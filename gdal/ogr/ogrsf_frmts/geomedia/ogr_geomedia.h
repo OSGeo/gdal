@@ -157,7 +157,6 @@ class OGRGeomediaDataSource final: public OGRDataSource
 
     char               *pszName;
 
-    int                 bDSUpdate;
     CPLODBCSession      oSession;
 
     CPLString          GetTableNameFromType(const char* pszTableType);
@@ -168,7 +167,7 @@ class OGRGeomediaDataSource final: public OGRDataSource
                         OGRGeomediaDataSource();
                         virtual ~OGRGeomediaDataSource();
 
-    int                 Open( const char *, int bUpdate, int bTestOpen );
+    int                 Open( const char * );
     int                 OpenTable( const char *pszTableName,
                                    const char *pszGeomCol,
                                    int bUpdate );
@@ -187,21 +186,6 @@ class OGRGeomediaDataSource final: public OGRDataSource
 
     // Internal use
     CPLODBCSession     *GetSession() { return &oSession; }
-};
-
-/************************************************************************/
-/*                          OGRGeomediaDriver                           */
-/************************************************************************/
-
-class OGRGeomediaDriver final: public OGRODBCMDBDriver
-{
-  public:
-                ~OGRGeomediaDriver();
-
-    const char  *GetName() override;
-    OGRDataSource *Open( const char *, int ) override;
-
-    int          TestCapability( const char * ) override;
 };
 
 #endif /* ndef _OGR_Geomedia_H_INCLUDED */

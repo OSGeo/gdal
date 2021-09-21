@@ -30,6 +30,7 @@
 import os
 import sys
 import shutil
+import struct
 
 import pytest
 
@@ -195,7 +196,7 @@ def test_tiff_check_alpha():
         assert got_cs == [12603, 58561, 36064, 10807]
         ds = None
 
-    
+
 
 ###############################################################################
 # Test reading a CMYK tiff as RGBA image
@@ -264,7 +265,7 @@ def test_tiff_read_ojpeg():
     if cs != 0:
         print('Should be 0 with internal libtiff')
 
-    
+
 ###############################################################################
 # Read a .tif.gz file
 
@@ -421,7 +422,7 @@ def test_tiff_citation():
         print('got: ', wkt)
         pytest.fail('Erdas citation processing failing?')
 
-    
+
 ###############################################################################
 # Check that we can read linear projection parameters properly (#3901)
 
@@ -649,10 +650,8 @@ def test_tiff_12bitjpeg():
     gdal.PopErrorHandler()
     gdal.SetConfigOption('CPL_ACCUM_ERROR_MSG', old_accum)
 
-    if gdal.GetLastErrorMsg().find(
-            'Unsupported JPEG data precision 12') != -1:
-        sys.stdout.write('(12bit jpeg not available) ... ')
-        pytest.skip()
+    if gdal.GetLastErrorMsg().find('Unsupported JPEG data precision 12') != -1:
+        pytest.skip('12bit jpeg not available')
     elif ds is None:
         pytest.fail('failed to open 12bit jpeg file with unexpected error')
 
@@ -703,7 +702,7 @@ def test_tiff_read_stats_from_pam():
     except OSError:
         pass
 
-    
+
 ###############################################################################
 # Test extracting georeferencing from a .TAB file
 
@@ -742,7 +741,7 @@ Definition Table
     assert gt == (400000.0, 25.0, 0.0, 1300000.0, 0.0, -25.0), \
         'did not get expected geotransform'
 
-    assert wkt.find('OSGB_1936') != -1, 'did not get expected SRS'
+    assert '_1936' in wkt, 'did not get expected SRS'
 
 ###############################################################################
 # Test reading PixelIsPoint file.
@@ -1138,7 +1137,7 @@ def test_tiff_read_huge4GB():
         ds = None
         os.remove('tmp/huge4GB.tif')
 
-    
+
 ###############################################################################
 # Test reading a (small) BigTIFF. Tests GTiffCacheOffsetOrCount8()
 
@@ -1554,7 +1553,7 @@ def test_tiff_direct_and_virtual_mem_io():
         print('unreached = %s' % unreached)
         pytest.fail('missing code coverage in VirtualMemIO()')
 
-    
+
 ###############################################################################
 # Check read Digital Globe metadata IMD & RPB format
 
@@ -1588,7 +1587,23 @@ def test_tiff_read_md1():
 
     assert not os.path.exists('data/md_dg.tif.aux.xml')
 
-    
+###############################################################################
+# Test CPLKeywordParser on non-conformant .IMD files
+# See https://github.com/OSGeo/gdal/issues/4037
+
+
+def test_tiff_read_non_conformant_imd():
+
+    gdal.FileFromMemBuffer('/vsimem/test.imd',
+                           """BEGIN_GROUP = foo\n\tkey = value with space ' not quoted;\n\tkey2 = another one ;\r\nEND_GROUP\nEND\n""");
+    gdal.FileFromMemBuffer('/vsimem/test.tif', open('data/byte.tif', 'rb').read())
+    ds = gdal.Open('/vsimem/test.tif')
+    md = ds.GetMetadata('IMD')
+    gdal.Unlink('/vsimem/test.imd')
+    gdal.Unlink('/vsimem/test.tif')
+    assert md == { 'foo.key': "value with space ' not quoted",
+                   'foo.key2': "another one" }
+
 ###############################################################################
 # Check read Digital Globe metadata XML format
 
@@ -1622,7 +1637,7 @@ def test_tiff_read_md2():
 
     assert not os.path.exists('data/md_dg_2.tif.aux.xml')
 
-    
+
 ###############################################################################
 # Check read GeoEye metadata format
 
@@ -1656,7 +1671,7 @@ def test_tiff_read_md3():
 
     assert not os.path.exists('data/md_ge_rgb_0010000.tif.aux.xml')
 
-    
+
 ###############################################################################
 # Check read OrbView metadata format
 
@@ -1690,7 +1705,7 @@ def test_tiff_read_md4():
 
     assert not os.path.exists('data/md_ov.tif.aux.xml')
 
-    
+
 ###############################################################################
 # Check read Resurs-DK1 metadata format
 
@@ -1724,7 +1739,7 @@ def test_tiff_read_md5():
 
     assert not os.path.exists('data/md_rdk1.tif.aux.xml')
 
-    
+
 ###############################################################################
 # Check read Landsat metadata format
 
@@ -1758,7 +1773,7 @@ def test_tiff_read_md6():
 
     assert not os.path.exists('data/md_ls_b1.tif.aux.xml')
 
-    
+
 ###############################################################################
 # Check read Spot metadata format
 
@@ -1792,7 +1807,7 @@ def test_tiff_read_md7():
 
     assert not os.path.exists('data/spot/md_spot.tif.aux.xml')
 
-    
+
 ###############################################################################
 # Check read RapidEye metadata format
 
@@ -1826,7 +1841,7 @@ def test_tiff_read_md8():
 
     assert not os.path.exists('data/md_re.tif.aux.xml')
 
-    
+
 ###############################################################################
 # Check read Alos metadata format
 
@@ -1859,7 +1874,7 @@ def test_tiff_read_md9():
 
     assert not os.path.exists('data/alos/IMG-md_alos.tif.aux.xml')
 
-    
+
 ###############################################################################
 # Check read Eros metadata format
 
@@ -1893,7 +1908,7 @@ def test_tiff_read_md10():
 
     assert not os.path.exists('data/md_eros.tif.aux.xml')
 
-    
+
 ###############################################################################
 # Check read Kompsat metadata format
 
@@ -1927,7 +1942,7 @@ def test_tiff_read_md11():
 
     assert not os.path.exists('data/md_kompsat.tif.aux.xml')
 
-    
+
 ###############################################################################
 # Check read Dimap metadata format
 
@@ -1982,15 +1997,12 @@ def test_tiff_read_empty_nodata_tag():
     ds = gdal.Open('data/empty_nodata.tif')
     assert ds.GetRasterBand(1).GetNoDataValue() is None
 
+
 ###############################################################################
 # Check that no auxiliary files are read with a simple Open(), reading
 # imagery and getting IMAGE_STRUCTURE metadata
-
-
+@pytest.mark.skipif(sys.platform != 'linux', reason='Incorrect platform')
 def test_tiff_read_strace_check():
-
-    if not sys.platform.startswith('linux'):
-        pytest.skip()
 
     python_exe = sys.executable
     cmd = "strace -f %s -c \"from osgeo import gdal; " % python_exe + (
@@ -2193,7 +2205,7 @@ def test_tiff_read_nogeoref():
 
     tests = [(None, True, True, False, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
              (None, True, True, True, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
-             (None, False, True, True, 'OSGB_1936', (400000.0, 25.0, 0.0, 1300000.0, 0.0, -25.0)),
+             (None, False, True, True, '_1936', (400000.0, 25.0, 0.0, 1300000.0, 0.0, -25.0)),
              (None, True, False, False, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
              (None, False, True, False, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
              (None, False, False, False, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
@@ -2204,7 +2216,7 @@ def test_tiff_read_nogeoref():
              ('INTERNAL,WORLDFILE,PAM', True, True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
              ('WORLDFILE,PAM,INTERNAL', False, False, True, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
              ('PAM,WORLDFILE,INTERNAL', False, False, True, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
-             ('TABFILE,WORLDFILE,INTERNAL', True, True, True, 'OSGB_1936', (400000.0, 25.0, 0.0, 1300000.0, 0.0, -25.0)),
+             ('TABFILE,WORLDFILE,INTERNAL', True, True, True, '_1936', (400000.0, 25.0, 0.0, 1300000.0, 0.0, -25.0)),
              ('PAM', True, True, False, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
              ('PAM,WORLDFILE', True, True, False, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
              ('WORLDFILE', True, True, False, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
@@ -2252,7 +2264,7 @@ def test_tiff_read_nogeoref():
                 print('Expected ' + expected_srs)
                 pytest.fail('Iteration %d, did not get expected SRS for %s,copy_pam=%s,copy_worldfile=%s,copy_tabfile=%s' % (iteration, config_option_value, str(copy_pam), str(copy_worldfile), str(copy_tabfile)))
 
-    
+
 ###############################################################################
 # Test GDAL_GEOREF_SOURCES
 
@@ -2272,8 +2284,8 @@ def test_tiff_read_inconsistent_georef():
              ('PAM', True, True, True, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
              ('PAM,TABFILE', True, True, True, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
              ('WORLDFILE', True, True, True, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
-             ('TABFILE', True, True, True, 'OSGB_1936', (400000.0, 25.0, 0.0, 1300000.0, 0.0, -25.0)),
-             ('TABFILE,PAM', True, True, True, 'OSGB_1936', (400000.0, 25.0, 0.0, 1300000.0, 0.0, -25.0)),
+             ('TABFILE', True, True, True, '_1936', (400000.0, 25.0, 0.0, 1300000.0, 0.0, -25.0)),
+             ('TABFILE,PAM', True, True, True, '_1936', (400000.0, 25.0, 0.0, 1300000.0, 0.0, -25.0)),
             ]
 
     for (config_option_value, copy_pam, copy_worldfile, copy_tabfile, expected_srs, expected_gt) in tests:
@@ -2312,7 +2324,7 @@ def test_tiff_read_inconsistent_georef():
                 print('Expected ' + expected_srs)
                 pytest.fail('Iteration %d, did not get expected SRS for %s,copy_pam=%s,copy_worldfile=%s,copy_tabfile=%s' % (iteration, config_option_value, str(copy_pam), str(copy_worldfile), str(copy_tabfile)))
 
-    
+
 ###############################################################################
 # Test GDAL_GEOREF_SOURCES
 
@@ -2362,7 +2374,7 @@ def test_tiff_read_gcp_internal_and_auxxml():
                 print('Expected ' + expected_srs)
                 pytest.fail('Iteration %d, did not get expected SRS for %s,copy_pam=%s' % (iteration, config_option_value, str(copy_pam)))
 
-    
+
 ###############################################################################
 # Test reading .tif + .aux
 
@@ -2411,7 +2423,7 @@ def test_tiff_read_jpeg_cloud_optimized():
         assert cs0 == 4743 and cs1 == 1133, i
         ds = None
 
-    
+
 # This one was generated with a buggy code that emit JpegTables with mode == 1
 # when creating the overview directory but failed to properly set this mode while
 # writing the imagery. libjpeg-6b emits a 'JPEGLib:Huffman table 0x00 was not defined'
@@ -2431,7 +2443,7 @@ def test_tiff_read_corrupted_jpeg_cloud_optimized():
     elif cs1 != 1133:
         pytest.fail(cs1)
 
-    
+
 ###############################################################################
 # Test reading YCbCr images with LZW compression
 
@@ -2462,7 +2474,7 @@ def test_tiff_read_ycbcr_lzw():
         assert got_cs1 == cs1 and got_cs2 == cs2 and got_cs3 == cs3, \
             (filename, got_cs1, got_cs2, got_cs3)
 
-    
+
 ###############################################################################
 # Test reading YCbCr images with nbits > 8
 
@@ -2618,7 +2630,7 @@ def test_tiff_read_leak_ZIPSetupDecode():
         for i in range(ds.RasterCount):
             ds.GetRasterBand(i + 1).Checksum()
 
-    
+
 ###############################################################################
 
 
@@ -2632,7 +2644,7 @@ def test_tiff_read_excessive_memory_TIFFFillStrip():
         for i in range(ds.RasterCount):
             ds.GetRasterBand(i + 1).Checksum()
 
-    
+
 ###############################################################################
 
 
@@ -2645,7 +2657,7 @@ def test_tiff_read_excessive_memory_TIFFFillStrip2():
         ds = gdal.Open('data/excessive-memory-TIFFFillStrip2.tif')
         ds.GetRasterBand(1).Checksum()
 
-    
+
 ###############################################################################
 
 
@@ -2658,7 +2670,7 @@ def test_tiff_read_excessive_memory_TIFFFillTile():
         ds = gdal.Open('data/excessive-memory-TIFFFillTile.tif')
         ds.GetRasterBand(1).Checksum()
 
-    
+
 ###############################################################################
 
 
@@ -2726,7 +2738,7 @@ def test_tiff_read_huge_number_strips():
         ds = gdal.Open('data/huge-number-strips.tif')
         ds.GetRasterBand(1).Checksum()
 
-    
+
 ###############################################################################
 
 
@@ -2738,15 +2750,11 @@ def test_tiff_read_huge_implied_number_strips():
     with gdaltest.error_handler():
         gdal.Open('data/huge-implied-number-strips.tif')
 
-    
+
 ###############################################################################
 
 
 def test_tiff_read_many_blocks():
-
-    # Runs super slow on some Windows configs
-    if sys.platform == 'win32':
-        pytest.skip()
 
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['LIBTIFF'] != 'INTERNAL':
@@ -2798,7 +2806,7 @@ def test_tiff_read_corrupted_deflate_singlestrip():
         ds = gdal.Open('data/corrupted_deflate_singlestrip.tif')
         ds.GetRasterBand(1).Checksum()
 
-    
+
 ###############################################################################
 # Test fix for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1563
 
@@ -2812,7 +2820,7 @@ def test_tiff_read_packbits_not_enough_data():
         ds = gdal.Open('data/packbits-not-enough-data.tif')
         ds.GetRasterBand(1).Checksum()
 
-    
+
 ###############################################################################
 # Test reading images with more than 2billion blocks for a single band
 
@@ -2900,7 +2908,7 @@ def test_tiff_read_stripoffset_types():
         if offsets != expected_offsets:
             print(filename, expected_offsets, offsets)
 
-    
+
 ###############################################################################
 # Test reading a JPEG-in-TIFF file that contains the 2 denial of service
 # vulnerabilities listed in
@@ -3025,7 +3033,7 @@ def test_tiff_read_negative_scaley():
     with gdaltest.config_option('GTIFF_HONOUR_NEGATIVE_SCALEY', 'YES'):
         assert ds.GetGeoTransform()[5] == 60
 
-    
+
 ###############################################################################
 # Test ZSTD compression
 
@@ -3494,3 +3502,20 @@ def test_tiff_read_utf8_encoding_issue_2903():
     ds = None
     os.unlink(tmp_tif_filename)
     os.unlink(tmp_tfw_filename)
+
+###############################################################################
+# Check over precision issue with nodata and Float32 (#3791)
+
+
+def test_tiff_read_overprecision_nodata_float32():
+
+    filename = '/vsimem/test_tiff_read_overprecision_nodata_float32.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(filename, 1, 1, 1, gdal.GDT_Float32)
+    ds.GetRasterBand(1).SetNoDataValue(-3.4e38)
+    ds.GetRasterBand(1).Fill(-3.4e38)
+    ds = None
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetNoDataValue() == struct.unpack('f', struct.pack('f', -3.4e38))[0]
+    assert struct.unpack('f', ds.GetRasterBand(1).ReadRaster())[0] == ds.GetRasterBand(1).GetNoDataValue()
+    ds = None
+    gdal.Unlink(filename)

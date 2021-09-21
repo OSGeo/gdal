@@ -4,7 +4,7 @@ include ../../GDALmake.opt
 
 OBJ	=	adrgdataset.o srpdataset.o
 
-CPPFLAGS	:=	 $(CPPFLAGS) -I../iso8211
+CPPFLAGS	:=	 $(CPPFLAGS) -iquote ../iso8211
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

@@ -33,19 +33,36 @@
 #include <queue>
 #include <set>
 
+#include <ctype.h> // isalnum
+
+#include "cpl_error_internal.h"
 #include "gdal_priv.h"
 #include "gdal_pam.h"
+#include "gdal_utils.h"
 #include "cpl_safemaths.hpp"
+#include "ogrsf_frmts.h"
 
 #if defined(__clang__) || defined(_MSC_VER)
 #define COMPILER_WARNS_ABOUT_ABSTRACT_VBASE_INIT
 #endif
 
 /************************************************************************/
+/*                          GetPAM()                                    */
+/************************************************************************/
+
+static std::shared_ptr<GDALPamMultiDim> GetPAM(const std::shared_ptr<GDALMDArray>& poParent)
+{
+    auto poPamArray = dynamic_cast<GDALPamMDArray*>(poParent.get());
+    if( poPamArray )
+        return poPamArray->GetPAM();
+    return nullptr;
+}
+
+/************************************************************************/
 /*                       GDALMDArrayUnscaled                            */
 /************************************************************************/
 
-class GDALMDArrayUnscaled final: public GDALMDArray
+class GDALMDArrayUnscaled final: public GDALPamMDArray
 {
 private:
     std::shared_ptr<GDALMDArray> m_poParent{};
@@ -57,7 +74,7 @@ private:
 protected:
     explicit GDALMDArrayUnscaled(const std::shared_ptr<GDALMDArray>& poParent):
         GDALAbstractMDArray(std::string(), "Unscaled view of " + poParent->GetFullName()),
-        GDALMDArray(std::string(), "Unscaled view of " + poParent->GetFullName()),
+        GDALPamMDArray(std::string(), "Unscaled view of " + poParent->GetFullName(), ::GetPAM(poParent)),
         m_poParent(std::move(poParent)),
         m_dt(GDALExtendedDataType::Create(GDALDataTypeIsComplex(
             m_poParent->GetDataType().GetNumericDataType()) ?
@@ -81,8 +98,9 @@ protected:
                       const void* pSrcBuffer) override;
 
     bool IAdviseRead(const GUInt64* arrayStartIdx,
-                     const size_t* count) const override
-        { return m_poParent->AdviseRead(arrayStartIdx, count); }
+                     const size_t* count,
+                     CSLConstList papszOptions) const override
+        { return m_poParent->AdviseRead(arrayStartIdx, count, papszOptions); }
 
 public:
     static std::shared_ptr<GDALMDArrayUnscaled> Create(
@@ -95,6 +113,8 @@ public:
     }
 
     bool IsWritable() const override { return m_poParent->IsWritable(); }
+
+    const std::string& GetFilename() const override { return m_poParent->GetFilename(); }
 
     const std::vector<std::shared_ptr<GDALDimension>>& GetDimensions() const override { return m_poParent->GetDimensions(); }
 
@@ -356,6 +376,63 @@ std::shared_ptr<GDALGroup> GDALGroup::OpenGroup(CPL_UNUSED const std::string& os
 }
 
 /************************************************************************/
+/*                        GetVectorLayerNames()                         */
+/************************************************************************/
+
+/** Return the list of layer names contained in this group.
+ *
+ * @note Driver implementation: optionally implemented. If implemented,
+ * OpenVectorLayer() should also be implemented.
+ *
+ * Drivers known to implement it: OpenFileGDB, FileGDB
+ *
+ * Other drivers will return an empty list. GDALDataset::GetLayerCount() and
+ * GDALDataset::GetLayer() should then be used.
+ *
+ * This is the same as the C function GDALGroupGetVectorLayerNames().
+ *
+ * @param papszOptions Driver specific options determining how layers
+ * should be retrieved. Pass nullptr for default behavior.
+ *
+ * @return the vector layer names.
+ * @since GDAL 3.4
+ */
+std::vector<std::string> GDALGroup::GetVectorLayerNames(CPL_UNUSED CSLConstList papszOptions) const
+{
+    return {};
+}
+
+/************************************************************************/
+/*                           OpenVectorLayer()                          */
+/************************************************************************/
+
+/** Open and return a vector layer.
+ *
+ * Due to the historical ownership of OGRLayer* by GDALDataset*, the
+ * lifetime of the returned OGRLayer* is linked to the one of the owner
+ * dataset (contrary to the general design of this class where objects can be
+ * used independently of the object that returned them)
+ *
+ * @note Driver implementation: optionally implemented. If implemented,
+ * GetVectorLayerNames() should also be implemented.
+ *
+ * Drivers known to implement it: MEM, netCDF.
+ *
+ * This is the same as the C function GDALGroupOpenVectorLayer().
+ *
+ * @param osName Vector layer name.
+ * @param papszOptions Driver specific options determining how the layer should
+ * be opened.  Pass nullptr for default behavior.
+ *
+ * @return the group, or nullptr.
+ */
+OGRLayer* GDALGroup::OpenVectorLayer(CPL_UNUSED const std::string& osName,
+                                     CPL_UNUSED CSLConstList papszOptions) const
+{
+    return nullptr;
+}
+
+/************************************************************************/
 /*                             GetDimensions()                          */
 /************************************************************************/
 
@@ -388,11 +465,11 @@ std::vector<std::shared_ptr<GDALDimension>> GDALGroup::GetDimensions(
 /** Return structural information on the group.
  *
  * This may be the compression, etc..
- * 
+ *
  * The return value should not be freed and is valid until GDALGroup is
  * released or this function called again.
- * 
- * This is the same as the C function GDALGroupGetStruturalInfo().
+ *
+ * This is the same as the C function GDALGroupGetStructuralInfo().
  */
 CSLConstList GDALGroup::GetStructuralInfo() const
 {
@@ -538,7 +615,7 @@ GUInt64 GDALGroup::GetTotalCopyCost() const
 /** Copy the content of a group into a new (generally empty) group.
  *
  * @param poDstRootGroup Destination root group. Must NOT be nullptr.
- * @param poSrcDS    Source dataset. Migt be nullptr (but for correct behavior
+ * @param poSrcDS    Source dataset. Might be nullptr (but for correct behavior
  *                   of some output drivers this is not recommended)
  * @param poSrcGroup Source group. Must NOT be nullptr.
  * @param bStrict Whether to enable stict mode. In strict mode, any error will
@@ -779,7 +856,7 @@ bool GDALGroup::CopyFrom( const std::shared_ptr<GDALGroup>& poDstRootGroup,
                 constexpr bool bForce = true;
                 double dfMin = 0.0;
                 double dfMax = 0.0;
-                if( srcArray->GetStatistics(poSrcDS, bApproxOK, bForce,
+                if( srcArray->GetStatistics(bApproxOK, bForce,
                                         &dfMin, &dfMax, nullptr, nullptr,
                                         nullptr,
                                         nullptr, nullptr) != CE_None )
@@ -983,7 +1060,7 @@ std::shared_ptr<GDALMDArray> GDALGroup::OpenMDArrayFromFullname(
  *                       the search should be started. If this is a non-empty
  *                       string, the group on which this method is called should
  *                       nominally be the root group (otherwise the path will
- *                       be interpretated as from the current group)
+ *                       be interpreted as from the current group)
  * @param papszOptions options to pass to OpenMDArray()
  * @since GDAL 3.2
  */
@@ -1118,6 +1195,38 @@ std::shared_ptr<GDALDimension> GDALGroup::OpenDimensionFromFullname(
             return dim;
     }
     return nullptr;
+}
+
+/************************************************************************/
+/*                           ClearStatistics()                          */
+/************************************************************************/
+
+/**
+ * \brief Clear statistics.
+ *
+ * @since GDAL 3.4
+ */
+void GDALGroup::ClearStatistics()
+{
+    auto groupNames = GetGroupNames();
+    for( const auto& name: groupNames )
+    {
+        auto subGroup = OpenGroup(name);
+        if( subGroup )
+        {
+            subGroup->ClearStatistics();
+        }
+    }
+
+    auto arrayNames = GetMDArrayNames();
+    for( const auto& name: arrayNames )
+    {
+        auto array = OpenMDArray(name);
+        if( array )
+        {
+            array->ClearStatistics();
+        }
+    }
 }
 
 /************************************************************************/
@@ -1806,7 +1915,7 @@ GUInt64 GDALAbstractMDArray::GetTotalElementsCount() const
  * aligned on those tile/block boundaries will be more efficient.
  *
  * The returned number of elements in the vector is the same as
- * GetDimensionCount(). A value of 0 should be interpretated as no hint regarding
+ * GetDimensionCount(). A value of 0 should be interpreted as no hint regarding
  * the natural block size along the considered dimension.
  * "Flat" arrays will typically return a vector of values set to 0.
  *
@@ -1819,7 +1928,7 @@ GUInt64 GDALAbstractMDArray::GetTotalElementsCount() const
  *
  * This is the same as the C function GDALMDArrayGetBlockSize().
  *
- * @return the block size, in number of elemnts along each dimension.
+ * @return the block size, in number of elements along each dimension.
  */
 std::vector<GUInt64> GDALAbstractMDArray::GetBlockSize() const
 {
@@ -1830,7 +1939,7 @@ std::vector<GUInt64> GDALAbstractMDArray::GetBlockSize() const
 /*                       GetProcessingChunkSize()                       */
 /************************************************************************/
 
-/** \brief Return an optimal chunk size for read/write oerations, given the natural
+/** \brief Return an optimal chunk size for read/write operations, given the natural
  * block size and memory constraints specified.
  *
  * This method will use GetBlockSize() to define a chunk whose dimensions are
@@ -1842,7 +1951,7 @@ std::vector<GUInt64> GDALAbstractMDArray::GetBlockSize() const
  *
  * @param nMaxChunkMemory Maximum amount of memory, in bytes, to use for the chunk.
  *
- * @return the chunk size, in number of elemnts along each dimension.
+ * @return the chunk size, in number of elements along each dimension.
  */
 std::vector<size_t> GDALAbstractMDArray::GetProcessingChunkSize(size_t nMaxChunkMemory) const
 {
@@ -1936,12 +2045,12 @@ std::vector<size_t> GDALAbstractMDArray::GetProcessingChunkSize(size_t nMaxChunk
 /************************************************************************/
 
 /** Set the variable unit.
- * 
+ *
  * Values should conform as much as possible with those allowed by
  * the NetCDF CF conventions:
  * http://cfconventions.org/Data/cf-conventions/cf-conventions-1.7/cf-conventions.html#units
  * but others might be returned.
- * 
+ *
  * Few examples are "meter", "degrees", "second", ...
  * Empty value means unknown.
  *
@@ -1963,12 +2072,12 @@ bool GDALMDArray::SetUnit(CPL_UNUSED const std::string& osUnit)
 /************************************************************************/
 
 /** Return the array unit.
- * 
+ *
  * Values should conform as much as possible with those allowed by
  * the NetCDF CF conventions:
  * http://cfconventions.org/Data/cf-conventions/cf-conventions-1.7/cf-conventions.html#units
  * but others might be returned.
- * 
+ *
  * Few examples are "meter", "degrees", "second", ...
  * Empty value means unknown.
  *
@@ -1985,7 +2094,7 @@ const std::string& GDALMDArray::GetUnit() const
 /************************************************************************/
 
 /** Assign a spatial reference system object to the the array.
- * 
+ *
  * This is the same as the C function GDALMDArraySetSpatialRef().
  */
 bool GDALMDArray::SetSpatialRef(CPL_UNUSED const OGRSpatialReference* poSRS)
@@ -1999,7 +2108,7 @@ bool GDALMDArray::SetSpatialRef(CPL_UNUSED const OGRSpatialReference* poSRS)
 /************************************************************************/
 
 /** Return the spatial reference system object associated with the array.
- * 
+ *
  * This is the same as the C function GDALMDArrayGetSpatialRef().
  */
 std::shared_ptr<OGRSpatialReference> GDALMDArray::GetSpatialRef() const
@@ -3055,7 +3164,7 @@ bool GDALMDArray::CopyFromAllExceptValues(const GDALMDArray* poSrcArray,
 
 /** Copy the content of an array into a new (generally empty) array.
  *
- * @param poSrcDS    Source dataset. Migt be nullptr (but for correct behavior
+ * @param poSrcDS    Source dataset. Might be nullptr (but for correct behavior
  *                   of some output drivers this is not recommended)
  * @param poSrcArray Source array. Should NOT be nullptr.
  * @param bStrict Whether to enable stict mode. In strict mode, any error will
@@ -3143,7 +3252,7 @@ bool GDALMDArray::CopyFrom(CPL_UNUSED GDALDataset* poSrcDS,
                 {
                     return false;
                 }
-                bool bRet = 
+                bool bRet =
                     poDstArray->Write(chunkArrayStartIdx,
                                        chunkCount,
                                        nullptr, nullptr,
@@ -3236,13 +3345,13 @@ bool GDALMDArray::CopyFrom(CPL_UNUSED GDALDataset* poSrcDS,
 /************************************************************************/
 
 /** Return structural information on the array.
- * 
+ *
  * This may be the compression, etc..
- * 
+ *
  * The return value should not be freed and is valid until GDALMDArray is
  * released or this function called again.
- * 
- * This is the same as the C function GDALMDArrayGetStruturalInfo().
+ *
+ * This is the same as the C function GDALMDArrayGetStructuralInfo().
  */
 CSLConstList GDALMDArray::GetStructuralInfo() const
 {
@@ -3276,23 +3385,30 @@ CSLConstList GDALMDArray::GetStructuralInfo() const
  *                      Array of GetDimensionCount() values.
  *                      Can be nullptr as a synonymous for
  *                      [ aoDims[i].GetSize() - arrayStartIdx[i] for i in range(GetDimensionCount() ]
+ *
+ * @param papszOptions Driver specific options, or nullptr. Consult driver documentation.
+ *
  * @return true in case of success (ignoring the advice is a success)
  *
  * @since GDAL 3.2
  */
 bool GDALMDArray::AdviseRead(const GUInt64* arrayStartIdx,
-                             const size_t* count) const
+                             const size_t* count,
+                             CSLConstList papszOptions) const
 {
-    std::vector<GUInt64> tmp_arrayStartIdx;
     const auto nDimCount = GetDimensionCount();
-    if( arrayStartIdx == nullptr && nDimCount > 0 )
+    if( nDimCount == 0 )
+        return true;
+
+    std::vector<GUInt64> tmp_arrayStartIdx;
+    if( arrayStartIdx == nullptr )
     {
         tmp_arrayStartIdx.resize(nDimCount);
         arrayStartIdx = tmp_arrayStartIdx.data();
     }
 
     std::vector<size_t> tmp_count;
-    if( count == nullptr && nDimCount > 0 )
+    if( count == nullptr )
     {
         tmp_count.resize(nDimCount);
         const auto& dims = GetDimensions();
@@ -3329,7 +3445,7 @@ bool GDALMDArray::AdviseRead(const GUInt64* arrayStartIdx,
         return false;
     }
 
-    return IAdviseRead(arrayStartIdx, count);
+    return IAdviseRead(arrayStartIdx, count, papszOptions);
 }
 
 /************************************************************************/
@@ -3337,17 +3453,310 @@ bool GDALMDArray::AdviseRead(const GUInt64* arrayStartIdx,
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
-bool GDALMDArray::IAdviseRead(const GUInt64*, const size_t*) const
+bool GDALMDArray::IAdviseRead(const GUInt64*, const size_t*, CSLConstList /* papszOptions*/) const
 {
     return true;
 }
 //! @endcond
 
+
+/************************************************************************/
+/*                            MassageName()                             */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+/*static*/ std::string GDALMDArray::MassageName(const std::string& inputName)
+{
+    std::string ret;
+    for( const char ch: inputName )
+    {
+        if( !isalnum(ch) )
+            ret += '_';
+        else
+            ret += ch;
+    }
+    return ret;
+}
+//! @endcond
+
+/************************************************************************/
+/*                         GetCacheRootGroup()                          */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+std::shared_ptr<GDALGroup> GDALMDArray::GetCacheRootGroup(bool bCanCreate,
+                                                          std::string& osCacheFilenameOut) const
+{
+    const auto& osFilename = GetFilename();
+    if( osFilename.empty() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot cache an array with an empty filename");
+        return nullptr;
+    }
+
+    osCacheFilenameOut = osFilename + ".gmac";
+    const char* pszProxy = PamGetProxy(osCacheFilenameOut.c_str());
+    if( pszProxy != nullptr )
+        osCacheFilenameOut = pszProxy;
+
+    std::unique_ptr<GDALDataset> poDS;
+    VSIStatBufL sStat;
+    if( VSIStatL(osCacheFilenameOut.c_str(), &sStat) == 0 )
+    {
+        poDS.reset(GDALDataset::Open(osCacheFilenameOut.c_str(),
+                                     GDAL_OF_MULTIDIM_RASTER | GDAL_OF_UPDATE,
+                                     nullptr, nullptr, nullptr));
+    }
+    if( poDS )
+    {
+        CPLDebug("GDAL", "Opening cache %s", osCacheFilenameOut.c_str());
+        return poDS->GetRootGroup();
+    }
+
+    if( bCanCreate )
+    {
+        const char* pszDrvName = "netCDF";
+        GDALDriver* poDrv = GetGDALDriverManager()->GetDriverByName(pszDrvName);
+        if( poDrv == nullptr )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot get driver %s", pszDrvName);
+            return nullptr;
+        }
+        {
+            CPLErrorHandlerPusher oHandlerPusher(CPLQuietErrorHandler);
+            CPLErrorStateBackuper oErrorStateBackuper;
+            poDS.reset(poDrv->CreateMultiDimensional(osCacheFilenameOut.c_str(),
+                                                     nullptr, nullptr));
+        }
+        if( !poDS )
+        {
+            pszProxy = PamAllocateProxy(osCacheFilenameOut.c_str());
+            if( pszProxy )
+            {
+                osCacheFilenameOut = pszProxy;
+                poDS.reset(poDrv->CreateMultiDimensional(osCacheFilenameOut.c_str(),
+                                                         nullptr, nullptr));
+            }
+        }
+        if( poDS )
+        {
+            CPLDebug("GDAL", "Creating cache %s", osCacheFilenameOut.c_str());
+            return poDS->GetRootGroup();
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot create %s. Set the GDAL_PAM_PROXY_DIR "
+                     "configuration option to write the cache in "
+                     "another directory",
+                     osCacheFilenameOut.c_str());
+        }
+    }
+
+    return nullptr;
+}
+//! @endcond
+
+/************************************************************************/
+/*                              Cache()                                 */
+/************************************************************************/
+
+/** Cache the content of the array into an auxiliary filename.
+ *
+ * The main purpose of this method is to be able to cache views that are
+ * expensive to compute, such as transposed arrays.
+ *
+ * The array will be stored in a file whose name is the one of
+ * GetFilename(), with an extra .gmac extension (stands for GDAL Multidimensional
+ * Array Cache). The cache is a netCDF dataset.
+ *
+ * If the .gmac file cannot be written next to the dataset, the
+ * GDAL_PAM_PROXY_DIR will be used, if set, to write the cache file into that
+ * directory.
+ *
+ * The GDALMDArray::Read() method will automatically use the cache when it exists.
+ * There is no timestamp checks between the source array and the cached array.
+ * If the source arrays changes, the cache must be manually deleted.
+ *
+ * This is the same as the C function GDALMDArrayCache()
+ *
+ * @note Driver implementation: optionally implemented.
+ *
+ * @param papszOptions List of options, null terminated, or NULL. Currently
+ *                     the only option supported is BLOCKSIZE=bs0,bs1,...,bsN
+ *                     to specify the block size of the cached array.
+ * @return true in case of success.
+ */
+bool GDALMDArray::Cache( CSLConstList papszOptions ) const
+{
+    std::string osCacheFilename;
+    auto poRG = GetCacheRootGroup(true, osCacheFilename);
+    if( !poRG )
+        return false;
+
+    const std::string osCachedArrayName(MassageName(GetFullName()));
+    if( poRG->OpenMDArray(osCachedArrayName) )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "An array with same name %s already exists in %s",
+                 osCachedArrayName.c_str(), osCacheFilename.c_str());
+        return false;
+    }
+
+    CPLStringList aosOptions;
+    aosOptions.SetNameValue("COMPRESS", "DEFLATE");
+    const auto& aoDims = GetDimensions();
+    std::vector<std::shared_ptr<GDALDimension>> aoNewDims;
+    if( !aoDims.empty() )
+    {
+        std::string osBlockSize(CSLFetchNameValueDef(papszOptions, "BLOCKSIZE", ""));
+        if( osBlockSize.empty() )
+        {
+            const auto anBlockSize = GetBlockSize();
+            int idxDim = 0;
+            for( auto nBlockSize: anBlockSize )
+            {
+                if( idxDim > 0 )
+                    osBlockSize += ',';
+                if( nBlockSize == 0 )
+                    nBlockSize = 256;
+                nBlockSize = std::min(nBlockSize, aoDims[idxDim]->GetSize());
+                osBlockSize += std::to_string(static_cast<uint64_t>(nBlockSize));
+                idxDim ++;
+            }
+        }
+        aosOptions.SetNameValue("BLOCKSIZE", osBlockSize.c_str());
+
+        int idxDim = 0;
+        for( const auto& poDim: aoDims )
+        {
+            auto poNewDim = poRG->CreateDimension(
+                osCachedArrayName + '_' + std::to_string(idxDim),
+                poDim->GetType(),
+                poDim->GetDirection(),
+                poDim->GetSize());
+            if( !poNewDim )
+                return false;
+            aoNewDims.emplace_back(poNewDim);
+            idxDim ++;
+        }
+    }
+
+    auto poCachedArray = poRG->CreateMDArray(osCachedArrayName,
+                                             aoNewDims,
+                                             GetDataType(),
+                                             aosOptions.List());
+    if( !poCachedArray )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Cannot create %s in %s",
+                 osCachedArrayName.c_str(), osCacheFilename.c_str());
+        return false;
+    }
+
+    GUInt64 nCost = 0;
+    return poCachedArray->CopyFrom(nullptr, this,
+                                   false, // strict
+                                   nCost, GetTotalCopyCost(),
+                                   nullptr, nullptr);
+}
+
+/************************************************************************/
+/*                               Read()                                 */
+/************************************************************************/
+
+bool GDALMDArray::Read(const GUInt64* arrayStartIdx,
+                      const size_t* count,
+                      const GInt64* arrayStep,        // step in elements
+                      const GPtrDiff_t* bufferStride, // stride in elements
+                      const GDALExtendedDataType& bufferDataType,
+                      void* pDstBuffer,
+                      const void* pDstBufferAllocStart,
+                      size_t nDstBufferAllocSize) const
+{
+    if( !m_bHasTriedCachedArray )
+    {
+        m_bHasTriedCachedArray = true;
+        if( IsCacheable() )
+        {
+            const auto& osFilename = GetFilename();
+            if( !osFilename.empty() &&
+                !EQUAL(CPLGetExtension(osFilename.c_str()), "gmac") )
+            {
+                std::string osCacheFilename;
+                auto poRG = GetCacheRootGroup(false, osCacheFilename);
+                if( poRG )
+                {
+                    const std::string osCachedArrayName(MassageName(GetFullName()));
+                    m_poCachedArray = poRG->OpenMDArray(osCachedArrayName);
+                    if( m_poCachedArray )
+                    {
+                        const auto& dims = GetDimensions();
+                        const auto& cachedDims = m_poCachedArray->GetDimensions();
+                        const size_t nDims = dims.size();
+                        bool ok =
+                            m_poCachedArray->GetDataType() == GetDataType() &&
+                            cachedDims.size() == nDims;
+                        for( size_t i = 0; ok && i < nDims; ++i )
+                        {
+                            ok = dims[i]->GetSize() == cachedDims[i]->GetSize();
+                        }
+                        if( ok )
+                        {
+                            CPLDebug("GDAL", "Cached array for %s found in %s",
+                                     osCachedArrayName.c_str(),
+                                     osCacheFilename.c_str());
+                        }
+                        else
+                        {
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                     "Cached array %s in %s has incompatible "
+                                     "characteristics with current array.",
+                                     osCachedArrayName.c_str(),
+                                     osCacheFilename.c_str());
+                            m_poCachedArray.reset();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    const auto array = m_poCachedArray ? m_poCachedArray.get() : this;
+    if( !array->GetDataType().CanConvertTo(bufferDataType) )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Array data type is not convertible to buffer data type");
+        return false;
+    }
+
+    std::vector<GInt64> tmp_arrayStep;
+    std::vector<GPtrDiff_t> tmp_bufferStride;
+    if( !array->CheckReadWriteParams(arrayStartIdx,
+                                     count,
+                                     arrayStep,
+                                     bufferStride,
+                                     bufferDataType,
+                                     pDstBuffer,
+                                     pDstBufferAllocStart,
+                                     nDstBufferAllocSize,
+                                     tmp_arrayStep,
+                                     tmp_bufferStride) )
+    {
+        return false;
+    }
+
+    return array->IRead(arrayStartIdx, count, arrayStep,
+                        bufferStride, bufferDataType, pDstBuffer);
+}
+
 /************************************************************************/
 /*                       GDALSlicedMDArray                              */
 /************************************************************************/
 
-class GDALSlicedMDArray final: public GDALMDArray
+class GDALSlicedMDArray final: public GDALPamMDArray
 {
 private:
     std::shared_ptr<GDALMDArray> m_poParent{};
@@ -3374,7 +3783,7 @@ protected:
         std::vector<Range>&& parentRanges)
     :
         GDALAbstractMDArray(std::string(), "Sliced view of " + poParent->GetFullName() + " (" + viewExpr + ")"),
-        GDALMDArray(std::string(), "Sliced view of " + poParent->GetFullName() + " (" + viewExpr + ")"),
+        GDALPamMDArray(std::string(), "Sliced view of " + poParent->GetFullName() + " (" + viewExpr + ")", ::GetPAM(poParent)),
         m_poParent(std::move(poParent)),
         m_dims(std::move(dims)),
         m_mapDimIdxToParentDimIdx(std::move(mapDimIdxToParentDimIdx)),
@@ -3401,7 +3810,8 @@ protected:
                       const void* pSrcBuffer) override;
 
     bool IAdviseRead(const GUInt64* arrayStartIdx,
-                     const size_t* count) const override;
+                     const size_t* count,
+                     CSLConstList papszOptions) const override;
 
 public:
     static std::shared_ptr<GDALSlicedMDArray> Create(
@@ -3422,6 +3832,8 @@ public:
     }
 
     bool IsWritable() const override { return m_poParent->IsWritable(); }
+
+    const std::string& GetFilename() const override { return m_poParent->GetFilename(); }
 
     const std::vector<std::shared_ptr<GDALDimension>>& GetDimensions() const override { return m_dims; }
 
@@ -3583,11 +3995,13 @@ bool GDALSlicedMDArray::IWrite(const GUInt64* arrayStartIdx,
 /************************************************************************/
 
 bool GDALSlicedMDArray::IAdviseRead(const GUInt64* arrayStartIdx,
-                                    const size_t* count) const
+                                    const size_t* count,
+                                    CSLConstList papszOptions) const
 {
     PrepareParentArrays(arrayStartIdx, count, nullptr, nullptr);
     return m_poParent->AdviseRead(m_parentStart.data(),
-                                  m_parentCount.data());
+                                  m_parentCount.data(),
+                                  papszOptions);
 }
 
 /************************************************************************/
@@ -3808,7 +4222,7 @@ static std::shared_ptr<GDALMDArray> CreateSlicedArray(
 /*                       GDALExtractFieldMDArray                        */
 /************************************************************************/
 
-class GDALExtractFieldMDArray final: public GDALMDArray
+class GDALExtractFieldMDArray final: public GDALPamMDArray
 {
 private:
     std::shared_ptr<GDALMDArray> m_poParent{};
@@ -3824,8 +4238,8 @@ protected:
     :
         GDALAbstractMDArray(
             std::string(), "Extract field " + fieldName + " of " + poParent->GetFullName()),
-        GDALMDArray(
-            std::string(), "Extract field " + fieldName + " of " + poParent->GetFullName()),
+        GDALPamMDArray(
+            std::string(), "Extract field " + fieldName + " of " + poParent->GetFullName(), ::GetPAM(poParent)),
         m_poParent(poParent),
         m_dt(srcComp->GetType()),
         m_srcCompName(srcComp->GetName())
@@ -3841,8 +4255,9 @@ protected:
                       void* pDstBuffer) const override;
 
     bool IAdviseRead(const GUInt64* arrayStartIdx,
-                     const size_t* count) const override
-        { return m_poParent->AdviseRead(arrayStartIdx, count); }
+                     const size_t* count,
+                     CSLConstList papszOptions) const override
+        { return m_poParent->AdviseRead(arrayStartIdx, count, papszOptions); }
 
 public:
     static std::shared_ptr<GDALExtractFieldMDArray> Create(
@@ -3861,6 +4276,8 @@ public:
     }
 
     bool IsWritable() const override { return m_poParent->IsWritable(); }
+
+    const std::string& GetFilename() const override { return m_poParent->GetFilename(); }
 
     const std::vector<std::shared_ptr<GDALDimension>>& GetDimensions() const override
     { return m_poParent->GetDimensions(); }
@@ -3961,7 +4378,7 @@ static std::shared_ptr<GDALMDArray> CreateFieldNameExtractArray(
  * https://www.numpy.org/devdocs/reference/arrays.indexing.html#basic-slicing-and-indexing
  * Or it can use field access by name. See
  * https://www.numpy.org/devdocs/reference/arrays.indexing.html#field-access
- * 
+ *
  * Multiple [] bracket elements can be concatenated, with a slice expression
  * or field name inside each.
  *
@@ -3969,7 +4386,7 @@ static std::shared_ptr<GDALMDArray> CreateFieldNameExtractArray(
  * indexes that apply to successive source dimensions, can be specified, using
  * integer indexing (e.g. 1), range indexing (start:stop:step), ellipsis (...)
  * or newaxis, using a comma separator.
- * 
+ *
  * Examples with a 2-dimensional array whose content is [[0,1,2,3],[4,5,6,7]].
  * <ul>
  * <li>GetView("[1][2]"): returns a 0-dimensional/scalar array with the value
@@ -4162,7 +4579,7 @@ std::shared_ptr<GDALMDArray> GDALMDArray::operator[](const std::string& fieldNam
 /*                      GDALMDArrayTransposed                           */
 /************************************************************************/
 
-class GDALMDArrayTransposed final: public GDALMDArray
+class GDALMDArrayTransposed final: public GDALPamMDArray
 {
 private:
     std::shared_ptr<GDALMDArray> m_poParent{};
@@ -4200,7 +4617,7 @@ protected:
         std::vector<std::shared_ptr<GDALDimension>>&& dims)
     :
         GDALAbstractMDArray(std::string(), "Transposed view of " + poParent->GetFullName() + " along " + MappingToStr(anMapNewAxisToOldAxis)),
-        GDALMDArray(std::string(), "Transposed view of " + poParent->GetFullName() + " along " + MappingToStr(anMapNewAxisToOldAxis)),
+        GDALPamMDArray(std::string(), "Transposed view of " + poParent->GetFullName() + " along " + MappingToStr(anMapNewAxisToOldAxis), ::GetPAM(poParent)),
         m_poParent(std::move(poParent)),
         m_anMapNewAxisToOldAxis(anMapNewAxisToOldAxis),
         m_dims(std::move(dims)),
@@ -4226,7 +4643,8 @@ protected:
                       const void* pSrcBuffer) override;
 
     bool IAdviseRead(const GUInt64* arrayStartIdx,
-                     const size_t* count) const override;
+                     const size_t* count,
+                     CSLConstList papszOptions) const override;
 
 public:
     static std::shared_ptr<GDALMDArrayTransposed> Create(
@@ -4259,6 +4677,8 @@ public:
     }
 
     bool IsWritable() const override { return m_poParent->IsWritable(); }
+
+    const std::string& GetFilename() const override { return m_poParent->GetFilename(); }
 
     const std::vector<std::shared_ptr<GDALDimension>>& GetDimensions() const override { return m_dims; }
 
@@ -4402,11 +4822,13 @@ bool GDALMDArrayTransposed::IWrite(const GUInt64* arrayStartIdx,
 /************************************************************************/
 
 bool GDALMDArrayTransposed::IAdviseRead(const GUInt64* arrayStartIdx,
-                                        const size_t* count) const
+                                        const size_t* count,
+                                        CSLConstList papszOptions) const
 {
     PrepareParentArrays(arrayStartIdx, count, nullptr, nullptr);
     return m_poParent->AdviseRead(m_parentStart.data(),
-                                  m_parentCount.data());
+                                  m_parentCount.data(),
+                                  papszOptions);
 }
 
 /************************************************************************/
@@ -4666,7 +5088,7 @@ bool GDALMDArrayUnscaled::IWrite(const GUInt64* arrayStartIdx,
     CPLAssert( nDTSize == 8 || nDTSize == 16 );
     const bool bIsBufferDataTypeNativeDataType = ( m_dt == bufferDataType );
     const bool bSelfAndParentHaveNoData =
-        m_bHasNoData && m_poParent->GetRawNoDataValue() != nullptr; 
+        m_bHasNoData && m_poParent->GetRawNoDataValue() != nullptr;
 
     double adfSrcNoData[2] = { 0, 0 };
     if( bSelfAndParentHaveNoData )
@@ -4890,10 +5312,10 @@ std::shared_ptr<GDALMDArray> GDALMDArray::GetUnscaled() const
 }
 
 /************************************************************************/
-/*                      GDALMDArrayTransposed                           */
+/*                         GDALMDArrayMask                              */
 /************************************************************************/
 
-class GDALMDArrayMask final: public GDALMDArray
+class GDALMDArrayMask final: public GDALPamMDArray
 {
 private:
     std::shared_ptr<GDALMDArray> m_poParent{};
@@ -4914,7 +5336,7 @@ private:
 protected:
     explicit GDALMDArrayMask(const std::shared_ptr<GDALMDArray>& poParent):
         GDALAbstractMDArray(std::string(), "Mask of " + poParent->GetFullName()),
-        GDALMDArray(std::string(), "Mask of " + poParent->GetFullName()),
+        GDALPamMDArray(std::string(), "Mask of " + poParent->GetFullName(), ::GetPAM(poParent)),
         m_poParent(std::move(poParent))
     {
     }
@@ -4927,8 +5349,9 @@ protected:
                       void* pDstBuffer) const override;
 
     bool IAdviseRead(const GUInt64* arrayStartIdx,
-                     const size_t* count) const override
-        { return m_poParent->AdviseRead(arrayStartIdx, count); }
+                     const size_t* count,
+                     CSLConstList papszOptions) const override
+        { return m_poParent->AdviseRead(arrayStartIdx, count, papszOptions); }
 
 public:
     static std::shared_ptr<GDALMDArrayMask> Create(
@@ -4941,6 +5364,8 @@ public:
     }
 
     bool IsWritable() const override { return false; }
+
+    const std::string& GetFilename() const override { return m_poParent->GetFilename(); }
 
     const std::vector<std::shared_ptr<GDALDimension>>& GetDimensions() const override { return m_poParent->GetDimensions(); }
 
@@ -5137,7 +5562,7 @@ lbl_return_to_caller:
         VSIFree(pTempBuffer);
         return false;
     }
- 
+
     switch( oTmpBufferDT.GetNumericDataType() )
     {
         case GDT_Byte:
@@ -5205,7 +5630,7 @@ lbl_return_to_caller:
             break;
 
     }
- 
+
     VSIFree(pTempBuffer);
 
     return true;
@@ -5450,6 +5875,946 @@ std::shared_ptr<GDALMDArray> GDALMDArray::GetMask(CPL_UNUSED
 }
 
 /************************************************************************/
+/*                         IsRegularlySpaced()                          */
+/************************************************************************/
+
+/** Returns whether an array is a 1D regularly spaced array.
+ *
+ * @param[out] dfStart     First value in the array
+ * @param[out] dfIncrement Increment/spacing between consecutive values.
+ * @return true if the array is regularly spaced.
+ */
+bool GDALMDArray::IsRegularlySpaced(double& dfStart, double& dfIncrement) const
+{
+    dfStart = 0;
+    dfIncrement = 0;
+    if( GetDimensionCount() != 1 || GetDataType().GetClass() != GEDTC_NUMERIC )
+        return false;
+    const auto nSize = GetDimensions()[0]->GetSize();
+    if( nSize <= 1 || nSize > 10 * 1000 * 1000 )
+        return false;
+
+    size_t nCount = static_cast<size_t>(nSize);
+    std::vector<double> adfTmp;
+    try
+    {
+        adfTmp.resize(nCount);
+    }
+    catch( const std::exception & )
+    {
+        return false;
+    }
+
+    GUInt64 anStart[1] = { 0 };
+    size_t anCount[1] = { nCount };
+
+    const auto IsRegularlySpacedInternal = [&dfStart, &dfIncrement, &anCount, &adfTmp]()
+    {
+        dfStart = adfTmp[0];
+        dfIncrement = (adfTmp[anCount[0]-1] - adfTmp[0]) / (anCount[0] - 1);
+        if( dfIncrement == 0 )
+        {
+            return false;
+        }
+        for(size_t i = 1; i < anCount[0]; i++ )
+        {
+            if( fabs((adfTmp[i] - adfTmp[i-1]) - dfIncrement) > 1e-3 * fabs(dfIncrement) )
+            {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    // First try with the first block. This can avoid excessive processing time,
+    // for example with Zarr datasets. https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=37636
+    const auto nBlockSize = GetBlockSize()[0];
+    if( nCount > 3 && nBlockSize >= 3 && nBlockSize < nCount - 1 )
+    {
+        const size_t nReducedCount = static_cast<size_t>(nBlockSize);
+        anCount[0] = nReducedCount;
+        if( !Read(anStart, anCount, nullptr, nullptr,
+                  GDALExtendedDataType::Create(GDT_Float64),
+                  &adfTmp[0]) )
+        {
+            return false;
+        }
+        if( !IsRegularlySpacedInternal() )
+        {
+            return false;
+        }
+
+        // Get next values
+        anStart[0] = nReducedCount;
+        anCount[0] = nCount - nReducedCount;
+    }
+
+    if( !Read(anStart, anCount, nullptr, nullptr,
+              GDALExtendedDataType::Create(GDT_Float64),
+              &adfTmp[static_cast<size_t>(anStart[0])]) )
+    {
+        return false;
+    }
+
+    return IsRegularlySpacedInternal();
+}
+
+/************************************************************************/
+/*                         GuessGeoTransform()                          */
+/************************************************************************/
+
+/** Returns whether 2 specified dimensions form a geotransform
+ *
+ * @param nDimX                Index of the X axis.
+ * @param nDimY                Index of the Y axis.
+ * @param bPixelIsPoint        Whether the geotransform should be returned
+ *                             with the pixel-is-point (pixel-center) convention
+ *                             (bPixelIsPoint = true), or with the pixel-is-area
+ *                             (top left corner convention)
+ *                             (bPixelIsPoint = false)
+ * @param[out] adfGeoTransform Computed geotransform
+ * @return true if a geotransform could be computed.
+ */
+bool GDALMDArray::GuessGeoTransform(size_t nDimX, size_t nDimY,
+                                    bool bPixelIsPoint,
+                                    double adfGeoTransform[6]) const
+{
+    const auto& dims(GetDimensions());
+    auto poVarX = dims[nDimX]->GetIndexingVariable();
+    auto poVarY = dims[nDimY]->GetIndexingVariable();
+    double dfXStart = 0.0;
+    double dfXSpacing = 0.0;
+    double dfYStart = 0.0;
+    double dfYSpacing = 0.0;
+    if( poVarX && poVarX->GetDimensionCount() == 1 &&
+        poVarX->GetDimensions()[0]->GetSize() == dims[nDimX]->GetSize() &&
+        poVarY && poVarY->GetDimensionCount() == 1 &&
+        poVarY->GetDimensions()[0]->GetSize() == dims[nDimY]->GetSize() &&
+        poVarX->IsRegularlySpaced(dfXStart, dfXSpacing) &&
+        poVarY->IsRegularlySpaced(dfYStart, dfYSpacing) )
+    {
+        adfGeoTransform[0] = dfXStart - (bPixelIsPoint ? 0 : dfXSpacing / 2);
+        adfGeoTransform[1] = dfXSpacing;
+        adfGeoTransform[2] = 0;
+        adfGeoTransform[3] = dfYStart - (bPixelIsPoint ? 0 : dfYSpacing / 2);
+        adfGeoTransform[4] = 0;
+        adfGeoTransform[5] = dfYSpacing;
+        return true;
+    }
+    return false;
+}
+
+/************************************************************************/
+/*                       GDALMDArrayResampled                           */
+/************************************************************************/
+
+class GDALMDArrayResampledDataset;
+
+class GDALMDArrayResampledDatasetRasterBand final: public GDALRasterBand
+{
+protected:
+    CPLErr IReadBlock( int, int, void * ) override;
+    CPLErr IRasterIO( GDALRWFlag eRWFlag,
+                                  int nXOff, int nYOff, int nXSize, int nYSize,
+                                  void * pData, int nBufXSize, int nBufYSize,
+                                  GDALDataType eBufType,
+                                  GSpacing nPixelSpaceBuf,
+                                  GSpacing nLineSpaceBuf,
+                                  GDALRasterIOExtraArg* psExtraArg ) override;
+public:
+    explicit GDALMDArrayResampledDatasetRasterBand(GDALMDArrayResampledDataset* poDSIn);
+
+    double GetNoDataValue(int* pbHasNoData) override;
+};
+
+class GDALMDArrayResampledDataset final: public GDALPamDataset
+{
+    friend class GDALMDArrayResampled;
+    friend class GDALMDArrayResampledDatasetRasterBand;
+
+    std::shared_ptr<GDALMDArray> m_poArray;
+    size_t m_iXDim;
+    size_t m_iYDim;
+    double m_adfGeoTransform[6]{0,1,0,0,0,1};
+    bool m_bHasGT = false;
+    mutable std::shared_ptr<OGRSpatialReference> m_poSRS{};
+
+    std::vector<GUInt64>     m_anOffset{};
+    std::vector<size_t>      m_anCount{};
+    std::vector<GPtrDiff_t>  m_anStride{};
+
+    std::string m_osFilenameLong{};
+    std::string m_osFilenameLat{};
+
+public:
+    GDALMDArrayResampledDataset(const std::shared_ptr<GDALMDArray>& array,
+                                size_t iXDim, size_t iYDim):
+        m_poArray(array),
+        m_iXDim(iXDim),
+        m_iYDim(iYDim),
+        m_anOffset(m_poArray->GetDimensionCount(), 0),
+        m_anCount(m_poArray->GetDimensionCount(), 1),
+        m_anStride(m_poArray->GetDimensionCount(), 0)
+    {
+        const auto& dims(m_poArray->GetDimensions());
+
+        nRasterYSize = static_cast<int>(
+            std::min(static_cast<GUInt64>(INT_MAX), dims[iYDim]->GetSize()));
+        nRasterXSize = static_cast<int>(
+            std::min(static_cast<GUInt64>(INT_MAX), dims[iXDim]->GetSize()));
+
+        m_bHasGT = m_poArray->GuessGeoTransform(
+            m_iXDim, m_iYDim, false, m_adfGeoTransform);
+
+        SetBand(1, new GDALMDArrayResampledDatasetRasterBand(this));
+    }
+
+    ~GDALMDArrayResampledDataset()
+    {
+        if( !m_osFilenameLong.empty() )
+            VSIUnlink(m_osFilenameLong.c_str());
+        if( !m_osFilenameLat.empty() )
+            VSIUnlink(m_osFilenameLat.c_str());
+    }
+
+    CPLErr GetGeoTransform(double* padfGeoTransform) override
+    {
+        memcpy(padfGeoTransform, m_adfGeoTransform, 6 * sizeof(double));
+        return m_bHasGT ? CE_None : CE_Failure;
+    }
+
+    const OGRSpatialReference* GetSpatialRef() const override
+    {
+        m_poSRS = m_poArray->GetSpatialRef();
+        if( m_poSRS )
+        {
+            m_poSRS.reset(m_poSRS->Clone());
+            auto axisMapping = m_poSRS->GetDataAxisToSRSAxisMapping();
+            for( auto& m: axisMapping )
+            {
+                if( m == static_cast<int>(m_iXDim) + 1 )
+                    m = 1;
+                else if( m == static_cast<int>(m_iYDim) + 1 )
+                    m = 2;
+                else
+                    m = 0;
+            }
+            m_poSRS->SetDataAxisToSRSAxisMapping(axisMapping);
+        }
+        return m_poSRS.get();
+    }
+
+    void SetGeolocationArray(const std::string& osFilenameLong,
+                             const std::string& osFilenameLat)
+    {
+        m_osFilenameLong = osFilenameLong;
+        m_osFilenameLat = osFilenameLat;
+        CPLStringList aosGeoLoc;
+        aosGeoLoc.SetNameValue("LINE_OFFSET", "0");
+        aosGeoLoc.SetNameValue("LINE_STEP", "1");
+        aosGeoLoc.SetNameValue("PIXEL_OFFSET", "0");
+        aosGeoLoc.SetNameValue("PIXEL_STEP", "1");
+        aosGeoLoc.SetNameValue("SRS", SRS_WKT_WGS84_LAT_LONG); // FIXME?
+        aosGeoLoc.SetNameValue("X_BAND", "1");
+        aosGeoLoc.SetNameValue("X_DATASET", m_osFilenameLong.c_str());
+        aosGeoLoc.SetNameValue("Y_BAND", "1");
+        aosGeoLoc.SetNameValue("Y_DATASET", m_osFilenameLat.c_str());
+        SetMetadata(aosGeoLoc.List(), "GEOLOCATION");
+    }
+
+};
+
+/************************************************************************/
+/*                      GDALRasterBandFromArray()                       */
+/************************************************************************/
+
+GDALMDArrayResampledDatasetRasterBand::GDALMDArrayResampledDatasetRasterBand(
+                                    GDALMDArrayResampledDataset* poDSIn)
+{
+    const auto& poArray(poDSIn->m_poArray);
+    const auto blockSize(poArray->GetBlockSize());
+    nBlockYSize = (blockSize[poDSIn->m_iYDim]) ? static_cast<int>(
+        std::min(static_cast<GUInt64>(INT_MAX), blockSize[poDSIn->m_iYDim])) : 1;
+    nBlockXSize = blockSize[poDSIn->m_iXDim] ? static_cast<int>(
+        std::min(static_cast<GUInt64>(INT_MAX), blockSize[poDSIn->m_iXDim])) :
+        poDSIn->GetRasterXSize();
+    eDataType = poArray->GetDataType().GetNumericDataType();
+    eAccess = poDSIn->eAccess;
+}
+
+/************************************************************************/
+/*                           GetNoDataValue()                           */
+/************************************************************************/
+
+double GDALMDArrayResampledDatasetRasterBand::GetNoDataValue(int* pbHasNoData)
+{
+    auto l_poDS(cpl::down_cast<GDALMDArrayResampledDataset*>(poDS));
+    const auto& poArray(l_poDS->m_poArray);
+    bool bHasNodata = false;
+    double dfRes = poArray->GetNoDataValueAsDouble(&bHasNodata);
+    if( pbHasNoData )
+        *pbHasNoData = bHasNodata;
+    return dfRes;
+}
+
+/************************************************************************/
+/*                            IReadBlock()                              */
+/************************************************************************/
+
+CPLErr GDALMDArrayResampledDatasetRasterBand::IReadBlock( int nBlockXOff,
+                                            int nBlockYOff,
+                                            void * pImage )
+{
+    const int nDTSize(GDALGetDataTypeSizeBytes(eDataType));
+    const int nXOff = nBlockXOff * nBlockXSize;
+    const int nYOff = nBlockYOff * nBlockYSize;
+    const int nReqXSize = std::min(nRasterXSize - nXOff, nBlockXSize);
+    const int nReqYSize = std::min(nRasterYSize - nYOff, nBlockYSize);
+    GDALRasterIOExtraArg sExtraArg;
+    INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+    return IRasterIO(GF_Read, nXOff, nYOff, nReqXSize, nReqYSize,
+                     pImage, nReqXSize, nReqYSize, eDataType,
+                     nDTSize, nDTSize * nBlockXSize, &sExtraArg);
+}
+
+/************************************************************************/
+/*                            IRasterIO()                               */
+/************************************************************************/
+
+CPLErr GDALMDArrayResampledDatasetRasterBand::IRasterIO( GDALRWFlag eRWFlag,
+                                  int nXOff, int nYOff, int nXSize, int nYSize,
+                                  void * pData, int nBufXSize, int nBufYSize,
+                                  GDALDataType eBufType,
+                                  GSpacing nPixelSpaceBuf,
+                                  GSpacing nLineSpaceBuf,
+                                  GDALRasterIOExtraArg* psExtraArg )
+{
+    auto l_poDS(cpl::down_cast<GDALMDArrayResampledDataset*>(poDS));
+    const auto& poArray(l_poDS->m_poArray);
+    const int nBufferDTSize(GDALGetDataTypeSizeBytes(eBufType));
+    if( eRWFlag == GF_Read &&
+        nXSize == nBufXSize && nYSize == nBufYSize && nBufferDTSize > 0 &&
+        (nPixelSpaceBuf % nBufferDTSize) == 0 &&
+        (nLineSpaceBuf % nBufferDTSize) == 0 )
+    {
+        l_poDS->m_anOffset[l_poDS->m_iXDim] = static_cast<GUInt64>(nXOff);
+        l_poDS->m_anCount[l_poDS->m_iXDim] = static_cast<size_t>(nXSize);
+        l_poDS->m_anStride[l_poDS->m_iXDim] =
+            static_cast<GPtrDiff_t>(nPixelSpaceBuf / nBufferDTSize);
+
+        l_poDS->m_anOffset[l_poDS->m_iYDim] = static_cast<GUInt64>(nYOff);
+        l_poDS->m_anCount[l_poDS->m_iYDim] = static_cast<size_t>(nYSize);
+        l_poDS->m_anStride[l_poDS->m_iYDim] =
+            static_cast<GPtrDiff_t>(nLineSpaceBuf / nBufferDTSize);
+
+        return poArray->Read(l_poDS->m_anOffset.data(),
+                             l_poDS->m_anCount.data(),
+                             nullptr,
+                             l_poDS->m_anStride.data(),
+                             GDALExtendedDataType::Create(eBufType), pData) ?
+                             CE_None : CE_Failure;
+    }
+    return GDALRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                     pData, nBufXSize, nBufYSize,
+                                     eBufType,
+                                     nPixelSpaceBuf, nLineSpaceBuf,
+                                     psExtraArg);
+}
+
+
+class GDALMDArrayResampled final: public GDALPamMDArray
+{
+private:
+    std::shared_ptr<GDALMDArray> m_poParent{};
+    std::vector<std::shared_ptr<GDALDimension>> m_apoDims;
+    std::vector<GUInt64> m_anBlockSize;
+    GDALExtendedDataType m_dt;
+    std::shared_ptr<OGRSpatialReference> m_poSRS{};
+    std::shared_ptr<GDALMDArray> m_poVarX{};
+    std::shared_ptr<GDALMDArray> m_poVarY{};
+    std::unique_ptr<GDALMDArrayResampledDataset> m_poParentDS{};
+    std::unique_ptr<GDALDataset> m_poReprojectedDS{};
+
+protected:
+    GDALMDArrayResampled(const std::shared_ptr<GDALMDArray>& poParent,
+                         const std::vector<std::shared_ptr<GDALDimension>>& apoDims,
+                         const std::vector<GUInt64>& anBlockSize):
+        GDALAbstractMDArray(std::string(), "Resampled view of " + poParent->GetFullName()),
+        GDALPamMDArray(std::string(), "Resampled view of " + poParent->GetFullName(), ::GetPAM(poParent)),
+        m_poParent(std::move(poParent)),
+        m_apoDims(apoDims),
+        m_anBlockSize(anBlockSize),
+        m_dt(m_poParent->GetDataType())
+    {
+        CPLAssert( apoDims.size() == m_poParent->GetDimensionCount() );
+        CPLAssert( anBlockSize.size() == m_poParent->GetDimensionCount() );
+    }
+
+    bool IRead(const GUInt64* arrayStartIdx,
+                      const size_t* count,
+                      const GInt64* arrayStep,
+                      const GPtrDiff_t* bufferStride,
+                      const GDALExtendedDataType& bufferDataType,
+                      void* pDstBuffer) const override;
+
+public:
+    static std::shared_ptr<GDALMDArrayResampled> Create(
+                const std::shared_ptr<GDALMDArray>& poParent,
+                const std::vector<std::shared_ptr<GDALDimension>>& apoNewDims,
+                GDALRIOResampleAlg resampleAlg,
+                const OGRSpatialReference* poTargetSRS,
+                CSLConstList papszOptions );
+
+    ~GDALMDArrayResampled()
+    {
+        // First close the warped VRT
+        m_poReprojectedDS.reset();
+        m_poParentDS.reset();
+    }
+
+    bool IsWritable() const override { return false; }
+
+    const std::string& GetFilename() const override { return m_poParent->GetFilename(); }
+
+    const std::vector<std::shared_ptr<GDALDimension>>& GetDimensions() const override { return m_apoDims; }
+
+    const GDALExtendedDataType &GetDataType() const override { return m_dt; }
+
+    std::shared_ptr<OGRSpatialReference> GetSpatialRef() const override { return m_poSRS; }
+
+    std::vector<GUInt64> GetBlockSize() const override { return m_anBlockSize; }
+
+    std::shared_ptr<GDALAttribute> GetAttribute(const std::string& osName) const override
+        { return m_poParent->GetAttribute(osName); }
+
+    std::vector<std::shared_ptr<GDALAttribute>> GetAttributes(CSLConstList papszOptions = nullptr) const override
+        { return m_poParent->GetAttributes(papszOptions); }
+
+    const std::string& GetUnit() const override { return m_poParent->GetUnit(); }
+
+    const void* GetRawNoDataValue() const override { return m_poParent->GetRawNoDataValue(); }
+
+    double GetOffset(bool* pbHasOffset, GDALDataType* peStorageType) const override {
+        return m_poParent->GetOffset(pbHasOffset, peStorageType); }
+
+    double GetScale(bool* pbHasScale, GDALDataType* peStorageType) const override {
+        return m_poParent->GetScale(pbHasScale, peStorageType); }
+};
+
+/************************************************************************/
+/*                   GDALMDArrayResampled::Create()                     */
+/************************************************************************/
+
+std::shared_ptr<GDALMDArrayResampled> GDALMDArrayResampled::Create(
+                const std::shared_ptr<GDALMDArray>& poParent,
+                const std::vector<std::shared_ptr<GDALDimension>>& apoNewDimsIn,
+                GDALRIOResampleAlg resampleAlg,
+                const OGRSpatialReference* poTargetSRS,
+                CSLConstList /* papszOptions */ )
+{
+    const char* pszResampleAlg = "nearest";
+    bool unsupported = false;
+    switch( resampleAlg )
+    {
+        case GRIORA_NearestNeighbour: pszResampleAlg = "nearest";      break;
+        case GRIORA_Bilinear:         pszResampleAlg = "bilinear";     break;
+        case GRIORA_Cubic:            pszResampleAlg = "cubic";        break;
+        case GRIORA_CubicSpline:      pszResampleAlg = "cubicspline";  break;
+        case GRIORA_Lanczos:          pszResampleAlg = "lanczos";      break;
+        case GRIORA_Average:          pszResampleAlg = "average";      break;
+        case GRIORA_Mode:             pszResampleAlg = "mode";         break;
+        case GRIORA_Gauss:            unsupported = true;              break;
+        case GRIORA_RESERVED_START:   unsupported = true;              break;
+        case GRIORA_RESERVED_END:     unsupported = true;              break;
+        case GRIORA_RMS:              pszResampleAlg = "rms";          break;
+    }
+    if( unsupported )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Unsupported resample method for GetResampled()");
+        return nullptr;
+    }
+
+    if( poParent->GetDimensionCount() < 2 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "GetResampled() only supports 2 dimensions or more");
+        return nullptr;
+    }
+
+    const auto& aoParentDims = poParent->GetDimensions();
+    if( apoNewDimsIn.size() != aoParentDims.size())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "GetResampled(): apoNewDims size should be the same as GetDimensionCount()");
+        return nullptr;
+    }
+
+    std::vector<std::shared_ptr<GDALDimension>> apoNewDims;
+    apoNewDims.reserve(apoNewDimsIn.size());
+
+    std::vector<GUInt64> anBlockSize;
+    anBlockSize.reserve(apoNewDimsIn.size());
+    const auto& anParentBlockSize = poParent->GetBlockSize();
+
+    for( unsigned i = 0; i + 2 < apoNewDimsIn.size(); ++i )
+    {
+        if( apoNewDimsIn[i] == nullptr )
+        {
+            apoNewDims.emplace_back(aoParentDims[i]);
+        }
+        else if( apoNewDimsIn[i]->GetSize() != aoParentDims[i]->GetSize() ||
+                 apoNewDimsIn[i]->GetName() != aoParentDims[i]->GetName() )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "GetResampled(): apoNewDims[%u] should be the same "
+                     "as its parent", i);
+            return nullptr;
+        }
+        anBlockSize.emplace_back(anParentBlockSize[i]);
+    }
+
+    const size_t iYDim = poParent->GetDimensionCount() - 2;
+    const size_t iXDim = poParent->GetDimensionCount() - 1;
+    std::unique_ptr<GDALMDArrayResampledDataset> poParentDS(
+        new GDALMDArrayResampledDataset(poParent, iXDim, iYDim));
+
+    double dfXStart = 0.0;
+    double dfXSpacing = 0.0;
+    bool gotXSpacing = false;
+    auto poNewDimX = apoNewDimsIn[iXDim];
+    if( poNewDimX )
+    {
+        if( poNewDimX->GetSize() > static_cast<GUInt64>(INT_MAX) )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Too big size for X dimension");
+            return nullptr;
+        }
+        auto var = poNewDimX->GetIndexingVariable();
+        if( var )
+        {
+            if( var->GetDimensionCount() != 1 ||
+                var->GetDimensions()[0]->GetSize() != poNewDimX->GetSize() ||
+                !var->IsRegularlySpaced(dfXStart, dfXSpacing) )
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "New X dimension should be indexed by a regularly spaced variable");
+                return nullptr;
+            }
+            gotXSpacing = true;
+        }
+    }
+
+    double dfYStart = 0.0;
+    double dfYSpacing = 0.0;
+    auto poNewDimY = apoNewDimsIn[iYDim];
+    bool gotYSpacing = false;
+    if( poNewDimY )
+    {
+        if( poNewDimY->GetSize() > static_cast<GUInt64>(INT_MAX) )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Too big size for Y dimension");
+            return nullptr;
+        }
+        auto var = poNewDimY->GetIndexingVariable();
+        if( var )
+        {
+            if( var->GetDimensionCount() != 1 ||
+                var->GetDimensions()[0]->GetSize() != poNewDimY->GetSize() ||
+                !var->IsRegularlySpaced(dfYStart, dfYSpacing) )
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "New Y dimension should be indexed by a regularly spaced variable");
+                return nullptr;
+            }
+            gotYSpacing = true;
+        }
+    }
+
+    // This limitation could probably be removed
+    if( (gotXSpacing && !gotYSpacing) ||
+        (!gotXSpacing && gotYSpacing) )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Either none of new X or Y dimension should have an indexing "
+                 "variable, or both should both should have one.");
+        return nullptr;
+    }
+
+    std::string osDstWKT;
+    if( poTargetSRS )
+    {
+        char* pszDstWKT = nullptr;
+        if( poTargetSRS->exportToWkt(&pszDstWKT) != OGRERR_NONE )
+        {
+            CPLFree(pszDstWKT);
+            return nullptr;
+        }
+        osDstWKT = pszDstWKT;
+        CPLFree(pszDstWKT);
+    }
+
+    // Use coordinate variables for geolocation array
+    const auto apoCoordinateVars = poParent->GetCoordinateVariables();
+    bool useGeolocationArray = false;
+    if( apoCoordinateVars.size() >= 2 )
+    {
+        std::shared_ptr<GDALMDArray> poLongVar;
+        std::shared_ptr<GDALMDArray> poLatVar;
+        for( const auto& poCoordVar: apoCoordinateVars )
+        {
+            const auto& osName = poCoordVar->GetName();
+            const auto poAttr = poCoordVar->GetAttribute("standard_name");
+            std::string osStandardName;
+            if( poAttr && poAttr->GetDataType().GetClass() == GEDTC_STRING &&
+                poAttr->GetDimensionCount() == 0 )
+            {
+                const char* pszStandardName = poAttr->ReadAsString();
+                if( pszStandardName )
+                    osStandardName = pszStandardName;
+            }
+            if( osName == "lon" || osName == "longitude" ||
+                osStandardName == "longitude" )
+            {
+                poLongVar = poCoordVar;
+            }
+            else if( osName == "lat" || osName == "latitude" ||
+                     osStandardName == "latitude" )
+            {
+                poLatVar = poCoordVar;
+            }
+        }
+        if( poLatVar != nullptr && poLongVar != nullptr )
+        {
+            const auto longDimCount = poLongVar->GetDimensionCount();
+            const auto& longDims = poLongVar->GetDimensions();
+            const auto latDimCount = poLatVar->GetDimensionCount();
+            const auto& latDims = poLatVar->GetDimensions();
+            const auto xDimSize = aoParentDims[iXDim]->GetSize();
+            const auto yDimSize = aoParentDims[iYDim]->GetSize();
+            if( longDimCount == 1 && longDims[0]->GetSize() == xDimSize &&
+                latDimCount == 1 && latDims[0]->GetSize() == yDimSize )
+            {
+                // Geolocation arrays are 1D, and of consistent size with
+                // the variable
+                useGeolocationArray = true;
+            }
+            else if( (longDimCount == 2 ||
+                     (longDimCount == 3 && longDims[0]->GetSize() == 1)) &&
+                     longDims[longDimCount-2]->GetSize() == yDimSize &&
+                     longDims[longDimCount-1]->GetSize() == xDimSize &&
+                     (latDimCount == 2 ||
+                     (latDimCount == 3 && latDims[0]->GetSize() == 1)) &&
+                     latDims[latDimCount-2]->GetSize() == yDimSize &&
+                     latDims[latDimCount-1]->GetSize() == xDimSize )
+
+            {
+                // Geolocation arrays are 2D (or 3D with first dimension of
+                // size 1, as found in Sentinel 5P products), and of consistent
+                // size with the variable
+                useGeolocationArray = true;
+            }
+            else
+            {
+                CPLDebug("GDAL",
+                         "Longitude and latitude coordinate variables found, "
+                         "but their characteristics are not compatible of using "
+                         "them as geolocation arrays");
+            }
+            if( useGeolocationArray )
+            {
+                CPLDebug("GDAL",
+                         "Setting geolocation array from variables %s and %s",
+                         poLongVar->GetName().c_str(),
+                         poLatVar->GetName().c_str());
+                std::string osFilenameLong = CPLSPrintf("/vsimem/%p/longitude.tif", poParent.get());
+                std::string osFilenameLat = CPLSPrintf("/vsimem/%p/latitude.tif", poParent.get());
+                std::unique_ptr<GDALDataset> poTmpLongDS(
+                    longDimCount == 1 ?
+                      poLongVar->AsClassicDataset(0, 0) :
+                      poLongVar->AsClassicDataset(longDimCount-1, longDimCount-2));
+                auto hTIFFLongDS = GDALTranslate(osFilenameLong.c_str(),
+                                                 GDALDataset::ToHandle(poTmpLongDS.get()),
+                                                 nullptr, nullptr);
+                std::unique_ptr<GDALDataset> poTmpLatDS(
+                    latDimCount == 1 ?
+                      poLatVar->AsClassicDataset(0, 0) :
+                      poLatVar->AsClassicDataset(latDimCount-1, latDimCount-2));
+                auto hTIFFLatDS = GDALTranslate(osFilenameLat.c_str(),
+                                                GDALDataset::ToHandle(poTmpLatDS.get()),
+                                                nullptr, nullptr);
+                const bool bError = ( hTIFFLatDS == nullptr || hTIFFLongDS == nullptr );
+                GDALClose(hTIFFLongDS);
+                GDALClose(hTIFFLatDS);
+                if( bError )
+                {
+                    VSIUnlink(osFilenameLong.c_str());
+                    VSIUnlink(osFilenameLat.c_str());
+                    return nullptr;
+                }
+
+                poParentDS->SetGeolocationArray(osFilenameLong,
+                                                osFilenameLat);
+            }
+        }
+        else
+        {
+            CPLDebug("GDAL",
+                     "Coordinate variables available for %s, but "
+                     "longitude and/or latitude variables were not identified",
+                     poParent->GetName().c_str());
+        }
+    }
+
+    // Build gdalwarp arguments
+    CPLStringList aosArgv;
+
+    aosArgv.AddString("-of");
+    aosArgv.AddString("VRT");
+
+    aosArgv.AddString("-r");
+    aosArgv.AddString(pszResampleAlg);
+
+    if( !osDstWKT.empty() )
+    {
+        aosArgv.AddString("-t_srs");
+        aosArgv.AddString(osDstWKT.c_str());
+    }
+
+    if( useGeolocationArray )
+        aosArgv.AddString("-geoloc");
+
+    if( gotXSpacing && gotYSpacing )
+    {
+        const double dfXMin = dfXStart - dfXSpacing / 2;
+        const double dfXMax = dfXMin + dfXSpacing * static_cast<double>(poNewDimX->GetSize());
+        const double dfYMax = dfYStart - dfYSpacing / 2;
+        const double dfYMin = dfYMax + dfYSpacing * static_cast<double>(poNewDimY->GetSize());
+        aosArgv.AddString("-te");
+        aosArgv.AddString(CPLSPrintf("%.18g", dfXMin));
+        aosArgv.AddString(CPLSPrintf("%.18g", dfYMin));
+        aosArgv.AddString(CPLSPrintf("%.18g", dfXMax));
+        aosArgv.AddString(CPLSPrintf("%.18g", dfYMax));
+    }
+
+    if( poNewDimX && poNewDimY )
+    {
+        aosArgv.AddString("-ts");
+        aosArgv.AddString(CPLSPrintf("%d", static_cast<int>(poNewDimX->GetSize())));
+        aosArgv.AddString(CPLSPrintf("%d", static_cast<int>(poNewDimY->GetSize())));
+    }
+    else if( poNewDimX  )
+    {
+        aosArgv.AddString("-ts");
+        aosArgv.AddString(CPLSPrintf("%d", static_cast<int>(poNewDimX->GetSize())));
+        aosArgv.AddString("0");
+    }
+    else if( poNewDimY )
+    {
+        aosArgv.AddString("-ts");
+        aosArgv.AddString("0");
+        aosArgv.AddString(CPLSPrintf("%d", static_cast<int>(poNewDimY->GetSize())));
+    }
+
+    // Create a warped VRT dataset
+    GDALWarpAppOptions* psOptions = GDALWarpAppOptionsNew(aosArgv.List(), nullptr);
+    GDALDatasetH hSrcDS = GDALDataset::ToHandle(poParentDS.get());
+    std::unique_ptr<GDALDataset> poReprojectedDS(
+        GDALDataset::FromHandle( GDALWarp( "", nullptr,
+                                           1, &hSrcDS,
+                                           psOptions, nullptr) ));
+    GDALWarpAppOptionsFree(psOptions);
+    if( poReprojectedDS == nullptr )
+        return nullptr;
+
+    int nBlockXSize;
+    int nBlockYSize;
+    poReprojectedDS->GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
+    anBlockSize.emplace_back(nBlockYSize);
+    anBlockSize.emplace_back(nBlockXSize);
+
+    double adfGeoTransform[6] = {0, 0, 0, 0, 0, 0};
+    CPLErr eErr = poReprojectedDS->GetGeoTransform(adfGeoTransform);
+    CPLAssert( eErr == CE_None );
+    CPL_IGNORE_RET_VAL(eErr);
+
+    auto poDimY = std::make_shared<GDALDimensionWeakIndexingVar>(
+        std::string(), "dimY", GDAL_DIM_TYPE_HORIZONTAL_Y, "NORTH",
+        poReprojectedDS->GetRasterYSize());
+    auto varY = std::make_shared<GDALMDArrayRegularlySpaced>(
+                     std::string(), poDimY->GetName(), poDimY,
+                     adfGeoTransform[3] + adfGeoTransform[5] / 2,
+                     adfGeoTransform[5],
+                     0);
+    poDimY->SetIndexingVariable(varY);
+
+    auto poDimX = std::make_shared<GDALDimensionWeakIndexingVar>(
+        std::string(), "dimX", GDAL_DIM_TYPE_HORIZONTAL_X, "EAST",
+        poReprojectedDS->GetRasterXSize());
+    auto varX = std::make_shared<GDALMDArrayRegularlySpaced>(
+                     std::string(), poDimX->GetName(), poDimX,
+                     adfGeoTransform[0] + adfGeoTransform[1] / 2,
+                     adfGeoTransform[1],
+                     0);
+    poDimX->SetIndexingVariable(varX);
+
+    apoNewDims.emplace_back(poDimY);
+    apoNewDims.emplace_back(poDimX);
+    auto newAr(std::shared_ptr<GDALMDArrayResampled>(
+                    new GDALMDArrayResampled(poParent, apoNewDims, anBlockSize)));
+    newAr->SetSelf(newAr);
+    if( poTargetSRS )
+    {
+        newAr->m_poSRS.reset(poTargetSRS->Clone());
+    }
+    else
+    {
+        newAr->m_poSRS = poParent->GetSpatialRef();
+    }
+    newAr->m_poVarX = varX;
+    newAr->m_poVarY = varY;
+    newAr->m_poReprojectedDS = std::move(poReprojectedDS);
+    newAr->m_poParentDS = std::move(poParentDS);
+    return newAr;
+}
+
+/************************************************************************/
+/*                   GDALMDArrayResampled::IRead()                      */
+/************************************************************************/
+
+bool GDALMDArrayResampled::IRead(const GUInt64* arrayStartIdx,
+                                 const size_t* count,
+                                 const GInt64* arrayStep,
+                                 const GPtrDiff_t* bufferStride,
+                                 const GDALExtendedDataType& bufferDataType,
+                                 void* pDstBuffer) const
+{
+    if( bufferDataType.GetClass() != GEDTC_NUMERIC )
+        return false;
+
+    struct Stack
+    {
+        size_t       nIters = 0;
+        GByte*       dst_ptr = nullptr;
+        GPtrDiff_t   dst_inc_offset = 0;
+    };
+    const auto nDims = GetDimensionCount();
+    std::vector<Stack> stack(nDims + 1); // +1 to avoid -Wnull-dereference
+    const size_t nBufferDTSize = bufferDataType.GetSize();
+    for( size_t i = 0; i < nDims; i++ )
+    {
+        stack[i].dst_inc_offset = static_cast<GPtrDiff_t>(
+            bufferStride[i] * nBufferDTSize);
+    }
+    stack[0].dst_ptr = static_cast<GByte*>(pDstBuffer);
+
+    size_t dimIdx = 0;
+    const size_t iDimY = nDims - 2;
+    const size_t iDimX = nDims - 1;
+    // Use an array to avoid a false positive warning from CLang Static
+    // Analyzer about flushCaches being never read
+    bool flushCaches[] = { false };
+
+lbl_next_depth:
+    if( dimIdx == iDimY )
+    {
+        if( flushCaches[0] )
+        {
+            flushCaches[0] = false;
+            // When changing of 2D slice, flush GDAL 2D buffers
+            m_poParentDS->FlushCache();
+            m_poReprojectedDS->FlushCache();
+        }
+
+        if( !GDALMDRasterIOFromBand(m_poReprojectedDS->GetRasterBand(1),
+                                    GF_Read,
+                                    iDimX,
+                                    iDimY,
+                                    arrayStartIdx,
+                                    count,
+                                    arrayStep,
+                                    bufferStride,
+                                    bufferDataType,
+                                    stack[dimIdx].dst_ptr) )
+        {
+            return false;
+        }
+    }
+    else
+    {
+        stack[dimIdx].nIters = count[dimIdx];
+        if( m_poParentDS->m_anOffset[dimIdx] != arrayStartIdx[dimIdx] )
+        {
+            flushCaches[0] = true;
+        }
+        m_poParentDS->m_anOffset[dimIdx] = arrayStartIdx[dimIdx];
+        while(true)
+        {
+            dimIdx ++;
+            stack[dimIdx].dst_ptr = stack[dimIdx-1].dst_ptr;
+            goto lbl_next_depth;
+lbl_return_to_caller:
+            dimIdx --;
+            if( (--stack[dimIdx].nIters) == 0 )
+                break;
+            flushCaches[0] = true;
+            ++m_poParentDS->m_anOffset[dimIdx];
+            stack[dimIdx].dst_ptr += stack[dimIdx].dst_inc_offset;
+        }
+    }
+    if( dimIdx > 0 )
+        goto lbl_return_to_caller;
+
+    return true;
+}
+
+/************************************************************************/
+/*                           GetResampled()                             */
+/************************************************************************/
+
+/** Return an array that is a resampled / reprojected view of the current array
+ *
+ * This is the same as the C function GDALMDArrayGetResampled().
+ *
+ * Currently this method can only resample along the last 2 dimensions.
+ *
+ * @param apoNewDims New dimensions. Its size should be GetDimensionCount().
+ *                   apoNewDims[i] can be NULL to let the method automatically
+ *                   determine it.
+ * @param resampleAlg Resampling algorithm
+ * @param poTargetSRS Target SRS, or nullptr
+ * @param papszOptions NULL-terminated list of options, or NULL.
+ *
+ * @return a new array, that holds a reference to the original one, and thus is
+ * a view of it (not a copy), or nullptr in case of error.
+ *
+ * @since 3.4
+ */
+std::shared_ptr<GDALMDArray>
+GDALMDArray::GetResampled( const std::vector<std::shared_ptr<GDALDimension>>& apoNewDims,
+                           GDALRIOResampleAlg resampleAlg,
+                           const OGRSpatialReference* poTargetSRS,
+                           CSLConstList papszOptions ) const
+{
+    auto self = std::dynamic_pointer_cast<GDALMDArray>(m_pSelf.lock());
+    if( !self )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Driver implementation issue: m_pSelf not set !");
+        return nullptr;
+    }
+    if( GetDataType().GetClass() != GEDTC_NUMERIC )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "GetResampled() only supports numeric data type");
+        return nullptr;
+    }
+    return GDALMDArrayResampled::Create(self, apoNewDims, resampleAlg, poTargetSRS, papszOptions);
+}
+
+/************************************************************************/
 /*                         GDALDatasetFromArray()                       */
 /************************************************************************/
 
@@ -5481,7 +6846,6 @@ public:
     const char* GetUnitType() override;
 };
 
-
 class GDALDatasetFromArray final: public GDALDataset
 {
     friend class GDALRasterBandFromArray;
@@ -5492,76 +6856,9 @@ class GDALDatasetFromArray final: public GDALDataset
     double m_adfGeoTransform[6]{0,1,0,0,0,1};
     bool m_bHasGT = false;
     mutable std::shared_ptr<OGRSpatialReference> m_poSRS{};
+    GDALMultiDomainMetadata m_oMDD{};
 
 public:
-    void GuessGeoTransform()
-    {
-        const auto& dims(m_poArray->GetDimensions());
-        if( dims.size() < 2 )
-            return;
-        auto poVarX = dims[m_iXDim]->GetIndexingVariable();
-        auto poVarY = dims[m_iYDim]->GetIndexingVariable();
-        if( poVarX && poVarX->GetDimensionCount() == 1 &&
-            poVarX->GetDimensions()[0]->GetSize() == dims[m_iXDim]->GetSize() &&
-            poVarY && poVarY->GetDimensionCount() == 1 &&
-            poVarY->GetDimensions()[0]->GetSize() == dims[m_iYDim]->GetSize() &&
-            dims[m_iXDim]->GetSize() > 1 &&
-            dims[m_iXDim]->GetSize() < 10 * 1000 * 1000 &&
-            dims[m_iYDim]->GetSize() > 1 &&
-            dims[m_iYDim]->GetSize() < 10 * 1000 * 1000 )
-        {
-            std::vector<double> adfTmp(static_cast<size_t>(std::max(
-                 dims[m_iXDim]->GetSize(), dims[m_iYDim]->GetSize())));
-            const GUInt64 anStart[1] = { 0 };
-            size_t nCount = static_cast<size_t>(dims[m_iXDim]->GetSize());
-            size_t anCount[1] = { nCount };
-            if( !poVarX->Read(anStart, anCount, nullptr, nullptr,
-                         GDALExtendedDataType::Create(GDT_Float64),
-                         &adfTmp[0]) )
-            {
-                return;
-            }
-
-            double dfSpacing = (adfTmp[nCount-1] - adfTmp[0]) / (nCount - 1);
-            for(size_t i = 1; i < nCount; i++ )
-            {
-                if( fabs((adfTmp[i] - adfTmp[i-1]) - dfSpacing) > 1e-3 * fabs(dfSpacing) )
-                {
-                    return;
-                }
-            }
-            const double dfXStart = adfTmp[0];
-            const double dfXSpacing = dfSpacing;
-
-            nCount = static_cast<size_t>(dims[m_iYDim]->GetSize());
-            anCount[0] = nCount;
-            if( !poVarY->Read(anStart, anCount, nullptr, nullptr,
-                         GDALExtendedDataType::Create(GDT_Float64),
-                         &adfTmp[0]) )
-            {
-                return;
-            }
-            dfSpacing = (adfTmp[nCount-1] - adfTmp[0]) / (nCount - 1);
-            for(size_t i = 1; i < nCount; i++ )
-            {
-                if( fabs((adfTmp[i] - adfTmp[i-1]) - dfSpacing) > 1e-3 * fabs(dfSpacing) )
-                {
-                    return;
-                }
-            }
-            const double dfYStart = adfTmp[0];
-            const double dfYSpacing = dfSpacing;
-            m_bHasGT = true;
-            m_adfGeoTransform[0] = dfXStart - dfXSpacing / 2;
-            m_adfGeoTransform[1] = dfXSpacing;
-            m_adfGeoTransform[2] = 0;
-            m_adfGeoTransform[3] = dfYStart - dfYSpacing / 2;
-            m_adfGeoTransform[4] = 0;
-            m_adfGeoTransform[5] = dfYSpacing;
-        }
-
-    }
-
     GDALDatasetFromArray(const std::shared_ptr<GDALMDArray>& array,
                          size_t iXDim, size_t iYDim):
         m_poArray(array),
@@ -5589,7 +6886,8 @@ public:
             }
         }
 
-        GuessGeoTransform();
+        m_bHasGT = m_poArray->GuessGeoTransform(
+            m_iXDim, m_iYDim, false, m_adfGeoTransform);
 
         const auto attrs(array->GetAttributes());
         for( const auto& attr: attrs )
@@ -5610,7 +6908,7 @@ public:
             {
                 val += '}';
             }
-            SetMetadataItem(attr->GetName().c_str(), val.c_str());
+            m_oMDD.SetMetadataItem(attr->GetName().c_str(), val.c_str());
         }
 
         // Instantiate bands by iterating over non-XY variables
@@ -5667,6 +6965,21 @@ lbl_return_to_caller:
             m_poSRS->SetDataAxisToSRSAxisMapping(axisMapping);
         }
         return m_poSRS.get();
+    }
+
+    CPLErr SetMetadata(char** papszMetadata, const char* pszDomain) override
+    {
+        return m_oMDD.SetMetadata(papszMetadata, pszDomain);
+    }
+
+    char** GetMetadata(const char* pszDomain) override
+    {
+        return m_oMDD.GetMetadata(pszDomain);
+    }
+
+    const char* GetMetadataItem(const char* pszName, const char* pszDomain) override
+    {
+        return m_oMDD.GetMetadataItem(pszName, pszDomain);
     }
 };
 
@@ -5864,27 +7177,28 @@ CPLErr GDALRasterBandFromArray::IRasterIO( GDALRWFlag eRWFlag,
 {
     auto l_poDS(cpl::down_cast<GDALDatasetFromArray*>(poDS));
     const auto& poArray(l_poDS->m_poArray);
-    const int nDTSize(GDALGetDataTypeSizeBytes(eDataType));
-    if( nXSize == nBufXSize && nYSize == nBufYSize && nDTSize > 0 &&
-        (nPixelSpaceBuf % nDTSize) == 0 && (nLineSpaceBuf % nDTSize) == 0 )
+    const int nBufferDTSize(GDALGetDataTypeSizeBytes(eBufType));
+    if( nXSize == nBufXSize && nYSize == nBufYSize && nBufferDTSize > 0 &&
+        (nPixelSpaceBuf % nBufferDTSize) == 0 &&
+        (nLineSpaceBuf % nBufferDTSize) == 0 )
     {
         m_anOffset[l_poDS->m_iXDim] = static_cast<GUInt64>(nXOff);
         m_anCount[l_poDS->m_iXDim] = static_cast<size_t>(nXSize);
         m_anStride[l_poDS->m_iXDim] =
-            static_cast<GPtrDiff_t>(nPixelSpaceBuf / nDTSize);
+            static_cast<GPtrDiff_t>(nPixelSpaceBuf / nBufferDTSize);
         if( poArray->GetDimensionCount() >= 2 )
         {
             m_anOffset[l_poDS->m_iYDim] = static_cast<GUInt64>(nYOff);
             m_anCount[l_poDS->m_iYDim] = static_cast<size_t>(nYSize);
             m_anStride[l_poDS->m_iYDim] =
-                static_cast<GPtrDiff_t>(nLineSpaceBuf / nDTSize);
+                static_cast<GPtrDiff_t>(nLineSpaceBuf / nBufferDTSize);
         }
         if( eRWFlag == GF_Read )
         {
             return poArray->Read(m_anOffset.data(),
                                  m_anCount.data(),
                                  nullptr, m_anStride.data(),
-                                 poArray->GetDataType(), pData) ?
+                                 GDALExtendedDataType::Create(eBufType), pData) ?
                                  CE_None : CE_Failure;
         }
         else
@@ -5892,7 +7206,7 @@ CPLErr GDALRasterBandFromArray::IRasterIO( GDALRWFlag eRWFlag,
             return poArray->Write(m_anOffset.data(),
                                   m_anCount.data(),
                                   nullptr, m_anStride.data(),
-                                  poArray->GetDataType(), pData) ?
+                                  GDALExtendedDataType::Create(eBufType), pData) ?
                                   CE_None : CE_Failure;
         }
     }
@@ -5997,11 +7311,6 @@ GDALDataset* GDALMDArray::AsClassicDataset(size_t iXDim, size_t iYDim) const
  *
  * This method is the same as the C function GDALMDArrayGetStatistics().
  *
- * @param poDS Owing dataset. If set to NULL, this method will always call
- * ComputeStatistics(). If set to non-NULL, the method will attempt to retrieve
- * from it (generally its persistent auxiliary metadata) already cached
- * statistics.
- *
  * @param bApproxOK Currently ignored. In the future, should be set to true
  * if statistics on the whole array are wished, or to false if a subset of it
  * may be used.
@@ -6020,7 +7329,7 @@ GDALDataset* GDALMDArray::AsClassicDataset(size_t iXDim, size_t iYDim) const
  *
  * @param pnValidCount Number of samples whose value is different from the nodata
  * value. (may be NULL)
- * 
+ *
  * @param pfnProgress a function to call to report progress, or NULL.
  *
  * @param pProgressData application data to pass to the progress function.
@@ -6031,34 +7340,16 @@ GDALDataset* GDALMDArray::AsClassicDataset(size_t iXDim, size_t iYDim) const
  * @since GDAL 3.2
  */
 
-CPLErr GDALMDArray::GetStatistics( GDALDataset* poDS,
-                                   bool bApproxOK, bool bForce,
+CPLErr GDALMDArray::GetStatistics( bool bApproxOK, bool bForce,
                                    double *pdfMin, double *pdfMax,
                                    double *pdfMean, double *pdfStdDev,
                                    GUInt64* pnValidCount,
                                    GDALProgressFunc pfnProgress, void *pProgressData )
 {
-    GDALPamDataset* poPamDS = dynamic_cast<GDALPamDataset*>(poDS);
-    if( poPamDS != nullptr )
-    {
-        bool bGotApproxStats = false;
-        if( poPamDS->GetMDArrayStatistics(GetFullName().c_str(),
-                                          &bGotApproxStats,
-                                          pdfMin, pdfMax,
-                                          pdfMean, pdfStdDev,
-                                          pnValidCount) )
-        {
-            if( bApproxOK )
-                return CE_None;
-            if( !bGotApproxStats )
-                return CE_None;
-        }
-    }
-
     if( !bForce )
         return CE_Warning;
 
-    return ComputeStatistics(poDS, bApproxOK, pdfMin, pdfMax, pdfMean,
+    return ComputeStatistics(bApproxOK, pdfMin, pdfMax, pdfMean,
                              pdfStdDev, pnValidCount,
                              pfnProgress, pProgressData)
                 ? CE_None: CE_Failure;
@@ -6078,15 +7369,11 @@ CPLErr GDALMDArray::GetStatistics( GDALDataset* poDS,
  * (as determined by GetMask()) is non-zero.
  *
  * Once computed, the statistics will generally be "set" back on the
- * owing dataset (if poDS is not NULL).
+ * owing dataset.
  *
  * Cached statistics can be cleared with GDALDataset::ClearStatistics().
  *
  * This method is the same as the C function GDALMDArrayComputeStatistics().
- *
- * @param poDS Owing dataset. If set to non-NULL, the method will attempt to
- * store computed statistics in it (generally its persistent auxiliary metadata)
- * for further retrieval by GetStatistics()
  *
  * @param bApproxOK Currently ignored. In the future, should be set to true
  * if statistics on the whole array are wished, or to false if a subset of it
@@ -6103,7 +7390,7 @@ CPLErr GDALMDArray::GetStatistics( GDALDataset* poDS,
  *
  * @param pnValidCount Number of samples whose value is different from the nodata
  * value. (may be NULL)
- * 
+ *
  * @param pfnProgress a function to call to report progress, or NULL.
  *
  * @param pProgressData application data to pass to the progress function.
@@ -6113,8 +7400,7 @@ CPLErr GDALMDArray::GetStatistics( GDALDataset* poDS,
  * @since GDAL 3.2
  */
 
-bool GDALMDArray::ComputeStatistics( GDALDataset* poDS,
-                                    bool bApproxOK,
+bool GDALMDArray::ComputeStatistics(bool bApproxOK,
                                     double *pdfMin, double *pdfMax,
                                     double *pdfMean, double *pdfStdDev,
                                     GUInt64* pnValidCount,
@@ -6264,45 +7550,68 @@ bool GDALMDArray::ComputeStatistics( GDALDataset* poDS,
     if( pnValidCount )
         *pnValidCount = sData.nValidCount;
 
-    if( poDS )
-    {
-        SetStatistics(poDS, bApproxOK,
-                      sData.dfMin, sData.dfMax, sData.dfMean, dfStdDev,
-                      sData.nValidCount);
-    }
+
+    SetStatistics(bApproxOK,
+                  sData.dfMin, sData.dfMax, sData.dfMean, dfStdDev,
+                  sData.nValidCount);
 
     return true;
 }
 
-bool GDALMDArray::SetStatistics( GDALDataset* poDS,
-                                 bool bApproxStats,
-                                 double dfMin, double dfMax,
-                                 double dfMean, double dfStdDev,
-                                 GUInt64 nValidCount )
+/************************************************************************/
+/*                            SetStatistics()                           */
+/************************************************************************/
+//! @cond Doxygen_Suppress
+bool GDALMDArray::SetStatistics( bool /* bApproxStats */,
+                                 double /* dfMin */, double /* dfMax */,
+                                 double /* dfMean */, double /* dfStdDev */,
+                                 GUInt64 /* nValidCount */ )
 {
-    if( poDS == nullptr )
-    {
-        CPLError(CE_Failure, CPLE_IllegalArg,
-                 "Dataset should be defined to enable serialization");
-        return false;
-    }
-
-    GDALPamDataset* poPamDS = dynamic_cast<GDALPamDataset*>(poDS);
-    if( poPamDS == nullptr )
-    {
-        CPLDebug("GDAL", "Cannot save statistics on a non-PAM dataset");
-        return false;
-    }
-
-    poPamDS->StoreMDArrayStatistics(GetFullName().c_str(),
-                                    bApproxStats,
-                                    dfMin, dfMax,
-                                    dfMean, dfStdDev,
-                                    nValidCount );
-
+    CPLDebug("GDAL", "Cannot save statistics on a non-PAM MDArray");
     return false;
 }
+//! @endcond
 
+/************************************************************************/
+/*                           ClearStatistics()                          */
+/************************************************************************/
+
+/**
+ * \brief Clear statistics.
+ *
+ * @since GDAL 3.4
+ */
+void GDALMDArray::ClearStatistics()
+{
+}
+
+/************************************************************************/
+/*                      GetCoordinateVariables()                        */
+/************************************************************************/
+
+/**
+ * \brief Return coordinate variables.
+ *
+ * Coordinate variables are an alternate way of indexing an array that can
+ * be sometimes used. For example, an array collected through remote sensing
+ * might be indexed by (scanline, pixel). But there can be
+ * a longitude and latitude arrays alongside that are also both indexed by
+ * (scanline, pixel), and are referenced from operational arrays for
+ * reprojection purposes.
+ *
+ * For netCDF, this will return the arrays referenced by the "coordinates" attribute.
+ *
+ * This method is the same as the C function GDALMDArrayGetCoordinateVariables().
+ *
+ * @return a vector of arrays
+ *
+ * @since GDAL 3.4
+ */
+
+std::vector<std::shared_ptr<GDALMDArray>> GDALMDArray::GetCoordinateVariables() const
+{
+    return {};
+}
 
 /************************************************************************/
 /*                       ~GDALExtendedDataType()                        */
@@ -6314,8 +7623,10 @@ GDALExtendedDataType::~GDALExtendedDataType() = default;
 /*                        GDALExtendedDataType()                        */
 /************************************************************************/
 
-GDALExtendedDataType::GDALExtendedDataType(size_t nMaxStringLength):
+GDALExtendedDataType::GDALExtendedDataType(size_t nMaxStringLength,
+                                           GDALExtendedDataTypeSubType eSubType):
     m_eClass(GEDTC_STRING),
+    m_eSubType(eSubType),
     m_nSize(sizeof(char*)),
     m_nMaxStringLength(nMaxStringLength)
 {}
@@ -6353,6 +7664,7 @@ GDALExtendedDataType::GDALExtendedDataType(
 GDALExtendedDataType::GDALExtendedDataType(const GDALExtendedDataType& other):
     m_osName(other.m_osName),
     m_eClass(other.m_eClass),
+    m_eSubType(other.m_eSubType),
     m_eNumericDT(other.m_eNumericDT),
     m_nSize(other.m_nSize),
     m_nMaxStringLength(other.m_nMaxStringLength)
@@ -6375,6 +7687,7 @@ GDALExtendedDataType& GDALExtendedDataType::operator= (GDALExtendedDataType&& ot
 {
     m_osName = std::move(other.m_osName);
     m_eClass = other.m_eClass;
+    m_eSubType = other.m_eSubType;
     m_eNumericDT = other.m_eNumericDT;
     m_nSize = other.m_nSize;
     m_nMaxStringLength = other.m_nMaxStringLength;
@@ -6441,7 +7754,7 @@ GDALExtendedDataType GDALExtendedDataType::Create(
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid offset/size");
         return GDALExtendedDataType(GDT_Unknown);
     }
-    if( nTotalSize == 0 )
+    if( nTotalSize == 0 || components.empty() )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Empty compound not allowed");
         return GDALExtendedDataType(GDT_Unknown);
@@ -6456,12 +7769,14 @@ GDALExtendedDataType GDALExtendedDataType::Create(
 /** Return a new GDALExtendedDataType of class GEDTC_STRING.
  *
  * This is the same as the C function GDALExtendedDataTypeCreateString().
- * 
+ *
  * @param nMaxStringLength maximum length of a string in bytes. 0 if unknown/unlimited
+ * @param eSubType Subtype.
  */
-GDALExtendedDataType GDALExtendedDataType::CreateString(size_t nMaxStringLength)
+GDALExtendedDataType GDALExtendedDataType::CreateString(size_t nMaxStringLength,
+                                                        GDALExtendedDataTypeSubType eSubType)
 {
-    return GDALExtendedDataType(nMaxStringLength);
+    return GDALExtendedDataType(nMaxStringLength, eSubType);
 }
 
 /************************************************************************/
@@ -6475,6 +7790,7 @@ GDALExtendedDataType GDALExtendedDataType::CreateString(size_t nMaxStringLength)
 bool GDALExtendedDataType::operator==(const GDALExtendedDataType& other) const
 {
     if( m_eClass != other.m_eClass ||
+        m_eSubType != other.m_eSubType ||
         m_nSize != other.m_nSize ||
         m_osName != other.m_osName )
     {
@@ -6830,6 +8146,27 @@ GDALExtendedDataTypeH GDALExtendedDataTypeCreateString(size_t nMaxStringLength)
 }
 
 /************************************************************************/
+/*                   GDALExtendedDataTypeCreateStringEx()               */
+/************************************************************************/
+
+/** Return a new GDALExtendedDataType of class GEDTC_STRING.
+ *
+ * This is the same as the C++ method GDALExtendedDataType::CreateString()
+ *
+ * The returned handle should be freed with GDALExtendedDataTypeRelease().
+ *
+ * @return a new GDALExtendedDataTypeH handle, or nullptr.
+ * @since GDAL 3.4
+ */
+GDALExtendedDataTypeH GDALExtendedDataTypeCreateStringEx(size_t nMaxStringLength,
+                                                         GDALExtendedDataTypeSubType eSubType)
+{
+    return new GDALExtendedDataTypeHS(
+        new GDALExtendedDataType(
+            GDALExtendedDataType::CreateString(nMaxStringLength, eSubType)));
+}
+
+/************************************************************************/
 /*                   GDALExtendedDataTypeCreateCompound()               */
 /************************************************************************/
 
@@ -6988,6 +8325,25 @@ int GDALExtendedDataTypeEquals(GDALExtendedDataTypeH hFirstEDT,
     VALIDATE_POINTER1( hSecondEDT, __func__, FALSE );
     return *(hFirstEDT->m_poImpl) == *(hSecondEDT->m_poImpl);
 }
+
+/************************************************************************/
+/*                    GDALExtendedDataTypeGetSubType()                  */
+/************************************************************************/
+
+/** Return the subtype of a type.
+ *
+ * This is the same as the C++ method GDALExtendedDataType::GetSubType()
+ *
+ * @param hEDT Data type.
+ * @return subtype.
+ * @since 3.4
+ */
+GDALExtendedDataTypeSubType GDALExtendedDataTypeGetSubType(GDALExtendedDataTypeH hEDT)
+{
+    VALIDATE_POINTER1( hEDT, __func__, GEDTST_NONE );
+    return hEDT->m_poImpl->GetSubType();
+}
+
 
 /************************************************************************/
 /*                     GDALExtendedDataTypeGetComponents()              */
@@ -7298,6 +8654,54 @@ GDALGroupH GDALGroupOpenGroup(GDALGroupH hGroup, const char* pszSubGroupName,
 }
 
 /************************************************************************/
+/*                   GDALGroupGetVectorLayerNames()                     */
+/************************************************************************/
+
+/** Return the list of layer names contained in this group.
+ *
+ * This is the same as the C++ method GDALGroup::GetVectorLayerNames().
+ *
+ * @return the group names, to be freed with CSLDestroy()
+ * @since 3.4
+ */
+char **GDALGroupGetVectorLayerNames(GDALGroupH hGroup, CSLConstList papszOptions)
+{
+    VALIDATE_POINTER1( hGroup, __func__, nullptr );
+    auto names = hGroup->m_poImpl->GetVectorLayerNames(papszOptions);
+    CPLStringList res;
+    for( const auto& name: names )
+    {
+        res.AddString(name.c_str());
+    }
+    return res.StealList();
+}
+
+/************************************************************************/
+/*                      GDALGroupOpenVectorLayer()                      */
+/************************************************************************/
+
+/** Open and return a vector layer.
+ *
+ * This is the same as the C++ method GDALGroup::OpenVectorLayer().
+ *
+ * Note that the vector layer is owned by its parent GDALDatasetH, and thus
+ * the returned handled if only valid while the parent GDALDatasetH is kept
+ * opened.
+ *
+ * @return the vector layer, or nullptr.
+ * @since 3.4
+ */
+OGRLayerH GDALGroupOpenVectorLayer(GDALGroupH hGroup,
+                                   const char* pszVectorLayerName,
+                                   CSLConstList papszOptions)
+{
+    VALIDATE_POINTER1( hGroup, __func__, nullptr );
+    VALIDATE_POINTER1( pszVectorLayerName, __func__, nullptr );
+    return OGRLayer::ToHandle(hGroup->m_poImpl->OpenVectorLayer(
+        std::string(pszVectorLayerName), papszOptions));
+}
+
+/************************************************************************/
 /*                       GDALGroupOpenMDArrayFromFullname()             */
 /************************************************************************/
 
@@ -7418,11 +8822,11 @@ GDALAttributeH *GDALGroupGetAttributes(GDALGroupH hGroup, size_t* pnCount,
 /** Return structural information on the group.
  *
  * This may be the compression, etc..
- * 
+ *
  * The return value should not be freed and is valid until GDALGroup is
  * released or this function called again.
- * 
- * This is the same as the C++ method GDALGroup::GetStruturalInfo().
+ *
+ * This is the same as the C++ method GDALGroup::GetStructuralInfo().
  */
 CSLConstList GDALGroupGetStructuralInfo(GDALGroupH hGroup)
 {
@@ -7796,9 +9200,29 @@ int GDALMDArrayAdviseRead(GDALMDArrayH hArray,
                           const GUInt64* arrayStartIdx,
                           const size_t* count)
 {
+    return GDALMDArrayAdviseReadEx(hArray, arrayStartIdx, count, nullptr);
+}
+
+/************************************************************************/
+/*                      GDALMDArrayAdviseReadEx()                       */
+/************************************************************************/
+
+/** Advise driver of upcoming read requests.
+ *
+ * This is the same as the C++ method GDALMDArray::AdviseRead()
+ *
+ * @return TRUE in case of success.
+ *
+ * @since GDAL 3.4
+ */
+int GDALMDArrayAdviseReadEx(GDALMDArrayH hArray,
+                            const GUInt64* arrayStartIdx,
+                            const size_t* count,
+                            CSLConstList papszOptions)
+{
     VALIDATE_POINTER1( hArray, __func__, FALSE );
     // coverity[var_deref_model]
-    return hArray->m_poImpl->AdviseRead(arrayStartIdx, count);
+    return hArray->m_poImpl->AdviseRead(arrayStartIdx, count, papszOptions);
 }
 
 /************************************************************************/
@@ -8160,7 +9584,7 @@ double GDALMDArrayGetOffsetEx(GDALMDArrayH hArray, int* pbHasValue,
  * aligned on those tile/block boundaries will be more efficient.
  *
  * The returned number of elements in the vector is the same as
- * GetDimensionCount(). A value of 0 should be interpretated as no hint regarding
+ * GetDimensionCount(). A value of 0 should be interpreted as no hint regarding
  * the natural block size along the considered dimension.
  * "Flat" arrays will typically return a vector of values set to 0.
  *
@@ -8173,7 +9597,7 @@ double GDALMDArrayGetOffsetEx(GDALMDArrayH hArray, int* pbHasValue,
  *
  * This is the same as the C++ method GDALAbstractMDArray::GetBlockSize().
  *
- * @return the block size, in number of elemnts along each dimension.
+ * @return the block size, in number of elements along each dimension.
  */
 GUInt64 *GDALMDArrayGetBlockSize(GDALMDArrayH hArray, size_t *pnCount)
 {
@@ -8194,7 +9618,7 @@ GUInt64 *GDALMDArrayGetBlockSize(GDALMDArrayH hArray, size_t *pnCount)
 /*                   GDALMDArrayGetProcessingChunkSize()               */
 /************************************************************************/
 
-/** \brief Return an optimal chunk size for read/write oerations, given the natural
+/** \brief Return an optimal chunk size for read/write operations, given the natural
  * block size and memory constraints specified.
  *
  * This method will use GetBlockSize() to define a chunk whose dimensions are
@@ -8208,7 +9632,7 @@ GUInt64 *GDALMDArrayGetBlockSize(GDALMDArrayH hArray, size_t *pnCount)
  * @param pnCount Pointer to the number of values returned. Must NOT be NULL.
  * @param nMaxChunkMemory Maximum amount of memory, in bytes, to use for the chunk.
  *
- * @return the chunk size, in number of elemnts along each dimension.
+ * @return the chunk size, in number of elements along each dimension.
  */
 
 size_t *GDALMDArrayGetProcessingChunkSize(GDALMDArrayH hArray, size_t *pnCount,
@@ -8234,11 +9658,11 @@ size_t *GDALMDArrayGetProcessingChunkSize(GDALMDArrayH hArray, size_t *pnCount,
 /** Return structural information on the array.
  *
  * This may be the compression, etc..
- * 
+ *
  * The return value should not be freed and is valid until GDALMDArray is
  * released or this function called again.
- * 
- * This is the same as the C++ method GDALMDArray::GetStruturalInfo().
+ *
+ * This is the same as the C++ method GDALMDArray::GetStructuralInfo().
  */
 CSLConstList GDALMDArrayGetStructuralInfo(GDALMDArrayH hArray)
 {
@@ -8341,16 +9765,52 @@ GDALMDArrayH GDALMDArrayGetMask(GDALMDArrayH hArray, CSLConstList papszOptions)
 }
 
 /************************************************************************/
+/*                   GDALMDArrayGetResampled()                          */
+/************************************************************************/
+
+/** Return an array that is a resampled / reprojected view of the current array
+ *
+ * This is the same as the C++ method GDALMDArray::GetResampled().
+ *
+ * Currently this method can only resample along the last 2 dimensions.
+ *
+ * The returned object should be released with GDALMDArrayRelease().
+ *
+ * @since 3.4
+ */
+GDALMDArrayH GDALMDArrayGetResampled(GDALMDArrayH hArray,
+                                     size_t nNewDimCount,
+                                     const GDALDimensionH* pahNewDims,
+                                     GDALRIOResampleAlg resampleAlg,
+                                     OGRSpatialReferenceH hTargetSRS,
+                                     CSLConstList papszOptions)
+{
+    VALIDATE_POINTER1( hArray, __func__, nullptr );
+    VALIDATE_POINTER1( pahNewDims, __func__, nullptr );
+    std::vector<std::shared_ptr<GDALDimension>> apoNewDims(nNewDimCount);
+    for( size_t i = 0; i < nNewDimCount; ++i )
+    {
+        if( pahNewDims[i] )
+            apoNewDims[i] = pahNewDims[i]->m_poImpl;
+    }
+    auto poNewArray = hArray->m_poImpl->GetResampled(
+        apoNewDims, resampleAlg, OGRSpatialReference::FromHandle(hTargetSRS), papszOptions);
+    if( !poNewArray )
+        return nullptr;
+    return new GDALMDArrayHS(poNewArray);
+}
+
+/************************************************************************/
 /*                      GDALMDArraySetUnit()                            */
 /************************************************************************/
 
 /** Set the variable unit.
- * 
+ *
  * Values should conform as much as possible with those allowed by
  * the NetCDF CF conventions:
  * http://cfconventions.org/Data/cf-conventions/cf-conventions-1.7/cf-conventions.html#units
  * but others might be returned.
- * 
+ *
  * Few examples are "meter", "degrees", "second", ...
  * Empty value means unknown.
  *
@@ -8371,18 +9831,18 @@ int GDALMDArraySetUnit(GDALMDArrayH hArray, const char* pszUnit)
 /************************************************************************/
 
 /** Return the array unit.
- * 
+ *
  * Values should conform as much as possible with those allowed by
  * the NetCDF CF conventions:
  * http://cfconventions.org/Data/cf-conventions/cf-conventions-1.7/cf-conventions.html#units
  * but others might be returned.
- * 
+ *
  * Few examples are "meter", "degrees", "second", ...
  * Empty value means unknown.
- * 
+ *
  * The return value should not be freed and is valid until GDALMDArray is
  * released or this function called again.
- * 
+ *
  * This is the same as the C++ method GDALMDArray::GetUnit().
  */
 const char* GDALMDArrayGetUnit(GDALMDArrayH hArray)
@@ -8397,7 +9857,7 @@ const char* GDALMDArrayGetUnit(GDALMDArrayH hArray)
 /************************************************************************/
 
 /** Assign a spatial reference system object to the the array.
- * 
+ *
  * This is the same as the C++ method GDALMDArray::SetSpatialRef().
  * @return TRUE in case of success.
  */
@@ -8413,7 +9873,7 @@ int GDALMDArraySetSpatialRef(GDALMDArrayH hArray,
 /************************************************************************/
 
 /** Return the spatial reference system object associated with the array.
- * 
+ *
  * This is the same as the C++ method GDALMDArray::GetSpatialRef().
  *
  * The returned object must be freed with OSRDestroySpatialReference().
@@ -8439,7 +9899,7 @@ OGRSpatialReferenceH GDALMDArrayGetSpatialRef(GDALMDArrayH hArray)
 
 CPLErr GDALMDArrayGetStatistics(
                         GDALMDArrayH hArray,
-                        GDALDatasetH hDS, int bApproxOK, int bForce,
+                        GDALDatasetH /*hDS*/, int bApproxOK, int bForce,
                         double *pdfMin, double *pdfMax,
                         double *pdfMean, double *pdfStdDev,
                         GUInt64* pnValidCount,
@@ -8447,7 +9907,6 @@ CPLErr GDALMDArrayGetStatistics(
 {
     VALIDATE_POINTER1( hArray, __func__, CE_Failure );
     return hArray->m_poImpl->GetStatistics(
-        GDALDataset::FromHandle(hDS),
         CPL_TO_BOOL(bApproxOK),
         CPL_TO_BOOL(bForce),
         pdfMin, pdfMax, pdfMean, pdfStdDev, pnValidCount,
@@ -8467,7 +9926,7 @@ CPLErr GDALMDArrayGetStatistics(
  */
 
 int GDALMDArrayComputeStatistics( GDALMDArrayH hArray,
-                                  GDALDatasetH hDS,
+                                  GDALDatasetH /* hDS */,
                                     int bApproxOK,
                                     double *pdfMin, double *pdfMax,
                                     double *pdfMean, double *pdfStdDev,
@@ -8477,10 +9936,78 @@ int GDALMDArrayComputeStatistics( GDALMDArrayH hArray,
 {
     VALIDATE_POINTER1( hArray, __func__, FALSE );
     return hArray->m_poImpl->ComputeStatistics(
-        GDALDataset::FromHandle(hDS),
         CPL_TO_BOOL(bApproxOK),
         pdfMin, pdfMax, pdfMean, pdfStdDev, pnValidCount,
         pfnProgress, pProgressData);
+}
+
+/************************************************************************/
+/*                 GDALMDArrayGetCoordinateVariables()                  */
+/************************************************************************/
+
+/** Return coordinate variables.
+ *
+ * The returned array must be freed with GDALReleaseArrays(). If only the array itself needs to be
+ * freed, CPLFree() should be called (and GDALMDArrayRelease() on
+ * individual array members).
+ *
+ * This is the same as the C++ method GDALMDArray::GetCoordinateVariables()
+ *
+ * @param hArray Array.
+ * @param pnCount Pointer to the number of values returned. Must NOT be NULL.
+ *
+ * @return an array of *pnCount arrays.
+ * @since 3.4
+ */
+GDALMDArrayH* GDALMDArrayGetCoordinateVariables(GDALMDArrayH hArray, size_t *pnCount)
+{
+    VALIDATE_POINTER1( hArray, __func__, nullptr );
+    VALIDATE_POINTER1( pnCount, __func__, nullptr );
+    const auto coordinates(hArray->m_poImpl->GetCoordinateVariables());
+    auto ret = static_cast<GDALMDArrayH*>(
+        CPLMalloc(sizeof(GDALMDArrayH) * coordinates.size()));
+    for( size_t i = 0; i < coordinates.size(); i++ )
+    {
+        ret[i] = new GDALMDArrayHS(coordinates[i]);
+    }
+    *pnCount = coordinates.size();
+    return ret;
+}
+
+/************************************************************************/
+/*                        GDALReleaseArrays()                           */
+/************************************************************************/
+
+/** Free the return of GDALMDArrayGetCoordinateVariables()
+ *
+ * @param arrays return pointer of above methods
+ * @param nCount *pnCount value returned by above methods
+ */
+void GDALReleaseArrays(GDALMDArrayH* arrays, size_t nCount)
+{
+    for( size_t i = 0; i < nCount; i++ )
+    {
+        delete arrays[i];
+    }
+    CPLFree(arrays);
+}
+
+/************************************************************************/
+/*                           GDALMDArrayCache()                         */
+/************************************************************************/
+
+/**
+ * \brief Cache the content of the array into an auxiliary filename.
+ *
+ * This is the same as the C++ method GDALMDArray::Cache().
+ *
+ * @since GDAL 3.4
+ */
+
+int GDALMDArrayCache( GDALMDArrayH hArray, CSLConstList papszOptions )
+{
+    VALIDATE_POINTER1( hArray, __func__, FALSE );
+    return hArray->m_poImpl->Cache(papszOptions);
 }
 
 /************************************************************************/
@@ -9138,9 +10665,11 @@ GDALDatasetH GDALMDArrayAsClassicDataset(GDALMDArrayH hArray,
 
 GDALAttributeString::GDALAttributeString(const std::string& osParentName,
                   const std::string& osName,
-                  const std::string& osValue):
+                  const std::string& osValue,
+                  GDALExtendedDataTypeSubType eSubType):
         GDALAbstractMDArray(osParentName, osName),
         GDALAttribute(osParentName, osName),
+        m_dt(GDALExtendedDataType::CreateString(0, eSubType)),
         m_osValue(osValue)
 {}
 
@@ -9164,7 +10693,7 @@ bool GDALAttributeString::IRead(const GUInt64* ,
     if( bufferDataType.GetClass() != GEDTC_STRING )
         return false;
     char* pszStr = static_cast<char*>(VSIMalloc(m_osValue.size() + 1));
-    if( !pszStr ) 
+    if( !pszStr )
         return false;
     memcpy(pszStr, m_osValue.c_str(), m_osValue.size() + 1);
     *static_cast<char**>(pDstBuffer) = pszStr;
@@ -9316,6 +10845,456 @@ bool GDALDimensionWeakIndexingVar::SetIndexingVariable(std::shared_ptr<GDALMDArr
 {
     m_poIndexingVariable = poIndexingVariable;
     return true;
+}
+
+/************************************************************************/
+/*                       GDALPamMultiDim::Private                       */
+/************************************************************************/
+
+struct GDALPamMultiDim::Private
+{
+    std::string m_osFilename{};
+    std::string m_osPamFilename{};
+
+    struct Statistics
+    {
+        bool bHasStats = false;
+        bool bApproxStats = false;
+        double dfMin = 0;
+        double dfMax = 0;
+        double dfMean = 0;
+        double dfStdDev = 0;
+        GUInt64 nValidCount = 0;
+    };
+
+    struct ArrayInfo
+    {
+        std::shared_ptr<OGRSpatialReference> poSRS{};
+        Statistics stats{};
+    };
+
+    std::map<std::string, ArrayInfo> m_oMapArray{};
+    std::vector<CPLXMLTreeCloser> m_apoOtherNodes{};
+    bool m_bDirty = false;
+    bool m_bLoaded = false;
+};
+
+/************************************************************************/
+/*                          GDALPamMultiDim                             */
+/************************************************************************/
+
+GDALPamMultiDim::GDALPamMultiDim(const std::string& osFilename):
+    d(new Private())
+{
+    d->m_osFilename = osFilename;
+}
+
+/************************************************************************/
+/*                   GDALPamMultiDim::~GDALPamMultiDim()                */
+/************************************************************************/
+
+GDALPamMultiDim::~GDALPamMultiDim()
+{
+    if( d->m_bDirty )
+        Save();
+}
+
+/************************************************************************/
+/*                          GDALPamMultiDim::Load()                     */
+/************************************************************************/
+
+void GDALPamMultiDim::Load()
+{
+    if( d->m_bLoaded )
+        return;
+    d->m_bLoaded = true;
+
+    const char *pszProxyPam = PamGetProxy( d->m_osFilename.c_str() );
+    d->m_osPamFilename = pszProxyPam ?
+        std::string(pszProxyPam) : d->m_osFilename + ".aux.xml";
+    CPLXMLTreeCloser oTree(nullptr);
+    {
+        CPLErrorStateBackuper oStateBackuper;
+        CPLErrorHandlerPusher oErrorHandlerPusher(CPLQuietErrorHandler);
+        oTree.reset(CPLParseXMLFile(d->m_osPamFilename.c_str()));
+    }
+    if( !oTree )
+    {
+        return;
+    }
+    const auto poPAMMultiDim = CPLGetXMLNode( oTree.get(), "=PAMDataset");
+    if( !poPAMMultiDim )
+        return;
+    for( CPLXMLNode* psIter = poPAMMultiDim->psChild;
+                                            psIter; psIter = psIter->psNext )
+    {
+        if( psIter->eType == CXT_Element &&
+            strcmp(psIter->pszValue, "Array") == 0 )
+        {
+            const char* pszName = CPLGetXMLValue(psIter, "name", nullptr);
+            if( !pszName )
+                continue;
+
+/* -------------------------------------------------------------------- */
+/*      Check for an SRS node.                                          */
+/* -------------------------------------------------------------------- */
+            const CPLXMLNode* psSRSNode = CPLGetXMLNode(psIter, "SRS");
+            if( psSRSNode )
+            {
+                std::shared_ptr<OGRSpatialReference> poSRS = std::make_shared<OGRSpatialReference>();
+                poSRS->SetFromUserInput( CPLGetXMLValue(psSRSNode, nullptr, ""),
+                                         OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS );
+                const char* pszMapping =
+                    CPLGetXMLValue(psSRSNode, "dataAxisToSRSAxisMapping", nullptr);
+                if( pszMapping )
+                {
+                    char** papszTokens = CSLTokenizeStringComplex( pszMapping, ",", FALSE, FALSE);
+                    std::vector<int> anMapping;
+                    for( int i = 0; papszTokens && papszTokens[i]; i++ )
+                    {
+                        anMapping.push_back(atoi(papszTokens[i]));
+                    }
+                    CSLDestroy(papszTokens);
+                    poSRS->SetDataAxisToSRSAxisMapping(anMapping);
+                }
+                else
+                {
+                    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                }
+
+                const char* pszCoordinateEpoch =
+                    CPLGetXMLValue(psSRSNode, "coordinateEpoch", nullptr);
+                if( pszCoordinateEpoch )
+                    poSRS->SetCoordinateEpoch(CPLAtof(pszCoordinateEpoch));
+
+                d->m_oMapArray[pszName].poSRS = poSRS;
+            }
+
+            const CPLXMLNode* psStatistics = CPLGetXMLNode(psIter, "Statistics");
+            if( psStatistics )
+            {
+                Private::Statistics sStats;
+                sStats.bHasStats = true;
+                sStats.bApproxStats = CPLTestBool(
+                    CPLGetXMLValue(psStatistics, "ApproxStats", "false"));
+                sStats.dfMin = CPLAtofM(
+                    CPLGetXMLValue(psStatistics, "Minimum", "0"));
+                sStats.dfMax = CPLAtofM(
+                    CPLGetXMLValue(psStatistics, "Maximum", "0"));
+                sStats.dfMean = CPLAtofM(
+                    CPLGetXMLValue(psStatistics, "Mean", "0"));
+                sStats.dfStdDev = CPLAtofM(
+                    CPLGetXMLValue(psStatistics, "StdDev", "0"));
+                sStats.nValidCount = static_cast<GUInt64>(CPLAtoGIntBig(
+                    CPLGetXMLValue(psStatistics, "ValidSampleCount", "0")));
+                d->m_oMapArray[pszName].stats = sStats;
+            }
+        }
+        else
+        {
+            CPLXMLNode* psNextBackup = psIter->psNext;
+            psIter->psNext = nullptr;
+            d->m_apoOtherNodes.emplace_back(CPLXMLTreeCloser(CPLCloneXMLTree(psIter)));
+            psIter->psNext = psNextBackup;
+        }
+    }
+}
+
+/************************************************************************/
+/*                          GDALPamMultiDim::Save()                     */
+/************************************************************************/
+
+void GDALPamMultiDim::Save()
+{
+    CPLXMLTreeCloser oTree(CPLCreateXMLNode(nullptr, CXT_Element, "PAMDataset"));
+    for( const auto& poOtherNode: d->m_apoOtherNodes )
+    {
+        CPLAddXMLChild(oTree.get(), CPLCloneXMLTree(poOtherNode.get()));
+    }
+    for( const auto& kv: d->m_oMapArray )
+    {
+        CPLXMLNode* psArrayNode = CPLCreateXMLNode( oTree.get(), CXT_Element, "Array" );
+        CPLAddXMLAttributeAndValue(psArrayNode, "name", kv.first.c_str());
+        if( kv.second.poSRS )
+        {
+            char* pszWKT = nullptr;
+            {
+                CPLErrorStateBackuper oErrorStateBackuper;
+                CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+                const char* const apszOptions[] = { "FORMAT=WKT2", nullptr };
+                kv.second.poSRS->exportToWkt(&pszWKT, apszOptions);
+            }
+            CPLXMLNode* psSRSNode = CPLCreateXMLElementAndValue( psArrayNode, "SRS", pszWKT );
+            CPLFree(pszWKT);
+            const auto& mapping = kv.second.poSRS->GetDataAxisToSRSAxisMapping();
+            CPLString osMapping;
+            for( size_t i = 0; i < mapping.size(); ++i )
+            {
+                if( !osMapping.empty() )
+                    osMapping += ",";
+                osMapping += CPLSPrintf("%d", mapping[i]);
+            }
+            CPLAddXMLAttributeAndValue(psSRSNode, "dataAxisToSRSAxisMapping",
+                                       osMapping.c_str());
+
+            const double dfCoordinateEpoch = kv.second.poSRS->GetCoordinateEpoch();
+            if( dfCoordinateEpoch > 0 )
+            {
+                std::string osCoordinateEpoch = CPLSPrintf("%f", dfCoordinateEpoch);
+                if( osCoordinateEpoch.find('.') != std::string::npos )
+                {
+                    while( osCoordinateEpoch.back() == '0' )
+                        osCoordinateEpoch.resize(osCoordinateEpoch.size()-1);
+                }
+                CPLAddXMLAttributeAndValue(psSRSNode, "coordinateEpoch",
+                                           osCoordinateEpoch.c_str());
+            }
+        }
+
+        if( kv.second.stats.bHasStats )
+        {
+            CPLXMLNode* psMDArray = CPLCreateXMLNode(
+                psArrayNode, CXT_Element, "Statistics" );
+            CPLCreateXMLElementAndValue(psMDArray,
+                                        "ApproxStats",
+                                        kv.second.stats.bApproxStats ? "1" : "0");
+            CPLCreateXMLElementAndValue(psMDArray,
+                                        "Minimum",
+                                        CPLSPrintf("%.18g", kv.second.stats.dfMin));
+            CPLCreateXMLElementAndValue(psMDArray,
+                                        "Maximum",
+                                        CPLSPrintf("%.18g", kv.second.stats.dfMax));
+            CPLCreateXMLElementAndValue(psMDArray,
+                                        "Mean",
+                                        CPLSPrintf("%.18g", kv.second.stats.dfMean));
+            CPLCreateXMLElementAndValue(psMDArray,
+                                        "StdDev",
+                                        CPLSPrintf("%.18g", kv.second.stats.dfStdDev));
+            CPLCreateXMLElementAndValue(psMDArray,
+                                        "ValidSampleCount",
+                                        CPLSPrintf(CPL_FRMT_GUIB, kv.second.stats.nValidCount));
+        }
+    }
+
+    std::vector<CPLErrorHandlerAccumulatorStruct> aoErrors;
+    CPLInstallErrorHandlerAccumulator(aoErrors);
+    const int bSaved =
+        CPLSerializeXMLTreeToFile( oTree.get(), d->m_osPamFilename.c_str() );
+    CPLUninstallErrorHandlerAccumulator();
+
+    const char *pszNewPam = nullptr;
+    if( !bSaved &&
+        PamGetProxy(d->m_osFilename.c_str()) == nullptr &&
+        ((pszNewPam = PamAllocateProxy(d->m_osFilename.c_str())) != nullptr))
+    {
+        CPLErrorReset();
+        CPLSerializeXMLTreeToFile( oTree.get(), pszNewPam );
+    }
+    else
+    {
+        for( const auto& oError: aoErrors )
+        {
+            CPLError(oError.type, oError.no, "%s", oError.msg.c_str() );
+        }
+    }
+}
+
+/************************************************************************/
+/*                    GDALPamMultiDim::GetSpatialRef()                  */
+/************************************************************************/
+
+std::shared_ptr<OGRSpatialReference>
+GDALPamMultiDim::GetSpatialRef(const std::string& osArrayFullName)
+{
+    Load();
+    auto oIter = d->m_oMapArray.find(osArrayFullName);
+    if( oIter != d->m_oMapArray.end() )
+        return oIter->second.poSRS;
+    return nullptr;
+}
+
+/************************************************************************/
+/*                    GDALPamMultiDim::SetSpatialRef()                  */
+/************************************************************************/
+
+void GDALPamMultiDim::SetSpatialRef(const std::string& osArrayFullName,
+                                    const OGRSpatialReference* poSRS)
+{
+    Load();
+    d->m_bDirty = true;
+    if( poSRS && !poSRS->IsEmpty() )
+        d->m_oMapArray[osArrayFullName].poSRS.reset(poSRS->Clone());
+    else
+        d->m_oMapArray[osArrayFullName].poSRS.reset();
+}
+
+/************************************************************************/
+/*                           GetStatistics()                            */
+/************************************************************************/
+
+CPLErr GDALPamMultiDim::GetStatistics( const std::string& osArrayFullName,
+                      bool bApproxOK,
+                      double *pdfMin, double *pdfMax,
+                      double *pdfMean, double *pdfStdDev,
+                      GUInt64* pnValidCount)
+{
+    Load();
+    auto oIter = d->m_oMapArray.find(osArrayFullName);
+    if( oIter == d->m_oMapArray.end() )
+        return CE_Failure;
+    const auto& stats = oIter->second.stats;
+    if( !stats.bHasStats )
+        return CE_Failure;
+    if( !bApproxOK && stats.bApproxStats )
+        return CE_Failure;
+    if( pdfMin )
+        *pdfMin = stats.dfMin;
+    if( pdfMax )
+        *pdfMax = stats.dfMax;
+    if( pdfMean )
+        *pdfMean = stats.dfMean;
+    if( pdfStdDev )
+        *pdfStdDev = stats.dfStdDev;
+    if( pnValidCount )
+        *pnValidCount = stats.nValidCount;
+    return CE_None;
+}
+
+/************************************************************************/
+/*                           SetStatistics()                            */
+/************************************************************************/
+
+void GDALPamMultiDim::SetStatistics( const std::string& osArrayFullName,
+                    bool bApproxStats,
+                    double dfMin, double dfMax,
+                    double dfMean, double dfStdDev,
+                    GUInt64 nValidCount )
+{
+    Load();
+    d->m_bDirty = true;
+    auto& stats = d->m_oMapArray[osArrayFullName].stats;
+    stats.bHasStats = true;
+    stats.bApproxStats = bApproxStats;
+    stats.dfMin = dfMin;
+    stats.dfMax = dfMax;
+    stats.dfMean = dfMean;
+    stats.dfStdDev = dfStdDev;
+    stats.nValidCount = nValidCount;
+}
+
+/************************************************************************/
+/*                           ClearStatistics()                          */
+/************************************************************************/
+
+void GDALPamMultiDim::ClearStatistics( const std::string& osArrayFullName )
+{
+    Load();
+    d->m_bDirty = true;
+    d->m_oMapArray[osArrayFullName].stats.bHasStats = false;
+}
+
+/************************************************************************/
+/*                           ClearStatistics()                          */
+/************************************************************************/
+
+void GDALPamMultiDim::ClearStatistics()
+{
+    Load();
+    d->m_bDirty = true;
+    for( auto& kv: d->m_oMapArray )
+        kv.second.stats.bHasStats = false;
+}
+
+/************************************************************************/
+/*                           GDALPamMDArray                             */
+/************************************************************************/
+
+GDALPamMDArray::GDALPamMDArray(const std::string& osParentName,
+                               const std::string& osName,
+                               const std::shared_ptr<GDALPamMultiDim>& poPam):
+#if !defined(COMPILER_WARNS_ABOUT_ABSTRACT_VBASE_INIT)
+    GDALAbstractMDArray(osParentName, osName),
+#endif
+    GDALMDArray(osParentName, osName),
+    m_poPam(poPam)
+{
+}
+
+/************************************************************************/
+/*                    GDALPamMDArray::SetSpatialRef()                   */
+/************************************************************************/
+
+bool GDALPamMDArray::SetSpatialRef(const OGRSpatialReference* poSRS)
+{
+    if( !m_poPam )
+        return false;
+    m_poPam->SetSpatialRef(GetFullName(), poSRS);
+    return true;
+}
+
+/************************************************************************/
+/*                    GDALPamMDArray::GetSpatialRef()                   */
+/************************************************************************/
+
+std::shared_ptr<OGRSpatialReference> GDALPamMDArray::GetSpatialRef() const
+{
+    if( !m_poPam )
+        return nullptr;
+    return m_poPam->GetSpatialRef(GetFullName());
+}
+
+/************************************************************************/
+/*                           GetStatistics()                            */
+/************************************************************************/
+
+CPLErr GDALPamMDArray::GetStatistics( bool bApproxOK, bool bForce,
+                                   double *pdfMin, double *pdfMax,
+                                   double *pdfMean, double *pdfStdDev,
+                                   GUInt64* pnValidCount,
+                                   GDALProgressFunc pfnProgress,
+                                   void * pProgressData )
+{
+    if( m_poPam &&
+        m_poPam->GetStatistics( GetFullName(), bApproxOK, pdfMin, pdfMax,
+                                pdfMean, pdfStdDev, pnValidCount ) == CE_None )
+    {
+        return CE_None;
+    }
+    if( !bForce )
+        return CE_Warning;
+
+    return GDALMDArray::GetStatistics(bApproxOK, bForce,
+                                      pdfMin, pdfMax,
+                                      pdfMean, pdfStdDev,
+                                      pnValidCount,
+                                      pfnProgress, pProgressData );
+}
+
+/************************************************************************/
+/*                           SetStatistics()                            */
+/************************************************************************/
+
+bool GDALPamMDArray::SetStatistics( bool bApproxStats,
+                                    double dfMin, double dfMax,
+                                    double dfMean, double dfStdDev,
+                                    GUInt64 nValidCount )
+{
+    if( !m_poPam )
+        return false;
+    m_poPam->SetStatistics(GetFullName(), bApproxStats, dfMin, dfMax, dfMean,
+                           dfStdDev, nValidCount);
+    return true;
+}
+
+/************************************************************************/
+/*                           ClearStatistics()                          */
+/************************************************************************/
+
+void GDALPamMDArray::ClearStatistics()
+{
+    if( !m_poPam )
+        return;
+    m_poPam->ClearStatistics(GetFullName());
 }
 
 //! @endcond

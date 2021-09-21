@@ -72,7 +72,7 @@ def processTool(toolName):
 
     process = Popen(command, stdout=PIPE, stderr=STDOUT)
     result = process.communicate()[0]
-    lines = result.split('\n')
+    lines = result.decode('utf-8').split('\n')
     index = 0
 
     while index < len(lines):
@@ -96,7 +96,7 @@ def parseGDALGeneralOptions():
     command = ["gdalinfo", "--help-general"]
     process = Popen(command, stdout=PIPE, stderr=STDOUT)
     result = process.communicate()[0]
-    lines = result.split('\n')
+    lines = result.decode('utf-8').split('\n')
     index = 0
     options = []
     while index < len(lines):
@@ -113,7 +113,7 @@ def parseOGRGeneralOptions():
     command = ["ogr2ogr", "--help-general"]
     process = Popen(command, stdout=PIPE, stderr=STDOUT)
     result = process.communicate()[0]
-    lines = result.split('\n')
+    lines = result.decode('utf-8').split('\n')
     index = 0
     options = []
     while index < len(lines):

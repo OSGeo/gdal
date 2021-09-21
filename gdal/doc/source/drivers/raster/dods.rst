@@ -8,6 +8,9 @@ DODS -- OPeNDAP Grid Client
 
 .. build_dependencies:: libdap
 
+.. deprecated_driver:: version_targeted_for_removal: 3.5
+   env_variable: GDAL_ENABLE_DEPRECATED_DRIVER_DODS
+
 GDAL optionally includes read support for 2D grids and arrays via the
 OPeNDAP (DODS) protocol.
 

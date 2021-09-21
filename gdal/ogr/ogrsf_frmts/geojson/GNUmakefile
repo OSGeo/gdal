@@ -22,7 +22,7 @@ OBJ = \
 	ogrtopojsonreader.o \
 	ogrgeojsonseqdriver.o
 
-CPPFLAGS	:= $(JSON_INCLUDE) -I. -I.. -I../..  $(CPPFLAGS)
+CPPFLAGS	:= $(JSON_INCLUDE) -iquote . -iquote .. -iquote ../..  $(CPPFLAGS)
 
 default:        $(foreach d,$(SUBDIRS-yes),$(d)-target) $(O_OBJ:.o=.$(OBJ_EXT))
 

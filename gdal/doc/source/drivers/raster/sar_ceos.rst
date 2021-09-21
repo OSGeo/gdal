@@ -11,18 +11,22 @@ SAR_CEOS -- CEOS SAR Image
 This is a read-only reader for CEOS SAR image files. To use, select the
 main imagery file.
 
-This driver works with most Radarsat and ERS data products, including
+This driver works with most Radarsat, JERS-1 and ERS data products, including
 single look complex products; however, it is unlikely to work for
 non-Radar CEOS products. The simpler `CEOS <#CEOS>`__ driver is often
 appropriate for these.
 
 This driver will attempt to read 15 lat/long GCPS by sampling the
-per-scanline CEOS superstructure information. It also captures various
-pieces of metadata from various header files, including:
+per-scanline CEOS superstructure information. In the case of products from the
+Alaska Satellite Facility, it will obtain corner coordinates from either the
+map projection record in the case of ScanSAR products, or the facility data
+record for non-ScanSAR products. It also captures various pieces of metadata
+from various header files, including:
 
 ::
 
      CEOS_LOGICAL_VOLUME_ID=EERS-1-SAR-MLD
+     CEOS_FACILITY=CDPF-RSAT
      CEOS_PROCESSING_FACILITY=APP
      CEOS_PROCESSING_AGENCY=CCRS
      CEOS_PROCESSING_COUNTRY=CANADA

@@ -93,6 +93,10 @@ class OSRProjTLSCache
 
 OSRProjTLSCache* OSRGetProjTLSCache();
 
+void OGRCTDumpStatistics();
+
+void OSRCTCleanCache();
+
 /*! @endcond Doxygen_Suppress */
 
 #endif

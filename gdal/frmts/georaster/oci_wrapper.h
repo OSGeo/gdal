@@ -290,6 +290,8 @@ private:
     bool                bExtProc = false;
 
     char*               pszUser = nullptr;
+                        //session is only used when user is not provided. 
+    char*               pszSessionUser = nullptr;
     char*               pszPassword = nullptr;
     char*               pszServer = nullptr;
 
@@ -329,6 +331,9 @@ public:
     bool                Succeeded() const { return bSuceeeded; }
 
     const char*         GetUser() const { return pszUser; }
+    const char*         GetSessionUser() const { 
+                         return (pszSessionUser == nullptr)? 
+                                   pszUser : pszSessionUser; } 
     const char*         GetPassword() const { return pszPassword; }
     const char*         GetServer() const{ return pszServer; }
     int                 GetVersion () const{ return nVersion; }

@@ -37,6 +37,8 @@
 #define CL_USE_DEPRECATED_OPENCL_1_0_APIS
 #endif
 
+#define CL_TARGET_OPENCL_VERSION 100
+
 #ifdef __APPLE__
 #include <OpenCL/OpenCL.h>
 #else

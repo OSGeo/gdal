@@ -1145,18 +1145,17 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
 
         // GRIB messages can be preceded by "garbage". GRIB2Inventory()
         // does not return the offset to the real start of the message
-        GByte abyHeader[1024 + 1];
+        char szHeader[1024 + 1];
         VSIFSeekL( poDS->fp, psInv->start, SEEK_SET );
-        size_t nRead = VSIFReadL( abyHeader, 1, sizeof(abyHeader)-1, poDS->fp );
-        abyHeader[nRead] = 0;
+        const int nRead = static_cast<int>(VSIFReadL( szHeader, 1, sizeof(szHeader)-1, poDS->fp ));
+        szHeader[nRead] = 0;
         // Find the real offset of the fist message
-        const char *pasHeader = reinterpret_cast<char *>(abyHeader);
         int nOffsetFirstMessage = 0;
-        for(int j = 0; j < poOpenInfo->nHeaderBytes - 3; j++)
+        for(int j = 0; j + 3 < nRead; j++)
         {
-            if(STARTS_WITH_CI(pasHeader + j, "GRIB")
+            if(STARTS_WITH_CI(szHeader + j, "GRIB")
 #ifdef ENABLE_TDLP
-               || STARTS_WITH_CI(pasHeader + j, "TDLP")
+               || STARTS_WITH_CI(szHeader + j, "TDLP")
 #endif
             )
             {
@@ -1241,17 +1240,31 @@ struct GRIBSharedResource
     VSILFILE* m_fp = nullptr;
     vsi_l_offset m_nOffsetCurData = static_cast<vsi_l_offset>(-1);
     std::vector<double> m_adfCurData{};
+    std::string m_osFilename;
+    std::shared_ptr<GDALPamMultiDim> m_poPAM{};
 
-    explicit GRIBSharedResource(VSILFILE* fp) : m_fp(fp) {}
-
-    ~GRIBSharedResource()
-    {
-        if( m_fp )
-            VSIFCloseL(m_fp);
-    }
+    GRIBSharedResource(const std::string& osFilename,
+                       VSILFILE* fp);
+    ~GRIBSharedResource();
 
     const std::vector<double>& LoadData(vsi_l_offset nOffset, int subgNum);
+
+    const std::shared_ptr<GDALPamMultiDim>& GetPAM() { return m_poPAM; }
 };
+
+GRIBSharedResource::GRIBSharedResource(const std::string& osFilename,
+                                       VSILFILE* fp) :
+   m_fp(fp),
+   m_osFilename(osFilename),
+   m_poPAM(std::make_shared<GDALPamMultiDim>(osFilename))
+{
+}
+
+GRIBSharedResource::~GRIBSharedResource()
+{
+    if( m_fp )
+        VSIFCloseL(m_fp);
+}
 
 /************************************************************************/
 /*                                GRIBGroup                             */
@@ -1295,7 +1308,7 @@ public:
 /*                                GRIBArray                             */
 /************************************************************************/
 
-class GRIBArray final: public GDALMDArray
+class GRIBArray final: public GDALPamMDArray
 {
     std::shared_ptr<GRIBSharedResource> m_poShared;
     std::vector<std::shared_ptr<GDALDimension>> m_dims{};
@@ -1336,6 +1349,8 @@ public:
     void Finalize(GRIBGroup* poGroup, inventoryType *psInv);
 
     bool IsWritable() const override { return false; }
+
+    const std::string& GetFilename() const override { return m_poShared->m_osFilename; }
 
     const std::vector<std::shared_ptr<GDALDimension>>& GetDimensions() const override { return m_dims; }
 
@@ -1386,7 +1401,7 @@ std::shared_ptr<GDALMDArray> GRIBGroup::OpenMDArray(const std::string& osName,
 GRIBArray::GRIBArray(const std::string& osName,
               const std::shared_ptr<GRIBSharedResource>& poShared):
     GDALAbstractMDArray("/", osName),
-    GDALMDArray("/", osName),
+    GDALPamMDArray("/", osName, poShared->GetPAM()),
     m_poShared(poShared)
 {
 }
@@ -1863,7 +1878,8 @@ bool GRIBArray::IRead(const GUInt64* arrayStartIdx,
 GDALDataset *GRIBDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
 
 {
-    auto poShared = std::make_shared<GRIBSharedResource>(poOpenInfo->fpL);
+    auto poShared = std::make_shared<GRIBSharedResource>(poOpenInfo->pszFilename,
+                                                         poOpenInfo->fpL);
     auto poRootGroup = std::make_shared<GRIBGroup>(poShared);
     poOpenInfo->fpL = nullptr;
 

@@ -2174,7 +2174,16 @@ def test_ogr_geojson_57():
 { "type": "Feature", "properties": { }, "bbox": [ 135.0, 88.6984598, -135.0, 90.0 ], "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ -135.0, 88.6984598 ], [ -180.0, 90.0 ], [ -180.0, 89.0796531 ], [ -135.0, 88.6984598 ] ] ], [ [ [ 180.0, 90.0 ], [ 135.0, 88.6984598 ], [ 180.0, 89.0796531 ], [ 180.0, 90.0 ] ] ] ] } }
 ]
 }"""
-    assert json.loads(got) == json.loads(expected) or json.loads(got) == json.loads(expected_geos_overlay_ng), got
+    expected_geos_3_9_1 = """{
+"type": "FeatureCollection",
+"bbox": [ 135.0000000, 88.6984598, -135.0000000, 90.0000000 ],
+"features": [
+{ "type": "Feature", "properties": { }, "bbox": [ 135.0, 88.6984598, -135.0, 90.0 ], "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 135.0, 88.6984598 ], [ 180.0, 89.0796531 ], [ 180.0, 90.0 ], [ 135.0, 88.6984598 ] ] ], [ [ [ -135.0, 88.6984598 ], [ -180.0, 90.0 ], [ -180.0, 89.0796531 ], [ -135.0, 88.6984598 ] ] ] ] } }
+]
+}"""
+    assert json.loads(got) == json.loads(expected) or \
+           json.loads(got) == json.loads(expected_geos_overlay_ng) or \
+           json.loads(got) == json.loads(expected_geos_3_9_1), got
 
     # Polar case: EPSG:3031: WGS 84 / Antarctic Polar Stereographic
     src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0)

@@ -58,7 +58,7 @@ OBJ = \
 	segment/vecsegdataindex.o \
 	segment/vecsegheader.o
 
-CXXFLAGS = -g -O0 -Wall -fPIC -I. $(JPEG_FLAGS)
+CXXFLAGS = -g -O0 -Wall -fPIC -iquote . $(JPEG_FLAGS)
 
 default:	pcidsk.a libpcidsk.so
 

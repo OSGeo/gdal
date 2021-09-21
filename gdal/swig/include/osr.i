@@ -389,6 +389,18 @@ public:
     return OSRIsVertical(self);
   }
 
+  bool IsDynamic() {
+    return OSRIsDynamic(self);
+  }
+
+  double GetCoordinateEpoch() {
+    return OSRGetCoordinateEpoch(self);
+  }
+
+  void SetCoordinateEpoch(double coordinateEpoch) {
+    OSRSetCoordinateEpoch(self, coordinateEpoch);
+  }
+
   int EPSGTreatsAsLatLong() {
     return OSREPSGTreatsAsLatLong(self);
   }
@@ -1079,20 +1091,20 @@ public:
   }
 
 %apply (char **argout) { (char **) };
-%apply (double *argout[ANY]) { (double *parms[17] ) };
-  OGRErr ExportToPCI( char **proj, char **units, double *parms[17] ) {
-    return OSRExportToPCI( self, proj, units, parms );
+%apply (double *argout[ANY]) { (double *params[17] ) };
+  OGRErr ExportToPCI( char **proj, char **units, double *params[17] ) {
+    return OSRExportToPCI( self, proj, units, params );
   }
 %clear (char **);
-%clear (double *parms[17]);
+%clear (double *params[17]);
 
 %apply (long *OUTPUT) { (long*) };
-%apply (double *argout[ANY]) { (double *parms[15]) }
-  OGRErr ExportToUSGS( long *code, long *zone, double *parms[15], long *datum ) {
-    return OSRExportToUSGS( self, code, zone, parms, datum );
+%apply (double *argout[ANY]) { (double *params[15]) }
+  OGRErr ExportToUSGS( long *code, long *zone, double *params[15], long *datum ) {
+    return OSRExportToUSGS( self, code, zone, params, datum );
   }
 %clear (long*);
-%clear (double *parms[15]);
+%clear (double *params[15]);
 
   OGRErr ExportToXML( char **argout, const char *dialect = "" ) {
     return OSRExportToXML( self, argout, dialect );
@@ -1148,7 +1160,7 @@ public:
  *  CoordinateTransformation Object
  *
  */
- 
+
 %rename (CoordinateTransformationOptions) OGRCoordinateTransformationOptions;
 class OGRCoordinateTransformationOptions {
 private:
@@ -1163,7 +1175,7 @@ public:
   ~OGRCoordinateTransformationOptions() {
     OCTDestroyCoordinateTransformationOptions( self );
   }
-  
+
   bool SetAreaOfInterest( double westLongitudeDeg,
                           double southLatitudeDeg,
                           double eastLongitudeDeg,
@@ -1203,7 +1215,7 @@ public:
   }
 
   OSRCoordinateTransformationShadow( OSRSpatialReferenceShadow *src, OSRSpatialReferenceShadow *dst, OGRCoordinateTransformationOptions* options ) {
-    return (OSRCoordinateTransformationShadow*) 
+    return (OSRCoordinateTransformationShadow*)
         options ? OCTNewCoordinateTransformationEx( src, dst, options ) : OCTNewCoordinateTransformation(src, dst);
   }
 
@@ -1326,7 +1338,7 @@ public:
 %newobject CreateCoordinateTransformation;
 %inline %{
   OSRCoordinateTransformationShadow *CreateCoordinateTransformation( OSRSpatialReferenceShadow *src, OSRSpatialReferenceShadow *dst, OGRCoordinateTransformationOptions* options = NULL ) {
-    return (OSRCoordinateTransformationShadow*) 
+    return (OSRCoordinateTransformationShadow*)
         options ? OCTNewCoordinateTransformationEx( src, dst, options ) : OCTNewCoordinateTransformation(src, dst);
 }
 %}
@@ -1543,6 +1555,32 @@ int GetPROJVersionMicro()
     return num;
 }
 %}
+
+%inline %{
+void SetPROJAuxDbPath( const char *utf8_path )
+{
+    const char* const apszPaths[2] = { utf8_path, NULL };
+    OSRSetPROJAuxDbPaths(apszPaths);
+}
+%}
+
+%apply (char **options) { (char **) };
+%inline %{
+void SetPROJAuxDbPaths( char** paths )
+{
+    OSRSetPROJAuxDbPaths(paths);
+}
+%}
+%clear (char **);
+
+%apply (char **CSL) {(char **)};
+%inline %{
+char** GetPROJAuxDbPaths()
+{
+    return OSRGetPROJAuxDbPaths();
+}
+%}
+%clear (char **);
 
 #ifdef SWIGPYTHON
 %thread;

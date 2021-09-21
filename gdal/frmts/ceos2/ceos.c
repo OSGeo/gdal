@@ -39,25 +39,25 @@ void InitEmptyCeosRecord(CeosRecord_t *record, int32 sequence, CeosTypeCode_t ty
 {
     if(record)
     {
-	if((record->Buffer = HMalloc(length)) == NULL)
-	{
-	    return;
-	}
-	/* First we zero fill the buffer */
-	memset(record->Buffer,0,length);
+        if((record->Buffer = HMalloc(length)) == NULL)
+        {
+            return;
+        }
+        /* First we zero fill the buffer */
+        memset(record->Buffer,0,length);
 
-	/* Setup values inside the CeosRecord_t header */
-	record->Sequence = sequence;
-	record->Flavor = 0;
-	record->FileId = 0;
-	record->TypeCode = typecode;
-	record->Subsequence = 0;
-	record->Length = length;
+        /* Setup values inside the CeosRecord_t header */
+        record->Sequence = sequence;
+        record->Flavor = 0;
+        record->FileId = 0;
+        record->TypeCode = typecode;
+        record->Subsequence = 0;
+        record->Length = length;
 
-	/* Now we fill in the buffer portion as well */
-	NativeToCeos( record->Buffer+SEQUENCE_OFF, &(record->Sequence), sizeof(record->Sequence), sizeof( record->Sequence ) );
-	memcpy(record->Buffer+TYPE_OFF, &( record->TypeCode.Int32Code ), sizeof( record->TypeCode.Int32Code ) );
-	NativeToCeos( record->Buffer+LENGTH_OFF, &length,  sizeof( length ), sizeof( length ) );
+        /* Now we fill in the buffer portion as well */
+        NativeToCeos( record->Buffer+SEQUENCE_OFF, &(record->Sequence), sizeof(record->Sequence), sizeof( record->Sequence ) );
+        memcpy(record->Buffer+TYPE_OFF, &( record->TypeCode.Int32Code ), sizeof( record->TypeCode.Int32Code ) );
+        NativeToCeos( record->Buffer+LENGTH_OFF, &length,  sizeof( length ), sizeof( length ) );
     }
 }
 
@@ -65,7 +65,7 @@ void InitCeosRecord(CeosRecord_t *record, uchar *buffer)
 {
     if(record && buffer)
     {
-	InitCeosRecordWithHeader(record, buffer, buffer+CEOS_HEADER_LENGTH);
+        InitCeosRecordWithHeader(record, buffer, buffer+CEOS_HEADER_LENGTH);
     }
 }
 
@@ -76,22 +76,22 @@ void InitCeosRecordWithHeader(CeosRecord_t *record, uchar *header, uchar *buffer
         if( record->Length != 0 )
             record->Length = DetermineCeosRecordBodyLength( header );
 
-	if(record->Length < CEOS_HEADER_LENGTH ||
-            (record->Buffer = HMalloc(record->Length)) == NULL)
-	{
-	    record->Length = 0;
-	    return;
-	}
+        if(record->Length < CEOS_HEADER_LENGTH ||
+                (record->Buffer = HMalloc(record->Length)) == NULL)
+        {
+            record->Length = 0;
+            return;
+        }
 
-	/* First copy the header then the buffer */
-	memcpy(record->Buffer,header,CEOS_HEADER_LENGTH);
-	/* Now we copy the rest */
+        /* First copy the header then the buffer */
+        memcpy(record->Buffer,header,CEOS_HEADER_LENGTH);
+        /* Now we copy the rest */
         if( record->Length > CEOS_HEADER_LENGTH )
             memcpy(record->Buffer+CEOS_HEADER_LENGTH,buffer,record->Length-CEOS_HEADER_LENGTH);
 
-	/* Now we fill in the rest of the structure! */
-	memcpy(&(record->TypeCode.Int32Code),header+TYPE_OFF,sizeof(record->TypeCode.Int32Code));
-	CeosToNative(&(record->Sequence),header+SEQUENCE_OFF,sizeof(record->Sequence), sizeof( record->Sequence ) );
+        /* Now we fill in the rest of the structure! */
+        memcpy(&(record->TypeCode.Int32Code),header+TYPE_OFF,sizeof(record->TypeCode.Int32Code));
+        CeosToNative(&(record->Sequence),header+SEQUENCE_OFF,sizeof(record->Sequence), sizeof( record->Sequence ) );
     }
 }
 
@@ -101,9 +101,8 @@ int DetermineCeosRecordBodyLength(const uchar *header)
 
     if(header)
     {
-	CeosToNative(&i,header+LENGTH_OFF,sizeof( i ), sizeof( i ) );
-
-	return i;
+        CeosToNative(&i,header+LENGTH_OFF,sizeof( i ), sizeof( i ) );
+        return i;
     }
 
     return -1;
@@ -113,11 +112,11 @@ void DeleteCeosRecord(CeosRecord_t *record)
 {
     if(record)
     {
-	if(record->Buffer)
-	{
-	    HFree(record->Buffer);
-	    record->Buffer = NULL;
-	}
+        if(record->Buffer)
+        {
+            HFree(record->Buffer);
+            record->Buffer = NULL;
+        }
         HFree( record );
     }
 }
@@ -126,7 +125,7 @@ void GetCeosRecordStruct(const CeosRecord_t *record,void *struct_ptr)
 {
     if(record && struct_ptr && record->Buffer)
     {
-	memcpy(record->Buffer,struct_ptr,record->Length);
+        memcpy(record->Buffer,struct_ptr,record->Length);
     }
 }
 
@@ -136,9 +135,9 @@ void PutCeosRecordStruct(CeosRecord_t *record,const void *struct_ptr)
 
     if(record && struct_ptr)
     {
-	CeosToNative( &Length, struct_ptr, sizeof( Length ), sizeof( Length ) );
-	memcpy(record->Buffer,struct_ptr,Length);
-	CeosUpdateHeaderFromBuffer(record);
+        CeosToNative( &Length, struct_ptr, sizeof( Length ), sizeof( Length ) );
+        memcpy(record->Buffer,struct_ptr,Length);
+        CeosUpdateHeaderFromBuffer(record);
     }
 }
 
@@ -153,18 +152,18 @@ void GetCeosField(CeosRecord_t *record, int32 start_byte,
 
     if(field_size < 1)
     {
-	return;
+        return;
     }
 
     /* Check for out of bounds */
     if(start_byte + field_size - 1 > record->Length)
     {
-	return;
+        return;
     }
 
     if((mod_buf = (char *) HMalloc(field_size + 1)) == NULL)
     {
-	return;
+        return;
     }
 
     memcpy(mod_buf,record->Buffer+(start_byte-1), field_size);
@@ -175,48 +174,48 @@ void GetCeosField(CeosRecord_t *record, int32 start_byte,
     {
     case 'b':
     case 'B':
-	/* Binary data type */
-	if(field_size > 1)
-	{
-	    CeosToNative( value, mod_buf, field_size, field_size );
-	} else {
-	    memcpy( value, mod_buf, field_size );
-	}
-	break;
+        /* Binary data type */
+        if(field_size > 1)
+        {
+            CeosToNative( value, mod_buf, field_size, field_size );
+        } else {
+            memcpy( value, mod_buf, field_size );
+        }
+        break;
 
     case 'i':
     case 'I':
-	/* Integer type */
-	*( (int *)value) = atoi(mod_buf);
-	break;
+        /* Integer type */
+        *( (int *)value) = atoi(mod_buf);
+        break;
 
     case 'f':
     case 'F':
     case 'e':
     case 'E':
-	/* Double precision float data type */
+        /* Double precision float data type */
 
-	/* Change the 'D' exponent separators to 'e' */
-	if( ( d_ptr = strchr(mod_buf, 'd') ) != NULL)
-	{
-	    *d_ptr = 'e';
-	}
-	if( ( d_ptr = strchr(mod_buf, 'D') ) != NULL)
-	{
-	    *d_ptr = 'e';
-	}
+        /* Change the 'D' exponent separators to 'e' */
+        if( ( d_ptr = strchr(mod_buf, 'd') ) != NULL)
+        {
+            *d_ptr = 'e';
+        }
+        if( ( d_ptr = strchr(mod_buf, 'D') ) != NULL)
+        {
+            *d_ptr = 'e';
+        }
 
-	*( (double *)value) = strtod(mod_buf,NULL);
-	break;
+        *( (double *)value) = strtod(mod_buf,NULL);
+        break;
     case 'a':
     case 'A':
-	/* ASCII..  We just easily extract it */
-	( (char *)value)[field_size] = '\0';
-	memcpy( value, mod_buf, field_size );
-	break;
+        /* ASCII..  We just easily extract it */
+        ( (char *)value)[field_size] = '\0';
+        memcpy( value, mod_buf, field_size );
+        break;
 
     default:
-	/* Unknown format.  Do nothing. */
+        /* Unknown format.  Do nothing. */
         break;
     }
 
@@ -233,63 +232,63 @@ void SetCeosField(CeosRecord_t *record, int32 start_byte, char *format, void *va
     sscanf(&format[1], "%d", &field_size);
     if(field_size < 1)
     {
-	return;
+        return;
     }
 
     /* Check for bounds */
     if(start_byte + field_size - 1 > record->Length)
     {
-	return;
+        return;
     }
 
     /* Make a local buffer to print into */
     if((temp_buf = (char *) HMalloc(field_size+1)) == NULL)
     {
-	return;
+        return;
     }
     switch(format[0])
     {
     case 'b':
     case 'B':
-	/* Binary data type */
-	if(field_size > 1)
-	{
-	    NativeToCeos( value, temp_buf, field_size, field_size );
-	} else {
-	    memcpy(value,temp_buf,field_size);
-	}
-	break;
+        /* Binary data type */
+        if(field_size > 1)
+        {
+            NativeToCeos( value, temp_buf, field_size, field_size );
+        } else {
+            memcpy(value,temp_buf,field_size);
+        }
+        break;
 
     case 'i':
     case 'I':
-	/* Integer data type */
-	snprintf( szPrintfFormat, sizeof(szPrintfFormat), "%%%s%c",format+1, 'd');
-	snprintf( temp_buf, field_size+1, szPrintfFormat, *(int *) value);
-	break;
+        /* Integer data type */
+        snprintf( szPrintfFormat, sizeof(szPrintfFormat), "%%%s%c",format+1, 'd');
+        snprintf( temp_buf, field_size+1, szPrintfFormat, *(int *) value);
+        break;
 
     case 'f':
     case 'F':
-	/* Double precision floating point data type */
-	snprintf( szPrintfFormat, sizeof(szPrintfFormat), "%%%s%c", format+1, 'g');
-	snprintf( temp_buf, field_size+1, szPrintfFormat, *(double *)value);
-	break;
+        /* Double precision floating point data type */
+        snprintf( szPrintfFormat, sizeof(szPrintfFormat), "%%%s%c", format+1, 'g');
+        snprintf( temp_buf, field_size+1, szPrintfFormat, *(double *)value);
+        break;
 
     case 'e':
     case 'E':
-	/* Double precision floating point data type (forced exponent) */
-	snprintf( szPrintfFormat, sizeof(szPrintfFormat), "%%%s%c", format+1, 'e');
-	snprintf( temp_buf, field_size+1, szPrintfFormat, *(double *)value);
-	break;
+        /* Double precision floating point data type (forced exponent) */
+        snprintf( szPrintfFormat, sizeof(szPrintfFormat), "%%%s%c", format+1, 'e');
+        snprintf( temp_buf, field_size+1, szPrintfFormat, *(double *)value);
+        break;
 
     case 'a':
     case 'A':
-	strncpy(temp_buf,value,field_size+1);
-	temp_buf[field_size] = '0';
-	break;
+        strncpy(temp_buf,value,field_size+1);
+        temp_buf[field_size] = '0';
+        break;
 
     default:
-	/* Unknown format */
-	HFree(temp_buf);
+        /* Unknown format */
+        HFree(temp_buf);
         return;
     }
 
@@ -314,13 +313,13 @@ CeosRecord_t *FindCeosRecord(Link_t *record_list, CeosTypeCode_t typecode, int32
 
     for( Link = record_list; Link != NULL; Link = Link->next )
     {
-	record = (CeosRecord_t *)Link->object;
+        record = (CeosRecord_t *)Link->object;
 
-	if( (record->TypeCode.Int32Code == typecode.Int32Code)
-	    && ( ( fileid == -1 ) || ( record->FileId == fileid  ) )
-	    && ( ( flavor == -1 ) || ( record->Flavor == flavor ) )
-	    && ( ( subsequence == -1 ) || ( record->Subsequence == subsequence ) ) )
-	    return record;
+        if( (record->TypeCode.Int32Code == typecode.Int32Code)
+            && ( ( fileid == -1 ) || ( record->FileId == fileid  ) )
+            && ( ( flavor == -1 ) || ( record->Flavor == flavor ) )
+            && ( ( subsequence == -1 ) || ( record->Subsequence == subsequence ) ) )
+            return record;
     }
 
     return NULL;
@@ -338,11 +337,11 @@ void SerializeCeosRecordsToFile(Link_t *record_list, VSILFILE *fp)
 
     while(list != NULL)
     {
-	memcpy(&crec,list->object,sizeof(CeosRecord_t));
-	Buffer = crec.Buffer;
-	crec.Buffer = NULL;
-	CPL_IGNORE_RET_VAL_SIZET(VSIFWriteL(&crec,sizeof(CeosRecord_t),1,fp));
-	CPL_IGNORE_RET_VAL_SIZET(VSIFWriteL(Buffer,crec.Length,1,fp));
+        memcpy(&crec,list->object,sizeof(CeosRecord_t));
+        Buffer = crec.Buffer;
+        crec.Buffer = NULL;
+        CPL_IGNORE_RET_VAL_SIZET(VSIFWriteL(&crec,sizeof(CeosRecord_t),1,fp));
+        CPL_IGNORE_RET_VAL_SIZET(VSIFWriteL(Buffer,crec.Length,1,fp));
     }
 }
 
@@ -353,12 +352,12 @@ void SerializeCeosRecordsFromFile(Link_t *record_list, VSILFILE *fp)
 
     while(!VSIFEofL(fp))
     {
-	crec = HMalloc(sizeof(CeosRecord_t));
-	CPL_IGNORE_RET_VAL_SIZET(VSIFReadL(crec,sizeof(CeosRecord_t),1,fp));
-	crec->Buffer = HMalloc(crec->Length * sizeof(char) );
-	CPL_IGNORE_RET_VAL_SIZET(VSIFReadL(crec->Buffer,sizeof(char),crec->Length,fp));
-	Link = ceos2CreateLink(crec);
-	AddLink(record_list,Link);
+        crec = HMalloc(sizeof(CeosRecord_t));
+        CPL_IGNORE_RET_VAL_SIZET(VSIFReadL(crec,sizeof(CeosRecord_t),1,fp));
+        crec->Buffer = HMalloc(crec->Length * sizeof(char) );
+        CPL_IGNORE_RET_VAL_SIZET(VSIFReadL(crec->Buffer,sizeof(char),crec->Length,fp));
+        Link = ceos2CreateLink(crec);
+        AddLink(record_list,Link);
     }
 }
 
@@ -366,9 +365,9 @@ void CeosUpdateHeaderFromBuffer(CeosRecord_t *record)
 {
     if(record && record->Buffer)
     {
-	CeosToNative( &( record->Length ), record->Buffer+LENGTH_OFF, sizeof(record->Length ), sizeof( record->Length ) );
-	memcpy(&(record->TypeCode.Int32Code),record->Buffer+TYPE_OFF,sizeof(record->TypeCode.Int32Code));
-	CeosToNative(&(record->Sequence),record->Buffer+SEQUENCE_OFF,sizeof(record->Sequence ), sizeof( record->Sequence ) );
+        CeosToNative( &( record->Length ), record->Buffer+LENGTH_OFF, sizeof(record->Length ), sizeof( record->Length ) );
+        memcpy(&(record->TypeCode.Int32Code),record->Buffer+TYPE_OFF,sizeof(record->TypeCode.Int32Code));
+        CeosToNative(&(record->Sequence),record->Buffer+SEQUENCE_OFF,sizeof(record->Sequence ), sizeof( record->Sequence ) );
     }
     if(record)
         record->Subsequence = 0;
@@ -385,7 +384,7 @@ void swapbyte(void *dst,void *src,size_t toswap)
 
     for(i = 0,e=toswap;i < toswap;i++,e--)
     {
-	out[i] = in[e-1];
+        out[i] = in[e-1];
     }
 }
 
@@ -402,12 +401,12 @@ void NativeToCeos( void *dst, const void *src, const size_t len, const size_t sw
 
     for(i = 0;i < units; i += swapunit )
     {
-	swapbyte( ( unsigned char *) dst + i, ( unsigned char * ) src + i, swapunit);
+        swapbyte( ( unsigned char *) dst + i, ( unsigned char * ) src + i, swapunit);
     }
 
     if(l_remainder)
     {
-	memcpy( ( unsigned char * ) dst + i, ( unsigned char * ) src + i, l_remainder );
+        memcpy( ( unsigned char * ) dst + i, ( unsigned char * ) src + i, l_remainder );
     }
 }
 

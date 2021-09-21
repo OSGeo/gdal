@@ -273,7 +273,7 @@ private:
 
     static int          Identify( GDALOpenInfo * poOpenInfo );
     static GDALDataset  *Open( GDALOpenInfo * );
-    static GDALDataset  *Open(GDALOpenInfo *, RMFDataset* poParentDS, vsi_l_offset nNextHeaderOffset );
+    static RMFDataset   *Open(GDALOpenInfo *, RMFDataset* poParentDS, vsi_l_offset nNextHeaderOffset );
     static GDALDataset  *Create( const char *, int, int, int,
                                  GDALDataType, char ** );
     static GDALDataset  *Create( const char *, int, int, int,
@@ -314,7 +314,7 @@ private:
     int                 SetupCompression(GDALDataType eType,
                                          const char* pszFilename);
     static void         WriteTileJobFunc(void* pData);
-    CPLErr              InitCompressorData(char **papszParmList);
+    CPLErr              InitCompressorData(char **papszParamList);
     CPLErr              WriteTile(int nBlockXOff, int nBlockYOff,
                                   GByte* pabyData, size_t nBytes,
                                   GUInt32 nRawXSize, GUInt32 nRawYSize);

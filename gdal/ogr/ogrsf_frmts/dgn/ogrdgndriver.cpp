@@ -128,6 +128,7 @@ void RegisterOGRDGN()
                                "<LayerCreationOptionList/>" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_FEATURE_STYLES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
 
     poDriver->pfnOpen = OGRDGNDriverOpen;
     poDriver->pfnIdentify = OGRDGNDriverIdentify;

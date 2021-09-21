@@ -30,6 +30,7 @@
 #include "cpl_port.h"
 #include "ogr_geometry.h"
 
+#include <cmath>
 #include <cstdio>
 #include <cstring>
 #include <algorithm>
@@ -42,6 +43,17 @@
 #include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$")
+
+/************************************************************************/
+/*                         GetEmptyNonEmptyFlag()                       */
+/************************************************************************/
+
+static int GetEmptyNonEmptyFlag(double x, double y)
+{
+    if( std::isnan(x) || std::isnan(y) )
+        return 0;
+    return OGRGeometry::OGR_G_NOT_EMPTY_POINT;
+}
 
 /************************************************************************/
 /*                              OGRPoint()                              */
@@ -74,7 +86,7 @@ OGRPoint::OGRPoint( double xIn, double yIn, double zIn ) :
     z(zIn),
     m(0.0)
 {
-    flags = OGR_G_NOT_EMPTY_POINT | OGR_G_3D;
+    flags = GetEmptyNonEmptyFlag(xIn, yIn) | OGR_G_3D;
 }
 
 /************************************************************************/
@@ -93,7 +105,7 @@ OGRPoint::OGRPoint( double xIn, double yIn ) :
     z(0.0),
     m(0.0)
 {
-    flags = OGR_G_NOT_EMPTY_POINT;
+    flags = GetEmptyNonEmptyFlag(xIn, yIn);
 }
 
 /************************************************************************/
@@ -114,7 +126,7 @@ OGRPoint::OGRPoint( double xIn, double yIn, double zIn, double mIn ) :
     z(zIn),
     m(mIn)
 {
-    flags = OGR_G_NOT_EMPTY_POINT | OGR_G_3D | OGR_G_MEASURED;
+    flags = GetEmptyNonEmptyFlag(xIn, yIn) | OGR_G_3D | OGR_G_MEASURED;
 }
 
 /************************************************************************/
@@ -190,17 +202,10 @@ OGRPoint& OGRPoint::operator=( const OGRPoint& other )
 /*      Make a new object that is a copy of this object.                */
 /************************************************************************/
 
-OGRGeometry *OGRPoint::clone() const
+OGRPoint *OGRPoint::clone() const
 
 {
-    OGRPoint *poNewPoint = new (std::nothrow) OGRPoint( x, y, z, m );
-    if( poNewPoint == nullptr )
-        return nullptr;
-
-    poNewPoint->assignSpatialReference( getSpatialReference() );
-    poNewPoint->flags = flags;
-
-    return poNewPoint;
+    return new (std::nothrow) OGRPoint(*this);
 }
 
 /************************************************************************/
@@ -288,7 +293,7 @@ void OGRPoint::setCoordinateDimension( int nNewDimension )
 /*      representation including the byte order, and type information.  */
 /************************************************************************/
 
-int OGRPoint::WkbSize() const
+size_t OGRPoint::WkbSize() const
 
 {
     if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
@@ -307,12 +312,12 @@ int OGRPoint::WkbSize() const
 /************************************************************************/
 
 OGRErr OGRPoint::importFromWkb( const unsigned char *pabyData,
-                                int nSize,
+                                size_t nSize,
                                 OGRwkbVariant eWkbVariant,
-                                int& nBytesConsumedOut )
+                                size_t& nBytesConsumedOut )
 
 {
-    nBytesConsumedOut = -1;
+    nBytesConsumedOut = 0;
     OGRwkbByteOrder eByteOrder = wkbNDR;
 
     flags = 0;
@@ -322,7 +327,7 @@ OGRErr OGRPoint::importFromWkb( const unsigned char *pabyData,
     if( eErr != OGRERR_NONE )
         return eErr;
 
-    if( nSize != -1 )
+    if( nSize != static_cast<size_t>(-1) )
     {
         if( (nSize < 37) && ((flags & OGR_G_3D) && (flags & OGR_G_MEASURED)) )
             return OGRERR_NOT_ENOUGH_DATA;

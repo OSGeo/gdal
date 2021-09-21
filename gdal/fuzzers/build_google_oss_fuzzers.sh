@@ -25,6 +25,10 @@ fi
 
 SRC_DIR=$(dirname $0)/..
 
+if [ "$LIBGDAL" = "" ]; then
+  LIBGDAL="$SRC_DIR/libgdal.a"
+fi
+
 build_fuzzer()
 {
     fuzzerName=$1
@@ -33,13 +37,13 @@ build_fuzzer()
     shift
     echo "Building fuzzer $fuzzerName"
     if test -d $SRC/install/lib; then
-        $CXX $CXXFLAGS -std=c++11 -I$SRC_DIR/port -I$SRC_DIR/gcore -I$SRC_DIR/alg -I$SRC_DIR/apps -I$SRC_DIR/ogr -I$SRC_DIR/ogr/ogrsf_frmts -I$SRC_DIR/ogr/ogrsf_frmts/sqlite \
+        $CXX $CXXFLAGS -I$SRC_DIR/port -I$SRC_DIR/gcore -I$SRC_DIR/alg -I$SRC_DIR/apps -I$SRC_DIR/ogr -I$SRC_DIR/ogr/ogrsf_frmts -I$SRC_DIR/ogr/ogrsf_frmts/sqlite \
             $sourceFilename "$@" -o $OUT/$fuzzerName \
-            $LIB_FUZZING_ENGINE $SRC_DIR/libgdal.a $EXTRA_LIBS $SRC/install/lib/*.a
+            $LIB_FUZZING_ENGINE $LIBGDAL $EXTRA_LIBS $SRC/install/lib/*.a
     else
-        $CXX $CXXFLAGS -std=c++11 -I$SRC_DIR/port -I$SRC_DIR/gcore -I$SRC_DIR/alg -I$SRC_DIR/apps -I$SRC_DIR/ogr -I$SRC_DIR/ogr/ogrsf_frmts -I$SRC_DIR/ogr/ogrsf_frmts/sqlite \
+        $CXX $CXXFLAGS -I$SRC_DIR/port -I$SRC_DIR/gcore -I$SRC_DIR/alg -I$SRC_DIR/apps -I$SRC_DIR/ogr -I$SRC_DIR/ogr/ogrsf_frmts -I$SRC_DIR/ogr/ogrsf_frmts/sqlite \
             $sourceFilename "$@" -o $OUT/$fuzzerName \
-            $LIB_FUZZING_ENGINE $SRC_DIR/libgdal.a $EXTRA_LIBS
+            $LIB_FUZZING_ENGINE $LIBGDAL $EXTRA_LIBS
     fi
 }
 
@@ -80,7 +84,6 @@ build_ogr_specialized_fuzzer shape OGRRegisterAll "/vsimem/test.tar" "/vsitar//v
 build_ogr_specialized_fuzzer mitab_mif OGRRegisterAll "/vsimem/test.tar" "/vsitar//vsimem/test.tar/my.mif"
 build_ogr_specialized_fuzzer mitab_tab OGRRegisterAll "/vsimem/test.tar" "/vsitar//vsimem/test.tar/my.tab"
 build_ogr_specialized_fuzzer csv RegisterOGRCSV "/vsimem/test.csv" "/vsimem/test.csv"
-build_ogr_specialized_fuzzer bna RegisterOGRBNA "/vsimem/test.bna" "/vsimem/test.bna"
 build_ogr_specialized_fuzzer wasp RegisterOGRWAsP "/vsimem/test.map" "/vsimem/test.map"
 build_ogr_specialized_fuzzer xlsx RegisterOGRXLSX "/vsimem/test.xlsx" "/vsitar/{/vsimem/test.xlsx}"
 build_ogr_specialized_fuzzer ods RegisterOGRODS "/vsimem/test.ods" "/vsitar/{/vsimem/test.ods}"
@@ -88,6 +91,7 @@ build_ogr_specialized_fuzzer lvbag RegisterOGRLVBAG "/vsimem/test.xml" "/vsimem/
 build_ogr_specialized_fuzzer avce00 RegisterOGRAVCE00 "/vsimem/test.e00" "/vsimem/test.e00"
 build_ogr_specialized_fuzzer avcbin RegisterOGRAVCBin "/vsimem/test.tar" "/vsitar/{/vsimem/test.tar}/testavc"
 build_ogr_specialized_fuzzer gml RegisterOGRGML "/vsimem/test.tar" "/vsitar//vsimem/test.tar/test.gml"
+build_ogr_specialized_fuzzer gmlas RegisterOGRGMLAS "/vsimem/test.tar" "GMLAS:/vsitar//vsimem/test.tar/test.gml"
 build_ogr_specialized_fuzzer fgb RegisterOGRFlatGeobuf "/vsimem/test.fgb" "/vsimem/test.fgb"
 build_fuzzer cad_fuzzer $(dirname $0)/ogr_fuzzer.cpp -DREGISTER_FUNC=RegisterOGRCAD
 build_fuzzer rec_fuzzer $(dirname $0)/ogr_fuzzer.cpp -DREGISTER_FUNC=RegisterOGRREC -DUSE_FILESYSTEM -DEXTENSION="\"rec\""
@@ -111,6 +115,8 @@ build_gdal_specialized_fuzzer mrf "GDALRegister_mrf();GDALRegister_GTiff" "/vsim
 build_gdal_specialized_fuzzer gdal_sdts GDALRegister_SDTS "/vsimem/test.tar" "/vsitar//vsimem/test.tar/1107CATD.DDF"
 build_gdal_specialized_fuzzer gdal_vrt GDALAllRegister "/vsimem/test.tar" "/vsitar//vsimem/test.tar/test.vrt"
 build_gdal_specialized_fuzzer ers GDALRegister_ERS "/vsimem/test.tar" "/vsitar//vsimem/test.tar/test.ers"
+build_gdal_specialized_fuzzer zarr GDALRegister_Zarr "/vsimem/test.tar" "/vsitar//vsimem/test.tar"
+build_gdal_specialized_fuzzer dimap "GDALRegister_DIMAP();GDALRegister_GTiff" "/vsimem/test.tar" "/vsitar//vsimem/test.tar"
 
 build_fuzzer gdal_filesystem_fuzzer $(dirname $0)/gdal_fuzzer.cpp -DUSE_FILESYSTEM
 build_fuzzer ogr_filesystem_fuzzer $(dirname $0)/ogr_fuzzer.cpp -DUSE_FILESYSTEM

@@ -8,6 +8,9 @@ ESRI ArcObjects
 
 .. build_dependencies:: ESRI ArcObjects
 
+.. deprecated_driver:: version_targeted_for_removal: 3.5
+   env_variable: GDAL_ENABLE_DEPRECATED_DRIVER_AO
+
 Overview
 --------
 

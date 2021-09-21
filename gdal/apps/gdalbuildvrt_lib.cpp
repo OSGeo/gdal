@@ -34,6 +34,7 @@
 #include "gdal_utils.h"
 #include "gdal_utils_priv.h"
 
+#include <cassert>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -68,6 +69,7 @@ CPL_CVSID("$Id$")
 #define GEOTRSFRM_ROTATION_PARAM2      4
 #define GEOTRSFRM_NS_RES               5
 
+namespace {
 typedef enum
 {
     LOWEST_RESOLUTION,
@@ -120,6 +122,7 @@ struct BandProperty
     bool                   bHasScale = false;
     double                 dfScale = 0;
 };
+} // namespace
 
 /************************************************************************/
 /*                            ArgIsNumeric()                            */
@@ -1241,6 +1244,7 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
             }
             if( pszResampling )
                 poSource->SetResampling(pszResampling);
+            assert( poMaskVRTBand );
             poMaskVRTBand->ConfigureSource( poSource,
                                             static_cast<GDALRasterBand*>(GDALGetRasterBand(hSourceDS, 1)),
                                             TRUE,

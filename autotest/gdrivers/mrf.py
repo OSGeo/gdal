@@ -33,34 +33,50 @@ import pytest
 from osgeo import gdal
 import gdaltest
 
+pytestmark = pytest.mark.require_driver('MRF')
 
 mrf_list = [
     ('byte.tif', 4672, [4672], []),
+    ('byte.tif', 4672, [4672], ['COMPRESS=ZSTD']),
     ('byte.tif', 4672, [4672], ['COMPRESS=DEFLATE']),
     ('byte.tif', 4672, [4672], ['COMPRESS=NONE']),
     ('byte.tif', 4672, [4672], ['COMPRESS=LERC']),
     ('byte.tif', 4672, [5015], ['COMPRESS=LERC', 'OPTIONS:LERC_PREC=10']),
     ('byte.tif', 4672, [4672], ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
     ('int16.tif', 4672, [4672], []),
+    ('int16.tif', 4672, [4672], ['COMPRESS=ZSTD']),
+    ('int16.tif', 4672, [4672], ['COMPRESS=DEFLATE']),
     ('int16.tif', 4672, [4672], ['COMPRESS=LERC']),
     ('int16.tif', 4672, [4672], ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
     ('../../gcore/data/uint16.tif', 4672, [4672], []),
+    ('../../gcore/data/uint16.tif', 4672, [4672], ['COMPRESS=DEFLATE']),
+    ('../../gcore/data/uint16.tif', 4672, [4672], ['COMPRESS=ZSTD']),
     ('../../gcore/data/uint16.tif', 4672, [4672], ['COMPRESS=LERC']),
     ('../../gcore/data/uint16.tif', 4672, [4672], ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
-    ('../../gcore/data/int32.tif', 4672, [4672], ['COMPRESS=TIF']),
-    ('../../gcore/data/int32.tif', 4672, [4672], ['COMPRESS=LERC']),
-    ('../../gcore/data/int32.tif', 4672, [4672], ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
+    ('int32.tif', 4672, [4672], ['COMPRESS=DEFLATE']),
+    ('int32.tif', 4672, [4672], ['COMPRESS=ZSTD']),
+    ('int32.tif', 4672, [4672], ['COMPRESS=TIF']),
+    ('int32.tif', 4672, [4672], ['COMPRESS=LERC']),
+    ('int32.tif', 4672, [4672], ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
+    ('../../gcore/data/uint32.tif', 4672, [4672], ['COMPRESS=DEFLATE']),
+    ('../../gcore/data/uint32.tif', 4672, [4672], ['COMPRESS=ZSTD']),
     ('../../gcore/data/uint32.tif', 4672, [4672], ['COMPRESS=TIF']),
     ('../../gcore/data/uint32.tif', 4672, [4672], ['COMPRESS=LERC']),
     ('../../gcore/data/uint32.tif', 4672, [4672], ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
-    ('../../gcore/data/float32.tif', 4672, [4672], ['COMPRESS=TIF']),
-    ('../../gcore/data/float32.tif', 4672, [4672], ['COMPRESS=LERC']),
-    ('../../gcore/data/float32.tif', 4672, [4672], ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
-    ('../../gcore/data/float64.tif', 4672, [4672], ['COMPRESS=TIF']),
-    ('../../gcore/data/float64.tif', 4672, [4672], ['COMPRESS=LERC']),
-    ('../../gcore/data/float64.tif', 4672, [5015], ['COMPRESS=LERC', 'OPTIONS:LERC_PREC=10']),
-    ('../../gcore/data/float64.tif', 4672, [4672], ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
+    ('float32.tif', 4672, [4672], ['COMPRESS=DEFLATE']),
+    ('float32.tif', 4672, [4672], ['COMPRESS=ZSTD']),
+    ('float32.tif', 4672, [4672], ['COMPRESS=TIF']),
+    ('float32.tif', 4672, [4672], ['COMPRESS=LERC']),
+    ('float32.tif', 4672, [4672], ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
+    ('float64.tif', 4672, [4672], ['COMPRESS=DEFLATE']),
+    ('float64.tif', 4672, [4672], ['COMPRESS=ZSTD']),
+    ('float64.tif', 4672, [4672], ['COMPRESS=TIF']),
+    ('float64.tif', 4672, [4672], ['COMPRESS=LERC']),
+    ('float64.tif', 4672, [5015], ['COMPRESS=LERC', 'OPTIONS:LERC_PREC=10']),
+    ('float64.tif', 4672, [4672], ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
     ('../../gcore/data/utmsmall.tif', 50054, [50054], []),
+    ('small_world.tif', 30111, [30111], ['COMPRESS=ZSTD']),
+    ('small_world.tif', 30111, [30111], ['COMPRESS=ZSTD', 'INTERLEAVE=PIXEL']),
     ('small_world.tif', 30111, [30111], ['COMPRESS=LERC', 'INTERLEAVE=PIXEL']),
     ('small_world.tif', 30111, [30111], ['COMPRESS=LERC', 'OPTIONS=V1:1', 'INTERLEAVE=PIXEL']),
     ('small_world_pct.tif', 14890, [14890], ['COMPRESS=PPNG']),
@@ -75,6 +91,7 @@ mrf_list = [
     ('f32nan_data.tif', 54061, [54052, 54050], ['COMPRESS=LERC', 'OPTIONS=V1:Yes LERC_PREC:0.01']),
 ]
 
+mrf_co = gdal.GetDriverByName('MRF').GetMetadataItem('DMD_CREATIONOPTIONLIST')
 
 @pytest.mark.parametrize(
     'src_filename,chksum,chksum_after_reopening,options',
@@ -83,7 +100,10 @@ mrf_list = [
 )
 def test_mrf(src_filename, chksum, chksum_after_reopening, options):
 
-    if 'COMPRESS=LERC' in options and 'LERC' not in gdal.GetDriverByName('MRF').GetMetadataItem('DMD_CREATIONOPTIONLIST'):
+    if 'COMPRESS=LERC' in options and 'LERC' not in mrf_co:
+        pytest.skip()
+
+    if 'COMPRESS=ZSTD' in options and 'ZSTD' not in mrf_co:
         pytest.skip()
 
     if 'jpg' in src_filename:
@@ -107,7 +127,7 @@ def test_mrf(src_filename, chksum, chksum_after_reopening, options):
     return ut.testCreateCopy(check_minmax=check_minmax)
 
 def cleanup(base = '/vsimem/out.'):
-    for ext in ['mrf', 'mrf.aux.xml', 'idx', 'ppg', 'til', 'lrc', 'pjg']:
+    for ext in ['mrf', 'mrf.aux.xml', 'idx', 'ppg', 'til', 'lrc', 'pjg', 'pzp', 'psz']:
         gdal.Unlink(base + ext)
 
 def test_mrf_zen_test():
@@ -288,7 +308,7 @@ def test_mrf_overview_external():
 
 def test_mrf_lerc_nodata():
 
-    if 'LERC' not in gdal.GetDriverByName('MRF').GetMetadataItem('DMD_CREATIONOPTIONLIST'):
+    if 'LERC' not in mrf_co:
         pytest.skip()
 
     gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format='MRF',
@@ -305,7 +325,7 @@ def test_mrf_lerc_nodata():
 
 def test_mrf_lerc_with_huffman():
 
-    if 'LERC' not in gdal.GetDriverByName('MRF').GetMetadataItem('DMD_CREATIONOPTIONLIST'):
+    if 'LERC' not in mrf_co:
         pytest.skip()
 
     gdal.Translate('/vsimem/out.mrf', 'data/small_world.tif', format='MRF',
@@ -318,7 +338,7 @@ def test_mrf_lerc_with_huffman():
     cleanup()
 
 def test_raw_lerc():
-    if 'LERC' not in gdal.GetDriverByName('MRF').GetMetadataItem('DMD_CREATIONOPTIONLIST'):
+    if 'LERC' not in  mrf_co:
         pytest.skip()
 
     # Defaults to LERC2

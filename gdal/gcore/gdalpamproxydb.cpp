@@ -418,10 +418,13 @@ const char *PamAllocateProxy( const char *pszOriginal )
     for( i = static_cast<int>(osRevProxyFile.size())-1; i >= 0; i-- )
         osProxy += osRevProxyFile[i];
 
-    if( osOriginal.find(":::OVR") != CPLString::npos )
-        osProxy += ".ovr";
-    else
-        osProxy += ".aux.xml";
+    if( !osOriginal.endsWith(".gmac") )
+    {
+        if( osOriginal.find(":::OVR") != CPLString::npos )
+            osProxy += ".ovr";
+        else
+            osProxy += ".aux.xml";
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Add the proxy and the original to the proxy list and resave     */

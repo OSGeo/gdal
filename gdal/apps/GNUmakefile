@@ -4,7 +4,7 @@
 
 include ../GDALmake.opt
 
-CPPFLAGS :=	-I$(GDAL_ROOT)/frmts/vrt $(CPPFLAGS) $(JSON_INCLUDE) $(PROJ_INCLUDE) -I$(GDAL_ROOT)/ogr/ogrsf_frmts/geojson -I$(GDAL_ROOT)/ogr/ogrsf_frmts/generic -g
+CPPFLAGS :=	-iquote $(GDAL_ROOT)/frmts/vrt $(CPPFLAGS) $(JSON_INCLUDE) $(PROJ_INCLUDE) -iquote $(GDAL_ROOT)/ogr/ogrsf_frmts/geojson -iquote $(GDAL_ROOT)/ogr/ogrsf_frmts/generic -g
 LNK_FLAGS :=	$(LDFLAGS)
 DEP_LIBS =	$(EXE_DEP_LIBS) $(XTRAOBJ)
 
@@ -26,12 +26,11 @@ BIN_LIST += 	gdal_contour$(EXE) \
 		ogr2ogr$(EXE) \
 		ogrtindex$(EXE) \
 		ogrlineref$(EXE) \
-		testepsg$(EXE) \
 		gdalbuildvrt$(EXE)
 
 ifeq ($(GNM_ENABLED),yes)
 BIN_LIST += 	gnmmanage$(EXE) gnmanalyse$(EXE)
-CPPFLAGS +=	-I$(GDAL_ROOT)/gnm
+CPPFLAGS +=	-iquote $(GDAL_ROOT)/gnm
 endif
 
 ifeq ($(HAVE_GEOS),yes)
@@ -195,7 +194,7 @@ gdal_create$(EXE):	gdal_create.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 clean:
-	$(RM) *.o $(BIN_LIST) core gdal-config gdal-config-inst
+	$(RM) *.o $(BIN_LIST) $(NON_DEFAULT_LIST) core gdal-config gdal-config-inst
 
 $(DEP_LIBS):
 

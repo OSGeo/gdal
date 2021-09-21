@@ -26,22 +26,52 @@ construction of the DSN based on that information in a manner similar to
 the default (used for Windows access to the Microsoft Access Driver).
 
 OGR treats all feature tables as layers. Most geometry types should be
-supported, including 3D data. Measures information will be discarded.
+supported, including 3D data. Measure information (m value) is also supported.
 Coordinate system information should be properly associated with layers.
 
 Currently the OGR Personal Geodatabase driver does not take advantage of
 spatial indexes for fast spatial queries, though that may be added in
 the future.
 
+The Personal GeoDatabase format does not strictly differentiate between
+multi and single geometry types for polygon or line layers, and it is
+possible for a polygon or line layer to contain a mix of both single
+and multi type geometries. Accordingly, in order to provide predictable
+geometry types, the GDAL driver will always report the type of a line
+layer as wkbMultiLineString, and a polygon layer as wkbMultiPolygon.
+Single-part line or polygon features in the database will be promoted
+to multilinestrings or multipolygons during reading.
+
 By default, SQL statements are passed directly to the MDB database
 engine. It's also possible to request the driver to handle SQL commands
 with :ref:`OGR SQL <ogr_sql_dialect>` engine, by passing **"OGRSQL"**
 string to the ExecuteSQL() method, as name of the SQL dialect.
 
+Special SQL requests
+--------------------
+
+"GetLayerDefinition a_layer_name" and "GetLayerMetadata a_layer_name"
+can be used as special SQL requests to get respectively the definition
+and metadata of a Personal GeoDatabase table as XML content.
+
+Dataset open options
+--------------------
+
+-  **LIST_ALL_TABLES**\ =YES/NO: This may be "YES" to force all tables,
+   including system and internal tables (such as the GDB_* tables) to be listed (since GDAL 3.4)
+
 Driver capabilities
 -------------------
 
 .. supports_georeferencing::
+
+
+Field domains
+-------------
+
+.. versionadded:: 3.4
+
+Coded and range field domains are supported.
 
 How to use PGeo driver with unixODBC and MDB Tools (on Unix and Linux)
 ----------------------------------------------------------------------
@@ -59,12 +89,11 @@ Prerequisites
 ~~~~~~~~~~~~~
 
 #. Install `unixODBC <http://www.unixodbc.org>`__ >= 2.2.11
-#. Install MDB Tools. While the official upstream of MDB Tools is abandoned and
-   contains many bugs which prevent correct parsing of Personal Geodatabase geometry
-   data, the maintained fork at `https://github.com/evanmiller/mdbtools <https://github.com/evanmiller/mdbtools>`__
-   contains all required fixes to allow GDAL to successfully read Personal Geodatabases.
+#. Install MDB Tools. The official upstream of MDB Tools is maintained
+   at `https://github.com/mdbtools/mdbtools <https://github.com/mdbtools/mdbtools>`__
+   Version 0.9.4 or later is recommended for best compatibility with the PGeo driver.
 
-(On Ubuntu 8.04 : sudo apt-get install unixodbc libmdbodbc)
+(On Ubuntu : sudo apt-get install unixodbc libmdbodbc)
 
 Configuration
 ~~~~~~~~~~~~~
@@ -206,7 +235,7 @@ Resources
 
 -  `About ESRI
    Geodatabase <http://www.esri.com/software/arcgis/geodatabase/index.html>`__
--  `evanmiller's maintained fork of MDB Tools <https://github.com/evanmiller/mdbtools>`__
+-  `MDB Tools project home <https://github.com/mdbtools/mdbtools>`__
 
 See also
 --------

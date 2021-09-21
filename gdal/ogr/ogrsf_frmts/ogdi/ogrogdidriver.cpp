@@ -124,6 +124,7 @@ void RegisterOGROGDI()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "OGDI Vectors (VPF, VMAP, DCW)" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/ogdi.html" );
+    poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
 
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
 }

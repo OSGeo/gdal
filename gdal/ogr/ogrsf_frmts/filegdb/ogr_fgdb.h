@@ -276,12 +276,14 @@ protected:
 /************************************************************************/
 
 class FGdbDatabaseConnection;
+class OGRFileGDBGroup;
 
 class FGdbDataSource final: public OGRDataSource
 {
   CPLString             m_osFSName;
   CPLString             m_osPublicName;
   std::set<OGRLayer*>   m_oSetSelectLayers;
+  std::shared_ptr<GDALGroup>     m_poRootGroup{};
 
   int        FixIndexes();
   int        bPerLayerCopyingForTransaction;
@@ -311,6 +313,10 @@ public:
 
   int TestCapability( const char * ) override;
 
+  const OGRFieldDomain* GetFieldDomain(const std::string& name) const override;
+
+  std::shared_ptr<GDALGroup> GetRootGroup() const override { return m_poRootGroup; }
+
   Geodatabase* GetGDB() { return m_pGeodatabase; }
   bool         GetUpdate() { return m_bUpdate; }
   FGdbDatabaseConnection* GetConnection() { return m_pConnection; }
@@ -333,7 +339,8 @@ public:
   */
 protected:
   bool LoadLayers(const std::wstring & parent);
-  bool OpenFGDBTables(const std::wstring &type,
+  bool OpenFGDBTables(OGRFileGDBGroup* group,
+                      const std::wstring &type,
                       const std::vector<std::wstring> &layers);
 
   FGdbDriver* m_poDriver;

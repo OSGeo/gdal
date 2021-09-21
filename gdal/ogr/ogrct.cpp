@@ -36,9 +36,11 @@
 #include <cstring>
 #include <limits>
 #include <list>
+#include <mutex>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_mem_cache.h"
 #include "cpl_string.h"
 #include "ogr_core.h"
 #include "ogr_srs_api.h"
@@ -48,6 +50,52 @@
 #include "proj_experimental.h"
 
 CPL_CVSID("$Id$")
+
+#ifdef DEBUG_PERF
+static double g_dfTotalTimeCRStoCRS = 0;
+static double g_dfTotalTimeReprojection = 0;
+
+/************************************************************************/
+/*                        CPLGettimeofday()                             */
+/************************************************************************/
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#  include <sys/timeb.h>
+
+namespace {
+struct CPLTimeVal
+{
+  time_t  tv_sec;         /* seconds */
+  long    tv_usec;        /* and microseconds */
+};
+}
+
+static void CPLGettimeofday(struct CPLTimeVal* tp, void* /* timezonep*/ )
+{
+  struct _timeb theTime;
+
+  _ftime(&theTime);
+  tp->tv_sec = static_cast<time_t>(theTime.time);
+  tp->tv_usec = theTime.millitm * 1000;
+}
+#else
+#  include <sys/time.h>     /* for gettimeofday() */
+#  define  CPLTimeVal timeval
+#  define  CPLGettimeofday(t,u) gettimeofday(t,u)
+#endif
+
+#endif // DEBUG_PERF
+
+// Cache of OGRProjCT objects
+static std::mutex g_oCTCacheMutex;
+class OGRProjCT;
+// We wrap a OGRProjCT in a shared_ptr<unique_ptr>, because we need a copyable
+// type to be inserted in the cache (shared_ptr), and we need to be able to
+// alter the content of the value to release() the unique_ptr value when we
+// find a value in it.
+typedef std::string CTCacheKey;
+typedef std::shared_ptr<std::unique_ptr<OGRProjCT>> CTCacheValue;
+static lru11::Cache<CTCacheKey, CTCacheValue>* g_poCTCache = nullptr;
 
 /************************************************************************/
 /*             OGRCoordinateTransformationOptions::Private              */
@@ -72,7 +120,88 @@ struct OGRCoordinateTransformationOptions::Private
 
     bool bHasTargetCenterLong = false;
     double dfTargetCenterLong = 0.0;
+
+    bool bCheckWithInvertProj = false;
+
+    Private();
+    Private(const Private&) = default;
+    Private(Private&&) = default;
+    Private& operator=(const Private&) = default;
+    Private& operator=(Private&&) = default;
+
+    std::string GetKey() const;
+    void RefreshCheckWithInvertProj();
 };
+
+/************************************************************************/
+/*                              Private()                               */
+/************************************************************************/
+
+OGRCoordinateTransformationOptions::Private::Private()
+{
+    RefreshCheckWithInvertProj();
+}
+
+/************************************************************************/
+/*                              GetKey()                                */
+/************************************************************************/
+
+std::string OGRCoordinateTransformationOptions::Private::GetKey() const
+{
+    std::string ret;
+    ret += std::to_string(static_cast<int>(bHasAreaOfInterest));
+    ret += std::to_string(dfWestLongitudeDeg);
+    ret += std::to_string(dfSouthLatitudeDeg);
+    ret += std::to_string(dfEastLongitudeDeg);
+    ret += std::to_string(dfNorthLatitudeDeg);
+    ret += osCoordOperation;
+    ret += std::to_string(static_cast<int>(bReverseCO));
+    ret += std::to_string(static_cast<int>(bAllowBallpark));
+    ret += std::to_string(dfAccuracy);
+    ret += std::to_string(static_cast<int>(bHasSourceCenterLong));
+    ret += std::to_string(dfSourceCenterLong);
+    ret += std::to_string(static_cast<int>(bHasTargetCenterLong));
+    ret += std::to_string(dfTargetCenterLong);
+    ret += std::to_string(static_cast<int>(bCheckWithInvertProj));
+    return ret;
+}
+
+/************************************************************************/
+/*                       RefreshCheckWithInvertProj()                   */
+/************************************************************************/
+
+void OGRCoordinateTransformationOptions::Private::RefreshCheckWithInvertProj()
+{
+    bCheckWithInvertProj =
+        CPLTestBool(CPLGetConfigOption( "CHECK_WITH_INVERT_PROJ", "NO" ));
+}
+
+/************************************************************************/
+/*                          GetWktOrProjString()                        */
+/************************************************************************/
+
+static char* GetWktOrProjString(const OGRSpatialReference* poSRS)
+{
+    CPLErrorStateBackuper oErrorStateBackuper;
+    CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+    const char* const apszOptionsWKT2_2018[] = { "FORMAT=WKT2_2018", nullptr };
+    // If there's a PROJ4 EXTENSION node in WKT1, then use
+    // it. For example when dealing with "+proj=longlat +lon_wrap=180"
+    char* pszText = nullptr;
+    if( poSRS->GetExtension(nullptr, "PROJ4", nullptr) )
+    {
+        poSRS->exportToProj4(&pszText);
+        if (strstr(pszText, " +type=crs") == nullptr )
+        {
+            auto tmpText = std::string(pszText) + " +type=crs";
+            CPLFree(pszText);
+            pszText = CPLStrdup(tmpText.c_str());
+        }
+    }
+    else
+        poSRS->exportToWkt(&pszText, apszOptionsWKT2_2018);
+    return pszText;
+}
 
 /************************************************************************/
 /*                  OGRCoordinateTransformationOptions()                */
@@ -221,7 +350,7 @@ bool OGRCoordinateTransformationOptions::SetAreaOfInterest(
 /** \brief Sets an area of interest.
  *
  * See OGRCoordinateTransformationOptions::SetAreaOfInterest()
- * 
+ *
  * @since GDAL 3.0
  */
 int OCTCoordinateTransformationOptionsSetAreaOfInterest(
@@ -295,7 +424,7 @@ void OGRCoordinateTransformationOptions::SetTargetCenterLong(double dfCenterLong
 /** \brief Sets a coordinate operation.
  *
  * See OGRCoordinateTransformationOptions::SetCoordinateTransformation()
- * 
+ *
  * @since GDAL 3.0
  */
 int OCTCoordinateTransformationOptionsSetOperation(
@@ -395,24 +524,79 @@ int OCTCoordinateTransformationOptionsSetBallparkAllowed(
 //! @cond Doxygen_Suppress
 class OGRProjCT : public OGRCoordinateTransformation
 {
+    class PjPtr
+    {
+        PJ* m_pj = nullptr;
+        void reset()
+        {
+            if( m_pj )
+            {
+                proj_assign_context(m_pj, OSRGetProjTLSContext());
+                proj_destroy(m_pj);
+            }
+        }
+    public:
+        PjPtr() : m_pj(nullptr){}
+        explicit PjPtr(PJ* pjIn) : m_pj(pjIn){}
+        ~PjPtr()
+        {
+            reset();
+        }
+        PjPtr(const PjPtr& other) :
+            m_pj((other.m_pj != nullptr) ?
+                 (proj_clone(OSRGetProjTLSContext(), other.m_pj)) :
+                 (nullptr))
+        {}
+        PjPtr(PjPtr&& other) :
+            m_pj(other.m_pj)
+        {
+            other.m_pj = nullptr;
+        }
+        PjPtr& operator=(const PjPtr& other)
+        {
+            if(this != &other)
+            {
+                reset();
+                m_pj = (other.m_pj != nullptr) ?
+                       (proj_clone(OSRGetProjTLSContext(), other.m_pj)) :
+                       (nullptr);
+            }
+            return *this;
+        }
+        PjPtr& operator=(PJ* pjIn)
+        {
+            if(m_pj != pjIn)
+            {
+                reset();
+                m_pj = pjIn;
+            }
+            return *this;
+        }
+        operator PJ* () { return m_pj; }
+        operator const PJ* () const{ return m_pj; }
+    };
+
     OGRSpatialReference *poSRSSource = nullptr;
     bool        bSourceLatLong = false;
     bool        bSourceWrap = false;
     double      dfSourceWrapLong = 0.0;
+    bool        bSourceIsDynamicCRS = false;
+    double      dfSourceCoordinateEpoch = 0.0;
 
     OGRSpatialReference *poSRSTarget = nullptr;
     bool        bTargetLatLong = false;
     bool        bTargetWrap = false;
     double      dfTargetWrapLong = 0.0;
+    bool        bTargetIsDynamicCRS = false;
+    double      dfTargetCoordinateEpoch = 0.0;
 
     bool        bWebMercatorToWGS84LongLat = false;
 
     int         nErrorCount = 0;
 
-    bool        bCheckWithInvertProj = false;
     double      dfThreshold = 0.0;
 
-    PJ*         m_pj = nullptr;
+    PjPtr       m_pj{};
     bool        m_bReversePj = false;
 
     bool        m_bEmitErrors = true;
@@ -434,14 +618,13 @@ class OGRProjCT : public OGRCoordinateTransformation
     bool        ListCoordinateOperations(const char* pszSrcSRS,
                                          const char* pszTargetSRS,
                                          const OGRCoordinateTransformationOptions& options );
-
     struct Transformation
     {
         double minx = 0.0;
         double miny = 0.0;
         double maxx = 0.0;
         double maxy = 0.0;
-        PJ* pj = nullptr;
+        PjPtr  pj{};
         CPLString osName{};
         CPLString osProjString{};
         double accuracy = 0.0;
@@ -454,36 +637,19 @@ class OGRProjCT : public OGRCoordinateTransformation
             minx(minxIn), miny(minyIn), maxx(maxxIn), maxy(maxyIn),
             pj(pjIn), osName(osNameIn), osProjString(osProjStringIn),
             accuracy(accuracyIn) {}
-
-        Transformation(const Transformation&) = delete;
-        Transformation(Transformation&& other):
-            minx(other.minx), miny(other.miny), maxx(other.maxx), maxy(other.maxy),
-            pj(other.pj), osName(std::move(other.osName)),
-            osProjString(std::move(other.osProjString)),
-            accuracy(other.accuracy)
-        {
-            other.pj = nullptr;
-        }
-        Transformation& operator=(const Transformation&) = delete;
-
-        ~Transformation()
-        {
-            if( pj )
-            {
-                proj_assign_context(pj, OSRGetProjTLSContext());
-                proj_destroy(pj);
-            }
-        }
     };
     std::vector<Transformation> m_oTransformations{};
     int m_iCurTransformation = -1;
     OGRCoordinateTransformationOptions m_options{};
 
-    OGRProjCT(const OGRProjCT& other)
-    {
-        Initialize(other.poSRSSource, other.poSRSTarget, other.m_options);
-    }
+    void ComputeThreshold();
+
+    OGRProjCT(const OGRProjCT& other);
     OGRProjCT& operator= (const OGRProjCT& ) = delete;
+
+    static CTCacheKey MakeCacheKey(const OGRSpatialReference* poSRS1,
+                           const OGRSpatialReference* poSRS2,
+                           const OGRCoordinateTransformationOptions& options);
 
 public:
     OGRProjCT();
@@ -508,9 +674,15 @@ public:
     void SetEmitErrors( bool bEmitErrors ) override
         { m_bEmitErrors = bEmitErrors; }
 
-    OGRCoordinateTransformation* Clone() const override {
-        return new OGRProjCT(*this);
-    }
+    OGRCoordinateTransformation* Clone() const override;
+
+    OGRCoordinateTransformation* GetInverse() const override;
+
+    static void InsertIntoCache( OGRProjCT* poCT );
+
+    static OGRProjCT* FindFromCache( const OGRSpatialReference *poSource,
+                                     const OGRSpatialReference *poTarget,
+                                     const OGRCoordinateTransformationOptions& options );
 };
 //! @endcond
 
@@ -530,7 +702,8 @@ void CPL_STDCALL
 OCTDestroyCoordinateTransformation( OGRCoordinateTransformationH hCT )
 
 {
-    delete OGRCoordinateTransformation::FromHandle(hCT);
+    OGRCoordinateTransformation::DestroyCT(
+        OGRCoordinateTransformation::FromHandle(hCT));
 }
 
 /************************************************************************/
@@ -556,7 +729,15 @@ OCTDestroyCoordinateTransformation( OGRCoordinateTransformationH hCT )
 
 void OGRCoordinateTransformation::DestroyCT( OGRCoordinateTransformation* poCT )
 {
-    delete poCT;
+    auto poProjCT = dynamic_cast<OGRProjCT*>(poCT);
+    if( poProjCT )
+    {
+        OGRProjCT::InsertIntoCache(poProjCT);
+    }
+    else
+    {
+        delete poCT;
+    }
 }
 
 /************************************************************************/
@@ -573,7 +754,7 @@ void OGRCoordinateTransformation::DestroyCT( OGRCoordinateTransformation* poCT )
  *
  * The delete operator, or OCTDestroyCoordinateTransformation() should
  * be used to destroy transformation objects.
- * 
+ *
  * This will honour the axis order advertized by the source and target SRS,
  * as well as their "data axis to SRS axis mapping".
  * To have a behavior similar to GDAL &lt; 3.0, the OGR_CT_FORCE_TRADITIONAL_GIS_ORDER
@@ -603,7 +784,7 @@ OGRCreateCoordinateTransformation( const OGRSpatialReference *poSource,
  *
  * The delete operator, or OCTDestroyCoordinateTransformation() should
  * be used to destroy transformation objects.
- * 
+ *
  * This will honour the axis order advertized by the source and target SRS,
  * as well as their "data axis to SRS axis mapping".
  * To have a behavior similar to GDAL &lt; 3.0, the OGR_CT_FORCE_TRADITIONAL_GIS_ORDER
@@ -641,7 +822,7 @@ OGRCreateCoordinateTransformation( const OGRSpatialReference *poSource,
  * best fitting coordinate transformation (which will be used for all coordinate
  * transformations, even if they don't fall into the declared area of interest)
  * If no options are set, then a list of candidate coordinate operations will be
- * reseached, and at each call to Transform(), the best of those candidate
+ * researched, and at each call to Transform(), the best of those candidate
  * regarding the centroid of the coordinate set will be dynamically selected.
  *
  * @param poSource source spatial reference system.
@@ -657,6 +838,11 @@ OGRCreateCoordinateTransformation( const OGRSpatialReference *poSource,
                                    const OGRCoordinateTransformationOptions& options )
 
 {
+    // Try to find if we have a match in the case
+    auto poCTFromCache = OGRProjCT::FindFromCache(poSource, poTarget, options);
+    if( poCTFromCache )
+        return poCTFromCache;
+
     OGRProjCT *poCT = new OGRProjCT();
 
     if( !poCT->Initialize( poSource, poTarget, options ) )
@@ -682,7 +868,7 @@ OGRCreateCoordinateTransformation( const OGRSpatialReference *poSource,
  *
  * OCTDestroyCoordinateTransformation() should
  * be used to destroy transformation objects.
- * 
+ *
  * This will honour the axis order advertized by the source and target SRS,
  * as well as their "data axis to SRS axis mapping".
  * To have a behavior similar to GDAL &lt; 3.0, the OGR_CT_FORCE_TRADITIONAL_GIS_ORDER
@@ -718,7 +904,7 @@ OCTNewCoordinateTransformation(
  *
  * OCTDestroyCoordinateTransformation() should
  * be used to destroy transformation objects.
- * 
+ *
  * The source SRS and target SRS should generally not be NULL. This is only
  * allowed if a custom coordinate operation is set through the hOptions argument.
  *
@@ -733,7 +919,7 @@ OCTNewCoordinateTransformation(
  * best fitting coordinate transformation (which will be used for all coordinate
  * transformations, even if they don't fall into the declared area of interest)
  * If no options are set, then a list of candidate coordinate operations will be
- * reseached, and at each call to Transform(), the best of those candidate
+ * researched, and at each call to Transform(), the best of those candidate
  * regarding the centroid of the coordinate set will be dynamically selected.
  *
  * @param hSourceSRS source spatial reference system.
@@ -749,12 +935,106 @@ OCTNewCoordinateTransformationEx(
     OGRCoordinateTransformationOptionsH hOptions)
 
 {
-    OGRCoordinateTransformationOptions defaultOptions;
     return reinterpret_cast<OGRCoordinateTransformationH>(
         OGRCreateCoordinateTransformation(
             reinterpret_cast<OGRSpatialReference *>(hSourceSRS),
             reinterpret_cast<OGRSpatialReference *>(hTargetSRS),
-            hOptions ? *hOptions : defaultOptions));
+            hOptions ? *hOptions : OGRCoordinateTransformationOptions()));
+}
+
+/************************************************************************/
+/*                              OCTClone()                              */
+/************************************************************************/
+
+/**
+ * Clone transformation object.
+ *
+ * This is the same as the C++ function OGRCreateCoordinateTransformation::Clone
+ *
+ * @return handle to transformation's clone or NULL on error,
+ *         must be freed with OCTDestroyCoordinateTransformation
+ *
+ * @since GDAL 3.4
+ */
+
+OGRCoordinateTransformationH
+OCTClone(OGRCoordinateTransformationH hTransform)
+
+{
+    VALIDATE_POINTER1( hTransform, "OCTClone", nullptr );
+    return OGRCoordinateTransformation::ToHandle(
+        OGRCoordinateTransformation::FromHandle(hTransform)->Clone());
+}
+
+/************************************************************************/
+/*                             OCTGetSourceCS()                         */
+/************************************************************************/
+
+/**
+ * Transformation's source coordinate system reference.
+ *
+ * This is the same as the C++ function OGRCreateCoordinateTransformation::GetSourceCS
+ *
+ * @return handle to transformation's source coordinate system or NULL if not present.
+ *
+ * The ownership of the returned CS belongs to the transformation object.
+ *
+ * @since GDAL 3.4
+ */
+
+OGRSpatialReferenceH OCTGetSourceCS(OGRCoordinateTransformationH hTransform)
+
+{
+    VALIDATE_POINTER1( hTransform, "OCTGetSourceCS", nullptr );
+    return OGRSpatialReference::ToHandle(
+        OGRCoordinateTransformation::FromHandle(hTransform)->GetSourceCS());
+}
+
+/************************************************************************/
+/*                             OCTGetTargetCS()                         */
+/************************************************************************/
+
+/**
+ * Transformation's target coordinate system reference.
+ *
+ * This is the same as the C++ function OGRCreateCoordinateTransformation::GetTargetCS
+ *
+ * @return handle to transformation's target coordinate system or NULL if not present.
+ *
+ * The ownership of the returned CS belongs to the transformation object.
+ *
+ * @since GDAL 3.4
+ */
+
+OGRSpatialReferenceH OCTGetTargetCS(OGRCoordinateTransformationH hTransform)
+
+{
+    VALIDATE_POINTER1( hTransform, "OCTGetTargetCS", nullptr );
+    return OGRSpatialReference::ToHandle(
+        OGRCoordinateTransformation::FromHandle(hTransform)->GetTargetCS());
+}
+
+/************************************************************************/
+/*                             OCTGetInverse()                          */
+/************************************************************************/
+
+/**
+ * Inverse transformation object.
+ *
+ * This is the same as the C++ function OGRCreateCoordinateTransformation::GetInverse
+ *
+ * @return handle to inverse transformation or NULL on error,
+ *         must be freed with OCTDestroyCoordinateTransformation
+ *
+ * @since GDAL 3.4
+ */
+
+OGRCoordinateTransformationH CPL_DLL OCTGetInverse(OGRCoordinateTransformationH hTransform)
+
+{
+    VALIDATE_POINTER1( hTransform, "OCTGetInverse", nullptr );
+    return OGRCoordinateTransformation::ToHandle(
+        OGRCoordinateTransformation::FromHandle(hTransform)->GetInverse());
 }
 
 /************************************************************************/
@@ -763,6 +1043,34 @@ OCTNewCoordinateTransformationEx(
 
 //! @cond Doxygen_Suppress
 OGRProjCT::OGRProjCT()
+{
+}
+
+/************************************************************************/
+/*                  OGRProjCT(const OGRProjCT& other)                   */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+OGRProjCT::OGRProjCT(const OGRProjCT& other) :
+    poSRSSource((other.poSRSSource != nullptr) ? (other.poSRSSource->Clone()) : (nullptr)),
+    bSourceLatLong(other.bSourceLatLong),
+    bSourceWrap(other.bSourceWrap),
+    dfSourceWrapLong(other.dfSourceWrapLong),
+    poSRSTarget((other.poSRSTarget != nullptr) ? (other.poSRSTarget->Clone()) : (nullptr)),
+    bTargetLatLong(other.bTargetLatLong),
+    bTargetWrap(other.bTargetWrap),
+    dfTargetWrapLong(other.dfTargetWrapLong),
+    bWebMercatorToWGS84LongLat(other.bWebMercatorToWGS84LongLat),
+    nErrorCount(other.nErrorCount),
+    dfThreshold(other.dfThreshold),
+    m_pj(other.m_pj),
+    m_bReversePj(other.m_bReversePj),
+    m_bEmitErrors(other.m_bEmitErrors),
+    bNoTransform(other.bNoTransform),
+    m_eStrategy(other.m_eStrategy),
+    m_oTransformations(other.m_oTransformations),
+    m_iCurTransformation(other.m_iCurTransformation),
+    m_options(other.m_options)
 {
 }
 
@@ -782,11 +1090,26 @@ OGRProjCT::~OGRProjCT()
     {
         poSRSTarget->Release();
     }
+}
 
-    if( m_pj )
+/************************************************************************/
+/*                          ComputeThreshold()                          */
+/************************************************************************/
+
+void OGRProjCT::ComputeThreshold()
+{
+    // The threshold is experimental. Works well with the cases of ticket #2305.
+    if( bSourceLatLong )
     {
-        proj_assign_context(m_pj, OSRGetProjTLSContext());
-        proj_destroy(m_pj);
+        // coverity[tainted_data]
+        dfThreshold = CPLAtof(CPLGetConfigOption( "THRESHOLD", ".1" ));
+    }
+    else
+    {
+        // 1 works well for most projections, except for +proj=aeqd that
+        // requires a tolerance of 10000.
+        // coverity[tainted_data]
+        dfThreshold = CPLAtof(CPLGetConfigOption( "THRESHOLD", "10000" ));
     }
 }
 
@@ -827,9 +1150,26 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
     }
 
     if( poSRSSource )
+    {
         bSourceLatLong = CPL_TO_BOOL(poSRSSource->IsGeographic());
+        bSourceIsDynamicCRS = poSRSSource->IsDynamic();
+        dfSourceCoordinateEpoch = poSRSSource->GetCoordinateEpoch();
+    }
     if( poSRSTarget )
+    {
         bTargetLatLong = CPL_TO_BOOL(poSRSTarget->IsGeographic());
+        bTargetIsDynamicCRS = poSRSTarget->IsDynamic();
+        dfTargetCoordinateEpoch = poSRSTarget->GetCoordinateEpoch();
+    }
+
+    if( bSourceIsDynamicCRS && bTargetIsDynamicCRS &&
+        dfSourceCoordinateEpoch > 0 && dfTargetCoordinateEpoch > 0 &&
+        dfSourceCoordinateEpoch != dfTargetCoordinateEpoch )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Coordinate transformation between different epochs are "
+                 "not currently supported");
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Setup source and target translations to radians for lat/long    */
@@ -893,22 +1233,7 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
         CPLDebug( "OGRCT", "Wrap target at %g.", dfTargetWrapLong );
     }
 
-    bCheckWithInvertProj =
-        CPLTestBool(CPLGetConfigOption( "CHECK_WITH_INVERT_PROJ", "NO" ));
-
-    // The threshold is experimental. Works well with the cases of ticket #2305.
-    if( bSourceLatLong )
-    {
-        // coverity[tainted_data]
-        dfThreshold = CPLAtof(CPLGetConfigOption( "THRESHOLD", ".1" ));
-    }
-    else
-    {
-        // 1 works well for most projections, except for +proj=aeqd that
-        // requires a tolerance of 10000.
-        // coverity[tainted_data]
-        dfThreshold = CPLAtof(CPLGetConfigOption( "THRESHOLD", "10000" ));
-    }
+    ComputeThreshold();
 
     // Detect webmercator to WGS84
     OGRAxisOrientation orientAxis0, orientAxis1;
@@ -1084,7 +1409,8 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
                 OGRSpatialReference oTmpSRS;
                 oTmpSRS.SetFromUserInput(osAuthCode);
                 oTmpSRS.SetDataAxisToSRSAxisMapping(poSRS->GetDataAxisToSRSAxisMapping());
-                if( oTmpSRS.IsSame(poSRS) )
+                const char* const apszOptionsIsSame[] = { "CRITERION=EQUIVALENT", nullptr };
+                if( oTmpSRS.IsSame(poSRS, apszOptionsIsSame) )
                 {
                     if( CanUseAuthorityDef(poSRS, &oTmpSRS, pszAuth) )
                     {
@@ -1094,29 +1420,18 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
             }
             if( pszText == nullptr )
             {
-                CPLErrorStateBackuper oErrorStateBackuper;
-                CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
-                const char* const apszOptionsWKT2_2018[] = { "FORMAT=WKT2_2018", nullptr };
-                // If there's a PROJ4 EXTENSION node in WKT1, then use
-                // it. For example when dealing with "+proj=longlat +lon_wrap=180"
-                if( poSRS->GetExtension(nullptr, "PROJ4", nullptr) )
-                {
-                    poSRS->exportToProj4(&pszText);
-                    if (strstr(pszText, " +type=crs") == nullptr )
-                    {
-                        auto tmpText = std::string(pszText) + " +type=crs";
-                        CPLFree(pszText);
-                        pszText = CPLStrdup(tmpText.c_str());
-                    }
-                }
-                else
-                    poSRS->exportToWkt(&pszText, apszOptionsWKT2_2018);
+                pszText = GetWktOrProjString(poSRS);
             }
             return pszText;
         };
 
         char* pszSrcSRS = exportSRSToText(poSRSSource);
         char* pszTargetSRS = exportSRSToText(poSRSTarget);
+#ifdef DEBUG_PERF
+        struct CPLTimeVal tvStart;
+        CPLGettimeofday(&tvStart, nullptr);
+        CPLDebug("OGR_CT", "Before proj_create_crs_to_crs()");
+#endif
 #ifdef DEBUG
         CPLDebug("OGR_CT", "Source CRS: '%s'", pszSrcSRS);
         CPLDebug("OGR_CT", "Target CRS: '%s'", pszTargetSRS);
@@ -1181,6 +1496,15 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
             CPLFree( pszTargetSRS );
             return FALSE;
         }
+#ifdef DEBUG_PERF
+        struct CPLTimeVal tvEnd;
+        CPLGettimeofday(&tvEnd, nullptr);
+        const double delay = (tvEnd.tv_sec + tvEnd.tv_usec * 1e-6) -
+                             (tvStart.tv_sec + tvStart.tv_usec * 1e-6);
+        g_dfTotalTimeCRStoCRS += delay;
+        CPLDebug("OGR_CT", "After proj_create_crs_to_crs(): %d ms",
+                 static_cast<int>(delay * 1000));
+#endif
 
         CPLFree(pszSrcSRS);
         CPLFree(pszTargetSRS);
@@ -1189,8 +1513,9 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
     if( options.d->osCoordOperation.empty() && poSRSSource && poSRSTarget )
     {
         // Determine if we can skip the transformation completely.
+        const char* const apszOptionsIsSame[] = { "CRITERION=EQUIVALENT", nullptr };
         bNoTransform = !bSourceWrap && !bTargetWrap &&
-                       CPL_TO_BOOL(poSRSSource->IsSame(poSRSTarget));
+                       CPL_TO_BOOL(poSRSSource->IsSame(poSRSTarget, apszOptionsIsSame));
     }
 
     return TRUE;
@@ -1425,7 +1750,7 @@ bool OGRProjCT::ListCoordinateOperations(const char* pszSrcSRS,
         return false;
     }
 
-    const auto addTransformation = [=](PJ* op,
+    const auto addTransformation = [this, &pjGeogToSrc, &ctx](PJ* op,
                                        double west_lon, double south_lat,
                                        double east_lon, double north_lat) {
         double minx = -std::numeric_limits<double>::max();
@@ -1718,6 +2043,11 @@ int OGRProjCT::TransformWithErrorCodes(
         }
     }
 #endif
+#ifdef DEBUG_PERF
+    //CPLDebug("OGR_CT", "Begin TransformWithErrorCodes()");
+    struct CPLTimeVal tvStart;
+    CPLGettimeofday(&tvStart, nullptr);
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Apply data axis to source CRS mapping.                          */
@@ -1810,7 +2140,7 @@ int OGRProjCT::TransformWithErrorCodes(
                     {
                         x[i] = M_PI;
                     }
-                    else if( bCheckWithInvertProj )
+                    else if( m_options.d->bCheckWithInvertProj )
                     {
                         x[i] = HUGE_VAL;
                         y[i] = HUGE_VAL;
@@ -1830,7 +2160,7 @@ int OGRProjCT::TransformWithErrorCodes(
                     {
                         x[i] = -M_PI;
                     }
-                    else if( bCheckWithInvertProj )
+                    else if( m_options.d->bCheckWithInvertProj )
                     {
                         x[i] = HUGE_VAL;
                         y[i] = HUGE_VAL;
@@ -1888,13 +2218,36 @@ int OGRProjCT::TransformWithErrorCodes(
         bTransformDone = true;
     }
 
+    // Determine the default coordinate epoch, if not provided in the point to
+    // transform.
+    // For time-dependent transformations, PROJ can currently only do
+    // staticCRS -> dynamicCRS or dynamicCRS -> staticCRS transformations, and
+    // in either case, the coordinate epoch of the dynamicCRS must be provided
+    // as the input time.
+    double dfDefaultTime = HUGE_VAL;
+    if( bSourceIsDynamicCRS && dfSourceCoordinateEpoch > 0 &&
+        !bTargetIsDynamicCRS &&
+        CPLTestBool(CPLGetConfigOption("OGR_CT_USE_SRS_COORDINATE_EPOCH", "YES")) )
+    {
+        dfDefaultTime = dfSourceCoordinateEpoch;
+        CPLDebug("OGR_CT", "Using coordinate epoch %f from source CRS",
+                 dfDefaultTime);
+    }
+    else if (bTargetIsDynamicCRS && dfTargetCoordinateEpoch > 0 &&
+             !bSourceIsDynamicCRS &&
+             CPLTestBool(CPLGetConfigOption("OGR_CT_USE_SRS_COORDINATE_EPOCH", "YES")) )
+    {
+        dfDefaultTime = dfTargetCoordinateEpoch;
+        CPLDebug("OGR_CT", "Using coordinate epoch %f from target CRS",
+                 dfDefaultTime);
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Select dynamically the best transformation for the data, if     */
 /*      needed.                                                         */
 /* -------------------------------------------------------------------- */
-
     auto ctx = OSRGetProjTLSContext();
-    auto pj = m_pj;
+    PJ* pj = m_pj;
     if( !bTransformDone && !pj )
     {
         double avgX = 0.0;
@@ -1923,7 +2276,7 @@ int OGRProjCT::TransformWithErrorCodes(
         coord.xyzt.x = avgX;
         coord.xyzt.y = avgY;
         coord.xyzt.z = z ? z[0] : 0;
-        coord.xyzt.t = t ? t[0] : HUGE_VAL;
+        coord.xyzt.t = t ? t[0] : dfDefaultTime;
 
         // We may need several attempts. For example the point at
         // lon=-111.5 lat=45.26 falls into the bounding box of the Canadian
@@ -1959,7 +2312,7 @@ int OGRProjCT::TransformWithErrorCodes(
             {
                 break;
             }
-            const auto& transf = m_oTransformations[iBestTransf];
+            auto& transf = m_oTransformations[iBestTransf];
             pj = transf.pj;
             proj_assign_context( pj, ctx );
             if( iBestTransf != m_iCurTransformation )
@@ -1975,7 +2328,7 @@ int OGRProjCT::TransformWithErrorCodes(
                 break;
             }
             pj = nullptr;
-            CPLDebug("OGRCT", 
+            CPLDebug("OGRCT",
                      "Did not result in valid result. "
                      "Attempting a retry with another operation.");
             if( iRetry == N_MAX_RETRY ) {
@@ -1991,7 +2344,7 @@ int OGRProjCT::TransformWithErrorCodes(
             // use the first operation that does not require grids.
             for( int i = 0; i < nOperations; i++ )
             {
-                const auto& transf = m_oTransformations[i];
+                auto& transf = m_oTransformations[i];
                 if( proj_coordoperation_get_grid_used_count(ctx, transf.pj) == 0 )
                 {
                     pj = transf.pj;
@@ -2059,7 +2412,7 @@ int OGRProjCT::TransformWithErrorCodes(
             coord.xyzt.x = x[i];
             coord.xyzt.y = y[i];
             coord.xyzt.z = z ? z[i] : 0;
-            coord.xyzt.t = t ? t[i] : 0;
+            coord.xyzt.t = t ? t[i] : dfDefaultTime;
             proj_errno_reset(pj);
             coord = proj_trans(pj, m_bReversePj ? PJ_INV : PJ_FWD, coord);
             x[i] = coord.xyzt.x;
@@ -2069,7 +2422,28 @@ int OGRProjCT::TransformWithErrorCodes(
             if( t )
                 t[i] = coord.xyzt.t;
             int err = 0;
-            if( coord.xyzt.x == HUGE_VAL )
+            if( std::isnan(coord.xyzt.x) )
+            {
+                // This shouldn't normally happen if PROJ projections behave
+                // correctly, but e.g inverse laea before PROJ 8.1.1 could
+                // do that for points out of domain.
+                // See https://github.com/OSGeo/PROJ/pull/2800
+                x[i] = HUGE_VAL;
+                y[i] = HUGE_VAL;
+                err = PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN;
+                static bool bHasWarned = false;
+                if( !bHasWarned )
+                {
+#ifdef DEBUG
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "PROJ returned a NaN value. It should be fixed");
+#else
+                    CPLDebug("OGR_CT", "PROJ returned a NaN value. It should be fixed");
+#endif
+                    bHasWarned = true;
+                }
+            }
+            else if( coord.xyzt.x == HUGE_VAL )
             {
                 err = proj_errno(pj);
                 // PROJ should normally emit an error, but in case it does not
@@ -2077,7 +2451,7 @@ int OGRProjCT::TransformWithErrorCodes(
                 if( err == 0 )
                     err = PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN;
             }
-            else if( bCheckWithInvertProj )
+            else if( m_options.d->bCheckWithInvertProj )
             {
                 // For some projections, we cannot detect if we are trying to reproject
                 // coordinates outside the validity area of the projection. So let's do
@@ -2217,9 +2591,190 @@ int OGRProjCT::TransformWithErrorCodes(
         }
     }
 #endif
+#ifdef DEBUG_PERF
+    struct CPLTimeVal tvEnd;
+    CPLGettimeofday(&tvEnd, nullptr);
+    const double delay = (tvEnd.tv_sec + tvEnd.tv_usec * 1e-6) -
+                         (tvStart.tv_sec + tvStart.tv_usec * 1e-6);
+    g_dfTotalTimeReprojection += delay;
+    //CPLDebug("OGR_CT", "End TransformWithErrorCodes(): %d ms",
+    //         static_cast<int>(delay * 1000));
+#endif
 
     return TRUE;
 }
+
+/************************************************************************/
+/*                               Clone()                                */
+/************************************************************************/
+
+OGRCoordinateTransformation* OGRProjCT::Clone() const
+{
+     std::unique_ptr<OGRProjCT> poNewCT(new OGRProjCT(*this));
+#if (PROJ_VERSION_MAJOR * 10000 + PROJ_VERSION_MINOR * 100 + PROJ_VERSION_PATCH) < 80001
+    // See https://github.com/OSGeo/PROJ/pull/2582
+    // This may fail before PROJ 8.0.1 if the m_pj object is a "meta"
+    // operation being a set of real operations
+    bool bCloneDone = ((m_pj == nullptr) == (poNewCT->m_pj == nullptr));
+    if(!bCloneDone)
+    {
+        poNewCT.reset(new OGRProjCT());
+        if(!poNewCT->Initialize(poSRSSource, poSRSTarget, m_options))
+        {
+            return nullptr;
+        }
+    }
+#endif //PROJ_VERSION
+    return poNewCT.release();
+}
+
+/************************************************************************/
+/*                            GetInverse()                              */
+/************************************************************************/
+
+OGRCoordinateTransformation* OGRProjCT::GetInverse() const
+{
+    PJ* new_pj = nullptr;
+    // m_pj can be nullptr if using m_eStrategy != PROJ
+    if( m_pj && !bWebMercatorToWGS84LongLat && !bNoTransform )
+    {
+        // See https://github.com/OSGeo/PROJ/pull/2582
+        // This may fail before PROJ 8.0.1 if the m_pj object is a "meta"
+        // operation being a set of real operations
+        new_pj = proj_clone(OSRGetProjTLSContext(), m_pj);
+    }
+
+    OGRCoordinateTransformationOptions newOptions(m_options);
+    std::swap(newOptions.d->bHasSourceCenterLong, newOptions.d->bHasTargetCenterLong);
+    std::swap(newOptions.d->dfSourceCenterLong, newOptions.d->dfTargetCenterLong);
+    newOptions.d->bReverseCO = !newOptions.d->bReverseCO;
+    newOptions.d->RefreshCheckWithInvertProj();
+
+    if( new_pj == nullptr && !bNoTransform )
+    {
+        return OGRCreateCoordinateTransformation(poSRSTarget, poSRSSource,
+                                                 newOptions);
+    }
+
+    auto poNewCT = new OGRProjCT();
+
+    if( poSRSTarget )
+        poNewCT->poSRSSource = poSRSTarget->Clone();
+    poNewCT->bSourceLatLong = bTargetLatLong;
+    poNewCT->bSourceWrap = bTargetWrap;
+    poNewCT->dfSourceWrapLong = dfTargetWrapLong;
+    poNewCT->bSourceIsDynamicCRS = bTargetIsDynamicCRS;
+    poNewCT->dfSourceCoordinateEpoch = dfTargetCoordinateEpoch;
+
+    if( poSRSSource )
+        poNewCT->poSRSTarget = poSRSSource->Clone();
+    poNewCT->bTargetLatLong = bSourceLatLong;
+    poNewCT->bTargetWrap = bSourceWrap;
+    poNewCT->dfTargetWrapLong = dfSourceWrapLong;
+    poNewCT->bTargetIsDynamicCRS = bSourceIsDynamicCRS;
+    poNewCT->dfTargetCoordinateEpoch = dfSourceCoordinateEpoch;
+
+    poNewCT->ComputeThreshold();
+
+    poNewCT->m_pj = new_pj;
+    poNewCT->m_bReversePj = !m_bReversePj;
+    poNewCT->bNoTransform = bNoTransform;
+    poNewCT->m_eStrategy = m_eStrategy;
+    poNewCT->m_options = newOptions;
+    return poNewCT;
+}
+
+/************************************************************************/
+/*                            OSRCTCleanCache()                         */
+/************************************************************************/
+
+void OSRCTCleanCache()
+{
+    std::lock_guard<std::mutex> oGuard(g_oCTCacheMutex);
+    delete g_poCTCache;
+    g_poCTCache = nullptr;
+}
+
+/************************************************************************/
+/*                          MakeCacheKey()                              */
+/************************************************************************/
+
+CTCacheKey OGRProjCT::MakeCacheKey(const OGRSpatialReference* poSRS1,
+                                    const OGRSpatialReference* poSRS2,
+                                    const OGRCoordinateTransformationOptions& options)
+{
+    const auto GetKeyForSRS = [](const OGRSpatialReference* poSRS)
+    {
+        if (poSRS)
+        {
+            char* pszText = GetWktOrProjString(poSRS);
+            std::string ret(pszText);
+            CPLFree(pszText);
+            const auto& mapping = poSRS->GetDataAxisToSRSAxisMapping();
+            for(const auto& axis: mapping)
+            {
+                ret += std::to_string(axis);
+            }
+            return ret;
+        }
+        else
+        {
+            return std::string("null");
+        }
+    };
+
+    std::string ret( GetKeyForSRS(poSRS1) );
+    ret += GetKeyForSRS(poSRS2);
+    ret += options.d->GetKey();
+    return ret;
+}
+
+/************************************************************************/
+/*                           InsertIntoCache()                          */
+/************************************************************************/
+
+void OGRProjCT::InsertIntoCache( OGRProjCT* poCT )
+{
+    std::lock_guard<std::mutex> oGuard(g_oCTCacheMutex);
+    if( g_poCTCache == nullptr )
+    {
+        g_poCTCache = new lru11::Cache<CTCacheKey, CTCacheValue>();
+    }
+    const auto key = MakeCacheKey(poCT->poSRSSource, poCT->poSRSTarget,
+                                  poCT->m_options);
+    if( g_poCTCache->contains(key) )
+    {
+        delete poCT;
+        return;
+    }
+    g_poCTCache->insert(key, std::make_shared<std::unique_ptr<OGRProjCT>>(
+                                            std::unique_ptr<OGRProjCT>(poCT)));
+}
+
+/************************************************************************/
+/*                            FindFromCache()                           */
+/************************************************************************/
+
+OGRProjCT* OGRProjCT::FindFromCache( const OGRSpatialReference *poSource,
+                                     const OGRSpatialReference *poTarget,
+                                     const OGRCoordinateTransformationOptions& options )
+{
+    std::lock_guard<std::mutex> oGuard(g_oCTCacheMutex);
+    if( g_poCTCache == nullptr || g_poCTCache->empty() )
+        return nullptr;
+
+    const auto key = MakeCacheKey(poSource, poTarget, options);
+    // Get value from cache and remove it
+    CTCacheValue holder;
+    if( g_poCTCache->tryGet(key, holder) )
+    {
+        auto poCT = holder->release();
+        g_poCTCache->remove(key);
+        return poCT;
+    }
+    return nullptr;
+}
+
 //! @endcond
 
 /************************************************************************/
@@ -2326,4 +2881,18 @@ int OCTTransform4DWithErrorCodes( OGRCoordinateTransformationH hTransform,
 
     return OGRCoordinateTransformation::FromHandle(hTransform)->
         TransformWithErrorCodes( nCount, x, y, z, t, panErrorCodes );
+}
+
+/************************************************************************/
+/*                         OGRCTDumpStatistics()                        */
+/************************************************************************/
+
+void OGRCTDumpStatistics()
+{
+#ifdef DEBUG_PERF
+    CPLDebug("OGR_CT", "Total time in proj_create_crs_to_crs(): %d ms",
+             static_cast<int>(g_dfTotalTimeCRStoCRS * 1000));
+    CPLDebug("OGR_CT", "Total time in coordinate transformation: %d ms",
+             static_cast<int>(g_dfTotalTimeReprojection * 1000));
+#endif
 }

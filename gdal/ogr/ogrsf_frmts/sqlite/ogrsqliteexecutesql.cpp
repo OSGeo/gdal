@@ -62,10 +62,10 @@ class OGRSQLiteExecuteSQLLayer final: public OGRSQLiteSelectLayer
   public:
     OGRSQLiteExecuteSQLLayer( char* pszTmpDBName,
                               OGRSQLiteDataSource* poDS,
-                              CPLString osSQL,
+                              const CPLString& osSQL,
                               sqlite3_stmt * hStmt,
-                              int bUseStatementForGetNextFeature,
-                              int bEmptyLayer );
+                              bool bUseStatementForGetNextFeature,
+                              bool bEmptyLayer );
     virtual ~OGRSQLiteExecuteSQLLayer();
 };
 
@@ -76,13 +76,13 @@ class OGRSQLiteExecuteSQLLayer final: public OGRSQLiteSelectLayer
 OGRSQLiteExecuteSQLLayer::OGRSQLiteExecuteSQLLayer(
     char* pszTmpDBNameIn,
     OGRSQLiteDataSource* poDSIn,
-    CPLString osSQL,
+    const CPLString& osSQL,
     sqlite3_stmt * hStmtIn,
-    int bUseStatementForGetNextFeature,
-    int bEmptyLayer ) :
+    bool bUseStatementForGetNextFeature,
+    bool bEmptyLayer ) :
     OGRSQLiteSelectLayer(poDSIn, osSQL, hStmtIn,
                          bUseStatementForGetNextFeature,
-                         bEmptyLayer, TRUE),
+                         bEmptyLayer, true),
     pszTmpDBName(pszTmpDBNameIn)
 {}
 
@@ -98,7 +98,7 @@ OGRSQLiteExecuteSQLLayer::~OGRSQLiteExecuteSQLLayer()
     // our own datasource,
     Finalize();
 
-    delete poDS;
+    delete m_poDS;
     VSIUnlink(pszTmpDBName);
     CPLFree(pszTmpDBName);
 }
@@ -201,7 +201,7 @@ static void OGR2SQLITEAddLayer( const char*& pszStart, int& nNum,
     osModifiedSQL += osTruncated;
     pszStart = pszSQLCommand;
     LayerDesc oLayerDesc = OGR2SQLITEExtractLayerDesc(&pszSQLCommand);
-    int bInsert = TRUE;
+    bool bInsert = true;
     if( oLayerDesc.osDSName.empty() )
     {
         osTruncated = pszStart;
@@ -221,7 +221,7 @@ static void OGR2SQLITEAddLayer( const char*& pszStart, int& nNum,
         else
         {
             osModifiedSQL += (*oIter).osSubstitutedName;
-            bInsert = FALSE;
+            bInsert = false;
         }
     }
     if( bInsert )
@@ -263,7 +263,7 @@ static void OGR2SQLITEGetPotentialLayerNamesInternal(const char **ppszSQLCommand
     const char* pszStart = pszSQLCommand;
     char ch = '\0';
     int nParenthesisLevel = 0;
-    int bLookforFTableName = FALSE;
+    bool bLookforFTableName = false;
 
     while( (ch = *pszSQLCommand) != '\0' )
     {
@@ -335,7 +335,7 @@ static void OGR2SQLITEGetPotentialLayerNamesInternal(const char **ppszSQLCommand
                 oSetSpatialIndex.insert(OGR2SQLITEExtractUnquotedString(&pszSQLCommand));
             }
 
-            bLookforFTableName = FALSE;
+            bLookforFTableName = false;
         }
 
         else if( STARTS_WITH_CI(pszSQLCommand, "FROM") &&
@@ -351,7 +351,7 @@ static void OGR2SQLITEGetPotentialLayerNamesInternal(const char **ppszSQLCommand
             {
                 pszSQLCommand += strlen("SpatialIndex") + 1;
 
-                bLookforFTableName = TRUE;
+                bLookforFTableName = true;
 
                 continue;
             }
@@ -514,7 +514,7 @@ int OGR2SQLITEDealWithSpatialColumn(OGRLayer* poLayer,
                                     const CPLString& osTableName,
                                     OGRSQLiteDataSource* poSQLiteDS,
                                     sqlite3* hDB,
-                                    int bSpatialiteDB,
+                                    bool bSpatialiteDB,
                                     const std::set<LayerDesc>&
                                         WHEN_SPATIALITE(oSetLayers),
                                     const std::set<CPLString>&
@@ -746,7 +746,7 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
     snprintf(pszTmpDBName, 256, "/vsimem/ogr2sqlite/temp_%s.db", szPtr);
 
     OGRSQLiteDataSource* poSQLiteDS = nullptr;
-    int bSpatialiteDB = FALSE;
+    bool bSpatialiteDB = false;
 
     CPLString osOldVal;
     const char* pszOldVal = CPLGetConfigOption("OGR_SQLITE_STATIC_VIRTUAL_OGR", nullptr);
@@ -773,11 +773,11 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
     {
         static CPLMutex* hMutex = nullptr;
         CPLMutexHolder oMutexHolder(&hMutex);
-        static int bTried = FALSE;
+        static bool bTried = false;
         if( !bTried &&
             CPLTestBool(CPLGetConfigOption("OGR_SQLITE_DIALECT_USE_SPATIALITE", "YES")) )
         {
-            bTried = TRUE;
+            bTried = true;
             char* pszCachedFilename = (char*) CPLMalloc(256);
             snprintf(szPtr, sizeof(szPtr), "%p", pszCachedFilename);
             snprintf(pszCachedFilename, 256, "/vsimem/ogr2sqlite/reference_%s.db",
@@ -826,7 +826,7 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
             CPLFree(pszTmpDBName);
             return nullptr;
         }
-        bSpatialiteDB = TRUE;
+        bSpatialiteDB = true;
     }
 #else
     /* No caching version */
@@ -839,7 +839,7 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
     papszOptions = NULL;
     if( nRet )
     {
-        bSpatialiteDB = TRUE;
+        bSpatialiteDB = true;
     }
 #endif
 
@@ -886,7 +886,7 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
         CPLDebug("OGR", "Modified SQL: %s", osModifiedSQL.c_str());
     pszStatement = osModifiedSQL.c_str(); /* do not use it anymore */
 
-    int bFoundOGRStyle = ( osModifiedSQL.ifind("OGR_STYLE") != std::string::npos );
+    const bool bFoundOGRStyle = ( osModifiedSQL.ifind("OGR_STYLE") != std::string::npos );
 
 /* -------------------------------------------------------------------- */
 /*      For each of those tables, create a Virtual Table.               */
@@ -955,7 +955,7 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
                 SQLEscapeName(osTableName).c_str(),
                 nExtraDS,
                 SQLEscapeLiteral(oLayerDesc.osLayerName).c_str(),
-                bFoundOGRStyle,
+                bFoundOGRStyle ? 1 : 0,
                 TRUE/*bExposeOGRNativeData*/);
 
         char* pszErrMsg = nullptr;
@@ -990,8 +990,8 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
     /* This will speed-up layer creation */
     /* ORDER BY are costly to evaluate and are not necessary to establish */
     /* the layer definition. */
-    int bUseStatementForGetNextFeature = TRUE;
-    int bEmptyLayer = FALSE;
+    bool bUseStatementForGetNextFeature = true;
+    bool bEmptyLayer = false;
 
     sqlite3_stmt *hSQLStmt = nullptr;
     int rc = sqlite3_prepare_v2( hDB,
@@ -1049,8 +1049,8 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
             return nullptr;
         }
 
-        bUseStatementForGetNextFeature = FALSE;
-        bEmptyLayer = TRUE;
+        bUseStatementForGetNextFeature = false;
+        bEmptyLayer = true;
     }
 
 /* -------------------------------------------------------------------- */

@@ -583,7 +583,7 @@ option applies.
 ogr2ogr
 ~~~~~~~
 
-Enhacements :
+Enhancements :
 
 -  will translate multi-geometry layers into multi-geometry layers if
    supported by output layer (OLCCreateGeomField capability). In case it

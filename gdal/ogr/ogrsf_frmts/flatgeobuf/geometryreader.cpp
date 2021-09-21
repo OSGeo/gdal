@@ -95,7 +95,7 @@ OGRMultiPoint *GeometryReader::readMultiPoint()
     m_length = m_length / 2;
     if (m_length >= feature_max_buffer_size)
         return CPLErrorInvalidLength("MultiPoint");
-    auto mp = std::unique_ptr<OGRMultiPoint>(new OGRMultiPoint());
+    auto mp = cpl::make_unique<OGRMultiPoint>();
     for (uint32_t i = 0; i < m_length; i++) {
         m_offset = i;
         const auto p = readPoint();
@@ -111,7 +111,7 @@ OGRMultiLineString *GeometryReader::readMultiLineString()
     const auto pEnds = m_geometry->ends();
     if (pEnds == nullptr)
         return CPLErrorInvalidPointer("MultiLineString ends data");
-    auto mls = std::unique_ptr<OGRMultiLineString>(new OGRMultiLineString());
+    auto mls = cpl::make_unique<OGRMultiLineString>();
     m_offset = 0;
     for (uint32_t i = 0; i < pEnds->size(); i++) {
         const auto e = pEnds->Get(i);
@@ -226,7 +226,7 @@ OGRErr GeometryReader::readSimpleCurve(OGRSimpleCurve *sc)
 OGRPolygon *GeometryReader::readPolygon()
 {
     const auto ends = m_geometry->ends();
-    auto p = std::unique_ptr<OGRPolygon>(new OGRPolygon());
+    auto p = cpl::make_unique<OGRPolygon>();
     if (ends == nullptr || ends->size() < 2) {
         m_length = m_length / 2;
         const auto lr = readSimpleCurve<OGRLinearRing>();
@@ -256,7 +256,7 @@ OGRMultiPolygon *GeometryReader::readMultiPolygon()
     auto parts = m_geometry->parts();
     if (parts == nullptr)
         return CPLErrorInvalidPointer("parts data");
-    auto mp = std::unique_ptr<OGRMultiPolygon>(new OGRMultiPolygon());
+    auto mp = cpl::make_unique<OGRMultiPolygon>();
     for (uoffset_t i = 0; i < parts->size(); i++) {
         GeometryReader reader { parts->Get(i), GeometryType::Polygon, m_hasZ, m_hasM };
         auto g = std::unique_ptr<OGRGeometry>(reader.read());
@@ -272,7 +272,7 @@ OGRGeometryCollection *GeometryReader::readGeometryCollection()
     auto parts = m_geometry->parts();
     if (parts == nullptr)
         return CPLErrorInvalidPointer("parts data");
-    auto gc = std::unique_ptr<OGRGeometryCollection>(new OGRGeometryCollection());
+    auto gc = cpl::make_unique<OGRGeometryCollection>();
     for (uoffset_t i = 0; i < parts->size(); i++) {
         GeometryReader reader { parts->Get(i), m_hasZ, m_hasM };
         auto g = std::unique_ptr<OGRGeometry>(reader.read());
@@ -288,13 +288,18 @@ OGRCompoundCurve *GeometryReader::readCompoundCurve()
     auto parts = m_geometry->parts();
     if (parts == nullptr)
         return CPLErrorInvalidPointer("parts data");
-    auto cc = std::unique_ptr<OGRCompoundCurve>(new OGRCompoundCurve());
+    auto cc = cpl::make_unique<OGRCompoundCurve>();
     for (uoffset_t i = 0; i < parts->size(); i++) {
         GeometryReader reader { parts->Get(i), m_hasZ, m_hasM };
         auto g = std::unique_ptr<OGRGeometry>(reader.read());
         if (dynamic_cast<OGRCurve *>(g.get()) == nullptr)
             return nullptr;
-        cc->addCurveDirectly(g.release()->toCurve());
+        auto poCurve = g.release()->toCurve();
+        if( cc->addCurveDirectly(poCurve) != OGRERR_NONE )
+        {
+            delete poCurve;
+            return nullptr;
+        }
     }
     return cc.release();
 }
@@ -304,13 +309,18 @@ OGRCurvePolygon *GeometryReader::readCurvePolygon()
     auto parts = m_geometry->parts();
     if (parts == nullptr)
         return CPLErrorInvalidPointer("parts data");
-    auto cp = std::unique_ptr<OGRCurvePolygon>(new OGRCurvePolygon());
+    auto cp = cpl::make_unique<OGRCurvePolygon>();
     for (uoffset_t i = 0; i < parts->size(); i++) {
         GeometryReader reader { parts->Get(i), m_hasZ, m_hasM };
         auto g = std::unique_ptr<OGRGeometry>(reader.read());
         if (dynamic_cast<OGRCurve *>(g.get()) == nullptr)
             return nullptr;
-        cp->addRingDirectly(g.release()->toCurve());
+        auto poCurve = g.release()->toCurve();
+        if( cp->addRingDirectly(poCurve) != OGRERR_NONE )
+        {
+            delete poCurve;
+            return nullptr;
+        }
     }
     return cp.release();
 }
@@ -320,7 +330,7 @@ OGRMultiCurve *GeometryReader::readMultiCurve()
     auto parts = m_geometry->parts();
     if (parts == nullptr)
         return CPLErrorInvalidPointer("parts data");
-    auto mc = std::unique_ptr<OGRMultiCurve>(new OGRMultiCurve());
+    auto mc = cpl::make_unique<OGRMultiCurve>();
     for (uoffset_t i = 0; i < parts->size(); i++) {
         GeometryReader reader { parts->Get(i), m_hasZ, m_hasM };
         auto g = std::unique_ptr<OGRGeometry>(reader.read());
@@ -336,13 +346,18 @@ OGRMultiSurface *GeometryReader::readMultiSurface()
     auto parts = m_geometry->parts();
     if (parts == nullptr)
         return CPLErrorInvalidPointer("parts data");
-    auto ms = std::unique_ptr<OGRMultiSurface>(new OGRMultiSurface());
+    auto ms = cpl::make_unique<OGRMultiSurface>();
     for (uoffset_t i = 0; i < parts->size(); i++) {
         GeometryReader reader { parts->Get(i), m_hasZ, m_hasM };
         auto g = std::unique_ptr<OGRGeometry>(reader.read());
         if (dynamic_cast<OGRSurface *>(g.get()) == nullptr)
             return nullptr;
-        ms->addGeometryDirectly(g.release());
+        auto poSubGeom = g.release();
+        if( ms->addGeometryDirectly(poSubGeom) != OGRERR_NONE )
+        {
+            delete poSubGeom;
+            return nullptr;
+        }
     }
     return ms.release();
 }
@@ -352,13 +367,18 @@ OGRPolyhedralSurface *GeometryReader::readPolyhedralSurface()
     auto parts = m_geometry->parts();
     if (parts == nullptr)
         return CPLErrorInvalidPointer("parts data");
-    auto ps = std::unique_ptr<OGRPolyhedralSurface>(new OGRPolyhedralSurface());
+    auto ps = cpl::make_unique<OGRPolyhedralSurface>();
     for (uoffset_t i = 0; i < parts->size(); i++) {
         GeometryReader reader { parts->Get(i), m_hasZ, m_hasM };
         auto g = std::unique_ptr<OGRGeometry>(reader.read());
-        if (dynamic_cast<OGRSurface *>(g.get()) == nullptr)
+        if (g == nullptr )
             return nullptr;
-        ps->addGeometryDirectly(g.release());
+        auto poSubGeom = g.release();
+        if( ps->addGeometryDirectly(poSubGeom) != OGRERR_NONE )
+        {
+            delete poSubGeom;
+            return nullptr;
+        }
     }
     return ps.release();
 }
@@ -366,7 +386,7 @@ OGRPolyhedralSurface *GeometryReader::readPolyhedralSurface()
 OGRTriangulatedSurface *GeometryReader::readTIN()
 {
     const auto ends = m_geometry->ends();
-    auto ts = std::unique_ptr<OGRTriangulatedSurface>(new OGRTriangulatedSurface());
+    auto ts = cpl::make_unique<OGRTriangulatedSurface>();
     if (ends == nullptr || ends->size() < 2) {
         m_length = m_length / 2;
         if (m_length != 4)

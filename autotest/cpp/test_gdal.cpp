@@ -133,7 +133,7 @@ namespace tut
 
 #define ENSURE(cond) ensure(#cond, (cond))
 #define ENSURE_EQUALS(a, b) ensure_equals(#a " == " #b, (a), (b))
-    
+
     // Test GDALDataTypeUnion()
     template<> template<> void object::test<6>()
     {
@@ -149,7 +149,7 @@ namespace tut
                 ENSURE( GDALGetDataTypeSize(eDT) >= GDALGetDataTypeSize(eDT2) );
                 ENSURE( (GDALDataTypeIsComplex(eDT) && (GDALDataTypeIsComplex(eDT1) || GDALDataTypeIsComplex(eDT2))) ||
                         (!GDALDataTypeIsComplex(eDT) && !GDALDataTypeIsComplex(eDT1) && !GDALDataTypeIsComplex(eDT2)) );
-                
+
                 ENSURE( !(GDALDataTypeIsFloating(eDT1) || GDALDataTypeIsFloating(eDT2)) || GDALDataTypeIsFloating(eDT));
                 ENSURE( !(GDALDataTypeIsSigned(eDT1) || GDALDataTypeIsSigned(eDT2)) || GDALDataTypeIsSigned(eDT));
             }
@@ -199,6 +199,11 @@ namespace tut
 
         ENSURE_EQUALS(GDALFindDataType(64, false /* signed */, true /* floating */, false /* complex */), GDT_Float64);
         ENSURE_EQUALS(GDALFindDataType(64, false /* signed */, true /* floating */, true /* complex */), GDT_CFloat64);
+
+        ENSURE_EQUALS(GDALDataTypeUnionWithValue(GDT_Byte, -32768, 0), GDT_Int16);
+        ENSURE_EQUALS(GDALDataTypeUnionWithValue(GDT_Byte, -32769, 0), GDT_Int32);
+        ENSURE_EQUALS(GDALDataTypeUnionWithValue(GDT_Float32, -99999, 0), GDT_Float32);
+        ENSURE_EQUALS(GDALDataTypeUnionWithValue(GDT_Float32, -99999.9876, 0), GDT_Float64);
     }
 
 #undef ENSURE
@@ -654,6 +659,7 @@ namespace tut
                 GDALExtendedDataType m_dt;
                 std::vector<std::shared_ptr<GDALDimension>> m_dims;
                 std::vector<GUInt64> m_blockSize;
+                const std::string m_osEmptyFilename{};
 
                 static std::vector<std::shared_ptr<GDALDimension>> BuildDims(
                     const std::vector<GUInt64>& sizes)
@@ -698,6 +704,8 @@ namespace tut
                 }
 
                 bool IsWritable() const override { return true; }
+
+                const std::string& GetFilename() const override { return m_osEmptyFilename; }
 
                 static std::shared_ptr<myArray> Create(GDALDataType eDT,
                                 const std::vector<GUInt64>& sizes,
@@ -1358,12 +1366,6 @@ namespace tut
     // Test TileMatrixSet
     template<> template<> void object::test<20>()
     {
-        // TODO investigate what fails exactly
-        if( !EQUAL(CPLGetConfigOption("GITHUB_WORKFLOW", ""), "") )
-            return;
-        if( !EQUAL(CPLGetConfigOption("APPVEYOR_BUILD_WORKER_IMAGE", ""), "") )
-            return;
-
         {
             auto l = gdal::TileMatrixSet::listPredefinedTileMatrixSets();
             ensure( l.find("GoogleMapsCompatible") != l.end() );
@@ -1380,7 +1382,7 @@ namespace tut
             CPLErrorReset();
             CPLPushErrorHandler(CPLQuietErrorHandler);
             // Invalid JSON
-            ensure( gdal::TileMatrixSet::parse("http://127.0.0.1:98765/example.json") == nullptr );
+            ensure( gdal::TileMatrixSet::parse("http://127.0.0.1:32767/example.json") == nullptr );
             CPLPopErrorHandler();
             ensure( CPLGetLastErrorType() != 0 );
         }
@@ -1681,5 +1683,165 @@ namespace tut
 
         poDS.reset();
         VSIUnlink("/vsimem/tmp.pix");
+    }
+
+    // Test GDALBufferHasOnlyNoData()
+    template<> template<> void object::test<22>()
+    {
+        /* bool CPL_DLL GDALBufferHasOnlyNoData(const void* pBuffer,
+                                     double dfNoDataValue,
+                                     size_t nWidth, size_t nHeight,
+                                     size_t nLineStride,
+                                     size_t nComponents,
+                                     int nBitsPerSample,
+                                     GDALBufferSampleFormat nSampleFormat);
+         */
+        ensure( GDALBufferHasOnlyNoData("\x00", 0.0, 1, 1, 1, 1, 8, GSF_UNSIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData("\x01", 0.0, 1, 1, 1, 1, 8, GSF_UNSIGNED_INT) );
+        ensure( GDALBufferHasOnlyNoData("\x00", 0.0, 1, 1, 1, 1, 1, GSF_UNSIGNED_INT) );
+        ensure( GDALBufferHasOnlyNoData("\x00\x00", 0.0, 1, 1, 1, 1, 16, GSF_UNSIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData("\x00\x01", 0.0, 1, 1, 1, 1, 16, GSF_UNSIGNED_INT) );
+        ensure( GDALBufferHasOnlyNoData("\x00\x01", 0.0, 1, 2, 2, 1, 8, GSF_UNSIGNED_INT) );
+        ensure( GDALBufferHasOnlyNoData("\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
+                                        0.0, 14, 1, 14, 1, 8, GSF_UNSIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData("\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
+                                         0.0, 14, 1, 14, 1, 8, GSF_UNSIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData("\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00",
+                                         0.0, 14, 1, 14, 1, 8, GSF_UNSIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData("\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01",
+                                         0.0, 14, 1, 14, 1, 8, GSF_UNSIGNED_INT) );
+
+        uint8_t uint8val = 1;
+        ensure( GDALBufferHasOnlyNoData(&uint8val, 1.0, 1, 1, 1, 1, 8, GSF_UNSIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData(&uint8val, 0.0, 1, 1, 1, 1, 8, GSF_UNSIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData(&uint8val, 128 + 1, 1, 1, 1, 1, 8, GSF_UNSIGNED_INT) );
+
+        int8_t int8val = -1;
+        ensure( GDALBufferHasOnlyNoData(&int8val, -1.0, 1, 1, 1, 1, 8, GSF_SIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData(&int8val, 0.0, 1, 1, 1, 1, 8, GSF_SIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData(&int8val, 256, 1, 1, 1, 1, 8, GSF_SIGNED_INT) );
+
+        uint16_t uint16val = 1;
+        ensure( GDALBufferHasOnlyNoData(&uint16val, 1.0, 1, 1, 1, 1, 16, GSF_UNSIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData(&uint16val, 0.0, 1, 1, 1, 1, 16, GSF_UNSIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData(&uint16val, 65536 + 1, 1, 1, 1, 1, 16, GSF_UNSIGNED_INT) );
+
+        int16_t int16val = -1;
+        ensure( GDALBufferHasOnlyNoData(&int16val, -1.0, 1, 1, 1, 1, 16, GSF_SIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData(&int16val, 0.0, 1, 1, 1, 1, 16, GSF_SIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData(&int16val, 32768, 1, 1, 1, 1, 16, GSF_SIGNED_INT) );
+
+        uint32_t uint32val = 1;
+        ensure( GDALBufferHasOnlyNoData(&uint32val, 1.0, 1, 1, 1, 1, 32, GSF_UNSIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData(&uint32val, 0.0, 1, 1, 1, 1, 32, GSF_UNSIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData(&uint32val, static_cast<double>(0x100000000LL + 1),
+                                         1, 1, 1, 1, 32, GSF_UNSIGNED_INT) );
+
+        int32_t int32val = -1;
+        ensure( GDALBufferHasOnlyNoData(&int32val, -1.0, 1, 1, 1, 1, 32, GSF_SIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData(&int32val, 0.0, 1, 1, 1, 1, 32, GSF_SIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData(&int32val, 0x80000000, 1, 1, 1, 1, 32, GSF_SIGNED_INT) );
+
+        float float32val = -1;
+        ensure( GDALBufferHasOnlyNoData(&float32val, -1.0, 1, 1, 1, 1, 32, GSF_FLOATING_POINT) );
+        ensure( !GDALBufferHasOnlyNoData(&float32val, 0.0, 1, 1, 1, 1, 32, GSF_FLOATING_POINT) );
+        ensure( !GDALBufferHasOnlyNoData(&float32val, 1e50, 1, 1, 1, 1, 32, GSF_FLOATING_POINT) );
+
+        float float32nan = std::numeric_limits<float>::quiet_NaN();
+        ensure( GDALBufferHasOnlyNoData(&float32nan, float32nan, 1, 1, 1, 1, 32, GSF_FLOATING_POINT) );
+        ensure( !GDALBufferHasOnlyNoData(&float32nan, 0.0, 1, 1, 1, 1, 32, GSF_FLOATING_POINT) );
+
+        double float64val = -1;
+        ensure( GDALBufferHasOnlyNoData(&float64val, -1.0, 1, 1, 1, 1, 64, GSF_FLOATING_POINT) );
+        ensure( !GDALBufferHasOnlyNoData(&float64val, 0.0, 1, 1, 1, 1, 64, GSF_FLOATING_POINT) );
+
+        double float64nan = std::numeric_limits<double>::quiet_NaN();
+        ensure( GDALBufferHasOnlyNoData(&float64nan, float64nan, 1, 1, 1, 1, 64, GSF_FLOATING_POINT) );
+        ensure( !GDALBufferHasOnlyNoData(&float64nan, 0.0, 1, 1, 1, 1, 64, GSF_FLOATING_POINT) );
+    }
+
+    // Test GDALRasterBand::GetIndexColorTranslationTo()
+    template<> template<> void object::test<23>()
+    {
+        GDALDatasetUniquePtr poSrcDS(
+            GDALDriver::FromHandle(
+                GDALGetDriverByName("MEM"))->Create("", 1, 1, 1, GDT_Byte, nullptr));
+        {
+            GDALColorTable oCT;
+            {
+                GDALColorEntry e;
+                e.c1 = 0;
+                e.c2 = 0;
+                e.c3 = 0;
+                e.c4 = 255;
+                oCT.SetColorEntry(0, &e);
+            }
+            {
+                GDALColorEntry e;
+                e.c1 = 1;
+                e.c2 = 0;
+                e.c3 = 0;
+                e.c4 = 255;
+                oCT.SetColorEntry(1, &e);
+            }
+            {
+                GDALColorEntry e;
+                e.c1 = 255;
+                e.c2 = 255;
+                e.c3 = 255;
+                e.c4 = 255;
+                oCT.SetColorEntry(2, &e);
+            }
+            {
+                GDALColorEntry e;
+                e.c1 = 125;
+                e.c2 = 126;
+                e.c3 = 127;
+                e.c4 = 0;
+                oCT.SetColorEntry(3, &e);
+                poSrcDS->GetRasterBand(1)->SetNoDataValue(3);
+            }
+            poSrcDS->GetRasterBand(1)->SetColorTable(&oCT);
+        }
+
+        GDALDatasetUniquePtr poDstDS(
+            GDALDriver::FromHandle(
+                GDALGetDriverByName("MEM"))->Create("", 1, 1, 1, GDT_Byte, nullptr));
+        {
+            GDALColorTable oCT;
+            {
+                GDALColorEntry e;
+                e.c1 = 255;
+                e.c2 = 255;
+                e.c3 = 255;
+                e.c4 = 255;
+                oCT.SetColorEntry(0, &e);
+            }
+            {
+                GDALColorEntry e;
+                e.c1 = 0;
+                e.c2 = 0;
+                e.c3 = 1;
+                e.c4 = 255;
+                oCT.SetColorEntry(1, &e);
+            }
+            {
+                GDALColorEntry e;
+                e.c1 = 12;
+                e.c2 = 13;
+                e.c3 = 14;
+                e.c4 = 0;
+                oCT.SetColorEntry(2, &e);
+                poSrcDS->GetRasterBand(1)->SetNoDataValue(2);
+            }
+            poDstDS->GetRasterBand(1)->SetColorTable(&oCT);
+        }
+
+        unsigned char* panTranslationTable = poSrcDS->GetRasterBand(1)->GetIndexColorTranslationTo(poDstDS->GetRasterBand(1));
+        ensure_equals(static_cast<int>(panTranslationTable[0]), 1);
+        ensure_equals(static_cast<int>(panTranslationTable[1]), 1);
+        ensure_equals(static_cast<int>(panTranslationTable[2]), 0);
+        ensure_equals(static_cast<int>(panTranslationTable[3]), 2); // special nodata mapping
+        CPLFree(panTranslationTable);
     }
 } // namespace tut

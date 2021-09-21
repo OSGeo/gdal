@@ -67,7 +67,8 @@ public:
 
     virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess,
-                                    bool bSetError ) override;
+                                    bool bSetError,
+                                    CSLConstList /* papszOptions */ ) override;
     virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags ) override;
     virtual int      Unlink( const char *pszFilename ) override;
     virtual int      Rename( const char *oldpath, const char *newpath ) override;
@@ -555,7 +556,8 @@ static bool VSIWin32IsLongFilename( const wchar_t* pwszFilename )
 
 VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
                                                    const char *pszAccess,
-                                                   bool bSetError )
+                                                   bool bSetError,
+                                                   CSLConstList /* papszOptions */ )
 
 {
     DWORD dwDesiredAccess;

@@ -279,7 +279,10 @@ int KMLNode::classify(KML* poKML, int nRecLevel)
         // Compare and return if it is mixed
         if(curr != all && all != Empty && curr != Empty)
         {
-            if (sName_.compare("MultiGeometry") == 0)
+            if (sName_.compare("MultiGeometry") == 0 ||
+                sName_.compare("MultiPolygon") == 0 ||
+                sName_.compare("MultiLineString") == 0 ||
+                sName_.compare("MultiPoint") == 0 )
                 eType_ = MultiGeometry;
             else
                 eType_ = Mixed;
@@ -292,7 +295,10 @@ int KMLNode::classify(KML* poKML, int nRecLevel)
 
     if(eType_ == Unknown)
     {
-        if (sName_.compare("MultiGeometry") == 0)
+        if (sName_.compare("MultiGeometry") == 0 ||
+            sName_.compare("MultiPolygon") == 0 ||
+            sName_.compare("MultiLineString") == 0 ||
+            sName_.compare("MultiPoint") == 0 )
         {
             if (all == Point)
                 eType_ = MultiPoint;
@@ -687,7 +693,10 @@ OGRGeometry* KMLNode::getGeometry(Nodetype eType)
         if( poLinearRing )
             poGeom->toPolygon()->addRingDirectly(poLinearRing);
     }
-    else if (sName_.compare("MultiGeometry") == 0)
+    else if (sName_.compare("MultiGeometry") == 0  ||
+             sName_.compare("MultiPolygon") == 0 ||
+             sName_.compare("MultiLineString") == 0 ||
+             sName_.compare("MultiPoint") == 0)
     {
         if (eType == MultiPoint)
             poGeom = new OGRMultiPoint();
@@ -775,7 +784,11 @@ Feature* KMLNode::getFeature(std::size_t nNum, int& nLastAsked, int &nLastCount)
 
     for(nCount = 0; nCount < poFeat->pvpoChildren_->size(); nCount++)
     {
-        if((*poFeat->pvpoChildren_)[nCount]->sName_.compare(sElementName) == 0)
+        const auto& sName = (*poFeat->pvpoChildren_)[nCount]->sName_;
+        if(sName.compare(sElementName) == 0 ||
+            (sElementName == "MultiGeometry" &&
+             (sName == "MultiPolygon" || sName == "MultiLineString" ||
+              sName == "MultiPoint")))
         {
             poTemp = (*poFeat->pvpoChildren_)[nCount];
             psReturn->poGeom = poTemp->getGeometry(poFeat->eType_);

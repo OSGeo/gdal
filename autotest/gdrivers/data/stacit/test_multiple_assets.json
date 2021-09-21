@@ -1,0 +1,166 @@
+{
+  "type": "FeatureCollection",
+  "stac_version": "1.0.0-beta.2",
+  "stac_extensions": [],
+  "features": [
+    {
+      "type": "Feature",
+      "stac_version": "1.0.0-beta.2",
+      "stac_extensions": [
+        "eo",
+        "proj"
+      ],
+      "id": "byte",
+      "geometry": null,
+      "properties": {
+        "datetime": "2021-07-19T10:57:30Z",
+        "proj:epsg": 26711,
+      },
+      "collection": "my_collection",
+      "assets": {
+        "B01": {
+          "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+          "roles": [
+            "data"
+          ],
+          "eo:bands": [
+            {
+              "name": "B01"
+            }
+          ],
+          "href": "data/byte.tif",
+          "proj:shape": [
+            20,
+            20
+          ],
+          "proj:transform": [
+            60,
+            0,
+            440720,
+            0,
+            -60,
+            3751320,
+            0,
+            0,
+            1
+          ]
+        },
+        "B02": {
+          "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+          "roles": [
+            "data"
+          ],
+          "eo:bands": [
+            {
+              "name": "B02"
+            }
+          ],
+          "href": "data/byte.tif",
+          "proj:shape": [
+            20,
+            20
+          ],
+          "proj:transform": [
+            60,
+            0,
+            -440720,
+            0,
+            -60,
+            3751320,
+            0,
+            0,
+            1
+          ]
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "stac_version": "1.0.0-beta.2",
+      "stac_extensions": [
+        "eo",
+        "proj"
+      ],
+      "id": "int16",
+      "geometry": null,
+      "properties": {
+        "datetime": "2021-07-19T10:57:30Z",
+        "proj:epsg": 26712,
+      },
+      "collection": "my_collection",
+      "assets": {
+        "B01": {
+          "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+          "roles": [
+            "data"
+          ],
+          "eo:bands": [
+            {
+              "name": "B01"
+            }
+          ],
+          "href": "data/int16.tif",
+          "proj:shape": [
+            20,
+            20
+          ],
+          "proj:transform": [
+            60,
+            0,
+            440720,
+            0,
+            -60,
+            3751320,
+            0,
+            0,
+            1
+          ]
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "stac_version": "1.0.0-beta.2",
+      "stac_extensions": [
+        "eo",
+        "proj"
+      ],
+      "id": "int16",
+      "geometry": null,
+      "properties": {
+        "datetime": "2021-07-19T10:57:30Z",
+        "proj:epsg": 26713,
+      },
+      "collection": "my_collection2",
+      "assets": {
+        "B01": {
+          "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+          "roles": [
+            "data"
+          ],
+          "eo:bands": [
+            {
+              "name": "B01"
+            }
+          ],
+          "href": "data/int16.tif",
+          "proj:shape": [
+            20,
+            20
+          ],
+          "proj:transform": [
+            60,
+            0,
+            440720,
+            0,
+            -60,
+            3751320,
+            0,
+            0,
+            1
+          ]
+        }
+      }
+    }
+  ]
+}

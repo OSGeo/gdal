@@ -55,6 +55,8 @@
 #include <cstdlib>
 #include <cstring>
 
+#include <limits>
+
 #include "cpl_config.h"
 #include "cpl_multiproc.h"
 #include "cpl_vsi.h"
@@ -2040,16 +2042,179 @@ void CSLSetNameValueSeparator( char ** papszList, const char *pszSeparator )
 char *CPLEscapeString( const char *pszInput, int nLength,
                        int nScheme )
 {
-    if( nLength == -1 )
-        nLength = static_cast<int>(strlen(pszInput));
+    const size_t szLength =
+        (nLength < 0) ? strlen(pszInput) : static_cast<size_t>(nLength);
+#define nLength no_longer_use_me
 
-    const size_t nSizeAlloc = nLength * 6 + 1;
-    char *pszOutput = static_cast<char *>( CPLMalloc( nSizeAlloc ) );
-    int iOut = 0;
+    size_t nSizeAlloc = 1;
+#if SIZEOF_VOIDP < 8
+    bool bWrapAround = false;
+    const auto IncSizeAlloc = [&nSizeAlloc, &bWrapAround](size_t inc)
+    {
+        constexpr size_t SZ_MAX = std::numeric_limits<size_t>::max();
+        if( nSizeAlloc > SZ_MAX - inc )
+        {
+            bWrapAround = true;
+            nSizeAlloc = 0;
+        }
+        nSizeAlloc += inc;
+    };
+#else
+    const auto IncSizeAlloc = [&nSizeAlloc](size_t inc)
+    {
+        nSizeAlloc += inc;
+    };
+#endif
 
     if( nScheme == CPLES_BackslashQuotable )
     {
-        for( int iIn = 0; iIn < nLength; iIn++ )
+        for( size_t iIn = 0; iIn < szLength; iIn++ )
+        {
+            if( pszInput[iIn] == '\0' ||
+                pszInput[iIn] == '\n' ||
+                pszInput[iIn] == '"'  ||
+                pszInput[iIn] == '\\' )
+                IncSizeAlloc(2);
+            else
+                IncSizeAlloc(1);
+        }
+    }
+    else if( nScheme == CPLES_XML || nScheme == CPLES_XML_BUT_QUOTES )
+    {
+        for( size_t iIn = 0; iIn < szLength; ++iIn )
+        {
+            if( pszInput[iIn] == '<' )
+            {
+                IncSizeAlloc(4);
+            }
+            else if( pszInput[iIn] == '>' )
+            {
+                IncSizeAlloc(4);
+            }
+            else if( pszInput[iIn] == '&' )
+            {
+                IncSizeAlloc(5);
+            }
+            else if( pszInput[iIn] == '"' && nScheme != CPLES_XML_BUT_QUOTES )
+            {
+                IncSizeAlloc(6);
+            }
+            // Python 2 does not display the UTF-8 character corresponding
+            // to the byte-order mark (BOM), so escape it.
+            else if( (reinterpret_cast<const unsigned char*>(pszInput))[iIn]
+                         == 0xEF &&
+                     (reinterpret_cast<const unsigned char*>(pszInput))[iIn+1]
+                         == 0xBB &&
+                     (reinterpret_cast<const unsigned char*>(pszInput))[iIn+2]
+                         == 0xBF )
+            {
+                IncSizeAlloc(8);
+                iIn += 2;
+            }
+            else if( (reinterpret_cast<const unsigned char*>(pszInput))[iIn]
+                         < 0x20
+                     && pszInput[iIn] != 0x9
+                     && pszInput[iIn] != 0xA
+                     && pszInput[iIn] != 0xD )
+            {
+                // These control characters are unrepresentable in XML format,
+                // so we just drop them.  #4117
+            }
+            else
+            {
+                IncSizeAlloc(1);
+            }
+        }
+    }
+    else if( nScheme == CPLES_URL ) // Untested at implementation.
+    {
+        for( size_t iIn = 0; iIn < szLength; ++iIn )
+        {
+            if( (pszInput[iIn] >= 'a' && pszInput[iIn] <= 'z')
+                || (pszInput[iIn] >= 'A' && pszInput[iIn] <= 'Z')
+                || (pszInput[iIn] >= '0' && pszInput[iIn] <= '9')
+                || pszInput[iIn] == '$' || pszInput[iIn] == '-'
+                || pszInput[iIn] == '_' || pszInput[iIn] == '.'
+                || pszInput[iIn] == '+' || pszInput[iIn] == '!'
+                || pszInput[iIn] == '*' || pszInput[iIn] == '\''
+                || pszInput[iIn] == '(' || pszInput[iIn] == ')'
+                || pszInput[iIn] == ',' )
+            {
+                IncSizeAlloc(1);
+            }
+            else
+            {
+                IncSizeAlloc(3);
+            }
+        }
+    }
+    else if( nScheme == CPLES_SQL || nScheme == CPLES_SQLI )
+    {
+        const char chQuote = nScheme == CPLES_SQL ? '\'' : '\"';
+        for( size_t iIn = 0; iIn < szLength; ++iIn )
+        {
+            if( pszInput[iIn] == chQuote )
+            {
+                IncSizeAlloc(2);
+            }
+            else
+            {
+                IncSizeAlloc(1);
+            }
+        }
+    }
+    else if( nScheme == CPLES_CSV || nScheme == CPLES_CSV_FORCE_QUOTING )
+    {
+        if( nScheme == CPLES_CSV &&
+            strcspn( pszInput, "\",;\t\n\r" ) == szLength )
+        {
+            char *pszOutput = static_cast<char *>( VSI_MALLOC_VERBOSE( szLength + 1 ) );
+            if( pszOutput == nullptr )
+                return nullptr;
+            memcpy(pszOutput, pszInput, szLength + 1);
+            return pszOutput;
+        }
+        else
+        {
+            IncSizeAlloc(1);
+            for( size_t iIn = 0; iIn < szLength; ++iIn )
+            {
+                if( pszInput[iIn] == '\"' )
+                {
+                    IncSizeAlloc(2);
+                }
+                else
+                    IncSizeAlloc(1);
+            }
+            IncSizeAlloc(1);
+        }
+    }
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Undefined escaping scheme (%d) in CPLEscapeString()",
+                  nScheme );
+        return CPLStrdup("");
+    }
+
+#if SIZEOF_VOIDP < 8
+    if( bWrapAround )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Out of memory in CPLEscapeString()");
+        return nullptr;
+    }
+#endif
+
+    char *pszOutput = static_cast<char *>( VSI_MALLOC_VERBOSE( nSizeAlloc ) );
+    if( pszOutput == nullptr )
+        return nullptr;
+
+    size_t iOut = 0;
+
+    if( nScheme == CPLES_BackslashQuotable )
+    {
+        for( size_t iIn = 0; iIn < szLength; iIn++ )
         {
             if( pszInput[iIn] == '\0' )
             {
@@ -2078,7 +2243,7 @@ char *CPLEscapeString( const char *pszInput, int nLength,
     }
     else if( nScheme == CPLES_XML || nScheme == CPLES_XML_BUT_QUOTES )
     {
-        for( int iIn = 0; iIn < nLength; ++iIn )
+        for( size_t iIn = 0; iIn < szLength; ++iIn )
         {
             if( pszInput[iIn] == '<' )
             {
@@ -2148,7 +2313,7 @@ char *CPLEscapeString( const char *pszInput, int nLength,
     }
     else if( nScheme == CPLES_URL ) // Untested at implementation.
     {
-        for( int iIn = 0; iIn < nLength; ++iIn )
+        for( size_t iIn = 0; iIn < szLength; ++iIn )
         {
             if( (pszInput[iIn] >= 'a' && pszInput[iIn] <= 'z')
                 || (pszInput[iIn] >= 'A' && pszInput[iIn] <= 'Z')
@@ -2173,13 +2338,13 @@ char *CPLEscapeString( const char *pszInput, int nLength,
     }
     else if( nScheme == CPLES_SQL || nScheme == CPLES_SQLI )
     {
-        char szQuote = nScheme == CPLES_SQL ? '\'' : '\"';
-        for( int iIn = 0; iIn < nLength; ++iIn )
+        const char chQuote = nScheme == CPLES_SQL ? '\'' : '\"';
+        for( size_t iIn = 0; iIn < szLength; ++iIn )
         {
-            if( pszInput[iIn] == szQuote )
+            if( pszInput[iIn] == chQuote )
             {
-                pszOutput[iOut++] = szQuote;
-                pszOutput[iOut++] = szQuote;
+                pszOutput[iOut++] = chQuote;
+                pszOutput[iOut++] = chQuote;
             }
             else
             {
@@ -2190,41 +2355,24 @@ char *CPLEscapeString( const char *pszInput, int nLength,
     }
     else if( nScheme == CPLES_CSV || nScheme == CPLES_CSV_FORCE_QUOTING )
     {
-        if( nScheme == CPLES_CSV &&
-            static_cast<int>(strcspn( pszInput, "\",;\t\n\r" )) == nLength )
-        {
-            memcpy( pszOutput, pszInput, nLength + 1 );
-            iOut = nLength + 1;
-        }
-        else
-        {
-            pszOutput[iOut++] = '\"';
+        pszOutput[iOut++] = '\"';
 
-            for( int iIn = 0; iIn < nLength; ++iIn )
+        for( size_t iIn = 0; iIn < szLength; ++iIn )
+        {
+            if( pszInput[iIn] == '\"' )
             {
-                if( pszInput[iIn] == '\"' )
-                {
-                    pszOutput[iOut++] = '\"';
-                    pszOutput[iOut++] = '\"';
-                }
-                else
-                    pszOutput[iOut++] = pszInput[iIn];
+                pszOutput[iOut++] = '\"';
+                pszOutput[iOut++] = '\"';
             }
-            pszOutput[iOut++] = '\"';
-            pszOutput[iOut++] = '\0';
+            else
+                pszOutput[iOut++] = pszInput[iIn];
         }
-    }
-    else
-    {
+        pszOutput[iOut++] = '\"';
         pszOutput[iOut++] = '\0';
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Undefined escaping scheme (%d) in CPLEscapeString()",
-                  nScheme );
     }
 
-    if( iOut == nLength + 1 )
-        return pszOutput;
-    return static_cast<char*>(CPLRealloc( pszOutput, iOut));
+    return pszOutput;
+#undef nLength
 }
 
 /************************************************************************/

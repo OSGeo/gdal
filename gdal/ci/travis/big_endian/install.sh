@@ -31,6 +31,7 @@ tar xzf sqlite-autoconf-3250100.tar.gz
 (cd proj;  ./autogen.sh && PKG_CONFIG_PATH=/tmp/install/lib/pkgconfig ./configure  --disable-static --host=armeb-linux-gnueabihf --prefix=/tmp/install --disable-lto && make -j3 && make install)
 
 cd gdal
+./autogen.sh
 ./configure --host=armeb-linux-gnueabihf --without-libtool --with-sqlite3=/tmp/install --with-proj=/tmp/install || cat config.log
 make USER_DEFS="-Werror" -j3
 cd apps

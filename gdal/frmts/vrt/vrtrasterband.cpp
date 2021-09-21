@@ -329,7 +329,6 @@ CPLErr VRTRasterBand::SetCategoryNames( char ** papszNewNames )
 
 CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
                                const char *pszVRTPath,
-                               void* pUniqueHandle,
                                std::map<CPLString, GDALDataset*>& oMapSharedSources )
 
 {
@@ -593,7 +592,7 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
             break;
         }
 
-        if( poBand->XMLInit( psNode, pszVRTPath, pUniqueHandle,
+        if( poBand->XMLInit( psNode, pszVRTPath,
                              oMapSharedSources ) == CE_None )
         {
             SetMaskBand(poBand);
@@ -1152,6 +1151,10 @@ void VRTRasterBand::GetFileList(char*** ppapszFileList, int *pnSize,
 int VRTRasterBand::GetOverviewCount()
 
 {
+    VRTDataset* poVRTDS = cpl::down_cast<VRTDataset *>( poDS );
+    if( !poVRTDS->AreOverviewsEnabled() )
+        return 0;
+
     // First: overviews declared in <Overview> element
     if( !m_aoOverviewInfos.empty() )
         return static_cast<int>(m_aoOverviewInfos.size());
@@ -1161,9 +1164,27 @@ int VRTRasterBand::GetOverviewCount()
     if( nOverviewCount )
         return nOverviewCount;
 
-    // If not found, implicit virtual overviews
-    VRTDataset* poVRTDS = static_cast<VRTDataset *>( poDS );
-    poVRTDS->BuildVirtualOverviews();
+    if( poVRTDS->m_apoOverviews.empty() )
+    {
+        // If not found, implicit virtual overviews
+
+        const std::string osFctId("VRTRasterBand::GetOverviewCount");
+        GDALAntiRecursionGuard oGuard(osFctId);
+        if( oGuard.GetCallDepth() >= 32 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Recursion detected");
+            return 0;
+        }
+
+        GDALAntiRecursionGuard oGuard2(oGuard, poVRTDS->GetDescription());
+        if( oGuard2.GetCallDepth() >= 2 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Recursion detected");
+            return 0;
+        }
+
+        poVRTDS->BuildVirtualOverviews();
+    }
     if( !poVRTDS->m_apoOverviews.empty() && poVRTDS->m_apoOverviews[0] )
         return static_cast<int>( poVRTDS->m_apoOverviews.size() );
 

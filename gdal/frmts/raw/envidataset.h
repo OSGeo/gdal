@@ -74,7 +74,7 @@ class ENVIDataset final: public RawDataset
 
     double      adfGeoTransform[6];
 
-    char       *pszProjection;
+    OGRSpatialReference m_oSRS{};
 
     CPLStringList m_aosHeader{};
 
@@ -114,14 +114,10 @@ class ENVIDataset final: public RawDataset
     void    FlushCache() override;
     CPLErr  GetGeoTransform( double *padfTransform ) override;
     CPLErr  SetGeoTransform( double * ) override;
-    const char *_GetProjectionRef() override;
-    CPLErr  _SetProjection( const char * ) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
-    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
-        return OldSetProjectionFromSetSpatialRef(poSRS);
-    }
+
+    const OGRSpatialReference* GetSpatialRef() const override ;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
+
     char  **GetFileList() override;
 
     void SetDescription( const char * ) override;
@@ -139,7 +135,7 @@ class ENVIDataset final: public RawDataset
     bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout&) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
-    static GDALDataset *Open( GDALOpenInfo *, bool bFileSizeCheck );
+    static ENVIDataset *Open( GDALOpenInfo *, bool bFileSizeCheck );
     static GDALDataset *Create( const char *pszFilename,
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char ** papszOptions );

@@ -2,7 +2,7 @@
 \page tutorial PCIDSK API Tutorial
 
 The PCIDSK file format is a geospatial file format which includes 
-raster channels (or bands) and auxilary segments which include
+raster channels (or bands) and auxiliary segments which include
 information like georeferencing, color lookup tables, vector feature
 data and many other special data types.  
 
@@ -10,7 +10,7 @@ The PCIDSK SDK provides C++ classes to interface to the various different
 components of the file format.  The PCIDSKFile is used to interface with
 the file as a whole.  The PCIDSKChannel is used to interface with a raster
 channel (or band).  The PCIDSKSegment is the generic interface to 
-auxilary segments.  There are additional interface classes available
+auxiliary segments.  There are additional interface classes available
 for some of the specific segment types. 
 
 \section tut_prelimin Include files, and Namespaces

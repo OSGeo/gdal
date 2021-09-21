@@ -762,3 +762,125 @@ def test_ogr_flatgeobuf_editing():
 ])
 def test_ogr_flatgeobuf_multi_geometries_with_empty(in_wkt, expected_wkt):
     wktRoundtrip(in_wkt, expected_wkt)
+
+
+def test_ogr_flatgeobuf_ossfuzz_bug_29462():
+    ds = ogr.GetDriverByName('FlatGeobuf').CreateDataSource('/vsimem/test.fgb')
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbPoint)
+
+    fld_defn = ogr.FieldDefn('str', ogr.OFTString)
+    lyr.CreateField(fld_defn)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['str'] = 'X' * 100000
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (0 0)'))
+    lyr.CreateFeature(f)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['str'] = 'X'
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (0 0)'))
+    lyr.CreateFeature(f)
+
+    ds = None
+
+    ds = ogr.Open('/vsimem/test.fgb')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f['str'] == 'X' * 100000
+    f = lyr.GetNextFeature()
+    assert f['str'] == 'X'
+    ds = None
+
+    ogr.GetDriverByName('FlatGeobuf').DeleteDataSource('/vsimem/test.fgb')
+    assert not gdal.VSIStatL('/vsimem/test.fgb')
+
+
+###############################################################################
+# Check that we don't crash or leak
+
+
+@pytest.mark.parametrize("filename", ['data/flatgeobuf/invalid_polyhedralsurface_of_curvepolygon.fgb',
+                                      'data/flatgeobuf/invalid_compoundcurve_non_contiguous_curves.fgb',
+                                      'data/flatgeobuf/invalid_curvepolygon_linestring_three_points.fgb',
+                                      'data/flatgeobuf/invalid_multisurface_of_polyhedralsurface.fgb'])
+def test_ogr_flatgeobuf_read_invalid_geometries(filename):
+    with gdaltest.error_handler():
+        ds = gdal.OpenEx(filename)
+        lyr = ds.GetLayer(0)
+        for f in lyr:
+            pass
+
+###############################################################################
+
+
+def test_ogr_flatgeobuf_read_coordinate_metadata_wkt():
+
+    ds = gdal.OpenEx('data/flatgeobuf/test_ogr_flatgeobuf_coordinate_epoch.fgb')
+    lyr = ds.GetLayer(0)
+    got_srs = lyr.GetSpatialRef()
+    assert got_srs is not None
+    assert got_srs.IsGeographic()
+
+
+###############################################################################
+
+
+def test_ogr_flatgeobuf_coordinate_epoch():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    srs.SetCoordinateEpoch(2021.3)
+
+    filename = '/vsimem/test_ogr_flatgeobuf_coordinate_epoch.fgb'
+    ds = ogr.GetDriverByName('FlatGeobuf').CreateDataSource(filename)
+    ds.CreateLayer('foo', srs=srs)
+    ds = None
+
+    ds = gdal.OpenEx(filename)
+    lyr = ds.GetLayer(0)
+    srs = lyr.GetSpatialRef()
+    assert srs.GetAuthorityCode(None) == '4326'
+    assert srs.GetCoordinateEpoch() == 2021.3
+    assert srs.GetDataAxisToSRSAxisMapping() == [2, 1]
+    ds = None
+
+    ogr.GetDriverByName('FlatGeobuf').DeleteDataSource(filename)
+
+
+###############################################################################
+
+
+def test_ogr_flatgeobuf_coordinate_epoch_custom_wkt():
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("""GEOGCRS["myTRF2021",
+    DYNAMIC[
+        FRAMEEPOCH[2010]],
+    DATUM["myTRF2021",
+        ELLIPSOID["GRS 1980",6378137,298.257222101,
+            LENGTHUNIT["metre",1]]],
+    PRIMEM["Greenwich",0,
+        ANGLEUNIT["degree",0.0174532925199433]],
+    CS[ellipsoidal,2],
+        AXIS["geodetic latitude (Lat)",north,
+            ORDER[1],
+            ANGLEUNIT["degree",0.0174532925199433]],
+        AXIS["geodetic longitude (Lon)",east,
+            ORDER[2],
+            ANGLEUNIT["degree",0.0174532925199433]]]""")
+    srs.SetCoordinateEpoch(2021.3)
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
+    filename = '/vsimem/test_ogr_flatgeobuf_coordinate_epoch.fgb'
+    ds = ogr.GetDriverByName('FlatGeobuf').CreateDataSource(filename)
+    ds.CreateLayer('foo', srs=srs)
+    ds = None
+
+    ds = gdal.OpenEx(filename)
+    lyr = ds.GetLayer(0)
+    got_srs = lyr.GetSpatialRef()
+    assert got_srs.IsSame(srs)
+    assert got_srs.GetCoordinateEpoch() == 2021.3
+    ds = None
+
+    ogr.GetDriverByName('FlatGeobuf').DeleteDataSource(filename)

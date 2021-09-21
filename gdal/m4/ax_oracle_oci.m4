@@ -96,20 +96,26 @@ AC_DEFUN([AX_LIB_ORACLE_OCI],
             dnl ORACLE_HOME path provided
 
             dnl Primary path to OCI headers, available in Oracle>=10
-            oracle_include_dir="$oracle_home_dir/rdbms/public"
+            if test -d "$oracle_home_dir/rdbms/public"; then
+                oracle_include_dir="$oracle_home_dir/rdbms/public"
+            fi
 
             dnl Secondary path to OCI headers used by older versions
-            oracle_include_dir2="$oracle_home_dir/rdbms/demo"
+            if test -d "$oracle_home_dir/rdbms/demo"; then
+                oracle_include_dir="$oracle_home_dir/rdbms/demo"
+            fi
 
             dnl Another path to OCI headers used by instant client
-            oracle_include_dir3="$oracle_home_dir/sdk/include"
+            if test -d "$oracle_home_dir/sdk/include"; then
+                oracle_include_dir="$oracle_home_dir/sdk/include"
+            fi
 
             dnl Library path
             oracle_lib_dir="$oracle_home_dir/lib"
 
             dnl Library path for instant client
-            oracle_lib_dir2="$oracle_home_dir"            
-            
+            oracle_lib_dir2="$oracle_home_dir"
+
         elif test "$oracle_home_dir" = "yes"; then
             want_oracle_but_no_path="yes"
         fi
@@ -143,16 +149,6 @@ Please, locate Oracle directories using --with-oci or \
         saved_CPPFLAGS="$CPPFLAGS"
         CPPFLAGS="$CPPFLAGS -I$oracle_include_dir"
 
-        dnl Additional path for older Oracle installations
-        if test -n "$oracle_include_dir2"; then
-            CPPFLAGS="$CPPFLAGS -I$oracle_include_dir2"
-        fi
-
-        dnl Additional path for instant client
-        if test -n "$oracle_include_dir3"; then
-            CPPFLAGS="$CPPFLAGS -I$oracle_include_dir3"
-        fi
-
         dnl Depending on later Oracle version detection,
         dnl -lnnz10 flag might be removed for older Oracle < 10.x
         if test -n "$oracle_include_dir" ; then
@@ -163,19 +159,13 @@ Please, locate Oracle directories using --with-oci or \
 
         saved_LIBS="$LIBS"
         LIBS="$LIBS $oci_ldflags"
-        
+
         dnl
         dnl Check OCI headers
         dnl
         if test -f "$oracle_include_dir/oci.h"; then
             ACTIVE_INCLUDE_DIR="$oracle_include_dir"
         fi
-        if test -f "$oracle_include_dir2/oci.h"; then
-            ACTIVE_INCLUDE_DIR="$oracle_include_dir2"
-        fi
-        if test -f "$oracle_include_dir3/oci.h"; then
-            ACTIVE_INCLUDE_DIR="$oracle_include_dir3"
-        fi  
         AC_MSG_CHECKING([for Oracle OCI headers in $ACTIVE_INCLUDE_DIR])
 
         AC_LANG_PUSH(C++)
@@ -196,14 +186,6 @@ Please, locate Oracle directories using --with-oci or \
             )],
             [
             ORACLE_OCI_CFLAGS="-I$oracle_include_dir"
-
-            if test -n "$oracle_include_dir2"; then
-                ORACLE_OCI_CFLAGS="$ORACLE_OCI_CFLAGS -I$oracle_include_dir2"
-            fi
-
-            if test -n "$oracle_include_dir3"; then
-                ORACLE_OCI_CFLAGS="$ORACLE_OCI_CFLAGS -I$oracle_include_dir3"
-            fi
 
             oci_header_found="yes"
             AC_MSG_RESULT([yes])
@@ -259,12 +241,7 @@ if (envh) OCIHandleFree(envh, OCI_HTYPE_ENV);
         if test -f "$oracle_include_dir/oci.h"; then
             ACTIVE_INCLUDE_DIR="$oracle_include_dir"
         fi
-        if test -f "$oracle_include_dir2/oci.h"; then
-            ACTIVE_INCLUDE_DIR="$oracle_include_dir2"
-        fi
-        if test -f "$oracle_include_dir3/oci.h"; then
-            ACTIVE_INCLUDE_DIR="$oracle_include_dir3"
-        fi        
+
         oracle_version_major=$(sed -n '/^#define OCI_MAJOR_VERSION.*$/{s/\([^0-9]*\)\([0-9]*\).*/\2/;P;}' \
 		$ACTIVE_INCLUDE_DIR/oci.h)
         oracle_version_minor=$(sed -n '/^#define OCI_MINOR_VERSION.*$/{s/\([^0-9]*\)\([0-9]*\).*/\2/;P;}' \

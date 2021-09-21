@@ -39,7 +39,7 @@
 #endif
 
 #include "cpl_json_streaming_parser.h"
-#include <ogr_api.h>
+#include "ogr_api.h"
 
 CPL_CVSID("$Id$")
 
@@ -1105,7 +1105,7 @@ OGRFeature* OGRGeoJSONReader::GetNextFeature(OGRGeoJSONLayer* poLayer)
         }
         if( bFinished && bJSonPLikeWrapper_ && nRead - nSkip > 0 )
             nRead --;
-        if( !poStreamingParser_->Parse( 
+        if( !poStreamingParser_->Parse(
                             reinterpret_cast<const char*>(pabyBuffer_ + nSkip),
                             nRead - nSkip, bFinished ) ||
             poStreamingParser_->ExceptionOccurred() )
@@ -1466,7 +1466,7 @@ OGRSpatialReference* OGRGeoJSONReadSpatialReference( json_object* poObj )
 
             poSRS = new OGRSpatialReference();
             poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-            if( OGRERR_NONE != poSRS->SetFromUserInput( pszName ) )
+            if( OGRERR_NONE != poSRS->SetFromUserInput( pszName, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS ) )
             {
                 delete poSRS;
                 poSRS = nullptr;

@@ -1,6 +1,13 @@
 name: Ubuntu 20.04 build
 
-on: [push, pull_request]
+on:
+    push:
+        paths-ignore:
+            - 'gdal/doc/**'
+    pull_request:
+        paths-ignore:
+            - 'gdal/doc/**'
+
 
 jobs:
 
@@ -11,13 +18,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Cache
+      - name: Cache deps
         uses: actions/cache@v2
-        id: cache
+        id: cache-deps
         with:
-          path: |
-                /tmp/docker
-                ${{ github.workspace }}/ccache.tar.gz
+          path: /tmp/docker
           key: ${{ runner.os }}-cache-ubuntu-20.04-${{ hashFiles('.github/workflows/ubuntu_20.04/build-deps.sh') }}-${{ github.run_id }}
           restore-keys: ${{ runner.os }}-cache-ubuntu-20.04-${{ hashFiles('.github/workflows/ubuntu_20.04/build-deps.sh') }}-
 
@@ -31,6 +36,21 @@ jobs:
                 mkdir -p /tmp/docker
                 docker image save -o /tmp/docker/gdal-deps-ubuntu-20.04.tar gdal-deps-ubuntu-20.04
             fi
+
+      - name: Get Architecture
+        id: get-arch
+        run: |
+          export ARCH=$(cc -march=native -### -E - < /dev/null 2>&1 | sed -ne 's/.*cc1 .*-march=\([^ "]*\)[ "].*/\1/p')
+          echo "Architecture: $ARCH"
+          echo "::set-output name=arch::$ARCH"
+
+      - name: Cache build
+        uses: actions/cache@v2
+        id: cache-build
+        with:
+          path: ${{ github.workspace }}/ccache.tar.gz
+          key: ${{ runner.os }}-cache-ubuntu-20.04-${{ steps.get-arch.outputs.arch }}-${{ hashFiles('.github/workflows/ubuntu_20.04/build-deps.sh') }}-${{ github.run_id }}
+          restore-keys: ${{ runner.os }}-cache-ubuntu-20.04-${{ steps.get-arch.outputs.arch }}-${{ hashFiles('.github/workflows/ubuntu_20.04/build-deps.sh') }}-
 
       - name: gcc compilation flags
         run: docker run --rm gdal-deps-ubuntu-20.04 sh -c "g++ -march=native -dM -E -x c++ - < /dev/null | grep -E 'SSE|AVX'"
@@ -51,8 +71,17 @@ jobs:
         run: docker run --rm gdal sh -c "cd /build/gdal/swig/java && make test"
 
       - name: Run SWIG CSharp tests
-        run: docker run --rm gdal sh -c "cd /build/gdal/swig/csharp && make && make && make test"
+        run: docker run --rm gdal sh -c "cd /build/gdal/swig/csharp && make && make test"
+
+      - name: Build GDAL Python sdist distribution
+        run: docker run --rm gdal sh -c "cd /build/gdal/swig/python && python3 setup.py sdist"
+
+      - name: Build gdal-utils Python bdist_wheel distribution
+        run: docker run --rm gdal sh -c "cd /build/gdal/swig/python/gdal-utils && python3 -m pip install wheel && python3 setup.py bdist_wheel"
 
       - name: Run pytest
         # --security-opt seccomp=unconfined, so that the userfaulfd syscall is available
-        run: docker run -e CI -e TRAVIS=yes -e GITHUB_WORKFLOW --security-opt seccomp=unconfined --rm gdal sh -c "cd /build/autotest && pip3 install -U -r requirements.txt && pytest"
+        run: docker run -e CI -e TRAVIS=yes -e TRAVIS_BRANCH=ubuntu_2004 -e GITHUB_WORKFLOW --security-opt seccomp=unconfined --rm gdal sh -c "cd /build/autotest && pip3 install -U -r requirements.txt && pytest"
+
+      - name: Build fake ossfuzz fuzzers
+        run: docker run --rm gdal sh -c "cd /build/gdal/fuzzers && make dummyfuzzers_dynamic"

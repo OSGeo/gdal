@@ -47,7 +47,7 @@ CPLString ProjToWKT(const CPLString &proj) {
     }
     else
     {
-        if (sr.SetFromUserInput(proj.c_str()) != OGRERR_NONE) return srs;
+        if (sr.SetFromUserInput(proj.c_str(), OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS) != OGRERR_NONE) return srs;
     }
     sr.exportToWkt(&wkt);
     srs = wkt;

@@ -35,6 +35,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -247,7 +248,7 @@ bool OGRVRTLayer::FastInitialize( CPLXMLNode *psLTreeIn,
             OGRSpatialReference oSRS;
             oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
-            if( oSRS.SetFromUserInput(pszLayerSRS) != OGRERR_NONE )
+            if( oSRS.SetFromUserInput(pszLayerSRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS) != OGRERR_NONE )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Failed to import LayerSRS `%s'.", pszLayerSRS);
@@ -473,7 +474,7 @@ bool OGRVRTLayer::ParseGeometryField(CPLXMLNode *psNode,
             OGRSpatialReference oSRS;
             oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
-            if( oSRS.SetFromUserInput(pszSRS) != OGRERR_NONE )
+            if( oSRS.SetFromUserInput(pszSRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS) != OGRERR_NONE )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Failed to import SRS `%s'.", pszSRS);
@@ -550,10 +551,9 @@ bool OGRVRTLayer::FullInitialize()
 
     // Figure out the data source name.  It may be treated relative
     // to vrt filename, but normally it is used directly.
-    char *pszSrcDSName =
-        const_cast<char *>(CPLGetXMLValue(psLTree, "SrcDataSource", nullptr));
+    std::string osSrcDSName = CPLGetXMLValue(psLTree, "SrcDataSource", "");
 
-    if( pszSrcDSName == nullptr )
+    if( osSrcDSName.empty() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Missing SrcDataSource for layer %s.", osName.c_str());
@@ -569,30 +569,25 @@ bool OGRVRTLayer::FullInitialize()
              i++ )
         {
             const char *pszPrefix = apszPrefixes[i];
-            if( EQUALN(pszSrcDSName, pszPrefix, strlen(pszPrefix)) )
+            if( EQUALN(osSrcDSName.c_str(), pszPrefix, strlen(pszPrefix)) )
             {
-                const char *pszLastPart = strrchr(pszSrcDSName, ':') + 1;
+                auto nLastPart = osSrcDSName.find(':') + 1;
                 // CSV:z:/foo.xyz
-                if( (pszLastPart[0] == '/' || pszLastPart[0] == '\\') &&
-                    pszLastPart - pszSrcDSName >= 3 && pszLastPart[-3] == ':' )
-                    pszLastPart -= 2;
-                CPLString osPrefix(pszSrcDSName);
-                osPrefix.resize(pszLastPart - pszSrcDSName);
-                pszSrcDSName = CPLStrdup((osPrefix +
-                    CPLProjectRelativeFilename(osVRTDirectory, pszLastPart)).c_str());
+                if( (osSrcDSName[nLastPart] == '/' || osSrcDSName[nLastPart] == '\\') &&
+                    nLastPart >= 3 && osSrcDSName[nLastPart-3] == ':' )
+                    nLastPart -= 2;
+                CPLString osPrefix(osSrcDSName);
+                osPrefix.resize(nLastPart);
+                osSrcDSName = osPrefix +
+                    CPLProjectRelativeFilename(osVRTDirectory, osSrcDSName.c_str() + nLastPart);
                 bDone = true;
                 break;
             }
         }
         if( !bDone )
         {
-            pszSrcDSName = CPLStrdup(
-                CPLProjectRelativeFilename(osVRTDirectory, pszSrcDSName));
+            osSrcDSName = CPLProjectRelativeFilename(osVRTDirectory, osSrcDSName.c_str());
         }
-    }
-    else
-    {
-        pszSrcDSName = CPLStrdup(pszSrcDSName);
     }
 
     // Are we accessing this datasource in shared mode?  We default
@@ -617,7 +612,7 @@ bool OGRVRTLayer::FullInitialize()
     // Try to access the datasource.
 try_again:
     CPLErrorReset();
-    if( EQUAL(pszSrcDSName, "@dummy@") )
+    if( EQUAL(osSrcDSName.c_str(), "@dummy@") )
     {
         GDALDriver *poMemDriver =
             OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName("Memory");
@@ -630,7 +625,7 @@ try_again:
     }
     else if( bSrcDSShared )
     {
-        if( poDS->IsInForbiddenNames(pszSrcDSName) )
+        if( poDS->IsInForbiddenNames(osSrcDSName.c_str()) )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cyclic VRT opening detected!");
@@ -644,7 +639,7 @@ try_again:
             if( bUpdate )
                 l_nFlags |= GDAL_OF_UPDATE;
             poSrcDS = (GDALDataset *)GDALOpenEx(
-                pszSrcDSName, l_nFlags, nullptr,
+                osSrcDSName.c_str(), l_nFlags, nullptr,
                 (const char *const *)papszOpenOptions, nullptr);
             CSLDestroy(papszOpenOptions);
             // Is it a VRT datasource?
@@ -665,7 +660,7 @@ try_again:
             if( bUpdate )
                 l_nFlags |= GDAL_OF_UPDATE;
             poSrcDS = (GDALDataset *)GDALOpenEx(
-                pszSrcDSName, l_nFlags, nullptr,
+                osSrcDSName.c_str(), l_nFlags, nullptr,
                 (const char *const *)papszOpenOptions, nullptr);
             CSLDestroy(papszOpenOptions);
             // Is it a VRT datasource?
@@ -700,13 +695,13 @@ try_again:
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Cannot open datasource `%s' in update mode. "
                      "Trying again in read-only mode",
-                     pszSrcDSName);
+                     osSrcDSName.c_str());
             bUpdate = false;
             goto try_again;
         }
         if( strlen(CPLGetLastErrorMsg()) == 0 )
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Failed to open datasource `%s'.", pszSrcDSName);
+                     "Failed to open datasource `%s'.", osSrcDSName.c_str());
         goto error;
     }
 
@@ -744,13 +739,10 @@ try_again:
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Failed to find layer '%s' on datasource '%s'.",
-                     pszSrcLayerName, pszSrcDSName);
+                     pszSrcLayerName, osSrcDSName.c_str());
             goto error;
         }
     }
-
-    CPLFree(pszSrcDSName);
-    pszSrcDSName = nullptr;
 
     // Search for GeometryField definitions.
 
@@ -1119,7 +1111,6 @@ try_again:
 
 error:
     bError = true;
-    CPLFree(pszSrcDSName);
     poFeatureDefn->Release();
     poFeatureDefn = new OGRFeatureDefn(osName);
     poFeatureDefn->SetGeomType(wkbNone);
@@ -1216,7 +1207,7 @@ bool OGRVRTLayer::ResetSourceReading()
 
                 if( !CPLIsInf(sEnvelope.MinX) )
                     osFilter +=
-                        CPLSPrintf("%s > %.15g", pszXField, sEnvelope.MinX);
+                        CPLSPrintf("\"%s\" > %.15g", pszXField, sEnvelope.MinX);
                 else if( sEnvelope.MinX > 0 )
                     osFilter += "0 = 1";
 
@@ -1225,7 +1216,7 @@ bool OGRVRTLayer::ResetSourceReading()
                     if( !osFilter.empty() )
                         osFilter += " AND ";
                     osFilter +=
-                        CPLSPrintf("%s < %.15g", pszXField, sEnvelope.MaxX);
+                        CPLSPrintf("\"%s\" < %.15g", pszXField, sEnvelope.MaxX);
                 }
                 else if( sEnvelope.MaxX < 0 )
                 {
@@ -1239,7 +1230,7 @@ bool OGRVRTLayer::ResetSourceReading()
                     if( !osFilter.empty() )
                         osFilter += " AND ";
                     osFilter +=
-                        CPLSPrintf("%s > %.15g", pszYField, sEnvelope.MinY);
+                        CPLSPrintf("\"%s\" > %.15g", pszYField, sEnvelope.MinY);
                 }
                 else if( sEnvelope.MinY > 0 )
                 {
@@ -1253,7 +1244,7 @@ bool OGRVRTLayer::ResetSourceReading()
                     if( !osFilter.empty() )
                         osFilter += " AND ";
                     osFilter +=
-                        CPLSPrintf("%s < %.15g", pszYField, sEnvelope.MaxY);
+                        CPLSPrintf("\"%s\" < %.15g", pszYField, sEnvelope.MaxY);
                 }
                 else if( sEnvelope.MaxY < 0 )
                 {
@@ -1797,23 +1788,30 @@ OGRVRTLayer::TranslateVRTFeatureToSrcFeature(OGRFeature *poVRTFeature)
             OGRGeometry *poGeom = poVRTFeature->GetGeomFieldRef(i);
             if( poGeom != nullptr )
             {
-                const int nSize = poGeom->WkbSize();
-                GByte *pabyData = static_cast<GByte *>(CPLMalloc(nSize));
-                if( poGeom->exportToWkb(wkbNDR, pabyData) == OGRERR_NONE )
+                const size_t nSize = poGeom->WkbSize();
+                if( nSize > static_cast<size_t>(std::numeric_limits<int>::max()) )
                 {
-                    if( poSrcFeat->GetFieldDefnRef(iGeomField)->GetType() ==
-                        OFTBinary )
-                    {
-                        poSrcFeat->SetField(iGeomField, nSize, pabyData);
-                    }
-                    else
-                    {
-                        char *pszHexWKB = CPLBinaryToHex(nSize, pabyData);
-                        poSrcFeat->SetField(iGeomField, pszHexWKB);
-                        CPLFree(pszHexWKB);
-                    }
                 }
-                CPLFree(pabyData);
+                else
+                {
+                    GByte *pabyData = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nSize));
+                    if( pabyData &&
+                        poGeom->exportToWkb(wkbNDR, pabyData) == OGRERR_NONE )
+                    {
+                        if( poSrcFeat->GetFieldDefnRef(iGeomField)->GetType() ==
+                            OFTBinary )
+                        {
+                            poSrcFeat->SetField(iGeomField, static_cast<int>(nSize), pabyData);
+                        }
+                        else
+                        {
+                            char *pszHexWKB = CPLBinaryToHex(static_cast<int>(nSize), pabyData);
+                            poSrcFeat->SetField(iGeomField, pszHexWKB);
+                            CPLFree(pszHexWKB);
+                        }
+                    }
+                    CPLFree(pabyData);
+                }
             }
         }
         else if( eGeometryStyle == VGS_Shape )

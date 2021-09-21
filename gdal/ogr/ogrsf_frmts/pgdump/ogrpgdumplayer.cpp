@@ -32,9 +32,7 @@
 #include "ogr_p.h"
 
 CPL_CVSID("$Id$")
-
-constexpr int USE_COPY_UNSET = -1;
-
+//
 static CPLString OGRPGDumpEscapeStringList(
     char** papszItems, bool bForInsertOrUpdate,
     OGRPGCommonEscapeStringCbk pfnEscapeString,
@@ -67,25 +65,8 @@ OGRPGDumpLayer::OGRPGDumpLayer( OGRPGDumpDataSource* poDSIn,
     pszFIDColumn(CPLStrdup(pszFIDColumnIn)),
     poFeatureDefn(new OGRFeatureDefn(pszTableName)),
     poDS(poDSIn),
-    bLaunderColumnNames(true),
-    bPreservePrecision(true),
-    bUseCopy(USE_COPY_UNSET),
     bWriteAsHex(CPL_TO_BOOL(bWriteAsHexIn)),
-    bCopyActive(false),
-    bFIDColumnInCopyFields(false),
-    bCreateTable(bCreateTableIn),
-    nUnknownSRSId(-1),
-    nForcedSRSId(-2),
-    nForcedGeometryTypeFlags(-1),
-    bCreateSpatialIndexFlag(true),
-    nPostGISMajor(0),
-    nPostGISMinor(0),
-    iNextShapeId(0),
-    iFIDAsRegularColumnIndex(-1),
-    bAutoFIDOnCreateViaCopy(true),
-    bCopyStatementWithFID(false),
-    bNeedToUpdateSequence(false),
-    papszOverrideColumnTypes(nullptr)
+    bCreateTable(bCreateTableIn)
 {
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->SetGeomType(wkbNone);
@@ -276,7 +257,7 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
                 osCommand += ", ";
 
             OGRGeomFieldDefn* poGFldDefn = poFeature->GetGeomFieldDefnRef(i);
-            osCommand = osCommand + OGRPGDumpEscapeColumnName(poGFldDefn->GetNameRef()) + " ";
+            osCommand += OGRPGDumpEscapeColumnName(poGFldDefn->GetNameRef()) + " ";
             bNeedComma = true;
         }
     }
@@ -287,7 +268,7 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
         if( bNeedComma )
             osCommand += ", ";
 
-        osCommand = osCommand + OGRPGDumpEscapeColumnName(pszFIDColumn) + " ";
+        osCommand += OGRPGDumpEscapeColumnName(pszFIDColumn) + " ";
         bNeedComma = true;
     }
     else
@@ -307,8 +288,7 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
         else
             osCommand += ", ";
 
-        osCommand = osCommand
-            + OGRPGDumpEscapeColumnName(poFeatureDefn->GetFieldDefn(i)->GetNameRef());
+        osCommand += OGRPGDumpEscapeColumnName(poFeatureDefn->GetFieldDefn(i)->GetNameRef());
     }
 
     const bool bEmptyInsert = !bNeedComma;
@@ -1563,6 +1543,13 @@ CPLString OGRPGCommonLayerGetPGDefault(OGRFieldDefn* poFieldDefn)
 OGRErr OGRPGDumpLayer::CreateField( OGRFieldDefn *poFieldIn,
                                     int bApproxOK )
 {
+    if( poFeatureDefn->GetFieldCount() + poFeatureDefn->GetGeomFieldCount() == 1600 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Maximum number of fields supported is 1600.");
+        return OGRERR_FAILURE;
+    }
+
     CPLString osFieldType;
     OGRFieldDefn oField( poFieldIn );
 
@@ -1658,6 +1645,13 @@ OGRErr OGRPGDumpLayer::CreateField( OGRFieldDefn *poFieldIn,
 OGRErr OGRPGDumpLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
                                         int /* bApproxOK */ )
 {
+    if( poFeatureDefn->GetFieldCount() + poFeatureDefn->GetGeomFieldCount() == 1600 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Maximum number of fields supported is 1600.");
+        return OGRERR_FAILURE;
+    }
+
     OGRwkbGeometryType eType = poGeomFieldIn->GetType();
     if( eType == wkbNone )
     {
@@ -1679,8 +1673,7 @@ OGRErr OGRPGDumpLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
     oTmpGeomFieldDefn.SetName(osGeomFieldName);
 
     CPLString               osCommand;
-    OGRPGDumpGeomFieldDefn *poGeomField =
-        new OGRPGDumpGeomFieldDefn( &oTmpGeomFieldDefn );
+    auto poGeomField = cpl::make_unique<OGRPGDumpGeomFieldDefn>( &oTmpGeomFieldDefn );
 
 /* -------------------------------------------------------------------- */
 /*      Do we want to "launder" the column names into Postgres          */
@@ -1782,7 +1775,7 @@ OGRErr OGRPGDumpLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
         }
     }
 
-    poFeatureDefn->AddGeomFieldDefn( poGeomField, FALSE );
+    poFeatureDefn->AddGeomFieldDefn( std::move(poGeomField) );
 
     return OGRERR_NONE;
 }

@@ -272,19 +272,19 @@ void netCDFDataset::SGCommitPendingTransaction()
                     if(err_code != NC_NOERR)
                     {
                         std::string frmt = std::string("attribute: ") + std::string(CF_SG_INTERIOR_RING);
-                        throw nccfdriver::SGWriter_Exception_NCDelFailure(layerMD.get_containerName().c_str(), frmt.c_str()); 
+                        throw nccfdriver::SGWriter_Exception_NCDelFailure(layerMD.get_containerName().c_str(), frmt.c_str());
                     }
 
                     // Invalidate variable writes as well - Interior Ring
                     vcdf.nc_del_vvar(layerMD.get_intring_varID());
 
-                    if(geometry_type == nccfdriver::POLYGON) 
+                    if(geometry_type == nccfdriver::POLYGON)
                     {
                         err_code = nc_del_att(cdfid, layerMD.get_containerRealID(), CF_SG_PART_NODE_COUNT);
                         NCDF_ERR(err_code);
                         if(err_code != NC_NOERR)
                         {
-                            std::string frmt = std::string("attribute: ") + std::string(CF_SG_PART_NODE_COUNT); 
+                            std::string frmt = std::string("attribute: ") + std::string(CF_SG_PART_NODE_COUNT);
                             throw nccfdriver::SGWriter_Exception_NCDelFailure(layerMD.get_containerName().c_str(), frmt.c_str());
                         }
 
@@ -314,7 +314,7 @@ void netCDFDataset::SGCommitPendingTransaction()
 void netCDFDataset::SGLogPendingTransaction()
 {
     GeometryScribe.log_transaction();
-    FieldScribe.log_transaction(); 
+    FieldScribe.log_transaction();
 }
 
 /* Takes an index and using the layer geometry builds the equivalent
@@ -350,7 +350,7 @@ OGRFeature* netCDFLayer::buildSGeometryFeature(size_t featureInd)
     }
 
     const auto wkb = m_simpleGeometryReader->serializeToWKB(featureInd);
-    geometry->importFromWkb(wkb.data(), static_cast<int>(wkb.size()), wkbVariantIso);
+    geometry->importFromWkb(wkb.data(), wkb.size(), wkbVariantIso);
     geometry->assignSpatialReference(this->GetSpatialRef());
 
     OGRFeatureDefn* defn = this->GetLayerDefn();
@@ -367,5 +367,5 @@ OGRFeature* netCDFLayer::buildSGeometryFeature(size_t featureInd)
 
 std::string netCDFDataset::generateLogName()
 {
-    return std::string(CPLGenerateTempFilename(nullptr)); 
+    return std::string(CPLGenerateTempFilename(nullptr));
 }

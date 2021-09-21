@@ -577,15 +577,20 @@ GMLFeature *GMLReader::NextFeature()
 #ifdef HAVE_EXPAT
     if (bUseExpatReader)
         return NextFeatureExpat();
-#endif
-
-#ifdef HAVE_XERCES
-    if (!bUseExpatReader)
-        return NextFeatureXerces();
-#endif
-
+#  ifdef HAVE_XERCES
+    return NextFeatureXerces();
+#  else
     CPLError(CE_Failure, CPLE_AppDefined, "NextFeature(): Should not happen");
     return nullptr;
+#  endif
+#else
+#  ifdef HAVE_XERCES
+    if (!bUseExpatReader)
+        return NextFeatureXerces();
+#  endif
+    CPLError(CE_Failure, CPLE_AppDefined, "NextFeature(): Should not happen");
+    return nullptr;
+#endif
 }
 
 /************************************************************************/
@@ -1370,8 +1375,16 @@ bool GMLReader::PrescanForSchema( bool bGetExtents,
         if( !bOnlyDetectSRS && papsGeometry != nullptr && papsGeometry[0] != nullptr )
         {
             if( poClass->GetGeometryPropertyCount() == 0 )
+            {
+                std::string osGeomName(m_osSingleGeomElemPath);
+                const auto nPos = osGeomName.rfind('|');
+                if( nPos != std::string::npos )
+                    osGeomName = osGeomName.substr(nPos + 1);
                 poClass->AddGeometryProperty(
-                    new GMLGeometryPropertyDefn("", "", wkbUnknown, -1, true));
+                    new GMLGeometryPropertyDefn(osGeomName.c_str(),
+                                                m_osSingleGeomElemPath.c_str(),
+                                                wkbUnknown, -1, true));
+            }
         }
 
         if( bGetExtents && papsGeometry != nullptr )
@@ -1517,6 +1530,7 @@ void GMLReader::SetGlobalSRSName( const char* pszGlobalSRSName )
         {
             m_pszGlobalSRSName = CPLStrdup(pszGlobalSRSName);
         }
+        m_bCanUseGlobalSRSName = m_pszGlobalSRSName != nullptr;
     }
 }
 

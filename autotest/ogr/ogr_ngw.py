@@ -8,7 +8,7 @@
 ################################################################################
 #  The MIT License (MIT)
 #
-#  Copyright (c) 2018-2020, NextGIS <info@nextgis.com>
+#  Copyright (c) 2018-2021, NextGIS <info@nextgis.com>
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy
 #  of this software and associated documentation files (the "Software"), to deal
@@ -29,6 +29,7 @@
 #  SOFTWARE.
 ################################################################################
 
+import os
 import sys
 
 sys.path.append('../pymod')
@@ -43,11 +44,14 @@ import pytest
 import random
 from datetime import datetime
 
+pytestmark = [pytest.mark.require_driver('NGW'),
+              pytest.mark.skipif('CI' in os.environ, reason="NGW tests are flaky. See https://github.com/OSGeo/gdal/issues/4453")]
+
 def check_availability(url):
     # Sandbox cleans at 1:05 on monday (UTC)
     now = datetime.utcnow()
     if now.weekday() == 0:
-        if now.hour >= 1 and now.hour < 3:
+        if now.hour >= 0 and now.hour < 4:
             return False
 
     version_url = url + '/api/component/pyramid/pkg_version'
@@ -67,7 +71,7 @@ def check_availability(url):
         count = quota_json['count']
         if limit is None or count is None:
             return True
-        return limit - count > 10
+        return limit - count > 15
     except:
         return False
 
@@ -75,37 +79,35 @@ def get_new_name():
     return 'gdaltest_group_' + str(int(time.time())) + '_' + str(random.randint(10, 99))
 
 ###############################################################################
-# Check driver existence.
-
-def test_ogr_ngw_1():
-
-    gdaltest.ngw_ds = None
-    gdaltest.ngw_drv = None
-
-    gdaltest.ngw_drv = gdal.GetDriverByName('NGW')
-    if gdaltest.ngw_drv is None:
-        pytest.skip()
+@pytest.fixture(autouse=True, scope='module')
+def startup_and_cleanup():
 
     gdaltest.ngw_test_server = 'https://sandbox.nextgis.com'
 
     if check_availability(gdaltest.ngw_test_server) == False:
-        gdaltest.ngw_drv = None
         pytest.skip()
+
+    yield
+
+    if gdaltest.group_id is not None:
+        delete_url = 'NGW:' + gdaltest.ngw_test_server + '/resource/' + gdaltest.group_id
+
+        gdaltest.ngw_layer = None
+        gdaltest.ngw_ds = None
+
+        assert gdal.GetDriverByName('NGW').Delete(delete_url) == gdal.CE_None, \
+            'Failed to delete datasource ' + delete_url + '.'
+
+    gdaltest.ngw_ds = None
 
 ###############################################################################
 # Check create datasource.
 
 def test_ogr_ngw_2():
-    if gdaltest.ngw_drv is None:
-        pytest.skip()
-
-    if check_availability(gdaltest.ngw_test_server) == False:
-        gdaltest.ngw_drv = None
-        pytest.skip()
 
     create_url = 'NGW:' + gdaltest.ngw_test_server + '/resource/0/' + get_new_name()
     gdal.PushErrorHandler()
-    gdaltest.ngw_ds = gdaltest.ngw_drv.Create(create_url, 0, 0, 0, gdal.GDT_Unknown, \
+    gdaltest.ngw_ds = gdal.GetDriverByName('NGW').Create(create_url, 0, 0, 0, gdal.GDT_Unknown, \
         options=['DESCRIPTION=GDAL Test group',])
     gdal.PopErrorHandler()
 
@@ -122,29 +124,23 @@ def test_ogr_ngw_2():
 # Check rename datasource.
 
 def test_ogr_ngw_3():
-    if gdaltest.ngw_drv is None:
-        pytest.skip()
-
-    if check_availability(gdaltest.ngw_test_server) == False:
-        gdaltest.ngw_drv = None
+    # FIXME: depends on previous test
+    if gdaltest.ngw_ds is None:
         pytest.skip()
 
     new_name = get_new_name() + '_2'
     ds_resource_id = gdaltest.ngw_ds.GetMetadataItem('id', '')
     rename_url = 'NGW:' + gdaltest.ngw_test_server + '/resource/' + ds_resource_id
 
-    assert gdaltest.ngw_drv.Rename(new_name, rename_url) == gdal.CE_None, \
+    assert gdal.GetDriverByName('NGW').Rename(new_name, rename_url) == gdal.CE_None, \
         'Rename datasource failed.'
 
 ###############################################################################
 # Check datasource metadata.
 
 def test_ogr_ngw_4():
-    if gdaltest.ngw_drv is None:
-        pytest.skip()
-
-    if check_availability(gdaltest.ngw_test_server) == False:
-        gdaltest.ngw_drv = None
+    # FIXME: depends on previous test
+    if gdaltest.ngw_ds is None:
         pytest.skip()
 
     ds_resource_id = gdaltest.ngw_ds.GetMetadataItem('id', '')
@@ -154,7 +150,7 @@ def test_ogr_ngw_4():
 
     gdaltest.ngw_ds = None
     url = 'NGW:' + gdaltest.ngw_test_server + '/resource/' + ds_resource_id
-    gdaltest.ngw_ds = gdal.OpenEx(url, gdal.OF_UPDATE) # gdaltest.ngw_drv.Open(url, update=1)
+    gdaltest.ngw_ds = gdal.OpenEx(url, gdal.OF_UPDATE) # gdal.GetDriverByName('NGW').Open(url, update=1)
     assert gdaltest.ngw_ds is not None, \
         'Open datasource failed.'
 
@@ -219,11 +215,8 @@ def add_metadata(lyr):
 # Check create vector layers.
 
 def test_ogr_ngw_5():
-    if gdaltest.ngw_drv is None:
-        pytest.skip()
-
-    if check_availability(gdaltest.ngw_test_server) == False:
-        gdaltest.ngw_drv = None
+    # FIXME: depends on previous test
+    if gdaltest.ngw_ds is None:
         pytest.skip()
 
     sr = osr.SpatialReference()
@@ -296,7 +289,7 @@ def test_ogr_ngw_5():
 
     url = 'NGW:' + gdaltest.ngw_test_server + '/resource/' + ds_resource_id
 
-    gdaltest.ngw_ds = gdal.OpenEx(url, gdal.OF_UPDATE) # gdaltest.ngw_drv.Open(url, update=1)
+    gdaltest.ngw_ds = gdal.OpenEx(url, gdal.OF_UPDATE) # gdal.GetDriverByName('NGW').Open(url, update=1)
     assert gdaltest.ngw_ds is not None, 'Open datasource failed.'
 
     for layer_name in ['test_pt_layer', 'test_ln_layer', 'test_pl_layer', 'test_plz_layer']:
@@ -324,11 +317,8 @@ def test_ogr_ngw_5():
 # Check open single vector layer.
 
 def test_ogr_ngw_6():
-    if gdaltest.ngw_drv is None:
-        pytest.skip()
-
-    if check_availability(gdaltest.ngw_test_server) == False:
-        gdaltest.ngw_drv = None
+    # FIXME: depends on previous test
+    if gdaltest.ngw_ds is None:
         pytest.skip()
 
     lyr = gdaltest.ngw_ds.GetLayerByName('test_pt_layer')
@@ -342,11 +332,8 @@ def test_ogr_ngw_6():
 # Check insert, update and delete features.
 
 def test_ogr_ngw_7():
-    if gdaltest.ngw_drv is None:
-        pytest.skip()
-
-    if check_availability(gdaltest.ngw_test_server) == False:
-        gdaltest.ngw_drv = None
+    # FIXME: depends on previous test
+    if gdaltest.ngw_ds is None:
         pytest.skip()
 
     lyr = gdaltest.ngw_ds.GetLayerByName('test_pt_layer')
@@ -375,11 +362,8 @@ def test_ogr_ngw_7():
 # Check insert, update features in batch mode.
 
 def test_ogr_ngw_8():
-    if gdaltest.ngw_drv is None:
-        pytest.skip()
-
-    if check_availability(gdaltest.ngw_test_server) == False:
-        gdaltest.ngw_drv = None
+    # FIXME: depends on previous test
+    if gdaltest.ngw_ds is None:
         pytest.skip()
 
     ds_resource_id = gdaltest.ngw_ds.GetMetadataItem('id', '')
@@ -425,11 +409,8 @@ def test_ogr_ngw_8():
 # Check paging while GetNextFeature.
 
 def test_ogr_ngw_9():
-    if gdaltest.ngw_drv is None:
-        pytest.skip()
-
-    if check_availability(gdaltest.ngw_test_server) == False:
-        gdaltest.ngw_drv = None
+    # FIXME: depends on previous test
+    if gdaltest.ngw_ds is None:
         pytest.skip()
 
     ds_resource_id = gdaltest.ngw_ds.GetMetadataItem('id', '')
@@ -455,18 +436,14 @@ def test_ogr_ngw_9():
 # Check native data.
 
 def test_ogr_ngw_10():
-    if gdaltest.ngw_drv is None:
-        pytest.skip()
-
-    if check_availability(gdaltest.ngw_test_server) == False:
-        gdaltest.ngw_drv = None
+    if gdal.GetDriverByName('NGW') is None or gdaltest.ngw_ds is None:
         pytest.skip()
 
     ds_resource_id = gdaltest.ngw_ds.GetMetadataItem('id', '')
     gdaltest.ngw_ds = None
 
     url = 'NGW:' + gdaltest.ngw_test_server + '/resource/' + ds_resource_id
-    gdaltest.ngw_ds = gdal.OpenEx(url, gdal.OF_UPDATE, open_options=['NATIVE_DATA=YES'])
+    gdaltest.ngw_ds = gdal.OpenEx(url, gdal.OF_UPDATE, open_options=['NATIVE_DATA=YES', 'EXTENSIONS=description,attachment'])
     lyr = gdaltest.ngw_ds.GetLayerByName('test_pt_layer')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
@@ -490,11 +467,8 @@ def test_ogr_ngw_10():
 # Check ignored fields works ok
 
 def test_ogr_ngw_11():
-    if gdaltest.ngw_drv is None or gdaltest.ngw_ds is None:
-        pytest.skip()
-
-    if check_availability(gdaltest.ngw_test_server) == False:
-        gdaltest.ngw_drv = None
+    # FIXME: depends on previous test
+    if gdaltest.ngw_ds is None:
         pytest.skip()
 
     lyr = gdaltest.ngw_ds.GetLayerByName('test_pt_layer')
@@ -524,11 +498,8 @@ def test_ogr_ngw_11():
 # Check attribute filter.
 
 def test_ogr_ngw_12():
-    if gdaltest.ngw_drv is None:
-        pytest.skip()
-
-    if check_availability(gdaltest.ngw_test_server) == False:
-        gdaltest.ngw_drv = None
+    # FIXME: depends on previous test
+    if gdaltest.ngw_ds is None:
         pytest.skip()
 
     lyr = gdaltest.ngw_ds.GetLayerByName('test_pt_layer')
@@ -560,11 +531,8 @@ def test_ogr_ngw_12():
 # Check spatial filter.
 
 def test_ogr_ngw_13():
-    if gdaltest.ngw_drv is None:
-        pytest.skip()
-
-    if check_availability(gdaltest.ngw_test_server) == False:
-        gdaltest.ngw_drv = None
+    # FIXME: depends on previous test
+    if gdaltest.ngw_ds is None:
         pytest.skip()
 
     lyr = gdaltest.ngw_ds.GetLayerByName('test_pt_layer')
@@ -578,14 +546,37 @@ def test_ogr_ngw_13():
     assert fc == 1, 'Expected feature count is 1, got {}.'.format(fc)
 
 ###############################################################################
-# Check ExecuteSQL.
+# Check ignore geometry.
+
 
 def test_ogr_ngw_14():
-    if gdaltest.ngw_drv is None:
+    # FIXME: depends on previous test
+    if gdaltest.ngw_ds is None:
         pytest.skip()
 
-    if check_availability(gdaltest.ngw_test_server) == False:
-        gdaltest.ngw_drv = None
+    lyr = gdaltest.ngw_ds.GetLayerByName('test_pt_layer')
+
+    # Reset any attribute filters
+    lyr.SetAttributeFilter(None)
+    lyr.SetSpatialFilter(None)
+
+    fd = lyr.GetLayerDefn()
+    fd.SetGeometryIgnored(1)
+
+    assert fd.IsGeometryIgnored(), 'geometry unexpectedly not ignored.'
+
+    feat = lyr.GetNextFeature()
+
+    assert feat.GetGeometryRef() is None, 'Unexpectedly got a geometry on feature 2.'
+
+    feat = None
+
+###############################################################################
+# Check ExecuteSQL.
+
+def test_ogr_ngw_15():
+    # FIXME: depends on previous test
+    if gdaltest.ngw_ds is None:
         pytest.skip()
 
     gdaltest.ngw_ds.ExecuteSQL('DELLAYER:test_ln_layer')
@@ -632,18 +623,12 @@ def test_ogr_ngw_14():
 #  Run test_ogrsf
 
 def test_ogr_ngw_test_ogrsf():
-    if gdaltest.ngw_drv is None or gdal.GetConfigOption('SKIP_SLOW') is not None:
-        pytest.skip()
-
-    if check_availability(gdaltest.ngw_test_server) == False:
-        gdaltest.ngw_drv = None
+    # FIXME: depends on previous test
+    if gdaltest.ngw_ds is None:
         pytest.skip()
 
     if gdaltest.skip_on_travis():
-        pytest.skip()
-
-    if gdaltest.ngw_ds is None:
-        pytest.skip()
+        pytest.skip('skip on travis')
 
     url = 'NGW:' + gdaltest.ngw_test_server + '/resource/' + gdaltest.group_id
 
@@ -662,22 +647,3 @@ def test_ogr_ngw_test_ogrsf():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' ' + url + ' -oo BATCH_SIZE=5 -oo PAGE_SIZE=100')
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
-
-###############################################################################
-# Cleanup
-
-def test_ogr_ngw_cleanup():
-
-    if gdaltest.ngw_drv is None:
-        pytest.skip()
-
-    if gdaltest.group_id is not None:
-        delete_url = 'NGW:' + gdaltest.ngw_test_server + '/resource/' + gdaltest.group_id
-
-        gdaltest.ngw_layer = None
-        gdaltest.ngw_ds = None
-
-        assert gdaltest.ngw_drv.Delete(delete_url) == gdal.CE_None, \
-            'Failed to delete datasource ' + delete_url + '.'
-
-    gdaltest.ngw_ds = None

@@ -8,7 +8,7 @@ COG -- Cloud Optimized GeoTIFF generator
 
 .. shortname:: COG
 
-.. built_in_by_default:: 
+.. built_in_by_default::
 
 This driver supports the creation of Cloud Optimized GeoTIFF (COG)
 
@@ -37,7 +37,8 @@ General creation options
 
 -  **BLOCKSIZE=n**: Sets the tile width and height in pixels. Defaults to 512.
 
--  **COMPRESS=[NONE/LZW/JPEG/DEFLATE/ZSTD/WEBP/LERC/LERC_DEFLATE/LERC_ZSTD]**: Set the compression to use.
+-  **COMPRESS=[NONE/LZW/JPEG/DEFLATE/ZSTD/WEBP/LERC/LERC_DEFLATE/LERC_ZSTD/LZMA]**: Set the compression to use.
+   Defaults to ``NONE``.
 
    * ``JPEG`` should generally only be used with
      Byte data (8 bit per channel). But if GDAL is built with internal libtiff and
@@ -51,19 +52,19 @@ General creation options
 
    * ``LZW``, ``DEFLATE`` and ``ZSTD`` compressions can be used with the PREDICTOR creation option.
 
-   * ``ZSTD`` is available when using internal libtiff and if GDAL built against 
+   * ``ZSTD`` is available when using internal libtiff and if GDAL built against
      libzstd >=1.0, or if built against external libtiff with zstd support.
 
    * ``LERC`` is available when using internal libtiff.
 
    * ``LERC_ZSTD`` is available when ``LERC`` and ``ZSTD`` are available.
 
--  **LEVEL=integer_value**: DEFLATE/ZSTD/LERC_DEFLATE/LERC_ZSTD compression level.
+-  **LEVEL=integer_value**: DEFLATE/ZSTD/LERC_DEFLATE/LERC_ZSTD/LZMA compression level.
    A lower number will
    result in faster compression but less efficient compression rate.
    1 is the fastest.
 
-   * For DEFLATE, 9 is the slowest/higher compression rate
+   * For DEFLATE/LZMA, 9 is the slowest/higher compression rate
      (or 12 when using a libtiff with libdeflate support). The default is 6.
    * For ZSTD, 22 is the slowest/higher compression rate. The default is 9.
 
@@ -138,7 +139,7 @@ General creation options
 
 - **OVERVIEWS=[AUTO/IGNORE_EXISTING/FORCE_USE_EXISTING/NONE]**: Describe the behavior
   regarding overview generation and use of source overviews.
-  
+
   - ``AUTO`` (default): source overviews will be
     used if present (even if the dimension of the smallest level is not < 512 pixels),
     and, if not present, overviews will be automatically generated in the
@@ -160,6 +161,21 @@ General creation options
         available if general options (i.e. options which are not creation options,
         like subsetting, etc.) are used.
 
+- **OVERVIEW_COMPRESS=[AUTO/NONE/LZW/JPEG/DEFLATE/ZSTD/WEBP/LERC/LERC_DEFLATE/LERC_ZSTD/LZMA]**:
+  Set the compression method (see ``COMPRESS``) to use when storing the overviews in the COG.
+  
+  By default (``AUTO``) the overviews will be created with the same compression method as the COG.
+
+- **OVERVIEW_QUALITY=integer_value**: JPEG/WEBP quality setting. A value of 100 is best
+  quality (least compression), and 1 is worst quality (best compression).
+  By default the overviews will be created with the same quality as the COG, unless
+  the compression type is different then the default is 75.
+
+- **OVERVIEW_PREDICTOR=[YES/NO/STANDARD/FLOATING_POINT]**: Set the predictor for LZW,
+  DEFLATE and ZSTD overview compression. By default the overviews will be created with the
+  same predictor as the COG, unless the compression type of the overview is different,
+  then the default is NO.
+
 - **GEOTIFF_VERSION=[AUTO/1.0/1.1]**: Select the version of
   the GeoTIFF standard used to encode georeferencing information. ``1.0``
   corresponds to the original
@@ -173,16 +189,16 @@ General creation options
   .. note:: Write support for GeoTIFF 1.1 requires libgeotiff 1.6.0 or later.
 
 - **SPARSE_OK=TRUE/FALSE** ((GDAL >= 3.2): Should empty blocks be
-   omitted on disk? When this option is set, any attempt of writing a
-   block whose all pixels are 0 or the nodata value will cause it not to
-   be written at all (unless there is a corresponding block already
-   allocated in the file). Sparse files have 0 tile/strip offsets for
-   blocks never written and save space; however, most non-GDAL packages
-   cannot read such files.
-   On the reading side, the presence of a omitted tile after a non-empty one
-   may cause optimized readers to have to issue an extra GET request to the
-   TileByteCounts array.
-   The default is FALSE.
+  omitted on disk? When this option is set, any attempt of writing a
+  block whose all pixels are 0 or the nodata value will cause it not to
+  be written at all (unless there is a corresponding block already
+  allocated in the file). Sparse files have 0 tile/strip offsets for
+  blocks never written and save space; however, most non-GDAL packages
+  cannot read such files.
+  On the reading side, the presence of a omitted tile after a non-empty one
+  may cause optimized readers to have to issue an extra GET request to the
+  TileByteCounts array.
+  The default is FALSE.
 
 Reprojection related creation options
 *************************************
@@ -230,9 +246,10 @@ Reprojection related creation options
   factor of 2, care must be taken in setting this value to a high number of
   levels, as up to 2^(ALIGNED_LEVELS-1) tiles can be added in each dimension.
   The driver enforces a hard limit of 10.
-  
+
 - **ADD_ALPHA=YES/NO**: Whether an alpha band is added in case of reprojection.
   Defaults to YES.
+
 
 File format details
 -------------------
@@ -281,13 +298,13 @@ the optimizations will not be available).
 Header ghost area
 *****************
 
-To describe the specific layout of COG files, a 
-description of the features used is located at the beginning of the file, so that 
+To describe the specific layout of COG files, a
+description of the features used is located at the beginning of the file, so that
 optimized readers (like GDAL) can use them and take shortcuts. Those features
-are described as ASCII strings "hidden" just after the 8 first bytes of a 
-ClassicTIFF (or after the 16 first ons for a BigTIFF). That is the first IFD 
-starts just after those strings. It is completely valid to have *ghost* 
-areas like this in a TIFF file, and readers will normally skip over them. So 
+are described as ASCII strings "hidden" just after the 8 first bytes of a
+ClassicTIFF (or after the 16 first ones for a BigTIFF). That is the first IFD
+starts just after those strings. It is completely valid to have *ghost*
+areas like this in a TIFF file, and readers will normally skip over them. So
 for a COG file with a transparency mask, those strings will be:
 
 ::
@@ -311,27 +328,27 @@ a fixed size of 43 bytes) where XXXXXX is a 6-digit number indicating the remain
 size of the section (that is starting after the linefeed character of this starting
 line).
 
-- ``LAYOUT=IFDS_BEFORE_DATA``: the IFDs are located at the beginning of the file. 
+- ``LAYOUT=IFDS_BEFORE_DATA``: the IFDs are located at the beginning of the file.
   GDAL will also makes sure that the tile index arrays are written
-  just after the IFDs and before the imagery, so that a first range request of 
+  just after the IFDs and before the imagery, so that a first range request of
   16 KB will always get all the IFDs
 
-- ``BLOCK_ORDER=ROW_MAJOR``: (strile is a contraction of 'strip or tile') the 
-  data for tiles is written in increasing tile id order. Future enhancements 
+- ``BLOCK_ORDER=ROW_MAJOR``: (strile is a contraction of 'strip or tile') the
+  data for tiles is written in increasing tile id order. Future enhancements
   could possibly implement other layouts.
 
-- ``BLOCK_LEADER=SIZE_AS_UINT4``: each tile data is preceded by 4 bytes, in a 
+- ``BLOCK_LEADER=SIZE_AS_UINT4``: each tile data is preceded by 4 bytes, in a
   *ghost* area as well, indicating the real tile size (in little endian order).
   See `Tile data leader and trailer`_ for more details.
 
-- ``BLOCK_TRAILER=LAST_4_BYTES_REPEATED``: just after the tile data, the last 4 
+- ``BLOCK_TRAILER=LAST_4_BYTES_REPEATED``: just after the tile data, the last 4
   bytes of the tile data are repeated. See `Tile data leader and trailer`_ for more details.
 
-- ``KNOWN_INCOMPATIBLE_EDITION=NO``: when a COG is generated this is always 
-  written. If GDAL is then used to modify the COG file, as most of the changes 
-  done on an existing COG file, will break the optimized structure, GDAL will 
-  change this metadata item to KNOWN_INCOMPATIBLE_EDITION=YES, and issue a 
-  warning on writing, and when reopening such file, so that users know they have 
+- ``KNOWN_INCOMPATIBLE_EDITION=NO``: when a COG is generated this is always
+  written. If GDAL is then used to modify the COG file, as most of the changes
+  done on an existing COG file, will break the optimized structure, GDAL will
+  change this metadata item to KNOWN_INCOMPATIBLE_EDITION=YES, and issue a
+  warning on writing, and when reopening such file, so that users know they have
   *broken* their COG file
 
 - ``MASK_INTERLEAVED_WITH_IMAGERY=YES``: indicates that mask data immediately
@@ -363,23 +380,23 @@ that follows it. This leader is *ghost* in the sense that the
 TileOffsets[] array does not point to it, but points to the real payload. Hence
 the offset of the leader is TileOffsets[i]-4.
 
-An optimized reader seeing the ``BLOCK_LEADER=SIZE_AS_UINT4`` metadata item will thus look for TileOffset[i] 
-and TileOffset[i+1] to deduce it must fetch the data starting at 
-offset=TileOffset[i] - 4 and of size=TileOffset[i+1]-TileOffset[i]+4. It then 
-checks the 4 first bytes to see if the size in this leader marker is 
-consistent with TileOffset[i+1]-TileOffset[i]. When there is no mask, they 
-should normally be equal (modulo the size taken by BLOCK_LEADER and 
-BLOCK_TRAILER). In the case where there is a mask and 
-MASK_INTERLEAVED_WITH_IMAGERY=YES, then the tile size indicated in the leader 
-will be < TileOffset[i+1]-TileOffset[i] since the data for the mask will 
+An optimized reader seeing the ``BLOCK_LEADER=SIZE_AS_UINT4`` metadata item will thus look for TileOffset[i]
+and TileOffset[i+1] to deduce it must fetch the data starting at
+offset=TileOffset[i] - 4 and of size=TileOffset[i+1]-TileOffset[i]+4. It then
+checks the 4 first bytes to see if the size in this leader marker is
+consistent with TileOffset[i+1]-TileOffset[i]. When there is no mask, they
+should normally be equal (modulo the size taken by BLOCK_LEADER and
+BLOCK_TRAILER). In the case where there is a mask and
+MASK_INTERLEAVED_WITH_IMAGERY=YES, then the tile size indicated in the leader
+will be < TileOffset[i+1]-TileOffset[i] since the data for the mask will
 follow the imagery data (see MASK_INTERLEAVED_WITH_IMAGERY=YES)
 
 Each tile data is immediately followed by a trailer, consisting of the repetition
 of the last 4 bytes of the payload of the tile data. The size of this trailer is
 *not* included in the TileByteCounts[] array. The purpose of this trailer is forces
 readers to be able to check if TIFF writers, not aware of those optimizations,
-have modified the  TIFF file in a way that breaks the optimizations. If an optimized reader 
-detects an inconsistency, it can then fallbacks to the regular/slower method of using 
+have modified the  TIFF file in a way that breaks the optimizations. If an optimized reader
+detects an inconsistency, it can then fallbacks to the regular/slower method of using
 TileOffsets[i] + TileByteCounts[i].
 
 Examples
@@ -399,3 +416,6 @@ See Also
 - :ref:`raster.gtiff` driver
 -  `How to generate and read cloud optimized GeoTIFF
    files <https://trac.osgeo.org/gdal/wiki/CloudOptimizedGeoTIFF>`__ (before GDAL 3.1)
+- If your source dataset is an internally tiled geotiff with the desired georeferencing and compression,
+  using `cogger <https://github.com/airbusgeo/cogger>`__ (possibly along with gdaladdo to create overviews) will
+  be much faster than the COG driver.

@@ -129,6 +129,16 @@ const char * OGRCircularString::getGeometryName() const
 }
 
 /************************************************************************/
+/*                               clone()                                */
+/************************************************************************/
+
+OGRCircularString *OGRCircularString::clone() const
+
+{
+    return new (std::nothrow) OGRCircularString(*this);
+}
+
+/************************************************************************/
 /*                           importFromWkb()                            */
 /*                                                                      */
 /*      Initialize from serialized stream in well known binary          */
@@ -136,9 +146,9 @@ const char * OGRCircularString::getGeometryName() const
 /************************************************************************/
 
 OGRErr OGRCircularString::importFromWkb( const unsigned char * pabyData,
-                                         int nSize,
+                                         size_t nSize,
                                          OGRwkbVariant eWkbVariant,
-                                         int& nBytesConsumedOut )
+                                         size_t& nBytesConsumedOut )
 
 {
     OGRErr eErr = OGRSimpleCurve::importFromWkb(pabyData, nSize,
@@ -242,7 +252,7 @@ double OGRCircularString::get_Length() const
         double alpha0 = 0.0;
         double alpha1 = 0.0;
         double alpha2 = 0.0;
-        if( OGRGeometryFactory::GetCurveParmeters(x0, y0, x1, y1, x2, y2,
+        if( OGRGeometryFactory::GetCurveParameters(x0, y0, x1, y1, x2, y2,
                                                   R, cx, cy,
                                                   alpha0, alpha1, alpha2) )
         {
@@ -282,13 +292,13 @@ void OGRCircularString::ExtendEnvelopeWithCircular(
         double alpha0 = 0.0;
         double alpha1 = 0.0;
         double alpha2 = 0.0;
-        if( OGRGeometryFactory::GetCurveParmeters(x0, y0, x1, y1, x2, y2,
+        if( OGRGeometryFactory::GetCurveParameters(x0, y0, x1, y1, x2, y2,
                                                   R, cx, cy,
                                                   alpha0, alpha1, alpha2))
         {
             if( CPLIsNan(alpha0) || CPLIsNan(alpha2) ) {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "GetCurveParmeters returned NaN");
+                         "GetCurveParameters returned NaN");
                 continue;
             }
             int quadrantStart =
@@ -390,7 +400,7 @@ void OGRCircularString::segmentize( double dfMaxLength )
         // We have strong constraints on the number of intermediate points
         // we can add.
 
-        if( OGRGeometryFactory::GetCurveParmeters(x0, y0, x1, y1, x2, y2,
+        if( OGRGeometryFactory::GetCurveParameters(x0, y0, x1, y1, x2, y2,
                                                   R, cx, cy,
                                                   alpha0, alpha1, alpha2) )
         {
@@ -593,7 +603,7 @@ void OGRCircularString::Value( double dfDistance, OGRPoint * poPoint ) const
         // We have strong constraints on the number of intermediate points
         // we can add.
 
-        if( OGRGeometryFactory::GetCurveParmeters(x0, y0, x1, y1, x2, y2,
+        if( OGRGeometryFactory::GetCurveParameters(x0, y0, x1, y1, x2, y2,
                                                   R, cx, cy,
                                                   alpha0, alpha1, alpha2) )
         {
@@ -798,12 +808,12 @@ int OGRCircularString::IsFullCircle( double& cx, double& cy,
         double alpha0_2 = 0.0;
         double alpha1_2 = 0.0;
         double alpha2_2 = 0.0;
-        if( OGRGeometryFactory::GetCurveParmeters(
+        if( OGRGeometryFactory::GetCurveParameters(
                 getX(0), getY(0),
                 getX(1), getY(1),
                 getX(2), getY(2),
                 R_1, cx_1, cy_1, alpha0_1, alpha1_1, alpha2_1) &&
-            OGRGeometryFactory::GetCurveParmeters(
+            OGRGeometryFactory::GetCurveParameters(
                 getX(2), getY(2),
                 getX(3), getY(3),
                 getX(4), getY(4),
@@ -844,7 +854,7 @@ double OGRCircularString::get_AreaOfCurveSegments() const
         double alpha0 = 0.0;
         double alpha1 = 0.0;
         double alpha2 = 0.0;
-        if( OGRGeometryFactory::GetCurveParmeters(x0, y0, x1, y1, x2, y2,
+        if( OGRGeometryFactory::GetCurveParameters(x0, y0, x1, y1, x2, y2,
                                                   R, cx, cy,
                                                   alpha0, alpha1, alpha2))
         {

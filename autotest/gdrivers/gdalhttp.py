@@ -30,7 +30,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import subprocess
 import sys
 from osgeo import gdal
@@ -46,127 +45,87 @@ except ImportError:
     sys.path.append('../pymod')
     import gdaltest
 
+
+pytestmark = pytest.mark.require_driver('HTTP')
+
+
+@pytest.fixture(autouse=True, scope="module")
+def disable_dods_driver():
+    dods_drv = gdal.GetDriverByName('DODS')
+    if dods_drv is not None:
+        dods_drv.Deregister()
+    yield
+    if dods_drv is not None:
+        dods_drv.Register()
+    dods_drv = None
+
+
+@pytest.fixture(autouse=True)
+def set_http_timeout():
+    with gdaltest.config_option('GDAL_HTTP_TIMEOUT', '5'):
+        yield
+
+
+def skip_if_unreachable(url, try_read=False):
+    conn = gdaltest.gdalurlopen(url, timeout=4)
+    if conn is None:
+        pytest.skip('cannot open URL')
+    if try_read:
+        try:
+            conn.read()
+        except Exception:
+            pytest.skip('cannot read')
+    conn.close()
+
+
 ###############################################################################
 # Verify we have the driver.
 
 
 def test_http_1():
-
-    gdaltest.dods_drv = None
-
-    drv = gdal.GetDriverByName('HTTP')
-    if drv is None:
-        pytest.skip()
-
-    gdaltest.dods_drv = gdal.GetDriverByName('DODS')
-    if gdaltest.dods_drv is not None:
-        gdaltest.dods_drv.Deregister()
-
-    tst = gdaltest.GDALTest('PNG', 'http://gdal.org/gdalicon.png',
-                            1, 7617, filename_absolute=1)
+    url = 'http://gdal.org/gdalicon.png'
+    tst = gdaltest.GDALTest('PNG', url, 1, 7617, filename_absolute=1)
     ret = tst.testOpen()
     if ret == 'fail':
-        conn = gdaltest.gdalurlopen('http://gdal.org/gdalicon.png')
-        if conn is None:
-            pytest.skip('cannot open URL')
-        conn.close()
-
-    return ret
+        skip_if_unreachable(url)
+        pytest.fail()
 
 ###############################################################################
 # Verify /vsicurl (subversion file listing)
 
 
 def test_http_2():
-
-    drv = gdal.GetDriverByName('HTTP')
-    if drv is None:
-        pytest.skip()
-
-    tst = gdaltest.GDALTest('GTiff', '/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/gcore/data/byte.tif',
-                            1, 4672, filename_absolute=1)
+    url = 'https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/gcore/data/byte.tif'
+    tst = gdaltest.GDALTest('GTiff', '/vsicurl/' + url, 1, 4672, filename_absolute=1)
     ret = tst.testOpen()
     if ret == 'fail':
-        conn = gdaltest.gdalurlopen('https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/gcore/data/byte.tif')
-        if conn is None:
-            pytest.skip('cannot open URL')
-        conn.close()
-
-    return ret
+        skip_if_unreachable(url)
+        pytest.fail()
 
 ###############################################################################
 # Verify /vsicurl (apache file listing)
 
 
 def test_http_3():
-
-    drv = gdal.GetDriverByName('HTTP')
-    if drv is None:
-        pytest.skip()
-
-    gdal.SetConfigOption('GDAL_HTTP_TIMEOUT', '5')
-    ds = gdal.Open('/vsicurl/http://download.osgeo.org/gdal/data/ehdr/elggll.bil')
-    gdal.SetConfigOption('GDAL_HTTP_TIMEOUT', None)
+    url = 'http://download.osgeo.org/gdal/data/ehdr/elggll.bil'
+    ds = gdal.Open('/vsicurl/' + url)
     if ds is None:
-        conn = gdaltest.gdalurlopen('http://download.osgeo.org/gdal/data/ehdr/elggll.bil')
-        if conn is None:
-            pytest.skip('cannot open URL')
-        conn.close()
+        skip_if_unreachable(url)
         pytest.fail()
-
-    
-###############################################################################
-# Verify /vsicurl (ftp)
-
-
-def http_4_old():
-
-    drv = gdal.GetDriverByName('HTTP')
-    if drv is None:
-        pytest.skip()
-
-    ds = gdal.Open('/vsicurl/ftp://ftp2.cits.rncan.gc.ca/pub/cantopo/250k_tif/MCR2010_01.tif')
-    if ds is None:
-
-        # Workaround unexplained failure on Tamas test machine. The test works fine with his
-        # builds on other machines...
-        # This heuristics might be fragile !
-        if "GDAL_DATA" in os.environ and os.environ["GDAL_DATA"].find("E:\\builds\\..\\sdk\\") == 0:
-            pytest.skip()
-
-        conn = gdaltest.gdalurlopen('ftp://ftp2.cits.rncan.gc.ca/pub/cantopo/250k_tif/MCR2010_01.tif')
-        if conn is None:
-            pytest.skip('cannot open URL')
-        conn.close()
-        pytest.fail()
-
-    filelist = ds.GetFileList()
-    assert filelist[0] == '/vsicurl/ftp://ftp2.cits.rncan.gc.ca/pub/cantopo/250k_tif/MCR2010_01.tif'
 
 ###############################################################################
 # Verify /vsicurl (ftp)
 
 
 def test_http_4():
-
     # Too unreliable
     if gdaltest.skip_on_travis():
         pytest.skip()
 
-    drv = gdal.GetDriverByName('HTTP')
-    if drv is None:
-        pytest.skip()
-
-    ds = gdal.Open('/vsicurl/ftp://download.osgeo.org/gdal/data/gtiff/utm.tif')
+    url = 'ftp://download.osgeo.org/gdal/data/gtiff/utm.tif'
+    ds = gdal.Open('/vsicurl/' + url)
     if ds is None:
-        conn = gdaltest.gdalurlopen('ftp://download.osgeo.org/gdal/data/gtiff/utm.tif', timeout=4)
-        if conn is None:
-            pytest.skip('cannot open URL')
-        try:
-            conn.read()
-        except:
-            pytest.skip('cannot read')
-        conn.close()
+        skip_if_unreachable(url, try_read=True)
         if sys.platform == 'darwin' and gdal.GetConfigOption('TRAVIS', None) is not None:
             pytest.skip("Fails on MacOSX Travis sometimes. Not sure why.")
         pytest.fail()
@@ -175,54 +134,14 @@ def test_http_4():
     assert '/vsicurl/ftp://download.osgeo.org/gdal/data/gtiff/utm.tif' in filelist
 
 ###############################################################################
-# Test HTTP driver with non VSIL driver
-
-
-def test_http_5():
-
-    drv = gdal.GetDriverByName('HTTP')
-    if drv is None:
-        pytest.skip()
-
-    ds = gdal.Open('https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/gdrivers/data/s4103.blx')
-    if ds is None:
-        conn = gdaltest.gdalurlopen('https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/gdrivers/data/s4103.blx')
-        if conn is None:
-            pytest.skip('cannot open URL')
-        try:
-            conn.read()
-        except:
-            pytest.skip('cannot read')
-        conn.close()
-        pytest.fail()
-    filename = ds.GetDescription()
-    ds = None
-
-    with pytest.raises(OSError):
-        os.stat(filename)
-        pytest.fail('file %s should have been removed' % filename)
-
-    
-###############################################################################
 # Test HTTP driver with OGR driver
 
 
 def test_http_6():
-
-    drv = gdal.GetDriverByName('HTTP')
-    if drv is None:
-        pytest.skip()
-
-    ds = ogr.Open('https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.dbf')
+    url = 'https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.dbf'
+    ds = ogr.Open(url)
     if ds is None:
-        conn = gdaltest.gdalurlopen('https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.dbf')
-        if conn is None:
-            pytest.skip('cannot open URL')
-        try:
-            conn.read()
-        except:
-            pytest.skip('cannot read')
-        conn.close()
+        skip_if_unreachable(url, try_read=True)
         pytest.fail()
     ds = None
 
@@ -230,10 +149,6 @@ def test_http_6():
 ###############################################################################
 
 def test_http_ssl_verifystatus():
-
-    if gdal.GetDriverByName('HTTP') is None:
-        pytest.skip()
-
     with gdaltest.config_option('GDAL_HTTP_SSL_VERIFYSTATUS', 'YES'):
         with gdaltest.error_handler():
             # For now this URL doesn't support OCSP stapling...
@@ -252,10 +167,6 @@ def test_http_ssl_verifystatus():
 
 
 def test_http_use_capi_store():
-
-    if gdal.GetDriverByName('HTTP') is None:
-        pytest.skip()
-
     if sys.platform != 'win32':
         with gdaltest.error_handler():
             return test_http_use_capi_store_sub()
@@ -275,12 +186,6 @@ def test_http_use_capi_store_sub():
     
 ###############################################################################
 #
-
-
-def test_http_cleanup():
-    if gdaltest.dods_drv is not None:
-        gdaltest.dods_drv.Register()
-    gdaltest.dods_drv = None
 
 
 if __name__ == '__main__':

@@ -17,6 +17,7 @@ Synopsis
 
     gdalwarp [--help-general] [--formats]
         [-s_srs srs_def] [-t_srs srs_def] [-ct string] [-to "NAME=VALUE"]* [-novshiftgrid]
+        [[-s_coord_epoch epoch] | [-t_coord_epoch epoch]]
         [-order n | -tps | -rpc | -geoloc] [-et err_threshold]
         [-refine_gcps tolerance [minimum_gcps]]
         [-te xmin ymin xmax ymax] [-te_srs srs_def]
@@ -44,15 +45,42 @@ with control information.
 
 .. option:: -s_srs <srs def>
 
-    Set source spatial reference.
+    Set source spatial reference. If not specified the SRS found in the input
+    dataset will be used.
 
     .. include:: options/srs_def_gdalwarp.rst
+
+.. option:: -s_coord_epoch <epoch>
+
+    .. versionadded:: 3.4
+
+    Assign a coordinate epoch, linked with the source SRS. Useful when the
+    source SRS is a dynamic CRS. Only taken into account if :option:`-s_srs`
+    is used.
+
+    Currently :option:`-s_coord_epoch` and :option:`-t_coord_epoch` are
+    mutually exclusive, due to lack of support for transformations between two dynamic CRS.
 
 .. option:: -t_srs <srs_def>
 
     Set target spatial reference.
 
+    A source SRS must be available for reprojection to occur. The source SRS
+    will be by default the one found in the input dataset when it is available,
+    or as overridden by the user with :option:`-s_srs`
+
     .. include:: options/srs_def_gdalwarp.rst
+
+.. option:: -t_coord_epoch <epoch>
+
+    .. versionadded:: 3.4
+
+    Assign a coordinate epoch, linked with the target SRS. Useful when the
+    target SRS is a dynamic CRS. Only taken into account if :option:`-t_srs`
+    is used.
+
+    Currently :option:`-s_coord_epoch` and :option:`-t_coord_epoch` are
+    mutually exclusive, due to lack of support for transformations between two dynamic CRS.
 
 .. option:: -ct <string>
 
@@ -201,11 +229,19 @@ with control information.
 
 .. option:: -srcnodata <value [value...]>
 
-    Set nodata masking
-    values for input bands (different values can be supplied for each band).  If
-    more than one value is supplied all values should be quoted to keep them
-    together as a single operating system argument.  Masked values will not be
-    used in interpolation.  Use a value of ``None`` to ignore intrinsic nodata settings on the source dataset.
+    Set nodata masking values for input bands (different values can be supplied
+    for each band). If more than one value is supplied all values should be quoted
+    to keep them together as a single operating system argument.
+    Masked values will not be used in interpolation.
+    Use a value of ``None`` to ignore intrinsic nodata settings on the source dataset.
+
+    When this option is set to a non-``None`` value, it causes the ``UNIFIED_SRC_NODATA``
+    warping option (see :cpp:member:`GDALWarpOptions::papszWarpOptions`) to be
+    set to ``YES``, if it is not explicitly set.
+
+    If ``-srcnodata`` is not explicitly set, but the source dataset has nodata values,
+    they will be taken into account, with ``UNIFIED_SRC_NODATA`` at ``PARTIAL``
+    by default.
 
 .. option:: -dstnodata <value [value...]>
 

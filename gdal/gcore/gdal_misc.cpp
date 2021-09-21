@@ -175,6 +175,9 @@ GDALDataTypeUnion( GDALDataType eType1, GDALDataType eType2 )
 GDALDataType CPL_STDCALL GDALDataTypeUnionWithValue(
     GDALDataType eDT, double dValue, int bComplex )
 {
+    if( eDT == GDT_Float32 && !bComplex && static_cast<float>(dValue) == dValue )
+        return eDT;
+
     const GDALDataType eDT2 = GDALFindDataTypeForValue(dValue, bComplex);
     return GDALDataTypeUnion(eDT, eDT2);
 }
@@ -511,7 +514,7 @@ int CPL_STDCALL GDALDataTypeIsConversionLossy( GDALDataType eTypeFrom,
 
     if( GDALDataTypeIsInteger(eTypeTo) )
     {
-        // E.g. float32 -> int32 
+        // E.g. float32 -> int32
         if( GDALDataTypeIsFloating(eTypeFrom) )
             return TRUE;
 
@@ -725,7 +728,7 @@ double GDALAdjustValueToDataType(
             }
             else
             {
-                // Intentionaly loose precision.
+                // Intentionally loose precision.
                 // TODO(schwehr): Is the double cast really necessary?
                 // If so, why?  What will fail?
                 dfValue = static_cast<double>(static_cast<float>(dfValue));
@@ -3212,7 +3215,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                         CSLFetchNameValue( papszMD, GDAL_DMD_HELPTOPIC ) );
 
             if( CPLFetchBool( papszMD, GDAL_DMD_SUBDATASETS, false ) )
-                printf( "  Supports: Subdatasets\n" );/*ok*/
+                printf( "  Supports: Raster subdatasets\n" );/*ok*/
             if( CPLFetchBool( papszMD, GDAL_DCAP_OPEN, false ) )
                 printf( "  Supports: Open() - Open existing dataset.\n" );/*ok*/
             if( CPLFetchBool( papszMD, GDAL_DCAP_CREATE, false ) )
@@ -3244,6 +3247,10 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                 printf( "  No support for geometries.\n" );/*ok*/
             if( CPLFetchBool( papszMD, GDAL_DCAP_FEATURE_STYLES, false ) )
                 printf( "  Supports: Feature styles.\n" );/*ok*/
+            if( CPLFetchBool( papszMD, GDAL_DCAP_COORDINATE_EPOCH, false ) )
+                printf( "  Supports: Coordinate epoch.\n" );/*ok*/
+            if( CPLFetchBool( papszMD, GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, false ) )
+                printf( "  Supports: Multiple vector layers.\n" );/*ok*/
 
             for( const char* key: { GDAL_DMD_CREATIONOPTIONLIST,
                                     GDAL_DMD_MULTIDIM_DATASET_CREATIONOPTIONLIST,
@@ -3411,13 +3418,31 @@ static bool _FetchDblFromMD( CSLConstList papszMD, const char *pszKey,
 
 /** Extract RPC info from metadata, and apply to an RPCInfo structure.
  *
- * The inverse of this function is RPCInfoToMD() in alg/gdal_rpc.cpp
+ * The inverse of this function is RPCInfoV1ToMD() in alg/gdal_rpc.cpp
  *
  * @param papszMD Dictionary of metadata representing RPC
  * @param psRPC (output) Pointer to structure to hold the RPC values.
  * @return TRUE in case of success. FALSE in case of failure.
  */
-int CPL_STDCALL GDALExtractRPCInfo( CSLConstList papszMD, GDALRPCInfo *psRPC )
+int CPL_STDCALL GDALExtractRPCInfoV1( CSLConstList papszMD, GDALRPCInfoV1 *psRPC )
+
+{
+    GDALRPCInfoV2 sRPC;
+    if( !GDALExtractRPCInfoV2(papszMD, &sRPC) )
+        return FALSE;
+    memcpy(psRPC, &sRPC, sizeof(GDALRPCInfoV1) );
+    return TRUE;
+}
+
+/** Extract RPC info from metadata, and apply to an RPCInfo structure.
+ *
+ * The inverse of this function is RPCInfoV2ToMD() in alg/gdal_rpc.cpp
+ *
+ * @param papszMD Dictionary of metadata representing RPC
+ * @param psRPC (output) Pointer to structure to hold the RPC values.
+ * @return TRUE in case of success. FALSE in case of failure.
+ */
+int CPL_STDCALL GDALExtractRPCInfoV2( CSLConstList papszMD, GDALRPCInfoV2 *psRPC )
 
 {
     if( CSLFetchNameValue( papszMD, RPC_LINE_NUM_COEFF ) == nullptr )
@@ -3433,6 +3458,8 @@ int CPL_STDCALL GDALExtractRPCInfo( CSLConstList papszMD, GDALRPCInfo *psRPC )
         return FALSE;
     }
 
+    _FetchDblFromMD( papszMD, RPC_ERR_BIAS, &(psRPC->dfERR_BIAS), 1, -1.0 );
+    _FetchDblFromMD( papszMD, RPC_ERR_RAND, &(psRPC->dfERR_RAND), 1, -1.0 );
     _FetchDblFromMD( papszMD, RPC_LINE_OFF, &(psRPC->dfLINE_OFF), 1, 0.0 );
     _FetchDblFromMD( papszMD, RPC_LINE_SCALE, &(psRPC->dfLINE_SCALE), 1, 1.0 );
     _FetchDblFromMD( papszMD, RPC_SAMP_OFF, &(psRPC->dfSAMP_OFF), 1, 0.0 );
@@ -3833,7 +3860,7 @@ void GDALDeserializeGCPListFromXML( CPLXMLNode* psGCPList,
         if( pszRawProj && pszRawProj[0] )
         {
             *ppoGCP_SRS = new OGRSpatialReference();
-            (*ppoGCP_SRS)->SetFromUserInput( pszRawProj );
+            (*ppoGCP_SRS)->SetFromUserInput( pszRawProj, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS );
 
             const char* pszMapping =
                 CPLGetXMLValue(psGCPList, "dataAxisToSRSAxisMapping", nullptr);

@@ -45,8 +45,10 @@ Synopsis
             [-mapFieldType type1|All=type2[,type3=type4]*]
             [-fieldmap identity | index1[,index2]*]
             [-splitlistfields] [-maxsubfields val]
+            [-resolveDomains]
             [-explodecollections] [-zfield field_name]
             [-gcp ungeoref_x ungeoref_y georef_x georef_y [elevation]]* [-order n | -tps]
+            [[-s_coord_epoch epoch] | [-t_coord_epoch epoch] | [-a_coord_epoch epoch]]
             [-nomd] [-mo "META-TAG=VALUE"]* [-noNativeData]
 
 Description
@@ -181,17 +183,58 @@ output coordinate system or even reprojecting the features during translation.
 
 .. option:: -a_srs <srs_def>
 
-    Assign an output SRS. Srs_def can be a full WKT definition (hard to escape
-    properly), or a well known definition (i.e. EPSG:4326) or a file with a WKT
-    definition.
+    Assign an output SRS, but without reprojecting (use :option:`-t_srs`
+    to reproject)
+
+    .. include:: options/srs_def.rst
+
+.. option:: -a_coord_epoch <epoch>
+
+    .. versionadded:: 3.4
+
+    Assign a coordinate epoch, linked with the output SRS. Useful when the
+    output SRS is a dynamic CRS. Only taken into account if :option:`-a_srs`
+    is used.
 
 .. option:: -t_srs <srs_def>
 
-    Reproject/transform to this SRS on output.
+    Reproject/transform to this SRS on output, and assign it as output SRS.
+
+    A source SRS must be available for reprojection to occur. The source SRS
+    will be by default the one found in the source layer when it is available,
+    or as overridden by the user with :option:`-s_srs`
+
+    .. include:: options/srs_def.rst
+
+.. option:: -t_coord_epoch <epoch>
+
+    .. versionadded:: 3.4
+
+    Assign a coordinate epoch, linked with the output SRS. Useful when the
+    output SRS is a dynamic CRS. Only taken into account if :option:`-t_srs`
+    is used. It is also mutually exclusive with  :option:`-a_coord_epoch`.
+
+    Currently :option:`-s_coord_epoch` and :option:`-t_coord_epoch` are
+    mutually exclusive, due to lack of support for transformations between two dynamic CRS.
 
 .. option:: -s_srs <srs_def>
 
-    Override source SRS.
+    Override source SRS. If not specified the SRS found in the input layer will
+    be used. This option has only an effect if used together with :option:`-t_srs`
+    to reproject.
+
+    .. include:: options/srs_def.rst
+
+.. option:: -s_coord_epoch <epoch>
+
+    .. versionadded:: 3.4
+
+    Assign a coordinate epoch, linked with the source SRS. Useful when the
+    source SRS is a dynamic CRS. Only taken into account if :option:`-s_srs`
+    is used.
+
+    Currently :option:`-s_coord_epoch` and :option:`-t_coord_epoch` are
+    mutually exclusive, due to lack of support for transformations between two dynamic CRS.
 
 .. option:: -ct <string>
 
@@ -306,7 +349,7 @@ output coordinate system or even reprojecting the features during translation.
 .. option:: -makevalid
 
     Run the :cpp:func:`OGRGeometry::MakeValid` operation, followed by
-    :cpp:func:`OGRGeometryFactory::removeLowerDimensionSubGeoms`, on geometries 
+    :cpp:func:`OGRGeometryFactory::removeLowerDimensionSubGeoms`, on geometries
     to ensure they are valid regarding the rules of the Simple Features specification.
 
     .. versionadded: 3.1 (requires GEOS 3.8 or later)
@@ -414,9 +457,17 @@ output coordinate system or even reprojecting the features during translation.
 
 .. option:: -emptyStrAsNull
 
+    .. versionadded:: 3.3
+
     Treat empty string values as null.
 
+.. option:: -resolveDomains
+
     .. versionadded:: 3.3
+
+    When this is specified, any selected field that is linked to a coded field
+    domain will be accompanied by an additional field (``{dstfield}_resolved``),
+    that will contain the description of the coded value.
 
 .. option:: -nomd
 

@@ -9,7 +9,7 @@ OBJ	= \
 
 O_OBJ	=	$(foreach file,$(OBJ),../../o/$(file))
 
-CPPFLAGS	:=	 $(HDF4_INCLUDE) -I. -I.. $(HDF4_FLAGS) $(CPPFLAGS) 
+CPPFLAGS	:=	 $(HDF4_INCLUDE) -iquote . -iquote .. $(HDF4_FLAGS) $(CPPFLAGS) 
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

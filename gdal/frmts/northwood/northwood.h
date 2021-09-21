@@ -84,8 +84,8 @@ typedef struct
 typedef struct
 {
     unsigned int nNumClassifiedItems;
-//  NWT_CLASSIFIED_ITEM *stClassifedItem[4096]; //hack - it could be up to 64K
-    NWT_CLASSIFIED_ITEM **stClassifedItem;    //hack - it could be up to 64K
+//  NWT_CLASSIFIED_ITEM *stClassifiedItem[4096]; //hack - it could be up to 64K
+    NWT_CLASSIFIED_ITEM **stClassifiedItem;    //hack - it could be up to 64K
 } NWT_CLASSIFIED_DICT;
 
 typedef struct {
@@ -126,8 +126,8 @@ typedef struct
     bool bHillShadeExists;
     bool bShowGradient;
     bool bShowHillShade;
-    char cHillShadeBrightness;
-    char cHillShadeContrast;
+    unsigned char cHillShadeBrightness;
+    unsigned char cHillShadeContrast;
     float fHillShadeAzimuth;
     float fHillShadeAngle;
     NWT_CLASSIFIED_DICT *stClassDict;
@@ -141,7 +141,7 @@ void nwtCloseGrid( NWT_GRID * pGrd );
 void nwtPrintGridHeader( NWT_GRID * pGrd );
 int nwt_LoadColors( NWT_RGB * pMap, int mapSize, NWT_GRID * pGrd );
 void nwt_HillShade( unsigned char *r, unsigned char *g, unsigned char *b,
-                    char *h );
+                    unsigned char *h );
 
 void createIP( int index, unsigned char r, unsigned char g, unsigned char b,
                NWT_RGB * map, int *pnWarkerMark );

@@ -42,6 +42,7 @@
 #include <limits>
 #include <memory>
 #include <new>
+#include <type_traits>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -2184,7 +2185,7 @@ int CPL_STDCALL GDALHasArbitraryOverviews( GDALRasterBandH hBand )
 int GDALRasterBand::GetOverviewCount()
 
 {
-    if( poDS != nullptr && poDS->oOvManager.IsInitialized() )
+    if( poDS != nullptr && poDS->oOvManager.IsInitialized() && poDS->AreOverviewsEnabled() )
         return poDS->oOvManager.GetOverviewCount( nBand );
 
     return 0;
@@ -2226,7 +2227,7 @@ int CPL_STDCALL GDALGetOverviewCount( GDALRasterBandH hBand )
 GDALRasterBand * GDALRasterBand::GetOverview( int i )
 
 {
-    if( poDS != nullptr && poDS->oOvManager.IsInitialized() )
+    if( poDS != nullptr && poDS->oOvManager.IsInitialized() && poDS->AreOverviewsEnabled() )
         return poDS->oOvManager.GetOverview( nBand, i );
 
     return nullptr;
@@ -3940,7 +3941,7 @@ class GDALUInt128
 
 // The rationale for below optimizations is detailed in statistics.txt
 
-// Use with T = GDT_Byte or GDT_UInt16 only !
+// Use with T = GByte or GUInt16 only !
 template<class T>
 static void ComputeStatisticsInternalGeneric( int nXCheck,
                                        int nBlockXSize,
@@ -3955,6 +3956,8 @@ static void ComputeStatisticsInternalGeneric( int nXCheck,
                                        GUIntBig& nSampleCount,
                                        GUIntBig& nValidCount )
 {
+    static_assert( std::is_same<T, GByte>::value ||
+                   std::is_same<T, GUInt16>::value, "bad type for T" );
     if( bHasNoData )
     {
         // General case
@@ -4241,30 +4244,136 @@ static void ComputeStatisticsInternal( int nXCheck,
 
 #if (defined(__x86_64__) || defined(_M_X64)) && (defined(__GNUC__) || defined(_MSC_VER))
 
-#include <emmintrin.h>
-
-#ifdef __SSE4_1__
-#include <smmintrin.h>
-#endif
-
-#if defined(__GNUC__)
-#define ALIGNED_16(x) x __attribute__ ((aligned (16)))
-#else
-#define ALIGNED_16(x) __declspec(align(16)) x
-#endif
-
-// Some convenience macros
-#define ZERO128                      _mm_setzero_si128()
-#ifdef __SSE4_1__
-#define EXTEND_UINT16_TO_UINT32(reg) _mm_cvtepu16_epi32(reg)
-#else
-#define EXTEND_UINT16_TO_UINT32(reg) _mm_unpacklo_epi16(reg, ZERO128)
-#endif
-#define GET_HIGH_64BIT(reg)          _mm_shuffle_epi32(reg, 2 | (3 << 2))
-
 #include "gdal_avx2_emulation.hpp"
 
 #define ZERO256                      GDALmm256_setzero_si256()
+
+template<bool COMPUTE_MIN, bool COMPUTE_MAX>
+static void ComputeStatisticsByteNoNodata( GPtrDiff_t nBlockPixels,
+                                           // assumed to be aligned on 256 bits
+                                           const GByte* pData,
+                                           GUInt32& nMin,
+                                           GUInt32& nMax,
+                                           GUIntBig& nSum,
+                                           GUIntBig& nSumSquare,
+                                           GUIntBig& nSampleCount,
+                                           GUIntBig& nValidCount )
+{
+    // 32-byte alignment may not be enforced by linker, so do it at hand
+    GByte aby32ByteUnaligned[32+32+32+32+32];
+    GByte* paby32ByteAligned = aby32ByteUnaligned +
+                                (32 - (reinterpret_cast<GUIntptr_t>(aby32ByteUnaligned) % 32));
+    GByte* pabyMin = paby32ByteAligned;
+    GByte* pabyMax = paby32ByteAligned + 32;
+    GUInt32* panSum = reinterpret_cast<GUInt32*>(paby32ByteAligned + 32*2);
+    GUInt32* panSumSquare = reinterpret_cast<GUInt32*>(paby32ByteAligned + 32*3);
+
+    GPtrDiff_t i = 0;
+    // Make sure that sumSquare can fit on uint32
+    // * 8 since we can hold 8 sums per vector register
+    const int nMaxIterationsPerInnerLoop = 8 *
+            ((std::numeric_limits<GUInt32>::max() / (255 * 255)) & ~31);
+    GPtrDiff_t nOuterLoops = nBlockPixels / nMaxIterationsPerInnerLoop;
+    if( (nBlockPixels % nMaxIterationsPerInnerLoop) != 0 )
+        nOuterLoops ++;
+
+    GDALm256i ymm_min = GDALmm256_load_si256(reinterpret_cast<const GDALm256i*>(pData + i));
+    GDALm256i ymm_max = ymm_min;
+    const auto ymm_mask_8bits = GDALmm256_set1_epi16(0xFF);
+
+    for( GPtrDiff_t k=0; k< nOuterLoops; k++ )
+    {
+        const auto iMax = std::min(nBlockPixels, i + nMaxIterationsPerInnerLoop);
+
+        // holds 4 uint32 sums in [0], [2], [4] and [6]
+        GDALm256i ymm_sum = ZERO256;
+        GDALm256i ymm_sumsquare = ZERO256; // holds 8 uint32 sums
+        for( ;i+31<iMax; i+=32 )
+        {
+            const GDALm256i ymm = GDALmm256_load_si256(reinterpret_cast<const GDALm256i*>(pData + i));
+            if( COMPUTE_MIN )
+            {
+                ymm_min = GDALmm256_min_epu8 (ymm_min, ymm);
+            }
+            if( COMPUTE_MAX )
+            {
+                ymm_max = GDALmm256_max_epu8 (ymm_max, ymm);
+            }
+
+            // Extract even-8bit values
+            const GDALm256i ymm_even = GDALmm256_and_si256(ymm, ymm_mask_8bits);
+            // Compute square of those 16 values as 32 bit result
+            // and add adjacent pairs
+            const GDALm256i ymm_even_square =
+                                        GDALmm256_madd_epi16(ymm_even, ymm_even);
+            // Add to the sumsquare accumulator
+            ymm_sumsquare = GDALmm256_add_epi32(ymm_sumsquare, ymm_even_square);
+
+            // Extract odd-8bit values
+            const GDALm256i ymm_odd = GDALmm256_srli_epi16(ymm, 8);
+            const GDALm256i ymm_odd_square =
+                                    GDALmm256_madd_epi16(ymm_odd, ymm_odd);
+            ymm_sumsquare = GDALmm256_add_epi32(ymm_sumsquare, ymm_odd_square);
+
+            // Now compute the sums
+            ymm_sum = GDALmm256_add_epi32(ymm_sum,
+                                       GDALmm256_sad_epu8(ymm, ZERO256));
+        }
+
+        GDALmm256_store_si256(reinterpret_cast<GDALm256i*>(panSum), ymm_sum);
+        GDALmm256_store_si256(reinterpret_cast<GDALm256i*>(panSumSquare), ymm_sumsquare);
+
+        nSum += panSum[0] + panSum[2] + panSum[4] + panSum[6];
+        nSumSquare += static_cast<GUIntBig>(panSumSquare[0]) +
+                      panSumSquare[1] + panSumSquare[2] + panSumSquare[3] +
+                      panSumSquare[4] + panSumSquare[5] + panSumSquare[6] +
+                      panSumSquare[7];
+    }
+
+    if( COMPUTE_MIN )
+    {
+        GDALmm256_store_si256(reinterpret_cast<GDALm256i*>(pabyMin), ymm_min);
+    }
+    if( COMPUTE_MAX )
+    {
+        GDALmm256_store_si256(reinterpret_cast<GDALm256i*>(pabyMax), ymm_max);
+    }
+    if( COMPUTE_MIN || COMPUTE_MAX )
+    {
+        for(int j=0;j<32;j++)
+        {
+            if( COMPUTE_MIN )
+            {
+                if( pabyMin[j] < nMin ) nMin = pabyMin[j];
+            }
+            if( COMPUTE_MAX )
+            {
+                if( pabyMax[j] > nMax ) nMax = pabyMax[j];
+            }
+        }
+    }
+
+    for( ; i<nBlockPixels; i++)
+    {
+        const GUInt32 nValue = pData[i];
+        if( COMPUTE_MIN )
+        {
+            if( nValue < nMin )
+                nMin = nValue;
+        }
+        if( COMPUTE_MAX )
+        {
+            if( nValue > nMax )
+                nMax = nValue;
+        }
+        nSum += nValue;
+        nSumSquare += nValue * nValue;
+    }
+
+    nSampleCount += static_cast<GUIntBig>(nBlockPixels);
+    nValidCount += static_cast<GUIntBig>(nBlockPixels);
+}
+
 
 // SSE2/AVX2 optimization for GByte case
 // In pure SSE2, this relies on gdal_avx2_emulation.hpp. There is no
@@ -4314,8 +4423,13 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
                                         static_cast<GByte>(nMin) );
         GDALm256i ymm_min = ymm_neutral;
         GDALm256i ymm_max = ymm_neutral;
+        const auto ymm_mask_8bits = GDALmm256_set1_epi16(0xFF);
 
-        const bool bComputeMinMax = nMin > 0 || nMax < 255;
+        const GUInt32 nMinThreshold =
+                        (bHasNoData && nNoDataValue == 0) ? 1 : 0;
+        const GUInt32 nMaxThreshold =
+                        (bHasNoData && nNoDataValue == 255) ? 254 : 255;
+        const bool bComputeMinMax = nMin > nMinThreshold || nMax < nMaxThreshold;
 
         for( GPtrDiff_t k=0; k< nOuterLoops; k++ )
         {
@@ -4360,22 +4474,22 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
                                                   ymm_nodata_by_neutral);
                 }
 
-                // Extend lower 128 bits of ymm from uint8 to uint16
-                const GDALm256i ymm_low = GDALmm256_cvtepu8_epi16(
-                            GDALmm256_extracti128_si256(ymm_nodata_by_zero, 0));
+                // Extract even-8bit values
+                const GDALm256i ymm_even =
+                    GDALmm256_and_si256(ymm_nodata_by_zero, ymm_mask_8bits);
                 // Compute square of those 16 values as 32 bit result
                 // and add adjacent pairs
-                const GDALm256i ymm_low_square =
-                                            GDALmm256_madd_epi16(ymm_low, ymm_low);
+                const GDALm256i ymm_even_square =
+                                            GDALmm256_madd_epi16(ymm_even, ymm_even);
                 // Add to the sumsquare accumulator
-                ymm_sumsquare = GDALmm256_add_epi32(ymm_sumsquare, ymm_low_square);
+                ymm_sumsquare = GDALmm256_add_epi32(ymm_sumsquare, ymm_even_square);
 
-                // Same as before with high 128bits of ymm
-                const GDALm256i ymm_high = GDALmm256_cvtepu8_epi16(
-                            GDALmm256_extracti128_si256(ymm_nodata_by_zero, 1));
-                const GDALm256i ymm_high_square =
-                                        GDALmm256_madd_epi16(ymm_high, ymm_high);
-                ymm_sumsquare = GDALmm256_add_epi32(ymm_sumsquare, ymm_high_square);
+                // Extract odd-8bit values
+                const GDALm256i ymm_odd =
+                    GDALmm256_srli_epi16(ymm_nodata_by_zero, 8);
+                const GDALm256i ymm_odd_square =
+                                        GDALmm256_madd_epi16(ymm_odd, ymm_odd);
+                ymm_sumsquare = GDALmm256_add_epi32(ymm_sumsquare, ymm_odd_square);
 
                 // Now compute the sums
                 ymm_sum = GDALmm256_add_epi32(ymm_sum,
@@ -4429,101 +4543,40 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
     }
     else if( !bHasNoData && nXCheck == nBlockXSize && nBlockPixels >= 32 )
     {
-        // 32-byte alignment may not be enforced by linker, so do it at hand
-        GByte aby32ByteUnaligned[32+32+32+32+32];
-        GByte* paby32ByteAligned = aby32ByteUnaligned +
-                                    (32 - (reinterpret_cast<GUIntptr_t>(aby32ByteUnaligned) % 32));
-        GByte* pabyMin = paby32ByteAligned;
-        GByte* pabyMax = paby32ByteAligned + 32;
-        GUInt32* panSum = reinterpret_cast<GUInt32*>(paby32ByteAligned + 32*2);
-        GUInt32* panSumSquare = reinterpret_cast<GUInt32*>(paby32ByteAligned + 32*3);
-
-        GPtrDiff_t i = 0;
-        // Make sure that sumSquare can fit on uint32
-        // * 8 since we can hold 8 sums per vector register
-        const int nMaxIterationsPerInnerLoop = 8 *
-                ((std::numeric_limits<GUInt32>::max() / (255 * 255)) & ~31);
-        GPtrDiff_t nOuterLoops = nBlockPixels / nMaxIterationsPerInnerLoop;
-        if( (nBlockPixels % nMaxIterationsPerInnerLoop) != 0 )
-            nOuterLoops ++;
-
-        GDALm256i ymm_min = GDALmm256_load_si256(reinterpret_cast<const GDALm256i*>(pData + i));
-        GDALm256i ymm_max = ymm_min;
-
-        const bool bComputeMinMax = nMin > 0 || nMax < 255;
-
-        for( GPtrDiff_t k=0; k< nOuterLoops; k++ )
+        if( nMin > 0 )
         {
-            const auto iMax = std::min(nBlockPixels, i + nMaxIterationsPerInnerLoop);
-
-            // holds 4 uint32 sums in [0], [2], [4] and [6]
-            GDALm256i ymm_sum = ZERO256;
-            GDALm256i ymm_sumsquare = ZERO256; // holds 8 uint32 sums
-            for( ;i+31<iMax; i+=32 )
+            if( nMax < 255 )
             {
-                const GDALm256i ymm = GDALmm256_load_si256(reinterpret_cast<const GDALm256i*>(pData + i));
-                if( bComputeMinMax )
-                {
-                    ymm_min = GDALmm256_min_epu8 (ymm_min, ymm);
-                    ymm_max = GDALmm256_max_epu8 (ymm_max, ymm);
-                }
-
-                // Extend lower 128 bits of ymm from uint8 to uint16
-                const GDALm256i ymm_low = GDALmm256_cvtepu8_epi16(
-                                            GDALmm256_extracti128_si256(ymm, 0));
-                // Compute square of those 16 values as 32 bit result
-                // and add adjacent pairs
-                const GDALm256i ymm_low_square =
-                                            GDALmm256_madd_epi16(ymm_low, ymm_low);
-                // Add to the sumsquare accumulator
-                ymm_sumsquare = GDALmm256_add_epi32(ymm_sumsquare, ymm_low_square);
-
-                // Same as before with high 128bits of ymm
-                const GDALm256i ymm_high = GDALmm256_cvtepu8_epi16(
-                                            GDALmm256_extracti128_si256(ymm, 1));
-                const GDALm256i ymm_high_square =
-                                        GDALmm256_madd_epi16(ymm_high, ymm_high);
-                ymm_sumsquare = GDALmm256_add_epi32(ymm_sumsquare, ymm_high_square);
-
-                // Now compute the sums
-                ymm_sum = GDALmm256_add_epi32(ymm_sum,
-                                           GDALmm256_sad_epu8(ymm, ZERO256));
+                ComputeStatisticsByteNoNodata<true, true>(
+                    nBlockPixels, pData,
+                    nMin, nMax,
+                    nSum, nSumSquare, nSampleCount, nValidCount );
             }
-
-            GDALmm256_store_si256(reinterpret_cast<GDALm256i*>(panSum), ymm_sum);
-            GDALmm256_store_si256(reinterpret_cast<GDALm256i*>(panSumSquare), ymm_sumsquare);
-
-            nSum += panSum[0] + panSum[2] + panSum[4] + panSum[6];
-            nSumSquare += static_cast<GUIntBig>(panSumSquare[0]) +
-                          panSumSquare[1] + panSumSquare[2] + panSumSquare[3] +
-                          panSumSquare[4] + panSumSquare[5] + panSumSquare[6] +
-                          panSumSquare[7];
-        }
-
-        if( bComputeMinMax )
-        {
-            GDALmm256_store_si256(reinterpret_cast<GDALm256i*>(pabyMin), ymm_min);
-            GDALmm256_store_si256(reinterpret_cast<GDALm256i*>(pabyMax), ymm_max);
-            for(int j=0;j<32;j++)
+            else
             {
-                if( pabyMin[j] < nMin ) nMin = pabyMin[j];
-                if( pabyMax[j] > nMax ) nMax = pabyMax[j];
+                ComputeStatisticsByteNoNodata<true, false>(
+                    nBlockPixels, pData,
+                    nMin, nMax,
+                    nSum, nSumSquare, nSampleCount, nValidCount );
             }
         }
-
-        for( ; i<nBlockPixels; i++)
+        else
         {
-            const GUInt32 nValue = pData[i];
-            if( nValue < nMin )
-                nMin = nValue;
-            if( nValue > nMax )
-                nMax = nValue;
-            nSum += nValue;
-            nSumSquare += nValue * nValue;
+            if( nMax < 255 )
+            {
+                ComputeStatisticsByteNoNodata<false, true>(
+                    nBlockPixels, pData,
+                    nMin, nMax,
+                    nSum, nSumSquare, nSampleCount, nValidCount );
+            }
+            else
+            {
+                ComputeStatisticsByteNoNodata<false, false>(
+                    nBlockPixels, pData,
+                    nMin, nMax,
+                    nSum, nSumSquare, nSampleCount, nValidCount );
+            }
         }
-
-        nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
-        nValidCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
     }
     else
     {
@@ -4581,6 +4634,8 @@ void ComputeStatisticsInternal<GUInt16>( int nXCheck,
             nOuterLoops ++;
 
         const bool bComputeMinMax = nMin > 0 || nMax < 65535;
+        const auto ymm_mask_16bits = GDALmm256_set1_epi32(0xFFFF);
+        const auto ymm_mask_32bits = GDALmm256_set1_epi64x(0xFFFFFFFF);
 
         GUIntBig nSumThis = 0;
         for( int k=0; k< nOuterLoops; k++ )
@@ -4598,52 +4653,21 @@ void ComputeStatisticsInternal<GUInt16>( int nXCheck,
                     ymm_max = GDALmm256_max_epi16 (ymm_max, ymm_shifted);
                 }
 
-                // Extend the 8 lower uint16 to uint32
-                const GDALm256i ymm_low = GDALmm256_cvtepu16_epi32(
-                                            GDALmm256_extracti128_si256(ymm, 0));
-                const GDALm256i ymm_high = GDALmm256_cvtepu16_epi32(
-                                            GDALmm256_extracti128_si256(ymm, 1));
-
-#ifndef naive_version
                 // Note: the int32 range can overflow for (0-32768)^2 +
                 // (0-32768)^2 = 0x80000000, but as we know the result is
                 // positive, this is OK as we interpret is a uint32.
                 const GDALm256i ymm_square = GDALmm256_madd_epi16(ymm_shifted,
                                                                   ymm_shifted);
-                const GDALm256i ymm_square_low = GDALmm256_cvtepu32_epi64(
-                                    GDALmm256_extracti128_si256(ymm_square, 0));
                 ymm_sumsquare = GDALmm256_add_epi64(ymm_sumsquare,
-                                                    ymm_square_low);
-                const GDALm256i ymm_square_high = GDALmm256_cvtepu32_epi64(
-                                    GDALmm256_extracti128_si256(ymm_square, 1));
+                                    GDALmm256_and_si256(ymm_square, ymm_mask_32bits));
                 ymm_sumsquare = GDALmm256_add_epi64(ymm_sumsquare,
-                                                    ymm_square_high);
-#else
-                // Compute square of those 8 values
-                const GDALm256i ymm_low2 = GDALmm256_mullo_epi32(ymm_low, ymm_low);
-                // Extract 4 low uint32 and extend them to uint64
-                const GDALm256i ymm_low2_low = GDALmm256_cvtepu32_epi64(
-                                            GDALmm256_extracti128_si256(ymm_low2, 0));
-                // Extract 4 high uint32 and extend them to uint64
-                const GDALm256i ymm_low2_high = GDALmm256_cvtepu32_epi64(
-                                            GDALmm256_extracti128_si256(ymm_low2, 1));
-                // Add to the sumsquare accumulator
-                ymm_sumsquare = GDALmm256_add_epi64(ymm_sumsquare, ymm_low2_low);
-                ymm_sumsquare = GDALmm256_add_epi64(ymm_sumsquare, ymm_low2_high);
-
-                // Same with the 8 upper uint16
-                const GDALm256i ymm_high2 = GDALmm256_mullo_epi32(ymm_high, ymm_high);
-                const GDALm256i ymm_high2_low = GDALmm256_cvtepu32_epi64(
-                                            GDALmm256_extracti128_si256(ymm_high2, 0));
-                const GDALm256i ymm_high2_high = GDALmm256_cvtepu32_epi64(
-                                            GDALmm256_extracti128_si256(ymm_high2, 1));
-                ymm_sumsquare = GDALmm256_add_epi64(ymm_sumsquare, ymm_high2_low);
-                ymm_sumsquare = GDALmm256_add_epi64(ymm_sumsquare, ymm_high2_high);
-#endif
+                                    GDALmm256_srli_epi64(ymm_square, 32));
 
                 // Now compute the sums
-                ymm_sum = GDALmm256_add_epi32(ymm_sum, ymm_low);
-                ymm_sum = GDALmm256_add_epi32(ymm_sum, ymm_high);
+                ymm_sum = GDALmm256_add_epi32(ymm_sum,
+                                  GDALmm256_and_si256(ymm, ymm_mask_16bits));
+                ymm_sum = GDALmm256_add_epi32(ymm_sum,
+                                  GDALmm256_srli_epi32(ymm, 16));
             }
 
             GUInt32 anSum[8];
@@ -4674,10 +4698,10 @@ void ComputeStatisticsInternal<GUInt16>( int nXCheck,
         GDALmm256_storeu_si256(reinterpret_cast<GDALm256i*>(anSumSquare), ymm_sumsquare);
         nSumSquare += anSumSquare[0] +
                         anSumSquare[1] + anSumSquare[2] + anSumSquare[3];
-#ifndef naive_version
+
         // Unshift the sum of squares
         UnshiftSumSquare(nSumSquare, nSumThis, static_cast<GUIntBig>(i));
-#endif
+
         nSum += nSumThis;
 
         for( ; i<nBlockPixels; i++)
@@ -4944,15 +4968,14 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
 /* -------------------------------------------------------------------- */
 /*      Read actual data and compute statistics.                        */
 /* -------------------------------------------------------------------- */
-    bool bFirstValue = true;
     // Using Welford algorithm:
     // http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
     // to compute standard deviation in a more numerically robust way than
     // the difference of the sum of square values with the square of the sum.
     // dfMean and dfM2 are updated at each sample.
     // dfM2 is the sum of square of differences to the current mean.
-    double dfMin = 0.0;
-    double dfMax = 0.0;
+    double dfMin = std::numeric_limits<double>::max();
+    double dfMax = -std::numeric_limits<double>::max();
     double dfMean = 0.0;
     double dfM2 = 0.0;
 
@@ -5028,21 +5051,11 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                                                 bGotFloatNoDataValue,
                                                 fNoDataValue,
                                                 bValid );
-                nSampleCount++;
                 if( !bValid )
                     continue;
 
-                if( bFirstValue )
-                {
-                    dfMin = dfValue;
-                    dfMax = dfValue;
-                    bFirstValue = false;
-                }
-                else
-                {
-                    dfMin = std::min(dfMin, dfValue);
-                    dfMax = std::max(dfMax, dfValue);
-                }
+                dfMin = std::min(dfMin, dfValue);
+                dfMax = std::max(dfMax, dfValue);
 
                 nValidCount++;
                 const double dfDelta = dfValue - dfMean;
@@ -5050,6 +5063,8 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                 dfM2 += dfDelta * (dfValue - dfMean);
             }
         }
+
+        nSampleCount = static_cast<GUIntBig>(nXReduced) * nYReduced;
 
         CPLFree( pData );
     }
@@ -5201,7 +5216,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                 SetStatistics( nMin, nMax, dfMean, dfStdDev );
             }
 
-        SetValidPercent( nSampleCount, nValidCount );
+            SetValidPercent( nSampleCount, nValidCount );
 
 /* -------------------------------------------------------------------- */
 /*      Record results.                                                 */
@@ -5260,21 +5275,11 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                                                     fNoDataValue,
                                                     bValid );
 
-                    nSampleCount++;
                     if( !bValid )
                         continue;
 
-                    if( bFirstValue )
-                    {
-                        dfMin = dfValue;
-                        dfMax = dfValue;
-                        bFirstValue = false;
-                    }
-                    else
-                    {
-                        dfMin = std::min(dfMin, dfValue);
-                        dfMax = std::max(dfMax, dfValue);
-                    }
+                    dfMin = std::min(dfMin, dfValue);
+                    dfMax = std::max(dfMax, dfValue);
 
                     nValidCount++;
                     const double dfDelta = dfValue - dfMean;
@@ -5282,6 +5287,8 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                     dfM2 += dfDelta * (dfValue - dfMean);
                 }
             }
+
+            nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
 
             poBlock->DropLock();
 
@@ -5319,6 +5326,11 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
             SetMetadataItem( "STATISTICS_APPROXIMATE",  nullptr );
         }
         SetStatistics( dfMin, dfMax, dfMean, dfStdDev );
+    }
+    else
+    {
+        dfMin = 0.0;
+        dfMax = 0.0;
     }
 
     SetValidPercent( nSampleCount, nValidCount );
@@ -5469,9 +5481,6 @@ CPLErr CPL_STDCALL GDALSetRasterStatistics(
 CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
                                             double* adfMinMax )
 {
-    double dfMin = 0.0;
-    double dfMax = 0.0;
-
 /* -------------------------------------------------------------------- */
 /*      Does the driver already know the min/max?                       */
 /* -------------------------------------------------------------------- */
@@ -5480,8 +5489,8 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
         int bSuccessMin = FALSE;
         int bSuccessMax = FALSE;
 
-        dfMin = GetMinimum( &bSuccessMin );
-        dfMax = GetMaximum( &bSuccessMax );
+        double dfMin = GetMinimum( &bSuccessMin );
+        double dfMax = GetMaximum( &bSuccessMax );
 
         if( bSuccessMin && bSuccessMax )
         {
@@ -5522,7 +5531,8 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
     GDALRasterIOExtraArg sExtraArg;
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
 
-    bool bFirstValue = true;
+    double dfMin = std::numeric_limits<double>::max();
+    double dfMax = -std::numeric_limits<double>::max();
     if ( bApproxOK && HasArbitraryOverviews() )
     {
 /* -------------------------------------------------------------------- */
@@ -5579,17 +5589,8 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
                 if( !bValid )
                     continue;
 
-                if( bFirstValue )
-                {
-                    dfMin = dfValue;
-                    dfMax = dfValue;
-                    bFirstValue = false;
-                }
-                else
-                {
-                    dfMin = std::min(dfMin, dfValue);
-                    dfMax = std::max(dfMax, dfValue);
-                }
+                dfMin = std::min(dfMin, dfValue);
+                dfMax = std::max(dfMax, dfValue);
             }
         }
 
@@ -5655,17 +5656,8 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
                     if( !bValid )
                         continue;
 
-                    if( bFirstValue )
-                    {
-                        dfMin = dfValue;
-                        dfMax = dfValue;
-                        bFirstValue = false;
-                    }
-                    else
-                    {
-                        dfMin = std::min(dfMin, dfValue);
-                        dfMax = std::max(dfMax, dfValue);
-                    }
+                    dfMin = std::min(dfMin, dfValue);
+                    dfMax = std::max(dfMax, dfValue);
                 }
             }
 
@@ -5673,16 +5665,18 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
         }
     }
 
-    adfMinMax[0] = dfMin;
-    adfMinMax[1] = dfMax;
-
-    if (bFirstValue)
+    if( dfMin > dfMax )
     {
+        adfMinMax[0] = 0;
+        adfMinMax[1] = 0;
         ReportError(
             CE_Failure, CPLE_AppDefined,
             "Failed to compute min/max, no valid pixels found in sampling." );
         return CE_Failure;
     }
+
+    adfMinMax[0] = dfMin;
+    adfMinMax[1] = dfMax;
 
     return CE_None;
 }
@@ -5948,7 +5942,7 @@ CPLErr CPL_STDCALL GDALSetDefaultRAT( GDALRasterBandH hBand,
  *
  * @since GDAL 1.5.0
  *
- * @see http://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask
+ * @see https://gdal.org/development/rfc/rfc15_nodatabitmask.html
  *
  */
 GDALRasterBand *GDALRasterBand::GetMaskBand()
@@ -6213,7 +6207,7 @@ GDALRasterBandH CPL_STDCALL GDALGetMaskBand( GDALRasterBandH hBand )
  *
  * @return a valid mask band.
  *
- * @see http://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask
+ * @see https://gdal.org/development/rfc/rfc15_nodatabitmask.html
  *
  */
 int GDALRasterBand::GetMaskFlags()
@@ -6292,7 +6286,7 @@ void GDALRasterBand::InvalidateMaskBand()
  *
  * @return CE_None on success or CE_Failure on an error.
  *
- * @see http://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask
+ * @see https://gdal.org/development/rfc/rfc15_nodatabitmask.html
  * @see GDALDataset::CreateMaskBand()
  *
  */
@@ -6388,15 +6382,26 @@ unsigned char* GDALRasterBand::GetIndexColorTranslationTo(
         {
             const int nEntries = srcColorTable->GetColorEntryCount();
             const int nRefEntries = destColorTable->GetColorEntryCount();
+
             int bHasNoDataValueSrc = FALSE;
             double dfNoDataValueSrc = GetNoDataValue(&bHasNoDataValueSrc);
+            if( !(bHasNoDataValueSrc &&
+                  dfNoDataValueSrc >= 0 && dfNoDataValueSrc <= 255 &&
+                  dfNoDataValueSrc == static_cast<int>(dfNoDataValueSrc)) )
+                bHasNoDataValueSrc = FALSE;
             const int noDataValueSrc =
                 bHasNoDataValueSrc ? static_cast<int>(dfNoDataValueSrc) : 0;
+
             int bHasNoDataValueRef = FALSE;
             const double dfNoDataValueRef =
                 poReferenceBand->GetNoDataValue(&bHasNoDataValueRef);
+            if( !(bHasNoDataValueRef &&
+                  dfNoDataValueRef >= 0 && dfNoDataValueRef <= 255 &&
+                  dfNoDataValueRef == static_cast<int>(dfNoDataValueRef)) )
+                bHasNoDataValueRef = FALSE;
             const int noDataValueRef =
                 bHasNoDataValueRef ? static_cast<int>(dfNoDataValueRef) : 0;
+
             bool samePalette = false;
 
             if (pApproximateMatching)
@@ -6423,10 +6428,13 @@ unsigned char* GDALRasterBand::GetIndexColorTranslationTo(
 
             if( !samePalette )
             {
-                // TODO(schwehr): Make 256 a constant and explain it.
                 if (pTranslationTable == nullptr)
-                    pTranslationTable =
-                        static_cast<unsigned char *>( CPLMalloc(256) );
+                {
+                    pTranslationTable = static_cast<unsigned char *>(
+                        VSI_CALLOC_VERBOSE(1, std::max(256, nEntries)) );
+                    if( pTranslationTable == nullptr )
+                        return nullptr;
+                }
 
                 // Trying to remap the product palette on the subdataset
                 // palette.
@@ -6437,8 +6445,8 @@ unsigned char* GDALRasterBand::GetIndexColorTranslationTo(
                         continue;
                     const GDALColorEntry* entry =
                         srcColorTable->GetColorEntry(i);
-                    int j = 0;  // j used after for.
-                    for( j = 0; j < nRefEntries; ++j )
+                    bool bMatchFound = false;
+                    for( int j = 0; j < nRefEntries; ++j )
                     {
                         if (bHasNoDataValueRef && noDataValueRef == j)
                             continue;
@@ -6450,17 +6458,18 @@ unsigned char* GDALRasterBand::GetIndexColorTranslationTo(
                         {
                             pTranslationTable[i] =
                                 static_cast<unsigned char>(j);
+                            bMatchFound = true;
                             break;
                         }
                     }
-                    if( j == nEntries )
+                    if( !bMatchFound )
                     {
                         // No exact match. Looking for closest color now.
                         int best_j = 0;
                         int best_distance = 0;
                         if( pApproximateMatching )
                             *pApproximateMatching = TRUE;
-                        for( j = 0; j < nRefEntries; ++j )
+                        for( int j = 0; j < nRefEntries; ++j )
                         {
                             const GDALColorEntry* entryRef =
                                 destColorTable->GetColorEntry(j);
@@ -7087,6 +7096,7 @@ class GDALMDArrayFromRasterBand final: public GDALMDArray
     std::vector<GByte> m_pabyNoData{};
     std::shared_ptr<GDALMDArray> m_varX{};
     std::shared_ptr<GDALMDArray> m_varY{};
+    std::string m_osFilename{};
 
     bool ReadWrite(GDALRWFlag eRWFlag,
                     const GUInt64* arrayStartIdx,
@@ -7108,7 +7118,8 @@ protected:
         m_poDS(poDS),
         m_poBand(poBand),
         m_dt(GDALExtendedDataType::Create(poBand->GetRasterDataType())),
-        m_osUnit( poBand->GetUnitType() )
+        m_osUnit( poBand->GetUnitType() ),
+        m_osFilename(poDS->GetDescription())
     {
         m_poDS->Reference();
 
@@ -7223,6 +7234,8 @@ public:
 
     bool IsWritable() const override { return m_poDS->GetAccess() == GA_Update; }
 
+    const std::string& GetFilename() const override { return m_osFilename; }
+
     const std::vector<std::shared_ptr<GDALDimension>>& GetDimensions() const override { return m_dims; }
 
     const GDALExtendedDataType &GetDataType() const override { return m_dt; }
@@ -7256,10 +7269,25 @@ public:
 
     std::shared_ptr<OGRSpatialReference> GetSpatialRef() const override
     {
-        auto poSRS = m_poDS->GetSpatialRef();
-        if( !poSRS )
+        auto poSrcSRS = m_poDS->GetSpatialRef();
+        if( !poSrcSRS )
             return nullptr;
-        return std::shared_ptr<OGRSpatialReference>(poSRS->Clone());
+        auto poSRS = std::shared_ptr<OGRSpatialReference>(poSrcSRS->Clone());
+
+        auto axisMapping = poSRS->GetDataAxisToSRSAxisMapping();
+        constexpr int iYDim = 0;
+        constexpr int iXDim = 1;
+        for( auto& m: axisMapping )
+        {
+            if( m == 1 )
+                m = iXDim + 1;
+            else if( m == 2 )
+                m = iYDim + 1;
+            else
+                m = 0;
+        }
+        poSRS->SetDataAxisToSRSAxisMapping(axisMapping);
+        return poSRS;
     }
 
     std::vector<GUInt64> GetBlockSize() const override
@@ -7331,42 +7359,66 @@ bool GDALMDArrayFromRasterBand::ReadWrite(GDALRWFlag eRWFlag,
                                           const GDALExtendedDataType& bufferDataType,
                                           void* pBuffer) const
 {
-    if( bufferDataType.GetClass() != GEDTC_NUMERIC )
-        return false;
+    constexpr size_t iDimX = 1;
+    constexpr size_t iDimY = 0;
+    return GDALMDRasterIOFromBand(m_poBand, eRWFlag,
+                                  iDimX,
+                                  iDimY,
+                                  arrayStartIdx,
+                                  count,
+                                  arrayStep,
+                                  bufferStride,
+                                  bufferDataType,
+                                  pBuffer);
+}
+
+/************************************************************************/
+/*                       GDALMDRasterIOFromBand()                       */
+/************************************************************************/
+
+bool GDALMDRasterIOFromBand(GDALRasterBand* poBand,
+                            GDALRWFlag eRWFlag,
+                            size_t iDimX,
+                            size_t iDimY,
+                            const GUInt64* arrayStartIdx,
+                            const size_t* count,
+                            const GInt64* arrayStep,
+                            const GPtrDiff_t* bufferStride,
+                            const GDALExtendedDataType& bufferDataType,
+                            void* pBuffer)
+{
     const auto eDT(bufferDataType.GetNumericDataType());
     const auto nDTSize(GDALGetDataTypeSizeBytes(eDT));
-    constexpr int kX = 1;
-    constexpr int kY = 0;
-    const int nX = arrayStep[kX] > 0  ?
-        static_cast<int>(arrayStartIdx[kX]) :
-        static_cast<int>(arrayStartIdx[kX] - (count[kX]-1) * -arrayStep[kX]);
-    const int nY = arrayStep[kY] > 0  ?
-        static_cast<int>(arrayStartIdx[kY]) :
-        static_cast<int>(arrayStartIdx[kY] - (count[kY]-1) * -arrayStep[kY]);
-    const int nSizeX = static_cast<int>(count[kX] * ABS(arrayStep[kX]));
-    const int nSizeY = static_cast<int>(count[kY] * ABS(arrayStep[kY]));
+    const int nX = arrayStep[iDimX] > 0  ?
+        static_cast<int>(arrayStartIdx[iDimX]) :
+        static_cast<int>(arrayStartIdx[iDimX] - (count[iDimX]-1) * -arrayStep[iDimX]);
+    const int nY = arrayStep[iDimY] > 0  ?
+        static_cast<int>(arrayStartIdx[iDimY]) :
+        static_cast<int>(arrayStartIdx[iDimY] - (count[iDimY]-1) * -arrayStep[iDimY]);
+    const int nSizeX = static_cast<int>(count[iDimX] * ABS(arrayStep[iDimX]));
+    const int nSizeY = static_cast<int>(count[iDimY] * ABS(arrayStep[iDimY]));
     GByte* pabyBuffer = static_cast<GByte*>(pBuffer);
     int nStrideXSign = 1;
-    if( arrayStep[kX] < 0 )
+    if( arrayStep[iDimX] < 0 )
     {
-        pabyBuffer += (count[kX]-1) * bufferStride[kX] * nDTSize;
+        pabyBuffer += (count[iDimX]-1) * bufferStride[iDimX] * nDTSize;
         nStrideXSign = -1;
     }
     int nStrideYSign = 1;
-    if( arrayStep[kY] < 0 )
+    if( arrayStep[iDimY] < 0 )
     {
-        pabyBuffer += (count[kY]-1) * bufferStride[kY] * nDTSize;
+        pabyBuffer += (count[iDimY]-1) * bufferStride[iDimY] * nDTSize;
         nStrideYSign = -1;
     }
 
-    return m_poBand->RasterIO(eRWFlag,
+    return poBand->RasterIO(eRWFlag,
             nX, nY, nSizeX, nSizeY,
             pabyBuffer,
-            static_cast<int>(count[kX]),
-            static_cast<int>(count[kY]),
+            static_cast<int>(count[iDimX]),
+            static_cast<int>(count[iDimY]),
             eDT,
-            static_cast<GSpacing>(nStrideXSign * bufferStride[kX] * nDTSize),
-            static_cast<GSpacing>(nStrideYSign * bufferStride[kY] * nDTSize),
+            static_cast<GSpacing>(nStrideXSign * bufferStride[iDimX] * nDTSize),
+            static_cast<GSpacing>(nStrideYSign * bufferStride[iDimY] * nDTSize),
             nullptr) == CE_None;
 }
 

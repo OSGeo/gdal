@@ -344,7 +344,7 @@ OGRESRIFeatureServiceDataset::OGRESRIFeatureServiceDataset(
         if( nUserSetRecordCount > poFirst->GetLayer(0)->GetFeatureCount() )
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                     "Specificied resultRecordCount=%d is greater than "
+                     "Specified resultRecordCount=%d is greater than "
                      "the maximum %d supported by the server",
                      nUserSetRecordCount,
                      static_cast<int>(poFirst->GetLayer(0)->GetFeatureCount()));
@@ -522,19 +522,24 @@ GDALDataset* OGRGeoJSONDriverOpenInternal( GDALOpenInfo* poOpenInfo,
         poDS = nullptr;
     }
 
-    if( poDS != nullptr && poDS->HasOtherPages() &&
-        (STARTS_WITH(poOpenInfo->pszFilename, "http") ||
-         STARTS_WITH(poOpenInfo->pszFilename, "/vsimem/")) )
+    if( poDS != nullptr && poDS->HasOtherPages() )
     {
-        const char* pszFSP = CSLFetchNameValue(poOpenInfo->papszOpenOptions,
-                                               "FEATURE_SERVER_PAGING");
-        const bool bHasResultOffset =
-          !CPLURLGetValue(poOpenInfo->pszFilename, "resultOffset").empty();
-        if( (!bHasResultOffset && (pszFSP == nullptr || CPLTestBool(pszFSP))) ||
-            (bHasResultOffset && pszFSP != nullptr && CPLTestBool(pszFSP)) )
+        const char* pszFilename = poOpenInfo->pszFilename;
+        if( STARTS_WITH_CI(pszFilename, "ESRIJSON:") )
+            pszFilename += strlen("ESRIJSON:");
+        if( STARTS_WITH(pszFilename, "http") ||
+            STARTS_WITH(pszFilename, "/vsimem/") )
         {
-            return new OGRESRIFeatureServiceDataset(poOpenInfo->pszFilename,
-                                                    poDS);
+            const char* pszFSP = CSLFetchNameValue(poOpenInfo->papszOpenOptions,
+                                                   "FEATURE_SERVER_PAGING");
+            const bool bHasResultOffset =
+              !CPLURLGetValue(pszFilename, "resultOffset").empty();
+            if( (!bHasResultOffset && (pszFSP == nullptr || CPLTestBool(pszFSP))) ||
+                (bHasResultOffset && pszFSP != nullptr && CPLTestBool(pszFSP)) )
+            {
+                return new OGRESRIFeatureServiceDataset(pszFilename,
+                                                        poDS);
+            }
         }
     }
 

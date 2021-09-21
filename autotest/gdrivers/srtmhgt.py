@@ -30,6 +30,7 @@
 ###############################################################################
 
 import os
+import struct
 from osgeo import gdal
 
 
@@ -133,6 +134,26 @@ def test_srtmhgt_4():
     assert cs == 3636, ('Wrong checksum. Checksum found %d' % cs)
 
 ###############################################################################
+# Test reading from a .hgts file (https://github.com/OSGeo/gdal/issues/4239
+
+
+def test_srtmhgt_hgts():
+
+    f = gdal.VSIFOpenL('/vsimem/n00e006.hgts', 'wb')
+    if f is None:
+        pytest.skip()
+    gdal.VSIFWriteL(struct.pack('>f', 1.25) * (3601 * 3601), 4, 3601 * 3601, f)
+    gdal.VSIFCloseL(f)
+
+    ds = gdal.Open('/vsimem/n00e006.hgts')
+    assert ds is not None
+    min_, max_ = ds.GetRasterBand(1).ComputeRasterMinMax()
+    gdal.Unlink('/vsimem/n00e006.hgts')
+
+    assert min_ == 1.25
+    assert max_ == 1.25
+
+###############################################################################
 # Cleanup.
 
 
@@ -144,7 +165,7 @@ def test_srtmhgt_cleanup():
         os.remove('tmp/n43.dt1.tif')
     except (RuntimeError, OSError):
         pass
-    
+
 
 
 

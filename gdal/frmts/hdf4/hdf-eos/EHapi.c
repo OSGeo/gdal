@@ -41,7 +41,7 @@ static int32 *EHXsdTable = NULL;
 
 #define HDFEOSVERSION 2.12
 #define HDFEOSVERSION1 "2.12"
-#include <HDFEOSVersion.h>
+#include "HDFEOSVersion.h"
 
 #define MAX_RETRIES 10
 

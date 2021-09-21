@@ -17,14 +17,37 @@ GDAL - Geospatial Data Abstraction Library
 [![Documentation build Status](https://dev.azure.com/osgeo/gdal/_apis/build/status/OSGeo.gdal.doc?branchName=master&jobName=Documentation)](https://dev.azure.com/osgeo/gdal/_build/latest?definitionId=2&branchName=master&jobName=Documentation)
 [![Fuzzing Status](https://oss-fuzz-build-logs.storage.googleapis.com/badges/gdal.svg)](https://bugs.chromium.org/p/oss-fuzz/issues/list?sort=-opened&can=1&q=proj:gdal)
 
+[![Powered by NumFOCUS](https://img.shields.io/badge/powered%20by-NumFOCUS-orange.svg?style=flat&colorA=E1523D&colorB=007D8A )](http://numfocus.org)
+
+
 GDAL is an open source X/MIT licensed translator library for raster and vector geospatial data formats.
 
-* Main site: https://www.gdal.org - Developer and user docs, links to other resources
+* Main site: https://gdal.org - Developer and user docs, links to other resources
 * GIT repository: https://github.com/OSGeo/gdal
 * Bug tracker: https://github.com/OSGeo/gdal/issues
 * Download: https://download.osgeo.org/gdal
 * Wiki: https://trac.osgeo.org/gdal - Various user and developer contributed documentation and hints
 * Mailing list: https://lists.osgeo.org/mailman/listinfo/gdal-dev
+
+[//]: # (numfocus-fiscal-sponsor-attribution)
+
+The GDAL project uses a [custom governance](./GOVERNANCE.md)
+and is fiscally sponsored by [NumFOCUS](https://numfocus.org/). Consider making
+a [tax-deductible donation](https://numfocus.org/donate-to-gdal) to help the project
+pay for developer time, professional services, travel, workshops, and a variety of other needs.
+
+<div align="center">
+  <a href="https://numfocus.org/project/gdal">
+    <img height="60px"
+         src="https://raw.githubusercontent.com/numfocus/templates/master/images/numfocus-logo.png"
+         align="center">
+  </a>
+</div>
+<br>
+
+NumFOCUS is 501(c)(3) non-profit charity in the United States; as such, donations to
+NumFOCUS are tax-deductible as allowed by law. As with any donation, you should
+consult with your personal tax adviser or the IRS about your particular tax situation.
 
 ### How to contribute
 
@@ -36,7 +59,11 @@ See [gdal/docker/](gdal/docker/)
 
 ### Code of Conduct
 
-See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+See [gdal/doc/source/community/code_of_conduct.rst](gdal/doc/source/community/code_of_conduct.rst)
+
+### Security policy
+
+See [SECURITY.md](SECURITY.md)
 
 ### Citing GDAL/OGR in publications
 

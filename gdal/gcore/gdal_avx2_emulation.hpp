@@ -36,6 +36,10 @@
 #define GDALmm_min_epu16   _mm_min_epu16
 #define GDALmm_max_epu16   _mm_max_epu16
 #define GDALmm_mullo_epi32 _mm_mullo_epi32
+#define GDALmm_cvtepu8_epi16  _mm_cvtepu8_epi16
+#define GDALmm_cvtepu16_epi32 _mm_cvtepu16_epi32
+#define GDALmm_cvtepu16_epi64 _mm_cvtepu16_epi64
+#define GDALmm_cvtepu32_epi64 _mm_cvtepu32_epi64
 
 #else
 // Emulation of SSE4.1 _mm_min_epu16 and _mm_max_epu16 with SSE2 only
@@ -73,6 +77,28 @@ static inline __m128i GDALmm_mullo_epi32 (__m128i x, __m128i y)
                                             2 << 2);
     return _mm_unpacklo_epi32(mul02, mul13);;
 }
+
+static inline __m128i GDALmm_cvtepu8_epi16 (__m128i x)
+{
+    return _mm_unpacklo_epi8(x, _mm_setzero_si128());
+}
+
+static inline __m128i GDALmm_cvtepu16_epi32 (__m128i x)
+{
+    return _mm_unpacklo_epi16(x, _mm_setzero_si128());
+}
+
+static inline __m128i GDALmm_cvtepu16_epi64 (__m128i x)
+{
+    return _mm_unpacklo_epi32(_mm_unpacklo_epi16(x, _mm_setzero_si128()),
+                              _mm_setzero_si128());
+}
+
+static inline __m128i GDALmm_cvtepu32_epi64 (__m128i x)
+{
+    return _mm_unpacklo_epi32(x, _mm_setzero_si128());
+}
+
 #endif // __SSE4_1__
 
 
@@ -84,6 +110,7 @@ typedef __m256i GDALm256i;
 
 #define GDALmm256_set1_epi8             _mm256_set1_epi8
 #define GDALmm256_set1_epi16            _mm256_set1_epi16
+#define GDALmm256_set1_epi32            _mm256_set1_epi32
 #define GDALmm256_setzero_si256         _mm256_setzero_si256
 #define GDALmm256_load_si256            _mm256_load_si256
 #define GDALmm256_store_si256           _mm256_store_si256
@@ -110,6 +137,10 @@ typedef __m256i GDALm256i;
 #define GDALmm256_sub_epi16             _mm256_sub_epi16
 #define GDALmm256_min_epi16             _mm256_min_epi16
 #define GDALmm256_max_epi16             _mm256_max_epi16
+#define GDALmm256_srli_epi16            _mm256_srli_epi16
+#define GDALmm256_srli_epi32            _mm256_srli_epi32
+#define GDALmm256_srli_epi64            _mm256_srli_epi64
+#define GDALmm256_set1_epi64x           _mm256_set1_epi64x
 
 #else
 
@@ -132,6 +163,22 @@ static inline GDALm256i GDALmm256_set1_epi16(short s)
     GDALm256i reg;
     reg.low = _mm_set1_epi16(s);
     reg.high = _mm_set1_epi16(s);
+    return reg;
+}
+
+static inline GDALm256i GDALmm256_set1_epi32(int i)
+{
+    GDALm256i reg;
+    reg.low = _mm_set1_epi32(i);
+    reg.high = _mm_set1_epi32(i);
+    return reg;
+}
+
+static inline GDALm256i GDALmm256_set1_epi64x(long long i)
+{
+    GDALm256i reg;
+    reg.low = _mm_set1_epi64x(i);
+    reg.high = _mm_set1_epi64x(i);
     return reg;
 }
 
@@ -195,44 +242,42 @@ static inline __m128i GDALmm256_extracti128_si256(GDALm256i reg, int index)
     return (index == 0) ? reg.low : reg.high;
 }
 
-static inline GDALm256i GDALmm256_cvtepu8_epi16(__m128i reg128)
-{
-    GDALm256i reg;
-    reg.low = _mm_unpacklo_epi8(reg128, _mm_setzero_si128());
-    reg.high = _mm_unpacklo_epi8(_mm_shuffle_epi32(reg128, 2 | (3 << 2)),
-                                 _mm_setzero_si128());
-    return reg;
+#define DEFINE_CVTE_MM256(mm256name, mm128name) \
+static inline GDALm256i mm256name(__m128i x) \
+{ \
+    GDALm256i reg; \
+    reg.low = mm128name(x); \
+    reg.high = mm128name(_mm_srli_si128(x, 8)); \
+    return reg; \
 }
 
-static inline GDALm256i GDALmm256_cvtepu16_epi32(__m128i reg128)
+DEFINE_CVTE_MM256(GDALmm256_cvtepu8_epi16, GDALmm_cvtepu8_epi16)
+DEFINE_CVTE_MM256(GDALmm256_cvtepu16_epi32, GDALmm_cvtepu16_epi32)
+DEFINE_CVTE_MM256(GDALmm256_cvtepu16_epi64, GDALmm_cvtepu16_epi64)
+DEFINE_CVTE_MM256(GDALmm256_cvtepu32_epi64, GDALmm_cvtepu32_epi64)
+
+static inline GDALm256i GDALmm256_srli_epi16(GDALm256i reg, int imm)
 {
-    GDALm256i reg;
-    reg.low = _mm_unpacklo_epi16(reg128, _mm_setzero_si128());
-    reg.high = _mm_unpacklo_epi16(_mm_shuffle_epi32(reg128, 2 | (3 << 2)),
-                                  _mm_setzero_si128());
-    return reg;
+    GDALm256i ret;
+    ret.low = _mm_srli_epi16(reg.low, imm);
+    ret.high = _mm_srli_epi16(reg.high, imm);
+    return ret;
 }
 
-static inline GDALm256i GDALmm256_cvtepu16_epi64(__m128i reg128)
+static inline GDALm256i GDALmm256_srli_epi32(GDALm256i reg, int imm)
 {
-    GDALm256i reg;
-    reg.low = _mm_unpacklo_epi32(_mm_unpacklo_epi16(reg128,
-                                                    _mm_setzero_si128()),
-                                 _mm_setzero_si128());
-    reg.high = _mm_unpacklo_epi32(_mm_unpacklo_epi16(
-                                     _mm_srli_si128(reg128, 4),
-                                                    _mm_setzero_si128()),
-                                     _mm_setzero_si128());
-    return reg;
+    GDALm256i ret;
+    ret.low = _mm_srli_epi32(reg.low, imm);
+    ret.high = _mm_srli_epi32(reg.high, imm);
+    return ret;
 }
 
-static inline GDALm256i GDALmm256_cvtepu32_epi64(__m128i reg128)
+static inline GDALm256i GDALmm256_srli_epi64(GDALm256i reg, int imm)
 {
-    GDALm256i reg;
-    reg.low = _mm_unpacklo_epi32(reg128, _mm_setzero_si128());
-    reg.high = _mm_unpacklo_epi32(_mm_shuffle_epi32(reg128, 2 | (3 << 2)),
-                                  _mm_setzero_si128());
-    return reg;
+    GDALm256i ret;
+    ret.low = _mm_srli_epi64(reg.low, imm);
+    ret.high = _mm_srli_epi64(reg.high, imm);
+    return ret;
 }
 
 #endif

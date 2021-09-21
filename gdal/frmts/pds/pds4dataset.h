@@ -63,6 +63,7 @@ class PDS4TableBaseLayer CPL_NON_FINAL: public OGRLayer
         GIntBig         m_nFID = 1;
         vsi_l_offset    m_nOffset = 0;
         CPLStringList   m_aosLCO{};
+        std::string     m_osLineEnding{};
 
         void            SetupGeomField();
         OGRFeature*     AddGeometryFromFields(OGRFeature* poFeature);
@@ -73,6 +74,7 @@ class PDS4TableBaseLayer CPL_NON_FINAL: public OGRLayer
                                                 const CPLString& osPrefix,
                                                 const char* pszTableEltName,
                                                 CPLString& osDescription);
+        void            ParseLineEndingOption(CSLConstList papszOptions);
 
     public:
         PDS4TableBaseLayer(PDS4Dataset* poDS,
@@ -122,7 +124,6 @@ class PDS4FixedWidthTable CPL_NON_FINAL: public PDS4TableBaseLayer
     protected:
         int             m_nRecordSize = 0;
         CPLString       m_osBuffer{};
-        bool            m_bHasCRLF = false;
 
         struct Field
         {
@@ -365,7 +366,8 @@ class PDS4Dataset final: public RawDataset
     static PDS4Dataset *CreateInternal(const char *pszFilename,
                                        GDALDataset* poSrcDS,
                                        int nXSize, int nYSize, int nBands,
-                                       GDALDataType eType, char **papszOptions);
+                                       GDALDataType eType,
+                                       const char * const * papszOptions);
 
 public:
     PDS4Dataset();
@@ -399,7 +401,8 @@ public:
 
     bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout&) override;
 
-    static GDALDataset *Open(GDALOpenInfo *);
+    static PDS4Dataset *OpenInternal(GDALOpenInfo *);
+    static GDALDataset *Open(GDALOpenInfo * poOpenInfo) { return OpenInternal(poOpenInfo); }
     static GDALDataset *Create(const char *pszFilename,
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char **papszOptions);

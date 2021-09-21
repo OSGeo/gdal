@@ -161,7 +161,7 @@ Creation Options
 
 -  **YCC=YES/NO** : YES if RGB must be transformed to YCC
    color space ("MCT transform", i.e. internal transform, without visual
-   degration). Defaults to YES.
+   degradation). Defaults to YES.
 
 -  **NBITS=int_value** : Bits (precision) for sub-byte
    files (1-7), sub-uint16 (9-15), sub-uint32 (17-31).
@@ -261,8 +261,11 @@ Creation Options
    increase codestream size, but improve either coding/decoding speed or
    resilience/error detection.
 
--  **PLT=YES/NO**: (GDAL >= 3.1.1 and OpenJPEG > 2.3.1) Whether to write a
-   PLT (Packet Length) marker segments in tile-part headers. Defaults to NO.
+-  **PLT=YES/NO**: (GDAL >= 3.1.1 and OpenJPEG >= 2.4.0) Whether to write a
+   PLT (Packet Length) marker segment in tile-part headers. Defaults to NO.
+
+-  **TLM=YES/NO**: (GDAL >= 3.4.0 and OpenJPEG >= 2.5.0) Whether to write a
+   TLM (Tile-part Length) marker segment in main header. Defaults to NO.
 
 -  **WRITE_METADATA=YES/NO**: Whether metadata should be
    written, in a dedicated JP2 'xml ' box. Defaults to NO. The content

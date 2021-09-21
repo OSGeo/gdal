@@ -245,8 +245,9 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
     }
 
     if (ret == CE_None) {
+        const char *pszEnableCache = CPLGetConfigOption("GDAL_ENABLE_WMS_CACHE", "YES");
         CPLXMLNode *cache_node = CPLGetXMLNode(config, "Cache");
-        if (cache_node != nullptr) {
+        if (cache_node != nullptr && CPLTestBool(pszEnableCache)) {
             m_cache = new GDALWMSCache();
             if (m_cache->Initialize(CPLGetXMLValue(service_node, "ServerUrl", nullptr),
                                     cache_node) != CE_None) {

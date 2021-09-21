@@ -56,8 +56,14 @@ SysTileDir::SysTileDir(PCIDSKFile * poFile, int nSegment,
 /************************************************************************/
 SysTileDir::~SysTileDir(void)
 {
-    Synchronize();
-
+    try
+    {
+        Synchronize();
+    }
+    catch( const PCIDSKException& )
+    {
+        // TODO ?
+    }
     delete mpoTileDir;
 }
 

@@ -3250,7 +3250,10 @@ void DontUseExceptions() {
     }
     char* pszNewValue = CPLStrdup(pszValue + strlen(MODULE_NAME) + 1);
     if( pszNewValue[0] == ' ' && pszNewValue[1] == '\0' )
+    {
+        CPLFree(pszNewValue);
         pszNewValue = NULL;
+    }
     CPLSetConfigOption("__chain_python_error_handlers", pszNewValue);
     CPLFree(pszNewValue);
     bUseExceptions = 0;
@@ -3319,22 +3322,15 @@ static PyObject* GDALPythonObjectFromCStr(const char *pszStr)
   {
     if (*pszIter > 127)
     {
-        PyObject* pyObj = PyUnicode_DecodeUTF8(pszStr, strlen(pszStr), "ignore");
-        if (pyObj != NULL)
+        PyObject* pyObj = PyUnicode_DecodeUTF8(pszStr, strlen(pszStr), "strict");
+        if (pyObj != NULL && !PyErr_Occurred())
             return pyObj;
-#if PY_VERSION_HEX >= 0x03000000
+        PyErr_Clear();
         return PyBytes_FromString(pszStr);
-#else
-        return PyString_FromString(pszStr);
-#endif
     }
     pszIter ++;
   }
-#if PY_VERSION_HEX >= 0x03000000
   return PyUnicode_FromString(pszStr);
-#else
-  return PyString_FromString(pszStr);
-#endif
 }
 
 /* Return a NULL terminated c String from a PyObject */
@@ -3351,24 +3347,43 @@ static char* GDALPythonObjectToCStr(PyObject* pyObject, int* pbToFree)
       PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObject);
       if( pyUTF8Str == NULL )
         return NULL;
-#if PY_VERSION_HEX >= 0x03000000
       PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-      PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
       pszNewStr = (char *) malloc(nLen+1);
+      if( pszNewStr == NULL )
+      {
+          CPLError(CE_Failure, CPLE_OutOfMemory, "Failed to allocate %llu bytes",
+                   (unsigned long long)(nLen + 1));
+          Py_XDECREF(pyUTF8Str);
+          return NULL;
+      }
       memcpy(pszNewStr, pszStr, nLen+1);
       Py_XDECREF(pyUTF8Str);
       *pbToFree = 1;
       return pszNewStr;
   }
+  else if( PyBytes_Check(pyObject) )
+  {
+      char* ret = PyBytes_AsString(pyObject);
+
+      // Check if there are \0 bytes inside the string
+      const Py_ssize_t size = PyBytes_Size(pyObject);
+      for( Py_ssize_t i = 0; i < size; i++ )
+      {
+          if( ret[i] == 0 )
+          {
+              CPLError(CE_Failure, CPLE_AppDefined,
+                       "bytes object cast as string contains a zero-byte.");
+              return NULL;
+          }
+      }
+
+      return ret;
+  }
   else
   {
-#if PY_VERSION_HEX >= 0x03000000
-      return PyBytes_AsString(pyObject);
-#else
-      return PyString_AsString(pyObject);
-#endif
+      CPLError(CE_Failure, CPLE_AppDefined,
+               "Passed object is neither of type string nor bytes");
+      return NULL;
   }
 }
 
@@ -3423,7 +3438,7 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
         psArgs = Py_BuildValue("(dsO)", dfComplete, pszMessage,
 	                       psInfo->psPyCallbackData );
 
-    psResult = PyEval_CallObject( psInfo->psPyCallback, psArgs);
+    psResult = PyObject_CallObject( psInfo->psPyCallback, psArgs);
     Py_XDECREF(psArgs);
 
     if( PyErr_Occurred() != NULL )
@@ -3700,11 +3715,7 @@ static char **CSLFromPySequence( PyObject *pySeq, int *pbErr )
 {
   *pbErr = FALSE;
   /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-  if ( ! PySequence_Check(pySeq) || PyUnicode_Check(pySeq)
-#if PY_VERSION_HEX < 0x03000000
-    || PyString_Check(pySeq)
-#endif
-    ) {
+  if ( ! PySequence_Check(pySeq) || PyUnicode_Check(pySeq) ) {
     PyErr_SetString(PyExc_TypeError,"not a sequence");
     *pbErr = TRUE;
     return NULL;
@@ -3732,21 +3743,12 @@ static char **CSLFromPySequence( PyObject *pySeq, int *pbErr )
         *pbErr = TRUE;
         return NULL;
       }
-#if PY_VERSION_HEX >= 0x03000000
       PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-      PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
       papszRet = CSLAddString( papszRet, pszStr );
       Py_XDECREF(pyUTF8Str);
     }
-#if PY_VERSION_HEX >= 0x03000000
     else if (PyBytes_Check(pyObj))
       papszRet = CSLAddString( papszRet, PyBytes_AsString(pyObj) );
-#else
-    else if (PyString_Check(pyObj))
-      papszRet = CSLAddString( papszRet, PyString_AsString(pyObj) );
-#endif
     else
     {
         Py_DECREF(pyObj);
@@ -4706,11 +4708,6 @@ SWIGINTERN PyObject *_wrap_Network_CreateLayer(PyObject *SWIGUNUSEDPARM(self), P
       {
         SWIG_fail;
       }
-    }
-  }
-  {
-    if (!arg2) {
-      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
     }
   }
   {
@@ -6147,7 +6144,7 @@ static swig_type_info _swigt__p_OGRFeatureShadow = {"_p_OGRFeatureShadow", "OGRF
 static swig_type_info _swigt__p_OGRLayerShadow = {"_p_OGRLayerShadow", "OGRLayerShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_OSRSpatialReferenceShadow = {"_p_OSRSpatialReferenceShadow", "OSRSpatialReferenceShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_char = {"_p_char", "char *|retStringAndCPLFree *", 0, 0, (void*)0, 0};
-static swig_type_info _swigt__p_int = {"_p_int", "OGRFieldSubType *|OSRAxisMappingStrategy *|OGRFieldType *|CPLErr *|int *|OGRwkbGeometryType *|OGRJustification *|OGRAxisOrientation *|GNMDirection *|OGRwkbByteOrder *|OGRErr *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_int = {"_p_int", "OGRFieldType *|OGRFieldDomainType *|OGRFieldSubType *|int *|OSRAxisMappingStrategy *|OGRwkbByteOrder *|CPLErr *|GNMDirection *|OGRAxisOrientation *|OGRJustification *|OGRErr *|OGRwkbGeometryType *|OGRFieldDomainMergePolicy *|OGRFieldDomainSplitPolicy *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_char = {"_p_p_char", "char **", 0, 0, (void*)0, 0};
 
 static swig_type_info *swig_type_initial[] = {
@@ -6907,3 +6904,4 @@ SWIG_init(void) {
 #endif
 }
 
+#define POST_PROCESSING_APPLIED

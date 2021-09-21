@@ -14,12 +14,12 @@ python: gdalvars
         cd python
         -del setup_vars.ini
         echo 'GNM_ENABLED=$(INCLUDE_GNM_FRMTS)' > setup_vars.ini
-        $(SWIG) -python -o extensions/gdalconst_wrap.c -outdir osgeo ..\include\gdalconst.i
-        $(SWIG) -c++ -python -I../include/python -I../include/python/docs -o extensions/gdal_wrap.cpp -outdir osgeo ..\include\gdal.i
-        $(SWIG) -c++ -python -I../include/python -I../include/python/docs -o extensions/osr_wrap.cpp -outdir osgeo ..\include\osr.i
-        $(SWIG) -c++ -python -I../include/python -I../include/python/docs -o extensions/ogr_wrap.cpp -outdir osgeo ..\include\ogr.i
-        $(SWIG) -c++ -python -I../include/python -I../include/python/docs -o extensions/gnm_wrap.cpp -outdir osgeo ..\include\gnm.i
-        $(SWIG) -c++ -python -I../include/python -I../include/python/docs -o extensions/gdal_array_wrap.cpp -outdir osgeo ..\include\gdal_array.i
+        $(SWIG) -python -threads -o extensions/gdalconst_wrap.c -outdir osgeo ..\include\gdalconst.i
+        $(SWIG) -c++ -python -threads -I../include/python -I../include/python/docs -o extensions/gdal_wrap.cpp -outdir osgeo ..\include\gdal.i
+        $(SWIG) -c++ -python -threads -I../include/python -I../include/python/docs -o extensions/osr_wrap.cpp -outdir osgeo ..\include\osr.i
+        $(SWIG) -c++ -python -threads -I../include/python -I../include/python/docs -o extensions/ogr_wrap.cpp -outdir osgeo ..\include\ogr.i
+        $(SWIG) -c++ -python -threads -I../include/python -I../include/python/docs -o extensions/gnm_wrap.cpp -outdir osgeo ..\include\gnm.i
+        $(SWIG) -c++ -python -threads -I../include/python -I../include/python/docs -o extensions/gdal_array_wrap.cpp -outdir osgeo ..\include\gdal_array.i
         $(PYDIR)\$(PYEXEC) setup.py build
 	cd ..
 
@@ -29,7 +29,6 @@ python_install: python
 	if not exist $(GDAL_HOME)\python\script  mkdir $(GDAL_HOME)\python\script
 	set PYTHONPATH=$(GDAL_HOME)\python\Lib\site-packages
 	$(PYDIR)\$(PYEXEC) setup.py install --prefix $(GDAL_HOME)\python
-	$(INSTALL) scripts\*.py $(GDAL_HOME)\python\script
 	cd ..
 
 #d:\Python\debug\Python-2.4\PCbuild\python_d.exe setup.py build   --debug

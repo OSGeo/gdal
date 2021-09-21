@@ -29,7 +29,7 @@
 #ifndef OGR_GEOJSONUTILS_H_INCLUDED
 #define OGR_GEOJSONUTILS_H_INCLUDED
 
-#include <ogr_core.h>
+#include "ogr_core.h"
 
 #include "cpl_json_header.h"
 #include "cpl_vsi.h"

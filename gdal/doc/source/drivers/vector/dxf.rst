@@ -382,13 +382,17 @@ and
 `$INSUNITS <https://knowledge.autodesk.com/support/autocad/learn-explore/caas/CloudHelp/cloudhelp/2018/ENU/AutoCAD-Core/files/GUID-A58A87BB-482B-4042-A00A-EEF55A2B4FD8-htm.html>`__
 variables in the header template.
 
+--------------
+
+
 See also
+--------
+
+`List of known 
+issues <https://github.com/OSGeo/gdal/blob/master/gdal/ogr/ogrsf_frmts/dxf/KNOWN_ISSUES.md>`__
 
 `AutoCAD 2000 DXF
 Reference <http://www.autodesk.com/techpubs/autocad/acad2000/dxf/>`__
 
 `AutoCAD 2014 DXF
 Reference <http://images.autodesk.com/adsk/files/autocad_2014_pdf_dxf_reference_enu.pdf>`__
-
-`DXF header
-reference <http://www.autodesk.com/techpubs/autocad/acad2000/dxf/header_section_group_codes_dxf_02.htm>`__

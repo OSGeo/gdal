@@ -369,10 +369,10 @@ typedef enum
     wkbCurve = 13,          /**< Curve (abstract type). ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbSurface = 14,        /**< Surface (abstract type). ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbPolyhedralSurface = 15,/**< a contiguous collection of polygons, which share common boundary segments,
-                               *   ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
+                               *   ISO SQL/MM Part 3. GDAL &gt;= 2.3 */
     wkbTIN = 16,              /**< a PolyhedralSurface consisting only of Triangle patches
-                               *    ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
-    wkbTriangle = 17,         /**< a Triangle. ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
+                               *    ISO SQL/MM Part 3. GDAL &gt;= 2.3 */
+    wkbTriangle = 17,         /**< a Triangle. ISO SQL/MM Part 3. GDAL &gt;= 2.3 */
 
     wkbNone = 100,          /**< non-standard, for pure attribute records */
     wkbLinearRing = 101,    /**< non-standard, just for createGeometry() */
@@ -384,9 +384,9 @@ typedef enum
     wkbMultiSurfaceZ = 1012,    /**< wkbMultiSurface with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
     wkbCurveZ = 1013,           /**< wkbCurve with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbSurfaceZ = 1014,         /**< wkbSurface with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbPolyhedralSurfaceZ = 1015,  /**< ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
-    wkbTINZ = 1016,                /**< ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
-    wkbTriangleZ = 1017,           /**< ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
+    wkbPolyhedralSurfaceZ = 1015,  /**< ISO SQL/MM Part 3. GDAL &gt;= 2.3 */
+    wkbTINZ = 1016,                /**< ISO SQL/MM Part 3. GDAL &gt;= 2.3 */
+    wkbTriangleZ = 1017,           /**< ISO SQL/MM Part 3. GDAL &gt;= 2.3 */
 
     wkbPointM = 2001,              /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbLineStringM = 2002,         /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
@@ -402,9 +402,9 @@ typedef enum
     wkbMultiSurfaceM = 2012,       /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbCurveM = 2013,              /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbSurfaceM = 2014,            /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbPolyhedralSurfaceM = 2015,  /**< ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
-    wkbTINM = 2016,                /**< ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
-    wkbTriangleM = 2017,           /**< ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
+    wkbPolyhedralSurfaceM = 2015,  /**< ISO SQL/MM Part 3. GDAL &gt;= 2.3 */
+    wkbTINM = 2016,                /**< ISO SQL/MM Part 3. GDAL &gt;= 2.3 */
+    wkbTriangleM = 2017,           /**< ISO SQL/MM Part 3. GDAL &gt;= 2.3 */
 
     wkbPointZM = 3001,              /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbLineStringZM = 3002,         /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
@@ -420,9 +420,9 @@ typedef enum
     wkbMultiSurfaceZM = 3012,       /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbCurveZM = 3013,              /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbSurfaceZM = 3014,            /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbPolyhedralSurfaceZM = 3015,  /**< ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
-    wkbTINZM = 3016,                /**< ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
-    wkbTriangleZM = 3017,           /**< ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
+    wkbPolyhedralSurfaceZM = 3015,  /**< ISO SQL/MM Part 3. GDAL &gt;= 2.3 */
+    wkbTINZM = 3016,                /**< ISO SQL/MM Part 3. GDAL &gt;= 2.3 */
+    wkbTriangleZM = 3017,           /**< ISO SQL/MM Part 3. GDAL &gt;= 2.3 */
 
 #if defined(DOXYGEN_SKIP)
     // Sphinx doesn't like 0x8000000x constants
@@ -526,7 +526,7 @@ OGRwkbGeometryType CPL_DLL OGR_GT_GetLinear( OGRwkbGeometryType eType );
 /** Enumeration to describe byte order */
 typedef enum
 {
-    wkbXDR = 0,         /**< MSB/Sun/Motoroloa: Most Significant Byte First   */
+    wkbXDR = 0,         /**< MSB/Sun/Motorola: Most Significant Byte First   */
     wkbNDR = 1          /**< LSB/Intel/Vax: Least Significant Byte First      */
 } OGRwkbByteOrder;
 
@@ -579,11 +579,17 @@ typedef enum
  */
 #define ALTER_UNIQUE_FLAG         0x20
 
+/** Alter field domain name.
+ * Used by OGR_L_AlterFieldDefn().
+ * @since GDAL 3.3
+ */
+#define ALTER_DOMAIN_FLAG         0x40
+
 
 /** Alter all parameters of field definition.
  * Used by OGR_L_AlterFieldDefn().
  */
-#define ALTER_ALL_FLAG             (ALTER_NAME_FLAG | ALTER_TYPE_FLAG | ALTER_WIDTH_PRECISION_FLAG | ALTER_NULLABLE_FLAG | ALTER_DEFAULT_FLAG | ALTER_UNIQUE_FLAG)
+#define ALTER_ALL_FLAG             (ALTER_NAME_FLAG | ALTER_TYPE_FLAG | ALTER_WIDTH_PRECISION_FLAG | ALTER_NULLABLE_FLAG | ALTER_DEFAULT_FLAG | ALTER_UNIQUE_FLAG | ALTER_DOMAIN_FLAG)
 
 /** Validate that fields respect not-null constraints.
  * Used by OGR_F_Validate().
@@ -825,7 +831,9 @@ int CPL_DLL OGRParseDate( const char *pszInput, OGRField *psOutput,
 #define ODsCEmulatedTransactions "EmulatedTransactions" /**< Dataset capability for emulated dataset transactions */
 #define ODsCMeasuredGeometries "MeasuredGeometries"     /**< Dataset capability for measured geometries support */
 #define ODsCRandomLayerRead     "RandomLayerRead"   /**< Dataset capability for GetNextFeature() returning features from random layers */
+/* Note the unfortunate trailing space at the end of the string */
 #define ODsCRandomLayerWrite    "RandomLayerWrite " /**< Dataset capability for supporting CreateFeature on layer in random order */
+#define ODsCAddFieldDomain     "AddFieldDomain"    /**< Dataset capability for supporting AddFieldDomain() (at least partially) */
 
 #define ODrCCreateDataSource   "CreateDataSource"   /**< Driver capability for datasource creation */
 #define ODrCDeleteDataSource   "DeleteDataSource"   /**< Driver capability for datasource deletion */
@@ -959,6 +967,71 @@ typedef enum ogr_style_tool_param_label_id
     OGRSTLabelLast      = 21
 #endif
 } OGRSTLabelParam;
+
+/* -------------------------------------------------------------------- */
+/*                          Field domains                               */
+/* -------------------------------------------------------------------- */
+
+/** Associates a code and a value
+ *
+ * @since GDAL 3.3
+ */
+typedef struct
+{
+    /** Code. Content should be of the type of the OGRFieldDomain */
+    char* pszCode;
+
+    /** Value. Might be NULL */
+    char* pszValue;
+} OGRCodedValue;
+
+/** Type of field domain.
+ *
+ * @since GDAL 3.3
+ */
+typedef enum
+{
+    /** Coded */
+    OFDT_CODED,
+    /** Range (min/max) */
+    OFDT_RANGE,
+    /** Glob (used by GeoPackage) */
+    OFDT_GLOB
+} OGRFieldDomainType;
+
+/** Split policy for field domains.
+ *
+ * When a feature is split in two, defines how the value of attributes
+ * following the domain are computed.
+ *
+ * @since GDAL 3.3
+ */
+typedef enum
+{
+    /** Default value */
+    OFDSP_DEFAULT_VALUE,
+    /** Duplicate */
+    OFDSP_DUPLICATE,
+    /** New values are computed by the ratio of their area/length compared to the area/length of the original feature */
+    OFDSP_GEOMETRY_RATIO
+} OGRFieldDomainSplitPolicy;
+
+/** Merge policy for field domains.
+ *
+ * When a feature is built by merging two features, defines how the value of
+ * attributes following the domain are computed.
+ *
+ * @since GDAL 3.3
+ */
+typedef enum
+{
+    /** Default value */
+    OFDMP_DEFAULT_VALUE,
+    /** Sum */
+    OFDMP_SUM,
+    /** New values are computed as the weighted average of the source values. */
+    OFDMP_GEOMETRY_WEIGHTED
+} OGRFieldDomainMergePolicy;
 
 /* ------------------------------------------------------------------- */
 /*                        Version checking                             */

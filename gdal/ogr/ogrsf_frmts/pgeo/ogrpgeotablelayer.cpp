@@ -69,7 +69,8 @@ CPLErr OGRPGeoTableLayer::Initialize( const char *pszTableName,
                                       double dfExtentBottom,
                                       double dfExtentTop,
                                       int nSRID,
-                                      int bHasZ )
+                                      int bHasZ,
+                                      int bHasM )
 
 {
     CPLODBCSession *poSession = poDS->GetSession();
@@ -93,9 +94,15 @@ CPLErr OGRPGeoTableLayer::Initialize( const char *pszTableName,
     if ( pszGeomCol )
         LookupSRID( nSRID );
 
-/* -------------------------------------------------------------------- */
-/*      Setup geometry type.                                            */
-/* -------------------------------------------------------------------- */
+    // Setup geometry type.
+
+    // The PGeo format has a similar approach to multi-part handling as Shapefiles,
+    // where polygon and multipolygon geometries or line and multiline geometries will
+    // co-exist in a layer reported as just polygon or line type respectively.
+    // To handle this in a predictable way for clients we always promote the polygon/line
+    // types to multitypes, and correspondingly ALWAYS return multi polygon/line geometry
+    // objects for features (even if strictly speaking the original feature had a polygon/line
+    // geometry object)
     OGRwkbGeometryType  eOGRType;
 
     switch( nShapeType )
@@ -113,12 +120,12 @@ CPLErr OGRPGeoTableLayer::Initialize( const char *pszTableName,
             break;
 
         case ESRI_LAYERGEOMTYPE_POLYLINE:
-            eOGRType = wkbLineString;
+            eOGRType = wkbMultiLineString;  // see comment above
             break;
 
         case ESRI_LAYERGEOMTYPE_POLYGON:
         case ESRI_LAYERGEOMTYPE_MULTIPATCH:
-            eOGRType = wkbPolygon;
+            eOGRType = wkbMultiPolygon; // see comment above
             break;
 
         default:
@@ -127,8 +134,13 @@ CPLErr OGRPGeoTableLayer::Initialize( const char *pszTableName,
             break;
     }
 
-    if( eOGRType != wkbUnknown && eOGRType != wkbNone && bHasZ )
-        eOGRType = wkbSetZ(eOGRType);
+    if( eOGRType != wkbUnknown && eOGRType != wkbNone )
+    {
+        if ( bHasZ )
+          eOGRType = wkbSetZ(eOGRType);
+        if ( bHasM )
+          eOGRType = wkbSetM(eOGRType);
+    }
     CPL_IGNORE_RET_VAL(eOGRType);
 
 /* -------------------------------------------------------------------- */
@@ -181,19 +193,54 @@ CPLErr OGRPGeoTableLayer::Initialize( const char *pszTableName,
         return CE_Failure;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Set geometry type.                                              */
-/*                                                                      */
-/*      NOTE: per reports from Craig Miller, it seems we cannot really  */
-/*      trust the ShapeType value.  At the very least "line" tables     */
-/*      sometimes have multilinestrings.  So for now we just always     */
-/*      return wkbUnknown.                                              */
-/*                                                                      */
-/*      TODO - mloskot: Similar issue has been reported in Ticket #1484 */
-/* -------------------------------------------------------------------- */
-#ifdef notdef
     poFeatureDefn->SetGeomType( eOGRType );
-#endif
+
+    // Where possible, retrieve useful metadata information from the GDB_Items table
+    if ( poDS->HasGdbItemsTable() )
+    {
+        CPLODBCStatement oItemsStmt( poSession );
+        oItemsStmt.Append( "SELECT Definition, Documentation FROM GDB_Items WHERE Name='" );
+        oItemsStmt.Append( pszTableName );
+        oItemsStmt.Append( "'" );
+        if( oItemsStmt.ExecuteSQL() )
+        {
+            while( oItemsStmt.Fetch() )
+            {
+                const CPLString osDefinition = CPLString( oItemsStmt.GetColData(0, "") );
+                if( strstr(osDefinition, "DEFeatureClassInfo") != nullptr )
+                {
+                    m_osDefinition = osDefinition;
+
+                    // try to retrieve field domains
+                    CPLXMLTreeCloser oTree(CPLParseXMLString(osDefinition.c_str()));
+                    if( oTree.get() )
+                    {
+                        if ( const CPLXMLNode* psFieldInfoExs = CPLGetXMLNode(oTree.get(), "=DEFeatureClassInfo.GPFieldInfoExs") )
+                        {
+                            for( const CPLXMLNode *psFieldInfoEx =
+                                     CPLGetXMLNode( psFieldInfoExs, "GPFieldInfoEx" );
+                                 psFieldInfoEx != nullptr;
+                                 psFieldInfoEx = psFieldInfoEx->psNext )
+                            {
+                                const CPLString osName = CPLGetXMLValue(psFieldInfoEx, "Name", "");
+                                const CPLString osDomainName = CPLGetXMLValue(psFieldInfoEx, "DomainName", "");
+                                if ( !osDomainName.empty() )
+                                {
+                                    const int fieldIndex = poFeatureDefn->GetFieldIndex( osName );
+                                    if ( fieldIndex != -1 )
+                                        poFeatureDefn->GetFieldDefn( fieldIndex )->SetDomainName( osDomainName );
+                                }
+                            }
+                        }
+                    }
+
+                    // try to retrieve layer medata
+                    m_osDocumentation = CPLString( oItemsStmt.GetColData(1, "") );
+                    break;
+                }
+            }
+        }
+    }
 
     return CE_None;
 }
@@ -326,7 +373,7 @@ int OGRPGeoTableLayer::TestCapability( const char * pszCap )
         return TRUE;
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
-        return m_poFilterGeom == nullptr;
+        return m_poFilterGeom == nullptr && poDS->CountStarWorking();
 
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
         return FALSE;
@@ -347,7 +394,7 @@ int OGRPGeoTableLayer::TestCapability( const char * pszCap )
 GIntBig OGRPGeoTableLayer::GetFeatureCount( int bForce )
 
 {
-    if( m_poFilterGeom != nullptr )
+    if( m_poFilterGeom != nullptr || !poDS->CountStarWorking() )
         return OGRPGeoLayer::GetFeatureCount( bForce );
 
     CPLODBCStatement oStmt( poDS->GetSession() );
@@ -374,6 +421,11 @@ GIntBig OGRPGeoTableLayer::GetFeatureCount( int bForce )
 
 OGRErr OGRPGeoTableLayer::GetExtent( OGREnvelope *psExtent, CPL_UNUSED int bForce )
 {
+    if( pszGeomColumn == nullptr )
+    {
+        return OGRERR_FAILURE;
+    }
+
     *psExtent = sExtent;
     return OGRERR_NONE;
 }

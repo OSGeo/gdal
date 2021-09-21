@@ -4,7 +4,7 @@ include ../../../GDALmake.opt
 
 OBJ	=	ogrcsvdriver.o ogrcsvdatasource.o ogrcsvlayer.o
 
-CPPFLAGS	:=	-I.. -I../.. -I../generic $(CPPFLAGS)
+CPPFLAGS	:=	-iquote .. -iquote ../.. -iquote ../generic $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 

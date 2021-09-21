@@ -33,7 +33,6 @@
 
 from osgeo import ogr, gdal
 import gdaltest
-import ogrtest
 import pytest
 
 pytestmark = pytest.mark.require_driver('LVBAG')
@@ -142,7 +141,7 @@ def test_ogr_lvbag_dataset_num():
     assert lyr.GetSpatialRef() is None, 'bad spatial ref'
     assert lyr.TestCapability(ogr.OLCStringsAsUTF8) == 1
 
-    assert lyr.GetLayerDefn().GetFieldCount() == 21
+    assert lyr.GetLayerDefn().GetFieldCount() == 22
 
     feat = lyr.GetNextFeature()
     if feat.GetField('identificatie') != 'NL.IMBAG.Nummeraanduiding.0106200000002798' or \
@@ -154,6 +153,7 @@ def test_ogr_lvbag_dataset_num():
        feat.GetFieldAsInteger('geconstateerd') != 0 or \
        feat.GetFieldAsString('documentdatum') != '2009/09/14' or \
        feat.GetFieldAsString('documentnummer') != '2009-BB01570' or \
+       feat.GetField('woonplaatsRef') is not None or \
        feat.GetFieldAsInteger('voorkomenidentificatie') != 1 or \
        feat.GetField('beginGeldigheid') != '2009/09/24' or \
        feat.GetField('tijdstipRegistratie') != '2009/11/06 12:21:37' or \
@@ -161,7 +161,25 @@ def test_ogr_lvbag_dataset_num():
         feat.DumpReadable()
         pytest.fail()
 
+    # Test for 'woonplaatsRef'
     feat = lyr.GetNextFeature()
+    if feat.GetField('identificatie') != 'NL.IMBAG.Nummeraanduiding.0106200000002799' or \
+       feat.GetFieldAsInteger('huisnummer') != 24 or \
+       feat.GetField('postcode') != '9403KD' or \
+       feat.GetField('typeAdresseerbaarObject') != 'Verblijfsobject' or \
+       feat.GetField('openbareruimteRef') != 'NL.IMBAG.Openbareruimte.0106300000002560' or \
+       feat.GetField('status') != 'Naamgeving uitgegeven' or \
+       feat.GetFieldAsInteger('geconstateerd') != 0 or \
+       feat.GetFieldAsString('documentdatum') != '2009/09/14' or \
+       feat.GetFieldAsString('documentnummer') != '2009-BB01570' or \
+       feat.GetField('woonplaatsRef') != 'NL.IMBAG.Woonplaats.1050' or \
+       feat.GetFieldAsInteger('voorkomenidentificatie') != 1 or \
+       feat.GetField('beginGeldigheid') != '2009/09/24' or \
+       feat.GetField('tijdstipRegistratie') != '2009/11/06 12:21:38' or \
+       feat.GetField('tijdstipRegistratieLV') != '2009/11/06 12:38:46.748':
+        feat.DumpReadable()
+        pytest.fail()
+
     feat = lyr.GetNextFeature()
     feat = lyr.GetNextFeature()
     assert feat is None
@@ -177,8 +195,29 @@ def test_ogr_lvbag_dataset_opr():
 
     assert lyr.GetGeomType() == ogr.wkbUnknown, 'bad layer geometry type'
     assert lyr.GetSpatialRef() is None, 'bad spatial ref'
-    assert lyr.GetFeatureCount() == 3
-    assert lyr.GetLayerDefn().GetFieldCount() == 18
+    assert lyr.GetFeatureCount() == 4
+    assert lyr.GetLayerDefn().GetFieldCount() == 19
+
+    feat = lyr.GetNextFeature()
+    if feat.GetField('naam') != 'Twaalfsuurlaan' or \
+        feat.GetField('verkorteNaam') is not None:
+        feat.DumpReadable()
+        pytest.fail()
+
+    # Skip Feat 2 and 3
+    lyr.GetNextFeature()
+    lyr.GetNextFeature()
+
+    # Last: contains abbreviated name ('verkorteNaam'), see issue 4286
+    feat = lyr.GetNextFeature()
+    if feat.GetField('naam') != 'Schout bij Nacht Doormansingel' or \
+        feat.GetField('verkorteNaam') != 'Sbn Doormansingel':
+        feat.DumpReadable()
+        pytest.fail()
+
+    # No more Features
+    feat = lyr.GetNextFeature()
+    assert feat is None
 
 def test_ogr_lvbag_dataset_pnd():
 
@@ -188,7 +227,7 @@ def test_ogr_lvbag_dataset_pnd():
 
     lyr = ds.GetLayer(0)
     assert lyr.GetName() == 'Pand', 'bad layer name'
-    assert lyr.GetGeomType() == ogr.wkbMultiPolygon, 'bad layer geometry type'
+    assert lyr.GetGeomType() == ogr.wkbPolygon, 'bad layer geometry type'
     assert lyr.GetFeatureCount() == 6
     assert lyr.GetLayerDefn().GetFieldCount() == 16
 
@@ -275,7 +314,7 @@ def test_ogr_lvbag_read_zip_1():
     ds = ogr.Open('/vsizip/./data/lvbag/archive_pnd.zip/9999PND08102020-000001.xml')
     assert ds is not None, 'cannot open dataset'
     assert ds.GetLayerCount() == 1, 'bad layer count'
-    
+
     lyr = ds.GetLayer(0)
     assert lyr.GetName() == 'Pand', 'bad layer name'
     assert lyr.GetFeatureCount() == 2
@@ -285,7 +324,7 @@ def test_ogr_lvbag_read_zip_2():
     ds = ogr.Open('/vsizip/./data/lvbag/archive_pnd.zip')
     assert ds is not None, 'cannot open dataset'
     assert ds.GetLayerCount() == 1, 'bad layer count'
-    
+
     lyr = ds.GetLayer(0)
     assert lyr.GetName() == 'Pand', 'bad layer name'
     assert lyr.GetFeatureCount() == 4
@@ -295,7 +334,7 @@ def test_ogr_lvbag_read_zip_3():
     ds = ogr.Open('/vsizip/./data/lvbag/archive_mixed.zip')
     assert ds is not None, 'cannot open dataset'
     assert ds.GetLayerCount() == 2, 'bad layer count'
-    
+
     lyr = ds.GetLayer(0)
     assert lyr.GetName() == 'Standplaats', 'bad layer name'
     assert lyr.GetFeatureCount() > 0
@@ -304,19 +343,28 @@ def test_ogr_lvbag_read_zip_3():
     assert lyr.GetName() == 'Pand', 'bad layer name'
     assert lyr.GetFeatureCount() > 0
 
-def test_ogr_lvbag_invalid_polygon():
+def test_ogr_lvbag_read_zip_4():
 
-    pytest.skip()
+    ds = ogr.Open('/vsizip/./data/lvbag/archive_single.zip')
+    assert ds is not None, 'cannot open dataset'
+    assert ds.GetLayerCount() == 1, 'bad layer count'
 
-    if not ogrtest.have_geos() and not ogrtest.have_sfcgal():
-        pytest.skip()
+    lyr = ds.GetLayer(0)
+    assert lyr.GetName() == 'Woonplaats', 'bad layer name'
+    assert lyr.GetFeatureCount() > 0
+
+def test_ogr_lvbag_fix_invalid_polygon():
+
+    _test = ogr.CreateGeometryFromWkt('POLYGON ((0 0,1 1,0 1,1 0,0 0))')
+    if _test.MakeValid() is None:
+        pytest.skip("MakeValid() not available")
 
     ds = gdal.OpenEx('data/lvbag/inval_polygon.xml', gdal.OF_VECTOR, open_options=['AUTOCORRECT_INVALID_DATA=YES'])
     assert ds is not None, 'cannot open dataset'
     assert ds.GetLayerCount() == 1, 'bad layer count'
-    
+
     lyr = ds.GetLayer(0)
-    
+
     feat = lyr.GetNextFeature()
     assert feat.GetGeomFieldRef(0).IsValid()
 
@@ -332,12 +380,36 @@ def test_ogr_lvbag_invalid_polygon():
     feat = lyr.GetNextFeature()
     assert feat is None
 
+def test_ogr_lvbag_fix_invalid_polygon_to_polygon():
+
+    _test = ogr.CreateGeometryFromWkt('POLYGON ((0 0,1 1,0 1,1 0,0 0))')
+    if _test.MakeValid() is None:
+        pytest.skip("MakeValid() not available")
+
+    ds = gdal.OpenEx('data/lvbag/inval_polygon2.xml', gdal.OF_VECTOR, open_options=['AUTOCORRECT_INVALID_DATA=YES'])
+    assert ds is not None, 'cannot open dataset'
+    assert ds.GetLayerCount() == 1, 'bad layer count'
+
+    lyr = ds.GetLayer(0)
+
+    feat = lyr.GetNextFeature()
+    assert feat.GetGeomFieldRef(0).GetGeometryType() == ogr.wkbPolygon
+
+    feat = lyr.GetNextFeature()
+    assert feat.GetGeomFieldRef(0).GetGeometryType() == ogr.wkbPolygon
+
+    feat = lyr.GetNextFeature()
+    assert feat.GetGeomFieldRef(0).GetGeometryType() == ogr.wkbPolygon
+
+    feat = lyr.GetNextFeature()
+    assert feat.GetGeomFieldRef(0).GetGeometryType() == ogr.wkbPolygon
+
 def test_ogr_lvbag_read_errors():
 
     ds = ogr.Open('data/lvbag/inval_pnd.xml')
     assert ds is not None, 'cannot open dataset'
     assert ds.GetLayerCount() == 1, 'bad layer count'
-    
+
     lyr = ds.GetLayer(0)
     with gdaltest.error_handler():
         assert lyr.GetName() == ''
@@ -348,7 +420,7 @@ def test_ogr_lvbag_fix_identificatie():
     ds = ogr.Open('data/lvbag/pnd2.xml')
     assert ds is not None, 'cannot open dataset'
     assert ds.GetLayerCount() == 1, 'bad layer count'
-    
+
     lyr = ds.GetLayer(0)
     assert lyr.GetName() == 'Pand', 'bad layer name'
     assert lyr.GetFeatureCount() == 1
@@ -361,6 +433,8 @@ def test_ogr_lvbag_old_schema():
     ds = ogr.Open('data/lvbag/lig_old.xml')
     assert ds is not None, 'cannot open dataset'
     assert ds.GetLayerCount() == 0, 'bad layer count'
+    ds = None
+    gdal.Unlink('data/lvbag/lig_old.gfs')
 
 def test_ogr_lvbag_stringlist_feat():
 
@@ -390,6 +464,18 @@ def test_ogr_lvbag_secondary_address():
 def test_ogr_lvbag_secondary_pandref():
 
     ds = ogr.Open('data/lvbag/vbo4.xml')
+    assert ds is not None, 'cannot open dataset'
+    assert ds.GetLayerCount() == 1, 'bad layer count'
+
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetFieldDefn(4).GetNameRef().lower() == 'pandref'
+
+    feat = lyr.GetNextFeature()
+    assert feat.GetField(4) == ['NL.IMBAG.Pand.0048100000002999', 'NL.IMBAG.Pand.1950100000100293'], 'bad nevenadres'
+
+def test_ogr_lvbag_file_extension():
+
+    ds = ogr.Open('data/lvbag/file4.vbo')
     assert ds is not None, 'cannot open dataset'
     assert ds.GetLayerCount() == 1, 'bad layer count'
 

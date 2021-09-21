@@ -51,6 +51,8 @@
  * RPC/RPB specific defines
  */
 
+#define RPC_ERR_BIAS        "ERR_BIAS"
+#define RPC_ERR_RAND        "ERR_RAND"
 #define RPC_LINE_OFF        "LINE_OFF"
 #define RPC_SAMP_OFF        "SAMP_OFF"
 #define RPC_LAT_OFF         "LAT_OFF"

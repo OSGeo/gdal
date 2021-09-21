@@ -85,8 +85,10 @@ void BinaryTileLayer::ReadTileList(void)
     if (nSize > GetLayerSize() || !GetFile()->IsValidFileOffset(nSize))
         return ThrowPCIDSKException("The tile layer is corrupted.");
 
+#if SIZEOF_VOIDP < 8
     if (nSize > std::numeric_limits<size_t>::max())
         return ThrowPCIDSKException("Unable to read extremely large tile layer on 32-bit system.");
+#endif
 
     try
     {

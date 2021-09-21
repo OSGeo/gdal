@@ -38,22 +38,15 @@ static PyObject* GDALPythonObjectFromCStr(const char *pszStr)
   {
     if (*pszIter > 127)
     {
-        PyObject* pyObj = PyUnicode_DecodeUTF8(pszStr, strlen(pszStr), "ignore");
-        if (pyObj != NULL)
+        PyObject* pyObj = PyUnicode_DecodeUTF8(pszStr, strlen(pszStr), "strict");
+        if (pyObj != NULL && !PyErr_Occurred())
             return pyObj;
-#if PY_VERSION_HEX >= 0x03000000
+        PyErr_Clear();
         return PyBytes_FromString(pszStr);
-#else
-        return PyString_FromString(pszStr);
-#endif
     }
     pszIter ++;
   }
-#if PY_VERSION_HEX >= 0x03000000
   return PyUnicode_FromString(pszStr);
-#else
-  return PyString_FromString(pszStr);
-#endif
 }
 
 /* Return a NULL terminated c String from a PyObject */
@@ -70,24 +63,43 @@ static char* GDALPythonObjectToCStr(PyObject* pyObject, int* pbToFree)
       PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObject);
       if( pyUTF8Str == NULL )
         return NULL;
-#if PY_VERSION_HEX >= 0x03000000
       PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-      PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
       pszNewStr = (char *) malloc(nLen+1);
+      if( pszNewStr == NULL )
+      {
+          CPLError(CE_Failure, CPLE_OutOfMemory, "Failed to allocate %llu bytes",
+                   (unsigned long long)(nLen + 1));
+          Py_XDECREF(pyUTF8Str);
+          return NULL;
+      }
       memcpy(pszNewStr, pszStr, nLen+1);
       Py_XDECREF(pyUTF8Str);
       *pbToFree = 1;
       return pszNewStr;
   }
+  else if( PyBytes_Check(pyObject) )
+  {
+      char* ret = PyBytes_AsString(pyObject);
+
+      // Check if there are \0 bytes inside the string
+      const Py_ssize_t size = PyBytes_Size(pyObject);
+      for( Py_ssize_t i = 0; i < size; i++ )
+      {
+          if( ret[i] == 0 )
+          {
+              CPLError(CE_Failure, CPLE_AppDefined,
+                       "bytes object cast as string contains a zero-byte.");
+              return NULL;
+          }
+      }
+
+      return ret;
+  }
   else
   {
-#if PY_VERSION_HEX >= 0x03000000
-      return PyBytes_AsString(pyObject);
-#else
-      return PyString_AsString(pyObject);
-#endif
+      CPLError(CE_Failure, CPLE_AppDefined,
+               "Passed object is neither of type string nor bytes");
+      return NULL;
   }
 }
 

@@ -93,6 +93,16 @@ OGRMultiSurface& OGRMultiSurface::operator=( const OGRMultiSurface& other )
 }
 
 /************************************************************************/
+/*                               clone()                                */
+/************************************************************************/
+
+OGRMultiSurface *OGRMultiSurface::clone() const
+
+{
+    return new (std::nothrow) OGRMultiSurface(*this);
+}
+
+/************************************************************************/
 /*                          getGeometryType()                           */
 /************************************************************************/
 

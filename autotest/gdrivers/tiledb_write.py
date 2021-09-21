@@ -91,10 +91,7 @@ def test_tiledb_write_custom_blocksize(mode):
     ['BAND', 'PIXEL']
 )
 def test_tiledb_write_update(mode):
-    try:
-        import numpy as np
-    except (ImportError):
-        pytest.skip()
+    np = pytest.importorskip('numpy')
 
     gdaltest.tiledb_drv = gdal.GetDriverByName('TileDB')
 
@@ -268,10 +265,7 @@ def test_tiledb_write_band_meta(mode):
     ['BAND', 'PIXEL']
 )
 def test_tiledb_write_history(mode):
-    try:
-        import numpy as np
-    except (ImportError):
-        pytest.skip()
+    np = pytest.importorskip('numpy')
 
     options = [
         'INTERLEAVE=%s' % (mode),

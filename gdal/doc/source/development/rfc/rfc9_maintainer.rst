@@ -8,7 +8,7 @@ Author: Frank Warmerdam
 
 Contact: warmerdam@pobox.com
 
-Status: Approved
+Status: Approved, but superseded per :ref:`rfc-83`
 
 Purpose
 -------
@@ -57,7 +57,7 @@ tasks.
 -  The maintainer should be used to take care of work that no one else
    is willing and able to do (ie. fill the holes, rather than displacing
    volunteers)
--  Try to avoid tieing up the maintainer on one big task for many weeks
+-  Try to avoid tying up the maintainer on one big task for many weeks
    unless directed by the PSC.
 -  The maintainer should not be directed to do work for which someone
    else is getting paid.

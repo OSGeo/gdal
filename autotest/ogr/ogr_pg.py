@@ -1526,7 +1526,7 @@ def test_ogr_pg_32():
     # Create third layer with very approximative EPSG:4326 but without authority
 
     srs = osr.SpatialReference()
-    srs.SetFromUserInput("""GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]""")
+    srs.SetFromUserInput("""GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295],AXIS["Latitude",NORTH],AXIS["Longitude",EAST]]""")
     gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer('testsrtext3', srs=srs)
 
     # Must still be 1

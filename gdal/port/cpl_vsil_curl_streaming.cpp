@@ -224,7 +224,8 @@ public:
 
     virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess,
-                                    bool bSetError ) override;
+                                    bool bSetError,
+                                    CSLConstList /* papszOptions */ ) override;
     virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
                            int nFlags ) override;
 
@@ -1596,7 +1597,8 @@ VSICurlStreamingFSHandler::CreateFileHandle( const char* pszURL )
 
 VSIVirtualHandle* VSICurlStreamingFSHandler::Open( const char *pszFilename,
                                                    const char *pszAccess,
-                                                   bool /* bSetError */ )
+                                                   bool /* bSetError */,
+                                                   CSLConstList /* papszOptions */ )
 {
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
         return nullptr;
@@ -1636,6 +1638,15 @@ int VSICurlStreamingFSHandler::Stat( const char *pszFilename,
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
         return -1;
 
+    if( (nFlags & VSI_STAT_CACHE_ONLY) != 0 )
+    {
+        const std::string osVSICURLFilename =
+            std::string("/vsicurl/") + (pszFilename + GetFSPrefix().size());
+        return VSIStatExL( osVSICURLFilename.c_str(),
+                           pStatBuf,
+                           nFlags );
+    }
+
     memset(pStatBuf, 0, sizeof(VSIStatBufL));
 
     VSICurlStreamingHandle* poHandle =
@@ -1665,13 +1676,13 @@ int VSICurlStreamingFSHandler::Stat( const char *pszFilename,
 
 const char* VSICurlStreamingFSHandler::GetActualURL(const char* pszFilename)
 {
-    VSICurlStreamingHandle* poHandle = dynamic_cast<VSICurlStreamingHandle*>(
-        Open(pszFilename, "rb", false));
+    if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
+        return pszFilename;
+    auto poHandle = std::unique_ptr<VSICurlStreamingHandle>(
+        CreateFileHandle(pszFilename + GetFSPrefix().size()));
     if( poHandle == nullptr )
         return pszFilename;
-    CPLString osURL(poHandle->GetURL());
-    delete poHandle;
-    return CPLSPrintf("%s", osURL.c_str());
+    return CPLSPrintf("%s", poHandle->GetURL());
 }
 
 /************************************************************************/
@@ -1940,11 +1951,7 @@ void VSIOSSStreamingFSHandler::UpdateMapFromHandle(
     CPLMutexHolder oHolder( &hMutex );
 
     VSIOSSHandleHelper * poOSSHandleHelper =
-        dynamic_cast<VSIOSSHandleHelper *>(poHandleHelper);
-    CPLAssert( poOSSHandleHelper );
-    if( !poOSSHandleHelper )
-        return;
-
+        cpl::down_cast<VSIOSSHandleHelper *>(poHandleHelper);
     oMapBucketsToOSSParams[ poOSSHandleHelper->GetBucket() ] =
         VSIOSSUpdateParams ( poOSSHandleHelper );
 }
@@ -1959,11 +1966,7 @@ void VSIOSSStreamingFSHandler::UpdateHandleFromMap(
     CPLMutexHolder oHolder( &hMutex );
 
     VSIOSSHandleHelper * poOSSHandleHelper =
-        dynamic_cast<VSIOSSHandleHelper *>(poHandleHelper);
-    CPLAssert( poOSSHandleHelper );
-    if( !poOSSHandleHelper )
-        return;
-
+        cpl::down_cast<VSIOSSHandleHelper *>(poHandleHelper);
     std::map< CPLString, VSIOSSUpdateParams>::iterator oIter =
         oMapBucketsToOSSParams.find(poOSSHandleHelper->GetBucket());
     if( oIter != oMapBucketsToOSSParams.end() )

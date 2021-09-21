@@ -33,7 +33,7 @@ import os
 import sys
 import time
 from osgeo import gdal
-
+from lxml import etree
 
 import gdaltest
 import pytest
@@ -73,6 +73,8 @@ def vsifile_generic(filename):
     assert start_time == pytest.approx(statBuf.mtime, abs=2)
 
     fp = gdal.VSIFOpenL(filename, 'rb')
+    assert gdal.VSIFReadL(1, 0, fp) is None
+    assert gdal.VSIFReadL(0, 1, fp) is None
     buf = gdal.VSIFReadL(1, 7, fp)
     assert gdal.VSIFWriteL('a', 1, 1, fp) == 0
     assert gdal.VSIFTruncateL(fp, 0) != 0
@@ -108,21 +110,14 @@ def vsifile_generic(filename):
 
 
 def test_vsifile_1():
-    return vsifile_generic('/vsimem/vsifile_1.bin')
+    vsifile_generic('/vsimem/vsifile_1.bin')
 
 ###############################################################################
 # Test regular file system
 
 
 def test_vsifile_2():
-
-    ret = vsifile_generic('tmp/vsifile_2.bin')
-    if ret != 'success' and gdaltest.skip_on_travis():
-        # FIXME
-        # Fails on Travis with 17592186044423 (which is 0x10 00 00 00 00 07 instead of 7) at line 63
-        # Looks like a 32/64bit issue with Python bindings of VSIStatL()
-        pytest.skip()
-    return ret
+    vsifile_generic('tmp/vsifile_2.bin')
 
 ###############################################################################
 # Test ftruncate >= 32 bit
@@ -531,7 +526,7 @@ def test_vsifile_14():
 
     with gdaltest.error_handler():
         gdal.VSIFOpenL('/vsitar//vsitar//vsitar//vsitar//vsitar//vsitar//vsitar//vsitar/a.tgzb.tgzc.tgzd.tgze.tgzf.tgz.h.tgz.i.tgz', 'rb')
-    
+
 ###############################################################################
 # Test issue with Eof() not detecting end of corrupted gzip stream (#6944)
 
@@ -606,10 +601,12 @@ def test_vsifile_19():
         options = gdal.GetFileSystemOptions(prefix)
         # Check that the options is XML correct
         if options is not None:
-            ret = gdal.ParseXMLString(options)
-            assert ret is not None, (prefix, options)
+            try:
+                etree.fromstring(options)
+            except:
+                assert False, (prefix, options)
 
-    
+
 ###############################################################################
 # Test gdal.VSIFReadL with None fp
 
@@ -654,7 +651,7 @@ def test_vsifile_21():
         data3 = gdal.VSIGetMemFileBuffer_unsafe(filename)
         assert data3 == None
 
-    
+
 
 def test_vsifile_22():
     # VSIOpenL doesn't set errorno
@@ -714,7 +711,7 @@ def test_vsigzip_multi_thread():
 
         pytest.fail()
 
-    
+
 ###############################################################################
 # Test vsisync()
 
@@ -770,72 +767,155 @@ def test_vsisync():
 ###############################################################################
 # Test gdal.OpenDir()
 
-def test_vsifile_opendir():
+@pytest.mark.parametrize("basepath", ["/vsimem/", "tmp/"])
+def test_vsifile_opendir(basepath):
 
     # Non existing dir
-    d = gdal.OpenDir('/vsimem/i_dont_exist')
+    d = gdal.OpenDir(basepath + '/i_dont_exist')
     assert not d
 
-    gdal.Mkdir('/vsimem/vsifile_opendir', 0o755)
+    gdal.RmdirRecursive(basepath + '/vsifile_opendir')
+
+    gdal.Mkdir(basepath + '/vsifile_opendir', 0o755)
 
     # Empty dir
-    d = gdal.OpenDir('/vsimem/vsifile_opendir')
+    d = gdal.OpenDir(basepath + '/vsifile_opendir')
     assert d
+
+    entry = gdal.GetNextDirEntry(d)
+    assert not entry
+
+    gdal.CloseDir(d)
+
+    f = gdal.VSIFOpenL(basepath + '/vsifile_opendir/test', 'wb')
+    assert f
+    gdal.VSIFWriteL('foo', 1, 3, f)
+    gdal.VSIFCloseL(f)
+
+    gdal.Mkdir(basepath + '/vsifile_opendir/subdir', 0o755)
+    gdal.Mkdir(basepath + '/vsifile_opendir/subdir/subdir2', 0o755)
+
+    f = gdal.VSIFOpenL(basepath + '/vsifile_opendir/subdir/subdir2/test2', 'wb')
+    assert f
+    gdal.VSIFWriteL('bar', 1, 3, f)
+    gdal.VSIFCloseL(f)
+
+    # Unlimited depth
+    d = gdal.OpenDir(basepath + '/vsifile_opendir')
+
+    entries_found = []
+    for i in range(4):
+        entry = gdal.GetNextDirEntry(d)
+        assert entry
+        if entry.name == 'test':
+            entries_found.append(entry.name)
+            assert (entry.mode & 32768) != 0
+            assert entry.modeKnown
+            assert entry.size == 3
+            assert entry.sizeKnown
+            assert entry.mtime != 0
+            assert entry.mtimeKnown
+            assert not entry.extra
+        elif entry.name == 'subdir':
+            entries_found.append(entry.name)
+            assert (entry.mode & 16384) != 0
+        elif entry.name == 'subdir/subdir2':
+            entries_found.append(entry.name)
+            assert (entry.mode & 16384) != 0
+        elif entry.name == 'subdir/subdir2/test2':
+            entries_found.append(entry.name)
+            assert (entry.mode & 32768) != 0
+        else:
+            assert False, entry.name
+    assert len(entries_found) == 4, entries_found
+
     entry = gdal.GetNextDirEntry(d)
     assert not entry
     gdal.CloseDir(d)
 
-    gdal.FileFromMemBuffer('/vsimem/vsifile_opendir/test', 'foo')
-    gdal.Mkdir('/vsimem/vsifile_opendir/subdir', 0o755)
-    gdal.Mkdir('/vsimem/vsifile_opendir/subdir/subdir2', 0o755)
-    gdal.FileFromMemBuffer('/vsimem/vsifile_opendir/subdir/subdir2/test2', 'bar')
+    # Unlimited depth, do not require stating (only honoured on Unix)
+    d = gdal.OpenDir(basepath + '/vsifile_opendir', -1, ['NAME_AND_TYPE_ONLY=YES'])
 
-    # Unlimited depth
-    d = gdal.OpenDir('/vsimem/vsifile_opendir')
-
-    entry = gdal.GetNextDirEntry(d)
-    assert entry.name == 'subdir'
-    assert entry.mode == 16384
-
-    entry = gdal.GetNextDirEntry(d)
-    assert entry.name == 'subdir/subdir2'
-    assert entry.mode == 16384
-
-    entry = gdal.GetNextDirEntry(d)
-    assert entry.name == 'subdir/subdir2/test2'
-    assert entry.mode == 32768
-
-    entry = gdal.GetNextDirEntry(d)
-    assert entry.name == 'test'
-    assert entry.mode == 32768
-    assert entry.modeKnown
-    assert entry.size == 3
-    assert entry.sizeKnown
-    assert entry.mtime != 0
-    assert entry.mtimeKnown
-    assert not entry.extra
+    entries_found = []
+    for i in range(4):
+        entry = gdal.GetNextDirEntry(d)
+        assert entry
+        if entry.name == 'test':
+            entries_found.append(entry.name)
+            assert (entry.mode & 32768) != 0
+            if os.name == 'posix' and basepath == 'tmp/':
+                assert entry.size == 0
+        elif entry.name == 'subdir':
+            entries_found.append(entry.name)
+            assert (entry.mode & 16384) != 0
+        elif entry.name == 'subdir/subdir2':
+            entries_found.append(entry.name)
+            assert (entry.mode & 16384) != 0
+        elif entry.name == 'subdir/subdir2/test2':
+            entries_found.append(entry.name)
+            assert (entry.mode & 32768) != 0
+            if os.name == 'posix' and basepath == 'tmp/':
+                assert entry.size == 0
+        else:
+            assert False, entry.name
+    assert len(entries_found) == 4, entries_found
 
     entry = gdal.GetNextDirEntry(d)
     assert not entry
     gdal.CloseDir(d)
 
     # Only top level
-    d = gdal.OpenDir('/vsimem/vsifile_opendir', 0)
+    d = gdal.OpenDir(basepath + '/vsifile_opendir', 0)
+    entries_found = set()
+    for i in range(2):
+        entry = gdal.GetNextDirEntry(d)
+        assert entry
+        entries_found.add(entry.name)
+    assert entries_found == set(['test', 'subdir'])
+
     entry = gdal.GetNextDirEntry(d)
-    assert entry.name == 'subdir'
+    assert not entry
+    gdal.CloseDir(d)
+
+    # Depth 1
+    files = set([l_entry.name for l_entry in gdal.listdir(basepath + '/vsifile_opendir', 1)])
+    assert files == set(['test', 'subdir', 'subdir/subdir2'])
+
+    # Prefix filtering
+    d = gdal.OpenDir(basepath + '/vsifile_opendir', -1, ['PREFIX=t'])
     entry = gdal.GetNextDirEntry(d)
     assert entry.name == 'test'
     entry = gdal.GetNextDirEntry(d)
     assert not entry
     gdal.CloseDir(d)
 
-    # Depth 1
-    files = [l_entry.name for l_entry in gdal.listdir('/vsimem/vsifile_opendir', 1)]
-    assert files == ['subdir', 'subdir/subdir2', 'test']
+    d = gdal.OpenDir(basepath + '/vsifile_opendir', -1, ['PREFIX=testtoolong'])
+    entry = gdal.GetNextDirEntry(d)
+    assert not entry
+    gdal.CloseDir(d)
 
-    gdal.RmdirRecursive('/vsimem/vsifile_opendir')
+    d = gdal.OpenDir(basepath + '/vsifile_opendir', -1, ['PREFIX=subd'])
+    entry = gdal.GetNextDirEntry(d)
+    assert entry.name == 'subdir'
+    entry = gdal.GetNextDirEntry(d)
+    assert entry.name == 'subdir/subdir2'
+    entry = gdal.GetNextDirEntry(d)
+    assert entry.name == 'subdir/subdir2/test2'
+    entry = gdal.GetNextDirEntry(d)
+    assert not entry
+    gdal.CloseDir(d)
 
+    d = gdal.OpenDir(basepath + '/vsifile_opendir', -1, ['PREFIX=subdir/sub'])
+    entry = gdal.GetNextDirEntry(d)
+    assert entry.name == 'subdir/subdir2'
+    entry = gdal.GetNextDirEntry(d)
+    assert entry.name == 'subdir/subdir2/test2'
+    entry = gdal.GetNextDirEntry(d)
+    assert not entry
+    gdal.CloseDir(d)
 
+    # Cleanup
+    gdal.RmdirRecursive(basepath + '/vsifile_opendir')
 
 ###############################################################################
 # Test bugfix for https://github.com/OSGeo/gdal/issues/1559
@@ -879,3 +959,16 @@ def test_vsifile_rmdirrecursive():
     open('tmp/rmdirrecursive/subdir/bar.bin', 'wb').close()
     assert gdal.RmdirRecursive('tmp/rmdirrecursive') == 0
     assert not os.path.exists('tmp/rmdirrecursive')
+
+###############################################################################
+
+def test_vsifile_vsizip_error():
+
+    for i in range(128):
+        filename = '/vsimem/tmp||maxlength=%d.zip' % i
+        with gdaltest.error_handler():
+            f = gdal.VSIFOpenL('/vsizip/%s/out.bin' % filename, 'wb')
+            if f is not None:
+                assert gdal.VSIFCloseL(f) < 0
+        gdal.Unlink(filename)
+

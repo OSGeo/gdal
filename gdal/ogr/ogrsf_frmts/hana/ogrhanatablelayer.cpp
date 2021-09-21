@@ -1370,7 +1370,7 @@ OGRErr OGRHanaTableLayer::CreateGeomField(OGRGeomFieldDefn* geomField, int)
         new OGRGeomFieldDefn(clmName.c_str(), geomField->GetType());
     newGeomField->SetNullable(geomField->IsNullable());
     newGeomField->SetSpatialRef(geomField->GetSpatialRef());
-    featureDefn_->AddGeomFieldDefn(newGeomField, FALSE);
+    featureDefn_->AddGeomFieldDefn(newGeomField);
     geomColumns_.push_back(
         {clmName, geomField->GetType(), srid, geomField->IsNullable() != 0});
 

@@ -183,6 +183,8 @@ public:
         }
         return TRUE;
     }
+
+    OGRCoordinateTransformation* GetInverse() const override { return nullptr; }
 };
 
 /************************************************************************/
@@ -273,6 +275,8 @@ public:
     OGRCoordinateTransformation* Clone() const override {
         return new OGRDXFOCSTransformer(*this);
     }
+
+    OGRCoordinateTransformation* GetInverse() const override { return nullptr; }
 };
 
 /************************************************************************/
@@ -436,7 +440,7 @@ class OGRDXFLayer final: public OGRLayer
     OGRDXFFeature *     TranslateASMEntity();
 
     bool                GenerateINSERTFeatures();
-    OGRLineString *     InsertSplineWithChecks( const int nDegree,
+    std::unique_ptr<OGRLineString> InsertSplineWithChecks( const int nDegree,
                                                 std::vector<double>& adfControlPoints,
                                                 int nControlPoints,
                                                 std::vector<double>& adfKnots,

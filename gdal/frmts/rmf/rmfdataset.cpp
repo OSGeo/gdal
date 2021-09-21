@@ -1093,13 +1093,13 @@ int RMFDataset::Identify( GDALOpenInfo *poOpenInfo )
 
 GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
 {
-    GDALDataset* poDS = Open( poOpenInfo, nullptr, 0 );
+    auto poDS = Open( poOpenInfo, nullptr, 0 );
     if( poDS == nullptr )
     {
         return nullptr;
     }
 
-    RMFDataset* poCurrentLayer = dynamic_cast<RMFDataset*>( poDS );
+    RMFDataset* poCurrentLayer = poDS;
     RMFDataset* poParent = poCurrentLayer;
     const int   nMaxPossibleOvCount = 64;
 
@@ -1114,11 +1114,11 @@ GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
     return poDS;
 }
 
-GDALDataset *RMFDataset::Open(GDALOpenInfo * poOpenInfo,
+RMFDataset *RMFDataset::Open(GDALOpenInfo * poOpenInfo,
                               RMFDataset* poParentDS,
                               vsi_l_offset nNextHeaderOffset )
 {
-    if( !Identify(poOpenInfo) || 
+    if( !Identify(poOpenInfo) ||
         (poParentDS == nullptr && poOpenInfo->fpL == nullptr) )
         return nullptr;
 
@@ -1144,43 +1144,35 @@ GDALDataset *RMFDataset::Open(GDALOpenInfo * poOpenInfo,
 
 #define RMF_READ_SHORT(ptr, value, offset)                              \
 do {                                                                    \
+    memcpy(&(value), (GInt16*)((ptr) + (offset)), sizeof(GInt16));      \
     if( poDS->bBigEndian )                                              \
     {                                                                   \
-        (value) = CPL_MSBWORD16(*(GInt16*)((ptr) + (offset)));          \
+        CPL_MSBPTR16(&(value));                                         \
     }                                                                   \
     else                                                                \
     {                                                                   \
-        (value) = CPL_LSBWORD16(*(GInt16*)((ptr) + (offset)));          \
+        CPL_LSBPTR16(&(value));                                         \
     }                                                                   \
 } while( false );
 
 #define RMF_READ_ULONG(ptr, value, offset)                              \
 do {                                                                    \
+    memcpy(&(value), (GUInt32*)((ptr) + (offset)), sizeof(GUInt32));    \
     if( poDS->bBigEndian )                                              \
     {                                                                   \
-        (value) = CPL_MSBWORD32(*(GUInt32*)((ptr) + (offset)));         \
+        CPL_MSBPTR32(&(value));                                         \
     }                                                                   \
     else                                                                \
     {                                                                   \
-        (value) = CPL_LSBWORD32(*(GUInt32*)((ptr) + (offset)));         \
+        CPL_LSBPTR32(&(value));                                         \
     }                                                                   \
 } while( false );
 
-#define RMF_READ_LONG(ptr, value, offset)                               \
-do {                                                                    \
-    if( poDS->bBigEndian )                                              \
-    {                                                                   \
-        (value) = CPL_MSBWORD32(*(GInt32*)((ptr) + (offset)));          \
-    }                                                                   \
-    else                                                                \
-    {                                                                   \
-        (value) = CPL_LSBWORD32(*(GInt32*)((ptr) + (offset)));          \
-    }                                                                   \
-} while( false );
+#define RMF_READ_LONG(ptr, value, offset) RMF_READ_ULONG(ptr, value, offset)
 
 #define RMF_READ_DOUBLE(ptr, value, offset)                             \
 do {                                                                    \
-    (value) = *reinterpret_cast<double*>((ptr) + (offset));             \
+    memcpy(&(value), (double*)((ptr) + (offset)), sizeof(double));      \
     if( poDS->bBigEndian )                                              \
     {                                                                   \
         CPL_MSBPTR64(&(value));                                         \
@@ -1752,7 +1744,7 @@ do {                                                                    \
             CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
                                 "RMF_SET_VERTCS",
                                  CPLGetConfigOption("RMF_SET_VERTCS", "NO"));
-        if(CPLTestBool(pszSetVertCS) && res == OGRERR_NONE && 
+        if(CPLTestBool(pszSetVertCS) && res == OGRERR_NONE &&
            poDS->sExtHeader.nVertDatum > 0)
         {
             oSRS.importVertCSFromPanorama(poDS->sExtHeader.nVertDatum);
@@ -1824,15 +1816,15 @@ do {                                                                    \
 /************************************************************************/
 GDALDataset *RMFDataset::Create( const char * pszFilename,
                                  int nXSize, int nYSize, int nBands,
-                                 GDALDataType eType, char **papszParmList )
+                                 GDALDataType eType, char **papszParamList )
 {
     return Create( pszFilename, nXSize, nYSize, nBands,
-                   eType, papszParmList, nullptr, 1.0 );
+                   eType, papszParamList, nullptr, 1.0 );
 }
 
 GDALDataset *RMFDataset::Create( const char * pszFilename,
                                  int nXSize, int nYSize, int nBands,
-                                 GDALDataType eType, char **papszParmList,
+                                 GDALDataType eType, char **papszParamList,
                                  RMFDataset* poParentDS, double dfOvFactor )
 
 {
@@ -1899,13 +1891,13 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
         dfResolution = RMF_DEFAULT_RESOLUTION;
         dfPixelSize = 1;
 
-        if( CPLFetchBool( papszParmList, "MTW", false) )
+        if( CPLFetchBool( papszParamList, "MTW", false) )
             poDS->eRMFType = RMFT_MTW;
         else
             poDS->eRMFType = RMFT_RSW;
 
         GUInt32 iVersion = RMF_VERSION;
-        const char *pszRMFHUGE = CSLFetchNameValue(papszParmList, "RMFHUGE");
+        const char *pszRMFHUGE = CSLFetchNameValue(papszParamList, "RMFHUGE");
 
         if( pszRMFHUGE == nullptr )
             pszRMFHUGE = "NO";// Keep old behavior by default
@@ -1935,13 +1927,13 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
             }
         }
 
-        const char *pszValue = CSLFetchNameValue(papszParmList,"BLOCKXSIZE");
+        const char *pszValue = CSLFetchNameValue(papszParamList,"BLOCKXSIZE");
         if( pszValue != nullptr )
             nBlockXSize = atoi( pszValue );
         if( static_cast<int>(nBlockXSize) <= 0 )
             nBlockXSize = RMF_DEFAULT_BLOCKXSIZE;
 
-        pszValue = CSLFetchNameValue(papszParmList,"BLOCKYSIZE");
+        pszValue = CSLFetchNameValue(papszParamList,"BLOCKYSIZE");
         if( pszValue != nullptr )
             nBlockYSize = atoi( pszValue );
         if( static_cast<int>(nBlockYSize) <= 0 )
@@ -2099,9 +2091,9 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
         poDS->sHeader.adfElevMinMax[1] = 0.0;
         poDS->sHeader.dfNoData = 0.0;
         poDS->sHeader.iCompression = GetCompressionType(
-                                        CSLFetchNameValue(papszParmList,
+                                        CSLFetchNameValue(papszParamList,
                                                           "COMPRESS"));
-        if(CE_None != poDS->InitCompressorData(papszParmList))
+        if(CE_None != poDS->InitCompressorData(papszParamList))
         {
             delete poDS;
             return nullptr;
@@ -2109,7 +2101,7 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
 
         if(poDS->sHeader.iCompression == RMF_COMPRESSION_JPEG)
         {
-            const char* pszJpegQuality = CSLFetchNameValue(papszParmList,
+            const char* pszJpegQuality = CSLFetchNameValue(papszParamList,
                                                            "JPEG_QUALITY");
             if(pszJpegQuality == nullptr)
             {
@@ -2682,9 +2674,9 @@ void RMFDataset::WriteTileJobFunc(void* pData)
     }
 }
 
-CPLErr RMFDataset::InitCompressorData(char **papszParmList)
+CPLErr RMFDataset::InitCompressorData(char **papszParamList)
 {
-    const char* pszNumThreads = CSLFetchNameValue(papszParmList, "NUM_THREADS");
+    const char* pszNumThreads = CSLFetchNameValue(papszParamList, "NUM_THREADS");
     if(pszNumThreads == nullptr)
         pszNumThreads = CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
 
@@ -2699,6 +2691,10 @@ CPLErr RMFDataset::InitCompressorData(char **papszParmList)
     if(nThreads < 0)
     {
         nThreads = 0;
+    }
+    if( nThreads > 1024 )
+    {
+        nThreads = 1024;
     }
 
     poCompressData = std::make_shared<RMFCompressData>();
@@ -2911,7 +2907,7 @@ CPLErr RMFDataset::WriteRawTile(int nBlockXOff, int nBlockYOff,
 
 CPLErr RMFDataset::ReadTile(int nBlockXOff, int nBlockYOff,
                             GByte* pabyData, size_t nRawBytes,
-                            GUInt32 nRawXSize, GUInt32 nRawYSize, 
+                            GUInt32 nRawXSize, GUInt32 nRawYSize,
                             bool& bNullTile)
 {
     bNullTile = false;

@@ -41,6 +41,7 @@
 #include "cpl_port.h"
 #include "ogr_api.h"
 
+#include <algorithm>
 #include <cctype>
 #include <cmath>
 #include <cstdlib>
@@ -721,7 +722,7 @@ static OGRPolygon *GML2FaceExtRing( const OGRGeometry *poGeom )
         {
             // There is a single Polygon within the collection.
             const OGRPolygon *poPg = poColl->getGeometryRef(0)->toPolygon();
-            poPolygon = poPg->clone()->toPolygon();
+            poPolygon = poPg->clone();
         }
         else
         {
@@ -734,7 +735,7 @@ static OGRPolygon *GML2FaceExtRing( const OGRGeometry *poGeom )
                         poColl->getGeometryRef(ig)->toPolygon();
                     if( poPg->getNumInteriorRings() > 0 )
                     {
-                        poPolygon = poPg->clone()->toPolygon();
+                        poPolygon = poPg->clone();
                     }
                 }
             }
@@ -924,7 +925,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
     bool bOrientation,
     bool bFaceHoleNegative )
 {
-    const bool bCastToLinearTypeIfPossible = true;  // Hard-coded for now.
+    // constexpr bool bCastToLinearTypeIfPossible = true;  // Hard-coded for now.
 
     // We need this nRecLevel == 0 check, otherwise this could result in multiple
     // revist of the same node, and exponential complexity.
@@ -1548,7 +1549,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
         if( poCC == nullptr )
             return nullptr;
 
-        else if( bCastToLinearTypeIfPossible && bChildrenAreAllLineString )
+        else if( /* bCastToLinearTypeIfPossible &&*/ bChildrenAreAllLineString )
         {
             return OGRCurve::CastToLinearRing(poCC);
         }
@@ -1660,7 +1661,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
         double alpha0 = 0.0;
         double alpha1 = 0.0;
         double alpha2 = 0.0;
-        if( !OGRGeometryFactory::GetCurveParmeters(
+        if( !OGRGeometryFactory::GetCurveParameters(
                                poLine->getX(0), poLine->getY(0),
                                poLine->getX(1), poLine->getY(1),
                                poLine->getX(2), poLine->getY(2),
@@ -1824,11 +1825,16 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                     bSRSUnitIsDegree = fabs(oSRS.GetAngularUnits(nullptr) -
                                             CPLAtof(SRS_UA_DEGREE_CONV)) < 1e-8;
                 }
+                else if( oSRS.IsProjected() )
+                {
+                    bInvertedAxisOrder =
+                        CPL_TO_BOOL(oSRS.EPSGTreatsAsNorthingEasting());
+                }
             }
         }
 
-        const double dfCenterX = p.getX();
-        const double dfCenterY = p.getY();
+        double dfCenterX = p.getX();
+        double dfCenterY = p.getY();
 
         double dfDistance;
         if( bSRSUnitIsDegree && pszUnits != nullptr &&
@@ -1891,6 +1897,9 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
             return poLS;
         }
 
+        if( bInvertedAxisOrder )
+            std::swap( dfCenterX, dfCenterY );
+
         OGRCircularString *poCC = new OGRCircularString();
         p.setX(dfCenterX + dfRadius * cos(dfStartAngle * kdfD2R));
         p.setY(dfCenterY + dfRadius * sin(dfStartAngle * kdfD2R));
@@ -1902,6 +1911,10 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
         p.setX(dfCenterX + dfRadius * cos(dfEndAngle * kdfD2R));
         p.setY(dfCenterY + dfRadius * sin(dfEndAngle * kdfD2R));
         poCC->addPoint(&p);
+
+        if( bInvertedAxisOrder )
+            poCC->swapXY();
+
         return poCC;
     }
 
@@ -1943,11 +1956,16 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                     bSRSUnitIsDegree = fabs(oSRS.GetAngularUnits(nullptr) -
                                             CPLAtof(SRS_UA_DEGREE_CONV)) < 1e-8;
                 }
+                else if( oSRS.IsProjected() )
+                {
+                    bInvertedAxisOrder =
+                        CPL_TO_BOOL(oSRS.EPSGTreatsAsNorthingEasting());
+                }
             }
         }
 
-        const double dfCenterX = p.getX();
-        const double dfCenterY = p.getY();
+        double dfCenterX = p.getX();
+        double dfCenterY = p.getY();
 
         double dfDistance;
         if( bSRSUnitIsDegree && pszUnits != nullptr &&
@@ -1983,6 +2001,9 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
             return poLS;
         }
 
+        if( bInvertedAxisOrder )
+            std::swap( dfCenterX, dfCenterY );
+
         OGRCircularString *poCC = new OGRCircularString();
         p.setX( dfCenterX - dfRadius );
         p.setY( dfCenterY );
@@ -1993,6 +2014,10 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
         p.setX( dfCenterX - dfRadius );
         p.setY( dfCenterY );
         poCC->addPoint(&p);
+
+        if( bInvertedAxisOrder )
+            poCC->swapXY();
+
         return poCC;
     }
 
@@ -2261,7 +2286,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
         }
         else
         {
-            if( bCastToLinearTypeIfPossible &&
+            if( /* bCastToLinearTypeIfPossible && */
                 wkbFlatten(poMS->getGeometryType()) == wkbMultiSurface &&
                 bChildrenAreAllPolygons )
             {
@@ -2482,7 +2507,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
             }
         }
 
-        if( bCastToLinearTypeIfPossible && bChildrenAreAllLineString )
+        if( /* bCastToLinearTypeIfPossible && */ bChildrenAreAllLineString )
         {
             return OGRMultiCurve::CastToMultiLineString(poMC);
         }
@@ -2545,7 +2570,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
             }
         }
 
-        if( bCastToLinearTypeIfPossible && bChildrenAreAllLineString )
+        if( /* bCastToLinearTypeIfPossible && */ bChildrenAreAllLineString )
         {
             return OGRCurve::CastToLineString(poCC);
         }
@@ -2686,7 +2711,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
         if( poCC == nullptr )
             return nullptr;
 
-        if( bCastToLinearTypeIfPossible && bChildrenAreAllLineString )
+        if( /* bCastToLinearTypeIfPossible && */ bChildrenAreAllLineString )
         {
             return OGRCurve::CastToLineString(poCC);
         }

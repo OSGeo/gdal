@@ -14,7 +14,7 @@ OBJ	=	gdal_fuzzer.o \
 		gml_geom_import_fuzzer.o \
 		fuzzingengine.o
 
-CPPFLAGS	:=	$(CPPFLAGS) -I../ogr/ogrsf_frmts/sqlite
+CXXFLAGS	:=	$(CXXFLAGS) -iquote ../ogr/ogrsf_frmts/sqlite
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
@@ -24,9 +24,16 @@ clean:
 	$(RM) gdal_translate_fuzzer$(EXE)
 	$(RM) gdal_vector_translate_fuzzer$(EXE)
 	$(RM) aig_fuzzer$(EXE)
+	$(RM) gdal_vrt_fuzzer$(EXE)
 	$(RM) ogr_fuzzer$(EXE)
 	$(RM) ogr_sdts_fuzzer$(EXE)
 	$(RM) mitab_tab_fuzzer$(EXE)
+	$(RM) mitab_mif_fuzzer$(EXE)
+	$(RM) gtiff_mmap_fuzzer$(EXE)
+	$(RM) gml_geom_import_fuzzer$(EXE)
+	$(RM) spatialite_geom_import_fuzzer$(EXE)
+	$(RM) osr_set_from_user_input_fuzzer$(EXE)
+	$(RM) get_jpeg2000_structure_fuzzer$(EXE)
 
 gdal_fuzzer$(EXE): gdal_fuzzer.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LDFLAGS) $(LNK_FLAGS) $(CXXFLAGS) $(GDAL_INCLUDE) gdal_fuzzer.cpp fuzzingengine.cpp $(XTRAOBJ) $(CONFIG_LIBS) -o $@
@@ -52,11 +59,28 @@ ogr_sdts_fuzzer$(EXE): ogr_fuzzer.$(OBJ_EXT) $(DEP_LIBS)
 mitab_tab_fuzzer$(EXE): ogr_fuzzer.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LDFLAGS) $(LNK_FLAGS) $(CXXFLAGS) $(GDAL_INCLUDE) ogr_fuzzer.cpp fuzzingengine.cpp $(XTRAOBJ) $(CONFIG_LIBS) -o $@ -DREGISTER_FUNC=OGRRegisterAll -DMEM_FILENAME="\"/vsimem/test.tar\"" -DGDAL_FILENAME="\"/vsitar//vsimem/test.tar/my.tab\""
 
+mitab_mif_fuzzer$(EXE): ogr_fuzzer.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LDFLAGS) $(LNK_FLAGS) $(CXXFLAGS) $(GDAL_INCLUDE) ogr_fuzzer.cpp fuzzingengine.cpp $(XTRAOBJ) $(CONFIG_LIBS) -o $@ -DREGISTER_FUNC=OGRRegisterAll -DMEM_FILENAME="\"/vsimem/test.tar\"" -DGDAL_FILENAME="\"/vsitar//vsimem/test.tar/my.mif\""
+
 gtiff_mmap_fuzzer$(EXE): gdal_fuzzer.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LDFLAGS) $(LNK_FLAGS) $(CXXFLAGS) $(GDAL_INCLUDE) gdal_fuzzer.cpp fuzzingengine.cpp $(XTRAOBJ) $(CONFIG_LIBS) -o $@ -DREGISTER_FUNC=GDALRegister_GTiff -DGTIFF_USE_MMAP
 
 gml_geom_import_fuzzer$(EXE): gml_geom_import_fuzzer.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LDFLAGS) $(LNK_FLAGS) $(CXXFLAGS) $(GDAL_INCLUDE) gml_geom_import_fuzzer.cpp fuzzingengine.cpp $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+
+spatialite_geom_import_fuzzer$(EXE): spatialite_geom_import_fuzzer.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LDFLAGS) $(LNK_FLAGS) $(CXXFLAGS) $(GDAL_INCLUDE) spatialite_geom_import_fuzzer.cpp fuzzingengine.cpp $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+
+osr_set_from_user_input_fuzzer$(EXE): osr_set_from_user_input_fuzzer.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LDFLAGS) $(LNK_FLAGS) $(CXXFLAGS) $(GDAL_INCLUDE) osr_set_from_user_input_fuzzer.cpp fuzzingengine.cpp $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+
+get_jpeg2000_structure_fuzzer$(EXE): get_jpeg2000_structure_fuzzer.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LDFLAGS) $(LNK_FLAGS) $(CXXFLAGS) $(GDAL_INCLUDE) get_jpeg2000_structure_fuzzer.cpp fuzzingengine.cpp $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+
+dummyfuzzers_dynamic: fuzzingengine.o
+	$(AR) r libFuzzingEngine.a fuzzingengine.o
+	CXX="${CXX}" CXXFLAGS="${CXXFLAGS} -L." EXTRA_LIBS="${LIBS}" LIBGDAL="-L.. -L../.libs -lgdal" SRC=/tmp OUT=/tmp ./build_google_oss_fuzzers.sh
+	OUT=/tmp ./build_seed_corpus.sh
 
 dummyfuzzers: fuzzingengine.o
 	$(AR) r libFuzzingEngine.a fuzzingengine.o

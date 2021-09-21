@@ -46,7 +46,7 @@ extern "C" void GDALRegister_STACTA();
 CPL_CVSID("$Id$")
 
 // Implements a driver for
-// https://github.com/radiantearth/stac-spec/tree/master/extensions/tiled-assets
+// https://github.com/stac-extensions/tiled-assets
 
 /************************************************************************/
 /*                         STACTARasterBand()                           */
@@ -400,7 +400,7 @@ CPLErr STACTARawDataset::IRasterIO( GDALRWFlag eRWFlag,
         // reading
         return GDALDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                       pData, nBufXSize, nBufYSize,
-                                      eBufType, 
+                                      eBufType,
                                       nBandCount, panBandMap,
                                       nPixelSpace, nLineSpace, nBandSpace,
                                       psExtraArg);
@@ -410,7 +410,7 @@ CPLErr STACTARawDataset::IRasterIO( GDALRWFlag eRWFlag,
 
     // If the (uncompressed) size of a metatile is small enough, then download
     // it entirely to minimize the number of network requests
-    const bool bDownloadWholeMetaTile = 
+    const bool bDownloadWholeMetaTile =
         m_poMasterDS->m_bDownloadWholeMetaTile ||
         (static_cast<GIntBig>(m_nMetaTileWidth) * m_nMetaTileHeight *
          nBands * nDTSize < 128 * 1024);
@@ -572,7 +572,7 @@ CPLErr STACTARawDataset::IRasterIO( GDALRWFlag eRWFlag,
                                                     nBufYOff * nLineSpace,
                         nBufXSizeEffective,
                         nBufYSizeEffective,
-                        eBufType, 
+                        eBufType,
                         nBandCount, panBandMap,
                         nPixelSpace, nLineSpace, nBandSpace,
                         &sExtraArgs) != CE_None )
@@ -939,7 +939,7 @@ bool STACTADataset::Open(GDALOpenInfo* poOpenInfo)
         {
             continue;
         }
-        auto poRawDS = std::unique_ptr<STACTARawDataset>(new STACTARawDataset());
+        auto poRawDS = cpl::make_unique<STACTARawDataset>();
         if( !poRawDS->InitRaster(poProtoDS.get(), poTMS.get(), tmsList[i].mId, oTM,
                                  oMapLimits) )
         {
@@ -1150,7 +1150,7 @@ GDALDataset* STACTADataset::OpenStatic(GDALOpenInfo* poOpenInfo)
 {
     if( !Identify(poOpenInfo) )
         return nullptr;
-    auto poDS = std::unique_ptr<STACTADataset>(new STACTADataset());
+    auto poDS = cpl::make_unique<STACTADataset>();
     if( !poDS->Open(poOpenInfo) )
         return nullptr;
     return poDS.release();

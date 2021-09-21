@@ -6,7 +6,7 @@ gdaltindex
 
 .. only:: html
 
-    Builds a shapefile as a raster tileindex.
+    Creates an OGR-supported dataset as a raster tileindex.
 
 .. Index:: gdaltindex
 
@@ -23,7 +23,7 @@ Synopsis
 Description
 -----------
 
-This program builds a shapefile with a record for each input raster file,
+This program creates an OGR-supported dataset with a record for each input raster file,
 an attribute containing the filename, and a polygon geometry outlining the
 raster.  This output is suitable for use with `MapServer <http://mapserver.org/>`__ as a raster
 tileindex.
@@ -76,9 +76,9 @@ tileindex.
 
 .. option:: index_file
 
-    The name of the output file to create/append to. The default shapefile will
+    The name of the output file to create/append to. The default dataset will
     be created if it doesn't already exist, otherwise it will append to the
-    existing file.
+    existing dataset.
 
 .. option:: <gdal_file>
 
@@ -89,21 +89,33 @@ tileindex.
 Examples
 --------
 
-Produce a shapefile (``doq_index.shp``) with a record for every
-image that the utility found in the ``doq`` folder. Each record holds
-information that points to the location of the image and also a bounding rectangle
-shape showing the bounds of the image:
+- Produce a shapefile (``doq_index.shp``) with a record for every
+  image that the utility found in the ``doq`` folder. Each record holds
+  information that points to the location of the image and also a bounding rectangle
+  shape showing the bounds of the image:
 
 ::
 
     gdaltindex doq_index.shp doq/*.tif
 
-The :option:`-t_srs` option can also be used to transform all input rasters
-into the same output projection:
+- Perform the same command as before, but now we create a GeoPackage instead of a Shapefile. 
+
+::
+
+    gdaltindex -f GPKG doq_index.gpkg doq/*.tif
+
+- The :option:`-t_srs` option can also be used to transform all input rasters
+  into the same output projection:
 
 ::
 
     gdaltindex -t_srs EPSG:4326 -src_srs_name src_srs tile_index_mixed_srs.shp *.tif
+
+- Make a tile index from files listed in a text file :
+
+::
+
+    gdaltindex doq_index.shp --optfile my_list.txt
 
 See also
 --------

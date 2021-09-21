@@ -29,7 +29,7 @@ Obviously not thread safe while any bit gets modified
 
 
 // For CPL_MSB and swap functions
-#include <cpl_port.h>
+#include "cpl_port.h"
 
 #include "marfa.h"
 #if defined(PACKER)

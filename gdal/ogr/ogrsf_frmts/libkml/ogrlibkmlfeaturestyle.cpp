@@ -29,8 +29,8 @@
 
 #include "libkml_headers.h"
 
-#include <ogrsf_frmts.h>
-#include <ogr_featurestyle.h>
+#include "ogrsf_frmts.h"
+#include "ogr_featurestyle.h"
 #include <string>
 #include "ogrlibkmlfeaturestyle.h"
 #include "ogrlibkmlstyle.h"

@@ -6,7 +6,7 @@
  *******************************************************************************
  *  The MIT License (MIT)
  *
- *  Copyright (c) 2018-2019, NextGIS
+ *  Copyright (c) 2018-2020, NextGIS
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -61,7 +61,8 @@ std::string GetTMS(const std::string &osUrl, const std::string &osResourceId)
 
 std::string GetFeaturePage(const std::string &osUrl, const std::string &osResourceId,
     GIntBig nStart, int nCount, const std::string &osFields,
-    const std::string &osWhere, const std::string &osSpatialWhere)
+    const std::string &osWhere, const std::string &osSpatialWhere,
+    const std::string &osExtensions, bool IsGeometryIgnored)
 {
     std::string osFeatureUrl = GetFeature(osUrl, osResourceId);
     bool bParamAdd = false;
@@ -107,7 +108,24 @@ std::string GetFeaturePage(const std::string &osUrl, const std::string &osResour
         else
         {
             osFeatureUrl += "?intersects=" + osSpatialWhere;
+            bParamAdd = true;
         }
+    }
+
+    if (bParamAdd)
+    {
+        osFeatureUrl += "&extensions=" + osExtensions;
+    }
+    else
+    {
+        osFeatureUrl += "?extensions=" + osExtensions;
+        bParamAdd = true;
+    }
+    CPL_IGNORE_RET_VAL(bParamAdd);
+
+    if (IsGeometryIgnored)
+    {
+        osFeatureUrl += "&geom=no";
     }
 
     return osFeatureUrl;

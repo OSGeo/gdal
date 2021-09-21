@@ -264,3 +264,33 @@ metadata in base64 encoded format. Something like:
 
 Note that the ascii encoded numeric values prefixing the base64 encoded
 header is the length (decoded) in bytes, followed by one space.
+
+Writing multiple Image Segments
+-------------------------------
+
+(GDAL >= 3.4)
+
+Writing a NITF file with several image segments is done with the ``APPEND_SUBDATASET=YES``
+creation option but requires some care.
+
+The file must be created with the content of the first image segment with the ``NUMI``
+creation option to specify the total number of image segments and optionally with
+the ``NUMDES`` creation option with the number of DE segments.
+TREs that apply to the whole file should also be specified at that stage.
+The ``APPEND_SUBDATASET`` creation option must NOT be specified.
+
+Subsequent images are appended with the ``APPEND_SUBDATASET=YES`` creation option.
+The ``IDLVL``, ``IALVL``, ``ILOCROW`` and ``ILOCCOL`` creation option may be specified.
+
+On the last image segment, the DES content, if any must be specified with the ``DES``
+creation option.
+
+.. note:: The file will only be valid if all NUMI images have been actually written.
+
+Example:
+
+::
+
+    gdal_translate first_image.tif  dest.tif -co NUMI=3 -co NUMDES=1
+    gdal_translate second_image.tif dest.tif -co APPEND_SUBDATASET=YES -co IC=C3 -co IDLVL=2
+    gdal_translate third_image.tif  dest.tif -co APPEND_SUBDATASET=YES -co IC=C8 -co IDLVL=3 -co "DES=DES1={des_content}"

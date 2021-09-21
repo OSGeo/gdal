@@ -10,11 +10,11 @@ OBJ	=	\
         jdinput12.obj jdmainct12.obj jdmarker12.obj jdmaster12.obj jdmerge12.obj jdphuff12.obj \
         jdpostct12.obj jdsample12.obj jdtrans12.obj jerror12.obj jfdctflt12.obj jfdctfst12.obj \
         jfdctint12.obj jidctflt12.obj jidctfst12.obj jidctint12.obj jidctred12.obj jquant112.obj \
-        jquant212.obj jutils12.obj jmemmgr12.obj jmemansi12.obj 
+        jquant212.obj jutils12.obj jmemmgr12.obj jmemnobs12.obj
 
 GDAL_ROOT	=	..\..\..
 
-EXTRAFLAGS      = -DDEFAULT_MAX_MEM=500000000L $(SOFTWARNFLAGS) 
+EXTRAFLAGS      = $(SOFTWARNFLAGS)
 
 default:	jcapimin12.c $(OBJ)
 	xcopy /D  /Y *.obj ..\..\o
@@ -64,7 +64,7 @@ jcapimin12.c:	../libjpeg/jcapimin.c
 	ren jidctfst.c jidctfst12.c
 	ren jidctint.c jidctint12.c
 	ren jidctred.c jidctred12.c
-	ren jmemansi.c jmemansi12.c
+	ren jmemnobs.c jmemnobs12.c
 	ren jmemmgr.c jmemmgr12.c
 	ren jquant1.c jquant112.c
 	ren jquant2.c jquant212.c

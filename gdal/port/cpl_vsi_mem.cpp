@@ -46,6 +46,7 @@
 #include <map>
 #include <string>
 #include <utility>
+#include <memory>
 
 #include "cpl_atomic_ops.h"
 #include "cpl_conv.h"
@@ -96,7 +97,6 @@ class VSIMemFile
 
 public:
     CPLString     osFilename{};
-    volatile int  nRefCount = 0;
 
     bool          bIsDirectory = false;
 
@@ -125,7 +125,7 @@ class VSIMemHandle final : public VSIVirtualHandle
     CPL_DISALLOW_COPY_ASSIGN(VSIMemHandle)
 
   public:
-    VSIMemFile    *poFile = nullptr;
+    std::shared_ptr<VSIMemFile> poFile = nullptr;
     vsi_l_offset  m_nOffset = 0;
     bool          bUpdate = false;
     bool          bEOF = false;
@@ -156,7 +156,7 @@ class VSIMemFilesystemHandler final : public VSIFilesystemHandler
     CPL_DISALLOW_COPY_ASSIGN(VSIMemFilesystemHandler)
 
   public:
-    std::map<CPLString, VSIMemFile*> oFileList{};
+    std::map<CPLString, std::shared_ptr<VSIMemFile> > oFileList{};
     CPLMutex        *hMutex = nullptr;
 
     VSIMemFilesystemHandler() = default;
@@ -167,7 +167,8 @@ class VSIMemFilesystemHandler final : public VSIFilesystemHandler
 
     VSIVirtualHandle *Open( const char *pszFilename,
                             const char *pszAccess,
-                            bool bSetError ) override;
+                            bool bSetError,
+                            CSLConstList /* papszOptions */ ) override;
     int Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
               int nFlags ) override;
     int Unlink( const char *pszFilename ) override;
@@ -204,13 +205,7 @@ VSIMemFile::VSIMemFile()
 /************************************************************************/
 
 VSIMemFile::~VSIMemFile()
-
 {
-    if( nRefCount != 0 )
-        CPLError( CE_Warning, CPLE_AppDefined,
-                  "Memory file %s deleted with %d references.",
-                  osFilename.c_str(), nRefCount );
-
     if( bOwnData && pabyData )
         CPLFree( pabyData );
 }
@@ -291,7 +286,7 @@ bool VSIMemFile::SetLength( vsi_l_offset nNewLength )
 
 VSIMemHandle::~VSIMemHandle()
 {
-    Close();
+    VSIMemHandle::Close();
 }
 
 /************************************************************************/
@@ -305,11 +300,8 @@ int VSIMemHandle::Close()
     {
 #ifdef DEBUG_VERBOSE
         CPLDebug("VSIMEM", "Closing handle %p on %s: ref_count=%d (before)",
-                 this, poFile->osFilename.c_str(), poFile->nRefCount);
+                 this, poFile->osFilename.c_str(), poFile.use_count());
 #endif
-        if( CPLAtomicDec(&(poFile->nRefCount)) == 0 )
-            delete poFile;
-
         poFile = nullptr;
     }
 
@@ -377,6 +369,9 @@ size_t VSIMemHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
 
 {
     size_t nBytesToRead = nSize * nCount;
+    if( nBytesToRead == 0 )
+        return 0;
+
     if( nCount > 0 && nBytesToRead / nCount != nSize )
     {
         bEOF = true;
@@ -490,11 +485,7 @@ int VSIMemHandle::Truncate( vsi_l_offset nNewSize )
 VSIMemFilesystemHandler::~VSIMemFilesystemHandler()
 
 {
-    for( const auto &iter : oFileList )
-    {
-        CPLAtomicDec(&iter.second->nRefCount);
-        delete iter.second;
-    }
+    oFileList.clear();
 
     if( hMutex != nullptr )
         CPLDestroyMutex( hMutex );
@@ -508,7 +499,8 @@ VSIMemFilesystemHandler::~VSIMemFilesystemHandler()
 VSIVirtualHandle *
 VSIMemFilesystemHandler::Open( const char *pszFilename,
                                const char *pszAccess,
-                               bool bSetError )
+                               bool bSetError,
+                               CSLConstList /* papszOptions */ )
 
 {
     CPLMutexHolder oHolder( &hMutex );
@@ -527,7 +519,7 @@ VSIMemFilesystemHandler::Open( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Get the filename we are opening, create if needed.              */
 /* -------------------------------------------------------------------- */
-    VSIMemFile *poFile = nullptr;
+    std::shared_ptr<VSIMemFile> poFile = nullptr;
     if( oFileList.find(osFilename) != oFileList.end() )
         poFile = oFileList[osFilename];
 
@@ -547,13 +539,12 @@ VSIMemFilesystemHandler::Open( const char *pszFilename,
     // Create.
     if( poFile == nullptr )
     {
-        poFile = new VSIMemFile;
+        poFile = std::make_shared<VSIMemFile>();
         poFile->osFilename = osFilename;
         oFileList[poFile->osFilename] = poFile;
-        CPLAtomicInc(&(poFile->nRefCount));  // For file list.
 #ifdef DEBUG_VERBOSE
         CPLDebug("VSIMEM", "Creating file %s: ref_count=%d",
-                 pszFilename, poFile->nRefCount);
+                 pszFilename, poFile.use_count());
 #endif
         poFile->nMaxLength = nMaxLength;
     }
@@ -583,10 +574,9 @@ VSIMemFilesystemHandler::Open( const char *pszFilename,
         strstr(pszAccess, "+") ||
         strstr(pszAccess, "a");
 
-    CPLAtomicInc(&(poFile->nRefCount));
 #ifdef DEBUG_VERBOSE
     CPLDebug("VSIMEM", "Opening handle %p on %s: ref_count=%d",
-             poHandle, pszFilename, poFile->nRefCount);
+             poHandle, pszFilename, poFile.use_count());
 #endif
     if( strstr(pszAccess, "a") )
         poHandle->m_nOffset = poFile->nLength;
@@ -622,7 +612,7 @@ int VSIMemFilesystemHandler::Stat( const char * pszFilename,
         return -1;
     }
 
-    VSIMemFile *poFile = oFileList[osFilename];
+    std::shared_ptr<VSIMemFile> poFile = oFileList[osFilename];
 
     memset( pStatBuf, 0, sizeof(VSIStatBufL) );
 
@@ -667,14 +657,10 @@ int VSIMemFilesystemHandler::Unlink_unlocked( const char * pszFilename )
         return -1;
     }
 
-    VSIMemFile *poFile = oFileList[osFilename];
 #ifdef DEBUG_VERBOSE
-    CPLDebug("VSIMEM", "Unlink %s: ref_count=%d (before)",
-             pszFilename, poFile->nRefCount);
+    std::shared_ptr<VSIMemFile> poFile = oFileList[osFilename];
+    CPLDebug("VSIMEM", "Unlink %s: ref_count=%d (before)", pszFilename, poFile.use_count());
 #endif
-    if( CPLAtomicDec(&(poFile->nRefCount)) == 0 )
-        delete poFile;
-
     oFileList.erase( oFileList.find(osFilename) );
 
     return 0;
@@ -698,15 +684,13 @@ int VSIMemFilesystemHandler::Mkdir( const char * pszPathname,
         return -1;
     }
 
-    VSIMemFile *poFile = new VSIMemFile;
-
+    std::shared_ptr<VSIMemFile> poFile = std::make_shared<VSIMemFile>();
     poFile->osFilename = osPathname;
     poFile->bIsDirectory = true;
     oFileList[osPathname] = poFile;
-    CPLAtomicInc(&(poFile->nRefCount));  // Referenced by file list.
 #ifdef DEBUG_VERBOSE
     CPLDebug("VSIMEM", "Mkdir on %s: ref_count=%d",
-             pszPathname, poFile->nRefCount);
+             pszPathname, poFile.use_count());
 #endif
     return 0;
 }
@@ -799,7 +783,7 @@ int VSIMemFilesystemHandler::Rename( const char *pszOldPath,
         return -1;
     }
 
-    std::map<CPLString, VSIMemFile*>::iterator it = oFileList.find(osOldPath);
+    std::map<CPLString, std::shared_ptr<VSIMemFile> >::iterator it = oFileList.find(osOldPath);
     while( it != oFileList.end() && it->first.ifind(osOldPath) == 0 )
     {
         const CPLString osRemainder = it->first.substr(osOldPath.size());
@@ -951,7 +935,7 @@ VSILFILE *VSIFileFromMemBuffer( const char *pszFilename,
     if( osFilename.empty() )
         return nullptr;
 
-    VSIMemFile *poFile = new VSIMemFile;
+    std::shared_ptr<VSIMemFile> poFile = std::make_shared<VSIMemFile>();
 
     poFile->osFilename = osFilename;
     poFile->bOwnData = CPL_TO_BOOL(bTakeOwnership);
@@ -963,10 +947,9 @@ VSILFILE *VSIFileFromMemBuffer( const char *pszFilename,
         CPLMutexHolder oHolder( &poHandler->hMutex );
         poHandler->Unlink_unlocked(osFilename);
         poHandler->oFileList[poFile->osFilename] = poFile;
-        CPLAtomicInc(&(poFile->nRefCount));
 #ifdef DEBUG_VERBOSE
         CPLDebug("VSIMEM", "VSIFileFromMemBuffer() %s: ref_count=%d (after)",
-                 poFile->osFilename.c_str(), poFile->nRefCount);
+                 poFile->osFilename.c_str(), poFile->use_count());
 #endif
     }
 
@@ -1014,7 +997,7 @@ GByte *VSIGetMemFileBuffer( const char *pszFilename,
     if( poHandler->oFileList.find(osFilename) == poHandler->oFileList.end() )
         return nullptr;
 
-    VSIMemFile *poFile = poHandler->oFileList[osFilename];
+    std::shared_ptr<VSIMemFile> poFile = poHandler->oFileList[osFilename];
     GByte *pabyData = poFile->pabyData;
     if( pnDataLength != nullptr )
         *pnDataLength = poFile->nLength;
@@ -1030,10 +1013,11 @@ GByte *VSIGetMemFileBuffer( const char *pszFilename,
         poHandler->oFileList.erase( poHandler->oFileList.find(osFilename) );
 #ifdef DEBUG_VERBOSE
         CPLDebug("VSIMEM", "VSIGetMemFileBuffer() %s: ref_count=%d (before)",
-                 poFile->osFilename.c_str(), poFile->nRefCount);
+                 poFile->osFilename.c_str(), poFile.use_count());
 #endif
-        CPLAtomicDec(&(poFile->nRefCount));
-        delete poFile;
+        poFile->pabyData = nullptr;
+        poFile->nLength = 0;
+        poFile->nAllocLength = 0;
     }
 
     return pabyData;

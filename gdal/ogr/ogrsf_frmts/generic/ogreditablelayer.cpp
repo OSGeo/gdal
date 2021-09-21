@@ -674,9 +674,6 @@ OGRErr      OGREditableLayer::CreateField( OGRFieldDefn *poField,
 
     m_oMapEditableFDefnFieldNameToIdx.clear();
 
-    // workarounds a bug in certain QGIS versions (2.0 for example)
-    SetIgnoredFields(nullptr);
-
     if( !m_bStructureModified &&
         m_poDecoratedLayer->TestCapability(OLCCreateField) )
     {
@@ -710,9 +707,6 @@ OGRErr      OGREditableLayer::DeleteField( int iField )
     if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
 
     m_oMapEditableFDefnFieldNameToIdx.clear();
-
-    // workarounds a bug in certain QGIS versions (2.0 for example)
-    SetIgnoredFields(nullptr);
 
     CPLString osDeletedField;
     if( iField >= 0 && iField < m_poEditableFeatureDefn->GetFieldCount() )

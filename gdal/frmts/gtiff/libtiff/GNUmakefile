@@ -41,17 +41,18 @@ OBJ	= \
 	tif_zip.o \
 	tif_lzma.o \
 	tif_zstd.o \
-	tif_webp.o
+	tif_webp.o \
+	tif_lerc.o
 
 O_OBJ	=	$(foreach file,$(OBJ),../../o/$(file))
 
 # Note: HOST_FILLORDER value is set arbitrarily. This isn't used by GDAL
 ALL_C_FLAGS =	$(CFLAGS_NOFTRAPV) $(CPPFLAGS) -DDONT_DEPRECATE_SPRINTF -DHOST_FILLORDER=FILLORDER_LSB2MSB
 
-ifeq ($(LIBZ_SETTING),internal) 
-XTRA_OPT =      -I../../zlib 
-else 
-XTRA_OPT = 
+ifeq ($(LIBZ_SETTING),internal)
+XTRA_OPT =      -I../../zlib
+else
+XTRA_OPT =
 endif
 
 ifeq ($(RENAME_INTERNAL_LIBTIFF_SYMBOLS),yes)
@@ -92,6 +93,14 @@ ifeq ($(LIBDEFLATE_SETTING),yes)
 ALL_C_FLAGS 	:=	$(ALL_C_FLAGS) -DLIBDEFLATE_SUPPORT
 endif
 
+ifeq ($(HAVE_LERC),internal)
+ALL_C_FLAGS 	:=	$(ALL_C_FLAGS) -DLERC_SUPPORT -I../../../third_party/LercLib
+endif
+
+ifeq ($(HAVE_LERC),external)
+ALL_C_FLAGS 	:=	$(ALL_C_FLAGS) -DLERC_SUPPORT $(LERC_INCLUDE)
+endif
+
 default:	$(EXTRA_DEP) $(OBJ:.o=.$(OBJ_EXT))
 
 clean:
@@ -119,17 +128,17 @@ install-obj:	$(EXTRA_DEP) $(O_OBJ:.o=.$(OBJ_EXT))
 ifeq ($(RENAME_INTERNAL_LIBTIFF_SYMBOLS),yes)
 ../../o/tif_jpeg.$(OBJ_EXT) : tif_jpeg.c t4.h tif_config.h tif_dir.h tif_fax3.h tif_predict.h tiff.h tiffconf.h tiffio.h tiffiop.h tiffvers.h uvcode.h
 	sed "s/defined(TIFFInitJPEG)/0/" < tif_jpeg.c > tmp_tif_jpeg.c
-	$(CC) -c -I../../port $(ALL_C_FLAGS) tmp_tif_jpeg.c -o $@
+	$(CC) -c $(ALL_C_FLAGS) tmp_tif_jpeg.c -o $@
 	rm tmp_tif_jpeg.c
 
 ../../o/tif_jpeg_12.$(OBJ_EXT) : tif_jpeg_12.c t4.h tif_config.h tif_dir.h tif_fax3.h tif_predict.h tiff.h tiffconf.h tiffio.h tiffiop.h tiffvers.h uvcode.h
-	sed "s/#  define TIFFInitJPEG/#undef TIFFInitJPEG\n#  define TIFFInitJPEG/" < tif_jpeg_12.c > tmp_tif_jpeg_12.c
-	$(CC) -c -I../../port $(ALL_C_FLAGS) tmp_tif_jpeg_12.c -o $@
+	sed "s/#define TIFFInitJPEG/#undef TIFFInitJPEG\n#  define TIFFInitJPEG/" < tif_jpeg_12.c > tmp_tif_jpeg_12.c
+	$(CC) -c $(ALL_C_FLAGS) tmp_tif_jpeg_12.c -o $@
 	rm tmp_tif_jpeg_12.c
 endif
 
 ../../o/%.$(OBJ_EXT):	%.c t4.h tif_config.h tif_dir.h tif_fax3.h tif_predict.h tiff.h tiffconf.h tiffio.h tiffiop.h tiffvers.h uvcode.h
-	$(CC) -c -I../../port $(ALL_C_FLAGS) $< -o $@
+	$(CC) -c $(ALL_C_FLAGS) $< -o $@
 
 libjpeg12src:
 	(cd ../../jpeg; $(MAKE) libjpeg12/jcapimin12.c)

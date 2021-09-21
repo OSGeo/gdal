@@ -34,6 +34,8 @@
 #include "cpl_string.h"
 #include "cpl_error.h"
 
+#include <mutex>
+
 CPL_CVSID("$Id$")
 
 #ifndef SQLColumns_TABLE_CAT
@@ -160,6 +162,164 @@ int CPLODBCDriverInstaller::InstallDriver( const char* pszDriver,
 
     // SUCCESS
     return TRUE;
+}
+
+/************************************************************************/
+/*                      FindMdbToolsDriverLib()                         */
+/************************************************************************/
+
+bool CPLODBCDriverInstaller::FindMdbToolsDriverLib(CPLString &osDriverFile)
+{
+    const char* pszDrvCfg = CPLGetConfigOption("MDBDRIVER_PATH", nullptr);
+    if ( nullptr != pszDrvCfg )
+    {
+        // Directory or file path
+        CPLString strLibPath(pszDrvCfg);
+
+        VSIStatBuf sStatBuf;
+        if ( VSIStat( pszDrvCfg, &sStatBuf ) == 0
+             && VSI_ISDIR( sStatBuf.st_mode ) )
+        {
+            // Find default library in custom directory
+            const char* pszDriverFile = CPLFormFilename( pszDrvCfg, "libmdbodbc.so", nullptr );
+            CPLAssert( nullptr != pszDriverFile );
+
+            strLibPath = pszDriverFile;
+        }
+
+        if ( LibraryExists( strLibPath.c_str() ) )
+        {
+            // Save custom driver path
+            osDriverFile = strLibPath;
+            return true;
+        }
+    }
+
+    // Check if we have a declaration of the driver in /etc/odbcinst.ini
+    GByte* pabyRet = nullptr;
+    CPL_IGNORE_RET_VAL(VSIIngestFile(nullptr, "/etc/odbcinst.ini", &pabyRet,
+                                     nullptr, 100 * 1000));
+    if( pabyRet )
+    {
+        const bool bFound = strstr(reinterpret_cast<const char*>(pabyRet),
+                                   "Microsoft Access Driver") != nullptr;
+        CPLFree(pabyRet);
+        if( bFound )
+        {
+            CPLDebug("ODBC", "Declaration of Microsoft Access Driver found in /etc/odbcinst.ini");
+            return false;
+        }
+    }
+
+    // Default name and path of driver library
+    const char* const apszLibNames[] = {
+        "libmdbodbc.so",
+        "libmdbodbc.so.0" /* for Ubuntu 8.04 support */
+    };
+    const char* const apzPaths[] = {
+        "/usr/lib/x86_64-linux-gnu/odbc", /* ubuntu 20.04 */
+        "/usr/lib64",
+        "/usr/lib64/odbc", /* fedora */
+        "/usr/local/lib64",
+        "/usr/lib",
+        "/usr/local/lib"
+    };
+
+    // Try to find library in default paths
+    for ( const char* pszPath: apzPaths )
+    {
+        for( const char* pszLibName: apszLibNames )
+        {
+            const char* pszDriverFile = CPLFormFilename( pszPath, pszLibName, nullptr );
+            CPLAssert( nullptr != pszDriverFile );
+
+            if ( LibraryExists( pszDriverFile ) )
+            {
+                // Save default driver path
+                osDriverFile = pszDriverFile;
+                return true;
+            }
+        }
+    }
+
+    CPLError(CE_Failure, CPLE_AppDefined, "ODBC: MDB Tools driver not found!\n" );
+    // Driver not found!
+    return false;
+}
+
+/************************************************************************/
+/*                              LibraryExists()                         */
+/************************************************************************/
+
+bool CPLODBCDriverInstaller::LibraryExists(const char *pszLibPath)
+{
+    CPLAssert( nullptr != pszLibPath );
+
+    VSIStatBuf stb;
+
+    if ( 0 == VSIStat( pszLibPath, &stb ) )
+    {
+        if (VSI_ISREG( stb.st_mode ) || VSI_ISLNK(stb.st_mode))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/************************************************************************/
+/*                      InstallMdbToolsDriver()                         */
+/************************************************************************/
+
+void CPLODBCDriverInstaller::InstallMdbToolsDriver()
+{
+#ifdef WIN32
+    return;
+#else
+    static std::once_flag oofDriverInstallAttempted;
+    std::call_once( oofDriverInstallAttempted, [ = ]
+    {
+        //
+        // ODBCINST.INI NOTE:
+        // This operation requires write access to odbcinst.ini file
+        // located in directory pointed by ODBCINISYS variable.
+        // Usually, it points to /etc, so non-root users can overwrite this
+        // setting ODBCINISYS with location they have write access to, e.g.:
+        // $ export ODBCINISYS=$HOME/etc
+        // $ touch $ODBCINISYS/odbcinst.ini
+        //
+        // See: http://www.unixodbc.org/internals.html
+        //
+        CPLString osDriverFile;
+
+        if ( FindMdbToolsDriverLib( osDriverFile ) )
+        {
+            CPLAssert( !osDriverFile.empty() );
+            CPLDebug( "ODBC", "MDB Tools driver: %s", osDriverFile.c_str() );
+
+            CPLString driverName("Microsoft Access Driver (*.mdb)");
+            CPLString driver(driverName);
+            driver += '\0';
+            driver += "Driver=";
+            driver += osDriverFile; // Found by FindDriverLib()
+            driver += '\0';
+            driver += "FileUsage=1";
+            driver += '\0';
+            driver += '\0';
+
+            // Rregister driver
+            CPLODBCDriverInstaller dri;
+            if ( !dri.InstallDriver(driver.c_str(), nullptr, ODBC_INSTALL_COMPLETE) )
+            {
+                // Report ODBC error
+                CPLError( CE_Failure, CPLE_AppDefined, "ODBC: Unable to install MDB driver for ODBC, MDB access may not supported: %s", dri.GetLastError() );
+            }
+            else
+                CPLDebug( "ODBC", "MDB Tools driver installed successfully!");
+        }
+    } );
+#endif
 }
 
 /************************************************************************/
@@ -363,7 +523,7 @@ int CPLODBCSession::RollbackTransaction()
  * ODBC error messages are reported in the following format:
  * [SQLState]ErrorMessage(NativeErrorCode)
  *
- * Multiple error messages are delimeted by ",".
+ * Multiple error messages are delimited by ",".
  */
 int CPLODBCSession::Failed( int nRetCode, HSTMT hStmt )
 
@@ -434,54 +594,50 @@ int CPLODBCSession::Failed( int nRetCode, HSTMT hStmt )
  */
 bool CPLODBCSession::ConnectToMsAccess(const char *pszName, const char *pszDSNStringTemplate)
 {
-    char *pszDSN = nullptr;
-
-    const bool usingAutomaticDSNStringTemplate = pszDSNStringTemplate == nullptr;
-
-    if( usingAutomaticDSNStringTemplate )
+    const auto Connect = [this, &pszName](const char* l_pszDSNStringTemplate, bool bVerboseError)
     {
-#ifdef WIN32
-        pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb, *.accdb);DBQ=%s";
-#else
-        pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb, *.accdb);DBQ=\"%s\"";
-#endif
-    }
-    pszDSN = static_cast< char * >( CPLMalloc(strlen(pszName)+strlen(pszDSNStringTemplate)+100) );
-    /* coverity[tainted_string] */
-    snprintf( pszDSN,
-        strlen(pszName)+strlen(pszDSNStringTemplate)+100,
-        pszDSNStringTemplate,  pszName );
-
-    CPLDebug( "ODBC", "EstablishSession(%s)", pszDSN );
-    int bError = !EstablishSession( pszDSN, nullptr, nullptr );
-    if( bError && usingAutomaticDSNStringTemplate )
-    {
-        // Trying with another template (#5594)
-#ifdef WIN32
-        pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb);DBQ=%s";
-#else
-        pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb);DBQ=\"%s\"";
-#endif
-        CPLFree( pszDSN );
-        pszDSN = static_cast< char * >( CPLMalloc(strlen(pszName)+strlen(pszDSNStringTemplate)+100) );
+        char* pszDSN = static_cast< char * >( CPLMalloc(strlen(pszName)+strlen(l_pszDSNStringTemplate)+100) );
+        /* coverity[tainted_string] */
         snprintf( pszDSN,
-            strlen(pszName)+strlen(pszDSNStringTemplate)+100,
-            pszDSNStringTemplate,  pszName );
+            strlen(pszName)+strlen(l_pszDSNStringTemplate)+100,
+            l_pszDSNStringTemplate,  pszName );
         CPLDebug( "ODBC", "EstablishSession(%s)", pszDSN );
-        bError = !EstablishSession( pszDSN, nullptr, nullptr );
-    }
+        int bError = !EstablishSession( pszDSN, nullptr, nullptr );
+        if ( bError )
+        {
+            if( bVerboseError )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Unable to initialize ODBC connection to DSN for %s,\n"
+                          "%s", pszDSN, GetLastError() );
+            }
+            CPLFree( pszDSN );
+            return false;
+        }
 
-    if ( bError )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unable to initialize ODBC connection to DSN for %s,\n"
-                  "%s", pszDSN, GetLastError() );
         CPLFree( pszDSN );
-        return false;
+        return true;
+    };
+
+    if( pszDSNStringTemplate )
+    {
+        return Connect(pszDSNStringTemplate, true);
     }
 
-    CPLFree( pszDSN );
-    return true;
+    for( const char* l_pszDSNStringTemplate:
+            { "DRIVER=Microsoft Access Driver (*.mdb, *.accdb);DBQ=%s",
+              "DRIVER=Microsoft Access Driver (*.mdb, *.accdb);DBQ=\"%s\"",
+              "DRIVER=Microsoft Access Driver (*.mdb);DBQ=%s",
+              "DRIVER=Microsoft Access Driver (*.mdb);DBQ=\"%s\"" } )
+    {
+        if( Connect(l_pszDSNStringTemplate, false) )
+            return true;
+    }
+
+    CPLError( CE_Failure, CPLE_AppDefined,
+              "Unable to initialize ODBC connection to DSN for %s,\n"
+              "%s", pszName, GetLastError() );
+    return false;
 }
 
 /************************************************************************/
@@ -1756,7 +1912,8 @@ int CPLODBCStatement::GetTables( const char *pszCatalog,
 
 {
     CPLDebug( "ODBC", "CatalogNameL: %s\nSchema name: %s",
-                pszCatalog, pszSchema );
+              pszCatalog ? pszCatalog : "(null)",
+              pszSchema ? pszSchema : "(null)" );
 
 #if (ODBCVER >= 0x0300)
 
@@ -1975,6 +2132,8 @@ SQLSMALLINT CPLODBCStatement::GetTypeMapping( SQLSMALLINT nTypeCode )
         case SQL_INTERVAL_HOUR_TO_MINUTE:
         case SQL_INTERVAL_HOUR_TO_SECOND:
         case SQL_INTERVAL_MINUTE_TO_SECOND:
+            return SQL_C_CHAR;
+
         case SQL_GUID:
             return SQL_C_GUID;
 

@@ -72,6 +72,26 @@ CPLJSONDocument& CPLJSONDocument::operator=(const CPLJSONDocument& other)
 
     return *this;
 }
+
+CPLJSONDocument::CPLJSONDocument(CPLJSONDocument&& other):
+    m_poRootJsonObject(other.m_poRootJsonObject)
+{
+    other.m_poRootJsonObject = nullptr;
+}
+
+CPLJSONDocument& CPLJSONDocument::operator=(CPLJSONDocument&& other)
+{
+    if( this == &other )
+        return *this;
+
+    if( m_poRootJsonObject )
+        json_object_put( TO_JSONOBJ(m_poRootJsonObject) );
+    m_poRootJsonObject = other.m_poRootJsonObject;
+    other.m_poRootJsonObject = nullptr;
+
+    return *this;
+}
+
 /*! @endcond */
 
 /**
@@ -147,6 +167,19 @@ CPLJSONObject CPLJSONDocument::GetRoot()
 }
 
 /**
+ * Set json document root object
+ * @param oRoot CPLJSONObject root object
+ *
+ * @since GDAL 3.4
+ */
+void CPLJSONDocument::SetRoot(const CPLJSONObject& oRoot)
+{
+    if( m_poRootJsonObject )
+        json_object_put( TO_JSONOBJ(m_poRootJsonObject) );
+    m_poRootJsonObject = json_object_get( TO_JSONOBJ(oRoot.m_poJsonObject) );
+}
+
+/**
  * Load json document from file by provided path
  * @param  osPath Path to json file.
  * @return         true on success. If error occurred it can be received using CPLGetLastErrorMsg method.
@@ -157,7 +190,7 @@ bool CPLJSONDocument::Load(const std::string &osPath)
 {
     GByte *pabyOut = nullptr;
     vsi_l_offset nSize = 0;
-    if( !VSIIngestFile( nullptr, osPath.c_str(), &pabyOut, &nSize, 8 * 1024 * 1024) ) // Maximum 8 Mb allowed
+    if( !VSIIngestFile( nullptr, osPath.c_str(), &pabyOut, &nSize, 100 * 1024 * 1024) ) // Maximum 100 Mb allowed
     {
         CPLError( CE_Failure, CPLE_FileIO, "Load json file %s failed", osPath.c_str() );
         return false;
@@ -185,6 +218,18 @@ bool CPLJSONDocument::LoadMemory(const GByte *pabyData, int nLength)
 
     if( m_poRootJsonObject )
         json_object_put( TO_JSONOBJ(m_poRootJsonObject) );
+
+    if( nLength == 4 && memcmp(reinterpret_cast<const char*>(pabyData), "true", nLength) == 0 )
+    {
+        m_poRootJsonObject = json_object_new_boolean(true);
+        return true;
+    }
+
+    if( nLength == 5 && memcmp(reinterpret_cast<const char*>(pabyData), "false", nLength) == 0 )
+    {
+        m_poRootJsonObject = json_object_new_boolean(false);
+        return true;
+    }
 
     json_tokener *jstok = json_tokener_new();
     m_poRootJsonObject = json_tokener_parse_ex( jstok,
@@ -857,6 +902,23 @@ void CPLJSONObject::Delete(const std::string &osName)
     {
         json_object_object_del( TO_JSONOBJ(object.GetInternalHandle()),
                                 objectName.c_str() );
+    }
+}
+
+/**
+ * Delete json object by key (without splitting on /)
+ * @param  osName Key name.
+ *
+ * @since GDAL 3.4
+ */
+void CPLJSONObject::DeleteNoSplitName(const std::string &osName)
+{
+    if( m_osKey == INVALID_OBJ_KEY )
+        m_osKey.clear();
+    if( m_poJsonObject )
+    {
+        json_object_object_del( TO_JSONOBJ(m_poJsonObject),
+                                osName.c_str() );
     }
 }
 

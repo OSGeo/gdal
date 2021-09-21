@@ -388,19 +388,15 @@ void OGRAmigoCloudLayer::EstablishLayerDefn(const char* pszLayerName,
                 }
                 else if(EQUAL(fieldType.c_str(), "geometry"))
                 {
-                    OGRAmigoCloudGeomFieldDefn *poFieldDefn =
-                            new OGRAmigoCloudGeomFieldDefn(fieldName.c_str(), wkbUnknown);
-                    poFeatureDefn->AddGeomFieldDefn(poFieldDefn, FALSE);
+                    auto poFieldDefn =
+                        cpl::make_unique<OGRAmigoCloudGeomFieldDefn>(fieldName.c_str(), wkbUnknown);
                     OGRSpatialReference* poSRS = GetSRS(fieldName.c_str(), &poFieldDefn->nSRID);
                     if( poSRS != nullptr )
                     {
-                        poFeatureDefn->GetGeomFieldDefn(
-                                poFeatureDefn->GetGeomFieldCount() - 1)->SetSpatialRef(poSRS);
+                        poFieldDefn->SetSpatialRef(poSRS);
                         poSRS->Release();
-                    } else {
-                        poFeatureDefn->GetGeomFieldDefn(
-                                poFeatureDefn->GetGeomFieldCount() - 1)->SetSpatialRef(poSRS);
                     }
+                    poFeatureDefn->AddGeomFieldDefn(std::move(poFieldDefn));
                 }
                 else if(EQUAL(fieldType.c_str(), "boolean"))
                 {

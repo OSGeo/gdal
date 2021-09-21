@@ -373,14 +373,14 @@ char** GDALMDReaderPleiades::LoadRPCXmlFile()
     char** papszRPB = nullptr;
     for( int i = 0; apszRPBMap[i] != nullptr; i += 2 )
     {
+        const char *pszValue = CSLFetchNameValue(papszRawRPCList,
+                                                 apszRPBMap[i + 1]);
         // Pleiades RPCs use "center of upper left pixel is 1,1" convention, convert to
         // Digital globe convention of "center of upper left pixel is 0,0".
-        if (i == 0 || i == 2)
+        if ((i == 0 || i == 2) && pszValue)
         {
             CPLString osField;
-            const char *pszOffset = CSLFetchNameValue(papszRawRPCList,
-                                                    apszRPBMap[i + 1]);
-            double dfVal = CPLAtofM( pszOffset ) -1.0 ;
+            double dfVal = CPLAtofM( pszValue ) -1.0 ;
             if( i == 0 )
                 dfVal += nLineOffShift;
             else
@@ -390,9 +390,7 @@ char** GDALMDReaderPleiades::LoadRPCXmlFile()
         }
         else
         {
-            papszRPB = CSLAddNameValue(papszRPB, apszRPBMap[i],
-                                    CSLFetchNameValue(papszRawRPCList,
-                                                        apszRPBMap[i + 1]));
+            papszRPB = CSLAddNameValue(papszRPB, apszRPBMap[i], pszValue);
         }
     }
 

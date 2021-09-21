@@ -42,6 +42,7 @@
 #include "cpl_minixml.h"
 #include "cpl_string.h"
 #include "ogr_core.h"
+#include "ogr_p.h"
 #include "ogr_geometry.h"
 
 CPL_CVSID("$Id$")
@@ -468,6 +469,18 @@ bool GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
     const char *pszGPath = "";
     int nGeomType = wkbUnknown;
 
+    const auto FlattenGeomTypeFromInt = [] (int eType)
+    {
+        eType = eType & (~wkb25DBitInternalUse);
+        if( eType >= 1000 && eType < 2000 )  // ISO Z.
+            return eType - 1000;
+        if( eType >= 2000 && eType < 3000 )  // ISO M.
+            return eType - 2000;
+        if( eType >= 3000 && eType < 4000 )  // ISO ZM.
+            return eType - 3000;
+        return eType;
+    };
+
     CPLXMLNode *psThis = nullptr;
     for( psThis = psRoot->psChild; psThis != nullptr; psThis = psThis->psNext )
     {
@@ -484,11 +497,10 @@ bool GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
             if( pszType != nullptr && !EQUAL(pszType, "0") )
             {
                 nGeomType = atoi(pszType);
-                const OGRwkbGeometryType nFlattenGeomType =
-                    wkbFlatten(nGeomType);
+                const int nFlattenGeomType = FlattenGeomTypeFromInt(nGeomType);
                 if( nGeomType != 0 &&
-                    !(nFlattenGeomType >= wkbPoint &&
-                      nFlattenGeomType <= wkbMultiSurface) )
+                    !(nFlattenGeomType >= static_cast<int>(wkbPoint) &&
+                      nFlattenGeomType <= static_cast<int>(wkbTIN)) )
                 {
                     nGeomType = wkbUnknown;
                     CPLError(CE_Warning, CPLE_AppDefined,
@@ -571,8 +583,7 @@ bool GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
             if( pszGeometryType != nullptr && !EQUAL(pszGeometryType, "0") )
             {
                 nGeomType = atoi(pszGeometryType);
-                const OGRwkbGeometryType nFlattenGeomType =
-                    wkbFlatten(nGeomType);
+                const int nFlattenGeomType = FlattenGeomTypeFromInt(nGeomType);
                 if( nGeomType == 100 || EQUAL(pszGeometryType, "NONE") )
                 {
                     bHasValidGeometryElementPath = false;
@@ -580,8 +591,8 @@ bool GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
                     break;
                 }
                 else if( nGeomType != 0 &&
-                         !(nFlattenGeomType >= wkbPoint &&
-                           nFlattenGeomType <= wkbMultiSurface) )
+                         !(nFlattenGeomType >= static_cast<int>(wkbPoint) &&
+                           nFlattenGeomType <= static_cast<int>(wkbTIN)) )
                 {
                     nGeomType = wkbUnknown;
                     CPLError(CE_Warning, CPLE_AppDefined,

@@ -5,7 +5,7 @@ include ../../../GDALmake.opt
 MIN_OBJ	=	dgnopen.o dgnread.o dgnhelp.o dgnwrite.o dgnstroke.o
 OBJ =	ogrdgndriver.o ogrdgndatasource.o ogrdgnlayer.o $(MIN_OBJ)
 
-CPPFLAGS	:=	-I.. -I../..  $(CPPFLAGS)
+CPPFLAGS	:=	-iquote .. -iquote ../..  $(CPPFLAGS)
 
 CPL_DIR	=	../../../port
 

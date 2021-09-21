@@ -201,7 +201,7 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
             if ( poGeom == nullptr )
             {
                 // Try also spatialite geometry blobs
-                if( OGRSQLiteLayer::ImportSpatiaLiteGeometry( pabyGpkg, iGpkgSize,
+                if( OGRSQLiteImportSpatiaLiteGeometry( pabyGpkg, iGpkgSize,
                                                               &poGeom ) != OGRERR_NONE )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined, "Unable to read geometry");
@@ -562,7 +562,7 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
                 else
                 {
                     // Try also spatialite geometry blobs
-                    if( OGRSQLiteLayer::ImportSpatiaLiteGeometry(
+                    if( OGRSQLiteImportSpatiaLiteGeometry(
                           pabyGpkg, nBytes, &poGeom, &nSRID ) != OGRERR_NONE )
                     {
                         delete poGeom;

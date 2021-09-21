@@ -143,6 +143,8 @@ void RegisterOGRFlatGeobuf()
 "  <Option name='VERIFY_BUFFERS' type='boolean' description='Verify flatbuffers integrity' default='YES'/>"
 "</OpenOptionList>");
 
+    poDriver->SetMetadataItem( GDAL_DCAP_COORDINATE_EPOCH, "YES" );
+
     poDriver->pfnOpen = OGRFlatGeobufDataset::Open;
     poDriver->pfnCreate = OGRFlatGeobufDataset::Create;
     poDriver->pfnIdentify = OGRFlatGeobufDriverIdentify;
@@ -304,7 +306,7 @@ GDALDataset *OGRFlatGeobufDataset::Create( const char *pszName,
 OGRLayer *OGRFlatGeobufDataset::GetLayer( int iLayer ) {
     if( iLayer < 0 || iLayer >= GetLayerCount() )
         return nullptr;
-    return m_apoLayers[iLayer].get();
+    return m_apoLayers[iLayer]->GetLayer();
 }
 
 int OGRFlatGeobufDataset::TestCapability(const char *pszCap)
@@ -389,29 +391,19 @@ OGRLayer* OGRFlatGeobufDataset::ICreateLayer( const char *pszLayerName,
 
     m_apoLayers.push_back(std::move(poLayer));
 
-    return m_apoLayers.back().get();
+    return m_apoLayers.back()->GetLayer();
 }
 
 /************************************************************************/
 //                            GetFileList()                             */
 /************************************************************************/
 
-template<typename Base, typename T>
-inline bool instanceof(const T*) {
-   return std::is_base_of<Base, T>::value;
-}
-
 char** OGRFlatGeobufDataset::GetFileList()
 {
     CPLStringList oFileList;
     for( const auto& poLayer: m_apoLayers )
     {
-        std::string filename;
-        if (instanceof<OGRFlatGeobufEditableLayer>(poLayer.get()))
-            filename = dynamic_cast<OGRFlatGeobufEditableLayer *>(poLayer.get())->GetFilename();
-        else
-            filename = dynamic_cast<OGRFlatGeobufLayer *>(poLayer.get())->GetFilename();
-        oFileList.AddString( filename.c_str() );
+        oFileList.AddString( poLayer->GetFilename().c_str() );
     }
     return oFileList.StealList();
 }

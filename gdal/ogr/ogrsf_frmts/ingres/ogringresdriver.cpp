@@ -87,6 +87,12 @@ OGRDataSource *OGRIngresDriver::Open( const char * pszFilename,
 
     CSLDestroy( papszOptions );
 
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("INGRES") )
+    {
+        delete poDS;
+        return nullptr;
+    }
+
     return poDS;
 }
 
@@ -98,6 +104,11 @@ OGRDataSource *OGRIngresDriver::CreateDataSource( const char * pszName,
                                                   char ** /* papszOptions */ )
 
 {
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("INGRES") )
+    {
+        return nullptr;
+    }
+
     OGRIngresDataSource *poDS = NULL;
 
     char **papszOpenOptions = ParseWrappedName( pszName );

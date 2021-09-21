@@ -32,6 +32,8 @@
 #ifndef GT_OVERVIEW_H_INCLUDED
 #define GT_OVERVIEW_H_INCLUDED
 
+#include <cstdint>
+
 #include "gdal_priv.h"
 #include "tiffio.h"
 
@@ -53,7 +55,7 @@ toff_t GTIFFWriteDirectory( TIFF *hTIFF, int nSubfileType,
                             const char* pszJPEGQuality,
                             const char* pszJPEGTablesMode,
                             const char* pszNoData,
-                            const uint32* panLercAddCompressionAndVersion,
+                            const uint32_t* panLercAddCompressionAndVersion,
                             bool DeferStrileArrayWriting,
                             const char * pszWebpLevel );
 

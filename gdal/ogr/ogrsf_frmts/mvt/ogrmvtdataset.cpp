@@ -61,8 +61,7 @@ constexpr int knMAX_FILES_PER_DIR = 10000;
 #include <sqlite3.h>
 #include "../sqlite/ogrsqliteutility.h"
 
-#define DO_NOT_INCLUDE_SQLITE_CLASSES
-#include "../sqlite/ogr_sqlite.h"
+#include "../sqlite/ogrsqlitevfs.h"
 
 #include "cpl_worker_thread_pool.h"
 
@@ -104,7 +103,7 @@ static void InitWebMercatorTilingScheme(OGRSpatialReference* poSRS,
 /*                           GetCmdId()                                 */
 /************************************************************************/
 
-/* For a drawing instruction combining a command id and a command count, 
+/* For a drawing instruction combining a command id and a command count,
  * return the command id */
 static unsigned GetCmdId(unsigned int nCmdCountCombined)
 {
@@ -115,7 +114,7 @@ static unsigned GetCmdId(unsigned int nCmdCountCombined)
 /*                           GetCmdCount()                              */
 /************************************************************************/
 
-/* For a drawing instruction combining a command id and a command count, 
+/* For a drawing instruction combining a command id and a command count,
  * return the command count */
 static unsigned GetCmdCount(unsigned int nCmdCountCombined)
 {
@@ -921,6 +920,22 @@ OGRGeometry* OGRMVTLayer::ParseGeometry(unsigned int nGeomType,
                         double dfY;
                         GetXY(nX, nY, dfX, dfY);
                         OGRPoint* poPoint = new OGRPoint(dfX, dfY);
+                        if( i == 0 && nCount == 2 &&
+                            m_pabyDataCur == pabyDataGeometryEnd )
+                        {
+                            // Current versions of Mapserver at time of writing
+                            // wrongly encode a point with nCount = 2
+                            static bool bWarned = false;
+                            if( !bWarned )
+                            {
+                                CPLDebug("MVT",
+                                         "Reading likely a broken point as "
+                                         "produced by some versions of Mapserver");
+                                bWarned = true;
+                            }
+                            delete poMultiPoint;
+                            return poPoint;
+                        }
                         poMultiPoint->addGeometryDirectly(poPoint);
                     }
                 }
@@ -2448,7 +2463,7 @@ static void ConvertFromWGS84(OGRSpatialReference* poTargetSRS,
         OGRSpatialReference oSRS_EPSG4326;
         oSRS_EPSG4326.SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
         oSRS_EPSG4326.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        OGRCoordinateTransformation* poCT = 
+        OGRCoordinateTransformation* poCT =
             OGRCreateCoordinateTransformation(&oSRS_EPSG4326, poTargetSRS);
         if( poCT )
         {
@@ -3701,7 +3716,7 @@ bool OGRMVTWriterDataset::EncodeRepairedOuterRing(
     const int nLastYOri = nLastY;
     GUInt32 nLineToCount = 0;
     const int nPoints = poRing->getNumPoints() - 1;
-    std::unique_ptr<OGRLinearRing> poOutLinearRing(new OGRLinearRing());
+    auto poOutLinearRing = cpl::make_unique<OGRLinearRing>();
     poOutLinearRing->setNumPoints(nPoints);
     for( int i = 0; i < nPoints; i++ )
     {
@@ -3785,7 +3800,7 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
                                            double& dfArea) const
 {
     dfArea = 0;
-    std::unique_ptr<OGRLinearRing> poOutOuterRing(new OGRLinearRing());
+    auto poOutOuterRing = cpl::make_unique<OGRLinearRing>();
     OGRPolygon oOutPolyAllRings;
 
     for( int i = 0; i < 1 + poPoly->getNumInteriorRings(); i++ )
@@ -3806,7 +3821,7 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
         const GUInt32 nMinLineTo = 2;
         std::unique_ptr<OGRLinearRing> poOutInnerRing;
         if( i > 0 )
-            poOutInnerRing = std::unique_ptr<OGRLinearRing>(new OGRLinearRing());
+            poOutInnerRing = cpl::make_unique<OGRLinearRing>();
         OGRLinearRing* poOutRing =
             poOutInnerRing.get() ? poOutInnerRing.get() : poOutOuterRing.get();
 
@@ -4373,7 +4388,7 @@ void OGRMVTWriterDataset::UpdateLayerProperties(
                     oFieldProps.m_dfMaxVal = oValue.getNumericValue();
                     oFieldProps.m_bAllInt = true; // overridden just below
                 }
-                oFieldProps.m_eType = 
+                oFieldProps.m_eType =
                     oValue.isNumeric() ? MVTTileLayerValue::ValueType::DOUBLE :
                     oValue.isString() ?  MVTTileLayerValue::ValueType::STRING :
                                             MVTTileLayerValue::ValueType::BOOL;
@@ -4458,7 +4473,7 @@ static void GZIPCompress(std::string& oTileBuffer)
             VSIFWriteL( oTileBuffer.data(), 1, oTileBuffer.size(), fpGZip );
             VSIFCloseL(fpGZip);
 
-            vsi_l_offset nCompressedSize = 0; 
+            vsi_l_offset nCompressedSize = 0;
             GByte* pabyCompressed = VSIGetMemFileBuffer(
                 osTmpFilename, &nCompressedSize, false);
             oTileBuffer.assign( reinterpret_cast<char*>(pabyCompressed),
@@ -4605,7 +4620,7 @@ static std::vector<GUInt32> GetReducedPrecisionGeometry(
                     GetCmdId(anDstGeometry[nIdxToPatch]),
                     nDstPoints);
 
-                // A valid linestring should have at least one MOVETO + 
+                // A valid linestring should have at least one MOVETO +
                 // one coord pair + one LINETO + one coord pair
                 if( eGeomType == MVTTileLayerFeature::GeomType::LINESTRING )
                 {
@@ -4892,7 +4907,7 @@ std::string OGRMVTWriterDataset::EncodeTile(
             sqlite3_column_text(hStmtLayer, 0));
         sqlite3_bind_int(hStmtRows, 1, nZ);
         sqlite3_bind_int(hStmtRows, 2, nX);
-        sqlite3_bind_int(hStmtRows, 3, nY); 
+        sqlite3_bind_int(hStmtRows, 3, nY);
         sqlite3_bind_text(hStmtRows, 4, pszLayerName, -1, SQLITE_STATIC);
 
         auto oIterMapLayerProps = oMapLayerProps.find(pszLayerName);
@@ -4959,7 +4974,7 @@ std::string OGRMVTWriterDataset::EncodeTile(
 
     std::string oTileBuffer(oTargetTile.write());
     size_t nSizeBefore = oTileBuffer.size();
-    if( m_bGZip) 
+    if( m_bGZip)
         GZIPCompress(oTileBuffer);
     const size_t nSizeAfter = oTileBuffer.size();
     const double dfCompressionRatio =
@@ -5082,7 +5097,7 @@ std::string OGRMVTWriterDataset::EncodeTile(
         }
 
         oTileBuffer = oTargetTile.write();
-        if( m_bGZip) 
+        if( m_bGZip)
             GZIPCompress(oTileBuffer);
 
         if( bTooBigTile )
@@ -5122,7 +5137,7 @@ std::string OGRMVTWriterDataset::RecodeTileLowerResolution(
             sqlite3_column_text(hStmtLayer, 0));
         sqlite3_bind_int(hStmtRows, 1, nZ);
         sqlite3_bind_int(hStmtRows, 2, nX);
-        sqlite3_bind_int(hStmtRows, 3, nY); 
+        sqlite3_bind_int(hStmtRows, 3, nY);
         sqlite3_bind_text(hStmtRows, 4, pszLayerName, -1, SQLITE_STATIC);
 
         std::shared_ptr<MVTTileLayer> poTargetLayer(new MVTTileLayer());
@@ -5151,7 +5166,7 @@ std::string OGRMVTWriterDataset::RecodeTileLowerResolution(
     sqlite3_reset(hStmtLayer);
 
     std::string oTileBuffer(oTargetTile.write());
-    if( m_bGZip) 
+    if( m_bGZip)
         GZIPCompress(oTileBuffer);
 
     return oTileBuffer;
@@ -5428,7 +5443,7 @@ bool OGRMVTWriterDataset::GenerateMetadata(
         OGRSpatialReference oSRS_EPSG4326;
         oSRS_EPSG4326.SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
         oSRS_EPSG4326.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        OGRCoordinateTransformation* poCT = 
+        OGRCoordinateTransformation* poCT =
             OGRCreateCoordinateTransformation(m_poSRS, &oSRS_EPSG4326);
         if( poCT )
         {
@@ -5624,7 +5639,7 @@ bool OGRMVTWriterDataset::GenerateMetadata(
                         static_cast<int>(oFieldProps.m_oSetAllValues.size()));
                 oFieldObj.Add( "type",
                     oFieldProps.m_eType ==
-                        MVTTileLayerValue::ValueType::DOUBLE ? "numeric" :
+                        MVTTileLayerValue::ValueType::DOUBLE ? "number" :
                     oFieldProps.m_eType ==
                         MVTTileLayerValue::ValueType::STRING ? "string" :
                                                                "boolean" );
@@ -5633,7 +5648,7 @@ bool OGRMVTWriterDataset::GenerateMetadata(
                 oFieldObj.Add( "values", oValues );
                 for( const auto& oIterValue: oFieldProps.m_oSetValues )
                 {
-                    if( oIterValue.getType() == 
+                    if( oIterValue.getType() ==
                                         MVTTileLayerValue::ValueType::BOOL )
                     {
                         oValues.Add( oIterValue.getBoolValue() );
@@ -5960,7 +5975,7 @@ GDALDataset* OGRMVTWriterDataset::Create( const char * pszFilename,
     const bool bMBTILES = pszFormat != nullptr && EQUAL(pszFormat, "MBTILES");
 
     // For debug only
-    bool bReuseTempFile = 
+    bool bReuseTempFile =
         CPLTestBool(CPLGetConfigOption("OGR_MVT_REUSE_TEMP_FILE", "NO"));
 
     if( bMBTILES )

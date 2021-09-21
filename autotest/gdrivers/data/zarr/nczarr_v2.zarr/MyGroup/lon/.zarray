@@ -1,0 +1,1 @@
+{"zarr_format": 2,"shape": [3],"dtype": "<f4","chunks": [3],"order": "C","compressor": null,"filters": null,"_NCZARR_ARRAY": {"dimrefs": ["/MyGroup/lon"],"storage": "chunked"}, "fill_value": null}

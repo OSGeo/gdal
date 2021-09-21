@@ -196,10 +196,7 @@ def test_kmlsuperoverlay_4():
 
 def test_kmlsuperoverlay_5():
 
-    try:
-        from xml.etree import ElementTree
-    except ImportError:
-        pytest.skip()
+    from xml.etree import ElementTree
 
     src_ds = gdal.Open("""<VRTDataset rasterXSize="512" rasterYSize="512">
   <SRS>PROJCS["WGS 84 / Mercator 41",
@@ -300,6 +297,22 @@ def test_kmlsuperoverlay_7():
 def test_kmlsuperoverlay_single_overlay_document_folder_pct():
 
     ds = gdal.Open('data/kml/small_world_in_document_folder_pct.kml')
+    assert ds.GetProjectionRef().find('WGS_1984') >= 0
+    got_gt = ds.GetGeoTransform()
+    ref_gt = [-180.0, 0.9, 0.0, 90.0, 0.0, -0.9]
+    for i in range(6):
+        assert got_gt[i] == pytest.approx(ref_gt[i], abs=1e-6)
+
+    assert ds.GetRasterBand(1).GetRasterColorInterpretation() == gdal.GCI_PaletteIndex
+    assert ds.GetRasterBand(1).GetColorTable()
+
+###############################################################################
+# Test raster KML with single Overlay, with no Folder element
+
+
+def test_kmlsuperoverlay_single_overlay_document_pct():
+
+    ds = gdal.Open('data/kml/small_world_in_document_pct.kml')
     assert ds.GetProjectionRef().find('WGS_1984') >= 0
     got_gt = ds.GetGeoTransform()
     ref_gt = [-180.0, 0.9, 0.0, 90.0, 0.0, -0.9]

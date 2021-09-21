@@ -196,7 +196,7 @@ To include link to sample file, use the ``download`` directive::
 
 The result of this code will generate a standard link to an :download:`external file <example.txt>`
 
-To include a the contents of a file, use ``literalinclude`` directive::
+To include the contents of a file, use ``literalinclude`` directive::
 
    Example of :command:`gdalinfo` use:
    
@@ -243,6 +243,25 @@ If you want to reference a non-specific path or file name::
    :file:`{your/own/path/to}/myfile.txt`
 
 This will output: :file:`{your/own/path/to}/myfile.txt`
+
+Reference code
+--------------
+
+To reference a class::
+
+  :cpp:class:`MyClass`
+
+To reference a method or function::
+
+  :cpp:func:`MyClass::MyMethod`
+  :cpp:func:`MyFunction`
+
+Reference configuration options
+-------------------------------
+
+To reference a configuration option, such as **GDAL_CACHEMAX**, use::
+
+  :decl_configoption:`OPTION_NAME`
 
 Reference commands
 ------------------

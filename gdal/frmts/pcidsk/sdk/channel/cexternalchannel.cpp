@@ -229,13 +229,18 @@ int CExternalChannel::ReadBlock( int block_index, void *buffer,
     int src_blocks_per_row = (db->GetWidth() + src_block_width - 1)
         / src_block_width;
     int pixel_size = DataTypeSize(GetType());
-    uint8 *temp_buffer = (uint8 *) calloc(src_block_width*src_block_height,
-                                          pixel_size);
+    std::vector<uint8> temp_buffer_vec;
+    try
+    {
+        temp_buffer_vec.resize(src_block_width*src_block_height*pixel_size);
+    }
+    catch( const std::exception& )
+    {
+        return ThrowPCIDSKException(0, "Failed to allocate temporary block buffer." );
+    }
+    uint8 *temp_buffer = &temp_buffer_vec[0];
     int txoff, tyoff, txsize, tysize;
     int dst_blockx, dst_blocky;
-
-    if( temp_buffer == nullptr )
-        return ThrowPCIDSKException(0, "Failed to allocate temporary block buffer." );
 
     dst_blockx = block_index % blocks_per_row;
     dst_blocky = block_index / blocks_per_row;
@@ -285,9 +290,6 @@ int CExternalChannel::ReadBlock( int block_index, void *buffer,
         block1_ysize = aysize;
     else
         block1_ysize = 0;
-
-    PCIDSKBuffer oTempBufferAutoPtr;
-    oTempBufferAutoPtr.buffer = (char *) temp_buffer;
 
     if( axsize > 0 && aysize > 0 )
     {

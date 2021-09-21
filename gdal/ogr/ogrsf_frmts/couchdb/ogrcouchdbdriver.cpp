@@ -71,6 +71,12 @@ static GDALDataset* OGRCouchDBDriverOpen( GDALOpenInfo* poOpenInfo )
         poDS = nullptr;
     }
 
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("COUCHDB") )
+    {
+        delete poDS;
+        return nullptr;
+    }
+
     return poDS;
 }
 
@@ -85,6 +91,9 @@ static GDALDataset* OGRCouchDBDriverCreate( const char * pszName,
                                             GDALDataType /* eDT */,
                                             char ** /* papszOptions */ )
 {
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("COUCHDB") )
+        return nullptr;
+
     OGRCouchDBDataSource   *poDS = new OGRCouchDBDataSource();
 
     if( !poDS->Open( pszName, TRUE ) )

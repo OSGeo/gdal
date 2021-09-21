@@ -1,0 +1,44 @@
+name: coverity-scan
+
+# Controls when the action will run.
+on:
+  # Run this action on a schedule (we're allowed a maximum of two per day)
+  schedule:
+    - cron: '0 18 * * SUN' # Sunday at 18:00 UTC
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+
+  coverity_scan:
+    runs-on: ubuntu-latest
+    if: github.repository == 'OSGeo/gdal'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Cache deps
+        uses: actions/cache@v2
+        id: cache-deps
+        with:
+          path: /tmp/docker
+          key: ${{ runner.os }}-cache-ubuntu-20.04-${{ hashFiles('.github/workflows/ubuntu_20.04/build-deps.sh') }}-${{ github.run_id }}
+          restore-keys: ${{ runner.os }}-cache-ubuntu-20.04-${{ hashFiles('.github/workflows/ubuntu_20.04/build-deps.sh') }}-
+
+      - name: Build or restore dependencies
+        run: |
+            if test -f /tmp/docker/gdal-deps-ubuntu-20.04.tar; then
+                docker image load -i /tmp/docker/gdal-deps-ubuntu-20.04.tar
+                docker images
+            else
+                docker build -f .github/workflows/ubuntu_20.04/Dockerfile.deps -t gdal-deps-ubuntu-20.04 .github/workflows/ubuntu_20.04
+                mkdir -p /tmp/docker
+                docker image save -o /tmp/docker/gdal-deps-ubuntu-20.04.tar gdal-deps-ubuntu-20.04
+            fi
+
+      - name: Build
+        run: docker run -e COVERITY_SCAN_TOKEN -e COVERITY_SCAN_EMAIL -v $PWD:/build gdal-deps-ubuntu-20.04 /build/.github/workflows/ubuntu_20.04/build.sh
+        env:
+          COVERITY_SCAN_TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
+          COVERITY_SCAN_EMAIL: ${{ secrets.COVERITY_SCAN_EMAIL }}

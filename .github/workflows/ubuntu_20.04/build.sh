@@ -2,37 +2,33 @@
 
 set -eu
 
-if test -f /build/ccache.tar.gz; then
-    echo "Restoring ccache..."
-    (cd $HOME && tar xzf /build/ccache.tar.gz)
-fi
+if test "${COVERITY_SCAN_TOKEN:-}" = ""; then
+  if test -f /build/ccache.tar.gz; then
+      echo "Restoring ccache..."
+      (cd $HOME && tar xzf /build/ccache.tar.gz)
+  fi
 
-cd /build
+  ccache -M 200M
+  ccache -s
 
-wget -q https://github.com/rouault/libecwj2-3.3-builds/releases/download/v1/install-libecwj2-3.3-ubuntu-20.04.tar.gz
-(cd / && tar xvzf /build/install-libecwj2-3.3-ubuntu-20.04.tar.gz)
-echo "/opt/libecwj2-3.3/lib" > /etc/ld.so.conf.d/libecwj2-3.3.conf
-ldconfig
-
-ccache -M 200M
-ccache -s
-
-cd gdal
-
-export CC="ccache gcc"
-export CXX="ccache g++"
-
-ARCH_FLAGS=""
-if (g++ -march=native -dM -E -x c++ - < /dev/null | grep AVX2 >/dev/null); then
-    ARCH_FLAGS="-mavx2"
-    echo "-mavx2 enabled"
-    echo "Effective SSE/AVX flags:"
-    g++ -mavx2 -dM -E -x c++ - < /dev/null | grep -E 'SSE|AVX'
+  export CC="ccache gcc"
+  export CXX="ccache g++"
+  export CXXFLAGS="-std=c++17 -march=native -O2 -Wodr -flto-odr-type-merging"
+  export CFLAGS="-O2 -march=native"
+  export OTHER_SWITCHES="--enable-lto "
 else
-    echo "AVX2 not available"
+  wget -q https://scan.coverity.com/download/cxx/linux64 --post-data "token=$COVERITY_SCAN_TOKEN&project=GDAL" -O cov-analysis-linux64.tar.gz
+  mkdir /tmp/cov-analysis-linux64
+  tar xzf cov-analysis-linux64.tar.gz --strip 1 -C /tmp/cov-analysis-linux64
+  export OTHER_SWITCHES="--enable-debug "
 fi
 
-CXXFLAGS="-std=c++17 -O1 $ARCH_FLAGS" CFLAGS="-O1 $ARCH_FLAGS" ./configure --prefix=/usr \
+cd /build/gdal
+
+./autogen.sh
+
+./configure --prefix=/usr \
+    ${OTHER_SWITCHES} \
     --without-libtool \
     --with-hide-internal-symbols \
     --with-jpeg12 \
@@ -51,7 +47,27 @@ CXXFLAGS="-std=c++17 -O1 $ARCH_FLAGS" CFLAGS="-O1 $ARCH_FLAGS" ./configure --pre
     --with-kea=/usr/bin/kea-config \
     --with-tiledb \
     --with-crypto \
-    --with-ecw=/opt/libecwj2-3.3
+    --with-ecw=/opt/libecwj2-3.3 \
+    --with-mrsid=/usr/local --with-jp2mrsid \
+    --with-fgdb=/usr/local/FileGDB_API \
+    --with-opencl \
+    --with-pdfium=/usr
+
+if test "${COVERITY_SCAN_TOKEN:-}" != ""; then
+  /tmp/cov-analysis-linux64/bin/cov-build --dir cov-int make "-j$(nproc)"
+  tar czf cov-int.tgz cov-int
+  curl \
+      --form token=$COVERITY_SCAN_TOKEN \
+      --form email=$COVERITY_SCAN_EMAIL \
+      --form file=@cov-int.tgz \
+      --form version=master \
+      --form description="`git rev-parse --abbrev-ref HEAD` `git rev-parse --short HEAD`" \
+      https://scan.coverity.com/builds?project=GDAL
+  exit 0
+fi
+
+unset CXXFLAGS
+unset CFLAGS
 
 make "-j$(nproc)" USER_DEFS=-Werror
 (cd apps; make test_ogrsf  USER_DEFS=-Werror)

@@ -206,7 +206,7 @@ Extract of the documentation of the driver:
    byte count set to 0. This is particularly useful to save disk space and time when
    the file must be initialized empty before being passed to a further processing
    stage that will fill it.
-   To avoid ambiguities with anoter sparse mechanism discussed in the next paragraphs,
+   To avoid ambiguities with another sparse mechanism discussed in the next paragraphs,
    we will call such files with implicit tiles/strips "TIFF sparse files". They will
    be likely *not* interoperable with TIFF readers that are not GDAL based and
    would consider such files with implicit tiles/strips as defective.

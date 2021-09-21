@@ -328,7 +328,7 @@ OGCAPIDataset::~OGCAPIDataset()
         CSLDestroy(papszOptions);
     }
 
-    CloseDependentDatasets();
+    OGCAPIDataset::CloseDependentDatasets();
 }
 
 /************************************************************************/
@@ -408,10 +408,23 @@ bool OGCAPIDataset::Download(
             CPLStringList* paosHeaders )
 {
     char** papszOptions = nullptr;
+    CPLString osHeaders;
     if( pszAccept )
     {
-        papszOptions = CSLSetNameValue(papszOptions,
-            "HEADERS", (CPLString("Accept: ") + pszAccept).c_str());
+        osHeaders += "Accept: ";
+        osHeaders += pszAccept;
+    }
+    if( pszPostContent )
+    {
+        if( !osHeaders.empty() )
+        {
+            osHeaders += "\r\n";
+        }
+        osHeaders += "Content-Type: application/json";
+    }
+    if( !osHeaders.empty() )
+    {
+        papszOptions = CSLSetNameValue(papszOptions, "HEADERS", osHeaders.c_str());
     }
     if( !m_osUserPwd.empty() )
     {
@@ -521,6 +534,9 @@ bool OGCAPIDataset::Download(
     else
     {
         osResult.assign(reinterpret_cast<const char*>(psResult->pabyData), psResult->nDataLen);
+#ifdef DEBUG_VERBOSE
+        CPLDebug("OGCAPI", "%s", osResult.c_str());
+#endif
     }
     CPLHTTPDestroyResult(psResult);
     return true;
@@ -1179,9 +1195,20 @@ bool OGCAPIDataset::InitWithCoverageAPI(GDALOpenInfo* poOpenInfo,
         }
 
         OGRSpatialReference oSRS;
-        const std::string srsName( oDomainSet["generalGrid"].GetString("srsName") );
+        std::string srsName( oDomainSet["generalGrid"].GetString("srsName") );
         bool bSwap = false;
-        if( oSRS.SetFromUserInput( srsName.c_str() ) == OGRERR_NONE )
+
+        // Strip of time component, as found in
+        // OGCAPI:https://maps.ecere.com/ogcapi/collections/blueMarble
+        if( STARTS_WITH(srsName.c_str(),
+                        "http://www.opengis.net/def/crs-compound?1=") &&
+            srsName.find("&2=http://www.opengis.net/def/crs/OGC/0/") != std::string::npos )
+        {
+            srsName = srsName.substr(strlen("http://www.opengis.net/def/crs-compound?1="));
+            srsName.resize(srsName.find("&2="));
+        }
+
+        if( oSRS.SetFromUserInput( srsName.c_str(), OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS ) == OGRERR_NONE )
         {
             if( oSRS.EPSGTreatsAsLatLong() || oSRS.EPSGTreatsAsNorthingEasting() )
             {
@@ -1360,7 +1387,11 @@ GDALRasterBand* OGCAPIMapWrapperBand::GetOverview(int nLevel)
 GDALColorInterp OGCAPIMapWrapperBand::GetColorInterpretation()
 {
     OGCAPIDataset* poGDS = cpl::down_cast<OGCAPIDataset*>(poDS);
-    return poGDS->m_poWMSDS->GetRasterBand(nBand)->GetColorInterpretation();
+    // The WMS driver returns Grey-Alpha for 2 band, RGB(A) for 3 or 4 bands
+    // Restrict that behavior to Byte only data.
+    if( eDataType == GDT_Byte )
+        return poGDS->m_poWMSDS->GetRasterBand(nBand)->GetColorInterpretation();
+    return GCI_Undefined;
 }
 
 /************************************************************************/
@@ -1398,9 +1429,9 @@ static bool ParseXMLSchema(
             const OGRFieldType eFType = GML_GetOGRFieldType(poProperty->GetType(), eSubType);
 
             const char* pszName = poProperty->GetName();
-            std::unique_ptr<OGRFieldDefn> oField(new OGRFieldDefn( pszName, eFType ));
-            oField->SetSubType(eSubType);
-            apoFields.emplace_back(std::move(oField));
+            auto poField = cpl::make_unique<OGRFieldDefn>( pszName, eFType );
+            poField->SetSubType(eSubType);
+            apoFields.emplace_back(std::move(poField));
         }
         delete poGMLFeatureClass;
         return true;
@@ -1447,7 +1478,7 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo* poOpenInfo,
             CPLDebug("OGCAPI", "Missing links for a tileset");
             continue;
         }
-        if( pszRequiredTileMatrixSet != nullptr && 
+        if( pszRequiredTileMatrixSet != nullptr &&
             oTileMatrixSetURI.find(pszRequiredTileMatrixSet) == std::string::npos &&
             oTileMatrixSetDefinition.find(pszRequiredTileMatrixSet) == std::string::npos )
         {
@@ -1489,7 +1520,7 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo* poOpenInfo,
     }
     if( osTilesetURL.empty() )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, 
+        CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot find tilematrixset");
         return false;
     }
@@ -1609,7 +1640,7 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo* poOpenInfo,
     if( tms == nullptr )
         return false;
 
-    if( m_oSRS.SetFromUserInput(tms->crs().c_str()) != OGRERR_NONE )
+    if( m_oSRS.SetFromUserInput(tms->crs().c_str(), OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS) != OGRERR_NONE )
         return false;
     const bool bInvertAxis =
             m_oSRS.EPSGTreatsAsLatLong() != FALSE ||
@@ -1659,7 +1690,7 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo* poOpenInfo,
             }
             int minCol = std::max(0,
                 static_cast<int>((dfXMin - dfOriX) / tileMatrix.mResX / tileMatrix.mTileWidth));
-            int maxCol = std::min(tileMatrix.mMatrixWidth - 1, 
+            int maxCol = std::min(tileMatrix.mMatrixWidth - 1,
                 static_cast<int>((dfXMax - dfOriX) / tileMatrix.mResX / tileMatrix.mTileWidth));
             int minRow = std::max(0,
                 static_cast<int>((dfOriY - dfYMax) / tileMatrix.mResY / tileMatrix.mTileHeight));
@@ -1821,7 +1852,7 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo* poOpenInfo,
                 std::vector<GDALDatasetH> apoStrippedDS;
                 // For each variable matrix width, create a separate WMS dataset
                 // with the correspond strip
-                for( size_t i = 0; i < vmwl.size(); i++) 
+                for( size_t i = 0; i < vmwl.size(); i++)
                 {
                     if( vmwl[i].mCoalesce <= 0 ||
                         (tileMatrix.mMatrixWidth % vmwl[i].mCoalesce) != 0 )
@@ -2311,7 +2342,6 @@ bool OGCAPITiledLayer::IncrementTileIndices()
 
 OGRFeature* OGCAPITiledLayer::GetNextRawFeature()
 {
-    OGRFeature* poSrcFeature = nullptr;
     while( true )
     {
         if( m_poUnderlyingLayer == nullptr )
@@ -2340,10 +2370,10 @@ OGRFeature* OGCAPITiledLayer::GetNextRawFeature()
             FinalizeFeatureDefnWithLayer(m_poUnderlyingLayer);
         }
 
-        poSrcFeature = m_poUnderlyingLayer->GetNextFeature();
+        auto poSrcFeature = m_poUnderlyingLayer->GetNextFeature();
         if( poSrcFeature != nullptr )
         {
-            break;
+            return BuildFeature(poSrcFeature, m_nCurX, m_nCurY);
         }
 
         m_poUnderlyingDS.reset();
@@ -2352,8 +2382,6 @@ OGRFeature* OGCAPITiledLayer::GetNextRawFeature()
         if( !IncrementTileIndices() )
             return nullptr;
     }
-
-    return BuildFeature(poSrcFeature, m_nCurX, m_nCurY);
 }
 
 /************************************************************************/
@@ -2516,7 +2544,7 @@ GDALDataset* OGCAPIDataset::Open(GDALOpenInfo* poOpenInfo)
 {
     if( !Identify(poOpenInfo) )
         return nullptr;
-    auto poDS = std::unique_ptr<OGCAPIDataset>(new OGCAPIDataset());
+    auto poDS = cpl::make_unique<OGCAPIDataset>();
     if( STARTS_WITH_CI(poOpenInfo->pszFilename, "OGCAPI:") )
     {
         if( !poDS->InitFromURL(poOpenInfo) )

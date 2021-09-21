@@ -41,9 +41,8 @@
 #include <vector>
 #include <utility>
 
-#include <curl/curl.h>
-
 #include "cpl_conv.h"
+#include "cpl_curl_priv.h"
 #include "cpl_http.h"
 #include "gdal_alg.h"
 #include "gdal_pam.h"

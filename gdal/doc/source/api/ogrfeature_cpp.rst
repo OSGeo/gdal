@@ -31,3 +31,31 @@ OGRGeomFieldDefn class
 .. doxygenclass:: OGRGeomFieldDefn
    :project: api
    :members:
+
+OGRFieldDomain class
+--------------------
+
+.. doxygenclass:: OGRFieldDomain
+   :project: api
+   :members:
+
+OGRCodedFieldDomain class
++++++++++++++++++++++++++
+
+.. doxygenclass:: OGRCodedFieldDomain
+   :project: api
+   :members:
+
+OGRRangeFieldDomain class
++++++++++++++++++++++++++
+
+.. doxygenclass:: OGRRangeFieldDomain
+   :project: api
+   :members:
+
+OGRGlobFieldDomain class
+++++++++++++++++++++++++
+
+.. doxygenclass:: OGRGlobFieldDomain
+   :project: api
+   :members:

@@ -31,6 +31,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import json
 import os
 import sys
 import shutil
@@ -148,8 +149,9 @@ def netcdf_test_copy_timeout(ifile, band, checksum, ofile, opts=None, driver='NE
             proc.terminate()
             if os.path.exists(ofile):
                 drv.Delete(ofile)
-            print('testCreateCopy() for file %s has reached timeout limit of %d seconds' % (ofile, timeout))
-            pytest.fail()
+            pytest.fail(
+                f'testCreateCopy() for file {ofile} has reached timeout limit of {timeout} seconds')
+
 
 ###############################################################################
 # check support for DEFLATE compression, requires HDF5 and zlib
@@ -228,7 +230,7 @@ def netcdf_check_vars(ifile, vals_global=None, vals_band=None):
         assert mk == v, ("invalid value [%s] for metadata [%s]=[%s]"
                                  % (str(mk), str(k), str(v)))
 
-    
+
 
 ###############################################################################
 # Netcdf Tests
@@ -558,7 +560,7 @@ def test_netcdf_15():
     else:
         pytest.skip()
 
-    
+
 ###############################################################################
 # check support for netcdf-4
 
@@ -586,7 +588,7 @@ def test_netcdf_16():
     else:
         pytest.skip()
 
-    
+
 ###############################################################################
 # check support for netcdf-4 - make sure hdf5 is not read by netcdf driver
 
@@ -619,7 +621,7 @@ def test_netcdf_17():
     else:
         pytest.skip()
 
-    
+
 ###############################################################################
 # check support for netcdf-4 classic (NC4C)
 
@@ -647,7 +649,7 @@ def test_netcdf_18():
     else:
         pytest.skip()
 
-    
+
 ###############################################################################
 # check support for reading with DEFLATE compression, requires NC4
 
@@ -739,7 +741,7 @@ def test_netcdf_22():
     else:
         ds = None
 
-    
+
 ###############################################################################
 # check support for hdf4 - make sure  hdf4 file is not read by netcdf driver
 
@@ -872,6 +874,24 @@ def netcdf_25_nc4():
                  'valid_range_s': '0,255'}
 
     return netcdf_check_vars('tmp/netcdf_25_nc4.nc', vals_global, vals_band)
+
+###############################################################################
+# check reading a file with valid_range with float values
+
+
+def test_netcdf_float_valid_range():
+
+    ds = gdal.Open('data/netcdf/float_valid_range.nc')
+    assert ds.GetRasterBand(1).ComputeRasterMinMax() == pytest.approx((0.1, 0.9), abs=1e-6)
+
+###############################################################################
+# check reading a file with valid_min and valid_max with float values
+
+
+def test_netcdf_float_valid_min_max():
+
+    ds = gdal.Open('data/netcdf/float_valid_min_max.nc')
+    assert ds.GetRasterBand(1).ComputeRasterMinMax() == pytest.approx((0.1, 0.9), abs=1e-6)
 
 ###############################################################################
 # check support for WRITE_BOTTOMUP file creation option
@@ -1119,9 +1139,10 @@ def test_netcdf_34():
     # valgrind detects memory leaks when this occurs (although it should never happen)
     if proc.is_alive():
         proc.terminate()
-        pytest.fail('testOpen() for file %s has reached timeout limit of %d seconds' % (filename, timeout))
+        pytest.fail(
+            f'testOpen() for file {filename} has reached timeout limit of {timeout} seconds')
 
-    
+
 ###############################################################################
 # test writing a long metadata > 8196 chars (bug #5113)
 
@@ -1542,7 +1563,7 @@ def test_netcdf_50():
     out_ds = gdal.OpenEx('tmp/netcdf_50.nc', gdal.OF_VECTOR)
     out_lyr = out_ds.GetLayer(0)
     srs = out_lyr.GetSpatialRef().ExportToWkt()
-    assert 'PROJCS["OSGB 1936' in srs
+    assert 'PROJCS["OSGB' in srs
     out_f = out_lyr.GetNextFeature()
     out_f.SetFID(-1)
     out_json = out_f.ExportToJson()
@@ -1749,7 +1770,7 @@ def test_netcdf_53():
     out_ds = gdal.OpenEx('tmp/netcdf_53.nc', gdal.OF_VECTOR)
     out_lyr = out_ds.GetLayer(0)
     srs = out_lyr.GetSpatialRef().ExportToWkt()
-    assert 'PROJCS["OSGB 1936' in srs
+    assert 'PROJCS["OSGB' in srs
     out_f = out_lyr.GetNextFeature()
     out_f.SetFID(-1)
     out_json = out_f.ExportToJson()
@@ -2051,7 +2072,7 @@ def test_netcdf_62_ncdump_check():
     else:
         pytest.skip()
 
-    
+
 
 def test_netcdf_62_cf_check():
 
@@ -2074,7 +2095,7 @@ def test_netcdf_63():
     shutil.copy('data/netcdf/profile.nc', 'tmp/netcdf_63.nc')
     ds = gdal.VectorTranslate('tmp/netcdf_63.nc', 'data/netcdf/profile.nc', format='netCDF', datasetCreationOptions=['FORMAT=NC4', 'GEOMETRY_ENCODING=WKT'],
         layerCreationOptions=['FEATURE_TYPE=PROFILE', \
-        'USE_STRING_IN_NC4=NO', 'STRING_DEFAULT_WIDTH=1']) 
+        'USE_STRING_IN_NC4=NO', 'STRING_DEFAULT_WIDTH=1'])
     gdal.VectorTranslate('/vsimem/netcdf_63.csv', ds, format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'GEOMETRY=AS_WKT', 'STRING_QUOTING=IF_NEEDED'])
 
     fp = gdal.VSIFOpenL('/vsimem/netcdf_63.csv', 'rb')
@@ -2449,7 +2470,7 @@ def test_netcdf_76():
         f.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 # test opening a raster file that used to be confused with a vector file (#6974)
 
@@ -2511,16 +2532,98 @@ def test_netcdf_81():
 
     projection = ds.GetProjectionRef()
     # Before PROJ 7.0.1
-    deprecated_expected_projection = """PROJCS["unnamed",GEOGCS["unknown",DATUM["unnamed",SPHEROID["Spheroid",6367470,594.313048347956]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Rotated_pole"],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],EXTENSION["PROJ4","+proj=ob_tran +o_proj=longlat +lon_0=18 +o_lon_p=0 +o_lat_p=39.25 +a=6367470 +b=6367470 +to_meter=0.0174532925199 +wktext"]]"""
+    deprecated_expected_projection = """PROJCS["unnamed",GEOGCS["unknown",DATUM["unnamed",SPHEROID["Spheroid",6367470,594.313048347956]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Rotated_pole"],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],EXTENSION["PROJ4","+proj=ob_tran +o_proj=longlat +lon_0=18 +o_lon_p=0 +o_lat_p=39.25 +a=6367470 +b=6356756 +to_meter=0.0174532925199 +wktext"]]"""
 
-    expected_projection = """GEOGCRS["unnamed",BASEGEOGCRS["unknown",DATUM["unknown",ELLIPSOID["unknown",6367470,0,LENGTHUNIT["metre",1,ID["EPSG",9001]]]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8901]]],DERIVINGCONVERSION["unknown",METHOD["PROJ ob_tran o_proj=longlat"],PARAMETER["lon_0",18,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],PARAMETER["o_lon_p",0,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],PARAMETER["o_lat_p",39.25,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]],CS[ellipsoidal,2],AXIS["longitude",east,ORDER[1],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],AXIS["latitude",north,ORDER[2],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]]"""
+    expected_projection = """GEOGCRS["unnamed",BASEGEOGCRS["unknown",DATUM["unknown",ELLIPSOID["unknown",6367470,594.313048347956,LENGTHUNIT["metre",1,ID["EPSG",9001]]]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8901]]],DERIVINGCONVERSION["unknown",METHOD["PROJ ob_tran o_proj=longlat"],PARAMETER["lon_0",18,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],PARAMETER["o_lon_p",0,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],PARAMETER["o_lat_p",39.25,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]],CS[ellipsoidal,2],AXIS["longitude",east,ORDER[1],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],AXIS["latitude",north,ORDER[2],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]]"""
 
-    assert projection in (expected_projection, deprecated_expected_projection)
+    newer_expected_projection = """GEOGCRS["Rotated_pole",BASEGEOGCRS["unknown",DATUM["unnamed",ELLIPSOID["Spheroid",6367470,594.313048347956,LENGTHUNIT["metre",1,ID["EPSG",9001]]]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]],DERIVINGCONVERSION["Pole rotation (netCDF CF convention)",METHOD["Pole rotation (netCDF CF convention)"],PARAMETER["Grid north pole latitude (netCDF CF convention)",39.25,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],PARAMETER["Grid north pole longitude (netCDF CF convention)",-162,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],PARAMETER["North pole grid longitude (netCDF CF convention)",0,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]],CS[ellipsoidal,2],AXIS["latitude",north,ORDER[1],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],AXIS["longitude",east,ORDER[2],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]]"""
+
+    assert projection in (newer_expected_projection, expected_projection, deprecated_expected_projection)
 
     gt = ds.GetGeoTransform()
     expected_gt = (-35.47, 0.44, 0.0, 23.65, 0.0, -0.44)
     assert max([abs(gt[i] - expected_gt[i]) for i in range(6)]) <= 1e-3, \
         'Did not get expected geotransform'
+
+###############################################################################
+# Write netCDF file in rotated_pole projection
+
+
+def test_netcdf_write_rotated_pole_from_method_proj():
+
+    if osr.GetPROJVersionMajor() * 10000 + osr.GetPROJVersionMinor() * 100 < 70100:
+        pytest.skip('Not enough recent PROJ version')
+
+    ds = gdal.GetDriverByName('netCDF').Create('tmp/rotated_pole.nc', 2, 2)
+    ds.SetGeoTransform([2,1,0,49,0,-1])
+    ds.SetProjection("""GEOGCRS["unnamed",BASEGEOGCRS["unknown",DATUM["unknown",ELLIPSOID["unknown",6367470,594.313048347956,LENGTHUNIT["metre",1,ID["EPSG",9001]]]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8901]]],DERIVINGCONVERSION["unknown",METHOD["PROJ ob_tran o_proj=longlat"],PARAMETER["lon_0",18,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],PARAMETER["o_lon_p",0,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],PARAMETER["o_lat_p",39.25,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]],CS[ellipsoidal,2],AXIS["longitude",east,ORDER[1],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],AXIS["latitude",north,ORDER[2],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]]""")
+    ds = None
+
+    ds = gdal.Open('tmp/rotated_pole.nc')
+    wkt = ds.GetProjectionRef()
+    ds = None
+
+    gdal.Unlink('tmp/rotated_pole.nc')
+
+    older_wkt = """GEOGCRS["unnamed",BASEGEOGCRS["unknown",DATUM["unknown",ELLIPSOID["unknown",6367470,594.313048347956,LENGTHUNIT["metre",1,ID["EPSG",9001]]]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8901]]],DERIVINGCONVERSION["unknown",METHOD["PROJ ob_tran o_proj=longlat"],PARAMETER["lon_0",18,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],PARAMETER["o_lon_p",0,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],PARAMETER["o_lat_p",39.25,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]],CS[ellipsoidal,2],AXIS["longitude",east,ORDER[1],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],AXIS["latitude",north,ORDER[2],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]]"""
+
+    newer_wkt = """GEOGCRS["Rotated_pole",BASEGEOGCRS["unknown",DATUM["unnamed",ELLIPSOID["Spheroid",6367470,594.313048347956,LENGTHUNIT["metre",1,ID["EPSG",9001]]]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]],DERIVINGCONVERSION["Pole rotation (netCDF CF convention)",METHOD["Pole rotation (netCDF CF convention)"],PARAMETER["Grid north pole latitude (netCDF CF convention)",39.25,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],PARAMETER["Grid north pole longitude (netCDF CF convention)",-162,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],PARAMETER["North pole grid longitude (netCDF CF convention)",0,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]],CS[ellipsoidal,2],AXIS["latitude",north,ORDER[1],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],AXIS["longitude",east,ORDER[2],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]]"""
+
+    assert wkt in (older_wkt, newer_wkt)
+
+###############################################################################
+# Write netCDF file in rotated_pole projection
+
+
+def test_netcdf_write_rotated_pole_from_method_netcdf_cf():
+
+    if osr.GetPROJVersionMajor() * 10000 + osr.GetPROJVersionMinor() * 100 < 80200:
+        pytest.skip('Not enough recent PROJ version')
+
+    expected_wkt = """GEOGCRS["Rotated_pole",BASEGEOGCRS["unknown",DATUM["unnamed",ELLIPSOID["Spheroid",6367470,594.313048347956,LENGTHUNIT["metre",1,ID["EPSG",9001]]]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]],DERIVINGCONVERSION["Pole rotation (netCDF CF convention)",METHOD["Pole rotation (netCDF CF convention)"],PARAMETER["Grid north pole latitude (netCDF CF convention)",39.25,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],PARAMETER["Grid north pole longitude (netCDF CF convention)",-162,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],PARAMETER["North pole grid longitude (netCDF CF convention)",0,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]],CS[ellipsoidal,2],AXIS["latitude",north,ORDER[1],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],AXIS["longitude",east,ORDER[2],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]]"""
+
+    ds = gdal.GetDriverByName('netCDF').Create('tmp/rotated_pole.nc', 2, 2)
+    ds.SetGeoTransform([2,1,0,49,0,-1])
+    ds.SetProjection(expected_wkt)
+    ds = None
+
+    ds = gdal.Open('tmp/rotated_pole.nc')
+    wkt = ds.GetProjectionRef()
+    ds = None
+
+    gdal.Unlink('tmp/rotated_pole.nc')
+
+    assert wkt == expected_wkt
+
+###############################################################################
+# Write netCDF file in rotated_pole projection
+
+
+def test_netcdf_write_rotated_pole_from_method_grib():
+
+    if osr.GetPROJVersionMajor() * 10000 + osr.GetPROJVersionMinor() * 100 < 70000:
+        pytest.skip('Not enough recent PROJ version')
+
+    ds = gdal.GetDriverByName('netCDF').Create('tmp/rotated_pole.nc', 2, 2)
+    ds.SetGeoTransform([2,1,0,49,0,-1])
+    ds.SetProjection("""GEOGCRS["Coordinate System imported from GRIB file",BASEGEOGCRS["Coordinate System imported from GRIB file",DATUM["unnamed",ELLIPSOID["Sphere",6367470,0,LENGTHUNIT["metre",1,ID["EPSG",9001]]]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]],DERIVINGCONVERSION["Pole rotation (GRIB convention)",METHOD["Pole rotation (GRIB convention)"],PARAMETER["Latitude of the southern pole (GRIB convention)",-30,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],PARAMETER["Longitude of the southern pole (GRIB convention)",-15,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],PARAMETER["Axis rotation (GRIB convention)",0,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]],CS[ellipsoidal,2],AXIS["latitude",north,ORDER[1],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],AXIS["longitude",east,ORDER[2],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]]""")
+    ds = None
+
+    ds = gdal.Open('tmp/rotated_pole.nc')
+    wkt = ds.GetProjectionRef()
+    ds = None
+
+    gdal.Unlink('tmp/rotated_pole.nc')
+
+    # Before PROJ 7.0.1
+    deprecated_expected_projection = """PROJCS["unnamed",GEOGCS["unknown",DATUM["unnamed",SPHEROID["Spheroid",6367470,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Rotated_pole"],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],EXTENSION["PROJ4","+proj=ob_tran +o_proj=longlat +lon_0=-15 +o_lon_p=0 +o_lat_p=30 +a=6367470 +b=6367470 +to_meter=0.0174532925199 +wktext"]]"""
+
+    older_wkt = """GEOGCRS["unnamed",BASEGEOGCRS["unknown",DATUM["unknown",ELLIPSOID["unknown",6367470,0,LENGTHUNIT["metre",1,ID["EPSG",9001]]]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8901]]],DERIVINGCONVERSION["unknown",METHOD["PROJ ob_tran o_proj=longlat"],PARAMETER["lon_0",-15,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],PARAMETER["o_lon_p",0,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],PARAMETER["o_lat_p",30,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]],CS[ellipsoidal,2],AXIS["longitude",east,ORDER[1],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],AXIS["latitude",north,ORDER[2],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]]"""
+
+    newer_wkt = """GEOGCRS["Rotated_pole",BASEGEOGCRS["unknown",DATUM["unnamed",ELLIPSOID["Spheroid",6367470,0,LENGTHUNIT["metre",1,ID["EPSG",9001]]]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]],DERIVINGCONVERSION["Pole rotation (netCDF CF convention)",METHOD["Pole rotation (netCDF CF convention)"],PARAMETER["Grid north pole latitude (netCDF CF convention)",30,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],PARAMETER["Grid north pole longitude (netCDF CF convention)",-195,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],PARAMETER["North pole grid longitude (netCDF CF convention)",0,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]],CS[ellipsoidal,2],AXIS["latitude",north,ORDER[1],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],AXIS["longitude",east,ORDER[2],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]]"""
+
+    assert wkt in (deprecated_expected_projection, older_wkt, newer_wkt)
+
 
 ###############################################################################
 # netCDF file with extra dimensions that are oddly indexed (1D variable
@@ -2581,7 +2684,7 @@ def test_netcdf_84():
     assert ds.GetRasterBand(1).DataType == gdal.GDT_CFloat32
 
     cs = ds.GetRasterBand(1).Checksum()
-    assert cs == 523, 'did not get expected checksum'
+    assert cs == 465, 'did not get expected checksum'
 
 # Repeat for Float64
 
@@ -2592,7 +2695,7 @@ def test_netcdf_85():
     assert ds.GetRasterBand(1).DataType == gdal.GDT_CFloat64
 
     cs = ds.GetRasterBand(1).Checksum()
-    assert cs == 511, 'did not get expected checksum'
+    assert cs == 546, 'did not get expected checksum'
 
 
 # Check for groups support
@@ -2808,7 +2911,7 @@ def test_netcdf_functions_2(filename, checksum, options, testfunction):
 
 #  basic tests
 def test_bad_cf1_8():
-    # basic resilience test, make sure it can exit "gracefully" 
+    # basic resilience test, make sure it can exit "gracefully"
     # if not it will abort all tests
     bad_geometry = ogr.Open("data/netcdf-sg/no_geometry_type.nc")
     bad_feature = ogr.Open("data/netcdf-sg/bad_feature_test.nc")
@@ -2842,8 +2945,8 @@ def test_point_read():
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "POINT (1 -1)")
-    
-    ft = layer.GetNextFeature() 
+
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "POINT (2 -2)")
@@ -2852,13 +2955,13 @@ def test_point_read():
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "POINT (3 -3)")
-    
-    ft = layer.GetNextFeature() 
+
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "POINT (4 -4)")
-    
-    ft = layer.GetNextFeature() 
+
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "POINT (5 -5)")
@@ -2878,8 +2981,8 @@ def test_point3D_read():
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "POINT (1 -1 1)")
-    
-    ft = layer.GetNextFeature() 
+
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "POINT (2 -2 -2)")
@@ -2888,13 +2991,13 @@ def test_point3D_read():
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "POINT (3 -3 3)")
-    
-    ft = layer.GetNextFeature() 
+
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "POINT (4 -4 -4)")
-    
-    ft = layer.GetNextFeature() 
+
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "POINT (5 -5 5)")
@@ -2902,34 +3005,34 @@ def test_point3D_read():
 def test_multipoint_read():
 
     multipoints = ogr.Open("data/netcdf-sg/multipoint_test.nc")
-    assert(multipoints != None) 
+    assert(multipoints != None)
 
     lc = multipoints.GetLayerCount()
     assert(lc == 1)
     layer = multipoints.GetLayerByName("names_geometry")
     assert(layer != None)
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "MULTIPOINT (1 -1,2 -2,3 -3,4 -4)")
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "MULTIPOINT (5 -5,6 -6,7 -7,8 -8)")
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "MULTIPOINT (9 -9,10 -10,-1 1,-2 2)")
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "MULTIPOINT (-3 3,-4 4,-5 5,-6 6)")
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "MULTIPOINT (-7 7,-8 8,-9 9,-10 10)")
@@ -2937,34 +3040,34 @@ def test_multipoint_read():
 def test_multipoint3D_read():
 
     multipoints = ogr.Open("data/netcdf-sg/multipoint3D_test.nc")
-    assert(multipoints != None) 
+    assert(multipoints != None)
 
     lc = multipoints.GetLayerCount()
     assert(lc == 1)
     layer = multipoints.GetLayerByName("names_geometry")
     assert(layer != None)
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "MULTIPOINT (1 -1 1,2 -2 -2,3 -3 3,4 -4 -4)")
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "MULTIPOINT (5 -5 5,6 -6 -6,7 -7 7,8 -8 -8)")
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "MULTIPOINT (9 -9 9,10 -10 -10,-1 1 -1,-2 2 2)")
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "MULTIPOINT (-3 3 -3,-4 4 4,-5 5 -5,-6 6 6)")
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "MULTIPOINT (-7 7 -7,-8 8 8,-9 9 -9,-10 10 10)")
@@ -2972,69 +3075,69 @@ def test_multipoint3D_read():
 def test_line_read():
 
     line = ogr.Open("data/netcdf-sg/line_test.nc")
-    assert(line != None) 
+    assert(line != None)
 
     lc = line.GetLayerCount()
     assert(lc == 1)
     layer = line.GetLayerByName("names_geometry")
     assert(layer != None)
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "LINESTRING (1 -1,2 -2,3 -3,4 -4)")
-     
-    ft = layer.GetNextFeature() 
+
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "LINESTRING (5 -5,6 -6,7 -7,8 -8)")
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "LINESTRING (9 -9,10 -10,-1 1,-2 2)")
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "LINESTRING (-3 3,-4 4,-5 5,-6 6)")
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "LINESTRING (-7 7,-8 8,-9 9,-10 10)")
-     
+
 def test_line3D_read():
 
     line = ogr.Open("data/netcdf-sg/line3D_test.nc")
-    assert(line != None) 
+    assert(line != None)
 
     lc = line.GetLayerCount()
     assert(lc == 1)
     layer = line.GetLayerByName("names_geometry")
     assert(layer != None)
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "LINESTRING (1 -1 1,2 -2 -2,3 -3 3,4 -4 -4)")
-     
-    ft = layer.GetNextFeature() 
+
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "LINESTRING (5 -5 5,6 -6 -6,7 -7 7,8 -8 -8)")
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "LINESTRING (9 -9 9,10 -10 -10,-1 1 1,-2 2 -2)")
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "LINESTRING (-3 3 3,-4 4 -4,-5 5 5,-6 6 -6)")
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "LINESTRING (-7 7 7,-8 8 -8,-9 9 9,-10 10 -10)")
@@ -3042,34 +3145,34 @@ def test_line3D_read():
 def test_multiline_read():
 
     multiline = ogr.Open("data/netcdf-sg/multiline_test.nc")
-    assert(multiline != None) 
+    assert(multiline != None)
 
     lc = multiline.GetLayerCount()
     assert(lc == 1)
     layer = multiline.GetLayerByName("names_geometry")
     assert(layer != None)
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "MULTILINESTRING ((1 -1),(2 -2,3 -3,4 -4))")
-    
-    ft = layer.GetNextFeature() 
+
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "MULTILINESTRING ((5 -5,6 -6,7 -7,8 -8))")
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "MULTILINESTRING ((9 -9,10 -10,-1 1),(-2 2))")
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "MULTILINESTRING ((-3 3,-4 4),(-5 5,-6 6))")
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "MULTILINESTRING ((-7 7,-8 8,-9 9,-10 10))")
@@ -3077,34 +3180,34 @@ def test_multiline_read():
 def test_multiline3D_read():
 
     multiline = ogr.Open("data/netcdf-sg/multiline3D_test.nc")
-    assert(multiline != None) 
+    assert(multiline != None)
 
     lc = multiline.GetLayerCount()
     assert(lc == 1)
     layer = multiline.GetLayerByName("names_geometry")
     assert(layer != None)
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "MULTILINESTRING ((1 -1 -1),(2 -2 2,3 -3 -3,4 -4 4))")
-    
-    ft = layer.GetNextFeature() 
+
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "MULTILINESTRING ((5 -5 -5,6 -6 6,7 -7 -7,8 -8 8))")
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "MULTILINESTRING ((9 -9 -9,10 -10 10,-1 1 -1),(-2 2 2))")
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "MULTILINESTRING ((-3 3 -3,-4 4 4),(-5 5 -5,-6 6 6))")
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "MULTILINESTRING ((-7 7 -7,-8 8 8,-9 9 -9,-10 10 10))")
@@ -3113,17 +3216,17 @@ def test_polygon_read():
 
     polygon = ogr.Open("data/netcdf-sg/polygon_test.nc")
     assert(polygon != None)
-    
+
     lc = polygon.GetLayerCount()
     assert(lc == 1)
     layer = polygon.GetLayerByName("names_geometry")
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "POLYGON ((0 0,1 0,1 1,0 0))")
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "POLYGON ((3 0,4 0,4 1,3 1,3 0))")
@@ -3132,17 +3235,17 @@ def test_polygon3D_read():
 
     polygon = ogr.Open("data/netcdf-sg/polygon3D_test.nc")
     assert(polygon != None)
-    
+
     lc = polygon.GetLayerCount()
     assert(lc == 1)
     layer = polygon.GetLayerByName("names_geometry")
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "POLYGON ((0 0 1,1 0 2,1 1 2,0 0 1))")
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "POLYGON ((3 0 1,4 0 1,4 1 1,3 1 1,3 0 1))")
@@ -3150,18 +3253,18 @@ def test_polygon3D_read():
 def test_multipolygon_read():
 
     multipolygon = ogr.Open("data/netcdf-sg/multipolygon_test.nc")
-    assert(multipolygon != None) 
+    assert(multipolygon != None)
 
     lc = multipolygon.GetLayerCount()
     assert(lc == 1)
     layer = multipolygon.GetLayerByName("names_geometry")
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "MULTIPOLYGON (((0 0,1 0,1 1,0 0)))")
-     
-    ft = layer.GetNextFeature() 
+
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "MULTIPOLYGON (((3 0,4 0,4 1,3 0)),((3 0,4 1,3 1,3 0)))")
@@ -3169,18 +3272,18 @@ def test_multipolygon_read():
 def test_multipolygon3D_read():
 
     multipolygon = ogr.Open("data/netcdf-sg/multipolygon3D_test.nc")
-    assert(multipolygon != None) 
+    assert(multipolygon != None)
 
     lc = multipolygon.GetLayerCount()
     assert(lc == 1)
     layer = multipolygon.GetLayerByName("names_geometry")
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "MULTIPOLYGON (((0 0 0,1 0 5,1 1 5,0 0 0)))")
-     
-    ft = layer.GetNextFeature() 
+
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "MULTIPOLYGON (((3 0 5,4 0 10,4 1 10,3 0 5)),((3 0 10,4 1 15,3 1 15,3 0 10)))")
@@ -3190,7 +3293,7 @@ def test_serpenski_two_ring():
     s = ogr.Open("data/netcdf-sg/serpenski_2nd.nc")
 
     assert(s != None)
-    
+
     lc = s.GetLayerCount()
     assert(lc == 1)
     good_layer = s.GetLayerByName("serpenski")
@@ -3204,14 +3307,14 @@ def test_serpenski_two_ring():
     st_wkt = triangle.ExportToWkt()
 
     assert(st_wkt == \
-	"MULTIPOLYGON (((0 0,1 0,0.5 0.866025403784439,0 0),(0.5 0.0,0.75 0.433012701892219,0.25 0.433012701892219,0.5 0.0)))") 
+	"MULTIPOLYGON (((0 0,1 0,0.5 0.866025403784439,0 0),(0.5 0.0,0.75 0.433012701892219,0.25 0.433012701892219,0.5 0.0)))")
 
 def test_serpenski3D_two_ring():
 
     s = ogr.Open("data/netcdf-sg/serpenski3D_2nd.nc")
 
     assert(s != None)
-    
+
     lc = s.GetLayerCount()
     assert(lc == 1)
     good_layer = s.GetLayerByName("serpenski")
@@ -3225,7 +3328,7 @@ def test_serpenski3D_two_ring():
     st_wkt = triangle.ExportToWkt()
 
     assert(st_wkt == \
-	"MULTIPOLYGON (((0 0 1,1 0 1,0.5 0.866025403784439 1,0 0 1),(0.5 0.0 1,0.75 0.433012701892219 1,0.25 0.433012701892219 1,0.5 0.0 1)))") 
+	"MULTIPOLYGON (((0 0 1,1 0 1,0.5 0.866025403784439 1,0 0 1),(0.5 0.0 1,0.75 0.433012701892219 1,0.25 0.433012701892219 1,0.5 0.0 1)))")
 
 def test_flipped_axis():
 
@@ -3233,10 +3336,10 @@ def test_flipped_axis():
 
     polygon = ogr.Open("data/netcdf-sg/flipped_axes_test.nc")
     assert(polygon != None)
-    
+
     layer = polygon.GetLayerByName("names_geometry")
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "POLYGON ((0 0,1 0,1 1,0 0))")
@@ -3245,15 +3348,15 @@ def test_arbitrary_3Daxis_order_():
 
     polygon = ogr.Open("data/netcdf-sg/arbitrary_axis_order_test.nc")
     assert(polygon != None)
-    
+
     layer = polygon.GetLayerByName("names_geometry")
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "POLYGON ((0 0 1,1 0 2,1 1 2,0 0 1))")
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "POLYGON ((3 0 1,4 0 1,4 1 1,3 1 1,3 0 1))")
@@ -3264,7 +3367,7 @@ def test_multiple_layers_one_nc():
     # each geometry container a layer
 
     s = ogr.Open("data/netcdf-sg/multiple_containers.nc")
-     
+
     lc = s.GetLayerCount()
     assert(lc == 2)
     s_triangle = s.GetLayerByName("serpenski")
@@ -3276,16 +3379,16 @@ def test_multiple_layers_one_nc():
     triangle_ft = s_triangle.GetNextFeature()
     triangle = triangle_ft.GetGeometryRef()
     assert(triangle.GetGeometryType() == ogr.wkbMultiPolygon)
-    st_wkt = triangle.ExportToWkt() 
+    st_wkt = triangle.ExportToWkt()
     assert(st_wkt == \
-	"MULTIPOLYGON (((0 0,1 0,0.5 0.866025403784439,0 0),(0.5 0.0,0.75 0.433012701892219,0.25 0.433012701892219,0.5 0.0)))") 
-    
+	"MULTIPOLYGON (((0 0,1 0,0.5 0.866025403784439,0 0),(0.5 0.0,0.75 0.433012701892219,0.25 0.433012701892219,0.5 0.0)))")
+
     outline_ft = s_outline.GetNextFeature()
     outline = outline_ft.GetGeometryRef()
     assert(outline.GetGeometryType() == ogr.wkbMultiLineString)
-    so_wkt = outline.ExportToWkt() 
+    so_wkt = outline.ExportToWkt()
     assert(so_wkt == \
-	"MULTILINESTRING ((0 0,1 0,0.5 0.866025403784439,0 0),(0.5 0.0,0.75 0.433012701892219,0.25 0.433012701892219,0.5 0.0))") 
+	"MULTILINESTRING ((0 0,1 0,0.5 0.866025403784439,0 0),(0.5 0.0,0.75 0.433012701892219,0.25 0.433012701892219,0.5 0.0))")
 
 #  advanced tests
 
@@ -3313,7 +3416,7 @@ def test_yahara():
     # Check spatial ref is set correctly
     fSRS = y_layer.GetSpatialRef()
     assert(fSRS is not None)
-    assert(fSRS.ExportToWkt() == "PROJCS[\"unnamed\",GEOGCS[\"unknown\",DATUM[\"unnamed\",SPHEROID[\"Spheroid\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]]],PROJECTION[\"Albers_Conic_Equal_Area\"],PARAMETER[\"latitude_of_center\",23],PARAMETER[\"longitude_of_center\",-96],PARAMETER[\"standard_parallel_1\",29.5],PARAMETER[\"standard_parallel_2\",45.5],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]") 
+    assert(fSRS.ExportToWkt() == "PROJCS[\"unnamed\",GEOGCS[\"unknown\",DATUM[\"unnamed\",SPHEROID[\"Spheroid\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]]],PROJECTION[\"Albers_Conic_Equal_Area\"],PARAMETER[\"latitude_of_center\",23],PARAMETER[\"longitude_of_center\",-96],PARAMETER[\"standard_parallel_1\",29.5],PARAMETER[\"standard_parallel_2\",45.5],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]")
 
 def test_states_full_layer():
 
@@ -3333,7 +3436,7 @@ def test_states_full_layer():
 
     # try resetting and then trying again
     s_layer.ResetReading()
-	
+
     first_2 = s_layer.GetNextFeature()
 
     # Did reset work correctly?
@@ -3353,7 +3456,7 @@ def test_states_full_layer():
 
 def test_point_write():
 
-    src = gdal.OpenEx("data/netcdf-sg/write-tests/point_write_test.json", gdal.OF_VECTOR) 
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/point_write_test.json", gdal.OF_VECTOR)
     assert(src is not None)
     gdal.VectorTranslate("tmp/test_point_write.nc", src, format="netCDF")
 
@@ -3397,7 +3500,7 @@ def test_point_write():
 
 def test_point3D_write():
 
-    src = gdal.OpenEx("data/netcdf-sg/write-tests/point3D_write_test.json", gdal.OF_VECTOR) 
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/point3D_write_test.json", gdal.OF_VECTOR)
     assert(src is not None)
     gdal.VectorTranslate("tmp/test_point3D_write.nc", src, format="netCDF")
 
@@ -3441,7 +3544,7 @@ def test_point3D_write():
 
 def test_line_write():
 
-    src = gdal.OpenEx("data/netcdf-sg/write-tests/line_write_test.json", gdal.OF_VECTOR) 
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/line_write_test.json", gdal.OF_VECTOR)
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
@@ -3479,7 +3582,7 @@ def test_line_write():
 
 def test_line3D_write():
 
-    src = gdal.OpenEx("data/netcdf-sg/write-tests/line3D_write_test.json", gdal.OF_VECTOR) 
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/line3D_write_test.json", gdal.OF_VECTOR)
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
@@ -3517,7 +3620,7 @@ def test_line3D_write():
 
 def test_polygon_no_ir_write():
 
-    src = gdal.OpenEx("data/netcdf-sg/write-tests/polygon_no_ir_write_test.json", gdal.OF_VECTOR) 
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/polygon_no_ir_write_test.json", gdal.OF_VECTOR)
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
@@ -3552,7 +3655,7 @@ def test_polygon_no_ir_write():
 
 def test_polygon_write():
 
-    src = gdal.OpenEx("data/netcdf-sg/write-tests/polygon_write_test.json", gdal.OF_VECTOR) 
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/polygon_write_test.json", gdal.OF_VECTOR)
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
@@ -3593,7 +3696,7 @@ def test_polygon_write():
 
 def test_polygon3D_no_ir_write():
 
-    src = gdal.OpenEx("data/netcdf-sg/write-tests/polygon3D_no_ir_write_test.json", gdal.OF_VECTOR) 
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/polygon3D_no_ir_write_test.json", gdal.OF_VECTOR)
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
@@ -3627,7 +3730,7 @@ def test_polygon3D_no_ir_write():
 
 def test_polygon3D_write():
 
-    src = gdal.OpenEx("data/netcdf-sg/write-tests/polygon3D_write_test.json", gdal.OF_VECTOR) 
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/polygon3D_write_test.json", gdal.OF_VECTOR)
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
@@ -3668,7 +3771,7 @@ def test_polygon3D_write():
 
 def test_multipoint_write():
 
-    src = gdal.OpenEx("data/netcdf-sg/write-tests/multipoint_write_test.json", gdal.OF_VECTOR) 
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/multipoint_write_test.json", gdal.OF_VECTOR)
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
@@ -3706,7 +3809,7 @@ def test_multipoint_write():
 
 def test_multipoint3D_write():
 
-    src = gdal.OpenEx("data/netcdf-sg/write-tests/multipoint3D_write_test.json", gdal.OF_VECTOR) 
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/multipoint3D_write_test.json", gdal.OF_VECTOR)
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
@@ -3737,7 +3840,7 @@ def test_multipoint3D_write():
 
 def test_multiline_write():
 
-    src = gdal.OpenEx("data/netcdf-sg/write-tests/multiline_write_test.json", gdal.OF_VECTOR) 
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/multiline_write_test.json", gdal.OF_VECTOR)
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
@@ -3775,7 +3878,7 @@ def test_multiline_write():
 
 def test_multiline3D_write():
 
-    src = gdal.OpenEx("data/netcdf-sg/write-tests/multiline3D_write_test.json", gdal.OF_VECTOR) 
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/multiline3D_write_test.json", gdal.OF_VECTOR)
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
@@ -3806,7 +3909,7 @@ def test_multiline3D_write():
 
 def test_multipolygon_write():
 
-    src = gdal.OpenEx("data/netcdf-sg/write-tests/multipolygon_write_test.json", gdal.OF_VECTOR) 
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/multipolygon_write_test.json", gdal.OF_VECTOR)
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
@@ -3840,7 +3943,7 @@ def test_multipolygon_write():
 
 def test_multipolygon3D_write():
 
-    src = gdal.OpenEx("data/netcdf-sg/write-tests/multipolygon3D_write_test.json", gdal.OF_VECTOR) 
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/multipolygon3D_write_test.json", gdal.OF_VECTOR)
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
@@ -3882,7 +3985,7 @@ def test_multipolygon3D_write():
 
 def test_multipolygon_with_no_ir_write():
 
-    src = gdal.OpenEx("data/netcdf-sg/write-tests/multipolygon_no_ir_write_test.json", gdal.OF_VECTOR) 
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/multipolygon_no_ir_write_test.json", gdal.OF_VECTOR)
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
@@ -3913,7 +4016,7 @@ def test_multipolygon_with_no_ir_write():
 
 def test_multipolygon3D_with_no_ir_write():
 
-    src = gdal.OpenEx("data/netcdf-sg/write-tests/multipolygon3D_no_ir_write_test.json", gdal.OF_VECTOR) 
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/multipolygon3D_no_ir_write_test.json", gdal.OF_VECTOR)
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
@@ -3971,7 +4074,7 @@ def test_write_buffer_restrict_correctness():
 def test_write_nc_from_nc():
 
     # Tests writing a netCDF file (of different name than source) out from another netCDF source file
-    src = gdal.OpenEx("data/netcdf-sg/multipoint_test.nc", gdal.OF_VECTOR) 
+    src = gdal.OpenEx("data/netcdf-sg/multipoint_test.nc", gdal.OF_VECTOR)
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
@@ -3982,27 +4085,27 @@ def test_write_nc_from_nc():
 
     layer = ncds.GetLayerByName("names_geometry")
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "MULTIPOINT (1 -1,2 -2,3 -3,4 -4)")
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "MULTIPOINT (5 -5,6 -6,7 -7,8 -8)")
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "MULTIPOINT (9 -9,10 -10,-1 1,-2 2)")
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "MULTIPOINT (-3 3,-4 4,-5 5,-6 6)")
 
-    ft = layer.GetNextFeature() 
+    ft = layer.GetNextFeature()
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "MULTIPOINT (-7 7,-8 8,-9 9,-10 10)")
@@ -4012,7 +4115,7 @@ def test_multipolygon_with_no_ir_NC4_write():
     # Almost identical to test_multipolygon_with_no_ir
     # except this time, it is writing an NC4 file
 
-    src = gdal.OpenEx("data/netcdf-sg/write-tests/multipolygon_no_ir_write_test.json", gdal.OF_VECTOR) 
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/multipolygon_no_ir_write_test.json", gdal.OF_VECTOR)
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
@@ -4043,7 +4146,7 @@ def test_multipolygon_with_no_ir_NC4_write():
 
 def test_multipolygon3D_NC4C_write():
 
-    src = gdal.OpenEx("data/netcdf-sg/write-tests/multipolygon3D_write_test.json", gdal.OF_VECTOR) 
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/multipolygon3D_write_test.json", gdal.OF_VECTOR)
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
@@ -4104,11 +4207,11 @@ def test_write_multiple_layers_one_nc():
     # each geometry container a layer
     # this also tests "update mode" for CF-1.8
 
-    src = gdal.OpenEx("data/netcdf-sg/write-tests/multipolygon_no_ir_write_test.json", gdal.OF_VECTOR) 
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/multipolygon_no_ir_write_test.json", gdal.OF_VECTOR)
     assert(src is not None)
     gdal.VectorTranslate("tmp/mlnc.nc", src, format="netCDF")
 
-    src = gdal.OpenEx("data/netcdf-sg/write-tests/point3D_write_test.json", gdal.OF_VECTOR) 
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/point3D_write_test.json", gdal.OF_VECTOR)
     assert(src is not None)
     gdal.VectorTranslate("tmp/mlnc.nc", src, format="netCDF", accessMode='update')
 
@@ -4176,7 +4279,7 @@ def test_write_multiple_layers_one_nc_NC4():
     # it writes to NC4, not NC3 (changing a file from NC3 to NC4)
     # and it writes them all at once (non update)
 
-    src = gdal.OpenEx("tmp/mlnc.nc", gdal.OF_VECTOR) 
+    src = gdal.OpenEx("tmp/mlnc.nc", gdal.OF_VECTOR)
     assert(src is not None)
     gdal.VectorTranslate("tmp/mlnc4.nc4", src, format="netCDF", datasetCreationOptions=['FORMAT=NC4'])
 
@@ -4244,7 +4347,7 @@ def test_write_multiple_layers_one_nc_back_to_NC3():
     # and it writes them all at once (non update)
     # test_write_multiple_layers_one_nc writes one and then another in update mode
 
-    src = gdal.OpenEx("tmp/mlnc4.nc4", gdal.OF_VECTOR) 
+    src = gdal.OpenEx("tmp/mlnc4.nc4", gdal.OF_VECTOR)
     assert(src is not None)
     gdal.VectorTranslate("tmp/mlnc_noupdate3.nc", src, format="netCDF")
 
@@ -4308,7 +4411,7 @@ def test_write_multiple_layers_one_nc_back_to_NC3():
 def test_SG_NC3_field_write():
     # Tests all the NC3 field writing capabilities with
     # buffering.
-    src = gdal.OpenEx("data/netcdf-sg/write-tests/field_test_nc3.nc", gdal.OF_VECTOR) 
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/field_test_nc3.nc", gdal.OF_VECTOR)
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
@@ -4338,7 +4441,7 @@ def test_SG_NC3_field_write():
     assert(fnum1 == 1)
     assert(fnum2 == 2)
     assert(fflt == 1.5)
-    assert(fdbl == 99.5) 
+    assert(fdbl == 99.5)
 
 def test_states_full_layer_buffer_restrict_correctness():
     # Tests whether or not having the write buffer restriction
@@ -4370,7 +4473,7 @@ def test_states_full_layer_buffer_restrict_correctness():
 
 def test_empty_polygon_read_write():
     # Tests writing features to a layer of empty polygons
-    src = gdal.OpenEx("data/netcdf-sg/write-tests/empty_polygon_write_test.json", gdal.OF_VECTOR) 
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/empty_polygon_write_test.json", gdal.OF_VECTOR)
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
@@ -4390,7 +4493,7 @@ def test_empty_polygon_read_write():
 
 def test_empty_multiline_read_write():
     # Tests writing features to a layer of empty polygons
-    src = gdal.OpenEx("data/netcdf-sg/write-tests/empty_mline_write_test.json", gdal.OF_VECTOR) 
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/empty_mline_write_test.json", gdal.OF_VECTOR)
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
@@ -4410,7 +4513,7 @@ def test_empty_multiline_read_write():
 
 def test_empty_multipolygon_read_write():
     # Tests writing features to a layer of empty polygons
-    src = gdal.OpenEx("data/netcdf-sg/write-tests/empty_multipolygon_write_test.json", gdal.OF_VECTOR) 
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/empty_multipolygon_write_test.json", gdal.OF_VECTOR)
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
@@ -4620,6 +4723,149 @@ def test_netcdf_open_vsimem():
     assert ds is not None
     gdal.Unlink('/vsimem/test.nc')
     assert ds.GetRasterBand(1).Checksum() == 14
+
+
+###############################################################################
+# Test opening a file that has coordinates but not georeferenced indexing variables
+
+
+def test_netcdf_open_coords_no_georef_indexing_variables():
+
+    ds = gdal.Open('data/netcdf/sentinel5p_fake.nc')
+    assert ds is not None
+    assert ds.GetGeoTransform(can_return_null=True) is None
+    assert ds.GetMetadata("GEOLOCATION") is not None
+
+
+###############################################################################
+# Test opening a file that has metadata ala Sentinel 5
+
+
+def test_netcdf_metadata_sentinel5():
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    ds = gdal.Open('data/netcdf/fake_ISO_METADATA.nc')
+    assert ds is not None
+    assert "json:ISO_METADATA" in ds.GetMetadataDomainList()
+    md = ds.GetMetadata_List("json:ISO_METADATA")
+    assert md is not None
+    md = md[0]
+    expected = {
+      "foo":"bar",
+      "bar":[
+        "bar#1",
+        "bar#2"
+      ],
+      "grp":{
+        "foo": 1.5
+      },
+      "array":[
+        {
+          "foo":"bar1"
+        },
+        {
+          "foo":"bar2"
+        }
+      ]
+    }
+    assert json.loads(md) == expected
+
+    ds = gdal.OpenEx('data/netcdf/fake_ISO_METADATA.nc', gdal.OF_MULTIDIM_RASTER)
+    assert ds is not None
+    rg = ds.GetRootGroup()
+    assert rg.GetGroupNames() is None
+    assert 'ISO_METADATA' in [attr.GetName() for attr in rg.GetAttributes()]
+    attr = rg.GetAttribute('ISO_METADATA')
+    assert attr is not None
+    assert attr.GetDataType().GetSubType() == gdal.GEDTST_JSON
+
+    j = gdal.MultiDimInfo('data/netcdf/fake_ISO_METADATA.nc')
+    assert 'attributes' in j
+    assert 'ISO_METADATA' in j['attributes']
+    assert j['attributes']['ISO_METADATA'] == expected
+
+
+###############################################################################
+# Test opening a file with particular georeferencing encoding
+
+
+def test_netcdf_modis_array():
+
+    ds = gdal.Open('data/netcdf/MODIS_ARRAY.nc')
+    assert ds.GetGeoTransform(can_return_null=True) is not None
+    assert ds.GetSpatialRef() is not None
+
+
+###############################################################################
+# Test import/export of Polar Stereographic Variant A (with scale factor)
+
+
+def test_netcdf_polar_stereographic_variant_a():
+
+    ds = gdal.Open('data/netcdf/polar_stero_variant_a.nc')
+    assert ds.GetSpatialRef().ExportToProj4() == '+proj=stere +lat_0=90 +lon_0=-100 +k=0.93301243 +x_0=4245000 +y_0=5295000 +R=6371229 +units=m +no_defs'
+
+    gdal.Translate('tmp/out.nc', ds, format='netCDF')
+    ds = gdal.Open('tmp/out.nc')
+    assert ds.GetSpatialRef().ExportToProj4() == '+proj=stere +lat_0=90 +lon_0=-100 +k=0.93301243 +x_0=4245000 +y_0=5295000 +R=6371229 +units=m +no_defs'
+    ds = None
+
+    gdal.Unlink('tmp/out.nc')
+
+
+###############################################################################
+# Test import/export of Polar Stereographic Variant B (with latitude of true scale)
+
+
+def test_netcdf_polar_stereographic_variant_b():
+
+    ds = gdal.Open('data/netcdf/polar_stero_variant_b.nc')
+    assert ds.GetSpatialRef().ExportToProj4() == '+proj=stere +lat_0=90 +lat_ts=59.9999376869521 +lon_0=-100 +x_0=4245000 +y_0=5295000 +R=6371229 +units=m +no_defs'
+
+    gdal.Translate('tmp/out.nc', ds, format='netCDF')
+    ds = gdal.Open('tmp/out.nc')
+    assert ds.GetSpatialRef().ExportToProj4() == '+proj=stere +lat_0=90 +lat_ts=59.9999376869521 +lon_0=-100 +x_0=4245000 +y_0=5295000 +R=6371229 +units=m +no_defs'
+    ds = None
+
+    gdal.Unlink('tmp/out.nc')
+
+
+###############################################################################
+# Test /vsi access through userfaultfd
+
+
+def test_netcdf_open_userfaultfd():
+
+    gdal.Unlink('tmp/test_netcdf_open_userfaultfd.zip')
+
+    f = gdal.VSIFOpenL('/vsizip/tmp/test_netcdf_open_userfaultfd.zip/test.nc', 'wb')
+    assert f
+    data = open('data/netcdf/byte_no_cf.nc', 'rb').read()
+    gdal.VSIFWriteL(data, 1, len(data), f)
+    gdal.VSIFCloseL(f)
+
+    # Can only work on Linux, with some kernel versions... not in Docker by default
+    # so mostly test that we don't crash
+    with gdaltest.error_handler():
+        ds = gdal.Open("/vsizip/tmp/test_netcdf_open_userfaultfd.zip/test.nc")
+
+    success_expected = False
+    if 'CI' not in os.environ:
+        uname = os.uname()
+        if uname.sysname == 'Linux':
+            version = uname.release.split('.')
+            major = int(version[0])
+            minor = int(version[1])
+            if (major, minor) >= (5, 11):
+                assert ds
+                success_expected = True
+
+    if ds and not success_expected:
+        print('/vsi access through userfaultfd succeeded')
+
+    gdal.Unlink('tmp/test_netcdf_open_userfaultfd.zip')
 
 
 def test_clean_tmp():

@@ -58,10 +58,8 @@ def test_basic_test_1():
     pytest.fail('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
 
 
+@pytest.mark.skipif(sys.platform != 'linux', reason='Incorrect platform')
 def test_basic_test_strace_non_existing_file():
-
-    if not sys.platform.startswith('linux'):
-        pytest.skip()
 
     python_exe = sys.executable
     cmd = "strace -f %s -c \"from osgeo import gdal; " % python_exe + (
@@ -351,6 +349,7 @@ def test_basic_test_12():
     assert lyr is not None
     lyr = ds.GetLayer(0)
     assert lyr is not None
+    assert not ds.IsLayerPrivate(0)
     sql_lyr = ds.ExecuteSQL('SELECT * FROM foo')
     assert sql_lyr is not None
     ds.ReleaseResultSet(sql_lyr)
@@ -409,29 +408,34 @@ def test_basic_test_14():
 
     with pytest.raises(Exception):
         ds.SetMetadata(5)
-    
+
 
     ds.SetMetadata(['foo=bar'])
     assert ds.GetMetadata_List() == ['foo=bar']
 
-    with pytest.raises(Exception):
-        ds.SetMetadata([5])
-    
+    with gdaltest.error_handler():
+        with pytest.raises(Exception):
+            ds.SetMetadata([5])
+
 
     ds.SetMetadata({'foo': 'baz'})
     assert ds.GetMetadata_List() == ['foo=baz']
 
-    with pytest.raises(Exception):
-        ds.SetMetadata({'foo': 5})
-    
+    ds.SetMetadata({'foo': b'baz'})
+    assert ds.GetMetadata_List() == ['foo=baz']
 
-    with pytest.raises(Exception):
-        ds.SetMetadata({5: 'baz'})
-    
+    with gdaltest.error_handler():
+        with pytest.raises(Exception):
+            ds.SetMetadata({'foo': b'zero_byte_in_string\0'})
 
-    with pytest.raises(Exception):
-        ds.SetMetadata({5: 6})
-    
+    ds.SetMetadata({'foo': 5})
+    assert ds.GetMetadata_List() == ['foo=5']
+
+    ds.SetMetadata({5: 'baz'})
+    assert ds.GetMetadata_List() == ['5=baz']
+
+    ds.SetMetadata({5: 6})
+    assert ds.GetMetadata_List() == ['5=6']
 
     val = '\u00e9ven'
 
@@ -441,15 +445,27 @@ def test_basic_test_14():
     ds.SetMetadata({val: 'baz'})
     assert ds.GetMetadata()[val] == 'baz'
 
-    with pytest.raises(Exception):
-        ds.SetMetadata({val: 5})
-    
+    ds.SetMetadata({val: 5})
+    assert ds.GetMetadata_List() == ['\u00e9ven=5']
+
+    ds.SetMetadata({5: val})
+    assert ds.GetMetadata_List() == ['5=\u00e9ven']
+
+    class ClassWithoutStrRepr:
+        def __init__(self):
+            pass
+        def __str__(self):
+            raise Exception('no string representation')
 
     with pytest.raises(Exception):
-        ds.SetMetadata({5: val})
-    
+        ds.SetMetadata({'a': ClassWithoutStrRepr()})
 
-    
+    with pytest.raises(Exception):
+        ds.SetMetadata({ClassWithoutStrRepr(): 'a'})
+
+    ds.SetMetadata([b'foo=\xE8\x03'])
+    assert ds.GetMetadata_List() == [b'foo=\xe8\x03']
+
 ###############################################################################
 # Test errors with progress callback
 
@@ -516,22 +532,31 @@ def test_basic_test_17():
     for _ in range(2):
         ogr.UseExceptions()
         gdal.UseExceptions()
+        flag = False
         try:
             gdal.Open('do_not_exist')
+            flag = True
         except RuntimeError:
             pass
+        assert not flag, 'expected failure'
         gdal.DontUseExceptions()
         ogr.DontUseExceptions()
         assert not gdal.GetUseExceptions()
         assert not ogr.GetUseExceptions()
 
+
+def test_basic_test_17_part_2():
+
+    # For some odd reason, this fails on the Travis CI targets after unrelated
+    # changes (https://travis-ci.com/github/OSGeo/gdal/jobs/501940381)
+    if gdaltest.skip_on_travis():
+        pytest.skip()
+
+    from osgeo import ogr
+
     for _ in range(2):
         ogr.UseExceptions()
         gdal.UseExceptions()
-        try:
-            gdal.Open('do_not_exist')
-        except RuntimeError:
-            pass
         flag = False
         try:
             ogr.DontUseExceptions()
@@ -589,3 +614,111 @@ def test_gdal_setgcpspatialref():
     assert sr_got
     assert sr_got.IsSame(sr)
 
+
+def test_gdal_getdatatypename():
+
+    assert gdal.GetDataTypeName(gdal.GDT_Byte) == 'Byte'
+    with pytest.raises(Exception):
+        gdal.GetDataTypeName(-1)
+    with pytest.raises(Exception):
+        gdal.GetDataTypeName(100)
+    with pytest.raises(Exception):
+        gdal.GetDataTypeName('invalid')
+
+
+def test_gdal_EscapeString():
+
+    assert gdal.EscapeString( '', scheme = gdal.CPLES_XML ) == ''
+
+    assert gdal.EscapeString( b'', scheme = gdal.CPLES_XML ) == b''
+
+    assert gdal.EscapeString( '&', gdal.CPLES_XML ) == '&amp;'
+
+    assert gdal.EscapeString( '<', gdal.CPLES_XML ) == '&lt;'
+
+    assert gdal.EscapeString( '>', gdal.CPLES_XML ) == '&gt;'
+
+    assert gdal.EscapeString( '"', gdal.CPLES_XML ) == '&quot;'
+
+    assert gdal.EscapeString( b'\xEF\xBB\xBF', gdal.CPLES_XML ) == b'&#xFEFF;'
+
+    assert gdal.EscapeString( '\t', gdal.CPLES_XML ) == '\t'
+
+    assert gdal.EscapeString( '\n', gdal.CPLES_XML ) == '\n'
+
+    assert gdal.EscapeString( b'\x01a', gdal.CPLES_XML ) == b'a'
+
+
+    assert gdal.EscapeString( '', gdal.CPLES_XML_BUT_QUOTES ) == ''
+
+    assert gdal.EscapeString( '&', gdal.CPLES_XML_BUT_QUOTES ) == '&amp;'
+
+    assert gdal.EscapeString( '<', gdal.CPLES_XML_BUT_QUOTES ) == '&lt;'
+
+    assert gdal.EscapeString( '>', gdal.CPLES_XML_BUT_QUOTES ) == '&gt;'
+
+    assert gdal.EscapeString( '"', gdal.CPLES_XML_BUT_QUOTES ) == '"'
+
+    assert gdal.EscapeString( b'\xEF\xBB\xBF', gdal.CPLES_XML_BUT_QUOTES ) == b'&#xFEFF;'
+
+    assert gdal.EscapeString( '\t', gdal.CPLES_XML_BUT_QUOTES ) == '\t'
+
+    assert gdal.EscapeString( '\n', gdal.CPLES_XML_BUT_QUOTES ) == '\n'
+
+    assert gdal.EscapeString( b'\x01a', gdal.CPLES_XML_BUT_QUOTES ) == b'a'
+
+
+    assert gdal.EscapeString( '', gdal.CPLES_BackslashQuotable ) == ''
+
+    assert gdal.EscapeString( 'a', gdal.CPLES_BackslashQuotable ) == 'a'
+
+    assert gdal.EscapeString( b'\x00x', gdal.CPLES_BackslashQuotable ) == b'\\0x'
+
+    assert gdal.EscapeString( b'\x01', gdal.CPLES_BackslashQuotable ) == b'\x01'
+
+    assert gdal.EscapeString( '\\', gdal.CPLES_BackslashQuotable ) == '\\\\'
+
+    assert gdal.EscapeString( '\n', gdal.CPLES_BackslashQuotable ) == '\\n'
+
+    assert gdal.EscapeString( '"', gdal.CPLES_BackslashQuotable ) == '\\"'
+
+
+    assert gdal.EscapeString( '', gdal.CPLES_URL ) == ''
+
+    assert gdal.EscapeString( 'aZAZ09$-_.+!*\'(), ', gdal.CPLES_URL ) == 'aZAZ09$-_.+!*\'(),%20'
+
+
+    assert gdal.EscapeString( "", gdal.CPLES_SQL ) == ""
+
+    assert gdal.EscapeString( "a", gdal.CPLES_SQL ) == "a"
+
+    assert gdal.EscapeString( "a'a", gdal.CPLES_SQL ) == "a''a"
+
+
+    assert gdal.EscapeString( "", gdal.CPLES_CSV ) == ""
+
+    assert gdal.EscapeString( "a'b", gdal.CPLES_CSV ) == "a'b"
+
+    assert gdal.EscapeString( 'a"b', gdal.CPLES_CSV ) == '"a""b"'
+
+    assert gdal.EscapeString( 'a,b', gdal.CPLES_CSV ) == '"a,b"'
+
+    assert gdal.EscapeString( 'a,b', gdal.CPLES_CSV ) == '"a,b"'
+
+    assert gdal.EscapeString( 'a\tb', gdal.CPLES_CSV ) == '"a\tb"'
+
+    assert gdal.EscapeString( 'a\nb', gdal.CPLES_CSV ) == '"a\nb"'
+
+    assert gdal.EscapeString( 'a\rb', gdal.CPLES_CSV ) == '"a\rb"'
+
+
+def test_gdal_EscapeString_errors():
+
+    if sys.maxsize > 2**32:
+        pytest.skip('Test not available on 64 bit')
+
+    # Allocation will be < 4 GB, but will fail being > 2 GB
+    assert gdal.EscapeString( b'"' * (((1 << 32)-1) // 6), gdal.CPLES_XML ) is None
+
+    # Allocation will be > 4 GB
+    assert gdal.EscapeString( b'"' * (((1 << 32)-1) // 6 + 1), gdal.CPLES_XML ) is None

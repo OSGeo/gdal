@@ -88,7 +88,8 @@ public:
 
         VSIVirtualHandle *Open( const char *pszFilename,
                                 const char *pszAccess,
-                                bool bSetError ) override;
+                                bool bSetError,
+                                CSLConstList papszOptions ) override;
 
         const char* GetOptions() override;
 
@@ -98,6 +99,8 @@ public:
             IVSIS3LikeHandleHelper * poHandleHelper ) override;
 
     char* GetSignedURL( const char* pszFilename, CSLConstList papszOptions ) override;
+
+    std::string GetStreamingFilename(const std::string& osFilename) const override { return osFilename; }
 };
 
 /************************************************************************/
@@ -129,7 +132,8 @@ class VSIOSSHandle final : public IVSIS3LikeHandle
 
 VSIVirtualHandle* VSIOSSFSHandler::Open( const char *pszFilename,
                                         const char *pszAccess,
-                                        bool bSetError)
+                                        bool bSetError,
+                                        CSLConstList papszOptions )
 {
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
         return nullptr;
@@ -153,7 +157,7 @@ VSIVirtualHandle* VSIOSSFSHandler::Open( const char *pszFilename,
             return nullptr;
         UpdateHandleFromMap(poHandleHelper);
         VSIS3WriteHandle* poHandle =
-            new VSIS3WriteHandle(this, pszFilename, poHandleHelper, false);
+            new VSIS3WriteHandle(this, pszFilename, poHandleHelper, false, papszOptions);
         if( !poHandle->IsOK() )
         {
             delete poHandle;
@@ -167,7 +171,7 @@ VSIVirtualHandle* VSIOSSFSHandler::Open( const char *pszFilename,
     }
 
     return
-        VSICurlFilesystemHandler::Open(pszFilename, pszAccess, bSetError);
+        VSICurlFilesystemHandlerBase::Open(pszFilename, pszAccess, bSetError, papszOptions);
 }
 
 /************************************************************************/
@@ -185,7 +189,7 @@ VSIOSSFSHandler::~VSIOSSFSHandler()
 
 void VSIOSSFSHandler::ClearCache()
 {
-    VSICurlFilesystemHandler::ClearCache();
+    VSICurlFilesystemHandlerBase::ClearCache();
 
     oMapBucketsToOSSParams.clear();
 }
@@ -208,7 +212,7 @@ const char* VSIOSSFSHandler::GetOptions()
         "description='Size in MB for chunks of files that are uploaded. The"
         "default value of 50 MB allows for files up to 500 GB each' "
         "default='50' min='1' max='1000'/>" +
-        VSICurlFilesystemHandler::GetOptionsStatic() +
+        VSICurlFilesystemHandlerBase::GetOptionsStatic() +
         "</Options>");
     return osOptions.c_str();
 }
@@ -298,10 +302,7 @@ void VSIOSSFSHandler::UpdateMapFromHandle( IVSIS3LikeHandleHelper * poHandleHelp
     CPLMutexHolder oHolder( &hMutex );
 
     VSIOSSHandleHelper * poOSSHandleHelper =
-        dynamic_cast<VSIOSSHandleHelper *>(poHandleHelper);
-    CPLAssert( poOSSHandleHelper );
-    if( !poOSSHandleHelper )
-        return;
+        cpl::down_cast<VSIOSSHandleHelper *>(poHandleHelper);
     oMapBucketsToOSSParams[ poOSSHandleHelper->GetBucket() ] =
         VSIOSSUpdateParams ( poOSSHandleHelper );
 }
@@ -315,10 +316,7 @@ void VSIOSSFSHandler::UpdateHandleFromMap( IVSIS3LikeHandleHelper * poHandleHelp
     CPLMutexHolder oHolder( &hMutex );
 
     VSIOSSHandleHelper * poOSSHandleHelper =
-        dynamic_cast<VSIOSSHandleHelper *>(poHandleHelper);
-    CPLAssert( poOSSHandleHelper );
-    if( !poOSSHandleHelper )
-        return;
+        cpl::down_cast<VSIOSSHandleHelper *>(poHandleHelper);
     std::map< CPLString, VSIOSSUpdateParams>::iterator oIter =
         oMapBucketsToOSSParams.find(poOSSHandleHelper->GetBucket());
     if( oIter != oMapBucketsToOSSParams.end() )

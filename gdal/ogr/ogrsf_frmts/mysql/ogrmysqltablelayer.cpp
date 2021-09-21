@@ -774,19 +774,14 @@ OGRErr OGRMySQLTableLayer::ICreateFeature( OGRFeature *poFeature )
     osCommand += ") VALUES (";
 
     // Set the geometry
-    bNeedComma = poFeature->GetGeometryRef() != nullptr;
-    if( poFeature->GetGeometryRef() != nullptr)
+    OGRGeometry *poGeom = poFeature->GetGeometryRef();
+    bNeedComma = poGeom != nullptr;
+    if( poGeom != nullptr)
     {
         char    *pszWKT = nullptr;
-
-        if( poFeature->GetGeometryRef() != nullptr )
-        {
-            OGRGeometry *poGeom = (OGRGeometry *) poFeature->GetGeometryRef();
-
-            poGeom->closeRings();
-            poGeom->flattenTo2D();
-            poGeom->exportToWkt( &pszWKT );
-        }
+        poGeom->closeRings();
+        poGeom->flattenTo2D();
+        poGeom->exportToWkt( &pszWKT );
 
         if( pszWKT != nullptr )
         {

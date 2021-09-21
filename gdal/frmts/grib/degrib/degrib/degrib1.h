@@ -54,6 +54,7 @@ extern const GRIB1ParmTable parm_table_ecmwf_150[256];
 extern const GRIB1ParmTable parm_table_ecmwf_160[256];
 extern const GRIB1ParmTable parm_table_ecmwf_170[256];
 extern const GRIB1ParmTable parm_table_ecmwf_180[256];
+extern const GRIB1ParmTable parm_table_ecmwf_228[256];
 
 extern const GRIB1ParmTable parm_table_athens[256];
 

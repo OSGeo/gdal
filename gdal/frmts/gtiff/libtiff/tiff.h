@@ -56,24 +56,37 @@
 /*
  * Intrinsic data types required by the file format:
  *
- * 8-bit quantities     int8/uint8
- * 16-bit quantities    int16/uint16
- * 32-bit quantities    int32/uint32
- * 64-bit quantities    int64/uint64
+ * 8-bit quantities     int8_t/uint_8_t
+ * 16-bit quantities    int16_t/uint_16_t
+ * 32-bit quantities    int32_t/uint_32_t
+ * 64-bit quantities    int64_t/uint_64_t
  * strings              unsigned char*
  */
+#ifdef __GNUC__
+#define TIFF_GCC_DEPRECATED __attribute__((deprecated))
+#else
+#define TIFF_GCC_DEPRECATED
+#endif
+#ifdef _MSC_VER
+#define TIFF_MSC_DEPRECATED __declspec(deprecated("libtiff type deprecated; please use corresponding C99 stdint.h type"))
+#else
+#define TIFF_MSC_DEPRECATED
+#endif
 
-typedef TIFF_INT8_T   int8;
-typedef TIFF_UINT8_T  uint8;
+#ifndef TIFF_DISABLE_DEPRECATED
+typedef TIFF_MSC_DEPRECATED int8_t   int8   TIFF_GCC_DEPRECATED;
+typedef TIFF_MSC_DEPRECATED uint8_t  uint8  TIFF_GCC_DEPRECATED;
 
-typedef TIFF_INT16_T  int16;
-typedef TIFF_UINT16_T uint16;
+typedef TIFF_MSC_DEPRECATED int16_t  int16  TIFF_GCC_DEPRECATED;
+typedef TIFF_MSC_DEPRECATED uint16_t uint16 TIFF_GCC_DEPRECATED;
 
-typedef TIFF_INT32_T  int32;
-typedef TIFF_UINT32_T uint32;
+typedef TIFF_MSC_DEPRECATED int32_t  int32  TIFF_GCC_DEPRECATED;
+typedef TIFF_MSC_DEPRECATED uint32_t uint32 TIFF_GCC_DEPRECATED;
 
-typedef TIFF_INT64_T  int64;
-typedef TIFF_UINT64_T uint64;
+typedef TIFF_MSC_DEPRECATED int64_t  int64  TIFF_GCC_DEPRECATED;
+typedef TIFF_MSC_DEPRECATED uint64_t uint64 TIFF_GCC_DEPRECATED;
+#endif /* TIFF_DISABLE_DEPRECATED */
+
 
 /*
  * Some types as promoted in a variable argument list
@@ -89,20 +102,20 @@ typedef int uint16_vap;
  * TIFF header.
  */
 typedef struct {
-	uint16 tiff_magic;      /* magic number (defines byte order) */
-	uint16 tiff_version;    /* TIFF version number */
+	uint16_t tiff_magic;      /* magic number (defines byte order) */
+	uint16_t tiff_version;    /* TIFF version number */
 } TIFFHeaderCommon;
 typedef struct {
-	uint16 tiff_magic;      /* magic number (defines byte order) */
-	uint16 tiff_version;    /* TIFF version number */
-	uint32 tiff_diroff;     /* byte offset to first directory */
+	uint16_t tiff_magic;      /* magic number (defines byte order) */
+	uint16_t tiff_version;    /* TIFF version number */
+	uint32_t tiff_diroff;     /* byte offset to first directory */
 } TIFFHeaderClassic;
 typedef struct {
-	uint16 tiff_magic;      /* magic number (defines byte order) */
-	uint16 tiff_version;    /* TIFF version number */
-	uint16 tiff_offsetsize; /* size of offsets, should be 8 */
-	uint16 tiff_unused;     /* unused word, should be 0 */
-	uint64 tiff_diroff;     /* byte offset to first directory */
+	uint16_t tiff_magic;      /* magic number (defines byte order) */
+	uint16_t tiff_version;    /* TIFF version number */
+	uint16_t tiff_offsetsize; /* size of offsets, should be 8 */
+	uint16_t tiff_unused;     /* unused word, should be 0 */
+	uint64_t tiff_diroff;     /* byte offset to first directory */
 } TIFFHeaderBig;
 
 
@@ -197,6 +210,7 @@ typedef enum {
 #define	    COMPRESSION_LZMA		34925	/* LZMA2 */
 #define	    COMPRESSION_ZSTD		50000	/* ZSTD: WARNING not registered in Adobe-maintained registry */
 #define	    COMPRESSION_WEBP		50001	/* WEBP: WARNING not registered in Adobe-maintained registry */
+#define	    COMPRESSION_JXL		50002	/* JPEGXL: WARNING not registered in Adobe-maintained registry */
 #define	TIFFTAG_PHOTOMETRIC		262	/* photometric interpretation */
 #define	    PHOTOMETRIC_MINISWHITE	0	/* min value is white */
 #define	    PHOTOMETRIC_MINISBLACK	1	/* min value is black */
@@ -465,7 +479,7 @@ typedef enum {
 #define	TIFFTAG_JBIGOPTIONS		34750	/* JBIG options */
 #define TIFFTAG_GPSIFD			34853	/* Pointer to GPS private directory */
 /* tags 34908-34914 are private tags registered to SGI */
-#define	TIFFTAG_FAXRECVPARAMS		34908	/* encoded Class 2 ses. parms */
+#define	TIFFTAG_FAXRECVPARAMS		34908	/* encoded Class 2 ses. params */
 #define	TIFFTAG_FAXSUBADDRESS		34909	/* received SubAddr string */
 #define	TIFFTAG_FAXRECVTIME		34910	/* receive time (secs) */
 #define	TIFFTAG_FAXDCS			34911	/* encoded fax ses. params, Table 2/T.30 */

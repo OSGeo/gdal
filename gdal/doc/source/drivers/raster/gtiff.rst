@@ -116,8 +116,8 @@ method.
 
 The block size (tile width and height) used for overviews (internal or
 external) can be specified by setting the GDAL_TIFF_OVR_BLOCKSIZE
-environment variable to a power-of-two value between 64 and 4096. The 
-default is 128, or starting with GDAL 3.1 to use the same block size 
+environment variable to a power-of-two value between 64 and 4096. The
+default is 128, or starting with GDAL 3.1 to use the same block size
 as the full-resolution dataset if possible (i.e. block height and width
 are equal, a power-of-two, and between 64 and 4096).
 
@@ -254,7 +254,7 @@ option to YES. Then, blocks that are never written through the
 IWriteBlock()/IRasterIO() interfaces will have their offset and byte
 count set to 0. This is particularly useful to save disk space and time
 when the file must be initialized empty before being passed to a further
-processing stage that will fill it. To avoid ambiguities with anoter
+processing stage that will fill it. To avoid ambiguities with another
 sparse mechanism discussed in the next paragraphs, we will call such
 files with implicit tiles/strips "TIFF sparse files". They will be
 likely **not** interoperable with TIFF readers that are not GDAL based
@@ -377,14 +377,17 @@ Creation Options
 -  **COMPRESS=[JPEG/LZW/PACKBITS/DEFLATE/CCITTRLE/CCITTFAX3/CCITTFAX4/LZMA/ZSTD/LERC/LERC_DEFLATE/LERC_ZSTD/WEBP/NONE]**:
    Set the compression to use.
 
-   * ``JPEG`` should generally only be used with
-     Byte data (8 bit per channel). But if GDAL is built with internal libtiff and
-     libjpeg, it is    possible to read and write TIFF files with 12bit JPEG compressed TIFF
-     files (seen as UInt16 bands with NBITS=12). See the `"8 and 12 bit
-     JPEG in TIFF" <http://trac.osgeo.org/gdal/wiki/TIFF12BitJPEG>`__ wiki
-     page for more details.
+   * ``JPEG`` should generally only be used with Byte data (8 bit per channel).
      Better compression for RGB images can be obtained by using the PHOTOMETRIC=YCBCR
      colorspace with a 4:2:2 subsampling of the Y,Cb,Cr components.
+
+     Starting with GDAL 3.4, if GDAL is built with its internal libtiff,
+     read and write support for JPEG-in-TIFF compressed images with 12-bit sample
+     is enabled by default (if JPEG support is also enabled), using GDAL internal libjpeg
+     (based on IJG libjpeg-6b, with additional changes for 12-bit sample support).
+     Support for JPEG with 12-bit sample is independent of whether
+     8-bit JPEG support is enabled through internal IJG libjpeg-6b or external libjpeg
+     (like libjpeg-turbo)
 
    * ``CCITTFAX3``, ``CCITTFAX4`` or ``CCITRLE`` compression should only be used with 1bit (NBITS=1) data
 
@@ -393,7 +396,9 @@ Creation Options
    * ``ZSTD`` is available since GDAL 2.3 when using internal libtiff and if GDAL
      built against libzstd >=1.0, or if built against external libtiff with zstd support.
 
-   * ``LERC`` and ``LERC_DEFLATE`` are available only when using internal libtiff.
+   * ``LERC`` and ``LERC_DEFLATE`` are available only when using internal libtiff for GDAL < 3.3.0.
+     Since GDAL 3.3.0, LERC compression is also available when building GDAL
+     against external libtiff >= 4.3.0, built itself against https://github.com/esri/lerc
 
    * ``LERC_ZSTD`` is available when ``LERC`` and ``ZSTD`` are available.
 
@@ -586,6 +591,45 @@ libtiff will fail to compress the data.
 Note also that the dimensions of the tiles or strips must be a multiple
 of 8 for PHOTOMETRIC=RGB or 16 for PHOTOMETRIC=YCBCR
 
+Lossless conversion of JPEG into JPEG-in-TIFF
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The conversion of a JPEG file (but *not* a JPEG-in-TIFF file) to a JPEG-in-TIFF
+file without decompression and compression cycles, and thus without any additional
+quality loss, can be done with gdal_translate (or the CreateCopy() API),
+if all the following conditions are met:
+
+- the source dataset is a JPEG file (or a VRT with a JPEG as a single SimpleSource)
+- the target dataset is a JPEG-in-TIFF file
+- no explicity target JPEG quality is specified
+- no change in colorspace is specified
+- no sub-windowing is requested
+- and more generally, no change that alters pixel values
+
+The generation of a tiled JPEG-in-TIFF from the original JPEG image is possible.
+Explicit assigment of target SRS and bounds are also possible.
+
+So, the following commands will use the lossless copy method :
+
+::
+
+    gdal_translate in.jpg out.tif -co COMPRESS=JPEG
+
+    gdal_translate in.jpg out.tif -co COMPRESS=JPEG -co TILED=YES
+
+    gdal_translate in.jpg out.tif -co COMPRESS=JPEG -a_srs EPSG:4326 -a_ullr -180 90 180 -90
+
+
+whereas the following commands will *not* (and thus cause JPEG decompression and
+compression):
+
+::
+
+    gdal_translate in.jpg out.tif -co COMPRESS=JPEG -co JPEG_QUALITY=60
+
+    gdal_translate in.jpg out.tif -srcwin 0 0 500 500 -co COMPRESS=JPEG
+
+
 Streaming operations
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -666,6 +710,12 @@ the default behavior of the GTiff driver.
    partially corrupted TIFF files
 -  :decl_configoption:`ESRI_XML_PAM` : Can be set to TRUE to force metadata in the xml:ESRI
    domain to be written to PAM.
+-  :decl_configoption:`COMPRESS_OVERVIEW` :  See `Creation Options COMPRESS <#creation-options>`__ section.
+   Set the compression type to use for overviews
+-  :decl_configoption:`PHOTOMETRIC_OVERVIEW` :  YCBCR
+   Set the photometric color space for overview creation
+-  :decl_configoption:`PREDICTOR_OVERVIEW` : Integer 1,2 or 3.
+   Set the predictor to use for overviews with LZW, DEFLATE and ZSTD compression
 -  :decl_configoption:`JPEG_QUALITY_OVERVIEW` : Integer between 0 and 100. Default value : 75.
    Quality of JPEG compressed overviews, either internal or external.
 -  :decl_configoption:`WEBP_LEVEL_OVERVIEW` : Integer between 1 and 100. Default value : 75.

@@ -44,7 +44,8 @@ namespace NGWAPI {
     std::string GetTMS(const std::string &osUrl, const std::string &osResourceId);
     std::string GetFeaturePage(const std::string &osUrl, const std::string &osResourceId,
         GIntBig nStart, int nCount = 0, const std::string &osFields = "",
-        const std::string &osWhere = "", const std::string &osSpatialWhere = "");
+        const std::string &osWhere = "", const std::string &osSpatialWhere = "",
+        const std::string &osExtensions = "", bool IsGeometryIgnored = false);
     std::string GetRoute(const std::string &osUrl);
     std::string GetUpload(const std::string &osUrl);
     std::string GetVersion(const std::string &osUrl);
@@ -229,6 +230,7 @@ class OGRNGWDataset final : public GDALDataset
 
     // json
     std::string osJsonDepth;
+    std::string osExtensions;
 
 public:
     OGRNGWDataset();
@@ -238,6 +240,7 @@ public:
         bool bUpdateIn, int nOpenFlagsIn );
     bool Open( const std::string &osUrlIn, const std::string &osResourceIdIn,
         char **papszOpenOptionsIn, bool bUpdateIn, int nOpenFlagsIn );
+    std::string Extensions() const;
 
     /* GDALDataset */
     virtual int GetLayerCount() override { return nLayers; }

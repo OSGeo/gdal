@@ -140,7 +140,7 @@ class ELASDataset final: public GDALPamDataset
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
-                                GDALDataType eType, char ** papszParmList );
+                                GDALDataType eType, char ** papszParamList );
 
     void FlushCache() override;
 };
@@ -506,7 +506,7 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
 GDALDataset *ELASDataset::Create( const char * pszFilename,
                                   int nXSize, int nYSize, int nBands,
                                   GDALDataType eType,
-                                  char ** /* notdef: papszParmList */ )
+                                  char ** /* notdef: papszParamList */ )
 
 {
 /* -------------------------------------------------------------------- */

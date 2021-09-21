@@ -8,6 +8,9 @@ INGR -- Intergraph Raster Format
 
 .. built_in_by_default::
 
+.. deprecated_driver:: version_targeted_for_removal: 3.5
+   env_variable: GDAL_ENABLE_DEPRECATED_DRIVER_INGR
+
 This format is supported for read and writes access.
 
 The Intergraph Raster File Format was the native file format used by

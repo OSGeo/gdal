@@ -133,6 +133,7 @@ struct VSIDIRADLS: public VSIDIR
     VSIADLSFSHandler* m_poFS = nullptr;
     int m_nMaxFiles = 0;
     bool m_bCacheEntries = true;
+    std::string m_osFilterPrefix{}; // client-side only. No server-side option in https://docs.microsoft.com/en-us/rest/api/storageservices/datalakestoragegen2/path/list
 
     explicit VSIDIRADLS(VSIADLSFSHandler *poFSIn): m_poFS(poFSIn) {}
 
@@ -179,7 +180,8 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
 
     VSIVirtualHandle *Open( const char *pszFilename,
                             const char *pszAccess,
-                            bool bSetError ) override;
+                            bool bSetError,
+                            CSLConstList papszOptions ) override;
 
     int Rename( const char *oldpath, const char *newpath ) override;
     int Unlink( const char *pszFilename ) override;
@@ -233,7 +235,8 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
                                 const std::string& osFilename,
                                 IVSIS3LikeHandleHelper * poS3HandleHelper,
                                 int nMaxRetry,
-                                double dfRetryDelay) override {
+                                double dfRetryDelay,
+                                CSLConstList /* papszOptions */) override {
         return UploadFile(osFilename, Event::CREATE_FILE, 0, nullptr, 0,
                           poS3HandleHelper, nMaxRetry, dfRetryDelay) ?
             std::string("dummy") : std::string();
@@ -273,10 +276,10 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
                         int /* nMaxRetry */,
                         double /* dfRetryDelay */) override { return true; }
 
-    CPLString GetStreamingPath( const char* pszFilename ) const override;
-
     IVSIS3LikeHandleHelper* CreateHandleHelper(
         const char* pszURI, bool bAllowNoObject) override;
+
+    std::string GetStreamingFilename(const std::string& osFilename) const override;
 };
 
 /************************************************************************/
@@ -606,6 +609,11 @@ const VSIDIREntry* VSIDIRADLS::NextDirEntry()
                     }
                 }
             }
+            if( !m_osFilterPrefix.empty() &&
+                !STARTS_WITH(entry->pszName, m_osFilterPrefix.c_str()) )
+            {
+                continue;
+            }
             return entry.get();
         }
         if( oIter.m_osNextMarker.empty() )
@@ -671,6 +679,9 @@ int VSIADLSFSHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
 {
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
         return -1;
+
+    if( (nFlags & VSI_STAT_CACHE_ONLY) != 0 )
+        return VSICurlFilesystemHandlerBase::Stat(pszFilename, pStatBuf, nFlags);
 
     const CPLString osFilenameWithoutSlash(RemoveTrailingSlash(pszFilename));
 
@@ -761,7 +772,7 @@ int VSIADLSFSHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
         return 0;
     }
 
-    return VSICurlFilesystemHandler::Stat(osFilenameWithoutSlash, pStatBuf, nFlags);
+    return VSICurlFilesystemHandlerBase::Stat(osFilenameWithoutSlash, pStatBuf, nFlags);
 }
 
 /************************************************************************/
@@ -777,7 +788,7 @@ char** VSIADLSFSHandler::GetFileMetadata( const char* pszFilename,
 
     if( pszDomain == nullptr || (!EQUAL(pszDomain, "STATUS") && !EQUAL(pszDomain, "ACL")) )
     {
-        return VSICurlFilesystemHandler::GetFileMetadata(
+        return VSICurlFilesystemHandlerBase::GetFileMetadata(
                     pszFilename, pszDomain, papszOptions);
     }
 
@@ -1164,7 +1175,8 @@ void VSIADLSFSHandler::ClearCache()
 
 VSIVirtualHandle* VSIADLSFSHandler::Open( const char *pszFilename,
                                         const char *pszAccess,
-                                        bool bSetError)
+                                        bool bSetError,
+                                        CSLConstList papszOptions )
 {
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
         return nullptr;
@@ -1200,7 +1212,7 @@ VSIVirtualHandle* VSIADLSFSHandler::Open( const char *pszFilename,
     }
 
     return
-        VSICurlFilesystemHandler::Open(pszFilename, pszAccess, bSetError);
+        VSICurlFilesystemHandlerBase::Open(pszFilename, pszAccess, bSetError, papszOptions);
 }
 
 /************************************************************************/
@@ -1745,6 +1757,7 @@ int VSIADLSFSHandler::CopyObject( const char *oldpath, const char *newpath,
                               nullptr));
         headers = curl_slist_append(headers, osSourceHeader.c_str());
         headers = curl_slist_append(headers, "Content-Length: 0");
+        headers = VSICurlSetContentTypeFromExt(headers, newpath);
         headers = VSICurlMergeHeaders(headers,
                         poAzHandleHelper->GetCurlHeaders("PUT", headers));
         curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
@@ -1791,7 +1804,7 @@ int VSIADLSFSHandler::CopyObject( const char *oldpath, const char *newpath,
             auto poADLSHandleHelper =
                 std::unique_ptr<IVSIS3LikeHandleHelper>(
                     VSIAzureBlobHandleHelper::BuildFromURI(osTargetNameWithoutPrefix, GetFSPrefix()));
-            if( poADLSHandleHelper == nullptr )
+            if( poADLSHandleHelper != nullptr )
                 InvalidateCachedData(poADLSHandleHelper->GetURLNoKVP().c_str());
 
             const CPLString osFilenameWithoutSlash(RemoveTrailingSlash(newpath));
@@ -1869,6 +1882,7 @@ bool VSIADLSFSHandler::UploadFile(const CPLString& osFilename,
             CPLHTTPSetOptions(hCurlHandle,
                               poHandleHelper->GetURL().c_str(),
                               nullptr));
+        headers = VSICurlSetContentTypeFromExt(headers, osFilename.c_str());
 
         CPLString osContentLength; // leave it in this scope
 
@@ -1883,7 +1897,7 @@ bool VSIADLSFSHandler::UploadFile(const CPLString& osFilename,
                                    static_cast<int>(nBufferSize));
             headers = curl_slist_append(headers, osContentLength.c_str());
         }
-        else 
+        else
         {
             curl_easy_setopt(hCurlHandle, CURLOPT_INFILESIZE, 0);
             headers = curl_slist_append(headers, "Content-Length: 0");
@@ -2012,7 +2026,7 @@ const char* VSIADLSFSHandler::GetOptions()
     "  <Option name='VSIAZ_CHUNK_SIZE' type='int' "
         "description='Size in MB for chunks of files that are uploaded' "
         "default='4' min='1' max='4'/>" +
-        VSICurlFilesystemHandler::GetOptionsStatic() +
+        VSICurlFilesystemHandlerBase::GetOptionsStatic() +
         "</Options>");
     return osOptions.c_str();
 }
@@ -2079,6 +2093,7 @@ VSIDIR* VSIADLSFSHandler::OpenDir( const char *pszPath,
     dir->m_nMaxFiles = atoi(CSLFetchNameValueDef(papszOptions, "MAXFILES", "0"));
     dir->m_bCacheEntries = CPLTestBool(
         CSLFetchNameValueDef(papszOptions, "CACHE_ENTRIES", "YES"));
+    dir->m_osFilterPrefix = CSLFetchNameValueDef(papszOptions, "PREFIX", "");
     if( !dir->IssueListDir() )
     {
         delete dir;
@@ -2089,18 +2104,14 @@ VSIDIR* VSIADLSFSHandler::OpenDir( const char *pszPath,
 }
 
 /************************************************************************/
-/*                         GetStreamingPath()                           */
+/*                      GetStreamingFilename()                          */
 /************************************************************************/
 
-CPLString VSIADLSFSHandler::GetStreamingPath( const char* pszFilename ) const
+std::string VSIADLSFSHandler::GetStreamingFilename(const std::string& osFilename) const
 {
-    const CPLString osPrefix(GetFSPrefix());
-    if( !STARTS_WITH_CI(pszFilename, osPrefix) )
-        return CPLString();
-
-    // Transform /vsiadls/foo into /vsiaz_streaming/foo
-    const size_t nPrefixLen = osPrefix.size();
-    return CPLString("/vsiaz_streaming/")  + (pszFilename + nPrefixLen);
+    if( STARTS_WITH(osFilename.c_str(), GetFSPrefix().c_str()) )
+        return "/vsiaz_streaming/" + osFilename.substr(GetFSPrefix().size());
+    return osFilename;
 }
 
 /************************************************************************/

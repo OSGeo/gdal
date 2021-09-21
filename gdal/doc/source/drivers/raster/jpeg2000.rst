@@ -8,6 +8,10 @@ JPEG2000 -- Implementation of the JPEG-2000 part 1
 
 .. build_dependencies:: libjasper
 
+.. deprecated_driver:: version_targeted_for_removal: 3.5
+   env_variable: GDAL_ENABLE_DEPRECATED_DRIVER_JPEG2000
+   message: You should consider using another driver, in particular the JP2OpenJPEG driver that is a better free and open source alternative.
+
 This implementation based on JasPer software (see below).
 
 XMP metadata can be extracted from JPEG2000

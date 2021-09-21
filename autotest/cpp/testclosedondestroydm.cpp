@@ -229,6 +229,7 @@ int main(int /* argc*/ , char* /* argv */[])
     unlink("byte3.tif");
     unlink("byte3.tif.msk");
     unlink("byte.vrt");
+    unlink("byte.vrt.ovr");
 
     return 0;
 }

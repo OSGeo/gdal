@@ -20,4 +20,4 @@ $SCRIPT_DIR/../common_install.sh
 (cd proj; sudo make -j3 install && sudo ldconfig)
 
 export PATH=$PWD/clang+llvm-9.0.0-x86_64-linux-gnu-ubuntu-16.04/bin:$PATH
-(cd gdal && CXXFLAGS="-std=c++11 -DCSA_BUILD" CFLAGS="-DCSA_BUILD" scan-build ./configure --prefix=/usr --without-libtool --enable-debug --with-jpeg12 --with-poppler --with-podofo --with-spatialite --with-mysql --with-liblzma --with-webp --with-java --with-mdb --with-jvm-lib-add-rpath --with-epsilon --with-ecw=/usr/local --with-fgdb=/usr/local --with-libkml --with-openjpeg=/usr/local --without-grib --with-proj=/usr/local)
+(cd gdal && ./autogen.sh && CXXFLAGS="-std=c++11 -DCSA_BUILD" CFLAGS="-DCSA_BUILD" scan-build ./configure --prefix=/usr --without-libtool --enable-debug --with-jpeg12 --with-poppler --with-podofo --with-spatialite --with-mysql --with-liblzma --with-webp --with-java --with-mdb --with-jvm-lib-add-rpath --with-epsilon --with-ecw=/usr/local --with-fgdb=/usr/local --with-libkml --with-openjpeg=/usr/local --without-grib --with-proj=/usr/local)

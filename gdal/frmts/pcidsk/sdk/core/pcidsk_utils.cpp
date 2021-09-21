@@ -455,14 +455,14 @@ int PCIDSK::pci_strncasecmp( const char *string1, const char *string2, size_t le
 }
 
 /************************************************************************/
-/*                         ProjParmsFromText()                          */
+/*                         ProjParamsFromText()                          */
 /*                                                                      */
-/*      function to turn a ProjParms string (17 floating point          */
+/*      function to turn a ProjParams string (17 floating point          */
 /*      numbers) into an array, as well as attaching the units code     */
 /*      derived from the geosys string.                                 */
 /************************************************************************/
 
-std::vector<double> PCIDSK::ProjParmsFromText( std::string geosys,
+std::vector<double> PCIDSK::ProjParamsFromText( std::string geosys,
                                                std::string sparms )
 
 {
@@ -507,10 +507,10 @@ std::vector<double> PCIDSK::ProjParmsFromText( std::string geosys,
 }
 
 /************************************************************************/
-/*                          ProjParmsToText()                           */
+/*                          ProjParamsToText()                           */
 /************************************************************************/
 
-std::string PCIDSK::ProjParmsToText( std::vector<double> dparms )
+std::string PCIDSK::ProjParamsToText( std::vector<double> dparms )
 
 {
     std::string sparms;

@@ -93,41 +93,42 @@ public:
 /*                           JPIPKAKDataset                             */
 /* ==================================================================== */
 /************************************************************************/
+
 class JPIPKAKDataset final: public GDALPamDataset
 {
 private:
-    int       bNeedReinitialize;
+    int       bNeedReinitialize = FALSE;
     CPLString osRequestUrl;
-    char* pszPath;
-    char* pszCid;
-    char* pszProjection;
+    char* pszPath = nullptr;
+    char* pszCid = nullptr;
+    OGRSpatialReference m_oSRS{};
 
-    int nPos;
-    int nVBASLen;
-    int nVBASFirstByte;
-    int nClassId;
-    int nQualityLayers;
-    int nResLevels;
-    int nComps;
-    int nBitDepth;
-    int bYCC;
-    GDALDataType eDT;
+    int nPos = 0;
+    int nVBASLen = 0;
+    int nVBASFirstByte = 0;
+    int nClassId = 0;
+    int nQualityLayers = 0;
+    int nResLevels = 0;
+    int nComps = 0;
+    int nBitDepth = 0;
+    int bYCC = 0;
+    GDALDataType eDT = GDT_Unknown;
 
-    int nCodestream;
-    long nDatabins;
+    int nCodestream = 0;
+    long nDatabins = 0;
 
     double adfGeoTransform[6];
 
-    int bWindowDone;
-    int bGeoTransformValid;
+    int bWindowDone = FALSE;
+    int bGeoTransformValid = FALSE;
 
-    int nGCPCount;
-    GDAL_GCP *pasGCPList;
+    int nGCPCount = 0;
+    GDAL_GCP *pasGCPList = nullptr;
 
     // kakadu
-    kdu_codestream *poCodestream;
-    kdu_region_decompressor *poDecompressor;
-    kdu_cache *poCache;
+    kdu_codestream *poCodestream = nullptr;
+    kdu_region_decompressor *poDecompressor = nullptr;
+    kdu_cache *poCache = nullptr;
 
     long ReadVBAS(GByte* pabyData, int nLen);
     JPIPDataSegment* ReadSegment(GByte* pabyData, int nLen, int& bError);
@@ -135,17 +136,17 @@ private:
     void Deinitialize();
     static int KakaduClassId(int nClassId);
 
-    CPLMutex *pGlobalMutex;
+    CPLMutex *pGlobalMutex = nullptr;
 
     // support two communication threads to the server, a main and an overview thread
-    volatile int bHighThreadRunning;
-    volatile int bLowThreadRunning;
-    volatile int bHighThreadFinished;
-    volatile int bLowThreadFinished;
+    volatile int bHighThreadRunning = 0;
+    volatile int bLowThreadRunning = 0;
+    volatile int bHighThreadFinished = 0;
+    volatile int bLowThreadFinished = 0;
 
     // transmission counts
-    volatile long nHighThreadByteCount;
-    volatile long nLowThreadByteCount;
+    volatile long nHighThreadByteCount = 0;
+    volatile long nLowThreadByteCount = 0;
 
     static void KakaduInitialize();
 
@@ -173,19 +174,13 @@ public:
 
     int TestUseBlockIO( int nXOff, int nYOff, int nXSize, int nYSize,
                         int nBufXSize, int nBufYSize, GDALDataType eDataType,
-                        int nBandCount, int *panBandList ) const;
+                        int nBandCount, const int *panBandList ) const;
 
     //gdaldataset methods
     virtual CPLErr GetGeoTransform( double * ) override;
-    virtual const char *_GetProjectionRef() override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
     virtual int    GetGCPCount() override;
-    virtual const char *_GetGCPProjection() override;
-    const OGRSpatialReference* GetGCPSpatialRef() const override {
-        return GetGCPSpatialRefFromOldGetGCPProjection();
-    }
+    const OGRSpatialReference* GetGCPSpatialRef() const override;
     virtual const GDAL_GCP *GetGCPs() override;
     virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
                               int nXOff, int nYOff, int nXSize, int nYSize,

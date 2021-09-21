@@ -60,7 +60,7 @@ veryclean: clean
 	-rm -f *.tar.gz
 	-rm -f *.bs
 
-doc: .FORCE
-
-.FORCE:
+doc:
 	perl parse-for-doxygen.pl > all.pm; doxygen; rm -f all.pm
+
+.PHONY: all generate build test install dist clean veryclean doc

@@ -25,7 +25,7 @@ sudo docker run -e 'ACCEPT_EULA=Y' -e 'SA_PASSWORD=DummyPassw0rd'  -p 1433:1433 
 sleep 10
 docker exec -it sql1 /opt/mssql-tools/bin/sqlcmd -l 30 -S localhost -U SA -P DummyPassw0rd -Q "CREATE DATABASE TestDB;"
 
-sudo apt-get install -y --allow-unauthenticated ccache libpng12-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libspatialite-dev gpsbabel swig libhdf4-alt-dev libhdf5-serial-dev libpodofo-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev  libepsilon-dev  liblcms2-2 libpcre3-dev mercurial cmake libcrypto++-dev postgresql-9.3-postgis-2.2 postgresql-9.3-postgis-scripts libpq-dev
+sudo apt-get install -y --allow-unauthenticated automake ccache libpng12-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libspatialite-dev gpsbabel swig libhdf4-alt-dev libhdf5-serial-dev libpodofo-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev  libepsilon-dev  liblcms2-2 libpcre3-dev mercurial cmake libcrypto++-dev postgresql-9.3-postgis-2.2 postgresql-9.3-postgis-scripts libpq-dev
 # libgta-dev
 sudo apt-get install -y libqhull-dev
 sudo apt-get install -y libogdi3.2-dev
@@ -36,8 +36,8 @@ sudo apt-get install doxygen texlive-latex-base
 # flake8 codes to just emulate pyflakes (http://flake8.pycqa.org/en/latest/user/error-codes.html)
 FLAKE8="flake8 --select=F401,F402,F403,F404,F405,F406,F407,F601,F602,F621,F622,F631,F632,F633,F701,F702,F703,F704,F705,F706,F707,F721,F722,F811,F812,F821,F822,F823,F831,F841,F901"
 $FLAKE8 autotest
-$FLAKE8 gdal/swig/python/scripts
-$FLAKE8 gdal/swig/python/samples
+$FLAKE8 gdal/swig/python/gdal-utils/scripts
+$FLAKE8 gdal/swig/python/gdal-utils/osgeo_utils/samples
 psql -c "drop database if exists autotest" -U postgres
 psql -c "create database autotest" -U postgres
 psql -c "create extension postgis" -d autotest -U postgres

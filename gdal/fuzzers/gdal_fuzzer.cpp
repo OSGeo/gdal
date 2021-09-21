@@ -32,6 +32,7 @@
 #include <unistd.h>
 
 #include <algorithm>
+#include <vector>
 
 #include "gdal.h"
 #include "cpl_conv.h"
@@ -83,7 +84,79 @@ int LLVMFuzzerInitialize(int* /*argc*/, char*** argv)
 #ifdef GTIFF_USE_MMAP
     CPLSetConfigOption("GTIFF_USE_MMAP", "YES");
 #endif
+
+#ifdef GDAL_SKIP
+    CPLSetConfigOption("GDAL_SKIP", GDAL_SKIP);
+#endif
+    REGISTER_FUNC();
+
     return 0;
+}
+
+static void ExploreAttributes(const GDALIHasAttribute* attributeHolder)
+{
+    const auto attributes = attributeHolder->GetAttributes();
+    for( const auto& attribute: attributes )
+    {
+        attribute->ReadAsRaw();
+    }
+
+    attributeHolder->GetAttribute("i_do_not_exist");
+}
+
+static void ExploreArray(const std::shared_ptr<GDALMDArray>& poArray)
+{
+    ExploreAttributes(poArray.get());
+
+    poArray->GetFilename();
+    poArray->GetStructuralInfo();
+    poArray->GetUnit();
+    poArray->GetSpatialRef();
+    poArray->GetRawNoDataValue();
+    poArray->GetOffset();
+    poArray->GetScale();
+    poArray->GetCoordinateVariables();
+
+    if( poArray->GetDataType().GetClass() == GEDTC_NUMERIC )
+    {
+        const auto nDimCount = poArray->GetDimensionCount();
+        std::vector<GUInt64> anArrayStartIdx(nDimCount);
+        std::vector<size_t> anCount(nDimCount, 1);
+        std::vector<GInt64> anArrayStep(nDimCount);
+        std::vector<GPtrDiff_t> anBufferStride(nDimCount);
+        std::vector<GByte> abyData( poArray->GetDataType().GetSize() );
+        poArray->Read(anArrayStartIdx.data(),
+                      anCount.data(),
+                      anArrayStep.data(),
+                      anBufferStride.data(),
+                      poArray->GetDataType(),
+                      &abyData[0]);
+    }
+}
+
+static void ExploreGroup(const std::shared_ptr<GDALGroup>& poGroup)
+{
+    ExploreAttributes(poGroup.get());
+
+    const auto groupNames = poGroup->GetGroupNames();
+    poGroup->OpenGroup("i_do_not_exist");
+    for( const auto& name: groupNames )
+    {
+        auto poSubGroup = poGroup->OpenGroup(name);
+        if( poSubGroup )
+            ExploreGroup(poSubGroup);
+    }
+
+    const auto arrayNames = poGroup->GetMDArrayNames();
+    poGroup->OpenMDArray("i_do_not_exist");
+    for( const auto& name: arrayNames )
+    {
+        auto poArray = poGroup->OpenMDArray(name);
+        if( poArray )
+        {
+            ExploreArray(poArray);
+        }
+    }
 }
 
 int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
@@ -105,10 +178,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
             reinterpret_cast<GByte*>(const_cast<uint8_t*>(buf)), len, FALSE );
 #endif
     VSIFCloseL(fp);
-#ifdef GDAL_SKIP
-    CPLSetConfigOption("GDAL_SKIP", GDAL_SKIP);
-#endif
-    REGISTER_FUNC();
+
     CPLPushErrorHandler(CPLQuietErrorHandler);
 #ifdef USE_FILESYSTEM
     const char* pszGDALFilename = szTempFilename;
@@ -188,7 +258,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
                 const char* pszCompress =
                     GDALGetMetadataItem(hDS, "COMPRESSION", "IMAGE_STRUCTURE");
                 if( pszCompress != nullptr &&
-                    ((nBYSize == 1 && nYSizeToRead > 1 &&
+                    ((nBYSize == 1 && GDALGetRasterYSize(hDS) > 1 &&
                       GDALGetMetadataItem(GDALGetRasterBand(hDS, 1),
                                         "BLOCK_OFFSET_0_1", "TIFF") == nullptr) ||
                      nBXSize != GDALGetRasterXSize(hDS)) &&
@@ -206,6 +276,13 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
                         GDALGetRasterYSize(hDS) > (INT_MAX / 2) /
                             static_cast<int>(sizeof(GUInt32)) /
                                 nSimultaneousBands / GDALGetRasterXSize(hDS) )
+                    {
+                        bDoCheckSum = false;
+                    }
+                    // https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=38051
+                    else if( STARTS_WITH_CI(pszCompress, "LERC") &&
+                        (static_cast<int64_t>(GDALGetRasterYSize(hDS)) * nSimultaneousBands * GDALGetRasterXSize(hDS) > (INT_MAX / 2) ||
+                         static_cast<int64_t>(GDALGetRasterYSize(hDS)) * nSimultaneousBands * GDALGetRasterXSize(hDS) * 4 / 3 + 100 > (INT_MAX / 2)) )
                     {
                         bDoCheckSum = false;
                     }
@@ -266,7 +343,19 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
             GDALRasterBandH hMaskBand = GDALGetMaskBand(hBand);
             GDALGetRasterBandXSize(hMaskBand);
             if( bDoCheckSum && nFlags == GMF_PER_DATASET )
-                GDALChecksumImage(hMaskBand, 0, 0, nXSizeToRead, nYSizeToRead);
+            {
+                int nBXSize = 0, nBYSize = 0;
+                GDALGetBlockSize( hMaskBand, &nBXSize, &nBYSize );
+                if( nBXSize == 0 || nBYSize == 0 ||
+                    nBXSize > INT_MAX / 2 / nBYSize )
+                {
+                    // do nothing
+                }
+                else
+                {
+                    GDALChecksumImage(hMaskBand, 0, 0, nXSizeToRead, nYSizeToRead);
+                }
+            }
 
             int nOverviewCount = GDALGetOverviewCount(hBand);
             for( int i = 0; i < nOverviewCount; i++ )
@@ -277,6 +366,17 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
 
         GDALClose(hDS);
     }
+
+    auto poDS = std::unique_ptr<GDALDataset>(
+        GDALDataset::Open( pszGDALFilename, GDAL_OF_MULTIDIM_RASTER ));
+    if( poDS )
+    {
+        auto poRootGroup = poDS->GetRootGroup();
+        poDS.reset();
+        if( poRootGroup )
+            ExploreGroup(poRootGroup);
+    }
+
     CPLPopErrorHandler();
 #ifdef USE_FILESYSTEM
     VSIUnlink( szTempFilename );

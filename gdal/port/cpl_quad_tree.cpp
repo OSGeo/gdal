@@ -74,6 +74,7 @@ struct _CPLQuadTree
 static void CPLQuadTreeAddFeatureInternal(CPLQuadTree *hQuadTree,
                                           void* hFeature,
                                           const CPLRectObj *pRect);
+static void CPLQuadTreeNodeDestroy(QuadTreeNode *psNode);
 
 /* -------------------------------------------------------------------- */
 /*      If the following is 0.5, psNodes will be split in half.  If it  */
@@ -299,6 +300,105 @@ void CPLQuadTreeInsertWithBounds(CPLQuadTree *hQuadTree,
 {
     hQuadTree->nFeatures++;
     CPLQuadTreeAddFeatureInternal(hQuadTree, hFeature, psBounds);
+}
+
+/************************************************************************/
+/*                            CPLQuadTreeRemove()                       */
+/************************************************************************/
+
+static bool CPLQuadTreeRemoveInternal(QuadTreeNode* psNode,
+                                      void* hFeature,
+                                      const CPLRectObj* psBounds)
+{
+    bool bRemoved = false;
+
+    for( int i = 0; i < psNode->nFeatures; i++ )
+    {
+        if( psNode->pahFeatures[i] == hFeature )
+        {
+            if( i < psNode->nFeatures - 1 )
+            {
+                memmove(psNode->pahFeatures + i,
+                        psNode->pahFeatures + i + 1,
+                        (psNode->nFeatures - 1 - i) * sizeof(void*));
+                if( psNode->pasBounds )
+                {
+                    memmove(psNode->pasBounds + i,
+                            psNode->pasBounds + i + 1,
+                            (psNode->nFeatures - 1 - i) * sizeof(CPLRectObj));
+                }
+            }
+            bRemoved = true;
+            psNode->nFeatures --;
+            break;
+        }
+    }
+    if( psNode->nFeatures == 0 && psNode->pahFeatures != nullptr )
+    {
+        CPLFree(psNode->pahFeatures);
+        CPLFree(psNode->pasBounds);
+        psNode->pahFeatures = nullptr;
+        psNode->pasBounds = nullptr;
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      Recurse to subnodes if they exist.                              */
+    /* -------------------------------------------------------------------- */
+    for( int i = 0; i < psNode->nNumSubNodes; i++ )
+    {
+        if( psNode->apSubNode[i] &&
+            CPL_RectOverlap(&(psNode->apSubNode[i]->rect), psBounds) )
+        {
+            bRemoved |=
+                CPLQuadTreeRemoveInternal( psNode->apSubNode[i], hFeature, psBounds );
+
+            if( psNode->apSubNode[i]->nFeatures == 0 &&
+                psNode->apSubNode[i]->nNumSubNodes == 0 )
+            {
+                CPLQuadTreeNodeDestroy(psNode->apSubNode[i]);
+                if( i < psNode->nNumSubNodes - 1 )
+                {
+                    memmove(psNode->apSubNode + i,
+                            psNode->apSubNode + i + 1,
+                            (psNode->nNumSubNodes - 1 - i) * sizeof(QuadTreeNode*));
+                }
+                i --;
+                psNode->nNumSubNodes --;
+            }
+        }
+    }
+
+    return bRemoved;
+}
+
+/**
+ * Remove a feature from a quadtree.
+ *
+ * Currently the quadtree is not re-balanced.
+ *
+ * @param hQuadTree the quad tree
+ * @param hFeature the feature to remove
+ * @param psBounds bounds of the feature (or NULL if pfnGetBounds has been filled)
+ */
+void CPLQuadTreeRemove(CPLQuadTree *hQuadTree, void* hFeature,
+                       const CPLRectObj* psBounds)
+{
+    if( psBounds == nullptr && hQuadTree->pfnGetBounds == nullptr )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "hQuadTree->pfnGetBounds == NULL");
+        return;
+    }
+    CPLRectObj bounds; // keep variable in this outer scope
+    if( psBounds == nullptr )
+    {
+        hQuadTree->pfnGetBounds(hFeature, &bounds);
+        psBounds = &bounds;
+    }
+    if( CPLQuadTreeRemoveInternal(hQuadTree->psRoot, hFeature, psBounds) )
+    {
+        hQuadTree->nFeatures--;
+    }
 }
 
 /************************************************************************/

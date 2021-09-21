@@ -120,7 +120,7 @@ class CPL_DLL OGROCISession {
 
     int      Failed( sword nStatus, const char *pszFunction = nullptr );
 
-    CPLErr   GetParmInfo( OCIParam *hParmDesc, OGRFieldDefn *poOGRDefn,
+    CPLErr   GetParamInfo( OCIParam *hParamDesc, OGRFieldDefn *poOGRDefn,
                           ub2 *pnOCIType, ub4 *pnOCILen );
 
     void     CleanName( char * );

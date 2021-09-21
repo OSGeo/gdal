@@ -315,6 +315,7 @@ bool OGRGmtLayer::ReadLine()
     if( osLine[0] != '#' || osLine.find_first_of('@') == std::string::npos )
         return true;
 
+    CPLStringList aosKeyedValues;
     for( size_t i = 0; i < osLine.length(); i++ )
     {
         if( osLine[i] == '@' && i + 2 <= osLine.size() )
@@ -346,11 +347,12 @@ bool OGRGmtLayer::ReadLine()
             CPLString osKeyValue = osLine.substr(i+1,1);
             osKeyValue += pszUEValue;
             CPLFree( pszUEValue );
-            papszKeyedValues = CSLAddString( papszKeyedValues, osKeyValue );
+            aosKeyedValues.AddString( osKeyValue );
 
             i = iValEnd;
         }
     }
+    papszKeyedValues = aosKeyedValues.StealList();
 
     return true;
 }
@@ -465,7 +467,7 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
                 {
                     // Add a hole to the current polygon.
                     poMP->getGeometryRef(
-                        poMP->getNumGeometries()-1 )->toPolygon()->
+                        poMP->getNumGeometries()-1 )->
                         addRingDirectly( new OGRLinearRing() );
                 }
                 else if( !NextIsFeature() )
@@ -606,7 +608,7 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
                       {
                           OGRMultiPolygon *poMP = poGeom->toMultiPolygon();
                           poPoly = poMP->getGeometryRef(
-                              poMP->getNumGeometries() - 1 )->toPolygon();
+                              poMP->getNumGeometries() - 1 );
                       }
                       else
                           poPoly = poGeom->toPolygon();
@@ -629,7 +631,7 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
                   {
                       OGRMultiLineString *poML = poGeom->toMultiLineString();
                       OGRLineString *poLine = poML->getGeometryRef(
-                          poML->getNumGeometries() -1 )->toLineString();
+                          poML->getNumGeometries() -1 );
 
                       if( nDim == 3 )
                           poLine->addPoint( dfX, dfY, dfZ );

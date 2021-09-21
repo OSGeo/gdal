@@ -223,6 +223,7 @@ static bool blockread(Byte** ppByte, size_t& size, std::vector<unsigned int>& d)
     Byte numBits = **ppByte;
     Byte n = stib67[numBits >> 6];
     numBits &= 63;  // bits 0-5;
+    // cppcheck-suppress knownConditionTrueFalse
     if (numBits >= 32 || n == 0 || size < 1 + static_cast<size_t>(n))
         return false;
     *ppByte += 1;
@@ -817,6 +818,7 @@ bool Lerc1Image::readZTile(Byte** ppByte, size_t& nRemainingBytes,
     // Used if bit-stuffed
     Byte n = stib67[comprFlag >> 6];
     comprFlag &= 63;
+    // cppcheck-suppress knownConditionTrueFalse
     if (n == 0 || comprFlag > 3)
         return false;
 

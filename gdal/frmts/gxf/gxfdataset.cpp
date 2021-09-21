@@ -273,7 +273,7 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      we also now verify that there is a #GRID keyword before         */
 /*      passing it off to GXFOpen().  We check in the first 50K.        */
 /* -------------------------------------------------------------------- */
-    poOpenInfo->TryToIngest(50000);
+    CPL_IGNORE_RET_VAL(poOpenInfo->TryToIngest(50000));
     bool bGotGrid = false;
 
     const char* pszBigBuf = (const char*)poOpenInfo->pabyHeader;

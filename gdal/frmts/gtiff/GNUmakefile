@@ -14,21 +14,6 @@ TIFF_OPTS	:=	-DINTERNAL_LIBTIFF -Ilibtiff $(TIFF_OPTS)
 ifeq ($(RENAME_INTERNAL_LIBTIFF_SYMBOLS),yes)
 TIFF_OPTS	:=	-DRENAME_INTERNAL_LIBTIFF_SYMBOLS $(TIFF_OPTS)
 endif
-ifeq ($(HAVE_LERC),yes)
-OBJ := $(OBJ) tif_lerc.o
-TIFF_OPTS	:=	-DHAVE_LERC -I../../third_party/LercLib $(TIFF_OPTS)
-
-# Still LERC specific
-ifeq ($(LIBZ_SETTING),internal)
-TIFF_OPTS :=      -I../zlib  $(TIFF_OPTS)
-endif
-
-# Still LERC specific
-ifeq ($(ZSTD_SETTING),yes)
-TIFF_OPTS 	:=	-DZSTD_SUPPORT $(TIFF_OPTS)
-endif
-
-endif
 
 ifeq ($(LIBDEFLATE_SETTING),yes)
 TIFF_OPTS 	:=	$(TIFF_OPTS) -DLIBDEFLATE_SUPPORT
@@ -52,7 +37,7 @@ ifeq ($(JPEG_SETTING),internal)
 TIFF_OPTS 	:=	$(TIFF_OPTS) -I../jpeg/libjpeg
 endif
 
-CPPFLAGS	:=	 -I.. $(GEOTIFF_INCLUDE) $(PROJ_INCLUDE) $(PROJ_FLAGS) $(TIFF_OPTS) $(CPPFLAGS)
+CPPFLAGS	:=	 -iquote .. $(GEOTIFF_INCLUDE) $(PROJ_INCLUDE) $(PROJ_FLAGS) $(TIFF_OPTS) $(CPPFLAGS)
 
 CXXFLAGS        :=      $(WARN_EFFCPLUSPLUS)  $(CXXFLAGS)
 # issue with $(WARN_OLD_STYLE_CAST) with x86_64-w64-mingw32-g++. See https://travis-ci.org/OSGeo/gdal/jobs/375654138
@@ -84,3 +69,8 @@ lib-geotiff:
 	(cd libgeotiff; $(MAKE) install-obj)
 
 install-obj:	$(SUBLIBS) $(O_OBJ:.o=.$(OBJ_EXT))
+
+generate_quant_table_md5sum: generate_quant_table_md5sum.cpp
+	$(CXX) -O2 -g -Wall generate_quant_table_md5sum.cpp -o generate_quant_table_md5sum -iquote ../../port -iquote ../../gcore -iquote ../../ogr -L../../ -lgdal
+	./generate_quant_table_md5sum > quant_table_md5sum.h
+	$(RM) -f generate_quant_table_md5sum

@@ -921,8 +921,8 @@ std::shared_ptr<VRTMDArray> VRTMDArray::Create(const std::shared_ptr<VRTGroup>& 
     std::unique_ptr<OGRSpatialReference> poSRS;
     if( psSRSNode )
     {
-        poSRS = std::unique_ptr<OGRSpatialReference>(new OGRSpatialReference());
-        poSRS->SetFromUserInput( CPLGetXMLValue(psSRSNode, nullptr, "") );
+        poSRS = cpl::make_unique<OGRSpatialReference>();
+        poSRS->SetFromUserInput( CPLGetXMLValue(psSRSNode, nullptr, ""), OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS );
         const char* pszMapping =
             CPLGetXMLValue(psSRSNode, "dataAxisToSRSAxisMapping", nullptr);
         if( pszMapping )
@@ -981,7 +981,7 @@ std::shared_ptr<VRTMDArray> VRTMDArray::Create(const std::shared_ptr<VRTGroup>& 
     }
 
     auto array(std::make_shared<VRTMDArray>(poThisGroup->GetRef(),
-                                            osParentName, pszName, 
+                                            osParentName, pszName,
                                             dt,
                                             std::move(dims),
                                             std::move(oMapAttributes)));
@@ -1129,17 +1129,19 @@ std::unique_ptr<VRTMDArraySourceInlinedValues> VRTMDArraySourceInlinedValues::Cr
     const bool bIsConstantValue = strcmp(psNode->pszValue, "ConstantValue") == 0;
     const auto& dt(array->GetDataType());
     const size_t nDTSize = dt.GetSize();
+    if( nDTSize == 0 )
+        return nullptr;
     if( strcmp(psNode->pszValue, "InlineValuesWithValueElement") == 0 )
     {
-        if( (dt.GetClass() != GEDTC_NUMERIC &&
-             dt.GetClass() != GEDTC_STRING) || nDTSize == 0 )
+        if( dt.GetClass() != GEDTC_NUMERIC &&
+            dt.GetClass() != GEDTC_STRING )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                     "Only numeric or string data type handled for InlineValuesWithValueElement");
             return nullptr;
         }
     }
-    else if( dt.GetClass() != GEDTC_NUMERIC || nDTSize == 0 )
+    else if( dt.GetClass() != GEDTC_NUMERIC )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Only numeric data type handled for InlineValues");
@@ -1275,12 +1277,12 @@ std::unique_ptr<VRTMDArraySourceInlinedValues> VRTMDArraySourceInlinedValues::Cr
         pabyPtr += nDTSize;
     }
 
-    return std::unique_ptr<VRTMDArraySourceInlinedValues>(new
-        VRTMDArraySourceInlinedValues(array,
-                                      bIsConstantValue,
-                                      std::move(anOffset),
-                                      std::move(anCount),
-                                      std::move(abyValues)));
+    return cpl::make_unique<VRTMDArraySourceInlinedValues>(
+                                       array,
+                                       bIsConstantValue,
+                                       std::move(anOffset),
+                                       std::move(anCount),
+                                       std::move(abyValues));
 }
 
 /************************************************************************/
@@ -1653,19 +1655,19 @@ std::unique_ptr<VRTMDArraySourceFromArray> VRTMDArraySourceFromArray::Create(
         }
     }
 
-    return std::unique_ptr<VRTMDArraySourceFromArray>(new
-        VRTMDArraySourceFromArray(poDstArray,
-                                  bRelativeToVRTSet,
-                                  bRelativeToVRT,
-                                  pszFilename,
-                                  pszArray,
-                                  pszSourceBand,
-                                  std::move(anTransposedAxis),
-                                  pszView,
-                                  std::move(anSrcOffset),
-                                  std::move(anCount),
-                                  std::move(anStep),
-                                  std::move(anDstOffset)));
+    return cpl::make_unique<VRTMDArraySourceFromArray>(
+                                              poDstArray,
+                                              bRelativeToVRTSet,
+                                              bRelativeToVRT,
+                                              pszFilename,
+                                              pszArray,
+                                              pszSourceBand,
+                                              std::move(anTransposedAxis),
+                                              pszView,
+                                              std::move(anSrcOffset),
+                                              std::move(anCount),
+                                              std::move(anStep),
+                                              std::move(anDstOffset));
 }
 
 /************************************************************************/
@@ -2007,7 +2009,7 @@ bool VRTMDArraySourceFromArray::Read(const GUInt64* arrayStartIdx,
         }
         anReqCount[i] = 1 + static_cast<size_t>(
             (std::min(nRightDstOffsetFromConfig - 1,
-                                  start_i + (count[i] - 1) * step_i) 
+                                  start_i + (count[i] - 1) * step_i)
                                             - anReqDstStart[i]) / step_i);
         if( arrayStep[i] < 0 )
         {

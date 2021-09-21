@@ -246,7 +246,8 @@ class VSIHdfsFilesystemHandler final : public VSIFilesystemHandler
     void EnsureFilesystem();
     VSIVirtualHandle *Open(const char *pszFilename,
                            const char *pszAccess,
-                           bool bSetError ) override;
+                           bool bSetError,
+                           CSLConstList /* papszOptions */) override;
     int Stat(const char *pszFilename,
              VSIStatBufL *pStatBuf,
              int nFlags) override;
@@ -283,7 +284,8 @@ VSIHdfsFilesystemHandler::EnsureFilesystem() {
 VSIVirtualHandle *
 VSIHdfsFilesystemHandler::Open( const char *pszFilename,
                                 const char *pszAccess,
-                                bool)
+                                bool,
+                                CSLConstList /* papszOptions */ )
 {
   EnsureFilesystem();
 

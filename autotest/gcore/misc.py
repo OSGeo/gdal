@@ -50,7 +50,7 @@ def test_misc_1():
         name = 'mem_%d' % i
         tab_ds[i] = drv.Create(name, 1, 1, 1)
         assert tab_ds[i] is not None
-    
+
 ###############################################################################
 # Test that OpenShared() works as expected by opening a big number of times
 # the same dataset with it. If it did not work, that would exhaust the system
@@ -64,7 +64,7 @@ def test_misc_2():
         tab_ds[i] = gdal.OpenShared('data/byte.tif')
         assert tab_ds[i] is not None
 
-    
+
 ###############################################################################
 # Test OpenShared() with a dataset whose filename != description (#2797)
 
@@ -288,6 +288,10 @@ def misc_6_internal(datatype, nBands, setDriversDone):
 
                 dst_ds = drv.CreateCopy(filename, ds)
                 has_succeeded = dst_ds is not None
+                if dst_ds:
+                    # check that domain == None doesn't crash
+                    dst_ds.GetMetadata(None)
+                    dst_ds.GetMetadataItem('', None)
                 dst_ds = None
 
                 size = 0
@@ -501,7 +505,7 @@ def test_misc_10():
     except OSError:
         pass
 
-    
+
 
 ###############################################################################
 # Test that we can open a symlink whose pointed filename isn't a real
@@ -591,7 +595,7 @@ def test_misc_12():
 
             gdal.Unlink('/vsimem/misc_12_src.tif')
 
-    
+
 ###############################################################################
 # Test CreateCopy() with incompatible driver types (#5912)
 
@@ -676,7 +680,7 @@ def test_misc_14():
         gdal.SetConfigOption('CPL_DEBUG', prev_debug)
         logger.removeHandler(handler)
 
-    
+
 
 ###############################################################################
 # Test SetErrorHandler
@@ -737,7 +741,7 @@ def test_misc_15():
         gdal.SetErrorHandler('CPLDefaultErrorHandler')
         gdal.SetConfigOption('CPL_DEBUG', prev_debug)
 
-    
+
 ###############################################################################
 
 

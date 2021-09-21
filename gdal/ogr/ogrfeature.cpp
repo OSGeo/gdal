@@ -3289,15 +3289,22 @@ char* OGRFeature::GetFieldAsSerializedJSon( int iField ) const
     OGRFieldType eType = poFDefn->GetType();
     if( eType == OFTStringList )
     {
-        json_object* poObj = json_object_new_array();
         char** papszValues = GetFieldAsStringList(iField);
-        for( int i=0; papszValues[i] != nullptr; i++)
+        if( papszValues == nullptr )
         {
-            json_object_array_add( poObj,
-                                   json_object_new_string(papszValues[i]) );
+            pszRet = CPLStrdup("[]");
         }
-        pszRet = CPLStrdup( json_object_to_json_string(poObj) );
-        json_object_put(poObj);
+        else
+        {
+            json_object* poObj = json_object_new_array();
+            for( int i=0; papszValues[i] != nullptr; i++)
+            {
+                json_object_array_add( poObj,
+                                       json_object_new_string(papszValues[i]) );
+            }
+            pszRet = CPLStrdup( json_object_to_json_string(poObj) );
+            json_object_put(poObj);
+        }
     }
     else if( eType == OFTIntegerList )
     {
@@ -5716,7 +5723,8 @@ OGRErr OGRFeature::SetFrom( const OGRFeature * poSrcFeature, int bForgiving )
     {
         if( poSrcFeature->GetFieldCount() )
             return OGRERR_FAILURE;
-        return SetFrom( poSrcFeature, nullptr, bForgiving );
+        int dummy = 0;
+        return SetFrom( poSrcFeature, &dummy, bForgiving );
     }
     return SetFrom( poSrcFeature, oMap.data(), bForgiving );
 }

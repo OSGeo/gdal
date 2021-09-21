@@ -39,7 +39,7 @@ CPL_CVSID("$Id$")
 Link_t *ceos2CreateLink( void *pObject )
 
 {
-    Link_t	*psLink = (Link_t *) CPLCalloc(sizeof(Link_t),1);
+    Link_t    *psLink = (Link_t *) CPLCalloc(sizeof(Link_t),1);
 
     psLink->object = pObject;
 
@@ -55,7 +55,7 @@ void DestroyList( Link_t * psList )
 {
     while( psList != NULL )
     {
-        Link_t	*psNext = psList->next;
+        Link_t    *psNext = psList->next;
 
         CPLFree( psList );
         psList = psNext;
@@ -81,7 +81,7 @@ Link_t *InsertLink( Link_t *psList, Link_t *psLink )
 Link_t *AddLink( Link_t *psList, Link_t *psLink )
 
 {
-    Link_t	*psNode;
+    Link_t    *psNode;
 
     if( psList == NULL )
         return psLink;

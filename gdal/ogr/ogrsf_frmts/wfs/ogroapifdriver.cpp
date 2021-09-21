@@ -125,8 +125,8 @@ class OGROAPIFLayer final: public OGRLayer
         CPLString       m_osAttributeFilter;
         CPLString       m_osGetID;
         bool            m_bFilterMustBeClientSideEvaluated = false;
-        bool            m_bGotQueriableAttributes = false;
-        std::set<CPLString> m_aoSetQueriableAttributes;
+        bool            m_bGotQueryableAttributes = false;
+        std::set<CPLString> m_aoSetQueryableAttributes;
         bool            m_bHasCQLText = false;
         // https://github.com/tschaub/ogcapi-features/blob/json-array-expression/extensions/cql/jfe/readme.md
         bool            m_bHasJSONFilterExpression = false;
@@ -138,6 +138,9 @@ class OGROAPIFLayer final: public OGRLayer
         CPLString       m_osDescribedByType{};
         bool            m_bDescribedByIsXML = false;
         CPLString       m_osQueryablesURL{};
+        std::vector<std::string> m_aosItemAssetNames{}; // STAC specific
+        CPLJSONDocument m_oCurDoc{};
+        int             m_iFeatureInPage = 0;
 
         void            EstablishFeatureDefn();
         OGRFeature     *GetNextRawFeature();
@@ -146,7 +149,7 @@ class OGROAPIFLayer final: public OGRLayer
         CPLString       BuildFilterCQLText(const swq_expr_node* poNode);
         CPLString       BuildFilterJSONFilterExpr(const swq_expr_node* poNode);
         bool            SupportsResultTypeHits();
-        void            GetQueriableAttributes();
+        void            GetQueryableAttributes();
         void            GetSchema();
 
     public:
@@ -157,6 +160,8 @@ class OGROAPIFLayer final: public OGRLayer
                      const CPLJSONArray& oLinks);
 
        ~OGROAPIFLayer();
+
+       void SetItemAssets(const CPLJSONObject& oItemAssets);
 
        const char*     GetName() override { return GetDescription(); }
        OGRFeatureDefn* GetLayerDefn() override;
@@ -565,8 +570,7 @@ bool OGROAPIFDataset::LoadJSONCollection(const CPLJSONObject& oCollection)
 #endif
     CPLJSONArray oCRS = oCollection.GetArray("crs");
     const auto oLinks = oCollection.GetArray("links");
-    std::unique_ptr<OGROAPIFLayer> poLayer( new
-        OGROAPIFLayer(this, osName, oBBOX, oCRS, oLinks) );
+    auto poLayer = cpl::make_unique<OGROAPIFLayer>(this, osName, oBBOX, oCRS, oLinks);
     if( !osTitle.empty() )
         poLayer->SetMetadataItem("TITLE", osTitle.c_str());
     if( !osDescription.empty() )
@@ -589,6 +593,14 @@ bool OGROAPIFDataset::LoadJSONCollection(const CPLJSONObject& oCollection)
                                          oArray[1].ToString().c_str() );
             }
         }
+    }
+
+    // STAC specific
+    auto oItemAssets = oCollection.GetObj("item_assets");
+    if( oItemAssets.IsValid() &&
+        oItemAssets.GetType() == CPLJSONObject::Type::Object )
+    {
+        poLayer->SetItemAssets(oItemAssets);
     }
 
     auto oJSONStr = oCollection.Format(CPLJSONObject::PrettyFormat::Pretty);
@@ -921,6 +933,19 @@ OGROAPIFLayer::~OGROAPIFLayer()
 }
 
 /************************************************************************/
+/*                         SetItemAssets()                              */
+/************************************************************************/
+
+void OGROAPIFLayer::SetItemAssets(const CPLJSONObject& oItemAssets)
+{
+    auto oChildren = oItemAssets.GetChildren();
+    for( const auto& oItemAsset: oChildren )
+    {
+        m_aosItemAssetNames.emplace_back(oItemAsset.GetName());
+    }
+}
+
+/************************************************************************/
 /*                            ResolveRefs()                             */
 /************************************************************************/
 
@@ -1117,9 +1142,9 @@ void OGROAPIFLayer::GetSchema()
                 const OGRFieldType eFType = GML_GetOGRFieldType(poProperty->GetType(), eSubType);
 
                 const char* pszName = poProperty->GetName() + (bAllPrefixed ? osPropertyNamePrefix.size() : 0);
-                std::unique_ptr<OGRFieldDefn> oField(new OGRFieldDefn( pszName, eFType ));
-                oField->SetSubType(eSubType);
-                m_apoFieldsFromSchema.emplace_back(std::move(oField));
+                auto poField = cpl::make_unique<OGRFieldDefn>( pszName, eFType );
+                poField->SetSubType(eSubType);
+                m_apoFieldsFromSchema.emplace_back(std::move(poField));
             }
         }
 
@@ -1192,9 +1217,9 @@ void OGROAPIFLayer::GetSchema()
                             }
                         }
 
-                        std::unique_ptr<OGRFieldDefn> oField(new OGRFieldDefn( oProp.GetName().c_str(), eType ));
-                        oField->SetSubType(eSubType);
-                        m_apoFieldsFromSchema.emplace_back(std::move(oField));
+                        auto poField = cpl::make_unique<OGRFieldDefn>( oProp.GetName().c_str(), eType );
+                        poField->SetSubType(eSubType);
+                        m_apoFieldsFromSchema.emplace_back(std::move(poField));
                     }
                 }
             }
@@ -1234,7 +1259,7 @@ void OGROAPIFLayer::EstablishFeatureDefn()
     CPLString osTmpFilename(CPLSPrintf("/vsimem/oapif_%p.json", this));
     oDoc.Save(osTmpFilename);
     std::unique_ptr<GDALDataset> poDS(
-      reinterpret_cast<GDALDataset*>(
+      GDALDataset::FromHandle(
         GDALOpenEx(osTmpFilename, GDAL_OF_VECTOR | GDAL_OF_INTERNAL,
                    nullptr, nullptr, nullptr)));
     VSIUnlink(osTmpFilename);
@@ -1275,6 +1300,12 @@ void OGROAPIFLayer::EstablishFeatureDefn()
                 m_poFeatureDefn->AddFieldDefn( poFDefn );
             }
         }
+    }
+
+    for( const auto& osItemAsset: m_aosItemAssetNames )
+    {
+        OGRFieldDefn oFieldDefn( ("asset_" + osItemAsset + "_href").c_str(), OFTString );
+        m_poFeatureDefn->AddFieldDefn( &oFieldDefn );
     }
 
     const auto& oRoot = oDoc.GetRoot();
@@ -1321,6 +1352,8 @@ void OGROAPIFLayer::ResetReading()
         }
         m_osGetURL = AddFilters(m_osGetURL);
     }
+    m_oCurDoc = CPLJSONDocument();
+    m_iFeatureInPage = 0;
 }
 
 /************************************************************************/
@@ -1381,12 +1414,12 @@ OGRFeature* OGROAPIFLayer::GetNextRawFeature()
             if( m_osGetURL.empty() )
                 return nullptr;
 
-            CPLJSONDocument oDoc;
+            m_oCurDoc = CPLJSONDocument();
 
             CPLString osURL(m_osGetURL);
             m_osGetURL.clear();
             CPLStringList aosHeaders;
-            if( !m_poDS->DownloadJSon(osURL, oDoc,
+            if( !m_poDS->DownloadJSon(osURL, m_oCurDoc,
                                       MEDIA_TYPE_GEOJSON ", " MEDIA_TYPE_JSON,
                                       &aosHeaders) )
             {
@@ -1394,9 +1427,9 @@ OGRFeature* OGROAPIFLayer::GetNextRawFeature()
             }
 
             CPLString osTmpFilename(CPLSPrintf("/vsimem/oapif_%p.json", this));
-            oDoc.Save(osTmpFilename);
+            m_oCurDoc.Save(osTmpFilename);
             m_poUnderlyingDS = std::unique_ptr<GDALDataset>(
-            reinterpret_cast<GDALDataset*>(
+              GDALDataset::FromHandle(
                 GDALOpenEx(osTmpFilename, GDAL_OF_VECTOR | GDAL_OF_INTERNAL,
                         nullptr, nullptr, nullptr)));
             VSIUnlink(osTmpFilename);
@@ -1417,7 +1450,7 @@ OGRFeature* OGROAPIFLayer::GetNextRawFeature()
             // actually
             if( m_poUnderlyingLayer->GetFeatureCount() > 0 && m_osGetID.empty() )
             {
-                CPLJSONArray oLinks = oDoc.GetRoot().GetArray("links");
+                CPLJSONArray oLinks = m_oCurDoc.GetRoot().GetArray("links");
                 if( oLinks.IsValid() )
                 {
                     int nCountRelNext = 0;
@@ -1489,13 +1522,39 @@ OGRFeature* OGROAPIFLayer::GetNextRawFeature()
 
         poSrcFeature = m_poUnderlyingLayer->GetNextFeature();
         if( poSrcFeature )
+        {
             break;
+        }
         m_poUnderlyingDS.reset();
         m_poUnderlyingLayer = nullptr;
+        m_iFeatureInPage = 0;
     }
 
     OGRFeature* poFeature = new OGRFeature(m_poFeatureDefn);
     poFeature->SetFrom(poSrcFeature);
+
+    // Collect STAC assets href
+    if( !m_aosItemAssetNames.empty() &&
+        m_poUnderlyingLayer != nullptr &&
+        m_oCurDoc.GetRoot().GetArray("features").Size() ==
+                                m_poUnderlyingLayer->GetFeatureCount() &&
+        m_iFeatureInPage < m_oCurDoc.GetRoot().GetArray("features").Size() )
+    {
+        auto m_oFeature = m_oCurDoc.GetRoot().GetArray("features")[m_iFeatureInPage];
+        auto oAssets = m_oFeature["assets"];
+        for( const auto& osAssetName: m_aosItemAssetNames )
+        {
+            auto href = oAssets[osAssetName]["href"];
+            if( href.IsValid() && href.GetType() == CPLJSONObject::Type::String )
+            {
+                poFeature->SetField(
+                    ("asset_" + osAssetName + "_href").c_str(),
+                    href.ToString().c_str() );
+            }
+        }
+    }
+    m_iFeatureInPage ++;
+
     auto poGeom = poFeature->GetGeometryRef();
     if( poGeom )
     {
@@ -1825,8 +1884,8 @@ CPLString OGROAPIFLayer::BuildFilter(const swq_expr_node* poNode)
             m_osGetID = poNode->papoSubExpr[1]->string_value;
         }
         else if( poFieldDefn &&
-            m_aoSetQueriableAttributes.find(poFieldDefn->GetNameRef()) !=
-                m_aoSetQueriableAttributes.end() )
+            m_aoSetQueryableAttributes.find(poFieldDefn->GetNameRef()) !=
+                m_aoSetQueryableAttributes.end() )
         {
             CPLString osEscapedFieldName;
             {
@@ -1987,8 +2046,8 @@ CPLString OGROAPIFLayer::BuildFilterCQLText(const swq_expr_node* poNode)
             m_osGetID = poNode->papoSubExpr[1]->string_value;
         }
         else if( poFieldDefn &&
-                 m_aoSetQueriableAttributes.find(poFieldDefn->GetNameRef()) !=
-                    m_aoSetQueriableAttributes.end() )
+                 m_aoSetQueryableAttributes.find(poFieldDefn->GetNameRef()) !=
+                    m_aoSetQueryableAttributes.end() )
         {
             CPLString osRet(poFieldDefn->GetNameRef());
             switch(poNode->nOperation )
@@ -2160,8 +2219,8 @@ CPLString OGROAPIFLayer::BuildFilterJSONFilterExpr(const swq_expr_node* poNode)
         const int nFieldIdx = poNode->field_index;
         const OGRFieldDefn* poFieldDefn = GetLayerDefn()->GetFieldDefn(nFieldIdx);
         if( poFieldDefn &&
-            m_aoSetQueriableAttributes.find(poFieldDefn->GetNameRef()) !=
-            m_aoSetQueriableAttributes.end() )
+            m_aoSetQueryableAttributes.find(poFieldDefn->GetNameRef()) !=
+            m_aoSetQueryableAttributes.end() )
         {
             CPLString osRet("[\"get\",\"");
             osRet += CPLString(poFieldDefn->GetNameRef()).replaceAll('\\',"\\\\").replaceAll('"',"\\\"");
@@ -2212,14 +2271,14 @@ CPLString OGROAPIFLayer::BuildFilterJSONFilterExpr(const swq_expr_node* poNode)
 }
 
 /************************************************************************/
-/*                        GetQueriableAttributes()                      */
+/*                        GetQueryableAttributes()                      */
 /************************************************************************/
 
-void OGROAPIFLayer::GetQueriableAttributes()
+void OGROAPIFLayer::GetQueryableAttributes()
 {
-    if( m_bGotQueriableAttributes )
+    if( m_bGotQueryableAttributes )
         return;
-    m_bGotQueriableAttributes = true;
+    m_bGotQueryableAttributes = true;
     CPLJSONDocument oAPIDoc = m_poDS->GetAPIDoc();
     if( oAPIDoc.GetRoot().GetString("openapi").empty() )
         return;
@@ -2264,7 +2323,7 @@ void OGROAPIFLayer::GetQueriableAttributes()
             }
             else if( GetLayerDefn()->GetFieldIndex(osName.c_str()) >= 0 )
             {
-                m_aoSetQueriableAttributes.insert(osName);
+                m_aoSetQueryableAttributes.insert(osName);
             }
         }
     }
@@ -2286,7 +2345,7 @@ void OGROAPIFLayer::GetQueriableAttributes()
                     const auto osId = oQueryables[i].GetString("id");
                     if( !osId.empty() )
                     {
-                        m_aoSetQueriableAttributes.insert(osId);
+                        m_aoSetQueryableAttributes.insert(osId);
                     }
                 }
             }
@@ -2314,7 +2373,7 @@ OGRErr OGROAPIFLayer::SetAttributeFilter( const char *pszQuery )
     m_osGetID.clear();
     if( m_poAttrQuery != nullptr )
     {
-        GetQueriableAttributes();
+        GetQueryableAttributes();
 
         swq_expr_node* poNode = (swq_expr_node*) m_poAttrQuery->GetSWQExpr();
 
@@ -2399,7 +2458,7 @@ static GDALDataset *OGROAPIFDriverOpen( GDALOpenInfo* poOpenInfo )
 {
     if( !OGROAPIFDriverIdentify(poOpenInfo) || poOpenInfo->eAccess == GA_Update )
         return nullptr;
-    std::unique_ptr<OGROAPIFDataset> poDataset(new OGROAPIFDataset());
+    auto poDataset = cpl::make_unique<OGROAPIFDataset>();
     if( !poDataset->Open(poOpenInfo) )
         return nullptr;
     return poDataset.release();

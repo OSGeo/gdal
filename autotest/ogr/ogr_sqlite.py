@@ -245,6 +245,61 @@ def test_ogr_sqlite_3():
 
     assert tr
 
+
+###############################################################################
+# Test retrieving layers
+
+
+def test_ogr_sqlite_layers():
+
+    if gdaltest.sl_ds is None:
+        pytest.skip()
+
+    assert gdaltest.sl_ds.GetLayerCount() == 2, 'did not get expected layer count'
+
+    lyr = gdaltest.sl_ds.GetLayer(0)
+    assert lyr is not None
+    assert lyr.GetName() == 'a_layer', 'did not get expected layer name'
+    assert lyr.GetGeomType() == ogr.wkbUnknown, 'did not get expected layer geometry type'
+    assert lyr.GetFeatureCount() == 0, 'did not get expected feature count'
+
+    lyr = gdaltest.sl_ds.GetLayer(1)
+    assert lyr is not None
+    assert lyr.GetName() == 'tpoly', 'did not get expected layer name'
+    assert lyr.GetGeomType() == ogr.wkbUnknown, 'did not get expected layer geometry type'
+    assert lyr.GetFeatureCount() == 10, 'did not get expected feature count'
+
+    # Test LIST_ALL_TABLES=YES open option
+    sl_ds_all_table = gdal.OpenEx('tmp/sqlite_test.db', gdal.OF_VECTOR | gdal.OF_UPDATE,
+                                 open_options=['LIST_ALL_TABLES=YES'])
+    assert sl_ds_all_table.GetLayerCount() == 5, 'did not get expected layer count'
+    lyr = sl_ds_all_table.GetLayer(0)
+    assert lyr is not None
+    assert lyr.GetName() == 'a_layer', 'did not get expected layer name'
+    assert not sl_ds_all_table.IsLayerPrivate(0)
+
+    lyr = sl_ds_all_table.GetLayer(1)
+    assert lyr is not None
+    assert lyr.GetName() == 'tpoly', 'did not get expected layer name'
+    assert not sl_ds_all_table.IsLayerPrivate(1)
+
+    lyr = sl_ds_all_table.GetLayer(2)
+    assert lyr is not None
+    assert lyr.GetName() == 'geometry_columns', 'did not get expected layer name'
+    assert sl_ds_all_table.IsLayerPrivate(2)
+
+    lyr = sl_ds_all_table.GetLayer(3)
+    assert lyr is not None
+    assert lyr.GetName() == 'spatial_ref_sys', 'did not get expected layer name'
+    assert sl_ds_all_table.IsLayerPrivate(3)
+
+    lyr = sl_ds_all_table.GetLayer(4)
+    assert lyr is not None
+    assert lyr.GetName() == 'sqlite_sequence', 'did not get expected layer name'
+    assert sl_ds_all_table.IsLayerPrivate(4)
+
+
+
 ###############################################################################
 # Write more features with a bunch of different geometries, and verify the
 # geometries are still OK.
@@ -488,7 +543,7 @@ def test_ogr_sqlite_10():
         feat_read_2.DumpReadable()
         pytest.fail('GetFeature() result seems to not match expected.')
 
-    
+
 ###############################################################################
 # Test FORMAT=WKB creation option
 
@@ -818,7 +873,7 @@ def test_ogr_sqlite_17(require_spatialite):
     assert lyr is None, 'layer creation should have failed'
 
     srs = osr.SpatialReference()
-    srs.SetFromUserInput("""GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]""")
+    srs.ImportFromEPSG(4326)
     lyr = ds.CreateLayer('geomspatialite', srs=srs)
 
     geom = ogr.CreateGeometryFromWkt('POINT(0 1)')
@@ -2282,9 +2337,17 @@ def test_ogr_sqlite_36():
 
     ds = ogr.Open('tmp/ogr_sqlite_36.sqlite')
     lyr = ds.GetLayer(0)
+    assert lyr.GetMetadataItem('') is None
+
+    ds = ogr.Open('tmp/ogr_sqlite_36.sqlite')
+    lyr = ds.GetLayer(0)
     assert lyr.GetMetadataItem(ogr.OLMD_FID64) is not None
     f = lyr.GetNextFeature()
     assert f.GetFID() == 1234567890123
+
+    ds = ogr.Open('tmp/ogr_sqlite_36.sqlite')
+    lyr = ds.GetLayer(0)
+    assert ogr.OLMD_FID64 in lyr.GetMetadata()
 
 ###############################################################################
 # Test not nullable fields
@@ -3057,6 +3120,91 @@ def test_ogr_sqlite_prelude_statements(require_spatialite):
     sql_lyr = ds.ExecuteSQL('SELECT * FROM poly JOIN other.poly USING (eas_id)')
     assert sql_lyr.GetFeatureCount() == 10
     ds.ReleaseResultSet(sql_lyr)
+
+###############################################################################
+# Test INTEGER_OR_TEXT affinity
+
+
+def test_ogr_sqlite_integer_or_text():
+
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource(':memory:')
+    ds.ExecuteSQL('CREATE TABLE foo(c INTEGER_OR_TEXT)')
+    ds.ExecuteSQL('INSERT INTO foo VALUES (5)')
+    ds.ExecuteSQL("INSERT INTO foo VALUES ('five')")
+
+    sql_lyr = ds.ExecuteSQL('SELECT typeof(c) FROM foo')
+    f = sql_lyr.GetNextFeature()
+    assert f.GetField(0) == 'integer'
+    ds.ReleaseResultSet(sql_lyr)
+
+    lyr = ds.GetLayer('foo')
+    assert lyr.GetLayerDefn().GetFieldCount() == 1
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTString
+    f = lyr.GetNextFeature()
+    assert f['c'] == '5'
+    f = lyr.GetNextFeature()
+    assert f['c'] == 'five'
+
+###############################################################################
+# Test better guessing of columns in a view
+
+
+def test_ogr_sqlite_view_type():
+
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource(':memory:')
+    ds.ExecuteSQL('CREATE TABLE t(c INTEGER)')
+    ds.ExecuteSQL('CREATE TABLE u(d TEXT)')
+    ds.ExecuteSQL("CREATE VIEW v AS SELECT c FROM t UNION ALL SELECT NULL FROM u")
+
+    lyr = ds.GetLayer('v')
+    assert lyr.GetLayerDefn().GetFieldCount() == 1
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTInteger
+
+    ds.ExecuteSQL('INSERT INTO t VALUES(1)')
+    f = lyr.GetNextFeature()
+    assert f['c'] == 1
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    assert f['c'] == 1
+
+
+###############################################################################
+# Test table WITHOUT ROWID
+
+
+def test_ogr_sqlite_without_rowid():
+
+    tmpfilename = '/vsimem/without_rowid.db'
+    try:
+        ds = ogr.GetDriverByName('SQLite').CreateDataSource(tmpfilename)
+        ds.ExecuteSQL('CREATE TABLE t(key TEXT NOT NULL PRIMARY KEY, value TEXT) WITHOUT ROWID')
+        ds = None
+
+        ds = ogr.Open(tmpfilename, update=1)
+        lyr = ds.GetLayer('t')
+        assert lyr.GetFIDColumn() == ''
+        assert lyr.GetLayerDefn().GetFieldCount() == 2
+
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f['key'] = 'foo'
+        f['value'] = 'bar'
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+        assert f.GetFID() == -1 # hard to do best
+
+        assert lyr.GetFeatureCount() == 1
+
+        f = lyr.GetNextFeature()
+        assert f['key'] == 'foo'
+        assert f['value'] == 'bar'
+        assert f.GetFID() == 0 # somewhat arbitrary
+
+        f = lyr.GetFeature(0)
+        assert f['key'] == 'foo'
+
+        ds = None
+    finally:
+        gdal.Unlink(tmpfilename)
+
 
 ###############################################################################
 #

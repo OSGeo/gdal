@@ -25,7 +25,7 @@ OBJ     =  ogrtigerdriver.o           \
 	   tigerzipplus4.o	      \
 	   tigerpoint.o
 
-CPPFLAGS	:=	-I.. -I../..  $(CPPFLAGS)
+CPPFLAGS	:=	-iquote .. -iquote ../..  $(CPPFLAGS)
 
 LIBS	:=	$(GDAL_LIB) $(LIBS)
 

@@ -990,13 +990,15 @@ OGRErr OGRIngresTableLayer::ICreateFeature( OGRFeature *poFeature )
     if( !osGeomText.empty() && poDS->IsNewIngres() == TRUE )
     {
         GByte * pabyWKB;
-        int nSize = poFeature->GetGeometryRef()->WkbSize();
-        pabyWKB = (GByte *) CPLMalloc(nSize);
+        const auto nSize = poFeature->GetGeometryRef()->WkbSize();
+        pabyWKB = (GByte *) VSI_MALLOC_VERBOSE(nSize);
+        if( pabyWKB )
+        {
+            poFeature->GetGeometryRef()->exportToWkb(wkbNDR, pabyWKB);
 
-        poFeature->GetGeometryRef()->exportToWkb(wkbNDR, pabyWKB);
-
-        oStmt.addInputParameter( IIAPI_LBYTE_TYPE, nSize, pabyWKB );
-        CPLFree(pabyWKB);
+            oStmt.addInputParameter( IIAPI_LBYTE_TYPE, nSize, pabyWKB );
+            CPLFree(pabyWKB);
+        }
 /*
  * Test code
         char * pszWKT;

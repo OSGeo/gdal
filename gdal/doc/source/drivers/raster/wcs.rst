@@ -212,7 +212,7 @@ In the case the URL does not contain coverage name, the service
 description file is not used and thus in that case the options are not
 written into it. Open options are given separate to the dataset name,
 with GDAL utility programs they are given using the -oo switch
-(`-oo "NAME=VALUE"`). The -oo swicth expects only one option but more
+(`-oo "NAME=VALUE"`). The -oo switch expects only one option but more
 options can be given repeating the switch.
 
 In addition to DescribeCoverageExtra and GetCoverageExtra, which are

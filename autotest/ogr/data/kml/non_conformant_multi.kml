@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- see https://github.com/OSGeo/gdal/issues/4031 -->
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:kml="http://www.opengis.net/kml/2.2">
+    <Document>
+        <name>Test</name>
+        <Placemark>
+            <MultiPolygon><Polygon><outerBoundaryIs><LinearRing><coordinates>0,0 0,1 1,1 1,0 0,0</coordinates></LinearRing></outerBoundaryIs></Polygon></MultiPolygon>
+        </Placemark>
+        <Placemark>
+            <MultiLineString><LineString><coordinates>0,0 1,1</coordinates></LineString></MultiLineString>
+        </Placemark>
+        <Placemark>
+            <MultiPoint><Point><coordinates>0,0</coordinates></Point></MultiPoint>
+        </Placemark>
+    </Document>
+</kml>

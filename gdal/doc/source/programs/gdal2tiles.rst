@@ -1,7 +1,7 @@
 .. _gdal2tiles:
 
 ================================================================================
-gdal2tiles
+gdal2tiles.py
 ================================================================================
 
 .. only:: html
@@ -92,6 +92,10 @@ can publish a picture without proper georeferencing too.
 .. option:: -v, --verbose
 
   Generate verbose output of tile generation.
+
+.. option:: -x, --exclude
+
+  Exclude transparent tiles from result tileset.
 
 .. option:: -q, --quiet
 
@@ -191,7 +195,7 @@ Available options are:
     template_tiles.mapml file from GDAL data resources
     will be used
 
-The --url option is also used to substitue ``${URL}`` in the template MapML file.
+The --url option is also used to substitute ``${URL}`` in the template MapML file.
 
 Examples
 --------

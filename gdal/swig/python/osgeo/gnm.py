@@ -107,8 +107,18 @@ def UseExceptions(*args):
 def DontUseExceptions(*args):
     """DontUseExceptions()"""
     return _gnm.DontUseExceptions(*args)
-from . import ogr
-from . import osr
+from sys import version_info as _swig_python_version_info
+if _swig_python_version_info >= (2, 7, 0):
+    from . import ogr
+else:
+    import ogr
+del _swig_python_version_info
+from sys import version_info as _swig_python_version_info
+if _swig_python_version_info >= (2, 7, 0):
+    from . import osr
+else:
+    import osr
+del _swig_python_version_info
 GATDijkstraShortestPath = _gnm.GATDijkstraShortestPath
 GATKShortestPath = _gnm.GATKShortestPath
 GATConnectedComponents = _gnm.GATConnectedComponents

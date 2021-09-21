@@ -495,7 +495,7 @@
 {
   /* %typemap(freearg) (int *nLen, char **pBuf ) */
   if( nLen$argnum ) {
-    free( pBuf$argnum );
+    VSIFree( pBuf$argnum );
   }
 }
 
@@ -504,6 +504,41 @@
 %typemap(jstype) (int *nLen, char **pBuf ) "byte[]"
 %typemap(javain) (int *nLen, char **pBuf ) "$javainput"
 %typemap(javaout) (int *nLen, char **pBuf ) {
+    return $jnicall;
+  }
+
+/***************************************************
+ * Typemaps for  (size_t *nLen, char **pBuf)
+ ***************************************************/
+
+%typemap(in,numinputs=0) (size_t *nLen, char **pBuf ) ( size_t nLen, char *pBuf )
+{
+  /* %typemap(in) (size_t *nLen, char **pBuf ) */
+  $1 = &nLen;
+  $2 = &pBuf;
+}
+
+%typemap(argout) (size_t *nLen, char **pBuf )
+{
+  /* %typemap(argout) (size_t *nLen, char **pBuf ) */
+  jbyteArray byteArray = jenv->NewByteArray(nLen$argnum);
+  jenv->SetByteArrayRegion(byteArray, (jsize)0, (jsize)nLen$argnum, (jbyte*)pBuf$argnum);
+  $result = byteArray;
+}
+
+%typemap(freearg) (size_t *nLen, char **pBuf )
+{
+  /* %typemap(freearg) (size_t *nLen, char **pBuf ) */
+  if( nLen$argnum ) {
+    VSIFree( pBuf$argnum );
+  }
+}
+
+%typemap(jni) (size_t *nLen, char **pBuf ) "jbyteArray"
+%typemap(jtype) (size_t *nLen, char **pBuf ) "byte[]"
+%typemap(jstype) (size_t *nLen, char **pBuf ) "byte[]"
+%typemap(javain) (size_t *nLen, char **pBuf ) "$javainput"
+%typemap(javaout) (size_t *nLen, char **pBuf ) {
     return $jnicall;
   }
 

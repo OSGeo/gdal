@@ -651,7 +651,7 @@ OGRErr OGRHanaLayer::ReadFeatureDefinition(
             OGRGeomFieldDefn* geomFieldDefn = new OGRGeomFieldDefn(
                 geometryColumnDesc.name.c_str(), geometryColumnDesc.type);
             geomFieldDefn->SetNullable(geometryColumnDesc.isNullable);
-            featureDef->AddGeomFieldDefn(geomFieldDefn, FALSE);
+            featureDef->AddGeomFieldDefn(geomFieldDefn);
 
             if (geometryColumnDesc.srid >= 0)
             {

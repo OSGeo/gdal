@@ -32,6 +32,7 @@
 
 #include <cstring>
 #include <cstddef>
+#include <new>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -95,6 +96,16 @@ OGRPolygon& OGRPolygon::operator=( const OGRPolygon& other )
         OGRCurvePolygon::operator=( other );
     }
     return *this;
+}
+
+/************************************************************************/
+/*                               clone()                                */
+/************************************************************************/
+
+OGRPolygon *OGRPolygon::clone() const
+
+{
+    return new (std::nothrow) OGRPolygon(*this);
 }
 
 /************************************************************************/
@@ -295,10 +306,10 @@ int OGRPolygon::checkRing( OGRCurve * poNewRing ) const
 /*      representation including the byte order, and type information.  */
 /************************************************************************/
 
-int OGRPolygon::WkbSize() const
+size_t OGRPolygon::WkbSize() const
 
 {
-    int nSize = 9;
+    size_t nSize = 9;
 
     for( auto&& poRing: *this )
     {
@@ -316,14 +327,14 @@ int OGRPolygon::WkbSize() const
 /************************************************************************/
 
 OGRErr OGRPolygon::importFromWkb( const unsigned char * pabyData,
-                                  int nSize,
+                                  size_t nSize,
                                   OGRwkbVariant eWkbVariant,
-                                  int& nBytesConsumedOut )
+                                  size_t& nBytesConsumedOut )
 
 {
-    nBytesConsumedOut = -1;
+    nBytesConsumedOut = 0;
     OGRwkbByteOrder eByteOrder = wkbNDR;
-    int nDataOffset = 0;
+    size_t nDataOffset = 0;
     // coverity[tainted_data]
     OGRErr eErr = oCC.importPreambleFromWkb(this, pabyData, nSize, nDataOffset,
                                              eByteOrder, 4, eWkbVariant);
@@ -337,7 +348,7 @@ OGRErr OGRPolygon::importFromWkb( const unsigned char * pabyData,
     {
         OGRLinearRing* poLR = new OGRLinearRing();
         oCC.papoCurves[iRing] = poLR;
-        int nBytesConsumedRing = -1;
+        size_t nBytesConsumedRing = 0;
         eErr = poLR->_importFromWkb( eByteOrder, flags,
                                      pabyData + nDataOffset,
                                      nSize,
@@ -350,7 +361,7 @@ OGRErr OGRPolygon::importFromWkb( const unsigned char * pabyData,
         }
 
         CPLAssert( nBytesConsumedRing > 0 );
-        if( nSize != -1 )
+        if( nSize != static_cast<size_t>(-1) )
         {
             CPLAssert( nSize >= nBytesConsumedRing );
             nSize -= nBytesConsumedRing;
@@ -422,7 +433,7 @@ OGRErr OGRPolygon::exportToWkb( OGRwkbByteOrder eByteOrder,
 /* ==================================================================== */
 /*      Serialize each of the rings.                                    */
 /* ==================================================================== */
-    int nOffset = 9;
+    size_t nOffset = 9;
 
     for( auto&& poRing: *this )
     {
@@ -625,7 +636,8 @@ std::string OGRPolygon::exportToWkt(const OGRWktOptions& opts,
 /* -------------------------------------------------------------------- */
 /*      If we have no valid exterior ring, return POLYGON EMPTY.        */
 /* -------------------------------------------------------------------- */
-    wkt = getGeometryName() + wktTypeString(opts.variant);
+    wkt = getGeometryName();
+    wkt += wktTypeString(opts.variant);
     if( getExteriorRing() == nullptr || getExteriorRing()->IsEmpty() )
         wkt += "EMPTY";
 
@@ -635,25 +647,40 @@ std::string OGRPolygon::exportToWkt(const OGRWktOptions& opts,
 
     else
     {
-        bool first(true);
-        wkt += "(";
-        for( int iRing = 0; iRing < oCC.nCurveCount; iRing++ )
+        try
         {
-            OGRLinearRing* poLR = oCC.papoCurves[iRing]->toLinearRing();
-            if( poLR->getNumPoints() )
+            bool first(true);
+            wkt += '(';
+            for( int iRing = 0; iRing < oCC.nCurveCount; iRing++ )
             {
-                if (!first)
-                    wkt += ',';
-                first = false;
-                std::string tempWkt = poLR->exportToWkt(opts, err);
-                if ( err && *err != OGRERR_NONE )
-                    return std::string();
+                OGRLinearRing* poLR = oCC.papoCurves[iRing]->toLinearRing();
+                if( poLR->getNumPoints() )
+                {
+                    if (!first)
+                        wkt += ',';
+                    first = false;
+                    OGRErr subgeomErr = OGRERR_NONE;
+                    std::string tempWkt = poLR->exportToWkt(opts, &subgeomErr);
+                    if ( subgeomErr != OGRERR_NONE )
+                    {
+                        if( err )
+                            *err = subgeomErr;
+                        return std::string();
+                    }
 
-                // Remove leading "LINEARRING..."
-                wkt += tempWkt.substr(tempWkt.find_first_of('('));
+                    // Remove leading "LINEARRING..."
+                    wkt += tempWkt.substr(tempWkt.find_first_of('('));
+                }
             }
+            wkt += ')';
         }
-        wkt += ')';
+        catch( const std::bad_alloc& e )
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
+            if (err)
+                *err = OGRERR_FAILURE;
+            return std::string();
+        }
     }
 
     if (err)
@@ -721,7 +748,7 @@ OGRPolygon* OGRPolygon::CurvePolyToPoly(
     CPL_UNUSED double dfMaxAngleStepSizeDegrees,
     CPL_UNUSED const char* const* papszOptions ) const
 {
-    return clone()->toPolygon();
+    return clone();
 }
 
 /************************************************************************/

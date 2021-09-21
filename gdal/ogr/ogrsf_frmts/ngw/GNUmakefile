@@ -7,7 +7,7 @@ OBJ	:= \
 	ogrngwlayer.o \
 	ngw_api.o
 
-CPPFLAGS	:=	-I. -I.. -I../.. $(CPPFLAGS)
+CPPFLAGS	:=	-iquote . -iquote .. -iquote ../.. $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 

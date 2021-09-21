@@ -39,14 +39,7 @@ CPL_CVSID("$Id$")
 
 OGRPGDumpDataSource::OGRPGDumpDataSource( const char* pszNameIn,
                                           char** papszOptions ) :
-    nLayers(0),
-    papoLayers(nullptr),
-    pszName(CPLStrdup(pszNameIn)),
-    bTriedOpen(false),
-    fp(nullptr),
-    bInTransaction(false),
-    poLayerInCopyMode(nullptr),
-    pszEOL("\n")
+    pszName(CPLStrdup(pszNameIn))
 {
     const char *pszCRLFFormat = CSLFetchNameValue( papszOptions, "LINEFORMAT");
 
@@ -607,11 +600,10 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
     if( bHavePostGIS )
     {
         OGRGeomFieldDefn oTmp( pszGFldName, eType );
-        OGRPGDumpGeomFieldDefn *poGeomField =
-            new OGRPGDumpGeomFieldDefn(&oTmp);
+        auto poGeomField = cpl::make_unique<OGRPGDumpGeomFieldDefn>(&oTmp);
         poGeomField->nSRSId = nSRSId;
         poGeomField->GeometryTypeFlags = GeometryTypeFlags;
-        poLayer->GetLayerDefn()->AddGeomFieldDefn(poGeomField, FALSE);
+        poLayer->GetLayerDefn()->AddGeomFieldDefn(std::move(poGeomField));
     }
     else if( pszGFldName )
         poLayer->SetGeometryFieldName(pszGFldName);

@@ -432,6 +432,28 @@ CPLXMLNode* PDS4TableBaseLayer::RefreshFileAreaObservationalBeginningCommon(
 }
 
 /************************************************************************/
+/*                        ParseLineEndingOption()                       */
+/************************************************************************/
+
+void PDS4TableBaseLayer::ParseLineEndingOption(CSLConstList papszOptions)
+{
+    const char* pszLineEnding = CSLFetchNameValueDef(papszOptions, "LINE_ENDING", "CRLF");
+    if( EQUAL(pszLineEnding, "CRLF") )
+    {
+        m_osLineEnding = "\r\n";
+    }
+    else if( EQUAL(pszLineEnding, "LF") )
+    {
+        m_osLineEnding = "\n";
+    }
+    else
+    {
+        m_osLineEnding = "\r\n";
+        CPLError(CE_Warning, CPLE_AppDefined, "Unhandled value for LINE_ENDING");
+    }
+}
+
+/************************************************************************/
 /* ==================================================================== */
 /*                        PDS4FixedWidthTable                           */
 /* ==================================================================== */
@@ -522,10 +544,7 @@ OGRErr PDS4FixedWidthTable::ISetFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
     CPLAssert( static_cast<int>(m_osBuffer.size()) == m_nRecordSize );
-    if( m_bHasCRLF )
-    {
-        CPLAssert( m_nRecordSize > 2 );
-    }
+    CPLAssert( m_nRecordSize > static_cast<int>(m_osLineEnding.size()) );
 
     VSIFSeekL(m_fp, m_nOffset + (poFeature->GetFID() - 1) * m_nRecordSize, SEEK_SET);
     memset(&m_osBuffer[0], ' ', m_nRecordSize);
@@ -745,10 +764,11 @@ OGRErr PDS4FixedWidthTable::ISetFeature( OGRFeature *poFeature )
     }
     delete poRawFeature;
 
-    if( m_bHasCRLF )
+    if( !m_osLineEnding.empty() )
     {
-        m_osBuffer[m_osBuffer.size() - 2] = '\r';
-        m_osBuffer[m_osBuffer.size() - 1] = '\n';
+        memcpy(&m_osBuffer[m_osBuffer.size() - m_osLineEnding.size()],
+               m_osLineEnding.data(),
+               m_osLineEnding.size());
     }
 
     if( VSIFWriteL(&m_osBuffer[0], m_nRecordSize, 1, m_fp) != 1 )
@@ -1099,9 +1119,24 @@ bool PDS4FixedWidthTable::ReadTableDef(const CPLXMLNode* psTable)
     m_nFeatureCount = CPLAtoGIntBig(
         CPLGetXMLValue(psTable, "records", "-1"));
 
-    m_bHasCRLF = EQUAL(
-        CPLGetXMLValue(psTable, "record_delimiter", ""),
-        "Carriage-Return Line-Feed");
+    const char* pszRecordDelimiter = CPLGetXMLValue(psTable, "record_delimiter", "");
+    if( EQUAL(pszRecordDelimiter, "Carriage-Return Line-Feed") )
+        m_osLineEnding = "\r\n";
+    else if( EQUAL(pszRecordDelimiter, "Line-Feed") )
+        m_osLineEnding = "\n";
+    else if( EQUAL(pszRecordDelimiter, "") )
+    {
+        if( GetSubType() == "Character" )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Missing record_delimiter");
+            return false;
+        }
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid record_delimiter");
+        return false;
+    }
 
     const CPLXMLNode* psRecord =
         CPLGetXMLNode(psTable, ("Record_" + GetSubType()).c_str());
@@ -1110,7 +1145,8 @@ bool PDS4FixedWidthTable::ReadTableDef(const CPLXMLNode* psTable)
         return false;
     }
     m_nRecordSize = atoi(CPLGetXMLValue(psRecord, "record_length", "0"));
-    if( m_nRecordSize <= (m_bHasCRLF ? 2 : 0) || m_nRecordSize > 1000 * 1000 )
+    if( m_nRecordSize <= static_cast<int>(m_osLineEnding.size()) ||
+        m_nRecordSize > 1000 * 1000 )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid record_length");
         return false;
@@ -1168,7 +1204,7 @@ bool PDS4FixedWidthTable::ReadFields(const CPLXMLNode* psParent,
                 return false;
             }
             f.m_nLength = atoi(pszFieldLength);
-            if( f.m_nLength <= 0 || f.m_nLength > m_nRecordSize - (m_bHasCRLF ? 2 : 0) - f.m_nOffset )
+            if( f.m_nLength <= 0 || f.m_nLength > m_nRecordSize - static_cast<int>(m_osLineEnding.size()) - f.m_nOffset )
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Invalid field_length");
                 return false;
@@ -1257,16 +1293,16 @@ bool PDS4FixedWidthTable::ReadFields(const CPLXMLNode* psParent,
             }
             int nGroupLength = atoi(pszGroupLength);
             if( nGroupLength <= 0 ||
-                nGroupLength > m_nRecordSize - (m_bHasCRLF ? 2 : 0) - nGroupOffset ||
+                nGroupLength > m_nRecordSize - static_cast<int>(m_osLineEnding.size()) - nGroupOffset ||
                 (nGroupLength % nRepetitions) != 0 )
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Invalid group_length");
                 return false;
             }
-            int nGroupOneRepititionLength = nGroupLength / nRepetitions;
+            int nGroupOneRepetitionLength = nGroupLength / nRepetitions;
             for( int i = 0; i < nRepetitions; i++ )
             {
-                if( !ReadFields(psIter, nGroupOffset + i * nGroupOneRepititionLength,
+                if( !ReadFields(psIter, nGroupOffset + i * nGroupOneRepetitionLength,
                                 osSuffixFieldName + "_" + CPLSPrintf("%d", i+1)) )
                 {
                     return false;
@@ -1298,11 +1334,17 @@ void PDS4FixedWidthTable::RefreshFileAreaObservational(CPLXMLNode* psFAO)
         CPLCreateXMLElementAndValue(psTable,
                                     (osPrefix + "description").c_str(),
                                     osDescription);
-    if( m_bHasCRLF )
+    if( m_osLineEnding == "\r\n" )
     {
         CPLCreateXMLElementAndValue(psTable,
                                     (osPrefix + "record_delimiter").c_str(),
                                     "Carriage-Return Line-Feed");
+    }
+    else if( m_osLineEnding == "\n" )
+    {
+        CPLCreateXMLElementAndValue(psTable,
+                                    (osPrefix + "record_delimiter").c_str(),
+                                    "Line-Feed");
     }
 
     // Write Record_Character / Record_Binary
@@ -1506,10 +1548,11 @@ bool PDS4FixedWidthTable::InitializeNewLayer(
         }
     }
 
-    if( m_bHasCRLF )
+    if( GetSubType() == "Character" )
     {
-        m_nRecordSize += 2;
+        ParseLineEndingOption(papszOptions);
     }
+    m_nRecordSize += static_cast<int>(m_osLineEnding.size());
     m_osBuffer.resize(m_nRecordSize);
 
     m_nFeatureCount = 0;
@@ -1528,7 +1571,6 @@ PDS4TableCharacter::PDS4TableCharacter(PDS4Dataset* poDS,
                                        const char* pszFilename) :
     PDS4FixedWidthTable(poDS, pszName, pszFilename)
 {
-    m_bHasCRLF = true;
 }
 
 /************************************************************************/
@@ -1748,7 +1790,7 @@ void PDS4DelimitedTable::GenerateVRT()
 
     CPLCreateXMLElementAndValue(psLayer, "SrcLayer", GetName());
 
-    CPLCreateXMLElementAndValue(psLayer, "GeometryType",
+    CPLXMLNode* psLastChild = CPLCreateXMLElementAndValue(psLayer, "GeometryType",
         OGRVRTGetSerializedGeometryType(GetGeomType()).c_str());
 
     if( GetSpatialRef() )
@@ -1762,13 +1804,18 @@ void PDS4DelimitedTable::GenerateVRT()
         }
     }
 
-    for( int i = 0; i < m_poRawFeatureDefn->GetFieldCount(); i++ )
+    while( psLastChild->psNext )
+        psLastChild = psLastChild->psNext;
+    const int nFieldCount = m_poRawFeatureDefn->GetFieldCount();
+    for( int i = 0; i < nFieldCount; i++ )
     {
         if( i != m_iWKT && i != m_iLongField && i != m_iLatField &&
             i != m_iAltField )
         {
             OGRFieldDefn* poFieldDefn = m_poRawFeatureDefn->GetFieldDefn(i);
-            CPLXMLNode* psField = CPLCreateXMLNode(psLayer, CXT_Element, "Field");
+            CPLXMLNode* psField = CPLCreateXMLNode(nullptr, CXT_Element, "Field");
+            psLastChild->psNext = psField;
+            psLastChild = psField;
             CPLAddXMLAttributeAndValue(psField, "name", poFieldDefn->GetNameRef());
             CPLAddXMLAttributeAndValue(psField, "type",
                                     OGR_GetFieldTypeName(poFieldDefn->GetType()));
@@ -1788,16 +1835,20 @@ void PDS4DelimitedTable::GenerateVRT()
 
     if( m_iWKT >= 0 )
     {
-        CPLXMLNode* psField = CPLCreateXMLNode(psLayer,
+        CPLXMLNode* psField = CPLCreateXMLNode(nullptr,
                                                CXT_Element, "GeometryField");
+        psLastChild->psNext = psField;
+        psLastChild = psField;
         CPLAddXMLAttributeAndValue(psField, "encoding", "WKT");
         CPLAddXMLAttributeAndValue(psField, "field",
                             m_poRawFeatureDefn->GetFieldDefn(m_iWKT)->GetNameRef());
     }
     else if( m_iLongField >= 0 && m_iLatField >= 0 )
     {
-        CPLXMLNode* psField = CPLCreateXMLNode(psLayer,
+        CPLXMLNode* psField = CPLCreateXMLNode(nullptr,
                                                CXT_Element, "GeometryField");
+        psLastChild->psNext = psField;
+        psLastChild = psField;
         CPLAddXMLAttributeAndValue(psField, "encoding", "PointFromColumns");
         CPLAddXMLAttributeAndValue(psField, "x",
                 m_poRawFeatureDefn->GetFieldDefn(m_iLongField)->GetNameRef());
@@ -1809,6 +1860,8 @@ void PDS4DelimitedTable::GenerateVRT()
                     m_poRawFeatureDefn->GetFieldDefn(m_iAltField)->GetNameRef());
         }
     }
+
+    CPL_IGNORE_RET_VAL(psLastChild);
 
     CPLSerializeXMLTreeToFile(psRoot, osVRTFilename);
     CPLDestroyXMLNode(psRoot);
@@ -1969,7 +2022,7 @@ OGRErr PDS4DelimitedTable::ICreateFeature( OGRFeature *poFeature )
             VSIFPrintfL(m_fp, "%s", QuoteIfNeeded(
                 m_poRawFeatureDefn->GetFieldDefn(i)->GetNameRef()).c_str());
         }
-        VSIFPrintfL(m_fp, "\r\n");
+        VSIFPrintfL(m_fp, "%s", m_osLineEnding.c_str());
         m_nOffset = VSIFTellL(m_fp);
     }
 
@@ -1992,7 +2045,7 @@ OGRErr PDS4DelimitedTable::ICreateFeature( OGRFeature *poFeature )
         VSIFPrintfL(m_fp, "%s",
             QuoteIfNeeded(poRawFeature->GetFieldAsString(i)).c_str());
     }
-    VSIFPrintfL(m_fp, "\r\n");
+    VSIFPrintfL(m_fp, "%s", m_osLineEnding.c_str());
     delete poRawFeature;
 
     m_nFeatureCount ++;
@@ -2084,13 +2137,20 @@ bool PDS4DelimitedTable::ReadTableDef(const CPLXMLNode* psTable)
     m_nFeatureCount = CPLAtoGIntBig(
         CPLGetXMLValue(psTable, "records", "-1"));
 
-    bool bHasCRLF = EQUAL(
-        CPLGetXMLValue(psTable, "record_delimiter", ""),
-        "Carriage-Return Line-Feed");
-    if( !bHasCRLF )
+
+    const char* pszRecordDelimiter = CPLGetXMLValue(psTable, "record_delimiter", "");
+    if( EQUAL(pszRecordDelimiter, "Carriage-Return Line-Feed") )
+        m_osLineEnding = "\r\n";
+    else if( EQUAL(pszRecordDelimiter, "Line-Feed") )
+        m_osLineEnding = "\n";
+    else if( EQUAL(pszRecordDelimiter, "") )
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "record_delimiter != 'Carriage-Return Line-Feed' not supported");
+        CPLError(CE_Failure, CPLE_AppDefined, "Missing record_delimiter");
+        return false;
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid record_delimiter");
         return false;
     }
 
@@ -2199,7 +2259,7 @@ bool PDS4DelimitedTable::ReadFields(const CPLXMLNode* psParent,
                 return false;
             }
             if( STARTS_WITH(f.m_osDataType, "ASCII_") &&
-                eType == OFTInteger &&
+                eType == OFTInteger && eSubType == OFSTNone &&
                 (nMaximumFieldLength == 0 || nMaximumFieldLength >= 10) )
             {
                 eType = OFTInteger64;
@@ -2266,9 +2326,18 @@ void PDS4DelimitedTable::RefreshFileAreaObservational(CPLXMLNode* psFAO)
                                     (osPrefix + "description").c_str(),
                                     osDescription);
 
-    CPLCreateXMLElementAndValue(psTable,
-                                (osPrefix + "record_delimiter").c_str(),
-                                "Carriage-Return Line-Feed");
+    if( m_osLineEnding == "\r\n" )
+    {
+        CPLCreateXMLElementAndValue(psTable,
+                                    (osPrefix + "record_delimiter").c_str(),
+                                    "Carriage-Return Line-Feed");
+    }
+    else if( m_osLineEnding == "\n" )
+    {
+        CPLCreateXMLElementAndValue(psTable,
+                                    (osPrefix + "record_delimiter").c_str(),
+                                    "Line-Feed");
+    }
 
     CPLCreateXMLElementAndValue(psTable,
                                 (osPrefix + "field_delimiter").c_str(),
@@ -2285,37 +2354,47 @@ void PDS4DelimitedTable::RefreshFileAreaObservational(CPLXMLNode* psFAO)
                         (osPrefix + "fields").c_str(),
                         CPLSPrintf("%d", static_cast<int>(m_aoFields.size())));
 
-    CPLCreateXMLElementAndValue(psRecord,
+    CPLXMLNode* psLastChild = CPLCreateXMLElementAndValue(psRecord,
                                 (osPrefix + "groups").c_str(), "0");
 
 
     CPLAssert(static_cast<int>(m_aoFields.size()) ==
                         m_poRawFeatureDefn->GetFieldCount());
 
+    const auto osPrefixedFieldDelimited(osPrefix + "Field_Delimited");
+    const auto osPrefixedName(osPrefix + "name");
+    const auto osPrefixedFieldNumber(osPrefix + "field_number");
+    const auto osPrefixedFieldData(osPrefix + "data_type");
+    const auto osPrefixMaxFieldLength(osPrefix + "maximum_field_length");
+    const auto osPrefixedUnit(osPrefix + "unit");
+    const auto osPrefixedDescription(osPrefix + "description");
+    CPLAssert(psLastChild->psNext == nullptr);
     for(int i = 0; i < static_cast<int>(m_aoFields.size()); i++ )
     {
-        auto& f= m_aoFields[i];
+        const auto& f = m_aoFields[i];
 
         CPLXMLNode* psField = CPLCreateXMLNode(
-            psRecord, CXT_Element, (osPrefix + "Field_Delimited").c_str());
+            nullptr, CXT_Element, osPrefixedFieldDelimited.c_str());
+        psLastChild->psNext = psField;
+        psLastChild = psField;
 
         CPLCreateXMLElementAndValue(psField,
-                        (osPrefix + "name").c_str(),
+                        osPrefixedName.c_str(),
                         m_poRawFeatureDefn->GetFieldDefn(i)->GetNameRef());
 
         CPLCreateXMLElementAndValue(psField,
-                                    (osPrefix + "field_number").c_str(),
+                                    osPrefixedFieldNumber.c_str(),
                                     CPLSPrintf("%d", i+1));
 
         CPLCreateXMLElementAndValue(psField,
-                                    (osPrefix + "data_type").c_str(),
+                                    osPrefixedFieldData.c_str(),
                                     f.m_osDataType.c_str());
 
         int nWidth = m_poRawFeatureDefn->GetFieldDefn(i)->GetWidth();
         if( nWidth > 0 )
         {
             auto psfield_length = CPLCreateXMLElementAndValue(psField,
-                                        (osPrefix + "maximum_field_length").c_str(),
+                                        osPrefixMaxFieldLength.c_str(),
                                         CPLSPrintf("%d", nWidth));
             CPLAddXMLAttributeAndValue(psfield_length, "unit", "byte");
         }
@@ -2323,14 +2402,14 @@ void PDS4DelimitedTable::RefreshFileAreaObservational(CPLXMLNode* psFAO)
         if( !f.m_osUnit.empty() )
         {
             CPLCreateXMLElementAndValue(psField,
-                                        (osPrefix + "unit").c_str(),
+                                        osPrefixedUnit.c_str(),
                                         m_aoFields[i].m_osUnit.c_str());
         }
 
         if( !f.m_osDescription.empty() )
         {
             CPLCreateXMLElementAndValue(psField,
-                                        (osPrefix + "description").c_str(),
+                                        osPrefixedDescription.c_str(),
                                         m_aoFields[i].m_osDescription.c_str());
         }
 
@@ -2438,6 +2517,8 @@ bool PDS4DelimitedTable::InitializeNewLayer(
         }
     }
 
+    ParseLineEndingOption(papszOptions);
+
     m_nFeatureCount = 0;
     MarkHeaderDirty();
     return true;
@@ -2453,8 +2534,7 @@ template<class T>
 OGRErr PDS4EditableSynchronizer<T>::EditableSyncToDisk(
                     OGRLayer* poEditableLayer, OGRLayer** ppoDecoratedLayer)
 {
-    auto poOriLayer = dynamic_cast<T*>(*ppoDecoratedLayer);
-    CPLAssert(poOriLayer);
+    auto poOriLayer = cpl::down_cast<T*>(*ppoDecoratedLayer);
 
     CPLString osTmpFilename(poOriLayer->m_osFilename + ".tmp");
     auto poNewLayer = poOriLayer->NewLayer(
@@ -2488,7 +2568,7 @@ OGRErr PDS4EditableSynchronizer<T>::EditableSyncToDisk(
         return OGRERR_FAILURE;
     }
 
-    const auto copyField = [](typename T::Field& oDst, const typename T::Field& oSrc) 
+    const auto copyField = [](typename T::Field& oDst, const typename T::Field& oSrc)
     {
         oDst.m_osDescription = oSrc.m_osDescription;
         oDst.m_osUnit = oSrc.m_osUnit;
@@ -2607,9 +2687,7 @@ PDS4EditableLayer::PDS4EditableLayer(PDS4DelimitedTable* poBaseLayer):
 
 PDS4TableBaseLayer* PDS4EditableLayer::GetBaseLayer() const
 {
-    auto ret = dynamic_cast<PDS4TableBaseLayer*>(OGREditableLayer::GetBaseLayer());
-    assert(ret);
-    return ret;
+    return cpl::down_cast<PDS4TableBaseLayer*>(OGREditableLayer::GetBaseLayer());
 }
 
 /************************************************************************/

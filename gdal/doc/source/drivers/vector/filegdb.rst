@@ -60,6 +60,24 @@ Special SQL requests
 can be used as special SQL requests to get respectively the definition
 and metadata of a FileGDB table as XML content.
 
+Field domains
+-------------
+
+.. versionadded:: 3.3
+
+Coded and range field domains are supported.
+
+Hiearchical organization
+------------------------
+
+.. versionadded:: 3.4
+
+The hiearchical organization of tables and feature classes as top-level
+element or within a feature dataset can be explored using the methods
+:cpp:func:`GDALDataset::GetRootGroup`,
+:cpp:func:`GDALGroup::GetGroupNames`, :cpp:func:`GDALGroup::OpenGroup`,
+:cpp:func:`GDALGroup::GetVectorLayerNames` and :cpp:func:`GDALGroup::OpenVectorLayer`
+
 Transaction support
 -------------------
 
@@ -183,6 +201,11 @@ Known Issues
    operation is not supported by the ESRI SDK.
 -  Reading data compressed in CDF format (Compressed Data Format)
    requires ESRI SDK 1.4 or later.
+
+Other limitations
+-----------------
+
+- The FileGeodatabase format (and thus the driver) does not support 64-bit integers.
 
 Links
 -----

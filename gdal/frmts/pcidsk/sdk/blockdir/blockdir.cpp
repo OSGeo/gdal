@@ -111,7 +111,7 @@ BlockDir::~BlockDir(void)
 /************************************************************************/
 
 /**
- * Syncronizes the block directory to disk.
+ * Synchronizes the block directory to disk.
  */
 void BlockDir::Sync(void)
 {

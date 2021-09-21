@@ -31,7 +31,7 @@
 
 #include "ogr_api.h"
 #include "cpl_error.h"
-#include "ogr_sqlite.h"
+#include "ogrsqlitebase.h"
 
 extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv);
 
@@ -46,7 +46,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
     OGRGeometry* poGeom = nullptr;
     CPLPushErrorHandler(CPLQuietErrorHandler);
-    OGRSQLiteLayer::ImportSpatiaLiteGeometry(
+    OGRSQLiteImportSpatiaLiteGeometry(
         const_cast<unsigned char*>(buf), static_cast<int>(len), &poGeom );
     CPLPopErrorHandler();
     delete poGeom;

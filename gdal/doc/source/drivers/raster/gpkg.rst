@@ -155,6 +155,15 @@ with FlushCache()), those uncompressed tiles are definitely transferred
 to the GeoPackage file with the appropriate compression. All of this is
 transparent to the user of GDAL API/utilities
 
+The driver updates the GeoPackage ``last_change`` timestamp when the file is
+created or modified. If consistent binary output is required for
+reproducibility, the timestamp can be forced to a specific value by setting the
+:decl_configoption:`OGR_CURRENT_DATE` global configuration option.
+When setting the option, take care to meet the specific time format
+requirement of the GeoPackage standard,
+e.g. `for version 1.2 <https://www.geopackage.org/spec120/#r15>`__.
+
+
 .. _raster.gpkg.tile_formats:
 
 Tile formats
@@ -416,9 +425,10 @@ The following creation options are available:
    grid-value-is-corner: (GDAL >= 2.3) Grid cell encoding. Only used for
    tiled gridded coverage datasets. Defaults to grid-value-is-center,
    when AREA_OR_POINT metadata item is not set.
--  **VERSION**\ =AUTO/1.0/1.1/1.2: (GDAL >= 2.2) Set GeoPackage version
+-  **VERSION**\ =AUTO/1.0/1.1/1.2/1.3: (GDAL >= 2.2) Set GeoPackage version
    (for application_id and user_version fields). In AUTO mode, this will
    be equivalent to 1.2 starting with GDAL 2.3.
+   1.3 is available starting with GDAL 3.3
 -  **ADD_GPKG_OGR_CONTENTS**\ =YES/NO: (GDAL >= 2.2) Defines whether to
    add a gpkg_ogr_contents table to keep feature count for vector
    layers, and associated triggers. Defaults to YES.
@@ -507,46 +517,46 @@ Examples
 
    ::
 
-      % gdal_translate -of GPKG byte.tif byte.gpkg
+      gdal_translate -of GPKG byte.tif byte.gpkg
 
 -  Translation of a GeoTIFF into GeoPackage using WebP tiles
 
    ::
 
-      % gdal_translate -of GPKG byte.tif byte.gpkg -co TILE_FORMAT=WEBP
+      gdal_translate -of GPKG byte.tif byte.gpkg -co TILE_FORMAT=WEBP
 
 -  Translation of a GeoTIFF into GeoPackage using GoogleMapsCompatible
    tiling scheme (with reprojection and resampling if needed)
 
    ::
 
-      % gdal_translate -of GPKG byte.tif byte.gpkg -co TILING_SCHEME=GoogleMapsCompatible
+      gdal_translate -of GPKG byte.tif byte.gpkg -co TILING_SCHEME=GoogleMapsCompatible
 
 -  Building of overviews of an existing GeoPackage, and forcing JPEG
    tiles
 
    ::
 
-      % gdaladdo -r cubic -oo TILE_FORMAT=JPEG my.gpkg 2 4 8 16 32 64
+      gdaladdo -r cubic -oo TILE_FORMAT=JPEG my.gpkg 2 4 8 16 32 64
 
 -  Addition of a new subdataset to an existing GeoPackage, and choose a
    non default name for the raster table.
 
    ::
 
-      % gdal_translate -of GPKG new.tif existing.gpkg -co APPEND_SUBDATASET=YES -co RASTER_TABLE=new_table
+      gdal_translate -of GPKG new.tif existing.gpkg -co APPEND_SUBDATASET=YES -co RASTER_TABLE=new_table
 
 -  Reprojection of an input dataset to GeoPackage
 
    ::
 
-      % gdalwarp -of GPKG in.tif out.gpkg -t_srs EPSG:3857
+      gdalwarp -of GPKG in.tif out.gpkg -t_srs EPSG:3857
 
 -  Open a specific raster table in a GeoPackage
 
    ::
 
-      % gdalinfo my.gpkg -oo TABLE=a_table
+      gdalinfo my.gpkg -oo TABLE=a_table
 
 See Also
 --------

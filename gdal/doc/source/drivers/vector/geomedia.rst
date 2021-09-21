@@ -7,6 +7,9 @@ Geomedia MDB database
 
 .. build_dependencies:: ODBC library
 
+.. deprecated_driver:: version_targeted_for_removal: 3.5
+   env_variable: GDAL_ENABLE_DEPRECATED_DRIVER_GEOMEDIA
+
 OGR optionally supports reading Geomedia .mdb files via ODBC. Geomedia
 is a Microsoft Access database with a set of tables defined by
 Intergraph for holding geodatabase metadata, and with geometry for

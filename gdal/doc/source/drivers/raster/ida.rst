@@ -8,6 +8,9 @@ IDA -- Image Display and Analysis
 
 .. built_in_by_default::
 
+.. deprecated_driver:: version_targeted_for_removal: 3.5
+   env_variable: GDAL_ENABLE_DEPRECATED_DRIVER_IDA
+
 GDAL supports reading and writing IDA images with some limitations. IDA
 images are the image format of WinDisp 4. The files are always one band
 only of 8bit data. IDA files often have the extension .img though that

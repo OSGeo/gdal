@@ -35,6 +35,7 @@
 #include "ogrpgeogeometry.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <cstring>
@@ -649,14 +650,11 @@ OGRErr OGRWriteToShapeBin( const OGRGeometry *poGeom,
     }
     else if( nOGRType == wkbPolygon )
     {
-        std::unique_ptr<OGRPolygon> poPoly(poGeom->clone()->toPolygon());
+        std::unique_ptr<OGRPolygon> poPoly(poGeom->toPolygon()->clone());
         poPoly->closeRings();
         nParts = poPoly->getNumInteriorRings() + 1;
-        for( GUInt32 i = 0; i < nParts; i++ )
+        for( const auto poRing: *poPoly )
         {
-            OGRLinearRing *poRing = i == 0
-                ? poPoly->getExteriorRing()
-                : poPoly->getInteriorRing(i-1);
             nPoints += poRing->getNumPoints();
         }
         nShpSize += 16 * nCoordDims;  // xy(z)(m) box.
@@ -669,9 +667,8 @@ OGRErr OGRWriteToShapeBin( const OGRGeometry *poGeom,
     else if( nOGRType == wkbMultiPoint )
     {
         const OGRMultiPoint *poMPoint = poGeom->toMultiPoint();
-        for( int i = 0; i < poMPoint->getNumGeometries(); i++ )
+        for( const auto poPoint: *poMPoint )
         {
-            const OGRPoint *poPoint = poMPoint->getGeometryRef(i)->toPoint();
             if( poPoint->IsEmpty() )
                 continue;
             nPoints++;
@@ -684,10 +681,8 @@ OGRErr OGRWriteToShapeBin( const OGRGeometry *poGeom,
     else if( nOGRType == wkbMultiLineString )
     {
         const OGRMultiLineString *poMLine = poGeom->toMultiLineString();
-        for( int i = 0; i < poMLine->getNumGeometries(); i++ )
+        for( const auto poLine: *poMLine )
         {
-            const OGRLineString *poLine =
-                poMLine->getGeometryRef(i)->toLineString();
             // Skip empties.
             if( poLine->IsEmpty() )
                 continue;
@@ -704,23 +699,18 @@ OGRErr OGRWriteToShapeBin( const OGRGeometry *poGeom,
     else if( nOGRType == wkbMultiPolygon )
     {
         std::unique_ptr<OGRMultiPolygon> poMPoly(
-                                    poGeom->clone()->toMultiPolygon());
+                                    poGeom->toMultiPolygon()->clone());
         poMPoly->closeRings();
-        for( int j = 0; j < poMPoly->getNumGeometries(); j++ )
+        for( const auto poPoly: *poMPoly )
         {
-            const OGRPolygon *poPoly = poMPoly->getGeometryRef(j)->toPolygon();
-            int nRings = poPoly->getNumInteriorRings() + 1;
-
             // Skip empties.
             if( poPoly->IsEmpty() )
                 continue;
 
+            const int nRings = poPoly->getNumInteriorRings() + 1;
             nParts += nRings;
-            for( int i = 0; i < nRings; i++ )
+            for( const auto poRing: *poPoly )
             {
-                const OGRLinearRing *poRing = i == 0
-                    ? poPoly->getExteriorRing()
-                    : poPoly->getInteriorRing(i-1);
                 nPoints += poRing->getNumPoints();
             }
         }
@@ -1061,14 +1051,16 @@ id,WKT
             std::unique_ptr<OGRLinearRing> poRing;
             if( i == 0 )
             {
-                poRing.reset(poPoly->getExteriorRing()->clone()->toLinearRing());
+                poRing.reset(poPoly->getExteriorRing()->clone());
+                assert( poRing );
                 // Outer ring must be clockwise.
                 if( !poRing->isClockwise() )
                     poRing->reverseWindingOrder();
             }
             else
             {
-                poRing.reset(poPoly->getInteriorRing(i-1)->clone()->toLinearRing());
+                poRing.reset(poPoly->getInteriorRing(i-1)->clone());
+                assert( poRing );
                 // Inner rings should be anti-clockwise.
                 if( poRing->isClockwise() )
                     poRing->reverseWindingOrder();
@@ -1304,14 +1296,16 @@ id,WKT
                 std::unique_ptr<OGRLinearRing> poRing;
                 if( j == 0 )
                 {
-                    poRing.reset(poPoly->getExteriorRing()->clone()->toLinearRing());
+                    poRing.reset(poPoly->getExteriorRing()->clone());
+                    assert( poRing != nullptr );
                     // Outer ring must be clockwise.
                     if( !poRing->isClockwise() )
                         poRing->reverseWindingOrder();
                 }
                 else
                 {
-                    poRing.reset(poPoly->getInteriorRing(j-1)->clone()->toLinearRing());
+                    poRing.reset(poPoly->getInteriorRing(j-1)->clone());
+                    assert( poRing != nullptr );
                     // Inner rings should be anti-clockwise.
                     if( poRing->isClockwise() )
                         poRing->reverseWindingOrder();
@@ -1438,16 +1432,14 @@ OGRErr OGRCreateMultiPatch( const OGRGeometry *poGeomConst,
     poPoints = nullptr;
     padfZ = nullptr;
     int nBeginLastPart = 0;
-    for( int j = 0; j < poMPoly->getNumGeometries(); j++ )
+    for( const auto poPoly: *poMPoly )
     {
-        OGRPolygon *poPoly = poMPoly->getGeometryRef(j)->toPolygon();
-        int nRings = poPoly->getNumInteriorRings() + 1;
-
         // Skip empties.
         if( poPoly->IsEmpty() )
             continue;
 
-        OGRLinearRing *poRing = poPoly->getExteriorRing();
+        const int nRings = poPoly->getNumInteriorRings() + 1;
+        const OGRLinearRing *poRing = poPoly->getExteriorRing();
         if( nRings == 1 && poRing->getNumPoints() == 4 )
         {
             int nCorrectedPoints = nPoints;
@@ -1763,7 +1755,7 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
                                               /* const */ double* padfM,
                                               int* pnLastCurveIdx )
 {
-    auto poCC = std::unique_ptr<OGRCompoundCurve>(new OGRCompoundCurve());
+    auto poCC = cpl::make_unique<OGRCompoundCurve>();
     int nLastPointIdx = nPartStartIdx;
     bool bHasCircularArcs = false;
     int i = nFirstCurveIdx;  // Used after for.

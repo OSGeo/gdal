@@ -137,7 +137,6 @@ void VRTDriver::AddSourceParser( const char *pszElementName,
 /************************************************************************/
 
 VRTSource *VRTDriver::ParseSource( CPLXMLNode *psSrc, const char *pszVRTPath,
-                                   void* pUniqueHandle,
                                    std::map<CPLString, GDALDataset*>& oMapSharedSources )
 
 {
@@ -163,7 +162,7 @@ VRTSource *VRTDriver::ParseSource( CPLXMLNode *psSrc, const char *pszVRTPath,
     if( pfnParser == nullptr )
         return nullptr;
 
-    return pfnParser( psSrc, pszVRTPath, pUniqueHandle, oMapSharedSources );
+    return pfnParser( psSrc, pszVRTPath, oMapSharedSources );
 }
 
 /************************************************************************/
@@ -455,6 +454,7 @@ void GDALRegister_VRT()
 "</OpenOptionList>" );
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_COORDINATE_EPOCH, "YES" );
 
     poDriver->AddSourceParser( "SimpleSource", VRTParseCoreSources );
     poDriver->AddSourceParser( "ComplexSource", VRTParseCoreSources );

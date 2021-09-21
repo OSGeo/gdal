@@ -33,6 +33,7 @@
 #include "cpl_vsi.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include <stdbool.h>
 
 CPL_CVSID("$Id$")
 
@@ -47,11 +48,6 @@ static int NITFWriteTREsFromOptions(
     int *pnOffset,
     char **papszOptions,
     const char* pszTREPrefix);
-
-static int NITFWriteDESsFromOptions(
-    VSILFILE* fp,
-    vsi_l_offset nOffsetLDSH,
-    char **papszOptions);
 
 static int
 NITFCollectSegmentInfo( NITFFile *psFile, int nFileHeaderLenSize, int nOffset,
@@ -539,16 +535,30 @@ int NITFCreate( const char *pszFilename,
                       char **papszOptions )
 
 {
+    return NITFCreateEx(pszFilename, nPixels, nLines, nBands, nBitsPerSample,
+                        pszPVType, papszOptions, NULL, NULL, NULL, NULL);
+}
+
+int NITFCreateEx( const char *pszFilename,
+                  int nPixels, int nLines, int nBands,
+                  int nBitsPerSample, const char *pszPVType,
+                  char **papszOptions,
+                  int* pnIndex,
+                  int* pnImageCount,
+                  vsi_l_offset* pnImageOffset,
+                  vsi_l_offset* pnICOffset )
+
+{
     VSILFILE	*fp;
     GUIntBig    nCur = 0;
     int         nOffset = 0, iBand, nIHSize, nNPPBH, nNPPBV;
-    GIntBig     nImageSize;
+    GUIntBig    nImageSize;
     int         nNBPR, nNBPC;
     const char *pszIREP;
     const char *pszIC = CSLFetchNameValue(papszOptions,"IC");
     int nCLevel;
     const char *pszNUMT;
-    int nHL, nNUMT = 0;
+    int nNUMT = 0;
     vsi_l_offset nOffsetUDIDL;
     const char *pszVersion;
     int iIM, nIM = 1;
@@ -556,9 +566,10 @@ int NITFCreate( const char *pszFilename,
     int iGS, nGS = 0; // number of graphic segment
     const char *pszNUMS; // graphic segment option string
     int iDES, nDES = 0;
-    char **papszSubList;
-    vsi_l_offset nOffsetLDSH;
     int bOK;
+
+    if( pnIndex )
+        *pnIndex = 0;
 
     if (nBands <= 0 || nBands > 99999)
     {
@@ -589,9 +600,19 @@ int NITFCreate( const char *pszFilename,
         }
     }
 
+    const bool bAppendSubdataset = CSLTestBoolean(
+        CSLFetchNameValueDef(papszOptions, "APPEND_SUBDATASET", "NO")) == TRUE;
+    const bool bWriteAllImages = CSLTestBoolean(
+        CSLFetchNameValueDef(papszOptions, "WRITE_ALL_IMAGES", "NO")) == TRUE;
     pszNUMI = CSLFetchNameValue( papszOptions, "NUMI" );
     if (pszNUMI != NULL)
     {
+        if( bAppendSubdataset )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "NUMI not supported with APPEND_SUBDATASET");
+            return FALSE;
+        }
         nIM = atoi(pszNUMI);
         if (nIM < 1 || nIM > 999)
         {
@@ -599,13 +620,21 @@ int NITFCreate( const char *pszFilename,
                     "Invalid NUMI value : %s", pszNUMI);
             return FALSE;
         }
-        if (nIM != 1 && !EQUAL(pszIC, "NC"))
+        if (nIM != 1 && !EQUAL(pszIC, "NC") && bWriteAllImages)
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                     "Unable to create file with multiple images and compression at the same time");
             return FALSE;
         }
     }
+    else if( bAppendSubdataset && bWriteAllImages )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "WRITE_ALL_IMAGES=YES only supported for first image");
+    }
+
+    if( pnImageCount )
+        *pnImageCount = nIM;
 
     // Reads and validates graphics segment number option
     pszNUMS = CSLFetchNameValue(papszOptions, "NUMS");
@@ -620,7 +649,15 @@ int NITFCreate( const char *pszFilename,
         }
     }
 
-
+    const char* pszNUMDES = CSLFetchNameValue(papszOptions, "NUMDES");
+    if( pszNUMDES )
+        nDES = atoi(pszNUMDES);
+    else
+    {
+        char** papszSubList = CSLFetchNameValueMultiple(papszOptions, "DES");
+        nDES = CSLCount(papszSubList);
+        CSLDestroy(papszSubList);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Compute raw image size, blocking factors and so forth.          */
@@ -652,7 +689,7 @@ int NITFCreate( const char *pszFilename,
 
         nImageSize =
             ((nBitsPerSample)/8)
-            * ((GIntBig) nPixels *nLines)
+            * ((GUIntBig) nPixels *nLines)
             * nBands;
     }
     else if ( (EQUAL(pszIC, "NC") || EQUAL(pszIC, "C8")) &&
@@ -674,7 +711,7 @@ int NITFCreate( const char *pszFilename,
 
         nImageSize =
             ((nBitsPerSample)/8)
-            * ((GIntBig) nPixels * (nNBPC * nNPPBV))
+            * ((GUIntBig) nPixels * (nNBPC * nNPPBV))
             * nBands;
     }
     else if ( (EQUAL(pszIC, "NC") || EQUAL(pszIC, "C8")) &&
@@ -696,7 +733,7 @@ int NITFCreate( const char *pszFilename,
 
         nImageSize =
             ((nBitsPerSample)/8)
-            * ((GIntBig) nLines * (nNBPR * nNPPBH))
+            * ((GUIntBig) nLines * (nNBPR * nNPPBH))
             * nBands;
     }
     else
@@ -718,13 +755,13 @@ int NITFCreate( const char *pszFilename,
 
         nImageSize =
             ((nBitsPerSample)/8)
-            * ((GIntBig) nNBPR * nNBPC)
+            * ((GUIntBig) nNBPR * nNBPC)
             * nNPPBH * nNPPBV * nBands;
     }
 
     if (EQUAL(pszIC, "NC"))
     {
-        if ((double)nImageSize >= 1e10 - 1)
+        if (nImageSize >= NITF_MAX_IMAGE_SIZE)
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                     "Unable to create file %s,\n"
@@ -732,7 +769,7 @@ int NITFCreate( const char *pszFilename,
                     pszFilename, nImageSize );
             return FALSE;
         }
-        if ((double)(nImageSize * nIM) >= 1e12 - 1)
+        if (nImageSize * nIM >= NITF_MAX_FILE_SIZE)
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                     "Unable to create file %s,\n"
@@ -745,7 +782,7 @@ int NITFCreate( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Open new file.                                                  */
 /* -------------------------------------------------------------------- */
-    fp = VSIFOpenL( pszFilename, "wb+" );
+    fp = VSIFOpenL( pszFilename, bAppendSubdataset ? "rb+" : "wb+" );
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
@@ -777,29 +814,31 @@ int NITFCreate( const char *pszFilename,
 /*      Prepare the file header.                                        */
 /* -------------------------------------------------------------------- */
 
-#define PLACE(location,name,text)  { \
+#define PLACE(location,name,text) do { \
     const char* _text = text; \
     bOK &= NITFGotoOffset(fp, location); \
-    bOK &= VSIFWriteL(_text, 1, strlen(_text), fp) == strlen(_text); }
+    bOK &= VSIFWriteL(_text, 1, strlen(_text), fp) == strlen(_text); } while(0)
 
-#define OVR(width,location,name,text) { 				\
+#define OVR(width,location,name,text) do { 				\
     const char* _text = text; \
-    const char *pszParmValueMacro; 						\
+    const char *pszParamValueMacro; 						\
     size_t to_write; \
-    pszParmValueMacro = CSLFetchNameValue( papszOptions, #name ); 		\
-    if( pszParmValueMacro == NULL )						\
-        pszParmValueMacro = _text;						\
+    pszParamValueMacro = CSLFetchNameValue( papszOptions, #name ); 		\
+    if( pszParamValueMacro == NULL )						\
+        pszParamValueMacro = _text;						\
     bOK &= NITFGotoOffset(fp, location); \
-    to_write = MIN(width,strlen(pszParmValueMacro)); \
-    bOK &= VSIFWriteL(pszParmValueMacro, 1, to_write, fp) == to_write; }
+    to_write = MIN(width,strlen(pszParamValueMacro)); \
+    bOK &= VSIFWriteL(pszParamValueMacro, 1, to_write, fp) == to_write; } while(0)
 
-#define WRITE_BYTE(location, val) { \
+#define WRITE_BYTE(location, val) do { \
     char cVal = val; \
     bOK &= NITFGotoOffset(fp, location); \
-    bOK &= VSIFWriteL(&cVal, 1, 1, fp) == 1; }
+    bOK &= VSIFWriteL(&cVal, 1, 1, fp) == 1; } while(0)
 
     bOK = VSIFSeekL(fp, 0, SEEK_SET) == 0;
 
+  if( !bAppendSubdataset )
+  {
     PLACE (  0, FDHR_FVER,    pszVersion                      );
     OVR( 2,  9, CLEVEL,       "03"                            );  /* Patched at the end */
     PLACE ( 11, STYPE        ,"BF01"                          );
@@ -834,11 +873,12 @@ int NITFCreate( const char *pszFilename,
     PLACE (354, HL           ,"??????"                        );
     PLACE (360, NUMI         ,CPLSPrintf("%03d", nIM)         );
 
-    nHL = 363;
+    int nHL = 363;
     for(iIM=0;iIM<nIM;iIM++)
     {
+        /* Patched when image segments are written. */
         PLACE (nHL,     LISHi    ,"??????"                        );
-        PLACE (nHL + 6, LIi      ,CPLSPrintf("%010" CPL_FRMT_GB_WITHOUT_PREFIX "d", nImageSize)  );
+        PLACE (nHL + 6, LIi      ,"??????????"                    );
         nHL += 6 + 10;
     }
 
@@ -852,32 +892,30 @@ int NITFCreate( const char *pszFilename,
     nHL += 3; // Move three characters
     for (iGS = 0; iGS < nGS; iGS++)
     {
-        PLACE (nHL, LSSHi ,CPLSPrintf("0000") );
-        PLACE (nHL + 4, LSi ,CPLSPrintf("000000") );
-        nHL += 4 + 6;
+        /* Patched when graphic segments are written. */
+        PLACE (nHL, LSSHi,  "????"                          );
+        nHL += 4;
+        PLACE (nHL, LSi ,   "??????"                        );
+        nHL += 6;
     }
 
     PLACE (nHL, NUMX         ,"000"                           );
     PLACE (nHL + 3, NUMT         ,CPLSPrintf("%03d",nNUMT)        );
 
+    /* Patched when text segments are written. */
     PLACE (nHL + 6, LTSHnLTn     ,""                              );
 
     nHL += 6 + (4+5) * nNUMT;
 
-    papszSubList = CSLFetchNameValueMultiple(papszOptions, "DES");
-    nDES = CSLCount(papszSubList);
-    CSLDestroy(papszSubList);
-
     PLACE (nHL, NUMDES       ,CPLSPrintf("%03d", nDES)                           );
     nHL += 3;
-    nOffsetLDSH = nHL;
 
     for (iDES = 0; iDES < nDES; iDES++)
     {
-        // All 9's indicates unknown.  Patched when DESs are written.
-        PLACE(nHL, LDSH      ,"9999"                          );
+        /* Patched when DESs are written. */
+        PLACE(nHL, LDSH      ,"????"                          );
         nHL += 4;
-        PLACE(nHL, LD        ,"999999999"                     );
+        PLACE(nHL, LD        ,"?????????"                     );
         nHL += 9;
     }
 
@@ -909,11 +947,53 @@ int NITFCreate( const char *pszFilename,
     PLACE (354, HL           ,CPLSPrintf("%06d",nHL)          );
 
     nCur = nHL;
+    iIM = 0;
+  }
+  else
+  {
+    // Append subdataset
+    NITFFile* psFile = NITFOpenEx( fp, pszFilename );
+    if( psFile == NULL )
+        return FALSE;
+
+    iIM = -1;
+    nIM = 0;
+    for( int i = 0; i < psFile->nSegmentCount; i++ )
+    {
+        if( strcmp(psFile->pasSegmentInfo[i].szSegmentType, "IM") == 0 )
+        {
+            nIM ++;
+            if( psFile->pasSegmentInfo[i].nSegmentHeaderSize == 0 && iIM < 0 )
+            {
+                iIM = i;
+                if( pnIndex )
+                    *pnIndex = i;
+            }
+        }
+    }
+    if( pnImageCount )
+        *pnImageCount = nIM;
+
+    psFile->fp = NULL;
+    NITFClose(psFile);
+
+    if( iIM < 0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Did not find free image segment");
+        CPL_IGNORE_RET_VAL_INT(VSIFCloseL( fp ));
+        return FALSE;
+    }
+    nIM = iIM + 1;
+
+    bOK &= VSIFSeekL(fp, 0, SEEK_END) == 0;
+    nCur = VSIFTellL(fp);
+  }
 
 /* -------------------------------------------------------------------- */
 /*      Prepare the image header.                                       */
 /* -------------------------------------------------------------------- */
-  for(iIM=0;iIM<nIM;iIM++)
+  for(;iIM<nIM;iIM++)
   {
     char** papszIREPBANDTokens = NULL;
     char** papszISUBCATTokens = NULL;
@@ -976,11 +1056,11 @@ int NITFCreate( const char *pszFilename,
     nOffset = 372;
 
     {
-        const char *pszParmValue;
-        pszParmValue = CSLFetchNameValue( papszOptions, "ICORDS" );
-        if( pszParmValue == NULL )
-            pszParmValue = " ";
-        if( *pszParmValue != ' ' )
+        const char *pszParamValue;
+        pszParamValue = CSLFetchNameValue( papszOptions, "ICORDS" );
+        if( pszParamValue == NULL )
+            pszParamValue = " ";
+        if( *pszParamValue != ' ' )
         {
             OVR(60,nCur+nOffset, IGEOLO, ""                            );
             nOffset += 60;
@@ -1010,6 +1090,11 @@ int NITFCreate( const char *pszFilename,
         }
     }
 
+    if( pnICOffset )
+    {
+        if( iIM == 0 || bAppendSubdataset )
+            *pnICOffset = nCur+nOffset+1;
+    }
     OVR( 2,nCur+nOffset+1, IC     , "NC"                           );
 
     if( pszIC[0] != 'N' )
@@ -1142,9 +1227,10 @@ int NITFCreate( const char *pszFilename,
     PLACE(nCur+nOffset+ 10, NPPBH , CPLSPrintf("%04d",nNPPBH)      );
     PLACE(nCur+nOffset+ 14, NPPBV , CPLSPrintf("%04d",nNPPBV)      );
     PLACE(nCur+nOffset+ 18, NBPP  , CPLSPrintf("%02d",nBitsPerSample) );
-    PLACE(nCur+nOffset+ 20, IDLVL , "001"                          );
-    PLACE(nCur+nOffset+ 23, IALVL , "000"                          );
-    PLACE(nCur+nOffset+ 26, ILOC  , "0000000000"                   );
+    PLACE(nCur+nOffset+ 20, IDLVL , CPLSPrintf("%03d", atoi(CSLFetchNameValueDef(papszOptions, "IDLVL", "1"))) );
+    PLACE(nCur+nOffset+ 23, IALVL , CPLSPrintf("%03d", atoi(CSLFetchNameValueDef(papszOptions, "IALVL", "0"))) );
+    PLACE(nCur+nOffset+ 26, ILOCROW, CPLSPrintf("%05d", atoi(CSLFetchNameValueDef(papszOptions, "ILOCROW", "0"))) );
+    PLACE(nCur+nOffset+ 31, ILOCCOL, CPLSPrintf("%05d", atoi(CSLFetchNameValueDef(papszOptions, "ILOCCOL", "0"))) );
     PLACE(nCur+nOffset+ 36, IMAG  , "1.0 "                         );
     PLACE(nCur+nOffset+ 40, UDIDL , "00000"                        );
     PLACE(nCur+nOffset+ 45, IXSHDL, "00000"                        );
@@ -1186,8 +1272,21 @@ int NITFCreate( const char *pszFilename,
     }
 
     PLACE( 363 + iIM * 16, LISH1, CPLSPrintf("%06d",nIHSize)      );
+    if( EQUAL(pszIC,"NC") )
+    {
+        PLACE( 369 + iIM * 16, LIi, CPLSPrintf("%010" CPL_FRMT_GB_WITHOUT_PREFIX "u",nImageSize) );
+    }
 
-    nCur += nIHSize + nImageSize;
+    nCur += nIHSize;
+    if( pnImageOffset )
+    {
+        if( iIM == 0 || bAppendSubdataset )
+            *pnImageOffset = nCur;
+    }
+    nCur += nImageSize;
+
+    if( !bWriteAllImages )
+        break;
   }
 
     /* -------------------------------------------------------------------- */
@@ -1200,19 +1299,20 @@ int NITFCreate( const char *pszFilename,
         bOK &= VSIFWriteL( &cNul, 1, 1, fp ) == 1;
     }
 
-    if(nDES > 0)
-    {
-        bOK &= NITFWriteDESsFromOptions(fp, nOffsetLDSH, papszOptions);
-        bOK &= VSIFSeekL(fp, 0, SEEK_END);
-        nCur = VSIFTellL(fp);
-    }
-
 /* -------------------------------------------------------------------- */
 /*      Compute and update CLEVEL ("complexity" level).                 */
 /*      See: http://164.214.2.51/ntb/baseline/docs/2500b/2500b_not2.pdf */
 /*            page 96u                                                  */
 /* -------------------------------------------------------------------- */
     nCLevel = 3;
+    if( bAppendSubdataset )
+    {
+        // Get existing CLEVEL
+        bOK &= VSIFSeekL( fp, 9, SEEK_SET ) == 0;
+        char szCLEVEL[3] = { 0 };
+        bOK &= VSIFReadL( szCLEVEL, 1, 2, fp ) != 0;
+        nCLevel = atoi(szCLEVEL);
+    }
     if (nBands > 9 || nIM > 20 || nPixels > 2048 || nLines > 2048 ||
         nNPPBH > 2048 || nNPPBV > 2048 || nCur > 52428799 )
     {
@@ -1236,7 +1336,7 @@ int NITFCreate( const char *pszFilename,
 
     /* According to the spec, CLEVEL 7 supports up to 10,737,418,330 bytes */
     /* but we can support technically much more */
-    if (EQUAL(pszIC, "NC") && GUINTBIG_TO_DOUBLE(nCur) >= 1e12 - 1)
+    if (EQUAL(pszIC, "NC") && nCur >= 999999999999ULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Too big file : " CPL_FRMT_GUIB, nCur);
@@ -1406,132 +1506,6 @@ static int NITFWriteTREsFromOptions(
         CPLFree( pszTREName );
         CPLFree( pszUnescapedContents );
 
-    }
-
-    return TRUE;
-}
-
-/************************************************************************/
-/*                            NITFWriteDES()                            */
-/************************************************************************/
-
-static int NITFWriteDES( VSILFILE* fp, vsi_l_offset nOffsetLDSH,
-                         int  iDES, const char *pszDESName,
-                         const GByte* pabyDESData, int nArrayLen)
-{
-    int bOK = TRUE;
-    int nTotalLen = nArrayLen + 27;  // DE(2) + DESID(25) + other data
-    int nSubHeadLen, nDataLen;
-    char pszTemp[5];
-
-    if (nTotalLen < 200)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "DES does not contain enough data");
-        return FALSE;
-    }
-
-    if (strcmp(pszDESName, "TRE_OVERFLOW") == 0)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "TRE_OVERFLOW DES not supported");
-        return FALSE;
-    }
-
-    memcpy(pszTemp, pabyDESData + 169, 4);
-    pszTemp[4] = '\0';
-    nSubHeadLen = atoi(pszTemp) + 200;
-    nDataLen = nTotalLen - nSubHeadLen;     // Length of DESDATA field only
-
-    if (nSubHeadLen > 9998 || nDataLen > 999999998)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "DES is too big to be written");
-        return FALSE;
-    }
-
-    bOK &= VSIFSeekL(fp, 0, SEEK_END) == 0;
-    bOK &= VSIFWriteL("DE", 1, 2, fp) == 2;
-    bOK &= VSIFWriteL(CPLSPrintf("%-25s", pszDESName), 1, 25, fp) == 25;
-    bOK &= (int)VSIFWriteL(pabyDESData, 1, nArrayLen, fp) == nArrayLen;
-
-    // Update LDSH and LD in the NITF Header
-    bOK &= VSIFSeekL(fp, nOffsetLDSH + iDES * 13, SEEK_SET) == 0;
-    bOK &= VSIFWriteL(CPLSPrintf("%04d", nSubHeadLen), 1, 4, fp) == 4;
-    bOK &= VSIFWriteL(CPLSPrintf("%09d", nDataLen), 1, 9, fp) == 9;
-
-    return bOK;
-}
-
-/************************************************************************/
-/*                          NITFWriteDESsFromOptions()                  */
-/************************************************************************/
-
-static int NITFWriteDESsFromOptions(
-    VSILFILE* fp,
-    vsi_l_offset nOffsetLDSH,
-    char **papszOptions)
-{
-    int iOption;
-    int iDES = 0;
-
-    if( papszOptions == NULL )
-    {
-        return TRUE;
-    }
-
-    for( iOption = 0; papszOptions[iOption] != NULL; iOption++ )
-    {
-        const char *pszEscapedContents;
-        GByte *pabyUnescapedContents;
-        char *pszDESName;
-        int  nContentLength;
-        const char* pszDelim;
-        size_t nNameLength;
-
-        if(!EQUALN(papszOptions[iOption], "DES=", 4))
-        {
-            continue;
-        }
-
-        /* We don't use CPLParseNameValue() as it removes leading spaces */
-        /* from the value (see #3088) */
-        pszDelim = strchr(papszOptions[iOption] + 4, '=');
-        if (pszDelim == NULL)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Could not parse creation options %s", papszOptions[iOption] + 4);
-            return FALSE;
-        }
-
-        nNameLength =  strlen(papszOptions[iOption] + 4) - strlen(pszDelim);
-        if (nNameLength > 25)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                "Specified DESID is too long %s", papszOptions[iOption] + 4);
-            return FALSE;
-        }
-
-        pszDESName = (char *)CPLMalloc(nNameLength+1);
-        memcpy(pszDESName, papszOptions[iOption] + 4, nNameLength);
-        pszDESName[nNameLength] = '\0';
-
-        pszEscapedContents = pszDelim + 1;
-
-        pabyUnescapedContents =
-            (GByte*)CPLUnescapeString( pszEscapedContents, &nContentLength,
-                                       CPLES_BackslashQuotable );
-
-        if(!NITFWriteDES(fp, nOffsetLDSH, iDES, pszDESName,
-                         pabyUnescapedContents, nContentLength))
-        {
-            CPLFree( pszDESName );
-            CPLFree( pabyUnescapedContents );
-            CPLError(CE_Failure, CPLE_AppDefined, "Could not write DES %d", iDES);
-            return FALSE;
-        }
-
-        CPLFree( pszDESName );
-        CPLFree( pabyUnescapedContents );
-
-        iDES++;
     }
 
     return TRUE;
@@ -2843,12 +2817,23 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                 char* pszCondVar = (char*)CPLMalloc(pszOperator - pszCond + 1);
                 const char* pszCondExpectedVal = pszOperator + 1;
                 const char* pszCondVal;
-                int bTestEqual = TRUE;
+                int bTestEqual = FALSE;
+                int bTestNotEqual = FALSE;
+                int bTestGreaterOrEqual = FALSE;
                 memcpy(pszCondVar, pszCond, pszOperator - pszCond);
                 if (pszOperator - pszCond > 1 && pszCondVar[pszOperator - pszCond - 1] == '!')
                 {
-                    bTestEqual = FALSE;
+                    bTestNotEqual = TRUE;
                     pszCondVar[pszOperator - pszCond - 1] = '\0';
+                }
+                else if (pszOperator - pszCond > 1 && pszCondVar[pszOperator - pszCond - 1] == '>')
+                {
+                    bTestGreaterOrEqual = TRUE;
+                    pszCondVar[pszOperator - pszCond - 1] = '\0';
+                }
+                else
+                {
+                    bTestEqual = TRUE;
                 }
                 pszCondVar[pszOperator - pszCond] = '\0';
                 pszCondVal = NITFFindValRecursive(papszMD, *pnMDSize, pszMDPrefix, pszCondVar);
@@ -2858,7 +2843,8 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                             pszCondVar);
                 }
                 else if ((bTestEqual && strcmp(pszCondVal, pszCondExpectedVal) == 0) ||
-                         (!bTestEqual && strcmp(pszCondVal, pszCondExpectedVal) != 0))
+                         (bTestNotEqual && strcmp(pszCondVal, pszCondExpectedVal) != 0) ||
+                         (bTestGreaterOrEqual && strcmp(pszCondVal, pszCondExpectedVal) >= 0))
                 {
                     papszMD = NITFGenericMetadataReadTREInternal(papszMD,
                                                                  pnMDSize,
@@ -3041,10 +3027,10 @@ static CPLXMLNode* NITFFindTREXMLDescFromName(NITFFile* psFile,
     if (psTreeNode == NULL)
         return NULL;
 
-    psTresNode = CPLGetXMLNode(psTreeNode, "=tres");
+    psTresNode = CPLGetXMLNode(psTreeNode, "=root.tres");
     if (psTresNode == NULL)
     {
-        CPLDebug("NITF", "Cannot find <tres> root element");
+        CPLDebug("NITF", "Cannot find <root><tres> root element");
         return NULL;
     }
 
@@ -3136,6 +3122,102 @@ CPLXMLNode* NITFCreateXMLTre(NITFFile* psFile,
 }
 
 /************************************************************************/
+/*                      NITFFindTREXMLDescFromName()                    */
+/************************************************************************/
+
+static CPLXMLNode* NITFFindDESXMLDescFromName(NITFFile* psFile,
+                                              const char* pszDESName)
+{
+    CPLXMLNode* psTreeNode;
+    CPLXMLNode* psTresNode;
+    CPLXMLNode* psIter;
+
+    psTreeNode = NITFLoadXMLSpec(psFile);
+    if (psTreeNode == NULL)
+        return NULL;
+
+    psTresNode = CPLGetXMLNode(psTreeNode, "=root.des_list");
+    if (psTresNode == NULL)
+    {
+        CPLDebug("NITF", "Cannot find <root><des_list> root element");
+        return NULL;
+    }
+
+    for(psIter = psTresNode->psChild;psIter != NULL;psIter = psIter->psNext)
+    {
+        if (psIter->eType == CXT_Element &&
+            psIter->pszValue != NULL &&
+            strcmp(psIter->pszValue, "des") == 0)
+        {
+            const char* pszName = CPLGetXMLValue(psIter, "name", NULL);
+            if (pszName != NULL && strcmp(pszName, pszDESName) == 0)
+            {
+                return psIter;
+            }
+        }
+    }
+
+    return NULL;
+}
+
+/************************************************************************/
+/*                 NITFCreateXMLDesUserDefinedSubHeader()               */
+/************************************************************************/
+
+CPLXMLNode* NITFCreateXMLDesUserDefinedSubHeader(NITFFile* psFile,
+                                                const NITFDES* psDES)
+{
+    const char* pszDESID = CSLFetchNameValue(psDES->papszMetadata, "DESID");
+    CPLXMLNode* psDESDef = NITFFindDESXMLDescFromName(psFile, pszDESID);
+    if( psDESDef == NULL )
+    {
+        CPLDebug("NITF", "Cannot find definition of DES %s in %s",
+                 pszDESID, NITF_SPEC_FILE);
+        return NULL;
+    }
+    CPLXMLNode* psUserDefinedFields = CPLGetXMLNode(psDESDef, "subheader_fields");
+    if( psUserDefinedFields == NULL )
+    {
+        return NULL;
+    }
+
+    CPLXMLNode* psOutXMLNode = CPLCreateXMLNode(NULL, CXT_Element, "user_defined_fields");
+
+    int bError = FALSE;
+    int nOffset = 200;
+    char** papszMD = NULL;
+    for( char** papszIter = psDES->papszMetadata; papszIter && *papszIter; ++papszIter )
+    {
+        char* pszKey = NULL;
+        const char* pszValue = CPLParseNameValue(*papszIter, &pszKey);
+        if( pszKey && pszValue )
+        {
+            papszMD = CSLSetNameValue(papszMD, pszKey, pszValue);
+        }
+        CPLFree(pszKey);
+    }
+    int nMDSize = CSLCount(papszMD);
+    int nMDAlloc = nMDSize;
+    const int nDESSize = psFile->pasSegmentInfo[psDES->iSegment].nSegmentHeaderSize;
+    CSLDestroy(NITFGenericMetadataReadTREInternal(papszMD,
+                                                  &nMDSize,
+                                                  &nMDAlloc,
+                                                  psOutXMLNode,
+                                                  pszDESID,
+                                                  psDES->pachHeader,
+                                                  nDESSize,
+                                                  psUserDefinedFields,
+                                                  &nOffset,
+                                                  "", /* pszMDPrefix, */
+                                                  &bError));
+    if (nOffset < atoi(CSLFetchNameValueDef(psDES->papszMetadata, "DESSHL", "0")))
+        CPLDebug("NITF", "%d remaining bytes at end of %s DES user defined subheader fields",
+                 nDESSize -nOffset, pszDESID);
+
+    return psOutXMLNode;
+}
+
+/************************************************************************/
 /*                        NITFGenericMetadataRead()                     */
 /*                                                                      */
 /* Add metadata from TREs of file and image objects in the papszMD list */
@@ -3165,10 +3247,10 @@ char **NITFGenericMetadataRead( char **papszMD,
     if (psTreeNode == NULL)
         return papszMD;
 
-    psTresNode = CPLGetXMLNode(psTreeNode, "=tres");
+    psTresNode = CPLGetXMLNode(psTreeNode, "=root.tres");
     if (psTresNode == NULL)
     {
-        CPLDebug("NITF", "Cannot find <tres> root element");
+        CPLDebug("NITF", "Cannot find <root><tres> root element");
         return papszMD;
     }
 

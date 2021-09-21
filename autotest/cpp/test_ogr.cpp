@@ -650,7 +650,7 @@ namespace tut
 
         ensure_equals( GetVarSIntSize(0), 1 );
         ensure_equals( GetVarSIntSize(63), 1 );
-        ensure_equals( GetVarSIntSize(64), 2 ); 
+        ensure_equals( GetVarSIntSize(64), 2 );
         ensure_equals( GetVarSIntSize(-1), 1 );
         ensure_equals( GetVarSIntSize(-64), 1 );
         ensure_equals( GetVarSIntSize(-65), 2 );
@@ -821,6 +821,223 @@ namespace tut
             OGRGeometry* poGeom = &o;
             ensure_equals( poGeom->toSurface(), &o );
         }
+
+        {
+            OGRPoint o;
+            // ensure_equals(o.toPoint(), &o);
+        }
+
+        {
+            OGRLineString o;
+            ensure_equals(o.toCurve(), &o);
+            ensure_equals(o.toSimpleCurve(), &o);
+            // ensure_equals(o.toLineString(), &o);
+
+            {
+                OGRCurve& oRef = o;
+                ensure_equals(oRef.toLineString(), &o);
+            }
+
+            {
+                OGRSimpleCurve& oRef = o;
+                ensure_equals(oRef.toLineString(), &o);
+            }
+        }
+
+        {
+            OGRLinearRing o;
+            ensure_equals(o.toCurve(), &o);
+            ensure_equals(o.toSimpleCurve(), &o);
+            // ensure_equals(o.toLinearRing(), &o);
+
+            {
+                OGRCurve& oRef = o;
+                ensure_equals(oRef.toLinearRing(), &o);
+            }
+            {
+                OGRSimpleCurve& oRef = o;
+                ensure_equals(oRef.toLinearRing(), &o);
+            }
+            {
+                OGRLineString& oRef = o;
+                ensure_equals(oRef.toLinearRing(), &o);
+            }
+        }
+
+        {
+            OGRCircularString o;
+            ensure_equals(o.toCurve(), &o);
+            ensure_equals(o.toSimpleCurve(), &o);
+            // ensure_equals(o.toCircularString(), &o);
+
+            {
+                OGRCurve& oRef = o;
+                ensure_equals(oRef.toCircularString(), &o);
+            }
+
+            {
+                OGRSimpleCurve& oRef = o;
+                ensure_equals(oRef.toCircularString(), &o);
+            }
+        }
+
+        {
+            OGRCompoundCurve o;
+            ensure_equals(o.toCurve(), &o);
+            // ensure_equals(o.toCompoundCurve(), &o);
+
+            {
+                OGRCurve& oRef = o;
+                ensure_equals(oRef.toCompoundCurve(), &o);
+            }
+        }
+
+        {
+            OGRCurvePolygon o;
+            ensure_equals(o.toSurface(), &o);
+            // ensure_equals(o.toCurvePolygon(), &o);
+
+            {
+                OGRSurface& oRef = o;
+                ensure_equals(oRef.toCurvePolygon(), &o);
+            }
+        }
+
+        {
+            OGRPolygon o;
+            ensure_equals(o.toSurface(), &o);
+            ensure_equals(o.toCurvePolygon(), &o);
+            // ensure_equals(o.toPolygon(), &o);
+
+            {
+                OGRSurface& oRef = o;
+                ensure_equals(oRef.toPolygon(), &o);
+            }
+
+            {
+                OGRCurvePolygon& oRef = o;
+                ensure_equals(oRef.toPolygon(), &o);
+            }
+        }
+
+        {
+            OGRTriangle o;
+            ensure_equals(o.toSurface(), &o);
+            ensure_equals(o.toCurvePolygon(), &o);
+            ensure_equals(o.toPolygon(), &o);
+            // ensure_equals(o.toTriangle(), &o);
+
+            {
+                OGRSurface& oRef = o;
+                ensure_equals(oRef.toTriangle(), &o);
+            }
+
+            {
+                OGRCurvePolygon& oRef = o;
+                ensure_equals(oRef.toTriangle(), &o);
+            }
+
+            {
+                OGRPolygon& oRef = o;
+                ensure_equals(oRef.toTriangle(), &o);
+            }
+        }
+
+        {
+            OGRMultiPoint o;
+            ensure_equals(o.toGeometryCollection(), &o);
+            // ensure_equals(o.toMultiPoint(), &o);
+
+            {
+                OGRGeometryCollection& oRef = o;
+                ensure_equals(oRef.toMultiPoint(), &o);
+            }
+        }
+
+        {
+            OGRMultiCurve o;
+            ensure_equals(o.toGeometryCollection(), &o);
+            // ensure_equals(o.toMultiCurve(), &o);
+
+            {
+                OGRGeometryCollection& oRef = o;
+                ensure_equals(oRef.toMultiCurve(), &o);
+            }
+        }
+
+        {
+            OGRMultiLineString o;
+            ensure_equals(o.toGeometryCollection(), &o);
+            ensure_equals(o.toMultiCurve(), &o);
+            // ensure_equals(o.toMultiLineString(), &o);
+
+            {
+                OGRMultiCurve& oRef = o;
+                ensure_equals(oRef.toMultiLineString(), &o);
+            }
+
+            {
+                OGRGeometryCollection& oRef = o;
+                ensure_equals(oRef.toMultiLineString(), &o);
+            }
+        }
+
+        {
+            OGRMultiSurface o;
+            ensure_equals(o.toGeometryCollection(), &o);
+            // ensure_equals(o.toMultiSurface(), &o);
+
+            {
+                OGRGeometryCollection& oRef = o;
+                ensure_equals(oRef.toMultiSurface(), &o);
+            }
+        }
+
+        {
+            OGRMultiPolygon o;
+            ensure_equals(o.toGeometryCollection(), &o);
+            ensure_equals(o.toMultiSurface(), &o);
+            // ensure_equals(o.toMultiPolygon(), &o);
+
+            {
+                OGRMultiSurface& oRef = o;
+                ensure_equals(oRef.toMultiPolygon(), &o);
+            }
+
+            {
+                OGRGeometryCollection& oRef = o;
+                ensure_equals(oRef.toMultiPolygon(), &o);
+            }
+        }
+
+        {
+            OGRPolyhedralSurface o;
+            ensure_equals(o.toSurface(), &o);
+            // ensure_equals(o.toPolyhedralSurface(), &o);
+
+            {
+                OGRSurface& oRef = o;
+                ensure_equals(oRef.toPolyhedralSurface(), &o);
+            }
+        }
+
+        {
+            OGRTriangulatedSurface o;
+            ensure_equals(o.toSurface(), &o);
+            ensure_equals(o.toPolyhedralSurface(), &o);
+            // ensure_equals(o.toTriangulatedSurface(), &o);
+
+            {
+                OGRSurface& oRef = o;
+                ensure_equals(oRef.toTriangulatedSurface(), &o);
+            }
+
+            {
+                OGRPolyhedralSurface& oRef = o;
+                ensure_equals(oRef.toTriangulatedSurface(), &o);
+            }
+        }
+
     }
 
     template<typename T> void TestIterator(T* obj,
@@ -1553,6 +1770,111 @@ namespace tut
         ensure(pszWKT != nullptr);
         ensure_equals(std::string(pszWKT), "POINT (1 2)");
         CPLFree(pszWKT);
+    }
+
+    // Test OGRGeometry::clone()
+    template<>
+    template<>
+    void object::test<18>()
+    {
+        const char* apszWKT[] =
+        {
+            "POINT (0 0)",
+            "POINT ZM EMPTY",
+            "LINESTRING (0 0)",
+            "LINESTRING ZM EMPTY",
+            "POLYGON ((0 0),(0 0))",
+            "MULTIPOLYGON ZM EMPTY",
+            "MULTIPOINT ((0 0))",
+            "MULTIPOINT ZM EMPTY",
+            "MULTILINESTRING ((0 0))",
+            "MULTILINESTRING ZM EMPTY",
+            "MULTIPOLYGON (((0 0)))",
+            "MULTIPOLYGON ZM EMPTY",
+            "GEOMETRYCOLLECTION (POINT (0 0))",
+            "GEOMETRYCOLLECTION ZM EMPTY",
+            "CIRCULARSTRING (0 0,1 1,0 0)",
+            "CIRCULARSTRING Z EMPTY",
+            "CIRCULARSTRING ZM EMPTY",
+            "COMPOUNDCURVE ((0 0,1 1))",
+            "COMPOUNDCURVE ZM EMPTY",
+            "CURVEPOLYGON ((0 0,1 1,1 0,0 0))",
+            "CURVEPOLYGON ZM EMPTY",
+            "MULTICURVE ((0 0))",
+            "MULTICURVE ZM EMPTY",
+            "MULTISURFACE (((0 0)))",
+            "MULTISURFACE ZM EMPTY",
+            "TRIANGLE ((0 0,0 1,1 1,0 0))",
+            "TRIANGLE ZM EMPTY",
+            "POLYHEDRALSURFACE (((0 0,0 1,1 1,0 0)))",
+            "POLYHEDRALSURFACE ZM EMPTY",
+            "TIN (((0 0,0 1,1 1,0 0)))",
+            "TIN ZM EMPTY",
+        };
+        OGRSpatialReference oSRS;
+        for( const char* pszWKT: apszWKT )
+        {
+            OGRGeometry* poGeom = nullptr;
+            OGRGeometryFactory::createFromWkt(pszWKT, &oSRS, &poGeom);
+            auto poClone = poGeom->clone();
+            ensure(poClone != nullptr);
+            char* outWKT = nullptr;
+            poClone->exportToWkt(&outWKT, wkbVariantIso);
+            ensure_equals(std::string(pszWKT), std::string(outWKT));
+            CPLFree(outWKT);
+            delete poClone;
+            delete poGeom;
+        }
+    }
+
+    // Test OGRLineString::removePoint()
+    template<>
+    template<>
+    void object::test<20>()
+    {
+        {
+            OGRLineString ls;
+            ls.addPoint(0,1);
+            ls.addPoint(2,3);
+            ls.addPoint(4,5);
+            ensure( !ls.removePoint(-1) );
+            ensure( !ls.removePoint(3) );
+            ensure_equals( ls.getNumPoints(), 3 );
+            ensure( ls.removePoint(1) );
+            ensure_equals( ls.getNumPoints(), 2 );
+            ensure_equals( ls.getX(0), 0.0 );
+            ensure_equals( ls.getY(0), 1.0 );
+            ensure_equals( ls.getX(1), 4.0 );
+            ensure_equals( ls.getY(1), 5.0 );
+            ensure( ls.removePoint(1) );
+            ensure_equals( ls.getNumPoints(), 1 );
+            ensure( ls.removePoint(0) );
+            ensure_equals( ls.getNumPoints(), 0 );
+        }
+        {
+            // With Z, M
+            OGRLineString ls;
+            ls.addPoint(0,1,20,30);
+            ls.addPoint(2,3,40,50);
+            ls.addPoint(4,5,60,70);
+            ensure( !ls.removePoint(-1) );
+            ensure( !ls.removePoint(3) );
+            ensure_equals( ls.getNumPoints(), 3 );
+            ensure( ls.removePoint(1) );
+            ensure_equals( ls.getNumPoints(), 2 );
+            ensure_equals( ls.getX(0), 0.0 );
+            ensure_equals( ls.getY(0), 1.0 );
+            ensure_equals( ls.getZ(0), 20.0 );
+            ensure_equals( ls.getM(0), 30.0 );
+            ensure_equals( ls.getX(1), 4.0 );
+            ensure_equals( ls.getY(1), 5.0 );
+            ensure_equals( ls.getZ(1), 60.0 );
+            ensure_equals( ls.getM(1), 70.0 );
+            ensure( ls.removePoint(1) );
+            ensure_equals( ls.getNumPoints(), 1 );
+            ensure( ls.removePoint(0) );
+            ensure_equals( ls.getNumPoints(), 0 );
+        }
     }
 
 } // namespace tut

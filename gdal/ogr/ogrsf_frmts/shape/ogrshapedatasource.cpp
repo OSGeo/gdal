@@ -107,8 +107,7 @@ OGRShapeDataSource::OGRShapeDataSource() :
     bDSUpdate(false),
     bSingleFileDataSource(false),
     poPool(new OGRLayerPool()),
-    b2GBLimit(CPLTestBool(CPLGetConfigOption("SHAPE_2GB_LIMIT", "FALSE"))),
-    papszOpenOptions(nullptr)
+    b2GBLimit(CPLTestBool(CPLGetConfigOption("SHAPE_2GB_LIMIT", "FALSE")))
 {}
 
 /************************************************************************/
@@ -149,8 +148,6 @@ OGRShapeDataSource::~OGRShapeDataSource()
     papoLayers = nullptr;
 
     delete poPool;
-
-    CSLDestroy( papszOpenOptions );
 
     RecompressIfNeeded(layerNames);
     RemoveLockFile();
@@ -232,6 +229,7 @@ bool OGRShapeDataSource::Open( GDALOpenInfo* poOpenInfo,
 
     const char * pszNewName = poOpenInfo->pszFilename;
     const bool bUpdate = poOpenInfo->eAccess == GA_Update;
+    CPLAssert( papszOpenOptions == nullptr );
     papszOpenOptions = CSLDuplicate( poOpenInfo->papszOpenOptions );
 
     pszName = CPLStrdup( pszNewName );
@@ -1439,7 +1437,7 @@ void OGRShapeDataSource::RefreshLockFile(void* _self)
             VSIFSeekL(self->m_psLockFile, 0, SEEK_SET);
             CPLString osTime;
             nInc++;
-            osTime.Printf(CPL_FRMT_GUIB ", %u\n", 
+            osTime.Printf(CPL_FRMT_GUIB ", %u\n",
                           static_cast<GUIntBig>(time(nullptr)),
                           nInc);
             VSIFWriteL(osTime.data(), 1, osTime.size(), self->m_psLockFile);

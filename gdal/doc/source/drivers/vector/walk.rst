@@ -7,6 +7,9 @@ Walk - Walk Spatial Data
 
 .. build_dependencies:: ODBC library
 
+.. deprecated_driver:: version_targeted_for_removal: 3.5
+   env_variable: GDAL_ENABLE_DEPRECATED_DRIVER_WALK
+
 OGR optionally supports reading Walk spatial data via ODBC. Walk spatial
 data is a Microsoft Access database developed by Walkinfo Technologies
 mainly for land surveying, evaluation, planning, checking and data

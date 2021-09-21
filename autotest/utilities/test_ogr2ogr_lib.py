@@ -29,7 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from osgeo import gdal, gdalconst, ogr
+from osgeo import gdal, gdalconst, ogr, osr
 import gdaltest
 import ogrtest
 import pytest
@@ -616,3 +616,140 @@ def test_ogr2ogr_emptyStrAsNull():
     f = lyr.GetNextFeature()
 
     assert f['foo'] is None, 'expected empty string to be transformed to null'
+
+
+###############################################################################
+# Verify propagation of field domains
+
+
+def test_ogr2ogr_fielddomain_():
+
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
+    src_lyr = src_ds.CreateLayer('layer')
+
+    src_fld_defn = ogr.FieldDefn('foo')
+    src_fld_defn.SetDomainName('my_domain')
+    src_lyr.CreateField(src_fld_defn)
+    assert src_ds.AddFieldDomain(ogr.CreateGlobFieldDomain('my_domain', 'desc', ogr.OFTString, ogr.OFSTNone, '*'))
+
+    src_fld_defn = ogr.FieldDefn('bar', ogr.OFTInteger)
+    src_fld_defn.SetDomainName('coded_domain')
+    src_lyr.CreateField(src_fld_defn)
+    assert src_ds.AddFieldDomain(ogr.CreateCodedFieldDomain(
+        'coded_domain', 'desc', ogr.OFTString, ogr.OFSTNone, {1: "one", 2: "two", 3: None}))
+
+    src_fld_defn = ogr.FieldDefn('baz', ogr.OFTInteger)
+    src_fld_defn.SetDomainName('non_existant_coded_domain')
+    src_lyr.CreateField(src_fld_defn)
+
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetField('foo', 'foo_content')
+    f.SetField('bar', 2)
+    f.SetField('baz', 0)
+    src_lyr.CreateFeature(f)
+
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetField('bar', -1) # does not exist in dictionary
+    src_lyr.CreateFeature(f)
+
+    ds = gdal.VectorTranslate('', src_ds, format='Memory')
+    lyr = ds.GetLayer(0)
+    fld_defn = lyr.GetLayerDefn().GetFieldDefn(0)
+    assert fld_defn.GetDomainName() == 'my_domain'
+    domain = ds.GetFieldDomain('my_domain')
+    assert domain is not None
+    assert domain.GetDomainType() == ogr.OFDT_GLOB
+
+    # Test -resolveDomains
+    ds = gdal.VectorTranslate('', src_ds, format='Memory', resolveDomains=True)
+    lyr = ds.GetLayer(0)
+    lyr_defn = lyr.GetLayerDefn()
+    assert lyr_defn.GetFieldCount() == 4
+
+    fld_defn = lyr_defn.GetFieldDefn(0)
+    assert fld_defn.GetDomainName() == 'my_domain'
+    domain = ds.GetFieldDomain('my_domain')
+    assert domain is not None
+    assert domain.GetDomainType() == ogr.OFDT_GLOB
+
+    fld_defn = lyr_defn.GetFieldDefn(1)
+    assert fld_defn.GetName() == 'bar'
+    assert fld_defn.GetType() == ogr.OFTInteger
+
+    fld_defn = lyr_defn.GetFieldDefn(2)
+    assert fld_defn.GetName() == 'bar_resolved'
+    assert fld_defn.GetType() == ogr.OFTString
+
+    fld_defn = lyr_defn.GetFieldDefn(3)
+    assert fld_defn.GetName() == 'baz'
+    assert fld_defn.GetType() == ogr.OFTInteger
+
+    f = lyr.GetNextFeature()
+    assert f['foo'] == 'foo_content'
+    assert f['bar'] == 2
+    assert f['bar_resolved'] == 'two'
+    assert f['baz'] == 0
+
+    f = lyr.GetNextFeature()
+    assert f['bar'] == -1
+    assert not f.IsFieldSet('bar_resolved')
+
+###############################################################################
+# Test -a_coord_epoch
+
+
+def test_ogr2ogr_assign_coord_epoch():
+
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
+    src_ds.CreateLayer('layer')
+
+    ds = gdal.VectorTranslate('', src_ds, options = '-f Memory -a_srs EPSG:7665 -a_coord_epoch 2021.3')
+    lyr = ds.GetLayer(0)
+    srs = lyr.GetSpatialRef()
+    assert srs.GetCoordinateEpoch() == 2021.3
+
+###############################################################################
+# Test -s_coord_epoch
+
+
+def test_ogr2ogr_s_coord_epoch():
+
+    if osr.GetPROJVersionMajor() * 100 + osr.GetPROJVersionMinor() < 702:
+        pytest.skip('requires PROJ 7.2 or later')
+
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
+    src_lyr = src_ds.CreateLayer('layer')
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(120 -40)'))
+    src_lyr.CreateFeature(f)
+
+    # ITRF2014 to GDA2020
+    ds = gdal.VectorTranslate('', src_ds, options = '-f Memory -s_srs EPSG:9000 -s_coord_epoch 2030 -t_srs EPSG:7844')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    g = f.GetGeometryRef()
+    assert g.GetX(0) != 120 and abs(g.GetX(0) - 120) < 1e-5
+    assert g.GetY(0) != -40 and abs(g.GetY(0) - -40) < 1e-5
+
+###############################################################################
+# Test -t_coord_epoch
+
+
+def test_ogr2ogr_t_coord_epoch():
+
+    if osr.GetPROJVersionMajor() * 100 + osr.GetPROJVersionMinor() < 702:
+        pytest.skip('requires PROJ 7.2 or later')
+
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
+    src_lyr = src_ds.CreateLayer('layer')
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(120 -40)'))
+    src_lyr.CreateFeature(f)
+
+    # GDA2020 to ITRF2014
+    ds = gdal.VectorTranslate('', src_ds, options = '-f Memory -t_srs EPSG:9000 -t_coord_epoch 2030 -s_srs EPSG:7844')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    g = f.GetGeometryRef()
+    assert g.GetX(0) != 120 and abs(g.GetX(0) - 120) < 1e-5
+    assert g.GetY(0) != -40 and abs(g.GetY(0) - -40) < 1e-5

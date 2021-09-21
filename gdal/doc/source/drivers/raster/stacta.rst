@@ -11,7 +11,7 @@ STACTA - Spatio-Temporal Asset Catalog Tiled Assets
 .. built_in_by_default::
 
 This driver supports opening JSON files following the
-`Spatio-Temporal Asset Catalog Tiled Assets <https://github.com/radiantearth/stac-spec/tree/master/extensions/tiled-assets>`_
+`Spatio-Temporal Asset Catalog Tiled Assets <https://github.com/stac-extensions/tiled-assets>`_
 specification. Such JSON file references tiles (also called metatiles), split
 from a potentially big dataset according to a tiling scheme, with several zoom
 levels. The driver provides a single raster view, with overviews, of the dataset
@@ -29,6 +29,8 @@ STACTA datasets/subdatasets can be accessed with one of the following syntaxes:
 * ``STACTA:"filename.json":my_asset``: specify an asset of a local/remote file
 
 * ``STACTA:"filename.json":my_asset:my_tms``: specify an asset and tiling scheme of a local/remote file
+
+The root of the JSON file must be of type ``Feature``.
 
 Open options
 ------------
@@ -56,3 +58,8 @@ Driver capabilities
 -------------------
 
 .. supports_virtualio::
+
+See Also
+--------
+
+-  :ref:`raster.stacit` documentation page.

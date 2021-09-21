@@ -40,6 +40,7 @@
 #include "gdal_utils.h"
 #include "gdalwarper.h"
 #include "mvtutils.h"
+#include "ogrsqlitevfs.h"
 
 #include "zlib.h"
 #include "ogrgeojsonreader.h"
@@ -502,7 +503,13 @@ char* MBTilesDataset::FindKey(int iPixel, int iLine)
 
     z_stream sStream;
     memset(&sStream, 0, sizeof(sStream));
-    inflateInit(&sStream);
+    if( inflateInit(&sStream) != Z_OK )
+    {
+        OGR_F_Destroy(hFeat);
+        OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+        CPLFree(pabyUncompressed);
+        return nullptr;
+    }
     sStream.next_in   = pabyData;
     sStream.avail_in  = nDataSize;
     sStream.next_out  = pabyUncompressed;
@@ -1906,8 +1913,8 @@ void MBTilesDataset::InitVector(double dfMinX, double dfMinY,
         {
             auto pszJson = OGR_F_GetFieldAsString(hFeat, 0);
             oDoc.GetRoot().Add( "json", pszJson );
-            oJsonDoc.LoadMemory(
-                    reinterpret_cast<const GByte*>(pszJson));
+            CPL_IGNORE_RET_VAL(oJsonDoc.LoadMemory(
+                    reinterpret_cast<const GByte*>(pszJson)));
             OGR_F_Destroy(hFeat);
         }
         OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
@@ -2443,6 +2450,7 @@ int MBTilesGetBandCountAndTileSize(
         VSICurlUninstallReadCbk(fpCURLOGR);
 
         /* Did the spy intercept something interesting ? */
+        // cppcheck-suppress knownConditionTrueFalse
         if (nBands != -1)
         {
             CPLErrorReset();

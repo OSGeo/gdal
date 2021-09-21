@@ -138,6 +138,7 @@ def test_cog_creation_options():
     ds = gdal.Open(filename)
     assert ds.GetRasterBand(1).Checksum() == 4672
     assert ds.GetMetadataItem('COMPRESSION', 'IMAGE_STRUCTURE') == 'DEFLATE'
+    assert ds.GetMetadataItem('PREDICTOR', 'IMAGE_STRUCTURE') is None
     ds = None
     filesize = gdal.VSIStatL(filename).size
     _check_cog(filename)
@@ -153,6 +154,9 @@ def test_cog_creation_options():
                                                            'PREDICTOR=YES',
                                                            'LEVEL=1'])
     assert gdal.VSIStatL(filename).size != filesize
+    ds = gdal.Open(filename)
+    assert ds.GetMetadataItem('PREDICTOR', 'IMAGE_STRUCTURE') == '2'
+    ds = None
 
     gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
                                                 options = ['COMPRESS=DEFLATE',
@@ -166,6 +170,14 @@ def test_cog_creation_options():
                                                     options = ['COMPRESS=ZSTD'])
         ds = gdal.Open(filename)
         assert ds.GetMetadataItem('COMPRESSION', 'IMAGE_STRUCTURE') == 'ZSTD'
+        ds = None
+
+    if '<Value>LZMA' in colist:
+
+        gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+                                                    options = ['COMPRESS=LZMA'])
+        ds = gdal.Open(filename)
+        assert ds.GetMetadataItem('COMPRESSION', 'IMAGE_STRUCTURE') == 'LZMA'
         ds = None
 
     if '<Value>WEBP' in colist:
@@ -253,6 +265,37 @@ def test_cog_creation_of_overviews():
     assert ds.GetRasterBand(1).GetOverview(1).Checksum() == cs2
     ds = None
     _check_cog(filename)
+
+    src_ds = None
+    gdal.GetDriverByName('GTiff').Delete(filename)
+    gdal.Unlink(directory)
+
+###############################################################################
+# Test creation of overviews with a different compression method
+
+def test_cog_creation_of_overviews_with_compression():
+    directory = '/vsimem/test_cog_creation_of_overviews_with_compression'
+    filename = directory + '/cog.tif'
+    src_ds = gdal.Translate('', 'data/byte.tif',
+                            options='-of MEM -outsize 2048 300')
+
+    ds = gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+                                            options = ['COMPRESS=LZW', 'OVERVIEW_COMPRESS=JPEG', 'OVERVIEW_QUALITY=50'])
+
+    assert ds.GetRasterBand(1).GetOverviewCount() == 2
+    assert ds.GetMetadata('IMAGE_STRUCTURE')['COMPRESSION'] == 'LZW'
+
+    ds_overview_a = gdal.Open('GTIFF_DIR:2:' + filename)
+    assert ds_overview_a.GetMetadata('IMAGE_STRUCTURE')['COMPRESSION'] == 'JPEG'
+    assert ds_overview_a.GetMetadata('IMAGE_STRUCTURE')['JPEG_QUALITY'] == '50'
+
+    ds_overview_b = gdal.Open('GTIFF_DIR:3:' + filename)
+    assert ds_overview_b.GetMetadata('IMAGE_STRUCTURE')['COMPRESSION'] == 'JPEG'
+    assert ds_overview_a.GetMetadata('IMAGE_STRUCTURE')['JPEG_QUALITY'] == '50'
+
+    ds_overview_a = None
+    ds_overview_b = None
+    ds = None
 
     src_ds = None
     gdal.GetDriverByName('GTiff').Delete(filename)
@@ -351,10 +394,7 @@ def test_cog_small_world_to_web_mercator():
         if gt[i] != pytest.approx(expected_gt[i], abs=1e-10 * abs(expected_gt[i])):
             assert False, gt
     got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(3)]
-    if sys.platform == 'darwin' and gdal.GetConfigOption('TRAVIS', None) is not None:
-        assert got_cs != [0, 0, 0]
-    else:
-        assert got_cs == [26293, 23439, 14955]
+    assert got_cs == [26293, 23439, 14955] or got_cs == [26228, 22085, 12992]
     assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 17849
     assert ds.GetRasterBand(1).GetOverviewCount() == 0
     ds = None

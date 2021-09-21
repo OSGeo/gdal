@@ -123,12 +123,9 @@ OGRFeatureDefn * OGRAmigoCloudTableLayer::GetLayerDefnInternal(CPL_UNUSED json_o
         return poFeatureDefn;
     }
 
-    if( poFeatureDefn == nullptr )
-    {
-        osBaseSQL.Printf("SELECT * FROM %s", OGRAMIGOCLOUDEscapeIdentifier(osTableName).c_str());
-        EstablishLayerDefn(osTableName, nullptr);
-        osBaseSQL = "";
-    }
+    osBaseSQL.Printf("SELECT * FROM %s", OGRAMIGOCLOUDEscapeIdentifier(osTableName).c_str());
+    EstablishLayerDefn(osTableName, nullptr);
+    osBaseSQL = "";
 
     if( !osFIDColName.empty() )
     {
@@ -774,25 +771,30 @@ OGRFeature* OGRAmigoCloudTableLayer::GetFeature( GIntBig nFeatureId )
     if( osFIDColName.empty() )
         return OGRAmigoCloudLayer::GetFeature(nFeatureId);
 
-    CPLString osSQL = osSELECTWithoutWHERE;
-    osSQL += " WHERE ";
-    osSQL += OGRAMIGOCLOUDEscapeIdentifier(osFIDColName).c_str();
-    osSQL += " = ";
-    osSQL += CPLSPrintf(CPL_FRMT_GIB, nFeatureId);
+    std::map<GIntBig, OGRAmigoCloudFID>::iterator it = mFIDs.find(nFeatureId);
+    if(it!=mFIDs.end()) {
+        OGRAmigoCloudFID &aFID = it->second;
 
-    json_object* poObj = poDS->RunSQL(osSQL);
-    json_object* poRowObj = OGRAMIGOCLOUDGetSingleRow(poObj);
-    if( poRowObj == nullptr )
-    {
-        if( poObj != nullptr )
-            json_object_put(poObj);
-        return OGRAmigoCloudLayer::GetFeature(nFeatureId);
+        CPLString osSQL = osSELECTWithoutWHERE;
+        osSQL += " WHERE ";
+        osSQL += OGRAMIGOCLOUDEscapeIdentifier(osFIDColName).c_str();
+        osSQL += " = ";
+        osSQL += CPLSPrintf("'%s'", aFID.osAmigoId.c_str());
+
+        json_object *poObj = poDS->RunSQL(osSQL);
+        json_object *poRowObj = OGRAMIGOCLOUDGetSingleRow(poObj);
+        if (poRowObj == nullptr) {
+            if (poObj != nullptr)
+                json_object_put(poObj);
+            return OGRAmigoCloudLayer::GetFeature(nFeatureId);
+        }
+
+        OGRFeature *poFeature = BuildFeature(poRowObj);
+        json_object_put(poObj);
+
+        return poFeature;
     }
-
-    OGRFeature* poFeature = BuildFeature(poRowObj);
-    json_object_put(poObj);
-
-    return poFeature;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -992,16 +994,15 @@ void OGRAmigoCloudTableLayer::SetDeferredCreation(OGRwkbGeometryType eGType,
         eGType = wkbMultiPolygon25D;
     if( eGType != wkbNone )
     {
-        OGRAmigoCloudGeomFieldDefn *poFieldDefn =
-            new OGRAmigoCloudGeomFieldDefn("wkb_geometry", eGType);
+        auto poFieldDefn =
+            cpl::make_unique<OGRAmigoCloudGeomFieldDefn>("wkb_geometry", eGType);
         poFieldDefn->SetNullable(bGeomNullable);
-        poFeatureDefn->AddGeomFieldDefn(poFieldDefn, FALSE);
         if( poSRS != nullptr )
         {
             poFieldDefn->nSRID = poDS->FetchSRSId( poSRS );
-            poFeatureDefn->GetGeomFieldDefn(
-                poFeatureDefn->GetGeomFieldCount() - 1)->SetSpatialRef(poSRS);
+            poFieldDefn->SetSpatialRef(poSRS);
         }
+        poFeatureDefn->AddGeomFieldDefn(std::move(poFieldDefn));
     }
 
     osBaseSQL.Printf("SELECT * FROM %s",

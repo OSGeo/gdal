@@ -48,15 +48,18 @@
 #ifndef GDAL_FRMTS_MRF_MARFA_H_INCLUDED
 #define GDAL_FRMTS_MRF_MARFA_H_INCLUDED
 
-#include <gdal_pam.h>
-#include <ogr_srs_api.h>
-#include <ogr_spatialref.h>
+#include "gdal_pam.h"
+#include "ogr_srs_api.h"
+#include "ogr_spatialref.h"
 
 #include <limits>
 // For printing values
 #include <ostream>
 #include <iostream>
 #include <sstream>
+#if defined(ZSTD_SUPPORT)
+#include <zstd.h>
+#endif
 
 #define NAMESPACE_MRF_START namespace GDAL_MRF {
 #define NAMESPACE_MRF_END   }
@@ -93,6 +96,9 @@ enum ILCompression {
     IL_PNG = 0, IL_PPNG, IL_JPEG, IL_JPNG, IL_NONE, IL_ZLIB, IL_TIF,
 #if defined(LERC)
     IL_LERC,
+#endif
+#if defined(ZSTD_SUPPORT)
+    IL_ZSTD,
 #endif
     IL_ERR_COMP
 };
@@ -245,21 +251,8 @@ CPLXMLNode *XMLSetAttributeVal(CPLXMLNode *parent,
     const char*pszName, const ILSize &sz, const char *frmt = nullptr);
 void XMLSetAttributeVal(CPLXMLNode *parent,
     const char*pszName, std::vector<double> const &values);
-//
-// Extension to CSL, set an entry only if it doesn't already exist
-//
-char **CSLAddIfMissing(char **papszList,
-    const char *pszName, const char *pszValue);
 
-GDALColorEntry GetXMLColorEntry(CPLXMLNode *p);
 GIntBig IdxSize(const ILImage &full, const int scale = 0);
-// Similar to uncompress() from zlib, accepts the ZFLAG_RAW
-// Return true if it worked
-int ZUnPack(const buf_mgr &src, buf_mgr &dst, int flags);
-// Similar to compress2() but with flags to control zlib features
-// Returns true if it worked
-int ZPack(const buf_mgr &src, buf_mgr &dst, int flags);
-// checks that the file exists and is at least sz, if access is update it extends it
 int CheckFileSize(const char *fname, GIntBig sz, GDALAccess eAccess);
 
 // Number of pages of size psz needed to hold n elements
@@ -505,6 +498,20 @@ protected:
 
     // statistical values
     std::vector<double> vNoData, vMin, vMax;
+    // Sticky context for zstd compress and decompress
+    void* pzscctx, * pzsdctx;
+#if defined(ZSTD_SUPPORT)
+    ZSTD_CCtx* getzsc() {
+        if (!pzscctx)
+            pzscctx = ZSTD_createCCtx();
+        return static_cast<ZSTD_CCtx*>(pzscctx);
+    }
+    ZSTD_DCtx* getzsd() {
+        if (!pzsdctx)
+            pzsdctx = ZSTD_createDCtx();
+        return static_cast<ZSTD_DCtx *>(pzsdctx);
+    }
+#endif
 };
 
 class MRFRasterBand CPL_NON_FINAL: public GDALPamRasterBand {
@@ -548,6 +555,7 @@ public:
     const char *GetOptionValue(const char *opt, const char *def) const;
     void SetAccess(GDALAccess eA) { eAccess = eA; }
     void SetDeflate(int v) { dodeflate = (v != 0); }
+    void SetZstd(int v) { dozstd = (v != 0); }
 
 protected:
     // Pointer to the GDALMRFDataset
@@ -555,6 +563,8 @@ protected:
     // Deflate page requested, named to avoid conflict with libz deflate()
     int dodeflate;
     int deflate_flags;
+    int dozstd;
+    int zstd_level;
     // Level count of this band
     GInt32 m_l;
     // The info about the current image, to enable R-sets
@@ -643,10 +653,13 @@ protected:
 
 class JPEG_Codec {
 public:
-    explicit JPEG_Codec(const ILImage &image) : img(image), sameres(FALSE), rgb(FALSE), optimize(false) {}
+    explicit JPEG_Codec(const ILImage &image) : img(image), sameres(FALSE), rgb(FALSE), optimize(false), JFIF(false) {}
 
     CPLErr CompressJPEG(buf_mgr &dst, buf_mgr &src);
     CPLErr DecompressJPEG(buf_mgr &dst, buf_mgr &src);
+
+    // Returns true for both JPEG and JPEG-XL (brunsli)
+    static bool IsJPEG(const buf_mgr& src);
 
 #if defined(JPEG12_SUPPORTED) // Internal only
 #define LIBJPEG_12_H "../jpeg/libjpeg12/jpeglib.h"
@@ -657,12 +670,14 @@ public:
     const ILImage img;
 
     // JPEG specific flags
-    bool sameres;
-    bool rgb;
-    bool optimize;
+    bool sameres;  // No color space subsample
+    bool rgb;      // No conversion to YCbCr
+    bool optimize; // Optimize Huffman tables
+    bool JFIF;     // Write JFIF only
 
 private:
-    JPEG_Codec& operator= (const JPEG_Codec& src); // not implemented. but suppress MSVC warning about 'assignment operator could not be generated'
+    // not implemented. but suppress MSVC warning about 'assignment operator could not be generated'
+    JPEG_Codec& operator= (const JPEG_Codec& src); 
 };
 
 class JPEG_Band final: public MRFRasterBand {
@@ -690,7 +705,7 @@ protected:
 
     CPLErr CompressJPNG(buf_mgr &dst, buf_mgr &src);
     CPLErr DecompressJPNG(buf_mgr &dst, buf_mgr &src);
-    bool rgb, sameres, optimize;
+    bool rgb, sameres, optimize, JFIF;
 };
 
 class Raw_Band final: public MRFRasterBand {

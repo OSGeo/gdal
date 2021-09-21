@@ -649,6 +649,9 @@ def test_tiff_srs_read_epsg32631_4979_geotiff1_1():
 
 def test_tiff_srs_write_vertical_perspective():
 
+    if osr.GetPROJVersionMajor() * 100 + osr.GetPROJVersionMinor() < 700:
+        pytest.skip('requires PROJ 7 or later')
+
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/src.tif', 1, 1)
     sr = osr.SpatialReference()
     sr.SetGeogCS("GEOG_NAME", "D_DATUM_NAME", "", 3000000, 0)
@@ -657,7 +660,6 @@ def test_tiff_srs_write_vertical_perspective():
     ds.SetSpatialRef(sr)
     assert gdal.GetLastErrorMsg() == ''
     ds = None
-    assert gdal.VSIStatL('/vsimem/src.tif.aux.xml')
 
     src_ds = gdal.Open('/vsimem/src.tif')
     # First is PROJ 7
@@ -665,7 +667,6 @@ def test_tiff_srs_write_vertical_perspective():
     gdal.ErrorReset()
     gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/dst.tif', src_ds)
     assert gdal.GetLastErrorMsg() == ''
-    assert gdal.VSIStatL('/vsimem/dst.tif.aux.xml')
 
     ds = gdal.Open('/vsimem/dst.tif')
     assert ds.GetSpatialRef().ExportToProj4() == src_ds.GetSpatialRef().ExportToProj4()
@@ -799,3 +800,59 @@ def test_tiff_srs_read_user_defined_geokeys():
     sr = ds.GetSpatialRef()
     assert gdal.GetLastErrorMsg() == ''
     assert sr is not None
+
+
+def test_tiff_srs_read_compoundcrs_without_gtcitation():
+    if int(gdal.GetDriverByName('GTiff').GetMetadataItem('LIBGEOTIFF')) < 1600:
+        pytest.skip()
+
+    ds = gdal.Open('data/gtiff/compdcrs_without_gtcitation.tif')
+    sr = ds.GetSpatialRef()
+    assert sr.GetName() == 'WGS 84 / UTM zone 32N + EGM08_Geoid'
+
+
+def test_tiff_srs_read_getspatialref_getgcpspatialref():
+
+    ds = gdal.Open('data/byte.tif')
+    assert ds.GetSpatialRef() is not None
+    assert ds.GetGCPSpatialRef() is None
+
+    ds = gdal.Open('data/byte.tif')
+    assert ds.GetGCPSpatialRef() is None
+    assert ds.GetSpatialRef() is not None
+
+    ds = gdal.Open('data/byte.tif')
+    assert ds.GetSpatialRef() is not None
+    assert ds.GetSpatialRef() is not None
+    assert ds.GetGCPSpatialRef() is None
+    assert ds.GetGCPSpatialRef() is None
+
+    ds = gdal.Open('data/byte_gcp_pixelispoint.tif')
+    assert ds.GetSpatialRef() is None
+    assert ds.GetGCPSpatialRef() is not None
+
+    ds = gdal.Open('data/byte_gcp_pixelispoint.tif')
+    assert ds.GetGCPSpatialRef() is not None
+    assert ds.GetSpatialRef() is None
+
+    ds = gdal.Open('data/byte_gcp_pixelispoint.tif')
+    assert ds.GetGCPSpatialRef() is not None
+    assert ds.GetGCPSpatialRef() is not None
+    assert ds.GetSpatialRef() is None
+    assert ds.GetSpatialRef() is None
+
+
+def test_tiff_srs_read_VerticalUnitsGeoKey_private_range():
+    ds = gdal.Open('data/gtiff/VerticalUnitsGeoKey_private_range.tif')
+    with gdaltest.error_handler():
+        sr = ds.GetSpatialRef()
+    assert sr.GetName() == "NAD83 / UTM zone 16N"
+    assert gdal.GetLastErrorMsg() != ''
+
+
+def test_tiff_srs_read_invalid_semimajoraxis_compound():
+    ds = gdal.Open('data/gtiff/invalid_semimajoraxis_compound.tif')
+    # Check that it doesn't crash. PROJ >= 8.2.0 will return a NULL CRS
+    # whereas previous versions will return a non-NULL one
+    with gdaltest.error_handler():
+        ds.GetSpatialRef()

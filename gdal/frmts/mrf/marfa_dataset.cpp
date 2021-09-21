@@ -50,12 +50,14 @@
 
 #include "marfa.h"
 #include "cpl_multiproc.h" /* for CPLSleep() */
-#include <gdal_priv.h>
+#include "gdal_priv.h"
 #include <assert.h>
 
 #include <algorithm>
 #include <vector>
-
+#if defined(ZSTD_SUPPORT)
+#include <zstd.h>
+#endif
 using std::vector;
 using std::string;
 
@@ -85,7 +87,9 @@ MRFDataset::MRFDataset() :
     bdirty(0),
     bGeoTransformValid(TRUE),
     poColorTable(nullptr),
-    Quality(0)
+    Quality(0),
+    pzscctx(nullptr),
+    pzsdctx(nullptr)
 {
     //                X0   Xx   Xy  Y0    Yx   Yy
     double gt[6] = { 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 };
@@ -107,9 +111,19 @@ bool MRFDataset::SetPBuffer(unsigned int sz) {
         return false;
     }
     pbuffer = pbufferNew;
-    pbsize = (pbuffer == nullptr) ? 0 : sz;
+    pbsize = sz;
     return true;
 }
+
+static GDALColorEntry GetXMLColorEntry(CPLXMLNode* p) {
+    GDALColorEntry ce;
+    ce.c1 = static_cast<short>(getXMLNum(p, "c1", 0));
+    ce.c2 = static_cast<short>(getXMLNum(p, "c2", 0));
+    ce.c3 = static_cast<short>(getXMLNum(p, "c3", 0));
+    ce.c4 = static_cast<short>(getXMLNum(p, "c4", 255));
+    return ce;
+}
+
 
 //
 // Called by dataset destructor or at GDAL termination, to avoid
@@ -135,7 +149,7 @@ int MRFDataset::CloseDependentDatasets() {
 
 MRFDataset::~MRFDataset() {   // Make sure everything gets written
     if (eAccess != GA_ReadOnly && !bCrystalized)
-        if (!Crystalize()) {
+        if (!MRFDataset::Crystalize()) {
             // Can't return error code from a destructor, just emit the error
             CPLError(CE_Failure, CPLE_FileIO, "Error creating files");
         }
@@ -153,6 +167,10 @@ MRFDataset::~MRFDataset() {   // Make sure everything gets written
     // CPLFree ignores being called with NULL
     CPLFree(pbuffer);
     pbsize = 0;
+#if defined(ZSTD_SUPPORT)
+    ZSTD_freeCCtx(static_cast<ZSTD_CCtx*>(pzscctx));
+    ZSTD_freeDCtx(static_cast<ZSTD_DCtx*>(pzsdctx));
+#endif
 }
 
 /*
@@ -372,7 +390,7 @@ CPLErr MRFDataset::IBuildOverviews(
 
                 //
                 // Ready, generate this overview
-                // Note that this function has a bug in GDAL, the block stepping is incorect
+                // Note that this function has a bug in GDAL, the block stepping is incorrect
                 // It can generate multiple overview in one call,
                 // Could rewrite this loop so this function only gets called once
                 //
@@ -1147,7 +1165,7 @@ CPLXMLNode* MRFDataset::BuildConfig()
 
     // Do we have an affine transform different from identity?
     double gt[6];
-    if ((GetGeoTransform(gt) == CE_None) &&
+    if ((MRFDataset::GetGeoTransform(gt) == CE_None) &&
         (gt[0] != 0 || gt[1] != 1 || gt[2] != 0 ||
             gt[3] != 0 || gt[4] != 0 || gt[5] != 1))
     {
@@ -1227,7 +1245,7 @@ CPLErr MRFDataset::Initialize(CPLXMLNode* config)
 
     OGRSpatialReference oSRS;
     const char* pszRawProjFromXML = CPLGetXMLValue(config, "GeoTags.Projection", "");
-    if (strlen(pszRawProjFromXML) == 0 || oSRS.SetFromUserInput(pszRawProjFromXML) != OGRERR_NONE)
+    if (strlen(pszRawProjFromXML) == 0 || oSRS.SetFromUserInput(pszRawProjFromXML, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS) != OGRERR_NONE)
         SetProjection("");
     else {
         char* pszRawProj = nullptr;
@@ -1458,6 +1476,16 @@ GIntBig MRFDataset::AddOverviews(int scaleIn) {
     return img.idxoffset + sizeof(ILIdx) * img.pagecount.l / img.size.z * (img.size.z - zslice);
 }
 
+//
+// set an entry if it doesn't already exist
+//
+static char** CSLAddIfMissing(char** papszList, const char* pszName, const char* pszValue) {
+    if (CSLFetchNameValue(papszList, pszName))
+        return papszList;
+    return CSLSetNameValue(papszList, pszName, pszValue);
+}
+
+
 // CreateCopy implemented based on Create
 GDALDataset* MRFDataset::CreateCopy(const char* pszFilename,
     GDALDataset* poSrcDS, int /*bStrict*/, char** papszOptions,
@@ -1611,7 +1639,12 @@ template<typename T> static void ZenFilter(T* buffer, GByte* mask, int nPixels, 
             if (bFBO) { // First band only
                 bool f = true;
                 for (int b = 0; b < nBands; b++)
-                    f = f && (0 == buffer[nBands * i + b]);
+                {
+                    if (0 == buffer[nBands * i + b]) {
+                        f = false;
+                        break;
+                    }
+                }
                 if (f)
                     buffer[nBands * i] = 1;
             }
@@ -2024,7 +2057,7 @@ CPLErr MRFDataset::WriteTile(void* buff, GUIntBig infooffset, GUIntBig size)
         VSIFSeekL(l_ifp, infooffset, SEEK_SET);
         VSIFReadL(&tinfo, 1, sizeof(ILIdx), l_ifp);
 
-        if (verCount == 0) 
+        if (verCount == 0)
             new_version = true; // No previous yet, might create a new version
         else { // We need at least two versions before we can test for changes
             ILIdx prevtinfo = { 0, 0 };

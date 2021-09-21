@@ -17,7 +17,7 @@ level utilities.
 It is strongly inspired from the netCDF and HDF5 API and data models.
 See `HDF5 format and data model <https://portal.opengeospatial.org/files/81716>`_.
 
-A :cpp:class:`GDALDataset` with mulidimensional content contains a root
+A :cpp:class:`GDALDataset` with multidimensional content contains a root
 :cpp:class:`GDALGroup`.
 
 Group
@@ -43,7 +43,7 @@ has a name, a multidimensional array, references a number of GDALDimension, and
 has a list of GDALAttribute.
 
 Most drivers use the row-major convention for dimensions: that is, when considering
-that the array elemnts are stored consecutively in memory, the first dimension
+that the array elements are stored consecutively in memory, the first dimension
 is the slowest varying one (in a 2D image, the row), and the last dimension the
 fastest varying one (in a 2D image, the column). That convention is the default
 convention used for NumPy arrays, the MEM driver and the HDF5 and netCDF APIs.
@@ -55,10 +55,16 @@ You can refer to `NumPy documentation about multidimensional array indexing orde
 a GDALMDArray has also optional properties:
 
     - Coordinate reference system: :cpp:class:`OGRSpatialReference`
-    - No data value: 
+    - No data value:
     - Unit
     - Offset, such that unscaled_value = offset + scale * raw_value
     - Scale, such that unscaled_value = offset + scale * raw_value
+
+Number of operations can be applied on an array to get modified views of it:
+:cpp:func:`GDALMDArray::Transpose()`, :cpp:func:`GDALMDArray::GetView()`, etc.
+
+The :cpp:func:`GDALMDArray::Cache()` method can be used to cache the value of
+a view array into a sidecar file.
 
 Dimension
 ---------
@@ -70,7 +76,7 @@ It has the following properties:
   - a size, that is the number of values that can be indexed along
     the dimension
   - a type, which is a string giving the nature of the dimension.
-    Predeined values are: HORIZONTAL_X, HORIZONTAL_Y, VERTICAL, TEMPORAL, PARAMETRIC
+    Predefined values are: HORIZONTAL_X, HORIZONTAL_Y, VERTICAL, TEMPORAL, PARAMETRIC
     Other values might be used. Empty value means unknown.
   - a direction. Predefined values are:
     EAST, WEST, SOUTH, NORTH, UP, DOWN, FUTURE, PAST

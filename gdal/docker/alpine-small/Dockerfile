@@ -5,7 +5,7 @@
 # Public domain
 # or licensed under X/MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
-ARG ALPINE_VERSION=3.12
+ARG ALPINE_VERSION=3.14
 FROM alpine:${ALPINE_VERSION} as builder
 
 # Derived from osgeo/proj by Howard Butler <howard@hobu.co>
@@ -61,10 +61,11 @@ RUN mkdir proj \
     && ./autogen.sh \
     && if test "${RSYNC_REMOTE}" != ""; then \
         echo "Downloading cache..."; \
-        rsync -ra ${RSYNC_REMOTE}/proj/ $HOME/; \
+        rsync -ra ${RSYNC_REMOTE}/proj/$(uname -m)/ $HOME/; \
         echo "Finished"; \
         export CC="ccache gcc"; \
         export CXX="ccache g++"; \
+        mkdir -p "$HOME/.ccache"; \
         export PROJ_DB_CACHE_DIR="$HOME/.ccache"; \
         ccache -M 100M; \
     fi \
@@ -75,7 +76,7 @@ RUN mkdir proj \
     && if test "${RSYNC_REMOTE}" != ""; then \
         ccache -s; \
         echo "Uploading cache..."; \
-        rsync -ra --delete $HOME/.ccache ${RSYNC_REMOTE}/proj/; \
+        rsync -ra --delete $HOME/.ccache ${RSYNC_REMOTE}/proj/$(uname -m)/; \
         echo "Finished"; \
         rm -rf $HOME/.ccache; \
         unset CC; \
@@ -90,8 +91,10 @@ RUN mkdir proj \
 ARG GDAL_VERSION=master
 ARG GDAL_RELEASE_DATE
 ARG GDAL_BUILD_IS_RELEASE
+ARG GDAL_REPOSITORY=OSGeo/gdal
+
 RUN if test "${GDAL_VERSION}" = "master"; then \
-        export GDAL_VERSION=$(curl -Ls https://api.github.com/repos/OSGeo/gdal/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha"); \
+        export GDAL_VERSION=$(curl -Ls https://api.github.com/repos/${GDAL_REPOSITORY}/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha"); \
         export GDAL_RELEASE_DATE=$(date "+%Y%m%d"); \
     fi \
     && if test "x${GDAL_BUILD_IS_RELEASE}" = "x"; then \
@@ -99,17 +102,19 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     fi \
     && if test "${RSYNC_REMOTE}" != ""; then \
         echo "Downloading cache..."; \
-        rsync -ra ${RSYNC_REMOTE}/gdal/ $HOME/; \
+        rsync -ra ${RSYNC_REMOTE}/gdal/$(uname -m)/ $HOME/; \
         echo "Finished"; \
         export CC="ccache gcc"; \
         export CXX="ccache g++"; \
+        mkdir -p "$HOME/.ccache"; \
         ccache -M 1G; \
     fi \
     && mkdir gdal \
-    && wget -q https://github.com/OSGeo/gdal/archive/${GDAL_VERSION}.tar.gz -O - \
+    && wget -q https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz -O - \
         | tar xz -C gdal --strip-components=1 \
     && cd gdal/gdal \
-    && ./configure --prefix=/usr --without-libtool \
+    && ./autogen.sh \
+    && ./configure --prefix=/usr --sysconfdir=/etc --without-libtool \
     --with-hide-internal-symbols \
     --with-proj=/usr \
     --with-libtiff=internal --with-rename-internal-libtiff-symbols \
@@ -120,7 +125,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && if test "${RSYNC_REMOTE}" != ""; then \
         ccache -s; \
         echo "Uploading cache..."; \
-        rsync -ra --delete $HOME/.ccache ${RSYNC_REMOTE}/gdal/; \
+        rsync -ra --delete $HOME/.ccache ${RSYNC_REMOTE}/gdal/$(uname -m)/; \
         echo "Finished"; \
         rm -rf $HOME/.ccache; \
         unset CC; \

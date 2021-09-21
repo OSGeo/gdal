@@ -4,7 +4,8 @@
 Software using GDAL
 ================================================================================
 
-- `3D DEM Viewer <http://www.msmacrosystem.nl/Ilwis/index.html>`_ from MS MacroSystem
+- `3D DEM Viewer <http://www.msmacrosystem.nl/Ilwis/index.html>`_ from MS MacroSystem.
+- `actinia <https://actinia.mundialis.de/>`_ A cloud based geoprocessing platform from mundialis.
 - `Biodiverse <http://shawnlaffan.github.io/biodiverse>`_ A tool for the spatial analysis of diversity. Uses GDAL for import/export of data.
 - `Bluemapia <http://www.bluemapia.com>`_ Multi-Map(Google,Microsoft,Open Street Map, NOAA/BSB Charts,self-calibrated raster) location-based GPS app for Windows Mobile.
 - `BRL-CAD <https://brlcad.org>`_ An open source solid modeling computer-aided design system.
@@ -44,7 +45,7 @@ Software using GDAL
 - `gstat  <http://www.gstat.org>`_  a geostatistical modelling package.
 - `GuidosToolbox  <https://forest.jrc.ec.europa.eu/en/activities/lpa/gtb/>`_  A multi-platform desktop application for generic image object analysis.
 - `gvSIG  <http://www.gvsig.com>`_  Desktop GIS Client.
-- `HydroDaVE Explorer  <http://www.hydrodave.com>`_  A web-enabled client that provides users an easy to use, secure, and reliable data management platform to efficienctly manage, access, and analyze environmental data.
+- `HydroDaVE Explorer  <http://www.hydrodave.com>`_  A web-enabled client that provides users an easy to use, secure, and reliable data management platform to efficiently manage, access, and analyze environmental data.
 - `IDRISI  <http://www.idrisi.com>`_  A GIS and Image Processing Windows Desktop application. Uses GDAL to import/export/warp raster data.
 - `ILWIS  <http://www.itc.nl/ilwis>`_  Remote Sensing and GIS Desktop Package.
 - `Image I/O-Ext  <https://github.com/geosolutions-it/imageio-ext>`_  includes gdalframework, a framework leveraging on GDAL via SWIG's generated JAVA bindings to provide support for a broad set of data formats.
@@ -111,4 +112,5 @@ Software using GDAL
 - `TravTime  <http://www.geostats.com/product_trav.htm>`_  .NET Application for visualizing, processing and analyzing GPS data for travel time, speed, and de
 - `VectorWorks <http://www.vectorworks.net>`_ The Vectorworks line of software products provides professional design solutions in the AEC, entertainment and landscape design industries.
 - `Vertual Terrain Project  <http://www.vterrain.org>`_  fostering tools for easy construction of the real world in interactive, 3D digital form.
+- `ViRGiS <https://www.virgis.org/>`__ Creating a GIS Platform in Virtual Reality / Mixed Reality
 - `WindNinja  <https://www.firelab.org/project/windninja>`_  wind model for fire behavior modeling.

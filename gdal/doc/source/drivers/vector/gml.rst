@@ -5,7 +5,7 @@ GML - Geography Markup Language
 
 .. shortname:: GML
 
-.. build_dependencies:: (read support needs Xerces or libexpat) 
+.. build_dependencies:: (read support needs Xerces or libexpat)
 
 OGR has limited support for GML reading and writing. Update of existing
 files is not supported.
@@ -498,6 +498,7 @@ The GML writer supports the following dataset creation options:
    'http://ogr.maptools.org/'. This is the application target namespace.
 -  **FORMAT**: This can be set to :
 
+   -  *GML2* in order to write GML files that follow GML 2.1.2 (Default before GDAL 3.4)
    -  *GML3* in order to write GML files that follow GML 3.1.1 SF-0
       profile.
    -  *GML3Deegree* in order to produce a GML 3.1.1 .XSD
@@ -505,9 +506,8 @@ The GML writer supports the following dataset creation options:
       by GML3 SF-0 profile, but that will be better accepted by some
       software (such as Deegree 3).
    -  *GML3.2*\ in order to write GML files that follow
-      GML 3.2.1 SF-0 profile.
+      GML 3.2.1 SF-0 profile. (Default since GDAL 3.4)
 
-   If not specified, GML2 will be used.
    Non-linear geometries can be written. This is
    only compatible with selecting on of that above GML3 format variant.
    Otherwise, such geometries will be approximating into their closest
@@ -965,7 +965,7 @@ Building junction tables
 ------------------------
 
 The
-`ogr_build_junction_table.py <https://github.com/OSGeo/gdal/blob/master/gdal/swig/python/samples/ogr_build_junction_table.py>`__
+`ogr_build_junction_table.py <https://github.com/OSGeo/gdal/blob/master/gdal/swig/python/gdal-utils/osgeo_utils/samples/ogr_build_junction_table.py>`__
 script can be used to build a `junction
 table <http://en.wikipedia.org/wiki/Junction_table>`__ from OGR layers
 that contain "XXXX_href" fields. Let's considering the following output

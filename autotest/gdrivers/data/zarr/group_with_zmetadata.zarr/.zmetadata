@@ -1,0 +1,40 @@
+{
+    "metadata": {
+        ".zattrs": {
+            "key": "value"
+        },
+        ".zgroup": {
+            "zarr_format": 2
+        },
+        "foo/.zgroup": {
+            "zarr_format": 2
+        },
+        "foo/bar/.zgroup": {
+            "zarr_format": 2
+        },
+        "foo/bar/.zattrs": {
+            "foo": "bar"
+        },
+        "foo/unexpected/.zattrs": {
+            "foo": "bar"
+        },
+        "foo/bar/baz/.zarray": {
+            "chunks": [
+                1
+            ],
+            "compressor": null,
+            "dtype": "<i4",
+            "fill_value": 0,
+            "filters": null,
+            "order": "C",
+            "shape": [
+                1
+            ],
+            "zarr_format": 2
+        },
+        "foo/bar/baz/.zattrs": {
+            "bar": "baz"
+        }
+    },
+    "zarr_consolidated_format": 1
+}

@@ -754,7 +754,7 @@ public:
     virtual ~OGRDB2DataSource();
 //***************** For raster support
 
-    virtual char **     GetMetadata( const char *pszDomain = nullptr ) override;
+    virtual char **     GetMetadata( const char *pszDomain = "" ) override;
     virtual const char *GetMetadataItem( const char * pszName,
                                          const char * pszDomain = "" ) override;
     virtual char **     GetMetadataDomainList() override;

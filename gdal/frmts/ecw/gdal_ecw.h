@@ -125,9 +125,11 @@ public:
 
 class VSIIOStream final: public CNCSJPCIOStream
 {
-#if ECWSDK_VERSION >= 54
-    NCS_DELETE_ALL_COPY_AND_MOVE(VSIIOStream)
-#endif
+    VSIIOStream(const VSIIOStream &) = delete;
+    VSIIOStream& operator= (const VSIIOStream&) = delete;
+    VSIIOStream(VSIIOStream &&) = delete;
+    VSIIOStream& operator= (VSIIOStream &&) = delete;
+
     char     *m_Filename;
   public:
 
@@ -186,7 +188,7 @@ class VSIIOStream final: public CNCSJPCIOStream
         {
             return nullptr;
         }
-        
+
         VSIIOStream *pDst = new VSIIOStream();
         pDst->Access(fpNewVSIL, bWritable, bSeekable, m_Filename, startOfJPData, lengthOfJPData);
         return pDst;
@@ -589,10 +591,7 @@ class CPL_DLL ECWDataset final: public GDALJP2AbstractDataset
     virtual char      **GetMetadata( const char * pszDomain = "" ) override;
 
     virtual CPLErr SetGeoTransform( double * padfGeoTransform ) override;
-    virtual CPLErr _SetProjection( const char* pszProjection ) override;
-    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
-        return OldSetProjectionFromSetSpatialRef(poSRS);
-    }
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
 
     virtual CPLErr SetMetadataItem( const char * pszName,
                                  const char * pszValue,
@@ -702,7 +701,7 @@ class ECWRasterBand final: public GDALPamRasterBand
 
 };
 
-int ECWTranslateFromWKT( const char *pszWKT,
+int ECWTranslateFromWKT( const OGRSpatialReference *poSRS,
                          char *pszProjection,
                          int nProjectionLen,
                          char *pszDatum,

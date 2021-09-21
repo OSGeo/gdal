@@ -100,7 +100,7 @@ int main( int argc, char ** argv )
                                         &dsr_size ) == 1 )
             break;
 
-        printf( "\nDatset %d\n", i );
+        printf( "\nDataset %d\n", i );
 
         printf( "ds_name = %s\n", ds_name );
         printf( "ds_type = %s\n", ds_type );

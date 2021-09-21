@@ -240,7 +240,8 @@ public:
 
     VSIVirtualHandle *Open( const char *pszFilename,
                             const char *pszAccess,
-                            bool bSetError ) override;
+                            bool bSetError,
+                            CSLConstList /* papszOptions */ ) override;
     VSIGZipHandle *OpenGZipReadOnly( const char *pszFilename,
                                      const char *pszAccess );
     int Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
@@ -1413,6 +1414,7 @@ void VSIGZipWriteHandleMT::DeflateCompress(void* inData)
     CPLAssert( psJob->pBuffer_);
 
     z_stream           sStream;
+    memset(&sStream, 0, sizeof(sStream));
     sStream.zalloc = nullptr;
     sStream.zfree = nullptr;
     sStream.opaque = nullptr;
@@ -1917,24 +1919,30 @@ int VSIGZipWriteHandle::Close()
         const size_t nOutBytes =
             static_cast<uInt>(Z_BUFSIZE) - sStream.avail_out;
 
-        if( m_poBaseHandle->Write( pabyOutBuf, 1, nOutBytes ) < nOutBytes )
-            return EOF;
-
         deflateEnd( &sStream );
 
-        if( nDeflateType == CPL_DEFLATE_TYPE_GZIP )
+        if( m_poBaseHandle->Write( pabyOutBuf, 1, nOutBytes ) < nOutBytes )
+        {
+            nRet = -1;
+        }
+
+        if( nRet == 0 && nDeflateType == CPL_DEFLATE_TYPE_GZIP )
         {
             const GUInt32 anTrailer[2] = {
                 CPL_LSBWORD32(static_cast<GUInt32>(nCRC)),
                 CPL_LSBWORD32(static_cast<GUInt32>(nCurOffset))
             };
 
-            m_poBaseHandle->Write( anTrailer, 1, 8 );
+            if( m_poBaseHandle->Write( anTrailer, 1, 8 ) < 8 )
+            {
+                nRet = -1;
+            }
         }
 
         if( bAutoCloseBaseHandle )
         {
-            nRet = m_poBaseHandle->Close();
+            if( nRet == 0 )
+                nRet = m_poBaseHandle->Close();
 
             delete m_poBaseHandle;
         }
@@ -2144,7 +2152,8 @@ void VSIGZipFilesystemHandler::SaveInfo_unlocked( VSIGZipHandle* poHandle )
 
 VSIVirtualHandle* VSIGZipFilesystemHandler::Open( const char *pszFilename,
                                                   const char *pszAccess,
-                                                  bool /* bSetError */ )
+                                                  bool /* bSetError */,
+                                                  CSLConstList /* papszOptions */ )
 {
     if( !STARTS_WITH_CI(pszFilename, "/vsigzip/") )
         return nullptr;
@@ -2639,7 +2648,8 @@ class VSIZipFilesystemHandler final : public VSIArchiveFilesystemHandler
 
     VSIVirtualHandle *Open( const char *pszFilename,
                             const char *pszAccess,
-                            bool bSetError ) override;
+                            bool bSetError,
+                            CSLConstList /* papszOptions */ ) override;
 
     VSIVirtualHandle *OpenForWrite( const char *pszFilename,
                                     const char *pszAccess );
@@ -2772,7 +2782,8 @@ VSIArchiveReader* VSIZipFilesystemHandler::CreateReader(
 
 VSIVirtualHandle* VSIZipFilesystemHandler::Open( const char *pszFilename,
                                                  const char *pszAccess,
-                                                 bool /* bSetError */ )
+                                                 bool /* bSetError */,
+                                                 CSLConstList /* papszOptions */ )
 {
 
     if( strchr(pszAccess, 'w') != nullptr )
@@ -3063,8 +3074,8 @@ VSIZipFilesystemHandler::OpenForWrite_unlocked( const char *pszFilename,
         if( hZIP == nullptr )
             return nullptr;
 
-        oMapZipWriteHandles[osZipFilename] =
-            new VSIZipWriteHandle(this, hZIP, nullptr);
+        auto poHandle = new VSIZipWriteHandle(this, hZIP, nullptr);
+        oMapZipWriteHandles[osZipFilename] = poHandle;
 
         if( !osZipInFileName.empty() )
         {
@@ -3072,7 +3083,8 @@ VSIZipFilesystemHandler::OpenForWrite_unlocked( const char *pszFilename,
                 OpenForWrite_unlocked(pszFilename, pszAccess));
             if( poRes == nullptr )
             {
-                delete oMapZipWriteHandles[osZipFilename];
+                delete poHandle;
+                oMapZipWriteHandles.erase(osZipFilename);
                 return nullptr;
             }
 
@@ -3081,7 +3093,7 @@ VSIZipFilesystemHandler::OpenForWrite_unlocked( const char *pszFilename,
             return poRes;
         }
 
-        return oMapZipWriteHandles[osZipFilename];
+        return poHandle;
     }
 }
 
@@ -3224,28 +3236,35 @@ int VSIZipWriteHandle::Flush()
 
 int VSIZipWriteHandle::Close()
 {
+    int nRet = 0;
     if( m_poParent )
     {
         CPLCloseFileInZip(m_poParent->m_hZIP);
         m_poParent->poChildInWriting = nullptr;
         if( bAutoDeleteParent )
+        {
+            if( m_poParent->Close() != 0 )
+                nRet = -1;
             delete m_poParent;
+        }
         m_poParent = nullptr;
     }
     if( poChildInWriting )
     {
-        poChildInWriting->Close();
+        if( poChildInWriting->Close() != 0 )
+            nRet = -1;
         poChildInWriting = nullptr;
     }
     if( m_hZIP )
     {
-        CPLCloseZip(m_hZIP);
+        if( CPLCloseZip(m_hZIP) != CE_None )
+            nRet = -1;
         m_hZIP = nullptr;
 
         m_poFS->RemoveFromMap(this);
     }
 
-    return 0;
+    return nRet;
 }
 
 /************************************************************************/
@@ -3326,11 +3345,11 @@ void VSIInstallZipFileHandler()
 /************************************************************************/
 
 /**
- * \brief Compress a buffer with ZLib DEFLATE compression.
+ * \brief Compress a buffer with ZLib compression.
  *
  * @param ptr input buffer.
  * @param nBytes size of input buffer in bytes.
- * @param nLevel ZLib compression level (-1 for default). Currently unused
+ * @param nLevel ZLib compression level (-1 for default).
  * @param outptr output buffer, or NULL to let the function allocate it.
  * @param nOutAvailableBytes size of output buffer if provided, or ignored.
  * @param pnOutBytes pointer to a size_t, where to store the size of the
@@ -3344,7 +3363,7 @@ void VSIInstallZipFileHandler()
 
 void* CPLZLibDeflate( const void* ptr,
                       size_t nBytes,
-                      CPL_UNUSED int nLevel,
+                      int nLevel,
                       void* outptr,
                       size_t nOutAvailableBytes,
                       size_t* pnOutBytes )
@@ -3354,12 +3373,26 @@ void* CPLZLibDeflate( const void* ptr,
 
     size_t nTmpSize = 0;
     void* pTmp;
+#ifdef HAVE_LIBDEFLATE
+    struct libdeflate_compressor* enc = libdeflate_alloc_compressor(nLevel < 0 ? 7 : nLevel);
+    if( enc == nullptr )
+    {
+        return nullptr;
+    }
+#endif
     if( outptr == nullptr )
     {
+#ifdef HAVE_LIBDEFLATE
+        nTmpSize = libdeflate_zlib_compress_bound(enc, nBytes);
+#else
         nTmpSize = 32 + nBytes * 2;
+#endif
         pTmp = VSIMalloc(nTmpSize);
         if( pTmp == nullptr )
         {
+#ifdef HAVE_LIBDEFLATE
+            libdeflate_free_compressor(enc);
+#endif
             return nullptr;
         }
     }
@@ -3370,13 +3403,6 @@ void* CPLZLibDeflate( const void* ptr,
     }
 
 #ifdef HAVE_LIBDEFLATE
-    struct libdeflate_compressor* enc = libdeflate_alloc_compressor(7);
-    if( enc == nullptr )
-    {
-        if( pTmp != outptr )
-            VSIFree(pTmp);
-        return nullptr;
-    }
     size_t nCompressedBytes = libdeflate_zlib_compress(
                     enc, ptr, nBytes, pTmp, nTmpSize);
     libdeflate_free_compressor(enc);
@@ -3393,7 +3419,7 @@ void* CPLZLibDeflate( const void* ptr,
     strm.zalloc = nullptr;
     strm.zfree = nullptr;
     strm.opaque = nullptr;
-    int ret = deflateInit(&strm, Z_DEFAULT_COMPRESSION);
+    int ret = deflateInit(&strm, nLevel < 0 ? Z_DEFAULT_COMPRESSION : nLevel);
     if( ret != Z_OK )
     {
         if( pTmp != outptr )
@@ -3425,7 +3451,7 @@ void* CPLZLibDeflate( const void* ptr,
 /************************************************************************/
 
 /**
- * \brief Uncompress a buffer compressed with ZLib DEFLATE compression.
+ * \brief Uncompress a buffer compressed with ZLib compression.
  *
  * @param ptr input buffer.
  * @param nBytes size of input buffer in bytes.
@@ -3478,6 +3504,7 @@ void* CPLZLibInflate( const void* ptr, size_t nBytes,
 #endif
 
     z_stream strm;
+    memset(&strm, 0, sizeof(strm));
     strm.zalloc = nullptr;
     strm.zfree = nullptr;
     strm.opaque = nullptr;
@@ -3491,7 +3518,9 @@ void* CPLZLibInflate( const void* ptr, size_t nBytes,
 
     size_t nTmpSize = 0;
     char* pszTmp = nullptr;
+#ifndef HAVE_LIBDEFLATE
     if( outptr == nullptr )
+#endif
     {
         nTmpSize = 2 * nBytes;
         pszTmp = static_cast<char *>(VSIMalloc(nTmpSize + 1));
@@ -3501,11 +3530,13 @@ void* CPLZLibInflate( const void* ptr, size_t nBytes,
             return nullptr;
         }
     }
+#ifndef HAVE_LIBDEFLATE
     else
     {
         pszTmp = static_cast<char *>(outptr);
         nTmpSize = nOutAvailableBytes;
     }
+#endif
 
     strm.avail_out = static_cast<uInt>(nTmpSize);
     strm.next_out = reinterpret_cast<Bytef *>(pszTmp);
@@ -3515,11 +3546,13 @@ void* CPLZLibInflate( const void* ptr, size_t nBytes,
         ret = inflate(&strm, Z_FINISH);
         if( ret == Z_BUF_ERROR )
         {
+#ifndef HAVE_LIBDEFLATE
             if( outptr == pszTmp )
             {
                 inflateEnd(&strm);
                 return nullptr;
             }
+#endif
 
             size_t nAlreadyWritten = nTmpSize - strm.avail_out;
             nTmpSize = nTmpSize * 2;
@@ -3543,8 +3576,12 @@ void* CPLZLibInflate( const void* ptr, size_t nBytes,
     {
         size_t nOutBytes = nTmpSize - strm.avail_out;
         // Nul-terminate if possible.
+#ifndef HAVE_LIBDEFLATE
         if( outptr != pszTmp || nOutBytes < nTmpSize )
+#endif
+        {
             pszTmp[nOutBytes] = '\0';
+        }
         inflateEnd(&strm);
         if( pnOutBytes != nullptr )
             *pnOutBytes = nOutBytes;
@@ -3552,8 +3589,12 @@ void* CPLZLibInflate( const void* ptr, size_t nBytes,
     }
     else
     {
+#ifndef HAVE_LIBDEFLATE
         if( outptr != pszTmp )
+#endif
+        {
             VSIFree(pszTmp);
+        }
         inflateEnd(&strm);
         return nullptr;
     }

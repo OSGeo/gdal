@@ -30,8 +30,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#undef ENABLE_LIBJPEG_NO_RETURN
-
 #include "cpl_port.h"
 #include "jpgdataset.h"
 
@@ -147,6 +145,21 @@ void JPGDatasetCommon::ReadEXIFMetadata()
 
         // Append metadata from PAM after EXIF metadata.
         papszMetadata = CSLMerge(papszMetadata, GDALPamDataset::GetMetadata());
+
+        // Expose XMP in EXIF in xml:XMP metadata domain
+        if( GDALDataset::GetMetadata("xml:XMP") == nullptr )
+        {
+            const char* pszXMP = CSLFetchNameValue(papszMetadata, "EXIF_XmlPacket");
+            if( pszXMP )
+            {
+                CPLDebug("JPEG", "Read XMP metadata from EXIF tag");
+                const char * const apszMDList[2] = { pszXMP, nullptr };
+                SetMetadata(const_cast<char**>(apszMDList), "xml:XMP");
+
+                papszMetadata = CSLSetNameValue(papszMetadata, "EXIF_XmlPacket", nullptr);
+            }
+        }
+
         SetMetadata(papszMetadata);
 
         nPamFlags = nOldPamFlags;
@@ -400,12 +413,17 @@ void JPGDatasetCommon::ReadFLIRMetadata()
     };
     SetStringIfNotEmpty("CreatorSoftware", 4, 16);
 
-    // Check file format version
+    // Check file format version (big endian most of the time)
     const auto nFileFormatVersion = ReadUInt32(20);
     if( !(nFileFormatVersion >= 100 && nFileFormatVersion < 200) )
     {
-        CPLDebug("JPEG", "FLIR: Unknown file format version: %u", nFileFormatVersion);
-        return;
+        bLittleEndian = true; // retry with little-endian
+        const auto nFileFormatVersionOtherEndianness = ReadUInt32(20);
+        if( !(nFileFormatVersionOtherEndianness >= 100 && nFileFormatVersionOtherEndianness < 200) )
+        {
+            CPLDebug("JPEG", "FLIR: Unknown file format version: %u", nFileFormatVersion);
+            return;
+        }
     }
 
     const auto nOffsetRecordDirectory = ReadUInt32(24);
@@ -588,7 +606,7 @@ void JPGDatasetCommon::ReadFLIRMetadata()
         SetMetadataItem("PaletteColors",
                         CPLSPrintf("%d", nPaletteColors), "FLIR");
 
-        const auto SetColorItem = [=](const char* pszItem, std::uint32_t nOffset)
+        const auto SetColorItem = [this, &abyFLIR](const char* pszItem, std::uint32_t nOffset)
         {
             SetMetadataItem(pszItem,
                             CPLSPrintf("%d %d %d",
@@ -750,9 +768,20 @@ void JPGDatasetCommon::LoadForMetadataDomain( const char *pszDomain )
     if (eAccess == GA_ReadOnly && !bHasReadEXIFMetadata &&
         (pszDomain == nullptr || EQUAL(pszDomain, "")))
         ReadEXIFMetadata();
-    if (eAccess == GA_ReadOnly && !bHasReadXMPMetadata &&
+    if (eAccess == GA_ReadOnly &&
         pszDomain != nullptr && EQUAL(pszDomain, "xml:XMP"))
-        ReadXMPMetadata();
+    {
+        if( !bHasReadXMPMetadata )
+        {
+            ReadXMPMetadata();
+        }
+        if( !bHasReadEXIFMetadata &&
+            GDALPamDataset::GetMetadata("xml:XMP") == nullptr )
+        {
+            // XMP can sometimes be embedded in a EXIF TIFF tag
+            ReadEXIFMetadata();
+        }
+    }
     if (eAccess == GA_ReadOnly && !bHasReadICCMetadata &&
         pszDomain != nullptr && EQUAL(pszDomain, "COLOR_PROFILE"))
         ReadICCProfile();
@@ -1385,13 +1414,11 @@ int JPGRasterBand::GetMaskFlags()
 
 GDALRasterBand *JPGRasterBand::GetOverview(int i)
 {
-    poGDS->InitInternalOverviews();
+    if( i < 0 || i >= GetOverviewCount() )
+        return nullptr;
 
     if( poGDS->nInternalOverviewsCurrent == 0 )
         return GDALPamRasterBand::GetOverview(i);
-
-    if( i < 0 || i >= poGDS->nInternalOverviewsCurrent )
-        return nullptr;
 
     return poGDS->papoInternalOverviews[i]->GetRasterBand(nBand);
 }
@@ -1402,6 +1429,9 @@ GDALRasterBand *JPGRasterBand::GetOverview(int i)
 
 int JPGRasterBand::GetOverviewCount()
 {
+    if( !poGDS->AreOverviewsEnabled() )
+        return 0;
+
     poGDS->InitInternalOverviews();
 
     if( poGDS->nInternalOverviewsCurrent == 0 )
@@ -3193,7 +3223,7 @@ void JPGDatasetCommon::DecompressMask()
                 break;
         }
 
-        if( iX == nRasterXSize )
+        if( iX == nRasterXSize && nChangedValBit == 1 )
         {
             CPLDebug("JPEG",
                      "Bit ordering in mask is guessed to be msb (unusual)");
@@ -3464,7 +3494,7 @@ CPLErr JPGAppendMask( const char *pszJPGFilename, GDALRasterBand *poMask,
     size_t nTotalOut = 0;
     if ( eErr == CE_None )
     {
-        if( CPLZLibDeflate(pabyBitBuf, nBitBufSize, 9,
+        if( CPLZLibDeflate(pabyBitBuf, nBitBufSize, -1,
                            pabyCMask, nBitBufSize + 30,
                            &nTotalOut) == nullptr )
         {
@@ -3699,7 +3729,7 @@ JPGDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
         poSrcDS->GetRasterBand(1)->GetColorInterpretation() != GCI_CyanBand )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "4-band JPEGs will be interpretated on reading as in CMYK colorspace");
+                 "4-band JPEGs will be interpreted on reading as in CMYK colorspace");
     }
 
 
@@ -4074,7 +4104,7 @@ JPGDataset::CreateCopyStage2( const char *pszFilename, GDALDataset *poSrcDS,
         sArgs.bDoPAMInitialize = true;
         sArgs.bUseInternalOverviews = true;
 
-        JPGDataset *poDS = dynamic_cast<JPGDataset *>(Open(&sArgs));
+        auto poDS = Open(&sArgs);
         CPLPopErrorHandler();
         if( poDS )
         {

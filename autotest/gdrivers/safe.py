@@ -56,7 +56,7 @@ def test_safe_3():
 
     tst = gdaltest.GDALTest(
         'SAFE',
-        'SENTINEL1_DS:data/SAFE_FAKE/test.SAFE:IW_VH', 1, 65372, filename_absolute=1)
+        'SENTINEL1_CALIB:UNCALIB:data/SAFE_FAKE/test.SAFE/manifest.safe:IW_VH:AMPLITUDE', 1, 65372, filename_absolute=1)
     return tst.testOpen()
 
 
@@ -64,7 +64,7 @@ def test_safe_4():
 
     tst = gdaltest.GDALTest(
         'SAFE',
-        'SENTINEL1_DS:data/SAFE_FAKE/test.SAFE:IW_VV', 1, 3732, filename_absolute=1)
+        'SENTINEL1_CALIB:UNCALIB:data/SAFE_FAKE/test.SAFE/manifest.safe:IW_VV:AMPLITUDE', 1, 3732, filename_absolute=1)
     return tst.testOpen()
 
 
@@ -72,7 +72,7 @@ def test_safe_5():
 
     tst = gdaltest.GDALTest(
         'SAFE',
-        'SENTINEL1_DS:data/SAFE_FAKE/test.SAFE:IW', 1, 65372, filename_absolute=1)
+        'SENTINEL1_CALIB:UNCALIB:data/SAFE_FAKE/test.SAFE:IW:AMPLITUDE', 1, 65372, filename_absolute=1)
     return tst.testOpen()
 
 
@@ -81,14 +81,18 @@ def test_safe_WV():
     ds = gdal.Open('data/SAFE_FAKE_WV')
     assert ds is not None
     subds = ds.GetSubDatasets()
-    assert len(subds) == 2
+    assert len(subds) == 10
 
-    ds = gdal.Open(subds[0][0])
+    assert 'SENTINEL1_CALIB:SIGMA0:data/SAFE_FAKE_WV/manifest.safe:WV1_VV_001:INTENSITY' in [x[0].replace('\\', '/') for x in subds]
+
+    ds = gdal.Open('SENTINEL1_CALIB:SIGMA0:data/SAFE_FAKE_WV/manifest.safe:WV1_VV_001:INTENSITY')
     assert ds is not None
     assert len(ds.GetSubDatasets()) == 0
     assert len(ds.GetGCPs()) == 1
 
-    ds = gdal.Open(subds[1][0])
+    assert 'SENTINEL1_CALIB:SIGMA0:data/SAFE_FAKE_WV/manifest.safe:WV2_VV_002:INTENSITY' in [x[0].replace('\\', '/') for x in subds]
+
+    ds = gdal.Open('SENTINEL1_CALIB:SIGMA0:data/SAFE_FAKE_WV/manifest.safe:WV2_VV_002:INTENSITY')
     assert ds is not None
     assert len(ds.GetSubDatasets()) == 0
     assert len(ds.GetGCPs()) == 2

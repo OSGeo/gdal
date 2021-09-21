@@ -43,18 +43,17 @@ The GDAL JPEG Driver is built using the Independent JPEG Group's jpeg
 library. Also note that the GeoTIFF driver supports tiled TIFF with JPEG
 compressed tiles.
 
-To be able to read and write JPEG images with 12-bit sample, you can
-build GDAL with its internal libjpeg (based on IJG libjpeg-6b, with
-additional changes for 12-bit sample support), or explicitly pass
---with-jpeg12=yes to configure script when building with external
-libjpeg. See `"8 and 12 bit JPEG in
-TIFF" <http://trac.osgeo.org/gdal/wiki/TIFF12BitJPEG>`__ wiki page for
-more details.
-
 It is also possible to use the JPEG driver with the libjpeg-turbo, a
 version of libjpeg, API and ABI compatible with IJG libjpeg-6b, which
 uses MMX, SSE, and SSE2 SIMD instructions to accelerate baseline JPEG
 compression/decompression.
+
+Starting with GDAL 3.4, read and write support for JPEG images with 12-bit sample
+is enabled by default (if JPEG support is also enabled), using GDAL internal libjpeg
+(based on IJG libjpeg-6b, with additional changes for 12-bit sample support).
+Support for JPEG with 12-bit sample is independent of whether
+8-bit JPEG support is enabled through internal IJG libjpeg-6b or external libjpeg
+(like libjpeg-turbo)
 
 XMP metadata can be extracted from the file,
 and will be stored as XML raw content in the xml:XMP metadata domain.
@@ -100,7 +99,7 @@ Creation Options
 JPEG files are created using the "JPEG" driver code. Only Byte band
 types are supported.
 
-Only 1 (greyscale), 3 band (intput should be in RGB colorspace.
+Only 1 (greyscale), 3 band (input should be in RGB colorspace.
 the driver will convert it automatically to YCbCr colorspace for storage, and
 will expose it back as RGB on reading) or 4 band
 (input should already by in CMYK colorspace. It will be exposed as RGB on reading
@@ -193,7 +192,7 @@ The below tables list the EXIF and GPS tags that can be written.
    appropriate spaces / zeroes
 
 -  The "Number of values" column is the number of values for the item.
-   Might be "variable" if there is no restriction, or a fixed value. Fo
+   Might be "variable" if there is no restriction, or a fixed value. For
    Type=ASCII, the fixed value includes the NUL-terminating byte, so the
    number of actual printable characters is number of values - 1.
 -  The "Optionality" column indicates whether the item should be present

@@ -393,7 +393,7 @@ Example on how to use the API:
    CSLDestroy(papszOptions);
 
 A sample Python script
-`gdal_create_pdf.py <https://raw.githubusercontent.com/OSGeo/gdal/master/gdal/swig/python/samples/gdal_create_pdf.py>`__
+`gdal_create_pdf.py <https://raw.githubusercontent.com/OSGeo/gdal/master/gdal/swig/python/gdal-utils/osgeo_utils/samples/gdal_create_pdf.py>`__
 is also available. Starting with GDAL 3.2, the :ref:`gdal_create` utility can
 also be used.
 
@@ -549,6 +549,12 @@ for arbitrary overviews, for fast zoom-out.
 Only GDAL builds against static builds of PDFium have been tested.
 Building PDFium can be challenging, and particular builds must be used to
 work properly with GDAL.
+
+With GDAL >= 3.4.0
++++++++++++++++++++
+
+The scripts in the `<https://github.com/rouault/pdfium_build_gdal_3_4>`__
+repository must be used to build a patched version of PDFium.
 
 With GDAL >= 3.2.0
 +++++++++++++++++++

@@ -38,6 +38,12 @@
 
 CPL_C_START
 
+/* 1e-12 - 1 */
+#define NITF_MAX_FILE_SIZE 999999999999ULL
+
+/* 1e-10 - 1 */
+#define NITF_MAX_IMAGE_SIZE 9999999999ULL
+
 typedef struct {
     char szSegmentType[3]; /* one of "IM", ... */
 
@@ -87,6 +93,15 @@ int      CPL_DLL  NITFCreate( const char *pszFilename,
                               int nPixels, int nLines, int nBands,
                               int nBitsPerSample, const char *pszPVType,
                               char **papszOptions );
+
+int        NITFCreateEx( const char *pszFilename,
+                         int nPixels, int nLines, int nBands,
+                         int nBitsPerSample, const char *pszPVType,
+                         char **papszOptions,
+                         int* pnIndex,
+                         int* pnImageCount,
+                         vsi_l_offset* pnImageOffset,
+                         vsi_l_offset* pnICOffset );
 
 const char CPL_DLL *NITFFindTRE( const char *pszTREData, int nTREBytes,
                                  const char *pszTag, int *pnFoundTRESize );
@@ -262,6 +277,9 @@ int       CPL_DLL  NITFDESGetTRE(   NITFDES* psDES,
 void      CPL_DLL  NITFDESFreeTREData( char* pabyTREData );
 
 int       CPL_DLL  NITFDESExtractShapefile(NITFDES* psDES, const char* pszRadixFileName);
+
+CPLXMLNode* NITFCreateXMLDesUserDefinedSubHeader(NITFFile* psFile,
+                                                 const NITFDES* psDES);
 
 CPLXMLNode CPL_DLL *NITFDESGetXml(NITFFile*, int iSegment);
 

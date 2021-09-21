@@ -588,7 +588,7 @@ DDFRecord *S57Writer::MakeRecord()
 /************************************************************************/
 
 bool S57Writer::WriteGeometry( DDFRecord *poRec, int nVertCount,
-                               double *padfX, double *padfY, double *padfZ )
+                               const double *padfX, const double *padfY, const double *padfZ )
 
 {
     const char *pszFieldName = "SG2D";
@@ -645,7 +645,7 @@ bool S57Writer::WritePrimitive( OGRFeature *poFeature )
 
 {
     DDFRecord *poRec = MakeRecord();
-    OGRGeometry *poGeom = poFeature->GetGeometryRef();
+    const OGRGeometry *poGeom = poFeature->GetGeometryRef();
 
 /* -------------------------------------------------------------------- */
 /*      Add the VRID field.                                             */
@@ -666,19 +666,19 @@ bool S57Writer::WritePrimitive( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
     if( poGeom != nullptr && wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
     {
-        OGRPoint *poPoint = poGeom->toPoint();
+        const OGRPoint *poPoint = poGeom->toPoint();
 
         CPLAssert( poFeature->GetFieldAsInteger( "RCNM") == RCNM_VI
                    || poFeature->GetFieldAsInteger( "RCNM") == RCNM_VC );
 
-        double dfX = poPoint->getX();
-        double dfY = poPoint->getY();
-        double dfZ = poPoint->getZ();
+        const double adfX[1] = { poPoint->getX() };
+        const double adfY[1] = { poPoint->getY() };
+        const double adfZ[1] = { poPoint->getZ() };
 
-        if( dfZ == 0.0 )
-            WriteGeometry( poRec, 1, &dfX, &dfY, nullptr );
+        if( adfZ[0] == 0.0 )
+            WriteGeometry( poRec, 1, &adfX[0], &adfY[0], nullptr );
         else
-            WriteGeometry( poRec, 1, &dfX, &dfY, &dfZ );
+            WriteGeometry( poRec, 1, &adfX[0], &adfY[0], &adfZ[0] );
     }
 
 /* -------------------------------------------------------------------- */
@@ -687,7 +687,7 @@ bool S57Writer::WritePrimitive( OGRFeature *poFeature )
     else if( poGeom != nullptr
              && wkbFlatten(poGeom->getGeometryType()) == wkbMultiPoint )
     {
-        OGRMultiPoint *poMP = poGeom->toMultiPoint();
+        const OGRMultiPoint *poMP = poGeom->toMultiPoint();
         const int nVCount = poMP->getNumGeometries();
 
         CPLAssert( poFeature->GetFieldAsInteger( "RCNM") == RCNM_VI
@@ -699,7 +699,7 @@ bool S57Writer::WritePrimitive( OGRFeature *poFeature )
 
         for( int i = 0; i < nVCount; i++ )
         {
-            OGRPoint *poPoint = poMP->getGeometryRef( i )->toPoint();
+            const OGRPoint *poPoint = poMP->getGeometryRef( i );
             padfX[i] = poPoint->getX();
             padfY[i] = poPoint->getY();
             padfZ[i] = poPoint->getZ();
@@ -718,7 +718,7 @@ bool S57Writer::WritePrimitive( OGRFeature *poFeature )
     else if( poGeom != nullptr
              && wkbFlatten(poGeom->getGeometryType()) == wkbLineString )
     {
-        OGRLineString *poLS = poGeom->toLineString();
+        const OGRLineString *poLS = poGeom->toLineString();
         const int nVCount = poLS->getNumPoints();
 
         CPLAssert( poFeature->GetFieldAsInteger( "RCNM") == RCNM_VE );

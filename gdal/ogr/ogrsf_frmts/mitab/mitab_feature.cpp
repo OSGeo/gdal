@@ -403,11 +403,9 @@ int TABFeature::ReadRecordFromDATFile(TABDATFile *poDATFile)
             int nYear = 0;
             int nMonth = 0;
             int nDay = 0;
-            int status = 0;
-
-            if((status =
-                    poDATFile->ReadDateField(poDATFile->GetFieldWidth(iField),
-                                             &nYear, &nMonth, &nDay)) == 0)
+            const int status = poDATFile->ReadDateField(
+                poDATFile->GetFieldWidth(iField), &nYear, &nMonth, &nDay);
+            if( status == 0)
             {
                 SetField(iField, nYear, nMonth, nDay, 0, 0, 0, 0);
             }
@@ -1834,14 +1832,14 @@ void TABCustomPoint::SetSymbolFromStyle(OGRStyleSymbol* poSymbolStyle)
     {
         const int nSymbolStyle = atoi(pszSymbolId+19);
         SetCustomSymbolStyle(static_cast<GByte>(nSymbolStyle));
-        
+
         const char* pszPtr = pszSymbolId+19;
-        while (*pszPtr != '-') 
+        while (*pszPtr != '-')
         {
             pszPtr++;
         }
         pszPtr++;
-        
+
         char szSymbolName[256] = "";
         int  i;
         for(i=0; i < 255 && *pszPtr != '\0' && *pszPtr != ',' && *pszPtr != '"'; i++, pszPtr++)
@@ -1985,7 +1983,7 @@ OGRLineString *TABPolyline::GetPartRef(int nPartIndex)
         if (nPartIndex >= 0 &&
             nPartIndex < poMultiLine->getNumGeometries())
         {
-            return poMultiLine->getGeometryRef(nPartIndex)->toLineString();
+            return poMultiLine->getGeometryRef(nPartIndex);
         }
         else
             return nullptr;
@@ -2183,7 +2181,7 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
 
         GInt32 nCoordBlockPtr = poPLineHdr->m_nCoordBlockPtr;
         const GUInt32 nCoordDataSize = poPLineHdr->m_nCoordDataSize;
-        if( nCoordDataSize > 1024 * 1024 && 
+        if( nCoordDataSize > 1024 * 1024 &&
             nCoordDataSize > poMapFile->GetFileSize() )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -2306,7 +2304,7 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         }
         const GUInt32 nMinimumBytesForSections =
                                 nMinSizeOfSection * numLineSections;
-        if( nMinimumBytesForSections > 1024 * 1024 && 
+        if( nMinimumBytesForSections > 1024 * 1024 &&
             nMinimumBytesForSections > poMapFile->GetFileSize() )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -2343,7 +2341,7 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
 
         const GUInt32 nMinimumBytesForPoints =
                         (bComprCoord ? 4 : 8) * numPointsTotal;
-        if( nMinimumBytesForPoints > 1024 * 1024 && 
+        if( nMinimumBytesForPoints > 1024 * 1024 &&
             nMinimumBytesForPoints > poMapFile->GetFileSize() )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -2891,7 +2889,7 @@ int TABPolyline::GetCenter( double &dX, double &dY )
         {
             OGRMultiLineString *poMultiLine = poGeom->toMultiLineString();
             if (poMultiLine->getNumGeometries() > 0)
-                poLine = poMultiLine->getGeometryRef(0)->toLineString();
+                poLine = poMultiLine->getGeometryRef(0);
         }
 
         if (poLine && poLine->getNumPoints() > 0)
@@ -3153,7 +3151,7 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         }
         const GUInt32 nMinimumBytesForSections =
                                 nMinSizeOfSection * numLineSections;
-        if( nMinimumBytesForSections > 1024 * 1024 && 
+        if( nMinimumBytesForSections > 1024 * 1024 &&
             nMinimumBytesForSections > poMapFile->GetFileSize() )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -3188,7 +3186,7 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
 
         const GUInt32 nMinimumBytesForPoints =
                         (bComprCoord ? 4 : 8) * numPointsTotal;
-        if( nMinimumBytesForPoints > 1024 * 1024 && 
+        if( nMinimumBytesForPoints > 1024 * 1024 &&
             nMinimumBytesForPoints > poMapFile->GetFileSize() )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -3698,7 +3696,7 @@ OGRLinearRing *TABRegion::GetRingRef(int nRequestedRingIndex)
         {
             OGRPolygon *poPolygon = nullptr;
             if (poMultiPolygon)
-                poPolygon = poMultiPolygon->getGeometryRef(iPoly)->toPolygon();
+                poPolygon = poMultiPolygon->getGeometryRef(iPoly);
             else
                 poPolygon = poGeom->toPolygon();
 
@@ -3758,7 +3756,7 @@ GBool TABRegion::IsInteriorRing(int nRequestedRingIndex)
         {
             OGRPolygon* poPolygon = nullptr;
             if (poMultiPolygon)
-                poPolygon = poMultiPolygon->getGeometryRef(iPoly)->toPolygon();
+                poPolygon = poMultiPolygon->getGeometryRef(iPoly);
             else
                 poPolygon = poGeom->toPolygon();
 
@@ -3893,7 +3891,7 @@ int TABRegion::GetCenter( double &dX, double &dY )
         {
             OGRMultiPolygon *poMultiPolygon = poGeom->toMultiPolygon();
             if (poMultiPolygon->getNumGeometries() > 0)
-                poPolygon = poMultiPolygon->getGeometryRef(0)->toPolygon();
+                poPolygon = poMultiPolygon->getGeometryRef(0);
         }
         else if (wkbFlatten(poGeom->getGeometryType()) == wkbPolygon)
         {
@@ -6546,10 +6544,10 @@ int TABMultiPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
          * Copy data from poObjHdr
          *------------------------------------------------------------*/
         TABMAPObjMultiPoint *poMPointHdr = cpl::down_cast<TABMAPObjMultiPoint *>(poObjHdr);
- 
+
         const GUInt32 nMinimumBytesForPoints =
                         (bComprCoord ? 4 : 8) * poMPointHdr->m_nNumPoints;
-        if( nMinimumBytesForPoints > 1024 * 1024 && 
+        if( nMinimumBytesForPoints > 1024 * 1024 &&
             nMinimumBytesForPoints > poMapFile->GetFileSize() )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -8412,17 +8410,20 @@ const char *ITABFeaturePen::GetPenStyleString() const
         break;
     }
 
+    // note - MapInfo renders all lines using a round pen cap and round pen join
+    // which are not the default values for OGR pen cap/join styles. So we need to explicitly
+    // include the cap/j parameters in these strings
     if (strlen(szPattern) != 0)
     {
       if(m_sPenDef.nPointWidth > 0)
         pszStyle =CPLSPrintf("PEN(w:%dpt,c:#%6.6x,id:\"mapinfo-pen-%d,"
-                             "ogr-pen-%d\",p:\"%spx\")",
+                             "ogr-pen-%d\",p:\"%spx\",cap:r,j:r)",
                              static_cast<int>(GetPenWidthPoint()),
                              m_sPenDef.rgbColor,GetPenPattern(),nOGRStyle,
                              szPattern);
       else
         pszStyle =CPLSPrintf("PEN(w:%dpx,c:#%6.6x,id:\"mapinfo-pen-%d,"
-                             "ogr-pen-%d\",p:\"%spx\")",
+                             "ogr-pen-%d\",p:\"%spx\",cap:r,j:r)",
                              GetPenWidthPixel(),
                              m_sPenDef.rgbColor,GetPenPattern(),nOGRStyle,
                              szPattern);
@@ -8431,12 +8432,12 @@ const char *ITABFeaturePen::GetPenStyleString() const
     {
       if(m_sPenDef.nPointWidth > 0)
         pszStyle =CPLSPrintf("PEN(w:%dpt,c:#%6.6x,id:\""
-                             "mapinfo-pen-%d,ogr-pen-%d\")",
+                             "mapinfo-pen-%d,ogr-pen-%d\",cap:r,j:r)",
                              static_cast<int>(GetPenWidthPoint()),
                              m_sPenDef.rgbColor,GetPenPattern(),nOGRStyle);
       else
         pszStyle =CPLSPrintf("PEN(w:%dpx,c:#%6.6x,id:\""
-                             "mapinfo-pen-%d,ogr-pen-%d\")",
+                             "mapinfo-pen-%d,ogr-pen-%d\",cap:r,j:r)",
                              GetPenWidthPixel(),
                              m_sPenDef.rgbColor,GetPenPattern(),nOGRStyle);
     }
@@ -8916,59 +8917,73 @@ ITABFeatureSymbol::ITABFeatureSymbol() :
 const char *ITABFeatureSymbol::GetSymbolStyleString(double dfAngle) const
 {
     const char *pszStyle = nullptr;
-    int    nOGRStyle  = 1;
+    int    nOGRStyle  = 0;
     /* char szPattern[20]; */
     int nAngle = 0;
     /* szPattern[0] = '\0'; */
 
-    if (m_sSymbolDef.nSymbolNo == 31)
-      nOGRStyle = 0;
-    else if (m_sSymbolDef.nSymbolNo == 32)
-      nOGRStyle = 6;
-    else if (m_sSymbolDef.nSymbolNo == 33)
+    switch (m_sSymbolDef.nSymbolNo)
     {
-        nAngle = 45;
-        nOGRStyle = 6;
-    }
-    else if (m_sSymbolDef.nSymbolNo == 34)
-      nOGRStyle = 4;
-    else if (m_sSymbolDef.nSymbolNo == 35)
-      nOGRStyle = 10;
-    else if (m_sSymbolDef.nSymbolNo == 36)
-      nOGRStyle = 8;
-    else if (m_sSymbolDef.nSymbolNo == 37)
-    {
-        nAngle = 180;
-        nOGRStyle = 8;
-    }
-    else if (m_sSymbolDef.nSymbolNo == 38)
-      nOGRStyle = 5;
-    else if (m_sSymbolDef.nSymbolNo == 39)
-    {
+      case 31:
+        // this is actually a "null" symbol in MapInfo!
+        nOGRStyle = 0;
+        break;
+      case 32: // filled square
+        nOGRStyle = 5;
+        break;
+      case 33: // filled diamond
         nAngle = 45;
         nOGRStyle = 5;
-    }
-    else if (m_sSymbolDef.nSymbolNo == 40)
-      nOGRStyle = 3;
-    else if (m_sSymbolDef.nSymbolNo == 41)
-      nOGRStyle = 9;
-    else if (m_sSymbolDef.nSymbolNo == 42)
-      nOGRStyle = 7;
-    else if (m_sSymbolDef.nSymbolNo == 43)
-    {
+        break;
+      case 34: // filled circle
+        nOGRStyle = 3;
+        break;
+      case 35: // filled star
+        nOGRStyle = 9;
+        break;
+      case 36: // filled upward pointing triangle
+        nOGRStyle = 7;
+        break;
+      case 37: // filled downward pointing triangle
         nAngle = 180;
         nOGRStyle = 7;
+        break;
+      case 38:  // hollow square
+        nOGRStyle = 4;
+        break;
+      case 39: // hollow diamond
+        nAngle = 45;
+        nOGRStyle = 4;
+        break;
+      case 40: // hollow circle
+        nOGRStyle = 2;
+        break;
+      case 41: // hollow star
+        nOGRStyle = 8;
+        break;
+      case 42: // hollow upward pointing triangle
+        nOGRStyle = 6;
+        break;
+      case 43: // hollow downward pointing triangle
+        nAngle = 180;
+        nOGRStyle = 6;
+        break;
+      case 44: // filled square (with shadow)
+        nOGRStyle = 5;
+        break;
+      case 45: // filled upward triangle (with shadow)
+        nOGRStyle = 7;
+        break;
+      case 46: // filled circle (with shadow)
+        nOGRStyle = 3;
+        break;
+      case 49: // crossed lines
+        nOGRStyle = 0;
+        break;
+      case 50: // X crossed lines
+        nOGRStyle = 1;
+        break;
     }
-    else if (m_sSymbolDef.nSymbolNo == 44)
-      nOGRStyle = 6;
-    else if (m_sSymbolDef.nSymbolNo == 45)
-      nOGRStyle = 8;
-    else if (m_sSymbolDef.nSymbolNo == 46)
-      nOGRStyle = 4;
-    else if (m_sSymbolDef.nSymbolNo == 49)
-      nOGRStyle = 1;
-    else if (m_sSymbolDef.nSymbolNo == 50)
-      nOGRStyle = 2;
 
     nAngle += static_cast<int>(dfAngle);
 
@@ -9011,37 +9026,37 @@ void ITABFeatureSymbol::SetSymbolFromStyle(OGRStyleSymbol* poSymbolStyle)
             switch (nSymbolId)
             {
               case 0:
-                SetSymbolNo(31);
-                break;
-              case 1:
                 SetSymbolNo(49);
                 break;
-              case 2:
+              case 1:
                 SetSymbolNo(50);
                 break;
-              case 3:
+              case 2:
                 SetSymbolNo(40);
                 break;
-              case 4:
+              case 3:
                 SetSymbolNo(34);
                 break;
-              case 5:
+              case 4:
                 SetSymbolNo(38);
                 break;
-              case 6:
+              case 5:
                 SetSymbolNo(32);
                 break;
-              case 7:
+              case 6:
                 SetSymbolNo(42);
                 break;
-              case 8:
+              case 7:
                 SetSymbolNo(36);
                 break;
-              case 9:
+              case 8:
                 SetSymbolNo(41);
                 break;
-              case 10:
+              case 9:
                 SetSymbolNo(35);
+                break;
+              case 10: // vertical bar -- no mapinfo equivalent, so use crosshairs as closest match
+                SetSymbolNo(49);
                 break;
             }
         }
@@ -9158,7 +9173,7 @@ TABFeatureClass ITABFeatureSymbol::GetSymbolFeatureClass(const char *pszStyleStr
             poStylePart = nullptr;
         }
     }
-    
+
     TABFeatureClass result = TABFCPoint;
 
     // If the no Symbol found, do nothing.

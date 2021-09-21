@@ -56,6 +56,9 @@ static GDALDataset* OGRCloudantDriverOpen( GDALOpenInfo* poOpenInfo )
     if( OGRCloudantDriverIdentify(poOpenInfo) == 0 )
         return nullptr;
 
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("CLOUDANT") )
+        return nullptr;
+
     OGRCloudantDataSource   *poDS = new OGRCloudantDataSource();
 
     if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update ) )
@@ -78,6 +81,9 @@ static GDALDataset* OGRCloudantDriverCreate( const char * pszName,
                                             GDALDataType /* eDT */,
                                             char ** /* papszOptions */ )
 {
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("CLOUDANT") )
+        return nullptr;
+
     OGRCloudantDataSource   *poDS = new OGRCloudantDataSource();
 
     if( !poDS->Open( pszName, TRUE ) )

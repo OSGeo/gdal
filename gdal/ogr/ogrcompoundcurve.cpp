@@ -96,6 +96,16 @@ OGRCompoundCurve& OGRCompoundCurve::operator=( const OGRCompoundCurve& other )
 }
 
 /************************************************************************/
+/*                               clone()                                */
+/************************************************************************/
+
+OGRCompoundCurve *OGRCompoundCurve::clone() const
+
+{
+    return new (std::nothrow) OGRCompoundCurve(*this);
+}
+
+/************************************************************************/
 /*                          getGeometryType()                           */
 /************************************************************************/
 
@@ -125,7 +135,7 @@ const char * OGRCompoundCurve::getGeometryName() const
 /************************************************************************/
 /*                              WkbSize()                               */
 /************************************************************************/
-int OGRCompoundCurve::WkbSize() const
+size_t OGRCompoundCurve::WkbSize() const
 {
     return oCC.WkbSize();
 }
@@ -146,12 +156,12 @@ OGRErr OGRCompoundCurve::addCurveDirectlyFromWkb( OGRGeometry* poSelf,
 /************************************************************************/
 
 OGRErr OGRCompoundCurve::importFromWkb( const unsigned char * pabyData,
-                                        int nSize,
+                                        size_t nSize,
                                         OGRwkbVariant eWkbVariant,
-                                       int& nBytesConsumedOut )
+                                        size_t& nBytesConsumedOut )
 {
     OGRwkbByteOrder eByteOrder = wkbNDR;
-    int nDataOffset = 0;
+    size_t nDataOffset = 0;
     // coverity[tainted_data]
     OGRErr eErr = oCC.importPreambleFromWkb(this, pabyData, nSize, nDataOffset,
                                              eByteOrder, 9, eWkbVariant);
@@ -159,7 +169,7 @@ OGRErr OGRCompoundCurve::importFromWkb( const unsigned char * pabyData,
         return eErr;
 
     eErr =  oCC.importBodyFromWkb(this, pabyData + nDataOffset, nSize,
-                                 FALSE,  // bAcceptCompoundCurve
+                                 false,  // bAcceptCompoundCurve
                                  addCurveDirectlyFromWkb,
                                  eWkbVariant,
                                  nBytesConsumedOut);
@@ -212,24 +222,6 @@ std::string OGRCompoundCurve::exportToWkt(const OGRWktOptions& opts,
                                           OGRErr *err) const
 {
     return oCC.exportToWkt(this, opts, err);
-}
-
-/************************************************************************/
-/*                               clone()                                */
-/************************************************************************/
-
-OGRGeometry *OGRCompoundCurve::clone() const
-{
-    OGRCompoundCurve *poNewCC = new OGRCompoundCurve;
-    poNewCC->assignSpatialReference( getSpatialReference() );
-    poNewCC->flags = flags;
-
-    for( int i = 0; i < oCC.nCurveCount; i++ )
-    {
-        poNewCC->addCurve( oCC.papoCurves[i] );
-    }
-
-    return poNewCC;
 }
 
 /************************************************************************/
@@ -512,7 +504,7 @@ OGRCurve* OGRCompoundCurve::stealCurve( int iCurve )
  * This method is the same as the C function OGR_G_AddGeometry().
  *
  * @param poCurve geometry to add to the container.
- * @param dfToleranceEps tolerance when checking that the first point of a
+ * @param dfToleranceEps relative tolerance when checking that the first point of a
  *                       segment matches then end point of the previous one.
  *                       Default value: 1e-14.
  *
@@ -522,7 +514,7 @@ OGRCurve* OGRCompoundCurve::stealCurve( int iCurve )
 
 OGRErr OGRCompoundCurve::addCurve( OGRCurve* poCurve, double dfToleranceEps )
 {
-    OGRCurve* poClonedCurve = poCurve->clone()->toCurve();
+    OGRCurve* poClonedCurve = poCurve->clone();
     const OGRErr eErr = addCurveDirectly( poClonedCurve, dfToleranceEps );
     if( eErr != OGRERR_NONE )
         delete poClonedCurve;
@@ -544,7 +536,7 @@ OGRErr OGRCompoundCurve::addCurve( OGRCurve* poCurve, double dfToleranceEps )
  * This method is the same as the C function OGR_G_AddGeometryDirectly().
  *
  * @param poCurve geometry to add to the container.
- * @param dfToleranceEps tolerance when checking that the first point of a
+ * @param dfToleranceEps relative tolerance when checking that the first point of a
  *                       segment matches then end point of the previous one.
  *                       Default value: 1e-14.
  *
@@ -595,14 +587,14 @@ OGRErr OGRCompoundCurve::addCurveDirectlyInternal( OGRCurve* poCurve,
         OGRPoint start;
         oCC.papoCurves[oCC.nCurveCount-1]->EndPoint(&oEnd);
         poCurve->StartPoint(&start);
-        if( fabs(oEnd.getX() - start.getX()) > dfToleranceEps ||
-            fabs(oEnd.getY() - start.getY()) > dfToleranceEps ||
-            fabs(oEnd.getZ() - start.getZ()) > dfToleranceEps )
+        if( fabs(oEnd.getX() - start.getX()) > dfToleranceEps * fabs(start.getX()) ||
+            fabs(oEnd.getY() - start.getY()) > dfToleranceEps * fabs(start.getY()) ||
+            fabs(oEnd.getZ() - start.getZ()) > dfToleranceEps * fabs(start.getZ()) )
         {
             poCurve->EndPoint(&start);
-            if( fabs(oEnd.getX() - start.getX()) > dfToleranceEps ||
-                fabs(oEnd.getY() - start.getY()) > dfToleranceEps ||
-                fabs(oEnd.getZ() - start.getZ()) > dfToleranceEps )
+            if( fabs(oEnd.getX() - start.getX()) > dfToleranceEps * fabs(start.getX()) ||
+                fabs(oEnd.getY() - start.getY()) > dfToleranceEps * fabs(start.getY()) ||
+                fabs(oEnd.getZ() - start.getZ()) > dfToleranceEps * fabs(start.getZ()) )
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Non contiguous curves");
                 return OGRERR_FAILURE;

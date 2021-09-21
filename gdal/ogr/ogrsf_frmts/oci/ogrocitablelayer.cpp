@@ -265,17 +265,17 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition( const char * pszTable )
     for( int iRawFld = 0; true; iRawFld++ )
     {
         OGRFieldDefn    oField( "", OFTString);
-        OCIParam     *hParmDesc;
+        OCIParam     *hParamDesc;
         ub2          nOCIType;
         ub4          nOCILen;
 
         nStatus = OCIParamGet( hAttrList, OCI_DTYPE_PARAM,
-                               poSession->hError, (dvoid**)&hParmDesc,
+                               poSession->hError, (dvoid**)&hParamDesc,
                                (ub4) iRawFld+1 );
         if( nStatus != OCI_SUCCESS )
             break;
 
-        if( poSession->GetParmInfo( hParmDesc, &oField, &nOCIType, &nOCILen )
+        if( poSession->GetParamInfo( hParamDesc, &oField, &nOCIType, &nOCILen )
             != CE_None )
             return poDefn;
 

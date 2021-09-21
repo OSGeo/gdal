@@ -85,7 +85,7 @@ toff_t GTIFFWriteDirectory( TIFF *hTIFF, int nSubfileType,
                             const char* pszJPEGQuality,
                             const char* pszJPEGTablesMode,
                             const char* pszNoData,
-                            CPL_UNUSED const uint32* panLercAddCompressionAndVersion,
+                            CPL_UNUSED const uint32_t* panLercAddCompressionAndVersion,
                             bool bDeferStrileArrayWriting,
                             const char *pszWebpLevel)
 
@@ -133,9 +133,7 @@ toff_t GTIFFWriteDirectory( TIFF *hTIFF, int nSubfileType,
                       panExtraSampleValues );
     }
 
-    if( nCompressFlag == COMPRESSION_LZW ||
-        nCompressFlag == COMPRESSION_ADOBE_DEFLATE ||
-        nCompressFlag == COMPRESSION_ZSTD )
+    if( GTIFFSupportsPredictor(nCompressFlag) )
         TIFFSetField( hTIFF, TIFFTAG_PREDICTOR, nPredictor );
 
 /* -------------------------------------------------------------------- */
@@ -180,13 +178,11 @@ toff_t GTIFFWriteDirectory( TIFF *hTIFF, int nSubfileType,
             TIFFSetField( hTIFF, TIFFTAG_WEBP_LEVEL, nWebpLevel );
     }
 
-#ifdef HAVE_LERC
     if( nCompressFlag == COMPRESSION_LERC && panLercAddCompressionAndVersion )
     {
         TIFFSetField(hTIFF, TIFFTAG_LERC_PARAMETERS, 2,
                      panLercAddCompressionAndVersion);
     }
-#endif
 
 /* -------------------------------------------------------------------- */
 /*      Write no data value if we have one.                             */
@@ -657,8 +653,7 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
 /*      Figure out the predictor value to use.                          */
 /* -------------------------------------------------------------------- */
     int nPredictor = PREDICTOR_NONE;
-    if( nCompression == COMPRESSION_LZW ||
-        nCompression == COMPRESSION_ADOBE_DEFLATE )
+    if( GTIFFSupportsPredictor(nCompression) )
     {
         const char* pszPredictor = papszOptions ?
             CSLFetchNameValue(papszOptions, "PREDICTOR") :
@@ -842,6 +837,36 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
         GTIFFBuildOverviewMetadata( pszResampling, poBaseDS, osMetadata );
     }
 
+    const bool bStandardColorInterp =
+        poBaseDS != nullptr &&
+        GTIFFIsStandardColorInterpretation(GDALDataset::ToHandle(poBaseDS),
+                                           static_cast<uint16_t>(nPhotometric),
+                                           nullptr);
+    if( poBaseDS != nullptr && !bStandardColorInterp )
+    {
+        if( osMetadata.size() >= strlen("</GDALMetadata>") &&
+            osMetadata.substr(osMetadata.size() - strlen("</GDALMetadata>")) == "</GDALMetadata>" )
+        {
+            osMetadata.resize(osMetadata.size() - strlen("</GDALMetadata>"));
+        }
+        else
+        {
+            CPLAssert(osMetadata.empty());
+            osMetadata = "<GDALMetadata>";
+        }
+        for( int i = 0; i < poBaseDS->GetRasterCount(); ++i )
+        {
+            const GDALColorInterp eInterp =
+                poBaseDS->GetRasterBand(i + 1)->GetColorInterpretation();
+            osMetadata += CPLSPrintf(
+                "<Item sample=\"%d\" name=\"COLORINTERP\" role=\"colorinterp\">",
+                i);
+            osMetadata += GDALGetColorInterpretationName(eInterp);
+            osMetadata += "</Item>";
+        }
+        osMetadata += "</GDALMetadata>";
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Loop, creating overviews.                                       */
 /* -------------------------------------------------------------------- */
@@ -859,7 +884,7 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
         pszNoData = osNoData.c_str();
     }
 
-    std::vector<uint16> anExtraSamples;
+    std::vector<uint16_t> anExtraSamples;
     for( int i = GTIFFGetMaxColorChannels(nPhotometric)+1; i <= nBands; i++ )
     {
         if( papoBandList[i-1]->GetColorInterpretation() == GCI_AlphaBand )

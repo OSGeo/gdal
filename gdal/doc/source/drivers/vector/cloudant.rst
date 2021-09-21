@@ -7,6 +7,9 @@ Cloudant -- Cloudant
 
 .. build_dependencies:: libcurl
 
+.. deprecated_driver:: version_targeted_for_removal: 3.5
+   env_variable: GDAL_ENABLE_DEPRECATED_DRIVER_CLOUDANT
+
 Cloudant and CouchDB are API compatible and based on the same core
 technology. The geospatial extension for Cloudant is separate to
 GeoCouch. This driver can connect to the a Cloudant service, potentially

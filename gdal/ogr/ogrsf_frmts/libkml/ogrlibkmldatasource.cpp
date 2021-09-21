@@ -174,6 +174,45 @@ static void OGRLIBKMLPreProcessInput( std::string& oKml )
             nPos = nPosAfterCoordinates + strlen("</coordinates>");
         }
     }
+
+    // Some non conformant file may contain MultiPolygon/MultiLineString/MultiPoint
+    // See https://github.com/OSGeo/gdal/issues/4031
+    // Replace them by MultiGeometry.
+    nPos = 0;
+    while( true )
+    {
+        const char* pszStartTag = "<MultiPolygon>";
+        const char* pszEndTag = "";
+        auto nNewPos = oKml.find(pszStartTag, nPos);
+        if( nNewPos != std::string::npos )
+        {
+            pszEndTag = "</MultiPolygon>";
+        }
+        else
+        {
+            pszStartTag = "<MultiLineString>";
+            nNewPos = oKml.find(pszStartTag, nPos);
+            if( nNewPos != std::string::npos )
+            {
+                pszEndTag = "</MultiLineString>";
+            }
+            else
+            {
+                pszStartTag = "<MultiPoint>";
+                nNewPos = oKml.find(pszStartTag, nPos);
+                if( nNewPos != std::string::npos )
+                    pszEndTag = "</MultiPoint>";
+                else
+                    break;
+            }
+        }
+        nPos = nNewPos;
+        oKml.replace(nPos, strlen(pszStartTag), "<MultiGeometry>");
+        nPos = oKml.find(pszEndTag, nPos);
+        if( nPos == std::string::npos )
+            break;
+        oKml.replace(nPos, strlen(pszEndTag), "</MultiGeometry>");
+    }
 }
 
 /************************************************************************/
@@ -446,7 +485,9 @@ void OGRLIBKMLDataSource::WriteKmz()
         OGRLIBKMLPostProcessOutput(oKmlOut);
 
         if( iLayer == 0 && CPLTestBool( pszUseDocKml ) )
-            CPLCreateFileInZip( hZIP, "layers/", nullptr );
+        {
+            CPL_IGNORE_RET_VAL(CPLCreateFileInZip( hZIP, "layers/", nullptr ));
+        }
 
         const char* pszLayerFileName = nullptr;
         if( CPLTestBool( pszUseDocKml ) )

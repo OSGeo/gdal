@@ -3148,7 +3148,7 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteLabel(OGRGeometryH hGeom,
     VSIFPrintfL(m_fp, "Q");
 
     EndObjWithStream();
-    
+
     return nObjectId;
 }
 
@@ -4224,7 +4224,7 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteBlock(GDALDataset* poSrcDS,
                 break;
             }
 
-            if( eErr == CE_None && pfnProgress != nullptr
+            if( pfnProgress != nullptr
                 && !pfnProgress( (iLine+1) / (double)nReqYSize,
                                 nullptr, pProgressData ) )
             {
@@ -4781,7 +4781,7 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "Invalid value for CLIPPING_EXTENT. Should be xmin,ymin,xmax,ymax");
-                bUseClippingExtent = TRUE;
+                bUseClippingExtent = FALSE;
             }
 
             if( bUseClippingExtent )
@@ -4793,14 +4793,14 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
                     {
                         CPLError(CE_Warning, CPLE_AppDefined,
                                 "Cannot use CLIPPING_EXTENT because main raster has a rotated geotransform");
-                        bUseClippingExtent = TRUE;
+                        bUseClippingExtent = FALSE;
                     }
                 }
                 else
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
                                 "Cannot use CLIPPING_EXTENT because main raster has no geotransform");
-                    bUseClippingExtent = TRUE;
+                    bUseClippingExtent = FALSE;
                 }
             }
         }

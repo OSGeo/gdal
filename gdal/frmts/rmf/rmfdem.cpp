@@ -100,10 +100,8 @@ GInt32 INV_INT24 = 0xFF000000L;
 CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static GInt32 AddInt32( GInt32& nTarget, GInt32 nVal )
 {
-    GUInt32 nTargetU = 0;
-    memcpy(&nTargetU, &nTarget, 4);
-    GUInt32 nValU = 0;
-    memcpy(&nValU, &nVal, 4);
+    GUInt32 nTargetU = static_cast<GUInt32>(nTarget);
+    GUInt32 nValU = static_cast<GUInt32>(nVal);
     nTargetU += nValU;
     memcpy(&nTarget, &nTargetU, 4);
     return nTarget;
@@ -125,7 +123,7 @@ size_t RMFDataset::DEMDecompress(const GByte* pabyIn, GUInt32 nSizeIn,
 
     GInt32 iPrev = 0;  // The last data value decoded.
 
-    const char* pabyTempIn  = reinterpret_cast<const char *>(pabyIn);
+    const signed char* pabyTempIn  = reinterpret_cast<const signed char *>(pabyIn);
     GInt32* paiOut = reinterpret_cast<GInt32 *>(pabyOut);
     nSizeOut /= sizeof(GInt32);
 
@@ -605,9 +603,12 @@ size_t RMFDataset::DEMCompress(const GByte* pabyIn, GUInt32 nSizeIn,
     const GUInt32 anDeltaTypeSize[8] = {0,0,4,8,12,16,24,32};
     const GUInt32 nMaxRecordSize = 255 + 32;
 
-    DEMWorkT iMin((poDS == nullptr) ? std::numeric_limits<DEMWorkT>::min() :
-                  static_cast<DEMWorkT>(poDS->sHeader.adfElevMinMax[0]));
-
+    DEMWorkT iMin(std::numeric_limits<DEMWorkT>::min() + 1);
+    if(poDS != nullptr &&
+       poDS->sHeader.adfElevMinMax[0] < poDS->sHeader.adfElevMinMax[1])
+    {
+        iMin = static_cast<DEMWorkT>(poDS->sHeader.adfElevMinMax[0]);
+    }
     GUInt32     nLessCount = 0;
     GUInt32     nRecordSize = 0;
     RmfTypes    eRecordType = TYPE_OUT;

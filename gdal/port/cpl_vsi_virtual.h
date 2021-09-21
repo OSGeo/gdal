@@ -91,7 +91,8 @@ public:
 
     virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess,
-                                    bool bSetError ) = 0;
+                                    bool bSetError,
+                                    CSLConstList papszOptions ) = 0;
     virtual int Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags) = 0;
     virtual int Unlink( const char *pszFilename )
                       { (void) pszFilename; errno=ENOENT; return -1; }
@@ -133,6 +134,10 @@ public:
                                     CSLConstList papszMetadata,
                                     const char* pszDomain,
                                     CSLConstList papszOptions );
+
+    virtual bool    AbortPendingUploads(const char* /*pszFilename*/) { return true;}
+
+    virtual std::string GetStreamingFilename(const std::string& osFilename) const { return osFilename; }
 };
 #endif /* #ifndef DOXYGEN_SKIP */
 

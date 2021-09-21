@@ -26,7 +26,8 @@ Synopsis
         [-unscale] [-scale[_bn] [src_min src_max [dst_min dst_max]]]* [-exponent[_bn] exp_val]*
         [-srcwin xoff yoff xsize ysize] [-epo] [-eco]
         [-projwin ulx uly lrx lry] [-projwin_srs srs_def]
-        [-a_srs srs_def] [-a_ullr ulx uly lrx lry] [-a_nodata value]
+        [-a_srs srs_def] [-a_coord_epoch <epoch>]
+        [-a_ullr ulx uly lrx lry] [-a_nodata value]
         [-a_scale value] [-a_offset value]
         [-nogcp] [-gcp pixel line easting northing [elevation]]*
         |-colorinterp{_bn} {red|green|blue|alpha|gray|undefined}]
@@ -118,9 +119,12 @@ resampling, and rescaling pixels in the process.
 .. option:: -scale [src_min src_max [dst_min dst_max]]
 
     Rescale the input pixels values from the range **src_min** to **src_max**
-    to the range **dst_min** to **dst_max**.  If omitted the output range is 0
+    to the range **dst_min** to **dst_max**. If omitted the output range is 0
     to 255.  If omitted the input range is automatically computed from the
-    source data. -scale can be repeated several times (if specified only once,
+    source data. Note that these values are only used to compute a scale and
+    offset to apply to the input raster values. In particular, src_min and
+    src_max are not used to clip input values.
+    -scale can be repeated several times (if specified only once,
     it also applies to all bands of the output dataset), so as to specify per
     band parameters. It is also possible to use the "-scale_bn" syntax where bn
     is a band number (e.g. "-scale_2" for the 2nd band of the output dataset)
@@ -185,13 +189,22 @@ resampling, and rescaling pixels in the process.
 
 .. option:: -a_srs <srs_def>
 
-    Override the projection for the output file.  The<srs_def> may be any of
-    the usual GDAL/OGR forms, complete WKT, PROJ.4, EPSG:n or a file containing
-    the WKT. No reprojection is done.
+    Override the projection for the output file.
+
+    .. include:: options/srs_def.rst
+
+    .. note:: No reprojection is done.
+
+.. option:: -a_coord_epoch <epoch>
+
+    .. versionadded:: 3.4
+
+    Assign a coordinate epoch, linked with the output SRS. Useful when the
+    output SRS is a dynamic CRS.
 
 .. option:: -a_scale <value>
 
-    Set band scaling value(no modification of pixel values is done)
+    Set band scaling value (no modification of pixel values is done)
 
     .. versionadded:: 2.3
 
@@ -211,7 +224,7 @@ resampling, and rescaling pixels in the process.
 .. option:: -a_nodata <value>
 
     Assign a specified nodata value to output bands. It can
-    be set to <i>none</i> to avoid setting a nodata value to the output file if
+    be set to ``none`` to avoid setting a nodata value to the output file if
     one exists for the source file. Note that, if the input dataset has a
     nodata value, this does not cause pixel values that are equal to that nodata
     value to be changed to the value specified with this option.

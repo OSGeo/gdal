@@ -400,7 +400,7 @@ def test_ogr_fgdb_4():
 
         assert lyr is None, ('failed at iteration %d' % j)
 
-    
+
 ###############################################################################
 # Test DeleteDataSource()
 
@@ -412,7 +412,7 @@ def test_ogr_fgdb_5():
 
     assert not os.path.exists("tmp/test.gdb")
 
-    
+
 ###############################################################################
 # Test adding a layer to an existing feature dataset
 
@@ -498,7 +498,7 @@ def test_ogr_fgdb_8():
         assert lyr_defn.GetFieldIndex(expected_names[i]) == i, \
             ('did not find %s' % expected_names[i])
 
-    
+
 ###############################################################################
 # Test layer name laundering (#4466)
 
@@ -541,7 +541,7 @@ def test_ogr_fgdb_9():
     for i, exp_name in enumerate(expected_names):
         assert ds.GetLayerByIndex(i).GetName() == exp_name, ('did not find %s' % exp_name)
 
-    
+
 ###############################################################################
 # Test SRS support
 
@@ -787,7 +787,7 @@ def test_ogr_fgdb_14():
         ds2 = None
         ds1 = None
 
-    
+
 ###############################################################################
 # Test opening a FGDB with both SRID and LatestSRID set (#5638)
 
@@ -1011,7 +1011,7 @@ def test_ogr_fgdb_19():
     # fails with ERROR 1: Failed to open Geodatabase (The system cannot find the file specified.)
     # File "ogr_fgdb.py", line 1664, in ogr_fgdb_19
     # if ds.StartTransaction(force=True) != 0:
-    if gdaltest.is_travis_branch('ubuntu_1804') or gdaltest.is_travis_branch('ubuntu_1604') or gdaltest.is_travis_branch('trusty_clang') or gdaltest.is_travis_branch('python3') or gdaltest.is_travis_branch('trunk_with_coverage'):
+    if gdaltest.is_travis_branch('ubuntu_2004') or gdaltest.is_travis_branch('ubuntu_1804') or gdaltest.is_travis_branch('ubuntu_1604') or gdaltest.is_travis_branch('trusty_clang') or gdaltest.is_travis_branch('python3') or gdaltest.is_travis_branch('trunk_with_coverage'):
         pytest.skip()
 
     try:
@@ -1081,7 +1081,7 @@ def test_ogr_fgdb_19():
 
     assert os.path.exists('tmp/test.gdb.ogredited')
     assert not os.path.exists('tmp/test.gdb.ogrtmp')
-    
+
 
     ret = lyr.CreateField(ogr.FieldDefn('foobar', ogr.OFTString))
     assert ret == 0
@@ -1506,14 +1506,14 @@ def test_ogr_fgdb_19():
     if ogrtest.openfilegdb_drv is not None:
         ogrtest.openfilegdb_drv.Deregister()
 
-    
+
 # Same, but retry without per-layer copying optimization (in the case
 # this was what was tested in previous step)
 
 
 def test_ogr_fgdb_19bis():
 
-    if gdaltest.is_travis_branch('ubuntu_1804') or gdaltest.is_travis_branch('ubuntu_1604') or gdaltest.is_travis_branch('trusty_clang') or gdaltest.is_travis_branch('python3') or gdaltest.is_travis_branch('trunk_with_coverage'):
+    if gdaltest.is_travis_branch('ubuntu_2004') or gdaltest.is_travis_branch('ubuntu_1804') or gdaltest.is_travis_branch('ubuntu_1604') or gdaltest.is_travis_branch('trusty_clang') or gdaltest.is_travis_branch('python3') or gdaltest.is_travis_branch('trunk_with_coverage'):
         pytest.skip()
 
     (bPerLayerCopyingForTransaction, ds) = ogr_fgdb_19_open_update('tmp/test.gdb')
@@ -1535,7 +1535,7 @@ def test_ogr_fgdb_20():
     if ogrtest.openfilegdb_drv is None:
         pytest.skip()
 
-    if gdaltest.is_travis_branch('ubuntu_1804') or gdaltest.is_travis_branch('ubuntu_1604') or gdaltest.is_travis_branch('trusty_clang') or gdaltest.is_travis_branch('python3') or gdaltest.is_travis_branch('trunk_with_coverage'):
+    if gdaltest.is_travis_branch('ubuntu_2004') or gdaltest.is_travis_branch('ubuntu_1804') or gdaltest.is_travis_branch('ubuntu_1604') or gdaltest.is_travis_branch('trusty_clang') or gdaltest.is_travis_branch('python3') or gdaltest.is_travis_branch('trunk_with_coverage'):
         pytest.skip()
 
     if not os.path.exists('tmp/test.gdb'):
@@ -1920,7 +1920,7 @@ def test_ogr_fgdb_20():
 
     # sys.exit(0)
 
-    
+
 ###############################################################################
 # Test M support
 
@@ -1931,7 +1931,7 @@ def test_ogr_fgdb_21():
         pytest.skip('SDK 1.4 required')
 
     # Fails on MULTIPOINT ZM
-    if gdaltest.is_travis_branch('ubuntu_1804') or gdaltest.is_travis_branch('ubuntu_1604') or gdaltest.is_travis_branch('python3'):
+    if gdaltest.is_travis_branch('ubuntu_2004') or gdaltest.is_travis_branch('ubuntu_1804') or gdaltest.is_travis_branch('ubuntu_1604') or gdaltest.is_travis_branch('python3'):
         pytest.skip()
 
     try:
@@ -1996,7 +1996,7 @@ def test_ogr_fgdb_21():
             feat.DumpReadable()
             pytest.fail(data)
 
-    
+
 ###############################################################################
 # Read curves
 
@@ -2032,7 +2032,7 @@ def test_ogr_fgdb_22():
             print(f.GetGeometryRef().ExportToWkt())
             pytest.fail(f_ref.GetGeometryRef().ExportToWkt())
 
-    
+
 ###############################################################################
 # Test opening '.'
 
@@ -2071,7 +2071,7 @@ def test_ogr_fgdb_24():
             print(f.GetGeometryRef().ExportToIsoWkt())
             pytest.fail(f_ref.GetGeometryRef().ExportToIsoWkt())
 
-    
+
 ###############################################################################
 # Test selecting FID column with OGRSQL
 
@@ -2167,3 +2167,93 @@ def test_ogr_fgdb_alias():
         shutil.rmtree("tmp/alias.gdb")
     except OSError:
         pass
+
+###############################################################################
+# Test reading field domains
+
+
+def test_ogr_fgdb_read_domains():
+
+    ds = gdal.OpenEx('data/filegdb/Domains.gdb', gdal.OF_VECTOR)
+    with gdaltest.error_handler():
+        assert ds.GetFieldDomain('i_dont_exist') is None
+    lyr = ds.GetLayer(0)
+    lyr_defn = lyr.GetLayerDefn()
+
+    fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('MaxSpeed'))
+    assert fld_defn.GetDomainName() == 'SpeedLimit'
+
+    domain = ds.GetFieldDomain('SpeedLimit')
+    assert domain is not None
+    assert domain.GetName() == 'SpeedLimit'
+    assert domain.GetDescription() == 'The maximun speed of the road'
+    assert domain.GetDomainType() == ogr.OFDT_RANGE
+    assert domain.GetFieldType() == fld_defn.GetType()
+    assert domain.GetFieldSubType() == fld_defn.GetSubType()
+    assert domain.GetMinAsDouble() == 40.0
+    assert domain.GetMaxAsDouble() == 100.0
+
+    fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('MedianType'))
+    assert fld_defn.GetDomainName() == 'MedianType'
+
+    domain = ds.GetFieldDomain('MedianType')
+    assert domain is not None
+    assert domain.GetName() == 'MedianType'
+    assert domain.GetDescription() == 'Road median types.'
+    assert domain.GetDomainType() == ogr.OFDT_CODED
+    assert domain.GetFieldType() == fld_defn.GetType()
+    assert domain.GetFieldSubType() == fld_defn.GetSubType()
+    assert domain.GetEnumeration() == {'0': 'None', '1': 'Cement'}
+
+
+
+###############################################################################
+# Test reading layer hierarchy
+
+
+def test_ogr_fgdb_read_layer_hierarchy():
+
+    if False:
+        # Test dataset produced with:
+        from osgeo import ogr, osr
+        srs = osr.SpatialReference()
+        srs.SetFromUserInput("WGS84")
+        ds = ogr.GetDriverByName('FileGDB').CreateDataSource('featuredataset.gdb')
+        ds.CreateLayer('fd1_lyr1', srs=srs, geom_type=ogr.wkbPoint, options=['FEATURE_DATASET=fd1'])
+        ds.CreateLayer('fd1_lyr2', srs=srs, geom_type=ogr.wkbPoint, options=['FEATURE_DATASET=fd1'])
+        srs2 = osr.SpatialReference()
+        srs2.ImportFromEPSG(32631)
+        ds.CreateLayer('standalone', srs=srs2, geom_type=ogr.wkbPoint)
+        srs3 = osr.SpatialReference()
+        srs3.ImportFromEPSG(32632)
+        ds.CreateLayer('fd2_lyr', srs=srs3, geom_type=ogr.wkbPoint, options=['FEATURE_DATASET=fd2'])
+
+    ds = gdal.OpenEx('data/filegdb/featuredataset.gdb')
+    rg = ds.GetRootGroup()
+
+    assert rg.GetGroupNames() == ['fd1', 'fd2']
+    assert rg.OpenGroup('not_existing') is None
+
+    fd1 = rg.OpenGroup('fd1')
+    assert fd1 is not None
+    assert fd1.GetVectorLayerNames() == ['fd1_lyr1', 'fd1_lyr2']
+    assert fd1.OpenVectorLayer('not_existing') is None
+    assert fd1.GetGroupNames() is None
+
+    fd1_lyr1 = fd1.OpenVectorLayer('fd1_lyr1')
+    assert fd1_lyr1 is not None
+    assert fd1_lyr1.GetName() == 'fd1_lyr1'
+
+    fd1_lyr2 = fd1.OpenVectorLayer('fd1_lyr2')
+    assert fd1_lyr2 is not None
+    assert fd1_lyr2.GetName() == 'fd1_lyr2'
+
+    fd2 = rg.OpenGroup('fd2')
+    assert fd2 is not None
+    assert fd2.GetVectorLayerNames() == ['fd2_lyr']
+    fd2_lyr = fd2.OpenVectorLayer('fd2_lyr')
+    assert fd2_lyr is not None
+
+    assert rg.GetVectorLayerNames() == ['standalone']
+    standalone = rg.OpenVectorLayer('standalone')
+    assert standalone is not None

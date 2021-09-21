@@ -97,8 +97,10 @@ static void Usage( const char* pszAdditionalMsg = nullptr, bool bShort = true )
         "               [-mapFieldType srctype|All=dsttype[,srctype2=dsttype2]*]\n"
         "               [-fieldmap identity | index1[,index2]*]\n"
         "               [-splitlistfields] [-maxsubfields val]\n"
+        "               [-resolveDomains]\n"
         "               [-explodecollections] [-zfield field_name]\n"
         "               [-gcp ungeoref_x ungeoref_y georef_x georef_y [elevation]]* [-order n | -tps]\n"
+        "               [[-s_coord_epoch epoch] | [-t_coord_epoch epoch] | [-a_coord_epoch epoch]]\n"
         "               [-nomd] [-mo \"META-TAG=VALUE\"]* [-noNativeData]\n");
 
     if( bShort )

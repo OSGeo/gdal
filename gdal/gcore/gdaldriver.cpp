@@ -156,7 +156,7 @@ void CPL_STDCALL GDALDestroyDriver( GDALDriverH hDriver )
 
 GDALDataset * GDALDriver::Create( const char * pszFilename,
                                   int nXSize, int nYSize, int nBands,
-                                  GDALDataType eType, char ** papszOptions )
+                                  GDALDataType eType, CSLConstList papszOptions )
 
 {
 /* -------------------------------------------------------------------- */
@@ -208,7 +208,7 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
         if( !EQUAL(GetDescription(), "MEM") &&
             !EQUAL(GetDescription(), "Memory") &&
             // ogr2ogr -f PostgreSQL might reach the Delete method of the
-            // PostgisRaster dirver which is undesirable
+            // PostgisRaster driver which is undesirable
             !EQUAL(GetDescription(), "PostgreSQL") )
         {
             QuietDelete( pszFilename );
@@ -234,16 +234,16 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
     if( pfnCreateEx != nullptr )
     {
         poDS = pfnCreateEx( this, pszFilename, nXSize, nYSize, nBands, eType,
-                          papszOptions );
+                          const_cast<char**>(papszOptions) );
     }
     else if( pfnCreate != nullptr )
     {
         poDS = pfnCreate( pszFilename, nXSize, nYSize, nBands, eType,
-                          papszOptions );
+                          const_cast<char**>(papszOptions) );
     }
     else if( nBands < 1 )
     {
-        poDS = pfnCreateVectorOnly( this, pszFilename, papszOptions );
+        poDS = pfnCreateVectorOnly( this, pszFilename, const_cast<char**>(papszOptions) );
     }
 
     if( poDS != nullptr )
@@ -283,7 +283,7 @@ GDALCreate( GDALDriverH hDriver, const char * pszFilename,
         GDALDriver::FromHandle(hDriver)->Create( pszFilename,
                                                     nXSize, nYSize, nBands,
                                                     eBandType,
-                                                    const_cast<char**>(papszOptions) );
+                                                    papszOptions );
 }
 
 /************************************************************************/
@@ -292,13 +292,13 @@ GDALCreate( GDALDriverH hDriver, const char * pszFilename,
 
 /**
  * \brief Create a new multidimensional dataset with this driver.
- * 
+ *
  * Only drivers that advertise the GDAL_DCAP_MULTIDIM_RASTER capability and
  * implement the pfnCreateMultiDimensional method might return a non nullptr
  * GDALDataset.
  *
  * This is the same as the C function GDALCreateMultiDimensional().
- * 
+ *
  * @param pszFilename  the name of the dataset to create.  UTF-8 encoded.
  * @param papszRootGroupOptions driver specific options regarding the creation
  *                              of the root group. Might be nullptr.
@@ -362,7 +362,7 @@ GDALDataset * GDALDriver::CreateMultiDimensional( const char * pszFilename,
 /************************************************************************/
 
 /** \brief Create a new multidimensional dataset with this driver.
- * 
+ *
  * This is the same as the C++ method GDALDriver::CreateMultiDimensional().
  */
 GDALDatasetH GDALCreateMultiDimensional( GDALDriverH hDriver,
@@ -527,7 +527,7 @@ CPLErr GDALDriver::DefaultCopyMasks( GDALDataset *poSrcDS,
 
 GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
                                             GDALDataset * poSrcDS,
-                                            int bStrict, char ** papszOptions,
+                                            int bStrict, CSLConstList papszOptions,
                                             GDALProgressFunc pfnProgress,
                                             void * pProgressData )
 
@@ -709,13 +709,15 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
             eErr = CE_None;
     }
 
-    if( eErr == CE_None
-        && poSrcDS->GetProjectionRef() != nullptr
-        && strlen(poSrcDS->GetProjectionRef()) > 0 )
+    if( eErr == CE_None )
     {
-        eErr = poDstDS->SetProjection( poSrcDS->GetProjectionRef() );
-        if( !bStrict )
-            eErr = CE_None;
+        const auto poSrcSRS = poSrcDS->GetSpatialRef();
+        if( poSrcSRS && !poSrcSRS->IsEmpty() )
+        {
+            eErr = poDstDS->SetSpatialRef(poSrcSRS);
+            if( !bStrict )
+                eErr = CE_None;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -755,7 +757,7 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
     {
         poDstDS->SetMetadata(papszXMP, "xml:XMP");
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Loop copying bands.                                             */
 /* -------------------------------------------------------------------- */
@@ -939,7 +941,7 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
 
 GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
                                      GDALDataset * poSrcDS,
-                                     int bStrict, char ** papszOptions,
+                                     int bStrict, CSLConstList papszOptions,
                                      GDALProgressFunc pfnProgress,
                                      void * pProgressData )
 
@@ -953,10 +955,10 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
 /*      it might just be a corrupt file or something.                   */
 /* -------------------------------------------------------------------- */
     const bool bAppendSubdataset =
-        CPLFetchBool(const_cast<const char **>(papszOptions),
+        CPLFetchBool(papszOptions,
                      "APPEND_SUBDATASET", false);
     if( !bAppendSubdataset &&
-        CPLFetchBool(const_cast<const char **>(papszOptions),
+        CPLFetchBool(papszOptions,
                      "QUIET_DELETE_ON_CREATE_COPY", true) )
     {
         // Someone issuing CreateCopy("foo.tif") on a
@@ -976,12 +978,11 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
         CSLPartialFindString(papszOptions, "QUIET_DELETE_ON_CREATE_COPY=");
     if( iIdxQuietDeleteOnCreateCopy >= 0 )
     {
-        //if( papszOptionsToDelete == nullptr )
-            papszOptionsToDelete = CSLDuplicate(papszOptions);
-        papszOptions =
+        papszOptionsToDelete = CSLDuplicate(papszOptions);
+        papszOptionsToDelete =
             CSLRemoveStrings(papszOptionsToDelete, iIdxQuietDeleteOnCreateCopy,
                              1, nullptr);
-        papszOptionsToDelete = papszOptions;
+        papszOptions = papszOptionsToDelete;
     }
 
 /* -------------------------------------------------------------------- */
@@ -994,14 +995,14 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
     if( iIdxInternalDataset >= 0 )
     {
         bInternalDataset =
-            CPLFetchBool(const_cast<const char **>(papszOptions),
+            CPLFetchBool(papszOptions,
                          "_INTERNAL_DATASET", false);
         if( papszOptionsToDelete == nullptr )
             papszOptionsToDelete = CSLDuplicate(papszOptions);
-        papszOptions =
+        papszOptionsToDelete =
             CSLRemoveStrings(papszOptionsToDelete, iIdxInternalDataset,
                              1, nullptr);
-        papszOptionsToDelete = papszOptions;
+        papszOptions = papszOptionsToDelete;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1053,7 +1054,8 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
     if( pfnCreateCopy != nullptr &&
         !CPLTestBool(CPLGetConfigOption("GDAL_DEFAULT_CREATE_COPY", "NO")) )
     {
-        poDstDS = pfnCreateCopy( pszFilename, poSrcDS, bStrict, papszOptions,
+        poDstDS = pfnCreateCopy( pszFilename, poSrcDS, bStrict,
+                                 const_cast<char**>(papszOptions),
                                  pfnProgress, pProgressData );
         if( poDstDS != nullptr )
         {
@@ -1101,7 +1103,7 @@ GDALDatasetH CPL_STDCALL GDALCreateCopy( GDALDriverH hDriver,
 
     return GDALDriver::FromHandle(hDriver)->
         CreateCopy( pszFilename, GDALDataset::FromHandle(hSrcDS),
-                    bStrict, const_cast<char**>(papszOptions),
+                    bStrict, papszOptions,
                     pfnProgress, pProgressData );
 }
 

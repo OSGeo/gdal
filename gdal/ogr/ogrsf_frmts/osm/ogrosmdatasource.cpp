@@ -60,7 +60,6 @@
 #include "ogr_feature.h"
 #include "ogr_geometry.h"
 #include "ogr_p.h"
-#include "ogr_sqlite.h"
 #include "ogrlayerdecorator.h"
 #include "ogrsf_frmts.h"
 #include "ogrsqliteexecutesql.h"
@@ -565,7 +564,7 @@ Bucket* OGROSMDataSource::AllocBucket( int iBucket )
         if( psPrevBucket->u.pabyBitmap == nullptr )
             psPrevBucket->u.pabyBitmap =
                 reinterpret_cast<GByte *>(VSI_CALLOC_VERBOSE(1, knPAGE_SIZE));
-        GByte* pabyBitmap = psPrevBucket->u.pabyBitmap; 
+        GByte* pabyBitmap = psPrevBucket->u.pabyBitmap;
         Bucket* psBucket = GetBucket( iBucket );
         if( pabyBitmap != nullptr )
         {
@@ -733,7 +732,7 @@ bool OGROSMDataSource::IndexPointCustom(OSMNode* psNode)
     const int nBucket = static_cast<int>(psNode->nID / NODE_PER_BUCKET);
     const int nOffInBucket = static_cast<int>(psNode->nID % NODE_PER_BUCKET);
     const int nOffInBucketReduced = nOffInBucket >> NODE_PER_SECTOR_SHIFT;
-    const int nOffInBucketReducedRemainer =
+    const int nOffInBucketReducedRemainder =
         nOffInBucket & ((1 << NODE_PER_SECTOR_SHIFT) - 1);
 
     Bucket* psBucket = GetBucket(nBucket);
@@ -741,7 +740,7 @@ bool OGROSMDataSource::IndexPointCustom(OSMNode* psNode)
     if( !bCompressNodes )
     {
         const int nBitmapIndex = nOffInBucketReduced / 8;
-        const int nBitmapRemainer = nOffInBucketReduced % 8;
+        const int nBitmapRemainder = nOffInBucketReduced % 8;
         if( psBucket->u.pabyBitmap == nullptr )
         {
             psBucket = AllocBucket(nBucket);
@@ -749,7 +748,7 @@ bool OGROSMDataSource::IndexPointCustom(OSMNode* psNode)
                 return false;
         }
         CPLAssert( psBucket->u.pabyBitmap != nullptr );
-        psBucket->u.pabyBitmap[nBitmapIndex] |= (1 << nBitmapRemainer);
+        psBucket->u.pabyBitmap[nBitmapIndex] |= (1 << nBitmapRemainder);
     }
 
     if( nBucket != nBucketOld )
@@ -780,7 +779,7 @@ bool OGROSMDataSource::IndexPointCustom(OSMNode* psNode)
     }
 
     LonLat* psLonLat = reinterpret_cast<LonLat*>(
-        pabySector + sizeof(LonLat) * nOffInBucketReducedRemainer);
+        pabySector + sizeof(LonLat) * nOffInBucketReducedRemainder);
     psLonLat->nLon = DBL_TO_INT(psNode->dfLon);
     psLonLat->nLat = DBL_TO_INT(psNode->dfLat);
 
@@ -1105,9 +1104,9 @@ void OGROSMDataSource::LookupNodesCustom( )
         else
         {
             int nBitmapIndex = nOffInBucketReduced / 8;
-            int nBitmapRemainer = nOffInBucketReduced % 8;
+            int nBitmapRemainder = nOffInBucketReduced % 8;
             if( psBucket->u.pabyBitmap == nullptr ||
-                !(psBucket->u.pabyBitmap[nBitmapIndex] & (1 << nBitmapRemainer)) )
+                !(psBucket->u.pabyBitmap[nBitmapIndex] & (1 << nBitmapRemainder)) )
                 continue;
         }
 
@@ -1161,7 +1160,7 @@ void OGROSMDataSource::LookupNodesCustomCompressedCase()
         const int nBucket = static_cast<int>(id / NODE_PER_BUCKET);
         const int nOffInBucket = static_cast<int>(id % NODE_PER_BUCKET);
         const int nOffInBucketReduced = nOffInBucket >> NODE_PER_SECTOR_SHIFT;
-        const int nOffInBucketReducedRemainer =
+        const int nOffInBucketReducedRemainder =
             nOffInBucket & ((1 << NODE_PER_SECTOR_SHIFT) - 1);
 
         if( nBucket != l_nBucketOld )
@@ -1243,7 +1242,7 @@ void OGROSMDataSource::LookupNodesCustomCompressedCase()
 
         panReqIds[j] = id;
         memcpy(pasLonLatArray + j,
-               pabySector + nOffInBucketReducedRemainer * sizeof(LonLat),
+               pabySector + nOffInBucketReducedRemainder * sizeof(LonLat),
                sizeof(LonLat));
 
         if( pasLonLatArray[j].nLon || pasLonLatArray[j].nLat )
@@ -1278,11 +1277,11 @@ void OGROSMDataSource::LookupNodesCustomNonCompressedCase()
         const int nBucket = static_cast<int>(id / NODE_PER_BUCKET);
         const int nOffInBucket = static_cast<int>(id % NODE_PER_BUCKET);
         const int nOffInBucketReduced = nOffInBucket >> NODE_PER_SECTOR_SHIFT;
-        const int nOffInBucketReducedRemainer =
+        const int nOffInBucketReducedRemainder =
             nOffInBucket & ((1 << NODE_PER_SECTOR_SHIFT) - 1);
 
         const int nBitmapIndex = nOffInBucketReduced / 8;
-        const int nBitmapRemainer = nOffInBucketReduced % 8;
+        const int nBitmapRemainder = nOffInBucketReduced % 8;
 
         if( psBucket == nullptr || nBucket != l_nBucketOld )
         {
@@ -1318,12 +1317,12 @@ void OGROSMDataSource::LookupNodesCustomNonCompressedCase()
             nSectorBase += abyBitsCount[psBucket->u.pabyBitmap[k]];
         }
         int nSector = nSectorBase;
-        if( nBitmapRemainer )
+        if( nBitmapRemainder )
         {
             assert(psBucket->u.pabyBitmap);
             nSector +=
                 abyBitsCount[psBucket->u.pabyBitmap[nBitmapIndex] &
-                             ((1 << nBitmapRemainer) - 1)];
+                             ((1 << nBitmapRemainder) - 1)];
         }
 
         const GIntBig nNewOffset = psBucket->nOff + nSector * SECTOR_SIZE;
@@ -1340,7 +1339,7 @@ void OGROSMDataSource::LookupNodesCustomNonCompressedCase()
 
         const size_t nOffsetInDiskSector =
             static_cast<size_t>(nNewOffset - nOldOffset) +
-            nOffInBucketReducedRemainer * sizeof(LonLat);
+            nOffInBucketReducedRemainder * sizeof(LonLat);
         if( nValidBytes < sizeof(LonLat) ||
             nOffsetInDiskSector > nValidBytes - sizeof(LonLat) )
         {
@@ -2681,6 +2680,7 @@ void OGROSMDataSource::ProcessPolygonsStandalone()
             int nBlobSize = sqlite3_column_bytes(pahSelectWayStmt[0], 1);
             const void* blob = sqlite3_column_blob(pahSelectWayStmt[0], 1);
 
+            // coverity[tainted_data]
             UncompressWay(
                 nBlobSize, static_cast<const GByte*>(blob),
                 nullptr, m_asLonLatCache, &nTags, pasTags, &sInfo );
@@ -3611,13 +3611,14 @@ bool OGROSMDataSource::ParseConf( char** papszOpenOptionsIn )
                 CSLDestroy(papszTokens2);
             }
             else if( CSLCount(papszTokens) == 2 &&
-                     strcmp(papszTokens[0], "unsignificant") == 0 )
+                     (strcmp(papszTokens[0], "unsignificant") == 0 ||
+                      strcmp(papszTokens[0], "insignificant") == 0) )
             {
                 char** papszTokens2 =
                     CSLTokenizeString2(papszTokens[1], ",", 0);
                 for(int i=0;papszTokens2[i] != nullptr;i++)
                 {
-                    papoLayers[iCurLayer]->AddUnsignificantKey(papszTokens2[i]);
+                    papoLayers[iCurLayer]->AddInsignificantKey(papszTokens2[i]);
                 }
                 CSLDestroy(papszTokens2);
             }

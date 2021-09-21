@@ -57,7 +57,7 @@ int PDFDataset::OpenVectorLayers(GDALPDFDictionary* poPageDict)
     }
 
     GetCatalog();
-    if( poCatalogObject == nullptr )
+    if( poCatalogObject == nullptr || poCatalogObject->GetType() != PDFObjectType_Dictionary )
         return FALSE;
 
     GDALPDFObject* poContents = poPageDict->Get("Contents");
@@ -1414,8 +1414,8 @@ OGRGeometry* PDFDataset::BuildGeometry(std::vector<double>& oCoords,
 
         if (poCenter == nullptr && poMLS != nullptr && poMLS->getNumGeometries() == 2)
         {
-            OGRLineString* poLS1 = poMLS->getGeometryRef(0)->toLineString();
-            OGRLineString* poLS2 = poMLS->getGeometryRef(1)->toLineString();
+            const OGRLineString* poLS1 = poMLS->getGeometryRef(0);
+            const OGRLineString* poLS2 = poMLS->getGeometryRef(1);
 
             // Recognize points as written by GDAL (ogr-sym-0: cross (+) ).
             if (poLS1->getNumPoints() == 2 && poLS2->getNumPoints() == 2 &&

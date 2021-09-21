@@ -32,7 +32,7 @@
 
 #include "cpl_json_header.h"
 #include "cpl_string.h"
-#include <ogr_core.h>
+#include "ogr_core.h"
 #include "ogrsf_frmts.h"
 
 #include "ogrgeojsonutils.h"

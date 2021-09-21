@@ -207,7 +207,7 @@ int CTiledChannel::ReadBlock( int iBlock, void *buffer,
 
     if( iBlock < 0 || iBlock >= nTileCount )
     {
-        return ThrowPCIDSKException(0, "Requested non-existant block (%d)",
+        return ThrowPCIDSKException(0, "Requested non-existent block (%d)",
                               iBlock );
     }
 
@@ -344,7 +344,7 @@ int CTiledChannel::WriteBlock( int iBlock, void *buffer )
 
     if( iBlock < 0 || iBlock >= nTileCount )
     {
-        return ThrowPCIDSKException(0, "Requested non-existant block (%d)",
+        return ThrowPCIDSKException(0, "Requested non-existent block (%d)",
                               iBlock );
     }
 
@@ -378,7 +378,7 @@ int CTiledChannel::WriteBlock( int iBlock, void *buffer )
     const char * compression = mpoTileLayer->GetCompressType();
 
 /* -------------------------------------------------------------------- */
-/*      The simpliest case it an uncompressed direct and complete       */
+/*      The simplest case it an uncompressed direct and complete       */
 /*      tile read into the destination buffer.                          */
 /* -------------------------------------------------------------------- */
     if (strcmp(compression, "NONE") == 0)
@@ -504,7 +504,7 @@ void CTiledChannel::RLEDecompressBlock( PCIDSKBuffer &oCompressedData,
 
 /* -------------------------------------------------------------------- */
 /*      Process till we are out of source data, or our destination      */
-/*      buffer is full.  These conditions should be satisified at       */
+/*      buffer is full.  These conditions should be satisfied at       */
 /*      the same time!                                                  */
 /* -------------------------------------------------------------------- */
     while( src_offset + 1 + nPixelSize <= oCompressedData.buffer_size
@@ -580,7 +580,7 @@ void CTiledChannel::RLECompressBlock( PCIDSKBuffer &oUncompressedData,
     uint8  *src = (uint8 *) oUncompressedData.buffer;
 
 /* -------------------------------------------------------------------- */
-/*      Loop till input exausted.                                       */
+/*      Loop till input exhausted.                                       */
 /* -------------------------------------------------------------------- */
     while( src_offset < src_bytes )
     {
@@ -721,7 +721,7 @@ void CTiledChannel::JPEGCompressBlock( PCIDSKBuffer &oDecompressedData,
         quality = atoi(compression + 4);
 
 /* -------------------------------------------------------------------- */
-/*      Make the output buffer plent big to hold any conceivable        */
+/*      Make the output buffer plenty big to hold any conceivable        */
 /*      result.                                                         */
 /* -------------------------------------------------------------------- */
     oCompressedData.SetSize( oDecompressedData.buffer_size * 2 + 1000 );

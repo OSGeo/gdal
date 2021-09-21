@@ -455,54 +455,47 @@ retry:
     if( poObj == nullptr )
         return nullptr;
 
-    json_object* poSubObj = nullptr;
-    if( pszProductType != nullptr &&
-        (poSubObj = CPL_json_object_object_get(poObj, pszProductType)) != nullptr )
+    json_object* poSubObj = CPL_json_object_object_get(poObj,
+                               pszProductType ? pszProductType : "visual");
+    if( poSubObj == nullptr )
     {
-       /* do nothing */
-    }
-    else if( pszProductType != nullptr && !EQUAL(pszProductType, "LIST") &&
-        (poSubObj = CPL_json_object_object_get(poObj, pszProductType)) == nullptr )
-    {
-       CPLError(CE_Failure, CPLE_AppDefined, "Cannot find asset %s", pszProductType);
-       json_object_put(poObj);
-       return nullptr;
-    }
-    else if( pszProductType == nullptr &&
-             (poSubObj = CPL_json_object_object_get(poObj, "visual")) != nullptr )
-    {
-        /* do nothing */
-    }
-    else
-    {
-        json_object_iter it;
-        it.key = nullptr;
-        it.val = nullptr;
-        it.entry = nullptr;
-        char** papszSubdatasets = nullptr;
-        int nSubDataset = 0;
-        json_object_object_foreachC( poObj, it )
+        if( pszProductType != nullptr && !EQUAL(pszProductType, "LIST") )
         {
-            ++nSubDataset;
-            papszSubdatasets = CSLSetNameValue(papszSubdatasets,
-                    CPLSPrintf("SUBDATASET_%d_NAME", nSubDataset),
-                    CPLSPrintf("Scene=%s of item types %s, asset %s",
-                               osScene.c_str(), pszCatalog, it.key));
-            papszSubdatasets = CSLSetNameValue(papszSubdatasets,
-                    CPLSPrintf("SUBDATASET_%d_DESC", nSubDataset),
-                    CPLSPrintf("PLScenes:version=Data_V1,itemtypes=%s,scene=%s,asset=%s",
-                               pszCatalog, osScene.c_str(), it.key));
+           CPLError(CE_Failure, CPLE_AppDefined, "Cannot find asset %s", pszProductType);
+           json_object_put(poObj);
         }
-        json_object_put(poObj);
-        if( nSubDataset != 0 )
+        else
         {
-            GDALDataset* poDS = new OGRPLScenesDataV1Dataset();
-            poDS->SetMetadata(papszSubdatasets, "SUBDATASETS");
-            CSLDestroy(papszSubdatasets);
-            return poDS;
+            json_object_iter it;
+            it.key = nullptr;
+            it.val = nullptr;
+            it.entry = nullptr;
+            char** papszSubdatasets = nullptr;
+            int nSubDataset = 0;
+            json_object_object_foreachC( poObj, it )
+            {
+                ++nSubDataset;
+                papszSubdatasets = CSLSetNameValue(papszSubdatasets,
+                        CPLSPrintf("SUBDATASET_%d_NAME", nSubDataset),
+                        CPLSPrintf("Scene=%s of item types %s, asset %s",
+                                   osScene.c_str(), pszCatalog, it.key));
+                papszSubdatasets = CSLSetNameValue(papszSubdatasets,
+                        CPLSPrintf("SUBDATASET_%d_DESC", nSubDataset),
+                        CPLSPrintf("PLScenes:version=Data_V1,itemtypes=%s,scene=%s,asset=%s",
+                                   pszCatalog, osScene.c_str(), it.key));
+            }
+            json_object_put(poObj);
+            if( nSubDataset != 0 )
+            {
+                GDALDataset* poDS = new OGRPLScenesDataV1Dataset();
+                poDS->SetMetadata(papszSubdatasets, "SUBDATASETS");
+                CSLDestroy(papszSubdatasets);
+                return poDS;
+            }
         }
         return nullptr;
     }
+
     if( json_object_get_type(poSubObj) != json_type_object )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find link");
@@ -578,7 +571,7 @@ retry:
     if( bUseVSICURL && !(STARTS_WITH(m_osBaseURL, "/vsimem/")) )
     {
         char* pszEscapedURL = CPLEscapeString(osRasterURL, -1, CPLES_URL);
-        CPLString osTmpURL("/vsicurl?use_head=no&max_retry=3&empty_dir=yes&url=");
+        CPLString osTmpURL("/vsicurl?use_head=no&max_retry=3&empty_dir=yes&use_redirect_url_if_no_query_string_params=yes&url=");
         osTmpURL += pszEscapedURL;
         CPLFree(pszEscapedURL);
         CPLDebug("PLSCENES", "URL = %s", osTmpURL.c_str());
@@ -601,6 +594,10 @@ retry:
     papszAllowedDrivers = CSLAddString(papszAllowedDrivers, "PNG");
     papszAllowedDrivers = CSLAddString(papszAllowedDrivers, "JPEG");
     papszAllowedDrivers = CSLAddString(papszAllowedDrivers, "NITF");
+    papszAllowedDrivers = CSLAddString(papszAllowedDrivers, "JP2KAK");
+    papszAllowedDrivers = CSLAddString(papszAllowedDrivers, "JP2ECW");
+    papszAllowedDrivers = CSLAddString(papszAllowedDrivers, "JP2MrSID");
+    papszAllowedDrivers = CSLAddString(papszAllowedDrivers, "JP2OpenJPEG");
     GDALDataset* poOutDS = (GDALDataset*) GDALOpenEx(osRasterURL, GDAL_OF_RASTER,
                                                      papszAllowedDrivers, nullptr, nullptr);
     CSLDestroy(papszAllowedDrivers);

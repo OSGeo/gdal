@@ -7,6 +7,9 @@ CouchDB - CouchDB/GeoCouch
 
 .. build_dependencies:: lilbcurl
 
+.. deprecated_driver:: version_targeted_for_removal: 3.5
+   env_variable: GDAL_ENABLE_DEPRECATED_DRIVER_COUCHDB
+
 This driver can connect to the a CouchDB service, potentially enabled
 with the GeoCouch spatial extension.
 

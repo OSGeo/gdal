@@ -29,14 +29,10 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import ctypes
+
 from osgeo import gdal
 import pytest
-
-
-try:
-    import ctypes
-except ImportError:
-    pass
 
 import gdaltest
 
@@ -66,11 +62,6 @@ def setup():
 
     gdal_handle_init = True
 
-    try:
-        ctypes.cdll
-    except ImportError:
-        pytest.skip('cannot find ctypes')
-
     name = find_libgdal()
     if name is None:
         pytest.skip()
@@ -96,12 +87,12 @@ def setup():
         if dynamic_version != static_version:
             gdal_handle = None
             gdal_handle_stdcall = None
-            pytest.skip('dynamic version(%s) does not match static version (%s)' % (dynamic_version, static_version))
+            pytest.skip(f'dynamic version({dynamic_version}) does not match '
+                        f'static version ({static_version})')
 
         return gdal_handle
     except Exception:
-        print('cannot find gdal shared object')
-        pytest.skip()
+        pytest.skip('cannot find gdal shared object')
 
 ###############################################################################
 # Call GDALDestroyDriverManager()

@@ -1,0 +1,1 @@
+{"zarr_format": 2,"_NCZARR_GROUP": {"dims": {"lon": 3,"lat": 3},"vars": ["dset1","lon","lat"],"groups": ["Group_A"]}}

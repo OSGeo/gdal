@@ -254,8 +254,8 @@ control the behavior of this driver.
    table will be first erased with the SQL TRUNCATE command before
    inserting the first feature. This is an alternative to using the
    -overwrite flag of ogr2ogr, that avoids views based on the table to
-   be destroyed. Typical use case: "ogr2ogr -append PG:dbname=foo
-   abc.shp --config OGR_TRUNCATE YES".
+   be destroyed. Typical use case: ``ogr2ogr -append PG:dbname=foo
+   abc.shp --config OGR_TRUNCATE YES``.
 
 Examples
 ~~~~~~~~
@@ -267,7 +267,7 @@ Examples
 
    ::
 
-      % ogr2ogr -f PostgreSQL PG:dbname=warmerda abc.shp
+      ogr2ogr -f PostgreSQL PG:dbname=warmerda abc.shp
 
 -  This second example loads a political boundaries layer from VPF (via
    the :ref:`OGDI driver <vector.ogdi>`), and renames the layer from the
@@ -276,7 +276,7 @@ Examples
 
    ::
 
-      % ogr2ogr -f PostgreSQL PG:dbname=warmerda \
+      ogr2ogr -f PostgreSQL PG:dbname=warmerda \
               gltp:/vrf/usr4/mpp1/v0eur/vmaplv0/eurnasia \
               -lco OVERWRITE=yes -nln polbndl_bnd 'polbndl@bnd(*)_line'
 
@@ -321,9 +321,9 @@ Examples
 
    ::
 
-      % ogr2ogr -f PostgreSQL PG:dbname=warmerda tiger_michigan \
+      ogr2ogr -f PostgreSQL PG:dbname=warmerda tiger_michigan \
            -lco OVERWRITE=yes CompleteChain
-      % ogr2ogr -update -append -f PostgreSQL PG:dbname=warmerda tiger_ohio \
+      ogr2ogr -update -append -f PostgreSQL PG:dbname=warmerda tiger_ohio \
            CompleteChain
 
 -  This example shows using ogrinfo to evaluate an SQL query statement

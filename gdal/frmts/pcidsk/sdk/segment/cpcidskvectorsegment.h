@@ -68,7 +68,7 @@ namespace PCIDSK
         std::string     GetRst() override { return ""; }
         std::vector<double> GetProjection( std::string &geosys ) override;
         void            SetProjection(std::string geosys,
-                                      std::vector<double> parms) override;
+                                      std::vector<double> params) override;
 
         int             GetFieldCount() override;
         std::string     GetFieldName(int) override;

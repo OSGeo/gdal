@@ -92,6 +92,9 @@ static GDALDataset *OGRARCGENDriverOpen( GDALOpenInfo* poOpenInfo )
     CSLDestroy(papszTokens);
     CPLFree(szFirstLine);
 
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("ARCGEN") )
+        return nullptr;
+
     OGRARCGENDataSource *poDS = new OGRARCGENDataSource();
 
     if( !poDS->Open( poOpenInfo->pszFilename ) )

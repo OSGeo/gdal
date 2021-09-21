@@ -36,6 +36,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <limits>
 #include <memory>
 
 #include "cpl_conv.h"
@@ -372,7 +373,7 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix,
     {
         OGRErr err(OGRERR_NONE);
         OGRWktOptions opts;
-        
+
         opts.variant = wkbVariantIso;
         std::string wkt = exportToWkt(opts, &err);
         if( err == OGRERR_NONE )
@@ -1279,6 +1280,8 @@ int OGR_G_Equal( OGRGeometryH hGeom, OGRGeometryH hOther )
  *
  * This function is the same as the CPP method OGRGeometry::WkbSize().
  *
+ * Use OGR_G_WkbSizeEx() if called on huge geometries (> 2 GB serialized)
+ *
  * @param hGeom handle on the geometry to get the binary size from.
  * @return size of binary representation in bytes.
  */
@@ -1287,6 +1290,41 @@ int OGR_G_WkbSize( OGRGeometryH hGeom )
 
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_WkbSize", 0 );
+
+    const size_t nSize = OGRGeometry::FromHandle(hGeom)->WkbSize();
+    if( nSize > static_cast<size_t>(std::numeric_limits<int>::max()) )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGR_G_WkbSize() would return a value beyond int range. "
+                 "Use OGR_G_WkbSizeEx() instead");
+        return 0;
+    }
+    return static_cast<int>(nSize);
+}
+
+/************************************************************************/
+/*                         OGR_G_WkbSizeEx()                            */
+/************************************************************************/
+/**
+ * \brief Returns size of related binary representation.
+ *
+ * This function returns the exact number of bytes required to hold the
+ * well known binary representation of this geometry object.  Its computation
+ * may be slightly expensive for complex geometries.
+ *
+ * This function relates to the SFCOM IWks::WkbSize() method.
+ *
+ * This function is the same as the CPP method OGRGeometry::WkbSize().
+ *
+ * @param hGeom handle on the geometry to get the binary size from.
+ * @return size of binary representation in bytes.
+ * @since GDAL 3.3
+ */
+
+size_t OGR_G_WkbSizeEx( OGRGeometryH hGeom )
+
+{
+    VALIDATE_POINTER1( hGeom, "OGR_G_WkbSizeEx", 0 );
 
     return OGRGeometry::FromHandle(hGeom)->WkbSize();
 }
@@ -1387,16 +1425,16 @@ void OGR_G_GetEnvelope3D( OGRGeometryH hGeom, OGREnvelope3D *psEnvelope )
  */
 
 OGRErr OGRGeometry::importFromWkb( const GByte* pabyData,
-                                   int nSize, OGRwkbVariant eWkbVariant )
+                                   size_t nSize, OGRwkbVariant eWkbVariant )
 {
-    int nBytesConsumedOutIgnored = -1;
+    size_t nBytesConsumedOutIgnored = 0;
     return importFromWkb( pabyData,
                           nSize, eWkbVariant, nBytesConsumedOutIgnored );
 }
 
 /**
  * \fn OGRErr OGRGeometry::importFromWkb( const unsigned char * pabyData,
- * int nSize, OGRwkbVariant eWkbVariant, int& nBytesConsumedOut );
+ * size_t nSize, OGRwkbVariant eWkbVariant, size_t& nBytesConsumedOut );
  *
  * \brief Assign geometry from well known binary data.
  *
@@ -1418,7 +1456,7 @@ OGRErr OGRGeometry::importFromWkb( const GByte* pabyData,
  * @return OGRERR_NONE if all goes well, otherwise any of
  * OGRERR_NOT_ENOUGH_DATA, OGRERR_UNSUPPORTED_GEOMETRY_TYPE, or
  * OGRERR_CORRUPT_DATA may be returned.
- * 
+ *
  * @since GDAL 2.3
  */
 
@@ -2149,7 +2187,13 @@ OGRGeometry::IsValid() const
 #else
         OGRBoolean bResult = FALSE;
 
-        GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
+        // Some invalid geometries, such as lines with one point, or
+        // rings that do not close, cannot be converted to GEOS.
+        // For validity checking we initialize the GEOS context with
+        // the warning handler as the error handler to avoid emitting
+        // CE_Failure when a geometry cannot be converted to GEOS.
+        GEOSContextHandle_t hGEOSCtxt = initGEOS_r( OGRGEOSWarningHandler, OGRGEOSWarningHandler );
+
         GEOSGeom hThisGeosGeom = exportToGEOS(hGEOSCtxt);
 
         if( hThisGeosGeom != nullptr  )
@@ -3072,7 +3116,7 @@ GEOSGeom OGRGeometry::exportToGEOS(
     else if ( eType == wkbGeometryCollection )
     {
         bool bCanConvertToMultiPoly = true;
-        bool bMustConvertToMultiPoly = true;
+        // bool bMustConvertToMultiPoly = true;
         OGRGeometryCollection* poGC = poLinearGeom->toGeometryCollection();
         for( int iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++ )
         {
@@ -3080,7 +3124,7 @@ GEOSGeom OGRGeometry::exportToGEOS(
                 wkbFlatten(poGC->getGeometryRef(iGeom)->getGeometryType());
             if( eSubGeomType == wkbPolyhedralSurface || eSubGeomType == wkbTIN )
             {
-                bMustConvertToMultiPoly = true;
+                // bMustConvertToMultiPoly = true;
             }
             else if( eSubGeomType != wkbMultiPolygon &&
                      eSubGeomType != wkbPolygon )
@@ -3089,7 +3133,7 @@ GEOSGeom OGRGeometry::exportToGEOS(
                 break;
             }
         }
-        if( bCanConvertToMultiPoly && bMustConvertToMultiPoly )
+        if( bCanConvertToMultiPoly /* && bMustConvertToMultiPoly */ )
         {
             OGRGeometry *poMultiPolygon = OGRGeometryFactory::forceTo(
                                 poLinearGeom->clone(), wkbMultiPolygon, nullptr );
@@ -3591,13 +3635,28 @@ static OGRBoolean OGRGEOSBooleanPredicate(
  * If OGR is built without the GEOS >= 3.8 library, this function will return
  * a clone of the input geometry if it is valid, or NULL if it is invalid
  *
+ * @param papszOptions NULL terminated list of options, or NULL. The following
+ * options are available:
+ * <ul>
+ * <li>METHOD=LINEWORK/STRUCTURE.
+ *     LINEWORK is the default method, which combines all rings into a set of
+ *     noded lines and then extracts valid polygons from that linework.
+ *     The STRUCTURE method (requires GEOS >= 3.10 and GDAL >= 3.4) first makes
+ *     all rings valid, then merges shells and
+ *     subtracts holes from shells to generate valid result. Assumes that
+ *     holes and shells are correctly categorized.</li>
+ * <li>KEEP_COLLAPSED=YES/NO. Only for METHOD=STRUCTURE.
+ *     NO (default): collapses are converted to empty geometries
+ *     YES: collapses are converted to a valid geometry of lower dimension.</li>
+ * </ul>
  * @return a newly allocated geometry now owned by the caller, or NULL
  * on failure.
  *
  * @since GDAL 3.0
  */
-OGRGeometry *OGRGeometry::MakeValid() const
+OGRGeometry *OGRGeometry::MakeValid( CSLConstList papszOptions ) const
 {
+    (void)papszOptions;
 #ifndef HAVE_GEOS
     if( IsValid() )
         return clone();
@@ -3634,13 +3693,42 @@ OGRGeometry *OGRGeometry::MakeValid() const
             return clone();
     }
 
+    const bool bStructureMethod = EQUAL(
+        CSLFetchNameValueDef(papszOptions, "METHOD", "LINEWORK"), "STRUCTURE");
+    CPL_IGNORE_RET_VAL(bStructureMethod);
+#if !(GEOS_VERSION_MAJOR > 3 || (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 10))
+    if( bStructureMethod )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "GEOS 3.10 or later needed for METHOD=STRUCTURE." );
+        return nullptr;
+    }
+#endif
+
     OGRGeometry *poOGRProduct = nullptr;
 
     GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
     GEOSGeom hGeosGeom = exportToGEOS(hGEOSCtxt);
     if( hGeosGeom != nullptr )
     {
-        GEOSGeom hGEOSRet = GEOSMakeValid_r( hGEOSCtxt, hGeosGeom );
+        GEOSGeom hGEOSRet;
+#if GEOS_VERSION_MAJOR > 3 || (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 10)
+        if( bStructureMethod )
+        {
+            GEOSMakeValidParams* params = GEOSMakeValidParams_create_r(hGEOSCtxt);
+            CPLAssert(params);
+            GEOSMakeValidParams_setMethod_r(
+                hGEOSCtxt, params, GEOS_MAKE_VALID_STRUCTURE);
+            GEOSMakeValidParams_setKeepCollapsed_r(hGEOSCtxt, params,
+                       CPLFetchBool(papszOptions, "KEEP_COLLAPSED", false));
+            hGEOSRet = GEOSMakeValidWithParams_r( hGEOSCtxt, hGeosGeom, params );
+            GEOSMakeValidParams_destroy_r(hGEOSCtxt, params);
+        }
+        else
+#endif
+        {
+            hGEOSRet = GEOSMakeValid_r( hGEOSCtxt, hGeosGeom );
+        }
         GEOSGeom_destroy_r( hGEOSCtxt, hGeosGeom );
 
         if( hGEOSRet != nullptr )
@@ -3691,6 +3779,118 @@ OGRGeometryH OGR_G_MakeValid( OGRGeometryH hGeom )
 
     return reinterpret_cast<OGRGeometryH>(
         reinterpret_cast<OGRGeometry *>(hGeom)->MakeValid());
+}
+
+/************************************************************************/
+/*                         OGR_G_MakeValidEx()                            */
+/************************************************************************/
+
+/**
+ * \brief Attempts to make an invalid geometry valid without losing vertices.
+ *
+ * Already-valid geometries are cloned without further intervention.
+ *
+ * This function is the same as the C++ method OGRGeometry::MakeValid().
+ *
+ * See documentation of that method for possible options.
+ *
+ * @param hGeom The Geometry to make valid.
+ * @param papszOptions Options.
+ *
+ * @return a newly allocated geometry now owned by the caller, or NULL
+ * on failure.
+ *
+ * @since GDAL 3.4
+ */
+
+OGRGeometryH OGR_G_MakeValidEx( OGRGeometryH hGeom, CSLConstList papszOptions )
+
+{
+    VALIDATE_POINTER1( hGeom, "OGR_G_MakeValidEx", nullptr );
+
+    return reinterpret_cast<OGRGeometryH>(
+        reinterpret_cast<OGRGeometry *>(hGeom)->MakeValid(papszOptions));
+}
+
+/************************************************************************/
+/*                            Normalize()                               */
+/************************************************************************/
+
+/**
+ * \brief Attempts to bring geometry into normalized/canonical form.
+ *
+ * This method is the same as the C function OGR_G_Normalize().
+ *
+ * This function is built on the GEOS library; check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this function will always fail,
+ * issuing a CPLE_NotSupported error.
+ *
+ * @return a newly allocated geometry now owned by the caller, or NULL
+ * on failure.
+ *
+ * @since GDAL 3.3
+ */
+OGRGeometry *OGRGeometry::Normalize() const
+{
+#ifndef HAVE_GEOS
+    CPLError( CE_Failure, CPLE_NotSupported,
+                  "GEOS support not enabled." );
+        return nullptr;
+#else
+    OGRGeometry *poOGRProduct = nullptr;
+
+    GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
+    GEOSGeom hGeosGeom = exportToGEOS(hGEOSCtxt);
+    if( hGeosGeom != nullptr )
+    {
+
+        int hGEOSRet = GEOSNormalize_r( hGEOSCtxt, hGeosGeom );
+
+        if( hGEOSRet == 0 )
+        {
+             poOGRProduct = BuildGeometryFromGEOS(hGEOSCtxt, hGeosGeom,
+                                                 this, nullptr);
+
+        } else
+        {
+            GEOSGeom_destroy_r( hGEOSCtxt, hGeosGeom );
+        }
+
+    }
+    freeGEOSContext( hGEOSCtxt );
+
+    return poOGRProduct;
+#endif
+}
+
+/************************************************************************/
+/*                         OGR_G_Normalize()                            */
+/************************************************************************/
+
+/**
+ * \brief Attempts to bring geometry into normalized/canonical form.
+ *
+ * This function is the same as the C++ method OGRGeometry::Normalize().
+ *
+ * This function is built on the GEOS library; check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this function will always fail,
+ * issuing a CPLE_NotSupported error.
+ * @param hGeom The Geometry to normalize.
+ *
+ * @return a newly allocated geometry now owned by the caller, or NULL
+ * on failure.
+ *
+ * @since GDAL 3.3
+ */
+
+OGRGeometryH OGR_G_Normalize( OGRGeometryH hGeom )
+
+{
+    VALIDATE_POINTER1( hGeom, "OGR_G_Normalize", nullptr );
+
+    return OGRGeometry::ToHandle(OGRGeometry::FromHandle(hGeom)->Normalize());
 }
 
 /************************************************************************/
@@ -5934,8 +6134,13 @@ int OGRPreparedGeometryIntersects(
 {
 #ifdef HAVE_GEOS_PREPARED_GEOMETRY
     OGRGeometry* poOtherGeom = OGRGeometry::FromHandle(hOtherGeom);
-    if( hPreparedGeom == nullptr || poOtherGeom == nullptr )
+    if( hPreparedGeom == nullptr || poOtherGeom == nullptr
+        // The check for IsEmpty() is for buggy GEOS versions.
+        // See https://github.com/libgeos/geos/pull/423
+        || poOtherGeom->IsEmpty() )
+    {
         return FALSE;
+    }
 
     GEOSGeom hGEOSOtherGeom =
         poOtherGeom->exportToGEOS(hPreparedGeom->hGEOSCtxt);
@@ -5965,8 +6170,13 @@ int OGRPreparedGeometryContains(
 {
 #ifdef HAVE_GEOS_PREPARED_GEOMETRY
     OGRGeometry* poOtherGeom = OGRGeometry::FromHandle(hOtherGeom);
-    if( hPreparedGeom == nullptr || poOtherGeom == nullptr )
+    if( hPreparedGeom == nullptr || poOtherGeom == nullptr
+        // The check for IsEmpty() is for buggy GEOS versions.
+        // See https://github.com/libgeos/geos/pull/423
+        || poOtherGeom->IsEmpty() )
+    {
         return FALSE;
+    }
 
     GEOSGeom hGEOSOtherGeom =
         poOtherGeom->exportToGEOS(hPreparedGeom->hGEOSCtxt);
@@ -6074,8 +6284,10 @@ OGRGeometry *OGRGeometryFromHexEWKB( const char *pszBytea, int* pnSRID,
 char* OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId,
                             int nPostGISMajor, int nPostGISMinor )
 {
-    const int nWkbSize = poGeometry->WkbSize();
-    GByte *pabyWKB = static_cast<GByte *>(CPLMalloc(nWkbSize));
+    const size_t nWkbSize = poGeometry->WkbSize();
+    GByte *pabyWKB = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nWkbSize));
+    if( pabyWKB == nullptr )
+        return CPLStrdup("");
 
     if( (nPostGISMajor > 2 || (nPostGISMajor == 2 && nPostGISMinor >= 2)) &&
         wkbFlatten(poGeometry->getGeometryType()) == wkbPoint &&
@@ -6099,8 +6311,19 @@ char* OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId,
     // we add in 8 characters to represent the SRID integer in hex, and
     // one for a null terminator.
 
-    const int pszSize = nWkbSize * 2 + 8 + 1;
-    char *pszTextBuf = static_cast<char *>(CPLMalloc(pszSize));
+    const size_t nTextSize = nWkbSize * 2 + 8 + 1;
+    if( nTextSize > static_cast<size_t>(std::numeric_limits<int>::max()) )
+    {
+        // FIXME: artificial limitation
+        CPLFree( pabyWKB );
+        return CPLStrdup("");
+    }
+    char *pszTextBuf = static_cast<char *>(VSI_MALLOC_VERBOSE(nTextSize));
+    if( pszTextBuf == nullptr )
+    {
+        CPLFree( pabyWKB );
+        return CPLStrdup("");
+    }
     char *pszTextBufCurrent = pszTextBuf;
 
     // Convert the 1st byte, which is the endianness flag, to hex.
@@ -6141,7 +6364,7 @@ char* OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId,
 
     // Copy the rest of the data over - subtract
     // 5 since we already copied 5 bytes above.
-    pszHex = CPLBinaryToHex( nWkbSize - 5, pabyWKB + 5 );
+    pszHex = CPLBinaryToHex( static_cast<int>(nWkbSize - 5), pabyWKB + 5 );
     strcpy(pszTextBufCurrent, pszHex );
     CPLFree ( pszHex );
 
@@ -6156,11 +6379,11 @@ char* OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId,
 
 //! @cond Doxygen_Suppress
 OGRErr OGRGeometry::importPreambleFromWkb( const unsigned char * pabyData,
-                                            int nSize,
+                                            size_t nSize,
                                             OGRwkbByteOrder& eByteOrder,
                                             OGRwkbVariant eWkbVariant )
 {
-    if( nSize < 9 && nSize != -1 )
+    if( nSize < 9 && nSize != static_cast<size_t>(-1) )
         return OGRERR_NOT_ENOUGH_DATA;
 
 /* -------------------------------------------------------------------- */
@@ -6196,10 +6419,10 @@ OGRErr OGRGeometry::importPreambleFromWkb( const unsigned char * pabyData,
 /************************************************************************/
 
 OGRErr OGRGeometry::importPreambleOfCollectionFromWkb( const unsigned char * pabyData,
-                                                        int& nSize,
-                                                        int& nDataOffset,
+                                                        size_t& nSize,
+                                                        size_t& nDataOffset,
                                                         OGRwkbByteOrder& eByteOrder,
-                                                        int nMinSubGeomSize,
+                                                        size_t nMinSubGeomSize,
                                                         int& nGeomCount,
                                                         OGRwkbVariant eWkbVariant )
 {
@@ -6229,14 +6452,16 @@ OGRErr OGRGeometry::importPreambleOfCollectionFromWkb( const unsigned char * pab
     if( OGR_SWAP( eByteOrder ) )
         nGeomCount = CPL_SWAP32(nGeomCount);
 
-    if( nGeomCount < 0 || nGeomCount > INT_MAX / nMinSubGeomSize )
+    if( nGeomCount < 0 ||
+        static_cast<size_t>(nGeomCount) > std::numeric_limits<size_t>::max() / nMinSubGeomSize )
     {
         nGeomCount = 0;
         return OGRERR_CORRUPT_DATA;
     }
+    const size_t nBufferMinSize = nGeomCount * nMinSubGeomSize;
 
     // Each ring has a minimum of nMinSubGeomSize bytes.
-    if( nSize != -1 && nSize - 9 < nGeomCount * nMinSubGeomSize )
+    if( nSize != static_cast<size_t>(-1) && nSize - 9 < nBufferMinSize )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Length of input WKB is too small" );
@@ -6245,7 +6470,7 @@ OGRErr OGRGeometry::importPreambleOfCollectionFromWkb( const unsigned char * pab
     }
 
     nDataOffset = 9;
-    if( nSize != -1 )
+    if( nSize != static_cast<size_t>(-1) )
     {
         CPLAssert( nSize >= nDataOffset );
         nSize -= nDataOffset;

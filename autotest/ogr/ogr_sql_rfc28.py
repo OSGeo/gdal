@@ -641,7 +641,7 @@ def test_ogr_rfc28_28():
         if ret == 'fail':
             return ret
 
-    
+
 ###############################################################################
 # Test behaviour of binary operations when one operand is a NULL value
 
@@ -1380,6 +1380,59 @@ def test_ogr_rfc28_many_and():
     f = lyr.GetNextFeature()
     assert f is not None
 
+
+###############################################################################
+# Test fix for https://github.com/OSGeo/gdal/issues/3919
+
+def test_ogr_rfc28_nested_or():
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    lyr = ds.CreateLayer('test', geom_type=ogr.wkbNone)
+    field = ogr.FieldDefn('fclass', ogr.OFTString)
+    lyr.CreateField(field)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField('fclass', 'x')
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+
+    tests_ok = [
+        """(fclass = 'a' OR fclass = 'b') OR (fclass = 'c' OR fclass = 'd' OR fclass = 'x')""",
+        """(fclass = 'c' OR fclass = 'd' OR fclass = 'x') OR (fclass = 'a' OR fclass = 'b')""",
+        """fclass = 'c' OR fclass = 'd' OR fclass = 'x'""",
+        """fclass = 'c' OR (fclass = 'd' OR fclass = 'x')""",
+        """(fclass = 'c' OR fclass = 'd') OR fclass = 'x'""",
+        """fclass = 'x' OR fclass = 'c' OR fclass = 'd'""",
+        """fclass = 'x' OR (fclass = 'c' OR fclass = 'd')""",
+        """(fclass = 'x' OR fclass = 'd') OR fclass = 'd'""",
+        """(fclass = 'a' OR fclass = 'b' OR fclass = 'b2') OR (fclass = 'c' OR fclass = 'd' OR fclass = 'x')""",
+        """(1 = 0) OR (fclass = 'c' OR fclass = 'd' OR fclass = 'x')""",
+        """(fclass = 'c' OR fclass = 'd' OR fclass = 'x') OR (1 = 0)""",
+        """(1 = 0 OR 1 = 0 OR 1 = 1) AND (fclass = 'c' OR fclass = 'd' OR fclass = 'x')""",
+    ]
+
+    for sql in tests_ok:
+        lyr.SetAttributeFilter(sql)
+        assert lyr.GetFeatureCount() == 1, sql
+
+    tests_ko = [
+        """(fclass = 'a' OR fclass = 'b') OR (fclass = 'c' OR fclass = 'd' OR fclass = 'COND_NOT_MET')""",
+        """(fclass = 'c' OR fclass = 'd' OR fclass = 'COND_NOT_MET') OR (fclass = 'a' OR fclass = 'b')""",
+        """fclass = 'c' OR fclass = 'd' OR fclass = 'COND_NOT_MET'""",
+        """fclass = 'c' OR (fclass = 'd' OR fclass = 'COND_NOT_MET')""",
+        """(fclass = 'c' OR fclass = 'd') OR fclass = 'COND_NOT_MET'""",
+        """fclass = 'COND_NOT_MET' OR fclass = 'c' OR fclass = 'd'""",
+        """fclass = 'COND_NOT_MET' OR (fclass = 'c' OR fclass = 'd')""",
+        """(fclass = 'COND_NOT_MET' OR fclass = 'd') OR fclass = 'd'""",
+        """(fclass = 'a' OR fclass = 'b' OR fclass = 'b2') OR (fclass = 'c' OR fclass = 'd' OR fclass = 'COND_NOT_MET')""",
+        """(1 = 0) OR (fclass = 'c' OR fclass = 'd' OR fclass = 'COND_NOT_MET')""",
+        """(fclass = 'c' OR fclass = 'd' OR fclass = 'COND_NOT_MET') OR (1 = 0)""",
+        """(1 = 0 OR 1 = 0 OR 1 = 1) AND (fclass = 'c' OR fclass = 'd' OR fclass = 'COND_NOT_MET')""",
+    ]
+
+    for sql in tests_ko:
+        lyr.SetAttributeFilter(sql)
+        assert lyr.GetFeatureCount() == 0, sql
+
+
 ###############################################################################
 # Test fix for https://github.com/OSGeo/gdal/issues/3249
 
@@ -1411,6 +1464,71 @@ def test_ogr_rfc28_order_by_two_columns():
     assert f['int_val'] == 0
     f = None
     ds.ReleaseResultSet(sql_lyr)
+
+
+###############################################################################
+# Test that date fields stored as ISO-8601 can be used with IN operator
+# Test fix for https://github.com/OSGeo/gdal/issues/3977
+
+def test_ogr_rfc28_in_date_filter():
+    """Test that date fields stored as ISO-8601 can be used with IN operator"""
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    lyr = ds.CreateLayer('ogr_in_date_filter', geom_type=ogr.wkbNone)
+    lyr.CreateField(ogr.FieldDefn('date_minus', ogr.OFTDate))
+    lyr.CreateField(ogr.FieldDefn('date_slash', ogr.OFTDate))
+
+    ogrtest.quick_create_feature(lyr, ["1950-12-31", "1950/12/31"], None)
+    ogrtest.quick_create_feature(lyr, ["1960-12-31", "1960/12/31"], None)
+
+    assert lyr.GetFeatureCount() == 2
+
+    def _ogr_in_date_filter_check(expected_fids):
+
+        lyr.ResetReading()
+        for expected_fid in expected_fids:
+            feat = lyr.GetNextFeature()
+            assert feat is not None
+            assert feat.GetFID() == expected_fid
+
+    _ogr_in_date_filter_check([0, 1])
+
+    lyr.SetAttributeFilter("date_minus IN ('1960-12-31')")
+    _ogr_in_date_filter_check([1])
+
+    lyr.SetAttributeFilter("date_minus IN ('1960-12-31', '1950-12-31')")
+    _ogr_in_date_filter_check([0, 1])
+
+    lyr.SetAttributeFilter("date_slash IN ('1960/12/31')")
+    _ogr_in_date_filter_check([1])
+
+    lyr.SetAttributeFilter("date_slash IN ('1960/12/31', '1950/12/31')")
+    _ogr_in_date_filter_check([0, 1])
+
+    lyr.SetAttributeFilter("date_slash IN ('1960-12-31')")
+    _ogr_in_date_filter_check([1])
+
+    lyr.SetAttributeFilter("date_slash IN ('1960-12-31', '1950-12-31')")
+    _ogr_in_date_filter_check([0, 1])
+
+    lyr.SetAttributeFilter("date_minus IN ('1960/12/31')")
+    _ogr_in_date_filter_check([1])
+
+    lyr.SetAttributeFilter("date_minus IN ('1960/12/31', '1950/12/31')")
+    _ogr_in_date_filter_check([0, 1])
+
+    lyr.SetAttributeFilter("date_minus IN ('2020/12/31', '2020/12/31')")
+    _ogr_in_date_filter_check([])
+
+    lyr.SetAttributeFilter("date_minus IN ('2020-12-31', '2020-12-31')")
+    _ogr_in_date_filter_check([])
+
+    lyr.SetAttributeFilter("date_slash IN ('2020/12/31', '2020/12/31')")
+    _ogr_in_date_filter_check([])
+
+    lyr.SetAttributeFilter("date_slash IN ('2020-12-31', '2020-12-31')")
+    _ogr_in_date_filter_check([])
+
 
 ###############################################################################
 

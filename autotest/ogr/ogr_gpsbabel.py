@@ -35,20 +35,27 @@ from osgeo import ogr
 from osgeo import gdal
 import pytest
 
+def gpsbabel_binary_found():
+    try:
+        ret = gdaltest.runexternal('gpsbabel -V')
+        return 'GPSBabel' in ret
+    except OSError:
+        return False
+
+
 pytestmark = [ pytest.mark.require_driver('GPSBabel'),
-               pytest.mark.require_driver('GPX') ]
+               pytest.mark.require_driver('GPX'),
+               pytest.mark.skipif(not gpsbabel_binary_found(), reason='GPSBabel utility not found') ]
 
 ###############################################################################
 @pytest.fixture(autouse=True, scope='module')
 def startup_and_cleanup():
 
-    # Test if the gpsbabel is accessible
-    try:
-        ret = gdaltest.runexternal('gpsbabel -V')
-    except OSError:
-        ret = ''
-    if ret.find('GPSBabel') == -1:
-        pytest.skip('Cannot access GPSBabel utility')
+    # Check that the GPX driver has read support
+    with gdaltest.error_handler():
+        if ogr.Open('data/gpx/test.gpx') is None:
+            assert 'Expat' in gdal.GetLastErrorMsg()
+            pytest.skip('GDAL build without Expat support')
 
 ###############################################################################
 # Test reading with explicit subdriver

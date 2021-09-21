@@ -521,6 +521,8 @@ extern unzFile ZEXPORT cpl_unzOpen2 (const char *path,
 
     int err=UNZ_OK;
 
+    memset(&us, 0, sizeof(us));
+
     // Must be a trick to ensure that unz_copyright remains in the binary!
     // cppcheck-suppress knownConditionTrueFalse
     if (unz_copyright[0]!=' ')

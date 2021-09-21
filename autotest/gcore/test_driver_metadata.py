@@ -245,7 +245,16 @@ schema_layer_creationoptionslist_xml = etree.XML(r"""
 
 schema_multidim_array_creationoptionslist_xml =etree.XML(r"""
 <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
-  <xs:element name="Value" type="xs:string"/>
+    <xs:element name="Value">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:string">
+          <xs:attribute type="xs:string" name="alias" use="optional"/>
+          <xs:attribute type="xs:string" name="aliasOf" use="optional"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
   <xs:element name="Option">
     <xs:complexType mixed="true">
       <xs:sequence>
@@ -255,6 +264,8 @@ schema_multidim_array_creationoptionslist_xml =etree.XML(r"""
       <xs:attribute type="xs:string" name="type" use="optional"/>
       <xs:attribute type="xs:string" name="description" use="optional"/>
       <xs:attribute type="xs:string" name="default" use="optional"/>
+      <xs:attribute type="xs:string" name="min" use="optional"/>
+      <xs:attribute type="xs:string" name="max" use="optional"/>
     </xs:complexType>
   </xs:element>
   <xs:element name="MultiDimArrayCreationOptionList">

@@ -775,7 +775,7 @@ int TABMAPFile::LoadNextMatchingObjectBlock( int bFirstObject )
         }
     }
 
-    return m_poSpIndexLeaf != nullptr;
+    return false;
 }
 
 /************************************************************************/
@@ -1551,27 +1551,17 @@ int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
      *----------------------------------------------------------------*/
     if (m_poCurObjBlock->GetNumUnusedBytes() < nObjSize )
     {
-        TABMAPObjHdr *poExistingObjHdr=nullptr;
-        TABMAPObjHdr **papoSrcObjHdrs = nullptr;
-        int numSrcObj = 0;
+        std::vector<std::unique_ptr<TABMAPObjHdr>> apoSrcObjHdrs;
         int nObjectSpace = 0;
 
         /* First pass to enumerate valid objects and compute their accumulated
            required size. */
         m_poCurObjBlock->Rewind();
-        while ((poExistingObjHdr = TABMAPObjHdr::ReadNextObj(m_poCurObjBlock,
-                                                    m_poHeader)) != nullptr)
+        while (auto poExistingObjHdr = TABMAPObjHdr::ReadNextObj(m_poCurObjBlock,
+                                                    m_poHeader))
         {
-            if (papoSrcObjHdrs == nullptr || numSrcObj%10 == 0)
-            {
-                // Realloc the array... by steps of 10
-                papoSrcObjHdrs = static_cast<TABMAPObjHdr**>(CPLRealloc(papoSrcObjHdrs,
-                                                            (numSrcObj+10)*
-                                                            sizeof(TABMAPObjHdr*)));
-            }
-            papoSrcObjHdrs[numSrcObj++] = poExistingObjHdr;
-
             nObjectSpace += m_poHeader->GetMapObjectSize(poExistingObjHdr->m_nType);
+            apoSrcObjHdrs.emplace_back(poExistingObjHdr);
         }
 
         /* Check that there's really some place that can be recovered */
@@ -1579,46 +1569,32 @@ int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
         {
 #ifdef DEBUG_VERBOSE
             CPLDebug("MITAB", "Compacting block at offset %d, %d objects valid, recovering %d bytes",
-                     m_poCurObjBlock->GetStartAddress(), numSrcObj,
+                     m_poCurObjBlock->GetStartAddress(), static_cast<int>(apoSrcObjHdrs.size()),
                      (m_poHeader->m_nRegularBlockSize - 20 - m_poCurObjBlock->GetNumUnusedBytes()) - nObjectSpace);
 #endif
             m_poCurObjBlock->ClearObjects();
 
-            for(int i=0; i<numSrcObj; i++)
+            for(auto& poSrcObjHdrs: apoSrcObjHdrs)
             {
                 /*-----------------------------------------------------------------
                 * Prepare and Write ObjHdr to this ObjBlock
                 *----------------------------------------------------------------*/
-                int nObjPtr = m_poCurObjBlock->PrepareNewObject(papoSrcObjHdrs[i]);
+                int nObjPtr = m_poCurObjBlock->PrepareNewObject(poSrcObjHdrs.get());
                 if (nObjPtr < 0 ||
-                    m_poCurObjBlock->CommitNewObject(papoSrcObjHdrs[i]) != 0)
+                    m_poCurObjBlock->CommitNewObject(poSrcObjHdrs.get()) != 0)
                 {
                     CPLError(CE_Failure, CPLE_FileIO,
                             "Failed writing object header for feature id %d",
-                            papoSrcObjHdrs[i]->m_nId);
-                    for(int j=0; j<numSrcObj; j++)
-                    {
-                      delete papoSrcObjHdrs[j];
-                    }
-                    CPLFree(papoSrcObjHdrs);
-                    papoSrcObjHdrs = nullptr;
+                            poSrcObjHdrs->m_nId);
                     return -1;
                 }
 
                 /*-----------------------------------------------------------------
                 * Update .ID Index
                 *----------------------------------------------------------------*/
-                m_poIdIndex->SetObjPtr(papoSrcObjHdrs[i]->m_nId, nObjPtr);
+                m_poIdIndex->SetObjPtr(poSrcObjHdrs->m_nId, nObjPtr);
             }
         }
-
-        /* Cleanup papoSrcObjHdrs[] */
-        for(int i=0; i<numSrcObj; i++)
-        {
-            delete papoSrcObjHdrs[i];
-        }
-        CPLFree(papoSrcObjHdrs);
-        papoSrcObjHdrs = nullptr;
     }
 
     if (m_poCurObjBlock->GetNumUnusedBytes() >= nObjSize )
@@ -2013,29 +1989,19 @@ int TABMAPFile::LoadObjAndCoordBlocks(GInt32 nBlockPtr)
 TABMAPObjectBlock *TABMAPFile::SplitObjBlock(TABMAPObjHdr *poObjHdrToAdd,
                                              int nSizeOfObjToAdd)
 {
-    TABMAPObjHdr **papoSrcObjHdrs = nullptr;
-    TABMAPObjHdr *poObjHdr=nullptr;
-    int i;
-    int numSrcObj = 0;
+    std::vector<std::unique_ptr<TABMAPObjHdr>> apoSrcObjHdrs;
 
     /*-----------------------------------------------------------------
      * Read all object headers
      *----------------------------------------------------------------*/
     m_poCurObjBlock->Rewind();
-    while ((poObjHdr = TABMAPObjHdr::ReadNextObj(m_poCurObjBlock,
-                                                 m_poHeader)) != nullptr)
+    while (auto poObjHdr = TABMAPObjHdr::ReadNextObj(m_poCurObjBlock,
+                                                     m_poHeader))
     {
-        if (papoSrcObjHdrs == nullptr || numSrcObj%10 == 0)
-        {
-            // Realloc the array... by steps of 10
-            papoSrcObjHdrs = static_cast<TABMAPObjHdr**>(CPLRealloc(papoSrcObjHdrs,
-                                                        (numSrcObj+10)*
-                                                        sizeof(TABMAPObjHdr*)));
-        }
-        papoSrcObjHdrs[numSrcObj++] = poObjHdr;
+        apoSrcObjHdrs.emplace_back(poObjHdr);
     }
     /* PickSeedsForSplit (reasonably) assumes at least 2 nodes */
-    CPLAssert(numSrcObj > 1);
+    CPLAssert(apoSrcObjHdrs.size() > 1);
 
     /*-----------------------------------------------------------------
      * Reset current obj and coord block
@@ -2045,13 +2011,13 @@ TABMAPObjectBlock *TABMAPFile::SplitObjBlock(TABMAPObjHdr *poObjHdrToAdd,
     m_poCurObjBlock->InitNewBlock(m_fp, m_poHeader->m_nRegularBlockSize,
                                   m_poCurObjBlock->GetStartAddress());
 
-    TABMAPCoordBlock *poSrcCoordBlock = m_poCurCoordBlock;
+    std::unique_ptr<TABMAPCoordBlock> poSrcCoordBlock(m_poCurCoordBlock);
     m_poCurCoordBlock = nullptr;
 
     /*-----------------------------------------------------------------
      * Create new obj and coord block
      *----------------------------------------------------------------*/
-    TABMAPObjectBlock *poNewObjBlock = new TABMAPObjectBlock(m_eAccessMode);
+    auto poNewObjBlock = cpl::make_unique<TABMAPObjectBlock>(m_eAccessMode);
     poNewObjBlock->InitNewBlock(m_fp, m_poHeader->m_nRegularBlockSize, m_oBlockManager.AllocNewBlock("OBJECT"));
 
     /* Use existing center of other block in case we have compressed objects
@@ -2064,43 +2030,44 @@ TABMAPObjectBlock *TABMAPFile::SplitObjBlock(TABMAPObjHdr *poObjHdrToAdd,
     /*-----------------------------------------------------------------
      * Pick Seeds for each block
      *----------------------------------------------------------------*/
-    TABMAPIndexEntry *pasSrcEntries =
-        static_cast<TABMAPIndexEntry*>(CPLMalloc(numSrcObj*sizeof(TABMAPIndexEntry)));
-    for (i=0; i<numSrcObj; i++)
+    std::vector<TABMAPIndexEntry> asSrcEntries;
+    asSrcEntries.reserve(apoSrcObjHdrs.size());
+    for (const auto& poSrcObjHdrs: apoSrcObjHdrs)
     {
-        pasSrcEntries[i].XMin = papoSrcObjHdrs[i]->m_nMinX;
-        pasSrcEntries[i].YMin = papoSrcObjHdrs[i]->m_nMinY;
-        pasSrcEntries[i].XMax = papoSrcObjHdrs[i]->m_nMaxX;
-        pasSrcEntries[i].YMax = papoSrcObjHdrs[i]->m_nMaxY;
+        TABMAPIndexEntry sEntry;
+        sEntry.nBlockPtr = 0;
+        sEntry.XMin = poSrcObjHdrs->m_nMinX;
+        sEntry.YMin = poSrcObjHdrs->m_nMinY;
+        sEntry.XMax = poSrcObjHdrs->m_nMaxX;
+        sEntry.YMax = poSrcObjHdrs->m_nMaxY;
+        asSrcEntries.emplace_back(sEntry);
     }
 
     int nSeed1, nSeed2;
-    TABMAPIndexBlock::PickSeedsForSplit(pasSrcEntries, numSrcObj, -1,
+    TABMAPIndexBlock::PickSeedsForSplit(asSrcEntries.data(),
+                                        static_cast<int>(asSrcEntries.size()),
+                                        -1,
                                         poObjHdrToAdd->m_nMinX,
                                         poObjHdrToAdd->m_nMinY,
                                         poObjHdrToAdd->m_nMaxX,
                                         poObjHdrToAdd->m_nMaxY,
                                         nSeed1, nSeed2);
-    CPLFree(pasSrcEntries);
-    pasSrcEntries = nullptr;
 
     /*-----------------------------------------------------------------
      * Assign the seeds to their respective block
      *----------------------------------------------------------------*/
     // Insert nSeed1 in this block
-    poObjHdr = papoSrcObjHdrs[nSeed1];
-    if (MoveObjToBlock(poObjHdr, poSrcCoordBlock,
+    if (MoveObjToBlock(apoSrcObjHdrs[nSeed1].get(), poSrcCoordBlock.get(),
                        m_poCurObjBlock, &m_poCurCoordBlock) <= 0)
     {
-        goto error;
+        return nullptr;
     }
 
     // Move nSeed2 to 2nd block
-    poObjHdr = papoSrcObjHdrs[nSeed2];
-    if (MoveObjToBlock(poObjHdr, poSrcCoordBlock,
-                       poNewObjBlock, &poNewCoordBlock) <= 0)
+    if (MoveObjToBlock(apoSrcObjHdrs[nSeed2].get(), poSrcCoordBlock.get(),
+                       poNewObjBlock.get(), &poNewCoordBlock) <= 0)
     {
-        goto error;
+        return nullptr;
     }
 
     /*-----------------------------------------------------------------
@@ -2111,12 +2078,12 @@ TABMAPObjectBlock *TABMAPFile::SplitObjBlock(TABMAPObjHdr *poObjHdrToAdd,
      * Resolve ties by adding the entry to the block with smaller total
      * area, then to the one with fewer entries, then to either.
      *----------------------------------------------------------------*/
-    for(int iEntry=0; iEntry<numSrcObj; iEntry++)
+    for(int iEntry=0; iEntry<static_cast<int>(apoSrcObjHdrs.size()); iEntry++)
     {
         if (iEntry == nSeed1 || iEntry == nSeed2)
             continue;
 
-        poObjHdr = papoSrcObjHdrs[iEntry];
+        TABMAPObjHdr* poObjHdr = apoSrcObjHdrs[iEntry].get();
 
         int nObjSize = m_poHeader->GetMapObjectSize(poObjHdr->m_nType);
 
@@ -2124,16 +2091,16 @@ TABMAPObjectBlock *TABMAPFile::SplitObjBlock(TABMAPObjHdr *poObjHdrToAdd,
         // entries should go to the other block
         if (m_poCurObjBlock->GetNumUnusedBytes() < nObjSize+nSizeOfObjToAdd )
         {
-            if (MoveObjToBlock(poObjHdr, poSrcCoordBlock,
-                               poNewObjBlock, &poNewCoordBlock) <= 0)
-                goto error;
+            if (MoveObjToBlock(poObjHdr, poSrcCoordBlock.get(),
+                               poNewObjBlock.get(), &poNewCoordBlock) <= 0)
+                return nullptr;
             continue;
         }
         else if (poNewObjBlock->GetNumUnusedBytes() < nObjSize+nSizeOfObjToAdd)
         {
-            if (MoveObjToBlock(poObjHdr, poSrcCoordBlock,
+            if (MoveObjToBlock(poObjHdr, poSrcCoordBlock.get(),
                                m_poCurObjBlock, &m_poCurCoordBlock) <= 0)
-                goto error;
+                return nullptr;
             continue;
         }
 
@@ -2161,26 +2128,18 @@ TABMAPObjectBlock *TABMAPFile::SplitObjBlock(TABMAPObjHdr *poObjHdrToAdd,
         if (dAreaDiff1 < dAreaDiff2)
         {
             // This entry stays in this block
-            if (MoveObjToBlock(poObjHdr, poSrcCoordBlock,
+            if (MoveObjToBlock(poObjHdr, poSrcCoordBlock.get(),
                                m_poCurObjBlock, &m_poCurCoordBlock) <= 0)
-                goto error;
+                return nullptr;
         }
         else
         {
             // This entry goes to new block
-            if (MoveObjToBlock(poObjHdr, poSrcCoordBlock,
-                               poNewObjBlock, &poNewCoordBlock) <= 0)
-                goto error;
+            if (MoveObjToBlock(poObjHdr, poSrcCoordBlock.get(),
+                               poNewObjBlock.get(), &poNewCoordBlock) <= 0)
+                return nullptr;
         }
     }
-
-    /* Cleanup papoSrcObjHdrs[] */
-    for(i=0; i<numSrcObj; i++)
-    {
-        delete papoSrcObjHdrs[i];
-    }
-    CPLFree(papoSrcObjHdrs);
-    papoSrcObjHdrs = nullptr;
 
     /*-----------------------------------------------------------------
      * Delete second coord block if one was created
@@ -2191,7 +2150,7 @@ TABMAPObjectBlock *TABMAPFile::SplitObjBlock(TABMAPObjHdr *poObjHdrToAdd,
     {
         if (poNewCoordBlock->CommitToFile() != 0)
         {
-            goto error;
+            return nullptr;
         }
         delete poNewCoordBlock;
     }
@@ -2205,7 +2164,7 @@ TABMAPObjectBlock *TABMAPFile::SplitObjBlock(TABMAPObjHdr *poObjHdrToAdd,
         {
             if (poSrcCoordBlock->GotoByteInFile(nFirstSrcCoordBlock, TRUE) != 0)
             {
-                goto error;
+                return nullptr;
             }
         }
 
@@ -2216,7 +2175,7 @@ TABMAPObjectBlock *TABMAPFile::SplitObjBlock(TABMAPObjHdr *poObjHdrToAdd,
             if (poSrcCoordBlock->CommitAsDeleted(m_oBlockManager.
                                                  GetFirstGarbageBlock()) != 0)
             {
-                goto error;
+                return nullptr;
             }
             m_oBlockManager.PushGarbageBlockAsFirst(poSrcCoordBlock->GetStartAddress());
 
@@ -2224,36 +2183,22 @@ TABMAPObjectBlock *TABMAPFile::SplitObjBlock(TABMAPObjHdr *poObjHdrToAdd,
             if (nNextCoordBlock > 0)
             {
                 if (poSrcCoordBlock->GotoByteInFile(nNextCoordBlock, TRUE) != 0)
-                    goto error;
+                    return nullptr;
 
                 nNextCoordBlock = poSrcCoordBlock->GetNextCoordBlock();
             }
             else
             {
                 // end of chain
-                delete poSrcCoordBlock;
-                poSrcCoordBlock = nullptr;
+                poSrcCoordBlock.reset();
             }
         }
     }
 
     if (poNewObjBlock->CommitToFile() != 0)
-        goto error;
+        return nullptr;
 
-    return poNewObjBlock;
-
-error:
-    if( papoSrcObjHdrs )
-    {
-        for(i=0; i<numSrcObj; i++)
-        {
-            delete papoSrcObjHdrs[i];
-        }
-        CPLFree(papoSrcObjHdrs);
-    }
-    delete poSrcCoordBlock;
-    delete poNewObjBlock;
-    return nullptr;
+    return poNewObjBlock.release();
 }
 
 /**********************************************************************

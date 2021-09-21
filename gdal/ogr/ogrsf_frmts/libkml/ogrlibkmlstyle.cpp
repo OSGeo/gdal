@@ -113,14 +113,7 @@ StylePtr addstylestring2kml(
             {
                 poKmlLineStyle = poKmlFactory->CreateLineStyle();
 
-                OGRStylePen *poStylePen = dynamic_cast<OGRStylePen *>(poOgrST);
-                if( poStylePen == nullptr )
-                {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "dynamic_cast failed.");
-                    delete poOgrSM;
-                    return nullptr;
-                }
+                OGRStylePen *poStylePen = cpl::down_cast<OGRStylePen *>(poOgrST);
 
                 /***** pen color *****/
                 GBool nullcheck = FALSE;
@@ -152,14 +145,7 @@ StylePtr addstylestring2kml(
             case OGRSTCBrush:
             {
                 OGRStyleBrush * const poStyleBrush =
-                    dynamic_cast<OGRStyleBrush *>(poOgrST);
-                if( poStyleBrush == nullptr )
-                {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "dynamic_cast failed.");
-                    delete poOgrSM;
-                    return nullptr;
-                }
+                    cpl::down_cast<OGRStyleBrush *>(poOgrST);
 
                 /***** brush color *****/
                 GBool nullcheck = FALSE;
@@ -184,14 +170,7 @@ StylePtr addstylestring2kml(
             case OGRSTCSymbol:
             {
                 OGRStyleSymbol * const poStyleSymbol =
-                    dynamic_cast<OGRStyleSymbol *>(poOgrST);
-                if( poStyleSymbol == nullptr )
-                {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "dynamic_cast failed.");
-                    delete poOgrSM;
-                    return nullptr;
-                }
+                    cpl::down_cast<OGRStyleSymbol *>(poOgrST);
 
                 /***** id (kml icon) *****/
                 GBool nullcheck = FALSE;
@@ -291,14 +270,7 @@ StylePtr addstylestring2kml(
                 GBool nullcheck2;
 
                 OGRStyleLabel *poStyleLabel =
-                    dynamic_cast<OGRStyleLabel *>(poOgrST);
-                if( poStyleLabel == nullptr )
-                {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "dynamic_cast failed.");
-                    delete poOgrSM;
-                    return nullptr;
-                }
+                    cpl::down_cast<OGRStyleLabel *>(poOgrST);
 
                 /***** color *****/
                 const char *pszcolor = poStyleLabel->ForeColor( nullcheck );

@@ -205,22 +205,22 @@ std::vector<double> CPCIDSKGeoref::GetParameters()
 
 {
     unsigned int  i;
-    std::vector<double> parms;
+    std::vector<double> params;
 
     Load();
 
-    parms.resize(18);
+    params.resize(18);
 
     if( !STARTS_WITH(seg_data.buffer, "PROJECTION") )
     {
         for( i = 0; i < 17; i++ )
-            parms[i] = 0.0;
-        parms[17] = -1.0;
+            params[i] = 0.0;
+        params[17] = -1.0;
     }
     else
     {
         for( i = 0; i < 17; i++ )
-            parms[i] = seg_data.GetDouble(80+26*i,26);
+            params[i] = seg_data.GetDouble(80+26*i,26);
 
         double dfUnitsCode = seg_data.GetDouble(1900, 26);
 
@@ -231,26 +231,26 @@ std::vector<double> CPCIDSKGeoref::GetParameters()
             seg_data.Get(64,16,grid_units);
 
             if( STARTS_WITH_CI( grid_units.c_str(), "DEG" /* "DEGREE" */) )
-                parms[17] = (double) (int) UNIT_DEGREE;
+                params[17] = (double) (int) UNIT_DEGREE;
             else if( STARTS_WITH_CI( grid_units.c_str(), "MET") )
-                parms[17] = (double) (int) UNIT_METER;
+                params[17] = (double) (int) UNIT_METER;
             else if( STARTS_WITH_CI( grid_units.c_str(), "FOOT") )
-                parms[17] = (double) (int) UNIT_US_FOOT;
+                params[17] = (double) (int) UNIT_US_FOOT;
             else if( STARTS_WITH_CI( grid_units.c_str(), "FEET") )
-                parms[17] = (double) (int) UNIT_US_FOOT;
+                params[17] = (double) (int) UNIT_US_FOOT;
             else if( STARTS_WITH_CI( grid_units.c_str(), "INTL " /* "INTL FOOT" */) )
-                parms[17] = (double) (int) UNIT_INTL_FOOT;
+                params[17] = (double) (int) UNIT_INTL_FOOT;
             else
-                parms[17] = -1.0; /* unknown */
+                params[17] = -1.0; /* unknown */
         }
         else
         {
-            parms[17] = dfUnitsCode;
+            params[17] = dfUnitsCode;
         }
 
     }
 
-    return parms;
+    return params;
 }
 
 /************************************************************************/
@@ -331,22 +331,22 @@ void CPCIDSKGeoref::WriteSimple( std::string const& geosysIn,
 /*                          WriteParameters()                           */
 /************************************************************************/
 
-void CPCIDSKGeoref::WriteParameters( std::vector<double> const& parms )
+void CPCIDSKGeoref::WriteParameters( std::vector<double> const& params )
 
 {
     Load();
 
-    if( parms.size() < 17 )
+    if( params.size() < 17 )
         return ThrowPCIDSKException( "Did not get expected number of parameters in WriteParameters()" );
 
     unsigned int i;
 
     for( i = 0; i < 17; i++ )
-        seg_data.Put(parms[i],80+26*i,26,"%26.16f");
+        seg_data.Put(params[i],80+26*i,26,"%26.16f");
 
-    if( parms.size() >= 18 )
+    if( params.size() >= 18 )
     {
-        switch( (UnitCode) (int) parms[17] )
+        switch( (UnitCode) (int) params[17] )
         {
           case UNIT_DEGREE:
             seg_data.Put( "DEGREE", 64, 16 );
@@ -381,23 +381,23 @@ std::vector<double> CPCIDSKGeoref::GetUSGSParameters()
 
 {
     unsigned int  i;
-    std::vector<double> parms;
+    std::vector<double> params;
 
     Load();
 
-    parms.resize(19);
+    params.resize(19);
     if( !STARTS_WITH(seg_data.buffer, "PROJECTION") )
     {
         for( i = 0; i < 19; i++ )
-            parms[i] = 0.0;
+            params[i] = 0.0;
     }
     else
     {
         for( i = 0; i < 19; i++ )
-            parms[i] = seg_data.GetDouble(1458+26*i,26);
+            params[i] = seg_data.GetDouble(1458+26*i,26);
     }
 
-    return parms;
+    return params;
 }
 
 /************************************************************************/
@@ -955,29 +955,29 @@ void CPCIDSKGeoref::PrepareGCTPFields()
 /* -------------------------------------------------------------------- */
 /*      Extract the non-GCTP style parameters.                          */
 /* -------------------------------------------------------------------- */
-    double pci_parms[17];
+    double pci_params[17];
     int i;
 
     for( i = 0; i < 17; i++ )
-        pci_parms[i] = seg_data.GetDouble(80+26*i,26);
+        pci_params[i] = seg_data.GetDouble(80+26*i,26);
 
-#define Dearth0                 pci_parms[0]
-#define Dearth1                 pci_parms[1]
-#define RefLong                 pci_parms[2]
-#define RefLat                  pci_parms[3]
-#define StdParallel1            pci_parms[4]
-#define StdParallel2            pci_parms[5]
-#define FalseEasting            pci_parms[6]
-#define FalseNorthing           pci_parms[7]
-#define Scale                   pci_parms[8]
-#define Height                  pci_parms[9]
-#define Long1                   pci_parms[10]
-#define Lat1                    pci_parms[11]
-#define Long2                   pci_parms[12]
-#define Lat2                    pci_parms[13]
-#define Azimuth                 pci_parms[14]
-#define LandsatNum              pci_parms[15]
-#define LandsatPath             pci_parms[16]
+#define Dearth0                 pci_params[0]
+#define Dearth1                 pci_params[1]
+#define RefLong                 pci_params[2]
+#define RefLat                  pci_params[3]
+#define StdParallel1            pci_params[4]
+#define StdParallel2            pci_params[5]
+#define FalseEasting            pci_params[6]
+#define FalseNorthing           pci_params[7]
+#define Scale                   pci_params[8]
+#define Height                  pci_params[9]
+#define Long1                   pci_params[10]
+#define Lat1                    pci_params[11]
+#define Long2                   pci_params[12]
+#define Lat2                    pci_params[13]
+#define Azimuth                 pci_params[14]
+#define LandsatNum              pci_params[15]
+#define LandsatPath             pci_params[16]
 
 /* -------------------------------------------------------------------- */
 /*      Get the zone code.                                              */
@@ -994,7 +994,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
 
 /* -------------------------------------------------------------------- */
 /*      Handle the ellipsoid.  We depend on applications properly       */
-/*      setting proj_parms[0], and proj_parms[1] with the semi-major    */
+/*      setting proj_params[0], and proj_params[1] with the semi-major    */
 /*      and semi-minor axes in all other cases.                         */
 /*                                                                      */
 /*      I wish we could lookup datum codes to find their GCTP           */

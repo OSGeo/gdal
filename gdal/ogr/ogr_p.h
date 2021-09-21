@@ -147,7 +147,7 @@ OGRErr CPL_DLL OSRGetEllipsoidInfo( int, char **, double *, double *);
 /* Fast atof function */
 double OGRFastAtof(const char* pszStr);
 
-OGRErr CPL_DLL OGRCheckPermutation(int* panPermutation, int nSize);
+OGRErr CPL_DLL OGRCheckPermutation(const int* panPermutation, int nSize);
 
 /* GML related */
 

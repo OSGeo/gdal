@@ -184,7 +184,7 @@ and the values along those axes are expressed generally in degree (ancient Frenc
 
 The order in which they are specified, that is latitude first, longitude second,
 or the reverse, is a constant matter of confusion and vary depending on conventions
-used by geodetic authorities, GIS user, file format and protocol specifications, etc...
+used by geodetic authorities, GIS user, file format and protocol specifications, etc.
 This is the source of various interoperability issues.
 
 Before GDAL 3.0, the :cpp:class:`OGRSpatialReference` class did not honour the axis order mandated by the authority
@@ -213,17 +213,25 @@ The argument passed to :cpp:func:`OGRSpatialReference::SetAxisMappingStrategy` i
 data axis to CRS axis mapping strategy.
 
 - :c:macro:`OAMS_TRADITIONAL_GIS_ORDER` means that for geographic CRS with lat/long order, the data will still be long/lat ordered. Similarly for a projected CRS with northing/easting order, the data will still be easting/northing ordered.
-- :c:macro:`OAMS_AUTHORITY_COMPLIANT` means that the data axis will be identical to the CRS axis. This is the fdefault value when instantiating OGRSpatialReference.
-- :c:macro:`OAMS_CUSTOM` means that the data axis are customly defined with SetDataAxisToSRSAxisMapping().
+- :c:macro:`OAMS_AUTHORITY_COMPLIANT` means that the data axis will be identical to the CRS axis. This is the default value when instantiating OGRSpatialReference.
+- :c:macro:`OAMS_CUSTOM` means that the data axes are customly defined with SetDataAxisToSRSAxisMapping().
 
 What has been discussed in this section for the particular case of Geographic
 CRS also applies to Projected CRS. While most of them use Easting first, Northing
 second convention, some defined in the EPSG registry use the reverse convention.
 
+Another way to keep using the Traditional GIS order for some specific well known CRS is to
+calling to :cpp:func:`OGRSpatialReference::SetWellKnownGeogCS` with
+"CRS27", "CRS83" or "CRS84" instead of "NAD27", "NAD83" and "WGS84" respectively.
+
+.. code-block::
+
+    oSRS.SetWellKnownGeogCS( "CRS84" );
+
 Defining a Projected CRS
 ------------------------
 
-A projected CRS (such as UTM, Lambert Conformal Conic, etc)
+A projected CRS (such as UTM, Lambert Conformal Conic, etc.)
 requires and underlying geographic CRS as well as a definition
 for the projection transform used to translate between linear positions
 (in meters or feet) and angular long/lat positions.  The following code
@@ -383,7 +391,7 @@ are assumed to be ellipsoidal heights. When using a compound CRS made of a
 horizontal CRS (geographic or projected) and a vertical CRS, elevations will
 be related to a vertical datum (mean sea level, gravity based, etc.).
 
-Starting with GDAL 3.0, a time value (generally as a vale in decimal years) can
+Starting with GDAL 3.0, a time value (generally as a value in decimal years) can
 also be specified for time-dependent coordinate operations.
 
 The following example shows how to conveniently create a long/lat coordinate
@@ -420,9 +428,9 @@ Advanced Coordinate Transformation
 
 OGRCreateCoordinateTransformation() under-the-hood may determine several candidate
 coordinate operations transforming from the source CRS to the target CRS. Those
-candidate coordinate operations have each their own area of use. When Transform()
+candidate coordinate operations each have their own area of use. When Transform()
 is invoked, it will determine the most appropriate coordinate operation based on
-the coordinates of the point to transform and those area of use. For example,
+the coordinates of the point to transform and area of use. For example,
 there are several dozens of possible coordinate operations for the NAD27 to WGS84
 transformation.
 
@@ -529,7 +537,7 @@ C bindings
                             int nCode );
     OGRErr  OSRSetProjParm( OGRSpatialReferenceH, const char *, double );
     double  OSRGetProjParm( OGRSpatialReferenceH hSRS,
-                            const char * pszParmName,
+                            const char * pszParamName,
                             double dfDefault,
                             OGRErr * );
 
@@ -600,7 +608,7 @@ format specified by `Coordinate Transformation Services (CT) specification (01-0
 and the way
 it was interpreted by GDAL, which various caveats detailed in
 the :ref:`wktproblems` page.
-The class was mostly containing a in-memory tree-like representation of WKT 1 strings.
+The class mostly contained an in-memory tree-like representation of WKT 1 strings.
 The class used to directly implement import and export to OGC WKT 1, WKT-ESRI and PROJ.4
 formats. Reprojection services were only available if GDAL had been build against
 the PROJ library.

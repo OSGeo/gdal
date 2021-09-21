@@ -28,27 +28,16 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-
-
 import gdaltest
-import pytest
 
 ###############################################################################
 
 
-def test_sar_ceos_online_1():
-    list_files = ['ottawa_patch.img',
-                  'ottawa_patch.led',
-                  'ottawa_patch.nul',
-                  'ottawa_patch.trl',
-                  'ottawa_patch.vol']
-
-    for filename in list_files:
-        if not gdaltest.download_file('http://download.osgeo.org/gdal/data/ceos/' + filename, filename):
-            pytest.skip()
-
-    tst = gdaltest.GDALTest('SAR_CEOS', 'tmp/cache/ottawa_patch.img', 1, 23026, filename_absolute=1)
+def test_sar_ceos_app_1():
+    tst = gdaltest.GDALTest('SAR_CEOS', 'data/sar_ceos/ottawa_patch.img', 1, 1327, filename_absolute=1)
     return tst.testOpen()
 
-
+def test_sar_ceos_asf_2():
+    tst = gdaltest.GDALTest('SAR_CEOS', 'data/sar_ceos/R1_26161_FN1_F164.D', 1, 16643, filename_absolute=1)
+    return tst.testOpen()
 

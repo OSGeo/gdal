@@ -314,6 +314,45 @@ cd $CUR_DIR
 zip -r $OUT/ers_fuzzer_seed_corpus.zip srtm.tar ers_dem.tar >/dev/null
 rm srtm.tar ers_dem.tar
 
+echo "Building zarr_fuzzer_seed_corups.zip"
+rm -f $OUT/zarr_fuzzer_seed_corpus.zip
+CUR_DIR=$PWD
+cd  $(dirname $0)/../../autotest/gdrivers/data/zarr
+for dirname in *.zarr v3/*.zr3; do
+    cd $dirname
+    {
+        filelist=$(find . -type f)
+        printf "FUZZER_FRIENDLY_ARCHIVE\\n"
+        for f in $filelist; do
+          printf "***NEWFILE***:%s\\n" "$f"
+          cat $f
+        done
+    } > $CUR_DIR/$(basename $dirname).tar
+    cd ..
+done
+cd $CUR_DIR
+zip -r $OUT/zarr_fuzzer_seed_corpus.zip ./*.zarr.tar ./*.zr3.tar >/dev/null
+rm ./*.zarr.tar ./*.zr3.tar
+
+echo "Building dimap_fuzzer_seed_corups.zip"
+rm -f $OUT/dimap_fuzzer_seed_corpus.zip
+CUR_DIR=$PWD
+cd  $(dirname $0)/../../autotest/gdrivers/data/dimap2
+for dirname in *; do
+    cd $dirname
+    {
+        filelist=$(find . -type f)
+        printf "FUZZER_FRIENDLY_ARCHIVE\\n"
+        for f in $filelist; do
+          printf "***NEWFILE***:%s\\n" "$f"
+          cat $f
+        done
+    } > $CUR_DIR/dimap_$(basename $dirname).tar
+    cd ..
+done
+cd $CUR_DIR
+zip -r $OUT/dimap_fuzzer_seed_corpus.zip dimap_*.tar >/dev/null
+rm dimap_*.tar
 
 echo "Building ogr_sdts_fuzzer_seed_corpus.zip"
 rm -f $OUT/ogr_sdts_fuzzer_seed_corpus.zip
@@ -345,12 +384,6 @@ echo "Building csv_fuzzer_seed_corpus.zip"
 cd $(dirname $0)/../../autotest/ogr/data/csv
 rm -f $OUT/csv_fuzzer_seed_corpus.zip
 zip -r $OUT/csv_fuzzer_seed_corpus.zip ./*.csv >/dev/null
-cd $OLDPWD
-
-echo "Building bna_fuzzer_seed_corpus.zip"
-cd $(dirname $0)/../../autotest/ogr/data/bna
-rm -f $OUT/bna_fuzzer_seed_corpus.zip
-zip -r $OUT/bna_fuzzer_seed_corpus.zip ./*.bna >/dev/null
 cd $OLDPWD
 
 echo "Building xlsx_fuzzer_seed_corpus.zip"
@@ -508,8 +541,35 @@ rm -f $OUT/gml_fuzzer_seed_corpus.zip
     printf "***NEWFILE***:test.xsd\\n"
     cat $(dirname $0)/../../autotest/ogr/data/gml/archsites.xsd
 } > $CUR_DIR/archsites_gml.tar
-zip -r $OUT/gml_fuzzer_seed_corpus.zip archsites_gml.tar >/dev/null
-rm archsites_gml.tar
+{
+    printf "FUZZER_FRIENDLY_ARCHIVE\\n"
+    printf "***NEWFILE***:test.gml\\n"
+    sed "s/expected_gml_gml32/test/" < $(dirname $0)/../../autotest/ogr/data/gml/expected_gml_gml32.gml
+    printf "***NEWFILE***:test.xsd\\n"
+    cat $(dirname $0)/../../autotest/ogr/data/gml/expected_gml_gml32.xsd
+} > $CUR_DIR/expected_gml_gml32.tar
+zip -r $OUT/gml_fuzzer_seed_corpus.zip archsites_gml.tar expected_gml_gml32.tar >/dev/null
+
+echo "Building gmlas_fuzzer_seed_corpus.zip"
+rm -f $OUT/gmlas_fuzzer_seed_corpus.zip
+CUR_DIR=$PWD
+cd  $(dirname $0)/../../autotest/ogr/data/gmlas
+for filename in *.xml *.gml; do
+    BASENAME=$(echo $filename | cut -d. -f1)
+    TARNAME="$CUR_DIR/gmlas_${BASENAME}.tar"
+    printf "FUZZER_FRIENDLY_ARCHIVE\\n" > $TARNAME
+    printf "***NEWFILE***:test.gml\\n" >> $TARNAME
+    sed "s/${BASENAME}/test/" < $filename >> $TARNAME
+    XSD_FILENAME="${BASENAME}.xsd"
+    if test -f $XSD_FILENAME; then
+      printf "***NEWFILE***:test.xsd\\n" >> $TARNAME
+      cat $XSD_FILENAME >> $TARNAME
+    fi
+done
+cd $CUR_DIR
+zip -r $OUT/gmlas_fuzzer_seed_corpus.zip archsites_gml.tar expected_gml_gml32.tar gmlas_*.tar >/dev/null
+rm archsites_gml.tar expected_gml_gml32.tar gmlas_*.tar
+
 
 echo "Building fgb_fuzzer_seed_corpus.zip"
 cd $(dirname $0)/../../autotest/ogr/data/testfgb

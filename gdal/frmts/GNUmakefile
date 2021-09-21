@@ -7,7 +7,7 @@ OBJ	=	o/gdalallregister.o
 FRMT_FLAGS	=	$(foreach FRMT, $(GDAL_FORMATS), -DFRMT_$(FRMT))
 
 ifeq ($(GNM_ENABLED),yes)
-   GDAL_INCLUDE += -I$(GDAL_ROOT)/gnm -I$(GDAL_ROOT)/gnm/gnm_frmts
+   GDAL_INCLUDE += -iquote $(GDAL_ROOT)/gnm -iquote $(GDAL_ROOT)/gnm/gnm_frmts
    CXXFLAGS += -DGNM_ENABLED
 endif
 

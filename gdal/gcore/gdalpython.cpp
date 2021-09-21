@@ -34,6 +34,7 @@
 
 #include <algorithm>
 #include <mutex>
+#include <set>
 #include <vector>
 
 using namespace GDALPy;
@@ -51,9 +52,6 @@ static std::mutex gMutex;
 static bool gbHasInitializedPython = false;
 static PyThreadState* gphThreadState = nullptr;
 
-static PyGILState_STATE (*PyLibGILState_Ensure)(void) = nullptr;
-static void (*PyLibGILState_Release)(PyGILState_STATE) = nullptr;
-
 // Emulate Py_CompileString with Py_CompileStringExFlags
 // Probably just a temporary measure for a bug of Python 3.8.0 on Windows
 // https://bugs.python.org/issue37633
@@ -65,14 +63,15 @@ static PyObject* GDAL_Py_CompileString(const char *str, const char *filename, in
 namespace GDALPy
 {
     int (*Py_IsInitialized)(void) = nullptr;
+    PyGILState_STATE (*PyGILState_Ensure)(void) = nullptr;
+    void (*PyGILState_Release)(PyGILState_STATE) = nullptr;
     void (*Py_SetProgramName)(const char*) = nullptr;
-    PyObject* (*PyBuffer_FromReadWriteMemory)(void*, size_t) = nullptr;
     PyObject* (*PyObject_Type)(PyObject*) = nullptr;
     int (*PyObject_IsInstance)(PyObject*, PyObject*) = nullptr;
     PyObject* (*PyTuple_New)(size_t) = nullptr;
     PyObject* (*PyBool_FromLong)(long) = nullptr;
-    PyObject* (*PyInt_FromLong)(long) = nullptr;
-    long (*PyInt_AsLong)(PyObject *) = nullptr;
+    PyObject* (*PyLong_FromLong)(long) = nullptr;
+    long (*PyLong_AsLong)(PyObject *) = nullptr;
     PyObject* (*PyLong_FromLongLong)(GIntBig) = nullptr;
     GIntBig (*PyLong_AsLongLong)(PyObject *) = nullptr;
     PyObject* (*PyFloat_FromDouble)(double) = nullptr;
@@ -94,9 +93,7 @@ namespace GDALPy
     void (*PyObject_Print)(PyObject*,FILE*,int) = nullptr;
     Py_ssize_t (*PyBytes_Size)(PyObject *) = nullptr;
     const char* (*PyBytes_AsString)(PyObject*) = nullptr;
-    PyObject* (*PyString_FromStringAndSize)(const void*, size_t) = nullptr;
     PyObject* (*PyBytes_FromStringAndSize)(const void*, size_t) = nullptr;
-    const char* (*PyString_AsString)(PyObject*) = nullptr; // Py2 only
     PyObject* (*PyUnicode_FromString)(const char*) = nullptr;
     PyObject* (*PyUnicode_AsUTF8String)(PyObject *) = nullptr;
     PyObject* (*PyImport_ImportModule)(const char*) = nullptr;
@@ -123,8 +120,7 @@ namespace GDALPy
                                     size_t len, int readonly, int infoflags) = nullptr;
     PyObject* (*PyMemoryView_FromBuffer)(Py_buffer *view) = nullptr;
 
-    PyObject* (*Py_InitModule4)(const char*, const PyMethodDef*, const char*, PyObject*, int) = nullptr; // Py2 only
-    PyObject * (*PyModule_Create2)(struct PyModuleDef*, int) = nullptr; // Py3
+    PyObject * (*PyModule_Create2)(struct PyModuleDef*, int) = nullptr;
 }
 
 /* MinGW32 might define HAVE_DLFCN_H, so skip the unix implementation */
@@ -300,34 +296,63 @@ static bool LoadPythonAPI()
 #endif
                         )
                     {
-                        // If this is a symlink, hopefully the resolved
-                        // name will be like "python2.7"
-                        const int nBufSize = 2048;
-                        std::vector<char> oFilename(nBufSize);
-                        char *szPointerFilename = &oFilename[0];
-                        int nBytes = static_cast<int>(
-                            readlink( osPythonBinary, szPointerFilename,
-                                      nBufSize ) );
-                        if (nBytes != -1)
+                        std::set<std::string> oSetAlreadyTriedLinks;
+                        while( true )
                         {
-                            szPointerFilename[std::min(nBytes,
-                                                       nBufSize - 1)] = 0;
-                            CPLString osFilename(
-                                            CPLGetFilename(szPointerFilename));
-                            CPLDebug("GDAL", "Which is an alias to: %s",
-                                     szPointerFilename);
-                            if( STARTS_WITH(osFilename, "python") )
+                            oSetAlreadyTriedLinks.insert(osPythonBinary);
+
+                            // If this is a symlink, hopefully the resolved
+                            // name will be like "python3.6"
+                            const int nBufSize = 2048;
+                            std::vector<char> oFilename(nBufSize);
+                            char *szPointerFilename = &oFilename[0];
+                            int nBytes = static_cast<int>(
+                                readlink( osPythonBinary, szPointerFilename,
+                                          nBufSize ) );
+                            if (nBytes != -1)
                             {
-                                osVersion = osFilename.substr(strlen("python"));
-                                CPLDebug("GDAL",
-                                         "Python version from binary name: %s",
-                                         osVersion.c_str());
+                                szPointerFilename[std::min(nBytes,
+                                                           nBufSize - 1)] = 0;
+                                CPLString osFilename(
+                                                CPLGetFilename(szPointerFilename));
+                                CPLDebug("GDAL", "Which is an alias to: %s",
+                                         szPointerFilename);
+
+                                if( STARTS_WITH(osFilename, "python") )
+                                {
+                                    CPLString osResolvedFullLink;
+                                    // If the filename is again a symlink,
+                                    // resolve it
+                                    if( CPLIsFilenameRelative(osFilename) )
+                                    {
+                                        osResolvedFullLink = CPLFormFilename(
+                                            CPLGetPath(osPythonBinary), osFilename, nullptr );
+                                    }
+                                    else
+                                    {
+                                        osResolvedFullLink = osFilename;
+                                    }
+                                    if( oSetAlreadyTriedLinks.find(osResolvedFullLink) ==
+                                            oSetAlreadyTriedLinks.end() &&
+                                        lstat(osResolvedFullLink, &sStat) == 0 &&
+                                        S_ISLNK(sStat.st_mode) )
+                                    {
+                                        osPythonBinary = osResolvedFullLink;
+                                        continue;
+                                    }
+
+                                    osVersion = osFilename.substr(strlen("python"));
+                                    CPLDebug("GDAL",
+                                             "Python version from binary name: %s",
+                                             osVersion.c_str());
+                                }
                             }
-                        }
-                        else
-                        {
-                            CPLDebug("GDAL", "realink(%s) failed",
-                                        osPythonBinary.c_str());
+                            else
+                            {
+                                CPLDebug("GDAL", "realink(%s) failed",
+                                            osPythonBinary.c_str());
+                            }
+                            break;
                         }
                     }
 
@@ -392,12 +417,12 @@ static bool LoadPythonAPI()
     // Note: update doc/source/drivers/raster/vrt.rst if change
     if( libHandle == nullptr )
     {
-        const char* const apszPythonSO[] = { "libpython2.7." SO_EXT,
-                                                "libpython3.5m." SO_EXT,
+        const char* const apszPythonSO[] = {
                                                 "libpython3.6m." SO_EXT,
                                                 "libpython3.7m." SO_EXT,
                                                 "libpython3.8m." SO_EXT,
                                                 "libpython3.9m." SO_EXT,
+                                                "libpython3.5m." SO_EXT,
                                                 "libpython3.4m." SO_EXT,
                                                 "libpython3.3." SO_EXT,
                                                 "libpython3.2." SO_EXT };
@@ -597,12 +622,11 @@ static bool LoadPythonAPI()
     // Note: update doc/source/drivers/raster/vrt.rst if change
     if( libHandle == nullptr )
     {
-        const char* const apszPythonSO[] = { "python27.dll",
-                                            "python35.dll",
-                                            "python36.dll",
+        const char* const apszPythonSO[] = {"python36.dll",
                                             "python37.dll",
                                             "python38.dll",
                                             "python39.dll",
+                                            "python35.dll",
                                             "python34.dll",
                                             "python33.dll",
                                             "python32.dll" };
@@ -630,52 +654,21 @@ static bool LoadPythonAPI()
     }
 
     LOAD(libHandle, Py_SetProgramName);
-    LOAD_NOCHECK(libHandle, PyBuffer_FromReadWriteMemory);
-    LOAD_NOCHECK(libHandle, PyBuffer_FillInfo);
-    LOAD_NOCHECK(libHandle, PyMemoryView_FromBuffer);
-    if( PyBuffer_FromReadWriteMemory == nullptr &&
-        (PyBuffer_FillInfo == nullptr || PyMemoryView_FromBuffer == nullptr) )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Cannot find PyBuffer_FromReadWriteMemory or "
-                 "PyBuffer_FillInfo+PyMemoryView_FromBuffer\n");
-        return false;
-    }
+    LOAD(libHandle, PyBuffer_FillInfo);
+    LOAD(libHandle, PyMemoryView_FromBuffer);
     LOAD(libHandle, PyObject_Type);
     LOAD(libHandle, PyObject_IsInstance);
     LOAD(libHandle, PyTuple_New);
     LOAD(libHandle, PyBool_FromLong);
-    if( PyBuffer_FromReadWriteMemory )
-    {
-        // Python 2
-        LOAD(libHandle, PyInt_FromLong);
-        LOAD(libHandle, PyInt_AsLong);
-        LOAD(libHandle, PyString_AsString);
-        LOAD_WITH_NAME(libHandle, PyBytes_Size, "PyString_Size");
-        LOAD_WITH_NAME(libHandle, PyBytes_AsString, "PyString_AsString");
-        LOAD(libHandle, PyString_FromStringAndSize);
-        LOAD_WITH_NAME(libHandle, PyBytes_FromStringAndSize,
-                       "PyString_FromStringAndSize");
-
-        LOAD_NOCHECK_WITH_NAME(libHandle, Py_InitModule4, "Py_InitModule4_64");
-        if( Py_InitModule4 == nullptr )
-            LOAD_WITH_NAME(libHandle, Py_InitModule4, "Py_InitModule4");
-    }
-    else
-    {
-        // Python 3
-        LOAD_WITH_NAME(libHandle, PyInt_FromLong, "PyLong_FromLong");
-        LOAD_WITH_NAME(libHandle, PyInt_AsLong, "PyLong_AsLong");
-        LOAD(libHandle, PyBytes_Size);
-        LOAD(libHandle, PyBytes_AsString);
-        LOAD(libHandle, PyBytes_FromStringAndSize);
-        LOAD_WITH_NAME(libHandle, PyString_FromStringAndSize,
-                       "PyBytes_FromStringAndSize");
-
-        LOAD(libHandle, PyModule_Create2);
-    }
+    LOAD(libHandle, PyLong_FromLong);
+    LOAD(libHandle, PyLong_AsLong);
     LOAD(libHandle, PyLong_FromLongLong);
     LOAD(libHandle, PyLong_AsLongLong);
+    LOAD(libHandle, PyBytes_Size);
+    LOAD(libHandle, PyBytes_AsString);
+    LOAD(libHandle, PyBytes_FromStringAndSize);
+
+    LOAD(libHandle, PyModule_Create2);
 
     LOAD_NOCHECK_WITH_NAME(libHandle, PyUnicode_FromString,
                            "PyUnicode_FromString");
@@ -743,8 +736,8 @@ static bool LoadPythonAPI()
     LOAD(libHandle, PySequence_Size);
     LOAD(libHandle, PySequence_GetItem);
     LOAD(libHandle, PyArg_ParseTuple);
-    LOAD_WITH_NAME(libHandle, PyLibGILState_Ensure, "PyGILState_Ensure");
-    LOAD_WITH_NAME(libHandle, PyLibGILState_Release, "PyGILState_Release");
+    LOAD(libHandle, PyGILState_Ensure);
+    LOAD(libHandle, PyGILState_Release);
     LOAD(libHandle, PyErr_Fetch);
     LOAD(libHandle, PyErr_Clear);
     LOAD(libHandle, Py_GetVersion);
@@ -823,7 +816,7 @@ GIL_Holder::GIL_Holder(bool bExclusiveLock):
     {
         gMutex.lock();
     }
-    m_eState = PyLibGILState_Ensure();
+    m_eState = PyGILState_Ensure();
 }
 
 /************************************************************************/
@@ -832,7 +825,7 @@ GIL_Holder::GIL_Holder(bool bExclusiveLock):
 
 GIL_Holder::~GIL_Holder()
 {
-    PyLibGILState_Release(m_eState);
+    PyGILState_Release(m_eState);
     if( m_bExclusiveLock )
     {
         gMutex.unlock();
@@ -848,19 +841,6 @@ GIL_Holder::~GIL_Holder()
 
 CPLString GetString(PyObject* obj, bool bEmitError)
 {
-    // Python 2
-    if( PyString_AsString )
-    {
-        static PyObject* poTmpUnicodeType = PyObject_Type(PyUnicode_FromString(""));
-        int bIsUnicode = PyObject_IsInstance(obj, poTmpUnicodeType);
-        if( !bIsUnicode )
-        {
-            const char* pszRet = PyString_AsString(obj);
-            CPLString osRet = pszRet ? pszRet : "";
-            return osRet;
-        }
-    }
-
     PyObject* unicode = PyUnicode_AsUTF8String(obj);
     if( PyErr_Occurred() )
     {
@@ -872,8 +852,7 @@ CPLString GetString(PyObject* obj, bool bEmitError)
         return CPLString();
     }
 
-    const char* pszRet = PyString_AsString ?
-        PyString_AsString(unicode) : PyBytes_AsString(unicode);
+    const char* pszRet = PyBytes_AsString(unicode);
     CPLString osRet = pszRet ? pszRet : "";
     Py_DecRef(unicode);
     return osRet;

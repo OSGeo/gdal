@@ -217,6 +217,7 @@ void RegisterOGRODS()
                                "Time Binary" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATASUBTYPES, "Boolean" );
     poDriver->SetMetadataItem( GDAL_DCAP_NONSPATIAL, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
 
     poDriver->pfnIdentify = OGRODSDriverIdentify;
     poDriver->pfnOpen = OGRODSDriverOpen;

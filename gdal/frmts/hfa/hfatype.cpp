@@ -93,7 +93,7 @@ const char *HFAType::Initialize( const char *pszInput )
     // Read the field definitions.
     while( pszInput != nullptr && *pszInput != '}' )
     {
-        std::unique_ptr<HFAField> poNewField(new HFAField());
+        auto poNewField = cpl::make_unique<HFAField>();
 
         pszInput = poNewField->Initialize(pszInput);
         if( pszInput != nullptr )

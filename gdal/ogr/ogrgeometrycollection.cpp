@@ -32,6 +32,7 @@
 
 #include <cstddef>
 #include <cstring>
+#include <new>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -148,25 +149,10 @@ void OGRGeometryCollection::empty()
 /*                               clone()                                */
 /************************************************************************/
 
-OGRGeometry *OGRGeometryCollection::clone() const
+OGRGeometryCollection *OGRGeometryCollection::clone() const
 
 {
-    OGRGeometryCollection *poNewGC =
-        OGRGeometryFactory::createGeometry(getGeometryType())->
-            toGeometryCollection();
-    poNewGC->assignSpatialReference( getSpatialReference() );
-    poNewGC->flags = flags;
-
-    for( auto&& poSubGeom: *this )
-    {
-        if( poNewGC->addGeometry( poSubGeom ) != OGRERR_NONE )
-        {
-            delete poNewGC;
-            return nullptr;
-        }
-    }
-
-    return poNewGC;
+    return new (std::nothrow) OGRGeometryCollection(*this);
 }
 
 /************************************************************************/
@@ -449,14 +435,14 @@ OGRErr OGRGeometryCollection::removeGeometry( int iGeom, int bDelete )
 /*      representation including the byte order, and type information.  */
 /************************************************************************/
 
-int OGRGeometryCollection::WkbSize() const
+size_t OGRGeometryCollection::WkbSize() const
 
 {
-    int nSize = 9;
+    size_t nSize = 9;
 
-    for( int i = 0; i < nGeomCount; i++ )
+    for( const auto& poGeom: *this )
     {
-        nSize += papoGeoms[i]->WkbSize();
+        nSize += poGeom->WkbSize();
     }
 
     return nSize;
@@ -467,12 +453,12 @@ int OGRGeometryCollection::WkbSize() const
 /************************************************************************/
 
 OGRErr OGRGeometryCollection::importFromWkbInternal( const unsigned char * pabyData,
-                                                     int nSize, int nRecLevel,
+                                                     size_t nSize, int nRecLevel,
                                                      OGRwkbVariant eWkbVariant,
-                                                     int& nBytesConsumedOut )
+                                                     size_t& nBytesConsumedOut )
 
 {
-    nBytesConsumedOut = -1;
+    nBytesConsumedOut = 0;
     // Arbitrary value, but certainly large enough for reasonable use cases.
     if( nRecLevel == 32 )
     {
@@ -484,7 +470,7 @@ OGRErr OGRGeometryCollection::importFromWkbInternal( const unsigned char * pabyD
 
     nGeomCount = 0;
     OGRwkbByteOrder eByteOrder = wkbXDR;
-    int nDataOffset = 0;
+    size_t nDataOffset = 0;
     OGRErr eErr = importPreambleOfCollectionFromWkb( pabyData,
                                                       nSize,
                                                       nDataOffset,
@@ -512,7 +498,7 @@ OGRErr OGRGeometryCollection::importFromWkbInternal( const unsigned char * pabyD
     {
         // Parses sub-geometry.
         const unsigned char* pabySubData = pabyData + nDataOffset;
-        if( nSize < 9 && nSize != -1 )
+        if( nSize < 9 && nSize != static_cast<size_t>(-1) )
             return OGRERR_NOT_ENOUGH_DATA;
 
         OGRwkbGeometryType eSubGeomType = wkbUnknown;
@@ -532,7 +518,7 @@ OGRErr OGRGeometryCollection::importFromWkbInternal( const unsigned char * pabyD
         }
 
         OGRGeometry* poSubGeom = nullptr;
-        int nSubGeomBytesConsumed = -1;
+        size_t nSubGeomBytesConsumed = 0;
         if( OGR_GT_IsSubClassOf(eSubGeomType, wkbGeometryCollection) )
         {
             poSubGeom = OGRGeometryFactory::createGeometry( eSubGeomType );
@@ -567,7 +553,7 @@ OGRErr OGRGeometryCollection::importFromWkbInternal( const unsigned char * pabyD
             flags |= OGR_G_MEASURED;
 
         CPLAssert( nSubGeomBytesConsumed > 0 );
-        if( nSize != -1 )
+        if( nSize != static_cast<size_t>(-1) )
         {
             CPLAssert( nSize >= nSubGeomBytesConsumed );
             nSize -= nSubGeomBytesConsumed;
@@ -588,9 +574,9 @@ OGRErr OGRGeometryCollection::importFromWkbInternal( const unsigned char * pabyD
 /************************************************************************/
 
 OGRErr OGRGeometryCollection::importFromWkb( const unsigned char * pabyData,
-                                             int nSize,
+                                             size_t nSize,
                                              OGRwkbVariant eWkbVariant,
-                                             int& nBytesConsumedOut )
+                                             size_t& nBytesConsumedOut )
 
 {
     return importFromWkbInternal(pabyData, nSize, 0, eWkbVariant,
@@ -662,7 +648,7 @@ OGRErr OGRGeometryCollection::exportToWkb( OGRwkbByteOrder eByteOrder,
         memcpy( pabyData+5, &nGeomCount, 4 );
     }
 
-    int nOffset = 9;
+    size_t nOffset = 9;
 
 /* ==================================================================== */
 /*      Serialize each of the Geoms.                                    */
@@ -814,55 +800,72 @@ std::string OGRGeometryCollection::exportToWktInternal(const OGRWktOptions& opts
     OGRErr *err, std::string exclude) const
 {
     bool first = true;
-    size_t excludeSize = exclude.size();
-    std::string wkt;
+    const size_t excludeSize = exclude.size();
+    std::string wkt(getGeometryName());
+    wkt += wktTypeString(opts.variant);
 
-    for (int i = 0; i < nGeomCount; ++i)
+    try
     {
-        OGRGeometry *geom = papoGeoms[i];
-        std::string tempWkt = geom->exportToWkt(opts, err);
-        if (err && *err != OGRERR_NONE)
-            return std::string();
-
-        // For some strange reason we exclude the typename leader when using
-        // some geometries as part of a collection.
-        if (excludeSize && (tempWkt.compare(0, excludeSize, exclude) == 0))
+        for (int i = 0; i < nGeomCount; ++i)
         {
-            auto pos = tempWkt.find('(');
-            // We won't have an opening paren if the geom is empty.
-            if (pos == std::string::npos)
-                continue;
-            tempWkt = tempWkt.substr(pos);
+            OGRGeometry *geom = papoGeoms[i];
+            OGRErr subgeomErr = OGRERR_NONE;
+            std::string tempWkt = geom->exportToWkt(opts, &subgeomErr);
+            if (subgeomErr != OGRERR_NONE)
+            {
+                if (err)
+                    *err = subgeomErr;
+                return std::string();
+            }
+
+            // For some strange reason we exclude the typename leader when using
+            // some geometries as part of a collection.
+            if (excludeSize && (tempWkt.compare(0, excludeSize, exclude) == 0))
+            {
+                auto pos = tempWkt.find('(');
+                // We won't have an opening paren if the geom is empty.
+                if (pos == std::string::npos)
+                    continue;
+                tempWkt = tempWkt.substr(pos);
+            }
+
+            // Also strange, we allow the inclusion of ISO-only geometries (see
+            // OGRPolyhedralSurface) in a non-iso geometry collection.  In order
+            // to facilitate this, we need to rip the ISO bit from the string.
+            if (opts.variant != wkbVariantIso)
+            {
+                std::string::size_type pos;
+                if ((pos = tempWkt.find(" Z ")) != std::string::npos)
+                    tempWkt.erase(pos + 1, 2);
+                else if ((pos = tempWkt.find(" M ")) != std::string::npos)
+                    tempWkt.erase(pos + 1, 2);
+                else if ((pos = tempWkt.find(" ZM ")) != std::string::npos)
+                    tempWkt.erase(pos + 1, 3);
+            }
+
+            if (first)
+                wkt += '(';
+            else
+                wkt += ',';
+            first = false;
+            wkt += tempWkt;
         }
 
-        // Also strange, we allow the inclusion of ISO-only geometries (see
-        // OGRPolyhedralSurface) in a non-iso geometry collection.  In order
-        // to facilitate this, we need to rip the ISO bit from the string.
-        if (opts.variant != wkbVariantIso)
-        {
-            std::string::size_type pos;
-            if ((pos = tempWkt.find(" Z ")) != std::string::npos)
-                tempWkt.erase(pos + 1, 2);
-            else if ((pos = tempWkt.find(" M ")) != std::string::npos)
-                tempWkt.erase(pos + 1, 2);
-            else if ((pos = tempWkt.find(" ZM ")) != std::string::npos)
-                tempWkt.erase(pos + 1, 3);
-        }
-
-        if (!first)
-            wkt += std::string(",");
-        first = false;
-        wkt += tempWkt;
+        if (err)
+            *err = OGRERR_NONE;
+        if (first)
+            wkt += "EMPTY";
+        else
+            wkt += ')';
+        return wkt;
     }
-
-    if (err)
-        *err = OGRERR_NONE;
-    if (wkt.empty())
-        wkt += "EMPTY";
-    else
-        wkt = "(" + wkt + ")";
-     wkt = getGeometryName() + wktTypeString(opts.variant) + wkt;
-    return wkt;
+    catch( const std::bad_alloc& e )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
+        if (err)
+            *err = OGRERR_FAILURE;
+        return std::string();
+    }
 }
 //! @endcond
 

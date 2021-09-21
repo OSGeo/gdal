@@ -435,7 +435,7 @@ void DGNRad50ToAscii(unsigned short sRad50, char *str )
         /* Map 0..39 to ASCII */
         if (sValue==0)
             ch = ' ';          /* space */
-        else if (sValue >= 1 && sValue <= 26)
+        else if (/*sValue >= 1 &&*/ sValue <= 26)
             ch = (char) (sValue-1+'A');/* printable alpha A..Z */
         else if (sValue == 27)
             ch = '$';          /* dollar */
@@ -443,7 +443,7 @@ void DGNRad50ToAscii(unsigned short sRad50, char *str )
             ch = '.';          /* period */
         else if (sValue == 29)
             ch = ' ';          /* unused char, emit a space instead */
-        else if (sValue >= 30 && sValue <= 39)
+        else if (/*sValue >= 30 &&*/ sValue <= 39)
             ch = (char) (sValue-30+'0');   /* digit 0..9 */
         *str = ch;
         str++;
@@ -1018,6 +1018,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
             int nEntityNum = 0;
             int nMSLink = 0;
             int nLinkSize = 0;
+            // coverity[tained_data]
             unsigned char *pabyData =
                 DGNGetLinkage( hDGN, psElement, iLink, &nLinkType,
                                &nEntityNum, &nMSLink, &nLinkSize );
@@ -1341,10 +1342,10 @@ void DGNRotationToQuaternion( double dfRotation, int *panQuaternion )
 void DGNQuaternionToMatrix( int *quat, float *mat )
 {
     const double q[4] = {
-        1.0 * quat[1] / (1<<31),
-        1.0 * quat[2] / (1<<31),
-        1.0 * quat[3] / (1<<31),
-        1.0 * quat[0] / (1<<31)
+        1.0 * quat[1] / (1U<<31),
+        1.0 * quat[2] / (1U<<31),
+        1.0 * quat[3] / (1U<<31),
+        1.0 * quat[0] / (1U<<31)
     };
 
     mat[0*3+0] = (float) (q[0]*q[0] - q[1]*q[1] - q[2]*q[2] + q[3]*q[3]);

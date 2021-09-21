@@ -25,7 +25,7 @@ i386 chroot "$chroot" ccache -s
 i386 chroot "$chroot" sh -c "cd $PWD/proj && ./autogen.sh && CC='ccache gcc' CXX='ccache g++' CFLAGS='-DPROJ_RENAME_SYMBOLS' CXXFLAGS='-DPROJ_RENAME_SYMBOLS' ./configure --disable-static --prefix=/usr/local && CCACHE_CPP2=yes make -j3"
 sudo i386 chroot "$chroot" sh -c "cd $PWD/proj && make -j3 install && mv /usr/local/lib/libproj.so.15.0.0 /usr/local/lib/libinternalproj.so.15.0.0 && rm /usr/local/lib/libproj.* && ln -s libinternalproj.so.15.0.0  /usr/local/lib/libinternalproj.so.15 && ln -s libinternalproj.so.15.0.0  /usr/local/lib/libinternalproj.so"
 
-i386 chroot "$chroot" sh -c "cd $PWD/gdal && CCACHE_CPP2=yes CC='ccache clang' CXX='ccache clang' LIBS='-lstdc++' ./configure --prefix=/usr --without-libtool --enable-debug --with-jpeg12 --with-python=/usr/bin/python3.5 --with-poppler --with-podofo --with-spatialite --with-mysql --with-liblzma --with-webp --with-epsilon --with-proj=/usr/local"
+i386 chroot "$chroot" sh -c "cd $PWD/gdal && ./autogen.sh && CCACHE_CPP2=yes CC='ccache clang' CXX='ccache clang' LIBS='-lstdc++' ./configure --prefix=/usr --without-libtool --enable-debug --with-jpeg12 --with-python=/usr/bin/python3.5 --with-poppler --with-podofo --with-spatialite --with-mysql --with-liblzma --with-webp --with-epsilon --with-proj=/usr/local"
 # --with-gta
 i386 chroot "$chroot" sh -c "cd $PWD/gdal && CCACHE_CPP2=yes make USER_DEFS=-Werror -j3"
 i386 chroot "$chroot" sh -c "cd $PWD/gdal/apps && CCACHE_CPP2=yes make USER_DEFS=-Werror -j3 test_ogrsf"

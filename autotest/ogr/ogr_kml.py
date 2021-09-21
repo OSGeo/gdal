@@ -104,7 +104,7 @@ def test_ogr_kml_attributes_1():
         print('got: ', feat.GetField('description'))
         pytest.fail('Wrong description field value')
 
-    
+
 ###############################################################################
 # Test reading attributes for another layer (point).
 #
@@ -185,7 +185,7 @@ def test_ogr_kml_attributes_4():
         i = i + 1
         feat = lyr.GetNextFeature()
 
-    
+
 ###############################################################################
 # Test reading of KML point geometry
 #
@@ -410,7 +410,7 @@ def test_ogr_kml_xml_attributes():
         print('got: ', feat.GetField('description'))
         pytest.fail('Wrong description field value')
 
-    
+
 ###############################################################################
 # Test reading all geometry types (#3558)
 
@@ -427,7 +427,7 @@ def test_ogr_kml_read_geometries():
     while feat is not None:
         feat = lyr.GetNextFeature()
 
-    
+
 ###############################################################################
 # Run test_ogrsf
 
@@ -517,7 +517,7 @@ def compare_output(content, expected_content):
     for i, content_line in enumerate(content_lines):
         assert content_line.strip() == expected_lines[i].strip(), content
 
-    
+
 ###############################################################################
 # Test that we can write a schema
 
@@ -730,3 +730,28 @@ def test_ogr_kml_read_placemark_in_root_and_subfolder():
     assert lyr is not None
     assert lyr.GetFeatureCount() == 1
 
+
+
+###############################################################################
+# Test reading KML with non-conformant MultiPolygon, MultiLineString, MultiPoint (#4031)
+
+
+def test_ogr_kml_read_non_conformant_multi_geometries():
+
+    if not ogrtest.have_read_kml:
+        pytest.skip()
+
+    ds = ogr.Open('data/kml/non_conformant_multi.kml')
+    lyr = ds.GetLayer(0)
+
+    feat = lyr.GetNextFeature()
+    wkt = 'MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)))'
+    assert not ogrtest.check_feature_geometry(feat, wkt)
+
+    feat = lyr.GetNextFeature()
+    wkt = 'MULTILINESTRING ((0 0,1 1))'
+    assert not ogrtest.check_feature_geometry(feat, wkt)
+
+    feat = lyr.GetNextFeature()
+    wkt = 'MULTIPOINT ((0 0))'
+    assert not ogrtest.check_feature_geometry(feat, wkt)

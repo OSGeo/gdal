@@ -35,6 +35,8 @@
 #include "cpl_odbc.h"
 #include "cpl_error.h"
 
+#include <unordered_set>
+
 /************************************************************************/
 /*                            OGRPGeoLayer                              */
 /************************************************************************/
@@ -60,6 +62,8 @@ class OGRPGeoLayer CPL_NON_FINAL: public OGRLayer
     char                *pszFIDColumn;
 
     int                *panFieldOrdinals;
+
+    bool                m_bEOF = false;
 
     CPLErr              BuildFeatureDefn( const char *pszLayerName,
                                           CPLODBCStatement *poStmt );
@@ -100,6 +104,8 @@ class OGRPGeoTableLayer final: public OGRPGeoLayer
     virtual CPLODBCStatement *  GetStatement() override;
 
     OGREnvelope         sExtent;
+    std::string         m_osDefinition;
+    std::string         m_osDocumentation;
 
   public:
     explicit            OGRPGeoTableLayer( OGRPGeoDataSource * );
@@ -113,7 +119,8 @@ class OGRPGeoTableLayer final: public OGRPGeoLayer
                                     double dfExtentBottom,
                                     double dfExtentTop,
                                     int nSRID,
-                                    int bHasZ );
+                                    int bHasZ,
+                                    int nHasM );
 
     virtual void        ResetReading() override;
     virtual GIntBig     GetFeatureCount( int ) override;
@@ -126,6 +133,8 @@ class OGRPGeoTableLayer final: public OGRPGeoLayer
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
     virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
+    const std::string&  GetXMLDefinition() { return m_osDefinition; }
+    const std::string&  GetXMLDocumentation() { return m_osDocumentation; }
 };
 
 /************************************************************************/
@@ -165,14 +174,23 @@ class OGRPGeoDataSource final: public OGRDataSource
 
     char               *pszName;
 
-    int                 bDSUpdate;
-    CPLODBCSession      oSession;
+    mutable CPLODBCSession oSession;
 
+    std::unordered_set< std::string > m_aosAllLCTableNames;
+    bool                m_bHasGdbItemsTable = false;
+
+    std::vector<std::unique_ptr<OGRLayer>> m_apoInvisibleLayers;
+
+#ifndef _WIN32
+    mutable bool        m_COUNT_STAR_state_known = false;
+    mutable bool        m_COUNT_STAR_working = false;
+#endif
+    static bool         IsPrivateLayerName( const CPLString& osName );
   public:
                         OGRPGeoDataSource();
                         virtual ~OGRPGeoDataSource();
 
-    int                 Open( const char *, int bUpdate, int bTestOpen );
+    int                 Open( GDALOpenInfo* poOpenInfo );
     int                 OpenTable( const char *pszTableName,
                                    const char *pszGeomCol,
                                    int bUpdate );
@@ -180,6 +198,8 @@ class OGRPGeoDataSource final: public OGRDataSource
     const char          *GetName() override { return pszName; }
     int                 GetLayerCount() override { return nLayers; }
     OGRLayer            *GetLayer( int ) override;
+    OGRLayer            *GetLayerByName( const char* ) override;
+    bool                IsLayerPrivate( int ) const override;
 
     int                 TestCapability( const char * ) override;
 
@@ -190,40 +210,11 @@ class OGRPGeoDataSource final: public OGRDataSource
 
     // Internal use
     CPLODBCSession     *GetSession() { return &oSession; }
+
+    bool CountStarWorking() const;
+
+    bool HasGdbItemsTable() const { return m_bHasGdbItemsTable; }
 };
 
-/************************************************************************/
-/*                           OGRODBCMDBDriver                           */
-/************************************************************************/
-
-class OGRODBCMDBDriver CPL_NON_FINAL: public OGRSFDriver
-{
-#ifndef WIN32
-    CPLString   osDriverFile;
-    static bool        LibraryExists( const char* pszLibPath );
-    bool        FindDriverLib();
-    CPLString   FindDefaultLib(const char* pszLibName);
-#endif
-
-protected:
-#ifndef WIN32
-    bool        InstallMdbDriver();
-#endif
-};
-
-/************************************************************************/
-/*                             OGRPGeoDriver                            */
-/************************************************************************/
-
-class OGRPGeoDriver final: public OGRODBCMDBDriver
-{
-  public:
-                ~OGRPGeoDriver();
-
-    const char  *GetName() override;
-    OGRDataSource *Open( const char *, int ) override;
-
-    int          TestCapability( const char * ) override;
-};
 
 #endif /* ndef _OGR_PGeo_H_INCLUDED */

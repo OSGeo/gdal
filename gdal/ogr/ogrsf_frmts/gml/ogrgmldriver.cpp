@@ -200,7 +200,7 @@ void RegisterOGRGML()
 "  <Option name='PREFIX' type='string' description='Prefix for the application target namespace.' default='ogr'/>"
 "  <Option name='STRIP_PREFIX' type='boolean' description='Whether to avoid writing the prefix of the application target namespace in the GML file.' default='NO'/>"
 "  <Option name='TARGET_NAMESPACE' type='string' description='Application target namespace.' default='http://ogr.maptools.org/'/>"
-"  <Option name='FORMAT' type='string-select' description='Version of GML to use' default='GML2'>"
+"  <Option name='FORMAT' type='string-select' description='Version of GML to use' default='GML3.2'>"
 "    <Value>GML2</Value>"
 "    <Value>GML3</Value>"
 "    <Value>GML3.2</Value>"
@@ -232,6 +232,7 @@ void RegisterOGRGML()
     poDriver->SetMetadataItem( GDAL_DCAP_UNIQUE_FIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
 
     poDriver->pfnOpen = OGRGMLDriverOpen;
     poDriver->pfnIdentify = OGRGMLDriverIdentify;

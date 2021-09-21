@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<?xml-model href="https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1D00.sch"
+  schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<?xml-model href="https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1D00_1933.sch"
+    schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<?xml-model href="https://pds.nasa.gov/pds4/disp/v1/PDS4_DISP_1900.sch"
+    schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<?xml-model href="https://pds.nasa.gov/pds4/mission/msn/v1/PDS4_MSN_1B00_1100.sch"
+    schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<?xml-model href="https://pds.nasa.gov/pds4/proc/v1/PDS4_PROC_1900.sch"
+    schematypens="http://purl.oclc.org/dsdl/schematron"?>
+
+<Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1"
+    xmlns:cart="http://pds.nasa.gov/pds4/cart/v1"
+    xmlns:disp="http://pds.nasa.gov/pds4/disp/v1"
+    xmlns:dph="http://pds.nasa.gov/pds4/dph/v1"
+    xmlns:msn="http://pds.nasa.gov/pds4/msn/v1"
+    xmlns:pds="http://pds.nasa.gov/pds4/pds/v1"
+    xmlns:proc="http://pds.nasa.gov/pds4/proc/v1"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://pds.nasa.gov/pds4/pds/v1 https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1D00.xsd      http://pds.nasa.gov/pds4/disp/v1 https://pds.nasa.gov/pds4/disp/v1/PDS4_DISP_1900.xsd                            http://pds.nasa.gov/pds4/cart/v1 https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1D00_1933.xsd   http://pds.nasa.gov/pds4/msn/v1 https://pds.nasa.gov/pds4/mission/msn/v1/PDS4_MSN_1B00_1100.xsd   http://pds.nasa.gov/pds4/proc/v1 https://pds.nasa.gov/pds4/proc/v1/PDS4_PROC_1900.xsd">
+  <Identification_Area>
+        <logical_identifier>urn:nasa:pds:cassini-coradar:coradr_0285.data:bieqh14n063_d285_t126s04_v02</logical_identifier>
+    <version_id>2.0</version_id>
+    <title>co-ssa-radar-5-bidr-v1.0 bieqh14n063_d285_t126s04_v02</title>
+    <information_model_version>1.13.0.0</information_model_version>
+    <product_class>Product_Observational</product_class>
+    <Citation_Information>
+      <author_list>Elachi, C.; Allison, M. D.; Borgarelli, L.; Encrenaz, P.; Im, E.; Janssen, M. A.; Johnson, W. T. K.; Kirk, R. L.; Lorenz, R. D.; Lunine, J. I.; Muhleman, D. O.; Ostro, S. J.; Picardi, G.; Posa, F.; Rapley, C. G.; Roth, L. E.; Seu, R.; Soderblom, L. A.; Vetrella, S.; Wall, S. D. Wood, C. A.; Zebker, H. A.</author_list>
+      <publication_year>2004</publication_year>
+      <description>
+        Title: "Radar: The Cassini Titan Radar Mapper"
+        Publication: The Cassini-Huygens Mission, by Russell, Christopher T., ISBN 978-1-4020-3147-2. Kluwer Academic Publishers, 2004, p. 71
+        DOI: 10.1007/1-4020-3874-7_2
+        Abstract: The Cassini RADAR instrument is a multimode 13.8 GHz multiple-beam sensor that can operate as a synthetic-aperture radar (SAR) imager, altimeter, scatterometer, and radiometer. The principal objective of the RADAR is to map the surface of Titan. This will be done in the imaging, scatterometer, and radiometer modes. The RADAR altimeter data will provide information on relative elevations in selected areas. Surfaces of the Saturn's icy satellites will be explored utilizing the RADAR radiometer and scatterometer modes. Saturn's atmosphere and rings will be probed in the radiometer mode only. The instrument is a joint development by JPL/NASA and ASI. The RADAR design features significant autonomy and data compression capabilities. It is expected that the instrument will detect surfaces with backscatter coefficient as low as -40 dB.
+      </description>
+    </Citation_Information>
+    <Modification_History>
+      <Modification_Detail>
+        <modification_date>2021-03-18</modification_date>
+        <version_id>2.0</version_id>
+        <description>Apache Velocity Template for CORADR BIEQ images</description>
+      </Modification_Detail>
+    </Modification_History>
+  </Identification_Area>
+  <Observation_Area>
+    <Time_Coordinates>
+       <start_date_time>2017-04-22T06:01:09.523Z</start_date_time>
+       <stop_date_time>2017-04-22T06:03:06.509Z</stop_date_time>
+    </Time_Coordinates>
+    <Primary_Result_Summary>
+      <purpose>Science</purpose>
+      <processing_level>Derived</processing_level>
+      <description>"The data values in this file are the incidence angles between the
+        look vector and the surface normal at each pixel."</description>
+    </Primary_Result_Summary>
+    <Investigation_Area>
+      <name>cassini-huygens</name>
+      <type>Mission</type>
+      <Internal_Reference>
+        <lid_reference>urn:nasa:pds:context:investigation:mission.cassini-huygens</lid_reference>
+        <reference_type>data_to_investigation</reference_type>
+      </Internal_Reference>
+    </Investigation_Area>
+    <Observing_System>
+      <Observing_System_Component>
+        <name>cassini orbiter</name>
+        <type>Spacecraft</type>
+      </Observing_System_Component>
+      <Observing_System_Component>
+        <name>cassini radar</name>
+        <type>Instrument</type>
+      </Observing_System_Component>
+    </Observing_System>
+    <Target_Identification>
+      <name>TITAN</name>
+      <type>Satellite</type>
+    </Target_Identification>
+    <Mission_Area>
+      <Mission_Information xmlns="http://pds.nasa.gov/pds4/msn/v1">
+        <mission_phase_name>TOUR</mission_phase_name>
+        <spacecraft_clock_start>1871536176</spacecraft_clock_start>
+        <spacecraft_clock_stop>1871536292</spacecraft_clock_stop>
+      </Mission_Information>
+    </Mission_Area>
+    <Discipline_Area>
+      <disp:Display_Settings>
+        <Local_Internal_Reference>
+          <local_identifier_reference>oblique_cylindrical.IMG</local_identifier_reference>
+          <local_reference_type>display_settings_to_array</local_reference_type>
+        </Local_Internal_Reference>
+        <disp:Display_Direction>
+          <disp:horizontal_display_axis>Sample</disp:horizontal_display_axis>
+          <disp:horizontal_display_direction>Left to Right</disp:horizontal_display_direction>
+          <disp:vertical_display_axis>Line</disp:vertical_display_axis>
+          <disp:vertical_display_direction>Top to Bottom</disp:vertical_display_direction>
+        </disp:Display_Direction>
+      </disp:Display_Settings>
+      <cart:Cartography>
+        <Local_Internal_Reference>
+          <local_identifier_reference>oblique_cylindrical.IMG</local_identifier_reference>
+          <local_reference_type>cartography_parameters_to_image_object</local_reference_type>
+        </Local_Internal_Reference>
+        <cart:Spatial_Domain>
+          <cart:Bounding_Coordinates>
+            <cart:west_bounding_coordinate unit="deg">69.37625913</cart:west_bounding_coordinate>
+            <!-- $label.IMAGE_MAP_PROJECTION.WESTERNMOST_LONGITUDE -->
+            <cart:east_bounding_coordinate unit="deg">56.16209333</cart:east_bounding_coordinate>
+            <!-- $label.IMAGE_MAP_PROJECTION.EASTERNMOST_LONGITUDE -->
+            <cart:north_bounding_coordinate unit="deg">29.32214980</cart:north_bounding_coordinate>
+            <!-- $label.IMAGE_MAP_PROJECTION.MAXIMUM_LATITUDE -->
+            <cart:south_bounding_coordinate unit="deg">-0.72660185</cart:south_bounding_coordinate>
+            <!-- $label.IMAGE_MAP_PROJECTION.MINIMUM_LATITUDE -->
+          </cart:Bounding_Coordinates>
+        </cart:Spatial_Domain>
+        <cart:Spatial_Reference_Information>
+          <cart:Horizontal_Coordinate_System_Definition>
+            <cart:Planar>
+              <cart:Map_Projection>
+                <cart:map_projection_name>Oblique Cylindrical</cart:map_projection_name>
+                <cart:Oblique_Cylindrical>
+                  <cart:latitude_of_projection_origin unit="deg">0.000000</cart:latitude_of_projection_origin>
+                  <!-- $label.IMAGE_MAP_PROJECTION.CENTER_LATITUDE -->
+                  <cart:longitude_of_central_meridian unit="deg">0.000000</cart:longitude_of_central_meridian>
+                  <!-- $label.IMAGE_MAP_PROJECTION.CENTER_LONGITUDE -->
+                  <cart:reference_latitude unit="deg">65.495149</cart:reference_latitude>
+                  <!-- $label.IMAGE_MAP_PROJECTION.REFERENCE_LATITUDE -->
+                  <cart:reference_longitude unit="deg">100.531895</cart:reference_longitude>
+                  <!-- $label.IMAGE_MAP_PROJECTION.REFERENCE_LONGITUDE -->
+                  <cart:map_projection_rotation unit="deg">90.0</cart:map_projection_rotation>
+                  <!-- $label.IMAGE_MAP_PROJECTION.MAP_PROJECTION_ROTATION -->
+                  <cart:oblique_proj_pole_latitude unit="deg">-11.769776</cart:oblique_proj_pole_latitude>
+                  <!-- $label.IMAGE_MAP_PROJECTION.OBLIQUE_PROJ_POLE_LATITUDE -->
+                  <cart:oblique_proj_pole_longitude unit="deg">163.331591</cart:oblique_proj_pole_longitude>
+                  <!-- $label.IMAGE_MAP_PROJECTION.OBLIQUE_PROJ_POLE_LONGITUDE -->
+                  <cart:oblique_proj_pole_rotation unit="deg">158.352054</cart:oblique_proj_pole_rotation>
+                  <!-- $label.IMAGE_MAP_PROJECTION.OBLIQUE_PROJ_POLE_ROTATION -->
+                  <cart:oblique_proj_x_axis_vector>(-0.07581289,-0.40778278,0.90992616)</cart:oblique_proj_x_axis_vector>
+                  <!-- $label.IMAGE_MAP_PROJECTION.OBLIQUE_PROJ_X_AXIS_VECTOR -->
+                  <cart:oblique_proj_y_axis_vector>(-0.33868824,0.86882886,0.36114635)</cart:oblique_proj_y_axis_vector>
+                  <!-- $label.IMAGE_MAP_PROJECTION.OBLIQUE_PROJ_Y_AXIS_VECTOR -->
+                  <cart:oblique_proj_z_axis_vector>(-0.93783937,-0.28080174,-0.20397966)</cart:oblique_proj_z_axis_vector>
+                  <!-- $label.IMAGE_MAP_PROJECTION.OBLIQUE_PROJ_Z_AXIS_VECTOR -->
+                  <cart:look_direction>RIGHT</cart:look_direction>
+                  <!-- $label.IMAGE_MAP_PROJECTION.LOOK_DIRECTION -->
+                </cart:Oblique_Cylindrical>
+              </cart:Map_Projection>
+              <cart:Planar_Coordinate_Information>
+                <cart:planar_coordinate_encoding_method>Coordinate Pair</cart:planar_coordinate_encoding_method>
+                <cart:Coordinate_Representation>
+                  <cart:pixel_resolution_x unit="m/pixel">351.11116</cart:pixel_resolution_x>
+                  <!-- $label.IMAGE_MAP_PROJECTION.MAP_SCALE * 1000 -->
+                  <cart:pixel_resolution_y unit="m/pixel">351.11116</cart:pixel_resolution_y>
+                  <!-- $label.IMAGE_MAP_PROJECTION.MAP_SCALE * 1000 -->
+                  <cart:pixel_scale_x unit="pixel/deg">128.0</cart:pixel_scale_x>
+                  <!-- $label.IMAGE_MAP_PROJECTION.MAP_RESOLUTION -->
+                  <cart:pixel_scale_y unit="pixel/deg">128.0</cart:pixel_scale_y>
+                  <!-- $label.IMAGE_MAP_PROJECTION.MAP_RESOLUTION -->
+                </cart:Coordinate_Representation>
+              </cart:Planar_Coordinate_Information>
+              <cart:Geo_Transformation>
+                <cart:upperleft_corner_x unit="m">-764017.88416</cart:upperleft_corner_x>
+                <!-- (SAMPLE_PROJECTION_OFFSET + 0.5) * -1 * MAP_SCALE * 1000 -->
+                <cart:upperleft_corner_y unit="m">3190898.2220799997</cart:upperleft_corner_y>
+                <!-- (LINE_PROJECTION_OFFSET + 0.5) * MAP_SCALE * 1000 -->
+              </cart:Geo_Transformation>
+            </cart:Planar>
+            <cart:Geodetic_Model>
+              <cart:latitude_type>Planetographic</cart:latitude_type>
+              <cart:spheroid_name>TITAN</cart:spheroid_name>
+              <!-- TITAN -->
+              <cart:a_axis_radius unit="m">2575000</cart:a_axis_radius>
+              <!-- $label.IMAGE_MAP_PROJECTION.A_AXIS_RADIUS * 1000 -->
+              <cart:b_axis_radius unit="m">2575000</cart:b_axis_radius>
+              <!-- $label.IMAGE_MAP_PROJECTION.B_AXIS_RADIUS * 1000 -->
+              <cart:c_axis_radius unit="m">2575000</cart:c_axis_radius>
+              <!-- $label.IMAGE_MAP_PROJECTION.C_AXIS_RADIUS * 1000 -->
+              <cart:longitude_direction>Positive West</cart:longitude_direction>
+              <!-- $label.IMAGE_MAP_PROJECTION.POSITIVE_LONGITUDE_DIRECTION -->
+            </cart:Geodetic_Model>
+          </cart:Horizontal_Coordinate_System_Definition>
+        </cart:Spatial_Reference_Information>
+      </cart:Cartography>
+      <proc:Processing_Information>
+        <Local_Internal_Reference>
+          <local_identifier_reference>oblique_cylindrical.IMG</local_identifier_reference>
+          <local_reference_type>processing_information_to_data_object</local_reference_type>
+        </Local_Internal_Reference>
+        <proc:Input_Product_List>
+          <proc:Input_Product>
+            <proc:local_identifier>LBDR_14_D285_V02</proc:local_identifier>
+          </proc:Input_Product>
+        </proc:Input_Product_List>
+        <proc:Process>
+          <proc:process_owner_name>RANDOLPH L. KIRK</proc:process_owner_name>
+          <proc:process_owner_institution_name>U.S.G.S. FLAGSTAFF</proc:process_owner_institution_name>
+        </proc:Process>
+      </proc:Processing_Information>
+    </Discipline_Area>
+  </Observation_Area>
+  <File_Area_Observational>
+    <File>
+      <file_name>oblique_cylindrical.IMG</file_name>
+       <creation_date_time>2017-08-16T23:02:54.000Z</creation_date_time>    </File>
+    <Array_2D_Image>
+      <local_identifier>oblique_cylindrical.IMG</local_identifier>
+      <axes>2</axes>
+      <axis_index_order>Last Index Fastest</axis_index_order>
+      <Element_Array>
+        <data_type>IEEE754LSBSingle</data_type>
+        <scaling_factor>1.00000000</scaling_factor>
+        <value_offset>0.00000000</value_offset>
+      </Element_Array>
+      <Axis_Array>
+        <axis_name>Line</axis_name>
+        <elements>1</elements>
+        <sequence_number>1</sequence_number>
+      </Axis_Array>
+      <Axis_Array>
+        <axis_name>Sample</axis_name>
+        <elements>1</elements>
+        <sequence_number>2</sequence_number>
+      </Axis_Array>
+      <Special_Constants>
+        <missing_constant>-Infinity</missing_constant>
+        <!-- missing data denoted by $label.MISSING_CONSTANT -->
+      </Special_Constants>
+    </Array_2D_Image>
+  </File_Area_Observational>
+</Product_Observational>

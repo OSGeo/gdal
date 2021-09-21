@@ -28,7 +28,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <gdal.h>
+#include "gdal.h"
 #include "cpl_multiproc.h"
 
 #include <assert.h>

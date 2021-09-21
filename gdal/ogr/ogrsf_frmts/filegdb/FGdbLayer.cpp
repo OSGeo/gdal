@@ -29,12 +29,14 @@
 * DEALINGS IN THE SOFTWARE.
 ****************************************************************************/
 
+#include <cassert>
 #include "ogr_fgdb.h"
 #include "ogrpgeogeometry.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "FGdbUtils.h"
 #include "cpl_minixml.h" // the only way right now to extract schema information
+#include "filegdb_gdbtoogrfieldtype.h"
 
 CPL_CVSID("$Id$")
 
@@ -819,6 +821,7 @@ int  FGdbLayer::EditGDBTablX( const CPLString& osGDBTablX,
     //printf("nLastWrittenOffset = %d\n", nLastWrittenOffset);
     if( nLastWrittenOffset > 0 || bDisableSparsePages )
     {
+        assert( nOutMaxFID >= 1 );
         SET_BIT(pabyBlockMapOut, (nOutMaxFID - 1) / 1024);
         nNonEmptyPages ++;
         if( nLastWrittenOffset < 1024 * nRecordSize )
@@ -2016,7 +2019,7 @@ static CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS, char** papszO
                         break;
                     }
                     OGRSpatialReference oSRS_FromESRI;
-                    if( oSRS_FromESRI.SetFromUserInput(pszESRI_WKT) == OGRERR_NONE &&
+                    if( oSRS_FromESRI.importFromWkt(pszESRI_WKT) == OGRERR_NONE &&
                         poSRSClone->IsSame(&oSRS_FromESRI) )
                     {
                         /* Potential match found */
@@ -2880,6 +2883,7 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode* psRoot)
             //int nPrecision = 0;
             int bNullable = TRUE;
             std::string osDefault;
+            std::string osDomainName;
 
             // loop through all items in Field element
             //
@@ -2931,6 +2935,13 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode* psRoot)
                     else if (EQUAL(psFieldItemNode->pszValue,"DefaultValue"))
                     {
                         osDefault = CPLGetXMLValue(psFieldItemNode, nullptr, "");
+                    }
+                    // NOTE: when using the GetDefinition() API, the domain name
+                    // is set in <Domain><DomainName>, whereas the raw XML is
+                    // just <DomainName>
+                    else if (EQUAL(psFieldItemNode->pszValue,"Domain"))
+                    {
+                        osDomainName = CPLGetXMLValue(psFieldItemNode, "DomainName", "");
                     }
                 }
             }
@@ -3021,6 +3032,10 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode* psRoot)
                                nYear, nMonth, nDay, nHour, nMinute, (int)(fSecond + 0.5)));
                     }
                 }
+            }
+            if( !osDomainName.empty() )
+            {
+                fieldTemplate.SetDomainName(osDomainName);
             }
 
             m_pFeatureDefn->AddFieldDefn( &fieldTemplate );

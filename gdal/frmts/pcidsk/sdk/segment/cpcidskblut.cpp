@@ -76,7 +76,7 @@ void CPCIDSK_BLUT::ReadBLUT( std::vector<BLUTEntry>& vBLUT )
 
     // the second token is the number of entries
     std::size_t nCount;
-    if(!(ss >> nCount))
+    if(!(ss >> nCount) || nCount > 1024 * 1024 /* arbitrary limit */)
         throw PCIDSKException("Invalid BLUT segment.");
 
     for(std::size_t n=0; n<nCount; ++n)

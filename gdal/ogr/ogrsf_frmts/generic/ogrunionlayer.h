@@ -47,8 +47,8 @@ class OGRUnionLayerGeomFieldDefn final: public OGRGeomFieldDefn
     OGREnvelope     sStaticEnvelope{};
 
             OGRUnionLayerGeomFieldDefn(const char* pszName, OGRwkbGeometryType eType);
-   explicit OGRUnionLayerGeomFieldDefn(OGRGeomFieldDefn* poSrc);
-   explicit OGRUnionLayerGeomFieldDefn(OGRUnionLayerGeomFieldDefn* poSrc);
+   explicit OGRUnionLayerGeomFieldDefn(const OGRGeomFieldDefn* poSrc);
+   explicit OGRUnionLayerGeomFieldDefn(const OGRUnionLayerGeomFieldDefn* poSrc);
            ~OGRUnionLayerGeomFieldDefn();
 };
 

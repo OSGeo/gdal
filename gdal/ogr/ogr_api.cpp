@@ -35,16 +35,53 @@
 
 #include "cpl_error.h"
 #include "ogr_geometry.h"
+#include "ogr_geos.h"
 
 CPL_CVSID("$Id$")
 
 static bool bNonLinearGeometriesEnabled = true;
 
 /************************************************************************/
+/*                         OGRGetGEOSVersion()                          */
+/************************************************************************/
+
+/** \brief Get the GEOS version
+ *
+ * @param pnMajor Pointer to major version number, or NULL
+ * @param pnMinor Pointer to minor version number, or NULL
+ * @param pnPatch Pointer to patch version number, or NULL
+ * @return TRUE if GDAL is built against GEOS
+ * @since GDAL 3.4.0
+ */
+#ifdef HAVE_GEOS
+bool OGRGetGEOSVersion(int *pnMajor, int *pnMinor, int *pnPatch) {
+    CPLStringList aosTokens(CSLTokenizeString2(GEOSversion(), ".", 0));
+
+    if (pnMajor && aosTokens.size() > 0)
+        *pnMajor = std::stoi(aosTokens[0]);
+    if (pnMinor && aosTokens.size() > 1)
+        *pnMinor = std::stoi(aosTokens[1]);
+    if (pnPatch && aosTokens.size() > 2)
+        *pnPatch = std::stoi(aosTokens[2]);
+    return TRUE;
+}
+#else
+bool OGRGetGEOSVersion(int *pnMajor, int *pnMinor, int *pnPatch) {
+    if (pnMajor)
+        *pnMajor = 0;
+    if (pnMinor)
+        *pnMinor = 0;
+    if (pnPatch)
+        *pnPatch = 0;
+    return FALSE;
+}
+#endif
+
+/************************************************************************/
 /*                           ToPointer()                                */
 /************************************************************************/
 
-inline OGRGeometry* ToPointer(OGRGeometryH hGeom)
+static inline OGRGeometry* ToPointer(OGRGeometryH hGeom)
 {
     return reinterpret_cast<OGRGeometry *>(hGeom);
 }
@@ -53,7 +90,7 @@ inline OGRGeometry* ToPointer(OGRGeometryH hGeom)
 /*                           ToHandle()                                 */
 /************************************************************************/
 
-inline OGRGeometryH ToHandle(OGRGeometry* poGeom)
+static inline OGRGeometryH ToHandle(OGRGeometry* poGeom)
 {
     return reinterpret_cast<OGRGeometryH>(poGeom);
 }
@@ -62,7 +99,7 @@ inline OGRGeometryH ToHandle(OGRGeometry* poGeom)
 /*                        OGR_G_GetPointCount()                         */
 /************************************************************************/
 /**
- * \brief Fetch number of points from a geometry.
+ * \brief Fetch number of points from a Point or a LineString/LinearRing geometry.
  *
  * Only wkbPoint[25D] or wkbLineString[25D] may return a valid value.
  * Other geometry types will silently return 0.
@@ -177,7 +214,7 @@ static double OGR_G_Get_Component( OGRGeometryH hGeom, int i )
 /*                             OGR_G_GetX()                             */
 /************************************************************************/
 /**
- * \brief Fetch the x coordinate of a point from a geometry.
+ * \brief Fetch the x coordinate of a point from a Point or a LineString/LinearRing geometry.
  *
  * @param hGeom handle to the geometry from which to get the x coordinate.
  * @param i point to get the x coordinate.
@@ -200,7 +237,7 @@ double OGR_G_GetX( OGRGeometryH hGeom, int i )
 /*                             OGR_G_GetY()                             */
 /************************************************************************/
 /**
- * \brief Fetch the x coordinate of a point from a geometry.
+ * \brief Fetch the x coordinate of a point from a Point or a LineString/LinearRing geometry.
  *
  * @param hGeom handle to the geometry from which to get the y coordinate.
  * @param i point to get the Y coordinate.
@@ -223,7 +260,7 @@ double OGR_G_GetY( OGRGeometryH hGeom, int i )
 /*                             OGR_G_GetZ()                             */
 /************************************************************************/
 /**
- * \brief Fetch the z coordinate of a point from a geometry.
+ * \brief Fetch the z coordinate of a point from a Point or a LineString/LinearRing geometry.
  *
  * @param hGeom handle to the geometry from which to get the Z coordinate.
  * @param i point to get the Z coordinate.

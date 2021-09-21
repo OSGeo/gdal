@@ -32,7 +32,7 @@
 #include "wmsdriver.h"
 #include <algorithm>
 
-#if LIBCURL_VERSION_NUM < 0x071c00
+#if !CURL_AT_LEAST_VERSION(7,28,0)
 // Needed for curl_multi_wait()
 #error Need libcurl version 7.28.0 or newer
 // 7.28 was released in Oct 2012
@@ -99,18 +99,21 @@ void WMSHTTPInitializeRequest(WMSHTTPRequest *psRequest) {
 
     psRequest->m_curl_handle = curl_easy_init();
     if (psRequest->m_curl_handle == nullptr) {
-        CPLError(CE_Fatal, CPLE_AppDefined, "CPLHTTPInitializeRequest(): Unable to create CURL handle.");
-        // This should return somehow?
+        CPLError(CE_Failure, CPLE_AppDefined, "CPLHTTPInitializeRequest(): Unable to create CURL handle.");
+        return;
     }
 
     if (!psRequest->Range.empty())
-        curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_RANGE, psRequest->Range.c_str());
+    {
+        CPL_IGNORE_RET_VAL(
+            curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_RANGE, psRequest->Range.c_str()));
+    }
 
-    curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_WRITEDATA, psRequest);
-    curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_WRITEFUNCTION, WriteFunc);
+    CPL_IGNORE_RET_VAL(curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_WRITEDATA, psRequest));
+    CPL_IGNORE_RET_VAL(curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_WRITEFUNCTION, WriteFunc));
 
     psRequest->m_curl_error.resize(CURL_ERROR_SIZE + 1);
-    curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_ERRORBUFFER, &psRequest->m_curl_error[0]);
+    CPL_IGNORE_RET_VAL(curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_ERRORBUFFER, &psRequest->m_curl_error[0]));
 
     psRequest->m_headers = static_cast<struct curl_slist*>(
             CPLHTTPSetOptions(psRequest->m_curl_handle, psRequest->URL.c_str(), psRequest->options));
@@ -121,8 +124,11 @@ void WMSHTTPInitializeRequest(WMSHTTPRequest *psRequest) {
                                         CPLSPrintf("Accept: %s", pszAccept));
     }
     if( psRequest->m_headers != nullptr )
-        curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_HTTPHEADER,
-                         psRequest->m_headers);
+    {
+        CPL_IGNORE_RET_VAL(
+            curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_HTTPHEADER,
+                         psRequest->m_headers));
+    }
 
 }
 

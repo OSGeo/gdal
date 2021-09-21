@@ -71,7 +71,7 @@ class GDALColorTable {
 
             Driver dv = null;
             Dataset ds = null, ds_out = null;
-            Band ba = null, ba_out = null;
+            Band band = null, ba_out = null;
             ColorTable ct = null, ct_out = null;
             byte [] buffer;
 
@@ -79,8 +79,8 @@ class GDALColorTable {
             /*      Open dataset.                                                   */
             /* -------------------------------------------------------------------- */
             ds = Gdal.Open(file, Access.GA_ReadOnly);
-            ba = ds.GetRasterBand(1);
-            ct = ba.GetRasterColorTable();
+            band = ds.GetRasterBand(1);
+            ct = band.GetRasterColorTable();
 
             if( ct != null )
                 Console.WriteLine( "Band has a color table with " + ct.GetCount() + " entries.");
@@ -91,7 +91,7 @@ class GDALColorTable {
             }
 
             buffer = new byte [ds.RasterXSize * ds.RasterYSize];
-            ba.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, buffer,
+            band.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, buffer,
                 ds.RasterXSize, ds.RasterYSize, 0, 0);
 
             /* -------------------------------------------------------------------- */
@@ -100,7 +100,7 @@ class GDALColorTable {
             dv = Gdal.GetDriverByName("GTiff");
 
             ds_out = dv.Create(file_out, ds.RasterXSize, ds.RasterYSize,
-                ds.RasterCount, ba.DataType, new string [] {});
+                ds.RasterCount, band.DataType, new string [] {});
             ba_out = ds_out.GetRasterBand(1);
             ct_out = new ColorTable(PaletteInterp.GPI_RGB);
 

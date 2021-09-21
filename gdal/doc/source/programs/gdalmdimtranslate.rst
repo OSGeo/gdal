@@ -19,9 +19,10 @@ Synopsis
 
     gdalmdimtranslate [--help-general] [-co "NAME=VALUE"]*
                       [-of format] [-array <array_spec>]*
-                      [-group <group_spec>]* 
-                      [-subset <subset_spec>]* 
-                      [-scaleaxes <scaleaxes_spec>]* 
+                      [-group <group_spec>]*
+                      [-subset <subset_spec>]*
+                      [-scaleaxes <scaleaxes_spec>]*
+                      [-oo NAME=VALUE]*
                       <src_filename> <dst_filename>
 
 
@@ -72,7 +73,7 @@ The following command line parameters can appear in any order.
     with the syntax:
     name={src_array_name}[,dstname={dst_array_name}][,transpose=[{axis1},{axis2},...][,view={view_expr}]
 
-    [{axis1},{axis2},...] is the argumet of  :cpp:func:`GDALMDArray::Transpose`.
+    [{axis1},{axis2},...] is the argument of  :cpp:func:`GDALMDArray::Transpose`.
     For example, transpose=[1,0] switches the axis order of a 2D array.
 
     {view_expr} is the value of the *viewExpr* argument of :cpp:func:`GDALMDArray::GetView`
@@ -84,7 +85,7 @@ The following command line parameters can appear in any order.
 
     Instead of converting the whole dataset, select one group, and possibly
     perform operations on it. This option can be specified several times to
-    operate on different groups. If only one group is specified, its contet will be
+    operate on different groups. If only one group is specified, its content will be
     copied directly to the target root group. If several ones are specified,
     they are copied under the target root group
 
@@ -122,6 +123,12 @@ The following command line parameters can appear in any order.
     That is dim1_name(scale_factor)[,dim2_name(scale_factor)]*
 
     Using -scaleaxes is incompatible of specifying a *view* option in -array.
+
+.. option:: -oo <NAME=VALUE>
+
+    .. versionadded:: 3.4
+
+    Source dataset open option (format specific)
 
 .. option:: <src_dataset>
 

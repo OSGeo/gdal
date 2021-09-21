@@ -158,7 +158,7 @@ OGRWAsPLayer::~OGRWAsPLayer()
                     startNeighbors[i] = j;
                 }
             }
-            if ( isEqual( p.dfRight, q.dfLeft) && isEqual( p.dfRight, q.dfLeft ) )
+            if ( isEqual( p.dfRight, q.dfLeft) && isEqual( p.dfLeft, q.dfRight ) )
             {
                 if ( startP.Equals( &startQ ) )
                 {
@@ -270,13 +270,13 @@ OGRWAsPLayer::~OGRWAsPLayer()
 OGRLineString * OGRWAsPLayer::Simplify( const OGRLineString & line ) const
 {
     if ( !line.getNumPoints() )
-        return  line.clone()->toLineString();
+        return  line.clone();
 
     std::unique_ptr< OGRLineString > poLine(
         (
             pdfTolerance.get() && *pdfTolerance > 0
-            ? line.Simplify( *pdfTolerance )
-            : line.clone() )->toLineString() );
+            ? line.Simplify( *pdfTolerance )->toLineString()
+            : line.clone() ) );
 
     OGRPoint startPt, endPt;
     poLine->StartPoint( &startPt );
@@ -286,7 +286,7 @@ OGRLineString * OGRWAsPLayer::Simplify( const OGRLineString & line ) const
     if ( pdfAdjacentPointTolerance.get() && *pdfAdjacentPointTolerance > 0)
     {
         /* remove consecutive points that are too close */
-        std::unique_ptr< OGRLineString > newLine( new OGRLineString );
+        auto newLine = cpl::make_unique<OGRLineString>();
         const double dist = *pdfAdjacentPointTolerance;
         OGRPoint pt;
         poLine->StartPoint( &pt );
@@ -449,7 +449,7 @@ OGRErr OGRWAsPLayer::WriteRoughness( OGRPolygon * poGeom, const double & dfZ )
                 case wkbLineString:
                 case wkbLineString25D:
                 {
-                    Boundary oB = { poIntersection->clone()->toLineString(), dfZ, oZones[i].dfZ };
+                    Boundary oB = { poIntersection->toLineString()->clone(), dfZ, oZones[i].dfZ };
                     oBoundaries.push_back( oB );
                 }
                 break;
@@ -466,7 +466,7 @@ OGRErr OGRWAsPLayer::WriteRoughness( OGRPolygon * poGeom, const double & dfZ )
 
                         if( poLine == nullptr )
                         {
-                            poLine = poSubLine->clone()->toLineString();
+                            poLine = poSubLine->clone();
                         }
                         else if ( poLine->getNumPoints() == 0 || poStart->Equals( poEnd ) )
                         {
@@ -476,7 +476,7 @@ OGRErr OGRWAsPLayer::WriteRoughness( OGRPolygon * poGeom, const double & dfZ )
                         {
                             Boundary oB = {poLine, dfZ, oZones[i].dfZ};
                             oBoundaries.push_back( oB );
-                            poLine = poSubLine->clone()->toLineString();
+                            poLine = poSubLine->clone();
                         }
                         poLine->EndPoint( poEnd );
                     }
@@ -536,7 +536,7 @@ OGRErr OGRWAsPLayer::WriteRoughness( OGRPolygon * poGeom, const double & dfZ )
         }
     }
 
-    Zone oZ =  { oEnvelope, poGeom->clone()->toPolygon(), dfZ };
+    Zone oZ =  { oEnvelope, poGeom->clone(), dfZ };
     oZones.push_back( oZ );
     return err;
 }
@@ -709,7 +709,7 @@ OGRErr OGRWAsPLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
     {
         oFieldDefn.GetSpatialRef()->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
-    poLayerDefn->AddGeomFieldDefn( &oFieldDefn, FALSE );
+    poLayerDefn->AddGeomFieldDefn( &oFieldDefn );
 
     /* Update geom field index */
     if ( -1 == iGeomFieldIdx )
@@ -763,7 +763,7 @@ OGRFeature *OGRWAsPLayer::GetNextRawFeature()
         return nullptr;
     }
 
-    std::unique_ptr< OGRFeature > poFeature( new OGRFeature( poLayerDefn ) );
+    auto poFeature = cpl::make_unique<OGRFeature>( poLayerDefn );
     poFeature->SetFID( ++iFeatureCount );
     for ( int i=0; i<iNumValues-1; i++ ) poFeature->SetField( i, dfValues[i] );
 
@@ -783,7 +783,7 @@ OGRFeature *OGRWAsPLayer::GetNextRawFeature()
         CPLError(CE_Failure, CPLE_FileIO, "No enough values for linestring" );
         return nullptr;
     }
-    std::unique_ptr< OGRLineString > poLine( new OGRLineString );
+    auto poLine = cpl::make_unique<OGRLineString>();
     poLine->setCoordinateDimension(3);
     poLine->assignSpatialReference( poSpatialReference );
     for ( int i=0; i<iNumValuesToRead; i+=2 )

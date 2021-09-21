@@ -77,7 +77,7 @@ void CPCIDSK_BPCT::ReadBPCT( std::vector<BPCTEntry>& vBPCT )
 
     // the second token is the number of entries
     std::size_t nCount;
-    if(!(ss >> nCount))
+    if(!(ss >> nCount)|| nCount > 1024 * 1024 /* arbitrary limit */)
         throw PCIDSKException("Invalid BPCT segment.");
 
 
