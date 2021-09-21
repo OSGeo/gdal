@@ -2262,6 +2262,16 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
         adfY[3] = -90.0;
     }
 
+    const char* pszLongitudeDirection =
+        CSLFetchNameValueDef(m_papszCreationOptions, "LONGITUDE_DIRECTION",
+                             "Positive East");
+    const double dfLongitudeMultiplier =
+        EQUAL(pszLongitudeDirection, "Positive West") ? -1 : 1;
+    const auto FixLong = [dfLongitudeMultiplier](double dfLon)
+    {
+        return dfLon * dfLongitudeMultiplier;
+    };
+
     // Note: starting with CART 1900, Spatial_Domain is actually optional
     CPLXMLNode* psSD = CPLCreateXMLNode(psCart, CXT_Element,
             (osPrefix + "Spatial_Domain").c_str());
@@ -2270,10 +2280,10 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
 
     const char* pszBoundingDegrees = CSLFetchNameValue(
         m_papszCreationOptions, "BOUNDING_DEGREES");
-    double dfWest = std::min(std::min(adfX[0], adfX[1]),
-                             std::min(adfX[2], adfX[3]));
-    double dfEast = std::max(std::max(adfX[0], adfX[1]),
-                             std::max(adfX[2], adfX[3]));
+    double dfWest = FixLong(std::min(std::min(adfX[0], adfX[1]),
+                             std::min(adfX[2], adfX[3])));
+    double dfEast = FixLong(std::max(std::max(adfX[0], adfX[1]),
+                             std::max(adfX[2], adfX[3])));
     double dfNorth = std::max(std::max(adfY[0], adfY[1]),
                               std::max(adfY[2], adfY[3]));
     double dfSouth = std::min(std::min(adfY[0], adfY[1]),
@@ -2365,14 +2375,14 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
                 aoProjParams.push_back(ProjParam("standard_parallel_1",
                         oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 1.0)));
                 aoProjParams.push_back(ProjParam("longitude_of_central_meridian",
-                        oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)));
+                        FixLong(oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0))));
             }
             else
             {
                 aoProjParams.push_back(ProjParam("standard_parallel_1",
                         oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 1.0)));
                 aoProjParams.push_back(ProjParam("longitude_of_central_meridian",
-                        oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)));
+                        FixLong(oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0))));
                 aoProjParams.push_back(ProjParam("latitude_of_projection_origin",
                         oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0)));
             }
@@ -2384,7 +2394,7 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
             if( bUse_CART_1933_Or_Later )
             {
                 aoProjParams.push_back(ProjParam("longitude_of_central_meridian",
-                        oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)));
+                        FixLong(oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0))));
                 aoProjParams.push_back(ProjParam("latitude_of_projection_origin",
                         oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0)));
                 aoProjParams.push_back(ProjParam("scale_factor_at_projection_origin",
@@ -2395,7 +2405,7 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
                 aoProjParams.push_back(ProjParam("scale_factor_at_projection_origin",
                         oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0)));
                 aoProjParams.push_back(ProjParam("longitude_of_central_meridian",
-                        oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)));
+                        FixLong(oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0))));
                 aoProjParams.push_back(ProjParam("latitude_of_projection_origin",
                         oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0)));
             }
@@ -2409,7 +2419,7 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
             aoProjParams.push_back(ProjParam("standard_parallel_2",
                     oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2, 0.0)));
             aoProjParams.push_back(ProjParam("longitude_of_central_meridian",
-                    oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)));
+                    FixLong(oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0))));
             aoProjParams.push_back(ProjParam("latitude_of_projection_origin",
                     oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0)));
         }
@@ -2432,7 +2442,7 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
             if( bUse_CART_1950_Or_Later )
             {
                 aoProjParams.push_back(ProjParam("longitude_of_central_meridian",
-                        oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)));
+                        FixLong(oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0))));
                 aoProjParams.push_back(ProjParam("latitude_of_projection_origin",
                         oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0)));
                 aoProjParams.push_back(ProjParam("scale_factor_at_projection_origin",
@@ -2443,7 +2453,7 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
                 aoProjParams.push_back(ProjParam(
                     bUse_CART_1933_Or_Later ?  "longitude_of_central_meridian" :
                                                "straight_vertical_longitude_from_pole",
-                        oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)));
+                        FixLong(oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0))));
                 aoProjParams.push_back(ProjParam("scale_factor_at_projection_origin",
                         oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0)));
                 aoProjParams.push_back(ProjParam("latitude_of_projection_origin",
@@ -2463,7 +2473,7 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
         {
             pszPDS4ProjectionName = "Sinusoidal";
             aoProjParams.push_back(ProjParam("longitude_of_central_meridian",
-                    oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)));
+                    FixLong(oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0))));
             aoProjParams.push_back(ProjParam("latitude_of_projection_origin",
                     oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0)));
         }
@@ -2482,7 +2492,7 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
         {
             pszPDS4ProjectionName = "Orthographic";
             aoProjParams.push_back(ProjParam("longitude_of_central_meridian",
-                    oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)));
+                    FixLong(oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0))));
             aoProjParams.push_back(ProjParam("latitude_of_projection_origin",
                     oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0)));
         }
@@ -2491,7 +2501,7 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
         {
             pszPDS4ProjectionName = "Mercator";
             aoProjParams.push_back(ProjParam("longitude_of_central_meridian",
-                    oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)));
+                    FixLong(oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0))));
             aoProjParams.push_back(ProjParam("latitude_of_projection_origin",
                     oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0)));
             aoProjParams.push_back(ProjParam("scale_factor_at_projection_origin",
@@ -2504,7 +2514,7 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
             aoProjParams.push_back(ProjParam("standard_parallel_1",
                     oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0)));
             aoProjParams.push_back(ProjParam("longitude_of_central_meridian",
-                    oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)));
+                    FixLong(oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0))));
             aoProjParams.push_back(ProjParam("latitude_of_projection_origin",
                     oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0)));
         }
@@ -2513,7 +2523,7 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
         {
             pszPDS4ProjectionName = "Lambert Azimuthal Equal Area";
             aoProjParams.push_back(ProjParam("longitude_of_central_meridian",
-                    oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)));
+                    FixLong(oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0))));
             aoProjParams.push_back(ProjParam("latitude_of_projection_origin",
                     oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0)));
         }
@@ -2547,7 +2557,7 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
                 aoProjParams.push_back(ProjParam("oblique_proj_pole_latitude",
                                                  dfPoleLatitude));
                 aoProjParams.push_back(ProjParam("oblique_proj_pole_longitude",
-                                                 dfPoleLongitude));
+                                                 FixLong(dfPoleLongitude)));
                 aoProjParams.push_back(ProjParam("oblique_proj_pole_rotation",
                                                  dfPoleRotation));
             }
@@ -2594,7 +2604,7 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
             CPLAddXMLAttributeAndValue(
                 CPLCreateXMLElementAndValue(psOLA,
                     (osPrefix + "azimuth_measure_point_longitude").c_str(),
-                    CPLSPrintf("%.18g", oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0))),
+                    CPLSPrintf("%.18g", FixLong(oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)))),
                 "unit", "deg");
 
             if( bUse_CART_1933_Or_Later )
@@ -2664,7 +2674,7 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
             CPLAddXMLAttributeAndValue(
                 CPLCreateXMLElementAndValue(psOLPG1,
                     (osPrefix + "oblique_line_longitude").c_str(),
-                    CPLSPrintf("%.18g", oSRS.GetNormProjParm(SRS_PP_LONGITUDE_OF_POINT_1, 0.0))),
+                    CPLSPrintf("%.18g", FixLong(oSRS.GetNormProjParm(SRS_PP_LONGITUDE_OF_POINT_1, 0.0)))),
                 "unit", "deg");
             CPLXMLNode* psOLPG2 = CPLCreateXMLNode(psOLP, CXT_Element,
                                     (osPrefix + "Oblique_Line_Point_Group").c_str());
@@ -2691,7 +2701,7 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
             CPLAddXMLAttributeAndValue(
                 CPLCreateXMLElementAndValue(psProj,
                     (osPrefix + "latitude_of_projection_origin").c_str(),
-                    CPLSPrintf("%.18g", oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0))),
+                    CPLSPrintf("%.18g", FixLong(oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0)))),
                 "unit", "deg");
         }
 
@@ -2903,9 +2913,7 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
                 (osPrefix + (bUseLDD1930RadiusNames ? "c_axis_radius" : "polar_radius")).c_str(),
                 CPLSPrintf("%.18g", dfSemiMinor)),
         "unit", "m");
-    const char* pszLongitudeDirection =
-        CSLFetchNameValueDef(m_papszCreationOptions, "LONGITUDE_DIRECTION",
-                             "Positive East");
+
     // Fix case
     if( EQUAL(pszLongitudeDirection, "Positive East") )
         pszLongitudeDirection = "Positive East";
