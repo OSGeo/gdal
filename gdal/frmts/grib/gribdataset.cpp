@@ -821,7 +821,7 @@ CPLErr GRIBRasterBand::IReadBlock( int /* nBlockXOff */,
     // point.  We also need to deal with bands that are a different
     // size than the dataset as a whole.
 
-    if( nGribDataXSize == nRasterXSize && nGribDataYSize == nRasterYSize && poGDS->nSplitAndSwap == 0)
+    if( nGribDataXSize == nRasterXSize && nGribDataYSize == nRasterYSize && poGDS->nSplitAndSwapColumn == 0)
     {
         // Simple 1:1 case.
         memcpy(pImage,
@@ -836,19 +836,22 @@ CPLErr GRIBRasterBand::IReadBlock( int /* nBlockXOff */,
     if( nBlockYOff >= nGribDataYSize )  // Off image?
         return CE_None;
 
+    if ( nRasterXSize != nGribDataXSize && poGDS->nSplitAndSwapColumn != 0)
+    {
+        CPLDebug("GRIB", "GribDataXSize (%d) does not match RasterXSize (%d), disabling Split&Swap mode",
+            nGribDataXSize, nRasterXSize);
+        poGDS->nSplitAndSwapColumn = 0;
+    }
+
     const int nCopyWords = std::min(nRasterXSize, nGribDataXSize);
 
-    // Split&Swap: transparent rewrap around the prime meridian instead of the antimeridian
-    // rows after nSplitAndSwap are placed at the beginning
-    // while rows before are placed at the end
     memcpy(pImage,
-           m_Grib_Data + static_cast<size_t>(nGribDataXSize) * (nGribDataYSize - nBlockYOff - 1) + poGDS->nSplitAndSwap,
-           (nCopyWords - poGDS->nSplitAndSwap) * sizeof(double));
+           m_Grib_Data + static_cast<size_t>(nGribDataXSize) * (nGribDataYSize - nBlockYOff - 1) + poGDS->nSplitAndSwapColumn,
+           (nCopyWords - poGDS->nSplitAndSwapColumn) * sizeof(double));
 
-    memcpy(reinterpret_cast<void*>(reinterpret_cast<double*>(pImage) + poGDS->nSplitAndSwap),
+    memcpy(reinterpret_cast<void*>(reinterpret_cast<double*>(pImage) + poGDS->nSplitAndSwapColumn),
            m_Grib_Data + static_cast<size_t>(nGribDataXSize) * (nGribDataYSize - nBlockYOff - 1),
-           poGDS->nSplitAndSwap * sizeof(double));
-
+           poGDS->nSplitAndSwapColumn * sizeof(double));
 
     return CE_None;
 }
@@ -1000,7 +1003,7 @@ GRIBDataset::GRIBDataset() :
         static_cast<GIntBig>(atoi(CPLGetConfigOption("GRIB_CACHEMAX", "100")))
         * 1024 * 1024),
     bCacheOnlyOneBand(FALSE),
-    nSplitAndSwap(0),
+    nSplitAndSwapColumn(0),
     poLastUsedBand(nullptr)
 {
     adfGeoTransform[0] = 0.0;
@@ -2312,26 +2315,29 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
         // GRIB2 files have longitudes in the [0-360] range
         // Shift them to the traditional [-180,180] longitude range
         // See https://github.com/OSGeo/gdal/issues/4524
-        if (meta->GribVersion == 2 &&
-            (rMinX + rPixelSizeX >= 180 || rMaxX >= 180) && 
+        if ((rMinX + rPixelSizeX >= 180 || rMaxX - rPixelSizeX >= 180) && 
             CPLTestBool(CPLGetConfigOption("GRIB_ADJUST_LONGITUDE_RANGE", "YES")) )
         {
             if (rPixelSizeX * nRasterXSize > 360)
-                CPLError(CE_Warning, CPLE_NotSupported,
+                CPLDebug("GRIB",
                     "Cannot properly handle GRIB2 files with overlaps and 0-360 longitudes");
             else if (rPixelSizeX * nRasterXSize == 360 && meta->gds.projType == GS3_LATLON)
             {
-                nSplitAndSwap = static_cast<int>(ceil(180 / rPixelSizeX));
                 // Find the first row number east of the antimeridian
-                CPLDebug("GRIB", "Enabling Split&Swap mode, antimeridian is at %d", nSplitAndSwap);
+                nSplitAndSwapColumn = static_cast<int>(ceil(180 / rPixelSizeX));
+                CPLDebug("GRIB", "Enabling Split&Swap mode, antimeridian is at column %d",
+                    nSplitAndSwapColumn);
                 rMinX = -180;
             }
             else if (Lon360to180(rMinX) > Lon360to180(rMaxX))
             {
-                CPLError(CE_Warning, CPLE_NotSupported,
-                    "Cannot properly handle GRIB2 files with 0-360 longitudes that span the antimeridian");
+                nSplitAndSwapColumn = static_cast<int>(ceil((180 - rMinX) / rPixelSizeX));
+                rMinX = Lon360to180(rMinX);
+                CPLDebug("GRIB", "GRIB with 0-360 longitudes spanning across the antimeridian at %d",
+                    nSplitAndSwapColumn);
             }
             else
+
             {
                 CPLDebug("GRIB", "Shifting longitudes from %lf:%lf to %lf:%lf",
                     rMinX, rMaxX, Lon360to180(rMinX), Lon360to180(rMaxX));
