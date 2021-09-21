@@ -27,7 +27,7 @@ of other raster datasets. Starting with GDAL 3.4.0, when reading such
 files, a transparent conversion of the longitudes to [-180,180] will be
 performed and the data will be rewrapped around the prime meridian -
 the split&swap mode. This behavior can be disabled by setting the
-configuration option GRIB_ADJUST_LONGITUDE_RANGE to `NO`.
+:decl_configoption:`GRIB_ADJUST_LONGITUDE_RANGE` configuration option to `NO`.
 
 There are several encoding schemes for raster data in GRIB format. Most
 common ones should be supported including PNG encoding. JPEG2000 encoded
