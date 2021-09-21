@@ -3222,13 +3222,22 @@ else
     NETCDF_PREFIX=`$NETCDF_NCCONFIG --prefix`
     NETCDF_INCLUDEDIR=`$NETCDF_NCCONFIG --includedir`
     NETCDF_LIBS=`$NETCDF_NCCONFIG --libs`
+    NETCDF_STATIC_LIBS=`$NETCDF_NCCONFIG --static --libs`
     STRIP_SYSTEM_LIBRARY_PATHS("${NETCDF_LIBS}")
     NETCDF_LIBS="$STRIPPED_LIBRARY_NAME"
     echo ""
     AC_MSG_RESULT([ got version="$NETCDF_VERSION", prefix="$NETCDF_PREFIX",
  libs="$NETCDF_LIBS", includedir="$NETCDF_INCLUDEDIR"])
 
-    AC_CHECK_LIB([netcdf], [nc_open], [NETCDF_SETTING=yes], [NETCDF_SETTING=no], $NETCDF_LIBS)
+    SAVED_LIBS="${LIBS}"
+    LIBS="$NETCDF_LIBS"
+    AC_CHECK_LIB([netcdf], [nc_open], [NETCDF_SETTING=yes], [NETCDF_SETTING=no],)
+    if test "$NETCDF_SETTING" = "no" ; then
+      unset ac_cv_lib_netcdf_nc_open
+      LIBS="$NETCDF_STATIC_LIBS"
+      AC_CHECK_LIB([netcdf], [nc_open], [NETCDF_SETTING=yes], [NETCDF_SETTING=no],)
+    fi
+    LIBS="${SAVED_LIBS}"
 
     if test "$NETCDF_SETTING" = "yes" ; then
       EXTRA_INCLUDES="-I$NETCDF_INCLUDEDIR $EXTRA_INCLUDES"
