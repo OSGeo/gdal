@@ -1428,8 +1428,27 @@ def test_grib_grib2_read_subgrids_reuse_bitmap():
 
 def test_grib_grib2_split_and_swap():
 
+    # Only the full globe can use split&swap
     ds = gdal.Open('data/grib/gfs.t06z.pgrb2.1p0.grib2')
     gt = ds.GetGeoTransform()
     expected_gt = (-185.0, 10.0, 0.0, 90.125, 0.0, -10.0)
     assert gt == pytest.approx(expected_gt, rel=1e-6)
     assert ds.GetRasterBand(1).Checksum() == 7514
+
+    # This one is very unorthodox and likely to trigger bugs
+    ds = gdal.Open('data/grib/gfs.t06z.pgrb2.1p0.partial_across_am.grib2')
+    gt = ds.GetGeoTransform()
+    expected_gt = (24.875, 10.0, 0.0, 90.125, 0.0, -10.0)
+    assert gt == pytest.approx(expected_gt, rel=1e-6)
+
+    # This one should have only the longitudes translation
+    ds = gdal.Open('data/grib/gfs.t06z.pgrb2.1p0.partial_east_of_am.grib2')
+    gt = ds.GetGeoTransform()
+    expected_gt = (-60.125, 10.0, 0.0, 90.125, 0.0, -10.0)
+    assert gt == pytest.approx(expected_gt, rel=1e-6)
+
+    # This one should be identical with and without the translation
+    ds = gdal.Open('data/grib/gfs.t06z.pgrb2.1p0.partial_west_of_am.grib2')
+    gt = ds.GetGeoTransform()
+    expected_gt = (24.875, 10.0, 0.0, 90.125, 0.0, -10.0)
+    assert gt == pytest.approx(expected_gt, rel=1e-6)
