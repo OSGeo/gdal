@@ -20,7 +20,7 @@ application which is written primarily by Arthur Taylor of NOAA NWS NDFD
 the g2clib grib decoding library written primarily by John Huddleston of
 NOAA NWS NCEP.
 
-GRIB2 files without projection on lon/lat grids have the particularity
+GRIB2 files without projection on lon/lat grids have the peculiarity
 of using longitudes in the [0,360] range and wrapping around the
 antimeridian as opposed to the usual wrapping around the prime meridian
 of other raster datasets. Starting with GDAL 3.4.0, when reading such
