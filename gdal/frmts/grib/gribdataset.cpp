@@ -2299,7 +2299,7 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
         }
     }
 
-    // http://gdal.org/gdal_datamodel.html :
+    // https://gdal.org/user/raster_data_model.html :
     //   we need the top left corner of the top left pixel.
     //   At the moment we have the center of the pixel.
     rMinX -= rPixelSizeX / 2;
