@@ -64,7 +64,7 @@ case $SCRIPT_DIR in
 esac
 $SCRIPT_DIR/../common_install.sh
 
-export ASAN_OPTIONS=allocator_may_return_null=1
+export ASAN_OPTIONS=allocator_may_return_null=1:symbolize=1
 
 export CCACHE_CPP2=yes
 export CC="ccache $PWD/clang+llvm-9.0.0-x86_64-linux-gnu-ubuntu-16.04/bin/clang"
@@ -116,6 +116,7 @@ rm -f "$WORK_DIR/ccache.tar.gz"
 
 
 export PRELOAD=$PWD/clang+llvm-9.0.0-x86_64-linux-gnu-ubuntu-16.04/lib/clang/9.0.0/lib/linux/libclang_rt.asan-x86_64.so
+export ASAN_SYMBOLIZER_PATH=$PWD/clang+llvm-9.0.0-x86_64-linux-gnu-ubuntu-16.04/bin/llvm-symbolizer
 
 cd autotest
 
