@@ -42,6 +42,8 @@
 
 #define ZARR_DEBUG_KEY "ZARR"
 
+#define CRS_ATTRIBUTE_NAME "_CRS"
+
 /************************************************************************/
 /*                         ZarrArray::ZarrArray()                       */
 /************************************************************************/
@@ -232,7 +234,7 @@ void ZarrArray::Flush()
                              pszAuthorityCode);
             }
 
-            oAttrs.Add("crs", oCRS);
+            oAttrs.Add(CRS_ATTRIBUTE_NAME, oCRS);
         }
 
         if( m_osUnit.empty() )
@@ -3084,7 +3086,7 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
         oAttributes = oTmpDoc.GetRoot();
     }
 
-    const auto crs = oAttributes["crs"];
+    const auto crs = oAttributes[CRS_ATTRIBUTE_NAME];
     std::shared_ptr<OGRSpatialReference> poSRS;
     if( crs.GetType() == CPLJSONObject::Type::Object )
     {
@@ -3097,7 +3099,7 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
                 poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                 if( poSRS->SetFromUserInput(item.ToString().c_str(), OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS) == OGRERR_NONE )
                 {
-                    oAttributes.Delete("crs");
+                    oAttributes.Delete(CRS_ATTRIBUTE_NAME);
                     break;
                 }
                 poSRS.reset();

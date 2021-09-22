@@ -90,7 +90,7 @@ SRS encoding
 ------------
 
 The Zarr specification has no provision for spatial reference system encoding.
-GDAL uses a ``crs`` attribute that is a dictionnary that may contain one or
+GDAL uses a ``_CRS`` attribute that is a dictionnary that may contain one or
 several of the following keys: ``url`` (using a OGC CRS URL), ``wkt`` (WKT:2019
 used by default on writing, WKT1 also supported on reading.), ``projjson``.
 On reading, it will use ``url`` by default, if not found will fallback to ``wkt``
@@ -99,7 +99,7 @@ and then ``projjson``.
 .. code-block:: json
 
     {
-      "crs":{
+      "_CRS":{
         "wkt":"PROJCRS[\"NAD27 \/ UTM zone 11N\",BASEGEOGCRS[\"NAD27\",DATUM[\"North American Datum 1927\",ELLIPSOID[\"Clarke 1866\",6378206.4,294.978698213898,LENGTHUNIT[\"metre\",1]]],PRIMEM[\"Greenwich\",0,ANGLEUNIT[\"degree\",0.0174532925199433]],ID[\"EPSG\",4267]],CONVERSION[\"UTM zone 11N\",METHOD[\"Transverse Mercator\",ID[\"EPSG\",9807]],PARAMETER[\"Latitude of natural origin\",0,ANGLEUNIT[\"degree\",0.0174532925199433],ID[\"EPSG\",8801]],PARAMETER[\"Longitude of natural origin\",-117,ANGLEUNIT[\"degree\",0.0174532925199433],ID[\"EPSG\",8802]],PARAMETER[\"Scale factor at natural origin\",0.9996,SCALEUNIT[\"unity\",1],ID[\"EPSG\",8805]],PARAMETER[\"False easting\",500000,LENGTHUNIT[\"metre\",1],ID[\"EPSG\",8806]],PARAMETER[\"False northing\",0,LENGTHUNIT[\"metre\",1],ID[\"EPSG\",8807]]],CS[Cartesian,2],AXIS[\"easting\",east,ORDER[1],LENGTHUNIT[\"metre\",1]],AXIS[\"northing\",north,ORDER[2],LENGTHUNIT[\"metre\",1]],ID[\"EPSG\",26711]]",
 
         "projjson":{
