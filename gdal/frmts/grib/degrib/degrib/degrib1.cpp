@@ -2022,6 +2022,16 @@ int ReadGrib1Record (VSILFILE *fp, sChar f_unit, double **Grib_Data,
           }
       }
 
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+      if( meta->gds.numPts > static_cast<size_t>(INT_MAX) /  sizeof (double) )
+      {
+          errSprintf ("Memory allocation failed due to being bigger than 2 GB in fuzzing mode");
+          *grib_DataLen = 0;
+          *Grib_Data = nullptr;
+          return -2;
+      }
+#endif
+
       *grib_DataLen = meta->gds.numPts;
       *Grib_Data = (double *) realloc ((void *) (*Grib_Data),
                                        (*grib_DataLen) * sizeof (double));

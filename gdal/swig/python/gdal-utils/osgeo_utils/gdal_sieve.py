@@ -172,6 +172,7 @@ def gdal_sieve(src_filename: Optional[str] = None,
             dst_ds.SetGeoTransform(gt)
 
         dstband = dst_ds.GetRasterBand(1)
+        dstband.SetNoDataValue(srcband.GetNoDataValue())
     else:
         dstband = srcband
 

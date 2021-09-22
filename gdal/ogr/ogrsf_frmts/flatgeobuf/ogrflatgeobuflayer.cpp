@@ -315,6 +315,7 @@ void OGRFlatGeobufLayer::writeHeader(VSILFILE *poFp, uint64_t featuresCount, std
     m_writeOffset += sizeof(magicbytes);
 
     FlatBufferBuilder fbb;
+    fbb.TrackMinAlign(8);
     auto columns = writeColumns(fbb);
 
     flatbuffers::Offset<Crs> crs = 0;
@@ -1139,6 +1140,7 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
     std::vector<uint8_t> properties;
     properties.reserve(1024 * 4);
     FlatBufferBuilder fbb;
+    fbb.TrackMinAlign(8);
 
     for (int i = 0; i < fieldCount; i++) {
         const auto fieldDef = m_poFeatureDefn->GetFieldDefn(i);
