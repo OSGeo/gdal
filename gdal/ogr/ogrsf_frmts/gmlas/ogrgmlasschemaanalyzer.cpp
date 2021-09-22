@@ -190,7 +190,35 @@ void CollectNamespacePrefixes(const char* pszXSDFilename,
     GMLASErrorHandler oErrorHandler;
     poReader->setErrorHandler(&oErrorHandler);
 
-    poReader->parse(oSource);
+    std::string osErrorMsg;
+    try
+    {
+        poReader->parse(oSource);
+    }
+    catch( const SAXException& e )
+    {
+        osErrorMsg += transcode(e.getMessage());
+    }
+    catch( const XMLException& e )
+    {
+        osErrorMsg += transcode(e.getMessage());
+    }
+    catch( const OutOfMemoryException& e )
+    {
+        if( strstr(CPLGetLastErrorMsg(), "configuration option") == nullptr )
+        {
+            osErrorMsg += transcode(e.getMessage());
+        }
+    }
+    catch( const DOMException& e )
+    {
+        osErrorMsg += transcode(e.getMessage());
+    }
+    if( !osErrorMsg.empty() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                 osErrorMsg.c_str());
+    }
     delete poReader;
 }
 
