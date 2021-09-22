@@ -254,16 +254,13 @@ void OSRProjTLSCache::clear()
 
 PJ* OSRProjTLSCache::GetPJForEPSGCode(int nCode, bool bUseNonDeprecated, bool bAddTOWGS84)
 {
-    try
+    std::shared_ptr<PJ> cached;
+    const EPSGCacheKey key(nCode, bUseNonDeprecated, bAddTOWGS84);
+    if( m_oCacheEPSG.tryGet(key, cached) )
     {
-        const EPSGCacheKey key(nCode, bUseNonDeprecated, bAddTOWGS84);
-        const auto& cached = m_oCacheEPSG.get(key);
         return proj_clone(OSRGetProjTLSContext(), cached.get());
     }
-    catch( const lru11::KeyNotFound& )
-    {
-        return nullptr;
-    }
+    return nullptr;
 }
 
 void OSRProjTLSCache::CachePJForEPSGCode(int nCode, bool bUseNonDeprecated, bool bAddTOWGS84, PJ* pj)
@@ -275,15 +272,12 @@ void OSRProjTLSCache::CachePJForEPSGCode(int nCode, bool bUseNonDeprecated, bool
 
 PJ* OSRProjTLSCache::GetPJForWKT(const std::string& wkt)
 {
-    try
+    std::shared_ptr<PJ> cached;
+    if( m_oCacheWKT.tryGet(wkt, cached) )
     {
-        const auto& cached = m_oCacheWKT.get(wkt);
         return proj_clone(OSRGetProjTLSContext(), cached.get());
     }
-    catch( const lru11::KeyNotFound& )
-    {
-        return nullptr;
-    }
+    return nullptr;
 }
 
 void OSRProjTLSCache::CachePJForWKT(const std::string& wkt, PJ* pj)
@@ -308,7 +302,7 @@ void OSRCleanupTLSContext()
 /************************************************************************/
 
 /** \brief Set the search path(s) for PROJ resource files.
- * 
+ *
  * @param papszPaths NULL terminated list of directory paths.
  * @since GDAL 3.0
  */
@@ -351,7 +345,7 @@ char** OSRGetPROJSearchPaths()
 /************************************************************************/
 
 /** \brief Set list of PROJ auxiliary database filenames.
- * 
+ *
  * @param papszAux NULL-terminated list of auxiliary database filenames, or NULL
  * @since GDAL 3.3
  *
@@ -369,7 +363,7 @@ void OSRSetPROJAuxDbPaths( const char* const * papszAux )
 /************************************************************************/
 
 /** \brief Get PROJ auxiliary database filenames.
- * 
+ *
  * @return NULL terminated list of PROJ auxiliary database filenames. To be freed with CSLDestroy()
  * @since GDAL 3.3.0
  *
