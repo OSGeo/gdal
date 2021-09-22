@@ -445,6 +445,19 @@ void OGRCSVLayer::BuildFeatureDefn( const char *pszNfdcGeomField,
     if( !bNew )
         ResetReading();
 
+    const int nMaxFieldCount = atoi(
+        CPLGetConfigOption("OGR_CSV_MAX_FIELD_COUNT", "2000"));
+    if( nFieldCount > nMaxFieldCount )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "%d columns detected. Limiting to %d. "
+                 "Set OGR_CSV_MAX_FIELD_COUNT configuration option "
+                 "to allow more fields.",
+                 nFieldCount,
+                 nMaxFieldCount);
+        nFieldCount = nMaxFieldCount;
+    }
+
     nCSVFieldCount = nFieldCount;
 
     panGeomFieldIndex = static_cast<int *>(CPLCalloc(nFieldCount, sizeof(int)));
@@ -560,6 +573,8 @@ void OGRCSVLayer::BuildFeatureDefn( const char *pszNfdcGeomField,
     constexpr int knMAX_GEOM_COLUMNS = 100;
     bool bWarnedMaxGeomFields = false;
 
+    const int nFieldTypesCount = CSLCount(papszFieldTypes);
+
     for( int iField = 0; !bIsEurostatTSV && iField < nFieldCount; iField++ )
     {
         char *pszFieldName = nullptr;
@@ -597,7 +612,7 @@ void OGRCSVLayer::BuildFeatureDefn( const char *pszNfdcGeomField,
         }
 
         OGRFieldDefn oField(pszFieldName, OFTString);
-        if( papszFieldTypes != nullptr && iField < CSLCount(papszFieldTypes) )
+        if( papszFieldTypes != nullptr && iField < nFieldTypesCount )
         {
             if( EQUAL(papszFieldTypes[iField], "WKT") )
             {
