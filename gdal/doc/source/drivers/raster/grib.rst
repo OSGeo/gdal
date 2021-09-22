@@ -20,6 +20,15 @@ application which is written primarily by Arthur Taylor of NOAA NWS NDFD
 the g2clib grib decoding library written primarily by John Huddleston of
 NOAA NWS NCEP.
 
+GRIB2 files without projection on lon/lat grids have the peculiarity
+of using longitudes in the [0,360] range and wrapping around the
+antimeridian as opposed to the usual wrapping around the prime meridian
+of other raster datasets. Starting with GDAL 3.4.0, when reading such
+files, a transparent conversion of the longitudes to [-180,180] will be
+performed and the data will be rewrapped around the prime meridian -
+the split&swap mode. This behavior can be disabled by setting the
+:decl_configoption:`GRIB_ADJUST_LONGITUDE_RANGE` configuration option to `NO`.
+
 There are several encoding schemes for raster data in GRIB format. Most
 common ones should be supported including PNG encoding. JPEG2000 encoded
 GRIB files will generally be supported if GDAL is also built with

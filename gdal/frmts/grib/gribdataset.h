@@ -109,6 +109,12 @@ class GRIBDataset final: public GDALPamDataset
     GIntBig nCachedBytes;
     GIntBig nCachedBytesThreshold;
     int bCacheOnlyOneBand;
+
+    // Split&Swap: transparent rewrap around the prime meridian instead of the antimeridian
+    // rows after nSplitAndSwapColumn are placed at the beginning
+    // while rows before are placed at the end
+    int nSplitAndSwapColumn;
+    
     GRIBRasterBand *poLastUsedBand;
     std::shared_ptr<GDALGroup> m_poRootGroup{};
     std::shared_ptr<OGRSpatialReference> m_poSRS{};
