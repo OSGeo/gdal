@@ -55,8 +55,9 @@ def has_jp2kdrv():
 
 def test_grib_1():
 
-    tst = gdaltest.GDALTest('GRIB', 'grib/ds.mint.bin', 2, 46927)
-    return tst.testOpen()
+    with gdaltest.config_option('GDAL_PAM_ENABLED', 'OFF'):
+        tst = gdaltest.GDALTest('GRIB', 'grib/ds.mint.bin', 2, 46927)
+        return tst.testOpen()
 
 
 ###############################################################################
@@ -96,13 +97,14 @@ def test_grib_read_different_sizes_messages():
 
 def test_grib_grib2_read_nodata():
 
-    ds = gdal.Open('data/grib/ds.mint.bin')
-    assert ds.GetRasterBand(1).GetNoDataValue() == 9999
-    assert ds.GetRasterBand(2).GetNoDataValue() == 9999
-    md = ds.GetRasterBand(1).GetMetadata()
-    expected_md = {'GRIB_REF_TIME': '  1203613200 sec UTC', 'GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES': '0 5 2 0 0 255 255 1 19 1 0 0 255 -1 -2147483647 2008 2 22 12 0 0 1 0 3 255 1 12 1 0', 'GRIB_VALID_TIME': '  1203681600 sec UTC', 'GRIB_FORECAST_SECONDS': '68400 sec', 'GRIB_UNIT': '[C]', 'GRIB_PDS_TEMPLATE_NUMBERS': '0 5 2 0 0 0 255 255 1 0 0 0 19 1 0 0 0 0 0 255 129 255 255 255 255 7 216 2 22 12 0 0 1 0 0 0 0 3 255 1 0 0 0 12 1 0 0 0 0', 'GRIB_DISCIPLINE': '0(Meteorological)', 'GRIB_PDS_PDTN': '8', 'GRIB_COMMENT': 'Minimum temperature [C]', 'GRIB_SHORT_NAME': '0-SFC', 'GRIB_ELEMENT': 'MinT'}
-    for k in expected_md:
-        assert k in md and md[k] == expected_md[k], 'Did not get expected metadata'
+    with gdaltest.config_option('GDAL_PAM_ENABLED', 'OFF'):
+        ds = gdal.Open('data/grib/ds.mint.bin')
+        assert ds.GetRasterBand(1).GetNoDataValue() == 9999
+        assert ds.GetRasterBand(2).GetNoDataValue() == 9999
+        md = ds.GetRasterBand(1).GetMetadata()
+        expected_md = {'GRIB_REF_TIME': '  1203613200 sec UTC', 'GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES': '0 5 2 0 0 255 255 1 19 1 0 0 255 -1 -2147483647 2008 2 22 12 0 0 1 0 3 255 1 12 1 0', 'GRIB_VALID_TIME': '  1203681600 sec UTC', 'GRIB_FORECAST_SECONDS': '68400 sec', 'GRIB_UNIT': '[C]', 'GRIB_PDS_TEMPLATE_NUMBERS': '0 5 2 0 0 0 255 255 1 0 0 0 19 1 0 0 0 0 0 255 129 255 255 255 255 7 216 2 22 12 0 0 1 0 0 0 0 3 255 1 0 0 0 12 1 0 0 0 0', 'GRIB_DISCIPLINE': '0(Meteorological)', 'GRIB_PDS_PDTN': '8', 'GRIB_COMMENT': 'Minimum temperature [C]', 'GRIB_SHORT_NAME': '0-SFC', 'GRIB_ELEMENT': 'MinT'}
+        for k in expected_md:
+            assert k in md and md[k] == expected_md[k], 'Did not get expected metadata'
 
 
 ###############################################################################
@@ -157,29 +159,30 @@ def test_grib_read_geotransform_one_n_or_n_one():
 
 def test_grib_read_vsizip():
 
-    ds = gdal.Open('/vsizip/data/grib/gfs.t00z.mastergrb2f03.zip/gfs.t00z.mastergrb2f03')
-    assert ds is not None
+    with gdaltest.config_option('GDAL_PAM_ENABLED', 'OFF'):
+        ds = gdal.Open('/vsizip/data/grib/gfs.t00z.mastergrb2f03.zip/gfs.t00z.mastergrb2f03')
+        assert ds is not None
 
 ###############################################################################
 # Write PDS numbers to all bands
 
 
 def test_grib_grib2_test_grib_pds_all_bands():
-    ds = gdal.Open('/vsizip/data/grib/gfs.t00z.mastergrb2f03.zip/gfs.t00z.mastergrb2f03')
-    assert ds is not None
-    band = ds.GetRasterBand(2)
-    md = band.GetMetadataItem('GRIB_PDS_TEMPLATE_NUMBERS')
-    ds = None
-    assert md is not None, 'Failed to fetch pds numbers (#5144)'
-
-    with gdaltest.config_option('GRIB_PDS_ALL_BANDS', 'OFF'):
+    with gdaltest.config_option('GDAL_PAM_ENABLED', 'OFF'):
         ds = gdal.Open('/vsizip/data/grib/gfs.t00z.mastergrb2f03.zip/gfs.t00z.mastergrb2f03')
-    assert ds is not None
-    band = ds.GetRasterBand(2)
-    md = band.GetMetadataItem('GRIB_PDS_TEMPLATE_NUMBERS')
-    ds = None
+        assert ds is not None
+        band = ds.GetRasterBand(2)
+        md = band.GetMetadataItem('GRIB_PDS_TEMPLATE_NUMBERS')
+        ds = None
+        assert md is not None, 'Failed to fetch pds numbers (#5144)'
 
-    assert md is None, 'Got pds numbers, when disabled (#5144)'
+        with gdaltest.config_option('GRIB_PDS_ALL_BANDS', 'OFF'):
+            ds = gdal.Open('/vsizip/data/grib/gfs.t00z.mastergrb2f03.zip/gfs.t00z.mastergrb2f03')
+            assert ds is not None
+            band = ds.GetRasterBand(2)
+            md = band.GetMetadataItem('GRIB_PDS_TEMPLATE_NUMBERS')
+            ds = None
+            assert md is None, 'Got pds numbers, when disabled (#5144)'
 
 ###############################################################################
 # Test support for template 4.15 (#5768)
@@ -1162,6 +1165,7 @@ def test_grib_grib2_write_data_encodings_warnings_and_errors():
         gdal.Unlink(tmpfilename)
 
     gdal.Unlink('/vsimem/huge.tif')
+    os.unlink('data/grib/ds.mint.bin.aux.xml')
 
     with gdaltest.error_handler():
         out_ds = gdal.Translate('/i/do_not/exist.grb2', 'data/byte.tif', format='GRIB')
@@ -1420,6 +1424,7 @@ def test_grib_grib2_read_subgrids_reuse_bitmap():
     ds = gdal.Open('data/grib/subgrids_reuse_bitmap.grib2')
     assert ds.GetRasterBand(1).Checksum() == 4672
     assert ds.GetRasterBand(2).Checksum() == 4563
+    os.unlink('data/grib/subgrids.grib2.aux.xml')
 
 
 ###############################################################################
@@ -1452,3 +1457,17 @@ def test_grib_grib2_split_and_swap():
     gt = ds.GetGeoTransform()
     expected_gt = (24.875, 10.0, 0.0, 90.125, 0.0, -10.0)
     assert gt == pytest.approx(expected_gt, rel=1e-6)
+
+
+# Test sidecar file support
+# https://github.com/OSGeo/gdal/issues/3799
+
+def test_grib_grib2_sidecar():
+
+    with gdaltest.config_option('GDAL_PAM_ENABLED', 'OFF'):
+        ds = gdal.Open('data/grib/gfs.t06z.pgrb2.10p0.f000.grib2')
+        assert ds.RasterCount == 6
+        assert ds.GetRasterBand(6).GetDescription() == '[GRLE] : 1 hybrid level'
+        assert ds.GetRasterBand(6).GetMetadataItem('GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES') == '1 32 2 0 81 0 0 1 0 105 0 1 255 0 0'
+        assert ds.GetRasterBand(6).GetMetadataItem('GRIB_REF_TIME') == '202109190600'
+        assert ds.GetRasterBand(6).GetMetadataItem('GRIB_VALID_TIME') == '202109190600'
