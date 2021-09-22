@@ -836,22 +836,19 @@ CPLErr GRIBRasterBand::IReadBlock( int /* nBlockXOff */,
     if( nBlockYOff >= nGribDataYSize )  // Off image?
         return CE_None;
 
-    if ( nRasterXSize != nGribDataXSize && poGDS->nSplitAndSwapColumn != 0)
-    {
-        CPLDebug("GRIB", "GribDataXSize (%d) does not match RasterXSize (%d), disabling Split&Swap mode",
-            nGribDataXSize, nRasterXSize);
-        poGDS->nSplitAndSwapColumn = 0;
-    }
+    int nSplitAndSwapColumn = poGDS->nSplitAndSwapColumn;
+    if (nRasterXSize != nGribDataXSize)
+        nSplitAndSwapColumn = 0;
 
     const int nCopyWords = std::min(nRasterXSize, nGribDataXSize);
 
     memcpy(pImage,
-           m_Grib_Data + static_cast<size_t>(nGribDataXSize) * (nGribDataYSize - nBlockYOff - 1) + poGDS->nSplitAndSwapColumn,
-           (nCopyWords - poGDS->nSplitAndSwapColumn) * sizeof(double));
+           m_Grib_Data + static_cast<size_t>(nGribDataXSize) * (nGribDataYSize - nBlockYOff - 1) + nSplitAndSwapColumn,
+           (nCopyWords - nSplitAndSwapColumn) * sizeof(double));
 
-    memcpy(reinterpret_cast<void*>(reinterpret_cast<double*>(pImage) + poGDS->nSplitAndSwapColumn),
+    memcpy(reinterpret_cast<void*>(reinterpret_cast<double*>(pImage) + nSplitAndSwapColumn),
            m_Grib_Data + static_cast<size_t>(nGribDataXSize) * (nGribDataYSize - nBlockYOff - 1),
-           poGDS->nSplitAndSwapColumn * sizeof(double));
+           nSplitAndSwapColumn * sizeof(double));
 
     return CE_None;
 }
