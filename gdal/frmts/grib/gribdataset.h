@@ -74,6 +74,12 @@
 class GRIBArray;
 class GRIBRasterBand;
 
+namespace gdal {
+namespace grib {
+class InventoryWrapper;
+}
+}
+
 class GRIBDataset final: public GDALPamDataset
 {
     friend class GRIBArray;
@@ -101,6 +107,7 @@ class GRIBDataset final: public GDALPamDataset
   private:
     void SetGribMetaData(grib_MetaData *meta);
     static GDALDataset *OpenMultiDim( GDALOpenInfo * );
+    static std::unique_ptr<gdal::grib::InventoryWrapper> Inventory(VSILFILE *, GDALOpenInfo *);
 
     VSILFILE *fp;
     // Calculate and store once as GetGeoTransform may be called multiple times.
@@ -140,6 +147,8 @@ public:
     virtual const char *GetDescription() const override;
 
     virtual double GetNoDataValue( int *pbSuccess = nullptr ) override;
+    virtual char **GetMetadata(const char *pszDomain = "") override;
+    virtual const char *GetMetadataItem(const char *pszName, const char *pszDomain = "") override;
 
     void    FindPDSTemplate();
 
@@ -149,7 +158,10 @@ public:
                               grib_MetaData ** );
 private:
     CPLErr       LoadData();
-    void    FindNoDataGrib2(bool bSeekToStart = true);
+    void         FindNoDataGrib2(bool bSeekToStart = true);
+    void         FindMetaData();
+    // Heuristic search for the start of the message
+    static vsi_l_offset FindTrueStart(VSILFILE *, vsi_l_offset);
 
     vsi_l_offset start;
     int subgNum;
@@ -178,6 +190,8 @@ private:
     std::string m_osType{};
     int     m_nPDTN = -1;
     std::vector<GUInt32> m_anPDSTemplateAssembledValues{};
+    bool    bLoadedPDS = false;
+    bool    bLoadedMetadata = false;
 };
 
 namespace gdal {
@@ -186,20 +200,8 @@ namespace grib {
 // Thin layer to manage allocation and deallocation.
 class InventoryWrapper {
   public:
-
-    explicit InventoryWrapper(VSILFILE * fp)
-        : inv_(nullptr), inv_len_(0), num_messages_(0), result_(0) {
-      result_ = GRIB2Inventory(fp, &inv_, &inv_len_,
-                               0 /* all messages */, &num_messages_);
-    }
-
-    ~InventoryWrapper() {
-        if (inv_ == nullptr) return;
-        for (uInt4 i = 0; i < inv_len_; i++) {
-            GRIB2InventoryFree(inv_ + i);
-        }
-        free(inv_);
-    }
+    InventoryWrapper() : inv_(nullptr), inv_len_(0), num_messages_(0), result_(0) {}
+    virtual ~InventoryWrapper() {}
 
     // Modifying the contents pointed to by the return is allowed.
     inventoryType * get(int i) const {
@@ -211,15 +213,15 @@ class InventoryWrapper {
     size_t num_messages() const { return num_messages_; }
     int result() const { return result_; }
 
-  private:
+  protected:
     inventoryType *inv_;
     uInt4 inv_len_;
     int num_messages_;
     int result_;
 };
 
-}  // namespace grib
-}  // namespace gdal
+} // namespace grib
+} // namespace gdal
 
 const char* const apszJ2KDrivers[] =
         { "JP2KAK", "JP2OPENJPEG", "JPEG2000", "JP2ECW" };

@@ -128,22 +128,88 @@ GRIBRasterBand::GRIBRasterBand( GRIBDataset *poDSIn, int nBandIn,
     nBlockXSize = poDSIn->nRasterXSize;
     nBlockYSize = 1;
 
-    const char *pszGribNormalizeUnits =
+    if (psInv->unitName != nullptr &&
+        psInv->comment != nullptr &&
+        psInv->element != nullptr)
+    {
+        bLoadedMetadata = true;
+        const char *pszGribNormalizeUnits =
+            CPLGetConfigOption("GRIB_NORMALIZE_UNITS", "YES");
+        bool bMetricUnits = CPLTestBool(pszGribNormalizeUnits);
+
+        SetMetadataItem("GRIB_UNIT",
+                        ConvertUnitInText(bMetricUnits, psInv->unitName));
+        SetMetadataItem("GRIB_COMMENT",
+                        ConvertUnitInText(bMetricUnits, psInv->comment));
+        SetMetadataItem("GRIB_ELEMENT", psInv->element);
+        SetMetadataItem("GRIB_SHORT_NAME", psInv->shortFstLevel);
+        SetMetadataItem("GRIB_REF_TIME",
+                        CPLString().Printf("%12.0f sec UTC", psInv->refTime));
+        SetMetadataItem("GRIB_VALID_TIME",
+                        CPLString().Printf("%12.0f sec UTC", psInv->validTime));
+        SetMetadataItem("GRIB_FORECAST_SECONDS",
+                        CPLString().Printf("%.0f sec", psInv->foreSec));
+        }
+}
+
+
+/************************************************************************/
+/*                           FindMetaData()                             */
+/************************************************************************/
+
+void GRIBRasterBand::FindMetaData()
+{
+    if (bLoadedMetadata) return;
+    if (m_Grib_MetaData == nullptr)
+        if (LoadData() != CE_None)
+            return;
+    bLoadedMetadata = true;
+
+    const char *pszGribNormalizeUnits = 
         CPLGetConfigOption("GRIB_NORMALIZE_UNITS", "YES");
     bool bMetricUnits = CPLTestBool(pszGribNormalizeUnits);
 
-    SetMetadataItem("GRIB_UNIT",
-                    ConvertUnitInText(bMetricUnits, psInv->unitName));
-    SetMetadataItem("GRIB_COMMENT",
-                    ConvertUnitInText(bMetricUnits, psInv->comment));
-    SetMetadataItem("GRIB_ELEMENT", psInv->element);
-    SetMetadataItem("GRIB_SHORT_NAME", psInv->shortFstLevel);
-    SetMetadataItem("GRIB_REF_TIME",
-                    CPLString().Printf("%12.0f sec UTC", psInv->refTime));
-    SetMetadataItem("GRIB_VALID_TIME",
-                    CPLString().Printf("%12.0f sec UTC", psInv->validTime));
-    SetMetadataItem("GRIB_FORECAST_SECONDS",
-                    CPLString().Printf("%.0f sec", psInv->foreSec));
+    GDALMajorObject::SetMetadataItem("GRIB_UNIT",
+                    ConvertUnitInText(bMetricUnits, m_Grib_MetaData->unitName));
+    GDALMajorObject::SetMetadataItem("GRIB_COMMENT",
+                    ConvertUnitInText(bMetricUnits, m_Grib_MetaData->comment));
+    GDALMajorObject::SetMetadataItem("GRIB_ELEMENT", m_Grib_MetaData->element);
+    GDALMajorObject::SetMetadataItem("GRIB_SHORT_NAME", m_Grib_MetaData->shortFstLevel);
+    GDALMajorObject::SetMetadataItem("GRIB_REF_TIME", m_Grib_MetaData->refTime);
+    GDALMajorObject::SetMetadataItem("GRIB_VALID_TIME", m_Grib_MetaData->validTime);
+    GDALMajorObject::SetMetadataItem("GRIB_FORECAST_SECONDS",
+                    CPLString().Printf("%d sec", m_Grib_MetaData->deltTime));
+}
+
+/************************************************************************/
+/*                          FindTrueStart()                             */
+/*                                                                      */
+/*      Scan after the official start of the message to find its        */
+/*      true starting offset.                                           */
+/************************************************************************/
+vsi_l_offset GRIBRasterBand::FindTrueStart(VSILFILE *fp, vsi_l_offset start)
+{
+    // GRIB messages can be preceded by "garbage". GRIB2Inventory()
+    // does not return the offset to the real start of the message
+    char szHeader[1024 + 1];
+    VSIFSeekL( fp, start, SEEK_SET );
+    const int nRead = static_cast<int>(VSIFReadL( szHeader, 1, sizeof(szHeader)-1, fp ));
+    szHeader[nRead] = 0;
+    // Find the real offset of the fist message
+    int nOffsetFirstMessage = 0;
+    for(int j = 0; j + 3 < nRead; j++)
+    {
+        if(STARTS_WITH_CI(szHeader + j, "GRIB")
+#ifdef ENABLE_TDLP
+           || STARTS_WITH_CI(szHeader + j, "TDLP")
+#endif
+        )
+        {
+            nOffsetFirstMessage = j;
+            break;
+        }
+    }
+    return start + nOffsetFirstMessage;
 }
 
 /************************************************************************/
@@ -156,7 +222,11 @@ GRIBRasterBand::GRIBRasterBand( GRIBDataset *poDSIn, int nBandIn,
 void GRIBRasterBand::FindPDSTemplate()
 
 {
+    if (bLoadedPDS) return;
+    bLoadedPDS = true;
+
     GRIBDataset *poGDS = static_cast<GRIBDataset *>(poDS);
+    start = FindTrueStart(poGDS->fp, start);
 
     // Read section 0
     GByte abySection0[16];
@@ -802,6 +872,34 @@ CPLErr GRIBRasterBand::LoadData()
 }
 
 /************************************************************************/
+/*                             GetMetaData()                            */
+/************************************************************************/
+char **GRIBRasterBand::GetMetadata(const char *pszDomain)
+{
+    FindMetaData();
+    if (m_nGribVersion == 2 &&
+        CPLTestBool(CPLGetConfigOption("GRIB_PDS_ALL_BANDS", "ON")))
+    {
+            FindPDSTemplate();
+    }
+    return GDALPamRasterBand::GetMetadata(pszDomain);
+}
+
+/************************************************************************/
+/*                             GetMetaDataItem()                        */
+/************************************************************************/
+const char *GRIBRasterBand::GetMetadataItem(const char *pszName, const char *pszDomain)
+{
+    FindMetaData();
+    if (m_nGribVersion == 2 &&
+        CPLTestBool(CPLGetConfigOption("GRIB_PDS_ALL_BANDS", "ON")))
+    {
+            FindPDSTemplate();
+    }
+    return GDALPamRasterBand::GetMetadataItem(pszName, pszDomain);
+}
+
+/************************************************************************/
 /*                             IReadBlock()                             */
 /************************************************************************/
 
@@ -941,6 +1039,7 @@ void GRIBRasterBand::ReadGribData( VSILFILE * fp, vsi_l_offset start, int subgNu
     if ( !CPLTestBool(pszGribNormalizeUnits) )
         f_unit = 0;  // Do not normalize units to metric.
 
+    start = FindTrueStart(fp, start);
     // Read GRIB message from file position "start".
     VSIFSeekL(fp, start, SEEK_SET);
     uInt4 grib_DataLen = 0;  // Size of Grib_Data.
@@ -981,9 +1080,136 @@ void GRIBRasterBand::UncacheData()
 
 GRIBRasterBand::~GRIBRasterBand()
 {
-    CPLFree(longFstLevel);
+    if (longFstLevel != nullptr)
+        CPLFree(longFstLevel);
     UncacheData();
 }
+
+
+/************************************************************************/
+/*                           InventoryWrapperGrib                       */
+/************************************************************************/
+class InventoryWrapperGrib : public gdal::grib::InventoryWrapper
+{
+  public:
+    explicit InventoryWrapperGrib(VSILFILE *fp) : gdal::grib::InventoryWrapper()
+    {
+        result_ = GRIB2Inventory(fp, &inv_, &inv_len_, 0 /* all messages */, &num_messages_);
+    }
+
+    ~InventoryWrapperGrib() override
+    {
+        if (inv_ == nullptr)
+            return;
+        for (uInt4 i = 0; i < inv_len_; i++)
+        {
+            GRIB2InventoryFree(inv_ + i);
+        }
+        free(inv_);
+    }
+};
+
+/************************************************************************/
+/*                           InventoryWrapperSidecar                    */
+/************************************************************************/
+
+class InventoryWrapperSidecar : public gdal::grib::InventoryWrapper
+{
+  public:
+    explicit InventoryWrapperSidecar(VSILFILE *fp) : gdal::grib::InventoryWrapper()
+    { 
+        VSIFSeekL(fp, 0, SEEK_END);
+        vsi_l_offset length = VSIFTellL(fp);
+        char *pszSidecar = new char[length + 1];
+        VSIFSeekL(fp, 0, SEEK_SET);
+        if (VSIFReadL(pszSidecar, length, 1, fp) != 1)
+        {
+            result_ = -1;
+            return;
+        }
+        pszSidecar[length] = 0;
+
+        char **papszMsgs = CSLTokenizeString2(pszSidecar, "\n", CSLT_PRESERVEQUOTES);
+        for (inv_len_ = 0; papszMsgs != NULL && papszMsgs[inv_len_] != NULL; ++inv_len_);
+        inv_ = new inventoryType[inv_len_];
+
+        for (int i = 0; papszMsgs != NULL && papszMsgs[i] != NULL; ++i)
+        {
+            char **papszTokens = CSLTokenizeString2(papszMsgs[i], ":",
+                CSLT_PRESERVEQUOTES | CSLT_ALLOWEMPTYTOKENS);
+            char **papszNum;
+            if (papszTokens[0] == nullptr || *papszTokens[0] == 0)
+                goto err_sidecar_1;
+            if (papszTokens[1] == nullptr || *papszTokens[1] == 0)
+                goto err_sidecar_1;
+
+            papszNum = CSLTokenizeString2(papszTokens[0], ".", 0);
+            if (papszNum[0] == nullptr || *papszNum[0] == 0)
+                goto err_sidecar_2;
+
+            // Only GRIBv2 has sidecars
+            inv_[i].GribVersion = (signed char) 2;
+            // This is all the information we need
+            char *endptr;
+            inv_[i].msgNum = strtol(papszNum[0], &endptr, 10);
+            if (*endptr != 0) goto err_sidecar_2;
+
+            if (papszNum[1] == nullptr || *papszNum[1] == 0)
+                inv_[i].subgNum = 0;
+            else
+            {
+                inv_[i].subgNum = strtol(papszNum[1], &endptr, 10);
+                if (*endptr != 0) goto err_sidecar_2;
+            }
+
+            inv_[i].start = strtoll(papszTokens[1], &endptr, 10);
+            if (*endptr != 0) goto err_sidecar_2;
+
+            inv_[i].unitName = nullptr;
+            inv_[i].comment = nullptr;
+            inv_[i].element = nullptr;
+            inv_[i].shortFstLevel = nullptr;
+            if (papszTokens[2] && papszTokens[3] && papszTokens[4])
+                inv_[i].longFstLevel = VSIStrdup(CPLSPrintf("[%s] : %s",
+                        papszTokens[3], papszTokens[4]));
+            else
+                inv_[i].longFstLevel = VSIStrdup("");
+
+            CSLDestroy(papszNum);
+            CSLDestroy(papszTokens);
+            continue;
+
+        err_sidecar_2:
+            CSLDestroy(papszNum);
+        err_sidecar_1:
+            CPLDebug("GRIB",
+                     "Failed parsing sidecar entry '%s', "
+                     "falling back to constructing an inventory",
+                     papszMsgs[i]);
+            CSLDestroy(papszTokens);
+            CSLDestroy(papszMsgs);
+            delete[] pszSidecar;
+            result_ = -1;
+            inv_len_ = i;
+            return;
+        }
+
+        CSLDestroy(papszMsgs);
+        delete[] pszSidecar;
+        result_ = inv_len_;
+    }
+
+    ~InventoryWrapperSidecar() override
+    {
+        if (inv_ == nullptr)
+            return;
+
+        for (unsigned i = 0; i < inv_len_; i++)
+            VSIFree(inv_[i].longFstLevel);
+
+        delete [] inv_;
+    }
+};
 
 /************************************************************************/
 /* ==================================================================== */
@@ -1056,6 +1282,36 @@ int GRIBDataset::Identify( GDALOpenInfo *poOpenInfo )
     }
 
     return FALSE;
+}
+
+/************************************************************************/
+/*                                Inventory()                           */
+/************************************************************************/
+
+std::unique_ptr<gdal::grib::InventoryWrapper> GRIBDataset::Inventory(VSILFILE *fp, GDALOpenInfo *poOpenInfo)
+{
+    std::unique_ptr<gdal::grib::InventoryWrapper> pInventories;
+
+    VSIFSeekL(fp, 0, SEEK_SET);
+    CPLString sSideCarFilename = CPLString(poOpenInfo->pszFilename) + ".idx";
+    VSILFILE *fpSideCar = nullptr;
+    if ((fpSideCar = VSIFOpenL(sSideCarFilename, "rb")) != nullptr) {
+        CPLDebug("GRIB", "Reading inventories from sidecar file %s", sSideCarFilename.c_str());
+        // Contains an GRIB2 message inventory of the file.
+        pInventories = std::make_unique<InventoryWrapperSidecar>(fpSideCar);
+        if (pInventories->result() <= 0 || pInventories->length() == 0)
+            pInventories = nullptr;
+        VSIFCloseL(fpSideCar);
+    } else
+        CPLDebug("GRIB", "Failed opening sidecar %s", sSideCarFilename.c_str());
+
+    if (pInventories == nullptr) {
+        CPLDebug("GRIB", "Reading inventories from GRIB file %s", poOpenInfo->pszFilename);
+        // Contains an GRIB2 message inventory of the file.
+        pInventories = std::make_unique<InventoryWrapperGrib>(fp);
+    }
+
+    return pInventories;
 }
 
 /************************************************************************/
@@ -1133,15 +1389,10 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
     // The band-data that is read is stored into the first RasterBand,
     // simply so that the same portion of the file is not read twice.
 
-    VSIFSeekL(poDS->fp, 0, SEEK_SET);
-
-    // Contains an GRIB2 message inventory of the file.
-    gdal::grib::InventoryWrapper oInventories(poDS->fp);
-
-    if( oInventories.result() <= 0 )
-    {
+    auto pInventories = Inventory(poDS->fp, poOpenInfo);
+    if (pInventories->result() <= 0) {
         char *errMsg = errSprintf(nullptr);
-        if( errMsg != nullptr )
+        if (errMsg != nullptr)
             CPLDebug("GRIB", "%s", errMsg);
         free(errMsg);
 
@@ -1158,33 +1409,11 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
     }
 
     // Create band objects.
-    for (uInt4 i = 0; i < oInventories.length(); ++i)
+    for (uInt4 i = 0; i < pInventories->length(); ++i)
     {
-        inventoryType *psInv = oInventories.get(i);
+        inventoryType *psInv = pInventories->get(i);
         GRIBRasterBand *gribBand = nullptr;
         uInt4 bandNr = i + 1;
-
-        // GRIB messages can be preceded by "garbage". GRIB2Inventory()
-        // does not return the offset to the real start of the message
-        char szHeader[1024 + 1];
-        VSIFSeekL( poDS->fp, psInv->start, SEEK_SET );
-        const int nRead = static_cast<int>(VSIFReadL( szHeader, 1, sizeof(szHeader)-1, poDS->fp ));
-        szHeader[nRead] = 0;
-        // Find the real offset of the fist message
-        int nOffsetFirstMessage = 0;
-        for(int j = 0; j + 3 < nRead; j++)
-        {
-            if(STARTS_WITH_CI(szHeader + j, "GRIB")
-#ifdef ENABLE_TDLP
-               || STARTS_WITH_CI(szHeader + j, "TDLP")
-#endif
-            )
-            {
-                nOffsetFirstMessage = j;
-                break;
-            }
-        }
-        psInv->start += nOffsetFirstMessage;
 
         if (bandNr == 1)
         {
@@ -1227,11 +1456,6 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
         else
         {
             gribBand = new GRIBRasterBand(poDS, bandNr, psInv);
-            if( CPLTestBool(CPLGetConfigOption("GRIB_PDS_ALL_BANDS", "ON")) )
-            {
-                if( psInv->GribVersion == 2 )
-                    gribBand->FindPDSTemplate();
-            }
         }
         poDS->SetBand(bandNr, gribBand);
     }
@@ -1907,9 +2131,9 @@ GDALDataset *GRIBDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
     VSIFSeekL(poShared->m_fp, 0, SEEK_SET);
 
     // Contains an GRIB2 message inventory of the file.
-    gdal::grib::InventoryWrapper oInventories(poShared->m_fp);
+    auto pInventories = Inventory(poShared->m_fp, poOpenInfo);
 
-    if( oInventories.result() <= 0 )
+    if( pInventories->result() <= 0 )
     {
         char *errMsg = errSprintf(nullptr);
         if( errMsg != nullptr )
@@ -1933,9 +2157,9 @@ GDALDataset *GRIBDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
     std::string osShortFstLevel;
     double dfRefTime = 0;
     double dfForecastTime = 0;
-    for (uInt4 i = 0; i < oInventories.length(); ++i)
+    for (uInt4 i = 0; i < pInventories->length(); ++i)
     {
-        inventoryType *psInv = oInventories.get(i);
+        inventoryType *psInv = pInventories->get(i);
         uInt4 bandNr = i + 1;
 
         // GRIB messages can be preceded by "garbage". GRIB2Inventory()
@@ -1985,7 +2209,7 @@ GDALDataset *GRIBDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
         {
             if( poArray)
             {
-                poArray->Finalize(poRootGroup.get(), oInventories.get(i-1));
+                poArray->Finalize(poRootGroup.get(), pInventories->get(i-1));
                 poRootGroup->AddArray(poArray);
             }
 
@@ -2046,7 +2270,7 @@ GDALDataset *GRIBDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
     if( poArray)
     {
         poArray->Finalize(poRootGroup.get(),
-                          oInventories.get(oInventories.length()-1));
+                          pInventories->get(pInventories->length()-1));
         poRootGroup->AddArray(poArray);
     }
 
