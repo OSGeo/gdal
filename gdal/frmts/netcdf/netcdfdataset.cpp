@@ -7069,15 +7069,17 @@ bool netCDFDatasetCreateTempFile( NetCDFFormatEnum eFormat,
                         aoDimIds.push_back(nDimId);
 
                         const size_t nDimSize = oMapDimIdToDimLen[nDimId];
-                        if( nDimSize != 0 &&
-                            nSize > std::numeric_limits<size_t>::max() / nDimSize )
+                        if( nDimSize != 0 )
                         {
-                            bFailed = true;
-                            break;
-                        }
-                        else
-                        {
-                            nSize *= nDimSize;
+                            if (nSize > std::numeric_limits<size_t>::max() / nDimSize )
+                            {
+                                bFailed = true;
+                                break;
+                            }
+                            else
+                            {
+                                nSize *= nDimSize;
+                            }
                         }
                     }
                     if( bFailed )
