@@ -55,8 +55,9 @@ def has_jp2kdrv():
 
 def test_grib_1():
 
-    tst = gdaltest.GDALTest('GRIB', 'grib/ds.mint.bin', 2, 46927)
-    return tst.testOpen()
+    with gdaltest.config_option('GDAL_PAM_ENABLED', 'OFF'):
+        tst = gdaltest.GDALTest('GRIB', 'grib/ds.mint.bin', 2, 46927)
+        return tst.testOpen()
 
 
 ###############################################################################
@@ -157,22 +158,16 @@ def test_grib_read_geotransform_one_n_or_n_one():
 
 def test_grib_read_vsizip():
 
-    ds = gdal.Open('/vsizip/data/grib/gfs.t00z.mastergrb2f03.zip/gfs.t00z.mastergrb2f03')
-    assert ds is not None
+    with gdaltest.config_option('GDAL_PAM_ENABLED', 'OFF'):
+        ds = gdal.Open('/vsizip/data/grib/gfs.t00z.mastergrb2f03.zip/gfs.t00z.mastergrb2f03')
+        assert ds is not None
 
 ###############################################################################
 # Write PDS numbers to all bands
 
 
 def test_grib_grib2_test_grib_pds_all_bands():
-    ds = gdal.Open('/vsizip/data/grib/gfs.t00z.mastergrb2f03.zip/gfs.t00z.mastergrb2f03')
-    assert ds is not None
-    band = ds.GetRasterBand(2)
-    md = band.GetMetadataItem('GRIB_PDS_TEMPLATE_NUMBERS')
-    ds = None
-    assert md is not None, 'Failed to fetch pds numbers (#5144)'
-
-    with gdaltest.config_option('GRIB_PDS_ALL_BANDS', 'OFF'):
+    with gdaltest.config_option('GDAL_PAM_ENABLED', 'OFF'):
         ds = gdal.Open('/vsizip/data/grib/gfs.t00z.mastergrb2f03.zip/gfs.t00z.mastergrb2f03')
         assert ds is not None
         band = ds.GetRasterBand(2)
@@ -1161,6 +1156,7 @@ def test_grib_grib2_write_data_encodings_warnings_and_errors():
         gdal.Unlink(tmpfilename)
 
     gdal.Unlink('/vsimem/huge.tif')
+    os.unlink('data/grib/ds.mint.bin.aux.xml')
 
     with gdaltest.error_handler():
         out_ds = gdal.Translate('/i/do_not/exist.grb2', 'data/byte.tif', format='GRIB')
@@ -1419,6 +1415,7 @@ def test_grib_grib2_read_subgrids_reuse_bitmap():
     ds = gdal.Open('data/grib/subgrids_reuse_bitmap.grib2')
     assert ds.GetRasterBand(1).Checksum() == 4672
     assert ds.GetRasterBand(2).Checksum() == 4563
+    os.unlink('data/grib/subgrids.grib2.aux.xml')
 
 
 ###############################################################################

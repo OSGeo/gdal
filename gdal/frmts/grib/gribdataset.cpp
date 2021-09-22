@@ -1334,7 +1334,8 @@ std::unique_ptr<gdal::grib::InventoryWrapper> GRIBDataset::Inventory(VSILFILE *f
     else
         CPLDebug("GRIB", "Failed opening sidecar %s", sSideCarFilename.c_str());
 
-    if (pInventories == nullptr) {
+    if (pInventories == nullptr)
+    {
         CPLDebug("GRIB", "Reading inventories from GRIB file %s", poOpenInfo->pszFilename);
         // Contains an GRIB2 message inventory of the file.
         pInventories = cpl::make_unique<InventoryWrapperGrib>(fp);
