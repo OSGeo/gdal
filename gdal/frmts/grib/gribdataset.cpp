@@ -46,7 +46,6 @@
 #include <set>
 #include <string>
 #include <vector>
-#include <memory>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -166,7 +165,7 @@ void GRIBRasterBand::FindMetaData()
             return;
     bLoadedMetadata = true;
 
-    const char *pszGribNormalizeUnits = 
+    const char *pszGribNormalizeUnits =
         CPLGetConfigOption("GRIB_NORMALIZE_UNITS", "YES");
     bool bMetricUnits = CPLTestBool(pszGribNormalizeUnits);
 
@@ -1118,12 +1117,12 @@ class InventoryWrapperSidecar : public gdal::grib::InventoryWrapper
 {
   public:
     explicit InventoryWrapperSidecar(VSILFILE *fp) : gdal::grib::InventoryWrapper()
-    { 
+    {
         VSIFSeekL(fp, 0, SEEK_END);
-        size_t length = VSIFTellL(fp);
+        vsi_l_offset length = VSIFTellL(fp);
         char *pszSidecar = new char[length + 1];
         VSIFSeekL(fp, 0, SEEK_SET);
-        if (VSIFReadL(pszSidecar, length, 1, fp) != 1)
+        if (VSIFReadL(pszSidecar, static_cast<size_t>(length), 1, fp) != 1)
         {
             result_ = -1;
             return;
@@ -1299,7 +1298,7 @@ std::unique_ptr<gdal::grib::InventoryWrapper> GRIBDataset::Inventory(VSILFILE *f
     if ((fpSideCar = VSIFOpenL(sSideCarFilename, "rb")) != nullptr) {
         CPLDebug("GRIB", "Reading inventories from sidecar file %s", sSideCarFilename.c_str());
         // Contains an GRIB2 message inventory of the file.
-        pInventories = std::make_unique<InventoryWrapperSidecar>(fpSideCar);
+        pInventories = cpl::make_unique<InventoryWrapperSidecar>(fpSideCar);
         if (pInventories->result() <= 0 || pInventories->length() == 0)
             pInventories = nullptr;
         VSIFCloseL(fpSideCar);
@@ -1309,7 +1308,7 @@ std::unique_ptr<gdal::grib::InventoryWrapper> GRIBDataset::Inventory(VSILFILE *f
     if (pInventories == nullptr) {
         CPLDebug("GRIB", "Reading inventories from GRIB file %s", poOpenInfo->pszFilename);
         // Contains an GRIB2 message inventory of the file.
-        pInventories = std::make_unique<InventoryWrapperGrib>(fp);
+        pInventories = cpl::make_unique<InventoryWrapperGrib>(fp);
     }
 
     return pInventories;
@@ -2537,7 +2536,7 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
         // GRIB2 files have longitudes in the [0-360] range
         // Shift them to the traditional [-180,180] longitude range
         // See https://github.com/OSGeo/gdal/issues/4524
-        if ((rMinX + rPixelSizeX >= 180 || rMaxX - rPixelSizeX >= 180) && 
+        if ((rMinX + rPixelSizeX >= 180 || rMaxX - rPixelSizeX >= 180) &&
             CPLTestBool(CPLGetConfigOption("GRIB_ADJUST_LONGITUDE_RANGE", "YES")) )
         {
             if (rPixelSizeX * nRasterXSize > 360)
