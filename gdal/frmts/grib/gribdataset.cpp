@@ -1210,7 +1210,7 @@ class InventoryWrapperSidecar : public gdal::grib::InventoryWrapper
 
         err_sidecar:
             CPLDebug("GRIB",
-                     "Failed parsing sidecar entry %ld '%s', "
+                     "Failed parsing sidecar entry '%s', "
                      "falling back to constructing an inventory",
                      aosMsgs[i]);
             inv_len_ = static_cast<unsigned>(i);
