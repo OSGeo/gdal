@@ -1131,13 +1131,13 @@ class InventoryWrapperSidecar : public gdal::grib::InventoryWrapper
         VSIFSeekL(fp, 0, SEEK_END);
         size_t length = static_cast<size_t>(VSIFTellL(fp));
         if (length > 4*1024*1024) return;
-        std::vector<char> psSidecar(static_cast<size_t>(length));
+        std::vector<char> achSidecar(length + 1);
         VSIFSeekL(fp, 0, SEEK_SET);
-        if (VSIFReadL(&psSidecar[0], length, 1, fp) != 1) return;
-        psSidecar[length] = 0;
+        if (VSIFReadL(&achSidecar[0], length, 1, fp) != 1) return;
+        achSidecar[length] = 0;
 
         CPLStringList aosMsgs(CSLTokenizeString2(
-            &psSidecar[0], "\n", CSLT_PRESERVEQUOTES | CSLT_STRIPLEADSPACES));
+            &achSidecar[0], "\n", CSLT_PRESERVEQUOTES | CSLT_STRIPLEADSPACES));
         inv_len_ = aosMsgs.size();
         inv_ = new inventoryType[inv_len_];
 
@@ -1157,14 +1157,16 @@ class InventoryWrapperSidecar : public gdal::grib::InventoryWrapper
             // Only GRIBv2 has sidecars
             inv_[i].GribVersion = (signed char) 2;
             char *endptr;
-            inv_[i].msgNum = strtol(aosNum[0], &endptr, 10);
+            inv_[i].msgNum =
+                static_cast<unsigned short>(strtol(aosNum[0], &endptr, 10));
             if (*endptr != 0) goto err_sidecar;
 
             if (aosNum.size() < 2)
                 inv_[i].subgNum = 0;
             else
             {
-                inv_[i].subgNum = strtol(aosNum[1], &endptr, 10);
+                inv_[i].subgNum =
+                    static_cast<unsigned short>(strtol(aosNum[1], &endptr, 10));
                 if (*endptr != 0) goto err_sidecar;
             }
 
@@ -1187,7 +1189,7 @@ class InventoryWrapperSidecar : public gdal::grib::InventoryWrapper
                      "Failed parsing sidecar entry '%s', "
                      "falling back to constructing an inventory",
                      aosMsgs[i]);
-            inv_len_ = i;
+            inv_len_ = static_cast<unsigned>(i);
             return;
         }
 
