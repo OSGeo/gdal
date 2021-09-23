@@ -175,15 +175,15 @@ void GRIBRasterBand::FindMetaData()
         CPLGetConfigOption("GRIB_NORMALIZE_UNITS", "YES");
     bool bMetricUnits = CPLTestBool(pszGribNormalizeUnits);
 
-    GDALMajorObject::SetMetadataItem("GRIB_UNIT",
+    GDALRasterBand::SetMetadataItem("GRIB_UNIT",
                     ConvertUnitInText(bMetricUnits, m_Grib_MetaData->unitName));
-    GDALMajorObject::SetMetadataItem("GRIB_COMMENT",
+    GDALRasterBand::SetMetadataItem("GRIB_COMMENT",
                     ConvertUnitInText(bMetricUnits, m_Grib_MetaData->comment));
-    GDALMajorObject::SetMetadataItem("GRIB_ELEMENT", m_Grib_MetaData->element);
-    GDALMajorObject::SetMetadataItem("GRIB_SHORT_NAME", m_Grib_MetaData->shortFstLevel);
-    GDALMajorObject::SetMetadataItem("GRIB_REF_TIME", m_Grib_MetaData->refTime);
-    GDALMajorObject::SetMetadataItem("GRIB_VALID_TIME", m_Grib_MetaData->validTime);
-    GDALMajorObject::SetMetadataItem("GRIB_FORECAST_SECONDS",
+    GDALRasterBand::SetMetadataItem("GRIB_ELEMENT", m_Grib_MetaData->element);
+    GDALRasterBand::SetMetadataItem("GRIB_SHORT_NAME", m_Grib_MetaData->shortFstLevel);
+    GDALRasterBand::SetMetadataItem("GRIB_REF_TIME", m_Grib_MetaData->refTime);
+    GDALRasterBand::SetMetadataItem("GRIB_VALID_TIME", m_Grib_MetaData->validTime);
+    GDALRasterBand::SetMetadataItem("GRIB_FORECAST_SECONDS",
                     CPLString().Printf("%d sec", m_Grib_MetaData->deltTime));
 }
 
@@ -266,7 +266,7 @@ void GRIBRasterBand::FindPDSTemplate()
             CPLString(table00[nDiscipline]).replaceAll(' ','_') + ")";
     }
 
-    SetMetadataItem("GRIB_DISCIPLINE", osDiscipline.c_str());
+    GDALRasterBand::SetMetadataItem("GRIB_DISCIPLINE", osDiscipline.c_str());
 
     GByte abyHead[5] = { 0 };
 
@@ -395,7 +395,7 @@ void GRIBRasterBand::FindPDSTemplate()
                     CPLString(table14[nType]).replaceAll(' ','_') + ")";
             }
 
-            SetMetadataItem("GRIB_IDS", osIDS);
+            GDALRasterBand::SetMetadataItem("GRIB_IDS", osIDS);
 
             CPLFree(pabyBody);
         }
@@ -498,7 +498,8 @@ void GRIBRasterBand::FindPDSTemplate()
             memcpy(&nPDTN, pabyBody + 8-1, 2);
             CPL_MSBPTR16(&nPDTN);
 
-            SetMetadataItem("GRIB_PDS_PDTN", CPLString().Printf("%d", nPDTN));
+            GDALRasterBand::SetMetadataItem("GRIB_PDS_PDTN",
+                                             CPLString().Printf("%d", nPDTN));
             m_nPDTN = nPDTN;
 
             CPLString osOctet;
@@ -516,7 +517,8 @@ void GRIBRasterBand::FindPDSTemplate()
                 osOctet += szByte;
             }
 
-            SetMetadataItem("GRIB_PDS_TEMPLATE_NUMBERS", osOctet);
+            GDALRasterBand::SetMetadataItem("GRIB_PDS_TEMPLATE_NUMBERS",
+                                             osOctet);
 
             g2int iofst = 0;
             g2int pdsnum = 0;
@@ -566,7 +568,8 @@ void GRIBRasterBand::FindPDSTemplate()
                                 osValues += CPLSPrintf("%d", pdstempl[i]);
                             }
                         }
-                        SetMetadataItem("GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES", osValues);
+                        GDALRasterBand::SetMetadataItem(
+                          "GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES", osValues);
                     }
                     else
                     {
