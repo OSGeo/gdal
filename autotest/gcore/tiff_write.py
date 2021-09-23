@@ -4181,6 +4181,45 @@ def test_tiff_write_117():
         'if GDAL is configured with external libtiff 4.x, it can fail if it is older than 4.0.3. With internal libtiff, should not fail'
 
 ###############################################################################
+# Test bugfix for ticket gh #4538 (rewriting of a deflate compressed tile, libtiff bug)
+
+
+def test_tiff_write_rewrite_in_place_issue_gh_4538():
+    # This fail with libtiff <= 4.3.0
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['LIBTIFF'] != 'INTERNAL':
+        pytest.skip()
+
+    # Defeats the logic that fixed test_tiff_write_117
+
+    import array
+    filename = '/vsimem/tmp.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(filename, 144*2, 128, 1,
+                                              options = ['TILED=YES',
+                                                         'COMPRESS=PACKBITS',
+                                                         'BLOCKXSIZE=144',
+                                                         'BLOCKYSIZE=128'])
+    x = ((144*128)//2) - 645
+    ds.GetRasterBand(1).WriteRaster(0, 0, 144, 128,
+                                    b'\x00' * x  + array.array('B', [i % 255 for i in range(144*128-x)]))
+    block1_data = b'\x00' * (x + 8) + array.array('B', [i % 255 for i in range(144*128-(x+8))])
+    ds.GetRasterBand(1).WriteRaster(144, 0, 144, 128, block1_data)
+    ds = None
+
+    ds = gdal.Open(filename, gdal.GA_Update)
+    ds.GetRasterBand(1).ReadRaster(144, 0, 144, 128)
+    block0_data = array.array('B', [i % 255 for i in range(144*128)])
+    ds.GetRasterBand(1).WriteRaster(0, 0, 144, 128, block0_data)
+    ds = None
+
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).ReadRaster(0, 0, 144, 128) == block0_data
+    assert ds.GetRasterBand(1).ReadRaster(144, 0, 144, 128) == block1_data
+    ds = None
+
+    gdal.Unlink(filename)
+
+###############################################################################
 # Test bugfix for ticket #4816
 
 
