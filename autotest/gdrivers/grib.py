@@ -1461,6 +1461,8 @@ def test_grib_grib2_sidecar():
     ds = gdal.Open('data/grib/gfs.t06z.pgrb2.10p0.f000.grib2')
     assert ds.RasterCount == 6
     assert ds.GetRasterBand(6).GetDescription() == 'GRLE:1 hybrid level:anl', 'Description does not match, sidecar index is probably ignored'
+    assert ds.GetRasterBand(2).GetMetadataItem('GRIB_ELEMENT') == 'CLWMR'
+    assert ds.GetRasterBand(3).GetMetadataItem('GRIB_ELEMENT') == 'ICMR'
     assert ds.GetRasterBand(6).GetMetadataItem('GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES') == '1 32 2 0 81 0 0 1 0 105 0 1 255 0 0'
     assert ds.GetRasterBand(6).GetMetadataItem('GRIB_REF_TIME') == '202109190600'
     assert ds.GetRasterBand(6).GetMetadataItem('GRIB_VALID_TIME') == '202109190600'

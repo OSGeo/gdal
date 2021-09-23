@@ -164,7 +164,7 @@ void GRIBRasterBand::FindMetaData()
     {
         grib_MetaData *metaData;
         GRIBDataset *poGDS = static_cast<GRIBDataset *>(poDS);
-        GRIBRasterBand::ReadGribData(poGDS->fp, 0, subgNum, nullptr, &metaData);
+        GRIBRasterBand::ReadGribData(poGDS->fp, start, subgNum, nullptr, &metaData);
         if (metaData == nullptr)
             return;
         m_Grib_MetaData = metaData;
