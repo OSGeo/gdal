@@ -1181,11 +1181,7 @@ class InventoryWrapperSidecar : public gdal::grib::InventoryWrapper
             aosNum = CPLStringList(CSLTokenizeString2(aosTokens[0], ".", 0));
             if (aosNum.size() < 1) goto err_sidecar;
 
-            // Normally only a GRIBv2 should have a sidecar, but it can contain GRIB1 bands
             // FindMetaData will retrieve the correct version number
-            inv_[i].GribVersion = (signed char) 2;
-            char *endptr;
-            inv_[i].msgNum =
                 static_cast<unsigned short>(strtol(aosNum[0], &endptr, 10));
             if (*endptr != 0) goto err_sidecar;
 
@@ -1214,7 +1210,7 @@ class InventoryWrapperSidecar : public gdal::grib::InventoryWrapper
 
         err_sidecar:
             CPLDebug("GRIB",
-                     "Failed parsing sidecar entry '%s', "
+                     "Failed parsing sidecar entry %ld '%s', "
                      "falling back to constructing an inventory",
                      aosMsgs[i]);
             inv_len_ = static_cast<unsigned>(i);
