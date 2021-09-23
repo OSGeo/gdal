@@ -1131,13 +1131,13 @@ class InventoryWrapperSidecar : public gdal::grib::InventoryWrapper
         VSIFSeekL(fp, 0, SEEK_END);
         size_t length = static_cast<size_t>(VSIFTellL(fp));
         if (length > 4*1024*1024) return;
-        std::vector<char> achSidecar(length + 1);
+        std::string psSidecar;
+        psSidecar.resize(length);
         VSIFSeekL(fp, 0, SEEK_SET);
-        if (VSIFReadL(&achSidecar[0], length, 1, fp) != 1) return;
-        achSidecar[length] = 0;
+        if (VSIFReadL(&psSidecar[0], length, 1, fp) != 1) return;
 
         CPLStringList aosMsgs(CSLTokenizeString2(
-            &achSidecar[0], "\n", CSLT_PRESERVEQUOTES | CSLT_STRIPLEADSPACES));
+            psSidecar.c_str(), "\n", CSLT_PRESERVEQUOTES | CSLT_STRIPLEADSPACES));
         inv_len_ = aosMsgs.size();
         inv_ = new inventoryType[inv_len_];
 
