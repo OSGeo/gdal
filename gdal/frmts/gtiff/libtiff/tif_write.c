@@ -124,7 +124,7 @@ TIFFWriteScanline(TIFF* tif, void* buf, uint32_t row, uint16_t sample)
 				return (-1);
 			tif->tif_flags |= TIFF_CODERSETUP;
 		}
-        
+
 		tif->tif_rawcc = 0;
 		tif->tif_rawcp = tif->tif_rawdata;
 
@@ -235,7 +235,7 @@ TIFFWriteEncodedStrip(TIFF* tif, uint32_t strip, void* data, tmsize_t cc)
 		if (!TIFFGrowStrips(tif, 1, module))
 			return ((tmsize_t) -1);
 		td->td_stripsperimage =
-		    TIFFhowmany_32(td->td_imagelength, td->td_rowsperstrip);  
+		    TIFFhowmany_32(td->td_imagelength, td->td_rowsperstrip);
 	}
 	/*
 	 * Handle delayed allocation of data buffer.  This
@@ -421,7 +421,7 @@ TIFFWriteEncodedTile(TIFF* tif, uint32_t tile, void* data, tmsize_t cc)
 	tif->tif_rawcc = 0;
 	tif->tif_rawcp = tif->tif_rawdata;
 
-	/* 
+	/*
 	 * Compute tiles per row & per column to compute
 	 * current row and column
 	 */
@@ -583,7 +583,7 @@ TIFFWriteCheck(TIFF* tif, int tiles, const char* module)
 	}
 
         _TIFFFillStriles( tif );
-        
+
 	/*
 	 * On the first write verify all the required information
 	 * has been setup and initialize any data structures that
@@ -600,7 +600,7 @@ TIFFWriteCheck(TIFF* tif, int tiles, const char* module)
 		return (0);
 	}
 	if (tif->tif_dir.td_samplesperpixel == 1) {
-		/* 
+		/*
 		 * Planarconfiguration is irrelevant in case of single band
 		 * images and need not be included. We will set it anyway,
 		 * because this field is used in other parts of library even
@@ -741,18 +741,21 @@ TIFFAppendToStrip(TIFF* tif, uint32_t strip, uint8_t* data, tmsize_t cc)
 	static const char module[] = "TIFFAppendToStrip";
 	TIFFDirectory *td = &tif->tif_dir;
 	uint64_t m;
-        int64_t old_byte_count = -1;
+    int64_t old_byte_count = -1;
 
-	if (td->td_stripoffset_p[strip] == 0 || tif->tif_curoff == 0) {
+    if( tif->tif_curoff == 0 )
+        tif->tif_lastvalidoff = 0;
+
+    if (td->td_stripoffset_p[strip] == 0 || tif->tif_curoff == 0) {
             assert(td->td_nstrips > 0);
 
-            if( td->td_stripbytecount_p[strip] != 0 
-                && td->td_stripoffset_p[strip] != 0 
+            if( td->td_stripbytecount_p[strip] != 0
+                && td->td_stripoffset_p[strip] != 0
                 && td->td_stripbytecount_p[strip] >= (uint64_t) cc )
             {
-                /* 
+                /*
                  * There is already tile data on disk, and the new tile
-                 * data we have will fit in the same space.  The only 
+                 * data we have will fit in the same space.  The only
                  * aspect of this that is risky is that there could be
                  * more data to append to this strip before we are done
                  * depending on how we are getting called.
@@ -763,11 +766,13 @@ TIFFAppendToStrip(TIFF* tif, uint32_t strip, uint8_t* data, tmsize_t cc)
                                  (unsigned long)tif->tif_row);
                     return (0);
                 }
+
+                tif->tif_lastvalidoff = td->td_stripoffset_p[strip] + td->td_stripbytecount_p[strip];
             }
             else
             {
-                /* 
-                 * Seek to end of file, and set that as our location to 
+                /*
+                 * Seek to end of file, and set that as our location to
                  * write this strip.
                  */
                 td->td_stripoffset_p[strip] = TIFFSeekFile(tif, 0, SEEK_END);
@@ -791,6 +796,83 @@ TIFFAppendToStrip(TIFF* tif, uint32_t strip, uint8_t* data, tmsize_t cc)
 		TIFFErrorExt(tif->tif_clientdata, module, "Maximum TIFF file size exceeded");
 		return (0);
 	}
+
+    if( tif->tif_lastvalidoff != 0 && m > tif->tif_lastvalidoff )
+    {
+        /* Ouch: we have detected that we are rewriting in place a strip/tile */
+        /* with several calls to TIFFAppendToStrip(). The first call was with */
+        /* a size smaller than the previous size of the strip/tile, so we */
+        /* opted to rewrite in place, but a following call causes us to go */
+        /* outsize of the strip/tile area, so we have to finally go for a */
+        /* append-at-end-of-file strategy, and start by moving what we already */
+        /* wrote. */
+        tmsize_t tempSize;
+        void* temp;
+        uint64_t offsetRead;
+        uint64_t offsetWrite;
+        uint64_t toCopy = td->td_stripbytecount_p[strip];
+
+        if( toCopy < 1024 * 1024 )
+            tempSize = (tmsize_t)toCopy;
+        else
+            tempSize = 1024 * 1024;
+
+        offsetRead = td->td_stripoffset_p[strip];
+        offsetWrite = TIFFSeekFile(tif, 0, SEEK_END);
+
+        m = offsetWrite + toCopy + cc;
+        if (!(tif->tif_flags&TIFF_BIGTIFF) && m != (uint32_t)m)
+        {
+            TIFFErrorExt(tif->tif_clientdata, module, "Maximum TIFF file size exceeded");
+            return (0);
+        }
+
+        temp = _TIFFmalloc(tempSize);
+        if (temp == NULL) {
+            TIFFErrorExt(tif->tif_clientdata, module, "No space for output buffer");
+            return (0);
+        }
+
+        tif->tif_flags |= TIFF_DIRTYSTRIP;
+
+        td->td_stripoffset_p[strip] = offsetWrite;
+        td->td_stripbytecount_p[strip] = 0;
+
+        /* Move data written by previous calls to us at end of file */
+        while( toCopy > 0 )
+        {
+            if( !SeekOK(tif, offsetRead) ) {
+                TIFFErrorExt(tif->tif_clientdata, module, "Seek error");
+                _TIFFfree(temp);
+                return (0);
+            }
+            if( !ReadOK(tif, temp, tempSize) ) {
+                TIFFErrorExt(tif->tif_clientdata, module, "Cannot read");
+                _TIFFfree(temp);
+                return (0);
+            }
+            if (!SeekOK(tif, offsetWrite) ) {
+                TIFFErrorExt(tif->tif_clientdata, module, "Seek error");
+                _TIFFfree(temp);
+                return (0);
+            }
+            if( !WriteOK(tif, temp, tempSize) ) {
+                TIFFErrorExt(tif->tif_clientdata, module, "Cannot write");
+                _TIFFfree(temp);
+                return (0);
+            }
+            offsetRead += tempSize;
+            offsetWrite += tempSize;
+            td->td_stripbytecount_p[strip] += tempSize;
+            toCopy -= tempSize;
+        }
+        _TIFFfree(temp);
+
+        /* Append the data of this call */
+        offsetWrite += cc;
+        m = offsetWrite;
+    }
+
 	if (!WriteOK(tif, data, cc)) {
 		TIFFErrorExt(tif->tif_clientdata, module, "Write error at scanline %lu",
 		    (unsigned long) tif->tif_row);
@@ -801,7 +883,7 @@ TIFFAppendToStrip(TIFF* tif, uint32_t strip, uint8_t* data, tmsize_t cc)
 
         if((int64_t) td->td_stripbytecount_p[strip] != old_byte_count )
             tif->tif_flags |= TIFF_DIRTYSTRIP;
-            
+
 	return (1);
 }
 
