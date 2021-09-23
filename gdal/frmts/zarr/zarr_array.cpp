@@ -696,15 +696,33 @@ bool ZarrArray::AllocateWorkingBuffers() const
 
     m_bAllocateWorkingBuffersDone = true;
 
-    GUIntBig nSizeNeeded = m_nTileSize;
+    size_t nSizeNeeded = m_nTileSize;
     if( m_bFortranOrder || m_oFiltersArray.Size() != 0 )
+    {
+        if( nSizeNeeded > std::numeric_limits<size_t>::max() / 2 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Too large chunk size");
+            return false;
+        }
         nSizeNeeded *= 2;
+    }
     if( NeedDecodedBuffer() )
     {
         size_t nDecodedBufferSize = m_oType.GetSize();
         for( const auto& nBlockSize: m_anBlockSize )
         {
+            if( nDecodedBufferSize > std::numeric_limits<size_t>::max() /
+                                        static_cast<size_t>(nBlockSize) )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Too large chunk size");
+                return false;
+            }
             nDecodedBufferSize *= static_cast<size_t>(nBlockSize);
+        }
+        if( nSizeNeeded > std::numeric_limits<size_t>::max() - nDecodedBufferSize )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Too large chunk size");
+            return false;
         }
         nSizeNeeded += nDecodedBufferSize;
     }
@@ -717,7 +735,7 @@ bool ZarrArray::AllocateWorkingBuffers() const
                  "Zarr tile allocation would require " CPL_FRMT_GUIB " bytes. "
                  "By default the driver limits to 1 GB. To allow that memory "
                  "allocation, set the ZARR_ALLOW_BIG_TILE_SIZE configuration "
-                 "option to YES.", nSizeNeeded);
+                 "option to YES.", static_cast<GUIntBig>(nSizeNeeded));
         return false;
     }
 
