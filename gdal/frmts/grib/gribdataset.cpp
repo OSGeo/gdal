@@ -161,8 +161,14 @@ void GRIBRasterBand::FindMetaData()
 {
     if (bLoadedMetadata) return;
     if (m_Grib_MetaData == nullptr)
-        if (LoadData() != CE_None)
+    {
+        grib_MetaData *metaData;
+        GRIBDataset *poGDS = static_cast<GRIBDataset *>(poDS);
+        GRIBRasterBand::ReadGribData(poGDS->fp, 0, subgNum, nullptr, &metaData);
+        if (metaData == nullptr)
             return;
+        m_Grib_MetaData = metaData;
+    }
     bLoadedMetadata = true;
 
     const char *pszGribNormalizeUnits =
@@ -1390,7 +1396,8 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
     // simply so that the same portion of the file is not read twice.
 
     auto pInventories = Inventory(poDS->fp, poOpenInfo);
-    if (pInventories->result() <= 0) {
+    if (pInventories->result() <= 0)
+    {
         char *errMsg = errSprintf(nullptr);
         if (errMsg != nullptr)
             CPLDebug("GRIB", "%s", errMsg);
