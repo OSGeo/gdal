@@ -1467,7 +1467,11 @@ def test_grib_grib2_sidecar():
     with gdaltest.config_option('GDAL_PAM_ENABLED', 'OFF'):
         ds = gdal.Open('data/grib/gfs.t06z.pgrb2.10p0.f000.grib2')
         assert ds.RasterCount == 6
-        assert ds.GetRasterBand(6).GetDescription() == '[GRLE] : 1 hybrid level'
+        assert ds.GetRasterBand(6).GetDescription() == 'GRLE:1 hybrid level:anl', 'Description does not match, sidecar index is probably ignored'
         assert ds.GetRasterBand(6).GetMetadataItem('GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES') == '1 32 2 0 81 0 0 1 0 105 0 1 255 0 0'
         assert ds.GetRasterBand(6).GetMetadataItem('GRIB_REF_TIME') == '202109190600'
         assert ds.GetRasterBand(6).GetMetadataItem('GRIB_VALID_TIME') == '202109190600'
+
+        ds = gdal.OpenEx('data/grib/gfs.t06z.pgrb2.10p0.f000.grib2', gdal.GA_ReadOnly, open_options=['USE_IDX=NO'])
+        assert ds.RasterCount == 6
+        assert ds.GetRasterBand(6).GetDescription() == '1[-] HYBL="Hybrid level"', 'Description does not match, sidecar index is probably loaded'

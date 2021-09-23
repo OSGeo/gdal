@@ -121,7 +121,7 @@ class GRIBDataset final: public GDALPamDataset
     // rows after nSplitAndSwapColumn are placed at the beginning
     // while rows before are placed at the end
     int nSplitAndSwapColumn;
-    
+
     GRIBRasterBand *poLastUsedBand;
     std::shared_ptr<GDALGroup> m_poRootGroup{};
     std::shared_ptr<OGRSpatialReference> m_poSRS{};
@@ -201,7 +201,7 @@ namespace grib {
 class InventoryWrapper
 {
   public:
-    InventoryWrapper() : inv_(nullptr), inv_len_(0), num_messages_(0), result_(0) {}
+    InventoryWrapper() {}
     virtual ~InventoryWrapper() {}
 
     // Modifying the contents pointed to by the return is allowed.
@@ -215,10 +215,10 @@ class InventoryWrapper
     int result() const { return result_; }
 
   protected:
-    inventoryType *inv_;
-    uInt4 inv_len_;
-    int num_messages_;
-    int result_;
+    inventoryType *inv_ = nullptr;
+    uInt4 inv_len_ = 0;
+    int num_messages_ = 0;
+    int result_ = 0;
 };
 
 } // namespace grib

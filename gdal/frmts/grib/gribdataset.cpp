@@ -1124,84 +1124,70 @@ class InventoryWrapperSidecar : public gdal::grib::InventoryWrapper
   public:
     explicit InventoryWrapperSidecar(VSILFILE *fp) : gdal::grib::InventoryWrapper()
     {
+        result_ = -1;
         VSIFSeekL(fp, 0, SEEK_END);
         size_t length = static_cast<size_t>(VSIFTellL(fp));
-        char *pszSidecar = new char[length + 1];
+        if (length > 4*1024*1024) return;
+        std::vector<char> psSidecar(static_cast<size_t>(length));
         VSIFSeekL(fp, 0, SEEK_SET);
-        if (VSIFReadL(pszSidecar, length, 1, fp) != 1)
-        {
-            result_ = -1;
-            return;
-        }
-        pszSidecar[length] = 0;
+        if (VSIFReadL(&psSidecar[0], length, 1, fp) != 1) return;
+        psSidecar[length] = 0;
 
-        char **papszMsgs = CSLTokenizeString2(pszSidecar, "\n", CSLT_PRESERVEQUOTES);
-        for (inv_len_ = 0; papszMsgs != nullptr && papszMsgs[inv_len_] != nullptr; ++inv_len_);
+        CPLStringList aosMsgs(CSLTokenizeString2(
+            &psSidecar[0], "\n", CSLT_PRESERVEQUOTES | CSLT_STRIPLEADSPACES));
+        inv_len_ = aosMsgs.size();
         inv_ = new inventoryType[inv_len_];
 
-        for (int i = 0; papszMsgs != nullptr && papszMsgs[i] != nullptr; ++i)
+        for (size_t i = 0; i < inv_len_; ++i)
         {
-            char **papszTokens = CSLTokenizeString2(papszMsgs[i], ":",
-                CSLT_PRESERVEQUOTES | CSLT_ALLOWEMPTYTOKENS);
-            char **papszNum;
-            if (papszTokens[0] == nullptr || *papszTokens[0] == 0)
-                goto err_sidecar_1;
-            if (papszTokens[1] == nullptr || *papszTokens[1] == 0)
-                goto err_sidecar_1;
+            // We are parsing "msgNum[.subgNum]:start:dontcare:name1:name2:name3"
+            // For NOMADS: "msgNum[.subgNum]:start:reftime:var:level:time"
+            CPLStringList aosTokens(CSLTokenizeString2(aosMsgs[i], ":",
+                CSLT_PRESERVEQUOTES | CSLT_ALLOWEMPTYTOKENS));
+            CPLStringList aosNum;
 
-            papszNum = CSLTokenizeString2(papszTokens[0], ".", 0);
-            if (papszNum[0] == nullptr || *papszNum[0] == 0)
-                goto err_sidecar_2;
+            if (aosTokens.size() < 5) goto err_sidecar;
+
+            aosNum = CPLStringList(CSLTokenizeString2(aosTokens[0], ".", 0));
+            if (aosNum.size() < 1) goto err_sidecar;
 
             // Only GRIBv2 has sidecars
             inv_[i].GribVersion = (signed char) 2;
-            // This is all the information we need
             char *endptr;
-            inv_[i].msgNum = strtol(papszNum[0], &endptr, 10);
-            if (*endptr != 0) goto err_sidecar_2;
+            inv_[i].msgNum = strtol(aosNum[0], &endptr, 10);
+            if (*endptr != 0) goto err_sidecar;
 
-            if (papszNum[1] == nullptr || *papszNum[1] == 0)
+            if (aosNum.size() < 2)
                 inv_[i].subgNum = 0;
             else
             {
-                inv_[i].subgNum = strtol(papszNum[1], &endptr, 10);
-                if (*endptr != 0) goto err_sidecar_2;
+                inv_[i].subgNum = strtol(aosNum[1], &endptr, 10);
+                if (*endptr != 0) goto err_sidecar;
             }
 
-            inv_[i].start = strtoll(papszTokens[1], &endptr, 10);
-            if (*endptr != 0) goto err_sidecar_2;
+            inv_[i].start = strtoll(aosTokens[1], &endptr, 10);
+            if (*endptr != 0) goto err_sidecar;
 
             inv_[i].unitName = nullptr;
             inv_[i].comment = nullptr;
             inv_[i].element = nullptr;
             inv_[i].shortFstLevel = nullptr;
-            if (papszTokens[2] && papszTokens[3] && papszTokens[4])
-                inv_[i].longFstLevel = VSIStrdup(CPLSPrintf("[%s] : %s",
-                        papszTokens[3], papszTokens[4]));
-            else
-                inv_[i].longFstLevel = VSIStrdup("");
+            // This is going into the description field ->
+            // the only available before loading the metadata
+            inv_[i].longFstLevel = VSIStrdup(CPLSPrintf("%s:%s:%s",
+                    aosTokens[3], aosTokens[4], aosTokens[5]));
 
-            CSLDestroy(papszNum);
-            CSLDestroy(papszTokens);
             continue;
 
-        err_sidecar_2:
-            CSLDestroy(papszNum);
-        err_sidecar_1:
+        err_sidecar:
             CPLDebug("GRIB",
-                     "Failed parsing sidecar entry '%s', "
+                     "Failed parsing sidecar entry %ld '%s', "
                      "falling back to constructing an inventory",
-                     papszMsgs[i]);
-            CSLDestroy(papszTokens);
-            CSLDestroy(papszMsgs);
-            delete[] pszSidecar;
-            result_ = -1;
+                     i, aosMsgs[i]);
             inv_len_ = i;
             return;
         }
 
-        CSLDestroy(papszMsgs);
-        delete[] pszSidecar;
         result_ = inv_len_;
     }
 
@@ -1301,14 +1287,18 @@ std::unique_ptr<gdal::grib::InventoryWrapper> GRIBDataset::Inventory(VSILFILE *f
     VSIFSeekL(fp, 0, SEEK_SET);
     CPLString sSideCarFilename = CPLString(poOpenInfo->pszFilename) + ".idx";
     VSILFILE *fpSideCar = nullptr;
-    if ((fpSideCar = VSIFOpenL(sSideCarFilename, "rb")) != nullptr) {
+    if (CPLTestBool(
+          CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "USE_IDX", "YES")) &&
+          ((fpSideCar = VSIFOpenL(sSideCarFilename, "rb")) != nullptr))
+    {
         CPLDebug("GRIB", "Reading inventories from sidecar file %s", sSideCarFilename.c_str());
         // Contains an GRIB2 message inventory of the file.
         pInventories = cpl::make_unique<InventoryWrapperSidecar>(fpSideCar);
         if (pInventories->result() <= 0 || pInventories->length() == 0)
             pInventories = nullptr;
         VSIFCloseL(fpSideCar);
-    } else
+    }
+    else
         CPLDebug("GRIB", "Failed opening sidecar %s", sSideCarFilename.c_str());
 
     if (pInventories == nullptr) {
