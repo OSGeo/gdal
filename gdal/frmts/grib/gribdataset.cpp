@@ -46,6 +46,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <memory>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
