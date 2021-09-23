@@ -1125,10 +1125,10 @@ class InventoryWrapperSidecar : public gdal::grib::InventoryWrapper
     explicit InventoryWrapperSidecar(VSILFILE *fp) : gdal::grib::InventoryWrapper()
     {
         VSIFSeekL(fp, 0, SEEK_END);
-        vsi_l_offset length = VSIFTellL(fp);
+        size_t length = static_cast<size_t>(VSIFTellL(fp));
         char *pszSidecar = new char[length + 1];
         VSIFSeekL(fp, 0, SEEK_SET);
-        if (VSIFReadL(pszSidecar, static_cast<size_t>(length), 1, fp) != 1)
+        if (VSIFReadL(pszSidecar, length, 1, fp) != 1)
         {
             result_ = -1;
             return;
