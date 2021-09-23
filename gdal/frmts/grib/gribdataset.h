@@ -198,7 +198,8 @@ namespace gdal {
 namespace grib {
 
 // Thin layer to manage allocation and deallocation.
-class InventoryWrapper {
+class InventoryWrapper
+{
   public:
     InventoryWrapper() : inv_(nullptr), inv_len_(0), num_messages_(0), result_(0) {}
     virtual ~InventoryWrapper() {}

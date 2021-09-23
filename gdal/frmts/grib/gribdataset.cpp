@@ -46,6 +46,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <memory>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -1119,7 +1120,7 @@ class InventoryWrapperSidecar : public gdal::grib::InventoryWrapper
     explicit InventoryWrapperSidecar(VSILFILE *fp) : gdal::grib::InventoryWrapper()
     { 
         VSIFSeekL(fp, 0, SEEK_END);
-        vsi_l_offset length = VSIFTellL(fp);
+        size_t length = VSIFTellL(fp);
         char *pszSidecar = new char[length + 1];
         VSIFSeekL(fp, 0, SEEK_SET);
         if (VSIFReadL(pszSidecar, length, 1, fp) != 1)
@@ -1130,10 +1131,10 @@ class InventoryWrapperSidecar : public gdal::grib::InventoryWrapper
         pszSidecar[length] = 0;
 
         char **papszMsgs = CSLTokenizeString2(pszSidecar, "\n", CSLT_PRESERVEQUOTES);
-        for (inv_len_ = 0; papszMsgs != NULL && papszMsgs[inv_len_] != NULL; ++inv_len_);
+        for (inv_len_ = 0; papszMsgs != nullptr && papszMsgs[inv_len_] != nullptr; ++inv_len_);
         inv_ = new inventoryType[inv_len_];
 
-        for (int i = 0; papszMsgs != NULL && papszMsgs[i] != NULL; ++i)
+        for (int i = 0; papszMsgs != nullptr && papszMsgs[i] != nullptr; ++i)
         {
             char **papszTokens = CSLTokenizeString2(papszMsgs[i], ":",
                 CSLT_PRESERVEQUOTES | CSLT_ALLOWEMPTYTOKENS);
