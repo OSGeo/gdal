@@ -1149,7 +1149,7 @@ class InventoryWrapperSidecar : public gdal::grib::InventoryWrapper
                 CSLT_PRESERVEQUOTES | CSLT_ALLOWEMPTYTOKENS));
             CPLStringList aosNum;
 
-            if (aosTokens.size() < 5) goto err_sidecar;
+            if (aosTokens.size() < 6) goto err_sidecar;
 
             aosNum = CPLStringList(CSLTokenizeString2(aosTokens[0], ".", 0));
             if (aosNum.size() < 1) goto err_sidecar;
