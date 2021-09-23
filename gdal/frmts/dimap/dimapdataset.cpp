@@ -1651,6 +1651,8 @@ void DIMAPDataset::SetMetadataFromXML(
         psDoc = CPLGetXMLNode( psProductIn, "=PHR_DIMAP_Document" );
     }
 
+    bool bWarnedDiscarding = false;
+
     for( int iTrItem = 0;
          apszMetadataTranslation[iTrItem] != nullptr;
          iTrItem += 2 )
@@ -1682,7 +1684,15 @@ void DIMAPDataset::SetMetadataFromXML(
                 if( psTarget->psChild->eType == CXT_Text )
                 {
                     osName += psTarget->pszValue;
-                    SetMetadataItem( osName, psTarget->psChild->pszValue );
+                    // Limit size to avoid perf issues when inserting
+                    // in metadata list
+                    if( osName.size() < 128 )
+                        SetMetadataItem( osName, psTarget->psChild->pszValue );
+                    else if( !bWarnedDiscarding )
+                    {
+                        bWarnedDiscarding = true;
+                        CPLDebug("DIMAP", "Discarding too long metadata item");
+                    }
                 }
                 else if( psTarget->psChild->eType == CXT_Attribute )
                 {
@@ -1696,7 +1706,15 @@ void DIMAPDataset::SetMetadataFromXML(
                         else if( psNode->eType == CXT_Text )
                         {
                             osName += psTarget->pszValue;
-                            SetMetadataItem( osName, psNode->pszValue );
+                            // Limit size to avoid perf issues when inserting
+                            // in metadata list
+                            if( osName.size() < 128 )
+                                SetMetadataItem( osName, psNode->pszValue );
+                            else if( !bWarnedDiscarding )
+                            {
+                                bWarnedDiscarding = true;
+                                CPLDebug("DIMAP", "Discarding too long metadata item");
+                            }
                         }
                     }
                 }
