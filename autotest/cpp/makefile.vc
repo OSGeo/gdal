@@ -76,7 +76,7 @@ GDAL_TEST_EXE = gdal_unit_test.exe
 
 default: $(GDAL_TEST_EXE) testcopywords.exe testperfcopywords.exe testclosedondestroydm.exe testthreadcond.exe testblockcache.exe testblockcachewrite.exe testblockcachelimits.exe testdestroy.exe testmultithreadedwriting.exe test_include_from_c_file.exe test_c_include_from_cpp_file.exe bug1488.exe
 
-check:	 $(GDAL_TEST_EXE) testblockcache.exe testblockcachewrite.exe testblockcachelimits.exe testmultithreadedwriting.exe bug1488.exe
+check:	 $(GDAL_TEST_EXE) testblockcache.exe testblockcachewrite.exe testblockcachelimits.exe testmultithreadedwriting.exe bug1488.exe testlog.exe
 	 $(GDAL_TEST_EXE)
 	testblockcache.exe -check -co TILED=YES --debug TEST,LOCK -loops 3 --config GDAL_RB_LOCK_DEBUG_CONTENTION YES
 	testblockcache.exe -check -co TILED=YES --debug TEST,LOCK -loops 3 --config GDAL_RB_LOCK_DEBUG_CONTENTION YES --config GDAL_RB_LOCK_TYPE SPIN
@@ -87,6 +87,7 @@ check:	 $(GDAL_TEST_EXE) testblockcache.exe testblockcachewrite.exe testblockcac
 	testdestroy.exe
 	testmultithreadedwriting.exe
 	bug1488.exe
+	testlog.exe
 
 check-all:	 check testcopywords.exe testperfcopywords.exe testclosedondestroydm.exe testthreadcond.exe
 	testcopywords.exe
@@ -146,7 +147,11 @@ bug1488.exe: bug1488.cpp
 	$(CC) bug1488.cpp $(CFLAGS) $(GDAL_LIB)
     if exist bug1488.exe.manifest mt -manifest bug1488.exe.manifest -outputresource:bug1488.exe;1
 
-copy-gdal-dll:	$(GDAL_DLL) 
+testlog.exe: testlog.cpp
+	$(CC) testlog.cpp $(CFLAGS) $(GDAL_LIB)
+    if exist testlog.exe.manifest mt -manifest testlog.exe.manifest -outputresource:testlog.exe;1
+
+copy-gdal-dll:	$(GDAL_DLL)
 
 $(GDAL_DLL):	$(GDAL_ROOT)\$(GDAL_DLL)
     copy /y $(GDAL_ROOT)\$(GDAL_DLL) .
