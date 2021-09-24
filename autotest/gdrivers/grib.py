@@ -1479,3 +1479,26 @@ def test_grib_grib2_sidecar():
         assert ds_no_idx.GetRasterBand(i).GetMetadata().keys() == ds_idx.GetRasterBand(i).GetMetadata().keys()
         for key in ds_no_idx.GetRasterBand(i).GetMetadata().keys():
             assert ds_no_idx.GetRasterBand(i).GetMetadataItem(key) == ds_idx.GetRasterBand(i).GetMetadataItem(key)
+
+# Test reading a (broken) mix of GRIBv2/GRIBv1 bands
+
+def test_grib_grib2_sidecar():
+
+    ds_idx = gdal.Open('data/grib/broken_combined_grib2_grib1.grb2')
+    assert ds_idx.RasterCount == 18
+    assert ds_idx.GetRasterBand(6).GetDescription() == 'VGRD:planetary boundary layer:10 hour fcst', 'Description does not match, sidecar index is probably ignored'
+    assert ds_idx.GetRasterBand(18).GetDescription() == 'DIRSW:Ground or water surface:anl', 'Description does not match, sidecar index is probably ignored'
+    assert ds_idx.GetRasterBand(2).GetMetadataItem('GRIB_ELEMENT') == 'REFD'
+    assert ds_idx.GetRasterBand(18).GetMetadataItem('GRIB_ELEMENT') == 'DIRSW'
+    assert ds_idx.GetRasterBand(1).Checksum() == 59985
+    assert ds_idx.GetRasterBand(18).Checksum() == 4794
+
+    ds_no_idx = gdal.OpenEx('data/grib/broken_combined_grib2_grib1.grb2', gdal.GA_ReadOnly, open_options=['USE_IDX=NO'])
+    assert ds_no_idx.RasterCount == ds_idx.RasterCount
+    assert ds_no_idx.GetRasterBand(6).GetDescription() == '0[-] RESERVED(220) (Reserved)', 'Description does not match, sidecar index is probably loaded'
+    assert ds_no_idx.GetRasterBand(18).GetDescription() == '1[-] SFC (Ground or water surface)', 'Description does not match, sidecar index is probably ignored'
+    for i in range(1, ds_no_idx.RasterCount):
+        assert ds_no_idx.GetRasterBand(i).Checksum() == ds_idx.GetRasterBand(i).Checksum()
+        assert ds_no_idx.GetRasterBand(i).GetMetadata().keys() == ds_idx.GetRasterBand(i).GetMetadata().keys()
+        for key in ds_no_idx.GetRasterBand(i).GetMetadata().keys():
+            assert ds_no_idx.GetRasterBand(i).GetMetadataItem(key) == ds_idx.GetRasterBand(i).GetMetadataItem(key)

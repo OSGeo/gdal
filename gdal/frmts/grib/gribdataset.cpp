@@ -171,6 +171,7 @@ void GRIBRasterBand::FindMetaData()
         m_Grib_MetaData = metaData;
     }
     bLoadedMetadata = true;
+    m_nGribVersion = m_Grib_MetaData->GribVersion;
 
     const char *pszGribNormalizeUnits =
         CPLGetConfigOption("GRIB_NORMALIZE_UNITS", "YES");
@@ -188,12 +189,25 @@ void GRIBRasterBand::FindMetaData()
     GDALRasterBand::SetMetadataItem("GRIB_SHORT_NAME",
                                     m_Grib_MetaData->shortFstLevel);
 
-    GDALRasterBand::SetMetadataItem(
-        "GRIB_REF_TIME",
-        CPLString().Printf("%.0f", m_Grib_MetaData->pds2.refTime));
-    GDALRasterBand::SetMetadataItem(
-        "GRIB_VALID_TIME",
-        CPLString().Printf("%.0f", m_Grib_MetaData->pds2.sect4.validTime));
+    if (m_nGribVersion == 2)
+    {
+        GDALRasterBand::SetMetadataItem(
+            "GRIB_REF_TIME",
+            CPLString().Printf("%.0f", m_Grib_MetaData->pds2.refTime));
+        GDALRasterBand::SetMetadataItem(
+            "GRIB_VALID_TIME",
+            CPLString().Printf("%.0f", m_Grib_MetaData->pds2.sect4.validTime));
+    }
+    else if (m_nGribVersion == 1)
+    {
+        GDALRasterBand::SetMetadataItem(
+            "GRIB_REF_TIME",
+            CPLString().Printf("%.0f", m_Grib_MetaData->pds1.refTime));
+        GDALRasterBand::SetMetadataItem(
+            "GRIB_VALID_TIME",
+            CPLString().Printf("%.0f", m_Grib_MetaData->pds1.validTime));
+
+    }
 
     GDALRasterBand::SetMetadataItem(
       "GRIB_FORECAST_SECONDS",
@@ -898,13 +912,11 @@ CPLErr GRIBRasterBand::LoadData()
 /************************************************************************/
 char **GRIBRasterBand::GetMetadata(const char *pszDomain)
 {
-    if (m_nGribVersion == 2)
+    FindMetaData();
+    if (m_nGribVersion == 2 &&
+        CPLTestBool(CPLGetConfigOption("GRIB_PDS_ALL_BANDS", "ON")))
     {
-        FindMetaData();
-        if (CPLTestBool(CPLGetConfigOption("GRIB_PDS_ALL_BANDS", "ON")))
-        {
-            FindPDSTemplate();
-        }
+        FindPDSTemplate();
     }
     return GDALPamRasterBand::GetMetadata(pszDomain);
 }
@@ -914,13 +926,11 @@ char **GRIBRasterBand::GetMetadata(const char *pszDomain)
 /************************************************************************/
 const char *GRIBRasterBand::GetMetadataItem(const char *pszName, const char *pszDomain)
 {
-    if (m_nGribVersion == 2)
+    FindMetaData();
+    if (m_nGribVersion == 2 &&
+        CPLTestBool(CPLGetConfigOption("GRIB_PDS_ALL_BANDS", "ON")))
     {
-        FindMetaData();
-        if (CPLTestBool(CPLGetConfigOption("GRIB_PDS_ALL_BANDS", "ON")))
-        {
-            FindPDSTemplate();
-        }
+        FindPDSTemplate();
     }
     return GDALPamRasterBand::GetMetadataItem(pszName, pszDomain);
 }
@@ -1171,7 +1181,8 @@ class InventoryWrapperSidecar : public gdal::grib::InventoryWrapper
             aosNum = CPLStringList(CSLTokenizeString2(aosTokens[0], ".", 0));
             if (aosNum.size() < 1) goto err_sidecar;
 
-            // Only GRIBv2 has sidecars
+            // Normally only a GRIBv2 should have a sidecar, but it can contain GRIB1 bands
+            // FindMetaData will retrieve the correct version number
             inv_[i].GribVersion = (signed char) 2;
             char *endptr;
             inv_[i].msgNum =
@@ -1442,6 +1453,7 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
             GRIBRasterBand::ReadGribData(poDS->fp, 0,
                                          psInv->subgNum,
                                          nullptr, &metaData);
+            psInv->GribVersion = metaData->GribVersion;
             if( metaData == nullptr || metaData->gds.Nx < 1 ||
                 metaData->gds.Ny < 1 )
             {
@@ -2236,6 +2248,7 @@ GDALDataset *GRIBDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
             GRIBRasterBand::ReadGribData(poShared->m_fp, psInv->start,
                                          psInv->subgNum,
                                          nullptr, &metaData);
+            psInv->GribVersion = metaData->GribVersion;
             if( metaData == nullptr || metaData->gds.Nx < 1 ||
                 metaData->gds.Ny < 1 )
             {
