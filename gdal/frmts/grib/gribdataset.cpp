@@ -2035,19 +2035,27 @@ const std::vector<double>& GRIBSharedResource::LoadData(vsi_l_offset nOffset,
     }
     const int nx = metadata->gds.Nx;
     const int ny = metadata->gds.Ny;
+    MetaFree(metadata);
+    delete metadata;
     if( nx <= 0 || ny <= 0 )
     {
-        MetaFree(metadata);
-        delete metadata;
         free(data);
         m_adfCurData.clear();
         return m_adfCurData;
     }
-    m_adfCurData.resize( static_cast<size_t>(nx) * ny );
+    try
+    {
+        m_adfCurData.resize( static_cast<size_t>(nx) * ny );
+    }
+    catch( const std::exception& e )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
+        free(data);
+        m_adfCurData.clear();
+        return m_adfCurData;
+    }
     m_nOffsetCurData = nOffset;
     memcpy(&m_adfCurData[0], data, static_cast<size_t>(nx) * ny * sizeof(double));
-    MetaFree(metadata);
-    delete metadata;
     free(data);
     return m_adfCurData;
 }
