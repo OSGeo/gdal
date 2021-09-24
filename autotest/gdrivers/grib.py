@@ -1482,7 +1482,7 @@ def test_grib_grib2_sidecar():
 
 # Test reading a (broken) mix of GRIBv2/GRIBv1 bands
 
-def test_grib_grib2_sidecar():
+def test_grib_grib1_2_mix_sidecar():
 
     ds_idx = gdal.Open('data/grib/broken_combined_grib2_grib1.grb2')
     assert ds_idx.RasterCount == 18
