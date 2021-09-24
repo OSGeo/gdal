@@ -104,7 +104,8 @@ static void ExploreAttributes(const GDALIHasAttribute* attributeHolder)
     attributeHolder->GetAttribute("i_do_not_exist");
 }
 
-static void ExploreArray(const std::shared_ptr<GDALMDArray>& poArray)
+static void ExploreArray(const std::shared_ptr<GDALMDArray>& poArray,
+                         const char* pszDriverName)
 {
     ExploreAttributes(poArray.get());
 
@@ -117,9 +118,41 @@ static void ExploreArray(const std::shared_ptr<GDALMDArray>& poArray)
     poArray->GetScale();
     poArray->GetCoordinateVariables();
 
-    if( poArray->GetDataType().GetClass() == GEDTC_NUMERIC )
+    const auto nDimCount = poArray->GetDimensionCount();
+    bool bRead = true;
+    constexpr size_t MAX_ALLOC = 1000 * 1000 * 1000U;
+    if( pszDriverName && EQUAL(pszDriverName, "GRIB") )
     {
-        const auto nDimCount = poArray->GetDimensionCount();
+        const auto poDims = poArray->GetDimensions();
+        if( nDimCount >= 2 &&
+            poDims[nDimCount-2]->GetSize() > MAX_ALLOC /
+                            sizeof(double) / poDims[nDimCount-1]->GetSize() )
+        {
+            bRead = false;
+        }
+    }
+    else
+    {
+        const auto anBlockSize = poArray->GetBlockSize();
+        size_t nBlockSize = poArray->GetDataType().GetSize();
+        for( const auto nDimBlockSize: anBlockSize )
+        {
+            if( nDimBlockSize == 0 )
+            {
+                break;
+            }
+            if( nBlockSize > MAX_ALLOC / nDimBlockSize )
+            {
+                bRead = false;
+                break;
+            }
+            nBlockSize *= static_cast<size_t>(nDimBlockSize);
+        }
+    }
+
+    if( bRead &&
+        poArray->GetDataType().GetClass() == GEDTC_NUMERIC )
+    {
         std::vector<GUInt64> anArrayStartIdx(nDimCount);
         std::vector<size_t> anCount(nDimCount, 1);
         std::vector<GInt64> anArrayStep(nDimCount);
@@ -134,7 +167,8 @@ static void ExploreArray(const std::shared_ptr<GDALMDArray>& poArray)
     }
 }
 
-static void ExploreGroup(const std::shared_ptr<GDALGroup>& poGroup)
+static void ExploreGroup(const std::shared_ptr<GDALGroup>& poGroup,
+                         const char* pszDriverName)
 {
     ExploreAttributes(poGroup.get());
 
@@ -144,7 +178,7 @@ static void ExploreGroup(const std::shared_ptr<GDALGroup>& poGroup)
     {
         auto poSubGroup = poGroup->OpenGroup(name);
         if( poSubGroup )
-            ExploreGroup(poSubGroup);
+            ExploreGroup(poSubGroup, pszDriverName);
     }
 
     const auto arrayNames = poGroup->GetMDArrayNames();
@@ -154,7 +188,7 @@ static void ExploreGroup(const std::shared_ptr<GDALGroup>& poGroup)
         auto poArray = poGroup->OpenMDArray(name);
         if( poArray )
         {
-            ExploreArray(poArray);
+            ExploreArray(poArray, pszDriverName);
         }
     }
 }
@@ -371,10 +405,14 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
         GDALDataset::Open( pszGDALFilename, GDAL_OF_MULTIDIM_RASTER ));
     if( poDS )
     {
+        auto poDriver = poDS->GetDriver();
+        const char* pszDriverName = nullptr;
+        if( poDriver )
+            pszDriverName = poDriver->GetDescription();
         auto poRootGroup = poDS->GetRootGroup();
         poDS.reset();
         if( poRootGroup )
-            ExploreGroup(poRootGroup);
+            ExploreGroup(poRootGroup, pszDriverName);
     }
 
     CPLPopErrorHandler();
