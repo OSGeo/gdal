@@ -1178,7 +1178,7 @@ class InventoryWrapperSidecar : public gdal::grib::InventoryWrapper
             inv_[i].element = nullptr;
             inv_[i].shortFstLevel = nullptr;
             // This is going into the description field ->
-            // the only available before loading the metadata
+            // the only one available before loading the metadata
             inv_[i].longFstLevel = VSIStrdup(CPLSPrintf("%s:%s:%s",
                     aosTokens[3], aosTokens[4], aosTokens[5]));
 
