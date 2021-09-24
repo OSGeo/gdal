@@ -1450,7 +1450,6 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
             GRIBRasterBand::ReadGribData(poDS->fp, 0,
                                          psInv->subgNum,
                                          nullptr, &metaData);
-            psInv->GribVersion = metaData->GribVersion;
             if( metaData == nullptr || metaData->gds.Nx < 1 ||
                 metaData->gds.Ny < 1 )
             {
@@ -2254,7 +2253,6 @@ GDALDataset *GRIBDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
             GRIBRasterBand::ReadGribData(poShared->m_fp, psInv->start,
                                          psInv->subgNum,
                                          nullptr, &metaData);
-            psInv->GribVersion = metaData->GribVersion;
             if( metaData == nullptr || metaData->gds.Nx < 1 ||
                 metaData->gds.Ny < 1 )
             {
