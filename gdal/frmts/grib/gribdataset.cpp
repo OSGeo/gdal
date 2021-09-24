@@ -1453,7 +1453,6 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
             GRIBRasterBand::ReadGribData(poDS->fp, 0,
                                          psInv->subgNum,
                                          nullptr, &metaData);
-            psInv->GribVersion = metaData->GribVersion;
             if( metaData == nullptr || metaData->gds.Nx < 1 ||
                 metaData->gds.Ny < 1 )
             {
@@ -1473,6 +1472,7 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
                 }
                 return nullptr;
             }
+            psInv->GribVersion = metaData->GribVersion;
 
             // Set the DataSet's x,y size, georeference and projection from
             // the first GRIB band.
@@ -2248,7 +2248,6 @@ GDALDataset *GRIBDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
             GRIBRasterBand::ReadGribData(poShared->m_fp, psInv->start,
                                          psInv->subgNum,
                                          nullptr, &metaData);
-            psInv->GribVersion = metaData->GribVersion;
             if( metaData == nullptr || metaData->gds.Nx < 1 ||
                 metaData->gds.Ny < 1 )
             {
@@ -2268,6 +2267,7 @@ GDALDataset *GRIBDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
                 CPLAcquireMutex(hGRIBMutex, 1000.0);
                 return nullptr;
             }
+            psInv->GribVersion = metaData->GribVersion;
 
             // Set the DataSet's x,y size, georeference and projection from
             // the first GRIB band.
