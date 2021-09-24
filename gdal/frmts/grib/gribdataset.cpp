@@ -912,9 +912,7 @@ CPLErr GRIBRasterBand::LoadData()
 /************************************************************************/
 char **GRIBRasterBand::GetMetadata(const char *pszDomain)
 {
-    FindMetaData();
-    if (m_nGribVersion == 2 &&
-        CPLTestBool(CPLGetConfigOption("GRIB_PDS_ALL_BANDS", "ON")))
+    if (m_nGribVersion == 2)
     {
         FindPDSTemplate();
     }
@@ -926,9 +924,7 @@ char **GRIBRasterBand::GetMetadata(const char *pszDomain)
 /************************************************************************/
 const char *GRIBRasterBand::GetMetadataItem(const char *pszName, const char *pszDomain)
 {
-    FindMetaData();
-    if (m_nGribVersion == 2 &&
-        CPLTestBool(CPLGetConfigOption("GRIB_PDS_ALL_BANDS", "ON")))
+    if (m_nGribVersion == 2)
     {
         FindPDSTemplate();
     }
