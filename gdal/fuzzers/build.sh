@@ -25,9 +25,13 @@ rm -rf curl
 git clone --depth 1 https://github.com/curl/curl.git curl
 
 rm -rf netcdf-c-4.7.4
+# fix_stack_read_overflow_ncindexlookup.patch: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=39189
 curl -L https://github.com/Unidata/netcdf-c/archive/refs/tags/v4.7.4.tar.gz > v4.7.4.tar.gz && \
     tar xzf v4.7.4.tar.gz && \
-    rm -f v4.7.4.tar.gz
+    rm -f v4.7.4.tar.gz && \
+    cd netcdf-c-4.7.4 && \
+    patch -p0 < $SRC/gdal/gdal/fuzzers/fix_stack_read_overflow_ncindexlookup.patch && \
+    cd ..
 
 rm -rf poppler
 git clone --depth 1 https://anongit.freedesktop.org/git/poppler/poppler.git poppler

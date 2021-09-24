@@ -1,0 +1,13 @@
+--- ./libhdf5/hdf5internal.c.ori	2021-09-24 12:04:56.890823968 +0200
++++ ./libhdf5/hdf5internal.c	2021-09-24 12:04:44.914865539 +0200
+@@ -896,7 +896,10 @@
+ 
+     /* Give the people what they want. */
+     if (norm_name)
++    {
+         strncpy(norm_name, my_norm_name, NC_MAX_NAME);
++        norm_name[NC_MAX_NAME] = 0;
++    }
+     if (h5)
+         *h5 = my_h5;
+     if (grp)
