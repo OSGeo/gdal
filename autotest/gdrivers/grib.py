@@ -100,7 +100,7 @@ def test_grib_grib2_read_nodata():
     assert ds.GetRasterBand(1).GetNoDataValue() == 9999
     assert ds.GetRasterBand(2).GetNoDataValue() == 9999
     md = ds.GetRasterBand(1).GetMetadata()
-    expected_md = {'GRIB_REF_TIME': '  1203613200 sec UTC', 'GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES': '0 5 2 0 0 255 255 1 19 1 0 0 255 -1 -2147483647 2008 2 22 12 0 0 1 0 3 255 1 12 1 0', 'GRIB_VALID_TIME': '  1203681600 sec UTC', 'GRIB_FORECAST_SECONDS': '68400 sec', 'GRIB_UNIT': '[C]', 'GRIB_PDS_TEMPLATE_NUMBERS': '0 5 2 0 0 0 255 255 1 0 0 0 19 1 0 0 0 0 0 255 129 255 255 255 255 7 216 2 22 12 0 0 1 0 0 0 0 3 255 1 0 0 0 12 1 0 0 0 0', 'GRIB_DISCIPLINE': '0(Meteorological)', 'GRIB_PDS_PDTN': '8', 'GRIB_COMMENT': 'Minimum temperature [C]', 'GRIB_SHORT_NAME': '0-SFC', 'GRIB_ELEMENT': 'MinT'}
+    expected_md = {'GRIB_REF_TIME': '1203613200', 'GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES': '0 5 2 0 0 255 255 1 19 1 0 0 255 -1 -2147483647 2008 2 22 12 0 0 1 0 3 255 1 12 1 0', 'GRIB_VALID_TIME': '1203681600', 'GRIB_FORECAST_SECONDS': '68400', 'GRIB_UNIT': '[C]', 'GRIB_PDS_TEMPLATE_NUMBERS': '0 5 2 0 0 0 255 255 1 0 0 0 19 1 0 0 0 0 0 255 129 255 255 255 255 7 216 2 22 12 0 0 1 0 0 0 0 3 255 1 0 0 0 12 1 0 0 0 0', 'GRIB_DISCIPLINE': '0(Meteorological)', 'GRIB_PDS_PDTN': '8', 'GRIB_COMMENT': 'Minimum temperature [C]', 'GRIB_SHORT_NAME': '0-SFC', 'GRIB_ELEMENT': 'MinT'}
     for k in expected_md:
         assert k in md and md[k] == expected_md[k], 'Did not get expected metadata'
 
@@ -221,7 +221,7 @@ def test_grib_grib2_read_template_4_32():
     assert cs == 48230, 'Could not open file'
     assert ds.GetRasterBand(1).ComputeRasterMinMax() == pytest.approx((-9.765,2.415), 1e-3) # Reasonable range for Celcius
     md = ds.GetRasterBand(1).GetMetadata()
-    expected_md = {'GRIB_REF_TIME': '  1508479200 sec UTC', 'GRIB_VALID_TIME': '  1508479200 sec UTC', 'GRIB_FORECAST_SECONDS': '0 sec', 'GRIB_UNIT': '[C]', 'GRIB_PDS_TEMPLATE_NUMBERS': '5 7 2 0 0 0 0 0 1 0 0 0 0 1 0 31 1 29 67 140 2 0 0 238 217', 'GRIB_PDS_PDTN': '32', 'GRIB_COMMENT': 'Brightness Temperature [C]', 'GRIB_SHORT_NAME': '0 undefined', 'GRIB_ELEMENT': 'BRTEMP', 'GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES': '5 7 2 0 0 0 0 1 0 1 31 285 17292 2 61145'}
+    expected_md = {'GRIB_REF_TIME': '1508479200', 'GRIB_VALID_TIME': '1508479200', 'GRIB_FORECAST_SECONDS': '0', 'GRIB_UNIT': '[C]', 'GRIB_PDS_TEMPLATE_NUMBERS': '5 7 2 0 0 0 0 0 1 0 0 0 0 1 0 31 1 29 67 140 2 0 0 238 217', 'GRIB_PDS_PDTN': '32', 'GRIB_COMMENT': 'Brightness Temperature [C]', 'GRIB_SHORT_NAME': '0 undefined', 'GRIB_ELEMENT': 'BRTEMP', 'GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES': '5 7 2 0 0 0 0 1 0 1 31 285 17292 2 61145'}
     for k in expected_md:
         assert k in md and md[k] == expected_md[k], 'Did not get expected metadata'
 
@@ -237,7 +237,7 @@ def test_grib_grib2_read_all_zero_data():
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 0, 'Could not open file'
     md = ds.GetRasterBand(1).GetMetadata()
-    expected_md = {'GRIB_REF_TIME': '  1510963200 sec UTC', 'GRIB_VALID_TIME': '  1510963200 sec UTC', 'GRIB_FORECAST_SECONDS': '0 sec', 'GRIB_UNIT': '[Proportion]', 'GRIB_PDS_TEMPLATE_NUMBERS': '2 0 0 0 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 255 255 255 255 255 255', 'GRIB_PDS_PDTN': '0', 'GRIB_COMMENT': 'Ice cover [Proportion]', 'GRIB_SHORT_NAME': '0-SFC', 'GRIB_ELEMENT': 'ICEC'}
+    expected_md = {'GRIB_REF_TIME': '1510963200', 'GRIB_VALID_TIME': '1510963200', 'GRIB_FORECAST_SECONDS': '0', 'GRIB_UNIT': '[Proportion]', 'GRIB_PDS_TEMPLATE_NUMBERS': '2 0 0 0 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 255 255 255 255 255 255', 'GRIB_PDS_PDTN': '0', 'GRIB_COMMENT': 'Ice cover [Proportion]', 'GRIB_SHORT_NAME': '0-SFC', 'GRIB_ELEMENT': 'ICEC'}
     for k in expected_md:
         assert k in md and md[k] == expected_md[k], 'Did not get expected metadata'
 
@@ -269,7 +269,7 @@ def test_grib_grib1_read_rotated_pole_lonlat():
         'Did not get expected geotransform'
 
     md = ds.GetRasterBand(1).GetMetadata()
-    expected_md = {'GRIB_REF_TIME': '  1503295200 sec UTC', 'GRIB_VALID_TIME': '  1503295200 sec UTC', 'GRIB_FORECAST_SECONDS': '0 sec', 'GRIB_UNIT': '[m^2/s^2]', 'GRIB_COMMENT': 'Geopotential [m^2/s^2]', 'GRIB_SHORT_NAME': '0-HTGL', 'GRIB_ELEMENT': 'GP'}
+    expected_md = {'GRIB_REF_TIME': '1503295200', 'GRIB_VALID_TIME': '1503295200', 'GRIB_FORECAST_SECONDS': '0', 'GRIB_UNIT': '[m^2/s^2]', 'GRIB_COMMENT': 'Geopotential [m^2/s^2]', 'GRIB_SHORT_NAME': '0-HTGL', 'GRIB_ELEMENT': 'GP'}
     for k in expected_md:
         assert k in md and md[k] == expected_md[k], 'Did not get expected metadata'
 
@@ -305,7 +305,7 @@ def test_grib_grib2_read_template_4_40():
     # with data nullified
     ds = gdal.Open('data/grib/template_4_40.grb2')
     md = ds.GetRasterBand(1).GetMetadata()
-    expected_md = {'GRIB_REF_TIME': '  1505088000 sec UTC', 'GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES': '20 0 40008 0 255 99 0 0 1 0 1 -127 -2147483647 255 -127 -2147483647', 'GRIB_VALID_TIME': '  1505088000 sec UTC', 'GRIB_FORECAST_SECONDS': '0 sec', 'GRIB_UNIT': '[kg/(m^3)]', 'GRIB_PDS_TEMPLATE_NUMBERS': '20 0 156 72 0 255 99 0 0 0 1 0 0 0 0 1 255 255 255 255 255 255 255 255 255 255 255', 'GRIB_PDS_PDTN': '40', 'GRIB_COMMENT': 'Mass Density (Concentration) [kg/(m^3)]', 'GRIB_SHORT_NAME': '0-SFC', 'GRIB_ELEMENT': 'MASSDEN'}
+    expected_md = {'GRIB_REF_TIME': '1505088000', 'GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES': '20 0 40008 0 255 99 0 0 1 0 1 -127 -2147483647 255 -127 -2147483647', 'GRIB_VALID_TIME': '1505088000', 'GRIB_FORECAST_SECONDS': '0', 'GRIB_UNIT': '[kg/(m^3)]', 'GRIB_PDS_TEMPLATE_NUMBERS': '20 0 156 72 0 255 99 0 0 0 1 0 0 0 0 1 255 255 255 255 255 255 255 255 255 255 255', 'GRIB_PDS_PDTN': '40', 'GRIB_COMMENT': 'Mass Density (Concentration) [kg/(m^3)]', 'GRIB_SHORT_NAME': '0-SFC', 'GRIB_ELEMENT': 'MASSDEN'}
     for k in expected_md:
         assert k in md and md[k] == expected_md[k], 'Did not get expected metadata'
 
@@ -1338,7 +1338,7 @@ def test_grib_online_grib2_jpeg2000_single_line():
     nd = ds.GetRasterBand(1).GetNoDataValue()
     assert nd == 9999, 'Bad nodata value'
     md = ds.GetRasterBand(1).GetMetadata()
-    expected_md = {'GRIB_REF_TIME': '  1510920000 sec UTC', 'GRIB_VALID_TIME': '  1510923600 sec UTC', 'GRIB_FORECAST_SECONDS': '3600 sec', 'GRIB_UNIT': '[kg/(m^2 s)]', 'GRIB_PDS_TEMPLATE_NUMBERS': '1 7 2 50 50 0 0 0 0 0 0 0 60 1 0 0 0 0 0 255 255 255 255 255 255', 'GRIB_PDS_PDTN': '0', 'GRIB_COMMENT': 'Precipitation rate [kg/(m^2 s)]', 'GRIB_SHORT_NAME': '0-SFC', 'GRIB_ELEMENT': 'PRATE'}
+    expected_md = {'GRIB_REF_TIME': '1510920000', 'GRIB_VALID_TIME': '1510923600', 'GRIB_FORECAST_SECONDS': '3600', 'GRIB_UNIT': '[kg/(m^2 s)]', 'GRIB_PDS_TEMPLATE_NUMBERS': '1 7 2 50 50 0 0 0 0 0 0 0 60 1 0 0 0 0 0 255 255 255 255 255 255', 'GRIB_PDS_PDTN': '0', 'GRIB_COMMENT': 'Precipitation rate [kg/(m^2 s)]', 'GRIB_SHORT_NAME': '0-SFC', 'GRIB_ELEMENT': 'PRATE'}
     for k in expected_md:
         assert k in md and md[k] == expected_md[k], 'Did not get expected metadata'
 
@@ -1464,9 +1464,9 @@ def test_grib_grib2_sidecar():
     assert ds_idx.GetRasterBand(2).GetMetadataItem('GRIB_ELEMENT') == 'REFD'
     assert ds_idx.GetRasterBand(3).GetMetadataItem('GRIB_ELEMENT') == 'REFC'
     assert ds_idx.GetRasterBand(6).GetMetadataItem('GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES') == '2 3 2 0 96 0 0 1 10 220 0 0 255 0 0'
-    assert ds_idx.GetRasterBand(6).GetMetadataItem('GRIB_REF_TIME') == '202109180600'
-    assert ds_idx.GetRasterBand(6).GetMetadataItem('GRIB_VALID_TIME') == '202109181600'
-    assert ds_idx.GetRasterBand(6).GetMetadataItem('GRIB_FORECAST_SECONDS') == '36000 sec'
+    assert ds_idx.GetRasterBand(6).GetMetadataItem('GRIB_REF_TIME') == '1631944800'
+    assert ds_idx.GetRasterBand(6).GetMetadataItem('GRIB_VALID_TIME') == '1631980800'
+    assert ds_idx.GetRasterBand(6).GetMetadataItem('GRIB_FORECAST_SECONDS') == '36000'
     assert ds_idx.GetRasterBand(1).Checksum() == 59985
     assert ds_idx.GetRasterBand(2).Checksum() == 59986
     assert ds_idx.GetRasterBand(6).Checksum() == 206
@@ -1477,7 +1477,5 @@ def test_grib_grib2_sidecar():
     for i in range(1, ds_no_idx.RasterCount):
         assert ds_no_idx.GetRasterBand(i).Checksum() == ds_idx.GetRasterBand(i).Checksum()
         assert ds_no_idx.GetRasterBand(i).GetMetadata().keys() == ds_idx.GetRasterBand(i).GetMetadata().keys()
-        for key in [ 'GRIB_ELEMENT', 'GRIB_SHORT_NAME', 'GRIB_UNIT', 'GRIB_COMMENT', 'GRIB_IDS', 'GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES', 'GRIB_FORECAST_SECONDS' ]:
+        for key in ds_no_idx.GetRasterBand(i).GetMetadata().keys():
             assert ds_no_idx.GetRasterBand(i).GetMetadataItem(key) == ds_idx.GetRasterBand(i).GetMetadataItem(key)
-        assert ds_no_idx.GetRasterBand(i).GetMetadataItem('GRIB_REF_TIME') == '  1631944800 sec UTC'
-        assert ds_no_idx.GetRasterBand(i).GetMetadataItem('GRIB_VALID_TIME') == '  1631980800 sec UTC'

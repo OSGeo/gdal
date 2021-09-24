@@ -52,6 +52,7 @@
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
+#include "cpl_time.h"
 #include "degrib/degrib/degrib2.h"
 #include "degrib/degrib/inventory.h"
 #include "degrib/degrib/meta.h"
@@ -144,11 +145,11 @@ GRIBRasterBand::GRIBRasterBand( GRIBDataset *poDSIn, int nBandIn,
         SetMetadataItem("GRIB_ELEMENT", psInv->element);
         SetMetadataItem("GRIB_SHORT_NAME", psInv->shortFstLevel);
         SetMetadataItem("GRIB_REF_TIME",
-                        CPLString().Printf("%12.0f sec UTC", psInv->refTime));
+                        CPLString().Printf("%.0f", psInv->refTime));
         SetMetadataItem("GRIB_VALID_TIME",
-                        CPLString().Printf("%12.0f sec UTC", psInv->validTime));
+                        CPLString().Printf("%.0f", psInv->validTime));
         SetMetadataItem("GRIB_FORECAST_SECONDS",
-                        CPLString().Printf("%.0f sec", psInv->foreSec));
+                        CPLString().Printf("%.0f", psInv->foreSec));
         }
 }
 
@@ -175,16 +176,28 @@ void GRIBRasterBand::FindMetaData()
         CPLGetConfigOption("GRIB_NORMALIZE_UNITS", "YES");
     bool bMetricUnits = CPLTestBool(pszGribNormalizeUnits);
 
-    GDALRasterBand::SetMetadataItem("GRIB_UNIT",
-                    ConvertUnitInText(bMetricUnits, m_Grib_MetaData->unitName));
-    GDALRasterBand::SetMetadataItem("GRIB_COMMENT",
-                    ConvertUnitInText(bMetricUnits, m_Grib_MetaData->comment));
-    GDALRasterBand::SetMetadataItem("GRIB_ELEMENT", m_Grib_MetaData->element);
-    GDALRasterBand::SetMetadataItem("GRIB_SHORT_NAME", m_Grib_MetaData->shortFstLevel);
-    GDALRasterBand::SetMetadataItem("GRIB_REF_TIME", m_Grib_MetaData->refTime);
-    GDALRasterBand::SetMetadataItem("GRIB_VALID_TIME", m_Grib_MetaData->validTime);
-    GDALRasterBand::SetMetadataItem("GRIB_FORECAST_SECONDS",
-                    CPLString().Printf("%d sec", m_Grib_MetaData->deltTime));
+    GDALRasterBand::SetMetadataItem(
+        "GRIB_UNIT",
+        ConvertUnitInText(bMetricUnits, m_Grib_MetaData->unitName));
+    GDALRasterBand::SetMetadataItem(
+        "GRIB_COMMENT",
+        ConvertUnitInText(bMetricUnits, m_Grib_MetaData->comment));
+
+    GDALRasterBand::SetMetadataItem("GRIB_ELEMENT",
+                                    m_Grib_MetaData->element);
+    GDALRasterBand::SetMetadataItem("GRIB_SHORT_NAME",
+                                    m_Grib_MetaData->shortFstLevel);
+
+    GDALRasterBand::SetMetadataItem(
+        "GRIB_REF_TIME",
+        CPLString().Printf("%.0f", m_Grib_MetaData->pds2.refTime));
+    GDALRasterBand::SetMetadataItem(
+        "GRIB_VALID_TIME",
+        CPLString().Printf("%.0f", m_Grib_MetaData->pds2.sect4.validTime));
+
+    GDALRasterBand::SetMetadataItem(
+      "GRIB_FORECAST_SECONDS",
+      CPLString().Printf("%d", m_Grib_MetaData->deltTime));
 }
 
 /************************************************************************/
@@ -885,11 +898,13 @@ CPLErr GRIBRasterBand::LoadData()
 /************************************************************************/
 char **GRIBRasterBand::GetMetadata(const char *pszDomain)
 {
-    FindMetaData();
-    if (m_nGribVersion == 2 &&
-        CPLTestBool(CPLGetConfigOption("GRIB_PDS_ALL_BANDS", "ON")))
+    if (m_nGribVersion == 2)
     {
+        FindMetaData();
+        if (CPLTestBool(CPLGetConfigOption("GRIB_PDS_ALL_BANDS", "ON")))
+        {
             FindPDSTemplate();
+        }
     }
     return GDALPamRasterBand::GetMetadata(pszDomain);
 }
@@ -899,11 +914,13 @@ char **GRIBRasterBand::GetMetadata(const char *pszDomain)
 /************************************************************************/
 const char *GRIBRasterBand::GetMetadataItem(const char *pszName, const char *pszDomain)
 {
-    FindMetaData();
-    if (m_nGribVersion == 2 &&
-        CPLTestBool(CPLGetConfigOption("GRIB_PDS_ALL_BANDS", "ON")))
+    if (m_nGribVersion == 2)
     {
+        FindMetaData();
+        if (CPLTestBool(CPLGetConfigOption("GRIB_PDS_ALL_BANDS", "ON")))
+        {
             FindPDSTemplate();
+        }
     }
     return GDALPamRasterBand::GetMetadataItem(pszName, pszDomain);
 }
