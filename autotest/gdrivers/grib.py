@@ -1458,26 +1458,24 @@ def test_grib_grib2_split_and_swap():
 
 def test_grib_grib2_sidecar():
 
-    ds = gdal.Open('data/grib/gfs.t06z.pgrb2.10p0.f000.grib2')
-    assert ds.RasterCount == 6
-    assert ds.GetRasterBand(6).GetDescription() == 'VGRD:planetary boundary layer:anl', 'Description does not match, sidecar index is probably ignored'
-    assert ds.GetRasterBand(2).GetMetadataItem('GRIB_ELEMENT') == 'REFD'
-    assert ds.GetRasterBand(3).GetMetadataItem('GRIB_ELEMENT') == 'REFC'
-    assert ds.GetRasterBand(6).GetMetadataItem('GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES') == '2 3 2 0 81 0 0 1 0 220 0 0 255 0 0'
-    assert ds.GetRasterBand(6).GetMetadataItem('GRIB_REF_TIME') == '202109180600'
-    assert ds.GetRasterBand(6).GetMetadataItem('GRIB_VALID_TIME') == '202109180600'
-    assert ds.GetRasterBand(1).Checksum() == 59991
-    assert ds.GetRasterBand(2).Checksum() == 59982
-    assert ds.GetRasterBand(6).Checksum() == 256
+    ds_idx = gdal.Open('data/grib/gfs.t06z.pgrb2.10p0.f000.grib2')
+    assert ds_idx.RasterCount == 6
+    assert ds_idx.GetRasterBand(6).GetDescription() == 'VGRD:planetary boundary layer:anl', 'Description does not match, sidecar index is probably ignored'
+    assert ds_idx.GetRasterBand(2).GetMetadataItem('GRIB_ELEMENT') == 'REFD'
+    assert ds_idx.GetRasterBand(3).GetMetadataItem('GRIB_ELEMENT') == 'REFC'
+    assert ds_idx.GetRasterBand(6).GetMetadataItem('GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES') == '2 3 2 0 81 0 0 1 0 220 0 0 255 0 0'
+    assert ds_idx.GetRasterBand(6).GetMetadataItem('GRIB_REF_TIME') == '202109180600'
+    assert ds_idx.GetRasterBand(6).GetMetadataItem('GRIB_VALID_TIME') == '202109180600'
+    assert ds_idx.GetRasterBand(1).Checksum() == 59991
+    assert ds_idx.GetRasterBand(2).Checksum() == 59982
+    assert ds_idx.GetRasterBand(6).Checksum() == 256
 
-    ds = gdal.OpenEx('data/grib/gfs.t06z.pgrb2.10p0.f000.grib2', gdal.GA_ReadOnly, open_options=['USE_IDX=NO'])
-    assert ds.RasterCount == 6
-    assert ds.GetRasterBand(6).GetDescription() == '0[-] RESERVED(220) (Reserved)', 'Description does not match, sidecar index is probably loaded'
-    assert ds.GetRasterBand(2).GetMetadataItem('GRIB_ELEMENT') == 'REFD'
-    assert ds.GetRasterBand(3).GetMetadataItem('GRIB_ELEMENT') == 'REFC'
-    assert ds.GetRasterBand(6).GetMetadataItem('GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES') == '2 3 2 0 81 0 0 1 0 220 0 0 255 0 0'
-    assert ds.GetRasterBand(6).GetMetadataItem('GRIB_REF_TIME') == '  1631944800 sec UTC'
-    assert ds.GetRasterBand(6).GetMetadataItem('GRIB_VALID_TIME') == '  1631944800 sec UTC'
-    assert ds.GetRasterBand(1).Checksum() == 59991
-    assert ds.GetRasterBand(2).Checksum() == 59982
-    assert ds.GetRasterBand(6).Checksum() == 256
+    ds_no_idx = gdal.OpenEx('data/grib/gfs.t06z.pgrb2.10p0.f000.grib2', gdal.GA_ReadOnly, open_options=['USE_IDX=NO'])
+    assert ds_no_idx.RasterCount == ds_idx.RasterCount
+    assert ds_no_idx.GetRasterBand(6).GetDescription() == '0[-] RESERVED(220) (Reserved)', 'Description does not match, sidecar index is probably loaded'
+    for i in range(1, ds_no_idx.RasterCount):
+        assert ds_no_idx.GetRasterBand(i).Checksum() == ds_idx.GetRasterBand(i).Checksum()
+        for key in [ 'GRIB_ELEMENT', 'GRIB_SHORT_NAME', 'GRIB_UNIT', 'GRIB_COMMENT', 'GRIB_IDS', 'GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES' ]:
+            assert ds_no_idx.GetRasterBand(i).GetMetadataItem(key) == ds_idx.GetRasterBand(i).GetMetadataItem(key)
+        assert ds_no_idx.GetRasterBand(i).GetMetadataItem('GRIB_REF_TIME') == '  1631944800 sec UTC'
+        assert ds_no_idx.GetRasterBand(i).GetMetadataItem('GRIB_VALID_TIME') == '  1631944800 sec UTC'
