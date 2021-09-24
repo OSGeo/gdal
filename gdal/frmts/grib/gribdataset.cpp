@@ -2745,6 +2745,14 @@ char** GDALGRIBDriver::GetMetadata(const char* pszDomain)
 
             aosMetadata.SetNameValue( GDAL_DMD_CREATIONOPTIONLIST,
                                       osCreationOptionList );
+
+            aosMetadata.SetNameValue(
+              GDAL_DMD_OPENOPTIONLIST,
+              "<OpenOptionList>"
+              "    <Option name='USE_IDX' type='boolean' "
+              "description='Load metadata from "
+              "wgrib2 index file if available' default='YES'/>"
+              "</OpenOptionList>");
         }
         return aosMetadata.List();
     }
