@@ -912,7 +912,9 @@ CPLErr GRIBRasterBand::LoadData()
 /************************************************************************/
 char **GRIBRasterBand::GetMetadata(const char *pszDomain)
 {
-    if (m_nGribVersion == 2)
+    FindMetaData();
+    if (m_nGribVersion == 2 &&
+        CPLTestBool(CPLGetConfigOption("GRIB_PDS_ALL_BANDS", "ON")))
     {
         FindPDSTemplate();
     }
@@ -924,7 +926,9 @@ char **GRIBRasterBand::GetMetadata(const char *pszDomain)
 /************************************************************************/
 const char *GRIBRasterBand::GetMetadataItem(const char *pszName, const char *pszDomain)
 {
-    if (m_nGribVersion == 2)
+    FindMetaData();
+    if (m_nGribVersion == 2 &&
+        CPLTestBool(CPLGetConfigOption("GRIB_PDS_ALL_BANDS", "ON")))
     {
         FindPDSTemplate();
     }
@@ -1446,6 +1450,7 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
             GRIBRasterBand::ReadGribData(poDS->fp, 0,
                                          psInv->subgNum,
                                          nullptr, &metaData);
+            psInv->GribVersion = metaData->GribVersion;
             if( metaData == nullptr || metaData->gds.Nx < 1 ||
                 metaData->gds.Ny < 1 )
             {
@@ -2249,6 +2254,7 @@ GDALDataset *GRIBDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
             GRIBRasterBand::ReadGribData(poShared->m_fp, psInv->start,
                                          psInv->subgNum,
                                          nullptr, &metaData);
+            psInv->GribVersion = metaData->GribVersion;
             if( metaData == nullptr || metaData->gds.Nx < 1 ||
                 metaData->gds.Ny < 1 )
             {
