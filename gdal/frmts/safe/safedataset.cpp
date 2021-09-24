@@ -1966,12 +1966,6 @@ double SAFECalibratedRasterBand::getTimeDiff(TimePoint oT1, TimePoint oT2)
     return oResult.count();
 }
 
-void SAFECalibratedRasterBand::addTime(TimePoint oT1,
-                                       std::chrono::duration<double> oSec)
-{
-    oT1 = oT1 + std::chrono::duration_cast<std::chrono::microseconds>(oSec);
-}
-
 SAFECalibratedRasterBand::TimePoint
 SAFECalibratedRasterBand::getazTime(TimePoint oStart, TimePoint oStop,
                                     long nNumOfLines, int nOffset)
