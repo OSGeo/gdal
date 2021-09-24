@@ -48,3 +48,9 @@ ifneq ($(wildcard $(KAKDIR)/apps/make/supp_local.o),)
 KAK_OBJ +=      \
     $(KAKDIR)/apps/make/supp_local.o
 endif
+
+# The following are for Kakadu 8.2 and later.
+ifneq ($(wildcard $(KAKDIR)/apps/make/file_io.o),)
+KAK_OBJ +=      \
+    $(KAKDIR)/apps/make/file_io.o
+endif
