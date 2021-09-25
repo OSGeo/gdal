@@ -237,10 +237,6 @@ typedef int             GBool;
 /*      64bit support                                                   */
 /* -------------------------------------------------------------------- */
 
-#if defined(WIN32) && defined(_MSC_VER)
-#define VSI_LARGE_API_SUPPORTED
-#endif
-
 #if HAVE_LONG_LONG
 
 /** Large signed integer type (generally 64-bit integer type).

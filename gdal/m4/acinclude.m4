@@ -42,7 +42,7 @@ AC_DEFUN([AC_HAVE_LONG_LONG],
   else
     AC_MSG_ERROR([long long not found])
   fi
-  rm -f conftest*
+  rm -rf conftest*
 ])
 
 # AC_LANG_FUNC_LINK_TRY_CUSTOM(C++)(FUNCTION,INCLUDE,CODE)
@@ -59,13 +59,13 @@ void test_f()
 ])])
 
 # -----------------------------------------------------------------
-# AC_CHECK_FUNC_CUSTOM(FUNCTION, [INCLUDE], [CODE], 
+# AC_CHECK_FUNC_CUSTOM(FUNCTION, [INCLUDE], [CODE],
 #                      [ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
 # -----------------------------------------------------------------
-# This function is primarily added to facilitate testing that 
+# This function is primarily added to facilitate testing that
 # function prototypes are properly found such that functions can
 # be compiled properly in C++.  In particular, we want to include
-# the real include file, not internal define prototypes. 
+# the real include file, not internal define prototypes.
 #
 # e.g.
 # AC_LANG_PUSH(C++)
@@ -95,6 +95,9 @@ AC_DEFUN([AC_UNIX_STDIO_64],
 
   AC_MSG_CHECKING([for 64bit file io])
 
+  HAVE_UNIX_STDIO_64="$with_unix_stdio_64"
+  HAVE_MINGW_64_IO=no
+
   dnl Special case when using mingw cross compiler.
   dnl /* We need __MSVCRT_VERSION__ >= 0x0601 to have "struct __stat64" */
   dnl /* Latest versions of mingw32 define it, but with older ones, */
@@ -109,66 +112,68 @@ AC_DEFUN([AC_UNIX_STDIO_64],
     echo '#include <sys/stat.h>' >> conftest.c
     echo 'int main() { struct __stat64 buf; _stat64( "", &buf ); return 0; }' >> conftest.c
     if test -z "`${CC} ${CFLAGS} -o conftest conftest.c 2>&1`" ; then
-        with_unix_stdio_64=no
+        HAVE_UNIX_STDIO_64=no
+        HAVE_MINGW_64_IO=yes
         AC_DEFINE_UNQUOTED(VSI_STAT64,_stat64, [Define to name of 64bit stat function])
         AC_DEFINE_UNQUOTED(VSI_STAT64_T,__stat64, [Define to name of 64bit stat structure])
     fi
-    rm -f conftest*
+    rm -rf conftest*
   fi
 
-  if test x"$with_unix_stdio_64" = x"yes" ; then
+  if test x"$HAVE_UNIX_STDIO_64" = x"yes" ; then
+    HAVE_UNIX_STDIO_64=yes
     VSI_FTELL64=ftell64
     VSI_FSEEK64=fseek64
   fi
 
-  if test x"$with_unix_stdio_64" = x"" ; then
+  if test x"$HAVE_UNIX_STDIO_64" = x"" ; then
     echo '#include <stdio.h>' > conftest.c
-    echo 'int main() { long long off=0; fseek64(NULL, off, SEEK_SET); off = ftell64(NULL); return 0; }' >> conftest.c
+    echo 'int main() { long long off=0; fseek64(NULL, off, SEEK_SET); off = ftell64(NULL); return (int)off; }' >> conftest.c
     if test -z "`${CC} ${CFLAGS} -o conftest conftest.c 2>&1`" ; then
-      with_unix_stdio_64=yes
+      HAVE_UNIX_STDIO_64=yes
       VSI_FTELL64=ftell64
       VSI_FSEEK64=fseek64
     fi
-    rm -f conftest*
+    rm -rf conftest*
   fi
 
-  dnl I use CXX in this one, to ensure that the prototypes are available. 
+  dnl I use CXX in this one, to ensure that the prototypes are available.
   dnl these functions seem to exist on Linux, but aren't normally defined
   dnl by stdio.h.  With CXX (C++) this becomes a fatal error.
 
-  if test x"$with_unix_stdio_64" = x"" ; then
+  if test x"$HAVE_UNIX_STDIO_64" = x"" ; then
     echo '#include <stdio.h>' > conftest.cpp
-    echo 'int main() { long long off=0; fseeko64(NULL, off, SEEK_SET); off = ftello64(NULL); return 0; }' >> conftest.cpp
+    echo 'int main() { long long off=0; fseeko64(NULL, off, SEEK_SET); off = ftello64(NULL); return (int)off; }' >> conftest.cpp
     if test -z "`${CXX} ${CXXFLAGS} -o conftest conftest.cpp 2>&1`" ; then
-      with_unix_stdio_64=yes
+      HAVE_UNIX_STDIO_64=yes
       VSI_FTELL64=ftello64
       VSI_FSEEK64=fseeko64
     fi
-    rm -f conftest*
+    rm -rf conftest*
   fi
 
-  dnl This is much like the first test, but we predefine _LARGEFILE64_SOURCE 
+  dnl This is much like the first test, but we predefine _LARGEFILE64_SOURCE
   dnl before including stdio.h.  This should work on Linux 2.4 series systems.
 
-  if test x"$with_unix_stdio_64" = x"" ; then
+  if test x"$HAVE_UNIX_STDIO_64" = x"" ; then
     echo '#define _LARGEFILE64_SOURCE' > conftest.cpp
     echo '#include <stdio.h>' >> conftest.cpp
-    echo 'int main() { long long off=0; fseeko64(NULL, off, SEEK_SET); off = ftello64(NULL); return 0; }' >> conftest.cpp
+    echo 'int main() { long long off=0; fseeko64(NULL, off, SEEK_SET); off = ftello64(NULL); return (int)off; }' >> conftest.cpp
     if test -z "`${CXX} ${CXXFLAGS} -o conftest conftest.cpp 2>&1`" ; then
-      with_unix_stdio_64=yes
+      HAVE_UNIX_STDIO_64=yes
       VSI_FTELL64=ftello64
       VSI_FSEEK64=fseeko64
       AC_DEFINE(VSI_NEED_LARGEFILE64_SOURCE, 1, [Define to 1, if you have LARGEFILE64_SOURCE])
     fi
-    rm -f conftest*
+    rm -rf conftest*
   fi
 
-  dnl Test special MacOS (Darwin) case. 
+  dnl Test special MacOS (Darwin) case.
 
-  if test x"$with_unix_stdio_64" = x"" ; then
+  if test x"$HAVE_UNIX_STDIO_64" = x"" ; then
     case "${host_os}" in
       darwin*)
-        with_unix_stdio_64=yes
+        HAVE_UNIX_STDIO_64=yes
         VSI_FTELL64=ftello
         VSI_FSEEK64=fseeko
         ;;
@@ -178,18 +183,18 @@ AC_DEFUN([AC_UNIX_STDIO_64],
   dnl Test for BSD systems that support ftello/fseeko.
   dnl OpenBSD throws warnings about using strcpy/strcat, so we use CC instead of CXX
 
-  if test x"$with_unix_stdio_64" = x"" ; then
+  if test x"$HAVE_UNIX_STDIO_64" = x"" ; then
     echo '#include <stdio.h>' > conftest.c
-    echo 'int main() { fpos_t off=0; fseeko(NULL, off, SEEK_SET); off = ftello(NULL); return 0; }' >> conftest.c
+    echo 'int main() { fpos_t off=0; fseeko(NULL, off, SEEK_SET); off = ftello(NULL); return (int)off; }' >> conftest.c
     if test -z "`${CC} ${CFLAGS} -o conftest conftest.c 2>&1`" ; then
-      with_unix_stdio_64=yes
+      HAVE_UNIX_STDIO_64=yes
       VSI_FTELL64=ftello
       VSI_FSEEK64=fseeko
     fi
-    rm -f conftest*
+    rm -rf conftest*
   fi
 
-  if test x"$with_unix_stdio_64" = x"yes" ; then
+  if test x"$HAVE_UNIX_STDIO_64" = x"yes" ; then
     AC_MSG_RESULT([yes])
 
     case "${host_os}" in
@@ -197,7 +202,7 @@ AC_DEFUN([AC_UNIX_STDIO_64],
         VSI_STAT64=stat
         VSI_STAT64_T=stat
         ;;
-      *)      
+      *)
         AC_CHECK_FUNC(stat64, VSI_STAT64=stat64 VSI_STAT64_T=stat64, VSI_STAT64=stat VSI_STAT64_T=stat)
         ;;
     esac
@@ -205,7 +210,6 @@ AC_DEFUN([AC_UNIX_STDIO_64],
     AC_CHECK_FUNC(ftruncate64, VSI_FTRUNCATE64=ftruncate64, VSI_FTRUNCATE64=ftruncate)
 
     AC_DEFINE(UNIX_STDIO_64, 1, [Define to 1 if you have fseek64, ftell64])
-    AC_DEFINE(VSI_LARGE_API_SUPPORTED, 1, [Define to 1, if you have 64 bit STDIO API])
 
     export VSI_FTELL64 VSI_FSEEK64 VSI_STAT64 VSI_STAT64_T VSI_OPEN64 VSI_FTRUNCATE64
     AC_DEFINE_UNQUOTED(VSI_FTELL64,$VSI_FTELL64, [Define to name of 64bit ftell func])
@@ -216,6 +220,14 @@ AC_DEFUN([AC_UNIX_STDIO_64],
     AC_DEFINE_UNQUOTED(VSI_FTRUNCATE64,$VSI_FTRUNCATE64, [Define to name of 64bit ftruncate function])
   else
     AC_MSG_RESULT([no])
+    if test "$HAVE_MINGW_64_IO" = "no"; then
+        if test x"$with_unix_stdio_64" = x"no" ; then
+            CXXFLAGS="$CXXFLAGS -DBUILD_WITHOUT_64BIT_OFFSET"
+            AC_MSG_WARN([64-bit file I/O missing. Build will not support files larger than 4 GB])
+        else
+            AC_MSG_ERROR([64-bit file I/O missing. Build will not support files larger than 4 GB. If that is intended, ./configure --with-unix-stdio-64=no])
+        fi
+    fi
   fi
 
 ])
@@ -228,14 +240,14 @@ AC_DEFUN([AC_COMPILER_LOCALHACK],
   echo 'int main() { int i = 1; if( *((unsigned char *) &i) == 0 ) printf( "BIGENDIAN"); return 0; }' >> conftest.c
   ${CC} $CPPFLAGS $EXTRA_INCLUDES -o conftest conftest.c 2> comp.out
   COMP_CHECK=`grep "system directory" comp.out | grep /usr/local/include`
-  if test -z "$COMP_CHECK" ; then 
+  if test -z "$COMP_CHECK" ; then
      AC_MSG_RESULT([no, everything is ok])
   else
      AC_MSG_RESULT([yes, stripping extras])
      CXXFLAGS=`echo "$CXXFLAGS " | sed "s/-I\/usr\/local\/include //"`
      CFLAGS=`echo "$CFLAGS " | sed "s/-I\/usr\/local\/include //"`
      EXTRA_INCLUDES=`echo "$EXTRA_INCLUDES " | sed "s/-I\/usr\/local\/include //"`
-  fi 
+  fi
   rm -f comp.out
 ])
 
@@ -248,7 +260,7 @@ AC_DEFUN([AC_COMPILER_PIC],
 	if test -z "`${CXX-g++} $CXXFLAGS -fPIC -c conftest.c 2>&1`"; then
 	  CXXFLAGS="$CXXFLAGS -fPIC"
 	fi
-	rm -f conftest*
+	rm -rf conftest*
 ])
 
 dnl
@@ -259,13 +271,13 @@ AC_DEFUN([AC_TRY_OGDI],
   saved_LIBS="$LIBS"
   OGDI_LIBS=" -logdi -lzlib"
   LIBS="$saved_LIBS $OGDI_LIBS"
-  AC_TRY_LINK(,[ void *cln_CreateClient(); cln_CreateClient(); ], 
+  AC_TRY_LINK(,[ void *cln_CreateClient(); cln_CreateClient(); ],
 	HAVE_OGDI=yes, HAVE_OGDI=no)
 
   if test "$HAVE_OGDI" = "no" ; then
     OGDI_LIBS="-L$TOPDIR/bin/$TARGET -logdi -lzlib"
     LIBS="$saved_LIBS $OGDI_LIBS"
-    AC_TRY_LINK(,[ void *cln_CreateClient(); cln_CreateClient(); ], 
+    AC_TRY_LINK(,[ void *cln_CreateClient(); cln_CreateClient(); ],
 	  HAVE_OGDI=yes, HAVE_OGDI=no)
   fi
 
@@ -300,7 +312,7 @@ AC_DEFUN([AC_TRY_OGDI],
 dnl
 dnl Try to find something to link shared libraries with.  Use "c++ -shared"
 dnl in preference to "ld -shared" because it will link in required c++
-dnl run time support for us. 
+dnl run time support for us.
 dnl
 AC_DEFUN([AC_LD_SHARED],
 [
@@ -327,7 +339,7 @@ AC_DEFUN([AC_LD_SHARED],
     elif test "$with_ld_shared" = "yes" ; then
       AC_MSG_ERROR([--with-ld-shared not supported])
     else
-      echo "using user supplied .so link command ... $with_ld_shared"	
+      echo "using user supplied .so link command ... $with_ld_shared"
     fi
     LD_SHARED="$with_ld_shared"
   fi
@@ -354,7 +366,7 @@ AC_DEFUN([AC_LD_SHARED],
     fi
   fi
 
-  dnl Test special MacOS (Darwin) case. 
+  dnl Test special MacOS (Darwin) case.
 
   if test ! -z "`uname | grep Darwin`" \
           -a "$LD_SHARED" = "/bin/true" \
@@ -398,7 +410,7 @@ AC_DEFUN([AC_LD_SHARED],
     else
       echo "checking for ${CXX} -shared ... no(2)"
     fi
-  else 
+  else
     if test "$LD_SHARED" = "/bin/true" ; then
       echo "checking for ${CXX} -shared ... no(1)"
     fi
@@ -436,7 +448,7 @@ AC_DEFUN([AC_LD_SHARED],
     fi
   fi
 
-  rm -f conftest* libconftest* 
+  rm -rf conftest* libconftest*
 
   AC_SUBST(LD_SHARED,$LD_SHARED)
   AC_SUBST(SO_EXT,$SO_EXT)
