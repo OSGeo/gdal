@@ -1769,3 +1769,29 @@ def test_netcdf_multidim_open_userfaultfd():
         print('/vsi access through userfaultfd succeeded')
 
     gdal.Unlink('tmp/test_netcdf_open_userfaultfd.zip')
+
+
+###############################################################################
+# Test opening a char 2D variable
+
+
+def test_netcdf_multidim_open_char_2d():
+
+    ds = gdal.OpenEx('data/netcdf/char_2d.nc', gdal.OF_MULTIDIM_RASTER)
+    ar = ds.GetRootGroup().OpenMDArray('f')
+    assert ar
+    ar.GetNoDataValueAsRaw()
+    ar.GetBlockSize()
+
+
+###############################################################################
+# Test opening a char 2D variable with a dimension of sizer zero
+
+
+def test_netcdf_multidim_open_char_2d_zero_dim():
+
+    ds = gdal.OpenEx('data/netcdf/char_2d_zero_dim.nc', gdal.OF_MULTIDIM_RASTER)
+    ar = ds.GetRootGroup().OpenMDArray('f')
+    assert ar
+    ar.GetNoDataValueAsRaw()
+    ar.GetBlockSize()
