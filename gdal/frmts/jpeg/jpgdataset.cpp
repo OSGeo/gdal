@@ -574,7 +574,7 @@ void JPGDatasetCommon::ReadFLIRMetadata()
         const auto nSS = ReadUInt32(nRecOffset + 904) & 0xffff;
         const auto nTZ = ReadInt16(nRecOffset + 908);
         struct tm brokenDown;
-        CPLUnixTimeToYMDHMS(nUnixTime - nTZ * 60, &brokenDown);
+        CPLUnixTimeToYMDHMS(static_cast<GIntBig>(nUnixTime) - nTZ * 60, &brokenDown);
         std::string osDateTime(CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02d.%03d",
                                brokenDown.tm_year + 1900,
                                brokenDown.tm_mon + 1,
