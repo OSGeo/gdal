@@ -98,7 +98,8 @@ std::shared_ptr<ZarrArray> ZarrArray::Create(const std::shared_ptr<ZarrSharedRes
     {
         uint64_t nTileThisDim = (aoDims[i]->GetSize() / anBlockSize[i]) +
                     (((aoDims[i]->GetSize() % anBlockSize[i]) != 0) ? 1 : 0);
-        if( nTotalTileCount > std::numeric_limits<uint64_t>::max() / nTileThisDim )
+        if( nTileThisDim != 0 &&
+            nTotalTileCount > std::numeric_limits<uint64_t>::max() / nTileThisDim )
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Array %s has more than 2^64 tiles. This is not supported.",

@@ -1003,14 +1003,14 @@ static bool FillBlockSize(const std::vector<std::shared_ptr<GDALDimension>>& aoD
         anBlockSize[i] = 1;
     if( nDims >= 2 )
     {
-        anBlockSize[nDims-2] = std::min(aoDimensions[nDims-2]->GetSize(),
+        anBlockSize[nDims-2] = std::min(std::max<GUInt64>(1, aoDimensions[nDims-2]->GetSize()),
                                         static_cast<GUInt64>(256));
-        anBlockSize[nDims-1] = std::min(aoDimensions[nDims-1]->GetSize(),
+        anBlockSize[nDims-1] = std::min(std::max<GUInt64>(1, aoDimensions[nDims-1]->GetSize()),
                                         static_cast<GUInt64>(256));
     }
     else if( nDims == 1 )
     {
-        anBlockSize[0] = aoDimensions[0]->GetSize();
+        anBlockSize[0] = std::max<GUInt64>(1, aoDimensions[0]->GetSize());
     }
 
     const char* pszBlockSize = CSLFetchNameValue(papszOptions, "BLOCKSIZE");
