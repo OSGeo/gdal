@@ -134,6 +134,18 @@ CPL_CVSID("$Id$")
 
 #endif /* ndef UNIX_STDIO_64 */
 
+#ifndef BUILD_WITHOUT_64BIT_OFFSET
+// Ensure we have working 64 bit API
+static_assert( sizeof(VSI_FTELL64(nullptr)) == sizeof(vsi_l_offset),
+               "File API does not seem to support 64-bit offset. "
+               "If you still want to build GDAL without > 4GB file support, "
+               "add the -DBUILD_WITHOUT_64BIT_OFFSET define" );
+static_assert( sizeof(VSIStatBufL::st_size) == sizeof(vsi_l_offset),
+               "File API does not seem to support 64-bit file size. "
+               "If you still want to build GDAL without > 4GB file support, "
+               "add the -DBUILD_WITHOUT_64BIT_OFFSET define" );
+#endif
+
 /************************************************************************/
 /* ==================================================================== */
 /*                       VSIUnixStdioFilesystemHandler                  */
