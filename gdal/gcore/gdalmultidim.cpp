@@ -5926,12 +5926,16 @@ bool GDALMDArray::IsRegularlySpaced(double& dfStart, double& dfIncrement) const
         return true;
     };
 
-    // First try with the first block. This can avoid excessive processing time,
+    // First try with the first block(s). This can avoid excessive processing time,
     // for example with Zarr datasets. https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=37636
+    // and https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=39273
     const auto nBlockSize = GetBlockSize()[0];
-    if( nCount > 3 && nBlockSize >= 3 && nBlockSize < nCount - 1 )
+    if( nCount >= 5 && nBlockSize <= nCount / 2 )
     {
-        const size_t nReducedCount = static_cast<size_t>(nBlockSize);
+        size_t nReducedCount =
+                    std::max<size_t>(3, static_cast<size_t>(nBlockSize));
+        while( nReducedCount < 256 && nReducedCount <= (nCount - 2) / 2 )
+            nReducedCount *= 2;
         anCount[0] = nReducedCount;
         if( !Read(anStart, anCount, nullptr, nullptr,
                   GDALExtendedDataType::Create(GDT_Float64),
