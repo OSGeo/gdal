@@ -244,9 +244,6 @@
 /* Define to name of 64bit ftell func */
 #undef VSI_FTELL64
 
-/* Define to 1, if you have 64 bit STDIO API */
-#undef VSI_LARGE_API_SUPPORTED
-
 /* Define to 1, if you have LARGEFILE64_SOURCE */
 #undef VSI_NEED_LARGEFILE64_SOURCE
 
