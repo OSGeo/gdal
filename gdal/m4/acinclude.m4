@@ -42,7 +42,7 @@ AC_DEFUN([AC_HAVE_LONG_LONG],
   else
     AC_MSG_ERROR([long long not found])
   fi
-  rm -f conftest*
+  rm -rf conftest*
 ])
 
 # AC_LANG_FUNC_LINK_TRY_CUSTOM(C++)(FUNCTION,INCLUDE,CODE)
@@ -117,7 +117,7 @@ AC_DEFUN([AC_UNIX_STDIO_64],
         AC_DEFINE_UNQUOTED(VSI_STAT64,_stat64, [Define to name of 64bit stat function])
         AC_DEFINE_UNQUOTED(VSI_STAT64_T,__stat64, [Define to name of 64bit stat structure])
     fi
-    rm -f conftest*
+    rm -rf conftest*
   fi
 
   if test x"$HAVE_UNIX_STDIO_64" = x"yes" ; then
@@ -134,7 +134,7 @@ AC_DEFUN([AC_UNIX_STDIO_64],
       VSI_FTELL64=ftell64
       VSI_FSEEK64=fseek64
     fi
-    rm -f conftest*
+    rm -rf conftest*
   fi
 
   dnl I use CXX in this one, to ensure that the prototypes are available.
@@ -149,7 +149,7 @@ AC_DEFUN([AC_UNIX_STDIO_64],
       VSI_FTELL64=ftello64
       VSI_FSEEK64=fseeko64
     fi
-    rm -f conftest*
+    rm -rf conftest*
   fi
 
   dnl This is much like the first test, but we predefine _LARGEFILE64_SOURCE
@@ -165,7 +165,7 @@ AC_DEFUN([AC_UNIX_STDIO_64],
       VSI_FSEEK64=fseeko64
       AC_DEFINE(VSI_NEED_LARGEFILE64_SOURCE, 1, [Define to 1, if you have LARGEFILE64_SOURCE])
     fi
-    rm -f conftest*
+    rm -rf conftest*
   fi
 
   dnl Test special MacOS (Darwin) case.
@@ -191,7 +191,7 @@ AC_DEFUN([AC_UNIX_STDIO_64],
       VSI_FTELL64=ftello
       VSI_FSEEK64=fseeko
     fi
-    rm -f conftest*
+    rm -rf conftest*
   fi
 
   if test x"$HAVE_UNIX_STDIO_64" = x"yes" ; then
@@ -260,7 +260,7 @@ AC_DEFUN([AC_COMPILER_PIC],
 	if test -z "`${CXX-g++} $CXXFLAGS -fPIC -c conftest.c 2>&1`"; then
 	  CXXFLAGS="$CXXFLAGS -fPIC"
 	fi
-	rm -f conftest*
+	rm -rf conftest*
 ])
 
 dnl
@@ -448,7 +448,7 @@ AC_DEFUN([AC_LD_SHARED],
     fi
   fi
 
-  rm -f conftest* libconftest*
+  rm -rf conftest* libconftest*
 
   AC_SUBST(LD_SHARED,$LD_SHARED)
   AC_SUBST(SO_EXT,$SO_EXT)
