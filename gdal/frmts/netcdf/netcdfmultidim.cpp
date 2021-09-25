@@ -1883,6 +1883,7 @@ const GDALExtendedDataType &netCDFVariable::GetDataType() const
 
     if( m_nDims == 2 && m_nVarType == NC_CHAR && m_nTextLength > 0 )
     {
+        m_bPerfectDataTypeMatch = true;
         m_dt.reset(new GDALExtendedDataType(
             GDALExtendedDataType::CreateString(m_nTextLength)));
     }
