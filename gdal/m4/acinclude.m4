@@ -128,7 +128,7 @@ AC_DEFUN([AC_UNIX_STDIO_64],
 
   if test x"$HAVE_UNIX_STDIO_64" = x"" ; then
     echo '#include <stdio.h>' > conftest.c
-    echo 'int main() { long long off=0; fseek64(NULL, off, SEEK_SET); off = ftell64(NULL); return 0; }' >> conftest.c
+    echo 'int main() { long long off=0; fseek64(NULL, off, SEEK_SET); off = ftell64(NULL); return (int)off; }' >> conftest.c
     if test -z "`${CC} ${CFLAGS} -o conftest conftest.c 2>&1`" ; then
       HAVE_UNIX_STDIO_64=yes
       VSI_FTELL64=ftell64
@@ -143,7 +143,7 @@ AC_DEFUN([AC_UNIX_STDIO_64],
 
   if test x"$HAVE_UNIX_STDIO_64" = x"" ; then
     echo '#include <stdio.h>' > conftest.cpp
-    echo 'int main() { long long off=0; fseeko64(NULL, off, SEEK_SET); off = ftello64(NULL); return 0; }' >> conftest.cpp
+    echo 'int main() { long long off=0; fseeko64(NULL, off, SEEK_SET); off = ftello64(NULL); return (int)off; }' >> conftest.cpp
     if test -z "`${CXX} ${CXXFLAGS} -o conftest conftest.cpp 2>&1`" ; then
       HAVE_UNIX_STDIO_64=yes
       VSI_FTELL64=ftello64
@@ -158,7 +158,7 @@ AC_DEFUN([AC_UNIX_STDIO_64],
   if test x"$HAVE_UNIX_STDIO_64" = x"" ; then
     echo '#define _LARGEFILE64_SOURCE' > conftest.cpp
     echo '#include <stdio.h>' >> conftest.cpp
-    echo 'int main() { long long off=0; fseeko64(NULL, off, SEEK_SET); off = ftello64(NULL); return 0; }' >> conftest.cpp
+    echo 'int main() { long long off=0; fseeko64(NULL, off, SEEK_SET); off = ftello64(NULL); return (int)off; }' >> conftest.cpp
     if test -z "`${CXX} ${CXXFLAGS} -o conftest conftest.cpp 2>&1`" ; then
       HAVE_UNIX_STDIO_64=yes
       VSI_FTELL64=ftello64
@@ -185,7 +185,7 @@ AC_DEFUN([AC_UNIX_STDIO_64],
 
   if test x"$HAVE_UNIX_STDIO_64" = x"" ; then
     echo '#include <stdio.h>' > conftest.c
-    echo 'int main() { fpos_t off=0; fseeko(NULL, off, SEEK_SET); off = ftello(NULL); return 0; }' >> conftest.c
+    echo 'int main() { fpos_t off=0; fseeko(NULL, off, SEEK_SET); off = ftello(NULL); return (int)off; }' >> conftest.c
     if test -z "`${CC} ${CFLAGS} -o conftest conftest.c 2>&1`" ; then
       HAVE_UNIX_STDIO_64=yes
       VSI_FTELL64=ftello
