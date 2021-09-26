@@ -1182,7 +1182,8 @@ class InventoryWrapperSidecar : public gdal::grib::InventoryWrapper
             if (aosNum.size() < 1) goto err_sidecar;
 
             // FindMetaData will retrieve the correct version number
-                static_cast<unsigned short>(strtol(aosNum[0], &endptr, 10));
+            char *endptr;
+            strtol(aosNum[0], &endptr, 10);
             if (*endptr != 0) goto err_sidecar;
 
             if (aosNum.size() < 2)
