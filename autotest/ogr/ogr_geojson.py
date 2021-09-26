@@ -1149,7 +1149,7 @@ def test_ogr_geojson_39():
 ] }""")
     lyr = ds.GetLayer(0)
     feat_defn = lyr.GetLayerDefn()
-    assert feat_defn.GetFieldDefn(1).GetName() == 'id' and feat_defn.GetFieldDefn(1).GetType() == ogr.OFTInteger
+    assert feat_defn.GetFieldDefn(0).GetName() == 'id' and feat_defn.GetFieldDefn(0).GetType() == ogr.OFTInteger
     feat = lyr.GetNextFeature()
     if feat.GetField('id') != 1:
         feat.DumpReadable()
@@ -3163,3 +3163,13 @@ def test_ogr_geojson_export_geometry_axis_order():
     # No CRS
     g = ogr.CreateGeometryFromWkt('POINT (2 49)')
     assert json.loads(g.ExportToJson()) == { "type": "Point", "coordinates": [ 2.0, 49.0 ] }
+
+###############################################################################
+
+def test_ogr_geojson_sparse_fields():
+
+    ds = ogr.Open('data/geojson/sparse_fields.geojson')
+    lyr = ds.GetLayer(0)
+    lyr_defn = lyr.GetLayerDefn()
+    field_names = [ lyr_defn.GetFieldDefn(i).GetName() for i in range(lyr_defn.GetFieldCount()) ]
+    assert field_names == [ 'C', 'B', 'A', 'D', 'E_prev', 'E', 'E_next', 'F', 'X']
