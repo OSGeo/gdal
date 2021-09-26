@@ -32,7 +32,6 @@
 #include "ogr_spatialref.h"
 #include "wcsutils.h"
 #include <algorithm>
-#include <string>
 
 #define DIGITS "0123456789"
 
@@ -43,19 +42,6 @@ void Swap(double &a, double &b)
     double tmp = a;
     a = b;
     b = tmp;
-}
-
-int CompareNumbers(const std::string &a, const std::string &b)
-{
-    double ad = std::stod(a);
-    double bd = std::stod(b);
-    if (ad < bd) {
-        return -1;
-    } else if (ad > bd) {
-        return 1;
-    } else {
-        return 0;
-    }
 }
 
 CPLString URLEncode(const CPLString &str)
