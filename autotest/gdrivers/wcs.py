@@ -248,7 +248,8 @@ def compare_urls(a, b):
     a_list = a.split('&')
     b_list = b.split('&')
     n = len(a_list)
-    if n != len(b_list): return False
+    if n != len(b_list):
+        return False
     for i in (range(n)):
         if not re.match('SUBSET=', a_list[i]):
             if a_list[i] != b_list[i]:
@@ -263,15 +264,19 @@ def compare_urls(a, b):
         x_list = x.split(',')
         y_list = y.split(',')
         m = len(x_list)
-        if m != len(y_list): return False
+        if m != len(y_list):
+            return False
         for j in (range(m)):
             try:
                 c1 = float(x_list[j])
                 c2 = float(y_list[j])
             except Exception as e:
+                print(repr(e))
                 return False
-            if c1 == c2: continue
-            if abs((c1-c2)/c1) > 0.001: return False
+            if c1 == c2:
+                continue
+            if abs((c1-c2)/c1) > 0.001:
+                return False
     return True
 
 
