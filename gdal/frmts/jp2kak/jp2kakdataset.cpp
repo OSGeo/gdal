@@ -788,7 +788,8 @@ int JP2KAKDataset::Identify( GDALOpenInfo * poOpenInfo )
             || EQUAL(pszExtension, "j2k")
             || EQUAL(pszExtension, "jp2")
             || EQUAL(pszExtension, "jpx")
-            || EQUAL(pszExtension, "j2c") )
+            || EQUAL(pszExtension, "j2c")
+            || EQUAL(pszExtension, "jhc") )
            return TRUE;
 
         // We also want to handle jpc datastreams vis /vsisubfile.
