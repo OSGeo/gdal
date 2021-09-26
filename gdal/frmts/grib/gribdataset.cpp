@@ -2579,11 +2579,12 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
             if (rPixelSizeX * nRasterXSize > 360)
                 CPLDebug("GRIB",
                     "Cannot properly handle GRIB2 files with overlaps and 0-360 longitudes");
-            else if (rPixelSizeX * nRasterXSize == 360 && meta->gds.projType == GS3_LATLON)
+            else if (fabs(360 - rPixelSizeX * nRasterXSize) < rPixelSizeX/4 &&
+                meta->gds.projType == GS3_LATLON)
             {
                 // Find the first row number east of the antimeridian
                 nSplitAndSwapColumn = static_cast<int>(ceil((180 - rMinX) / rPixelSizeX));
-                CPLDebug("GRIB", "Enabling Split&Swap mode, antimeridian is at column %d",
+                CPLDebug("GRIB", "Rewrapping around the antimeridian at column %d",
                     nSplitAndSwapColumn);
                 rMinX = -180;
             }
