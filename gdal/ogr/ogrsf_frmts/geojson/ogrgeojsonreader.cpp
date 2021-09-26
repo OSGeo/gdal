@@ -1649,6 +1649,10 @@ bool OGRGeoJSONReader::GenerateLayerDefn( OGRGeoJSONLayer* poLayer,
         }
     }
 
+    // Note: the current strategy will not produce stable output, depending
+    // on the order of features, if there are conflicting order / cycles.
+    // See https://github.com/OSGeo/gdal/pull/4552 for a number of potential
+    // resolutions if that has to be solved in the future.
     OGRFeatureDefn* poDefn = poLayer->GetLayerDefn();
     const auto sortedFields = dag.getTopologicalOrdering();
     CPLAssert( sortedFields.size() == apoFieldDefn.size() );
