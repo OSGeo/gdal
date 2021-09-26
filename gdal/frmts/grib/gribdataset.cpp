@@ -980,9 +980,10 @@ CPLErr GRIBRasterBand::IReadBlock( int /* nBlockXOff */,
            m_Grib_Data + static_cast<size_t>(nGribDataXSize) * (nGribDataYSize - nBlockYOff - 1) + nSplitAndSwapColumn,
            (nCopyWords - nSplitAndSwapColumn) * sizeof(double));
 
-    memcpy(reinterpret_cast<void*>(reinterpret_cast<double*>(pImage) + nSplitAndSwapColumn),
-           m_Grib_Data + static_cast<size_t>(nGribDataXSize) * (nGribDataYSize - nBlockYOff - 1),
-           nSplitAndSwapColumn * sizeof(double));
+    if (nSplitAndSwapColumn > 0)
+        memcpy(reinterpret_cast<void*>(reinterpret_cast<double*>(pImage) + nSplitAndSwapColumn),
+            m_Grib_Data + static_cast<size_t>(nGribDataXSize) * (nGribDataYSize - nBlockYOff - 1),
+            nSplitAndSwapColumn * sizeof(double));
 
     return CE_None;
 }

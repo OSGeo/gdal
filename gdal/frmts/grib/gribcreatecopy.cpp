@@ -295,7 +295,6 @@ bool GRIB2Section3Writer::WriteGeographic()
 
     WriteEllipsoidAndRasterSize();
 
-    CPLDebug("GRIB", "Geotransform: %lf %lf %lf", adfGeoTransform[0], adfGeoTransform[1], adfGeoTransform[2]);
     if (dfLLX < 0 &&
         CPLTestBool(CPLGetConfigOption("GRIB_ADJUST_LONGITUDE_RANGE", "YES")))
     {
@@ -806,23 +805,26 @@ float* GRIB2Section567Writer::GetFloatData()
         VSIFree(pafData);
         return nullptr;
     }
-    eErr = m_poSrcDS->GetRasterBand(m_nBand)->RasterIO(
-      GF_Read,
-      0, 0,
-      m_nSplitAndSwap, m_nYSize,
-      pafData + (m_adfGeoTransform[5] < 0 ? (m_nYSize - 1) * m_nXSize : 0) +
-        (m_nXSize - m_nSplitAndSwap),
-      m_nSplitAndSwap, m_nYSize,
-      GDT_Float32,
-      sizeof(float),
-      m_adfGeoTransform[5] < 0
-        ? -static_cast<GSpacing>(m_nXSize * sizeof(float))
-        : static_cast<GSpacing>(m_nXSize * sizeof(float)),
-      nullptr);
-    if (eErr != CE_None)
+    if (m_nSplitAndSwap > 0)
     {
-        VSIFree(pafData);
-        return nullptr;
+        eErr = m_poSrcDS->GetRasterBand(m_nBand)->RasterIO(
+        GF_Read,
+        0, 0,
+        m_nSplitAndSwap, m_nYSize,
+        pafData + (m_adfGeoTransform[5] < 0 ? (m_nYSize - 1) * m_nXSize : 0) +
+            (m_nXSize - m_nSplitAndSwap),
+        m_nSplitAndSwap, m_nYSize,
+        GDT_Float32,
+        sizeof(float),
+        m_adfGeoTransform[5] < 0
+            ? -static_cast<GSpacing>(m_nXSize * sizeof(float))
+            : static_cast<GSpacing>(m_nXSize * sizeof(float)),
+        nullptr);
+        if (eErr != CE_None)
+        {
+            VSIFree(pafData);
+            return nullptr;
+        }
     }
 
     m_fMin = std::numeric_limits<float>::max();
@@ -1300,19 +1302,22 @@ bool GRIB2Section567Writer::WriteIEEE(GDALProgressFunc pfnProgress,
             GDALDestroyScaledProgress(pScaledProgressData);
             return false;
         }
-        eErr = m_poSrcDS->GetRasterBand(m_nBand)->RasterIO(
-            GF_Read,
-            0, iSrcLine,
-            m_nSplitAndSwap, 1,
-            reinterpret_cast<void*>(reinterpret_cast<GByte*>(pData) +
-                m_nSplitAndSwap * GDALGetDataTypeSizeBytes(eReqDT)),
-            m_nSplitAndSwap, 1,
-            eReqDT, 0, 0, nullptr);
-        if ( eErr != CE_None )
+        if (m_nSplitAndSwap > 0)
         {
-            CPLFree(pData);
-            GDALDestroyScaledProgress(pScaledProgressData);
-            return false;
+            eErr = m_poSrcDS->GetRasterBand(m_nBand)->RasterIO(
+                GF_Read,
+                0, iSrcLine,
+                m_nSplitAndSwap, 1,
+                reinterpret_cast<void*>(reinterpret_cast<GByte*>(pData) +
+                    m_nSplitAndSwap * GDALGetDataTypeSizeBytes(eReqDT)),
+                m_nSplitAndSwap, 1,
+                eReqDT, 0, 0, nullptr);
+            if ( eErr != CE_None )
+            {
+                CPLFree(pData);
+                GDALDestroyScaledProgress(pScaledProgressData);
+                return false;
+            }
         }
         if( m_fValOffset != 0.0 )
         {
