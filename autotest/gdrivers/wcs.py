@@ -257,9 +257,9 @@ def compare_urls(a, b):
             continue
         x = a_list[i]
         y = b_list[i]
-        for c in ('SUBSET=', 'E', 'N', '%28', '%29'):
-            x = x.replace(c, '')
-            y = y.replace(c, '')
+        for c in ('SUBSET=[a-zA-Z]+', '%28', '%29'):
+            x = re.sub(c, '', x)
+            y = re.sub(c, '', y)
         x_list = x.split(',')
         y_list = y.split(',')
         m = len(x_list)
