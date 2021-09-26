@@ -1425,10 +1425,7 @@ def test_grib_grib2_read_subgrids_reuse_bitmap():
 # Test reading and writing GRIBv2 with 0-360 longitudes
 # Fixes https://github.com/OSGeo/gdal/issues/4524
 
-def test_grib_grib2_split_and_swap():
-    tmpfilename = '/vsimem/out.grb2'
-
-    tests = [
+@pytest.mark.parametrize('test', [
         # Only the full globe can use split&swap
         { 'file': 'data/grib/gfs.t06z.pgrb2.1p0.grib2', 'geo': (-185.0, 10.0, 0.0, 90.125, 0.0, -10.0), 'band1csum': 7514 },
         # This one is very unorthodox and likely to trigger bugs
@@ -1437,28 +1434,31 @@ def test_grib_grib2_split_and_swap():
         { 'file': 'data/grib/gfs.t06z.pgrb2.1p0.partial_east_of_am.grib2', 'geo': (-60.125, 10.0, 0.0, 90.125, 0.0, -10.0), 'band1csum': 698 },
         # This one should be identical with and without the translation
         { 'file': 'data/grib/gfs.t06z.pgrb2.1p0.partial_west_of_am.grib2', 'geo': (24.875, 10.0, 0.0, 90.125, 0.0, -10.0), 'band1csum': 601 }
-    ]
+], ids=lambda x: x['file'])
+def test_grib_grib2_split_and_swap(test):
+    tmpfilename = '/vsimem/out.grb2'
 
-    for test in tests:
-        ds = gdal.Open(test['file'])
-        gt = ds.GetGeoTransform()
-        assert gt == pytest.approx(test['geo'], rel=1e-6)
-        assert ds.GetRasterBand(1).Checksum() == test['band1csum']
+    ds = gdal.Open(test['file'])
+    gt = ds.GetGeoTransform()
+    assert gt == pytest.approx(test['geo'], rel=1e-6)
+    assert ds.GetRasterBand(1).Checksum() == test['band1csum']
 
-        out_ds = gdaltest.grib_drv.CreateCopy(tmpfilename, ds)
-        gt = out_ds.GetGeoTransform()
-        assert gt == pytest.approx(test['geo'], rel=1e-6)
-        assert out_ds.GetRasterBand(1).Checksum() == test['band1csum']
+    out_ds = gdaltest.grib_drv.CreateCopy(tmpfilename, ds)
+    gt = out_ds.GetGeoTransform()
+    assert gt == pytest.approx(test['geo'], rel=1e-6)
+    assert out_ds.GetRasterBand(1).Checksum() == test['band1csum']
 
-        out_ds = None
-        gdal.Unlink(tmpfilename)
-        ds = None
+    out_ds = None
+    gdal.Unlink(tmpfilename)
+    ds = None
 
+def test_grib_grib2_disable_split_and_swap():
     with gdaltest.config_option('GRIB_ADJUST_LONGITUDE_RANGE', 'NO'):
+        tmpfilename = '/vsimem/out.grb2'
         # This the untranslated range
         expected_gt = (-0.125, 10.0, 0.0, 90.125, 0.0, -10.0)
 
-        ds = gdal.Open(tests[0]['file'])
+        ds = gdal.Open('data/grib/gfs.t06z.pgrb2.1p0.grib2')
         gt = ds.GetGeoTransform()
         assert gt == pytest.approx(expected_gt, rel=1e-6)
         assert ds.GetRasterBand(1).Checksum() == 7674
@@ -1471,8 +1471,6 @@ def test_grib_grib2_split_and_swap():
         out_ds = None
         gdal.Unlink(tmpfilename)
         ds = None
-
-
 
 
 # Test sidecar file support
