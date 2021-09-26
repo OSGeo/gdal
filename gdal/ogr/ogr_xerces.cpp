@@ -41,6 +41,7 @@
 #include "cpl_string.h"
 
 #include <algorithm>
+#include <limits>
 #include <map>
 
 CPL_CVSID("$Id$")
@@ -150,6 +151,8 @@ public:
 
 void* OGRXercesInstrumentedMemoryManager::allocate(XMLSize_t size)
 {
+    if( size > std::numeric_limits<size_t>::max() - 8U )
+        throw OutOfMemoryException();
     void* memptr = VSIMalloc(size + 8);
     if( memptr == nullptr )
         throw OutOfMemoryException();
