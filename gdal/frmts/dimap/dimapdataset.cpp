@@ -1230,8 +1230,15 @@ int DIMAPDataset::ReadImageInformation2()
     {
         return FALSE;
     }
-    if( poImageDS->GetRasterCount() != l_nBands &&
-        !(bTwoDataFilesPerTile && poImageDS->GetRasterCount() == 3) )
+    if( bTwoDataFilesPerTile )
+    {
+        if( l_nBands != 6 || poImageDS->GetRasterCount() != 3 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Inconsistent band count");
+            return FALSE;
+        }
+    }
+    else if( poImageDS->GetRasterCount() != l_nBands )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Inconsistent band count");
         return FALSE;
