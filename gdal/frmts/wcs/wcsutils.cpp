@@ -44,49 +44,6 @@ void Swap(double &a, double &b)
     b = tmp;
 }
 
-int CompareNumbers(const std::string &a, const std::string &b)
-{
-    size_t a_dot = a.find(".");
-    size_t b_dot = b.find(".");
-    std::string a_p = a.substr(0, a_dot);
-    std::string b_p = b.substr(0, b_dot);
-    int d = (int)(a_p.length()) - (int)(b_p.length());
-    if (d < 0) {
-        for (int i = 0; i < -1*d; ++i) {
-            a_p = "0" + a_p;
-        }
-    } else if (d > 0) {
-        for (int i = 0; i < d; ++i) {
-            b_p = "0" + b_p;
-        }
-    }
-    int c = a_p.compare(b_p);
-    if (c < 0) {
-        return -1;
-    } else if (c > 0) {
-        return 1;
-    }
-    a_p = a_dot == std::string::npos ? a : a.substr(a_dot + 1);
-    b_p = b_dot == std::string::npos ? b : b.substr(b_dot + 1);
-    d = (int)(a_p.length()) - (int)(b_p.length());
-    if (d < 0) {
-        for (int i = 0; i < -1*d; ++i) {
-            a_p = a_p + "0";
-        }
-    } else if (d > 0) {
-        for (int i = 0; i < d; ++i) {
-            b_p = b_p + "0";
-        }
-    }
-    c = a_p.compare(b_p);
-    if (c < 0) {
-        return -1;
-    } else if (c > 0) {
-        return 1;
-    }
-    return 0;
-}
-
 CPLString URLEncode(const CPLString &str)
 {
     char *pszEncoded = CPLEscapeString(str, -1, CPLES_URL );
