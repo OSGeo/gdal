@@ -32,6 +32,7 @@
 #include "cpl_string.h"
 #include "cpl_minixml.h"
 #include "cpl_http.h"
+#include "cpl_conv.h"
 #include "gmlutils.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
@@ -182,11 +183,11 @@ CPLString WCSDataset201::GetCoverageRequest(bool scaled,
     std::vector<CPLString> low = Split(CPLGetXMLValue(psService, "Low", ""), ",");
     std::vector<CPLString> high = Split(CPLGetXMLValue(psService, "High", ""), ",");
     CPLString a = CPLString().Printf("%.17g", extent[0]);
-    if (low.size() > 1 && CompareNumbers(low[0], a) > 0) {
+    if (low.size() > 1 && CPLAtof(low[0].c_str()) > extent[0]) {
         a = low[0];
     }
     CPLString b = CPLString().Printf("%.17g", extent[2]);
-    if (high.size() > 1 && CompareNumbers(high[0], b) < 0) {
+    if (high.size() > 1 && CPLAtof(high[0].c_str()) < extent[2]) {
         b = high[0];
     }
     /*
@@ -202,11 +203,11 @@ CPLString WCSDataset201::GetCoverageRequest(bool scaled,
     request += CPLString().Printf("&SUBSET=%s%%28%s,%s%%29", x, a.c_str(), b.c_str());
 
     a = CPLString().Printf("%.17g", extent[1]);
-    if (low.size() > 1 && CompareNumbers(low[1], a) > 0) {
+    if (low.size() > 1 && CPLAtof(low[1].c_str()) > extent[1]) {
         a = low[1];
     }
     b = CPLString().Printf("%.17g", extent[3]);
-    if (high.size() > 1 && CompareNumbers(high[1], b) < 0) {
+    if (high.size() > 1 && CPLAtof(high[1].c_str()) < extent[3]) {
         b = high[1];
     }
     /*
