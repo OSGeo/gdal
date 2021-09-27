@@ -32,14 +32,16 @@ For example:
 ::
 
      MEM:::DATAPOINTER=342343408,PIXELS=100,LINES=100,BANDS=3,DATATYPE=Byte,
-          PIXELOFFSET=3,LINEOFFSET=300,BANDOFFSET=1
+          PIXELOFFSET=3,LINEOFFSET=300,BANDOFFSET=1,
+          GEOTRANSFORM=1.166396e+02/1.861068e-05/0.000000e+00/3.627969e+01/0.000000e+00/-1.861068e-05
 
 or
 
 ::
 
      MEM:::DATAPOINTER=0x1467BEF0,PIXELS=100,LINES=100,BANDS=3,DATATYPE=Byte,
-          PIXELOFFSET=3,LINEOFFSET=300,BANDOFFSET=1
+          PIXELOFFSET=3,LINEOFFSET=300,BANDOFFSET=1,
+          GEOTRANSFORM=1.166396e+02/1.861068e-05/0.000000e+00/3.627969e+01/0.000000e+00/-1.861068e-05
 
 -  DATAPOINTER: address of the first pixel of the first band. The
    address can be represented as a hexadecimal or decimal value.
@@ -59,6 +61,8 @@ or
    next. (optional)
 -  BANDOFFSET: Offset in bytes between the start of one bands data and
    the next.
+-  GEOTRANSFORM: Set the affine transformation coefficients. 6 real
+   numbers with '/' as separator (optional)
 
 Creation Options
 ----------------

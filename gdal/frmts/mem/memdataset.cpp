@@ -1429,6 +1429,24 @@ GDALDataset *MEMDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Set GeoTransform information.                                   */
+/* -------------------------------------------------------------------- */
+
+    pszOption = CSLFetchNameValue(papszOptions, "GEOTRANSFORM");
+    if( pszOption != nullptr ) {
+        char **values = CSLTokenizeStringComplex(pszOption, "/", TRUE, FALSE );
+        if ( CSLCount( values ) == 6 ) {
+            double adfGeoTransform[6] = {0,0,0,0,0,0};
+            for ( size_t i = 0; i < 6; ++i ) {
+                adfGeoTransform[i] =
+                    CPLScanDouble( values[i], static_cast<int>(strlen(values[i])) );
+            }
+            poDS->SetGeoTransform(adfGeoTransform);
+        }
+        CSLDestroy( values );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Try to return a regular handle on the file.                     */
 /* -------------------------------------------------------------------- */
     CSLDestroy( papszOptions );
