@@ -1310,7 +1310,7 @@ def test_netcdf_multidim_getmdarraynames_options(netcdf_setup):  # noqa
     assert 'mygridmapping' in rg.GetMDArrayNames(['SHOW_ZERO_DIM=YES'])
 
 
-def test_netcdf_multidim_indexing_var_through_coordinates(netcdf_setup):  # noqa
+def test_netcdf_multidim_indexing_var_through_coordinates_opposite_order(netcdf_setup):  # noqa
 
     tmpfilename = 'tmp/test_netcdf_multidim_indexing_var_through_coordinates.nc'
     drv = gdal.GetDriverByName('netCDF')
@@ -1324,8 +1324,16 @@ def test_netcdf_multidim_indexing_var_through_coordinates(netcdf_setup):  # noqa
         att = var.CreateAttribute('coordinates', [], gdal.ExtendedDataType.CreateString())
         assert att
         assert att.Write('lon lat') == gdal.CE_None
-        rg.CreateMDArray('lat', [dim_rel_to_lat],  gdal.ExtendedDataType.Create(gdal.GDT_Float64))
-        rg.CreateMDArray('lon', [dim_rel_to_lon],  gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+
+        var = rg.CreateMDArray('lat', [dim_rel_to_lat],  gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+        att = var.CreateAttribute('standard_name', [], gdal.ExtendedDataType.CreateString())
+        assert att
+        assert att.Write('latitude') == gdal.CE_None
+
+        var = rg.CreateMDArray('lon', [dim_rel_to_lon],  gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+        att = var.CreateAttribute('standard_name', [], gdal.ExtendedDataType.CreateString())
+        assert att
+        assert att.Write('longitude') == gdal.CE_None
 
     def check():
         ds = gdal.OpenEx(tmpfilename, gdal.OF_MULTIDIM_RASTER)
@@ -1343,7 +1351,7 @@ def test_netcdf_multidim_indexing_var_through_coordinates(netcdf_setup):  # noqa
     gdal.Unlink(tmpfilename)
 
 
-def test_netcdf_multidim_indexing_var_through_coordinates_2D_dims(netcdf_setup):  # noqa
+def test_netcdf_multidim_indexing_var_through_coordinates_2D_dims_same_order(netcdf_setup):  # noqa
 
     tmpfilename = 'tmp/test_netcdf_multidim_indexing_var_through_coordinates.nc'
     drv = gdal.GetDriverByName('netCDF')
@@ -1357,9 +1365,18 @@ def test_netcdf_multidim_indexing_var_through_coordinates_2D_dims(netcdf_setup):
         var = rg.CreateMDArray('var', [dimZ, dim_rel_to_lat, dim_rel_to_lon],  gdal.ExtendedDataType.Create(gdal.GDT_Float64))
         att = var.CreateAttribute('coordinates', [], gdal.ExtendedDataType.CreateString())
         assert att
-        assert att.Write('lon lat Z') == gdal.CE_None
-        rg.CreateMDArray('lat', [dim_rel_to_lat, dim_rel_to_lon],  gdal.ExtendedDataType.Create(gdal.GDT_Float64))
-        rg.CreateMDArray('lon', [dim_rel_to_lat, dim_rel_to_lon],  gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+        assert att.Write('Z lat lon') == gdal.CE_None
+
+        var = rg.CreateMDArray('lat', [dim_rel_to_lat, dim_rel_to_lon],  gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+        att = var.CreateAttribute('standard_name', [], gdal.ExtendedDataType.CreateString())
+        assert att
+        assert att.Write('latitude') == gdal.CE_None
+
+        var = rg.CreateMDArray('lon', [dim_rel_to_lat, dim_rel_to_lon],  gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+        att = var.CreateAttribute('standard_name', [], gdal.ExtendedDataType.CreateString())
+        assert att
+        assert att.Write('longitude') == gdal.CE_None
+
         rg.CreateMDArray('Z', [dimZ],  gdal.ExtendedDataType.Create(gdal.GDT_Float64))
 
     def check():
@@ -1377,7 +1394,101 @@ def test_netcdf_multidim_indexing_var_through_coordinates_2D_dims(netcdf_setup):
     check()
     gdal.Unlink(tmpfilename)
 
-def test_netcdf_multidim_stats(netcdf_setup):  # noqa
+
+def test_netcdf_multidim_indexing_var_through_coordinates_2D_dims_opposite_order(netcdf_setup):  # noqa
+
+    tmpfilename = 'tmp/test_netcdf_multidim_indexing_var_through_coordinates.nc'
+    drv = gdal.GetDriverByName('netCDF')
+
+    def create():
+        ds = drv.CreateMultiDimensional(tmpfilename)
+        rg = ds.GetRootGroup()
+        dimZ = rg.CreateDimension('Z', None, None, 1)
+        dim_rel_to_lat = rg.CreateDimension('related_to_lat', None, None, 1)
+        dim_rel_to_lon = rg.CreateDimension('related_to_lon', None, None, 2)
+        var = rg.CreateMDArray('var', [dimZ, dim_rel_to_lat, dim_rel_to_lon],  gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+        att = var.CreateAttribute('coordinates', [], gdal.ExtendedDataType.CreateString())
+        assert att
+        assert att.Write('lon lat Z') == gdal.CE_None
+
+        var = rg.CreateMDArray('lat', [dim_rel_to_lat, dim_rel_to_lon],  gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+        att = var.CreateAttribute('standard_name', [], gdal.ExtendedDataType.CreateString())
+        assert att
+        assert att.Write('latitude') == gdal.CE_None
+
+        var = rg.CreateMDArray('lon', [dim_rel_to_lat, dim_rel_to_lon],  gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+        att = var.CreateAttribute('standard_name', [], gdal.ExtendedDataType.CreateString())
+        assert att
+        assert att.Write('longitude') == gdal.CE_None
+
+        rg.CreateMDArray('Z', [dimZ],  gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+
+    def check():
+        ds = gdal.OpenEx(tmpfilename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        dims = rg.GetDimensions()
+        dim_lat = dims[1]
+        assert dim_lat.GetName() == 'related_to_lat'
+        assert dim_lat.GetIndexingVariable().GetName() == 'lat'
+        dim_lon = dims[2]
+        assert dim_lon.GetName() == 'related_to_lon'
+        assert dim_lon.GetIndexingVariable().GetName() == 'lon'
+
+    create()
+    check()
+    gdal.Unlink(tmpfilename)
+
+def test_netcdf_multidim_indexing_var_single_dim(netcdf_setup):  # noqa
+
+    tmpfilename = 'tmp/test_netcdf_multidim_indexing_var_single_dim.nc'
+    drv = gdal.GetDriverByName('netCDF')
+
+    def create():
+        ds = drv.CreateMultiDimensional(tmpfilename)
+        rg = ds.GetRootGroup()
+        dimK = rg.CreateDimension('k', None, None, 1)
+        rg.CreateMDArray('time', [dimK],  gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+        dimL = rg.CreateDimension('l', None, None, 1)
+        rg.CreateMDArray('unrelated', [dimL],  gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+
+    def check():
+        ds = gdal.OpenEx(tmpfilename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        dims = rg.GetDimensions()
+        dim = dims[0]
+        assert dim.GetName() == 'k'
+        assert dim.GetIndexingVariable().GetName() == 'time'
+
+    create()
+    check()
+    gdal.Unlink(tmpfilename)
+
+
+def test_netcdf_multidim_indexing_var_single_dim_two_candidates(netcdf_setup):  # noqa
+
+    tmpfilename = 'tmp/test_netcdf_multidim_indexing_var_single_dim_two_candidates.nc'
+    drv = gdal.GetDriverByName('netCDF')
+
+    def create():
+        ds = drv.CreateMultiDimensional(tmpfilename)
+        rg = ds.GetRootGroup()
+        dimK = rg.CreateDimension('k', None, None, 1)
+        rg.CreateMDArray('time', [dimK],  gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+        rg.CreateMDArray('another_time', [dimK],  gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+
+    def check():
+        ds = gdal.OpenEx(tmpfilename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        dims = rg.GetDimensions()
+        dim = dims[0]
+        assert dim.GetIndexingVariable() is None
+
+    create()
+    check()
+    gdal.Unlink(tmpfilename)
+
+
+def test_netcdf_multidim_stats():
 
     tmpfilename = 'tmp/test_netcdf_multidim_stats.nc'
     drv = gdal.GetDriverByName('netCDF')
