@@ -980,9 +980,10 @@ CPLErr GRIBRasterBand::IReadBlock( int /* nBlockXOff */,
            m_Grib_Data + static_cast<size_t>(nGribDataXSize) * (nGribDataYSize - nBlockYOff - 1) + nSplitAndSwapColumn,
            (nCopyWords - nSplitAndSwapColumn) * sizeof(double));
 
-    memcpy(reinterpret_cast<void*>(reinterpret_cast<double*>(pImage) + nSplitAndSwapColumn),
-           m_Grib_Data + static_cast<size_t>(nGribDataXSize) * (nGribDataYSize - nBlockYOff - 1),
-           nSplitAndSwapColumn * sizeof(double));
+    if (nSplitAndSwapColumn > 0)
+        memcpy(reinterpret_cast<void*>(reinterpret_cast<double*>(pImage) + nSplitAndSwapColumn),
+            m_Grib_Data + static_cast<size_t>(nGribDataXSize) * (nGribDataYSize - nBlockYOff - 1),
+            nSplitAndSwapColumn * sizeof(double));
 
     return CE_None;
 }
@@ -1181,12 +1182,9 @@ class InventoryWrapperSidecar : public gdal::grib::InventoryWrapper
             aosNum = CPLStringList(CSLTokenizeString2(aosTokens[0], ".", 0));
             if (aosNum.size() < 1) goto err_sidecar;
 
-            // Normally only a GRIBv2 should have a sidecar, but it can contain GRIB1 bands
             // FindMetaData will retrieve the correct version number
-            inv_[i].GribVersion = (signed char) 2;
             char *endptr;
-            inv_[i].msgNum =
-                static_cast<unsigned short>(strtol(aosNum[0], &endptr, 10));
+            strtol(aosNum[0], &endptr, 10);
             if (*endptr != 0) goto err_sidecar;
 
             if (aosNum.size() < 2)
@@ -1334,7 +1332,8 @@ std::unique_ptr<gdal::grib::InventoryWrapper> GRIBDataset::Inventory(VSILFILE *f
     else
         CPLDebug("GRIB", "Failed opening sidecar %s", sSideCarFilename.c_str());
 
-    if (pInventories == nullptr) {
+    if (pInventories == nullptr)
+    {
         CPLDebug("GRIB", "Reading inventories from GRIB file %s", poOpenInfo->pszFilename);
         // Contains an GRIB2 message inventory of the file.
         pInventories = cpl::make_unique<InventoryWrapperGrib>(fp);
@@ -2582,11 +2581,12 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
             if (rPixelSizeX * nRasterXSize > 360)
                 CPLDebug("GRIB",
                     "Cannot properly handle GRIB2 files with overlaps and 0-360 longitudes");
-            else if (rPixelSizeX * nRasterXSize == 360 && meta->gds.projType == GS3_LATLON)
+            else if (fabs(360 - rPixelSizeX * nRasterXSize) < rPixelSizeX/4 &&
+                meta->gds.projType == GS3_LATLON)
             {
                 // Find the first row number east of the antimeridian
                 nSplitAndSwapColumn = static_cast<int>(ceil((180 - rMinX) / rPixelSizeX));
-                CPLDebug("GRIB", "Enabling Split&Swap mode, antimeridian is at column %d",
+                CPLDebug("GRIB", "Rewrapping around the antimeridian at column %d",
                     nSplitAndSwapColumn);
                 rMinX = -180;
             }

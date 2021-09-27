@@ -43,6 +43,16 @@ CPL_C_START
 CPL_C_END
 
 /************************************************************************/
+/*                         Lon180to360()                                */
+/************************************************************************/
+
+static inline double Lon180to360(double lon)
+{
+    if (lon == 180) return 180;
+    return fmod(fmod(lon, 360) + 360, 360);
+}
+
+/************************************************************************/
 /*                             WriteByte()                              */
 /************************************************************************/
 
@@ -154,6 +164,7 @@ class GRIB2Section3Writer
         const char* pszProjection;
         double dfLLX, dfLLY, dfURX, dfURY;
         double adfGeoTransform[6];
+        int nSplitAndSwapColumn = 0;
 
         bool WriteScaled(double dfVal, double dfUnit);
         bool TransformToGeo(double& dfX, double& dfY);
@@ -170,6 +181,7 @@ class GRIB2Section3Writer
 
     public:
         GRIB2Section3Writer( VSILFILE* fpIn, GDALDataset *poSrcDSIn );
+        inline int SplitAndSwap() const { return nSplitAndSwapColumn; }
 
         bool Write();
 };
@@ -283,10 +295,35 @@ bool GRIB2Section3Writer::WriteGeographic()
 
     WriteEllipsoidAndRasterSize();
 
-    if( dfLLX < 0 )
+    if (dfLLX < 0 &&
+        CPLTestBool(CPLGetConfigOption("GRIB_ADJUST_LONGITUDE_RANGE", "YES")))
     {
-        dfLLX += 360;
-        dfURX += 360;
+        CPLDebug("GRIB", "Source longitude range is %lf to %lf", dfLLX, dfURX);
+        double dfOrigLLX = dfLLX;
+        dfLLX = Lon180to360(dfLLX);
+        dfURX = Lon180to360(dfURX);
+
+        if (dfLLX > dfURX)
+        {
+            if (fabs(360 - poSrcDS->GetRasterXSize() * adfGeoTransform[1]) <
+                adfGeoTransform[1] / 4)
+            {
+                // Find the first row number east of the prime meridian
+                nSplitAndSwapColumn =
+                  static_cast<int>(ceil((0 - dfOrigLLX) / adfGeoTransform[1]));
+                CPLDebug("GRIB",
+                         "Rewrapping around the prime meridian at column %d",
+                         nSplitAndSwapColumn);
+                dfLLX = 0;
+                dfURX = 360 - adfGeoTransform[1];
+            }
+            else
+            {
+                CPLDebug("GRIB",
+                         "Writing a GRIB with 0-360 longitudes crossing the prime meridian");
+            }
+        }
+        CPLDebug("GRIB", "Target longitudes range is %lf %lf", dfLLX, dfURX);
     }
 
     WriteUInt32(fp, 0); // Basic angle. 0 equivalent of 1
@@ -686,6 +723,7 @@ class GRIB2Section567Writer
         float            m_fValOffset;
         int              m_bHasNoData;
         double           m_dfNoData;
+        int              m_nSplitAndSwap;
 
         float*           GetFloatData();
         bool             WriteSimplePacking();
@@ -698,7 +736,8 @@ class GRIB2Section567Writer
     public:
         GRIB2Section567Writer( VSILFILE* fp,
                                GDALDataset *poSrcDS,
-                               int nBand );
+                               int nBand,
+                               int nSplitAndSwap );
 
         bool Write(float fValOffset,
                    char** papszOptions,
@@ -712,7 +751,8 @@ class GRIB2Section567Writer
 
 GRIB2Section567Writer::GRIB2Section567Writer( VSILFILE* fp,
                                               GDALDataset *poSrcDS,
-                                              int nBand ):
+                                              int nBand,
+                                              int nSplitAndSwap ):
     m_fp(fp),
     m_poSrcDS(poSrcDS),
     m_nBand(nBand),
@@ -729,7 +769,8 @@ GRIB2Section567Writer::GRIB2Section567Writer( VSILFILE* fp,
     m_bUseZeroBits(false),
     m_fValOffset(0.0),
     m_bHasNoData(false),
-    m_dfNoData(0.0)
+    m_dfNoData(0.0),
+    m_nSplitAndSwap(nSplitAndSwap)
 {
     m_poSrcDS->GetGeoTransform(m_adfGeoTransform);
     m_dfNoData = m_poSrcDS->GetRasterBand(nBand)->GetNoDataValue(&m_bHasNoData);
@@ -749,20 +790,41 @@ float* GRIB2Section567Writer::GetFloatData()
     }
     CPLErr eErr = m_poSrcDS->GetRasterBand(m_nBand)->RasterIO(
         GF_Read,
-        0, 0,
-        m_nXSize, m_nYSize,
+        m_nSplitAndSwap, 0,
+        m_nXSize - m_nSplitAndSwap, m_nYSize,
         pafData + (m_adfGeoTransform[5] < 0 ? (m_nYSize - 1) * m_nXSize : 0),
-        m_nXSize, m_nYSize,
+        m_nXSize - m_nSplitAndSwap, m_nYSize,
         GDT_Float32,
         sizeof(float),
         m_adfGeoTransform[5] < 0 ?
             -static_cast<GSpacing>(m_nXSize * sizeof(float)):
             static_cast<GSpacing>(m_nXSize * sizeof(float)),
         nullptr);
-    if( eErr != CE_None )
+    if (eErr != CE_None)
     {
         VSIFree(pafData);
         return nullptr;
+    }
+    if (m_nSplitAndSwap > 0)
+    {
+        eErr = m_poSrcDS->GetRasterBand(m_nBand)->RasterIO(
+        GF_Read,
+        0, 0,
+        m_nSplitAndSwap, m_nYSize,
+        pafData + (m_adfGeoTransform[5] < 0 ? (m_nYSize - 1) * m_nXSize : 0) +
+            (m_nXSize - m_nSplitAndSwap),
+        m_nSplitAndSwap, m_nYSize,
+        GDT_Float32,
+        sizeof(float),
+        m_adfGeoTransform[5] < 0
+            ? -static_cast<GSpacing>(m_nXSize * sizeof(float))
+            : static_cast<GSpacing>(m_nXSize * sizeof(float)),
+        nullptr);
+        if (eErr != CE_None)
+        {
+            VSIFree(pafData);
+            return nullptr;
+        }
     }
 
     m_fMin = std::numeric_limits<float>::max();
@@ -1229,11 +1291,34 @@ bool GRIB2Section567Writer::WriteIEEE(GDALProgressFunc pfnProgress,
         int iSrcLine = m_adfGeoTransform[5] < 0 ? m_nYSize - 1 - i: i;
         CPLErr eErr = m_poSrcDS->GetRasterBand(m_nBand)->RasterIO(
             GF_Read,
-            0, iSrcLine,
-            m_nXSize, 1,
+            m_nSplitAndSwap, iSrcLine,
+            m_nXSize - m_nSplitAndSwap, 1,
             pData,
-            m_nXSize, 1,
+            m_nXSize - m_nSplitAndSwap, 1,
             eReqDT, 0, 0, nullptr);
+        if ( eErr != CE_None )
+        {
+            CPLFree(pData);
+            GDALDestroyScaledProgress(pScaledProgressData);
+            return false;
+        }
+        if (m_nSplitAndSwap > 0)
+        {
+            eErr = m_poSrcDS->GetRasterBand(m_nBand)->RasterIO(
+                GF_Read,
+                0, iSrcLine,
+                m_nSplitAndSwap, 1,
+                reinterpret_cast<void*>(reinterpret_cast<GByte*>(pData) +
+                    m_nSplitAndSwap * GDALGetDataTypeSizeBytes(eReqDT)),
+                m_nSplitAndSwap, 1,
+                eReqDT, 0, 0, nullptr);
+            if ( eErr != CE_None )
+            {
+                CPLFree(pData);
+                GDALDestroyScaledProgress(pScaledProgressData);
+                return false;
+            }
+        }
         if( m_fValOffset != 0.0 )
         {
             if( eReqDT == GDT_Float32 )
@@ -1255,12 +1340,6 @@ bool GRIB2Section567Writer::WriteIEEE(GDALProgressFunc pfnProgress,
         GDALSwapWords( pData, GDALGetDataTypeSizeBytes(eReqDT), m_nXSize,
                        GDALGetDataTypeSizeBytes(eReqDT) );
 #endif
-        if( eErr != CE_None )
-        {
-            CPLFree(pData);
-            GDALDestroyScaledProgress(pScaledProgressData);
-            return false;
-        }
         if( VSIFWriteL( pData, 1, nBufferSize, m_fp ) != nBufferSize )
         {
             CPLFree(pData);
@@ -2493,6 +2572,7 @@ GRIBDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     vsi_l_offset nStartOffset = 0;
     vsi_l_offset nTotalSizeOffset = 0;
+    int nSplitAndSwapColumn = 0;
     // Note: WRITE_SUBGRIDS=YES should not be used blindly currently, as it
     // does not check that the content of the DISCIPLINE and IDS are the same.
     // A smarter behavior would be to break into separate messages if needed
@@ -2523,11 +2603,13 @@ GRIBDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             WriteByte(fp, 2); // section number
 
             // Section 3: Grid Definition Section
-            if( !GRIB2Section3Writer(fp, poSrcDS).Write() )
+            GRIB2Section3Writer oSection3(fp, poSrcDS);
+            if (!oSection3.Write())
             {
                 VSIFCloseL(fp);
                 return nullptr;
             }
+            nSplitAndSwapColumn = oSection3.SplitAndSwap();
         }
 
         // Section 4: Product Definition Section
@@ -2539,7 +2621,7 @@ GRIBDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         }
 
         // Section 5, 6 and 7
-        if( !GRIB2Section567Writer(fp, poSrcDS, nBand).
+        if( !GRIB2Section567Writer(fp, poSrcDS, nBand, nSplitAndSwapColumn).
                 Write(fValOffset, papszOptions, pfnProgress, pProgressData) )
         {
             VSIFCloseL(fp);
