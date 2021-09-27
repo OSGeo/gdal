@@ -87,13 +87,20 @@ details <http://trac.osgeo.org/gdal/wiki/mdbtools>`__
 
 Prerequisites
 ~~~~~~~~~~~~~
+.. role:: bash(code)
+   :language: bash
 
 #. Install `unixODBC <http://www.unixodbc.org>`__ >= 2.2.11
 #. Install MDB Tools. The official upstream of MDB Tools is maintained
    at `https://github.com/mdbtools/mdbtools <https://github.com/mdbtools/mdbtools>`__
-   Version 0.9.4 or later is recommended for best compatibility with the PGeo driver.
+   Version 0.9.4 or later is recommended for best compatibility with the PGeo driver. 
+   With the latest version no additional configuration (the followings) is required on Debian Linux and 
+   :bash:`ogrinfo sample.mdb` works fine.
+   
 
 (On Ubuntu : sudo apt-get install unixodbc libmdbodbc)
+
+(On Debian : sudo apt-get install unixodbc odbc-mdbtools)
 
 Configuration
 ~~~~~~~~~~~~~
