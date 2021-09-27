@@ -36,9 +36,12 @@
 #include "ogrsf_frmts.h"
 
 #include "ogrgeojsonutils.h"
+#include "directedacyclicgraph.hpp"
 
 #include <utility>
+#include <map>
 #include <set>
+#include <vector>
 
 /************************************************************************/
 /*                         FORWARD DECLARATIONS                         */
@@ -101,7 +104,10 @@ class OGRGeoJSONBaseReader
     void SetArrayAsString( bool bArrayAsString );
     void SetDateAsString( bool bDateAsString );
 
-    bool GenerateFeatureDefn( OGRLayer* poLayer, json_object* poObj );
+    bool GenerateFeatureDefn( std::map<std::string, int>& oMapFieldNameToIdx,
+                              std::vector<std::unique_ptr<OGRFieldDefn>>& apoFieldDefn,
+                              gdal::DirectedAcyclicGraph<int, std::string>& dag,
+                              OGRLayer* poLayer, json_object* poObj );
     void FinalizeLayerDefn( OGRLayer* poLayer, CPLString& osFIDColumn );
 
     OGRGeometry* ReadGeometry( json_object* poObj, OGRSpatialReference* poLayerSRS );
@@ -213,7 +219,9 @@ void OGRGeoJSONReaderSetField( OGRLayer* poLayer,
                                bool bFlattenNestedAttributes,
                                char chNestedAttributeSeparator );
 void OGRGeoJSONReaderAddOrUpdateField(
-    OGRFeatureDefn* poDefn,
+    std::vector<int>& retIndices,
+    std::map<std::string, int>& oMapFieldNameToIdx,
+    std::vector<std::unique_ptr<OGRFieldDefn>>& apoFieldDefn,
     const char* pszKey,
     json_object* poVal,
     bool bFlattenNestedAttributes,
