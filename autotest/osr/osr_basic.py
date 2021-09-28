@@ -1851,3 +1851,83 @@ def test_osr_basic_get_axes_count():
     srs = osr.SpatialReference()
     srs.SetFromUserInput("+proj=tmerc +datum=WGS84 +geoidgrids=foo.gtx")
     assert srs.GetAxesCount() == 3
+
+
+###############################################################################
+# Test exporting a CRS type that is WKT2-only (#3927)
+
+
+def test_osr_basic_export_derived_projected_crs_to_wkt():
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("""DERIVEDPROJCRS["unnamed",
+    BASEPROJCRS["unnamed",
+        BASEGEOGCRS["WGS 84",
+            DATUM["World Geodetic System 1984",
+                ELLIPSOID["WGS 84",6378137,298.257223563,
+                    LENGTHUNIT["metre",1]]],
+            PRIMEM["Greenwich",0,
+                ANGLEUNIT["degree",0.0174532925199433]],
+            ID["EPSG",4326]],
+        CONVERSION["Oblique Stereographic",
+            METHOD["Oblique Stereographic",
+                ID["EPSG",9809]],
+            PARAMETER["Latitude of natural origin",35.91600629551671,
+                ANGLEUNIT["degree",0.0174532925199433],
+                ID["EPSG",8801]],
+            PARAMETER["Longitude of natural origin",-84.21682058830596,
+                ANGLEUNIT["degree",0.0174532925199433],
+                ID["EPSG",8802]],
+            PARAMETER["Scale factor at natural origin",0.9999411285026271,
+                SCALEUNIT["unity",1],
+                ID["EPSG",8805]],
+            PARAMETER["False easting",760932.0392583184,
+                LENGTHUNIT["metre",1],
+                ID["EPSG",8806]],
+            PARAMETER["False northing",177060.0539497079,
+                LENGTHUNIT["metre",1],
+                ID["EPSG",8807]]]],
+    DERIVINGCONVERSION["unnamed",
+        METHOD["PROJ affine"],
+        PARAMETER["xoff",-25.365221999119967,
+            SCALEUNIT["unity",1]],
+        PARAMETER["yoff",-30.51036324049346,
+            SCALEUNIT["unity",1]],
+        PARAMETER["zoff",31.80827133745305,
+            SCALEUNIT["unity",1]],
+        PARAMETER["s11",3.280833333333336,
+            SCALEUNIT["unity",1]],
+        PARAMETER["s12",6.938893903907228e-18,
+            SCALEUNIT["unity",1]],
+        PARAMETER["s13",0,
+            SCALEUNIT["unity",1]],
+        PARAMETER["s21",-6.938893903907228e-18,
+            SCALEUNIT["unity",1]],
+        PARAMETER["s22",3.280833333333336,
+            SCALEUNIT["unity",1]],
+        PARAMETER["s23",0,
+            SCALEUNIT["unity",1]],
+        PARAMETER["s31",0.000144198502849885,
+            SCALEUNIT["unity",1]],
+        PARAMETER["s32",-0.00016681800457995442,
+            SCALEUNIT["unity",1]],
+        PARAMETER["s33",3.2808333333333355,
+            SCALEUNIT["unity",1]]],
+        CS[Cartesian,3],
+        AXIS["(E)",east,
+            ORDER[1],
+            LENGTHUNIT["metre",1,
+                ID["EPSG",9001]]],
+        AXIS["(N)",north,
+            ORDER[2],
+            LENGTHUNIT["metre",1,
+                ID["EPSG",9001]]],
+        AXIS["ellipsoidal height (h)",up,
+            ORDER[3],
+            LENGTHUNIT["metre",1,
+                ID["EPSG",9001]]]]""")
+    wkt = srs.ExportToWkt()
+    assert wkt
+    assert wkt == srs.ExportToWkt(['FORMAT=WKT2'])
+    assert wkt.startswith('DERIVEDPROJCRS')
+    assert gdal.GetLastErrorMsg() == ''
