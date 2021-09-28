@@ -236,6 +236,53 @@ def test_vsifile_5():
     gdal.Unlink('tmp/vsifile_5.bin')
 
 ###############################################################################
+# Test vsicache an read errors (https://github.com/qgis/QGIS/issues/45293)
+
+
+def test_vsifile_vsicache_read_error():
+
+    tmpfilename = 'tmp/test_vsifile_vsicache_read_error.bin'
+    f = gdal.VSIFOpenL(tmpfilename, 'wb')
+    assert f
+    try:
+        gdal.VSIFTruncateL(f, 1000 * 1000)
+
+        with gdaltest.config_option('VSI_CACHE', 'YES'):
+            f2 = gdal.VSIFOpenL(tmpfilename, 'rb')
+        assert f2
+        try:
+            gdal.VSIFSeekL(f2, 500 * 1000, 0)
+
+            # Truncate the file to simulate a read error
+            gdal.VSIFTruncateL(f, 0)
+
+            assert len(gdal.VSIFReadL(1, 5000 * 1000, f2)) == 0
+
+            # Extend the file again
+            gdal.VSIFTruncateL(f, 1000 * 1000)
+
+            # Read again
+            gdal.VSIFSeekL(f2, 500 * 1000, 0)
+            assert len(gdal.VSIFReadL(1, 50 * 1000, f2)) == 50 * 1000
+
+            # Truncate the file to simulate a read error
+            gdal.VSIFTruncateL(f, 10)
+
+            CHUNK_SIZE=32768
+
+            gdal.VSIFSeekL(f2, 0, 0)
+            assert len(gdal.VSIFReadL(1, CHUNK_SIZE, f2)) == 10
+
+            gdal.VSIFSeekL(f2, 100, 0)
+            assert len(gdal.VSIFReadL(1, CHUNK_SIZE, f2)) == 0
+
+        finally:
+            gdal.VSIFCloseL(f2)
+    finally:
+        gdal.VSIFCloseL(f)
+        gdal.Unlink(tmpfilename)
+
+###############################################################################
 # Test vsicache above 2 GB
 
 
