@@ -127,6 +127,10 @@ the health of the project:
 
     .. container:: horizontal-logo
 
+        `Kaplan Open Source Consulting <https://kaplanopensource.co.il/>`__
+
+    .. container:: horizontal-logo
+
         `Space Intelligence <https://www.space-intelligence.com>`__
 
     .. container:: horizontal-logo
