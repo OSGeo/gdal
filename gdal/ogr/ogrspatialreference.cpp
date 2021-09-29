@@ -4020,6 +4020,9 @@ OGRErr OGRSpatialReference::importFromURN( const char *pszURN )
 
 {
 #if PROJ_AT_LEAST_VERSION(8,1,0)
+
+    // PROJ 8.2.0 has support for IAU codes now.
+#if !PROJ_AT_LEAST_VERSION(8,2,0)
 /* -------------------------------------------------------------------- */
 /*      Is this an IAU code?  Lets try for the IAU2000 dictionary.      */
 /* -------------------------------------------------------------------- */
@@ -4035,6 +4038,8 @@ OGRErr OGRSpatialReference::importFromURN( const char *pszURN )
             return importFromDict( "IAU2000.wkt", pszCode );
         }
     }
+#endif
+
     if( strlen(pszURN) >= 1000 )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Too long input string");
