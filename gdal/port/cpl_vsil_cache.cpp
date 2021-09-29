@@ -301,8 +301,8 @@ int VSICachedFile::LoadBlocks( vsi_l_offset nStartBlock, size_t nBlockCount,
 /* -------------------------------------------------------------------- */
     if( nBlockCount == 1 )
     {
-        if( !poBase->Seek( static_cast<vsi_l_offset>(nStartBlock) * m_nChunkSize,
-                           SEEK_SET ) )
+        if( poBase->Seek( static_cast<vsi_l_offset>(nStartBlock) * m_nChunkSize,
+                          SEEK_SET ) != 0 )
         {
             return FALSE;
         }
