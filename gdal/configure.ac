@@ -4202,39 +4202,47 @@ else
         dnl libs from dap-config gets added further down
         AC_MSG_RESULT([libdap $LIBDAP_VER])
     else
-        dnl Check the version by compiling test programs
+        PKG_PROG_PKG_CONFIG([0.21])
+        PKG_CHECK_MODULES(LIBDAP,[libdap], [HAVE_LIBDAP=yes], [HAVE_LIBDAP=no])
 
-        dnl Test if we have libdap >= 3.10
-        dnl From libdap 3.10, AISConnect.h has been renamed as Connect.h
-        rm -f islibdappost310.*
-        echo '#include "Connect.h"' > islibdappost310.cpp
-        echo 'int main(int argc, char** argv) { return 0; } ' >> islibdappost310.cpp
-        if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} islibdappost310.cpp -c ${DODS_INC} ${CPPFLAGS} 2>&1`" ; then
-        dnl yes, libdap >= 3.10
-            DODS_INC="$DODS_INC -DLIBDAP_310 -DLIBDAP_39"
-            AC_MSG_RESULT([libdap >= 3.10])
+        if test "${HAVE_LIBDAP}" = "yes"; then
+            dnl The dods driver needs LIBDAP_320 and LIBDAP_39 defined to include the right headers
+            DODS_INC="$DODS_INC $LIBDAP_CFLAGS -DLIBDAP_310 -DLIBDAP_39"
         else
-            AC_MSG_RESULT([libdap < 3.10])
+            dnl Check the version by compiling test programs
 
-            dnl Test if we have libdap < 3.9
-            dnl Before libdap < 3.9, DAS derived from AttrTable class
-            dnl I wish they had defines with version numbers instead of this test !
-            rm -f islibdappre39.*
-            echo '#include "DAS.h"' > islibdappre39.cpp
-            echo '#include "AttrTable.h"' >> islibdappre39.cpp
-            echo 'using namespace libdap;' >> islibdappre39.cpp
-            echo 'int main(int argc, char** argv) { DAS oDAS; AttrTable& oAttrTable = oDAS; } ' >> islibdappre39.cpp
-            if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} islibdappre39.cpp -c ${DODS_INC} 2>&1`" ; then
-            dnl yes, libdap < 3.9
-                AC_MSG_RESULT([libdap < 3.9])
+            dnl Test if we have libdap >= 3.10
+            dnl From libdap 3.10, AISConnect.h has been renamed as Connect.h
+            rm -f islibdappost310.*
+            echo '#include "Connect.h"' > islibdappost310.cpp
+            echo 'int main(int argc, char** argv) { return 0; } ' >> islibdappost310.cpp
+            if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} islibdappost310.cpp -c ${DODS_INC} ${CPPFLAGS} 2>&1`" ; then
+            dnl yes, libdap >= 3.10
+                DODS_INC="$DODS_INC -DLIBDAP_310 -DLIBDAP_39"
+                AC_MSG_RESULT([libdap >= 3.10])
             else
-                DODS_INC="$DODS_INC -DLIBDAP_39"
-                AC_MSG_RESULT([libdap >= 3.9])
-            fi
-            rm -f islibdappre39.*
+                AC_MSG_RESULT([libdap < 3.10])
 
+                dnl Test if we have libdap < 3.9
+                dnl Before libdap < 3.9, DAS derived from AttrTable class
+                dnl I wish they had defines with version numbers instead of this test !
+                rm -f islibdappre39.*
+                echo '#include "DAS.h"' > islibdappre39.cpp
+                echo '#include "AttrTable.h"' >> islibdappre39.cpp
+                echo 'using namespace libdap;' >> islibdappre39.cpp
+                echo 'int main(int argc, char** argv) { DAS oDAS; AttrTable& oAttrTable = oDAS; } ' >> islibdappre39.cpp
+                if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} islibdappre39.cpp -c ${DODS_INC} 2>&1`" ; then
+                dnl yes, libdap < 3.9
+                    AC_MSG_RESULT([libdap < 3.9])
+                else
+                    DODS_INC="$DODS_INC -DLIBDAP_39"
+                    AC_MSG_RESULT([libdap >= 3.9])
+                fi
+                rm -f islibdappre39.*
+
+            fi
+            rm -f islibdappost310.*
         fi
-        rm -f islibdappost310.*
     fi
 
 
@@ -4245,6 +4253,8 @@ else
     elif test -x $DODS_BIN/dap-config ; then
       dnl OPeNDAP 3.4 and earlier lack opendap-config, but use it if avail.
       LIBS="$LIBS `$DODS_BIN/dap-config --libs`"
+    elif test "${HAVE_LIBDAP}" = "yes"; then
+      LIBS="$LIBS $LIBDAP_LIBS"
     else
       dnl Otherwise try to put things together in a more primitive way.
       LIBS="$LIBS -L$DODS_LIB -ldap++ -lpthread -lrx"
