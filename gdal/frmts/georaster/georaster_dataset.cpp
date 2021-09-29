@@ -2499,8 +2499,9 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
     {
         OWStatement* poStmt = poConnection->CreateStatement( CPLSPrintf(
             "SELECT   DISTINCT COLUMN_NAME, OWNER FROM ALL_SDO_GEOR_SYSDATA\n"
-            "  WHERE  TABLE_NAME = UPPER('%s')\n"
+            "  WHERE  OWNER = UPPER('%s') AND TABLE_NAME = UPPER('%s')\n"
             "  ORDER  BY COLUMN_NAME ASC",
+                poGRW->sOwner.c_str(),
                 poGRW->sTable.c_str() ) );
 
         char szColumn[OWNAME];
