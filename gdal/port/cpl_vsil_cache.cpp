@@ -301,8 +301,11 @@ int VSICachedFile::LoadBlocks( vsi_l_offset nStartBlock, size_t nBlockCount,
 /* -------------------------------------------------------------------- */
     if( nBlockCount == 1 )
     {
-        poBase->Seek( static_cast<vsi_l_offset>(nStartBlock) * m_nChunkSize,
-                      SEEK_SET );
+        if( !poBase->Seek( static_cast<vsi_l_offset>(nStartBlock) * m_nChunkSize,
+                           SEEK_SET ) )
+        {
+            return FALSE;
+        }
 
         auto poBlock = cpl::make_unique<VSICacheChunk>();
         if( !poBlock || !poBlock->Allocate( m_nChunkSize ) )
