@@ -412,6 +412,34 @@ JXLPreEncode(TIFF* tif, uint16_t s)
             return 0;
         }
 
+        if( !sp->lossless && td->td_planarconfig == PLANARCONFIG_CONTIG )
+        {
+            switch(td->td_samplesperpixel) {
+                case 2:
+                    if(td->td_sampleinfo[1] != EXTRASAMPLE_UNASSALPHA) {
+                        TIFFErrorExt(tif->tif_clientdata, module,
+                            "JXL: For 2-band images in lossy mode the second band must be alpha");
+                        return 0;
+                    }
+                    break;
+                case 3:
+                    if( td->td_photometric != PHOTOMETRIC_RGB ) {
+                        TIFFErrorExt(tif->tif_clientdata, module,
+                            "JXL: For 3-band images in lossy mode bands must be RGB");
+                        return 0;
+                    }
+                    break;
+                case 4:
+                    if( td->td_photometric != PHOTOMETRIC_RGB ||
+                        td->td_sampleinfo[3] != EXTRASAMPLE_UNASSALPHA) {
+                        TIFFErrorExt(tif->tif_clientdata, module,
+                            "JXL: For 4-band images in lossy mode bands must be RGBA");
+                        return 0;
+                    }
+                    break;
+            }
+        }
+
         if( GetJXLDataType(tif) < 0 )
             return 0;
 
