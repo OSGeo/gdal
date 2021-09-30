@@ -24,6 +24,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-rec
     libdeflate-dev libblosc-dev liblz4-dev \
     mono-mcs libmono-system-drawing4.0-cil ccache \
     perl ant \
+    libbrotli-dev \
     opencl-c-headers ocl-icd-opencl-dev
 
 # Build likbkea
@@ -56,6 +57,17 @@ mkdir tiledb \
 
 # Workaround bug in ogdi packaging
 ln -s /usr/lib/ogdi/libvrf.so /usr/lib
+
+# Build libjxl
+git clone https://github.com/libjxl/libjxl.git --recursive \
+    && cd libjxl \
+    && mkdir build \
+    && cd build \
+    && cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF .. \
+    && make -j$(nproc) \
+    && make -j$(nproc) install \
+    && cd ../.. \
+    && rm -rf jpeg-xl
 
 # Install MrSID SDK
 mkdir mrsid \

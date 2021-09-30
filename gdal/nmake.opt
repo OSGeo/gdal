@@ -969,6 +969,10 @@ HAVE_LERC=internal
 #HEIF_INC = -Ic:\dev\install-libheif\include
 #HEIF_LIB = C:\dev\install-libheif\lib\heif.lib
 
+# Comment out for JXL support (in internal libtiff)
+#JXL_CFLAGS = -Ic:\dev\install-libjxl\include
+#JXL_LIB = C:\dev\install-libjxl\lib\libjxl.lib
+
 ########### END OF STUFF THAT NORMALLY NEEDS TO BE UPDATED ##################
 
 
@@ -1177,5 +1181,5 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
 	$(MRSID_LIDAR_LIB) $(LIBKML_LIBS) $(SOSI_LIBS) $(PDF_LIB_LINK) $(LZMA_LIBS) $(ZSTD_LIBS) $(BLOSC_LIBS) $(LZ4_LIBS) \
 	$(LIBICONV_LIBRARY) $(WEBP_LIBS) $(TILEDB_LIBS) $(FGDB_LIB_LINK) $(FREEXL_LIBS) $(GTA_LIBS) \
 	$(INGRES_LIB) $(LIBXML2_LIB) $(PCRE_LIB) $(MONGODB_LIB_LINK) $(MONGODBV3_LIB_LINK) $(CRYPTOPP_LIB) $(OPENSSL_LIB) $(CHARLS_LIB) ws2_32.lib \
-	$(RDB_LIB) $(CRUNCH_LIB) $(OPENEXR_LIB) $(HEIF_LIB) $(LERC_LIB) $(BROTLI_LIB) $(BRUNSLI_LIB)\
+	$(RDB_LIB) $(CRUNCH_LIB) $(OPENEXR_LIB) $(HEIF_LIB) $(LERC_LIB) $(JXL_LIB) $(BROTLI_LIB) $(BRUNSLI_LIB)\
     kernel32.lib psapi.lib wbemuuid.lib

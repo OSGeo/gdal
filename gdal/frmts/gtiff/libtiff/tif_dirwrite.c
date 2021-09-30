@@ -1788,7 +1788,8 @@ static int _WriteAsType(TIFF* tif, uint64_t strile_size, uint64_t uncompressed_t
               compression == COMPRESSION_LZMA ||
               compression == COMPRESSION_LERC ||
               compression == COMPRESSION_ZSTD ||
-              compression == COMPRESSION_WEBP )
+              compression == COMPRESSION_WEBP ||
+              compression == COMPRESSION_JXL )
     {
         /* For a few select compression types, we assume that in the worst */
         /* case the compressed size will be 10 times the uncompressed size */

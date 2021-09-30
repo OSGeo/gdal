@@ -339,6 +339,7 @@ TIFFSeek(TIFF* tif, uint32_t row, uint16_t sample )
         whole_strip = TIFFGetStrileByteCount(tif, strip) < 10
                 || isMapped(tif);
         if( td->td_compression == COMPRESSION_LERC ||
+            td->td_compression == COMPRESSION_JXL ||
             td->td_compression == COMPRESSION_JBIG )
         {
             /* Ideally plugins should have a way to declare they don't support
