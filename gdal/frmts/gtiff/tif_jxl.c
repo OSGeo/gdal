@@ -416,7 +416,9 @@ JXLPreEncode(TIFF* tif, uint16_t s)
         {
             switch(td->td_samplesperpixel) {
                 case 2:
-                    if(td->td_sampleinfo[1] != EXTRASAMPLE_UNASSALPHA) {
+                    if( td->td_extrasamples == 0 ||
+                        td->td_sampleinfo[td->td_extrasamples-1] != EXTRASAMPLE_UNASSALPHA)
+                    {
                         TIFFErrorExt(tif->tif_clientdata, module,
                             "JXL: For 2-band images in lossy mode the second band must be alpha");
                         return 0;
@@ -431,7 +433,8 @@ JXLPreEncode(TIFF* tif, uint16_t s)
                     break;
                 case 4:
                     if( td->td_photometric != PHOTOMETRIC_RGB ||
-                        td->td_sampleinfo[3] != EXTRASAMPLE_UNASSALPHA) {
+                        td->td_extrasamples == 0 ||
+                        td->td_sampleinfo[td->td_extrasamples-1] != EXTRASAMPLE_UNASSALPHA) {
                         TIFFErrorExt(tif->tif_clientdata, module,
                             "JXL: For 4-band images in lossy mode bands must be RGBA");
                         return 0;
