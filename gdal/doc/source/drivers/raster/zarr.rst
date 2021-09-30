@@ -292,6 +292,10 @@ with ``ARRAY:`` using :program:`gdalmdimtranslate`):
   order in encoded chunks. Only useful when using compression. Defaults to C.
   Changing to F may improve depending on array content.
 
+- **STRING_FORMAT=ASCII/UNICODE**: Whether to use the numpy type for ASCII-only
+  strings or Unicode strings. Unicode strings take 4 byte per character.
+  Defaults to ASCII.
+
 - **DIM_SEPARATOR=string**: Dimension separator in chunk filenames.
   Default to decimal point for ZarrV2 and slash for ZarrV3.
 

@@ -29,6 +29,7 @@
 #include "cpl_vsi_virtual.h"
 #include "zarr.h"
 #include "gdal_thread_pool.h"
+#include "ucs4_utf8.hpp"
 
 #include "tif_float.h"
 
@@ -43,6 +44,65 @@
 #define ZARR_DEBUG_KEY "ZARR"
 
 #define CRS_ATTRIBUTE_NAME "_CRS"
+
+namespace {
+
+inline
+std::vector<GByte> UTF8ToUCS4(const char* pszStr, bool needByteSwap)
+{
+    const size_t nLen = strlen(pszStr);
+    // Worst case if that we need 4 more bytes than the UTF-8 one
+    // (when the content is pure ASCII)
+    if( nLen > std::numeric_limits<size_t>::max() / sizeof(uint32_t) )
+        throw std::bad_alloc();
+    std::vector<GByte> ret(nLen * sizeof(uint32_t));
+    size_t outPos = 0;
+    for( size_t i = 0; i < nLen; outPos += sizeof(uint32_t))
+    {
+        uint32_t ucs4 = 0;
+        int consumed = FcUtf8ToUcs4(
+            reinterpret_cast<const uint8_t*>(pszStr + i), &ucs4, nLen - i);
+        if( consumed <= 0 )
+        {
+            ret.resize(outPos);
+        }
+        if( needByteSwap )
+        {
+            CPL_SWAP32PTR(&ucs4);
+        }
+        memcpy(&ret[outPos], &ucs4, sizeof(uint32_t));
+        i += consumed;
+    }
+    ret.resize(outPos);
+    return ret;
+}
+
+inline char* UCS4ToUTF8(const uint8_t* ucs4Ptr, size_t nSize, bool needByteSwap)
+{
+    // A UCS4 char can require up to 6 bytes in UTF8.
+    if( nSize > (std::numeric_limits<size_t>::max() - 1) / 6 * 4 )
+        return nullptr;
+    const size_t nOutSize = nSize / 4 * 6 + 1;
+    char* ret = static_cast<char*>(VSI_MALLOC_VERBOSE(nOutSize));
+    if( ret == nullptr )
+        return nullptr;
+    size_t outPos = 0;
+    for(size_t i = 0; i + sizeof(uint32_t) - 1 < nSize; i += sizeof(uint32_t))
+    {
+        uint32_t ucs4;
+        memcpy(&ucs4, ucs4Ptr + i, sizeof(uint32_t));
+        if( needByteSwap )
+        {
+            CPL_SWAP32PTR(&ucs4);
+        }
+        int written = FcUcs4ToUtf8 (ucs4, reinterpret_cast<uint8_t*>(ret + outPos));
+        outPos += written;
+    }
+    ret[outPos] = 0;
+    return ret;
+}
+
+} // namespace
 
 /************************************************************************/
 /*                         ZarrArray::ZarrArray()                       */
@@ -72,8 +132,7 @@ ZarrArray::ZarrArray(const std::shared_ptr<ZarrSharedResource>& poSharedResource
     // Compute individual tile size
     const size_t nSourceSize = m_aoDtypeElts.back().nativeOffset +
                                m_aoDtypeElts.back().nativeSize;
-    m_nTileSize = m_oType.GetClass() == GEDTC_STRING ?
-                                m_oType.GetMaxStringLength() : nSourceSize;
+    m_nTileSize = nSourceSize;
     for( const auto& nBlockSize: m_anBlockSize )
     {
         m_nTileSize *= static_cast<size_t>(nBlockSize);
@@ -303,7 +362,8 @@ void ZarrArray::DeallocateDecodedTileData()
         const size_t nValues = m_abyDecodedTileData.size() / nDTSize;
         for( auto& elt: m_aoDtypeElts )
         {
-            if( elt.nativeType == DtypeElt::NativeType::STRING )
+            if( elt.nativeType == DtypeElt::NativeType::STRING_ASCII ||
+                elt.nativeType == DtypeElt::NativeType::STRING_UNICODE )
             {
                 for( size_t i = 0; i < nValues; i++, pDst += nDTSize )
                 {
@@ -328,7 +388,37 @@ static void EncodeElt(const std::vector<DtypeElt>& elts,
 {
     for( const auto& elt: elts )
     {
-        if( elt.needByteSwapping )
+        if( elt.nativeType == DtypeElt::NativeType::STRING_UNICODE )
+        {
+            const char* pStr = *reinterpret_cast<const char* const*>(pSrc + elt.gdalOffset);
+            if( pStr )
+            {
+                try
+                {
+                    const auto ucs4 = UTF8ToUCS4(pStr, elt.needByteSwapping);
+                    const auto ucs4Len = ucs4.size();
+                    memcpy(pDst + elt.nativeOffset, ucs4.data(), std::min(ucs4Len, elt.nativeSize));
+                    if( ucs4Len > elt.nativeSize )
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Too long string truncated");
+                    }
+                    else if( ucs4Len < elt.nativeSize )
+                    {
+                        memset(pDst + elt.nativeOffset + ucs4Len, 0, elt.nativeSize - ucs4Len);
+                    }
+                }
+                catch( const std::exception& )
+                {
+                    memset(pDst + elt.nativeOffset, 0, elt.nativeSize);
+                }
+            }
+            else
+            {
+                memset(pDst + elt.nativeOffset, 0, elt.nativeSize);
+            }
+        }
+        else if( elt.needByteSwapping )
         {
             if( elt.nativeSize == 2 )
             {
@@ -442,7 +532,7 @@ static void EncodeElt(const std::vector<DtypeElt>& elts,
                 CPLAssert(false);
             }
         }
-        else if( elt.nativeType == DtypeElt::NativeType::STRING )
+        else if( elt.nativeType == DtypeElt::NativeType::STRING_ASCII )
         {
             const char* pStr = *reinterpret_cast<const char* const*>(pSrc + elt.gdalOffset);
             if( pStr )
@@ -677,7 +767,8 @@ bool ZarrArray::NeedDecodedBuffer() const
         for( const auto& elt: m_aoDtypeElts )
         {
             if( elt.needByteSwapping || elt.gdalTypeIsApproxOfNative ||
-                elt.nativeType == DtypeElt::NativeType::STRING )
+                elt.nativeType == DtypeElt::NativeType::STRING_ASCII ||
+                elt.nativeType == DtypeElt::NativeType::STRING_UNICODE )
             {
                 return true;
             }
@@ -961,7 +1052,18 @@ static void DecodeSourceElt(const std::vector<DtypeElt>& elts,
 {
     for( auto& elt: elts )
     {
-        if( elt.needByteSwapping )
+        if( elt.nativeType == DtypeElt::NativeType::STRING_UNICODE )
+        {
+            char* ptr;
+            char** pDstPtr = reinterpret_cast<char**>(pDst + elt.gdalOffset);
+            memcpy(&ptr, pDstPtr, sizeof(ptr));
+            VSIFree(ptr);
+
+            char* pDstStr = UCS4ToUTF8(pSrc + elt.nativeOffset, elt.nativeSize,
+                                       elt.needByteSwapping);
+            memcpy(pDstPtr, &pDstStr, sizeof(pDstStr));
+        }
+        else if( elt.needByteSwapping )
         {
             if( elt.nativeSize == 2 )
             {
@@ -1079,7 +1181,7 @@ static void DecodeSourceElt(const std::vector<DtypeElt>& elts,
                 CPLAssert(false);
             }
         }
-        else if( elt.nativeType == DtypeElt::NativeType::STRING )
+        else if( elt.nativeType == DtypeElt::NativeType::STRING_ASCII )
         {
             char* ptr;
             char** pDstPtr = reinterpret_cast<char**>(pDst + elt.gdalOffset);
@@ -2010,11 +2112,21 @@ lbl_next_depth_inner_loop:
                 }
                 else if( m_oType.GetClass() == GEDTC_STRING )
                 {
-                    char* pDstStr = static_cast<char*>(CPLMalloc(nSourceSize + 1));
-                    memcpy(pDstStr, src_ptr, nSourceSize);
-                    pDstStr[nSourceSize] = 0;
-                    char** pDstPtr = static_cast<char**>(dst_ptr);
-                    memcpy(pDstPtr, &pDstStr, sizeof(char*));
+                    if( m_aoDtypeElts.back().nativeType == DtypeElt::NativeType::STRING_UNICODE )
+                    {
+                        char* pDstStr = UCS4ToUTF8(src_ptr, nSourceSize,
+                                                   m_aoDtypeElts.back().needByteSwapping);
+                        char** pDstPtr = static_cast<char**>(dst_ptr);
+                        memcpy(pDstPtr, &pDstStr, sizeof(pDstStr));
+                    }
+                    else
+                    {
+                        char* pDstStr = static_cast<char*>(CPLMalloc(nSourceSize + 1));
+                        memcpy(pDstStr, src_ptr, nSourceSize);
+                        pDstStr[nSourceSize] = 0;
+                        char** pDstPtr = static_cast<char**>(dst_ptr);
+                        memcpy(pDstPtr, &pDstStr, sizeof(char*));
+                    }
                 }
                 else
                 {
@@ -2628,9 +2740,34 @@ lbl_next_depth_inner_loop:
                     if( pSrcStr )
                     {
                         const size_t nLen = strlen(pSrcStr);
-                        memcpy(dst_ptr, pSrcStr, std::min(nLen, nNativeSize));
-                        if( nLen < nNativeSize )
-                            memset(dst_ptr + nLen, 0, nNativeSize - nLen);
+                        if( m_aoDtypeElts.back().nativeType == DtypeElt::NativeType::STRING_UNICODE )
+                        {
+                            try
+                            {
+                                const auto ucs4 = UTF8ToUCS4(pSrcStr, m_aoDtypeElts.back().needByteSwapping);
+                                const auto ucs4Len = ucs4.size();
+                                memcpy(dst_ptr, ucs4.data(), std::min(ucs4Len, nNativeSize));
+                                if( ucs4Len > nNativeSize )
+                                {
+                                    CPLError(CE_Warning, CPLE_AppDefined,
+                                             "Too long string truncated");
+                                }
+                                else if( ucs4Len < nNativeSize )
+                                {
+                                    memset(dst_ptr + ucs4Len, 0, nNativeSize - ucs4Len);
+                                }
+                            }
+                            catch( const std::exception& )
+                            {
+                                 memset(dst_ptr, 0, nNativeSize);
+                            }
+                        }
+                        else
+                        {
+                            memcpy(dst_ptr, pSrcStr, std::min(nLen, nNativeSize));
+                            if( nLen < nNativeSize )
+                                memset(dst_ptr + nLen, 0, nNativeSize - nLen);
+                        }
                     }
                     else
                     {
@@ -2895,11 +3032,22 @@ static GDALExtendedDataType ParseDtype(bool isZarrV2,
             }
             else if( chType == 'S' )
             {
-                elt.nativeType = DtypeElt::NativeType::STRING;
+                elt.nativeType = DtypeElt::NativeType::STRING_ASCII;
                 elt.gdalType = GDALExtendedDataType::CreateString(nBytes);
                 elt.gdalSize = elt.gdalType.GetSize();
                 elts.emplace_back(elt);
                 return GDALExtendedDataType::CreateString(nBytes);
+            }
+            else if( chType == 'U' )
+            {
+                elt.nativeType = DtypeElt::NativeType::STRING_UNICODE;
+                // the dtype declaration is number of UCS4 characters. Store it as bytes
+                elt.nativeSize *= 4;
+                // We can really map UCS4 size to UTF-8
+                elt.gdalType = GDALExtendedDataType::CreateString();
+                elt.gdalSize = elt.gdalType.GetSize();
+                elts.emplace_back(elt);
+                return GDALExtendedDataType::CreateString();
             }
             else
                 break;
@@ -3600,15 +3748,20 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
         }
         else if( oType.GetClass() == GEDTC_STRING )
         {
-            std::vector<GByte> abyNativeFillValue(osFillValue.size() + 1);
-            memcpy(&abyNativeFillValue[0], osFillValue.data(), osFillValue.size());
-            int nBytes = CPLBase64DecodeInPlace(&abyNativeFillValue[0]);
-            abyNativeFillValue.resize(nBytes + 1);
-            abyNativeFillValue[nBytes] = 0;
-            abyNoData.resize( oType.GetSize() );
-            char* pDstStr = CPLStrdup( reinterpret_cast<const char*>(&abyNativeFillValue[0]) );
-            char** pDstPtr = reinterpret_cast<char**>(&abyNoData[0]);
-            memcpy(pDstPtr, &pDstStr, sizeof(pDstStr));
+            // zarr.open('unicode_be.zarr', mode = 'w', shape=(1,), dtype = '>U1', compressor = None)
+            // oddly generates "fill_value": "0"
+            if( osFillValue != "0" )
+            {
+                std::vector<GByte> abyNativeFillValue(osFillValue.size() + 1);
+                memcpy(&abyNativeFillValue[0], osFillValue.data(), osFillValue.size());
+                int nBytes = CPLBase64DecodeInPlace(&abyNativeFillValue[0]);
+                abyNativeFillValue.resize(nBytes + 1);
+                abyNativeFillValue[nBytes] = 0;
+                abyNoData.resize( oType.GetSize() );
+                char* pDstStr = CPLStrdup( reinterpret_cast<const char*>(&abyNativeFillValue[0]) );
+                char** pDstPtr = reinterpret_cast<char**>(&abyNoData[0]);
+                memcpy(pDstPtr, &pDstStr, sizeof(pDstStr));
+            }
         }
         else
         {

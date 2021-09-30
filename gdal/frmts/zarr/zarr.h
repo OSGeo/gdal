@@ -409,7 +409,8 @@ struct DtypeElt
         SIGNED_INT,
         IEEEFP,
         COMPLEX_IEEEFP,
-        STRING,
+        STRING_ASCII,
+        STRING_UNICODE
     };
 
     NativeType           nativeType = NativeType::BOOLEAN;

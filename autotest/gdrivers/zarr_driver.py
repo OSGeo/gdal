@@ -1756,7 +1756,12 @@ def test_zarr_write_array_content(dtype, structtype, gdaltype, fill_value, nodat
         gdal.RmdirRecursive(filename)
 
 
-def test_zarr_create_array_string():
+
+@pytest.mark.parametrize("string_format,input_str,output_str",
+                          [('ASCII', '0123456789truncated', '0123456789'),
+                           ('UNICODE','\u00E9' + '123456789truncated', '\u00E9' + '123456789')],
+                         ids=('ASCII', 'UNICODE'))
+def test_zarr_create_array_string(string_format, input_str, output_str):
 
     try:
         def create():
@@ -1769,8 +1774,9 @@ def test_zarr_create_array_string():
             dim0 = rg.CreateDimension("dim0", None, None, 2)
 
             ar = rg.CreateMDArray(
-                "test", [dim0], gdal.ExtendedDataType.CreateString(10))
-            assert ar.Write(['ab', '0123456789truncated']) == gdal.CE_None
+                "test", [dim0], gdal.ExtendedDataType.CreateString(10),
+                ['STRING_FORMAT='+string_format, 'COMPRESS=ZLIB'])
+            assert ar.Write(['ab', input_str]) == gdal.CE_None
         create()
 
         ds = gdal.OpenEx(
@@ -1779,10 +1785,45 @@ def test_zarr_create_array_string():
         rg = ds.GetRootGroup()
         assert rg
         ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
-        assert ar.Read() == ['ab', '0123456789']
+        assert ar.Read() == ['ab', output_str]
 
     finally:
         gdal.RmdirRecursive('/vsimem/test.zarr')
+
+
+@pytest.mark.parametrize("srcfilename", ["data/zarr/unicode_le.zarr",
+                                         "data/zarr/unicode_be.zarr"])
+def test_zarr_update_array_string(srcfilename):
+
+    filename = '/vsimem/test.zarr'
+
+    try:
+        gdal.Mkdir(filename, 0)
+        gdal.FileFromMemBuffer(filename + '/.zarray', open(srcfilename + '/.zarray', 'rb').read())
+        gdal.FileFromMemBuffer(filename + '/0', open(srcfilename + '/0', 'rb').read())
+
+        eta = '\u03B7'
+
+        def update():
+            ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+            rg = ds.GetRootGroup()
+            ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+            assert ar.Read() == ['\u00E9']
+            assert ar.Write([eta]) == gdal.CE_None
+            assert gdal.GetLastErrorMsg() == ''
+
+        update()
+
+        def check():
+            ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+            rg = ds.GetRootGroup()
+            ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+            assert ar.Read() == [eta]
+
+        check()
+
+    finally:
+        gdal.RmdirRecursive(filename)
 
 
 @pytest.mark.parametrize("format", ['ZARR_V2', 'ZARR_V3'])

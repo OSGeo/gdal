@@ -821,7 +821,8 @@ std::shared_ptr<GDALGroup> ZarrGroupV2::CreateGroup(const std::string& osName,
 static CPLJSONObject FillDTypeElts(const GDALExtendedDataType& oDataType,
                                    size_t nGDALStartOffset,
                                    std::vector<DtypeElt>& aoDtypeElts,
-                                   bool bZarrV2)
+                                   bool bZarrV2,
+                                   bool bUseUnicode)
 {
     CPLJSONObject dtype;
     const auto eClass = oDataType.GetClass();
@@ -842,13 +843,25 @@ static CPLJSONObject FillDTypeElts(const GDALExtendedDataType& oDataType,
                 return dtype;
             }
             DtypeElt elt;
-            elt.nativeType = DtypeElt::NativeType::STRING;
             elt.nativeOffset = nNativeStartOffset;
-            elt.nativeSize = oDataType.GetMaxStringLength();
+            if( bUseUnicode )
+            {
+                elt.nativeType = DtypeElt::NativeType::STRING_UNICODE;
+                elt.nativeSize = oDataType.GetMaxStringLength() * 4;
+#ifdef CPL_MSB
+                elt.needByteSwapping = true;
+#endif
+                dtype.Set(dummy, CPLSPrintf("<U%d", static_cast<int>(oDataType.GetMaxStringLength())));
+            }
+            else
+            {
+                elt.nativeType = DtypeElt::NativeType::STRING_ASCII;
+                elt.nativeSize = oDataType.GetMaxStringLength();
+                dtype.Set(dummy, CPLSPrintf("|S%d", static_cast<int>(oDataType.GetMaxStringLength())));
+            }
             elt.gdalOffset = nGDALStartOffset;
             elt.gdalSize = sizeof(char*);
             aoDtypeElts.emplace_back(elt);
-            dtype.Set(dummy, CPLSPrintf("|S%d", static_cast<int>(elt.nativeSize)));
             break;
         }
 
@@ -968,7 +981,8 @@ static CPLJSONObject FillDTypeElts(const GDALExtendedDataType& oDataType,
                     comp->GetType(),
                     nGDALStartOffset + comp->GetOffset(),
                     aoDtypeElts,
-                    bZarrV2);
+                    bZarrV2,
+                    bUseUnicode);
                 if( !subdtype.IsValid() )
                 {
                     dtype = CPLJSONObject();
@@ -1070,7 +1084,9 @@ std::shared_ptr<GDALMDArray> ZarrGroupV2::CreateMDArray(
 
     std::vector<DtypeElt> aoDtypeElts;
     constexpr bool bZarrV2 = true;
-    const auto dtype = FillDTypeElts(oDataType, 0, aoDtypeElts, bZarrV2);
+    const bool bUseUnicode = EQUAL(
+        CSLFetchNameValueDef(papszOptions, "STRING_FORMAT", "ASCII"), "UNICODE");
+    const auto dtype = FillDTypeElts(oDataType, 0, aoDtypeElts, bZarrV2, bUseUnicode);
     if( !dtype.IsValid() || aoDtypeElts.empty() )
         return nullptr;
 
@@ -1609,7 +1625,7 @@ std::shared_ptr<GDALMDArray> ZarrGroupV3::CreateMDArray(
 
     std::vector<DtypeElt> aoDtypeElts;
     constexpr bool bZarrV2 = false;
-    const auto dtype = FillDTypeElts(oDataType, 0, aoDtypeElts, bZarrV2)["dummy"];
+    const auto dtype = FillDTypeElts(oDataType, 0, aoDtypeElts, bZarrV2, false)["dummy"];
     if( !dtype.IsValid() || aoDtypeElts.empty() )
         return nullptr;
 
