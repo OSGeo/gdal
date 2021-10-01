@@ -381,7 +381,7 @@ Configuration Options
    represent the latitude and longitude only by their attributes (STRICT)
    or also by guessing the name (YES), default is YES.
 
--  **GDAL_NETCDF_IGNORE_XY_AXIS_NAME_CHECKS=[YES/NO] : When a dimension
+-  **GDAL_NETCDF_IGNORE_XY_AXIS_NAME_CHECKS=[YES/NO]** : When a dimension
    has been identified as latitude or longitude by its attributes, check
    if its name also matches the convention, default is YES.
 
