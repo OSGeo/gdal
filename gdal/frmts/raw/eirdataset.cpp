@@ -489,6 +489,15 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
         }
     }
 
+    if( !RAWDatasetCheckMemoryUsage(
+                        poDS->nRasterXSize, poDS->nRasterYSize, nBands,
+                        nItemSize,
+                        nPixelOffset, nLineOffset, nSkipBytes, nBandOffset,
+                        poDS->fpImage) )
+    {
+        return nullptr;
+    }
+
     poDS->SetDescription( poOpenInfo->pszFilename );
     poDS->PamInitialize();
 
