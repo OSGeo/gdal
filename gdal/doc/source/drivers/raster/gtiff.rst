@@ -402,7 +402,9 @@ Creation Options
 
    * ``LERC_ZSTD`` is available when ``LERC`` and ``ZSTD`` are available.
 
-   * ``JXL`` is for JPEG-XL, and is only available when usign internal libtiff and building GDAL against https://github.com/libjxl/libxl
+   * ``JXL`` is for JPEG-XL, and is only available when using internal libtiff and building GDAL against
+     https://github.com/libjxl/libxl . JXL compression may only be used alongside ``INTERLEAVE=PIXEL`` 
+     (the default) on datasets with 4 bands or less.
 
    * ``NONE`` is the default.
 
@@ -477,7 +479,8 @@ Creation Options
    BLOCKYSIZE value for strip layout.
 
 -  **JXL_LOSSLESS=YES/NO**: Set whether JPEG-XL compression should be lossless
-   (YES, default) or lossy (NO)
+   (YES, default) or lossy (NO). For lossy compression, the underlying data
+   should be either gray, gray+alpha, rgb or rgb+alpha.
 
 -  **JXL_EFFORT=[1-9]**: Level of effort for JPEG-XL compression.
    The higher, the smaller file and slower compression time. Default is 5.
