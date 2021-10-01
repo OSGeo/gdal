@@ -377,7 +377,7 @@ Configuration Options
    not needed unless a specific dataset is causing problems (which
    should be reported in GDAL trac).
 
--  **GDAL_NETCDF_VERIFY_DIMS=[YES/STRICT] : Try to guess which dimensions
+-  **GDAL_NETCDF_VERIFY_DIMS=[YES/STRICT]** : Try to guess which dimensions
    represent the latitude and longitude only by their attributes (STRICT)
    or also by guessing the name (YES), default is YES.
 
