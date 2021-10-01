@@ -596,6 +596,19 @@ void ZarrDriver::InitMetadata()
             CPLCreateXMLNode(poValueNode, CXT_Text, "F");
         }
 
+        auto psStringFormat = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
+        CPLAddXMLAttributeAndValue(psStringFormat, "name", "STRING_FORMAT");
+        CPLAddXMLAttributeAndValue(psStringFormat, "type", "string-select");
+        CPLAddXMLAttributeAndValue(psStringFormat, "default", "STRING");
+        {
+            auto poValueNode = CPLCreateXMLNode(psStringFormat, CXT_Element, "Value");
+            CPLCreateXMLNode(poValueNode, CXT_Text, "STRING");
+        }
+        {
+            auto poValueNode = CPLCreateXMLNode(psStringFormat, CXT_Element, "Value");
+            CPLCreateXMLNode(poValueNode, CXT_Text, "UNICODE");
+        }
+
         auto psDimSeparatorNode = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
         CPLAddXMLAttributeAndValue(psDimSeparatorNode, "name", "DIM_SEPARATOR");
         CPLAddXMLAttributeAndValue(psDimSeparatorNode, "type", "string");
