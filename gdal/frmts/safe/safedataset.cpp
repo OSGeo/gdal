@@ -884,17 +884,16 @@ GDALDataset *SAFEDataset::Open( GDALOpenInfo * poOpenInfo )
             return nullptr;
         }
 
-        const char *pszSelectionUnit = strrchr(osMDFilename.c_str(), ':');
-        if(pszSelectionUnit == nullptr ||
-           pszSelectionUnit == osMDFilename.c_str())
+        const auto nSelectionUnitPos = osMDFilename.rfind(':');
+        if(nSelectionUnitPos == std::string::npos || nSelectionUnitPos == 0)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Invalid syntax for SENTINEL1_CALIB:");
             return nullptr;
         }
 
-        CPLString osUnitValue = pszSelectionUnit + strlen(":");
-        osMDFilename.resize(pszSelectionUnit - osMDFilename.c_str());
+        CPLString osUnitValue = osMDFilename.substr(nSelectionUnitPos + 1);
+        osMDFilename.resize(nSelectionUnitPos);
         if(EQUAL(osUnitValue.c_str(), "AMPLITUDE"))
             eRequestType = AMPLITUDE;
         else if(EQUAL(osUnitValue.c_str(), "COMPLEX"))
@@ -908,27 +907,26 @@ GDALDataset *SAFEDataset::Open( GDALOpenInfo * poOpenInfo )
             return nullptr;
         }
 
-        const char *pszSelection1 = strrchr(osMDFilename.c_str(), ':');
-        if(pszSelection1 == nullptr || pszSelection1 == osMDFilename.c_str())
+        const auto nSelection1Pos = osMDFilename.rfind(':');
+        if(nSelection1Pos == std::string::npos || nSelection1Pos == 0)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Invalid syntax for SENTINEL1_CALIB:");
             return nullptr;
         }
-        osMDFilename.resize(pszSelection1 - osMDFilename.c_str());
-        osSelectedSubDS1 = pszSelection1 + strlen(":");
+        osSelectedSubDS1 = osMDFilename.substr(nSelection1Pos + 1);
+        osMDFilename.resize(nSelection1Pos);
 
-        const char *pszSelection2 = strchr(osSelectedSubDS1.c_str(), '_');
-        if(pszSelection2 != nullptr && pszSelection2 != pszSelection1)
+        const auto nSelection2Pos = osSelectedSubDS1.find('_');
+        if(nSelection2Pos != std::string::npos && nSelection2Pos != 0)
         {
-            osSelectedSubDS1.resize(pszSelection2 - osSelectedSubDS1.c_str());
-            osSelectedSubDS2 = pszSelection2 + strlen("_");
-            const char *pszSelection3 = strchr(osSelectedSubDS2.c_str(), '_');
-            if(pszSelection3 != nullptr && pszSelection3 != pszSelection2)
+            osSelectedSubDS2 = osSelectedSubDS1.substr(nSelection2Pos+1);
+            osSelectedSubDS1.resize(nSelection2Pos);
+            const auto nSelection3Pos = osSelectedSubDS2.find('_');
+            if(nSelection3Pos != std::string::npos && nSelection3Pos != 0)
             {
-                osSelectedSubDS2.resize(pszSelection3 -
-                                        osSelectedSubDS2.c_str());
-                osSelectedSubDS3 = pszSelection3 + strlen("_");
+                osSelectedSubDS3 = osSelectedSubDS2.substr(nSelection3Pos+1);
+                osSelectedSubDS2.resize(nSelection3Pos);
             }
         }
 
