@@ -102,7 +102,6 @@ struct WriteFuncStruct
     char*           pBuffer = nullptr;
     size_t          nSize = 0;
     bool            bIsHTTP = false;
-    bool            bIsInHeader = false;
     bool            bMultiRange = false;
     vsi_l_offset    nStartOffset = 0;
     vsi_l_offset    nEndOffset = 0;
@@ -110,7 +109,7 @@ struct WriteFuncStruct
     vsi_l_offset    nContentLength = 0;
     bool            bFoundContentRange = false;
     bool            bError = false;
-    bool            bDownloadHeaderOnly = false;
+    bool            bInterruptDownload = false;
     bool            bDetectRangeDownloadingError = false;
     GIntBig         nTimestampDate = 0; // Corresponds to Date: header field
 
