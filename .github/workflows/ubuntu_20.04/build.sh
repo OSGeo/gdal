@@ -48,6 +48,7 @@ cd /build/gdal
     --with-tiledb \
     --with-crypto \
     --with-ecw=/opt/libecwj2-3.3 \
+    --with-jxl \
     --with-mrsid=/usr/local --with-jp2mrsid \
     --with-fgdb=/usr/local/FileGDB_API \
     --with-opencl \

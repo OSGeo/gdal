@@ -570,6 +570,13 @@ EXR_CFLAGS = @EXR_CFLAGS@
 HEIF_CFLAGS = @HEIF_CFLAGS@
 
 #
+# JXL support
+#
+
+HAVE_JXL = @HAVE_JXL@
+JXL_CFLAGS = @JXL_CFLAGS@
+
+#
 # cryptopp stuff
 #
 HAVE_CRYPTOPP    =       @HAVE_CRYPTOPP@

@@ -7338,6 +7338,11 @@ def test_tiff_write_compression_create_and_createcopy():
     if 'WEBP' in md['DMD_CREATIONOPTIONLIST']:
         tests.append((['COMPRESS=WEBP', 'WEBP_LEVEL=95'],['COMPRESS=WEBP', 'WEBP_LEVEL=15']))
 
+    if 'JXL' in md['DMD_CREATIONOPTIONLIST']:
+        tests.append((['COMPRESS=JXL', 'JXL_LOSSLESS=YES'],['COMPRESS=JXL', 'JXL_LOSSLESS=NO']))
+        tests.append((['COMPRESS=JXL', 'JXL_LOSSLESS=NO', 'JXL_EFFORT=3'],['COMPRESS=JXL', 'JXL_LOSSLESS=NO', 'JXL_EFFORT=9']))
+        tests.append((['COMPRESS=JXL', 'JXL_LOSSLESS=NO', 'JXL_DISTANCE=0.1'],['COMPRESS=JXL', 'JXL_LOSSLESS=NO', 'JXL_DISTANCE=3']))
+
     new_tests = []
     for (before, after) in tests:
         new_tests.append((before, after))
@@ -7514,6 +7519,45 @@ def test_tiff_write_lerc_float_with_nan(gdalDataType, structType):
     assert math.isnan(got_data[1])
     ds = None
     gdal.Unlink(filename)
+
+###############################################################################
+# Test JXL compression
+
+
+def test_tiff_write_jpegxl_byte_single_band():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('JXL') == -1:
+        pytest.skip()
+
+    ut = gdaltest.GDALTest('GTiff', 'byte.tif', 1, 4672, options=['COMPRESS=JXL'])
+    return ut.testCreateCopy()
+
+###############################################################################
+# Test JXL compression
+
+
+def test_tiff_write_jpegxl_byte_three_band():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('JXL') == -1:
+        pytest.skip()
+
+    ut = gdaltest.GDALTest('GTiff', 'rgbsmall.tif', 1, 21212, options=['COMPRESS=JXL'])
+    return ut.testCreateCopy()
+
+###############################################################################
+# Test JXL compression
+
+
+def test_tiff_write_jpegxl_uint16_single_band():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('JXL') == -1:
+        pytest.skip()
+
+    ut = gdaltest.GDALTest('GTiff', 'uint16.tif', 1, 4672, options=['COMPRESS=JXL'])
+    return ut.testCreateCopy()
 
 ###############################################################################
 # Test creating overviews with NaN nodata
