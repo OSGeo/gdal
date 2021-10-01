@@ -408,7 +408,7 @@ JXLPreEncode(TIFF* tif, uint16_t s)
             td->td_samplesperpixel > 4 )
         {
             TIFFErrorExt(tif->tif_clientdata, module,
-                "JXL: Only up to 4 samples are supported for Planarconfig=Contig");
+                "JXL: INTERLEAVE=PIXEL supports a maximum of 4 bands (%d provided)", td->td_samplesperpixel);
             return 0;
         }
 
