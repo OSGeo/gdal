@@ -225,7 +225,8 @@ RUN if echo "$WITH_PDFIUM" | grep -Eiq "^(y(es)?|1|true)$"  ; then ( \
   ) ; fi
 
 # Build libjxl
-RUN git clone https://github.com/libjxl/libjxl.git --recursive \
+RUN . /buildscripts/bh-set-envvars.sh \
+    && git clone https://github.com/libjxl/libjxl.git --recursive \
     && cd libjxl \
     && mkdir build \
     && cd build \
