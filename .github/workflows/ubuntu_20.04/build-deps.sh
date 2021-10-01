@@ -67,7 +67,7 @@ git clone https://github.com/libjxl/libjxl.git --recursive \
     && make -j$(nproc) \
     && make -j$(nproc) install \
     && cd ../.. \
-    && rm -rf jpeg-xl
+    && rm -rf libjxl
 
 # Install MrSID SDK
 mkdir mrsid \
