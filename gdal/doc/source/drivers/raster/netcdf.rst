@@ -198,7 +198,7 @@ driver first tries to follow the CF-1 Convention from UNIDATA looking
 for the Metadata named "grid_mapping". If "grid_mapping" is not present,
 the driver will try to find an lat/lon grid array to set geotransform
 array. The NetCDF driver verifies that the Lat/Lon array is equally
-space.
+spaced.
 
 If those 2 methods fail, NetCDF driver will try to read the following
 metadata directly and set up georeferencing.
@@ -213,6 +213,10 @@ or,
 -  Southernmost_Northing
 -  Easternmost_Easting
 -  Westernmost_Easting
+
+See also the configuration options **GDAL_NETCDF_VERIFY_DIMS** and
+**GDAL_NETCDF_IGNORE_XY_AXIS_NAME_CHECKS** which control this
+behaviour.
 
 Open options
 ------------
@@ -372,6 +376,14 @@ Configuration Options
    overriding the order detected by the driver. This option is usually
    not needed unless a specific dataset is causing problems (which
    should be reported in GDAL trac).
+
+-  **GDAL_NETCDF_VERIFY_DIMS=[YES/STRICT]** : Try to guess which dimensions
+   represent the latitude and longitude only by their attributes (STRICT)
+   or also by guessing the name (YES), default is YES.
+
+-  **GDAL_NETCDF_IGNORE_XY_AXIS_NAME_CHECKS=[YES/NO]** : When a dimension
+   has been identified as latitude or longitude by its attributes, check
+   if its name also matches the convention, default is YES.
 
 VSI Virtual File System API support
 -----------------------------------

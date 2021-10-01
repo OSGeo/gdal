@@ -62,8 +62,10 @@
 #define CF_LATITUDE_LNG_NAME       "latitude"
 #define CF_DEGREES_NORTH           "degrees_north" /* recommended */
 #define CF_DEGREE_NORTH            "degree_north"  /* acceptable */
+#define CF_DEGREES_N               "degrees_N"     /* acceptable */
 #define CF_DEGREES_EAST            "degrees_east"  /* recommended */
 #define CF_DEGREE_EAST             "degree_east"   /* acceptable */
+#define CF_DEGREES_E               "degrees_E"     /* acceptable */
 
 #define CF_AXIS            "axis"
 /* #define CF_BOUNDS          "bounds" */
