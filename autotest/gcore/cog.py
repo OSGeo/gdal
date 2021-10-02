@@ -106,7 +106,7 @@ def test_cog_basic():
     ds = gdal.Open(filename)
     assert ds.GetRasterBand(1).Checksum() == 4672
     assert ds.GetMetadataItem('LAYOUT', 'IMAGE_STRUCTURE') == 'COG'
-    assert ds.GetMetadataItem('COMPRESSION', 'IMAGE_STRUCTURE') is None
+    assert ds.GetMetadataItem('COMPRESSION', 'IMAGE_STRUCTURE') == 'LZW'
     assert ds.GetRasterBand(1).GetOverviewCount() == 0
     assert ds.GetRasterBand(1).GetBlockSize() == [512, 512]
     assert ds.GetMetadataItem('GDAL_STRUCTURAL_METADATA', 'TIFF') == """GDAL_STRUCTURAL_METADATA_SIZE=000140 bytes
