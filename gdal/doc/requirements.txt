@@ -4,3 +4,4 @@ breathe == 4.13.0
 sphinx == 2.0.1
 sphinx-rtd-theme == 0.4.3
 docutils = 0.17.1
+babel = 2.9.1
