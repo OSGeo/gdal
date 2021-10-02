@@ -154,6 +154,8 @@ def test_http_ssl_verifystatus():
             # For now this URL doesn't support OCSP stapling...
             gdal.OpenEx('https://google.com', allowed_drivers=['HTTP'])
     last_err = gdal.GetLastErrorMsg()
+    if 'timed out' in last_err:
+        pytest.skip(last_err)
     if 'No OCSP response received' not in last_err and 'libcurl too old' not in last_err:
 
         # The test actually works on Travis Mac
@@ -162,7 +164,7 @@ def test_http_ssl_verifystatus():
 
         pytest.fail(last_err)
 
-    
+
 ###############################################################################
 
 
@@ -183,7 +185,7 @@ def test_http_use_capi_store_sub():
     with gdaltest.config_option('GDAL_HTTP_USE_CAPI_STORE', 'YES'):
         gdal.OpenEx('https://google.com', allowed_drivers=['HTTP'])
 
-    
+
 ###############################################################################
 #
 
