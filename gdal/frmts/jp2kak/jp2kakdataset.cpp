@@ -1134,35 +1134,18 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 
         cod->get(Corder, 0, 0, order);
 
-        // TODO(schwehr): Why not a switch statement?
-        if( order == Corder_LRCP )
+        const char* pszOrder = nullptr;
+        switch( order )
         {
-            CPLDebug("JP2KAK", "order=LRCP");
-            poDS->SetMetadataItem("Corder", "LRCP");
+            case Corder_LRCP: pszOrder = "LRCP"; break;
+            case Corder_RPCL: pszOrder = "RPCL"; break;
+            case Corder_PCRL: pszOrder = "PCRL"; break;
+            case Corder_CPRL: pszOrder = "CPRL"; break;
+            default: break;
         }
-        else if( order == Corder_RLCP )
+        if( pszOrder )
         {
-            CPLDebug("JP2KAK", "order=RLCP");
-            poDS->SetMetadataItem("Corder", "RLCP");
-        }
-        else if( order == Corder_RPCL )
-        {
-            CPLDebug("JP2KAK", "order=RPCL");
-            poDS->SetMetadataItem("Corder", "RPCL");
-        }
-        else if( order == Corder_PCRL )
-        {
-            CPLDebug("JP2KAK", "order=PCRL");
-            poDS->SetMetadataItem("Corder", "PCRL");
-        }
-        else if( order == Corder_CPRL )
-        {
-            CPLDebug("JP2KAK", "order=CPRL");
-            poDS->SetMetadataItem("Corder", "CPRL");
-        }
-        else
-        {
-            CPLDebug("JP2KAK", "order=%d, not recognized.", order);
+            poDS->SetMetadataItem("Corder", pszOrder, "IMAGE_STRUCTURE");
         }
 
         poDS->bUseYCC = false;
