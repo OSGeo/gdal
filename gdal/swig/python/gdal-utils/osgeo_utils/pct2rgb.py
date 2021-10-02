@@ -68,7 +68,7 @@ def main(argv):
             i = i + 1
             driver = argv[i]
 
-        if arg == '-ct':
+        elif arg == '-ct':
             i = i + 1
             pct_filename = argv[i]
 
