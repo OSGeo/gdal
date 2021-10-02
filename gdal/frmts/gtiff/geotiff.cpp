@@ -462,9 +462,6 @@ private:
 
     void        LoadMDAreaOrPoint();
     void        LookForProjection();
-#ifdef ESRI_BUILD
-    void        AdjustLinearUnit( short UOMLength );
-#endif
 
     void        Crystalize();  // TODO: Spelling.
     void        RestoreVolatileParameters(TIFF* hTIFF);
@@ -12819,11 +12816,6 @@ void GTiffDataset::LookForProjection()
             }
         }
 
-        // Check the tif linear unit and the CS linear unit.
-#ifdef ESRI_BUILD
-        AdjustLinearUnit(psGTIFDefn.UOMLength);
-#endif
-
         GTIFFreeDefn(psGTIFDefn);
 
         GTiffDatasetSetAreaOrPointMD( hGTIF, m_oGTiffMDMD );
@@ -12835,47 +12827,6 @@ void GTiffDataset::LookForProjection()
     m_bForceUnsetGTOrGCPs = false;
     m_bForceUnsetProjection = false;
 }
-
-/************************************************************************/
-/*                          AdjustLinearUnit()                          */
-/*                                                                      */
-/*      The following code is only used in ESRI Builds and there is     */
-/*      outstanding discussion on whether it is even appropriate        */
-/*      then.                                                           */
-/************************************************************************/
-#ifdef ESRI_BUILD
-
-void GTiffDataset::AdjustLinearUnit( short UOMLength )
-{
-    if( !pszProjection || strlen(pszProjection) == 0 )
-        return;
-    if( UOMLength == 9001 )
-    {
-        char* pstr = strstr(pszProjection, "PARAMETER");
-        if( !pstr )
-            return;
-        pstr = strstr(pstr, "UNIT[");
-        if( !pstr )
-            return;
-        pstr = strchr(pstr, ',') + 1;
-        if( !pstr )
-            return;
-        char* pstr1 = strchr(pstr, ']');
-        if( !pstr1 || pstr1 - pstr >= 128 )
-            return;
-        char csUnitStr[128];
-        strncpy(csUnitStr, pstr, pstr1 - pstr);
-        csUnitStr[pstr1-pstr] = '\0';
-        const double csUnit = CPLAtof(csUnitStr);
-        if( fabs(csUnit - 1.0) > 0.000001 )
-        {
-            for( long i = 0; i < 6; ++i )
-                adfGeoTransform[i] /= csUnit;
-        }
-    }
-}
-
-#endif  // def ESRI_BUILD
 
 /************************************************************************/
 /*                            ApplyPamInfo()                            */
