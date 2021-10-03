@@ -134,15 +134,15 @@ Byte. With the -mode flag can also return a minimum visible height raster of typ
 
   Sets what information the output contains.
 
-  Possible values: VISIBLE, DEM, GROUND
+  Possible values: NORMAL, DEM, GROUND
 
-  VISIBLE returns a raster of type Byte containing visible locations.
+  NORMAL returns a raster of type Byte containing visible locations.
 
   DEM and GROUND will return a raster of type Float64 containing the minimum target
   height for target to be visible from the DEM surface or ground level respectively.
   Flags -tz, -iv and -vv will be ignored.
 
-  Default VISIBLE
+  Default NORMAL
 
 C API
 -----
