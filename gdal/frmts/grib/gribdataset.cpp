@@ -2042,9 +2042,21 @@ const std::vector<double>& GRIBSharedResource::LoadData(vsi_l_offset nOffset,
         m_adfCurData.clear();
         return m_adfCurData;
     }
+    const size_t nPointCount = static_cast<size_t>(nx) * ny;
+    const size_t nByteCount = nPointCount * sizeof(double);
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    if( nByteCount > static_cast<size_t>(INT_MAX) )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Too large memory allocation attempt");
+        free(data);
+        m_adfCurData.clear();
+        return m_adfCurData;
+    }
+#endif
     try
     {
-        m_adfCurData.resize( static_cast<size_t>(nx) * ny );
+        m_adfCurData.resize( nPointCount );
     }
     catch( const std::exception& e )
     {
@@ -2054,7 +2066,7 @@ const std::vector<double>& GRIBSharedResource::LoadData(vsi_l_offset nOffset,
         return m_adfCurData;
     }
     m_nOffsetCurData = nOffset;
-    memcpy(&m_adfCurData[0], data, static_cast<size_t>(nx) * ny * sizeof(double));
+    memcpy(&m_adfCurData[0], data, nByteCount);
     free(data);
     return m_adfCurData;
 }
