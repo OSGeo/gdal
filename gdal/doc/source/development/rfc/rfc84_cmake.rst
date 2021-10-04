@@ -124,6 +124,14 @@ A checklist of all features of our current build systems that will need to be
 ported and checked has been initiated in:
 https://docs.google.com/spreadsheets/d/1SsUXiZxKim6jhLjlJFCRs1zwMvNpbJbBMB6yl0ms01c/edit
 
+SWIG bindings
+-------------
+
+The Python, Java and CSharp bindings will be available as options of the CMake
+build options.
+
+The Perl bindings will not be available, as being planned for removal in GDAL 3.5
+
 Compatibility
 -------------
 
