@@ -40,6 +40,8 @@
 #include <memory>
 #include <vector>
 
+static bool gbHasLZW = false;
+
 extern "C" CPL_DLL void GDALRegister_COG();
 
 /************************************************************************/
@@ -760,7 +762,8 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
         }
     }
 
-    CPLString osCompress = CSLFetchNameValueDef(papszOptions, "COMPRESS", "NONE");
+    CPLString osCompress = CSLFetchNameValueDef(papszOptions, "COMPRESS",
+                                                gbHasLZW ? "LZW" : "NONE");
     if( EQUAL(osCompress, "JPEG") &&
         poCurDS->GetRasterCount() == 4 )
     {
@@ -1051,14 +1054,15 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
                                      CPLSPrintf("%d", nAlignedLevels));
          }
     }
-    const char* pszOverviewCompress = CSLFetchNameValue(papszOptions, "OVERVIEW_COMPRESS");
+    const char* pszOverviewCompress = CSLFetchNameValueDef(
+        papszOptions, "OVERVIEW_COMPRESS", osCompress.c_str());
 
     CPLConfigOptionSetter ovrCompressSetter("COMPRESS_OVERVIEW", pszOverviewCompress, true);
     CPLConfigOptionSetter ovrQualityJpegSetter("JPEG_QUALITY_OVERVIEW", CSLFetchNameValue(papszOptions, "OVERVIEW_QUALITY"), true);
     CPLConfigOptionSetter ovrQualityWebpSetter("WEBP_LEVEL_OVERVIEW", CSLFetchNameValue(papszOptions, "OVERVIEW_QUALITY"), true);
 
     std::unique_ptr<CPLConfigOptionSetter> poPhotometricSetter;
-    if (pszOverviewCompress != nullptr && nBands == 3 && EQUAL(pszOverviewCompress, "JPEG") )
+    if (nBands == 3 && EQUAL(pszOverviewCompress, "JPEG") )
     {
         poPhotometricSetter.reset(new CPLConfigOptionSetter("PHOTOMETRIC_OVERVIEW", "YCBCR", true));
     }
@@ -1153,6 +1157,7 @@ GDALCOGDriver::GDALCOGDriver()
     osCompressValues = GTiffGetCompressValues(
         bHasLZW, bHasDEFLATE, bHasLZMA, bHasZSTD, bHasJPEG, bHasWebP, bHasLERC,
         true /* bForCOG */);
+    gbHasLZW = bHasLZW;
 }
 
 void GDALCOGDriver::InitializeCreationOptionList()
@@ -1163,11 +1168,15 @@ void GDALCOGDriver::InitializeCreationOptionList()
 
     CPLString osOptions;
     osOptions = "<CreationOptionList>"
-                "   <Option name='COMPRESS' type='string-select'>";
+                "   <Option name='COMPRESS' type='string-select' default='";
+    osOptions += bHasLZW ? "LZW" : "NONE";
+    osOptions += "'>";
     osOptions += osCompressValues;
     osOptions += "   </Option>";
 
-    osOptions += "   <Option name='OVERVIEW_COMPRESS' type='string-select'>";
+    osOptions += "   <Option name='OVERVIEW_COMPRESS' type='string-select' default='";
+    osOptions += bHasLZW ? "LZW" : "NONE";
+    osOptions += "'>";
     osOptions += osCompressValues;
     osOptions += "   </Option>";
 
