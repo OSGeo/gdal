@@ -507,6 +507,29 @@ def test_vsicurl_test_retry():
         assert '429' in error_msg
 
 
+def test_vsicurl_test_range_retry():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/test_retry/', 404)
+    handler.add('HEAD', '/test_retry/test.txt', 200, {'Content-Length': '6'})
+    handler.add('GET', '/test_retry/test.txt', 502, {'Content-Range': 'bytes 3-5/6'})
+    handler.add('GET', '/test_retry/test.txt', 429, {'Content-Range': 'bytes 3-5/6'})
+    handler.add('GET', '/test_retry/test.txt', 200, {'Content-Range': 'bytes 3-5/6'}, 'bar')
+    with webserver.install_http_handler(handler):
+        f = gdal.VSIFOpenL('/vsicurl?max_retry=2&retry_delay=0.01&url=http://localhost:%d/test_retry/test.txt' % gdaltest.webserver_port, 'rb')
+        assert f is not None
+        gdal.ErrorReset()
+        with gdaltest.error_handler():
+            data = gdal.VSIFReadL(1, 3, f).decode('ascii')
+        error_msg = gdal.GetLastErrorMsg()
+        gdal.VSIFCloseL(f)
+        assert data == 'bar'
+        assert '429' in error_msg
+
+        
 ###############################################################################
 
 
