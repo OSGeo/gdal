@@ -166,6 +166,27 @@ Our continuous integration "only" tests Linux (Intel/AMD, ARM64 and s390x archit
 Android (build only), MacOSX and Windows. We will welcome involvement at some point
 from users/developers of other environments to test and help address any outstanding issues.
 
+General requirements
+--------------------
+
+The following lists a few requirements to consider the new build system be ready,
+and the existing ones can be removed:
+
+- The build system works on most environments where the build systems are known to work.
+  For CI-tested environments, this will involve porting to them and checking that
+  the builds are functional. For other build systems, we will depend on manual testing
+  from users.
+
+- objdir / out-of-source builds are supported.
+
+- cross builds are supported.
+
+- Explicit testing of OSes through ``if(THIS_OS)`` should be limited, and replaced
+  by testing of feature wherever doable.
+
+- There has been a formal release (presumably 3.6) with existing build systems
+  and cmake where cmake meets the above requirements, as verified by packager feedback.
+
 Funding
 -------
 
