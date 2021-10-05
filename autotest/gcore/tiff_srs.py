@@ -856,3 +856,29 @@ def test_tiff_srs_read_invalid_semimajoraxis_compound():
     # whereas previous versions will return a non-NULL one
     with gdaltest.error_handler():
         ds.GetSpatialRef()
+
+
+def test_tiff_srs_try_write_derived_geographic():
+
+    if osr.GetPROJVersionMajor() < 7:
+        pytest.skip()
+
+    tmpfile = '/vsimem/tmp.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(tmpfile, 1, 1)
+    wkt = 'GEOGCRS["Coordinate System imported from GRIB file",BASEGEOGCRS["Coordinate System imported from GRIB file",DATUM["unnamed",ELLIPSOID["Sphere",6367470,0,LENGTHUNIT["metre",1,ID["EPSG",9001]]]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]],DERIVINGCONVERSION["Pole rotation (GRIB convention)",METHOD["Pole rotation (GRIB convention)"],PARAMETER["Latitude of the southern pole (GRIB convention)",-30,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],PARAMETER["Longitude of the southern pole (GRIB convention)",-15,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],PARAMETER["Axis rotation (GRIB convention)",0,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]],CS[ellipsoidal,2],AXIS["latitude",north,ORDER[1],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],AXIS["longitude",east,ORDER[2],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]]'
+    ds.SetProjection(wkt)
+    ds = None
+
+    assert gdal.VSIStatL(tmpfile + '.aux.xml')
+    ds = gdal.Open(tmpfile)
+    srs = ds.GetSpatialRef()
+    assert srs is not None
+    assert srs.IsDerivedGeographic()
+    ds = None
+
+    gdal.Unlink(tmpfile + '.aux.xml')
+    ds = gdal.Open(tmpfile)
+    assert ds.GetSpatialRef() is None
+    ds = None
+
+    gdal.Unlink(tmpfile)
