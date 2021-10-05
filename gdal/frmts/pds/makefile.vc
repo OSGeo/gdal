@@ -5,9 +5,17 @@ OBJ	=	pdsdataset.obj isis2dataset.obj isis3dataset.obj \
 
 GDAL_ROOT	=	..\..
 
-EXTRAFLAGS = 	-I..\..\gcore -I..\vrt -I..\..\ogr\ogrsf_frmts\geojson -I..\..\ogr\ogrsf_frmts\geojson\libjson -I..\..\ogr\ogrsf_frmts\generic -I..\..\ogr\ogrsf_frmts\vrt
+EXTRAFLAGS = 	-I..\..\gcore -I..\vrt -I..\..\ogr\ogrsf_frmts\geojson -I..\..\ogr\ogrsf_frmts\geojson\libjson -I..\..\ogr\ogrsf_frmts\generic -I..\..\ogr\ogrsf_frmts\vrt $(GEOTIFF_INC) $(TIFF_INC) -I..\gtiff
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
+
+!IFNDEF GEOTIFF_INC
+GEOTIFF_INC   =	-I..\gtiff\libgeotiff
+!ENDIF
+
+!IFNDEF TIFF_INC
+TIFF_INC   =   -I..\gtiff\libtiff
+!ENDIF
 
 default:	$(OBJ)
 	xcopy /D  /Y *.obj ..\o

@@ -294,11 +294,13 @@ def test_vicar_create_label_option_as_filename_error():
     gdal.Unlink(filename)
 
 
-def test_vicar_create_georeferencing():
+@pytest.mark.parametrize("georef_format", ["MIPL", "GEOTIFF"])
+def test_vicar_create_georeferencing(georef_format):
 
     src_ds = gdal.Open('data/vicar/test_vicar_truncated.bin')
     filename = '/vsimem/test.vic'
-    ds = gdal.GetDriverByName('VICAR').Create(filename, src_ds.RasterXSize, src_ds.RasterYSize)
+    ds = gdal.GetDriverByName('VICAR').Create(filename, src_ds.RasterXSize, src_ds.RasterYSize,
+                                              options = ['GEOREF_FORMAT=' + georef_format])
     ds.SetGeoTransform(src_ds.GetGeoTransform())
     ds.SetSpatialRef(src_ds.GetSpatialRef())
     ds = None
@@ -306,14 +308,31 @@ def test_vicar_create_georeferencing():
     ds = gdal.Open(filename)
     assert ds.GetGeoTransform() == src_ds.GetGeoTransform()
     assert ds.GetSpatialRef().IsSame(src_ds.GetSpatialRef())
+    lbl = ds.GetMetadata_List('json:VICAR')[0]
+    lbl = json.loads(lbl)
+    if georef_format == 'MIPL':
+        assert 'MAP' in lbl['PROPERTY']
+        assert 'GEOTIFF' not in lbl['PROPERTY']
+    else:
+        assert 'GEOTIFF' in lbl['PROPERTY']
+        assert 'MAP' not in lbl['PROPERTY']
 
     filename2 = '/vsimem/test2.vic'
-    assert gdal.GetDriverByName('VICAR').CreateCopy(filename2, ds)
+    assert gdal.GetDriverByName('VICAR').CreateCopy(filename2, ds,
+                                                    options = ['GEOREF_FORMAT=' + georef_format])
     ds = None
 
     ds = gdal.Open(filename2)
     assert ds.GetGeoTransform() == src_ds.GetGeoTransform()
     assert ds.GetSpatialRef().IsSame(src_ds.GetSpatialRef())
+    lbl = ds.GetMetadata_List('json:VICAR')[0]
+    lbl = json.loads(lbl)
+    if georef_format == 'MIPL':
+        assert 'MAP' in lbl['PROPERTY']
+        assert 'GEOTIFF' not in lbl['PROPERTY']
+    else:
+        assert 'GEOTIFF' in lbl['PROPERTY']
+        assert 'MAP' not in lbl['PROPERTY']
     ds = None
 
     gdal.GetDriverByName('VICAR').Delete(filename)
@@ -353,7 +372,7 @@ def test_vicar_write_basic():
     assert ds.GetRasterBand(1).Checksum() == 4672
     lbl = ds.GetMetadata_List('json:VICAR')[0]
     lbl = json.loads(lbl)
-    assert lbl['EOCI1'] == 1160
+    assert lbl['EOCI1'] == 1040
     assert lbl['EOCI2'] == 0
     ds = None
     gdal.GetDriverByName('VICAR').Delete(filename)

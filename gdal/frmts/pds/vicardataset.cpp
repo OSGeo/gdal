@@ -40,11 +40,77 @@ constexpr double NULL3 = -32768.0;
 #include "nasakeywordhandler.h"
 #include "vicarkeywordhandler.h"
 
+#include "gtiff.h"
+#include "geotiff.h"
+#include "tifvsi.h"
+#include "xtiffio.h"
+
 #include <exception>
 #include <limits>
 #include <string>
 
 CPL_CVSID("$Id$")
+
+/* GeoTIFF 1.0 geokeys */
+
+static const geokey_t GTiffAsciiKeys[] = {
+    GTCitationGeoKey,
+    GeogCitationGeoKey,
+    PCSCitationGeoKey,
+    VerticalCitationGeoKey
+};
+
+static const geokey_t GTiffDoubleKeys[] = {
+    GeogInvFlatteningGeoKey,
+    GeogSemiMajorAxisGeoKey,
+    GeogSemiMinorAxisGeoKey,
+    ProjAzimuthAngleGeoKey,
+    ProjCenterLatGeoKey,
+    ProjCenterLongGeoKey,
+    ProjFalseEastingGeoKey,
+    ProjFalseNorthingGeoKey,
+    ProjFalseOriginEastingGeoKey,
+    ProjFalseOriginLatGeoKey,
+    ProjFalseOriginLongGeoKey,
+    ProjFalseOriginNorthingGeoKey,
+    ProjLinearUnitSizeGeoKey,
+    ProjNatOriginLatGeoKey,
+    ProjNatOriginLongGeoKey,
+    ProjOriginLatGeoKey,
+    ProjOriginLongGeoKey,
+    ProjRectifiedGridAngleGeoKey,
+    ProjScaleAtNatOriginGeoKey,
+    ProjScaleAtOriginGeoKey,
+    ProjStdParallel1GeoKey,
+    ProjStdParallel2GeoKey,
+    ProjStdParallelGeoKey,
+    ProjStraightVertPoleLongGeoKey,
+    GeogLinearUnitSizeGeoKey,
+    GeogAngularUnitSizeGeoKey,
+    GeogPrimeMeridianLongGeoKey,
+    ProjCenterEastingGeoKey,
+    ProjCenterNorthingGeoKey,
+    ProjScaleAtCenterGeoKey
+};
+
+static const geokey_t GTiffShortKeys[] = {
+    GTModelTypeGeoKey,
+    GTRasterTypeGeoKey,
+    GeogAngularUnitsGeoKey,
+    GeogEllipsoidGeoKey,
+    GeogGeodeticDatumGeoKey,
+    GeographicTypeGeoKey,
+    ProjCoordTransGeoKey,
+    ProjLinearUnitsGeoKey,
+    ProjectedCSTypeGeoKey,
+    ProjectionGeoKey,
+    GeogPrimeMeridianGeoKey,
+    GeogLinearUnitsGeoKey,
+    GeogAzimuthUnitsGeoKey,
+    VerticalCSTypeGeoKey,
+    VerticalDatumGeoKey,
+    VerticalUnitsGeoKey
+};
 
 /************************************************************************/
 /*                     OGRVICARBinaryPrefixesLayer                      */
@@ -1677,129 +1743,30 @@ void VICARDataset::BuildLabel()
                 oMap.Set( "POSITIVE_LONGITUDE_DIRECTION", m_osLongitudeDirection );
         }
     }
+    else if( m_bGeoRefFormatIsMIPL )
+    {
+        auto oProperty = oLabel.GetObj("PROPERTY");
+        if( oProperty.IsValid() )
+        {
+            oProperty.Delete( "MAP" );
+            oProperty.Delete( "GEOTIFF" );
+        }
+        if( !m_oSRS.IsEmpty() )
+        {
+            BuildLabelPropertyMap(oLabel);
+        }
+    }
     else
     {
         auto oProperty = oLabel.GetObj("PROPERTY");
         if( oProperty.IsValid() )
         {
             oProperty.Delete( "MAP" );
+            oProperty.Delete( "GEOTIFF" );
         }
         if( !m_oSRS.IsEmpty() )
         {
-            if( m_oSRS.IsProjected() || m_oSRS.IsGeographic() )
-            {
-                oProperty = GetOrCreateJSONObject(oLabel, "PROPERTY");
-                auto oMap = GetOrCreateJSONObject(oProperty, "MAP");
-
-                const char* pszDatum = m_oSRS.GetAttrValue("DATUM");
-                CPLString osTargetName( m_osTargetName );
-                if( osTargetName.empty() )
-                {
-                    if( pszDatum && STARTS_WITH(pszDatum, "D_") )
-                    {
-                        osTargetName = pszDatum + 2;
-                    }
-                    else if( pszDatum )
-                    {
-                        osTargetName = pszDatum;
-                    }
-                }
-                if( !osTargetName.empty() )
-                    oMap.Add( "TARGET_NAME", osTargetName );
-
-                oMap.Add( "A_AXIS_RADIUS", m_oSRS.GetSemiMajor() / 1000.0 );
-                oMap.Add( "B_AXIS_RADIUS", m_oSRS.GetSemiMajor() / 1000.0 );
-                oMap.Add( "C_AXIS_RADIUS", m_oSRS.GetSemiMinor() / 1000.0 );
-
-                if( !m_osLatitudeType.empty() )
-                    oMap.Add( "COORDINATE_SYSTEM_NAME", m_osLatitudeType );
-                else
-                    oMap.Add( "COORDINATE_SYSTEM_NAME", "PLANETOCENTRIC" );
-
-                if( !m_osLongitudeDirection.empty() )
-                    oMap.Add( "POSITIVE_LONGITUDE_DIRECTION", m_osLongitudeDirection );
-                else
-                    oMap.Add( "POSITIVE_LONGITUDE_DIRECTION", "EAST" );
-
-                const char* pszProjection = m_oSRS.GetAttrValue("PROJECTION");
-                if( pszProjection == nullptr )
-                {
-                    oMap.Add( "MAP_PROJECTION_TYPE", "SIMPLE_CYLINDRICAL" );
-                    oMap.Add( "CENTER_LONGITUDE", 0.0 );
-                    oMap.Add( "CENTER_LATITUDE", 0.0 );
-                }
-                else if( EQUAL(pszProjection, SRS_PT_EQUIRECTANGULAR) )
-                {
-                    oMap.Add( "MAP_PROJECTION_TYPE", "EQUIRECTANGULAR" );
-                    if( m_oSRS.GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 )
-                                                                        != 0.0 )
-                    {
-                        CPLError(CE_Warning, CPLE_NotSupported,
-                                "Ignoring %s. Only 0 value supported",
-                                SRS_PP_LATITUDE_OF_ORIGIN);
-                    }
-                    oMap.Add( "CENTER_LONGITUDE",
-                        m_oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0) );
-                    const double dfCenterLat =
-                        m_oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0);
-                    oMap.Add( "CENTER_LATITUDE", dfCenterLat );
-                }
-                else if( EQUAL(pszProjection, SRS_PT_SINUSOIDAL) )
-                {
-                    oMap.Add( "MAP_PROJECTION_TYPE", "SINUSOIDAL" );
-                    oMap.Add( "CENTER_LONGITUDE",
-                        m_oSRS.GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER, 0.0) );
-                    oMap.Add( "CENTER_LATITUDE", 0.0 );
-                }
-                else
-                {
-                    CPLError(CE_Warning, CPLE_NotSupported,
-                            "Projection %s not supported",
-                            pszProjection);
-                }
-
-
-                if( oMap["MAP_PROJECTION_TYPE"].IsValid() )
-                {
-                    if( m_oSRS.GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 ) != 0.0 )
-                    {
-                        CPLError(CE_Warning, CPLE_NotSupported,
-                                "Ignoring %s. Only 0 value supported",
-                                SRS_PP_FALSE_EASTING);
-                    }
-                    if( m_oSRS.GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 ) != 0.0 )
-                    {
-                        CPLError(CE_Warning, CPLE_AppDefined,
-                                "Ignoring %s. Only 0 value supported",
-                                SRS_PP_FALSE_NORTHING);
-                    }
-
-                    if( m_bGotTransform )
-                    {
-                        const double dfDegToMeter = m_oSRS.GetSemiMajor() * M_PI / 180.0;
-                        if( m_oSRS.IsProjected() )
-                        {
-                            const double dfLinearUnits = m_oSRS.GetLinearUnits();
-                            const double dfScale = m_adfGeoTransform[1] * dfLinearUnits;
-                            oMap.Add( "SAMPLE_PROJECTION_OFFSET", -m_adfGeoTransform[0] * dfLinearUnits / dfScale - 0.5 );
-                            oMap.Add( "LINE_PROJECTION_OFFSET", m_adfGeoTransform[3] * dfLinearUnits / dfScale - 0.5 );
-                            oMap.Add( "MAP_SCALE", dfScale / 1000.0 );
-                        }
-                        else if( m_oSRS.IsGeographic() )
-                        {
-                            const double dfScale = m_adfGeoTransform[1] * dfDegToMeter;
-                            oMap.Add( "SAMPLE_PROJECTION_OFFSET", -m_adfGeoTransform[0] * dfDegToMeter / dfScale - 0.5 );
-                            oMap.Add( "LINE_PROJECTION_OFFSET", m_adfGeoTransform[3] * dfDegToMeter / dfScale - 0.5 );
-                            oMap.Add( "MAP_SCALE", dfScale / 1000.0 );
-                        }
-                    }
-                }
-            }
-            else
-            {
-                CPLError(CE_Warning, CPLE_NotSupported,
-                         "SRS not supported");
-            }
+            BuildLabelPropertyGeoTIFF(oLabel);
         }
     }
 
@@ -1807,138 +1774,254 @@ void VICARDataset::BuildLabel()
 }
 
 /************************************************************************/
-/*                                Open()                                */
+/*                        BuildLabelPropertyMap()                       */
 /************************************************************************/
 
-GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
+void VICARDataset::BuildLabelPropertyMap(CPLJSONObject& oLabel)
 {
-/* -------------------------------------------------------------------- */
-/*      Does this look like a VICAR dataset?                            */
-/* -------------------------------------------------------------------- */
-    const int nLabelOffset = GetLabelOffset( poOpenInfo );
-    if( nLabelOffset < 0 )
-        return nullptr;
-    if( nLabelOffset > 0 )
+    if( m_oSRS.IsProjected() || m_oSRS.IsGeographic() )
     {
-        CPLString osSubFilename;
-        osSubFilename.Printf("/vsisubfile/%d,%s",
-                             nLabelOffset,
-                             poOpenInfo->pszFilename);
-        GDALOpenInfo oOpenInfo(osSubFilename.c_str(), poOpenInfo->eAccess);
-        return Open(&oOpenInfo);
-    }
+        auto oProperty = GetOrCreateJSONObject(oLabel, "PROPERTY");
+        auto oMap = GetOrCreateJSONObject(oProperty, "MAP");
 
-    VICARDataset *poDS = new VICARDataset();
-    poDS->fpImage = poOpenInfo->fpL;
-    poOpenInfo->fpL = nullptr;
-    if( ! poDS->oKeywords.Ingest( poDS->fpImage, poOpenInfo->pabyHeader ) ) {
-        delete poDS;
-        return nullptr;
-    }
-
-    /************ CHECK INSTRUMENT/DATA *****************/
-
-    bool bIsDTM = false;
-    const char* value = poDS->GetKeyword( "DTM.DTM_OFFSET" );
-    if (!EQUAL(value,"") ) {
-        bIsDTM = true;
-    }
-
-    bool bInstKnown = false;
-    // Check for HRSC
-    if ( EQUAL(poDS->GetKeyword("BLTYPE"),"M94_HRSC") )
-        bInstKnown = true;
-    // Check for Framing Camera on Dawn
-    else if ( EQUAL(poDS->GetKeyword("INSTRUMENT_ID"),"FC2") )
-        bInstKnown = true;
-
-    /************ Grab dimensions *****************/
-
-    const int nCols = atoi(poDS->GetKeyword("NS"));
-    const int nRows = atoi(poDS->GetKeyword("NL"));
-    const int nBands = atoi(poDS->GetKeyword("NB"));
-
-    if( !GDALCheckDatasetDimensions(nCols, nRows) ||
-        !GDALCheckBandCount(nBands, false) )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "File %s appears to be a VICAR file, but failed to find some "
-                  "required keywords.",
-                  poOpenInfo->pszFilename );
-        delete poDS;
-        return nullptr;
-    }
-
-    const GDALDataType eDataType = GetDataTypeFromFormat(poDS->GetKeyword( "FORMAT" ));
-    if( eDataType == GDT_Unknown )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Could not find known VICAR label entries!\n");
-        delete poDS;
-        return nullptr;
-    }
-    double dfNoData = 0.0;
-    if (eDataType == GDT_Byte) {
-        dfNoData = NULL1;
-    }
-    else if (eDataType == GDT_Int16) {
-        dfNoData = NULL2;
-    }
-    else if (eDataType == GDT_Float32) {
-        dfNoData = NULL3;
-    }
-
-    /***** CHECK ENDIANNESS **************/
-
-    RawRasterBand::ByteOrder eByteOrder = RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN;
-    if( GDALDataTypeIsInteger(eDataType) )
-    {
-        value = poDS->GetKeyword( "INTFMT", "LOW" );
-        if (EQUAL(value,"LOW") ) {
-            eByteOrder = RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN;
+        const char* pszDatum = m_oSRS.GetAttrValue("DATUM");
+        CPLString osTargetName( m_osTargetName );
+        if( osTargetName.empty() )
+        {
+            if( pszDatum && STARTS_WITH(pszDatum, "D_") )
+            {
+                osTargetName = pszDatum + 2;
+            }
+            else if( pszDatum )
+            {
+                osTargetName = pszDatum;
+            }
         }
-        else if( EQUAL(value, "HIGH") ) {
-            eByteOrder = RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN;
+        if( !osTargetName.empty() )
+            oMap.Add( "TARGET_NAME", osTargetName );
+
+        oMap.Add( "A_AXIS_RADIUS", m_oSRS.GetSemiMajor() / 1000.0 );
+        oMap.Add( "B_AXIS_RADIUS", m_oSRS.GetSemiMajor() / 1000.0 );
+        oMap.Add( "C_AXIS_RADIUS", m_oSRS.GetSemiMinor() / 1000.0 );
+
+        if( !m_osLatitudeType.empty() )
+            oMap.Add( "COORDINATE_SYSTEM_NAME", m_osLatitudeType );
+        else
+            oMap.Add( "COORDINATE_SYSTEM_NAME", "PLANETOCENTRIC" );
+
+        if( !m_osLongitudeDirection.empty() )
+            oMap.Add( "POSITIVE_LONGITUDE_DIRECTION", m_osLongitudeDirection );
+        else
+            oMap.Add( "POSITIVE_LONGITUDE_DIRECTION", "EAST" );
+
+        const char* pszProjection = m_oSRS.GetAttrValue("PROJECTION");
+        if( pszProjection == nullptr )
+        {
+            oMap.Add( "MAP_PROJECTION_TYPE", "SIMPLE_CYLINDRICAL" );
+            oMap.Add( "CENTER_LONGITUDE", 0.0 );
+            oMap.Add( "CENTER_LATITUDE", 0.0 );
+        }
+        else if( EQUAL(pszProjection, SRS_PT_EQUIRECTANGULAR) )
+        {
+            oMap.Add( "MAP_PROJECTION_TYPE", "EQUIRECTANGULAR" );
+            if( m_oSRS.GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 )
+                                                                != 0.0 )
+            {
+                CPLError(CE_Warning, CPLE_NotSupported,
+                        "Ignoring %s. Only 0 value supported",
+                        SRS_PP_LATITUDE_OF_ORIGIN);
+            }
+            oMap.Add( "CENTER_LONGITUDE",
+                m_oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0) );
+            const double dfCenterLat =
+                m_oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0);
+            oMap.Add( "CENTER_LATITUDE", dfCenterLat );
+        }
+        else if( EQUAL(pszProjection, SRS_PT_SINUSOIDAL) )
+        {
+            oMap.Add( "MAP_PROJECTION_TYPE", "SINUSOIDAL" );
+            oMap.Add( "CENTER_LONGITUDE",
+                m_oSRS.GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER, 0.0) );
+            oMap.Add( "CENTER_LATITUDE", 0.0 );
         }
         else
         {
-            CPLError( CE_Failure, CPLE_NotSupported,
-                    "INTFMT=%s layout not supported.", value);
-            delete poDS;
-            return nullptr;
+            CPLError(CE_Warning, CPLE_NotSupported,
+                    "Projection %s not supported",
+                    pszProjection);
+        }
+
+
+        if( oMap["MAP_PROJECTION_TYPE"].IsValid() )
+        {
+            if( m_oSRS.GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 ) != 0.0 )
+            {
+                CPLError(CE_Warning, CPLE_NotSupported,
+                        "Ignoring %s. Only 0 value supported",
+                        SRS_PP_FALSE_EASTING);
+            }
+            if( m_oSRS.GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 ) != 0.0 )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                        "Ignoring %s. Only 0 value supported",
+                        SRS_PP_FALSE_NORTHING);
+            }
+
+            if( m_bGotTransform )
+            {
+                const double dfDegToMeter = m_oSRS.GetSemiMajor() * M_PI / 180.0;
+                if( m_oSRS.IsProjected() )
+                {
+                    const double dfLinearUnits = m_oSRS.GetLinearUnits();
+                    const double dfScale = m_adfGeoTransform[1] * dfLinearUnits;
+                    oMap.Add( "SAMPLE_PROJECTION_OFFSET", -m_adfGeoTransform[0] * dfLinearUnits / dfScale - 0.5 );
+                    oMap.Add( "LINE_PROJECTION_OFFSET", m_adfGeoTransform[3] * dfLinearUnits / dfScale - 0.5 );
+                    oMap.Add( "MAP_SCALE", dfScale / 1000.0 );
+                }
+                else if( m_oSRS.IsGeographic() )
+                {
+                    const double dfScale = m_adfGeoTransform[1] * dfDegToMeter;
+                    oMap.Add( "SAMPLE_PROJECTION_OFFSET", -m_adfGeoTransform[0] * dfDegToMeter / dfScale - 0.5 );
+                    oMap.Add( "LINE_PROJECTION_OFFSET", m_adfGeoTransform[3] * dfDegToMeter / dfScale - 0.5 );
+                    oMap.Add( "MAP_SCALE", dfScale / 1000.0 );
+                }
+            }
         }
     }
     else
     {
-        value = poDS->GetKeyword( "REALFMT", "VAX" );
-        if (EQUAL(value,"RIEEE") ) {
-            eByteOrder = RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN;
-        }
-        else if (EQUAL(value,"IEEE") ) {
-            eByteOrder = RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN;
-        }
-        else if (EQUAL(value,"VAX") ) {
-            eByteOrder = RawRasterBand::ByteOrder::ORDER_VAX;
-        }
-        else
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "SRS not supported");
+    }
+}
+
+/************************************************************************/
+/*                    BuildLabelPropertyGeoTIFF()                       */
+/************************************************************************/
+
+void VICARDataset::BuildLabelPropertyGeoTIFF(CPLJSONObject& oLabel)
+{
+    auto oProperty = GetOrCreateJSONObject(oLabel, "PROPERTY");
+    auto oGeoTIFF = GetOrCreateJSONObject(oProperty, "GEOTIFF");
+
+    // Ported from Vicar Open Source: Afids expects to be able to read
+    // NITF_NROWS and NITF_NCOLS
+
+    oGeoTIFF.Add("NITF_NROWS", nRasterYSize);
+    oGeoTIFF.Add("NITF_NCOLS", nRasterXSize);
+
+    // Create a in-memory GeoTIFF file
+
+    char szFilename[100] = {};
+    snprintf( szFilename, sizeof(szFilename),
+              "/vsimem/vicar_tmp_%p.tif", this);
+    GDALDriver* poGTiffDriver = GDALDriver::FromHandle(GDALGetDriverByName("GTiff"));
+    if( poGTiffDriver == nullptr )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "GTiff driver not available");
+        return;
+    }
+    const char* const apszOptions[] = { "GEOTIFF_VERSION=1.0", nullptr };
+    auto poDS = std::unique_ptr<GDALDataset>(
+        poGTiffDriver->Create(szFilename, 1, 1, 1, GDT_Byte, apszOptions));
+    if( !poDS )
+        return;
+    poDS->SetSpatialRef(&m_oSRS);
+    if( m_bGotTransform )
+        poDS->SetGeoTransform(&m_adfGeoTransform[0]);
+    poDS->SetMetadataItem(GDALMD_AREA_OR_POINT, GetMetadataItem(GDALMD_AREA_OR_POINT));
+    poDS.reset();
+
+    // Open it with libtiff/libgeotiff
+    VSILFILE* fpL = VSIFOpenL( szFilename, "r" );
+    if( fpL == nullptr )
+    {
+        VSIUnlink(szFilename);
+        return;
+    }
+
+    TIFF *hTIFF = VSI_TIFFOpen( szFilename, "r", fpL );
+    CPLAssert(hTIFF);
+
+    GTIF *hGTIF = GTIFNew(hTIFF);
+    CPLAssert(hGTIF);
+
+    // Get geotiff keys and write them as VICAR metadata
+    for( const auto& gkey: GTiffShortKeys )
+    {
+        unsigned short val = 0;
+        if( GTIFKeyGetSHORT(hGTIF, gkey, &val, 0, 1) )
         {
-            CPLError( CE_Failure, CPLE_NotSupported,
-                    "REALFMT=%s layout not supported.", value);
-            delete poDS;
-            return nullptr;
+            oGeoTIFF.Add(
+                CPLString(GTIFKeyName(gkey)).toupper(),
+                CPLSPrintf("%d(%s)", val, GTIFValueNameEx(hGTIF, gkey, val)));
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Capture some information from the file that is of interest.     */
-/* -------------------------------------------------------------------- */
-    poDS->nRasterXSize = nCols;
-    poDS->nRasterYSize = nRows;
+    for( const auto& gkey: GTiffDoubleKeys )
+    {
+        double val = 0;
+        if( GTIFKeyGetDOUBLE(hGTIF, gkey, &val, 0, 1) )
+        {
+            oGeoTIFF.Add(
+                CPLString(GTIFKeyName(gkey)).toupper(),
+                CPLSPrintf("%.18g", val));
+        }
+    }
 
+    for( const auto& gkey: GTiffAsciiKeys)
+    {
+        char szAscii[1024];
+        if( GTIFKeyGetASCII(hGTIF, gkey, szAscii, static_cast<int>(sizeof(szAscii))) )
+        {
+            oGeoTIFF.Add(
+                CPLString(GTIFKeyName(gkey)).toupper(),
+                szAscii);
+        }
+    }
+
+    GTIFFree(hGTIF);
+
+    // Get geotiff tags and write them as VICAR metadata
+    const std::map<int, const char*> oMapTagCodeToName = {
+        { TIFFTAG_GEOPIXELSCALE, "MODELPIXELSCALETAG" },
+        { TIFFTAG_GEOTIEPOINTS, "MODELTIEPOINTTAG" },
+        { TIFFTAG_GEOTRANSMATRIX, "MODELTRANSFORMATIONTAG" }
+    };
+
+    for( const auto& kv: oMapTagCodeToName )
+    {
+        uint16_t nCount = 0;
+        double* padfValues = nullptr;
+        if( TIFFGetField(hTIFF, kv.first, &nCount, &padfValues) )
+        {
+            std::string osVal("(");
+            for( uint16_t i = 0; i < nCount; ++i )
+            {
+                if( i > 0 )
+                    osVal += ',';
+                osVal += CPLSPrintf("%.18g", padfValues[i]);
+            }
+            osVal += ')';
+            oGeoTIFF.Add(kv.second, osVal);
+        }
+    }
+
+    XTIFFClose( hTIFF );
+    CPL_IGNORE_RET_VAL(VSIFCloseL(fpL));
+    VSIUnlink(szFilename);
+}
+
+/************************************************************************/
+/*                       ReadProjectionFromMapGroup()                   */
+/************************************************************************/
+
+void VICARDataset::ReadProjectionFromMapGroup()
+{
     double dfXDim = 1.0;
     double dfYDim = 1.0;
 
-    value = poDS->GetKeyword("MAP.MAP_SCALE");
+    const char* value = GetKeyword("MAP.MAP_SCALE");
     if (strlen(value) > 0 ) {
         dfXDim = CPLAtof(value) * 1000.0;
         dfYDim = CPLAtof(value) * -1 * 1000.0;
@@ -1959,7 +2042,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
     /***********   Grab LINE_PROJECTION_OFFSET ************/
     double dfULYMap = 0.5;
 
-    value = poDS->GetKeyword("MAP.LINE_PROJECTION_OFFSET");
+    value = GetKeyword("MAP.LINE_PROJECTION_OFFSET");
     if (strlen(value) > 0) {
         const double yulcenter = CPLAtof(value);
         dfULYMap = ((yulcenter + dfLineOffset_Shift) * -dfYDim * dfLineOffset_Mult);
@@ -1967,7 +2050,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
     /***********   Grab SAMPLE_PROJECTION_OFFSET ************/
     double dfULXMap=0.5;
 
-    value = poDS->GetKeyword("MAP.SAMPLE_PROJECTION_OFFSET");
+    value = GetKeyword("MAP.SAMPLE_PROJECTION_OFFSET");
     if( strlen(value) > 0 ) {
         const double xulcenter = CPLAtof(value);
         dfULXMap = ((xulcenter + dfSampleOffset_Shift) * dfXDim * dfSampleOffset_Mult);
@@ -1980,42 +2063,42 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
 
     /***********  Grab TARGET_NAME  ************/
     /**** This is the planets name i.e. MARS ***/
-    const CPLString target_name = poDS->GetKeyword("MAP.TARGET_NAME");
+    const CPLString target_name = GetKeyword("MAP.TARGET_NAME");
 
     /**********   Grab MAP_PROJECTION_TYPE *****/
     const CPLString map_proj_name
-        = poDS->GetKeyword( "MAP.MAP_PROJECTION_TYPE");
+        = GetKeyword( "MAP.MAP_PROJECTION_TYPE");
 
     /******  Grab semi_major & convert to KM ******/
     const double semi_major
-        = CPLAtof(poDS->GetKeyword( "MAP.A_AXIS_RADIUS")) * 1000.0;
+        = CPLAtof(GetKeyword( "MAP.A_AXIS_RADIUS")) * 1000.0;
 
     /******  Grab semi-minor & convert to KM ******/
     const double semi_minor
-        = CPLAtof(poDS->GetKeyword( "MAP.C_AXIS_RADIUS")) * 1000.0;
+        = CPLAtof(GetKeyword( "MAP.C_AXIS_RADIUS")) * 1000.0;
 
     /***********   Grab CENTER_LAT ************/
     const double center_lat =
-        CPLAtof(poDS->GetKeyword( "MAP.CENTER_LATITUDE"));
+        CPLAtof(GetKeyword( "MAP.CENTER_LATITUDE"));
 
     /***********   Grab CENTER_LON ************/
     const double center_lon
-        = CPLAtof(poDS->GetKeyword( "MAP.CENTER_LONGITUDE"));
+        = CPLAtof(GetKeyword( "MAP.CENTER_LONGITUDE"));
 
     /**********   Grab 1st std parallel *******/
     const double first_std_parallel =
-        CPLAtof(poDS->GetKeyword( "MAP.FIRST_STANDARD_PARALLEL"));
+        CPLAtof(GetKeyword( "MAP.FIRST_STANDARD_PARALLEL"));
 
     /**********   Grab 2nd std parallel *******/
     const double second_std_parallel =
-        CPLAtof(poDS->GetKeyword( "MAP.SECOND_STANDARD_PARALLEL"));
+        CPLAtof(GetKeyword( "MAP.SECOND_STANDARD_PARALLEL"));
 
     /*** grab  PROJECTION_LATITUDE_TYPE = "PLANETOCENTRIC" ****/
     // Need to further study how ocentric/ographic will effect the gdal library.
     // So far we will use this fact to define a sphere or ellipse for some projections
     // Frank - may need to talk this over
     bool bIsGeographic = true;
-    value = poDS->GetKeyword("MAP.COORDINATE_SYSTEM_NAME");
+    value = GetKeyword("MAP.COORDINATE_SYSTEM_NAME");
     if (EQUAL( value, "PLANETOCENTRIC" ))
         bIsGeographic = false;
 
@@ -2170,18 +2253,311 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
             }
         }
 
-        poDS->m_oSRS = oSRS;
-        poDS->m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        m_oSRS = oSRS;
+        m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
     if( bProjectionSet )
     {
-        poDS->m_bGotTransform = true;
-        poDS->m_adfGeoTransform[0] = dfULXMap;
-        poDS->m_adfGeoTransform[1] = dfXDim;
-        poDS->m_adfGeoTransform[2] = 0.0;
-        poDS->m_adfGeoTransform[3] = dfULYMap;
-        poDS->m_adfGeoTransform[4] = 0.0;
-        poDS->m_adfGeoTransform[5] = dfYDim;
+        m_bGotTransform = true;
+        m_adfGeoTransform[0] = dfULXMap;
+        m_adfGeoTransform[1] = dfXDim;
+        m_adfGeoTransform[2] = 0.0;
+        m_adfGeoTransform[3] = dfULYMap;
+        m_adfGeoTransform[4] = 0.0;
+        m_adfGeoTransform[5] = dfYDim;
+    }
+}
+
+/************************************************************************/
+/*                    ReadProjectionFromGeoTIFFGroup()                  */
+/************************************************************************/
+
+void VICARDataset::ReadProjectionFromGeoTIFFGroup()
+{
+    m_bGeoRefFormatIsMIPL = true;
+
+    // We will build a in-memory temporary GeoTIFF file from the VICAR GEOTIFF
+    // metadata items.
+
+    char szFilename[100] = {};
+    snprintf( szFilename, sizeof(szFilename),
+              "/vsimem/vicar_tmp_%p.tif", this);
+
+/* -------------------------------------------------------------------- */
+/*      Initialization of libtiff and libgeotiff.                       */
+/* -------------------------------------------------------------------- */
+    GTiffOneTimeInit();
+    LibgeotiffOneTimeInit();
+
+/* -------------------------------------------------------------------- */
+/*      Initialize access to the memory geotiff structure.              */
+/* -------------------------------------------------------------------- */
+    VSILFILE* fpL = VSIFOpenL( szFilename, "w" );
+    if( fpL == nullptr )
+        return;
+
+    TIFF *hTIFF = VSI_TIFFOpen( szFilename, "w", fpL );
+
+    if( hTIFF == nullptr )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "TIFF/GeoTIFF structure is corrupt." );
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpL));
+        return;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write some minimal set of image parameters.                     */
+/* -------------------------------------------------------------------- */
+    TIFFSetField( hTIFF, TIFFTAG_IMAGEWIDTH, 1 );
+    TIFFSetField( hTIFF, TIFFTAG_IMAGELENGTH, 1 );
+    TIFFSetField( hTIFF, TIFFTAG_BITSPERSAMPLE, 8 );
+    TIFFSetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL, 1 );
+    TIFFSetField( hTIFF, TIFFTAG_ROWSPERSTRIP, 1 );
+    TIFFSetField( hTIFF, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG );
+    TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK );
+
+/* -------------------------------------------------------------------- */
+/*      Write geotiff keys from VICAR metadata                          */
+/* -------------------------------------------------------------------- */
+    GTIF *hGTIF = GTIFNew(hTIFF);
+    CPLAssert(hGTIF);
+
+    for( const auto& gkey: GTiffAsciiKeys )
+    {
+        const char* pszValue = GetKeyword(
+            ("GEOTIFF." + CPLString(GTIFKeyName(gkey)).toupper()).c_str(), nullptr );
+        if( pszValue )
+        {
+            GTIFKeySet(hGTIF, gkey, TYPE_ASCII,
+                       static_cast<int>(strlen(pszValue)), pszValue);
+        }
+    }
+
+    for( const auto& gkey: GTiffDoubleKeys )
+    {
+        const char* pszValue = GetKeyword(
+            ("GEOTIFF." + CPLString(GTIFKeyName(gkey)).toupper()).c_str(), nullptr );
+        if( pszValue )
+        {
+            GTIFKeySet(hGTIF, gkey, TYPE_DOUBLE, 1, CPLAtof(pszValue));
+        }
+    }
+
+    for( const auto& gkey: GTiffShortKeys )
+    {
+        const char* pszValue = GetKeyword(
+            ("GEOTIFF." + CPLString(GTIFKeyName(gkey)).toupper()).c_str(), nullptr );
+        if( pszValue )
+        {
+            GTIFKeySet(hGTIF, gkey, TYPE_SHORT, 1, atoi(pszValue));
+        }
+    }
+
+    GTIFWriteKeys( hGTIF );
+    GTIFFree( hGTIF );
+
+/* -------------------------------------------------------------------- */
+/*      Write geotiff tags from VICAR metadata                          */
+/* -------------------------------------------------------------------- */
+
+    const std::map<const char*, int> oMapTagNameToCode = {
+        { "MODELPIXELSCALETAG", TIFFTAG_GEOPIXELSCALE },
+        { "MODELTIEPOINTTAG", TIFFTAG_GEOTIEPOINTS },
+        { "MODELTRANSFORMATIONTAG", TIFFTAG_GEOTRANSMATRIX },
+    };
+
+    for( const auto& kv: oMapTagNameToCode )
+    {
+        const char* pszValue = GetKeyword(
+            (std::string("GEOTIFF.") + kv.first).c_str(), nullptr);
+        if( pszValue )
+        {
+            // Remove leading ( and trailing ), and replace comma by space
+            // to separate on it.
+            const CPLStringList aosTokens(CSLTokenizeString2(
+                CPLString(pszValue).replaceAll('(',"").replaceAll(')', "").
+                  replaceAll(',', ' ').c_str(),
+                " ", 0));
+            std::vector<double> adfValues;
+            for( int i = 0; i < aosTokens.size(); ++i )
+                adfValues.push_back(CPLAtof(aosTokens[i]));
+            TIFFSetField(hTIFF, kv.second, aosTokens.size(), &adfValues[0]);
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Finalize the geotiff file.                                      */
+/* -------------------------------------------------------------------- */
+
+    char bySmallImage = 0;
+
+    TIFFWriteEncodedStrip( hTIFF, 0, &bySmallImage, 1 );
+    TIFFWriteDirectory( hTIFF );
+
+    XTIFFClose( hTIFF );
+    CPL_IGNORE_RET_VAL(VSIFCloseL(fpL));
+
+/* -------------------------------------------------------------------- */
+/*      Get georeferencing from file.                                   */
+/* -------------------------------------------------------------------- */
+    auto poGTiffDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(szFilename));
+    if( poGTiffDS )
+    {
+        auto poSRS = poGTiffDS->GetSpatialRef();
+        if( poSRS )
+            m_oSRS = *poSRS;
+
+        if( poGTiffDS->GetGeoTransform(&m_adfGeoTransform[0]) == CE_None )
+        {
+            m_bGotTransform = true;
+        }
+
+        const char* pszAreaOrPoint = poGTiffDS->GetMetadataItem(GDALMD_AREA_OR_POINT);
+        if( pszAreaOrPoint )
+            GDALDataset::SetMetadataItem(GDALMD_AREA_OR_POINT, pszAreaOrPoint);
+    }
+
+    VSIUnlink(szFilename);
+}
+
+/************************************************************************/
+/*                                Open()                                */
+/************************************************************************/
+
+GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
+{
+/* -------------------------------------------------------------------- */
+/*      Does this look like a VICAR dataset?                            */
+/* -------------------------------------------------------------------- */
+    const int nLabelOffset = GetLabelOffset( poOpenInfo );
+    if( nLabelOffset < 0 )
+        return nullptr;
+    if( nLabelOffset > 0 )
+    {
+        CPLString osSubFilename;
+        osSubFilename.Printf("/vsisubfile/%d,%s",
+                             nLabelOffset,
+                             poOpenInfo->pszFilename);
+        GDALOpenInfo oOpenInfo(osSubFilename.c_str(), poOpenInfo->eAccess);
+        return Open(&oOpenInfo);
+    }
+
+    VICARDataset *poDS = new VICARDataset();
+    poDS->fpImage = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
+    if( ! poDS->oKeywords.Ingest( poDS->fpImage, poOpenInfo->pabyHeader ) ) {
+        delete poDS;
+        return nullptr;
+    }
+
+    /************ CHECK INSTRUMENT/DATA *****************/
+
+    bool bIsDTM = false;
+    const char* value = poDS->GetKeyword( "DTM.DTM_OFFSET" );
+    if (!EQUAL(value,"") ) {
+        bIsDTM = true;
+    }
+
+    bool bInstKnown = false;
+    // Check for HRSC
+    if ( EQUAL(poDS->GetKeyword("BLTYPE"),"M94_HRSC") )
+        bInstKnown = true;
+    // Check for Framing Camera on Dawn
+    else if ( EQUAL(poDS->GetKeyword("INSTRUMENT_ID"),"FC2") )
+        bInstKnown = true;
+
+    /************ Grab dimensions *****************/
+
+    const int nCols = atoi(poDS->GetKeyword("NS"));
+    const int nRows = atoi(poDS->GetKeyword("NL"));
+    const int nBands = atoi(poDS->GetKeyword("NB"));
+
+    if( !GDALCheckDatasetDimensions(nCols, nRows) ||
+        !GDALCheckBandCount(nBands, false) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "File %s appears to be a VICAR file, but failed to find some "
+                  "required keywords.",
+                  poOpenInfo->pszFilename );
+        delete poDS;
+        return nullptr;
+    }
+
+    const GDALDataType eDataType = GetDataTypeFromFormat(poDS->GetKeyword( "FORMAT" ));
+    if( eDataType == GDT_Unknown )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Could not find known VICAR label entries!\n");
+        delete poDS;
+        return nullptr;
+    }
+    double dfNoData = 0.0;
+    if (eDataType == GDT_Byte) {
+        dfNoData = NULL1;
+    }
+    else if (eDataType == GDT_Int16) {
+        dfNoData = NULL2;
+    }
+    else if (eDataType == GDT_Float32) {
+        dfNoData = NULL3;
+    }
+
+    /***** CHECK ENDIANNESS **************/
+
+    RawRasterBand::ByteOrder eByteOrder = RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN;
+    if( GDALDataTypeIsInteger(eDataType) )
+    {
+        value = poDS->GetKeyword( "INTFMT", "LOW" );
+        if (EQUAL(value,"LOW") ) {
+            eByteOrder = RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN;
+        }
+        else if( EQUAL(value, "HIGH") ) {
+            eByteOrder = RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN;
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_NotSupported,
+                    "INTFMT=%s layout not supported.", value);
+            delete poDS;
+            return nullptr;
+        }
+    }
+    else
+    {
+        value = poDS->GetKeyword( "REALFMT", "VAX" );
+        if (EQUAL(value,"RIEEE") ) {
+            eByteOrder = RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN;
+        }
+        else if (EQUAL(value,"IEEE") ) {
+            eByteOrder = RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN;
+        }
+        else if (EQUAL(value,"VAX") ) {
+            eByteOrder = RawRasterBand::ByteOrder::ORDER_VAX;
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_NotSupported,
+                    "REALFMT=%s layout not supported.", value);
+            delete poDS;
+            return nullptr;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Capture some information from the file that is of interest.     */
+/* -------------------------------------------------------------------- */
+    poDS->nRasterXSize = nCols;
+    poDS->nRasterYSize = nRows;
+
+    if( poDS->GetKeyword("MAP.MAP_PROJECTION_TYPE")[0] != '\0' )
+    {
+        poDS->ReadProjectionFromMapGroup();
+    }
+    else if( poDS->GetKeyword("GEOTIFF.GTMODELTYPEGEOKEY")[0] != '\0' ||
+             poDS->GetKeyword("GEOTIFF.MODELTIEPOINTTAG")[0] != '\0' )
+    {
+        poDS->ReadProjectionFromGeoTIFFGroup();
     }
 
     if( !poDS->m_bGotTransform )
@@ -2780,6 +3156,8 @@ VICARDataset *VICARDataset::CreateInternal(const char* pszFilename,
     poDS->nRasterYSize = nYSize;
     poDS->m_nRecordSize = nLineOffset;
     poDS->m_bIsLabelWritten = false;
+    poDS->m_bGeoRefFormatIsMIPL =
+        EQUAL(CSLFetchNameValueDef(papszOptions, "GEOREF_FORMAT", "MIPL"), "MIPL");
     poDS->m_bUseSrcLabel = CPLFetchBool(papszOptions, "USE_SRC_LABEL", true);
     poDS->m_bUseSrcMap = CPLFetchBool(papszOptions, "USE_SRC_MAP", false);
     poDS->m_osLatitudeType = CSLFetchNameValueDef(papszOptions,
@@ -2947,6 +3325,12 @@ void GDALRegister_VICAR()
                                "Byte Int16 Int32 Float32 Float64 CFloat32" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
+"  <Option name='GEOREF_FORMAT' type='string-select' "
+    "description='How to encode georeferencing information' "
+    "default='MIPL'>"
+"     <Value>MIPL</Value>"
+"     <Value>GEOTIFF</Value>"
+"  </Option>"
 "  <Option name='COORDINATE_SYSTEM_NAME' type='string-select' "
     "description='Value of MAP.COORDINATE_SYSTEM_NAME' default='PLANETOCENTRIC'>"
 "     <Value>PLANETOCENTRIC</Value>"

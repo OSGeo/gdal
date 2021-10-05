@@ -78,6 +78,8 @@ class VICARDataset final: public RawDataset
 
     std::unique_ptr<OGRLayer> m_poLayer;
 
+    bool          m_bGeoRefFormatIsMIPL = true;
+
     CPLString   m_osLatitudeType; // creation only
     CPLString   m_osLongitudeDirection; // creation only
     CPLString   m_osTargetName; // creation only
@@ -97,6 +99,11 @@ class VICARDataset final: public RawDataset
     static VICARDataset *CreateInternal( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char ** papszOptions );
+
+    void ReadProjectionFromMapGroup();
+    void ReadProjectionFromGeoTIFFGroup();
+    void BuildLabelPropertyMap(CPLJSONObject& oLabel);
+    void BuildLabelPropertyGeoTIFF(CPLJSONObject& oLabel);
 
 public:
     VICARDataset();
