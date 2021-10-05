@@ -4996,7 +4996,7 @@ PDFDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
             const char * const apszMDList[2] = { pszContent, nullptr };
             poDS->SetMetadata(const_cast<char**>(apszMDList), "xml:XMP");
         }
-#if (POPPLER_MAJOR_VERSION < 21 || (POPPLER_MAJOR_VERSION == 21 && POPPLER_MINOR_VERSION <= 9))
+#if (POPPLER_MAJOR_VERSION < 21 || (POPPLER_MAJOR_VERSION == 21 && POPPLER_MINOR_VERSION < 10))
         delete poMetadata;
 #endif
     }
