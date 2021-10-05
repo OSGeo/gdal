@@ -441,6 +441,9 @@ def test_tiff_write_16():
     ds.SetMetadata({'test': 'testvalue'})
     ds.GetRasterBand(1).SetMetadata({'testBand': 'testvalueBand'})
 
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    ds.SetSpatialRef(srs)
     ds.SetGeoTransform((10, 5, 0, 30, 0, -5))
 
     data = ds_in.ReadRaster(0, 0, 20, 20)
@@ -449,9 +452,12 @@ def test_tiff_write_16():
     ds_in = None
     ds = None
 
+    # Check first from PAM
+    assert gdal.VSIStatL('tmp/tw_16.tif.aux.xml') is not None
     ds = gdal.Open('tmp/tw_16.tif')
-    assert ds.GetGeoTransform() == (0.0, 1.0, 0.0, 0.0, 0.0, 1.0), \
-        'Got wrong geotransform, profile ignored?'
+    assert ds.GetGeoTransform() == (10, 5, 0, 30, 0, -5)
+    assert ds.GetSpatialRef() is not None
+    assert ds.GetSpatialRef().GetAuthorityCode(None) == '4326'
 
     md = ds.GetMetadata()
     assert 'test' in md, 'Metadata absent from .aux.xml file.'
@@ -460,16 +466,12 @@ def test_tiff_write_16():
     assert 'testBand' in md, 'Metadata absent from .aux.xml file.'
 
     ds = None
-
-    try:
-        os.remove('tmp/tw_16.tif.aux.xml')
-    except OSError:
-        try:
-            os.stat('tmp/tw_16.tif.aux.xml')
-        except OSError:
-            pytest.fail('No .aux.xml file.')
+    gdal.Unlink('tmp/tw_16.tif.aux.xml')
 
     ds = gdal.Open('tmp/tw_16.tif')
+    assert ds.GetGeoTransform() == (0.0, 1.0, 0.0, 0.0, 0.0, 1.0), \
+        'Got wrong geotransform, profile ignored?'
+    assert ds.GetSpatialRef() is None
 
     md = ds.GetMetadata()
     assert 'test' not in md, 'Metadata written to BASELINE file.'

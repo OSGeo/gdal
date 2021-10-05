@@ -18765,6 +18765,12 @@ CPLErr GTiffDataset::SetSpatialRef( const OGRSpatialReference * poSRS )
 
     m_bGeoTIFFInfoChanged = true;
 
+    if( (m_eProfile == GTiffProfile::BASELINE) &&
+        (GetPamFlags() & GPF_DISABLED) == 0 )
+    {
+        GDALPamDataset::SetSpatialRef(poSRS);
+    }
+
     return CE_None;
 }
 
@@ -18847,6 +18853,14 @@ CPLErr GTiffDataset::SetGeoTransform( double * padfTransform )
         memcpy( m_adfGeoTransform, padfTransform, sizeof(double)*6 );
         m_bGeoTransformValid = true;
         m_bGeoTIFFInfoChanged = true;
+
+        if( (m_eProfile == GTiffProfile::BASELINE) &&
+            !CPLFetchBool( m_papszCreationOptions, "TFW", false ) &&
+            !CPLFetchBool( m_papszCreationOptions, "WORLDFILE", false ) &&
+            (GetPamFlags() & GPF_DISABLED) == 0 )
+        {
+            GDALPamDataset::SetGeoTransform(padfTransform);
+        }
 
         return CE_None;
     }
@@ -18956,6 +18970,12 @@ CPLErr GTiffDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
         m_pasGCPList = GDALDuplicateGCPs(m_nGCPCount, pasGCPListIn);
 
         m_bGeoTIFFInfoChanged = true;
+
+        if( (m_eProfile == GTiffProfile::BASELINE) &&
+            (GetPamFlags() & GPF_DISABLED) == 0 )
+        {
+            GDALPamDataset::SetGCPs(nGCPCountIn, pasGCPListIn, poGCPSRS);
+        }
 
         return CE_None;
     }
