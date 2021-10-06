@@ -6091,11 +6091,11 @@ dnl ---------------------------------------------------------------------------
 dnl Detect libjxl
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(jxl,[  --with-jxl            Include JPEG-XL support via libjxl library],,)
+AC_ARG_WITH(jxl,[  --with-jxl            Include JPEG-XL support via libjxl library, requires an internal libtiff.],,)
 
 HAVE_JXL=no
 
-if test "$with_jxl" = "no" ; then
+if test "$TIFF_SETTING" != "internal" -o  "$with_jxl" = "no" ; then
 
   AC_MSG_NOTICE([JXL support disabled.])
 
@@ -6109,7 +6109,7 @@ else
     # Test that the package found is for the right architecture
     saved_LIBS="$LIBS"
     LIBS="$JXL_LIBS"
-    AC_CHECK_LIB(jxl,JxlDecoderCreate, [HAVE_JXL=yes], [HAVE_JXL=no])
+    AC_CHECK_LIB(jxl,JxlEncoderOptionsCreate, [HAVE_JXL=yes], [HAVE_JXL=no])
     LIBS="$saved_LIBS"
 
     if test "$HAVE_JXL" = "yes"; then
