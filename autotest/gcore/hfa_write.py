@@ -35,7 +35,7 @@ import shutil
 
 import pytest
 
-from osgeo import gdal
+from osgeo import gdal, osr
 
 import gdaltest
 
@@ -430,4 +430,22 @@ def test_hfa_create_compress_big_block():
     assert got_data == src_ds.GetRasterBand(1).ReadRaster()
 
 
-
+# GCPs go to PAM currently
+def test_hfa_create_gcp():
+    filename = '/vsimem/test.img'
+    ds = gdal.GetDriverByName('HFA').Create(filename, 1, 1)
+    gcp1 = gdal.GCP()
+    gcp1.GCPPixel = 0
+    gcp1.GCPLine = 0
+    gcp1.GCPX = 440720.000
+    gcp1.GCPY = 3751320.000
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+    assert ds.SetGCPs((gcp1, ), sr.ExportToWkt()) == gdal.CE_None
+    ds = None
+    ds = gdal.Open(filename)
+    assert ds.GetGCPCount() == 1
+    assert ds.GetGCPSpatialRef() is not None
+    assert len(ds.GetGCPs()) == 1
+    ds = None
+    gdal.GetDriverByName('HFA').Delete(filename)

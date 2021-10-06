@@ -16,6 +16,6 @@ clean:
 $(O_OBJ): hfa.h hfa_p.h
 
 hfatest: hfatest.$(OBJ_EXT) $(HFAOBJ:.o=.$(OBJ_EXT))
-	$(LD) hfatest.$(OBJ_EXT) $(HFAOBJ:.o=.$(OBJ_EXT)) ../../port/*.$(OBJ_EXT)  ../../ogr/ogrsf_frmts/o/json_*.o  ../../ogr/ogrsf_frmts/o/printbuf.o  ../../ogr/ogrsf_frmts/o/arraylist.o  ../../ogr/ogrsf_frmts/o/linkhash.o ../../ogr/ograpispy.o  -L../.. -lgdal $(LIBS) -o hfatest
+	$(LD) hfatest.$(OBJ_EXT) $(HFAOBJ:.o=.$(OBJ_EXT)) ../../port/*.$(OBJ_EXT)  ../../ogr/ogrsf_frmts/o/json_*.o  ../../ogr/ogrsf_frmts/o/printbuf.o  ../../ogr/ogrsf_frmts/o/arraylist.o  ../../ogr/ogrsf_frmts/o/linkhash.o ../../ogr/ograpispy.o ../../ogr/ogr_proj_p.o  -L../.. -lgdal $(LIBS) -o hfatest
 
 install-obj: $(O_OBJ:.o=.$(OBJ_EXT))
