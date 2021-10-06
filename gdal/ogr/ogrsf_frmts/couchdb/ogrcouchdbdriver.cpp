@@ -71,7 +71,7 @@ static GDALDataset* OGRCouchDBDriverOpen( GDALOpenInfo* poOpenInfo )
         poDS = nullptr;
     }
 
-    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("COUCHDB") )
+    if( poDS != nullptr && !GDALIsDriverDeprecatedForGDAL35StillEnabled("COUCHDB") )
     {
         delete poDS;
         return nullptr;
