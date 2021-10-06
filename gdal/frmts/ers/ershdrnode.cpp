@@ -175,7 +175,7 @@ int ERSHdrNode::ParseChildren( VSILFILE * fp, int nRecLevel )
 
         if( (iOff = osLine.find_first_of( '=' )) != std::string::npos )
         {
-            CPLString osName = iOff == 0 ? std::string() : osLine.substr(0,iOff-1);
+            CPLString osName = iOff == 0 ? std::string() : osLine.substr(0,iOff);
             osName.Trim();
 
             CPLString osValue = osLine.c_str() + iOff + 1;
