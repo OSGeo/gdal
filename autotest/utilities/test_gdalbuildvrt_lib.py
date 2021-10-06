@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import pytest
 import struct
 
 from osgeo import gdal
@@ -317,3 +318,21 @@ def test_gdalbuildvrt_lib_usemaskband_on_alpha_band():
     ds = gdal.BuildVRT('', [src1_ds, src2_ds])
     assert struct.unpack('B' * 3, ds.GetRasterBand(1).ReadRaster()) == (255, 127, 0)
     assert struct.unpack('B' * 3, ds.GetRasterBand(2).ReadRaster()) == (255, 255, 0)
+
+###############################################################################
+# Test parsing all resampling methods
+
+@pytest.mark.parametrize("resampleAlg,resampleAlgStr",
+                         [ (gdal.GRIORA_NearestNeighbour, "near"),
+                           (gdal.GRIORA_Cubic, "cubic"),
+                           (gdal.GRIORA_CubicSpline, "cubicspline"),
+                           (gdal.GRIORA_Lanczos, "lanczos"),
+                           (gdal.GRIORA_Average, "average"),
+                           (gdal.GRIORA_RMS, "rms"),
+                           (gdal.GRIORA_Mode, "mode"),
+                           (gdal.GRIORA_Gauss, "gauss") ])
+def test_gdalbuildvrt_lib_resampling_methods(resampleAlg, resampleAlgStr):
+
+    option_list = gdal.BuildVRTOptions(resampleAlg=resampleAlg, options='__RETURN_OPTION_LIST__')
+    assert option_list == ['-r', resampleAlgStr]
+    assert gdal.BuildVRT('', '../gcore/data/byte.tif', resampleAlg=resampleAlg) is not None

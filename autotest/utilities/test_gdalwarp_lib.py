@@ -178,7 +178,7 @@ def test_gdalwarp_lib_9():
 
 def test_gdalwarp_lib_10():
 
-    ds = gdal.Warp('', '../gcore/data/byte.tif', format='MEM', width=40, height=40, resampleAlg=gdal.GRIORA_NearestNeighbour)
+    ds = gdal.Warp('', '../gcore/data/byte.tif', format='MEM', width=40, height=40, resampleAlg=gdal.GRA_NearestNeighbour)
 
     assert ds.GetRasterBand(1).Checksum() == 18784, 'Bad checksum'
 
@@ -190,7 +190,7 @@ def test_gdalwarp_lib_10():
 
 def test_gdalwarp_lib_11():
 
-    ds = gdal.Warp('', '../gcore/data/byte.tif', format='MEM', width=40, height=40, resampleAlg=gdal.GRIORA_Bilinear)
+    ds = gdal.Warp('', '../gcore/data/byte.tif', format='MEM', width=40, height=40, resampleAlg=gdal.GRA_Bilinear)
 
     ref_ds = gdal.Open('ref_data/testgdalwarp11.tif')
     maxdiff = gdaltest.compare_ds(ds, ref_ds, verbose=0)
@@ -208,7 +208,7 @@ def test_gdalwarp_lib_11():
 
 def test_gdalwarp_lib_12():
 
-    ds = gdal.Warp('', '../gcore/data/byte.tif', format='MEM', width=40, height=40, resampleAlg=gdal.GRIORA_Cubic)
+    ds = gdal.Warp('', '../gcore/data/byte.tif', format='MEM', width=40, height=40, resampleAlg=gdal.GRA_Cubic)
 
     ref_ds = gdal.Open('ref_data/testgdalwarp12.tif')
     maxdiff = gdaltest.compare_ds(ds, ref_ds, verbose=0)
@@ -226,7 +226,7 @@ def test_gdalwarp_lib_12():
 
 def test_gdalwarp_lib_13():
 
-    ds = gdal.Warp('', '../gcore/data/byte.tif', format='MEM', width=40, height=40, resampleAlg=gdal.GRIORA_CubicSpline)
+    ds = gdal.Warp('', '../gcore/data/byte.tif', format='MEM', width=40, height=40, resampleAlg=gdal.GRA_CubicSpline)
 
     ref_ds = gdal.Open('ref_data/testgdalwarp13.tif')
     maxdiff = gdaltest.compare_ds(ds, ref_ds, verbose=0)
@@ -244,7 +244,7 @@ def test_gdalwarp_lib_13():
 
 def test_gdalwarp_lib_14():
 
-    ds = gdal.Warp('', '../gcore/data/byte.tif', format='MEM', width=40, height=40, resampleAlg=gdal.GRIORA_Lanczos)
+    ds = gdal.Warp('', '../gcore/data/byte.tif', format='MEM', width=40, height=40, resampleAlg=gdal.GRA_Lanczos)
 
     ref_ds = gdal.Open('ref_data/testgdalwarp14.tif')
     maxdiff = gdaltest.compare_ds(ds, ref_ds, verbose=0)
@@ -255,6 +255,31 @@ def test_gdalwarp_lib_14():
         pytest.fail('Image too different from reference')
 
     ds = None
+
+###############################################################################
+# Test parsing all resampling methods
+
+@pytest.mark.parametrize("resampleAlg,resampleAlgStr",
+                         [ (gdal.GRA_NearestNeighbour, "near"),
+                           (gdal.GRA_Cubic, "cubic"),
+                           (gdal.GRA_CubicSpline, "cubicspline"),
+                           (gdal.GRA_Lanczos, "lanczos"),
+                           (gdal.GRA_Average, "average"),
+                           (gdal.GRA_RMS, "rms"),
+                           (gdal.GRA_Mode, "mode"),
+                           (gdal.GRA_Max, "max"),
+                           (gdal.GRA_Min, "min"),
+                           (gdal.GRA_Med, "med"),
+                           (gdal.GRA_Q1, "q1"),
+                           (gdal.GRA_Q3, "q3"),
+                           (gdal.GRA_Sum, "sum") ])
+def test_gdalwarp_lib_resampling_methods(resampleAlg, resampleAlgStr):
+
+    option_list = gdal.WarpOptions(resampleAlg=resampleAlg, options='__RETURN_OPTION_LIST__')
+    assert option_list == ['-r', resampleAlgStr]
+    assert gdal.Warp('', '../gcore/data/byte.tif',
+                     format='MEM', width=2, height=2, resampleAlg=resampleAlg) is not None
+
 
 ###############################################################################
 # Test -dstnodata
@@ -1797,7 +1822,7 @@ def test_gdalwarp_lib_ct_wkt():
         BBOX[-90,-180,90,180]]]"""
 
     dstDS = gdal.Warp('', '../gcore/data/byte.tif',
-                      resampleAlg=gdal.GRIORA_Cubic, format='MEM',
+                      resampleAlg=gdal.GRA_Cubic, format='MEM',
                       dstSRS='EPSG:4326',
                       coordinateOperation=wkt)
 
