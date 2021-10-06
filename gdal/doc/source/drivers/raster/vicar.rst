@@ -186,6 +186,11 @@ creation option.
 
 The available creation options are:
 
+-  **GEOREF_FORMAT**\ =MIPL/GEOTIFF. (GDAL >= 3.4) How to encode georeferencing
+   information. Defaults to MIPL using the ``MAP`` property group. When setting to
+   GEOTIFF, a ``GEOTIFF`` property group will be used using GeoTIFF keys and tags.
+   The COORDINATE_SYSTEM_NAME, POSITIVE_LONGITUDE_DIRECTION and TARGET_NAME
+   options will be ignored when selectin the GEOTIFF encoding.
 -  **COORDINATE_SYSTEM_NAME**\ =PLANETOCENTRIC/PLANETOGRAPHIC. Value of
    MAP.COORDINATE_SYSTEM_NAME. Defaults to PLANETOCENTRIC. If specified, and
    USE_SRC_MAP is in effect, this will be taken into account to
