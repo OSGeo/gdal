@@ -502,8 +502,13 @@ int JPIPKAKDataset::Initialize(const char* pszDatasetName, int bReinitializing )
     // stateful session (multi-shot communications)
     // "cnew=http&type=jpp-stream&stream=0&tid=0&len="
     CPLString osRequest;
-    osRequest.Printf("%s?%s%i", osURL.c_str(),
-                     "cnew=http&type=jpp-stream&stream=0&tid=0&len=", 2000);
+    if (osURL.ifind("?") == std::string::npos)
+        osRequest.Printf("%s?%s%i", osURL.c_str(),
+                "cnew=http&type=jpp-stream&stream=0&tid=0&len=", 2000);
+    else
+        osRequest.Printf("%s&%s%i", osURL.c_str(),
+                "cnew=http&type=jpp-stream&stream=0&tid=0&len=", 2000);
+
 
     CPLHTTPResult *psResult = CPLHTTPFetch(osRequest, apszOptions);
 
@@ -758,7 +763,9 @@ int JPIPKAKDataset::Initialize(const char* pszDatasetName, int bReinitializing )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Unable to open stream to parse metadata boxes" );
-        return FALSE;
+        // subtarget has no boxes but works well
+        if(osURL.ifind("?subtarget=") == std::string::npos && osURL.ifind("&subtarget=") == std::string::npos)
+            return FALSE;
     }
 
     // create in memory file using vsimem
