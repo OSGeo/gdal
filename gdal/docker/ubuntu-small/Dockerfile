@@ -95,7 +95,6 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && wget -q https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz -O - \
         | tar xz -C proj --strip-components=1 \
     && cd proj \
-    && ./autogen.sh \
     && if test "${RSYNC_REMOTE}" != ""; then \
         echo "Downloading cache..."; \
         rsync -ra ${RSYNC_REMOTE}/proj/${GCC_ARCH}/ $HOME/; \
@@ -106,7 +105,11 @@ RUN . /buildscripts/bh-set-envvars.sh \
         ccache -M 100M; \
     fi \
     && CFLAGS='-DPROJ_RENAME_SYMBOLS -O2' CXXFLAGS='-DPROJ_RENAME_SYMBOLS -DPROJ_INTERNAL_CPP_NAMESPACE -O2' \
-        ./configure --prefix=${PROJ_INSTALL_PREFIX} "${WITH_HOST}" --disable-static \
+        cmake . \
+        -DBUILD_SHARED_LIBS=ON \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=${PROJ_INSTALL_PREFIX} \
+        -DBUILD_TESTING=OFF \
     && make -j$(nproc) \
     && make install DESTDIR="/build" \
     && if test "${RSYNC_REMOTE}" != ""; then \
@@ -120,7 +123,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
     fi \
     && cd .. \
     && rm -rf proj \
-    && PROJ_SO=$(readlink /build${PROJ_INSTALL_PREFIX}/lib/libproj.so | sed "s/libproj\.so\.//") \
+    && PROJ_SO=$(readlink -f /build${PROJ_INSTALL_PREFIX}/lib/libproj.so | awk 'BEGIN {FS="libproj.so."} {print $2}') \
     && PROJ_SO_FIRST=$(echo $PROJ_SO | awk 'BEGIN {FS="."} {print $1}') \
     && mv /build${PROJ_INSTALL_PREFIX}/lib/libproj.so.${PROJ_SO} /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO} \
     && ln -s libinternalproj.so.${PROJ_SO} /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO_FIRST} \
