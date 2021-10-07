@@ -129,8 +129,22 @@ cd ..
 
 # build libproj.a (proj master required)
 cd proj
-./autogen.sh
-SQLITE3_CFLAGS="-I$SRC/install/include" SQLITE3_LIBS="-L$SRC/install/lib -lsqlite3" TIFF_CFLAGS=-I/usr/include TIFF_LIBS=-ltiff ./configure --disable-shared --prefix=$SRC/install --with-curl=$SRC/install/bin/curl-config
+cmake . -DBUILD_SHARED_LIBS:BOOL=OFF \
+        -DSQLITE3_INCLUDE_DIR:PATH="$SRC/install/include" \
+        -DSQLITE3_LIBRARY:FILEPATH="$SRC/install/lib/libsqlite3.a" \
+        -DCURL_INCLUDE_DIR:PATH="$SRC/install/include" \
+        -DCURL_LIBRARY_RELEASE:FILEPATH="$SRC/install/lib/libcurl.a" \
+        -DCMAKE_INSTALL_PREFIX=$SRC/install \
+        -DBUILD_CCT:BOOL=OFF \
+        -DBUILD_CS2CS:BOOL=OFF \
+        -DBUILD_GEOD:BOOL=OFF \
+        -DBUILD_GIE:BOOL=OFF \
+        -DBUILD_GMOCK:BOOL=OFF \
+        -DBUILD_PROJ:BOOL=OFF \
+        -DBUILD_PROJINFO:BOOL=OFF \
+        -DBUILD_PROJSYNC:BOOL=OFF \
+        -DBUILD_TESTING:BOOL=OFF
+
 make clean -s
 make -j$(nproc) -s
 make install
