@@ -1309,7 +1309,7 @@ bool GRIB2Section567Writer::WriteIEEE(GDALProgressFunc pfnProgress,
                 0, iSrcLine,
                 m_nSplitAndSwap, 1,
                 reinterpret_cast<void*>(reinterpret_cast<GByte*>(pData) +
-                    m_nSplitAndSwap * GDALGetDataTypeSizeBytes(eReqDT)),
+                     (m_nXSize - m_nSplitAndSwap) * GDALGetDataTypeSizeBytes(eReqDT)),
                 m_nSplitAndSwap, 1,
                 eReqDT, 0, 0, nullptr);
             if ( eErr != CE_None )

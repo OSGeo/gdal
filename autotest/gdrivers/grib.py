@@ -1472,6 +1472,24 @@ def test_grib_grib2_disable_split_and_swap():
         gdal.Unlink(tmpfilename)
         ds = None
 
+# https://github.com/OSGeo/gdal/issues/4611
+def test_grib_grib2_split_and_swap_offset_am():
+    tempFilename = '/vsimem/temp.grb2'
+    outFilename = '/vsimem/out.grb2'
+    ds = gdal.Open('data/grib/gfs.t06z.pgrb2.1p0.grib2')
+
+    geo = (119.975, 10.0, 0.0, 90.125, 0.0, -10.0)
+    temp_ds = gdaltest.grib_drv.CreateCopy(tempFilename, ds)
+    temp_ds.SetGeoTransform(geo)
+
+    out_ds = gdaltest.grib_drv.CreateCopy(outFilename, temp_ds)
+    gt = out_ds.GetGeoTransform()
+    assert gt == pytest.approx((-185.0, 10.0, 0.0, 90.125, 0.0, -10.0), rel=1e-6)
+
+    out_ds = None
+    temp_ds = None
+    gdal.Unlink(tempFilename)
+    gdal.Unlink(outFilename)
 
 # Test sidecar file support
 # https://github.com/OSGeo/gdal/issues/3799
