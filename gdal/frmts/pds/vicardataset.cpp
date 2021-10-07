@@ -44,6 +44,7 @@ constexpr double NULL3 = -32768.0;
 #include "geotiff.h"
 #include "tifvsi.h"
 #include "xtiffio.h"
+#include "gt_wkt_srs_priv.h"
 
 #include <exception>
 #include <limits>
@@ -1950,7 +1951,7 @@ void VICARDataset::BuildLabelPropertyGeoTIFF(CPLJSONObject& oLabel)
     for( const auto& gkey: GTiffShortKeys )
     {
         unsigned short val = 0;
-        if( GTIFKeyGetSHORT(hGTIF, gkey, &val, 0, 1) )
+        if( GDALGTIFKeyGetSHORT(hGTIF, gkey, &val, 0, 1) )
         {
             oGeoTIFF.Add(
                 CPLString(GTIFKeyName(gkey)).toupper(),
@@ -1961,7 +1962,7 @@ void VICARDataset::BuildLabelPropertyGeoTIFF(CPLJSONObject& oLabel)
     for( const auto& gkey: GTiffDoubleKeys )
     {
         double val = 0;
-        if( GTIFKeyGetDOUBLE(hGTIF, gkey, &val, 0, 1) )
+        if( GDALGTIFKeyGetDOUBLE(hGTIF, gkey, &val, 0, 1) )
         {
             oGeoTIFF.Add(
                 CPLString(GTIFKeyName(gkey)).toupper(),
@@ -1972,7 +1973,7 @@ void VICARDataset::BuildLabelPropertyGeoTIFF(CPLJSONObject& oLabel)
     for( const auto& gkey: GTiffAsciiKeys)
     {
         char szAscii[1024];
-        if( GTIFKeyGetASCII(hGTIF, gkey, szAscii, static_cast<int>(sizeof(szAscii))) )
+        if( GDALGTIFKeyGetASCII(hGTIF, gkey, szAscii, static_cast<int>(sizeof(szAscii))) )
         {
             oGeoTIFF.Add(
                 CPLString(GTIFKeyName(gkey)).toupper(),
