@@ -161,10 +161,10 @@ ARG RSYNC_REMOTE
 # Build PROJ
 ARG PROJ_VERSION=master
 RUN mkdir proj \
+    && apk add --no-cache cmake \
     && wget -q https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz -O - \
         | tar xz -C proj --strip-components=1 \
     && cd proj \
-    && ./autogen.sh \
     && if test "${RSYNC_REMOTE}" != ""; then \
         echo "Downloading cache..."; \
         rsync -ra ${RSYNC_REMOTE}/proj/$(uname -m)/ $HOME/; \
@@ -175,7 +175,12 @@ RUN mkdir proj \
         export PROJ_DB_CACHE_DIR="$HOME/.ccache"; \
         ccache -M 100M; \
     fi \
-    && ./configure --prefix=/usr --disable-static --enable-lto \
+    && cmake . \
+        -DBUILD_SHARED_LIBS=ON \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DENABLE_IPO=ON \
+        -DBUILD_TESTING=OFF \
     && make -j$(nproc) \
     && make install \
     && make install DESTDIR="/build_proj" \
@@ -191,7 +196,8 @@ RUN mkdir proj \
     && cd .. \
     && rm -rf proj \
     && for i in /build_proj/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && for i in /build_proj/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
+    && for i in /build_proj/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done \
+    && apk del cmake
 
 # Build spatialite
 ARG SPATIALITE_VERSION=5.0.1
