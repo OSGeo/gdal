@@ -71,6 +71,7 @@
 #include "ogr_core.h"
 #include "ogr_srs_api.h"
 
+#define ROTATED_POLE_VAR_NAME "rotated_pole"
 
 CPL_CVSID("$Id$")
 
@@ -2736,7 +2737,7 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
         if( pszValue == nullptr &&
             FetchAttr(pszGridMappingValue, CF_PP_GRID_NORTH_POLE_LONGITUDE) != nullptr )
         {
-            pszValue = "rotated_latitude_longitude";
+            pszValue = CF_PT_ROTATED_LATITUDE_LONGITUDE;
         }
 
         if( pszValue != nullptr )
@@ -3304,7 +3305,7 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                 }
             }
 
-            else if( EQUAL(pszValue, "rotated_latitude_longitude") )
+            else if( EQUAL(pszValue, CF_PT_ROTATED_LATITUDE_LONGITUDE) )
             {
                 const double dfGridNorthPoleLong =
                     poDS->FetchCopyParam(pszGridMappingValue,
@@ -4544,8 +4545,8 @@ int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS,
             const double dfLonp = oValMap["o_lon_p"];
             const double dfLatp = oValMap["o_lat_p"];
 
-            pszCFProjection = CPLStrdup("rotated_pole");
-            addParamString(CF_GRD_MAPPING_NAME, "rotated_latitude_longitude");
+            pszCFProjection = CPLStrdup(ROTATED_POLE_VAR_NAME);
+            addParamString(CF_GRD_MAPPING_NAME, CF_PT_ROTATED_LATITUDE_LONGITUDE);
             addParamDouble(CF_PP_GRID_NORTH_POLE_LONGITUDE, dfLon0 - 180);
             addParamDouble(CF_PP_GRID_NORTH_POLE_LATITUDE, dfLatp);
             addParamDouble(CF_PP_NORTH_POLE_GRID_LONGITUDE, dfLonp);
@@ -4559,8 +4560,8 @@ int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS,
             const double dfGridNorthPoleLong = oValMap["Grid north pole longitude (netCDF CF convention)"];
             const double dfNorthPoleGridLong = oValMap["North pole grid longitude (netCDF CF convention)"];
 
-            pszCFProjection = CPLStrdup("rotated_pole");
-            addParamString(CF_GRD_MAPPING_NAME, "rotated_latitude_longitude");
+            pszCFProjection = CPLStrdup(ROTATED_POLE_VAR_NAME);
+            addParamString(CF_GRD_MAPPING_NAME, CF_PT_ROTATED_LATITUDE_LONGITUDE);
             addParamDouble(CF_PP_GRID_NORTH_POLE_LONGITUDE, dfGridNorthPoleLong);
             addParamDouble(CF_PP_GRID_NORTH_POLE_LATITUDE, dfGridNorthPoleLat);
             addParamDouble(CF_PP_NORTH_POLE_GRID_LONGITUDE, dfNorthPoleGridLong);
@@ -4578,8 +4579,8 @@ int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS,
             const double dfLonp = dfAxisRotation == 0 ? 0 : -dfAxisRotation;
             const double dfLatp = dfLatSouthernPole == 0 ? 0 : -dfLatSouthernPole;
 
-            pszCFProjection = CPLStrdup("rotated_pole");
-            addParamString(CF_GRD_MAPPING_NAME, "rotated_latitude_longitude");
+            pszCFProjection = CPLStrdup(ROTATED_POLE_VAR_NAME);
+            addParamString(CF_GRD_MAPPING_NAME, CF_PT_ROTATED_LATITUDE_LONGITUDE);
             addParamDouble(CF_PP_GRID_NORTH_POLE_LONGITUDE, dfLon0 - 180);
             addParamDouble(CF_PP_GRID_NORTH_POLE_LATITUDE, dfLatp);
             addParamDouble(CF_PP_NORTH_POLE_GRID_LONGITUDE, dfLonp);
@@ -4758,6 +4759,31 @@ void NCDFWriteLonLatVarsAttributes(nccfdriver::netCDFVID & vcdf, int nVarLonID, 
         vcdf.nc_put_vatt_text(nVarLonID, CF_STD_NAME, CF_LONGITUDE_STD_NAME);
         vcdf.nc_put_vatt_text(nVarLonID, CF_LNG_NAME, CF_LONGITUDE_LNG_NAME);
         vcdf.nc_put_vatt_text(nVarLonID, CF_UNITS, CF_DEGREES_EAST);
+    }
+    catch(nccfdriver::SG_Exception& e)
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "%s", e.get_err_msg());
+    }
+}
+
+/************************************************************************/
+/*                   NCDFWriteRLonRLatVarsAttributes()                    */
+/************************************************************************/
+
+void NCDFWriteRLonRLatVarsAttributes(nccfdriver::netCDFVID & vcdf,
+                                     int nVarRLonID, int nVarRLatID)
+{
+    try
+    {
+        vcdf.nc_put_vatt_text(nVarRLatID, CF_STD_NAME, "grid_latitude");
+        vcdf.nc_put_vatt_text(nVarRLatID, CF_LNG_NAME, "latitude in rotated pole grid");
+        vcdf.nc_put_vatt_text(nVarRLatID, CF_UNITS, "degrees");
+        vcdf.nc_put_vatt_text(nVarRLatID, CF_AXIS, "Y");
+
+        vcdf.nc_put_vatt_text(nVarRLonID, CF_STD_NAME, "grid_longitude");
+        vcdf.nc_put_vatt_text(nVarRLonID, CF_LNG_NAME, "longitude in rotated pole grid");
+        vcdf.nc_put_vatt_text(nVarRLonID, CF_UNITS, "degrees");
+        vcdf.nc_put_vatt_text(nVarRLonID, CF_AXIS, "X");
     }
     catch(nccfdriver::SG_Exception& e)
     {
@@ -5046,20 +5072,6 @@ CPLErr netCDFDataset::AddProjectionVars( bool bDefsOnly,
         // Make sure we are in define mode.
         SetDefineMode(true);
 
-        // Rename dimensions if lon/lat.
-        if( !bIsProjected )
-        {
-            // Rename dims to lat/lon.
-            papszDimName.Clear();  // If we add other dims one day, this has to change
-            papszDimName.AddString(NCDF_DIMNAME_LAT);
-            papszDimName.AddString(NCDF_DIMNAME_LON);
-
-            int status = nc_rename_dim(cdfid, nYDimID, NCDF_DIMNAME_LAT);
-            NCDF_ERR(status);
-            status = nc_rename_dim(cdfid, nXDimID, NCDF_DIMNAME_LON);
-            NCDF_ERR(status);
-        }
-
         // Write projection attributes.
         if( bWriteGridMapping )
         {
@@ -5107,8 +5119,36 @@ CPLErr netCDFDataset::AddProjectionVars( bool bDefsOnly,
 
         // Write CF Projection vars.
 
+        const bool bIsRotatedPole = pszCFProjection != nullptr &&
+                                    EQUAL(pszCFProjection, ROTATED_POLE_VAR_NAME);
+        if( bIsRotatedPole )
+        {
+            // Rename dims to rlat/rlon.
+            papszDimName.Clear();  // If we add other dims one day, this has to change
+            papszDimName.AddString(NCDF_DIMNAME_RLAT);
+            papszDimName.AddString(NCDF_DIMNAME_RLON);
+
+            int status = nc_rename_dim(cdfid, nYDimID, NCDF_DIMNAME_RLAT);
+            NCDF_ERR(status);
+            status = nc_rename_dim(cdfid, nXDimID, NCDF_DIMNAME_RLON);
+            NCDF_ERR(status);
+        }
+        // Rename dimensions if lon/lat.
+        else if( !bIsProjected )
+        {
+            // Rename dims to lat/lon.
+            papszDimName.Clear();  // If we add other dims one day, this has to change
+            papszDimName.AddString(NCDF_DIMNAME_LAT);
+            papszDimName.AddString(NCDF_DIMNAME_LON);
+
+            int status = nc_rename_dim(cdfid, nYDimID, NCDF_DIMNAME_LAT);
+            NCDF_ERR(status);
+            status = nc_rename_dim(cdfid, nXDimID, NCDF_DIMNAME_LON);
+            NCDF_ERR(status);
+        }
+
         // Write X/Y attributes.
-        if( bIsProjected )
+        else /* if( bIsProjected ) */
         {
             // X
             int anXDims[1];
@@ -5194,21 +5234,32 @@ CPLErr netCDFDataset::AddProjectionVars( bool bDefsOnly,
             }
 
             // Def vars and attributes.
-            int status = nc_def_var(cdfid, CF_LATITUDE_VAR_NAME, eLonLatType,
-                                    nLatDims, panLatDims, &nVarLatID);
-            CPLDebug("GDAL_netCDF", "nc_def_var(%d,%s,%d,%d,-,-) got id %d",
-                    cdfid, CF_LATITUDE_VAR_NAME, eLonLatType, nLatDims, nVarLatID);
-            NCDF_ERR(status);
-            DefVarDeflate(nVarLatID, false);  // Don't set chunking.
+            {
+                const char* pszVarName = bIsRotatedPole ?
+                                    NCDF_DIMNAME_RLAT : CF_LATITUDE_VAR_NAME;
+                int status = nc_def_var(cdfid, pszVarName, eLonLatType,
+                                        nLatDims, panLatDims, &nVarLatID);
+                CPLDebug("GDAL_netCDF", "nc_def_var(%d,%s,%d,%d,-,-) got id %d",
+                        cdfid, pszVarName, eLonLatType, nLatDims, nVarLatID);
+                NCDF_ERR(status);
+                DefVarDeflate(nVarLatID, false);  // Don't set chunking.
+            }
 
-            status = nc_def_var(cdfid, CF_LONGITUDE_VAR_NAME, eLonLatType,
-                                nLonDims, panLonDims, &nVarLonID);
-            CPLDebug("GDAL_netCDF", "nc_def_var(%d,%s,%d,%d,-,-) got id %d",
-                    cdfid, CF_LONGITUDE_VAR_NAME, eLonLatType, nLatDims, nVarLonID);
-            NCDF_ERR(status);
-            DefVarDeflate(nVarLonID, false);  // Don't set chunking.
+            {
+                const char* pszVarName = bIsRotatedPole ?
+                                    NCDF_DIMNAME_RLON : CF_LONGITUDE_VAR_NAME;
+                int status = nc_def_var(cdfid, pszVarName, eLonLatType,
+                                        nLonDims, panLonDims, &nVarLonID);
+                CPLDebug("GDAL_netCDF", "nc_def_var(%d,%s,%d,%d,-,-) got id %d",
+                        cdfid, pszVarName, eLonLatType, nLatDims, nVarLonID);
+                NCDF_ERR(status);
+                DefVarDeflate(nVarLonID, false);  // Don't set chunking.
+            }
 
-            NCDFWriteLonLatVarsAttributes(this->vcdf, nVarLonID, nVarLatID);
+            if( bIsRotatedPole )
+                NCDFWriteRLonRLatVarsAttributes(this->vcdf, nVarLonID, nVarLatID);
+            else
+                NCDFWriteLonLatVarsAttributes(this->vcdf, nVarLonID, nVarLatID);
 
             CPLFree(panLatDims);
             CPLFree(panLonDims);
@@ -5227,8 +5278,15 @@ CPLErr netCDFDataset::AddProjectionVars( bool bDefsOnly,
 
         int nVarLonID = -1;
         int nVarLatID = -1;
-        nc_inq_varid(cdfid, CF_LONGITUDE_VAR_NAME, &nVarLonID);
-        nc_inq_varid(cdfid, CF_LATITUDE_VAR_NAME, &nVarLatID);
+
+        const bool bIsRotatedPole = pszCFProjection != nullptr &&
+                                    EQUAL(pszCFProjection, ROTATED_POLE_VAR_NAME);
+        nc_inq_varid(cdfid,
+                     bIsRotatedPole ? NCDF_DIMNAME_RLON : CF_LONGITUDE_VAR_NAME,
+                     &nVarLonID);
+        nc_inq_varid(cdfid,
+                     bIsRotatedPole ? NCDF_DIMNAME_RLAT : CF_LATITUDE_VAR_NAME,
+                     &nVarLatID);
 
         // Get projection values.
 

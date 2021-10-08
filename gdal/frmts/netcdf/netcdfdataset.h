@@ -108,6 +108,8 @@ static const size_t NCDF_MAX_STR_LEN = 8192;
 #define NCDF_DIMNAME_LON     "lon"
 #define NCDF_DIMNAME_LAT     "lat"
 #define NCDF_LONLAT          "lon lat"
+#define NCDF_DIMNAME_RLON    "rlon" // rotated longitude
+#define NCDF_DIMNAME_RLAT    "rlat" // rotated latitude
 
 /* netcdf file types, as in libcdi/cdo and compat w/netcdf.h */
 typedef enum
@@ -1065,6 +1067,7 @@ class netCDFLayer final: public OGRLayer
 
 const char* NCDFGetProjectedCFUnit(const OGRSpatialReference *poSRS);
 void NCDFWriteLonLatVarsAttributes(nccfdriver::netCDFVID& vcdf, int nVarLonID, int nVarLatID);
+void NCDFWriteRLonRLatVarsAttributes(nccfdriver::netCDFVID& vcdf, int nVarRLonID, int nVarRLatID);
 void NCDFWriteXYVarsAttributes(nccfdriver::netCDFVID& vcdf, int nVarXID, int nVarYID,
                                       OGRSpatialReference* poSRS);
 int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS,
