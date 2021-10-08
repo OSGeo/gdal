@@ -1642,6 +1642,41 @@ def test_vrt_check_dont_open_unneeded_source():
         gdal.Unlink(tmpfilename)
 
 
+def test_vrt_check_dont_open_unneeded_source_with_complex_source_nodata():
+
+    vrt = """<VRTDataset rasterXSize="20" rasterYSize="20">
+  <VRTRasterBand dataType="Byte" band="1">
+    <ColorInterp>Gray</ColorInterp>
+    <ComplexSource>
+      <SourceFilename>data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="10" ySize="10" />
+      <DstRect xOff="0" yOff="0" xSize="10" ySize="10" />
+      <NODATA>0</NODATA>
+    </ComplexSource>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="1">i_do_not_exist.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="10" yOff="10" xSize="10" ySize="10" />
+      <DstRect xOff="10" yOff="10" xSize="10" ySize="10" />
+      <NODATA>0</NODATA>
+    </ComplexSource>
+  </VRTRasterBand>
+</VRTDataset>"""
+
+    tmpfilename = '/vsimem/tmp.vrt'
+    gdal.FileFromMemBuffer(tmpfilename, vrt)
+    try:
+        ds = gdal.Translate('', tmpfilename, options = '-of MEM -srcwin 0 0 10 10')
+        assert ds is not None
+
+        with gdaltest.error_handler():
+            ds = gdal.Translate('', tmpfilename, options = '-of MEM -srcwin 0 0 10.1 10.1')
+        assert ds is None
+    finally:
+        gdal.Unlink(tmpfilename)
+
+
 def test_vrt_nodata_and_implicit_ovr_recursion_issue():
 
     """ Tests scenario https://github.com/OSGeo/gdal/issues/4620#issuecomment-938636360 """
