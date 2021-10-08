@@ -2292,8 +2292,10 @@ netCDFDataset::~netCDFDataset()
         (bSetProjection || bSetGeoTransform) )
     {
         // Ensure projection is written if GeoTransform OR Projection are missing.
-            if( !bAddedProjectionVarsDefs )
+        if( !bAddedProjectionVarsDefs )
+        {
             AddProjectionVars( true, nullptr, nullptr );
+        }
         AddProjectionVars( false, nullptr, nullptr );
     }
 
