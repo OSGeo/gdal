@@ -257,13 +257,23 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             }
             if( bFallbackToBase )
             {
-                return GDALRasterBand::IRasterIO( eRWFlag,
+                const bool bBackupEnabledOverviews = l_poDS->AreOverviewsEnabled();
+                if( !l_poDS->m_apoOverviews.empty() &&
+                    l_poDS->AreOverviewsEnabled() )
+                {
+                    // Disable use of implicit overviews to avoid infinite
+                    // recursion
+                    l_poDS->SetEnableOverviews(false);
+                }
+                const auto eErr = GDALRasterBand::IRasterIO( eRWFlag,
                                                   nXOff, nYOff, nXSize, nYSize,
                                                   pData, nBufXSize, nBufYSize,
                                                   eBufType,
                                                   nPixelSpace,
                                                   nLineSpace,
                                                   psExtraArg );
+                l_poDS->SetEnableOverviews(bBackupEnabledOverviews);
+                return eErr;
             }
         }
     }
