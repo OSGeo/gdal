@@ -90,6 +90,7 @@
 #define CF_PT_POLAR_STEREO           "polar_stereographic"
 #define CF_PT_STEREO                 "stereographic"
 #define CF_PT_GEOS                   "geostationary"
+#define CF_PT_ROTATED_LATITUDE_LONGITUDE "rotated_latitude_longitude"
 
 /* projection parameters */
 #define CF_PP_STD_PARALLEL           "standard_parallel"
