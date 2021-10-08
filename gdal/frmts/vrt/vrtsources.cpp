@@ -1797,6 +1797,23 @@ void VRTSimpleSource::SetResampling( const char* pszResampling )
 }
 
 /************************************************************************/
+/*                      GetAdjustedNoDataValue()                        */
+/************************************************************************/
+
+double VRTSimpleSource::GetAdjustedNoDataValue() const
+{
+    if( m_bNoDataSet )
+    {
+        auto l_band = GetRasterBand();
+        if( l_band && l_band->GetRasterDataType() == GDT_Float32 )
+        {
+            return GDALAdjustNoDataCloseToFloatMax(m_dfNoDataValue);
+        }
+    }
+    return m_dfNoDataValue;
+}
+
+/************************************************************************/
 /* ==================================================================== */
 /*                         VRTAveragedSource                            */
 /* ==================================================================== */
@@ -1887,6 +1904,8 @@ VRTAveragedSource::RasterIO( GDALDataType /*eBandDataType*/,
     auto l_band = GetRasterBand();
     if( !l_band )
         return CE_Failure;
+
+    const double dfNoDataValue = GetAdjustedNoDataValue();
 
 /* -------------------------------------------------------------------- */
 /*      Allocate a temporary buffer to whole the full resolution        */
@@ -2001,9 +2020,9 @@ VRTAveragedSource::RasterIO( GDALDataType /*eBandDataType*/,
                         continue;
 
                     if( m_bNoDataSet &&
-                        GDALIsValueInRange<float>(m_dfNoDataValue) &&
+                        GDALIsValueInRange<float>(dfNoDataValue) &&
                         ARE_REAL_EQUAL(fSampledValue,
-                                       static_cast<float>(m_dfNoDataValue)))
+                                       static_cast<float>(dfNoDataValue)))
                         continue;
 
                     nPixelCount++;
@@ -2197,8 +2216,9 @@ CPLXMLNode *VRTComplexSource::SerializeToXML( const char *pszVRTPath )
         auto l_band = GetRasterBand();
         if( l_band )
         {
+            const double dfNoDataValue = GetAdjustedNoDataValue();
             CPLSetXMLValue( psSrc, "NODATA", VRTSerializeNoData(
-                m_dfNoDataValue, l_band->GetRasterDataType(), 16).c_str());
+                dfNoDataValue, l_band->GetRasterDataType(), 16).c_str());
         }
     }
 
@@ -2335,11 +2355,6 @@ CPLErr VRTComplexSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
     {
         m_bNoDataSet = TRUE;
         m_dfNoDataValue = CPLAtofM( CPLGetXMLValue(psSrc, "NODATA", "0") );
-        auto l_band = GetRasterBand();
-        if( l_band != nullptr && l_band->GetRasterDataType() == GDT_Float32 )
-        {
-            m_dfNoDataValue = GDALAdjustNoDataCloseToFloatMax(m_dfNoDataValue);
-        }
     }
 
     const char* pszUseMaskBand = CPLGetXMLValue(psSrc, "UseMaskBand", nullptr);
@@ -2641,7 +2656,7 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
     // If no explicit <NODATA> is set, but UseMaskBand is set, and the band
     // has a nodata value, then use it as if it was set as <NODATA>
     int bNoDataSet = m_bNoDataSet;
-    double dfNoDataValue = m_dfNoDataValue;
+    double dfNoDataValue = GetAdjustedNoDataValue();;
     auto l_band = GetRasterBand();
     if( !l_band )
         return CE_Failure;
