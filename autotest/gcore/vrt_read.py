@@ -1636,3 +1636,25 @@ def test_vrt_usemaskband_alpha():
 
     gdal.GetDriverByName('GTiff').Delete('/vsimem/src1.tif')
     gdal.GetDriverByName('GTiff').Delete('/vsimem/src2.tif')
+
+
+def test_vrt_nodata_and_implicit_ovr_recursion_issue():
+
+    """ Tests scenario https://github.com/OSGeo/gdal/issues/4620#issuecomment-938636360 """
+
+    vrt = """<VRTDataset rasterXSize="20" rasterYSize="20">
+  <VRTRasterBand dataType="Byte" band="1">
+    <NoDataValue>0</NoDataValue>
+    <ComplexSource>
+      <NODATA>0</NODATA>
+      <SourceFilename>data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </ComplexSource>
+  </VRTRasterBand>
+  <OverviewList resampling="average">2</OverviewList>
+</VRTDataset>"""
+
+    tmpfilename = '/vsimem/tmp.vrt'
+    with gdaltest.tempfile(tmpfilename, vrt):
+        ds = gdal.Open(tmpfilename)
+        assert ds.GetRasterBand(1).GetOverview(0).Checksum() == 1152
