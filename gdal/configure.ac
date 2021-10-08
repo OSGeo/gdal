@@ -32,7 +32,8 @@ define([AC_CACHE_LOAD], )
 define([AC_CACHE_SAVE], )
 
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT(GDALmake.opt.in)
+AC_INIT
+AC_CONFIG_SRCDIR([GDALmake.opt.in])
 AC_SUBST(PACKAGE, gdal)
 AC_CONFIG_MACRO_DIR(m4)
 AC_CONFIG_HEADERS([port/cpl_config.h:port/cpl_config.h.in])
@@ -41,15 +42,20 @@ AH_TOP([#define CPL_CONFIG_H])
 AH_BOTTOM([#include "cpl_config_extras.h"])
 AH_BOTTOM([#endif])
 
-dnl We require autoconf 2.52+ for libtool support on cygwin/mingw hosts
-AC_PREREQ(2.52)
+AC_PREREQ([2.69])
 
 dnl Compute the canonical host-system (the system we are building for)
 dnl type variable $host
 AC_CANONICAL_HOST
 
 dnl Enable as much warnings as possible
+AC_LANG_PUSH([C])
+AX_COMPILER_VENDOR
+AC_LANG_POP([C])
 AX_CFLAGS_WARN_ALL(C_WFLAGS)
+AC_LANG_PUSH([C++])
+AX_COMPILER_VENDOR
+AC_LANG_POP([C++])
 AX_CXXFLAGS_WARN_ALL(CXX_WFLAGS)
 
 dnl Remove -Wdeclaration-after-statement that is no longer appropriate in C99
@@ -209,10 +215,8 @@ AC_SUBST(WARN_EFFCPLUSPLUS,$WARN_EFFCPLUSPLUS)
 
 dnl Checks for programs.
 AC_PROG_CC
-AC_PROG_CC_C99
 AC_PROG_CXX
-AC_LIBTOOL_WIN32_DLL
-AC_PROG_LIBTOOL
+LT_INIT([win32-dll])
 
 dnl Check that CXX is really a working compiler
 AC_LANG_PUSH([C++])
@@ -286,7 +290,6 @@ case "${host_os}" in
 esac
 
 dnl Checks for header files.
-AC_HEADER_STDC
 AC_CHECK_HEADERS(assert.h fcntl.h unistd.h dbmalloc.h dlfcn.h stdint.h limits.h locale.h values.h float.h errno.h direct.h)
 
 dnl Check for userfaultfd support
@@ -350,18 +353,16 @@ AC_CHECK_FUNCS(statvfs64)
 AC_CHECK_FUNCS(getrlimit)
 
 AC_MSG_CHECKING([for RLIMIT_AS])
-AC_TRY_COMPILE(
-  [
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <sys/time.h>
 #include <sys/resource.h>
-  ], [
+  ]], [[
     return RLIMIT_AS;
-  ],
-  [
+  ]])],[
     AC_MSG_RESULT([yes])
     AC_DEFINE_UNQUOTED(HAVE_RLIMIT_AS, 1,
           [Define to 1 if you have the `RLIMIT_AS' constant.])
-  ], [
+  ],[
     AC_MSG_RESULT([no])
 ])
 
@@ -376,22 +377,20 @@ AC_LANG_POP(C++)
 
 AC_MSG_CHECKING([for uselocale])
 AC_LANG_PUSH(C++)
-AC_TRY_COMPILE(
-  [
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #define _XOPEN_SOURCE 700
 #include <locale.h>
-  ], [
+  ]], [[
     locale_t alocale = newlocale (LC_NUMERIC_MASK, "C", 0);
     locale_t oldlocale = uselocale(alocale);
     uselocale(oldlocale);
     freelocale(alocale);
     return 0;
-  ],
-  [
+  ]])],[
     AC_MSG_RESULT([yes])
     AC_DEFINE_UNQUOTED(HAVE_USELOCALE, 1,
           [Define to 1 if you have the `uselocale' function.])
-  ], [
+  ],[
     AC_MSG_RESULT([no])
 ])
 AC_LANG_POP(C++)
@@ -504,19 +503,17 @@ dnl Check if __uint128_t is available and usable
 dnl ---------------------------------------------------------------------------
 
 AC_MSG_CHECKING([for __uint128_t])
-AC_TRY_COMPILE(
-  [
-  ], [
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+  ]], [[
       unsigned long long v1 = 1024ULL;
       unsigned long long v2 = 0x8000000000000000ULL;
       __uint128_t u = ((__uint128_t)v1)*((__uint128_t)v2);
       return u == 0;
-  ],
-  [
+  ]])],[
     AC_MSG_RESULT([yes])
     AC_DEFINE_UNQUOTED(HAVE_UINT128_T, 1,
           [Define to 1 if the system has the type __uint128_t])
-  ], [
+  ],[
     AC_MSG_RESULT([no])
 ])
 
@@ -979,18 +976,16 @@ if test "$with_threads" = "yes" -o "$with_threads" = "" ; then
 
   AC_MSG_CHECKING([for PTHREAD_MUTEX_RECURSIVE])
 
-  AC_TRY_COMPILE(
-  [
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #define _GNU_SOURCE
 #include <pthread.h>
-  ], [
+  ]], [[
     return (PTHREAD_MUTEX_RECURSIVE);
-  ],
-  [
+  ]])],[
     AC_MSG_RESULT([yes])
     AC_DEFINE_UNQUOTED(HAVE_PTHREAD_MUTEX_RECURSIVE, 1,
           [Define to 1 if you have the `PTHREAD_MUTEX_RECURSIVE' constant.])
-  ], [
+  ],[
     AC_MSG_RESULT([no])
   ])
 
@@ -998,36 +993,32 @@ if test "$with_threads" = "yes" -o "$with_threads" = "" ; then
 
   AC_MSG_CHECKING([for PTHREAD_MUTEX_ADAPTIVE_NP])
 
-  AC_TRY_COMPILE(
-  [
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #define _GNU_SOURCE
 #include <pthread.h>
-  ], [
+  ]], [[
     return PTHREAD_MUTEX_ADAPTIVE_NP;
-  ],
-  [
+  ]])],[
     AC_MSG_RESULT([yes])
     AC_DEFINE_UNQUOTED(HAVE_PTHREAD_MUTEX_ADAPTIVE_NP, 1,
           [Define to 1 if you have the `PTHREAD_MUTEX_ADAPTIVE_NP' constant.])
-  ], [
+  ],[
     AC_MSG_RESULT([no])
   ])
 
   AC_MSG_CHECKING([for pthread_spinlock_t])
 
-  AC_TRY_COMPILE(
-  [
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #define _GNU_SOURCE
 #include <pthread.h>
-  ], [
+  ]], [[
     pthread_spinlock_t spin;
     return 1;
-  ],
-  [
+  ]])],[
     AC_MSG_RESULT([yes])
     AC_DEFINE_UNQUOTED(HAVE_PTHREAD_SPINLOCK, 1,
           [Define to 1 if you have the `pthread_spinlock_t' type.])
-  ], [
+  ],[
     AC_MSG_RESULT([no])
   ])
 
@@ -1036,11 +1027,11 @@ elif test "$with_threads" != "no" ; then
   THREAD_FLAG=CPL_MULTIPROC_PTHREAD
   THREAD_LIB="$with_threads"
 
-  AC_CHECKING(whether we should include thread/mutex support...)
+  AS_MESSAGE([checking whether we should include thread/mutex support......])
   AC_MSG_RESULT([        using threads with link options "$THREAD_LIB".])
 
 else
-  AC_CHECKING(whether we should include thread/mutex support...)
+  AS_MESSAGE([checking whether we should include thread/mutex support......])
   AC_MSG_RESULT([        thread safe support disabled.])
 fi
 
@@ -1057,18 +1048,16 @@ dnl ---------------------------------------------------------------------------
 
 AC_MSG_CHECKING([for 5 args mremap()])
 
-AC_TRY_COMPILE(
-[
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #define _GNU_SOURCE
 #include <sys/mman.h>
-], [
+]], [[
 return (mremap(0,0,0,0,0));
-],
-[
+]])],[
 AC_MSG_RESULT([yes])
 AC_DEFINE_UNQUOTED(HAVE_5ARGS_MREMAP, 1,
         [Define to 1 if you have the 5 args `mremap' function.])
-], [
+],[
 AC_MSG_RESULT([no])
 ])
 
@@ -1078,17 +1067,15 @@ dnl ---------------------------------------------------------------------------
 
 AC_MSG_CHECKING([for _SC_PHYS_PAGES])
 
-AC_TRY_COMPILE(
-[
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <unistd.h>
-], [
+]], [[
 return (sysconf(_SC_PHYS_PAGES));
-],
-[
+]])],[
 AC_MSG_RESULT([yes])
 AC_DEFINE_UNQUOTED(HAVE_SC_PHYS_PAGES, 1,
         [Define to 1 if you have the _SC_PHYS_PAGES' constant.])
-], [
+],[
 AC_MSG_RESULT([no])
 ])
 
@@ -3349,7 +3336,10 @@ AC_SUBST([NETCDF_SETTING], [$NETCDF_SETTING])
 
 if test "$NETCDF_SETTING" != "no" ; then
 
-   AC_CHECK_HEADERS([$NETCDF_INCLUDEDIR/netcdf_mem.h], [NETCDF_MEM=yes], [NETCDF_MEM=no], [#include <$NETCDF_INCLUDEDIR/netcdf.h>])
+   NETCDF_MEM=no
+   if test -f "$NETCDF_INCLUDEDIR/netcdf_mem.h"; then
+       NETCDF_MEM=yes;
+   fi
 
    AC_SUBST([NETCDF_MEM], [$NETCDF_MEM])
    AC_SUBST([NETCDF_ROOT], [$NETCDF_ROOT])
@@ -5631,7 +5621,7 @@ dnl ---------------------------------------------------------------------------
 
 RASDAMAN_ENABLED=no
 
-AC_CHECKING(whether we should include rasdaman support)
+AS_MESSAGE([checking whether we should include rasdaman support...])
 AC_ARG_WITH(rasdaman,
 [  --with-rasdaman[=DIR]        Include rasdaman support (DIR is rasdaman's install dir).],,)
 
@@ -6169,7 +6159,8 @@ case "${host_os}" in
         ;;
 esac
 
-AC_OUTPUT(GDALmake.opt)
+AC_CONFIG_FILES([GDALmake.opt])
+AC_OUTPUT
 
 dnl ---------------------------------------------------------------------------
 dnl Display configuration status
