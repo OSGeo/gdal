@@ -86,11 +86,17 @@ the health of the project:
 
     .. container:: horizontal-logo
 
+        .. image:: ../../images/sponsors/logo-aerometrex.png
+           :class: img-logos
+           :width: 150 px
+           :target: https://aerometrex.com.au
+
+    .. container:: horizontal-logo
+
         .. image:: ../../images/sponsors/logo-frontiersi.png
            :class: img-logos
            :width: 150 px
            :target: https://frontiersi.com.au
-
 
     .. container:: horizontal-logo
 
@@ -99,14 +105,12 @@ the health of the project:
            :width: 150 px
            :target: https://www.koordinates.com
 
-
     .. container:: horizontal-logo
 
         .. image:: ../../images/sponsors/logo-mapgears.png
            :class: img-logos
            :width: 150 px
            :target: https://www.mapgears.com
-
 
     .. container:: horizontal-logo
 
