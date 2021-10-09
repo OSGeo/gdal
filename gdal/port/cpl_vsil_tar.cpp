@@ -414,6 +414,18 @@ int VSITarReader::GotoNextFile()
         }
         else
         {
+            // Is it a ustar extension ?
+            // Cf https://en.wikipedia.org/wiki/Tar_(computing)#UStar_format
+            if( memcmp(abyHeader + 257, "ustar\0", 6) == 0 &&
+                abyHeader[345] != '\0' )
+            {
+                std::string osFilenamePrefix;
+                osFilenamePrefix.assign(
+                    reinterpret_cast<const char*>(abyHeader + 345),
+                    CPLStrnlen(reinterpret_cast<const char*>(abyHeader + 345), 155));
+                osNextFileName = osFilenamePrefix + '/' + osNextFileName;
+            }
+
             break;
         }
     }
