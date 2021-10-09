@@ -1207,6 +1207,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     int            InitBlockInfo();
 
     void           AddBlockToFreeList( GDALRasterBlock * );
+    inline virtual bool NoBounds() const { return false; }
 //! @endcond
 
     GDALRasterBlock *TryGetLockedBlockRef( int nXBlockOff, int nYBlockYOff );

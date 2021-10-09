@@ -7,7 +7,7 @@ OBJ	=	gdalopeninfo.obj gdaldrivermanager.obj gdaldriver.obj \
 		gdaljp2metadata.obj gdaljp2box.obj \
 		gdalmultidomainmetadata.obj gdalpamproxydb.obj \
 		gdalallvalidmaskband.obj gdalnodatamaskband.obj \
-                gdalproxydataset.obj gdalproxypool.obj \
+        gdalproxydataset.obj gdalproxypool.obj gdalringdataset.obj \
 		gdalnodatavaluesmaskband.obj gdaldefaultasync.obj \
 		gdaldllmain.obj gdalexif.obj \
 		gdalgeorefpamdataset.obj  gdaljp2abstractdataset.obj \

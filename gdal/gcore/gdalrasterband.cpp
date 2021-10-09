@@ -340,8 +340,9 @@ CPLErr GDALRasterBand::RasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      Do some validation of parameters.                               */
 /* -------------------------------------------------------------------- */
-    if( nXOff < 0 || nXOff > INT_MAX - nXSize || nXOff + nXSize > nRasterXSize
+    if(( nXOff < 0 || nXOff > INT_MAX - nXSize || nXOff + nXSize > nRasterXSize
         || nYOff < 0 || nYOff > INT_MAX - nYSize || nYOff + nYSize > nRasterYSize )
+        && !NoBounds())
     {
         ReportError( CE_Failure, CPLE_IllegalArg,
                   "Access window out of range in RasterIO().  Requested\n"

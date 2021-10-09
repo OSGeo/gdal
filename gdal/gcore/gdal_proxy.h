@@ -118,9 +118,9 @@ class CPL_DLL GDALProxyRasterBand : public GDALRasterBand
     virtual GDALRasterBand* RefUnderlyingRasterBand() = 0;
     virtual void UnrefUnderlyingRasterBand(GDALRasterBand* poUnderlyingRasterBand);
 
-    CPLErr IReadBlock( int, int, void * ) override;
-    CPLErr IWriteBlock( int, int, void * ) override;
-    CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual CPLErr IWriteBlock( int, int, void * ) override;
+    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                     void *, int, int, GDALDataType,
                     GSpacing, GSpacing, GDALRasterIOExtraArg* psExtraArg ) override;
 
@@ -424,6 +424,57 @@ class GDALProxyPoolMaskBand : public GDALProxyPoolRasterBand
                            GDALDataType eDataType,
                            int nBlockXSize, int nBlockYSize );
     ~GDALProxyPoolMaskBand() override;
+};
+
+/* ******************************************************************** */
+/*                         GDALRingRasterBand                       */
+/* ******************************************************************** */
+
+class GDALRingDataset;
+
+class CPL_DLL GDALRingRasterBand : public GDALProxyRasterBand
+{
+  private:
+    friend class GDALRingDataset;
+    GDALRasterBand* m_poUnderlying;
+
+  protected:
+    GDALRasterBand* RefUnderlyingRasterBand() override;
+    void UnrefUnderlyingRasterBand(
+      GDALRasterBand* poUnderlyingRasterBand) override;
+    inline virtual bool NoBounds() const override { return true; }
+    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
+                    void *, int, int, GDALDataType,
+                    GSpacing, GSpacing, GDALRasterIOExtraArg* psExtraArg ) override;
+
+  public:
+    GDALRingRasterBand(GDALRasterBand* poBand);
+
+  private:
+    CPL_DISALLOW_COPY_ASSIGN(GDALRingRasterBand)
+};
+
+/* ******************************************************************** */
+/*                          GDALRingDataset                         */
+/* ******************************************************************** */
+
+class GDALRingDataset : public GDALProxyDataset
+{
+  private:
+    friend class GDALRingRasterBand;
+    GDALDataset* m_poUnderlying;
+    int m_nWrappedAxis = 1;
+
+  protected:
+    virtual GDALDataset* RefUnderlyingDataset() const override;
+    virtual void UnrefUnderlyingDataset(GDALDataset* poUnderlyingDataset) const override;
+
+  public:
+    GDALRingDataset( GDALDataset* poDS );
+    GDALRasterBand * GetRasterBand( int nBandId );
+
+  private:
+    CPL_DISALLOW_COPY_ASSIGN(GDALRingDataset)
 };
 
 #endif
