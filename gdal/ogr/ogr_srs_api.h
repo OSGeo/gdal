@@ -1102,6 +1102,18 @@ OCTTransform4DWithErrorCodes( OGRCoordinateTransformationH hCT,
                   int nCount, double *x, double *y, double *z, double *t,
                   int *panErrorCodes );
 
+int CPL_DLL CPL_STDCALL
+OCTTransformBounds( OGRCoordinateTransformationH hCT,
+                    const double xmin,
+                    const double ymin,
+                    const double xmax,
+                    const double ymax,
+                    double* out_xmin,
+                    double* out_ymin,
+                    double* out_xmax,
+                    double* out_ymax,
+                    const int densify_pts );
+
 
 CPL_C_END
 

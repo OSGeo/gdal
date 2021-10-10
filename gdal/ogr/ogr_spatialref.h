@@ -832,6 +832,61 @@ public:
                                          double *z, double *t,
                                          int *panErrorCodes );
 
+    /** \brief Transform boundary.
+     *
+     * This method is the same as the C function OCTTransformBounds().
+     *
+     * Transform boundary densifying the edges to account for nonlinear
+     * transformations along these edges and extracting the outermost bounds.
+     *
+     * If the destination CRS is geographic, the first axis is longitude,
+     * and xmax < xmin then the bounds crossed the antimeridian.
+     * In this scenario there are two polygons, one on each side of the antimeridian.
+     * The first polygon should be constructed with (xmin, ymin, 180, ymax)
+     * and the second with (-180, ymin, xmax, ymax).
+     *
+     * If the destination CRS is geographic, the first axis is latitude,
+     * and ymax < ymin then the bounds crossed the antimeridian.
+     * In this scenario there are two polygons, one on each side of the antimeridian.
+     * The first polygon should be constructed with (ymin, xmin, ymax, 180)
+     * and the second with (ymin, -180, ymax, xmax).
+     *
+     * @param xmin Minimum bounding coordinate of the first axis in source CRS.
+     * @param ymin Minimum bounding coordinate of the second axis in source CRS.
+     * @param xmax Maximum bounding coordinate of the first axis in source CRS.
+     * @param ymax Maximum bounding coordinate of the second axis in source CRS.
+     * @param out_xmin Minimum bounding coordinate of the first axis in target CRS
+     * @param out_ymin Minimum bounding coordinate of the second axis in target CRS.
+     * @param out_xmax Maximum bounding coordinate of the first axis in target CRS.
+     * @param out_ymax Maximum bounding coordinate of the second axis in target CRS.
+     * @param densify_pts Recommended to use 21. This is the number of points
+     *     to use to densify the bounding polygon in the transformation.
+     * @return TRUE if successful. FALSE if failures encountered.
+     * @since GDAL 3.5
+     */
+    virtual int TransformBounds( const double xmin,
+                                 const double ymin,
+                                 const double xmax,
+                                 const double ymax,
+                                 double* out_xmin,
+                                 double* out_ymin,
+                                 double* out_xmax,
+                                 double* out_ymax,
+                                 const int densify_pts )
+    {
+        (void)xmin;
+        (void)xmax;
+        (void)ymin;
+        (void)ymax;
+        (void)densify_pts;
+        *out_xmin = HUGE_VAL;
+        *out_ymin = HUGE_VAL;
+        *out_xmax = HUGE_VAL;
+        *out_ymax = HUGE_VAL;
+        CPLError(CE_Failure, CPLE_AppDefined, "TransformBounds not implemented.");
+        return false;
+    }
+
     /** Convert a OGRCoordinateTransformation* to a OGRCoordinateTransformationH.
      * @since GDAL 2.3
      */
