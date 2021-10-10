@@ -369,6 +369,58 @@ Creation Options
 -  **PIXELTYPE=[DEFAULT/SIGNEDBYTE]**: By setting this to SIGNEDBYTE, a
    new Byte file can be forced to be written as signed byte.
 
+Creation of multidimensional files with CreateCopy() 2D raster API
+------------------------------------------------------------------
+
+Starting with GDAL 3.1, the prefered way of creating > 2D files is to use the
+the :ref:`multidim_raster_data_model` API. However it is possible to create
+such files with the 2D raster API using the CreateCopy() method (note that at
+time of writing, this is not supported using the Create() method).
+
+The ``NETCDF_DIM_EXTRA={dim1_name,...dimN_name}`` metadata item must be set on the
+source dataset, where dim1_name is the name of the slowest varying dimension
+and dimN_name the name of the fastest varying one.
+
+For each extra dimension, the ``NETCDF_DIM_{dim_name}_DEF={dimension_size,netcdf_data_type}``
+metadata item must be set where dimension_size is the size of the dimension
+(number of samples along that dimension) and netcdf_data_type is the integer
+value for the netCDF data type of the corresponding indexing variable. Among the most useful
+data types:
+
+- 4 for Int
+- 5 for Float
+- 6 for Double
+- 10 for Int64
+
+The ``NETCDF_DIM_{dim_name}_VALUES={value1,...valueN}`` is set to define the
+values of the indexing variable corresponding to dimension.
+
+``dim_name#attribute`` metadata items can also be set to define the attributes
+of the indexing variable of the dimension.
+
+Example of creation of a Time,Z,Y,X 4D file in Python:
+
+.. code-block:: python
+
+    # Create in-memory file with required metadata to define the extra >2D
+    # dimensions
+    size_z = 2
+    size_time = 3
+    src_ds = gdal.GetDriverByName('MEM').Create('', 4, 3, size_z * size_time)
+    src_ds.SetMetadataItem('NETCDF_DIM_EXTRA', '{time,Z}')
+    # 6 is NC_DOUBLE
+    src_ds.SetMetadataItem('NETCDF_DIM_Z_DEF', f"{{{size_z},6}}")
+    src_ds.SetMetadataItem('NETCDF_DIM_Z_VALUES', '{1.25,2.50}')
+    src_ds.SetMetadataItem('Z#axis', 'Z')
+    src_ds.SetMetadataItem('NETCDF_DIM_time_DEF', f"{{{size_time},6}}")
+    src_ds.SetMetadataItem('NETCDF_DIM_time_VALUES', '{1,2,3}')
+    src_ds.SetMetadataItem('time#axis', 'T')
+    src_ds.SetGeoTransform([2,1,0,49,0,-1])
+
+    # Create netCDF file
+    gdal.GetDriverByName('netCDF').CreateCopy('out.nc', src_ds)
+
+
 Configuration Options
 ---------------------
 

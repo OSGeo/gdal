@@ -4874,6 +4874,38 @@ def test_netcdf_open_userfaultfd():
     gdal.Unlink('tmp/test_netcdf_open_userfaultfd.zip')
 
 
+
+def test_netcdf_write_4D():
+
+    # Create in-memory file with required metadata to define the extra >2D
+    # dimensions
+    size_z = 2
+    size_time = 3
+    src_ds = gdal.GetDriverByName('MEM').Create('', 4, 3, size_z * size_time)
+    src_ds.SetMetadataItem('NETCDF_DIM_EXTRA', '{time,Z}')
+    # 6 is NC_DOUBLE
+    src_ds.SetMetadataItem('NETCDF_DIM_Z_DEF', f"{{{size_z},6}}")
+    src_ds.SetMetadataItem('NETCDF_DIM_Z_VALUES', '{1.25,2.50}')
+    src_ds.SetMetadataItem('Z#axis', 'Z')
+    src_ds.SetMetadataItem('NETCDF_DIM_time_DEF', f"{{{size_time},6}}")
+    src_ds.SetMetadataItem('NETCDF_DIM_time_VALUES', '{1,2,3}')
+    src_ds.SetMetadataItem('time#axis', 'T')
+    src_ds.SetGeoTransform([2,1,0,49,0,-1])
+
+    # Create netCDF file
+    tmpfilename = 'tmp/test_netcdf_write_4D.nc'
+    gdal.GetDriverByName('netCDF').CreateCopy(tmpfilename, src_ds)
+
+    # Checks
+    ds = gdal.Open(tmpfilename)
+    assert ds.RasterCount == size_z * size_time
+    assert ds.GetMetadataItem('NETCDF_DIM_EXTRA') == '{time,Z}'
+    assert ds.GetMetadataItem('NETCDF_DIM_Z_VALUES') == '{1.25,2.5}'
+    assert ds.GetMetadataItem('NETCDF_DIM_time_VALUES') == '{1,2,3}'
+    ds = None
+    gdal.Unlink(tmpfilename)
+
+
 def test_clean_tmp():
     # [KEEP THIS AS THE LAST TEST]
     # i.e. please do not add any tests after this one. Put new ones above.
