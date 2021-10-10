@@ -1693,16 +1693,27 @@ bool OGRProjCT::ListCoordinateOperations(const char* pszSrcSRS,
 #if PROJ_VERSION_MAJOR > 7 || (PROJ_VERSION_MAJOR == 7 && PROJ_VERSION_MINOR >= 2)
         if( datum == nullptr )
         {
-            datum = proj_crs_get_datum_ensemble(ctx, geodetic_crs);
+            datum = proj_crs_get_datum_forced(ctx, geodetic_crs);
         }
 #endif
         if( datum )
         {
+            auto ellps = proj_get_ellipsoid(ctx, datum);
+            proj_destroy(datum);
+            double semi_major_metre = 0;
+            double inv_flattening = 0;
+            proj_ellipsoid_get_parameters(ctx, ellps, &semi_major_metre,
+                                          nullptr, nullptr, &inv_flattening);
             auto cs = proj_create_ellipsoidal_2D_cs(
                 ctx, PJ_ELLPS2D_LONGITUDE_LATITUDE, nullptr, 0);
-            auto temp = proj_create_geographic_crs_from_datum(
-                ctx,"unnamed", datum, cs);
-            proj_destroy(datum);
+            // It is critical to set the prime meridian to 0
+            auto temp = proj_create_geographic_crs(
+                ctx, "unnamed crs", "unnamed datum",
+                proj_get_name(ellps),
+                semi_major_metre, inv_flattening,
+                "Reference prime meridian", 0, nullptr, 0,
+                cs);
+            proj_destroy(ellps);
             proj_destroy(cs);
             proj_destroy(geodetic_crs);
             geodetic_crs = temp;
