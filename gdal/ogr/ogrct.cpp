@@ -1603,7 +1603,12 @@ bool OGRProjCT::ListCoordinateOperations(const char* pszSrcSRS,
     proj_operation_factory_context_set_spatial_criterion(
         ctx, operation_ctx, PROJ_SPATIAL_CRITERION_PARTIAL_INTERSECTION);
     proj_operation_factory_context_set_grid_availability_use(
-        ctx, operation_ctx, PROJ_GRID_AVAILABILITY_DISCARD_OPERATION_IF_MISSING_GRID);
+        ctx, operation_ctx,
+#if PROJ_VERSION_MAJOR >= 7
+        proj_context_is_network_enabled(ctx) ?
+            PROJ_GRID_AVAILABILITY_KNOWN_AVAILABLE:
+#endif
+            PROJ_GRID_AVAILABILITY_DISCARD_OPERATION_IF_MISSING_GRID);
 
     if( options.d->bHasAreaOfInterest )
     {
