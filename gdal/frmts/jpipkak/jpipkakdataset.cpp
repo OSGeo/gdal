@@ -756,87 +756,99 @@ int JPIPKAKDataset::Initialize(const char* pszDatasetName, int bReinitializing )
 /*      If the server has used placeholder boxes for this               */
 /*      information then the image will be interpreted as x,y           */
 /* ==================================================================== */
+
+    bool bSubtarget = false;
+    if(osURL.ifind("?subtarget=") == std::string::npos && osURL.ifind("&subtarget=") == std::string::npos)
+	bSubtarget = true;
+
     GDALJP2Metadata oJP2Geo;
     int nLen = poCache->get_databin_length(KDU_META_DATABIN, nCodestream, 0);
 
-    if( nLen == 0 )
+    if( nLen == 0 && !bSubtarget )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Unable to open stream to parse metadata boxes" );
-        // subtarget has no boxes but works well
-        if(osURL.ifind("?subtarget=") == std::string::npos && osURL.ifind("&subtarget=") == std::string::npos)
-            return FALSE;
+	    return FALSE;
     }
 
-    // create in memory file using vsimem
-    CPLString osFileBoxName;
-    osFileBoxName.Printf("/vsimem/jpip/%s.dat", pszCid);
-    VSILFILE *fpLL = VSIFOpenL(osFileBoxName.c_str(), "w+");
-    poCache->set_read_scope(KDU_META_DATABIN, nCodestream, 0);
-    kdu_byte* pabyBuffer = (kdu_byte *)CPLMalloc(nLen);
-    poCache->read(pabyBuffer, nLen);
-    VSIFWriteL(pabyBuffer, nLen, 1, fpLL);
-    CPLFree( pabyBuffer );
-
-    VSIFFlushL(fpLL);
-    VSIFSeekL(fpLL, 0, SEEK_SET);
-
-    nPamFlags |= GPF_NOSAVE;
-
-    try
+    if (nLen > 0)
     {
-        oJP2Geo.ReadBoxes(fpLL);
-        // parse gml first, followed by geojp2 as a fallback
-        if (oJP2Geo.ParseGMLCoverageDesc() || oJP2Geo.ParseJP2GeoTIFF())
+        // create in memory file using vsimem
+        CPLString osFileBoxName;
+        osFileBoxName.Printf("/vsimem/jpip/%s.dat", pszCid);
+        VSILFILE *fpLL = VSIFOpenL(osFileBoxName.c_str(), "w+");
+        poCache->set_read_scope(KDU_META_DATABIN, nCodestream, 0);
+        kdu_byte* pabyBuffer = (kdu_byte *)CPLMalloc(nLen);
+        poCache->read(pabyBuffer, nLen);
+        VSIFWriteL(pabyBuffer, nLen, 1, fpLL);
+        CPLFree( pabyBuffer );
+    
+        VSIFFlushL(fpLL);
+        VSIFSeekL(fpLL, 0, SEEK_SET);
+    
+        nPamFlags |= GPF_NOSAVE;
+    
+        try
         {
-            m_oSRS = oJP2Geo.m_oSRS;
-            bGeoTransformValid = TRUE;
-
-            memcpy(adfGeoTransform, oJP2Geo.adfGeoTransform,
-                   sizeof(double) * 6 );
-            nGCPCount = oJP2Geo.nGCPCount;
-            pasGCPList = oJP2Geo.pasGCPList;
-
-            oJP2Geo.pasGCPList = nullptr;
-            oJP2Geo.nGCPCount = 0;
-
-            int iBox;
-
-            for( iBox = 0;
-                 oJP2Geo.papszGMLMetadata
-                     && oJP2Geo.papszGMLMetadata[iBox] != nullptr;
-                 iBox++ )
+            oJP2Geo.ReadBoxes(fpLL);
+            // parse gml first, followed by geojp2 as a fallback
+            if (oJP2Geo.ParseGMLCoverageDesc() || oJP2Geo.ParseJP2GeoTIFF())
             {
-                char *pszName = nullptr;
-                const char *pszXML =
-                    CPLParseNameValue( oJP2Geo.papszGMLMetadata[iBox],
-                                       &pszName );
-                CPLString osDomain;
-                char *apszMDList[2];
-
-                osDomain.Printf( "xml:%s", pszName );
-                apszMDList[0] = (char *) pszXML;
-                apszMDList[1] = nullptr;
-
-                GDALPamDataset::SetMetadata( apszMDList, osDomain );
-                CPLFree( pszName );
+                m_oSRS = oJP2Geo.m_oSRS;
+                bGeoTransformValid = TRUE;
+    
+                memcpy(adfGeoTransform, oJP2Geo.adfGeoTransform,
+                       sizeof(double) * 6 );
+                nGCPCount = oJP2Geo.nGCPCount;
+                pasGCPList = oJP2Geo.pasGCPList;
+    
+                oJP2Geo.pasGCPList = nullptr;
+                oJP2Geo.nGCPCount = 0;
+    
+                int iBox;
+    
+                for( iBox = 0;
+                     oJP2Geo.papszGMLMetadata
+                         && oJP2Geo.papszGMLMetadata[iBox] != nullptr;
+                     iBox++ )
+                {
+                    char *pszName = nullptr;
+                    const char *pszXML =
+                        CPLParseNameValue( oJP2Geo.papszGMLMetadata[iBox],
+                                           &pszName );
+                    CPLString osDomain;
+                    char *apszMDList[2];
+    
+                    osDomain.Printf( "xml:%s", pszName );
+                    apszMDList[0] = (char *) pszXML;
+                    apszMDList[1] = nullptr;
+    
+                    GDALPamDataset::SetMetadata( apszMDList, osDomain );
+                    CPLFree( pszName );
+                }
+            }
+            else
+            {
+                // treat as Cartesian, no geo metadata
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Parsed metadata boxes from jpip stream, geographic metadata not found - is the server using placeholders for this data?" );
             }
         }
-        else
+        catch(...)
         {
-            // treat as Cartesian, no geo metadata
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "Parsed metadata boxes from jpip stream, geographic metadata not found - is the server using placeholders for this data?" );
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Unable to parse geographic metadata boxes from jpip stream" );
         }
+    
+        VSIFCloseL(fpLL);
+        VSIUnlink( osFileBoxName.c_str());
     }
-    catch(...)
+    else
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Unable to parse geographic metadata boxes from jpip stream" );
+	    // treat as Cartesian, no geo metadata
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Parsed metadata boxes from jpip stream, geographic metadata not found - is the server using placeholders for this data?" );
     }
-
-    VSIFCloseL(fpLL);
-    VSIUnlink( osFileBoxName.c_str());
 
     bNeedReinitialize = FALSE;
 
