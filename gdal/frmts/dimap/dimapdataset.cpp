@@ -1602,15 +1602,19 @@ int DIMAPDataset::ReadImageInformation2()
                                 else
                                 {
                                     nBandIndex =
-                                        atoi(&psTag->psChild->pszValue[1]) + 1;
-                                    if( nBandIndex <= 0 ||
-                                    nBandIndex > poImageDS->GetRasterCount() )
+                                        atoi(&psTag->psChild->pszValue[1]);
+                                    if( nBandIndex < 0 ||
+                                        nBandIndex >= poImageDS->GetRasterCount() )
                                     {
                                         CPLError(
                                             CE_Warning, CPLE_AppDefined,
                                             "Bad BAND_INDEX value : %s",
                                             psTag->psChild->pszValue);
                                         nBandIndex = 0;
+                                    }
+                                    else
+                                    {
+                                        nBandIndex++;
                                     }
                                 }
                             }
