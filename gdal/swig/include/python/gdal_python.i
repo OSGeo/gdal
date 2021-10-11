@@ -2593,4 +2593,12 @@ def EscapeString(*args, **kwargs):
     else:
         return _gdal.wrapper_EscapeString(*args, **kwargs)
 
+
+def ApplyVerticalShiftGrid(*args, **kwargs):
+    """ApplyVerticalShiftGrid(Dataset src_ds, Dataset grid_ds, bool inverse=False, double srcUnitToMeter=1.0, double dstUnitToMeter=1.0, char ** options=None) -> Dataset"""
+
+    from warnings import warn
+    warn('ApplyVerticalShiftGrid() will be removed in GDAL 4.0', DeprecationWarning)
+    return _ApplyVerticalShiftGrid(*args, **kwargs)
+
 %}

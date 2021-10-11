@@ -58,6 +58,10 @@
 using namespace std;
 
 #define CPL_SUPRESS_CPLUSPLUS
+
+// Suppress deprecation warning for GDALApplyVerticalShiftGrid
+#define CPL_WARN_DEPRECATED_GDALApplyVerticalShiftGrid(x)
+
 #include "cpl_port.h"
 #include "cpl_string.h"
 #include "cpl_multiproc.h"

@@ -688,16 +688,36 @@ void CPL_DLL GDALTriangulationFree(GDALTriangulation* psDT);
 void GDALTriangulationTerminate(void);
 /*! @endcond */
 
+/*! @cond Doxygen_Suppress */
+#ifndef CPL_WARN_DEPRECATED_GDALOpenVerticalShiftGrid
+#define CPL_WARN_DEPRECATED_GDALOpenVerticalShiftGrid CPL_WARN_DEPRECATED
+#endif
+/*! @endcond */
+
 GDALDatasetH CPL_DLL GDALOpenVerticalShiftGrid(
                                         const char* pszProj4Geoidgrids,
-                                        int* pbError );
+                                        int* pbError )
+/*! @cond Doxygen_Suppress */
+    CPL_WARN_DEPRECATED_GDALOpenVerticalShiftGrid("GDALOpenVerticalShiftGrid() will be removed in GDAL 4.0")
+/*! @endcond */
+    ;
+
+/*! @cond Doxygen_Suppress */
+#ifndef CPL_WARN_DEPRECATED_GDALApplyVerticalShiftGrid
+#define CPL_WARN_DEPRECATED_GDALApplyVerticalShiftGrid CPL_WARN_DEPRECATED
+#endif
+/*! @endcond */
 
 GDALDatasetH CPL_DLL GDALApplyVerticalShiftGrid( GDALDatasetH hSrcDataset,
                                          GDALDatasetH hGridDataset,
                                          int bInverse,
                                          double dfSrcUnitToMeter,
                                          double dfDstUnitToMeter,
-                                         const char* const* papszOptions );
+                                         const char* const* papszOptions )
+/*! @cond Doxygen_Suppress */
+    CPL_WARN_DEPRECATED_GDALApplyVerticalShiftGrid("GDALApplyVerticalShiftGrid() will be removed in GDAL 4.0")
+/*! @endcond */
+    ;
 
 CPL_C_END
 

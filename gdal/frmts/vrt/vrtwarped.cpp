@@ -36,6 +36,10 @@
 #include <string.h>
 #include <algorithm>
 
+// Suppress deprecation warning for GDALOpenVerticalShiftGrid and GDALApplyVerticalShiftGrid
+#define CPL_WARN_DEPRECATED_GDALOpenVerticalShiftGrid(x)
+#define CPL_WARN_DEPRECATED_GDALApplyVerticalShiftGrid(x)
+
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_minixml.h"
@@ -1292,6 +1296,11 @@ CPLErr VRTWarpedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPathIn )
         {
             continue;
         }
+
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "The VerticalShiftGrids in a warped VRT is now deprecated, "
+                 "and will no longer be handled in GDAL 4.0");
+
         const char* pszVGrids = CPLGetXMLValue(psIter, "Grids", nullptr);
         if( pszVGrids )
         {
