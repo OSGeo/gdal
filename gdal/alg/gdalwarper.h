@@ -426,6 +426,10 @@ public:
 /*! @cond Doxygen_Suppress */
     /** Per-thread data. Internally set */
     void                *psThreadData;
+
+    bool                bApplyVerticalShift = false;
+
+    double              dfMultFactorVerticalShit = 1.0;
 /*! @endcond */
 
                        GDALWarpKernel();

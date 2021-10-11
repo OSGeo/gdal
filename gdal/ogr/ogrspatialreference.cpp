@@ -10003,17 +10003,21 @@ int OSRGetAxesCount( OGRSpatialReferenceH hSRS )
  * @param pszTargetKey the coordinate system part to query ("PROJCS" or "GEOGCS").
  * @param iAxis the axis to query (0 for first, 1 for second, 2 for third).
  * @param peOrientation location into which to place the fetch orientation, may be NULL.
+ * @param pdfConvUnit (GDAL >= 3.4) Location into which to place axis conversion factor. May be NULL. Only set if pszTargetKey == NULL
  *
  * @return the name of the axis or NULL on failure.
  */
 
 const char *
 OGRSpatialReference::GetAxis( const char *pszTargetKey, int iAxis,
-                              OGRAxisOrientation *peOrientation ) const
+                              OGRAxisOrientation *peOrientation,
+                              double *pdfConvUnit) const
 
 {
     if( peOrientation != nullptr )
         *peOrientation = OAO_Other;
+    if( pdfConvUnit != nullptr )
+        *pdfConvUnit = 0;
 
     d->refreshProjObj();
     if( d->m_pj_crs == nullptr )
@@ -10087,9 +10091,16 @@ OGRSpatialReference::GetAxis( const char *pszTargetKey, int iAxis,
         {
             const char* pszName = nullptr;
             const char* pszOrientation = nullptr;
+            double dfConvFactor = 0.0;
             proj_cs_get_axis_info(
                 ctxt, cs, iAxisModified, &pszName, nullptr, &pszOrientation,
-                nullptr, nullptr, nullptr, nullptr);
+                &dfConvFactor, nullptr, nullptr, nullptr);
+
+            if( pdfConvUnit != nullptr )
+            {
+                *pdfConvUnit = dfConvFactor;
+            }
+
             if( pszName && pszOrientation )
             {
                 d->m_osAxisName[iAxis] = pszName;

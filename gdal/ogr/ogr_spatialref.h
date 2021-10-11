@@ -256,7 +256,8 @@ class CPL_DLL OGRSpatialReference
     int         EPSGTreatsAsNorthingEasting() const;
     int         GetAxesCount() const;
     const char *GetAxis( const char *pszTargetKey, int iAxis,
-                         OGRAxisOrientation *peOrientation ) const;
+                         OGRAxisOrientation *peOrientation,
+                         double* pdfConvFactor = nullptr ) const;
     OGRErr      SetAxes( const char *pszTargetKey,
                          const char *pszXAxisName,
                          OGRAxisOrientation eXAxisOrientation,

@@ -44,6 +44,10 @@
 #include <limits>
 #include <vector>
 
+// Suppress deprecation warning for GDALOpenVerticalShiftGrid and GDALApplyVerticalShiftGrid
+#define CPL_WARN_DEPRECATED_GDALOpenVerticalShiftGrid(x)
+#define CPL_WARN_DEPRECATED_GDALApplyVerticalShiftGrid(x)
+
 #include "commonutils.h"
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -59,8 +63,13 @@
 #include "ogr_geometry.h"
 #include "ogr_spatialref.h"
 #include "ogr_srs_api.h"
+#include "ogr_proj_p.h"
 #include "vrtdataset.h"
 #include "../frmts/gtiff/cogdriver.h"
+
+#if PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 3
+#define USE_PROJ_BASED_VERTICAL_SHIFT_METHOD
+#endif
 
 CPL_CVSID("$Id$")
 
@@ -211,8 +220,11 @@ struct GDALWarpAppOptions
     /*! overview level of source files to be used */
     int nOvLevel;
 
-    /*! Whether to disable vertical grid shift adjustment */
-    bool bNoVShiftGrid;
+    /*! Whether to enable vertical shift adjustment */
+    bool bVShift;
+
+    /*! Whether to disable vertical shift adjustment */
+    bool bNoVShift;
 };
 
 static CPLErr
@@ -543,18 +555,106 @@ GDALWarpAppOptions* GDALWarpAppOptionsClone(const GDALWarpAppOptions *psOptionsI
     return psOptions;
 }
 
+#ifdef USE_PROJ_BASED_VERTICAL_SHIFT_METHOD
+
 /************************************************************************/
-/*                           Is3DGeogcs()                               */
+/*                      ApplyVerticalShift()                            */
 /************************************************************************/
 
-static bool Is3DGeogcs( const OGRSpatialReference& oSRS )
+static bool ApplyVerticalShift( GDALDatasetH hWrkSrcDS,
+                                const GDALWarpAppOptions* psOptions,
+                                GDALWarpOptions *psWO )
 {
-    const char* pszName = oSRS.GetAuthorityName(nullptr);
-    const char* pszCode = oSRS.GetAuthorityCode(nullptr);
-    // Yep, we only support that EPSG:4979, ie WGS 84 3D
-    return pszName != nullptr && EQUAL(pszName, "EPSG") &&
-           pszCode != nullptr && EQUAL(pszCode, "4979");
+    bool bApplyVShift = false;
+
+    if( psOptions->bVShift )
+    {
+        bApplyVShift = true;
+        psWO->papszWarpOptions = CSLSetNameValue(psWO->papszWarpOptions,
+                                                 "APPLY_VERTICAL_SHIFT",
+                                                 "YES");
+    }
+
+    // Check if we must do vertical shift grid transform
+    OGRSpatialReference oSRSSrc;
+    OGRSpatialReference oSRSDst;
+    const char* pszSrcWKT = CSLFetchNameValue(psOptions->papszTO, "SRC_SRS");
+    if( pszSrcWKT )
+        oSRSSrc.SetFromUserInput( pszSrcWKT );
+    else
+    {
+        auto hSRS = GDALGetSpatialRef(hWrkSrcDS);
+        if( hSRS )
+            oSRSSrc = *(OGRSpatialReference::FromHandle(hSRS));
+    }
+
+    const char* pszDstWKT = CSLFetchNameValue( psOptions->papszTO, "DST_SRS" );
+    if( pszDstWKT )
+        oSRSDst.SetFromUserInput( pszDstWKT );
+
+    const bool bSrcHasVertAxis =
+        oSRSSrc.IsCompound() ||
+        ((oSRSSrc.IsProjected() || oSRSSrc.IsGeographic()) && oSRSSrc.GetAxesCount() == 3);
+
+    const bool bDstHasVertAxis =
+        oSRSDst.IsCompound() ||
+        ((oSRSDst.IsProjected() || oSRSDst.IsGeographic()) && oSRSDst.GetAxesCount() == 3);
+
+    if( (GDALGetRasterCount(hWrkSrcDS) == 1 || psOptions->bVShift) &&
+        (bSrcHasVertAxis || bDstHasVertAxis) )
+    {
+        bApplyVShift = true;
+        psWO->papszWarpOptions = CSLSetNameValue(psWO->papszWarpOptions,
+                                                 "APPLY_VERTICAL_SHIFT",
+                                                 "YES");
+
+        if( CSLFetchNameValue(psWO->papszWarpOptions,
+                              "MULT_FACTOR_VERTICAL_SHIFT") == nullptr )
+        {
+            // Select how to go from input dataset units to meters
+            const char* pszUnit =
+                GDALGetRasterUnitType( GDALGetRasterBand(hWrkSrcDS, 1) );
+            double dfToMeterSrc = 1.0;
+            if( pszUnit && (EQUAL(pszUnit, "m") ||
+                            EQUAL(pszUnit, "meter")||
+                            EQUAL(pszUnit, "metre")) )
+            {
+            }
+            else if( pszUnit && (EQUAL(pszUnit, "ft") ||
+                                 EQUAL(pszUnit, "foot")) )
+            {
+                dfToMeterSrc = CPLAtof(SRS_UL_FOOT_CONV);
+            }
+            else
+            {
+                if( pszUnit && !EQUAL(pszUnit, "") )
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Unknown units=%s", pszUnit);
+                }
+
+                if( bSrcHasVertAxis )
+                    oSRSSrc.GetAxis(nullptr, 2, nullptr, &dfToMeterSrc);
+            }
+
+            double dfToMeterDst = 1.0;
+            if( bDstHasVertAxis )
+                oSRSDst.GetAxis(nullptr, 2, nullptr, &dfToMeterDst);
+
+            if( dfToMeterSrc > 0 && dfToMeterDst > 0 )
+            {
+                const double dfMultFactorVerticalShit = dfToMeterSrc / dfToMeterDst;
+                psWO->papszWarpOptions = CSLSetNameValue(
+                    psWO->papszWarpOptions, "MULT_FACTOR_VERTICAL_SHIFT",
+                    CPLSPrintf("%.18g", dfMultFactorVerticalShit));
+            }
+        }
+    }
+
+    return bApplyVShift;
 }
+
+#else
 
 /************************************************************************/
 /*                      ApplyVerticalShiftGrid()                        */
@@ -588,8 +688,8 @@ static GDALDatasetH ApplyVerticalShiftGrid( GDALDatasetH hWrkSrcDS,
         GDALGetGeoTransform(hWrkSrcDS, adfGT) == CE_None &&
         !oSRSSrc.IsEmpty() && !oSRSDst.IsEmpty() )
     {
-        if( (oSRSSrc.IsCompound() || Is3DGeogcs(oSRSSrc)) ||
-            (oSRSDst.IsCompound() || Is3DGeogcs(oSRSDst)) )
+        if( (oSRSSrc.IsCompound() || (oSRSSrc.IsGeographic() && oSRSSrc.GetAxesCount() == 3)) ||
+            (oSRSDst.IsCompound() || (oSRSDst.IsGeographic() && oSRSDst.GetAxesCount() == 3)) )
         {
             const char *pszSrcProj4Geoids =
                 oSRSSrc.GetExtension( "VERT_DATUM", "PROJ4_GRIDS" );
@@ -702,13 +802,13 @@ static GDALDatasetH ApplyVerticalShiftGrid( GDALDatasetH hWrkSrcDS,
                     {
                         if( hVRTDS )
                         {
-                            VRTWarpedDataset* poVRTDS =
-                                reinterpret_cast<VRTWarpedDataset*>(hVRTDS);
-                            poVRTDS->SetApplyVerticalShiftGrid(
-                                pszSrcProj4Geoids,
-                                false,
-                                dfToMeterSrc, 1.0, papszOptions );
+                            CPLError(CE_Failure, CPLE_NotSupported,
+                                     "Warping to VRT with vertical transformation not supported with PROJ < 6.3");
+                            bErrorOccurredOut = true;
+                            CSLDestroy(papszOptions);
+                            return hWrkSrcDS;
                         }
+
                         CPLDebug("GDALWARP", "Adjusting source dataset "
                                  "with source vertical datum using %s",
                                  pszSrcProj4Geoids);
@@ -749,13 +849,13 @@ static GDALDatasetH ApplyVerticalShiftGrid( GDALDatasetH hWrkSrcDS,
                     {
                         if( hVRTDS )
                         {
-                            VRTWarpedDataset* poVRTDS =
-                                reinterpret_cast<VRTWarpedDataset*>(hVRTDS);
-                            poVRTDS->SetApplyVerticalShiftGrid(
-                                pszDstProj4Geoids,
-                                true,
-                                dfToMeterSrc, dfToMeterDst, papszOptions );
+                            CPLError(CE_Failure, CPLE_NotSupported,
+                                     "Warping to VRT with vertical transformation not supported with PROJ < 6.3");
+                            bErrorOccurredOut = true;
+                            CSLDestroy(papszOptions);
+                            return hWrkSrcDS;
                         }
+
                         CPLDebug("GDALWARP", "Adjusting source dataset "
                                  "with target vertical datum using %s",
                                  pszDstProj4Geoids);
@@ -770,6 +870,8 @@ static GDALDatasetH ApplyVerticalShiftGrid( GDALDatasetH hWrkSrcDS,
     }
     return hWrkSrcDS;
 }
+
+#endif
 
 /************************************************************************/
 /*                        CanUseBuildVRT()                              */
@@ -2094,8 +2196,16 @@ GDALDatasetH GDALWarpDirect( const char *pszDest, GDALDatasetH hDstDS,
     bool bVRT = false;
     OGRGeometryH hCutline = nullptr;
 
+#if defined(USE_PROJ_BASED_VERTICAL_SHIFT_METHOD)
+    if( psOptions->bNoVShift )
+    {
+        psOptions->papszTO = CSLSetNameValue(psOptions->papszTO,
+                                             "STRIP_VERT_CS", "YES");
+    }
+#else
     psOptions->papszTO = CSLSetNameValue(psOptions->papszTO,
                                          "STRIP_VERT_CS", "YES");
+#endif
 
     if( !CheckOptions(pszDest, hDstDS, nSrcCount, pahSrcDS,
                       psOptions, bVRT, pbUsageError) )
@@ -2429,7 +2539,8 @@ GDALDatasetH GDALWarpDirect( const char *pszDest, GDALDatasetH hDstDS,
         GDALDatasetH hWrkSrcDS =
             poSrcOvrDS ? static_cast<GDALDatasetH>(poSrcOvrDS) : hSrcDS;
 
-        if( !psOptions->bNoVShiftGrid )
+#if !defined(USE_PROJ_BASED_VERTICAL_SHIFT_METHOD)
+        if( !psOptions->bNoVShift)
         {
             bool bErrorOccurred = false;
             hWrkSrcDS = ApplyVerticalShiftGrid( hWrkSrcDS,
@@ -2445,6 +2556,7 @@ GDALDatasetH GDALWarpDirect( const char *pszDest, GDALDatasetH hDstDS,
                 return nullptr;
             }
         }
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Clear temporary INIT_DEST settings after the first image.       */
@@ -2473,6 +2585,7 @@ GDALDatasetH GDALWarpDirect( const char *pszDest, GDALDatasetH hDstDS,
 
         psWO->papszWarpOptions = CSLDuplicate(psOptions->papszWarpOptions);
         psWO->eWorkingDataType = psOptions->eWorkingType;
+
         psWO->eResampleAlg = psOptions->eResampleAlg;
 
         psWO->hSrcDS = hWrkSrcDS;
@@ -2572,11 +2685,23 @@ GDALDatasetH GDALWarpDirect( const char *pszDest, GDALDatasetH hDstDS,
                 GDALCreateGenImgProjTransformer2( hWrkSrcDS, hDstDS, psOptions->papszTO );
         }
 
+        bool bUseApproxTransformer = psOptions->dfErrorThreshold != 0.0;
+#ifdef USE_PROJ_BASED_VERTICAL_SHIFT_METHOD
+        if( !psOptions->bNoVShift )
+        {
+            // Can modify both psWO->papszWarpOptions
+            if( ApplyVerticalShift( hWrkSrcDS, psOptions, psWO ) )
+            {
+                bUseApproxTransformer = false;
+            }
+        }
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      Warp the transformer with a linear approximator unless the      */
 /*      acceptable error is zero.                                       */
 /* -------------------------------------------------------------------- */
-        if( psOptions->dfErrorThreshold != 0.0 )
+        if( bUseApproxTransformer )
         {
             hTransformArg =
                 GDALCreateApproxTransformer( GDALGenImgProjTransform,
@@ -4170,7 +4295,7 @@ GDALWarpAppOptions *GDALWarpAppOptionsNew(char** papszArgv,
     psOptions->pszMDConflictValue = CPLStrdup("*");
     psOptions->bSetColorInterpretation = false;
     psOptions->nOvLevel = -2;
-    psOptions->bNoVShiftGrid = false;
+    psOptions->bNoVShift = false;
 
 /* -------------------------------------------------------------------- */
 /*      Parse arguments.                                                */
@@ -4536,9 +4661,16 @@ GDALWarpAppOptions *GDALWarpAppOptionsNew(char** papszArgv,
                 return nullptr;
             }
         }
-        else if( EQUAL(papszArgv[i],"-novshiftgrid") )
+
+        else if( EQUAL(papszArgv[i],"-vshift") )
         {
-            psOptions->bNoVShiftGrid = true;
+            psOptions->bVShift = true;
+        }
+
+        else if( EQUAL(papszArgv[i],"-novshiftgrid") ||
+                 EQUAL(papszArgv[i],"-novshift") )
+        {
+            psOptions->bNoVShift = true;
         }
 
         else if( EQUAL(papszArgv[i], "-if") && i+1 < argc )
