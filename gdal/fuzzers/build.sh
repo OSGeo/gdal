@@ -135,14 +135,7 @@ cmake . -DBUILD_SHARED_LIBS:BOOL=OFF \
         -DCURL_INCLUDE_DIR:PATH="$SRC/install/include" \
         -DCURL_LIBRARY_RELEASE:FILEPATH="$SRC/install/lib/libcurl.a" \
         -DCMAKE_INSTALL_PREFIX=$SRC/install \
-        -DBUILD_CCT:BOOL=OFF \
-        -DBUILD_CS2CS:BOOL=OFF \
-        -DBUILD_GEOD:BOOL=OFF \
-        -DBUILD_GIE:BOOL=OFF \
-        -DBUILD_GMOCK:BOOL=OFF \
-        -DBUILD_PROJ:BOOL=OFF \
-        -DBUILD_PROJINFO:BOOL=OFF \
-        -DBUILD_PROJSYNC:BOOL=OFF \
+        -DBUILD_APPS:BOOL=OFF \
         -DBUILD_TESTING:BOOL=OFF
 
 make clean -s
