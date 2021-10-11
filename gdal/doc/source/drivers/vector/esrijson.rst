@@ -55,13 +55,14 @@ Open options
 ------------
 
 -  **FEATURE_SERVER_PAGING** = YES/NO: Whether to automatically scroll
-   through results with a ArcGIS Feature Service endpoint.
+   through results with a ArcGIS Feature Service endpoint. Has only effect
+   for ArcGIS servers >= 10.3 and layers with supportsPagination=true capability.
 
 Example
 -------
 
 Read the result of a FeatureService request against a GeoServices REST
-server:
+server (note that this server does not support paging):
 
 ::
 
