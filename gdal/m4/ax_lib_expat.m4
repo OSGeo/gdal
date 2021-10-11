@@ -2,11 +2,11 @@ dnl $Id$
 dnl
 dnl @synopsis AX_LIB_EXPAT([MINIMUM-VERSION])
 dnl
-dnl This macro provides tests of availability of Expat XML Parser 
+dnl This macro provides tests of availability of Expat XML Parser
 dnl of particular version or newer.
-dnl This macro checks for Expat XML Parser headers and libraries 
+dnl This macro checks for Expat XML Parser headers and libraries
 dnl and defines compilation flags
-dnl 
+dnl
 dnl Macro supports following options and their values:
 dnl 1) Single-option usage:
 dnl --with-expat - yes, no or path to Expat XML Parser installation prefix
@@ -37,12 +37,12 @@ dnl
 AC_DEFUN([AX_LIB_EXPAT],
 [
     AC_ARG_WITH([expat],
-        AC_HELP_STRING([--with-expat=@<:@ARG@:>@],
+        AS_HELP_STRING([--with-expat=@<:@ARG@:>@],
             [use Expat XML Parser from given prefix (ARG=path); check standard prefixes (ARG=yes); disable (ARG=no)]
         ),
         [
         if test "$withval" = "yes"; then
-            if test -f /usr/local/include/expat.h ; then 
+            if test -f /usr/local/include/expat.h ; then
                 expat_prefix=/usr/local
             elif test -f /usr/include/expat.h ; then
                 expat_prefix=/usr
@@ -60,26 +60,26 @@ AC_DEFUN([AX_LIB_EXPAT],
         ],
         [
         dnl Default behavior is implicit yes
-        if test -f /usr/local/include/expat.h ; then 
+        if test -f /usr/local/include/expat.h ; then
             expat_prefix=/usr/local
         elif test -f /usr/include/expat.h ; then
             expat_prefix=/usr
         else
-            expat_prefix="" 
+            expat_prefix=""
         fi
 
         ]
     )
 
     AC_ARG_WITH([expat-inc],
-        AC_HELP_STRING([--with-expat-inc=@<:@DIR@:>@],
+        AS_HELP_STRING([--with-expat-inc=@<:@DIR@:>@],
             [path to Expat XML Parser headers]
         ),
         [expat_include_dir="$withval"],
         [expat_include_dir=""]
     )
     AC_ARG_WITH([expat-lib],
-        AC_HELP_STRING([--with-expat-lib=@<:@ARG@:>@],
+        AS_HELP_STRING([--with-expat-lib=@<:@ARG@:>@],
             [link options for Expat XML Parser libraries]
         ),
         [expat_lib_flags="$withval"],
@@ -92,7 +92,7 @@ AC_DEFUN([AX_LIB_EXPAT],
 
     dnl
     dnl Collect include/lib paths and flags
-    dnl 
+    dnl
     run_expat_test="no"
 
     if test -n "$expat_prefix"; then
@@ -137,7 +137,7 @@ AC_DEFUN([AX_LIB_EXPAT],
 
         saved_CPPFLAGS="$CPPFLAGS"
         CPPFLAGS="$CPPFLAGS -I$expat_include_dir"
-        
+
         dnl
         dnl Check Expat headers
         dnl
@@ -175,7 +175,7 @@ AC_DEFUN([AX_LIB_EXPAT],
             AC_SUBST([EXPAT_LDFLAGS])
 
             HAVE_EXPAT="yes"
-        else 
+        else
             HAVE_EXPAT="no"
         fi
 
@@ -187,7 +187,7 @@ AC_DEFUN([AX_LIB_EXPAT],
         if test "$HAVE_EXPAT" = "yes"; then
 
             expat_version_req=ifelse([$1], [], [], [$1])
-            
+
             if test  -n "$expat_version_req"; then
 
                 AC_MSG_CHECKING([if Expat XML Parser version is >= $expat_version_req])
@@ -211,7 +211,7 @@ AC_DEFUN([AX_LIB_EXPAT],
                     if test "x$expat_version_req_revision" = "x"; then
                         expat_version_req_revision="0"
                     fi
-                    
+
                     expat_version_req_number=`expr $expat_version_req_major \* 10000 \
                                                \+ $expat_version_req_minor \* 100 \
                                                \+ $expat_version_req_revision`
