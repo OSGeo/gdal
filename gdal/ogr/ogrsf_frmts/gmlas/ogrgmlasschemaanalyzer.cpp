@@ -41,6 +41,8 @@ static XSModel* getGrammarPool(XMLGrammarPool* pool)
 #include "ogr_gmlas.h"
 #include "ogr_pgdump.h"
 
+#include <list>
+
 CPL_CVSID("$Id$")
 
 static OGRwkbGeometryType GetOGRGeometryType( XSTypeDefinition* poTypeDef );
@@ -382,82 +384,153 @@ bool GMLASSchemaAnalyzer::LaunderFieldNames( GMLASFeatureClass& oClass )
     // Duplicates can happen if a class has both an element and an attribute
     // with same name, and/or attributes/elements with same name in different
     // namespaces.
-    bool bHasDoneSomeRenaming = false;
-    do
+
+    // Detect duplicated field names
+    std::map<CPLString, std::list<int> > oMapNameToFieldIndex;
+    for(int i=0; i< static_cast<int>(aoFields.size());i++)
     {
-        bHasDoneSomeRenaming = false;
-
-        // Detect duplicated field names
-        std::map<CPLString, std::vector<int> > oSetNames;
-        for(int i=0; i< static_cast<int>(aoFields.size());i++)
+        if( aoFields[i].GetCategory() == GMLASField::REGULAR )
         {
-            if( aoFields[i].GetCategory() == GMLASField::REGULAR )
-            {
-                oSetNames[ aoFields[i].GetName() ].push_back(i ) ;
-            }
+            oMapNameToFieldIndex[ aoFields[i].GetName() ].push_back(i);
         }
+    }
 
-        // Iterate over the unique names
-        for( const auto& oIter: oSetNames )
+    std::set<CPLString> oSetDuplicates;
+    for( const auto& oIter: oMapNameToFieldIndex )
+    {
+        // Has it duplicates ?
+        const size_t nOccurrences = oIter.second.size();
+        if( nOccurrences > 1 )
         {
-            // Has it duplicates ?
-            const size_t nOccurrences = oIter.second.size();
-            if( nOccurrences > 1 )
+            oSetDuplicates.insert(oIter.first);
+        }
+    }
+
+    while( !oSetDuplicates.empty() )
+    {
+        // Iterate over the unique names
+        auto oIterSet = oSetDuplicates.begin();
+        while( oIterSet != oSetDuplicates.end() )
+        {
+            auto oIterSetNext = oIterSet;
+            ++oIterSetNext;
+
+            auto oIterMap = oMapNameToFieldIndex.find(*oIterSet);
+            CPLAssert( oIterMap != oMapNameToFieldIndex.end() );
+            auto& list = oIterMap->second;
+
+            const CPLString oClassNS =
+                    GetNSOfLastXPathComponent(oClass.GetXPath());
+            bool bHasDoneRenamingForThatCase = false;
+
+            auto oIterList = list.begin();
+
+            // Update oMapNameToFieldIndex and oSetDuplicates with the
+            // new field name, and removing the old one.
+            const auto updateSetAndMapWithNewName = [
+                &oIterList, &list, &oMapNameToFieldIndex, &oSetDuplicates]
+                (int nFieldIdx, const std::string& osNewName)
             {
-                const CPLString oClassNS =
-                        GetNSOfLastXPathComponent(oClass.GetXPath());
-                bool bHasDoneRenamingForThatCase = false;
+                list.erase(oIterList);
+                auto& newList = oMapNameToFieldIndex[osNewName];
+                newList.push_back(nFieldIdx);
+                if( newList.size() > 1 )
+                    oSetDuplicates.insert(osNewName);
+            };
 
-                for(size_t i=0; i<nOccurrences;i++)
+            while( oIterList != list.end() )
+            {
+                auto oIterListNext = oIterList;
+                ++oIterListNext;
+
+                const int nFieldIdx = *oIterList;
+                GMLASField& oField = aoFields[nFieldIdx];
+                // CPLDebug("GMLAS", "%s", oField.GetXPath().c_str() );
+                const CPLString oNS(
+                            GetNSOfLastXPathComponent(oField.GetXPath()));
+                // If the field has a namespace that is not the one of its
+                // class, then prefix its name with its namespace
+                if( !oNS.empty() && oNS != oClassNS &&
+                    !STARTS_WITH(oField.GetName(), (oNS + "_").c_str() ) )
                 {
-                    GMLASField& oField = aoFields[oIter.second[i]];
-                    // CPLDebug("GMLAS", "%s", oField.GetXPath().c_str() );
-                    const CPLString oNS(
-                                GetNSOfLastXPathComponent(oField.GetXPath()));
-                    // If the field has a namespace that is not the one of its
-                    // class, then prefix its name with its namespace
-                    if( !oNS.empty() && oNS != oClassNS &&
-                        !STARTS_WITH(oField.GetName(), (oNS + "_").c_str() ) )
-                    {
-                        bHasDoneSomeRenaming = true;
-                        bHasDoneRenamingForThatCase = true;
-                        oField.SetName( oNS + "_" + oField.GetName() );
-                        break;
-                    }
-                    // If it is an attribute without a particular namespace,
-                    // then suffix with _attr
-                    else if( oNS.empty() &&
-                             oField.GetXPath().find('@') != std::string::npos &&
-                             oField.GetName().find("_attr") == std::string::npos )
-                    {
-                        bHasDoneSomeRenaming = true;
-                        bHasDoneRenamingForThatCase = true;
-                        oField.SetName( oField.GetName() + "_attr" );
-                        break;
-                    }
+                    bHasDoneRenamingForThatCase = true;
+                    const auto osNewName = oNS + "_" + oField.GetName();
+                    oField.SetName(osNewName);
+                    updateSetAndMapWithNewName(nFieldIdx, osNewName);
+                    break;
+                }
+                // If it is an attribute without a particular namespace,
+                // then suffix with _attr
+                else if( oNS.empty() &&
+                         oField.GetXPath().find('@') != std::string::npos &&
+                         oField.GetName().find("_attr") == std::string::npos )
+                {
+                    bHasDoneRenamingForThatCase = true;
+                    const auto osNewName = oField.GetName() + "_attr";
+                    oField.SetName(osNewName);
+                    updateSetAndMapWithNewName(nFieldIdx, osNewName);
+                    break;
                 }
 
-                // If none of the above renaming strategies have worked, then
-                // append a counter to the duplicates.
-                if( !bHasDoneRenamingForThatCase )
+                oIterList = oIterListNext;
+            }
+
+            // If none of the above renaming strategies have worked, then
+            // append a counter to the duplicates.
+            if( !bHasDoneRenamingForThatCase )
+            {
+                int i = 0;
+                oIterList = list.begin();
+                while( oIterList != list.end() )
                 {
-                    for(size_t i=0; i<nOccurrences;i++)
+                    auto oIterListNext = oIterList;
+                    ++oIterListNext;
+
+                    const int nFieldIdx = *oIterList;
+                    GMLASField& oField = aoFields[nFieldIdx];
+                    if( i > 0 )
                     {
-                        GMLASField& oField = aoFields[oIter.second[i]];
-                        if( i > 0 )
-                        {
-                            bHasDoneSomeRenaming = true;
-                            oField.SetName( oField.GetName() +
-                                CPLSPrintf("%d", static_cast<int>(i)+1) );
-                        }
+                        const auto osNewName = oField.GetName() +
+                                    CPLSPrintf("%d", static_cast<int>(i)+1);
+                        oField.SetName(osNewName);
+                        updateSetAndMapWithNewName(nFieldIdx, osNewName);
                     }
+
+                    ++i;
+                    oIterList = oIterListNext;
                 }
+            }
+
+            // Update oSetDuplicates and oMapNameToFieldIndex if we have
+            // no longer duplicates for the current name
+            if( list.size() <= 1 )
+            {
+                if( list.empty() )
+                {
+                    oMapNameToFieldIndex.erase(oIterMap);
+                }
+                oSetDuplicates.erase(oIterSet);
+            }
+
+            oIterSet = oIterSetNext;
+        }
+    }
+
+#ifdef DEBUG
+    {
+        // Check that the above algorithm managed to deduplicate names
+        std::set<CPLString> oSetNames;
+        for( const auto& oField: aoFields )
+        {
+            if( oField.GetCategory() == GMLASField::REGULAR )
+            {
+                const auto& osName = oField.GetName();
+                CPLAssert( oSetNames.find(osName) == oSetNames.end() );
+                oSetNames.insert(osName);
             }
         }
     }
-    // As renaming could have created new duplicates (hopefully not!), loop
-    // until no renaming has been done.
-    while( bHasDoneSomeRenaming );
+#endif
 
     // Now check if we must truncate names
     if( m_nIdentifierMaxLength >= MIN_VALUE_OF_MAX_IDENTIFIER_LENGTH )
