@@ -130,6 +130,7 @@ void OGRAVCE00Layer::ResetReading()
         AVCE00ReadGotoSectionE00(psTableRead, psTableSection, 0);
     }
 
+    m_bEOF = false;
     bNeedReset = false;
     nNextFID = 1;
 }
@@ -245,6 +246,9 @@ OGRFeature *OGRAVCE00Layer::GetFeature( GIntBig nFID )
 OGRFeature *OGRAVCE00Layer::GetNextFeature()
 
 {
+    if ( m_bEOF )
+        return nullptr;
+
     if( bNeedReset )
         ResetReading();
 
@@ -268,7 +272,7 @@ OGRFeature *OGRAVCE00Layer::GetNextFeature()
     }
 
     if( poFeature == nullptr )
-        ResetReading();
+        m_bEOF = true;
 
     return poFeature;
 }
