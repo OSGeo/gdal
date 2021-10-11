@@ -48,6 +48,8 @@ class OGRAVCLayer CPL_NON_FINAL: public OGRLayer
 
     AVCFileType         eSectionType;
 
+    bool                m_bEOF = false;
+
     int                 SetupFeatureDefinition( const char *pszName );
     bool                AppendTableDefinition( AVCTableDef *psTableDef );
 
