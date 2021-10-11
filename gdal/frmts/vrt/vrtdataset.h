@@ -319,16 +319,6 @@ class CPL_DLL VRTWarpedDataset final: public VRTDataset
 
     void              CreateImplicitOverviews();
 
-    struct VerticalShiftGrid
-    {
-        CPLString osVGrids{};
-        int       bInverse = false;
-        double    dfToMeterSrc = 0.0;
-        double    dfToMeterDest = 0.0;
-        CPLStringList aosOptions{};
-    };
-    std::vector<VerticalShiftGrid> m_aoVerticalShiftGrids{};
-
     friend class VRTWarpedRasterBand;
 
     CPL_DISALLOW_COPY_ASSIGN(VRTWarpedDataset)
@@ -361,12 +351,6 @@ public:
     CPLErr            ProcessBlock( int iBlockX, int iBlockY );
 
     void              GetBlockSize( int *, int * ) const;
-
-    void              SetApplyVerticalShiftGrid(const char* pszVGrids,
-                                             int bInverse,
-                                             double dfToMeterSrc,
-                                             double dfToMeterDest,
-                                             char** papszOptions );
 };
 
 /************************************************************************/

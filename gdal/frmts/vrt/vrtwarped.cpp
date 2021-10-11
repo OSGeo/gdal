@@ -792,26 +792,6 @@ char** VRTWarpedDataset::GetFileList()
 }
 
 /************************************************************************/
-/*                      SetApplyVerticalShiftGrid()                     */
-/************************************************************************/
-
-void  VRTWarpedDataset::SetApplyVerticalShiftGrid(const char* pszVGrids,
-                                               int bInverse,
-                                               double dfToMeterSrc,
-                                               double dfToMeterDest,
-                                               char** papszOptions )
-{
-    VerticalShiftGrid oVertShiftGrid;
-    oVertShiftGrid.osVGrids = pszVGrids;
-    oVertShiftGrid.bInverse = bInverse;
-    oVertShiftGrid.dfToMeterSrc = dfToMeterSrc;
-    oVertShiftGrid.dfToMeterDest = dfToMeterDest;
-    oVertShiftGrid.aosOptions.Assign(papszOptions,FALSE);
-    m_aoVerticalShiftGrids.push_back(oVertShiftGrid);
-}
-
-
-/************************************************************************/
 /* ==================================================================== */
 /*                    VRTWarpedOverviewTransformer                      */
 /* ==================================================================== */
@@ -1338,9 +1318,7 @@ CPLErr VRTWarpedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPathIn )
                                                    pszValue);
                 }
             }
-            SetApplyVerticalShiftGrid(pszVGrids, bInverse,
-                                      dfToMeterSrc, dfToMeterDest,
-                                      papszOptions );
+
             int bError = FALSE;
             GDALDatasetH hGridDataset =
                 GDALOpenVerticalShiftGrid(pszVGrids, &bError);
@@ -1528,44 +1506,6 @@ CPLXMLNode *VRTWarpedDataset::SerializeToXML( const char *pszVRTPathIn )
         else
             CPLCreateXMLElementAndValue(
                 psTree, "SrcOvrLevel", CPLSPrintf("%d", m_nSrcOvrLevel) );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Serialize vertical shift grids.                                 */
-/* -------------------------------------------------------------------- */
-    for(size_t i = 0; i < m_aoVerticalShiftGrids.size(); ++i )
-    {
-        CPLXMLNode* psVertShiftGridNode =
-            CPLCreateXMLNode( psTree, CXT_Element, "VerticalShiftGrids" );
-        CPLCreateXMLElementAndValue(psVertShiftGridNode,
-                                    "Grids",
-                                    m_aoVerticalShiftGrids[i].osVGrids);
-        CPLCreateXMLElementAndValue(psVertShiftGridNode,
-                "Inverse",
-                m_aoVerticalShiftGrids[i].bInverse ? "TRUE" : "FALSE");
-        CPLCreateXMLElementAndValue(psVertShiftGridNode,
-                "ToMeterSrc",
-                CPLSPrintf("%.18g", m_aoVerticalShiftGrids[i].dfToMeterSrc));
-        CPLCreateXMLElementAndValue(psVertShiftGridNode,
-                "ToMeterDest",
-                CPLSPrintf("%.18g", m_aoVerticalShiftGrids[i].dfToMeterDest));
-        for( int j=0; j < m_aoVerticalShiftGrids[i].aosOptions.size(); ++j )
-        {
-            char* pszKey = nullptr;
-            const char* pszValue = CPLParseNameValue(
-                m_aoVerticalShiftGrids[i].aosOptions[j], &pszKey);
-            if( pszKey && pszValue )
-            {
-                CPLXMLNode* psOption = CPLCreateXMLElementAndValue(
-                    psVertShiftGridNode,
-                    "Option",
-                    pszValue);
-                CPLCreateXMLNode(
-                    CPLCreateXMLNode( psOption, CXT_Attribute, "name" ),
-                    CXT_Text, pszKey );
-            }
-            CPLFree(pszKey);
-        }
     }
 
 /* ==================================================================== */
