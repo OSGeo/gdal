@@ -4,9 +4,10 @@ on:
     push:
         paths-ignore:
             - 'gdal/doc/**'
-    pull_request:
-        paths-ignore:
-            - 'gdal/doc/**'
+    # Disabled because of https://github.com/OSGeo/gdal/issues/4599
+    #pull_request:
+    #    paths-ignore:
+    #        - 'gdal/doc/**'
 
 
 jobs:
