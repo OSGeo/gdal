@@ -759,7 +759,7 @@ int JPIPKAKDataset::Initialize(const char* pszDatasetName, int bReinitializing )
 
     bool bSubtarget = false;
     if(osURL.ifind("?subtarget=") == std::string::npos && osURL.ifind("&subtarget=") == std::string::npos)
-	bSubtarget = true;
+	    bSubtarget = true;
 
     GDALJP2Metadata oJP2Geo;
     int nLen = poCache->get_databin_length(KDU_META_DATABIN, nCodestream, 0);
@@ -782,12 +782,12 @@ int JPIPKAKDataset::Initialize(const char* pszDatasetName, int bReinitializing )
         poCache->read(pabyBuffer, nLen);
         VSIFWriteL(pabyBuffer, nLen, 1, fpLL);
         CPLFree( pabyBuffer );
-    
+
         VSIFFlushL(fpLL);
         VSIFSeekL(fpLL, 0, SEEK_SET);
-    
+
         nPamFlags |= GPF_NOSAVE;
-    
+
         try
         {
             oJP2Geo.ReadBoxes(fpLL);
@@ -796,17 +796,17 @@ int JPIPKAKDataset::Initialize(const char* pszDatasetName, int bReinitializing )
             {
                 m_oSRS = oJP2Geo.m_oSRS;
                 bGeoTransformValid = TRUE;
-    
+
                 memcpy(adfGeoTransform, oJP2Geo.adfGeoTransform,
                        sizeof(double) * 6 );
                 nGCPCount = oJP2Geo.nGCPCount;
                 pasGCPList = oJP2Geo.pasGCPList;
-    
+
                 oJP2Geo.pasGCPList = nullptr;
                 oJP2Geo.nGCPCount = 0;
-    
+
                 int iBox;
-    
+
                 for( iBox = 0;
                      oJP2Geo.papszGMLMetadata
                          && oJP2Geo.papszGMLMetadata[iBox] != nullptr;
@@ -818,11 +818,11 @@ int JPIPKAKDataset::Initialize(const char* pszDatasetName, int bReinitializing )
                                            &pszName );
                     CPLString osDomain;
                     char *apszMDList[2];
-    
+
                     osDomain.Printf( "xml:%s", pszName );
                     apszMDList[0] = (char *) pszXML;
                     apszMDList[1] = nullptr;
-    
+
                     GDALPamDataset::SetMetadata( apszMDList, osDomain );
                     CPLFree( pszName );
                 }
@@ -839,7 +839,7 @@ int JPIPKAKDataset::Initialize(const char* pszDatasetName, int bReinitializing )
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Unable to parse geographic metadata boxes from jpip stream" );
         }
-    
+
         VSIFCloseL(fpLL);
         VSIUnlink( osFileBoxName.c_str());
     }
