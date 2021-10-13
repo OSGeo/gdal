@@ -1,0 +1,2 @@
+add_gdal_driver(TARGET gdal_SRTMHGT SOURCES srtmhgtdataset.cpp)
+gdal_standard_includes(gdal_SRTMHGT)

@@ -1,0 +1,12 @@
+[pytest]
+python_files = *.py
+testpaths = ogr gcore gdrivers osr alg gnm utilities pyscripts
+norecursedirs = ogr/data
+log_file = @AUTOTEST_LOG_FILE@
+log_file_level = INFO
+env =
+  @TEST_ENV@
+
+markers =
+    require_driver: Skip test(s) if driver isn't present
+    require_run_on_demand: Skip test(s) if RUN_ON_DEMAND environment variable is not set

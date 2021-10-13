@@ -1,0 +1,11 @@
+add_gdal_driver(TARGET gdal_JPEGLS SOURCES jpegls_header.h jpeglsdataset.cpp)
+gdal_standard_includes(gdal_JPEGLS)
+gdal_target_link_libraries(TARGET gdal_JPEGLS LIBRARIES CharLS::CharLS)
+
+if (CharLS_VERSION STREQUAL 1)
+  target_compile_definitions(gdal_JPEGLS PRIVATE -DCHARLS_INTERFACE_H)
+elseif (CharLS_VERSION STREQUAL 2.1)
+  target_compile_definitions(gdal_JPEGLS PRIVATE -DCHARLS_2_1)
+else ()
+  target_compile_definitions(gdal_JPEGLS PRIVATE -DCHARLS_2)
+endif ()
