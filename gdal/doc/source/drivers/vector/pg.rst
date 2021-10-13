@@ -43,13 +43,13 @@ Connecting to a database
    ::
 
       PG:"dbname='databasename' host='addr' port='5432' user='x' password='y'"
-      
-   In this syntax each parameter setting is in the form keyword = value. 
-   Spaces around the equal sign are optional. To write an empty value, or a 
-   value containing spaces, surround it with single quotes, e.g., 
-   keyword = 'a value'. Single quotes and backslashes within the value must 
+
+   In this syntax each parameter setting is in the form keyword = value.
+   Spaces around the equal sign are optional. To write an empty value, or a
+   value containing spaces, surround it with single quotes, e.g.,
+   keyword = 'a value'. Single quotes and backslashes within the value must
    be escaped with a backslash, i.e., \' and \\.
-  
+
 
    Starting with GDAL 3.1 also this syntax is supported:
 
@@ -57,11 +57,18 @@ Connecting to a database
 
       PG:service=servicename
 
+
+   Starting with GDAL 3.4, the URI syntax is also supported
+
+   ::
+
+      postgresql://[user[:password]@][netloc][:port][/dbname][?param1=value1&...]
+
 | It's also possible to omit the database name and connect to a
   *default* database, with the same name as the user name.
 | **Note**: We use PQconnectdb() to make the connection. See details from
   `PostgreSQL libpq documentation <https://www.postgresql.org/docs/12/libpq-connect.html>`__).
-  
+
 
 Geometry columns
 ----------------
