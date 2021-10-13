@@ -2324,7 +2324,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
         // have write capabilities. But do the substitution to get a sensible
         // error message
         if( EQUAL(osOGRCompatFormat, "GMT") ||
-            EQUAL(osOGRCompatFormat, "VRT") |
+            EQUAL(osOGRCompatFormat, "VRT") ||
             EQUAL(osOGRCompatFormat, "SDTS") ||
             EQUAL(osOGRCompatFormat, "PDS") )
         {
