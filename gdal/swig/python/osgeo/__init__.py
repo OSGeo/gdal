@@ -9,7 +9,7 @@ if version_info >= (3, 8, 0) and platform == 'win32':
             if p:
                 try:
                     os.add_dll_directory(p)
-                except FileNotFoundError:
+                except (FileNotFoundError, OSError):
                     continue
 
 
