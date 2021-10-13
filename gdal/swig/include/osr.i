@@ -1554,6 +1554,16 @@ int GetPROJVersionMicro()
     OSRGetPROJVersion(NULL, NULL, &num);
     return num;
 }
+
+bool GetPROJEnableNetwork()
+{
+    return OSRGetPROJEnableNetwork();
+}
+
+void SetPROJEnableNetwork(bool enabled)
+{
+    OSRSetPROJEnableNetwork(enabled);
+}
 %}
 
 %inline %{

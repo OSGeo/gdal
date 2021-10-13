@@ -1931,3 +1931,21 @@ def test_osr_basic_export_derived_projected_crs_to_wkt():
     assert wkt == srs.ExportToWkt(['FORMAT=WKT2'])
     assert wkt.startswith('DERIVEDPROJCRS')
     assert gdal.GetLastErrorMsg() == ''
+
+
+###############################################################################
+# Test osr.GetPROJEnableNetwork / osr.SetPROJEnableNetwork
+
+
+def test_osr_basic_proj_network():
+
+    if osr.GetPROJVersionMajor() < 7:
+        pytest.skip('requires PROJ 7 or later')
+    initial_value = osr.GetPROJEnableNetwork()
+    try:
+        new_val = not initial_value
+        osr.SetPROJEnableNetwork(new_val)
+        assert osr.GetPROJEnableNetwork() == new_val
+    finally:
+        osr.SetPROJEnableNetwork(initial_value)
+
