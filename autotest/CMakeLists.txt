@@ -48,7 +48,11 @@ if (Python_FOUND)
         RESULT res
         COPY_ON_ERROR SYMBOLIC)
     else ()
-      file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/${tgt} ${CMAKE_CURRENT_BINARY_DIR}/${tgt})
+      if (NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
+          execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/${tgt} ${CMAKE_CURRENT_BINARY_DIR}/${tgt})
+      else ()
+          file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/${tgt} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+      endif ()
     endif ()
     add_custom_target(
       autotest_${tgt}
