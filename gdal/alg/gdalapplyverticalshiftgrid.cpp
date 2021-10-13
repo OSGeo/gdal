@@ -284,13 +284,13 @@ CPLErr GDALApplyVSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 else if( poGDS->m_bInverse )
                 {
                     m_pafSrcData[iY * nBlockXSize + iX] = static_cast<float>(
-                        (fSrcVal * poGDS->m_dfSrcUnitToMeter - fGridVal) / 
+                        (fSrcVal * poGDS->m_dfSrcUnitToMeter - fGridVal) /
                                                 poGDS->m_dfDstUnitToMeter);
                 }
                 else
                 {
                     m_pafSrcData[iY * nBlockXSize + iX] = static_cast<float>(
-                        (fSrcVal * poGDS->m_dfSrcUnitToMeter + fGridVal) / 
+                        (fSrcVal * poGDS->m_dfSrcUnitToMeter + fGridVal) /
                                                 poGDS->m_dfDstUnitToMeter);
                 }
             }
@@ -310,14 +310,14 @@ CPLErr GDALApplyVSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 /** Apply a vertical shift grid to a source (DEM typically) dataset.
- * 
+ *
  * hGridDataset will typically use WGS84 as horizontal datum (but this is
  * not a requirement) and its values are the values to add to go from geoid
  * elevations to WGS84 ellipsoidal heights.
- * 
+ *
  * hGridDataset will be on-the-fly reprojected and resampled to the projection
  * and resolution of hSrcDataset, using bilinear resampling by default.
- * 
+ *
  * Both hSrcDataset and hGridDataset must be single band datasets, and have
  * a valid geotransform and projection.
  *
@@ -329,7 +329,7 @@ CPLErr GDALApplyVSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
  * owner of them.
  *
  * Valid use cases:
- * 
+ *
  * \code
  * hSrcDataset = GDALOpen(...)
  * hGridDataset = GDALOpen(...)
@@ -338,7 +338,7 @@ CPLErr GDALApplyVSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
  * GDALReleaseDataset(hGridDataset);
  * if( hDstDataset )
  * {
- *     // Do things with hDstDataset 
+ *     // Do things with hDstDataset
  *     GDALClose(hDstDataset) // will close hSrcDataset and hGridDataset
  * }
  * \endcode
@@ -370,6 +370,8 @@ CPLErr GDALApplyVSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
  * hGridDataset, or NULL. If not NULL, it must be closed with GDALClose().
  *
  * @since GDAL 2.2
+ * @deprecated GDAL 3.4. Will be removed in GDAL 4.0. This function was used
+ *             by gdalwarp initially, but is no longer needed.
  */
 GDALDatasetH GDALApplyVerticalShiftGrid( GDALDatasetH hSrcDataset,
                                          GDALDatasetH hGridDataset,
@@ -517,7 +519,7 @@ GDALDatasetH GDALApplyVerticalShiftGrid( GDALDatasetH hSrcDataset,
     const bool bErrorOnMissingShift = CPLFetchBool( papszOptions,
                                               "ERROR_ON_MISSING_VERT_SHIFT",
                                               false );
-    psWO->padfDstNoDataReal[0] = 
+    psWO->padfDstNoDataReal[0] =
         (bErrorOnMissingShift) ? -std::numeric_limits<float>::infinity() : 0.0;
     psWO->papszWarpOptions = CSLSetNameValue(psWO->papszWarpOptions,
                                                  "INIT_DEST",
@@ -611,6 +613,8 @@ static CPLString GetProj4Filename(const char* pszFilename)
  * @return a dataset. If not NULL, it must be closed with GDALClose().
  *
  * @since GDAL 2.2
+ * @deprecated GDAL 3.4. Will be removed in GDAL 4.0. This function was used
+ *             by gdalwarp initially, but is no longer needed.
  */
 GDALDatasetH GDALOpenVerticalShiftGrid( const char* pszProj4Geoidgrids,
                                         int* pbError )

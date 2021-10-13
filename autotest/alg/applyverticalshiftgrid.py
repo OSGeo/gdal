@@ -289,17 +289,17 @@ def test_applyverticalshiftgrid_5():
 def test_applyverticalshiftgrid_6():
 
     grid_ds = gdal.GetDriverByName('GTX').Create(
-        '/vsimem/applyverticalshiftgrid_6.gtx', 1440, 721, 1, gdal.GDT_Float32)
+        'tmp/applyverticalshiftgrid_6.gtx', 1440, 721, 1, gdal.GDT_Float32)
     grid_ds.SetGeoTransform([-180.125, 0.25, 0, 90.125, 0, -0.25])
     grid_ds.GetRasterBand(1).Fill(10)
     grid_ds = None
 
     ds = gdal.Warp('', '../gcore/data/byte.tif', format='MEM',
-                   dstSRS='+proj=utm +zone=11 +datum=NAD27 +geoidgrids=/vsimem/applyverticalshiftgrid_6.gtx +vunits=m +no_defs')
+                   dstSRS='+proj=utm +zone=11 +datum=NAD27 +geoidgrids=./tmp/applyverticalshiftgrid_6.gtx +vunits=m +no_defs')
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 4783
 
-    gdal.Unlink('/vsimem/applyverticalshiftgrid_6.gtx')
+    gdal.Unlink('tmp/applyverticalshiftgrid_6.gtx')
 
 ###############################################################################
 # Simulate USA geoid grids with long origin > 180
@@ -308,17 +308,17 @@ def test_applyverticalshiftgrid_6():
 def test_applyverticalshiftgrid_7():
 
     grid_ds = gdal.GetDriverByName('GTX').Create(
-        '/vsimem/applyverticalshiftgrid_7.gtx', 700, 721, 1, gdal.GDT_Float32)
+        'tmp/applyverticalshiftgrid_7.gtx', 700, 721, 1, gdal.GDT_Float32)
     grid_ds.SetGeoTransform([-150 + 360, 0.25, 0, 90.125, 0, -0.25])
     grid_ds.GetRasterBand(1).Fill(10)
     grid_ds = None
 
     ds = gdal.Warp('', '../gcore/data/byte.tif', format='MEM',
-                   dstSRS='+proj=utm +zone=11 +datum=NAD27 +geoidgrids=/vsimem/applyverticalshiftgrid_7.gtx +vunits=m +no_defs')
+                   dstSRS='+proj=utm +zone=11 +datum=NAD27 +geoidgrids=./tmp/applyverticalshiftgrid_7.gtx +vunits=m +no_defs')
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 4783
 
-    gdal.Unlink('/vsimem/applyverticalshiftgrid_7.gtx')
+    gdal.Unlink('tmp/applyverticalshiftgrid_7.gtx')
 
 
 

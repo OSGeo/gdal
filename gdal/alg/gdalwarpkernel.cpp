@@ -1170,6 +1170,10 @@ CPLErr GDALWarpKernel::PerformWarp()
     nFiltInitX = ((anGWKFilterRadius[eResample] + 1) % 2) - nXRadius;
     nFiltInitY = ((anGWKFilterRadius[eResample] + 1) % 2) - nYRadius;
 
+    bApplyVerticalShift = CPLFetchBool(papszWarpOptions, "APPLY_VERTICAL_SHIFT", false);
+    dfMultFactorVerticalShit = CPLAtof(
+        CSLFetchNameValueDef(papszWarpOptions, "MULT_FACTOR_VERTICAL_SHIFT", "1.0") );
+
 /* -------------------------------------------------------------------- */
 /*      Set up resampling functions.                                    */
 /* -------------------------------------------------------------------- */
@@ -1187,6 +1191,7 @@ CPLErr GDALWarpKernel::PerformWarp()
          || eResample == GRA_Cubic
          || eResample == GRA_CubicSpline
          || eResample == GRA_Lanczos) &&
+        !bApplyVerticalShift &&
         CPLFetchBool( papszWarpOptions, "USE_OPENCL", true ) )
     {
         const CPLErr eResult = GWKOpenCLCase( this );
@@ -4945,6 +4950,14 @@ static void GWKGeneralCaseThread( void* pData)
                 if( dfBandDensity < BAND_DENSITY_THRESHOLD )
                     continue;
 
+                if( poWK->bApplyVerticalShift )
+                {
+                    if( !std::isfinite(padfZ[iDstX]) )
+                        continue;
+                    // Subtract padfZ[] since the coordinate transformation is from target to source
+                    dfValueReal = dfValueReal * poWK->dfMultFactorVerticalShit - padfZ[iDstX];
+                }
+
                 bHasFoundDensity = true;
 
 /* -------------------------------------------------------------------- */
@@ -5205,6 +5218,14 @@ static void GWKRealCaseThread( void* pData)
                 if( dfBandDensity < BAND_DENSITY_THRESHOLD )
                     continue;
 
+                if( poWK->bApplyVerticalShift )
+                {
+                    if( !std::isfinite(padfZ[iDstX]) )
+                        continue;
+                    // Subtract padfZ[] since the coordinate transformation is from target to source
+                    dfValueReal = dfValueReal * poWK->dfMultFactorVerticalShit - padfZ[iDstX];
+                }
+
                 bHasFoundDensity = true;
 
 /* -------------------------------------------------------------------- */
@@ -5374,12 +5395,21 @@ static void GWKResampleNoMasksOrDstDensityOnlyThreadInternal( void* pData )
                                     &value,
                                     padfWeight);
                 }
+
+                if( poWK->bApplyVerticalShift )
+                {
+                    if( !std::isfinite(padfZ[iDstX]) )
+                        continue;
+                    // Subtract padfZ[] since the coordinate transformation is from target to source
+                    value = GWKClampValueT<T>(value * poWK->dfMultFactorVerticalShit - padfZ[iDstX]);
+                }
+
+                if( poWK->pafDstDensity )
+                    poWK->pafDstDensity[iDstOffset] = 1.0f;
+
                 reinterpret_cast<T *>(poWK->papabyDstImage[iBand])[iDstOffset] =
                     value;
             }
-
-            if( poWK->pafDstDensity )
-                poWK->pafDstDensity[iDstOffset] = 1.0f;
         }
 
 /* -------------------------------------------------------------------- */
@@ -5593,6 +5623,16 @@ static void GWKNearestThread( void* pData )
                 if( GWKGetPixelT(poWK, iBand, iSrcOffset,
                                  &dfBandDensity, &value) )
                 {
+
+                    if( poWK->bApplyVerticalShift )
+                    {
+                        if( !std::isfinite(padfZ[iDstX]) )
+                            continue;
+                        // Subtract padfZ[] since the coordinate transformation is from target to source
+                        value = GWKClampValueT<T>(value * poWK->dfMultFactorVerticalShit - padfZ[iDstX]);
+                    }
+
+
                     if( dfBandDensity < 1.0 )
                     {
                         if( dfBandDensity == 0.0 )
@@ -6082,6 +6122,15 @@ static void GWKAverageOrModeThread( void* pData)
                     if( dfTotalWeight > 0 )
                     {
                         dfValueReal = dfTotalReal / dfTotalWeight;
+
+                        if( poWK->bApplyVerticalShift )
+                        {
+                            if( !std::isfinite(padfZ[iDstX]) )
+                                continue;
+                            // Subtract padfZ[] since the coordinate transformation is from target to source
+                            dfValueReal = dfValueReal * poWK->dfMultFactorVerticalShit - padfZ[iDstX];
+                        }
+
                         if (bIsComplex)
                         {
                             dfValueImag = dfTotalImag / dfTotalWeight;
@@ -6129,6 +6178,15 @@ static void GWKAverageOrModeThread( void* pData)
                     if( dfTotalWeight > 0 )
                     {
                         dfValueReal = sqrt( dfTotalReal / dfTotalWeight );
+
+                        if( poWK->bApplyVerticalShift )
+                        {
+                            if( !std::isfinite(padfZ[iDstX]) )
+                                continue;
+                            // Subtract padfZ[] since the coordinate transformation is from target to source
+                            dfValueReal = dfValueReal * poWK->dfMultFactorVerticalShit - padfZ[iDstX];
+                        }
+
                         if (bIsComplex)
                             dfValueImag = sqrt( dfTotalImag / dfTotalWeight );
 
@@ -6176,6 +6234,15 @@ static void GWKAverageOrModeThread( void* pData)
                     if( bFoundValid )
                     {
                         dfValueReal = dfTotalReal;
+
+                        if( poWK->bApplyVerticalShift )
+                        {
+                            if( !std::isfinite(padfZ[iDstX]) )
+                                continue;
+                            // Subtract padfZ[] since the coordinate transformation is from target to source
+                            dfValueReal = dfValueReal * poWK->dfMultFactorVerticalShit - padfZ[iDstX];
+                        }
+
                         if (bIsComplex)
                         {
                             dfValueImag = dfTotalImag;
@@ -6248,6 +6315,15 @@ static void GWKAverageOrModeThread( void* pData)
                         if( iMaxVal != -1 )
                         {
                             dfValueReal = pafRealVals[iMaxVal];
+
+                            if( poWK->bApplyVerticalShift )
+                            {
+                                if( !std::isfinite(padfZ[iDstX]) )
+                                    continue;
+                                // Subtract padfZ[] since the coordinate transformation is from target to source
+                                dfValueReal = dfValueReal * poWK->dfMultFactorVerticalShit - padfZ[iDstX];
+                            }
+
                             dfBandDensity = 1;
                             bHasFoundDensity = true;
                         }
@@ -6294,6 +6370,15 @@ static void GWKAverageOrModeThread( void* pData)
                         if( iMaxInd != -1 )
                         {
                             dfValueReal = iMaxInd;
+
+                            if( poWK->bApplyVerticalShift )
+                            {
+                                if( !std::isfinite(padfZ[iDstX]) )
+                                    continue;
+                                // Subtract padfZ[] since the coordinate transformation is from target to source
+                                dfValueReal = dfValueReal * poWK->dfMultFactorVerticalShit - padfZ[iDstX];
+                            }
+
                             dfBandDensity = 1;
                             bHasFoundDensity = true;
                         }
@@ -6337,6 +6422,15 @@ static void GWKAverageOrModeThread( void* pData)
                     if( bFoundValid )
                     {
                         dfValueReal = dfTotalReal;
+
+                        if( poWK->bApplyVerticalShift )
+                        {
+                            if( !std::isfinite(padfZ[iDstX]) )
+                                continue;
+                            // Subtract padfZ[] since the coordinate transformation is from target to source
+                            dfValueReal = dfValueReal * poWK->dfMultFactorVerticalShit - padfZ[iDstX];
+                        }
+
                         dfBandDensity = 1;
                         bHasFoundDensity = true;
                     }
@@ -6379,6 +6473,15 @@ static void GWKAverageOrModeThread( void* pData)
                     if( bFoundValid )
                     {
                         dfValueReal = dfTotalReal;
+
+                        if( poWK->bApplyVerticalShift )
+                        {
+                            if( !std::isfinite(padfZ[iDstX]) )
+                                continue;
+                            // Subtract padfZ[] since the coordinate transformation is from target to source
+                            dfValueReal = dfValueReal * poWK->dfMultFactorVerticalShit - padfZ[iDstX];
+                        }
+
                         dfBandDensity = 1;
                         bHasFoundDensity = true;
                     }
@@ -6422,6 +6525,14 @@ static void GWKAverageOrModeThread( void* pData)
                         int quantIdx = static_cast<int>(
                             std::ceil(quant * dfRealValuesTmp.size() - 1));
                         dfValueReal = dfRealValuesTmp[quantIdx];
+
+                        if( poWK->bApplyVerticalShift )
+                        {
+                            if( !std::isfinite(padfZ[iDstX]) )
+                                continue;
+                            // Subtract padfZ[] since the coordinate transformation is from target to source
+                            dfValueReal = dfValueReal * poWK->dfMultFactorVerticalShit - padfZ[iDstX];
+                        }
 
                         dfBandDensity = 1;
                         bHasFoundDensity = true;

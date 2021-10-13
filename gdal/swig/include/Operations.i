@@ -807,6 +807,9 @@ public:
 /*                        ApplyVerticalShiftGrid()                      */
 /************************************************************************/
 
+#ifdef SWIGPYTHON
+%rename (_ApplyVerticalShiftGrid) ApplyVerticalShiftGrid;
+#endif
 %newobject ApplyVerticalShiftGrid;
 %apply Pointer NONNULL {GDALDatasetShadow *src_ds, GDALDatasetShadow *grid_ds};
 #ifndef SWIGJAVA

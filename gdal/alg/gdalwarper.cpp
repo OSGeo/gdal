@@ -1549,6 +1549,20 @@ GDALWarpResolveWorkingDataType( GDALWarpOptions *psOptions )
                 true );
         }
     }
+
+    const bool bApplyVerticalShift = CPLFetchBool(
+        psOptions->papszWarpOptions, "APPLY_VERTICAL_SHIFT", false);
+    if( bApplyVerticalShift && GDALDataTypeIsInteger(psOptions->eWorkingDataType) )
+    {
+        const double dfMultFactorVerticalShit = CPLAtof(
+            CSLFetchNameValueDef(psOptions->papszWarpOptions,
+                                 "MULT_FACTOR_VERTICAL_SHIFT", "1.0") );
+        if( dfMultFactorVerticalShit != 1 )
+        {
+            psOptions->eWorkingDataType =
+                GDALDataTypeUnion( psOptions->eWorkingDataType, GDT_Float32 );
+        }
+    }
 }
 
 /************************************************************************/

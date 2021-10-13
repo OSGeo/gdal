@@ -1517,6 +1517,14 @@ def EscapeString(*args, **kwargs):
         return _gdal.wrapper_EscapeString(*args, **kwargs)
 
 
+def ApplyVerticalShiftGrid(*args, **kwargs):
+    """ApplyVerticalShiftGrid(Dataset src_ds, Dataset grid_ds, bool inverse=False, double srcUnitToMeter=1.0, double dstUnitToMeter=1.0, char ** options=None) -> Dataset"""
+
+    from warnings import warn
+    warn('ApplyVerticalShiftGrid() will be removed in GDAL 4.0', DeprecationWarning)
+    return _ApplyVerticalShiftGrid(*args, **kwargs)
+
+
 
 def Debug(*args):
     """Debug(char const * msg_class, char const * message)"""
@@ -4463,9 +4471,9 @@ def Transformer(*args):
     """Transformer(Dataset src, Dataset dst, char ** options) -> GDALTransformerInfoShadow"""
     return _gdal.Transformer(*args)
 
-def ApplyVerticalShiftGrid(*args, **kwargs):
-    """ApplyVerticalShiftGrid(Dataset src_ds, Dataset grid_ds, bool inverse=False, double srcUnitToMeter=1.0, double dstUnitToMeter=1.0, char ** options=None) -> Dataset"""
-    return _gdal.ApplyVerticalShiftGrid(*args, **kwargs)
+def _ApplyVerticalShiftGrid(*args, **kwargs):
+    """_ApplyVerticalShiftGrid(Dataset src_ds, Dataset grid_ds, bool inverse=False, double srcUnitToMeter=1.0, double dstUnitToMeter=1.0, char ** options=None) -> Dataset"""
+    return _gdal._ApplyVerticalShiftGrid(*args, **kwargs)
 
 def ApplyGeoTransform(*args):
     """ApplyGeoTransform(double [6] padfGeoTransform, double dfPixel, double dfLine)"""

@@ -16,7 +16,7 @@ Synopsis
 .. code-block::
 
     gdalwarp [--help-general] [--formats]
-        [-s_srs srs_def] [-t_srs srs_def] [-ct string] [-to "NAME=VALUE"]* [-novshiftgrid]
+        [-s_srs srs_def] [-t_srs srs_def] [-ct string] [-to "NAME=VALUE"]* [-vshift | -novshift]
         [[-s_coord_epoch epoch] | [-t_coord_epoch epoch]]
         [-order n | -tps | -rpc | -geoloc] [-et err_threshold]
         [-refine_gcps tolerance [minimum_gcps]]
@@ -96,13 +96,22 @@ with control information.
 
     Set a transformer option suitable to pass to :cpp:func:`GDALCreateGenImgProjTransformer2`.
 
-.. option:: -novshiftgrid
+.. option:: -vshift
 
-    Disable the use of vertical
-    datum shift grids when one of the source or target SRS has an explicit vertical
-    datum, and the input dataset is a single band dataset.
+    Force the use of vertical shift. This option is generally not necessary,
+    except when using an explicit coordinate transformation (:option:`-ct`),
+    and not specifying an explict source and target SRS.
 
-    .. versionadded:: 2.2
+    .. versionadded:: 3.4
+
+.. option:: -novshift
+
+    Disable the use of vertical shift when one of the source or target SRS has
+    an explicit vertical datum, and the input dataset is a single band dataset.
+
+    .. note:: this option was named ``-novshiftgrid`` in GDAL 2.2 to 3.3.
+
+    .. versionadded:: 3.4
 
 .. option:: -order <n>
 
@@ -368,10 +377,6 @@ layer containing the cutline features has no explicit SRS, the cutline
 features must be in the SRS of the destination file. When writing to a
 not yet existing target dataset, its extent will be the one of the
 original raster unless -te or -crop_to_cutline are specified.
-
-When doing vertical shift adjustments, the transformer option -to ERROR_ON_MISSING_VERT_SHIFT=YES
-can be used to error out as soon as a vertical shift value is missing (instead of
-0 being used).
 
 Starting with GDAL 3.1, it is possible to use as output format a driver that
 only supports the CreateCopy operation. This may internally imply creation of

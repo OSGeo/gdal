@@ -3191,6 +3191,10 @@ namespace swig {
 using namespace std;
 
 #define CPL_SUPRESS_CPLUSPLUS
+
+// Suppress deprecation warning for GDALApplyVerticalShiftGrid
+#define CPL_WARN_DEPRECATED_GDALApplyVerticalShiftGrid(x)
+
 #include "cpl_port.h"
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
@@ -38822,7 +38826,7 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_ApplyVerticalShiftGrid(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+SWIGINTERN PyObject *_wrap__ApplyVerticalShiftGrid(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
   GDALDatasetShadow *arg2 = (GDALDatasetShadow *) 0 ;
@@ -38851,35 +38855,35 @@ SWIGINTERN PyObject *_wrap_ApplyVerticalShiftGrid(PyObject *SWIGUNUSEDPARM(self)
   };
   GDALDatasetShadow *result = 0 ;
   
-  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OO|OOOO:ApplyVerticalShiftGrid",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5)) SWIG_fail;
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OO|OOOO:_ApplyVerticalShiftGrid",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ApplyVerticalShiftGrid" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "_ApplyVerticalShiftGrid" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
   }
   arg1 = reinterpret_cast< GDALDatasetShadow * >(argp1);
   res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "ApplyVerticalShiftGrid" "', argument " "2"" of type '" "GDALDatasetShadow *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "_ApplyVerticalShiftGrid" "', argument " "2"" of type '" "GDALDatasetShadow *""'"); 
   }
   arg2 = reinterpret_cast< GDALDatasetShadow * >(argp2);
   if (obj2) {
     ecode3 = SWIG_AsVal_bool(obj2, &val3);
     if (!SWIG_IsOK(ecode3)) {
-      SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "ApplyVerticalShiftGrid" "', argument " "3"" of type '" "bool""'");
+      SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "_ApplyVerticalShiftGrid" "', argument " "3"" of type '" "bool""'");
     } 
     arg3 = static_cast< bool >(val3);
   }
   if (obj3) {
     ecode4 = SWIG_AsVal_double(obj3, &val4);
     if (!SWIG_IsOK(ecode4)) {
-      SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "ApplyVerticalShiftGrid" "', argument " "4"" of type '" "double""'");
+      SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "_ApplyVerticalShiftGrid" "', argument " "4"" of type '" "double""'");
     } 
     arg4 = static_cast< double >(val4);
   }
   if (obj4) {
     ecode5 = SWIG_AsVal_double(obj4, &val5);
     if (!SWIG_IsOK(ecode5)) {
-      SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "ApplyVerticalShiftGrid" "', argument " "5"" of type '" "double""'");
+      SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "_ApplyVerticalShiftGrid" "', argument " "5"" of type '" "double""'");
     } 
     arg5 = static_cast< double >(val5);
   }
@@ -44443,7 +44447,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"GDALTransformerInfoShadow_TransformGeolocations", (PyCFunction) _wrap_GDALTransformerInfoShadow_TransformGeolocations, METH_VARARGS | METH_KEYWORDS, (char *)"GDALTransformerInfoShadow_TransformGeolocations(GDALTransformerInfoShadow self, Band xBand, Band yBand, Band zBand, GDALProgressFunc callback=0, void * callback_data=None, char ** options=None) -> int"},
 	 { (char *)"GDALTransformerInfoShadow_swigregister", GDALTransformerInfoShadow_swigregister, METH_VARARGS, NULL},
 	 { (char *)"Transformer", _wrap_Transformer, METH_VARARGS, (char *)"Transformer(Dataset src, Dataset dst, char ** options) -> GDALTransformerInfoShadow"},
-	 { (char *)"ApplyVerticalShiftGrid", (PyCFunction) _wrap_ApplyVerticalShiftGrid, METH_VARARGS | METH_KEYWORDS, (char *)"ApplyVerticalShiftGrid(Dataset src_ds, Dataset grid_ds, bool inverse=False, double srcUnitToMeter=1.0, double dstUnitToMeter=1.0, char ** options=None) -> Dataset"},
+	 { (char *)"_ApplyVerticalShiftGrid", (PyCFunction) _wrap__ApplyVerticalShiftGrid, METH_VARARGS | METH_KEYWORDS, (char *)"_ApplyVerticalShiftGrid(Dataset src_ds, Dataset grid_ds, bool inverse=False, double srcUnitToMeter=1.0, double dstUnitToMeter=1.0, char ** options=None) -> Dataset"},
 	 { (char *)"ApplyGeoTransform", _wrap_ApplyGeoTransform, METH_VARARGS, (char *)"ApplyGeoTransform(double [6] padfGeoTransform, double dfPixel, double dfLine)"},
 	 { (char *)"InvGeoTransform", _wrap_InvGeoTransform, METH_VARARGS, (char *)"InvGeoTransform(double [6] gt_in) -> RETURN_NONE"},
 	 { (char *)"VersionInfo", _wrap_VersionInfo, METH_VARARGS, (char *)"VersionInfo(char const * request) -> char const *"},
