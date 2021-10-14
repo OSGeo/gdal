@@ -439,7 +439,7 @@ CPLErr MRFDataset::PatchOverview(int BlockX,int BlockY, int Width,int Height,
 
             // Mark input data as no longer needed, saves RAM
             for (int band=0; band < bands; band++)
-                src_b[band]->FlushCache();
+                src_b[band]->FlushCache(false);
         }
     }
 
@@ -447,7 +447,7 @@ CPLErr MRFDataset::PatchOverview(int BlockX,int BlockY, int Width,int Height,
         return status; // Report problems
 
     for (int band=0; band<bands; band++)
-        dst_b[band]->FlushCache(); // Commit destination to disk after each overview
+        dst_b[band]->FlushCache(false); // Commit destination to disk after each overview
 
     if (!recursive)
         return CE_None;

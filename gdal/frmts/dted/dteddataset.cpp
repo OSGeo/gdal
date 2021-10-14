@@ -257,7 +257,7 @@ DTEDDataset::DTEDDataset() :
 DTEDDataset::~DTEDDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
     CPLFree(pszFilename);
     CPLFree( pszProjection );
     if( psDTED != nullptr )

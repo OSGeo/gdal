@@ -829,7 +829,7 @@ PCIDSK2Dataset::PCIDSK2Dataset() :
 #endif
 PCIDSK2Dataset::~PCIDSK2Dataset()
 {
-    PCIDSK2Dataset::FlushCache();
+    PCIDSK2Dataset::FlushCache(true);
 
     while( !apoLayers.empty() )
     {
@@ -1037,10 +1037,10 @@ void PCIDSK2Dataset::ProcessRPC()
 /*                             FlushCache()                             */
 /************************************************************************/
 
-void PCIDSK2Dataset::FlushCache()
+void PCIDSK2Dataset::FlushCache(bool bAtClosing)
 
 {
-    GDALPamDataset::FlushCache();
+    GDALPamDataset::FlushCache(bAtClosing);
 
     if( poFile )
     {

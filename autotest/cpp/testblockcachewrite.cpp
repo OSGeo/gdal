@@ -73,7 +73,7 @@ class MyDataset: public GDALDataset
 
         ~MyDataset()
         {
-            FlushCache();
+            FlushCache(true);
         }
 };
 
@@ -133,7 +133,7 @@ static void test2()
     auto poDS = GetGDALDriverManager()->GetDriverByName("GTiff")->Create("/vsimem/foo.tif", 1, 1, 2, GDT_Byte, nullptr);
     poDS->GetRasterBand(1)->Fill(0);
     poDS->GetRasterBand(2)->Fill(0);
-    poDS->FlushCache();
+    poDS->FlushCache(false);
     GDALSetCacheMax(0);
 
     poDS->GetRasterBand(1)->Fill(1);

@@ -154,7 +154,7 @@ MRFDataset::~MRFDataset() {   // Make sure everything gets written
             CPLError(CE_Failure, CPLE_FileIO, "Error creating files");
         }
 
-    MRFDataset::FlushCache();
+    MRFDataset::FlushCache(true);
     MRFDataset::CloseDependentDatasets();
 
     if (ifp.FP)

@@ -40,7 +40,7 @@ GNMDatabaseNetwork::GNMDatabaseNetwork() : GNMGenericNetwork()
 
 GNMDatabaseNetwork::~GNMDatabaseNetwork()
 {
-    FlushCache();
+    FlushCache(true);
 
     GDALClose(m_poDS);
 }

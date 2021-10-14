@@ -165,10 +165,10 @@ GDALPamDataset::~GDALPamDataset()
 /*                             FlushCache()                             */
 /************************************************************************/
 
-void GDALPamDataset::FlushCache()
+void GDALPamDataset::FlushCache(bool bAtClosing)
 
 {
-    GDALDataset::FlushCache();
+    GDALDataset::FlushCache(bAtClosing);
     if( nPamFlags & GPF_DIRTY )
         TrySaveXML();
 }

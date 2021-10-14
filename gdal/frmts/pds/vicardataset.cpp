@@ -1137,7 +1137,7 @@ VICARDataset::~VICARDataset()
 {
     if( !m_bIsLabelWritten )
         WriteLabel();
-    VICARDataset::FlushCache();
+    VICARDataset::FlushCache(true);
     PatchLabel();
     if( fpImage != nullptr )
         VSIFCloseL( fpImage );
@@ -3257,7 +3257,7 @@ GDALDataset* VICARDataset::CreateCopy( const char *pszFilename,
     poDS->m_bInitToNodata = false;
     CPLErr eErr = GDALDatasetCopyWholeRaster( poSrcDS, poDS,
                                            nullptr, pfnProgress, pProgressData );
-    poDS->FlushCache();
+    poDS->FlushCache(false);
     if( eErr != CE_None )
     {
         delete poDS;

@@ -163,7 +163,7 @@ class HDF4ImageDataset final: public HDF4Dataset
     static GDALDataset  *Create( const char * pszFilename,
                                  int nXSize, int nYSize, int nBands,
                                  GDALDataType eType, char ** papszParamList );
-    virtual void        FlushCache( void ) override;
+    virtual void        FlushCache( bool bAtClosing ) override;
     CPLErr              GetGeoTransform( double * padfTransform ) override;
     virtual CPLErr      SetGeoTransform( double * ) override;
     const char          *_GetProjectionRef() override;
@@ -827,7 +827,7 @@ HDF4ImageDataset::~HDF4ImageDataset()
 {
     CPLMutexHolderD(&hHDF4Mutex);
 
-    HDF4ImageDataset::FlushCache();
+    HDF4ImageDataset::FlushCache(true);
 
     CPLFree( pszFilename );
     if( iSDS != FAIL )
@@ -972,12 +972,12 @@ const GDAL_GCP *HDF4ImageDataset::GetGCPs()
 /*                             FlushCache()                             */
 /************************************************************************/
 
-void HDF4ImageDataset::FlushCache()
+void HDF4ImageDataset::FlushCache(bool bAtClosing)
 
 {
     CPLMutexHolderD(&hHDF4Mutex);
 
-    GDALDataset::FlushCache();
+    GDALDataset::FlushCache(bAtClosing);
 
     if( eAccess == GA_ReadOnly )
         return;

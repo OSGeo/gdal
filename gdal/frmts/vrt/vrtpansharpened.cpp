@@ -153,7 +153,7 @@ VRTPansharpenedDataset::VRTPansharpenedDataset( int nXSize, int nYSize ) :
 VRTPansharpenedDataset::~VRTPansharpenedDataset()
 
 {
-    VRTPansharpenedDataset::FlushCache();
+    VRTPansharpenedDataset::FlushCache(true);
     VRTPansharpenedDataset::CloseDependentDatasets();
     CPLFree(m_pabyLastBufferBandRasterIO);
 }
@@ -1418,7 +1418,7 @@ VRTPansharpenedRasterBand::VRTPansharpenedRasterBand( GDALDataset *poDSIn, int n
 VRTPansharpenedRasterBand::~VRTPansharpenedRasterBand()
 
 {
-    FlushCache();
+    FlushCache(true);
 }
 
 /************************************************************************/

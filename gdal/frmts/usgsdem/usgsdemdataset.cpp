@@ -566,7 +566,7 @@ USGSDEMDataset::USGSDEMDataset() :
 USGSDEMDataset::~USGSDEMDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
 
     CPLFree( pszProjection );
     if( fp != nullptr )

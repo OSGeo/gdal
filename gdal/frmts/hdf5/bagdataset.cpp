@@ -1895,7 +1895,7 @@ BAGDataset::~BAGDataset()
         }
     }
 
-    FlushCache();
+    FlushCache(true);
 
     m_apoOverviewDS.clear();
     if( !m_bIsChild )

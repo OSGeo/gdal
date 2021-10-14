@@ -791,7 +791,7 @@ public:
     OGRErr              CreateExtensionsTableIfNecessary();
     // cppcheck-suppress functionStatic
     int                 HasExtensionsTable();
-    virtual void        FlushCache() override;
+    virtual void        FlushCache(bool bAtClosing) override;
     static GDALDataset* CreateCopy( const char *pszFilename,
                                     GDALDataset *poSrcDS,
                                     int bStrict,
@@ -898,7 +898,7 @@ public:
                                        void* pData) override;
     virtual CPLErr          IWriteBlock(int nBlockXOff, int nBlockYOff,
                                         void* pData) override;
-    virtual CPLErr          FlushCache() override;
+    virtual CPLErr          FlushCache(bool bAtClosing) override;
 
     virtual GDALColorTable* GetColorTable() override;
     virtual CPLErr          SetColorTable(GDALColorTable* poCT) override;

@@ -606,7 +606,7 @@ L1BDataset::L1BDataset( L1BFileFormat eL1BFormatIn ) :
 L1BDataset::~L1BDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
 
     if( nGCPCount > 0 )
     {

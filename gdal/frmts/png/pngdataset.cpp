@@ -295,7 +295,7 @@ PNGDataset::PNGDataset() :
 PNGDataset::~PNGDataset()
 
 {
-    PNGDataset::FlushCache();
+    PNGDataset::FlushCache(true);
 
     if( hPNG != nullptr )
         png_destroy_read_struct( &hPNG, &psPNGInfo, nullptr );
@@ -448,10 +448,10 @@ CPLErr PNGDataset::GetGeoTransform( double * padfTransform )
 /*      cache if need be.                                               */
 /************************************************************************/
 
-void PNGDataset::FlushCache()
+void PNGDataset::FlushCache(bool bAtClosing)
 
 {
-    GDALPamDataset::FlushCache();
+    GDALPamDataset::FlushCache(bAtClosing);
 
     if( pabyBuffer != nullptr )
     {
@@ -473,7 +473,7 @@ static void PNGDatasetDisableCRCCheck( png_structp hPNG )
     hPNG->flags |= PNG_FLAG_CRC_CRITICAL_IGNORE;
 
     hPNG->flags &= ~PNG_FLAG_CRC_ANCILLARY_MASK;
-    hPNG->flags |= PNG_FLAG_CRC_ANCILLARY_NOWARN; 
+    hPNG->flags |= PNG_FLAG_CRC_ANCILLARY_NOWARN;
 }
 #endif
 

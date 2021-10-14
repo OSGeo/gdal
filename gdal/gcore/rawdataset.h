@@ -183,7 +183,7 @@ public:
     char **GetCategoryNames() override;
     CPLErr SetCategoryNames( char ** ) override;
 
-    CPLErr FlushCache() override;
+    CPLErr FlushCache(bool bAtClosing) override;
 
     CPLVirtualMem *GetVirtualMemAuto( GDALRWFlag eRWFlag,
                                       int *pnPixelSpace,

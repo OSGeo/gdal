@@ -1906,12 +1906,12 @@ int VRTSourcedRasterBand::CloseDependentDatasets()
 /*                               FlushCache()                           */
 /************************************************************************/
 
-CPLErr VRTSourcedRasterBand::FlushCache()
+CPLErr VRTSourcedRasterBand::FlushCache(bool bAtClosing)
 {
-    CPLErr eErr = VRTRasterBand::FlushCache();
+    CPLErr eErr = VRTRasterBand::FlushCache(bAtClosing);
     for( int i = 0; i < nSources && eErr == CE_None; i++ )
     {
-        eErr = papoSources[i]->FlushCache();
+        eErr = papoSources[i]->FlushCache(bAtClosing);
     }
     return eErr;
 }

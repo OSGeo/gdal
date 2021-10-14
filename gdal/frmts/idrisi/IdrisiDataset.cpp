@@ -627,7 +627,7 @@ IdrisiDataset::IdrisiDataset() :
 
 IdrisiDataset::~IdrisiDataset()
 {
-    FlushCache();
+    FlushCache(true);
 
     if( papszRDC != nullptr && eAccess == GA_Update  )
     {
@@ -1314,7 +1314,7 @@ GDALDataset *IdrisiDataset::CreateCopy( const char *pszFilename,
     //      Finalize
     // --------------------------------------------------------------------
 
-    poDS->FlushCache();
+    poDS->FlushCache(false);
 
     return poDS;
 }
@@ -3179,7 +3179,7 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
         {
             dfStdP2 = -dfStdP1;
             dfScale = 1.0;
-        } 
+        }
         else
         {
             dfStdP2 = oSRS.GetProjParm( SRS_PP_STANDARD_PARALLEL_2, -0.1, nullptr );

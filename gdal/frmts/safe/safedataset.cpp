@@ -622,7 +622,7 @@ CPLErr SAFECalibratedRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 SAFEDataset::~SAFEDataset()
 
 {
-    SAFEDataset::FlushCache();
+    SAFEDataset::FlushCache(true);
 
     CPLDestroyXMLNode( psManifest );
     CPLFree( pszProjection );

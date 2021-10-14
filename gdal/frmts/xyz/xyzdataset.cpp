@@ -666,7 +666,7 @@ XYZDataset::XYZDataset() :
 XYZDataset::~XYZDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
     if (fp)
         VSIFCloseL(fp);
 

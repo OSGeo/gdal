@@ -910,7 +910,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
 
 netCDFRasterBand::~netCDFRasterBand()
 {
-    netCDFRasterBand::FlushCache();
+    netCDFRasterBand::FlushCache(true);
     CPLFree(panBandZPos);
     CPLFree(panBandZLev);
 }
@@ -2300,7 +2300,7 @@ netCDFDataset::~netCDFDataset()
         AddProjectionVars( false, nullptr, nullptr );
     }
 
-    netCDFDataset::FlushCache();
+    netCDFDataset::FlushCache(true);
     SGCommitPendingTransaction();
 
     for(size_t i = 0; i < apoVectorDatasets.size(); i++)

@@ -71,7 +71,7 @@ IntergraphDataset::IntergraphDataset() :
 
 IntergraphDataset::~IntergraphDataset()
 {
-    FlushCache();
+    FlushCache(true);
 
     CPLFree( pszFilename );
 
@@ -833,7 +833,7 @@ GDALDataset *IntergraphDataset::CreateCopy( const char *pszFilename,
     // Finalize
     // --------------------------------------------------------------------
 
-    poDstDS->FlushCache();
+    poDstDS->FlushCache(false);
 
     return poDstDS;
 }

@@ -281,7 +281,7 @@ AirSARDataset::AirSARDataset() :
 AirSARDataset::~AirSARDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
     CPLFree( pabyCompressedLine );
     CPLFree( padfMatrix );
 

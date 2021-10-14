@@ -90,7 +90,7 @@ class ISCEDataset final: public RawDataset
     ISCEDataset();
     ~ISCEDataset() override;
 
-    void FlushCache() override;
+    void FlushCache(bool bAtClosing) override;
     char **GetFileList() override;
 
     static int          Identify( GDALOpenInfo *poOpenInfo );
@@ -179,7 +179,7 @@ ISCEDataset::ISCEDataset() :
 
 ISCEDataset::~ISCEDataset( void )
 {
-    ISCEDataset::FlushCache();
+    ISCEDataset::FlushCache(true);
     if ( fpImage != nullptr )
     {
         if( VSIFCloseL( fpImage ) != 0 )
@@ -194,9 +194,9 @@ ISCEDataset::~ISCEDataset( void )
 /*                            FlushCache()                              */
 /************************************************************************/
 
-void ISCEDataset::FlushCache( void )
+void ISCEDataset::FlushCache(bool bAtClosing)
 {
-    RawDataset::FlushCache();
+    RawDataset::FlushCache(bAtClosing);
 
     GDALRasterBand *band = (GetRasterCount() > 0) ? GetRasterBand(1) : nullptr;
 

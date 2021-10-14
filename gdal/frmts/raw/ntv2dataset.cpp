@@ -122,7 +122,7 @@ class NTv2Dataset final: public RawDataset
         return GetSpatialRefFromOldGetProjectionRef();
     }
 
-    void FlushCache(void) override;
+    void FlushCache(bool bAtClosing) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -161,7 +161,7 @@ NTv2Dataset::NTv2Dataset() :
 NTv2Dataset::~NTv2Dataset()
 
 {
-    NTv2Dataset::FlushCache();
+    NTv2Dataset::FlushCache(true);
 
     if( fpImage != nullptr )
     {
@@ -200,7 +200,7 @@ static void SwapPtr64IfNecessary( bool bMustSwap, void* ptr )
 /*                             FlushCache()                             */
 /************************************************************************/
 
-void NTv2Dataset::FlushCache()
+void NTv2Dataset::FlushCache(bool bAtClosing)
 
 {
 /* -------------------------------------------------------------------- */
@@ -209,7 +209,7 @@ void NTv2Dataset::FlushCache()
 /* -------------------------------------------------------------------- */
     if( eAccess != GA_Update || !(GetPamFlags() & GPF_DIRTY) )
     {
-        RawDataset::FlushCache();
+        RawDataset::FlushCache(bAtClosing);
         return;
     }
 
@@ -350,7 +350,7 @@ void NTv2Dataset::FlushCache()
     if( !bSomeLeftOver )
         SetPamFlags( GetPamFlags() & (~GPF_DIRTY) );
 
-    RawDataset::FlushCache();
+    RawDataset::FlushCache(bAtClosing);
 }
 
 /************************************************************************/

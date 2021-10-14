@@ -489,7 +489,7 @@ RRASTERDataset::~RRASTERDataset()
     if( m_fpImage != nullptr )
     {
         InitImageIfNeeded();
-        FlushCache();
+        FlushCache(true);
         VSIFCloseL(m_fpImage);
     }
     if( m_bHeaderDirty )
@@ -1538,7 +1538,7 @@ GDALDataset *RRASTERDataset::CreateCopy( const char * pszFilename,
     CSLDestroy(papszAdjustedOptions);
 
     if( poOutDS != nullptr )
-        poOutDS->FlushCache();
+        poOutDS->FlushCache(false);
 
     return poOutDS;
 }

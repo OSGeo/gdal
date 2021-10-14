@@ -91,7 +91,7 @@ EIRDataset::EIRDataset() = default;
 EIRDataset::~EIRDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
 
     if( nBands > 0 && GetAccess() == GA_Update )
     {

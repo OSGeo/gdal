@@ -1238,7 +1238,7 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
     if( eErr == CE_None )
-        hODS->FlushCache();
+        hODS->FlushCache(true);
     delete hODS;
 
     GTIFFSetInExternalOvr(false);

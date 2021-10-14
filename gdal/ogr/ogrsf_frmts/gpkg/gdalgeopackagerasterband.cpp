@@ -160,12 +160,12 @@ GDALGPKGMBTilesLikeRasterBand::GDALGPKGMBTilesLikeRasterBand(
 /*                              FlushCache()                            */
 /************************************************************************/
 
-CPLErr GDALGPKGMBTilesLikeRasterBand::FlushCache()
+CPLErr GDALGPKGMBTilesLikeRasterBand::FlushCache(bool bAtClosing)
 {
     m_poTPD->m_nLastSpaceCheckTimestamp = -1; // disable partial flushes
-    CPLErr eErr = GDALPamRasterBand::FlushCache();
+    CPLErr eErr = GDALPamRasterBand::FlushCache(bAtClosing);
     if( eErr == CE_None )
-        eErr = m_poTPD->IFlushCacheWithErrCode();
+        eErr = m_poTPD->IFlushCacheWithErrCode(bAtClosing);
     m_poTPD->m_nLastSpaceCheckTimestamp = 0;
     return eErr;
 }

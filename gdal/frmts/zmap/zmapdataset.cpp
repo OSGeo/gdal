@@ -207,7 +207,7 @@ ZMapDataset::ZMapDataset() :
 ZMapDataset::~ZMapDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
     if (fp)
         VSIFCloseL(fp);
 }

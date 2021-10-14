@@ -659,7 +659,7 @@ void OGRLIBKMLDataSource::WriteDir()
 
 ******************************************************************************/
 
-void OGRLIBKMLDataSource::FlushCache()
+void OGRLIBKMLDataSource::FlushCache(bool /* bAtClosing */)
 {
     if( !bUpdated )
         return;
@@ -692,7 +692,7 @@ void OGRLIBKMLDataSource::FlushCache()
 OGRLIBKMLDataSource::~OGRLIBKMLDataSource()
 {
     /***** sync the DS to disk *****/
-    OGRLIBKMLDataSource::FlushCache();
+    OGRLIBKMLDataSource::FlushCache(true);
 
     CPLFree( m_pszName );
 

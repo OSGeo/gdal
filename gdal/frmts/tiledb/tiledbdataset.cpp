@@ -123,7 +123,7 @@ class TileDBDataset final: public GDALPamDataset
         static void             SetBlockSize( GDALRasterBand* poBand,
                                                 char ** &papszOptions );
 
-        virtual void            FlushCache( void ) override;
+        virtual void            FlushCache( bool bAtClosing ) override;
 
 
 };
@@ -459,7 +459,7 @@ CPLErr TileDBRasterBand::IWriteBlock( int nBlockXOff,
     }
     else
     {
-        // global order requires ordered blocks (see FlushCache())
+        // global order requires ordered blocks (see FlushCache(bool bAtClosing))
         if ( ( nCurrBlockX != nBlockXOff ) || ( nCurrBlockY != nBlockYOff ) )
         {   CPLError( CE_Failure, CPLE_AppDefined,
                     "Non-sequential global write to TileDB.\n");
@@ -604,7 +604,7 @@ GDALColorInterp TileDBRasterBand::GetColorInterpretation()
 TileDBDataset::~TileDBDataset()
 
 {
-    TileDBDataset::FlushCache();
+    TileDBDataset::FlushCache(true);
 
     // important to finalize arrays before closing array when updating
     if ( bGlobalOrder )
@@ -667,10 +667,10 @@ CPLErr TileDBDataset::AddDimensions( tiledb::Domain& domain,
 /*                             FlushCache()                             */
 /************************************************************************/
 
-void TileDBDataset::FlushCache()
+void TileDBDataset::FlushCache(bool bAtClosing)
 
 {
-    BlockBasedFlushCache();
+    BlockBasedFlushCache(bAtClosing);
 
     if( nPamFlags & GPF_DIRTY )
         TrySaveXML();

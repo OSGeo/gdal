@@ -53,7 +53,7 @@ OGRPGDataSource::OGRPGDataSource() = default;
 OGRPGDataSource::~OGRPGDataSource()
 
 {
-    OGRPGDataSource::FlushCache();
+    OGRPGDataSource::FlushCache(true);
 
     CPLFree( pszName );
     CPLFree( pszForcedTables );
@@ -102,7 +102,7 @@ OGRPGDataSource::~OGRPGDataSource()
 /*                              FlushCache()                            */
 /************************************************************************/
 
-void OGRPGDataSource::FlushCache(void)
+void OGRPGDataSource::FlushCache(bool /* bAtClosing */)
 {
     EndCopy();
     for( int iLayer = 0; iLayer < nLayers; iLayer++ )
@@ -2568,7 +2568,7 @@ OGRErr OGRPGDataSource::CommitTransaction()
     /*CPLDebug("PG", "poDS=%p CommitTransaction() nSoftTransactionLevel=%d",
              this, nSoftTransactionLevel);*/
 
-    FlushCache();
+    FlushCache(false);
 
     nSoftTransactionLevel--;
     bUserTransactionActive = FALSE;
@@ -2614,7 +2614,7 @@ OGRErr OGRPGDataSource::RollbackTransaction()
     /*CPLDebug("PG", "poDS=%p RollbackTransaction() nSoftTransactionLevel=%d",
              this, nSoftTransactionLevel);*/
 
-    FlushCache();
+    FlushCache(false);
 
     nSoftTransactionLevel--;
     bUserTransactionActive = FALSE;
@@ -2929,7 +2929,7 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
     while(*pszSQLCommand == ' ')
         pszSQLCommand ++;
 
-    FlushCache();
+    FlushCache(false);
 
 /* -------------------------------------------------------------------- */
 /*      Use generic implementation for recognized dialects              */

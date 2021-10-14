@@ -130,7 +130,7 @@ class PLMosaicDataset final: public GDALPamDataset
                                GSpacing nBandSpace,
                                GDALRasterIOExtraArg* psExtraArg) override;
 
-    virtual void FlushCache(void) override;
+    virtual void FlushCache(bool bAtClosing) override;
 
     virtual const char *_GetProjectionRef() override;
     const OGRSpatialReference* GetSpatialRef() const override {
@@ -373,7 +373,7 @@ PLMosaicDataset::PLMosaicDataset() :
 PLMosaicDataset::~PLMosaicDataset()
 
 {
-    PLMosaicDataset::FlushCache();
+    PLMosaicDataset::FlushCache(true);
     CPLFree(pszWKT);
     for( auto& poDS: apoTMSDS )
         delete poDS;
@@ -412,7 +412,7 @@ void PLMosaicDataset::FlushDatasetsCache()
 /*                            FlushCache()                              */
 /************************************************************************/
 
-void PLMosaicDataset::FlushCache()
+void PLMosaicDataset::FlushCache(bool bAtClosing)
 {
     FlushDatasetsCache();
 
@@ -423,7 +423,7 @@ void PLMosaicDataset::FlushCache()
     poLastItemsInformation = nullptr;
     osLastRetGetLocationInfo.clear();
 
-    GDALDataset::FlushCache();
+    GDALDataset::FlushCache(bAtClosing);
 }
 
 /************************************************************************/

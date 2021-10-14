@@ -649,7 +649,7 @@ RIKDataset::RIKDataset() :
 RIKDataset::~RIKDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
     CPLFree( pOffsets );
     if( fp != nullptr )
         VSIFCloseL( fp );

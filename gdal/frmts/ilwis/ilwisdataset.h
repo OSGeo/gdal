@@ -174,7 +174,7 @@ public:
         return OldSetProjectionFromSetSpatialRef(poSRS);
     }
 
-    virtual void   FlushCache() override;
+    virtual void   FlushCache(bool bAtClosing) override;
 };
 
 // IniFile.h: interface for the IniFile class.

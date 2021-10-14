@@ -93,7 +93,7 @@ VRTDatasetH CPL_STDCALL VRTCreate(int nXSize, int nYSize)
 VRTDataset::~VRTDataset()
 
 {
-    VRTDataset::FlushCache();
+    VRTDataset::FlushCache(true);
     if( m_poSRS )
         m_poSRS->Release();
     if( m_poGCP_SRS )
@@ -118,42 +118,42 @@ VRTDataset::~VRTDataset()
 /*                             FlushCache()                             */
 /************************************************************************/
 
-void VRTDataset::FlushCache()
+void VRTDataset::FlushCache(bool bAtClosing)
 
 {
     if( m_poRootGroup )
         m_poRootGroup->Serialize();
     else
-        VRTFlushCacheStruct<VRTDataset>::FlushCache(*this);
+        VRTFlushCacheStruct<VRTDataset>::FlushCache(*this, bAtClosing);
 }
 
 /************************************************************************/
 /*                             FlushCache()                             */
 /************************************************************************/
 
-void VRTWarpedDataset::FlushCache()
+void VRTWarpedDataset::FlushCache(bool bAtClosing)
 
 {
-    VRTFlushCacheStruct<VRTWarpedDataset>::FlushCache(*this);
+    VRTFlushCacheStruct<VRTWarpedDataset>::FlushCache(*this, bAtClosing);
 }
 
 /************************************************************************/
 /*                             FlushCache()                             */
 /************************************************************************/
 
-void VRTPansharpenedDataset::FlushCache()
+void VRTPansharpenedDataset::FlushCache(bool bAtClosing)
 
 {
-    VRTFlushCacheStruct<VRTPansharpenedDataset>::FlushCache(*this);
+    VRTFlushCacheStruct<VRTPansharpenedDataset>::FlushCache(*this, bAtClosing);
 }
 
 /************************************************************************/
 /*                             FlushCache()                             */
 /************************************************************************/
 
-template<class T> void VRTFlushCacheStruct<T>::FlushCache(T& obj)
+template<class T> void VRTFlushCacheStruct<T>::FlushCache(T& obj, bool bAtClosing)
 {
-    obj.GDALDataset::FlushCache();
+    obj.GDALDataset::FlushCache(bAtClosing);
 
     if( !obj.m_bNeedsFlush || !obj.m_bWritable )
         return;
@@ -173,7 +173,7 @@ template<class T> void VRTFlushCacheStruct<T>::FlushCache(T& obj)
     if( fpVRT == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                "Failed to write .vrt file in FlushCache()." );
+                "Failed to write .vrt file in FlushCache(bool bAtClosing)." );
         return;
     }
 
@@ -206,7 +206,7 @@ template<class T> void VRTFlushCacheStruct<T>::FlushCache(T& obj)
     if( !bOK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                "Failed to write .vrt file in FlushCache()." );
+                "Failed to write .vrt file in FlushCache(bool bAtClosing)." );
         return;
     }
 }
@@ -246,18 +246,18 @@ char** VRTDataset::GetMetadata( const char *pszDomain )
 /*! @endcond */
 
 /************************************************************************/
-/*                            VRTFlushCache()                           */
+/*                            VRTFlushCache(bool bAtClosing)                           */
 /************************************************************************/
 
 /**
- * @see VRTDataset::FlushCache()
+ * @see VRTDataset::FlushCache(bool bAtClosing)
  */
 
 void CPL_STDCALL VRTFlushCache( VRTDatasetH hDataset )
 {
     VALIDATE_POINTER0( hDataset, "VRTFlushCache" );
 
-    static_cast<VRTDataset *>(GDALDataset::FromHandle(hDataset))->FlushCache();
+    static_cast<VRTDataset *>(GDALDataset::FromHandle(hDataset))->FlushCache(false);
 }
 
 /*! @cond Doxygen_Suppress */
@@ -1531,7 +1531,7 @@ int VRTDataset::CloseDependentDatasets()
 {
     /* We need to call it before removing the sources, otherwise */
     /* we would remove them from the serizalized VRT */
-    FlushCache();
+    FlushCache(true);
 
     int bHasDroppedRef = GDALDataset::CloseDependentDatasets();
 

@@ -69,7 +69,7 @@ class CPL_DLL GDALProxyDataset : public GDALDataset
                             const char * pszValue,
                             const char * pszDomain ) override;
 
-    void FlushCache() override;
+    void FlushCache(bool bAtClosing) override;
 
     const OGRSpatialReference* GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
@@ -134,7 +134,7 @@ class CPL_DLL GDALProxyRasterBand : public GDALRasterBand
     CPLErr SetMetadataItem( const char * pszName,
                             const char * pszValue,
                             const char * pszDomain ) override;
-    CPLErr FlushCache() override;
+    CPLErr FlushCache(bool bAtClosing) override;
     char **GetCategoryNames() override;
     double GetNoDataValue( int *pbSuccess = nullptr ) override;
     double GetMinimum( int *pbSuccess = nullptr ) override;
@@ -278,7 +278,7 @@ class CPL_DLL GDALProxyPoolDataset : public GDALProxyDataset
     // VRT SimpleSource will not have to access any other bands than the one added.
     void AddSrcBand(int nBand, GDALDataType eDataType, int nBlockXSize,
                                 int nBlockYSize );
-    void FlushCache() override;
+    void FlushCache(bool bAtClosing) override;
 
     const OGRSpatialReference* GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
@@ -362,7 +362,7 @@ class CPL_DLL GDALProxyPoolRasterBand : public GDALProxyRasterBand
     GDALRasterBand *GetRasterSampleOverview( GUIntBig nDesiredSamples ) override; // TODO
     GDALRasterBand *GetMaskBand() override;
 
-    CPLErr FlushCache() override;
+    CPLErr FlushCache(bool bAtClosing) override;
 
   private:
     CPL_DISALLOW_COPY_ASSIGN(GDALProxyPoolRasterBand)

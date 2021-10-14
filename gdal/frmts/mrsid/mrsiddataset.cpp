@@ -749,7 +749,7 @@ MrSIDDataset::MrSIDDataset(int bIsJPEG2000) :
 
 MrSIDDataset::~MrSIDDataset()
 {
-    MrSIDDataset::FlushCache();
+    MrSIDDataset::FlushCache(true);
 
 #ifdef MRSID_ESDK
     if ( poImageWriter )
@@ -3146,10 +3146,10 @@ LT_STATUS MrSIDDummyImageReader::decodeStrip(LTISceneBuffer& stripData,
 /*                             FlushCache()                             */
 /************************************************************************/
 
-void MrSIDDataset::FlushCache()
+void MrSIDDataset::FlushCache(bool bAtClosing)
 
 {
-    GDALDataset::FlushCache();
+    GDALDataset::FlushCache(bAtClosing);
 }
 
 /************************************************************************/

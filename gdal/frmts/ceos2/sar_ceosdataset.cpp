@@ -686,7 +686,7 @@ SAR_CEOSDataset::SAR_CEOSDataset() :
 SAR_CEOSDataset::~SAR_CEOSDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
 
     CSLDestroy( papszTempMD );
 

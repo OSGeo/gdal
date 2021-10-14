@@ -204,7 +204,7 @@ FASTDataset::FASTDataset() :
 FASTDataset::~FASTDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
 
     CPLFree( pszDirname );
     CPLFree( pszProjection );

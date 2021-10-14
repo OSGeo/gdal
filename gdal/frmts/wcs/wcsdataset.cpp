@@ -80,7 +80,7 @@ WCSDataset::WCSDataset(int version, const char *cache_dir) :
 WCSDataset::~WCSDataset()
 
 {
-    // perhaps this should be moved into a FlushCache() method.
+    // perhaps this should be moved into a FlushCache(bool bAtClosing) method.
     if( bServiceDirty && !STARTS_WITH_CI(GetDescription(), "<WCS_GDAL>") )
     {
         CPLSerializeXMLTreeToFile( psService, GetDescription() );

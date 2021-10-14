@@ -78,7 +78,7 @@ GSCDataset::GSCDataset() :
 GSCDataset::~GSCDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
     if( fpImage != nullptr )
         CPL_IGNORE_RET_VAL(VSIFCloseL( fpImage ));
 }

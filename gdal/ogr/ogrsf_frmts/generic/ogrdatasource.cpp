@@ -312,7 +312,7 @@ OGRErr OGR_DS_SyncToDisk( OGRDataSourceH hDS )
 {
     VALIDATE_POINTER1( hDS, "OGR_DS_SyncToDisk", OGRERR_INVALID_HANDLE );
 
-    reinterpret_cast<GDALDataset *>(hDS)->FlushCache();
+    reinterpret_cast<GDALDataset *>(hDS)->FlushCache(false);
     if( CPLGetLastErrorType() != 0 )
         return OGRERR_FAILURE;
     else

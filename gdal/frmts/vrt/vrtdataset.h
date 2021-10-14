@@ -143,7 +143,7 @@ public:
                                int *pnMaxSize, CPLHashSet* hSetFiles);
 
     virtual int    IsSimpleSource() { return FALSE; }
-    virtual CPLErr FlushCache() { return CE_None; }
+    virtual CPLErr FlushCache(bool /*bAtClosing*/) { return CE_None; }
 };
 
 typedef VRTSource *(*VRTSourceParser)(CPLXMLNode *, const char *,
@@ -162,7 +162,7 @@ class VRTRasterBand;
 
 template<class T> struct VRTFlushCacheStruct
 {
-    static void FlushCache(T& obj);
+    static void FlushCache(T& obj, bool bAtClosing);
 };
 
 class VRTWarpedDataset;
@@ -226,7 +226,7 @@ class CPL_DLL VRTDataset CPL_NON_FINAL: public GDALDataset
     virtual ~VRTDataset();
 
     void          SetNeedsFlush() { m_bNeedsFlush = true; }
-    virtual void  FlushCache() override;
+    virtual void  FlushCache(bool bAtClosing) override;
 
     void SetWritable(int bWritableIn) { m_bWritable = CPL_TO_BOOL(bWritableIn); }
 
@@ -330,7 +330,7 @@ public:
                       VRTWarpedDataset( int nXSize, int nYSize );
     virtual ~VRTWarpedDataset();
 
-    virtual void  FlushCache() override;
+    virtual void  FlushCache(bool bAtClosing) override;
 
     CPLErr            Initialize( /* GDALWarpOptions */ void * );
 
@@ -402,7 +402,7 @@ public:
                       VRTPansharpenedDataset( int nXSize, int nYSize );
     virtual ~VRTPansharpenedDataset();
 
-    virtual void  FlushCache() override;
+    virtual void  FlushCache(bool bAtClosing) override;
 
     virtual CPLErr    XMLInit( CPLXMLNode *, const char * ) override;
     virtual CPLXMLNode *   SerializeToXML( const char *pszVRTPath ) override;
@@ -693,7 +693,7 @@ class CPL_DLL VRTSourcedRasterBand CPL_NON_FINAL: public VRTRasterBand
 
     virtual int         IsSourcedRasterBand() override { return TRUE; }
 
-    virtual CPLErr      FlushCache() override;
+    virtual CPLErr      FlushCache(bool bAtClosing) override;
 };
 
 /************************************************************************/
@@ -1013,7 +1013,7 @@ public:
 
     virtual int    IsSimpleSource() override { return TRUE; }
     virtual const char* GetType() { return "SimpleSource"; }
-    virtual CPLErr FlushCache() override;
+    virtual CPLErr FlushCache(bool bAtClosing) override;
 
     GDALRasterBand* GetRasterBand() const;
     GDALRasterBand* GetMaskBandMainBand();

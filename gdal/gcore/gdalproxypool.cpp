@@ -845,12 +845,12 @@ void GDALProxyPoolDataset::UnrefUnderlyingDataset(
 /*                         FlushCache()                                 */
 /************************************************************************/
 
-void  GDALProxyPoolDataset::FlushCache()
+void  GDALProxyPoolDataset::FlushCache(bool bAtClosing)
 {
     GDALDataset* poUnderlyingDataset = RefUnderlyingDataset(false);
     if (poUnderlyingDataset)
     {
-        poUnderlyingDataset->FlushCache();
+        poUnderlyingDataset->FlushCache(bAtClosing);
         UnrefUnderlyingDataset(poUnderlyingDataset);
     }
 }
@@ -1258,12 +1258,12 @@ void GDALProxyPoolRasterBand::UnrefUnderlyingRasterBand(GDALRasterBand* poUnderl
 /*                             FlushCache()                             */
 /************************************************************************/
 
-CPLErr GDALProxyPoolRasterBand::FlushCache()
+CPLErr GDALProxyPoolRasterBand::FlushCache(bool bAtClosing)
 {
     GDALRasterBand* poUnderlyingRasterBand = RefUnderlyingRasterBand(false);
     if (poUnderlyingRasterBand)
     {
-        CPLErr eErr = poUnderlyingRasterBand->FlushCache();
+        CPLErr eErr = poUnderlyingRasterBand->FlushCache(bAtClosing);
         UnrefUnderlyingRasterBand(poUnderlyingRasterBand);
         return eErr;
     }
