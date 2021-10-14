@@ -467,6 +467,8 @@ void CPL_DLL OSRSetPROJSearchPaths( const char* const * papszPaths );
 char CPL_DLL **OSRGetPROJSearchPaths( void );
 void CPL_DLL OSRSetPROJAuxDbPaths( const char* const * papszPaths );
 char CPL_DLL **OSRGetPROJAuxDbPaths( void );
+void CPL_DLL OSRSetPROJEnableNetwork( int enabled );
+int CPL_DLL OSRGetPROJEnableNetwork( void );
 void CPL_DLL OSRGetPROJVersion( int* pnMajor, int* pnMinor, int* pnPatch );
 
 OGRSpatialReferenceH CPL_DLL CPL_STDCALL

@@ -4706,6 +4706,16 @@ int GetPROJVersionMicro()
     return num;
 }
 
+bool GetPROJEnableNetwork()
+{
+    return OSRGetPROJEnableNetwork();
+}
+
+void SetPROJEnableNetwork(bool enabled)
+{
+    OSRSetPROJEnableNetwork(enabled);
+}
+
 
 void SetPROJAuxDbPath( const char *utf8_path )
 {
@@ -17950,6 +17960,68 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_GetPROJEnableNetwork(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  bool result;
+  
+  if (!PyArg_ParseTuple(args,(char *)":GetPROJEnableNetwork")) SWIG_fail;
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (bool)GetPROJEnableNetwork();
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_bool(static_cast< bool >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SetPROJEnableNetwork(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  bool arg1 ;
+  bool val1 ;
+  int ecode1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:SetPROJEnableNetwork",&obj0)) SWIG_fail;
+  ecode1 = SWIG_AsVal_bool(obj0, &val1);
+  if (!SWIG_IsOK(ecode1)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "SetPROJEnableNetwork" "', argument " "1"" of type '" "bool""'");
+  } 
+  arg1 = static_cast< bool >(val1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    SetPROJEnableNetwork(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_SetPROJAuxDbPath(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   char *arg1 = (char *) 0 ;
@@ -18298,6 +18370,8 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"GetPROJVersionMajor", _wrap_GetPROJVersionMajor, METH_VARARGS, (char *)"GetPROJVersionMajor() -> int"},
 	 { (char *)"GetPROJVersionMinor", _wrap_GetPROJVersionMinor, METH_VARARGS, (char *)"GetPROJVersionMinor() -> int"},
 	 { (char *)"GetPROJVersionMicro", _wrap_GetPROJVersionMicro, METH_VARARGS, (char *)"GetPROJVersionMicro() -> int"},
+	 { (char *)"GetPROJEnableNetwork", _wrap_GetPROJEnableNetwork, METH_VARARGS, (char *)"GetPROJEnableNetwork() -> bool"},
+	 { (char *)"SetPROJEnableNetwork", _wrap_SetPROJEnableNetwork, METH_VARARGS, (char *)"SetPROJEnableNetwork(bool enabled)"},
 	 { (char *)"SetPROJAuxDbPath", _wrap_SetPROJAuxDbPath, METH_VARARGS, (char *)"SetPROJAuxDbPath(char const * utf8_path)"},
 	 { (char *)"SetPROJAuxDbPaths", _wrap_SetPROJAuxDbPaths, METH_VARARGS, (char *)"SetPROJAuxDbPaths(char ** paths)"},
 	 { (char *)"GetPROJAuxDbPaths", _wrap_GetPROJAuxDbPaths, METH_VARARGS, (char *)"GetPROJAuxDbPaths() -> char **"},

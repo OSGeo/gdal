@@ -1307,6 +1307,14 @@ def GetPROJVersionMicro(*args):
     """GetPROJVersionMicro() -> int"""
     return _osr.GetPROJVersionMicro(*args)
 
+def GetPROJEnableNetwork(*args):
+    """GetPROJEnableNetwork() -> bool"""
+    return _osr.GetPROJEnableNetwork(*args)
+
+def SetPROJEnableNetwork(*args):
+    """SetPROJEnableNetwork(bool enabled)"""
+    return _osr.SetPROJEnableNetwork(*args)
+
 def SetPROJAuxDbPath(*args):
     """SetPROJAuxDbPath(char const * utf8_path)"""
     return _osr.SetPROJAuxDbPath(*args)
