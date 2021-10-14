@@ -798,6 +798,25 @@ OGRLayer* OGROpenFileGDBDataSource::GetLayerByName( const char* pszName )
 }
 
 
+/***********************************************************************/
+/*                          IsLayerPrivate()                           */
+/***********************************************************************/
+
+
+bool OGROpenFileGDBDataSource::IsLayerPrivate(int iLayer) const
+{
+  if( iLayer < 0 || iLayer >= static_cast< int >( m_apoLayers.size() ) )
+      return false;
+
+  const std::string osName( m_apoLayers[iLayer]->GetName() );
+
+  const CPLString osLCTableName(CPLString(osName).tolower());
+
+  // tables beginning with "GDB_" are private tables
+  return osLCTableName.size() >= 4 && osLCTableName.substr(0, 4) == "gdb_";
+}
+
+
 /************************************************************************/
 /*                 OGROpenFileGDBSingleFeatureLayer()                   */
 /************************************************************************/

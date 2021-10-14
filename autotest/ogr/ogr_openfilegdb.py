@@ -1577,6 +1577,13 @@ def test_ogr_openfilegdb_list_all_tables_v10():
                  'GDB_Items', 'GDB_SpatialRefs', 'GDB_SystemCatalog']:
         assert name in layer_names
 
+    private_layers = [ds_all_table.GetLayer(i).GetName() for i in range(ds_all_table.GetLayerCount()) if ds_all_table.IsLayerPrivate(i)]
+    for name in ['GDB_DBTune', 'GDB_ItemRelationshipTypes', 'GDB_ItemRelationships', 'GDB_ItemTypes',
+                 'GDB_Items', 'GDB_SpatialRefs', 'GDB_SystemCatalog']:
+        assert name in private_layers
+    for name in ['linestring', 'point', 'multipoint']:
+        assert name not in private_layers
+
 
 def test_ogr_openfilegdb_list_all_tables_v9():
     ds = ogr.Open('data/filegdb/testopenfilegdb93.gdb.zip')
@@ -1601,6 +1608,13 @@ def test_ogr_openfilegdb_list_all_tables_v9():
                  'GDB_DBTune', 'GDB_FeatureClasses', 'GDB_FeatureDataset', 'GDB_FieldInfo',
                  'GDB_ObjectClasses', 'GDB_Release', 'GDB_SpatialRefs', 'GDB_SystemCatalog', 'GDB_UserMetadata']:
         assert name in layer_names
+
+    private_layers = [ds_all_table.GetLayer(i).GetName() for i in range(ds_all_table.GetLayerCount()) if ds_all_table.IsLayerPrivate(i)]
+    for name in ['GDB_DBTune', 'GDB_FeatureClasses', 'GDB_FeatureDataset', 'GDB_FieldInfo',
+                 'GDB_ObjectClasses', 'GDB_Release', 'GDB_SpatialRefs', 'GDB_SystemCatalog', 'GDB_UserMetadata']:
+        assert name in private_layers
+    for name in ['linestring', 'point', 'multipoint']:
+        assert name not in private_layers
 
 
 ###############################################################################

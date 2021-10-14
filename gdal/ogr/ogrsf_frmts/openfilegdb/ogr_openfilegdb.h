@@ -198,6 +198,7 @@ public:
 
   virtual OGRLayer*   GetLayer( int ) override;
   virtual OGRLayer*   GetLayerByName( const char* pszName ) override;
+  bool                IsLayerPrivate( int ) const override;
 
   virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
                                   OGRGeometry *poSpatialFilter,
