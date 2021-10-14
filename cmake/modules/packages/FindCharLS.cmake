@@ -62,14 +62,14 @@ set_package_properties(CharLS PROPERTIES
 if(CharLS_FOUND)
     set(CharLS_LIBRARIES ${CharLS_LIBRARY})
     set(CharLS_INCLUDE_DIRS ${CharLS_INCLUDE_DIR})
-    if(NOT TARGET CharLS::CharLS)
-        add_library(CharLS::CharLS UNKNOWN IMPORTED)
+    if(NOT TARGET CharLS::charls)
+        add_library(CharLS::charls UNKNOWN IMPORTED)
         if(CharLS_INCLUDE_DIRS)
-          set_target_properties(CharLS::CharLS PROPERTIES
+          set_target_properties(CharLS::charls PROPERTIES
             INTERFACE_INCLUDE_DIRECTORIES ${CharLS_INCLUDE_DIR})
         endif()
         if(EXISTS "${CharLS_LIBRARY}")
-          set_target_properties(CharLS::CharLS PROPERTIES
+          set_target_properties(CharLS::charls PROPERTIES
             IMPORTED_LINK_INTERFACE_LANGUAGES "CXX"
             IMPORTED_LOCATION ${CharLS_LIBRARY})
         endif()
