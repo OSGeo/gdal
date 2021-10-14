@@ -311,7 +311,6 @@ if (UNIX AND NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
 
   # gdal-config utility command generation
   include(GenerateConfig)
-  set(CONFIG_DATA "${GDAL_PREFIX}/share/gdal/${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}")
   if (ENABLE_GNM)
     set(CONFIG_GNM_ENABLED "yes")
   else ()
