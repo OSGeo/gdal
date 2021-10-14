@@ -77,6 +77,16 @@ ogrtest.openfilegdb_datalist_m = [["pointm", ogr.wkbPointM, "POINT M (1 2 3)"],
                                  ]
 
 
+@pytest.fixture()
+def ogrsf_path():
+    import test_cli_utilities
+    path = test_cli_utilities.get_test_ogrsf_path()
+    if path is None:
+        pytest.skip('ogrsf test utility not found')
+
+    return path
+
+
 ###############################################################################
 # Disable FileGDB driver
 
@@ -386,13 +396,16 @@ def test_ogr_openfilegdb_1_93():
 # Run test_ogrsf
 
 
-def test_ogr_openfilegdb_2(filename='data/filegdb/testopenfilegdb.gdb.zip'):
+@pytest.fixture(params=['data/filegdb/testopenfilegdb.gdb.zip',
+                        'data/filegdb/testopenfilegdb92.gdb.zip',
+                        'data/filegdb/testopenfilegdb93.gdb.zip'])
+def gdb_source(request):
+    return request.param
 
-    import test_cli_utilities
-    if test_cli_utilities.get_test_ogrsf_path() is None:
-        pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro ' + filename)
+@pytest.fixture()
+def ogrsf_run(ogrsf_path, gdb_source):
+    ret = gdaltest.runexternal(ogrsf_path + ' -ro ' + gdb_source)
 
     success = 'INFO' in ret and 'ERROR' not in ret
     if not success:
@@ -401,12 +414,10 @@ def test_ogr_openfilegdb_2(filename='data/filegdb/testopenfilegdb.gdb.zip'):
             pytest.xfail('Failure. See https://github.com/rouault/gdal/runs/1331249076?check_suite_focus=true')
     assert success
 
-def test_ogr_openfilegdb_2_92():
-    return test_ogr_openfilegdb_2(filename='data/filegdb/testopenfilegdb92.gdb.zip')
 
+def test_ogr_openfilegdb_2(ogrsf_run, gdb_source):
+    pass
 
-def test_ogr_openfilegdb_2_93():
-    return test_ogr_openfilegdb_2(filename='data/filegdb/testopenfilegdb93.gdb.zip')
 
 ###############################################################################
 # Open a .gdbtable directly
