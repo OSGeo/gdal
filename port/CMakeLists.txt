@@ -5,44 +5,31 @@ target_public_header(
   TARGET
   gdal
   HEADERS
-  cpl_alibaba_oss.h
-  cpl_aws.h
-  cpl_azure.h
-  cplkeywordparser.h
   cpl_atomic_ops.h
+  cpl_auto_close.h
+  cpl_compressor.h
   cpl_config_extras.h
-  cpl_google_cloud.h
   cpl_conv.h
-  cpl_cpu_features.h
   cpl_csv.h
   cpl_error.h
   cpl_hash_set.h
   cpl_http.h
   cpl_json.h
-  cpl_json_header.h
+  cplkeywordparser.h
   cpl_list.h
   cpl_minixml.h
   cpl_multiproc.h
   cpl_port.h
+  cpl_progress.h
   cpl_quad_tree.h
-  cpl_safemaths.hpp
-  cpl_sha1.h
-  cpl_sha256.h
+  cpl_spawn.h
   cpl_string.h
   cpl_time.h
   cpl_vsi.h
   cpl_vsi_error.h
   cpl_vsi_virtual.h
   cpl_virtualmem.h
-  gdal_csv.h
-  cpl_spawn.h
-  cpl_progress.h
-  cpl_json_streaming_parser.h
-  cpl_md5.h
-  cpl_mem_cache.h
-  cpl_worker_thread_pool.h
-  cpl_json_streaming_writer.h
-  cpl_compressor.h)
+  gdal_csv.h)
 
 add_library(
   cpl STATIC
@@ -245,7 +232,6 @@ endif ()
 if (HAVE_CURL)
   target_include_directories(cpl PRIVATE ${CURL_INCLUDE_DIRS})
   target_compile_definitions(cpl PRIVATE -DHAVE_CURL)
-  target_public_header(TARGET gdal HEADERS cpl_vsil_curl_priv.h)
   target_sources(cpl PRIVATE cpl_vsil_curl.cpp cpl_vsil_curl_streaming.cpp)
   target_link_libraries(GDAL_LINK_LIBRARY INTERFACE CURL::libcurl)
 endif ()
