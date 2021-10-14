@@ -783,7 +783,6 @@ MEMDataset::MEMDataset() :
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = -1.0;
     DisableReadWriteMutex();
-    MarkSuppressOnClose();
 }
 
 /************************************************************************/
@@ -793,7 +792,10 @@ MEMDataset::MEMDataset() :
 MEMDataset::~MEMDataset()
 
 {
+    const bool bSuppressOnCloseBackup = bSuppressOnClose;
+    bSuppressOnClose = true;
     FlushCache(true);
+    bSuppressOnClose = bSuppressOnCloseBackup;
 
     GDALDeinitGCPs( m_nGCPCount, m_pasGCPs );
     CPLFree( m_pasGCPs );
