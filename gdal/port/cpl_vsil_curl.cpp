@@ -736,7 +736,9 @@ static bool VSICurlIsS3LikeSignedURL( const char* pszURL )
         ((strstr(pszURL, ".s3.amazonaws.com/") != nullptr ||
           strstr(pszURL, ".s3.amazonaws.com:") != nullptr ||
           strstr(pszURL, ".storage.googleapis.com/") != nullptr ||
-          strstr(pszURL, ".storage.googleapis.com:") != nullptr) &&
+          strstr(pszURL, ".storage.googleapis.com:") != nullptr ||
+          strstr(pszURL, ".cloudfront.net/") != nullptr ||
+          strstr(pszURL, ".cloudfront.net:") != nullptr) &&
          (strstr(pszURL, "&Signature=") != nullptr ||
           strstr(pszURL, "?Signature=") != nullptr)) ||
         strstr(pszURL, "&X-Amz-Signature=") != nullptr ||
@@ -1517,7 +1519,13 @@ retry:
         CPLDebug(poFS->GetDebugKey(),
                  "Got response_code=%ld", response_code);
 
-    if( response_code == 403 && bUsedRedirect )
+    if( bUsedRedirect &&
+        (response_code == 403 ||
+        // Below case is in particular for
+        // gdalinfo /vsicurl/https://lpdaac.earthdata.nasa.gov/lp-prod-protected/HLSS30.015/HLS.S30.T10TEK.2020273T190109.v1.5.B8A.tif --config GDAL_DISABLE_READDIR_ON_OPEN EMPTY_DIR --config GDAL_HTTP_COOKIEFILE /tmp/cookie.txt --config GDAL_HTTP_COOKIEJAR /tmp/cookie.txt
+        // We got the redirect URL from a HEAD request, but it is not valid for a GET.
+        // So retry with GET on original URL to get a redirect URL valid for it.
+        (response_code == 400 && osURL.find(".cloudfront.net") != std::string::npos)) )
     {
         CPLDebug(poFS->GetDebugKey(),
                  "Got an error with redirect URL. Retrying with original one");
