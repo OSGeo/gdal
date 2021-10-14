@@ -101,6 +101,13 @@ def ogrsf_path():
     return path
 
 
+@pytest.fixture(params=[{'src': 'data/filegdb/testopenfilegdb.gdb.zip', 'version_10': True},
+                        {'src': 'data/filegdb/testopenfilegdb92.gdb.zip', 'version_10': False},
+                        {'src': 'data/filegdb/testopenfilegdb93.gdb.zip', 'version_10': False}])
+def gdb_source(request):
+    return request.param
+
+
 ###############################################################################
 # Make test data
 
@@ -279,7 +286,9 @@ def ogr_openfilegdb_make_test_data():
 # Basic tests
 
 
-def test_ogr_openfilegdb_1(filename='data/filegdb/testopenfilegdb.gdb.zip', version10=True):
+def test_ogr_openfilegdb_1(gdb_source):
+    filename = gdb_source['src']
+    version10 = gdb_source['version_10']
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput("WGS84")
@@ -389,27 +398,13 @@ def test_ogr_openfilegdb_1(filename='data/filegdb/testopenfilegdb.gdb.zip', vers
     ds = None
 
 
-def test_ogr_openfilegdb_1_92():
-    return test_ogr_openfilegdb_1(filename='data/filegdb/testopenfilegdb92.gdb.zip', version10=False)
-
-
-def test_ogr_openfilegdb_1_93():
-    return test_ogr_openfilegdb_1(filename='data/filegdb/testopenfilegdb93.gdb.zip', version10=False)
-
 ###############################################################################
 # Run test_ogrsf
 
 
-@pytest.fixture(params=['data/filegdb/testopenfilegdb.gdb.zip',
-                        'data/filegdb/testopenfilegdb92.gdb.zip',
-                        'data/filegdb/testopenfilegdb93.gdb.zip'])
-def gdb_source(request):
-    return request.param
-
-
 @pytest.fixture()
 def ogrsf_run(ogrsf_path, gdb_source):
-    ret = gdaltest.runexternal(ogrsf_path + ' -ro ' + gdb_source)
+    ret = gdaltest.runexternal(ogrsf_path + ' -ro ' + gdb_source['src'])
 
     success = 'INFO' in ret and 'ERROR' not in ret
     if not success:
@@ -1572,7 +1567,4 @@ def test_ogr_openfilegdb_cleanup():
         shutil.rmtree('tmp/testopenfilegdb_fuzzed.gdb')
     except OSError:
         pass
-
-
-
 
