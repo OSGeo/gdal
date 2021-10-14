@@ -77,6 +77,20 @@ ogrtest.openfilegdb_datalist_m = [["pointm", ogr.wkbPointM, "POINT M (1 2 3)"],
                                  ]
 
 
+@pytest.fixture(scope="module", autouse=True)
+def setup_driver():
+    # remove FileGDB driver before running tests
+    filegdb_driver = ogr.GetDriverByName('FileGDB')
+    if filegdb_driver is not None:
+        filegdb_driver.Deregister()
+
+    yield
+
+    if filegdb_driver is not None:
+        print('Reregistering FileGDB driver')
+        filegdb_driver.Register()
+
+
 @pytest.fixture()
 def ogrsf_path():
     import test_cli_utilities
@@ -85,16 +99,6 @@ def ogrsf_path():
         pytest.skip('ogrsf test utility not found')
 
     return path
-
-
-###############################################################################
-# Disable FileGDB driver
-
-def test_ogr_openfilegdb_init():
-
-    ogrtest.fgdb_drv = ogr.GetDriverByName('FileGDB')
-    if ogrtest.fgdb_drv is not None:
-        ogrtest.fgdb_drv.Deregister()
 
 
 ###############################################################################
@@ -1554,9 +1558,6 @@ def test_ogr_openfilegdb_read_layer_hierarchy():
 
 
 def test_ogr_openfilegdb_cleanup():
-
-    if ogrtest.fgdb_drv is not None:
-        ogrtest.fgdb_drv.Register()
 
     try:
         shutil.rmtree('tmp/testopenfilegdb.gdb')
