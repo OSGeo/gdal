@@ -136,6 +136,8 @@ class OGRDataSourceWithTransaction final: public OGRDataSource
     virtual bool        AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,
                                        std::string& failureReason) override;
 
+    virtual std::shared_ptr<GDALGroup> GetRootGroup() const override;
+
     virtual char      **GetMetadata( const char * pszDomain = "" ) override;
     virtual CPLErr      SetMetadata( char ** papszMetadata,
                                      const char * pszDomain = "" ) override;
@@ -446,6 +448,12 @@ bool OGRDataSourceWithTransaction::AddFieldDomain(std::unique_ptr<OGRFieldDomain
 {
     if( !m_poBaseDataSource ) return false;
     return m_poBaseDataSource->AddFieldDomain(std::move(domain), failureReason);
+}
+
+std::shared_ptr<GDALGroup> OGRDataSourceWithTransaction::GetRootGroup() const
+{
+    if( !m_poBaseDataSource ) return nullptr;
+    return m_poBaseDataSource->GetRootGroup();
 }
 
 char      **OGRDataSourceWithTransaction::GetMetadata( const char * pszDomain )
