@@ -1618,6 +1618,39 @@ def test_ogr_openfilegdb_list_all_tables_v9():
 
 
 ###############################################################################
+# Test that non-spatial tables which are not present in GDB_Items are listed
+# see https://github.com/OSGeo/gdal/issues/4463
+
+
+def test_ogr_openfilegdb_non_spatial_table_outside_gdb_items():
+    ds = ogr.Open('data/filegdb/table_outside_gdbitems.gdb.zip')
+    assert ds is not None
+
+    assert ds.GetLayerCount() == 3, 'did not get expected layer count'
+    layer_names = set(ds.GetLayer(i).GetName() for i in range(ds.GetLayerCount()))
+    assert layer_names == {'aquaduct', 'flat_table1', 'flat_table2'}
+
+    # Test with the LIST_ALL_TABLES=YES open option
+    ds_all_table = gdal.OpenEx('data/filegdb/table_outside_gdbitems.gdb.zip', gdal.OF_VECTOR,
+                                 open_options=['LIST_ALL_TABLES=YES'])
+
+    assert ds_all_table.GetLayerCount() == 10, 'did not get expected layer count'
+    layer_names = set(ds_all_table.GetLayer(i).GetName() for i in range(ds_all_table.GetLayerCount()))
+
+    for name in ['aquaduct', 'flat_table1', 'flat_table2',
+                 'GDB_DBTune', 'GDB_ItemRelationshipTypes', 'GDB_ItemRelationships', 'GDB_ItemTypes',
+                 'GDB_Items', 'GDB_SpatialRefs', 'GDB_SystemCatalog']:
+        assert name in layer_names
+
+    private_layers = set(ds_all_table.GetLayer(i).GetName() for i in range(ds_all_table.GetLayerCount()) if ds_all_table.IsLayerPrivate(i))
+    for name in ['GDB_DBTune', 'GDB_ItemRelationshipTypes', 'GDB_ItemRelationships', 'GDB_ItemTypes',
+                 'GDB_Items', 'GDB_SpatialRefs', 'GDB_SystemCatalog']:
+        assert name in private_layers
+    for name in ['aquaduct', 'flat_table1', 'flat_table2']:
+        assert name not in private_layers
+
+
+###############################################################################
 # Cleanup
 
 

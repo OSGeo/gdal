@@ -186,6 +186,7 @@ class OGROpenFileGDBDataSource final: public OGRDataSource
                                 const CPLString& osDocumentation,
                                 const char* pszGeomName,
                                 OGRwkbGeometryType eGeomType );
+  static bool         IsPrivateLayerName( const CPLString& osName );
 
 public:
            OGROpenFileGDBDataSource();

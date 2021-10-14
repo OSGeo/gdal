@@ -312,27 +312,30 @@ int OGROpenFileGDBDataSource::Open(const GDALOpenInfo *poOpenInfo )
         }
     }
 
-    const bool bListAllTables = CPLTestBool(CSLFetchNameValueDef(
-        poOpenInfo->papszOpenOptions, "LIST_ALL_TABLES", "NO"));
-
-    if ( bListAllTables )
+    if ( nInterestTable == 0 )
     {
+        const bool bListAllTables = CPLTestBool(CSLFetchNameValueDef(
+            poOpenInfo->papszOpenOptions, "LIST_ALL_TABLES", "NO"));
+
         // add additional tables which are not present in the GDB_Items/GDB_FeatureClasses/GDB_ObjectClasses tables
-        for ( auto oIter = m_osMapNameToIdx.begin(); oIter != m_osMapNameToIdx.end(); ++oIter )
+        for ( const auto &oIter : m_osMapNameToIdx )
         {
             // test if layer is already added
-            if ( OGRDataSource::GetLayerByName( oIter->first.c_str() ) )
+            if ( OGRDataSource::GetLayerByName( oIter.first.c_str() ) )
                 continue;
 
-            const int idx = oIter->second;
-            CPLString osFilename(CPLFormFilename(m_osDirName, CPLSPrintf("a%08x", idx), "gdbtable"));
-            if( FileExists(osFilename) )
+            if ( bListAllTables || !IsPrivateLayerName(oIter.first))
             {
-                OGRLayer* poLayer = new OGROpenFileGDBLayer( osFilename, oIter->first.c_str(), "", "");
-                m_apoLayers.push_back(poLayer);
-                if( m_poRootGroup )
+                const int idx = oIter.second;
+                CPLString osFilename(CPLFormFilename(m_osDirName, CPLSPrintf("a%08x", idx), "gdbtable"));
+                if( FileExists(osFilename) )
                 {
-                    cpl::down_cast< OGROpenFileGDBGroup* >( m_poRootGroup.get() )->m_apoLayers.emplace_back(poLayer);
+                    OGRLayer* poLayer = new OGROpenFileGDBLayer( osFilename, oIter.first.c_str(), "", "");
+                    m_apoLayers.push_back(poLayer);
+                    if( m_poRootGroup )
+                    {
+                        cpl::down_cast< OGROpenFileGDBGroup* >( m_poRootGroup.get() )->m_apoLayers.emplace_back(poLayer);
+                    }
                 }
             }
         }
@@ -799,9 +802,21 @@ OGRLayer* OGROpenFileGDBDataSource::GetLayerByName( const char* pszName )
 
 
 /***********************************************************************/
-/*                          IsLayerPrivate()                           */
+/*                          IsPrivateLayerName()                       */
 /***********************************************************************/
 
+bool OGROpenFileGDBDataSource::IsPrivateLayerName(const CPLString &osName)
+{
+    const CPLString osLCTableName(CPLString(osName).tolower());
+
+    // tables beginning with "GDB_" are private tables
+    return osLCTableName.size() >= 4 && osLCTableName.substr(0, 4) == "gdb_";
+}
+
+
+/***********************************************************************/
+/*                          IsLayerPrivate()                           */
+/***********************************************************************/
 
 bool OGROpenFileGDBDataSource::IsLayerPrivate(int iLayer) const
 {
@@ -809,11 +824,7 @@ bool OGROpenFileGDBDataSource::IsLayerPrivate(int iLayer) const
       return false;
 
   const std::string osName( m_apoLayers[iLayer]->GetName() );
-
-  const CPLString osLCTableName(CPLString(osName).tolower());
-
-  // tables beginning with "GDB_" are private tables
-  return osLCTableName.size() >= 4 && osLCTableName.substr(0, 4) == "gdb_";
+  return IsPrivateLayerName( osName );
 }
 
 
