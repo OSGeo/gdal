@@ -191,7 +191,7 @@ public:
            OGROpenFileGDBDataSource();
   virtual ~OGROpenFileGDBDataSource();
 
-  int                 Open(const char * );
+  int                 Open( const GDALOpenInfo* poOpenInfo );
 
   virtual const char* GetName() override { return m_pszName; }
   virtual int         GetLayerCount() override { return static_cast<int>(m_apoLayers.size()); }

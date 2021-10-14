@@ -1548,6 +1548,61 @@ def test_ogr_openfilegdb_read_layer_hierarchy():
     standalone = rg.OpenVectorLayer('standalone')
     assert standalone is not None
 
+
+
+###############################################################################
+# Test LIST_ALL_TABLES open option
+
+
+def test_ogr_openfilegdb_list_all_tables_v10():
+    ds = ogr.Open('data/filegdb/testopenfilegdb.gdb.zip')
+    assert ds is not None
+
+    assert ds.GetLayerCount() == 37, 'did not get expected layer count'
+    layer_names = [ds.GetLayer(i).GetName() for i in range(ds.GetLayerCount())]
+    # should not be exposed by default
+    for name in ['GDB_DBTune', 'GDB_ItemRelationshipTypes', 'GDB_ItemRelationships', 'GDB_ItemTypes',
+                 'GDB_Items', 'GDB_SpatialRefs', 'GDB_SystemCatalog']:
+        assert name not in layer_names
+
+    # Test LIST_ALL_TABLES=YES open option
+    ds_all_table = gdal.OpenEx('data/filegdb/testopenfilegdb.gdb.zip', gdal.OF_VECTOR,
+                                 open_options=['LIST_ALL_TABLES=YES'])
+
+    assert ds_all_table.GetLayerCount() == 44, 'did not get expected layer count'
+    layer_names = [ds_all_table.GetLayer(i).GetName() for i in range(ds_all_table.GetLayerCount())]
+
+    for name in ['linestring', 'point', 'multipoint',
+                 'GDB_DBTune', 'GDB_ItemRelationshipTypes', 'GDB_ItemRelationships', 'GDB_ItemTypes',
+                 'GDB_Items', 'GDB_SpatialRefs', 'GDB_SystemCatalog']:
+        assert name in layer_names
+
+
+def test_ogr_openfilegdb_list_all_tables_v9():
+    ds = ogr.Open('data/filegdb/testopenfilegdb93.gdb.zip')
+    assert ds is not None
+
+    assert ds.GetLayerCount() == 22, 'did not get expected layer count'
+    layer_names = [ds.GetLayer(i).GetName() for i in range(ds.GetLayerCount())]
+    # should not be exposed by default
+    for name in ['GDB_DBTune', 'GDB_FeatureClasses', 'GDB_FeatureDataset', 'GDB_FieldInfo',
+                 'GDB_ObjectClasses', 'GDB_Release', 'GDB_SpatialRefs', 'GDB_SystemCatalog', 'GDB_UserMetadata']:
+        assert name not in layer_names
+
+    # Test LIST_ALL_TABLES=YES open option
+    ds_all_table = gdal.OpenEx('data/filegdb/testopenfilegdb93.gdb.zip', gdal.OF_VECTOR,
+                                 open_options=['LIST_ALL_TABLES=YES'])
+
+    assert ds_all_table.GetLayerCount() == 31, 'did not get expected layer count'
+    layer_names = [ds_all_table.GetLayer(i).GetName() for i in range(ds_all_table.GetLayerCount())]
+    print(layer_names)
+
+    for name in ['linestring', 'point', 'multipoint',
+                 'GDB_DBTune', 'GDB_FeatureClasses', 'GDB_FeatureDataset', 'GDB_FieldInfo',
+                 'GDB_ObjectClasses', 'GDB_Release', 'GDB_SpatialRefs', 'GDB_SystemCatalog', 'GDB_UserMetadata']:
+        assert name in layer_names
+
+
 ###############################################################################
 # Cleanup
 
