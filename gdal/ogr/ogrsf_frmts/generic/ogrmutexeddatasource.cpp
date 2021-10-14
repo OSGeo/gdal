@@ -114,6 +114,12 @@ OGRErr      OGRMutexedDataSource::DeleteLayer(int iIndex)
     return eErr;
 }
 
+bool OGRMutexedDataSource::IsLayerPrivate(int iLayer) const
+{
+    CPLMutexHolderOptionalLockD(m_hGlobalMutex);
+    return m_poBaseDataSource->IsLayerPrivate(iLayer);
+}
+
 int         OGRMutexedDataSource::TestCapability( const char * pszCap )
 {
     CPLMutexHolderOptionalLockD(m_hGlobalMutex);

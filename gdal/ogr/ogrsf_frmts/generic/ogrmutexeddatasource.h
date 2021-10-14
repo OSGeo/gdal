@@ -77,6 +77,7 @@ class CPL_DLL OGRMutexedDataSource : public OGRDataSource
     virtual OGRLayer    *GetLayer(int) override;
     virtual OGRLayer    *GetLayerByName(const char *) override;
     virtual OGRErr      DeleteLayer(int) override;
+    virtual bool        IsLayerPrivate(int iLayer) const override;
 
     virtual int         TestCapability( const char * ) override;
 
