@@ -17,8 +17,8 @@ ogr_default_driver2(mitab TAB "MapInfo TAB and MIF/MID")
 # ######################################################################################################################
 ogr_default_driver(kml KML) # when not found EXPAT, it use CPL_MINIXML (ex. android)
 ogr_default_driver(vrt "VRT - Virtual Format")
-ogr_default_driver(sdts SDTS) # depends ISO8211
-ogr_default_driver(gml GML) # when not found both EXPAT/XercesC, return error in driver, referenced by WCS
+ogr_optional_driver(sdts SDTS) # depends ISO8211
+ogr_optional_driver(gml GML) # when not found both EXPAT/XercesC, return error in driver, referenced by WCS
 
 # ######################################################################################################################
 ogr_optional_driver(avc AVC)
