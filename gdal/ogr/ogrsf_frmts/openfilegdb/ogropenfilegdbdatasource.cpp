@@ -55,6 +55,32 @@
 
 CPL_CVSID("$Id$")
 
+
+/***********************************************************************/
+/*                      OGROpenFileGDBGroup                            */
+/***********************************************************************/
+
+class OGROpenFileGDBGroup final: public GDALGroup
+{
+protected:
+    friend class OGROpenFileGDBDataSource;
+    std::vector<std::shared_ptr<GDALGroup>> m_apoSubGroups{};
+    std::vector<OGRLayer*> m_apoLayers{};
+
+public:
+    OGROpenFileGDBGroup(const std::string& osParentName, const char* pszName):
+        GDALGroup(osParentName, pszName) {}
+
+    std::vector<std::string> GetGroupNames(CSLConstList papszOptions) const override;
+    std::shared_ptr<GDALGroup> OpenGroup(const std::string& osName,
+                                         CSLConstList papszOptions) const override;
+
+    std::vector<std::string> GetVectorLayerNames(CSLConstList papszOptions) const override;
+    OGRLayer* OpenVectorLayer(const std::string& osName,
+                              CSLConstList papszOptions) const override;
+};
+
+
 /************************************************************************/
 /*                      OGROpenFileGDBDataSource()                      */
 /************************************************************************/
@@ -96,9 +122,10 @@ int OGROpenFileGDBDataSource::FileExists(const char* pszFilename)
 /*                                Open()                                */
 /************************************************************************/
 
-int OGROpenFileGDBDataSource::Open( const char* pszFilename )
-
+int OGROpenFileGDBDataSource::Open(const GDALOpenInfo *poOpenInfo )
 {
+    const char* pszFilename = poOpenInfo->pszFilename;
+
     FileGDBTable oTable;
 
     m_pszName = CPLStrdup(pszFilename);
@@ -285,6 +312,35 @@ int OGROpenFileGDBDataSource::Open( const char* pszFilename )
         }
     }
 
+    if ( nInterestTable == 0 )
+    {
+        const bool bListAllTables = CPLTestBool(CSLFetchNameValueDef(
+            poOpenInfo->papszOpenOptions, "LIST_ALL_TABLES", "NO"));
+
+        // add additional tables which are not present in the GDB_Items/GDB_FeatureClasses/GDB_ObjectClasses tables
+        for ( const auto &oIter : m_osMapNameToIdx )
+        {
+            // test if layer is already added
+            if ( OGRDataSource::GetLayerByName( oIter.first.c_str() ) )
+                continue;
+
+            if ( bListAllTables || !IsPrivateLayerName(oIter.first))
+            {
+                const int idx = oIter.second;
+                CPLString osFilename(CPLFormFilename(m_osDirName, CPLSPrintf("a%08x", idx), "gdbtable"));
+                if( FileExists(osFilename) )
+                {
+                    OGRLayer* poLayer = new OGROpenFileGDBLayer( osFilename, oIter.first.c_str(), "", "");
+                    m_apoLayers.push_back(poLayer);
+                    if( m_poRootGroup )
+                    {
+                        cpl::down_cast< OGROpenFileGDBGroup* >( m_poRootGroup.get() )->m_apoLayers.emplace_back(poLayer);
+                    }
+                }
+            }
+        }
+    }
+
     return TRUE;
 }
 
@@ -350,30 +406,6 @@ OGRLayer* OGROpenFileGDBDataSource::AddLayer( const CPLString& osName,
     }
     return nullptr;
 }
-
-/***********************************************************************/
-/*                      OGROpenFileGDBGroup                            */
-/***********************************************************************/
-
-class OGROpenFileGDBGroup final: public GDALGroup
-{
-protected:
-    friend class OGROpenFileGDBDataSource;
-    std::vector<std::shared_ptr<GDALGroup>> m_apoSubGroups{};
-    std::vector<OGRLayer*> m_apoLayers{};
-
-public:
-    OGROpenFileGDBGroup(const std::string& osParentName, const char* pszName):
-        GDALGroup(osParentName, pszName) {}
-
-    std::vector<std::string> GetGroupNames(CSLConstList papszOptions) const override;
-    std::shared_ptr<GDALGroup> OpenGroup(const std::string& osName,
-                                         CSLConstList papszOptions) const override;
-
-    std::vector<std::string> GetVectorLayerNames(CSLConstList papszOptions) const override;
-    OGRLayer* OpenVectorLayer(const std::string& osName,
-                              CSLConstList papszOptions) const override;
-};
 
 std::vector<std::string> OGROpenFileGDBGroup::GetGroupNames(CSLConstList) const
 {
@@ -766,6 +798,33 @@ OGRLayer* OGROpenFileGDBDataSource::GetLayerByName( const char* pszName )
         }
     }
     return nullptr;
+}
+
+
+/***********************************************************************/
+/*                          IsPrivateLayerName()                       */
+/***********************************************************************/
+
+bool OGROpenFileGDBDataSource::IsPrivateLayerName(const CPLString &osName)
+{
+    const CPLString osLCTableName(CPLString(osName).tolower());
+
+    // tables beginning with "GDB_" are private tables
+    return osLCTableName.size() >= 4 && osLCTableName.substr(0, 4) == "gdb_";
+}
+
+
+/***********************************************************************/
+/*                          IsLayerPrivate()                           */
+/***********************************************************************/
+
+bool OGROpenFileGDBDataSource::IsLayerPrivate(int iLayer) const
+{
+  if( iLayer < 0 || iLayer >= static_cast< int >( m_apoLayers.size() ) )
+      return false;
+
+  const std::string osName( m_apoLayers[iLayer]->GetName() );
+  return IsPrivateLayerName( osName );
 }
 
 

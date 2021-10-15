@@ -186,18 +186,20 @@ class OGROpenFileGDBDataSource final: public OGRDataSource
                                 const CPLString& osDocumentation,
                                 const char* pszGeomName,
                                 OGRwkbGeometryType eGeomType );
+  static bool         IsPrivateLayerName( const CPLString& osName );
 
 public:
            OGROpenFileGDBDataSource();
   virtual ~OGROpenFileGDBDataSource();
 
-  int                 Open(const char * );
+  int                 Open( const GDALOpenInfo* poOpenInfo );
 
   virtual const char* GetName() override { return m_pszName; }
   virtual int         GetLayerCount() override { return static_cast<int>(m_apoLayers.size()); }
 
   virtual OGRLayer*   GetLayer( int ) override;
   virtual OGRLayer*   GetLayerByName( const char* pszName ) override;
+  bool                IsLayerPrivate( int ) const override;
 
   virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
                                   OGRGeometry *poSpatialFilter,
