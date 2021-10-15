@@ -1,80 +1,85 @@
 # CMake4GDAL project is distributed under X/MIT license. See accompanying file LICENSE.txt.
 cmake_minimum_required(VERSION 3.10)
-cmake_policy(SET CMP0023 NEW)
-cmake_policy(SET CMP0025 NEW)
-cmake_policy(SET CMP0033 NEW)
-cmake_policy(SET CMP0034 NEW)
-cmake_policy(SET CMP0037 NEW)
-cmake_policy(SET CMP0038 NEW)
-cmake_policy(SET CMP0039 NEW)
-cmake_policy(SET CMP0040 NEW)
-cmake_policy(SET CMP0041 NEW)
-cmake_policy(SET CMP0042 NEW)
-cmake_policy(SET CMP0044 NEW)
-cmake_policy(SET CMP0046 NEW)
-cmake_policy(SET CMP0048 NEW)
-cmake_policy(SET CMP0050 NEW)
-cmake_policy(SET CMP0054 NEW)
-cmake_policy(SET CMP0057 NEW)
-cmake_policy(SET CMP0058 NEW)
-cmake_policy(SET CMP0062 NEW)
-cmake_policy(SET CMP0064 NEW)
-cmake_policy(SET CMP0068 NEW)
-cmake_policy(SET CMP0069 NEW)
-cmake_policy(SET CMP0070 NEW)
+
 # cmake version 3.12 or later
 if (POLICY CMP0073)
-  # _LIB_DEPENDS
+  # Do not produce legacy _LIB_DEPENDS cache entries.
   cmake_policy(SET CMP0073 NEW)
 endif ()
 if (POLICY CMP0074)
-  # Packagename_ROOT
+  # find_package() uses <PackageName>_ROOT variables.
   cmake_policy(SET CMP0074 NEW)
 endif ()
 if (POLICY CMP0075)
+  # Include file check macros honor CMAKE_REQUIRED_LIBRARIES.
   cmake_policy(SET CMP0075 NEW)
 endif ()
+
+# cmake version 3.13 or later
 if (POLICY CMP0076)
+  # The target_sources() command converts relative paths to absolute.
   cmake_policy(SET CMP0076 NEW)
 endif ()
 if (POLICY CMP0079)
+  # target_link_libraries() allows use with targets in other directories.
   cmake_policy(SET CMP0079 NEW)
 endif ()
-# cmake version 3.14 or later
+
+# cmake version 3.15 or later
 if (POLICY CMP0090)
+  # export(PACKAGE) does not populate package registry by default.
   cmake_policy(SET CMP0090 NEW)
 endif ()
 if (POLICY CMP0092)
+  # MSVC warning flags are not in CMAKE_<LANG>_FLAGS by default.
   cmake_policy(SET CMP0092 NEW)
 endif ()
 if (POLICY CMP0094)
+  # Modules FindPython3, FindPython2 and FindPython use LOCATION for lookup strategy.
   cmake_policy(SET CMP0094 NEW)
 endif ()
+
+# cmake version 3.17 or later
 if (POLICY CMP0102)
+  # The mark_as_advanced() command no longer creates a cache entry if one does not already exist.
   cmake_policy(SET CMP0102 NEW)
 endif ()
+
+# cmake version 3.19 or later
 if (POLICY CMP0110)
+  # add_test() supports arbitrary characters in test names.
   cmake_policy(SET CMP0110 NEW)
 endif ()
 if (POLICY CMP0112)
+  # Target file component generator expressions do not add target dependencies.
   cmake_policy(SET CMP0112 NEW)
 endif ()
 if (POLICY CMP0113)
+  # Makefile Generators do not repeat custom commands from target dependencies.
   cmake_policy(SET CMP0113 NEW)
 endif ()
+
+# cmake version 3.20 or later
 if (POLICY CMP0115)
+  # Source file extensions must be explicit.
   cmake_policy(SET CMP0115 NEW)
 endif ()
 if (POLICY CMP0116)
+  # Ninja generators transform DEPFILE s from add_custom_command().
   cmake_policy(SET CMP0116 NEW)
 endif ()
 if (POLICY CMP0117)
+  # MSVC RTTI flag /GR is not added to CMAKE_CXX_FLAGS by default.
   cmake_policy(SET CMP0117 NEW)
 endif ()
+
+# cmake version 3.21 or later
 if (POLICY CMP0124)
+  # the scope of loop variables defined by the foreach() command is restricted to the loop only
   cmake_policy(SET CMP0124 NEW)
 endif ()
 if (POLICY CMP0125)
+  # The find_file(), find_path(), find_library() and find_program() commands cache their result in the variable specified by their first argument
   cmake_policy(SET CMP0125 NEW)
 endif ()
 #
