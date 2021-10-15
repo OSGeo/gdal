@@ -197,13 +197,6 @@ a.reference.external::after
 	/* use 100% width */
 }
 
-.wy-side-nav-search
-{
-	margin-bottom: unset;
-	padding-bottom: unset;
-	background-color: #28728d;
-}
-
 /*  Use sidebar versions area to link to course name */
 .rst-versions a {
     color: white;
