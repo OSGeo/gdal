@@ -14,7 +14,6 @@ add_gdal_driver(
           Packer_RLE.h
           JPNG_band.cpp
           Tif_band.cpp
-          Raw_band.cpp
   BUILTIN)
 gdal_standard_includes(gdal_MRF)
 if (GDAL_JPEG12_SUPPORTED)
@@ -54,4 +53,8 @@ if (HAVE_ZSTD)
   target_compile_definitions(gdal_MRF PRIVATE -DZSTD_SUPPORT)
   target_include_directories(gdal_MRF PRIVATE ${ZSTD_INCLUDE_DIRS})
   gdal_target_link_libraries(TARGET gdal_MRF LIBRARIES ZSTD::zstd)
+endif ()
+
+if (GDAL_USE_LIBLERC_INTERNAL)
+  add_subdirectory(LERCV1)
 endif ()
