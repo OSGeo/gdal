@@ -8,7 +8,7 @@ include(CMakeDependentOption)
 gdal_optional_format(raw "Raw formats:EOSAT FAST Format, FARSITE LCP and Vexcel MFF2 Image")
 gdal_format(iso8211 "iso8211 library")
 gdal_format(png "PNG image format")
-gdal_optional_format(jpeg "JPEG image format")
+gdal_format(jpeg "JPEG image format") # jpeg_vsiio_dest used by TIFF driver
 gdal_format(gtiff "GeoTIFF image format")
 set_package_properties(TIFF PROPERTIES PURPOSE "gdal_GTIFF: GeoTIFF image format")
 gdal_format(mem "Read/write data in Memory")
