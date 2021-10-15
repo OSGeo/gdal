@@ -91,6 +91,7 @@ gdal_optional_format(arg "ARG: Azavea Raster Grid")
 gdal_optional_format(usgsdem "USGS ASCII DEM (and CDED)")
 gdal_optional_format(airsar "AirSAR Polarimetric Format")
 gdal_optional_format(ozi "OZF2/OZFX3 raster")
+gdal_optional_format(pcidsk "PCI Geomatics Database File")
 gdal_optional_format(rda "RDA (DigitalGlobe Raster Data Access)")
 gdal_optional_format(sigdem "Scaled Integer Gridded DEM .sigdem Driver")
 gdal_dependent_format(msg "Meteosat Second Generation" "MSG_FOUND") # FIXME: currently the build depend on copying the
@@ -122,7 +123,6 @@ gdal_dependent_format(openjpeg "JPEG2000 driver based on OpenJPEG library" "OPEN
 gdal_dependent_format(jpegls "JPEG LS" "HAVE_CHARLS")
 gdal_dependent_format(jpeg2000 "JPEG2000 --- Implementation of the JPEG-2000 part 1 (ISO/IEC 15444-1) standard"
                       "HAVE_JASPER")
-gdal_dependent_format(pcidsk "PCI Geomatics Database File" "HAVE_PCIDSK")
 gdal_dependent_format(tiledb "TileDB tiledb.io" "HAVE_TILEDB")
 gdal_dependent_format(exr "EXR support via OpenEXR library" "OpenEXR_FOUND")
 

@@ -162,7 +162,6 @@ else()
     set(GDAL_USE_QHULL_INTERNAL OFF CACHE BOOL "")
 endif()
 
-option(GDAL_USE_LIBPCIDSK_INTERNAL "Set ON to build PCIDSK sdk" ON)
 gdal_check_package(LIBCSF "libcsf")
 if(NOT HAVE_LIBCSF)
     set(GDAL_USE_LIBCSF_INTERNAL ON CACHE BOOL "Set ON to build pcraster driver with internal libcdf")

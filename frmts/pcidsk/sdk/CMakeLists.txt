@@ -1,5 +1,5 @@
 add_library(
-  pcidsk_sdk STATIC
+  pcidsk_sdk OBJECT
   blockdir/asciitiledir.cpp
   blockdir/asciitilelayer.cpp
   blockdir/binarytiledir.cpp
@@ -55,10 +55,13 @@ if (WIN32)
 else ()
   target_sources(pcidsk_sdk PRIVATE port/io_stdio.cpp port/pthread_mutex.cpp)
 endif ()
+
+# FIXME target if we build as a plugin
+target_sources(gdal PRIVATE $<TARGET_OBJECTS:pcidsk_sdk>)
+
 target_include_directories(pcidsk_sdk PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} $<TARGET_PROPERTY:cpl,SOURCE_DIR>
                                               $<TARGET_PROPERTY:cpl,BINARY_DIR>)
 set_property(TARGET pcidsk_sdk PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
-set_property(TARGET pcidsk_sdk PROPERTY ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
   set_property(TARGET pcidsk_sdk PROPERTY UNITY_BUILD OFF)
@@ -69,4 +72,9 @@ if (NOT TARGET PCIDSK::PCIDSK)
   set_target_properties(PCIDSK::PCIDSK PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR})
 endif ()
 
-target_link_libraries(GDAL_LINK_LIBRARY INTERFACE pcidsk_sdk)
+if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.12)
+    target_link_libraries(gdal_PCIDSK INTERFACE pcidsk_sdk)
+else()
+    set_target_properties(gdal_PCIDSK PROPERTIES INTERFACE_LINK_LIBRARIES pcidsk_sdk)
+    #target_link_libraries(GDAL_LINK_LIBRARY INTERFACE pcidsk_sdk)
+endif()
