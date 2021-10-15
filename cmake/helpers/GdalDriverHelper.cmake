@@ -209,7 +209,7 @@ include(CMakeDependentOption)
 # - when dependency specified by depend fails, force OFF
 macro(gdal_dependent_format format desc depends)
     string(TOUPPER ${format} key)
-    cmake_dependent_option(GDAL_ENABLE_FRMT_${key} "Set ON to build ${desc} format" ON
+    cmake_dependent_option(GDAL_ENABLE_FRMT_${key} "Set ON to build ${desc} format" ${GDAL_BUILD_OPTIONAL_DRIVERS}
                            "${depends}" OFF)
     add_feature_info(gdal_${key} GDAL_ENABLE_FRMT_${key} "${desc}")
     if (GDAL_ENABLE_FRMT_${key})
@@ -240,7 +240,7 @@ endmacro()
 
 macro(ogr_dependent_driver name desc depend)
     string(TOUPPER ${name} key)
-    cmake_dependent_option(OGR_ENABLE_${key} "Set ON to build OGR ${desc} driver" ON
+    cmake_dependent_option(OGR_ENABLE_${key} "Set ON to build OGR ${desc} driver" ${OGR_BUILD_OPTIONAL_DRIVERS}
                            "${depend}" OFF)
     add_feature_info(ogr_${key} OGR_ENABLE_${key} "${desc}")
     if (OGR_ENABLE_${key})
