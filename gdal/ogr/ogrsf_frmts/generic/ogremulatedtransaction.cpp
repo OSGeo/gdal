@@ -49,7 +49,7 @@ class OGRLayerWithTransaction final: public OGRLayerDecorator
 
         OGRLayerWithTransaction(OGRDataSourceWithTransaction* poDS,
                                 OGRLayer* poBaseLayer);
-    virtual ~OGRLayerWithTransaction();
+    virtual ~OGRLayerWithTransaction() override;
 
     virtual const char *GetName() override { return GetDescription(); }
     virtual OGRFeatureDefn *GetLayerDefn() override;
@@ -94,7 +94,7 @@ class OGRDataSourceWithTransaction final: public OGRDataSource
                                           int bTakeOwnershipDataSource,
                                           int bTakeOwnershipTransactionBehavior);
 
-    virtual     ~OGRDataSourceWithTransaction();
+    virtual     ~OGRDataSourceWithTransaction() override;
 
     int                 IsInTransaction() const { return m_bInTransaction; }
 

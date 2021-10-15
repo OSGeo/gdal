@@ -67,7 +67,7 @@ class CPL_DLL OGRMutexedDataSource : public OGRDataSource
                                       int bWrapLayersInMutexedLayer);
 
     /* The destruction of the object isn't protected by the mutex */
-    virtual     ~OGRMutexedDataSource();
+    virtual     ~OGRMutexedDataSource() override;
 
     OGRDataSource*      GetBaseDataSource() { return m_poBaseDataSource; }
 
