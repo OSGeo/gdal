@@ -22,9 +22,15 @@ set(GDAL_SWIG_COMMON_INTERFACE_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/include/XMLNode.i
     ${CMAKE_CURRENT_SOURCE_DIR}/include/MultiDimensional.i)
 
-add_subdirectory(python)
+option(BUILD_PYTHON_BINDINGS "Build Python bindings" ON)
+option(BUILD_JAVA_BINDINGS "Build Java bindings" ON)
+
+if (BUILD_PYTHON_BINDINGS)
+  add_subdirectory(python)
+endif ()
+
 if (UNIX)
-  if (JNI_FOUND)
+  if (JNI_FOUND AND BUILD_JAVA_BINDINGS)
     add_subdirectory(java)
   endif ()
   if (PERL_FOUND)
