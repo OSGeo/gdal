@@ -118,10 +118,8 @@ endif ()
 
 add_subdirectory(mdreader)
 
-if (HAVE_SQLITE3)
+if (OGR_ENABLE_SQLITE)
   target_compile_definitions(gcore PRIVATE -DSQLITE_ENABLED)
-  target_include_directories(gcore PRIVATE ${SQLite3_INCLUDE_DIRS})
-  target_link_libraries(GDAL_LINK_LIBRARY INTERFACE SQLite::SQLite3)
 endif ()
 if (HAVE_LIBXML2)
   target_compile_definitions(gcore PRIVATE -DHAVE_LIBXML2)
