@@ -1697,3 +1697,27 @@ def test_vrt_nodata_and_implicit_ovr_recursion_issue():
     with gdaltest.tempfile(tmpfilename, vrt):
         ds = gdal.Open(tmpfilename)
         assert ds.GetRasterBand(1).GetOverview(0).Checksum() == 1152
+
+
+def test_vrt_statistics_and_implicit_ovr_recursion_issue():
+
+    """ Tests scenario https://github.com/OSGeo/gdal/issues/4661 """
+
+    gdal.Translate('/vsimem/test.tif', 'data/uint16.tif', width = 2048)
+    vrt_ds = gdal.Translate('', '/vsimem/test.tif', format='VRT')
+    with gdaltest.config_option('VRT_VIRTUAL_OVERVIEWS', 'YES'):
+        vrt_ds.BuildOverviews('NEAR', [2, 4])
+
+    stats = vrt_ds.GetRasterBand(1).ComputeStatistics(True) # approx stats
+    assert gdal.GetLastErrorMsg() == ''
+    assert stats[0] == 74
+
+    min_max = vrt_ds.GetRasterBand(1).ComputeRasterMinMax(True) # approx stats
+    assert gdal.GetLastErrorMsg() == ''
+    assert min_max[0] == 74
+
+    hist = vrt_ds.GetRasterBand(1).GetHistogram(True) # approx stats
+    assert gdal.GetLastErrorMsg() == ''
+    assert hist is not None
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/test.tif')
