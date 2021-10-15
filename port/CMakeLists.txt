@@ -31,8 +31,7 @@ target_public_header(
   cpl_virtualmem.h
   gdal_csv.h)
 
-add_library(
-  cpl OBJECT
+set(CPL_SOURCES
   cpl_alibaba_oss.cpp
   cpl_azure.cpp
   cpl_conv.cpp
@@ -101,93 +100,12 @@ add_library(
   cpl_json_streaming_writer.cpp
   cpl_vax.cpp
   cpl_compressor.cpp)
+add_library(cpl OBJECT ${CPL_SOURCES})
 target_sources(gdal PRIVATE $<TARGET_OBJECTS:cpl>)
 set_property(TARGET cpl PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
-  set_property(
-    SOURCE cpl_conv.cpp
-           cpl_alibaba_oss.cpp
-           cpl_azure.cpp
-           cpl_aws.cpp
-           cpl_google_oauth2.cpp
-           cpl_vsil_curl.cpp
-           cpl_vsil_curl_streaming.cpp
-    PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
-  # These files has CPL_CVSID() which break UNITY_BUILD
-  set_property(
-    SOURCE cpl_alibaba_oss.cpp
-           cpl_atomic_ops.cpp
-           cpl_aws.cpp
-           cpl_azure.cpp
-           cpl_base64.cpp
-           cpl_conv.cpp
-           cpl_cpu_features.cpp
-           cpl_csv.cpp
-           cpl_error.cpp
-           cpl_findfile.cpp
-           cpl_getexecpath.cpp
-           cpl_google_cloud.cpp
-           cpl_google_oauth2.cpp
-           cpl_hash_set.cpp
-           cpl_http.cpp
-           cpl_list.cpp
-           cpl_md5.cpp
-           cpl_minixml.cpp
-           cpl_minizip_ioapi.cpp
-           cpl_minizip_unzip.cpp
-           cpl_minizip_zip.cpp
-           cpl_multiproc.cpp
-           cpl_odbc.cpp
-           cpl_path.cpp
-           cpl_progress.cpp
-           cpl_quad_tree.cpp
-           cpl_recode.cpp
-           cpl_recode_iconv.cpp
-           cpl_recode_stub.cpp
-           cpl_sha1.cpp
-           cpl_sha256.cpp
-           cpl_spawn.cpp
-           cpl_string.cpp
-           cpl_strtod.cpp
-           cpl_swift.cpp
-           cpl_time.cpp
-           cpl_vax.cpp
-           cpl_virtualmem.cpp
-           cpl_vsi_error.cpp
-           cpl_vsi_mem.cpp
-           cpl_vsil.cpp
-           cpl_vsil_abstract_archive.cpp
-           cpl_vsil_az.cpp
-           cpl_vsil_buffered_reader.cpp
-           cpl_vsil_cache.cpp
-           cpl_vsil_crypt.cpp
-           cpl_vsil_curl.cpp
-           cpl_vsil_curl_streaming.cpp
-           cpl_vsil_gs.cpp
-           cpl_vsil_gzip.cpp
-           cpl_vsil_hdfs.cpp
-           cpl_vsil_oss.cpp
-           cpl_vsil_s3.cpp
-           cpl_vsil_simple.cpp
-           cpl_vsil_sparsefile.cpp
-           cpl_vsil_stdin.cpp
-           cpl_vsil_stdout.cpp
-           cpl_vsil_subfile.cpp
-           cpl_vsil_swift.cpp
-           cpl_vsil_tar.cpp
-           cpl_vsil_unix_stdio_64.cpp
-           cpl_vsil_webhdfs.cpp
-           cpl_vsil_win32.cpp
-           cpl_vsisimple.cpp
-           cpl_worker_thread_pool.cpp
-           cpl_xml_validate.cpp
-           cplgetsymbol.cpp
-           cplkeywordparser.cpp
-           cplstring.cpp
-           cplstringlist.cpp
-           vsipreload.cpp
-           xmlreformat.cpp
-    PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
+  # Part of those files have CPL_CVSID() which break UNITY_BUILD
+  set_property(TARGET cpl PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
 endif ()
 # include path to generated cpl_config.h
 target_include_directories(cpl PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
@@ -210,15 +128,29 @@ if (HAVE_AVX_AT_COMPILE_TIME)
   target_compile_definitions(cpl PRIVATE -DHAVE_AVX_AT_COMPILE_TIME)
 endif ()
 
+function(cpl_add_target_link_library)
+    set(_multiValueArgs INTERFACE)
+    cmake_parse_arguments(_ATLL "" "" "${_multiValueArgs}" ${ARGN})
+    if(NOT _ATLL_INTERFACE)
+        message(FATAL_ERROR "cpl_add_target_link_library: INTERFACE is mandatory argument")
+    endif()
+    if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.12)
+        target_link_libraries(cpl INTERFACE "${_ATLL_INTERFACE}")
+    else()
+        #set_target_properties(cpl PROPERTIES INTERFACE_LINK_LIBRARIES "${_ATLL_INTERFACE}")
+        target_link_libraries(GDAL_LINK_LIBRARY INTERFACE ${_ATLL_INTERFACE})
+    endif()
+endfunction()
+
 if (NOT WIN32)
-  target_link_libraries(GDAL_LINK_LIBRARY INTERFACE ${CMAKE_DL_LIBS})
+  cpl_add_target_link_library(INTERFACE ${CMAKE_DL_LIBS})
 endif ()
 
 if (GDAL_USE_LIBJSONC_INTERNAL)
   target_include_directories(cpl PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
 else ()
   target_include_directories(cpl PRIVATE ${JSONC_INCLUDE_DIR})
-  target_link_libraries(GDAL_LINK_LIBRARY INTERFACE JSONC::JSONC)
+  cpl_add_target_link_library(INTERFACE JSONC::JSONC)
 endif ()
 
 target_compile_definitions(cpl PRIVATE -DHAVE_LIBZ -DZIP_SUPPORT)
@@ -231,14 +163,13 @@ else ()
   if (MSVC)
     target_compile_definitions(cpl PRIVATE -DZLIB_DLL)
   endif (MSVC)
-  target_link_libraries(GDAL_LINK_LIBRARY INTERFACE ZLIB::ZLIB)
+  cpl_add_target_link_library(INTERFACE ZLIB::ZLIB)
 endif ()
 
 if (HAVE_CURL)
   target_include_directories(cpl PRIVATE ${CURL_INCLUDE_DIRS})
   target_compile_definitions(cpl PRIVATE -DHAVE_CURL)
-  target_sources(cpl PRIVATE cpl_vsil_curl.cpp cpl_vsil_curl_streaming.cpp)
-  target_link_libraries(GDAL_LINK_LIBRARY INTERFACE CURL::libcurl)
+  cpl_add_target_link_library(INTERFACE CURL::libcurl)
 endif ()
 
 if (HAVE_ICONV)
@@ -250,7 +181,7 @@ if (HAVE_ICONV)
       target_compile_definitions(cpl PRIVATE -DLIBICONV_PLUG)
     endif ()
     target_sources(cpl PRIVATE cpl_recode_iconv.cpp)
-    target_link_libraries(GDAL_LINK_LIBRARY INTERFACE Iconv::Iconv)
+    cpl_add_target_link_library(INTERFACE Iconv::Iconv)
   endif ()
 endif ()
 
@@ -258,7 +189,7 @@ if (ODBC_FOUND)
   target_sources(cpl PRIVATE cpl_odbc.cpp)
   target_public_header(TARGET gdal HEADERS cpl_odbc.h)
   target_include_directories(cpl PRIVATE ${ODBC_INCLUDE_DIRS})
-  target_link_libraries(GDAL_LINK_LIBRARY INTERFACE ODBC::ODBC ODBC::ODBCINST)
+  cpl_add_target_link_library(INTERFACE ODBC::ODBC ODBC::ODBCINST)
 endif ()
 
 if (GDAL_USE_XMLREFORMAT)
@@ -271,7 +202,7 @@ if (MSVC)
   endif ()
 else ()
   if (Threads_FOUND)
-    target_link_libraries(GDAL_LINK_LIBRARY INTERFACE Threads::Threads)
+    cpl_add_target_link_library(INTERFACE Threads::Threads)
   endif ()
 endif ()
 
@@ -291,12 +222,12 @@ add_executable(xmlreformat EXCLUDE_FROM_ALL xmlreformat.cpp)
 
 if (HAVE_CRYPTPP)
   target_compile_definitions(cpl PRIVATE -DHAVE_CRYPTOPP)
-  target_link_libraries(GDAL_LINK_LIBRARY INTERFACE CRYPTPP::CRYPTPP)
+  cpl_add_target_link_library(INTERFACE CRYPTPP::CRYPTPP)
 endif ()
 
 if (TARGET OpenSSL::Crypto)
   target_compile_definitions(cpl PRIVATE -DUSE_OPENSSL_CRYPTO)
-  target_link_libraries(GDAL_LINK_LIBRARY INTERFACE OpenSSL::Crypto)
+  cpl_add_target_link_library(INTERFACE OpenSSL::Crypto)
 endif ()
 
 if (CRYPTOPP_USE_ONLY_CRYPTODLL_ALG AND NOT BULID_SHARED_LIBS)
@@ -312,5 +243,5 @@ endif ()
 if (HAVE_ZSTD)
   target_compile_definitions(cpl PRIVATE -DHAVE_ZSTD)
   target_include_directories(cpl PRIVATE ${ZSTD_INCLUDE_DIRS})
-  target_link_libraries(GDAL_LINK_LIBRARY INTERFACE ZSTD::zstd)
+  cpl_add_target_link_library(INTERFACE ZSTD::zstd)
 endif ()
