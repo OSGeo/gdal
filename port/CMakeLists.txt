@@ -197,6 +197,12 @@ if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
 endif ()
 # include path to generated cpl_config.h
 target_include_directories(cpl PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+
+if ((EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/cpl_config.h") AND NOT ("${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_BINARY_DIR}"))
+  # Try to detect issues when building with cmake out of source tree, but against a previous build done in source tree
+  message(FATAL_ERROR "${CMAKE_CURRENT_SOURCE_DIR}/cpl_config.h was found, and likely conflicts with ${CMAKE_CURRENT_BINARY_DIR}/cpl_config.h")
+endif ()
+
 if (WIN32)
   target_sources(cpl PRIVATE cpl_vsil_win32.cpp)
 else ()
