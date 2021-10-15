@@ -1632,9 +1632,11 @@ namespace tut
     // Test that PCIDSK GetMetadataItem() return is stable
     template<> template<> void object::test<21>()
     {
+        auto poDrv = GDALDriver::FromHandle(GDALGetDriverByName("PCIDSK"));
+        if( poDrv == nullptr )
+            return;
         GDALDatasetUniquePtr poDS(
-            GDALDriver::FromHandle(
-                GDALGetDriverByName("PCIDSK"))->Create("/vsimem/tmp.pix", 1, 1, 1, GDT_Byte, nullptr));
+            poDrv->Create("/vsimem/tmp.pix", 1, 1, 1, GDT_Byte, nullptr));
         ensure( poDS != nullptr );
         poDS->SetMetadataItem("FOO", "BAR");
         poDS->SetMetadataItem("BAR", "BAZ");
