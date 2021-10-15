@@ -345,10 +345,11 @@ protected:
 
   FGdbDriver* m_poDriver;
   FGdbDatabaseConnection* m_pConnection;
-  std::vector <FGdbLayer*> m_layers;
+  std::vector <OGRLayer*> m_layers;
   Geodatabase* m_pGeodatabase;
   bool m_bUpdate;
   GDALDriver* m_poOpenFileGDBDrv;
+  std::unique_ptr<GDALDataset> m_poOpenFileGDBDS;
 };
 
 /************************************************************************/

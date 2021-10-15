@@ -2265,3 +2265,25 @@ def test_ogr_fgdb_read_layer_hierarchy():
     assert rg.GetVectorLayerNames() == ['standalone']
     standalone = rg.OpenVectorLayer('standalone')
     assert standalone is not None
+
+
+###############################################################################
+# Test that non-spatial tables which are not present in GDB_Items are listed
+# see https://github.com/OSGeo/gdal/issues/4463
+
+
+def test_ogr_filegdb_non_spatial_table_outside_gdb_items(openfilegdb_drv, fgdb_drv):
+    openfilegdb_drv.Deregister()
+    fgdb_drv.Deregister()
+
+    # Force FileGDB first
+    fgdb_drv.Register()
+    openfilegdb_drv.Register()
+
+    ds = ogr.Open('data/filegdb/table_outside_gdbitems.gdb')
+    assert ds is not None
+    assert ds.GetDriver().GetName() == 'FileGDB'
+
+    assert ds.GetLayerCount() == 3, 'did not get expected layer count'
+    layer_names = set(ds.GetLayer(i).GetName() for i in range(ds.GetLayerCount()))
+    assert layer_names == {'aquaduct', 'flat_table1', 'flat_table2'}

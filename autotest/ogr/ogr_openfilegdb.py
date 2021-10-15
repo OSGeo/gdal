@@ -1623,7 +1623,7 @@ def test_ogr_openfilegdb_list_all_tables_v9():
 
 
 def test_ogr_openfilegdb_non_spatial_table_outside_gdb_items():
-    ds = ogr.Open('data/filegdb/table_outside_gdbitems.gdb.zip')
+    ds = ogr.Open('data/filegdb/table_outside_gdbitems.gdb')
     assert ds is not None
 
     assert ds.GetLayerCount() == 3, 'did not get expected layer count'
@@ -1631,7 +1631,7 @@ def test_ogr_openfilegdb_non_spatial_table_outside_gdb_items():
     assert layer_names == {'aquaduct', 'flat_table1', 'flat_table2'}
 
     # Test with the LIST_ALL_TABLES=YES open option
-    ds_all_table = gdal.OpenEx('data/filegdb/table_outside_gdbitems.gdb.zip', gdal.OF_VECTOR,
+    ds_all_table = gdal.OpenEx('data/filegdb/table_outside_gdbitems.gdb', gdal.OF_VECTOR,
                                  open_options=['LIST_ALL_TABLES=YES'])
 
     assert ds_all_table.GetLayerCount() == 10, 'did not get expected layer count'
