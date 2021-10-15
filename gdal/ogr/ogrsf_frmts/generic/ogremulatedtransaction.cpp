@@ -104,6 +104,7 @@ class OGRDataSourceWithTransaction final: public OGRDataSource
     virtual OGRLayer    *GetLayer(int) override;
     virtual OGRLayer    *GetLayerByName(const char *) override;
     virtual OGRErr      DeleteLayer(int) override;
+    virtual bool        IsLayerPrivate(int iLayer) const override;
 
     virtual int         TestCapability( const char * ) override;
 
@@ -130,6 +131,12 @@ class OGRDataSourceWithTransaction final: public OGRDataSource
     virtual OGRErr      StartTransaction(int bForce=FALSE) override;
     virtual OGRErr      CommitTransaction() override;
     virtual OGRErr      RollbackTransaction() override;
+
+    virtual const OGRFieldDomain* GetFieldDomain(const std::string& name) const override;
+    virtual bool        AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,
+                                       std::string& failureReason) override;
+
+    virtual std::shared_ptr<GDALGroup> GetRootGroup() const override;
 
     virtual char      **GetMetadata( const char * pszDomain = "" ) override;
     virtual CPLErr      SetMetadata( char ** papszMetadata,
@@ -271,6 +278,12 @@ OGRErr      OGRDataSourceWithTransaction::DeleteLayer(int iIndex)
         }
     }
     return eErr;
+}
+
+bool OGRDataSourceWithTransaction::IsLayerPrivate(int iLayer) const
+{
+    if( !m_poBaseDataSource ) return false;
+    return m_poBaseDataSource->IsLayerPrivate(iLayer);
 }
 
 int         OGRDataSourceWithTransaction::TestCapability( const char * pszCap )
@@ -423,6 +436,24 @@ OGRErr OGRDataSourceWithTransaction::RollbackTransaction()
     if( bHasReopenedDS )
         RemapLayers();
     return eErr;
+}
+
+const OGRFieldDomain* OGRDataSourceWithTransaction::GetFieldDomain(const std::string& name) const
+{
+    if( !m_poBaseDataSource ) return nullptr;
+    return m_poBaseDataSource->GetFieldDomain(name);
+}
+
+bool OGRDataSourceWithTransaction::AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain, std::string& failureReason)
+{
+    if( !m_poBaseDataSource ) return false;
+    return m_poBaseDataSource->AddFieldDomain(std::move(domain), failureReason);
+}
+
+std::shared_ptr<GDALGroup> OGRDataSourceWithTransaction::GetRootGroup() const
+{
+    if( !m_poBaseDataSource ) return nullptr;
+    return m_poBaseDataSource->GetRootGroup();
 }
 
 char      **OGRDataSourceWithTransaction::GetMetadata( const char * pszDomain )
