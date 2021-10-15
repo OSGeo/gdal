@@ -173,7 +173,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /*      this request?                                                   */
 /* ==================================================================== */
     auto l_poDS = cpl::down_cast<VRTDataset*>(poDS);
-    if( l_poDS->m_apoOverviews.empty() &&
+    if( l_poDS->m_apoOverviews.empty() && // do not use virtual overviews
         (nBufXSize < nXSize || nBufYSize < nYSize)
         && GetOverviewCount() > 0 )
     {
@@ -718,7 +718,9 @@ CPLErr VRTSourcedRasterBand::ComputeRasterMinMax( int bApproxOK, double* adfMinM
 /* -------------------------------------------------------------------- */
 /*      If we have overview bands, use them for min/max.                */
 /* -------------------------------------------------------------------- */
-    if( bApproxOK && GetOverviewCount() > 0 && !HasArbitraryOverviews() )
+    auto l_poDS = cpl::down_cast<VRTDataset*>(poDS);
+    if( l_poDS->m_apoOverviews.empty() && // do not use virtual overviews
+        bApproxOK && GetOverviewCount() > 0 && !HasArbitraryOverviews() )
     {
         GDALRasterBand * const poBand
             = GetRasterSampleOverview( GDALSTAT_APPROX_NUMSAMPLES );
@@ -814,7 +816,9 @@ VRTSourcedRasterBand::ComputeStatistics( int bApproxOK,
 /* -------------------------------------------------------------------- */
 /*      If we have overview bands, use them for statistics.             */
 /* -------------------------------------------------------------------- */
-    if( bApproxOK && GetOverviewCount() > 0 && !HasArbitraryOverviews() )
+    auto l_poDS = cpl::down_cast<VRTDataset*>(poDS);
+    if( l_poDS->m_apoOverviews.empty() && // do not use virtual overviews
+        bApproxOK && GetOverviewCount() > 0 && !HasArbitraryOverviews() )
     {
         GDALRasterBand * const poBand
             = GetRasterSampleOverview( GDALSTAT_APPROX_NUMSAMPLES );
@@ -907,7 +911,9 @@ CPLErr VRTSourcedRasterBand::GetHistogram( double dfMin, double dfMax,
 /* -------------------------------------------------------------------- */
 /*      If we have overviews, use them for the histogram.               */
 /* -------------------------------------------------------------------- */
-    if( bApproxOK && GetOverviewCount() > 0 && !HasArbitraryOverviews() )
+    auto l_poDS = cpl::down_cast<VRTDataset*>(poDS);
+    if( l_poDS->m_apoOverviews.empty() && // do not use virtual overviews
+        bApproxOK && GetOverviewCount() > 0 && !HasArbitraryOverviews() )
     {
         // FIXME: Should we use the most reduced overview here or use some
         // minimum number of samples like GDALRasterBand::ComputeStatistics()
