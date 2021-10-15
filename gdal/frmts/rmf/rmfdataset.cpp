@@ -763,10 +763,10 @@ RMFDataset::RMFDataset() :
 
 RMFDataset::~RMFDataset()
 {
-    RMFDataset::FlushCache();
+    RMFDataset::FlushCache(true);
     for( size_t n = 0; n != poOvrDatasets.size(); ++n )
     {
-        poOvrDatasets[n]->RMFDataset::FlushCache();
+        poOvrDatasets[n]->RMFDataset::FlushCache(true);
     }
 
     VSIFree( paiTiles );
@@ -1041,10 +1041,10 @@ do {                                                    \
 /*                             FlushCache()                             */
 /************************************************************************/
 
-void RMFDataset::FlushCache()
+void RMFDataset::FlushCache(bool bAtClosing)
 
 {
-    GDALDataset::FlushCache();
+    GDALDataset::FlushCache(bAtClosing);
 
     if(poCompressData != nullptr &&
        poCompressData->oThreadPool.GetThreadCount() > 0)

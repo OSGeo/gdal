@@ -1267,7 +1267,7 @@ GRIBDataset::GRIBDataset() :
 GRIBDataset::~GRIBDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
     if( fp != nullptr )
         VSIFCloseL(fp);
 }

@@ -553,7 +553,8 @@ private:
 
     void        IdentifyAuthorizedGeoreferencingSources();
 
-    void        FlushCacheInternal( bool bFlushDirectory );
+    void        FlushCacheInternal( bool bAtClosing,
+                                    bool bFlushDirectory );
     bool        HasOptimizedReadMultiRange();
 
     bool        AssociateExternalMask();
@@ -614,7 +615,7 @@ private:
                                     int bStrict, char ** papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void * pProgressData );
-    virtual void    FlushCache() override;
+    virtual void    FlushCache(bool bAtClosing) override;
 
     virtual char  **GetMetadataDomainList() override;
     virtual CPLErr  SetMetadata( char **, const char * = "" ) override;
@@ -991,7 +992,7 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             // Trick: we invalidate the JPEG dataset to force a reload
             // of the new content.
             CPLErrorReset();
-            m_poGDS->m_poJPEGDS->FlushCache();
+            m_poGDS->m_poJPEGDS->FlushCache(false);
             if( CPLGetLastErrorNo() != 0 )
             {
                 m_poGDS->m_poJPEGDS.reset();
@@ -1573,7 +1574,7 @@ int GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
     // Make sure that TIFFTAG_STRIPOFFSETS is up-to-date.
     if( m_poGDS->GetAccess() == GA_Update )
     {
-        m_poGDS->FlushCache();
+        m_poGDS->FlushCache(false);
         VSI_TIFFFlushBufferedWrite( TIFFClientdata( m_poGDS->m_hTIFF ) );
     }
 
@@ -1961,7 +1962,7 @@ CPLVirtualMem* GTiffRasterBand::GetVirtualMemAutoInternal( GDALRWFlag eRWFlag,
     // Make sure that TIFFTAG_STRIPOFFSETS is up-to-date.
     if( m_poGDS->GetAccess() == GA_Update )
     {
-        m_poGDS->FlushCache();
+        m_poGDS->FlushCache(false);
         VSI_TIFFFlushBufferedWrite( TIFFClientdata( m_poGDS->m_hTIFF ) );
     }
 
@@ -3819,7 +3820,7 @@ int GTiffDataset::DirectIO( GDALRWFlag eRWFlag,
     // Make sure that TIFFTAG_STRIPOFFSETS is up-to-date.
     if( GetAccess() == GA_Update )
     {
-        FlushCache();
+        FlushCache(false);
         VSI_TIFFFlushBufferedWrite( TIFFClientdata( m_hTIFF ) );
     }
 
@@ -4629,7 +4630,7 @@ int GTiffRasterBand::IGetDataCoverageStatus( int nXOff, int nYOff,
                                              double* pdfDataPct)
 {
     if( eAccess == GA_Update )
-        m_poGDS->FlushCache();
+        m_poGDS->FlushCache(false);
 
     const int iXBlockStart = nXOff / nBlockXSize;
     const int iXBlockEnd = (nXOff + nXSize - 1) / nBlockXSize;
@@ -7800,7 +7801,8 @@ int GTiffDataset::Finalize()
 /* -------------------------------------------------------------------- */
 /*  Ensure any blocks write cached by GDAL gets pushed through libtiff. */
 /* -------------------------------------------------------------------- */
-        FlushCacheInternal( false /* do not call FlushDirectory */ );
+        FlushCacheInternal( true, /* at closing */
+                            false /* do not call FlushDirectory */ );
 
         FillEmptyTiles();
         m_bFillEmptyTilesAtClosing = false;
@@ -7810,7 +7812,7 @@ int GTiffDataset::Finalize()
 /*      Force a complete flush, including either rewriting(moving)      */
 /*      of writing in place the current directory.                      */
 /* -------------------------------------------------------------------- */
-    FlushCacheInternal( true );
+    FlushCacheInternal( true /* at closing */, true );
 
     // Destroy compression queue
     if( m_poCompressQueue )
@@ -7838,7 +7840,7 @@ int GTiffDataset::Finalize()
     {
         PushMetadataToPam();
         m_bMetadataChanged = false;
-        GDALPamDataset::FlushCache();
+        GDALPamDataset::FlushCache(false);
     }
 
 /* -------------------------------------------------------------------- */
@@ -9748,18 +9750,19 @@ bool GTiffDataset::IsBlockAvailable( int nBlockId,
 /*      cache if need be.                                               */
 /************************************************************************/
 
-void GTiffDataset::FlushCache()
+void GTiffDataset::FlushCache(bool bAtClosing)
 
 {
-    FlushCacheInternal( true );
+    FlushCacheInternal( bAtClosing, true );
 }
 
-void GTiffDataset::FlushCacheInternal( bool bFlushDirectory )
+void GTiffDataset::FlushCacheInternal( bool bAtClosing,
+                                       bool bFlushDirectory )
 {
     if( m_bIsFinalized )
         return;
 
-    GDALPamDataset::FlushCache();
+    GDALPamDataset::FlushCache(bAtClosing);
 
     if( m_bLoadedBlockDirty && m_nLoadedBlock != -1 )
         FlushBlockBuf();
@@ -17108,7 +17111,7 @@ CPLErr GTiffDataset::CopyImageryAndMask(GTiffDataset* poDstDS,
             }
         }
     }
-    poDstDS->FlushCache(); // mostly to wait for thread completion
+    poDstDS->FlushCache(false); // mostly to wait for thread completion
     VSIFree(pBlockBuffer);
 
     return eErr;
@@ -18438,7 +18441,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                     dfCurPixels = dfNextCurPixels;
                     GDALDestroyScaledProgress(pScaledData);
 
-                    poDstDS->FlushCache();
+                    poDstDS->FlushCache(false);
 
                     // Copy mask of the overview.
                     if( eErr == CE_None &&
@@ -18461,7 +18464,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                 GDALScaledProgress, pScaledData );
                         dfCurPixels = dfNextCurPixels;
                         GDALDestroyScaledProgress(pScaledData);
-                        poDstDS->m_poMaskDS->FlushCache();
+                        poDstDS->m_poMaskDS->FlushCache(false);
                     }
                 }
 
@@ -19604,7 +19607,7 @@ bool GTiffDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout& sLayout)
 {
     if( eAccess == GA_Update )
     {
-        FlushCache();
+        FlushCache(false);
         Crystalize();
     }
 

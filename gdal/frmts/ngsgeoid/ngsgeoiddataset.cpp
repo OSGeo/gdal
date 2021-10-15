@@ -166,7 +166,7 @@ NGSGEOIDDataset::NGSGEOIDDataset() :
 NGSGEOIDDataset::~NGSGEOIDDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
     if (fp)
         VSIFCloseL(fp);
 }

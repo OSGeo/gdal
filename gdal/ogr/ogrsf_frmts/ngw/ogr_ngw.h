@@ -255,7 +255,7 @@ public:
         const char *pszDomain = "" ) override;
     virtual CPLErr SetMetadataItem( const char *pszName, const char *pszValue,
         const char *pszDomain = "" ) override;
-    virtual void FlushCache() override;
+    virtual void FlushCache(bool bAtClosing) override;
     virtual OGRLayer *ExecuteSQL( const char *pszStatement,
         OGRGeometry *poSpatialFilter, const char *pszDialect ) override;
 

@@ -157,7 +157,7 @@ static GDALDataset *OGRCSVDriverOpen( GDALOpenInfo *poOpenInfo )
         if( oIter != poMap->end() )
         {
             GDALDataset *poOtherDS = oIter->second;
-            poOtherDS->FlushCache();
+            poOtherDS->FlushCache(false);
         }
     }
 

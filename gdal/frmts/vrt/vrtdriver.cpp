@@ -404,7 +404,7 @@ VRTCreateCopy( const char * pszFilename,
     }
 
     CPLErrorReset();
-    poVRTDS->FlushCache();
+    poVRTDS->FlushCache(true);
     if( CPLGetLastErrorType() != CE_None )
     {
         delete poVRTDS;

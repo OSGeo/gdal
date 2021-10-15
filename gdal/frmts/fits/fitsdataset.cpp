@@ -1730,7 +1730,7 @@ FITSRasterBand::FITSRasterBand( FITSDataset *poDSIn, int nBandIn ) :
 
 FITSRasterBand::~FITSRasterBand()
 {
-    FlushCache();
+    FlushCache(true);
 }
 
 /************************************************************************/
@@ -1989,7 +1989,7 @@ FITSDataset::~FITSDataset() {
       }
 
       // Make sure we flush the raster cache before we close the file!
-      FlushCache();
+      FlushCache(true);
     }
 
     // Close the FITS handle

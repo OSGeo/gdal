@@ -99,7 +99,7 @@ class CPL_DLL OGRMutexedDataSource : public OGRDataSource
                                     const char *pszDialect ) override;
     virtual void        ReleaseResultSet( OGRLayer * poResultsSet ) override;
 
-    virtual void        FlushCache() override;
+    virtual void        FlushCache(bool bAtClosing) override;
 
     virtual OGRErr      StartTransaction(int bForce=FALSE) override;
     virtual OGRErr      CommitTransaction() override;

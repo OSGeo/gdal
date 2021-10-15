@@ -143,7 +143,7 @@ DIMAPDataset::DIMAPDataset() :
 DIMAPDataset::~DIMAPDataset()
 
 {
-    DIMAPDataset::FlushCache();
+    DIMAPDataset::FlushCache(true);
 
     CPLDestroyXMLNode( psProduct );
 

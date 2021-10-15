@@ -482,7 +482,7 @@ double GSBGRasterBand::GetMaximum( int *pbSuccess )
 GSBGDataset::~GSBGDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
     if( fp != nullptr )
         VSIFCloseL( fp );
 }

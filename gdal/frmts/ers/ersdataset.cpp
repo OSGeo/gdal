@@ -89,7 +89,7 @@ class ERSDataset final: public RawDataset
     ERSDataset();
     ~ERSDataset() override;
 
-    void FlushCache(void) override;
+    void FlushCache(bool bAtClosing) override;
     CPLErr GetGeoTransform( double * padfTransform ) override;
     CPLErr SetGeoTransform( double *padfTransform ) override;
     const char *_GetProjectionRef(void) override;
@@ -160,7 +160,7 @@ ERSDataset::ERSDataset() :
 ERSDataset::~ERSDataset()
 
 {
-    ERSDataset::FlushCache();
+    ERSDataset::FlushCache(true);
 
     if( fpImage != nullptr )
     {
@@ -212,7 +212,7 @@ int ERSDataset::CloseDependentDatasets()
 /*                             FlushCache()                             */
 /************************************************************************/
 
-void ERSDataset::FlushCache()
+void ERSDataset::FlushCache(bool bAtClosing)
 
 {
     if( bHDRDirty )
@@ -233,7 +233,7 @@ void ERSDataset::FlushCache()
         }
     }
 
-    RawDataset::FlushCache();
+    RawDataset::FlushCache(bAtClosing);
 }
 
 /************************************************************************/

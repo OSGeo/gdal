@@ -154,16 +154,16 @@ VRTSimpleSource::~VRTSimpleSource()
 /*                           FlushCache()                               */
 /************************************************************************/
 
-CPLErr VRTSimpleSource::FlushCache()
+CPLErr VRTSimpleSource::FlushCache(bool bAtClosing)
 
 {
     if( m_poMaskBandMainBand != nullptr )
     {
-        return m_poMaskBandMainBand->FlushCache();
+        return m_poMaskBandMainBand->FlushCache(bAtClosing);
     }
     else if( m_poRasterBand != nullptr )
     {
-        return m_poRasterBand->FlushCache();
+        return m_poRasterBand->FlushCache(bAtClosing);
     }
     return CE_None;
 }

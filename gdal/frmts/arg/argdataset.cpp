@@ -88,7 +88,7 @@ ARGDataset::~ARGDataset()
 {
     CPLFree(pszFilename);
 
-    FlushCache();
+    FlushCache(true);
     if( fpImage != nullptr )
         VSIFCloseL( fpImage );
 }

@@ -172,7 +172,7 @@ double GTXRasterBand::GetNoDataValue( int *pbSuccess )
 GTXDataset::~GTXDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
 
     if( fpImage != nullptr )
     {

@@ -535,7 +535,7 @@ RS2Dataset::RS2Dataset() :
 RS2Dataset::~RS2Dataset()
 
 {
-    RS2Dataset::FlushCache();
+    RS2Dataset::FlushCache(true);
 
     CPLDestroyXMLNode( psProduct );
     CPLFree( pszProjection );

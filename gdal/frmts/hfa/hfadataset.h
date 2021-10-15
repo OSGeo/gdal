@@ -118,7 +118,7 @@ class HFADataset final : public GDALPamDataset
     virtual CPLErr SetMetadataItem( const char *, const char *,
                                     const char * = "" ) override;
 
-    virtual void   FlushCache() override;
+    virtual void   FlushCache(bool bAtClosing) override;
     virtual CPLErr IBuildOverviews( const char *pszResampling,
                                     int nOverviews, int *panOverviewList,
                                     int nListBands, int *panBandList,

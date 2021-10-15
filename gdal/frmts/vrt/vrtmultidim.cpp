@@ -225,7 +225,7 @@ void VRTGroup::Serialize() const
     if( fpVRT == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                "Failed to write .vrt file in FlushCache()." );
+                "Failed to write .vrt file in Serialize()." );
         return;
     }
 
@@ -250,7 +250,7 @@ void VRTGroup::Serialize() const
     if( !bOK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                "Failed to write .vrt file in FlushCache()." );
+                "Failed to write .vrt file in Serialize()." );
         return;
     }
 }

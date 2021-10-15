@@ -7,6 +7,11 @@ MIGRATION GUIDE FROM GDAL 3.3 to GDAL 3.4
         - (nGeomFieldCount, paoGeomFieldDefn) ==> std::vector<std::unique_ptr<OGRGeomFieldDefn>> apoGeomFieldDefn{};
     * OGRFeatureDefn::AddGeomFieldDefn( OGRGeomFieldDefn *, bCopy = FALSE ) is
       replaced by AddGeomFieldDefn( std::unique_ptr<OGRGeomFieldDefn>&& )
+    * GDALDataset::FlushCache() and GDALRasterBand::FlushCache() now takes a bool bAtClosing argument.
+      That argument is set to true when FlushCache() is called from the dataset/band destructor.
+      This can be used as a hint, for example to avoid doing extra work if the dataset is marked
+      for deletion at closing. Driver implementing that method should propagate the argument to the
+      base implementation when calling it.
 
 MIGRATION GUIDE FROM GDAL 3.2 to GDAL 3.3
 -----------------------------------------

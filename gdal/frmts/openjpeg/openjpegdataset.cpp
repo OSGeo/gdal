@@ -1221,7 +1221,7 @@ JP2OpenJPEGDataset::JP2OpenJPEGDataset()
 JP2OpenJPEGDataset::~JP2OpenJPEGDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
 
 #if IS_OPENJPEG_OR_LATER(2,3,0)
     if( iLevel == 0 )

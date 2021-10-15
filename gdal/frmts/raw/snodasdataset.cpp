@@ -185,7 +185,7 @@ SNODASDataset::SNODASDataset() :
 SNODASDataset::~SNODASDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
 }
 
 /************************************************************************/

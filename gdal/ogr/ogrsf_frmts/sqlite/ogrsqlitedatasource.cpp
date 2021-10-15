@@ -2278,7 +2278,7 @@ std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*>
 /*                              FlushCache()                            */
 /************************************************************************/
 
-void OGRSQLiteDataSource::FlushCache()
+void OGRSQLiteDataSource::FlushCache(bool bAtClosing)
 {
     for( int iLayer = 0; iLayer < m_nLayers; iLayer++ )
     {
@@ -2289,7 +2289,7 @@ void OGRSQLiteDataSource::FlushCache()
             poLayer->CreateSpatialIndexIfNecessary();
         }
     }
-    GDALDataset::FlushCache();
+    GDALDataset::FlushCache(bAtClosing);
 }
 
 /************************************************************************/

@@ -178,7 +178,7 @@ class NITFDataset final: public GDALPamDataset
     virtual char      **GetMetadata( const char * pszDomain = "" ) override;
     virtual const char *GetMetadataItem( const char * pszName,
                                          const char * pszDomain = "" ) override;
-    virtual void   FlushCache() override;
+    virtual void   FlushCache(bool bAtClosing) override;
     virtual CPLErr IBuildOverviews( const char *, int, int *,
                                     int, int *, GDALProgressFunc, void * ) override;
 
@@ -270,7 +270,7 @@ class NITFProxyPamRasterBand CPL_NON_FINAL: public GDALPamRasterBand
         /*virtual CPLErr      SetMetadataItem( const char * pszName,
                                             const char * pszValue,
                                             const char * pszDomain = "" );*/
-        virtual CPLErr FlushCache() override;
+        virtual CPLErr FlushCache(bool bAtClosing) override;
         /*virtual char **GetCategoryNames();*/
         virtual double GetNoDataValue( int *pbSuccess = nullptr ) override;
         virtual double GetMinimum( int *pbSuccess = nullptr ) override;

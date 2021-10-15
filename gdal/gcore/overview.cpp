@@ -4680,7 +4680,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
          eErr == CE_None && iOverview < nOverviewCount;
          ++iOverview )
     {
-        eErr = papoOvrBands[iOverview]->FlushCache();
+        eErr = papoOvrBands[iOverview]->FlushCache(false);
     }
 
     if( eErr == CE_None )
@@ -5320,7 +5320,7 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
         for( int iBand = 0; iBand < nBands; ++iBand )
         {
             CPLFree(apaChunk[iBand]);
-            papapoOverviewBands[iBand][iOverview]->FlushCache();
+            papapoOverviewBands[iBand][iOverview]->FlushCache(false);
 
             CPLFree(apabyChunkNoDataMask[iBand]);
         }

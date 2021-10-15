@@ -237,7 +237,7 @@ SRTMHGTDataset::SRTMHGTDataset()
 
 SRTMHGTDataset::~SRTMHGTDataset()
 {
-  FlushCache();
+  FlushCache(true);
   if(fpImage != nullptr)
     VSIFCloseL(fpImage);
   CPLFree(pabyBuffer);

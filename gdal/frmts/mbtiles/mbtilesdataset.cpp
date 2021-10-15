@@ -202,7 +202,7 @@ class MBTilesDataset final: public GDALPamDataset, public GDALGPKGMBTilesLikePse
     protected:
         // Coming from GDALGPKGMBTilesLikePseudoDataset
 
-        virtual CPLErr                  IFlushCacheWithErrCode() override;
+        virtual CPLErr                  IFlushCacheWithErrCode(bool bAtClosing) override;
         virtual int                     IGetRasterCount() override { return nBands; }
         virtual GDALRasterBand*         IGetRasterBand(int nBand) override { return GetRasterBand(nBand); }
         virtual sqlite3                *IGetDB() override { return hDB; }
@@ -852,7 +852,7 @@ MBTilesDataset::~MBTilesDataset()
     // Need to explicitly clear it before close hDS
     m_apoLayers.clear();
 
-    FlushCache();
+    FlushCache(true);
 
     if (poMainDS == nullptr)
     {
@@ -950,17 +950,17 @@ bool MBTilesDataset::ICanIWriteBlock()
 }
 
 /************************************************************************/
-/*                         IFlushCacheWithErrCode()                            */
+/*                         IFlushCacheWithErrCode()                     */
 /************************************************************************/
 
-CPLErr MBTilesDataset::IFlushCacheWithErrCode()
+CPLErr MBTilesDataset::IFlushCacheWithErrCode(bool bAtClosing)
 
 {
     if( m_bInFlushCache )
         return CE_None;
     m_bInFlushCache = true;
     // Short circuit GDALPamDataset to avoid serialization to .aux.xml
-    GDALDataset::FlushCache();
+    GDALDataset::FlushCache(bAtClosing);
 
     CPLErr eErr = FlushTiles();
 
@@ -3446,7 +3446,7 @@ CPLErr MBTilesDataset::IBuildOverviews(
     if( nOverviews == 0 )
     {
         for(int i=0;i<m_nOverviewCount;i++)
-            m_papoOverviewDS[i]->FlushCache();
+            m_papoOverviewDS[i]->FlushCache(false);
         char* pszSQL = sqlite3_mprintf("DELETE FROM 'tiles' WHERE zoom_level < %d",
                                        m_nZoomLevel);
         char* pszErrMsg = nullptr;
@@ -3491,7 +3491,7 @@ CPLErr MBTilesDataset::IBuildOverviews(
         return CE_Failure;
     }
 
-    FlushCache();
+    FlushCache(false);
     for(int i=0;i<nOverviews;i++)
     {
         if( panOverviewList[i] < 2 )

@@ -404,7 +404,7 @@ VRTWarpedDataset::VRTWarpedDataset( int nXSize, int nYSize ) :
 VRTWarpedDataset::~VRTWarpedDataset()
 
 {
-    VRTWarpedDataset::FlushCache();
+    VRTWarpedDataset::FlushCache(true);
     VRTWarpedDataset::CloseDependentDatasets();
 }
 
@@ -1732,7 +1732,7 @@ VRTWarpedRasterBand::VRTWarpedRasterBand( GDALDataset *poDSIn, int nBandIn,
 VRTWarpedRasterBand::~VRTWarpedRasterBand()
 
 {
-    FlushCache();
+    FlushCache(true);
 }
 
 /************************************************************************/

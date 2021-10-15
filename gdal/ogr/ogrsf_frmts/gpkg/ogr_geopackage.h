@@ -248,7 +248,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
         virtual CPLErr      GetGeoTransform( double* padfGeoTransform ) override;
         virtual CPLErr      SetGeoTransform( double* padfGeoTransform ) override;
 
-        virtual void        FlushCache() override;
+        virtual void        FlushCache(bool bAtClosing) override;
         virtual CPLErr      IBuildOverviews( const char *, int, int *,
                                              int, int *, GDALProgressFunc, void * ) override;
 
@@ -313,7 +313,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
     protected:
         // Coming from GDALGPKGMBTilesLikePseudoDataset
 
-        virtual CPLErr                  IFlushCacheWithErrCode() override;
+        virtual CPLErr                  IFlushCacheWithErrCode(bool bAtClosing) override;
         virtual int                     IGetRasterCount() override { return nBands; }
         virtual GDALRasterBand*         IGetRasterBand(int nBand) override { return GetRasterBand(nBand); }
         virtual sqlite3                *IGetDB() override { return GetDB(); }

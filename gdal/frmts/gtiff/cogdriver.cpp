@@ -1090,7 +1090,7 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
     GDALDestroyScaledProgress(pScaledProgress);
 
     if( poRet )
-        poRet->FlushCache();
+        poRet->FlushCache(false);
 
     CPLDebug("COG", "Generating final product: end");
     return poRet;

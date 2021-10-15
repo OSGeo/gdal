@@ -277,7 +277,7 @@ class JPGDatasetCommon CPL_NON_FINAL: public GDALPamDataset
 
     virtual char **GetFileList(void) override;
 
-    virtual void FlushCache(void) override;
+    virtual void FlushCache(bool bAtClosing) override;
 
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );

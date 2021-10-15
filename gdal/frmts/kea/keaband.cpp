@@ -120,7 +120,7 @@ KEARasterBand::~KEARasterBand()
     }
 
     // according to the docs, this is required
-    this->FlushCache();
+    this->FlushCache(true);
 
     // decrement the recount and delete if needed
     if( m_pRefCount->DecRef() )
@@ -624,7 +624,7 @@ CPLErr KEARasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
 {
     if( bForce )
     {
-        return GDALPamRasterBand::GetDefaultHistogram(pdfMin, pdfMax, pnBuckets, 
+        return GDALPamRasterBand::GetDefaultHistogram(pdfMin, pdfMax, pnBuckets,
                         ppanHistogram, bForce, fn, pProgressData);
     }
     else
@@ -755,7 +755,7 @@ CPLErr KEARasterBand::SetDefaultRAT(const GDALRasterAttributeTable *poRAT)
         KEARasterAttributeTable *pKEATable = (KEARasterAttributeTable*)this->GetDefaultRAT();
         if( pKEATable == nullptr )
             return CE_Failure;
-            
+
         int numRows = poRAT->GetRowCount();
         pKEATable->SetRowCount(numRows);
 
@@ -1265,7 +1265,7 @@ kealib::KEALayerType KEARasterBand::getLayerType() const
 {
     return m_pImageIO->getImageBandLayerType(nBand);
 }
-void KEARasterBand::setLayerType(kealib::KEALayerType eLayerType) 
+void KEARasterBand::setLayerType(kealib::KEALayerType eLayerType)
 {
     m_pImageIO->setImageBandLayerType(nBand, eLayerType);
 }

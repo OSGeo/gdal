@@ -91,7 +91,7 @@ NDFDataset::NDFDataset() :
 NDFDataset::~NDFDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
     CPLFree( pszProjection );
     CSLDestroy( papszHeader );
     CSLDestroy( papszExtraFiles );

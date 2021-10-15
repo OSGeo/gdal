@@ -310,7 +310,7 @@ private:
 
   protected:
     virtual int         CloseDependentDatasets() override;
-    virtual void        FlushCache() override;
+    virtual void        FlushCache(bool bAtClosing) override;
 
 public:
     PostGISRasterDataset();

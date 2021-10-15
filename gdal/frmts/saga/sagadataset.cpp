@@ -319,7 +319,7 @@ SAGADataset::~SAGADataset()
 
 {
     CPLFree( pszProjection );
-    FlushCache();
+    FlushCache(true);
     if( fp != nullptr )
         VSIFCloseL( fp );
 }

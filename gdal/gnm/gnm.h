@@ -210,7 +210,7 @@ public:
                                    char **papszOptions = nullptr ) override;
 
     virtual int CloseDependentDatasets() override;
-    virtual void FlushCache(void) override;
+    virtual void FlushCache(bool bAtClosing) override;
 
     // GNMNetwork Interface
 

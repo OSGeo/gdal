@@ -544,7 +544,7 @@ MG4LidarDataset::MG4LidarDataset() :
 MG4LidarDataset::~MG4LidarDataset()
 
 {
-   FlushCache();
+   FlushCache(true);
    if ( papoOverviewDS )
    {
       for( int i = 0; i < nOverviewCount; i++ )

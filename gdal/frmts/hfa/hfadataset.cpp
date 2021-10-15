@@ -1861,7 +1861,7 @@ HFARasterBand::HFARasterBand( HFADataset *poDSIn, int nBandIn, int iOverview ) :
 HFARasterBand::~HFARasterBand()
 
 {
-    FlushCache();
+    FlushCache(true);
 
     for( int iOvIndex = 0; iOvIndex < nOverviews; iOvIndex++ )
     {
@@ -3116,7 +3116,7 @@ HFADataset::HFADataset() :
 HFADataset::~HFADataset()
 
 {
-    HFADataset::FlushCache();
+    HFADataset::FlushCache(true);
 
     // Destroy the raster bands if they exist.  We forcibly clean
     // them up now to avoid any effort to write to them after the
@@ -3148,10 +3148,10 @@ HFADataset::~HFADataset()
 /*                             FlushCache()                             */
 /************************************************************************/
 
-void HFADataset::FlushCache()
+void HFADataset::FlushCache(bool bAtClosing)
 
 {
-    GDALPamDataset::FlushCache();
+    GDALPamDataset::FlushCache(bAtClosing);
 
     if( eAccess != GA_Update )
         return;

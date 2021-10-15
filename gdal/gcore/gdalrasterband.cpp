@@ -86,7 +86,12 @@ GDALRasterBand::GDALRasterBand(int bForceCachedIOIn):
 GDALRasterBand::~GDALRasterBand()
 
 {
-    GDALRasterBand::FlushCache();
+    if( poDS && poDS->bSuppressOnClose )
+    {
+        if( poBandBlockCache )
+            poBandBlockCache->DisableDirtyBlockWriting();
+    }
+    GDALRasterBand::FlushCache(true);
 
     delete poBandBlockCache;
 
@@ -1010,12 +1015,16 @@ int GDALRasterBand::InitBlockInfo()
  *
  * This method is the same as the C function GDALFlushRasterCache().
  *
+ * @param bAtClosing Whether this is called from a GDALDataset destructor
  * @return CE_None on success.
  */
 
-CPLErr GDALRasterBand::FlushCache()
+CPLErr GDALRasterBand::FlushCache(bool bAtClosing)
 
 {
+    if( bAtClosing && poDS && poDS->bSuppressOnClose && poBandBlockCache )
+        poBandBlockCache->DisableDirtyBlockWriting();
+
     CPLErr eGlobalErr = eFlushBlockErr;
 
     if (eFlushBlockErr != CE_None)
@@ -1047,7 +1056,7 @@ CPLErr CPL_STDCALL GDALFlushRasterCache( GDALRasterBandH hBand )
 {
     VALIDATE_POINTER1( hBand, "GDALFlushRasterCache", CE_Failure );
 
-    return GDALRasterBand::FromHandle(hBand)->FlushCache();
+    return GDALRasterBand::FromHandle(hBand)->FlushCache(false);
 }
 
 /************************************************************************/

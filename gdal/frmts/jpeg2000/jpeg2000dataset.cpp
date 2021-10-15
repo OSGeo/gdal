@@ -456,7 +456,7 @@ JPEG2000Dataset::JPEG2000Dataset() :
 JPEG2000Dataset::~JPEG2000Dataset()
 
 {
-    FlushCache();
+    FlushCache(true);
 
     if ( psStream )
         jas_stream_close( psStream );

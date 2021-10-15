@@ -6728,8 +6728,8 @@ lbl_next_depth:
         {
             flushCaches[0] = false;
             // When changing of 2D slice, flush GDAL 2D buffers
-            m_poParentDS->FlushCache();
-            m_poReprojectedDS->FlushCache();
+            m_poParentDS->FlushCache(false);
+            m_poReprojectedDS->FlushCache(false);
         }
 
         if( !GDALMDRasterIOFromBand(m_poReprojectedDS->GetRasterBand(1),

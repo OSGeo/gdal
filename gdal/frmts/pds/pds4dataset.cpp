@@ -528,7 +528,7 @@ PDS4Dataset::~PDS4Dataset()
 {
     if( m_bMustInitImageFile)
         CPL_IGNORE_RET_VAL(InitImageFile());
-    PDS4Dataset::FlushCache();
+    PDS4Dataset::FlushCache(true);
     if( m_bCreateHeader || m_bDirtyHeader )
         WriteHeader();
     if( m_fpImage )
@@ -3010,7 +3010,7 @@ bool PDS4Dataset::InitImageFile()
                     return false;
                 }
             }
-            m_poExternalDS->FlushCache();
+            m_poExternalDS->FlushCache(false);
 
             // Check that blocks are effectively written in expected order.
             GIntBig nLastOffset = 0;
@@ -3069,7 +3069,7 @@ bool PDS4Dataset::InitImageFile()
                 }
             }
             VSIFree(pBlockData);
-            m_poExternalDS->FlushCache();
+            m_poExternalDS->FlushCache(false);
 
             // Check that blocks are effectively written in expected order.
             GIntBig nLastOffset = 0;
@@ -4706,7 +4706,7 @@ GDALDataset* PDS4Dataset::CreateCopy( const char *pszFilename,
     {
         CPLErr eErr = GDALDatasetCopyWholeRaster( poSrcDS, poDS,
                                            nullptr, pfnProgress, pProgressData );
-        poDS->FlushCache();
+        poDS->FlushCache(false);
         if( eErr != CE_None )
         {
             delete poDS;

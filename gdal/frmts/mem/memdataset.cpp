@@ -259,7 +259,7 @@ CPLErr MEMRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     }
 
     // In case block based I/O has been done before.
-    FlushCache();
+    FlushCache(false);
 
     if( eRWFlag == GF_Read )
     {
@@ -352,7 +352,7 @@ CPLErr MEMDataset::IRasterIO( GDALRWFlag eRWFlag,
         }
         if( iBandIndex == nBandCount )
         {
-            FlushCache();
+            FlushCache(false);
             if( eRWFlag == GF_Read )
             {
                 for(int iLine=0;iLine<nYSize;iLine++)
@@ -792,7 +792,10 @@ MEMDataset::MEMDataset() :
 MEMDataset::~MEMDataset()
 
 {
-    FlushCache();
+    const bool bSuppressOnCloseBackup = bSuppressOnClose;
+    bSuppressOnClose = true;
+    FlushCache(true);
+    bSuppressOnClose = bSuppressOnCloseBackup;
 
     GDALDeinitGCPs( m_nGCPCount, m_pasGCPs );
     CPLFree( m_pasGCPs );

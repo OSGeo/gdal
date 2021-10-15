@@ -77,7 +77,7 @@ class BTDataset final: public GDALPamDataset
     CPLErr GetGeoTransform( double * ) override;
     CPLErr SetGeoTransform( double * ) override;
 
-    void FlushCache() override;
+    void FlushCache(bool bAtClosing) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -390,7 +390,7 @@ BTDataset::BTDataset() :
 BTDataset::~BTDataset()
 
 {
-    BTDataset::FlushCache();
+    BTDataset::FlushCache(true);
     if( fpImage != nullptr )
     {
         if( VSIFCloseL( fpImage ) != 0 )
@@ -407,10 +407,10 @@ BTDataset::~BTDataset()
 /*      We override this to include flush out the header block.         */
 /************************************************************************/
 
-void BTDataset::FlushCache()
+void BTDataset::FlushCache(bool bAtClosing)
 
 {
-    GDALDataset::FlushCache();
+    GDALDataset::FlushCache(bAtClosing);
 
     if( !bHeaderModified )
         return;

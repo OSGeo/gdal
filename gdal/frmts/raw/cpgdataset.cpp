@@ -133,7 +133,7 @@ CPGDataset::CPGDataset() :
 CPGDataset::~CPGDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
 
     for( int iBand = 0; iBand < 4; iBand++ )
     {

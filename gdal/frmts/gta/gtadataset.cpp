@@ -796,7 +796,7 @@ GTADataset::GTADataset()
 GTADataset::~GTADataset()
 
 {
-    FlushCache();
+    FlushCache(true);
     VSIFree( pszGCPProjection );
     for( int i = 0; i < nGCPs; i++ )
     {

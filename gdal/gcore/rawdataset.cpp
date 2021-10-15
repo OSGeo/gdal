@@ -304,7 +304,7 @@ RawRasterBand::~RawRasterBand()
 
     CSLDestroy(papszCategoryNames);
 
-    RawRasterBand::FlushCache();
+    RawRasterBand::FlushCache(true);
 
     if (bOwnsFP)
     {
@@ -360,10 +360,10 @@ void RawRasterBand::SetAccess(GDALAccess eAccessIn) { eAccess = eAccessIn; }
 /*      write block function as it is kind of expensive.                */
 /************************************************************************/
 
-CPLErr RawRasterBand::FlushCache()
+CPLErr RawRasterBand::FlushCache(bool bAtClosing)
 
 {
-    CPLErr eErr = GDALRasterBand::FlushCache();
+    CPLErr eErr = GDALRasterBand::FlushCache(bAtClosing);
     if( eErr != CE_None )
     {
         bNeedFileFlush = false;
@@ -1020,11 +1020,11 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 cpl::down_cast<RawRasterBand *>(poDS->GetRasterBand(1));
             CPLAssert(poFirstBand);
             if( poFirstBand->bNeedFileFlush )
-                RawRasterBand::FlushCache();
+                RawRasterBand::FlushCache(false);
         }
     }
     if( bNeedFileFlush )
-        RawRasterBand::FlushCache();
+        RawRasterBand::FlushCache(false);
 
     // Read data.
     if ( eRWFlag == GF_Read )
@@ -1469,7 +1469,7 @@ CPLVirtualMem  *RawRasterBand::GetVirtualMemAuto( GDALRWFlag eRWFlag,
                                                  pnLineSpace, papszOptions);
     }
 
-    FlushCache();
+    FlushCache(false);
 
     CPLVirtualMem *pVMem = CPLVirtualMemFileMapNew(
         fpRawL, nImgOffset, nSize,

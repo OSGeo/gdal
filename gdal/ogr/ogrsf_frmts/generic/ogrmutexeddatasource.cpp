@@ -187,10 +187,10 @@ void        OGRMutexedDataSource::ReleaseResultSet( OGRLayer * poResultsSet )
     m_poBaseDataSource->ReleaseResultSet(poResultsSet);
 }
 
-void      OGRMutexedDataSource::FlushCache()
+void      OGRMutexedDataSource::FlushCache(bool bAtClosing)
 {
     CPLMutexHolderOptionalLockD(m_hGlobalMutex);
-    return m_poBaseDataSource->FlushCache();
+    return m_poBaseDataSource->FlushCache(bAtClosing);
 }
 
 OGRErr OGRMutexedDataSource::StartTransaction(int bForce)

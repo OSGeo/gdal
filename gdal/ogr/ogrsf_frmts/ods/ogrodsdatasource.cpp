@@ -105,7 +105,7 @@ void OGRODSLayer::SetUpdated(bool bUpdatedIn)
 
 OGRErr OGRODSLayer::SyncToDisk()
 {
-    poDS->FlushCache();
+    poDS->FlushCache(false);
     return OGRERR_NONE;
 }
 
@@ -251,7 +251,7 @@ OGRODSDataSource::OGRODSDataSource() :
 OGRODSDataSource::~OGRODSDataSource()
 
 {
-    OGRODSDataSource::FlushCache();
+    OGRODSDataSource::FlushCache(true);
 
     CPLFree( pszName );
 
@@ -1838,7 +1838,7 @@ static void WriteLayer(VSILFILE* fp, OGRLayer* poLayer)
 /*                            FlushCache()                              */
 /************************************************************************/
 
-void OGRODSDataSource::FlushCache()
+void OGRODSDataSource::FlushCache(bool /* bAtClosing */)
 {
     if (!bUpdated)
         return;

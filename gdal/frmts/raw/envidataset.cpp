@@ -267,11 +267,11 @@ ENVIDataset::ENVIDataset() :
 ENVIDataset::~ENVIDataset()
 
 {
-    ENVIDataset::FlushCache();
+    ENVIDataset::FlushCache(true);
     if( fpImage )
     {
         // Make sure the binary file has the expected size
-        if( bFillFile && nBands > 0)
+        if( !bSuppressOnClose && bFillFile && nBands > 0)
         {
             const int nDataSize =
                 GDALGetDataTypeSizeBytes(GetRasterBand(1)->GetRasterDataType());
@@ -315,14 +315,14 @@ ENVIDataset::~ENVIDataset()
 /*                             FlushCache()                             */
 /************************************************************************/
 
-void ENVIDataset::FlushCache()
+void ENVIDataset::FlushCache(bool bAtClosing)
 
 {
-    RawDataset::FlushCache();
+    RawDataset::FlushCache(bAtClosing);
 
     GDALRasterBand *band = GetRasterCount() > 0 ? GetRasterBand(1) : nullptr;
 
-    if ( band == nullptr || !bHeaderDirty )
+    if ( band == nullptr || !bHeaderDirty || (bAtClosing && bSuppressOnClose) )
         return;
 
     // If opening an existing file in Update mode (i.e. "r+") we need to make

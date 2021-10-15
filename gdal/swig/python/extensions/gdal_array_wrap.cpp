@@ -3688,7 +3688,7 @@ NUMPYDataset::~NUMPYDataset()
         CPLFree( pasGCPList );
     }
 
-    FlushCache();
+    FlushCache(true);
 
     // Although the module has thread disabled, we go here from GDALClose()
     SWIG_PYTHON_THREAD_BEGIN_BLOCK;

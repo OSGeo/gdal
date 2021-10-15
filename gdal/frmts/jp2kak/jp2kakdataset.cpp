@@ -660,7 +660,7 @@ JP2KAKDataset::JP2KAKDataset()
 JP2KAKDataset::~JP2KAKDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
 
     if( poInput != nullptr )
     {

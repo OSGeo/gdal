@@ -967,7 +967,7 @@ BMPDataset::BMPDataset() :
 
 BMPDataset::~BMPDataset()
 {
-    FlushCache();
+    FlushCache(true);
 
     CPLFree( pabyColorTable );
     if ( poColorTable )
