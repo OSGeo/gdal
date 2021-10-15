@@ -32,7 +32,7 @@ target_public_header(
   gdal_csv.h)
 
 add_library(
-  cpl STATIC
+  cpl OBJECT
   cpl_alibaba_oss.cpp
   cpl_azure.cpp
   cpl_conv.cpp
@@ -101,14 +101,8 @@ add_library(
   cpl_json_streaming_writer.cpp
   cpl_vax.cpp
   cpl_compressor.cpp)
-set_target_properties(
-  cpl
-  PROPERTIES CXX_STANDARD 11
-             CXX_STANDARD_REQUIRED ON
-             POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS}
-             LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-             ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-target_link_libraries(GDAL_LINK_LIBRARY INTERFACE cpl)
+target_sources(gdal PRIVATE $<TARGET_OBJECTS:cpl>)
+set_property(TARGET cpl PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
   set_property(
     SOURCE cpl_conv.cpp
@@ -216,10 +210,15 @@ if (HAVE_AVX_AT_COMPILE_TIME)
   target_compile_definitions(cpl PRIVATE -DHAVE_AVX_AT_COMPILE_TIME)
 endif ()
 
+if (NOT WIN32)
+  target_link_libraries(GDAL_LINK_LIBRARY INTERFACE ${CMAKE_DL_LIBS})
+endif ()
+
 if (GDAL_USE_LIBJSONC_INTERNAL)
   target_include_directories(cpl PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
 else ()
-  target_link_libraries(cpl PRIVATE JSONC::JSONC)
+  target_include_directories(cpl PRIVATE ${JSONC_INCLUDE_DIR})
+  target_link_libraries(GDAL_LINK_LIBRARY INTERFACE JSONC::JSONC)
 endif ()
 
 target_compile_definitions(cpl PRIVATE -DHAVE_LIBZ -DZIP_SUPPORT)
@@ -232,7 +231,7 @@ else ()
   if (MSVC)
     target_compile_definitions(cpl PRIVATE -DZLIB_DLL)
   endif (MSVC)
-  target_link_libraries(cpl PRIVATE ZLIB::ZLIB)
+  target_link_libraries(GDAL_LINK_LIBRARY INTERFACE ZLIB::ZLIB)
 endif ()
 
 if (HAVE_CURL)
@@ -251,7 +250,7 @@ if (HAVE_ICONV)
       target_compile_definitions(cpl PRIVATE -DLIBICONV_PLUG)
     endif ()
     target_sources(cpl PRIVATE cpl_recode_iconv.cpp)
-    target_link_libraries(cpl PRIVATE Iconv::Iconv)
+    target_link_libraries(GDAL_LINK_LIBRARY INTERFACE Iconv::Iconv)
   endif ()
 endif ()
 
@@ -259,7 +258,7 @@ if (ODBC_FOUND)
   target_sources(cpl PRIVATE cpl_odbc.cpp)
   target_public_header(TARGET gdal HEADERS cpl_odbc.h)
   target_include_directories(cpl PRIVATE ${ODBC_INCLUDE_DIRS})
-  target_link_libraries(cpl PRIVATE ODBC::ODBC ODBC::ODBCINST)
+  target_link_libraries(GDAL_LINK_LIBRARY INTERFACE ODBC::ODBC ODBC::ODBCINST)
 endif ()
 
 if (GDAL_USE_XMLREFORMAT)
@@ -272,7 +271,7 @@ if (MSVC)
   endif ()
 else ()
   if (Threads_FOUND)
-    target_link_libraries(cpl PRIVATE Threads::Threads)
+    target_link_libraries(GDAL_LINK_LIBRARY INTERFACE Threads::Threads)
   endif ()
 endif ()
 
@@ -292,12 +291,12 @@ add_executable(xmlreformat EXCLUDE_FROM_ALL xmlreformat.cpp)
 
 if (HAVE_CRYPTPP)
   target_compile_definitions(cpl PRIVATE -DHAVE_CRYPTOPP)
-  target_link_libraries(cpl PRIVATE CRYPTPP::CRYPTPP)
+  target_link_libraries(GDAL_LINK_LIBRARY INTERFACE CRYPTPP::CRYPTPP)
 endif ()
 
 if (TARGET OpenSSL::Crypto)
   target_compile_definitions(cpl PRIVATE -DUSE_OPENSSL_CRYPTO)
-  target_link_libraries(cpl PRIVATE OpenSSL::Crypto)
+  target_link_libraries(GDAL_LINK_LIBRARY INTERFACE OpenSSL::Crypto)
 endif ()
 
 if (CRYPTOPP_USE_ONLY_CRYPTODLL_ALG AND NOT BULID_SHARED_LIBS)
@@ -313,5 +312,5 @@ endif ()
 if (HAVE_ZSTD)
   target_compile_definitions(cpl PRIVATE -DHAVE_ZSTD)
   target_include_directories(cpl PRIVATE ${ZSTD_INCLUDE_DIRS})
-  target_link_libraries(cpl PRIVATE ZSTD::zstd)
+  target_link_libraries(GDAL_LINK_LIBRARY INTERFACE ZSTD::zstd)
 endif ()

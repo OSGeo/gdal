@@ -38,7 +38,7 @@ if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
   set_property(TARGET gdal_unit_test PROPERTY UNITY_BUILD OFF)
 endif ()
 
-target_link_libraries(gdal_unit_test PRIVATE $<TARGET_NAME:gdal> $<TARGET_NAME:cpl>)
+target_link_libraries(gdal_unit_test PRIVATE $<TARGET_NAME:gdal>)
 add_dependencies(gdal_unit_test gdal)
 gdal_standard_includes(gdal_unit_test)
 target_compile_definitions(gdal_unit_test PRIVATE -DGDAL_TEST_ROOT_DIR="${GDAL_ROOT_TEST_DIR}")
