@@ -153,39 +153,44 @@ GDALAutoCreateWarpedVRTEx( GDALDatasetH hSrcDS,
     GDALWarpInitDefaultBandMapping( psWO, GDALGetRasterCount( hSrcDS ) );
 
 /* -------------------------------------------------------------------- */
-/*      Setup no data values                                            */
+/*      Setup no data values (if not done in psOptionsIn)               */
 /* -------------------------------------------------------------------- */
-    for( int i = 0; i < psWO->nBandCount; i++ )
+    if( psWO->padfSrcNoDataReal == nullptr &&
+        psWO->padfDstNoDataReal == nullptr &&
+        psWO->nSrcAlphaBand == 0 )
     {
-        GDALRasterBandH rasterBand = GDALGetRasterBand(psWO->hSrcDS, psWO->panSrcBands[i]);
-
-        int hasNoDataValue;
-        double noDataValue = GDALGetRasterNoDataValue(rasterBand, &hasNoDataValue);
-
-        if( hasNoDataValue )
+        for( int i = 0; i < psWO->nBandCount; i++ )
         {
-            // Check if the nodata value is out of range
-            int bClamped = FALSE;
-            int bRounded = FALSE;
-            CPL_IGNORE_RET_VAL(
-                GDALAdjustValueToDataType(GDALGetRasterDataType(rasterBand),
-                                      noDataValue, &bClamped, &bRounded ));
-            if( !bClamped )
-            {
-                GDALWarpInitNoDataReal(psWO, -1e10);
+            GDALRasterBandH rasterBand = GDALGetRasterBand(psWO->hSrcDS, psWO->panSrcBands[i]);
 
-                psWO->padfSrcNoDataReal[i] = noDataValue;
-                psWO->padfDstNoDataReal[i] = noDataValue;
+            int hasNoDataValue;
+            double noDataValue = GDALGetRasterNoDataValue(rasterBand, &hasNoDataValue);
+
+            if( hasNoDataValue )
+            {
+                // Check if the nodata value is out of range
+                int bClamped = FALSE;
+                int bRounded = FALSE;
+                CPL_IGNORE_RET_VAL(
+                    GDALAdjustValueToDataType(GDALGetRasterDataType(rasterBand),
+                                          noDataValue, &bClamped, &bRounded ));
+                if( !bClamped )
+                {
+                    GDALWarpInitNoDataReal(psWO, -1e10);
+
+                    psWO->padfSrcNoDataReal[i] = noDataValue;
+                    psWO->padfDstNoDataReal[i] = noDataValue;
+                }
             }
         }
-    }
 
-    if( psWO->padfDstNoDataReal != nullptr )
-    {
-        if (CSLFetchNameValue( psWO->papszWarpOptions, "INIT_DEST" ) == nullptr)
+        if( psWO->padfDstNoDataReal != nullptr )
         {
-            psWO->papszWarpOptions =
-                CSLSetNameValue(psWO->papszWarpOptions, "INIT_DEST", "NO_DATA");
+            if (CSLFetchNameValue( psWO->papszWarpOptions, "INIT_DEST" ) == nullptr)
+            {
+                psWO->papszWarpOptions =
+                    CSLSetNameValue(psWO->papszWarpOptions, "INIT_DEST", "NO_DATA");
+            }
         }
     }
 
