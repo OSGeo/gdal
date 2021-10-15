@@ -51,7 +51,7 @@ target_include_directories(
   PRIVATE $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR> $<TARGET_PROPERTY:ogr_geojson,SOURCE_DIR>
           $<TARGET_PROPERTY:gnm_frmts,SOURCE_DIR> $<TARGET_PROPERTY:gdal_GTIFF,SOURCE_DIR>
           $<TARGET_PROPERTY:gdal_MEM,SOURCE_DIR> $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR>)
-set_property(TARGET gcore PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_property(TARGET gcore PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 
 if (HAVE_SSSE3_AT_COMPILE_TIME)
   target_compile_definitions(gcore PRIVATE -DHAVE_SSSE3_AT_COMPILE_TIME)
@@ -61,7 +61,7 @@ add_library(gdaldrivermanager OBJECT gdaldrivermanager.cpp)
 gdal_standard_includes(gdaldrivermanager)
 file(TO_CMAKE_PATH "${CMAKE_PREFIX_PATH}/${CMAKE_INSTALL_DATADIR}" INST_DATA_PATH)
 target_compile_definitions(gdaldrivermanager PRIVATE -DINST_DATA="${INST_DATA_PATH}")
-set_property(TARGET gdaldrivermanager PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_property(TARGET gdaldrivermanager PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 if (HAVE_XERCESC)
   target_include_directories(gdaldrivermanager PRIVATE ${XercesC_INCLUDE_DIRS} ${XercesC_INCLUDE_DIRS}/xercesc)
   target_compile_definitions(gdaldrivermanager PRIVATE -DHAVE_XERCES)
@@ -72,7 +72,7 @@ add_library(rasterio_ssse3 OBJECT rasterio_ssse3.cpp)
 gdal_standard_includes(rasterio_ssse3)
 target_include_directories(rasterio_ssse3 PRIVATE $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR>
                                                   $<TARGET_PROPERTY:gdal_MEM,SOURCE_DIR>)
-set_property(TARGET rasterio_ssse3 PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_property(TARGET rasterio_ssse3 PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 target_sources(gdal PRIVATE $<TARGET_OBJECTS:gcore> $<TARGET_OBJECTS:gdaldrivermanager>
                             $<TARGET_OBJECTS:rasterio_ssse3>)
 include(TargetPublicHeader)

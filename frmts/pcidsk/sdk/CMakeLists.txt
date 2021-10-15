@@ -57,7 +57,7 @@ else ()
 endif ()
 target_include_directories(pcidsk_sdk PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} $<TARGET_PROPERTY:cpl,SOURCE_DIR>
                                               $<TARGET_PROPERTY:cpl,BINARY_DIR>)
-set_property(TARGET pcidsk_sdk PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_property(TARGET pcidsk_sdk PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 set_property(TARGET pcidsk_sdk PROPERTY ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)

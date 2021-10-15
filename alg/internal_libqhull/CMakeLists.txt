@@ -32,7 +32,7 @@ add_library(
   userprintf_rbox.c)
 include(GdalStandardIncludes)
 gdal_standard_includes(qhull)
-set_property(TARGET qhull PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_property(TARGET qhull PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 set_property(TARGET qhull PROPERTY ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 if (MSVC)
   target_compile_definitions(qhull PRIVATE -D_USE_MATH_DEFINES)

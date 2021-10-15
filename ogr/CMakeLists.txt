@@ -74,7 +74,7 @@ endif ()
 include(GdalStandardIncludes)
 gdal_standard_includes(ogr)
 target_include_directories(ogr PRIVATE $<TARGET_PROPERTY:ogr_geojson,SOURCE_DIR> $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR>)
-set_property(TARGET ogr PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_property(TARGET ogr PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 target_sources(gdal PRIVATE $<TARGET_OBJECTS:ogr>)
 
 target_compile_definitions(ogr PRIVATE HAVE_MITAB)

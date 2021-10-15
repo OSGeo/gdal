@@ -107,7 +107,7 @@ endif ()
 
 set_target_properties(libtiff PROPERTIES CXX_STANDARD 11)
 target_link_libraries(GDAL_LINK_LIBRARY INTERFACE libtiff)
-set_property(TARGET libtiff PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_property(TARGET libtiff PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 set_property(TARGET libtiff PROPERTY ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 # ifeq ($(RENAME_INTERNAL_LIBTIFF_SYMBOLS),yes) ../../o/tif_jpeg.$(OBJ_EXT) : tif_jpeg.c t4.h tif_config.h tif_dir.h
