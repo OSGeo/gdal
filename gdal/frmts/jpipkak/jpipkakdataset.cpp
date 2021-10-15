@@ -759,7 +759,7 @@ int JPIPKAKDataset::Initialize(const char* pszDatasetName, int bReinitializing )
 
     bool bSubtarget = false;
     if(osURL.ifind("?subtarget=") == std::string::npos && osURL.ifind("&subtarget=") == std::string::npos)
-	    bSubtarget = true;
+        bSubtarget = true;
 
     GDALJP2Metadata oJP2Geo;
     int nLen = poCache->get_databin_length(KDU_META_DATABIN, nCodestream, 0);
@@ -768,7 +768,7 @@ int JPIPKAKDataset::Initialize(const char* pszDatasetName, int bReinitializing )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Unable to open stream to parse metadata boxes" );
-	    return FALSE;
+        return FALSE;
     }
 
     if (nLen > 0)
@@ -845,7 +845,7 @@ int JPIPKAKDataset::Initialize(const char* pszDatasetName, int bReinitializing )
     }
     else
     {
-	    // treat as Cartesian, no geo metadata
+        // treat as Cartesian, no geo metadata
         CPLError(CE_Warning, CPLE_AppDefined,
                  "Parsed metadata boxes from jpip stream, geographic metadata not found - is the server using placeholders for this data?" );
     }
