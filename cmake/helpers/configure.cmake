@@ -30,12 +30,6 @@ endif ()
 check_function_exists(vsnprintf HAVE_VSNPRINTF)
 check_function_exists(snprintf HAVE_SNPRINTF)
 check_function_exists(getcwd HAVE_GETCWD)
-check_include_file("ctype.h" HAVE_CTYPE_H)
-check_include_file("stdlib.h" HAVE_STDLIB_H)
-
-if (HAVE_CTYPE_H AND HAVE_STDLIB_H)
-  set(STDC_HEADERS 1)
-endif ()
 
 check_include_file("assert.h" HAVE_ASSERT_H)
 check_include_file("fcntl.h" HAVE_FCNTL_H)

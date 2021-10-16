@@ -26,11 +26,6 @@
 #define getcwd _getcwd
 #endif
 
-/* Define if you have the ANSI C header files.  */
-#ifndef STDC_HEADERS
-#  define STDC_HEADERS 1
-#endif
-
 /* Define to 1 if you have the <assert.h> header file. */
 #define HAVE_ASSERT_H 1
 
