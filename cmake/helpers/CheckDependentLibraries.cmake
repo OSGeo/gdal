@@ -106,7 +106,7 @@ if(NOT HAVE_TIFF)
     set(GDAL_USE_LIBTIFF_INTERNAL ON CACHE BOOL "")
 endif()
 set_package_properties(TIFF PROPERTIES
-                       URL "http://libtiff.org/"
+                       URL "https://libtiff.gitlab.io/libtiff/"
                        DESCRIPTION "support for the Tag Image File Format (TIFF)."
                        TYPE RECOMMENDED
                       )
