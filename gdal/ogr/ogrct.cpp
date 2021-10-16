@@ -650,14 +650,14 @@ class OGRProjCT : public OGRCoordinateTransformation
     static CTCacheKey MakeCacheKey(const OGRSpatialReference* poSRS1,
                            const OGRSpatialReference* poSRS2,
                            const OGRCoordinateTransformationOptions& options);
-    int ContainsNorthPole(
+    bool ContainsNorthPole(
         const double xmin,
         const double ymin,
         const double xmax,
         const double ymax,
         bool lon_lat_order
     );
-    int ContainsSouthPole(
+    bool ContainsSouthPole(
         const double xmin,
         const double ymin,
         const double xmax,
@@ -2829,7 +2829,7 @@ static double antimeridian_max(const double* data, const int arr_len) {
 // Check if the original projected bounds contains
 // the north pole.
 // This assumes that the destination CRS is geographic.
-int OGRProjCT::ContainsNorthPole(
+bool OGRProjCT::ContainsNorthPole(
     const double xmin,
     const double ymin,
     const double xmax,
@@ -2864,7 +2864,7 @@ int OGRProjCT::ContainsNorthPole(
 // Check if the original projected bounds contains
 // the south pole.
 // This assumes that the destination CRS is geographic.
-int OGRProjCT::ContainsSouthPole(
+bool OGRProjCT::ContainsSouthPole(
     const double xmin,
     const double ymin,
     const double xmax,
