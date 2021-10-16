@@ -45,7 +45,11 @@
 #include "gdal_alg_priv.h"
 #include "gdal.h"
 #include "gdal_pam.h"
+#ifdef GDAL_CMAKE_BUILD
+#include "gdal_version_full/gdal_version.h"
+#else
 #include "gdal_version.h"
+#endif
 #include "gdal_thread_pool.h"
 #include "ogr_srs_api.h"
 #include "ograpispy.h"

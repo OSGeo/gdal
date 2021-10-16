@@ -80,7 +80,7 @@ target_public_header(
   TARGET
   gdal
   HEADERS
-  ${CMAKE_CURRENT_BINARY_DIR}/gdal_version.h
+  ${CMAKE_CURRENT_BINARY_DIR}/gdal_version_full/gdal_version.h
   gdal.h
   gdaljp2metadata.h
   gdal_frmts.h

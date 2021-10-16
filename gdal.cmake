@@ -27,7 +27,7 @@ include(GdalVersion)
 include(CheckDependentLibraries)
 
 # Default definitions during build
-add_definitions(-DGDAL_COMPILATION)
+add_definitions(-DGDAL_COMPILATION -DGDAL_CMAKE_BUILD)
 
 if (ENABLE_LTO)
   if (POLICY CMP0069)
@@ -164,9 +164,16 @@ endif ()
 
 # MSVC spefific resource preparation
 if (MSVC)
-  target_sources(gdal PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/gcore/Version.rc)
-  source_group("Resource Files" FILES ${CMAKE_CURRENT_SOURCE_DIR}/gcore/Version.rc)
-  gdal_standard_includes(gdal)
+  target_sources(gdal PRIVATE gcore/Version.rc)
+  target_include_directories(gdal
+                             PRIVATE
+                             $<TARGET_PROPERTY:gcore,BINARY_DIR>/gdal_version_full
+                             $<TARGET_PROPERTY:gcore,SOURCE_DIR>
+                             $<TARGET_PROPERTY:gcore,BINARY_DIR>
+                             $<TARGET_PROPERTY:cpl,SOURCE_DIR> # port
+                             $<TARGET_PROPERTY:cpl,BINARY_DIR>
+                             $<TARGET_PROPERTY:ogr,SOURCE_DIR>)
+  source_group("Resource Files" FILES gcore/Version.rc)
   if (CMAKE_CL_64)
     set_target_properties(gdal PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x64")
   endif ()

@@ -95,6 +95,9 @@ if (BUILD_APPS)
 
   add_custom_target(gdalapps DEPENDS ${APPS_TARGETS})
   foreach (UTILCMD IN ITEMS ${APPS_TARGETS})
+    # Add that include directory before all others so the gdal_version.h from it is included and not
+    # gcore/gdal_version.h
+    target_include_directories(${UTILCMD} PRIVATE $<TARGET_PROPERTY:gcore,BINARY_DIR>/gdal_version_full)
     gdal_standard_includes(${UTILCMD})
     add_dependencies(${UTILCMD} generate_gdal_version_h)
     target_include_directories(
@@ -151,6 +154,9 @@ if (BUILD_APPS)
           test_ogrsf
           testepsg
           testreprojmulti)
+    # Add that include directory before all others so the gdal_version.h from it is included and not
+    # gcore/gdal_version.h
+    target_include_directories(${UTILCMD} PRIVATE $<TARGET_PROPERTY:gcore,BINARY_DIR>/gdal_version_full)
     gdal_standard_includes(${UTILCMD})
     add_dependencies(${UTILCMD} generate_gdal_version_h)
     target_link_libraries(${UTILCMD} PRIVATE ${GDAL_LINK_LIBRARY})
