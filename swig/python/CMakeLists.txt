@@ -67,16 +67,14 @@ else ()
         ${Python_EXECUTABLE} -m lib2to3 --fix=import --fix=next --fix=renames --fix=unicode --fix=ws_comma --fix=xrange
         --write --write-unchanged-files --nobackups --output-dir=${OSGEO_BINARY_DIR} ${OSGEO_SOURCE_DIR}__init__.py
         ${OSGEO_SOURCE_DIR}gdal.py ${OSGEO_SOURCE_DIR}gdalconst.py ${OSGEO_SOURCE_DIR}gdalnumeric.py
-        ${OSGEO_SOURCE_DIR}ogr.py ${OSGEO_SOURCE_DIR}osr.py ${OSGEO_SOURCE_DIR}gnm.py ${OSGEO_SOURCE_DIR}gdal_array.py
-      BYPRODUCTS ${GDAL_PYTHON_PYSOURCES})
+        ${OSGEO_SOURCE_DIR}ogr.py ${OSGEO_SOURCE_DIR}osr.py ${OSGEO_SOURCE_DIR}gnm.py ${OSGEO_SOURCE_DIR}gdal_array.py)
   else ()
     add_custom_command(
       OUTPUT ${GDAL_PYTHON_PYSOURCES}
       COMMAND
         ${CMAKE_COMMAND} -E copy ${OSGEO_SOURCE_DIR}__init__.py ${OSGEO_SOURCE_DIR}gdal.py
         ${OSGEO_SOURCE_DIR}gdalconst.py ${OSGEO_SOURCE_DIR}gdalnumeric.py ${OSGEO_SOURCE_DIR}ogr.py
-        ${OSGEO_SOURCE_DIR}osr.py ${OSGEO_SOURCE_DIR}gnm.py ${OSGEO_SOURCE_DIR}gdal_array.py ${OSGEO_BINARY_DIR}
-      BYPRODUCTS ${GDAL_PYTHON_PYSOURCES})
+        ${OSGEO_SOURCE_DIR}osr.py ${OSGEO_SOURCE_DIR}gnm.py ${OSGEO_SOURCE_DIR}gdal_array.py ${OSGEO_BINARY_DIR})
   endif ()
   set(GDAL_PYTHON_CSOURCES
       ${GDAL_PYTHON_CSOURCE_DIR}/gdal_wrap.cpp ${GDAL_PYTHON_CSOURCE_DIR}/gdalconst_wrap.c
@@ -101,15 +99,7 @@ if (Python_FOUND AND NOT WIN32)
            osgeo._ogr${PY_EXT_EXT} osgeo._osr${PY_EXT_EXT}
     COMMAND ${Python_EXECUTABLE} setup.py build_ext --inplace
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    BYPRODUCTS osgeo._gdal${PY_EXT_EXT}
-               osgeo._gdalconst${PY_EXT_EXT}
-               osgeo._gdal_array${PY_EXT_EXT}
-               osgeo._gnm${PY_EXT_EXT}
-               osgeo._ogr${PY_EXT_EXT}
-               osgeo._osr${PY_EXT_EXT}
-               SOURCES
-               ${GDAL_PYTHON_PYSOURCDES}
-               ${GDAL_PYTHON_CSOURCES})
+    BYPRODUCTS SOURCES ${GDAL_PYTHON_PYSOURCDES} ${GDAL_PYTHON_CSOURCES})
   add_custom_target(
     python_binding ALL
     DEPENDS osgeo._gdal${PY_EXT_EXT}
