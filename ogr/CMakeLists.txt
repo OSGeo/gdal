@@ -92,6 +92,17 @@ if (GDAL_USE_SFCGAL)
   target_compile_definitions(ogr PRIVATE -DHAVE_SFCGAL=1)
   target_include_directories(ogr PRIVATE ${SFCGAL_INCLUDE_DIRS})
   target_link_libraries(GDAL_LINK_LIBRARY INTERFACE SFCGAL::SFCGAL)
+  # work around for SFCGAL 1.3.7 on Ubuntu 20.04/Debian
+  if (SFCGAL_VERSION_STRING VERSION_EQUAL "1.3.7")
+    if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+      message(
+        WARNING
+          "Detect SFCGAL v1.3.7 on Linux (maybe Ubuntu 20.04?), known as buggy that cause a link error. Trying a workaround"
+        )
+      find_library(GMPXX_LIBRARY NAMES gmpxx)
+      target_link_libraries(GDAL_LINK_LIBRARY INTERFACE ${GMPXX_LIBRARY})
+    endif ()
+  endif ()
 endif ()
 
 target_compile_definitions(ogr PRIVATE -DHAVE_LIBZ -DZIP_SUPPORT)
