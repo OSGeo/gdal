@@ -6,6 +6,8 @@ if (CharLS_VERSION STREQUAL 1)
   target_compile_definitions(gdal_JPEGLS PRIVATE -DCHARLS_INTERFACE_H)
 elseif (CharLS_VERSION STREQUAL 2.1)
   target_compile_definitions(gdal_JPEGLS PRIVATE -DCHARLS_2_1)
+  # libcharls 2.2.0 requires C++14
+  set_property(TARGET gdal_JPEGLS PROPERTY CXX_STANDARD 14)
 else ()
   target_compile_definitions(gdal_JPEGLS PRIVATE -DCHARLS_2)
 endif ()
