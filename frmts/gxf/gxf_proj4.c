@@ -94,10 +94,6 @@ char *GXFGetMapProjectionAsPROJ4( GXFHandle hGXF )
                                                 ",", TRUE, TRUE );
     }
 
-#ifdef DBMALLOC
-    malloc_chain_check(1);
-#endif
-
     if( papszMethods == NULL
         || papszMethods[0] == NULL
         || EQUAL(papszMethods[0],"Geographic") )

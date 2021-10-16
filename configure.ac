@@ -294,7 +294,7 @@ case "${host_os}" in
 esac
 
 dnl Checks for header files.
-AC_CHECK_HEADERS(assert.h fcntl.h unistd.h dbmalloc.h dlfcn.h stdint.h limits.h locale.h values.h float.h errno.h direct.h)
+AC_CHECK_HEADERS(assert.h fcntl.h unistd.h dlfcn.h stdint.h limits.h locale.h values.h float.h errno.h direct.h)
 
 dnl Check for userfaultfd support
 AC_CHECK_HEADERS([linux/userfaultfd.h], [ENABLE_UFFD="yes"], [ENABLE_UFFD="no"], [])

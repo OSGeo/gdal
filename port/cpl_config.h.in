@@ -43,9 +43,6 @@
 /* Define to 1 if you have the <csf.h> header file. */
 #undef HAVE_CSF_H
 
-/* Define to 1 if you have the <dbmalloc.h> header file. */
-#undef HAVE_DBMALLOC_H
-
 /* Define to 1 if you have the declaration of `strtof', and to 0 if you don't.
    */
 #undef HAVE_DECL_STRTOF

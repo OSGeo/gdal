@@ -160,16 +160,6 @@
 #  include <strings.h>
 #endif
 
-#if defined(HAVE_LIBDBMALLOC) && defined(HAVE_DBMALLOC_H) && defined(DEBUG)
-#  define DBMALLOC
-#  include <dbmalloc.h>
-#endif
-
-#if !defined(DBMALLOC) && defined(HAVE_DMALLOC_H)
-#  define USE_DMALLOC
-#  include <dmalloc.h>
-#endif
-
 /* ==================================================================== */
 /*      Base portability stuff ... this stuff may need to be            */
 /*      modified for new platforms.                                     */

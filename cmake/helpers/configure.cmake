@@ -46,7 +46,6 @@ check_include_file("locale.h" HAVE_LOCALE_H)
 check_include_file("errno.h" HAVE_ERRNO_H)
 check_include_file("direct.h" HAVE_DIRECT_H)
 check_include_file("dlfcn.h" HAVE_DLFCN_H)
-check_include_file("dbmalloc.h" HAVE_DBMALLOC_H)
 
 check_type_size("int" SIZEOF_INT)
 check_type_size("unsigned long" SIZEOF_UNSIGNED_LONG)

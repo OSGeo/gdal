@@ -198,9 +198,6 @@ int main( int nArgc, char ** papszArgv )
 
     CPLFree( pszShapefile );
 }
-#ifdef DBMALLOC
-    malloc_dump(1);
-#endif
 }
 
 /* **********************************************************************/

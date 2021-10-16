@@ -41,10 +41,6 @@
 
 #include <stdio.h>
 
-#ifdef USE_DBMALLOC
-#include <dbmalloc.h>
-#endif
-
 #ifdef USE_CPL
 #include "cpl_conv.h"
 #endif

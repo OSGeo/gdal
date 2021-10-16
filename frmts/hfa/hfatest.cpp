@@ -226,9 +226,5 @@ int main( int argc, char ** argv )
     VSICleanupFileManager();
     CPLCleanupTLS();
 
-#ifdef DBMALLOC
-    malloc_dump(1);
-#endif
-
     exit( 0 );
 }

@@ -323,8 +323,4 @@ int main( int nArgc, char ** papszArgv )
     }
 
     oModule.Close();
-
-#ifdef DBMALLOC
-    malloc_dump(1);
-#endif
 }

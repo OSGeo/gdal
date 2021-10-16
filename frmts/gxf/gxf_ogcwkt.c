@@ -317,10 +317,6 @@ char *GXFGetMapProjectionAsOGCWKT( GXFHandle hGXF )
                                                 ",", TRUE, TRUE );
     }
 
-#ifdef DBMALLOC
-    malloc_chain_check(1);
-#endif
-
 /* -------------------------------------------------------------------- */
 /*      Create the PROJCS.                                              */
 /* -------------------------------------------------------------------- */

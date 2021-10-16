@@ -66,8 +66,6 @@
 #undef HAVE_LOCALTIME_R
 
 #undef HAVE_DLFCN_H
-#undef HAVE_DBMALLOC_H
-#undef HAVE_LIBDBMALLOC
 #undef WORDS_BIGENDIAN
 
 /* The size of a `int', as computed by sizeof. */
