@@ -1,0 +1,20 @@
+name: Lint CMakeLists.txt
+
+on: [push, pull_request]
+
+jobs:
+  cmake-lint:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.8
+    - name: Install lint tool
+      run: |
+        python -m pip install --upgrade pip
+        pip install cmake-format pyyaml
+    - name: Check cmakelist
+      run: find . -name CMakeLists.txt |xargs cmake-format --check
