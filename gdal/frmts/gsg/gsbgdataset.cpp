@@ -519,7 +519,7 @@ GDALDataset *GSBGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    GSBGDataset *poDS = new GSBGDataset();
+    auto poDS = cpl::make_unique<GSBGDataset>();
 
     poDS->eAccess = poOpenInfo->eAccess;
     poDS->fp = poOpenInfo->fpL;
@@ -530,7 +530,6 @@ GDALDataset *GSBGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( VSIFSeekL( poDS->fp, 4, SEEK_SET ) != 0 )
     {
-        delete poDS;
         CPLError( CE_Failure, CPLE_FileIO,
                   "Unable to seek to start of grid file header.\n" );
         return nullptr;
@@ -540,7 +539,6 @@ GDALDataset *GSBGDataset::Open( GDALOpenInfo * poOpenInfo )
     GInt16 nTemp;
     if( VSIFReadL( (void *)&nTemp, 2, 1, poDS->fp ) != 1 )
     {
-        delete poDS;
         CPLError( CE_Failure, CPLE_FileIO, "Unable to read raster X size.\n" );
         return nullptr;
     }
@@ -548,7 +546,6 @@ GDALDataset *GSBGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( VSIFReadL( (void *)&nTemp, 2, 1, poDS->fp ) != 1 )
     {
-        delete poDS;
         CPLError( CE_Failure, CPLE_FileIO, "Unable to read raster Y size.\n" );
         return nullptr;
     }
@@ -556,20 +553,18 @@ GDALDataset *GSBGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize))
     {
-        delete poDS;
         return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    GSBGRasterBand *poBand = new GSBGRasterBand( poDS, 1 );
+    GSBGRasterBand *poBand = new GSBGRasterBand( poDS.get(), 1 );
+    poDS->SetBand( 1, poBand );
 
     double dfTemp;
     if( VSIFReadL( (void *)&dfTemp, 8, 1, poDS->fp ) != 1 )
     {
-        delete poDS;
-        delete poBand;
         CPLError( CE_Failure, CPLE_FileIO,
                   "Unable to read minimum X value.\n" );
         return nullptr;
@@ -579,8 +574,6 @@ GDALDataset *GSBGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( VSIFReadL( (void *)&dfTemp, 8, 1, poDS->fp ) != 1 )
     {
-        delete poDS;
-        delete poBand;
         CPLError( CE_Failure, CPLE_FileIO,
                   "Unable to read maximum X value.\n" );
         return nullptr;
@@ -590,8 +583,6 @@ GDALDataset *GSBGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( VSIFReadL( (void *)&dfTemp, 8, 1, poDS->fp ) != 1 )
     {
-        delete poDS;
-        delete poBand;
         CPLError( CE_Failure, CPLE_FileIO,
                   "Unable to read minimum Y value.\n" );
         return nullptr;
@@ -601,8 +592,6 @@ GDALDataset *GSBGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( VSIFReadL( (void *)&dfTemp, 8, 1, poDS->fp ) != 1 )
     {
-        delete poDS;
-        delete poBand;
         CPLError( CE_Failure, CPLE_FileIO,
                   "Unable to read maximum Y value.\n" );
         return nullptr;
@@ -612,8 +601,6 @@ GDALDataset *GSBGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( VSIFReadL( (void *)&dfTemp, 8, 1, poDS->fp ) != 1 )
     {
-        delete poDS;
-        delete poBand;
         CPLError( CE_Failure, CPLE_FileIO,
                   "Unable to read minimum Z value.\n" );
         return nullptr;
@@ -623,16 +610,12 @@ GDALDataset *GSBGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( VSIFReadL( (void *)&dfTemp, 8, 1, poDS->fp ) != 1 )
     {
-        delete poDS;
-        delete poBand;
         CPLError( CE_Failure, CPLE_FileIO,
                   "Unable to read maximum Z value.\n" );
         return nullptr;
     }
     CPL_LSBPTR64( &dfTemp );
     poBand->dfMaxZ = dfTemp;
-
-    poDS->SetBand( 1, poBand );
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
@@ -643,9 +626,9 @@ GDALDataset *GSBGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check for external overviews.                                   */
 /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename, poOpenInfo->GetSiblingFiles() );
+    poDS->oOvManager.Initialize( poDS.get(), poOpenInfo->pszFilename, poOpenInfo->GetSiblingFiles() );
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/
