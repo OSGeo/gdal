@@ -29,7 +29,7 @@ if (GDAL_USE_LIBTIFF_INTERNAL)
     target_compile_definitions(gdal_GTIFF PRIVATE -DRENAME_INTERNAL_LIBTIFF_SYMBOLS)
   endif ()
 else ()
-  target_compile_definitions(gdal_GTIFF PRIVATE -DHAVE_TIFF -DBIGTIFF_SUPPORT -DPIXARLOG_SUPPORT)
+  target_compile_definitions(gdal_GTIFF PRIVATE -DPIXARLOG_SUPPORT)
   gdal_target_link_libraries(TARGET gdal_GTIFF LIBRARIES TIFF::TIFF)
 endif ()
 

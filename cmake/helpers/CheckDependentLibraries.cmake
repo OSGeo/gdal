@@ -100,21 +100,17 @@ if(TIFF_FOUND)
     set(HAVE_TIFF ON)
     set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} ${TIFF_INCLUDE_DIR})
     set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${TIFF_LIBRARIES})
-    check_function_exists(TIFFScanlineSize64 HAVE_BIGTIFF)
     set(GDAL_USE_LIBTIFF_INTERNAL OFF CACHE BOOL "")
 endif()
 if(NOT HAVE_TIFF)
     set(GDAL_USE_LIBTIFF_INTERNAL ON CACHE BOOL "")
-    set(HAVE_BIGTIFF ON)
 endif()
 set_package_properties(TIFF PROPERTIES
                        URL "http://libtiff.org/"
                        DESCRIPTION "support for the Tag Image File Format (TIFF)."
                        TYPE RECOMMENDED
                       )
-if(HAVE_BIGTIFF)
-    add_definitions(-DBIGTIFF_SUPPORT)
-endif()
+
 gdal_check_package(ZSTD "ZSTD compression library")
 gdal_check_package(SFCGAL "gdal core supports ISO 19107:2013 and OGC Simple Features Access 1.2 for 3D operations")
 cmake_dependent_option(GDAL_USE_SFCGAL "Set ON to use SFCGAL" ON "SFCGAL_FOUND" OFF)

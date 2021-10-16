@@ -36,7 +36,6 @@
 /* Define if gdal use internal libtiff*/
 #cmakedefine GDAL_USE_LIBTIFF_INTERNAL
 #cmakedefine GDAL_HAVE_TIFF
-#cmakedefine GDAL_BIGTIFF_SUPPORT
 #cmakedefine GDAL_PIXARLOG_SUPPORT
 
 /* Define if gdal use internal libjpeg*/
