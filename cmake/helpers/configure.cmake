@@ -400,7 +400,7 @@ else (MSVC)
   endif ()
 
   if (HAVE_HIDE_INTERNAL_SYMBOLS)
-    option(GDAL_HIDE_INTERNAL_SYMBOLS "Set to ON to hide internal symbols." OFF)
+    option(GDAL_HIDE_INTERNAL_SYMBOLS "Set to ON to hide internal symbols." ON)
     if (GDAL_HIDE_INTERNAL_SYMBOLS)
       set(USE_GCC_VISIBILITY_FLAG TRUE)
       set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
