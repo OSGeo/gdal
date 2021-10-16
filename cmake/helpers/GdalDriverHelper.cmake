@@ -137,6 +137,7 @@ function(add_gdal_driver)
             endif ()
         endif ()
     endif ()
+    add_dependencies(${_DRIVER_TARGET} generate_gdal_version_h)
 endfunction()
 
 # Detect whether driver is built as PLUGIN or not.

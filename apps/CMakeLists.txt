@@ -17,6 +17,7 @@ add_library(
   nearblack_lib.cpp
   gdalmdiminfo_lib.cpp
   gdalmdimtranslate_lib.cpp)
+add_dependencies(appslib generate_gdal_version_h)
 target_sources(gdal PRIVATE $<TARGET_OBJECTS:appslib>)
 gdal_standard_includes(appslib)
 target_include_directories(
@@ -95,6 +96,7 @@ if (BUILD_APPS)
   add_custom_target(gdalapps DEPENDS ${APPS_TARGETS})
   foreach (UTILCMD IN ITEMS ${APPS_TARGETS})
     gdal_standard_includes(${UTILCMD})
+    add_dependencies(${UTILCMD} generate_gdal_version_h)
     target_include_directories(
       ${UTILCMD} PRIVATE $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR> $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>
                          $<TARGET_PROPERTY:ogr_geojson,SOURCE_DIR> $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR>)
@@ -150,6 +152,7 @@ if (BUILD_APPS)
           testepsg
           testreprojmulti)
     gdal_standard_includes(${UTILCMD})
+    add_dependencies(${UTILCMD} generate_gdal_version_h)
     target_link_libraries(${UTILCMD} PRIVATE ${GDAL_LINK_LIBRARY})
     if (MSVC OR MINGW)
       target_compile_definitions(${UTILCMD} PRIVATE -DSUPPORTS_WMAIN)

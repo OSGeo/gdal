@@ -41,6 +41,7 @@ endif ()
 
 # ######################################################################################################################
 add_library(gdal gcore/gdal.h)
+add_dependencies(gdal generate_gdal_version_h)
 add_library(GDAL_LINK_LIBRARY INTERFACE)
 target_link_libraries(gdal PRIVATE $<LINK_ONLY:GDAL_LINK_LIBRARY>)
 # Set project and C++ Standard properties

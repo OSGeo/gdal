@@ -60,6 +60,7 @@ add_library(
   ogr_xerces.cpp
   ogr_geo_utils.cpp
   ogr_proj_p.cpp)
+add_dependencies(ogr generate_gdal_version_h)
 if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
   set_property(
     SOURCE ogrfeaturequery.cpp
