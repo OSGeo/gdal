@@ -118,6 +118,13 @@ endif()
 gdal_check_package(ZSTD "ZSTD compression library")
 gdal_check_package(SFCGAL "gdal core supports ISO 19107:2013 and OGC Simple Features Access 1.2 for 3D operations")
 cmake_dependent_option(GDAL_USE_SFCGAL "Set ON to use SFCGAL" ON "SFCGAL_FOUND" OFF)
+if (SFCGAL_VERSION_STRING VERSION_EQUAL "1.3.7")
+    ## show warning when SFCGAL 1.3.7 on Ubuntu 20.04/Debian
+    if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+        message(WARNING
+                "Detect SFCGAL v1.3.7 on Linux (maybe Ubuntu 20.04?), known as buggy that cause a link error.")
+    endif ()
+endif()
 
 gdal_check_package(GeoTIFF "")
 if(NOT HAVE_GEOTIFF)
