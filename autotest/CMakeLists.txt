@@ -47,13 +47,20 @@ if (Python_FOUND)
       file(
         CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/${tgt} ${CMAKE_CURRENT_BINARY_DIR}/${tgt}
         RESULT res
-        COPY_ON_ERROR SYMBOLIC)
+        SYMBOLIC)
+      if (NOT res EQUAL 0)
+        message("Copying content of ${CMAKE_CURRENT_SOURCE_DIR}/${tgt} to ${CMAKE_CURRENT_BINARY_DIR}/${tgt}")
+        execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/${tgt}
+                                ${CMAKE_CURRENT_BINARY_DIR}/${tgt})
+      endif ()
     else ()
       if (NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
         execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/${tgt}
                                 ${CMAKE_CURRENT_BINARY_DIR}/${tgt})
       else ()
-        file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/${tgt} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+        message("Copying content of ${CMAKE_CURRENT_SOURCE_DIR}/${tgt} to ${CMAKE_CURRENT_BINARY_DIR}/${tgt}")
+        execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/${tgt}
+                                ${CMAKE_CURRENT_BINARY_DIR}/${tgt})
       endif ()
     endif ()
     add_custom_target(
