@@ -176,15 +176,11 @@ else (MSVC)
   find_package(Threads)
   if (Threads_FOUND)
     set(_WITH_PT_OPTION_ON TRUE)
-    set(TARGET_LINK_LIB ${TARGET_LINK_LIB} ${CMAKE_THREAD_LIBS_INIT})
   else ()
     set(_WITH_PT_OPTION_ON FALSE)
   endif ()
 
-  find_library(DL_LIB dl)
-  set(TARGET_LINK_LIB ${TARGET_LINK_LIB} ${DL_LIB})
   find_library(M_LIB m)
-  set(TARGET_LINK_LIB ${TARGET_LINK_LIB} ${M_LIB})
 
   option(GDAL_USE_CPL_MULTIPROC_PTHREAD "Set to ON if you want to use pthreads based multiprocessing support."
          ${_WITH_PT_OPTION_ON})

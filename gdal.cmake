@@ -44,6 +44,9 @@ add_library(gdal gcore/gdal.h)
 add_dependencies(gdal generate_gdal_version_h)
 add_library(GDAL_LINK_LIBRARY INTERFACE)
 target_link_libraries(gdal PRIVATE $<LINK_ONLY:GDAL_LINK_LIBRARY>)
+if (M_LIB)
+  target_link_libraries(gdal PRIVATE -lm)
+endif ()
 # Set project and C++ Standard properties
 set_target_properties(
   gdal
@@ -288,8 +291,7 @@ install(
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  RESOURCE DESTINATION ${CMAKE_INSTALL_DATADIR}/gdal
-  # GDAL 4.0 ? Install headers in ${CMAKE_INSTALL_INCLUDEDIR}/gdal ?
+  RESOURCE DESTINATION ${CMAKE_INSTALL_DATADIR}/gdal # GDAL 4.0 ? Install headers in ${CMAKE_INSTALL_INCLUDEDIR}/gdal ?
   PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
   FRAMEWORK DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
