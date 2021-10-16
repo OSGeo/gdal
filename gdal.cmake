@@ -315,10 +315,10 @@ if (UNIX AND NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
   get_property(_OGR_FORMATS GLOBAL PROPERTY OGR_FORMATS)
   string(REPLACE ";" " " CONFIG_FORMATS "${_GDAL_FORMATS} ${_OGR_FORMATS}")
   generate_config(gdal GDAL_LINK_LIBRARY ${GDAL_CMAKE_TEMPLATE_PATH}/gdal-config.in
-                  ${CMAKE_BINARY_DIR}/gdal/apps/gdal-config)
-  add_custom_target(gdal_config ALL DEPENDS ${CMAKE_BINARY_DIR}/gdal/apps/gdal-config)
+                  ${CMAKE_BINARY_DIR}/apps/gdal-config)
+  add_custom_target(gdal_config ALL DEPENDS ${CMAKE_BINARY_DIR}/apps/gdal-config)
   install(
-    PROGRAMS ${CMAKE_BINARY_DIR}/gdal/apps/gdal-config
+    PROGRAMS ${CMAKE_BINARY_DIR}/apps/gdal-config
     DESTINATION bin
     PERMISSIONS OWNER_READ
                 OWNER_WRITE

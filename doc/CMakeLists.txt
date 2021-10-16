@@ -3,7 +3,7 @@
 # Documentation rules
 find_package(Doxygen)
 if (DOXYGEN_FOUND)
-  set(TARGET_HTML_DIR ${CMAKE_BINARY_DIR}/gdal/html)
+  set(TARGET_HTML_DIR ${CMAKE_BINARY_DIR}/html)
   file(MAKE_DIRECTORY ${TARGET_HTML_DIR})
   # Generate translated docs. Should go first, because index.html page should be overwritten with the main one later
   add_custom_command(
@@ -11,7 +11,7 @@ if (DOXYGEN_FOUND)
     COMMAND ${DOXYGEN_EXECUTABLE} -w html header.html footer.html stylesheet.css
     WORKING_DIRECTORY ${TARGET_HTML_DIR})
   # Generate Russian document
-  set(GDAL_DOXYGEN_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/gdal")
+  set(GDAL_DOXYGEN_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
   set(GDAL_DOXYGEN_PROJECT_NAME "RU")
   set(GDAL_DOXYGEN_LANGUAGE "Russian")
   set(GDAL_DOXYGEN_JAVADOC_AUTOBRIEF "NO")
@@ -43,7 +43,7 @@ if (DOXYGEN_FOUND)
     MAIN_DEPENDENCY ${TARGET_HTML_DIR}/header.html
     WORKING_DIRECTORY ${TARGET_HTML_DIR})
   # generate Brazillian document
-  set(GDAL_DOXYGEN_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/gdal")
+  set(GDAL_DOXYGEN_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
   set(GDAL_DOXYGEN_PROJECT_NAME "BR")
   set(GDAL_DOXYGEN_LANGUAGE "Brazilian")
   set(GDAL_DOXYGEN_JAVADOC_AUTOBRIEF "NO")
@@ -68,14 +68,14 @@ if (DOXYGEN_FOUND)
     DEPENDS ${TARGET_HTML_DIR}/header.html)
 
   # run main doxygen
-  set(GDAL_DOXYGEN_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/gdal")
+  set(GDAL_DOXYGEN_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
   set(GDAL_DOXYGEN_PROJECT_NAME "GDAL")
   set(GDAL_DOXYGEN_LANGUAGE "English")
   set(GDAL_DOXYGEN_JAVADOC_AUTOBRIEF "YES")
   set(GDAL_DOXYGEN_EXTRACT_LOCAL_CLASSES "NO")
   set(GDAL_ENABLED_SECTIONS "")
   set(GDAL_GENERATE_HTML "YES")
-  set(GDAL_DOXYGEN_INCLUDE_PATH "${CMAKE_BINARY_DIR}/gdal/port ${CMAKE_BINARY_DIR}/gdal/gcore")
+  set(GDAL_DOXYGEN_INCLUDE_PATH "${CMAKE_BINARY_DIR}/port ${CMAKE_BINARY_DIR}/gcore")
   set(GDAL_DOXYGEN_INPUT
       "port gcore frmts/gdalallregister.cpp alg frmts/vrt \
                doc apps ogr ogr/ogrsf_frmts ogr/ogrsf_frmts/generic \
@@ -84,15 +84,15 @@ if (DOXYGEN_FOUND)
                swig/python/scripts gnm")
   set(GDAL_DOXYGEN_EXAMPLE_PATH "apps frmts frmts/jdem")
   set(GDAL_DOXYGEN_IMAGE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/grid)
-  set(GDAL_DOXYGEN_LAYOUT_FILE ${CMAKE_SOURCE_DIR}/gdal/DoxygenLayout.xml)
+  set(GDAL_DOXYGEN_LAYOUT_FILE ${CMAKE_SOURCE_DIR}/DoxygenLayout.xml)
   set(GDAL_GENERATE_MAN "NO")
   configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile_main)
   add_custom_command(
-    OUTPUT ${CMAKE_BINARY_DIR}/gdal/html/index.html
+    OUTPUT ${CMAKE_BINARY_DIR}/html/index.html
     COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile_main
     MAIN_DEPENDENCY ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile_main
     ${TARGET_HTML_DIR}/header.html ${TARGET_HTML_DIR}/index_ru.html ${TARGET_HTML_DIR}/index_br.html
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/gdal)
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # copy rest of files for html generation
   file(
@@ -110,39 +110,39 @@ if (DOXYGEN_FOUND)
     ${CMAKE_CURRENT_SOURCE_DIR}/images/src-logo.png
     ${CMAKE_CURRENT_SOURCE_DIR}/images/waypoint_logo.png
     ${CMAKE_CURRENT_SOURCE_DIR}/grid/*.png
-    ${CMAKE_SOURCE_DIR}/gdal/frmts/*.html
-    ${CMAKE_SOURCE_DIR}/gdal/frmts/*/frmt_*.html
-    ${CMAKE_SOURCE_DIR}/gdal/frmts/openjpeg/*.xml
-    ${CMAKE_SOURCE_DIR}/gdal/frmts/wms/frmt_*.xml
-    ${CMAKE_SOURCE_DIR}/gdal/ogr/ogrsf_frmts/*/frmt_*.html
-    ${CMAKE_SOURCE_DIR}/gdal/ogr/ogrsf_frmts/*/dev_*.html
-    ${CMAKE_SOURCE_DIR}/gdal/ogr/ogrsf_frmts/gpkg/geopackage_aspatial.html
-    ${CMAKE_SOURCE_DIR}/gdal/ogr/*.gif
-    ${CMAKE_SOURCE_DIR}/gdal/data/gdalicon.png
-    ${CMAKE_SOURCE_DIR}/gdal/ogr/ogrsf_frmts/ogr_formats.html
-    ${CMAKE_SOURCE_DIR}/gdal/ogr/ogrsf_frmts/ogr_formats.html
-    ${CMAKE_SOURCE_DIR}/gdal/ogr/ogr_feature_style.html)
+    ${CMAKE_SOURCE_DIR}/frmts/*.html
+    ${CMAKE_SOURCE_DIR}/frmts/*/frmt_*.html
+    ${CMAKE_SOURCE_DIR}/frmts/openjpeg/*.xml
+    ${CMAKE_SOURCE_DIR}/frmts/wms/frmt_*.xml
+    ${CMAKE_SOURCE_DIR}/ogr/ogrsf_frmts/*/frmt_*.html
+    ${CMAKE_SOURCE_DIR}/ogr/ogrsf_frmts/*/dev_*.html
+    ${CMAKE_SOURCE_DIR}/ogr/ogrsf_frmts/gpkg/geopackage_aspatial.html
+    ${CMAKE_SOURCE_DIR}/ogr/*.gif
+    ${CMAKE_SOURCE_DIR}/data/gdalicon.png
+    ${CMAKE_SOURCE_DIR}/ogr/ogrsf_frmts/ogr_formats.html
+    ${CMAKE_SOURCE_DIR}/ogr/ogrsf_frmts/ogr_formats.html
+    ${CMAKE_SOURCE_DIR}/ogr/ogr_feature_style.html)
   add_custom_target(_copy_other_docs) # FIXME: are there any way without internal custom target?
   foreach (f ${OTHER_DOCS})
     add_custom_command(
       TARGET _copy_other_docs
       PRE_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy ${f} ${CMAKE_BINARY_DIR}/gdal/html)
+      COMMAND ${CMAKE_COMMAND} -E copy ${f} ${CMAKE_BINARY_DIR}/html)
   endforeach ()
   add_custom_target(
     documents
-    DEPENDS ${CMAKE_BINARY_DIR}/gdal/html/index.html
-            ${CMAKE_BINARY_DIR}/gdal/html/index_ru.html
-            ${CMAKE_BINARY_DIR}/gdal/html/index_br.html
-            ${CMAKE_BINARY_DIR}/gdal/html/header.html
-            ${CMAKE_BINARY_DIR}/gdal/html/footer.html
-            ${CMAKE_BINARY_DIR}/gdal/html/stylesheet.css
-            ${CMAKE_BINARY_DIR}/gdal/html/header_br.html
-            ${CMAKE_BINARY_DIR}/gdal/html/header_ru.html
+    DEPENDS ${CMAKE_BINARY_DIR}/html/index.html
+            ${CMAKE_BINARY_DIR}/html/index_ru.html
+            ${CMAKE_BINARY_DIR}/html/index_br.html
+            ${CMAKE_BINARY_DIR}/html/header.html
+            ${CMAKE_BINARY_DIR}/html/footer.html
+            ${CMAKE_BINARY_DIR}/html/stylesheet.css
+            ${CMAKE_BINARY_DIR}/html/header_br.html
+            ${CMAKE_BINARY_DIR}/html/header_ru.html
             _copy_other_docs)
 
   # Build man
-  set(GDAL_DOXYGEN_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/gdal")
+  set(GDAL_DOXYGEN_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
   set(GDAL_DOXYGEN_PROJECT_NAME "GDAL")
   set(GDAL_DOXYGEN_LANGUAGE "English")
   set(GDAL_DOXYGEN_JAVADOC_AUTOBRIEF "YES")
@@ -160,12 +160,11 @@ if (DOXYGEN_FOUND)
   set(GDAL_GENERATE_MAN "YES")
   configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile_man)
   add_custom_command(
-    OUTPUT ${CMAKE_BINARY_DIR}/gdal/man/man1/gdalinfo.1 ${CMAKE_BINARY_DIR}/gdal/man/man1/gdal-config.1
-           ${CMAKE_BINARY_DIR}/gdal/man/man1/ogrlinfo.1 ${CMAKE_BINARY_DIR}/gdal/man/man1/ogr2ogr.1
+    OUTPUT ${CMAKE_BINARY_DIR}/man/man1/gdalinfo.1 ${CMAKE_BINARY_DIR}/man/man1/gdal-config.1
+           ${CMAKE_BINARY_DIR}/man/man1/ogrlinfo.1 ${CMAKE_BINARY_DIR}/man/man1/ogr2ogr.1
     COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile_man
     MAIN_DEPENDENCY ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile_man
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/gdal)
-  add_custom_target(
-    manpages DEPENDS ${CMAKE_BINARY_DIR}/gdal/man/man1/gdalinfo.1 ${CMAKE_BINARY_DIR}/gdal/man/man1/gdal-config.1
-                     ${CMAKE_BINARY_DIR}/gdal/man/man1/ogrlinfo.1 ${CMAKE_BINARY_DIR}/gdal/man/man1/ogr2ogr.1)
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+  add_custom_target(manpages DEPENDS ${CMAKE_BINARY_DIR}/man/man1/gdalinfo.1 ${CMAKE_BINARY_DIR}/man/man1/gdal-config.1
+                                     ${CMAKE_BINARY_DIR}/man/man1/ogrlinfo.1 ${CMAKE_BINARY_DIR}/man/man1/ogr2ogr.1)
 endif ()
