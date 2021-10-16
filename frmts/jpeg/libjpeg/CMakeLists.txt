@@ -55,7 +55,7 @@ add_library(
   jdmainct.c
   jdsample.c
   jfdctint.c
-  jmemansi.c
+  jmemnobs.c
   jquant1.c)
 target_include_directories(libjpeg PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
                                            $<TARGET_PROPERTY:cpl,SOURCE_DIR> $<TARGET_PROPERTY:cpl,BINARY_DIR>)
