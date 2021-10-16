@@ -32,74 +32,74 @@ target_public_header(
   gdal_csv.h)
 
 set(CPL_SOURCES
-  cpl_alibaba_oss.cpp
-  cpl_azure.cpp
-  cpl_conv.cpp
-  cpl_error.cpp
-  cpl_string.cpp
-  cplgetsymbol.cpp
-  cplstringlist.cpp
-  cpl_strtod.cpp
-  cpl_path.cpp
-  cpl_csv.cpp
-  cpl_findfile.cpp
-  cpl_minixml.cpp
-  cpl_multiproc.cpp
-  cpl_list.cpp
-  cpl_getexecpath.cpp
-  cplstring.cpp
-  cpl_vsisimple.cpp
-  cpl_vsil.cpp
-  cpl_vsi_mem.cpp
-  cpl_http.cpp
-  cpl_hash_set.cpp
-  cplkeywordparser.cpp
-  cpl_recode.cpp
-  cpl_recode_stub.cpp
-  cpl_quad_tree.cpp
-  cpl_atomic_ops.cpp
-  cpl_vsil_subfile.cpp
-  cpl_time.cpp
-  cpl_vsil_stdout.cpp
-  cpl_vsil_sparsefile.cpp
-  cpl_vsil_abstract_archive.cpp
-  cpl_vsil_tar.cpp
-  cpl_vsil_stdin.cpp
-  cpl_vsil_buffered_reader.cpp
-  cpl_base64.cpp
-  cpl_vsil_curl.cpp
-  cpl_vsil_curl_streaming.cpp
-  cpl_vsil_cache.cpp
-  cpl_xml_validate.cpp
-  cpl_spawn.cpp
-  cpl_google_oauth2.cpp
-  cpl_progress.cpp
-  cpl_virtualmem.cpp
-  cpl_worker_thread_pool.cpp
-  cpl_vsil_crypt.cpp
-  cpl_sha1.cpp
-  cpl_sha256.cpp
-  cpl_aws.cpp
-  cpl_aws_win32.cpp
-  cpl_vsi_error.cpp
-  cpl_cpu_features.cpp
-  cpl_google_cloud.cpp
-  cpl_json.cpp
-  cpl_json_streaming_parser.cpp
-  cpl_md5.cpp
-  cpl_vsil_hdfs.cpp
-  cpl_swift.cpp
-  cpl_vsil_adls.cpp
-  cpl_vsil_az.cpp
-  cpl_vsil_uploadonclose.cpp
-  cpl_vsil_gs.cpp
-  cpl_vsil_webhdfs.cpp
-  cpl_vsil_s3.cpp
-  cpl_vsil_oss.cpp
-  cpl_vsil_swift.cpp
-  cpl_json_streaming_writer.cpp
-  cpl_vax.cpp
-  cpl_compressor.cpp)
+    cpl_alibaba_oss.cpp
+    cpl_azure.cpp
+    cpl_conv.cpp
+    cpl_error.cpp
+    cpl_string.cpp
+    cplgetsymbol.cpp
+    cplstringlist.cpp
+    cpl_strtod.cpp
+    cpl_path.cpp
+    cpl_csv.cpp
+    cpl_findfile.cpp
+    cpl_minixml.cpp
+    cpl_multiproc.cpp
+    cpl_list.cpp
+    cpl_getexecpath.cpp
+    cplstring.cpp
+    cpl_vsisimple.cpp
+    cpl_vsil.cpp
+    cpl_vsi_mem.cpp
+    cpl_http.cpp
+    cpl_hash_set.cpp
+    cplkeywordparser.cpp
+    cpl_recode.cpp
+    cpl_recode_stub.cpp
+    cpl_quad_tree.cpp
+    cpl_atomic_ops.cpp
+    cpl_vsil_subfile.cpp
+    cpl_time.cpp
+    cpl_vsil_stdout.cpp
+    cpl_vsil_sparsefile.cpp
+    cpl_vsil_abstract_archive.cpp
+    cpl_vsil_tar.cpp
+    cpl_vsil_stdin.cpp
+    cpl_vsil_buffered_reader.cpp
+    cpl_base64.cpp
+    cpl_vsil_curl.cpp
+    cpl_vsil_curl_streaming.cpp
+    cpl_vsil_cache.cpp
+    cpl_xml_validate.cpp
+    cpl_spawn.cpp
+    cpl_google_oauth2.cpp
+    cpl_progress.cpp
+    cpl_virtualmem.cpp
+    cpl_worker_thread_pool.cpp
+    cpl_vsil_crypt.cpp
+    cpl_sha1.cpp
+    cpl_sha256.cpp
+    cpl_aws.cpp
+    cpl_aws_win32.cpp
+    cpl_vsi_error.cpp
+    cpl_cpu_features.cpp
+    cpl_google_cloud.cpp
+    cpl_json.cpp
+    cpl_json_streaming_parser.cpp
+    cpl_md5.cpp
+    cpl_vsil_hdfs.cpp
+    cpl_swift.cpp
+    cpl_vsil_adls.cpp
+    cpl_vsil_az.cpp
+    cpl_vsil_uploadonclose.cpp
+    cpl_vsil_gs.cpp
+    cpl_vsil_webhdfs.cpp
+    cpl_vsil_s3.cpp
+    cpl_vsil_oss.cpp
+    cpl_vsil_swift.cpp
+    cpl_json_streaming_writer.cpp
+    cpl_vax.cpp
+    cpl_compressor.cpp)
 add_library(cpl OBJECT ${CPL_SOURCES})
 target_sources(gdal PRIVATE $<TARGET_OBJECTS:cpl>)
 set_property(TARGET cpl PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
@@ -110,9 +110,13 @@ endif ()
 # include path to generated cpl_config.h
 target_include_directories(cpl PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
-if ((EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/cpl_config.h") AND NOT ("${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_BINARY_DIR}"))
+if ((EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/cpl_config.h") AND NOT ("${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL
+                                                                 "${CMAKE_CURRENT_BINARY_DIR}"))
   # Try to detect issues when building with cmake out of source tree, but against a previous build done in source tree
-  message(FATAL_ERROR "${CMAKE_CURRENT_SOURCE_DIR}/cpl_config.h was found, and likely conflicts with ${CMAKE_CURRENT_BINARY_DIR}/cpl_config.h")
+  message(
+    FATAL_ERROR
+      "${CMAKE_CURRENT_SOURCE_DIR}/cpl_config.h was found, and likely conflicts with ${CMAKE_CURRENT_BINARY_DIR}/cpl_config.h"
+    )
 endif ()
 
 if (WIN32)
@@ -128,19 +132,19 @@ if (HAVE_AVX_AT_COMPILE_TIME)
   target_compile_definitions(cpl PRIVATE -DHAVE_AVX_AT_COMPILE_TIME)
 endif ()
 
-function(cpl_add_target_link_library)
-    set(_multiValueArgs INTERFACE)
-    cmake_parse_arguments(_ATLL "" "" "${_multiValueArgs}" ${ARGN})
-    if(NOT _ATLL_INTERFACE)
-        message(FATAL_ERROR "cpl_add_target_link_library: INTERFACE is mandatory argument")
-    endif()
-    if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.12)
-        target_link_libraries(cpl INTERFACE "${_ATLL_INTERFACE}")
-    else()
-        #set_target_properties(cpl PROPERTIES INTERFACE_LINK_LIBRARIES "${_ATLL_INTERFACE}")
-        target_link_libraries(GDAL_LINK_LIBRARY INTERFACE ${_ATLL_INTERFACE})
-    endif()
-endfunction()
+function (cpl_add_target_link_library)
+  set(_multiValueArgs INTERFACE)
+  cmake_parse_arguments(_ATLL "" "" "${_multiValueArgs}" ${ARGN})
+  if (NOT _ATLL_INTERFACE)
+    message(FATAL_ERROR "cpl_add_target_link_library: INTERFACE is mandatory argument")
+  endif ()
+  if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.12)
+    target_link_libraries(cpl INTERFACE "${_ATLL_INTERFACE}")
+  else ()
+    # set_target_properties(cpl PROPERTIES INTERFACE_LINK_LIBRARIES "${_ATLL_INTERFACE}")
+    target_link_libraries(GDAL_LINK_LIBRARY INTERFACE ${_ATLL_INTERFACE})
+  endif ()
+endfunction ()
 
 if (NOT WIN32)
   cpl_add_target_link_library(INTERFACE ${CMAKE_DL_LIBS})

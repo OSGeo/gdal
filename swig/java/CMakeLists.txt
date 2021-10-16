@@ -8,8 +8,8 @@ function (GDAL_JAVA_WRAP)
     set(SWIG_OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/org/gdal/${_SWIG_TARGET}/${_SWIG_TARGET}_wrap.cpp)
     add_custom_command(
       OUTPUT ${SWIG_OUTPUT}
-      COMMAND ${SWIG_EXECUTABLE} ${_SWIG_ARGS} ${SWIG_DEFINES} -I${CMAKE_SOURCE_DIR}/gdal
-              -c++ -java -o ${SWIG_OUTPUT} ${CMAKE_SOURCE_DIR}/swig/include/${_SWIG_TARGET}.i
+      COMMAND ${SWIG_EXECUTABLE} ${_SWIG_ARGS} ${SWIG_DEFINES} -I${CMAKE_SOURCE_DIR}/gdal -c++ -java -o ${SWIG_OUTPUT}
+              ${CMAKE_SOURCE_DIR}/swig/include/${_SWIG_TARGET}.i
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
       DEPENDS ${GDAL_SWIG_COMMON_INTERFACE_FILES} ${CMAKE_SOURCE_DIR}/swig/include/java/typemaps_java.i
               ${CMAKE_SOURCE_DIR}/swig/include/java/${_SWIG_TARGET}_java.i)

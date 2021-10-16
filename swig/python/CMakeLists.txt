@@ -239,8 +239,8 @@ add_custom_command(
   OUTPUT ${CMAKE_SOURCE_DIR}/swig/include/python/docs/ogr_geometry_docs.i
   COMMAND
     ${Python_EXECUTABLE} ${CMAKE_SOURCE_DIR}/swig/include/python/docs/doxy2swig.py
-    ${CMAKE_SOURCE_DIR}/xml/ogrgeometry_8cpp.xml
-    ${CMAKE_SOURCE_DIR}/swig/include/python/docs/ogr_geometry_docs.i OGRGeometryShadow OGR_G_
+    ${CMAKE_SOURCE_DIR}/xml/ogrgeometry_8cpp.xml ${CMAKE_SOURCE_DIR}/swig/include/python/docs/ogr_geometry_docs.i
+    OGRGeometryShadow OGR_G_
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   DEPENDS ${CMAKE_SOURCE_DIR}/xml/ogrgeometry_8cpp.xml
   COMMENT "Generate ogr_geometory_docs.i by doxy2swig")
@@ -248,8 +248,8 @@ add_custom_command(
   OUTPUT ${CMAKE_SOURCE_DIR}/swig/include/python/docs/ogr_datasource_docs.i
   COMMAND
     ${Python_EXECUTABLE} ${CMAKE_SOURCE_DIR}/swig/include/python/docs/doxy2swig.py
-    ${CMAKE_SOURCE_DIR}/xml/ogrdatasource_8cpp.xml
-    ${CMAKE_SOURCE_DIR}/swig/include/python/docs/ogr_datasource_docs.i OGRDataSourceShadow OGR_DS_
+    ${CMAKE_SOURCE_DIR}/xml/ogrdatasource_8cpp.xml ${CMAKE_SOURCE_DIR}/swig/include/python/docs/ogr_datasource_docs.i
+    OGRDataSourceShadow OGR_DS_
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   DEPENDS ${CMAKE_SOURCE_DIR}/xml/ogrdatasource_8cpp.xml
   COMMENT "Generate ogr_datasource_docs.i by doxy2swig")
@@ -257,8 +257,8 @@ add_custom_command(
   OUTPUT ${CMAKE_SOURCE_DIR}/swig/include/python/docs/ogr_driver_docs.i
   COMMAND
     ${Python_EXECUTABLE} ${CMAKE_SOURCE_DIR}/swig/include/python/docs/doxy2swig.py
-    ${CMAKE_SOURCE_DIR}/xml/ogrsfdriver_8cpp.xml
-    ${CMAKE_SOURCE_DIR}/swig/include/python/docs/ogr_driver_docs.i OGRDriverShadow OGR_Dr_
+    ${CMAKE_SOURCE_DIR}/xml/ogrsfdriver_8cpp.xml ${CMAKE_SOURCE_DIR}/swig/include/python/docs/ogr_driver_docs.i
+    OGRDriverShadow OGR_Dr_
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   DEPENDS ${CMAKE_SOURCE_DIR}/xml/ogrsfdriver_8cpp.xml
   COMMENT "Generate ogr_driver_docs.i by doxy2swig")
@@ -266,8 +266,8 @@ add_custom_command(
   OUTPUT ${CMAKE_SOURCE_DIR}/swig/include/python/docs/ogr_feature_docs.i
   COMMAND
     ${Python_EXECUTABLE} ${CMAKE_SOURCE_DIR}/swig/include/python/docs/doxy2swig.py
-    ${CMAKE_SOURCE_DIR}/xml/ogrfeature_8cpp.xml
-    ${CMAKE_SOURCE_DIR}/swig/include/python/docs/ogr_feature_docs.i OGRFeatureShadow OGR_F_
+    ${CMAKE_SOURCE_DIR}/xml/ogrfeature_8cpp.xml ${CMAKE_SOURCE_DIR}/swig/include/python/docs/ogr_feature_docs.i
+    OGRFeatureShadow OGR_F_
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   DEPENDS ${CMAKE_SOURCE_DIR}/xml/ogrfeature_8cpp.xml
   COMMENT "Generate ogr_feature_docs.i by doxy2swig")
@@ -275,8 +275,8 @@ add_custom_command(
   OUTPUT ${CMAKE_SOURCE_DIR}/swig/include/python/docs/ogr_featuredef_docs.i
   COMMAND
     ${Python_EXECUTABLE} ${CMAKE_SOURCE_DIR}/swig/include/python/docs/doxy2swig.py
-    ${CMAKE_SOURCE_DIR}/xml/ogrfeaturedefn_8cpp.xml
-    ${CMAKE_SOURCE_DIR}/swig/include/python/docs/ogr_featuredef_docs.i OGRFeatureDefnShadow OGR_FD_
+    ${CMAKE_SOURCE_DIR}/xml/ogrfeaturedefn_8cpp.xml ${CMAKE_SOURCE_DIR}/swig/include/python/docs/ogr_featuredef_docs.i
+    OGRFeatureDefnShadow OGR_FD_
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   DEPENDS ${CMAKE_SOURCE_DIR}/xml/ogrfeaturedefn_8cpp.xml
   COMMENT "Generate ogr_featuredef_docs.i by doxy2swig")
@@ -284,8 +284,8 @@ add_custom_command(
   OUTPUT ${CMAKE_SOURCE_DIR}/swig/include/python/docs/ogr_fielddef_docs.i
   COMMAND
     ${Python_EXECUTABLE} ${CMAKE_SOURCE_DIR}/swig/include/python/docs/doxy2swig.py
-    ${CMAKE_SOURCE_DIR}/xml/ogrfielddefn_8cpp.xml
-    ${CMAKE_SOURCE_DIR}/swig/include/python/docs/ogr_fielddef_docs.i OGRFieldDefnShadow OGR_Fld_
+    ${CMAKE_SOURCE_DIR}/xml/ogrfielddefn_8cpp.xml ${CMAKE_SOURCE_DIR}/swig/include/python/docs/ogr_fielddef_docs.i
+    OGRFieldDefnShadow OGR_Fld_
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   DEPENDS ${CMAKE_SOURCE_DIR}/xml/ogrfielddefn_8cpp.xml
   COMMENT "Generate ogr_fielddef_docs.i by doxy2swig")
