@@ -422,7 +422,7 @@ NWT_GRDDataset::~NWT_GRDDataset() {
 }
 
 /************************************************************************/
-/*                            ~FlushCache(bool bAtClosing)                             */
+/*                 ~FlushCache(bool bAtClosing)                         */
 /************************************************************************/
 void NWT_GRDDataset::FlushCache(bool bAtClosing) {
     // Ensure the header and TAB file are up to date

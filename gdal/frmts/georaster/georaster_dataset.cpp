@@ -72,7 +72,7 @@ GeoRasterDataset::GeoRasterDataset()
 
 GeoRasterDataset::~GeoRasterDataset()
 {
-    GeoRasterDataset::FlushCache(bAtClosing);
+    GeoRasterDataset::FlushCache(true);
 
     poGeoRaster->FlushMetadata();
 
@@ -1720,7 +1720,7 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
     //      Finalize
     // --------------------------------------------------------------------
 
-    poDstDS->FlushCache(bAtClosing);
+    poDstDS->FlushCache(true);
 
     if( pfnProgress )
     {
@@ -1789,7 +1789,7 @@ CPLErr GeoRasterDataset::IRasterIO( GDALRWFlag eRWFlag,
 }
 
 //  ---------------------------------------------------------------------------
-//                                                                 FlushCache(bool bAtClosing)
+//                                                  FlushCache(bool bAtClosing)
 //  ---------------------------------------------------------------------------
 
 void GeoRasterDataset::FlushCache(bool bAtClosing)
