@@ -260,7 +260,6 @@ def test_proj(src_srs, src_xyz, src_error,
     ],
 )
 def test_transform_bounds_densify(density, expected):
-    numpy = pytest.importorskip('numpy')
     src = osr.SpatialReference()
     assert src.ImportFromEPSG(4326) == 0
     dst = osr.SpatialReference()
@@ -269,10 +268,9 @@ def test_transform_bounds_densify(density, expected):
        "+a=6370997 +b=6370997 +units=m +no_defs"
     ) == 0
     ctr = osr.CoordinateTransformation(src, dst)
-    assert numpy.allclose(
-        ctr.TransformBounds(40, -120, 64, -80, density),
-        expected,
-    )
+    assert ctr.TransformBounds(
+        40, -120, 64, -80, density
+    ) == pytest.approx(expected)
 
 
 @pytest.mark.parametrize(
@@ -283,7 +281,6 @@ def test_transform_bounds_densify(density, expected):
     ],
 )
 def test_transform_bounds__normalized_axis(density, expected):
-    numpy = pytest.importorskip('numpy')
     src = osr.SpatialReference()
     assert src.ImportFromEPSG(4326) == 0
     src.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
@@ -293,14 +290,12 @@ def test_transform_bounds__normalized_axis(density, expected):
        "+a=6370997 +b=6370997 +units=m +no_defs"
     ) == 0
     ctr = osr.CoordinateTransformation(src, dst)
-    assert numpy.allclose(
-        ctr.TransformBounds(-120, 40, -80, 64, density),
-        expected,
-    )
+    assert ctr.TransformBounds(
+        -120, 40, -80, 64, density
+    ) == pytest.approx(expected)
 
 
 def test_transform_bounds_densify_out_of_bounds():
-    numpy = pytest.importorskip('numpy')
     src = osr.SpatialReference()
     assert src.ImportFromEPSG(4326) == 0
     dst = osr.SpatialReference()
@@ -309,11 +304,12 @@ def test_transform_bounds_densify_out_of_bounds():
        "+a=6370997 +b=6370997 +units=m +no_defs"
     ) == 0
     ctr = osr.CoordinateTransformation(src, dst)
-    assert numpy.isinf(ctr.TransformBounds(-120, 40, -80, 64, -1)).all()
+    assert ctr.TransformBounds(
+        -120, 40, -80, 64, -1
+    ) == (float("inf"), float("inf"), float("inf"), float("inf"))
 
 
 def test_transform_bounds_densify_out_of_bounds__geographic_output():
-    numpy = pytest.importorskip('numpy')
     src = osr.SpatialReference()
     assert src.ImportFromProj4(
        "+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 "
@@ -322,31 +318,29 @@ def test_transform_bounds_densify_out_of_bounds__geographic_output():
     dst = osr.SpatialReference()
     assert dst.ImportFromEPSG(4326) == 0
     ctr = osr.CoordinateTransformation(src, dst)
-    assert numpy.isinf(ctr.TransformBounds(-120, 40, -80, 64, 1)).all()
+    assert ctr.TransformBounds(
+        -120, 40, -80, 64, 1
+    ) == (float("inf"), float("inf"), float("inf"), float("inf"))
 
 
 def test_transform_bounds_antimeridian():
-    numpy = pytest.importorskip('numpy')
     src = osr.SpatialReference()
     assert src.ImportFromEPSG(4167) == 0
     dst = osr.SpatialReference()
     assert dst.ImportFromEPSG(3851) == 0
     ctr = osr.CoordinateTransformation(src, dst)
-    assert numpy.allclose(
-        ctr.TransformBounds(-55.95, 160.6, -25.88, -171.2, 21),
-        (5228058.6143420935, 1722483.900174921, 8692574.544944234, 4624385.494808555),
+    assert ctr.TransformBounds(
+        -55.95, 160.6, -25.88, -171.2, 21
+    ) == pytest.approx(
+        (5228058.6143420935, 1722483.900174921, 8692574.544944234, 4624385.494808555)
     )
     ctr = osr.CoordinateTransformation(dst, src)
-    assert numpy.allclose(
-        ctr.TransformBounds(
-            5228058.6143420935, 1722483.900174921, 8692574.544944234, 4624385.494808555, 21
-        ),
-        (-56.7471249, 153.2799922, -24.6148194, -162.1813873),
-    )
+    assert ctr.TransformBounds(
+        5228058.6143420935, 1722483.900174921, 8692574.544944234, 4624385.494808555, 21
+    ) == pytest.approx((-56.7471249, 153.2799922, -24.6148194, -162.1813873))
 
 
 def test_transform_bounds_antimeridian_normalized_axis():
-    numpy = pytest.importorskip('numpy')
     src = osr.SpatialReference()
     assert src.ImportFromEPSG(4167) == 0
     src.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
@@ -354,21 +348,20 @@ def test_transform_bounds_antimeridian_normalized_axis():
     assert dst.ImportFromEPSG(3851) == 0
     dst.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     ctr = osr.CoordinateTransformation(src, dst)
-    numpy.allclose(
-        ctr.TransformBounds(160.6, -55.95, -171.2, -25.88, 21),
-        (1722483.900174921, 5228058.6143420935, 4624385.494808555, 8692574.544944234),
+    assert ctr.TransformBounds(
+            160.6, -55.95, -171.2, -25.88, 21
+    ) == pytest.approx(
+        (1722483.900174921, 5228058.6143420935, 4624385.494808555, 8692574.544944234)
     )
     ctr = osr.CoordinateTransformation(dst, src)
-    numpy.allclose(
-        ctr.TransformBounds(
-            11722483.900174921, 5228058.6143420935, 4624385.494808555, 8692574.544944234, 21
-        ),
-        (153.2799922, -56.7471249, -162.1813873, -24.6148194),
+    assert ctr.TransformBounds(
+        1722483.900174921, 5228058.6143420935, 4624385.494808555, 8692574.544944234, 21
+    ) == pytest.approx(
+        (153.2799922, -56.7471249, -162.1813873, -24.6148194)
     )
 
 
 def test_transform_bounds__beyond_global_bounds():
-    numpy = pytest.importorskip('numpy')
     src = osr.SpatialReference()
     assert src.ImportFromEPSG(6933) == 0
     src.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
@@ -376,16 +369,12 @@ def test_transform_bounds__beyond_global_bounds():
     assert dst.ImportFromEPSG(4326) == 0
     dst.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     ctr = osr.CoordinateTransformation(src, dst)
-    numpy.testing.assert_almost_equal(
-        ctr.TransformBounds(
-            -17367531.3203125, -7314541.19921875, 17367531.3203125, 7314541.19921875, 21
-        ),
-        (-180, -85.0445994113099, 180, 85.0445994113099),
-    )
+    assert ctr.TransformBounds(
+        -17367531.3203125, -7314541.19921875, 17367531.3203125, 7314541.19921875, 21
+    ) == pytest.approx((-180, -85.0445994113099, 180, 85.0445994113099))
 
 
 def test_transform_bounds__ignore_inf():
-    numpy = pytest.importorskip('numpy')
     src = osr.SpatialReference()
     assert src.ImportFromEPSG(4326) == 0
     src.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
@@ -393,15 +382,12 @@ def test_transform_bounds__ignore_inf():
     assert dst.SetFromUserInput("ESRI:102036") == 0
     dst.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     ctr = osr.CoordinateTransformation(src, dst)
-    numpy.testing.assert_almost_equal(
-        ctr.TransformBounds(-180.0, -90.0, 180.0, 0.0, 21),
-        (0, -89178008, 0, 0),
-        decimal=0,
+    assert float("inf") not in ctr.TransformBounds(
+        -180.0, -90.0, 180.0, 0.0, 21
     )
 
 
 def test_transform_bounds__ignore_inf_geographic():
-    numpy = pytest.importorskip('numpy')
     crs_wkt = (
         'PROJCS["Interrupted_Goode_Homolosine",'
         'GEOGCS["GCS_unnamed ellipse",DATUM["D_unknown",'
@@ -417,17 +403,12 @@ def test_transform_bounds__ignore_inf_geographic():
     assert dst.ImportFromEPSG(4326) == 0
     dst.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     ctr = osr.CoordinateTransformation(src, dst)
-    numpy.testing.assert_almost_equal(
-        ctr.TransformBounds(
-            -15028000.0, 7515000.0, -14975000.0, 7556000.0, 21
-        ),
-        (-179.2133, 70.9345, -177.9054, 71.4364),
-        decimal=0,
-    )
+    assert ctr.TransformBounds(
+        -15028000.0, 7515000.0, -14975000.0, 7556000.0, 21
+    ) == pytest.approx((-179.2133, 70.9345, -177.9054, 71.4364), rel=1)
 
 
 def test_transform_bounds__noop_geographic():
-    numpy = pytest.importorskip('numpy')
     src = osr.SpatialReference()
     assert src.ImportFromEPSG(4284) == 0
     src.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
@@ -435,36 +416,29 @@ def test_transform_bounds__noop_geographic():
     assert dst.ImportFromEPSG(4284) == 0
     dst.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     ctr = osr.CoordinateTransformation(src, dst)
-    numpy.testing.assert_almost_equal(
-        ctr.TransformBounds(19.57, 35.14, -168.97, 81.91, 21),
-        (19.57, 35.14, -168.97, 81.91),
-    )
+    assert ctr.TransformBounds(
+        19.57, 35.14, -168.97, 81.91, 21
+    ) == pytest.approx((19.57, 35.14, -168.97, 81.91))
 
 
 def test_transform_bounds__north_pole():
-    numpy = pytest.importorskip('numpy')
     src = osr.SpatialReference()
     assert src.ImportFromEPSG(32661) == 0
     dst = osr.SpatialReference()
     assert dst.ImportFromEPSG(4326) == 0
     ctr = osr.CoordinateTransformation(src, dst)
-    numpy.testing.assert_almost_equal(
-        ctr.TransformBounds(
-            -1405880.71737131, -1371213.7625429356, 5405880.71737131, 5371213.762542935, 21
-        ),
-        (48.656, -180.0, 90.0, 180.0),
-        decimal=0,
-    )
+    assert ctr.TransformBounds(
+        -1405880.71737131, -1371213.7625429356, 5405880.71737131, 5371213.762542935, 21
+    ) == pytest.approx((48.656, -180.0, 90.0, 180.0), rel=1)
     ctr = osr.CoordinateTransformation(dst, src)
-    numpy.testing.assert_almost_equal(
-        ctr.TransformBounds(60.0, -180.0, 90.0, 180.0, 21),
-        (-1405880.71737131, -1371213.7625429356, 5405880.71737131, 5371213.762542935),
-        decimal=0,
+    assert ctr.TransformBounds(
+        60.0, -180.0, 90.0, 180.0, 21
+    ) == pytest.approx(
+        (-1405880.71737131, -1371213.7625429356, 5405880.71737131, 5371213.762542935)
     )
 
 
 def test_transform_bounds__north_pole__xy():
-    numpy = pytest.importorskip('numpy')
     src = osr.SpatialReference()
     assert src.ImportFromEPSG(32661) == 0
     src.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
@@ -472,50 +446,35 @@ def test_transform_bounds__north_pole__xy():
     assert dst.ImportFromEPSG(4326) == 0
     dst.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     ctr = osr.CoordinateTransformation(src, dst)
-    numpy.testing.assert_almost_equal(
-        ctr.TransformBounds(
-            -1371213.7625429356, -1405880.71737131, 5371213.762542935, 5405880.71737131, 21
-        ),
-        (-180.0, 48.656, 180.0, 90.0),
-        decimal=0,
-    )
+    assert ctr.TransformBounds(
+        -1371213.7625429356, -1405880.71737131, 5371213.762542935, 5405880.71737131, 21
+    ) == pytest.approx((-180.0, 48.656, 180.0, 90.0), rel=1)
     ctr = osr.CoordinateTransformation(dst, src)
-    numpy.testing.assert_almost_equal(
-        ctr.TransformBounds(-180.0, 60.0, 180.0, 90.0, 21),
-        (-1371213.7625429356, -1405880.71737131, 5371213.762542935, 5405880.71737131),
-        decimal=0,
+    assert ctr.TransformBounds(
+        -180.0, 60.0, 180.0, 90.0, 21
+    ) == pytest.approx(
+        (-1371213.7625429356, -1405880.71737131, 5371213.762542935, 5405880.71737131)
     )
 
 
 def test_transform_bounds__south_pole():
-    numpy = pytest.importorskip('numpy')
     src = osr.SpatialReference()
     assert src.ImportFromEPSG(32761) == 0
     dst = osr.SpatialReference()
     assert dst.ImportFromEPSG(4326) == 0
     ctr = osr.CoordinateTransformation(src, dst)
-    numpy.testing.assert_almost_equal(
-        ctr.TransformBounds(
-            -1405880.71737131, -1371213.7625429356, 5405880.71737131, 5371213.762542935, 21
-        ),
-        (-90, -180.0, -48.656, 180.0),
-        decimal=0,
-    )
+    assert ctr.TransformBounds(
+        -1405880.71737131, -1371213.7625429356, 5405880.71737131, 5371213.762542935, 21
+    ) == pytest.approx((-90, -180.0, -48.656, 180.0), rel=1)
     ctr = osr.CoordinateTransformation(dst, src)
-    numpy.testing.assert_almost_equal(
-        ctr.TransformBounds(-90.0, -180.0, -60.0, 180.0, 21),
-        (
-            -1405880.72,
-            -1371213.76,
-            5405880.72,
-            5371213.76,
-        ),
-        decimal=0,
+    assert ctr.TransformBounds(
+        -90.0, -180.0, -60.0, 180.0, 21
+    ) == pytest.approx(
+        (-1405880.72, -1371213.76, 5405880.72, 5371213.76)
     )
 
 
 def test_transform_bounds__south_pole__xy():
-    numpy = pytest.importorskip('numpy')
     src = osr.SpatialReference()
     assert src.ImportFromEPSG(32761) == 0
     src.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
@@ -523,21 +482,14 @@ def test_transform_bounds__south_pole__xy():
     assert dst.ImportFromEPSG(4326) == 0
     dst.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     ctr = osr.CoordinateTransformation(src, dst)
-    numpy.testing.assert_almost_equal(
-        ctr.TransformBounds(
-            -1371213.7625429356, -1405880.71737131, 5371213.762542935, 5405880.71737131, 21
-        ),
-        (-180.0, -90, 180.0, -48.656),
-        decimal=0,
+    assert ctr.TransformBounds(
+        -1371213.7625429356, -1405880.71737131, 5371213.762542935, 5405880.71737131, 21
+    ) == pytest.approx(
+        (-180.0, -90, 180.0, -48.656), rel=1
     )
     ctr = osr.CoordinateTransformation(dst, src)
-    numpy.testing.assert_almost_equal(
-        ctr.TransformBounds(-180.0, -90.0, 180.0, -60.0, 21),
-        (
-            -1371213.76,
-            -1405880.72,
-            5371213.76,
-            5405880.72,
-        ),
-        decimal=0,
+    assert ctr.TransformBounds(
+        -180.0, -90.0, 180.0, -60.0, 21
+    ) == pytest.approx(
+        (-1371213.76, -1405880.72, 5371213.76, 5405880.72)
     )
