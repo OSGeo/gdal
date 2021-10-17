@@ -22,23 +22,21 @@ add_gdal_driver(
 gdal_standard_includes(gdal_GTIFF)
 target_include_directories(gdal_GTIFF PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/jpeg)
 option(HAVE_LERC "Enable LERC" ON)
+
+# Make sure to add first all internal libraries, so that their include path goes before external ones, that could also
+# have the headers of libtiff/libgeotiff
+
 if (GDAL_USE_LIBTIFF_INTERNAL)
   target_compile_definitions(gdal_GTIFF PRIVATE -DINTERNAL_LIBTIFF)
   target_include_directories(gdal_GTIFF PRIVATE $<TARGET_PROPERTY:libtiff,SOURCE_DIR>)
   if (RENAME_INTERNAL_LIBTIFF_SYMBOLS)
     target_compile_definitions(gdal_GTIFF PRIVATE -DRENAME_INTERNAL_LIBTIFF_SYMBOLS)
   endif ()
-else ()
-  target_compile_definitions(gdal_GTIFF PRIVATE -DPIXARLOG_SUPPORT)
-  gdal_target_link_libraries(TARGET gdal_GTIFF LIBRARIES TIFF::TIFF)
 endif ()
 
 if (GDAL_USE_LIBJPEG_INTERNAL)
   target_include_directories(gdal_GTIFF PRIVATE $<TARGET_PROPERTY:libjpeg,SOURCE_DIR>)
   target_compile_definitions(gdal_GTIFF PRIVATE -DHAVE_LIBJPEG)
-else ()
-  target_compile_definitions(gdal_GTIFF PRIVATE -DHAVE_LIBJPEG)
-  gdal_target_link_libraries(TARGET gdal_GTIFF LIBRARIES JPEG::JPEG)
 endif ()
 
 if (GDAL_USE_LIBGEOTIFF_INTERNAL)
@@ -47,15 +45,13 @@ if (GDAL_USE_LIBGEOTIFF_INTERNAL)
   if (RENAME_INTERNAL_LIBGEOTIFF_SYMBOLS)
     target_compile_definitions(gdal_GTIFF PRIVATE -DRENAME_INTERNAL_LIBGEOTIFF_SYMBOLS)
   endif ()
-else ()
-  gdal_target_link_libraries(TARGET gdal_GTIFF LIBRARIES GEOTIFF::GEOTIFF)
 endif ()
 
 if (GDAL_USE_LIBZ_INTERNAL)
   target_include_directories(gdal_GTIFF PRIVATE $<TARGET_PROPERTY:libz,SOURCE_DIR>)
-else ()
-  gdal_target_link_libraries(TARGET gdal_GTIFF LIBRARIES ZLIB::ZLIB)
 endif ()
+
+# Now deal with external dependencies
 
 if (HAVE_WEBP)
   target_compile_definitions(gdal_GTIFF PRIVATE -DWEBP_SUPPORT)
@@ -69,6 +65,24 @@ if (HAVE_ZSTD)
 endif ()
 
 gdal_target_link_libraries(TARGET gdal_GTIFF LIBRARIES PROJ::PROJ)
+
+if (NOT GDAL_USE_LIBTIFF_INTERNAL)
+  target_compile_definitions(gdal_GTIFF PRIVATE -DPIXARLOG_SUPPORT)
+  gdal_target_link_libraries(TARGET gdal_GTIFF LIBRARIES TIFF::TIFF)
+endif ()
+
+if (NOT GDAL_USE_LIBJPEG_INTERNAL)
+  target_compile_definitions(gdal_GTIFF PRIVATE -DHAVE_LIBJPEG)
+  gdal_target_link_libraries(TARGET gdal_GTIFF LIBRARIES JPEG::JPEG)
+endif ()
+
+if (NOT GDAL_USE_LIBGEOTIFF_INTERNAL)
+  gdal_target_link_libraries(TARGET gdal_GTIFF LIBRARIES GEOTIFF::GEOTIFF)
+endif ()
+
+if (NOT GDAL_USE_LIBZ_INTERNAL)
+  gdal_target_link_libraries(TARGET gdal_GTIFF LIBRARIES ZLIB::ZLIB)
+endif ()
 
 if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
   set_property(SOURCE geotiff.cpp gt_wkt_srs.cpp PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
