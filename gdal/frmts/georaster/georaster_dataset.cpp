@@ -1720,7 +1720,7 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
     //      Finalize
     // --------------------------------------------------------------------
 
-    poDstDS->FlushCache(true);
+    poDstDS->FlushCache(false);
 
     if( pfnProgress )
     {
