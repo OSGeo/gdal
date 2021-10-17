@@ -93,7 +93,6 @@ jobs:
         working-directory: ${{ github.workspace }}
 
   build-windows-conda:
-    if: ${{ false }}  # FIXME: disable for now
     runs-on: windows-latest
     env:
         architecture: x64
