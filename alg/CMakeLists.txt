@@ -35,6 +35,8 @@ add_library(
   gdal_simplesurf.cpp
   viewshed.cpp)
 
+add_dependencies(alg generate_gdal_version_h)
+
 include(GdalStandardIncludes)
 gdal_standard_includes(alg)
 target_include_directories(
