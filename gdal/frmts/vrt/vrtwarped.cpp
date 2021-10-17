@@ -181,9 +181,12 @@ GDALAutoCreateWarpedVRTEx( GDALDatasetH hSrcDS,
                 if( !bClamped )
                 {
                     GDALWarpInitNoDataReal(psWO, -1e10);
-
-                    psWO->padfSrcNoDataReal[i] = noDataValue;
-                    psWO->padfDstNoDataReal[i] = noDataValue;
+                    if( psWO->padfSrcNoDataReal != nullptr &&
+                        psWO->padfDstNoDataReal != nullptr )
+                    {
+                        psWO->padfSrcNoDataReal[i] = noDataValue;
+                        psWO->padfDstNoDataReal[i] = noDataValue;
+                    }
                 }
             }
         }
