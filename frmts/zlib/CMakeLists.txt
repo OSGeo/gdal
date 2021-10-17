@@ -1,6 +1,6 @@
 # This is common library for other driver.
 add_library(
-  libz STATIC
+  libz OBJECT
   crc32.h
   deflate.h
   inffast.h
@@ -24,5 +24,4 @@ add_library(
   uncompr.c
   zutil.c)
 set_property(TARGET libz PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
-set_property(TARGET libz PROPERTY ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-target_link_libraries(GDAL_LINK_LIBRARY INTERFACE libz)
+target_sources(gdal PRIVATE $<TARGET_OBJECTS:libz>)

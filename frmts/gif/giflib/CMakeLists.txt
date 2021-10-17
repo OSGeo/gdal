@@ -1,5 +1,5 @@
 add_library(
-  giflib STATIC
+  giflib OBJECT
   dgif_lib.c
   egif_lib.c
   gifalloc.c
@@ -9,5 +9,4 @@ add_library(
   gif_lib.h
   gif_lib_private.h)
 set_property(TARGET giflib PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
-set_property(TARGET giflib PROPERTY ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-target_link_libraries(GDAL_LINK_LIBRARY INTERFACE giflib)
+target_sources(gdal PRIVATE $<TARGET_OBJECTS:giflib>)

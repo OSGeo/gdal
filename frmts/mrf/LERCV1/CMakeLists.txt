@@ -1,5 +1,4 @@
-add_library(liblerc STATIC Lerc1Image.cpp Lerc1Image.h)
+add_library(liblerc OBJECT Lerc1Image.cpp Lerc1Image.h)
 target_include_directories(liblerc PRIVATE $<TARGET_PROPERTY:cpl,SOURCE_DIR> $<TARGET_PROPERTY:cpl,BINARY_DIR>)
 set_property(TARGET liblerc PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
-set_property(TARGET liblerc PROPERTY ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-target_link_libraries(GDAL_LINK_LIBRARY INTERFACE liblerc)
+target_sources(gdal PRIVATE $<TARGET_OBJECTS:liblerc>)

@@ -1,5 +1,5 @@
 add_library(
-  libjpeg STATIC
+  libjpeg OBJECT
   jcapimin.c
   jchuff.h
   jconfig.h
@@ -70,10 +70,9 @@ endif ()
 if (GDAL_USE_LIBZ_INTERNAL)
   target_include_directories(libjpeg PRIVATE $<TARGET_PROPERTY:libz,SOURCE_DIR>)
 else ()
-  target_link_libraries(libjpeg PRIVATE ZLIB::ZLIB)
+  gdal_add_private_link_libraries(ZLIB::ZLIB)
 endif ()
 
 target_compile_definitions(libjpeg PRIVATE -DDEFAULT_MAX_MEM=500000000L)
 set_property(TARGET libjpeg PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
-set_property(TARGET libjpeg PROPERTY ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-target_link_libraries(GDAL_LINK_LIBRARY INTERFACE libjpeg)
+target_sources(gdal PRIVATE $<TARGET_OBJECTS:libjpeg>)

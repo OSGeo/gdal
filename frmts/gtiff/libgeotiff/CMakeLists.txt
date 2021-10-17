@@ -1,5 +1,5 @@
 add_library(
-  geotiff STATIC
+  geotiff OBJECT
   cpl_serv.h
   geo_free.c
   geo_new.c
@@ -36,14 +36,14 @@ if (GDAL_USE_LIBTIFF_INTERNAL)
   endif ()
 else ()
   target_include_directories(geotiff PRIVATE ${TIFF_INCLUDE_DIRS})
-  target_link_libraries(GDAL_LINK_LIBRARY INTERFACE ${TIFF_LIBRARIES})
+  gdal_add_private_link_libraries(${TIFF_LIBRARIES})
 endif ()
 if (RENAME_INTERNAL_LIBGEOTIFF_SYMBOLS)
   target_compile_definitions(geotiff PRIVATE -DRENAME_INTERNAL_LIBGEOTIFF_SYMBOLS)
   target_sources(geotiff PRIVATE gdal_libgeotiff_symbol_rename.h)
 endif ()
 set_property(TARGET geotiff PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
-set_property(TARGET geotiff PROPERTY ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-target_link_libraries(GDAL_LINK_LIBRARY INTERFACE geotiff)
 
-target_link_libraries(geotiff PRIVATE PROJ::PROJ)
+target_include_directories(geotiff PRIVATE ${PROJ_INCLUDE_DIR})
+gdal_add_private_link_libraries(PROJ::PROJ)
+target_sources(gdal PRIVATE $<TARGET_OBJECTS:geotiff>)

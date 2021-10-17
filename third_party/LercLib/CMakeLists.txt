@@ -1,5 +1,5 @@
 add_library(
-  lerc STATIC
+  lerc OBJECT
   BitMask.cpp
   BitMask.h
   BitStuffer2.cpp
@@ -17,5 +17,4 @@ add_library(
   RLE.cpp
   RLE.h)
 set_property(TARGET lerc PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
-set_property(TARGET lerc PROPERTY ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-target_link_libraries(GDAL_LINK_LIBRARY INTERFACE lerc)
+target_sources(gdal PRIVATE $<TARGET_OBJECTS:lerc>)

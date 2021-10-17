@@ -1,7 +1,7 @@
 # CMake4GDAL project is distributed under X/MIT license. See accompanying file LICENSE.txt.
 
 add_library(
-  qhull STATIC
+  qhull OBJECT
   geom.c
   io.c
   mem.c
@@ -33,7 +33,6 @@ add_library(
 include(GdalStandardIncludes)
 gdal_standard_includes(qhull)
 set_property(TARGET qhull PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
-set_property(TARGET qhull PROPERTY ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 if (MSVC)
   target_compile_definitions(qhull PRIVATE -D_USE_MATH_DEFINES)
   if (CMAKE_CL_64)
@@ -43,4 +42,4 @@ if (MSVC)
   endif ()
 endif ()
 
-target_link_libraries(GDAL_LINK_LIBRARY INTERFACE qhull)
+target_sources(gdal PRIVATE $<TARGET_OBJECTS:qhull>)

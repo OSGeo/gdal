@@ -33,7 +33,7 @@ if (GDAL_USE_LIBJSONC_INTERNAL)
   target_include_directories(appslib PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
 else ()
   target_include_directories(appslib PRIVATE ${JSONC_INCLUDE_DIRS})
-  target_link_libraries(GDAL_LINK_LIBRARY INTERFACE ${JSONC_LIBRARIES})
+  gdal_add_private_link_libraries(${JSONC_LIBRARIES})
 endif ()
 
 if (BUILD_APPS)

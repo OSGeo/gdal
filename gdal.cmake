@@ -40,12 +40,20 @@ if (ENABLE_LTO)
 endif ()
 
 # ######################################################################################################################
+
+set_property(GLOBAL PROPERTY gdal_private_link_libraries)
+function(gdal_add_private_link_libraries)
+    get_property(tmp GLOBAL PROPERTY gdal_private_link_libraries)
+    foreach(arg ${ARGV})
+        set(tmp ${tmp} ${arg})
+    endforeach()
+    set_property(GLOBAL PROPERTY gdal_private_link_libraries ${tmp})
+endfunction(gdal_add_private_link_libraries)
+
 add_library(gdal gcore/gdal.h)
 add_dependencies(gdal generate_gdal_version_h)
-add_library(GDAL_LINK_LIBRARY INTERFACE)
-target_link_libraries(gdal PRIVATE $<LINK_ONLY:GDAL_LINK_LIBRARY>)
 if (M_LIB)
-  target_link_libraries(gdal PRIVATE -lm)
+  gdal_add_private_link_libraries(-lm)
 endif ()
 # Set project and C++ Standard properties
 set_target_properties(
@@ -159,6 +167,10 @@ add_subdirectory(swig)
 
 # Utilities
 add_subdirectory(apps)
+
+# Add all library dependencies of target gdal
+get_property(GDAL_PRIVATE_LINK_LIBRARIES GLOBAL PROPERTY gdal_private_link_libraries)
+target_link_libraries(gdal PRIVATE ${GDAL_PRIVATE_LINK_LIBRARIES})
 
 # Document/Manuals
 if (BUILD_DOCS)
@@ -322,7 +334,7 @@ if (UNIX AND NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
   get_property(_GDAL_FORMATS GLOBAL PROPERTY GDAL_FORMATS)
   get_property(_OGR_FORMATS GLOBAL PROPERTY OGR_FORMATS)
   string(REPLACE ";" " " CONFIG_FORMATS "${_GDAL_FORMATS} ${_OGR_FORMATS}")
-  generate_config(gdal GDAL_LINK_LIBRARY ${GDAL_CMAKE_TEMPLATE_PATH}/gdal-config.in
+  generate_config(gdal "gdal_private_link_libraries" ${GDAL_CMAKE_TEMPLATE_PATH}/gdal-config.in
                   ${CMAKE_BINARY_DIR}/apps/gdal-config)
   add_custom_target(gdal_config ALL DEPENDS ${CMAKE_BINARY_DIR}/apps/gdal-config)
   install(

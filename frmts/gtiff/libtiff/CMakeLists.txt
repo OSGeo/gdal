@@ -1,5 +1,5 @@
 add_library(
-  libtiff STATIC
+  libtiff OBJECT
   tif_dir.c
   tif_fax3.c
   tif_lzma.c
@@ -59,14 +59,14 @@ if (GDAL_USE_LIBZ_INTERNAL)
   target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:libz,SOURCE_DIR>)
   target_compile_definitions(libtiff PRIVATE -DPIXARLOG_SUPPORT -DZIP_SUPPORT)
 else ()
-  target_link_libraries(libtiff PRIVATE ZLIB::ZLIB)
+  gdal_add_private_link_libraries(ZLIB::ZLIB)
   target_compile_definitions(libtiff PRIVATE -DPIXARLOG_SUPPORT -DZIP_SUPPORT)
 endif ()
 
 if (GDAL_USE_LIBJPEG_INTERNAL)
   target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:libjpeg,SOURCE_DIR>)
 else ()
-  target_link_libraries(libtiff PRIVATE JPEG::JPEG)
+  gdal_add_private_link_libraries(JPEG::JPEG)
 endif ()
 
 if (GDAL_JPEG12_SUPPORTED)
@@ -76,18 +76,18 @@ target_compile_definitions(libtiff PRIVATE -DJPEG_SUPPORT -DOJPEG_SUPPORT)
 
 if (HAVE_LIBLZMA)
   target_compile_definitions(libtiff PRIVATE -DLZMA_SUPPORT)
-  target_link_libraries(libtiff PRIVATE LibLZMA::LibLZMA)
+  gdal_add_private_link_libraries(LibLZMA::LibLZMA)
 endif ()
 
 if (HAVE_ZSTD)
   target_compile_definitions(libtiff PRIVATE -DZSTD_SUPPORT)
   target_include_directories(libtiff PRIVATE ${ZSTD_INCLUDE_DIRS})
-  target_link_libraries(libtiff PRIVATE ZSTD::zstd)
+  gdal_add_private_link_libraries(ZSTD::zstd)
 endif ()
 
 if (HAVE_WEBP)
   target_compile_definitions(libtiff PRIVATE -DWEBP_SUPPORT)
-  target_link_libraries(GDAL_LINK_LIBRARY INTERFACE WEBP::WebP)
+  gdal_add_private_link_libraries(WEBP::WebP)
 endif ()
 
 if (HAVE_LERC)
@@ -106,9 +106,8 @@ if (MSVC)
 endif ()
 
 set_target_properties(libtiff PROPERTIES CXX_STANDARD 11)
-target_link_libraries(GDAL_LINK_LIBRARY INTERFACE libtiff)
 set_property(TARGET libtiff PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
-set_property(TARGET libtiff PROPERTY ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+target_sources(gdal PRIVATE $<TARGET_OBJECTS:libtiff>)
 
 # ifeq ($(RENAME_INTERNAL_LIBTIFF_SYMBOLS),yes) ../../o/tif_jpeg.$(OBJ_EXT) : tif_jpeg.c t4.h tif_config.h tif_dir.h
 # tif_fax3.h tif_predict.h tiff.h tiffconf.h tiffio.h tiffiop.h tiffvers.h uvcode.h sed "s/defined(TIFFInitJPEG)/0/" <

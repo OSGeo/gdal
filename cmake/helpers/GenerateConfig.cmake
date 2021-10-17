@@ -18,7 +18,7 @@ function(generate_config _target _link _template _output)
 
     # dep-libs
     set(_DEP_LIBS "")
-    get_property(_LIBS TARGET ${_link} PROPERTY INTERFACE_LINK_LIBRARIES)
+    get_property(_LIBS GLOBAL PROPERTY ${_link})
     list(REMOVE_DUPLICATES _LIBS)
     foreach(_lib IN LISTS _LIBS)
         if(TARGET ${_lib})

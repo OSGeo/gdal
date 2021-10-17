@@ -185,7 +185,7 @@ function(gdal_target_link_libraries)
         target_link_libraries(${_DRIVER_TARGET} PRIVATE ${_DRIVER_LIBRARIES})
     else ()
         gdal_target_interfaces(${_DRIVER_TARGET} ${_DRIVER_LIBRARIES})
-        target_link_libraries(GDAL_LINK_LIBRARY INTERFACE ${_DRIVER_LIBRARIES})
+        gdal_add_private_link_libraries(${_DRIVER_LIBRARIES})
     endif ()
 endfunction()
 
