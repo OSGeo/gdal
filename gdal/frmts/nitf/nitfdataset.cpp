@@ -240,7 +240,7 @@ int NITFDataset::CloseDependentDatasets()
 /* We must do it now since the rasterbands can be NITFWrapperRasterBand */
 /* that derive from the GDALProxyRasterBand object, which keeps         */
 /* a reference on the JPEG/JP2K dataset, so any later call to           */
-/* FlushCache(bool bAtClosing) would result in FlushCache() being called on a          */
+/* FlushCache() would result in FlushCache() being called on a          */
 /* already destroyed object                                             */
 /* -------------------------------------------------------------------- */
     for( int iBand = 0; iBand < nBands; iBand++ )
