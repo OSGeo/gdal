@@ -93,28 +93,36 @@ if(NOT POPPLER_VERSION_STRING)
             HINTS ${POPPLER_INCLUDE_DIR}
             PATH_SUFFIXES poppler
             )
+  #if(POPPLER_VERSION_HEADER)
+  #  file(READ ${POPPLER_VERSION_HEADER} _poppler_version_header_contents)
+  #  string(REGEX REPLACE
+  #         "^.*[ \t]+POPPLER_VERSION_MAJOR[ \t]+([0-9]+).*$"
+  #         "\\1"
+  #         POPPLER_VERSION_MAJOR
+  #         "${_poppler_version_header_contents}"
+  #         )
+  #  string(REGEX REPLACE
+  #         "^.*[ \t]+POPPLER_VERSION_MINOR[ \t]+([0-9]+).*$"
+  #         "\\1"
+  #         POPPLER_VERSION_MINOR
+  #         "${_poppler_version_header_contents}"
+  #         )
+  #  string(REGEX REPLACE
+  #         "^.*[ \t]+POPPLER_VERSION_MICRO[ \t]+([0-9]+).*$"
+  #         "\\1"
+  #         POPPLER_VERSION_MICRO
+  #         "${_poppler_version_header_contents}"
+  #         )
+  #  unset(_poppler_version_header_contents)
+  #  set(POPPLER_VERSION_STRING "${POPPLER_VERSION_MAJOR}.${POPPLER_VERSION_MINOR}.${POPPLER_VERSION_MICRO}")
+  #endif()
   if(POPPLER_VERSION_HEADER)
-    file(READ ${POPPLER_VERSION_HEADER} _poppler_version_header_contents)
-    string(REGEX REPLACE
-           "^.*[ \t]+POPPLER_VERSION_MAJOR[ \t]+([0-9]+).*$"
-           "\\1"
-           POPPLER_VERSION_MAJOR
-           "${_poppler_version_header_contents}"
-           )
-    string(REGEX REPLACE
-           "^.*[ \t]+POPPLER_VERSION_MINOR[ \t]+([0-9]+).*$"
-           "\\1"
-           POPPLER_VERSION_MINOR
-           "${_poppler_version_header_contents}"
-           )
-    string(REGEX REPLACE
-           "^.*[ \t]+POPPLER_VERSION_MICRO[ \t]+([0-9]+).*$"
-           "\\1"
-           POPPLER_VERSION_MICRO
-           "${_poppler_version_header_contents}"
-           )
-    unset(_poppler_version_header_contents)
-    set(POPPLER_VERSION_STRING "${POPPLER_VERSION_MAJOR}.${POPPLER_VERSION_MINOR}.${POPPLER_VERSION_MICRO}")
+    file(STRINGS "${POPPLER_VERSION_HEADER}" _poppler_version_str REGEX "^#define[\t ]+POPPLER_VERSION[\t ]+\".*\"")
+    string(REGEX REPLACE "^#define[\t ]+POPPLER_VERSION[\t ]+\"([^\"]*)\".*" "\\1" POPPLER_VERSION_STRING "${_poppler_version_str}")
+    if(NOT ${POPPLER_VERSION_STRING} MATCHES "[0-9]+\\.[0-9]+\\.[0-9]+")
+      message(WARNING "POPPLER_VERSION (${POPPLER_VERSION_STRING}) doesn't match *.*.* form")
+    endif()
+    unset(_poppler_version_str)
   endif()
 endif()
 
