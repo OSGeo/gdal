@@ -18,22 +18,23 @@ if (GDAL_SHA1SUM)
 elseif (EXISTS ${SOURCE_DIR}/.git)
 
     find_package(Git)
-    include(GetGitRevisionDescription)
-    get_git_head_revision(GDAL_GIT_REFSPEC GDAL_GIT_HASH ${SOURCE_DIR})
-    include(GetGitHeadDate)
-    get_git_head_date(GDAL_GIT_DATE ${SOURCE_DIR})
-    git_local_changes(GIT_LOCAL_CHG ${SOURCE_DIR})
-    string(SUBSTRING ${GDAL_GIT_HASH} 0 10 REV)
-    set(GDAL_DEV_REVISION "dev-${REV}")
-    if (GIT_LOCAL_CHG STREQUAL "DIRTY")
-      set(GDAL_DEV_REVISION "${GDAL_DEV_REVISION}-dirty")
-    endif()
+    if (GIT_FOUND)
+        include(GetGitRevisionDescription)
+        get_git_head_revision(GDAL_GIT_REFSPEC GDAL_GIT_HASH ${SOURCE_DIR})
+        include(GetGitHeadDate)
+        get_git_head_date(GDAL_GIT_DATE ${SOURCE_DIR})
+        git_local_changes(GIT_LOCAL_CHG ${SOURCE_DIR})
+        string(SUBSTRING ${GDAL_GIT_HASH} 0 10 REV)
+        set(GDAL_DEV_REVISION "dev-${REV}")
+        if (GIT_LOCAL_CHG STREQUAL "DIRTY")
+          set(GDAL_DEV_REVISION "${GDAL_DEV_REVISION}-dirty")
+        endif()
 
-    string(REPLACE "dev" "${GDAL_DEV_REVISION}"
-           GDAL_VERSION_H_CONTENTS "${GDAL_VERSION_H_CONTENTS}")
-    string(REGEX REPLACE "(define GDAL_RELEASE_DATE[ ]+)([0-9]+)(.*)" "\\1${GDAL_GIT_DATE}\\3"
-          GDAL_VERSION_H_CONTENTS "${GDAL_VERSION_H_CONTENTS}")
-
+        string(REPLACE "dev" "${GDAL_DEV_REVISION}"
+               GDAL_VERSION_H_CONTENTS "${GDAL_VERSION_H_CONTENTS}")
+        string(REGEX REPLACE "(define GDAL_RELEASE_DATE[ ]+)([0-9]+)(.*)" "\\1${GDAL_GIT_DATE}\\3"
+              GDAL_VERSION_H_CONTENTS "${GDAL_VERSION_H_CONTENTS}")
+    endif ()
 endif ()
 
 file(WRITE ${BINARY_DIR}/gcore/gdal_version_full/gdal_version.h.tmp "${GDAL_VERSION_H_CONTENTS}")
