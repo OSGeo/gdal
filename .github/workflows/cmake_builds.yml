@@ -52,6 +52,7 @@ jobs:
         cmake --build $GITHUB_WORKSPACE/build --target quicktest
 
   build-windows-msys2-mingw:
+    if: ${{ false }}  # FIXME: disable for now
     runs-on: windows-latest
     env:
       generator: MinGW Makefiles
@@ -92,6 +93,7 @@ jobs:
         working-directory: ${{ github.workspace }}
 
   build-windows-conda:
+    if: ${{ false }}  # FIXME: disable for now
     runs-on: windows-latest
     env:
         architecture: x64
@@ -130,6 +132,7 @@ jobs:
       run: cmake --build $GITHUB_WORKSPACE/build --config Release --target quicktest
 
   build-mac:
+    if: ${{ false }}  # FIXME: disable for now
     runs-on: macOS-latest
     env:
       CMAKE_OPTIONS: -DGDAL_USE_GIFLIB_INTERNAL=YES -DCFITSIO_ROOT=/usr/local/opt/cfitsio  -DPoppler_ROOT=/usr/local/opt/poppler -DPROJ_ROOT=/usr/local/opt/proj -DLibXml2_ROOT=/usr/local/opt/libxml2 -DSPATIALITE_ROOT=/usr/local/opt/libspatialite -DPostgreSQL_ROOT=/usr/local/opt/libpq -DEXPAT_ROOT=/usr/local/opt/expat -DXercesC_ROOT=/usr/local/opt/xerces-c -DSQLite3_ROOT=/usr/local/opt/sqlite -DOpenSSL_ROOT=/usr/local/opt/openssl -DPNG_ROOT=/usr/local/opt/libpng -DJPEG_ROOT=/usr/local/opt/jpeg -DOpenJPEG_ROOT=/usr/local/opt/openjpeg
