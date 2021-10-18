@@ -1159,6 +1159,11 @@ class CoordinateTransformation(_object):
         """TransformPoints(CoordinateTransformation self, int nCount)"""
         return _osr.CoordinateTransformation_TransformPoints(self, *args)
 
+
+    def TransformBounds(self, *args):
+        """TransformBounds(CoordinateTransformation self, double minx, double miny, double maxx, double maxy, int densify_pts)"""
+        return _osr.CoordinateTransformation_TransformBounds(self, *args)
+
 CoordinateTransformation_swigregister = _osr.CoordinateTransformation_swigregister
 CoordinateTransformation_swigregister(CoordinateTransformation)
 
