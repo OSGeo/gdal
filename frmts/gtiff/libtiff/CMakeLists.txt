@@ -35,13 +35,13 @@ add_library(
   tif_webp.c
   tif_color.c
   tif_dumpmode.c
-  tif_jpeg.c
+  # tif_jpeg.c
   tif_packbits.c
   tif_thunder.c
   tiff.h
   tif_compress.c
   tif_error.c
-  tif_jpeg_12.c
+  # tif_jpeg_12.c
   tif_pixarlog.c
   tif_tile.c
   tiffconf.h
@@ -79,6 +79,7 @@ endif ()
 
 if (GDAL_JPEG12_SUPPORTED)
   target_compile_definitions(libtiff PRIVATE -DJPEG_DUAL_MODE_8_12)
+  target_include_directories(libtiff PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 endif ()
 
 if (HAVE_LIBLZMA)
@@ -104,8 +105,25 @@ endif ()
 
 if (RENAME_INTERNAL_LIBTIFF_SYMBOLS)
   target_compile_definitions(libtiff PRIVATE -DRENAME_INTERNAL_LIBTIFF_SYMBOLS)
-  target_sources(libtiff PRIVATE gdal_libtiff_symbol_rename.h)
+
+  target_include_directories(libtiff PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+  # A few hacks in tif_jpeg.c and tif_jpeg_12.c to deal with the #define game of gdal_libtiff_symbol_rename.h
+  file(READ ${CMAKE_CURRENT_SOURCE_DIR}/tif_jpeg.c tif_jpeg_content)
+  string(REPLACE "defined(TIFFInitJPEG)" "0" tif_jpeg_content "${tif_jpeg_content}")
+  file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/tif_jpeg_modified.c "${tif_jpeg_content}")
+
+  file(READ ${CMAKE_CURRENT_SOURCE_DIR}/tif_jpeg_12.c tif_jpeg_12_content)
+  string(REPLACE "#define TIFFInitJPEG TIFFInitJPEG_12" "#undef TIFFInitJPEG\n#define TIFFInitJPEG TIFFInitJPEG_12"
+                 tif_jpeg_12_content "${tif_jpeg_12_content}")
+  file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/tif_jpeg_12_modified.c "${tif_jpeg_12_content}")
+
+  target_sources(libtiff PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/tif_jpeg_modified.c
+                                 ${CMAKE_CURRENT_BINARY_DIR}/tif_jpeg_12_modified.c gdal_libtiff_symbol_rename.h)
+else ()
+  target_sources(libtiff PRIVATE tif_jpeg.c tif_jpeg_12.c gdal_libtiff_symbol_rename.h)
 endif ()
+
 if (MSVC)
   if (CMAKE_CL_64)
     target_compile_definitions(libtiff PRIVATE -D_WIN64)
@@ -115,12 +133,3 @@ endif ()
 set_target_properties(libtiff PROPERTIES CXX_STANDARD 11)
 set_property(TARGET libtiff PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 target_sources(gdal PRIVATE $<TARGET_OBJECTS:libtiff>)
-
-# ifeq ($(RENAME_INTERNAL_LIBTIFF_SYMBOLS),yes) ../../o/tif_jpeg.$(OBJ_EXT) : tif_jpeg.c t4.h tif_config.h tif_dir.h
-# tif_fax3.h tif_predict.h tiff.h tiffconf.h tiffio.h tiffiop.h tiffvers.h uvcode.h sed "s/defined(TIFFInitJPEG)/0/" <
-# tif_jpeg.c > tmp_tif_jpeg.c $(CC) -c -I../../port $(ALL_C_FLAGS) tmp_tif_jpeg.c -o $@ rm tmp_tif_jpeg.c
-#
-# ../../o/tif_jpeg_12.$(OBJ_EXT) : tif_jpeg_12.c t4.h tif_config.h tif_dir.h tif_fax3.h tif_predict.h tiff.h tiffconf.h
-# tiffio.h tiffiop.h tiffvers.h uvcode.h sed "s/#  define TIFFInitJPEG/#undef TIFFInitJPEG\n#  define TIFFInitJPEG/" <
-# tif_jpeg_12.c > tmp_tif_jpeg_12.c $(CC) -c -I../../port $(ALL_C_FLAGS) tmp_tif_jpeg_12.c -o $@ rm tmp_tif_jpeg_12.c
-# endif

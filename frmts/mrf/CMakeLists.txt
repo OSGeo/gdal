@@ -19,6 +19,7 @@ gdal_standard_includes(gdal_MRF)
 if (GDAL_JPEG12_SUPPORTED)
   target_sources(gdal_MRF PRIVATE JPEG12_band.cpp)
   target_compile_definitions(gdal_MRF PRIVATE -DJPEG12_SUPPORTED)
+  target_include_directories(gdal_MRF PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 endif ()
 
 if (GDAL_USE_LIBJPEG_INTERNAL)

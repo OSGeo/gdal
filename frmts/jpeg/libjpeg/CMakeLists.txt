@@ -61,19 +61,6 @@ target_include_directories(libjpeg PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOU
                                            $<TARGET_PROPERTY:cpl,SOURCE_DIR> $<TARGET_PROPERTY:cpl,BINARY_DIR>)
 target_compile_options(libjpeg PRIVATE ${GDAL_C_WARNING_FLAGS} ${SOFTWARNFLAGS})
 
-option(GDAL_JPEG12_SUPPORTED "Set ON to use libjpeg12 support" OFF)
-if (GDAL_JPEG12_SUPPORTED)
-  target_compile_definitions(libjpeg PRIVATE -DJPEG_DUAL_MODE_8_12)
-  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../libjpeg12/jmorecfg.h.12 DESTINATION ${CMAKE_CURRENT_SOURCE_DIR})
-  file(RENAME ${CMAKE_CURRENT_SOURCE_DIR}/jmorecfg.h.12 ${CMAKE_CURRENT_SOURCE_DIR}/jmorecfg.h)
-endif ()
-
-if (GDAL_USE_LIBZ_INTERNAL)
-  target_include_directories(libjpeg PRIVATE $<TARGET_PROPERTY:libz,SOURCE_DIR>)
-else ()
-  gdal_add_private_link_libraries(ZLIB::ZLIB)
-endif ()
-
 target_compile_definitions(libjpeg PRIVATE -DDEFAULT_MAX_MEM=500000000L)
 set_property(TARGET libjpeg PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 target_sources(gdal PRIVATE $<TARGET_OBJECTS:libjpeg>)
