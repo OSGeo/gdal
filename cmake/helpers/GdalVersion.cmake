@@ -40,7 +40,7 @@ if ((EXISTS "${CMAKE_SOURCE_DIR}/gcore/gdal_version.h") AND NOT ("${CMAKE_SOURCE
     message(FATAL_ERROR "${CMAKE_SOURCE_DIR}/gcore/gdal_version.h was found, and likely conflicts with ${CMAKE_BINARY_DIR}/gcore/gdal_version.h")
 endif ()
 
-if (EXISTS ${SOURCE_DIR}/.git)
+if (EXISTS ${CMAKE_SOURCE_DIR}/.git)
     set(GDAL_DEV_SUFFIX "dev")
 else()
     set(GDAL_DEV_SUFFIX "")
