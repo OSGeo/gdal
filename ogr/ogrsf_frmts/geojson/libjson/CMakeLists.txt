@@ -25,8 +25,8 @@ add_library(
   json_util.c
   linkhash.c
   printbuf.c)
-# -D_XOPEN_SOURCE=500 to enable strdup() definition in C11 mode
-target_compile_definitions(libjson PRIVATE -D_XOPEN_SOURCE=500)
+# -D_XOPEN_SOURCE=700 to enable strdup() definition in C11 mode
+target_compile_definitions(libjson PRIVATE -D_XOPEN_SOURCE=700)
 target_include_directories(libjson PRIVATE $<TARGET_PROPERTY:cpl,SOURCE_DIR> $<TARGET_PROPERTY:cpl,BINARY_DIR>)
 set_target_properties(libjson PROPERTIES CXX_STANDARD 11)
 set_property(TARGET libjson PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
