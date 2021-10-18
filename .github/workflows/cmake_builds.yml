@@ -124,9 +124,10 @@ jobs:
       shell: bash -l {0}
       # FIXME: Spatialite and Jasper manually disabled because of linking errors: spatialite needs rttopo, and jasper lacks jp2_box_destroy
       # Disable MySQL because of ogr\ogrsf_frmts\mysql\ogr_mysql.h(47,10): fatal error C1083: Cannot open include file: 'mysql.h': No such file or directory
+      # Disable LIBKML because of issue at linking time with kmlXXXX.lib being debug libraries
       run: |
         mkdir -p $GITHUB_WORKSPACE/build
-        cmake -A ${architecture} -G "${generator}" "-DCMAKE_C_COMPILER_LAUNCHER=clcache" "-DCMAKE_CXX_COMPILER_LAUNCHER=clcache" "-DCMAKE_PREFIX_PATH=${CONDA_PREFIX}" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DSPATIALITE_LIBRARY:FILEPATH= -DJASPER_LIBRARY_RELEASE:FILEPATH= -DMYSQL_LIBRARY:FILEPATH=
+        cmake -A ${architecture} -G "${generator}" "-DCMAKE_C_COMPILER_LAUNCHER=clcache" "-DCMAKE_CXX_COMPILER_LAUNCHER=clcache" "-DCMAKE_PREFIX_PATH=${CONDA_PREFIX}" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DSPATIALITE_LIBRARY:FILEPATH= -DJASPER_LIBRARY_RELEASE:FILEPATH= -DMYSQL_LIBRARY:FILEPATH= -DLIBKML_BASE_LIBRARY:FILEPATH=
     - name: Build
       shell: bash -l {0}
       run: cmake --build $GITHUB_WORKSPACE/build --config Release
