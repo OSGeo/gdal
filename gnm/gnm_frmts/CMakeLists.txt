@@ -2,6 +2,7 @@
 
 add_library(gnm_frmts OBJECT gnm_frmts.h gnmregisterall.cpp)
 gdal_standard_includes(gnm_frmts)
+add_dependencies(gnm_frmts generate_gdal_version_h)
 target_include_directories(gnm_frmts PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} $<TARGET_PROPERTY:gnm,SOURCE_DIR>)
 target_compile_definitions(gnm_frmts PRIVATE -DGNMFILE_ENABLED -DGNMDB_ENABLED)
 target_sources(gdal PRIVATE $<TARGET_OBJECTS:gnm_frmts>)

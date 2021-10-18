@@ -24,6 +24,7 @@ add_library(
   reader_rdk1.cpp
   reader_spot.cpp)
 gdal_standard_includes(gcore_mdreader)
+add_dependencies(gcore_mdreader generate_gdal_version_h)
 target_include_directories(gcore_mdreader PRIVATE $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)
 target_sources(gdal PRIVATE $<TARGET_OBJECTS:gcore_mdreader>)
 set_property(TARGET gcore_mdreader PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})

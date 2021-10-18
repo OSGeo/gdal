@@ -153,6 +153,7 @@ gdal_dependent_format(ecw "ERDAS JPEG2000 (.jp2)" "HAVE_ECW")
 
 # Register all frmt drivers according to FRMT_<driver> flags
 gdal_standard_includes(gdal_frmts)
+add_dependencies(gdal_frmts generate_gdal_version_h)
 if (ENABLE_GNM)
   target_compile_definitions(gdal_frmts PRIVATE -DGNM_ENABLED)
 endif ()
