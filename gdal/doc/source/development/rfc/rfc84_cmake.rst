@@ -11,7 +11,7 @@ Contact: even.rouault at spatialys.com,
          nyall.dawson at gmail.com,
          howard at hobu.co
 Started: 2021-09-22
-Status:  Development
+Status:  Adopted (implementation in progress)
 ======== ==================================================
 
 Summary
@@ -197,4 +197,4 @@ provide an initial build out of CMake support for GDAL.
 Voting history
 --------------
 
-TBD
++1 from PSC members: HowardB, MateuszL, KurtS, DanielM and JukkaR
