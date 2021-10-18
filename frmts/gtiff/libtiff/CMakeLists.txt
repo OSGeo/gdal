@@ -55,24 +55,30 @@ add_library(
 target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:cpl,SOURCE_DIR> $<TARGET_PROPERTY:cpl,BINARY_DIR>)
 target_compile_definitions(libtiff PRIVATE -DDONT_DEPRECATE_SPRINTF)
 
+target_compile_definitions(libtiff PRIVATE -DPIXARLOG_SUPPORT -DZIP_SUPPORT)
+target_compile_definitions(libtiff PRIVATE -DJPEG_SUPPORT -DOJPEG_SUPPORT)
+
+# Include first internal libraries
 if (GDAL_USE_LIBZ_INTERNAL)
   target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:libz,SOURCE_DIR>)
-  target_compile_definitions(libtiff PRIVATE -DPIXARLOG_SUPPORT -DZIP_SUPPORT)
-else ()
-  gdal_add_private_link_libraries(ZLIB::ZLIB)
-  target_compile_definitions(libtiff PRIVATE -DPIXARLOG_SUPPORT -DZIP_SUPPORT)
 endif ()
 
 if (GDAL_USE_LIBJPEG_INTERNAL)
   target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:libjpeg,SOURCE_DIR>)
-else ()
+endif ()
+
+# Now external libraries
+if (NOT GDAL_USE_LIBZ_INTERNAL)
+  gdal_add_private_link_libraries(ZLIB::ZLIB)
+endif ()
+
+if (NOT GDAL_USE_LIBJPEG_INTERNAL)
   gdal_add_private_link_libraries(JPEG::JPEG)
 endif ()
 
 if (GDAL_JPEG12_SUPPORTED)
   target_compile_definitions(libtiff PRIVATE -DJPEG_DUAL_MODE_8_12)
 endif ()
-target_compile_definitions(libtiff PRIVATE -DJPEG_SUPPORT -DOJPEG_SUPPORT)
 
 if (HAVE_LIBLZMA)
   target_compile_definitions(libtiff PRIVATE -DLZMA_SUPPORT)
