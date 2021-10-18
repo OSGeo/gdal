@@ -22,7 +22,7 @@
 #
 ###############################################################################
 
-find_path(GEOTIFF_INCLUDE_DIR geotiff.h PATH_SUFFIXES geotiff)
+find_path(GEOTIFF_INCLUDE_DIR geotiff.h PATH_SUFFIXES geotiff libgeotiff)
 find_library(GEOTIFF_LIBRARY geotiff geotiff_i)
 
 if(GEOTIFF_INCLUDE_DIR)
