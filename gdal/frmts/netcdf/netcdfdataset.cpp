@@ -11596,7 +11596,9 @@ static CPLErr NCDFResolveElem( int nStartGroupId,
         return CE_Failure;
     }
 
+#ifdef NETCDF_HAS_NC4
     enum {NCRM_PARENT, NCRM_WIDTH_WISE} eNCResolveMode = NCRM_PARENT;
+#endif
 
     std::queue<int> aoQueueGroupIdsToVisit;
     aoQueueGroupIdsToVisit.push(nStartGroupId);
