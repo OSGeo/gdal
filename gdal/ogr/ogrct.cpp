@@ -3410,7 +3410,7 @@ int OCTTransform4DWithErrorCodes( OGRCoordinateTransformationH hTransform,
  * @param densify_pts Recommended to use 21. This is the number of points
  *     to use to densify the bounding polygon in the transformation.
  * @return TRUE if successful. FALSE if failures encountered.
- * @since 3.5
+ * @since 3.4
  */
 int CPL_STDCALL OCTTransformBounds( OGRCoordinateTransformationH hTransform,
                                     const double xmin,

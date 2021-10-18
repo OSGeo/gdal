@@ -862,7 +862,7 @@ public:
      * @param densify_pts Recommended to use 21. This is the number of points
      *     to use to densify the bounding polygon in the transformation.
      * @return TRUE if successful. FALSE if failures encountered.
-     * @since GDAL 3.5
+     * @since 3.4
      */
     virtual int TransformBounds( const double xmin,
                                  const double ymin,
