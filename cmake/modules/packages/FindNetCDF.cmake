@@ -91,7 +91,7 @@ if(NETCDF_INCLUDE_DIR AND NETCDF_LIBRARY)
                         OUTPUT_VARIABLE nc_has_${_conf}
                         ERROR_QUIET
                         OUTPUT_STRIP_TRAILING_WHITESPACE)
-        if(nc_has_${conf} STREQUAL "yes")
+        if(nc_has_${_conf} STREQUAL "yes")
             set(NETCDF_HAS_${_key} ON  PARENT_SCOPE)
         else()
             set(NETCDF_HAS_${_key} OFF PARENT_SCOPE)
