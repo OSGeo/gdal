@@ -362,4 +362,8 @@ system_summary(DESCRIPTION "GDAL is now configured on;")
 include(FeatureSummary)
 feature_summary(DESCRIPTION "Enabled drivers and features and found dependency packages" WHAT ALL)
 
+if( NOT SILENCE_EXPERIMENTAL_WARNING )
+    message(WARNING "CMake builds are considered only EXPERIMENTAL for now. Do not use them for production.")
+endif()
+
 # vim: ts=4 sw=4 sts=4 et
