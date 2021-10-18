@@ -59,6 +59,7 @@ add_library(
   jquant1.c)
 target_include_directories(libjpeg PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
                                            $<TARGET_PROPERTY:cpl,SOURCE_DIR> $<TARGET_PROPERTY:cpl,BINARY_DIR>)
+target_compile_options(libjpeg PRIVATE ${GDAL_C_WARNING_FLAGS} ${SOFTWARNFLAGS})
 
 option(GDAL_JPEG12_SUPPORTED "Set ON to use libjpeg12 support" OFF)
 if (GDAL_JPEG12_SUPPORTED)

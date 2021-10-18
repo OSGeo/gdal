@@ -18,3 +18,4 @@ add_library(
   RLE.h)
 set_property(TARGET lerc PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 target_sources(gdal PRIVATE $<TARGET_OBJECTS:lerc>)
+target_compile_options(lerc PRIVATE ${GDAL_CXX_WARNING_FLAGS})

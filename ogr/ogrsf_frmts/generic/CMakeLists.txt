@@ -41,6 +41,7 @@ add_library(
   ogrmutexeddatasource.cpp
   ogrmutexedlayer.cpp)
 gdal_standard_includes(ogrsf_generic)
+target_compile_options(ogrsf_generic PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX})
 target_sources(gdal PRIVATE $<TARGET_OBJECTS:ogrsf_generic>)
 set_property(TARGET ogrsf_generic PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 

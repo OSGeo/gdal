@@ -1,4 +1,10 @@
 include(GdalStandardIncludes)
+
+if (CMAKE_CXX_FLAGS)
+  string(REPLACE "-Werror" " " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+  string(REPLACE "/WX" " " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+endif ()
+
 function (GDAL_JAVA_WRAP)
   set(_options CXX)
   set(_oneValueArgs TARGET)

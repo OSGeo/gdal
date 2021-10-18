@@ -102,6 +102,7 @@ set(CPL_SOURCES
     cpl_compressor.cpp)
 add_library(cpl OBJECT ${CPL_SOURCES})
 target_sources(gdal PRIVATE $<TARGET_OBJECTS:cpl>)
+target_compile_options(cpl PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX})
 set_property(TARGET cpl PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
   # Part of those files have CPL_CVSID() which break UNITY_BUILD

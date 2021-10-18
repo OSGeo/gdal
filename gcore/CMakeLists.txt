@@ -46,6 +46,7 @@ add_library(
   gdal_thread_pool.cpp
   nasakeywordhandler.cpp)
 gdal_standard_includes(gcore)
+target_compile_options(gcore PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX})
 target_include_directories(
   gcore
   PRIVATE $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR> $<TARGET_PROPERTY:ogr_geojson,SOURCE_DIR>
@@ -59,6 +60,7 @@ endif ()
 
 add_library(gdaldrivermanager OBJECT gdaldrivermanager.cpp)
 gdal_standard_includes(gdaldrivermanager)
+target_compile_options(gdaldrivermanager PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX})
 file(TO_CMAKE_PATH "${CMAKE_PREFIX_PATH}/${CMAKE_INSTALL_DATADIR}" INST_DATA_PATH)
 target_compile_definitions(gdaldrivermanager PRIVATE -DINST_DATA="${INST_DATA_PATH}")
 set_property(TARGET gdaldrivermanager PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
@@ -70,6 +72,7 @@ endif ()
 
 add_library(rasterio_ssse3 OBJECT rasterio_ssse3.cpp)
 gdal_standard_includes(rasterio_ssse3)
+target_compile_options(rasterio_ssse3 PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX})
 target_include_directories(rasterio_ssse3 PRIVATE $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR>
                                                   $<TARGET_PROPERTY:gdal_MEM,SOURCE_DIR>)
 set_property(TARGET rasterio_ssse3 PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})

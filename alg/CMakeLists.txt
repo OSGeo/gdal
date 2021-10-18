@@ -39,6 +39,10 @@ add_dependencies(alg generate_gdal_version_h)
 
 include(GdalStandardIncludes)
 gdal_standard_includes(alg)
+target_compile_options(alg PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST}
+                                   ${WFLAG_EFFCXX}>)
+target_compile_options(alg PRIVATE $<$<COMPILE_LANGUAGE:C>:${GDAL_C_WARNING_FLAGS}>)
+
 target_include_directories(
   alg PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/marching_squares> $<TARGET_PROPERTY:gdal_GTIFF,SOURCE_DIR>
               $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR> $<TARGET_PROPERTY:gdal_MEM,SOURCE_DIR>)
@@ -49,7 +53,7 @@ if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
 endif ()
 
 if (HAVE_GEOS)
-  target_include_directories(alg PRIVATE ${GEOS_INCLUDE_DIRS} ${GEOS_INCLUDE_DIRS}/capi)
+  target_include_directories(alg PRIVATE ${GEOS_INCLUDE_DIRS})
   target_compile_definitions(alg PRIVATE -DHAVE_GEOS=1)
   gdal_add_private_link_libraries(GEOS::GEOS)
 endif ()

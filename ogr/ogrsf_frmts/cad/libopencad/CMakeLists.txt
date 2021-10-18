@@ -19,4 +19,5 @@ target_include_directories(
   libopencad PRIVATE $<TARGET_PROPERTY:cpl,SOURCE_DIR> $<TARGET_PROPERTY:cpl,BINARY_DIR>
                      $<TARGET_PROPERTY:ogr_CAD,SOURCE_DIR> ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/dwg)
 set_target_properties(libopencad PROPERTIES POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
+target_compile_options(libopencad PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${GDAL_SOFTWARNFLAGS})
 target_sources(gdal PRIVATE $<TARGET_OBJECTS:libopencad>)

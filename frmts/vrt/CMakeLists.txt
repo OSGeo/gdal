@@ -14,7 +14,8 @@ add_gdal_driver(
           vrtdataset.cpp
           pixelfunctions.cpp
           vrtpansharpened.cpp
-          vrtmultidim.cpp)
+          vrtmultidim.cpp
+          STRONG_CXX_WFLAGS)
 gdal_standard_includes(gdal_vrt)
 target_include_directories(gdal_vrt PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/raw)
 

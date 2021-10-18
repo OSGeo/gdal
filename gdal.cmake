@@ -18,7 +18,20 @@ option(BUILD_SHARED_LIBS "Set ON to build shared library" ON)
 
 # ######################################################################################################################
 # generate ${CMAKE_CURRENT_BINARY_DIR}/port/cpl_config.h
+
+set(_CMAKE_C_FLAGS_backup ${CMAKE_C_FLAGS})
+set(_CMAKE_CXX_FLAGS_backup ${CMAKE_CXX_FLAGS})
+if (CMAKE_C_FLAGS)
+    string(REPLACE "-Werror" " " CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
+    string(REPLACE "/WX" " " CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
+endif()
+if (CMAKE_CXX_FLAGS)
+  string(REPLACE "-Werror" " " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+  string(REPLACE "/WX" " " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+endif()
 include(configure)
+set(CMAKE_C_FLAGS ${_CMAKE_C_FLAGS_backup})
+set(CMAKE_CXX_FLAGS ${_CMAKE_CXX_FLAGS_backup})
 
 # generate ${CMAKE_CURRENT_BINARY_DIR}/gcore/gdal_version.h and set GDAL_VERSION variable
 include(GdalVersion)
@@ -38,6 +51,120 @@ if (ENABLE_LTO)
     endif ()
   endif ()
 endif ()
+
+# ######################################################################################################################
+# Detect available warning flags
+
+set(GDAL_C_WARNING_FLAGS)
+set(GDAL_CXX_WARNING_FLAGS)
+if (MSVC)
+    # 4127: conditional expression is constant
+    # 4251: 'identifier' : class 'type' needs to have dll-interface to be used by clients of class 'type2'
+    # 4275: non DLL-interface classkey 'identifier' used as base for DLL-interface classkey 'identifier'
+    # 4786: ??????????
+    # 4100: 'identifier' : unreferenced formal parameter
+    # 4245: 'conversion' : conversion from 'type1' to 'type2', signed/unsigned mismatch
+    # 4206: nonstandard extension used : translation unit is empty (only applies to C source code)
+    # 4351: new behavior: elements of array 'array' will be default initialized (needed for https://trac.osgeo.org/gdal/changeset/35593)
+    # 4611: interaction between '_setjmp' and C++ object destruction is non-portable
+    #
+    set(GDAL_C_WARNING_FLAGS /W4 /wd4127 /wd4251 /wd4275 /wd4786 /wd4100 /wd4245 /wd4206 /wd4351 /wd4611)
+    set(GDAL_CXX_WARNING_FLAGS ${GDAL_C_WARNING_FLAGS})
+    add_compile_options(/EHsc)
+
+    # The following are extra disables that can be applied to external source
+    # not under our control that we wish to use less stringent warnings with.
+    set(GDAL_SOFTWARNFLAGS /wd4244 /wd4702 /wd4701 /wd4013 /wd4706 /wd4057 /wd4210 /wd4305)
+
+else()
+
+    macro(detect_and_set_c_warning_flag flag_name)
+        string(TOUPPER ${flag_name} flag_name_upper)
+        string(REPLACE "-" "_" flag_name_upper "${flag_name_upper}")
+        string(REPLACE "=" "_" flag_name_upper "${flag_name_upper}")
+        check_c_compiler_flag(-W${flag_name} "HAVE_WFLAG_${flag_name_upper}")
+        if( HAVE_WFLAG_${flag_name_upper} )
+            set(GDAL_C_WARNING_FLAGS ${GDAL_C_WARNING_FLAGS} -W${flag_name})
+        endif()
+    endmacro()
+
+    macro(detect_and_set_cxx_warning_flag flag_name)
+        string(TOUPPER ${flag_name} flag_name_upper)
+        string(REPLACE "-" "_" flag_name_upper "${flag_name_upper}")
+        string(REPLACE "=" "_" flag_name_upper "${flag_name_upper}")
+        check_cxx_compiler_flag(-W${flag_name} "HAVE_WFLAG_${flag_name_upper}")
+        if( HAVE_WFLAG_${flag_name_upper} )
+            set(GDAL_CXX_WARNING_FLAGS ${GDAL_CXX_WARNING_FLAGS} -W${flag_name})
+        endif()
+    endmacro()
+
+    macro(detect_and_set_c_and_cxx_warning_flag flag_name)
+        string(TOUPPER ${flag_name} flag_name_upper)
+        string(REPLACE "-" "_" flag_name_upper "${flag_name_upper}")
+        string(REPLACE "=" "_" flag_name_upper "${flag_name_upper}")
+        check_c_compiler_flag(-W${flag_name} "HAVE_WFLAG_${flag_name_upper}")
+        if( HAVE_WFLAG_${flag_name_upper} )
+            set(GDAL_C_WARNING_FLAGS ${GDAL_C_WARNING_FLAGS} -W${flag_name})
+            set(GDAL_CXX_WARNING_FLAGS ${GDAL_CXX_WARNING_FLAGS} -W${flag_name})
+        endif()
+    endmacro()
+
+    detect_and_set_c_and_cxx_warning_flag(all)
+    detect_and_set_c_and_cxx_warning_flag(extra)
+    detect_and_set_c_and_cxx_warning_flag(init-self)
+    detect_and_set_c_and_cxx_warning_flag(unused-parameter)
+    detect_and_set_c_warning_flag(missing-prototypes)
+    detect_and_set_c_and_cxx_warning_flag(missing-declarations)
+    detect_and_set_c_and_cxx_warning_flag(shorten-64-to-32)
+    detect_and_set_c_and_cxx_warning_flag(logical-op)
+    detect_and_set_c_and_cxx_warning_flag(shadow)
+    detect_and_set_c_and_cxx_warning_flag(missing-include-dirs)
+    check_c_compiler_flag("-Wformat -Werror=format-security -Wno-format-nonliteral" HAVE_WFLAG_FORMAT_SECURITY)
+    if( HAVE_WFLAG_FORMAT_SECURITY )
+        set(GDAL_C_WARNING_FLAGS ${GDAL_C_WARNING_FLAGS} -Wformat -Werror=format-security -Wno-format-nonliteral)
+        set(GDAL_CXX_WARNING_FLAGS ${GDAL_CXX_WARNING_FLAGS} -Wformat -Werror=format-security -Wno-format-nonliteral)
+    else()
+        detect_and_set_c_and_cxx_warning_flag(format)
+    endif()
+    detect_and_set_c_and_cxx_warning_flag(error=vla)
+    detect_and_set_c_and_cxx_warning_flag(no-clobbered)
+    detect_and_set_c_and_cxx_warning_flag(date-time)
+    detect_and_set_c_and_cxx_warning_flag(null-dereference)
+    detect_and_set_c_and_cxx_warning_flag(duplicate-cond)
+    detect_and_set_cxx_warning_flag(extra-semi)
+    detect_and_set_c_and_cxx_warning_flag(no-sign-compare)
+    detect_and_set_c_and_cxx_warning_flag(comma)
+    detect_and_set_c_and_cxx_warning_flag(float-conversion)
+    check_c_compiler_flag("-Wdocumentation -Wno-documentation-deprecated-sync" HAVE_WFLAG_DOCUMENTATION_AND_NO_DEPRECATED)
+    if( HAVE_WFLAG_DOCUMENTATION_AND_NO_DEPRECATED )
+        set(GDAL_C_WARNING_FLAGS ${GDAL_C_WARNING_FLAGS} -Wdocumentation -Wno-documentation-deprecated-sync)
+        set(GDAL_CXX_WARNING_FLAGS ${GDAL_CXX_WARNING_FLAGS} -Wdocumentation -Wno-documentation-deprecated-sync)
+    endif()
+    detect_and_set_cxx_warning_flag(unused-private-field)
+    detect_and_set_cxx_warning_flag(non-virtual-dtor)
+    detect_and_set_cxx_warning_flag(overloaded-virtual)
+
+    check_cxx_compiler_flag(-fno-operator-names HAVE_FLAG_NO_OPERATOR_NAMES)
+    if( HAVE_FLAG_NO_OPERATOR_NAMES )
+        set(GDAL_CXX_WARNING_FLAGS ${GDAL_CXX_WARNING_FLAGS} -fno-operator-names)
+    endif()
+
+    # Detect -Wold-style-cast but do not add it by default, as not all targets support it
+    check_cxx_compiler_flag(-Wold-style-cast HAVE_WFLAG_OLD_STYLE_CAST)
+    if( HAVE_WFLAG_OLD_STYLE_CAST )
+        set(WFLAG_OLD_STYLE_CAST -Wold-style-cast)
+    endif()
+
+    # Detect Weffc++ but do not add it by default, as not all targets support it
+    check_cxx_compiler_flag(-Weffc++ HAVE_WFLAG_EFFCXX)
+    if( HAVE_WFLAG_EFFCXX )
+        set(WFLAG_EFFCXX -Weffc++)
+    endif()
+
+endif()
+
+# message("GDAL_C_WARNING_FLAGS: ${GDAL_C_WARNING_FLAGS}")
+# message("GDAL_CXX_WARNING_FLAGS: ${GDAL_CXX_WARNING_FLAGS}")
 
 # ######################################################################################################################
 

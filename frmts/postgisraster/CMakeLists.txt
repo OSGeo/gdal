@@ -6,7 +6,8 @@ add_gdal_driver(
           postgisrasterrasterband.cpp
           postgisrastertiledataset.cpp
           postgisrastertilerasterband.cpp
-          postgisrastertools.cpp)
+          postgisrastertools.cpp
+          STRONG_CXX_WFLAGS)
 gdal_standard_includes(gdal_PostGISRaster)
 target_include_directories(gdal_PostGISRaster PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/vrt ${PostgreSQL_INCLUDE_DIRS})
 target_compile_definitions(gdal_PostGISRaster PRIVATE -DHAVE_PG)

@@ -25,3 +25,7 @@ add_library(
   zutil.c)
 set_property(TARGET libz PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 target_sources(gdal PRIVATE $<TARGET_OBJECTS:libz>)
+target_compile_options(libz PRIVATE ${GDAL_C_WARNING_FLAGS})
+if (MSVC)
+  target_compile_options(libz PRIVATE ${SOFTWARNFLAGS} /wd4131)
+endif ()

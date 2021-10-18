@@ -72,7 +72,7 @@ GdalDriverHelper
 #]=======================================================================]
 
 function(add_gdal_driver)
-    set(_options BUILTIN PLUGIN)
+    set(_options BUILTIN PLUGIN STRONG_CXX_WFLAGS CXX_WFLAGS_EFFCXX)
     set(_oneValueArgs TARGET DESCRIPTION DEF)
     set(_multiValueArgs SOURCES)
     cmake_parse_arguments(_DRIVER "${_options}" "${_oneValueArgs}" "${_multiValueArgs}" ${ARGN})
@@ -137,6 +137,14 @@ function(add_gdal_driver)
             endif ()
         endif ()
     endif ()
+    if (_DRIVER_CXX_WFLAGS_EFFCXX)
+        target_compile_options(${_DRIVER_TARGET} PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${GDAL_CXX_WARNING_FLAGS} ${WFLAG_EFFCXX}>)
+    elseif (_DRIVER_STRONG_CXX_WFLAGS)
+        target_compile_options(${_DRIVER_TARGET} PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX}>)
+    else()
+        target_compile_options(${_DRIVER_TARGET} PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${GDAL_CXX_WARNING_FLAGS}>)
+    endif()
+    target_compile_options(${_DRIVER_TARGET} PRIVATE $<$<COMPILE_LANGUAGE:C>:${GDAL_C_WARNING_FLAGS}>)
     add_dependencies(${_DRIVER_TARGET} generate_gdal_version_h)
 endfunction()
 

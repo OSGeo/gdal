@@ -3,6 +3,5 @@ add_gdal_driver(
   TARGET gdal_northwood
   DEF FRMT_northwood
   SOURCES grddataset.cpp grcdataset.cpp northwood.cpp northwood.h
-  BUILTIN)
+  BUILTIN STRONG_CXX_WFLAGS)
 gdal_standard_includes(gdal_northwood)
-target_include_directories(gdal_northwood PRIVATE ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/tab)

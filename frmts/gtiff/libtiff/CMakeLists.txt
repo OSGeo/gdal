@@ -54,6 +54,7 @@ add_library(
   tiffio.h)
 target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:cpl,SOURCE_DIR> $<TARGET_PROPERTY:cpl,BINARY_DIR>)
 target_compile_definitions(libtiff PRIVATE -DDONT_DEPRECATE_SPRINTF)
+target_compile_options(libtiff PRIVATE ${GDAL_C_WARNING_FLAGS})
 
 target_compile_definitions(libtiff PRIVATE -DPIXARLOG_SUPPORT -DZIP_SUPPORT)
 target_compile_definitions(libtiff PRIVATE -DJPEG_SUPPORT -DOJPEG_SUPPORT)

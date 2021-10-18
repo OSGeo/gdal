@@ -29,6 +29,8 @@ add_library(
   geotiffio.h)
 include(GdalStandardIncludes)
 gdal_standard_includes(geotiff)
+target_compile_options(geotiff PRIVATE ${GDAL_C_WARNING_FLAGS})
+
 if (GDAL_USE_LIBTIFF_INTERNAL)
   target_include_directories(geotiff PRIVATE $<TARGET_PROPERTY:libtiff,SOURCE_DIR>)
   if (RENAME_INTERNAL_LIBTIFF_SYMBOLS)

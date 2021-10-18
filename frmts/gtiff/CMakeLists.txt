@@ -18,7 +18,7 @@ add_gdal_driver(
           gt_wkt_srs.cpp
           tifvsi.cpp
           tif_float.c
-  BUILTIN)
+  BUILTIN CXX_WFLAGS_EFFCXX)
 gdal_standard_includes(gdal_GTIFF)
 target_include_directories(gdal_GTIFF PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/jpeg)
 option(HAVE_LERC "Enable LERC" ON)

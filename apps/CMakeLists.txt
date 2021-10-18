@@ -20,6 +20,7 @@ add_library(
 add_dependencies(appslib generate_gdal_version_h)
 target_sources(gdal PRIVATE $<TARGET_OBJECTS:appslib>)
 gdal_standard_includes(appslib)
+target_compile_options(appslib PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST})
 target_include_directories(
   appslib PRIVATE $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR> $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>
                   $<TARGET_PROPERTY:ogr_geojson,SOURCE_DIR> $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR> ${PROJ_INCLUDE_DIRS})
@@ -106,6 +107,7 @@ if (BUILD_APPS)
     # gcore/gdal_version.h
     target_include_directories(${UTILCMD} PRIVATE $<TARGET_PROPERTY:gcore,BINARY_DIR>/gdal_version_full)
     gdal_standard_includes(${UTILCMD})
+    target_compile_options(${UTILCMD} PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST})
     add_dependencies(${UTILCMD} generate_gdal_version_h)
     target_include_directories(
       ${UTILCMD} PRIVATE $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR> $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>
@@ -165,6 +167,7 @@ if (BUILD_APPS)
     # gcore/gdal_version.h
     target_include_directories(${UTILCMD} PRIVATE $<TARGET_PROPERTY:gcore,BINARY_DIR>/gdal_version_full)
     gdal_standard_includes(${UTILCMD})
+    target_compile_options(${UTILCMD} PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST})
     add_dependencies(${UTILCMD} generate_gdal_version_h)
     target_link_libraries(${UTILCMD} PRIVATE ${GDAL_LINK_LIBRARY})
     if (MSVC OR MINGW)

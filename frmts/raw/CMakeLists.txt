@@ -35,7 +35,7 @@ add_gdal_driver(
           byndataset.cpp
           byndataset.cpp
           envidataset.cpp
-  BUILTIN)
+  BUILTIN CXX_WFLAGS_EFFCXX)
 gdal_standard_includes(gdal_raw)
 target_include_directories(gdal_raw PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
