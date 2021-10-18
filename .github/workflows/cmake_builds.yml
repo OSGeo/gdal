@@ -128,7 +128,11 @@ jobs:
       run: cmake --build $GITHUB_WORKSPACE/build --config Release
     - name: test
       shell: bash -l {0}
-      run: cmake --build $GITHUB_WORKSPACE/build --config Release --target quicktest
+      # only test-copy-words for now
+      run: |
+        export PATH=${CONDA_PREFIX}/Library/bin:${GITHUB_WORKSPACE}/build/Release:${PATH}
+        echo $PATH
+        cmake --build $GITHUB_WORKSPACE/build --config Release --target test-copy-words
 
   build-mac:
     if: ${{ false }}  # FIXME: disable for now
