@@ -23,7 +23,7 @@ find_path(JSONC_INCLUDE_DIR
           NAMES json.h
           HINTS ${PC_JSONC_INCLUDE_DIRS}
                 ${JSONC_ROOT}/include
-          PATH_SUFFIXES json-c)
+          PATH_SUFFIXES json-c json)
 find_library(JSONC_LIBRARY
              NAMES json-c json
              HINTS ${PC_JSONC_LIBRARY_DIRS}
