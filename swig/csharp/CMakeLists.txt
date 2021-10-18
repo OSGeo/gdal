@@ -10,10 +10,10 @@ function (gdal_csharp_dll)
     OUTPUT ${_CSHARP_WORKING_DIRECTORY}/${_CSHARP_WRAPPER}.cpp ${_CSHARP_CS_SOURCES}
     COMMAND
       ${SWIG_EXECUTABLE} -namespace ${_CSHARP_NAMESPACE} -outdir ${_CSHARP_WORKING_DIRECTORY} -DSWIG2_CSHARP -dllimport
-      ${_CSHARP_WRAPPER} -Wall -I${CMAKE_SOURCE_DIR}/swig/include -I${CMAKE_SOURCE_DIR}/swig/include/csharp
-      -I${CMAKE_SOURCE_DIR}/gdal -c++ -csharp -o ${_CSHARP_WRAPPER}.cpp ${_CSHARP_SWIG_INTERFACE}
+      ${_CSHARP_WRAPPER} -Wall -I${PROJECT_SOURCE_DIR}/swig/include -I${PROJECT_SOURCE_DIR}/swig/include/csharp
+      -I${PROJECT_SOURCE_DIR}/gdal -c++ -csharp -o ${_CSHARP_WRAPPER}.cpp ${_CSHARP_SWIG_INTERFACE}
     WORKING_DIRECTORY ${_CSHARP_WORKING_DIRECTORY}
-    DEPENDS ${GDAL_SWIG_COMMON_INCLUDE} ${CMAKE_SOURCE_DIR}/swig/include/csharp/typemaps_csharp.i
+    DEPENDS ${GDAL_SWIG_COMMON_INCLUDE} ${PROJECT_SOURCE_DIR}/swig/include/csharp/typemaps_csharp.i
             ${_CSHARP_SWIG_INTERFACE})
   set_source_files_properties(${_CSHARP_WRAPPER} PROPERTIES GENERATED 1)
   add_library(${_CSHARP_WRAPPER} OBJECT ${_CSHARP_WORKING_DIRECTORY}/${_CSHARP_WRAPPER}.cpp)
@@ -38,7 +38,7 @@ gdal_csharp_dll(
   TARGET gdal_csharp.dll
   NAMESPACE OSGeo.GDAL
   WRAPPER gdal_wrap
-  SWIG_INTERFACE ${CMAKE_SOURCE_DIR}/swig/include/gdal.i
+  SWIG_INTERFACE ${PROJECT_SOURCE_DIR}/swig/include/gdal.i
   CS_SOURCES gdal/Access.cs
              gdal/GDALWarpAppOptions.cs
              gdal/AsyncReader.cs
@@ -86,7 +86,7 @@ gdal_csharp_dll(
   TARGET ogr_csharp.dll
   NAMESPACE OSGeo.OGR
   WRAPPER ogr_wrap
-  SWIG_INTERFACE ${CMAKE_SOURCE_DIR}/swig/include/ogr.i
+  SWIG_INTERFACE ${PROJECT_SOURCE_DIR}/swig/include/ogr.i
   CS_SOURCES ogr/DataSource.cs
              ogr/FieldDefn.cs
              ogr/Layer.cs
@@ -111,14 +111,14 @@ gdal_csharp_dll(
   TARGET osr_csharp.dll
   NAMESPACE OSGeo.OSR
   WRAPPER osr_wrap
-  SWIG_INTERFACE ${CMAKE_SOURCE_DIR}/swig/include/osr.i
+  SWIG_INTERFACE ${PROJECT_SOURCE_DIR}/swig/include/osr.i
   CS_SOURCES osr/AxisOrientation.cs osr/Osr.cs osr/SpatialReference.cs osr/CoordinateTransformation.cs osr/OsrPINVOKE.cs
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/osr)
 gdal_csharp_dll(
   TARGET gdalconst_csharp.dll
   NAMESPACE OSGeo.GDAL
   WRAPPER gdalconst_wrap
-  SWIG_INTERFACE ${CMAKE_SOURCE_DIR}/swig/include/gdalconst.i
+  SWIG_INTERFACE ${PROJECT_SOURCE_DIR}/swig/include/gdalconst.i
   CS_SOURCES const/GdalConst.cs const/GdalConstPINVOKE.cs
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/const)
 # ######################################################################################################################

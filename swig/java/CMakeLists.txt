@@ -14,22 +14,22 @@ function (GDAL_JAVA_WRAP)
     set(SWIG_OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/org/gdal/${_SWIG_TARGET}/${_SWIG_TARGET}_wrap.cpp)
     add_custom_command(
       OUTPUT ${SWIG_OUTPUT}
-      COMMAND ${SWIG_EXECUTABLE} ${_SWIG_ARGS} ${SWIG_DEFINES} -I${CMAKE_SOURCE_DIR}/gdal -c++ -java -o ${SWIG_OUTPUT}
-              ${CMAKE_SOURCE_DIR}/swig/include/${_SWIG_TARGET}.i
+      COMMAND ${SWIG_EXECUTABLE} ${_SWIG_ARGS} ${SWIG_DEFINES} -I${PROJECT_SOURCE_DIR}/gdal -c++ -java -o ${SWIG_OUTPUT}
+              ${PROJECT_SOURCE_DIR}/swig/include/${_SWIG_TARGET}.i
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-      DEPENDS ${GDAL_SWIG_COMMON_INTERFACE_FILES} ${CMAKE_SOURCE_DIR}/swig/include/java/typemaps_java.i
-              ${CMAKE_SOURCE_DIR}/swig/include/java/${_SWIG_TARGET}_java.i)
+      DEPENDS ${GDAL_SWIG_COMMON_INTERFACE_FILES} ${PROJECT_SOURCE_DIR}/swig/include/java/typemaps_java.i
+              ${PROJECT_SOURCE_DIR}/swig/include/java/${_SWIG_TARGET}_java.i)
     set_source_files_properties(${SWIG_OUTPUT} PROPERTIES GENERATED 1)
     add_library(${_SWIG_TARGET}jni MODULE ${CMAKE_CURRENT_BINARY_DIR}/org/gdal/${_SWIG_TARGET}/${_SWIG_TARGET}_wrap.cpp)
   else ()
     set(SWIG_OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/org/gdal/${_SWIG_TARGET}/${_SWIG_TARGET}_wrap.c)
     add_custom_command(
       OUTPUT ${SWIG_OUTPUT}
-      COMMAND ${SWIG_EXECUTABLE} ${_SWIG_ARGS} ${SWIG_DEFINES} -I${CMAKE_SOURCE_DIR}/gdal -java -o ${SWIG_OUTPUT}
-              ${CMAKE_SOURCE_DIR}/swig/include/${_SWIG_TARGET}.i
+      COMMAND ${SWIG_EXECUTABLE} ${_SWIG_ARGS} ${SWIG_DEFINES} -I${PROJECT_SOURCE_DIR}/gdal -java -o ${SWIG_OUTPUT}
+              ${PROJECT_SOURCE_DIR}/swig/include/${_SWIG_TARGET}.i
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-      DEPENDS ${GDAL_SWIG_COMMON_INTERFACE_FILES} ${CMAKE_SOURCE_DIR}/swig/include/java/typemaps_java.i
-              ${CMAKE_SOURCE_DIR}/swig/include/java/${_SWIG_TARGET}_java.i)
+      DEPENDS ${GDAL_SWIG_COMMON_INTERFACE_FILES} ${PROJECT_SOURCE_DIR}/swig/include/java/typemaps_java.i
+              ${PROJECT_SOURCE_DIR}/swig/include/java/${_SWIG_TARGET}_java.i)
     set_source_files_properties(${SWIG_OUTPUT} PROPERTIES GENERATED 1)
     add_library(${_SWIG_TARGET}jni MODULE ${CMAKE_CURRENT_BINARY_DIR}/org/gdal/${_SWIG_TARGET}/${_SWIG_TARGET}_wrap.c)
   endif ()
@@ -50,8 +50,8 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/org/gdal/gdalconst)
 gdal_java_wrap(
   TARGET gdalconst
   ARGS -Wall
-       -I${CMAKE_SOURCE_DIR}/swig/include
-       -I${CMAKE_SOURCE_DIR}/swig/include/java
+       -I${PROJECT_SOURCE_DIR}/swig/include
+       -I${PROJECT_SOURCE_DIR}/swig/include/java
        -outdir
        ${CMAKE_CURRENT_BINARY_DIR}/org/gdal/gdalconst/
        -package
@@ -62,8 +62,8 @@ foreach (tgt IN ITEMS gdal ogr osr gnm)
     TARGET ${tgt}
     CXX
     ARGS -Wall
-         -I${CMAKE_SOURCE_DIR}/swig/include
-         -I${CMAKE_SOURCE_DIR}/swig/include/java
+         -I${PROJECT_SOURCE_DIR}/swig/include
+         -I${PROJECT_SOURCE_DIR}/swig/include/java
          -outdir
          ${CMAKE_CURRENT_BINARY_DIR}/org/gdal/${tgt}/
          -package

@@ -1,13 +1,13 @@
 # CMake4GDAL project is distributed under X/MIT license. See accompanying file LICENSE.txt.
 
-set(GDAL_ROOT_TEST_DIR "${CMAKE_SOURCE_DIR}/autotest")
+set(GDAL_ROOT_TEST_DIR "${PROJECT_SOURCE_DIR}/autotest")
 
 if (NOT CMAKE_CROSSCOMPILING)
   if (LINUX)
-    add_library(vsipreload MODULE ${CMAKE_SOURCE_DIR}/port/vsipreload.cpp)
+    add_library(vsipreload MODULE ${PROJECT_SOURCE_DIR}/port/vsipreload.cpp)
     target_link_libraries(vsipreload PRIVATE $<TARGET_NAME:gdal>)
     if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
-      set_property(SOURCE ${CMAKE_SOURCE_DIR}/port/vsipreload.cpp PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
+      set_property(SOURCE ${PROJECT_SOURCE_DIR}/port/vsipreload.cpp PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
     endif ()
   endif ()
 endif ()
@@ -59,10 +59,10 @@ else ()
 endif ()
 # FIXME: better handling of output path w/o hard coded. set(GDAL_OUTPUT_DIR
 # "$<TARGET_PROPERTY:gdal,LIBRARY_OUTPUT_DIRECTORY>")
-file(TO_NATIVE_PATH "${CMAKE_BINARY_DIR}" GDAL_OUTPUT_DIR)
+file(TO_NATIVE_PATH "${PROJECT_BINARY_DIR}" GDAL_OUTPUT_DIR)
 # set(GDAL_DRIVER_PATH "$<TARGET_PROPERTY:gdal,PLUGIN_OUTPUT_DIR")
-file(TO_NATIVE_PATH "${CMAKE_BINARY_DIR}/gdalplugins" GDAL_DRIVER_PATH)
-file(TO_NATIVE_PATH "${CMAKE_SOURCE_DIR}/data" GDAL_DATA)
+file(TO_NATIVE_PATH "${PROJECT_BINARY_DIR}/gdalplugins" GDAL_DRIVER_PATH)
+file(TO_NATIVE_PATH "${PROJECT_SOURCE_DIR}/data" GDAL_DATA)
 # PATH="${GDAL_OUTPUT_DIR}${ENVSEP}$ENV{PATH}"
 list(APPEND TEST_ENV LD_LIBRARY_PATH="${GDAL_OUTPUT_DIR}:$ENV{LD_LIBRARY_PATH}" GDAL_DRIVER_PATH="${GDAL_DRIVER_PATH}"
      GDAL_DATA="${GDAL_DATA}")

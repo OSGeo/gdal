@@ -73,8 +73,8 @@ find_path(Oracle_INCLUDE_DIR oci.h
 #   we need it before lib checking because of OS X bugs in instant client (see below)
 if (NOT DEFINED ORACLE_OCI_VERSION AND ORACLE_INCLUDES)
   try_run(OCIVER_TYPE OCIVER_COMPILED
-          ${CMAKE_BINARY_DIR}
-          ${CMAKE_SOURCE_DIR}/cmake/modules/OCIVersion.c
+          ${PROJECT_BINARY_DIR}
+          ${PROJECT_SOURCE_DIR}/cmake/modules/OCIVersion.c
           CMAKE_FLAGS "-DINCLUDE_DIRECTORIES:STRING=${ORACLE_INCLUDES}"
           OUTPUT_VARIABLE OCIVER)
 

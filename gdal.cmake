@@ -281,8 +281,8 @@ endif ()
 add_subdirectory(gcore)
 
 # Raster/Vector drivers (built-in and plugins)
-set(GDAL_RASTER_FORMAT_SOURCE_DIR "${CMAKE_SOURCE_DIR}/frmts")
-set(GDAL_VECTOR_FORMAT_SOURCE_DIR "${CMAKE_SOURCE_DIR}/ogr/ogrsf_frmts")
+set(GDAL_RASTER_FORMAT_SOURCE_DIR "${PROJECT_SOURCE_DIR}/frmts")
+set(GDAL_VECTOR_FORMAT_SOURCE_DIR "${PROJECT_SOURCE_DIR}/ogr/ogrsf_frmts")
 add_subdirectory(frmts)
 add_subdirectory(ogr/ogrsf_frmts)
 
@@ -459,10 +459,10 @@ if (UNIX AND NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
   get_property(_OGR_FORMATS GLOBAL PROPERTY OGR_FORMATS)
   string(REPLACE ";" " " CONFIG_FORMATS "${_GDAL_FORMATS} ${_OGR_FORMATS}")
   generate_config(gdal "gdal_private_link_libraries" ${GDAL_CMAKE_TEMPLATE_PATH}/gdal-config.in
-                  ${CMAKE_BINARY_DIR}/apps/gdal-config)
-  add_custom_target(gdal_config ALL DEPENDS ${CMAKE_BINARY_DIR}/apps/gdal-config)
+                  ${PROJECT_BINARY_DIR}/apps/gdal-config)
+  add_custom_target(gdal_config ALL DEPENDS ${PROJECT_BINARY_DIR}/apps/gdal-config)
   install(
-    PROGRAMS ${CMAKE_BINARY_DIR}/apps/gdal-config
+    PROGRAMS ${PROJECT_BINARY_DIR}/apps/gdal-config
     DESTINATION bin
     PERMISSIONS OWNER_READ
                 OWNER_WRITE
@@ -480,7 +480,7 @@ if (UNIX AND NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
     COMPONENT libraries)
 endif ()
 
-configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/uninstall.cmake.in ${CMAKE_BINARY_DIR}/cmake_uninstall.cmake IMMEDIATE @ONLY)
+configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/uninstall.cmake.in ${PROJECT_BINARY_DIR}/cmake_uninstall.cmake IMMEDIATE @ONLY)
 add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 
 # Print summry

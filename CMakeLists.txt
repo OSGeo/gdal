@@ -159,7 +159,7 @@ set(CLANG_TIDY_WARNINGS_AS_ERRORS
     "clang-analyzer-alpha.unix.cstring.*"
     CACHE STRING "clang-tidy warnings as errors.")
 if (RUN_CLANG_TIDY)
-  if (CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
+  if (PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
     message(FATAL_ERROR "RUN_CLANG_TIDY requires an out-of-source build!")
   endif ()
   find_program(CLANG_TIDY_COMMAND NAMES clang-tidy)
@@ -168,7 +168,7 @@ if (RUN_CLANG_TIDY)
     set(CMAKE_CXX_CLANG_TIDY)
   else ()
     set(CMAKE_CXX_CLANG_TIDY
-        "${CLANG_TIDY_COMMAND}" "-checks='${CLANG_TIDY_CHECKS}'" "-header-filter='${CMAKE_SOURCE_DIR}/gdal/*'"
+        "${CLANG_TIDY_COMMAND}" "-checks='${CLANG_TIDY_CHECKS}'" "-header-filter='${PROJECT_SOURCE_DIR}/*'"
         "-warnings-as-errors='${CLANG_TIDY_WARNINGS_AS_ERRORS}'")
   endif ()
 endif ()
@@ -197,7 +197,7 @@ else ()
 endif ()
 set_package_properties(Python PROPERTIES PURPOSE "SWIG_PYTHON: Python binding")
 #
-include(gdal.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/gdal.cmake)
 
 if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/autotest")
   # unit tests
