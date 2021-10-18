@@ -70,10 +70,6 @@ set_property(TARGET gdal PROPERTY PLUGIN_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/gdalplugins")
 
 if (MINGW)
-  list(FIND CMAKE_EXE_LINKER_FLAGS "-municode" has_municode)
-  if (NOT has_unicode)
-    set(CMAKE_EXE_LINKER_FLAGS ${CMAKE_EXE_LINKER_FLAGS} "-municode")
-  endif ()
   if (TARGET_CPU MATCHES "x86_64")
     add_definitions(-m64)
   endif ()

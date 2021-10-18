@@ -93,6 +93,13 @@ if (BUILD_APPS)
     target_include_directories(gnmmanage PRIVATE $<TARGET_PROPERTY:gnm,SOURCE_DIR>)
   endif ()
 
+  if (MINGW)
+    list(FIND CMAKE_EXE_LINKER_FLAGS "-municode" has_municode)
+    if (NOT has_unicode)
+      set(CMAKE_EXE_LINKER_FLAGS ${CMAKE_EXE_LINKER_FLAGS} "-municode")
+    endif ()
+  endif ()
+
   add_custom_target(gdalapps DEPENDS ${APPS_TARGETS})
   foreach (UTILCMD IN ITEMS ${APPS_TARGETS})
     # Add that include directory before all others so the gdal_version.h from it is included and not
