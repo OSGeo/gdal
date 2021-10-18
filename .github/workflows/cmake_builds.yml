@@ -43,7 +43,7 @@ jobs:
     - name: Configure
       run: |
         cd $GITHUB_WORKSPACE/build
-        cmake  ${CMAKE_OPTIONS} -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} ${GITHUB_WORKSPACE}
+        cmake  ${CMAKE_OPTIONS} -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror ${GITHUB_WORKSPACE}
     - name: Build
       run: |
         cmake --build $GITHUB_WORKSPACE/build -j $(nproc)
