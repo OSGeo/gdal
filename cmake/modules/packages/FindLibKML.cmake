@@ -58,7 +58,7 @@ mark_as_advanced(LIBKML_BASE_LIBRARY)
 
 set(libkml_known_components DOM CONVENIENCE ENGINE REGIONATOR)
 foreach(_comp IN LISTS libkml_known_components)
-  if(${_comp} IN_LIST LIBKML_FIND_COMPONENTS)
+  if(${_comp} IN_LIST LibKML_FIND_COMPONENTS)
     string(TOLOWER ${_comp} _name)
     find_library(LIBKML_${_comp}_LIBRARY
                  NAMES kml${_name} libkml${_name}
@@ -69,19 +69,23 @@ endforeach()
 
 if(LIBKML_INCLUDE_DIR AND NOT LIBKML_VERSION)
   file(STRINGS ${LIBKML_INCLUDE_DIR}/kml/base/version.h libkml_version_h_string
-       REGEX "^#define[\t ]+LIBKML_(MAJOR|MINOR|PATCH)_VERSION[\t ]+[0-9]+")
-  string(REGEX REPLACE ".*LIBKML_MAJOR_VERSION[\t ]+([0-9]+)" "\\1" LIBKML_VERSION_MAJOR "${libkml_version_h_string}")
-  string(REGEX REPLACE ".*LIBKML_MINOR_VERSION[\t ]+([0-9]+)" "\\1" LIBKML_VERSION_MINOR "${libkml_version_h_string}")
-  string(REGEX REPLACE ".*LIBKML_PATCH_VERSION[\t ]+([0-9]+)" "\\1" LIBKML_VERSION_PATCH "${libkml_version_h_string}")
-  set(LIBKML_VERSION_STRING "${LIBKML_VERSION_MAJOR}.${LIBKML_VERSION_MINOR}.${LIBKML_VERSION_PATCH}")
+       REGEX "^#define[\t ]+LIBKML_(MAJOR|MINOR|MICRO)_VERSION[\t ]+[0-9]+")
+  string(REGEX REPLACE ".*LIBKML_MAJOR_VERSION[\t ]+([0-9]+).*" "\\1" LIBKML_VERSION_MAJOR "${libkml_version_h_string}")
+  string(REGEX REPLACE ".*LIBKML_MINOR_VERSION[\t ]+([0-9]+).*" "\\1" LIBKML_VERSION_MINOR "${libkml_version_h_string}")
+  string(REGEX REPLACE ".*LIBKML_MICRO_VERSION[\t ]+([0-9]+).*" "\\1" LIBKML_VERSION_MICRO "${libkml_version_h_string}")
+  set(LIBKML_VERSION_STRING "${LIBKML_VERSION_MAJOR}.${LIBKML_VERSION_MINOR}.${LIBKML_VERSION_MICRO}")
 endif()
+
+set(libkml_required_vars LIBKML_BASE_LIBRARY LIBKML_INCLUDE_DIR)
+foreach(_comp IN LISTS LibKML_FIND_COMPONENTS)
+  set(libkml_required_vars ${libkml_required_vars} "LIBKML_${_comp}_LIBRARY")
+endforeach()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(LibKML
                                   FOUND_VAR LIBKML_FOUND
-                                  REQUIRED_VARS LIBKML_BASE_LIBRARY LIBKML_INCLUDE_DIR
-                                  VERSION_VAR LIBKML_VERSION_STRING
-                                  HANDLE_COMPONENTS)
+                                  REQUIRED_VARS ${libkml_required_vars}
+                                  VERSION_VAR LIBKML_VERSION_STRING)
 
 if(LIBKML_FOUND)
   set(LIBKML_INCLUDE_DIRS ${LIBKML_INLCUDE_DIR})
@@ -90,7 +94,7 @@ if(LIBKML_FOUND)
     add_library(LIBKML::LibKML UNKNOWN IMPORTED)
     set_target_properties(LIBKML::LibKML PROPERTIES
                           INTERFACE_INCLUDE_DIRECTORIES ${LIBKML_INCLUDE_DIR}
-                          IMPORTED_LINK_INTERFACE_LAGUAGES "C"
+                          IMPORTED_LINK_INTERFACE_LAGUAGES "C++"
                           IMPORTED_LOCATION ${LIBKML_BASE_LIBRARY})
   endif()
   foreach(_comp IN LISTS libkml_known_components)
@@ -99,7 +103,7 @@ if(LIBKML_FOUND)
       if(NOT TARGET LIBKML::${_comp})
         add_library(LIBKML::${_comp} UNKNOWN IMPORTED)
         set_target_properties(LIBKML::${_comp} PROPERTIES
-                              IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+                              IMPORTED_LINK_INTERFACE_LANGUAGES "C++"
                               IMPORTED_LOCATION "${LIBKML_${_comp}_LIBRARY}")
       endif()
     endif()
