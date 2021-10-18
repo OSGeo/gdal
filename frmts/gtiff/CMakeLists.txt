@@ -23,6 +23,10 @@ gdal_standard_includes(gdal_GTIFF)
 target_include_directories(gdal_GTIFF PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/jpeg)
 option(HAVE_LERC "Enable LERC" ON)
 
+if (GDAL_USE_LIBTIFF_INTERNAL AND NOT GDAL_USE_LIBGEOTIFF_INTERNAL)
+  message(FATAL_ERROR "When GDAL_USE_LIBTIFF_INTERNAL=ON, GDAL_USE_LIBGEOTIFF_INTERNAL must be also set to ON")
+endif ()
+
 # Make sure to add first all internal libraries, so that their include path goes before external ones, that could also
 # have the headers of libtiff/libgeotiff
 
