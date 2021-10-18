@@ -39,17 +39,21 @@ jobs:
            libpq-dev libpqtypes-dev postgresql-12 postgresql-12-postgis-3 postgresql-client-12 postgresql-12-postgis-3-scripts
         python3 -m pip install -U pip wheel setuptools numpy
         python3 -m pip install -r $GITHUB_WORKSPACE/autotest/requirements.txt
-        mkdir -p $GITHUB_WORKSPACE/build
     - name: Configure
       run: |
-        cd $GITHUB_WORKSPACE/build
-        cmake  ${CMAKE_OPTIONS} -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror ${GITHUB_WORKSPACE}
+        mkdir -p $GITHUB_WORKSPACE/superbuild
+        cd $GITHUB_WORKSPACE/superbuild
+        printf "cmake_minimum_required(VERSION 3.10)\nproject(test)\nadd_subdirectory(gdal)" > CMakeLists.txt
+        ln -s .. gdal
+        mkdir build
+        cd build
+        cmake  ${CMAKE_OPTIONS} -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror ..
     - name: Build
       run: |
-        cmake --build $GITHUB_WORKSPACE/build -j $(nproc)
+        cmake --build $GITHUB_WORKSPACE/superbuild/build -j $(nproc)
     - name: test
       run: |
-        cmake --build $GITHUB_WORKSPACE/build --target quicktest
+        cmake --build $GITHUB_WORKSPACE/superbuild/build --target quicktest
 
   build-windows-msys2-mingw:
     if: ${{ false }}  # FIXME: disable for now
