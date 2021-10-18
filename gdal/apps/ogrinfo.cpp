@@ -436,12 +436,10 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
 
     if( nFetchFID == OGRNullFID && !bSummaryOnly )
     {
-        OGRFeature *poFeature = nullptr;
-        while( (poFeature = poLayer->GetNextFeature()) != nullptr )
+        for( auto& poFeature: poLayer )
         {
             if( !bSuperQuiet )
                 poFeature->DumpReadable(nullptr, papszOptions);
-            OGRFeature::DestroyFeature(poFeature);
         }
     }
     else if( nFetchFID != OGRNullFID )
