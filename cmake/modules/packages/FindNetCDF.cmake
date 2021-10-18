@@ -98,12 +98,26 @@ if(NETCDF_INCLUDE_DIR AND NETCDF_LIBRARY)
         endif()
     endfunction()
 
-    if(NC_CONFIG)
+    if(NC_CONFIG AND NOT WIN32)
         GET_NC_CONFIG(dap)
         GET_NC_CONFIG(nc2)
         GET_NC_CONFIG(nc4)
         GET_NC_CONFIG(hdf4)
         GET_NC_CONFIG(hdf5)
+    else()
+        # Detect internal NC4_create symbol as a hint that NC4 support is enabled
+        # Fragile...
+        function(detect_NC4_create)
+            include(CheckCSourceCompiles)
+            set(CMAKE_REQUIRED_QUIET "yes")
+            set(CMAKE_REQUIRED_LIBRARIES ${NETCDF_LIBRARY})
+            check_c_source_compiles("int NC4_create ();int main () {return NC4_create ();}" HAVE_NC4_CREATE)
+        endfunction()
+
+        detect_NC4_create()
+        if(HAVE_NC4_CREATE)
+            set(NETCDF_HAS_NC4 ON)
+        endif()
     endif()
 
     macro(NetCDF_DETECT_COMPONENT _comp)

@@ -30,14 +30,15 @@ if (CMAKE_CXX_FLAGS)
   string(REPLACE "/WX" " " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
 endif()
 include(configure)
-set(CMAKE_C_FLAGS ${_CMAKE_C_FLAGS_backup})
-set(CMAKE_CXX_FLAGS ${_CMAKE_CXX_FLAGS_backup})
 
 # generate ${CMAKE_CURRENT_BINARY_DIR}/gcore/gdal_version.h and set GDAL_VERSION variable
 include(GdalVersion)
 
 # find 3rd party libraries
 include(CheckDependentLibraries)
+
+set(CMAKE_C_FLAGS ${_CMAKE_C_FLAGS_backup})
+set(CMAKE_CXX_FLAGS ${_CMAKE_CXX_FLAGS_backup})
 
 # Default definitions during build
 add_definitions(-DGDAL_COMPILATION -DGDAL_CMAKE_BUILD)
