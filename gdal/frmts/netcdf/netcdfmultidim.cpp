@@ -2678,7 +2678,7 @@ bool netCDFVariable::IReadWrite(const bool bIsRead,
                 // native NC type translates into GDAL data type of larger size
                 for( ptrdiff_t i = nExpectedBufferStride - 1; i >= 0; --i )
                 {
-                    GByte abySrc[2];
+                    GByte abySrc[sizeof(double)]; // 2 is enough here, but sizeof(double) make MSVC happy
                     abySrc[0] = *(pabyBuffer + i);
                     ConvertNCToGDAL(&abySrc[0]);
                     GDALExtendedDataType::CopyValue(
