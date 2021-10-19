@@ -19,7 +19,7 @@ add_gdal_driver(
 gdal_standard_includes(gdal_vrt)
 target_include_directories(gdal_vrt PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/raw)
 
-if (HAVE_GEOS)
+if (GDAL_USE_GEOS)
   target_include_directories(gdal_vrt PRIVATE ${GEOS_INCLUDE_DIRS})
   gdal_target_link_libraries(TARGET gdal_vrt LIBRARIES ${GEOS_LIBRARIES})
   target_compile_definitions(gdal_vrt PRIVATE -DHAVE_GEOS=1)

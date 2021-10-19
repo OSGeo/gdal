@@ -22,11 +22,3 @@ gdal_target_link_libraries(TARGET ogr_GeoPackage PRIVATE LIBRARIES SQLite::SQLit
 if (SQLite_HAS_COLUMN_METADATA)
   target_compile_definitions(ogr_GeoPackage PRIVATE -DSQLITE_HAS_COLUMN_METADATA)
 endif ()
-
-if (HAVE_SPATIALITE)
-  gdal_target_link_libraries(TARGET ogr_GeoPackage PRIVATE LIBRARIES SPATIALITE::SPATIALITE)
-endif ()
-if (HAVE_RASTERLITE2)
-  target_compile_definitions(ogr_GeoPackage PRIVATE -DHAVE_RASTERLITE2)
-  gdal_target_link_libraries(TARGET ogr_GeoPackage LIBRARIES RASTERLITE2::RASTERLITE2)
-endif ()

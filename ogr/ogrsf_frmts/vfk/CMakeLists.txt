@@ -15,7 +15,7 @@ add_gdal_driver(
           vfkfeature.cpp
           vfkfeaturesqlite.cpp)
 gdal_standard_includes(ogr_VFK)
-if (HAVE_SQLITE3)
+if (GDAL_USE_SQLITE3)
   target_include_directories(ogr_VFK PRIVATE ${SQLite3_INCLUDE_DIR})
   gdal_target_link_libraries(TARGET ogr_VFK LIBRARIES SQLite::SQLite3)
   target_compile_definitions(ogr_VFK PRIVATE -DHAVE_SQLITE)

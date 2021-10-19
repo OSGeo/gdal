@@ -52,7 +52,7 @@ if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
   set_property(SOURCE gdaldither.cpp gdalmediancut.cpp PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
 endif ()
 
-if (HAVE_GEOS)
+if (GDAL_USE_GEOS)
   target_include_directories(alg PRIVATE ${GEOS_INCLUDE_DIRS})
   target_compile_definitions(alg PRIVATE -DHAVE_GEOS=1)
   gdal_add_private_link_libraries(GEOS::GEOS)

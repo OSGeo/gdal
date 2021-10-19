@@ -50,7 +50,7 @@ if (GDAL_USE_LIBLERC_INTERNAL)
   target_compile_definitions(gdal_MRF PRIVATE -DLERC)
 endif ()
 
-if (HAVE_ZSTD)
+if (GDAL_USE_ZSTD)
   target_compile_definitions(gdal_MRF PRIVATE -DZSTD_SUPPORT)
   target_include_directories(gdal_MRF PRIVATE ${ZSTD_INCLUDE_DIRS})
   gdal_target_link_libraries(TARGET gdal_MRF LIBRARIES ZSTD::zstd)

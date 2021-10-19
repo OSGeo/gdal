@@ -20,11 +20,9 @@ target_include_directories(
   ogr_GMLAS PRIVATE ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/geojson ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/mem
                     ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/pgdump)
 
-if (HAVE_XERCESC)
-  target_include_directories(ogr_GMLAS PRIVATE ${XercesC_INCLUDE_DIRS} ${XercesC_INCLUDE_DIRS}/xercesc)
-  target_compile_definitions(ogr_GMLAS PRIVATE -DHAVE_XERCES=1)
-  gdal_target_link_libraries(TARGET ogr_GMLAS LIBRARIES XercesC::XercesC)
-endif ()
+target_include_directories(ogr_GMLAS PRIVATE ${XercesC_INCLUDE_DIRS} ${XercesC_INCLUDE_DIRS}/xercesc)
+target_compile_definitions(ogr_GMLAS PRIVATE -DHAVE_XERCES=1)
+gdal_target_link_libraries(TARGET ogr_GMLAS LIBRARIES XercesC::XercesC)
 
 if (GDAL_USE_LIBJSONC_INTERNAL)
   target_include_directories(ogr_GMLAS PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
