@@ -158,6 +158,16 @@ This will only give you a minimum build which will lack a lot of drivers.
 Consult :ref:`raster_drivers` and :ref:`vector_drivers` pages for additional optional
 dependencies.
 
+
+Build instructions
+..................
+
+See https://trac.osgeo.org/gdal/wiki/BuildHints for hints for existing
+autoconf and nmake build systems.
+
+From GDAL 3.5, an *experimental* :ref:`CMake-based build <build_hints>` is available.
+
+
 Binaries
 ------------------------------------------------------------------------------
 
@@ -213,3 +223,8 @@ Images with nightly builds of GDAL master and tagged releases are available at
 
 Information on the content of the different configurations can be found at
 `https://github.com/OSGeo/gdal/tree/master/gdal/docker <https://github.com/OSGeo/gdal/tree/master/gdal/docker>`_
+
+.. toctree::
+   :maxdepth: 0
+
+   build_hints
