@@ -111,12 +111,16 @@ if (RENAME_INTERNAL_LIBTIFF_SYMBOLS)
   # A few hacks in tif_jpeg.c and tif_jpeg_12.c to deal with the #define game of gdal_libtiff_symbol_rename.h
   file(READ ${CMAKE_CURRENT_SOURCE_DIR}/tif_jpeg.c tif_jpeg_content)
   string(REPLACE "defined(TIFFInitJPEG)" "0" tif_jpeg_content "${tif_jpeg_content}")
-  file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/tif_jpeg_modified.c "${tif_jpeg_content}")
+  file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/tif_jpeg_modified.c.tmp "${tif_jpeg_content}")
+  execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/tif_jpeg_modified.c.tmp
+                          ${CMAKE_CURRENT_BINARY_DIR}/tif_jpeg_modified.c)
 
   file(READ ${CMAKE_CURRENT_SOURCE_DIR}/tif_jpeg_12.c tif_jpeg_12_content)
   string(REPLACE "#define TIFFInitJPEG TIFFInitJPEG_12" "#undef TIFFInitJPEG\n#define TIFFInitJPEG TIFFInitJPEG_12"
                  tif_jpeg_12_content "${tif_jpeg_12_content}")
-  file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/tif_jpeg_12_modified.c "${tif_jpeg_12_content}")
+  file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/tif_jpeg_12_modified.c.tmp "${tif_jpeg_12_content}")
+  execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/tif_jpeg_12_modified.c.tmp
+                          ${CMAKE_CURRENT_BINARY_DIR}/tif_jpeg_12_modified.c)
 
   target_sources(libtiff PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/tif_jpeg_modified.c
                                  ${CMAKE_CURRENT_BINARY_DIR}/tif_jpeg_12_modified.c gdal_libtiff_symbol_rename.h)
