@@ -167,13 +167,11 @@ int FGdbDataSource::FixIndexes()
     {
         m_pConnection->CloseGeodatabase();
 
-        char* apszDrivers[2];
-        apszDrivers[0] = (char*) "OpenFileGDB";
-        apszDrivers[1] = nullptr;
+        const char* const apszDrivers[2] = { "OpenFileGDB", nullptr };
         const char* pszSystemCatalog = CPLFormFilename(m_osFSName, "a00000001.gdbtable", nullptr);
-        GDALDataset* poOpenFileGDBDS = (GDALDataset*)
-            GDALOpenEx(pszSystemCatalog, GDAL_OF_VECTOR,
-                       apszDrivers, nullptr, nullptr);
+        auto poOpenFileGDBDS = std::unique_ptr<GDALDataset>(
+            GDALDataset::Open(pszSystemCatalog, GDAL_OF_VECTOR,
+                              apszDrivers, nullptr, nullptr));
         if( poOpenFileGDBDS == nullptr || poOpenFileGDBDS->GetLayer(0) == nullptr )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -218,7 +216,6 @@ int FGdbDataSource::FixIndexes()
                 delete poF;
             }
         }
-        GDALClose(poOpenFileGDBDS);
 
         m_pConnection->SetFIDHackInProgress(FALSE);
     }
@@ -485,10 +482,10 @@ bool FGdbDataSource::LoadLayers(const std::wstring &root)
     // We do this by browsing the catalog table (using the OpenFileGDB driver) and looking for items we haven't yet found.
     // If we find any, we have no choice but to load these using the OpenFileGDB driver, as the ESRI SDK refuses to acknowledge that they
     // exist (despite ArcGIS itself showing them!)
-    const char* apszDrivers[2] = { "OpenFileGDB", nullptr };
+    const char* const apszDrivers[2] = { "OpenFileGDB", nullptr };
     const char* pszSystemCatalog = CPLFormFilename(m_osFSName, "a00000001", "gdbtable");
-    m_poOpenFileGDBDS.reset( (GDALDataset*)
-        GDALOpenEx(pszSystemCatalog, GDAL_OF_VECTOR, apszDrivers, nullptr, nullptr) );
+    m_poOpenFileGDBDS.reset(
+        GDALDataset::Open(pszSystemCatalog, GDAL_OF_VECTOR, apszDrivers, nullptr, nullptr) );
     if( m_poOpenFileGDBDS != nullptr && m_poOpenFileGDBDS->GetLayer(0) != nullptr )
     {
         OGRLayer* poCatalogLayer = m_poOpenFileGDBDS->GetLayer(0);
