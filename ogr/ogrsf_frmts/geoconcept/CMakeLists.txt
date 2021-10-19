@@ -11,9 +11,6 @@ add_gdal_driver(
           geoconcept.c
           geoconcept_syscoord.c)
 gdal_standard_includes(ogr_Geoconcept)
-if (USE_CPL)
-  target_compile_definitions(ogr_Geoconcept PRIVATE -DUSE_CPL)
-endif ()
 if (MSVC)
   target_compile_options(ogr_Geoconcept PRIVATE /wd4706)
 endif ()

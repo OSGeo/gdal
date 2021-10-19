@@ -1,7 +1,6 @@
 # CMake4GDAL project is distributed under X/MIT license. See accompanying file LICENSE.txt.
 
 # Switches to control build targets(cached)
-option(USE_CPL "Set ON to use cpl" ON)
 option(ENABLE_GNM "Build GNM module" ON)
 option(ENABLE_PAM "Set ON to enable pam" ON)
 option(BUILD_APPS "Build command utilities" ON)
