@@ -54,6 +54,8 @@ if (BUILD_APPS)
   add_executable(gdal_rasterize gdal_rasterize_bin.cpp)
   add_executable(gdaldem gdaldem_bin.cpp)
   add_executable(gdaltransform gdaltransform.cpp)
+  add_executable(gdal_create gdal_create.cpp)
+  add_executable(gdal_viewshed gdal_viewshed.cpp)
   add_executable(ogrinfo commonutils.h ogrinfo.cpp)
   add_executable(ogr2ogr ogr2ogr_bin.cpp)
   add_executable(ogrlineref ogrlineref.cpp)
@@ -74,6 +76,8 @@ if (BUILD_APPS)
       gdaltransform
       gdaltindex
       gdaldem
+      gdal_create
+      gdal_viewshed
       nearblack
       ogrlineref
       ogrtindex
