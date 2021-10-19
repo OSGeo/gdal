@@ -44,7 +44,6 @@ endfunction()
 
 # Custom find_package definitions
 define_find_package2(LIBCSF csf.h csf)
-define_find_package2(BPG libbpg.h bpg)
 define_find_package2(Crnlib crnlib.h crunch)
 define_find_package2(IDB it.h idb)
 define_find_package2(RASDAMAN rasdaman.hh raslib)
@@ -243,7 +242,6 @@ gdal_check_package(ZSTD "enable TIFF ZStandard compression")
 gdal_check_package(DB2 "enable ogr_DB2 IBM DB2 driver")
 gdal_check_package(CharLS "enable gdal_JPEGLS jpeg loss-less driver")
 gdal_check_package(OpenMP "")
-gdal_check_package(BPG  "enable gdal_BPG driver")
 gdal_check_package(Crnlib "enable gdal_DDS driver")
 gdal_check_package(IDB "enable ogr_IDB driver")
 # TODO: implement FindRASDAMAN
