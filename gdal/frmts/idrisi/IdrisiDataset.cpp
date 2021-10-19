@@ -2980,8 +2980,6 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
     //  Check for State Plane
     // -----------------------------------------------------
 
-#ifndef GDAL_RST_PLUGIN
-
     if( EQUAL( pszProjName, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP ) ||
         EQUAL( pszProjName, SRS_PT_TRANSVERSE_MERCATOR ) )
     {
@@ -3055,8 +3053,6 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
             return CE_None;
         }
     }
-
-#endif // GDAL_RST_PLUGIN
 
     const char *pszProjectionOut = nullptr;
 
