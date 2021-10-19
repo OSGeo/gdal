@@ -13,7 +13,7 @@ and `define_find_pacakge2()` that declare package properties to find.
 variables. And also set imported Target `<Upper-case pkgname>::<pkgname>`.
 
 `find_package2()` accept two options, `QUIET` and `REQUIRED`.
-There is no support for `VERSION` and `COMPOENNTS`.
+There is no support for `VERSION` and `COMPONENTS`.
 
 This script only support package that has only one library name and
 single directory for include files. If your target is supposed not as
