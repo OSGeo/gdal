@@ -188,14 +188,16 @@ set_package_properties(SQLite3 PROPERTIES PURPOSE "Spatialite/rasterlite support
 gdal_check_package(SPATIALITE "Enable spatialite support for sqlite3")
 find_package(Rasterlite2)
 set_package_properties(Rasterlite2 PROPERTIES PURPOSE "Enable rasterlite2 support for sqlite3")
-if(RASTERLITE2_FOUND AND NOT RASTERLITE2_VERSION_STRING VERSION_LESS 1.1.0)
-    # GDAL requires rasterlite2 1.1.0 and later
-    set(HAVE_RASTERLITE2 ON CACHE INTERNAL "HAVE_RASTERLITE2")
-else()
-    if(RASTERLITE2_FOUND AND RASTERLITE2_VERSION_STRING VERSION_LESS 1.1.0)
+if(RASTERLITE2_FOUND)
+    if(RASTERLITE2_VERSION_STRING VERSION_GREATER_EQUAL 1.1.0)
+        # GDAL requires rasterlite2 1.1.0 and later
+        set(HAVE_RASTERLITE2 ON CACHE INTERNAL "HAVE_RASTERLITE2")
+    else()
         message(STATUS "Rasterlite2 requires version 1.1.0 and later, detected: ${RASTERLITE2_VERSION_STRING}")
         message(STATUS "Turn off rasterlite2 support")
+        set(HAVE_RASTERLITE2 OFF CACHE INTERNAL "HAVE_RASTERLITE2")
     endif()
+else()
     set(HAVE_RASTERLITE2 OFF CACHE INTERNAL "HAVE_RASTERLITE2")
 endif()
 
