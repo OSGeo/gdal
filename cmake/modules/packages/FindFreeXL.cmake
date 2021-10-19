@@ -42,7 +42,7 @@ endif()
 
 find_path(FREEXL_INCLUDE_DIR
           NAMES freexl.h
-          HINSTS ${PC_FREEXL_INCLUDE_DIRS})
+          HINTS ${PC_FREEXL_INCLUDE_DIRS})
 find_library(FREEXL_LIBRARY
              NAMES freexl
              HINTS ${PC_FREEXL_LIBRARY_DIRS})

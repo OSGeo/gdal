@@ -24,7 +24,7 @@ if(GEOS_CONFIG)
 endif()
 
 find_path(GEOS_INCLUDE_DIR NAMES geos_c.h
-          HINSTS ${GEOS_PREFIX}/include)
+          HINTS ${GEOS_PREFIX}/include)
 find_library(GEOS_LIBRARY NAMES geos_c
              HINTS ${GEOS_PREFIX}/lib)
 mark_as_advanced(GEOS_INCLUDE_DIR GEOS_LIBRARY)
