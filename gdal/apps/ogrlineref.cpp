@@ -1247,8 +1247,7 @@ static OGRErr GetCoordinates( OGRLayer* const poPkLayer,
     poPkLayer->ResetReading();
 
     bool bHaveCoords = false;
-    OGRFeature* pFeature = nullptr;
-    while( (pFeature = poPkLayer->GetNextFeature()) != nullptr )
+    for( auto& pFeature: poPkLayer )
     {
         bHaveCoords = true;
         const double dfStart = pFeature->GetFieldAsDouble(FIELD_START);
@@ -1271,7 +1270,6 @@ static OGRErr GetCoordinates( OGRLayer* const poPkLayer,
                 "The position for distance %f is lat:%f, long:%f, height:%f\n",
                 dfPos, pt.getY(), pt.getX(), pt.getZ()));
         }
-        OGRFeature::DestroyFeature(pFeature);
     }
 
     if( bHaveCoords )

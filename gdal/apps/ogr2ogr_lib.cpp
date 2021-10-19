@@ -512,8 +512,7 @@ static OGRGeometry* LoadGeometry( const char* pszDS,
         poLyr->SetAttributeFilter(pszWhere);
 
     OGRMultiPolygon *poMP = nullptr;
-    OGRFeature *poFeat = nullptr;
-    while ((poFeat = poLyr->GetNextFeature()) != nullptr)
+    for( auto& poFeat: poLyr )
     {
         OGRGeometry* poSrcGeom = poFeat->GetGeometryRef();
         if (poSrcGeom)
@@ -541,15 +540,12 @@ static OGRGeometry* LoadGeometry( const char* pszDS,
             {
                 CPLError( CE_Failure, CPLE_AppDefined, "Geometry not of polygon type." );
                 OGRGeometryFactory::destroyGeometry(poMP);
-                OGRFeature::DestroyFeature(poFeat);
                 if( pszSQL != nullptr )
                     poDS->ReleaseResultSet( poLyr );
                 GDALClose(poDS);
                 return nullptr;
             }
         }
-
-        OGRFeature::DestroyFeature(poFeat);
     }
 
     if( pszSQL != nullptr )
@@ -721,8 +717,7 @@ bool OGRSplitListFieldLayer::BuildLayerDefn(GDALProgressFunc pfnProgress,
 
         /* Scan the whole layer to compute the maximum number of */
         /* items for each field of list type */
-        OGRFeature* poSrcFeature = nullptr;
-        while( (poSrcFeature = poSrcLayer->GetNextFeature()) != nullptr )
+        for( auto& poSrcFeature: poSrcLayer )
         {
             for( int i=0; i<nListFieldCount; ++i )
             {
@@ -761,7 +756,6 @@ bool OGRSplitListFieldLayer::BuildLayerDefn(GDALProgressFunc pfnProgress,
                     pasListFields[i].nMaxOccurrences = nCount;
                 }
             }
-            OGRFeature::DestroyFeature(poSrcFeature);
 
             nFeatureIndex ++;
             if (pfnProgress != nullptr && nFeatureCount != 0)
