@@ -7,7 +7,10 @@ add_gdal_driver(
           IntergraphDataset.cpp
           IntergraphDataset.h
           JpegHelper.cpp
-          JpegHelper.h)
+          JpegHelper.h
+          PLUGIN_CAPABLE_IF
+          "NOT GDAL_USE_LIBTIFF_INTERNAL"
+          NO_DEPS)
 gdal_standard_includes(gdal_INGR)
 target_include_directories(gdal_INGR PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/gtiff)
 

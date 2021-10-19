@@ -6,7 +6,10 @@ add_gdal_driver(
           pcrasterdataset.cpp
           pcrastermisc.cpp
           pcrasterrasterband.cpp
-          pcrasterutil.cpp)
+          pcrasterutil.cpp
+          PLUGIN_CAPABLE_IF
+          "NOT GDAL_USE_LIBCSF_INTERNAL"
+          NO_DEPS)
 gdal_standard_includes(gdal_PCRaster)
 
 if (GDAL_USE_LIBCSF_INTERNAL)

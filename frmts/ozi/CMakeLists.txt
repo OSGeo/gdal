@@ -1,4 +1,4 @@
-add_gdal_driver(TARGET gdal_OZI SOURCES ozidataset.cpp)
+add_gdal_driver(TARGET gdal_OZI SOURCES ozidataset.cpp PLUGIN_CAPABLE_IF "NOT GDAL_USE_LIBZ_INTERNAL" NO_DEPS)
 gdal_standard_includes(gdal_OZI)
 target_compile_definitions(gdal_OZI PRIVATE -DHAVE_LIBZ -DZIP_SUPPORT)
 if (GDAL_USE_LIBZ_INTERNAL)

@@ -1,4 +1,4 @@
-add_gdal_driver(TARGET gdal_JPEGLS SOURCES jpegls_header.h jpeglsdataset.cpp)
+add_gdal_driver(TARGET gdal_JPEGLS SOURCES jpegls_header.h jpeglsdataset.cpp PLUGIN_CAPABLE)
 gdal_standard_includes(gdal_JPEGLS)
 gdal_target_link_libraries(TARGET gdal_JPEGLS LIBRARIES CharLS::charls)
 

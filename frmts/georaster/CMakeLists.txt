@@ -1,7 +1,7 @@
 add_gdal_driver(
   TARGET gdal_GEOR
   SOURCES georaster_dataset.cpp georaster_priv.h georaster_rasterband.cpp georaster_wrapper.cpp
-  DEF FRMT_georaster)
+  DEF FRMT_georaster PLUGIN_CAPABLE_IF "NOT GDAL_USE_LIBZ_INTERNAL;NOT GDAL_USE_LIBJPEG_INTERNAL")
 gdal_standard_includes(gdal_GEOR)
 if (GDAL_USE_LIBZ_INTERNAL)
   target_include_directories(gdal_GEOR PRIVATE $<TARGET_PROPERTY:libz,SOURCE_DIR>)

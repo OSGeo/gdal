@@ -13,15 +13,18 @@ set_property(TARGET ogrsf_frmts PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARE
 ogr_default_driver(mem "Read/write driver for MEMORY virtual files")
 ogr_default_driver(geojson "GeoJSON/ESRIJSON/TopoJSON driver")
 ogr_default_driver2(mitab TAB "MapInfo TAB and MIF/MID")
+ogr_default_driver(shape "ESRI shape-file")
 
 # ######################################################################################################################
 ogr_default_driver(kml KML) # when not found EXPAT, it use CPL_MINIXML (ex. android)
 ogr_default_driver(vrt "VRT - Virtual Format")
+
+ogr_optional_driver(avc AVC)
+
 ogr_optional_driver(sdts SDTS) # depends ISO8211
 ogr_optional_driver(gml GML) # when not found both EXPAT/XercesC, return error in driver, referenced by WCS
 
 # ######################################################################################################################
-ogr_optional_driver(avc AVC)
 ogr_optional_driver(csv CSV)
 ogr_optional_driver(dgn DGN)
 ogr_optional_driver(gmt GMT)
@@ -29,7 +32,6 @@ ogr_optional_driver(ntf NTF)
 ogr_optional_driver(rec REC)
 option(ENABLE_S57_BUILTIN_CLASSES "Set ON to build s57 driver with builin classes" OFF)
 ogr_optional_driver(s57 S57)
-ogr_optional_driver(shape "ESRI shape-file")
 ogr_optional_driver(tiger "U.S. Census TIGER/Line")
 ogr_optional_driver(geoconcept GEOCONCEPT)
 ogr_optional_driver(georss GEORSS)

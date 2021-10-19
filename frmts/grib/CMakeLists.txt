@@ -45,7 +45,10 @@ add_gdal_driver(
           degrib/g2clib/misspack.c
           degrib/g2clib/dec_jpeg2000.cpp
           degrib/g2clib/jpcunpack.c
-          degrib/degrib/hazard.c)
+          degrib/degrib/hazard.c
+          PLUGIN_CAPABLE_IF
+          "NOT GDAL_USE_LIBPNG_INTERNAL;NOT GDAL_USE_LIBZ_INTERNAL"
+          NO_DEPS)
 gdal_standard_includes(gdal_GRIB)
 
 if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)

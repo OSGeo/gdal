@@ -1,5 +1,4 @@
 # HDF4 and HDF4Image driver
-option(GDAL_ENABLE_FRMT_HDF4_PLUGIN "build HDF4 driver as plugin" ON)
 set(_SOURCES
     hdf-eos/ease.h
     hdf-eos/HdfEosDef.h
@@ -13,16 +12,10 @@ set(_SOURCES
     hdf4dataset.cpp
     hdf4imagedataset.cpp
     hdf4multidim.cpp)
-if (GDAL_ENABLE_FRMT_HDF4_PLUGIN)
-  add_gdal_driver(
-    TARGET gdal_HDF4
-    SOURCES ${_SOURCES}
-    PLUGIN)
-else ()
-  add_gdal_driver(TARGET gdal_HDF4 SOURCES ${_SOURCES})
-endif ()
+
+add_gdal_driver(TARGET gdal_HDF4 SOURCES ${_SOURCES} PLUGIN_CAPABLE)
 unset(_SOURCES)
-if (GDAL_ENABLE_PLUGIN OR GDAL_ENABLE_FRMT_HDF4_PLUGIN)
+if (GDAL_ENABLE_FRMT_HDF4_PLUGIN)
   # When build as plugin, it initialize HDF4Image driver too.
   target_compile_definitions(gdal_HDF4 PRIVATE -DHDF4_PLUGIN)
 endif ()

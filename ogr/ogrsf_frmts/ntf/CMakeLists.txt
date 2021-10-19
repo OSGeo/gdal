@@ -11,6 +11,8 @@ add_gdal_driver(
           ntf_generic.cpp
           ntf_raster.cpp
           ntf_codelist.cpp
-          ntfstroke.cpp)
+          ntfstroke.cpp
+          PLUGIN_CAPABLE
+          NO_DEPS)
 gdal_standard_includes(ogr_NTF)
 add_executable(ntfdump EXCLUDE_FROM_ALL ntfdump.cpp)

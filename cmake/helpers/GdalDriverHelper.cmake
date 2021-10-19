@@ -12,39 +12,37 @@ GdalDriverHelper
 
   Symptoms add_gdal_driver( TARGET <target_name>
                             [SOURCES <source file> [<source file>[...]]]
-                            [BUILTIN]
+                            BUILTIN | PLUGIN_CAPABLE | [PLUGIN_CAPABLE_IF <cond>]
+                            [NO_DEPS]
                           )
            gdal_standard_includes(<target_name>)
            gdal_target_link_libraries(TARGET <target_name> LIBRARIES <library> [<library2> [..]])
 
+  Drivers should specify one and only one of:
+  - BUILTIN: the driver is built-in into library, and cannot be built as a plugin
+  - PLUGIN_CAPABLE: the driver can be built as a plugin.
+    This only happens if the GDAL_ENABLE_FRMT_{foo}_PLUGIN or OGR_ENABLE_{foo}_PLUGIN
+    variable is set to ON.
+    The default value of that variable is :
+    - the value of GDAL_ENABLE_PLUGINS option when NO_DEPS is not specified (e.g ECW, HDF4, etc.)
+    - the value of GDAL_ENABLE_PLUGINS_NO_DEPS option when NO_DEPS is specified
+  - PLUGIN_CAPABLE_IF: similar to PLUGIN_CAPABLE,
+    but extra conditions provided in <cond> (e.g "NOT GDAL_USE_LIBJSONC_INTERNAL") are needed
 
+  The NO_DEPS option express that the driver has no non-core external depedencies.
 
-  All in one macro; not recommended.
-
-  Symptoms gdal_driver( TARGET <target_name>
-                        [SOURCES <source file> [<source file>[...]]]
-                        [INCLUDES <include_dir> [<include dir2> [...]]]
-                        [LIBRARIES <library1> [<library2> [...]][
-                        [DEFINITIONS -DFOO=1 [-DBOO [...]]]
-                        [BUILTIN]
-          )
-
-  All driver which is not specify 'BUILTIN' beocmes PLUGIN when
-  configuration ENABLE_PLUGIN = true.
-
-  There aree several examples to show how to write build cmake script.
+  There are several examples to show how to write build cmake script.
 
  ex.1 Driver which is referrenced by other drivers
       Such driver should built-in into library to resolve reference.
-      Please use 'FORCE_BUILTIN' option keyword which indicate to link it into libgdal.so.
 
    add_gdal_driver(TARGET gdal_iso8211 SOURCES iso8211.cpp BUILTIN)
 
  ex.2 Driver that refer other driver as dependency
       Please do not specify LIBRARIES for linking target for other driver,
-      That should be bulit into libgdal.
+      That should be built into libgdal.
 
-   add_gdal_driver(TARGET gdal_ADRG SOURCES foo.cpp)
+   add_gdal_driver(TARGET gdal_ADRG SOURCES foo.cpp BUILTIN)
    target_include_directories(gdal_ADRG PRIVATE $<TARGET_PROPERTY:iso8211,SOURCE_DIR>)
 
  ex.3  Driver which is depend on some external libraries
@@ -53,7 +51,7 @@ GdalDriverHelper
        CheckDependentLibraries.cmake.
 
    add_gdal_driver(TARGET    gdal_WEBP
-               SOURCES   gdal_webp.c gdal_webp.h)
+                   SOURCES   gdal_webp.c gdal_webp.h PLUGIN_CAPABLE)
    gdal_standard_includes(gdal_WEBP)
    target_include_directories(gdal_WEBP PRIVATE ${WEBP_INCLUDE_DIRS} ${TIFF_INCLUDE_DIRS})
    gdal_target_link_libraries(TARGET gdal_WEBP LIBRARIES ${WEBP_LIBRARIES} ${TIFF_LIBRARIES})
@@ -65,15 +63,15 @@ GdalDriverHelper
        You may use 'IF(GDAL_USE_SOME_LIBRARY_INTERNAL)...ELSE()...ENDIF()' cmake directive too.
 
    add_gdal_driver(TARGET gdal_CALS
-               SOURCES calsdataset.cpp)
+                   SOURCES calsdataset.cpp BUILTIN)
    gdal_standard_includes(gdal_CALS)
    gdal_include_directories(gdal_CALS PRIVATE $<TARGET_PROPERTY:libtiff,SOURCE_DIR>)
 
 #]=======================================================================]
 
 function(add_gdal_driver)
-    set(_options BUILTIN PLUGIN STRONG_CXX_WFLAGS CXX_WFLAGS_EFFCXX)
-    set(_oneValueArgs TARGET DESCRIPTION DEF)
+    set(_options BUILTIN PLUGIN_CAPABLE NO_DEPS STRONG_CXX_WFLAGS CXX_WFLAGS_EFFCXX)
+    set(_oneValueArgs TARGET DESCRIPTION DEF PLUGIN_CAPABLE_IF)
     set(_multiValueArgs SOURCES)
     cmake_parse_arguments(_DRIVER "${_options}" "${_oneValueArgs}" "${_multiValueArgs}" ${ARGN})
     # Check mandatory arguments
@@ -83,15 +81,7 @@ function(add_gdal_driver)
     if (NOT _DRIVER_SOURCES)
         message(FATAL_ERROR "ADD_GDAL_DRIVER(): SOURCES is a mandatory argument.")
     endif ()
-    # Determine whether plugin or built-in
-    if (_DRIVER_PLUGIN)
-        # When specified PLUGIN, always build as plugin
-        set(_DRIVER_PLUGIN_BUILD TRUE)
-    elseif ((NOT GDAL_ENABLE_PLUGIN) OR _DRIVER_BUILTIN)
-        set(_DRIVER_PLUGIN_BUILD FALSE)
-    else ()
-        set(_DRIVER_PLUGIN_BUILD TRUE)
-    endif ()
+
     # Set *_FORMATS properties for summary and gdal_config utility
     string(FIND "${_DRIVER_TARGET}" "ogr" IS_OGR)
     if (IS_OGR EQUAL -1) # raster
@@ -101,6 +91,41 @@ function(add_gdal_driver)
         string(REPLACE "ogr_" "" _FORMAT ${_DRIVER_TARGET})
         set_property(GLOBAL APPEND PROPERTY OGR_FORMATS ${_FORMAT})
     endif ()
+    string(TOUPPER ${_FORMAT} _KEY)
+
+    if ((NOT _DRIVER_PLUGIN_CAPABLE) AND (NOT _DRIVER_BUILTIN) AND (NOT _DRIVER_PLUGIN_CAPABLE_IF))
+        message(FATAL_ERROR "Driver ${_DRIVER_TARGET} should declare BUILTIN, PLUGIN_CAPABLE or PLUGIN_CAPABLE_IF")
+    endif()
+
+    # Determine whether plugin or built-in
+    set(_DRIVER_PLUGIN_BUILD OFF)
+    if (_DRIVER_PLUGIN_CAPABLE_IF)
+        set(_COND ${_DRIVER_PLUGIN_CAPABLE_IF})
+    endif()
+    if (_DRIVER_PLUGIN_CAPABLE OR _DRIVER_PLUGIN_CAPABLE_IF)
+        set(_INITIAL_VALUE OFF)
+        if( GDAL_ENABLE_PLUGINS AND NOT _DRIVER_NO_DEPS )
+            set(_INITIAL_VALUE ON)
+        elseif( GDAL_ENABLE_PLUGINS_NO_DEPS AND _DRIVER_NO_DEPS )
+            set(_INITIAL_VALUE ON)
+        endif()
+        if( IS_OGR EQUAL -1) # raster
+            cmake_dependent_option(GDAL_ENABLE_FRMT_${_KEY}_PLUGIN "Set ON to build GDAL ${_KEY} driver as plugin"
+                                   ${_INITIAL_VALUE}
+                                   "GDAL_ENABLE_FRMT_${_KEY};${_COND}" OFF)
+            if( ${GDAL_ENABLE_FRMT_${_KEY}_PLUGIN} )
+                set(_DRIVER_PLUGIN_BUILD ON)
+            endif()
+        else()
+            cmake_dependent_option(OGR_ENABLE_${_KEY}_PLUGIN "Set ON to build OGR ${_KEY} driver as plugin"
+                                   ${_INITIAL_VALUE}
+                                   "OGR_ENABLE_${_KEY};${_COND}" OFF)
+            if( ${OGR_ENABLE_${_KEY}_PLUGIN} )
+                set(_DRIVER_PLUGIN_BUILD ON)
+            endif()
+        endif()
+    endif()
+
     # target configuration
     if (_DRIVER_PLUGIN_BUILD)
         # target become *.so *.dll or *.dylib
@@ -132,7 +157,6 @@ function(add_gdal_driver)
                 target_compile_definitions(gdal_frmts PRIVATE -D${_DEF})
             else () # vector
                 string(REPLACE "ogr_" "" _FORMAT ${_DRIVER_TARGET})
-                string(TOUPPER ${_FORMAT} _KEY)
                 target_compile_definitions(ogrsf_frmts PRIVATE -D${_KEY}_ENABLED)
             endif ()
         endif ()

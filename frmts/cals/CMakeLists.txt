@@ -1,4 +1,4 @@
-add_gdal_driver(TARGET gdal_CALS SOURCES calsdataset.cpp)
+add_gdal_driver(TARGET gdal_CALS SOURCES calsdataset.cpp PLUGIN_CAPABLE_IF "NOT GDAL_USE_LIBTIFF_INTERNAL" NO_DEPS)
 gdal_standard_includes(gdal_CALS)
 
 if (GDAL_USE_LIBTIFF_INTERNAL)

@@ -1,4 +1,4 @@
-add_gdal_driver(TARGET gdal_COASP SOURCES coasp_dataset.cpp)
+add_gdal_driver(TARGET gdal_COASP SOURCES coasp_dataset.cpp PLUGIN_CAPABLE NO_DEPS)
 gdal_standard_includes(gdal_COASP)
 if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
   # These files has CPL_CVSID("$id$") which break ODR and UNITY_BUILD

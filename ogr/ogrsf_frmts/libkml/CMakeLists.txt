@@ -14,6 +14,7 @@ add_gdal_driver(
           ogrlibkmlgeometry.cpp
           ogrlibkmlstyle.cpp
           ogrlibkmldatasource.cpp
-          ogrlibkmlfield.cpp)
+          ogrlibkmlfield.cpp
+          PLUGIN_CAPABLE)
 gdal_standard_includes(ogr_LIBKML)
 gdal_target_link_libraries(TARGET ogr_LIBKML LIBRARIES LIBKML::LibKML LIBKML::DOM LIBKML::ENGINE)

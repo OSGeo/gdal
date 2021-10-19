@@ -1,4 +1,4 @@
-add_gdal_driver(TARGET gdal_DODS SOURCES libdap_headers.h dodsdataset2.cpp)
+add_gdal_driver(TARGET gdal_DODS SOURCES libdap_headers.h dodsdataset2.cpp PLUGIN_CAPABLE)
 gdal_standard_includes(gdal_DODS)
 target_include_directories(gdal_DODS PRIVATE ${DAP_INCLUDE_DIRS})
 gdal_target_link_libraries(TARGET gdal_DODS LIBRARIES DAP::DAP DAP::CLIENT)

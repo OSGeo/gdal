@@ -7,7 +7,8 @@ add_gdal_driver(
           ogrwalklayer.cpp
           ogrwalkselectlayer.cpp
           ogrwalktablelayer.cpp
-          ogrwalktool.cpp)
+          ogrwalktool.cpp
+  BUILTIN) # because of PGEO dependency
 gdal_standard_includes(ogr_WALK)
 target_include_directories(ogr_WALK PRIVATE $<TARGET_PROPERTY:ogr_PGeo,SOURCE_DIR>
                                             $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)

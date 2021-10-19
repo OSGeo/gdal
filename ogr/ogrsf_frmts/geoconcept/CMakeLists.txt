@@ -9,7 +9,9 @@ add_gdal_driver(
           ogrgeoconceptdriver.h
           ogrgeoconceptlayer.h
           geoconcept.c
-          geoconcept_syscoord.c)
+          geoconcept_syscoord.c
+          PLUGIN_CAPABLE
+          NO_DEPS)
 gdal_standard_includes(ogr_Geoconcept)
 if (MSVC)
   target_compile_options(ogr_Geoconcept PRIVATE /wd4706)

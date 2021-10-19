@@ -11,7 +11,8 @@ add_gdal_driver(
           ddfrecordindex.cpp
           s57featuredefns.cpp
           s57filecollector.cpp
-          s57writer.cpp)
+          s57writer.cpp
+  BUILTIN)
 target_include_directories(ogr_S57 PRIVATE $<TARGET_PROPERTY:gdal_iso8211,SOURCE_DIR>)
 gdal_standard_includes(ogr_S57)
 add_executable(s57dump EXCLUDE_FROM_ALL s57dump.cpp)

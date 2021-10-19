@@ -14,7 +14,8 @@ add_gdal_driver(
           pdfreadvectors.cpp
           ogrpdflayer.cpp
           pdfwritabledataset.cpp
-          pdfcreatefromcomposition.cpp)
+          pdfcreatefromcomposition.cpp
+          PLUGIN_CAPABLE)
 gdal_standard_includes(gdal_PDF)
 target_include_directories(gdal_PDF PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/vrt ${GDAL_RASTER_FORMAT_SOURCE_DIR}/mem
                                             ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/mem)

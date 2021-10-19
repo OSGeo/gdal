@@ -24,5 +24,7 @@ add_gdal_driver(
           tigerfilebase.cpp
           tigerpip.cpp
           tigerpolygoneconomic.cpp
-          tigerzipplus4.cpp)
+          tigerzipplus4.cpp
+          PLUGIN_CAPABLE
+          NO_DEPS)
 gdal_standard_includes(ogr_Tiger)

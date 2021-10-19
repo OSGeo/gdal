@@ -6,7 +6,9 @@ add_gdal_driver(
           ogrodsdriver.cpp
           ods_formula_parser.hpp
           ods_formula.h
-          ogr_ods.h)
+          ogr_ods.h
+          PLUGIN_CAPABLE
+          NO_DEPS)
 gdal_standard_includes(ogr_ODS)
 target_include_directories(ogr_ODS PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
                                            $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR>)

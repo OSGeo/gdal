@@ -5,7 +5,20 @@ option(ENABLE_GNM "Build GNM module" ON)
 option(ENABLE_PAM "Set ON to enable pam" ON)
 option(BUILD_APPS "Build command utilities" ON)
 option(BUILD_DOCS "Build documents" ON)
-option(GDAL_ENABLE_PLUGIN "Set ON prefer to build most drivers as plugin" OFF)
+
+# This option is to build drivers as plugins, for drivers that have external
+# dependencies, that are not parf of GDAL core dependencies
+# Examples are netCDF, HDF4, Oracle, PDF, etc.
+# This global setting can be overriden at the driver level with
+# GDAL_ENABLE_FRMT_{foo}_PLUGIN or OGR_ENABLE_{foo}_PLUGIN variables.
+option(GDAL_ENABLE_PLUGINS "Set ON to build drivers that have non-core external dependencies as plugin" OFF)
+
+# This option is to build drivers as plugins, for drivers that have no external
+# dependencies or dependencies that are part of GDAL core dependencies
+# Examples are BMP, FlatGeobuf, etc.
+option(GDAL_ENABLE_PLUGINS_NO_DEPS "Set ON to build drivers that have no non-core external dependencies as plugin" OFF)
+mark_as_advanced(GDAL_ENABLE_PLUGINS_NO_DEPS)
+
 option(GDAL_ENABLE_QHULL "use qhull" ON)
 option(ENABLE_IPO "Enable Inter-Procedural Optimization if possible" OFF)
 option(GDAL_ENABLE_MACOSX_FRAMEWORK "Enable Framework on Mac OS X" OFF)

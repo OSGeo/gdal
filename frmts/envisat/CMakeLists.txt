@@ -8,7 +8,9 @@ add_gdal_driver(
           records.c
           adsrange.cpp
           unwrapgcps.cpp
-          envisatdataset.cpp)
+          envisatdataset.cpp
+          PLUGIN_CAPABLE
+          NO_DEPS)
 gdal_standard_includes(gdal_Envisat)
 target_include_directories(gdal_Envisat PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/raw)
 

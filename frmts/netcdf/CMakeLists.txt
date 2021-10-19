@@ -1,5 +1,4 @@
 # There are netCDF, GMT drivers. When PLUGIN specifying NETCDF_PLUGIN then automatically register GMT from netCDF.
-option(GDAL_ENABLE_NETCDF_PLUGIN "Enable to build NetCDF plugin" ON)
 set(_SOURCES
     netcdfdataset.cpp
     netcdflayer.cpp
@@ -11,16 +10,9 @@ set(_SOURCES
     netcdfmultidim.cpp
     netcdfvirtual.cpp
     netcdf_sentinel3_sral_mwr.cpp)
-if (GDAL_ENABLE_NETCDF_PLUGIN)
-  add_gdal_driver(
-    TARGET gdal_netCDF
-    SOURCES ${_SOURCES}
-    PLUGIN)
-else ()
-  add_gdal_driver(TARGET gdal_netCDF SOURCES ${_SOURCES})
-endif ()
+add_gdal_driver(TARGET gdal_netCDF SOURCES ${_SOURCES} PLUGIN_CAPABLE)
 unset(_SOURCES)
-if (GDAL_ENABLE_PLUGIN OR GDAL_ENABLE_NETCDF_PLUGIN)
+if (GDAL_ENABLE_FRMT_NETCDF)
   target_compile_definitions(gdal_netCDF PRIVATE -DNETCDF_PLUGIN)
 endif ()
 

@@ -10,6 +10,8 @@ add_gdal_driver(
           wcsdataset201.cpp
           wcsrasterband.cpp
           wcsrasterband.h
-          wcsutils.cpp)
+          wcsutils.cpp
+          PLUGIN_CAPABLE
+          NO_DEPS)
 gdal_standard_includes(gdal_WCS)
 target_include_directories(gdal_WCS PRIVATE ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/gml)

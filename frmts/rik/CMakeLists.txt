@@ -1,4 +1,4 @@
-add_gdal_driver(TARGET gdal_RIK SOURCES rikdataset.cpp)
+add_gdal_driver(TARGET gdal_RIK SOURCES rikdataset.cpp PLUGIN_CAPABLE_IF "NOT GDAL_USE_LIBZ_INTERNAL" NO_DEPS)
 gdal_standard_includes(gdal_RIK)
 
 if (GDAL_USE_LIBZ_INTERNAL)

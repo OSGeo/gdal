@@ -7,5 +7,7 @@ add_gdal_driver(
           ogr_gtm.h
           ogrgtmdatasource.cpp
           ogrgtmdriver.cpp
-          ogrgtmlayer.cpp)
+          ogrgtmlayer.cpp
+          PLUGIN_CAPABLE
+          NO_DEPS)
 gdal_standard_includes(ogr_GTM)
