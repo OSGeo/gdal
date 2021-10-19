@@ -574,14 +574,14 @@ def test_ogr_fgdb_10(fgdb_drv):
 
     srs_approx_4326 = srs_exact_4326.Clone()
     srs_approx_4326.MorphToESRI()
-    srs_approx_4326.MorphFromESRI()
+    srs_approx_4326.ImportFromWkt(srs_approx_4326.ExportToWkt())
 
     srs_exact_2193 = osr.SpatialReference()
     srs_exact_2193.ImportFromEPSG(2193)
 
     srs_approx_2193 = srs_exact_2193.Clone()
     srs_approx_2193.MorphToESRI()
-    srs_approx_2193.MorphFromESRI()
+    srs_approx_2193.ImportFromWkt(srs_approx_2193.ExportToWkt())
 
     srs_not_in_db = osr.SpatialReference("""PROJCS["foo",
     GEOGCS["foo",
@@ -601,7 +601,7 @@ def test_ogr_fgdb_10(fgdb_drv):
     srs_exact_4230.ImportFromEPSG(4230)
     srs_approx_4230 = srs_exact_4230.Clone()
     srs_approx_4230.MorphToESRI()
-    srs_approx_4230.MorphFromESRI()
+    srs_approx_4230.ImportFromWkt(srs_approx_4230.ExportToWkt())
 
     srs_approx_intl = osr.SpatialReference()
     srs_approx_intl.ImportFromProj4('+proj=longlat +ellps=intl +no_defs')

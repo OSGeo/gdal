@@ -1992,40 +1992,46 @@ static CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS, char** papszO
             poSRSClone->exportToWkt(&wkt);
             if (wkt)
             {
-                EnumSpatialReferenceInfo oEnumESRI_SRS;
                 std::vector<int> oaiCandidateSRS;
                 nSRID = 0;
 
-                /* Enumerate SRS from ESRI DB and find a match */
-                while( true )
+                // Ask PROJ which known SRS matches poSRS
+                int nEntries = 0;
+                int* panMatchConfidence = nullptr;
+                auto pahSRS = poSRS->FindMatches(nullptr, &nEntries,
+                                                 &panMatchConfidence);
+                for( int i = 0; i < nEntries; ++i )
                 {
-                    if ( poSRS->IsProjected() )
+                    if( panMatchConfidence[i] >= 70 )
                     {
-                        if( !oEnumESRI_SRS.NextProjectedSpatialReference(oESRI_SRS) )
-                            break;
-                    }
-                    else
-                    {
-                        if( !oEnumESRI_SRS.NextGeographicSpatialReference(oESRI_SRS) )
-                            break;
-                    }
-
-                    std::string osESRI_WKT = WStringToString(oESRI_SRS.srtext);
-                    const char* pszESRI_WKT = osESRI_WKT.c_str();
-                    if( strcmp(pszESRI_WKT, wkt) == 0 )
-                    {
-                        /* Exact match found (not sure this case happens) */
-                        nSRID = oESRI_SRS.auth_srid;
-                        break;
-                    }
-                    OGRSpatialReference oSRS_FromESRI;
-                    if( oSRS_FromESRI.importFromWkt(pszESRI_WKT) == OGRERR_NONE &&
-                        poSRSClone->IsSame(&oSRS_FromESRI) )
-                    {
-                        /* Potential match found */
-                        oaiCandidateSRS.push_back(oESRI_SRS.auth_srid);
+                        // Look for candidates in the EPSG/ESRI namespace,
+                        // and find the correspond ESRI SRS from the code
+                        const char* pszAuthName = OSRGetAuthorityName(pahSRS[i], nullptr);
+                        const char* pszAuthCode = OSRGetAuthorityCode(pahSRS[i], nullptr);
+                        if( pszAuthName &&
+                            (EQUAL(pszAuthName, "EPSG") || EQUAL(pszAuthName, "ESRI")) &&
+                            pszAuthCode &&
+                            SpatialReferences::FindSpatialReferenceBySRID(atoi(pszAuthCode), oESRI_SRS) )
+                        {
+                            const std::string osESRI_WKT = WStringToString(oESRI_SRS.srtext);
+                            OGRSpatialReference oSRS_FromESRI;
+                            oSRS_FromESRI.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                            if( oSRS_FromESRI.importFromWkt(osESRI_WKT.c_str()) == OGRERR_NONE &&
+                                poSRSClone->IsSame(&oSRS_FromESRI) )
+                            {
+                                if( panMatchConfidence[i] == 100 )
+                                {
+                                    /* Exact match found (not sure this case happens) */
+                                    nSRID = oESRI_SRS.auth_srid;
+                                    break;
+                                }
+                                oaiCandidateSRS.push_back(oESRI_SRS.auth_srid);
+                            }
+                        }
                     }
                 }
+                OSRFreeSRSArray(pahSRS);
+                CPLFree(panMatchConfidence);
 
                 if( nSRID != 0 )
                 {
