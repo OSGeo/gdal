@@ -837,34 +837,36 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
         GTIFFBuildOverviewMetadata( pszResampling, poBaseDS, osMetadata );
     }
 
-    const bool bStandardColorInterp =
-        poBaseDS != nullptr &&
-        GTIFFIsStandardColorInterpretation(GDALDataset::ToHandle(poBaseDS),
-                                           static_cast<uint16_t>(nPhotometric),
-                                           nullptr);
-    if( poBaseDS != nullptr && !bStandardColorInterp )
+    if( poBaseDS != nullptr && poBaseDS->GetRasterCount() == nBands )
     {
-        if( osMetadata.size() >= strlen("</GDALMetadata>") &&
-            osMetadata.substr(osMetadata.size() - strlen("</GDALMetadata>")) == "</GDALMetadata>" )
+        const bool bStandardColorInterp =
+            GTIFFIsStandardColorInterpretation(GDALDataset::ToHandle(poBaseDS),
+                                               static_cast<uint16_t>(nPhotometric),
+                                               nullptr);
+        if( !bStandardColorInterp )
         {
-            osMetadata.resize(osMetadata.size() - strlen("</GDALMetadata>"));
+            if( osMetadata.size() >= strlen("</GDALMetadata>") &&
+                osMetadata.substr(osMetadata.size() - strlen("</GDALMetadata>")) == "</GDALMetadata>" )
+            {
+                osMetadata.resize(osMetadata.size() - strlen("</GDALMetadata>"));
+            }
+            else
+            {
+                CPLAssert(osMetadata.empty());
+                osMetadata = "<GDALMetadata>";
+            }
+            for( int i = 0; i < poBaseDS->GetRasterCount(); ++i )
+            {
+                const GDALColorInterp eInterp =
+                    poBaseDS->GetRasterBand(i + 1)->GetColorInterpretation();
+                osMetadata += CPLSPrintf(
+                    "<Item sample=\"%d\" name=\"COLORINTERP\" role=\"colorinterp\">",
+                    i);
+                osMetadata += GDALGetColorInterpretationName(eInterp);
+                osMetadata += "</Item>";
+            }
+            osMetadata += "</GDALMetadata>";
         }
-        else
-        {
-            CPLAssert(osMetadata.empty());
-            osMetadata = "<GDALMetadata>";
-        }
-        for( int i = 0; i < poBaseDS->GetRasterCount(); ++i )
-        {
-            const GDALColorInterp eInterp =
-                poBaseDS->GetRasterBand(i + 1)->GetColorInterpretation();
-            osMetadata += CPLSPrintf(
-                "<Item sample=\"%d\" name=\"COLORINTERP\" role=\"colorinterp\">",
-                i);
-            osMetadata += GDALGetColorInterpretationName(eInterp);
-            osMetadata += "</Item>";
-        }
-        osMetadata += "</GDALMetadata>";
     }
 
 /* -------------------------------------------------------------------- */

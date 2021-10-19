@@ -220,7 +220,8 @@ def test_cog_creation_options():
             assert filesize_lerc_zstd_level_1 > filesize_lerc_zstd
 
     src_ds = None
-    gdal.GetDriverByName('GTiff').Delete(filename)
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('GTiff').Delete(filename)
 
 
 ###############################################################################
@@ -813,6 +814,7 @@ def test_cog_sparse_mask():
         src_ds.GetRasterBand(i+1).WriteRaster(256, 256, 128, 128, '\x00' * 128 * 128)
     src_ds.BuildOverviews('NEAREST', [2])
     gdal.GetDriverByName('COG').CreateCopy(filename, src_ds, options = ['BLOCKSIZE=128', 'SPARSE_OK=YES', 'COMPRESS=JPEG', 'RESAMPLING=NEAREST'])
+    assert gdal.GetLastErrorMsg() == ''
     _check_cog(filename)
     with gdaltest.config_option('GTIFF_HAS_OPTIMIZED_READ_MULTI_RANGE', 'YES'):
         ds = gdal.Open(filename)
