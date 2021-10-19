@@ -5,8 +5,8 @@
 DefineFindPackage2
 ------------------
 
-Define `find_pacakge2()` which has similar functionality as `find_package`
-and `define_find_pacakge2()` that declare package properties to find.
+Define `find_package2()` which has similar functionality as `find_package`
+and `define_find_package2()` that declare package properties to find.
 
 `find_package2(<pkgname>)` returns `<Upper-case pkgname>_FOUND`,
 `<Upper-case pkgname>_LIBRARIES` and `<Upper-case pkgname>_INCLUDE_DIRS'
