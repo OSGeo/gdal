@@ -201,6 +201,13 @@ Known Issues
    operation is not supported by the ESRI SDK.
 -  Reading data compressed in CDF format (Compressed Data Format)
    requires ESRI SDK 1.4 or later.
+-  Some applications create FileGeodatabases with non-spatial tables which are
+   not present in the GDB_Items metadata table. These tables cannot be opened
+   by the ESRI SDK, so GDAL will automatically fallback to the OpenFileGDB
+   driver to read these tables. Accordingly they will be opened with the
+   limitations of the OpenFileGDB driver (for instance, they will be
+   read only).
+
 
 Other limitations
 -----------------
