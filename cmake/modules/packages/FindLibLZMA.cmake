@@ -26,9 +26,9 @@ This module will set the following variables in your project:
   LIBLZMA_FOUND             - True if liblzma is found.
   LIBLZMA_INCLUDE_DIRS      - Directory where liblzma headers are located.
   LIBLZMA_LIBRARIES         - Lzma libraries to link against.
-  LIBLZMA_HAS_AUTO_DECODER  - True if lzma_auto_decoder() is found (required).
-  LIBLZMA_HAS_EASY_ENCODER  - True if lzma_easy_encoder() is found (required).
-  LIBLZMA_HAS_LZMA_PRESET   - True if lzma_lzma_preset() is found (required).
+  #LIBLZMA_HAS_AUTO_DECODER  - True if lzma_auto_decoder() is found (required).
+  #LIBLZMA_HAS_EASY_ENCODER  - True if lzma_easy_encoder() is found (required).
+  #LIBLZMA_HAS_LZMA_PRESET   - True if lzma_lzma_preset() is found (required).
   LIBLZMA_VERSION_MAJOR     - The major version of lzma
   LIBLZMA_VERSION_MINOR     - The minor version of lzma
   LIBLZMA_VERSION_PATCH     - The patch version of lzma
@@ -56,18 +56,18 @@ if (LIBLZMA_LIBRARY)
    include(CheckLibraryExists)
    set(CMAKE_REQUIRED_QUIET_SAVE ${CMAKE_REQUIRED_QUIET})
    set(CMAKE_REQUIRED_QUIET ${LibLZMA_FIND_QUIETLY})
-   CHECK_LIBRARY_EXISTS(${LIBLZMA_LIBRARY} lzma_auto_decoder "" LIBLZMA_HAS_AUTO_DECODER)
-   CHECK_LIBRARY_EXISTS(${LIBLZMA_LIBRARY} lzma_easy_encoder "" LIBLZMA_HAS_EASY_ENCODER)
-   CHECK_LIBRARY_EXISTS(${LIBLZMA_LIBRARY} lzma_lzma_preset "" LIBLZMA_HAS_LZMA_PRESET)
+   #CHECK_LIBRARY_EXISTS(${LIBLZMA_LIBRARY} lzma_auto_decoder "" LIBLZMA_HAS_AUTO_DECODER)
+   #CHECK_LIBRARY_EXISTS(${LIBLZMA_LIBRARY} lzma_easy_encoder "" LIBLZMA_HAS_EASY_ENCODER)
+   #CHECK_LIBRARY_EXISTS(${LIBLZMA_LIBRARY} lzma_lzma_preset "" LIBLZMA_HAS_LZMA_PRESET)
    set(CMAKE_REQUIRED_QUIET ${CMAKE_REQUIRED_QUIET_SAVE})
 endif ()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(LibLZMA  REQUIRED_VARS  LIBLZMA_LIBRARY
                                                           LIBLZMA_INCLUDE_DIR
-                                                          LIBLZMA_HAS_AUTO_DECODER
-                                                          LIBLZMA_HAS_EASY_ENCODER
-                                                          LIBLZMA_HAS_LZMA_PRESET
+                                                          #LIBLZMA_HAS_AUTO_DECODER
+                                                          #LIBLZMA_HAS_EASY_ENCODER
+                                                          #LIBLZMA_HAS_LZMA_PRESET
                                            VERSION_VAR    LIBLZMA_VERSION_STRING
                                  )
 mark_as_advanced( LIBLZMA_INCLUDE_DIR LIBLZMA_LIBRARY )
