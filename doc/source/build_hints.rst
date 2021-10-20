@@ -327,7 +327,7 @@ that are not part of GDAL core dependencies (e.g. are netCDF, HDF4, Oracle, PDF,
     the use of a different option from GDAL_ENABLE_PLUGINS.
 
 
-Building on Windows with Conda dependencies and Visual Studio 2017
+Building on Windows with Conda dependencies and Visual Studio
 --------------------------------------------------------------------------------
 
 It is less appropriate for Debug builds of GDAL, than other methods, such as using vcpkg.
@@ -353,11 +353,18 @@ Start a Conda enabled console and assuming there is a c:\\dev directory
     conda create --name gdal
     conda activate gdal
     conda install --yes --quiet curl libiconv icu git python=3.7 swig numpy pytest zlib clcache
+    conda install --yes --quiet -c conda-forge compilers
     conda install --yes --quiet -c conda-forge \
-        proj geos hdf4 hdf5 \
+        cmake proj geos hdf4 hdf5 \
         libnetcdf openjpeg poppler libtiff libpng xerces-c expat libxml2 kealib json-c \
         cfitsio freexl geotiff jpeg libpq libspatialite libwebp-base pcre postgresql \
         sqlite tiledb zstd charls cryptopp cgal jasper librttopo libkml openssl xz
+
+.. note::
+
+    The ``compilers`` package will install ``vs2017_win-64`` (at time of writing)
+    to set the appropriate environment for cmake to pick up. It is also possible
+    to use the ``vs2019_win-64`` package if Visual Studio 2019 is to be used.
 
 Checkout GDAL sources
 +++++++++++++++++++++
@@ -376,7 +383,6 @@ From a Conda enabled console
 
     conda activate gdal
     cd c:\dev\gdal
-    call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat"
     cmake -S . -B build -DCMAKE_PREFIX_PATH:FILEPATH="%CONDA_PREFIX%" \
                         -DCMAKE_C_COMPILER_LAUNCHER=clcache
                         -DCMAKE_CXX_COMPILER_LAUNCHER=clcache
