@@ -59,7 +59,7 @@ if (NOT GDAL_USE_LIBTIFF_INTERNAL)
   gdal_target_link_libraries(TARGET gdal_GTIFF LIBRARIES TIFF::TIFF)
 endif ()
 
-if (GDAL_ENABLE_FRMT_JPEG)
+if (GDAL_ENABLE_FRMT_JPEG AND GDAL_USE_JPEG)
   target_compile_definitions(gdal_GTIFF PRIVATE -DHAVE_LIBJPEG)
   gdal_target_link_libraries(TARGET gdal_GTIFF LIBRARIES JPEG::JPEG)
 endif ()
