@@ -109,6 +109,8 @@ else()
     set(GDAL_USE_LIBZ_INTERNAL OFF CACHE BOOL "Use internal zlib copy (if set to ON, has precedence over GDAL_USE_ZLIB)")
 endif()
 
+gdal_check_package(Deflate "Enable libdeflate compression library (complement to ZLib)" CAN_DISABLE)
+
 find_package(OpenSSL COMPONENTS Crypto SSL)
 if(OPENSSL_FOUND)
     set(HAVE_OPENSSL ON CACHE INTERNAL "")

@@ -77,6 +77,12 @@ if (NOT GDAL_USE_LIBJPEG_INTERNAL)
   gdal_add_private_link_libraries(JPEG::JPEG)
 endif ()
 
+if (GDAL_USE_DEFLATE)
+  target_compile_definitions(libtiff PRIVATE -DLIBDEFLATE_SUPPORT)
+  target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:Deflate::Deflate,INCLUDE_DIRECTORIES>)
+  gdal_add_private_link_libraries(Deflate::Deflate)
+endif ()
+
 if (GDAL_JPEG12_SUPPORTED)
   target_compile_definitions(libtiff PRIVATE -DJPEG_DUAL_MODE_8_12)
   target_include_directories(libtiff PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
