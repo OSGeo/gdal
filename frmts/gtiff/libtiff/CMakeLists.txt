@@ -68,6 +68,11 @@ if (GDAL_USE_LIBJPEG_INTERNAL)
   target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:libjpeg,SOURCE_DIR>)
 endif ()
 
+if (GDAL_USE_LIBLERC_INTERNAL)
+  target_compile_definitions(libtiff PRIVATE -DLERC_SUPPORT)
+  target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:lerc,SOURCE_DIR>)
+endif ()
+
 # Now external libraries
 if (NOT GDAL_USE_LIBZ_INTERNAL)
   gdal_add_private_link_libraries(ZLIB::ZLIB)
@@ -102,11 +107,6 @@ endif ()
 if (GDAL_USE_WEBP)
   target_compile_definitions(libtiff PRIVATE -DWEBP_SUPPORT)
   gdal_add_private_link_libraries(WEBP::WebP)
-endif ()
-
-if (GDAL_USE_LIBLERC_INTERNAL)
-  target_compile_definitions(libtiff PRIVATE -DLERC_SUPPORT)
-  target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:lerc,SOURCE_DIR>)
 endif ()
 
 if (RENAME_INTERNAL_LIBTIFF_SYMBOLS)
