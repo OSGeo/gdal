@@ -19,7 +19,7 @@ add_gdal_driver(
           ogrili2datasource.cpp
           imdreader.h
           imdreader.cpp
-  BUILTIN)
+  BUILTIN) # FIXME: could be PLUGIN_CAPABLE NO_DEPS if there was a global GDALRegisterMe() entry poit
 gdal_standard_includes(ogr_ILI)
 
 if (GDAL_USE_XERCESC)

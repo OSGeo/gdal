@@ -1,2 +1,2 @@
-add_gdal_driver(TARGET gdal_PALSARJaxa SOURCES jaxapalsardataset.cpp PLUGIN_CAPABLE NO_DEPS)
+add_gdal_driver(TARGET gdal_PALSARJaxa DEF FRMT_jaxapalsar SOURCES jaxapalsardataset.cpp PLUGIN_CAPABLE NO_DEPS)
 gdal_standard_includes(gdal_PALSARJaxa)

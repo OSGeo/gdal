@@ -1,5 +1,5 @@
 add_gdal_driver(TARGET gdal_Rasterlite SOURCES rasterlitedataset.h rasterlitecreatecopy.cpp rasterlitedataset.cpp
-                                               rasterliteoverviews.cpp)
+                                               rasterliteoverviews.cpp PLUGIN_CAPABLE NO_DEPS)
 gdal_standard_includes(gdal_Rasterlite)
 if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
   # These files has CPL_CVSID("$id$") which break ODR and UNITY_BUILD

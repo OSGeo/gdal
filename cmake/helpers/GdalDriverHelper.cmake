@@ -110,17 +110,30 @@ function(add_gdal_driver)
             set(_INITIAL_VALUE ON)
         endif()
         if( IS_OGR EQUAL -1) # raster
-            cmake_dependent_option(GDAL_ENABLE_FRMT_${_KEY}_PLUGIN "Set ON to build GDAL ${_KEY} driver as plugin"
+            if (_DRIVER_DEF)
+                set(_KEY ${_DRIVER_DEF})
+                string(REPLACE "FRMT_" "" _KEY ${_KEY})
+                string(TOUPPER ${_KEY} _KEY)
+            endif ()
+            set(_enable_plugin_var GDAL_ENABLE_FRMT_${_KEY})
+            if( NOT DEFINED ${_enable_plugin_var} )
+                message(FATAL_ERROR "Option ${_enable_plugin_var} does not exist")
+            endif()
+            cmake_dependent_option(${_enable_plugin_var}_PLUGIN "Set ON to build GDAL ${_KEY} driver as plugin"
                                    ${_INITIAL_VALUE}
-                                   "GDAL_ENABLE_FRMT_${_KEY};${_COND}" OFF)
-            if( ${GDAL_ENABLE_FRMT_${_KEY}_PLUGIN} )
+                                   "${_enable_plugin_var};${_COND}" OFF)
+            if( ${_enable_plugin_var}_PLUGIN )
                 set(_DRIVER_PLUGIN_BUILD ON)
             endif()
         else()
-            cmake_dependent_option(OGR_ENABLE_${_KEY}_PLUGIN "Set ON to build OGR ${_KEY} driver as plugin"
+            set(_enable_plugin_var OGR_ENABLE_${_KEY})
+            if( NOT DEFINED ${_enable_plugin_var} )
+                message(FATAL_ERROR "Option ${_enable_plugin_var} does not exist")
+            endif()
+            cmake_dependent_option(${_enable_plugin_var}_PLUGIN "Set ON to build OGR ${_KEY} driver as plugin"
                                    ${_INITIAL_VALUE}
-                                   "OGR_ENABLE_${_KEY};${_COND}" OFF)
-            if( ${OGR_ENABLE_${_KEY}_PLUGIN} )
+                                   "${_enable_plugin_var};${_COND}" OFF)
+            if( ${_enable_plugin_var}_PLUGIN )
                 set(_DRIVER_PLUGIN_BUILD ON)
             endif()
         endif()
