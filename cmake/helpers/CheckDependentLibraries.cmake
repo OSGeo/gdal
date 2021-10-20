@@ -291,6 +291,7 @@ gdal_check_package(OpenCL "Enable OpenCL (may be used for warping)" DISABLED_BY_
 gdal_check_package(PostgreSQL "" CAN_DISABLE)
 gdal_check_package(SOSI  "enable ogr_SOSI driver")
 gdal_check_package(LibLZMA "LZMA compression" CAN_DISABLE)
+gdal_check_package(LZ4 "LZ4 compression" CAN_DISABLE)
 gdal_check_package(CharLS "enable gdal_JPEGLS jpeg loss-less driver")
 gdal_check_package(OpenMP "")
 gdal_check_package(Crnlib "enable gdal_DDS driver")
