@@ -460,7 +460,7 @@ private:
 
     void        WriteGeoTIFFInfo();
     bool        SetDirectory();
-    void        ReloadDirectory();
+    void        ReloadDirectory(bool bReopenHandle = false);
 
     int         GetJPEGOverviewCount();
 
@@ -9799,6 +9799,39 @@ void GTiffDataset::FlushCacheInternal( bool bAtClosing,
 void GTiffDataset::FlushDirectory()
 
 {
+    const auto ReloadAllOtherDirectories = [this]()
+    {
+        const auto poBaseDS = m_poBaseDS ? m_poBaseDS : this;
+        if( poBaseDS->m_papoOverviewDS )
+        {
+            for( int i = 0; i < poBaseDS->m_nOverviewCount; ++i )
+            {
+                if( poBaseDS->m_papoOverviewDS[i]->m_bCrystalized &&
+                    poBaseDS->m_papoOverviewDS[i] != this )
+                {
+                    poBaseDS->m_papoOverviewDS[i]->ReloadDirectory(true);
+                }
+
+                if( poBaseDS->m_papoOverviewDS[i]->m_poMaskDS &&
+                    poBaseDS->m_papoOverviewDS[i]->m_poMaskDS != this &&
+                    poBaseDS->m_papoOverviewDS[i]->m_poMaskDS->m_bCrystalized )
+                {
+                    poBaseDS->m_papoOverviewDS[i]->m_poMaskDS->ReloadDirectory(true);
+                }
+            }
+        }
+        if( poBaseDS->m_poMaskDS &&
+            poBaseDS->m_poMaskDS != this &&
+            poBaseDS->m_poMaskDS->m_bCrystalized )
+        {
+            poBaseDS->m_poMaskDS->ReloadDirectory(true);
+        }
+        if( poBaseDS->m_bCrystalized && poBaseDS != this )
+        {
+            poBaseDS->ReloadDirectory(true);
+        }
+    };
+
     if( GetAccess() == GA_Update )
     {
         if( m_bMetadataChanged )
@@ -9863,6 +9896,8 @@ void GTiffDataset::FlushDirectory()
 
                 TIFFSetSubDirectory( m_hTIFF, m_nDirOffset );
 
+                ReloadAllOtherDirectories();
+
                 if( m_bLayoutIFDSBeforeData &&
                     m_bBlockOrderRowMajor &&
                     m_bLeaderSizeAsUInt4 &&
@@ -9877,6 +9912,7 @@ void GTiffDataset::FlushDirectory()
                     m_bWriteKnownIncompatibleEdition = true;
                 }
             }
+
             m_bNeedsRewrite = false;
         }
     }
@@ -9897,6 +9933,7 @@ void GTiffDataset::FlushDirectory()
         if( m_nDirOffset != TIFFCurrentDirOffset( m_hTIFF ) )
         {
             m_nDirOffset = nNewDirOffset;
+            ReloadAllOtherDirectories();
             CPLDebug( "GTiff",
                       "directory moved during flush in FlushDirectory()" );
         }
@@ -10286,9 +10323,33 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS,
 /*                           ReloadDirectory()                          */
 /************************************************************************/
 
-void GTiffDataset::ReloadDirectory()
+void GTiffDataset::ReloadDirectory(bool bReopenHandle)
 {
-    TIFFSetSubDirectory( m_hTIFF, 0 );
+    bool bNeedSetInvalidDir = true;
+    if( bReopenHandle )
+    {
+        // When issuing a TIFFRewriteDirectory() or when a TIFFFlush() has
+        // caused a move of the directory, we would need to invalidate the
+        // tif_lastdiroff member, but it is not possible to do so without
+        // re-opening the TIFF handle.
+        auto hTIFFNew = VSI_TIFFReOpen(m_hTIFF);
+        if( hTIFFNew != nullptr )
+        {
+            m_hTIFF = hTIFFNew;
+            bNeedSetInvalidDir = false; // we could do it, but not needed
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot re-open TIFF handle for file %s. "
+                     "Directory chaining may be corrupted !",
+                     m_pszFilename);
+        }
+    }
+    if( bNeedSetInvalidDir )
+    {
+        TIFFSetSubDirectory( m_hTIFF, 0 );
+    }
     CPL_IGNORE_RET_VAL( SetDirectory() );
 }
 

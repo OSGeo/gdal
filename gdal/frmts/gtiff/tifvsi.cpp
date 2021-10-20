@@ -61,6 +61,7 @@ extern TIFF CPL_DLL * XTIFFClientOpen( const char* name, const char* mode,
                                        TIFFSeekProc, TIFFCloseProc,
                                        TIFFSizeProc,
                                        TIFFMapFileProc, TIFFUnmapFileProc );
+extern void CPL_DLL XTIFFClose(TIFF *tif);
 CPL_C_END
 
 constexpr int BUFFER_SIZE = 65536;
@@ -81,6 +82,8 @@ struct GDALTiffHandleShared
 
 struct GDALTiffHandle
 {
+    bool bFree;
+
     GDALTiffHandle* psParent; // nullptr for the parent itself
     GDALTiffHandleShared* psShared;
 
@@ -223,6 +226,7 @@ _tiffWriteProc( thandle_t th, tdata_t buf, tsize_t size )
     {
         TIFFErrorExt( th, "_tiffWriteProc", "%s", VSIStrerror( errno ) );
     }
+
     if( psGTH->psShared->bAtEndOfFile )
     {
         psGTH->psShared->nFileLength += nRet;
@@ -297,7 +301,8 @@ _tiffCloseProc( thandle_t th )
     GDALTiffHandle* psGTH = reinterpret_cast<GDALTiffHandle*>( th );
     SetActiveGTH(psGTH);
     GTHFlushBuffer(th);
-    FreeGTH(psGTH);
+    if( psGTH->bFree )
+        FreeGTH(psGTH);
     return 0;
 }
 
@@ -430,7 +435,7 @@ static void InitializeWriteBuffer(GDALTiffHandle* psGTH, const char* pszMode)
             CPLTestBool(CPLGetConfigOption("GTIFF_USE_MMAP", "NO")) )
         {
             psGTH->nDataLength = 0;
-            psGTH->pBase = 
+            psGTH->pBase =
                 VSIGetMemFileBuffer(psGTH->psShared->pszName, &psGTH->nDataLength, FALSE);
         }
         bAllocBuffer = false;
@@ -469,6 +474,7 @@ TIFF* VSI_TIFFOpen( const char* name, const char* mode,
 
     GDALTiffHandle* psGTH = static_cast<GDALTiffHandle *>(
         CPLCalloc(1, sizeof(GDALTiffHandle)) );
+    psGTH->bFree = true;
     psGTH->psParent = nullptr;
     psGTH->psShared = static_cast<GDALTiffHandleShared *>(
         CPLCalloc(1, sizeof(GDALTiffHandleShared)) );
@@ -491,16 +497,51 @@ TIFF* VSI_TIFFOpenChild( TIFF* parent )
 
     GDALTiffHandle* psGTH = static_cast<GDALTiffHandle *>(
         CPLCalloc(1, sizeof(GDALTiffHandle)) );
+    psGTH->bFree = true;
     psGTH->psParent = psGTHParent;
     psGTH->psShared = psGTHParent->psShared;
     psGTH->psShared->nUserCounter ++;
 
     SetActiveGTH(psGTH);
     VSIFSeekL( psGTH->psShared->fpL, 0, SEEK_SET );
+    psGTH->psShared->bAtEndOfFile = false;
 
-    const char* mode = 
+    const char* mode =
         psGTH->psShared->bReadOnly && psGTH->psShared->bLazyStrileLoading ? "rDO" :
         psGTH->psShared->bReadOnly ? "r" :
         psGTH->psShared->bLazyStrileLoading ? "r+D" : "r+";
     return VSI_TIFFOpen_common(psGTH, mode);
+}
+
+// Re-open a TIFF handle (seeking to the appropriate directory is then needed)
+TIFF* VSI_TIFFReOpen( TIFF* tif )
+{
+    thandle_t th = TIFFClientdata( tif );
+    GDALTiffHandle* psGTH = reinterpret_cast<GDALTiffHandle*>( th );
+
+    // Disable freeing of psGTH in _tiffCloseProc(), which could be called
+    // if XTIFFClientOpen() fails, or obviously by XTIFFClose()
+    psGTH->bFree = false;
+
+    const char* mode =
+        psGTH->psShared->bReadOnly && psGTH->psShared->bLazyStrileLoading ? "rDO" :
+        psGTH->psShared->bReadOnly ? "r" :
+        psGTH->psShared->bLazyStrileLoading ? "r+D" : "r+";
+
+    SetActiveGTH(psGTH);
+    VSIFSeekL( psGTH->psShared->fpL, 0, SEEK_SET );
+    psGTH->psShared->bAtEndOfFile = false;
+
+    TIFF* newHandle = XTIFFClientOpen( psGTH->psShared->pszName,
+                         mode,
+                         reinterpret_cast<thandle_t>(psGTH),
+                         _tiffReadProc, _tiffWriteProc,
+                         _tiffSeekProc, _tiffCloseProc, _tiffSizeProc,
+                         _tiffMapProc, _tiffUnmapProc );
+    if( newHandle != nullptr )
+        XTIFFClose(tif);
+
+    psGTH->bFree = true;
+
+    return newHandle;
 }
