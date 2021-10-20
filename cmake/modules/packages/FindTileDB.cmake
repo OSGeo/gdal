@@ -33,14 +33,12 @@ FIND_PATH(TILEDB_INCLUDE_DIR
         tiledb
         PATHS
         ${TILEDB_HOME}/dist/include
-        ${TileDB_ROOT}/include
         ${TILEDB_ROOT}/include)
 
 FIND_LIBRARY(TILEDB_LIBRARY
         NAMES tiledb
         PATHS
         ${TILEDB_HOME}/dist/lib
-        ${TileDB_ROOT}/lib
         ${TILEDB_ROOT}/lib)
 
 SET(TILEDB_VERSION_H "${TILEDB_INCLUDE_DIR}/tiledb/tiledb_version.h")
