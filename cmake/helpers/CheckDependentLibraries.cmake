@@ -17,9 +17,11 @@ include(DefineFindPackage2)
 # Macro to declare a package
 # Accept a CAN_DISABLE option to specify that the package can be disabled
 # if found, with the GDAL_USE_{name in upper case} option.
+# Accept a DISABLED_BY_DEFAULT option to specify that the default value of
+# GDAL_USE_ is OFF.
 # Accept a RECOMMENDED option
 macro(gdal_check_package name purpose)
-    set(_options CAN_DISABLE RECOMMENDED)
+    set(_options CAN_DISABLE RECOMMENDED DISABLED_BY_DEFAULT)
     set(_oneValueArgs )
     set(_multiValueArgs)
     cmake_parse_arguments(_GCP "${_options}" "${_oneValueArgs}" "${_multiValueArgs}" ${ARGN})
@@ -41,13 +43,20 @@ macro(gdal_check_package name purpose)
             set_package_properties(${name} PROPERTIES PURPOSE ${purpose})
         endif()
     endif()
-    if( _GCP_CAN_DISABLE )
+    if( _GCP_CAN_DISABLE OR _GCP_DISABLED_BY_DEFAULT )
         if(GDAL_USE_${key})
             if(NOT HAVE_${key})
                 message(FATAL_ERROR "Configured to use ${key}, but not found")
             endif()
         endif()
-        cmake_dependent_option(GDAL_USE_${key} "Set ON to use ${key}" ON "HAVE_${key}" OFF)
+        set(_gcpp_status ON)
+        if( _GCP_DISABLED_BY_DEFAULT )
+            set(_gcpp_status OFF)
+            if(HAVE_${key} AND NOT GDAL_USE_${key})
+                message("${key} has been found, but is disabled by default. Enable it by setting GDAL_USE_${key}=ON")
+            endif()
+        endif()
+        cmake_dependent_option(GDAL_USE_${key} "Set ON to use ${key}" ${_gcpp_status} "HAVE_${key}" OFF)
     endif()
 endmacro()
 
@@ -274,7 +283,9 @@ gdal_check_package(KEA "")
 gdal_check_package(ECW "Enable ECW driver")
 gdal_check_package(NetCDF "Enable netCDF driver" CAN_DISABLE)
 gdal_check_package(OGDI "Enable ogr_OGDI driver")
-gdal_check_package(OpenCL "")
+# OpenCL warping gives different results than the ones expected by autotest,
+# so disable it by default even if found.
+gdal_check_package(OpenCL "Enable OpenCL (may be used for warping)" DISABLED_BY_DEFAULT)
 gdal_check_package(PostgreSQL "" CAN_DISABLE)
 gdal_check_package(SOSI  "enable ogr_SOSI driver")
 gdal_check_package(LibLZMA "LZMA compression" CAN_DISABLE)

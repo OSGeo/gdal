@@ -72,7 +72,7 @@ if (ENABLE_PAM)
   target_compile_definitions(alg PRIVATE -DPAM_ENABLED)
 endif ()
 
-if (HAVE_OPENCL)
+if (GDAL_USE_OPENCL)
   target_include_directories(alg PRIVATE ${OpenCL_INCLUDE_DIRS})
   gdal_add_private_link_libraries(OpenCL::OpenCL)
   target_compile_definitions(alg PRIVATE -DHAVE_OPENCL)
