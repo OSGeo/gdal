@@ -107,6 +107,10 @@ All cached entries can be viewed using ``cmake -LAH`` from a build directory.
     :envvar:`OSGEO4W_ROOT` (if set), otherwise is ``c:/OSGeo4W``.
     Default for Unix-like is ``/usr/local/``.
 
+    Starting with CMake 3.12, it is also possible to use a
+    ``<Packagename>_ROOT`` variable to define the prefix for a particular
+    package. See https://cmake.org/cmake/help/latest/release/3.12.html?highlight=root#commands
+
 .. option:: ENABLE_IPO=OFF
 
     Build library using the compiler's `interprocedural optimization
@@ -117,6 +121,21 @@ CMake package dependent options
 +++++++++++++++++++++++++++++++
 
 .. Put packages in alphabetic order.
+
+Generally speaking, packages (external dependencies) will be automatically found if
+they are in default locations used by CMake. This can be also tuned for example
+with the ``CMAKE_INSTALL_PREFIX`` variable.
+
+Starting with CMake 3.12, it is also possible to use a
+``<Packagename>_ROOT`` variable to define the prefix for a particular
+package. See https://cmake.org/cmake/help/latest/release/3.12.html?highlight=root#commands
+
+Most dependencies that would be found can also be disabled by setting the
+following option:
+
+.. option:: GDAL_USE_<Packagename>:BOOL=ON/OFF
+
+    Control whether a found dependency can be used for the GDAL build.
 
 curl
 ****
@@ -135,8 +154,8 @@ curl
     Control whether to use Curl. Defaults to ON when Curl is found.
 
 
-libgeotiff
-**********
+geotiff
+*******
 
 .. option:: GEOTIFF_INCLUDE_DIR
 
@@ -156,8 +175,8 @@ libgeotiff
     libgeotiff is not found.
 
 
-libtiff
-*******
+TIFF
+****
 
 .. option:: TIFF_INCLUDE_DIR
 
@@ -212,7 +231,101 @@ SQLite3
 Selection of drivers
 ++++++++++++++++++++
 
-TODO
+By default, all drivers that have their build requirements satisfied will be
+built-in in the GDAL core library.
+
+The following options are available to select a subset of drivers:
+
+.. option:: GDAL_ENABLE_FRMT_<driver_name>:BOOL=ON/OFF
+
+.. option:: OGR_ENABLE_<driver_name>:BOOL=ON/OFF
+
+    Independently of options that control global behavior, drivers can be individually
+    enabled or disabled with those options.
+
+.. option:: GDAL_BUILD_OPTIONAL_DRIVERS:BOOL=ON/OFF
+
+.. option:: OGR_BUILD_OPTIONAL_DRIVERS:BOOL=ON/OFF
+
+    Globally enable/disable all GDAL/raster or OGR/vector drivers.
+    More exactly, setting those variables to ON affect the default value of the
+    ``GDAL_ENABLE_FRMT_<driver_name>`` or ``OGR_ENABLE_<driver_name>`` variables
+    (when they are not yet set).
+
+    This can be combined with individual activation of a subset of drivers by using
+    the ``GDAL_ENABLE_FRMT_<driver_name>:BOOL=ON`` or ``OGR_ENABLE_<driver_name>:BOOL=ON``
+    variables. Note that changing the value of GDAL_BUILD_OPTIONAL_DRIVERS/
+    OGR_BUILD_OPTIONAL_DRIVERS after a first run of CMake does not change the
+    activation of individual drivers. It might be needed to pass
+    ``-UGDAL_ENABLE_FRMT_* -UOGR_ENABLE_*`` to reset their state.
+
+
+Example of minimal build with the JP2OpenJPEG and SVG drivers enabled::
+
+    cmake .. -UGDAL_ENABLE_FRMT_* -UOGR_ENABLE_* \
+             -DGDAL_BUILD_OPTIONAL_DRIVERS:BOOL=OFF -DOGR_BUILD_OPTIONAL_DRIVERS:BOOL=OFF \
+             -DGDAL_ENABLE_FRMT_JP2OPENPEG:BOOL=ON \
+             -DOGR_ENABLE_SVG:BOOL=ON
+
+Build drivers as plugins
+++++++++++++++++++++++++
+
+An important subset, but not all, drivers can be also built as plugin, that is
+to say as standalone .dll/.so shared libraries, to be installed in the ``gdalplugins``
+subdirectory of the GDAL installation. This can be useful in particular for
+drivers that depend on libraries that have a license different (proprietary, copyleft, ...)
+from the core GDAL library.
+
+The list of drivers that can be built as plugins can be obtained with::
+
+    cmake .. -L | grep -e "_ENABLE.*PLUGIN"
+
+The following options are available to select the plugin/builtin status of
+a driver:
+
+.. option:: GDAL_ENABLE_FRMT_<driver_name>_PLUGIN:BOOL=ON/OFF
+
+.. option:: OGR_ENABLE_<driver_name>_PLUGIN:BOOL=ON/OFF
+
+    Independently of options that control global behavior, drivers can be individually
+    enabled or disabled with those options.
+
+    Note that for the driver to be built, the corresponding base
+    ``GDAL_ENABLE_FRMT_{driver_name}:BOOL=ON`` or ``OGR_ENABLE_{driver_name}:BOOL=ON`` option must
+    be set.
+
+.. option:: GDAL_ENABLE_PLUGINS:BOOL=ON/OFF
+
+    Globally enable/disable building all (plugin capable), GDAL and OGR, drivers as plugins.
+    More exactly, setting that variable to ON affects the default value of the
+    ``GDAL_ENABLE_FRMT_<driver_name>_PLUGIN`` or ``OGR_ENABLE_<driver_name>_PLUGIN``
+    variables (when they are not yet set).
+
+    This can be combined with individual activation/deactivation of the plugin status with the
+    ``GDAL_ENABLE_FRMT_{driver_name}_PLUGIN:BOOL`` or ``OGR_ENABLE_{driver_name}_PLUGIN:BOOL`` variables.
+    Note that changing the value of GDAL_ENABLE_PLUGINS after a first
+    run of CMake does not change the activation of the plugin status of individual drivers.
+    It might be needed to pass ``-UGDAL_ENABLE_FRMT_* -UOGR_ENABLE_*`` to reset their state.
+
+
+Example of build with all potential drivers as plugins, except the JP2OpenJPEG one::
+
+    cmake .. -UGDAL_ENABLE_FRMT_* -UOGR_ENABLE_* \
+             -DGDAL_ENABLE_PLUGINS:BOOL=ON \
+             -DGDAL_ENABLE_FRMT_JP2OPENPEG_PLUGIN:BOOL=OFF
+
+There is a subtelty regarding ``GDAL_ENABLE_PLUGINS:BOOL=ON``. It only controls
+the plugin status of plugin-capable drivers that have external dependencies,
+that are not part of GDAL core dependencies (e.g. are netCDF, HDF4, Oracle, PDF, etc.).
+
+.. option:: GDAL_ENABLE_PLUGINS_NO_DEPS:BOOL=ON/OFF
+
+    Globally enable/disable building all (plugin capable), GDAL and OGR, drivers as plugins,
+    for drivers that have no external dependencies (e.g. BMP, FlatGeobuf), or that have
+    dependencies that are part of GDAL core dependencies (e.g GPX).
+    Building such drivers as plugins is generally not necessary, hence
+    the use of a different option from GDAL_ENABLE_PLUGINS.
+
 
 Building on Windows with Conda dependencies and Visual Studio 2017
 --------------------------------------------------------------------------------
