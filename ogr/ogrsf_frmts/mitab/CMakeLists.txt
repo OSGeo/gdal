@@ -1,7 +1,7 @@
 # referenced from frmts/northwood driver
 add_gdal_driver(
   TARGET ogr_TAB
-  DEF TAB_ENABLED
+  DEF MITAB_ENABLED
   BUILTIN
   SOURCES mitab_rawbinblock.cpp
           mitab_mapheaderblock.cpp
