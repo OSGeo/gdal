@@ -75,16 +75,18 @@ endif ()
 
 # Now external libraries
 if (NOT GDAL_USE_LIBZ_INTERNAL)
+  target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:ZLIB::ZLIB,INTERFACE_INCLUDE_DIRECTORIES>)
   gdal_add_private_link_libraries(ZLIB::ZLIB)
 endif ()
 
 if (NOT GDAL_USE_LIBJPEG_INTERNAL)
+  target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:JPEG::JPEG,INTERFACE_INCLUDE_DIRECTORIES>)
   gdal_add_private_link_libraries(JPEG::JPEG)
 endif ()
 
 if (GDAL_USE_DEFLATE)
   target_compile_definitions(libtiff PRIVATE -DLIBDEFLATE_SUPPORT)
-  target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:Deflate::Deflate,INCLUDE_DIRECTORIES>)
+  target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:Deflate::Deflate,INTERFACE_INCLUDE_DIRECTORIES>)
   gdal_add_private_link_libraries(Deflate::Deflate)
 endif ()
 
@@ -95,17 +97,19 @@ endif ()
 
 if (GDAL_USE_LIBLZMA)
   target_compile_definitions(libtiff PRIVATE -DLZMA_SUPPORT)
+  target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:LibLZMA::LibLZMA,INTERFACE_INCLUDE_DIRECTORIES>)
   gdal_add_private_link_libraries(LibLZMA::LibLZMA)
 endif ()
 
 if (GDAL_USE_ZSTD)
   target_compile_definitions(libtiff PRIVATE -DZSTD_SUPPORT)
-  target_include_directories(libtiff PRIVATE ${ZSTD_INCLUDE_DIRS})
+  target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:ZSTD::zstd,INTERFACE_INCLUDE_DIRECTORIES>)
   gdal_add_private_link_libraries(ZSTD::zstd)
 endif ()
 
 if (GDAL_USE_WEBP)
   target_compile_definitions(libtiff PRIVATE -DWEBP_SUPPORT)
+  target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:WEBP::WebP,INTERFACE_INCLUDE_DIRECTORIES>)
   gdal_add_private_link_libraries(WEBP::WebP)
 endif ()
 
