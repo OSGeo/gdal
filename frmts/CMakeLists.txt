@@ -23,7 +23,7 @@ set_package_properties(TIFF PROPERTIES PURPOSE "gdal_INGR: Intergraph Raster For
 gdal_optional_format(gxf "GXF")
 gdal_optional_format(aaigrid "Arc/Info ASCII Grid Format.")
 gdal_optional_format(ceos "CEOS translator")
-gdal_optional_format(ceos2 "ASI CEOS translator")
+gdal_optional_format(ceos2 "ASI CEOS translator" DRIVER_NAME_OPTION "SAR_CEOS")
 gdal_optional_format(xpm "XPM image format")
 gdal_optional_format(dted "Military Elevation Data")
 gdal_optional_format(jdem "JDEM driver")
@@ -118,7 +118,8 @@ gdal_dependent_format(postgisraster "PostGIS Raster driver" "GDAL_USE_POSTGRESQL
 gdal_dependent_format(dods "OPeNDAP Grid Client" "HAVE_DAP")
 gdal_dependent_format(dds "DirectDraw Surface" "HAVE_CRNLIB")
 gdal_dependent_format(kea "Kea" "HAVE_KEA")
-gdal_dependent_format(openjpeg "JPEG2000 driver based on OpenJPEG library" "GDAL_USE_OPENJPEG")
+gdal_dependent_format(openjpeg "JPEG2000 driver based on OpenJPEG library" "GDAL_USE_OPENJPEG" DRIVER_NAME_OPTION
+                      "JP2OpenJPEG")
 gdal_dependent_format(jpegls "JPEG LS" "HAVE_CHARLS")
 gdal_dependent_format(jpeg2000 "JPEG2000 --- Implementation of the JPEG-2000 part 1 (ISO/IEC 15444-1) standard"
                       "HAVE_JASPER")
