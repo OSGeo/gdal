@@ -148,6 +148,7 @@ target_public_header(
   ogr_core.h
   ogr_feature.h
   ogr_featurestyle.h
+  ogr_geocoding.h
   ogr_geometry.h
   ogr_p.h
   ogr_spatialref.h

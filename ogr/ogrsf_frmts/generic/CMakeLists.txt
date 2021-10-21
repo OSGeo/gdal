@@ -49,14 +49,18 @@ set_property(TARGET ogrsf_generic PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHA
 if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
   set_property(SOURCE ogr_gensql.cpp PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
 endif ()
-include(TargetPublicHeader)
-target_public_header(
-  TARGET
-  gdal
-  HEADERS
-  ogr_gensql.h
-  ogreditablelayer.h
-  ogremulatedtransaction.h
-  ogrmutexeddatasource.h
-  ogrmutexedlayer.h
-  ogrwarpedlayer.h)
+
+if (FALSE)
+  # the following are not installed by current autoconf builds
+  include(TargetPublicHeader)
+  target_public_header(
+    TARGET
+    gdal
+    HEADERS
+    ogr_gensql.h
+    ogreditablelayer.h
+    ogremulatedtransaction.h
+    ogrmutexeddatasource.h
+    ogrmutexedlayer.h
+    ogrwarpedlayer.h)
+endif ()

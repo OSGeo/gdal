@@ -89,19 +89,16 @@ target_public_header(
   ${CMAKE_CURRENT_BINARY_DIR}/gdal_version_full/gdal_version.h
   gdal.h
   gdaljp2metadata.h
+  gdaljp2abstractdataset.h
   gdal_frmts.h
   gdal_pam.h
   gdal_priv.h
   gdal_proxy.h
   gdal_rat.h
   rawdataset.h
-  gdalexif.h
   gdalgeorefpamdataset.h
-  gdal_priv_templates.hpp
-  gdal_avx2_emulation.hpp
   gdal_mdreader.h
-  gdal_pam.h
-  gdalsse_priv.h)
+  gdal_pam.h)
 
 if (GDAL_USE_LIBJSONC_INTERNAL)
   target_include_directories(gcore PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)

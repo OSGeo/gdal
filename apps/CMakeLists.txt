@@ -37,6 +37,9 @@ else ()
   gdal_add_private_link_libraries(${JSONC_LIBRARIES})
 endif ()
 
+include(TargetPublicHeader)
+target_public_header(TARGET gdal HEADERS gdal_utils.h)
+
 if (BUILD_APPS)
   # Default Apps
   add_executable(gdalinfo gdal_utils_priv.h gdalinfo_bin.cpp)

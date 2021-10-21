@@ -24,3 +24,6 @@ if (GDAL_USE_GEOS)
   gdal_target_link_libraries(TARGET gdal_vrt LIBRARIES ${GEOS_LIBRARIES})
   target_compile_definitions(gdal_vrt PRIVATE -DHAVE_GEOS=1)
 endif ()
+
+include(TargetPublicHeader)
+target_public_header(TARGET gdal HEADERS vrtdataset.h gdal_vrt.h)
