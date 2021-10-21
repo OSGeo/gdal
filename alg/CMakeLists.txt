@@ -58,7 +58,7 @@ if (GDAL_USE_GEOS)
   gdal_add_private_link_libraries(GEOS::GEOS)
 endif ()
 
-if (HAVE_ARMADILLO)
+if (GDAL_USE_ARMADILLO)
   target_include_directories(alg PRIVATE ${ALMADILLO_INCLUDE_DIRS})
   target_compile_definitions(alg PRIVATE -DHAVE_ARMADILLO)
   gdal_add_private_link_libraries(${ARMADILLO_LIBRARIES})
