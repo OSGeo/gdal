@@ -499,12 +499,24 @@ endif ()
 configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/uninstall.cmake.in ${PROJECT_BINARY_DIR}/cmake_uninstall.cmake IMMEDIATE @ONLY)
 add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 
-# Print summry
+# Print summary
 include(SystemSummary)
 system_summary(DESCRIPTION "GDAL is now configured on;")
 
+# Do not warn about Shapelib being an optional package not found, as we
+# don't recommend using it
+get_property(_packages_not_found GLOBAL PROPERTY PACKAGES_NOT_FOUND)
+set(_new_packages_not_found)
+foreach(_package IN LISTS _packages_not_found)
+    if(NOT ${_package} STREQUAL "Shapelib")
+        set(_new_packages_not_found ${_new_packages_not_found} "${_package}")
+    endif()
+endforeach()
+
 include(FeatureSummary)
+set_property(GLOBAL PROPERTY PACKAGES_NOT_FOUND ${_new_packages_not_found})
 feature_summary(DESCRIPTION "Enabled drivers and features and found dependency packages" WHAT ALL)
+set_property(GLOBAL PROPERTY PACKAGES_NOT_FOUND ${_packages_not_found})
 
 set(_has_found_disabled_packages 0)
 get_property(_packages_found GLOBAL PROPERTY PACKAGES_FOUND)

@@ -206,8 +206,12 @@ endif()
 
 option(GDAL_USE_LIBLERC_INTERNAL "Set ON to build mrf driver with internal libLERC" ON)
 
-gdal_check_package(Shapelib "Enable Shapelib support.")
-if(NOT HAVE_SHAPELIB)
+# Disable by default the use of external shapelib, as currently the SAOffset
+# member that holds file offsets in it is a 'unsigned long', hence 32 bit on
+# 32 bit platforms, whereas we can handle DBFs file > 4 GB.
+# Internal shapelib has not this issue
+gdal_check_package(Shapelib "Enable Shapelib support (not recommended, internal Shapelib is preferred)." DISABLED_BY_DEFAULT)
+if(NOT GDAL_USE_SHAPELIB)
     set(GDAL_USE_SHAPELIB_INTERNAL ON CACHE BOOL "Set ON to build shape driver with internal shapelib" FORCE)
 else()
     if(Shapelib_VERSION VERSION_LESS 1.4.0)
