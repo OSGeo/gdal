@@ -3,6 +3,7 @@ add_library(
   gcore OBJECT
   gdalopeninfo.cpp
   gdaldriver.cpp
+  gdaldrivermanager.cpp
   gdaldataset.cpp
   gdalrasterband.cpp
   gdal_misc.cpp
@@ -55,36 +56,31 @@ target_include_directories(
           $<TARGET_PROPERTY:gdal_MEM,SOURCE_DIR> $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR>)
 set_property(TARGET gcore PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 
+if (NOT DEFINED GDAL_RESOURCE_PATH)
+  message(FATAL_ERROR "GDAL_RESOURCE_PATH not set")
+endif ()
+file(TO_CMAKE_PATH "${CMAKE_INSTALL_PREFIX}/${GDAL_RESOURCE_PATH}" INST_DATA_PATH)
+set_property(
+  SOURCE gdaldrivermanager.cpp
+  APPEND
+  PROPERTY COMPILE_DEFINITIONS INST_DATA="${INST_DATA_PATH}")
+if (HAVE_XERCESC)
+  set_property(
+    SOURCE gdaldrivermanager.cpp
+    APPEND
+    PROPERTY COMPILE_DEFINITIONS HAVE_XERCES)
+endif ()
+
 if (HAVE_SSSE3_AT_COMPILE_TIME)
   target_compile_definitions(gcore PRIVATE -DHAVE_SSSE3_AT_COMPILE_TIME)
+  target_sources(gcore PRIVATE rasterio_ssse3.cpp)
+  set_property(
+    SOURCE rasterio_ssse3.cpp
+    APPEND
+    PROPERTY COMPILE_FLAGS ${GDAL_SSSE3_FLAG})
 endif ()
 
-add_library(gdaldrivermanager OBJECT gdaldrivermanager.cpp)
-gdal_standard_includes(gdaldrivermanager)
-add_dependencies(gdaldrivermanager generate_gdal_version_h)
-target_compile_options(gdaldrivermanager PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX})
-file(TO_CMAKE_PATH "${CMAKE_PREFIX_PATH}/${CMAKE_INSTALL_DATADIR}" INST_DATA_PATH)
-target_compile_definitions(gdaldrivermanager PRIVATE -DINST_DATA="${INST_DATA_PATH}")
-set_property(TARGET gdaldrivermanager PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
-if (HAVE_XERCESC)
-  target_compile_definitions(gdaldrivermanager PRIVATE -DHAVE_XERCES)
-endif ()
-
-add_library(rasterio_ssse3 OBJECT rasterio_ssse3.cpp)
-gdal_standard_includes(rasterio_ssse3)
-add_dependencies(rasterio_ssse3 generate_gdal_version_h)
-target_compile_options(rasterio_ssse3 PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX})
-target_include_directories(rasterio_ssse3 PRIVATE $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR>
-                                                  $<TARGET_PROPERTY:gdal_MEM,SOURCE_DIR>)
-set_property(TARGET rasterio_ssse3 PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
-
-if (HAVE_SSSE3_AT_COMPILE_TIME)
-  target_compile_options(rasterio_ssse3 PRIVATE ${GDAL_SSSE3_FLAG})
-  target_compile_definitions(rasterio_ssse3 PRIVATE -DHAVE_SSSE3_AT_COMPILE_TIME)
-endif ()
-
-target_sources(gdal PRIVATE $<TARGET_OBJECTS:gcore> $<TARGET_OBJECTS:gdaldrivermanager>
-                            $<TARGET_OBJECTS:rasterio_ssse3>)
+target_sources(gdal PRIVATE $<TARGET_OBJECTS:gcore>)
 
 if (GDAL_USE_LIBJSONC_INTERNAL)
   target_include_directories(gcore PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)

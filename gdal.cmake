@@ -247,6 +247,8 @@ else ()
       CACHE PATH "Installation directory for plugins")
 endif ()
 
+set(GDAL_RESOURCE_PATH ${CMAKE_INSTALL_DATADIR}/gdal) # GDAL 4.0 ? Install headers in ${CMAKE_INSTALL_INCLUDEDIR}/gdal ?
+
 # detect portability libs and set, so it should add at first Common Portability layer
 add_subdirectory(port)
 
@@ -443,7 +445,7 @@ install(
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  RESOURCE DESTINATION ${CMAKE_INSTALL_DATADIR}/gdal # GDAL 4.0 ? Install headers in ${CMAKE_INSTALL_INCLUDEDIR}/gdal ?
+  RESOURCE DESTINATION ${GDAL_RESOURCE_PATH}
   PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
   FRAMEWORK DESTINATION ${CMAKE_INSTALL_LIBDIR})
 

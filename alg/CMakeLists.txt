@@ -93,12 +93,18 @@ endif ()
 if (HAVE_SSE_AT_COMPILE_TIME)
   target_sources(alg PRIVATE gdalgridsse.cpp)
   target_compile_definitions(alg PRIVATE -DHAVE_SSE_AT_COMPILE_TIME)
-  set_source_files_properties(gdalgridsse.cpp PROPERTIES COMPILE_FLAGS ${GDAL_SSE_FLAG})
+  set_property(
+    SOURCE gdalgridavx.cpp
+    APPEND
+    PROPERTY COMPILE_FLAGS ${GDAL_SSE_FLAG})
 endif ()
 if (HAVE_AVX_AT_COMPILE_TIME)
   target_sources(alg PRIVATE gdalgridavx.cpp)
   target_compile_definitions(alg PRIVATE -DHAVE_AVX_AT_COMPILE_TIME)
-  set_source_files_properties(gdalgridavx.cpp PROPERTIES COMPILE_FLAGS ${GDAL_AVX_FLAG})
+  set_property(
+    SOURCE gdalgridavx.cpp
+    APPEND
+    PROPERTY COMPILE_FLAGS ${GDAL_AVX_FLAG})
 endif ()
 
 include(TargetPublicHeader)
