@@ -7600,5 +7600,37 @@ def test_tiff_write_coordinate_epoch():
     gdal.Unlink('/vsimem/test_tiff_write_coordinate_epoch.tif')
 
 
+###############################################################################
+# Test scenario with multiple IFDs and directory rewriting
+# https://github.com/OSGeo/gdal/issues/3746
+
+
+@pytest.mark.parametrize("reopen", [True, False])
+def test_tiff_write_muliple_ifds_directory_rewriting(reopen):
+
+    filename = '/vsimem/out.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(filename, 32, 32, options=['TILED=YES', 'SPARSE_OK=YES'])
+    ds.BuildOverviews('NONE', [2])
+    if reopen:
+        ds = None
+        ds = gdal.Open(filename, gdal.GA_Update)
+
+    ds.GetRasterBand(1).GetOverview(0).Fill(2)
+
+    # Rewrite second IFD
+    ds.GetRasterBand(1).GetOverview(0).SetNoDataValue(0)
+    # Rewrite first IFD
+    ds.GetRasterBand(1).SetNoDataValue(3)
+
+    ds = None
+
+    ds = gdal.Open(filename)
+    mm = ds.GetRasterBand(1).GetOverview(0).ComputeRasterMinMax()
+    ds = None
+
+    gdal.Unlink(filename)
+    assert mm == (2, 2)
+
+
 def test_tiff_write_cleanup():
     gdaltest.tiff_drv = None
