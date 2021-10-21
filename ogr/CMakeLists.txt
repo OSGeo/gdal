@@ -79,11 +79,19 @@ target_include_directories(ogr PRIVATE $<TARGET_PROPERTY:ogr_geojson,SOURCE_DIR>
 set_property(TARGET ogr PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 target_sources(gdal PRIVATE $<TARGET_OBJECTS:ogr>)
 
+if (GDAL_USE_LIBZ_INTERNAL)
+  target_include_directories(ogr PRIVATE $<TARGET_PROPERTY:libz,SOURCE_DIR>)
+endif ()
+
+if (GDAL_USE_LIBJSONC_INTERNAL)
+  target_include_directories(ogr PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
+endif ()
+
 target_compile_definitions(ogr PRIVATE HAVE_MITAB)
-# TODO: detect whether -DPROJ_STATIC or not.
 target_include_directories(ogr PRIVATE ${PROJ_INCLUDE_DIRS})
 gdal_add_private_link_libraries(PROJ::PROJ)
 
+# External libs then
 if (GDAL_USE_GEOS)
   target_compile_definitions(ogr PRIVATE -DHAVE_GEOS=1)
   target_include_directories(ogr PRIVATE ${GEOS_INCLUDE_DIRS})
@@ -107,10 +115,7 @@ if (GDAL_USE_SFCGAL)
   endif ()
 endif ()
 
-target_compile_definitions(ogr PRIVATE -DHAVE_LIBZ -DZIP_SUPPORT)
-if (GDAL_USE_LIBZ_INTERNAL)
-  target_include_directories(ogr PRIVATE $<TARGET_PROPERTY:libz,SOURCE_DIR>)
-else ()
+if (NOT GDAL_USE_LIBZ_INTERNAL)
   target_compile_definitions(ogr PRIVATE -DHAVE_ZLIB_H -DHAVE_ZLIB)
   if (MSVC)
     target_compile_definitions(ogr PRIVATE -DZLIB_DLL)
@@ -132,9 +137,7 @@ if (GDAL_USE_XERCESC)
   gdal_add_private_link_libraries(XercesC::XercesC)
 endif ()
 
-if (GDAL_USE_LIBJSONC_INTERNAL)
-  target_include_directories(ogr PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
-else ()
+if (NOT GDAL_USE_LIBJSONC_INTERNAL)
   target_include_directories(ogr PRIVATE ${JSONC_INCLUDE_DIR})
   gdal_add_private_link_libraries(JSONC::JSONC)
 endif ()

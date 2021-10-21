@@ -67,9 +67,7 @@ file(TO_CMAKE_PATH "${CMAKE_PREFIX_PATH}/${CMAKE_INSTALL_DATADIR}" INST_DATA_PAT
 target_compile_definitions(gdaldrivermanager PRIVATE -DINST_DATA="${INST_DATA_PATH}")
 set_property(TARGET gdaldrivermanager PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 if (HAVE_XERCESC)
-  target_include_directories(gdaldrivermanager PRIVATE ${XercesC_INCLUDE_DIRS} ${XercesC_INCLUDE_DIRS}/xercesc)
   target_compile_definitions(gdaldrivermanager PRIVATE -DHAVE_XERCES)
-  gdal_add_private_link_libraries(XercesC::XercesC)
 endif ()
 
 add_library(rasterio_ssse3 OBJECT rasterio_ssse3.cpp)
@@ -79,8 +77,45 @@ target_compile_options(rasterio_ssse3 PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_
 target_include_directories(rasterio_ssse3 PRIVATE $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR>
                                                   $<TARGET_PROPERTY:gdal_MEM,SOURCE_DIR>)
 set_property(TARGET rasterio_ssse3 PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
+
+if (HAVE_SSSE3_AT_COMPILE_TIME)
+  target_compile_options(rasterio_ssse3 PRIVATE ${GDAL_SSSE3_FLAG})
+  target_compile_definitions(rasterio_ssse3 PRIVATE -DHAVE_SSSE3_AT_COMPILE_TIME)
+endif ()
+
 target_sources(gdal PRIVATE $<TARGET_OBJECTS:gcore> $<TARGET_OBJECTS:gdaldrivermanager>
                             $<TARGET_OBJECTS:rasterio_ssse3>)
+
+if (GDAL_USE_LIBJSONC_INTERNAL)
+  target_include_directories(gcore PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
+endif ()
+
+if (ENABLE_PAM)
+  target_compile_definitions(gcore PRIVATE -DPAM_ENABLED)
+endif ()
+
+add_subdirectory(mdreader)
+
+# External libs now
+if (NOT GDAL_USE_LIBJSONC_INTERNAL)
+  target_include_directories(gcore PRIVATE ${JSONC_INCLUDE_DIRS})
+  gdal_add_private_link_libraries(JSONC::JSONC)
+endif ()
+
+if (OGR_ENABLE_SQLITE)
+  target_compile_definitions(gcore PRIVATE -DSQLITE_ENABLED)
+endif ()
+if (HAVE_LIBXML2)
+  target_compile_definitions(gcore PRIVATE -DHAVE_LIBXML2)
+  target_include_directories(gcore PRIVATE ${LIBXML2_INCLUDE_DIRS})
+  gdal_add_private_link_libraries(LibXml2::LibXml2)
+endif ()
+if (GDAL_USE_GEOS)
+  target_compile_definitions(gcore PRIVATE -DHAVE_GEOS)
+  target_include_directories(gcore PRIVATE ${GEOS_INCLUDE_DIRS})
+  gdal_add_private_link_libraries(GEOS::GEOS)
+endif ()
+
 include(TargetPublicHeader)
 target_public_header(
   TARGET
@@ -99,35 +134,3 @@ target_public_header(
   gdalgeorefpamdataset.h
   gdal_mdreader.h
   gdal_pam.h)
-
-if (GDAL_USE_LIBJSONC_INTERNAL)
-  target_include_directories(gcore PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
-else ()
-  target_include_directories(gcore PRIVATE ${JSONC_INCLUDE_DIRS})
-  gdal_add_private_link_libraries(JSONC::JSONC)
-endif ()
-
-if (ENABLE_PAM)
-  target_compile_definitions(gcore PRIVATE -DPAM_ENABLED)
-endif ()
-
-if (HAVE_SSSE3_AT_COMPILE_TIME)
-  target_compile_options(rasterio_ssse3 PRIVATE ${GDAL_SSSE3_FLAG})
-  target_compile_definitions(rasterio_ssse3 PRIVATE -DHAVE_SSSE3_AT_COMPILE_TIME)
-endif ()
-
-add_subdirectory(mdreader)
-
-if (OGR_ENABLE_SQLITE)
-  target_compile_definitions(gcore PRIVATE -DSQLITE_ENABLED)
-endif ()
-if (HAVE_LIBXML2)
-  target_compile_definitions(gcore PRIVATE -DHAVE_LIBXML2)
-  target_include_directories(gcore PRIVATE ${LIBXML2_INCLUDE_DIRS})
-  gdal_add_private_link_libraries(LibXml2::LibXml2)
-endif ()
-if (GDAL_USE_GEOS)
-  target_compile_definitions(gcore PRIVATE -DHAVE_GEOS)
-  target_include_directories(gcore PRIVATE ${GEOS_INCLUDE_DIRS})
-  gdal_add_private_link_libraries(GEOS::GEOS)
-endif ()
