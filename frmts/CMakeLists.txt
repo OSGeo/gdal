@@ -120,7 +120,7 @@ gdal_dependent_format(dds "DirectDraw Surface" "HAVE_CRNLIB")
 gdal_dependent_format(kea "Kea" "HAVE_KEA")
 gdal_dependent_format(openjpeg "JPEG2000 driver based on OpenJPEG library" "GDAL_USE_OPENJPEG" DRIVER_NAME_OPTION
                       "JP2OpenJPEG")
-gdal_dependent_format(jpegls "JPEG LS" "HAVE_CHARLS")
+gdal_dependent_format(jpegls "JPEG LS" "GDAL_USE_CHARLS")
 gdal_dependent_format(jpeg2000 "JPEG2000 --- Implementation of the JPEG-2000 part 1 (ISO/IEC 15444-1) standard"
                       "HAVE_JASPER")
 gdal_dependent_format(tiledb "TileDB tiledb.io" "GDAL_USE_TILEDB")
