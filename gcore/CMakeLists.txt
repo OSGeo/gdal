@@ -65,6 +65,7 @@ set_property(
   APPEND
   PROPERTY COMPILE_DEFINITIONS INST_DATA="${INST_DATA_PATH}")
 if (HAVE_XERCESC)
+  target_include_directories(gcore PRIVATE ${XercesC_INCLUDE_DIRS} ${XercesC_INCLUDE_DIRS}/xercesc)
   set_property(
     SOURCE gdaldrivermanager.cpp
     APPEND
