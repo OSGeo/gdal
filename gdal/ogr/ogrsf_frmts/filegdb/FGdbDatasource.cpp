@@ -109,10 +109,10 @@ OGRLayer* OGRFileGDBGroup::OpenVectorLayer(const std::string& osName,
 /*                          FGdbDataSource()                           */
 /************************************************************************/
 
-FGdbDataSource::FGdbDataSource(FGdbDriver* poDriverIn,
+FGdbDataSource::FGdbDataSource(bool bUseDriverMutex,
                                FGdbDatabaseConnection* pConnection):
 OGRDataSource(),
-m_poDriver(poDriverIn), m_pConnection(pConnection), m_pGeodatabase(nullptr), m_bUpdate(false),
+m_bUseDriverMutex(bUseDriverMutex), m_pConnection(pConnection), m_pGeodatabase(nullptr), m_bUpdate(false),
 m_poOpenFileGDBDrv(nullptr)
 {
     bPerLayerCopyingForTransaction = -1;
@@ -124,7 +124,7 @@ m_poOpenFileGDBDrv(nullptr)
 
 FGdbDataSource::~FGdbDataSource()
 {
-    CPLMutexHolderOptionalLockD(m_poDriver ? m_poDriver->GetMutex() : nullptr);
+    CPLMutexHolderOptionalLockD( m_bUseDriverMutex ? FGdbDriver::hMutex : nullptr );
 
     if( m_pConnection && m_pConnection->IsLocked() )
         CommitTransaction();
@@ -141,8 +141,8 @@ FGdbDataSource::~FGdbDataSource()
 
     FixIndexes();
 
-    if( m_poDriver )
-        m_poDriver->Release( m_osPublicName );
+    if ( m_bUseDriverMutex )
+      FGdbDriver::Release( m_osPublicName );
 
     //size_t count = m_layers.size();
     for(size_t i = 0; i < count; ++i )
@@ -276,11 +276,11 @@ int FGdbDataSource::ReOpen()
         return FALSE;
     }
 
-    FGdbDataSource* pDS = new FGdbDataSource(m_poDriver, m_pConnection);
+    FGdbDataSource* pDS = new FGdbDataSource(m_bUseDriverMutex, m_pConnection);
     if( EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL_REOPEN", ""), "CASE2") ||
         !pDS->Open(m_osPublicName, TRUE, m_osFSName) )
     {
-        pDS->m_poDriver = nullptr;
+        pDS->m_bUseDriverMutex = false;
         delete pDS;
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot reopen %s",
                  m_osFSName.c_str());
@@ -323,7 +323,7 @@ int FGdbDataSource::ReOpen()
     m_pGeodatabase = pDS->m_pGeodatabase;
     pDS->m_pGeodatabase = nullptr;
 
-    pDS->m_poDriver = nullptr;
+    pDS->m_bUseDriverMutex = false;
     pDS->m_pConnection = nullptr;
     delete pDS;
 
