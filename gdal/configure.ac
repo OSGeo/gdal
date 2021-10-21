@@ -214,7 +214,11 @@ AC_SUBST(WARN_OLD_STYLE_CAST,$WARN_OLD_STYLE_CAST)
 AC_SUBST(WARN_EFFCPLUSPLUS,$WARN_EFFCPLUSPLUS)
 
 dnl Checks for programs.
-AC_PROG_CC
+
+dnl AC_PROG_CC_C99 is deprecated since autoconf 2.70
+m4_if(m4_version_compare(m4_defn([AC_AUTOCONF_VERSION]), [2.70]),
+     [-1], [AC_PROG_CC_C99], [AC_PROG_CC])
+
 AC_PROG_CXX
 LT_INIT([win32-dll])
 
