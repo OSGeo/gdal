@@ -352,8 +352,6 @@ gdal_check_package(Oracle "Enable Oracle OCI driver")
 gdal_check_package(TEIGHA "")
 
 # proprietary libraries
-# Esri ArcSDE(Spatial Database Engine)
-gdal_check_package(SDE "Enable ArcSDE(Spatial Database Engine)")
 # KAKADU
 gdal_check_package(KDU "Enable KAKADU")
 # LURATECH JPEG2000 SDK
