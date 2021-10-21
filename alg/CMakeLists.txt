@@ -64,14 +64,6 @@ if (GDAL_USE_ARMADILLO)
   gdal_add_private_link_libraries(${ARMADILLO_LIBRARIES})
 endif ()
 
-if (USE_CPL)
-  target_compile_definitions(alg PRIVATE -DUSE_CPL)
-endif ()
-
-if (ENABLE_PAM)
-  target_compile_definitions(alg PRIVATE -DPAM_ENABLED)
-endif ()
-
 if (GDAL_USE_OPENCL)
   target_include_directories(alg PRIVATE ${OpenCL_INCLUDE_DIRS})
   gdal_add_private_link_libraries(OpenCL::OpenCL)
