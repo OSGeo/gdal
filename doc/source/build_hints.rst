@@ -175,30 +175,6 @@ geotiff
     libgeotiff is not found.
 
 
-TIFF
-****
-
-.. option:: TIFF_INCLUDE_DIR
-
-    Path to an include directory with the ``tiff.h`` header file.
-
-.. option:: TIFF_LIBRARY_RELEASE
-
-    Path to a shared or static library file, such as ``tiff.dll``,
-    ``libtiff.so``, ``tiff.lib``, or other name. A similar variable
-    ``TIFF_LIBRARY_DEBUG`` can also be specified to a similar library for
-    building Debug releases.
-
-.. option:: GDAL_USE_TIFF=ON/OFF
-
-    Control whether to use external libtiff. Defaults to ON when external libtiff is found.
-
-.. option:: GDAL_USE_LIBTIFF_INTERNAL=ON/OFF
-
-    Control whether to use internal libtiff copy. Defaults to ON when external
-    libtiff is not found.
-
-
 PROJ
 ****
 
@@ -226,6 +202,35 @@ SQLite3
 .. option:: GDAL_USE_SQLITE3=ON/OFF
 
     Control whether to use SQLite3. Defaults to ON when SQLite3 is found.
+
+
+TIFF
+****
+
+.. option:: TIFF_INCLUDE_DIR
+
+    Path to an include directory with the ``tiff.h`` header file.
+
+.. option:: TIFF_LIBRARY_RELEASE
+
+    Path to a shared or static library file, such as ``tiff.dll``,
+    ``libtiff.so``, ``tiff.lib``, or other name. A similar variable
+    ``TIFF_LIBRARY_DEBUG`` can also be specified to a similar library for
+    building Debug releases.
+
+.. option:: GDAL_USE_TIFF=ON/OFF
+
+    Control whether to use external libtiff. Defaults to ON when external libtiff is found.
+
+.. option:: GDAL_USE_LIBTIFF_INTERNAL=ON/OFF
+
+    Control whether to use internal libtiff copy. Defaults to ON when external
+    libtiff is not found.
+
+TileDB
+******
+
+Specify install prefix in the ``CMAKE_INSTALL_PREFIX`` variable.
 
 
 Selection of drivers
