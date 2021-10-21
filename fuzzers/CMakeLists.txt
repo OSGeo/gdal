@@ -25,7 +25,7 @@ function (build_fuzzer)
       ${FUZZ_CORPUS} ${_FUZZ_NAME}_seed_corpus.zip
       PARENT_SCOPE)
   if (_FUZZ_DEFINITIONS)
-    target_compile_definitions(${_FUZZ_NAME} PRIVATE ${FUZZ_DEFINITIONS})
+    target_compile_definitions(${_FUZZ_NAME} PRIVATE ${_FUZZ_DEFINITIONS})
   endif ()
   target_link_libraries(${_FUZZ_NAME} PRIVATE $<TARGET_NAME:fuzzingengine> $<TARGET_NAME:gdal>)
   gdal_standard_includes(${_FUZZ_NAME})

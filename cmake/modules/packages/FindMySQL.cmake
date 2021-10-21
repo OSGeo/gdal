@@ -6,7 +6,7 @@
 # - Find mysqlclient
 # Find the native MySQL includes and library
 #
-#  MYSQL_INCLUDE_DIR - where to find mysql.h, etc.
+#  MYSQL_INCLUDE_DIRS- where to find mysql.h, etc.
 #  MYSQL_LIBRARIES   - List of libraries when using MySQL.
 #  MYSQL_FOUND       - True if MySQL found.
 
@@ -15,8 +15,8 @@ find_path(MYSQL_INCLUDE_DIR
           PATH_SUFFIXES mysql
           DOC "MySQL Client library includes")
 
-if( MYSQL_INCLUDE_DIR AND EXISTS "${MYSQL_INCLUDE_DIRS}/mysql_version.h" )
-	file( STRINGS "${MYSQL_INCLUDE_DIRS}/mysql_version.h"
+if( MYSQL_INCLUDE_DIR AND EXISTS "${MYSQL_INCLUDE_DIR}/mysql_version.h" )
+	file( STRINGS "${MYSQL_INCLUDE_DIR}/mysql_version.h"
 		MYSQL_VERSION_H REGEX "^#define[ \t]+MYSQL_SERVER_VERSION[ \t]+\"[^\"]+\".*$" )
 	string( REGEX REPLACE
 		"^.*MYSQL_SERVER_VERSION[ \t]+\"([^\"]+)\".*$" "\\1" MYSQL_VERSION_STRING
@@ -40,5 +40,5 @@ set_package_properties(MYSQL PROPERTIES
 mark_as_advanced(MYSQL_LIBRARY MYSQL_INCLUDE_DIR)
 
 set(MYSQL_LIBRARIES ${MYSQL_LIBRARY})
-set(MYSQL_INCLUDE_DIRS ${MYSQL_INCLUDE_DIRS})
+set(MYSQL_INCLUDE_DIRS ${MYSQL_INCLUDE_DIR})
 

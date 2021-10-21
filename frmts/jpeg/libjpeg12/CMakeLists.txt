@@ -77,7 +77,7 @@ file(RENAME ${CMAKE_CURRENT_BINARY_DIR}/jmorecfg.h.12 ${CMAKE_CURRENT_BINARY_DIR
 add_library(libjpeg12 OBJECT ${SOURCES_12})
 target_include_directories(libjpeg12 PRIVATE ${CMAKE_CURRENT_BINARY_DIR} $<TARGET_PROPERTY:cpl,SOURCE_DIR>
                                              $<TARGET_PROPERTY:cpl,BINARY_DIR>)
-target_compile_options(libjpeg12 PRIVATE ${GDAL_C_WARNING_FLAGS} ${SOFTWARNFLAGS})
+target_compile_options(libjpeg12 PRIVATE ${GDAL_C_WARNING_FLAGS} ${GDAL_SOFTWARNFLAGS})
 target_compile_definitions(libjpeg12 PRIVATE -DJPEG_DUAL_MODE_8_12)
 
 target_compile_definitions(libjpeg12 PRIVATE -DDEFAULT_MAX_MEM=500000000L)

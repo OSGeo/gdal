@@ -8,6 +8,6 @@ add_gdal_driver(
           ogrmysqltablelayer.cpp
           PLUGIN_CAPABLE)
 gdal_standard_includes(ogr_MySQL)
-target_include_directories(ogr_MySQL PRIVATE ${MYSQL_INCLUDE_DIRS} /usr/include/mysql)
+target_include_directories(ogr_MySQL PRIVATE ${MYSQL_INCLUDE_DIRS})
 target_compile_definitions(ogr_MySQL PRIVATE -DHAVE_MYSQL)
 gdal_target_link_libraries(TARGET ogr_MySQL LIBRARIES ${MYSQL_LIBRARIES})

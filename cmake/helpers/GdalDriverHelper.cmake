@@ -99,6 +99,7 @@ function(add_gdal_driver)
 
     # Determine whether plugin or built-in
     set(_DRIVER_PLUGIN_BUILD OFF)
+    set(_COND)
     if (_DRIVER_PLUGIN_CAPABLE_IF)
         set(_COND ${_DRIVER_PLUGIN_CAPABLE_IF})
     endif()

@@ -91,6 +91,8 @@ if (MSVC)
 
 else()
 
+    set(GDAL_SOFTWARNFLAGS "")
+
     macro(detect_and_set_c_warning_flag flag_name)
         string(TOUPPER ${flag_name} flag_name_upper)
         string(REPLACE "-" "_" flag_name_upper "${flag_name_upper}")
