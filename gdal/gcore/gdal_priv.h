@@ -1211,8 +1211,6 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     void           AddBlockToFreeList( GDALRasterBlock * );
 //! @endcond
 
-    GDALRasterBlock *TryGetLockedBlockRef( int nXBlockOff, int nYBlockYOff );
-
   public:
                 GDALRasterBand();
     explicit    GDALRasterBand(int bForceCachedIO);
@@ -1242,6 +1240,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     GDALRasterBlock *GetLockedBlockRef( int nXBlockOff, int nYBlockOff,
                                         int bJustInitialize = FALSE ) CPL_WARN_UNUSED_RESULT;
+    GDALRasterBlock *TryGetLockedBlockRef( int nXBlockOff, int nYBlockYOff ) CPL_WARN_UNUSED_RESULT;
     CPLErr      FlushBlock( int, int, int bWriteDirtyBlock = TRUE );
 
     unsigned char*  GetIndexColorTranslationTo(/* const */ GDALRasterBand* poReferenceBand,
