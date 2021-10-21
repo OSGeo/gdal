@@ -39,6 +39,9 @@ CPL_CVSID("$Id$")
 
 extern "C" void RegisterOGRFileGDB();
 
+#define ENDS_WITH(str, strLen, end) \
+    (strLen >= strlen(end) && EQUAL(str + strLen - strlen(end), end))
+
 static std::map<CPLString, FGdbDatabaseConnection*> *poMapConnections = nullptr;
 CPLMutex* FGdbDriver::hMutex = nullptr;
 FGdbTransactionManager* FGdbDriver::m_poTransactionManager = nullptr;
@@ -61,6 +64,56 @@ static void OGRFileGDBDriverUnload( GDALDriver * )
     poMapConnections = nullptr;
 }
 
+
+/************************************************************************/
+/*                 OGRFileGDBDriverIdentifyInternal()                   */
+/************************************************************************/
+
+static GDALIdentifyEnum OGRFileGDBDriverIdentifyInternal( GDALOpenInfo* poOpenInfo,
+                                     const char*& pszFilename )
+{
+    // First check if we have to do any work.
+    size_t nLen = strlen(pszFilename);
+    if( ENDS_WITH(pszFilename, nLen, ".gdb") ||
+        ENDS_WITH(pszFilename, nLen, ".gdb/") )
+    {
+        // Check that the filename is really a directory, to avoid confusion
+        // with Garmin MapSource - gdb format which can be a problem when the
+        // driver is loaded as a plugin, and loaded before the GPSBabel driver
+        // (http://trac.osgeo.org/osgeo4w/ticket/245)
+        if( STARTS_WITH(pszFilename, "/vsi") ||
+            !poOpenInfo->bStatOK ||
+            !poOpenInfo->bIsDirectory )
+        {
+            return GDAL_IDENTIFY_FALSE;
+        }
+        return GDAL_IDENTIFY_TRUE;
+    }
+    else if( EQUAL(pszFilename, ".") )
+    {
+        GDALIdentifyEnum eRet = GDAL_IDENTIFY_FALSE;
+        char* pszCurrentDir = CPLGetCurrentDir();
+        if( pszCurrentDir )
+        {
+            const char* pszTmp = pszCurrentDir;
+            eRet = OGRFileGDBDriverIdentifyInternal(poOpenInfo, pszTmp);
+            CPLFree(pszCurrentDir);
+        }
+        return eRet;
+    }
+    else
+    {
+        return GDAL_IDENTIFY_FALSE;
+    }
+}
+
+static int OGRFileGDBDriverIdentify( GDALOpenInfo* poOpenInfo )
+{
+    const char* pszFilename = poOpenInfo->pszFilename;
+    return OGRFileGDBDriverIdentifyInternal( poOpenInfo, pszFilename );
+}
+
+
 /************************************************************************/
 /*                      OGRFileGDBDriverOpen()                          */
 /************************************************************************/
@@ -68,41 +121,12 @@ static void OGRFileGDBDriverUnload( GDALDriver * )
 static GDALDataset *OGRFileGDBDriverOpen( GDALOpenInfo* poOpenInfo )
 {
     const char* pszFilename = poOpenInfo->pszFilename;
-    bool bUpdate = poOpenInfo->eAccess == GA_Update;
 
-    // First check if we have to do any work.
-    size_t nLen = strlen(pszFilename);
-    if( nLen == 1 && pszFilename[0] == '.' )
-    {
-        char* pszCurrentDir = CPLGetCurrentDir();
-        if( pszCurrentDir )
-        {
-            size_t nLen2 = strlen(pszCurrentDir);
-            bool bOK = (nLen2 >= 4 && EQUAL(pszCurrentDir + nLen2 - 4, ".gdb"));
-            CPLFree(pszCurrentDir);
-            if( !bOK )
-                return nullptr;
-        }
-        else
-        {
-            return nullptr;
-        }
-    }
-    else if(! ((nLen >= 4 && EQUAL(pszFilename + nLen - 4, ".gdb")) ||
-               (nLen >= 5 && EQUAL(pszFilename + nLen - 5, ".gdb/"))) )
+    if( OGRFileGDBDriverIdentifyInternal( poOpenInfo, pszFilename ) == GDAL_IDENTIFY_FALSE )
         return nullptr;
 
+    const bool bUpdate = poOpenInfo->eAccess == GA_Update;
     long hr;
-
-    /* Check that the filename is really a directory, to avoid confusion with */
-    /* Garmin MapSource - gdb format which can be a problem when the FileGDB */
-    /* driver is loaded as a plugin, and loaded before the GPSBabel driver */
-    /* (http://trac.osgeo.org/osgeo4w/ticket/245) */
-    VSIStatBuf stat;
-    if( CPLStat( pszFilename, &stat ) != 0 || !VSI_ISDIR(stat.st_mode) )
-    {
-        return nullptr;
-    }
 
     CPLMutexHolderD(&FGdbDriver::hMutex);
     if( poMapConnections == nullptr )
@@ -866,6 +890,7 @@ void RegisterOGRFileGDB()
     poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
 
     poDriver->pfnOpen = OGRFileGDBDriverOpen;
+    poDriver->pfnIdentify = OGRFileGDBDriverIdentify;
     poDriver->pfnCreate = OGRFileGDBDriverCreate;
     poDriver->pfnDelete = OGRFileGDBDeleteDataSource;
     poDriver->pfnUnloadDriver = OGRFileGDBDriverUnload;
