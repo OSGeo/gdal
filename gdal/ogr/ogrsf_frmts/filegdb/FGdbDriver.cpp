@@ -39,81 +39,100 @@ CPL_CVSID("$Id$")
 
 extern "C" void RegisterOGRFileGDB();
 
-/************************************************************************/
-/*                            FGdbDriver()                              */
-/************************************************************************/
-FGdbDriver::FGdbDriver(): OGRSFDriver(), hMutex(nullptr)
-{
-}
+#define ENDS_WITH(str, strLen, end) \
+    (strLen >= strlen(end) && EQUAL(str + strLen - strlen(end), end))
+
+static std::map<CPLString, FGdbDatabaseConnection*> *poMapConnections = nullptr;
+CPLMutex* FGdbDriver::hMutex = nullptr;
+FGdbTransactionManager* FGdbDriver::m_poTransactionManager = nullptr;
 
 /************************************************************************/
-/*                            ~FGdbDriver()                             */
+/*                     OGRFileGDBDriverUnload()                         */
 /************************************************************************/
-FGdbDriver::~FGdbDriver()
 
+static void OGRFileGDBDriverUnload( GDALDriver * )
 {
-    if( !oMapConnections.empty() )
+    if ( poMapConnections && !poMapConnections->empty() )
         CPLDebug("FileGDB", "Remaining %d connections. Bug?",
-                 (int)oMapConnections.size());
-    if( hMutex != nullptr )
-        CPLDestroyMutex(hMutex);
-    hMutex = nullptr;
+                 (int)poMapConnections->size());
+    if( FGdbDriver::hMutex != nullptr )
+        CPLDestroyMutex(FGdbDriver::hMutex);
+    FGdbDriver::hMutex = nullptr;
+    delete FGdbDriver::m_poTransactionManager;
+    FGdbDriver::m_poTransactionManager = nullptr;
+    delete poMapConnections;
+    poMapConnections = nullptr;
 }
 
-/************************************************************************/
-/*                              GetName()                               */
-/************************************************************************/
-
-const char *FGdbDriver::GetName()
-
-{
-    return "FileGDB";
-}
 
 /************************************************************************/
-/*                                Open()                                */
+/*                 OGRFileGDBDriverIdentifyInternal()                   */
 /************************************************************************/
 
-OGRDataSource *FGdbDriver::Open( const char* pszFilename, int bUpdate )
-
+static GDALIdentifyEnum OGRFileGDBDriverIdentifyInternal( GDALOpenInfo* poOpenInfo,
+                                     const char*& pszFilename )
 {
     // First check if we have to do any work.
     size_t nLen = strlen(pszFilename);
-    if( nLen == 1 && pszFilename[0] == '.' )
+    if( ENDS_WITH(pszFilename, nLen, ".gdb") ||
+        ENDS_WITH(pszFilename, nLen, ".gdb/") )
     {
+        // Check that the filename is really a directory, to avoid confusion
+        // with Garmin MapSource - gdb format which can be a problem when the
+        // driver is loaded as a plugin, and loaded before the GPSBabel driver
+        // (http://trac.osgeo.org/osgeo4w/ticket/245)
+        if( STARTS_WITH(pszFilename, "/vsi") ||
+            !poOpenInfo->bStatOK ||
+            !poOpenInfo->bIsDirectory )
+        {
+            return GDAL_IDENTIFY_FALSE;
+        }
+        return GDAL_IDENTIFY_TRUE;
+    }
+    else if( EQUAL(pszFilename, ".") )
+    {
+        GDALIdentifyEnum eRet = GDAL_IDENTIFY_FALSE;
         char* pszCurrentDir = CPLGetCurrentDir();
         if( pszCurrentDir )
         {
-            size_t nLen2 = strlen(pszCurrentDir);
-            bool bOK = (nLen2 >= 4 && EQUAL(pszCurrentDir + nLen2 - 4, ".gdb"));
+            const char* pszTmp = pszCurrentDir;
+            eRet = OGRFileGDBDriverIdentifyInternal(poOpenInfo, pszTmp);
             CPLFree(pszCurrentDir);
-            if( !bOK )
-                return nullptr;
         }
-        else
-        {
-            return nullptr;
-        }
+        return eRet;
     }
-    else if(! ((nLen >= 4 && EQUAL(pszFilename + nLen - 4, ".gdb")) ||
-               (nLen >= 5 && EQUAL(pszFilename + nLen - 5, ".gdb/"))) )
+    else
+    {
+        return GDAL_IDENTIFY_FALSE;
+    }
+}
+
+static int OGRFileGDBDriverIdentify( GDALOpenInfo* poOpenInfo )
+{
+    const char* pszFilename = poOpenInfo->pszFilename;
+    return OGRFileGDBDriverIdentifyInternal( poOpenInfo, pszFilename );
+}
+
+
+/************************************************************************/
+/*                      OGRFileGDBDriverOpen()                          */
+/************************************************************************/
+
+static GDALDataset *OGRFileGDBDriverOpen( GDALOpenInfo* poOpenInfo )
+{
+    const char* pszFilename = poOpenInfo->pszFilename;
+
+    if( OGRFileGDBDriverIdentifyInternal( poOpenInfo, pszFilename ) == GDAL_IDENTIFY_FALSE )
         return nullptr;
 
+    const bool bUpdate = poOpenInfo->eAccess == GA_Update;
     long hr;
 
-    /* Check that the filename is really a directory, to avoid confusion with */
-    /* Garmin MapSource - gdb format which can be a problem when the FileGDB */
-    /* driver is loaded as a plugin, and loaded before the GPSBabel driver */
-    /* (http://trac.osgeo.org/osgeo4w/ticket/245) */
-    VSIStatBuf stat;
-    if( CPLStat( pszFilename, &stat ) != 0 || !VSI_ISDIR(stat.st_mode) )
-    {
-        return nullptr;
-    }
+    CPLMutexHolderD(&FGdbDriver::hMutex);
+    if( poMapConnections == nullptr )
+        poMapConnections = new std::map<CPLString, FGdbDatabaseConnection*>();
 
-    CPLMutexHolderD(&hMutex);
-
-    FGdbDatabaseConnection* pConnection = oMapConnections[pszFilename];
+    FGdbDatabaseConnection* pConnection = (*poMapConnections)[pszFilename];
     if( pConnection != nullptr )
     {
         if( pConnection->IsFIDHackInProgress() )
@@ -154,18 +173,18 @@ OGRDataSource *FGdbDriver::Open( const char* pszFilename, int bUpdate )
             {
                 GDBErr(hr, "Failed to open Geodatabase");
             }
-            oMapConnections.erase(pszFilename);
+            poMapConnections->erase(pszFilename);
             return nullptr;
         }
 
         CPLDebug("FileGDB", "Really opening %s", pszFilename);
         pConnection = new FGdbDatabaseConnection(pszFilename, pGeoDatabase);
-        oMapConnections[pszFilename] = pConnection;
+        (*poMapConnections)[pszFilename] = pConnection;
     }
 
     FGdbDataSource* pDS;
 
-    pDS = new FGdbDataSource(this, pConnection);
+    pDS = new FGdbDataSource(true, pConnection);
 
     if(!pDS->Open( pszFilename, bUpdate, nullptr ) )
     {
@@ -175,28 +194,32 @@ OGRDataSource *FGdbDriver::Open( const char* pszFilename, int bUpdate )
     else
     {
         OGRMutexedDataSource* poMutexedDS =
-                new OGRMutexedDataSource(pDS, TRUE, hMutex, TRUE);
+                new OGRMutexedDataSource(pDS, TRUE, FGdbDriver::hMutex, TRUE);
         if( bUpdate )
-            return OGRCreateEmulatedTransactionDataSourceWrapper(poMutexedDS, this, TRUE, FALSE);
+            return OGRCreateEmulatedTransactionDataSourceWrapper(poMutexedDS, FGdbDriver::GetTransactionManager(), TRUE, FALSE);
         else
             return poMutexedDS;
     }
 }
 
 /***********************************************************************/
-/*                     CreateDataSource()                              */
+/*                    OGRFileGDBDriverCreate()                         */
 /***********************************************************************/
 
-OGRDataSource* FGdbDriver::CreateDataSource( const char * conn,
-                                           char **papszOptions)
+static GDALDataset* OGRFileGDBDriverCreate( const char *pszName,
+                                            CPL_UNUSED int nBands,
+                                            CPL_UNUSED int nXSize,
+                                            CPL_UNUSED int nYSize,
+                                            CPL_UNUSED GDALDataType eDT,
+                                            char **papszOptions )
 {
     long hr;
     Geodatabase *pGeodatabase;
-    std::wstring wconn = StringToWString(conn);
+    std::wstring wconn = StringToWString(pszName);
     int bUpdate = TRUE; // If we're creating, we must be writing.
     VSIStatBuf stat;
 
-    CPLMutexHolderD(&hMutex);
+    CPLMutexHolderD(&FGdbDriver::hMutex);
 
     /* We don't support options yet, so warn if they send us some */
     if ( papszOptions )
@@ -206,7 +229,7 @@ OGRDataSource* FGdbDriver::CreateDataSource( const char * conn,
 
     /* Only accept names of form "filename.gdb" and */
     /* also .gdb.zip to be able to return FGDB with MapServer OGR output (#4199) */
-    const char* pszExt = CPLGetExtension(conn);
+    const char* pszExt = CPLGetExtension(pszName);
     if ( !(EQUAL(pszExt,"gdb") || EQUAL(pszExt, "zip")) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -215,10 +238,10 @@ OGRDataSource* FGdbDriver::CreateDataSource( const char * conn,
     }
 
     /* Don't try to create on top of something already there */
-    if( CPLStat( conn, &stat ) == 0 )
+    if( CPLStat( pszName, &stat ) == 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "%s already exists.\n", conn );
+                  "%s already exists.\n", pszName );
         return nullptr;
     }
 
@@ -233,23 +256,26 @@ OGRDataSource* FGdbDriver::CreateDataSource( const char * conn,
         if ( hr == -2147220653 )
             errstr = "File already exists (%s).\n";
         delete pGeodatabase;
-        CPLError( CE_Failure, CPLE_AppDefined, errstr, conn );
+        CPLError( CE_Failure, CPLE_AppDefined, errstr, pszName );
         return nullptr;
     }
 
-    FGdbDatabaseConnection* pConnection = new FGdbDatabaseConnection(conn, pGeodatabase);
-    oMapConnections[conn] = pConnection;
+    FGdbDatabaseConnection* pConnection = new FGdbDatabaseConnection(pszName, pGeodatabase);
+
+    if( poMapConnections == nullptr )
+        poMapConnections = new std::map<CPLString, FGdbDatabaseConnection*>();
+    (*poMapConnections)[pszName] = pConnection;
 
     /* Ready to embed the Geodatabase in an OGR Datasource */
-    FGdbDataSource* pDS = new FGdbDataSource(this, pConnection);
-    if ( ! pDS->Open(conn, bUpdate, nullptr) )
+    FGdbDataSource* pDS = new FGdbDataSource(true, pConnection);
+    if ( ! pDS->Open(pszName, bUpdate, nullptr) )
     {
         delete pDS;
         return nullptr;
     }
     else
         return OGRCreateEmulatedTransactionDataSourceWrapper(
-            new OGRMutexedDataSource(pDS, TRUE, hMutex, TRUE), this,
+            new OGRMutexedDataSource(pDS, TRUE, FGdbDriver::hMutex, TRUE), FGdbDriver::GetTransactionManager(),
             TRUE, FALSE);
 }
 
@@ -257,9 +283,9 @@ OGRDataSource* FGdbDriver::CreateDataSource( const char * conn,
 /*                           StartTransaction()                         */
 /************************************************************************/
 
-OGRErr FGdbDriver::StartTransaction(OGRDataSource*& poDSInOut, int& bOutHasReopenedDS)
+OGRErr FGdbTransactionManager::StartTransaction(OGRDataSource*& poDSInOut, int& bOutHasReopenedDS)
 {
-    CPLMutexHolderOptionalLockD(hMutex);
+    CPLMutexHolderOptionalLockD(FGdbDriver::hMutex);
 
     bOutHasReopenedDS = FALSE;
 
@@ -391,14 +417,14 @@ OGRErr FGdbDriver::StartTransaction(OGRDataSource*& poDSInOut, int& bOutHasReope
     {
         delete pConnection->m_pGeodatabase;
         pConnection->m_pGeodatabase = nullptr;
-        Release(osName);
+        FGdbDriver::Release(osName);
         GDBErr(hr, CPLSPrintf("Failed to open %s. Dataset should be closed",
                               osDatabaseToReopen.c_str()));
 
         return OGRERR_FAILURE;
     }
 
-    FGdbDataSource* pDS = new FGdbDataSource(this, pConnection);
+    FGdbDataSource* pDS = new FGdbDataSource(true, pConnection);
     pDS->Open(osDatabaseToReopen, TRUE, osNameOri);
 
 #ifndef WIN32
@@ -409,7 +435,7 @@ OGRErr FGdbDriver::StartTransaction(OGRDataSource*& poDSInOut, int& bOutHasReope
     }
 #endif
 
-    poDSInOut = new OGRMutexedDataSource(pDS, TRUE, hMutex, TRUE);
+    poDSInOut = new OGRMutexedDataSource(pDS, TRUE, FGdbDriver::hMutex, TRUE);
 
     if( eErr == OGRERR_NONE )
         pConnection->SetLocked(TRUE);
@@ -420,9 +446,9 @@ OGRErr FGdbDriver::StartTransaction(OGRDataSource*& poDSInOut, int& bOutHasReope
 /*                           CommitTransaction()                        */
 /************************************************************************/
 
-OGRErr FGdbDriver::CommitTransaction(OGRDataSource*& poDSInOut, int& bOutHasReopenedDS)
+OGRErr FGdbTransactionManager::CommitTransaction(OGRDataSource*& poDSInOut, int& bOutHasReopenedDS)
 {
-    CPLMutexHolderOptionalLockD(hMutex);
+    CPLMutexHolderOptionalLockD(FGdbDriver::hMutex);
 
     bOutHasReopenedDS = FALSE;
 
@@ -563,7 +589,7 @@ OGRErr FGdbDriver::CommitTransaction(OGRDataSource*& poDSInOut, int& bOutHasReop
                      osEditedName.c_str(),
                      osName.c_str());
             pConnection->SetLocked(FALSE);
-            Release(osName);
+            FGdbDriver::Release(osName);
             return OGRERR_FAILURE;
         }
         else if( EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE5") ||
@@ -592,7 +618,7 @@ OGRErr FGdbDriver::CommitTransaction(OGRDataSource*& poDSInOut, int& bOutHasReop
                     "Dataset should be closed",
                     osName.c_str(), osTmpName.c_str(), osEditedName.c_str());
             pConnection->SetLocked(FALSE);
-            Release(osName);
+            FGdbDriver::Release(osName);
             return OGRERR_FAILURE;
         }
 
@@ -604,7 +630,7 @@ OGRErr FGdbDriver::CommitTransaction(OGRDataSource*& poDSInOut, int& bOutHasReop
                     "Dataset should be closed",
                     osEditedName.c_str(), osName.c_str(), osTmpName.c_str());
             pConnection->SetLocked(FALSE);
-            Release(osName);
+            FGdbDriver::Release(osName);
             return OGRERR_FAILURE;
         }
 
@@ -623,15 +649,15 @@ OGRErr FGdbDriver::CommitTransaction(OGRDataSource*& poDSInOut, int& bOutHasReop
         delete pConnection->m_pGeodatabase;
         pConnection->m_pGeodatabase = nullptr;
         pConnection->SetLocked(FALSE);
-        Release(osName);
+        FGdbDriver::Release(osName);
         GDBErr(hr, "Failed to re-open Geodatabase. Dataset should be closed");
         return OGRERR_FAILURE;
     }
 
-    FGdbDataSource* pDS = new FGdbDataSource(this, pConnection);
+    FGdbDataSource* pDS = new FGdbDataSource(true, pConnection);
     pDS->Open(osNameOri, TRUE, nullptr);
     //pDS->SetPerLayerCopyingForTransaction(bPerLayerCopyingForTransaction);
-    poDSInOut = new OGRMutexedDataSource(pDS, TRUE, hMutex, TRUE);
+    poDSInOut = new OGRMutexedDataSource(pDS, TRUE, FGdbDriver::hMutex, TRUE);
 
     pConnection->SetLocked(FALSE);
 
@@ -642,9 +668,9 @@ OGRErr FGdbDriver::CommitTransaction(OGRDataSource*& poDSInOut, int& bOutHasReop
 /*                           RollbackTransaction()                      */
 /************************************************************************/
 
-OGRErr FGdbDriver::RollbackTransaction(OGRDataSource*& poDSInOut, int& bOutHasReopenedDS)
+OGRErr FGdbTransactionManager::RollbackTransaction(OGRDataSource*& poDSInOut, int& bOutHasReopenedDS)
 {
-    CPLMutexHolderOptionalLockD(hMutex);
+    CPLMutexHolderOptionalLockD(FGdbDriver::hMutex);
 
     bOutHasReopenedDS = FALSE;
 
@@ -695,15 +721,15 @@ OGRErr FGdbDriver::RollbackTransaction(OGRDataSource*& poDSInOut, int& bOutHasRe
         delete pConnection->m_pGeodatabase;
         pConnection->m_pGeodatabase = nullptr;
         pConnection->SetLocked(FALSE);
-        Release(osName);
+        FGdbDriver::Release(osName);
         GDBErr(hr, "Failed to re-open Geodatabase. Dataset should be closed");
         return OGRERR_FAILURE;
     }
 
-    FGdbDataSource* pDS = new FGdbDataSource(this, pConnection);
+    FGdbDataSource* pDS = new FGdbDataSource(true, pConnection);
     pDS->Open(osNameOri, TRUE, nullptr);
     //pDS->SetPerLayerCopyingForTransaction(bPerLayerCopyingForTransaction);
-    poDSInOut = new OGRMutexedDataSource(pDS, TRUE, hMutex, TRUE);
+    poDSInOut = new OGRMutexedDataSource(pDS, TRUE, FGdbDriver::hMutex, TRUE);
 
     pConnection->SetLocked(FALSE);
 
@@ -716,9 +742,12 @@ OGRErr FGdbDriver::RollbackTransaction(OGRDataSource*& poDSInOut, int& bOutHasRe
 
 void FGdbDriver::Release(const char* pszName)
 {
-    CPLMutexHolderOptionalLockD(hMutex);
+    CPLMutexHolderOptionalLockD(FGdbDriver::hMutex);
 
-    FGdbDatabaseConnection* pConnection = oMapConnections[pszName];
+    if( poMapConnections == nullptr )
+        poMapConnections = new std::map<CPLString, FGdbDatabaseConnection*>();
+
+    FGdbDatabaseConnection* pConnection = (*poMapConnections)[pszName];
     if( pConnection != nullptr )
     {
         pConnection->m_nRefCount --;
@@ -728,9 +757,21 @@ void FGdbDriver::Release(const char* pszName)
         {
             pConnection->CloseGeodatabase();
             delete pConnection;
-            oMapConnections.erase(pszName);
+            poMapConnections->erase(pszName);
         }
     }
+}
+
+/***********************************************************************/
+/*                       GetTransactionManager()                       */
+/***********************************************************************/
+
+FGdbTransactionManager *FGdbDriver::GetTransactionManager()
+{
+    CPLMutexHolderD(&FGdbDriver::hMutex);
+    if( m_poTransactionManager == nullptr )
+        m_poTransactionManager = new FGdbTransactionManager();
+    return m_poTransactionManager;
 }
 
 /***********************************************************************/
@@ -765,27 +806,14 @@ int FGdbDatabaseConnection::OpenGeodatabase(const char* pszFSName)
     return TRUE;
 }
 
-/***********************************************************************/
-/*                         TestCapability()                            */
-/***********************************************************************/
 
-int FGdbDriver::TestCapability( const char * pszCap )
-{
-    if (EQUAL(pszCap, ODrCCreateDataSource) )
-        return TRUE;
-
-    else if (EQUAL(pszCap, ODrCDeleteDataSource) )
-        return TRUE;
-
-    return FALSE;
-}
 /************************************************************************/
-/*                          DeleteDataSource()                          */
+/*                     OGRFileGDBDeleteDataSource()                     */
 /************************************************************************/
 
-OGRErr FGdbDriver::DeleteDataSource( const char *pszDataSource )
+static CPLErr OGRFileGDBDeleteDataSource( const char *pszDataSource )
 {
-    CPLMutexHolderD(&hMutex);
+    CPLMutexHolderD(&FGdbDriver::hMutex);
 
     std::wstring wstr = StringToWString(pszDataSource);
 
@@ -794,10 +822,10 @@ OGRErr FGdbDriver::DeleteDataSource( const char *pszDataSource )
     if( S_OK != (hr = ::DeleteGeodatabase(wstr)) )
     {
         GDBErr(hr, "Failed to delete Geodatabase");
-        return OGRERR_FAILURE;
+        return CE_Failure;
     }
 
-    return OGRERR_NONE;
+    return CE_None;
 }
 
 /***********************************************************************/
@@ -807,12 +835,18 @@ OGRErr FGdbDriver::DeleteDataSource( const char *pszDataSource )
 void RegisterOGRFileGDB()
 
 {
+    if( GDALGetDriverByName("FileGDB") != nullptr )
+        return;
+
     if (! GDAL_CHECK_VERSION("OGR FGDB"))
         return;
 
-    OGRSFDriver* poDriver = new FGdbDriver;
+    GDALDriver* poDriver = new GDALDriver();
+
+    poDriver->SetDescription( "FileGDB" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                 "ESRI FileGDB" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES");
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gdb" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/filegdb.html" );
 
@@ -855,5 +889,11 @@ void RegisterOGRFileGDB()
     poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
 
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
+    poDriver->pfnOpen = OGRFileGDBDriverOpen;
+    poDriver->pfnIdentify = OGRFileGDBDriverIdentify;
+    poDriver->pfnCreate = OGRFileGDBDriverCreate;
+    poDriver->pfnDelete = OGRFileGDBDeleteDataSource;
+    poDriver->pfnUnloadDriver = OGRFileGDBDriverUnload;
+
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }
