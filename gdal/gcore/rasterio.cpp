@@ -3907,7 +3907,8 @@ int GDALDatasetGetBestOverviewLevel( GDALDataset* poDS,
                                      int &nXOff, int &nYOff,
                                      int &nXSize, int &nYSize,
                                      int nBufXSize, int nBufYSize,
-                                     int nBandCount, int *panBandMap )
+                                     int nBandCount, int *panBandMap,
+                                     GDALRasterIOExtraArg* psExtraArg )
 {
     int nOverviewCount = 0;
     GDALRasterBand *poFirstBand = nullptr;
@@ -3979,7 +3980,7 @@ int GDALDatasetGetBestOverviewLevel( GDALDataset* poDS,
 
     return GDALBandGetBestOverviewLevel2( poFirstBand,
                                           nXOff, nYOff, nXSize, nYSize,
-                                          nBufXSize, nBufYSize, nullptr );
+                                          nBufXSize, nBufYSize, psExtraArg );
 }
 
 /************************************************************************/
@@ -4194,11 +4195,15 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      Select an overview level if appropriate.                        */
 /* -------------------------------------------------------------------- */
+
+    GDALRasterIOExtraArg sExtraArg;
+    GDALCopyRasterIOExtraArg(&sExtraArg, psExtraArg);
     const int nOverviewLevel =
         GDALDatasetGetBestOverviewLevel( this,
                                          nXOff, nYOff, nXSize, nYSize,
                                          nBufXSize, nBufYSize,
-                                         nBandCount, panBandMap);
+                                         nBandCount, panBandMap,
+                                         &sExtraArg );
     if (nOverviewLevel >= 0)
     {
         GetRasterBand(panBandMap[0])->GetOverview(nOverviewLevel)->
@@ -4209,12 +4214,12 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
     double dfYOff = nYOff;
     double dfXSize = nXSize;
     double dfYSize = nYSize;
-    if( psExtraArg->bFloatingPointWindowValidity )
+    if( sExtraArg.bFloatingPointWindowValidity )
     {
-        dfXOff = psExtraArg->dfXOff;
-        dfYOff = psExtraArg->dfYOff;
-        dfXSize = psExtraArg->dfXSize;
-        dfYSize = psExtraArg->dfYSize;
+        dfXOff = sExtraArg.dfXOff;
+        dfYOff = sExtraArg.dfYOff;
+        dfXSize = sExtraArg.dfXSize;
+        dfYSize = sExtraArg.dfYSize;
     }
 
 /* -------------------------------------------------------------------- */
