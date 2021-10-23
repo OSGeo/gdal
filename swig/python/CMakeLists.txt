@@ -2,18 +2,23 @@
 
 # SWIG generates wrapper sources
 option(SWIG_REGENERATE_PYTHON "Generate python source with SWIG." OFF)
+
+file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/osgeo/")
+set(GDAL_PYTHON_CSOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/extensions/")
+file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/extensions/")
+set(GDAL_PYTHON_CSOURCES
+    ${GDAL_PYTHON_CSOURCE_DIR}/gdal_wrap.cpp ${GDAL_PYTHON_CSOURCE_DIR}/gdalconst_wrap.c
+    ${GDAL_PYTHON_CSOURCE_DIR}/gnm_wrap.cpp ${GDAL_PYTHON_CSOURCE_DIR}/ogr_wrap.cpp
+    ${GDAL_PYTHON_CSOURCE_DIR}/osr_wrap.cpp)
+
 if (SWIG_REGENERATE_PYTHON)
-  set(GDAL_PYTHON_CSOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/extensions/")
-  set(GDAL_PYTHON_CSOURCES
-      ${GDAL_PYTHON_CSOURCE_DIR}/gdal_wrap.cpp ${GDAL_PYTHON_CSOURCE_DIR}/gdalconst_wrap.c
-      ${GDAL_PYTHON_CSOURCE_DIR}/gnm_wrap.cpp ${GDAL_PYTHON_CSOURCE_DIR}/ogr_wrap.cpp
-      ${GDAL_PYTHON_CSOURCE_DIR}/osr_wrap.cpp)
+
   set(GDAL_PYTHON_PYSOURCES
       ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdal.py ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdalconst.py
       ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdalnumeric.py ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gnm.py
       ${CMAKE_CURRENT_BINARY_DIR}/osgeo/ogr.py ${CMAKE_CURRENT_BINARY_DIR}/osgeo/osr.py)
   include(GdalSwigBindings)
-  if (Pyhton_VERSION_MAJOR EQUAL 3)
+  if (Python_VERSION_MAJOR EQUAL 3)
     set(PY3ARG "-py3")
   else ()
     unset(PY3ARG)
@@ -26,40 +31,60 @@ if (SWIG_REGENERATE_PYTHON)
     ${PY3ARG}
     -threads
     -outdir
-    ${CMAKE_CURRENT_BINARY_DIR}
+    ${CMAKE_CURRENT_BINARY_DIR}/osgeo
     OUTPUT
     ${GDAL_PYTHON_PYSOURCES}
     ${GDAL_PYTHON_CSOURCES})
 
   # gdal_array_wrap.cpp when NumPy exist
-  if (NumPy_FOUND)
+  if (Python_NumPy_FOUND)
     set(ARRAY_INPUT ${PROJECT_SOURCE_DIR}/swig/include/gdal_array.i)
     set(ARRAY_OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/extensions/gdal_array_wrap.cpp)
     add_custom_command(
       OUTPUT ${ARRAY_OUTPUT} "${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdal_array.py"
       COMMAND
         ${SWIG_EXECUTABLE} -Wall -I${PROJECT_SOURCE_DIR}/swig/include -I${PROJECT_SOURCE_DIR}/swig/include/python
-        -I${PROJECT_SOURCE_DIR}/swig/include/python/docs ${PY3ARG} -threads -outdir ${CMAKE_CURRENT_BINARY_DIR}
+        -I${PROJECT_SOURCE_DIR}/swig/include/python/docs ${PY3ARG} -threads -outdir ${CMAKE_CURRENT_BINARY_DIR}/osgeo
         ${SWIG_DEFINES} -I${PROJECT_SOURCE_DIR}/gdal -c++ -python -o ${ARRAY_OUTPUT} ${ARRAY_INPUT}
       DEPENDS ${GDAL_SWIG_COMMON_INCLUDE} ${ARRAY_INPUT} ${PROJECT_SOURCE_DIR}/swig/include/python/typemaps_python.i
       COMMENT "Generate _gdal_array_wrap.so and gdal_array.py by SWiG command")
     list(APPEND GDAL_PYTHON_CSOURCES "${GDAL_PYTHON_CSOURCE_DIR}/gdal_array_wrap.cpp")
     list(APPEND GDAL_PYTHON_PYSOURCES "${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdal_array.py")
   endif ()
+
+  add_custom_command(
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdalnumeric.py"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/osgeo/gdalnumeric.py"
+            "${CMAKE_CURRENT_BINARY_DIR}/osgeo"
+    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/osgeo/gdalnumeric.py")
+  list(APPEND GDAL_PYTHON_PYSOURCES "${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdalnumeric.py")
+
+  add_custom_command(
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/osgeo/__init__.py"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/osgeo/__init__.py" "${CMAKE_CURRENT_BINARY_DIR}/osgeo"
+    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/osgeo/__init__.py")
+  list(APPEND GDAL_PYTHON_PYSOURCES "${CMAKE_CURRENT_BINARY_DIR}/osgeo/__init__.py")
+
 else ()
-  set(GDAL_PYTHON_CSOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/extensions")
+  set(GDAL_PYTHON_CSOURCES_SRC
+      ${CMAKE_CURRENT_SOURCE_DIR}/extensions/gdal_wrap.cpp ${CMAKE_CURRENT_SOURCE_DIR}/extensions/gdalconst_wrap.c
+      ${CMAKE_CURRENT_SOURCE_DIR}/extensions/gnm_wrap.cpp ${CMAKE_CURRENT_SOURCE_DIR}/extensions/ogr_wrap.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/extensions/osr_wrap.cpp)
   set(GDAL_PYTHON_PYSOURCES
       ${CMAKE_CURRENT_BINARY_DIR}/osgeo/__init__.py
       ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdal.py
       ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdalconst.py
       ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdalnumeric.py
-      ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdal_array.py
       ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gnm.py
       ${CMAKE_CURRENT_BINARY_DIR}/osgeo/ogr.py
       ${CMAKE_CURRENT_BINARY_DIR}/osgeo/osr.py)
   file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/osgeo/" OSGEO_BINARY_DIR)
   file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/osgeo/" OSGEO_SOURCE_DIR)
-  file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/osgeo/")
+  if (Python_NumPy_FOUND)
+    list(APPEND GDAL_PYTHON_CSOURCES "${GDAL_PYTHON_CSOURCE_DIR}/gdal_array_wrap.cpp")
+    list(APPEND GDAL_PYTHON_CSOURCES_SRC "${CMAKE_CURRENT_SOURCE_DIR}/extensions/gdal_array_wrap.cpp")
+    list(APPEND GDAL_PYTHON_PYSOURCES "${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdal_array.py")
+  endif ()
   if (Python_VERSION_MAJOR EQUAL 3 AND Python_EXECUTABLE)
     add_custom_command(
       OUTPUT ${GDAL_PYTHON_PYSOURCES}
@@ -76,16 +101,53 @@ else ()
         ${OSGEO_SOURCE_DIR}gdalconst.py ${OSGEO_SOURCE_DIR}gdalnumeric.py ${OSGEO_SOURCE_DIR}ogr.py
         ${OSGEO_SOURCE_DIR}osr.py ${OSGEO_SOURCE_DIR}gnm.py ${OSGEO_SOURCE_DIR}gdal_array.py ${OSGEO_BINARY_DIR})
   endif ()
-  set(GDAL_PYTHON_CSOURCES
-      ${GDAL_PYTHON_CSOURCE_DIR}/gdal_wrap.cpp ${GDAL_PYTHON_CSOURCE_DIR}/gdalconst_wrap.c
-      ${GDAL_PYTHON_CSOURCE_DIR}/gnm_wrap.cpp ${GDAL_PYTHON_CSOURCE_DIR}/ogr_wrap.cpp
-      ${GDAL_PYTHON_CSOURCE_DIR}/osr_wrap.cpp)
+  file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/extensions/" GDAL_PYTHON_CSOURCE_SRC_DIR_NATIVE_PATH)
+  file(TO_NATIVE_PATH "${GDAL_PYTHON_CSOURCE_DIR}/" GDAL_PYTHON_CSOURCE_DIR_NATIVE_PATH)
+  add_custom_command(
+    OUTPUT ${GDAL_PYTHON_CSOURCES}
+    COMMAND
+      ${CMAKE_COMMAND} -E copy_if_different ${GDAL_PYTHON_CSOURCE_SRC_DIR_NATIVE_PATH}gdal_wrap.cpp
+      ${GDAL_PYTHON_CSOURCE_SRC_DIR_NATIVE_PATH}gdalconst_wrap.c ${GDAL_PYTHON_CSOURCE_SRC_DIR_NATIVE_PATH}gnm_wrap.cpp
+      ${GDAL_PYTHON_CSOURCE_SRC_DIR_NATIVE_PATH}ogr_wrap.cpp ${GDAL_PYTHON_CSOURCE_SRC_DIR_NATIVE_PATH}osr_wrap.cpp
+      ${GDAL_PYTHON_CSOURCE_SRC_DIR_NATIVE_PATH}gdal_array_wrap.cpp ${GDAL_PYTHON_CSOURCE_DIR_NATIVE_PATH}
+    DEPENDS ${GDAL_PYTHON_CSOURCES_SRC})
 endif ()
+
+function (symlink_or_copy source destination)
+
+  if (CMAKE_VERSION VERSION_GREATER 3.14)
+    file(
+      CREATE_LINK ${source} ${destination}
+      RESULT res
+      SYMBOLIC)
+    if (NOT res EQUAL 0)
+      message("Copying content of ${source} to ${destination}")
+      execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory ${source} ${destination})
+    endif ()
+  else ()
+    if (NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
+      execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${source} ${destination})
+    else ()
+      message("Copying content of ${source} to ${destination}")
+      execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory ${source} ${destination})
+    endif ()
+  endif ()
+
+endfunction ()
+
+symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/gdal-utils ${CMAKE_CURRENT_BINARY_DIR}/gdal-utils)
+symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/gdal-utils/osgeo_utils ${CMAKE_CURRENT_BINARY_DIR}/osgeo_utils)
+
 if (Python_FOUND AND NOT WIN32)
   if (ENABLE_GNM)
     set(GNM_ENABLED "True")
   else ()
     set(GNM_ENABLED "False")
+  endif ()
+  if (Python_NumPy_FOUND)
+    set(HAVE_NUMPY "True")
+  else ()
+    set(HAVE_NUMPY "False")
   endif ()
   file(TO_NATIVE_PATH "${GDAL_PYTHON_CSOURCE_DIR}" GDAL_PYTHON_EXT_SOURCE_DIR)
   configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/setup.py.in ${CMAKE_CURRENT_BINARY_DIR}/setup.py @ONLY)
@@ -94,28 +156,25 @@ if (Python_FOUND AND NOT WIN32)
     COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/get_ext.py
     OUTPUT_VARIABLE PY_EXT_EXT
     OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+  set(PY_SO_LIST osgeo._gdal${PY_EXT_EXT} osgeo._gdalconst${PY_EXT_EXT} osgeo._gnm${PY_EXT_EXT} osgeo._ogr${PY_EXT_EXT}
+                 osgeo._osr${PY_EXT_EXT})
+  if (Python_NumPy_FOUND)
+    set(PY_SO_LIST ${PY_SO_LIST} osgeo._gdal_array${PY_EXT_EXT})
+  endif ()
+
   add_custom_command(
-    OUTPUT osgeo._gdal${PY_EXT_EXT} osgeo._gdalconst${PY_EXT_EXT} osgeo._gdal_array${PY_EXT_EXT} osgeo._gnm${PY_EXT_EXT}
-           osgeo._ogr${PY_EXT_EXT} osgeo._osr${PY_EXT_EXT}
+    OUTPUT ${PY_SO_LIST}
     COMMAND ${Python_EXECUTABLE} setup.py build_ext --inplace
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    BYPRODUCTS SOURCES ${GDAL_PYTHON_PYSOURCDES} ${GDAL_PYTHON_CSOURCES})
-  add_custom_target(
-    python_binding ALL
-    DEPENDS osgeo._gdal${PY_EXT_EXT}
-            osgeo._gdalconst${PY_EXT_EXT}
-            osgeo._gdal_array${PY_EXT_EXT}
-            osgeo._gnm${PY_EXT_EXT}
-            osgeo._ogr${PY_EXT_EXT}
-            osgeo._osr${PY_EXT_EXT}
-            ${GDAL_PYTHON_PYSOURCES}
-            gdal)
+    DEPENDS ${GDAL_PYTHON_PYSOURCES} ${GDAL_PYTHON_CSOURCES})
+
+  add_custom_target(python_binding ALL DEPENDS ${PY_SO_LIST} ${GDAL_PYTHON_PYSOURCES} gdal)
   add_custom_target(
     python_wheel
     COMMAND ${Python_EXECUTABLE} setup.py bdist_wheel
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    DEPENDS osgeo._gdal${PY_EXT_EXT} osgeo._gdalconst${PY_EXT_EXT} osgeo._gdal_array${PY_EXT_EXT}
-            osgeo._gnm${PY_EXT_EXT} osgeo._ogr${PY_EXT_EXT} osgeo._osr${PY_EXT_EXT})
+    DEPENDS ${PY_SO_LIST})
   if (CMAKE_INSTALL_PREFIX)
     install(CODE "execute_process(COMMAND ${Python_EXECUTABLE} setup.py install --prefix=\"${CMAKE_INSTALL_PREFIX}\"
                                   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})")

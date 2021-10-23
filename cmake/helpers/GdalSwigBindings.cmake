@@ -23,7 +23,7 @@ function(gdal_swig_bindings)
           TARGET gdalconst
           BINDING ${_SWIG_BINDING}
           ARGS ${SWIG_ARGS}
-          OUTPUT ${SWIG_OUTPUT}
+          OUTPUT ${_SWIG_OUTPUT}
           DEPENDS ${GDAL_SWIG_COMMON_INTERFACE_FILES}
           ${_SWIG_DEPENDS}
           ${PROJECT_SOURCE_DIR}/swig/include/${_SWIG_BINDING}/typemaps_${_SWIG_BINDING}.i
@@ -35,7 +35,7 @@ function(gdal_swig_bindings)
             TARGET ${tgt} CXX
             BINDING ${_SWIG_BINDING}
             ARGS ${SWIG_ARGS}
-            OUTPUT ${SWIG_OUTPUT}
+            OUTPUT ${_SWIG_OUTPUT}
             DEPENDS ${GDAL_SWIG_COMMON_INTERFACE_FILES}
             ${_SWIG_DEPENDS}
             ${PROJECT_SOURCE_DIR}/swig/include/${_SWIG_BINDING}/typemaps_${_SWIG_BINDING}.i
@@ -56,8 +56,11 @@ function(gdal_swig_binding_target)
   else ()
     set(_OUTPUT ${PROJECT_BINARY_DIR}/swig/${_SWIG_BINDING}/extensions/${_SWIG_TARGET}_wrap.c)
   endif ()
+  if ("${_SWIG_BINDING}" STREQUAL "python")
+    set(BINDING_LANGUAGE_OUTPUT "${PROJECT_BINARY_DIR}/swig/${_SWIG_BINDING}/osgeo/${_SWIG_TARGET}.py")
+  endif()
   add_custom_command(
-          OUTPUT ${_OUTPUT} ${_SWIG_OUTPUT}
+          OUTPUT ${_OUTPUT} ${BINDING_LANGUAGE_OUTPUT}
           COMMAND ${SWIG_EXECUTABLE} ${_SWIG_ARGS} ${SWIG_DEFINES} -I${PROJECT_SOURCE_DIR}/gdal
           $<$<BOOL:${_SWIG_CXX}>:-c++> -${_SWIG_BINDING}
           -o ${_OUTPUT}
