@@ -211,6 +211,10 @@ set_target_properties(
 set_property(TARGET gdal PROPERTY PLUGIN_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/gdalplugins")
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/gdalplugins")
 
+if(MSVC AND NOT BUILD_SHARED_LIBS)
+  target_compile_definitions(gdal PUBLIC CPL_DISABLE_DLL=)
+endif()
+
 if (MINGW)
   if (TARGET_CPU MATCHES "x86_64")
     add_definitions(-m64)
