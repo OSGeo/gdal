@@ -56,6 +56,11 @@ target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:cpl,SOURCE_DIR> $<T
 target_compile_definitions(libtiff PRIVATE -DDONT_DEPRECATE_SPRINTF)
 target_compile_options(libtiff PRIVATE ${GDAL_C_WARNING_FLAGS})
 
+if (MSVC)
+  # Suppress '<unnamed-tag>': structure was padded due to alignment specifier in tif_jpeg.c
+  target_compile_options(libtiff PRIVATE /wd4324)
+endif ()
+
 target_compile_definitions(libtiff PRIVATE -DPIXARLOG_SUPPORT -DZIP_SUPPORT)
 target_compile_definitions(libtiff PRIVATE -DJPEG_SUPPORT -DOJPEG_SUPPORT)
 
