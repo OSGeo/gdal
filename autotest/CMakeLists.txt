@@ -54,7 +54,7 @@ if (Python_FOUND)
                                 ${CMAKE_CURRENT_BINARY_DIR}/${tgt})
       endif ()
     else ()
-      if (NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
+      if (NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
         execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/${tgt}
                                 ${CMAKE_CURRENT_BINARY_DIR}/${tgt})
       else ()
