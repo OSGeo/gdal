@@ -7847,7 +7847,6 @@ class Geometry(_object):
 
     def Destroy(self):
       self.__swig_destroy__(self)
-      self.__del__()
       self.thisown = 0
 
     def __str__(self):
