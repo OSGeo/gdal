@@ -3,10 +3,10 @@ name: Ubuntu 20.04 build
 on:
     push:
         paths-ignore:
-            - 'gdal/doc/**'
+            - 'doc/**'
     pull_request:
         paths-ignore:
-            - 'gdal/doc/**'
+            - 'doc/**'
 
 
 jobs:
@@ -65,23 +65,23 @@ jobs:
         run: docker run -e GITHUB_WORKFLOW --rm gdal sh -c "cd /build/autotest/cpp && make quick_test && make testsse2 && (if (g++ -march=native -dM -E -x c++ - < /dev/null | grep AVX2 >/dev/null); then make testavx2; else /bin/true; fi)"
 
       - name: Run SWIG Perl tests
-        run: docker run --rm gdal sh -c "cd /build/gdal/swig/perl && make test"
+        run: docker run --rm gdal sh -c "cd /build/swig/perl && make test"
 
       - name: Run SWIG Java tests
-        run: docker run --rm gdal sh -c "cd /build/gdal/swig/java && make test"
+        run: docker run --rm gdal sh -c "cd /build/swig/java && make test"
 
       - name: Run SWIG CSharp tests
-        run: docker run --rm gdal sh -c "cd /build/gdal/swig/csharp && make && make test"
+        run: docker run --rm gdal sh -c "cd /build/swig/csharp && make && make test"
 
       - name: Build GDAL Python sdist distribution
-        run: docker run --rm gdal sh -c "cd /build/gdal/swig/python && python3 setup.py sdist"
+        run: docker run --rm gdal sh -c "cd /build/swig/python && python3 setup.py sdist"
 
       - name: Build gdal-utils Python bdist_wheel distribution
-        run: docker run --rm gdal sh -c "cd /build/gdal/swig/python/gdal-utils && python3 -m pip install wheel && python3 setup.py bdist_wheel"
+        run: docker run --rm gdal sh -c "cd /build/swig/python/gdal-utils && python3 -m pip install wheel && python3 setup.py bdist_wheel"
 
       - name: Run pytest
         # --security-opt seccomp=unconfined, so that the userfaulfd syscall is available
         run: docker run -e CI -e TRAVIS=yes -e TRAVIS_BRANCH=ubuntu_2004 -e GITHUB_WORKFLOW --security-opt seccomp=unconfined --rm gdal sh -c "cd /build/autotest && pip3 install -U -r requirements.txt && pytest"
 
       - name: Build fake ossfuzz fuzzers
-        run: docker run --rm gdal sh -c "cd /build/gdal/fuzzers && make dummyfuzzers_dynamic"
+        run: docker run --rm gdal sh -c "cd /build/fuzzers && make dummyfuzzers_dynamic"

@@ -16,8 +16,8 @@ from subprocess import check_output, CalledProcessError
 # Switches
 # ---------------------------------------------------------------------------
 
-include_dirs = ['@CMAKE_BINARY_DIR@/gdal/port', '@CMAKE_SOURCE_DIR@/gdal/port', '@CMAKE_BINARY_DIR@/gdal/gcore', '@CMAKE_SOURCE_DIR@/gdal/gcore', '@CMAKE_SOURCE_DIR@/gdal/alg', '@CMAKE_SOURCE_DIR@/gdal/ogr/', '@CMAKE_SOURCE_DIR@/gdal/ogr/ogrsf_frmts', '@CMAKE_SOURCE_DIR@/gdal/gnm', '@CMAKE_SOURCE_DIR@/gdal/apps']
-library_dirs = ['@CMAKE_BINARY_DIR@/gdal/']
+include_dirs = ['@CMAKE_BINARY_DIR@/port', '@CMAKE_SOURCE_DIR@/port', '@CMAKE_BINARY_DIR@/gcore', '@CMAKE_SOURCE_DIR@/gcore', '@CMAKE_SOURCE_DIR@/alg', '@CMAKE_SOURCE_DIR@/ogr/', '@CMAKE_SOURCE_DIR@/ogr/ogrsf_frmts', '@CMAKE_SOURCE_DIR@/gnm', '@CMAKE_SOURCE_DIR@/apps']
+library_dirs = ['@CMAKE_BINARY_DIR@/']
 libraries = ['gdal']
 
 

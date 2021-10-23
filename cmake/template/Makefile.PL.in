@@ -8,7 +8,7 @@ use Cwd;
 my $source_tree = '@CMAKE_SOURCE_DIR@/gdal';
 my $build_tree = '@CMAKE_BINARY_DIR@/gdal';
 my $wrap_dir = '@GDAL_PERL_WRAP_OBJ_DIR@';
-my $config = "@CMAKE_BINARY_DIR@/gdal/apps/gdal-config";
+my $config = "@CMAKE_BINARY_DIR@/apps/gdal-config";
 push @ARGV, "INSTALLSITEMAN1DIR=@INSTALL_PREFIX@/@INSTALL_BASE@/man1";
 push @ARGV, "INSTALLSITEMAN3DIR=@INSTALL_PREFIX@/@INSTALL_BASE@/man3";
 
@@ -23,12 +23,12 @@ for my $module (sort keys %$objects) {
     my $OPTIMIZE = '';
     $OPTIMIZE .= ' '.$ENV{CFLAGS} if $ENV{CFLAGS};
     $OPTIMIZE .= ' '.$ENV{CPPFLAGS} if $ENV{CFLAGS};
-    
+
     my %PM = ( 'lib/Geo/GDAL.pm' => '$(INST_LIBDIR)/GDAL.pm',
                'lib/Geo/OGR.pm' => '$(INST_LIBDIR)/OGR.pm',
                'lib/Geo/OSR.pm' => '$(INST_LIBDIR)/OSR.pm',
                'lib/Geo/Const.pm' => '$(INST_LIBDIR)/GDAL/Const.pm' );
-    
+
     $PM{'lib/Geo/GNM.pm'} = '$(INST_LIBDIR)/GNM.pm' if $objects->{'Geo::GNM'};
 
     WriteMakefile( NAME => $module,
@@ -64,7 +64,7 @@ sub get_config {
             if (/^CONFIG_LIBS/) {
                 s/^CONFIG_LIBS="//;
                 s/"\s*$//;
-                if ($_ =~ /\.la$/) { 
+                if ($_ =~ /\.la$/) {
                     $LIB .= parse_libtool_library_file_for_l($_);
                 } else {
                     $LIB .= $_;

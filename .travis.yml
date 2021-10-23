@@ -180,13 +180,13 @@ matrix:
 #        - DETAILS="debug build, libtool"
 
 before_install:
-  - ./gdal/ci/travis/${BUILD_NAME}/before_install.sh
+  - ./ci/travis/${BUILD_NAME}/before_install.sh
 
 install:
-  - ./gdal/ci/travis/${BUILD_NAME}/install.sh
+  - ./ci/travis/${BUILD_NAME}/install.sh
 
 script:
-  - ./gdal/ci/travis/${BUILD_NAME}/script.sh
+  - ./ci/travis/${BUILD_NAME}/script.sh
 
 notifications:
   irc:

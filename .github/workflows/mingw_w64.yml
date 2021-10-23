@@ -3,10 +3,10 @@ name: mingw_w64 build
 on:
     push:
         paths-ignore:
-            - 'gdal/doc/**'
+            - 'doc/**'
     pull_request:
         paths-ignore:
-            - 'gdal/doc/**'
+            - 'doc/**'
 
 
 jobs:

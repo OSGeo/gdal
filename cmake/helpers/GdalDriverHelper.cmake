@@ -1,5 +1,5 @@
 # Distributed under the GDAL/OGR MIT/X style License.  See accompanying
-# file gdal/LICENSE.TXT.
+# file LICENSE.TXT.
 
 #[=======================================================================[.rst:
 GdalDriverHelper
@@ -196,8 +196,8 @@ endmacro()
 #  Macro for including  driver directories.
 #  Following macro should use only in the directories:
 #
-#  gdal/ogr/ogrsf_frmts/
-#  gdal/frmts/
+#  ogr/ogrsf_frmts/
+#  frmts/
 #
 
 include(CMakeDependentOption)

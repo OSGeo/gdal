@@ -494,7 +494,7 @@ REFERENCES_RELATION    = NO
 # functions in REFERENCES_RELATION and REFERENCED_BY_RELATION lists will
 # link to the source code.  Otherwise they will link to the documentation.
 #
-# http://trac.osgeo.org/gdal/ticket/2723
+# http://trac.osgeo.org/ticket/2723
 
 REFERENCES_LINK_SOURCE = NO
 
@@ -558,7 +558,7 @@ HTML_HEADER            =
 # each generated HTML page. If it is left blank doxygen will generate a
 # standard footer.
 
-HTML_FOOTER            = ${CMAKE_SOURCE_DIR}/gdal/doc/gdal_footer.html
+HTML_FOOTER            = ${CMAKE_SOURCE_DIR}/doc/gdal_footer.html
 
 # Custom layout (see http://www.stack.nl/~dimitri/doxygen/manual/customize.html)
 LAYOUT_FILE 	       = ${GDAL_DOXYGEN_LAYOUT_FILE}

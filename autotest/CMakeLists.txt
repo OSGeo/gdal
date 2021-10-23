@@ -13,7 +13,7 @@ if (Python_FOUND)
     set(_SEP ":")
   endif ()
   get_target_property(PLUGIN_OUTPUT_DIR gdal PLUGIN_OUTPUT_DIR)
-  list(APPEND _TEST_ENV "PATH=${CMAKE_BINARY_DIR}/gdal/apps${_SEP}$ENV{PATH}" "GDAL_DATA=${CMAKE_SOURCE_DIR}/gdal/data"
+  list(APPEND _TEST_ENV "PATH=${CMAKE_BINARY_DIR}/apps${_SEP}$ENV{PATH}" "GDAL_DATA=${CMAKE_SOURCE_DIR}/data"
        "GDAL_DRIVER_PATH=${PLUGIN_OUTPUT_DIR}")
   if (GDAL_DOWNLOAD_TEST_DATA)
     list(APPEND _TEST_ENV GDAL_DOWNLOAD_TEST_DATA=YES)
@@ -30,8 +30,8 @@ if (Python_FOUND)
   configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/pytest.ini.in ${CMAKE_CURRENT_BINARY_DIR}/pytest.ini @ONLY)
   file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/conftest.py DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
-  set(PYTHON_RUN_ENV "PYTHONPATH=${CMAKE_BINARY_DIR}/gdal/swig/python/"
-                     "LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/gdal${_SEP}$ENV{LD_LIBRARY_PATH}")
+  set(PYTHON_RUN_ENV "PYTHONPATH=${CMAKE_BINARY_DIR}/swig/python/"
+                     "LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}${_SEP}$ENV{LD_LIBRARY_PATH}")
   foreach (
     tgt IN
     ITEMS ogr
@@ -40,6 +40,7 @@ if (Python_FOUND)
           alg
           osr
           gnm
+          pymod
           pyscripts
           utilities)
     if (CMAKE_VERSION VERSION_GREATER 3.14)
@@ -100,6 +101,6 @@ int main(int argc, char **argv) {
     autotest_runner
     COMMAND ${CMAKE_COMMAND} -E env ${PYTHON_RUN_ENV} $<TARGET_NAME:pytest_runner> -c
             ${CMAKE_CURRENT_BINARY_DIR}/pytest.ini
-    DEPENDS gdal gdalapps python_binding
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/autotest)
+    DEPENDS gdal gdalapps python_binding pytest_runner
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 endif ()

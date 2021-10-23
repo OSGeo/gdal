@@ -23,7 +23,7 @@ else
   export OTHER_SWITCHES="--enable-debug "
 fi
 
-cd /build/gdal
+cd /build
 
 ./autogen.sh
 
@@ -75,9 +75,9 @@ make "-j$(nproc)" USER_DEFS=-Werror
 make install "-j$(nproc)"
 ldconfig
 
-(cd ../autotest/cpp && make "-j$(nproc)")
+(cd autotest/cpp && make "-j$(nproc)")
 
-#(cd ../autotest/cpp && \
+#(cd autotest/cpp && \
 #    make vsipreload.so && \
 #    LD_PRELOAD=./vsipreload.so gdalinfo /vsicurl/http://download.osgeo.org/gdal/data/ecw/spif83.ecw && \
 #    LD_PRELOAD=./vsipreload.so sqlite3  /vsicurl/http://download.osgeo.org/gdal/data/sqlite3/polygon.db "select * from polygon limit 10"

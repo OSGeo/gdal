@@ -1,5 +1,5 @@
 # Distributed under the GDAL/OGR MIT/X style License.  See accompanying
-# file gdal/LICENSE.TXT.
+# file LICENSE.TXT.
 
 #[=======================================================================[.rst:
 GdalVersion
@@ -17,7 +17,7 @@ GdalVersion
 #]=======================================================================]
 
 # parse the version number from gdal_version.h and include in GDAL_MAJOR_VERSION and GDAL_MINOR_VERSION
-file(READ ${CMAKE_SOURCE_DIR}/gdal/gcore/gdal_version.h.in GDAL_VERSION_H_CONTENTS)
+file(READ ${CMAKE_SOURCE_DIR}/gcore/gdal_version.h.in GDAL_VERSION_H_CONTENTS)
 string(REGEX MATCH "GDAL_VERSION_MAJOR[ \t]+([0-9]+)"
        GDAL_VERSION_MAJOR ${GDAL_VERSION_H_CONTENTS})
 string(REGEX MATCH "([0-9]+)"
@@ -46,7 +46,7 @@ else ()
     git_local_changes(GIT_LOCAL_CHG ${CMAKE_SOURCE_DIR})
     string(SUBSTRING ${GDAL_GIT_HASH} 0 10 REV)
     set(GDAL_DEV_REVISION "dev-${REV}")
-    file(READ ${CMAKE_SOURCE_DIR}/gdal/gcore/gdal_version.h.in GDAL_VERSION_H_CONTENTS)
+    file(READ ${CMAKE_SOURCE_DIR}/gcore/gdal_version.h.in GDAL_VERSION_H_CONTENTS)
     string(CONCAT
            GDAL_VERSION_H_CONTENTS
            "/* This is a generated file from gdal_version.h.in. DO NOT MODIFY !!!! */\n"
@@ -59,7 +59,7 @@ else ()
          OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/gcore/gdal_version.h
          CONTENT "${GDAL_VERSION_H_CONTENTS}")
   else ()
-    file(READ ${CMAKE_SOURCE_DIR}/gdal/gcore/gdal_version.h.in GDAL_VERSION_H_CONTENTS)
+    file(READ ${CMAKE_SOURCE_DIR}/gcore/gdal_version.h.in GDAL_VERSION_H_CONTENTS)
     string(CONCAT
            GDAL_VERSION_H_CONTENTS
            "/* This is a generated file from gdal_version.h.in. DO NOT MODIFY !!!! */\n"
@@ -71,7 +71,7 @@ else ()
 endif ()
 
 if (NOT GDAL_SOVERSION)
-  file(READ ${CMAKE_SOURCE_DIR}/gdal/GDALmake.opt.in GDAL_MAKE_OPT_CONTENT)
+  file(READ ${CMAKE_SOURCE_DIR}/GDALmake.opt.in GDAL_MAKE_OPT_CONTENT)
   string(REGEX MATCH "^LIBGDAL_CURRENT :=[ /t]+([0-9]+)$" "${GDAL_MAKE_OPT_CONTENT}" GDAL_SOVERSION)
   string(REGEX MATCH "([0-9]+)" "${GDAL_SOVERSION}" GDAL_SOVERSION)
   # when fails to get soversion, fallback to some default

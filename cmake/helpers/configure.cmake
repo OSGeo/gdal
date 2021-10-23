@@ -1,4 +1,4 @@
-# Distributed under the GDAL/OGR MIT/X style License.  See accompanying file gdal/LICENSE.TXT.
+# Distributed under the GDAL/OGR MIT/X style License.  See accompanying file LICENSE.TXT.
 
 #[=======================================================================[.rst:
 configure
@@ -438,6 +438,6 @@ if (UNIX)
   endif ()
 endif ()
 
-configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/cpl_config.h.in ${CMAKE_BINARY_DIR}/gdal/port/cpl_config.h @ONLY)
+configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/cpl_config.h.in ${CMAKE_BINARY_DIR}/port/cpl_config.h @ONLY)
 
 # vim: ts=4 sw=4 sts=4 et

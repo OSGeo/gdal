@@ -75,7 +75,6 @@ tar xzf sqlite-autoconf-3250100.tar.gz
 (cd proj; sudo make -j3 install)
 
 # build GDAL
-cd gdal
 ./autogen.sh
 ./configure --host=x86_64-w64-mingw32 --with-proj=/tmp/install
 make USER_DEFS="-Wextra -Werror" -j3
@@ -90,7 +89,7 @@ cd swig/python
 ln -s "$WINEPREFIX/drive_c/users/root/Local Settings/Application Data/Programs/Python/Python37" $WINEPREFIX/drive_c/Python37
 gendef $WINEPREFIX/drive_c/Python37/python37.dll
 x86_64-w64-mingw32-dlltool --dllname $WINEPREFIX/drive_c/Python37/python37.dll --input-def python37.def --output-lib $WINEPREFIX/drive_c/Python37/libs/libpython37.a
-bash fallback_build_mingw32_under_unix_py37.sh 
+bash fallback_build_mingw32_under_unix_py37.sh
 cd ../..
 
 ccache -s
@@ -101,7 +100,7 @@ rm -f "$WORK_DIR/ccache.tar.gz"
 
 
 wine64 apps/gdalinfo.exe --version
-cd ../autotest
+cd autotest
 # Does not work under wine
 rm -f gcore/rfc30.py
 rm -f pyscripts/data/test_utf8*
@@ -116,7 +115,7 @@ export PYTEST="wine64 $PYTHON_DIR/python.exe -m pytest -vv -p no:sugar --color=n
 
 
 # Run all the Python autotests
-GDAL_DATA=$PWD/../gdal/data \
-    PYTHONPATH=$PWD/../gdal/swig/python/build/lib.win-amd64-3.7 \
-    PATH=$PWD/../gdal:$PWD/../gdal/apps/.libs:$PWD:$PATH \
+GDAL_DATA=$PWD/../data \
+    PYTHONPATH=$PWD/../swig/python/build/lib.win-amd64-3.7 \
+    PATH=$PWD/../gdal:$PWD/../apps/.libs:$PWD:$PATH \
     $PYTEST

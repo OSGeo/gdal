@@ -1,5 +1,5 @@
 # Distributed under the GDAL/OGR MIT/X style License.  See accompanying
-# file gdal/LICENSE.TXT.
+# file LICENSE.TXT.
 
 #[=======================================================================[.rst:
 CheckDependentLibraries.cmake

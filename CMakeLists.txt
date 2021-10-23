@@ -193,13 +193,13 @@ else ()
 endif ()
 set_package_properties(Python PROPERTIES PURPOSE "SWIG_PYTHON: Python binding")
 #
-add_subdirectory(gdal)
+include(gdal.cmake)
 # unit tests
 add_subdirectory(autotest/cpp)
 # please comment out if you want to exclude autotest from distribution.
 add_subdirectory(autotest)
 # Google OSS-Fuzz project utilities
-add_subdirectory(gdal/fuzzers)
+add_subdirectory(fuzzers)
 # Google OSS-Fuzz tests
-add_subdirectory(gdal/fuzzers/tests)
+add_subdirectory(fuzzers/tests)
 # vim: ts=4 sw=4 sts=4 et

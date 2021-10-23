@@ -7,7 +7,7 @@ branches:
 # the file patterns below
 skip_commits:
     files:
-        - gdal/doc/**/*
+        - doc/**/*
 
 environment:
   matrix:
@@ -155,7 +155,7 @@ install:
       $env:NMAKE_LOCAL+="NETCDF_HAS_NC4 = yes`n"
       $env:NMAKE_LOCAL+="PROJ_INCLUDE=-I$env:APPVEYOR_BUILD_FOLDER\install-proj\include`n"
       $env:NMAKE_LOCAL+="PROJ_LIBRARY=$env:APPVEYOR_BUILD_FOLDER\install-proj\lib\proj.lib`n"
-      $env:NMAKE_LOCAL | Set-Content "$env:APPVEYOR_BUILD_FOLDER\gdal\nmake.local"
+      $env:NMAKE_LOCAL | Set-Content "$env:APPVEYOR_BUILD_FOLDER\nmake.local"
       #
       cd $env:APPVEYOR_BUILD_FOLDER
       exec { git clone --depth=1 -b $env:PROJ_BRANCH https://github.com/OSGeo/PROJ proj }
@@ -176,17 +176,17 @@ install:
       appveyor DownloadFile http://download.osgeo.org/proj/proj-datumgrid-1.8.zip
       exec { 7z x proj-datumgrid-1.8.zip -aoa }
       #
-      cd $env:APPVEYOR_BUILD_FOLDER\gdal
+      cd $env:APPVEYOR_BUILD_FOLDER
       exec { copy $env:APPVEYOR_BUILD_FOLDER\install-proj\bin\*.dll . }
       exec { nmake /f makefile.vc MSVC_VER=$env:MSVC_VER $env:WIN64_ARG USER_DEFS=/WX }
       cd apps
       exec { nmake /f makefile.vc test_ogrsf.exe MSVC_VER=$env:MSVC_VER $env:WIN64_ARG USER_DEFS=/WX }
       $env:DISTUTILS_USE_SDK=1
       $env:MSSdk=1
-      cd $env:APPVEYOR_BUILD_FOLDER\gdal\swig\python
+      cd $env:APPVEYOR_BUILD_FOLDER\swig\python
       exec { python setup.py build }
       exec { python setup.py install }
-      cd $env:APPVEYOR_BUILD_FOLDER\gdal\swig\csharp
+      cd $env:APPVEYOR_BUILD_FOLDER\swig\csharp
       exec { nmake /f makefile.vc interface}
       exec { nmake /f makefile.vc all $env:WIN64_ARG}
       cd $env:APPVEYOR_BUILD_FOLDER\autotest\cpp
@@ -196,8 +196,8 @@ build: off
 
 test_script:
   - ps: |
-      $env:PATH="$env:APPVEYOR_BUILD_FOLDER\gdal;$env:APPVEYOR_BUILD_FOLDER\gdal\apps;$env:SDK_BIN;$env:PATH"
-      $env:GDAL_DATA="$env:APPVEYOR_BUILD_FOLDER\gdal\data"
+      $env:PATH="$env:APPVEYOR_BUILD_FOLDER;$env:APPVEYOR_BUILD_FOLDER\apps;$env:SDK_BIN;$env:PATH"
+      $env:GDAL_DATA="$env:APPVEYOR_BUILD_FOLDER\data"
       # $env:PROJ_LIB="$env:APPVEYOR_BUILD_FOLDER\install-proj\share"
       $env:DO_NOT_FAIL_ON_RECODE_ERRORS="YES"
       # The ca-bundle.crt file which we could point to is invalid in the current SDK
@@ -208,7 +208,7 @@ test_script:
       cd $env:APPVEYOR_BUILD_FOLDER\autotest
       exec { pip install -Ur requirements.txt }
       exec { pytest -vv }
-      cd $env:APPVEYOR_BUILD_FOLDER\gdal\swig\csharp
+      cd $env:APPVEYOR_BUILD_FOLDER\swig\csharp
       exec { nmake /f makefile.vc test}
 
 deploy: off
