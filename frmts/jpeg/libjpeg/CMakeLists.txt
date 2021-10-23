@@ -59,7 +59,7 @@ add_library(
   jquant1.c)
 target_include_directories(libjpeg PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
                                            $<TARGET_PROPERTY:cpl,SOURCE_DIR> $<TARGET_PROPERTY:cpl,BINARY_DIR>)
-target_compile_options(libjpeg PRIVATE ${GDAL_C_WARNING_FLAGS} ${SOFTWARNFLAGS})
+target_compile_options(libjpeg PRIVATE ${GDAL_C_WARNING_FLAGS} ${GDAL_SOFTWARNFLAGS})
 
 target_compile_definitions(libjpeg PRIVATE -DDEFAULT_MAX_MEM=500000000L)
 set_property(TARGET libjpeg PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
