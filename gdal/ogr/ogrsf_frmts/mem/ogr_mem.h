@@ -42,7 +42,7 @@ class OGRMemDataSource;
 
 class IOGRMemLayerFeatureIterator;
 
-class OGRMemLayer CPL_NON_FINAL: public OGRLayer
+class CPL_DLL OGRMemLayer CPL_NON_FINAL: public OGRLayer
 {
     CPL_DISALLOW_COPY_ASSIGN(OGRMemLayer)
 
