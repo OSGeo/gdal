@@ -31,10 +31,12 @@
 #ifndef PARSEXSD_H_INCLUDED
 #define PARSEXSD_H_INCLUDED
 
+#include "cpl_port.h"
+
 #include <vector>
 #include "gmlreader.h"
 
-bool GMLParseXSD( const char *pszFile,
+bool CPL_DLL GMLParseXSD( const char *pszFile,
                  std::vector<GMLFeatureClass*> & aosClasses,
                  bool& bFullyUnderstood );
 
