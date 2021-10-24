@@ -80,4 +80,10 @@ target_compile_options(csf PRIVATE ${GDAL_C_WARNING_FLAGS} ${GDAL_SOFTWARNFLAGS}
 target_include_directories(csf PRIVATE $<TARGET_PROPERTY:cpl,SOURCE_DIR> $<TARGET_PROPERTY:cpl,BINARY_DIR>)
 target_compile_definitions(csf PRIVATE -DUSE_IN_GDAL)
 set_property(TARGET csf PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
-target_sources(gdal PRIVATE $<TARGET_OBJECTS:csf>)
+
+is_plugin(RES gdal_PCRaster)
+if (RES)
+  target_sources(gdal_PCRaster PRIVATE $<TARGET_OBJECTS:csf>)
+else ()
+  target_sources(gdal PRIVATE $<TARGET_OBJECTS:csf>)
+endif ()
