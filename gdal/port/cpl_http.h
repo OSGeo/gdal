@@ -183,7 +183,7 @@ void CPL_DLL CPLHTTPRestoreSigPipeHandler(void* old_handler);
 bool CPLMultiPerformWait(void* hCurlMultiHandle, int& repeats);
 /*! @endcond */
 
-bool CPLIsMachinePotentiallyGCEInstance();
+bool CPL_DLL CPLIsMachinePotentiallyGCEInstance();
 bool CPLIsMachineForSureGCEInstance();
 
 /** Manager of Google OAuth2 authentication.
