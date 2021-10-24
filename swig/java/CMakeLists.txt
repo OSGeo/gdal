@@ -43,6 +43,7 @@ function (GDAL_JAVA_WRAP)
   else ()
     set_property(TARGET ${_SWIG_TARGET}jni PROPERTY LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   endif ()
+  target_link_libraries(${_SWIG_TARGET}jni PRIVATE $<TARGET_NAME:gdal>)
 endfunction ()
 
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/org/gdal)
