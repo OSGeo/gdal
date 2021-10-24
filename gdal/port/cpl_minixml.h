@@ -193,7 +193,7 @@ extern "C++"
 #endif
 
 /*! @cond Doxygen_Suppress */
-struct CPLXMLTreeCloserDeleter
+struct CPL_DLL CPLXMLTreeCloserDeleter
 {
     void operator()(CPLXMLNode* psNode) const { CPLDestroyXMLNode(psNode); }
 };
@@ -202,7 +202,7 @@ struct CPLXMLTreeCloserDeleter
 /** Manage a tree of XML nodes so that all nodes are freed when the instance goes
  * out of scope.  Only the top level node should be in a CPLXMLTreeCloser.
  */
-class CPLXMLTreeCloser: public std::unique_ptr<CPLXMLNode, CPLXMLTreeCloserDeleter>
+class CPL_DLL CPLXMLTreeCloser: public std::unique_ptr<CPLXMLNode, CPLXMLTreeCloserDeleter>
 {
  public:
   /** Constructor */
