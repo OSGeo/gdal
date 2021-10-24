@@ -1,9 +1,8 @@
-add_gdal_driver(TARGET gdal_CALS SOURCES calsdataset.cpp PLUGIN_CAPABLE_IF "NOT GDAL_USE_LIBTIFF_INTERNAL" NO_DEPS)
+add_gdal_driver(TARGET gdal_CALS SOURCES calsdataset.cpp PLUGIN_CAPABLE NO_DEPS)
 gdal_standard_includes(gdal_CALS)
 
 if (GDAL_USE_LIBTIFF_INTERNAL)
   target_include_directories(gdal_CALS PRIVATE $<TARGET_PROPERTY:libtiff,SOURCE_DIR>)
 else ()
   target_include_directories(gdal_CALS PRIVATE ${TIFF_INCLUDE_DIRS})
-  gdal_target_link_libraries(TARGET gdal_CALS LIBRARIES ${TIFF_LIBRARIES})
 endif ()
