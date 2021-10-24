@@ -1248,7 +1248,7 @@ CPLErr GDALEEDAIDataset::GetGeoTransform( double* adfGeoTransform )
 bool GDALEEDAIDataset::Open(GDALOpenInfo* poOpenInfo)
 {
     m_osBaseURL = CPLGetConfigOption("EEDA_URL",
-                            "https://earthengine.googleapis.com/v1alpha/");
+                            "https://earthengine-highvolume.googleapis.com/v1alpha/");
 
     m_osAsset =
             CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "ASSET", "");
