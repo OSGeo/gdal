@@ -29,6 +29,8 @@
 #ifndef CPL_VAX_H
 #define CPL_VAX_H
 
+#include "cpl_port.h"
+
 void CPL_DLL CPLVaxToIEEEDouble( void * );
 void CPL_DLL CPLIEEEToVaxDouble( void * );
 
