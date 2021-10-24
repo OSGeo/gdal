@@ -38,7 +38,7 @@
 /*                      OGRUnionLayerGeomFieldDefn                      */
 /************************************************************************/
 
-class OGRUnionLayerGeomFieldDefn final: public OGRGeomFieldDefn
+class CPL_DLL OGRUnionLayerGeomFieldDefn final: public OGRGeomFieldDefn
 {
     public:
 
@@ -64,7 +64,7 @@ typedef enum
     FIELD_SPECIFIED,
 } FieldUnionStrategy;
 
-class OGRUnionLayer final: public OGRLayer
+class CPL_DLL OGRUnionLayer final: public OGRLayer
 {
     CPL_DISALLOW_COPY_ASSIGN(OGRUnionLayer)
 
