@@ -34,6 +34,10 @@ if (SQLITE_HAS_PCRE AND GDAL_USE_PCRE)
   gdal_target_link_libraries(TARGET ogr_SQLite LIBRARIES PCRE::PCRE)
 endif ()
 
+if (SQLITE_HAS_COLUMN_METADATA)
+  target_compile_definitions(ogr_SQLite PRIVATE -DSQLITE_HAS_COLUMN_METADATA)
+endif ()
+
 if (GDAL_USE_SPATIALITE)
   get_filename_component(SPATIALITE_SONAME ${SPATIALITE_LIBRARY} NAME CACHE)
   target_compile_definitions(ogr_SQLite PRIVATE -DHAVE_SPATIALITE)
