@@ -57,6 +57,14 @@ if (GDAL_HIDE_INTERNAL_SYMBOLS)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
 endif ()
 
+# Check that all symbols we need are present in our dependencies
+# This is in particular useful to check that drivers built as plugins can
+# access all symbols they need.
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  string(APPEND CMAKE_SHARED_LINKER_FLAGS " -Wl,--no-undefined")
+  string(APPEND CMAKE_MODULE_LINKER_FLAGS " -Wl,--no-undefined")
+endif ()
+
 # Default definitions during build
 add_definitions(-DGDAL_COMPILATION -DGDAL_CMAKE_BUILD)
 
