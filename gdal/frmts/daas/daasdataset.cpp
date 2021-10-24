@@ -1070,7 +1070,7 @@ void GDALDAASDataset::ReadSRS(const CPLJSONObject& oProperties)
     if( m_osSRSType == "urn" || m_osSRSType == "proj4" )
     {
         OGRSpatialReference oSRS;
-        if( oSRS.SetFromUserInput(m_osSRSValue, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS) == OGRERR_NONE )
+        if( oSRS.SetFromUserInput(m_osSRSValue, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) == OGRERR_NONE )
         {
             OGR_SRSNode *poGEOGCS = oSRS.GetAttrNode("GEOGCS");
             if( poGEOGCS != nullptr )
@@ -1188,7 +1188,7 @@ bool GDALDAASDataset::SetupServerSideReprojection(const char* pszTargetSRS)
     }
 
     OGRSpatialReference oSRS;
-    if( oSRS.SetFromUserInput(pszTargetSRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS) != OGRERR_NONE )
+    if( oSRS.SetFromUserInput(pszTargetSRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) != OGRERR_NONE )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                     "Invalid TARGET_SRS value");

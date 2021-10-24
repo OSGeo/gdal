@@ -92,7 +92,7 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
         VersionStringToInt(osVersion.c_str())>= VersionStringToInt("1.3.0") )
     {
         OGRSpatialReference oSRS;
-        oSRS.SetFromUserInput(osCRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS);
+        oSRS.SetFromUserInput(osCRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get());
         oSRS.AutoIdentifyEPSG();
         if( oSRS.EPSGTreatsAsLatLong() || oSRS.EPSGTreatsAsNorthingEasting() )
         {

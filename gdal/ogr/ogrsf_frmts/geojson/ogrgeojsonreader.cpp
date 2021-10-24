@@ -1495,7 +1495,7 @@ OGRSpatialReference* OGRGeoJSONReadSpatialReference( json_object* poObj )
 
             poSRS = new OGRSpatialReference();
             poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-            if( OGRERR_NONE != poSRS->SetFromUserInput( pszName, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS ) )
+            if( OGRERR_NONE != poSRS->SetFromUserInput( pszName, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) )
             {
                 delete poSRS;
                 poSRS = nullptr;

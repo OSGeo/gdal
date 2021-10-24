@@ -2938,7 +2938,7 @@ void GMLASReader::ProcessGeometry(CPLXMLNode* psRoot)
                                 new OGRSpatialReference();
                 poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
-                if( poSRS->SetFromUserInput( pszSRSName, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS ) == OGRERR_NONE )
+                if( poSRS->SetFromUserInput( pszSRSName, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) == OGRERR_NONE )
                 {
                     m_oMapGeomFieldDefnToSRSName[poGeomFieldDefn] = pszSRSName;
                     poGeomFieldDefn->SetSpatialRef(poSRS);
@@ -2973,7 +2973,7 @@ void GMLASReader::ProcessGeometry(CPLXMLNode* psRoot)
             if( oIter == m_oMapSRSNameToInvertedAxis.end() )
             {
                 OGRSpatialReference oSRS;
-                oSRS.SetFromUserInput( pszSRSName, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS );
+                oSRS.SetFromUserInput( pszSRSName, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get());
                 bSwapXY = !STARTS_WITH_CI(pszSRSName, "EPSG:") &&
                     (CPL_TO_BOOL(oSRS.EPSGTreatsAsLatLong()) ||
                      CPL_TO_BOOL(oSRS.EPSGTreatsAsNorthingEasting()));
@@ -2996,7 +2996,7 @@ void GMLASReader::ProcessGeometry(CPLXMLNode* psRoot)
         {
             bool bReprojectionOK = false;
             OGRSpatialReference oSRS;
-            if( oSRS.SetFromUserInput( pszSRSName, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS ) == OGRERR_NONE )
+            if( oSRS.SetFromUserInput( pszSRSName, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) == OGRERR_NONE )
             {
                 OGRCoordinateTransformation* poCT =
                     OGRCreateCoordinateTransformation( &oSRS,

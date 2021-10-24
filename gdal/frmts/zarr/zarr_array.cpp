@@ -3264,7 +3264,7 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
             {
                 poSRS = std::make_shared<OGRSpatialReference>();
                 poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-                if( poSRS->SetFromUserInput(item.ToString().c_str(), OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS) == OGRERR_NONE )
+                if( poSRS->SetFromUserInput(item.ToString().c_str(), OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) == OGRERR_NONE )
                 {
                     oAttributes.Delete(CRS_ATTRIBUTE_NAME);
                     break;

@@ -126,7 +126,7 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(
         } else if( org && code != 0 ) {
             CPLString osCode;
             osCode.Printf("%s:%d", org->c_str(), code);
-            if( m_poSRS->SetFromUserInput(osCode.c_str(), OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS) != OGRERR_NONE &&
+            if( m_poSRS->SetFromUserInput(osCode.c_str(), OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) != OGRERR_NONE &&
                 !wkt.empty() )
             {
                 m_poSRS->importFromWkt(wkt.c_str());

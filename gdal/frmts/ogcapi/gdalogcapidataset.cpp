@@ -1208,7 +1208,7 @@ bool OGCAPIDataset::InitWithCoverageAPI(GDALOpenInfo* poOpenInfo,
             srsName.resize(srsName.find("&2="));
         }
 
-        if( oSRS.SetFromUserInput( srsName.c_str(), OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS ) == OGRERR_NONE )
+        if( oSRS.SetFromUserInput( srsName.c_str(), OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) == OGRERR_NONE )
         {
             if( oSRS.EPSGTreatsAsLatLong() || oSRS.EPSGTreatsAsNorthingEasting() )
             {
@@ -1640,7 +1640,7 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo* poOpenInfo,
     if( tms == nullptr )
         return false;
 
-    if( m_oSRS.SetFromUserInput(tms->crs().c_str(), OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS) != OGRERR_NONE )
+    if( m_oSRS.SetFromUserInput(tms->crs().c_str(), OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) != OGRERR_NONE )
         return false;
     const bool bInvertAxis =
             m_oSRS.EPSGTreatsAsLatLong() != FALSE ||

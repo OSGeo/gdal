@@ -558,7 +558,7 @@ OGRFeature* GDALEEDALayer::GetNextRawFeature()
             if( !osSRS.empty() )
             {
                 OGRSpatialReference oSRS;
-                oSRS.SetFromUserInput(osSRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS);
+                oSRS.SetFromUserInput(osSRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get());
                 const char* pszAuthName = oSRS.GetAuthorityName(nullptr);
                 const char* pszAuthCode = oSRS.GetAuthorityCode(nullptr);
                 if( pszAuthName && pszAuthCode )

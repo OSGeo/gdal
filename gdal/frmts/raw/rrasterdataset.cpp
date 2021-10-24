@@ -561,7 +561,7 @@ void RRASTERDataset::RewriteHeader()
     if( !m_osProjection.empty() )
     {
         OGRSpatialReference oSRS;
-        oSRS.SetFromUserInput(m_osProjection, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS);
+        oSRS.SetFromUserInput(m_osProjection, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get());
         char* pszProj4 = nullptr;
         oSRS.exportToProj4(&pszProj4);
         if( pszProj4 )

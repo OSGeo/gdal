@@ -827,7 +827,7 @@ int PLMosaicDataset::OpenMosaic()
     }
 
     OGRSpatialReference oSRS;
-    oSRS.SetFromUserInput(pszSRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS);
+    oSRS.SetFromUserInput(pszSRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get());
     oSRS.exportToWkt(&pszWKT);
 
     json_object* poQuadDownload = CPL_json_object_object_get(
