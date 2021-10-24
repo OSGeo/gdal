@@ -219,7 +219,7 @@ public:
 
 #ifdef GDAL_COMPILATION
 
-bool RAWDatasetCheckMemoryUsage(int nXSize, int nYSize, int nBands,
+bool CPL_DLL RAWDatasetCheckMemoryUsage(int nXSize, int nYSize, int nBands,
                                 int nDTSize,
                                 int nPixelOffset,
                                 int nLineOffset,
