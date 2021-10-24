@@ -240,7 +240,7 @@ json_object* OGRGeoJSONFindMemberByName( json_object* poObj,
                                          const char* pszName );
 GeoJSONObject::Type OGRGeoJSONGetType( json_object* poObj );
 
-json_object* json_ex_get_object_by_path( json_object* poObj,
+json_object CPL_DLL* json_ex_get_object_by_path( json_object* poObj,
                                          const char* pszPath );
 
 json_object CPL_DLL*  CPL_json_object_object_get( struct json_object* obj,
