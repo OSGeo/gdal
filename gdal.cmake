@@ -52,6 +52,11 @@ include(CheckDependentLibraries)
 set(CMAKE_C_FLAGS ${_CMAKE_C_FLAGS_backup})
 set(CMAKE_CXX_FLAGS ${_CMAKE_CXX_FLAGS_backup})
 
+if (GDAL_HIDE_INTERNAL_SYMBOLS)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
+endif ()
+
 # Default definitions during build
 add_definitions(-DGDAL_COMPILATION -DGDAL_CMAKE_BUILD)
 
