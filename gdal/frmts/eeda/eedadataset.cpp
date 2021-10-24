@@ -1119,7 +1119,7 @@ static json_object* GDALEEDADatasetGetConf()
 bool GDALEEDADataset::Open(GDALOpenInfo* poOpenInfo)
 {
     m_osBaseURL = CPLGetConfigOption("EEDA_URL",
-                            "https://earthengine.googleapis.com/v1alpha/");
+                            "https://earthengine-highvolume.googleapis.com/v1alpha/");
 
     CPLString osCollection =
             CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "COLLECTION", "");
