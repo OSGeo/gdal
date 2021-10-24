@@ -25,6 +25,10 @@ if (GDAL_USE_POPPLER)
   gdal_target_link_libraries(TARGET gdal_PDF LIBRARIES POPPLER::Poppler)
   string(REGEX REPLACE "([0-9]+)\\.([0-9]+).*" "\\1" POPPLER_VERSION_MAJOR ${POPPLER_VERSION_STRING})
   string(REGEX REPLACE "([0-9]+)\\.([0-9]+).*" "\\2" POPPLER_VERSION_MINOR ${POPPLER_VERSION_STRING})
+  # Strip leading zero
+  if ("${POPPLER_VERSION_MINOR}" MATCHES "0?[0-9]+")
+    string(REGEX REPLACE "0?([0-9]+)" "\\1" POPPLER_VERSION_MINOR ${POPPLER_VERSION_MINOR})
+  endif ()
   target_compile_definitions(gdal_PDF PRIVATE -DHAVE_POPPLER -DPOPPLER_MAJOR_VERSION=${POPPLER_VERSION_MAJOR}
                                               -DPOPPLER_MINOR_VERSION=${POPPLER_VERSION_MINOR})
 endif ()
