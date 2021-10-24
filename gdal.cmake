@@ -329,7 +329,9 @@ add_subdirectory(frmts)
 add_subdirectory(ogr/ogrsf_frmts)
 
 # Bindings
-add_subdirectory(swig)
+if (BUILD_SHARED_LIBS)
+  add_subdirectory(swig)
+endif ()
 
 # Utilities
 add_subdirectory(apps)
