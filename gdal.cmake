@@ -61,8 +61,12 @@ endif ()
 # This is in particular useful to check that drivers built as plugins can
 # access all symbols they need.
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  string(APPEND CMAKE_SHARED_LINKER_FLAGS " -Wl,--no-undefined")
-  string(APPEND CMAKE_MODULE_LINKER_FLAGS " -Wl,--no-undefined")
+  include(CheckLinkerFlag)
+  check_linker_flag(C "-Wl,--no-undefined" HAS_NO_UNDEFINED)
+  if (HAS_NO_UNDEFINED)
+    string(APPEND CMAKE_SHARED_LINKER_FLAGS " -Wl,--no-undefined")
+    string(APPEND CMAKE_MODULE_LINKER_FLAGS " -Wl,--no-undefined")
+  endif ()
 endif ()
 
 # Default definitions during build
