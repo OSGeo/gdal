@@ -100,7 +100,11 @@ gdal_optional_format(pdf "Geospatial PDF") # write only if none of GDAL_USE_POPP
 gdal_dependent_format(png "PNG image format" "GDAL_USE_PNG OR GDAL_USE_LIBPNG_INTERNAL")
 gdal_dependent_format(jpeg "JPEG image format" "GDAL_USE_JPEG OR GDAL_USE_LIBJPEG_INTERNAL")
 gdal_dependent_format(gif "Graphics Interchange Format" "GDAL_USE_GIF OR GDAL_USE_GIFLIB_INTERNAL")
-gdal_dependent_format(wcs "OGC Web Coverage Service" "GDAL_USE_CURL")
+
+gdal_dependent_format(wcs "OGC Web Coverage Service" "GDAL_USE_CURL" SKIP_ADD_SUBDIRECTORY)
+gdal_dependent_format(http "HTTP driver" "GDAL_USE_CURL" SKIP_ADD_SUBDIRECTORY)
+add_subdirectory(wcs)
+
 gdal_dependent_format(netcdf "NetCDF network Common Data Form" "GDAL_USE_NETCDF")
 gdal_optional_format(zarr "ZARR")
 gdal_dependent_format(eeda "Earth Engine Data API" "GDAL_USE_CURL")

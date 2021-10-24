@@ -253,7 +253,7 @@ include(CMakeDependentOption)
 # - when enabled, add definition"-DFRMT_format"
 # - when dependency specified by depend fails, force OFF
 macro(gdal_dependent_format format desc depends)
-    set(_options)
+    set(_options SKIP_ADD_SUBDIRECTORY)
     set(_oneValueArgs DRIVER_NAME_OPTION)
     set(_multiValueArgs)
     cmake_parse_arguments(_GDF "${_options}" "${_oneValueArgs}" "${_multiValueArgs}" ${ARGN})
@@ -265,7 +265,7 @@ macro(gdal_dependent_format format desc depends)
     cmake_dependent_option(GDAL_ENABLE_FRMT_${key} "Set ON to build ${desc} format" ${GDAL_BUILD_OPTIONAL_DRIVERS}
                            "${depends}" OFF)
     add_feature_info(gdal_${key} GDAL_ENABLE_FRMT_${key} "${desc}")
-    if (GDAL_ENABLE_FRMT_${key})
+    if (GDAL_ENABLE_FRMT_${key} AND NOT _GDF_SKIP_ADD_SUBDIRECTORY)
         add_subdirectory(${format})
     endif ()
 endmacro()
