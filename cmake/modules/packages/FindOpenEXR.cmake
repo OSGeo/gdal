@@ -30,6 +30,12 @@ find_library(OpenEXR_LIBRARY
 find_library(OpenEXR_UTIL_LIBRARY
              NAMES IlmImfUtil
              HINTS ${PC_OpenEXR_LIBRARY_DIRS})
+find_library(OpenEXR_HALF_LIBRARY
+             NAMES Half
+             HINTS ${PC_OpenEXR_LIBRARY_DIRS})
+find_library(OpenEXR_IEX_LIBRARY
+             NAMES Iex
+             HINTS ${PC_OpenEXR_LIBRARY_DIRS})
 
 find_package_handle_standard_args(OpenEXR FOUND_VAR OpenEXR_FOUND
                                   REQUIRED_VARS OpenEXR_LIBRARY OpenEXR_UTIL_LIBRARY OpenEXR_INCLUDE_DIR
@@ -37,10 +43,12 @@ find_package_handle_standard_args(OpenEXR FOUND_VAR OpenEXR_FOUND
 
 if (OpenEXR_FOUND)
   set(OpenEXR_INCLUDE_DIRS ${OpenEXR_INCLUDE_DIR})
-  set(OpenEXR_LIBRARIES ${OpenEXR_LIBRARY} ${OpenEXR_UTIL_LIBRARY})
+  set(OpenEXR_LIBRARIES ${OpenEXR_LIBRARY} ${OpenEXR_UTIL_LIBRARY} ${OpenEXR_HALF_LIBRARY} ${OpenEXR_IEX_LIBRARY})
   if (NOT TARGET OpenEXR::OpenEXR)
     add_library(OpenEXR::IlmImf UNKNOWN IMPORTED)
     add_library(OpenEXR::IlmImfUtil UNKNOWN IMPORTED)
+    add_library(OpenEXR::Half UNKNOWN IMPORTED)
+    add_library(OpenEXR::Iex UNKNOWN IMPORTED)
     set_target_properties(OpenEXR::IlmImf  PROPERTIES
                           INTERFACE_INCLUDE_DIRECTORIES "${OpenEXR_INCLUDE_DIRS}"
                           IMPORTED_LINK_INTERFACE_LANGUAGES "C"
@@ -49,5 +57,13 @@ if (OpenEXR_FOUND)
                           INTERFACE_INCLUDE_DIRECTORIES "${OpenEXR_INCLUDE_DIRS}"
                           IMPORTED_LINK_INTERFACE_LANGUAGES "C"
                           IMPORTED_LOCATION ${OpenEXR_UTIL_LIBRARY})
+    set_target_properties(OpenEXR::Half PROPERTIES
+                          INTERFACE_INCLUDE_DIRECTORIES "${OpenEXR_INCLUDE_DIRS}"
+                          IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+                          IMPORTED_LOCATION ${OpenEXR_HALF_LIBRARY})
+    set_target_properties(OpenEXR::Iex PROPERTIES
+                          INTERFACE_INCLUDE_DIRECTORIES "${OpenEXR_INCLUDE_DIRS}"
+                          IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+                          IMPORTED_LOCATION ${OpenEXR_IEX_LIBRARY})
   endif ()
 endif ()
