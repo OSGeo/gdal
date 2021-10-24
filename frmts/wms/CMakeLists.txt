@@ -1,4 +1,3 @@
-# WMS should not be a plugin -- WFS dependency.
 add_gdal_driver(
   TARGET gdal_WMS
   SOURCES gdalhttp.cpp
@@ -34,7 +33,7 @@ add_gdal_driver(
           minidriver_virtualearth.h
           minidriver_worldwind.h
           wmsmetadataset.h
-  BUILTIN)
+          PLUGIN_CAPABLE)
 gdal_standard_includes(gdal_WMS)
 target_include_directories(gdal_WMS PRIVATE ${CURL_INCLUDE_DIRS} $<TARGET_PROPERTY:alg,SOURCE_DIR>
                                             $<TARGET_PROPERTY:gdal_raw,SOURCE_DIR>)
