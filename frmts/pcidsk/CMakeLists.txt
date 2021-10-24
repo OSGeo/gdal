@@ -9,12 +9,9 @@ add_gdal_driver(
           "NOT GDAL_USE_LIBJPEG_INTERNAL")
 gdal_standard_includes(gdal_PCIDSK)
 
-if (GDAL_USE_LIBJPEG_INTERNAL)
-  target_include_directories(gdal_PCIDSK PRIVATE $<TARGET_PROPERTY:libjpeg,SOURCE_DIR>)
-else ()
-  target_include_directories(gdal_PCIDSK PRIVATE ${JPEG_INCLUDE_DIRS})
-  gdal_target_link_libraries(TARGET gdal_PCIDSK LIBRARIES JPEG::JPEG)
-endif ()
-
 target_include_directories(gdal_PCIDSK PRIVATE $<TARGET_PROPERTY:pcidsk_sdk,SOURCE_DIR>)
 add_subdirectory(sdk)
+
+if (NOT GDAL_USE_LIBJPEG_INTERNAL)
+  gdal_target_link_libraries(TARGET gdal_PCIDSK LIBRARIES JPEG::JPEG)
+endif ()

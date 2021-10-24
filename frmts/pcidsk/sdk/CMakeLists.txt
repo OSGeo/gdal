@@ -56,8 +56,12 @@ else ()
   target_sources(pcidsk_sdk PRIVATE port/io_stdio.cpp port/pthread_mutex.cpp)
 endif ()
 
-# FIXME target if we build as a plugin
-target_sources(gdal PRIVATE $<TARGET_OBJECTS:pcidsk_sdk>)
+is_plugin(RES gdal_PCIDSK)
+if (RES)
+  target_sources(gdal_PCIDSK PRIVATE $<TARGET_OBJECTS:pcidsk_sdk>)
+else ()
+  target_sources(gdal PRIVATE $<TARGET_OBJECTS:pcidsk_sdk>)
+endif ()
 
 target_include_directories(pcidsk_sdk PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} $<TARGET_PROPERTY:cpl,SOURCE_DIR>
                                               $<TARGET_PROPERTY:cpl,BINARY_DIR>)
@@ -65,6 +69,13 @@ set_property(TARGET pcidsk_sdk PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED
 
 if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
   set_property(TARGET pcidsk_sdk PROPERTY UNITY_BUILD OFF)
+endif ()
+
+target_compile_definitions(pcidsk_sdk PRIVATE -DHAVE_LIBJPEG)
+if (GDAL_USE_LIBJPEG_INTERNAL)
+  target_include_directories(pcidsk_sdk PRIVATE $<TARGET_PROPERTY:libjpeg,SOURCE_DIR>)
+else ()
+  target_include_directories(pcidsk_sdk PRIVATE ${JPEG_INCLUDE_DIRS})
 endif ()
 
 if (NOT TARGET PCIDSK::PCIDSK)
