@@ -259,7 +259,7 @@ bool OGRGeoJSONUpdateLayerGeomType( OGRLayer* poLayer,
 /************************************************************************/
 
 bool OGRGeoJSONReadRawPoint( json_object* poObj, OGRPoint& point );
-OGRGeometry* OGRGeoJSONReadGeometry( json_object* poObj );
+OGRGeometry CPL_DLL * OGRGeoJSONReadGeometry( json_object* poObj );
 OGRPoint* OGRGeoJSONReadPoint( json_object* poObj );
 OGRMultiPoint* OGRGeoJSONReadMultiPoint( json_object* poObj );
 OGRLineString* OGRGeoJSONReadLineString( json_object* poObj, bool bRaw=false );

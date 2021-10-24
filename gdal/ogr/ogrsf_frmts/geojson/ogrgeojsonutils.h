@@ -67,7 +67,7 @@ bool TopoJSONIsObject(const char *pszText);
 /*                           GeoJSONPropertyToFieldType                 */
 /************************************************************************/
 
-OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject,
+OGRFieldType CPL_DLL GeoJSONPropertyToFieldType( json_object* poObject,
                                          OGRFieldSubType& eSubType,
                                          bool bArrayAsString = false );
 
