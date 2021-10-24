@@ -45,6 +45,7 @@
 # NETCDF_HAS_HDF4
 # NETCDF_HAS_HDF5
 # NETCDF_HAS_DAP
+# NETCDF_HAS_MEM
 #
 
 #search starting from user editable cache var
@@ -79,6 +80,12 @@ if(NETCDF_INCLUDE_DIR AND NETCDF_LIBRARY)
     set (NETCDF_C_INCLUDE_DIRS ${NETCDF_INCLUDE_DIR})
     set (NETCDF_C_LIBRARIES ${NETCDF_LIBRARY})
 
+    find_file(NETCDF_MEM_H
+             NAMES "netcdf_mem.h"
+             HINTS ${NETCDF_INCLUDE_DIR})
+    if(NETCDF_MEM_H)
+        set(NETCDF_HAS_MEM ON)
+    endif()
 
     function(GET_NC_CONFIG _conf)
         if(_conf STREQUAL "c++")

@@ -98,6 +98,7 @@ set(CPL_SOURCES
     cpl_vsil_oss.cpp
     cpl_vsil_swift.cpp
     cpl_json_streaming_writer.cpp
+    cpl_userfaultfd.cpp
     cpl_vax.cpp
     cpl_compressor.cpp)
 add_library(cpl OBJECT ${CPL_SOURCES})

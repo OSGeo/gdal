@@ -402,7 +402,7 @@ else (MSVC)
     add_definitions(-DDONT_DEPRECATE_SRPINTF)
   endif ()
 
-  check_include_file('linux/userfaultfd.h' HAVE_USERFAULTFD_H)
+  check_include_file("linux/userfaultfd.h" HAVE_USERFAULTFD_H)
 endif ()
 
 if (WORDS_BIGENDIAN)
