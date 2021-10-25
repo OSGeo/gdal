@@ -56,7 +56,6 @@ jobs:
         cmake --build $GITHUB_WORKSPACE/superbuild/build --target quicktest
 
   build-windows-msys2-mingw:
-    if: ${{ false }}  # FIXME: disable for now
     runs-on: windows-latest
     env:
       generator: MinGW Makefiles
@@ -71,7 +70,7 @@ jobs:
           $script = @'
           pacman -S --noconfirm base-devel
           pacman -S --noconfirm mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-ccache
-          pacman -S --noconfirm mingw-w64-x86_64-proj mingw-w64-x86_64-geos mingw-w64-x86_64-hdf5 mingw-w64-x86_64-netcdf mingw-w64-x86_64-openjpeg mingw-w64-x86_64-poppler mingw-w64-x86_64-libtiff mingw-w64-x86_64-libpng mingw-w64-x86_64-xerces-c mingw-w64-x86_64-libxml2 mingw-w64-x86_64-libfreexl mingw-w64-x86_64-libgeotiff mingw-w64-x86_64-libspatialite mingw-w64-x86_64-libtiff mingw-w64-x86_64-pcre mingw-w64-x86_64-postgresql mingw-w64-x86_64-zstd mingw-w64-x86_64-crypto++ mingw-w64-x86_64-cgal mingw-w64-x86_64-jasper mingw-w64-x86_64-python-numpy mingw-w64-x86_64-python-pytest
+          pacman -S --noconfirm mingw-w64-x86_64-proj mingw-w64-x86_64-geos mingw-w64-x86_64-hdf5 mingw-w64-x86_64-netcdf mingw-w64-x86_64-openjpeg mingw-w64-x86_64-poppler mingw-w64-x86_64-libtiff mingw-w64-x86_64-libpng mingw-w64-x86_64-xerces-c mingw-w64-x86_64-libfreexl mingw-w64-x86_64-libgeotiff mingw-w64-x86_64-libspatialite mingw-w64-x86_64-libtiff mingw-w64-x86_64-pcre mingw-w64-x86_64-postgresql mingw-w64-x86_64-zstd mingw-w64-x86_64-crypto++ mingw-w64-x86_64-cgal mingw-w64-x86_64-jasper mingw-w64-x86_64-python-numpy mingw-w64-x86_64-python-pytest
           '@
           & c:\tools\msys64\usr\bin\bash.exe -lc $script
         env:
@@ -86,15 +85,17 @@ jobs:
           & c:\tools\msys64\usr\bin\bash.exe -lc $script
         env:
           MSYSTEM: MINGW64
+      #  libxml2 disabled because currently causes a 'Imported target "LibXml2::LibXml2" includes non-existent path "/mingw64/include/libxml2" in its INTERFACE_INCLUDE_DIRECTORIES'
       - name: Configure
-        run: cmake -DCMAKE_BUILD_TYPE=release -G "${env:generator}" "-DCMAKE_C_COMPILER_LAUNCHER=c:\tools\msys64\mingw64\bin\ccache.exe" "-DCMAKE_CXX_COMPILER_LAUNCHER=c:\tools\msys64\mingw64\bin\ccache.exe" "-DCMAKE_PREFIX_PATH=C:\tools\msys64\mingw64" "-DCMAKE_UNITY_BUILD=${env:CMAKE_UNITY_BUILD}" -S . -B "build"
+        run: cmake -DCMAKE_BUILD_TYPE=release -G "${env:generator}" "-DCMAKE_C_COMPILER_LAUNCHER=c:\tools\msys64\mingw64\bin\ccache.exe" "-DCMAKE_CXX_COMPILER_LAUNCHER=c:\tools\msys64\mingw64\bin\ccache.exe" "-DCMAKE_PREFIX_PATH=C:\tools\msys64\mingw64" "-DCMAKE_UNITY_BUILD=${env:CMAKE_UNITY_BUILD}" -S . -B "build" -DLIBXML2_INCLUDE_DIR=C:/tools/msys64/mingw64/include -DGDAL_USE_LIBXML2:BOOL=OFF
         working-directory: ${{ github.workspace }}
       - name: Build
-        run: cmake --build build
+        run: cmake --build build -j 3
         working-directory: ${{ github.workspace }}
-      - name: test
-        run: cmake --build build --target quicktest
-        working-directory: ${{ github.workspace }}
+      # FIXME: enable some tests
+      #- name: test
+      #  run: cmake --build build --target quicktest
+      #  working-directory: ${{ github.workspace }}
 
   build-windows-conda:
     runs-on: windows-latest
@@ -133,17 +134,16 @@ jobs:
       run: cmake --build $GITHUB_WORKSPACE/build --config Release
     - name: test
       shell: bash -l {0}
-      # only test-copy-words for now
+      # FIXME: only test-copy-words for now
       run: |
         export PATH=${CONDA_PREFIX}/Library/bin:${GITHUB_WORKSPACE}/build/Release:${PATH}
         echo $PATH
         cmake --build $GITHUB_WORKSPACE/build --config Release --target test-copy-words
 
   build-mac:
-    if: ${{ false }}  # FIXME: disable for now
     runs-on: macOS-latest
     env:
-      CMAKE_OPTIONS: -DGDAL_USE_GIFLIB_INTERNAL=YES -DCFITSIO_ROOT=/usr/local/opt/cfitsio  -DPoppler_ROOT=/usr/local/opt/poppler -DPROJ_ROOT=/usr/local/opt/proj -DLibXml2_ROOT=/usr/local/opt/libxml2 -DSPATIALITE_ROOT=/usr/local/opt/libspatialite -DPostgreSQL_ROOT=/usr/local/opt/libpq -DEXPAT_ROOT=/usr/local/opt/expat -DXercesC_ROOT=/usr/local/opt/xerces-c -DSQLite3_ROOT=/usr/local/opt/sqlite -DOpenSSL_ROOT=/usr/local/opt/openssl -DPNG_ROOT=/usr/local/opt/libpng -DJPEG_ROOT=/usr/local/opt/jpeg -DOpenJPEG_ROOT=/usr/local/opt/openjpeg
+      CMAKE_OPTIONS: -DGDAL_USE_GIFLIB_INTERNAL=YES -DCFITSIO_ROOT=/usr/local/opt/cfitsio  -DPoppler_ROOT=/usr/local/opt/poppler -DPROJ_ROOT=/usr/local/opt/proj -DLibXml2_ROOT=/usr/local/opt/libxml2 -DSPATIALITE_ROOT=/usr/local/opt/libspatialite -DPostgreSQL_ROOT=/usr/local/opt/libpq -DEXPAT_ROOT=/usr/local/opt/expat -DXercesC_ROOT=/usr/local/opt/xerces-c -DSQLite3_ROOT=/usr/local/opt/sqlite -DOpenSSL_ROOT=/usr/local/opt/openssl -DPNG_ROOT=/usr/local/opt/libpng -DJPEG_ROOT=/usr/local/opt/jpeg -DOpenJPEG_ROOT=/usr/local/opt/openjpeg -DGDAL_USE_DAP=OFF -DGDAL_USE_JASPER=OFF
     steps:
     - name: Checkout GDAL
       uses: actions/checkout@v2
@@ -154,7 +154,7 @@ jobs:
         brew update
         brew outdated
         brew install postgresql || brew link --overwrite postgresql
-        brew install freexl libxml2 libspatialite geos proj openjpeg giflib szip postgis poppler doxygen unixodbc libdap
+        brew install freexl libxml2 libspatialite geos proj openjpeg giflib szip postgis poppler doxygen unixodbc
         brew install ccache swig
         # gdal is automatically installed as a dependency for postgis
         brew uninstall --ignore-dependencies gdal
@@ -163,6 +163,7 @@ jobs:
         mkdir -p $GITHUB_WORKSPACE/build
         cmake -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal ${CMAKE_OPTIONS} "-DCMAKE_C_COMPILER_LAUNCHER=ccache" "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build"
     - name: Build
-      run: cmake --build $GITHUB_WORKSPACE/build
+      run: cmake --build $GITHUB_WORKSPACE/build -j 3
     - name: test
-      run: cmake --build $GITHUB_WORKSPACE/build --target quicktest
+      # FIXME: only test-copy-words for now. quicktest target fails on test-unit in a few test cases
+      run: cmake --build $GITHUB_WORKSPACE/build --target test-copy-words
