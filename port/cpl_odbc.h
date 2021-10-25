@@ -239,6 +239,7 @@ class CPL_DLL CPLODBCStatement {
 
     char         **m_papszColValues = nullptr;
     CPL_SQLLEN       *m_panColValueLengths = nullptr;
+    double        *m_padColValuesAsDouble = nullptr;
 
     int            Failed( int );
 
@@ -279,10 +280,14 @@ class CPL_DLL CPLODBCStatement {
     short          GetColNullable( int );
     const char    *GetColColumnDef( int );
 
-    int            GetColId( const char * );
+    int            GetColId( const char * ) const;
     const char    *GetColData( int, const char * = nullptr );
     const char    *GetColData( const char *, const char * = nullptr );
     int            GetColDataLength( int );
+
+    double         GetColDataAsDouble( int ) const;
+    double         GetColDataAsDouble( const char * ) const;
+
     int            GetRowCountAffected();
 
     // Fetch special metadata.
