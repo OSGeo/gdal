@@ -40,7 +40,7 @@ if(PKG_CONFIG_FOUND)
 endif()
 
 find_path(PDFIUM_INCLUDE_DIR
-          NAMES POFDoc.h
+          NAMES public/fpdfview.h
           HINTS ${PC_PDFIUM_INCLUDE_DIRS}
           PATH_SUFFIXES pdfium)
 
