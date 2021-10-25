@@ -86,7 +86,7 @@ endif ()
 #
 project(gdal LANGUAGES C CXX)
 
-set(GDAL_LIB_TARGET_NAME gdal)
+set(GDAL_LIB_TARGET_NAME GDAL)
 
 #
 # setup cmake modules paths

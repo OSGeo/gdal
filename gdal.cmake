@@ -211,6 +211,7 @@ endfunction(gdal_add_private_link_libraries)
 
 add_library(${GDAL_LIB_TARGET_NAME} gcore/gdal.h)
 set_target_properties(${GDAL_LIB_TARGET_NAME} PROPERTIES OUTPUT_NAME "gdal")
+add_library(GDAL::GDAL ALIAS ${GDAL_LIB_TARGET_NAME})
 add_dependencies(${GDAL_LIB_TARGET_NAME} generate_gdal_version_h)
 if (M_LIB)
   gdal_add_private_link_libraries(-lm)
@@ -482,20 +483,23 @@ install(
 
 if (UNIX AND NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
   # Genarate GdalConfig.cmake and GdalConfigVersion.cmake
-  export(EXPORT gdal-export FILE gdal-export.cmake)
+  export(EXPORT gdal-export
+         NAMESPACE GDAL::
+         FILE gdal-export.cmake)
   install(
     EXPORT gdal-export
-    FILE GdalConfig.cmake
+    FILE GDALConfig.cmake
+    NAMESPACE GDAL::
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gdal/
     EXPORT_LINK_INTERFACE_LIBRARIES)
   include(CMakePackageConfigHelpers)
   write_basic_package_version_file(
-    GdalConfigVersion.cmake
+    GDALConfigVersion.cmake
     VERSION ${GDAL_VERSION}
     # SameMinorVersion compatibility are supported CMake > 3.10.1 so use ExactVersion instead. COMPATIBILITY
     # SameMinorVersion)
     COMPATIBILITY ExactVersion)
-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/GdalConfigVersion.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gdal/)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/GDALConfigVersion.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gdal/)
 
   # gdal-config utility command generation
   include(GenerateConfig)
