@@ -258,7 +258,7 @@ if(GDAL_USE_LIBKML)
 endif()
 cmake_dependent_option(GDAL_USE_LIBKML "Set ON to use LibKML" ON LibKML_FOUND OFF)
 
-gdal_check_package(Jasper "Enable JPEG2000 support")
+gdal_check_package(Jasper "Enable JPEG2000 support" CAN_DISABLE)
 if(HAVE_JASPER)
     # Detect GeoJP2 UUID hack
     include(CheckCSourceCompiles)
