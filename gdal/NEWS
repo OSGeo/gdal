@@ -1,3 +1,131 @@
+= GDAL/OGR 3.3.3 Release Notes =
+
+The 3.3.3 release is a bug fix release.
+
+== Build ==
+
+* Use pkg-config for libdap when dap-config is not available.
+* Fix build against Poppler 21.10.0
+* fix mrf 'make clean' when lercv1 not defined
+* Windows: fix TileDB build (#4631)
+* Windows: remove unneeded qualifier on CPLMSVCSafeIntException class to fix pedantic build (#4698)
+
+== Port ==
+
+* Google cloud: avoid issue with some openssl versions and 2 line endings in private key
+* /vsimem/: fix Read(buffer,nSize=0,nCount=1) to return 0
+* /vsicurl/: fix for curl 7.79.0 to get file size when retrieving headers only.
+* /vsicurl/: make it work without explicit CPL_VSIL_CURL_USE_HEAD=FALSE with .earthdata.nasa.gov/ URLs (#4641)
+* VSI cache: fix crash when a Read() to the underlying file fails (#4559)
+* CPL logging mechanism: fix writing non-ASCII UTF-8 filenames on Windows (#4492)
+
+== GDAL core ==
+
+* GDALOpenInfo(): fix issue when passing a directory on netBSD and potentially other BSDs
+* Warper: avoid selecting Float64 working data type with a Float32 raster and a nodata value compatible of it (#4469)
+* GDALMDReaderPleiades::LoadRPCXmlFile(): fix nullptr dereference on non-conformant file (ossfuzz #38998)
+* GDALDataset::BlockBasedRasterIO(): fix when an overview is selected and non-integer window coordinates are involved (#4665)
+
+== GDAL utilities ==
+
+* gdal2tiles: fix tile grid origin of openlayers with xyz and geodetic profile as arguments (#4425)
+* gdal2tiles: avoid potential race when creating directories (#4691)
+* gdal_sieve: preserve NoData value when output to a new file
+* pct2rgb: fix parsing arguments
+* fix GetOutputDriversFor for ext == 'nc' (#4671, #4498)
+
+== GDAL drivers ==
+
+COG driver:
+ * fix error messages when creating JPEG compressed COGs from RGBA
+
+EEDAI driver:
+ * Make Earth Engine driver use the highvolume API endpoint by default (#4695)
+
+ERS driver:
+ * fix off-by-one error when reading ERS header (#4609)
+
+GeoRaster driver:
+ * Add owner checking in the query (#4565)
+
+GRIB driver:
+ * fix stack read buffer overflow (ossfuzz #38610)
+ * fix potential crashes on big GRIB1 files on low-memory condition (ossfuzz #38971)
+
+GTiff driver:
+ * fix nullptr deref read with PROJ master and a CompoundCRS where the ellipsoid definition is invalid
+ * fix corruption in TIFF directory chaining when altering nodata value after IFD crystallization (#3746)
+ * do not try to export a DerivedGeographic CRS to GeoTIFF, but fallback to PAM
+ * Internal libtiff: fix rewrite in place that could cause corruption in some situations. (#4538)
+
+JP2KAK driver:
+ * fix Unix build with Kakadu 8.2 (#4306)
+
+PDS4 driver:
+ * fix opening of some .xml files with large number of <?xml-model> tags
+ * accept optional <Reference_List> element in template
+ * fixes for compatibility with sp:Spectral_Characteristics in template.
+
+netCDF driver:
+ * accept degree_north/degree_east (degree singular) as acceptable unit for latitude/longitude axis (#4439)
+ * Tolerate "degrees_E"/"degrees_N" as valid axis names (#4581)
+ * parse correctly valid_range/valid_min/valid_max attributes when they are of non-integer type (#4443)
+ * multidim: avoid crash when getting data type of a char variable with 2 dimensions
+ * multidim GetBlockSize(): fix heap buffer write overflow on 2D char variables (ossfuzz #39258)
+ * multidim: fix use of coordinates attribute to find the indexing variable of a dimension
+
+WCS driver:
+ * fix requests involving negative coordinates (#4550)
+
+VRT driver:
+ * fix issue with sources with nodata and OverviewList resampling='average' that triggers a 'recursion error' message (relates to #4620)
+ * GDALAutoCreateWarpedVRTEx(): do not set padfSrcNoDataReal/padfDstNoDataReal if already set in passed-in options (rasterio/rasterio#2233)
+ * avoid recursion issue on ComputeStatistics()/.ComputeRasterMinMax()/GetHistogram() with implicit overviews and approximation enabled (#4661)
+
+WMTS driver:
+ * do not take into account a TileMatrixSetLink that points to a non-existing TileMatrixSet.
+
+== OGRSpatialReference ==
+
+* OGRSpatialReference::GetAxesCount(): fix on CompoundCRS of BoundCRS
+* fix retrieving projection parameters from WKT1 name on a Projected 3D CRS (OSGeo/PROJ#2846)
+* Fix EPSGTreatsAsLatLong with compoundCRS (#4505)
+* OSRProjTLSCache: avoid use of exceptions (#4531)
+* exportToWkt(): use WKT2 for DerivedProjectedCRS (#3927)
+* OGR_CT with OGR_CT_OP_SELECTION=BEST_ACCURACY: fix for non-Greenwich prime meridian (#4632)
+
+== OGR drivers ==
+
+CouchDB driver:
+ * avoid message about deprecated driver when the driver rejects the connection string (#4601)
+
+ESRIJSON driver:
+ * make 'ESRIJSON:http://' connection string scroll results
+
+FileGDB driver:
+ * Fix reading of field domains when data source is wrapped in OGRDataSourceWithTransaction (#4651)
+
+FlatGeoBuf driver:
+ * fix memory leaks on invalid geometries (ossfuzz #38166)
+
+GeoJSON driver:
+ * recognize URL of likely OAPIF items response page (fixes #4601)
+
+GML driver:
+ * fix warning when reading .gfs file with a polyhedral surface
+
+OSM driver:
+ * better validation of coordinates in XML to avoid integer overflow (ossfuzz #40257)
+
+PDS4 driver:
+ * avoid warning about wrong field subtype when parsing ASCII_Boolean
+
+== Python bindings ==
+
+* fix resampleAlg=gdal.GRA_Sum/Med/Min/Max/Q1/Q3 in gdal.Warp()
+* Fix potential OSError exception in __init__ on Windows and Python >= 3.8 (#4644)
+* remove call to __del__() in Geometry.Destroy(), which no longer exists in SWIG 4
+
 = GDAL/OGR 3.3.2 Release Notes =
 
 The 3.3.2 release is a bug fix release.
