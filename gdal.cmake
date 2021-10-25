@@ -277,7 +277,7 @@ else ()
       CACHE PATH "Installation directory for plugins")
 endif ()
 
-set(GDAL_RESOURCE_PATH ${CMAKE_INSTALL_DATADIR}/gdal) # GDAL 4.0 ? Install headers in ${CMAKE_INSTALL_INCLUDEDIR}/gdal ?
+set(GDAL_RESOURCE_PATH ${CMAKE_INSTALL_DATADIR}/gdal)
 
 # detect portability libs and set, so it should add at first Common Portability layer
 add_subdirectory(port)
@@ -351,17 +351,25 @@ if (BUILD_DOCS)
   add_subdirectory(doc)
 endif ()
 
+# GDAL 4.0 ? Install headers in ${CMAKE_INSTALL_INCLUDEDIR}/gdal ?
+set(GDAL_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR})
+
+# So that GDAL can be used as a add_subdirectory() of another project
+target_include_directories(${GDAL_LIB_TARGET_NAME} PUBLIC
+                             $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/apps>
+                             $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/alg>
+                             $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/gcore>
+                             $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/gcore/gdal_version_full>
+                             $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/port>
+                             $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/port>
+                             $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/ogr>
+                             $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/ogr/ogrsf_frmts>
+                             $<INSTALL_INTERFACE:${GDAL_INSTALL_INCLUDEDIR}>)
+
+
 # MSVC spefific resource preparation
 if (MSVC)
   target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE gcore/Version.rc)
-  target_include_directories(${GDAL_LIB_TARGET_NAME}
-                             PRIVATE
-                             $<TARGET_PROPERTY:gcore,BINARY_DIR>/gdal_version_full
-                             $<TARGET_PROPERTY:gcore,SOURCE_DIR>
-                             $<TARGET_PROPERTY:gcore,BINARY_DIR>
-                             $<TARGET_PROPERTY:cpl,SOURCE_DIR> # port
-                             $<TARGET_PROPERTY:cpl,BINARY_DIR>
-                             $<TARGET_PROPERTY:ogr,SOURCE_DIR>)
   source_group("Resource Files" FILES gcore/Version.rc)
   if (CMAKE_CL_64)
     set_target_properties(${GDAL_LIB_TARGET_NAME} PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x64")
@@ -478,7 +486,7 @@ install(
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   RESOURCE DESTINATION ${GDAL_RESOURCE_PATH}
-  PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+  PUBLIC_HEADER DESTINATION ${GDAL_INSTALL_INCLUDEDIR}
   FRAMEWORK DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 if (UNIX AND NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
