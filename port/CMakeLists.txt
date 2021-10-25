@@ -222,6 +222,12 @@ endif ()
 
 add_executable(xmlreformat EXCLUDE_FROM_ALL xmlreformat.cpp)
 
+if (GDAL_USE_LIBXML2)
+  target_compile_definitions(cpl PRIVATE -DHAVE_LIBXML2)
+  target_include_directories(cpl PRIVATE ${LIBXML2_INCLUDE_DIRS})
+  gdal_add_private_link_libraries(LibXml2::LibXml2)
+endif ()
+
 if (HAVE_CRYPTPP)
   target_compile_definitions(cpl PRIVATE -DHAVE_CRYPTOPP)
   target_include_directories(cpl PRIVATE $<TARGET_PROPERTY:CRYPTPP::CRYPTPP,INTERFACE_INCLUDE_DIRECTORIES>)
