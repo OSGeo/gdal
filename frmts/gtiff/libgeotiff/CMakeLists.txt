@@ -48,4 +48,4 @@ set_property(TARGET geotiff PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LI
 
 target_include_directories(geotiff PRIVATE ${PROJ_INCLUDE_DIR})
 gdal_add_private_link_libraries(PROJ::PROJ)
-target_sources(gdal PRIVATE $<TARGET_OBJECTS:geotiff>)
+target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:geotiff>)

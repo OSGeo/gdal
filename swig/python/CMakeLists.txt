@@ -169,7 +169,7 @@ if (Python_FOUND AND NOT WIN32)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     DEPENDS ${GDAL_PYTHON_PYSOURCES} ${GDAL_PYTHON_CSOURCES})
 
-  add_custom_target(python_binding ALL DEPENDS ${PY_SO_LIST} ${GDAL_PYTHON_PYSOURCES} gdal)
+  add_custom_target(python_binding ALL DEPENDS ${PY_SO_LIST} ${GDAL_PYTHON_PYSOURCES} ${GDAL_LIB_TARGET_NAME})
   add_custom_target(
     python_wheel
     COMMAND ${Python_EXECUTABLE} setup.py bdist_wheel
@@ -204,7 +204,7 @@ elseif (Python_Development_FOUND)
     if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
       target_compile_definitions(${name}${v} PRIVATE -D__MSVCRT_VERSION__=0x0601)
     endif ()
-    target_link_libraries(${name}${v} PRIVATE $<TARGET_NAME:gdal>)
+    target_link_libraries(${name}${v} PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)
     install(
       TARGETS ${name}${v}
       COMPONENT python

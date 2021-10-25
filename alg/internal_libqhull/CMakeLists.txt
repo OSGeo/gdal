@@ -42,4 +42,4 @@ if (MSVC)
   endif ()
 endif ()
 
-target_sources(gdal PRIVATE $<TARGET_OBJECTS:qhull>)
+target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:qhull>)

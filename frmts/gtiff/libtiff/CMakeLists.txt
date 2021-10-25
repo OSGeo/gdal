@@ -151,4 +151,4 @@ endif ()
 
 set_target_properties(libtiff PROPERTIES CXX_STANDARD 11)
 set_property(TARGET libtiff PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
-target_sources(gdal PRIVATE $<TARGET_OBJECTS:libtiff>)
+target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:libtiff>)

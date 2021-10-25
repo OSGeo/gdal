@@ -81,7 +81,7 @@ if (HAVE_SSSE3_AT_COMPILE_TIME)
     PROPERTY COMPILE_FLAGS ${GDAL_SSSE3_FLAG})
 endif ()
 
-target_sources(gdal PRIVATE $<TARGET_OBJECTS:gcore>)
+target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:gcore>)
 
 if (GDAL_USE_LIBJSONC_INTERNAL)
   target_include_directories(gcore PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)

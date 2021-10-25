@@ -47,7 +47,7 @@ target_include_directories(
   alg PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/marching_squares> $<TARGET_PROPERTY:gdal_GTIFF,SOURCE_DIR>
               $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR> $<TARGET_PROPERTY:gdal_MEM,SOURCE_DIR>)
 set_property(TARGET alg PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
-target_sources(gdal PRIVATE $<TARGET_OBJECTS:alg>)
+target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:alg>)
 if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
   set_property(SOURCE gdaldither.cpp gdalmediancut.cpp PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
 endif ()

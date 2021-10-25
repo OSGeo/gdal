@@ -12,7 +12,7 @@ if (Python_FOUND)
   else ()
     set(_SEP ":")
   endif ()
-  get_target_property(PLUGIN_OUTPUT_DIR gdal PLUGIN_OUTPUT_DIR)
+  get_target_property(PLUGIN_OUTPUT_DIR ${GDAL_LIB_TARGET_NAME} PLUGIN_OUTPUT_DIR)
   list(APPEND _TEST_ENV "PATH=${CMAKE_BINARY_DIR}/apps${_SEP}$ENV{PATH}" "GDAL_DATA=${CMAKE_SOURCE_DIR}/data"
        "GDAL_DRIVER_PATH=${PLUGIN_OUTPUT_DIR}")
   if (GDAL_DOWNLOAD_TEST_DATA)
@@ -67,13 +67,13 @@ if (Python_FOUND)
       autotest_${tgt}
       COMMAND ${CMAKE_COMMAND} -E env ${PYTHON_RUN_ENV} ${Python_EXECUTABLE} -m pytest -c
               ${CMAKE_CURRENT_BINARY_DIR}/pytest.ini ${tgt}
-      DEPENDS gdal gdalapps python_binding)
+      DEPENDS ${GDAL_LIB_TARGET_NAME} gdalapps python_binding)
   endforeach ()
   add_custom_target(
     autotest
     COMMAND ${CMAKE_COMMAND} -E env ${PYTHON_RUN_ENV} ${Python_EXECUTABLE} -m pytest -c
             ${CMAKE_CURRENT_BINARY_DIR}/pytest.ini
-    DEPENDS gdal gdalapps python_binding)
+    DEPENDS ${GDAL_LIB_TARGET_NAME} gdalapps python_binding)
   file(
     WRITE ${CMAKE_CURRENT_BINARY_DIR}/pytest_runner.cpp
     "
@@ -102,13 +102,13 @@ int main(int argc, char **argv) {
 }")
   add_executable(pytest_runner ${CMAKE_CURRENT_BINARY_DIR}/pytest_runner.cpp)
   set_property(TARGET pytest_runner PROPERTY CXX_STANDARD 11)
-  target_link_libraries(pytest_runner PUBLIC gdal)
+  target_link_libraries(pytest_runner PUBLIC ${GDAL_LIB_TARGET_NAME})
   target_include_directories(pytest_runner PRIVATE ${Python_INCLUDE_DIRS})
   target_link_libraries(pytest_runner PRIVATE ${Python_LIBRARIES})
   add_custom_target(
     autotest_runner
     COMMAND ${CMAKE_COMMAND} -E env ${PYTHON_RUN_ENV} $<TARGET_NAME:pytest_runner> -c
             ${CMAKE_CURRENT_BINARY_DIR}/pytest.ini
-    DEPENDS gdal gdalapps python_binding pytest_runner
+    DEPENDS ${GDAL_LIB_TARGET_NAME} gdalapps python_binding pytest_runner
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 endif ()

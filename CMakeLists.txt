@@ -85,6 +85,9 @@ if (POLICY CMP0125)
 endif ()
 #
 project(gdal LANGUAGES C CXX)
+
+set(GDAL_LIB_TARGET_NAME gdal)
+
 #
 # setup cmake modules paths
 include(cmake/modules/init.cmake)

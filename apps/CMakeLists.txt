@@ -18,7 +18,7 @@ add_library(
   gdalmdiminfo_lib.cpp
   gdalmdimtranslate_lib.cpp)
 add_dependencies(appslib generate_gdal_version_h)
-target_sources(gdal PRIVATE $<TARGET_OBJECTS:appslib>)
+target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:appslib>)
 gdal_standard_includes(appslib)
 target_compile_options(appslib PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST})
 target_include_directories(
@@ -38,7 +38,7 @@ else ()
 endif ()
 
 include(TargetPublicHeader)
-target_public_header(TARGET gdal HEADERS gdal_utils.h)
+target_public_header(TARGET ${GDAL_LIB_TARGET_NAME} HEADERS gdal_utils.h)
 
 if (BUILD_APPS)
   # Default Apps
@@ -136,7 +136,7 @@ if (BUILD_APPS)
       target_link_libraries(${UTILCMD} PRIVATE ${JSONC_LIBRARIES})
     endif ()
     target_include_directories(${UTILCMD} PRIVATE ${PROJ_INCLUDE_DIRS})
-    target_link_libraries(${UTILCMD} PRIVATE $<TARGET_NAME:gdal>)
+    target_link_libraries(${UTILCMD} PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)
     # Windows(Mingw/MSVC) link libraries
     if (CMAKE_SYSTEM_NAME MATCHES "Windows")
       target_link_libraries(${UTILCMD} PRIVATE wsock32 ws2_32 psapi)
@@ -189,6 +189,6 @@ if (BUILD_APPS)
     target_include_directories(
       ${UTILCMD} PRIVATE $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR> $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>
                          $<TARGET_PROPERTY:ogr_geojson,SOURCE_DIR> $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR>)
-    target_link_libraries(${UTILCMD} PRIVATE $<TARGET_NAME:gdal>)
+    target_link_libraries(${UTILCMD} PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)
   endforeach ()
 endif ()

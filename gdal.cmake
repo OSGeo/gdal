@@ -209,14 +209,15 @@ function(gdal_add_private_link_libraries)
     set_property(GLOBAL PROPERTY gdal_private_link_libraries ${tmp})
 endfunction(gdal_add_private_link_libraries)
 
-add_library(gdal gcore/gdal.h)
-add_dependencies(gdal generate_gdal_version_h)
+add_library(${GDAL_LIB_TARGET_NAME} gcore/gdal.h)
+set_target_properties(${GDAL_LIB_TARGET_NAME} PROPERTIES OUTPUT_NAME "gdal")
+add_dependencies(${GDAL_LIB_TARGET_NAME} generate_gdal_version_h)
 if (M_LIB)
   gdal_add_private_link_libraries(-lm)
 endif ()
 # Set project and C++ Standard properties
 set_target_properties(
-  gdal
+  ${GDAL_LIB_TARGET_NAME}
   PROPERTIES PROJECT_LABEL ${PROJECT_NAME}
              VERSION ${GDAL_ABI_FULL_VERSION}
              SOVERSION "${GDAL_SOVERSION}"
@@ -225,16 +226,16 @@ set_target_properties(
              RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
              CXX_STANDARD 11
              CXX_STANDARD_REQUIRED YES)
-set_property(TARGET gdal PROPERTY PLUGIN_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/gdalplugins")
+set_property(TARGET ${GDAL_LIB_TARGET_NAME} PROPERTY PLUGIN_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/gdalplugins")
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/gdalplugins")
 
 if(MSVC)
   set(GDAL_DEBUG_POSTFIX "d" CACHE STRING "Postfix to add to the GDAL dll name for debug builds")
-  set_target_properties(gdal PROPERTIES DEBUG_POSTFIX "${GDAL_DEBUG_POSTFIX}")
+  set_target_properties(${GDAL_LIB_TARGET_NAME} PROPERTIES DEBUG_POSTFIX "${GDAL_DEBUG_POSTFIX}")
 endif()
 
 if(MSVC AND NOT BUILD_SHARED_LIBS)
-  target_compile_definitions(gdal PUBLIC CPL_DISABLE_DLL=)
+  target_compile_definitions(${GDAL_LIB_TARGET_NAME} PUBLIC CPL_DISABLE_DLL=)
 endif()
 
 if (MINGW)
@@ -257,7 +258,7 @@ if (GDAL_ENABLE_MACOSX_FRAMEWORK)
       CACHE PATH "Installation directory for plugins")
   set(CMAKE_MACOSX_RPATH ON)
   set_target_properties(
-    gdal
+    ${GDAL_LIB_TARGET_NAME}
     PROPERTIES FRAMEWORK TRUE
                FRAMEWORK_VERSION A
                MACOSX_FRAMEWORK_SHORT_VERSION_STRING ${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}
@@ -342,7 +343,7 @@ add_subdirectory(apps)
 
 # Add all library dependencies of target gdal
 get_property(GDAL_PRIVATE_LINK_LIBRARIES GLOBAL PROPERTY gdal_private_link_libraries)
-target_link_libraries(gdal PRIVATE ${GDAL_PRIVATE_LINK_LIBRARIES})
+target_link_libraries(${GDAL_LIB_TARGET_NAME} PRIVATE ${GDAL_PRIVATE_LINK_LIBRARIES})
 
 # Document/Manuals
 if (BUILD_DOCS)
@@ -351,8 +352,8 @@ endif ()
 
 # MSVC spefific resource preparation
 if (MSVC)
-  target_sources(gdal PRIVATE gcore/Version.rc)
-  target_include_directories(gdal
+  target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE gcore/Version.rc)
+  target_include_directories(${GDAL_LIB_TARGET_NAME}
                              PRIVATE
                              $<TARGET_PROPERTY:gcore,BINARY_DIR>/gdal_version_full
                              $<TARGET_PROPERTY:gcore,SOURCE_DIR>
@@ -362,14 +363,14 @@ if (MSVC)
                              $<TARGET_PROPERTY:ogr,SOURCE_DIR>)
   source_group("Resource Files" FILES gcore/Version.rc)
   if (CMAKE_CL_64)
-    set_target_properties(gdal PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x64")
+    set_target_properties(${GDAL_LIB_TARGET_NAME} PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x64")
   endif ()
 endif ()
 
 # Windows(Mingw/MSVC) link libraries
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
   # wbemuuid needed for port/cpl_aws_win32.cpp
-  target_link_libraries(gdal PRIVATE wsock32 ws2_32 secur32 psapi wbemuuid)
+  target_link_libraries(${GDAL_LIB_TARGET_NAME} PRIVATE wsock32 ws2_32 secur32 psapi wbemuuid)
 endif ()
 
 get_property(_plugins GLOBAL PROPERTY PLUGIN_MODULES)
@@ -380,7 +381,7 @@ configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/gdal_def.h.in ${CMAKE_CURRENT_BINARY_
 
 # ######################################################################################################################
 set_property(
-  TARGET gdal
+  TARGET ${GDAL_LIB_TARGET_NAME}
   APPEND
   PROPERTY PUBLIC_HEADER ${CMAKE_CURRENT_BINARY_DIR}/port/cpl_config.h)
 
@@ -465,12 +466,12 @@ set(GDAL_DATA_FILES
     data/vdv452.xsd
     data/vicar.json)
 set_property(
-  TARGET gdal
+  TARGET ${GDAL_LIB_TARGET_NAME}
   APPEND
   PROPERTY RESOURCE "${GDAL_DATA_FILES}")
 
 install(
-  TARGETS gdal
+  TARGETS ${GDAL_LIB_TARGET_NAME}
   EXPORT gdal-export
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -506,7 +507,7 @@ if (UNIX AND NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
   get_property(_GDAL_FORMATS GLOBAL PROPERTY GDAL_FORMATS)
   get_property(_OGR_FORMATS GLOBAL PROPERTY OGR_FORMATS)
   string(REPLACE ";" " " CONFIG_FORMATS "${_GDAL_FORMATS} ${_OGR_FORMATS}")
-  generate_config(gdal "gdal_private_link_libraries" ${GDAL_CMAKE_TEMPLATE_PATH}/gdal-config.in
+  generate_config(${GDAL_LIB_TARGET_NAME} "gdal_private_link_libraries" ${GDAL_CMAKE_TEMPLATE_PATH}/gdal-config.in
                   ${PROJECT_BINARY_DIR}/apps/gdal-config)
   add_custom_target(gdal_config ALL DEPENDS ${PROJECT_BINARY_DIR}/apps/gdal-config)
   install(

@@ -82,4 +82,4 @@ target_compile_definitions(libjpeg12 PRIVATE -DJPEG_DUAL_MODE_8_12)
 
 target_compile_definitions(libjpeg12 PRIVATE -DDEFAULT_MAX_MEM=500000000L)
 set_property(TARGET libjpeg12 PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
-target_sources(gdal PRIVATE $<TARGET_OBJECTS:libjpeg12>)
+target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:libjpeg12>)

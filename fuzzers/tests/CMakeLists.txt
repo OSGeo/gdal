@@ -4,9 +4,9 @@ enable_testing()
 
 macro (fuzzer_test_target _test _target)
   add_executable(${_target} EXCLUDE_FROM_ALL ${_target}.cpp)
-  target_link_libraries(${_target} PRIVATE $<TARGET_NAME:gdal>)
+  target_link_libraries(${_target} PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)
   gdal_standard_includes(${_target})
-  add_dependencies(${_target} gdal)
+  add_dependencies(${_target} ${GDAL_LIB_TARGET_NAME})
   add_test(NAME ${_test} COMMAND ${_target})
 endmacro ()
 

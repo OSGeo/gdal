@@ -18,4 +18,4 @@ endif ()
 
 add_executable(mvt_tile_test EXCLUDE_FROM_ALL mvt_tile_test.cpp)
 gdal_standard_includes(mvt_tile_test)
-target_link_libraries(mvt_tile_test PRIVATE $<TARGET_NAME:gdal>)
+target_link_libraries(mvt_tile_test PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)

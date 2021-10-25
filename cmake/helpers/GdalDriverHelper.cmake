@@ -142,20 +142,20 @@ function(add_gdal_driver)
     if (_DRIVER_PLUGIN_BUILD)
         # target become *.so *.dll or *.dylib
         add_library(${_DRIVER_TARGET} MODULE ${_DRIVER_SOURCES})
-        get_target_property(PLUGIN_OUTPUT_DIR gdal PLUGIN_OUTPUT_DIR)
+        get_target_property(PLUGIN_OUTPUT_DIR ${GDAL_LIB_TARGET_NAME} PLUGIN_OUTPUT_DIR)
         set_target_properties(${_DRIVER_TARGET}
                               PROPERTIES
                               PREFIX ""
                               LIBRARY_OUTPUT_DIRECTORY ${PLUGIN_OUTPUT_DIR}
                               )
-        target_link_libraries(${_DRIVER_TARGET} PRIVATE $<TARGET_NAME:gdal>)
+        target_link_libraries(${_DRIVER_TARGET} PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)
         install(FILES $<TARGET_LINKER_FILE:${_DRIVER_TARGET}> DESTINATION ${INSTALL_PLUGIN_DIR}
                 RENAME "${_DRIVER_TARGET}${CMAKE_SHARED_LIBRARY_SUFFIX}" NAMELINK_SKIP)
         set_property(GLOBAL APPEND PROPERTY PLUGIN_MODULES ${_DRIVER_TARGET})
     else ()
         add_library(${_DRIVER_TARGET} OBJECT ${_DRIVER_SOURCES})
         set_property(TARGET ${_DRIVER_TARGET} PROPERTY POSITION_INDEPENDENT_CODE ON)
-        target_sources(gdal PRIVATE $<TARGET_OBJECTS:${_DRIVER_TARGET}>)
+        target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:${_DRIVER_TARGET}>)
         if (_DRIVER_DEF)
             if (IS_OGR EQUAL -1) # raster
                 target_compile_definitions(gdal_frmts PRIVATE -D${_DRIVER_DEF})

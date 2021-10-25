@@ -60,7 +60,7 @@ is_plugin(RES gdal_PCIDSK)
 if (RES)
   target_sources(gdal_PCIDSK PRIVATE $<TARGET_OBJECTS:pcidsk_sdk>)
 else ()
-  target_sources(gdal PRIVATE $<TARGET_OBJECTS:pcidsk_sdk>)
+  target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:pcidsk_sdk>)
 endif ()
 
 target_include_directories(pcidsk_sdk PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} $<TARGET_PROPERTY:cpl,SOURCE_DIR>
