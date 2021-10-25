@@ -103,9 +103,13 @@ All cached entries can be viewed using ``cmake -LAH`` from a build directory.
 
 .. option:: CMAKE_INSTALL_PREFIX
 
-    Default for Windows is based on the environment variable
-    :envvar:`OSGEO4W_ROOT` (if set), otherwise is ``c:/OSGeo4W``.
+    Where to install the software.
     Default for Unix-like is ``/usr/local/``.
+
+.. option:: CMAKE_PREFIX_PATH
+
+    List of directories specifying installation prefixes to be searched when
+    external dependencies are looked for.
 
     Starting with CMake 3.12, it is also possible to use a
     ``<Packagename>_ROOT`` variable to define the prefix for a particular
@@ -124,7 +128,7 @@ CMake package dependent options
 
 Generally speaking, packages (external dependencies) will be automatically found if
 they are in default locations used by CMake. This can be also tuned for example
-with the ``CMAKE_INSTALL_PREFIX`` variable.
+with the ``CMAKE_PREFIX_PATH`` variable.
 
 Starting with CMake 3.12, it is also possible to use a
 ``<Packagename>_ROOT`` variable to define the prefix for a particular
@@ -230,7 +234,7 @@ TIFF
 TileDB
 ******
 
-Specify install prefix in the ``CMAKE_INSTALL_PREFIX`` variable.
+Specify install prefix in the ``CMAKE_PREFIX_PATH`` variable.
 
 
 Selection of drivers
