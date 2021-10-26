@@ -38,7 +38,7 @@ CPL_CVSID("$Id$")
 
 static int OGRSelafinDriverIdentify( GDALOpenInfo* poOpenInfo )
 {
-    if( poOpenInfo->fpL != nullptr )
+    if( poOpenInfo->pabyHeader != nullptr )
     {
         if( poOpenInfo->nHeaderBytes < 84 + 8 )
             return FALSE;
@@ -54,6 +54,7 @@ static int OGRSelafinDriverIdentify( GDALOpenInfo* poOpenInfo )
 
         return TRUE;
     }
+
     return -1;
 }
 
