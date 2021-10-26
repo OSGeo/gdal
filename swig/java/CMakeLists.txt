@@ -36,7 +36,8 @@ function (GDAL_JAVA_WRAP)
   gdal_standard_includes(${_SWIG_TARGET}jni)
   target_include_directories(${_SWIG_TARGET}jni PRIVATE ${JNI_INCLUDE_DIRS} $<TARGET_PROPERTY:gnm,SOURCE_DIR>
                                                         ${CMAKE_CURRENT_BINARY_DIR})
-  if (GENERATOR_IS_MULTI_CONFIG)
+  get_property(_isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+  if (_isMultiConfig)
     set_target_properties(
       TARGET ${_SWIG_TARGET}jni PROPERTIES LIBRARY_OUTPUT_DIRECTORY_DEBUG ${CMAKE_CURRENT_BINARY_DIR}/debug
                                            LIBRARY_OUTPUT_DIRECTORY_REL ${CMAKE_CURRENT_BINARY_DIR})

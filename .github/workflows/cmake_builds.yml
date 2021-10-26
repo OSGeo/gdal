@@ -47,13 +47,16 @@ jobs:
         ln -s .. gdal
         mkdir build
         cd build
-        cmake  ${CMAKE_OPTIONS} -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror ..
+        cmake  ${CMAKE_OPTIONS} -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror ..
     - name: Build
       run: |
         cmake --build $GITHUB_WORKSPACE/superbuild/build -j $(nproc)
     - name: test
       run: |
-        cmake --build $GITHUB_WORKSPACE/superbuild/build --target quicktest
+        cmake --build $GITHUB_WORKSPACE/superbuild/build --target quicktest -j $(nproc)
+    - name: install
+      run: |
+        cmake --build $GITHUB_WORKSPACE/superbuild/build --target install -j $(nproc)
 
   build-windows-msys2-mingw:
     runs-on: windows-latest
@@ -70,7 +73,7 @@ jobs:
           $script = @'
           pacman -S --noconfirm base-devel
           pacman -S --noconfirm mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-ccache
-          pacman -S --noconfirm mingw-w64-x86_64-proj mingw-w64-x86_64-geos mingw-w64-x86_64-hdf5 mingw-w64-x86_64-netcdf mingw-w64-x86_64-openjpeg mingw-w64-x86_64-poppler mingw-w64-x86_64-libtiff mingw-w64-x86_64-libpng mingw-w64-x86_64-xerces-c mingw-w64-x86_64-libfreexl mingw-w64-x86_64-libgeotiff mingw-w64-x86_64-libspatialite mingw-w64-x86_64-libtiff mingw-w64-x86_64-pcre mingw-w64-x86_64-postgresql mingw-w64-x86_64-zstd mingw-w64-x86_64-crypto++ mingw-w64-x86_64-cgal mingw-w64-x86_64-jasper mingw-w64-x86_64-python-numpy mingw-w64-x86_64-python-pytest
+          pacman -S --noconfirm mingw-w64-x86_64-proj mingw-w64-x86_64-geos mingw-w64-x86_64-hdf5 mingw-w64-x86_64-netcdf mingw-w64-x86_64-openjpeg mingw-w64-x86_64-poppler mingw-w64-x86_64-libtiff mingw-w64-x86_64-libpng mingw-w64-x86_64-xerces-c mingw-w64-x86_64-libfreexl mingw-w64-x86_64-libgeotiff mingw-w64-x86_64-libspatialite mingw-w64-x86_64-libtiff mingw-w64-x86_64-pcre mingw-w64-x86_64-postgresql mingw-w64-x86_64-zstd mingw-w64-x86_64-crypto++ mingw-w64-x86_64-cgal mingw-w64-x86_64-jasper mingw-w64-x86_64-python-numpy mingw-w64-x86_64-python-pytest mingw-w64-x86_64-python-setuptools
           '@
           & c:\tools\msys64\usr\bin\bash.exe -lc $script
         env:
@@ -130,7 +133,7 @@ jobs:
       # Disable LIBKML because of issue at linking time with kmlXXXX.lib being debug libraries
       run: |
         mkdir -p $GITHUB_WORKSPACE/build
-        cmake -A ${architecture} -G "${generator}" "-DCMAKE_C_COMPILER_LAUNCHER=clcache" "-DCMAKE_CXX_COMPILER_LAUNCHER=clcache" "-DCMAKE_PREFIX_PATH=${CONDA_PREFIX}" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DSPATIALITE_LIBRARY:FILEPATH= -DJASPER_LIBRARY_RELEASE:FILEPATH= -DMYSQL_LIBRARY:FILEPATH= -DLIBKML_BASE_LIBRARY:FILEPATH=
+        cmake -A ${architecture} -G "${generator}" "-DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal" "-DCMAKE_C_COMPILER_LAUNCHER=clcache" "-DCMAKE_CXX_COMPILER_LAUNCHER=clcache" "-DCMAKE_PREFIX_PATH=${CONDA_PREFIX}" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DSPATIALITE_LIBRARY:FILEPATH= -DJASPER_LIBRARY_RELEASE:FILEPATH= -DMYSQL_LIBRARY:FILEPATH= -DLIBKML_BASE_LIBRARY:FILEPATH=
     - name: Build
       shell: bash -l {0}
       run: cmake --build $GITHUB_WORKSPACE/build --config Release
@@ -141,6 +144,9 @@ jobs:
         export PATH=${CONDA_PREFIX}/Library/bin:${GITHUB_WORKSPACE}/build/Release:${PATH}
         echo $PATH
         cmake --build $GITHUB_WORKSPACE/build --config Release --target test-copy-words
+    - name: Install
+      shell: bash -l {0}
+      run: cmake --build $GITHUB_WORKSPACE/build --config Release --target install
 
   build-mac:
     runs-on: macOS-latest
@@ -169,3 +175,5 @@ jobs:
     - name: test
       # FIXME: only test-copy-words for now. quicktest target fails on test-unit in a few test cases
       run: cmake --build $GITHUB_WORKSPACE/build --target test-copy-words
+    - name: Install
+      run: cmake --build $GITHUB_WORKSPACE/build --target install -j 3

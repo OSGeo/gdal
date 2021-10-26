@@ -22,7 +22,7 @@ from setuptools import Extension
 # ---------------------------------------------------------------------------
 
 include_dirs = ['@PROJECT_BINARY_DIR@/port', '@PROJECT_SOURCE_DIR@/port', '@PROJECT_BINARY_DIR@/gcore', '@PROJECT_SOURCE_DIR@/gcore', '@PROJECT_SOURCE_DIR@/alg', '@PROJECT_SOURCE_DIR@/ogr/', '@PROJECT_SOURCE_DIR@/ogr/ogrsf_frmts', '@PROJECT_SOURCE_DIR@/gnm', '@PROJECT_SOURCE_DIR@/apps']
-library_dirs = ['@PROJECT_BINARY_DIR@/']
+library_dirs = [@GDAL_LIB_DIR@]
 libraries = ['gdal']
 
 
@@ -149,9 +149,6 @@ class gdal_ext(build_ext):
         elif isinstance(self.library_dirs, str) and sys.platform == 'darwin':
             self.library_dirs += ':' + ':'.join(library_dirs)
         if self.libraries is None:
-            if self.get_compiler() == 'msvc':
-                libraries.remove('gdal')
-                libraries.append('gdal_i')
             self.libraries = libraries
 
         build_ext.finalize_options(self)
