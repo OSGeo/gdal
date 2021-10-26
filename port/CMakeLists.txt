@@ -240,7 +240,7 @@ if (TARGET OpenSSL::Crypto)
   gdal_add_private_link_libraries(OpenSSL::Crypto)
 endif ()
 
-if (CRYPTOPP_USE_ONLY_CRYPTODLL_ALG AND NOT BULID_SHARED_LIBS)
+if (CRYPTOPP_USE_ONLY_CRYPTODLL_ALG AND NOT BUILD_SHARED_LIBS)
   # Define USE_ONLY_CRYPTODLL_ALG is running against cryptopp.dll, but not if statically linking
   # USE_ONLY_CRYPTODLL_ALG=YES
   #
