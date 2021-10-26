@@ -32,11 +32,11 @@ Examples of dynamic CRS are ``WGS 84 (G1762)``, ``ITRF2014``, ``ATRF2014``.
 
 The generic EPSG:4326 WGS 84 CRS is also considered dynamic, although it is
 not recommended to use it due to being based on a datum ensemble whose positional
-accuracy is 2 metres, but prefer one of its realizations, such as WGS 84 (G1762)
+accuracy is 2 meters, but prefer one of its realizations, such as WGS 84 (G1762)
 
 At time of writing, no formats handled by GDAL/OGR have a standardized way of
 encoding a coordinate epoch. We consequently have made choices how to encode it,
-admitedly not always elegant, with the aim of being as much as possible backward
+admittedly not always elegant, with the aim of being as much as possible backward
 compatible with existing readers.
 Those encodings might change if corresponding official specifications
 evolve to take this concept into account. But, as this is a bit of a chicken-and-egg

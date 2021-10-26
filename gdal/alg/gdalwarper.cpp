@@ -1136,7 +1136,7 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
  *     <li>input pixel = (1, 2, 127) ==> output pixel = (0, 0, 127, 255)</li>
  *     </ul>
  *
- *     Note: NO was the default behaviour before GDAL 3.3.2
+ *     Note: NO was the default behavior before GDAL 3.3.2
  * </li>
  * <li>When PARTIAL, or not specified at all (default behavior),
  *     nodata masking values is considered independently for each band.

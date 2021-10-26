@@ -683,9 +683,9 @@ GDALProxyPoolDataset::GDALProxyPoolDataset( const char* pszSourceDatasetDescript
 /*                              Create()                                */
 /************************************************************************/
 
-/* Instanciate a GDALProxyPoolDataset where the parameters (raster size, etc.)
+/* Instantiate a GDALProxyPoolDataset where the parameters (raster size, etc.)
  * are obtained by opening the underlying dataset.
- * Its bands are also instanciated.
+ * Its bands are also instantiated.
  */
 GDALProxyPoolDataset* GDALProxyPoolDataset::Create( const char* pszSourceDatasetDescription,
                                                     CSLConstList papszOpenOptions,

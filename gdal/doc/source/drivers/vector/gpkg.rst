@@ -345,7 +345,7 @@ Two special hard-coded CRS are reserved per the GeoPackage specification:
   creating a spatial layer without any explicit CRS
 
 - SRID -1, for a Undefined Projected CRS. It might be selected by creating a
-  layer with a CRS instanciated from the following WKT string:
+  layer with a CRS instantiated from the following WKT string:
   ``LOCAL_CS["Undefined cartesian SRS"]``. (GDAL >= 3.3)
 
 Level of support of GeoPackage Extensions

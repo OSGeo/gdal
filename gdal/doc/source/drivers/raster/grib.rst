@@ -111,7 +111,7 @@ Open options
    the bands. In particular, this allows an orders of magnitude
    faster extraction of select bands from large GRIBv2 files on
    remote storage (like NOMADS on AWS S3).
-   In order to avoid unncessary I/O only the text
+   In order to avoid unnecessary I/O only the text
    description of the bands should be accessed as accessing the
    metadata will require loading of the band header.
    gdal_translate is supported but gdalinfo is not.

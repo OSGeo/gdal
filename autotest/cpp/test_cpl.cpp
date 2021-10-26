@@ -3446,7 +3446,7 @@ namespace tut
 
         constexpr int MAX_RAND_VAL = 32767;
 
-        // Slighly improved version of https://xkcd.com/221/, as suggested by
+        // Slightly improved version of https://xkcd.com/221/, as suggested by
         // "man srand"
         const auto DummyRand = [&]()
         {

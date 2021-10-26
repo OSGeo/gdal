@@ -616,13 +616,13 @@ if all the following conditions are met:
 
 - the source dataset is a JPEG file (or a VRT with a JPEG as a single SimpleSource)
 - the target dataset is a JPEG-in-TIFF file
-- no explicity target JPEG quality is specified
+- no explicitly target JPEG quality is specified
 - no change in colorspace is specified
 - no sub-windowing is requested
 - and more generally, no change that alters pixel values
 
 The generation of a tiled JPEG-in-TIFF from the original JPEG image is possible.
-Explicit assigment of target SRS and bounds are also possible.
+Explicit assignment of target SRS and bounds are also possible.
 
 So, the following commands will use the lossless copy method :
 

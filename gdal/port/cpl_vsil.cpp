@@ -844,7 +844,7 @@ char** VSIGetFileMetadata( const char * pszFilename, const char* pszDomain,
  * <li>HEADERS: specific to /vsis3/ and /vsigs/: to set HTTP headers, such as
  * "Content-Type", or other file system specific header.
  * For /vsigs/, this also includes: x-goog-meta-{key}={value}. Note that you
- * should specify all metadata to be set, as existing metadata will be overriden.
+ * should specify all metadata to be set, as existing metadata will be overridden.
  * </li>
  * <li>TAGS: Content of papszMetadata should be KEY=VALUE pairs.
  *    <ul>
