@@ -397,6 +397,7 @@ set_property(
   PROPERTY PUBLIC_HEADER ${CMAKE_CURRENT_BINARY_DIR}/port/cpl_config.h)
 
 set(GDAL_DATA_FILES
+    LICENSE.TXT
     data/GDALLogoBW.svg
     data/GDALLogoColor.svg
     data/GDALLogoGS.svg
@@ -470,7 +471,10 @@ set(GDAL_DATA_FILES
     data/seed_2d.dgn
     data/seed_3d.dgn
     data/stateplane.csv
+    data/template_tiles.mapml
     data/tms_LINZAntarticaMapTileGrid.json
+    data/tms_MapML_APSTILE.json
+    data/tms_MapML_CBMTILE.json
     data/tms_NZTM2000.json
     data/trailer.dxf
     data/vdv452.xml
