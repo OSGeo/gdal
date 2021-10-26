@@ -39,10 +39,10 @@ endif
 
 NON_DEFAULT_LIST = 	multireadtest$(EXE) dumpoverviews$(EXE) \
 	gdalwarpsimple$(EXE) gdalflattenmask$(EXE) \
-	gdaltorture$(EXE) gdal2ogr$(EXE) test_ogrsf$(EXE) \
+	gdaltorture$(EXE) gdal2ogr$(EXE) \
 	gdalasyncread$(EXE) testreprojmulti$(EXE)
 
-default:	gdal-config-inst gdal-config $(BIN_LIST)
+default:	gdal-config-inst gdal-config $(BIN_LIST) test_ogrsf$(EXE)
 
 all: default $(NON_DEFAULT_LIST)
 
