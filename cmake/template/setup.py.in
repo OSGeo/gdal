@@ -102,6 +102,7 @@ class gdal_ext(build_ext):
         self.numpy_include_dir = get_numpy_include()
         self.gdaldir = None
         self.extra_cflags = []
+        self.parallel = True
 
     def get_compiler(self):
         return self.compiler or ('msvc' if os.name == 'nt' else 'unix')
