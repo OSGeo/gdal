@@ -1,0 +1,347 @@
+#
+# makefile.vc - MSVC++ makefile for the C#/GDAL extension
+#
+# This VC++ makefile will build the GDAL C# interface assemblies
+#
+# To use the makefile:
+#  - Open a DOS prompt window
+#  - Run the VCVARS32.BAT script to initialize the VC++ environment variables
+#  - Start the build with:  nmake /f makefile.vc
+#
+# $Id$
+#
+
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+!INCLUDE csharp.opt
+
+GDAL_VERSION= \
+!INCLUDE $(GDAL_ROOT)\VERSION
+
+!IFDEF CSHARP_STATIC_LINKAGE
+GDALLIB	= $(GDAL_ROOT)\$(GDAL_LIB_NAME)
+!ELSE
+GDALLIB	= $(GDAL_ROOT)\$(GDAL_LIB_NAME)
+!ENDIF
+
+!IFDEF MONO
+CSC = mcs
+!ELSE
+!IFNDEF NETSTANDARD
+NETSTANDARD = netstandard2.0
+!ENDIF
+!IFNDEF NETCORE
+NETCORE = netcoreapp2.1
+!ENDIF
+!IF $(MSVC_VER) >= 1400
+!IFDEF WIN64
+CSC = csc /platform:anycpu
+DOTNET_RID = win-x64
+!ELSE
+CSC = csc /platform:x86
+DOTNET_RID = win-x86
+!ENDIF
+!ELSE
+CSC = csc
+!ENDIF
+!ENDIF
+
+!IF "$(DEBUG)" == "1"
+CSDEBUG = /debug:full
+DOTNET_CONFIG = Debug
+!ELSE
+CSDEBUG =
+DOTNET_CONFIG = Release
+!ENDIF
+
+!IF $(MSVC_VER) >= 1600
+CSC = $(CSC) /define:CLR4
+!ENDIF
+
+OBJ	=	gdal_wrap.obj gdalconst_wrap.obj ogr_wrap.obj osr_wrap.obj
+
+.SUFFIXES: .cs .csproj
+
+all: ogr_dir gdal_dir osr_dir const_dir gdal_csharp samples
+
+template.csproj:
+!IFDEF NETSTANDARD
+    echo ^<Project Sdk="Microsoft.NET.Sdk"^> > $@
+    echo ^<PropertyGroup^> >> $@
+    echo ^<TargetFramework^>$(NETSTANDARD)^</TargetFramework^> >> $@
+    echo ^<AssemblyVersion^>$(GDAL_VERSION).0^</AssemblyVersion^> >> $@
+    echo ^<AssemblyOriginatorKeyFile^>..\gdal.snk^</AssemblyOriginatorKeyFile^> >> $@
+    echo ^<SignAssembly^>true^</SignAssembly^> >> $@
+	echo ^<AllowUnsafeBlocks^>true^</AllowUnsafeBlocks^> >> $@
+    echo ^</PropertyGroup^> >> $@
+    echo ^</Project^> >> $@
+!ELSE
+    echo > $@
+!ENDIF
+
+{apps}.cs{apps}.csproj:
+!IFDEF NETCORE
+    echo ^<Project Sdk="Microsoft.NET.Sdk"^> > $@
+    echo ^<PropertyGroup^> >> $@
+    echo ^<OutputType^>Exe^</OutputType^> >> $@
+    echo ^<TargetFramework^>$(NETCORE)^</TargetFramework^> >> $@
+    echo ^<AssemblyVersion^>$(GDAL_VERSION).0^</AssemblyVersion^> >> $@
+    echo ^<EnableDefaultCompileItems^>false^</EnableDefaultCompileItems^>  >> $@
+    echo ^</PropertyGroup^> >> $@
+    echo ^<ItemGroup^> >> $@
+    echo ^<Compile Include="$(<F)" /^> >> $@
+    echo ^</ItemGroup^> >> $@
+    echo ^</Project^> >> $@
+!ELSE
+    echo > $@
+!ENDIF
+
+gdal_csharp: template.csproj
+!IFDEF NETSTANDARD
+    cd const
+    copy ..\template.csproj gdalconst_csharp.csproj
+    dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID)
+    cd ..
+    cd osr
+    copy ..\template.csproj osr_csharp.csproj
+    dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID)
+    cd ..
+    cd ogr
+    copy ..\template.csproj ogr_csharp.csproj
+    dotnet add reference ..\osr\osr_csharp.csproj
+    dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID)
+    cd ..
+    cd gdal
+    copy ..\template.csproj gdal_csharp.csproj
+    dotnet add reference ..\osr\osr_csharp.csproj ..\ogr\ogr_csharp.csproj
+    dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID)
+    cd ..
+!ELSE
+    $(CSC) $(CSDEBUG) /unsafe /target:library /out:osr_csharp.dll osr\*.cs AssemblyInfo.cs
+    $(CSC) $(CSDEBUG) /unsafe /target:library /out:ogr_csharp.dll /r:osr_csharp.dll ogr\*.cs AssemblyInfo.cs
+    $(CSC) $(CSDEBUG) /unsafe /target:library /out:gdal_csharp.dll /r:ogr_csharp.dll /r:osr_csharp.dll gdal\*.cs AssemblyInfo.cs
+    $(CSC) $(CSDEBUG) /unsafe /target:library /out:gdalconst_csharp.dll const\*.cs AssemblyInfo.cs
+!ENDIF
+    link /dll $(OGR_INCLUDE) $(BASE_INCLUDE) ogr_wrap.obj \
+		$(EXTERNAL_LIBS) $(GDALLIB)\
+		 /out:ogr_wrap.dll $(LINKER_FLAGS)
+	if exist ogr_wrap.dll.manifest mt -manifest ogr_wrap.dll.manifest -outputresource:ogr_wrap.dll;2
+    link /dll $(OGR_INCLUDE) $(BASE_INCLUDE) gdal_wrap.obj \
+		$(EXTERNAL_LIBS) $(GDALLIB)\
+		 /out:gdal_wrap.dll $(LINKER_FLAGS)
+	if exist gdal_wrap.dll.manifest mt -manifest gdal_wrap.dll.manifest -outputresource:gdal_wrap.dll;2
+    link /dll $(OGR_INCLUDE) $(BASE_INCLUDE) gdalconst_wrap.obj \
+		$(EXTERNAL_LIBS) $(GDALLIB)\
+		 /out:gdalconst_wrap.dll $(LINKER_FLAGS)
+	if exist gdalconst_wrap.dll.manifest mt -manifest gdalconst_wrap.dll.manifest -outputresource:gdalconst_wrap.dll;2
+    link /dll $(OGR_INCLUDE) $(BASE_INCLUDE) osr_wrap.obj \
+		$(EXTERNAL_LIBS) $(GDALLIB)\
+		 /out:osr_wrap.dll $(LINKER_FLAGS)
+	if exist osr_wrap.dll.manifest mt -manifest osr_wrap.dll.manifest -outputresource:osr_wrap.dll;2
+
+sign:
+    sn -k gdal.snk
+
+ogr_dir:
+	cd ogr
+	$(MAKE) /f makefile.vc
+	cd ..
+
+gdal_dir:
+	cd gdal
+	$(MAKE) /f makefile.vc
+	cd ..
+
+const_dir:
+	cd const
+	$(MAKE) /f makefile.vc
+	cd ..
+
+osr_dir:
+	cd osr
+	$(MAKE) /f makefile.vc
+	cd ..
+
+interface:
+	cd const
+    $(SWIG) -DSWIG2_CSHARP -csharp -namespace OSGeo.GDAL -dllimport gdalconst_wrap -o gdalconst_wrap.c ../../include/gdalconst.i
+	cd ..
+	cd gdal
+	$(SWIG) -DSWIG2_CSHARP -c++ -csharp -namespace OSGeo.GDAL  -dllimport gdal_wrap -I../../include/csharp -o gdal_wrap.cpp ../../include/gdal.i
+	cd ..
+	cd osr
+	$(SWIG) -DSWIG2_CSHARP -c++ -csharp -namespace OSGeo.OSR  -dllimport osr_wrap -I../../include/csharp -o osr_wrap.cpp ../../include/osr.i
+	cd ..
+	cd ogr
+	$(SWIG) -DSWIG2_CSHARP -c++ -csharp -namespace OSGeo.OGR -dllimport ogr_wrap -I../../include/csharp -o ogr_wrap.cpp ../../include/ogr.i
+	cd ..
+
+sampleprojects: apps/ogrinfo.csproj apps/createdata.csproj apps/OSRTransform.csproj apps/GDALRead.csproj apps/GDALReadDirect.csproj apps/GDALAdjustContrast.csproj apps/GDALDatasetRasterIO.csproj apps/GDALDatasetRasterIOEx.csproj apps/GDALWrite.csproj apps/GDALDatasetWrite.csproj apps/GDALColorTable.csproj apps/WKT2WKB.csproj apps/OGRGEOS.csproj apps/ReadXML.csproj apps/GDALInfo.csproj apps/GDALOverviews.csproj apps/GDALCreateCopy.csproj apps/GDALGetHistogram.csproj apps/VSIMem.csproj apps/GDALMemDataset.csproj apps/OGRLayerAlg.csproj apps/OGRFeatureEdit.csproj apps/GDALWarp.csproj apps/GetCRSInfo.csproj
+
+samples: sampleprojects
+!IFDEF NETSTANDARD
+    cd apps
+    dotnet add ogrinfo.csproj reference ..\osr\osr_csharp.csproj
+    dotnet add ogrinfo.csproj reference ..\ogr\ogr_csharp.csproj
+    dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID) ogrinfo.csproj
+    dotnet add createdata.csproj reference ..\osr\osr_csharp.csproj
+    dotnet add createdata.csproj reference ..\ogr\ogr_csharp.csproj
+    dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID) createdata.csproj
+    dotnet add OSRTransform.csproj reference ..\osr\osr_csharp.csproj
+    dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID) OSRTransform.csproj
+    dotnet add GDALRead.csproj reference ..\gdal\gdal_csharp.csproj
+    dotnet add GDALRead.csproj package System.Drawing.Common
+    dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID) GDALRead.csproj
+    dotnet add GDALReadDirect.csproj reference ..\gdal\gdal_csharp.csproj
+    dotnet add GDALReadDirect.csproj package System.Drawing.Common
+    dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID) GDALReadDirect.csproj
+    dotnet add GDALAdjustContrast.csproj reference ..\gdal\gdal_csharp.csproj
+    dotnet add GDALAdjustContrast.csproj package System.Drawing.Common
+    dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID) GDALAdjustContrast.csproj
+    dotnet add GDALDatasetRasterIO.csproj reference ..\gdal\gdal_csharp.csproj
+    dotnet add GDALDatasetRasterIO.csproj package System.Drawing.Common
+    dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID) GDALDatasetRasterIO.csproj
+    dotnet add GDALDatasetRasterIOEx.csproj reference ..\gdal\gdal_csharp.csproj
+    dotnet add GDALDatasetRasterIOEx.csproj package System.Drawing.Common
+    dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID) GDALDatasetRasterIOEx.csproj
+    dotnet add GDALWrite.csproj reference ..\gdal\gdal_csharp.csproj
+    dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID) GDALWrite.csproj
+    dotnet add GDALDatasetWrite.csproj reference ..\gdal\gdal_csharp.csproj
+    dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID) GDALDatasetWrite.csproj
+    dotnet add GDALColorTable.csproj reference ..\gdal\gdal_csharp.csproj
+    dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID) GDALColorTable.csproj
+    dotnet add WKT2WKB.csproj reference ..\ogr\ogr_csharp.csproj
+    dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID) WKT2WKB.csproj
+    dotnet add OGRGEOS.csproj reference ..\ogr\ogr_csharp.csproj
+    dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID) OGRGEOS.csproj
+    dotnet add ReadXML.csproj reference ..\gdal\gdal_csharp.csproj
+    dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID) ReadXML.csproj
+    dotnet add GDALInfo.csproj reference ..\ogr\ogr_csharp.csproj
+    dotnet add GDALInfo.csproj reference ..\gdal\gdal_csharp.csproj
+    dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID) GDALInfo.csproj
+    dotnet add GDALOverviews.csproj reference ..\gdal\gdal_csharp.csproj
+    dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID) GDALOverviews.csproj
+    dotnet add GDALCreateCopy.csproj reference ..\gdal\gdal_csharp.csproj
+    dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID) GDALCreateCopy.csproj
+    dotnet add GDALGetHistogram.csproj reference ..\gdal\gdal_csharp.csproj
+    dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID) GDALGetHistogram.csproj
+    dotnet add VSIMem.csproj reference ..\gdal\gdal_csharp.csproj
+    dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID) VSIMem.csproj
+    dotnet add GDALMemDataset.csproj reference ..\gdal\gdal_csharp.csproj
+    dotnet add GDALMemDataset.csproj package System.Drawing.Common
+    dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID) GDALMemDataset.csproj
+    dotnet add OGRLayerAlg.csproj reference ..\osr\osr_csharp.csproj
+    dotnet add OGRLayerAlg.csproj reference ..\ogr\ogr_csharp.csproj
+    dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID) OGRLayerAlg.csproj
+    dotnet add OGRFeatureEdit.csproj reference ..\osr\osr_csharp.csproj
+    dotnet add OGRFeatureEdit.csproj reference ..\ogr\ogr_csharp.csproj
+    dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID) OGRFeatureEdit.csproj
+    dotnet add GDALWarp.csproj reference ..\gdal\gdal_csharp.csproj
+    dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID) GDALWarp.csproj
+    dotnet add GetCRSInfo.csproj reference ..\osr\osr_csharp.csproj
+    dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID) GetCRSInfo.csproj
+    -move /Y *.dll ..
+    -move /Y *.exe ..
+    -move /Y *.pdb ..
+    -move /Y *.json ..
+    -move /Y *.md ..
+    cd ..
+!ELSE
+    $(CSC) $(CSDEBUG) /r:ogr_csharp.dll /r:osr_csharp.dll /out:ogrinfo.exe apps\ogrinfo.cs
+    $(CSC) $(CSDEBUG) /r:ogr_csharp.dll /r:osr_csharp.dll /out:createdata.exe apps\createdata.cs
+    $(CSC) $(CSDEBUG) /r:osr_csharp.dll /out:OSRTransform.exe apps\OSRTransform.cs
+    $(CSC) $(CSDEBUG) /r:gdal_csharp.dll /r:System.Drawing.dll /out:GDALRead.exe apps\GDALRead.cs
+    $(CSC) $(CSDEBUG) /r:gdal_csharp.dll /r:System.Drawing.dll /out:GDALReadDirect.exe apps\GDALReadDirect.cs
+    $(CSC) $(CSDEBUG) /r:gdal_csharp.dll /r:System.Drawing.dll /out:GDALAdjustContrast.exe apps\GDALAdjustContrast.cs
+    $(CSC) $(CSDEBUG) /r:gdal_csharp.dll /r:System.Drawing.dll /out:GDALDatasetRasterIO.exe apps\GDALDatasetRasterIO.cs
+    $(CSC) $(CSDEBUG) /r:gdal_csharp.dll /r:System.Drawing.dll /out:GDALDatasetRasterIOEx.exe apps\GDALDatasetRasterIOEx.cs
+    $(CSC) $(CSDEBUG) /r:gdal_csharp.dll /out:GDALWrite.exe apps\GDALWrite.cs
+    $(CSC) $(CSDEBUG) /r:gdal_csharp.dll /out:GDALDatasetWrite.exe apps\GDALDatasetWrite.cs
+    $(CSC) $(CSDEBUG) /r:gdal_csharp.dll /out:GDALColorTable.exe apps\GDALColorTable.cs
+    $(CSC) $(CSDEBUG) /r:ogr_csharp.dll /out:WKT2WKB.exe apps\WKT2WKB.cs
+    $(CSC) $(CSDEBUG) /r:ogr_csharp.dll /out:OGRGEOS.exe apps\OGRGEOS.cs
+    $(CSC) $(CSDEBUG) /r:gdal_csharp.dll /out:ReadXML.exe apps\ReadXML.cs
+    $(CSC) $(CSDEBUG) /r:gdal_csharp.dll /r:osr_csharp.dll /out:GDALInfo.exe apps\GDALInfo.cs
+    $(CSC) $(CSDEBUG) /r:gdal_csharp.dll /out:GDALOverviews.exe apps\GDALOverviews.cs
+    $(CSC) $(CSDEBUG) /r:gdal_csharp.dll /out:GDALCreateCopy.exe apps\GDALCreateCopy.cs
+    $(CSC) $(CSDEBUG) /r:gdal_csharp.dll /out:GDALGetHistogram.exe apps\GDALGetHistogram.cs
+    $(CSC) $(CSDEBUG) /r:gdal_csharp.dll /out:VSIMem.exe apps\VSIMem.cs
+    $(CSC) $(CSDEBUG) /r:gdal_csharp.dll /r:System.Drawing.dll /out:GDALMemDataset.exe apps\GDALMemDataset.cs
+	$(CSC) $(CSDEBUG) /r:ogr_csharp.dll /r:osr_csharp.dll /out:OGRLayerAlg.exe apps\OGRLayerAlg.cs
+	$(CSC) $(CSDEBUG) /r:ogr_csharp.dll /r:osr_csharp.dll /out:OGRFeatureEdit.exe apps\OGRFeatureEdit.cs
+	$(CSC) $(CSDEBUG) /r:gdal_csharp.dll /out:GDALWarp.exe apps\GDALWarp.cs
+	$(CSC) $(CSDEBUG) /r:osr_csharp.dll /out:GetCRSInfo.exe apps\GetCRSInfo.cs
+!ENDIF
+
+test:
+!IFDEF MONO
+	mono createdata.exe Data pointlayer
+    mono ogrinfo.exe Data/pointlayer.shp
+    mono OSRTransform.exe
+    mono GDALWrite.exe Data/sample.tif
+    mono GDALDatasetWrite.exe Data/sample1.tif
+	mono GDALCreateCopy.exe Data/sample.tif Data/sample2.tif
+	mono GDALOverviews.exe Data/sample.tif NEAREST 2 4
+	mono GDALInfo.exe Data/sample.tif
+	mono GDALInfo.exe ../../autotest/gcore/data/byte.tif
+!ELSE
+    createdata.exe Data pointlayer
+    ogrinfo.exe Data/pointlayer.shp
+	OSRTransform.exe
+	GDALWrite.exe Data/sample.tif
+	GDALDatasetWrite.exe Data/sample1.tif
+	GDALCreateCopy.exe Data/sample.tif Data/sample2.tif
+    GDALReadDirect.exe Data/sample.tif Data/sample.png
+	GDALOverviews.exe Data/sample.tif NEAREST 2 4
+	GDALInfo.exe Data/sample.tif
+	GDALInfo.exe ../../autotest/gcore/data/byte.tif
+	ogrlayeralg.exe Intersection Data/pointlayer.shp pointlayer Data/pointlayer.shp pointlayer Data intersectionresult
+	ogrinfo.exe Data/intersectionresult.shp
+	gdalwarp.exe Data/testwarp.tif "-of GTiff -t_srs EPSG:32645 -overwrite" "../../autotest/gcore/data/byte.tif"
+	getcrsinfo.exe "EPSG" 20
+    sn -vf osr_csharp.dll
+    sn -vf ogr_csharp.dll
+    sn -vf gdal_csharp.dll
+!ENDIF
+
+clean:
+	cd gdal
+	$(MAKE) /f makefile.vc clean
+	cd ..
+	cd ogr
+	$(MAKE) /f makefile.vc clean
+	cd ..
+	cd const
+	$(MAKE) /f makefile.vc clean
+	cd ..
+	cd osr
+	$(MAKE) /f makefile.vc clean
+	cd ..
+	-del $(GDAL_LIB_NAME)
+	-del *.obj
+	-del *.exp
+	-del *.ilk
+	-del *.pdb
+	-del *.tlb
+	-del *.lib
+	-del *.mdb
+	-del *.exe
+	-del *.manifest
+    -del *.json
+	-rd /q /s Data
+    -del apps\*.csproj
+    -del *.dll
+    -del *.pdb
+    -del *.exe
+    -del *.json
+    -rd /q /s apps\obj
+    -del template.csproj
+    -del SOS_README.md
+
+install:
+    -mkdir $(GDAL_HOME)\csharp
+	xcopy /Y /R /F *_wrap.dll $(GDAL_HOME)\csharp
+	xcopy /Y /R /F *_csharp.dll $(GDAL_HOME)\csharp
+

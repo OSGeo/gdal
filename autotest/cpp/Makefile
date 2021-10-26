@@ -1,6 +1,6 @@
 # This Makefile requires GNU Make.
 
-include ../../gdal/GDALmake.opt
+include ../../GDALmake.opt
 CXXFLAGS += -I. -Itut $(GDAL_INCLUDE)
 CPPFLAGS:=$(filter-out -DGDAL_COMPILATION,$(CPPFLAGS))
 
@@ -37,17 +37,17 @@ quick_test: gdal_unit_test testcopywords testclosedondestroydm testthreadcond te
 	./testlog
 
 testsse2:
-	$(CXX) -g -O2  testsse.cpp -o testsse -I../../gdal/port -I../../gdal/gcore
+	$(CXX) -g -O2  testsse.cpp -o testsse -I../../port -I../../gcore
 	./testsse
-	$(CXX) -g -O2 -DUSE_SSE2_EMULATION -DNO_WARN_USE_SSE2_EMULATION testsse.cpp -o testsse -I../../gdal/port -I../../gdal/gcore
+	$(CXX) -g -O2 -DUSE_SSE2_EMULATION -DNO_WARN_USE_SSE2_EMULATION testsse.cpp -o testsse -I../../port -I../../gcore
 	./testsse
 
 testavx2: testsse2
-	$(CXX) -g -O2 -mssse3 testsse.cpp -o testsse -I../../gdal/port -I../../gdal/gcore
+	$(CXX) -g -O2 -mssse3 testsse.cpp -o testsse -I../../port -I../../gcore
 	./testsse
-	$(CXX) -g -O2 -mssse3 -msse4.1 testsse.cpp -o testsse -I../../gdal/port -I../../gdal/gcore
+	$(CXX) -g -O2 -mssse3 -msse4.1 testsse.cpp -o testsse -I../../port -I../../gcore
 	./testsse
-	$(CXX) -g -O2 -mavx2 testsse.cpp -o testsse -I../../gdal/port -I../../gdal/gcore
+	$(CXX) -g -O2 -mavx2 testsse.cpp -o testsse -I../../port -I../../gcore
 	./testsse
 
 OBJ = \
@@ -138,7 +138,7 @@ proj_with_fork: proj_with_fork.o
 testlog: testlog.o
 	$(LD) $(LDFLAGS) $< $(CONFIG_LIBS) -o $@
 
-vsipreload.so: ../../gdal/port/vsipreload.o
+vsipreload.so: ../../port/vsipreload.o
 	$(CXX) -fPIC -g $(CXXFLAGS) $< $(CONFIG_LIBS) $(LDFLAGS) -shared -o $@
 
 test_include_from_c_file:

@@ -3,10 +3,10 @@ name: Windows builds
 on:
     push:
         paths-ignore:
-            - 'gdal/doc/**'
+            - 'doc/**'
     pull_request:
         paths-ignore:
-            - 'gdal/doc/**'
+            - 'doc/**'
 
 
 jobs:
@@ -198,7 +198,7 @@ jobs:
             $env:NMAKE_LOCAL+="WEBP_LIBS = /NODEFAULTLIB:libcmt.lib `$(SDK_PREFIX)\libwebp-1.0.3-windows-x86\lib\libwebp.lib`n"
             $env:NMAKE_LOCAL+="LIBDEFLATE_CFLAGS = -I`$(SDK_PREFIX)`n"
             $env:NMAKE_LOCAL+="LIBDEFLATE_LIB = `$(SDK_PREFIX)\libdeflate.lib`n"
-            $env:NMAKE_LOCAL | Set-Content "$env:GITHUB_WORKSPACE\gdal\nmake.local"
+            $env:NMAKE_LOCAL | Set-Content "$env:GITHUB_WORKSPACE\nmake.local"
             #
             cd $env:GITHUB_WORKSPACE
             cd proj
@@ -218,17 +218,17 @@ jobs:
             Invoke-WebRequest "http://download.osgeo.org/proj/proj-datumgrid-1.8.zip" -OutFile "proj-datumgrid-1.8.zip"
             7z x proj-datumgrid-1.8.zip -aoa
             #
-            cd $env:GITHUB_WORKSPACE\gdal
+            cd $env:GITHUB_WORKSPACE
             copy $env:GITHUB_WORKSPACE\install-proj\bin\*.dll .
             exec { nmake /f makefile.vc MSVC_VER=$env:MSVC_VER $env:WIN64_ARG USER_DEFS="/WX $env:ARCH_FLAGS" }
             cd apps
             exec { nmake /f makefile.vc test_ogrsf.exe MSVC_VER=$env:MSVC_VER $env:WIN64_ARG USER_DEFS=/WX }
             $env:DISTUTILS_USE_SDK=1
             $env:MSSdk=1
-            cd $env:GITHUB_WORKSPACE\gdal\swig\python
+            cd $env:GITHUB_WORKSPACE\swig\python
             exec { python setup.py build }
             exec { python setup.py install }
-            cd $env:GITHUB_WORKSPACE\gdal\swig\csharp
+            cd $env:GITHUB_WORKSPACE\swig\csharp
             dotnet nuget locals all --clear
             dotnet nuget add source https://api.nuget.org/v3/index.json -n nuget.org
             dotnet restore
@@ -251,10 +251,10 @@ jobs:
             $env:SDK_BIN="$env:SDK_PREFIX\bin"
             # Set USE_PATH_FOR_GDAL_PYTHON=YES and include a fake path in the PATH
             # to test robustness to nonexistent paths (only relevant for python>=3.8)
-            # See https://github.com/OSGeo/gdal/issues/3898
+            # See https://github.com/OSGeo/issues/3898
             $env:USE_PATH_FOR_GDAL_PYTHON="YES"
-            $env:PATH="$env:GITHUB_WORKSPACE\gdal;$env:GITHUB_WORKSPACE\gdal\apps;$env:SDK_PREFIX\dll;$env:SDK_PREFIX;$env:SDK_BIN;$env:GITHUB_WORKSPACE\not_a_real_path;$env:PATH"
-            $env:GDAL_DATA="$env:GITHUB_WORKSPACE\gdal\data"
+            $env:PATH="$env:GITHUB_WORKSPACE;$env:GITHUB_WORKSPACE\apps;$env:SDK_PREFIX\dll;$env:SDK_PREFIX;$env:SDK_BIN;$env:GITHUB_WORKSPACE\not_a_real_path;$env:PATH"
+            $env:GDAL_DATA="$env:GITHUB_WORKSPACE\data"
             $env:DO_NOT_FAIL_ON_RECODE_ERRORS="YES"
             $env:MDB_ODBC_DRIVER_INSTALLED="YES"
             # The ca-bundle.crt file which we could point to is invalid in the current SDK
@@ -265,5 +265,5 @@ jobs:
             cd $env:GITHUB_WORKSPACE\autotest
             pip install -Ur requirements.txt
             exec { pytest -vv }
-            cd $env:GITHUB_WORKSPACE\gdal\swig\csharp
+            cd $env:GITHUB_WORKSPACE\swig\csharp
             exec { nmake /f makefile.vc test }

@@ -26,7 +26,9 @@
 // Boston, MA 02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
 
+#ifndef GDAL_COMPILATION
 #define GDAL_COMPILATION
+#endif
 
 #include "gdal_unit_test.h"
 

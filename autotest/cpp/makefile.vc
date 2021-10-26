@@ -12,8 +12,8 @@
 # GDAL library
 
 !IFNDEF GDAL_ROOT
-!IF EXIST("..\..\gdal\nmake.opt")
-GDAL_ROOT = ..\..\gdal
+!IF EXIST("..\..\nmake.opt")
+GDAL_ROOT = ..\..
 !ENDIF
 !ENDIF
 

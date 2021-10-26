@@ -1,0 +1,22 @@
+add_gdal_driver(
+  TARGET gdal_GEOR
+  SOURCES georaster_dataset.cpp georaster_priv.h georaster_rasterband.cpp georaster_wrapper.cpp
+  DEF FRMT_georaster PLUGIN_CAPABLE_IF "NOT GDAL_USE_LIBZ_INTERNAL;NOT GDAL_USE_LIBJPEG_INTERNAL")
+gdal_standard_includes(gdal_GEOR)
+if (GDAL_USE_LIBZ_INTERNAL)
+  target_include_directories(gdal_GEOR PRIVATE $<TARGET_PROPERTY:libz,SOURCE_DIR>)
+endif ()
+if (HAVE_OCI)
+  target_include_directories(gdal_GEOR PRIVATE ${OCI_INCLUDE_DIR})
+  gdal_target_link_libraries(gdal_GEOR PRIVATE ${OCI_LIBRARY})
+endif ()
+if (GDAL_USE_LIBJPEG_INTERNAL)
+  target_include_directories(gdal_GEOR PRIVATE $<TARGET_PROPERTY:libjpeg,SOURCE_DIR>)
+  target_compile_definitions(gdal_GEOR PRIVATE -DJPEG_SUPPORTED)
+else ()
+  if (HAVE_JPEG)
+    target_include_directories(gdal_GEOR PRIVATE ${JPEG_INCLUDE_DIRS})
+    target_compile_definitions(gdal_GEOR PRIVATE -DJPEG_SUPPORTED)
+    gdal_target_link_libraries(TARGET gdal_GEOR LIBRARIES JPEG::JPEG)
+  endif ()
+endif ()

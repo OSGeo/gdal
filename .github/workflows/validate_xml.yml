@@ -3,10 +3,10 @@ name: Validate XML
 on:
     push:
         paths-ignore:
-            - 'gdal/doc/**'
+            - 'doc/**'
     pull_request:
         paths-ignore:
-            - 'gdal/doc/**'
+            - 'doc/**'
 
 
 jobs:
@@ -24,6 +24,6 @@ jobs:
 
       - name: Run xmllint checks
         run: |
-          xmllint --schema ./gdal/data/nitf_spec.xsd ./gdal/data/nitf_spec.xml --noout
-          xmllint --schema ./gdal/data/vdv452.xsd ./gdal/data/vdv452.xml --noout
-          xmllint --schema ./gdal/data/gmlasconf.xsd ./gdal/data/gmlasconf.xml --noout
+          xmllint --schema ./data/nitf_spec.xsd ./data/nitf_spec.xml --noout
+          xmllint --schema ./data/vdv452.xsd ./data/vdv452.xml --noout
+          xmllint --schema ./data/gmlasconf.xsd ./data/gmlasconf.xml --noout

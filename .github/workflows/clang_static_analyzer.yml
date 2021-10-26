@@ -3,10 +3,10 @@ name: CLang Static Analyzer
 on:
     push:
         paths-ignore:
-            - 'gdal/doc/**'
+            - 'doc/**'
     pull_request:
         paths-ignore:
-            - 'gdal/doc/**'
+            - 'doc/**'
 
 
 jobs:
@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Run
-        run: docker run --rm -v $PWD:$PWD ubuntu:16.04 sh -c "cd $PWD && apt update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends sudo software-properties-common && DEBIAN_FRONTEND=noninteractive sh ./gdal/ci/travis/csa_part_1/before_install.sh && sh ./gdal/ci/travis/csa_part_1/install.sh && sh ./gdal/ci/travis/csa_part_1/script.sh"
+        run: docker run --rm -v $PWD:$PWD ubuntu:16.04 sh -c "cd $PWD && apt update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends sudo software-properties-common && DEBIAN_FRONTEND=noninteractive sh ./ci/travis/csa_part_1/before_install.sh && sh ./ci/travis/csa_part_1/install.sh && sh ./ci/travis/csa_part_1/script.sh"
 
   clang_static_analyzer_part_2:
     runs-on: ubuntu-20.04
@@ -29,4 +29,4 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Run
-        run: docker run --rm -v $PWD:$PWD ubuntu:16.04 sh -c "cd $PWD && apt update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends sudo software-properties-common && DEBIAN_FRONTEND=noninteractive sh ./gdal/ci/travis/csa_part_2/before_install.sh && sh ./gdal/ci/travis/csa_part_2/install.sh && sh ./gdal/ci/travis/csa_part_2/script.sh"
+        run: docker run --rm -v $PWD:$PWD ubuntu:16.04 sh -c "cd $PWD && apt update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends sudo software-properties-common && DEBIAN_FRONTEND=noninteractive sh ./ci/travis/csa_part_2/before_install.sh && sh ./ci/travis/csa_part_2/install.sh && sh ./ci/travis/csa_part_2/script.sh"

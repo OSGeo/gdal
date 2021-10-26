@@ -3,10 +3,10 @@ name: MacOS build
 on:
     push:
         paths-ignore:
-            - 'gdal/doc/**'
+            - 'doc/**'
     pull_request:
         paths-ignore:
-            - 'gdal/doc/**'
+            - 'doc/**'
 
 
 jobs:
@@ -26,17 +26,17 @@ jobs:
       - name: Install Requirements
         shell: bash -l {0}
         run: |
-          source ./gdal/ci/travis/osx/before_install.sh
+          source ./ci/travis/osx/before_install.sh
 
       - name: Build
         shell: bash -l {0}
         run: |
-          source ./gdal/ci/travis/osx/install.sh
+          source ./ci/travis/osx/install.sh
 
       - name: Run tests
         shell: bash -l {0}
         run: |
-          source ./gdal/ci/travis/osx/script.sh
+          source ./ci/travis/osx/script.sh
         env:
             # Emulate a few Travis-CI env variable so that some tests get properly skipped
             TRAVIS: true
