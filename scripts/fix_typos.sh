@@ -62,7 +62,7 @@ if ! test -d fix_typos; then
     )
 fi
 
-EXCLUDED_FILES="*/.svn*,configure,config.log,config.status,config.guess,config.sub,*/autom4te.cache/*,*.ai,*.svg"
+EXCLUDED_FILES="*/.svn*,*/.git/*,configure,config.log,config.status,config.guess,config.sub,*/autom4te.cache/*,*.ai,*.svg"
 EXCLUDED_FILES="$EXCLUDED_FILES,*/hdf-eos/*,teststream.out,ogrogdilayer.cpp"
 EXCLUDED_FILES="$EXCLUDED_FILES,*/doc/build/*,*/data/*,figures.mp,*/tmp/*,*/ruby/*"
 EXCLUDED_FILES="$EXCLUDED_FILES,*/fix_typos/*,fix_typos.sh,*.eps,geopackage_aspatial.html"
@@ -72,7 +72,7 @@ EXCLUDED_FILES="$EXCLUDED_FILES,PROVENANCE.TXT,libtool,ltmain.sh,libtool.m4,./m4
 EXCLUDED_FILES="$EXCLUDED_FILES,WFSServersList.txt"
 EXCLUDED_FILES="$EXCLUDED_FILES,*/sosi/*" # norwegian
 EXCLUDED_FILES="$EXCLUDED_FILES,*/ci/travis/csa_part_1/*,*/ci/travis/csa_part_2/*"
-EXCLUDED_FILES="$EXCLUDED_FILES,*/internal_libqhull/*,*/zlib/*,*/libjpeg/*,*/libpng/*,*/libcsf/*,*/degrib/*"
+EXCLUDED_FILES="$EXCLUDED_FILES,*/internal_libqhull/*,*/zlib/*,*/libjpeg/*,*/libjpeg12/*,*/libpng/*,*/libcsf/*,*/degrib/*"
 AUTHORIZED_LIST="poSession,FIDN,TRAFIC,HTINK,repID,oCurr,INTREST,oPosition"
 AUTHORIZED_LIST="$AUTHORIZED_LIST,CPL_SUPRESS_CPLUSPLUS,SRP_NAM,ADRG_NAM,'SRP_NAM,AuxilaryTarget"
 # IRIS driver metadata item names: FIXME ?
@@ -123,9 +123,10 @@ AUTHORIZED_LIST="$AUTHORIZED_LIST,cJP2_Colorspace_RGBa,cJP2_Colorspace_Palette_R
 AUTHORIZED_LIST="$AUTHORIZED_LIST,CURLE_FILE_COULDNT_READ_FILE"
 AUTHORIZED_LIST="$AUTHORIZED_LIST,nParms,ProjParm,ProjParmId,GTIFFetchProjParms,gdal_GTIFFetchProjParms" # API of libgeotiff
 
+python3 fix_typos/codespell/codespell.py -w -i 3 -q 2 -S "$EXCLUDED_FILES,./autotest/*,./build*/*" \
+    -x scripts/typos_allowlist.txt --words-white-list=$AUTHORIZED_LIST \
+    -D ./fix_typos/gdal_dict.txt .
+
 python3 fix_typos/codespell/codespell.py -w -i 3 -q 2 -S "$EXCLUDED_FILES" \
     -x scripts/typos_allowlist.txt --words-white-list=$AUTHORIZED_LIST \
-    ../autotest
-python3 fix_typos/codespell/codespell.py -w -i 3 -q 2 -S "$EXCLUDED_FILES" \
-    -x scripts/typos_allowlist.txt --words-white-list=$AUTHORIZED_LIST \
-    -D ./fix_typos/gdal_dict.txt  .
+    autotest
