@@ -143,24 +143,19 @@ class gdal_ext(build_ext):
         # Needed on recent MacOSX
         elif isinstance(self.include_dirs, str) and sys.platform == 'darwin':
             self.include_dirs += ':' + ':'.join(include_dirs)
+
         if self.library_dirs is None:
             self.library_dirs = library_dirs
         # Needed on recent MacOSX
         elif isinstance(self.library_dirs, str) and sys.platform == 'darwin':
             self.library_dirs += ':' + ':'.join(library_dirs)
+
         if self.libraries is None:
             self.libraries = libraries
 
         build_ext.finalize_options(self)
 
         self.include_dirs.append(self.numpy_include_dir)
-
-        if self.get_compiler() == 'msvc':
-            return True
-
-        self.gdaldir = '@CMAKE_INSTALL_PREFIX@'
-        self.library_dirs.append(os.path.join(self.gdaldir, 'lib'))
-        self.include_dirs.append(os.path.join(self.gdaldir, 'include'))
 
 
 extra_link_args = []
