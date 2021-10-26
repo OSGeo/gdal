@@ -67,7 +67,7 @@ jobs:
           mv doc/build/html gdal-docs
           rm gdal-docs/gdal.pdf
           cp doc/build/latex/gdal.pdf gdal-docs
-          cp gdal/data/gdalicon.png gdal-docs # For GDAL autotest...
+          cp data/gdalicon.png gdal-docs # For GDAL autotest...
           cd gdal-docs
           wget http://download.osgeo.org/gdal/for_doc/javadoc.zip -O /tmp/javadoc.zip
           wget http://download.osgeo.org/gdal/for_doc/python-doc.tar.gz -O /tmp/python-doc.tar.gz
