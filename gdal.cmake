@@ -530,7 +530,7 @@ if (UNIX AND NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
   add_custom_target(gdal_config ALL DEPENDS ${PROJECT_BINARY_DIR}/apps/gdal-config)
   install(
     PROGRAMS ${PROJECT_BINARY_DIR}/apps/gdal-config
-    DESTINATION bin
+    DESTINATION ${CMAKE_INSTALL_BINDIR}
     PERMISSIONS OWNER_READ
                 OWNER_WRITE
                 OWNER_EXECUTE
@@ -539,7 +539,13 @@ if (UNIX AND NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
                 WORLD_READ
                 WORLD_EXECUTE
     COMPONENT applications)
+
   # pkg-config resource
+  get_property(_gdal_lib_name TARGET ${GDAL_LIB_TARGET_NAME} PROPERTY OUTPUT_NAME)
+  set(CONFIG_INST_LIBS   "-L${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} -l${_gdal_lib_name}")
+  set(CONFIG_INST_CFLAGS "-I${CMAKE_INSTALL_PREFIX}/${GDAL_INSTALL_INCLUDEDIR}")
+  set(CONFIG_INST_DATA   "${CMAKE_INSTALL_PREFIX}/${GDAL_RESOURCE_PATH}")
+  get_dep_libs(${GDAL_LIB_TARGET_NAME} "gdal_private_link_libraries" CONFIG_INST_DEP_LIBS)
   configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/gdal.pc.in ${CMAKE_CURRENT_BINARY_DIR}/gdal.pc @ONLY)
   install(
     FILES ${CMAKE_CURRENT_BINARY_DIR}/gdal.pc
