@@ -9,7 +9,7 @@ option(BUILD_DOCS "Build documents" ON)
 # This option is to build drivers as plugins, for drivers that have external
 # dependencies, that are not parf of GDAL core dependencies
 # Examples are netCDF, HDF4, Oracle, PDF, etc.
-# This global setting can be overriden at the driver level with
+# This global setting can be overridden at the driver level with
 # GDAL_ENABLE_FRMT_{foo}_PLUGIN or OGR_ENABLE_{foo}_PLUGIN variables.
 option(GDAL_ENABLE_PLUGINS "Set ON to build drivers that have non-core external dependencies as plugin" OFF)
 
@@ -367,7 +367,7 @@ target_include_directories(${GDAL_LIB_TARGET_NAME} PUBLIC
                              $<INSTALL_INTERFACE:${GDAL_INSTALL_INCLUDEDIR}>)
 
 
-# MSVC spefific resource preparation
+# MSVC specific resource preparation
 if (MSVC)
   target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE gcore/Version.rc)
   source_group("Resource Files" FILES gcore/Version.rc)
@@ -490,7 +490,7 @@ install(
   FRAMEWORK DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 if (UNIX AND NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
-  # Genarate GdalConfig.cmake and GdalConfigVersion.cmake
+  # Generate GdalConfig.cmake and GdalConfigVersion.cmake
   export(EXPORT gdal-export
          NAMESPACE GDAL::
          FILE gdal-export.cmake)

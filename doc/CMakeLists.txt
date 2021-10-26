@@ -42,7 +42,7 @@ if (DOXYGEN_FOUND)
       ${CMAKE_CURRENT_SOURCE_DIR}/ReplaceStr.cmake
     MAIN_DEPENDENCY ${TARGET_HTML_DIR}/header.html
     WORKING_DIRECTORY ${TARGET_HTML_DIR})
-  # generate Brazillian document
+  # generate Brazilian document
   set(GDAL_DOXYGEN_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
   set(GDAL_DOXYGEN_PROJECT_NAME "BR")
   set(GDAL_DOXYGEN_LANGUAGE "Brazilian")

@@ -1,4 +1,4 @@
-# FIXME currently only version 7 is suppoted
+# FIXME currently only version 7 is supported
 set(GRASS_VERSION 7)
 add_gdal_driver(TARGET ogr_GRASS SOURCES ogrgrass.h ogrgrassdatasource.cpp ogrgrassdriver.cpp ogrgrasslayer.cpp)
 gdal_standard_includes(ogr_GRASS)

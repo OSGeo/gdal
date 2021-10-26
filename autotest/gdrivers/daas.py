@@ -47,7 +47,7 @@ pytestmark = pytest.mark.require_driver('DAAS')
 @pytest.fixture(autouse=True, scope='module')
 def startup_and_cleanup():
 
-    # Unset environment variables that influence the driver behaviour
+    # Unset environment variables that influence the driver behavior
     daas_vars = {}
     for var in ('GDAL_DAAS_API_KEY', 'GDAL_DAAS_CLIENT_ID', 'GDAL_DAAS_AUTH_URL', 'GDAL_DAAS_ACCESS_TOKEN'):
         daas_vars[var] = gdal.GetConfigOption(var)

@@ -1,4 +1,4 @@
-# reffered from ogr_MVT
+# referred from ogr_MVT
 add_gdal_driver(
   TARGET ogr_OSM
   SOURCES ogrosmdatasource.cpp ogrosmdriver.cpp ogrosmlayer.cpp osm_parser.cpp

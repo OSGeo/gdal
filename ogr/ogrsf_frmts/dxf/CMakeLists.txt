@@ -1,4 +1,4 @@
-# reffered from DWG driver
+# referred from DWG driver
 add_gdal_driver(
   TARGET ogr_DXF
   SOURCES ogr_autocad_services.h

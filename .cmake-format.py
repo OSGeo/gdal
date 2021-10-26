@@ -108,7 +108,7 @@ with section("format"):
   autosort = False
 
   # By default, if cmake-format cannot successfully fit everything into the
-  # desired linewidth it will apply the last, most agressive attempt that it
+  # desired linewidth it will apply the last, most aggressive attempt that it
   # made. If this flag is True, however, cmake-format will print error, exit
   # with non-zero status code, and write-out nothing
   require_valid_layout = False
@@ -146,7 +146,7 @@ with section("markup"):
   ruler_pattern = '^\\s*[^\\w\\s]{3}.*[^\\w\\s]{3}$'
 
   # If a comment line matches starts with this pattern then it is explicitly a
-  # trailing comment for the preceeding argument. Default is '#<'
+  # trailing comment for the preceding argument. Default is '#<'
   explicit_trailing_pattern = '#<'
 
   # If a comment line starts with at least this many consecutive hash
