@@ -87,8 +87,9 @@ jobs:
           MSYSTEM: MINGW64
       #  libxml2 disabled because currently causes a 'Imported target "LibXml2::LibXml2" includes non-existent path "/mingw64/include/libxml2" in its INTERFACE_INCLUDE_DIRECTORIES'
       # Disable mySQL since C:/mysql/lib/mysqlclient.lib (unrelated to msys) is found, which causes linking issues
+      # Disable Python bindings because of 'ValueError: filename D:/a/gdal/gdal/swig/python/osgeo/__init__.py does not start with the input_base_dir D:/a/gdal/gdal/swig/python/osgeo/\' when running lib2to3
       - name: Configure
-        run: cmake -DCMAKE_BUILD_TYPE=release -G "${env:generator}" "-DCMAKE_C_COMPILER_LAUNCHER=c:\tools\msys64\mingw64\bin\ccache.exe" "-DCMAKE_CXX_COMPILER_LAUNCHER=c:\tools\msys64\mingw64\bin\ccache.exe" "-DCMAKE_PREFIX_PATH=C:\tools\msys64\mingw64" "-DCMAKE_UNITY_BUILD=${env:CMAKE_UNITY_BUILD}" -S . -B "build" -DLIBXML2_INCLUDE_DIR=C:/tools/msys64/mingw64/include -DGDAL_USE_LIBXML2:BOOL=OFF -DGDAL_USE_MYSQL:BOOL=OFF
+        run: cmake -DCMAKE_BUILD_TYPE=release -G "${env:generator}" "-DCMAKE_C_COMPILER_LAUNCHER=c:\tools\msys64\mingw64\bin\ccache.exe" "-DCMAKE_CXX_COMPILER_LAUNCHER=c:\tools\msys64\mingw64\bin\ccache.exe" "-DCMAKE_PREFIX_PATH=C:\tools\msys64\mingw64" "-DCMAKE_UNITY_BUILD=${env:CMAKE_UNITY_BUILD}" -S . -B "build" -DLIBXML2_INCLUDE_DIR=C:/tools/msys64/mingw64/include -DGDAL_USE_LIBXML2:BOOL=OFF -DGDAL_USE_MYSQL:BOOL=OFF -DBUILD_PYTHON_BINDINGS:BOOL=OFF
         working-directory: ${{ github.workspace }}
       - name: Build
         run: cmake --build build -j 3
