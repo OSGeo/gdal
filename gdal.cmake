@@ -326,13 +326,15 @@ add_subdirectory(ogr)
 if (ENABLE_GNM)
   add_subdirectory(gnm)
 endif ()
-add_subdirectory(gcore)
 
 # Raster/Vector drivers (built-in and plugins)
 set(GDAL_RASTER_FORMAT_SOURCE_DIR "${PROJECT_SOURCE_DIR}/frmts")
 set(GDAL_VECTOR_FORMAT_SOURCE_DIR "${PROJECT_SOURCE_DIR}/ogr/ogrsf_frmts")
 add_subdirectory(frmts)
 add_subdirectory(ogr/ogrsf_frmts)
+
+# It needs to be after ogr/ogrsf_frmts so it can use OGR_ENABLE_SQLITE
+add_subdirectory(gcore)
 
 # Bindings
 if (BUILD_SHARED_LIBS)
