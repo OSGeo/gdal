@@ -42,7 +42,7 @@
 
 ZarrGroupBase::~ZarrGroupBase()
 {
-    // We need to explictly flush arrays so that the _ARRAY_DIMENSIONS
+    // We need to explicitly flush arrays so that the _ARRAY_DIMENSIONS
     // is properly written. As it relies on checking if the dimensions of the
     // array have an indexing variable, then still need to be all alive.
     for( auto& kv: m_oMapMDArrays )

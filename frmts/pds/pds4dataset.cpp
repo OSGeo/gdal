@@ -3566,7 +3566,7 @@ void PDS4Dataset::CreateHeader(CPLXMLNode* psProduct,
         }
     }
 
-    // Depending on the vrsion of the DISP schema, Local_Internal_Reference
+    // Depending on the version of the DISP schema, Local_Internal_Reference
     // may be in the disp: namespace or the default one.
     const auto GetLocalIdentifierReferenceFromDisciplineArea =
         [](const CPLXMLNode* psDisciplineArea, const char* pszDefault)

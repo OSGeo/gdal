@@ -944,7 +944,7 @@ CPLErr MRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer) {
         auto ctx = poDS->getzsd();
         if (!ctx) {
             CPLFree(data);
-            CPLError(CE_Failure, CPLE_AppDefined, "Can't aquire ZSTD context");
+            CPLError(CE_Failure, CPLE_AppDefined, "Can't acquire ZSTD context");
             return CE_Failure;
         }
         if (img.pageSizeBytes > INT_MAX - 1440) {

@@ -90,7 +90,7 @@ SRS encoding
 ------------
 
 The Zarr specification has no provision for spatial reference system encoding.
-GDAL uses a ``_CRS`` attribute that is a dictionnary that may contain one or
+GDAL uses a ``_CRS`` attribute that is a dictionary that may contain one or
 several of the following keys: ``url`` (using a OGC CRS URL), ``wkt`` (WKT:2019
 used by default on writing, WKT1 also supported on reading.), ``projjson``.
 On reading, it will use ``url`` by default, if not found will fallback to ``wkt``

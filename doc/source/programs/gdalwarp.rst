@@ -100,7 +100,7 @@ with control information.
 
     Force the use of vertical shift. This option is generally not necessary,
     except when using an explicit coordinate transformation (:option:`-ct`),
-    and not specifying an explict source and target SRS.
+    and not specifying an explicit source and target SRS.
 
     .. versionadded:: 3.4
 

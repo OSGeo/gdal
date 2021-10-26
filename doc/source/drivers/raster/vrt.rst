@@ -302,7 +302,7 @@ tag is not present, the source dataset will be opened at the same time as the VR
 .. note::
 
     Starting with GDAL 3.4, the ``SourceProperties`` element is no longer necessary
-    for defered opening of the source datasets.
+    for deferred opening of the source datasets.
 
 The content of the SourceBand subelement can refer to
 a mask band. For example mask,1 means the mask band of the first band of the source.

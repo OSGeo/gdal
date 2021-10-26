@@ -44,7 +44,7 @@
  */
 #include <setjmp.h>
 
-/* Settings that are independ of libjpeg ABI. Used when reinitializing the */
+/* Settings that are independent of libjpeg ABI. Used when reinitializing the */
 /* JPEGState from libjpegs 8 bit to libjpeg 12 bits, which have potentially */
 /* different ABI */
 typedef struct {

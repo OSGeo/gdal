@@ -55,7 +55,7 @@ for line in result:
                     add_occurence('integer_overflow_unsigned')
             else:
                 if 'harmless' in msg:
-                    add_occurence('integer_overflow_harmless') # one occurence due to atoi()
+                    add_occurence('integer_overflow_harmless') # one occurrence due to atoi()
                 else:
                     add_occurence('integer_overflow_signed')
         elif 'out of bound' in msg or 'heap' in msg or 'buffer' in msg or 'container overflow' in msg or 'array' in msg or 'read overflow' in msg:

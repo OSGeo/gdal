@@ -216,7 +216,7 @@ or,
 
 See also the configuration options **GDAL_NETCDF_VERIFY_DIMS** and
 **GDAL_NETCDF_IGNORE_XY_AXIS_NAME_CHECKS** which control this
-behaviour.
+behavior.
 
 Open options
 ------------
@@ -300,7 +300,7 @@ Variables attributes for: tos, lon, lat and time
      time#bounds=time_bnds
      time#original_units=seconds since 2001-1-1
 
-Product specific behaviour
+Product specific behavior
 --------------------------
 
 Sentinel 5
@@ -372,7 +372,7 @@ Creation Options
 Creation of multidimensional files with CreateCopy() 2D raster API
 ------------------------------------------------------------------
 
-Starting with GDAL 3.1, the prefered way of creating > 2D files is to use the
+Starting with GDAL 3.1, the preferred way of creating > 2D files is to use the
 the :ref:`multidim_raster_data_model` API. However it is possible to create
 such files with the 2D raster API using the CreateCopy() method (note that at
 time of writing, this is not supported using the Create() method).
