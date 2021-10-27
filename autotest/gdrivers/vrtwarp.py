@@ -458,3 +458,21 @@ def test_vrtwarp_read_inconsistent_blocksize(filename):
         ds = gdal.Open(filename)
     assert ds is None
     assert gdal.GetLastErrorMsg() == 'Block size specified on band 1 not consistent with dataset block size'
+
+
+###############################################################################
+# Test that we don't write duplicated block size information
+
+
+def test_vrtwarp_write_no_duplicated_blocksize():
+    tmpfilename = '/vsimem/tmp.vrt'
+    gdal.Warp(tmpfilename, 'data/byte.tif', format='VRT', width=1024, height=1024)
+    fp = gdal.VSIFOpenL(tmpfilename, 'rb')
+    assert fp
+    data = gdal.VSIFReadL(1, 10000, fp).decode('utf-8')
+    gdal.VSIFCloseL(fp)
+    gdal.Unlink(tmpfilename)
+    assert '<BlockXSize>' in data
+    assert '<BlockYSize>' in data
+    assert ' blockXSize=' not in data
+    assert ' blockYSize=' not in data

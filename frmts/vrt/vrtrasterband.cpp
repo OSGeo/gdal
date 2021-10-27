@@ -657,11 +657,16 @@ CPLXMLNode *VRTRasterBand::SerializeToXML( const char *pszVRTPath )
     if( nBand > 0 )
         CPLSetXMLValue( psTree, "#band", CPLSPrintf( "%d", GetBand() ) );
 
-    if( nBlockXSize != 128 && nBlockXSize != nRasterXSize )
-        CPLSetXMLValue( psTree, "#blockXSize", CPLSPrintf( "%d", nBlockXSize ) );
+    // Do not serialize block size of VRTWarpedRasterBand since it is already
+    // serialized at the dataset level.
+    if( dynamic_cast<VRTWarpedRasterBand*>(this) == nullptr )
+    {
+        if( nBlockXSize != 128 && nBlockXSize != nRasterXSize )
+            CPLSetXMLValue( psTree, "#blockXSize", CPLSPrintf( "%d", nBlockXSize ) );
 
-    if( nBlockYSize != 128 && nBlockYSize != nRasterYSize )
-        CPLSetXMLValue( psTree, "#blockYSize", CPLSPrintf( "%d", nBlockYSize ) );
+        if( nBlockYSize != 128 && nBlockYSize != nRasterYSize )
+            CPLSetXMLValue( psTree, "#blockYSize", CPLSPrintf( "%d", nBlockYSize ) );
+    }
 
     CPLXMLNode *psMD = oMDMD.Serialize();
     if( psMD != nullptr )
