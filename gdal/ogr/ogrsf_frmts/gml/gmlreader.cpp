@@ -954,8 +954,8 @@ GMLFeatureClass *GMLReader::GetClass( const char *pszName ) const
 {
     for( int iClass = 0; iClass < m_nClassCount; iClass++ )
     {
-        if( EQUAL(GetClass(iClass)->GetName(),pszName) )
-            return GetClass(iClass);
+        if( EQUAL(m_papoClass[iClass]->GetName(),pszName) )
+            return m_papoClass[iClass];
     }
 
     return nullptr;

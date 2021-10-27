@@ -500,8 +500,8 @@ GMLFeatureClass *NASReader::GetClass( const char *pszName ) const
 {
     for( int iClass = 0; iClass < m_nClassCount; iClass++ )
     {
-        if( strcmp(GetClass(iClass)->GetName(),pszName) == 0 )
-            return GetClass(iClass);
+        if( strcmp(m_papoClass[iClass]->GetName(),pszName) == 0 )
+            return m_papoClass[iClass];
     }
 
     return nullptr;
