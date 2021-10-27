@@ -31,6 +31,9 @@ rm autotest/ogr/ogr_fgdb.py
 
 (cd autotest/ogr && OGR_MSSQL_CONNECTION_STRING="MSSQL:server=$IP;database=TestDB;driver=ODBC Driver 17 for SQL Server;UID=SA;PWD=DummyPassw0rd" $PYTEST ogr_mssqlspatial.py)
 
+# HANA tests
+(cd autotest/ogr && OGR_HANA_CONNECTION_STRING="DRIVER=/usr/sap/hdbclient/libodbcHDB.so;HOST=917df316-4e01-4a10-be54-eac1b6ab15fb.hana.prod-us10.hanacloud.ondemand.com;PORT=443;USER=GDALCI;PASSWORD=Z2!.S-bN]vh62\G" $PYTEST ogr_hana.py)
+
 # Fails with ERROR 1: OGDI DataSource Open Failed: Could not find the dynamic library "vrf"
 rm autotest/ogr/ogr_ogdi.py
 

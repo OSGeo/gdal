@@ -19,10 +19,38 @@ docker run --name mariadb -e MYSQL_ROOT_PASSWORD=passwd -e "MYSQL_ROOT_HOST=%" -
 # PostGIS
 docker run -v /home:/home --name "postgis" -p 25432:5432 -e ALLOW_IP_RANGE=0.0.0.0/0 -d -t kartoza/postgis:13.0
 
-sudo apt-get install -y --allow-unauthenticated python3-dev python3-pip python3-numpy libpng-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libpoppler-private-dev libspatialite-dev gpsbabel swig libhdf4-alt-dev libhdf5-serial-dev poppler-utils unixodbc-dev libwebp-dev libepsilon-dev liblcms2-2 libpcre3-dev libcrypto++-dev libdap-dev libfyba-dev libkml-dev libmysqlclient-dev mysql-client-core-5.7 libogdi3.2-dev libcfitsio-dev openjdk-8-jdk libzstd1-dev libblosc-dev liblz4-dev ccache bash zip curl libpq-dev postgresql-client postgis cmake libssl-dev libboost-dev autoconf automake sqlite3 libopenexr-dev g++ fossil libgeotiff-dev libcharls-dev libopenjp2-7-dev libcairo2-dev doxygen
+sudo apt-get install -y --allow-unauthenticated python3-dev python3-pip python3-numpy libpng-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libpoppler-private-dev libspatialite-dev gpsbabel swig libhdf4-alt-dev libhdf5-serial-dev poppler-utils unixodbc-dev libwebp-dev libepsilon-dev liblcms2-2 libpcre3-dev libcrypto++-dev libdap-dev libfyba-dev libkml-dev libmysqlclient-dev mysql-client-core-5.7 libogdi3.2-dev libcfitsio-dev openjdk-8-jdk libzstd1-dev libblosc-dev liblz4-dev ccache bash zip curl libpq-dev postgresql-client postgis cmake libssl-dev libboost-dev autoconf automake sqlite3 libopenexr-dev g++ fossil libgeotiff-dev libcharls-dev libopenjp2-7-dev libcairo2-dev doxygen git
 # libheif-dev: strane linking errors (__cxa_init_primary_exception, std::thread::_State::~_State()) related to also linking to FileGDB API
 # libpodofo-dev : FIXME incompatibilities at runtime with that version
 #sudo apt-get install -y --allow-unauthenticated libsfcgal-dev
+
+# HANA: client side
+# Install hdbsql tool
+curl -v -j -k -L -H "Cookie: eula_3_1_agreed=tools.hana.ondemand.com/developer-license-3_1.txt" https://tools.hana.ondemand.com/additional/hanaclient-latest-linux-x64.tar.gz --output hanaclient-latest-linux-x64.tar.gz \
+  && tar -xvf hanaclient-latest-linux-x64.tar.gz \
+  && mkdir /usr/sap \
+  && ./client/hdbinst -a client --sapmnt=/usr/sap \
+  && rm -rf client \
+  && rm hanaclient*
+export PATH=/usr/sap/hdbclient:$PATH
+
+wget "https://cmake.org/files/v3.12/cmake-3.12.4.tar.gz" \
+  && tar xzf cmake-3.12.4.tar.gz \
+  && rm cmake-3.12.4.tar.gz \
+  && cd cmake-3.12.4 \
+  && ./bootstrap --prefix=/usr/local/ \
+  && make \
+  && make install \
+  && cd .. \
+  && rm -rf cmake-3.12.4
+
+# Download and compile odbc-cpp-wrapper
+git clone https://github.com/SAP/odbc-cpp-wrapper.git \
+  && mkdir odbc-cpp-wrapper/build \
+  && cd odbc-cpp-wrapper/build \
+  && cmake .. \
+  && make -j 2 \
+  && make install
 
 # MSSQL: client side
 curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
