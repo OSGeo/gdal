@@ -118,6 +118,9 @@ typedef struct
 // File header size in bytes:
 constexpr int BFH_SIZE = 14;
 
+// Size of sInfoHeader.iSize in bytes
+constexpr int SIZE_OF_INFOHEADER_SIZE = 4;
+
 typedef struct
 {
     GUInt32     iSize;          // Size of BMPInfoHeader structure in bytes.
@@ -1069,9 +1072,20 @@ CPLErr BMPDataset::IRasterIO( GDALRWFlag eRWFlag,
 int BMPDataset::Identify( GDALOpenInfo *poOpenInfo )
 
 {
-    if( poOpenInfo->nHeaderBytes < 2
+    if( poOpenInfo->nHeaderBytes < BFH_SIZE + SIZE_OF_INFOHEADER_SIZE
         || poOpenInfo->pabyHeader[0] != 'B'
-        || poOpenInfo->pabyHeader[1] != 'M' )
+        || poOpenInfo->pabyHeader[1] != 'M'
+        || poOpenInfo->pabyHeader[6] != 0
+        || poOpenInfo->pabyHeader[7] != 0
+        || poOpenInfo->pabyHeader[8] != 0
+        || poOpenInfo->pabyHeader[9] != 0 )
+        return FALSE;
+
+    uint32_t nInfoHeaderSize;
+    memcpy(&nInfoHeaderSize, poOpenInfo->pabyHeader + BFH_SIZE, sizeof(uint32_t));
+    CPL_LSBPTR32(&nInfoHeaderSize);
+    // Check against the maximum known size
+    if( nInfoHeaderSize > BIH_OS22SIZE )
         return FALSE;
 
     return TRUE;
@@ -1091,8 +1105,6 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     BMPDataset *poDS = new BMPDataset();
     poDS->eAccess = poOpenInfo->eAccess;
-    poDS->fp = poOpenInfo->fpL;
-    poOpenInfo->fpL = nullptr;
 
     VSIStatBufL sStat;
     if (VSIStatL(poOpenInfo->pszFilename, &sStat) != 0)
@@ -1104,8 +1116,7 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Read the BMPFileHeader. We need iOffBits value only             */
 /* -------------------------------------------------------------------- */
-    VSIFSeekL( poDS->fp, 10, SEEK_SET );
-    VSIFReadL( &poDS->sFileHeader.iOffBits, 1, 4, poDS->fp );
+    memcpy( &poDS->sFileHeader.iOffBits, poOpenInfo->pabyHeader + 10, 4 );
 #ifdef CPL_MSB
     CPL_SWAP32PTR( &poDS->sFileHeader.iOffBits );
 #endif
@@ -1117,9 +1128,20 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
               poDS->sFileHeader.iOffBits );
 #endif
 
+    // Validatate iOffBits
+    if( poDS->sFileHeader.iOffBits <= BFH_SIZE + SIZE_OF_INFOHEADER_SIZE ||
+        poDS->sFileHeader.iOffBits >= poDS->sFileHeader.iSize )
+    {
+        delete poDS;
+        return nullptr;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Read the BMPInfoHeader.                                         */
 /* -------------------------------------------------------------------- */
+    poDS->fp = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
+
     VSIFSeekL( poDS->fp, BFH_SIZE, SEEK_SET );
     VSIFReadL( &poDS->sInfoHeader.iSize, 1, 4, poDS->fp );
 #ifdef CPL_MSB
