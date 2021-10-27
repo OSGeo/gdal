@@ -117,6 +117,9 @@ def main(argv):
 
         i = i + 1
 
+    if pan_name is None or len(spectral_names) < 2:
+        return Usage()
+
     dst_filename = spectral_names.pop()
     return gdal_pansharpen(argv=None,
                            pan_name=pan_name,
