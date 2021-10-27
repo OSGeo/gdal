@@ -286,11 +286,9 @@ elseif (Python_Development_FOUND)
   py_ext(_osr ${v} osr_wrap.cpp)
   set(_py_depends)
   if (Python_NumPy_FOUND)
-    if (NOT Pyhton_NumPy_VERSION VERSION_LESS 1.0.0)
-      py_ext(_gdal_array ${v} gdal_array_wrap.cpp)
-      target_include_directories(_gdal_array${v} PRIVATE ${Python_NumPy_INCLUDE_DIRS})
-      list(APPEND _py_depends _gdal_array${v})
-    endif ()
+    py_ext(_gdal_array ${v} gdal_array_wrap.cpp)
+    target_include_directories(_gdal_array${v} PRIVATE ${Python_NumPy_INCLUDE_DIRS})
+    list(APPEND _py_depends _gdal_array${v})
   endif ()
   if (ENABLE_GNM)
     list(APPEND _py_depends _gnm${v})
@@ -325,8 +323,7 @@ else ()
 endif ()
 
 if (REGENERATE_PYTHON_DOCS)
-  # Do not do this by default: make clean cause them to be removed as they
-  # are generated in the source tree.
+  # Do not do this by default: make clean cause them to be removed as they are generated in the source tree.
   file(COPY ${PROJECT_SOURCE_DIR}/Doxyfile DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
   file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile "GENERATE_XML=YES")
   add_custom_command(
