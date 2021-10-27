@@ -263,11 +263,7 @@ But you can do something like this instead:
 
     if __name__ == '__main__':
         err = GdalErrorHandler()
-        handler = err.handler  # Note don't pass class method directly or python segfaults
-        # due to a reference counting bug
-        # http://trac.osgeo.org/gdal/ticket/5186#comment:4
-
-        gdal.PushErrorHandler(handler)
+        gdal.PushErrorHandler(err.handler)
         gdal.UseExceptions()  # Exceptions will get raised on anything >= gdal.CE_Failure
 
         assert err.err_level == gdal.CE_None, 'the error level starts at 0'
