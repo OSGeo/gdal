@@ -1362,6 +1362,9 @@ def test_netcdf_42():
         'LINE_STEP': '1',
         'Y_DATASET': 'NETCDF:"tmp/netcdf_42.nc":lat',
             'Y_BAND': '1'})
+    wkt = ds.GetProjectionRef()
+    assert ds.GetMetadataItem('transverse_mercator#spatial_ref') == wkt
+    assert ds.GetMetadataItem('transverse_mercator#crs_wkt') == wkt
 
     ds = gdal.Open('NETCDF:"tmp/netcdf_42.nc":lon')
     assert ds.GetRasterBand(1).Checksum() == 36043
@@ -4904,6 +4907,11 @@ def test_netcdf_write_4D():
     assert ds.GetMetadataItem('NETCDF_DIM_time_VALUES') == '{1,2,3}'
     ds = None
     gdal.Unlink(tmpfilename)
+
+
+def test_netcdf__crs_wkt():
+    ds = gdal.Open('data/netcdf/netcdf_crs_wkt.nc')
+    assert ds.GetSpatialRef().IsGeographic()
 
 
 def test_clean_tmp():

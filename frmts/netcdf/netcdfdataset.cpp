@@ -2651,6 +2651,9 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                 CPLDebug("GDAL_netCDF", "got grid_mapping %s",
                          pszGridMappingValue);
                 pszWKT = FetchAttr(pszGridMappingValue, NCDF_SPATIAL_REF);
+                if ( !pszWKT ) {
+                    pszWKT = FetchAttr(pszGridMappingValue, NCDF_CRS_WKT);
+                }
                 if( pszWKT )
                 {
                     pszGeoTransform = FetchAttr(pszGridMappingValue,
@@ -4393,6 +4396,7 @@ int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS,
                                 char **ppszCFProjection, bool bWriteGDALTags, const std::string& srsVarName)
 {
     char *pszCFProjection = nullptr;
+    bool bWriteWkt = true;
 
     struct Value
     {
@@ -4539,7 +4543,7 @@ int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS,
         if( EQUAL(pszMethod, "PROJ ob_tran o_proj=longlat") )
         {
             // Not enough interoperable to be written as WKT
-            bWriteGDALTags = false;
+            bWriteWkt = false;
 
             const double dfLon0 = oValMap["lon_0"];
             const double dfLonp = oValMap["o_lon_p"];
@@ -4554,7 +4558,7 @@ int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS,
         else if( EQUAL(pszMethod, "Pole rotation (netCDF CF convention)") )
         {
             // Not enough interoperable to be written as WKT
-            bWriteGDALTags = false;
+            bWriteWkt = false;
 
             const double dfGridNorthPoleLat = oValMap["Grid north pole latitude (netCDF CF convention)"];
             const double dfGridNorthPoleLong = oValMap["Grid north pole longitude (netCDF CF convention)"];
@@ -4569,7 +4573,7 @@ int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS,
         else if( EQUAL(pszMethod, "Pole rotation (GRIB convention)") )
         {
             // Not enough interoperable to be written as WKT
-            bWriteGDALTags = false;
+            bWriteWkt = false;
 
             const double dfLatSouthernPole = oValMap["Latitude of the southern pole (GRIB convention)"];
             const double dfLonSouthernPole = oValMap["Longitude of the southern pole (GRIB convention)"];
@@ -4611,13 +4615,17 @@ int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS,
     addParamDouble(CF_PP_SEMI_MAJOR_AXIS, poSRS->GetSemiMajor());
     addParamDouble(CF_PP_INVERSE_FLATTENING, poSRS->GetInvFlattening());
 
-    if( bWriteGDALTags )
+    if( bWriteWkt )
     {
         char *pszSpatialRef = nullptr;
         poSRS->exportToWkt(&pszSpatialRef);
         if( pszSpatialRef && pszSpatialRef[0] )
         {
-            addParamString(NCDF_SPATIAL_REF, pszSpatialRef);
+            if ( bWriteGDALTags ) {
+                // SPATIAL_REF is deprecated. Will be removed in GDAL 4.
+                addParamString(NCDF_SPATIAL_REF, pszSpatialRef);
+            }
+            addParamString(NCDF_CRS_WKT, pszSpatialRef);
         }
         CPLFree(pszSpatialRef);
     }

@@ -200,6 +200,8 @@ the driver will try to find an lat/lon grid array to set geotransform
 array. The NetCDF driver verifies that the Lat/Lon array is equally
 spaced.
 
+.. versionadded:: 3.4 crs_wkt attribute support
+
 If those 2 methods fail, NetCDF driver will try to read the following
 metadata directly and set up georeferencing.
 
@@ -350,7 +352,8 @@ Creation Options
    (such as named datums and EPSG codes), therefore the driver exports
    these variables by default. In import the CF "grid_mapping" variable
    takes precedence and the GDAL tags are used if they do not conflict
-   with CF metadata.
+   with CF metadata. In GDAL 4, spatial_ref will not be exported. The
+   crs_wkt CF metatata attribute will be used instead.
 
 -  **WRITE_LONLAT=[YES/NO/IF_NEEDED]**: Define if CF lon/lat variables
    are written to file. Default is YES for geographic SRS and NO for
