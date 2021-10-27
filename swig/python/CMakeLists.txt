@@ -143,7 +143,7 @@ if (_isMultiConfig AND WIN32)
   set(ONLY_GENERATE_FOR_RELEASE ON)
 endif ()
 
-if (Python_FOUND)
+if (Python_Interpreter_FOUND)
   if (ENABLE_GNM)
     set(GNM_ENABLED "True")
   else ()
