@@ -135,7 +135,7 @@ class OGRGeoJSONSeqWriteLayer final: public OGRLayer
     int TestCapability( const char* pszCap ) override;
 
   private:
-    OGRGeoJSONSeqDataSource* m_poDS = nullptr;    
+    OGRGeoJSONSeqDataSource* m_poDS = nullptr;
     OGRFeatureDefn* m_poFeatureDefn = nullptr;
 
     OGRCoordinateTransformation* m_poCT = nullptr;
@@ -291,6 +291,10 @@ bool OGRGeoJSONSeqLayer::Init(bool bLooseIdentification)
 
     ResetReading();
 
+    std::map<std::string, int> oMapFieldNameToIdx;
+    std::vector<std::unique_ptr<OGRFieldDefn>> apoFieldDefn;
+    gdal::DirectedAcyclicGraph<int, std::string> dag;
+
     while( true )
     {
         auto poObject = GetNextObject(bLooseIdentification);
@@ -298,10 +302,21 @@ bool OGRGeoJSONSeqLayer::Init(bool bLooseIdentification)
             break;
         if( OGRGeoJSONGetType(poObject) == GeoJSONObject::eFeature )
         {
-            m_oReader.GenerateFeatureDefn(this, poObject);
+            m_oReader.GenerateFeatureDefn(oMapFieldNameToIdx,
+                                          apoFieldDefn,
+                                          dag,
+                                          this, poObject);
         }
         json_object_put(poObject);
         m_nTotalFeatures ++;
+    }
+
+    OGRFeatureDefn* poDefn = GetLayerDefn();
+    const auto sortedFields = dag.getTopologicalOrdering();
+    CPLAssert( sortedFields.size() == apoFieldDefn.size() );
+    for( int idx: sortedFields )
+    {
+        poDefn->AddFieldDefn(apoFieldDefn[idx].get());
     }
 
     ResetReading();

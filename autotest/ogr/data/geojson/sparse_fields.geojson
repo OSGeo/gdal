@@ -1,0 +1,117 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "B": "b"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "C": "c"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "C": "c",
+                "B": "b"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "C": "c",
+                "A": "a"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "B": "a",
+                "A": "c"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "X": "isolated_node"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": null,
+            "#comment": "attempt at creating direct cycle",
+            "properties": {
+                "A": "c",
+                "C": "a"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": null,
+            "#comment": "attempt at creating indirect cycle",
+            "properties": {
+                "A": "c",
+                "B": "b",
+                "C": "a"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "A": "a",
+                "D": "d"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "A": "a",
+                "E": "e"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "E": "e",
+                "E_next": "e_next"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "E_prev": "e_prev",
+                "E": "e"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "E": "e",
+                "F": "f"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "D": "d",
+                "F": "f"
+            }
+        }
+    ]
+}

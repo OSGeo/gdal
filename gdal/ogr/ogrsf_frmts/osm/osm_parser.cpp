@@ -1955,7 +1955,7 @@ static OSMRetCode PBF_ProcessBlock(OSMContext* psCtxt)
         psCtxt->nBytesRead += nHeaderSize;
 
         memset(psCtxt->pabyBlobHeader + nHeaderSize, 0, EXTRA_BYTES);
-        const bool bRet = ReadBlobHeader(psCtxt->pabyBlobHeader, 
+        const bool bRet = ReadBlobHeader(psCtxt->pabyBlobHeader,
                               psCtxt->pabyBlobHeader + nHeaderSize,
                               &nBlobSize, &eType);
         if( !bRet || eType == BLOB_UNKNOWN )
@@ -2483,8 +2483,9 @@ static void XMLCALL OSM_XML_endElementCbk( void *pUserData,
 
     if( psCtxt->bInNode && strcmp(pszName, "node") == 0 )
     {
-        if( psCtxt->pasNodes[0].dfLon < -180 || psCtxt->pasNodes[0].dfLon > 180 ||
-            psCtxt->pasNodes[0].dfLat < -90 || psCtxt->pasNodes[0].dfLat > 90 )
+        // Written this way to deal with NaN
+        if( !(psCtxt->pasNodes[0].dfLon >= -180 && psCtxt->pasNodes[0].dfLon <= 180 &&
+              psCtxt->pasNodes[0].dfLat >= -90 && psCtxt->pasNodes[0].dfLat <= 90) )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Invalid lon=%f lat=%f",

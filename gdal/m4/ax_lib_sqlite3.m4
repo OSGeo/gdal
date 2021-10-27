@@ -1,7 +1,7 @@
 dnl $Id$
 dnl
 dnl @synopsis AX_LIB_SQLITE3([MINIMUM-VERSION])
-dnl 
+dnl
 dnl Test for the SQLite 3 library of a particular version (or newer)
 dnl
 dnl This macro takes only one optional argument, required version
@@ -32,7 +32,7 @@ dnl
 AC_DEFUN([AX_LIB_SQLITE3],
 [
     AC_ARG_WITH([sqlite3],
-        AC_HELP_STRING(
+        AS_HELP_STRING(
             [--with-sqlite3=@<:@ARG@:>@],
             [use SQLite 3 library @<:@default=yes@:>@, optionally specify the prefix for sqlite3 library]
         ),
@@ -118,7 +118,7 @@ AC_DEFUN([AX_LIB_SQLITE3],
             WANT_SQLITE3="no"
         fi
     fi
-    
+
     AC_MSG_CHECKING([for SQLite3 library >= $sqlite3_version_req])
 
     if test "x$WANT_SQLITE3" = "xyes"; then
@@ -157,7 +157,7 @@ AC_DEFUN([AX_LIB_SQLITE3],
         CPPFLAGS="$saved_CPPFLAGS"
 
         if test "$success" = "yes"; then
-            
+
             SQLITE3_CFLAGS="$ac_sqlite3_cppflags"
             SQLITE3_LDFLAGS="$ac_sqlite3_ldflags"
 

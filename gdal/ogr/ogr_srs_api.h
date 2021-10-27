@@ -467,6 +467,8 @@ void CPL_DLL OSRSetPROJSearchPaths( const char* const * papszPaths );
 char CPL_DLL **OSRGetPROJSearchPaths( void );
 void CPL_DLL OSRSetPROJAuxDbPaths( const char* const * papszPaths );
 char CPL_DLL **OSRGetPROJAuxDbPaths( void );
+void CPL_DLL OSRSetPROJEnableNetwork( int enabled );
+int CPL_DLL OSRGetPROJEnableNetwork( void );
 void CPL_DLL OSRGetPROJVersion( int* pnMajor, int* pnMinor, int* pnPatch );
 
 OGRSpatialReferenceH CPL_DLL CPL_STDCALL
@@ -1099,6 +1101,18 @@ int CPL_DLL
 OCTTransform4DWithErrorCodes( OGRCoordinateTransformationH hCT,
                   int nCount, double *x, double *y, double *z, double *t,
                   int *panErrorCodes );
+
+int CPL_DLL CPL_STDCALL
+OCTTransformBounds( OGRCoordinateTransformationH hCT,
+                    const double xmin,
+                    const double ymin,
+                    const double xmax,
+                    const double ymax,
+                    double* out_xmin,
+                    double* out_ymin,
+                    double* out_xmax,
+                    double* out_ymax,
+                    const int densify_pts );
 
 
 CPL_C_END

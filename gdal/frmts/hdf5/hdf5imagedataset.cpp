@@ -186,7 +186,7 @@ HDF5ImageDataset::HDF5ImageDataset() :
 /************************************************************************/
 HDF5ImageDataset::~HDF5ImageDataset()
 {
-    FlushCache();
+    FlushCache(true);
 
     if( dataset_id > 0 )
         H5Dclose(dataset_id);

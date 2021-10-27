@@ -52,6 +52,7 @@
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
+#include "cpl_time.h"
 #include "degrib/degrib/degrib2.h"
 #include "degrib/degrib/inventory.h"
 #include "degrib/degrib/meta.h"
@@ -90,6 +91,16 @@ static CPLString ConvertUnitInText( bool bMetricUnits, const char *pszTxt )
 }
 
 /************************************************************************/
+/*                         Lon360to180()                               */
+/************************************************************************/
+
+static inline double Lon360to180(double lon)
+{
+    if (lon == 180) return 180;
+    return fmod(lon + 180, 360) - 180;
+}
+
+/************************************************************************/
 /*                           GRIBRasterBand()                            */
 /************************************************************************/
 
@@ -118,22 +129,120 @@ GRIBRasterBand::GRIBRasterBand( GRIBDataset *poDSIn, int nBandIn,
     nBlockXSize = poDSIn->nRasterXSize;
     nBlockYSize = 1;
 
+    if (psInv->unitName != nullptr &&
+        psInv->comment != nullptr &&
+        psInv->element != nullptr)
+    {
+        bLoadedMetadata = true;
+        const char *pszGribNormalizeUnits =
+            CPLGetConfigOption("GRIB_NORMALIZE_UNITS", "YES");
+        bool bMetricUnits = CPLTestBool(pszGribNormalizeUnits);
+
+        SetMetadataItem("GRIB_UNIT",
+                        ConvertUnitInText(bMetricUnits, psInv->unitName));
+        SetMetadataItem("GRIB_COMMENT",
+                        ConvertUnitInText(bMetricUnits, psInv->comment));
+        SetMetadataItem("GRIB_ELEMENT", psInv->element);
+        SetMetadataItem("GRIB_SHORT_NAME", psInv->shortFstLevel);
+        SetMetadataItem("GRIB_REF_TIME",
+                        CPLString().Printf("%.0f", psInv->refTime));
+        SetMetadataItem("GRIB_VALID_TIME",
+                        CPLString().Printf("%.0f", psInv->validTime));
+        SetMetadataItem("GRIB_FORECAST_SECONDS",
+                        CPLString().Printf("%.0f", psInv->foreSec));
+        }
+}
+
+
+/************************************************************************/
+/*                           FindMetaData()                             */
+/************************************************************************/
+
+void GRIBRasterBand::FindMetaData()
+{
+    if (bLoadedMetadata) return;
+    if (m_Grib_MetaData == nullptr)
+    {
+        grib_MetaData *metaData;
+        GRIBDataset *poGDS = static_cast<GRIBDataset *>(poDS);
+        GRIBRasterBand::ReadGribData(poGDS->fp, start, subgNum, nullptr, &metaData);
+        if (metaData == nullptr)
+            return;
+        m_Grib_MetaData = metaData;
+    }
+    bLoadedMetadata = true;
+    m_nGribVersion = m_Grib_MetaData->GribVersion;
+
     const char *pszGribNormalizeUnits =
         CPLGetConfigOption("GRIB_NORMALIZE_UNITS", "YES");
     bool bMetricUnits = CPLTestBool(pszGribNormalizeUnits);
 
-    SetMetadataItem("GRIB_UNIT",
-                    ConvertUnitInText(bMetricUnits, psInv->unitName));
-    SetMetadataItem("GRIB_COMMENT",
-                    ConvertUnitInText(bMetricUnits, psInv->comment));
-    SetMetadataItem("GRIB_ELEMENT", psInv->element);
-    SetMetadataItem("GRIB_SHORT_NAME", psInv->shortFstLevel);
-    SetMetadataItem("GRIB_REF_TIME",
-                    CPLString().Printf("%12.0f sec UTC", psInv->refTime));
-    SetMetadataItem("GRIB_VALID_TIME",
-                    CPLString().Printf("%12.0f sec UTC", psInv->validTime));
-    SetMetadataItem("GRIB_FORECAST_SECONDS",
-                    CPLString().Printf("%.0f sec", psInv->foreSec));
+    GDALRasterBand::SetMetadataItem(
+        "GRIB_UNIT",
+        ConvertUnitInText(bMetricUnits, m_Grib_MetaData->unitName));
+    GDALRasterBand::SetMetadataItem(
+        "GRIB_COMMENT",
+        ConvertUnitInText(bMetricUnits, m_Grib_MetaData->comment));
+
+    GDALRasterBand::SetMetadataItem("GRIB_ELEMENT",
+                                    m_Grib_MetaData->element);
+    GDALRasterBand::SetMetadataItem("GRIB_SHORT_NAME",
+                                    m_Grib_MetaData->shortFstLevel);
+
+    if (m_nGribVersion == 2)
+    {
+        GDALRasterBand::SetMetadataItem(
+            "GRIB_REF_TIME",
+            CPLString().Printf("%.0f", m_Grib_MetaData->pds2.refTime));
+        GDALRasterBand::SetMetadataItem(
+            "GRIB_VALID_TIME",
+            CPLString().Printf("%.0f", m_Grib_MetaData->pds2.sect4.validTime));
+    }
+    else if (m_nGribVersion == 1)
+    {
+        GDALRasterBand::SetMetadataItem(
+            "GRIB_REF_TIME",
+            CPLString().Printf("%.0f", m_Grib_MetaData->pds1.refTime));
+        GDALRasterBand::SetMetadataItem(
+            "GRIB_VALID_TIME",
+            CPLString().Printf("%.0f", m_Grib_MetaData->pds1.validTime));
+
+    }
+
+    GDALRasterBand::SetMetadataItem(
+      "GRIB_FORECAST_SECONDS",
+      CPLString().Printf("%d", m_Grib_MetaData->deltTime));
+}
+
+/************************************************************************/
+/*                          FindTrueStart()                             */
+/*                                                                      */
+/*      Scan after the official start of the message to find its        */
+/*      true starting offset.                                           */
+/************************************************************************/
+vsi_l_offset GRIBRasterBand::FindTrueStart(VSILFILE *fp, vsi_l_offset start)
+{
+    // GRIB messages can be preceded by "garbage". GRIB2Inventory()
+    // does not return the offset to the real start of the message
+    char szHeader[1024 + 1];
+    VSIFSeekL( fp, start, SEEK_SET );
+    const int nRead = static_cast<int>(VSIFReadL( szHeader, 1, sizeof(szHeader)-1, fp ));
+    szHeader[nRead] = 0;
+    // Find the real offset of the fist message
+    int nOffsetFirstMessage = 0;
+    for(int j = 0; j + 3 < nRead; j++)
+    {
+        if(STARTS_WITH_CI(szHeader + j, "GRIB")
+#ifdef ENABLE_TDLP
+           || STARTS_WITH_CI(szHeader + j, "TDLP")
+#endif
+        )
+        {
+            nOffsetFirstMessage = j;
+            break;
+        }
+    }
+    return start + nOffsetFirstMessage;
 }
 
 /************************************************************************/
@@ -146,7 +255,11 @@ GRIBRasterBand::GRIBRasterBand( GRIBDataset *poDSIn, int nBandIn,
 void GRIBRasterBand::FindPDSTemplate()
 
 {
+    if (bLoadedPDS) return;
+    bLoadedPDS = true;
+
     GRIBDataset *poGDS = static_cast<GRIBDataset *>(poDS);
+    start = FindTrueStart(poGDS->fp, start);
 
     // Read section 0
     GByte abySection0[16];
@@ -180,7 +293,7 @@ void GRIBRasterBand::FindPDSTemplate()
             CPLString(table00[nDiscipline]).replaceAll(' ','_') + ")";
     }
 
-    SetMetadataItem("GRIB_DISCIPLINE", osDiscipline.c_str());
+    GDALRasterBand::SetMetadataItem("GRIB_DISCIPLINE", osDiscipline.c_str());
 
     GByte abyHead[5] = { 0 };
 
@@ -309,7 +422,7 @@ void GRIBRasterBand::FindPDSTemplate()
                     CPLString(table14[nType]).replaceAll(' ','_') + ")";
             }
 
-            SetMetadataItem("GRIB_IDS", osIDS);
+            GDALRasterBand::SetMetadataItem("GRIB_IDS", osIDS);
 
             CPLFree(pabyBody);
         }
@@ -412,7 +525,8 @@ void GRIBRasterBand::FindPDSTemplate()
             memcpy(&nPDTN, pabyBody + 8-1, 2);
             CPL_MSBPTR16(&nPDTN);
 
-            SetMetadataItem("GRIB_PDS_PDTN", CPLString().Printf("%d", nPDTN));
+            GDALRasterBand::SetMetadataItem("GRIB_PDS_PDTN",
+                                             CPLString().Printf("%d", nPDTN));
             m_nPDTN = nPDTN;
 
             CPLString osOctet;
@@ -430,7 +544,8 @@ void GRIBRasterBand::FindPDSTemplate()
                 osOctet += szByte;
             }
 
-            SetMetadataItem("GRIB_PDS_TEMPLATE_NUMBERS", osOctet);
+            GDALRasterBand::SetMetadataItem("GRIB_PDS_TEMPLATE_NUMBERS",
+                                             osOctet);
 
             g2int iofst = 0;
             g2int pdsnum = 0;
@@ -480,7 +595,8 @@ void GRIBRasterBand::FindPDSTemplate()
                                 osValues += CPLSPrintf("%d", pdstempl[i]);
                             }
                         }
-                        SetMetadataItem("GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES", osValues);
+                        GDALRasterBand::SetMetadataItem(
+                          "GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES", osValues);
                     }
                     else
                     {
@@ -792,6 +908,34 @@ CPLErr GRIBRasterBand::LoadData()
 }
 
 /************************************************************************/
+/*                             GetMetaData()                            */
+/************************************************************************/
+char **GRIBRasterBand::GetMetadata(const char *pszDomain)
+{
+    FindMetaData();
+    if (m_nGribVersion == 2 &&
+        CPLTestBool(CPLGetConfigOption("GRIB_PDS_ALL_BANDS", "ON")))
+    {
+        FindPDSTemplate();
+    }
+    return GDALPamRasterBand::GetMetadata(pszDomain);
+}
+
+/************************************************************************/
+/*                             GetMetaDataItem()                        */
+/************************************************************************/
+const char *GRIBRasterBand::GetMetadataItem(const char *pszName, const char *pszDomain)
+{
+    FindMetaData();
+    if (m_nGribVersion == 2 &&
+        CPLTestBool(CPLGetConfigOption("GRIB_PDS_ALL_BANDS", "ON")))
+    {
+        FindPDSTemplate();
+    }
+    return GDALPamRasterBand::GetMetadataItem(pszName, pszDomain);
+}
+
+/************************************************************************/
 /*                             IReadBlock()                             */
 /************************************************************************/
 
@@ -804,12 +948,14 @@ CPLErr GRIBRasterBand::IReadBlock( int /* nBlockXOff */,
     if (eErr != CE_None)
         return eErr;
 
+    GRIBDataset *poGDS = static_cast<GRIBDataset *>(poDS);
+
     // The image as read is always upside down to our normal
     // orientation so we need to effectively flip it at this
     // point.  We also need to deal with bands that are a different
     // size than the dataset as a whole.
 
-    if( nGribDataXSize == nRasterXSize && nGribDataYSize == nRasterYSize )
+    if( nGribDataXSize == nRasterXSize && nGribDataYSize == nRasterYSize && poGDS->nSplitAndSwapColumn == 0)
     {
         // Simple 1:1 case.
         memcpy(pImage,
@@ -824,11 +970,20 @@ CPLErr GRIBRasterBand::IReadBlock( int /* nBlockXOff */,
     if( nBlockYOff >= nGribDataYSize )  // Off image?
         return CE_None;
 
+    int nSplitAndSwapColumn = poGDS->nSplitAndSwapColumn;
+    if (nRasterXSize != nGribDataXSize)
+        nSplitAndSwapColumn = 0;
+
     const int nCopyWords = std::min(nRasterXSize, nGribDataXSize);
 
     memcpy(pImage,
-           m_Grib_Data + static_cast<size_t>(nGribDataXSize) * (nGribDataYSize - nBlockYOff - 1),
-           nCopyWords * sizeof(double));
+           m_Grib_Data + static_cast<size_t>(nGribDataXSize) * (nGribDataYSize - nBlockYOff - 1) + nSplitAndSwapColumn,
+           (nCopyWords - nSplitAndSwapColumn) * sizeof(double));
+
+    if (nSplitAndSwapColumn > 0)
+        memcpy(reinterpret_cast<void*>(reinterpret_cast<double*>(pImage) + nSplitAndSwapColumn),
+            m_Grib_Data + static_cast<size_t>(nGribDataXSize) * (nGribDataYSize - nBlockYOff - 1),
+            nSplitAndSwapColumn * sizeof(double));
 
     return CE_None;
 }
@@ -921,6 +1076,7 @@ void GRIBRasterBand::ReadGribData( VSILFILE * fp, vsi_l_offset start, int subgNu
     if ( !CPLTestBool(pszGribNormalizeUnits) )
         f_unit = 0;  // Do not normalize units to metric.
 
+    start = FindTrueStart(fp, start);
     // Read GRIB message from file position "start".
     VSIFSeekL(fp, start, SEEK_SET);
     uInt4 grib_DataLen = 0;  // Size of Grib_Data.
@@ -961,9 +1117,122 @@ void GRIBRasterBand::UncacheData()
 
 GRIBRasterBand::~GRIBRasterBand()
 {
-    CPLFree(longFstLevel);
+    if (longFstLevel != nullptr)
+        CPLFree(longFstLevel);
     UncacheData();
 }
+
+
+/************************************************************************/
+/*                           InventoryWrapperGrib                       */
+/************************************************************************/
+class InventoryWrapperGrib : public gdal::grib::InventoryWrapper
+{
+  public:
+    explicit InventoryWrapperGrib(VSILFILE *fp) : gdal::grib::InventoryWrapper()
+    {
+        result_ = GRIB2Inventory(fp, &inv_, &inv_len_, 0 /* all messages */, &num_messages_);
+    }
+
+    ~InventoryWrapperGrib() override
+    {
+        if (inv_ == nullptr)
+            return;
+        for (uInt4 i = 0; i < inv_len_; i++)
+        {
+            GRIB2InventoryFree(inv_ + i);
+        }
+        free(inv_);
+    }
+};
+
+/************************************************************************/
+/*                           InventoryWrapperSidecar                    */
+/************************************************************************/
+
+class InventoryWrapperSidecar : public gdal::grib::InventoryWrapper
+{
+  public:
+    explicit InventoryWrapperSidecar(VSILFILE *fp) : gdal::grib::InventoryWrapper()
+    {
+        result_ = -1;
+        VSIFSeekL(fp, 0, SEEK_END);
+        size_t length = static_cast<size_t>(VSIFTellL(fp));
+        if (length > 4*1024*1024) return;
+        std::string psSidecar;
+        psSidecar.resize(length);
+        VSIFSeekL(fp, 0, SEEK_SET);
+        if (VSIFReadL(&psSidecar[0], length, 1, fp) != 1) return;
+
+        CPLStringList aosMsgs(CSLTokenizeString2(
+            psSidecar.c_str(), "\n", CSLT_PRESERVEQUOTES | CSLT_STRIPLEADSPACES));
+        inv_len_ = aosMsgs.size();
+        inv_ = new inventoryType[inv_len_];
+
+        for (size_t i = 0; i < inv_len_; ++i)
+        {
+            // We are parsing "msgNum[.subgNum]:start:dontcare:name1:name2:name3"
+            // For NOMADS: "msgNum[.subgNum]:start:reftime:var:level:time"
+            CPLStringList aosTokens(CSLTokenizeString2(aosMsgs[i], ":",
+                CSLT_PRESERVEQUOTES | CSLT_ALLOWEMPTYTOKENS));
+            CPLStringList aosNum;
+
+            if (aosTokens.size() < 6) goto err_sidecar;
+
+            aosNum = CPLStringList(CSLTokenizeString2(aosTokens[0], ".", 0));
+            if (aosNum.size() < 1) goto err_sidecar;
+
+            // FindMetaData will retrieve the correct version number
+            char *endptr;
+            strtol(aosNum[0], &endptr, 10);
+            if (*endptr != 0) goto err_sidecar;
+
+            if (aosNum.size() < 2)
+                inv_[i].subgNum = 0;
+            else
+            {
+                inv_[i].subgNum =
+                    static_cast<unsigned short>(strtol(aosNum[1], &endptr, 10));
+                if (*endptr != 0) goto err_sidecar;
+            }
+
+            inv_[i].start = strtoll(aosTokens[1], &endptr, 10);
+            if (*endptr != 0) goto err_sidecar;
+
+            inv_[i].unitName = nullptr;
+            inv_[i].comment = nullptr;
+            inv_[i].element = nullptr;
+            inv_[i].shortFstLevel = nullptr;
+            // This is going into the description field ->
+            // the only one available before loading the metadata
+            inv_[i].longFstLevel = VSIStrdup(CPLSPrintf("%s:%s:%s",
+                    aosTokens[3], aosTokens[4], aosTokens[5]));
+
+            continue;
+
+        err_sidecar:
+            CPLDebug("GRIB",
+                     "Failed parsing sidecar entry '%s', "
+                     "falling back to constructing an inventory",
+                     aosMsgs[i]);
+            inv_len_ = static_cast<unsigned>(i);
+            return;
+        }
+
+        result_ = inv_len_;
+    }
+
+    ~InventoryWrapperSidecar() override
+    {
+        if (inv_ == nullptr)
+            return;
+
+        for (unsigned i = 0; i < inv_len_; i++)
+            VSIFree(inv_[i].longFstLevel);
+
+        delete [] inv_;
+    }
+};
 
 /************************************************************************/
 /* ==================================================================== */
@@ -980,6 +1249,7 @@ GRIBDataset::GRIBDataset() :
         static_cast<GIntBig>(atoi(CPLGetConfigOption("GRIB_CACHEMAX", "100")))
         * 1024 * 1024),
     bCacheOnlyOneBand(FALSE),
+    nSplitAndSwapColumn(0),
     poLastUsedBand(nullptr)
 {
     adfGeoTransform[0] = 0.0;
@@ -997,7 +1267,7 @@ GRIBDataset::GRIBDataset() :
 GRIBDataset::~GRIBDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
     if( fp != nullptr )
         VSIFCloseL(fp);
 }
@@ -1035,6 +1305,41 @@ int GRIBDataset::Identify( GDALOpenInfo *poOpenInfo )
     }
 
     return FALSE;
+}
+
+/************************************************************************/
+/*                                Inventory()                           */
+/************************************************************************/
+
+std::unique_ptr<gdal::grib::InventoryWrapper> GRIBDataset::Inventory(VSILFILE *fp, GDALOpenInfo *poOpenInfo)
+{
+    std::unique_ptr<gdal::grib::InventoryWrapper> pInventories;
+
+    VSIFSeekL(fp, 0, SEEK_SET);
+    CPLString sSideCarFilename = CPLString(poOpenInfo->pszFilename) + ".idx";
+    VSILFILE *fpSideCar = nullptr;
+    if (CPLTestBool(
+          CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "USE_IDX", "YES")) &&
+          ((fpSideCar = VSIFOpenL(sSideCarFilename, "rb")) != nullptr))
+    {
+        CPLDebug("GRIB", "Reading inventories from sidecar file %s", sSideCarFilename.c_str());
+        // Contains an GRIB2 message inventory of the file.
+        pInventories = cpl::make_unique<InventoryWrapperSidecar>(fpSideCar);
+        if (pInventories->result() <= 0 || pInventories->length() == 0)
+            pInventories = nullptr;
+        VSIFCloseL(fpSideCar);
+    }
+    else
+        CPLDebug("GRIB", "Failed opening sidecar %s", sSideCarFilename.c_str());
+
+    if (pInventories == nullptr)
+    {
+        CPLDebug("GRIB", "Reading inventories from GRIB file %s", poOpenInfo->pszFilename);
+        // Contains an GRIB2 message inventory of the file.
+        pInventories = cpl::make_unique<InventoryWrapperGrib>(fp);
+    }
+
+    return pInventories;
 }
 
 /************************************************************************/
@@ -1112,15 +1417,11 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
     // The band-data that is read is stored into the first RasterBand,
     // simply so that the same portion of the file is not read twice.
 
-    VSIFSeekL(poDS->fp, 0, SEEK_SET);
-
-    // Contains an GRIB2 message inventory of the file.
-    gdal::grib::InventoryWrapper oInventories(poDS->fp);
-
-    if( oInventories.result() <= 0 )
+    auto pInventories = Inventory(poDS->fp, poOpenInfo);
+    if (pInventories->result() <= 0)
     {
         char *errMsg = errSprintf(nullptr);
-        if( errMsg != nullptr )
+        if (errMsg != nullptr)
             CPLDebug("GRIB", "%s", errMsg);
         free(errMsg);
 
@@ -1137,33 +1438,11 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
     }
 
     // Create band objects.
-    for (uInt4 i = 0; i < oInventories.length(); ++i)
+    for (uInt4 i = 0; i < pInventories->length(); ++i)
     {
-        inventoryType *psInv = oInventories.get(i);
+        inventoryType *psInv = pInventories->get(i);
         GRIBRasterBand *gribBand = nullptr;
         uInt4 bandNr = i + 1;
-
-        // GRIB messages can be preceded by "garbage". GRIB2Inventory()
-        // does not return the offset to the real start of the message
-        char szHeader[1024 + 1];
-        VSIFSeekL( poDS->fp, psInv->start, SEEK_SET );
-        const int nRead = static_cast<int>(VSIFReadL( szHeader, 1, sizeof(szHeader)-1, poDS->fp ));
-        szHeader[nRead] = 0;
-        // Find the real offset of the fist message
-        int nOffsetFirstMessage = 0;
-        for(int j = 0; j + 3 < nRead; j++)
-        {
-            if(STARTS_WITH_CI(szHeader + j, "GRIB")
-#ifdef ENABLE_TDLP
-               || STARTS_WITH_CI(szHeader + j, "TDLP")
-#endif
-            )
-            {
-                nOffsetFirstMessage = j;
-                break;
-            }
-        }
-        psInv->start += nOffsetFirstMessage;
 
         if (bandNr == 1)
         {
@@ -1192,6 +1471,7 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
                 }
                 return nullptr;
             }
+            psInv->GribVersion = metaData->GribVersion;
 
             // Set the DataSet's x,y size, georeference and projection from
             // the first GRIB band.
@@ -1206,11 +1486,6 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
         else
         {
             gribBand = new GRIBRasterBand(poDS, bandNr, psInv);
-            if( CPLTestBool(CPLGetConfigOption("GRIB_PDS_ALL_BANDS", "ON")) )
-            {
-                if( psInv->GribVersion == 2 )
-                    gribBand->FindPDSTemplate();
-            }
         }
         poDS->SetBand(bandNr, gribBand);
     }
@@ -1759,19 +2034,39 @@ const std::vector<double>& GRIBSharedResource::LoadData(vsi_l_offset nOffset,
     }
     const int nx = metadata->gds.Nx;
     const int ny = metadata->gds.Ny;
+    MetaFree(metadata);
+    delete metadata;
     if( nx <= 0 || ny <= 0 )
     {
-        MetaFree(metadata);
-        delete metadata;
         free(data);
         m_adfCurData.clear();
         return m_adfCurData;
     }
-    m_adfCurData.resize( static_cast<size_t>(nx) * ny );
+    const size_t nPointCount = static_cast<size_t>(nx) * ny;
+    const size_t nByteCount = nPointCount * sizeof(double);
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    if( nByteCount > static_cast<size_t>(INT_MAX) )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Too large memory allocation attempt");
+        free(data);
+        m_adfCurData.clear();
+        return m_adfCurData;
+    }
+#endif
+    try
+    {
+        m_adfCurData.resize( nPointCount );
+    }
+    catch( const std::exception& e )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
+        free(data);
+        m_adfCurData.clear();
+        return m_adfCurData;
+    }
     m_nOffsetCurData = nOffset;
-    memcpy(&m_adfCurData[0], data, static_cast<size_t>(nx) * ny * sizeof(double));
-    MetaFree(metadata);
-    delete metadata;
+    memcpy(&m_adfCurData[0], data, nByteCount);
     free(data);
     return m_adfCurData;
 }
@@ -1886,9 +2181,9 @@ GDALDataset *GRIBDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
     VSIFSeekL(poShared->m_fp, 0, SEEK_SET);
 
     // Contains an GRIB2 message inventory of the file.
-    gdal::grib::InventoryWrapper oInventories(poShared->m_fp);
+    auto pInventories = Inventory(poShared->m_fp, poOpenInfo);
 
-    if( oInventories.result() <= 0 )
+    if( pInventories->result() <= 0 )
     {
         char *errMsg = errSprintf(nullptr);
         if( errMsg != nullptr )
@@ -1912,9 +2207,9 @@ GDALDataset *GRIBDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
     std::string osShortFstLevel;
     double dfRefTime = 0;
     double dfForecastTime = 0;
-    for (uInt4 i = 0; i < oInventories.length(); ++i)
+    for (uInt4 i = 0; i < pInventories->length(); ++i)
     {
-        inventoryType *psInv = oInventories.get(i);
+        inventoryType *psInv = pInventories->get(i);
         uInt4 bandNr = i + 1;
 
         // GRIB messages can be preceded by "garbage". GRIB2Inventory()
@@ -1964,7 +2259,7 @@ GDALDataset *GRIBDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
         {
             if( poArray)
             {
-                poArray->Finalize(poRootGroup.get(), oInventories.get(i-1));
+                poArray->Finalize(poRootGroup.get(), pInventories->get(i-1));
                 poRootGroup->AddArray(poArray);
             }
 
@@ -1991,6 +2286,7 @@ GDALDataset *GRIBDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
                 CPLAcquireMutex(hGRIBMutex, 1000.0);
                 return nullptr;
             }
+            psInv->GribVersion = metaData->GribVersion;
 
             // Set the DataSet's x,y size, georeference and projection from
             // the first GRIB band.
@@ -2025,7 +2321,7 @@ GDALDataset *GRIBDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
     if( poArray)
     {
         poArray->Finalize(poRootGroup.get(),
-                          oInventories.get(oInventories.length()-1));
+                          pInventories->get(pInventories->length()-1));
         poRootGroup->AddArray(poArray);
     }
 
@@ -2258,6 +2554,7 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
         rMaxY = meta->gds.lat1;
 
         double rMinY = meta->gds.lat2;
+        double rMaxX = meta->gds.lon2;
         if (meta->gds.lat2 > rMaxY)
         {
             rMaxY = meta->gds.lat2;
@@ -2287,15 +2584,35 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
         if (rPixelSizeY < 0 || fabs(rPixelSizeY - meta->gds.Dy) > 0.002)
             rPixelSizeY = meta->gds.Dy;
 
-        // Longitude origin of GRIB files is sometimes funny. Try to shift as close
-        // as possible to the traditional [-180,180] longitude range
-        // See https://trac.osgeo.org/gdal/ticket/7103
-        if( ((rMinX >= 179 && rPixelSizeX * meta->gds.Nx > 10) || rMinX >= 180) &&
+        // GRIB2 files have longitudes in the [0-360] range
+        // Shift them to the traditional [-180,180] longitude range
+        // See https://github.com/OSGeo/gdal/issues/4524
+        if ((rMinX + rPixelSizeX >= 180 || rMaxX - rPixelSizeX >= 180) &&
             CPLTestBool(CPLGetConfigOption("GRIB_ADJUST_LONGITUDE_RANGE", "YES")) )
         {
-            CPLDebug("GRIB", "Adjusting longitude origin from %f to %f",
-                     rMinX - rPixelSizeX / 2, rMinX - rPixelSizeX / 2 - 360 );
-            rMinX -= 360;
+            if (rPixelSizeX * nRasterXSize > 360)
+                CPLDebug("GRIB",
+                    "Cannot properly handle GRIB2 files with overlaps and 0-360 longitudes");
+            else if (fabs(360 - rPixelSizeX * nRasterXSize) < rPixelSizeX/4 &&
+                meta->gds.projType == GS3_LATLON)
+            {
+                // Find the first row number east of the antimeridian
+                nSplitAndSwapColumn = static_cast<int>(ceil((180 - rMinX) / rPixelSizeX));
+                CPLDebug("GRIB", "Rewrapping around the antimeridian at column %d",
+                    nSplitAndSwapColumn);
+                rMinX = -180;
+            }
+            else if (Lon360to180(rMinX) > Lon360to180(rMaxX))
+            {
+                CPLDebug("GRIB", "GRIB with 0-360 longitudes spanning across the antimeridian");
+                rMinX = Lon360to180(rMinX);
+            }
+            else
+            {
+                CPLDebug("GRIB", "Shifting longitudes from %lf:%lf to %lf:%lf",
+                    rMinX, rMaxX, Lon360to180(rMinX), Lon360to180(rMaxX));
+                rMinX = Lon360to180(rMinX);
+            }
         }
     }
 
@@ -2461,6 +2778,14 @@ char** GDALGRIBDriver::GetMetadata(const char* pszDomain)
 
             aosMetadata.SetNameValue( GDAL_DMD_CREATIONOPTIONLIST,
                                       osCreationOptionList );
+
+            aosMetadata.SetNameValue(
+              GDAL_DMD_OPENOPTIONLIST,
+              "<OpenOptionList>"
+              "    <Option name='USE_IDX' type='boolean' "
+              "description='Load metadata from "
+              "wgrib2 index file if available' default='YES'/>"
+              "</OpenOptionList>");
         }
         return aosMetadata.List();
     }

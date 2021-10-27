@@ -1640,3 +1640,84 @@ def test_vrt_check_dont_open_unneeded_source():
         assert ds is None
     finally:
         gdal.Unlink(tmpfilename)
+
+
+def test_vrt_check_dont_open_unneeded_source_with_complex_source_nodata():
+
+    vrt = """<VRTDataset rasterXSize="20" rasterYSize="20">
+  <VRTRasterBand dataType="Byte" band="1">
+    <ColorInterp>Gray</ColorInterp>
+    <ComplexSource>
+      <SourceFilename>data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="10" ySize="10" />
+      <DstRect xOff="0" yOff="0" xSize="10" ySize="10" />
+      <NODATA>0</NODATA>
+    </ComplexSource>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="1">i_do_not_exist.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="10" yOff="10" xSize="10" ySize="10" />
+      <DstRect xOff="10" yOff="10" xSize="10" ySize="10" />
+      <NODATA>0</NODATA>
+    </ComplexSource>
+  </VRTRasterBand>
+</VRTDataset>"""
+
+    tmpfilename = '/vsimem/tmp.vrt'
+    gdal.FileFromMemBuffer(tmpfilename, vrt)
+    try:
+        ds = gdal.Translate('', tmpfilename, options = '-of MEM -srcwin 0 0 10 10')
+        assert ds is not None
+
+        with gdaltest.error_handler():
+            ds = gdal.Translate('', tmpfilename, options = '-of MEM -srcwin 0 0 10.1 10.1')
+        assert ds is None
+    finally:
+        gdal.Unlink(tmpfilename)
+
+
+def test_vrt_nodata_and_implicit_ovr_recursion_issue():
+
+    """ Tests scenario https://github.com/OSGeo/gdal/issues/4620#issuecomment-938636360 """
+
+    vrt = """<VRTDataset rasterXSize="20" rasterYSize="20">
+  <VRTRasterBand dataType="Byte" band="1">
+    <NoDataValue>0</NoDataValue>
+    <ComplexSource>
+      <NODATA>0</NODATA>
+      <SourceFilename>data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </ComplexSource>
+  </VRTRasterBand>
+  <OverviewList resampling="average">2</OverviewList>
+</VRTDataset>"""
+
+    tmpfilename = '/vsimem/tmp.vrt'
+    with gdaltest.tempfile(tmpfilename, vrt):
+        ds = gdal.Open(tmpfilename)
+        assert ds.GetRasterBand(1).GetOverview(0).Checksum() == 1152
+
+
+def test_vrt_statistics_and_implicit_ovr_recursion_issue():
+
+    """ Tests scenario https://github.com/OSGeo/gdal/issues/4661 """
+
+    gdal.Translate('/vsimem/test.tif', 'data/uint16.tif', width = 2048)
+    vrt_ds = gdal.Translate('', '/vsimem/test.tif', format='VRT')
+    with gdaltest.config_option('VRT_VIRTUAL_OVERVIEWS', 'YES'):
+        vrt_ds.BuildOverviews('NEAR', [2, 4])
+
+    stats = vrt_ds.GetRasterBand(1).ComputeStatistics(True) # approx stats
+    assert gdal.GetLastErrorMsg() == ''
+    assert stats[0] == 74
+
+    min_max = vrt_ds.GetRasterBand(1).ComputeRasterMinMax(True) # approx stats
+    assert gdal.GetLastErrorMsg() == ''
+    assert min_max[0] == 74
+
+    hist = vrt_ds.GetRasterBand(1).GetHistogram(True) # approx stats
+    assert gdal.GetLastErrorMsg() == ''
+    assert hist is not None
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/test.tif')

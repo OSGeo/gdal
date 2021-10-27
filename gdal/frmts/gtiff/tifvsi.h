@@ -39,6 +39,7 @@
 
 TIFF* VSI_TIFFOpen( const char* name, const char* mode, VSILFILE* fp );
 TIFF* VSI_TIFFOpenChild( TIFF* parent ); // the returned handle must be closed before the parent. They share the same underlying VSILFILE
+TIFF* VSI_TIFFReOpen( TIFF* tif );
 VSILFILE* VSI_TIFFGetVSILFile( thandle_t th );
 int VSI_TIFFFlushBufferedWrite( thandle_t th );
 toff_t VSI_TIFFSeek(TIFF* tif, toff_t off, int whence );

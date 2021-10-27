@@ -215,7 +215,7 @@ EnvisatDataset::EnvisatDataset() :
 EnvisatDataset::~EnvisatDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
 
     if( hEnvisatFile != nullptr )
         EnvisatFile_Close( hEnvisatFile );

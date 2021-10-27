@@ -91,7 +91,7 @@ int GDALDefaultOverviews::CloseDependentDatasets()
     if( poODS != nullptr )
     {
         bHasDroppedRef = true;
-        poODS->FlushCache();
+        poODS->FlushCache(true);
         GDALClose( poODS );
         poODS = nullptr;
     }
@@ -101,7 +101,7 @@ int GDALDefaultOverviews::CloseDependentDatasets()
         if( bOwnMaskDS )
         {
             bHasDroppedRef = true;
-            poMaskDS->FlushCache();
+            poMaskDS->FlushCache(true);
             GDALClose( poMaskDS );
         }
         poMaskDS = nullptr;

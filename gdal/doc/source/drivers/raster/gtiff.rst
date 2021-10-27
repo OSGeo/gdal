@@ -374,7 +374,7 @@ Creation Options
    (UInt32 type) are also accepted. From GDAL 2.2, n=16 is accepted for
    Float32 type to generate half-precision floating point values.
 
--  **COMPRESS=[JPEG/LZW/PACKBITS/DEFLATE/CCITTRLE/CCITTFAX3/CCITTFAX4/LZMA/ZSTD/LERC/LERC_DEFLATE/LERC_ZSTD/WEBP/NONE]**:
+-  **COMPRESS=[JPEG/LZW/PACKBITS/DEFLATE/CCITTRLE/CCITTFAX3/CCITTFAX4/LZMA/ZSTD/LERC/LERC_DEFLATE/LERC_ZSTD/WEBP/JXL/NONE]**:
    Set the compression to use.
 
    * ``JPEG`` should generally only be used with Byte data (8 bit per channel).
@@ -401,6 +401,10 @@ Creation Options
      against external libtiff >= 4.3.0, built itself against https://github.com/esri/lerc
 
    * ``LERC_ZSTD`` is available when ``LERC`` and ``ZSTD`` are available.
+
+   * ``JXL`` is for JPEG-XL, and is only available when using internal libtiff and building GDAL against
+     https://github.com/libjxl/libxl . JXL compression may only be used alongside ``INTERLEAVE=PIXEL`` 
+     (the default) on datasets with 4 bands or less.
 
    * ``NONE`` is the default.
 
@@ -473,6 +477,17 @@ Creation Options
    compression will be used. There is a significant time penalty for each
    tile/strip with lossless WebP compression, so you may want to increase the
    BLOCKYSIZE value for strip layout.
+
+-  **JXL_LOSSLESS=YES/NO**: Set whether JPEG-XL compression should be lossless
+   (YES, default) or lossy (NO). For lossy compression, the underlying data
+   should be either gray, gray+alpha, rgb or rgb+alpha.
+
+-  **JXL_EFFORT=[1-9]**: Level of effort for JPEG-XL compression.
+   The higher, the smaller file and slower compression time. Default is 5.
+
+-  **JXL_DISTANCE=[0.1-15]**: Distance level for lossy JPEG-XL compression
+   0=mathematically lossless, 1.0=visually lossless, usual range [0.5,3].
+   Default is 1.0
 
 -  **PHOTOMETRIC=[MINISBLACK/MINISWHITE/RGB/CMYK/YCBCR/CIELAB/ICCLAB/ITULAB]**:
    Set the photometric interpretation tag. Default is MINISBLACK, but if

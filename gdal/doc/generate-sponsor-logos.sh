@@ -15,3 +15,4 @@ inkscape --export-png=images/sponsors/logo-safe.png --export-width=$SILVER_WIDTH
 
 inkscape --export-png=images/sponsors/logo-koordinates.png --export-width=$BRONZE_WIDTH images/sponsors/logo-koordinates.svg
 inkscape --export-png=images/sponsors/logo-frontiersi.png --export-width=$BRONZE_WIDTH images/sponsors/logo-FrontierSI.svg
+inkscape --export-png=images/sponsors/logo-aerometrex.png --export-width=$BRONZE_WIDTH images/sponsors/logo-aerometrex.svg

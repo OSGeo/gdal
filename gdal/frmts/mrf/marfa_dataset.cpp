@@ -154,7 +154,7 @@ MRFDataset::~MRFDataset() {   // Make sure everything gets written
             CPLError(CE_Failure, CPLE_FileIO, "Error creating files");
         }
 
-    MRFDataset::FlushCache();
+    MRFDataset::FlushCache(true);
     MRFDataset::CloseDependentDatasets();
 
     if (ifp.FP)
@@ -1245,7 +1245,7 @@ CPLErr MRFDataset::Initialize(CPLXMLNode* config)
 
     OGRSpatialReference oSRS;
     const char* pszRawProjFromXML = CPLGetXMLValue(config, "GeoTags.Projection", "");
-    if (strlen(pszRawProjFromXML) == 0 || oSRS.SetFromUserInput(pszRawProjFromXML, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS) != OGRERR_NONE)
+    if (strlen(pszRawProjFromXML) == 0 || oSRS.SetFromUserInput(pszRawProjFromXML, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) != OGRERR_NONE)
         SetProjection("");
     else {
         char* pszRawProj = nullptr;

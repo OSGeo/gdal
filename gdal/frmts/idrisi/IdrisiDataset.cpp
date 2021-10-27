@@ -627,7 +627,7 @@ IdrisiDataset::IdrisiDataset() :
 
 IdrisiDataset::~IdrisiDataset()
 {
-    FlushCache();
+    FlushCache(true);
 
     if( papszRDC != nullptr && eAccess == GA_Update  )
     {
@@ -1314,7 +1314,7 @@ GDALDataset *IdrisiDataset::CreateCopy( const char *pszFilename,
     //      Finalize
     // --------------------------------------------------------------------
 
-    poDS->FlushCache();
+    poDS->FlushCache(false);
 
     return poDS;
 }
@@ -2980,8 +2980,6 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
     //  Check for State Plane
     // -----------------------------------------------------
 
-#ifndef GDAL_RST_PLUGIN
-
     if( EQUAL( pszProjName, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP ) ||
         EQUAL( pszProjName, SRS_PT_TRANSVERSE_MERCATOR ) )
     {
@@ -3055,8 +3053,6 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
             return CE_None;
         }
     }
-
-#endif // GDAL_RST_PLUGIN
 
     const char *pszProjectionOut = nullptr;
 
@@ -3179,7 +3175,7 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
         {
             dfStdP2 = -dfStdP1;
             dfScale = 1.0;
-        } 
+        }
         else
         {
             dfStdP2 = oSRS.GetProjParm( SRS_PP_STANDARD_PARALLEL_2, -0.1, nullptr );

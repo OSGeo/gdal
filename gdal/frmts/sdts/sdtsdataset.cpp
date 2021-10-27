@@ -106,7 +106,7 @@ SDTSDataset::SDTSDataset() :
 SDTSDataset::~SDTSDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
 
     if( poTransfer != nullptr )
         delete poTransfer;

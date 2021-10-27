@@ -132,15 +132,15 @@ CPL_C_END
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 
 /* Instantiates the mutex if not already done. The parameter x should be a (void**). */
-#define CPLMutexHolderD(x)  CPLMutexHolder oHolder(x,1000.0,__FILE__,__LINE__);
+#define CPLMutexHolderD(x)  CPLMutexHolder oHolder(x,1000.0,__FILE__,__LINE__)
 
 /* Instantiates the mutex with options if not already done. */
 /* The parameter x should be a (void**). */
-#define CPLMutexHolderExD(x, nOptions)  CPLMutexHolder oHolder(x,1000.0,__FILE__,__LINE__,nOptions);
+#define CPLMutexHolderExD(x, nOptions)  CPLMutexHolder oHolder(x,1000.0,__FILE__,__LINE__,nOptions)
 
 /* This variant assumes the mutex has already been created. If not, it will */
 /* be a no-op. The parameter x should be a (void*) */
-#define CPLMutexHolderOptionalLockD(x)  CPLMutexHolder oHolder(x,1000.0,__FILE__,__LINE__);
+#define CPLMutexHolderOptionalLockD(x)  CPLMutexHolder oHolder(x,1000.0,__FILE__,__LINE__)
 
 /** Object to hold a mutex */
 class CPL_DLL CPLMutexHolder

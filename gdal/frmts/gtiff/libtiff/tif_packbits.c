@@ -214,23 +214,17 @@ static int
 PackBitsDecode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
 {
 	static const char module[] = "PackBitsDecode";
-	char *bp;
+	int8_t *bp;
 	tmsize_t cc;
 	long n;
 	int b;
 
 	(void) s;
-	bp = (char*) tif->tif_rawcp;
+	bp = (int8_t*) tif->tif_rawcp;
 	cc = tif->tif_rawcc;
 	while (cc > 0 && occ > 0) {
 		n = (long) *bp++;
 		cc--;
-		/*
-		 * Watch out for compilers that
-		 * don't sign extend chars...
-		 */
-		if (n >= 128)
-			n -= 256;
 		if (n < 0) {		/* replicate next byte -n+1 times */
 			if (n == -128)	/* nop */
 				continue;

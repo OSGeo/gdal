@@ -70,7 +70,7 @@ wget -q "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz" \
     --with-hide-internal-symbols \
     --with-jpeg12 \
     --with-python \
-    --with-poppler \
+    --with-jxl \
     --with-spatialite \
     --with-mysql \
     --with-liblzma \

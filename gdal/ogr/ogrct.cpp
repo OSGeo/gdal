@@ -650,7 +650,20 @@ class OGRProjCT : public OGRCoordinateTransformation
     static CTCacheKey MakeCacheKey(const OGRSpatialReference* poSRS1,
                            const OGRSpatialReference* poSRS2,
                            const OGRCoordinateTransformationOptions& options);
-
+    bool ContainsNorthPole(
+        const double xmin,
+        const double ymin,
+        const double xmax,
+        const double ymax,
+        bool lon_lat_order
+    );
+    bool ContainsSouthPole(
+        const double xmin,
+        const double ymin,
+        const double xmax,
+        const double ymax,
+        bool lon_lat_order
+    );
 public:
     OGRProjCT();
     ~OGRProjCT() override;
@@ -669,6 +682,16 @@ public:
     int TransformWithErrorCodes( int nCount,
                              double *x, double *y, double *z, double *t,
                              int *panErrorCodes ) override;
+
+    int TransformBounds( const double xmin,
+                         const double ymin,
+                         const double xmax,
+                         const double ymax,
+                         double* out_xmin,
+                         double* out_ymin,
+                         double* out_xmax,
+                         double* out_ymax,
+                         const int densify_pts ) override;
 
     bool GetEmitErrors() const override { return m_bEmitErrors; }
     void SetEmitErrors( bool bEmitErrors ) override
@@ -1603,7 +1626,12 @@ bool OGRProjCT::ListCoordinateOperations(const char* pszSrcSRS,
     proj_operation_factory_context_set_spatial_criterion(
         ctx, operation_ctx, PROJ_SPATIAL_CRITERION_PARTIAL_INTERSECTION);
     proj_operation_factory_context_set_grid_availability_use(
-        ctx, operation_ctx, PROJ_GRID_AVAILABILITY_DISCARD_OPERATION_IF_MISSING_GRID);
+        ctx, operation_ctx,
+#if PROJ_VERSION_MAJOR >= 7
+        proj_context_is_network_enabled(ctx) ?
+            PROJ_GRID_AVAILABILITY_KNOWN_AVAILABLE:
+#endif
+            PROJ_GRID_AVAILABILITY_DISCARD_OPERATION_IF_MISSING_GRID);
 
     if( options.d->bHasAreaOfInterest )
     {
@@ -1693,16 +1721,27 @@ bool OGRProjCT::ListCoordinateOperations(const char* pszSrcSRS,
 #if PROJ_VERSION_MAJOR > 7 || (PROJ_VERSION_MAJOR == 7 && PROJ_VERSION_MINOR >= 2)
         if( datum == nullptr )
         {
-            datum = proj_crs_get_datum_ensemble(ctx, geodetic_crs);
+            datum = proj_crs_get_datum_forced(ctx, geodetic_crs);
         }
 #endif
         if( datum )
         {
+            auto ellps = proj_get_ellipsoid(ctx, datum);
+            proj_destroy(datum);
+            double semi_major_metre = 0;
+            double inv_flattening = 0;
+            proj_ellipsoid_get_parameters(ctx, ellps, &semi_major_metre,
+                                          nullptr, nullptr, &inv_flattening);
             auto cs = proj_create_ellipsoidal_2D_cs(
                 ctx, PJ_ELLPS2D_LONGITUDE_LATITUDE, nullptr, 0);
-            auto temp = proj_create_geographic_crs_from_datum(
-                ctx,"unnamed", datum, cs);
-            proj_destroy(datum);
+            // It is critical to set the prime meridian to 0
+            auto temp = proj_create_geographic_crs(
+                ctx, "unnamed crs", "unnamed datum",
+                proj_get_name(ellps),
+                semi_major_metre, inv_flattening,
+                "Reference prime meridian", 0, nullptr, 0,
+                cs);
+            proj_destroy(ellps);
             proj_destroy(cs);
             proj_destroy(geodetic_crs);
             geodetic_crs = temp;
@@ -2604,6 +2643,461 @@ int OGRProjCT::TransformWithErrorCodes(
     return TRUE;
 }
 
+
+/************************************************************************/
+/*                      TransformBounds()                       */
+/************************************************************************/
+
+// ---------------------------------------------------------------------------
+static double simple_min(const double* data, const int arr_len) {
+    double min_value = data[0];
+    for( int iii = 1; iii < arr_len; iii++ ) {
+        if (data[iii] < min_value)
+            min_value = data[iii];
+    }
+    return min_value;
+}
+
+
+// ---------------------------------------------------------------------------
+static double simple_max(const double* data, const int arr_len) {
+    double max_value = data[0];
+    for( int iii = 1; iii < arr_len; iii++ ) {
+        if ((data[iii] > max_value || max_value == HUGE_VAL) && data[iii] != HUGE_VAL)
+            max_value = data[iii];
+    }
+    return max_value;
+ }
+
+
+// ---------------------------------------------------------------------------
+static int _find_previous_index(const int iii, const double* data, const int arr_len) {
+    // find index of nearest valid previous value if exists
+    int prev_iii = iii - 1;
+    if (prev_iii == -1)  // handle wraparound
+        prev_iii = arr_len - 1;
+    while (data[prev_iii] == HUGE_VAL && prev_iii != iii) {
+        prev_iii --;
+        if (prev_iii == -1)  // handle wraparound
+            prev_iii = arr_len - 1;
+    }
+    return prev_iii;
+}
+
+
+// ---------------------------------------------------------------------------
+/******************************************************************************
+Handles the case when longitude values cross the antimeridian
+when calculating the minimum.
+Note: The data array must be in a linear ring.
+Note: This requires a densified ring with at least 2 additional
+        points per edge to correctly handle global extents.
+If only 1 additional point:
+    |        |
+    |RL--x0--|RL--
+    |        |
+-180    180|-180
+If they are evenly spaced and it crosses the antimeridian:
+x0 - L = 180
+R - x0 = -180
+For example:
+Let R = -179.9, x0 = 0.1, L = -179.89
+x0 - L = 0.1 - -179.9 = 180
+R - x0 = -179.89 - 0.1 ~= -180
+This is the same in the case when it didn't cross the antimeridian.
+If you have 2 additional points:
+    |            |
+    |RL--x0--x1--|RL--
+    |            |
+-180        180|-180
+If they are evenly spaced and it crosses the antimeridian:
+x0 - L = 120
+x1 - x0 = 120
+R - x1 = -240
+For example:
+Let R = -179.9, x0 = -59.9, x1 = 60.1 L = -179.89
+x0 - L = 59.9 - -179.9 = 120
+x1 - x0 = 60.1 - 59.9 = 120
+R - x1 = -179.89 - 60.1 ~= -240
+However, if they are evenly spaced and it didn't cross the antimeridian:
+x0 - L = 120
+x1 - x0 = 120
+R - x1 = 120
+From this, we have a delta that is guaranteed to be significantly
+large enough to tell the difference reguarless of the direction
+the antimeridian was crossed.
+However, even though the spacing was even in the source projection, it isn't
+guaranteed in the target geographic projection. So, instead of 240, 200 is used
+as it significantly larger than 120 to be sure that the antimeridian was crossed
+but smalller than 240 to account for possible irregularities in distances
+when re-projecting. Also, 200 ensures latitudes are ignored for axis order handling.
+******************************************************************************/
+static double antimeridian_min(const double* data, const int arr_len) {
+    double positive_min = HUGE_VAL;
+    double min_value = HUGE_VAL;
+    int crossed_meridian_count = 0;
+    bool positive_meridian = false;
+
+    for( int iii = 0; iii < arr_len; iii++ ) {
+        if (data[iii] == HUGE_VAL)
+            continue;
+        int prev_iii = _find_previous_index(iii, data, arr_len);
+        // check if crossed meridian
+        double delta = data[prev_iii] - data[iii];
+        // 180 -> -180
+        if (delta >= 200 && delta != HUGE_VAL) {
+            if (crossed_meridian_count == 0)
+                positive_min = min_value;
+            crossed_meridian_count ++;
+            positive_meridian = false;
+        // -180 -> 180
+        } else if (delta <= -200 && delta != HUGE_VAL) {
+            if (crossed_meridian_count == 0)
+                positive_min = data[iii];
+            crossed_meridian_count ++;
+            positive_meridian = true;
+        }
+        // positive meridian side min
+        if (positive_meridian && data[iii] < positive_min)
+            positive_min = data[iii];
+        // track general min value
+        if (data[iii] < min_value)
+            min_value = data[iii];
+    }
+
+    if (crossed_meridian_count == 2)
+        return positive_min;
+    else if (crossed_meridian_count == 4)
+        // bounds extends beyond -180/180
+        return -180;
+    return min_value;
+}
+
+
+// ---------------------------------------------------------------------------
+// Handles the case when longitude values cross the antimeridian
+// when calculating the minimum.
+// Note: The data array must be in a linear ring.
+// Note: This requires a densified ring with at least 2 additional
+//       points per edge to correctly handle global extents.
+// See antimeridian_min docstring for reasoning.
+static double antimeridian_max(const double* data, const int arr_len) {
+    double negative_max = -HUGE_VAL;
+    double max_value = -HUGE_VAL;
+    bool negative_meridian = false;
+    int crossed_meridian_count = 0;
+
+    for( int iii = 0; iii < arr_len; iii++ ) {
+        if (data[iii] == HUGE_VAL)
+            continue;
+        int prev_iii = _find_previous_index(iii, data, arr_len);
+        // check if crossed meridian
+        double delta = data[prev_iii] - data[iii];
+        // 180 -> -180
+        if (delta >= 200 && delta != HUGE_VAL) {
+            if (crossed_meridian_count == 0)
+                negative_max = data[iii];
+            crossed_meridian_count ++;
+            negative_meridian = true;
+        // -180 -> 180
+        } else if (delta <= -200 && delta != HUGE_VAL){
+            if (crossed_meridian_count == 0)
+                negative_max = max_value;
+            negative_meridian = false;
+            crossed_meridian_count++;
+        }
+        // negative meridian side max
+        if (negative_meridian
+            && (data[iii] > negative_max || negative_max == HUGE_VAL)
+            && data[iii] != HUGE_VAL
+        )
+            negative_max = data[iii];
+        // track general max value
+        if ((data[iii] > max_value || max_value == HUGE_VAL) && data[iii] != HUGE_VAL)
+            max_value = data[iii];
+    }
+    if (crossed_meridian_count == 2)
+        return negative_max;
+    else if (crossed_meridian_count == 4)
+        // bounds extends beyond -180/180
+        return 180;
+    return max_value;
+}
+
+
+// ---------------------------------------------------------------------------
+// Check if the original projected bounds contains
+// the north pole.
+// This assumes that the destination CRS is geographic.
+bool OGRProjCT::ContainsNorthPole(
+    const double xmin,
+    const double ymin,
+    const double xmax,
+    const double ymax,
+    bool lon_lat_order
+) {
+    double pole_y = 90;
+    double pole_x = 0;
+    if (!lon_lat_order) {
+        pole_y = 0;
+        pole_x = 90;
+    }
+    auto inverseCT = GetInverse();
+    if (!inverseCT)
+        return false;
+    inverseCT->TransformWithErrorCodes(
+        1,
+        &pole_x,
+        &pole_y,
+        nullptr,
+        nullptr,
+        nullptr
+    );
+    delete inverseCT;
+    if (xmin < pole_x && pole_x < xmax && ymax > pole_y && pole_y > ymin)
+        return true;
+    return false;
+}
+
+
+// ---------------------------------------------------------------------------
+// Check if the original projected bounds contains
+// the south pole.
+// This assumes that the destination CRS is geographic.
+bool OGRProjCT::ContainsSouthPole(
+    const double xmin,
+    const double ymin,
+    const double xmax,
+    const double ymax,
+    bool lon_lat_order
+) {
+    double pole_y = -90;
+    double pole_x = 0;
+    if (!lon_lat_order) {
+        pole_y = 0;
+        pole_x = -90;
+    }
+    auto inverseCT = GetInverse();
+    if (!inverseCT)
+        return false;
+    inverseCT->TransformWithErrorCodes(
+        1,
+        &pole_x,
+        &pole_y,
+        nullptr,
+        nullptr,
+        nullptr
+    );
+    delete inverseCT;
+    if (xmin < pole_x && pole_x < xmax && ymax > pole_y && pole_y > ymin)
+        return true;
+    return false;
+}
+
+
+int OGRProjCT::TransformBounds(
+    const double xmin,
+    const double ymin,
+    const double xmax,
+    const double ymax,
+    double* out_xmin,
+    double* out_ymin,
+    double* out_xmax,
+    double* out_ymax,
+    const int densify_pts
+) {
+
+    if ( bNoTransform ) {
+        *out_xmin = xmin;
+        *out_ymin = ymin;
+        *out_xmax = xmax;
+        *out_ymax = ymax;
+        return true;
+    }
+
+    *out_xmin = HUGE_VAL;
+    *out_ymin = HUGE_VAL;
+    *out_xmax = HUGE_VAL;
+    *out_ymax = HUGE_VAL;
+
+    if (densify_pts < 0 || densify_pts > 10000) {
+        CPLError(CE_Failure, CPLE_AppDefined,
+        "densify_pts must be between 0-10000.");
+        return false;
+    }
+    if (!poSRSSource) {
+        CPLError(CE_Failure, CPLE_AppDefined,
+        "missing source SRS.");
+        return false;
+    }
+    if (!poSRSTarget) {
+        CPLError(CE_Failure, CPLE_AppDefined,
+        "missing target SRS.");
+        return false;
+    }
+
+    bool degree_input = false;
+    bool degree_output = false;
+    bool input_lon_lat_order = false;
+    bool output_lon_lat_order = false;
+
+    if( bSourceLatLong )
+    {
+        degree_input = fabs(poSRSSource->GetAngularUnits(nullptr) -
+                            CPLAtof(SRS_UA_DEGREE_CONV)) < 1e-8;
+        OGRAxisOrientation source_orientation;
+        const auto& mapping = poSRSSource->GetDataAxisToSRSAxisMapping();
+        int axis_index = 0;
+        if( mapping[0] != 1 && mapping[0] != -1 )
+            axis_index = 1;
+        poSRSSource->GetAxis(nullptr, axis_index, &source_orientation);
+        if( source_orientation == OAO_East )
+            input_lon_lat_order = true;
+    }
+    if( bTargetLatLong )
+    {
+        degree_output = fabs(poSRSTarget->GetAngularUnits(nullptr) -
+                            CPLAtof(SRS_UA_DEGREE_CONV)) < 1e-8;
+        OGRAxisOrientation target_orientation;
+        const auto& mapping = poSRSTarget->GetDataAxisToSRSAxisMapping();
+        int axis_index = 0;
+        if( mapping[0] != 1 && mapping[0] != -1 )
+            axis_index = 1;
+        poSRSTarget->GetAxis(nullptr, axis_index, &target_orientation);
+        if( target_orientation == OAO_East )
+            output_lon_lat_order = true;
+    }
+
+    if (degree_output && densify_pts < 2) {
+        CPLError(CE_Failure, CPLE_AppDefined,
+        "densify_pts must be at least 2 if the output is geograpic.");
+        return false;
+    }
+
+    int side_pts = densify_pts + 1;  // add one because we are densifying
+    const int boundary_len = side_pts * 4;
+    std::vector<double> x_boundary_array;
+    std::vector<double> y_boundary_array;
+    try
+    {
+        x_boundary_array.resize(boundary_len);
+        y_boundary_array.resize(boundary_len);
+    }
+    catch( const std::exception & e ) // memory allocation failure
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
+        return false;
+    }
+    double delta_x = 0;
+    double delta_y = 0;
+    bool north_pole_in_bounds = false;
+    bool south_pole_in_bounds = false;
+    if (degree_output) {
+        north_pole_in_bounds = ContainsNorthPole(
+            xmin,
+            ymin,
+            xmax,
+            ymax,
+            output_lon_lat_order
+        );
+        south_pole_in_bounds = ContainsSouthPole(
+            xmin,
+            ymin,
+            xmax,
+            ymax,
+            output_lon_lat_order
+        );
+    }
+
+    if (degree_input && xmax < xmin) {
+        if (!input_lon_lat_order) {
+            CPLError(CE_Failure, CPLE_AppDefined, "latitude max < latitude min.");
+            return false;
+        }
+        // handle antimeridian
+        delta_x = (xmax - xmin + 360.0) / side_pts;
+    } else {
+        delta_x = (xmax - xmin) / side_pts;
+    }
+    if (degree_input && ymax < ymin) {
+        if (input_lon_lat_order) {
+            CPLError(CE_Failure, CPLE_AppDefined, "latitude max < latitude min.");
+            return false;
+        }
+        // handle antimeridian
+        delta_y = (ymax - ymin + 360.0) / side_pts;
+    } else {
+        delta_y = (ymax - ymin) / side_pts;
+    }
+
+
+    // build densified bounding box
+    // Note: must be a linear ring for antimeridian logic
+    for( int iii = 0; iii < side_pts; iii++ )
+    {
+        // xmin boundary
+        y_boundary_array[iii] = ymax - iii * delta_y;
+        x_boundary_array[iii] = xmin;
+        // ymin boundary
+        y_boundary_array[iii + side_pts] = ymin;
+        x_boundary_array[iii + side_pts] = xmin + iii * delta_x;
+        // xmax boundary
+        y_boundary_array[iii + side_pts * 2] = ymin + iii * delta_y;
+        x_boundary_array[iii + side_pts * 2] = xmax;
+        // ymax boundary
+        y_boundary_array[iii + side_pts * 3] = ymax;
+        x_boundary_array[iii + side_pts * 3] = xmax - iii * delta_x;
+    }
+
+    TransformWithErrorCodes(
+        boundary_len,
+        &x_boundary_array[0],
+        &y_boundary_array[0],
+        nullptr,
+        nullptr,
+        nullptr
+    );
+
+    if (!degree_output) {
+        *out_xmin = simple_min(&x_boundary_array[0], boundary_len);
+        *out_xmax = simple_max(&x_boundary_array[0], boundary_len);
+        *out_ymin = simple_min(&y_boundary_array[0], boundary_len);
+        *out_ymax = simple_max(&y_boundary_array[0], boundary_len);
+    } else if (north_pole_in_bounds && output_lon_lat_order) {
+        *out_xmin = -180;
+        *out_ymin = simple_min(&y_boundary_array[0], boundary_len);
+        *out_xmax = 180;
+        *out_ymax = 90;
+    } else if (north_pole_in_bounds) {
+        *out_xmin = simple_min(&x_boundary_array[0], boundary_len);
+        *out_ymin = -180;
+        *out_xmax = 90;
+        *out_ymax = 180;
+    } else if (south_pole_in_bounds && output_lon_lat_order) {
+        *out_xmin = -180;
+        *out_ymin = -90;
+        *out_xmax = 180;
+        *out_ymax = simple_max(&y_boundary_array[0], boundary_len);
+    } else if (south_pole_in_bounds) {
+        *out_xmin = -90;
+        *out_ymin = -180;
+        *out_xmax = simple_max(&x_boundary_array[0], boundary_len);
+        *out_ymax = 180;
+    } else if (output_lon_lat_order) {
+        *out_xmin = antimeridian_min(&x_boundary_array[0], boundary_len);
+        *out_xmax = antimeridian_max(&x_boundary_array[0], boundary_len);
+        *out_ymin = simple_min(&y_boundary_array[0], boundary_len);
+        *out_ymax = simple_max(&y_boundary_array[0], boundary_len);
+    } else {
+        *out_xmin = simple_min(&x_boundary_array[0], boundary_len);
+        *out_xmax = simple_max(&x_boundary_array[0], boundary_len);
+        *out_ymin = antimeridian_min(&y_boundary_array[0], boundary_len);
+        *out_ymax = antimeridian_max(&y_boundary_array[0], boundary_len);
+    }
+    return true;
+}
+
+
 /************************************************************************/
 /*                               Clone()                                */
 /************************************************************************/
@@ -2881,6 +3375,61 @@ int OCTTransform4DWithErrorCodes( OGRCoordinateTransformationH hTransform,
 
     return OGRCoordinateTransformation::FromHandle(hTransform)->
         TransformWithErrorCodes( nCount, x, y, z, t, panErrorCodes );
+}
+
+
+/************************************************************************/
+/*                           OCTTransformBounds()                           */
+/************************************************************************/
+/** \brief Transform boundary.
+ * 
+ * Transform boundary densifying the edges to account for nonlinear
+ * transformations along these edges and extracting the outermost bounds.
+ *
+ * If the destination CRS is geographic, the first axis is longitude,
+ * and xmax < xmin then the bounds crossed the antimeridian.
+ * In this scenario there are two polygons, one on each side of the antimeridian.
+ * The first polygon should be constructed with (xmin, ymin, 180, ymax)
+ * and the second with (-180, ymin, xmax, ymax).
+ *
+ * If the destination CRS is geographic, the first axis is latitude,
+ * and ymax < ymin then the bounds crossed the antimeridian.
+ * In this scenario there are two polygons, one on each side of the antimeridian.
+ * The first polygon should be constructed with (ymin, xmin, ymax, 180)
+ * and the second with (ymin, -180, ymax, xmax).
+ *
+ * @param hTransform Transformation object
+ * @param xmin Minimum bounding coordinate of the first axis in source CRS.
+ * @param ymin Minimum bounding coordinate of the second axis in source CRS.
+ * @param xmax Maximum bounding coordinate of the first axis in source CRS.
+ * @param ymax Maximum bounding coordinate of the second axis in source CRS.
+ * @param out_xmin Minimum bounding coordinate of the first axis in target CRS
+ * @param out_ymin Minimum bounding coordinate of the second axis in target CRS.
+ * @param out_xmax Maximum bounding coordinate of the first axis in target CRS.
+ * @param out_ymax Maximum bounding coordinate of the second axis in target CRS.
+ * @param densify_pts Recommended to use 21. This is the number of points
+ *     to use to densify the bounding polygon in the transformation.
+ * @return TRUE if successful. FALSE if failures encountered.
+ * @since 3.4
+ */
+int CPL_STDCALL OCTTransformBounds( OGRCoordinateTransformationH hTransform,
+                                    const double xmin,
+                                    const double ymin,
+                                    const double xmax,
+                                    const double ymax,
+                                    double* out_xmin,
+                                    double* out_ymin,
+                                    double* out_xmax,
+                                    double* out_ymax,
+                                    int densify_pts )
+
+{
+    VALIDATE_POINTER1( hTransform, "TransformBounds", FALSE );
+
+    return OGRProjCT::FromHandle(hTransform)->
+        TransformBounds( 
+            xmin, ymin, xmax, ymax, out_xmin, out_ymin, out_xmax, out_ymax, densify_pts
+        );
 }
 
 /************************************************************************/

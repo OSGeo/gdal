@@ -397,7 +397,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
                                void *, int, int, GDALDataType,
                                int, int *, GSpacing, GSpacing, GSpacing,
                                GDALRasterIOExtraArg* psExtraArg ) CPL_WARN_UNUSED_RESULT;
-    void   BlockBasedFlushCache();
+    void   BlockBasedFlushCache(bool bAtClosing);
 
     CPLErr BandBasedRasterIO( GDALRWFlag eRWFlag,
                                int nXOff, int nYOff, int nXSize, int nYSize,
@@ -505,7 +505,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     Bands              GetBands();
 
-    virtual void FlushCache(void);
+    virtual void FlushCache(bool bAtClosing = false);
 
     virtual const OGRSpatialReference* GetSpatialRef() const;
     virtual CPLErr SetSpatialRef(const OGRSpatialReference* poSRS);
@@ -1084,6 +1084,7 @@ class GDALAbstractBandBlockCache
 
         int               m_nInitialDirtyBlocksInFlushCache = 0;
         int               m_nLastTick = -1;
+        bool              m_bWriteDirtyBlocks = true;
 
         void              FreeDanglingBlocks();
         void              UnreferenceBlockBase();
@@ -1100,6 +1101,7 @@ class GDALAbstractBandBlockCache
             void             AddBlockToFreeList( GDALRasterBlock * );
             void             IncDirtyBlocks(int nInc);
             void             WaitCompletionPendingTasks();
+            void             DisableDirtyBlockWriting() { m_bWriteDirtyBlocks = false; }
 
             virtual bool             Init() = 0;
             virtual bool             IsInitOK() = 0;
@@ -1209,8 +1211,6 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     void           AddBlockToFreeList( GDALRasterBlock * );
 //! @endcond
 
-    GDALRasterBlock *TryGetLockedBlockRef( int nXBlockOff, int nYBlockYOff );
-
   public:
                 GDALRasterBand();
     explicit    GDALRasterBand(int bForceCachedIO);
@@ -1240,6 +1240,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     GDALRasterBlock *GetLockedBlockRef( int nXBlockOff, int nYBlockOff,
                                         int bJustInitialize = FALSE ) CPL_WARN_UNUSED_RESULT;
+    GDALRasterBlock *TryGetLockedBlockRef( int nXBlockOff, int nYBlockYOff ) CPL_WARN_UNUSED_RESULT;
     CPLErr      FlushBlock( int, int, int bWriteDirtyBlock = TRUE );
 
     unsigned char*  GetIndexColorTranslationTo(/* const */ GDALRasterBand* poReferenceBand,
@@ -1248,7 +1249,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     // New OpengIS CV_SampleDimension stuff.
 
-    virtual CPLErr FlushCache();
+    virtual CPLErr FlushCache(bool bAtClosing = false);
     virtual char **GetCategoryNames();
     virtual double GetNoDataValue( int *pbSuccess = nullptr );
     virtual double GetMinimum( int *pbSuccess = nullptr );

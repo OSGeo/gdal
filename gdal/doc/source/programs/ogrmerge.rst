@@ -117,7 +117,7 @@ potential manual editing of it and :program:`ogr2ogr` can be done.
 
     Only take into account input layers whose geometry type match the
     type(s) specified. Valid values for geom_type_name are GEOMETRY,
-    POINT, LINESTRING, POLYGON, MULTIPOINT, MULTILINESTRING, MULTIPOINT,
+    POINT, LINESTRING, POLYGON, MULTIPOINT, MULTILINESTRING, MULTIPOLYGON,
     GEOMETRYCOLLECTION, CIRCULARSTRING, CURVEPOLYGON, MULTICURVE,
     MULTISURFACE, CURVE, SURFACE, TRIANGLE, POLYHEDRALSURFACE and TIN.
 

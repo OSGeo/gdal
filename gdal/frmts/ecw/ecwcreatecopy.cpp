@@ -1622,7 +1622,7 @@ class ECWWriteDataset final: public GDALDataset
                                  int );
             ~ECWWriteDataset();
 
-    virtual void   FlushCache( void ) override;
+    virtual void   FlushCache( bool bAtClosing ) override;
 
     virtual CPLErr GetGeoTransform( double * ) override;
     virtual CPLErr SetGeoTransform( double * ) override;
@@ -1737,7 +1737,7 @@ ECWWriteDataset::ECWWriteDataset( const char *pszFilenameIn,
 ECWWriteDataset::~ECWWriteDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
 
     if( bCrystalized )
     {
@@ -1761,10 +1761,10 @@ ECWWriteDataset::~ECWWriteDataset()
 /*                             FlushCache()                             */
 /************************************************************************/
 
-void ECWWriteDataset::FlushCache()
+void ECWWriteDataset::FlushCache(bool bAtClosing)
 
 {
-    BlockBasedFlushCache();
+    BlockBasedFlushCache(bAtClosing);
 }
 
 /************************************************************************/

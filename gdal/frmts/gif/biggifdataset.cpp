@@ -175,7 +175,7 @@ BIGGIFDataset::BIGGIFDataset() :
 BIGGIFDataset::~BIGGIFDataset()
 
 {
-    BIGGIFDataset::FlushCache();
+    BIGGIFDataset::FlushCache(true);
 
     BIGGIFDataset::CloseDependentDatasets();
 }

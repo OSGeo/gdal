@@ -213,7 +213,7 @@ static GDALDataset* OGROpenFileGDBDriverOpen( GDALOpenInfo* poOpenInfo )
 #endif
 
     OGROpenFileGDBDataSource* poDS = new OGROpenFileGDBDataSource();
-    if( poDS->Open( pszFilename ) )
+    if( poDS->Open( poOpenInfo ) )
     {
         return poDS;
     }
@@ -244,6 +244,13 @@ void RegisterOGROpenFileGDB()
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/openfilegdb.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
+
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, "<OpenOptionList>"
+"  <Option name='LIST_ALL_TABLES' type='string-select' scope='vector' description='Whether all tables, including system and internal tables (such as GDB_* tables) should be listed' default='NO'>"
+"    <Value>YES</Value>"
+"    <Value>NO</Value>"
+"  </Option>"
+"</OpenOptionList>");
 
     poDriver->pfnOpen = OGROpenFileGDBDriverOpen;
     poDriver->pfnIdentify = OGROpenFileGDBDriverIdentify;

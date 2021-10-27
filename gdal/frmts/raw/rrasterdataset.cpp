@@ -489,7 +489,7 @@ RRASTERDataset::~RRASTERDataset()
     if( m_fpImage != nullptr )
     {
         InitImageIfNeeded();
-        FlushCache();
+        FlushCache(true);
         VSIFCloseL(m_fpImage);
     }
     if( m_bHeaderDirty )
@@ -561,7 +561,7 @@ void RRASTERDataset::RewriteHeader()
     if( !m_osProjection.empty() )
     {
         OGRSpatialReference oSRS;
-        oSRS.SetFromUserInput(m_osProjection, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS);
+        oSRS.SetFromUserInput(m_osProjection, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get());
         char* pszProj4 = nullptr;
         oSRS.exportToProj4(&pszProj4);
         if( pszProj4 )
@@ -1538,7 +1538,7 @@ GDALDataset *RRASTERDataset::CreateCopy( const char * pszFilename,
     CSLDestroy(papszAdjustedOptions);
 
     if( poOutDS != nullptr )
-        poOutDS->FlushCache();
+        poOutDS->FlushCache(false);
 
     return poOutDS;
 }

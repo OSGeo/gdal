@@ -155,7 +155,7 @@ RDataset::RDataset() :
 
 RDataset::~RDataset()
 {
-    FlushCache();
+    FlushCache(true);
     CPLFree(padfMatrixValues);
 
     if( fp )

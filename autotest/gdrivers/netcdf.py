@@ -2555,12 +2555,15 @@ def test_netcdf_write_rotated_pole_from_method_proj():
         pytest.skip('Not enough recent PROJ version')
 
     ds = gdal.GetDriverByName('netCDF').Create('tmp/rotated_pole.nc', 2, 2)
-    ds.SetGeoTransform([2,1,0,49,0,-1])
+    gt = [2,1,0,49,0,-1]
+    ds.SetGeoTransform(gt)
     ds.SetProjection("""GEOGCRS["unnamed",BASEGEOGCRS["unknown",DATUM["unknown",ELLIPSOID["unknown",6367470,594.313048347956,LENGTHUNIT["metre",1,ID["EPSG",9001]]]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8901]]],DERIVINGCONVERSION["unknown",METHOD["PROJ ob_tran o_proj=longlat"],PARAMETER["lon_0",18,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],PARAMETER["o_lon_p",0,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],PARAMETER["o_lat_p",39.25,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]],CS[ellipsoidal,2],AXIS["longitude",east,ORDER[1],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],AXIS["latitude",north,ORDER[2],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]]""")
     ds = None
 
     ds = gdal.Open('tmp/rotated_pole.nc')
+    got_gt = ds.GetGeoTransform()
     wkt = ds.GetProjectionRef()
+    md = ds.GetMetadata()
     ds = None
 
     gdal.Unlink('tmp/rotated_pole.nc')
@@ -2570,6 +2573,9 @@ def test_netcdf_write_rotated_pole_from_method_proj():
     newer_wkt = """GEOGCRS["Rotated_pole",BASEGEOGCRS["unknown",DATUM["unnamed",ELLIPSOID["Spheroid",6367470,594.313048347956,LENGTHUNIT["metre",1,ID["EPSG",9001]]]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]],DERIVINGCONVERSION["Pole rotation (netCDF CF convention)",METHOD["Pole rotation (netCDF CF convention)"],PARAMETER["Grid north pole latitude (netCDF CF convention)",39.25,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],PARAMETER["Grid north pole longitude (netCDF CF convention)",-162,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],PARAMETER["North pole grid longitude (netCDF CF convention)",0,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]],CS[ellipsoidal,2],AXIS["latitude",north,ORDER[1],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],AXIS["longitude",east,ORDER[2],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]]"""
 
     assert wkt in (older_wkt, newer_wkt)
+    assert got_gt == pytest.approx(gt, rel=1e-6)
+    assert md['rlat#standard_name'] == 'grid_latitude'
+    assert md['rlon#standard_name'] == 'grid_longitude'
 
 ###############################################################################
 # Write netCDF file in rotated_pole projection
@@ -4866,6 +4872,38 @@ def test_netcdf_open_userfaultfd():
         print('/vsi access through userfaultfd succeeded')
 
     gdal.Unlink('tmp/test_netcdf_open_userfaultfd.zip')
+
+
+
+def test_netcdf_write_4D():
+
+    # Create in-memory file with required metadata to define the extra >2D
+    # dimensions
+    size_z = 2
+    size_time = 3
+    src_ds = gdal.GetDriverByName('MEM').Create('', 4, 3, size_z * size_time)
+    src_ds.SetMetadataItem('NETCDF_DIM_EXTRA', '{time,Z}')
+    # 6 is NC_DOUBLE
+    src_ds.SetMetadataItem('NETCDF_DIM_Z_DEF', f"{{{size_z},6}}")
+    src_ds.SetMetadataItem('NETCDF_DIM_Z_VALUES', '{1.25,2.50}')
+    src_ds.SetMetadataItem('Z#axis', 'Z')
+    src_ds.SetMetadataItem('NETCDF_DIM_time_DEF', f"{{{size_time},6}}")
+    src_ds.SetMetadataItem('NETCDF_DIM_time_VALUES', '{1,2,3}')
+    src_ds.SetMetadataItem('time#axis', 'T')
+    src_ds.SetGeoTransform([2,1,0,49,0,-1])
+
+    # Create netCDF file
+    tmpfilename = 'tmp/test_netcdf_write_4D.nc'
+    gdal.GetDriverByName('netCDF').CreateCopy(tmpfilename, src_ds)
+
+    # Checks
+    ds = gdal.Open(tmpfilename)
+    assert ds.RasterCount == size_z * size_time
+    assert ds.GetMetadataItem('NETCDF_DIM_EXTRA') == '{time,Z}'
+    assert ds.GetMetadataItem('NETCDF_DIM_Z_VALUES') == '{1.25,2.5}'
+    assert ds.GetMetadataItem('NETCDF_DIM_time_VALUES') == '{1,2,3}'
+    ds = None
+    gdal.Unlink(tmpfilename)
 
 
 def test_clean_tmp():

@@ -499,7 +499,7 @@ bool WCSDataset110::ExtractGridInfo()
     {
         OGRSpatialReference oSRS;
 
-        if( oSRS.SetFromUserInput( pszProjOverride, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS ) != OGRERR_NONE )
+        if( oSRS.SetFromUserInput( pszProjOverride, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) != OGRERR_NONE )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "<SRS> element contents not parsable:\n%s",

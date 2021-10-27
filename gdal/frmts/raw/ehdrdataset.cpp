@@ -402,7 +402,7 @@ EHdrDataset::EHdrDataset() :
 EHdrDataset::~EHdrDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
 
     if( nBands > 0 && GetAccess() == GA_Update )
     {
@@ -1857,7 +1857,7 @@ GDALDataset *EHdrDataset::CreateCopy( const char * pszFilename,
     CSLDestroy(papszAdjustedOptions);
 
     if( poOutDS != nullptr )
-        poOutDS->FlushCache();
+        poOutDS->FlushCache(false);
 
     return poOutDS;
 }

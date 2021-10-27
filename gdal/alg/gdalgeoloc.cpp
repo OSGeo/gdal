@@ -509,8 +509,8 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
             const size_t iBM = iBMX + iBMY * nBMXSize;
             if( psTransform->pafBackMapX[iBM] < 0 )
                 continue;
-            if( iBMX > iLastValidIX + 1 &&
-                iLastValidIX != static_cast<size_t>(-1) &&
+            if( iLastValidIX != static_cast<size_t>(-1) &&
+                iBMX > iLastValidIX + 1 &&
                 fabs( psTransform->pafBackMapX[iBM] -
                     psTransform->pafBackMapX[iLastValidIX + iBMY * nBMXSize]) <= 2 &&
                 fabs( psTransform->pafBackMapY[iBM] -

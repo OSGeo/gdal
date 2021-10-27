@@ -170,7 +170,7 @@ def test_ogr_pg_1():
         gdaltest.pg_has_postgis = False
         print('PostGIS NOT available !')
 
-    
+
 ###############################################################################
 # Create table from data/poly.shp
 
@@ -288,7 +288,7 @@ def test_ogr_pg_19():
             print(extent)
             pytest.fail('Wrong estimated extent')
 
-    
+
 ###############################################################################
 # Test reading a SQL result layer extent
 
@@ -1011,7 +1011,7 @@ def test_ogr_pg_21_subgeoms():
         feat.Destroy()
         feat = None
 
-    
+
 ###############################################################################
 # Check if the 3d geometries of TIN, Triangle and POLYHEDRALSURFACE are valid
 
@@ -1690,7 +1690,7 @@ def test_ogr_pg_35():
     finally:
         gdal.PopErrorHandler()
 
-    
+
 ###############################################################################
 # Test support for inherited tables : tables inherited from a Postgis Table
 
@@ -2318,7 +2318,7 @@ def test_ogr_pg_48():
         feat.DumpReadable()
         pytest.fail('did not get expected other_id')
 
-    
+
 ###############################################################################
 # Go on with previous test but set PGSQL_OGR_FID this time
 
@@ -2343,7 +2343,7 @@ def test_ogr_pg_49():
         feat.DumpReadable()
         pytest.fail('did not get expected FID')
 
-    
+
 ###############################################################################
 # Write and read NaN values (#3667)
 # This tests writing using COPY and INSERT
@@ -3028,7 +3028,7 @@ def test_ogr_pg_65():
         assert lyr.GetLayerDefn().GetGeomFieldDefn(1).GetSpatialRef() is None
         assert lyr.GetLayerDefn().GetGeomFieldDefn(2).GetSpatialRef().ExportToWkt().find('32631') >= 0
 
-    
+
 ###############################################################################
 # Run test_ogrsf
 
@@ -3221,7 +3221,7 @@ def test_ogr_pg_70():
         ds.ReleaseResultSet(geography_columns_lyr)
         ds = None
 
-    
+
 ###############################################################################
 # Test interoperability of WKT/WKB with PostGIS.
 
@@ -3342,7 +3342,7 @@ def test_ogr_pg_71():
 
         assert out_wkt == wkt
 
-    
+
 ###############################################################################
 # Test 64 bit FID
 
@@ -4038,7 +4038,7 @@ def test_ogr_pg_77():
     except OSError:
         pass
 
-    
+
 ###############################################################################
 # Test manually added geometry constraints
 
@@ -4316,7 +4316,7 @@ def test_ogr_pg_83(with_and_without_postgis):
         assert got_wkt == expected_wkt, (geom_type, options, wkt, expected_wkt, got_wkt)
         lyr.ResetReading()  # flushes implicit transaction
 
-    
+
 ###############################################################################
 # Test description
 
@@ -4674,7 +4674,7 @@ def test_ogr_pg_uuid():
     f['uid'] = '6f9619ff-8b86-d011-b42d-00c04fc964ff'
     lyr.CreateFeature(f)
     lyr.CommitTransaction()
-    
+
     test_ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=0)
     lyr = test_ds.GetLayer('test_ogr_pg_uuid')
     fd = lyr.GetLayerDefn().GetFieldDefn(0)
@@ -4808,6 +4808,44 @@ def test_abort_sql():
 
     end = time.time()
     assert int(end - start) < 1
+
+###############################################################################
+# Test postgresql:// URL
+
+def test_ogr_pg_url():
+
+    if gdaltest.pg_ds is None:
+        pytest.skip()
+
+    if gdaltest.pg_version < (9,3):
+        pytest.skip()
+
+    params = gdaltest.pg_connection_string.split(' ')
+    url = "postgresql://?" + '&'.join(params)
+
+    ds = ogr.Open(url)
+    assert ds is not None
+
+    ds = ogr.Open('PG:' + url)
+    assert ds is not None
+
+    # Test postgresql:// with open options
+    params_without_dbname = []
+    open_options = ['active_schema=public']
+    for param in params:
+        if param.startswith('dbname='):
+            open_options.append('DBNAME=' + param[len('dbname='):])
+        elif param.startswith('port='):
+            open_options.append('PORT=' + param[len('port='):])
+        else:
+            params_without_dbname.append(param)
+
+    url = "postgresql://"
+    if params_without_dbname:
+        url += '?' + '&'.join(params_without_dbname)
+    ds = gdal.OpenEx(url, gdal.OF_VECTOR, open_options=open_options)
+    assert ds is not None
+
 
 
 def test_ogr_pg_cleanup():

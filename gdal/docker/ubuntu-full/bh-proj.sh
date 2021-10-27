@@ -19,8 +19,6 @@ wget -q "https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz" \
 (
     cd proj
 
-    ./autogen.sh
-
     if [ -n "${RSYNC_REMOTE:-}" ]; then
         echo "Downloading cache..."
         rsync -ra "${RSYNC_REMOTE}/proj/${GCC_ARCH}/" "$HOME/"
@@ -36,7 +34,10 @@ wget -q "https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz" \
     export CFLAGS="-DPROJ_RENAME_SYMBOLS -O2 -g"
     export CXXFLAGS="-DPROJ_RENAME_SYMBOLS -DPROJ_INTERNAL_CPP_NAMESPACE -O2 -g"
 
-    ./configure "--prefix=${PROJ_INSTALL_PREFIX:-/usr/local}" --disable-static "${WITH_HOST}"
+    cmake . \
+        -DBUILD_SHARED_LIBS=ON \
+        -DCMAKE_INSTALL_PREFIX=${PROJ_INSTALL_PREFIX:-/usr/local} \
+        -DBUILD_TESTING=OFF
 
     make "-j$(nproc)"
     make install DESTDIR="${DESTDIR}"
@@ -56,7 +57,11 @@ wget -q "https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz" \
 
 rm -rf proj
 
-PROJ_SO=$(readlink "${DESTDIR}${PROJ_INSTALL_PREFIX}/lib/libproj.so" | sed "s/libproj\.so\.//")
+if test "${DESTDIR}" = "/build_tmp_proj"; then
+    exit 0
+fi
+
+PROJ_SO=$(readlink -f "${DESTDIR}${PROJ_INSTALL_PREFIX}/lib/libproj.so" | awk 'BEGIN {FS="libproj.so."} {print $2}')
 PROJ_SO_FIRST=$(echo "$PROJ_SO" | awk 'BEGIN {FS="."} {print $1}')
 PROJ_SO_DEST="${DESTDIR}${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO}"
 

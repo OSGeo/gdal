@@ -85,7 +85,7 @@ OGRGeoJSONDataSource::OGRGeoJSONDataSource() :
 
 OGRGeoJSONDataSource::~OGRGeoJSONDataSource()
 {
-    OGRGeoJSONDataSource::FlushCache();
+    OGRGeoJSONDataSource::FlushCache(true);
     OGRGeoJSONDataSource::Clear();
 }
 
@@ -1006,7 +1006,7 @@ void OGRGeoJSONDataSource::AddLayer( OGRGeoJSONLayer* poLayer )
 /*                            FlushCache()                              */
 /************************************************************************/
 
-void OGRGeoJSONDataSource::FlushCache()
+void OGRGeoJSONDataSource::FlushCache(bool /*bAtClosing*/)
 {
     if( papoLayersWriter_ != nullptr )
         return;

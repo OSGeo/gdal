@@ -97,7 +97,7 @@ class STACTADataset final: public GDALPamDataset
                                GSpacing nPixelSpace, GSpacing nLineSpace,
                                GSpacing nBandSpace,
                                GDALRasterIOExtraArg* psExtraArg) override;
-        void FlushCache() override;
+        void FlushCache(bool bAtClosing) override;
 };
 
 /************************************************************************/

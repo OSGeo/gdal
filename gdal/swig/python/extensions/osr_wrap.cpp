@@ -4576,6 +4576,20 @@ SWIGINTERN void OSRCoordinateTransformationShadow_TransformPoints(OSRCoordinateT
         return;
     OCTTransform4D( self, nCount, x, y, z, t, NULL );
   }
+SWIGINTERN void OSRCoordinateTransformationShadow_TransformBounds(OSRCoordinateTransformationShadow *self,double argout[4],double minx,double miny,double maxx,double maxy,int densify_pts){
+    argout[0] = HUGE_VAL;
+    argout[1] = HUGE_VAL;
+    argout[2] = HUGE_VAL;
+    argout[3] = HUGE_VAL;
+    if (self == NULL)
+        return;
+    OCTTransformBounds(
+        self,
+        minx, miny, maxx, maxy,
+        &argout[0], &argout[1], &argout[2], &argout[3],
+        densify_pts
+    );
+}
 
   OSRCoordinateTransformationShadow *CreateCoordinateTransformation( OSRSpatialReferenceShadow *src, OSRSpatialReferenceShadow *dst, OGRCoordinateTransformationOptions* options = NULL ) {
     return (OSRCoordinateTransformationShadow*)
@@ -4704,6 +4718,16 @@ int GetPROJVersionMicro()
     int num;
     OSRGetPROJVersion(NULL, NULL, &num);
     return num;
+}
+
+bool GetPROJEnableNetwork()
+{
+    return OSRGetPROJEnableNetwork();
+}
+
+void SetPROJEnableNetwork(bool enabled)
+{
+    OSRSetPROJEnableNetwork(enabled);
 }
 
 
@@ -16473,6 +16497,98 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_CoordinateTransformation_TransformBounds(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRCoordinateTransformationShadow *arg1 = (OSRCoordinateTransformationShadow *) 0 ;
+  double *arg2 ;
+  double arg3 ;
+  double arg4 ;
+  double arg5 ;
+  double arg6 ;
+  int arg7 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double argout2[4] ;
+  double val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  double val5 ;
+  int ecode5 = 0 ;
+  double val6 ;
+  int ecode6 = 0 ;
+  int val7 ;
+  int ecode7 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  PyObject * obj5 = 0 ;
+  
+  {
+    /* %typemap(in,numinputs=0) (double argout2[ANY]) */
+    memset(argout2, 0, sizeof(argout2));
+    arg2 = argout2;
+  }
+  if (!PyArg_ParseTuple(args,(char *)"OOOOOO:CoordinateTransformation_TransformBounds",&obj0,&obj1,&obj2,&obj3,&obj4,&obj5)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRCoordinateTransformationShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CoordinateTransformation_TransformBounds" "', argument " "1"" of type '" "OSRCoordinateTransformationShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRCoordinateTransformationShadow * >(argp1);
+  ecode3 = SWIG_AsVal_double(obj1, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "CoordinateTransformation_TransformBounds" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj2, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "CoordinateTransformation_TransformBounds" "', argument " "4"" of type '" "double""'");
+  } 
+  arg4 = static_cast< double >(val4);
+  ecode5 = SWIG_AsVal_double(obj3, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "CoordinateTransformation_TransformBounds" "', argument " "5"" of type '" "double""'");
+  } 
+  arg5 = static_cast< double >(val5);
+  ecode6 = SWIG_AsVal_double(obj4, &val6);
+  if (!SWIG_IsOK(ecode6)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "CoordinateTransformation_TransformBounds" "', argument " "6"" of type '" "double""'");
+  } 
+  arg6 = static_cast< double >(val6);
+  ecode7 = SWIG_AsVal_int(obj5, &val7);
+  if (!SWIG_IsOK(ecode7)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode7), "in method '" "CoordinateTransformation_TransformBounds" "', argument " "7"" of type '" "int""'");
+  } 
+  arg7 = static_cast< int >(val7);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    OSRCoordinateTransformationShadow_TransformBounds(arg1,arg2,arg3,arg4,arg5,arg6,arg7);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  {
+    /* %typemap(argout) (double argout[ANY]) */
+    PyObject *out = CreateTupleFromDoubleArray( arg2, 4 );
+    resultobj = t_output_helper(resultobj,out);
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *CoordinateTransformation_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *obj;
   if (!PyArg_ParseTuple(args,(char *)"O:swigregister", &obj)) return NULL;
@@ -17950,6 +18066,68 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_GetPROJEnableNetwork(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  bool result;
+  
+  if (!PyArg_ParseTuple(args,(char *)":GetPROJEnableNetwork")) SWIG_fail;
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (bool)GetPROJEnableNetwork();
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_bool(static_cast< bool >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SetPROJEnableNetwork(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  bool arg1 ;
+  bool val1 ;
+  int ecode1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:SetPROJEnableNetwork",&obj0)) SWIG_fail;
+  ecode1 = SWIG_AsVal_bool(obj0, &val1);
+  if (!SWIG_IsOK(ecode1)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "SetPROJEnableNetwork" "', argument " "1"" of type '" "bool""'");
+  } 
+  arg1 = static_cast< bool >(val1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    SetPROJEnableNetwork(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_SetPROJAuxDbPath(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   char *arg1 = (char *) 0 ;
@@ -18262,6 +18440,7 @@ static PyMethodDef SwigMethods[] = {
 		""},
 	 { (char *)"CoordinateTransformation_TransformPointWithErrorCode", _wrap_CoordinateTransformation_TransformPointWithErrorCode, METH_VARARGS, (char *)"CoordinateTransformation_TransformPointWithErrorCode(CoordinateTransformation self, double x, double y, double z, double t)"},
 	 { (char *)"CoordinateTransformation_TransformPoints", _wrap_CoordinateTransformation_TransformPoints, METH_VARARGS, (char *)"CoordinateTransformation_TransformPoints(CoordinateTransformation self, int nCount)"},
+	 { (char *)"CoordinateTransformation_TransformBounds", _wrap_CoordinateTransformation_TransformBounds, METH_VARARGS, (char *)"CoordinateTransformation_TransformBounds(CoordinateTransformation self, double minx, double miny, double maxx, double maxy, int densify_pts)"},
 	 { (char *)"CoordinateTransformation_swigregister", CoordinateTransformation_swigregister, METH_VARARGS, NULL},
 	 { (char *)"CreateCoordinateTransformation", _wrap_CreateCoordinateTransformation, METH_VARARGS, (char *)"CreateCoordinateTransformation(SpatialReference src, SpatialReference dst, CoordinateTransformationOptions options=None) -> CoordinateTransformation"},
 	 { (char *)"CRSInfo_auth_name_get", _wrap_CRSInfo_auth_name_get, METH_VARARGS, (char *)"CRSInfo_auth_name_get(CRSInfo self) -> char *"},
@@ -18298,6 +18477,8 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"GetPROJVersionMajor", _wrap_GetPROJVersionMajor, METH_VARARGS, (char *)"GetPROJVersionMajor() -> int"},
 	 { (char *)"GetPROJVersionMinor", _wrap_GetPROJVersionMinor, METH_VARARGS, (char *)"GetPROJVersionMinor() -> int"},
 	 { (char *)"GetPROJVersionMicro", _wrap_GetPROJVersionMicro, METH_VARARGS, (char *)"GetPROJVersionMicro() -> int"},
+	 { (char *)"GetPROJEnableNetwork", _wrap_GetPROJEnableNetwork, METH_VARARGS, (char *)"GetPROJEnableNetwork() -> bool"},
+	 { (char *)"SetPROJEnableNetwork", _wrap_SetPROJEnableNetwork, METH_VARARGS, (char *)"SetPROJEnableNetwork(bool enabled)"},
 	 { (char *)"SetPROJAuxDbPath", _wrap_SetPROJAuxDbPath, METH_VARARGS, (char *)"SetPROJAuxDbPath(char const * utf8_path)"},
 	 { (char *)"SetPROJAuxDbPaths", _wrap_SetPROJAuxDbPaths, METH_VARARGS, (char *)"SetPROJAuxDbPaths(char ** paths)"},
 	 { (char *)"GetPROJAuxDbPaths", _wrap_GetPROJAuxDbPaths, METH_VARARGS, (char *)"GetPROJAuxDbPaths() -> char **"},

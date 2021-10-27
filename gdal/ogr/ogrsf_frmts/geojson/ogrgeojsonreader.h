@@ -36,9 +36,12 @@
 #include "ogrsf_frmts.h"
 
 #include "ogrgeojsonutils.h"
+#include "directedacyclicgraph.hpp"
 
 #include <utility>
+#include <map>
 #include <set>
+#include <vector>
 
 /************************************************************************/
 /*                         FORWARD DECLARATIONS                         */
@@ -101,7 +104,10 @@ class OGRGeoJSONBaseReader
     void SetArrayAsString( bool bArrayAsString );
     void SetDateAsString( bool bDateAsString );
 
-    bool GenerateFeatureDefn( OGRLayer* poLayer, json_object* poObj );
+    bool GenerateFeatureDefn( std::map<std::string, int>& oMapFieldNameToIdx,
+                              std::vector<std::unique_ptr<OGRFieldDefn>>& apoFieldDefn,
+                              gdal::DirectedAcyclicGraph<int, std::string>& dag,
+                              OGRLayer* poLayer, json_object* poObj );
     void FinalizeLayerDefn( OGRLayer* poLayer, CPLString& osFIDColumn );
 
     OGRGeometry* ReadGeometry( json_object* poObj, OGRSpatialReference* poLayerSRS );
@@ -213,7 +219,9 @@ void OGRGeoJSONReaderSetField( OGRLayer* poLayer,
                                bool bFlattenNestedAttributes,
                                char chNestedAttributeSeparator );
 void OGRGeoJSONReaderAddOrUpdateField(
-    OGRFeatureDefn* poDefn,
+    std::vector<int>& retIndices,
+    std::map<std::string, int>& oMapFieldNameToIdx,
+    std::vector<std::unique_ptr<OGRFieldDefn>>& apoFieldDefn,
     const char* pszKey,
     json_object* poVal,
     bool bFlattenNestedAttributes,
@@ -232,7 +240,7 @@ json_object* OGRGeoJSONFindMemberByName( json_object* poObj,
                                          const char* pszName );
 GeoJSONObject::Type OGRGeoJSONGetType( json_object* poObj );
 
-json_object* json_ex_get_object_by_path( json_object* poObj,
+json_object CPL_DLL* json_ex_get_object_by_path( json_object* poObj,
                                          const char* pszPath );
 
 json_object CPL_DLL*  CPL_json_object_object_get( struct json_object* obj,
@@ -251,7 +259,7 @@ bool OGRGeoJSONUpdateLayerGeomType( OGRLayer* poLayer,
 /************************************************************************/
 
 bool OGRGeoJSONReadRawPoint( json_object* poObj, OGRPoint& point );
-OGRGeometry* OGRGeoJSONReadGeometry( json_object* poObj );
+OGRGeometry CPL_DLL * OGRGeoJSONReadGeometry( json_object* poObj );
 OGRPoint* OGRGeoJSONReadPoint( json_object* poObj );
 OGRMultiPoint* OGRGeoJSONReadMultiPoint( json_object* poObj );
 OGRLineString* OGRGeoJSONReadLineString( json_object* poObj, bool bRaw=false );

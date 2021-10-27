@@ -9,6 +9,7 @@ cpp/*.pdb
 cpp/*.vcxproj
 cpp/*.vcxproj.filters
 cpp/*.vcxproj.user
+cpp/.libs
 cpp/[Dd]ebug
 cpp/[Rr]elease
 cpp/x64

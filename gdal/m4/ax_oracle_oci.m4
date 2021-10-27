@@ -41,7 +41,7 @@ dnl @license AllPermissive
 AC_DEFUN([AX_LIB_ORACLE_OCI],
 [
     AC_ARG_WITH([oci],
-        AC_HELP_STRING([--with-oci=@<:@ARG@:>@],
+        AS_HELP_STRING([--with-oci=@<:@ARG@:>@],
             [use Oracle OCI API from given Oracle home (ARG=path); use existing ORACLE_HOME (ARG=yes); disable Oracle OCI support (ARG=no)]
         ),
         [
@@ -67,14 +67,14 @@ AC_DEFUN([AX_LIB_ORACLE_OCI],
     )
 
     AC_ARG_WITH([oci-include],
-        AC_HELP_STRING([--with-oci-include=@<:@DIR@:>@],
+        AS_HELP_STRING([--with-oci-include=@<:@DIR@:>@],
             [use Oracle OCI API headers from given path]
         ),
         [oracle_home_include_dir="$withval"],
         [oracle_home_include_dir=""]
     )
     AC_ARG_WITH([oci-lib],
-        AC_HELP_STRING([--with-oci-lib=@<:@DIR@:>@],
+        AS_HELP_STRING([--with-oci-lib=@<:@DIR@:>@],
             [use Oracle OCI API libraries from given path]
         ),
         [oracle_home_lib_dir="$withval"],

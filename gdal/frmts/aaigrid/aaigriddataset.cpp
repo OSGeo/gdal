@@ -279,7 +279,7 @@ AAIGDataset::AAIGDataset() :
 AAIGDataset::~AAIGDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
 
     if( fp != nullptr )
     {

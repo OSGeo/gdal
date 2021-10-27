@@ -42,6 +42,7 @@
 
 #include "cpl_error.h"
 #include "cpl_vsi.h"
+#include "ogr_spatialref.h"
 
 #ifdef CPL_LSB
 #  define HFAStandard(n,p) {}
@@ -135,11 +136,14 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
                 GIntBig nStackDataOffset,
                 int nStackCount, int nStackIndex );
 
-char *
-HFAPCSStructToWKT( const Eprj_Datum *psDatum,
+std::unique_ptr<OGRSpatialReference>
+HFAPCSStructToOSR( const Eprj_Datum *psDatum,
                    const Eprj_ProParameters *psPro,
                    const Eprj_MapInfo *psMapInfo,
                    HFAEntry *poMapInformation );
+
+const char *const* HFAGetDatumMap();
+const char *const* HFAGetUnitMap();
 
 /************************************************************************/
 /*                               HFABand                                */

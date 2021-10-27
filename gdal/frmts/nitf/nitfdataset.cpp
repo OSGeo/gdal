@@ -152,7 +152,7 @@ NITFDataset::~NITFDataset()
 
 int NITFDataset::CloseDependentDatasets()
 {
-    NITFDataset::FlushCache();
+    NITFDataset::FlushCache(true);
 
     int bHasDroppedRef = GDALPamDataset::CloseDependentDatasets();
 
@@ -256,7 +256,7 @@ int NITFDataset::CloseDependentDatasets()
 /*                             FlushCache()                             */
 /************************************************************************/
 
-void NITFDataset::FlushCache()
+void NITFDataset::FlushCache(bool bAtClosing)
 
 {
     // If the JPEG/JP2K dataset has dirty pam info, then we should consider
@@ -272,9 +272,9 @@ void NITFDataset::FlushCache()
         MarkPamDirty();
 
     if( poJ2KDataset != nullptr && bJP2Writing)
-        poJ2KDataset->FlushCache();
+        poJ2KDataset->FlushCache(bAtClosing);
 
-    GDALPamDataset::FlushCache();
+    GDALPamDataset::FlushCache(bAtClosing);
 }
 
 #ifdef ESRI_BUILD

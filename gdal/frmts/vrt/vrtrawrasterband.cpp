@@ -82,7 +82,7 @@ VRTRawRasterBand::VRTRawRasterBand( GDALDataset *poDSIn, int nBandIn,
 VRTRawRasterBand::~VRTRawRasterBand()
 
 {
-    FlushCache();
+    FlushCache(true);
     ClearRawLink();
 }
 

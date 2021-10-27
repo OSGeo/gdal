@@ -206,7 +206,7 @@ ECWRasterBand::ECWRasterBand( ECWDataset *poDSIn, int nBandIn, int iOverviewIn,
 
 ECWRasterBand::~ECWRasterBand()
 {
-    GDALRasterBand::FlushCache();
+    GDALRasterBand::FlushCache(true);
 
     while( !apoOverviews.empty() )
     {
@@ -1003,7 +1003,7 @@ ECWDataset::ECWDataset(int bIsJPEG2000In)
 ECWDataset::~ECWDataset()
 
 {
-    GDALPamDataset::FlushCache();
+    GDALPamDataset::FlushCache(true);
     CleanupWindow();
 
 #if ECWSDK_VERSION>=50

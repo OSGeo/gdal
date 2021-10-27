@@ -484,7 +484,7 @@ SGIDataset::SGIDataset() :
 SGIDataset::~SGIDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
 
     // Do we need to write out rle table?
     if( image.rleTableDirty )

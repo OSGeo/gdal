@@ -98,7 +98,7 @@ typedef enum {
 /**
  * The base class for all metadata readers
  */
-class GDALMDReaderBase{
+class CPL_DLL GDALMDReaderBase{
 
     CPL_DISALLOW_COPY_ASSIGN(GDALMDReaderBase)
 

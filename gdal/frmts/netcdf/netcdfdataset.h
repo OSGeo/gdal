@@ -108,6 +108,8 @@ static const size_t NCDF_MAX_STR_LEN = 8192;
 #define NCDF_DIMNAME_LON     "lon"
 #define NCDF_DIMNAME_LAT     "lat"
 #define NCDF_LONLAT          "lon lat"
+#define NCDF_DIMNAME_RLON    "rlon" // rotated longitude
+#define NCDF_DIMNAME_RLAT    "rlat" // rotated latitude
 
 /* netcdf file types, as in libcdi/cdo and compat w/netcdf.h */
 typedef enum
@@ -182,11 +184,11 @@ static const int NCDF_DEFLATE_LEVEL    = 1;  /* best time/size ratio */
 /*         CF-1 Coordinate Type Naming (Chapter 4.  Coordinate Types )  */
 /* -------------------------------------------------------------------- */
 static const char* const papszCFLongitudeVarNames[] = { CF_LONGITUDE_VAR_NAME, "longitude", nullptr };
-static const char* const papszCFLongitudeAttribNames[] = { CF_UNITS, CF_UNITS, CF_STD_NAME, CF_AXIS, CF_LNG_NAME, nullptr };
-static const char* const papszCFLongitudeAttribValues[] = { CF_DEGREES_EAST, CF_DEGREE_EAST, CF_LONGITUDE_STD_NAME, "X", CF_LONGITUDE_LNG_NAME, nullptr };
+static const char* const papszCFLongitudeAttribNames[] = { CF_UNITS, CF_UNITS, CF_UNITS, CF_STD_NAME, CF_AXIS, CF_LNG_NAME, nullptr };
+static const char* const papszCFLongitudeAttribValues[] = { CF_DEGREES_EAST, CF_DEGREE_EAST, CF_DEGREES_E, CF_LONGITUDE_STD_NAME, "X", CF_LONGITUDE_LNG_NAME, nullptr };
 static const char* const papszCFLatitudeVarNames[] = { CF_LATITUDE_VAR_NAME, "latitude", nullptr };
-static const char* const papszCFLatitudeAttribNames[] = { CF_UNITS, CF_UNITS, CF_STD_NAME, CF_AXIS, CF_LNG_NAME, nullptr };
-static const char* const papszCFLatitudeAttribValues[] = { CF_DEGREES_NORTH, CF_DEGREE_NORTH, CF_LATITUDE_STD_NAME, "Y", CF_LATITUDE_LNG_NAME, nullptr };
+static const char* const papszCFLatitudeAttribNames[] = { CF_UNITS, CF_UNITS, CF_UNITS, CF_STD_NAME, CF_AXIS, CF_LNG_NAME, nullptr };
+static const char* const papszCFLatitudeAttribValues[] = { CF_DEGREES_NORTH, CF_DEGREE_NORTH, CF_DEGREES_N, CF_LATITUDE_STD_NAME, "Y", CF_LATITUDE_LNG_NAME, nullptr };
 
 static const char* const papszCFProjectionXVarNames[] = { CF_PROJ_X_VAR_NAME, "xc", nullptr };
 static const char* const papszCFProjectionXAttribNames[] = { CF_STD_NAME, CF_AXIS, nullptr };
@@ -1065,6 +1067,7 @@ class netCDFLayer final: public OGRLayer
 
 const char* NCDFGetProjectedCFUnit(const OGRSpatialReference *poSRS);
 void NCDFWriteLonLatVarsAttributes(nccfdriver::netCDFVID& vcdf, int nVarLonID, int nVarLatID);
+void NCDFWriteRLonRLatVarsAttributes(nccfdriver::netCDFVID& vcdf, int nVarRLonID, int nVarRLatID);
 void NCDFWriteXYVarsAttributes(nccfdriver::netCDFVID& vcdf, int nVarXID, int nVarYID,
                                       OGRSpatialReference* poSRS);
 int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS,

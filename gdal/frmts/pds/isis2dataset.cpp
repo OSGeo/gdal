@@ -133,7 +133,7 @@ ISIS2Dataset::ISIS2Dataset() :
 ISIS2Dataset::~ISIS2Dataset()
 
 {
-    FlushCache();
+    FlushCache(true);
     if( fpImage != nullptr )
         VSIFCloseL( fpImage );
 }

@@ -1159,6 +1159,11 @@ class CoordinateTransformation(_object):
         """TransformPoints(CoordinateTransformation self, int nCount)"""
         return _osr.CoordinateTransformation_TransformPoints(self, *args)
 
+
+    def TransformBounds(self, *args):
+        """TransformBounds(CoordinateTransformation self, double minx, double miny, double maxx, double maxy, int densify_pts)"""
+        return _osr.CoordinateTransformation_TransformBounds(self, *args)
+
 CoordinateTransformation_swigregister = _osr.CoordinateTransformation_swigregister
 CoordinateTransformation_swigregister(CoordinateTransformation)
 
@@ -1306,6 +1311,14 @@ def GetPROJVersionMinor(*args):
 def GetPROJVersionMicro(*args):
     """GetPROJVersionMicro() -> int"""
     return _osr.GetPROJVersionMicro(*args)
+
+def GetPROJEnableNetwork(*args):
+    """GetPROJEnableNetwork() -> bool"""
+    return _osr.GetPROJEnableNetwork(*args)
+
+def SetPROJEnableNetwork(*args):
+    """SetPROJEnableNetwork(bool enabled)"""
+    return _osr.SetPROJEnableNetwork(*args)
 
 def SetPROJAuxDbPath(*args):
     """SetPROJAuxDbPath(char const * utf8_path)"""

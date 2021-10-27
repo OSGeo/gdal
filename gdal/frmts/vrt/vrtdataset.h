@@ -143,7 +143,7 @@ public:
                                int *pnMaxSize, CPLHashSet* hSetFiles);
 
     virtual int    IsSimpleSource() { return FALSE; }
-    virtual CPLErr FlushCache() { return CE_None; }
+    virtual CPLErr FlushCache(bool /*bAtClosing*/) { return CE_None; }
 };
 
 typedef VRTSource *(*VRTSourceParser)(CPLXMLNode *, const char *,
@@ -162,7 +162,7 @@ class VRTRasterBand;
 
 template<class T> struct VRTFlushCacheStruct
 {
-    static void FlushCache(T& obj);
+    static void FlushCache(T& obj, bool bAtClosing);
 };
 
 class VRTWarpedDataset;
@@ -226,7 +226,7 @@ class CPL_DLL VRTDataset CPL_NON_FINAL: public GDALDataset
     virtual ~VRTDataset();
 
     void          SetNeedsFlush() { m_bNeedsFlush = true; }
-    virtual void  FlushCache() override;
+    virtual void  FlushCache(bool bAtClosing) override;
 
     void SetWritable(int bWritableIn) { m_bWritable = CPL_TO_BOOL(bWritableIn); }
 
@@ -319,16 +319,6 @@ class CPL_DLL VRTWarpedDataset final: public VRTDataset
 
     void              CreateImplicitOverviews();
 
-    struct VerticalShiftGrid
-    {
-        CPLString osVGrids{};
-        int       bInverse = false;
-        double    dfToMeterSrc = 0.0;
-        double    dfToMeterDest = 0.0;
-        CPLStringList aosOptions{};
-    };
-    std::vector<VerticalShiftGrid> m_aoVerticalShiftGrids{};
-
     friend class VRTWarpedRasterBand;
 
     CPL_DISALLOW_COPY_ASSIGN(VRTWarpedDataset)
@@ -340,7 +330,7 @@ public:
                       VRTWarpedDataset( int nXSize, int nYSize );
     virtual ~VRTWarpedDataset();
 
-    virtual void  FlushCache() override;
+    virtual void  FlushCache(bool bAtClosing) override;
 
     CPLErr            Initialize( /* GDALWarpOptions */ void * );
 
@@ -361,12 +351,6 @@ public:
     CPLErr            ProcessBlock( int iBlockX, int iBlockY );
 
     void              GetBlockSize( int *, int * ) const;
-
-    void              SetApplyVerticalShiftGrid(const char* pszVGrids,
-                                             int bInverse,
-                                             double dfToMeterSrc,
-                                             double dfToMeterDest,
-                                             char** papszOptions );
 };
 
 /************************************************************************/
@@ -418,7 +402,7 @@ public:
                       VRTPansharpenedDataset( int nXSize, int nYSize );
     virtual ~VRTPansharpenedDataset();
 
-    virtual void  FlushCache() override;
+    virtual void  FlushCache(bool bAtClosing) override;
 
     virtual CPLErr    XMLInit( CPLXMLNode *, const char * ) override;
     virtual CPLXMLNode *   SerializeToXML( const char *pszVRTPath ) override;
@@ -709,7 +693,7 @@ class CPL_DLL VRTSourcedRasterBand CPL_NON_FINAL: public VRTRasterBand
 
     virtual int         IsSourcedRasterBand() override { return TRUE; }
 
-    virtual CPLErr      FlushCache() override;
+    virtual CPLErr      FlushCache(bool bAtClosing) override;
 };
 
 /************************************************************************/
@@ -948,8 +932,11 @@ protected:
     double              m_dfDstXSize = 0;
     double              m_dfDstYSize = 0;
 
-    int                 m_bNoDataSet = false;       // should really be a member of VRTComplexSource as only taken into account by it
-    double              m_dfNoDataValue = VRT_NODATA_UNSET;    // same as above
+    // should really be a member of VRTComplexSource as only taken into account by it
+    int                 m_bNoDataSet = false;
+
+    // same as above. adjusted value should be read with GetAdjustedNoDataValue()
+    double              m_dfNoDataValue = VRT_NODATA_UNSET;
     CPLString           m_osResampling{};
 
     int                 m_nMaxValue = 0;
@@ -962,6 +949,8 @@ protected:
     bool                m_bDropRefOnSrcBand = true;
 
     int                 NeedMaxValAdjustment() const;
+
+    double              GetAdjustedNoDataValue() const;
 
 public:
             VRTSimpleSource();
@@ -1024,7 +1013,7 @@ public:
 
     virtual int    IsSimpleSource() override { return TRUE; }
     virtual const char* GetType() { return "SimpleSource"; }
-    virtual CPLErr FlushCache() override;
+    virtual CPLErr FlushCache(bool bAtClosing) override;
 
     GDALRasterBand* GetRasterBand() const;
     GDALRasterBand* GetMaskBandMainBand();

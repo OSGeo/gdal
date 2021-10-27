@@ -89,6 +89,10 @@ static GDALDataset *OGRTigerDriverCreate( const char * pszName,
                                           CPL_UNUSED GDALDataType eDT,
                                           char **papszOptions )
 {
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled(
+            "TIGER", "Note: only the writing side is planned for removal") )
+        return nullptr;
+
     OGRTigerDataSource *poDS = new OGRTigerDataSource();
 
     if( poDS->Create( pszName, papszOptions ) )

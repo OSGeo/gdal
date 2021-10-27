@@ -97,25 +97,25 @@ int main(int /* argc*/ , char* /* argv */[])
     if (hDS)
         GDALChecksumImage(GDALGetRasterBand(hDS, 1), 0, 0, GDALGetRasterXSize(hDS), GDALGetRasterYSize(hDS));
 
-    hDS = GDALOpen(GDRIVERS_DIR "data/rgb_warp.vrt", GA_ReadOnly);
+    hDS = GDALOpen(GDRIVERS_DIR "data/vrt/rgb_warp.vrt", GA_ReadOnly);
     if (hDS)
         GDALChecksumImage(GDALGetRasterBand(hDS, 1), 0, 0, GDALGetRasterXSize(hDS), GDALGetRasterYSize(hDS));
 
-    hDS = GDALOpen(GDRIVERS_DIR "data/A.TOC", GA_ReadOnly);
+    hDS = GDALOpen(GDRIVERS_DIR "data/nitf/A.TOC", GA_ReadOnly);
 
-    hDS = GDALOpen("NITF_TOC_ENTRY:CADRG_ONC_1,000,000_2_0:" GDRIVERS_DIR "data/A.TOC", GA_ReadOnly);
+    hDS = GDALOpen("NITF_TOC_ENTRY:CADRG_ONC_1,000,000_2_0:" GDRIVERS_DIR "data/nitf/A.TOC", GA_ReadOnly);
     if (hDS)
         GDALChecksumImage(GDALGetRasterBand(hDS, 1), 0, 0, GDALGetRasterXSize(hDS), GDALGetRasterYSize(hDS));
 
-    hDS = GDALOpen(GDRIVERS_DIR "data/testtil.til", GA_ReadOnly);
+    hDS = GDALOpen(GDRIVERS_DIR "data/til/testtil.til", GA_ReadOnly);
     if (hDS)
         GDALChecksumImage(GDALGetRasterBand(hDS, 1), 0, 0, GDALGetRasterXSize(hDS), GDALGetRasterYSize(hDS));
 
-    hDS = GDALOpen(GDRIVERS_DIR "data/product.xml", GA_ReadOnly);
+    hDS = GDALOpen(GDRIVERS_DIR "data/rs2/product.xml", GA_ReadOnly);
     if (hDS)
         GDALChecksumImage(GDALGetRasterBand(hDS, 1), 0, 0, GDALGetRasterXSize(hDS), GDALGetRasterYSize(hDS));
 
-    hDS = GDALOpen(GDRIVERS_DIR "data/METADATA.DIM", GA_ReadOnly);
+    hDS = GDALOpen(GDRIVERS_DIR "data/dimap/METADATA.DIM", GA_ReadOnly);
     if (hDS)
         GDALChecksumImage(GDALGetRasterBand(hDS, 1), 0, 0, GDALGetRasterXSize(hDS), GDALGetRasterYSize(hDS));
 
@@ -123,7 +123,7 @@ int main(int /* argc*/ , char* /* argv */[])
     if (hDS)
         GDALChecksumImage(GDALGetRasterBand(hDS, 1), 0, 0, GDALGetRasterXSize(hDS), GDALGetRasterYSize(hDS));
 
-    hDS = GDALOpen(GDRIVERS_DIR "data/bug407.gif", GA_ReadOnly);
+    hDS = GDALOpen(GDRIVERS_DIR "data/gif/bug407.gif", GA_ReadOnly);
     if (hDS)
     {
         GDALChecksumImage(GDALGetRasterBand(hDS, 1), 0, 0, GDALGetRasterXSize(hDS), GDALGetRasterYSize(hDS));
@@ -211,10 +211,10 @@ int main(int /* argc*/ , char* /* argv */[])
     hDS = GDALOpenShared(GCORE_DATA_DIR "byte.tif", GA_ReadOnly);
     hDS = GDALOpenShared(GCORE_DATA_DIR "byte.tif", GA_ReadOnly);
 
-    hDS = GDALOpenShared(GDRIVERS_DIR "data/mercator.sid", GA_ReadOnly);
+    hDS = GDALOpenShared(GDRIVERS_DIR "data/sid/mercator.sid", GA_ReadOnly);
 
-    hDS = GDALOpen("RASTERLITE:" GDRIVERS_DIR "data/rasterlite_pyramids.sqlite,table=test", GA_ReadOnly);
-    hDS = GDALOpen("RASTERLITE:" GDRIVERS_DIR "data/rasterlite_pyramids.sqlite,table=test,level=1", GA_ReadOnly);
+    hDS = GDALOpen("RASTERLITE:" GDRIVERS_DIR "data/rasterlite/rasterlite_pyramids.sqlite,table=test", GA_ReadOnly);
+    hDS = GDALOpen("RASTERLITE:" GDRIVERS_DIR "data/rasterlite/rasterlite_pyramids.sqlite,table=test,level=1", GA_ReadOnly);
 
     OpenJPEG2000(GDRIVERS_DIR "data/jpeg2000/rgbwcmyk01_YeGeo_kakadu.jp2");
 

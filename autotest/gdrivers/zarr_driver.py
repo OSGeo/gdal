@@ -590,7 +590,7 @@ def test_zarr_read_crs(crs_member):
     }
 
     zattrs_all = {
-        "crs": {
+        "_CRS": {
             "projjson": {
                 "$schema": "https://proj.org/schemas/v0.2/projjson.schema.json",
                 "type": "GeographicCRS",
@@ -687,7 +687,7 @@ def test_zarr_read_crs(crs_member):
         }
     }
 
-    zattrs = {"crs": {crs_member: zattrs_all["crs"][crs_member]}}
+    zattrs = {"_CRS": {crs_member: zattrs_all["_CRS"][crs_member]}}
 
     try:
         gdal.Mkdir('/vsimem/test.zarr', 0)
@@ -1576,8 +1576,8 @@ def test_zarr_create_array_set_crs():
         data = gdal.VSIFReadL(1, 10000, f)
         gdal.VSIFCloseL(f)
         j = json.loads(data)
-        assert 'crs' in j
-        crs = j['crs']
+        assert '_CRS' in j
+        crs = j['_CRS']
         assert 'wkt' in crs
         assert 'url' in crs
         if 'projjson' in crs:
@@ -1756,7 +1756,12 @@ def test_zarr_write_array_content(dtype, structtype, gdaltype, fill_value, nodat
         gdal.RmdirRecursive(filename)
 
 
-def test_zarr_create_array_string():
+
+@pytest.mark.parametrize("string_format,input_str,output_str",
+                          [('ASCII', '0123456789truncated', '0123456789'),
+                           ('UNICODE','\u00E9' + '123456789truncated', '\u00E9' + '123456789')],
+                         ids=('ASCII', 'UNICODE'))
+def test_zarr_create_array_string(string_format, input_str, output_str):
 
     try:
         def create():
@@ -1769,8 +1774,9 @@ def test_zarr_create_array_string():
             dim0 = rg.CreateDimension("dim0", None, None, 2)
 
             ar = rg.CreateMDArray(
-                "test", [dim0], gdal.ExtendedDataType.CreateString(10))
-            assert ar.Write(['ab', '0123456789truncated']) == gdal.CE_None
+                "test", [dim0], gdal.ExtendedDataType.CreateString(10),
+                ['STRING_FORMAT='+string_format, 'COMPRESS=ZLIB'])
+            assert ar.Write(['ab', input_str]) == gdal.CE_None
         create()
 
         ds = gdal.OpenEx(
@@ -1779,10 +1785,45 @@ def test_zarr_create_array_string():
         rg = ds.GetRootGroup()
         assert rg
         ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
-        assert ar.Read() == ['ab', '0123456789']
+        assert ar.Read() == ['ab', output_str]
 
     finally:
         gdal.RmdirRecursive('/vsimem/test.zarr')
+
+
+@pytest.mark.parametrize("srcfilename", ["data/zarr/unicode_le.zarr",
+                                         "data/zarr/unicode_be.zarr"])
+def test_zarr_update_array_string(srcfilename):
+
+    filename = '/vsimem/test.zarr'
+
+    try:
+        gdal.Mkdir(filename, 0)
+        gdal.FileFromMemBuffer(filename + '/.zarray', open(srcfilename + '/.zarray', 'rb').read())
+        gdal.FileFromMemBuffer(filename + '/0', open(srcfilename + '/0', 'rb').read())
+
+        eta = '\u03B7'
+
+        def update():
+            ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+            rg = ds.GetRootGroup()
+            ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+            assert ar.Read() == ['\u00E9']
+            assert ar.Write([eta]) == gdal.CE_None
+            assert gdal.GetLastErrorMsg() == ''
+
+        update()
+
+        def check():
+            ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+            rg = ds.GetRootGroup()
+            ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+            assert ar.Read() == [eta]
+
+        check()
+
+    finally:
+        gdal.RmdirRecursive(filename)
 
 
 @pytest.mark.parametrize("format", ['ZARR_V2', 'ZARR_V3'])
@@ -2597,6 +2638,68 @@ def test_zarr_read_invalid_nczarr_dim():
             rg = ds.GetRootGroup()
             ar = rg.OpenMDArray('test')
             assert ar
+
+    finally:
+        gdal.RmdirRecursive('/vsimem/test.zarr')
+
+
+def test_zarr_read_test_overflow_in_AllocateWorkingBuffers_due_to_fortran():
+
+    if sys.maxsize < (1 << 32):
+        pytest.skip()
+
+    try:
+        gdal.Mkdir('/vsimem/test.zarr', 0)
+
+        j = { "chunks": [(1 << 32) - 1, (1 << 32) - 1],
+              "compressor": None,
+              "dtype": '!b1',
+              "fill_value": None,
+              "filters": None,
+              "order": "F",
+              "shape": [ 1, 1 ],
+              "zarr_format": 2
+        }
+
+        gdal.FileFromMemBuffer('/vsimem/test.zarr/.zarray', json.dumps(j))
+
+        ds = gdal.OpenEx('/vsimem/test.zarr', gdal.OF_MULTIDIM_RASTER)
+        assert ds
+        rg = ds.GetRootGroup()
+        ar = rg.OpenMDArray('test')
+        with gdaltest.error_handler():
+            assert ar.Read(count = [1,1]) is None
+
+    finally:
+        gdal.RmdirRecursive('/vsimem/test.zarr')
+
+
+def test_zarr_read_test_overflow_in_AllocateWorkingBuffers_due_to_type_change():
+
+    if sys.maxsize < (1 << 32):
+        pytest.skip()
+
+    try:
+        gdal.Mkdir('/vsimem/test.zarr', 0)
+
+        j = { "chunks": [(1 << 32) - 1, ((1 << 32) - 1) / 8],
+              "compressor": None,
+              "dtype": '<u8',
+              "fill_value": None,
+              "filters": None,
+              "order": "C",
+              "shape": [ 1, 1 ],
+              "zarr_format": 2
+        }
+
+        gdal.FileFromMemBuffer('/vsimem/test.zarr/.zarray', json.dumps(j))
+
+        ds = gdal.OpenEx('/vsimem/test.zarr', gdal.OF_MULTIDIM_RASTER)
+        assert ds
+        rg = ds.GetRootGroup()
+        ar = rg.OpenMDArray('test')
+        with gdaltest.error_handler():
+            assert ar.Read(count = [1,1]) is None
 
     finally:
         gdal.RmdirRecursive('/vsimem/test.zarr')

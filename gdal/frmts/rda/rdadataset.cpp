@@ -1306,7 +1306,7 @@ bool GDALRDADataset::ReadGeoreferencing()
     CPLString osSRS =
         GetJsonString(poObj, "spatialReferenceSystemCode", true, bError);
     OGRSpatialReference oSRS;
-    if( !osSRS.empty() && oSRS.SetFromUserInput(osSRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS) == OGRERR_NONE )
+    if( !osSRS.empty() && oSRS.SetFromUserInput(osSRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) == OGRERR_NONE )
     {
         char* pszWKT = nullptr;
         oSRS.exportToWkt(&pszWKT);

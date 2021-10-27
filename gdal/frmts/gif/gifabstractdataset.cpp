@@ -67,7 +67,7 @@ GIFAbstractDataset::GIFAbstractDataset() :
 GIFAbstractDataset::~GIFAbstractDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
 
     if ( pszProjection )
         CPLFree( pszProjection );

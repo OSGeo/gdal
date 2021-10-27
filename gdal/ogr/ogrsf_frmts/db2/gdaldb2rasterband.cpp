@@ -56,13 +56,13 @@ GDALDB2RasterBand::GDALDB2RasterBand(OGRDB2DataSource* poDSIn,
 /*                              FlushCache()                            */
 /************************************************************************/
 
-CPLErr GDALDB2RasterBand::FlushCache()
+CPLErr GDALDB2RasterBand::FlushCache(bool bAtClosing)
 {
     CPLDebug("GDALDB2RasterBand::FlushCache","Entering");
     OGRDB2DataSource* poGDS = (OGRDB2DataSource* )poDS;
     CPLDebug("GDALDB2RasterBand::FlushCache","Calling FGDALPamRasterBand::FlushCache");
 
-    if( GDALPamRasterBand::FlushCache() != CE_None )
+    if( GDALPamRasterBand::FlushCache(bAtClosing) != CE_None )
         return CE_Failure;
     CPLDebug("GDALDB2RasterBand::FlushCache","Calling FlushCacheWithErrCode");
     return poGDS->FlushCacheWithErrCode();

@@ -174,7 +174,7 @@ WEBPDataset::WEBPDataset() :
 WEBPDataset::~WEBPDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
     if (fpImage)
         VSIFCloseL(fpImage);
     VSIFree(pabyUncompressed);

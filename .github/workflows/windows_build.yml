@@ -261,7 +261,7 @@ jobs:
             # See https://github.com/gisinternals/buildsystem/issues/104
             $env:GDAL_HTTP_UNSAFESSL="YES"
             cd $env:GITHUB_WORKSPACE\autotest\cpp
-            nmake /f makefile.vc check MSVC_VER=$env:MSVC_VER $env:WIN64_ARG
+            exec { nmake /f makefile.vc check MSVC_VER=$env:MSVC_VER $env:WIN64_ARG }
             cd $env:GITHUB_WORKSPACE\autotest
             pip install -Ur requirements.txt
             exec { pytest -vv }

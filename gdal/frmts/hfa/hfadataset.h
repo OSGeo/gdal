@@ -59,7 +59,7 @@ class HFADataset final : public GDALPamDataset
 
     bool        bGeoDirty;
     double      adfGeoTransform[6];
-    char        *pszProjection;
+    OGRSpatialReference m_oSRS{};
 
     bool        bIgnoreUTM;
 
@@ -104,30 +104,21 @@ class HFADataset final : public GDALPamDataset
 
     virtual char **GetFileList() override;
 
-    virtual const char *_GetProjectionRef() override;
-    virtual CPLErr _SetProjection( const char * ) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
-    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
-        return OldSetProjectionFromSetSpatialRef(poSRS);
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
 
     virtual CPLErr GetGeoTransform( double * ) override;
     virtual CPLErr SetGeoTransform( double * ) override;
 
     virtual int    GetGCPCount() override;
-    virtual const char *_GetGCPProjection() override;
-    const OGRSpatialReference* GetGCPSpatialRef() const override {
-        return GetGCPSpatialRefFromOldGetGCPProjection();
-    }
+    const OGRSpatialReference* GetGCPSpatialRef() const override;
     virtual const GDAL_GCP *GetGCPs() override;
 
     virtual CPLErr SetMetadata( char **, const char * = "" ) override;
     virtual CPLErr SetMetadataItem( const char *, const char *,
                                     const char * = "" ) override;
 
-    virtual void   FlushCache() override;
+    virtual void   FlushCache(bool bAtClosing) override;
     virtual CPLErr IBuildOverviews( const char *pszResampling,
                                     int nOverviews, int *panOverviewList,
                                     int nListBands, int *panBandList,

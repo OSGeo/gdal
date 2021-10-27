@@ -1483,7 +1483,7 @@ public:
 GDALEXRWritableDataset::~GDALEXRWritableDataset()
 {
     WriteHeader();
-    FlushCache();
+    FlushCache(true);
 }
 
 /************************************************************************/

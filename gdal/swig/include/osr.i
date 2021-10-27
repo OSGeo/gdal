@@ -1331,6 +1331,23 @@ public:
   %clear (double*);
 #endif
 
+void TransformBounds(
+    double argout[4], double minx, double miny, double maxx, double maxy, int densify_pts
+) {
+    argout[0] = HUGE_VAL;
+    argout[1] = HUGE_VAL;
+    argout[2] = HUGE_VAL;
+    argout[3] = HUGE_VAL;
+    if (self == NULL)
+        return;
+    OCTTransformBounds(
+        self,
+        minx, miny, maxx, maxy,
+        &argout[0], &argout[1], &argout[2], &argout[3],
+        densify_pts
+    );
+}
+
 } /*extend */
 };
 
@@ -1553,6 +1570,16 @@ int GetPROJVersionMicro()
     int num;
     OSRGetPROJVersion(NULL, NULL, &num);
     return num;
+}
+
+bool GetPROJEnableNetwork()
+{
+    return OSRGetPROJEnableNetwork();
+}
+
+void SetPROJEnableNetwork(bool enabled)
+{
+    OSRSetPROJEnableNetwork(enabled);
 }
 %}
 

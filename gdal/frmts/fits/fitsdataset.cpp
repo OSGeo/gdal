@@ -69,7 +69,7 @@ class FITSDataset final : public GDALPamDataset {
   int m_fitsDataType = 0;   // FITS code for the image type
 
   bool m_isExistingFile = false;
-  long m_highestOffsetWritten = 0;  // How much of image has been written
+  LONGLONG m_highestOffsetWritten = 0;  // How much of image has been written
 
   bool        m_bNoDataChanged = false;
   bool        m_bNoDataSet = false;
@@ -1730,7 +1730,7 @@ FITSRasterBand::FITSRasterBand( FITSDataset *poDSIn, int nBandIn ) :
 
 FITSRasterBand::~FITSRasterBand()
 {
-    FlushCache();
+    FlushCache(true);
 }
 
 /************************************************************************/
@@ -1989,7 +1989,7 @@ FITSDataset::~FITSDataset() {
       }
 
       // Make sure we flush the raster cache before we close the file!
-      FlushCache();
+      FlushCache(true);
     }
 
     // Close the FITS handle

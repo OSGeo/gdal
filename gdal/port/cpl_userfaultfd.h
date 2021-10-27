@@ -45,8 +45,8 @@
 
 typedef struct cpl_uffd_context cpl_uffd_context;
 
-bool CPLIsUserFaultMappingSupported();
-cpl_uffd_context * CPLCreateUserFaultMapping(const char * pszFilename, void ** ppVma, uint64_t * pnVmaSize);
-void CPLDeleteUserFaultMapping(cpl_uffd_context * ctx);
+bool CPL_DLL CPLIsUserFaultMappingSupported();
+cpl_uffd_context CPL_DLL * CPLCreateUserFaultMapping(const char * pszFilename, void ** ppVma, uint64_t * pnVmaSize);
+void CPL_DLL CPLDeleteUserFaultMapping(cpl_uffd_context * ctx);
 
 #endif

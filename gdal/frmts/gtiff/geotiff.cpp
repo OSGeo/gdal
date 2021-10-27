@@ -27,14 +27,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-// If we use sunpro compiler on linux. Weird idea indeed!
-#if defined(__SUNPRO_CC) && defined(__linux__)
-#define _GNU_SOURCE
-#elif defined(__GNUC__) && !defined(_GNU_SOURCE)
-// Required to use RTLD_DEFAULT of dlfcn.h.
-#define _GNU_SOURCE
-#endif
-
 #include "cpl_port.h"  // Must be first.
 #include "gtiff.h"
 
@@ -99,6 +91,7 @@
 #include "tiff.h"
 #include "tif_float.h"
 #include "tiffio.h"
+#include "tif_jxl.h"
 #include "tiffvers.h"
 #include "tifvsi.h"
 #include "xtiffio.h"
@@ -332,6 +325,11 @@ private:
     double      m_adfGeoTransform[6]{0,1,0,0,0,1};
     double      m_dfMaxZError = 0.0;
     uint32_t      m_anLercAddCompressionAndVersion[2]{0,0};
+#if HAVE_JXL
+    bool        m_bJXLLossless = true;
+    float       m_fJXLDistance = 1.0f;
+    uint32_t    m_nJXLEffort = 5;
+#endif
     double      m_dfNoDataValue = -9999.0;
 
     toff_t      m_nDirOffset = 0;
@@ -456,16 +454,13 @@ private:
 
     void        LoadMDAreaOrPoint();
     void        LookForProjection();
-#ifdef ESRI_BUILD
-    void        AdjustLinearUnit( short UOMLength );
-#endif
 
     void        Crystalize();  // TODO: Spelling.
     void        RestoreVolatileParameters(TIFF* hTIFF);
 
     void        WriteGeoTIFFInfo();
     bool        SetDirectory();
-    void        ReloadDirectory();
+    void        ReloadDirectory(bool bReopenHandle = false);
 
     int         GetJPEGOverviewCount();
 
@@ -558,7 +553,8 @@ private:
 
     void        IdentifyAuthorizedGeoreferencingSources();
 
-    void        FlushCacheInternal( bool bFlushDirectory );
+    void        FlushCacheInternal( bool bAtClosing,
+                                    bool bFlushDirectory );
     bool        HasOptimizedReadMultiRange();
 
     bool        AssociateExternalMask();
@@ -619,7 +615,7 @@ private:
                                     int bStrict, char ** papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void * pProgressData );
-    virtual void    FlushCache() override;
+    virtual void    FlushCache(bool bAtClosing) override;
 
     virtual char  **GetMetadataDomainList() override;
     virtual CPLErr  SetMetadata( char **, const char * = "" ) override;
@@ -678,7 +674,7 @@ class GTiffJPEGOverviewDS final : public GDALDataset
     CPLString  m_osTmpFilenameJPEGTable{};
 
     CPLString    m_osTmpFilename{};
-    GDALDataset* m_poJPEGDS = nullptr;
+    std::unique_ptr<GDALDataset> m_poJPEGDS{};
     // Valid block id of the parent DS that match poJPEGDS.
     int          m_nBlockId = -1;
 
@@ -764,8 +760,7 @@ GTiffJPEGOverviewDS::GTiffJPEGOverviewDS( GTiffDataset* poParentDSIn,
 
 GTiffJPEGOverviewDS::~GTiffJPEGOverviewDS()
 {
-    if( m_poJPEGDS != nullptr )
-        GDALClose( m_poJPEGDS );
+    m_poJPEGDS.reset();
     VSIUnlink(m_osTmpFilenameJPEGTable);
     if( !m_osTmpFilename.empty() )
         VSIUnlink(m_osTmpFilename);
@@ -884,9 +879,7 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff,
               m_poGDS->m_poJPEGDS->GetRasterYSize() !=
               nBlockYSize * nScaleFactor)) )
         {
-            if( m_poGDS->m_poJPEGDS != nullptr )
-                GDALClose( m_poGDS->m_poJPEGDS );
-            m_poGDS->m_poJPEGDS = nullptr;
+            m_poGDS->m_poJPEGDS.reset();
         }
 
         CPLString osFileToOpen;
@@ -903,8 +896,7 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             if( m_poGDS->m_poJPEGDS != nullptr &&
                 STARTS_WITH(m_poGDS->m_poJPEGDS->GetDescription(), "/vsisparse/") )
             {
-                GDALClose( m_poGDS->m_poJPEGDS );
-                m_poGDS->m_poJPEGDS = nullptr;
+                m_poGDS->m_poJPEGDS.reset();
             }
             osFileToOpen = m_poGDS->m_osTmpFilename;
 
@@ -937,8 +929,7 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             // fake JPEG file.
 
             // Always re-open.
-            GDALClose( m_poGDS->m_poJPEGDS );
-            m_poGDS->m_poJPEGDS = nullptr;
+            m_poGDS->m_poJPEGDS.reset();
 
             osFileToOpen =
                 CPLSPrintf("/vsisparse/%s", m_poGDS->m_osTmpFilename.c_str());
@@ -972,42 +963,28 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
         if( m_poGDS->m_poJPEGDS == nullptr )
         {
-            const char* apszDrivers[] = { "JPEG", nullptr };
+            const char* const apszDrivers[] = { "JPEG", nullptr };
 
-            CPLString osOldVal;
-            if( m_poGDS->m_poParentDS->m_nPlanarConfig == PLANARCONFIG_CONTIG &&
-                m_poGDS->nBands == 4 )
-            {
-                osOldVal =
-                    CPLGetThreadLocalConfigOption("GDAL_JPEG_TO_RGB", "");
-                CPLSetThreadLocalConfigOption("GDAL_JPEG_TO_RGB", "NO");
-            }
+            CPLConfigOptionSetter oJPEGtoRGBSetter(
+                "GDAL_JPEG_TO_RGB",
+                m_poGDS->m_poParentDS->m_nPlanarConfig == PLANARCONFIG_CONTIG &&
+                m_poGDS->nBands == 4 ? "NO" : "YES",
+                false);
 
-            m_poGDS->m_poJPEGDS =
-                static_cast<GDALDataset *>( GDALOpenEx(
+            m_poGDS->m_poJPEGDS.reset(GDALDataset::Open(
                     osFileToOpen,
                     GDAL_OF_RASTER | GDAL_OF_INTERNAL,
-                    apszDrivers, nullptr, nullptr) );
+                    apszDrivers, nullptr, nullptr));
 
             if( m_poGDS->m_poJPEGDS != nullptr )
             {
                 // Force all implicit overviews to be available, even for
                 // small tiles.
-                CPLSetThreadLocalConfigOption( "JPEG_FORCE_INTERNAL_OVERVIEWS",
-                                               "YES");
-                GDALGetOverviewCount(GDALGetRasterBand(m_poGDS->m_poJPEGDS, 1));
-                CPLSetThreadLocalConfigOption( "JPEG_FORCE_INTERNAL_OVERVIEWS",
-                                               nullptr);
+                CPLConfigOptionSetter oInternalOverviewsSetter(
+                    "JPEG_FORCE_INTERNAL_OVERVIEWS", "YES", false);
+                GDALGetOverviewCount(GDALGetRasterBand(m_poGDS->m_poJPEGDS.get(), 1));
 
                 m_poGDS->m_nBlockId = nBlockId;
-            }
-
-            if( m_poGDS->m_poParentDS->m_nPlanarConfig == PLANARCONFIG_CONTIG &&
-                m_poGDS->nBands == 4 )
-            {
-                CPLSetThreadLocalConfigOption(
-                    "GDAL_JPEG_TO_RGB",
-                    !osOldVal.empty() ? osOldVal.c_str() : nullptr );
             }
         }
         else
@@ -1015,11 +992,10 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             // Trick: we invalidate the JPEG dataset to force a reload
             // of the new content.
             CPLErrorReset();
-            m_poGDS->m_poJPEGDS->FlushCache();
+            m_poGDS->m_poJPEGDS->FlushCache(false);
             if( CPLGetLastErrorNo() != 0 )
             {
-                GDALClose( m_poGDS->m_poJPEGDS );
-                m_poGDS->m_poJPEGDS = nullptr;
+                m_poGDS->m_poJPEGDS.reset();
                 return CE_Failure;
             }
             m_poGDS->m_nBlockId = nBlockId;
@@ -1029,7 +1005,7 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     CPLErr eErr = CE_Failure;
     if( m_poGDS->m_poJPEGDS )
     {
-        GDALDataset* l_poDS = m_poGDS->m_poJPEGDS;
+        GDALDataset* l_poDS = m_poGDS->m_poJPEGDS.get();
 
         int nReqXOff = 0;
         int nReqYOff = 0;
@@ -1598,7 +1574,7 @@ int GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
     // Make sure that TIFFTAG_STRIPOFFSETS is up-to-date.
     if( m_poGDS->GetAccess() == GA_Update )
     {
-        m_poGDS->FlushCache();
+        m_poGDS->FlushCache(false);
         VSI_TIFFFlushBufferedWrite( TIFFClientdata( m_poGDS->m_hTIFF ) );
     }
 
@@ -1986,7 +1962,7 @@ CPLVirtualMem* GTiffRasterBand::GetVirtualMemAutoInternal( GDALRWFlag eRWFlag,
     // Make sure that TIFFTAG_STRIPOFFSETS is up-to-date.
     if( m_poGDS->GetAccess() == GA_Update )
     {
-        m_poGDS->FlushCache();
+        m_poGDS->FlushCache(false);
         VSI_TIFFFlushBufferedWrite( TIFFClientdata( m_poGDS->m_hTIFF ) );
     }
 
@@ -3844,7 +3820,7 @@ int GTiffDataset::DirectIO( GDALRWFlag eRWFlag,
     // Make sure that TIFFTAG_STRIPOFFSETS is up-to-date.
     if( GetAccess() == GA_Update )
     {
-        FlushCache();
+        FlushCache(false);
         VSI_TIFFFlushBufferedWrite( TIFFClientdata( m_hTIFF ) );
     }
 
@@ -4654,7 +4630,7 @@ int GTiffRasterBand::IGetDataCoverageStatus( int nXOff, int nYOff,
                                              double* pdfDataPct)
 {
     if( eAccess == GA_Update )
-        m_poGDS->FlushCache();
+        m_poGDS->FlushCache(false);
 
     const int iXBlockStart = nXOff / nBlockXSize;
     const int iXBlockEnd = (nXOff + nXSize - 1) / nBlockXSize;
@@ -7825,7 +7801,8 @@ int GTiffDataset::Finalize()
 /* -------------------------------------------------------------------- */
 /*  Ensure any blocks write cached by GDAL gets pushed through libtiff. */
 /* -------------------------------------------------------------------- */
-        FlushCacheInternal( false /* do not call FlushDirectory */ );
+        FlushCacheInternal( true, /* at closing */
+                            false /* do not call FlushDirectory */ );
 
         FillEmptyTiles();
         m_bFillEmptyTilesAtClosing = false;
@@ -7835,7 +7812,7 @@ int GTiffDataset::Finalize()
 /*      Force a complete flush, including either rewriting(moving)      */
 /*      of writing in place the current directory.                      */
 /* -------------------------------------------------------------------- */
-    FlushCacheInternal( true );
+    FlushCacheInternal( true /* at closing */, true );
 
     // Destroy compression queue
     if( m_poCompressQueue )
@@ -7863,7 +7840,7 @@ int GTiffDataset::Finalize()
     {
         PushMetadataToPam();
         m_bMetadataChanged = false;
-        GDALPamDataset::FlushCache();
+        GDALPamDataset::FlushCache(false);
     }
 
 /* -------------------------------------------------------------------- */
@@ -9179,6 +9156,7 @@ bool GTiffDataset::SubmitCompressionJob( int nStripOrTile, GByte* pabyData,
             m_nCompression == COMPRESSION_LZMA ||
             m_nCompression == COMPRESSION_ZSTD ||
             m_nCompression == COMPRESSION_LERC ||
+            m_nCompression == COMPRESSION_JXL ||
             m_nCompression == COMPRESSION_WEBP ||
             m_nCompression == COMPRESSION_JPEG) )
     {
@@ -9772,18 +9750,19 @@ bool GTiffDataset::IsBlockAvailable( int nBlockId,
 /*      cache if need be.                                               */
 /************************************************************************/
 
-void GTiffDataset::FlushCache()
+void GTiffDataset::FlushCache(bool bAtClosing)
 
 {
-    FlushCacheInternal( true );
+    FlushCacheInternal( bAtClosing, true );
 }
 
-void GTiffDataset::FlushCacheInternal( bool bFlushDirectory )
+void GTiffDataset::FlushCacheInternal( bool bAtClosing,
+                                       bool bFlushDirectory )
 {
     if( m_bIsFinalized )
         return;
 
-    GDALPamDataset::FlushCache();
+    GDALPamDataset::FlushCache(bAtClosing);
 
     if( m_bLoadedBlockDirty && m_nLoadedBlock != -1 )
         FlushBlockBuf();
@@ -9820,6 +9799,39 @@ void GTiffDataset::FlushCacheInternal( bool bFlushDirectory )
 void GTiffDataset::FlushDirectory()
 
 {
+    const auto ReloadAllOtherDirectories = [this]()
+    {
+        const auto poBaseDS = m_poBaseDS ? m_poBaseDS : this;
+        if( poBaseDS->m_papoOverviewDS )
+        {
+            for( int i = 0; i < poBaseDS->m_nOverviewCount; ++i )
+            {
+                if( poBaseDS->m_papoOverviewDS[i]->m_bCrystalized &&
+                    poBaseDS->m_papoOverviewDS[i] != this )
+                {
+                    poBaseDS->m_papoOverviewDS[i]->ReloadDirectory(true);
+                }
+
+                if( poBaseDS->m_papoOverviewDS[i]->m_poMaskDS &&
+                    poBaseDS->m_papoOverviewDS[i]->m_poMaskDS != this &&
+                    poBaseDS->m_papoOverviewDS[i]->m_poMaskDS->m_bCrystalized )
+                {
+                    poBaseDS->m_papoOverviewDS[i]->m_poMaskDS->ReloadDirectory(true);
+                }
+            }
+        }
+        if( poBaseDS->m_poMaskDS &&
+            poBaseDS->m_poMaskDS != this &&
+            poBaseDS->m_poMaskDS->m_bCrystalized )
+        {
+            poBaseDS->m_poMaskDS->ReloadDirectory(true);
+        }
+        if( poBaseDS->m_bCrystalized && poBaseDS != this )
+        {
+            poBaseDS->ReloadDirectory(true);
+        }
+    };
+
     if( GetAccess() == GA_Update )
     {
         if( m_bMetadataChanged )
@@ -9884,6 +9896,8 @@ void GTiffDataset::FlushDirectory()
 
                 TIFFSetSubDirectory( m_hTIFF, m_nDirOffset );
 
+                ReloadAllOtherDirectories();
+
                 if( m_bLayoutIFDSBeforeData &&
                     m_bBlockOrderRowMajor &&
                     m_bLeaderSizeAsUInt4 &&
@@ -9898,6 +9912,7 @@ void GTiffDataset::FlushDirectory()
                     m_bWriteKnownIncompatibleEdition = true;
                 }
             }
+
             m_bNeedsRewrite = false;
         }
     }
@@ -9918,6 +9933,7 @@ void GTiffDataset::FlushDirectory()
         if( m_nDirOffset != TIFFCurrentDirOffset( m_hTIFF ) )
         {
             m_nDirOffset = nNewDirOffset;
+            ReloadAllOtherDirectories();
             CPLDebug( "GTiff",
                       "directory moved during flush in FlushDirectory()" );
         }
@@ -10025,6 +10041,11 @@ CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset,
     poODS->m_dfMaxZError = m_dfMaxZError;
     memcpy(poODS->m_anLercAddCompressionAndVersion, m_anLercAddCompressionAndVersion,
            sizeof(m_anLercAddCompressionAndVersion));
+#ifdef HAVE_JXL
+    poODS->m_bJXLLossless = m_bJXLLossless;
+    poODS->m_fJXLDistance = m_fJXLDistance;
+    poODS->m_nJXLEffort = m_nJXLEffort;
+#endif
 
     if( poODS->OpenOffset( VSI_TIFFOpenChild(m_hTIFF), nOverviewOffset,
                             GA_Update ) != CE_None )
@@ -10302,9 +10323,33 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS,
 /*                           ReloadDirectory()                          */
 /************************************************************************/
 
-void GTiffDataset::ReloadDirectory()
+void GTiffDataset::ReloadDirectory(bool bReopenHandle)
 {
-    TIFFSetSubDirectory( m_hTIFF, 0 );
+    bool bNeedSetInvalidDir = true;
+    if( bReopenHandle )
+    {
+        // When issuing a TIFFRewriteDirectory() or when a TIFFFlush() has
+        // caused a move of the directory, we would need to invalidate the
+        // tif_lastdiroff member, but it is not possible to do so without
+        // re-opening the TIFF handle.
+        auto hTIFFNew = VSI_TIFFReOpen(m_hTIFF);
+        if( hTIFFNew != nullptr )
+        {
+            m_hTIFF = hTIFFNew;
+            bNeedSetInvalidDir = false; // we could do it, but not needed
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot re-open TIFF handle for file %s. "
+                     "Directory chaining may be corrupted !",
+                     m_pszFilename);
+        }
+    }
+    if( bNeedSetInvalidDir )
+    {
+        TIFFSetSubDirectory( m_hTIFF, 0 );
+    }
     CPL_IGNORE_RET_VAL( SetDirectory() );
 }
 
@@ -11134,12 +11179,16 @@ void GTiffDataset::WriteGeoTIFFInfo()
         if( bHasProjection )
         {
             char* pszProjection = nullptr;
+            OGRErr eErr;
             {
                 CPLErrorStateBackuper oErrorStateBackuper;
                 CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
-                m_oSRS.exportToWkt(&pszProjection);
+                if( m_oSRS.IsDerivedGeographic() )
+                    eErr = OGRERR_FAILURE;
+                else
+                    eErr = m_oSRS.exportToWkt(&pszProjection);
             }
-            if( pszProjection && pszProjection[0] &&
+            if( eErr == OGRERR_NONE && pszProjection && pszProjection[0] &&
                 strstr(pszProjection, "custom_proj4") == nullptr )
             {
                 GTIFSetFromOGISDefnEx( psGTIF,
@@ -12137,6 +12186,14 @@ void GTiffDataset::RestoreVolatileParameters(TIFF* hTIFF)
             TIFFSetField(hTIFF, TIFFTAG_WEBP_LEVEL, m_nWebPLevel);
         if( m_bWebPLossless && m_nCompression == COMPRESSION_WEBP)
             TIFFSetField(hTIFF, TIFFTAG_WEBP_LOSSLESS, 1);
+#ifdef HAVE_JXL
+        if( m_nCompression == COMPRESSION_JXL )
+        {
+            TIFFSetField(hTIFF, TIFFTAG_JXL_LOSSYNESS, m_bJXLLossless ? JXL_LOSSLESS : JXL_LOSSY);
+            TIFFSetField(hTIFF, TIFFTAG_JXL_EFFORT, m_nJXLEffort);
+            TIFFSetField(hTIFF, TIFFTAG_JXL_DISTANCE, m_fJXLDistance);
+        }
+#endif
     }
 }
 
@@ -12819,11 +12876,6 @@ void GTiffDataset::LookForProjection()
             }
         }
 
-        // Check the tif linear unit and the CS linear unit.
-#ifdef ESRI_BUILD
-        AdjustLinearUnit(psGTIFDefn.UOMLength);
-#endif
-
         GTIFFreeDefn(psGTIFDefn);
 
         GTiffDatasetSetAreaOrPointMD( hGTIF, m_oGTiffMDMD );
@@ -12835,47 +12887,6 @@ void GTiffDataset::LookForProjection()
     m_bForceUnsetGTOrGCPs = false;
     m_bForceUnsetProjection = false;
 }
-
-/************************************************************************/
-/*                          AdjustLinearUnit()                          */
-/*                                                                      */
-/*      The following code is only used in ESRI Builds and there is     */
-/*      outstanding discussion on whether it is even appropriate        */
-/*      then.                                                           */
-/************************************************************************/
-#ifdef ESRI_BUILD
-
-void GTiffDataset::AdjustLinearUnit( short UOMLength )
-{
-    if( !pszProjection || strlen(pszProjection) == 0 )
-        return;
-    if( UOMLength == 9001 )
-    {
-        char* pstr = strstr(pszProjection, "PARAMETER");
-        if( !pstr )
-            return;
-        pstr = strstr(pstr, "UNIT[");
-        if( !pstr )
-            return;
-        pstr = strchr(pstr, ',') + 1;
-        if( !pstr )
-            return;
-        char* pstr1 = strchr(pstr, ']');
-        if( !pstr1 || pstr1 - pstr >= 128 )
-            return;
-        char csUnitStr[128];
-        strncpy(csUnitStr, pstr, pstr1 - pstr);
-        csUnitStr[pstr1-pstr] = '\0';
-        const double csUnit = CPLAtof(csUnitStr);
-        if( fabs(csUnit - 1.0) > 0.000001 )
-        {
-            for( long i = 0; i < 6; ++i )
-                adfGeoTransform[i] /= csUnit;
-        }
-    }
-}
-
-#endif  // def ESRI_BUILD
 
 /************************************************************************/
 /*                            ApplyPamInfo()                            */
@@ -14385,6 +14396,10 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     {
         m_oGTiffMDMD.SetMetadataItem( "COMPRESSION", "WEBP", "IMAGE_STRUCTURE" );
     }
+    else if( m_nCompression == COMPRESSION_JXL )
+    {
+        m_oGTiffMDMD.SetMetadataItem( "COMPRESSION", "JXL", "IMAGE_STRUCTURE" );
+    }
     else
     {
         CPLString oComp;
@@ -15394,6 +15409,24 @@ static double GTiffGetLERCMaxZError(char** papszOptions)
     return CPLAtof(CSLFetchNameValueDef( papszOptions, "MAX_Z_ERROR", "0.0") );
 }
 
+#if HAVE_JXL
+static bool GTiffGetJXLLossless(CSLConstList papszOptions)
+{
+    return CPLTestBool(CSLFetchNameValueDef(papszOptions, "JXL_LOSSLESS", "TRUE"));
+}
+
+static uint32_t GTiffGetJXLEffort(CSLConstList papszOptions)
+{
+    return atoi(CSLFetchNameValueDef(papszOptions, "JXL_EFFORT", "5"));
+}
+
+static float GTiffGetJXLDistance(CSLConstList papszOptions)
+{
+    return static_cast<float>(CPLAtof(CSLFetchNameValueDef(papszOptions, "JXL_DISTANCE", "1.0")));
+}
+
+#endif
+
 static signed char GTiffGetWebPLevel(char** papszOptions)
 {
     int nWebPLevel = -1;
@@ -15673,7 +15706,11 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     const int l_nJpegQuality = GTiffGetJpegQuality(papszParamList);
     const int l_nJpegTablesMode = GTiffGetJpegTablesMode(papszParamList);
     const double l_dfMaxZError = GTiffGetLERCMaxZError(papszParamList);
-
+#if HAVE_JXL
+    const bool l_bJXLLossless = GTiffGetJXLLossless(papszParamList);
+    const uint32_t l_nJXLEffort = GTiffGetJXLEffort(papszParamList);
+    const float l_fJXLDistance = GTiffGetJXLDistance(papszParamList);
+#endif
 /* -------------------------------------------------------------------- */
 /*      Streaming related code                                          */
 /* -------------------------------------------------------------------- */
@@ -16229,6 +16266,14 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     {
         TIFFSetField( l_hTIFF, TIFFTAG_LERC_MAXZERROR, l_dfMaxZError );
     }
+#if HAVE_JXL
+    if( l_nCompression == COMPRESSION_JXL )
+    {
+        TIFFSetField( l_hTIFF, TIFFTAG_JXL_LOSSYNESS, l_bJXLLossless ? JXL_LOSSLESS : JXL_LOSSY );
+        TIFFSetField( l_hTIFF, TIFFTAG_JXL_EFFORT, l_nJXLEffort );
+        TIFFSetField( l_hTIFF, TIFFTAG_JXL_DISTANCE, l_fJXLDistance );
+    }
+#endif
     if( l_nCompression == COMPRESSION_WEBP && l_nWebPLevel != -1)
         TIFFSetField( l_hTIFF, TIFFTAG_WEBP_LEVEL, l_nWebPLevel);
     if( l_nCompression == COMPRESSION_WEBP && l_bWebPLossless)
@@ -16918,6 +16963,11 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     poDS->m_nJpegQuality = GTiffGetJpegQuality(papszParamList);
     poDS->m_nJpegTablesMode = GTiffGetJpegTablesMode(papszParamList);
     poDS->m_dfMaxZError = GTiffGetLERCMaxZError(papszParamList);
+#if HAVE_JXL
+    poDS->m_bJXLLossless = GTiffGetJXLLossless(papszParamList);
+    poDS->m_nJXLEffort = GTiffGetJXLEffort(papszParamList);
+    poDS->m_fJXLDistance = GTiffGetJXLDistance(papszParamList);
+#endif
     poDS->InitCreationOrOpenOptions(papszParamList);
 
 /* -------------------------------------------------------------------- */
@@ -17122,7 +17172,7 @@ CPLErr GTiffDataset::CopyImageryAndMask(GTiffDataset* poDstDS,
             }
         }
     }
-    poDstDS->FlushCache(); // mostly to wait for thread completion
+    poDstDS->FlushCache(false); // mostly to wait for thread completion
     VSIFree(pBlockBuffer);
 
     return eErr;
@@ -17842,9 +17892,13 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             {
                 CPLErrorStateBackuper oErrorStateBackuper;
                 CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
-                eErr = l_poSRS->exportToWkt(&pszWKT);
+                if( l_poSRS->IsDerivedGeographic() )
+                    eErr = OGRERR_FAILURE;
+                else
+                    eErr = l_poSRS->exportToWkt(&pszWKT);
             }
-            if( eErr == OGRERR_NONE && strstr(pszWKT, "custom_proj4") == nullptr )
+            if( eErr == OGRERR_NONE && pszWKT != nullptr &&
+                strstr(pszWKT, "custom_proj4") == nullptr )
             {
                 GTIFSetFromOGISDefnEx( psGTIF,
                                        OGRSpatialReference::ToHandle(
@@ -18154,6 +18208,11 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     poDS->m_nJpegTablesMode = GTiffGetJpegTablesMode(papszOptions);
     poDS->GetDiscardLsbOption(papszOptions);
     poDS->m_dfMaxZError = GTiffGetLERCMaxZError(papszOptions);
+#if HAVE_JXL
+    poDS->m_bJXLLossless = GTiffGetJXLLossless(papszOptions);
+    poDS->m_nJXLEffort = GTiffGetJXLEffort(papszOptions);
+    poDS->m_fJXLDistance = GTiffGetJXLDistance(papszOptions);
+#endif
     poDS->InitCreationOrOpenOptions(papszOptions);
 
     if( l_nCompression == COMPRESSION_ADOBE_DEFLATE ||
@@ -18193,6 +18252,14 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         TIFFSetField( l_hTIFF, TIFFTAG_LERC_MAXZERROR, poDS->m_dfMaxZError );
     }
+#if HAVE_JXL
+    if( l_nCompression == COMPRESSION_JXL )
+    {
+        TIFFSetField( l_hTIFF, TIFFTAG_JXL_LOSSYNESS, poDS->m_bJXLLossless ? JXL_LOSSLESS : JXL_LOSSY );
+        TIFFSetField( l_hTIFF, TIFFTAG_JXL_EFFORT, poDS->m_nJXLEffort );
+        TIFFSetField( l_hTIFF, TIFFTAG_JXL_DISTANCE, poDS->m_fJXLDistance );
+    }
+#endif
     if( l_nCompression == COMPRESSION_WEBP )
     {
         if( poDS->m_nWebPLevel != -1 )
@@ -18435,7 +18502,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                     dfCurPixels = dfNextCurPixels;
                     GDALDestroyScaledProgress(pScaledData);
 
-                    poDstDS->FlushCache();
+                    poDstDS->FlushCache(false);
 
                     // Copy mask of the overview.
                     if( eErr == CE_None &&
@@ -18458,7 +18525,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                 GDALScaledProgress, pScaledData );
                         dfCurPixels = dfNextCurPixels;
                         GDALDestroyScaledProgress(pScaledData);
-                        poDstDS->m_poMaskDS->FlushCache();
+                        poDstDS->m_poMaskDS->FlushCache(false);
                     }
                 }
 
@@ -18770,6 +18837,12 @@ CPLErr GTiffDataset::SetSpatialRef( const OGRSpatialReference * poSRS )
 
     m_bGeoTIFFInfoChanged = true;
 
+    if( (m_eProfile == GTiffProfile::BASELINE) &&
+        (GetPamFlags() & GPF_DISABLED) == 0 )
+    {
+        GDALPamDataset::SetSpatialRef(poSRS);
+    }
+
     return CE_None;
 }
 
@@ -18852,6 +18925,14 @@ CPLErr GTiffDataset::SetGeoTransform( double * padfTransform )
         memcpy( m_adfGeoTransform, padfTransform, sizeof(double)*6 );
         m_bGeoTransformValid = true;
         m_bGeoTIFFInfoChanged = true;
+
+        if( (m_eProfile == GTiffProfile::BASELINE) &&
+            !CPLFetchBool( m_papszCreationOptions, "TFW", false ) &&
+            !CPLFetchBool( m_papszCreationOptions, "WORLDFILE", false ) &&
+            (GetPamFlags() & GPF_DISABLED) == 0 )
+        {
+            GDALPamDataset::SetGeoTransform(padfTransform);
+        }
 
         return CE_None;
     }
@@ -18961,6 +19042,12 @@ CPLErr GTiffDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
         m_pasGCPList = GDALDuplicateGCPs(m_nGCPCount, pasGCPListIn);
 
         m_bGeoTIFFInfoChanged = true;
+
+        if( (m_eProfile == GTiffProfile::BASELINE) &&
+            (GetPamFlags() & GPF_DISABLED) == 0 )
+        {
+            GDALPamDataset::SetGCPs(nGCPCountIn, pasGCPListIn, poGCPSRS);
+        }
 
         return CE_None;
     }
@@ -19581,7 +19668,7 @@ bool GTiffDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout& sLayout)
 {
     if( eAccess == GA_Update )
     {
-        FlushCache();
+        FlushCache(false);
         Crystalize();
     }
 
@@ -19831,54 +19918,29 @@ static void GTiffTagExtender(TIFF *tif)
 /*      unnecessary paging in of the library for GDAL apps that         */
 /*      don't use it.                                                   */
 /************************************************************************/
-#if defined(HAVE_DLFCN_H) && !defined(WIN32)
-#include <dlfcn.h>
-#endif
 
 static std::mutex oDeleteMutex;
+#ifdef HAVE_JXL
+static TIFFCodec* pJXLCodec = nullptr;
+#endif
 
 int GTiffOneTimeInit()
 
 {
     std::lock_guard<std::mutex> oLock(oDeleteMutex);
 
+#ifdef HAVE_JXL
+    if( pJXLCodec == nullptr )
+    {
+        pJXLCodec = TIFFRegisterCODEC(COMPRESSION_JXL, "JXL", TIFFInitJXL);
+    }
+#endif
+
     static bool bOneTimeInitDone = false;
     if( bOneTimeInitDone )
         return TRUE;
 
     bOneTimeInitDone = true;
-
-    // This is a frequent configuration error that is difficult to track down
-    // for people unaware of the issue : GDAL built against internal libtiff
-    // (4.X), but used by an application that links with external libtiff (3.X)
-    // Note: on my conf, the order that cause GDAL to crash - and that is
-    // detected by the following code - is "-ltiff -lgdal". "-lgdal -ltiff"
-    // works for the GTiff driver but probably breaks the application that
-    // believes it uses libtiff 3.X but we cannot detect that.
-#if !defined(RENAME_INTERNAL_LIBTIFF_SYMBOLS)
-#if defined(HAVE_DLFCN_H) && !defined(WIN32)
-    const char* (*pfnVersion)(void);
-#ifdef HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
-#endif
-    pfnVersion = reinterpret_cast<const char* (*)(void)>(dlsym(RTLD_DEFAULT, "TIFFGetVersion"));
-#ifdef HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT
-#pragma GCC diagnostic pop
-#endif
-    if( pfnVersion )
-    {
-        const char* pszVersion = pfnVersion();
-        if( pszVersion && strstr(pszVersion, "Version 3.") != nullptr )
-        {
-            CPLError(
-                CE_Warning, CPLE_AppDefined,
-                "libtiff version mismatch: You're linking against libtiff 3.X, "
-                "but GDAL has been compiled against libtiff >= 4.0.0" );
-        }
-    }
-#endif  // HAVE_DLFCN_H
-#endif // !defined(RENAME_INTERNAL_LIBTIFF_SYMBOLS)
 
     _ParentExtender = TIFFSetTagExtender(GTiffTagExtender);
 
@@ -19898,6 +19960,11 @@ static
 void GDALDeregister_GTiff( GDALDriver * )
 
 {
+#ifdef HAVE_JXL
+    if( pJXLCodec )
+        TIFFUnRegisterCODEC(pJXLCodec);
+    pJXLCodec = nullptr;
+#endif
 }
 
 /************************************************************************/
@@ -19935,6 +20002,12 @@ int GTIFFGetCompressionMethod(const char* pszValue, const char* pszVariableName)
     {
         nCompression = COMPRESSION_LERC;
     }
+#ifdef HAVE_JXL
+    else if( EQUAL( pszValue, "JXL" ) )
+    {
+        nCompression = COMPRESSION_JXL;
+    }
+#endif
     else if( EQUAL( pszValue, "WEBP" ) )
         nCompression = COMPRESSION_WEBP;
     else
@@ -20058,6 +20131,9 @@ CPLString GTiffGetCompressValues(bool& bHasLZW,
                         "       <Value>LERC_ZSTD</Value>";
         }
     }
+#ifdef HAVE_JXL
+    osCompressValues += "       <Value>JXL</Value>";
+#endif
     _TIFFfree( codecs );
 
     return osCompressValues;
@@ -20137,6 +20213,12 @@ void GDALRegister_GTiff()
 #endif
 "   <Option name='WEBP_LEVEL' type='int' description='WEBP quality level. Low values result in higher compression ratios' default='75'/>";
     }
+#ifdef HAVE_JXL
+    osOptions += ""
+"   <Option name='JXL_LOSSLESS' type='boolean' description='Whether JPEGXL compression should be lossless' default='YES'/>"
+"   <Option name='JXL_EFFORT' type='int' description='Level of effort 1(fast)-9(slow)' default='5'/>"
+"   <Option name='JXL_DISTANCE' type='float' description='Distance level for lossy compression (0=mathematically lossless, 1.0=visually lossless, usual range [0.5,3])' default='1.0' min='0.1' max='15.0'/>";
+#endif
     osOptions += ""
 "   <Option name='NUM_THREADS' type='string' description='Number of worker threads for compression. Can be set to ALL_CPUS' default='1'/>"
 "   <Option name='NBITS' type='int' description='BITS for sub-byte files (1-7), sub-uint16_t (9-15), sub-uint32_t (17-31), or float32 (16)'/>"

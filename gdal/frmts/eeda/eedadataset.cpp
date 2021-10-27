@@ -558,7 +558,7 @@ OGRFeature* GDALEEDALayer::GetNextRawFeature()
             if( !osSRS.empty() )
             {
                 OGRSpatialReference oSRS;
-                oSRS.SetFromUserInput(osSRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS);
+                oSRS.SetFromUserInput(osSRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get());
                 const char* pszAuthName = oSRS.GetAuthorityName(nullptr);
                 const char* pszAuthCode = oSRS.GetAuthorityCode(nullptr);
                 if( pszAuthName && pszAuthCode )
@@ -1119,7 +1119,7 @@ static json_object* GDALEEDADatasetGetConf()
 bool GDALEEDADataset::Open(GDALOpenInfo* poOpenInfo)
 {
     m_osBaseURL = CPLGetConfigOption("EEDA_URL",
-                            "https://earthengine.googleapis.com/v1alpha/");
+                            "https://earthengine-highvolume.googleapis.com/v1alpha/");
 
     CPLString osCollection =
             CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "COLLECTION", "");

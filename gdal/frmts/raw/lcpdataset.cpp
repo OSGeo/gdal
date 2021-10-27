@@ -104,7 +104,7 @@ LCPDataset::LCPDataset() :
 LCPDataset::~LCPDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
     if( fpImage != nullptr )
     {
         if( VSIFCloseL( fpImage ) != 0 )

@@ -71,7 +71,7 @@ class KRODataset final: public RawDataset
 KRODataset::~KRODataset()
 
 {
-    FlushCache();
+    FlushCache(true);
 
     if( fpImage != nullptr )
     {

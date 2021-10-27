@@ -574,7 +574,7 @@ void JPGDatasetCommon::ReadFLIRMetadata()
         const auto nSS = ReadUInt32(nRecOffset + 904) & 0xffff;
         const auto nTZ = ReadInt16(nRecOffset + 908);
         struct tm brokenDown;
-        CPLUnixTimeToYMDHMS(nUnixTime - nTZ * 60, &brokenDown);
+        CPLUnixTimeToYMDHMS(static_cast<GIntBig>(nUnixTime) - nTZ * 60, &brokenDown);
         std::string osDateTime(CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02d.%03d",
                                brokenDown.tm_year + 1900,
                                brokenDown.tm_mon + 1,
@@ -1820,13 +1820,13 @@ CPLErr JPGDatasetCommon::IBuildOverviews( const char *pszResampling,
 }
 
 /************************************************************************/
-/*                           FlushCache()                               */
+/*                           FlushCache(bool bAtClosing)                               */
 /************************************************************************/
 
-void JPGDatasetCommon::FlushCache()
+void JPGDatasetCommon::FlushCache(bool bAtClosing)
 
 {
-    GDALPamDataset::FlushCache();
+    GDALPamDataset::FlushCache(bAtClosing);
 
     if (bHasDoneJpegStartDecompress)
     {
@@ -1835,7 +1835,7 @@ void JPGDatasetCommon::FlushCache()
 
     // For the needs of the implicit JPEG-in-TIFF overview mechanism.
     for(int i = 0; i < nInternalOverviewsCurrent; i++)
-        papoInternalOverviews[i]->FlushCache();
+        papoInternalOverviews[i]->FlushCache(bAtClosing);
 }
 
 #endif  // !defined(JPGDataset)
@@ -1860,7 +1860,7 @@ JPGDataset::JPGDataset() : nQLevel(0)
 JPGDataset::~JPGDataset()
 
 {
-    GDALPamDataset::FlushCache();
+    GDALPamDataset::FlushCache(true);
     JPGDataset::StopDecompress();
 }
 

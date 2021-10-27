@@ -173,7 +173,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /*      this request?                                                   */
 /* ==================================================================== */
     auto l_poDS = cpl::down_cast<VRTDataset*>(poDS);
-    if( l_poDS->m_apoOverviews.empty() &&
+    if( l_poDS->m_apoOverviews.empty() && // do not use virtual overviews
         (nBufXSize < nXSize || nBufYSize < nYSize)
         && GetOverviewCount() > 0 )
     {
@@ -257,13 +257,23 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             }
             if( bFallbackToBase )
             {
-                return GDALRasterBand::IRasterIO( eRWFlag,
+                const bool bBackupEnabledOverviews = l_poDS->AreOverviewsEnabled();
+                if( !l_poDS->m_apoOverviews.empty() &&
+                    l_poDS->AreOverviewsEnabled() )
+                {
+                    // Disable use of implicit overviews to avoid infinite
+                    // recursion
+                    l_poDS->SetEnableOverviews(false);
+                }
+                const auto eErr = GDALRasterBand::IRasterIO( eRWFlag,
                                                   nXOff, nYOff, nXSize, nYSize,
                                                   pData, nBufXSize, nBufYSize,
                                                   eBufType,
                                                   nPixelSpace,
                                                   nLineSpace,
                                                   psExtraArg );
+                l_poDS->SetEnableOverviews(bBackupEnabledOverviews);
+                return eErr;
             }
         }
     }
@@ -708,7 +718,9 @@ CPLErr VRTSourcedRasterBand::ComputeRasterMinMax( int bApproxOK, double* adfMinM
 /* -------------------------------------------------------------------- */
 /*      If we have overview bands, use them for min/max.                */
 /* -------------------------------------------------------------------- */
-    if( bApproxOK && GetOverviewCount() > 0 && !HasArbitraryOverviews() )
+    auto l_poDS = cpl::down_cast<VRTDataset*>(poDS);
+    if( l_poDS->m_apoOverviews.empty() && // do not use virtual overviews
+        bApproxOK && GetOverviewCount() > 0 && !HasArbitraryOverviews() )
     {
         GDALRasterBand * const poBand
             = GetRasterSampleOverview( GDALSTAT_APPROX_NUMSAMPLES );
@@ -804,7 +816,9 @@ VRTSourcedRasterBand::ComputeStatistics( int bApproxOK,
 /* -------------------------------------------------------------------- */
 /*      If we have overview bands, use them for statistics.             */
 /* -------------------------------------------------------------------- */
-    if( bApproxOK && GetOverviewCount() > 0 && !HasArbitraryOverviews() )
+    auto l_poDS = cpl::down_cast<VRTDataset*>(poDS);
+    if( l_poDS->m_apoOverviews.empty() && // do not use virtual overviews
+        bApproxOK && GetOverviewCount() > 0 && !HasArbitraryOverviews() )
     {
         GDALRasterBand * const poBand
             = GetRasterSampleOverview( GDALSTAT_APPROX_NUMSAMPLES );
@@ -897,7 +911,9 @@ CPLErr VRTSourcedRasterBand::GetHistogram( double dfMin, double dfMax,
 /* -------------------------------------------------------------------- */
 /*      If we have overviews, use them for the histogram.               */
 /* -------------------------------------------------------------------- */
-    if( bApproxOK && GetOverviewCount() > 0 && !HasArbitraryOverviews() )
+    auto l_poDS = cpl::down_cast<VRTDataset*>(poDS);
+    if( l_poDS->m_apoOverviews.empty() && // do not use virtual overviews
+        bApproxOK && GetOverviewCount() > 0 && !HasArbitraryOverviews() )
     {
         // FIXME: Should we use the most reduced overview here or use some
         // minimum number of samples like GDALRasterBand::ComputeStatistics()
@@ -1896,12 +1912,12 @@ int VRTSourcedRasterBand::CloseDependentDatasets()
 /*                               FlushCache()                           */
 /************************************************************************/
 
-CPLErr VRTSourcedRasterBand::FlushCache()
+CPLErr VRTSourcedRasterBand::FlushCache(bool bAtClosing)
 {
-    CPLErr eErr = VRTRasterBand::FlushCache();
+    CPLErr eErr = VRTRasterBand::FlushCache(bAtClosing);
     for( int i = 0; i < nSources && eErr == CE_None; i++ )
     {
-        eErr = papoSources[i]->FlushCache();
+        eErr = papoSources[i]->FlushCache(bAtClosing);
     }
     return eErr;
 }

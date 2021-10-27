@@ -43,7 +43,7 @@
 
 /*! @cond Doxygen_Suppress */
 
-class CPLKeywordParser
+class CPL_DLL CPLKeywordParser
 {
     char     **papszKeywordList = nullptr;
 

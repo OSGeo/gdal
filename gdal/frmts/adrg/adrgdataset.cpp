@@ -569,7 +569,7 @@ ADRGDataset::~ADRGDataset()
 
     if( bCreation )
     {
-        GDALPamDataset::FlushCache();
+        GDALPamDataset::FlushCache(true);
 
         /* Write header and padding of image */
         VSIFSeekL(fdIMG, 0, SEEK_SET);

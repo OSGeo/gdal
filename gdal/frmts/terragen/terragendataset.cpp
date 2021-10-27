@@ -466,7 +466,7 @@ TerragenDataset::TerragenDataset() :
 TerragenDataset::~TerragenDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
 
     CPLFree(m_pszProjection);
     CPLFree(m_pszFilename);

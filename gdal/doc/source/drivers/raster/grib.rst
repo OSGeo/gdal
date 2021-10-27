@@ -20,6 +20,15 @@ application which is written primarily by Arthur Taylor of NOAA NWS NDFD
 the g2clib grib decoding library written primarily by John Huddleston of
 NOAA NWS NCEP.
 
+GRIB2 files without projection on lon/lat grids have the peculiarity
+of using longitudes in the [0,360] range and wrapping around the
+antimeridian as opposed to the usual wrapping around the prime meridian
+of other raster datasets. Starting with GDAL 3.4.0, when reading such
+files, a transparent conversion of the longitudes to [-180,180] will be
+performed and the data will be rewrapped around the prime meridian -
+the split&swap mode. This behavior can be disabled by setting the
+:decl_configoption:`GRIB_ADJUST_LONGITUDE_RANGE` configuration option to `NO`.
+
 There are several encoding schemes for raster data in GRIB format. Most
 common ones should be supported including PNG encoding. JPEG2000 encoded
 GRIB files will generally be supported if GDAL is also built with
@@ -90,6 +99,23 @@ the default behavior of the GRIB driver.
    (GRIB_NORMALIZE_UNITS=YES), temperatures are reported in degree
    Celsius (°C). With GRIB_NORMALIZE_UNITS=NO, they are reported in
    degree Kelvin (°K).
+
+Open options
+------------
+
+-  **USE_IDX=YES/NO**: (From GDAL 3.4) Enable automatic reading
+   of external wgrib2 external index files when available. GDAL
+   will look for a `<GRIB>.idx` in the same place as the dataset.
+   These files when combined with careful usage of the API or the
+   CLI tools allow a GRIBv2 file to be opened without reading all
+   the bands. In particular, this allows an orders of magnitude
+   faster extraction of select bands from large GRIBv2 files on
+   remote storage (like NOMADS on AWS S3).
+   In order to avoid unncessary I/O only the text
+   description of the bands should be accessed as accessing the
+   metadata will require loading of the band header.
+   gdal_translate is supported but gdalinfo is not.
+   Default is YES.
 
 GRIB2 write support
 -------------------

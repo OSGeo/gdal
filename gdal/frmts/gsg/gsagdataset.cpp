@@ -806,7 +806,7 @@ GSAGDataset::GSAGDataset( const char *pszEOL ) :
 GSAGDataset::~GSAGDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
     if( fp != nullptr )
         VSIFCloseL( fp );
 }

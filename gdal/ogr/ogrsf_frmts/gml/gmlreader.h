@@ -344,6 +344,6 @@ IGMLReader *CreateGMLReader(bool bUseExpatParserPreferably,
                             GMLSwapCoordinatesEnum eSwapCoordinates,
                             bool bGetSecondaryGeometryOption);
 
-OGRFieldType GML_GetOGRFieldType(GMLPropertyType eType, OGRFieldSubType& eSubType);
+OGRFieldType CPL_DLL GML_GetOGRFieldType(GMLPropertyType eType, OGRFieldSubType& eSubType);
 
 #endif /* GMLREADER_H_INCLUDED */

@@ -114,6 +114,12 @@ OGRErr      OGRMutexedDataSource::DeleteLayer(int iIndex)
     return eErr;
 }
 
+bool OGRMutexedDataSource::IsLayerPrivate(int iLayer) const
+{
+    CPLMutexHolderOptionalLockD(m_hGlobalMutex);
+    return m_poBaseDataSource->IsLayerPrivate(iLayer);
+}
+
 int         OGRMutexedDataSource::TestCapability( const char * pszCap )
 {
     CPLMutexHolderOptionalLockD(m_hGlobalMutex);
@@ -181,10 +187,10 @@ void        OGRMutexedDataSource::ReleaseResultSet( OGRLayer * poResultsSet )
     m_poBaseDataSource->ReleaseResultSet(poResultsSet);
 }
 
-void      OGRMutexedDataSource::FlushCache()
+void      OGRMutexedDataSource::FlushCache(bool bAtClosing)
 {
     CPLMutexHolderOptionalLockD(m_hGlobalMutex);
-    return m_poBaseDataSource->FlushCache();
+    return m_poBaseDataSource->FlushCache(bAtClosing);
 }
 
 OGRErr OGRMutexedDataSource::StartTransaction(int bForce)

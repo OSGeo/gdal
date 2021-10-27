@@ -324,7 +324,7 @@ PAuxDataset::PAuxDataset() :
 PAuxDataset::~PAuxDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
     if( fpImage != nullptr && VSIFCloseL( fpImage ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO, "I/O error" );

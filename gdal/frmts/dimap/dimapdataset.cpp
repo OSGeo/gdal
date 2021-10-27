@@ -143,7 +143,7 @@ DIMAPDataset::DIMAPDataset() :
 DIMAPDataset::~DIMAPDataset()
 
 {
-    DIMAPDataset::FlushCache();
+    DIMAPDataset::FlushCache(true);
 
     CPLDestroyXMLNode( psProduct );
 
@@ -950,7 +950,7 @@ int DIMAPDataset::ReadImageInformation()
     if( pszSRS != nullptr )
     {
         OGRSpatialReference oSRS;
-        if( oSRS.SetFromUserInput( pszSRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS ) == OGRERR_NONE )
+        if( oSRS.SetFromUserInput( pszSRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) == OGRERR_NONE )
         {
             if( nGCPCount > 0 )
             {
@@ -1230,8 +1230,15 @@ int DIMAPDataset::ReadImageInformation2()
     {
         return FALSE;
     }
-    if( poImageDS->GetRasterCount() != l_nBands &&
-        !(bTwoDataFilesPerTile && poImageDS->GetRasterCount() == 3) )
+    if( bTwoDataFilesPerTile )
+    {
+        if( l_nBands != 6 || poImageDS->GetRasterCount() != 3 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Inconsistent band count");
+            return FALSE;
+        }
+    }
+    else if( poImageDS->GetRasterCount() != l_nBands )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Inconsistent band count");
         return FALSE;
@@ -1464,7 +1471,7 @@ int DIMAPDataset::ReadImageInformation2()
     if( pszSRS != nullptr )
     {
         OGRSpatialReference oSRS;
-        if( oSRS.SetFromUserInput( pszSRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS ) == OGRERR_NONE )
+        if( oSRS.SetFromUserInput( pszSRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) == OGRERR_NONE )
         {
             if( nGCPCount > 0 )
             {
@@ -1595,15 +1602,19 @@ int DIMAPDataset::ReadImageInformation2()
                                 else
                                 {
                                     nBandIndex =
-                                        atoi(&psTag->psChild->pszValue[1]) + 1;
-                                    if( nBandIndex <= 0 ||
-                                    nBandIndex > poImageDS->GetRasterCount() )
+                                        atoi(&psTag->psChild->pszValue[1]);
+                                    if( nBandIndex < 0 ||
+                                        nBandIndex >= poImageDS->GetRasterCount() )
                                     {
                                         CPLError(
                                             CE_Warning, CPLE_AppDefined,
                                             "Bad BAND_INDEX value : %s",
                                             psTag->psChild->pszValue);
                                         nBandIndex = 0;
+                                    }
+                                    else
+                                    {
+                                        nBandIndex++;
                                     }
                                 }
                             }
@@ -1651,6 +1662,8 @@ void DIMAPDataset::SetMetadataFromXML(
         psDoc = CPLGetXMLNode( psProductIn, "=PHR_DIMAP_Document" );
     }
 
+    bool bWarnedDiscarding = false;
+
     for( int iTrItem = 0;
          apszMetadataTranslation[iTrItem] != nullptr;
          iTrItem += 2 )
@@ -1682,7 +1695,15 @@ void DIMAPDataset::SetMetadataFromXML(
                 if( psTarget->psChild->eType == CXT_Text )
                 {
                     osName += psTarget->pszValue;
-                    SetMetadataItem( osName, psTarget->psChild->pszValue );
+                    // Limit size to avoid perf issues when inserting
+                    // in metadata list
+                    if( osName.size() < 128 )
+                        SetMetadataItem( osName, psTarget->psChild->pszValue );
+                    else if( !bWarnedDiscarding )
+                    {
+                        bWarnedDiscarding = true;
+                        CPLDebug("DIMAP", "Discarding too long metadata item");
+                    }
                 }
                 else if( psTarget->psChild->eType == CXT_Attribute )
                 {
@@ -1696,7 +1717,15 @@ void DIMAPDataset::SetMetadataFromXML(
                         else if( psNode->eType == CXT_Text )
                         {
                             osName += psTarget->pszValue;
-                            SetMetadataItem( osName, psNode->pszValue );
+                            // Limit size to avoid perf issues when inserting
+                            // in metadata list
+                            if( osName.size() < 128 )
+                                SetMetadataItem( osName, psNode->pszValue );
+                            else if( !bWarnedDiscarding )
+                            {
+                                bWarnedDiscarding = true;
+                                CPLDebug("DIMAP", "Discarding too long metadata item");
+                            }
                         }
                     }
                 }

@@ -53,7 +53,11 @@ static bool OGRGPSBabelDriverIdentifyInternal(
     else if (memcmp(poOpenInfo->pabyHeader, "MsRcf", 5) == 0)
         pszGPSBabelDriverName = "gdb";
     else if (strstr(reinterpret_cast<const char*>(poOpenInfo->pabyHeader), "<osm") != nullptr)
+    {
+        if( GDALGetDriverByName("OSM") != nullptr )
+            return false;
         pszGPSBabelDriverName = "osm";
+    }
     else if (strstr(reinterpret_cast<const char*>(poOpenInfo->pabyHeader), "$GPGSA") != nullptr ||
                 strstr(reinterpret_cast<const char*>(poOpenInfo->pabyHeader), "$GPGGA") != nullptr)
         pszGPSBabelDriverName = "nmea";

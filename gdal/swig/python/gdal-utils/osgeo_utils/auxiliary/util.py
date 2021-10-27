@@ -69,7 +69,7 @@ def GetOutputDriversFor(filename: PathLikeOrStr, is_raster=True) -> List[str]:
 
     # GMT is registered before netCDF for opening reasons, but we want
     # netCDF to be used by default for output.
-    if ext.lower() == 'nc' and not drv_list and \
+    if ext.lower() == 'nc' and len(drv_list) >= 2 and \
         drv_list[0].upper() == 'GMT' and drv_list[1].upper() == 'NETCDF':
         drv_list = ['NETCDF', 'GMT']
 

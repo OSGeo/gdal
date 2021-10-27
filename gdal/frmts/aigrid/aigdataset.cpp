@@ -329,7 +329,7 @@ AIGDataset::AIGDataset() :
 AIGDataset::~AIGDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
     CPLFree( pszProjection );
     CSLDestroy( papszPrj );
     if( psInfo != nullptr )

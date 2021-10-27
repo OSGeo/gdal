@@ -173,7 +173,7 @@ GXFDataset::GXFDataset() :
 GXFDataset::~GXFDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
     if( hGXF != nullptr )
         GXFClose( hGXF );
     CPLFree( pszProjection );

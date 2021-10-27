@@ -36,6 +36,10 @@
 #include <string.h>
 #include <algorithm>
 
+// Suppress deprecation warning for GDALOpenVerticalShiftGrid and GDALApplyVerticalShiftGrid
+#define CPL_WARN_DEPRECATED_GDALOpenVerticalShiftGrid(x)
+#define CPL_WARN_DEPRECATED_GDALApplyVerticalShiftGrid(x)
+
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_minixml.h"
@@ -153,39 +157,47 @@ GDALAutoCreateWarpedVRTEx( GDALDatasetH hSrcDS,
     GDALWarpInitDefaultBandMapping( psWO, GDALGetRasterCount( hSrcDS ) );
 
 /* -------------------------------------------------------------------- */
-/*      Setup no data values                                            */
+/*      Setup no data values (if not done in psOptionsIn)               */
 /* -------------------------------------------------------------------- */
-    for( int i = 0; i < psWO->nBandCount; i++ )
+    if( psWO->padfSrcNoDataReal == nullptr &&
+        psWO->padfDstNoDataReal == nullptr &&
+        psWO->nSrcAlphaBand == 0 )
     {
-        GDALRasterBandH rasterBand = GDALGetRasterBand(psWO->hSrcDS, psWO->panSrcBands[i]);
-
-        int hasNoDataValue;
-        double noDataValue = GDALGetRasterNoDataValue(rasterBand, &hasNoDataValue);
-
-        if( hasNoDataValue )
+        for( int i = 0; i < psWO->nBandCount; i++ )
         {
-            // Check if the nodata value is out of range
-            int bClamped = FALSE;
-            int bRounded = FALSE;
-            CPL_IGNORE_RET_VAL(
-                GDALAdjustValueToDataType(GDALGetRasterDataType(rasterBand),
-                                      noDataValue, &bClamped, &bRounded ));
-            if( !bClamped )
-            {
-                GDALWarpInitNoDataReal(psWO, -1e10);
+            GDALRasterBandH rasterBand = GDALGetRasterBand(psWO->hSrcDS, psWO->panSrcBands[i]);
 
-                psWO->padfSrcNoDataReal[i] = noDataValue;
-                psWO->padfDstNoDataReal[i] = noDataValue;
+            int hasNoDataValue;
+            double noDataValue = GDALGetRasterNoDataValue(rasterBand, &hasNoDataValue);
+
+            if( hasNoDataValue )
+            {
+                // Check if the nodata value is out of range
+                int bClamped = FALSE;
+                int bRounded = FALSE;
+                CPL_IGNORE_RET_VAL(
+                    GDALAdjustValueToDataType(GDALGetRasterDataType(rasterBand),
+                                          noDataValue, &bClamped, &bRounded ));
+                if( !bClamped )
+                {
+                    GDALWarpInitNoDataReal(psWO, -1e10);
+                    if( psWO->padfSrcNoDataReal != nullptr &&
+                        psWO->padfDstNoDataReal != nullptr )
+                    {
+                        psWO->padfSrcNoDataReal[i] = noDataValue;
+                        psWO->padfDstNoDataReal[i] = noDataValue;
+                    }
+                }
             }
         }
-    }
 
-    if( psWO->padfDstNoDataReal != nullptr )
-    {
-        if (CSLFetchNameValue( psWO->papszWarpOptions, "INIT_DEST" ) == nullptr)
+        if( psWO->padfDstNoDataReal != nullptr )
         {
-            psWO->papszWarpOptions =
-                CSLSetNameValue(psWO->papszWarpOptions, "INIT_DEST", "NO_DATA");
+            if (CSLFetchNameValue( psWO->papszWarpOptions, "INIT_DEST" ) == nullptr)
+            {
+                psWO->papszWarpOptions =
+                    CSLSetNameValue(psWO->papszWarpOptions, "INIT_DEST", "NO_DATA");
+            }
         }
     }
 
@@ -395,7 +407,7 @@ VRTWarpedDataset::VRTWarpedDataset( int nXSize, int nYSize ) :
 VRTWarpedDataset::~VRTWarpedDataset()
 
 {
-    VRTWarpedDataset::FlushCache();
+    VRTWarpedDataset::FlushCache(true);
     VRTWarpedDataset::CloseDependentDatasets();
 }
 
@@ -790,26 +802,6 @@ char** VRTWarpedDataset::GetFileList()
 
     return papszFileList;
 }
-
-/************************************************************************/
-/*                      SetApplyVerticalShiftGrid()                     */
-/************************************************************************/
-
-void  VRTWarpedDataset::SetApplyVerticalShiftGrid(const char* pszVGrids,
-                                               int bInverse,
-                                               double dfToMeterSrc,
-                                               double dfToMeterDest,
-                                               char** papszOptions )
-{
-    VerticalShiftGrid oVertShiftGrid;
-    oVertShiftGrid.osVGrids = pszVGrids;
-    oVertShiftGrid.bInverse = bInverse;
-    oVertShiftGrid.dfToMeterSrc = dfToMeterSrc;
-    oVertShiftGrid.dfToMeterDest = dfToMeterDest;
-    oVertShiftGrid.aosOptions.Assign(papszOptions,FALSE);
-    m_aoVerticalShiftGrids.push_back(oVertShiftGrid);
-}
-
 
 /************************************************************************/
 /* ==================================================================== */
@@ -1312,6 +1304,11 @@ CPLErr VRTWarpedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPathIn )
         {
             continue;
         }
+
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "The VerticalShiftGrids in a warped VRT is now deprecated, "
+                 "and will no longer be handled in GDAL 4.0");
+
         const char* pszVGrids = CPLGetXMLValue(psIter, "Grids", nullptr);
         if( pszVGrids )
         {
@@ -1338,9 +1335,7 @@ CPLErr VRTWarpedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPathIn )
                                                    pszValue);
                 }
             }
-            SetApplyVerticalShiftGrid(pszVGrids, bInverse,
-                                      dfToMeterSrc, dfToMeterDest,
-                                      papszOptions );
+
             int bError = FALSE;
             GDALDatasetH hGridDataset =
                 GDALOpenVerticalShiftGrid(pszVGrids, &bError);
@@ -1528,44 +1523,6 @@ CPLXMLNode *VRTWarpedDataset::SerializeToXML( const char *pszVRTPathIn )
         else
             CPLCreateXMLElementAndValue(
                 psTree, "SrcOvrLevel", CPLSPrintf("%d", m_nSrcOvrLevel) );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Serialize vertical shift grids.                                 */
-/* -------------------------------------------------------------------- */
-    for(size_t i = 0; i < m_aoVerticalShiftGrids.size(); ++i )
-    {
-        CPLXMLNode* psVertShiftGridNode =
-            CPLCreateXMLNode( psTree, CXT_Element, "VerticalShiftGrids" );
-        CPLCreateXMLElementAndValue(psVertShiftGridNode,
-                                    "Grids",
-                                    m_aoVerticalShiftGrids[i].osVGrids);
-        CPLCreateXMLElementAndValue(psVertShiftGridNode,
-                "Inverse",
-                m_aoVerticalShiftGrids[i].bInverse ? "TRUE" : "FALSE");
-        CPLCreateXMLElementAndValue(psVertShiftGridNode,
-                "ToMeterSrc",
-                CPLSPrintf("%.18g", m_aoVerticalShiftGrids[i].dfToMeterSrc));
-        CPLCreateXMLElementAndValue(psVertShiftGridNode,
-                "ToMeterDest",
-                CPLSPrintf("%.18g", m_aoVerticalShiftGrids[i].dfToMeterDest));
-        for( int j=0; j < m_aoVerticalShiftGrids[i].aosOptions.size(); ++j )
-        {
-            char* pszKey = nullptr;
-            const char* pszValue = CPLParseNameValue(
-                m_aoVerticalShiftGrids[i].aosOptions[j], &pszKey);
-            if( pszKey && pszValue )
-            {
-                CPLXMLNode* psOption = CPLCreateXMLElementAndValue(
-                    psVertShiftGridNode,
-                    "Option",
-                    pszValue);
-                CPLCreateXMLNode(
-                    CPLCreateXMLNode( psOption, CXT_Attribute, "name" ),
-                    CXT_Text, pszKey );
-            }
-            CPLFree(pszKey);
-        }
     }
 
 /* ==================================================================== */
@@ -1778,7 +1735,7 @@ VRTWarpedRasterBand::VRTWarpedRasterBand( GDALDataset *poDSIn, int nBandIn,
 VRTWarpedRasterBand::~VRTWarpedRasterBand()
 
 {
-    FlushCache();
+    FlushCache(true);
 }
 
 /************************************************************************/

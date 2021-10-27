@@ -29,10 +29,12 @@
 #ifndef CPL_VAX_H
 #define CPL_VAX_H
 
-void CPLVaxToIEEEDouble( void * );
-void CPLIEEEToVaxDouble( void * );
+#include "cpl_port.h"
 
-void CPLVaxToIEEEFloat( void * );
-void CPLIEEEToVaxFloat( void * );
+void CPL_DLL CPLVaxToIEEEDouble( void * );
+void CPL_DLL CPLIEEEToVaxDouble( void * );
+
+void CPL_DLL CPLVaxToIEEEFloat( void * );
+void CPL_DLL CPLIEEEToVaxFloat( void * );
 
 #endif // CPL_VAX_H

@@ -121,11 +121,11 @@ inline CPLSafeInt<unsigned> CPLSM_TO_UNSIGNED(GUInt64 x);
 class CPLMSVCSafeIntException : public msl::utilities::SafeIntException
 {
 public:
-    static void CPLMSVCSafeIntException::SafeIntOnOverflow()
+    static void SafeIntOnOverflow()
     {
         throw CPLSafeIntOverflow();
     }
-    static void CPLMSVCSafeIntException::SafeIntOnDivZero()
+    static void SafeIntOnDivZero()
     {
         throw CPLSafeIntOverflowDivisionByZero();
     }

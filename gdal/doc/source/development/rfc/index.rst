@@ -90,3 +90,4 @@ RFC list
     rfc80_numfocus_relationship
     rfc81_coordinate_epoch
     rfc83_use_of_project_sponsorship
+    rfc84_cmake

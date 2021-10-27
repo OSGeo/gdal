@@ -1472,52 +1472,110 @@ std::shared_ptr<GDALMDArray> netCDFDimension::GetIndexingVariable() const
     // another variable for the matching dimension of its "coordinates".
     netCDFGroup oGroup(m_poShared, m_gid);
     const auto arrayNames = oGroup.GetMDArrayNames(nullptr);
+    std::shared_ptr<GDALMDArray> candidateIndexingVariable;
+    int nCountCandidateIndexingVariable = 0;
     for(const auto& arrayName: arrayNames)
     {
         const auto poArray = oGroup.OpenMDArray(arrayName, nullptr);
-        if( poArray )
+        const auto poArrayNC = std::dynamic_pointer_cast<netCDFVariable>(poArray);
+        if( !poArrayNC )
+            continue;
+
+        const auto apoArrayDims = poArray->GetDimensions();
+        if( apoArrayDims.size() == 1 )
         {
-            const auto poArrayNC = std::dynamic_pointer_cast<netCDFVariable>(poArray);
-            const auto poCoordinates = poArray->GetAttribute("coordinates");
-            if( poArrayNC && poCoordinates &&
-                poCoordinates->GetDataType().GetClass() == GEDTC_STRING )
+            const auto& poArrayDim = apoArrayDims[0];
+            const auto poArrayDimNC = std::dynamic_pointer_cast<
+                                            netCDFDimension>(poArrayDim);
+            if( poArrayDimNC &&
+                poArrayDimNC->m_gid == m_gid &&
+                poArrayDimNC->m_dimid == m_dimid )
             {
-                const CPLStringList aosCoordinates(
-                    CSLTokenizeString2(poCoordinates->ReadAsString(), " ", 0));
-                const auto apoArrayDims = poArray->GetDimensions();
-                if( apoArrayDims.size() ==
-                    static_cast<size_t>(aosCoordinates.size()) )
+                // If the array doesn't have a coordinates variable, but is a 1D
+                // array indexed by our dimension, then use it as the indexing
+                // variable, provided it is the only such variable.
+                if( nCountCandidateIndexingVariable == 0 )
                 {
-                    for(size_t i = 0; i < apoArrayDims.size(); ++i)
-                    {
-                        const auto& poArrayDim =  apoArrayDims[i];
-                        const auto poArrayDimNC = std::dynamic_pointer_cast<
-                        netCDFDimension>(poArrayDim);
-                        if( poArrayDimNC &&
-                            poArrayDimNC->m_gid == m_gid &&
-                            poArrayDimNC->m_dimid == m_dimid )
-                        {
-                            int nIndexingVarGroupId = -1;
-                            int nIndexingVarId = -1;
-                            if( NCDFResolveVar(poArrayNC->GetGroupId(),
-                                               aosCoordinates[aosCoordinates.size() - 1 - i],
-                                               &nIndexingVarGroupId,
-                                               &nIndexingVarId,
-                                               false) == CE_None )
-                            {
-                                return netCDFVariable::Create(m_poShared,
-                                    nIndexingVarGroupId, nIndexingVarId,
-                                    std::vector<std::shared_ptr<GDALDimension>>(),
-                                    nullptr, false);
-                            }
-                        }
-                    }
+                    candidateIndexingVariable = poArray;
                 }
+                else
+                {
+                    candidateIndexingVariable.reset();
+                }
+                nCountCandidateIndexingVariable ++;
+                continue;
+            }
+        }
+
+        const auto poCoordinates = poArray->GetAttribute("coordinates");
+        if( !(poCoordinates &&
+              poCoordinates->GetDataType().GetClass() == GEDTC_STRING) )
+        {
+            continue;
+        }
+
+        // Check that the arrays has as many dimensions as its coordinates attribute
+        const CPLStringList aosCoordinates(
+            CSLTokenizeString2(poCoordinates->ReadAsString(), " ", 0));
+        if( apoArrayDims.size() != static_cast<size_t>(aosCoordinates.size()) )
+            continue;
+
+        for(size_t i = 0; i < apoArrayDims.size(); ++i)
+        {
+            const auto& poArrayDim =  apoArrayDims[i];
+            const auto poArrayDimNC = std::dynamic_pointer_cast<
+                                    netCDFDimension>(poArrayDim);
+
+            // Check if the array is indexed by the current dimension
+            if( !(poArrayDimNC &&
+                  poArrayDimNC->m_gid == m_gid &&
+                  poArrayDimNC->m_dimid == m_dimid) )
+            {
+                continue;
+            }
+
+            // Caution: some datasets have their coordinates variables in the
+            // same order than dimensions (i.e. from slowest varying to
+            // fastest varying), while others have the coordinates variables
+            // in the opposite order.
+            // Assume same order by default, but if we find the first variable
+            // to be of longitude/X type, then assume the opposite order.
+            bool coordinatesInSameOrderThanDimensions = true;
+            if( aosCoordinates.size() > 1 )
+            {
+                int bFirstGroupId = -1;
+                int nFirstVarId = -1;
+                if( NCDFResolveVar(poArrayNC->GetGroupId(),
+                                   aosCoordinates[0],
+                                   &bFirstGroupId,
+                                   &nVarId,
+                                   false) == CE_None &&
+                   (NCDFIsVarLongitude(bFirstGroupId, nFirstVarId, aosCoordinates[0]) ||
+                    NCDFIsVarProjectionX(bFirstGroupId, nFirstVarId, aosCoordinates[0])) )
+                {
+                    coordinatesInSameOrderThanDimensions = false;
+                }
+            }
+
+            int nIndexingVarGroupId = -1;
+            int nIndexingVarId = -1;
+            const size_t nIdxCoordinate = coordinatesInSameOrderThanDimensions ?
+                                            i : aosCoordinates.size() - 1 - i;
+            if( NCDFResolveVar(poArrayNC->GetGroupId(),
+                               aosCoordinates[nIdxCoordinate],
+                               &nIndexingVarGroupId,
+                               &nIndexingVarId,
+                               false) == CE_None )
+            {
+                return netCDFVariable::Create(m_poShared,
+                    nIndexingVarGroupId, nIndexingVarId,
+                    std::vector<std::shared_ptr<GDALDimension>>(),
+                    nullptr, false);
             }
         }
     }
 
-    return nullptr;
+    return candidateIndexingVariable;
 }
 
 /************************************************************************/
@@ -1883,6 +1941,7 @@ const GDALExtendedDataType &netCDFVariable::GetDataType() const
 
     if( m_nDims == 2 && m_nVarType == NC_CHAR && m_nTextLength > 0 )
     {
+        m_bPerfectDataTypeMatch = true;
         m_dt.reset(new GDALExtendedDataType(
             GDALExtendedDataType::CreateString(m_nTextLength)));
     }
@@ -2619,7 +2678,7 @@ bool netCDFVariable::IReadWrite(const bool bIsRead,
                 // native NC type translates into GDAL data type of larger size
                 for( ptrdiff_t i = nExpectedBufferStride - 1; i >= 0; --i )
                 {
-                    GByte abySrc[2];
+                    GByte abySrc[sizeof(double)]; // 2 is enough here, but sizeof(double) make MSVC happy
                     abySrc[0] = *(pabyBuffer + i);
                     ConvertNCToGDAL(&abySrc[0]);
                     GDALExtendedDataType::CopyValue(
@@ -3164,11 +3223,14 @@ double netCDFVariable::GetOffset(bool* pbHasOffset, GDALDataType* peStorageType)
 
 std::vector<GUInt64> netCDFVariable::GetBlockSize() const
 {
-    std::vector<GUInt64> res(GetDimensionCount());
+    const auto nDimCount = GetDimensionCount();
+    std::vector<GUInt64> res(nDimCount);
     if( res.empty() )
         return res;
     int nStorageType = 0;
-    std::vector<size_t> anTemp(GetDimensionCount());
+    // We add 1 to the dimension count, for 2D char variables that we
+    // expose as a 1D variable.
+    std::vector<size_t> anTemp(1 + nDimCount);
     nc_inq_var_chunking(m_gid, m_varid, &nStorageType, &anTemp[0]);
     if( nStorageType == NC_CHUNKED )
     {

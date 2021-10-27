@@ -643,7 +643,7 @@ retry:
                 }
                 delete poFeat;
 
-                poOutDS->FlushCache();
+                poOutDS->FlushCache(false);
                 VSIUnlink("/vsimem/tmp/ogrplscenesDataV1");
                 VSIUnlink("/vsimem/tmp/ogrplscenesDataV1.aux.xml");
                 CPLPopErrorHandler();

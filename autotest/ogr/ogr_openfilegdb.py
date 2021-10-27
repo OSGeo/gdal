@@ -77,14 +77,35 @@ ogrtest.openfilegdb_datalist_m = [["pointm", ogr.wkbPointM, "POINT M (1 2 3)"],
                                  ]
 
 
-###############################################################################
-# Disable FileGDB driver
+@pytest.fixture(scope="module", autouse=True)
+def setup_driver():
+    # remove FileGDB driver before running tests
+    filegdb_driver = ogr.GetDriverByName('FileGDB')
+    if filegdb_driver is not None:
+        filegdb_driver.Deregister()
 
-def test_ogr_openfilegdb_init():
+    yield
 
-    ogrtest.fgdb_drv = ogr.GetDriverByName('FileGDB')
-    if ogrtest.fgdb_drv is not None:
-        ogrtest.fgdb_drv.Deregister()
+    if filegdb_driver is not None:
+        print('Reregistering FileGDB driver')
+        filegdb_driver.Register()
+
+
+@pytest.fixture()
+def ogrsf_path():
+    import test_cli_utilities
+    path = test_cli_utilities.get_test_ogrsf_path()
+    if path is None:
+        pytest.skip('ogrsf test utility not found')
+
+    return path
+
+
+@pytest.fixture(params=[{'src': 'data/filegdb/testopenfilegdb.gdb.zip', 'version_10': True},
+                        {'src': 'data/filegdb/testopenfilegdb92.gdb.zip', 'version_10': False},
+                        {'src': 'data/filegdb/testopenfilegdb93.gdb.zip', 'version_10': False}])
+def gdb_source(request):
+    return request.param
 
 
 ###############################################################################
@@ -265,7 +286,9 @@ def ogr_openfilegdb_make_test_data():
 # Basic tests
 
 
-def test_ogr_openfilegdb_1(filename='data/filegdb/testopenfilegdb.gdb.zip', version10=True):
+def test_ogr_openfilegdb_1(gdb_source):
+    filename = gdb_source['src']
+    version10 = gdb_source['version_10']
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput("WGS84")
@@ -375,24 +398,13 @@ def test_ogr_openfilegdb_1(filename='data/filegdb/testopenfilegdb.gdb.zip', vers
     ds = None
 
 
-def test_ogr_openfilegdb_1_92():
-    return test_ogr_openfilegdb_1(filename='data/filegdb/testopenfilegdb92.gdb.zip', version10=False)
-
-
-def test_ogr_openfilegdb_1_93():
-    return test_ogr_openfilegdb_1(filename='data/filegdb/testopenfilegdb93.gdb.zip', version10=False)
-
 ###############################################################################
 # Run test_ogrsf
 
 
-def test_ogr_openfilegdb_2(filename='data/filegdb/testopenfilegdb.gdb.zip'):
-
-    import test_cli_utilities
-    if test_cli_utilities.get_test_ogrsf_path() is None:
-        pytest.skip()
-
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro ' + filename)
+@pytest.fixture()
+def ogrsf_run(ogrsf_path, gdb_source):
+    ret = gdaltest.runexternal(ogrsf_path + ' -ro ' + gdb_source['src'])
 
     success = 'INFO' in ret and 'ERROR' not in ret
     if not success:
@@ -401,12 +413,10 @@ def test_ogr_openfilegdb_2(filename='data/filegdb/testopenfilegdb.gdb.zip'):
             pytest.xfail('Failure. See https://github.com/rouault/gdal/runs/1331249076?check_suite_focus=true')
     assert success
 
-def test_ogr_openfilegdb_2_92():
-    return test_ogr_openfilegdb_2(filename='data/filegdb/testopenfilegdb92.gdb.zip')
 
+def test_ogr_openfilegdb_2(ogrsf_run, gdb_source):
+    pass
 
-def test_ogr_openfilegdb_2_93():
-    return test_ogr_openfilegdb_2(filename='data/filegdb/testopenfilegdb93.gdb.zip')
 
 ###############################################################################
 # Open a .gdbtable directly
@@ -1538,14 +1548,113 @@ def test_ogr_openfilegdb_read_layer_hierarchy():
     standalone = rg.OpenVectorLayer('standalone')
     assert standalone is not None
 
+
+
+###############################################################################
+# Test LIST_ALL_TABLES open option
+
+
+def test_ogr_openfilegdb_list_all_tables_v10():
+    ds = ogr.Open('data/filegdb/testopenfilegdb.gdb.zip')
+    assert ds is not None
+
+    assert ds.GetLayerCount() == 37, 'did not get expected layer count'
+    layer_names = [ds.GetLayer(i).GetName() for i in range(ds.GetLayerCount())]
+    # should not be exposed by default
+    for name in ['GDB_DBTune', 'GDB_ItemRelationshipTypes', 'GDB_ItemRelationships', 'GDB_ItemTypes',
+                 'GDB_Items', 'GDB_SpatialRefs', 'GDB_SystemCatalog']:
+        assert name not in layer_names
+
+    # Test LIST_ALL_TABLES=YES open option
+    ds_all_table = gdal.OpenEx('data/filegdb/testopenfilegdb.gdb.zip', gdal.OF_VECTOR,
+                                 open_options=['LIST_ALL_TABLES=YES'])
+
+    assert ds_all_table.GetLayerCount() == 44, 'did not get expected layer count'
+    layer_names = [ds_all_table.GetLayer(i).GetName() for i in range(ds_all_table.GetLayerCount())]
+
+    for name in ['linestring', 'point', 'multipoint',
+                 'GDB_DBTune', 'GDB_ItemRelationshipTypes', 'GDB_ItemRelationships', 'GDB_ItemTypes',
+                 'GDB_Items', 'GDB_SpatialRefs', 'GDB_SystemCatalog']:
+        assert name in layer_names
+
+    private_layers = [ds_all_table.GetLayer(i).GetName() for i in range(ds_all_table.GetLayerCount()) if ds_all_table.IsLayerPrivate(i)]
+    for name in ['GDB_DBTune', 'GDB_ItemRelationshipTypes', 'GDB_ItemRelationships', 'GDB_ItemTypes',
+                 'GDB_Items', 'GDB_SpatialRefs', 'GDB_SystemCatalog']:
+        assert name in private_layers
+    for name in ['linestring', 'point', 'multipoint']:
+        assert name not in private_layers
+
+
+def test_ogr_openfilegdb_list_all_tables_v9():
+    ds = ogr.Open('data/filegdb/testopenfilegdb93.gdb.zip')
+    assert ds is not None
+
+    assert ds.GetLayerCount() == 22, 'did not get expected layer count'
+    layer_names = [ds.GetLayer(i).GetName() for i in range(ds.GetLayerCount())]
+    # should not be exposed by default
+    for name in ['GDB_DBTune', 'GDB_FeatureClasses', 'GDB_FeatureDataset', 'GDB_FieldInfo',
+                 'GDB_ObjectClasses', 'GDB_Release', 'GDB_SpatialRefs', 'GDB_SystemCatalog', 'GDB_UserMetadata']:
+        assert name not in layer_names
+
+    # Test LIST_ALL_TABLES=YES open option
+    ds_all_table = gdal.OpenEx('data/filegdb/testopenfilegdb93.gdb.zip', gdal.OF_VECTOR,
+                                 open_options=['LIST_ALL_TABLES=YES'])
+
+    assert ds_all_table.GetLayerCount() == 31, 'did not get expected layer count'
+    layer_names = [ds_all_table.GetLayer(i).GetName() for i in range(ds_all_table.GetLayerCount())]
+    print(layer_names)
+
+    for name in ['linestring', 'point', 'multipoint',
+                 'GDB_DBTune', 'GDB_FeatureClasses', 'GDB_FeatureDataset', 'GDB_FieldInfo',
+                 'GDB_ObjectClasses', 'GDB_Release', 'GDB_SpatialRefs', 'GDB_SystemCatalog', 'GDB_UserMetadata']:
+        assert name in layer_names
+
+    private_layers = [ds_all_table.GetLayer(i).GetName() for i in range(ds_all_table.GetLayerCount()) if ds_all_table.IsLayerPrivate(i)]
+    for name in ['GDB_DBTune', 'GDB_FeatureClasses', 'GDB_FeatureDataset', 'GDB_FieldInfo',
+                 'GDB_ObjectClasses', 'GDB_Release', 'GDB_SpatialRefs', 'GDB_SystemCatalog', 'GDB_UserMetadata']:
+        assert name in private_layers
+    for name in ['linestring', 'point', 'multipoint']:
+        assert name not in private_layers
+
+
+###############################################################################
+# Test that non-spatial tables which are not present in GDB_Items are listed
+# see https://github.com/OSGeo/gdal/issues/4463
+
+
+def test_ogr_openfilegdb_non_spatial_table_outside_gdb_items():
+    ds = ogr.Open('data/filegdb/table_outside_gdbitems.gdb')
+    assert ds is not None
+
+    assert ds.GetLayerCount() == 3, 'did not get expected layer count'
+    layer_names = set(ds.GetLayer(i).GetName() for i in range(ds.GetLayerCount()))
+    assert layer_names == {'aquaduct', 'flat_table1', 'flat_table2'}
+
+    # Test with the LIST_ALL_TABLES=YES open option
+    ds_all_table = gdal.OpenEx('data/filegdb/table_outside_gdbitems.gdb', gdal.OF_VECTOR,
+                                 open_options=['LIST_ALL_TABLES=YES'])
+
+    assert ds_all_table.GetLayerCount() == 10, 'did not get expected layer count'
+    layer_names = set(ds_all_table.GetLayer(i).GetName() for i in range(ds_all_table.GetLayerCount()))
+
+    for name in ['aquaduct', 'flat_table1', 'flat_table2',
+                 'GDB_DBTune', 'GDB_ItemRelationshipTypes', 'GDB_ItemRelationships', 'GDB_ItemTypes',
+                 'GDB_Items', 'GDB_SpatialRefs', 'GDB_SystemCatalog']:
+        assert name in layer_names
+
+    private_layers = set(ds_all_table.GetLayer(i).GetName() for i in range(ds_all_table.GetLayerCount()) if ds_all_table.IsLayerPrivate(i))
+    for name in ['GDB_DBTune', 'GDB_ItemRelationshipTypes', 'GDB_ItemRelationships', 'GDB_ItemTypes',
+                 'GDB_Items', 'GDB_SpatialRefs', 'GDB_SystemCatalog']:
+        assert name in private_layers
+    for name in ['aquaduct', 'flat_table1', 'flat_table2']:
+        assert name not in private_layers
+
+
 ###############################################################################
 # Cleanup
 
 
 def test_ogr_openfilegdb_cleanup():
-
-    if ogrtest.fgdb_drv is not None:
-        ogrtest.fgdb_drv.Register()
 
     try:
         shutil.rmtree('tmp/testopenfilegdb.gdb')
@@ -1560,7 +1669,4 @@ def test_ogr_openfilegdb_cleanup():
         shutil.rmtree('tmp/testopenfilegdb_fuzzed.gdb')
     except OSError:
         pass
-
-
-
 

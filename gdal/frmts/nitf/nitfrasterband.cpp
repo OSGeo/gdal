@@ -319,7 +319,7 @@ retType NITFProxyPamRasterBand::methodName argList \
     return ret; \
 }
 
-RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, FlushCache, (), ())
+RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, FlushCache, (bool bAtClosing), (bAtClosing))
 
 RB_PROXY_METHOD_WITH_RET(GDALColorInterp, GCI_Undefined, GetColorInterpretation, (), ())
 RB_PROXY_METHOD_WITH_RET(GDALColorTable*, nullptr, GetColorTable, (), ())

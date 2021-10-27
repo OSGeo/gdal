@@ -25,9 +25,13 @@ rm -rf curl
 git clone --depth 1 https://github.com/curl/curl.git curl
 
 rm -rf netcdf-c-4.7.4
+# fix_stack_read_overflow_ncindexlookup.patch: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=39189
 curl -L https://github.com/Unidata/netcdf-c/archive/refs/tags/v4.7.4.tar.gz > v4.7.4.tar.gz && \
     tar xzf v4.7.4.tar.gz && \
-    rm -f v4.7.4.tar.gz
+    rm -f v4.7.4.tar.gz && \
+    cd netcdf-c-4.7.4 && \
+    patch -p0 < $SRC/gdal/gdal/fuzzers/fix_stack_read_overflow_ncindexlookup.patch && \
+    cd ..
 
 rm -rf poppler
 git clone --depth 1 https://anongit.freedesktop.org/git/poppler/poppler.git poppler
@@ -125,8 +129,15 @@ cd ..
 
 # build libproj.a (proj master required)
 cd proj
-./autogen.sh
-SQLITE3_CFLAGS="-I$SRC/install/include" SQLITE3_LIBS="-L$SRC/install/lib -lsqlite3" TIFF_CFLAGS=-I/usr/include TIFF_LIBS=-ltiff ./configure --disable-shared --prefix=$SRC/install --with-curl=$SRC/install/bin/curl-config
+cmake . -DBUILD_SHARED_LIBS:BOOL=OFF \
+        -DSQLITE3_INCLUDE_DIR:PATH="$SRC/install/include" \
+        -DSQLITE3_LIBRARY:FILEPATH="$SRC/install/lib/libsqlite3.a" \
+        -DCURL_INCLUDE_DIR:PATH="$SRC/install/include" \
+        -DCURL_LIBRARY_RELEASE:FILEPATH="$SRC/install/lib/libcurl.a" \
+        -DCMAKE_INSTALL_PREFIX=$SRC/install \
+        -DBUILD_APPS:BOOL=OFF \
+        -DBUILD_TESTING:BOOL=OFF
+
 make clean -s
 make -j$(nproc) -s
 make install
@@ -161,6 +172,7 @@ if [ "$ARCHITECTURE" = "x86_64" ]; then
 fi
 
 PKG_CONFIG_PATH=$SRC/install/lib/pkgconfig ./configure --without-libtool --with-liblzma --with-expat --with-sqlite3=$SRC/install --with-xerces=$SRC/install --with-webp ${NETCDF_SWITCH} --with-curl=$SRC/install/bin/curl-config --without-hdf5 --with-jpeg=internal --with-proj=$SRC/install -with-proj-extra-lib-for-test="-L$SRC/install/lib -lcurl -lssl -lcrypto -lz -ltiff" --with-poppler --with-libtiff=internal --with-rename-internal-libtiff-symbols
+# sed -i "s/POPPLER_MINOR_VERSION = 9/POPPLER_MINOR_VERSION = 10/" GDALmake.opt # temporary hack until poppler > 21.9 is released
 
 make clean -s
 make -j$(nproc) -s static-lib

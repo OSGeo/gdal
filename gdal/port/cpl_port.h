@@ -237,10 +237,6 @@ typedef int             GBool;
 /*      64bit support                                                   */
 /* -------------------------------------------------------------------- */
 
-#if defined(WIN32) && defined(_MSC_VER)
-#define VSI_LARGE_API_SUPPORTED
-#endif
-
 #if HAVE_LONG_LONG
 
 /** Large signed integer type (generally 64-bit integer type).
@@ -962,7 +958,7 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 
 #endif /* __cplusplus */
 
-#if !defined(DOXYGEN_SKIP)
+#if !defined(DOXYGEN_SKIP) && !defined(CPL_WARN_DEPRECATED)
 #if defined(__has_extension)
   #if __has_extension(attribute_deprecated_with_message)
     /* Clang extension */

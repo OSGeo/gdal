@@ -565,7 +565,6 @@ void VSICURLInitWriteFuncStruct( WriteFuncStruct   *psStruct,
     psStruct->pBuffer = nullptr;
     psStruct->nSize = 0;
     psStruct->bIsHTTP = false;
-    psStruct->bIsInHeader = true;
     psStruct->bMultiRange = false;
     psStruct->nStartOffset = 0;
     psStruct->nEndOffset = 0;
@@ -573,7 +572,6 @@ void VSICURLInitWriteFuncStruct( WriteFuncStruct   *psStruct,
     psStruct->nContentLength = 0;
     psStruct->bFoundContentRange = false;
     psStruct->bError = false;
-    psStruct->bDownloadHeaderOnly = false;
     psStruct->bDetectRangeDownloadingError = true;
     psStruct->nTimestampDate = 0;
 
@@ -597,13 +595,9 @@ size_t VSICurlHandleWriteFunc( void *buffer, size_t count,
     WriteFuncStruct* psStruct = static_cast<WriteFuncStruct *>(req);
     const size_t nSize = count * nmemb;
 
-    if( psStruct->bIsHTTP && !psStruct->bIsInHeader && psStruct->bDownloadHeaderOnly )
+    if( psStruct->bInterrupted )
     {
-        // If moved permanently/temporarily, go on.
-        // Otherwise stop now,
-        if( !(psStruct->nHTTPCode == 301 ||
-              psStruct->nHTTPCode == 302) )
-            return 0;
+        return 0;
     }
 
     char* pNewBuffer = static_cast<char *>(
@@ -613,7 +607,7 @@ size_t VSICurlHandleWriteFunc( void *buffer, size_t count,
         psStruct->pBuffer = pNewBuffer;
         memcpy(psStruct->pBuffer + psStruct->nSize, buffer, nSize);
         psStruct->pBuffer[psStruct->nSize + nSize] = '\0';
-        if( psStruct->bIsHTTP && psStruct->bIsInHeader )
+        if( psStruct->bIsHTTP )
         {
             char* pszLine = psStruct->pBuffer + psStruct->nSize;
             if( STARTS_WITH_CI(pszLine, "HTTP/") )
@@ -693,12 +687,9 @@ size_t VSICurlHandleWriteFunc( void *buffer, size_t count,
                 else
 #endif //!CURL_AT_LEAST_VERSION(7,54,0)
                 {
-                    psStruct->bIsInHeader = false;
-
                     // Detect servers that don't support range downloading.
                     if( psStruct->nHTTPCode == 200 &&
                         psStruct->bDetectRangeDownloadingError &&
-                        !psStruct->bDownloadHeaderOnly &&
                         !psStruct->bMultiRange &&
                         !psStruct->bFoundContentRange &&
                         (psStruct->nStartOffset != 0 ||
@@ -745,7 +736,9 @@ static bool VSICurlIsS3LikeSignedURL( const char* pszURL )
         ((strstr(pszURL, ".s3.amazonaws.com/") != nullptr ||
           strstr(pszURL, ".s3.amazonaws.com:") != nullptr ||
           strstr(pszURL, ".storage.googleapis.com/") != nullptr ||
-          strstr(pszURL, ".storage.googleapis.com:") != nullptr) &&
+          strstr(pszURL, ".storage.googleapis.com:") != nullptr ||
+          strstr(pszURL, ".cloudfront.net/") != nullptr ||
+          strstr(pszURL, ".cloudfront.net:") != nullptr) &&
          (strstr(pszURL, "&Signature=") != nullptr ||
           strstr(pszURL, "?Signature=") != nullptr)) ||
         strstr(pszURL, "&X-Amz-Signature=") != nullptr ||
@@ -900,6 +893,11 @@ retry:
 
     WriteFuncStruct sWriteFuncHeaderData;
     VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, nullptr, nullptr, nullptr);
+    sWriteFuncHeaderData.bDetectRangeDownloadingError = false;
+    sWriteFuncHeaderData.bIsHTTP = STARTS_WITH(osURL, "http");
+
+    WriteFuncStruct sWriteFuncData;
+    VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
 
     CPLString osVerb;
     CPLString osRange; // leave in this scope !
@@ -916,7 +914,6 @@ retry:
         // so it gets included in Azure signature
         osRange.Printf("Range: bytes=0-%d", nRoundedBufSize-1);
         headers = curl_slist_append(headers, osRange.c_str());
-        sWriteFuncHeaderData.bDetectRangeDownloadingError = false;
     }
     // HACK for mbtiles driver: http://a.tiles.mapbox.com/v3/ doesn't accept
     // HEAD, as it is a redirect to AWS S3 signed URL, but those are only valid
@@ -927,12 +924,11 @@ retry:
              VSICurlIsS3LikeSignedURL(osURL) ||
              !m_bUseHead )
     {
-        sWriteFuncHeaderData.bDownloadHeaderOnly = true;
+        sWriteFuncData.bInterrupted = true;
         osVerb = "GET";
     }
     else
     {
-        sWriteFuncHeaderData.bDetectRangeDownloadingError = false;
         curl_easy_setopt(hCurlHandle, CURLOPT_NOBODY, 1);
         curl_easy_setopt(hCurlHandle, CURLOPT_HTTPGET, 0);
         curl_easy_setopt(hCurlHandle, CURLOPT_HEADER, 1);
@@ -945,12 +941,9 @@ retry:
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
                      VSICurlHandleWriteFunc);
-    sWriteFuncHeaderData.bIsHTTP = STARTS_WITH(osURL, "http");
 
     // Bug with older curl versions (<=7.16.4) and FTP.
     // See http://curl.haxx.se/mail/lib-2007-08/0312.html
-    WriteFuncStruct sWriteFuncData;
-    VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
     curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
     curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                      VSICurlHandleWriteFunc);
@@ -999,14 +992,6 @@ retry:
                             osURL.c_str(), oFileProp.fileSize);
             }
         }
-    }
-
-    if( ENABLE_DEBUG && szCurlErrBuf[0] != '\0' &&
-        sWriteFuncHeaderData.bDownloadHeaderOnly &&
-        EQUAL(szCurlErrBuf, "Failed writing header") )
-    {
-        // Not really an error since we voluntarily interrupted the download !
-        szCurlErrBuf[0] = 0;
     }
 
     double dfSize = 0;
@@ -1534,7 +1519,13 @@ retry:
         CPLDebug(poFS->GetDebugKey(),
                  "Got response_code=%ld", response_code);
 
-    if( response_code == 403 && bUsedRedirect )
+    if( bUsedRedirect &&
+        (response_code == 403 ||
+        // Below case is in particular for
+        // gdalinfo /vsicurl/https://lpdaac.earthdata.nasa.gov/lp-prod-protected/HLSS30.015/HLS.S30.T10TEK.2020273T190109.v1.5.B8A.tif --config GDAL_DISABLE_READDIR_ON_OPEN EMPTY_DIR --config GDAL_HTTP_COOKIEFILE /tmp/cookie.txt --config GDAL_HTTP_COOKIEJAR /tmp/cookie.txt
+        // We got the redirect URL from a HEAD request, but it is not valid for a GET.
+        // So retry with GET on original URL to get a redirect URL valid for it.
+        (response_code == 400 && osURL.find(".cloudfront.net") != std::string::npos)) )
     {
         CPLDebug(poFS->GetDebugKey(),
                  "Got an error with redirect URL. Retrying with original one");

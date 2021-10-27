@@ -259,7 +259,7 @@ CPLErr MEMRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     }
 
     // In case block based I/O has been done before.
-    FlushCache();
+    FlushCache(false);
 
     if( eRWFlag == GF_Read )
     {
@@ -352,7 +352,7 @@ CPLErr MEMDataset::IRasterIO( GDALRWFlag eRWFlag,
         }
         if( iBandIndex == nBandCount )
         {
-            FlushCache();
+            FlushCache(false);
             if( eRWFlag == GF_Read )
             {
                 for(int iLine=0;iLine<nYSize;iLine++)
@@ -792,7 +792,10 @@ MEMDataset::MEMDataset() :
 MEMDataset::~MEMDataset()
 
 {
-    FlushCache();
+    const bool bSuppressOnCloseBackup = bSuppressOnClose;
+    bSuppressOnClose = true;
+    FlushCache(true);
+    bSuppressOnClose = bSuppressOnCloseBackup;
 
     GDALDeinitGCPs( m_nGCPCount, m_pasGCPs );
     CPLFree( m_pasGCPs );
@@ -1426,6 +1429,24 @@ GDALDataset *MEMDataset::Open( GDALOpenInfo * poOpenInfo )
                                           pabyData + iBand * nBandOffset,
                                           eType, nPixelOffset, nLineOffset,
                                           FALSE ) );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Set GeoTransform information.                                   */
+/* -------------------------------------------------------------------- */
+
+    pszOption = CSLFetchNameValue(papszOptions, "GEOTRANSFORM");
+    if( pszOption != nullptr ) {
+        char **values = CSLTokenizeStringComplex(pszOption, "/", TRUE, FALSE );
+        if ( CSLCount( values ) == 6 ) {
+            double adfGeoTransform[6] = {0,0,0,0,0,0};
+            for ( size_t i = 0; i < 6; ++i ) {
+                adfGeoTransform[i] =
+                    CPLScanDouble( values[i], static_cast<int>(strlen(values[i])) );
+            }
+            poDS->SetGeoTransform(adfGeoTransform);
+        }
+        CSLDestroy( values );
     }
 
 /* -------------------------------------------------------------------- */

@@ -278,7 +278,7 @@ OGRLayer *OGRVRTDataSource::InstantiateWarpedLayer(
     {
         poSrcSRS = new OGRSpatialReference();
         poSrcSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        if( poSrcSRS->SetFromUserInput(pszSourceSRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS) != OGRERR_NONE )
+        if( poSrcSRS->SetFromUserInput(pszSourceSRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) != OGRERR_NONE )
         {
             delete poSrcSRS;
             poSrcSRS = nullptr;
@@ -294,7 +294,7 @@ OGRLayer *OGRVRTDataSource::InstantiateWarpedLayer(
 
     OGRSpatialReference *poTargetSRS = new OGRSpatialReference();
     poTargetSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    if( poTargetSRS->SetFromUserInput(pszTargetSRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS) != OGRERR_NONE )
+    if( poTargetSRS->SetFromUserInput(pszTargetSRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) != OGRERR_NONE )
     {
         delete poTargetSRS;
         poTargetSRS = nullptr;
@@ -404,7 +404,7 @@ OGRLayer *OGRVRTDataSource::InstantiateUnionLayer(
             OGRSpatialReference oSRS;
             oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
-            if( oSRS.SetFromUserInput(pszLayerSRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS) != OGRERR_NONE )
+            if( oSRS.SetFromUserInput(pszLayerSRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) != OGRERR_NONE )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Failed to import LayerSRS `%s'.", pszLayerSRS);
@@ -531,7 +531,7 @@ OGRLayer *OGRVRTDataSource::InstantiateUnionLayer(
                     OGRSpatialReference oSRS;
                     oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
-                    if( oSRS.SetFromUserInput(pszSRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS) != OGRERR_NONE )
+                    if( oSRS.SetFromUserInput(pszSRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) != OGRERR_NONE )
                     {
                         CPLError(CE_Failure, CPLE_AppDefined,
                                  "Failed to import SRS `%s'.", pszSRS);

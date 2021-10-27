@@ -239,7 +239,7 @@ TSXDataset::TSXDataset() :
 /************************************************************************/
 
 TSXDataset::~TSXDataset() {
-    FlushCache();
+    FlushCache(true);
 
     CPLFree( pszProjection );
 

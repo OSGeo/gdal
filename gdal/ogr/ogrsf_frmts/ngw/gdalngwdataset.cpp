@@ -74,7 +74,7 @@ OGRNGWDataset::OGRNGWDataset() :
 OGRNGWDataset::~OGRNGWDataset()
 {
     // Last sync with server.
-    OGRNGWDataset::FlushCache();
+    OGRNGWDataset::FlushCache(true);
 
     if( poRasterDS != nullptr )
     {
@@ -580,7 +580,7 @@ OGRLayer *OGRNGWDataset::ICreateLayer( const char *pszNameIn,
     }
 
     // Check input parameters.
-    if( (eGType < wkbPoint || eGType > wkbMultiPolygon) && 
+    if( (eGType < wkbPoint || eGType > wkbMultiPolygon) &&
         (eGType < wkbPoint25D || eGType > wkbMultiPolygon25D) )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -796,9 +796,9 @@ CPLErr OGRNGWDataset::SetMetadataItem( const char *pszName,
 /*
  * FlushCache()
  */
-void OGRNGWDataset::FlushCache()
+void OGRNGWDataset::FlushCache(bool bAtClosing)
 {
-    GDALDataset::FlushCache();
+    GDALDataset::FlushCache(bAtClosing);
     FlushMetadata( GetMetadata("NGW") );
 }
 
@@ -1121,7 +1121,7 @@ OGRLayer *OGRNGWDataset::ExecuteSQL( const char *pszStatement,
                 {
                     osNgwSelect += psKeyDef->field_name;
                 }
-                else 
+                else
                 {
                     osNgwSelect += "-" + std::string(psKeyDef->field_name);
                 }

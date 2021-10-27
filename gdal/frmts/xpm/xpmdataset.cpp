@@ -65,7 +65,7 @@ class XPMDataset final: public GDALPamDataset
 XPMDataset::~XPMDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
 }
 
 /************************************************************************/
