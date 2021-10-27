@@ -564,6 +564,11 @@ CPLErr VRTWarpedDataset::Initialize( void *psWO )
 
     GDALDestroyWarpOptions(psWO_Dup);
 
+    if( nBands > 1 )
+    {
+        GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+    }
+
     return eErr;
 }
 
@@ -1252,6 +1257,11 @@ CPLErr VRTWarpedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPathIn )
                      "dataset block size", i);
             return CE_Failure;
         }
+    }
+
+    if( nBands > 1 )
+    {
+        GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
     }
 
 /* -------------------------------------------------------------------- */
