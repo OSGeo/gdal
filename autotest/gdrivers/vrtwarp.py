@@ -443,3 +443,18 @@ def test_vrtwarp_read_blocks_in_space():
 
     ds = gdal.Open('data/vrt/geos_vrtwarp.vrt')
     assert ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512)
+
+###############################################################################
+# Test reading a warped VRT that has inconsistent block size at band and
+# dataset level
+
+
+@pytest.mark.parametrize("filename", ["data/vrt/warp_inconsistent_blockxsize.vrt",
+                                      "data/vrt/warp_inconsistent_blockysize.vrt"])
+def test_vrtwarp_read_inconsistent_blocksize(filename):
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ds = gdal.Open(filename)
+    assert ds is None
+    assert gdal.GetLastErrorMsg() == 'Block size specified on band 1 not consistent with dataset block size'

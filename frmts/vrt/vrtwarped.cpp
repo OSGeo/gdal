@@ -1239,6 +1239,21 @@ CPLErr VRTWarpedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPathIn )
             return eErr;
     }
 
+    // Check that band block sizes didn't change the dataset block size.
+    for(int i = 1; i <= nBands; i++ )
+    {
+        int nBlockXSize = 0;
+        int nBlockYSize = 0;
+        GetRasterBand(i)->GetBlockSize(&nBlockXSize, &nBlockYSize);
+        if( nBlockXSize != m_nBlockXSize || nBlockYSize != m_nBlockYSize )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Block size specified on band %d not consistent with "
+                     "dataset block size", i);
+            return CE_Failure;
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Find the GDALWarpOptions XML tree.                              */
 /* -------------------------------------------------------------------- */
