@@ -49,8 +49,6 @@ ccache -M 1G
 ccache -s
 
 # Configure GDAL
-CURRENT_DIR=$PWD
-cd gdal
 ./autogen.sh
 CC='ccache clang' CXX='ccache clang++' LDFLAGS='-lstdc++' ./configure --prefix=/usr --without-libtool --with-python=/usr/bin/python3 --with-poppler --with-spatialite --with-liblzma --with-webp --with-hdf4 --with-hdf5 --with-armadillo
 
@@ -58,7 +56,7 @@ make USER_DEFS=-Werror -j$(nproc)
 (cd apps && make USER_DEFS=-Werror -j$(nproc) test_ogrsf)
 make install
 ldconfig
-cd "$CURRENT_DIR"
+
 (cd autotest/cpp && make -j3)
 
 ccache -s

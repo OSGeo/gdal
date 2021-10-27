@@ -91,14 +91,14 @@ mrf_list = [
     ('f32nan_data.tif', 54061, [54052, 54050], ['COMPRESS=LERC', 'OPTIONS=V1:Yes LERC_PREC:0.01']),
 ]
 
-mrf_co = gdal.GetDriverByName('MRF').GetMetadataItem('DMD_CREATIONOPTIONLIST')
-
 @pytest.mark.parametrize(
     'src_filename,chksum,chksum_after_reopening,options',
     mrf_list,
     ids=['{0}-{3}'.format(*r) for r in mrf_list],
 )
 def test_mrf(src_filename, chksum, chksum_after_reopening, options):
+
+    mrf_co = gdal.GetDriverByName('MRF').GetMetadataItem('DMD_CREATIONOPTIONLIST')
 
     if 'COMPRESS=LERC' in options and 'LERC' not in mrf_co:
         pytest.skip()
@@ -182,7 +182,7 @@ def test_mrf_overview_nnb_fact_2():
         assert cs == expected_cs, gdal.GetDataTypeName(dt)
         ds = None
         cleanup()
-    
+
 
 def test_mrf_overview_nnb_with_nodata_fact_2():
 
@@ -204,7 +204,7 @@ def test_mrf_overview_nnb_with_nodata_fact_2():
         assert cs == expected_cs, gdal.GetDataTypeName(dt)
         ds = None
         cleanup()
-    
+
 
 def test_mrf_overview_avg_fact_2():
 
@@ -250,7 +250,7 @@ def test_mrf_overview_avg_with_nodata_fact_2():
         ds = None
         cleanup()
 
-    
+
 def test_mrf_nnb_overview_partial_block():
 
     out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format='MRF',
@@ -308,6 +308,7 @@ def test_mrf_overview_external():
 
 def test_mrf_lerc_nodata():
 
+    mrf_co = gdal.GetDriverByName('MRF').GetMetadataItem('DMD_CREATIONOPTIONLIST')
     if 'LERC' not in mrf_co:
         pytest.skip()
 
@@ -325,6 +326,7 @@ def test_mrf_lerc_nodata():
 
 def test_mrf_lerc_with_huffman():
 
+    mrf_co = gdal.GetDriverByName('MRF').GetMetadataItem('DMD_CREATIONOPTIONLIST')
     if 'LERC' not in mrf_co:
         pytest.skip()
 
@@ -338,6 +340,8 @@ def test_mrf_lerc_with_huffman():
     cleanup()
 
 def test_raw_lerc():
+
+    mrf_co = gdal.GetDriverByName('MRF').GetMetadataItem('DMD_CREATIONOPTIONLIST')
     if 'LERC' not in  mrf_co:
         pytest.skip()
 

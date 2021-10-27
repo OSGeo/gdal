@@ -55,11 +55,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ### Docker images
 
-See [gdal/docker/](gdal/docker/)
+See [docker/](docker/)
 
 ### Code of Conduct
 
-See [gdal/doc/source/community/code_of_conduct.rst](gdal/doc/source/community/code_of_conduct.rst)
+See [doc/source/community/code_of_conduct.rst](doc/source/community/code_of_conduct.rst)
 
 ### Security policy
 

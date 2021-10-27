@@ -3,10 +3,10 @@ name: Code Checks
 on:
     push:
         paths-ignore:
-            - 'gdal/doc/**'
+            - 'doc/**'
     pull_request:
         paths-ignore:
-            - 'gdal/doc/**'
+            - 'doc/**'
 
 jobs:
 
@@ -23,10 +23,10 @@ jobs:
           sudo apt install -y cppcheck libsqlite3-dev ccache sqlite3 libproj-dev
 
       - name: Run configure
-        run: (cd gdal && ./autogen.sh && ./configure)
+        run: (./autogen.sh && ./configure)
 
       - name: Run cppcheck test
-        run: ./gdal/scripts/cppcheck.sh
+        run: ./scripts/cppcheck.sh
 
   code_quality_checks:
     runs-on: ubuntu-latest
@@ -35,19 +35,19 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Detect tabulations
-        run: ./gdal/scripts/detect_tabulations.sh
+        run: ./scripts/detect_tabulations.sh
 
       - name: Detect printf
-        run: ./gdal/scripts/detect_printf.sh
+        run: ./scripts/detect_printf.sh
 
       - name: Detect self assignments
-        run: ./gdal/scripts/detect_self_assignment.sh
+        run: ./scripts/detect_self_assignment.sh
 
       - name: Detect suspicious char digit zero
-        run: ./gdal/scripts/detect_suspicious_char_digit_zero.sh
+        run: ./scripts/detect_suspicious_char_digit_zero.sh
 
       - name: Shellcheck
-        run: shellcheck -e SC2086,SC2046,SC2164,SC2054 $(find gdal -name '*.sh' -a -not -name ltmain.sh)
+        run: shellcheck -e SC2086,SC2046,SC2164,SC2054 $(find . -name '*.sh' -a -not -name ltmain.sh -a -not -wholename "./autotest/*" -a -not -wholename "./.github/*")
 
   flake8:
     runs-on: ubuntu-latest
@@ -64,7 +64,7 @@ jobs:
         run: |
             export FLAKE8="flake8 --config autotest/setup.cfg"
             $FLAKE8 autotest
-            $FLAKE8 gdal/swig/python/gdal-utils/
+            $FLAKE8 swig/python/gdal-utils/
 
   doxygen:
     runs-on: ubuntu-18.04
@@ -79,6 +79,6 @@ jobs:
 
       - name: Run doxygen
         run: |
-            cd gdal/doc
+            cd doc
             make .doxygen_up_to_date >log.txt 2>&1
             if grep -i warning log.txt | grep -v -e russian -e brazilian; then echo "Doxygen warnings found" && cat log.txt && /bin/false; else echo "No Doxygen warnings found"; fi

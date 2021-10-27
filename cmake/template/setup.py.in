@@ -1,0 +1,264 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# Setup script for GDAL Python bindings.
+# Inspired by psycopg2 setup.py file
+# http://www.initd.org/tracker/psycopg/browser/psycopg2/trunk/setup.py
+# Howard Butler hobu.inc@gmail.com
+
+
+import os
+import sys
+from glob import glob
+
+from setuptools.command.build_ext import build_ext
+from setuptools import setup
+from setuptools import find_packages
+from setuptools import Extension
+
+
+# ---------------------------------------------------------------------------
+# Switches
+# ---------------------------------------------------------------------------
+
+include_dirs = ['@PROJECT_BINARY_DIR@/port', '@PROJECT_SOURCE_DIR@/port', '@PROJECT_BINARY_DIR@/gcore', '@PROJECT_SOURCE_DIR@/gcore', '@PROJECT_SOURCE_DIR@/alg', '@PROJECT_SOURCE_DIR@/ogr/', '@PROJECT_SOURCE_DIR@/ogr/ogrsf_frmts', '@PROJECT_SOURCE_DIR@/gnm', '@PROJECT_SOURCE_DIR@/apps']
+library_dirs = [@GDAL_LIB_DIR@]
+libraries = ['gdal']
+
+
+# ---------------------------------------------------------------------------
+# Helper Functions
+# ---------------------------------------------------------------------------
+
+# Function to find numpy's include directory
+def get_numpy_include():
+    if @HAVE_NUMPY@:
+        # Fix numpy installation using setuptools
+        __builtins__.__NUMPY_SETUP__ = False
+
+        import numpy
+        return numpy.get_include()
+
+    return '.'
+
+
+def supports_cxx11(compiler, compiler_flag=None):
+    ret = False
+    with open('gdal_python_cxx11_test.cpp', 'wt') as f:
+        f.write("""
+#if __cplusplus < 201103L
+#error "C++11 required"
+#endif
+int main () { return 0; }""")
+        f.close()
+        extra_postargs = None
+        if compiler_flag:
+            extra_postargs = [compiler_flag]
+
+        if os.name == 'posix':
+            # Redirect stderr to /dev/null to hide any error messages
+            # from the compiler.
+            devnull = open(os.devnull, 'w')
+            oldstderr = os.dup(sys.stderr.fileno())
+            os.dup2(devnull.fileno(), sys.stderr.fileno())
+            try:
+                compiler.compile([f.name], extra_postargs=extra_postargs)
+                ret = True
+            except Exception:
+                pass
+            os.dup2(oldstderr, sys.stderr.fileno())
+            devnull.close()
+        else:
+            try:
+                compiler.compile([f.name], extra_postargs=extra_postargs)
+                ret = True
+            except Exception:
+                pass
+    os.unlink('gdal_python_cxx11_test.cpp')
+    if os.path.exists('gdal_python_cxx11_test.o'):
+        os.unlink('gdal_python_cxx11_test.o')
+    return ret
+
+###Based on: https://stackoverflow.com/questions/28641408/how-to-tell-which-compiler-will-be-invoked-for-a-python-c-extension-in-setuptool
+def has_flag(compiler, flagname):
+    import tempfile
+    from distutils.errors import CompileError
+    with tempfile.NamedTemporaryFile('w', suffix='.cpp') as f:
+        f.write('int main (int argc, char **argv) { return 0; }')
+        try:
+            compiler.compile([f.name], extra_postargs=[flagname])
+        except CompileError:
+            return False
+    return True
+
+class gdal_ext(build_ext):
+
+    def run(self):
+        build_ext.run(self)
+
+    def initialize_options(self):
+        build_ext.initialize_options(self)
+
+        self.numpy_include_dir = get_numpy_include()
+        self.gdaldir = None
+        self.extra_cflags = []
+        self.parallel = True
+
+    def get_compiler(self):
+        return self.compiler or ('msvc' if os.name == 'nt' else 'unix')
+
+
+    def build_extensions(self):
+
+        # Add a -std=c++11 or similar flag if needed
+        ct = self.compiler.compiler_type
+        if ct == 'unix' and not supports_cxx11(self.compiler):
+            cxx11_flag = None
+            if supports_cxx11(self.compiler, '-std=c++11'):
+                cxx11_flag = '-std=c++11'
+            if cxx11_flag:
+                for ext in self.extensions:
+                    # gdalconst builds as a .c file
+                    if ext.name != 'osgeo._gdalconst':
+                        ext.extra_compile_args += [cxx11_flag]
+
+                    # Adding arch flags here if OS X and compiler is clang
+                    if sys.platform == 'darwin' and [int(x) for x in os.uname()[2].split('.')] >= [11, 0, 0]:
+                        # since MacOS X 10.9, clang no longer accepts -mno-fused-madd
+                        # extra_compile_args.append('-Qunused-arguments')
+                        clang_flag = '-Wno-error=unused-command-line-argument-hard-error-in-future'
+                        if has_flag(self.compiler, clang_flag):
+                            ext.extra_compile_args += [clang_flag]
+                        else:
+                            clang_flag = '-Wno-error=unused-command-line-argument'
+                            if has_flag(self.compiler, clang_flag):
+                                ext.extra_compile_args += [clang_flag]
+
+        build_ext.build_extensions(self)
+
+    def finalize_options(self):
+        global include_dirs, library_dirs
+
+        if self.include_dirs is None:
+            self.include_dirs = include_dirs
+        # Needed on recent MacOSX
+        elif isinstance(self.include_dirs, str) and sys.platform == 'darwin':
+            self.include_dirs += ':' + ':'.join(include_dirs)
+
+        if self.library_dirs is None:
+            self.library_dirs = library_dirs
+        # Needed on recent MacOSX
+        elif isinstance(self.library_dirs, str) and sys.platform == 'darwin':
+            self.library_dirs += ':' + ':'.join(library_dirs)
+
+        if self.libraries is None:
+            self.libraries = libraries
+
+        build_ext.finalize_options(self)
+
+        self.include_dirs.append(self.numpy_include_dir)
+
+
+extra_link_args = []
+extra_compile_args = []
+
+gdal_module = Extension('osgeo._gdal',
+                        sources=['extensions/gdal_wrap.cpp'],
+                        extra_compile_args=extra_compile_args,
+                        extra_link_args=extra_link_args)
+
+gdalconst_module = Extension('osgeo._gdalconst',
+                             sources=['extensions/gdalconst_wrap.c'],
+                             extra_compile_args=extra_compile_args,
+                             extra_link_args=extra_link_args)
+
+osr_module = Extension('osgeo._osr',
+                       sources=['extensions/osr_wrap.cpp'],
+                       extra_compile_args=extra_compile_args,
+                       extra_link_args=extra_link_args)
+
+ogr_module = Extension('osgeo._ogr',
+                       sources=['extensions/ogr_wrap.cpp'],
+                       extra_compile_args=extra_compile_args,
+                       extra_link_args=extra_link_args)
+
+
+array_module = Extension('osgeo._gdal_array',
+                         sources=['extensions/gdal_array_wrap.cpp'],
+                         extra_compile_args=extra_compile_args,
+                         extra_link_args=extra_link_args)
+
+gnm_module = Extension('osgeo._gnm',
+                       sources=['extensions/gnm_wrap.cpp'],
+                       extra_compile_args=extra_compile_args,
+                       extra_link_args=extra_link_args)
+
+ext_modules = [gdal_module,
+               gdalconst_module,
+               osr_module,
+               ogr_module]
+
+if @GNM_ENABLED@:
+    ext_modules.append(gnm_module)
+
+extras_require=None
+if @HAVE_NUMPY@:
+    ext_modules.append(array_module)
+    extras_require={'numpy': ['numpy > 1.0.0']}
+
+utils_package_root = 'gdal-utils'   # path for gdal-utils sources
+packages = find_packages(utils_package_root)
+packages = ['osgeo'] + packages
+package_dir = {'osgeo': 'osgeo', '': utils_package_root}
+
+readme = open('@CMAKE_CURRENT_SOURCE_DIR@/README.rst', encoding="utf-8").read()
+
+name = 'GDAL'
+version = '@GDAL_VERSION_NO_DEV_SUFFIX@'
+author = "Frank Warmerdam"
+author_email = "warmerdam@pobox.com"
+maintainer = "Howard Butler"
+maintainer_email = "hobu.inc@gmail.com"
+description = "GDAL: Geospatial Data Abstraction Library"
+license_type = "MIT"
+url = "http://www.gdal.org"
+
+classifiers = [
+    'Development Status :: 5 - Production/Stable',
+    'Intended Audience :: Developers',
+    'Intended Audience :: Science/Research',
+    'License :: OSI Approved :: MIT License',
+    'Operating System :: OS Independent',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: C',
+    'Programming Language :: C++',
+    'Topic :: Scientific/Engineering :: GIS',
+    'Topic :: Scientific/Engineering :: Information Analysis',
+
+]
+
+exclude_package_data = {'': ['CMakeLists.txt']}
+
+setup(
+    name=name,
+    version=version,
+    author=author,
+    author_email=author_email,
+    maintainer=maintainer,
+    maintainer_email=maintainer_email,
+    long_description=readme,
+    long_description_content_type='text/x-rst',
+    description=description,
+    license=license_type,
+    classifiers=classifiers,
+    packages=packages,
+    package_dir=package_dir,
+    url=url,
+    python_requires='>=3.6.0',
+    ext_modules=ext_modules,
+    scripts=glob(utils_package_root + '/scripts/*.py'),
+    extras_require=extras_require,
+    zip_safe=False,
+    cmdclass=dict(build_ext=gdal_ext),
+    exclude_package_data = exclude_package_data,
+)

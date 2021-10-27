@@ -1,0 +1,30 @@
+add_gdal_driver(
+  TARGET ogr_Tiger
+  SOURCES ogr_tiger.h
+          tigerarealandmarks.cpp
+          tigeridhistory.cpp
+          tigerpoint.cpp
+          tigerspatialmetadata.cpp
+          ogrtigerdatasource.cpp
+          tigercompletechain.cpp
+          tigerkeyfeatures.cpp
+          tigerpolychainlink.cpp
+          tigertlidrange.cpp
+          ogrtigerdriver.cpp
+          tigerentitynames.cpp
+          tigerlandmarks.cpp
+          tigerpolygon.cpp
+          tigerzerocellid.cpp
+          ogrtigerlayer.cpp
+          tigerfeatureids.cpp
+          tigeroverunder.cpp
+          tigerpolygoncorrections.cpp
+          tigerzipcodes.cpp
+          tigeraltname.cpp
+          tigerfilebase.cpp
+          tigerpip.cpp
+          tigerpolygoneconomic.cpp
+          tigerzipplus4.cpp
+          PLUGIN_CAPABLE
+          NO_DEPS)
+gdal_standard_includes(ogr_Tiger)

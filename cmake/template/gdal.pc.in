@@ -1,0 +1,17 @@
+CONFIG_VERSION=@GDAL_VERSION@
+CONFIG_INST_PREFIX=@GDAL_PREFIX@
+CONFIG_INST_LIBS=@CONFIG_INST_LIBS@
+CONFIG_INST_CFLAGS=@CONFIG_INST_CFLAGS@
+CONFIG_INST_DATA=@CONFIG_INST_DATA@
+prefix=${CONFIG_INST_PREFIX}
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${exec_prefix}/include
+datadir=${CONFIG_INST_DATA}
+
+Name: libgdal
+Description: Geospatial Data Abstraction Library
+Version: ${CONFIG_VERSION}
+Libs: ${CONFIG_INST_LIBS}
+Libs.private: @CONFIG_INST_DEP_LIBS@
+Cflags: ${CONFIG_INST_CFLAGS}

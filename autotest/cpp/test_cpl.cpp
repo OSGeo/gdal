@@ -26,7 +26,9 @@
 // Boston, MA 02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
 
+#ifndef GDAL_COMPILATION
 #define GDAL_COMPILATION
+#endif
 
 #include "gdal_unit_test.h"
 
@@ -3446,7 +3448,7 @@ namespace tut
 
         constexpr int MAX_RAND_VAL = 32767;
 
-        // Slighly improved version of https://xkcd.com/221/, as suggested by
+        // Slightly improved version of https://xkcd.com/221/, as suggested by
         // "man srand"
         const auto DummyRand = [&]()
         {

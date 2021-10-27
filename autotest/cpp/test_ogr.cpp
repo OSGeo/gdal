@@ -27,7 +27,7 @@
 
 #include "ogr_p.h"
 #include "ogrsf_frmts.h"
-#include "../../gdal/ogr/ogrsf_frmts/osm/gpb.h"
+#include "../../ogr/ogrsf_frmts/osm/gpb.h"
 
 #include <string>
 

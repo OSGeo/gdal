@@ -3,11 +3,11 @@ name: Conda
 on:
     push:
         paths-ignore:
-            - 'gdal/doc/**'
-    # Disabled because of https://github.com/OSGeo/gdal/issues/4599
+            - 'doc/**'
+    # Disabled because of https://github.com/OSGeo/issues/4599
     #pull_request:
     #    paths-ignore:
-    #        - 'gdal/doc/**'
+    #        - 'doc/**'
 
 
 jobs:
@@ -35,7 +35,7 @@ jobs:
     - name: Setup
       shell: bash -l {0}
       run: |
-          source ./gdal/ci/travis/conda/setup.sh
+          source ./ci/travis/conda/setup.sh
 
     - name: Support longpaths
       run: git config --system core.longpaths true
@@ -44,7 +44,7 @@ jobs:
     - name: Build
       shell: bash -l {0}
       run: |
-          source ../gdal/ci/travis/conda/compile.sh
+          source ../ci/travis/conda/compile.sh
       working-directory: ./gdal-feedstock
 
     - uses: ilammy/msvc-dev-cmd@v1
@@ -61,5 +61,5 @@ jobs:
       env:
         ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
       run: |
-          source ../gdal/ci/travis/conda/upload.sh || true
+          source ../ci/travis/conda/upload.sh || true
       working-directory: ./gdal-feedstock
