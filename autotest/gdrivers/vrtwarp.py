@@ -435,7 +435,7 @@ def test_vrtwarp_read_blocks_larger_than_2_gigapixels():
     assert data == ref_ds.ReadRaster()
 
 ###############################################################################
-# Test reading a warped VRT that has blocks pointing to spce.
+# Test reading a warped VRT that has blocks pointing to space.
 # https://github.com/OSGeo/gdal/issues/1985
 
 
