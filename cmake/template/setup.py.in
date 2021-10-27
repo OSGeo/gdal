@@ -22,7 +22,7 @@ from setuptools import Extension
 # ---------------------------------------------------------------------------
 
 include_dirs = ['@PROJECT_BINARY_DIR@/port', '@PROJECT_SOURCE_DIR@/port', '@PROJECT_BINARY_DIR@/gcore', '@PROJECT_SOURCE_DIR@/gcore', '@PROJECT_SOURCE_DIR@/alg', '@PROJECT_SOURCE_DIR@/ogr/', '@PROJECT_SOURCE_DIR@/ogr/ogrsf_frmts', '@PROJECT_SOURCE_DIR@/gnm', '@PROJECT_SOURCE_DIR@/apps']
-library_dirs = ['@PROJECT_BINARY_DIR@/']
+library_dirs = [@GDAL_LIB_DIR@]
 libraries = ['gdal']
 
 
@@ -144,27 +144,19 @@ class gdal_ext(build_ext):
         # Needed on recent MacOSX
         elif isinstance(self.include_dirs, str) and sys.platform == 'darwin':
             self.include_dirs += ':' + ':'.join(include_dirs)
+
         if self.library_dirs is None:
             self.library_dirs = library_dirs
         # Needed on recent MacOSX
         elif isinstance(self.library_dirs, str) and sys.platform == 'darwin':
             self.library_dirs += ':' + ':'.join(library_dirs)
+
         if self.libraries is None:
-            if self.get_compiler() == 'msvc':
-                libraries.remove('gdal')
-                libraries.append('gdal_i')
             self.libraries = libraries
 
         build_ext.finalize_options(self)
 
         self.include_dirs.append(self.numpy_include_dir)
-
-        if self.get_compiler() == 'msvc':
-            return True
-
-        self.gdaldir = '@CMAKE_INSTALL_PREFIX@'
-        self.library_dirs.append(os.path.join(self.gdaldir, 'lib'))
-        self.include_dirs.append(os.path.join(self.gdaldir, 'include'))
 
 
 extra_link_args = []

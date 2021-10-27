@@ -138,7 +138,12 @@ endfunction ()
 symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/gdal-utils ${CMAKE_CURRENT_BINARY_DIR}/gdal-utils)
 symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/gdal-utils/osgeo_utils ${CMAKE_CURRENT_BINARY_DIR}/osgeo_utils)
 
-if (Python_FOUND AND NOT WIN32)
+get_property(_isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+if (_isMultiConfig AND WIN32)
+  set(ONLY_GENERATE_FOR_RELEASE ON)
+endif ()
+
+if (Python_FOUND)
   if (ENABLE_GNM)
     set(GNM_ENABLED "True")
   else ()
@@ -150,44 +155,107 @@ if (Python_FOUND AND NOT WIN32)
     set(HAVE_NUMPY "False")
   endif ()
   file(TO_NATIVE_PATH "${GDAL_PYTHON_CSOURCE_DIR}" GDAL_PYTHON_EXT_SOURCE_DIR)
-  configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/setup.py.in ${CMAKE_CURRENT_BINARY_DIR}/setup.py @ONLY)
-  file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/get_ext.py "import sysconfig\nprint(sysconfig.get_config_var('EXT_SUFFIX'))\n")
+  set(GDAL_LIB_DIR "os.path.dirname('$<TARGET_FILE:${GDAL_LIB_TARGET_NAME}>')")
+  configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/setup.py.in ${CMAKE_CURRENT_BINARY_DIR}/setup.py.tmp @ONLY)
+  if (ONLY_GENERATE_FOR_RELEASE)
+    file(
+      GENERATE
+      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/setup.py
+      INPUT ${CMAKE_CURRENT_BINARY_DIR}/setup.py.tmp
+      CONDITION "$<CONFIG:Release>")
+  else ()
+    file(
+      GENERATE
+      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/setup.py
+      INPUT ${CMAKE_CURRENT_BINARY_DIR}/setup.py.tmp)
+  endif ()
+  file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/get_suffix.py
+       "from setuptools.command.build_ext import EXTENSION_SUFFIXES; print(EXTENSION_SUFFIXES[0])\n")
   execute_process(
-    COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/get_ext.py
-    OUTPUT_VARIABLE PY_EXT_EXT
+    COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/get_suffix.py
+    OUTPUT_VARIABLE PY_EXT_SUFFIX
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-  set(PY_SO_LIST osgeo._gdal${PY_EXT_EXT} osgeo._gdalconst${PY_EXT_EXT} osgeo._gnm${PY_EXT_EXT} osgeo._ogr${PY_EXT_EXT}
-                 osgeo._osr${PY_EXT_EXT})
+  set(PY_SO_LIST osgeo/_gdal${PY_EXT_SUFFIX} osgeo/_gdalconst${PY_EXT_SUFFIX} osgeo/_gnm${PY_EXT_SUFFIX}
+                 osgeo/_ogr${PY_EXT_SUFFIX} osgeo/_osr${PY_EXT_SUFFIX})
   if (Python_NumPy_FOUND)
-    set(PY_SO_LIST ${PY_SO_LIST} osgeo._gdal_array${PY_EXT_EXT})
+    set(PY_SO_LIST ${PY_SO_LIST} osgeo/_gdal_array${PY_EXT_SUFFIX})
   endif ()
 
+  # Generate extension
+  if (ONLY_GENERATE_FOR_RELEASE)
+    set(BUILD_EXT_FILENAME ${CMAKE_CURRENT_BINARY_DIR}/build_ext_$<CONFIG>.cmake)
+    file(
+      GENERATE
+      OUTPUT ${BUILD_EXT_FILENAME}
+      CONTENT
+        "execute_process(COMMAND $<IF:$<CONFIG:Release>,${Python_EXECUTABLE} setup.py build_ext --inplace,${CMAKE_COMMAND} -E echo \"setup.py build_ext only run in Release configuration\">)"
+      )
+  else ()
+    set(BUILD_EXT_FILENAME ${CMAKE_CURRENT_BINARY_DIR}/build_ext.cmake)
+    file(WRITE ${BUILD_EXT_FILENAME} "execute_process(COMMAND ${Python_EXECUTABLE} setup.py build_ext --inplace)\n")
+  endif ()
   add_custom_command(
     OUTPUT ${PY_SO_LIST}
-    COMMAND ${Python_EXECUTABLE} setup.py build_ext --inplace
+    COMMAND ${CMAKE_COMMAND} -P ${BUILD_EXT_FILENAME}
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    DEPENDS ${GDAL_PYTHON_PYSOURCES} ${GDAL_PYTHON_CSOURCES})
+    DEPENDS ${GDAL_LIB_TARGET_NAME} ${GDAL_PYTHON_PYSOURCES} ${GDAL_PYTHON_CSOURCES})
 
   add_custom_target(python_binding ALL DEPENDS ${PY_SO_LIST} ${GDAL_PYTHON_PYSOURCES} ${GDAL_LIB_TARGET_NAME})
+
+  # Generate wheel
+  if (ONLY_GENERATE_FOR_RELEASE)
+    set(BUILD_BDIST_WHEEL_FILENAME ${CMAKE_CURRENT_BINARY_DIR}/build_bdist_wheel_$<CONFIG>.cmake)
+    file(
+      GENERATE
+      OUTPUT ${BUILD_BDIST_WHEEL_FILENAME}
+      CONTENT
+        "execute_process(COMMAND $<IF:$<CONFIG:Release>,${Python_EXECUTABLE} setup.py bdist_wheel,${CMAKE_COMMAND} -E echo \"setup.py bdist_wheel only run in Release configuration\">)"
+      )
+  else ()
+    set(BUILD_BDIST_WHEEL_FILENAME ${CMAKE_CURRENT_BINARY_DIR}/build_bdist_wheel.cmake)
+    file(WRITE ${BUILD_BDIST_WHEEL_FILENAME} "execute_process(COMMAND ${Python_EXECUTABLE} setup.py bdist_wheel)\n")
+  endif ()
   add_custom_target(
     python_wheel
-    COMMAND ${Python_EXECUTABLE} setup.py bdist_wheel
+    COMMAND ${CMAKE_COMMAND} -P ${BUILD_BDIST_WHEEL_FILENAME}
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     DEPENDS ${PY_SO_LIST})
-  if (CMAKE_INSTALL_PREFIX)
-    install(CODE "execute_process(COMMAND ${Python_EXECUTABLE} setup.py install --prefix=\"${CMAKE_INSTALL_PREFIX}\"
-                                  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})")
+
+  # Install extension
+  if (ONLY_GENERATE_FOR_RELEASE)
+    if (POLICY CMP0087)
+      # install(SCRIPT) can use generator expressions, since CMake 3.14
+      cmake_policy(SET CMP0087 NEW)
+      if (CMAKE_INSTALL_PREFIX)
+        set(INSTALL_ARGS " \"--prefix=${CMAKE_INSTALL_PREFIX}\"")
+      endif ()
+      file(
+        GENERATE
+        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/install_binding_$<CONFIG>.cmake
+        CONTENT
+          "execute_process(COMMAND $<IF:$<CONFIG:Release>,${Python_EXECUTABLE} setup.py install ${INSTALL_ARGS},${CMAKE_COMMAND} -E echo \"setup.py install only run in Release configuration\">
+                                          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})")
+      install(SCRIPT ${CMAKE_CURRENT_BINARY_DIR}/install_binding_$<CONFIG>.cmake)
+    else ()
+      message(WARNING "Installing Python bindings with a multi generator requires CMake >= 3.14")
+    endif ()
   else ()
-    install(CODE "execute_process(COMMAND ${Python_EXECUTABLE} setup.py install
-                                  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})")
+    if (CMAKE_INSTALL_PREFIX)
+      # TODO: port logic from Makefile to deal with debian layout etc
+      set(INSTALL_ARGS " \"--prefix=${CMAKE_INSTALL_PREFIX}\"")
+    endif ()
+    install(CODE "execute_process(COMMAND ${Python_EXECUTABLE} setup.py install ${INSTALL_ARGS}
+                                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})")
+
   endif ()
+
 elseif (Python_Development_FOUND)
   macro (py_ext name v source)
     set(GDAL_PYTHON_EXT_SOURCE_DIR "${GDAL_PYTHON_CSOURCE_DIR}")
     python_add_library(${name}${v} MODULE ${GDAL_PYTHON_EXT_SOURCE_DIR}/${source})
     set_property(TARGET ${name}${v} PROPERTY LIBRARY_OUTPUT_NAME ${name})
-    if (GENERATOR_IS_MULTI_CONFIG)
+    if (_isMultiConfig)
       set_target_properties(
         ${name}${v}
         PROPERTIES LIBRARY_OUTPUT_NAME ${name}
