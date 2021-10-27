@@ -1694,9 +1694,9 @@ CPLErr VRTWarpedDataset::ProcessBlock( int iBlockX, int iBlockY )
                     for(int iY=0;iY<nReqYSize;iY++)
                     {
                         GDALCopyWords(
-                            pabyDstBandBuffer + iY * nReqXSize*nWordSize,
+                            pabyDstBandBuffer + static_cast<GPtrDiff_t>(iY) * nReqXSize*nWordSize,
                             psWO->eWorkingDataType, nWordSize,
-                            pabyBlock + iY * m_nBlockXSize * nDTSize,
+                            pabyBlock + static_cast<GPtrDiff_t>(iY) * m_nBlockXSize * nDTSize,
                             poBlock->GetDataType(),
                             nDTSize,
                             nReqXSize );
