@@ -270,14 +270,17 @@ GDALAutoCreateWarpedVRTEx( GDALDatasetH hSrcDS,
 
     GDALDestroyWarpOptions( psWO );
 
-    if( pszDstWKT != nullptr )
-        GDALSetProjection( hDstDS, pszDstWKT );
-    else if( pszSrcWKT != nullptr )
-        GDALSetProjection( hDstDS, pszSrcWKT );
-    else if( GDALGetGCPCount( hSrcDS ) > 0 )
-        GDALSetProjection( hDstDS, GDALGetGCPProjection( hSrcDS ) );
-    else
-        GDALSetProjection( hDstDS, GDALGetProjectionRef( hSrcDS ) );
+    if( hDstDS != nullptr )
+    {
+        if( pszDstWKT != nullptr )
+            GDALSetProjection( hDstDS, pszDstWKT );
+        else if( pszSrcWKT != nullptr )
+            GDALSetProjection( hDstDS, pszSrcWKT );
+        else if( GDALGetGCPCount( hSrcDS ) > 0 )
+            GDALSetProjection( hDstDS, GDALGetGCPProjection( hSrcDS ) );
+        else
+            GDALSetProjection( hDstDS, GDALGetProjectionRef( hSrcDS ) );
+    }
 
     return hDstDS;
 }
