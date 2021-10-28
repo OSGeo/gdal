@@ -270,14 +270,17 @@ GDALAutoCreateWarpedVRTEx( GDALDatasetH hSrcDS,
 
     GDALDestroyWarpOptions( psWO );
 
-    if( pszDstWKT != nullptr )
-        GDALSetProjection( hDstDS, pszDstWKT );
-    else if( pszSrcWKT != nullptr )
-        GDALSetProjection( hDstDS, pszSrcWKT );
-    else if( GDALGetGCPCount( hSrcDS ) > 0 )
-        GDALSetProjection( hDstDS, GDALGetGCPProjection( hSrcDS ) );
-    else
-        GDALSetProjection( hDstDS, GDALGetProjectionRef( hSrcDS ) );
+    if( hDstDS != nullptr )
+    {
+        if( pszDstWKT != nullptr )
+            GDALSetProjection( hDstDS, pszDstWKT );
+        else if( pszSrcWKT != nullptr )
+            GDALSetProjection( hDstDS, pszSrcWKT );
+        else if( GDALGetGCPCount( hSrcDS ) > 0 )
+            GDALSetProjection( hDstDS, GDALGetGCPProjection( hSrcDS ) );
+        else
+            GDALSetProjection( hDstDS, GDALGetProjectionRef( hSrcDS ) );
+    }
 
     return hDstDS;
 }
@@ -563,6 +566,11 @@ CPLErr VRTWarpedDataset::Initialize( void *psWO )
     }
 
     GDALDestroyWarpOptions(psWO_Dup);
+
+    if( nBands > 1 )
+    {
+        GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+    }
 
     return eErr;
 }
@@ -1239,6 +1247,26 @@ CPLErr VRTWarpedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPathIn )
             return eErr;
     }
 
+    // Check that band block sizes didn't change the dataset block size.
+    for(int i = 1; i <= nBands; i++ )
+    {
+        int nBlockXSize = 0;
+        int nBlockYSize = 0;
+        GetRasterBand(i)->GetBlockSize(&nBlockXSize, &nBlockYSize);
+        if( nBlockXSize != m_nBlockXSize || nBlockYSize != m_nBlockYSize )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Block size specified on band %d not consistent with "
+                     "dataset block size", i);
+            return CE_Failure;
+        }
+    }
+
+    if( nBands > 1 )
+    {
+        GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Find the GDALWarpOptions XML tree.                              */
 /* -------------------------------------------------------------------- */
@@ -1669,9 +1697,9 @@ CPLErr VRTWarpedDataset::ProcessBlock( int iBlockX, int iBlockY )
                     for(int iY=0;iY<nReqYSize;iY++)
                     {
                         GDALCopyWords(
-                            pabyDstBandBuffer + iY * nReqXSize*nWordSize,
+                            pabyDstBandBuffer + static_cast<GPtrDiff_t>(iY) * nReqXSize*nWordSize,
                             psWO->eWorkingDataType, nWordSize,
-                            pabyBlock + iY * m_nBlockXSize * nDTSize,
+                            pabyBlock + static_cast<GPtrDiff_t>(iY) * m_nBlockXSize * nDTSize,
                             poBlock->GetDataType(),
                             nDTSize,
                             nReqXSize );
