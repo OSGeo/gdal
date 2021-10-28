@@ -39,6 +39,8 @@ endif()
 
 find_path(OPENJPEG_INCLUDE_DIR opj_config.h
           PATH_SUFFIXES
+              openjpeg-2.5
+              openjpeg-2.4
               openjpeg-2.3
               openjpeg-2.2
               openjpeg-2.1
