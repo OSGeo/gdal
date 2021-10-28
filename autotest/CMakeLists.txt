@@ -17,13 +17,13 @@ if (Python_FOUND)
   if (WIN32)
     # If running GDAL as a CustomBuild Command os MSBuild, "ERROR bla:" is considered as failing the job. This is rarely
     # the intended behavior
-    list(APPEND PYTHON_RUN_ENV CPL_ERROR_SEPARATOR="$<SEMICOLON>")
+    list(APPEND PYTHON_RUN_ENV "CPL_ERROR_SEPARATOR=\\;")
 
-    string(REPLACE ";" "$<SEMICOLON>" PATH_ESCAPED "$ENV{PATH}")
-    list(APPEND PYTHON_RUN_ENV PATH="${GDAL_OUTPUT_DIR}$<SEMICOLON>${GDAL_APPS_OUTPUT_DIR}$<SEMICOLON>${PATH_ESCAPED}")
+    string(REPLACE ";" "\\;" PATH_ESCAPED "$ENV{PATH}")
+    list(APPEND PYTHON_RUN_ENV "PATH=${GDAL_OUTPUT_DIR}\\;${GDAL_APPS_OUTPUT_DIR}\\;${PATH_ESCAPED}")
   else ()
-    list(APPEND PYTHON_RUN_ENV PATH="${GDAL_APPS_OUTPUT_DIR}:$ENV{PATH}")
-    list(APPEND PYTHON_RUN_ENV LD_LIBRARY_PATH="${GDAL_OUTPUT_DIR}:$ENV{LD_LIBRARY_PATH}")
+    list(APPEND PYTHON_RUN_ENV "PATH=${GDAL_APPS_OUTPUT_DIR}:$ENV{PATH}")
+    list(APPEND PYTHON_RUN_ENV "LD_LIBRARY_PATH=${GDAL_OUTPUT_DIR}:$ENV{LD_LIBRARY_PATH}")
   endif ()
 
   list(APPEND PYTHON_RUN_ENV "PYTHONPATH=${CMAKE_BINARY_DIR}/swig/python/")
@@ -35,12 +35,11 @@ if (Python_FOUND)
   if (PLUGIN_MODULES_LENGTH GREATER_EQUAL 1)
     list(GET PLUGIN_MODULES 0 FIRST_TARGET)
     set(PLUGIN_OUTPUT_DIR "$<SHELL_PATH:$<TARGET_FILE_DIR:${FIRST_TARGET}>>")
-    file(TO_NATIVE_PATH "${PLUGIN_OUTPUT_DIR}" PLUGIN_OUTPUT_DIR)
-    list(APPEND PYTHON_RUN_ENV GDAL_DRIVER_PATH="${PLUGIN_OUTPUT_DIR}")
+    list(APPEND PYTHON_RUN_ENV "GDAL_DRIVER_PATH=${PLUGIN_OUTPUT_DIR}")
   else ()
     # if no plugins are configured, set up a dummy path, to avoid loading installed plugins (from a previous install
     # execution) that could have a different ABI
-    list(APPEND PYTHON_RUN_ENV GDAL_DRIVER_PATH="dummy")
+    list(APPEND PYTHON_RUN_ENV "GDAL_DRIVER_PATH=dummy")
   endif ()
 
   # Set TEST_ENV that goes into pytest.ini
@@ -92,6 +91,9 @@ if (Python_FOUND)
 
   # Needed for a autotest/osr test
   symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/cpp/data ${CMAKE_CURRENT_BINARY_DIR}/cpp/data)
+  if (NOT SKIP_COPYING_AUTOTEST_SUBDIRS)
+    symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/pymod ${CMAKE_CURRENT_BINARY_DIR}/pymod)
+  endif ()
 
   foreach (
     tgt IN
@@ -101,7 +103,6 @@ if (Python_FOUND)
           alg
           osr
           gnm
-          pymod
           pyscripts
           utilities)
     if (NOT SKIP_COPYING_AUTOTEST_SUBDIRS)
@@ -112,6 +113,9 @@ if (Python_FOUND)
       COMMAND ${CMAKE_COMMAND} -E env ${PYTHON_RUN_ENV} ${Python_EXECUTABLE} -m pytest -c
               ${CMAKE_CURRENT_BINARY_DIR}/pytest.ini ${tgt}
       DEPENDS ${GDAL_LIB_TARGET_NAME} gdalapps python_binding)
+    add_test(NAME autotest_${tgt} COMMAND ${Python_EXECUTABLE} -m pytest -c ${CMAKE_CURRENT_BINARY_DIR}/pytest.ini
+                                          ${tgt})
+    set_property(TEST autotest_${tgt} PROPERTY ENVIRONMENT "${PYTHON_RUN_ENV}")
   endforeach ()
   add_custom_target(
     autotest
