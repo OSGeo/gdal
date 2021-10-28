@@ -30,7 +30,7 @@ curl -L https://github.com/Unidata/netcdf-c/archive/refs/tags/v4.7.4.tar.gz > v4
     tar xzf v4.7.4.tar.gz && \
     rm -f v4.7.4.tar.gz && \
     cd netcdf-c-4.7.4 && \
-    patch -p0 < $SRC/gdal/gdal/fuzzers/fix_stack_read_overflow_ncindexlookup.patch && \
+    patch -p0 < $SRC/gdal/fuzzers/fix_stack_read_overflow_ncindexlookup.patch && \
     cd ..
 
 rm -rf poppler
