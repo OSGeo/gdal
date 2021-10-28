@@ -6,7 +6,7 @@ if (NOT DEFINED ENV{CTEST_PARALLEL_LEVEL})
   set(PARALLEL_OPTION "-j1")
 endif ()
 
-if (Python_FOUND)
+if (Python_Interpreter_FOUND)
   if (WIN32)
     set(_SEP ";")
   else ()
@@ -74,14 +74,15 @@ if (Python_FOUND)
     COMMAND ${CMAKE_COMMAND} -E env ${PYTHON_RUN_ENV} ${Python_EXECUTABLE} -m pytest -c
             ${CMAKE_CURRENT_BINARY_DIR}/pytest.ini
     DEPENDS ${GDAL_LIB_TARGET_NAME} gdalapps python_binding)
+endif ()
 
-  # Generating Python bindings in Debug mode of MSVC tends to be problematic, since it requires a python debug library
-  # not easily found, hence we disable pytest_runner for that situation We might not need it at all
-  get_property(_isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
-  if (NOT (_isMultiConfig AND WIN32))
-    file(
-      WRITE ${CMAKE_CURRENT_BINARY_DIR}/pytest_runner.cpp
-      "
+# Generating Python bindings in Debug mode of MSVC tends to be problematic, since it requires a python debug library not
+# easily found, hence we disable pytest_runner for that situation We might not need it at all
+get_property(_isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+if (Python_Development_FOUND AND NOT (_isMultiConfig AND WIN32))
+  file(
+    WRITE ${CMAKE_CURRENT_BINARY_DIR}/pytest_runner.cpp
+    "
 #include <string>
 #include <Python.h>
 int main(int argc, char **argv) {
@@ -105,16 +106,15 @@ int main(int argc, char **argv) {
     Py_Finalize();
     return 0;
 }")
-    add_executable(pytest_runner ${CMAKE_CURRENT_BINARY_DIR}/pytest_runner.cpp)
-    set_property(TARGET pytest_runner PROPERTY CXX_STANDARD 11)
-    target_link_libraries(pytest_runner PUBLIC ${GDAL_LIB_TARGET_NAME})
-    target_include_directories(pytest_runner PRIVATE ${Python_INCLUDE_DIRS})
-    target_link_libraries(pytest_runner PRIVATE ${Python_LIBRARIES})
-    add_custom_target(
-      autotest_runner
-      COMMAND ${CMAKE_COMMAND} -E env ${PYTHON_RUN_ENV} $<TARGET_NAME:pytest_runner> -c
-              ${CMAKE_CURRENT_BINARY_DIR}/pytest.ini
-      DEPENDS ${GDAL_LIB_TARGET_NAME} gdalapps python_binding pytest_runner
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  endif ()
+  add_executable(pytest_runner ${CMAKE_CURRENT_BINARY_DIR}/pytest_runner.cpp)
+  set_property(TARGET pytest_runner PROPERTY CXX_STANDARD 11)
+  target_link_libraries(pytest_runner PUBLIC ${GDAL_LIB_TARGET_NAME})
+  target_include_directories(pytest_runner PRIVATE ${Python_INCLUDE_DIRS})
+  target_link_libraries(pytest_runner PRIVATE ${Python_LIBRARIES})
+  add_custom_target(
+    autotest_runner
+    COMMAND ${CMAKE_COMMAND} -E env ${PYTHON_RUN_ENV} $<TARGET_NAME:pytest_runner> -c
+            ${CMAKE_CURRENT_BINARY_DIR}/pytest.ini
+    DEPENDS ${GDAL_LIB_TARGET_NAME} gdalapps python_binding pytest_runner
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 endif ()

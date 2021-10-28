@@ -198,6 +198,40 @@ else ()
   find_package(Python COMPONENTS Interpreter Development NumPy)
 endif ()
 set_package_properties(Python PROPERTIES PURPOSE "SWIG_PYTHON: Python binding")
+
+if (NOT Python_FOUND AND ${CMAKE_VERSION} VERSION_LESS "3.12.0")
+  # On Ubuntu 18.04 with Python 3.6, the backported FindPython package we have in cmake/modules/3.16 doesn't manage to
+  # find automatically Python (we can make it work by manually setting -DPython_LOOKUP_VERSION=3.6.9
+  # -DPython_LIBRARY=/usr/lib/x86_64-linux-gnu/libpython3.6m.so
+  # -DPython_NumPy_INCLUDE_DIR=/usr/lib/python3/dist-packages/numpy/core/include/numpy ) but this is a bit painful. So
+  # use the deprecated method (since CMake 3.12), which works out of the box in that situation.
+  find_package(PythonInterp)
+  find_package(PythonLibs)
+  if (PYTHONINTERP_FOUND)
+    set(Python_Interpreter_FOUND TRUE)
+    set(Python_EXECUTABLE ${PYTHON_EXECUTABLE})
+    set(Python_VERSION_MAJOR ${PYTHON_VERSION_MAJOR})
+    set(Python_VERSION_MINOR ${PYTHON_VERSION_MINOR})
+
+    # Detect numpy
+    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/get_numpy.py
+         "try:\n  import numpy\n  print(numpy.get_include())\nexcept:\n  pass\n")
+    execute_process(
+      COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/get_numpy.py
+      OUTPUT_VARIABLE _numpy_include
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
+    if (NOT _numpy_include STREQUAL "")
+      set(Python_NumPy_FOUND TRUE)
+      set(Python_NumPy_INCLUDE_DIRS ${Python_NumPy_INCLUDE_DIRS})
+    endif ()
+  endif ()
+  if (PYTHONLIBS_FOUND)
+    set(Python_Development_FOUND TRUE)
+    set(Python_LIBRARIES ${PYTHON_LIBRARIES})
+    set(Python_INCLUDE_DIRS ${PYTHON_INCLUDE_DIRS})
+  endif ()
+endif ()
+
 #
 include(${CMAKE_CURRENT_SOURCE_DIR}/gdal.cmake)
 
