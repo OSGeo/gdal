@@ -29,64 +29,13 @@ option(OGR_BUILD_OPTIONAL_DRIVERS "Whether to build OGR optional drivers by defa
 option(BUILD_SHARED_LIBS "Set ON to build shared library" ON)
 
 # ######################################################################################################################
-# generate ${CMAKE_CURRENT_BINARY_DIR}/port/cpl_config.h
-
-set(_CMAKE_C_FLAGS_backup ${CMAKE_C_FLAGS})
-set(_CMAKE_CXX_FLAGS_backup ${CMAKE_CXX_FLAGS})
-if (CMAKE_C_FLAGS)
-    string(REPLACE "-Werror" " " CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
-    string(REPLACE "/WX" " " CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
-endif()
-if (CMAKE_CXX_FLAGS)
-  string(REPLACE "-Werror" " " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-  string(REPLACE "/WX" " " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-endif()
-include(configure)
-
-# generate ${CMAKE_CURRENT_BINARY_DIR}/gcore/gdal_version.h and set GDAL_VERSION variable
-include(GdalVersion)
-
-# find 3rd party libraries
-include(CheckDependentLibraries)
-
-set(CMAKE_C_FLAGS ${_CMAKE_C_FLAGS_backup})
-set(CMAKE_CXX_FLAGS ${_CMAKE_CXX_FLAGS_backup})
-
-if (GDAL_HIDE_INTERNAL_SYMBOLS)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
-endif ()
-
-# Check that all symbols we need are present in our dependencies
-# This is in particular useful to check that drivers built as plugins can
-# access all symbols they need.
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  include(CheckLinkerFlag)
-  check_linker_flag(C "-Wl,--no-undefined" HAS_NO_UNDEFINED)
-  if (HAS_NO_UNDEFINED)
-    string(APPEND CMAKE_SHARED_LINKER_FLAGS " -Wl,--no-undefined")
-    string(APPEND CMAKE_MODULE_LINKER_FLAGS " -Wl,--no-undefined")
-  endif ()
-endif ()
-
-# Default definitions during build
-add_definitions(-DGDAL_COMPILATION -DGDAL_CMAKE_BUILD)
-
-if (ENABLE_IPO)
-  if (POLICY CMP0069)
-    include(CheckIPOSupported)
-    check_ipo_supported(RESULT result)
-    if (result)
-      set(CMAKE_INTERPROCEDURAL_OPTIMIZATION True)
-    endif ()
-  endif ()
-endif ()
-
-# ######################################################################################################################
 # Detect available warning flags
+
+# Do that check now, since we need the result of HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT for cpl_config.h
 
 set(GDAL_C_WARNING_FLAGS)
 set(GDAL_CXX_WARNING_FLAGS)
+
 if (MSVC)
     # 4127: conditional expression is constant
     # 4251: 'identifier' : class 'type' needs to have dll-interface to be used by clients of class 'type2'
@@ -181,6 +130,11 @@ else()
         set(GDAL_CXX_WARNING_FLAGS ${GDAL_CXX_WARNING_FLAGS} -fno-operator-names)
     endif()
 
+    check_cxx_compiler_flag(-Wzero-as-null-pointer-constant HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT)
+    if( HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT )
+      set(GDAL_CXX_WARNING_FLAGS ${GDAL_CXX_WARNING_FLAGS} -Wzero-as-null-pointer-constant)
+    endif()
+
     # Detect -Wold-style-cast but do not add it by default, as not all targets support it
     check_cxx_compiler_flag(-Wold-style-cast HAVE_WFLAG_OLD_STYLE_CAST)
     if( HAVE_WFLAG_OLD_STYLE_CAST )
@@ -197,6 +151,60 @@ endif()
 
 # message("GDAL_C_WARNING_FLAGS: ${GDAL_C_WARNING_FLAGS}")
 # message("GDAL_CXX_WARNING_FLAGS: ${GDAL_CXX_WARNING_FLAGS}")
+
+# ######################################################################################################################
+# generate ${CMAKE_CURRENT_BINARY_DIR}/port/cpl_config.h
+
+set(_CMAKE_C_FLAGS_backup ${CMAKE_C_FLAGS})
+set(_CMAKE_CXX_FLAGS_backup ${CMAKE_CXX_FLAGS})
+if (CMAKE_C_FLAGS)
+    string(REPLACE "-Werror" " " CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
+    string(REPLACE "/WX" " " CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
+endif()
+if (CMAKE_CXX_FLAGS)
+  string(REPLACE "-Werror" " " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+  string(REPLACE "/WX" " " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+endif()
+include(configure)
+
+# generate ${CMAKE_CURRENT_BINARY_DIR}/gcore/gdal_version.h and set GDAL_VERSION variable
+include(GdalVersion)
+
+# find 3rd party libraries
+include(CheckDependentLibraries)
+
+set(CMAKE_C_FLAGS ${_CMAKE_C_FLAGS_backup})
+set(CMAKE_CXX_FLAGS ${_CMAKE_CXX_FLAGS_backup})
+
+if (GDAL_HIDE_INTERNAL_SYMBOLS)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
+endif ()
+
+# Check that all symbols we need are present in our dependencies
+# This is in particular useful to check that drivers built as plugins can
+# access all symbols they need.
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  include(CheckLinkerFlag)
+  check_linker_flag(C "-Wl,--no-undefined" HAS_NO_UNDEFINED)
+  if (HAS_NO_UNDEFINED)
+    string(APPEND CMAKE_SHARED_LINKER_FLAGS " -Wl,--no-undefined")
+    string(APPEND CMAKE_MODULE_LINKER_FLAGS " -Wl,--no-undefined")
+  endif ()
+endif ()
+
+# Default definitions during build
+add_definitions(-DGDAL_COMPILATION -DGDAL_CMAKE_BUILD)
+
+if (ENABLE_IPO)
+  if (POLICY CMP0069)
+    include(CheckIPOSupported)
+    check_ipo_supported(RESULT result)
+    if (result)
+      set(CMAKE_INTERPROCEDURAL_OPTIMIZATION True)
+    endif ()
+  endif ()
+endif ()
 
 # ######################################################################################################################
 
