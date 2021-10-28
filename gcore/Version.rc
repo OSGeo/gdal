@@ -48,6 +48,9 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 #pragma code_page(1252)
 #endif //_WIN32
 
+#ifdef GDAL_COMPILATION
+#undef GDAL_COMPILATION
+#endif
 #include "gdal.h"
 
 #ifndef _MAC
