@@ -399,7 +399,7 @@ else (MSVC)
     DEPRECATE_SPRINTF)
   if (NOT DEPRECATE_SPRINTF)
     set(DONT_DEPRECATE_SPRINTF 1)
-    add_definitions(-DDONT_DEPRECATE_SRPINTF)
+    add_definitions(-DDONT_DEPRECATE_SPRINTF)
   endif ()
 
   check_include_file("linux/userfaultfd.h" HAVE_USERFAULTFD_H)

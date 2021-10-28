@@ -188,5 +188,8 @@
 #cmakedefine DONT_DEPRECATE_SPRINTF 0
 #endif
 
+/* Define to 1 if you have the `std::isnan' function. */
+#define HAVE_STD_IS_NAN 1
+
 /* Define to 1 if the compiler supports -Wzero-as-null-pointer-constant */
 #cmakedefine HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT @HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT@
