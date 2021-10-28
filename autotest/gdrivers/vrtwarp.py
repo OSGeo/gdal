@@ -435,7 +435,7 @@ def test_vrtwarp_read_blocks_larger_than_2_gigapixels():
     assert data == ref_ds.ReadRaster()
 
 ###############################################################################
-# Test reading a warped VRT that has blocks pointing to spce.
+# Test reading a warped VRT that has blocks pointing to space.
 # https://github.com/OSGeo/gdal/issues/1985
 
 
@@ -443,3 +443,36 @@ def test_vrtwarp_read_blocks_in_space():
 
     ds = gdal.Open('data/vrt/geos_vrtwarp.vrt')
     assert ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512)
+
+###############################################################################
+# Test reading a warped VRT that has inconsistent block size at band and
+# dataset level
+
+
+@pytest.mark.parametrize("filename", ["data/vrt/warp_inconsistent_blockxsize.vrt",
+                                      "data/vrt/warp_inconsistent_blockysize.vrt"])
+def test_vrtwarp_read_inconsistent_blocksize(filename):
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ds = gdal.Open(filename)
+    assert ds is None
+    assert gdal.GetLastErrorMsg() == 'Block size specified on band 1 not consistent with dataset block size'
+
+
+###############################################################################
+# Test that we don't write duplicated block size information
+
+
+def test_vrtwarp_write_no_duplicated_blocksize():
+    tmpfilename = '/vsimem/tmp.vrt'
+    gdal.Warp(tmpfilename, 'data/byte.tif', format='VRT', width=1024, height=1024)
+    fp = gdal.VSIFOpenL(tmpfilename, 'rb')
+    assert fp
+    data = gdal.VSIFReadL(1, 10000, fp).decode('utf-8')
+    gdal.VSIFCloseL(fp)
+    gdal.Unlink(tmpfilename)
+    assert '<BlockXSize>' in data
+    assert '<BlockYSize>' in data
+    assert ' blockXSize=' not in data
+    assert ' blockYSize=' not in data

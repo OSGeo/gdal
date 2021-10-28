@@ -460,26 +460,29 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
     CPLDebug("WARP", "Using %d threads", nThreads);
 
     auto& jobs = *psThreadData->threadJobs;
+    CPLAssert( static_cast<int>(jobs.size()) >= nThreads );
     // Fill-in job structures.
-    GIntBig i = 0;
-    for (auto& job : jobs)
+    for (int i = 0; i < nThreads; ++i)
     {
+        auto& job = jobs[i];
         job.poWK = poWK;
-        job.iYMin = static_cast<int>(i * nDstYSize / nThreads);
-        job.iYMax = static_cast<int>((i + 1) * nDstYSize / nThreads);
+        job.iYMin = static_cast<int>(static_cast<int64_t>(i) * nDstYSize / nThreads);
+        job.iYMax = static_cast<int>(static_cast<int64_t>(i + 1) * nDstYSize / nThreads);
         if( poWK->pfnProgress != GDALDummyProgress )
             job.pfnProgress = GWKProgressThread;
         job.pfnFunc = pfnFunc;
-        i++;
     }
 
     {
         std::unique_lock<std::mutex> lock(psThreadData->mutex);
 
         // Start jobs.
-        for (auto& job : jobs)
+        for (int i = 0; i < nThreads; ++i)
+        {
+            auto& job = jobs[i];
             psThreadData->poJobQueue->SubmitJob( ThreadFuncAdapter,
                 static_cast<void*>(&job) );
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Report progress.                                                */
