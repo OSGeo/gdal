@@ -155,19 +155,27 @@ if (Python_Interpreter_FOUND)
     set(HAVE_NUMPY "False")
   endif ()
   file(TO_NATIVE_PATH "${GDAL_PYTHON_CSOURCE_DIR}" GDAL_PYTHON_EXT_SOURCE_DIR)
-  set(GDAL_LIB_DIR "os.path.dirname('$<TARGET_FILE:${GDAL_LIB_TARGET_NAME}>')")
-  configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/setup.py.in ${CMAKE_CURRENT_BINARY_DIR}/setup.py.tmp @ONLY)
-  if (ONLY_GENERATE_FOR_RELEASE)
-    file(
-      GENERATE
-      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/setup.py
-      INPUT ${CMAKE_CURRENT_BINARY_DIR}/setup.py.tmp
-      CONDITION "$<CONFIG:Release>")
+  if (_isMultiConfig)
+    set(GDAL_LIB_DIR "os.path.dirname('$<TARGET_FILE:${GDAL_LIB_TARGET_NAME}>')")
+    configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/setup.py.in ${CMAKE_CURRENT_BINARY_DIR}/setup.py.tmp @ONLY)
+    if (ONLY_GENERATE_FOR_RELEASE)
+      file(
+        GENERATE
+        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/setup.py
+        INPUT ${CMAKE_CURRENT_BINARY_DIR}/setup.py.tmp
+        CONDITION "$<CONFIG:Release>")
+    else ()
+      file(
+        GENERATE
+        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/setup.py
+        INPUT ${CMAKE_CURRENT_BINARY_DIR}/setup.py.tmp)
+    endif ()
   else ()
-    file(
-      GENERATE
-      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/setup.py
-      INPUT ${CMAKE_CURRENT_BINARY_DIR}/setup.py.tmp)
+    # Do not use file(GENERATE) as, for some unknown reason, it would cause cmake to be reinvoked every time make is
+    # involved
+    get_target_property(_gdal_lib_directory ${GDAL_LIB_TARGET_NAME} LIBRARY_OUTPUT_DIRECTORY)
+    set(GDAL_LIB_DIR "'${_gdal_lib_directory}'")
+    configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/setup.py.in ${CMAKE_CURRENT_BINARY_DIR}/setup.py @ONLY)
   endif ()
   file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/get_suffix.py
        "from setuptools.command.build_ext import EXTENSION_SUFFIXES; print(EXTENSION_SUFFIXES[0])\n")
