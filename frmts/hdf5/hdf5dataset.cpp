@@ -378,13 +378,14 @@ int HDF5Dataset::Identify( GDALOpenInfo * poOpenInfo )
     {
         if( (EQUAL(osExt, "NC") ||
              EQUAL(osExt, "CDF") ||
-             EQUAL(osExt, "NC4")) &&
+             EQUAL(osExt, "NC4") ||
+             EQUAL(osExt, "gmac")) &&
             GDALGetDriverByName("netCDF") != nullptr )
         {
             const char *const apszAllowedDriver[] = { "netCDF", nullptr };
             CPLPushErrorHandler(CPLQuietErrorHandler);
             GDALDatasetH hDS = GDALOpenEx(poOpenInfo->pszFilename,
-                                          GDAL_OF_RASTER | GDAL_OF_VECTOR,
+                                          GDAL_OF_RASTER | GDAL_OF_MULTIDIM_RASTER | GDAL_OF_VECTOR,
                                           apszAllowedDriver, nullptr, nullptr);
             CPLPopErrorHandler();
             if( hDS )
