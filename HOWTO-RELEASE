@@ -68,8 +68,8 @@ Perl module maintainer to make a CPAN release.
      bump CURRENT, set others to zero.
 
 5) Prepare release overview in the NEWS file. For example, to get all changes
-   from v2.2.0 to current HEAD (from gdal/ subdirectory)
-     git log --reverse -v v2.2.0..HEAD .
+   from v2.2.0 to current HEAD
+     git log --reverse -v v2.2.0..HEAD . ":(exclude)autotest"
 
   - commit new version to NEWS file.
 
@@ -92,8 +92,7 @@ Perl module maintainer to make a CPAN release.
 
 8) Prepare archives
 
-8.1) Create the source distributions using the mkgdaldist.sh script (under gdal/
-   in git).
+8.1) Create the source distributions using the mkgdaldist.sh script.
    The argument should be the version number (i.e. 1.4.2). As our process involves
    doing betas or RCs, use the -rc option so that the filenames include this
    information (after promotion to official release, filename renaming will have
@@ -199,7 +198,7 @@ the GDAL package by one of the current owners : HowardB/FrankW/EvenR)
 
 15.2) create gdal sdist and upload to pypi:
 
-    a) cd gdal/swig/python
+    a) cd swig/python
 
     b) python setup.py sdist
 
@@ -214,7 +213,7 @@ the GDAL package by one of the current owners : HowardB/FrankW/EvenR)
 
 15.3) create gdal-utils wheel and upload to pypi:
 
-    a) cd gdal/swig/python/gdal-utils
+    a) cd swig/python/gdal-utils
 
     b) python setup.py bdist_wheel
 
@@ -341,7 +340,7 @@ e) Click the "Release" button and that is it! The release should be available in
     e.g
         ./docker/build-all.sh --with-multi-arch --release --tag 3.3.1 --gdal v3.3.1 --proj 8.1.0 --platform linux/arm64,linux/amd64 --push
 
-    and update gdal/docker/README.md with the latest release
+    and update docker/README.md with the latest release
 
 21) Announce release to :
     - major release: gdal-dev@lists.osgeo.org, gdal-announce@lists.osgeo.org, news_item@osgeo.org.
