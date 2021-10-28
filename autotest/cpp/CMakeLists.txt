@@ -86,10 +86,12 @@ endif ()
 file(TO_NATIVE_PATH "${PROJECT_SOURCE_DIR}/data" GDAL_DATA)
 list(APPEND TEST_ENV GDAL_DATA="${GDAL_DATA}")
 
-add_custom_target(
-  test-unit
-  COMMAND ${CMAKE_COMMAND} -E env ${TEST_ENV} $<TARGET_FILE:gdal_unit_test>
-  DEPENDS gdal_unit_test)
+if (NOT CMAKE_CROSSCOMPILING OR CMAKE_CROSSCOMPILING_EMULATOR)
+  add_custom_target(
+    test-unit
+    COMMAND ${CMAKE_COMMAND} -E env ${TEST_ENV} $<TARGET_FILE:gdal_unit_test>
+    DEPENDS gdal_unit_test)
+endif ()
 
 macro (gdal_test_target _target _source)
   add_executable(${_target} EXCLUDE_FROM_ALL ${_source})
@@ -102,86 +104,116 @@ macro (gdal_test_target _target _source)
 endmacro ()
 
 gdal_test_target(testblockcache testblockcache.cpp)
-add_custom_target(
-  test-block-cache-1
-  COMMAND ${CMAKE_COMMAND} -E env ${TEST_ENV} $<TARGET_FILE:testblockcache> -check -co TILED=YES --debug TEST,LOCK
-          -loops 3 --config GDAL_RB_LOCK_DEBUG_CONTENTION YES
-  DEPENDS testblockcache
-  WORKING_DIRECTORY ${GDAL_ROOT_TEST_DIR})
-add_custom_target(
-  test-block-cache-2
-  COMMAND ${CMAKE_COMMAND} -E env ${TEST_ENV} $<TARGET_FILE:testblockcache> -check -co TILED=YES --debug TEST,LOCK
-          -loops 3 --config GDAL_RB_LOCK_DEBUG_CONTENTION YES --config GDAL_RB_LOCK_TYPE SPIN
-  DEPENDS testblockcache
-  WORKING_DIRECTORY ${GDAL_ROOT_TEST_DIR})
-add_custom_target(
-  test-block-cache-3
-  COMMAND ${CMAKE_COMMAND} -E env ${TEST_ENV} $<TARGET_FILE:testblockcache> -check -co TILED=YES -migrate
-  DEPENDS testblockcache
-  WORKING_DIRECTORY ${GDAL_ROOT_TEST_DIR})
-add_custom_target(
-  test-block-cache-4
-  COMMAND ${CMAKE_COMMAND} -E env ${TEST_ENV} $<TARGET_FILE:testblockcache> -check -memdriver
-  DEPENDS testblockcache
-  WORKING_DIRECTORY ${GDAL_ROOT_TEST_DIR})
-add_custom_target(
-  test-block-cache-5
-  COMMAND ${CMAKE_COMMAND} -E env ${TEST_ENV} $<TARGET_FILE:testblockcache> --config GDAL_BAND_BLOCK_CACHE HASHSET
-          -check -co TILED=YES --debug TEST,LOCK -loops 3 --config GDAL_RB_LOCK_DEBUG_CONTENTION YES
-  DEPENDS testblockcache
-  WORKING_DIRECTORY ${GDAL_ROOT_TEST_DIR})
-add_custom_target(
-  test-block-cache-6
-  COMMAND
-    ${CMAKE_COMMAND} -E env ${TEST_ENV} $<TARGET_FILE:testblockcache> --config GDAL_BAND_BLOCK_CACHE HASHSET -check -co
-    TILED=YES --debug TEST,LOCK -loops 3 --config GDAL_RB_LOCK_DEBUG_CONTENTION YES --config GDAL_RB_LOCK_TYPE SPIN
-  DEPENDS testblockcache
-  WORKING_DIRECTORY ${GDAL_ROOT_TEST_DIR})
 
-gdal_test_target(testsse1 testsse.cpp)
-gdal_test_target(testsse2 testsse.cpp)
-gdal_test_target(testsse3 testsse.cpp)
-gdal_test_target(testsse4 testsse.cpp)
-gdal_test_target(testsse5 testsse.cpp)
-target_compile_options(testsse2 PRIVATE -mssse3)
-target_compile_options(testsse3 PRIVATE -mssse3 -msse4.1)
-target_compile_options(testsse4 PRIVATE -mavx2)
-target_compile_definitions(testsse5 PRIVATE -DUSE_SSE2_EMULATION)
-add_custom_target(
-  test-sse1
-  COMMAND ${CMAKE_COMMAND} -E env ${TEST_ENV} $<TARGET_FILE:testsse1>
-  DEPENDS testsse1
-  WORKING_DIRECTORY ${GDAL_ROOT_TEST_DIR})
-add_custom_target(
-  test-sse2
-  COMMAND ${CMAKE_COMMAND} -E env ${TEST_ENV} $<TARGET_FILE:testsse2>
-  DEPENDS testsse2
-  WORKING_DIRECTORY ${GDAL_ROOT_TEST_DIR})
-add_custom_target(
-  test-sse3
-  COMMAND ${CMAKE_COMMAND} -E env ${TEST_ENV} $<TARGET_FILE:testsse3>
-  DEPENDS testsse3
-  WORKING_DIRECTORY ${GDAL_ROOT_TEST_DIR})
-add_custom_target(
-  test-sse4
-  COMMAND ${CMAKE_COMMAND} -E env ${TEST_ENV} $<TARGET_FILE:testsse4>
-  DEPENDS testsse4
-  WORKING_DIRECTORY ${GDAL_ROOT_TEST_DIR})
-add_custom_target(
-  test-sse5
-  COMMAND ${CMAKE_COMMAND} -E env ${TEST_ENV} $<TARGET_FILE:testsse5>
-  DEPENDS testsse5
-  WORKING_DIRECTORY ${GDAL_ROOT_TEST_DIR})
+if (NOT CMAKE_CROSSCOMPILING OR CMAKE_CROSSCOMPILING_EMULATOR)
+  add_custom_target(
+    test-block-cache-1
+    COMMAND ${CMAKE_COMMAND} -E env ${TEST_ENV} $<TARGET_FILE:testblockcache> -check -co TILED=YES --debug TEST,LOCK
+            -loops 3 --config GDAL_RB_LOCK_DEBUG_CONTENTION YES
+    DEPENDS testblockcache
+    WORKING_DIRECTORY ${GDAL_ROOT_TEST_DIR})
+  add_custom_target(
+    test-block-cache-2
+    COMMAND ${CMAKE_COMMAND} -E env ${TEST_ENV} $<TARGET_FILE:testblockcache> -check -co TILED=YES --debug TEST,LOCK
+            -loops 3 --config GDAL_RB_LOCK_DEBUG_CONTENTION YES --config GDAL_RB_LOCK_TYPE SPIN
+    DEPENDS testblockcache
+    WORKING_DIRECTORY ${GDAL_ROOT_TEST_DIR})
+  add_custom_target(
+    test-block-cache-3
+    COMMAND ${CMAKE_COMMAND} -E env ${TEST_ENV} $<TARGET_FILE:testblockcache> -check -co TILED=YES -migrate
+    DEPENDS testblockcache
+    WORKING_DIRECTORY ${GDAL_ROOT_TEST_DIR})
+  add_custom_target(
+    test-block-cache-4
+    COMMAND ${CMAKE_COMMAND} -E env ${TEST_ENV} $<TARGET_FILE:testblockcache> -check -memdriver
+    DEPENDS testblockcache
+    WORKING_DIRECTORY ${GDAL_ROOT_TEST_DIR})
+  add_custom_target(
+    test-block-cache-5
+    COMMAND ${CMAKE_COMMAND} -E env ${TEST_ENV} $<TARGET_FILE:testblockcache> --config GDAL_BAND_BLOCK_CACHE HASHSET
+            -check -co TILED=YES --debug TEST,LOCK -loops 3 --config GDAL_RB_LOCK_DEBUG_CONTENTION YES
+    DEPENDS testblockcache
+    WORKING_DIRECTORY ${GDAL_ROOT_TEST_DIR})
+  add_custom_target(
+    test-block-cache-6
+    COMMAND
+      ${CMAKE_COMMAND} -E env ${TEST_ENV} $<TARGET_FILE:testblockcache> --config GDAL_BAND_BLOCK_CACHE HASHSET -check
+      -co TILED=YES --debug TEST,LOCK -loops 3 --config GDAL_RB_LOCK_DEBUG_CONTENTION YES --config GDAL_RB_LOCK_TYPE
+      SPIN
+    DEPENDS testblockcache
+    WORKING_DIRECTORY ${GDAL_ROOT_TEST_DIR})
+endif ()
+
+if (HAVE_AVX_AT_COMPILE_TIME)
+  gdal_test_target(testsse testsse.cpp)
+  gdal_test_target(testsse2_emulation testsse.cpp)
+  gdal_test_target(testssse3 testsse.cpp)
+  gdal_test_target(testsse4_1 testsse.cpp)
+  gdal_test_target(testavx2 testsse.cpp)
+  target_compile_definitions(testsse2_emulation PRIVATE -DUSE_SSE2_EMULATION -DNO_WARN_USE_SSE2_EMULATION)
+  target_compile_options(testssse3 PRIVATE -mssse3)
+  target_compile_options(testsse4_1 PRIVATE -mssse3 -msse4.1)
+  target_compile_options(testavx2 PRIVATE -mavx2)
+  target_compile_options(testsse2_emulation PRIVATE -msse2)
+
+  if (NOT CMAKE_CROSSCOMPILING OR CMAKE_CROSSCOMPILING_EMULATOR)
+    add_custom_target(
+      test-sse
+      COMMAND ${CMAKE_COMMAND} -E env ${TEST_ENV} $<TARGET_FILE:testsse>
+      DEPENDS testsse
+      WORKING_DIRECTORY ${GDAL_ROOT_TEST_DIR})
+    add_custom_target(
+      test-sse2-emulation
+      COMMAND ${CMAKE_COMMAND} -E env ${TEST_ENV} $<TARGET_FILE:testsse2_emulation>
+      DEPENDS testsse2_emulation
+      WORKING_DIRECTORY ${GDAL_ROOT_TEST_DIR})
+    add_custom_target(
+      test-ssse3
+      COMMAND ${CMAKE_COMMAND} -E env ${TEST_ENV} $<TARGET_FILE:testssse3>
+      DEPENDS testssse3
+      WORKING_DIRECTORY ${GDAL_ROOT_TEST_DIR})
+    add_custom_target(
+      test-sse41
+      COMMAND ${CMAKE_COMMAND} -E env ${TEST_ENV} $<TARGET_FILE:testsse4_1>
+      DEPENDS testsse4_1
+      WORKING_DIRECTORY ${GDAL_ROOT_TEST_DIR})
+    add_custom_target(
+      test-avx2
+      COMMAND ${CMAKE_COMMAND} -E env ${TEST_ENV} $<TARGET_FILE:testavx2>
+      DEPENDS testavx2
+      WORKING_DIRECTORY ${GDAL_ROOT_TEST_DIR})
+  endif ()
+endif ()
 
 macro (gdal_autotest_target _target testlabel _source options)
+  gdal_test_target(${_target} ${_source})
   if (NOT CMAKE_CROSSCOMPILING OR CMAKE_CROSSCOMPILING_EMULATOR)
-    gdal_test_target(${_target} ${_source})
     add_custom_target(
       ${testlabel}
       COMMAND ${CMAKE_COMMAND} -E env ${TEST_ENV} $<TARGET_FILE:${_target}> ${options}
+      DEPENDS ${_target}
       WORKING_DIRECTORY ${GDAL_ROOT_TEST_DIR})
   endif ()
 endmacro ()
+
+set(QUICKTEST_LIST
+    test-unit
+    test-block-cache-1
+    test-block-cache-2
+    test-block-cache-3
+    test-block-cache-4
+    test-block-cache-5
+    test-block-cache-6
+    test-copy-words
+    test-closed-on-destroy-DM
+    test-threaded-condition
+    test-virtual-memory
+    test-block-cache-write
+    test-block-cache-limit
+    test-multi-threaded-writing
+    test-destroy
+    test-bug1488
+    test-log)
 
 gdal_autotest_target(testcopywords test-copy-words testcopywords.cpp "")
 gdal_autotest_target(testclosedondestroydm test-closed-on-destroy-DM testclosedondestroydm.cpp "")
@@ -194,21 +226,13 @@ gdal_autotest_target(testdestroy test-destroy testdestroy.cpp "")
 gdal_autotest_target(test_include_from_c_file test-include-from-C-file test_include_from_c_file.c "")
 gdal_autotest_target(test_c_include_from_cpp_file test-C-include-from-CPP-file test_c_include_from_cpp_file.cpp "")
 gdal_autotest_target(testperfcopywords test-performance-copy-words testperfcopywords.cpp "")
+gdal_autotest_target(bug1488 test-bug1488 bug1488.cpp "")
+gdal_autotest_target(testlog test-log testlog.cpp "")
+if (UNIX)
+  gdal_autotest_target(proj_with_fork test-proj-with-fork proj_with_fork.cpp "")
+  list(APPEND QUICKTEST_LIST test-proj-with-fork)
+endif ()
 
-add_custom_target(
-  quicktest
-  DEPENDS test-unit
-          test-block-cache-1
-          test-block-cache-2
-          test-block-cache-3
-          test-block-cache-4
-          test-block-cache-5
-          test-block-cache-6
-          test-copy-words
-          test-closed-on-destroy-DM
-          test-threaded-condition
-          test-virtual-memory
-          test-block-cache-write
-          test-block-cache-limit
-          test-multi-threaded-writing
-          test-destroy)
+if (NOT CMAKE_CROSSCOMPILING OR CMAKE_CROSSCOMPILING_EMULATOR)
+  add_custom_target(quicktest DEPENDS ${QUICKTEST_LIST})
+endif ()
