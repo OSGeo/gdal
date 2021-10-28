@@ -7342,7 +7342,7 @@ def test_tiff_write_compression_create_and_createcopy():
 
     if 'JXL' in md['DMD_CREATIONOPTIONLIST']:
         tests.append((['COMPRESS=JXL', 'JXL_LOSSLESS=YES'],['COMPRESS=JXL', 'JXL_LOSSLESS=NO']))
-        tests.append((['COMPRESS=JXL', 'JXL_LOSSLESS=NO', 'JXL_EFFORT=3'],['COMPRESS=JXL', 'JXL_LOSSLESS=NO', 'JXL_EFFORT=9']))
+        tests.append((['COMPRESS=JXL', 'JXL_LOSSLESS=YES', 'JXL_EFFORT=3'],['COMPRESS=JXL', 'JXL_LOSSLESS=YES', 'JXL_EFFORT=9']))
         tests.append((['COMPRESS=JXL', 'JXL_LOSSLESS=NO', 'JXL_DISTANCE=0.1'],['COMPRESS=JXL', 'JXL_LOSSLESS=NO', 'JXL_DISTANCE=3']))
 
     new_tests = []
