@@ -60,7 +60,7 @@ static void OpenJPEG2000(const char* pszFilename)
         }
 
         hDS = GDALOpen(pszFilename, GA_ReadOnly);
-        if( !EQUAL(apszDrivers[i], "JP2Lura") )
+        if( !EQUAL(apszDrivers[i], "JP2Lura") && !EQUAL(apszDrivers[i], "JPEG2000") )
         {
             assert( hDS != nullptr );
         }
