@@ -74,6 +74,9 @@ jobs:
           pacman -S --noconfirm base-devel
           pacman -S --noconfirm mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-ccache
           pacman -S --noconfirm mingw-w64-x86_64-proj mingw-w64-x86_64-geos mingw-w64-x86_64-hdf5 mingw-w64-x86_64-netcdf mingw-w64-x86_64-openjpeg mingw-w64-x86_64-poppler mingw-w64-x86_64-libtiff mingw-w64-x86_64-libpng mingw-w64-x86_64-xerces-c mingw-w64-x86_64-libfreexl mingw-w64-x86_64-libgeotiff mingw-w64-x86_64-libspatialite mingw-w64-x86_64-libtiff mingw-w64-x86_64-pcre mingw-w64-x86_64-postgresql mingw-w64-x86_64-zstd mingw-w64-x86_64-crypto++ mingw-w64-x86_64-cgal mingw-w64-x86_64-jasper mingw-w64-x86_64-python-numpy mingw-w64-x86_64-python-pytest mingw-w64-x86_64-python-setuptools
+          cd /C/tools/msys64/mingw64/share/proj
+          wget http://download.osgeo.org/proj/proj-datumgrid-1.8.tar.gz
+          tar xvzf proj-datumgrid-1.8.tar.gz
           '@
           & c:\tools\msys64\usr\bin\bash.exe -lc $script
         env:
@@ -83,7 +86,7 @@ jobs:
           $script = @'
           python -m ensurepip --upgrade
           python -m pip install -U wheel setuptools numpy
-          python -m pip install pytest pytest-sugar pytest-env
+          python -m pip install pytest pytest-env
           '@
           & c:\tools\msys64\usr\bin\bash.exe -lc $script
         env:
@@ -101,6 +104,8 @@ jobs:
       #- name: test
       #  run: cmake --build build --target quicktest
       #  working-directory: ${{ github.workspace }}
+      #  env:
+      #    PROJ_LIB: "C:\\tools\\msys64\\mingw64\\share\\proj"
 
   build-windows-conda:
     runs-on: windows-latest
@@ -121,11 +126,15 @@ jobs:
     - name: Install dependency
       shell: bash -l {0}
       run: |
-        conda install --yes --quiet --name gdalenv curl libiconv icu git python=3.7 swig numpy pytest zlib clcache
+        conda install --yes --quiet --name gdalenv curl libiconv icu git python=3.7 swig numpy pytest pytest-env zlib clcache lxml
         conda install --yes --quiet --name gdalenv -c conda-forge proj geos hdf4 hdf5 \
             libnetcdf openjpeg poppler libtiff libpng xerces-c expat libxml2 kealib json-c \
             cfitsio freexl geotiff jpeg libpq libspatialite libwebp-base pcre postgresql \
             sqlite tiledb zstd charls cryptopp cgal jasper doxygen librttopo libkml openssl xz
+        cd $CONDA_PREFIX/Library/share/proj
+        curl http://download.osgeo.org/proj/proj-datumgrid-1.8.tar.gz > proj-datumgrid-1.8.tar.gz
+        tar xvzf proj-datumgrid-1.8.tar.gz
+        cd $OLDPWD
     - name: Configure
       shell: bash -l {0}
       # FIXME: Spatialite and Jasper manually disabled because of linking errors: spatialite needs rttopo, and jasper lacks jp2_box_destroy
@@ -161,7 +170,7 @@ jobs:
       run: |
         brew update
         brew outdated
-        brew install postgresql || brew link --overwrite postgresql
+        brew install postgresql || brew link postgresql
         brew install freexl libxml2 libspatialite geos proj openjpeg giflib szip postgis poppler doxygen unixodbc
         brew install ccache swig
         # gdal is automatically installed as a dependency for postgis

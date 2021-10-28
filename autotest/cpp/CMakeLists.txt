@@ -39,7 +39,7 @@ if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
 endif ()
 
 target_link_libraries(gdal_unit_test PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)
-add_dependencies(gdal_unit_test ${GDAL_LIB_TARGET_NAME})
+add_dependencies(gdal_unit_test ${GDAL_LIB_TARGET_NAME} gdal_plugins)
 gdal_standard_includes(gdal_unit_test)
 target_compile_options(gdal_unit_test PRIVATE ${GDAL_CXX_WARNING_FLAGS})
 target_compile_definitions(gdal_unit_test PRIVATE -DGDAL_TEST_ROOT_DIR="${GDAL_ROOT_TEST_DIR}")
@@ -52,20 +52,40 @@ set(TEST_ENV)
 if (MINGW)
   list(APPEND TEST_ENV SKIP_MEM_INTENSIVE_TEST=YES)
 endif ()
-if (MSVC)
-  set(ENVSEP ";")
+
+# Set PATH / LD_LIBRARY_PATH
+set(GDAL_OUTPUT_DIR "$<SHELL_PATH:$<TARGET_FILE_DIR:${GDAL_LIB_TARGET_NAME}>>")
+if (WIN32)
+  # If running GDAL as a CustomBuild Command os MSBuild, "ERROR bla:" is considered as failing the job. This is rarely
+  # the intended behavior
+  list(APPEND TEST_ENV CPL_ERROR_SEPARATOR="$<SEMICOLON>")
+
+  string(REPLACE ";" "$<SEMICOLON>" PATH_ESCAPED "$ENV{PATH}")
+  list(APPEND TEST_ENV PATH="${GDAL_OUTPUT_DIR}$<SEMICOLON>${PATH_ESCAPED}")
+  # Recoding tests in test_cpl.cpp fail on Windows
+  list(APPEND TEST_ENV DO_NOT_FAIL_ON_RECODE_ERRORS=YES)
 else ()
-  set(ENVSEP ":")
+  list(APPEND TEST_ENV LD_LIBRARY_PATH="${GDAL_OUTPUT_DIR}:$ENV{LD_LIBRARY_PATH}")
 endif ()
-# FIXME: better handling of output path w/o hard coded. set(GDAL_OUTPUT_DIR
-# "$<TARGET_PROPERTY:${GDAL_LIB_TARGET_NAME},LIBRARY_OUTPUT_DIRECTORY>")
-file(TO_NATIVE_PATH "${PROJECT_BINARY_DIR}" GDAL_OUTPUT_DIR)
-# set(GDAL_DRIVER_PATH "$<TARGET_PROPERTY:${GDAL_LIB_TARGET_NAME},PLUGIN_OUTPUT_DIR")
-file(TO_NATIVE_PATH "${PROJECT_BINARY_DIR}/gdalplugins" GDAL_DRIVER_PATH)
+
+# Set GDAL_DRIVER_PATH We request the TARGET_FILE_DIR of one of the plugins, since the PLUGIN_OUTPUT_DIR will not
+# contain the \Release suffix with MSVC generator
+get_property(PLUGIN_MODULES GLOBAL PROPERTY PLUGIN_MODULES)
+list(LENGTH PLUGIN_MODULES PLUGIN_MODULES_LENGTH)
+if (PLUGIN_MODULES_LENGTH GREATER_EQUAL 1)
+  list(GET PLUGIN_MODULES 0 FIRST_TARGET)
+  set(PLUGIN_OUTPUT_DIR "$<SHELL_PATH:$<TARGET_FILE_DIR:${FIRST_TARGET}>>")
+  list(APPEND TEST_ENV GDAL_DRIVER_PATH="${PLUGIN_OUTPUT_DIR}")
+else ()
+  # if no plugins are configured, set up a dummy path, to avoid loading installed plugins (from a previous install
+  # execution) that could have a different ABI
+  list(APPEND TEST_ENV GDAL_DRIVER_PATH="dummy")
+endif ()
+
+# Set GDAL_DATA
 file(TO_NATIVE_PATH "${PROJECT_SOURCE_DIR}/data" GDAL_DATA)
-# PATH="${GDAL_OUTPUT_DIR}${ENVSEP}$ENV{PATH}"
-list(APPEND TEST_ENV LD_LIBRARY_PATH="${GDAL_OUTPUT_DIR}:$ENV{LD_LIBRARY_PATH}" GDAL_DRIVER_PATH="${GDAL_DRIVER_PATH}"
-     GDAL_DATA="${GDAL_DATA}")
+list(APPEND TEST_ENV GDAL_DATA="${GDAL_DATA}")
+
 add_custom_target(
   test-unit
   COMMAND ${CMAKE_COMMAND} -E env ${TEST_ENV} $<TARGET_FILE:gdal_unit_test>
@@ -78,7 +98,7 @@ macro (gdal_test_target _target _source)
   target_compile_options(${_target} PRIVATE ${GDAL_CXX_WARNING_FLAGS})
   target_include_directories(${_target} PRIVATE $<TARGET_PROPERTY:appslib,SOURCE_DIR>)
   target_compile_definitions(${_target} PRIVATE -DGDAL_TEST_ROOT_DIR="${GDAL_ROOT_TEST_DIR}")
-  add_dependencies(${_target} ${GDAL_LIB_TARGET_NAME})
+  add_dependencies(${_target} ${GDAL_LIB_TARGET_NAME} gdal_plugins)
 endmacro ()
 
 gdal_test_target(testblockcache testblockcache.cpp)
