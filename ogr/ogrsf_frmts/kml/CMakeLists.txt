@@ -7,7 +7,6 @@ gdal_standard_includes(ogr_KML)
 
 if (HAVE_EXPAT)
   target_sources(ogr_KML PRIVATE kml.cpp kmlnode.cpp kmlvector.h kml.h kmlnode.h kmlvector.cpp)
-  target_include_directories(ogr_KML PRIVATE ${EXPAT_INCLUDE_DIRS})
   target_compile_definitions(ogr_KML PRIVATE -DHAVE_EXPAT)
-  gdal_target_link_libraries(TARGET ogr_KML LIBRARIES ${EXPAT_LIBRARIES})
+  gdal_target_link_libraries(TARGET ogr_KML LIBRARIES EXPAT::EXPAT)
 endif ()

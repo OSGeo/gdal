@@ -113,4 +113,12 @@ find_package_handle_standard_args(OpenJPEG
 if(OPENJPEG_FOUND)
   set(OPENJPEG_LIBRARIES ${OPENJPEG_LIBRARY})
   set(OPENJPEG_INCLUDE_DIRS ${OPENJPEG_INCLUDE_DIR})
+
+  if(NOT TARGET OPENJPEG::OpenJPEG)
+    add_library(OPENJPEG::OpenJPEG UNKNOWN IMPORTED)
+    set_target_properties(OPENJPEG::OpenJPEG PROPERTIES
+                          INTERFACE_INCLUDE_DIRECTORIES ${OPENJPEG_INCLUDE_DIR}
+                          IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+                          IMPORTED_LOCATION "${OPENJPEG_LIBRARY}")
+  endif()
 endif()

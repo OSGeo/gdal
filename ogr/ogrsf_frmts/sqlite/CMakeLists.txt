@@ -29,7 +29,6 @@ gdal_target_link_libraries(TARGET ogr_SQLite LIBRARIES SQLite::SQLite3)
 gdal_target_link_libraries(TARGET ogr_SQLite LIBRARIES PROJ::PROJ)
 
 if (GDAL_USE_PCRE)
-  target_include_directories(ogr_SQLite PRIVATE ${PCRE_INCLUDE_DIRS})
   target_compile_definitions(ogr_SQLite PRIVATE -DHAVE_PCRE)
   gdal_target_link_libraries(TARGET ogr_SQLite LIBRARIES PCRE::PCRE)
 endif ()

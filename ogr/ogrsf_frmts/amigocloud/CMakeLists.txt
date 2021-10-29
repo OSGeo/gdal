@@ -15,6 +15,5 @@ target_include_directories(ogr_AmigoCloud PRIVATE ${GDAL_VECTOR_FORMAT_SOURCE_DI
 if (GDAL_USE_LIBJSONC_INTERNAL)
   target_include_directories(ogr_AmigoCloud PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
 else ()
-  target_include_directories(ogr_AmigoCloud PRIVATE ${JSONC_INCLUDE_DIRS})
-  gdal_target_link_libraries(TARGET ogr_AmigoCloud LIBRARIES ${JSONC_LIBRARIES})
+  gdal_target_link_libraries(TARGET ogr_AmigoCloud LIBRARIES JSONC::JSONC)
 endif ()
