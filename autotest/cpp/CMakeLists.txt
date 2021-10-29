@@ -86,13 +86,17 @@ endif ()
 file(TO_NATIVE_PATH "${PROJECT_SOURCE_DIR}/data" GDAL_DATA)
 list(APPEND TEST_ENV "GDAL_DATA=${GDAL_DATA}")
 
-macro (register_test _test_name _binary_name)
+macro (register_test_as_custom_target _test_name _binary_name)
   if (NOT CMAKE_CROSSCOMPILING OR CMAKE_CROSSCOMPILING_EMULATOR)
     add_custom_target(
       ${_test_name}
       COMMAND ${CMAKE_COMMAND} -E env ${TEST_ENV} $<TARGET_FILE:${_binary_name}> ${ARGN}
       DEPENDS ${_binary_name})
   endif ()
+endmacro ()
+
+macro (register_test _test_name _binary_name)
+  register_test_as_custom_target(${_test_name} ${_binary_name} ${ARGN})
   add_test(NAME ${_test_name} COMMAND ${_binary_name} ${ARGN})
   set_property(TEST ${_test_name} PROPERTY ENVIRONMENT "${TEST_ENV}")
 endmacro ()
@@ -179,23 +183,26 @@ register_test(
   GDAL_RB_LOCK_TYPE
   SPIN)
 
-if (HAVE_AVX_AT_COMPILE_TIME)
-  gdal_test_target(testsse testsse.cpp)
+if ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(x86_64|AMD64)")
+  gdal_test_target(testsse2 testsse.cpp)
   gdal_test_target(testsse2_emulation testsse.cpp)
+  target_compile_definitions(testsse2_emulation PRIVATE -DUSE_SSE2_EMULATION -DNO_WARN_USE_SSE2_EMULATION)
+  target_compile_options(testsse2_emulation PRIVATE -msse2)
+  register_test(test-sse2 testsse2)
+  register_test(test-sse2-emulation testsse2_emulation)
+endif ()
+
+if (HAVE_AVX_AT_COMPILE_TIME)
+  # Do not include in ctest as we aren't sure the target machine support this
   gdal_test_target(testssse3 testsse.cpp)
   gdal_test_target(testsse4_1 testsse.cpp)
   gdal_test_target(testavx2 testsse.cpp)
-  target_compile_definitions(testsse2_emulation PRIVATE -DUSE_SSE2_EMULATION -DNO_WARN_USE_SSE2_EMULATION)
   target_compile_options(testssse3 PRIVATE -mssse3)
   target_compile_options(testsse4_1 PRIVATE -mssse3 -msse4.1)
   target_compile_options(testavx2 PRIVATE -mavx2)
-  target_compile_options(testsse2_emulation PRIVATE -msse2)
-
-  register_test(test-sse testsse)
-  register_test(test-sse2-emulation testsse2_emulation)
-  register_test(test-ssse3 testssse3)
-  register_test(test-sse41 testsse4_1)
-  register_test(test-avx2 testavx2)
+  register_test_as_custom_target(test-ssse3 testssse3)
+  register_test_as_custom_target(test-sse41 testsse4_1)
+  register_test_as_custom_target(test-avx2 testavx2)
 endif ()
 
 macro (gdal_autotest_target _target testlabel _source options)
