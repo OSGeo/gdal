@@ -89,6 +89,41 @@ find_package(Boost)
 gdal_check_package(CURL "Enable drivers to use web API" CAN_DISABLE)
 
 gdal_check_package(Iconv "Character set recoding (used in GDAL portability library)" CAN_DISABLE)
+
+if (Iconv_FOUND)
+  set(CMAKE_REQUIRED_INCLUDES ${Iconv_INCLUDE_DIR})
+  set(CMAKE_REQUIRED_LIBRARIES ${Iconv_LIBRARY})
+  if (MSVC)
+    set(CMAKE_REQUIRED_FLAGS "/WX")
+  else ()
+    set(CMAKE_REQUIRED_FLAGS "-Werror")
+  endif ()
+
+  set(ICONV_CONST_TEST_CODE
+      "#include <stdlib.h>
+    #include <iconv.h>
+    int main(){
+      iconv_t conv = 0;
+      char* in = 0;
+      size_t ilen = 0;
+      char* out = 0;
+      size_t olen = 0;
+      size_t ret = iconv(conv, &in, &ilen, &out, &olen);
+      return (size_t)ret;
+    }")
+  check_cxx_source_compiles("${ICONV_CONST_TEST_CODE}" _ICONV_SECOND_ARGUMENT_IS_NOT_CONST)
+  if (_ICONV_SECOND_ARGUMENT_IS_NOT_CONST)
+    set(ICONV_CPP_CONST "")
+  else ()
+    set(ICONV_CPP_CONST "const")
+  endif ()
+  unset(ICONV_CONST_TEST_CODE)
+  unset(_ICONV_SECOND_ARGUMENT_IS_NOT_CONST)
+  unset(CMAKE_REQUIRED_INCLUDES)
+  unset(CMAKE_REQUIRED_LIBRARIES)
+  unset(CMAKE_REQUIRED_FLAGS)
+endif ()
+
 gdal_check_package(LibXml2 "Read and write XML formats" CAN_DISABLE)
 
 gdal_check_package(EXPAT "Read and write XML formats" RECOMMENDED)
@@ -226,6 +261,11 @@ endif()
 gdal_check_package(PCRE "Enable PCRE support for sqlite3" CAN_DISABLE)
 
 gdal_check_package(SQLite3 "Enable SQLite3 support (used by SQLite/Spatialite, GPKG, Rasterlite, MBTiles, etc.)" CAN_DISABLE RECOMMENDED)
+if (SQLite3_FOUND)
+  if (NOT DEFINED SQLite_HAS_COLUMN_METADATA)
+    message(FATAL_ERROR "missing SQLite_HAS_COLUMN_METADATA")
+  endif()
+endif ()
 
 gdal_check_package(SPATIALITE "Enable spatialite support for sqlite3" CAN_DISABLE)
 
@@ -265,6 +305,8 @@ if(HAVE_JASPER)
     set(CMAKE_REQUIRED_QUIET "yes")
     set(CMAKE_REQUIRED_LIBRARIES jasper)
     check_c_source_compiles("#ifdef __cplusplus\nextern \"C\"\n#endif\n char jp2_encode_uuid ();int main () {return jp2_encode_uuid ();;return 0;}" HAVE_JASPER_UUID)
+    unset(CMAKE_REQUIRED_QUIET)
+    unset(CMAKE_REQUIRED_LIBRARIES)
     if(HAVE_JASPER_UUID)
         message(STATUS "Jasper GeoJP2 UUID hack detected.")
         if(TARGET JASPER::Jasper)

@@ -50,72 +50,8 @@ set(HAVE_LONG_LONG 1)
 set(HAVE_IEEEFP TRUE)
 # endif()
 
-if (SQLITE3_FOUND AND NOT WITH_SQLITE3_EXTERNAL)
-  set(SQLITE_COL_TEST_CODE
-      "#ifdef __cplusplus
-extern \"C\"
-#endif
-char sqlite3_column_table_name ();
-int
-main ()
-{
-return sqlite3_column_table_name ();
-  return 0;
-}
-")
-  check_c_source_compiles("${SQLITE_COL_TEST_CODE}" SQLITE_HAS_COLUMN_METADATA)
-else ()
-  set(SQLITE_HAS_COLUMN_METADATA ON)
-endif ()
-
 check_function_exists("atoll" HAVE_ATOLL)
 check_function_exists("strtof" HAVE_DECL_STRTOF)
-
-if (Iconv_FOUND)
-  set(CMAKE_REQUIRED_INCLUDES ${Iconv_INCLUDE_DIR})
-  set(CMAKE_REQUIRED_LIBRARIES ${Iconv_LIBRARY})
-  if (MSVC)
-    set(CMAKE_REQUIRED_FLAGS "/WX")
-  else ()
-    set(CMAKE_REQUIRED_FLAGS "-Werror")
-  endif ()
-
-  set(ICONV_CONST_TEST_CODE
-      "#include <stdlib.h>
-    #include <iconv.h>
-    #ifdef __cplusplus
-    extern \"C\"
-    #endif
-
-    int main(){
-    #if defined(__STDC__) || defined(__cplusplus)
-      iconv_t conv = 0;
-      char* in = 0;
-      size_t ilen = 0;
-      char* out = 0;
-      size_t olen = 0;
-      size_t ret = iconv(conv, &in, &ilen, &out, &olen);
-    #else
-      size_t ret = iconv();
-    #endif
-      return 0;
-    }")
-  if (CMAKE_C_COMPILER_LOADED)
-    check_c_source_compiles("${ICONV_CONST_TEST_CODE}" _ICONV_SECOND_ARGUMENT_IS_NOT_CONST)
-  elseif (CMAKE_CXX_COMPILER_LOADED)
-    check_cxx_source_compiles("${ICONV_CONST_TEST_CODE}" _ICONV_SECOND_ARGUMENT_IS_NOT_CONST)
-  endif ()
-  if (_ICONV_SECOND_ARGUMENT_IS_NOT_CONST)
-    set(ICONV_CPP_CONST "")
-  else ()
-    set(ICONV_CPP_CONST "const")
-  endif ()
-  unset(ICONV_CONST_TEST_CODE)
-  unset(_ICONV_SECOND_ARGUMENT_IS_NOT_CONST)
-  unset(CMAKE_REQUIRED_INCLUDES)
-  unset(CMAKE_REQUIRED_LIBRARIES)
-  unset(CMAKE_REQUIRED_FLAGS)
-endif ()
 
 if (MSVC)
   check_include_file("search.h" HAVE_SEARCH_H)
