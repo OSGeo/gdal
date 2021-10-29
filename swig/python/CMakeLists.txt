@@ -30,6 +30,7 @@ if (SWIG_REGENERATE_PYTHON)
     -I${PROJECT_SOURCE_DIR}/swig/include/python/docs
     ${PY3ARG}
     -threads
+    -relativeimport
     -outdir
     ${CMAKE_CURRENT_BINARY_DIR}/osgeo
     OUTPUT
@@ -44,7 +45,7 @@ if (SWIG_REGENERATE_PYTHON)
       OUTPUT ${ARRAY_OUTPUT} "${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdal_array.py"
       COMMAND
         ${SWIG_EXECUTABLE} -Wall -I${PROJECT_SOURCE_DIR}/swig/include -I${PROJECT_SOURCE_DIR}/swig/include/python
-        -I${PROJECT_SOURCE_DIR}/swig/include/python/docs ${PY3ARG} -threads -outdir ${CMAKE_CURRENT_BINARY_DIR}/osgeo
+        -I${PROJECT_SOURCE_DIR}/swig/include/python/docs ${PY3ARG} -threads -relativeimport -outdir ${CMAKE_CURRENT_BINARY_DIR}/osgeo
         ${SWIG_DEFINES} -I${PROJECT_SOURCE_DIR}/gdal -c++ -python -o ${ARRAY_OUTPUT} ${ARRAY_INPUT}
       DEPENDS ${GDAL_SWIG_COMMON_INCLUDE} ${ARRAY_INPUT} ${PROJECT_SOURCE_DIR}/swig/include/python/typemaps_python.i
       COMMENT "Generate _gdal_array_wrap.so and gdal_array.py by SWiG command")
