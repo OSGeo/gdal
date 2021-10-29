@@ -101,10 +101,16 @@ endif ()
 if (HAVE_AVX_AT_COMPILE_TIME)
   target_sources(alg PRIVATE gdalgridavx.cpp)
   target_compile_definitions(alg PRIVATE -DHAVE_AVX_AT_COMPILE_TIME)
-  set_property(
+  get_property(
+    _compile_flags
     SOURCE gdalgridavx.cpp
-    APPEND
-    PROPERTY COMPILE_FLAGS ${GDAL_AVX_FLAG})
+    PROPERTY COMPILE_FLAGS)
+  if ("${_compile_flags}" STREQUAL "" OR "${_compile_flags}" STREQUAL " ")
+    set(_compile_flags ${GDAL_AVX_FLAG})
+  else ()
+    list(APPEND _compile_flags ${GDAL_AVX_FLAG})
+  endif ()
+  set_property(SOURCE gdalgridavx.cpp PROPERTY COMPILE_FLAGS ${_compile_flags})
 endif ()
 
 include(TargetPublicHeader)
