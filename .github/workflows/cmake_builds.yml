@@ -51,9 +51,12 @@ jobs:
     - name: Build
       run: |
         cmake --build $GITHUB_WORKSPACE/superbuild/build -j $(nproc)
-    - name: test
+    - name: test (with command targets)
       run: |
         cmake --build $GITHUB_WORKSPACE/superbuild/build --target quicktest -j $(nproc)
+    - name: test (with ctest)
+      run: |
+        ctest --test-dir $GITHUB_WORKSPACE/superbuild/build -L quicktest -j $(nproc)
     - name: install
       run: |
         cmake --build $GITHUB_WORKSPACE/superbuild/build --target install -j $(nproc)
@@ -145,14 +148,15 @@ jobs:
         cmake -A ${architecture} -G "${generator}" "-DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal" "-DCMAKE_C_COMPILER_LAUNCHER=clcache" "-DCMAKE_CXX_COMPILER_LAUNCHER=clcache" "-DCMAKE_PREFIX_PATH=${CONDA_PREFIX}" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DSPATIALITE_LIBRARY:FILEPATH= -DJASPER_LIBRARY_RELEASE:FILEPATH= -DMYSQL_LIBRARY:FILEPATH= -DLIBKML_BASE_LIBRARY:FILEPATH=
     - name: Build
       shell: bash -l {0}
-      run: cmake --build $GITHUB_WORKSPACE/build --config Release
+      run: cmake --build $GITHUB_WORKSPACE/build --config Release -j 2
     - name: test
       shell: bash -l {0}
-      # FIXME: only test-copy-words for now
       run: |
-        export PATH=${CONDA_PREFIX}/Library/bin:${GITHUB_WORKSPACE}/build/Release:${PATH}
-        echo $PATH
-        cmake --build $GITHUB_WORKSPACE/build --config Release --target test-copy-words
+        cmake --build $GITHUB_WORKSPACE/build --config Release --target quicktest
+    - name: test (with ctest)
+      shell: bash -l {0}
+      run: |
+        ctest --test-dir $GITHUB_WORKSPACE/build -C Release -L quicktest -j 3
     - name: Install
       shell: bash -l {0}
       run: cmake --build $GITHUB_WORKSPACE/build --config Release --target install

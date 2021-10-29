@@ -28,8 +28,6 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include <sys/types.h>
-#include <unistd.h>
 
 #include "ogr_api.h"
 #include "cpl_conv.h"

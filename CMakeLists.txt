@@ -85,6 +85,7 @@ if (POLICY CMP0125)
 endif ()
 #
 project(gdal LANGUAGES C CXX)
+include(CTest)
 
 set(GDAL_LIB_TARGET_NAME GDAL)
 
@@ -235,14 +236,15 @@ endif ()
 #
 include(${CMAKE_CURRENT_SOURCE_DIR}/gdal.cmake)
 
-if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/autotest")
+if (BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/autotest")
   # unit tests
   add_subdirectory(autotest/cpp)
-  # please comment out if you want to exclude autotest from distribution.
   add_subdirectory(autotest)
 endif ()
 # Google OSS-Fuzz project utilities
 add_subdirectory(fuzzers)
-# Google OSS-Fuzz tests
-add_subdirectory(fuzzers/tests)
+if (BUILD_TESTING)
+  # Google OSS-Fuzz tests
+  add_subdirectory(fuzzers/tests)
+endif ()
 # vim: ts=4 sw=4 sts=4 et
