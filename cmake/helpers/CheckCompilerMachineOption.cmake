@@ -68,9 +68,18 @@ function(check_compiler_machine_option outvar feature)
 	  string(REPLACE "_" "." _flag "${_flag}")
       __check_compiler_flag("-m${_flag}" test_${_flag})
       if(test_${_flag})
-        set(header_table "sse3" "pmmintrin.h" "ssse3" "tmmintrin.h" "sse4.1" "smmintrin.h"
-            "sse4.2" "smmintrin.h" "sse4a" "ammintrin.h" "avx" "immintrin.h"
-            "avx2" "immintrin.h" "fma4" "x86intrin.h" "xop" "x86intrin.h")
+        set(header_table
+            "sse" "xmmintrin.h"
+            "sse2" "emmintrin.h"
+            "sse3" "pmmintrin.h"
+            "ssse3" "tmmintrin.h"
+            "sse4.1" "smmintrin.h"
+            "sse4.2" "smmintrin.h"
+            "sse4a" "ammintrin.h"
+            "avx" "immintrin.h"
+            "avx2" "immintrin.h"
+            "fma4" "x86intrin.h"
+            "xop" "x86intrin.h")
         set(_header FALSE)
         list(FIND header_table ${_flag} _found)
         if(_found GREATER -1)
