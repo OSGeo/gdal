@@ -34,9 +34,20 @@
 #include "cpl_multiproc.h"
 #include "gdal_priv.h"
 
-#include <cassert>
 #include <cstdlib>
 #include <vector>
+
+template<typename T> void check(const T& x, const char* msg)
+{
+    if( !x )
+    {
+        fprintf(stderr, "CHECK(%s) failed\n", msg);
+        exit(1);
+    }
+}
+
+#define STRINGIFY(x) #x
+#define CHECK(x) check((x), STRINGIFY(x))
 
 CPLLock* psLock = nullptr;
 
@@ -107,7 +118,7 @@ static void Check(GByte* pBuffer, int nXSize, int nYSize, int nBands,
             {
                 unsigned long seed = iBand * nXSize * nYSize + (iY + nYOff) * nXSize + iX + nXOff;
                 GByte expected = (GByte)(myrand_r(&seed) & 0xff);
-                assert( pBuffer[iBand * nXWin * nYWin + iY * nXWin + iX] == expected );
+                CHECK( pBuffer[iBand * nXWin * nYWin + iY * nXWin + iX] == expected );
                 (void)expected;
             }
         }
@@ -173,7 +184,7 @@ static Resource* AcquireFirstResource()
     else
         psGlobalResourceLast = nullptr;
     psRet->psNext = nullptr;
-    assert(psRet->psPrev == nullptr);
+    CHECK(psRet->psPrev == nullptr);
     if( psLock ) CPLReleaseLock(psLock);
     return psRet;
 }
@@ -213,7 +224,7 @@ static void ThreadFuncWithMigration(void* /* _unused */)
     while( (psRequest = GetNextRequest(psGlobalRequestList)) != nullptr )
     {
         Resource* psResource = AcquireFirstResource();
-        assert(psResource);
+        CHECK(psResource);
         int nXSize = psResource->poDS->GetRasterXSize();
         int nYSize = psResource->poDS->GetRasterYSize();
         ReadRaster(psResource->poDS, nXSize, nYSize, psRequest->nBands,
@@ -574,7 +585,7 @@ int main(int argc, char* argv[])
     if( poMEMDS )
         GDALClose(poMEMDS);
 
-    assert( GDALGetCacheUsed64() == 0 );
+    CHECK( GDALGetCacheUsed64() == 0 );
 
     GDALDestroyDriverManager();
     CSLDestroy( argv );

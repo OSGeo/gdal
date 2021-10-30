@@ -33,9 +33,19 @@
 #include "gdal_priv.h"
 #include "gdal.h"
 
-#include <cassert>
-
 #include "test_data.h"
+
+template<typename T> void check(const T& x, const char* msg)
+{
+    if( !x )
+    {
+        fprintf(stderr, "CHECK(%s) failed\n", msg);
+        exit(1);
+    }
+}
+
+#define STRINGIFY(x) #x
+#define CHECK(x) check((x), STRINGIFY(x))
 
 static void OpenJPEG2000(const char* pszFilename)
 {
@@ -62,7 +72,7 @@ static void OpenJPEG2000(const char* pszFilename)
         hDS = GDALOpen(pszFilename, GA_ReadOnly);
         if( !EQUAL(apszDrivers[i], "JP2Lura") && !EQUAL(apszDrivers[i], "JPEG2000") )
         {
-            assert( hDS != nullptr );
+            CHECK( hDS != nullptr );
         }
         for(j=0;j<N_DRIVERS;j++)
         {
