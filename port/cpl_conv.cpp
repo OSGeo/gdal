@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_config.h"
+
+#ifdef HAVE_USELOCALE
 // For uselocale, define _XOPEN_SOURCE = 700
 // but on Solaris, we don't have uselocale and we cannot have
 // std=c++11 with _XOPEN_SOURCE != 600
@@ -42,6 +45,7 @@
 #undef _XOPEN_SOURCE
 #endif
 #define _XOPEN_SOURCE 700
+#endif
 #endif
 
 // For atoll (at least for NetBSD)
