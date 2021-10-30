@@ -1,7 +1,7 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  GeoTIFF Driver
+ * Project:  CPL
  * Purpose:  Floating point conversion functions. Convert 16- and 24-bit
  *           floating point numbers into the 32-bit IEEE 754 compliant ones.
  * Author:   Andrey Kiselev, dron@remotesensing.org
@@ -44,7 +44,8 @@
  *
  ****************************************************************************/
 
-#include "tif_float.h"
+#include "cpl_float.h"
+#include "cpl_error.h"
 
 /************************************************************************/
 /*                           HalfToFloat()                              */
@@ -52,7 +53,7 @@
 /*  16-bit floating point number to 32-bit one.                         */
 /************************************************************************/
 
-GUInt32 HalfToFloat( GUInt16 iHalf )
+GUInt32 CPLHalfToFloat( GUInt16 iHalf )
 {
 
     GUInt32 iSign =     (iHalf >> 15) & 0x00000001;
@@ -117,7 +118,7 @@ GUInt32 HalfToFloat( GUInt16 iHalf )
 /* -------------------------------------------------------------------- */
 
     /* coverity[overflow_sink] */
-    return (iSign << 31) | ((GUInt32)iExponent << 23) | iMantissa;
+    return (iSign << 31) | (static_cast<GUInt32>(iExponent) << 23) | iMantissa;
 }
 
 /************************************************************************/
@@ -126,7 +127,7 @@ GUInt32 HalfToFloat( GUInt16 iHalf )
 /*  24-bit floating point number to 32-bit one.                         */
 /************************************************************************/
 
-GUInt32 TripleToFloat( GUInt32 iTriple )
+GUInt32 CPLTripleToFloat( GUInt32 iTriple )
 {
 
     GUInt32 iSign       = (iTriple >> 23) & 0x00000001;
@@ -191,5 +192,80 @@ GUInt32 TripleToFloat( GUInt32 iTriple )
 /* -------------------------------------------------------------------- */
 
     /* coverity[overflow_sink] */
-    return (iSign << 31) | ((GUInt32)iExponent << 23) | iMantissa;
+    return (iSign << 31) | (static_cast<GUInt32>(iExponent) << 23) | iMantissa;
+}
+
+
+/************************************************************************/
+/*                            FloatToHalf()                             */
+/************************************************************************/
+
+GUInt16 CPLFloatToHalf( GUInt32 iFloat32, bool& bHasWarned )
+{
+    GUInt32 iSign =     (iFloat32 >> 31) & 0x00000001;
+    GUInt32 iExponent = (iFloat32 >> 23) & 0x000000ff;
+    GUInt32 iMantissa = iFloat32         & 0x007fffff;
+
+    if (iExponent == 255)
+    {
+        if (iMantissa == 0)
+        {
+/* -------------------------------------------------------------------- */
+/*       Positive or negative infinity.                                 */
+/* -------------------------------------------------------------------- */
+
+            return static_cast<GUInt16>((iSign << 15) | 0x7C00);
+        }
+        else
+        {
+/* -------------------------------------------------------------------- */
+/*       NaN -- preserve sign and significand bits.                     */
+/* -------------------------------------------------------------------- */
+            if( iMantissa >> 13 )
+                return static_cast<GUInt16>((iSign << 15) | 0x7C00 |
+                                                            (iMantissa >> 13));
+
+            return static_cast<GUInt16>((iSign << 15) | 0x7E00);
+        }
+    }
+
+    if( iExponent <= 127 - 15 )
+    {
+        // Zero, float32 denormalized number or float32 too small normalized
+        // number
+        if( 13 + 1 + 127 - 15 - iExponent >= 32 )
+            return static_cast<GUInt16>(iSign << 15);
+
+        // Return a denormalized number
+        return static_cast<GUInt16>((iSign << 15) |
+                ((iMantissa | 0x00800000) >> (13 + 1 + 127 - 15 - iExponent)));
+    }
+    if( iExponent - (127 - 15) >= 31 )
+    {
+        if( !bHasWarned )
+        {
+            bHasWarned = true;
+            float fVal = 0.0f;
+            memcpy(&fVal, &iFloat32, 4);
+            CPLError(
+                CE_Failure, CPLE_AppDefined,
+                "Value %.8g is beyond range of float16. Converted to %sinf",
+                fVal, (fVal > 0) ? "+" : "-");
+        }
+        return static_cast<GUInt16>((iSign << 15) | 0x7C00);  // Infinity
+    }
+
+/* -------------------------------------------------------------------- */
+/*       Normalized number.                                             */
+/* -------------------------------------------------------------------- */
+
+    iExponent = iExponent - (127 - 15);
+    iMantissa = iMantissa >> 13;
+
+/* -------------------------------------------------------------------- */
+/*       Assemble sign, exponent and mantissa.                          */
+/* -------------------------------------------------------------------- */
+
+    // coverity[overflow_sink]
+    return static_cast<GUInt16>((iSign << 15) | (iExponent << 10) | iMantissa);
 }

@@ -10,14 +10,12 @@ add_gdal_driver(
           gt_wkt_srs_priv.h
           gt_wkt_srs_for_gdal.h
           tifvsi.h
-          tif_float.h
           geotiff.cpp
           gt_jpeg_copy.cpp
           gt_citation.cpp
           gt_overview.cpp
           gt_wkt_srs.cpp
           tifvsi.cpp
-          tif_float.c
   BUILTIN CXX_WFLAGS_EFFCXX)
 gdal_standard_includes(gdal_GTIFF)
 target_include_directories(gdal_GTIFF PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/jpeg)
