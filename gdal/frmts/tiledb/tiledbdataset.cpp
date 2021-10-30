@@ -683,6 +683,9 @@ void TileDBDataset::FlushCache(bool bAtClosing)
 CPLErr TileDBDataset::TrySaveXML()
 
 {
+    if( m_array == nullptr )
+        return CE_None;
+
     CPLXMLNode *psTree = nullptr;
     try
     {
