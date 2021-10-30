@@ -173,6 +173,9 @@ include(GdalVersion)
 # find 3rd party libraries
 include(CheckDependentLibraries)
 
+# Generates now port/cpl_config.h (it depends on at least iconv detection in CheckDependentLibraries)
+configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/cpl_config.h.in ${PROJECT_BINARY_DIR}/port/cpl_config.h @ONLY)
+
 set(CMAKE_C_FLAGS ${_CMAKE_C_FLAGS_backup})
 set(CMAKE_CXX_FLAGS ${_CMAKE_CXX_FLAGS_backup})
 
