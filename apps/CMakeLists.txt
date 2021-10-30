@@ -158,7 +158,7 @@ if (BUILD_APPS)
   add_executable(gdalwarpsimple EXCLUDE_FROM_ALL gdalwarpsimple.c)
   add_executable(multireadtest EXCLUDE_FROM_ALL multireadtest.cpp)
   add_executable(test_ogrsf test_ogrsf.cpp)
-  add_executable(testepsg testepsg.cpp)
+  add_executable(testepsg EXCLUDE_FROM_ALL testepsg.cpp)
   add_executable(testreprojmulti EXCLUDE_FROM_ALL testreprojmulti.cpp)
 
   foreach (
