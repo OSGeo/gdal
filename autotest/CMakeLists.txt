@@ -6,7 +6,7 @@ if (NOT DEFINED ENV{CTEST_PARALLEL_LEVEL})
   set(PARALLEL_OPTION "-j1")
 endif ()
 
-if (Python_FOUND)
+if (Python_Interpreter_FOUND)
 
   set(PYTHON_RUN_ENV)
 
@@ -126,7 +126,7 @@ if (Python_FOUND)
   # Generating Python bindings in Debug mode of MSVC tends to be problematic, since it requires a python debug library
   # not easily found, hence we disable pytest_runner for that situation We might not need it at all
   get_property(_isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
-  if (NOT (_isMultiConfig AND WIN32))
+  if (Python_Development_FOUND AND NOT (_isMultiConfig AND WIN32))
     file(
       WRITE ${CMAKE_CURRENT_BINARY_DIR}/pytest_runner.cpp
       "
