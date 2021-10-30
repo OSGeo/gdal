@@ -4027,7 +4027,7 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
     if( pszSRID != nullptr )
     {
         oSRS.Clear();
-        if( oSRS.SetFromUserInput(pszSRID) == OGRERR_NONE )
+        if( oSRS.SetFromUserInput(pszSRID, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) == OGRERR_NONE )
         {
             char *pszWKTExport = nullptr;
             CPLDebug("GDAL_netCDF", "Got SRS from %s", pszSRID);
