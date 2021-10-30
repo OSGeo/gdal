@@ -13,17 +13,14 @@ endif ()
 
 if (GDAL_USE_GEOS)
   target_compile_definitions(gdal_MBTiles PRIVATE -DHAVE_GEOS=1)
-  target_include_directories(gdal_MBTiles PRIVATE ${GEOS_INCLUDE_DIRS})
   gdal_target_link_libraries(TARGET gdal_MBTiles LIBRARIES GEOS::GEOS)
 endif ()
 
-target_include_directories(gdal_MBTiles PRIVATE ${SQLite3_INCLUDE_DIRS})
 target_compile_definitions(gdal_MBTiles PRIVATE -DHAVE_SQLITE)
 gdal_target_link_libraries(TARGET gdal_MBTiles LIBRARIES SQLite::SQLite3)
 
 if (NOT GDAL_USE_LIBJSONC_INTERNAL)
-  target_include_directories(gdal_MBTiles PRIVATE ${JSONC_INCLUDE_DIRS})
-  gdal_target_link_libraries(TARGET gdal_MBTiles LIBRARIES ${JSONC_LIBRARIES})
+  gdal_target_link_libraries(TARGET gdal_MBTiles LIBRARIES JSONC::JSONC)
 endif ()
 target_include_directories(
   gdal_MBTiles PRIVATE ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/geojson ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/gpkg

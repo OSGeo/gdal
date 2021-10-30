@@ -4,6 +4,5 @@ target_include_directories(gdal_RDA PRIVATE ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/geo
 if (GDAL_USE_LIBJSONC_INTERNAL)
   target_include_directories(gdal_RDA PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
 else ()
-  target_include_directories(gdal_RDA PRIVATE ${JSONC_INCLUDE_DIRS})
-  gdal_target_link_libraries(TARGET gdal_RDA LIBRARIES ${JSONC_LIBRARIES})
+  gdal_target_link_libraries(TARGET gdal_RDA LIBRARIES JSONC::JSONC)
 endif ()

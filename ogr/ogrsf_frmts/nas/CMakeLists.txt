@@ -12,7 +12,6 @@ add_gdal_driver(
 gdal_standard_includes(ogr_NAS)
 target_include_directories(ogr_NAS PRIVATE $<TARGET_PROPERTY:ogr_GML,SOURCE_DIR>)
 if (HAVE_EXPAT)
-  target_include_directories(ogr_NAS PRIVATE ${EXPAT_INCLUDE_DIRS})
   target_compile_definitions(ogr_NAS PRIVATE -DHAVE_EXPAT)
   gdal_target_link_libraries(TARGET ogr_NAS LIBRARIES EXPAT::EXPAT)
 endif ()
