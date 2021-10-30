@@ -9,5 +9,5 @@ target_include_directories(
 
 if (GDAL_USE_BLOSC)
   target_compile_definitions(gdal_Zarr PRIVATE -DHAVE_BLOSC)
-  gdal_add_private_link_libraries(Blosc::Blosc)
+  gdal_target_link_libraries(TARGET gdal_Zarr LIBRARIES Blosc::Blosc)
 endif ()
