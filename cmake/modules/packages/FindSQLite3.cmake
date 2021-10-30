@@ -58,12 +58,12 @@ if(SQLite3_INCLUDE_DIR AND SQLite3_LIBRARY)
     # check column metadata
     set(CMAKE_REQUIRED_LIBRARIES ${SQLite3_LIBRARY})
     set(CMAKE_REQUIRED_INCLUDES ${SQLite3_INCLUDE_DIR})
-    check_symbol_exists(sqlite3_column_table_name sqlite3.h SQLite_HAS_COLUMN_METADATA)
-    check_symbol_exists(sqlite3_rtree_query_callback sqlite3.h SQLite_HAS_RTREE)
+    check_symbol_exists(sqlite3_column_table_name sqlite3.h SQLite3_HAS_COLUMN_METADATA)
+    check_symbol_exists(sqlite3_rtree_query_callback sqlite3.h SQLite3_HAS_RTREE)
     unset(CMAKE_REQUIRED_LIBRARIES)
     unset(CMAKE_REQUIRED_INCLUDES)
 endif()
-mark_as_advanced(SQLite3_LIBRARY SQLite3_INCLUDE_DIR SQLite_HAS_COLUMN_METADATA SQLite_HAS_RTREE)
+mark_as_advanced(SQLite3_LIBRARY SQLite3_INCLUDE_DIR SQLite3_HAS_COLUMN_METADATA SQLite3_HAS_RTREE)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(SQLite3
@@ -80,13 +80,13 @@ if(SQLite3_FOUND)
                           INTERFACE_INCLUDE_DIRECTORIES "${SQLite3_INCLUDE_DIRS}"
                           IMPORTED_LINK_INTERFACE_LANGUAGES "CXX"
                           IMPORTED_LOCATION "${SQLite3_LIBRARY}")
-    if(SQLite_HAS_COLUMN_METADATA)
+    if(SQLite3_HAS_COLUMN_METADATA)
         set_property(TARGET SQLite::SQLite3 APPEND PROPERTY
-                     INTERFACE_COMPILE_DEFINITIONS "SQLite_HAS_COLUMN_METADATA")
+                     INTERFACE_COMPILE_DEFINITIONS "SQLite3_HAS_COLUMN_METADATA")
     endif()
-    if(SQLite_HAS_RTREE)
+    if(SQLite3_HAS_RTREE)
         set_property(TARGET SQLite::SQLite3 APPEND PROPERTY
-                     INTERFACE_COMPILE_DEFINITIONS "SQLite_HAS_RTREE")
+                     INTERFACE_COMPILE_DEFINITIONS "SQLite3_HAS_RTREE")
     endif()
   endif()
 endif()
