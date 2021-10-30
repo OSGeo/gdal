@@ -1,7 +1,7 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  GeoTIFF Driver
+ * Project:  CPL
  * Purpose:  Floating point conversion functions. Convert 16- and 24-bit
  *           floating point numbers into the 32-bit IEEE 754 compliant ones.
  * Author:   Andrey Kiselev, dron@remotesensing.org
@@ -45,18 +45,18 @@
  *
  ****************************************************************************/
 
-#ifndef TIF_FLOAT_H_INCLUDED
-#define TIF_FLOAT_H_INCLUDED
+#ifndef CPL_FLOAT_H_INCLUDED
+#define CPL_FLOAT_H_INCLUDED
 
 #include "cpl_port.h"
 
 CPL_C_START
-GUInt32 HalfToFloat( GUInt16 iHalf );
-GUInt32 TripleToFloat( GUInt32 iTriple );
+GUInt32 CPL_DLL CPLHalfToFloat( GUInt16 iHalf );
+GUInt32 CPL_DLL CPLTripleToFloat( GUInt32 iTriple );
 CPL_C_END
 
 #ifdef __cplusplus
-GUInt16 FloatToHalf( GUInt32 iFloat32, bool& bHasWarned );
+GUInt16 CPL_DLL CPLFloatToHalf( GUInt32 iFloat32, bool& bHasWarned );
 #endif
 
-#endif // TIF_FLOAT_H_INCLUDED
+#endif // CPL_FLOAT_H_INCLUDED

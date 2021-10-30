@@ -77,6 +77,7 @@ OBJ	=	cpl_conv.obj \
 		cpl_vax.obj \
 		cpl_vsil_uploadonclose.obj \
 		cpl_compressor.obj \
+		cpl_float.obj \
 		$(ODBC_OBJ)
 
 LIB	=	cpl.lib

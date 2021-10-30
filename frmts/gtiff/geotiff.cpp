@@ -89,7 +89,7 @@
 #include "ogr_spatialref.h"
 #include "ogr_proj_p.h"
 #include "tiff.h"
-#include "tif_float.h"
+#include "cpl_float.h"
 #include "tiffio.h"
 #include "tif_jxl.h"
 #include "tiffvers.h"
@@ -6502,80 +6502,6 @@ GTiffOddBitsBand::GTiffOddBitsBand( GTiffDataset *m_poGDSIn, int nBandIn )
 }
 
 /************************************************************************/
-/*                            FloatToHalf()                             */
-/************************************************************************/
-
-GUInt16 FloatToHalf( GUInt32 iFloat32, bool& bHasWarned )
-{
-    GUInt32 iSign =     (iFloat32 >> 31) & 0x00000001;
-    GUInt32 iExponent = (iFloat32 >> 23) & 0x000000ff;
-    GUInt32 iMantissa = iFloat32         & 0x007fffff;
-
-    if (iExponent == 255)
-    {
-        if (iMantissa == 0)
-        {
-/* -------------------------------------------------------------------- */
-/*       Positive or negative infinity.                                 */
-/* -------------------------------------------------------------------- */
-
-            return static_cast<GUInt16>((iSign << 15) | 0x7C00);
-        }
-        else
-        {
-/* -------------------------------------------------------------------- */
-/*       NaN -- preserve sign and significand bits.                     */
-/* -------------------------------------------------------------------- */
-            if( iMantissa >> 13 )
-                return static_cast<GUInt16>((iSign << 15) | 0x7C00 |
-                                                            (iMantissa >> 13));
-
-            return static_cast<GUInt16>((iSign << 15) | 0x7E00);
-        }
-    }
-
-    if( iExponent <= 127 - 15 )
-    {
-        // Zero, float32 denormalized number or float32 too small normalized
-        // number
-        if( 13 + 1 + 127 - 15 - iExponent >= 32 )
-            return static_cast<GUInt16>(iSign << 15);
-
-        // Return a denormalized number
-        return static_cast<GUInt16>((iSign << 15) |
-                ((iMantissa | 0x00800000) >> (13 + 1 + 127 - 15 - iExponent)));
-    }
-    if( iExponent - (127 - 15) >= 31 )
-    {
-        if( !bHasWarned )
-        {
-            bHasWarned = true;
-            float fVal = 0.0f;
-            memcpy(&fVal, &iFloat32, 4);
-            CPLError(
-                CE_Failure, CPLE_AppDefined,
-                "Value %.8g is beyond range of float16. Converted to %sinf",
-                fVal, (fVal > 0) ? "+" : "-");
-        }
-        return static_cast<GUInt16>((iSign << 15) | 0x7C00);  // Infinity
-    }
-
-/* -------------------------------------------------------------------- */
-/*       Normalized number.                                             */
-/* -------------------------------------------------------------------- */
-
-    iExponent = iExponent - (127 - 15);
-    iMantissa = iMantissa >> 13;
-
-/* -------------------------------------------------------------------- */
-/*       Assemble sign, exponent and mantissa.                          */
-/* -------------------------------------------------------------------- */
-
-    // coverity[overflow_sink]
-    return static_cast<GUInt16>((iSign << 15) | (iExponent << 10) | iMantissa);
-}
-
-/************************************************************************/
 /*                            IWriteBlock()                             */
 /************************************************************************/
 
@@ -6685,7 +6611,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
             {
                 GUInt32 nInWord = static_cast<GUInt32 *>(pImage)[iPixel];
                 bool bClipWarn = m_poGDS->m_bClipWarn;
-                GUInt16 nHalf = FloatToHalf(nInWord, bClipWarn);
+                GUInt16 nHalf = CPLFloatToHalf(nInWord, bClipWarn);
                 m_poGDS->m_bClipWarn = bClipWarn;
                 reinterpret_cast<GUInt16*>(m_poGDS->m_pabyBlockBuf)[iPixel] = nHalf;
             }
@@ -6874,7 +6800,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                 GUInt32 nInWord = reinterpret_cast<const GUInt32 *>(
                                                         pabyThisImage)[iPixel];
                 bool bClipWarn = m_poGDS->m_bClipWarn;
-                GUInt16 nHalf = FloatToHalf(nInWord, bClipWarn);
+                GUInt16 nHalf = CPLFloatToHalf(nInWord, bClipWarn);
                 m_poGDS->m_bClipWarn = bClipWarn;
                 reinterpret_cast<GUInt16*>(m_poGDS->m_pabyBlockBuf)[
                                     iPixel * m_poGDS->nBands + iBand] = nHalf;
@@ -7193,7 +7119,7 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             for( GPtrDiff_t i = 0; i < nBlockPixels; ++i )
             {
                 static_cast<GUInt32 *>(pImage)[i] =
-                    HalfToFloat( *reinterpret_cast<const GUInt16 *>(pabyImage) );
+                    CPLHalfToFloat( *reinterpret_cast<const GUInt16 *>(pabyImage) );
                 pabyImage += iSkipBytes;
             }
         }
@@ -7203,13 +7129,13 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             {
 #ifdef CPL_MSB
                 static_cast<GUInt32 *>(pImage)[i] =
-                    TripleToFloat(
+                    CPLTripleToFloat(
                         ( static_cast<GUInt32>(*(pabyImage + 0)) << 16)
                         | (static_cast<GUInt32>(*(pabyImage + 1)) << 8)
                         | static_cast<GUInt32>(*(pabyImage + 2)) );
 #else
                 static_cast<GUInt32 *>(pImage)[i] =
-                    TripleToFloat(
+                    CPLTripleToFloat(
                         ( static_cast<GUInt32>(*(pabyImage + 2)) << 16)
                         | (static_cast<GUInt32>(*(pabyImage + 1)) << 8)
                         | static_cast<GUInt32>(*pabyImage) );
