@@ -164,12 +164,16 @@ static CPLString vsi_to_tiledb_uri( const char* pszUri )
         osUri.Printf("gcs://%s", pszUri + 7);
     else
     {
+        osUri = pszUri;
         // tiledb (at least at 2.4.2 on Conda) wrongly interprets relative
         // directories on Windows as absolute ones.
         if( CPLIsFilenameRelative(pszUri) )
-            osUri = CPLFormFilename(CPLGetCurrentDir(), pszUri, nullptr);
-        else
-            osUri = pszUri;
+        {
+            char* pszCurDir = CPLGetCurrentDir();
+            if( pszCurDir )
+                osUri = CPLFormFilename(pszCurDir, pszUri, nullptr);
+            CPLFree(pszCurDir);
+        }
     }
 
     return osUri;
