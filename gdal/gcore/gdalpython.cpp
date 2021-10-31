@@ -65,7 +65,8 @@ namespace GDALPy
     int (*Py_IsInitialized)(void) = nullptr;
     PyGILState_STATE (*PyGILState_Ensure)(void) = nullptr;
     void (*PyGILState_Release)(PyGILState_STATE) = nullptr;
-    void (*Py_SetProgramName)(const char*) = nullptr;
+    void (*Py_SetProgramName)(const wchar_t*) = nullptr;
+    void (*Py_SetPythonHome)(const wchar_t*) = nullptr;
     PyObject* (*PyObject_Type)(PyObject*) = nullptr;
     int (*PyObject_IsInstance)(PyObject*, PyObject*) = nullptr;
     PyObject* (*PyTuple_New)(size_t) = nullptr;
@@ -124,7 +125,7 @@ namespace GDALPy
 }
 
 /* MinGW32 might define HAVE_DLFCN_H, so skip the unix implementation */
-#if defined(HAVE_DLFCN_H) && !defined(WIN32)
+#if defined(HAVE_DLFCN_H) && !defined(_WIN32)
 
 #include <dlfcn.h>
 
@@ -136,7 +137,7 @@ typedef void* LibraryHandle;
             memcpy(&x, &ptr, sizeof(void*)); \
     } while(0)
 
-#elif defined(WIN32)
+#elif defined(_WIN32)
 
 #include <windows.h>
 #include <psapi.h>
@@ -169,7 +170,7 @@ typedef HMODULE LibraryHandle;
 /*                          LoadPythonAPI()                             */
 /************************************************************************/
 
-#if defined(LOAD_NOCHECK_WITH_NAME) && defined(HAVE_DLFCN_H) && !defined(WIN32)
+#if defined(LOAD_NOCHECK_WITH_NAME) && defined(HAVE_DLFCN_H) && !defined(_WIN32)
 static LibraryHandle libHandleStatic = nullptr;
 #endif
 
@@ -185,7 +186,7 @@ static bool LoadPythonAPI()
     LibraryHandle libHandle = nullptr;
 
     const char* pszPythonSO = CPLGetConfigOption("PYTHONSO", nullptr);
-#if defined(HAVE_DLFCN_H) && !defined(WIN32)
+#if defined(HAVE_DLFCN_H) && !defined(_WIN32)
 
     // First try in the current process in case the python symbols would
     // be already loaded
@@ -281,7 +282,7 @@ static bool LoadPythonAPI()
                     struct stat sStat;
                     CPLString osPythonBinary(
                         CPLFormFilename(*papszIter, "python", nullptr));
-                    if( iTry == 1 )
+                    if( iTry == 0 )
                         osPythonBinary += "3";
                     if( lstat(osPythonBinary, &sStat) != 0 )
                         continue;
@@ -420,8 +421,9 @@ static bool LoadPythonAPI()
         const char* const apszPythonSO[] = {
                                                 "libpython3.6m." SO_EXT,
                                                 "libpython3.7m." SO_EXT,
-                                                "libpython3.8m." SO_EXT,
-                                                "libpython3.9m." SO_EXT,
+                                                "libpython3.8." SO_EXT,
+                                                "libpython3.9." SO_EXT,
+                                                "libpython3.10." SO_EXT,
                                                 "libpython3.5m." SO_EXT,
                                                 "libpython3.4m." SO_EXT,
                                                 "libpython3.3." SO_EXT,
@@ -435,7 +437,8 @@ static bool LoadPythonAPI()
         }
     }
 
-#elif defined(WIN32)
+#elif defined(_WIN32)
+    CPLString osPythonBinaryUsed;
 
     // First try in the current process in case the python symbols would
     // be already loaded
@@ -475,7 +478,7 @@ static bool LoadPythonAPI()
         uOldErrorMode = SetErrorMode(SEM_NOOPENFILEERRORBOX |
                                      SEM_FAILCRITICALERRORS);
 
-#if (defined(WIN32) && _MSC_VER >= 1310) || __MSVCRT_VERSION__ >= 0x0601
+#if (defined(_WIN32) && _MSC_VER >= 1310) || __MSVCRT_VERSION__ >= 0x0601
         if( CPLTestBool( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
         {
             wchar_t *pwszFilename =
@@ -555,19 +558,23 @@ static bool LoadPythonAPI()
 
                     CPLDebug("GDAL", "Found %s", osPythonBinary.c_str());
 
-                    // In python2.7, the dll is in the same directory as the exe
+                    // Test when dll is in the same directory as the exe
                     char** papszFiles = VSIReadDir(*papszIter);
                     for( char** papszFileIter = papszFiles;
                                 papszFileIter != nullptr && *papszFileIter != nullptr;
                                 ++papszFileIter )
                     {
-                        if( STARTS_WITH_CI(*papszFileIter, "python") &&
+                        if( (STARTS_WITH_CI(*papszFileIter, "python") ||
+                             // mingw64 uses libpython3.X.dll naming
+                             STARTS_WITH_CI(*papszFileIter, "libpython3.")) &&
+                            // do not load minimum API dll
                             !EQUAL(*papszFileIter, "python3.dll") &&
                             EQUAL(CPLGetExtension(*papszFileIter), "dll") )
                         {
                             osDLLName = CPLFormFilename(*papszIter,
                                                         *papszFileIter,
                                                         nullptr);
+                            osPythonBinaryUsed = osPythonBinary;
                             break;
                         }
                     }
@@ -626,6 +633,7 @@ static bool LoadPythonAPI()
                                             "python37.dll",
                                             "python38.dll",
                                             "python39.dll",
+                                            "python310.dll",
                                             "python35.dll",
                                             "python34.dll",
                                             "python33.dll",
@@ -653,7 +661,63 @@ static bool LoadPythonAPI()
         return false;
     }
 
+    LOAD(libHandle, Py_GetVersion);
+    CPLString osPythonVersion(Py_GetVersion());
+    osPythonVersion.replaceAll("\r\n", ' ');
+    osPythonVersion.replaceAll('\n', ' ');
+    CPLDebug("GDAL", "Python version used: %s", osPythonVersion.c_str());
+
     LOAD(libHandle, Py_SetProgramName);
+    LOAD(libHandle, Py_SetPythonHome);
+
+#ifdef _WIN32
+    if( !osPythonBinaryUsed.empty() && getenv("PYTHONHOME") == nullptr )
+    {
+        const char* pszPythonHome = CPLGetDirname(osPythonBinaryUsed.c_str());
+        VSIStatBufL sStat;
+        bool bOK = false;
+        // Test Windows Conda layout
+        const char* pszDirEncodings = CPLFormFilename(
+                            pszPythonHome, "lib/encodings", nullptr);
+        if( VSIStatL(pszDirEncodings, &sStat) == 0 )
+        {
+            bOK = true;
+        }
+        else
+        {
+            // Test mingw64 layout
+            const CPLStringList aosVersionTokens(
+                CSLTokenizeString2(osPythonVersion.c_str(), ".", 0));
+            if( aosVersionTokens.size() >= 3 )
+            {
+                pszPythonHome = CPLGetDirname(pszPythonHome);
+                pszDirEncodings = CPLFormFilename(pszPythonHome,
+                        CPLSPrintf("lib/python%s.%s/encodings",
+                                   aosVersionTokens[0], aosVersionTokens[1]), nullptr);
+                if( VSIStatL(pszDirEncodings, &sStat) == 0 )
+                {
+                    bOK = true;
+                }
+            }
+        }
+        if( bOK )
+        {
+            static wchar_t wszPythonHome[4096];
+            wchar_t *pwszPythonHome =
+                CPLRecodeToWChar(pszPythonHome, CPL_ENC_UTF8, CPL_ENC_UCS2 );
+            const size_t nLength = wcslen(pwszPythonHome) + 1;
+            if( nLength <= sizeof(wszPythonHome) )
+            {
+                CPLDebug("GDAL", "Call Py_SetPythonHome(%s)", pszPythonHome);
+                memcpy(wszPythonHome, pwszPythonHome, nLength * sizeof(wchar_t));
+                // The string must reside in static storage
+                Py_SetPythonHome(wszPythonHome);
+            }
+            CPLFree(pwszPythonHome);
+        }
+    }
+#endif
+
     LOAD(libHandle, PyBuffer_FillInfo);
     LOAD(libHandle, PyMemoryView_FromBuffer);
     LOAD(libHandle, PyObject_Type);
@@ -740,12 +804,6 @@ static bool LoadPythonAPI()
     LOAD(libHandle, PyGILState_Release);
     LOAD(libHandle, PyErr_Fetch);
     LOAD(libHandle, PyErr_Clear);
-    LOAD(libHandle, Py_GetVersion);
-
-    CPLString osPythonVersion(Py_GetVersion());
-    osPythonVersion.replaceAll("\r\n", ' ');
-    osPythonVersion.replaceAll('\n', ' ');
-    CPLDebug("GDAL", "Python version used: %s", osPythonVersion.c_str());
 
 #else // LOAD_NOCHECK_WITH_NAME
     CPLError(CE_Failure, CPLE_AppDefined,
@@ -776,6 +834,7 @@ bool GDALPythonInitialize()
     if( !bIsInitialized)
     {
         gbHasInitializedPython = true;
+        CPLDebug("GDAL", "Before Py_Initialize()");
         Py_InitializeEx(0);
         CPLDebug("GDAL", "Py_Initialize()");
         PyEval_InitThreads();
