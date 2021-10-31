@@ -87,6 +87,7 @@ def compare_ogrinfo_output(gmlfile, reffile, options=''):
                                encoding='utf-8')
     ret = ret.replace('\r\n', '\n')
     ret = ret.replace('data\\gmlas\\', 'data/gmlas/')  # Windows
+    ret = ret.replace('data/gmlas\\', 'data/gmlas/')  # Windows
     expected = open(reffile, 'rb').read().decode('utf-8')
     expected = expected.replace('\r\n', '\n')
     if ret != expected:
