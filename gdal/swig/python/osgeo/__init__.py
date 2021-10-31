@@ -11,6 +11,14 @@ if version_info >= (3, 8, 0) and platform == 'win32':
                     os.add_dll_directory(p)
                 except (FileNotFoundError, OSError):
                     continue
+    elif 'PATH' in os.environ:
+        import glob
+        for p in os.environ['PATH'].split(';'):
+            if glob.glob(os.path.join(p, 'gdal*.dll')) or glob.glob(os.path.join(p, 'libgdal*.dll')):
+                try:
+                    os.add_dll_directory(p)
+                except (FileNotFoundError, OSError):
+                    continue
 
 
 def swig_import_helper():
