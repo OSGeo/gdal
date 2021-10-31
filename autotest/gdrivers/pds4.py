@@ -1314,7 +1314,11 @@ def _test_createlabelonly(src_ds,
     with gdaltest.error_handler():
         ds = gdal.Open(filename)
     assert ds
-    assert src_ds_name in ds.GetFileList()
+    found_src_ds_name = False
+    for fname in ds.GetFileList():
+        if fname.replace('\\', '/') == src_ds_name.replace('\\', '/'):
+            found_src_ds_name = True
+    assert found_src_ds_name, ds.GetFileList()
     assert ds.RasterCount == src_ds.RasterCount
     assert ds.RasterXSize == src_ds.RasterXSize
     assert ds.RasterYSize == src_ds.RasterYSize
