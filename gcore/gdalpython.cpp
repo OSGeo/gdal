@@ -282,7 +282,7 @@ static bool LoadPythonAPI()
                     struct stat sStat;
                     CPLString osPythonBinary(
                         CPLFormFilename(*papszIter, "python", nullptr));
-                    if( iTry == 1 )
+                    if( iTry == 0 )
                         osPythonBinary += "3";
                     if( lstat(osPythonBinary, &sStat) != 0 )
                         continue;
@@ -421,8 +421,9 @@ static bool LoadPythonAPI()
         const char* const apszPythonSO[] = {
                                                 "libpython3.6m." SO_EXT,
                                                 "libpython3.7m." SO_EXT,
-                                                "libpython3.8m." SO_EXT,
-                                                "libpython3.9m." SO_EXT,
+                                                "libpython3.8." SO_EXT,
+                                                "libpython3.9." SO_EXT,
+                                                "libpython3.10." SO_EXT,
                                                 "libpython3.5m." SO_EXT,
                                                 "libpython3.4m." SO_EXT,
                                                 "libpython3.3." SO_EXT,
@@ -632,6 +633,7 @@ static bool LoadPythonAPI()
                                             "python37.dll",
                                             "python38.dll",
                                             "python39.dll",
+                                            "python310.dll",
                                             "python35.dll",
                                             "python34.dll",
                                             "python33.dll",
