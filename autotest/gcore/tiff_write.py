@@ -372,7 +372,9 @@ def test_tiff_write_13():
     assert cs == 17347 or cs == 14445, 'fail: bad checksum'
 
     if md['LIBTIFF'] == 'INTERNAL':
-        assert size <= 22816, 'fail: bad size'
+        # 22816 with libjpeg-6b or libjpeg-turbo
+        # 22828 with libjpeg-9d
+        assert size <= 22828, 'fail: bad size'
 
 
 ###############################################################################
