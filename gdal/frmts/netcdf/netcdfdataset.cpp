@@ -73,6 +73,11 @@
 
 #define ROTATED_POLE_VAR_NAME "rotated_pole"
 
+// Detect netCDF 4.8
+#ifdef NC_ENCZARR
+#define NETCDF_USES_UTF8
+#endif
+
 CPL_CVSID("$Id$")
 
 // Internal function declarations.
@@ -6721,7 +6726,7 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
     int new_cdfid = -1;
     CPLString osTmpFilename(osFilename + ".tmp");
     CPLString osFilenameForNCCreate(osTmpFilename);
-#ifdef WIN32
+#if defined(WIN32) && !defined(NETCDF_USES_UTF8)
     if( CPLTestBool(CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         char* pszTemp = CPLRecode( osFilenameForNCCreate, CPL_ENC_UTF8, "CP_ACP" );
@@ -6807,7 +6812,7 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
     VSIUnlink(osOriFilename);
 
     CPLString osFilenameForNCOpen(osFilename);
-#ifdef WIN32
+#if defined(WIN32) && !defined(NETCDF_USES_UTF8)
     if( CPLTestBool(CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         char* pszTemp = CPLRecode( osFilenameForNCOpen, CPL_ENC_UTF8, "CP_ACP" );
@@ -7739,7 +7744,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
     const int nMode = ((poOpenInfo->nOpenFlags & (GDAL_OF_UPDATE | GDAL_OF_VECTOR)) ==
                 (GDAL_OF_UPDATE | GDAL_OF_VECTOR)) ? NC_WRITE : NC_NOWRITE;
     CPLString osFilenameForNCOpen(poDS->osFilename);
-#ifdef WIN32
+#if defined(WIN32) && !defined(NETCDF_USES_UTF8)
     if( CPLTestBool(CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         char* pszTemp = CPLRecode( osFilenameForNCOpen, CPL_ENC_UTF8, "CP_ACP" );
@@ -8681,7 +8686,7 @@ netCDFDataset::CreateLL( const char *pszFilename,
 
     // Create the dataset.
     CPLString osFilenameForNCCreate(pszFilename);
-#ifdef WIN32
+#if defined(WIN32) && !defined(NETCDF_USES_UTF8)
     if( CPLTestBool(CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         char* pszTemp = CPLRecode( osFilenameForNCCreate, CPL_ENC_UTF8, "CP_ACP" );
