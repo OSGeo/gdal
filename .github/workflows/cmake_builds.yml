@@ -43,7 +43,7 @@ jobs:
       run: |
         mkdir -p $GITHUB_WORKSPACE/superbuild
         cd $GITHUB_WORKSPACE/superbuild
-        printf "cmake_minimum_required(VERSION 3.10)\nproject(test)\nadd_subdirectory(gdal)" > CMakeLists.txt
+        printf "cmake_minimum_required(VERSION 3.10)\nproject(test)\nenable_testing()\nadd_subdirectory(gdal)" > CMakeLists.txt
         ln -s .. gdal
         mkdir build
         cd build
@@ -56,7 +56,7 @@ jobs:
         cmake --build $GITHUB_WORKSPACE/superbuild/build --target quicktest -j $(nproc)
     - name: test (with ctest)
       run: |
-        ctest --test-dir $GITHUB_WORKSPACE/superbuild/build -L quicktest -j $(nproc)
+        ctest --test-dir $GITHUB_WORKSPACE/superbuild/build -V
     - name: install
       run: |
         cmake --build $GITHUB_WORKSPACE/superbuild/build --target install -j $(nproc)
@@ -156,7 +156,7 @@ jobs:
     - name: test (with ctest)
       shell: bash -l {0}
       run: |
-        ctest --test-dir $GITHUB_WORKSPACE/build -C Release -L quicktest -j 3
+        ctest --test-dir $GITHUB_WORKSPACE/build -C Release -V -j 3
     - name: Install
       shell: bash -l {0}
       run: cmake --build $GITHUB_WORKSPACE/build --config Release --target install
