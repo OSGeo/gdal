@@ -26,7 +26,7 @@ if (Python_Interpreter_FOUND)
     list(APPEND PYTHON_RUN_ENV "LD_LIBRARY_PATH=${GDAL_OUTPUT_DIR}:$ENV{LD_LIBRARY_PATH}")
   endif ()
 
-  list(APPEND PYTHON_RUN_ENV "PYTHONPATH=${CMAKE_BINARY_DIR}/swig/python/")
+  list(APPEND PYTHON_RUN_ENV "PYTHONPATH=${PROJECT_BINARY_DIR}/swig/python/")
 
   # Set GDAL_DRIVER_PATH We request the TARGET_FILE_DIR of one of the plugins, since the PLUGIN_OUTPUT_DIR will not
   # contain the \Release suffix with MSVC generator
