@@ -67,6 +67,11 @@ jobs:
       generator: MinGW Makefiles
       JAVA_HOME: "C:\\Program Files\\Java\\zulu-11-azure-jdk_11.33.15-11.0.4-win_x64"
     steps:
+      # To avoid git clone to mess with the line endings of GDAL autotest data
+      # files that look like text, but should be handled as binary content
+      - name: Set git core.autocrlf to false
+        run: |
+          git config --global core.autocrlf false
       - name: Checkout GDAL
         uses: actions/checkout@v2
       - name: Install MSYS2
@@ -117,6 +122,11 @@ jobs:
         generator: Visual Studio 16 2019
         JAVA_HOME: "C:\\Program Files\\Java\\zulu-11-azure-jdk_11.33.15-11.0.4-win_x64"
     steps:
+    # To avoid git clone to mess with the line endings of GDAL autotest data
+    # files that look like text, but should be handled as binary content
+    - name: Set git core.autocrlf to false
+      run: |
+        git config --global core.autocrlf false
     - name: Checkout GDAL
       uses: actions/checkout@v2
     - uses: conda-incubator/setup-miniconda@v2
