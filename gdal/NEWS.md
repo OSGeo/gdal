@@ -1,4 +1,4 @@
-# GDAL/OGR 3.4.0 Release Notes (to ca77809572a73b9018d6f71d698b0786263c105e)
+# GDAL/OGR 3.4.0 Release Notes
 
 ## In a nutshell...
 
@@ -321,6 +321,7 @@ NetCDF driver:
  * Accept HDF5 files if HDF5 driver is not available and libnetcdf has support for them
  * properly deal with Polar Stereographic in reading and writing (#4144)
  * parse correctly valid_range/valid_min/valid_max attributes when they are of non-integer type (#4443)
+ * no longer do filename recoding with netCDF >= 4.8 on Windows
  * multidim: make opening /vsimem/ file work when netCDF MEM API is available (avoids using userfaultfd)
  * multidim: make /vsi access work with netcdf >= 4.7
  * multidim: avoid crash when getting data type of a char variable with 2 dimensions.
@@ -369,6 +370,10 @@ SAFE driver:
 
 SRTMHGT driver:
  * support .hgts files from NASADEM SHHP. Also support auxiliary files with .err, .img, .num, .img.num and .swb extensions from other NASADEM products (#4239)
+
+TileDB driver:
+ * fix crash when creating array from subdatasets fails
+ * fix handling of relative paths on Windows
 
 TGA driver:
  * fix heap buffer overflow (ossfuzz #35520)
@@ -657,6 +662,7 @@ Python bindings:
  * fix crash when reading null strings with MDArray.Read()
  * catch potential exception thrown by SWIG_AsCharPtrAndSize()
  * Build windows python wrappers with -threads argument
+ * Python >= 3.8 on Windows: automatically add path with [lib]gdal*.dll with os.add_dll_directory()
  * Python >= 3.8 import: fix exception when PATH has nonexistent paths on Windows (#3898)
  * fix behavior of SetMetadata() when a value is of type bytes (#4292)
  * no longer use distutils (deprecated since python 3.10) when setuptools is available (#4334)
