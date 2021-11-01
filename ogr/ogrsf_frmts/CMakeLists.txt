@@ -20,6 +20,7 @@ ogr_default_driver(shape "ESRI shape-file")
 ogr_default_driver(kml KML) # when not found EXPAT, it use CPL_MINIXML (ex. android)
 ogr_default_driver(vrt "VRT - Virtual Format")
 
+# Caution: if modifying AVC declaration here, also modify it in gdal.cmake
 ogr_optional_driver(avc AVC)
 
 ogr_optional_driver(sdts SDTS) # depends ISO8211
@@ -74,7 +75,9 @@ ogr_optional_driver(idrisi IDRISI)
 
 ogr_dependent_driver(pds "Planetary Data Systems TABLE" "GDAL_ENABLE_FRMT_PDS")
 
+# Caution: if modifying SQLite declaration here, also modify it in gdal.cmake
 ogr_dependent_driver(sqlite "SQLite3 / Spatialite RDBMS" "GDAL_USE_SQLITE3")
+# Caution: if modifying GPKG declaration here, also modify it in gdal.cmake
 ogr_dependent_driver(gpkg "GeoPackage" "GDAL_USE_SQLITE3;OGR_ENABLE_SQLITE")
 ogr_dependent_driver(osm "OpenStreetMap XML and PBF" "GDAL_USE_SQLITE3;OGR_ENABLE_SQLITE")
 ogr_dependent_driver(vfk "Czech Cadastral Exchange Data Format" "GDAL_USE_SQLITE3")

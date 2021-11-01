@@ -247,6 +247,16 @@ endmacro()
 
 include(CMakeDependentOption)
 
+macro(check_depend_condition depends)
+    foreach(_dep IN ITEMS ${depends})
+        if( "${_dep}" MATCHES "GDAL_ENABLE_FRMT_" OR "${_dep}" MATCHES "OGR_ENABLE_")
+            if(NOT DEFINED "${_dep}")
+                message(FATAL_ERROR "Condition ${depends} refers to variable ${_dep} which is not defined")
+            endif()
+        endif()
+    endforeach()
+endmacro()
+
 # gdal_dependent_format(format desc depend) do followings:
 # - add subdirectory 'format'
 # - define option "GDAL_ENABLE_FRMT_NAME" then set to default OFF/ON
@@ -262,6 +272,7 @@ macro(gdal_dependent_format format desc depends)
     else()
         string(TOUPPER ${format} key)
     endif()
+    check_depend_condition(${depends})
     cmake_dependent_option(GDAL_ENABLE_FRMT_${key} "Set ON to build ${desc} format" ${GDAL_BUILD_OPTIONAL_DRIVERS}
                            "${depends}" OFF)
     add_feature_info(gdal_${key} GDAL_ENABLE_FRMT_${key} "${desc}")
@@ -301,8 +312,11 @@ endmacro()
 
 macro(ogr_dependent_driver name desc depend)
     string(TOUPPER ${name} key)
-    cmake_dependent_option(OGR_ENABLE_${key} "Set ON to build OGR ${desc} driver" ${OGR_BUILD_OPTIONAL_DRIVERS}
-                           "${depend}" OFF)
+    check_depend_condition(${depend})
+    if( NOT("${key}" STREQUAL "GPKG" OR "${key}" STREQUAL "SQLITE" OR "${key}" STREQUAL "AVC") )
+        cmake_dependent_option(OGR_ENABLE_${key} "Set ON to build OGR ${desc} driver" ${OGR_BUILD_OPTIONAL_DRIVERS}
+                               "${depend}" OFF)
+    endif()
     add_feature_info(ogr_${key} OGR_ENABLE_${key} "${desc}")
     if (OGR_ENABLE_${key})
         add_subdirectory(${name})
