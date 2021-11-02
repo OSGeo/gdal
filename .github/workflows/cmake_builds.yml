@@ -167,6 +167,8 @@ jobs:
       shell: bash -l {0}
       run: |
         ctest --test-dir $GITHUB_WORKSPACE/build -C Release -V -j 3
+      env:
+        SKIP_OGR_GMLAS_HUGE_PROCESSING_TIME: YES
     - name: Install
       shell: bash -l {0}
       run: cmake --build $GITHUB_WORKSPACE/build --config Release --target install
