@@ -4,9 +4,13 @@ add_library(gdal_frmts OBJECT gdalallregister.cpp)
 include(GdalDriverHelper)
 include(CMakeDependentOption)
 
+# JPEG must be defined before GTiff
+gdal_dependent_format(jpeg "JPEG image format" "GDAL_USE_JPEG OR GDAL_USE_LIBJPEG_INTERNAL")
+
 # base driver provide frmt core functions
 gdal_optional_format(raw "Raw formats:EOSAT FAST Format, FARSITE LCP and Vexcel MFF2 Image")
 gdal_format(iso8211 "iso8211 library")
+# JPEG must be defined before GTiff
 gdal_format(gtiff "GeoTIFF image format")
 set_package_properties(TIFF PROPERTIES PURPOSE "gdal_GTIFF: GeoTIFF image format")
 gdal_format(mem "Read/write data in Memory")
@@ -81,7 +85,7 @@ gdal_optional_format(ogcapi "OGCAPI")
 
 # optional Formats
 gdal_optional_format(bsb "Maptech/NOAA BSB Nautical Chart Format")
-gdal_dependent_format(aigrid "Arc/Info Binary Grid Format" "OGR_ENABLE_AVC;OGR_ENABLE_SHAPE")
+gdal_dependent_format(aigrid "Arc/Info Binary Grid Format" "OGR_ENABLE_AVC")
 gdal_optional_format(arg "ARG: Azavea Raster Grid")
 gdal_optional_format(usgsdem "USGS ASCII DEM (and CDED)")
 gdal_optional_format(airsar "AirSAR Polarimetric Format")
@@ -98,7 +102,6 @@ gdal_optional_format(pdf "Geospatial PDF") # write only if none of GDAL_USE_POPP
 
 # formats with external library dependency
 gdal_dependent_format(png "PNG image format" "GDAL_USE_PNG OR GDAL_USE_LIBPNG_INTERNAL")
-gdal_dependent_format(jpeg "JPEG image format" "GDAL_USE_JPEG OR GDAL_USE_LIBJPEG_INTERNAL")
 gdal_dependent_format(gif "Graphics Interchange Format" "GDAL_USE_GIF OR GDAL_USE_GIFLIB_INTERNAL")
 
 gdal_dependent_format(wcs "OGC Web Coverage Service" "GDAL_USE_CURL" SKIP_ADD_SUBDIRECTORY)

@@ -29,7 +29,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 from osgeo import gdal
 import gdaltest
 import test_cli_utilities
@@ -153,7 +152,7 @@ def test_gdal_viewshed_missing_oy():
 def test_gdal_viewshed_invalid_input():
 
     _, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_viewshed_path() + ' -ox 0 -oy 0 /dev/null /dev/null')
-    assert ('not recognized as a supported file format' in err) or (os.name == 'nt' and 'No such file or directory' in err)
+    assert ('not recognized as' in err) or ('No such file or directory' in err)
 
 
 ###############################################################################

@@ -33,6 +33,11 @@ if (GDAL_USE_LIBTIFF_INTERNAL)
   if (RENAME_INTERNAL_LIBTIFF_SYMBOLS)
     target_compile_definitions(gdal_GTIFF PRIVATE -DRENAME_INTERNAL_LIBTIFF_SYMBOLS)
   endif ()
+
+  if (GDAL_USE_DEFLATE)
+    target_compile_definitions(gdal_GTIFF PRIVATE -DLIBDEFLATE_SUPPORT)
+  endif ()
+
 endif ()
 
 if (GDAL_USE_LIBJPEG_INTERNAL)

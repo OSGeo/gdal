@@ -43,7 +43,7 @@ jobs:
       run: |
         mkdir -p $GITHUB_WORKSPACE/superbuild
         cd $GITHUB_WORKSPACE/superbuild
-        printf "cmake_minimum_required(VERSION 3.10)\nproject(test)\nadd_subdirectory(gdal)" > CMakeLists.txt
+        printf "cmake_minimum_required(VERSION 3.10)\nproject(test)\nenable_testing()\nadd_subdirectory(gdal)" > CMakeLists.txt
         ln -s .. gdal
         mkdir build
         cd build
@@ -56,7 +56,7 @@ jobs:
         cmake --build $GITHUB_WORKSPACE/superbuild/build --target quicktest -j $(nproc)
     - name: test (with ctest)
       run: |
-        ctest --test-dir $GITHUB_WORKSPACE/superbuild/build -L quicktest -j $(nproc)
+        ctest --test-dir $GITHUB_WORKSPACE/superbuild/build -V
     - name: install
       run: |
         cmake --build $GITHUB_WORKSPACE/superbuild/build --target install -j $(nproc)
@@ -67,6 +67,11 @@ jobs:
       generator: MinGW Makefiles
       JAVA_HOME: "C:\\Program Files\\Java\\zulu-11-azure-jdk_11.33.15-11.0.4-win_x64"
     steps:
+      # To avoid git clone to mess with the line endings of GDAL autotest data
+      # files that look like text, but should be handled as binary content
+      - name: Set git core.autocrlf to false
+        run: |
+          git config --global core.autocrlf false
       - name: Checkout GDAL
         uses: actions/checkout@v2
       - name: Install MSYS2
@@ -117,6 +122,11 @@ jobs:
         generator: Visual Studio 16 2019
         JAVA_HOME: "C:\\Program Files\\Java\\zulu-11-azure-jdk_11.33.15-11.0.4-win_x64"
     steps:
+    # To avoid git clone to mess with the line endings of GDAL autotest data
+    # files that look like text, but should be handled as binary content
+    - name: Set git core.autocrlf to false
+      run: |
+        git config --global core.autocrlf false
     - name: Checkout GDAL
       uses: actions/checkout@v2
     - uses: conda-incubator/setup-miniconda@v2
@@ -156,7 +166,9 @@ jobs:
     - name: test (with ctest)
       shell: bash -l {0}
       run: |
-        ctest --test-dir $GITHUB_WORKSPACE/build -C Release -L quicktest -j 3
+        ctest --test-dir $GITHUB_WORKSPACE/build -C Release -V -j 3
+      env:
+        SKIP_OGR_GMLAS_HUGE_PROCESSING_TIME: YES
     - name: Install
       shell: bash -l {0}
       run: cmake --build $GITHUB_WORKSPACE/build --config Release --target install

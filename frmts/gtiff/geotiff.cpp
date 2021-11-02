@@ -12484,7 +12484,6 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
-    // Disable strip chop for now.
     bool bStreaming = false;
     const char* pszReadStreaming =
         CPLGetConfigOption("TIFF_READ_STREAMING", nullptr);
@@ -12520,8 +12519,8 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     TIFF *l_hTIFF =
         VSI_TIFFOpen( pszFilename,
                       poOpenInfo->eAccess == GA_ReadOnly ?
-                        ((bStreaming || !bDeferStrileLoading) ? "r" : "rDO") :
-                        (!bDeferStrileLoading ? "r+" : "r+D"),
+                        ((bStreaming || !bDeferStrileLoading) ? "rC" : "rDOC") :
+                        (!bDeferStrileLoading ? "r+C" : "r+DC"),
                       poOpenInfo->fpL );
     CPLUninstallErrorHandlerAccumulator();
 
@@ -13090,7 +13089,7 @@ GDALDataset *GTiffDataset::OpenDir( GDALOpenInfo * poOpenInfo )
     if( !GTiffOneTimeInit() )
         return nullptr;
 
-    const char* pszFlag = poOpenInfo->eAccess == GA_Update ? "r+D" : "rDO";
+    const char* pszFlag = poOpenInfo->eAccess == GA_Update ? "r+DC" : "rDOC";
     VSILFILE* l_fpL = VSIFOpenL(pszFilename, pszFlag);
     if( l_fpL == nullptr )
         return nullptr;
