@@ -533,7 +533,7 @@ CPLErr GDALDefaultOverviews::CleanOverviews()
     GDALClose( poODS );
     poODS = nullptr;
 
-    const CPLErr eErr = poOvrDriver != nullptr ?
+    CPLErr eErr = poOvrDriver != nullptr ?
         poOvrDriver->Delete( osOvrFilename ) : CE_None;
 
     // Reset the saved overview filename.
@@ -549,6 +549,15 @@ CPLErr GDALDefaultOverviews::CleanOverviews()
     else
     {
         osOvrFilename = "";
+    }
+
+    if( HaveMaskFile() && poMaskDS )
+    {
+        const CPLErr eErr2 = poMaskDS->BuildOverviews(
+                            nullptr, 0, nullptr, 0, nullptr,
+                            nullptr, nullptr);
+        if( eErr2 != CE_None )
+            return eErr2;
     }
 
     return eErr;
