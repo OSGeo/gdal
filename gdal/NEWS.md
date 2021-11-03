@@ -269,6 +269,7 @@ GTiff driver:
  * write georeferencing info to PAM .aux.xml when using PROFILE=BASELINE
  * do not try to export a DerivedGeographic CRS to GeoTIFF, but fallback to PAM
  * fix corruption in TIFF directory chaining when altering nodata value after IFD crystallization (#3746)
+ * explicitly enable strip choping (workaround bug in libtiff CMake builds)
  * Update internal libtiff to latest upstream
  * limit error message count, mainly with Fax3 decoder, to avoid performance issues (ossfuzz #38317)
 
@@ -451,6 +452,7 @@ ZMap driver:
  * exportToWkt(): use WKT2 for DerivedProjectedCRS (#3927)
  * Add OSRSetPROJEnableNetwork() / OSRGetPROJEnableNetwork(), and expose them to SWIG
  * Adds OCTTransformBounds to the C and SWIG API to transform a bounding box (#4630)
+ * OGRSpatialReference::GetName(): workaround a PROJ 8.2.0 bug for BoundCRS
 
 ### Utilities
  * ogrinfo: report hiearchical organization of layers
@@ -548,6 +550,7 @@ Memory driver:
 
 MITAB driver:
  * Fix mapping of mapinfo symbol numbers to corresponding OGR symbol IDs (#3826)
+ * allow reading MID/MIF files with lines up to 1 million bytes (#3943)
 
 MongoDB3 driver:
  * fix deprecation warnings with mongocxx >= 3.6
