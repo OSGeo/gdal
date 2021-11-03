@@ -142,12 +142,7 @@ if (BUILD_APPS)
       target_link_libraries(${UTILCMD} PRIVATE wsock32 ws2_32 psapi)
     endif ()
   endforeach ()
-  install(
-    TARGETS ${APPS_TARGETS}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    FRAMEWORK DESTINATION ${CMAKE_INSTALL_LIBDIR})
+  install(TARGETS ${APPS_TARGETS} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
   # NON-Default Apps
   add_executable(dumpoverviews EXCLUDE_FROM_ALL dumpoverviews.cpp)
