@@ -331,3 +331,57 @@ def test_ogr_odbc_ogrsf_null_memo(ogrsf_path):
     ret = gdaltest.runexternal(ogrsf_path + ' data/mdb/null_memo.mdb')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
+
+
+
+###############################################################################
+# Test reading MDB with real values (https://github.com/OSGeo/gdal/issues/3885)
+
+def test_numeric_read():
+    if not recent_enough_mdb_odbc_driver():
+        pytest.skip("test skipped because of assumption that a not enough version of MDBTools is available")
+
+    odbc_drv = ogr.GetDriverByName('ODBC')
+    ds = odbc_drv.Open('data/mdb/numeric.mdb')
+
+    # NOTE that the bug from https://github.com/OSGeo/gdal/issues/3885 only gets triggered using the Windows Access ODBC
+    # driver AFTER reading a number of features. It can't be reproduced if we request only a single failing feature.
+    lyr = ds.GetLayerByName('INVENTORY')
+    expected_str = [
+        ['dr8v0myu0nnx', 'Riverside Drive', 'East River Road', 'DEAD END', 0, 0.15268780291080475, 0.15268780291080475],
+        ['dr8v0qp6p01f', 'Remington Parkway', 'East River Road', 'DEAD END', 0, 0.2121122032403946, 0.2121122032403946],
+        ['dr8v0tepmsfv', 'Bronx Drive', 'East River Road', 'DEAD END', 0, 0.8030499815940857, 0.8030499815940857],
+        ['dr8v0w0pf123', 'Delaware Avenue', 'East River Road', 'DEAD END', 0, 0.2692877948284149, 0.2692877948284149],
+        ['dr8v0xxj74uw', 'Idle Lane', 'East River Road', 'DEAD END', 0, 0.1881732940673828, 0.1881732940673828],
+        ['dr8v0yr2et5g', 'Park Circle', 'Crittenden Road', 'DEAD END', 0, 0.45297008752822876, 0.45297008752822876],
+        ['dr8v1j5meh6x', 'Tower Drive', 'Brighton Henrietta Town Line Road', 'DEAD END', 0, 0.19818930327892303, 0.19818930327892303],
+        ['dr8v1m1624qj', 'Western Drive', 'Brighton Henrietta Town Line Road', 'Southern Drive', 0, 0.07699214667081833,
+         0.07699214667081833],
+        ]
+
+    i = 0
+    feat = lyr.GetNextFeature()
+    while feat is not None:
+        attrs = [feat.GetField(n) for n in range(6)]
+        for k in range(6):
+            if attrs[k] != expected_str[i][k]:
+                feat.DumpReadable()
+                pytest.fail(str(k) + ': ' + str(attrs[k]) + ' <> ' + str(expected_str[i][k]))
+        i = i + 1
+        if i == 8:
+            # that's enough to reproduce the bug...
+            break
+        feat = lyr.GetNextFeature()
+
+
+###############################################################################
+# Run test_ogrsf on numeric database
+
+
+def test_ogr_odbc_ogrsf_numeric(ogrsf_path):
+    if not recent_enough_mdb_odbc_driver():
+        pytest.skip("test skipped because of assumption that a not enough version of MDBTools is available")
+
+    ret = gdaltest.runexternal(ogrsf_path + ' data/mdb/numeric.mdb')
+
+    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
