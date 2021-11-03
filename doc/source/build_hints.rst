@@ -335,6 +335,69 @@ that are not part of GDAL core dependencies (e.g. are netCDF, HDF4, Oracle, PDF,
     Building such drivers as plugins is generally not necessary, hence
     the use of a different option from GDAL_ENABLE_PLUGINS.
 
+Python bindings options
++++++++++++++++++++++++
+
+.. option:: BUILD_PYTHON_BINDINGS:BOOL=ON/OFF
+
+    Whether Python bindings should be built. It is ON by default, but only
+    effective if a Python installation is found.
+
+A nominal Python installation should comprise the Python runtime (>= 3.6) and
+the setuptools module.
+numpy and its header and development library are also strongly recommended.
+
+The Python installation is normally found if found in the path or registered
+through other standard installation mechanisms of the Python installers.
+It is also possible to specify it using several variables, as detailed in
+https://cmake.org/cmake/help/git-stage/module/FindPython.html
+
+GDAL also provides the following option:
+
+.. option:: Python_LOOKUP_VERSION:STRING=major.minor.patch
+
+    When it is specified, Python_FIND_STRATEGY=VERSION is assumed. Note that
+    the patch number must be provided, as the EXACT strategy is used
+
+Other useful options:
+
+.. option:: Python_FIND_VIRTUALENV
+
+    Specify 'ONLY' to use virtualenv activated.
+
+.. option:: Python_ROOT
+
+    Specify Python installation prefix.
+
+Examples::
+
+    cmake -DPython_LOOKUP_VERSION=3.6 ..
+    cmake -DPython_FIND_VIRTUALENV=ONLY ..
+    cmake -DPython_ROOT=C:\Python36 ..
+
+
+The following options are advanced onces and only taken into account during
+the ``install`` CMake target.
+
+.. option:: GDAL_PYTHON_INSTALL_PREFIX
+
+    This option can be specified to a directory name, to override the
+    ``CMAKE_INSTALL_PREFIX`` option.
+    It is used to set the value of the ``--prefix`` option of ``python setup.py install``.
+
+.. option:: GDAL_PYTHON_INSTALL_LAYOUT
+
+    This option can be specified to set the value of the ``--install-layout``
+    option of ``python setup.py install``. The install layout is by default set to
+    ``deb`` when it is detected that the Python installation looks for
+    the ``site-packages`` subdirectory. Otherwise it is unspecified.
+
+.. option:: GDAL_PYTHON_INSTALL_LIB
+
+    This option can be specified to set the value of the ``--install-lib``
+    option of ``python setup.py install``. It is only taken into account on
+    MacOS systems, when the Python installation is a framework.
+
 
 Building on Windows with Conda dependencies and Visual Studio
 --------------------------------------------------------------------------------
