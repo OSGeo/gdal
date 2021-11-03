@@ -265,30 +265,40 @@ endif ()
 
 # Install properties
 if (GDAL_ENABLE_MACOSX_FRAMEWORK)
-  set(INSTALL_PLUGIN_DIR
-      "${CMAKE_INSTALL_PREFIX}/PlugIns"
-      CACHE PATH "Installation directory for plugins")
   set(CMAKE_MACOSX_RPATH ON)
+  set(FRAMEWORK_VERSION ${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR})
+  set(FRAMEWORK_DESTINATION "Library/Frameworks")
+  set(FRAMEWORK_SUBDIR "${FRAMEWORK_DESTINATION}/gdal.framework/Versions/${FRAMEWORK_VERSION}")
+  set(INSTALL_PLUGIN_DIR
+      "${FRAMEWORK_SUBDIR}/PlugIns"
+      CACHE PATH "Installation sub-directory for plugins")
+  set(CMAKE_INSTALL_BINDIR "bin" CACHE STRING "Installation sub-directory for executables")
+  set(CMAKE_INSTALL_LIBDIR "${FRAMEWORK_SUBDIR}" CACHE INTERNAL "Installation sub-directory for libraries" FORCE)
+  # CMAKE_INSTALL_INCLUDEDIR should normally not be used
+  set(CMAKE_INSTALL_INCLUDEDIR "${FRAMEWORK_SUBDIR}/Headers" CACHE INTERNAL "Installation sub-directory for headers" FORCE)
+  set(CMAKE_INSTALL_DATADIR "${FRAMEWORK_SUBDIR}/Resources" CACHE INTERNAL "Installation sub-directory for resources" FORCE)
+  set(GDAL_RESOURCE_PATH ${CMAKE_INSTALL_DATADIR})
   set_target_properties(
     ${GDAL_LIB_TARGET_NAME}
     PROPERTIES FRAMEWORK TRUE
-               FRAMEWORK_VERSION A
+               FRAMEWORK_VERSION ${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}
                MACOSX_FRAMEWORK_SHORT_VERSION_STRING ${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}
                MACOSX_FRAMEWORK_BUNDLE_VERSION "GDAL ${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}"
                MACOSX_FRAMEWORK_IDENTIFIER org.osgeo.libgdal
                XCODE_ATTRIBUTE_INSTALL_PATH "@rpath"
-               INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}"
+               INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${FRAMEWORK_DESTINATION}"
                BUILD_WITH_INSTALL_RPATH TRUE
                # MACOSX_FRAMEWORK_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/info.plist.in"
     )
 else ()
   include(GNUInstallDirs)
   set(INSTALL_PLUGIN_DIR
-      "${CMAKE_INSTALL_PREFIX}/lib/gdalplugins/${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}"
-      CACHE PATH "Installation directory for plugins")
+      "lib/gdalplugins/${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}"
+      CACHE PATH "Installation sub-directory for plugins")
+  set(GDAL_RESOURCE_PATH ${CMAKE_INSTALL_DATADIR}/gdal)
 endif ()
 
-set(GDAL_RESOURCE_PATH ${CMAKE_INSTALL_DATADIR}/gdal)
+set(INSTALL_PLUGIN_FULL_DIR "${CMAKE_INSTALL_PREFIX}/${INSTALL_PLUGIN_DIR}")
 
 # detect portability libs and set, so it should add at first Common Portability layer
 add_subdirectory(port)
@@ -502,6 +512,14 @@ set_property(
   APPEND
   PROPERTY RESOURCE "${GDAL_DATA_FILES}")
 
+if(GDAL_ENABLE_MACOSX_FRAMEWORK)
+  # We need to add data files and public headers as sources of the library
+  # os they get installed through the framework installation mechanisms
+  target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE "${GDAL_DATA_FILES}")
+  get_property(_public_headers TARGET ${GDAL_LIB_TARGET_NAME} PROPERTY PUBLIC_HEADER)
+  target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE "${_public_headers}")
+endif()
+
 install(
   TARGETS ${GDAL_LIB_TARGET_NAME}
   EXPORT gdal-export
@@ -510,7 +528,7 @@ install(
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   RESOURCE DESTINATION ${GDAL_RESOURCE_PATH}
   PUBLIC_HEADER DESTINATION ${GDAL_INSTALL_INCLUDEDIR}
-  FRAMEWORK DESTINATION ${CMAKE_INSTALL_LIBDIR})
+  FRAMEWORK DESTINATION "${FRAMEWORK_DESTINATION}")
 
 if (UNIX AND NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
   # Generate GdalConfig.cmake and GdalConfigVersion.cmake
