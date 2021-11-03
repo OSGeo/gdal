@@ -147,6 +147,7 @@ function(add_gdal_driver)
                               PROPERTIES
                               PREFIX ""
                               LIBRARY_OUTPUT_DIRECTORY ${PLUGIN_OUTPUT_DIR}
+                              SKIP_BUILD_RPATH YES
                               )
         target_link_libraries(${_DRIVER_TARGET} PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)
         install(FILES $<TARGET_LINKER_FILE:${_DRIVER_TARGET}> DESTINATION ${INSTALL_PLUGIN_DIR}
