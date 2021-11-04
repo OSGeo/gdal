@@ -850,8 +850,9 @@ void OGRODSDataSource::FillRepeatedCells(bool wasLastCell)
         return;
     }
 
+    // Use 16 as minimum cost for each allocation.
     const size_t nCellMemSize =
-        (!osValue.empty()) ? osValue.size() : osFormula.size();
+        std::max<size_t>(16, (!osValue.empty()) ? osValue.size() : osFormula.size());
     if( nCellMemSize > static_cast<size_t>(10 * 1024 * 1024) /
             (std::max(nCellsRepeated, 1) * nRowsRepeated) )
     {
@@ -861,6 +862,20 @@ void OGRODSDataSource::FillRepeatedCells(bool wasLastCell)
         nCellsRepeated = 0;
         return;
     }
+
+    m_nAccRepeatedMemory +=
+        nCellMemSize * std::max(nCellsRepeated, 1) * nRowsRepeated;
+    if( m_nAccRepeatedMemory > static_cast<size_t>(10 * 1024 * 1024) )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Too much accumulated memory for row/cell repetition. "
+                 "Parsing stopped");
+        bEndTableParsing = true;
+        nCellsRepeated = 0;
+        bStopParsing = true;
+        return;
+    }
+
     for(int i = 0; i < nCellsRepeated; i++)
     {
         if( !osValue.empty() )
