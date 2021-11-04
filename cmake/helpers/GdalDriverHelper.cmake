@@ -149,9 +149,21 @@ function(add_gdal_driver)
                               LIBRARY_OUTPUT_DIRECTORY ${PLUGIN_OUTPUT_DIR}
                               SKIP_BUILD_RPATH YES
                               )
+        # The following doesn't work: we have to manually tweak will install_name_tool
+        #if (GDAL_ENABLE_MACOSX_FRAMEWORK)
+        #    set_target_properties(${_DRIVER_TARGET}
+        #                          PROPERTIES
+        #                          INSTALL_RPATH "@loader_path/../../../..")
+        #endif()
         target_link_libraries(${_DRIVER_TARGET} PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)
         install(FILES $<TARGET_LINKER_FILE:${_DRIVER_TARGET}> DESTINATION ${INSTALL_PLUGIN_DIR}
                 RENAME "${_DRIVER_TARGET}${CMAKE_SHARED_LIBRARY_SUFFIX}" NAMELINK_SKIP)
+        if (GDAL_ENABLE_MACOSX_FRAMEWORK)
+            file(RELATIVE_PATH relDir
+                 ${CMAKE_CURRENT_BINARY_DIR}/${INSTALL_PLUGIN_DIR}
+                 ${CMAKE_CURRENT_BINARY_DIR}/${FRAMEWORK_DESTINATION})
+            install(CODE "execute_process(COMMAND install_name_tool -add_rpath \"@loader_path/${relDir}\" \"$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/${INSTALL_PLUGIN_DIR}/${_DRIVER_TARGET}${CMAKE_SHARED_LIBRARY_SUFFIX}\")")
+        endif()
         set_property(GLOBAL APPEND PROPERTY PLUGIN_MODULES ${_DRIVER_TARGET})
     else ()
         add_library(${_DRIVER_TARGET} OBJECT ${_DRIVER_SOURCES})
