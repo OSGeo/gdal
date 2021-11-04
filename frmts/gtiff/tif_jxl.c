@@ -557,7 +557,7 @@ JXLPostEncode(TIFF* tif)
                 return 0;
             }
         }
-        if( JxlEncoderOptionsSetEffort(opts, sp->effort) != JXL_ENC_SUCCESS )
+        if( JxlEncoderOptionsSetInteger(opts, JXL_ENC_OPTION_EFFORT, sp->effort) != JXL_ENC_SUCCESS )
         {
             TIFFErrorExt(tif->tif_clientdata, module,
                          "JxlEncoderOptionsSetEffort() failed");
