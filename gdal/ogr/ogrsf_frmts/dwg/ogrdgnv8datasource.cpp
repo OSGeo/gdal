@@ -53,7 +53,7 @@ OGRDGNV8DataSource::OGRDGNV8DataSource(OGRDGNV8Services* poServices) :
 OGRDGNV8DataSource::~OGRDGNV8DataSource()
 
 {
-    OGRDGNV8DataSource::FlushCache();
+    OGRDGNV8DataSource::FlushCache(true);
 
     for( int i = 0; i < m_nLayers; i++ )
         delete m_papoLayers[i];
@@ -67,7 +67,7 @@ OGRDGNV8DataSource::~OGRDGNV8DataSource()
 /*                              FlushCache()                            */
 /************************************************************************/
 
-void OGRDGNV8DataSource::FlushCache()
+void OGRDGNV8DataSource::FlushCache(bool /* bAtClosing */)
 {
     if( m_poDb.isNull() || !m_bModified )
         return;
@@ -109,7 +109,7 @@ int OGRDGNV8DataSource::Open( const char * pszFilename, bool bUpdate )
 
 {
     SetDescription(pszFilename);
-    
+
     OdString oFilename( FromUTF8(pszFilename) );
     try
     {
@@ -148,7 +148,7 @@ int OGRDGNV8DataSource::Open( const char * pszFilename, bool bUpdate )
     for ( ; !pIter.isNull() && !pIter->done(); pIter->step() )
     {
         OdDgModelPtr pModel = OdDgModel::cast(
-                pIter->item().openObject( 
+                pIter->item().openObject(
                     bUpdate ? OdDg::kForWrite : OdDg::kForRead ) );
         if ( !pModel.isNull() )
         {
@@ -236,7 +236,7 @@ void OGRDGNV8DataSource::InitWithSeed()
             colorTable->setPalette(palette);
         }
     }
-    
+
     OdDgModelTablePtr pModelTable = m_poDb->getModelTable();
 
     if( CPLTestBool(CSLFetchNameValueDef(
@@ -292,7 +292,7 @@ void OGRDGNV8DataSource::InitWithSeed()
         // Recreate a new model and bind it as default
         OdDgModelPtr model = OdDgModel::createObject();
         pModelTable->add( model );
-        
+
         m_poDb->setActiveModelId( model->elementId() );
         m_poDb->setDefaultModelId( model->elementId() );
 
@@ -394,7 +394,7 @@ bool OGRDGNV8DataSource::PreCreate( const char *pszFilename,
     m_bModified = true;
     m_papszOptions = CSLDuplicate( papszOptionsIn );
     SetDescription( pszFilename );
-    
+
     VSILFILE* fp = VSIFOpenL(pszFilename, "wb");
     if( fp == nullptr )
     {
@@ -403,16 +403,16 @@ bool OGRDGNV8DataSource::PreCreate( const char *pszFilename,
         return false;
     }
     VSIFCloseL(fp);
-    
+
     const char* pszSeed = CSLFetchNameValue(m_papszOptions, "SEED");
-    
+
     try
     {
         if( pszSeed )
             m_poDb = m_poServices->readFile( FromUTF8(pszSeed) );
         else
             m_poDb = m_poServices->createDatabase();
-        
+
         if( pszSeed )
         {
             InitWithSeed();
@@ -514,7 +514,7 @@ CPLString OGRDGNV8DataSource::ToUTF8(const OdString& str)
         CPL_ENC_UTF8);
     CPLString osRet(pszUTF8);
     CPLFree(pszUTF8);
-    return osRet;    
+    return osRet;
 }
 
 /************************************************************************/
@@ -530,7 +530,7 @@ OdString OGRDGNV8DataSource::FromUTF8(const CPLString& str)
         "WCHAR_T"));
     OdString osRet(pwszWide);
     CPLFree(pwszWide);
-    return osRet;    
+    return osRet;
 }
 
 /************************************************************************/
@@ -579,7 +579,7 @@ OGRLayer *OGRDGNV8DataSource::ICreateLayer( const char *pszLayerName,
             model = OdDgModel::createObject();
             pModelTable->add( model );
         }
-        
+
         const char* pszDim = CSLFetchNameValue(papszOptions, "DIM");
         if( pszDim != nullptr )
         {
@@ -587,9 +587,9 @@ OGRLayer *OGRDGNV8DataSource::ICreateLayer( const char *pszLayerName,
         }
 
         model->setWorkingUnit( OdDgModel::kWuMasterUnit );
-            
+
         model->setName( FromUTF8(pszLayerName) );
-        
+
         const char* pszDescription = CSLFetchNameValue(papszOptions,
                                                        "DESCRIPTION");
         if( pszDescription )
@@ -614,7 +614,7 @@ OGRLayer *OGRDGNV8DataSource::ICreateLayer( const char *pszLayerName,
                  "Unknown exception occurred");
         return nullptr;
     }
-    
+
     m_bModified = true;
 
     OGRDGNV8Layer* poLayer = new OGRDGNV8Layer(this, model);
