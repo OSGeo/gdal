@@ -60,6 +60,9 @@ jobs:
     - name: install
       run: |
         cmake --build $GITHUB_WORKSPACE/superbuild/build --target install -j $(nproc)
+        export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib
+        $GITHUB_WORKSPACE/install-gdal/bin/gdalinfo --version
+        PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/python3/dist-packages python3 -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
 
   build-windows-msys2-mingw:
     runs-on: windows-latest
@@ -171,7 +174,11 @@ jobs:
         SKIP_OGR_GMLAS_HUGE_PROCESSING_TIME: YES
     - name: Install
       shell: bash -l {0}
-      run: cmake --build $GITHUB_WORKSPACE/build --config Release --target install
+      run: |
+        cmake --build $GITHUB_WORKSPACE/build --config Release --target install
+        export PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH
+        gdalinfo --version
+        PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/site-packages python3 -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
 
   build-mac:
     runs-on: macOS-latest

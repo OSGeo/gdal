@@ -233,30 +233,63 @@ if (Python_Interpreter_FOUND)
     DEPENDS ${PY_SO_LIST})
 
   # Install extension
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/trimmedsysconfig.py ${CMAKE_CURRENT_BINARY_DIR}/trimmedsysconfig.py @ONLY)
+  file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/get_python_lib.py
+       "from trimmedsysconfig import get_python_lib;print(get_python_lib(prefix=\"${GDAL_PYTHON_INSTALL_PREFIX}\"))\n")
+  execute_process(
+    COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/get_python_lib.py
+    OUTPUT_VARIABLE SITE_PACKAGE_DIR
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+  set(INSTALL_ARGS "--single-version-externally-managed --record=record.txt")
+  if (DEFINED GDAL_PYTHON_INSTALL_PREFIX)
+    file(TO_NATIVE_PATH "${GDAL_PYTHON_INSTALL_PREFIX}" NATIVE_GDAL_PYTHON_INSTALL_PREFIX)
+    set(INSTALL_ARGS "${INSTALL_ARGS} \"--prefix=${NATIVE_GDAL_PYTHON_INSTALL_PREFIX}\"")
+  elseif (CMAKE_INSTALL_PREFIX)
+    file(TO_NATIVE_PATH "${CMAKE_INSTALL_PREFIX}" NATIVE_CMAKE_INSTALL_PREFIX)
+    if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+      file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/is_std_unix_layout.py
+           "import sys;print(\"FALSE\" if \"framework\" in sys.prefix.lower() else \"TRUE\")\n")
+      execute_process(
+        COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/is_std_unix_layout.py
+        OUTPUT_VARIABLE STD_UNIX_LAYOUT
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+      if ("${STD_UNIX_LAYOUT}" STREQUAL "TRUE")
+        set(INSTALL_ARGS "${INSTALL_ARGS} \"--prefix=${NATIVE_CMAKE_INSTALL_PREFIX}\"")
+      elseif (DEFINED GDAL_PYTHON_INSTALL_LIB)
+        set(INSTALL_ARGS "${INSTALL_ARGS} \"--install-lib=${GDAL_PYTHON_INSTALL_LIB}\"")
+      endif ()
+    else ()
+      set(INSTALL_ARGS "${INSTALL_ARGS} \"--prefix=${NATIVE_CMAKE_INSTALL_PREFIX}\"")
+    endif ()
+  endif ()
+
+  if (DEFINED GDAL_PYTHON_INSTALL_LAYOUT)
+    set(INSTALL_ARGS "${INSTALL_ARGS} --install-layout=${GDAL_PYTHON_INSTALL_LAYOUT}")
+  elseif ("${SITE_PACKAGE_DIR}" MATCHES "dist-packages")
+    set(INSTALL_ARGS "${INSTALL_ARGS} --install-layout=deb")
+  endif ()
+
+  configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/install_python.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/install_python.cmake
+                 @ONLY)
+
   if (ONLY_GENERATE_FOR_RELEASE)
     if (POLICY CMP0087)
       # install(SCRIPT) can use generator expressions, since CMake 3.14
       cmake_policy(SET CMP0087 NEW)
-      if (CMAKE_INSTALL_PREFIX)
-        set(INSTALL_ARGS " \"--prefix=${CMAKE_INSTALL_PREFIX}\"")
-      endif ()
       file(
         GENERATE
         OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/install_binding_$<CONFIG>.cmake
         CONTENT
-          "execute_process(COMMAND $<IF:$<CONFIG:Release>,${Python_EXECUTABLE} setup.py install ${INSTALL_ARGS},${CMAKE_COMMAND} -E echo \"setup.py install only run in Release configuration\">
+          "execute_process(COMMAND $<IF:$<CONFIG:Release>,${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/install_python.cmake,${CMAKE_COMMAND} -E echo \"setup.py install only run in Release configuration\">
                                           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})")
       install(SCRIPT ${CMAKE_CURRENT_BINARY_DIR}/install_binding_$<CONFIG>.cmake)
     else ()
       message(WARNING "Installing Python bindings with a multi generator requires CMake >= 3.14")
     endif ()
   else ()
-    if (CMAKE_INSTALL_PREFIX)
-      # TODO: port logic from Makefile to deal with debian layout etc
-      set(INSTALL_ARGS " \"--prefix=${CMAKE_INSTALL_PREFIX}\"")
-    endif ()
-    install(CODE "execute_process(COMMAND ${Python_EXECUTABLE} setup.py install ${INSTALL_ARGS}
-                                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})")
+    install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/install_python.cmake
+                                  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})")
 
   endif ()
 
