@@ -403,6 +403,8 @@ endif()
 gdal_check_package(Oracle "Enable Oracle OCI driver")
 gdal_check_package(TEIGHA "")
 
+option(GDAL_USE_MSG "Set ON to build MSG driver and download external https://gitlab.eumetsat.int/open-source/PublicDecompWT" OFF)
+
 # proprietary libraries
 # KAKADU
 gdal_check_package(KDU "Enable KAKADU")

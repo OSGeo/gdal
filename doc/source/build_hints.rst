@@ -398,6 +398,16 @@ the ``install`` CMake target.
     option of ``python setup.py install``. It is only taken into account on
     MacOS systems, when the Python installation is a framework.
 
+Driver specific options
++++++++++++++++++++++++
+
+.. option:: GDAL_USE_PUBLICDECOMPWT=ON
+
+    The :ref:`raster.msg` driver is built only if this option is set. Its effect is to
+    download the https://gitlab.eumetsat.int/open-source/PublicDecompWT.git
+    repository (requires the ``git`` binary to be available at configuration time)
+    into the build tree and build the needed files from it into the driver.
+
 
 Building on Windows with Conda dependencies and Visual Studio
 --------------------------------------------------------------------------------
