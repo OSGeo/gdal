@@ -61,7 +61,7 @@ ln -s /usr/lib/ogdi/libvrf.so /usr/lib
 # Build libjxl
 # libjxl being still unstable, if the main branch fails to compile/test
 # you can replace JXL_TREEISH=main by JXL_TREEISH=sha1_of_known_working_commit
-JXL_TREEISH=v0.6.1
+JXL_TREEISH=0c5cf04fb6c18d6a89d5a3b215eb2f7750947db5
 git clone https://github.com/libjxl/libjxl.git --recursive \
     && cd libjxl \
     && git checkout ${JXL_TREEISH} \
