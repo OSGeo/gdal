@@ -1654,7 +1654,7 @@ public:
 %apply (GByte* outBytes) {GByte*};
   GByte* GetFieldAsBinary(int id, int *nLen, char **pBuf) {
     GByte* pabyBlob = OGR_F_GetFieldAsBinary(self, id, nLen);
-    *pBuf = (char*)malloc(*nLen);
+    *pBuf = (char*)VSIMalloc(*nLen);
     memcpy(*pBuf, pabyBlob, *nLen);
     return (GByte*)*pBuf;
   }
@@ -1669,7 +1669,7 @@ public:
       else
       {
         GByte* pabyBlob = OGR_F_GetFieldAsBinary(self, id, nLen);
-        *pBuf = (char*)malloc(*nLen);
+        *pBuf = (char*)VSIMalloc(*nLen);
         memcpy(*pBuf, pabyBlob, *nLen);
         return (GByte*)*pBuf;
       }
@@ -1678,7 +1678,7 @@ public:
 #else
   OGRErr GetFieldAsBinary( int id, int *nLen, char **pBuf) {
     GByte* pabyBlob = OGR_F_GetFieldAsBinary(self, id, nLen);
-    *pBuf = (char*)malloc(*nLen);
+    *pBuf = (char*)VSIMalloc(*nLen);
     memcpy(*pBuf, pabyBlob, *nLen);
     return OGRERR_NONE;
   }
@@ -1694,7 +1694,7 @@ public:
       else
       {
         GByte* pabyBlob = OGR_F_GetFieldAsBinary(self, id, nLen);
-        *pBuf = (char*)malloc(*nLen);
+        *pBuf = (char*)VSIMalloc(*nLen);
         memcpy(*pBuf, pabyBlob, *nLen);
         return OGRERR_NONE;
       }
