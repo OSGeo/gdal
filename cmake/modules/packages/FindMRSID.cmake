@@ -20,14 +20,10 @@ configure
 find_path(MRSID_INCLUDE_DIR NAMES lt_base.h)
 
 if( MRSID_INCLUDE_DIR )
-  find_library( MRSID_LIBRARY_LTI NAMES lti_dsdk ltidsdk)
-  find_library( MRSID_LIBRARY_LTI_LIDAR NAMES lti_lidar_dsdk)
-  if(MRSID_LIBRARY_LTI AND MRSID_LIBRARY_LTI_LIDAR)
-      set(MRSID_LIBRARIES ${MRSID_LIBRARY_LTI} ${MRSID_LIBRARY_LTI_LIDAR} CACHE PATH "")
-  endif()
+  find_library( MRSID_LIBRARY NAMES lti_dsdk ltidsdk)
 endif()
 
-if(MRSID_INCLUDE_DIR AND MRSID_LIBRARIES)
+if(MRSID_INCLUDE_DIR AND MRSID_LIBRARY)
   set(MAJOR_VERSION 0)
   set(MINOR_VERSION 0)
   set(SRV_VERSION 0)
@@ -50,29 +46,21 @@ if(MRSID_INCLUDE_DIR AND MRSID_LIBRARIES)
   endif()
   set(MRSID_VERSION_STRING "${MAJOR_VERSION}.${MINOR_VERSION}.${REV_VERSION}")
 endif()
-mark_as_advanced(MRSID_INCLUDE_DIR MRSID_LIBRARY_LTI MRSID_LIBRARY_LTI_LIDAR MRSID_VERSION_STRING)
+mark_as_advanced(MRSID_INCLUDE_DIR MRSID_LIBRARY MRSID_VERSION_STRING)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(MRSID FOUND_VAR MRSID_FOUND
-                                  REQUIRED_VARS MRSID_LIBRARY_LTI MRSID_LIBRARY_LTI_LIDAR MRSID_INCLUDE_DIR
+                                  REQUIRED_VARS MRSID_LIBRARY MRSID_INCLUDE_DIR
                                   VERSION_VAR MRSID_VERSION_STRING)
 
 # Copy the results to the output variables.
 if(MRSID_FOUND)
-  set(MRSID_LIBRARY ${MRSID_LIBRARIES})
+  set(MRSID_LIBRARIES ${MRSID_LIBRARY})
   set(MRSID_INCLUDE_DIRS ${MRSID_INCLUDE_DIR})
   if(NOT TARGET MRSID::MRSID)
     add_library(MRSID::MRSID UNKNOWN IMPORTED)
     set_target_properties(MRSID::MRSID PROPERTIES
                           INTERFACE_INCLUDE_DIRECTORIES "${MRSID_INCLUDE_DIR}"
-                          IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-                          IMPORTED_LOCATION "${MRSID_LIBRARY_LTI}")
-  endif()
-  if(NOT TARGET MRSID::LIDAR)
-    add_library(MRSID::LIDAR UNKNOWN IMPORTED)
-    set_target_properties(MRSID::LIDAR PROPERTIES
-                          INTERFACE_INCLUDE_DIRECTORIES "${MRSID_INCLUDE_DIR}"
-                          IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-                          IMPORTED_LOCATION "${MRSID_LIBRARY_LTI_LIDAR}")
+                          IMPORTED_LOCATION "${MRSID_LIBRARY}")
   endif()
 endif()
