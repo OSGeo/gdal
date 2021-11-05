@@ -227,8 +227,6 @@ OGRHanaLayer::OGRHanaLayer(OGRHanaDataSource* datasource)
 
 OGRHanaLayer::~OGRHanaLayer()
 {
-    ResetReading();
-
     if (featureDefn_)
         featureDefn_->Release();
     if (srs_)

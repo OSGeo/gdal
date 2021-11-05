@@ -241,7 +241,7 @@ protected:
     void ReadGeometryExtent(int geomField, OGREnvelope* extent);
 
 public:
-    OGRHanaLayer(OGRHanaDataSource* datasource);
+    explicit OGRHanaLayer(OGRHanaDataSource* datasource);
     ~OGRHanaLayer() override;
 
     void ResetReading() override;
@@ -353,7 +353,7 @@ public:
 class OGRHanaResultLayer : public OGRHanaLayer
 {
 public:
-    OGRHanaResultLayer(OGRHanaDataSource* datasource);
+    explicit OGRHanaResultLayer(OGRHanaDataSource* datasource);
 
     OGRErr Initialize(const char* query, OGRGeometry* spatialFilter);
 

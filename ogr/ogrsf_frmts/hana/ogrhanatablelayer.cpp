@@ -157,23 +157,23 @@ FieldTypeInfo ParseFieldTypeInfo(const CPLString& typeDef)
     }
 
     if (EQUAL(typeName.c_str(), "BOOLEAN"))
-        return {typeDef, odbc::SQLDataTypes::Boolean, 0, 0};
+        return {typeName, odbc::SQLDataTypes::Boolean, 0, 0};
     else if (EQUAL(typeName.c_str(), "TINYINT"))
-        return {typeDef, odbc::SQLDataTypes::TinyInt, 0, 0};
+        return {typeName, odbc::SQLDataTypes::TinyInt, 0, 0};
     else if (EQUAL(typeName.c_str(), "SMALLINT"))
-        return {typeDef, odbc::SQLDataTypes::SmallInt, 0, 0};
+        return {typeName, odbc::SQLDataTypes::SmallInt, 0, 0};
     else if (EQUAL(typeName.c_str(), "INTEGER"))
-        return {typeDef, odbc::SQLDataTypes::Integer, 0, 0};
+        return {typeName, odbc::SQLDataTypes::Integer, 0, 0};
     else if (EQUAL(typeName.c_str(), "DECIMAL"))
     {
         switch (typeSize.size())
         {
         case 0:
-            return {typeDef, odbc::SQLDataTypes::Decimal, 0, 0};
+            return {typeName, odbc::SQLDataTypes::Decimal, 0, 0};
         case 1:
-            return {typeDef, odbc::SQLDataTypes::Decimal, typeSize[0], 0};
+            return {typeName, odbc::SQLDataTypes::Decimal, typeSize[0], 0};
         case 2:
-            return {typeDef, odbc::SQLDataTypes::Decimal, typeSize[0],
+            return {typeName, odbc::SQLDataTypes::Decimal, typeSize[0],
                     typeSize[1]};
         }
     }
@@ -182,26 +182,26 @@ FieldTypeInfo ParseFieldTypeInfo(const CPLString& typeDef)
         switch (typeSize.size())
         {
         case 0:
-            return {typeDef, odbc::SQLDataTypes::Float, 10, 0};
+            return {typeName, odbc::SQLDataTypes::Float, 10, 0};
         case 1:
-            return {typeDef, odbc::SQLDataTypes::Float, typeSize[0], 0};
+            return {typeName, odbc::SQLDataTypes::Float, typeSize[0], 0};
         case 2:
             incorrectFormatErr();
             return {"", UNKNOWN_DATA_TYPE, 0, 0};
         }
     }
     else if (EQUAL(typeName.c_str(), "REAL"))
-        return {typeDef, odbc::SQLDataTypes::Real, 0, 0};
+        return {typeName, odbc::SQLDataTypes::Real, 0, 0};
     else if (EQUAL(typeName.c_str(), "DOUBLE"))
-        return {typeDef, odbc::SQLDataTypes::Double, 0, 0};
+        return {typeName, odbc::SQLDataTypes::Double, 0, 0};
     else if (EQUAL(typeName.c_str(), "VARCHAR"))
     {
         switch (typeSize.size())
         {
         case 0:
-            return {typeDef, odbc::SQLDataTypes::VarChar, 1, 0};
+            return {typeName, odbc::SQLDataTypes::VarChar, 1, 0};
         case 1:
-            return {typeDef, odbc::SQLDataTypes::VarChar, typeSize[0], 0};
+            return {typeName, odbc::SQLDataTypes::VarChar, typeSize[0], 0};
         case 2:
             incorrectFormatErr();
             return {"", UNKNOWN_DATA_TYPE, 0, 0};
@@ -212,42 +212,42 @@ FieldTypeInfo ParseFieldTypeInfo(const CPLString& typeDef)
         switch (typeSize.size())
         {
         case 0:
-            return {typeDef, odbc::SQLDataTypes::WVarChar, 1, 0};
+            return {typeName, odbc::SQLDataTypes::WVarChar, 1, 0};
         case 1:
-            return {typeDef, odbc::SQLDataTypes::WVarChar, typeSize[0], 0};
+            return {typeName, odbc::SQLDataTypes::WVarChar, typeSize[0], 0};
         case 2:
             incorrectFormatErr();
             return {"", UNKNOWN_DATA_TYPE, 0, 0};
         }
     }
     else if (EQUAL(typeName.c_str(), "NCLOB"))
-        return {typeDef, odbc::SQLDataTypes::WLongVarChar, 0, 0};
+        return {typeName, odbc::SQLDataTypes::WLongVarChar, 0, 0};
     else if (EQUAL(typeName.c_str(), "DATE"))
-        return {typeDef, odbc::SQLDataTypes::Date, 0, 0};
+        return {typeName, odbc::SQLDataTypes::Date, 0, 0};
     else if (EQUAL(typeName.c_str(), "TIME"))
-        return {typeDef, odbc::SQLDataTypes::Time, 0, 0};
+        return {typeName, odbc::SQLDataTypes::Time, 0, 0};
     else if (EQUAL(typeName.c_str(), "TIMESTAMP"))
-        return {typeDef, odbc::SQLDataTypes::Timestamp, 0, 0};
+        return {typeName, odbc::SQLDataTypes::Timestamp, 0, 0};
     else if (EQUAL(typeName.c_str(), "VARBINARY"))
     {
         switch (typeSize.size())
         {
         case 0:
-            return {typeDef, odbc::SQLDataTypes::VarBinary, 1, 0};
+            return {typeName, odbc::SQLDataTypes::VarBinary, 1, 0};
         case 1:
-            return {typeDef, odbc::SQLDataTypes::VarBinary, typeSize[0], 0};
+            return {typeName, odbc::SQLDataTypes::VarBinary, typeSize[0], 0};
         case 2:
             incorrectFormatErr();
             return {"", UNKNOWN_DATA_TYPE, 0, 0};
         }
     }
     else if (EQUAL(typeName.c_str(), "BLOB"))
-        return {typeDef, odbc::SQLDataTypes::LongVarBinary, 0, 0};
+        return {typeName, odbc::SQLDataTypes::LongVarBinary, 0, 0};
 
     CPLError(
         CE_Failure, CPLE_NotSupported, "Unknown column type '%s'.",
         typeName.c_str());
-    return {typeDef, UNKNOWN_DATA_TYPE, 0, 0};
+    return {typeName, UNKNOWN_DATA_TYPE, 0, 0};
 }
 
 void SetFieldDefn(OGRFieldDefn& field, const FieldTypeInfo& typeInfo)
@@ -1143,6 +1143,13 @@ OGRErr OGRHanaTableLayer::ISetFeature(OGRFeature* feature)
         CPLError(
             CE_Failure, CPLE_NotSupported, UNSUPPORTED_OP_READ_ONLY,
             "SetFeature");
+        return OGRERR_FAILURE;
+    }
+
+    if( nullptr == feature )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "NULL pointer to OGRFeature passed to SetFeature()." );
         return OGRERR_FAILURE;
     }
 

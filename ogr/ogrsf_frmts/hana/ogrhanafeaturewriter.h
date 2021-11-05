@@ -74,10 +74,8 @@ template<typename ElementT>
 void OGRHanaFeatureWriter::SetFieldValueAsArray(
     int fieldIndex, const odbc::Binary& value)
 {
-    const char* data = value->data();
-    const uint8_t* ptr = reinterpret_cast<const uint8_t*>(data);
+    const uint8_t* ptr = reinterpret_cast<const uint8_t*>(value->data());
     uint32_t numElements = *(reinterpret_cast<const uint32_t*>(ptr));
-    data += sizeof(uint32_t);
 
     if (numElements == 0)
     {
