@@ -221,6 +221,23 @@ Can be detected with pkg-config.
     Path to a shared or static library file.
 
 
+MRSID
+*****
+
+MRSID_ROOT or CMAKE_PREFIX_PATH should point to the directory of the SDK ending with
+Raster_DSDK. Note that on Linux, its lib subdirectory should be in the
+LD_LIBRARY_PATH so that the linking of applications succeeds and libtbb.so can
+be found.
+
+.. option:: MRSID_INCLUDE_DIR
+
+    Path to the include directory with the ``lt_base.h`` header file.
+
+.. option:: MRSID_LIBRARY
+
+    Path to library file libltidsdk
+
+
 PROJ
 ****
 
