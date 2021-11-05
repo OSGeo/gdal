@@ -157,6 +157,30 @@ curl
 
     Control whether to use Curl. Defaults to ON when Curl is found.
 
+ECW
+***
+
+Currently only support for ECW SDK 3.3 and 5.5 is offered.
+
+.. option:: ECW_INCLUDE_DIR
+
+    Path to the include directory with the ``NCSECWClient.h`` header file.
+
+.. option:: ECW_LIBRARY
+
+    Path to library file libNCSEcw
+
+.. option:: ECWnet_LIBRARY
+
+    Path to library file libNCSCnet (only needed for SDK 3.3)
+
+.. option:: ECWC_LIBRARY
+
+    Path to library file libNCSEcwC (only needed for SDK 3.3)
+
+.. option:: NCSUtil_LIBRARY
+
+    Path to library file libNCSUtil (only needed for SDK 3.3)
 
 geotiff
 *******
