@@ -162,6 +162,10 @@ ECW
 
 Currently only support for ECW SDK 3.3 and 5.5 is offered.
 
+For ECW SDK 5.5, ECW_ROOT or CMAKE_PREFIX_PATH should point to the directory
+into which there are include and lib subdirectories, typically
+ending with ERDAS-ECW_JPEG_2000_SDK-5.5.0/Desktop_Read-Only.
+
 .. option:: ECW_INCLUDE_DIR
 
     Path to the include directory with the ``NCSECWClient.h`` header file.
