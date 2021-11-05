@@ -231,13 +231,17 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
     const size_t nXSize = psTransform->nGeoLocXSize;
     const size_t nYSize = psTransform->nGeoLocYSize;
 
-/* -------------------------------------------------------------------- */
-/*      Decide on resolution for backmap.  We aim for slightly          */
-/*      higher resolution than the source but we can't easily           */
-/*      establish how much dead space there is in the backmap, so it    */
-/*      is approximate.                                                 */
-/* -------------------------------------------------------------------- */
-    const double dfTargetPixels = (static_cast<double>(nXSize) * nYSize * OVERSAMPLE_FACTOR);
+/* ------------------------------------------------------------------- */
+/*      Decide on resolution for backmap.  We make sure that the       */
+/*      X and Y resolutions are at least OVERSAMPLE_FACTOR higher than */
+/*      the source.                                                    */
+/* ------------------------------------------------------------------- */
+    // Higher bound for pixel size
+    const double nPixelSizeBound = std::min((psTransform->dfMaxX - psTransform->dfMinX) / nXSize,
+                                            (psTransform->dfMaxY - psTransform->dfMinY) / nYSize) / OVERSAMPLE_FACTOR;
+    const double dfTargetPixels =
+      (psTransform->dfMaxX - psTransform->dfMinX) *
+      (psTransform->dfMaxY - psTransform->dfMinY) / (nPixelSizeBound * nPixelSizeBound);
     const double dfPixelSize = sqrt(
         (psTransform->dfMaxX - psTransform->dfMinX) *
         (psTransform->dfMaxY - psTransform->dfMinY) / dfTargetPixels);
@@ -282,7 +286,7 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
     psTransform->adfBackMapGeoTransform[5] = -dfPixelSize;
 
 /* -------------------------------------------------------------------- */
-/*      Allocate backmap, and initialize to nodata value (-1.0).        */
+/*      Allocate backmap, and initialize weights to nodata value (0.).  */
 /* -------------------------------------------------------------------- */
     psTransform->pafBackMapX = static_cast<float *>(
         VSI_MALLOC3_VERBOSE(nBMXSize, nBMYSize, sizeof(float)));
@@ -445,101 +449,133 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
         }
     }
 
-    // Fill holes in backmap
-    auto poMEMDS = std::unique_ptr<GDALDataset>(
-          MEMDataset::Create( "",
-                              static_cast<int>(nBMXSize),
-                              static_cast<int>(nBMYSize),
-                              0, GDT_Float32, nullptr ));
-
-    for( int i = 1; i <= 2; i++ )
-    {
-        char szBuffer[32] = { '\0' };
-        char szBuffer0[64] = { '\0' };
-        char* apszOptions[] = { szBuffer0, nullptr };
-
-        void* ptr = (i == 1) ? psTransform->pafBackMapX : psTransform->pafBackMapY;
-        szBuffer[CPLPrintPointer(szBuffer, ptr, sizeof(szBuffer))] = '\0';
-        snprintf(szBuffer0, sizeof(szBuffer0), "DATAPOINTER=%s", szBuffer);
-        poMEMDS->AddBand(GDT_Float32, apszOptions);
-        poMEMDS->GetRasterBand(i)->SetNoDataValue(-1);
-    }
-
-#ifdef DEBUG_GEOLOC
-    if( CPLTestBool(CPLGetConfigOption("GEOLOC_DUMP", "NO")) )
-    {
-        GDALClose(GDALCreateCopy(GDALGetDriverByName("GTiff"),
-                              "/tmp/geoloc_before_fill.tif",
-                              poMEMDS.get(),
-                              false, nullptr, nullptr, nullptr));
-    }
-#endif
-
-    constexpr double dfMaxSearchDist = 3.0;
-    constexpr int nSmoothingIterations = 1;
-    for( int i = 1; i <= 2; i++ )
-    {
-        GDALFillNodata( GDALRasterBand::ToHandle(poMEMDS->GetRasterBand(i)),
-                        nullptr,
-                        dfMaxSearchDist,
-                        0, // unused parameter
-                        nSmoothingIterations,
-                        nullptr,
-                        nullptr,
-                        nullptr );
-    }
-
-#ifdef DEBUG_GEOLOC
-    if( CPLTestBool(CPLGetConfigOption("GEOLOC_DUMP", "NO")) )
-    {
-        GDALClose(GDALCreateCopy(GDALGetDriverByName("GTiff"),
-                              "/tmp/geoloc_after_fill.tif",
-                              poMEMDS.get(),
-                              false, nullptr, nullptr, nullptr));
-    }
-#endif
-
-    // A final hole filling logic, proceeding line by line, and feeling
-    // holes when the backmap values surrounding the hole are close enough.
-    for( size_t iBMY = 0; iBMY < nBMYSize; iBMY++ )
-    {
-        size_t iLastValidIX = static_cast<size_t>(-1);
-        for( size_t iBMX = 0; iBMX < nBMXSize; iBMX++ )
-        {
-            const size_t iBM = iBMX + iBMY * nBMXSize;
-            if( psTransform->pafBackMapX[iBM] < 0 )
-                continue;
-            if( iLastValidIX != static_cast<size_t>(-1) &&
-                iBMX > iLastValidIX + 1 &&
-                fabs( psTransform->pafBackMapX[iBM] -
-                    psTransform->pafBackMapX[iLastValidIX + iBMY * nBMXSize]) <= 2 &&
-                fabs( psTransform->pafBackMapY[iBM] -
-                    psTransform->pafBackMapY[iLastValidIX + iBMY * nBMXSize]) <= 2 )
-            {
-                for( size_t iBMXInner = iLastValidIX + 1; iBMXInner < iBMX; ++iBMXInner )
-                {
-                    const float alpha = static_cast<float>(iBMXInner - iLastValidIX) / (iBMX - iLastValidIX);
-                    psTransform->pafBackMapX[iBMXInner + iBMY * nBMXSize] =
-                        (1.0f - alpha) * psTransform->pafBackMapX[iLastValidIX + iBMY * nBMXSize] +
-                        alpha * psTransform->pafBackMapX[iBM];
-                    psTransform->pafBackMapY[iBMXInner + iBMY * nBMXSize] =
-                        (1.0f - alpha) * psTransform->pafBackMapY[iLastValidIX + iBMY * nBMXSize] +
-                        alpha * psTransform->pafBackMapY[iBM];
-                }
-            }
-            iLastValidIX = iBMX;
+    // Check if backmap has holes
+    bool has_holes = false;
+    for( size_t bmY = 0; bmY < nBMYSize; bmY++ ) {
+      size_t max_transitions;
+      // If first column has valid data the maximum
+      // number of transitions is 1, otherwise two
+      // are allowed
+      if( wgtsBackMap[bmY * nBMXSize] != 0. ) {
+        max_transitions = 1;
+      } else {
+        max_transitions = 2;
+      }
+      size_t transitions = 0;
+      for( size_t bmX = 0; bmX < nBMYSize - 1; bmX++ ) {
+        if((wgtsBackMap[bmX + bmY * nBMXSize] != 0. &&
+            wgtsBackMap[bmX + 1 + bmY * nBMXSize] == 0.) ||
+           (wgtsBackMap[bmX + bmY * nBMXSize] == 0. &&
+            wgtsBackMap[bmX + 1 + bmY * nBMXSize] != 0.)) {
+          transitions++;
         }
+      }
+      if( transitions > max_transitions ) {
+          has_holes = true;
+          break;
+      }
     }
 
-#ifdef DEBUG_GEOLOC
-    if( CPLTestBool(CPLGetConfigOption("GEOLOC_DUMP", "NO")) )
+    // Fill holes in backmap, if required
+    if( has_holes )
     {
-        GDALClose(GDALCreateCopy(GDALGetDriverByName("GTiff"),
-                              "/tmp/geoloc_after_line_fill.tif",
-                              poMEMDS.get(),
-                              false, nullptr, nullptr, nullptr));
-    }
+
+      auto poMEMDS = std::unique_ptr<GDALDataset>(
+            MEMDataset::Create( "",
+                                static_cast<int>(nBMXSize),
+                                static_cast<int>(nBMYSize),
+                                0, GDT_Float32, nullptr ));
+
+      for( int i = 1; i <= 2; i++ )
+      {
+          char szBuffer[32] = { '\0' };
+          char szBuffer0[64] = { '\0' };
+          char* apszOptions[] = { szBuffer0, nullptr };
+
+          void* ptr = (i == 1) ? psTransform->pafBackMapX : psTransform->pafBackMapY;
+          szBuffer[CPLPrintPointer(szBuffer, ptr, sizeof(szBuffer))] = '\0';
+          snprintf(szBuffer0, sizeof(szBuffer0), "DATAPOINTER=%s", szBuffer);
+          poMEMDS->AddBand(GDT_Float32, apszOptions);
+          poMEMDS->GetRasterBand(i)->SetNoDataValue(-1);
+      }
+
+#ifdef DEBUG_GEOLOC
+      if( CPLTestBool(CPLGetConfigOption("GEOLOC_DUMP", "NO")) )
+      {
+          GDALClose(GDALCreateCopy(GDALGetDriverByName("GTiff"),
+                                "/tmp/geoloc_before_fill.tif",
+                                poMEMDS.get(),
+                                false, nullptr, nullptr, nullptr));
+      }
 #endif
+
+      constexpr double dfMaxSearchDist = 3.0;
+      constexpr int nSmoothingIterations = 1;
+      for( int i = 1; i <= 2; i++ )
+      {
+          GDALFillNodata( GDALRasterBand::ToHandle(poMEMDS->GetRasterBand(i)),
+                          nullptr,
+                          dfMaxSearchDist,
+                          0, // unused parameter
+                          nSmoothingIterations,
+                          nullptr,
+                          nullptr,
+                          nullptr );
+      }
+
+#ifdef DEBUG_GEOLOC
+      if( CPLTestBool(CPLGetConfigOption("GEOLOC_DUMP", "NO")) )
+      {
+          GDALClose(GDALCreateCopy(GDALGetDriverByName("GTiff"),
+                                "/tmp/geoloc_after_fill.tif",
+                                poMEMDS.get(),
+                                false, nullptr, nullptr, nullptr));
+     }
+#endif
+
+      // A final hole filling logic, proceeding line by line, and filling
+      // holes when the backmap values surrounding the hole are close enough.
+      for( size_t iBMY = 0; iBMY < nBMYSize; iBMY++ )
+      {
+          size_t iLastValidIX = static_cast<size_t>(-1);
+          for( size_t iBMX = 0; iBMX < nBMXSize; iBMX++ )
+          {
+              const size_t iBM = iBMX + iBMY * nBMXSize;
+              if( psTransform->pafBackMapX[iBM] < 0 )
+                  continue;
+              if( iLastValidIX != static_cast<size_t>(-1) &&
+                  iBMX > iLastValidIX + 1 &&
+                  fabs( psTransform->pafBackMapX[iBM] -
+                      psTransform->pafBackMapX[iLastValidIX + iBMY * nBMXSize]) <= 2 &&
+                  fabs( psTransform->pafBackMapY[iBM] -
+                      psTransform->pafBackMapY[iLastValidIX + iBMY * nBMXSize]) <= 2 )
+              {
+                  for( size_t iBMXInner = iLastValidIX + 1; iBMXInner < iBMX; ++iBMXInner )
+                  {
+                      const float alpha = static_cast<float>(iBMXInner - iLastValidIX) / (iBMX - iLastValidIX);
+                      psTransform->pafBackMapX[iBMXInner + iBMY * nBMXSize] =
+                          (1.0f - alpha) * psTransform->pafBackMapX[iLastValidIX + iBMY * nBMXSize] +
+                          alpha * psTransform->pafBackMapX[iBM];
+                      psTransform->pafBackMapY[iBMXInner + iBMY * nBMXSize] =
+                          (1.0f - alpha) * psTransform->pafBackMapY[iLastValidIX + iBMY * nBMXSize] +
+                          alpha * psTransform->pafBackMapY[iBM];
+                  }
+              }
+              iLastValidIX = iBMX;
+          }
+      }
+
+#ifdef DEBUG_GEOLOC
+      if( CPLTestBool(CPLGetConfigOption("GEOLOC_DUMP", "NO")) )
+      {
+          GDALClose(GDALCreateCopy(GDALGetDriverByName("GTiff"),
+                                "/tmp/geoloc_after_line_fill.tif",
+                                poMEMDS.get(),
+                                false, nullptr, nullptr, nullptr));
+      }
+#endif
+
+    }
 
     CPLFree( wgtsBackMap );
 
