@@ -6031,6 +6031,10 @@ else
     saved_LIBS="$LIBS"
     LIBS="$EXR_LIBS"
     AC_CHECK_LIB(IlmImf,ImfTiledInputReadTile, [HAVE_EXR=yes], [HAVE_EXR=no])
+    if test "$HAVE_EXR" = "no"; then
+      dnl Try with OpenEXR >= 3 name
+      AC_CHECK_LIB(OpenEXR,ImfTiledInputReadTile, [HAVE_EXR=yes], [HAVE_EXR=no])
+    fi
     LIBS="$saved_LIBS"
 
     if test "$HAVE_EXR" = "yes"; then
