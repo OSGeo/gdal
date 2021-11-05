@@ -17,32 +17,52 @@
 find_package(PkgConfig QUIET)
 if (PKG_CONFIG_FOUND)
     pkg_check_modules(PC_OpenEXR QUIET OpenEXR)
-    set(OpenEXR_VERSION_STRING ${OpenEXR_VERSION})
+    set(OpenEXR_VERSION_STRING ${PC_OpenEXR_VERSION})
 endif ()
 
 find_path(OpenEXR_INCLUDE_DIR
           NAMES ImfVersion.h
           HINTS ${PC_OpenEXR_INCLUDE_DIRS}
           PATH_SUFFIXES OpenEXR)
-find_library(OpenEXR_LIBRARY
-             NAMES IlmImf
-             HINTS ${PC_OpenEXR_LIBRARY_DIRS})
-find_library(OpenEXR_UTIL_LIBRARY
-             NAMES IlmImfUtil
-             HINTS ${PC_OpenEXR_LIBRARY_DIRS})
-find_library(OpenEXR_HALF_LIBRARY
-             NAMES Half
-             HINTS ${PC_OpenEXR_LIBRARY_DIRS})
-find_library(OpenEXR_IEX_LIBRARY
-             NAMES Iex
-             HINTS ${PC_OpenEXR_LIBRARY_DIRS})
+find_path(Imath_INCLUDE_DIR
+          NAMES ImathMatrix.h
+          HINTS ${PC_OpenEXR_INCLUDE_DIRS}
+          PATH_SUFFIXES Imath)
+
+if (OpenEXR_VERSION_STRING VERSION_GREATER_EQUAL 3.0)
+    find_library(OpenEXR_LIBRARY
+                 NAMES OpenEXR
+                 HINTS ${PC_OpenEXR_LIBRARY_DIRS})
+    find_library(OpenEXR_UTIL_LIBRARY
+                 NAMES OpenEXRUtil
+                 HINTS ${PC_OpenEXR_LIBRARY_DIRS})
+    find_library(OpenEXR_HALF_LIBRARY
+                 NAMES Imath
+                 HINTS ${PC_OpenEXR_LIBRARY_DIRS})
+    find_library(OpenEXR_IEX_LIBRARY
+                 NAMES Iex
+                 HINTS ${PC_OpenEXR_LIBRARY_DIRS})
+else()
+    find_library(OpenEXR_LIBRARY
+                 NAMES IlmImf
+                 HINTS ${PC_OpenEXR_LIBRARY_DIRS})
+    find_library(OpenEXR_UTIL_LIBRARY
+                 NAMES IlmImfUtil
+                 HINTS ${PC_OpenEXR_LIBRARY_DIRS})
+    find_library(OpenEXR_HALF_LIBRARY
+                 NAMES Half
+                 HINTS ${PC_OpenEXR_LIBRARY_DIRS})
+    find_library(OpenEXR_IEX_LIBRARY
+                 NAMES Iex
+                 HINTS ${PC_OpenEXR_LIBRARY_DIRS})
+endif()
 
 find_package_handle_standard_args(OpenEXR FOUND_VAR OpenEXR_FOUND
-                                  REQUIRED_VARS OpenEXR_LIBRARY OpenEXR_UTIL_LIBRARY OpenEXR_INCLUDE_DIR
+                                  REQUIRED_VARS OpenEXR_LIBRARY OpenEXR_UTIL_LIBRARY OpenEXR_HALF_LIBRARY OpenEXR_IEX_LIBRARY OpenEXR_INCLUDE_DIR Imath_INCLUDE_DIR
                                   VERSION_VAR OpenEXR_VERSION_STRING)
 
 if (OpenEXR_FOUND)
-  set(OpenEXR_INCLUDE_DIRS ${OpenEXR_INCLUDE_DIR})
+  set(OpenEXR_INCLUDE_DIRS ${OpenEXR_INCLUDE_DIR} ${Imath_INCLUDE_DIR})
   set(OpenEXR_LIBRARIES ${OpenEXR_LIBRARY} ${OpenEXR_UTIL_LIBRARY} ${OpenEXR_HALF_LIBRARY} ${OpenEXR_IEX_LIBRARY})
   if (NOT TARGET OpenEXR::OpenEXR)
     add_library(OpenEXR::IlmImf UNKNOWN IMPORTED)
