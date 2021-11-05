@@ -893,8 +893,7 @@ def execute_sql_scalar(conn, sql):
 
 def generate_schema_name(conn, prefix):
     uid = execute_sql_scalar(conn, "SELECT REPLACE(CURRENT_UTCDATE, '-', '') || '_' || BINTOHEX(SYSUUID) FROM DUMMY;")
-    # '{}_{}'.format(prefix, uid)
-    return 'gdal_test__01'
+    return '{}_{}'.format(prefix, uid)
 
 
 def open_datasource(update=1):
