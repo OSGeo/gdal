@@ -45,7 +45,7 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different
 # For faster builds, generate a strip down version without GDAL_RELEASE_DATE
 # and GDAL_RELEASE_NAME which change quite often in git builds, to save rebuilt
 # time
-string(REGEX REPLACE "(DO_NOT_DEFINE_GDAL_RELEASE_DATE_AND_GDAL_RELEASE_NAME\\))(.*)" "\\1\n#endif\n"
+string(REGEX REPLACE "(DO_NOT_DEFINE_GDAL_DATE_NAME\\))(.*)" "\\1\n#endif\n"
           GDAL_VERSION_MINIMUM_H_CONTENTS "${GDAL_VERSION_H_CONTENTS}")
 file(WRITE ${BINARY_DIR}/gcore/gdal_version.h.tmp "${GDAL_VERSION_MINIMUM_H_CONTENTS}")
 execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different

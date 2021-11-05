@@ -10,14 +10,12 @@ add_gdal_driver(
           gt_wkt_srs_priv.h
           gt_wkt_srs_for_gdal.h
           tifvsi.h
-          tif_float.h
           geotiff.cpp
           gt_jpeg_copy.cpp
           gt_citation.cpp
           gt_overview.cpp
           gt_wkt_srs.cpp
           tifvsi.cpp
-          tif_float.c
   BUILTIN CXX_WFLAGS_EFFCXX)
 gdal_standard_includes(gdal_GTIFF)
 target_include_directories(gdal_GTIFF PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/jpeg)
@@ -35,6 +33,11 @@ if (GDAL_USE_LIBTIFF_INTERNAL)
   if (RENAME_INTERNAL_LIBTIFF_SYMBOLS)
     target_compile_definitions(gdal_GTIFF PRIVATE -DRENAME_INTERNAL_LIBTIFF_SYMBOLS)
   endif ()
+
+  if (GDAL_USE_DEFLATE)
+    target_compile_definitions(gdal_GTIFF PRIVATE -DLIBDEFLATE_SUPPORT)
+  endif ()
+
 endif ()
 
 if (GDAL_USE_LIBJPEG_INTERNAL)
@@ -66,6 +69,12 @@ endif ()
 
 if (NOT GDAL_USE_LIBGEOTIFF_INTERNAL)
   gdal_target_link_libraries(TARGET gdal_GTIFF LIBRARIES GEOTIFF::GEOTIFF)
+endif ()
+
+if (GDAL_USE_LIBTIFF_INTERNAL AND GDAL_USE_JXL)
+  target_sources(gdal_GTIFF PRIVATE tif_jxl.c)
+  target_compile_definitions(gdal_GTIFF PRIVATE -DHAVE_JXL)
+  gdal_target_link_libraries(TARGET gdal_GTIFF LIBRARIES JXL::JXL)
 endif ()
 
 if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)

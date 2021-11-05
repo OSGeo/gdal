@@ -79,7 +79,7 @@ class OGRDGNV8Layer final: public OGRLayer
 
     void                        AddToComplexCurve( OGRFeature* poFeature,
                                                    OGRCircularString* poCS,
-                                                   OdDgComplexCurvePtr complexCurve );    
+                                                   OdDgComplexCurvePtr complexCurve );
     void                        AddToComplexCurve( OGRFeature* poFeature,
                                                    OGRCompoundCurve* poCC,
                                                    OdDgComplexCurvePtr complexCurve );
@@ -152,7 +152,7 @@ class OGRDGNV8DataSource final: public GDALDataset
     OGRLayer            *GetLayer( int ) override;
 
     int                 TestCapability( const char * ) override;
-    virtual void        FlushCache() override;
+    virtual void        FlushCache(bool bAtClosing) override;
 
     virtual char **     GetMetadataDomainList() override;
     virtual char**      GetMetadata(const char* pszDomain = "") override;

@@ -202,10 +202,10 @@ namespace tut
         double y = -60;
         ensure( poCT->Transform(1, &x, &y) );
         // Check that the transformed point is different but not too far
-        ensure( abs(x - 44) > 1e-10 );
-        ensure( abs(y - -60) > 1e-10 );
-        ensure( abs(x - 44) < 1e-3 );
-        ensure( abs(y - -60) < 1e-3 );
+        ensure( fabs(x - 44) > 1e-10 );
+        ensure( fabs(y - -60) > 1e-10 );
+        ensure( fabs(x - 44) < 1e-3 );
+        ensure( fabs(y - -60) < 1e-3 );
         const double xTransformed = x;
         const double yTransformed = y;
 
@@ -263,13 +263,13 @@ namespace tut
                            const double xSrc, const double ySrc)
     {
         ensure(poCT != nullptr);
-        ensure((poCT->GetSourceCS() == nullptr) == 
+        ensure((poCT->GetSourceCS() == nullptr) ==
                (poSRSSource == nullptr) );
         if(poSRSSource != nullptr)
         {
             ensure(poCT->GetSourceCS()->IsSame(poSRSSource));
         }
-        ensure((poCT->GetTargetCS() == nullptr) == 
+        ensure((poCT->GetTargetCS() == nullptr) ==
                (poSRSTarget == nullptr));
         if(poSRSTarget != nullptr)
         {
@@ -284,13 +284,13 @@ namespace tut
         auto poClone =std::unique_ptr<OGRCoordinateTransformation>(
             poCT->Clone());
         ensure(poClone != nullptr );
-        ensure((poClone->GetSourceCS() == nullptr) == 
+        ensure((poClone->GetSourceCS() == nullptr) ==
                (poSRSSource == nullptr));
         if(poSRSSource != nullptr)
         {
             ensure(poClone->GetSourceCS()->IsSame(poSRSSource));
         }
-        ensure((poClone->GetTargetCS() == nullptr) == 
+        ensure((poClone->GetTargetCS() == nullptr) ==
                (poSRSTarget == nullptr));
         if(poSRSTarget != nullptr)
         {
@@ -299,10 +299,10 @@ namespace tut
         x = xSrc;
         y = ySrc;
         ensure(poClone->Transform(1, &x, &y));
-        ensure(abs(x - xTransformed) < 1e-15);
-        ensure(abs(y - yTransformed) < 1e-15);
+        ensure(fabs(x - xTransformed) < 1e-15);
+        ensure(fabs(y - yTransformed) < 1e-15);
     }
-    
+
     // Test OGRCoordinateTransformation::Clone() with usual case
     template<>
     template<>

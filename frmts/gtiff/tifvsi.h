@@ -37,7 +37,7 @@
 #include "cpl_vsi.h"
 #include "tiffio.h"
 
-TIFF* VSI_TIFFOpen( const char* name, const char* mode, VSILFILE* fp );
+TIFF CPL_DLL * VSI_TIFFOpen( const char* name, const char* mode, VSILFILE* fp );
 TIFF* VSI_TIFFOpenChild( TIFF* parent ); // the returned handle must be closed before the parent. They share the same underlying VSILFILE
 TIFF* VSI_TIFFReOpen( TIFF* tif );
 VSILFILE* VSI_TIFFGetVSILFile( thandle_t th );

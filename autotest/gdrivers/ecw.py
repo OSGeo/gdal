@@ -615,11 +615,12 @@ def test_ecw_19():
 
     ds = gdal.Open('data/jpeg2000/3_13bit_and_1bit.jp2')
 
-    expected_checksums = [64570, 57277, 56048, 61292]
+    # 31324 is got with ECW SDK 5.5 on Windows that seems to promote the 1 bit
+    # channel to 8 bit
+    expected_checksums = [(64570,), (57277,), (56048,), (61292, 31324)]
 
     for i in range(4):
-        assert ds.GetRasterBand(i + 1).Checksum() == expected_checksums[i], \
-            ('unexpected checksum (%d) for band %d' % (expected_checksums[i], i + 1))
+        assert ds.GetRasterBand(i + 1).Checksum() in expected_checksums[i]
 
     assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16, 'unexpected data type'
 
@@ -1415,9 +1416,7 @@ def test_ecw_41():
     ds = None
 
     # Check that there's no .aux.xml file
-    with pytest.raises(OSError):
-        os.stat('tmp/stefan_full_rgba_ecwv3_meta.ecw.aux.xml')
-
+    assert not os.path.exists('tmp/stefan_full_rgba_ecwv3_meta.ecw.aux.xml')
 
     ds = gdal.Open('tmp/stefan_full_rgba_ecwv3_meta.ecw')
     assert ds.GetRasterBand(1).GetMinimum() == 0

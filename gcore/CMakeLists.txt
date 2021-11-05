@@ -63,8 +63,8 @@ file(TO_CMAKE_PATH "${CMAKE_INSTALL_PREFIX}/${GDAL_RESOURCE_PATH}" INST_DATA_PAT
 set_property(
   SOURCE gdaldrivermanager.cpp
   APPEND
-  PROPERTY COMPILE_DEFINITIONS INST_DATA="${INST_DATA_PATH}")
-if (HAVE_XERCESC)
+  PROPERTY COMPILE_DEFINITIONS INST_DATA="${INST_DATA_PATH}" INSTALL_PLUGIN_FULL_DIR="${INSTALL_PLUGIN_FULL_DIR}")
+if (GDAL_USE_XERCESC)
   target_include_directories(gcore PRIVATE ${XercesC_INCLUDE_DIRS} ${XercesC_INCLUDE_DIRS}/xercesc)
   set_property(
     SOURCE gdaldrivermanager.cpp
@@ -99,6 +99,9 @@ if (NOT GDAL_USE_LIBJSONC_INTERNAL)
   gdal_add_private_link_libraries(JSONC::JSONC)
 endif ()
 
+if (NOT DEFINED OGR_ENABLE_SQLITE)
+  message(FATAL_ERROR "OGR_ENABLE_SQLITE should be set to ON or OFF")
+endif ()
 if (OGR_ENABLE_SQLITE)
   target_compile_definitions(gcore PRIVATE -DSQLITE_ENABLED)
 endif ()

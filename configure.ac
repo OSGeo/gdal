@@ -36,7 +36,7 @@ AC_INIT
 AC_CONFIG_SRCDIR([GDALmake.opt.in])
 AC_SUBST(PACKAGE, gdal)
 AC_CONFIG_MACRO_DIR(m4)
-AC_CONFIG_HEADERS([port/cpl_config.h:port/cpl_config.h.in])
+AC_CONFIG_HEADERS([generated_headers/cpl_config.h:port/cpl_config.h.in])
 AH_TOP([#ifndef CPL_CONFIG_H])
 AH_TOP([#define CPL_CONFIG_H])
 AH_BOTTOM([#include "cpl_config_extras.h"])
@@ -6031,6 +6031,10 @@ else
     saved_LIBS="$LIBS"
     LIBS="$EXR_LIBS"
     AC_CHECK_LIB(IlmImf,ImfTiledInputReadTile, [HAVE_EXR=yes], [HAVE_EXR=no])
+    if test "$HAVE_EXR" = "no"; then
+      dnl Try with OpenEXR >= 3 name
+      AC_CHECK_LIB(OpenEXR,ImfTiledInputReadTile, [HAVE_EXR=yes], [HAVE_EXR=no])
+    fi
     LIBS="$saved_LIBS"
 
     if test "$HAVE_EXR" = "yes"; then

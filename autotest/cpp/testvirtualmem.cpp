@@ -33,7 +33,17 @@
 #include "gdal_alg.h"
 #include "gdal.h"
 
-#include <cassert>
+template<typename T> void check(const T& x, const char* msg)
+{
+    if( !x )
+    {
+        fprintf(stderr, "CHECK(%s) failed\n", msg);
+        exit(1);
+    }
+}
+
+#define STRINGIFY(x) #x
+#define CHECK(x) check((x), STRINGIFY(x))
 
 #ifdef notdef
 static void test_huge_mapping_cbk(CPLVirtualMem* ctxt,
@@ -61,7 +71,7 @@ static void test_huge_mapping()
                                TRUE,
                                VIRTUALMEM_READONLY,
                                test_huge_mapping_cbk, NULL, NULL, NULL);
-    assert(ctxt);
+    CHECK(ctxt);
     addr = (char*) CPLVirtualMemGetAddr(ctxt);
     for(i=0;i<50*1000;i++)
     {
@@ -69,7 +79,7 @@ static void test_huge_mapping()
         size_t idx = (size_t)rand_r(&seedp)*3000*1024 / RAND_MAX * 1024;
         char val = addr[idx];
         /*printf("i=%d, val[%ld] = %d\n", i, (long int)idx, val);*/
-        assert(val == 0x7F);
+        CHECK(val == 0x7F);
     }
     CPLVirtualMemFree(ctxt);
 }
@@ -104,7 +114,7 @@ static void test_two_pages_thread(void* p)
     {
         char val = addr[MINIMUM_PAGE_SIZE * (i % 3) + MINIMUM_PAGE_SIZE/2 - 1];
         /*fprintfstderr("T2: val[%d] = %d\n", MINIMUM_PAGE_SIZE * (i % 2) + MINIMUM_PAGE_SIZE/2 - 1, val);*/
-        assert(val == (((i % 3) == 0) ? 0x3F : ((i % 3) == 1) ? 0x5F : 0x7F));
+        CHECK(val == (((i % 3) == 0) ? 0x3F : ((i % 3) == 1) ? 0x5F : 0x7F));
     }
     CPLVirtualMemUnDeclareThread(ctxt);
 }
@@ -129,8 +139,8 @@ static int test_two_pages()
         return FALSE;
 
     addr = (char*) CPLVirtualMemGetAddr(ctxt);
-    assert(CPLVirtualMemGetPageSize(ctxt) == MINIMUM_PAGE_SIZE);
-    assert(CPLVirtualMemIsAccessThreadSafe(ctxt));
+    CHECK(CPLVirtualMemGetPageSize(ctxt) == MINIMUM_PAGE_SIZE);
+    CHECK(CPLVirtualMemIsAccessThreadSafe(ctxt));
     /*fprintfstderr("main thread is %X, addr=%p\n", pthread_self(), addr);*/
     hThread = CPLCreateJoinableThread(test_two_pages_thread, ctxt);
     CPLVirtualMemDeclareThread(ctxt);
@@ -140,7 +150,7 @@ static int test_two_pages()
         {
             char val = addr[MINIMUM_PAGE_SIZE * (i % 3)];
             /*fprintfstderr("T1: val[%d] = %d\n", MINIMUM_PAGE_SIZE * (i % 2), val);*/
-            assert(val == (((i % 3) == 0) ? 0x3F : ((i % 3) == 1) ? 0x5F : 0x7F));
+            CHECK(val == (((i % 3) == 0) ? 0x3F : ((i % 3) == 1) ? 0x5F : 0x7F));
         }
     }
     CPLVirtualMemUnDeclareThread(ctxt);
@@ -165,7 +175,7 @@ static void test_raw_auto(const char* pszFormat, int bFileMapping)
     GDALDatasetH hDS = GDALCreate(GDALGetDriverByName(pszFormat),
                                   osTmpFile.c_str(),
                                   400, 300, 2, GDT_Byte, nullptr );
-    assert(hDS);
+    CHECK(hDS);
 
     int nPixelSpace1;
     GIntBig nLineSpace1;
@@ -174,7 +184,7 @@ static void test_raw_auto(const char* pszFormat, int bFileMapping)
     if( !bFileMapping )
     {
         char** papszOptions = CSLSetNameValue(nullptr, "USE_DEFAULT_IMPLEMENTATION", "NO" );
-        assert( GDALGetVirtualMemAuto(GDALGetRasterBand(hDS, 1),
+        CHECK( GDALGetVirtualMemAuto(GDALGetRasterBand(hDS, 1),
                                                     GF_Write,
                                                     &nPixelSpace1,
                                                     &nLineSpace1,
@@ -194,14 +204,14 @@ static void test_raw_auto(const char* pszFormat, int bFileMapping)
                                                   &nLineSpace2,
                                                   papszOptions);
     CSLDestroy(papszOptions);
-    assert(pVMem1 != nullptr);
-    assert(pVMem2 != nullptr);
-    assert(CPLVirtualMemIsFileMapping(pVMem1) == bFileMapping);
-    assert(nPixelSpace1 == ((EQUAL(pszFormat, "GTIFF") && bFileMapping) ? 2 : 1));
+    CHECK(pVMem1 != nullptr);
+    CHECK(pVMem2 != nullptr);
+    CHECK(CPLVirtualMemIsFileMapping(pVMem1) == bFileMapping);
+    CHECK(nPixelSpace1 == ((EQUAL(pszFormat, "GTIFF") && bFileMapping) ? 2 : 1));
     if( bFileMapping )
-        assert(nLineSpace1 == 400 * 2);
+        CHECK(nLineSpace1 == 400 * 2);
     else
-        assert(nLineSpace1 == 400 * nPixelSpace1);
+        CHECK(nLineSpace1 == 400 * nPixelSpace1);
 
     GByte* pBase1 = (GByte*) CPLVirtualMemGetAddr(pVMem1);
     GByte* pBase2 = (GByte*) CPLVirtualMemGetAddr(pVMem2);
@@ -219,8 +229,8 @@ static void test_raw_auto(const char* pszFormat, int bFileMapping)
     GDALClose(hDS);
 
     hDS = GDALOpen(osTmpFile.c_str(), GA_ReadOnly);
-    assert(GDALChecksumImage(GDALGetRasterBand(hDS, 1), 0, 0, 400, 300) == 52906);
-    assert(GDALChecksumImage(GDALGetRasterBand(hDS, 2), 0, 0, 400, 300) == 30926);
+    CHECK(GDALChecksumImage(GDALGetRasterBand(hDS, 1), 0, 0, 400, 300) == 52906);
+    CHECK(GDALChecksumImage(GDALGetRasterBand(hDS, 2), 0, 0, 400, 300) == 30926);
     GDALClose(hDS);
 
     GDALDeleteDataset(nullptr, osTmpFile.c_str());
@@ -238,7 +248,7 @@ int main(int /* argc */, char* /* argv */[])
     {
         printf("Testing CPLVirtualMemFileMapNew()\n");
         VSILFILE* fp = VSIFOpenL(GCORE_DATA_DIR "byte.tif", "rb");
-        assert(fp);
+        CHECK(fp);
         VSIFSeekL(fp, 0, SEEK_END);
         size_t nSize = (size_t)VSIFTellL(fp);
         VSIFSeekL(fp, 0, SEEK_SET);
@@ -247,9 +257,9 @@ int main(int /* argc */, char* /* argv */[])
         CPLVirtualMem * psMem = CPLVirtualMemFileMapNew( fp, 0, nSize,
                                                          VIRTUALMEM_READONLY,
                                                          nullptr, nullptr );
-        assert(psMem);
+        CHECK(psMem);
         void* pMemBuf = CPLVirtualMemGetAddr(psMem);
-        assert(memcmp(pRefBuf, pMemBuf, nSize) == 0);
+        CHECK(memcmp(pRefBuf, pMemBuf, nSize) == 0);
         CPLFree(pRefBuf);
         CPLVirtualMemFree(psMem);
         VSIFCloseL(fp);

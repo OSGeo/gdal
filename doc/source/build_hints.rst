@@ -157,6 +157,34 @@ curl
 
     Control whether to use Curl. Defaults to ON when Curl is found.
 
+ECW
+***
+
+Currently only support for ECW SDK 3.3 and 5.5 is offered.
+
+For ECW SDK 5.5, ECW_ROOT or CMAKE_PREFIX_PATH should point to the directory
+into which there are include and lib subdirectories, typically
+ending with ERDAS-ECW_JPEG_2000_SDK-5.5.0/Desktop_Read-Only.
+
+.. option:: ECW_INCLUDE_DIR
+
+    Path to the include directory with the ``NCSECWClient.h`` header file.
+
+.. option:: ECW_LIBRARY
+
+    Path to library file libNCSEcw
+
+.. option:: ECWnet_LIBRARY
+
+    Path to library file libNCSCnet (only needed for SDK 3.3)
+
+.. option:: ECWC_LIBRARY
+
+    Path to library file libNCSEcwC (only needed for SDK 3.3)
+
+.. option:: NCSUtil_LIBRARY
+
+    Path to library file libNCSUtil (only needed for SDK 3.3)
 
 geotiff
 *******
@@ -177,6 +205,20 @@ geotiff
 
     Control whether to use internal libgeotiff copy. Defaults to ON when external
     libgeotiff is not found.
+
+JXL
+***
+
+JPEG-XL library used by the GeoTIFF driver, when built against internal libtiff.
+Can be detected with pkg-config.
+
+.. option:: JXL_INCLUDE_DIR
+
+    Path to an include directory with the ``jxl/decode.h`` header file.
+
+.. option:: JXL_LIBRARY
+
+    Path to a shared or static library file.
 
 
 PROJ
@@ -334,6 +376,79 @@ that are not part of GDAL core dependencies (e.g. are netCDF, HDF4, Oracle, PDF,
     dependencies that are part of GDAL core dependencies (e.g GPX).
     Building such drivers as plugins is generally not necessary, hence
     the use of a different option from GDAL_ENABLE_PLUGINS.
+
+Python bindings options
++++++++++++++++++++++++
+
+.. option:: BUILD_PYTHON_BINDINGS:BOOL=ON/OFF
+
+    Whether Python bindings should be built. It is ON by default, but only
+    effective if a Python installation is found.
+
+A nominal Python installation should comprise the Python runtime (>= 3.6) and
+the setuptools module.
+numpy and its header and development library are also strongly recommended.
+
+The Python installation is normally found if found in the path or registered
+through other standard installation mechanisms of the Python installers.
+It is also possible to specify it using several variables, as detailed in
+https://cmake.org/cmake/help/git-stage/module/FindPython.html
+
+GDAL also provides the following option:
+
+.. option:: Python_LOOKUP_VERSION:STRING=major.minor.patch
+
+    When it is specified, Python_FIND_STRATEGY=VERSION is assumed. Note that
+    the patch number must be provided, as the EXACT strategy is used
+
+Other useful options:
+
+.. option:: Python_FIND_VIRTUALENV
+
+    Specify 'ONLY' to use virtualenv activated.
+
+.. option:: Python_ROOT
+
+    Specify Python installation prefix.
+
+Examples::
+
+    cmake -DPython_LOOKUP_VERSION=3.6 ..
+    cmake -DPython_FIND_VIRTUALENV=ONLY ..
+    cmake -DPython_ROOT=C:\Python36 ..
+
+
+The following options are advanced onces and only taken into account during
+the ``install`` CMake target.
+
+.. option:: GDAL_PYTHON_INSTALL_PREFIX
+
+    This option can be specified to a directory name, to override the
+    ``CMAKE_INSTALL_PREFIX`` option.
+    It is used to set the value of the ``--prefix`` option of ``python setup.py install``.
+
+.. option:: GDAL_PYTHON_INSTALL_LAYOUT
+
+    This option can be specified to set the value of the ``--install-layout``
+    option of ``python setup.py install``. The install layout is by default set to
+    ``deb`` when it is detected that the Python installation looks for
+    the ``site-packages`` subdirectory. Otherwise it is unspecified.
+
+.. option:: GDAL_PYTHON_INSTALL_LIB
+
+    This option can be specified to set the value of the ``--install-lib``
+    option of ``python setup.py install``. It is only taken into account on
+    MacOS systems, when the Python installation is a framework.
+
+Driver specific options
++++++++++++++++++++++++
+
+.. option:: GDAL_USE_PUBLICDECOMPWT=ON
+
+    The :ref:`raster.msg` driver is built only if this option is set. Its effect is to
+    download the https://gitlab.eumetsat.int/open-source/PublicDecompWT.git
+    repository (requires the ``git`` binary to be available at configuration time)
+    into the build tree and build the needed files from it into the driver.
 
 
 Building on Windows with Conda dependencies and Visual Studio

@@ -6,7 +6,7 @@ Install all required development packages: GNU make, g++, ...
 Build:
 
 ```
-cd gdal
+./autogen.sh
 ./configure --with-python [other options]
 make -j8 -s
 cd apps; make -s test_ogrsf; cd ..
@@ -20,9 +20,37 @@ gdalinfo --version
 
 Run autotest suite:
 ```
-cd ../autotest
+cd autotest
 pip install -r requirements.txt
 pytest
+```
+
+Setting development environment (CMake, EXPERIMENTAL)
+=====================================================
+
+Note: CMake builds are EXPERIMENTAL for now.
+
+Install all required development packages: GNU make, g++, ...
+
+Configure and build:
+
+```
+mkdir build
+cd build
+cmake .. [options]
+make -j8 -s
+```
+
+Run command line utilities (without installing):
+```
+. ../scripts/setdevenv.sh
+gdalinfo --version
+```
+
+Run autotest suite:
+```
+pip install -r ../autotest/requirements.txt
+pytest autotest
 ```
 
 Git workflows with GDAL

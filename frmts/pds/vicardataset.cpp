@@ -2580,8 +2580,11 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
     GUInt64 nNBB;
     GUInt64 nImageSize;
     if( !GetSpacings(poDS->oKeywords, nPixelOffset, nLineOffset, nBandOffset,
-                     nImageOffsetWithoutNBB, nNBB, nImageSize) )
+                     nImageOffsetWithoutNBB, nNBB, nImageSize) ||
+         nImageOffsetWithoutNBB >
+             std::numeric_limits<GUInt64>::max() - (nNBB + nBandOffset * (nBands - 1)) )
     {
+        CPLDebug("VICAR", "Invalid spacings found");
         delete poDS;
         return nullptr;
     }

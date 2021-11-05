@@ -35,6 +35,14 @@ Driver capabilities
 Build Instructions
 ------------------
 
+CMake builds
+++++++++++++
+
+See the ``GDAL_USE_PUBLICDECOMPWT`` option of :ref:`build_hints`.
+
+Other build systems
++++++++++++++++++++
+
 Clone the EUMETSAT library for wavelet decompression into ``frmts/msg``.
 
 If you are building with Visual Studio 6.0, extract the .vc makefiles

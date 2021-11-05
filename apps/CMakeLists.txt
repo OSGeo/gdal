@@ -142,12 +142,7 @@ if (BUILD_APPS)
       target_link_libraries(${UTILCMD} PRIVATE wsock32 ws2_32 psapi)
     endif ()
   endforeach ()
-  install(
-    TARGETS ${APPS_TARGETS}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    FRAMEWORK DESTINATION ${CMAKE_INSTALL_LIBDIR})
+  install(TARGETS ${APPS_TARGETS} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
   # NON-Default Apps
   add_executable(dumpoverviews EXCLUDE_FROM_ALL dumpoverviews.cpp)
@@ -158,7 +153,7 @@ if (BUILD_APPS)
   add_executable(gdalwarpsimple EXCLUDE_FROM_ALL gdalwarpsimple.c)
   add_executable(multireadtest EXCLUDE_FROM_ALL multireadtest.cpp)
   add_executable(test_ogrsf test_ogrsf.cpp)
-  add_executable(testepsg testepsg.cpp)
+  add_executable(testepsg EXCLUDE_FROM_ALL testepsg.cpp)
   add_executable(testreprojmulti EXCLUDE_FROM_ALL testreprojmulti.cpp)
 
   foreach (

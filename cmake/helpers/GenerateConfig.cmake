@@ -2,21 +2,7 @@
 include(SelectImportedConfig)
 include(SplitLibraryToCFlags)
 
-function(generate_config _target _link _template _output)
-    if(NOT DEFINED CMAKE_INSTALL_PREFIX)
-        set(CONFIG_PREFIX "/usr/local") # default
-    else()
-        set(CONFIG_PREFIX ${CMAKE_INSTALL_PREFIX})
-    endif()
-    set(CONFIG_CFLAGS "-I${CONFIG_PREFIX}/include")
-    set(CONFIG_DATA "${CONFIG_PREFIX}/share/${_target}")
-    if(CONFIG_PREFIX STREQUAL "/usr")
-        set(CONFIG_LIBS "${CMAKE_LINK_LIBRARY_FLAG}${_target}")
-    else()
-        set(CONFIG_LIBS "${CMAKE_LIBRARY_PATH_FLAG}${CONFIG_PREFIX}/lib ${CMAKE_LINK_LIBRARY_FLAG}${_target}")
-    endif()
-
-    # dep-libs
+function(get_dep_libs _target _link _output_var)
     set(_DEP_LIBS "")
     get_property(_LIBS GLOBAL PROPERTY ${_link})
     list(REMOVE_DUPLICATES _LIBS)
@@ -57,9 +43,35 @@ function(generate_config _target _link _template _output)
             endif()
         endif()
     endforeach()
-    string(REPLACE ";" " " CONFIG_DEP_LIBS "${_DEP_LIBS}")
+    string(REPLACE ";" " " _DEP_LIBS "${_DEP_LIBS}")
+    set(${_output_var} "${_DEP_LIBS}" PARENT_SCOPE)
+endfunction()
 
-    file(READ ${_template} GDAL_CONFIG_CONTENT)
-    string(CONFIGURE "${GDAL_CONFIG_CONTENT}" GDAL_CONFIG_CONTENT @ONLY)
-    file(GENERATE OUTPUT ${_output} CONTENT "${GDAL_CONFIG_CONTENT}")
+function(generate_config _target _link _template _output)
+    if(NOT DEFINED CMAKE_INSTALL_PREFIX)
+        set(CONFIG_PREFIX "/usr/local") # default
+    else()
+        set(CONFIG_PREFIX ${CMAKE_INSTALL_PREFIX})
+    endif()
+    set(CONFIG_CFLAGS "-I${CONFIG_PREFIX}/include")
+    get_property(_target_lib_name TARGET ${_target} PROPERTY OUTPUT_NAME)
+
+    set(CONFIG_DATA "${CONFIG_PREFIX}/share/${_target_lib_name}")
+    if(CONFIG_PREFIX STREQUAL "/usr")
+        set(CONFIG_LIBS "${CMAKE_LINK_LIBRARY_FLAG}${_target_lib_name}")
+    else()
+        set(CONFIG_LIBS "${CMAKE_LIBRARY_PATH_FLAG}${CONFIG_PREFIX}/lib ${CMAKE_LINK_LIBRARY_FLAG}${_target_lib_name}")
+    endif()
+
+    # dep-libs
+    get_dep_libs(${_target} ${_link} CONFIG_DEP_LIBS)
+
+    get_filename_component(_output_dir ${_output} DIRECTORY)
+    get_filename_component(_output_name ${_output} NAME)
+    configure_file(${_template} ${_output_dir}/tmp/${_output_name} @ONLY)
+    file(COPY ${_output_dir}/tmp/${_output_name}
+         DESTINATION ${_output_dir}
+         FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+    )
+
 endfunction()

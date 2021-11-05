@@ -163,7 +163,18 @@ static CPLString vsi_to_tiledb_uri( const char* pszUri )
     else if ( STARTS_WITH_CI( pszUri, "/VSIGS/") )
         osUri.Printf("gcs://%s", pszUri + 7);
     else
+    {
         osUri = pszUri;
+        // tiledb (at least at 2.4.2 on Conda) wrongly interprets relative
+        // directories on Windows as absolute ones.
+        if( CPLIsFilenameRelative(pszUri) )
+        {
+            char* pszCurDir = CPLGetCurrentDir();
+            if( pszCurDir )
+                osUri = CPLFormFilename(pszCurDir, pszUri, nullptr);
+            CPLFree(pszCurDir);
+        }
+    }
 
     return osUri;
 }
@@ -683,6 +694,9 @@ void TileDBDataset::FlushCache(bool bAtClosing)
 CPLErr TileDBDataset::TrySaveXML()
 
 {
+    if( m_array == nullptr )
+        return CE_None;
+
     CPLXMLNode *psTree = nullptr;
     try
     {
@@ -1247,7 +1261,7 @@ GDALDataset *TileDBDataset::Open( GDALOpenInfo * poOpenInfo )
                 return nullptr;
             }
 
-            osArrayPath = apszName[1];
+            osArrayPath = vsi_to_tiledb_uri(apszName[1]);
             osSubdataset = apszName[2];
             poDS->SetSubdatasetName( osSubdataset.c_str() );
         }

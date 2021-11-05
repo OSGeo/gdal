@@ -35,7 +35,7 @@
 /*                               MEMGroup                               */
 /************************************************************************/
 
-class MEMGroup CPL_NON_FINAL: public GDALGroup
+class CPL_DLL MEMGroup CPL_NON_FINAL: public GDALGroup
 {
     std::map<CPLString, std::shared_ptr<GDALGroup>> m_oMapGroups{};
     std::map<CPLString, std::shared_ptr<GDALMDArray>> m_oMapMDArrays{};
@@ -84,7 +84,7 @@ public:
 /*                            MEMAbstractMDArray                        */
 /************************************************************************/
 
-class MEMAbstractMDArray: virtual public GDALAbstractMDArray
+class CPL_DLL MEMAbstractMDArray: virtual public GDALAbstractMDArray
 {
     std::vector<std::shared_ptr<GDALDimension>> m_aoDims;
     size_t m_nTotalSize = 0;

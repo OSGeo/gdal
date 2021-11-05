@@ -33,7 +33,17 @@
 #include "gdal_priv.h"
 #include "test_data.h"
 
-#include <cassert>
+template<typename T> void check(const T& x, const char* msg)
+{
+    if( !x )
+    {
+        fprintf(stderr, "CHECK(%s) failed\n", msg);
+        exit(1);
+    }
+}
+
+#define STRINGIFY(x) #x
+#define CHECK(x) check((x), STRINGIFY(x))
 
 class MyRasterBand: public GDALRasterBand
 {
@@ -51,7 +61,7 @@ class MyRasterBand: public GDALRasterBand
         CPLErr IWriteBlock(int nXBlock, int nYBlock, void*) CPL_OVERRIDE
         {
             printf("Entering IWriteBlock(%d, %d)\n", nXBlock, nYBlock);
-            assert(!bBusy);
+            CHECK(!bBusy);
             bBusy = TRUE;
             CPLSleep(0.5);
             bBusy = FALSE;
@@ -143,7 +153,7 @@ static void test2()
     GByte c = 0;
     CPL_IGNORE_RET_VAL(poDS->GetRasterBand(1)->RasterIO(GF_Read,0,0,1,1,&c,1,1,GDT_Byte,0,0,nullptr));
     printf("%d\n", c);
-    assert(c == 1);
+    CHECK(c == 1);
     CPLJoinThread(hThread);
 
     CPLSetConfigOption("GDAL_RB_INTERNALIZE_SLEEP_AFTER_DETACH_BEFORE_WRITE", nullptr);

@@ -717,8 +717,8 @@ class XMMReg2Double
 
     inline void Store2Val(float* ptr) const
     {
-        ptr[0] = low;
-        ptr[1] = high;
+        ptr[0] = static_cast<float>(low);
+        ptr[1] = static_cast<float>(high);
     }
 
     void Store2Val(unsigned char* ptr) const

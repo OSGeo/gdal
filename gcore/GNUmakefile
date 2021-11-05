@@ -60,12 +60,11 @@ $(OBJ):	gdal_priv.h gdal_proxy.h
 
 clean: mdreader-clean
 	$(RM) *.o $(O_OBJ)
-	$(RM) -f gdal_version.h
 
 docs:
 	(cd ..; $(MAKE) docs)
 
-gdal_misc.$(OBJ_EXT):	gdal_misc.cpp gdal_version.h
+gdal_misc.$(OBJ_EXT):	gdal_misc.cpp ../generated_headers/gdal_version.h
 
 gdaldrivermanager.$(OBJ_EXT):	gdaldrivermanager.cpp ../GDALmake.opt
 	$(CXX) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CXXFLAGS) -DINST_DATA=\"$(INST_DATA)\" \
@@ -82,8 +81,7 @@ INST_H_FILES = \
 	gdal_priv.h \
 	gdal_proxy.h \
 	gdal_rat.h \
-	rawdataset.h \
-	gdal_version.h
+	rawdataset.h
 
 install:
 	for f in $(INST_H_FILES) ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_INCLUDE) ; done

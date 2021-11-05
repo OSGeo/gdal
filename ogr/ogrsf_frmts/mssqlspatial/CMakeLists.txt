@@ -10,5 +10,4 @@ add_gdal_driver(
           ogrmssqlspatialtablelayer.cpp
           PLUGIN_CAPABLE)
 gdal_standard_includes(ogr_MSSQLSpatial)
-target_include_directories(ogr_MSSQLSpatial PRIVATE ${ODBC_INCLUDE_DIRS})
 gdal_target_link_libraries(TARGET ogr_MSSQLSpatial LIBRARIES ODBC::ODBC)

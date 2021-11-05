@@ -1868,8 +1868,8 @@ def test_netcdf_multidim_open_userfaultfd():
 
     success_expected = False
     if 'CI' not in os.environ:
-        uname = os.uname()
-        if uname.sysname == 'Linux':
+        if sys.platform.startswith('linux'):
+            uname = os.uname()
             version = uname.release.split('.')
             major = int(version[0])
             minor = int(version[1])

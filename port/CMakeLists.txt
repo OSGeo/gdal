@@ -100,7 +100,8 @@ set(CPL_SOURCES
     cpl_json_streaming_writer.cpp
     cpl_userfaultfd.cpp
     cpl_vax.cpp
-    cpl_compressor.cpp)
+    cpl_compressor.cpp
+    cpl_float.cpp)
 add_library(cpl OBJECT ${CPL_SOURCES})
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:cpl>)
 target_compile_options(cpl PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX})

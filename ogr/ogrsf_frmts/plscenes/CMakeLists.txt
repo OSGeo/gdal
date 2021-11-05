@@ -6,6 +6,5 @@ target_include_directories(ogr_PLSCENES PRIVATE $<TARGET_PROPERTY:ogr_geojson,SO
 if (GDAL_USE_LIBJSONC_INTERNAL)
   target_include_directories(ogr_PLSCENES PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
 else ()
-  target_include_directories(ogr_PLSCENES PRIVATE ${JSONC_INCLUDE_DIR})
   gdal_target_link_libraries(TARGET ogr_PLSCENES LIBRARIES JSONC::JSONC)
 endif ()

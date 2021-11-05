@@ -156,6 +156,8 @@ class OGRODSDataSource final: public GDALDataset
     int                 nRowsRepeated;
     int                 nCurCol;
     int                 nCellsRepeated;
+    // Accumulated memory allocations related to repeated cells.
+    size_t              m_nAccRepeatedMemory = 0;
     bool                bEndTableParsing;
 
     OGRODSLayer        *poCurLayer;

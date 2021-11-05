@@ -1023,12 +1023,14 @@ begin:
                 osCurFile += '/';
             osCurFile += entry.pszName;
 
+#if !defined(__sun)
             if( psEntry->d_type == DT_REG )
                 entry.nMode = S_IFREG;
             else if( psEntry->d_type == DT_DIR )
                 entry.nMode = S_IFDIR;
             else if( psEntry->d_type == DT_LNK )
                 entry.nMode = S_IFLNK;
+#endif
 
             const auto StatFile = [&osCurFile, this]()
             {
@@ -1050,8 +1052,12 @@ begin:
                 if( STARTS_WITH(m_osFilterPrefix.c_str(), osName.c_str()) &&
                     m_osFilterPrefix[osName.size()] == '/' )
                 {
+#if !defined(__sun)
                     if( psEntry->d_type == DT_UNKNOWN )
+#endif
+                    {
                         StatFile();
+                    }
                     if( VSI_ISDIR(entry.nMode) )
                     {
                         goto begin;
@@ -1065,7 +1071,11 @@ begin:
                 continue;
             }
 
-            if( !m_bNameAndTypeOnly || psEntry->d_type == DT_UNKNOWN )
+            if( !m_bNameAndTypeOnly
+#if !defined(__sun)
+                || psEntry->d_type == DT_UNKNOWN
+#endif
+                )
             {
                 StatFile();
             }

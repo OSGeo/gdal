@@ -89,6 +89,41 @@ find_package(Boost)
 gdal_check_package(CURL "Enable drivers to use web API" CAN_DISABLE)
 
 gdal_check_package(Iconv "Character set recoding (used in GDAL portability library)" CAN_DISABLE)
+
+if (Iconv_FOUND)
+  set(CMAKE_REQUIRED_INCLUDES ${Iconv_INCLUDE_DIR})
+  set(CMAKE_REQUIRED_LIBRARIES ${Iconv_LIBRARY})
+  if (MSVC)
+    set(CMAKE_REQUIRED_FLAGS "/WX")
+  else ()
+    set(CMAKE_REQUIRED_FLAGS "-Werror")
+  endif ()
+
+  set(ICONV_CONST_TEST_CODE
+      "#include <stdlib.h>
+    #include <iconv.h>
+    int main(){
+      iconv_t conv = 0;
+      char* in = 0;
+      size_t ilen = 0;
+      char* out = 0;
+      size_t olen = 0;
+      size_t ret = iconv(conv, &in, &ilen, &out, &olen);
+      return (size_t)ret;
+    }")
+  check_cxx_source_compiles("${ICONV_CONST_TEST_CODE}" _ICONV_SECOND_ARGUMENT_IS_NOT_CONST)
+  if (_ICONV_SECOND_ARGUMENT_IS_NOT_CONST)
+    set(ICONV_CPP_CONST "")
+  else ()
+    set(ICONV_CPP_CONST "const")
+  endif ()
+  unset(ICONV_CONST_TEST_CODE)
+  unset(_ICONV_SECOND_ARGUMENT_IS_NOT_CONST)
+  unset(CMAKE_REQUIRED_INCLUDES)
+  unset(CMAKE_REQUIRED_LIBRARIES)
+  unset(CMAKE_REQUIRED_FLAGS)
+endif ()
+
 gdal_check_package(LibXml2 "Read and write XML formats" CAN_DISABLE)
 
 gdal_check_package(EXPAT "Read and write XML formats" RECOMMENDED)
@@ -226,6 +261,21 @@ endif()
 gdal_check_package(PCRE "Enable PCRE support for sqlite3" CAN_DISABLE)
 
 gdal_check_package(SQLite3 "Enable SQLite3 support (used by SQLite/Spatialite, GPKG, Rasterlite, MBTiles, etc.)" CAN_DISABLE RECOMMENDED)
+if (SQLite3_FOUND)
+  if (NOT DEFINED SQLite3_HAS_COLUMN_METADATA)
+    message(FATAL_ERROR "missing SQLite3_HAS_COLUMN_METADATA")
+  endif()
+  if (NOT DEFINED SQLite3_HAS_RTREE)
+    message(FATAL_ERROR "missing SQLite3_HAS_RTREE")
+  endif()
+  if (GDAL_USE_SQLITE3 AND NOT SQLite3_HAS_RTREE)
+    if (NOT ACCEPT_MISSING_SQLITE3_RTREE)
+      message(FATAL_ERROR "${SQLite3_LIBRARIES} lacks the RTree extension! Spatialite and GPKG will not behave properly. Define ACCEPT_MISSING_SQLITE3_RTREE:BOOL=ON option if you want to build despite this limitation.")
+    else()
+      message(WARNING "${SQLite3_LIBRARIES} lacks the RTree extension! Spatialite and GPKG will not behave properly.")
+    endif()
+  endif()
+endif ()
 
 gdal_check_package(SPATIALITE "Enable spatialite support for sqlite3" CAN_DISABLE)
 
@@ -265,6 +315,8 @@ if(HAVE_JASPER)
     set(CMAKE_REQUIRED_QUIET "yes")
     set(CMAKE_REQUIRED_LIBRARIES jasper)
     check_c_source_compiles("#ifdef __cplusplus\nextern \"C\"\n#endif\n char jp2_encode_uuid ();int main () {return jp2_encode_uuid ();;return 0;}" HAVE_JASPER_UUID)
+    unset(CMAKE_REQUIRED_QUIET)
+    unset(CMAKE_REQUIRED_LIBRARIES)
     if(HAVE_JASPER_UUID)
         message(STATUS "Jasper GeoJP2 UUID hack detected.")
         if(TARGET JASPER::Jasper)
@@ -297,6 +349,7 @@ gdal_check_package(SOSI  "enable ogr_SOSI driver")
 gdal_check_package(LibLZMA "LZMA compression" CAN_DISABLE)
 gdal_check_package(LZ4 "LZ4 compression" CAN_DISABLE)
 gdal_check_package(Blosc "Blosc compression" CAN_DISABLE)
+gdal_check_package(JXL "JPEG-XL compression (when used with internal libtiff)" CAN_DISABLE)
 gdal_check_package(CharLS "enable gdal_JPEGLS jpeg loss-less driver" CAN_DISABLE)
 gdal_check_package(OpenMP "")
 gdal_check_package(Crnlib "enable gdal_DDS driver")
@@ -350,6 +403,8 @@ endif()
 
 gdal_check_package(Oracle "Enable Oracle OCI driver")
 gdal_check_package(TEIGHA "")
+
+option(GDAL_USE_MSG "Set ON to build MSG driver and download external https://gitlab.eumetsat.int/open-source/PublicDecompWT" OFF)
 
 # proprietary libraries
 # KAKADU

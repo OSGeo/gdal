@@ -19,6 +19,6 @@ target_include_directories(
                          ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/sqlite)
 
 gdal_target_link_libraries(TARGET ogr_GeoPackage PRIVATE LIBRARIES SQLite::SQLite3)
-if (SQLITE_HAS_COLUMN_METADATA)
+if (SQLite3_HAS_COLUMN_METADATA)
   target_compile_definitions(ogr_GeoPackage PRIVATE -DSQLITE_HAS_COLUMN_METADATA)
 endif ()

@@ -1200,7 +1200,22 @@ const char* OGRSpatialReference::GetName() const
     d->refreshProjObj();
     if( !d->m_pj_crs )
         return nullptr;
-    return proj_get_name(d->m_pj_crs);
+    const char* pszName = proj_get_name(d->m_pj_crs);
+#if PROJ_VERSION_NUMBER == PROJ_COMPUTE_VERSION(8,2,0)
+    if( d->m_pjType == PJ_TYPE_BOUND_CRS && EQUAL(pszName, "SOURCECRS") )
+    {
+        // Work around a bug of PROJ 8.2.0 (fixed in 8.2.1)
+        PJ* baseCRS = proj_get_source_crs(d->getPROJContext(), d->m_pj_crs);
+        if( baseCRS )
+        {
+            pszName = proj_get_name(baseCRS);
+            // pszName still remains valid after proj_destroy(), since
+            // d->m_pj_crs keeps a reference to the base CRS C++ object.
+            proj_destroy(baseCRS);
+        }
+    }
+#endif
+    return pszName;
 }
 
 /************************************************************************/

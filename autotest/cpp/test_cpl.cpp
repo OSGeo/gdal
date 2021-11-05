@@ -470,12 +470,14 @@ namespace tut
                  sizeof(oReferenceString.szString));
         oReferenceString.szString[sizeof(oReferenceString.szString) - 1] = '\0';
 
-        while ( !fin.eof() )
+        while (true)
         {
             TestRecodeStruct oTestString;
 
             fin.read(oTestString.szEncoding, sizeof(oTestString.szEncoding));
             oTestString.szEncoding[sizeof(oTestString.szEncoding) - 1] = '\0';
+            if( fin.eof() )
+                break;
             fin.read(oTestString.szString, sizeof(oTestString.szString));
             oTestString.szString[sizeof(oTestString.szString) - 1] = '\0';
 

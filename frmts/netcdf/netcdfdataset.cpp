@@ -73,6 +73,11 @@
 
 #define ROTATED_POLE_VAR_NAME "rotated_pole"
 
+// Detect netCDF 4.8
+#ifdef NC_ENCZARR
+#define NETCDF_USES_UTF8
+#endif
+
 CPL_CVSID("$Id$")
 
 // Internal function declarations.
@@ -2564,6 +2569,7 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
 {
     bool bGotGeogCS = false;
     bool bGotCfSRS = false;
+    bool bGotCfWktSRS = false;
     bool bGotGdalSRS = false;
     bool bGotCfGT = false;
     bool bGotGdalGT = false;
@@ -2651,8 +2657,26 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                 CPLDebug("GDAL_netCDF", "got grid_mapping %s",
                          pszGridMappingValue);
                 pszWKT = FetchAttr(pszGridMappingValue, NCDF_SPATIAL_REF);
+                if ( !pszWKT ) {
+                    pszWKT = FetchAttr(pszGridMappingValue, NCDF_CRS_WKT);
+                } else {
+                    bGotGdalSRS = true;
+                    CPLDebug("GDAL_netCDF", "setting WKT from GDAL");
+                }
                 if( pszWKT )
                 {
+                    if (!bGotGdalSRS) {
+                        bGotCfWktSRS = true;
+                        CPLDebug("GDAL_netCDF", "setting WKT from CF");
+                    }
+                    if(returnProjStr != nullptr)
+                    {
+                        (*returnProjStr) = std::string(pszWKT);
+                    }
+                    else
+                    {
+                        SetProjection(pszWKT);
+                    }
                     pszGeoTransform = FetchAttr(pszGridMappingValue,
                                                 NCDF_GEOTRANSFORM);
                 }
@@ -2728,7 +2752,7 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
 
     bool bRotatedPole = false;
 
-    if( !EQUAL(pszGridMappingValue, "") )
+    if( !pszWKT && !EQUAL(pszGridMappingValue, "") )
     {
         pszValue = FetchAttr(pszGridMappingValue, CF_GRD_MAPPING_NAME);
 
@@ -3884,160 +3908,96 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
         CPLFree(pdfYCoord);
     }  // end if(has dims)
 
-    // Process custom GDAL values (spatial_ref, GeoTransform).
-    if( !EQUAL(pszGridMappingValue, "") )
+    // Process custom GeoTransform GDAL value.
+    if( !EQUAL(pszGridMappingValue, "") && !bGotCfGT )
     {
-        if( pszWKT != nullptr )
+        // TODO: Read the GT values and detect for conflict with CF.
+        // This could resolve the GT precision loss issue.
+
+        if( pszGeoTransform != nullptr )
         {
-            // Compare SRS obtained from CF attributes and GDAL WKT.
-            // If possible use the more complete GDAL WKT.
-
-            // Set the SRS to the one written by GDAL.
-            if( !bGotCfSRS || ! bIsGdalCfFile )
+            char** papszGeoTransform =
+                CSLTokenizeString2(pszGeoTransform,
+                                    " ",
+                                    CSLT_HONOURSTRINGS);
+            if( CSLCount(papszGeoTransform) == 6 )
             {
-                bGotGdalSRS = true;
-                CPLDebug("GDAL_netCDF", "setting WKT from GDAL");
-                if(returnProjStr != nullptr)
-                {
-                    (*returnProjStr) = std::string(pszWKT);
-                }
-                else
-                {
-                    SetProjection(pszWKT);
-                }
+                bGotGdalGT = true;
+                for( int i = 0; i < 6; i++ )
+                    adfTempGeoTransform[i] =
+                        CPLAtof(papszGeoTransform[i]);
             }
-            else
-            {
-                // Use the SRS from GDAL if it doesn't conflict with the one
-                // from CF.
-                OGRSpatialReference oSRSGDAL;
-                oSRSGDAL.importFromWkt(pszWKT);
-                // Set datum to unknown or else datums will not match, see bug
-                // #4281.
-                if( oSRSGDAL.GetAttrNode("DATUM") )
-                    oSRSGDAL.GetAttrNode("DATUM")->GetChild(0)->SetValue("unnamed");
-                // Need this for setprojection autotest.
-                if( oSRSGDAL.GetAttrNode("PROJCS") )
-                    oSRSGDAL.GetAttrNode("PROJCS")->GetChild(0)->SetValue("unnamed");
-                if( oSRSGDAL.GetAttrNode("GEOGCS") )
-                    oSRSGDAL.GetAttrNode("GEOGCS")->GetChild(0)->SetValue("unnamed");
-
-                OGRSpatialReference oSRSForComparison(oSRS);
-                if( oSRSForComparison.GetAttrNode("DATUM") )
-                    oSRSForComparison.GetAttrNode("DATUM")->GetChild(0)->SetValue("unnamed");
-                if( oSRSForComparison.GetAttrNode("PROJCS") )
-                    oSRSForComparison.GetAttrNode("PROJCS")->GetChild(0)->SetValue("unnamed");
-                if( oSRSForComparison.GetAttrNode("GEOGCS") )
-                    oSRSForComparison.GetAttrNode("GEOGCS")->GetChild(0)->SetValue("unnamed");
-
-                if( oSRSForComparison.IsSame(&oSRSGDAL) )
-                {
-#ifdef NCDF_DEBUG
-                    CPLDebug("GDAL_netCDF", "ARE SAME, using GDAL WKT");
-#endif
-                    bGotGdalSRS = true;
-                    CPLDebug("GDAL_netCDF", "setting WKT from GDAL");
-                    SetProjection(pszWKT);
-                }
-                else
-                {
-                    CPLDebug("GDAL_netCDF",
-                             "got WKT from GDAL \n[%s]\nbut not using it "
-                             "because conflicts with CF\n[%s]",
-                             pszWKT, poDS->pszProjection);
-                }
-            }
-
-            // Look for GeoTransform Array, if not found in CF.
-            if( !bGotCfGT )
-            {
-                // TODO: Read the GT values and detect for conflict with CF.
-                // This could resolve the GT precision loss issue.
-
-                if( pszGeoTransform != nullptr )
-                {
-                    char** papszGeoTransform =
-                        CSLTokenizeString2(pszGeoTransform,
-                                            " ",
-                                            CSLT_HONOURSTRINGS);
-                    if( CSLCount(papszGeoTransform) == 6 )
-                    {
-                        bGotGdalGT = true;
-                        for( int i = 0; i < 6; i++ )
-                            adfTempGeoTransform[i] =
-                                CPLAtof(papszGeoTransform[i]);
-                    }
-                    CSLDestroy(papszGeoTransform);
-                }
-                else
-                {
-                    // Look for corner array values.
-                    // CPLDebug("GDAL_netCDF",
-                    //           "looking for geotransform corners");
-                    bool bGotNN = false;
-                    double dfNN = FetchCopyParam(pszGridMappingValue,
-                                                "Northernmost_Northing", 0, &bGotNN);
-
-                    bool bGotSN = false;
-                    double dfSN = FetchCopyParam(pszGridMappingValue,
-                                                "Southernmost_Northing", 0, &bGotSN);
-
-                    bool bGotEE = false;
-                    double dfEE = FetchCopyParam(pszGridMappingValue,
-                                                "Easternmost_Easting", 0, &bGotEE);
-
-                    bool bGotWE = false;
-                    double dfWE = FetchCopyParam(pszGridMappingValue,
-                                                "Westernmost_Easting", 0, &bGotWE);
-
-                    // Only set the GeoTransform if we got all the values.
-                    if( bGotNN && bGotSN && bGotEE && bGotWE )
-                    {
-                        bGotGdalGT = true;
-
-                        adfTempGeoTransform[0] = dfWE;
-                        adfTempGeoTransform[1] =
-                            (dfEE - dfWE) / (poDS->GetRasterXSize() - 1);
-                        adfTempGeoTransform[2] = 0.0;
-                        adfTempGeoTransform[3] = dfNN;
-                        adfTempGeoTransform[4] = 0.0;
-                        adfTempGeoTransform[5] =
-                            (dfSN - dfNN) / (poDS->GetRasterYSize() - 1);
-                        // Compute the center of the pixel.
-                        adfTempGeoTransform[0] =
-                            dfWE - (adfTempGeoTransform[1] / 2);
-                        adfTempGeoTransform[3] =
-                            dfNN - (adfTempGeoTransform[5] / 2);
-                    }
-                } // (pszGeoTransform != NULL)
-
-                if( bGotGdalSRS && !bGotGdalGT )
-                    CPLDebug("GDAL_netCDF",
-                             "Got SRS but no geotransform from GDAL!");
-            }  // if( !bGotCfGT )
+            CSLDestroy(papszGeoTransform);
         }
+        else
+        {
+            // Look for corner array values.
+            // CPLDebug("GDAL_netCDF",
+            //           "looking for geotransform corners");
+            bool bGotNN = false;
+            double dfNN = FetchCopyParam(pszGridMappingValue,
+                                        "Northernmost_Northing", 0, &bGotNN);
+
+            bool bGotSN = false;
+            double dfSN = FetchCopyParam(pszGridMappingValue,
+                                        "Southernmost_Northing", 0, &bGotSN);
+
+            bool bGotEE = false;
+            double dfEE = FetchCopyParam(pszGridMappingValue,
+                                        "Easternmost_Easting", 0, &bGotEE);
+
+            bool bGotWE = false;
+            double dfWE = FetchCopyParam(pszGridMappingValue,
+                                        "Westernmost_Easting", 0, &bGotWE);
+
+            // Only set the GeoTransform if we got all the values.
+            if( bGotNN && bGotSN && bGotEE && bGotWE )
+            {
+                bGotGdalGT = true;
+
+                adfTempGeoTransform[0] = dfWE;
+                adfTempGeoTransform[1] =
+                    (dfEE - dfWE) / (poDS->GetRasterXSize() - 1);
+                adfTempGeoTransform[2] = 0.0;
+                adfTempGeoTransform[3] = dfNN;
+                adfTempGeoTransform[4] = 0.0;
+                adfTempGeoTransform[5] =
+                    (dfSN - dfNN) / (poDS->GetRasterYSize() - 1);
+                // Compute the center of the pixel.
+                adfTempGeoTransform[0] =
+                    dfWE - (adfTempGeoTransform[1] / 2);
+                adfTempGeoTransform[3] =
+                    dfNN - (adfTempGeoTransform[5] / 2);
+            }
+        } // (pszGeoTransform != NULL)
+
+        if( bGotGdalSRS && !bGotGdalGT )
+            CPLDebug("GDAL_netCDF",
+                        "Got SRS but no geotransform from GDAL!");
     }
 
-    // Some netCDF files have a srid attribute (#6613) like
-    // urn:ogc:def:crs:EPSG::6931
-    const char *pszSRID = FetchAttr(pszGridMappingValue, "srid");
-    if( pszSRID != nullptr )
-    {
-        oSRS.Clear();
-        if( oSRS.SetFromUserInput(pszSRID) == OGRERR_NONE )
+    if ( !pszWKT && !bGotCfSRS ) {
+        // Some netCDF files have a srid attribute (#6613) like
+        // urn:ogc:def:crs:EPSG::6931
+        const char *pszSRID = FetchAttr(pszGridMappingValue, "srid");
+        if( pszSRID != nullptr )
         {
-            char *pszWKTExport = nullptr;
-            CPLDebug("GDAL_netCDF", "Got SRS from %s", pszSRID);
-            oSRS.exportToWkt(&pszWKTExport);
-            if(returnProjStr != nullptr)
+            oSRS.Clear();
+            if( oSRS.SetFromUserInput(pszSRID, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) == OGRERR_NONE )
             {
-                (*returnProjStr) = std::string(pszWKTExport);
+                char *pszWKTExport = nullptr;
+                CPLDebug("GDAL_netCDF", "Got SRS from %s", pszSRID);
+                oSRS.exportToWkt(&pszWKTExport);
+                if(returnProjStr != nullptr)
+                {
+                    (*returnProjStr) = std::string(pszWKTExport);
+                }
+                else
+                {
+                    SetProjection(pszWKTExport);
+                }
+                CPLFree(pszWKTExport);
             }
-            else
-            {
-                SetProjection(pszWKTExport);
-            }
-            CPLFree(pszWKTExport);
         }
     }
 
@@ -4059,16 +4019,16 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
 
     // Debugging reports.
     CPLDebug("GDAL_netCDF",
-             "bGotGeogCS=%d bGotCfSRS=%d bGotCfGT=%d bGotGdalSRS=%d "
-             "bGotGdalGT=%d",
+             "bGotGeogCS=%d bGotCfSRS=%d bGotCfGT=%d bGotCfWktSRS=%d "
+             "bGotGdalSRS=%d bGotGdalGT=%d",
              static_cast<int>(bGotGeogCS), static_cast<int>(bGotCfSRS),
-             static_cast<int>(bGotCfGT), static_cast<int>(bGotGdalSRS),
-             static_cast<int>(bGotGdalGT));
+             static_cast<int>(bGotCfGT), static_cast<int>(bGotCfWktSRS),
+             static_cast<int>(bGotGdalSRS), static_cast<int>(bGotGdalGT));
 
     if( !bGotCfGT && !bGotGdalGT )
         CPLDebug("GDAL_netCDF", "did not get geotransform from CF nor GDAL!");
 
-    if( !bGotGeogCS && !bGotCfSRS && !bGotGdalSRS && !bGotCfGT )
+    if( !bGotGeogCS && !bGotCfSRS && !bGotGdalSRS && !bGotCfGT && !bGotCfWktSRS)
         CPLDebug("GDAL_netCDF", "did not get projection from CF nor GDAL!");
 
     // Search for Well-known GeogCS if got only CF WKT
@@ -4393,6 +4353,7 @@ int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS,
                                 char **ppszCFProjection, bool bWriteGDALTags, const std::string& srsVarName)
 {
     char *pszCFProjection = nullptr;
+    bool bWriteWkt = true;
 
     struct Value
     {
@@ -4539,7 +4500,7 @@ int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS,
         if( EQUAL(pszMethod, "PROJ ob_tran o_proj=longlat") )
         {
             // Not enough interoperable to be written as WKT
-            bWriteGDALTags = false;
+            bWriteWkt = false;
 
             const double dfLon0 = oValMap["lon_0"];
             const double dfLonp = oValMap["o_lon_p"];
@@ -4554,7 +4515,7 @@ int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS,
         else if( EQUAL(pszMethod, "Pole rotation (netCDF CF convention)") )
         {
             // Not enough interoperable to be written as WKT
-            bWriteGDALTags = false;
+            bWriteWkt = false;
 
             const double dfGridNorthPoleLat = oValMap["Grid north pole latitude (netCDF CF convention)"];
             const double dfGridNorthPoleLong = oValMap["Grid north pole longitude (netCDF CF convention)"];
@@ -4569,7 +4530,7 @@ int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS,
         else if( EQUAL(pszMethod, "Pole rotation (GRIB convention)") )
         {
             // Not enough interoperable to be written as WKT
-            bWriteGDALTags = false;
+            bWriteWkt = false;
 
             const double dfLatSouthernPole = oValMap["Latitude of the southern pole (GRIB convention)"];
             const double dfLonSouthernPole = oValMap["Longitude of the southern pole (GRIB convention)"];
@@ -4611,13 +4572,17 @@ int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS,
     addParamDouble(CF_PP_SEMI_MAJOR_AXIS, poSRS->GetSemiMajor());
     addParamDouble(CF_PP_INVERSE_FLATTENING, poSRS->GetInvFlattening());
 
-    if( bWriteGDALTags )
+    if( bWriteWkt )
     {
         char *pszSpatialRef = nullptr;
         poSRS->exportToWkt(&pszSpatialRef);
         if( pszSpatialRef && pszSpatialRef[0] )
         {
-            addParamString(NCDF_SPATIAL_REF, pszSpatialRef);
+            if ( bWriteGDALTags ) {
+                // SPATIAL_REF is deprecated. Will be removed in GDAL 4.
+                addParamString(NCDF_SPATIAL_REF, pszSpatialRef);
+            }
+            addParamString(NCDF_CRS_WKT, pszSpatialRef);
         }
         CPLFree(pszSpatialRef);
     }
@@ -6713,7 +6678,7 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
     int new_cdfid = -1;
     CPLString osTmpFilename(osFilename + ".tmp");
     CPLString osFilenameForNCCreate(osTmpFilename);
-#ifdef WIN32
+#if defined(WIN32) && !defined(NETCDF_USES_UTF8)
     if( CPLTestBool(CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         char* pszTemp = CPLRecode( osFilenameForNCCreate, CPL_ENC_UTF8, "CP_ACP" );
@@ -6799,7 +6764,7 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
     VSIUnlink(osOriFilename);
 
     CPLString osFilenameForNCOpen(osFilename);
-#ifdef WIN32
+#if defined(WIN32) && !defined(NETCDF_USES_UTF8)
     if( CPLTestBool(CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         char* pszTemp = CPLRecode( osFilenameForNCOpen, CPL_ENC_UTF8, "CP_ACP" );
@@ -7731,7 +7696,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
     const int nMode = ((poOpenInfo->nOpenFlags & (GDAL_OF_UPDATE | GDAL_OF_VECTOR)) ==
                 (GDAL_OF_UPDATE | GDAL_OF_VECTOR)) ? NC_WRITE : NC_NOWRITE;
     CPLString osFilenameForNCOpen(poDS->osFilename);
-#ifdef WIN32
+#if defined(WIN32) && !defined(NETCDF_USES_UTF8)
     if( CPLTestBool(CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         char* pszTemp = CPLRecode( osFilenameForNCOpen, CPL_ENC_UTF8, "CP_ACP" );
@@ -8673,7 +8638,7 @@ netCDFDataset::CreateLL( const char *pszFilename,
 
     // Create the dataset.
     CPLString osFilenameForNCCreate(pszFilename);
-#ifdef WIN32
+#if defined(WIN32) && !defined(NETCDF_USES_UTF8)
     if( CPLTestBool(CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         char* pszTemp = CPLRecode( osFilenameForNCCreate, CPL_ENC_UTF8, "CP_ACP" );

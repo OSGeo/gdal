@@ -39,7 +39,7 @@
 
 #ifndef DOXYGEN_SKIP
 #if defined(GDAL_COMPILATION)
-#define DO_NOT_DEFINE_GDAL_RELEASE_DATE_AND_GDAL_RELEASE_NAME
+#define DO_NOT_DEFINE_GDAL_DATE_NAME
 #endif
 #include "gdal_version.h"
 #include "cpl_port.h"

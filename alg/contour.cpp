@@ -121,7 +121,7 @@ struct PolygonContourWriter
     }
     void endPolygon()
     {
-        if ( currentGeometry_ && currentPart_ )
+        if ( currentPart_ )
         {
             currentGeometry_->addGeometryDirectly(currentPart_);
         }
@@ -134,7 +134,7 @@ struct PolygonContourWriter
 
     void addPart( const marching_squares::LineString& ring )
     {
-        if ( currentGeometry_ && currentPart_ )
+        if ( currentPart_ )
         {
             currentGeometry_->addGeometryDirectly(currentPart_);
         }
@@ -164,13 +164,13 @@ struct PolygonContourWriter
     OGRPolygon* currentPart_ = nullptr;
     OGRContourWriterInfo* poInfo_ = nullptr;
     double currentLevel_ = 0;
-    double previousLevel_; 
+    double previousLevel_;
 };
 
 struct GDALRingAppender
 {
     CPL_DISALLOW_COPY_ASSIGN(GDALRingAppender)
-    
+
     GDALRingAppender(GDALContourWriter write, void *data)
     : write_( write )
     , data_( data )
@@ -186,7 +186,7 @@ struct GDALRingAppender
             ys[i] = pt.y;
             i++;
         }
-        
+
         if ( write_(level, int(sz), &xs[0], &ys[0], data_) != CE_None )
             CPLError( CE_Failure, CPLE_AppDefined, "cannot write linestring" );
     }
@@ -463,7 +463,7 @@ an averaged value from the two nearby points (in this case (12+3+5)/3).
  * @param pProgressArg The callback data for the pfnProgress function.
  *
  * @param options List of options
- * 
+ *
  * Options:
  *
  *   LEVEL_INTERVAL=f
@@ -483,10 +483,10 @@ an averaged value from the two nearby points (in this case (12+3+5)/3).
  * where k is a positive integer.
  *
  *   FIXED_LEVELS=f[,f]*
- * 
+ *
  * The list of fixed contour levels at which contours should be generated.
  * This option has precedence on LEVEL_INTERVAL
- * 
+ *
  *   NODATA=f
  *
  * The value to use as a "nodata" value. That is, a pixel value which
@@ -624,7 +624,7 @@ CPLErr GDALContourGenerateEx( GDALRasterBandH hBand, void *hLayer,
     {
         if ( polygonize )
         {
-            int bSuccess; 
+            int bSuccess;
             PolygonContourWriter w( &oCWI, GDALGetRasterMinimum( hBand, &bSuccess ) );
             typedef PolygonRingAppender<PolygonContourWriter> RingAppender;
             RingAppender appender( w );

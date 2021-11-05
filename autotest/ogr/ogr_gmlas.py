@@ -87,6 +87,7 @@ def compare_ogrinfo_output(gmlfile, reffile, options=''):
                                encoding='utf-8')
     ret = ret.replace('\r\n', '\n')
     ret = ret.replace('data\\gmlas\\', 'data/gmlas/')  # Windows
+    ret = ret.replace('data/gmlas\\', 'data/gmlas/')  # Windows
     expected = open(reffile, 'rb').read().decode('utf-8')
     expected = expected.replace('\r\n', '\n')
     if ret != expected:
@@ -2732,6 +2733,7 @@ def test_ogr_gmlas_huge_memory_allocation():
 # Related to https://issues.apache.org/jira/browse/XERCESC-1051
 
 
+@pytest.mark.skipif('SKIP_OGR_GMLAS_HUGE_PROCESSING_TIME' in os.environ, reason='test skipped on CI due to random crash on Windows Conda builds with parallel ctest')
 def test_ogr_gmlas_huge_processing_time():
 
     with gdaltest.config_option('OGR_GMLAS_XERCES_MAX_TIME', '0.5'):

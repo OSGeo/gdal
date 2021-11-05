@@ -5,6 +5,5 @@ target_include_directories(gdal_PLMOSAIC PRIVATE ${GDAL_VECTOR_FORMAT_SOURCE_DIR
 if (GDAL_USE_LIBJSONC_INTERNAL)
   target_include_directories(gdal_PLMOSAIC PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
 else ()
-  target_include_directories(gdal_PLMOSAIC PRIVATE ${JSONC_INCLUDE_DIR})
-  gdal_target_link_libraries(TARGET gdal_PLMOSAIC LIBRARIES ${JSONC_LIBRARY})
+  gdal_target_link_libraries(TARGET gdal_PLMOSAIC LIBRARIES JSONC::JSONC)
 endif ()

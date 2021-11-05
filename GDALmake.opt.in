@@ -73,7 +73,7 @@ INST_DOCS	=	@htmldir@
 INST_MAN	=	@mandir@
 INST_WEB	=	$(HOME)/www/gdal
 
-CPPFLAGS	:= @CPPFLAGS@ -iquote $(GDAL_ROOT)/port @EXTRA_INCLUDES@ -DGDAL_COMPILATION
+CPPFLAGS	:= @CPPFLAGS@ -iquote $(GDAL_ROOT)/port -iquote $(GDAL_ROOT)/generated_headers @EXTRA_INCLUDES@ -DGDAL_COMPILATION
 CFLAGS		= @CFLAGS@ @C_WFLAGS@ $(USER_DEFS)
 CXXFLAGS	= @CXXFLAGS@ @CXX_WFLAGS@ $(USER_DEFS)
 CFLAGS_NOFTRAPV          = @CFLAGS_NOFTRAPV@ @C_WFLAGS@ $(USER_DEFS)
@@ -120,14 +120,14 @@ else
 HAVE_LD_SHARED  =	yes
 endif
 
-GDAL_INCLUDE	=	-iquote $(GDAL_ROOT)/port -iquote $(GDAL_ROOT)/gcore \
+GDAL_INCLUDE	=	-iquote $(GDAL_ROOT)/port -iquote $(GDAL_ROOT)/generated_headers -iquote $(GDAL_ROOT)/gcore \
 			-iquote $(GDAL_ROOT)/alg \
                         -iquote $(GDAL_ROOT)/ogr -iquote $(GDAL_ROOT)/ogr/ogrsf_frmts \
                         -iquote $(GDAL_ROOT)/gnm -iquote $(GDAL_ROOT)/apps
 
 # libtool targets and help variables
 LIBGDAL	:=		libgdal.la
-LIBGDAL_CURRENT	:=	29
+LIBGDAL_CURRENT	:=	30
 LIBGDAL_REVISION	:=	0
 LIBGDAL_AGE	:=	0
 
