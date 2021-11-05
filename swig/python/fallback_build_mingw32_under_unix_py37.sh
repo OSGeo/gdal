@@ -17,7 +17,7 @@ else
     HAS_NUMPY=no
 fi
 
-INCFLAGS="-I${PYTHONHOME}/include -I../../port -I../../gcore -I../../alg -I../../ogr/ -I../../gnm -I../../apps/"
+INCFLAGS="-I${PYTHONHOME}/include -I../../port -I../../generated_headers -I../../gcore -I../../alg -I../../ogr/ -I../../gnm -I../../apps/"
 LINKFLAGS="-L../../.libs -lgdal -L${PYTHONHOME}/libs -l${PYTHONLIB}"
 CFLAGS="-O2 -D__MSVCRT_VERSION__=0x0601"
 

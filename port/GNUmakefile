@@ -117,7 +117,6 @@ clean:
 INST_H_FILES = \
 	cpl_atomic_ops.h \
 	cpl_config_extras.h \
-	cpl_config.h \
 	cpl_conv.h \
 	cpl_csv.h \
 	cpl_error.h \

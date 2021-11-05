@@ -205,7 +205,7 @@ gdal-config:	gdal-config.in ../GDALmake.opt ./GNUmakefile ../VERSION
 	echo 'CONFIG_LIBS="$(CONFIG_LIBS)"' >> gdal-config
 	echo 'CONFIG_DEP_LIBS="$(LIBS)"' >> gdal-config
 	echo 'CONFIG_PREFIX="$(GDAL_ROOT)"' >> gdal-config
-	echo 'CONFIG_CFLAGS="-I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/gcore -I$(GDAL_ROOT)/alg -I$(GDAL_ROOT)/gnm -I$(GDAL_ROOT)/ogr -I$(GDAL_ROOT)/ogr/ogrsf_frmts -I$(GDAL_ROOT)/frmts/vrt -I$(GDAL_ROOT)/apps"' >> gdal-config
+	echo 'CONFIG_CFLAGS="-I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/generated_headers -I$(GDAL_ROOT)/gcore -I$(GDAL_ROOT)/alg -I$(GDAL_ROOT)/gnm -I$(GDAL_ROOT)/ogr -I$(GDAL_ROOT)/ogr/ogrsf_frmts -I$(GDAL_ROOT)/frmts/vrt -I$(GDAL_ROOT)/apps"' >> gdal-config
 	echo 'CONFIG_DATA="$(GDAL_ROOT)/data"' >> gdal-config
 	echo 'CONFIG_VERSION="'`cat ../VERSION`'"' >> gdal-config
 	echo 'CONFIG_OGR_ENABLED=yes' >> gdal-config  # Deprecated.  Always true.

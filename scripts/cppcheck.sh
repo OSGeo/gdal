@@ -19,6 +19,8 @@ GDAL_ROOT=$SCRIPT_DIR/..
 
 if test -f port/cpl_config.h; then
   CPL_CONFIG_H=$PWD/port/cpl_config.h
+elif test -f generated_headers/cpl_config.h; then
+  CPL_CONFIG_H=$PWD/generated_headers/cpl_config.h
 else
   echo "No cpl_config.h file found"
   exit 1
@@ -91,7 +93,7 @@ for dirname in alg port gcore ogr frmts gnm apps fuzzers; do
         --include="${CPL_CONFIG_H}" \
         --include=port/cpl_port.h \
         -I "${CPL_CONFIG_H_DIR}" \
-        -I port -I gcore -I ogr -I ogr/ogrsf_frmts -I ogr/ogrsf_frmts/geojson \
+        -I port -I generated_headers -I gcore -I ogr -I ogr/ogrsf_frmts -I ogr/ogrsf_frmts/geojson \
         -I ogr/ogrsf_frmts/geojson/libjson \
         -i cpl_mem_cache.h \
         -i ogrdissolve.cpp \
