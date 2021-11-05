@@ -178,6 +178,20 @@ geotiff
     Control whether to use internal libgeotiff copy. Defaults to ON when external
     libgeotiff is not found.
 
+JXL
+***
+
+JPEG-XL library used by the GeoTIFF driver, when built against internal libtiff.
+Can be detected with pkg-config.
+
+.. option:: JXL_INCLUDE_DIR
+
+    Path to an include directory with the ``jxl/decode.h`` header file.
+
+.. option:: JXL_LIBRARY
+
+    Path to a shared or static library file.
+
 
 PROJ
 ****
