@@ -42,6 +42,7 @@
 #ifdef _MSC_VER
 #pragma warning( push )
 #pragma warning( disable : 4290 )  /* C++ exception specification ignored except to indicate a function is not __declspec(nothrow)*/
+#pragma warning( disable : 4268 )  /* 'H5O_TOKEN_UNDEF_g': 'const' static/global data initialized with compiler generated default constructor fills the object with zeros */
 #endif
 
 #include "libkea/KEACommon.h"
