@@ -206,6 +206,16 @@ geotiff
     Control whether to use internal libgeotiff copy. Defaults to ON when external
     libgeotiff is not found.
 
+
+HDF5
+****
+
+The HDF5 C library is needed for the HDF5 and BAG drivers. The HDF5 CXX library
+is needed for the KEA driver.
+The https://cmake.org/cmake/help/latest/module/FindHDF5.html module is used to
+detect the HDF5 library.
+
+
 JXL
 ***
 
@@ -217,6 +227,21 @@ Can be detected with pkg-config.
     Path to an include directory with the ``jxl/decode.h`` header file.
 
 .. option:: JXL_LIBRARY
+
+    Path to a shared or static library file.
+
+
+KEA
+***
+
+The KEA library is required for the KEA driver. The HDF5 CXX library is also
+required.
+
+.. option:: KEA_INCLUDE_DIR
+
+    Path to an include directory with the ``libkea/KEACommon.h`` header file.
+
+.. option:: KEA_LIBRARY
 
     Path to a shared or static library file.
 
