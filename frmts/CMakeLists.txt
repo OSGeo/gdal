@@ -123,7 +123,7 @@ gdal_dependent_format(mbtiles "MBTile" "GDAL_USE_SQLITE3;OGR_ENABLE_GPKG")
 gdal_dependent_format(postgisraster "PostGIS Raster driver" "GDAL_USE_POSTGRESQL")
 gdal_dependent_format(dods "OPeNDAP Grid Client" "GDAL_USE_DAP")
 gdal_dependent_format(dds "DirectDraw Surface" "HAVE_CRNLIB")
-gdal_dependent_format(kea "Kea" "HAVE_KEA")
+gdal_dependent_format(kea "Kea" "GDAL_USE_KEA;HDF5_FOUND")
 gdal_dependent_format(openjpeg "JPEG2000 driver based on OpenJPEG library" "GDAL_USE_OPENJPEG" DRIVER_NAME_OPTION
                       "JP2OpenJPEG")
 gdal_dependent_format(jpegls "JPEG LS" "GDAL_USE_CHARLS")
