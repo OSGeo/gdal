@@ -4479,7 +4479,7 @@ SWIGINTERN char **OGRFeatureShadow_GetFieldAsStringList(OGRFeatureShadow *self,i
   }
 SWIGINTERN OGRErr OGRFeatureShadow_GetFieldAsBinary__SWIG_0(OGRFeatureShadow *self,int id,int *nLen,char **pBuf){
     GByte* pabyBlob = OGR_F_GetFieldAsBinary(self, id, nLen);
-    *pBuf = (char*)malloc(*nLen);
+    *pBuf = (char*)VSIMalloc(*nLen);
     memcpy(*pBuf, pabyBlob, *nLen);
     return 0;
   }
@@ -4493,7 +4493,7 @@ SWIGINTERN OGRErr OGRFeatureShadow_GetFieldAsBinary__SWIG_1(OGRFeatureShadow *se
       else
       {
         GByte* pabyBlob = OGR_F_GetFieldAsBinary(self, id, nLen);
-        *pBuf = (char*)malloc(*nLen);
+        *pBuf = (char*)VSIMalloc(*nLen);
         memcpy(*pBuf, pabyBlob, *nLen);
         return 0;
       }
