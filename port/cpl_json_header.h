@@ -33,7 +33,17 @@
 #pragma GCC system_header
 #endif
 
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable : 4005 ) /* json_inttypes.h(18,1): warning C4005: 'PRId64': macro redefinition. C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\ucrt\inttypes.h(117): message : see previous definition of
+'PRId64' */
+#endif
+
 #include <json.h>
+
+#ifdef _MSC_VER
+#pragma warning( pop)
+#endif
 
 #undef json_object_object_foreachC
 #define json_object_object_foreachC(obj,iter) \

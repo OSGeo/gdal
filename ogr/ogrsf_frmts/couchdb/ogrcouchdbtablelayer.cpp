@@ -1052,7 +1052,7 @@ int OGRCouchDBTableLayer::GetTotalFeatureCount()
     }
 
     if (nTotalRows >= static_cast<int>(nSpecialRows))
-        nTotalRows -= nSpecialRows;
+        nTotalRows -= static_cast<int>(nSpecialRows);
 
     json_object_put(poAnswerObj);
 
