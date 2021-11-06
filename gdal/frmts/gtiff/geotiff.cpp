@@ -9964,6 +9964,8 @@ CPLErr GTiffDataset::CleanOverviews()
     for( int i = 0; i < m_nOverviewCount; ++i )
     {
         anOvDirOffsets.push_back( m_papoOverviewDS[i]->m_nDirOffset );
+        if( m_papoOverviewDS[i]->m_poMaskDS )
+            anOvDirOffsets.push_back( m_papoOverviewDS[i]->m_poMaskDS->m_nDirOffset );
         delete m_papoOverviewDS[i];
     }
 
@@ -9978,12 +9980,10 @@ CPLErr GTiffDataset::CleanOverviews()
 
     while( true )
     {
-        for( int i = 0; i < m_nOverviewCount; ++i )
+        for( toff_t nOffset: anOvDirOffsets )
         {
-            if( anOvDirOffsets[i] == TIFFCurrentDirOffset( m_hTIFF ) )
+            if( nOffset == TIFFCurrentDirOffset( m_hTIFF ) )
             {
-                CPLDebug( "GTiff", "%d -> %d",
-                          static_cast<int>(anOvDirOffsets[i]), iThisOffset );
                 anOvDirIndexes.push_back( static_cast<uint16_t>(iThisOffset) );
             }
         }
@@ -10007,9 +10007,15 @@ CPLErr GTiffDataset::CleanOverviews()
     }
 
     CPLFree( m_papoOverviewDS );
-
     m_nOverviewCount = 0;
     m_papoOverviewDS = nullptr;
+
+    if( m_poMaskDS )
+    {
+        CPLFree( m_poMaskDS->m_papoOverviewDS );
+        m_poMaskDS->m_nOverviewCount = 0;
+        m_poMaskDS->m_papoOverviewDS = nullptr;
+    }
 
     if( !SetDirectory() )
         return CE_Failure;

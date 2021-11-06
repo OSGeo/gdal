@@ -2012,6 +2012,41 @@ def test_tiff_ovr_nodata_multiband_interleave_band_non_default_color_interp(exte
     gdal.GetDriverByName('GTiff').Delete(temp_path)
 
 ###############################################################################
+
+
+@pytest.mark.parametrize("external_ovr_and_msk", [False,True])
+def test_tiff_ovr_clean_with_mask(external_ovr_and_msk):
+    """ Test fix for https://github.com/OSGeo/gdal/issues/1047 """
+
+    filename = '/vsimem/test_tiff_ovr_clean_with_mask.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(filename, 10, 10)
+    with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK', 'NO' if external_ovr_and_msk else 'YES'):
+        ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+    if external_ovr_and_msk:
+        ds = None
+        ds = gdal.Open(filename)
+    ds.BuildOverviews('NEAR', [2])
+    ds = None
+
+    # Clear overviews
+    ds = gdal.Open(filename, gdal.GA_Update)
+    ds.BuildOverviews(None, [])
+    assert ds.GetRasterBand(1).GetOverviewCount() == 0
+    assert ds.GetRasterBand(1).GetMaskBand().GetOverviewCount() == 0
+    ds = None
+
+    assert gdal.VSIStatL(filename + '.ovr') is None
+    assert gdal.VSIStatL(filename + '.msk.ovr') is None
+
+    # Check after reopening
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetOverviewCount() == 0
+    assert ds.GetRasterBand(1).GetMaskBand().GetOverviewCount() == 0
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete(filename)
+
+###############################################################################
 # Cleanup
 
 def test_tiff_ovr_cleanup():
