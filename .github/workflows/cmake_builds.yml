@@ -5,10 +5,10 @@ name: Build and test with CMake
 on:
     push:
         paths-ignore:
-            - 'gdal/doc/**'
+            - 'doc/**'
     pull_request:
         paths-ignore:
-            - 'gdal/doc/**'
+            - 'doc/**'
 
 env:
   CMAKE_UNITY_BUILD: OFF
@@ -156,9 +156,11 @@ jobs:
       # FIXME: Spatialite and Jasper manually disabled because of linking errors: spatialite needs rttopo, and jasper lacks jp2_box_destroy
       # Disable MySQL because of ogr\ogrsf_frmts\mysql\ogr_mysql.h(47,10): fatal error C1083: Cannot open include file: 'mysql.h': No such file or directory
       # Disable LIBKML because of issue at linking time with kmlXXXX.lib being debug libraries
+      # Note that the leading space in CMAKE_C/CXX_FLAGS=" /WX" is due to using Bash on Windows that would
+      # otherwise interpret /bla has a file relative to the Bash root directory and would replace it by a path like c:\Program Files\git\WX
       run: |
         mkdir -p $GITHUB_WORKSPACE/build
-        cmake -A ${architecture} -G "${generator}" "-DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal" "-DCMAKE_C_COMPILER_LAUNCHER=clcache" "-DCMAKE_CXX_COMPILER_LAUNCHER=clcache" "-DCMAKE_PREFIX_PATH=${CONDA_PREFIX}" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DSPATIALITE_LIBRARY:FILEPATH= -DJASPER_LIBRARY_RELEASE:FILEPATH= -DMYSQL_LIBRARY:FILEPATH= -DLIBKML_BASE_LIBRARY:FILEPATH= -DGDAL_ENABLE_PLUGINS:BOOL=ON -DGDAL_ENABLE_PLUGINS_NO_DEPS:BOOL=ON -DGDAL_USE_PUBLICDECOMPWT:BOOL=ON
+        cmake -A ${architecture} -G "${generator}" "-DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal" "-DCMAKE_C_COMPILER_LAUNCHER=clcache" "-DCMAKE_CXX_COMPILER_LAUNCHER=clcache" "-DCMAKE_PREFIX_PATH=${CONDA_PREFIX}" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DSPATIALITE_LIBRARY:FILEPATH= -DJASPER_LIBRARY_RELEASE:FILEPATH= -DMYSQL_LIBRARY:FILEPATH= -DLIBKML_BASE_LIBRARY:FILEPATH= -DGDAL_ENABLE_PLUGINS:BOOL=ON -DGDAL_ENABLE_PLUGINS_NO_DEPS:BOOL=ON -DGDAL_USE_PUBLICDECOMPWT:BOOL=ON -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX"
     - name: Build
       shell: bash -l {0}
       run: cmake --build $GITHUB_WORKSPACE/build --config Release -j 2

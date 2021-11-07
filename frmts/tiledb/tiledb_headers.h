@@ -35,8 +35,16 @@
 #pragma GCC system_header
 #endif
 
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable : 4996 ) /* XXXX was deprecated */
+#endif
+
 #include "tiledb/tiledb"
 
+#ifdef _MSC_VER
+#pragma warning( pop )
+#endif
 
 typedef enum {
     BAND=0,
