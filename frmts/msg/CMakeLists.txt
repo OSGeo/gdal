@@ -14,7 +14,7 @@ add_gdal_driver(
           xritheaderparser.h
           PLUGIN_CAPABLE)
 gdal_standard_includes(gdal_MSG)
-target_compile_definitions(gdal_MSG PRIVATE DEFINITIONS -DDO_NOT_USE_DEBUG_BOOL)
+target_compile_definitions(gdal_MSG PRIVATE -DDO_NOT_USE_DEBUG_BOOL)
 
 include(ExternalProject)
 ExternalProject_Add(
@@ -29,6 +29,7 @@ ExternalProject_Add(
 add_dependencies(gdal_MSG PublicDecompWT)
 
 if (WIN32)
+  target_compile_definitions(gdal_MSG PRIVATE -DWIN32)
   set_property(
     SOURCE PublicDecompWT_all.cpp
     APPEND
