@@ -72,7 +72,7 @@ XRITHeaderParser::XRITHeaderParser(std::ifstream & ifile)
 
   if (!m_isValid) // seek back to original position
   {
-    ifile.seekg(-probeSize, std::ios_base::cur);
+    ifile.seekg(-static_cast<int>(probeSize), std::ios_base::cur);
   }
 }
 

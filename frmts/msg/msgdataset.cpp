@@ -516,9 +516,9 @@ CPLErr MSGRasterBand::IReadBlock( int /*nBlockXOff*/, int nBlockYOff,
         if (xhp.isValid())
         {
           std::vector <short> QualityInfo;
-          unsigned short chunk_height = xhp.nrRows();
-          unsigned short chunk_bpp = xhp.nrBitsPerPixel();
-          unsigned short chunk_width = xhp.nrColumns();
+          unsigned short chunk_height = static_cast<unsigned short>(xhp.nrRows());
+          unsigned short chunk_bpp = static_cast<unsigned short>(xhp.nrBitsPerPixel());
+          unsigned short chunk_width = static_cast<unsigned short>(xhp.nrColumns());
           unsigned __int8 NR = (unsigned __int8)chunk_bpp;
           unsigned int nb_ibytes = static_cast<unsigned int>(xhp.dataSize());
           int iShift = 0;
@@ -597,12 +597,12 @@ CPLErr MSGRasterBand::IReadBlock( int /*nBlockXOff*/, int nBlockYOff,
               if (poGDS->command.cDataConversion == 'B')
               {
                 for( int i = 0; i < nBlockSize; ++i )
-                    ((GByte *)pImage)[i] = cimg.Get()[y+=iStep] / 4;
+                    ((GByte *)pImage)[i] = static_cast<GByte>(cimg.Get()[y+=iStep] / 4);
               }
               else
               {
                 for( int i = 0; i < nBlockSize; ++i )
-                    ((GByte *)pImage)[i] = cimg.Get()[y+=iStep];
+                    ((GByte *)pImage)[i] = static_cast<GByte>(cimg.Get()[y+=iStep]);
               }
             }
             else
@@ -618,7 +618,7 @@ CPLErr MSGRasterBand::IReadBlock( int /*nBlockXOff*/, int nBlockYOff,
                   if (fSplitStrip && (j >= iSplitRow)) // In splitstrip, below splitline, thus do not shift!!
                     iXOffset -= iShift;
                   for (int i = 0; i < chunk_width; ++i)
-                    ((GByte *)pImage)[++iXOffset] = cimg.Get()[y+=iStep] / 4;
+                    ((GByte *)pImage)[++iXOffset] = static_cast<GByte>(cimg.Get()[y+=iStep] / 4);
                 }
               }
               else
@@ -630,7 +630,7 @@ CPLErr MSGRasterBand::IReadBlock( int /*nBlockXOff*/, int nBlockYOff,
                   if (fSplitStrip && (j >= iSplitRow)) // In splitstrip, below splitline, thus do not shift!!
                     iXOffset -= iShift;
                   for (int i = 0; i < chunk_width; ++i)
-                    ((GByte *)pImage)[++iXOffset] = cimg.Get()[y+=iStep];
+                    ((GByte *)pImage)[++iXOffset] = static_cast<GByte>(cimg.Get()[y+=iStep]);
                 }
               }
             }
