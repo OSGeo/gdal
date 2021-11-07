@@ -70,12 +70,12 @@ See Also
    52000 <http://georezo.net/wiki/_media/main/geomatique/norme_edigeo.zip>`__
    (in French)
 -  `Standard d'échange des objets du PCI selon la norme
-   EDIGEO <https://www.craig.fr/sites/default/files/contenu/60-2010-le-pci-en-auvergne/docs/edigeopci.pdf>`__
+   EDIGEO <https://www.craig.fr/sites/www.craig.fr/files/contenu/60-2010-le-pci-en-auvergne/docs/edigeopci.pdf>`__
    (in French)
 -  `Homepage of the French Digital Cadastral
    Plan <http://www.cadastre.gouv.fr>`__ (in French)
 -  `Geotools EDIGEO module
-   description <http://docs.codehaus.org/pages/viewpage.action?pageId=77692976>`__
-   (in English)
+   description <http://old.geotools.org/77692976.html>`__
+   (in English), `unmaintained and removed <https://github.com/geotools/geotools/pull/2446/files>`__
 -  `Sample of EDIGEO
-   data <http://svn.geotools.org/trunk/modules/unsupported/edigeo/src/test/resources/org/geotools/data/edigeo/test-data/>`__
+   data <https://github.com/geotools/geotools/tree/affa340d16681f1bb78673d23fb38a6c1eb2b38a/modules/unsupported/edigeo/src/test/resources/org/geotools/data/edigeo/test-data>`__
