@@ -37,6 +37,10 @@ if (SQLite3_HAS_COLUMN_METADATA)
   target_compile_definitions(ogr_SQLite PRIVATE -DSQLITE_HAS_COLUMN_METADATA)
 endif ()
 
+if (SQLite3_HAS_NON_DEPRECATED_AUTO_EXTENSION)
+  target_compile_definitions(ogr_SQLite PRIVATE -DSQLITE_HAS_NON_DEPRECATED_AUTO_EXTENSION)
+endif ()
+
 if (GDAL_USE_SPATIALITE)
   get_filename_component(SPATIALITE_SONAME ${SPATIALITE_LIBRARY} NAME CACHE)
   target_compile_definitions(ogr_SQLite PRIVATE -DHAVE_SPATIALITE)

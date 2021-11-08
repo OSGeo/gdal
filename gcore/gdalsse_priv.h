@@ -504,11 +504,11 @@ class XMMReg2Double
     static inline XMMReg2Double Ternary(const XMMReg2Double& cond, const XMMReg2Double& true_expr, const XMMReg2Double& false_expr)
     {
         XMMReg2Double reg;
-        if( cond.low )
+        if( cond.low != 0 )
             reg.low = true_expr.low;
         else
             reg.low = false_expr.low;
-        if( cond.high )
+        if( cond.high != 0 )
             reg.high = true_expr.high;
         else
             reg.high = false_expr.high;
