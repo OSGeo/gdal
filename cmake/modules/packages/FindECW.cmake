@@ -16,6 +16,10 @@
 # Copyright (C) 2017,2018 Hiroshi Miura
 ################################################################################
 
+if(NOT ECW_ROOT AND DEFINED ENV{ECW_ROOT})
+  set(ECW_ROOT "$ENV{ECW_ROOT}")
+endif()
+
 find_path(ECW_INCLUDE_DIR NCSECWClient.h)
 
 if (ECW_INCLUDE_DIR)
