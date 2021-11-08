@@ -2153,6 +2153,9 @@ static CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS, char** papszO
     CPLCreateXMLElementAndValue(srs_xml, "HighPrecision", "true");
 
     /* Add the WKID to the XML */
+    const char* pszWKID = CSLFetchNameValue(papszOptions, "WKID");
+    if( pszWKID )
+        nSRID = atoi(pszWKID);
     if ( nSRID )
     {
         CPLCreateXMLElementAndValue(srs_xml, "WKID", CPLSPrintf("%d", nSRID));
