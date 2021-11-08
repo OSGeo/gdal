@@ -1601,7 +1601,7 @@ class CPL_DLL GDALDriver : public GDALMajorObject
                                            void * pProgressData );
 //! @endcond
     static CPLErr       QuietDelete( const char * pszName,
-                                     const char *const *papszAllowedDrivers = nullptr);
+                                     CSLConstList papszAllowedDrivers = nullptr);
 
 //! @cond Doxygen_Suppress
     static CPLErr       DefaultRename( const char * pszNewName,
