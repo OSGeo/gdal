@@ -28,7 +28,7 @@ This module will set the following variables if found:
 #]=======================================================================]
 
 
-if(SQLite3_INCLUDE_DIR AND SQLIite3_LIBRARY)
+if(SQLite3_INCLUDE_DIR AND SQLite3_LIBRARY)
   set(SQLite3_FIND_QUIETLY TRUE)
 endif()
 
