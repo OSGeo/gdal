@@ -308,6 +308,10 @@ ENVIDataset::~ENVIDataset()
     {
         GDALDeinitGCPs(static_cast<int>(m_asGCPs.size()), m_asGCPs.data());
     }
+
+    // Should be called before pszHDRFilename is freed.
+    CleanupPostFileClosing();
+
     CPLFree(pszHDRFilename);
 }
 
