@@ -9,7 +9,7 @@ GDAL_ROOT	=	..\..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
-EXTRAFLAGS = -I.. -I..\.. $(PROJ_FLAGS) $(PROJ_INCLUDE) $(SQLITE_INC) $(PCRE_EXTRAFLAGS) $(SQLITE_HAS_COLUMN_METADATA_EXTRAFLAGS) $(SPATIALITE_412_OR_LATER_EXTRAFLAGS)
+EXTRAFLAGS = -I.. -I..\.. $(PROJ_FLAGS) $(PROJ_INCLUDE) $(SQLITE_INC) $(PCRE_EXTRAFLAGS) $(SQLITE_HAS_COLUMN_METADATA_EXTRAFLAGS) $(SPATIALITE_412_OR_LATER_EXTRAFLAGS) -DSQLITE_HAS_NON_DEPRECATED_AUTO_EXTENSION
 
 !IFDEF PCRE_INC
 PCRE_EXTRAFLAGS = $(PCRE_INC)
@@ -32,5 +32,5 @@ clean:
 
 test_load_virtual_ogr.exe:	test_load_virtual_ogr.obj
 	$(CC) $(CFLAGS) test_load_virtual_ogr.obj $(SQLITE_LIB)  /link $(LINKER_FLAGS)
-	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1 
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	del test_load_virtual_ogr.obj

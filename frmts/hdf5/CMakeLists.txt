@@ -23,7 +23,7 @@ gdal_standard_includes(gdal_HDF5)
 if (WIN32)
   target_compile_definitions(gdal_HDF5 PRIVATE -DWIN32)
 endif ()
-target_include_directories(gdal_HDF5 PRIVATE ${HDF5_INCLUDE_DIRS})
+target_include_directories(gdal_HDF5 SYSTEM PRIVATE ${HDF5_INCLUDE_DIRS})
 gdal_target_link_libraries(TARGET gdal_HDF5 LIBRARIES ${HDF5_C_LIBRARIES})
 
 if (HDF5_BUILD_SHARED_LIBS)

@@ -73,7 +73,14 @@ CPL_C_END
 
 void OGR2SQLITE_Register()
 {
+#if !defined(SQLITE_HAS_NON_DEPRECATED_AUTO_EXTENSION) && defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated"
+#endif
     sqlite3_auto_extension ((void (*)(void)) OGR2SQLITE_static_register);
+#if !defined(SQLITE_HAS_NON_DEPRECATED_AUTO_EXTENSION) && defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 }
 
 #define VIRTUAL_OGR_DYNAMIC_EXTENSION_ENABLED

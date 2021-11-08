@@ -60,6 +60,20 @@ if(SQLite3_INCLUDE_DIR AND SQLite3_LIBRARY)
     set(CMAKE_REQUIRED_INCLUDES ${SQLite3_INCLUDE_DIR})
     check_symbol_exists(sqlite3_column_table_name sqlite3.h SQLite3_HAS_COLUMN_METADATA)
     check_symbol_exists(sqlite3_rtree_query_callback sqlite3.h SQLite3_HAS_RTREE)
+
+    if (MSVC)
+        set(CMAKE_REQUIRED_FLAGS "/WX")
+      else ()
+        set(CMAKE_REQUIRED_FLAGS "-Werror")
+      endif ()
+    set(SQLITE3_AUTO_EXTENSION_CHECK
+        "#include <sqlite3.h>
+         int main(){
+          return sqlite3_auto_extension ((void (*)(void)) 0);
+         }")
+    check_cxx_source_compiles("${SQLITE3_AUTO_EXTENSION_CHECK}" SQLite3_HAS_NON_DEPRECATED_AUTO_EXTENSION)
+    unset(CMAKE_REQUIRED_FLAGS)
+
     unset(CMAKE_REQUIRED_LIBRARIES)
     unset(CMAKE_REQUIRED_INCLUDES)
 endif()
