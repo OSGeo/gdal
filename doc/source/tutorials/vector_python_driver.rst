@@ -628,4 +628,4 @@ Other examples
 --------------
 
 Other examples, including a CityJSON driver, may be found at
-https://github.com/OSGeo/gdal/tree/master/gdal/examples/pydrivers
+https://github.com/OSGeo/gdal/tree/master/examples/pydrivers

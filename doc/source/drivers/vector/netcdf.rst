@@ -353,7 +353,7 @@ XML configuration file
 ----------------------
 
 A XML configuration file conforming to the following
-`schema <https://github.com/OSGeo/gdal/blob/master/gdal/data/netcdf_config.xsd>`__
+`schema <https://github.com/OSGeo/gdal/blob/master/data/netcdf_config.xsd>`__
 can be used for very precise control on the output format, in particular
 to set all needed attributes (such as units) to conform to the `NetCDF
 CF-1.6

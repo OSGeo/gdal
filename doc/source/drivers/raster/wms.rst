@@ -313,7 +313,7 @@ IIP:http://foo.com/FIF=image_name out.xml -of WMS"
 Examples
 --------
 
--  | `onearth_global_mosaic.xml <https://github.com/OSGeo/gdal/blob/master/gdal/frmts/wms/frmt_wms_onearth_global_mosaic.xml>`__
+-  | `onearth_global_mosaic.xml <https://github.com/OSGeo/gdal/blob/master/frmts/wms/frmt_wms_onearth_global_mosaic.xml>`__
      - Landsat mosaic from a `OnEarth <http://onearth.jpl.nasa.gov/>`__
      WMS server
 
@@ -328,7 +328,7 @@ Examples
    *Note : this particular server does no longer accept regular WMS
    queries.*
 
--  `metacarta_wmsc.xml <https://github.com/OSGeo/gdal/blob/master/gdal/frmts/wms/frmt_wms_metacarta_wmsc.xml>`__ - It is possible
+-  `metacarta_wmsc.xml <https://github.com/OSGeo/gdal/blob/master/frmts/wms/frmt_wms_metacarta_wmsc.xml>`__ - It is possible
    to configure a WMS Service conforming to a WMS-C cache by specifying
    a number of overviews and specifying the 'block size' as the tile
    size of the cache. The following example is a sample set up for a
@@ -342,7 +342,7 @@ Examples
 
         .. image:: http://sydney.freeearthfoundation.com/gdalwms/metacarta_wmsc.png
 
--  | `tileservice_bmng.xml <https://github.com/OSGeo/gdal/blob/master/gdal/frmts/wms/frmt_wms_tileservice_bmng.xml>`__ -
+-  | `tileservice_bmng.xml <https://github.com/OSGeo/gdal/blob/master/frmts/wms/frmt_wms_tileservice_bmng.xml>`__ -
      TileService, Blue Marble NG (January)
 
    ::
@@ -353,7 +353,7 @@ Examples
 
         .. image:: http://sydney.freeearthfoundation.com/gdalwms/tileservice_bmng.jpg
 
--  | `tileservice_nysdop2004.xml <https://github.com/OSGeo/gdal/blob/master/gdal/frmts/wms/frmt_wms_tileservice_nysdop2004.xml>`__
+-  | `tileservice_nysdop2004.xml <https://github.com/OSGeo/gdal/blob/master/frmts/wms/frmt_wms_tileservice_nysdop2004.xml>`__
      - TileService, NYSDOP 2004
 
    ::
@@ -365,7 +365,7 @@ Examples
         .. image:: http://sydney.freeearthfoundation.com/gdalwms/tileservice_nysdop2004.jpg
 
 -  | `OpenStreetMap TMS Service
-     Example <https://github.com/OSGeo/gdal/blob/master/gdal/frmts/wms/frmt_wms_openstreetmap_tms.xml>`__: Connect to
+     Example <https://github.com/OSGeo/gdal/blob/master/frmts/wms/frmt_wms_openstreetmap_tms.xml>`__: Connect to
      OpenStreetMap tile service. Note that this file takes advantage of
      the tile cache; more information about configuring the tile cache
      settings is available above. Please also change the <UserAgent>, to avoid the
@@ -373,30 +373,30 @@ Examples
      big usage of it would be seen.
    | ``gdal_translate -of PNG -outsize 512 512 frmt_wms_openstreetmap_tms.xml openstreetmap.png``
 
--  | `MetaCarta TMS Layer Example <https://github.com/OSGeo/gdal/blob/master/gdal/frmts/wms/frmt_wms_metacarta_tms.xml>`__,
+-  | `MetaCarta TMS Layer Example <https://github.com/OSGeo/gdal/blob/master/frmts/wms/frmt_wms_metacarta_tms.xml>`__,
      accessing the default MetaCarta TMS layer.
    | ``gdal_translate -of PNG -outsize 512 256 frmt_wms_metacarta_tms.xml metacarta.png``
 
--  `BlueMarble Amazon S3 Example <https://github.com/OSGeo/gdal/blob/master/gdal/frmts/wms/frmt_wms_bluemarble_s3_tms.xml>`__
+-  `BlueMarble Amazon S3 Example <https://github.com/OSGeo/gdal/blob/master/frmts/wms/frmt_wms_bluemarble_s3_tms.xml>`__
    accessed with the TMS minidriver.
 
--  `Google Maps <https://github.com/OSGeo/gdal/blob/master/gdal/frmts/wms/frmt_wms_googlemaps_tms.xml>`__ accessed with the TMS
+-  `Google Maps <https://github.com/OSGeo/gdal/blob/master/frmts/wms/frmt_wms_googlemaps_tms.xml>`__ accessed with the TMS
    minidriver.
 
--  `ArcGIS MapServer Tiles <https://github.com/OSGeo/gdal/blob/master/gdal/frmts/wms/frmt_wms_arcgis_mapserver_tms.xml>`__
+-  `ArcGIS MapServer Tiles <https://github.com/OSGeo/gdal/blob/master/frmts/wms/frmt_wms_arcgis_mapserver_tms.xml>`__
    accessed with the TMS minidriver.
 
--  OnEarth Tiled WMS `Clementine <https://github.com/OSGeo/gdal/blob/master/gdal/frmts/wms/frmt_twms_Clementine.xml>`__,
-   `daily <https://github.com/OSGeo/gdal/blob/master/gdal/frmts/wms/frmt_twms_daily.xml>`__, and `srtm <https://github.com/OSGeo/gdal/blob/master/gdal/frmts/wms/frmt_twms_srtm.xml>`__
+-  OnEarth Tiled WMS `Clementine <https://github.com/OSGeo/gdal/blob/master/frmts/wms/frmt_twms_Clementine.xml>`__,
+   `daily <https://github.com/OSGeo/gdal/blob/master/frmts/wms/frmt_twms_daily.xml>`__, and `srtm <https://github.com/OSGeo/gdal/blob/master/gdal/frmts/wms/frmt_twms_srtm.xml>`__
    examples.
 
--  `VirtualEarth Aerial Layer <https://github.com/OSGeo/gdal/blob/master/gdal/frmts/wms/frmt_wms_virtualearth.xml>`__ accessed
+-  `VirtualEarth Aerial Layer <https://github.com/OSGeo/gdal/blob/master/frmts/wms/frmt_wms_virtualearth.xml>`__ accessed
    with the VirtualEarth minidriver.
 
--  `ArcGIS online sample server layer <https://github.com/OSGeo/gdal/blob/master/gdal/frmts/wms/frmt_ags_arcgisonline.xml>`__
+-  `ArcGIS online sample server layer <https://github.com/OSGeo/gdal/blob/master/frmts/wms/frmt_ags_arcgisonline.xml>`__
    accessed with the ArcGIS Server REST API minidriver.
 
--  `IIP online sample server layer <https://github.com/OSGeo/gdal/blob/master/gdal/frmts/wms/frmt_wms_iip.xml>`__ accessed with
+-  `IIP online sample server layer <https://github.com/OSGeo/gdal/blob/master/frmts/wms/frmt_wms_iip.xml>`__ accessed with
    the IIP minidriver.
 
 Open syntax

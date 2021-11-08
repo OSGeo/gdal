@@ -64,7 +64,7 @@ The following layer creation options are available:
    VDV-452-ENGLISH and VDV-452-GERMAN will restrict the VDV-452 to the
    specified language. The configuration file describing VDV-452 table
    and field names is
-   `vdv452.xml <https://github.com/OSGeo/gdal/blob/master/gdal/data/vdv452.xml>`__
+   `vdv452.xml <https://github.com/OSGeo/gdal/blob/master/data/vdv452.xml>`__
    located in the GDAL_DATA directory.
 -  **PROFILE_STRICT**\ =YES/NO. Whether checks of profile should be
    strict. In strict mode, unexpected layer or field names will be
