@@ -87,6 +87,7 @@ elseif(ECW_VERSION_STRING VERSION_GREATER_EQUAL 4.0)
     # We could likely handle other versions, but not done currently
     message(FATAL_ERROR "Only ECW SDK 3.3 and >= 5.5 are supported")
 else()
+    # Case of ECW SDK 3.3. We need to find extra libraries than the base NCSEcw.
     find_library(ECW_LIBRARY NCSEcw)
     find_library(ECWnet_LIBRARY NCSCnet)
     find_library(ECWC_LIBRARY NCSEcwC)
