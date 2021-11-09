@@ -389,7 +389,7 @@ See also
 --------
 
 `List of known 
-issues <https://github.com/OSGeo/gdal/blob/master/gdal/ogr/ogrsf_frmts/dxf/KNOWN_ISSUES.md>`__
+issues <https://github.com/OSGeo/gdal/blob/master/ogr/ogrsf_frmts/dxf/KNOWN_ISSUES.md>`__
 
 `AutoCAD 2000 DXF
 Reference <http://www.autodesk.com/techpubs/autocad/acad2000/dxf/>`__

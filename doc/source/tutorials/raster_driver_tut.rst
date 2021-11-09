@@ -18,7 +18,7 @@ It is strongly advised that the :ref:`raster_data_model` be reviewed and underst
 Implementing the Dataset
 ------------------------
 
-We will start showing minimal implementation of a read-only driver for the Japanese DEM format (`jdemdataset.cpp <https://github.com/OSGeo/gdal/blob/master/gdal/frmts/jdem/jdemdataset.cpp>`_). First we declare a format specific dataset class, JDEMDataset in this case.
+We will start showing minimal implementation of a read-only driver for the Japanese DEM format (`jdemdataset.cpp <https://github.com/OSGeo/gdal/blob/master/frmts/jdem/jdemdataset.cpp>`_). First we declare a format specific dataset class, JDEMDataset in this case.
 
 .. code-block::
 

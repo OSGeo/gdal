@@ -356,9 +356,9 @@ bit artificial. The CityJSON driver mentioned below does not need it.
 Other examples:
 
 * a PASSTHROUGH driver that forwards calls to the GDAL SWIG Python API:
-  https://github.com/OSGeo/gdal/blob/master/gdal/examples/pydrivers/ogr_PASSTHROUGH.py
+  https://github.com/OSGeo/gdal/blob/master/examples/pydrivers/ogr_PASSTHROUGH.py
 * a driver implemented a simple parsing of `CityJSON <https://www.cityjson.org/>`_:
-  https://github.com/OSGeo/gdal/blob/master/gdal/examples/pydrivers/ogr_CityJSON.py
+  https://github.com/OSGeo/gdal/blob/master/examples/pydrivers/ogr_CityJSON.py
 
 Limitations and scope
 ---------------------
