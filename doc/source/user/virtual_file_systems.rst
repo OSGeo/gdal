@@ -26,7 +26,7 @@ It is possible to chain multiple file system handlers.
 
     # ogrinfo a shapefile in a zip file on the internet:
 
-    ogrinfo -ro -al -so /vsizip//vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/shp/data/poly.zip
+    ogrinfo -ro -al -so /vsizip//vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/shp/poly.zip
 
     # ogrinfo a shapefile in a zip file on an ftp:
 
