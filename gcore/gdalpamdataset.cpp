@@ -152,7 +152,12 @@ GDALPamDataset::GDALPamDataset()
 GDALPamDataset::~GDALPamDataset()
 
 {
-    if( nPamFlags & GPF_DIRTY )
+    if( bSuppressOnClose )
+    {
+        if( psPam && psPam->pszPamFilename != nullptr )
+            VSIUnlink(psPam->pszPamFilename);
+    }
+    else if( nPamFlags & GPF_DIRTY )
     {
         CPLDebug( "GDALPamDataset", "In destructor with dirty metadata." );
         GDALPamDataset::TrySaveXML();

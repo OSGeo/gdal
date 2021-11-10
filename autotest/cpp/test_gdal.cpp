@@ -1852,15 +1852,23 @@ namespace tut
     template<> template<> void object::test<24>()
     {
         const char* pszFilename = "/vsimem/out.tif";
-        GDALDatasetUniquePtr poDstDS(
-            GDALDriver::FromHandle(
-                GDALGetDriverByName("GTiff"))->Create(pszFilename, 1, 1, 1, GDT_Byte, nullptr));
-        poDstDS->MarkSuppressOnClose();
-        poDstDS->GetRasterBand(1)->Fill(255);
-        poDstDS->FlushCache(true);
-        // All buffers have been flushed, but our dirty block should not have been written
-        // hence the checksum will be 0
-        ensure_equals(GDALChecksumImage(GDALRasterBand::FromHandle(poDstDS->GetRasterBand(1)),0,0,1,1), 0);
+        const char* const apszOptions[] = { "PROFILE=BASELINE", nullptr };
+        {
+            GDALDatasetUniquePtr poDstDS(
+                GDALDriver::FromHandle(
+                    GDALGetDriverByName("GTiff"))->Create(pszFilename, 1, 1, 1, GDT_Byte, apszOptions));
+            poDstDS->SetMetadataItem("FOO", "BAR");
+            poDstDS->MarkSuppressOnClose();
+            poDstDS->GetRasterBand(1)->Fill(255);
+            poDstDS->FlushCache(true);
+            // All buffers have been flushed, but our dirty block should not have been written
+            // hence the checksum will be 0
+            ensure_equals(GDALChecksumImage(GDALRasterBand::FromHandle(poDstDS->GetRasterBand(1)),0,0,1,1), 0);
+        }
+        {
+            VSIStatBufL sStat;
+            ensure(VSIStatL(CPLSPrintf("%s.aux.xml", pszFilename), &sStat) != 0);
+        }
     }
 
 } // namespace tut
