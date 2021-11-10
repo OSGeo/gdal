@@ -437,6 +437,9 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     void  ShareLockWithParentDataset(GDALDataset* poParentDataset);
 
 //! @endcond
+
+    void                CleanupPostFileClosing();
+
     virtual int         CloseDependentDatasets();
 //! @cond Doxygen_Suppress
     int                 ValidateLayerCreationOptions( const char* const* papszLCO );
@@ -599,8 +602,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     int           GetShared() const;
     void          MarkAsShared();
 
-    /** Set that the dataset must be deleted on close. */
-    void          MarkSuppressOnClose() { bSuppressOnClose = true; }
+    void          MarkSuppressOnClose();
 
     /** Return open options.
      * @return open options.
@@ -1601,7 +1603,7 @@ class CPL_DLL GDALDriver : public GDALMajorObject
                                            void * pProgressData );
 //! @endcond
     static CPLErr       QuietDelete( const char * pszName,
-                                     const char *const *papszAllowedDrivers = nullptr);
+                                     CSLConstList papszAllowedDrivers = nullptr);
 
 //! @cond Doxygen_Suppress
     static CPLErr       DefaultRename( const char * pszNewName,

@@ -1505,6 +1505,36 @@ void GDALDataset::MarkAsShared()
 }
 
 /************************************************************************/
+/*                            MarkAsShared()                            */
+/************************************************************************/
+
+/** Set that the dataset must be deleted on close. */
+void  GDALDataset::MarkSuppressOnClose()
+{
+    bSuppressOnClose = true;
+}
+
+/************************************************************************/
+/*                        CleanupPostFileClosing()                      */
+/************************************************************************/
+
+/** This method should be called by driver implementations in their destructor,
+ * after having closed all files, but before having freed resources that
+ * are needed for their GetFileList() implementation.
+ * This is used to implement MarkSuppressOnClose behavior.
+ */
+void GDALDataset::CleanupPostFileClosing()
+{
+    if( bSuppressOnClose )
+    {
+        char** papszFileList = GetFileList();
+        for( int i = 0; papszFileList && papszFileList[i]; ++i )
+            VSIUnlink(papszFileList[i]);
+        CSLDestroy(papszFileList);
+    }
+}
+
+/************************************************************************/
 /*                            GetGCPCount()                             */
 /************************************************************************/
 
