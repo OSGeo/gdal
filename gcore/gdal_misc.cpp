@@ -62,6 +62,8 @@
 #include "ogr_spatialref.h"
 #include "ogr_geos.h"
 
+#include "proj.h"
+
 CPL_CVSID("$Id$")
 
 static int GetMinBitsForPair(
@@ -2213,6 +2215,13 @@ const char * CPL_STDCALL GDALVersionInfo( const char *pszRequest )
         osBuildInfo += CPLString("GEOS_VERSION=") + GEOS_CAPI_VERSION + "\n";
 #endif
 #endif
+        osBuildInfo += CPLSPrintf("PROJ_BUILD_VERSION=%d.%d.%d\n",
+                                  PROJ_VERSION_MAJOR,
+                                  PROJ_VERSION_MINOR,
+                                  PROJ_VERSION_PATCH);
+        osBuildInfo += CPLSPrintf("PROJ_RUNTIME_VERSION=%s\n",
+                                  proj_info().version);
+
         CPLFree(CPLGetTLS(CTLS_VERSIONINFO));
         CPLSetTLS(CTLS_VERSIONINFO, CPLStrdup(osBuildInfo), TRUE );
         return static_cast<char *>( CPLGetTLS(CTLS_VERSIONINFO) );
@@ -3327,6 +3336,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
         {
             printf( "Generic GDAL utility command options:\n" );/*ok*/
             printf( "  --version: report version of GDAL in use.\n" );/*ok*/
+            printf( "  --build: report detailed information about GDAL in use.\n" );/*ok*/
             printf( "  --license: report GDAL license info.\n" );/*ok*/
             printf( "  --formats: report all configured format drivers.\n" );/*ok*/
             printf( "  --format [format]: details of one format.\n" );/*ok*/

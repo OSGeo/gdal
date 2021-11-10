@@ -10,6 +10,10 @@ All GDAL OGR command line programs support the following common options.
 
     Report the version of GDAL and exit.
 
+.. option:: --build
+
+    Report detailed information about GDAL in use.
+
 .. option:: --formats
 
     List all vector formats supported by this GDAL build (read-only and
