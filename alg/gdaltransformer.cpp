@@ -1556,7 +1556,8 @@ bool GDALComputeAreaOfInterest(OGRSpatialReference* poSRS,
  * used to specify the identity geotransform (ungeoreference image)
  * <li> RPC_HEIGHT: A fixed height to be used with RPC calculations.
  * <li> RPC_DEM: The name of a DEM file to be used with RPC calculations.
- * <li> Other RPC related options. See GDALCreateRPCTransformer()
+ *      See GDALCreateRPCTransformerV2() for more details.
+ * <li> Other RPC related options. See GDALCreateRPCTransformerV2()
  * <li> INSERT_CENTER_LONG: May be set to FALSE to disable setting up a
  * CENTER_LONG value on the coordinate system to rewrap things around the
  * center of the image.
