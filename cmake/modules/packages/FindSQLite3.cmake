@@ -56,7 +56,11 @@ endif()
 
 if(SQLite3_INCLUDE_DIR AND SQLite3_LIBRARY)
     # check column metadata
-    set(CMAKE_REQUIRED_LIBRARIES ${SQLite3_LIBRARY})
+    if( ${SQLite3_LIBRARY} MATCHES "libsqlite3.a" AND PC_SQLITE3_STATIC_LIBRARIES)
+        set(CMAKE_REQUIRED_LIBRARIES ${PC_SQLITE3_STATIC_LIBRARIES})
+    else()
+        set(CMAKE_REQUIRED_LIBRARIES ${SQLite3_LIBRARY})
+    endif()
     set(CMAKE_REQUIRED_INCLUDES ${SQLite3_INCLUDE_DIR})
     check_symbol_exists(sqlite3_column_table_name sqlite3.h SQLite3_HAS_COLUMN_METADATA)
     check_symbol_exists(sqlite3_rtree_query_callback sqlite3.h SQLite3_HAS_RTREE)
