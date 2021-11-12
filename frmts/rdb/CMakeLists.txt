@@ -5,6 +5,6 @@ gdal_target_link_libraries(TARGET gdal_RDB PRIVATE LIBRARIES rdbcpp)
 
 if (GDAL_USE_LIBJSONC_INTERNAL)
   target_include_directories(gdal_RDB PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
-else()
+else ()
   gdal_target_link_libraries(TARGET gdal_RDB LIBRARIES JSONC::JSONC)
-endif()
+endif ()
