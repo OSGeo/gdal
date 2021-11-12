@@ -362,6 +362,7 @@ gdal_check_package(IDB "enable ogr_IDB driver")
 # TODO: implement FindRASDAMAN
 # libs: -lrasodmg -lclientcomm -lcompression -lnetwork -lraslib
 gdal_check_package(RASDAMAN "enable rasdaman driver")
+gdal_check_package(rdb "enable RIEGL RDB library" CAN_DISABLE)
 gdal_check_package(TileDB "enable TileDB driver" CAN_DISABLE)
 gdal_check_package(OpenEXR "OpenEXR >=2.2" CAN_DISABLE)
 
