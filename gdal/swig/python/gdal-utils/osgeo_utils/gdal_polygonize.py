@@ -206,9 +206,9 @@ class GDALPolygonize(GDALScript):
 
         parser.add_argument("-b", "-band", dest="band_number", metavar="band", type=str, default='1',
                             help="The band on <raster_file> to build the polygons from. "
-                                 "Starting with GDAL 2.2, the value can also be set to “mask”, "
+                                 "Starting with GDAL 2.2, the value can also be set to \"mask\", "
                                  "to indicate that the mask band of the first band must be used "
-                                 "(or “mask,band_number” for the mask of a specified band).")
+                                 "(or \"mask,band_number\" for the mask of a specified band).")
 
         parser.add_argument("-of", "-f", dest="driver_name", metavar='ogr_format',
                             help="Select the output format. "
@@ -224,7 +224,7 @@ class GDALPolygonize(GDALScript):
                             help="The name of the layer created to hold the polygon features.")
 
         parser.add_argument("dst_fieldname", type=str, nargs='?',
-                            help="The name of the field to create (defaults to “DN”).")
+                            help="The name of the field to create (defaults to \"DN\").")
 
         return parser
 
