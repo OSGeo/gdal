@@ -186,6 +186,27 @@ ending with ERDAS-ECW_JPEG_2000_SDK-5.5.0/Desktop_Read-Only.
 
     Path to library file libNCSUtil (only needed for SDK 3.3)
 
+FileGDB
+*******
+
+FileGDB_ROOT or CMAKE_PREFIX_PATH should point to the directory of the SDK.
+
+.. option:: FileGDB_INCLUDE_DIR
+
+    Path to the include directory with the ``FileGDBAPI.h`` header file.
+
+.. option:: FileGDB_LIBRARY
+
+    Path to library file
+
+.. option:: FileGDB_LIBRARY_RELEASE
+
+    Path to Release library file (only used on Windows)
+
+.. option:: FileGDB_LIBRARY_DEBUG
+
+    Path to Debug library file (only used on Windows)
+
 geotiff
 *******
 
