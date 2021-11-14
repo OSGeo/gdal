@@ -2494,30 +2494,91 @@ void OGRSimpleCurve::segmentize( double dfMaxLength )
         return;
     }
 
-    OGRRawPoint* paoNewPoints = nullptr;
-    double* padfNewZ = nullptr;
-    double* padfNewM = nullptr;
     int nNewPointCount = 0;
     const double dfSquareMaxLength = dfMaxLength * dfMaxLength;
 
+    // First pass to compute new number of points
     for( int i = 0; i < nPointCount; i++ )
     {
-        paoNewPoints = static_cast<OGRRawPoint *>(
-            CPLRealloc(paoNewPoints,
-                       sizeof(OGRRawPoint) * (nNewPointCount + 1)));
+        nNewPointCount++;
+
+        if( i == nPointCount - 1 )
+            break;
+
+        // Must be kept in sync with the second pass loop
+        const double dfX = paoPoints[i+1].x - paoPoints[i].x;
+        const double dfY = paoPoints[i+1].y - paoPoints[i].y;
+        const double dfSquareDist = dfX * dfX + dfY * dfY;
+        if( dfSquareDist - dfSquareMaxLength > 1e-5 * dfSquareMaxLength )
+        {
+            const double dfIntermediatePoints =
+                floor(sqrt(dfSquareDist / dfSquareMaxLength) - 1e-2);
+            const int nIntermediatePoints =
+                DoubleToIntClamp(dfIntermediatePoints);
+
+            // TODO(schwehr): Can these be tighter?
+            // Limit allocation of paoNewPoints to a few GB of memory.
+            // An OGRRawPoint is 2 doubles.
+            // kMax is a guess of what a reasonable max might be.
+            constexpr int kMax = 2 << 26;
+            if ( nNewPointCount > kMax || nIntermediatePoints > kMax )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Too many points in a segment: %d or %d",
+                         nNewPointCount, nIntermediatePoints);
+                return;
+            }
+
+            nNewPointCount += nIntermediatePoints;
+        }
+    }
+
+    if( nPointCount == nNewPointCount )
+        return;
+
+    // Allocate new arrays
+    OGRRawPoint* paoNewPoints = static_cast<OGRRawPoint *>(
+        VSI_MALLOC_VERBOSE(sizeof(OGRRawPoint) * nNewPointCount));
+    if( paoNewPoints == nullptr )
+        return;
+    double* padfNewZ = nullptr;
+    double* padfNewM = nullptr;
+    if( padfZ != nullptr )
+    {
+        padfNewZ = static_cast<double *>(
+            VSI_MALLOC_VERBOSE(sizeof(double) * nNewPointCount));
+        if( padfNewZ == nullptr )
+        {
+            VSIFree(paoNewPoints);
+            return;
+        }
+    }
+    if( padfM != nullptr )
+    {
+        padfNewM = static_cast<double *>(
+            VSI_MALLOC_VERBOSE(sizeof(double) * nNewPointCount));
+        if( padfNewM == nullptr )
+        {
+            VSIFree(paoNewPoints);
+            VSIFree(padfNewZ);
+            return;
+        }
+    }
+
+    // Second pass to fill new arrays
+    // Must be kept in sync with the first pass loop
+    nNewPointCount = 0;
+    for( int i = 0; i < nPointCount; i++ )
+    {
         paoNewPoints[nNewPointCount] = paoPoints[i];
 
         if( padfZ != nullptr )
         {
-            padfNewZ = static_cast<double *>(
-                CPLRealloc(padfNewZ, sizeof(double) * (nNewPointCount + 1)));
             padfNewZ[nNewPointCount] = padfZ[i];
         }
 
         if( padfM != nullptr )
         {
-            padfNewM = static_cast<double *>(
-                CPLRealloc(padfNewM, sizeof(double) * (nNewPointCount + 1)));
             padfNewM[nNewPointCount] = padfM[i];
         }
 
@@ -2535,41 +2596,6 @@ void OGRSimpleCurve::segmentize( double dfMaxLength )
                 floor(sqrt(dfSquareDist / dfSquareMaxLength) - 1e-2);
             const int nIntermediatePoints =
                 DoubleToIntClamp(dfIntermediatePoints);
-
-            // TODO(schwehr): Can these be tighter?
-            // Limit allocation of paoNewPoints to a few GB of memory.
-            // An OGRRawPoint is 2 doubles.
-            // kMax is a guess of what a reasonable max might be.
-            const int kMax = 2 << 26;
-            if ( nNewPointCount > kMax || nIntermediatePoints > kMax )
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Too many points in a segment: %d or %d",
-                         nNewPointCount, nIntermediatePoints);
-                CPLFree(paoNewPoints);
-                CPLFree(padfNewZ);
-                CPLFree(padfNewM);
-                return;
-            }
-
-            paoNewPoints = static_cast<OGRRawPoint *>(
-                CPLRealloc(paoNewPoints,
-                           sizeof(OGRRawPoint) * (nNewPointCount +
-                                                  nIntermediatePoints)));
-            if( padfZ != nullptr )
-            {
-                padfNewZ = static_cast<double *>(
-                    CPLRealloc(padfNewZ,
-                               sizeof(double) * (nNewPointCount +
-                                                 nIntermediatePoints)));
-            }
-            if( padfM != nullptr )
-            {
-                padfNewM = static_cast<double *>(
-                    CPLRealloc(padfNewM,
-                               sizeof(double) * (nNewPointCount +
-                                                 nIntermediatePoints)));
-            }
 
             for( int j = 1; j <= nIntermediatePoints; j++ )
             {
