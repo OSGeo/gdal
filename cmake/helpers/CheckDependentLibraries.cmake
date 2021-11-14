@@ -262,7 +262,11 @@ else()
 endif()
 
 # 3rd party libraries
-gdal_check_package(PCRE "Enable PCRE support for sqlite3" CAN_DISABLE)
+
+gdal_check_package(PCRE2 "Enable PCRE2 support for sqlite3" CAN_DISABLE)
+if(NOT GDAL_USE_PCRE)
+    gdal_check_package(PCRE "Enable PCRE support for sqlite3" CAN_DISABLE)
+endif()
 
 gdal_check_package(SQLite3 "Enable SQLite3 support (used by SQLite/Spatialite, GPKG, Rasterlite, MBTiles, etc.)" CAN_DISABLE RECOMMENDED)
 if (SQLite3_FOUND)
