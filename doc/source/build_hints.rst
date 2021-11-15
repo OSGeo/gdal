@@ -292,6 +292,20 @@ required.
     Path to a shared or static library file.
 
 
+LURATECH
+********
+
+LURATECH_ROOT or CMAKE_PREFIX_PATH should point to the directory of the SDK.
+
+.. option:: LURATECH_INCLUDE_DIR
+
+    Path to the include directory with the ``lwf_jp2.h`` header file.
+
+.. option:: LURATECH_LIBRARY
+
+    Path to library file lib_lwf_jp2.a / lwf_jp2.lib
+
+
 MRSID
 *****
 
