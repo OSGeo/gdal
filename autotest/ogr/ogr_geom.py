@@ -747,6 +747,12 @@ def test_ogr_geom_segmentize():
             print('%.18g' % (g1.GetPoint(i)[0] - g2.GetPoint(g1.GetPointCount() - 1 - i)[0]))
             pytest.fail('%.18g' % (g1.GetPoint(i)[1] - g2.GetPoint(g1.GetPointCount() - 1 - i)[1]))
 
+    # Test extremely small threshold
+    geom = ogr.CreateGeometryFromWkt('LINESTRING(0 0,0 1)')
+    with gdaltest.error_handler():
+        geom.Segmentize(1e-30)
+    assert gdal.GetLastErrorMsg() != ''
+
 
 def test_ogr_geom_segmentize_issue_1341():
 

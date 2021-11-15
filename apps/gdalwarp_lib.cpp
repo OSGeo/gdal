@@ -451,7 +451,9 @@ static CPLErr CropToCutline( OGRGeometryH hCutline, char** papszTO,
         if( hCTCutlineToSrc != nullptr )
             OGR_G_Transform( hGeomInSrcSRS, hCTCutlineToSrc );
 
-        const double epsilon = std::numeric_limits<double>::epsilon();
+        // Do not use a smaller epsilon, otherwise it could cause useless
+        // segmentization (https://github.com/OSGeo/gdal/issues/4826)
+        constexpr double epsilon = 1e-10;
         for(int nIter=0;nIter<10;nIter++)
         {
             OGR_G_DestroyGeometry(hTransformedGeom);
