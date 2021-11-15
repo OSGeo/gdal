@@ -1,5 +1,7 @@
 # CMake4GDAL project is distributed under X/MIT license. See accompanying file LICENSE.txt.
 
+option(GDAL_RPATH_USE_USE_ORIGIN "Use relative runpath" OFF)
+
 # Switches to control build targets(cached)
 option(ENABLE_GNM "Build GNM module" ON)
 option(ENABLE_PAM "Set ON to enable pam" ON)
@@ -296,6 +298,16 @@ else ()
       "lib/gdalplugins/${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}"
       CACHE PATH "Installation sub-directory for plugins")
   set(GDAL_RESOURCE_PATH ${CMAKE_INSTALL_DATADIR}/gdal)
+  if(UNIX)
+    #set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+    #set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib:$ORIGIN/")
+    if(GDAL_RPATH_USE_USE_ORIGIN)
+      message("(FLX) GDAL_RPATH_USE_USE_ORIGIN")
+      set_target_properties(${GDAL_LIB_TARGET_NAME} PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
+      set_target_properties(${GDAL_LIB_TARGET_NAME} PROPERTIES BUILD_RPATH_USE_ORIGIN TRUE)
+      set_target_properties(${GDAL_LIB_TARGET_NAME} PROPERTIES INSTALL_RPATH "$ORIGIN")
+    endif()
+  endif()
 endif ()
 
 set(INSTALL_PLUGIN_FULL_DIR "${CMAKE_INSTALL_PREFIX}/${INSTALL_PLUGIN_DIR}")
