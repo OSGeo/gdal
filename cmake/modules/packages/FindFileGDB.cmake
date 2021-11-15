@@ -9,52 +9,90 @@
 #
 # ::
 #
-# If it's found it sets FILEGDB_FOUND to TRUE
+# If it's found it sets FileGDB_FOUND to TRUE
 # and following variables are set:
-#    FILEGDB_INCLUDE_DIR
-#    FILEGDB_LIBRARY
-#    FILEGDB_VERSION
+#    FileGDB_INCLUDE_DIR
+#    FileGDB_LIBRARY
+#    FileGDB_VERSION
 #
 # Select a FGDB API to use, or disable driver.
 
 if(CMAKE_VERSION VERSION_LESS 3.13)
-    set(FILEGDB_ROOT CACHE PATH "")
+    set(FileGDB_ROOT CACHE PATH "")
 endif()
 
-find_path(FILEGDB_INCLUDE_DIR NAMES FileGDBAPI.h
-          PATHS  /usr/local/filegdb/include
-          SUFFIX_PATHS filegdb)
+find_path(FileGDB_INCLUDE_DIR NAMES FileGDBAPI.h
+          PATHS /usr/local/filegdb/include "${FileGDB_ROOT}/include")
+mark_as_advanced(FileGDB_INCLUDE_DIR)
 
-if(FILEGDB_INCLUDE_DIR)
-    find_library(FILEGDB_LIBRARY NAMES FileGDBAPI)
-    include(CheckCXXSourceCompiles)
-    include_directories(FILEGDB_INCLUDE_DIR)
-    check_cxx_source_compiles("#include <FileGDBAPI.h>\nusing namespace FileGDBAPI;
-            int main() { Geodatabase oDB; std::wstring osStr; ::OpenGeodatabase(osStr, oDB); return 0; }" TEST_FILEGDB_COMPILE)
-    if(NOT TEST_FILEGDB_COMPILE)
-        set(FILEGDB_FOUND FALSE)
-    endif()
-    if(UNIX)
-        find_library(FILEGDB_RTL_LIBRARY NAMES fgdbunixrtl)
+if(FileGDB_INCLUDE_DIR)
+    if(WIN32)
+        if(NOT FileGDB_LIBRARY)
+          find_library(FileGDB_LIBRARY_RELEASE NAMES
+              FileGDBAPI
+              PATHS "${FileGDB_ROOT}/lib" "${FileGDB_ROOT}/lib64"
+          )
+          mark_as_advanced(FileGDB_LIBRARY_RELEASE)
+
+          find_library(FileGDB_LIBRARY_DEBUG NAMES
+              FileGDBAPID
+              PATHS "${FileGDB_ROOT}/lib" "${FileGDB_ROOT}/lib64"
+          )
+          mark_as_advanced(FileGDB_LIBRARY_DEBUG)
+
+          include(SelectLibraryConfigurations)
+          select_library_configurations(FileGDB)
+        endif()
+    else()
+        mark_as_advanced(FileGDB_LIBRARY)
+
+        find_library(FileGDB_LIBRARY NAMES FileGDBAPI PATHS "${FileGDB_ROOT}/lib" "${FileGDB_ROOT}/lib64")
+        include(CheckCXXSourceCompiles)
+        set(CMAKE_REQUIRED_LIBRARIES ${FileGDB_LIBRARY})
+        set(CMAKE_REQUIRED_INCLUDES ${FileGDB_INCLUDE_DIR})
+        check_cxx_source_compiles("#include <FileGDBAPI.h>\nusing namespace FileGDBAPI;\n
+                int main() { Geodatabase oDB; std::wstring osStr; ::OpenGeodatabase(osStr, oDB); return 0; }" TEST_FileGDB_COMPILE)
+        unset(CMAKE_REQUIRED_INCLUDES)
+        unset(CMAKE_REQUIRED_LIBRARIES)
+        if(NOT TEST_FileGDB_COMPILE)
+            set(FileGDB_FOUND FALSE)
+        endif()
     endif()
 endif()
-mark_as_advanced(FILEGDB_INCLUDE_DIR FILEGDB_LIBRARY)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(FileGDB
-                                  FOUND_VAR FILEGDB_FOUND
-                                  REQUIRED_VARS FILEGDB_LIBRARY FILEGDB_INCLUDE_DIR)
+                                  FOUND_VAR FileGDB_FOUND
+                                  REQUIRED_VARS FileGDB_LIBRARY FileGDB_INCLUDE_DIR)
 
-if(FILEGDB_FOUND)
-    set(FILEGDB_INCLUDE_DIRS ${FILEGDB_INCLUDE_DIR})
-    set(FILEGDB_LIBRARIES ${FILEGDB_LIBRARY} ${FILEGDB_RTL_LIBRARY})
+if(FileGDB_FOUND)
+    set(FileGDB_INCLUDE_DIRS ${FileGDB_INCLUDE_DIR})
+    set(FileGDB_LIBRARIES ${FileGDB_LIBRARY})
     if(NOT TARGET FILEGDB::FileGDB)
         add_library(FILEGDB::FileGDB UNKNOWN IMPORTED)
         set_target_properties(FILEGDB::FileGDB PROPERTIES
-                              INTERFACE_INCLUDE_DIRECTORIES "${FILEGDB_INCLUDE_DIR}"
-                              IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-                              IMPORTED_LOCATION "${FILEGDB_LIBRARY}")
-        set_property(TARGET FILEGDB::FileGDB APPEND PROPERTY
-                     INTERFACE_LINK_LIBRARIES ${FILEGDB_RTL_LIBRARY})
+                              INTERFACE_INCLUDE_DIRECTORIES "${FileGDB_INCLUDE_DIR}"
+                              IMPORTED_LINK_INTERFACE_LANGUAGES "C")
+
+        if(EXISTS "${FileGDB_LIBRARY}")
+          set_target_properties(FILEGDB::FileGDB PROPERTIES
+            IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+            IMPORTED_LOCATION "${FileGDB_LIBRARY}")
+        endif()
+        if(FileGDB_LIBRARY_RELEASE)
+          set_property(TARGET FILEGDB::FileGDB APPEND PROPERTY
+            IMPORTED_CONFIGURATIONS RELEASE)
+          set_target_properties(FILEGDB::FileGDB PROPERTIES
+            IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+            IMPORTED_LOCATION_RELEASE "${FileGDB_LIBRARY_RELEASE}")
+        endif()
+        if(FileGDB_LIBRARY_DEBUG)
+          set_property(TARGET FILEGDB::FileGDB APPEND PROPERTY
+            IMPORTED_CONFIGURATIONS DEBUG)
+          set_target_properties(FILEGDB::FileGDB PROPERTIES
+            IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+            IMPORTED_LOCATION_DEBUG "${FileGDB_LIBRARY_DEBUG}")
+        endif()
+
     endif()
 endif()
