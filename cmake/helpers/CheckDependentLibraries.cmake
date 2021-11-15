@@ -416,8 +416,7 @@ option(GDAL_USE_MSG "Set ON to build MSG driver and download external https://gi
 # proprietary libraries
 # KAKADU
 gdal_check_package(KDU "Enable KAKADU" CAN_DISABLE)
-# LURATECH JPEG2000 SDK
-set(LURATECH_JP2SDK_DIRECTORY "" CACHE STRING "LURATECH JP2SDK library base directory")
+gdal_check_package(LURATECH "Enable JP2Lura driver" CAN_DISABLE)
 gdal_check_package(FME "FME")
 
 # bindings
