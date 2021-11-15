@@ -28,6 +28,8 @@
 
 import os
 
+from osgeo.ogr import wkbPolygon
+
 import gdaltest
 import ogrtest
 import pytest
@@ -98,8 +100,7 @@ def test_ogr_hana_1():
 
     ######################################################
     # Create Layer
-    gdaltest.hana_layer = gdaltest.hana_ds.CreateLayer(layer_name, srs=shp_layer.GetSpatialRef(),
-                                                       options=[])
+    gdaltest.hana_layer = gdaltest.hana_ds.CreateLayer(layer_name, srs=shp_layer.GetSpatialRef())
 
     ######################################################
     # Check layer name
@@ -741,7 +742,7 @@ def test_ogr_hana_22():
     if gdaltest.hana_ds is None:
         pytest.skip()
 
-    layer = gdaltest.hana_ds.CreateLayer('OGR_HANA_22', geom_type=ogr.wkbNone, options=['FID=fid','LAUNDER=NO'])
+    layer = gdaltest.hana_ds.CreateLayer('OGR_HANA_22', geom_type=ogr.wkbNone, options=['FID=fid', 'LAUNDER=NO'])
 
     gdal.PushErrorHandler()
     assert layer.CreateField(ogr.FieldDefn('str', ogr.OFTString)) == 0
@@ -773,45 +774,36 @@ def test_ogr_hana_23():
 ###############################################################################
 # Test COLUMN_TYPES layer creation option
 
-def test_ogr_hana_78():
+def test_ogr_hana_24():
     if gdaltest.hana_ds is None:
         pytest.skip()
 
-    layer = gdaltest.hana_ds.CreateLayer('OGR_HANA_78', options=['COLUMN_TYPES=SINT=SMALLINT,DEC1=DECIMAL(10,5),DEC2=DECIMAL(20,0)'])
+    layer = gdaltest.hana_ds.CreateLayer('OGR_HANA_24',
+                                         options=['COLUMN_TYPES=SINT=SMALLINT,DEC1=DECIMAL(10,5),DEC2=DECIMAL(20,0)'])
     layer.CreateField(ogr.FieldDefn('SINT', ogr.OFTString))
     layer.CreateField(ogr.FieldDefn('DEC1', ogr.OFTString))
     layer.CreateField(ogr.FieldDefn('DEC2', ogr.OFTString))
-    feat = ogr.Feature(layer.GetLayerDefn())
-    feat.SetField('SINT', '123')
-    feat.SetField('DEC2', '123456789012345')
-    layer.CreateFeature(feat)
-    feat.Destroy()
 
     ds = open_datasource()
-    layer = ds.GetLayerByName('OGR_HANA_78')
+    layer = ds.GetLayerByName('OGR_HANA_24')
     layer_defn = layer.GetLayerDefn()
-    fieldSINT = layer_defn.GetFieldDefn(layer_defn.GetFieldIndex('SINT'))
-    fieldDEC1 = layer_defn.GetFieldDefn(layer_defn.GetFieldIndex('DEC1'))
-    fieldDEC2 = layer_defn.GetFieldDefn(layer_defn.GetFieldIndex('DEC2'))
-    assert fieldSINT.GetType() == ogr.OFTInteger
-    assert fieldSINT.GetWidth() == 0
-    assert fieldDEC1.GetType() == ogr.OFTReal
-    assert fieldDEC1.GetWidth() == 10
-    assert fieldDEC1.GetPrecision() == 5
-    assert fieldDEC2.GetType() == ogr.OFTReal
-    assert fieldDEC2.GetWidth() == 20
-    assert fieldDEC2.GetPrecision() == 0
-
-    feat = layer.GetNextFeature()
-    assert feat.GetField('SINT') == 123
-    assert feat.GetField('DEC2') == 123456789012345
-    feat.Destroy()
+    field_SINT = layer_defn.GetFieldDefn(layer_defn.GetFieldIndex('SINT'))
+    field_DEC1 = layer_defn.GetFieldDefn(layer_defn.GetFieldIndex('DEC1'))
+    field_DEC2 = layer_defn.GetFieldDefn(layer_defn.GetFieldIndex('DEC2'))
+    assert field_SINT.GetType() == ogr.OFTInteger
+    assert field_SINT.GetWidth() == 0
+    assert field_DEC1.GetType() == ogr.OFTReal
+    assert field_DEC1.GetWidth() == 10
+    assert field_DEC1.GetPrecision() == 5
+    assert field_DEC2.GetType() == ogr.OFTReal
+    assert field_DEC2.GetWidth() == 20
+    assert field_DEC2.GetPrecision() == 0
 
 
 ###############################################################################
 # Run test_ogrsf
 
-def test_ogr_hana_79():
+def test_ogr_hana_25():
     if gdaltest.hana_ds is None:
         pytest.skip()
 
@@ -820,13 +812,33 @@ def test_ogr_hana_79():
         pytest.skip()
 
     conn_str = gdaltest.hana_connection_string + ';SCHEMA=' + gdaltest.hana_schema_name
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' "' + 'HANA:' + conn_str + '" ogr_hana_79')
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' "' + 'HANA:' + conn_str + '" TPOLY')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
+
+
+###############################################################################
+# Run test_ogrsf with -sql
+
+def test_ogr_hana_26():
+    if gdaltest.hana_ds is None:
+        pytest.skip()
+
+    import test_cli_utilities
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        pytest.skip()
+
+    conn_str = gdaltest.hana_connection_string + ';SCHEMA=' + gdaltest.hana_schema_name
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' "' + 'HANA:' + conn_str +
+                               '" -sql "SELECT * FROM TPOLY"')
+
+    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
+
+
 ###############################################################################
 # Test retrieving an error from ExecuteSQL()
 
-def test_ogr_hana_80():
+def test_ogr_hana_27():
     if gdaltest.hana_ds is None:
         pytest.skip()
 
@@ -849,6 +861,8 @@ def test_ogr_hana_cleanup():
 
     gdaltest.hana_ds.ExecuteSQL('DELLAYER:tpoly')
     gdaltest.hana_ds.ExecuteSQL('DELLAYER:ogr_hana_21')
+    gdaltest.hana_ds.ExecuteSQL('DELLAYER:ogr_hana_22')
+    gdaltest.hana_ds.ExecuteSQL('DELLAYER:ogr_hana_24')
 
     gdal.PopErrorHandler()
 
