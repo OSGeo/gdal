@@ -882,3 +882,12 @@ def test_tiff_srs_try_write_derived_geographic():
     ds = None
 
     gdal.Unlink(tmpfile)
+
+
+def test_tiff_srs_read_GeogGeodeticDatumGeoKey_reserved_range():
+    ds = gdal.Open('data/gtiff/GeogGeodeticDatumGeoKey_reserved.tif')
+    with gdaltest.error_handler():
+        sr = ds.GetSpatialRef()
+    assert sr.GetName() == "WGS 84 / Pseudo-Mercator"
+    assert gdal.GetLastErrorMsg() != ''
+    assert gdal.GetLastErrorType() == gdal.CE_Warning
