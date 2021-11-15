@@ -37,6 +37,7 @@
 #include <regex>
 
 #include "odbc/Exception.h"
+#include "odbc/ResultSet.h"
 #include "odbc/PreparedStatement.h"
 #include "odbc/Types.h"
 
@@ -329,7 +330,6 @@ void SetFieldDefn(OGRFieldDefn& field, const FieldTypeInfo& typeInfo)
 OGRHanaTableLayer::OGRHanaTableLayer(OGRHanaDataSource* datasource, int update)
     : OGRHanaLayer(datasource)
     , updateMode_(update)
-    , insertFeatureStmtHasFID(false)
     , batchSize_(4 * 1024)
     , defaultStringSize_(256)
     , launderColumnNames_(true)
@@ -375,13 +375,13 @@ OGRErr OGRHanaTableLayer::ReadTableDefinition()
 /* -------------------------------------------------------------------- */
 
 std::pair<OGRErr, std::size_t> OGRHanaTableLayer::ExecuteUpdate(
-    odbc::PreparedStatement& statement, const char* functionName)
+    odbc::PreparedStatement& statement, bool withBatch,  const char* functionName)
 {
     std::size_t ret = 0;
 
     try
     {
-        if (dataSource_->IsTransactionStarted())
+        if (withBatch)
         {
             if (statement.getBatchDataSize() >= batchSize_)
                 statement.executeBatch();
@@ -390,8 +390,10 @@ std::pair<OGRErr, std::size_t> OGRHanaTableLayer::ExecuteUpdate(
         else
         {
             ret = statement.executeUpdate();
-            dataSource_->Commit();
         }
+
+        if (!dataSource_->IsTransactionStarted())
+            dataSource_->Commit();
     }
     catch (odbc::Exception& ex)
     {
@@ -421,22 +423,17 @@ odbc::PreparedStatementRef OGRHanaTableLayer::CreateDeleteFeatureStatement()
 /*                   CreateInsertFeatureStatement()                     */
 /* -------------------------------------------------------------------- */
 
-odbc::PreparedStatementRef OGRHanaTableLayer::CreateInsertFeatureStatement(
-    GIntBig fidColumnID)
+odbc::PreparedStatementRef OGRHanaTableLayer::CreateInsertFeatureStatement(bool withFID)
 {
-    insertFeatureStmtHasFID = false;
-
     std::vector<CPLString> columns;
     std::vector<CPLString> values;
     bool hasArray = false;
     for (const AttributeColumnDescription& clmDesc : attrColumns_)
     {
-        if (clmDesc.isFeatureID)
+        if (clmDesc.isFeatureID && !withFID)
         {
-            if (fidColumnID == OGRNullFID)
+            if (clmDesc.isAutoIncrement)
                 continue;
-            else
-                insertFeatureStmtHasFID = true;
         }
 
         columns.push_back(QuotedIdentifier(clmDesc.name));
@@ -476,11 +473,16 @@ odbc::PreparedStatementRef OGRHanaTableLayer::CreateInsertFeatureStatement(
 odbc::PreparedStatementRef OGRHanaTableLayer::CreateUpdateFeatureStatement()
 {
     std::vector<CPLString> values;
+    values.reserve(attrColumns_.size());
     bool hasArray = false;
+
     for (const AttributeColumnDescription& clmDesc : attrColumns_)
     {
         if (clmDesc.isFeatureID)
-            continue;
+        {
+            if (clmDesc.isAutoIncrement)
+                continue;
+        }
         values.push_back(
             QuotedIdentifier(clmDesc.name) + " = "
             + GetParameterValue(
@@ -519,8 +521,12 @@ odbc::PreparedStatementRef OGRHanaTableLayer::CreateUpdateFeatureStatement()
 
 void OGRHanaTableLayer::ResetPreparedStatements()
 {
-    if (!insertFeatureStmt_.isNull())
-        insertFeatureStmt_ = nullptr;
+    if (!currentIdentityValueStmt_.isNull())
+        currentIdentityValueStmt_ = nullptr;
+    if (!insertFeatureStmtWithFID_.isNull())
+        insertFeatureStmtWithFID_ = nullptr;
+    if (!insertFeatureStmtWithoutFID_.isNull())
+        insertFeatureStmtWithoutFID_ = nullptr;
     if (!deleteFeatureStmt_.isNull())
         deleteFeatureStmt_ = nullptr;
     if (!updateFeatureStmt_.isNull())
@@ -534,8 +540,8 @@ void OGRHanaTableLayer::ResetPreparedStatements()
 OGRErr OGRHanaTableLayer::SetStatementParameters(
     odbc::PreparedStatement& statement,
     OGRFeature* feature,
-    bool skipFidColumn,
     bool newFeature,
+    bool withFID,
     const char* functionName)
 {
     OGRHanaFeatureReader featReader(*feature);
@@ -546,7 +552,7 @@ OGRErr OGRHanaTableLayer::SetStatementParameters(
     {
         if (clmDesc.isFeatureID)
         {
-            if (skipFidColumn)
+            if (!withFID && clmDesc.isAutoIncrement)
                 continue;
 
             ++paramIndex;
@@ -554,34 +560,45 @@ OGRErr OGRHanaTableLayer::SetStatementParameters(
             switch (clmDesc.type)
             {
             case odbc::SQLDataTypes::Integer:
-                if (!CanCastIntBigTo<std ::int32_t>(feature->GetFID()))
+                if (feature->GetFID() == OGRNullFID)
+                    statement.setInt(paramIndex, odbc::Int());
+                else
                 {
-                    CPLError(
-                        CE_Failure, CPLE_AppDefined,
-                        "%s: Feature id with value %s cannot "
-                        "be stored in a column of type INTEGER",
-                        functionName,
-                        std::to_string(feature->GetFID()).c_str());
-                    return OGRERR_FAILURE;
+                    if (!CanCastIntBigTo<std ::int32_t>(feature->GetFID()))
+                    {
+                        CPLError(
+                            CE_Failure, CPLE_AppDefined,
+                            "%s: Feature id with value %s cannot "
+                            "be stored in a column of type INTEGER",
+                            functionName,
+                            std::to_string(feature->GetFID()).c_str());
+                        return OGRERR_FAILURE;
+                    }
+
+                    statement.setInt(
+                        paramIndex,
+                        odbc::Int(static_cast<std::int32_t>(feature->GetFID())));
                 }
-                statement.setInt(
-                    paramIndex,
-                    odbc::Int(static_cast<std::int32_t>(feature->GetFID())));
                 break;
             case odbc::SQLDataTypes::BigInt:
-                if (!CanCastIntBigTo<std::int64_t>(feature->GetFID()))
+                if (feature->GetFID() == OGRNullFID)
+                    statement.setLong(paramIndex, odbc::Long());
+                else
                 {
-                    CPLError(
-                        CE_Failure, CPLE_AppDefined,
-                        "%s: Feature id with value %s cannot "
-                        "be stored in a column of type BIGINT",
-                        functionName,
-                        std::to_string(feature->GetFID()).c_str());
-                    return OGRERR_FAILURE;
+                    if (!CanCastIntBigTo<std::int64_t>(feature->GetFID()))
+                    {
+                        CPLError(
+                            CE_Failure, CPLE_AppDefined,
+                            "%s: Feature id with value %s cannot "
+                            "be stored in a column of type BIGINT",
+                            functionName,
+                            std::to_string(feature->GetFID()).c_str());
+                        return OGRERR_FAILURE;
+                    }
+                    statement.setLong(
+                        paramIndex,
+                        odbc::Long(static_cast<std::int64_t>(feature->GetFID())));
                 }
-                statement.setLong(
-                    paramIndex,
-                    odbc::Long(static_cast<std::int64_t>(feature->GetFID())));
                 break;
             default:
                 CPLError(
@@ -741,9 +758,6 @@ OGRErr OGRHanaTableLayer::SetStatementParameters(
             odbc::Long(static_cast<std::int64_t>(feature->GetFID())));
     }
 
-    if (dataSource_->IsTransactionStarted())
-        statement.addBatch();
-
     return OGRERR_NONE;
 }
 
@@ -789,8 +803,10 @@ bool OGRHanaTableLayer::HasPendingFeatures() const
 {
     return (!deleteFeatureStmt_.isNull()
             && deleteFeatureStmt_->getBatchDataSize() > 0)
-           || (!insertFeatureStmt_.isNull()
-               && insertFeatureStmt_->getBatchDataSize() > 0)
+            || (!insertFeatureStmtWithFID_.isNull()
+                && insertFeatureStmtWithFID_->getBatchDataSize() > 0)
+           || (!insertFeatureStmtWithoutFID_.isNull()
+               && insertFeatureStmtWithoutFID_->getBatchDataSize() > 0)
            || (!updateFeatureStmt_.isNull()
                && updateFeatureStmt_->getBatchDataSize() > 0);
 }
@@ -1015,27 +1031,6 @@ int OGRHanaTableLayer::TestCapability(const char* capabilities)
 }
 
 /************************************************************************/
-/*                         SetAttributeFilter()                         */
-/************************************************************************/
-
-OGRErr OGRHanaTableLayer::SetAttributeFilter(const char* attrFilter)
-{
-    CPLFree(m_pszAttrQueryString);
-    m_pszAttrQueryString = attrFilter ? CPLStrdup(attrFilter) : nullptr;
-
-    if (attrFilter == nullptr || strlen(attrFilter) == 0)
-        attrFilter_ = "";
-    else
-        attrFilter_.assign(attrFilter, strlen(attrFilter));
-
-    rebuildQueryStatement_ = true;
-    BuildWhereClause();
-    ResetReading();
-
-    return OGRERR_NONE;
-}
-
-/************************************************************************/
 /*                          ICreateFeature()                            */
 /************************************************************************/
 
@@ -1049,31 +1044,67 @@ OGRErr OGRHanaTableLayer::ICreateFeature(OGRFeature* feature)
         return OGRERR_FAILURE;
     }
 
+    if( nullptr == feature )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "NULL pointer to OGRFeature passed to CreateFeature()." );
+        return OGRERR_FAILURE;
+    }
+
+    GIntBig nFID = feature->GetFID();
+    bool withFID = nFID != OGRNullFID;
+    bool withBatch = withFID && dataSource_->IsTransactionStarted();
+
     try
     {
-        if (insertFeatureStmt_.isNull())
+        odbc::PreparedStatementRef& stmt = withFID ? insertFeatureStmtWithFID_ : insertFeatureStmtWithoutFID_;
+
+        if (stmt.isNull())
         {
-            insertFeatureStmt_ =
-                CreateInsertFeatureStatement(feature->GetFID());
-            if (insertFeatureStmt_.isNull())
+            stmt = CreateInsertFeatureStatement(withFID);
+            if (stmt.isNull())
                 return OGRERR_FAILURE;
         }
 
-        OGRErr err = SetStatementParameters(
-            *insertFeatureStmt_, feature, !insertFeatureStmtHasFID, true,
-            "CreateFeature");
+        OGRErr err = SetStatementParameters(*stmt, feature, true, withFID, "CreateFeature");
 
         if (OGRERR_NONE != err)
             return err;
 
-        auto ret = ExecuteUpdate(*insertFeatureStmt_, "CreateFeature");
-        return ret.first;
+        if (withBatch)
+            stmt->addBatch();
+
+        auto ret = ExecuteUpdate(*stmt, withBatch, "CreateFeature");
+
+        err = ret.first;
+        if (OGRERR_NONE != err)
+            return err;
+
+        if (!withFID)
+        {
+            const CPLString sql = StringFormat(
+                "SELECT CURRENT_IDENTITY_VALUE() \"current identity value\" FROM %s",
+                GetFullTableNameQuoted(schemaName_, tableName_).c_str());
+
+            if (currentIdentityValueStmt_.isNull())
+                currentIdentityValueStmt_ = dataSource_->PrepareStatement(sql.c_str());
+
+            odbc::ResultSetRef rsIdentity = currentIdentityValueStmt_->executeQuery();
+            if ( rsIdentity->next() )
+            {
+              odbc::Long id = rsIdentity->getLong( 1 );
+              if ( !id.isNull() )
+                feature->SetFID(static_cast<GIntBig>( *id ) );
+            }
+            rsIdentity->close();
+        }
+
+        return err;
     }
     catch (const std::exception& ex)
     {
-        CPLError(
-            CE_Failure, CPLE_NotSupported, "Unable to create feature: %s",
-            ex.what());
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Unable to create feature: %s", ex.what());
         return OGRERR_FAILURE;
     }
     return OGRERR_NONE;
@@ -1123,10 +1154,11 @@ OGRErr OGRHanaTableLayer::DeleteFeature(GIntBig nFID)
     }
 
     deleteFeatureStmt_->setLong(1, odbc::Long(static_cast<std::int64_t>(nFID)));
-    if (dataSource_->IsTransactionStarted())
-        deleteFeatureStmt_->addBatch();
+    bool withBatch = dataSource_->IsTransactionStarted();
+    if (withBatch)
+       deleteFeatureStmt_->addBatch();
 
-    auto ret = ExecuteUpdate(*deleteFeatureStmt_, "DeleteFeature");
+    auto ret = ExecuteUpdate(*deleteFeatureStmt_, withBatch, "DeleteFeature");
     return (OGRERR_NONE == ret.first && ret.second != 1)
                ? OGRERR_NON_EXISTING_FEATURE
                : ret.first;
@@ -1186,12 +1218,16 @@ OGRErr OGRHanaTableLayer::ISetFeature(OGRFeature* feature)
     }
 
     OGRErr err = SetStatementParameters(
-        *updateFeatureStmt_, feature, true, false, "SetFeature");
+        *updateFeatureStmt_, feature, false, false, "SetFeature");
 
     if (OGRERR_NONE != err)
         return err;
 
-    auto ret = ExecuteUpdate(*updateFeatureStmt_, "SetFeature");
+    bool withBatch = dataSource_->IsTransactionStarted();
+    if (withBatch)
+        updateFeatureStmt_->addBatch();
+
+    auto ret = ExecuteUpdate(*updateFeatureStmt_, withBatch, "SetFeature");
     return (OGRERR_NONE == ret.first && ret.second != 1)
                ? OGRERR_NON_EXISTING_FEATURE
                : ret.first;
@@ -1373,11 +1409,11 @@ OGRErr OGRHanaTableLayer::CreateGeomField(OGRGeomFieldDefn* geomField, int)
         return OGRERR_FAILURE;
     }
 
-    OGRGeomFieldDefn* newGeomField =
-        new OGRGeomFieldDefn(clmName.c_str(), geomField->GetType());
+    auto newGeomField = cpl::make_unique<OGRGeomFieldDefn>(
+                clmName.c_str(), geomField->GetType());
     newGeomField->SetNullable(geomField->IsNullable());
     newGeomField->SetSpatialRef(geomField->GetSpatialRef());
-    featureDefn_->AddGeomFieldDefn(newGeomField);
+    featureDefn_->AddGeomFieldDefn(std::move(newGeomField));
     geomColumns_.push_back(
         {clmName, geomField->GetType(), srid, geomField->IsNullable() != 0});
 
@@ -1565,8 +1601,10 @@ OGRErr OGRHanaTableLayer::AlterFieldDefn(
 
 void OGRHanaTableLayer::ClearBatches()
 {
-    if (!insertFeatureStmt_.isNull())
-        insertFeatureStmt_->clearBatch();
+    if (!insertFeatureStmtWithFID_.isNull())
+        insertFeatureStmtWithFID_->clearBatch();
+    if (!insertFeatureStmtWithoutFID_.isNull())
+        insertFeatureStmtWithoutFID_->clearBatch();
     if (!updateFeatureStmt_.isNull())
         updateFeatureStmt_->clearBatch();
 }
@@ -1635,9 +1673,12 @@ OGRErr OGRHanaTableLayer::CommitTransaction()
         if (!deleteFeatureStmt_.isNull()
             && deleteFeatureStmt_->getBatchDataSize() > 0)
             deleteFeatureStmt_->executeBatch();
-        if (!insertFeatureStmt_.isNull()
-            && insertFeatureStmt_->getBatchDataSize() > 0)
-            insertFeatureStmt_->executeBatch();
+        if (!insertFeatureStmtWithFID_.isNull()
+            && insertFeatureStmtWithFID_->getBatchDataSize() > 0)
+            insertFeatureStmtWithFID_->executeBatch();
+        if (!insertFeatureStmtWithoutFID_.isNull()
+            && insertFeatureStmtWithoutFID_->getBatchDataSize() > 0)
+            insertFeatureStmtWithoutFID_->executeBatch();
         if (!updateFeatureStmt_.isNull()
             && updateFeatureStmt_->getBatchDataSize() > 0)
             updateFeatureStmt_->executeBatch();

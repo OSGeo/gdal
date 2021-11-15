@@ -35,6 +35,7 @@
 #include <sstream>
 #include <memory>
 
+#include "odbc/Exception.h"
 #include "odbc/ResultSet.h"
 #include "odbc/Statement.h"
 #include "odbc/Types.h"
@@ -69,6 +70,35 @@ CPLString BuildQuery(
 CPLString BuildQuery(const char* source, const char* columns)
 {
     return BuildQuery(source, columns, nullptr, nullptr, -1);
+}
+
+CPLString BuildSpatialFilter(uint dbVersion, const OGREnvelope& env, const CPLString& clmName, int srid)
+{
+    if( (CPLIsInf(env.MinX) || CPLIsInf(env.MinY) ||
+         CPLIsInf(env.MaxX) || CPLIsInf(env.MaxY)) )
+        return "";
+
+    auto clampValue = []( double v)
+    {
+        constexpr double MAX_VALUE = 1e+150;
+        if (v < -MAX_VALUE)
+            return -MAX_VALUE;
+        else if (v > MAX_VALUE)
+            return MAX_VALUE;
+        return v;
+    };
+
+    double minX = clampValue(env.MinX);
+    double minY = clampValue(env.MinY);
+    double maxX = clampValue(env.MaxX);
+    double maxY = clampValue(env.MaxY);
+
+    if ( dbVersion == 1 )
+        return StringFormat("\"%s\".ST_IntersectsRect(ST_GeomFromText('POINT(%f %f)', %d), ST_GeomFromText('POINT(%f %f)', %d)) = 1",
+                            clmName.c_str(), minX, minY, srid, maxX, maxY, srid);
+    else
+        return StringFormat("\"%s\".ST_IntersectsRectPlanar(ST_GeomFromText('POINT(%f %f)', %d), ST_GeomFromText('POINT(%f %f)', %d)) = 1",
+                            clmName.c_str(), minX, minY, srid, maxX, maxY, srid);
 }
 
 OGRFieldDefn* CreateFieldDefn(const AttributeColumnDescription& columnDesc)
@@ -280,28 +310,20 @@ void OGRHanaLayer::BuildWhereClause()
     whereClause_ = "";
 
     CPLString spatialFilter;
-    if (m_poFilterGeom != nullptr && m_iGeomFieldFilter >= 0
-        && m_iGeomFieldFilter < featureDefn_->GetGeomFieldCount())
+    if (m_poFilterGeom != nullptr)
     {
-        OGREnvelope env;
+        OGRGeomFieldDefn* geomFieldDefn = nullptr;
+        if( featureDefn_->GetGeomFieldCount() != 0 )
+            geomFieldDefn = featureDefn_->GetGeomFieldDefn(m_iGeomFieldFilter);
 
-        m_poFilterGeom->getEnvelope(&env);
-
-        // TODO: do we need to transform coordinates to column's srs?
-        // m_poFilterGeom->getSpatialReference()
-        const GeometryColumnDescription& geomClmDesc =
-            geomColumns_[static_cast<std::size_t>(m_iGeomFieldFilter)];
-        CPLString srs;
-        if (geomClmDesc.srid >= 0)
-            srs = ", " + std::to_string(geomClmDesc.srid);
-
-        std::ostringstream os;
-        os << QuotedIdentifier(geomClmDesc.name)
-           << ".ST_IntersectsRectPlanar(ST_GeomFromText('Point(" << env.MinX
-           << " " << env.MinY << ")'" << srs << "),"
-           << "ST_GeomFromText('Point(" << env.MaxX << " " << env.MaxY << ")'"
-           << srs << ")) = 1";
-        spatialFilter = os.str();
+        if ( geomFieldDefn != nullptr)
+        {
+            OGREnvelope env;
+            m_poFilterGeom->getEnvelope(&env);
+            const GeometryColumnDescription& geomClmDesc =
+                geomColumns_[static_cast<std::size_t>(m_iGeomFieldFilter)];
+            spatialFilter = BuildSpatialFilter(dataSource_->GetMajorVersion(), env, geomClmDesc.name, geomClmDesc.srid);
+        }
     }
 
     if (!attrFilter_.empty())
@@ -334,8 +356,17 @@ OGRFeature* OGRHanaLayer::GetNextFeatureInternal()
     {
         CPLAssert(!queryStatement_.empty());
 
-        odbc::StatementRef stmt = dataSource_->CreateStatement();
-        resultSet_ = stmt->executeQuery(queryStatement_.c_str());
+        try
+        {
+            odbc::StatementRef stmt = dataSource_->CreateStatement();
+            resultSet_ = stmt->executeQuery(queryStatement_.c_str());
+        }
+        catch (const odbc::Exception& ex)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Fail to execute query : %s", ex.what());
+            return nullptr;
+        }
     }
 
     OGRFeature* feature = ReadFeature();
@@ -646,10 +677,10 @@ OGRErr OGRHanaLayer::ReadFeatureDefinition(
         {
             const GeometryColumnDescription& geometryColumnDesc =
                 clmDesc.geometryDescription;
-            OGRGeomFieldDefn* geomFieldDefn = new OGRGeomFieldDefn(
-                geometryColumnDesc.name.c_str(), geometryColumnDesc.type);
+
+            auto geomFieldDefn = cpl::make_unique<OGRGeomFieldDefn>(
+                        geometryColumnDesc.name.c_str(), geometryColumnDesc.type);
             geomFieldDefn->SetNullable(geometryColumnDesc.isNullable);
-            featureDef->AddGeomFieldDefn(geomFieldDefn);
 
             if (geometryColumnDesc.srid >= 0)
             {
@@ -658,6 +689,7 @@ OGRErr OGRHanaLayer::ReadFeatureDefinition(
                 geomFieldDefn->SetSpatialRef(srs);
             }
             geomColumns_.push_back(geometryColumnDesc);
+            featureDef->AddGeomFieldDefn(std::move(geomFieldDefn));
             continue;
         }
 
@@ -757,34 +789,41 @@ void OGRHanaLayer::ResetReading()
 /*                            GetExtent()                               */
 /************************************************************************/
 
-OGRErr OGRHanaLayer::GetExtent(int geomField, OGREnvelope* extent, int force)
+OGRErr OGRHanaLayer::GetExtent(int iGeomField, OGREnvelope* extent, int force)
 {
-    OGRErr ret = OGRERR_FAILURE;
-
-    if (geomField >= 0 && geomField < featureDefn_->GetGeomFieldCount())
+    if( iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount() ||
+        GetLayerDefn()->GetGeomFieldDefn(iGeomField)->GetType() == wkbNone )
     {
-        try
+        if( iGeomField != 0 )
         {
-            ReadGeometryExtent(geomField, extent);
-            ret = OGRERR_NONE;
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid geometry field index : %d", iGeomField);
         }
-        catch (const std::exception& ex)
-        {
-            CPLString clmName =
-                (geomField < static_cast<int>(geomColumns_.size()))
-                    ? geomColumns_[static_cast<std::size_t>(
-                                       geomColumns_.size())]
-                          .name
-                    : "unknown column";
-            CPLDebug(
-                "HANA", "Unable to query extent of '%s' using fast method: %s",
-                clmName.c_str(), ex.what());
-        }
+        return OGRERR_FAILURE;
     }
 
-    if (OGRERR_NONE == ret)
-        return ret;
-    return OGRLayer::GetExtent(extent, force);
+    try
+    {
+        ReadGeometryExtent(iGeomField, extent);
+        return OGRERR_NONE;
+    }
+    catch (const std::exception& ex)
+    {
+        CPLString clmName =
+            (iGeomField < static_cast<int>(geomColumns_.size()))
+                ? geomColumns_[static_cast<std::size_t>(
+                                   geomColumns_.size())]
+                      .name
+                : "unknown column";
+        CPLDebug(
+            "HANA", "Unable to query extent of '%s' using fast method: %s",
+            clmName.c_str(), ex.what());
+    }
+
+    if( iGeomField == 0 )
+        return OGRLayer::GetExtent( extent, force );
+    else
+        return OGRLayer::GetExtent( iGeomField, extent, force);
 }
 
 /************************************************************************/
@@ -858,6 +897,28 @@ const char* OGRHanaLayer::GetFIDColumn()
                      .name.c_str();
 }
 
+
+/************************************************************************/
+/*                         SetAttributeFilter()                         */
+/************************************************************************/
+
+OGRErr OGRHanaLayer::SetAttributeFilter(const char* pszQuery)
+{
+    CPLFree(m_pszAttrQueryString);
+    m_pszAttrQueryString = pszQuery ? CPLStrdup(pszQuery) : nullptr;
+
+    if (pszQuery == nullptr || strlen(pszQuery) == 0)
+        attrFilter_ = "";
+    else
+        attrFilter_.assign(pszQuery, strlen(pszQuery));
+
+    rebuildQueryStatement_ = true;
+    BuildWhereClause();
+    ResetReading();
+
+    return OGRERR_NONE;
+}
+
 /************************************************************************/
 /*                          SetSpatialFilter()                          */
 /************************************************************************/
@@ -868,9 +929,8 @@ void OGRHanaLayer::SetSpatialFilter(int iGeomField, OGRGeometry* poGeom)
 
     if (iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount())
     {
-        CPLError(
-            CE_Failure, CPLE_AppDefined, "Invalid geometry field index : %d",
-            iGeomField);
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid geometry field index : %d", iGeomField);
         return;
     }
     m_iGeomFieldFilter = iGeomField;

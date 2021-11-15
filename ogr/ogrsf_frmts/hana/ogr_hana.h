@@ -127,6 +127,7 @@ private:
     SrsCache srsCache_;
     odbc::EnvironmentRef connEnv_;
     odbc::ConnectionRef conn_;
+    uint majorVersion_ = 0;
 
 private:
     void CreateTable(
@@ -134,7 +135,9 @@ private:
         const CPLString& fidName,
         const CPLString& fidType,
         const CPLString& geomColumnName,
-        const CPLString& geomColumnNullable,
+        OGRwkbGeometryType geomType,
+        bool geomColumnNullable,
+        const CPLString& geomColumnIndexType,
         int geomSrid);
 
 protected:
@@ -183,6 +186,7 @@ public:
 
     int Open(const char* newName, char** options, int update);
 
+    uint GetMajorVersion() const { return majorVersion_; }
     OGRErr DeleteLayer(int index) override;
     int GetLayerCount() override { return static_cast<int>(layers_.size()); }
     OGRLayer* GetLayer(int index) override;
@@ -257,6 +261,8 @@ public:
     OGRSpatialReference* GetSpatialRef() override;
     const char* GetFIDColumn() override;
 
+    OGRErr SetAttributeFilter( const char *pszQuery ) override;
+
     void SetSpatialFilter(OGRGeometry* poGeom) override
     {
         SetSpatialFilter(0, poGeom);
@@ -277,10 +283,11 @@ private:
     CPLString tableName_;
     bool updateMode_;
 
-    odbc::PreparedStatementRef insertFeatureStmt_;
+    odbc::PreparedStatementRef currentIdentityValueStmt_;
+    odbc::PreparedStatementRef insertFeatureStmtWithFID_;
+    odbc::PreparedStatementRef insertFeatureStmtWithoutFID_;
     odbc::PreparedStatementRef deleteFeatureStmt_;
     odbc::PreparedStatementRef updateFeatureStmt_;
-    bool insertFeatureStmtHasFID;
 
     std::size_t batchSize_;
     std::size_t defaultStringSize_;
@@ -292,17 +299,16 @@ private:
     OGRErr ReadTableDefinition();
 
     std::pair<OGRErr, std::size_t> ExecuteUpdate(
-        odbc::PreparedStatement& statement, const char* functionName);
+        odbc::PreparedStatement& statement, bool withBatch, const char* functionName);
     odbc::PreparedStatementRef CreateDeleteFeatureStatement();
-    odbc::PreparedStatementRef CreateInsertFeatureStatement(
-        GIntBig fidColumnID);
+    odbc::PreparedStatementRef CreateInsertFeatureStatement(bool withFID);
     odbc::PreparedStatementRef CreateUpdateFeatureStatement();
     void ResetPreparedStatements();
     OGRErr SetStatementParameters(
         odbc::PreparedStatement& statement,
         OGRFeature* feature,
-        bool skipFidColumn,
         bool newFeature,
+        bool withFID,
         const char* functionName);
 
     OGRErr DropTable();
@@ -321,8 +327,6 @@ public:
     void ResetReading() override;
     const char* GetName() override { return tableName_.c_str(); }
     int TestCapability(const char* capabilities) override;
-
-    OGRErr SetAttributeFilter(const char* attrFilter) override;
 
     OGRErr ICreateFeature(OGRFeature* feature) override;
     OGRErr DeleteFeature(GIntBig nFID) override;
