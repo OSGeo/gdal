@@ -61,10 +61,7 @@ OGRErr OGRHanaResultLayer::Initialize(const char* query, OGRGeometry* spatialFil
     SetDescription(featureDefn_->GetName());
 
     if (spatialFilter != nullptr)
-    {
-        m_poFilterGeom = spatialFilter;
-        BuildWhereClause();
-    }
+        SetSpatialFilter(spatialFilter);
     BuildQueryStatement();
 
     return OGRERR_NONE;
