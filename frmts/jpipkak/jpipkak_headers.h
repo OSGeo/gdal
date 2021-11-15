@@ -35,8 +35,17 @@
 #pragma GCC system_header
 #endif
 
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable : 4458 )
+#endif
+
 #include "kdu_cache.h"
 #include "kdu_region_decompressor.h"
 #include "kdu_file_io.h"
+
+#ifdef _MSC_VER
+#pragma warning( pop )
+#endif
 
 #endif /* JPIPKAK_HEADERS_H */

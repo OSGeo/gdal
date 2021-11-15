@@ -147,8 +147,8 @@ endif ()
 
 # ######################################################################################################################
 # driver with proprietary libraries Kakadu software SDK
-gdal_dependent_format(jp2kak "JPEG-2000 (based on Kakadu)" "HAVE_KDU")
-gdal_dependent_format(jpipkak "JPIP Streaming" "HAVE_KDU")
+gdal_dependent_format(jp2kak "JPEG-2000 (based on Kakadu)" "GDAL_USE_KDU")
+gdal_dependent_format(jpipkak "JPIP Streaming" "GDAL_USE_KDU")
 # Luratech SDK
 gdal_dependent_format(jp2lura JP2LURA "HAVE_LURA")
 # ESRI ArcSDE C API SDK

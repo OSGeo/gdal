@@ -231,6 +231,31 @@ Can be detected with pkg-config.
     Path to a shared or static library file.
 
 
+KDU (Kakadu)
+************
+
+The Kakadu library is required for the JP2KAK and JPIPKAK drivers. There is
+no standardized installation layout, nor fixed library file names, so finding
+Kakadu artifacts is a bit challenging. Currently automatic finding of it from
+the KDU_ROOT variable is only implemented for Linux, Mac and Windows x86_64
+builds. For other platforms, users need to manually specify the KDU_LIBRARY
+and KDU_AUX_LIBRARY variable.
+
+.. option:: KDU_INCLUDE_DIR
+
+    Path to the root of the Kakadu build tree, from which the
+    ``coresys/common/kdu_elementary.h`` header file should be found.
+
+.. option:: KDU_LIBRARY
+
+    Path to a shared library file whose name is like libkdu_vXYR.so on Unix
+    or kdu_vXYR.lib on Windows, where X.Y is the Kakadu version.
+
+.. option:: KDU_AUX_LIBRARY
+
+    Path to a shared library file whose name is like libkdu_aXYR.so on Unix
+    or kdu_aXYR.lib on Windows, where X.Y is the Kakadu version.
+
 KEA
 ***
 
