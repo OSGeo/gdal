@@ -23,6 +23,10 @@ ifeq ($(HAVE_PCRE),yes)
 CPPFLAGS +=  -DHAVE_PCRE
 endif
 
+ifeq ($(HAVE_PCRE2),yes)
+CPPFLAGS +=  -DHAVE_PCRE2
+endif
+
 ifeq ($(SQLITE_HAS_COLUMN_METADATA),yes)
 CPPFLAGS +=  -DSQLITE_HAS_COLUMN_METADATA
 endif
