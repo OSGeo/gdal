@@ -829,14 +829,7 @@ int ERSDataset::Identify( GDALOpenInfo * poOpenInfo )
 /*      We assume the user selects the .ers file.                       */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes >= 15
-        && STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "DatasetHeader ") )
-        return TRUE;
-
-/* -------------------------------------------------------------------- */
-/*      We assume the user selects the .ers file.                       */
-/* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes >= 1
-        && STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "#") )
+        && strstr((const char *) poOpenInfo->pabyHeader, "DatasetHeader ") != nullptr )
         return TRUE;
 
     return FALSE;
