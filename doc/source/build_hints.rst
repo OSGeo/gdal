@@ -309,6 +309,20 @@ be found.
     Path to library file libltidsdk
 
 
+PCRE2
+*****
+
+Perl-compatible Regular Expressions support, for the REGEXP operator in SQLite3
+
+.. option:: PCRE2_INCLUDE_DIR
+
+    Path to an include directory with the ``pcre2.h`` header file.
+
+.. option:: PCRE2_LIBRARY
+
+    Path to a shared or static library file with "pcre2-8" in its name
+
+
 PROJ
 ****
 
