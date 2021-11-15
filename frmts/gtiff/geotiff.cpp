@@ -12770,40 +12770,64 @@ void GTiffDataset::LookForProjection()
     {
         GTIFDefn *psGTIFDefn = GTIFAllocDefn();
 
-        if( GTIFGetDefn( hGTIF, psGTIFDefn ) )
+        // Collect (PROJ) error messages and remit them later as warnings
+        std::vector<CPLErrorHandlerAccumulatorStruct> aoErrors;
+        CPLInstallErrorHandlerAccumulator(aoErrors);
+        const int ret = GTIFGetDefn( hGTIF, psGTIFDefn );
+        CPLUninstallErrorHandlerAccumulator();
+
+        if( ret )
         {
+            CPLInstallErrorHandlerAccumulator(aoErrors);
             OGRSpatialReferenceH hSRS = GTIFGetOGISDefnAsOSR( hGTIF, psGTIFDefn );
+            CPLUninstallErrorHandlerAccumulator();
+
             if( hSRS )
             {
                 m_oSRS = *(OGRSpatialReference::FromHandle(hSRS));
                 OSRDestroySpatialReference(hSRS);
             }
+        }
 
-            if( m_oSRS.IsCompound() )
+        std::set<std::string> oSetErrorMsg;
+        for( const auto& oError: aoErrors )
+        {
+            // Some error messages might be duplicated in GTIFGetDefn()
+            // and GTIFGetOGISDefnAsOSR(). Emit them just once.
+            if( oSetErrorMsg.find(oError.msg) == oSetErrorMsg.end() )
             {
-                const char* pszVertUnit = nullptr;
-                m_oSRS.GetTargetLinearUnits("COMPD_CS|VERT_CS", &pszVertUnit);
-                if( pszVertUnit && !EQUAL(pszVertUnit, "unknown") )
-                {
-                    CPLFree(m_pszVertUnit);
-                    m_pszVertUnit = CPLStrdup(pszVertUnit);
-                }
+                oSetErrorMsg.insert(oError.msg);
+                CPLError( oError.type == CE_Failure ? CE_Warning : oError.type,
+                          oError.no,
+                          "%s",
+                          oError.msg.c_str() );
+            }
+        }
 
-                int versions[3];
-                GTIFDirectoryInfo(hGTIF, versions, nullptr);
+        if( m_oSRS.IsCompound() )
+        {
+            const char* pszVertUnit = nullptr;
+            m_oSRS.GetTargetLinearUnits("COMPD_CS|VERT_CS", &pszVertUnit);
+            if( pszVertUnit && !EQUAL(pszVertUnit, "unknown") )
+            {
+                CPLFree(m_pszVertUnit);
+                m_pszVertUnit = CPLStrdup(pszVertUnit);
+            }
 
-                // If GeoTIFF 1.0, strip vertical by default
-                const char* pszDefaultReportCompdCS =
-                    ( versions[0] == 1 && versions[1]== 1 && versions[2] == 0 ) ? "NO" : "YES";
+            int versions[3];
+            GTIFDirectoryInfo(hGTIF, versions, nullptr);
 
-                // Should we simplify away vertical CS stuff?
-                if( !CPLTestBool( CPLGetConfigOption("GTIFF_REPORT_COMPD_CS",
-                                            pszDefaultReportCompdCS) ) )
-                {
-                    CPLDebug( "GTiff", "Got COMPD_CS, but stripping it." );
+            // If GeoTIFF 1.0, strip vertical by default
+            const char* pszDefaultReportCompdCS =
+                ( versions[0] == 1 && versions[1]== 1 && versions[2] == 0 ) ? "NO" : "YES";
 
-                    m_oSRS.StripVertical();
-                }
+            // Should we simplify away vertical CS stuff?
+            if( !CPLTestBool( CPLGetConfigOption("GTIFF_REPORT_COMPD_CS",
+                                        pszDefaultReportCompdCS) ) )
+            {
+                CPLDebug( "GTiff", "Got COMPD_CS, but stripping it." );
+
+                m_oSRS.StripVertical();
             }
         }
 
