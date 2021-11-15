@@ -828,11 +828,18 @@ int ERSDataset::Identify( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      We assume the user selects the .ers file.                       */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 15
-        || !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "DatasetHeader ") )
-        return FALSE;
+    if( poOpenInfo->nHeaderBytes >= 15
+        && STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "DatasetHeader ") )
+        return TRUE;
 
-    return TRUE;
+/* -------------------------------------------------------------------- */
+/*      We assume the user selects the .ers file.                       */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->nHeaderBytes >= 1
+        && STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "#") )
+        return TRUE;
+
+    return FALSE;
 }
 
 /************************************************************************/
@@ -896,17 +903,11 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
         return nullptr;
 
 /* -------------------------------------------------------------------- */
-/*      Read the first line.                                            */
-/* -------------------------------------------------------------------- */
-
-    CPLReadLineL( poOpenInfo->fpL );
-
-/* -------------------------------------------------------------------- */
-/*      Now ingest the rest of the file as a tree of header nodes.      */
+/*      Ingest the file as a tree of header nodes.                      */
 /* -------------------------------------------------------------------- */
     ERSHdrNode *poHeader = new ERSHdrNode();
 
-    if( !poHeader->ParseChildren( poOpenInfo->fpL ) )
+    if( !poHeader->ParseHeader( poOpenInfo->fpL ) )
     {
         delete poHeader;
         VSIFCloseL( poOpenInfo->fpL );

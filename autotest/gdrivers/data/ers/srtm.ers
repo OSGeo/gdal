@@ -1,3 +1,4 @@
+# This is an ERS file with a comment at the start
 DatasetHeader Begin
   Version = "5.2"
   DataSetType = ERStorage
@@ -5,6 +6,9 @@ DatasetHeader Begin
   ByteOrder = MSBFirst
   Foo = { "x\\\"
 y" }
+  Bar = "# not a comment"
+  Baz = { "x\\\"
+#also not a comment" }
 
   CoordinateSpace Begin
     Datum = "WGS84"
@@ -13,8 +17,9 @@ y" }
     Rotation = 0:0:0.0
   CoordinateSpace End
 
+# Comment in the middle
   RasterInfo Begin
-    CellType = Signed16BitInteger
+    CellType = Signed16BitInteger   # Comment at the end of a line
     NullCellValue = +9999
     CellInfo Begin
       Xdimension = 0.00833333
@@ -37,7 +42,8 @@ y" }
     RegionInfo Begin
       RegionName = "All"
       Stats Begin
-        MinimumValue = { -4315 }
+        MinimumValue = { -4315 # comment in brackets
+        }
         MaximumValue = { -3744 }
         MeanValue = { -4020.25 }
         MedianValue = { -4000 }
