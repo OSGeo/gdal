@@ -14,47 +14,71 @@
 #    OpenEXR_INCLUDE_DIRS
 #    OpenEXR_LIBRARIES
 #
+
+if(OpenEXR_ROOT)
+  list(APPEND OpenEXR_INC_HINTS ${OpenEXR_ROOT}/include/OpenEXR)
+  list(APPEND OpenEXR_LIB_HINTS ${OpenEXR_ROOT}/lib)
+  list(APPEND CMAKE_PREFIX_PATH ${OpenEXR_ROOT})
+endif()
+
+if(Imath_ROOT)
+  list(APPEND Imath_INC_HINTS ${Imath_ROOT}/include/Imath)
+  list(APPEND Imath_LIB_HINTS ${Imath_ROOT}/lib)
+  list(APPEND CMAKE_PREFIX_PATH ${Imath_ROOT})
+endif()
+
 find_package(PkgConfig QUIET)
 if (PKG_CONFIG_FOUND)
-    pkg_check_modules(PC_OpenEXR QUIET OpenEXR)
+  pkg_check_modules(PC_OpenEXR QUIET OpenEXR)
+  if(PC_OpenEXR_FOUND)
+    list(APPEND OpenEXR_LIB_HINTS ${PC_OpenEXR_LIBRARY_DIRS})
+    list(APPEND OpenEXR_INC_HINTS ${PC_OpenEXR_INCLUDE_DIRS})    
     set(OpenEXR_VERSION_STRING ${PC_OpenEXR_VERSION})
+  endif()
 endif ()
 
 find_path(OpenEXR_INCLUDE_DIR
           NAMES ImfVersion.h
-          HINTS ${PC_OpenEXR_INCLUDE_DIRS}
+          HINTS ${OpenEXR_INC_HINTS}
           PATH_SUFFIXES OpenEXR)
 find_path(Imath_INCLUDE_DIR
           NAMES ImathMatrix.h
-          HINTS ${PC_OpenEXR_INCLUDE_DIRS}
+          HINTS ${Imath_INC_HINTS} ${OpenEXR_INCLUDE_DIR}
           PATH_SUFFIXES Imath)
+
+if(NOT OpenEXR_VERSION_STRING)
+  # Fallback for PkgConfig not finding anything
+  file(READ ${OpenEXR_INCLUDE_DIR}/OpenEXRConfig.h txt)
+  string(REGEX MATCH "define[ \t]+OPENEXR_VERSION_STRING[ \t]+\"([0-9]+(.[0-9]+)?(.[0-9]+)?)\".*$" _ ${txt})
+  set(OpenEXR_VERSION_STRING ${CMAKE_MATCH_1})
+endif()
 
 if (OpenEXR_VERSION_STRING VERSION_GREATER_EQUAL 3.0)
     find_library(OpenEXR_LIBRARY
                  NAMES OpenEXR
-                 HINTS ${PC_OpenEXR_LIBRARY_DIRS})
+                 HINTS ${OpenEXR_LIB_HINTS})
     find_library(OpenEXR_UTIL_LIBRARY
                  NAMES OpenEXRUtil
-                 HINTS ${PC_OpenEXR_LIBRARY_DIRS})
+                 HINTS ${OpenEXR_LIB_HINTS})
     find_library(OpenEXR_HALF_LIBRARY
                  NAMES Imath
-                 HINTS ${PC_OpenEXR_LIBRARY_DIRS})
+                 HINTS ${Imath_LIB_HINTS})  #Imath is considered separate since v3
     find_library(OpenEXR_IEX_LIBRARY
                  NAMES Iex
-                 HINTS ${PC_OpenEXR_LIBRARY_DIRS})
+                 HINTS ${OpenEXR_LIB_HINTS})
 else()
     find_library(OpenEXR_LIBRARY
                  NAMES IlmImf
-                 HINTS ${PC_OpenEXR_LIBRARY_DIRS})
+                 HINTS ${OpenEXR_LIB_HINTS})
     find_library(OpenEXR_UTIL_LIBRARY
                  NAMES IlmImfUtil
-                 HINTS ${PC_OpenEXR_LIBRARY_DIRS})
+                 HINTS ${OpenEXR_LIB_HINTS})
     find_library(OpenEXR_HALF_LIBRARY
                  NAMES Half
-                 HINTS ${PC_OpenEXR_LIBRARY_DIRS})
+                 HINTS ${OpenEXR_LIB_HINTS})
     find_library(OpenEXR_IEX_LIBRARY
                  NAMES Iex
-                 HINTS ${PC_OpenEXR_LIBRARY_DIRS})
+                 HINTS ${OpenEXR_LIB_HINTS})
 endif()
 
 find_package_handle_standard_args(OpenEXR FOUND_VAR OpenEXR_FOUND
