@@ -29,6 +29,18 @@
 #include "memwatch.h"
 #endif
 
+#if __cplusplus >= 201500
+#  define CPL_FALLTHROUGH [[fallthrough]];
+#elif ((defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >=7))) || __GNUC__ >= 7)
+/** Macro for fallthrough in a switch case construct */
+#  define CPL_FALLTHROUGH [[clang::fallthrough]];
+#else
+/** Macro for fallthrough in a switch case construct */
+#  define CPL_FALLTHROUGH
+#endif
+
+
+
 /*****************************************************************************
  * AllocSprintf() -- Arthur Taylor / MDL (Review 12/2002)
  *
@@ -99,7 +111,7 @@ static void AllocSprintf (char **Ptr, size_t *LenBuff, const char *fmt,
 
    myAssert (sizeof (char) == 1);
 
-   if ((fmt == NULL) || (strlen (fmt) == 0)) {
+   if ((fmt == nullptr) || (strlen (fmt) == 0)) {
       return;
    }
    p = fmt;
@@ -120,7 +132,7 @@ static void AllocSprintf (char **Ptr, size_t *LenBuff, const char *fmt,
       p1 = p;
       p = strchr (p1, '%');
       /* Handle simple case when no more % in format string. */
-      if (p == NULL) {
+      if (p == nullptr) {
          /* No more format strings; copy rest of format and return */
          lenBuff += strlen (p1);
          buffer = (char *) realloc ((void *) buffer, lenBuff);
@@ -231,7 +243,7 @@ static void AllocSprintf (char **Ptr, size_t *LenBuff, const char *fmt,
                   ipos = lenBuff - 1;
                   break;
                }
-               /* Intentionally fall through. */
+               CPL_FALLTHROUGH
             case 'S':
                if ((p1 - p) == 1) {
                   f_inLoop = 0;
@@ -251,12 +263,13 @@ static void AllocSprintf (char **Ptr, size_t *LenBuff, const char *fmt,
                   }
                   break;
                }
-               /* Intentionally fall through. */
+               CPL_FALLTHROUGH
             default:
                lenBuff += p1 - p;
                buffer = (char *) realloc ((void *) buffer, lenBuff);
                strncpy (buffer + ipos, p + 1, p1 - p);
                ipos = lenBuff - 1;
+               break;
          }
       }
       p = p1 + 1;
@@ -295,8 +308,8 @@ void mallocSprintf (char **Ptr, const char *fmt, ...)
    va_list ap;          /* Contains the data needed by fmt. */
    size_t buff_len = 0; /* Allocated length of buffer. */
 
-   *Ptr = NULL;
-   if (fmt != NULL) {
+   *Ptr = nullptr;
+   if (fmt != nullptr) {
       va_start (ap, fmt); /* make ap point to 1st unnamed arg. */
       AllocSprintf (Ptr, &buff_len, fmt, ap);
       va_end (ap);      /* clean up when done. */
@@ -333,9 +346,9 @@ void reallocSprintf (char **Ptr, const char *fmt, ...)
    va_list ap;          /* Contains the data needed by fmt. */
    size_t buff_len;     /* Allocated length of buffer. */
 
-   if (fmt != NULL) {
+   if (fmt != nullptr) {
       va_start (ap, fmt); /* make ap point to 1st unnamed arg. */
-      if (*Ptr == NULL) {
+      if (*Ptr == nullptr) {
          buff_len = 0;
       } else {
          buff_len = strlen (*Ptr) + 1;
@@ -374,8 +387,8 @@ void reallocSprintf (char **Ptr, const char *fmt, ...)
  *****************************************************************************
  */
 /* Following 2 variables used in both errSprintf and preErrSprintf */
-static char *errBuffer = NULL; /* Stores the current built up message. */
-static size_t errBuff_len = 0; /* Allocated length of errBuffer. */
+static thread_local char *errBuffer = nullptr; /* Stores the current built up message. */
+static thread_local size_t errBuff_len = 0; /* Allocated length of errBuffer. */
 
 char *errSprintf (const char *fmt, ...)
 {
@@ -383,16 +396,16 @@ char *errSprintf (const char *fmt, ...)
    char *ans;           /* Pointer to the final message while we reset
                          * buffer. */
 
-   if (fmt == NULL) {
+   if (fmt == nullptr) {
       ans = errBuffer;
-      errBuffer = NULL;
+      errBuffer = nullptr;
       errBuff_len = 0;
       return ans;
    }
    va_start (ap, fmt);  /* make ap point to 1st unnamed arg. */
    AllocSprintf (&errBuffer, &errBuff_len, fmt, ap);
    va_end (ap);         /* clean up when done. */
-   return NULL;
+   return nullptr;
 }
 
 /*****************************************************************************
@@ -423,13 +436,13 @@ char *errSprintf (const char *fmt, ...)
  */
 void preErrSprintf (const char *fmt, ...)
 {
-   char *preBuffer = NULL; /* Stores the prepended message. */
+   char *preBuffer = nullptr; /* Stores the prepended message. */
    size_t preBuff_len = 0; /* Allocated length of preBuffer. */
    va_list ap;          /* Contains the data needed by fmt. */
 
    myAssert (sizeof (char) == 1);
 
-   if (fmt == NULL) {
+   if (fmt == nullptr) {
       return;
    }
    va_start (ap, fmt);  /* make ap point to 1st unnamed arg. */
