@@ -816,8 +816,9 @@ int ERSDataset::Identify( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      We assume the user selects the .ers file.                       */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes > 15
-        && STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "Algorithm Begin") )
+    CPLString osHeader((const char *)poOpenInfo->pabyHeader, poOpenInfo->nHeaderBytes);
+
+    if( osHeader.ifind( "Algorithm Begin" ) != std::string::npos )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "%s appears to be an algorithm ERS file, which is not currently supported.",
@@ -825,14 +826,10 @@ int ERSDataset::Identify( GDALOpenInfo * poOpenInfo )
         return FALSE;
     }
 
-/* -------------------------------------------------------------------- */
-/*      We assume the user selects the .ers file.                       */
-/* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 15
-        || !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "DatasetHeader ") )
-        return FALSE;
+    if( osHeader.ifind( "DatasetHeader " ) != std::string::npos )
+        return TRUE;
 
-    return TRUE;
+    return FALSE;
 }
 
 /************************************************************************/
@@ -896,17 +893,11 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
         return nullptr;
 
 /* -------------------------------------------------------------------- */
-/*      Read the first line.                                            */
-/* -------------------------------------------------------------------- */
-
-    CPLReadLineL( poOpenInfo->fpL );
-
-/* -------------------------------------------------------------------- */
-/*      Now ingest the rest of the file as a tree of header nodes.      */
+/*      Ingest the file as a tree of header nodes.                      */
 /* -------------------------------------------------------------------- */
     ERSHdrNode *poHeader = new ERSHdrNode();
 
-    if( !poHeader->ParseChildren( poOpenInfo->fpL ) )
+    if( !poHeader->ParseHeader( poOpenInfo->fpL ) )
     {
         delete poHeader;
         VSIFCloseL( poOpenInfo->fpL );
