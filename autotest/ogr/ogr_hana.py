@@ -25,10 +25,7 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 ###############################################################################
-
 import os
-
-from osgeo.ogr import wkbPolygon
 
 import gdaltest
 import ogrtest
@@ -608,7 +605,7 @@ def test_ogr_hana_20():
 
 def test_ogr_hana_21():
     if gdaltest.hana_ds is None:
-        return 'skip'
+        pytest.skip()
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
@@ -733,6 +730,7 @@ def test_ogr_hana_21():
                         (field_name, actual, expected_value))
 
     feat.Destroy()
+    ds = None
 
 
 ###############################################################################
@@ -798,6 +796,7 @@ def test_ogr_hana_24():
     assert field_DEC2.GetType() == ogr.OFTReal
     assert field_DEC2.GetWidth() == 20
     assert field_DEC2.GetPrecision() == 0
+    ds = None
 
 
 ###############################################################################

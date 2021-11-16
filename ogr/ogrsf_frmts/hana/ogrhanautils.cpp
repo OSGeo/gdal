@@ -34,6 +34,29 @@ CPL_CVSID("$Id$")
 
 namespace hana_utils {
 
+CPLString StringFormat(const char* format, ...)
+{
+    va_list args;
+    va_start( args, format );
+    char smallBuffer[1024];
+    int sz = CPLvsnprintf(smallBuffer, 0, format, args);
+    va_end( args );
+
+    if (sz <= 0)
+        throw std::runtime_error("Error during formatting.");
+    size_t size = static_cast<std::size_t>(sz);
+
+    if (size < sizeof(smallBuffer))
+        return CPLString(smallBuffer, size);
+
+    std::vector<char> buffer;
+    buffer.resize(size + 1);
+    va_start( args, format );
+    CPLvsnprintf(buffer.data(), size, format, args);
+    va_end( args );
+    return CPLString(buffer.data(), size);
+}
+
 const char* SkipLeadingSpaces(const char* value)
 {
     while (*value == ' ')

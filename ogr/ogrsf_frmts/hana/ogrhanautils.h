@@ -49,18 +49,7 @@ bool CanCastIntBigTo(GIntBig value)
            && value <= static_cast<GIntBig>(std::numeric_limits<Type>::max());
 }
 
-template<typename... Args>
-CPLString StringFormat(const char* format, Args... args)
-{
-    int size = snprintf(nullptr, 0, format, args...) + 1;
-    if (size <= 0)
-        throw std::runtime_error("Error during formatting.");
-    std::unique_ptr<char[]> buf(new char[static_cast<std::size_t>(size)]);
-    char* bufPtr = &buf[0];
-    snprintf(bufPtr, size, format, args...);
-    return CPLString(bufPtr, static_cast<std::size_t>(size - 1));
-}
-
+CPLString StringFormat(const char* format, ...);
 const char* SkipLeadingSpaces(const char* value);
 CPLString JoinStrings(
     const std::vector<CPLString>& strs,
