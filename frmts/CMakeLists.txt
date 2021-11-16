@@ -156,7 +156,7 @@ gdal_dependent_format(sde "ESRI ArcSDE Raster" "HAVE_SDE")
 # LizardTech's decoding software development kit (DSDK)
 gdal_dependent_format(mrsid "Multi-resolution Seamless Image Database" "HAVE_MRSID")
 # gdal_dependent_format(mrsid_lidar "Multi-resolution Seamless Image Database - LiDAR support" "HAVE_MRSID")
-gdal_dependent_format(georaster "Oracle Spatial GeoRaster" "HAVE_ORACLE")
+gdal_dependent_format(georaster "Oracle Spatial GeoRaster" "HAVE_ORACLE" DRIVER_NAME_OPTION GEOR)
 gdal_dependent_format(ecw "ERDAS JPEG2000 (.jp2)" "HAVE_ECW")
 
 # Register all frmt drivers according to FRMT_<driver> flags

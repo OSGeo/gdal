@@ -323,6 +323,14 @@ be found.
     Path to library file libltidsdk
 
 
+Oracle
+******
+
+.. option:: Oracle_ROOT
+
+    Path to the root directory of the Oracle Instant Client SDK
+
+
 PCRE2
 *****
 
