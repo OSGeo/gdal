@@ -33,7 +33,7 @@ CSC = mcs
 NETSTANDARD = netstandard2.0
 !ENDIF
 !IFNDEF NETCORE
-NETCORE = netcoreapp2.1
+NETCORE = netcoreapp2.2
 !ENDIF
 !IF $(MSVC_VER) >= 1400
 !IFDEF WIN64
@@ -87,6 +87,7 @@ template.csproj:
     echo ^<PropertyGroup^> >> $@
     echo ^<OutputType^>Exe^</OutputType^> >> $@
     echo ^<TargetFramework^>$(NETCORE)^</TargetFramework^> >> $@
+    echo ^<CheckEolTargetFramework^>false^</CheckEolTargetFramework^> >> $@
     echo ^<AssemblyVersion^>$(GDAL_VERSION).0^</AssemblyVersion^> >> $@
     echo ^<EnableDefaultCompileItems^>false^</EnableDefaultCompileItems^>  >> $@
     echo ^</PropertyGroup^> >> $@
@@ -192,19 +193,19 @@ samples: sampleprojects
     dotnet add OSRTransform.csproj reference ..\osr\osr_csharp.csproj
     dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID) OSRTransform.csproj
     dotnet add GDALRead.csproj reference ..\gdal\gdal_csharp.csproj
-    dotnet add GDALRead.csproj package System.Drawing.Common
+    dotnet add GDALRead.csproj package System.Drawing.Common -v 5.0.3
     dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID) GDALRead.csproj
     dotnet add GDALReadDirect.csproj reference ..\gdal\gdal_csharp.csproj
-    dotnet add GDALReadDirect.csproj package System.Drawing.Common
+    dotnet add GDALReadDirect.csproj package System.Drawing.Common -v 5.0.3
     dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID) GDALReadDirect.csproj
     dotnet add GDALAdjustContrast.csproj reference ..\gdal\gdal_csharp.csproj
-    dotnet add GDALAdjustContrast.csproj package System.Drawing.Common
+    dotnet add GDALAdjustContrast.csproj package System.Drawing.Common -v 5.0.3
     dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID) GDALAdjustContrast.csproj
     dotnet add GDALDatasetRasterIO.csproj reference ..\gdal\gdal_csharp.csproj
-    dotnet add GDALDatasetRasterIO.csproj package System.Drawing.Common
+    dotnet add GDALDatasetRasterIO.csproj package System.Drawing.Common -v 5.0.3
     dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID) GDALDatasetRasterIO.csproj
     dotnet add GDALDatasetRasterIOEx.csproj reference ..\gdal\gdal_csharp.csproj
-    dotnet add GDALDatasetRasterIOEx.csproj package System.Drawing.Common
+    dotnet add GDALDatasetRasterIOEx.csproj package System.Drawing.Common -v 5.0.3
     dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID) GDALDatasetRasterIOEx.csproj
     dotnet add GDALWrite.csproj reference ..\gdal\gdal_csharp.csproj
     dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID) GDALWrite.csproj
@@ -230,7 +231,7 @@ samples: sampleprojects
     dotnet add VSIMem.csproj reference ..\gdal\gdal_csharp.csproj
     dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID) VSIMem.csproj
     dotnet add GDALMemDataset.csproj reference ..\gdal\gdal_csharp.csproj
-    dotnet add GDALMemDataset.csproj package System.Drawing.Common
+    dotnet add GDALMemDataset.csproj package System.Drawing.Common -v 5.0.3
     dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID) GDALMemDataset.csproj
     dotnet add OGRLayerAlg.csproj reference ..\osr\osr_csharp.csproj
     dotnet add OGRLayerAlg.csproj reference ..\ogr\ogr_csharp.csproj
