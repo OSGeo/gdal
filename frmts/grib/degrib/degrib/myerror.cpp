@@ -29,7 +29,9 @@
 #include "memwatch.h"
 #endif
 
-#if ((defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >=7))) || __GNUC__ >= 7)
+#if __cplusplus >= 201500
+#  define CPL_FALLTHROUGH [[fallthrough]];
+#elif ((defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >=7))) || __GNUC__ >= 7)
 /** Macro for fallthrough in a switch case construct */
 #  define CPL_FALLTHROUGH [[clang::fallthrough]];
 #else
