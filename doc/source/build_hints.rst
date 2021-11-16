@@ -186,6 +186,27 @@ ending with ERDAS-ECW_JPEG_2000_SDK-5.5.0/Desktop_Read-Only.
 
     Path to library file libNCSUtil (only needed for SDK 3.3)
 
+FileGDB
+*******
+
+FileGDB_ROOT or CMAKE_PREFIX_PATH should point to the directory of the SDK.
+
+.. option:: FileGDB_INCLUDE_DIR
+
+    Path to the include directory with the ``FileGDBAPI.h`` header file.
+
+.. option:: FileGDB_LIBRARY
+
+    Path to library file
+
+.. option:: FileGDB_LIBRARY_RELEASE
+
+    Path to Release library file (only used on Windows)
+
+.. option:: FileGDB_LIBRARY_DEBUG
+
+    Path to Debug library file (only used on Windows)
+
 geotiff
 *******
 
@@ -231,6 +252,31 @@ Can be detected with pkg-config.
     Path to a shared or static library file.
 
 
+KDU (Kakadu)
+************
+
+The Kakadu library is required for the JP2KAK and JPIPKAK drivers. There is
+no standardized installation layout, nor fixed library file names, so finding
+Kakadu artifacts is a bit challenging. Currently automatic finding of it from
+the KDU_ROOT variable is only implemented for Linux, Mac and Windows x86_64
+builds. For other platforms, users need to manually specify the KDU_LIBRARY
+and KDU_AUX_LIBRARY variable.
+
+.. option:: KDU_INCLUDE_DIR
+
+    Path to the root of the Kakadu build tree, from which the
+    ``coresys/common/kdu_elementary.h`` header file should be found.
+
+.. option:: KDU_LIBRARY
+
+    Path to a shared library file whose name is like libkdu_vXYR.so on Unix
+    or kdu_vXYR.lib on Windows, where X.Y is the Kakadu version.
+
+.. option:: KDU_AUX_LIBRARY
+
+    Path to a shared library file whose name is like libkdu_aXYR.so on Unix
+    or kdu_aXYR.lib on Windows, where X.Y is the Kakadu version.
+
 KEA
 ***
 
@@ -244,6 +290,20 @@ required.
 .. option:: KEA_LIBRARY
 
     Path to a shared or static library file.
+
+
+LURATECH
+********
+
+LURATECH_ROOT or CMAKE_PREFIX_PATH should point to the directory of the SDK.
+
+.. option:: LURATECH_INCLUDE_DIR
+
+    Path to the include directory with the ``lwf_jp2.h`` header file.
+
+.. option:: LURATECH_LIBRARY
+
+    Path to library file lib_lwf_jp2.a / lwf_jp2.lib
 
 
 MRSID
@@ -269,6 +329,20 @@ Oracle
 .. option:: Oracle_ROOT
 
     Path to the root directory of the Oracle Instant Client SDK
+
+
+PCRE2
+*****
+
+Perl-compatible Regular Expressions support, for the REGEXP operator in SQLite3
+
+.. option:: PCRE2_INCLUDE_DIR
+
+    Path to an include directory with the ``pcre2.h`` header file.
+
+.. option:: PCRE2_LIBRARY
+
+    Path to a shared or static library file with "pcre2-8" in its name
 
 
 PROJ

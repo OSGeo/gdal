@@ -262,7 +262,11 @@ else()
 endif()
 
 # 3rd party libraries
-gdal_check_package(PCRE "Enable PCRE support for sqlite3" CAN_DISABLE)
+
+gdal_check_package(PCRE2 "Enable PCRE2 support for sqlite3" CAN_DISABLE)
+if(NOT GDAL_USE_PCRE)
+    gdal_check_package(PCRE "Enable PCRE support for sqlite3" CAN_DISABLE)
+endif()
 
 gdal_check_package(SQLite3 "Enable SQLite3 support (used by SQLite/Spatialite, GPKG, Rasterlite, MBTiles, etc.)" CAN_DISABLE RECOMMENDED)
 if (SQLite3_FOUND)
@@ -362,6 +366,7 @@ gdal_check_package(IDB "enable ogr_IDB driver")
 # TODO: implement FindRASDAMAN
 # libs: -lrasodmg -lclientcomm -lcompression -lnetwork -lraslib
 gdal_check_package(RASDAMAN "enable rasdaman driver")
+gdal_check_package(rdb "enable RIEGL RDB library" CAN_DISABLE)
 gdal_check_package(TileDB "enable TileDB driver" CAN_DISABLE)
 gdal_check_package(OpenEXR "OpenEXR >=2.2" CAN_DISABLE)
 
@@ -409,14 +414,14 @@ endif()
 set(Oracle_CAN_USE_CLNTSH_AS_MAIN_LIBRARY ON)
 gdal_check_package(Oracle "Enable Oracle OCI driver")
 gdal_check_package(TEIGHA "")
+gdal_check_package(FileGDB "Enable FileGDB (based on closed-source SDK) driver" CAN_DISABLE)
 
 option(GDAL_USE_MSG "Set ON to build MSG driver and download external https://gitlab.eumetsat.int/open-source/PublicDecompWT" OFF)
 
 # proprietary libraries
 # KAKADU
-gdal_check_package(KDU "Enable KAKADU")
-# LURATECH JPEG2000 SDK
-set(LURATECH_JP2SDK_DIRECTORY "" CACHE STRING "LURATECH JP2SDK library base directory")
+gdal_check_package(KDU "Enable KAKADU" CAN_DISABLE)
+gdal_check_package(LURATECH "Enable JP2Lura driver" CAN_DISABLE)
 gdal_check_package(FME "FME")
 
 # bindings

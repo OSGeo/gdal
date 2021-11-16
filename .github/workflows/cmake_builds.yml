@@ -145,7 +145,7 @@ jobs:
         conda install --yes --quiet --name gdalenv curl libiconv icu git python=3.7 swig numpy pytest pytest-env zlib clcache lxml
         conda install --yes --quiet --name gdalenv -c conda-forge proj geos hdf4 hdf5 kealib \
             libnetcdf openjpeg poppler libtiff libpng xerces-c expat libxml2 kealib json-c \
-            cfitsio freexl geotiff jpeg libpq libspatialite libwebp-base pcre postgresql \
+            cfitsio freexl geotiff jpeg libpq libspatialite libwebp-base pcre pcre2 postgresql \
             sqlite tiledb zstd charls cryptopp cgal jasper doxygen librttopo libkml openssl xz
         cd $CONDA_PREFIX/Library/share/proj
         curl http://download.osgeo.org/proj/proj-datumgrid-1.8.tar.gz > proj-datumgrid-1.8.tar.gz

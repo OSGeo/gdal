@@ -95,7 +95,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && wget -q https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz -O - \
         | tar xz -C proj --strip-components=1 \
     && cd proj \
-    && if test "${RSYNC_REMOTE}" != ""; then \
+    && if test "${RSYNC_REMOTE:-}" != ""; then \
         echo "Downloading cache..."; \
         rsync -ra ${RSYNC_REMOTE}/proj/${GCC_ARCH}/ $HOME/; \
         echo "Finished"; \
@@ -112,7 +112,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
         -DBUILD_TESTING=OFF \
     && make -j$(nproc) \
     && make install DESTDIR="/build" \
-    && if test "${RSYNC_REMOTE}" != ""; then \
+    && if test "${RSYNC_REMOTE:-}" != ""; then \
         ccache -s; \
         echo "Uploading cache..."; \
         rsync -ra --delete $HOME/.ccache ${RSYNC_REMOTE}/proj/${GCC_ARCH}/; \
@@ -152,7 +152,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
         | tar xz -C gdal --strip-components=1 \
     && cd gdal \
     && ./autogen.sh \
-    && if test "${RSYNC_REMOTE}" != ""; then \
+    && if test "${RSYNC_REMOTE:-}" != ""; then \
         echo "Downloading cache..."; \
         rsync -ra ${RSYNC_REMOTE}/gdal/${GCC_ARCH}/ $HOME/; \
         echo "Finished"; \
@@ -175,7 +175,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
     --with-geotiff=internal --with-rename-internal-libgeotiff-symbols \
     && make -j$(nproc) \
     && make install DESTDIR="/build" \
-    && if test "${RSYNC_REMOTE}" != ""; then \
+    && if test "${RSYNC_REMOTE:-}" != ""; then \
         ccache -s; \
         echo "Uploading cache..."; \
         rsync -ra --delete $HOME/.ccache ${RSYNC_REMOTE}/gdal/${GCC_ARCH}/; \

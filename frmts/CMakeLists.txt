@@ -132,6 +132,7 @@ gdal_dependent_format(jpeg2000 "JPEG2000 --- Implementation of the JPEG-2000 par
 gdal_dependent_format(tiledb "TileDB tiledb.io" "GDAL_USE_TILEDB")
 gdal_dependent_format(exr "EXR support via OpenEXR library" "GDAL_USE_OPENEXR")
 gdal_dependent_format(pcraster "PCRaster CSF 2.0 raster file driver" "GDAL_USE_LIBCSF OR GDAL_USE_LIBCSF_INTERNAL")
+gdal_dependent_format(rdb "RIEGL RDB Map Pixel (.mpx) driver" "rdb_FOUND")
 
 # for circulate dependency, grass is NOT always compiled in.
 gdal_dependent_format(grass "GRASS" "HAVE_GRASS")
@@ -146,10 +147,10 @@ endif ()
 
 # ######################################################################################################################
 # driver with proprietary libraries Kakadu software SDK
-gdal_dependent_format(jp2kak "JPEG-2000 (based on Kakadu)" "HAVE_KDU")
-gdal_dependent_format(jpipkak "JPIP Streaming" "HAVE_KDU")
+gdal_dependent_format(jp2kak "JPEG-2000 (based on Kakadu)" "GDAL_USE_KDU")
+gdal_dependent_format(jpipkak "JPIP Streaming" "GDAL_USE_KDU")
 # Luratech SDK
-gdal_dependent_format(jp2lura JP2LURA "HAVE_LURA")
+gdal_dependent_format(jp2lura "JPEG-2000 (based on Luratech)" "GDAL_USE_LURATECH")
 # ESRI ArcSDE C API SDK
 gdal_dependent_format(sde "ESRI ArcSDE Raster" "HAVE_SDE")
 # LizardTech's decoding software development kit (DSDK)
