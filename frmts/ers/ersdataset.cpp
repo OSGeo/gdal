@@ -818,7 +818,7 @@ int ERSDataset::Identify( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     CPLString osHeader((const char *)poOpenInfo->pabyHeader, poOpenInfo->nHeaderBytes);
 
-    if( osHeader.ifind( "Algorithm " ) != std::string::npos )
+    if( osHeader.ifind( "Algorithm Begin" ) != std::string::npos )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "%s appears to be an algorithm ERS file, which is not currently supported.",
