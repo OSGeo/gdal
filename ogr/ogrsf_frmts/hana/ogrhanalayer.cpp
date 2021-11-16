@@ -761,6 +761,11 @@ void OGRHanaLayer::ReadGeometryExtent(int geomField, OGREnvelope* extent)
             subQuery.c_str());
     }
 
+    extent->MinX = 0.0;
+    extent->MaxX = 0.0;
+    extent->MinY = 0.0;
+    extent->MaxY = 0.0;
+
     odbc::StatementRef stmt = dataSource_->CreateStatement();
     odbc::ResultSetRef rsExtent = stmt->executeQuery(sql.c_str());
     if (rsExtent->next())
