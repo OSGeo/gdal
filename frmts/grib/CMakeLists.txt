@@ -7,7 +7,7 @@ add_gdal_driver(
           degrib/degrib/degrib2.cpp
           degrib/degrib/inventory.cpp
           degrib/degrib/metaname.cpp
-          degrib/degrib/myerror.c
+          degrib/degrib/myerror.cpp
           degrib/degrib/grib1tab.cpp
           degrib/degrib/myutil.c
           degrib/degrib/metaparse.cpp
