@@ -72,8 +72,11 @@ CPLString BuildQuery(const char* source, const char* columns)
     return BuildQuery(source, columns, nullptr, nullptr, -1);
 }
 
-CPLString BuildSpatialFilter(uint dbVersion, const OGREnvelope& env, const CPLString& clmName, int srid)
+CPLString BuildSpatialFilter(uint dbVersion, const OGRGeometry& geom, const CPLString& clmName, int srid)
 {
+    OGREnvelope env;
+    geom.getEnvelope(&env);
+
     if( (CPLIsInf(env.MinX) || CPLIsInf(env.MinY) ||
          CPLIsInf(env.MaxX) || CPLIsInf(env.MaxY)) )
         return "";
@@ -93,11 +96,12 @@ CPLString BuildSpatialFilter(uint dbVersion, const OGREnvelope& env, const CPLSt
     double maxX = clampValue(env.MaxX);
     double maxY = clampValue(env.MaxY);
 
+    // TODO: add support for non-rectangular filter, see m_bFilterIsEnvelope flag.
     if ( dbVersion == 1 )
-        return StringFormat("\"%s\".ST_IntersectsRect(ST_GeomFromText('POINT(%f %f)', %d), ST_GeomFromText('POINT(%f %f)', %d)) = 1",
+        return StringFormat("\"%s\".ST_IntersectsRect(ST_GeomFromText('POINT(%.18g %.18g)', %d), ST_GeomFromText('POINT(%.18g %.18g)', %d)) = 1",
                             clmName.c_str(), minX, minY, srid, maxX, maxY, srid);
     else
-        return StringFormat("\"%s\".ST_IntersectsRectPlanar(ST_GeomFromText('POINT(%f %f)', %d), ST_GeomFromText('POINT(%f %f)', %d)) = 1",
+        return StringFormat("\"%s\".ST_IntersectsRectPlanar(ST_GeomFromText('POINT(%.18g %.18g)', %d), ST_GeomFromText('POINT(%.18g %.18g)', %d)) = 1",
                             clmName.c_str(), minX, minY, srid, maxX, maxY, srid);
 }
 
@@ -318,11 +322,9 @@ void OGRHanaLayer::BuildWhereClause()
 
         if ( geomFieldDefn != nullptr)
         {
-            OGREnvelope env;
-            m_poFilterGeom->getEnvelope(&env);
             const GeometryColumnDescription& geomClmDesc =
                 geomColumns_[static_cast<std::size_t>(m_iGeomFieldFilter)];
-            spatialFilter = BuildSpatialFilter(dataSource_->GetMajorVersion(), env, geomClmDesc.name, geomClmDesc.srid);
+            spatialFilter = BuildSpatialFilter(dataSource_->GetMajorVersion(), *m_poFilterGeom, geomClmDesc.name, geomClmDesc.srid);
         }
     }
 
