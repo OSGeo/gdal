@@ -48,6 +48,7 @@
 #ifdef _MSC_VER
 #pragma warning( push )
 #pragma warning( disable : 4244 ) /* conversion from 'const int' to 'Guchar', possible loss of data */
+#pragma warning( disable : 4267 ) /* conversion from 'size_t' to 'int', possible loss of data */
 #endif
 
 #if !(POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 73)

@@ -28,14 +28,20 @@ target_compile_definitions(ogr_SQLite PRIVATE -DHAVE_SQLITE)
 gdal_target_link_libraries(TARGET ogr_SQLite LIBRARIES SQLite::SQLite3)
 gdal_target_link_libraries(TARGET ogr_SQLite LIBRARIES PROJ::PROJ)
 
-if (SQLITE_HAS_PCRE AND GDAL_USE_PCRE)
-  target_include_directories(ogr_SQLite PRIVATE ${PCRE_INCLUDE_DIRS})
+if (GDAL_USE_PCRE2)
+  target_compile_definitions(ogr_SQLite PRIVATE -DHAVE_PCRE2)
+  gdal_target_link_libraries(TARGET ogr_SQLite LIBRARIES PCRE2::PCRE2)
+elseif (GDAL_USE_PCRE)
   target_compile_definitions(ogr_SQLite PRIVATE -DHAVE_PCRE)
   gdal_target_link_libraries(TARGET ogr_SQLite LIBRARIES PCRE::PCRE)
 endif ()
 
-if (SQLITE_HAS_COLUMN_METADATA)
+if (SQLite3_HAS_COLUMN_METADATA)
   target_compile_definitions(ogr_SQLite PRIVATE -DSQLITE_HAS_COLUMN_METADATA)
+endif ()
+
+if (SQLite3_HAS_NON_DEPRECATED_AUTO_EXTENSION)
+  target_compile_definitions(ogr_SQLite PRIVATE -DSQLITE_HAS_NON_DEPRECATED_AUTO_EXTENSION)
 endif ()
 
 if (GDAL_USE_SPATIALITE)

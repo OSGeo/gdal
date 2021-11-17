@@ -2,8 +2,8 @@
 set -e
 
 if test "x$GDAL_SHA1SUM" != "x"; then
-        if test -f gdal_version.h; then
-                cp gdal_version.h gdal_version.h.bak
+        if test -f ../generated_headers/gdal_version.h; then
+                cp ../generated_headers/gdal_version.h gdal_version.h.bak
         else
                 touch gdal_version.h.bak
         fi
@@ -20,15 +20,15 @@ if test "x$GDAL_SHA1SUM" != "x"; then
         fi
         diff -u gdal_version.h.new gdal_version.h.bak >/dev/null || \
             (echo "Update gdal_version.h"; \
-             cp gdal_version.h.new gdal_version.h)
+             cp gdal_version.h.new ../generated_headers/gdal_version.h)
         rm -f gdal_version.h.bak
         rm -f gdal_version.h.new
 elif git log -1 >/dev/null 2>/dev/null && grep dev gdal_version.h.in >/dev/null; then
         REV=$(git log -1 --format="%h")
         DATE=$(git log -1 --date=format:'%Y%m%d' --format="%ad" 2>/dev/null) || DATE=""
         if git status --porcelain -uno | grep . >/dev/null; then REV="$REV-dirty"; fi
-        if test -f gdal_version.h; then
-                cp gdal_version.h gdal_version.h.bak
+        if test -f ../generated_headers/gdal_version.h; then
+                cp ../generated_headers/gdal_version.h gdal_version.h.bak
         else
                 touch gdal_version.h.bak
         fi
@@ -41,7 +41,7 @@ elif git log -1 >/dev/null 2>/dev/null && grep dev gdal_version.h.in >/dev/null;
         fi
         diff -u gdal_version.h.new gdal_version.h.bak >/dev/null || \
             (echo "Update gdal_version.h"; \
-             cp gdal_version.h.new gdal_version.h)
+             cp gdal_version.h.new ../generated_headers/gdal_version.h)
         rm -f gdal_version.h.bak
         rm -f gdal_version.h.new
 else
@@ -50,6 +50,6 @@ else
         cat gdal_version.h.in >> gdal_version.h.new
         diff -u gdal_version.h.new gdal_version.h 2>/dev/null >/dev/null || \
             (echo "Update gdal_version.h"; \
-             cp gdal_version.h.new gdal_version.h)
+             cp gdal_version.h.new ../generated_headers/gdal_version.h)
         rm -f gdal_version.h.new
 fi

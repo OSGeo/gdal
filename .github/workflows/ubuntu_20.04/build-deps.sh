@@ -15,7 +15,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-rec
     libnetcdf-dev libpoppler-dev libpoppler-private-dev \
     libspatialite-dev swig libhdf4-alt-dev libhdf5-serial-dev \
     libfreexl-dev unixodbc-dev libwebp-dev libepsilon-dev \
-    liblcms2-2 libpcre3-dev libcrypto++-dev libdap-dev libfyba-dev \
+    liblcms2-2 libpcre2-dev libcrypto++-dev libdap-dev libfyba-dev \
     libkml-dev libmysqlclient-dev libogdi-dev \
     libcfitsio-dev openjdk-8-jdk libzstd-dev \
     libpq-dev libssl-dev libboost-dev \
@@ -59,11 +59,12 @@ mkdir tiledb \
 ln -s /usr/lib/ogdi/libvrf.so /usr/lib
 
 # Build libjxl
-# Checkout this commit because of https://github.com/libjxl/libjxl/issues/771
-JXL_SHA1=f34a2667fe3195bfa06b4dae2e6ea598ad9e3d9f
+# libjxl being still unstable, if the main branch fails to compile/test
+# you can replace JXL_TREEISH=main by JXL_TREEISH=sha1_of_known_working_commit
+JXL_TREEISH=main
 git clone https://github.com/libjxl/libjxl.git --recursive \
     && cd libjxl \
-    && git checkout ${JXL_SHA1} \
+    && git checkout ${JXL_TREEISH} \
     && mkdir build \
     && cd build \
     && cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF .. \

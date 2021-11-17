@@ -50,10 +50,10 @@ def test_tiledb_write_complex(mode):
 
     new_ds = gdaltest.tiledb_drv.CreateCopy('tmp/tiledb_complex64', src_ds, options=options)
     meta = new_ds.GetMetadata('IMAGE_STRUCTURE')
-    assert meta['INTERLEAVE'] == mode, 'Didn\'t get expected mode'
+    assert meta['INTERLEAVE'] == mode, 'Did not get expected mode'
 
     bnd = new_ds.GetRasterBand(1)
-    assert bnd.Checksum() == 5028, 'Didn\'t get expected checksum on still-open file'
+    assert bnd.Checksum() == 5028, 'Did not get expected checksum on still-open file'
 
     bnd = None
     new_ds = None
@@ -74,10 +74,10 @@ def test_tiledb_write_custom_blocksize(mode):
     new_ds = gdaltest.tiledb_drv.CreateCopy('tmp/tiledb_custom', src_ds,
                                         options=options)
     meta = new_ds.GetMetadata('IMAGE_STRUCTURE')
-    assert meta['INTERLEAVE'] == mode, 'Didn\'t get expected mode'
+    assert meta['INTERLEAVE'] == mode, 'Did not get expected mode'
 
     bnd = new_ds.GetRasterBand(1)
-    assert bnd.Checksum() == 50054, 'Didn\'t get expected checksum on still-open file'
+    assert bnd.Checksum() == 50054, 'Did not get expected checksum on still-open file'
     assert bnd.GetBlockSize() == [32, 32]
 
     bnd = None
@@ -102,7 +102,7 @@ def test_tiledb_write_update(mode):
     new_ds = gdaltest.tiledb_drv.Create('tmp/tiledb_update', 20, 20, 1, gdal.GDT_Byte, options=options)
     new_ds.GetRasterBand(1).WriteArray(np.zeros((20, 20)))
     meta = new_ds.GetMetadata('IMAGE_STRUCTURE')
-    assert meta['INTERLEAVE'] == mode, 'Didn\'t get expected mode'
+    assert meta['INTERLEAVE'] == mode, 'Did not get expected mode'
     del new_ds
 
     update_ds = gdal.Open('tmp/tiledb_update', gdal.GA_Update)
@@ -113,7 +113,7 @@ def test_tiledb_write_update(mode):
     update_ds = None
 
     test_ds = gdal.Open('tmp/tiledb_update')
-    assert test_ds.GetRasterBand(1).Checksum() == 1217, 'Didn\'t get expected checksum on file update' 
+    assert test_ds.GetRasterBand(1).Checksum() == 1217, 'Did not get expected checksum on file update'
     test_ds = None
 
     gdaltest.tiledb_drv.Delete('tmp/tiledb_update')
@@ -133,10 +133,10 @@ def test_tiledb_write_rgb(mode):
     ]
     new_ds = gdaltest.tiledb_drv.CreateCopy('tmp/tiledb_rgb', src_ds, options=options)
     meta = new_ds.GetMetadata('IMAGE_STRUCTURE')
-    assert meta['INTERLEAVE'] == mode, 'Didn\'t get expected mode'
-    assert new_ds.RasterCount == 3, 'Didn\'t get expected band count'
+    assert meta['INTERLEAVE'] == mode, 'Did not get expected mode'
+    assert new_ds.RasterCount == 3, 'Did not get expected band count'
     bnd = new_ds.GetRasterBand(2)
-    assert bnd.Checksum() == 21053, 'Didn\'t get expected checksum on still-open file'
+    assert bnd.Checksum() == 21053, 'Did not get expected checksum on still-open file'
 
     new_ds = None
 
@@ -169,7 +169,7 @@ def test_tiledb_write_attributes(mode):
     assert new_ds.RasterYSize == src_ds.RasterYSize
     assert new_ds.RasterCount == src_ds.RasterCount
     meta = new_ds.GetMetadata('IMAGE_STRUCTURE')
-    assert meta['INTERLEAVE'] == mode, 'Didn\'t get expected mode'
+    assert meta['INTERLEAVE'] == mode, 'Did not get expected mode'
 
     new_ds = None
 
@@ -244,7 +244,7 @@ def test_tiledb_write_band_meta(mode):
     new_ds = gdaltest.tiledb_drv.CreateCopy('tmp/tiledb_meta', src_ds, options=options)
 
     meta = new_ds.GetMetadata('IMAGE_STRUCTURE')
-    assert meta['INTERLEAVE'] == mode, 'Didn\'t get expected mode'
+    assert meta['INTERLEAVE'] == mode, 'Did not get expected mode'
 
     bnd = new_ds.GetRasterBand(1)
     bnd.SetMetadataItem('Item', 'Value')
@@ -254,6 +254,7 @@ def test_tiledb_write_band_meta(mode):
 
     new_ds = gdal.Open('tmp/tiledb_meta')
     assert new_ds.GetRasterBand(1).GetMetadataItem('Item') == 'Value'
+    new_ds = None
 
     gdaltest.tiledb_drv.Delete('tmp/tiledb_meta')
 
@@ -279,7 +280,7 @@ def test_tiledb_write_history(mode):
     new_ds.GetRasterBand(1).WriteArray(np.zeros((20, 20)))
 
     meta = new_ds.GetMetadata('IMAGE_STRUCTURE')
-    assert meta['INTERLEAVE'] == mode, 'Didn\'t get expected mode'
+    assert meta['INTERLEAVE'] == mode, 'Did not get expected mode'
     del new_ds
 
     ts = [2, 3, 4, 5]

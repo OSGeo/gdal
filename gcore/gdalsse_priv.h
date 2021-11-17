@@ -504,11 +504,11 @@ class XMMReg2Double
     static inline XMMReg2Double Ternary(const XMMReg2Double& cond, const XMMReg2Double& true_expr, const XMMReg2Double& false_expr)
     {
         XMMReg2Double reg;
-        if( cond.low )
+        if( cond.low != 0 )
             reg.low = true_expr.low;
         else
             reg.low = false_expr.low;
-        if( cond.high )
+        if( cond.high != 0 )
             reg.high = true_expr.high;
         else
             reg.high = false_expr.high;
@@ -717,8 +717,8 @@ class XMMReg2Double
 
     inline void Store2Val(float* ptr) const
     {
-        ptr[0] = low;
-        ptr[1] = high;
+        ptr[0] = static_cast<float>(low);
+        ptr[1] = static_cast<float>(high);
     }
 
     void Store2Val(unsigned char* ptr) const

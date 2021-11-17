@@ -23,12 +23,11 @@ add_gdal_driver(
 gdal_standard_includes(ogr_ILI)
 
 if (GDAL_USE_XERCESC)
-  target_include_directories(ogr_ILI PRIVATE ${XercesC_INCLUDE_DIRS} ${XercesC_INCLUDE_DIRS}/xercesc)
+  target_include_directories(ogr_ILI PRIVATE ${XercesC_INCLUDE_DIRS}/xercesc)
   target_compile_definitions(ogr_ILI PRIVATE -DHAVE_XERCES)
   gdal_target_link_libraries(TARGET ogr_ILI LIBRARIES XercesC::XercesC)
 endif ()
 if (GDAL_USE_GEOS)
-  target_include_directories(ogr_ILI PRIVATE ${GEOS_INCLUDE_DIRS})
   target_compile_definitions(ogr_ILI PRIVATE -DHAVE_GEOS=1)
   gdal_target_link_libraries(TARGET ogr_ILI LIBRARIES GEOS::GEOS)
 endif ()

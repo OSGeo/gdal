@@ -32,6 +32,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "cpl_hash_set.h"
+#include <cctype>
 #include <set>
 
 #define PQexec this_is_an_error
@@ -2925,8 +2926,8 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
                                         const char *pszDialect )
 
 {
-    /* Skip leading spaces */
-    while(*pszSQLCommand == ' ')
+    /* Skip leading whitespace characters */
+    while(std::isspace(static_cast<unsigned char>(*pszSQLCommand)))
         pszSQLCommand ++;
 
     FlushCache(false);

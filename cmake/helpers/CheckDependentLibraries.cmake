@@ -23,12 +23,16 @@ include(DefineFindPackage2)
 macro(gdal_check_package name purpose)
     set(_options CAN_DISABLE RECOMMENDED DISABLED_BY_DEFAULT)
     set(_oneValueArgs )
-    set(_multiValueArgs)
+    set(_multiValueArgs COMPONENTS)
     cmake_parse_arguments(_GCP "${_options}" "${_oneValueArgs}" "${_multiValueArgs}" ${ARGN})
     string(TOUPPER ${name} key)
     find_package2(${name} QUIET)
     if(NOT DEFINED ${key}_FOUND)
-        find_package(${name})
+        if(_GCP_COMPONENTS)
+            find_package(${name} COMPONENTS ${_GCP_COMPONENTS})
+        else()
+            find_package(${name})
+        endif()
     endif()
     if(${key}_FOUND OR ${name}_FOUND)
         set(HAVE_${key} ON)
@@ -89,6 +93,41 @@ find_package(Boost)
 gdal_check_package(CURL "Enable drivers to use web API" CAN_DISABLE)
 
 gdal_check_package(Iconv "Character set recoding (used in GDAL portability library)" CAN_DISABLE)
+
+if (Iconv_FOUND)
+  set(CMAKE_REQUIRED_INCLUDES ${Iconv_INCLUDE_DIR})
+  set(CMAKE_REQUIRED_LIBRARIES ${Iconv_LIBRARY})
+  if (MSVC)
+    set(CMAKE_REQUIRED_FLAGS "/WX")
+  else ()
+    set(CMAKE_REQUIRED_FLAGS "-Werror")
+  endif ()
+
+  set(ICONV_CONST_TEST_CODE
+      "#include <stdlib.h>
+    #include <iconv.h>
+    int main(){
+      iconv_t conv = 0;
+      char* in = 0;
+      size_t ilen = 0;
+      char* out = 0;
+      size_t olen = 0;
+      size_t ret = iconv(conv, &in, &ilen, &out, &olen);
+      return (size_t)ret;
+    }")
+  check_cxx_source_compiles("${ICONV_CONST_TEST_CODE}" _ICONV_SECOND_ARGUMENT_IS_NOT_CONST)
+  if (_ICONV_SECOND_ARGUMENT_IS_NOT_CONST)
+    set(ICONV_CPP_CONST "")
+  else ()
+    set(ICONV_CPP_CONST "const")
+  endif ()
+  unset(ICONV_CONST_TEST_CODE)
+  unset(_ICONV_SECOND_ARGUMENT_IS_NOT_CONST)
+  unset(CMAKE_REQUIRED_INCLUDES)
+  unset(CMAKE_REQUIRED_LIBRARIES)
+  unset(CMAKE_REQUIRED_FLAGS)
+endif ()
+
 gdal_check_package(LibXml2 "Read and write XML formats" CAN_DISABLE)
 
 gdal_check_package(EXPAT "Read and write XML formats" RECOMMENDED)
@@ -223,9 +262,28 @@ else()
 endif()
 
 # 3rd party libraries
-gdal_check_package(PCRE "Enable PCRE support for sqlite3" CAN_DISABLE)
+
+gdal_check_package(PCRE2 "Enable PCRE2 support for sqlite3" CAN_DISABLE)
+if(NOT GDAL_USE_PCRE)
+    gdal_check_package(PCRE "Enable PCRE support for sqlite3" CAN_DISABLE)
+endif()
 
 gdal_check_package(SQLite3 "Enable SQLite3 support (used by SQLite/Spatialite, GPKG, Rasterlite, MBTiles, etc.)" CAN_DISABLE RECOMMENDED)
+if (SQLite3_FOUND)
+  if (NOT DEFINED SQLite3_HAS_COLUMN_METADATA)
+    message(FATAL_ERROR "missing SQLite3_HAS_COLUMN_METADATA")
+  endif()
+  if (NOT DEFINED SQLite3_HAS_RTREE)
+    message(FATAL_ERROR "missing SQLite3_HAS_RTREE")
+  endif()
+  if (GDAL_USE_SQLITE3 AND NOT SQLite3_HAS_RTREE)
+    if (NOT ACCEPT_MISSING_SQLITE3_RTREE)
+      message(FATAL_ERROR "${SQLite3_LIBRARIES} lacks the RTree extension! Spatialite and GPKG will not behave properly. Define ACCEPT_MISSING_SQLITE3_RTREE:BOOL=ON option if you want to build despite this limitation.")
+    else()
+      message(WARNING "${SQLite3_LIBRARIES} lacks the RTree extension! Spatialite and GPKG will not behave properly.")
+    endif()
+  endif()
+endif ()
 
 gdal_check_package(SPATIALITE "Enable spatialite support for sqlite3" CAN_DISABLE)
 
@@ -265,6 +323,8 @@ if(HAVE_JASPER)
     set(CMAKE_REQUIRED_QUIET "yes")
     set(CMAKE_REQUIRED_LIBRARIES jasper)
     check_c_source_compiles("#ifdef __cplusplus\nextern \"C\"\n#endif\n char jp2_encode_uuid ();int main () {return jp2_encode_uuid ();;return 0;}" HAVE_JASPER_UUID)
+    unset(CMAKE_REQUIRED_QUIET)
+    unset(CMAKE_REQUIRED_LIBRARIES)
     if(HAVE_JASPER_UUID)
         message(STATUS "Jasper GeoJP2 UUID hack detected.")
         if(TARGET JASPER::Jasper)
@@ -274,7 +334,8 @@ if(HAVE_JASPER)
     endif()
 endif()
 
-gdal_check_package(HDF5 "Enable HDF5" CAN_DISABLE)
+# CXX is only needed for KEA driver
+gdal_check_package(HDF5 "Enable HDF5" COMPONENTS "C" "CXX" CAN_DISABLE)
 
 gdal_check_package(WebP "WebP compression" CAN_DISABLE)
 gdal_check_package(FreeXL "Enable XLS driver" CAN_DISABLE)
@@ -285,7 +346,7 @@ gdal_check_package(Armadillo "C++ library for linear algebra (used for TPS trans
 gdal_check_package(CFITSIO "C FITS I/O library" CAN_DISABLE)
 gdal_check_package(GEOS "Geometry Engine - Open Source (GDAL core dependency)" RECOMMENDED CAN_DISABLE)
 gdal_check_package(HDF4 "Enable HDF4 driver" CAN_DISABLE)
-gdal_check_package(KEA "")
+gdal_check_package(KEA "Enable KEA driver" CAN_DISABLE)
 gdal_check_package(ECW "Enable ECW driver")
 gdal_check_package(NetCDF "Enable netCDF driver" CAN_DISABLE)
 gdal_check_package(OGDI "Enable ogr_OGDI driver")
@@ -297,6 +358,7 @@ gdal_check_package(SOSI  "enable ogr_SOSI driver")
 gdal_check_package(LibLZMA "LZMA compression" CAN_DISABLE)
 gdal_check_package(LZ4 "LZ4 compression" CAN_DISABLE)
 gdal_check_package(Blosc "Blosc compression" CAN_DISABLE)
+gdal_check_package(JXL "JPEG-XL compression (when used with internal libtiff)" CAN_DISABLE)
 gdal_check_package(CharLS "enable gdal_JPEGLS jpeg loss-less driver" CAN_DISABLE)
 gdal_check_package(OpenMP "")
 gdal_check_package(Crnlib "enable gdal_DDS driver")
@@ -304,6 +366,7 @@ gdal_check_package(IDB "enable ogr_IDB driver")
 # TODO: implement FindRASDAMAN
 # libs: -lrasodmg -lclientcomm -lcompression -lnetwork -lraslib
 gdal_check_package(RASDAMAN "enable rasdaman driver")
+gdal_check_package(rdb "enable RIEGL RDB library" CAN_DISABLE)
 gdal_check_package(TileDB "enable TileDB driver" CAN_DISABLE)
 gdal_check_package(OpenEXR "OpenEXR >=2.2" CAN_DISABLE)
 
@@ -348,14 +411,17 @@ else()
     set(HAVE_PDFLIB OFF)
 endif()
 
+set(Oracle_CAN_USE_CLNTSH_AS_MAIN_LIBRARY ON)
 gdal_check_package(Oracle "Enable Oracle OCI driver")
 gdal_check_package(TEIGHA "")
+gdal_check_package(FileGDB "Enable FileGDB (based on closed-source SDK) driver" CAN_DISABLE)
+
+option(GDAL_USE_MSG "Set ON to build MSG driver and download external https://gitlab.eumetsat.int/open-source/PublicDecompWT" OFF)
 
 # proprietary libraries
 # KAKADU
-gdal_check_package(KDU "Enable KAKADU")
-# LURATECH JPEG2000 SDK
-set(LURATECH_JP2SDK_DIRECTORY "" CACHE STRING "LURATECH JP2SDK library base directory")
+gdal_check_package(KDU "Enable KAKADU" CAN_DISABLE)
+gdal_check_package(LURATECH "Enable JP2Lura driver" CAN_DISABLE)
 gdal_check_package(FME "FME")
 
 # bindings

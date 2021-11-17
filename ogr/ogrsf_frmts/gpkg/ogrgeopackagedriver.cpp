@@ -430,7 +430,7 @@ void RegisterOGRGeoPackage()
 
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GeoPackage" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gpkg" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/geopackage.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/gpkg.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte Int16 UInt16 Float32" );
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, "<OpenOptionList>"

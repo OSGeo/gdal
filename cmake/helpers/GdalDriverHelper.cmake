@@ -147,10 +147,23 @@ function(add_gdal_driver)
                               PROPERTIES
                               PREFIX ""
                               LIBRARY_OUTPUT_DIRECTORY ${PLUGIN_OUTPUT_DIR}
+                              SKIP_BUILD_RPATH YES
                               )
+        # The following doesn't work: we have to manually tweak will install_name_tool
+        #if (GDAL_ENABLE_MACOSX_FRAMEWORK)
+        #    set_target_properties(${_DRIVER_TARGET}
+        #                          PROPERTIES
+        #                          INSTALL_RPATH "@loader_path/../../../..")
+        #endif()
         target_link_libraries(${_DRIVER_TARGET} PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)
         install(FILES $<TARGET_LINKER_FILE:${_DRIVER_TARGET}> DESTINATION ${INSTALL_PLUGIN_DIR}
                 RENAME "${_DRIVER_TARGET}${CMAKE_SHARED_LIBRARY_SUFFIX}" NAMELINK_SKIP)
+        if (GDAL_ENABLE_MACOSX_FRAMEWORK)
+            file(RELATIVE_PATH relDir
+                 ${CMAKE_CURRENT_BINARY_DIR}/${INSTALL_PLUGIN_DIR}
+                 ${CMAKE_CURRENT_BINARY_DIR}/${FRAMEWORK_DESTINATION})
+            install(CODE "execute_process(COMMAND install_name_tool -add_rpath \"@loader_path/${relDir}\" \"$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/${INSTALL_PLUGIN_DIR}/${_DRIVER_TARGET}${CMAKE_SHARED_LIBRARY_SUFFIX}\")")
+        endif()
         set_property(GLOBAL APPEND PROPERTY PLUGIN_MODULES ${_DRIVER_TARGET})
     else ()
         add_library(${_DRIVER_TARGET} OBJECT ${_DRIVER_SOURCES})
@@ -247,6 +260,16 @@ endmacro()
 
 include(CMakeDependentOption)
 
+macro(check_depend_condition depends)
+    foreach(_dep IN ITEMS ${depends})
+        if( "${_dep}" MATCHES "GDAL_ENABLE_FRMT_" OR "${_dep}" MATCHES "OGR_ENABLE_")
+            if(NOT DEFINED "${_dep}")
+                message(FATAL_ERROR "Condition ${depends} refers to variable ${_dep} which is not defined")
+            endif()
+        endif()
+    endforeach()
+endmacro()
+
 # gdal_dependent_format(format desc depend) do followings:
 # - add subdirectory 'format'
 # - define option "GDAL_ENABLE_FRMT_NAME" then set to default OFF/ON
@@ -262,6 +285,7 @@ macro(gdal_dependent_format format desc depends)
     else()
         string(TOUPPER ${format} key)
     endif()
+    check_depend_condition(${depends})
     cmake_dependent_option(GDAL_ENABLE_FRMT_${key} "Set ON to build ${desc} format" ${GDAL_BUILD_OPTIONAL_DRIVERS}
                            "${depends}" OFF)
     add_feature_info(gdal_${key} GDAL_ENABLE_FRMT_${key} "${desc}")
@@ -301,8 +325,11 @@ endmacro()
 
 macro(ogr_dependent_driver name desc depend)
     string(TOUPPER ${name} key)
-    cmake_dependent_option(OGR_ENABLE_${key} "Set ON to build OGR ${desc} driver" ${OGR_BUILD_OPTIONAL_DRIVERS}
-                           "${depend}" OFF)
+    check_depend_condition(${depend})
+    if( NOT("${key}" STREQUAL "GPKG" OR "${key}" STREQUAL "SQLITE" OR "${key}" STREQUAL "AVC") )
+        cmake_dependent_option(OGR_ENABLE_${key} "Set ON to build OGR ${desc} driver" ${OGR_BUILD_OPTIONAL_DRIVERS}
+                               "${depend}" OFF)
+    endif()
     add_feature_info(ogr_${key} OGR_ENABLE_${key} "${desc}")
     if (OGR_ENABLE_${key})
         add_subdirectory(${name})

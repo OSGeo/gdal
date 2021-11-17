@@ -97,10 +97,10 @@ Configuration file
 ------------------
 
 A default configuration file
-`gmlasconf.xml <http://github.com/OSGeo/gdal/blob/master/gdal/data/gmlasconf.xml>`__
+`gmlasconf.xml <http://github.com/OSGeo/gdal/blob/master/data/gmlasconf.xml>`__
 file is provided in the data directory of the GDAL installation. Its
 structure and content is documented in
-`gmlasconf.xsd <http://github.com/OSGeo/gdal/blob/master/gdal/data/gmlasconf.xsd>`__
+`gmlasconf.xsd <http://github.com/OSGeo/gdal/blob/master/data/gmlasconf.xsd>`__
 schema.
 
 This configuration file enables the user to modify the following
@@ -186,7 +186,7 @@ Open options
    links in its root element.
 -  **CONFIG_FILE**\ =filename or inline XML definition: filename of a
    XML configuration file conforming to the
-   `gmlasconf.xsd <https://github.com/OSGeo/gdal/blob/master/gdal/data/gmlasconf.xsd>`__
+   `gmlasconf.xsd <https://github.com/OSGeo/gdal/blob/master/data/gmlasconf.xsd>`__
    schema. It is also possible to provide the XML content directly
    inlined provided that the very first characters are <Configuration.
 -  **EXPOSE_METADATA_LAYERS**\ =YES/NO: whether the metadata layers
@@ -299,7 +299,7 @@ The supported dataset creation options are:
    schemas and locations filled.
 -  **CONFIG_FILE**\ =filename or inline XML definition: filename of a
    XML configuration file conforming to the
-   `gmlasconf.xsd <https://github.com/OSGeo/gdal/blob/master/gdal/data/gmlasconf.xsd>`__
+   `gmlasconf.xsd <https://github.com/OSGeo/gdal/blob/master/data/gmlasconf.xsd>`__
    schema. It is also possible to provide the XML content directly
    inlined provided that the very first characters are <Configuration>.
 -  **LAYERS**\ =layers. Comma separated list of layers to export as

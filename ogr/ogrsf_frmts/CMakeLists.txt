@@ -8,6 +8,7 @@ target_include_directories(ogrsf_frmts PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT
                                                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/generic>)
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:ogrsf_frmts>)
 set_property(TARGET ogrsf_frmts PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
+add_dependencies(ogrsf_frmts generate_gdal_version_h)
 
 # Obligatory for building GDAL; always compile in.
 ogr_default_driver(mem "Read/write driver for MEMORY virtual files")
@@ -19,6 +20,7 @@ ogr_default_driver(shape "ESRI shape-file")
 ogr_default_driver(kml KML) # when not found EXPAT, it use CPL_MINIXML (ex. android)
 ogr_default_driver(vrt "VRT - Virtual Format")
 
+# Caution: if modifying AVC declaration here, also modify it in gdal.cmake
 ogr_optional_driver(avc AVC)
 
 ogr_optional_driver(sdts SDTS) # depends ISO8211
@@ -59,7 +61,7 @@ ogr_dependent_driver(svg "Scalable Vector Graphics" "HAVE_EXPAT")
 ogr_dependent_driver(csw CSW "GDAL_USE_CURL")
 ogr_dependent_driver(dods DODS "GDAL_USE_DAP;GDAL_USE_LIBXML2")
 ogr_dependent_driver(dwg DWG "HAVE_TEIGHA")
-ogr_dependent_driver(filegdb FileGDB "HAVE_FGDB")
+ogr_dependent_driver(filegdb FileGDB "GDAL_USE_FILEGDB")
 ogr_dependent_driver(libkml LibKML "GDAL_USE_LIBKML")
 ogr_dependent_driver(nas "NAS/ALKIS" "GDAL_USE_XERCESC")
 ogr_dependent_driver(plscenes PLSCENES "GDAL_USE_CURL")
@@ -73,7 +75,9 @@ ogr_optional_driver(idrisi IDRISI)
 
 ogr_dependent_driver(pds "Planetary Data Systems TABLE" "GDAL_ENABLE_FRMT_PDS")
 
+# Caution: if modifying SQLite declaration here, also modify it in gdal.cmake
 ogr_dependent_driver(sqlite "SQLite3 / Spatialite RDBMS" "GDAL_USE_SQLITE3")
+# Caution: if modifying GPKG declaration here, also modify it in gdal.cmake
 ogr_dependent_driver(gpkg "GeoPackage" "GDAL_USE_SQLITE3;OGR_ENABLE_SQLITE")
 ogr_dependent_driver(osm "OpenStreetMap XML and PBF" "GDAL_USE_SQLITE3;OGR_ENABLE_SQLITE")
 ogr_dependent_driver(vfk "Czech Cadastral Exchange Data Format" "GDAL_USE_SQLITE3")

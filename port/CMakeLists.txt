@@ -100,7 +100,8 @@ set(CPL_SOURCES
     cpl_json_streaming_writer.cpp
     cpl_userfaultfd.cpp
     cpl_vax.cpp
-    cpl_compressor.cpp)
+    cpl_compressor.cpp
+    cpl_float.cpp)
 add_library(cpl OBJECT ${CPL_SOURCES})
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:cpl>)
 target_compile_options(cpl PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX})
@@ -258,7 +259,7 @@ endif ()
 
 if (GDAL_USE_LIBLZMA)
   target_compile_definitions(cpl PRIVATE -DHAVE_LZMA)
-  target_include_directories(cpl PRIVATE $<TARGET_PROPERTY:LibLZMA::LibLZMA,INTERFACE_INCLUDE_DIRECTORIES>)
+  target_include_directories(cpl SYSTEM PRIVATE $<TARGET_PROPERTY:LibLZMA::LibLZMA,INTERFACE_INCLUDE_DIRECTORIES>)
   gdal_add_private_link_libraries(LibLZMA::LibLZMA)
 endif ()
 

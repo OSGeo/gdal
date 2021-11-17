@@ -50,22 +50,18 @@ endif ()
 # Now external libs
 
 if (NOT GDAL_USE_LIBJPEG_INTERNAL)
-  target_include_directories(gdal_MRF PRIVATE ${JPEG_INCLUDE_DIRS})
   gdal_target_link_libraries(TARGET gdal_MRF LIBRARIES JPEG::JPEG)
 endif ()
 
 if (NOT GDAL_USE_LIBPNG_INTERNAL)
-  target_include_directories(gdal_MRF PRIVATE ${PNG_INCLUDE_DIRS})
   gdal_target_link_libraries(TARGET gdal_MRF LIBRARIES PNG::PNG)
 endif ()
 
 if (NOT GDAL_USE_LIBZ_INTERNAL)
-  target_include_directories(gdal_MRF PRIVATE ${ZLIB_INCLUDE_DIRS})
   gdal_target_link_libraries(TARGET gdal_MRF LIBRARIES ZLIB::ZLIB)
 endif ()
 
 if (GDAL_USE_ZSTD)
   target_compile_definitions(gdal_MRF PRIVATE -DZSTD_SUPPORT)
-  target_include_directories(gdal_MRF PRIVATE ${ZSTD_INCLUDE_DIRS})
   gdal_target_link_libraries(TARGET gdal_MRF LIBRARIES ZSTD::zstd)
 endif ()

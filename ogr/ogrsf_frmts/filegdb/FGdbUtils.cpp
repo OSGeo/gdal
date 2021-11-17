@@ -516,8 +516,7 @@ std::string FGDBEscapeUnsupportedPrefixes(const std::string& className)
 std::string FGDBEscapeReservedKeywords(const std::string& name)
 {
     std::string newName = name;
-    std::string upperName = name;
-    std::transform(upperName.begin(), upperName.end(), upperName.begin(), ::toupper);
+    std::string upperName = CPLString(name).toupper();
 
     // From ESRI docs
     static const char* const RESERVED_WORDS[] = {FGDB_OID_NAME, "ADD", "ALTER", "AND", "AS", "ASC", "BETWEEN",

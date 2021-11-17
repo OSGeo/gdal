@@ -142,6 +142,7 @@ CWD=${PWD}
 #
 echo "* Generating ./configure..."
 ./autogen.sh
+rm -rf autom4te.cache
 
 #
 # Generate man pages

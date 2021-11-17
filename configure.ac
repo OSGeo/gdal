@@ -36,7 +36,7 @@ AC_INIT
 AC_CONFIG_SRCDIR([GDALmake.opt.in])
 AC_SUBST(PACKAGE, gdal)
 AC_CONFIG_MACRO_DIR(m4)
-AC_CONFIG_HEADERS([port/cpl_config.h:port/cpl_config.h.in])
+AC_CONFIG_HEADERS([generated_headers/cpl_config.h:port/cpl_config.h.in])
 AH_TOP([#ifndef CPL_CONFIG_H])
 AH_TOP([#define CPL_CONFIG_H])
 AH_BOTTOM([#include "cpl_config_extras.h"])
@@ -4491,6 +4491,43 @@ AC_SUBST([HAVE_RASTERLITE2], $HAVE_RASTERLITE2)
 AC_SUBST([RASTERLITE2_CFLAGS], $RASTERLITE2_CFLAGS)
 
 dnl ---------------------------------------------------------------------------
+dnl Check for PCRE2.
+dnl ---------------------------------------------------------------------------
+
+HAVE_PCRE2=no
+
+AC_ARG_WITH(pcre2,
+    [  --with-pcre2             Include libpcre2 support (REGEXP support for SQLite)],
+    ,,)
+
+if test "$with_pcre2" = "no"; then
+    AC_MSG_RESULT(disabled)
+    HAVE_PCRE2=no
+else
+    save_CPPFLAGS="$CPPFLAGS"
+    CPPFLAGS="$CPPFLAGS -DPCRE2_CODE_UNIT_WIDTH=8"
+    AC_CHECK_HEADERS([pcre2.h])
+    CPPFLAGS="$save_CPPFLAGS"
+    if test "$ac_cv_header_pcre2_h" = "no" ; then
+        if test "$with_pcre2" = "yes"; then
+            AC_MSG_ERROR([cannot find pcre2.h])
+        fi
+    else
+        AC_CHECK_LIB(pcre2-8,pcre2_compile_8,HAVE_PCRE2=yes,HAVE_PCRE2=no,)
+        if test "$HAVE_PCRE2" = "yes" ; then
+            HAVE_PCRE2=yes
+            LIBS="$LIBS -lpcre2-8"
+        else
+            if test "$with_pcre2" = "yes"; then
+                AC_MSG_ERROR([cannot find libpcre2])
+            fi
+        fi
+    fi
+fi
+
+AC_SUBST(HAVE_PCRE2)
+
+dnl ---------------------------------------------------------------------------
 dnl Check for PCRE.
 dnl ---------------------------------------------------------------------------
 
@@ -4503,7 +4540,7 @@ AC_ARG_WITH(pcre,
 if test "$with_pcre" = "no"; then
     AC_MSG_RESULT(disabled)
     HAVE_PCRE=no
-else
+elif test "$HAVE_PCRE2" = "no"; then
     AC_CHECK_HEADERS([pcre.h])
     if test "$ac_cv_header_pcre_h" = "no" ; then
         if test "$with_pcre" = "yes"; then
@@ -6091,6 +6128,10 @@ else
     saved_LIBS="$LIBS"
     LIBS="$EXR_LIBS"
     AC_CHECK_LIB(IlmImf,ImfTiledInputReadTile, [HAVE_EXR=yes], [HAVE_EXR=no])
+    if test "$HAVE_EXR" = "no"; then
+      dnl Try with OpenEXR >= 3 name
+      AC_CHECK_LIB(OpenEXR,ImfTiledInputReadTile, [HAVE_EXR=yes], [HAVE_EXR=no])
+    fi
     LIBS="$saved_LIBS"
 
     if test "$HAVE_EXR" = "yes"; then
@@ -6307,6 +6348,7 @@ LOC_MSG([  OpenJPEG support:          ${HAVE_OPENJPEG}])
 LOC_MSG([  PCIDSK support:            ${PCIDSK_SETTING}])
 LOC_MSG([  PCRaster support:          ${PCRASTER_SETTING}])
 LOC_MSG([  PCRE support:              ${HAVE_PCRE}])
+LOC_MSG([  PCRE2 support:             ${HAVE_PCRE2}])
 LOC_MSG([  PDFium support:            ${HAVE_PDFIUM}])
 LOC_MSG([  Podofo support:            ${HAVE_PODOFO}])
 LOC_MSG([  Poppler support:           ${HAVE_POPPLER}])

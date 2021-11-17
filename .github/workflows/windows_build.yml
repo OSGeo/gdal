@@ -233,7 +233,9 @@ jobs:
             dotnet nuget add source https://api.nuget.org/v3/index.json -n nuget.org
             dotnet restore
             exec { nmake /f makefile.vc interface }
-            exec { nmake /f makefile.vc all $env:WIN64_ARG }
+            # all disabled because of https://github.com/OSGeo/gdal/issues/4792
+            # exec { nmake /f makefile.vc all $env:WIN64_ARG}
+            exec { nmake /f makefile.vc ogr_dir gdal_dir osr_dir const_dir gdal_csharp $env:WIN64_ARG}
             cd $env:GITHUB_WORKSPACE\autotest\cpp
             exec { nmake /f makefile.vc MSVC_VER=$env:MSVC_VER $env:WIN64_ARG }
 
@@ -265,5 +267,6 @@ jobs:
             cd $env:GITHUB_WORKSPACE\autotest
             pip install -Ur requirements.txt
             exec { pytest -vv }
-            cd $env:GITHUB_WORKSPACE\swig\csharp
-            exec { nmake /f makefile.vc test }
+            # disabled because of https://github.com/OSGeo/gdal/issues/4792
+            # cd $env:GITHUB_WORKSPACE\swig\csharp
+            # exec { nmake /f makefile.vc test }

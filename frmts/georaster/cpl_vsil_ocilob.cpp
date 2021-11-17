@@ -322,8 +322,8 @@ size_t VSIOCILobHandle::Read( void* pBuffer, size_t nSize, size_t nCount )
 
     GUIntBig nRead = poStatement->ReadBlob( phLocator,
                                             pBuffer,
-                                            (nCurOff + 1),
-                                            nBytes  );
+                                            static_cast<unsigned long>(nCurOff + 1),
+                                            static_cast<unsigned long>(nBytes)  );
 
     nCurOff += (GUIntBig) nRead;
 
@@ -347,8 +347,8 @@ size_t VSIOCILobHandle::Write( const void * pBuffer,
 
     GUIntBig nWrite = poStatement->WriteBlob( phLocator,
                                               (void*) pBuffer,
-                                              (nCurOff + 1),
-                                              nBytes );
+                                              static_cast<unsigned long>(nCurOff + 1),
+                                              static_cast<unsigned long>(nBytes) );
 
     nCurOff += (GUIntBig) nWrite;
 

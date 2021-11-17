@@ -44,6 +44,7 @@ def gather_redirects(src_dir):
     output.update({ 'ogr_apitut.html' : os.path.join('./tutorials', 'vector_api_tut') + '.html' })
     output.update({ 'ogr/ogr_arch.html' : os.path.join('../user', 'vector_data_model') + '.html' })
     output.update({ 'ogr_arch.html' : os.path.join('./user', 'vector_data_model') + '.html' })
+    output.update({ 'drivers/vector/geopackage.html' : os.path.join('../../drivers/vector', 'gpkg') + '.html' })
 
     # Legacy WFS3 renamed as OAPIF
     output.update({ 'drv_wfs3.html' : os.path.join('./drivers/vector', 'oapif') + '.html' })

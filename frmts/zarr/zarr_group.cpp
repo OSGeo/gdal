@@ -677,35 +677,45 @@ bool ZarrGroupV2::InitFromZGroup(const CPLJSONObject& obj)
 
         const auto vars = nczarrGroup["vars"].ToArray();
         // open first indexing variables
+        std::set<std::string> oSetIndexingArrayNames;
         for( const auto& var: vars )
         {
             const auto osVarName = var.ToString();
             if( IsValidName(osVarName) &&
-                m_oMapDimensions.find(osVarName) != m_oMapDimensions.end() )
+                m_oMapDimensions.find(osVarName) != m_oMapDimensions.end() &&
+                m_oMapMDArrays.find(osVarName) == m_oMapMDArrays.end() &&
+                oSetIndexingArrayNames.find(osVarName) == oSetIndexingArrayNames.end() )
             {
-                m_aosArrays.emplace_back(osVarName);
+                oSetIndexingArrayNames.insert(osVarName);
                 OpenMDArray(osVarName);
             }
         }
 
         // add regular arrays
+        std::set<std::string> oSetRegularArrayNames;
         for( const auto& var: vars )
         {
             const auto osVarName = var.ToString();
             if( IsValidName(osVarName) &&
-                m_oMapDimensions.find(osVarName) == m_oMapDimensions.end() )
+                m_oMapDimensions.find(osVarName) == m_oMapDimensions.end() &&
+                m_oMapMDArrays.find(osVarName) == m_oMapMDArrays.end() &&
+                oSetRegularArrayNames.find(osVarName) == oSetRegularArrayNames.end() )
             {
+                oSetRegularArrayNames.insert(osVarName);
                 m_aosArrays.emplace_back(osVarName);
             }
         }
 
         // Finally list groups
+        std::set<std::string> oSetGroups;
         const auto groups = nczarrGroup["groups"].ToArray();
         for( const auto& group: groups )
         {
             const auto osGroupName = group.ToString();
-            if( IsValidName(osGroupName) )
+            if( IsValidName(osGroupName) &&
+                oSetGroups.find(osGroupName) == oSetGroups.end() )
             {
+                oSetGroups.insert(osGroupName);
                 m_aosGroups.emplace_back(osGroupName);
             }
         }

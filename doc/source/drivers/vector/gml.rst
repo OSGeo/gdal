@@ -965,7 +965,7 @@ Building junction tables
 ------------------------
 
 The
-`ogr_build_junction_table.py <https://github.com/OSGeo/gdal/blob/master/gdal/swig/python/gdal-utils/osgeo_utils/samples/ogr_build_junction_table.py>`__
+`ogr_build_junction_table.py <https://github.com/OSGeo/gdal/blob/master/swig/python/gdal-utils/osgeo_utils/samples/ogr_build_junction_table.py>`__
 script can be used to build a `junction
 table <http://en.wikipedia.org/wiki/Junction_table>`__ from OGR layers
 that contain "XXXX_href" fields. Let's considering the following output

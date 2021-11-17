@@ -109,6 +109,17 @@ char CPL_DLL *CPLRecode( const char *pszSource,
     {
         return CPLRecodeStub( pszSource, pszSrcEncoding, pszDstEncoding );
     }
+#ifdef _WIN32
+    else if( ( (EQUAL(pszSrcEncoding, "CP_ACP") ||
+                EQUAL(pszSrcEncoding, "CP_OEMCP"))
+              && EQUAL(pszDstEncoding, CPL_ENC_UTF8) )
+            || ( EQUAL(pszSrcEncoding, CPL_ENC_UTF8)
+                 && (EQUAL(pszDstEncoding, "CP_ACP")||
+                     EQUAL(pszDstEncoding, "CP_OEMCP")) ) )
+    {
+        return CPLRecodeStub( pszSource, pszSrcEncoding, pszDstEncoding );
+    }
+#endif
     else
     {
         return CPLRecodeIconv( pszSource, pszSrcEncoding, pszDstEncoding );

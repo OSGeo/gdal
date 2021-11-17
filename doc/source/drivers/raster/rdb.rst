@@ -12,7 +12,7 @@ RDB - *RIEGL* Database
 
 GDAL can read \*.mpx files in the RDB format, the in-house format used by `RIEGL Laser Measurement Systems GmbH <http://www.riegl.com>`__ through the RDB library.
 
-The driver relies on the RDB library, which can be downloaded `here <http://riegl.com/members-area/>`__. The minimum version required of the rdblib is 2.2.0.
+The driver relies on the RDB library, which can be downloaded `here <https://repository.riegl.com/software/libraries/rdblib>`__ . The minimum version required of the rdblib is 2.2.0.
 
 Driver capabilities
 -------------------
@@ -22,7 +22,7 @@ Driver capabilities
 Provided Bands
 -------------------
 
-All attributes stored in the RDB, but the coordinates, are provided in bands. Vector attributes are split up into multiple bands. 
+All attributes stored in the RDB, but the coordinates, are provided in bands. Vector attributes are split up into multiple bands.
 The attributes are currently mapped as follows:
 
 +----------------------------+-------------------------+
@@ -33,48 +33,34 @@ The attributes are currently mapped as follows:
 | riegl.surface_normal[1],   | Band 2                  |
 |                            |                         |
 | riegl.surface_normal[2]    | Band 3                  |
-+----------------------------+-------------------------+ 
-| riegl.reflectance          | Band 4                  |
 +----------------------------+-------------------------+
-| riegl.amplitude            | Band 5                  |
+| riegl.timestamp_min        | Band 4                  |
 +----------------------------+-------------------------+
-| riegl.deviation            | Band 6                  |
+| riegl.timestamp_max        | Band 5                  |
 +----------------------------+-------------------------+
-| riegl.point_count          | Band 7                  |
+| riegl.reflectance          | Band 6                  |
 +----------------------------+-------------------------+
-| riegl.pca_thickness        | Band 8                  |
+| riegl.amplitude            | Band 7                  |
 +----------------------------+-------------------------+
-| riegl.std_dev              | Band 9                  |
+| riegl.deviation            | Band 8                  |
 +----------------------------+-------------------------+
-| riegl.height_center        | Band 10                 |
+| riegl.height_center        | Band 9                  |
 +----------------------------+-------------------------+
-| riegl.height_mean          | Band 11                 |
+| riegl.height_mean          | Band 10                 |
 +----------------------------+-------------------------+
-| riegl.height_min           | Band 12                 |
+| riegl.height_min           | Band 11                 |
 +----------------------------+-------------------------+
-| riegl.height_max           | Band 13                 |
+| riegl.height_max           | Band 12                 |
 +----------------------------+-------------------------+
-| pixel_linear_sums[0]       | Band 14                 |
-|                            |                         |
-| pixel_linear_sums[1]       | Band 15                 |
-|                            |                         |
-| pixel_linear_sums[2]       | Band 16                 |
+| riegl.point_count          | Band 13                 |
 +----------------------------+-------------------------+
-| pixel_square_sums[0]       | Band 17                 |
-|                            |                         |
-| pixel_square_sums[1]       | Band 18                 |
-|                            |                         |
-| pixel_square_sums[2]       | Band 19                 |
-|                            |                         |
-| pixel_square_sums[3]       | Band 20                 |
-|                            |                         |
-| pixel_square_sums[4]       | Band 21                 |
-|                            |                         |
-| pixel_square_sums[5]       | Band 22                 |
+| riegl.point_count_grid_cell| Band 14                 |
 +----------------------------+-------------------------+
-| riegl.voxel_count          | Band 23                 |
+| riegl.pca_thickness        | Band 15                 |
 +----------------------------+-------------------------+
-| riegl.id                   | Band 24                 |
+| riegl.std_dev              | Band 16                 |
 +----------------------------+-------------------------+
-| riegl.point_count_grid_cell| Band 25                 |
+| riegl.voxel_count          | Band 17                 |
++----------------------------+-------------------------+
+| riegl.id                   | Band 18                 |
 +----------------------------+-------------------------+

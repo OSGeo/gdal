@@ -697,6 +697,10 @@ class ECWRasterBand final: public GDALPamRasterBand
                                   double *pdfMean, double *padfStdDev ) override;
     virtual CPLErr SetStatistics( double dfMin, double dfMax,
                                   double dfMean, double dfStdDev ) override;
+
+    virtual CPLErr SetMetadataItem( const char * pszName,
+                                 const char * pszValue,
+                                 const char * pszDomain = "" ) override;
 #endif
 
 };

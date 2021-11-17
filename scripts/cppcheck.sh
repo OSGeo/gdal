@@ -16,23 +16,42 @@ case $SCRIPT_DIR in
         ;;
 esac
 GDAL_ROOT=$SCRIPT_DIR/..
-cd "$GDAL_ROOT"
 
+if test -f port/cpl_config.h; then
+  CPL_CONFIG_H=$PWD/port/cpl_config.h
+elif test -f generated_headers/cpl_config.h; then
+  CPL_CONFIG_H=$PWD/generated_headers/cpl_config.h
+else
+  echo "No cpl_config.h file found"
+  exit 1
+fi
+CPL_CONFIG_H_DIR=$(dirname "${CPL_CONFIG_H}")
+echo "Using ${CPL_CONFIG_H}"
+
+cd "$GDAL_ROOT"
 
 LOG_FILE=/tmp/cppcheck_gdal.txt
 
 CPPCHECK_VERSION="$(cppcheck --version | awk '{print $2}')"
-if test $(expr $CPPCHECK_VERSION \>= 1.84) = 1; then
+CPPCHECK_VERSION_GT_1_84=$(expr "$CPPCHECK_VERSION" \>= 1.84 || /bin/true)
+if test "$CPPCHECK_VERSION_GT_1_84" = 1; then
     OVERRIDE=
 else
     OVERRIDE="-Doverride="
+fi
+
+CPPCHECK_VERSION_GT_2_7=$(expr "$CPPCHECK_VERSION" \>= 2.7 || /bin/true)
+if test "$CPPCHECK_VERSION_GT_2_7" = 1; then
+    POSIX="--library=posix"
+else
+    POSIX="--std=posix"
 fi
 
 echo "" > ${LOG_FILE}
 for dirname in alg port gcore ogr frmts gnm apps fuzzers; do
     printf "Running cppcheck on %s (can be long): " "$dirname"
     cppcheck --inline-suppr --template='{file}:{line},{severity},{id},{message}' \
-        --enable=all --inconclusive --std=posix -UAFL_FRIENDLY -UANDROID \
+        --enable=all --inconclusive ${POSIX} -UAFL_FRIENDLY -UANDROID \
         -UCOMPAT_WITH_ICC_CONVERSION_CHECK -DDEBUG -UDEBUG_BOOL -DHAVE_CXX11=1 \
         -D__linux \
         -DGBool=int -DCPL_HAS_GINT64=1 -DHAVE_GEOS -DHAVE_EXPAT -DHAVE_XERCES -DCOMPILATION_ALLOWED \
@@ -71,9 +90,10 @@ for dirname in alg port gcore ogr frmts gnm apps fuzzers; do
         -DINT_MIN=-2147483648 \
         -DINT_MAX=2147483647 \
         -DUINT_MAX=4294967295U \
-        --include=port/cpl_config.h \
+        --include="${CPL_CONFIG_H}" \
         --include=port/cpl_port.h \
-        -I port -I gcore -I ogr -I ogr/ogrsf_frmts -I ogr/ogrsf_frmts/geojson \
+        -I "${CPL_CONFIG_H_DIR}" \
+        -I port -I generated_headers -I gcore -I ogr -I ogr/ogrsf_frmts -I ogr/ogrsf_frmts/geojson \
         -I ogr/ogrsf_frmts/geojson/libjson \
         -i cpl_mem_cache.h \
         -i ogrdissolve.cpp \

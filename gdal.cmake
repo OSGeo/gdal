@@ -29,64 +29,13 @@ option(OGR_BUILD_OPTIONAL_DRIVERS "Whether to build OGR optional drivers by defa
 option(BUILD_SHARED_LIBS "Set ON to build shared library" ON)
 
 # ######################################################################################################################
-# generate ${CMAKE_CURRENT_BINARY_DIR}/port/cpl_config.h
-
-set(_CMAKE_C_FLAGS_backup ${CMAKE_C_FLAGS})
-set(_CMAKE_CXX_FLAGS_backup ${CMAKE_CXX_FLAGS})
-if (CMAKE_C_FLAGS)
-    string(REPLACE "-Werror" " " CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
-    string(REPLACE "/WX" " " CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
-endif()
-if (CMAKE_CXX_FLAGS)
-  string(REPLACE "-Werror" " " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-  string(REPLACE "/WX" " " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-endif()
-include(configure)
-
-# generate ${CMAKE_CURRENT_BINARY_DIR}/gcore/gdal_version.h and set GDAL_VERSION variable
-include(GdalVersion)
-
-# find 3rd party libraries
-include(CheckDependentLibraries)
-
-set(CMAKE_C_FLAGS ${_CMAKE_C_FLAGS_backup})
-set(CMAKE_CXX_FLAGS ${_CMAKE_CXX_FLAGS_backup})
-
-if (GDAL_HIDE_INTERNAL_SYMBOLS)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
-endif ()
-
-# Check that all symbols we need are present in our dependencies
-# This is in particular useful to check that drivers built as plugins can
-# access all symbols they need.
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  include(CheckLinkerFlag)
-  check_linker_flag(C "-Wl,--no-undefined" HAS_NO_UNDEFINED)
-  if (HAS_NO_UNDEFINED)
-    string(APPEND CMAKE_SHARED_LINKER_FLAGS " -Wl,--no-undefined")
-    string(APPEND CMAKE_MODULE_LINKER_FLAGS " -Wl,--no-undefined")
-  endif ()
-endif ()
-
-# Default definitions during build
-add_definitions(-DGDAL_COMPILATION -DGDAL_CMAKE_BUILD)
-
-if (ENABLE_IPO)
-  if (POLICY CMP0069)
-    include(CheckIPOSupported)
-    check_ipo_supported(RESULT result)
-    if (result)
-      set(CMAKE_INTERPROCEDURAL_OPTIMIZATION True)
-    endif ()
-  endif ()
-endif ()
-
-# ######################################################################################################################
 # Detect available warning flags
+
+# Do that check now, since we need the result of HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT for cpl_config.h
 
 set(GDAL_C_WARNING_FLAGS)
 set(GDAL_CXX_WARNING_FLAGS)
+
 if (MSVC)
     # 4127: conditional expression is constant
     # 4251: 'identifier' : class 'type' needs to have dll-interface to be used by clients of class 'type2'
@@ -181,6 +130,11 @@ else()
         set(GDAL_CXX_WARNING_FLAGS ${GDAL_CXX_WARNING_FLAGS} -fno-operator-names)
     endif()
 
+    check_cxx_compiler_flag(-Wzero-as-null-pointer-constant HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT)
+    if( HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT )
+      set(GDAL_CXX_WARNING_FLAGS ${GDAL_CXX_WARNING_FLAGS} -Wzero-as-null-pointer-constant)
+    endif()
+
     # Detect -Wold-style-cast but do not add it by default, as not all targets support it
     check_cxx_compiler_flag(-Wold-style-cast HAVE_WFLAG_OLD_STYLE_CAST)
     if( HAVE_WFLAG_OLD_STYLE_CAST )
@@ -197,6 +151,63 @@ endif()
 
 # message("GDAL_C_WARNING_FLAGS: ${GDAL_C_WARNING_FLAGS}")
 # message("GDAL_CXX_WARNING_FLAGS: ${GDAL_CXX_WARNING_FLAGS}")
+
+# ######################################################################################################################
+# generate ${CMAKE_CURRENT_BINARY_DIR}/port/cpl_config.h
+
+set(_CMAKE_C_FLAGS_backup ${CMAKE_C_FLAGS})
+set(_CMAKE_CXX_FLAGS_backup ${CMAKE_CXX_FLAGS})
+if (CMAKE_C_FLAGS)
+    string(REPLACE "-Werror" " " CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
+    string(REPLACE "/WX" " " CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
+endif()
+if (CMAKE_CXX_FLAGS)
+  string(REPLACE "-Werror" " " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+  string(REPLACE "/WX" " " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+endif()
+include(configure)
+
+# generate ${CMAKE_CURRENT_BINARY_DIR}/gcore/gdal_version.h and set GDAL_VERSION variable
+include(GdalVersion)
+
+# find 3rd party libraries
+include(CheckDependentLibraries)
+
+# Generates now port/cpl_config.h (it depends on at least iconv detection in CheckDependentLibraries)
+configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/cpl_config.h.in ${PROJECT_BINARY_DIR}/port/cpl_config.h @ONLY)
+
+set(CMAKE_C_FLAGS ${_CMAKE_C_FLAGS_backup})
+set(CMAKE_CXX_FLAGS ${_CMAKE_CXX_FLAGS_backup})
+
+if (GDAL_HIDE_INTERNAL_SYMBOLS)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
+endif ()
+
+# Check that all symbols we need are present in our dependencies
+# This is in particular useful to check that drivers built as plugins can
+# access all symbols they need.
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  include(CheckLinkerFlag)
+  check_linker_flag(C "-Wl,--no-undefined" HAS_NO_UNDEFINED)
+  if (HAS_NO_UNDEFINED)
+    string(APPEND CMAKE_SHARED_LINKER_FLAGS " -Wl,--no-undefined")
+    string(APPEND CMAKE_MODULE_LINKER_FLAGS " -Wl,--no-undefined")
+  endif ()
+endif ()
+
+# Default definitions during build
+add_definitions(-DGDAL_COMPILATION -DGDAL_CMAKE_BUILD)
+
+if (ENABLE_IPO)
+  if (POLICY CMP0069)
+    include(CheckIPOSupported)
+    check_ipo_supported(RESULT result)
+    if (result)
+      set(CMAKE_INTERPROCEDURAL_OPTIMIZATION True)
+    endif ()
+  endif ()
+endif ()
 
 # ######################################################################################################################
 
@@ -254,30 +265,40 @@ endif ()
 
 # Install properties
 if (GDAL_ENABLE_MACOSX_FRAMEWORK)
-  set(INSTALL_PLUGIN_DIR
-      "${CMAKE_INSTALL_PREFIX}/PlugIns"
-      CACHE PATH "Installation directory for plugins")
   set(CMAKE_MACOSX_RPATH ON)
+  set(FRAMEWORK_VERSION ${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR})
+  set(FRAMEWORK_DESTINATION "Library/Frameworks" CACHE STRING "Framework destination sub-directory")
+  set(FRAMEWORK_SUBDIR "${FRAMEWORK_DESTINATION}/gdal.framework/Versions/${FRAMEWORK_VERSION}")
+  set(INSTALL_PLUGIN_DIR
+      "${FRAMEWORK_SUBDIR}/PlugIns"
+      CACHE PATH "Installation sub-directory for plugins")
+  set(CMAKE_INSTALL_BINDIR "bin" CACHE STRING "Installation sub-directory for executables")
+  set(CMAKE_INSTALL_LIBDIR "${FRAMEWORK_SUBDIR}" CACHE INTERNAL "Installation sub-directory for libraries" FORCE)
+  # CMAKE_INSTALL_INCLUDEDIR should normally not be used
+  set(CMAKE_INSTALL_INCLUDEDIR "${FRAMEWORK_SUBDIR}/Headers" CACHE INTERNAL "Installation sub-directory for headers" FORCE)
+  set(CMAKE_INSTALL_DATADIR "${FRAMEWORK_SUBDIR}/Resources" CACHE INTERNAL "Installation sub-directory for resources" FORCE)
+  set(GDAL_RESOURCE_PATH ${CMAKE_INSTALL_DATADIR})
   set_target_properties(
     ${GDAL_LIB_TARGET_NAME}
     PROPERTIES FRAMEWORK TRUE
-               FRAMEWORK_VERSION A
+               FRAMEWORK_VERSION ${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}
                MACOSX_FRAMEWORK_SHORT_VERSION_STRING ${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}
                MACOSX_FRAMEWORK_BUNDLE_VERSION "GDAL ${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}"
                MACOSX_FRAMEWORK_IDENTIFIER org.osgeo.libgdal
                XCODE_ATTRIBUTE_INSTALL_PATH "@rpath"
-               INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}"
+               INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${FRAMEWORK_DESTINATION}"
                BUILD_WITH_INSTALL_RPATH TRUE
                # MACOSX_FRAMEWORK_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/info.plist.in"
     )
 else ()
   include(GNUInstallDirs)
   set(INSTALL_PLUGIN_DIR
-      "${CMAKE_INSTALL_PREFIX}/lib/gdalplugins/${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}"
-      CACHE PATH "Installation directory for plugins")
+      "lib/gdalplugins/${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}"
+      CACHE PATH "Installation sub-directory for plugins")
+  set(GDAL_RESOURCE_PATH ${CMAKE_INSTALL_DATADIR}/gdal)
 endif ()
 
-set(GDAL_RESOURCE_PATH ${CMAKE_INSTALL_DATADIR}/gdal)
+set(INSTALL_PLUGIN_FULL_DIR "${CMAKE_INSTALL_PREFIX}/${INSTALL_PLUGIN_DIR}")
 
 # detect portability libs and set, so it should add at first Common Portability layer
 add_subdirectory(port)
@@ -330,6 +351,12 @@ endif ()
 # Raster/Vector drivers (built-in and plugins)
 set(GDAL_RASTER_FORMAT_SOURCE_DIR "${PROJECT_SOURCE_DIR}/frmts")
 set(GDAL_VECTOR_FORMAT_SOURCE_DIR "${PROJECT_SOURCE_DIR}/ogr/ogrsf_frmts")
+
+# We need to forward declare a few OGR drivers because raster formats need them
+option(OGR_ENABLE_AVC "Set ON to build OGR AVC driver" ${OGR_BUILD_OPTIONAL_DRIVERS})
+cmake_dependent_option(OGR_ENABLE_SQLITE "Set ON to build OGR SQLite driver" ${OGR_BUILD_OPTIONAL_DRIVERS} "GDAL_USE_SQLITE3" OFF)
+cmake_dependent_option(OGR_ENABLE_GPKG "Set ON to build OGR GPKG driver" ${OGR_BUILD_OPTIONAL_DRIVERS} "GDAL_USE_SQLITE3;OGR_ENABLE_SQLITE" OFF)
+
 add_subdirectory(frmts)
 add_subdirectory(ogr/ogrsf_frmts)
 
@@ -485,6 +512,14 @@ set_property(
   APPEND
   PROPERTY RESOURCE "${GDAL_DATA_FILES}")
 
+if(GDAL_ENABLE_MACOSX_FRAMEWORK)
+  # We need to add data files and public headers as sources of the library
+  # os they get installed through the framework installation mechanisms
+  target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE "${GDAL_DATA_FILES}")
+  get_property(_public_headers TARGET ${GDAL_LIB_TARGET_NAME} PROPERTY PUBLIC_HEADER)
+  target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE "${_public_headers}")
+endif()
+
 install(
   TARGETS ${GDAL_LIB_TARGET_NAME}
   EXPORT gdal-export
@@ -493,7 +528,7 @@ install(
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   RESOURCE DESTINATION ${GDAL_RESOURCE_PATH}
   PUBLIC_HEADER DESTINATION ${GDAL_INSTALL_INCLUDEDIR}
-  FRAMEWORK DESTINATION ${CMAKE_INSTALL_LIBDIR})
+  FRAMEWORK DESTINATION "${FRAMEWORK_DESTINATION}")
 
 if (UNIX AND NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
   # Generate GdalConfig.cmake and GdalConfigVersion.cmake

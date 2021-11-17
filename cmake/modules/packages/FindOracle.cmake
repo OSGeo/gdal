@@ -42,7 +42,13 @@
 # Copyright (c) 2018 Hiroshi Miura
 #
 
-file(TO_CMAKE_PATH "$ENV{ORACLE_HOME}" ORACLE_HOME)
+if(DEFINED Oracle_ROOT)
+    set(ORACLE_HOME "${Oracle_ROOT}")
+elseif(DEFINED ORACLE_ROOT)
+    set(ORACLE_HOME "${ORACLE_ROOT}")
+else()
+    file(TO_CMAKE_PATH "$ENV{ORACLE_HOME}" ORACLE_HOME)
+endif()
 get_filename_component(XE_HOME "[HKEY_LOCAL_MACHINE\\SOFTWARE\\ORACLE\\KEY_XE;ORACLE_HOME]" ABSOLUTE CACHE)
 
 set(ORACLE_INCLUDES_LOCATION
@@ -137,6 +143,12 @@ find_library(Oracle_LIBRARY
              NO_DEFAULT_PATH
              )
 
+# Oracle InstantClient 12.1 has no liboci. It seems we just need libclntsh
+# for the GDAL drivers.
+if( Oracle_CAN_USE_CLNTSH_AS_MAIN_LIBRARY AND "${Oracle_FIND_COMPONENTS}" STREQUAL "")
+    set(Oracle_FIND_COMPONENTS CLNTSH)
+endif()
+
 foreach(_comp IN LISTS Oracle_FIND_COMPONENTS)
   set(Oracle_${_comp}_FOUND FALSE)
 endforeach()
@@ -168,6 +180,10 @@ foreach(_comp IN LISTS Oracle_known_components)
     endif()
 endforeach()
 
+if( NOT Oracle_LIBRARY AND Oracle_CAN_USE_CLNTSH_AS_MAIN_LIBRARY AND Oracle_CLNTSH_LIBRARY )
+    set(Oracle_LIBRARY "${Oracle_CLNTSH_LIBRARY}")
+endif()
+
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Oracle
                                   FOUND_VAR Oracle_FOUND
@@ -183,7 +199,7 @@ IF(Oracle_FOUND)
         list(APPEND Oracle_INCLUDE_DIRS ${Oracle_XML_INCLUDE_DIR})
     endif()
     if(NOT TARGET Oracle::OCI)
-        add_library(Oracle::OCI UNKNOWN IMPORETED)
+        add_library(Oracle::OCI UNKNOWN IMPORTED)
         set_target_properties(Oracle::OCI PROPERTIES
                               INTERFACE_INCLUDE_DIRECTORIES ${Oracle_INCLUDE_DIR}
                               IMPORTED_LINK_INTERFACE_LANGUAGES "C"

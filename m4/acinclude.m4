@@ -194,6 +194,18 @@ AC_DEFUN([AC_UNIX_STDIO_64],
     rm -rf conftest*
   fi
 
+  dnl Needed for netBSD
+  if test x"$HAVE_UNIX_STDIO_64" = x"" ; then
+    echo '#include <stdio.h>' > conftest.c
+    echo 'int main() { off_t off=0; fseeko(NULL, off, SEEK_SET); off = ftello(NULL); return (int)off; }' >> conftest.c
+    if test -z "`${CC} ${CFLAGS} -o conftest conftest.c 2>&1`" ; then
+      HAVE_UNIX_STDIO_64=yes
+      VSI_FTELL64=ftello
+      VSI_FSEEK64=fseeko
+    fi
+    rm -rf conftest*
+  fi
+
   if test x"$HAVE_UNIX_STDIO_64" = x"yes" ; then
     AC_MSG_RESULT([yes])
 

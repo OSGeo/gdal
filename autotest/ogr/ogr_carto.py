@@ -808,16 +808,13 @@ def test_ogr_carto_vsimem_cleanup():
     for f in gdal.ReadDir('/vsimem/'):
         gdal.Unlink('/vsimem/' + f)
 
-    
+
 ###############################################################################
 #  Run test_ogrsf
 
-
+@pytest.mark.skipif(gdaltest.is_ci(), reason='test skipped on CI due to regular failures on it due to platform limits')
 def test_ogr_carto_test_ogrsf():
     if gdal.GetConfigOption('SKIP_SLOW') is not None:
-        pytest.skip()
-
-    if gdaltest.skip_on_travis():
         pytest.skip()
 
     ogrtest.carto_test_server = 'https://gdalautotest2.carto.com'

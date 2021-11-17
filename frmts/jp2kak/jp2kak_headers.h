@@ -35,6 +35,11 @@
 #pragma GCC system_header
 #endif
 
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable : 4458 )
+#endif
+
 #include "jp2_local.h"
 
 // Kakadu core includes
@@ -65,6 +70,10 @@
 #  include "kdu_client.h"
 #else
 #  define kdu_client void
+#endif
+
+#ifdef _MSC_VER
+#pragma warning( pop )
 #endif
 
 #endif  // JP2KAK_HEADERS_H

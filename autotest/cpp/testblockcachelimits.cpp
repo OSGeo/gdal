@@ -33,9 +33,19 @@
 #include "gdal_priv.h"
 #include "gdal.h"
 
-#include <cassert>
-
 #include "test_data.h"
+
+template<typename T> void check(const T& x, const char* msg)
+{
+    if( !x )
+    {
+        fprintf(stderr, "CHECK(%s) failed\n", msg);
+        exit(1);
+    }
+}
+
+#define STRINGIFY(x) #x
+#define CHECK(x) check((x), STRINGIFY(x))
 
 static void thread_func(void* /* unused */)
 {
@@ -134,7 +144,7 @@ int main(int argc, char* argv[])
     printf("after GDALFlushRasterCache\n");
 
     CPLJoinThread(hThread);
-    assert( GDALGetCacheUsed64() == 0 );
+    CHECK( GDALGetCacheUsed64() == 0 );
 
     CPL_IGNORE_RET_VAL(GDALRasterIO(GDALGetRasterBand(hDS, 1), GF_Read, 0, 0, 20, 20, buf, 20, 20, GDT_Byte, 0, 0));
     hThread = CPLCreateJoinableThread(thread_func2, nullptr);

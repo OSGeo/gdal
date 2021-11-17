@@ -1464,7 +1464,7 @@ unsigned long OWStatement::GetBlobLength( OCILobLocator* phLocator )
         return 0;
     }
 
-    return nSize;
+    return static_cast<unsigned long>(nSize);
 }
                                          
 unsigned long OWStatement::ReadBlob( OCILobLocator* phLocator,
@@ -1536,7 +1536,7 @@ unsigned long OWStatement::WriteBlob( OCILobLocator* phLocator,
         return (unsigned long) 0;
     }
 
-    return nAmont;
+    return static_cast<unsigned long>(nAmont);
 }
 
 char* OWStatement::ReadCLob( OCILobLocator* phLocator )
@@ -1856,7 +1856,7 @@ void OWUpperIfNoQuotes( char* pszText )
 
     for( size_t i = 0; i < nSize; i++ )
     {
-        pszText[i] = toupper( pszText[i] );
+        pszText[i] = static_cast<char>(toupper( pszText[i] ));
     }
 }
 

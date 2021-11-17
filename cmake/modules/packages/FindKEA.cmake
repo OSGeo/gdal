@@ -15,10 +15,8 @@
 #
 
 find_path(KEA_INCLUDE_DIR
-          NAMES KEACommon.h kea-config.h
-          PATH_SUFFIXES libkea
-)
-find_library(KEA_LIBRARY NAMES kea)
+          NAMES libkea/KEACommon.h libkea/kea-config.h)
+find_library(KEA_LIBRARY NAMES kea libkea)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(KEA FOUND_VAR KEA_FOUND

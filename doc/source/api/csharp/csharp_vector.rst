@@ -213,8 +213,8 @@ Related C# examples
 
 The following examples demonstrate the usage of the OGR vector operations mentioned above:
 
-* `ogrinfo.cs <https://github.com/OSGeo/gdal/blob/master/gdal/swig/csharp/apps/ogrinfo.cs>`__
-* `OGRLayerAlg.cs <https://github.com/OSGeo/gdal/blob/master/gdal/swig/csharp/apps/OGRLayerAlg.cs>`__
-* `OGRFeatureEdit.cs <https://github.com/OSGeo/gdal/blob/master/gdal/swig/csharp/apps/OGRFeatureEdit.cs>`__
-* `OSRTransform.cs <https://github.com/OSGeo/gdal/blob/master/gdal/swig/csharp/apps/OSRTransform.cs>`__
-* `GetCRSInfo.cs <https://github.com/OSGeo/gdal/blob/master/gdal/swig/csharp/apps/GetCRSInfo.cs>`__
+* `ogrinfo.cs <https://github.com/OSGeo/gdal/blob/master/swig/csharp/apps/ogrinfo.cs>`__
+* `OGRLayerAlg.cs <https://github.com/OSGeo/gdal/blob/master/swig/csharp/apps/OGRLayerAlg.cs>`__
+* `OGRFeatureEdit.cs <https://github.com/OSGeo/gdal/blob/master/swig/csharp/apps/OGRFeatureEdit.cs>`__
+* `OSRTransform.cs <https://github.com/OSGeo/gdal/blob/master/swig/csharp/apps/OSRTransform.cs>`__
+* `GetCRSInfo.cs <https://github.com/OSGeo/gdal/blob/master/swig/csharp/apps/GetCRSInfo.cs>`__

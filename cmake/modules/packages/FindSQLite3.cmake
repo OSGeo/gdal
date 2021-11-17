@@ -27,8 +27,25 @@ This module will set the following variables if found:
   Copyright (c) 2019 Chuck Atkins
 #]=======================================================================]
 
+# Accept upper case variant for SQLite3_INCLUDE_DIR
+if(SQLITE3_INCLUDE_DIR)
+  if(SQLite3_INCLUDE_DIR AND NOT "${SQLite3_INCLUDE_DIR}" STREQUAL "${SQLITE3_INCLUDE_DIR}")
+    message(FATAL_ERROR "Both SQLite3_INCLUDE_DIR and SQLITE3_INCLUDE_DIR are defined, but not at same value")
+  endif()
+  set(SQLite3_INCLUDE_DIR "${SQLITE3_INCLUDE_DIR}" CACHE STRING "Path to a file" FORCE)
+  unset(SQLITE3_INCLUDE_DIR CACHE)
+endif()
 
-if(SQLite3_INCLUDE_DIR AND SQLIite3_LIBRARY)
+# Accept upper case variant for SQLite3_LIBRARY
+if(SQLITE3_LIBRARY)
+  if(SQLite3_LIBRARY AND NOT "${SQLite3_LIBRARY}" STREQUAL "${SQLITE3_LIBRARY}")
+    message(FATAL_ERROR "Both SQLite3_LIBRARY and SQLITE3_LIBRARY are defined, but not at same value")
+  endif()
+  set(SQLite3_LIBRARY "${SQLITE3_LIBRARY}" CACHE FILEPATH "Path to a library" FORCE)
+  unset(SQLITE3_LIBRARY CACHE)
+endif()
+
+if(SQLite3_INCLUDE_DIR AND SQLite3_LIBRARY)
   set(SQLite3_FIND_QUIETLY TRUE)
 endif()
 
@@ -55,33 +72,33 @@ if(SQLite3_INCLUDE_DIR)
 endif()
 
 if(SQLite3_INCLUDE_DIR AND SQLite3_LIBRARY)
-    get_filename_component(SQLite3_LIBRARY_DIR ${SQLite3_LIBRARY} DIRECTORY)
-    find_path(SQLite3_PCRE_LIBRARY
-              NAMES pcre.${CMAKE_SHARED_LIBRARY_SUFFIX}
-              SUFFIX_PATHS sqlite3
-              PATHS /usr/lib
-              HINTS ${SQLite3_LIBRARY_DIR})
-    if(EXISTS ${SQLite3_PCRE_LIBRARY})
-        set(SQLite_HAS_PCRE ON)
-    else()
-        set(SQLite_HAS_PCRE OFF)
-    endif()
     # check column metadata
-    set(SQLITE_COL_TEST_CODE "#ifdef __cplusplus
-extern \"C\"
-#endif
-char sqlite3_column_table_name ();
-int
-main ()
-{
-return sqlite3_column_table_name ();
-  return 0;
-}
-")
-    check_c_source_compiles("${SQLITE_COL_TEST_CODE}"  SQLite_HAS_COLUMN_METADATA)
-    set(SQLite_HAS_COLUMN_METADATA ${SQLite_HAS_COLUMN_METADATA})
+    if( ${SQLite3_LIBRARY} MATCHES "libsqlite3.a" AND PC_SQLITE3_STATIC_LDFLAGS)
+        set(CMAKE_REQUIRED_LIBRARIES ${PC_SQLITE3_STATIC_LDFLAGS})
+    else()
+        set(CMAKE_REQUIRED_LIBRARIES ${SQLite3_LIBRARY})
+    endif()
+    set(CMAKE_REQUIRED_INCLUDES ${SQLite3_INCLUDE_DIR})
+    check_symbol_exists(sqlite3_column_table_name sqlite3.h SQLite3_HAS_COLUMN_METADATA)
+    check_symbol_exists(sqlite3_rtree_query_callback sqlite3.h SQLite3_HAS_RTREE)
+
+    if (MSVC)
+        set(CMAKE_REQUIRED_FLAGS "/WX")
+      else ()
+        set(CMAKE_REQUIRED_FLAGS "-Werror")
+      endif ()
+    set(SQLITE3_AUTO_EXTENSION_CHECK
+        "#include <sqlite3.h>
+         int main(){
+          return sqlite3_auto_extension ((void (*)(void)) 0);
+         }")
+    check_cxx_source_compiles("${SQLITE3_AUTO_EXTENSION_CHECK}" SQLite3_HAS_NON_DEPRECATED_AUTO_EXTENSION)
+    unset(CMAKE_REQUIRED_FLAGS)
+
+    unset(CMAKE_REQUIRED_LIBRARIES)
+    unset(CMAKE_REQUIRED_INCLUDES)
 endif()
-mark_as_advanced(SQLite3_LIBRARY SQLite3_INCLUDE_DIR SQLite_HAS_PCRE SQLite_HAS_COLUMN_METADATA)
+mark_as_advanced(SQLite3_LIBRARY SQLite3_INCLUDE_DIR SQLite3_HAS_COLUMN_METADATA SQLite3_HAS_RTREE)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(SQLite3
@@ -98,13 +115,13 @@ if(SQLite3_FOUND)
                           INTERFACE_INCLUDE_DIRECTORIES "${SQLite3_INCLUDE_DIRS}"
                           IMPORTED_LINK_INTERFACE_LANGUAGES "CXX"
                           IMPORTED_LOCATION "${SQLite3_LIBRARY}")
-    if(SQLite_HAS_PCRE)
+    if(SQLite3_HAS_COLUMN_METADATA)
         set_property(TARGET SQLite::SQLite3 APPEND PROPERTY
-                     INTERFACE_COMPILE_DEFINITIONS "SQLite_HAS_PCRE")
+                     INTERFACE_COMPILE_DEFINITIONS "SQLite3_HAS_COLUMN_METADATA")
     endif()
-    if(SQLite_HAS_COLUMN_METADATA)
+    if(SQLite3_HAS_RTREE)
         set_property(TARGET SQLite::SQLite3 APPEND PROPERTY
-                     INTERFACE_COMPILE_DEFINITIONS "SQLite_HAS_COLUMN_METADATA")
+                     INTERFACE_COMPILE_DEFINITIONS "SQLite3_HAS_RTREE")
     endif()
   endif()
 endif()

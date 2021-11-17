@@ -37,11 +37,11 @@ build_fuzzer()
     shift
     echo "Building fuzzer $fuzzerName"
     if test -d $SRC/install/lib; then
-        $CXX $CXXFLAGS -I$SRC_DIR/port -I$SRC_DIR/gcore -I$SRC_DIR/alg -I$SRC_DIR/apps -I$SRC_DIR/ogr -I$SRC_DIR/ogr/ogrsf_frmts -I$SRC_DIR/ogr/ogrsf_frmts/sqlite \
+        $CXX $CXXFLAGS -I$SRC_DIR/port -I$SRC_DIR/generated_headers -I$SRC_DIR/gcore -I$SRC_DIR/alg -I$SRC_DIR/apps -I$SRC_DIR/ogr -I$SRC_DIR/ogr/ogrsf_frmts -I$SRC_DIR/ogr/ogrsf_frmts/sqlite \
             $sourceFilename "$@" -o $OUT/$fuzzerName \
             $LIB_FUZZING_ENGINE $LIBGDAL $EXTRA_LIBS $SRC/install/lib/*.a
     else
-        $CXX $CXXFLAGS -I$SRC_DIR/port -I$SRC_DIR/gcore -I$SRC_DIR/alg -I$SRC_DIR/apps -I$SRC_DIR/ogr -I$SRC_DIR/ogr/ogrsf_frmts -I$SRC_DIR/ogr/ogrsf_frmts/sqlite \
+        $CXX $CXXFLAGS -I$SRC_DIR/port -I$SRC_DIR/generated_headers -I$SRC_DIR/gcore -I$SRC_DIR/alg -I$SRC_DIR/apps -I$SRC_DIR/ogr -I$SRC_DIR/ogr/ogrsf_frmts -I$SRC_DIR/ogr/ogrsf_frmts/sqlite \
             $sourceFilename "$@" -o $OUT/$fuzzerName \
             $LIB_FUZZING_ENGINE $LIBGDAL $EXTRA_LIBS
     fi

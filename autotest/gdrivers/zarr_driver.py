@@ -2414,6 +2414,10 @@ def test_zarr_read_nczarr_v2(filename,path):
         assert dims[1].GetName() == 'lon'
         assert dims[1].GetFullName() == '/MyGroup/Group_A/lon'
 
+    if filename == 'data/zarr/nczarr_v2.zarr':
+        mygroup = rg.OpenGroup('MyGroup')
+        assert mygroup.GetMDArrayNames() == ['lon', 'lat', 'dset1']
+
 
 @pytest.mark.parametrize("format", ['ZARR_V2', 'ZARR_V3'])
 def test_zarr_cache_tile_presence(format):
@@ -2638,6 +2642,52 @@ def test_zarr_read_invalid_nczarr_dim():
             rg = ds.GetRootGroup()
             ar = rg.OpenMDArray('test')
             assert ar
+
+    finally:
+        gdal.RmdirRecursive('/vsimem/test.zarr')
+
+
+def test_zarr_read_nczar_repeated_array_names():
+
+    try:
+        gdal.Mkdir('/vsimem/test.zarr', 0)
+
+        j = { "_NCZARR_GROUP":{ "dims":{ "lon": 1 }, "vars": ["a", "a", "lon", "lon"], "groups": ["g", "g"] } }
+
+        gdal.FileFromMemBuffer('/vsimem/test.zarr/.zgroup', json.dumps(j))
+
+        j = { "chunks": [1,1],
+              "compressor": None,
+              "dtype": '!b1',
+              "fill_value": None,
+              "filters": None,
+              "order": "C",
+              "shape": [ 1,1 ],
+              "zarr_format": 2
+        }
+
+        gdal.FileFromMemBuffer('/vsimem/test.zarr/a/.zarray', json.dumps(j))
+
+        j = { "chunks": [1],
+              "compressor": None,
+              "dtype": '!b1',
+              "fill_value": None,
+              "filters": None,
+              "order": "C",
+              "shape": [ 1 ],
+              "zarr_format": 2
+        }
+
+        gdal.FileFromMemBuffer('/vsimem/test.zarr/lon/.zarray', json.dumps(j))
+
+        with gdaltest.error_handler():
+            ds = gdal.OpenEx('/vsimem/test.zarr', gdal.OF_MULTIDIM_RASTER)
+            assert ds
+            rg = ds.GetRootGroup()
+            assert rg.GetMDArrayNames() == ['lon', 'a']
+            ar = rg.OpenMDArray('a')
+            assert ar
+            assert rg.GetGroupNames() == ["g"]
 
     finally:
         gdal.RmdirRecursive('/vsimem/test.zarr')

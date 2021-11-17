@@ -14,6 +14,5 @@ target_include_directories(ogr_Carto PRIVATE $<TARGET_PROPERTY:ogr_PGDump,SOURCE
 if (GDAL_USE_LIBJSONC_INTERNAL)
   target_include_directories(ogr_Carto PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
 else ()
-  target_include_directories(ogr_Carto PRIVATE ${JSONC_INCLUDE_DIR})
   gdal_target_link_libraries(TARGET ogr_Carto LIBRARIES JSONC::JSONC)
 endif ()

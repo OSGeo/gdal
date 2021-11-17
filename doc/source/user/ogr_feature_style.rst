@@ -802,9 +802,9 @@ one for each tool (:cpp:class:`OGRStylePen`,
 :cpp:class:`OGRStyleLabel`), with each available
 parameter represented by a getter and setter member function. To
 understand these classes better, it may be useful to read the
-`ogr_featurestyle.h <https://github.com/OSGeo/gdal/blob/master/gdal/ogr/ogr_featurestyle.h>`__
+`ogr_featurestyle.h <https://github.com/OSGeo/gdal/blob/master/ogr/ogr_featurestyle.h>`__
 and
-`ogrfeaturestyle.cpp <https://github.com/OSGeo/gdal/blob/master/gdal/ogr/ogrfeaturestyle.cpp>`__
+`ogrfeaturestyle.cpp <https://github.com/OSGeo/gdal/blob/master/ogr/ogrfeaturestyle.cpp>`__
 code files.
 
 Here is some example C++ code:

@@ -17,7 +17,6 @@ if (GDAL_ENABLE_FRMT_NETCDF)
 endif ()
 
 gdal_standard_includes(gdal_netCDF)
-target_include_directories(gdal_netCDF PRIVATE ${NETCDF_INCLUDE_DIRS})
 gdal_target_link_libraries(TARGET gdal_netCDF LIBRARIES NETCDF::netCDF)
 if (NETCDF_HAS_NC4)
   target_compile_definitions(gdal_netCDF PRIVATE -DNETCDF_HAS_NC4)

@@ -13,14 +13,26 @@ Download
 Current Releases
 ------------------------------------------------------------------------------
 
+* **2021-11-08** `gdal-3.4.0.tar.gz`_ `3.4.0 Release Notes`_ (`3.4.0 md5`_)
+
+.. _`3.4.0 Release Notes`: https://github.com/OSGeo/gdal/blob/v3.4.0/gdal/NEWS.md
+.. _`gdal-3.4.0.tar.gz`: https://github.com/OSGeo/gdal/releases/download/v3.4.0/gdal-3.4.0.tar.gz
+.. _`3.4.0 md5`: https://github.com/OSGeo/gdal/releases/download/v3.4.0/gdal-3.4.0.tar.gz.md5
+
+Past Releases
+------------------------------------------------------------------------------
+
+* **2021-10-29** `gdal-3.3.3.tar.gz`_ `3.3.3 Release Notes`_ (`3.3.3 md5`_)
+
+.. _`3.3.3 Release Notes`: https://github.com/OSGeo/gdal/blob/v3.3.3/gdal/NEWS
+.. _`gdal-3.3.3.tar.gz`: https://github.com/OSGeo/gdal/releases/download/v3.3.3/gdal-3.3.3.tar.gz
+.. _`3.3.3 md5`: https://github.com/OSGeo/gdal/releases/download/v3.3.3/gdal-3.3.3.tar.gz.md5
+
 * **2021-09-01** `gdal-3.3.2.tar.gz`_ `3.3.2 Release Notes`_ (`3.3.2 md5`_)
 
 .. _`3.3.2 Release Notes`: https://github.com/OSGeo/gdal/blob/v3.3.2/gdal/NEWS
 .. _`gdal-3.3.2.tar.gz`: https://github.com/OSGeo/gdal/releases/download/v3.3.2/gdal-3.3.2.tar.gz
 .. _`3.3.2 md5`: https://github.com/OSGeo/gdal/releases/download/v3.3.2/gdal-3.3.2.tar.gz.md5
-
-Past Releases
-------------------------------------------------------------------------------
 
 * **2021-07-05** `gdal-3.3.1.tar.gz`_ `3.3.1 Release Notes`_ (`3.3.1 md5`_)
 
@@ -222,7 +234,7 @@ Images with nightly builds of GDAL master and tagged releases are available at
 `Docker Hub <https://hub.docker.com/r/osgeo/gdal/tags>`_
 
 Information on the content of the different configurations can be found at
-`https://github.com/OSGeo/gdal/tree/master/gdal/docker <https://github.com/OSGeo/gdal/tree/master/gdal/docker>`_
+`https://github.com/OSGeo/gdal/tree/master/docker <https://github.com/OSGeo/gdal/tree/master/docker>`_
 
 .. toctree::
    :maxdepth: 0

@@ -10,6 +10,10 @@ All GDAL command line programs support the following common options.
 
     Report the version of GDAL and exit.
 
+.. option:: --build
+
+    Report detailed information about GDAL in use.
+
 .. _raster_common_options_formats:
 .. option:: --formats
 

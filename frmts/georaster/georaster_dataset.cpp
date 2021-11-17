@@ -760,8 +760,8 @@ boolean GeoRasterDataset::JPEG_CopyDirect( const char* pszJPGFilename,
 
             const auto nWrite = poStmt->WriteBlob( poLocator,
                                         (void*) pBuffer,
-                                        (nCurOff + 1),
-                                        nSize );
+                                        static_cast<unsigned long>(nCurOff + 1),
+                                        static_cast<unsigned long>(nSize) );
 
             nCurOff += nWrite;
             nCount  += nSize;

@@ -95,6 +95,7 @@ with control information.
 .. option:: -to <NAME=VALUE>
 
     Set a transformer option suitable to pass to :cpp:func:`GDALCreateGenImgProjTransformer2`.
+    See :cpp:func:`GDALCreateRPCTransformerV2()` for RPC specific options.
 
 .. option:: -vshift
 
@@ -133,7 +134,7 @@ with control information.
 .. option:: -et <err_threshold>
 
     Error threshold for transformation approximation (in pixel units -
-    defaults to 0.125, unless, starting with GDAL 2.1, the RPC_DEM warping
+    defaults to 0.125, unless, starting with GDAL 2.1, the RPC_DEM transformer
     option is specified, in which case, an exact transformer, i.e.
     err_threshold=0, will be used).
 

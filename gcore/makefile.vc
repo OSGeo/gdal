@@ -29,7 +29,7 @@ GDAL_ROOT	=	..
 SSSE3_OBJ = rasterio_ssse3.obj
 !ENDIF
 
-EXTRAFLAGS =	$(PAM_SETTING) -I..\frmts\gtiff -I..\frmts\mem -I..\frmts\vrt -I..\ogr\ogrsf_frmts\generic -I../ogr/ogrsf_frmts/geojson -I..\ogr\ogrsf_frmts\geojson\libjson $(SQLITEDEF) $(GEOS_CFLAGS)
+EXTRAFLAGS =	$(PAM_SETTING) -I..\frmts\gtiff -I..\frmts\mem -I..\frmts\vrt -I..\ogr\ogrsf_frmts\generic -I../ogr/ogrsf_frmts/geojson -I..\ogr\ogrsf_frmts\geojson\libjson $(PROJ_INCLUDE) $(SQLITEDEF) $(GEOS_CFLAGS)
 
 !IFDEF SQLITE_LIB
 SQLITEDEF	=	-DSQLITE_ENABLED
