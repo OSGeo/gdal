@@ -40,11 +40,13 @@ endif ()
 find_path(OpenEXR_INCLUDE_DIR
           NAMES ImfVersion.h
           HINTS ${OpenEXR_INC_HINTS}
-          PATH_SUFFIXES OpenEXR)
+          PATH_SUFFIXES OpenEXR
+          REQUIRED)
 find_path(Imath_INCLUDE_DIR
           NAMES ImathMatrix.h
           HINTS ${Imath_INC_HINTS} ${OpenEXR_INCLUDE_DIR}
-          PATH_SUFFIXES Imath)
+          PATH_SUFFIXES Imath
+          REQUIRED)
 
 if(NOT OpenEXR_VERSION_STRING)
   # Fallback for PkgConfig not finding anything
