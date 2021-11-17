@@ -46,7 +46,7 @@ find_path(Imath_INCLUDE_DIR
           HINTS ${Imath_INC_HINTS} ${OpenEXR_INCLUDE_DIR}
           PATH_SUFFIXES Imath)
 
-if(NOT OpenEXR_VERSION_STRING)
+if(OpenEXR_INCLUDE_DIR AND NOT OpenEXR_VERSION_STRING)
   # Fallback for PkgConfig not finding anything
   file(READ ${OpenEXR_INCLUDE_DIR}/OpenEXRConfig.h txt)
   string(REGEX MATCH "define[ \t]+OPENEXR_VERSION_STRING[ \t]+\"([0-9]+(.[0-9]+)?(.[0-9]+)?)\".*$" _ ${txt})
