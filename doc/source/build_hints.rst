@@ -326,14 +326,14 @@ OpenEXR
 *******
 
 	Specify ``OpenEXR_ROOT`` variable pointing to the parent directory of 
-	/lib and /include subdirectories, i.e. /DEV/lib/openexr-3.0
+	/lib and /include subdirectories, i.e. /DEV/lib/openexr-3.0.
 	For OpenEXR >= 3 additionally specify ``Imath_ROOT`` as this is a 
 	separate library now, i.e. /DEV/lib/imath-3.1.3
 
 or 
 
-	Specify root directory adding to the ``CMAKE_PREFIX_PATH`` variable, 
-	for example -DCMAKE_PREFIX_PATH=/DEV/lib/openexr-3.0;/DEV/lib/imath-3.1.3
+	Specify root directory adding to the ``CMAKE_PREFIX_PATH`` variable to find OpenEXR's pkgconfig. 
+	For example -DCMAKE_PREFIX_PATH=/DEV/lib/openexr-3.0;/DEV/lib/imath-3.1.3
 
 or
 
