@@ -1122,6 +1122,26 @@ GDALAbstractBandBlockCache* GDALHashSetBandBlockCacheCreate(GDALRasterBand* poBa
 //! @endcond
 
 /* ******************************************************************** */
+/*                       GDALCacheFlushHelperHandler                    */
+/* ******************************************************************** */
+
+//! By default, when a dataset being processed needs to allocate a new cache block
+// and the global cache is already full, it is not allowed to flush the cache of
+// other datasets to make room in the global cache, in order to prevent problems
+// in multithreading scenarios. This callback asks the user whether it is safe to
+// flush some dataset or not, in order to give a chance to do so and free some
+// cache blocks. By doing so, the pressure on the cache might be released and avoid
+// I/O congestion. It is up to the user to ensure that by answering "yes" in a
+// multithreading scenario, flushing another dataset will not induce unexpected results.
+// This callback cannot be installed on different thread local storages, since its
+// purpose is to get a global answer regarding the user's known current thread states
+
+typedef bool (CPL_STDCALL *GDALCacheFlushHelperHandler)(const GDALDataset* currentDataset, const GDALDataset* datasetThatCouldBeFlushed, void* cacheManager, void* pUserData);
+
+GDALCacheFlushHelperHandler CPL_DLL CPL_STDCALL GDALSetCacheFlushHelperHandler(GDALCacheFlushHelperHandler, void* cacheManager, void* pUserData);
+bool CPL_DLL CPL_STDCALL ApplyCacheHelperFlushHandler( const GDALDataset* currentDataset, const GDALDataset* datasetThatCouldBeFlushed, void* cacheManager);
+
+/* ******************************************************************** */
 /*                            GDALRasterBand                            */
 /* ******************************************************************** */
 

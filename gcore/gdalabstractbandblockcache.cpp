@@ -45,6 +45,51 @@ CPL_CVSID("$Id$")
 static int nAllBandsKeptAlivedBlocks = 0;
 #endif
 
+static CPLMutex *hCacheHelperMutex = nullptr;
+static GDALCacheFlushHelperHandler pfnCacheFlushHelperHandler = 0;
+static void *pCacheFlushHelperHandlerUserData = nullptr;
+
+/**
+* Calls the current GDALCacheFlushHelperHandler
+*
+* @param currentDataset Dataset being processed and requiring a new cache block
+* @param datasetThatCouldBeFlushed Dataset containing the oldest cache block that could be flushed
+* @param cacheManager unused for now, just in case in the future a cache redesign could allow several cache block pools
+*/
+bool CPL_STDCALL
+ApplyCacheHelperFlushHandler( const GDALDataset* currentDataset, const GDALDataset* datasetThatCouldBeFlushed, void* cacheManager)
+{
+    bool result = false;
+    if( pfnCacheFlushHelperHandler != nullptr ) //quick test to avoid locking
+    {
+        CPLMutexHolderD( &hCacheHelperMutex );
+        if( pfnCacheFlushHelperHandler != nullptr )
+            result = pfnCacheFlushHelperHandler(currentDataset, datasetThatCouldBeFlushed, cacheManager, pCacheFlushHelperHandlerUserData);
+    }
+    return result;
+}
+
+/**
+* Installs a new GDALCacheFlushHelperHandler
+*
+* @param pfnCacheHelperHandlerNew new GDALCacheFlushHelperHandler, can be 0 to set none
+* @param cacheManager unused for now, just in case in the future a cache redesign could allow several cache block pools
+* @param pUserData custom use data, that must be remain valid until the handler is uninstalled
+* @return the previous GDALCacheFlushHelperHandler
+*/
+
+GDALCacheFlushHelperHandler CPL_STDCALL
+GDALSetCacheFlushHelperHandler(GDALCacheFlushHelperHandler pfnCacheHelperHandlerNew, void* cacheManager, void* pUserData)
+{
+    GDALCacheFlushHelperHandler pfnOldHandler = nullptr;
+    CPLMutexHolderD( &hCacheHelperMutex );
+    pfnOldHandler = pfnCacheFlushHelperHandler;
+    pfnCacheFlushHelperHandler = pfnCacheHelperHandlerNew;
+    pCacheFlushHelperHandlerUserData = pUserData;
+    return pfnOldHandler;
+}
+//end GDALSetCacheFlushHelperHandler()
+
 /************************************************************************/
 /*                       GDALArrayBandBlockCache()                      */
 /************************************************************************/
