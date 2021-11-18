@@ -182,6 +182,7 @@ if (GDAL_USE_ICONV)
           # linkage against OSX's system iconv is going to require
           # LIBICONV_PLUG to be defined, but other self-built situations
           # like CondaForge or Homebrew might not need this
+          set(CMAKE_REQUIRED_LIBRARIES ${Iconv_LIBRARY})
           check_symbol_exists(_iconv_close "iconv.h" HAVE_ICONV_CLOSE)
           if (HAVE_ICONV_CLOSE)
               target_compile_definitions(cpl PRIVATE -DLIBICONV_PLUG)
