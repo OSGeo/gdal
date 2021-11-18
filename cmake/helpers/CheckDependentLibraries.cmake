@@ -13,6 +13,7 @@ include(CheckFunctionExists)
 include(CMakeDependentOption)
 include(FeatureSummary)
 include(DefineFindPackage2)
+include(CheckSymbolExists)
 
 # Macro to declare a package
 # Accept a CAN_DISABLE option to specify that the package can be disabled
