@@ -74,7 +74,7 @@ ApplyCacheHelperFlushHandler( const GDALDataset* currentDataset, const GDALDatas
 *
 * @param pfnCacheHelperHandlerNew new GDALCacheFlushHelperHandler, can be 0 to set none
 * @param cacheManager unused for now, just in case in the future a cache redesign could allow several cache block pools
-* @param pUserData custom use data, that must be remain valid until the handler is uninstalled
+* @param pUserData custom user data, that must remain valid until the handler is uninstalled
 * @return the previous GDALCacheFlushHelperHandler
 */
 

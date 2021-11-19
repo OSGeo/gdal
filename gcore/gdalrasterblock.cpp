@@ -989,9 +989,10 @@ CPLErr GDALRasterBlock::Internalize()
                     }
                     else if (nDisableDirtyBlockFlushCounter == 0)
                     {
-                        GDALDataset* otherDataset = poTarget->poBand->GetDataset();
-                        const bool canFlushOtherDataset = ApplyCacheHelperFlushHandler(poThisDS, otherDataset, 0);
-                        if( (poTarget->poBand->GetDataset() == poThisDS ) || canFlushOtherDataset)
+                        GDALDataset* targetDataset = poTarget->poBand->GetDataset();
+                        const bool isSameDataset = (targetDataset == poThisDS);
+                        const bool canFlushTargetDataset = isSameDataset || ApplyCacheHelperFlushHandler(poThisDS, targetDataset, 0);
+                        if( canFlushTargetDataset )
                         {
                             if( CPLAtomicCompareAndExchange(
                                     &(poTarget->nLockCount), 0, -1) )
