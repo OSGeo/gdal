@@ -7004,6 +7004,136 @@ def test_tiff_write_180_lerc_separate():
     gdal.Unlink(filename)
     assert cs == [30111, 32302, 40026]
 
+
+###############################################################################
+# Test MAX_Z_ERROR_OVERVIEW effect while creating overviews
+# on a newly created dataset
+
+@pytest.mark.parametrize("external_ovr,compression", [(True, 'LERC_ZSTD'),
+                                                      (False, 'LERC_ZSTD'),
+                                                      (True, 'LERC_DEFLATE'),
+                                                      (False, 'LERC_DEFLATE')])
+def test_tiff_write_lerc_overview(external_ovr, compression):
+    md = gdaltest.tiff_drv.GetMetadata()
+    if compression not in md['DMD_CREATIONOPTIONLIST']:
+        pytest.skip()
+
+    checksums = {}
+    errors = [0,10,10]
+    src_ds = gdal.Open('../gdrivers/data/utm.tif')
+    for i, error in enumerate(errors):
+        fname = '/vsimem/test_tiff_write_lerc_overview_%d' % i
+
+        ds = gdal.GetDriverByName('GTiff').Create(fname, 256, 256, 1,
+                                                  options=['COMPRESS=' + compression,
+                                                           'MAX_Z_ERROR=%f' % error])
+        data = src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512, 256, 256)
+        ds.GetRasterBand(1).WriteRaster(0, 0, 256, 256, data)
+        if i == 2:
+            error = 30
+        options = {}
+        if external_ovr:
+            ds = None
+            ds = gdal.Open(fname)
+            options['COMPRESS_OVERVIEW'] = compression
+        options['MAX_Z_ERROR_OVERVIEW'] = '%d' % error
+        with gdaltest.config_options(options):
+            ds.BuildOverviews('AVERAGE', overviewlist=[2, 4])
+
+        ds = None
+
+        ds = gdal.Open(fname)
+        assert ds.GetRasterBand(1).GetOverview(0).GetDataset().GetMetadataItem('COMPRESSION', 'IMAGE_STRUCTURE') == compression
+        checksums[i] = [ ds.GetRasterBand(1).Checksum(),
+                               ds.GetRasterBand(1).GetOverview(0).Checksum(),
+                               ds.GetRasterBand(1).GetOverview(1).Checksum() ]
+        ds = None
+        gdaltest.tiff_drv.Delete(fname)
+
+    assert checksums[0][0] != checksums[1][0]
+    assert checksums[0][1] != checksums[1][1]
+    assert checksums[0][2] != checksums[1][2]
+
+    assert checksums[0][0] != checksums[2][0]
+    assert checksums[0][1] != checksums[2][1]
+    assert checksums[0][2] != checksums[2][2]
+
+    assert checksums[1][0] == checksums[2][0]
+    assert checksums[1][1] != checksums[2][1]
+    assert checksums[1][2] != checksums[2][2]
+
+###############################################################################
+# Test ZLEVEL_OVERVIEW effect while creating overviews
+# on a newly created dataset
+
+@pytest.mark.parametrize("external_ovr", [True, False])
+def test_tiff_write_lerc_zlevel(external_ovr):
+    md = gdaltest.tiff_drv.GetMetadata()
+    if 'LERC_DEFLATE' not in md['DMD_CREATIONOPTIONLIST']:
+        pytest.skip()
+
+    filesize = {}
+    src_ds = gdal.Open('../gdrivers/data/utm.tif')
+    for level in (1,9):
+        fname = '/vsimem/test_tiff_write_lerc_zlevel_%d' % level
+        ds = gdal.GetDriverByName('GTiff').Create(fname, 256, 256, 1,
+                                                  options=['COMPRESS=LERC_DEFLATE'])
+        data = src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512, 256, 256)
+        ds.GetRasterBand(1).WriteRaster(0, 0, 256, 256, data)
+        options = { 'MAX_Z_ERROR_OVERVIEW' : '10' }
+        if external_ovr:
+            ds = None
+            ds = gdal.Open(fname)
+            options['COMPRESS_OVERVIEW'] = 'LERC_DEFLATE'
+        options['ZLEVEL_OVERVIEW'] = '%d' % level
+        with gdaltest.config_options(options):
+            ds.BuildOverviews('AVERAGE', overviewlist=[2, 4])
+        ds = None
+
+        if external_ovr:
+            filesize[level] = gdal.VSIStatL(fname + '.ovr').size
+        else:
+            filesize[level] = gdal.VSIStatL(fname).size
+        gdaltest.tiff_drv.Delete(fname)
+
+    assert filesize[1] > filesize[9]
+
+###############################################################################
+# Test ZSTD_LEVEL_OVERVIEW effect while creating overviews
+# on a newly created dataset
+
+@pytest.mark.parametrize("external_ovr", [True, False])
+def test_tiff_write_lerc_zstd_level(external_ovr):
+    md = gdaltest.tiff_drv.GetMetadata()
+    if 'LERC_ZSTD' not in md['DMD_CREATIONOPTIONLIST']:
+        pytest.skip()
+
+    filesize = {}
+    src_ds = gdal.Open('../gdrivers/data/utm.tif')
+    for level in (1,22):
+        fname = '/vsimem/test_tiff_write_lerc_zstd_level_%d' % level
+        ds = gdal.GetDriverByName('GTiff').Create(fname, 256, 256, 1,
+                                                  options=['COMPRESS=LERC_ZSTD'])
+        data = src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512, 256, 256)
+        ds.GetRasterBand(1).WriteRaster(0, 0, 256, 256, data)
+        options = { 'MAX_Z_ERROR_OVERVIEW' : '10' }
+        if external_ovr:
+            ds = None
+            ds = gdal.Open(fname)
+            options['COMPRESS_OVERVIEW'] = 'LERC_ZSTD'
+        options['ZSTD_LEVEL_OVERVIEW'] = '%d' % level
+        with gdaltest.config_options(options):
+            ds.BuildOverviews('AVERAGE', overviewlist=[2, 4])
+        ds = None
+
+        if external_ovr:
+            filesize[level] = gdal.VSIStatL(fname + '.ovr').size
+        else:
+            filesize[level] = gdal.VSIStatL(fname).size
+        gdaltest.tiff_drv.Delete(fname)
+
+    assert filesize[1] > filesize[22]
+
 ###############################################################################
 # Test set XMP metadata
 
