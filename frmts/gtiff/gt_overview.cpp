@@ -900,6 +900,20 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
         }
     }
 
+    const uint32_t* panLercAddCompressionAndVersion = nullptr;
+    uint32_t anLercAddCompressionAndVersion[2] = {LERC_VERSION_2_4,
+                                                  LERC_ADD_COMPRESSION_NONE};
+    if( pszCompress && EQUAL(pszCompress, "LERC_DEFLATE") )
+    {
+        anLercAddCompressionAndVersion[1] = LERC_ADD_COMPRESSION_DEFLATE;
+        panLercAddCompressionAndVersion = anLercAddCompressionAndVersion;
+    }
+    else if( pszCompress && EQUAL(pszCompress, "LERC_ZSTD") )
+    {
+        anLercAddCompressionAndVersion[1] = LERC_ADD_COMPRESSION_ZSTD;
+        panLercAddCompressionAndVersion = anLercAddCompressionAndVersion;
+    }
+
     for( iOverview = 0; iOverview < nOverviews; iOverview++ )
     {
         const int nOXSize = panOverviewList ?
@@ -942,7 +956,7 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
                                 CSLFetchNameValue(papszOptions, "JPEG_TABLESMODE") :
                                 CPLGetConfigOption( "JPEG_TABLESMODE_OVERVIEW", nullptr ),
                              pszNoData,
-                             nullptr,
+                             panLercAddCompressionAndVersion,
                              false
                            ) == 0 )
         {
@@ -1025,6 +1039,53 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
         TIFFSetField( hTIFF, TIFFTAG_JPEGTABLESMODE,
                       nJpegTablesMode );
         GTIFFSetJpegTablesMode(GDALDataset::ToHandle(hODS), nJpegTablesMode);
+    }
+
+    const char* pszZLevel =
+        papszOptions ?
+            CSLFetchNameValue(papszOptions, "ZLEVEL") :
+            CPLGetConfigOption( "ZLEVEL_OVERVIEW", nullptr );
+    if( (nCompression == COMPRESSION_DEFLATE ||
+         anLercAddCompressionAndVersion[1] == LERC_ADD_COMPRESSION_DEFLATE) &&
+         pszZLevel != nullptr )
+    {
+        const int nZLevel = atoi(pszZLevel);
+        if ( nZLevel >= 1 )
+        {
+            TIFFSetField( hTIFF, TIFFTAG_ZIPQUALITY, nZLevel );
+            GTIFFSetZLevel(GDALDataset::ToHandle(hODS), nZLevel);
+        }
+    }
+
+    const char* pszZSTDLevel =
+        papszOptions ?
+            CSLFetchNameValue(papszOptions, "ZSTD_LEVEL") :
+            CPLGetConfigOption( "ZSTD_LEVEL_OVERVIEW", nullptr );
+    if( (nCompression == COMPRESSION_ZSTD ||
+         anLercAddCompressionAndVersion[1] == LERC_ADD_COMPRESSION_ZSTD) &&
+         pszZSTDLevel != nullptr )
+    {
+        const int nZSTDLevel = atoi(pszZSTDLevel);
+        if ( nZSTDLevel >= 1 )
+        {
+            TIFFSetField( hTIFF, TIFFTAG_ZSTD_LEVEL, nZSTDLevel );
+            GTIFFSetZSTDLevel(GDALDataset::ToHandle(hODS), nZSTDLevel);
+        }
+    }
+
+    const char* pszMaxZError =
+        papszOptions ?
+            CSLFetchNameValue(papszOptions, "MAX_Z_ERROR") :
+            CPLGetConfigOption( "MAX_Z_ERROR_OVERVIEW", nullptr );
+    if( nCompression == COMPRESSION_LERC &&
+         pszMaxZError != nullptr )
+    {
+        const double dfMaxZError = CPLAtof(pszMaxZError);
+        if ( dfMaxZError >= 0 )
+        {
+            TIFFSetField( hTIFF, TIFFTAG_LERC_MAXZERROR, dfMaxZError );
+            GTIFFSetMaxZError(GDALDataset::ToHandle(hODS), dfMaxZError);
+        }
     }
 
 /* -------------------------------------------------------------------- */
