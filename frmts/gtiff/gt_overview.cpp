@@ -515,6 +515,10 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
         {
             nPlanarConfig = PLANARCONFIG_CONTIG;
         }
+        else if( nCompression == COMPRESSION_WEBP )
+        {
+            nPlanarConfig = PLANARCONFIG_CONTIG;
+        }
     }
 
     const char* pszInterleave = papszOptions ?
