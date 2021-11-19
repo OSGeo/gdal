@@ -3145,10 +3145,11 @@ def test_tiff_write_90():
     assert checksums[1][2] != checksums[2][2]
 
 ###############################################################################
-# Test WEBP_LEVEL propagation and overriding while creating (internal) overviews
+# Test WEBP_LEVEL propagation and overriding while creating overviews
 # on a newly created dataset
 
-def test_tiff_write_90_webp():
+@pytest.mark.parametrize("external_ovr", [True, False])
+def test_tiff_write_90_webp(external_ovr):
     md = gdaltest.tiff_drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('WEBP') == -1:
         pytest.skip()
@@ -3159,16 +3160,22 @@ def test_tiff_write_90_webp():
         src_ds = gdal.Open('../gdrivers/data/utm.tif')
         fname = 'tmp/tiff_write_90_webp_%d' % i
 
-        ds = gdal.GetDriverByName('GTiff').Create(fname, 1024, 1024, 3,
+        ds = gdal.GetDriverByName('GTiff').Create(fname, 512, 512, 3,
                                                   options=['COMPRESS=WEBP', 'WEBP_LEVEL=%d' % quality])
 
-        data = src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512, 1024, 1024)
-        ds.GetRasterBand(1).WriteRaster(0, 0, 1024, 1024, data)
-        ds.GetRasterBand(2).WriteRaster(0, 0, 1024, 1024, data)
-        ds.GetRasterBand(3).WriteRaster(0, 0, 1024, 1024, data)
+        data = src_ds.GetRasterBand(1).ReadRaster()
+        ds.GetRasterBand(1).WriteRaster(0, 0, 512, 512, data)
+        ds.GetRasterBand(2).WriteRaster(0, 0, 512, 512, data)
+        ds.GetRasterBand(3).WriteRaster(0, 0, 512, 512, data)
         if i == 2:
             quality = 30
-        with gdaltest.config_option('WEBP_LEVEL_OVERVIEW', '%d'%quality):
+        options = {}
+        if external_ovr:
+            ds = None
+            ds = gdal.Open(fname)
+            options['COMPRESS_OVERVIEW'] = 'WEBP'
+        options['WEBP_LEVEL_OVERVIEW'] = '%d' % quality
+        with gdaltest.config_options(options):
             ds.BuildOverviews('AVERAGE', overviewlist=[2, 4])
 
         src_ds = None
@@ -3192,7 +3199,6 @@ def test_tiff_write_90_webp():
     assert checksums[1][0] == checksums[2][0]
     assert checksums[1][1] != checksums[2][1]
     assert checksums[1][2] != checksums[2][2]
-
 
 
 ###############################################################################
