@@ -10230,10 +10230,7 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS,
                                     CPLSPrintf("%d", m_nJpegTablesMode),
                                     pszNoData,
                                     m_anLercAddCompressionAndVersion,
-                                    m_bWriteCOGLayout,
-                                    nOvrWebpLevel >= 0 ?
-                                        CPLSPrintf("%d", nOvrWebpLevel) : nullptr
-                                   );
+                                    m_bWriteCOGLayout);
 
         if( nOverviewOffset == 0 )
             eErr = CE_Failure;
@@ -10329,8 +10326,7 @@ CPLErr GTiffDataset::CreateInternalMaskOverviews(int nOvrBlockXSize,
                         nullptr, nullptr, nullptr, 0, nullptr,
                         "",
                         nullptr, nullptr, nullptr, nullptr,
-                        m_bWriteCOGLayout,
-                        nullptr );
+                        m_bWriteCOGLayout);
 
                 if( nOverviewOffset == 0 )
                 {
@@ -10646,9 +10642,7 @@ CPLErr GTiffDataset::IBuildOverviews(
                     CPLSPrintf("%d", m_nJpegTablesMode),
                     pszNoData,
                     m_anLercAddCompressionAndVersion,
-                    false,
-                    nOvrWebpLevel >= 0 ?
-                                CPLSPrintf("%d", nOvrWebpLevel) : nullptr
+                    false
             );
 
             if( nOverviewOffset == 0 )
@@ -19555,7 +19549,7 @@ CPLErr GTiffDataset::CreateMaskBand(int nFlagsIn)
                 bIsTiled, l_nCompression,
                 PHOTOMETRIC_MASK, PREDICTOR_NONE,
                 SAMPLEFORMAT_UINT, nullptr, nullptr, nullptr, 0, nullptr, "", nullptr, nullptr,
-                nullptr, nullptr, m_bWriteCOGLayout, nullptr );
+                nullptr, nullptr, m_bWriteCOGLayout );
 
         ReloadDirectory();
 
