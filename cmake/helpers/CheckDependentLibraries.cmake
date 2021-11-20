@@ -13,6 +13,7 @@ include(CheckFunctionExists)
 include(CMakeDependentOption)
 include(FeatureSummary)
 include(DefineFindPackage2)
+include(CheckSymbolExists)
 
 # Macro to declare a package
 # Accept a CAN_DISABLE option to specify that the package can be disabled
@@ -264,7 +265,7 @@ endif()
 # 3rd party libraries
 
 gdal_check_package(PCRE2 "Enable PCRE2 support for sqlite3" CAN_DISABLE)
-if(NOT GDAL_USE_PCRE)
+if(NOT GDAL_USE_PCRE2)
     gdal_check_package(PCRE "Enable PCRE support for sqlite3" CAN_DISABLE)
 endif()
 
