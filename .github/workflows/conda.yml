@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        platform: ['ubuntu-latest','windows-latest','macos-latest']
+        platform: ['ubuntu-latest','windows-latest','macos-10.15']
 
     env:
       PLATFORM: ${{ matrix.platform }}
