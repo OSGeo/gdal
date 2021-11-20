@@ -765,7 +765,8 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
     CPLString osCompress = CSLFetchNameValueDef(papszOptions, "COMPRESS",
                                                 gbHasLZW ? "LZW" : "NONE");
     if( EQUAL(osCompress, "JPEG") &&
-        poCurDS->GetRasterCount() == 4 )
+        poCurDS->GetRasterCount() == 4 &&
+        poCurDS->GetRasterBand(4)->GetColorInterpretation() == GCI_AlphaBand )
     {
         char** papszArg = nullptr;
         papszArg = CSLAddString(papszArg, "-of");
