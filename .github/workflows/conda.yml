@@ -4,10 +4,9 @@ on:
     push:
         paths-ignore:
             - 'doc/**'
-    # Disabled because of https://github.com/OSGeo/issues/4599
-    #pull_request:
-    #    paths-ignore:
-    #        - 'doc/**'
+    pull_request:
+        paths-ignore:
+            - 'doc/**'
 
 
 jobs:
