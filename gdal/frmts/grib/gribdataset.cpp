@@ -2597,10 +2597,14 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
                 meta->gds.projType == GS3_LATLON)
             {
                 // Find the first row number east of the antimeridian
-                nSplitAndSwapColumn = static_cast<int>(ceil((180 - rMinX) / rPixelSizeX));
-                CPLDebug("GRIB", "Rewrapping around the antimeridian at column %d",
-                    nSplitAndSwapColumn);
-                rMinX = -180;
+                const int nSplitAndSwapColumnCandidate = static_cast<int>(ceil((180 - rMinX) / rPixelSizeX));
+                if( nSplitAndSwapColumnCandidate < nRasterXSize )
+                {
+                    nSplitAndSwapColumn = nSplitAndSwapColumnCandidate;
+                    CPLDebug("GRIB", "Rewrapping around the antimeridian at column %d",
+                        nSplitAndSwapColumn);
+                    rMinX = -180;
+                }
             }
             else if (Lon360to180(rMinX) > Lon360to180(rMaxX))
             {
