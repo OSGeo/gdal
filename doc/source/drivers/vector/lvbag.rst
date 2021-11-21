@@ -20,9 +20,9 @@ library.
 Each extract XML file is presented as a single OGR layer. The layers are
 georeferenced in their native (EPSG:28992) SRS.
 
-More information about the LV BAG 2.0 can be found at https://zakelijk.kadaster.nl/bag-2.0
+More information about the LV BAG 2.0 can be found at https://www.kadaster.nl/zakelijk/producten/adressen-en-gebouwen/bag-2.0-extract
 
-LV BAG model definitions are available at https://www.kadaster.nl/-/xsd-s-bag-2.0-extract
+LV BAG model definitions are available at https://developer.kadaster.nl/schemas/-/categories/4119958
 
 Note 1 : The earlier BAG 1.0 extract is **not supported**\  by this driver.
 
@@ -96,4 +96,4 @@ Examples
 See Also
 --------
 
--  `Kadaster LV BAG 2.0 page (Dutch) <https://zakelijk.kadaster.nl/bag-2.0>`__
+-  `Kadaster LV BAG 2.0 page (Dutch) <https://www.kadaster.nl/zakelijk/producten/adressen-en-gebouwen/bag-2.0-extract>`__
