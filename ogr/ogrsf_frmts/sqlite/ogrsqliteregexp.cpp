@@ -165,7 +165,7 @@ void OGRSQLiteREGEXPFunction( sqlite3_context *ctx,
         return;
 
     pcre2_match_data *md = pcre2_match_data_create_from_pattern(p, nullptr);
-    if (!str) {
+    if (!md) {
         sqlite3_result_error(ctx, "could not create match data block", -1);
         return;
     }
