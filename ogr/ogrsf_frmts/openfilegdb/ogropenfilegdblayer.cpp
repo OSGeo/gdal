@@ -689,10 +689,12 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
             case FGFT_RASTER:
             {
                 const FileGDBRasterField* rasterField = cpl::down_cast<const FileGDBRasterField*>(poGDBField);
-                if( rasterField->IsManaged() )
+                if( rasterField->GetType() == FileGDBRasterField::Type::MANAGED )
                     eType = OFTInteger;
-                else
+                else if( rasterField->GetType() == FileGDBRasterField::Type::EXTERNAL )
                     eType = OFTString;
+                else
+                    eType = OFTBinary;
                 break;
             }
         }

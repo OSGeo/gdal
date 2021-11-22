@@ -186,17 +186,27 @@ class FileGDBGeomField: public FileGDBField
 
 class FileGDBRasterField: public FileGDBGeomField
 {
+    public:
+        enum class Type
+        {
+            EXTERNAL,
+            MANAGED,
+            INLINE,
+        };
+
+    private:
         friend class FileGDBTable;
 
         std::string       osRasterColumnName;
-        bool              m_bIsManaged = false;
+
+        Type              m_eType = Type::EXTERNAL;
 
     public:
         explicit          FileGDBRasterField(FileGDBTable* poParentIn) : FileGDBGeomField(poParentIn) {}
         virtual          ~FileGDBRasterField() {}
 
         const std::string& GetRasterColumnName() const { return osRasterColumnName; }
-        bool IsManaged() const { return m_bIsManaged; }
+        Type GetType() const { return m_eType; }
 };
 
 /************************************************************************/
