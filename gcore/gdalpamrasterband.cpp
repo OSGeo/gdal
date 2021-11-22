@@ -564,15 +564,23 @@ CPLErr GDALPamRasterBand::CloneInfo( GDALRasterBand *poSrcBand,
 /* -------------------------------------------------------------------- */
     if( nCloneFlags & GCIF_NODATA )
     {
-        int bSuccess = FALSE;  // TODO(schwehr): int -> bool.
+        int bSuccess = FALSE;
         const double dfNoData = poSrcBand->GetNoDataValue( &bSuccess );
 
         if( bSuccess )
         {
-            if( !bOnlyIfMissing
-                || GetNoDataValue( &bSuccess ) != dfNoData
-                || !bSuccess )
+            if( !bOnlyIfMissing )
                 GDALPamRasterBand::SetNoDataValue( dfNoData );
+            else
+            {
+                const double dfExistingNoData = GetNoDataValue( &bSuccess );
+                if( !bSuccess ||
+                    !((std::isnan(dfExistingNoData) && std::isnan(dfNoData)) ||
+                      dfExistingNoData == dfNoData) )
+                {
+                    GDALPamRasterBand::SetNoDataValue( dfNoData );
+                }
+            }
         }
     }
 
