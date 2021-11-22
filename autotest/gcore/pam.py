@@ -538,6 +538,19 @@ def test_pam_metadata_coordinate_epoch():
     gdal.GetDriverByName('PNM').Delete(tmpfilename)
 
 ###############################################################################
+# Check that PAM handles correctly equality of NaN nodata values (#4847)
+
+def test_pam_nodata_nan():
+
+    outfilename = '/vsimem/test_pam_nodata_nan.tif'
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 1, gdal.GDT_Float32)
+    src_ds.GetRasterBand(1).SetNoDataValue(float('nan'))
+    gdal.GetDriverByName('GTiff').CreateCopy(outfilename, src_ds)
+    # Check that no PAM file is generated
+    assert gdal.VSIStatL(outfilename + '.aux.xml') is None
+    gdal.GetDriverByName('GTiff').Delete(outfilename)
+
+###############################################################################
 # Cleanup.
 
 def test_pam_cleanup():
