@@ -62,10 +62,13 @@ if (WIN32)
 
   string(REPLACE ";" "\\;" PATH_ESCAPED "$ENV{PATH}")
   list(APPEND TEST_ENV "PATH=${GDAL_OUTPUT_DIR}\\;${PATH_ESCAPED}")
-  # Recoding tests in test_cpl.cpp fail on Windows
-  list(APPEND TEST_ENV DO_NOT_FAIL_ON_RECODE_ERRORS=YES)
 else ()
   list(APPEND TEST_ENV "LD_LIBRARY_PATH=${GDAL_OUTPUT_DIR}:$ENV{LD_LIBRARY_PATH}")
+endif ()
+
+if (WIN32 OR APPLE)
+  # Recoding tests in test_cpl.cpp fail on Windows and Mac
+  list(APPEND TEST_ENV DO_NOT_FAIL_ON_RECODE_ERRORS=YES)
 endif ()
 
 # Set GDAL_DRIVER_PATH We request the TARGET_FILE_DIR of one of the plugins, since the PLUGIN_OUTPUT_DIR will not
