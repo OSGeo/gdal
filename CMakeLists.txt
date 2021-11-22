@@ -221,7 +221,7 @@ endif ()
 #   4. If nothing specified, use default behavior.
 #
 # for example
-#   $ cmake -DPython_LOOKUP_VERSION=3.6 ..
+#   $ cmake -DPython_LOOKUP_VERSION=3.6.0 ..
 #   $ cmake -DPython_FIND_VIRTUALENV=ONLY ..
 #   $ cmake -DPython_ROOT=C:\Python36 ..
 # ~~~
@@ -232,7 +232,7 @@ if (Python_LOOKUP_VERSION)
   find_package(Python ${Python_LOOKUP_VERSION} EXACT COMPONENTS Interpreter Development NumPy)
 else ()
   set(Python_FIND_STRATEGY LOCATION)
-  find_package(Python COMPONENTS Interpreter Development NumPy)
+  find_package(Python 3.6 COMPONENTS Interpreter Development NumPy)
 endif ()
 set_package_properties(Python PROPERTIES PURPOSE "SWIG_PYTHON: Python binding")
 
