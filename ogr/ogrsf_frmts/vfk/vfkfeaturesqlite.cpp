@@ -235,7 +235,10 @@ OGRErr VFKFeatureSQLite::LoadProperties(OGRFeature *poFeature)
         /* sequential access */
         VFKReaderSQLite *poReader = (VFKReaderSQLite *) m_poDataBlock->GetReader();
         if ( poReader->ExecuteSQL(hStmt) != OGRERR_NONE )
+        {
+            ((VFKDataBlockSQLite *) m_poDataBlock)->m_hStmt = nullptr;
             return OGRERR_FAILURE;
+        }
     }
 
     int nPropertyCount = m_poDataBlock->GetPropertyCount();
