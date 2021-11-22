@@ -223,8 +223,8 @@ Several authentication methods are possible, and are attempted in the following 
 
 1. If :decl_configoption:`AWS_NO_SIGN_REQUEST=YES` configuration option is set, request signing is disabled. This option might be used for buckets with public access rights. Available since GDAL 2.3
 2. The :decl_configoption:`AWS_SECRET_ACCESS_KEY` and :decl_configoption:`AWS_ACCESS_KEY_ID` configuration options can be set. The :decl_configoption:`AWS_SESSION_TOKEN` configuration option must be set when temporary credentials are used.
-3. Starting with GDAL 2.3, alternate ways of providing credentials similar to what the "aws" command line utility or Boto3 support can be used. If the above mentioned environment variables are not provided, the ``~/.aws/credentials`` or ``UserProfile%/.aws/credentials`` file will be read (or the file pointed by :decl_configoption:`CPL_AWS_CREDENTIALS_FILE`). The profile may be specified with the :decl_configoption:`AWS_DEFAULT_PROFILE` environment variable, or starting with GDAL 3.2 with the :decl_configoption:`AWS_PROFILE` environment variable (the default profile is "default")
-4. The ``~/.aws/config`` or ``UserProfile%/.aws/config`` file may also be used (or the file pointer by :decl_configoption:`AWS_CONFIG_FILE`) to retrieve credentials and the AWS region.
+3. Starting with GDAL 2.3, alternate ways of providing credentials similar to what the "aws" command line utility or Boto3 support can be used. If the above mentioned environment variables are not provided, the ``~/.aws/credentials`` or ``UserProfile%/.aws/credentials`` file will be read (or the file pointed by :decl_configoption:`CPL_AWS_CREDENTIALS_FILE`). The profile may be specified with the :decl_configoption:`AWS_DEFAULT_PROFILE` environment variable, or starting with GDAL 3.2 with the :decl_configoption:`AWS_PROFILE` environment variable (the default profile is "default").
+4. The ``~/.aws/config`` or ``%UserProfile%/.aws/config`` file may also be used (or the file pointer by :decl_configoption:`AWS_CONFIG_FILE`) to retrieve credentials and the AWS region.
 5. If none of the above method succeeds, instance profile credentials will be retrieved when GDAL is used on EC2 instances.
 
 The :decl_configoption:`AWS_REGION` (or :decl_configoption:`AWS_DEFAULT_REGION` starting with GDAL 2.3) configuration option may be set to one of the supported S3 regions and defaults to ``us-east-1``.
@@ -247,6 +247,7 @@ Since GDAL 3.1, the :cpp:func:`VSIRename` operation is supported (first doing a 
 
 Since GDAL 3.1, the :cpp:func:`VSIRmdirRecursive` operation is supported (using batch deletion method). The :decl_configoption:`CPL_VSIS3_USE_BASE_RMDIR_RECURSIVE` configuration option can be set to YES if using a S3-like API that doesn't support batch deletion (GDAL >= 3.2)
 
+Starting with GDAL 3.5, profiles that use IAM role assumption (see https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-role.html) are handled. The ``role_arn`` and ``source_profile`` keywords are required in such profiles. The optional ``external_id``, ``mfa_serial`` and ``role_session_name`` can be specified. ``credential_source`` is not supported currently.
 
 .. versionadded:: 2.1
 
