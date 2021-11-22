@@ -23,7 +23,21 @@
 ###############################################################################
 
 find_path(GEOTIFF_INCLUDE_DIR geotiff.h PATH_SUFFIXES geotiff libgeotiff)
-find_library(GEOTIFF_LIBRARY geotiff geotiff_i)
+
+set(GEOTIFF_NAMES ${GEOTIFF_NAMES} geotiff geotiff_i)
+set(GEOTIFF_NAMES_DEBUG ${GEOTIFF_NAMES_DEBUG} geotiffd geotiff_d geotiff_d_i)
+
+if(NOT GEOTIFF_LIBRARY)
+  find_library(GEOTIFF_LIBRARY_RELEASE NAMES ${GEOTIFF_NAMES})
+  find_library(GEOTIFF_LIBRARY_DEBUG NAMES ${GEOTIFF_NAMES_DEBUG})
+  include(SelectLibraryConfigurations)
+  select_library_configurations(GEOTIFF)
+  mark_as_advanced(GEOTIFF_LIBRARY_RELEASE GEOTIFF_LIBRARY_DEBUG)
+endif()
+
+unset(GEOTIFF_NAMES)
+unset(GEOTIFF_NAMES_DEBUG)
+
 
 if(GEOTIFF_INCLUDE_DIR)
     set(GEOTIFF_MAJOR_VERSION 0)
@@ -64,8 +78,26 @@ if(GEOTIFF_FOUND)
         add_library(GEOTIFF::GEOTIFF UNKNOWN IMPORTED)
         set_target_properties(GEOTIFF::GEOTIFF PROPERTIES
                               INTERFACE_INCLUDE_DIRECTORIES ${GEOTIFF_INCLUDE_DIR}
-                              IMPORTED_LINK_INTERFACE_LANGUAGES C
-                              IMPORTED_LOCATION ${GEOTIFF_LIBRARY})
+                              IMPORTED_LINK_INTERFACE_LANGUAGES C)
+        if(EXISTS "${GEOTIFF_LIBRARY}")
+          set_target_properties(GEOTIFF::GEOTIFF PROPERTIES
+            IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+            IMPORTED_LOCATION "${GEOTIFF_LIBRARY}")
+        endif()
+        if(EXISTS "${GEOTIFF_LIBRARY_RELEASE}")
+          set_property(TARGET GEOTIFF::GEOTIFF APPEND PROPERTY
+            IMPORTED_CONFIGURATIONS RELEASE)
+          set_target_properties(GEOTIFF::GEOTIFF PROPERTIES
+            IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "C"
+            IMPORTED_LOCATION_RELEASE "${GEOTIFF_LIBRARY_RELEASE}")
+        endif()
+        if(EXISTS "${GEOTIFF_LIBRARY_DEBUG}")
+          set_property(TARGET GEOTIFF::GEOTIFF APPEND PROPERTY
+            IMPORTED_CONFIGURATIONS DEBUG)
+          set_target_properties(GEOTIFF::GEOTIFF PROPERTIES
+            IMPORTED_LINK_INTERFACE_LANGUAGES_DEBUG "C"
+            IMPORTED_LOCATION_DEBUG "${GEOTIFF_LIBRARY_DEBUG}")
+        endif()
     endif()
 endif()
 

@@ -214,9 +214,12 @@ geotiff
 
     Path to an include directory with the libgeotiff header files.
 
-.. option:: GEOTIFF_LIBRARY
+.. option:: GEOTIFF_LIBRARY_RELEASE
 
-    Path to a shared or static library file such as libgeotiff.so
+    Path to a shared or static library file, such as ``geotiff.dll``,
+    ``libgeotiff.so``, ``geotiff.lib``, or other name. A similar variable
+    ``GEOTIFF_LIBRARY_DEBUG`` can also be specified to a similar library for
+    building Debug releases.
 
 .. option:: GDAL_USE_GEOTIFF=ON/OFF
 
