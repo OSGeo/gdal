@@ -52,6 +52,7 @@ def test_ogr_vfk_1():
     gdal.SetConfigOption('OGR_VFK_DB_OVERWRITE', 'YES')
 
     gdaltest.vfk_ds = ogr.Open('data/vfk/bylany.vfk')
+    gdal.SetConfigOption('OGR_VFK_DB_OVERWRITE', None)
 
     assert gdaltest.vfk_ds is not None
 
@@ -210,7 +211,7 @@ def test_ogr_vfk_7():
         assert col.GetName() == name and col.GetType() == ctype, \
             "PAR: '{}' column name/type mismatch".format(name)
 
-    
+
 ###############################################################################
 # Open DB file as datasource (new in GDAL 2.2)
 
@@ -331,7 +332,7 @@ def test_ogr_vfk_12():
 
     assert geom.GetPointCount() == 92, \
         'did not get expected number of points.'
-    
+
 ###############################################################################
 # cleanup
 
@@ -351,7 +352,7 @@ def test_ogr_vfk_cleanup():
     except OSError:
         pass
 
-    
+
 ###############################################################################
 #
 
