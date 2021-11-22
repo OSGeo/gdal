@@ -256,6 +256,7 @@
 %constant CPLES_XML_BUT_QUOTES    = CPLES_XML_BUT_QUOTES;
 %constant CPLES_URL               = CPLES_URL;
 %constant CPLES_SQL               = CPLES_SQL;
+%constant CPLES_SQLI              = CPLES_SQLI;
 %constant CPLES_CSV               = CPLES_CSV;
 
 // GDALRATFieldType

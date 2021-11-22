@@ -3930,6 +3930,7 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "CPLES_XML_BUT_QUOTES",SWIG_From_int((int)(CPLES_XML_BUT_QUOTES)));
   SWIG_Python_SetConstant(d, "CPLES_URL",SWIG_From_int((int)(CPLES_URL)));
   SWIG_Python_SetConstant(d, "CPLES_SQL",SWIG_From_int((int)(CPLES_SQL)));
+  SWIG_Python_SetConstant(d, "CPLES_SQLI",SWIG_From_int((int)(CPLES_SQLI)));
   SWIG_Python_SetConstant(d, "CPLES_CSV",SWIG_From_int((int)(CPLES_CSV)));
   SWIG_Python_SetConstant(d, "GFT_Integer",SWIG_From_int((int)(GFT_Integer)));
   SWIG_Python_SetConstant(d, "GFT_Real",SWIG_From_int((int)(GFT_Real)));
