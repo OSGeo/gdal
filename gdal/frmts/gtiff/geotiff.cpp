@@ -16415,8 +16415,11 @@ void GTiffWriteJPEGTables( TIFF* hTIFF,
     papszLocalParameters = CSLSetNameValue( papszLocalParameters,
                                             "JPEG_QUALITY",
                                             pszJPEGQuality );
-    papszLocalParameters = CSLSetNameValue( papszLocalParameters,
-                                            "PHOTOMETRIC", pszPhotometric );
+    if( nBands <= 4 )
+    {
+        papszLocalParameters = CSLSetNameValue( papszLocalParameters,
+                                                "PHOTOMETRIC", pszPhotometric );
+    }
     papszLocalParameters = CSLSetNameValue( papszLocalParameters,
                                             "BLOCKYSIZE",
                                             CPLSPrintf("%u", nInMemImageHeight)
