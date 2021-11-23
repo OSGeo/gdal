@@ -3461,7 +3461,7 @@ bool IVSIS3LikeFSHandler::CopyFile(VSILFILE* fpIn,
         STARTS_WITH(pszTarget, osPrefix) )
     {
         bool bRet = CopyObject(pszSource, pszTarget, nullptr) == 0;
-        if( pProgressFunc )
+        if( bRet && pProgressFunc )
         {
             bRet = pProgressFunc(1.0, osMsg.c_str(), pProgressData) != 0;
         }
