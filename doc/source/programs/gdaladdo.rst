@@ -63,11 +63,11 @@ most supported file formats with one of several downsampling algorithms.
 .. option:: -ro
 
     open the dataset in read-only mode, in order to generate external overview
-    (for GeoTIFF especially). 
+    (for GeoTIFF especially).
 
 .. option:: -clean
 
-    remove all overviews. 
+    remove all overviews.
 
 .. option:: -oo NAME=VALUE
 
@@ -76,13 +76,13 @@ most supported file formats with one of several downsampling algorithms.
 .. option:: -minsize <val>
 
     Maximum width or height of the smallest overview level. Only taken into
-    account if explicit levels are not specified. Defaults to 256. 
+    account if explicit levels are not specified. Defaults to 256.
 
     .. versionadded:: 2.3
 
 .. option:: <filename>
 
-    The file to build overviews for (or whose overviews must be removed). 
+    The file to build overviews for (or whose overviews must be removed).
 
 .. option:: <levels>
 
@@ -129,13 +129,22 @@ The photometric interpretation can be set with the :decl_configoption:`PHOTOMETR
 =RGB/YCBCR/... configuration option,
 and the interleaving with the :decl_configoption:`INTERLEAVE_OVERVIEW` =PIXEL/BAND configuration option.
 
-For JPEG compressed external overviews, the JPEG quality can be set with
+For JPEG compressed external and internal overviews, the JPEG quality can be set with
 ``--config JPEG_QUALITY_OVERVIEW value``.
 
 For WEBP compressed external and internal overviews, the WEBP quality level can be set with
 ``--config WEBP_LEVEL_OVERVIEW value``. If not set, will default to 75.
 
-For LZW or DEFLATE compressed external overviews, the predictor value can be set
+For LERC compressed external and internal overviews, the max error threshold can be set with
+``--config MAX_Z_ERROR_OVERVIEW value``. If not set, will default to 0 (lossless). Added in GDAL 3.4.1
+
+For DEFLATE or LERC_DEFLATE compressed external and internal overviews, the compression level can be set with
+``--config ZLEVEL_OVERVIEW value``. If not set, will default to 6. Added in GDAL 3.4.1
+
+For ZSTD or LERC_ZSTD compressed external and internal overviews, the compression level can be set with
+``--config ZSTD_LEVEL_OVERVIEW value``. If not set, will default to 9. Added in GDAL 3.4.1
+
+For LZW, ZSTD or DEFLATE compressed external overviews, the predictor value can be set
 with ``--config PREDICTOR_OVERVIEW 1|2|3``.
 
 To produce the smallest possible JPEG-In-TIFF overviews, you should use:
