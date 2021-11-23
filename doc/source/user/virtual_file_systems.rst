@@ -223,7 +223,7 @@ Several authentication methods are possible, and are attempted in the following 
 
 1. If :decl_configoption:`AWS_NO_SIGN_REQUEST=YES` configuration option is set, request signing is disabled. This option might be used for buckets with public access rights. Available since GDAL 2.3
 2. The :decl_configoption:`AWS_SECRET_ACCESS_KEY` and :decl_configoption:`AWS_ACCESS_KEY_ID` configuration options can be set. The :decl_configoption:`AWS_SESSION_TOKEN` configuration option must be set when temporary credentials are used.
-3. Starting with GDAL 2.3, alternate ways of providing credentials similar to what the "aws" command line utility or Boto3 support can be used. If the above mentioned environment variables are not provided, the ``~/.aws/credentials`` or ``UserProfile%/.aws/credentials`` file will be read (or the file pointed by :decl_configoption:`CPL_AWS_CREDENTIALS_FILE`). The profile may be specified with the :decl_configoption:`AWS_DEFAULT_PROFILE` environment variable, or starting with GDAL 3.2 with the :decl_configoption:`AWS_PROFILE` environment variable (the default profile is "default").
+3. Starting with GDAL 2.3, alternate ways of providing credentials similar to what the "aws" command line utility or Boto3 support can be used. If the above mentioned environment variables are not provided, the ``~/.aws/credentials`` or ``%UserProfile%/.aws/credentials`` file will be read (or the file pointed by :decl_configoption:`CPL_AWS_CREDENTIALS_FILE`). The profile may be specified with the :decl_configoption:`AWS_DEFAULT_PROFILE` environment variable, or starting with GDAL 3.2 with the :decl_configoption:`AWS_PROFILE` environment variable (the default profile is "default").
 4. The ``~/.aws/config`` or ``%UserProfile%/.aws/config`` file may also be used (or the file pointer by :decl_configoption:`AWS_CONFIG_FILE`) to retrieve credentials and the AWS region.
 5. If none of the above method succeeds, instance profile credentials will be retrieved when GDAL is used on EC2 instances.
 
@@ -329,12 +329,15 @@ The generalities of :ref:`/vsicurl/ </vsicurl/>` apply.
 Several authentication methods are possible, and are attempted in the following order:
 
 1. The :decl_configoption:`AZURE_STORAGE_CONNECTION_STRING` configuration option, given in the access key section of the administration interface. It contains both the account name and a secret key.
+
 2. The :decl_configoption:`AZURE_STORAGE_ACCOUNT` configuration option is set to specify the account name AND
 
     a) The :decl_configoption:`AZURE_STORAGE_ACCESS_KEY` configuration option is set to specify the secret key.
     b) The :decl_configoption:`AZURE_NO_SIGN_REQUEST=YES` configuration option is set, so as to disable any request signing. This option might be used for accounts with public access rights. Available since GDAL 3.2
-    c) The :decl_configoption:`AZURE_SAS` configuration option is set to specify a Shared Access Signature. This SAS is appended to URLs built by the /vsiaz/ file system handler. Its value should already be URL-encoded and should not contain any leading '?' or '&' character (e.g. a valid one may look like "st=2019-07-18T03%3A53%3A22Z&se=2035-07-19T03%3A53%3A00Z&sp=rl&sv=2018-03-28&sr=c&sig=2RIXmLbLbiagYnUd49rgx2kOXKyILrJOgafmkODhRAQ%3D"). Available since GDAL 3.2
+    c) The :decl_configoption:`AZURE_STORAGE_SAS_TOKEN` configuration option (``AZURE_SAS`` if GDAL < 3.5) is set to specify a Shared Access Signature. This SAS is appended to URLs built by the /vsiaz/ file system handler. Its value should already be URL-encoded and should not contain any leading '?' or '&' character (e.g. a valid one may look like "st=2019-07-18T03%3A53%3A22Z&se=2035-07-19T03%3A53%3A00Z&sp=rl&sv=2018-03-28&sr=c&sig=2RIXmLbLbiagYnUd49rgx2kOXKyILrJOgafmkODhRAQ%3D"). Available since GDAL 3.2
     d) The current machine is a Azure Virtual Machine with Azure Active Directory permissions assigned to it (see https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/qs-configure-portal-windows-vm). Available since GDAL 3.3
+
+3. Starting with GDAL 3.5, the `configuration file <https://github.com/MicrosoftDocs/azure-docs-cli/blob/main/docs-ref-conceptual/azure-cli-configuration.md>` of the "az" command line utility can be used. The following keys of the ``[storage]`` section will be used in the following priority: ``connection_string``, ``account`` + ``key`` or ``account`` + ``sas_token``
 
 Since GDAL 3.1, the :cpp:func:`VSIRename` operation is supported (first doing a copy of the original file and then deleting it)
 

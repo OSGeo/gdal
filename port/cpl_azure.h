@@ -47,7 +47,7 @@ class VSIAzureBlobHandleHelper final: public IVSIS3LikeHandleHelper
         CPLString m_osStorageKey;
         CPLString m_osSAS;
         bool      m_bUseHTTPS;
-        bool      m_bFromManagedIdendities;
+        bool      m_bFromManagedIdentities;
 
         enum class Service
         {
@@ -63,9 +63,6 @@ class VSIAzureBlobHandleHelper final: public IVSIS3LikeHandleHelper
                                          CPLString& osStorageKey,
                                          CPLString& osSAS,
                                          bool& bFromManagedIdentities);
-
-        static bool     GetConfigurationFromManagedIdentities(
-                                                    CPLString& osAccessToken);
 
         static CPLString BuildURL(const CPLString& osEndpoint,
                                   const CPLString& osStorageAccount,
