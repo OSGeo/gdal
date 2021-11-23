@@ -401,7 +401,7 @@ int FileGDBTable::IsLikelyFeatureAtOffset(vsi_l_offset nOffset,
             case FGFT_RASTER:
             {
                 const FileGDBRasterField* rasterField = cpl::down_cast<const FileGDBRasterField*>(apoFields[i]);
-                if( rasterField->IsManaged() )
+                if( rasterField->GetType() == FileGDBRasterField::Type::MANAGED )
                     nRequiredLength += sizeof(GInt32);
                 else
                     nRequiredLength += 1; /* varuint32 so at least one byte */
@@ -483,7 +483,7 @@ int FileGDBTable::IsLikelyFeatureAtOffset(vsi_l_offset nOffset,
                 case FGFT_RASTER:
                 {
                     const FileGDBRasterField* rasterField = cpl::down_cast<const FileGDBRasterField*>(apoFields[i]);
-                    if( rasterField->IsManaged() )
+                    if( rasterField->GetType() == FileGDBRasterField::Type::MANAGED )
                         nRequiredLength += sizeof(GInt32);
                     else
                     {
@@ -1074,7 +1074,17 @@ int FileGDBTable::Open(const char* pszFilename,
             if( eType == FGFT_RASTER )
             {
                 returnErrorIf(nRemaining < 1 );
-                poRasterField->m_bIsManaged = *pabyIter != 0;
+                if( *pabyIter == 0 )
+                    poRasterField->m_eType = FileGDBRasterField::Type::EXTERNAL;
+                else if( *pabyIter == 1 )
+                    poRasterField->m_eType = FileGDBRasterField::Type::MANAGED;
+                else if( *pabyIter == 2 )
+                    poRasterField->m_eType = FileGDBRasterField::Type::INLINE;
+                else
+                {
+                    CPLError(CE_Warning, CPLE_NotSupported,
+                             "Unknown raster field type %d", *pabyIter);
+                }
                 pabyIter += 1;
                 nRemaining -= 1;
             }
@@ -1490,7 +1500,7 @@ OGRField* FileGDBTable::GetFieldValue(int iCol)
             case FGFT_RASTER:
             {
                 const FileGDBRasterField* rasterField = cpl::down_cast<const FileGDBRasterField*>(apoFields[j]);
-                if( rasterField->IsManaged() )
+                if( rasterField->GetType() == FileGDBRasterField::Type::MANAGED )
                     nLength = sizeof(GInt32);
                 else
                 {
@@ -1687,7 +1697,7 @@ OGRField* FileGDBTable::GetFieldValue(int iCol)
         case FGFT_RASTER:
         {
             const FileGDBRasterField* rasterField = cpl::down_cast<const FileGDBRasterField*>(apoFields[iCol]);
-            if( rasterField->IsManaged() )
+            if( rasterField->GetType() == FileGDBRasterField::Type::MANAGED )
             {
                 if( pabyIterVals + sizeof(GInt32) > pabyEnd )
                 {
@@ -1716,11 +1726,26 @@ OGRField* FileGDBTable::GetFieldValue(int iCol)
                     returnError();
                 }
 
-                // coverity[tainted_data,tainted_data_argument]
-                m_osCacheRasterFieldPath = ReadUTF16String(pabyIterVals, nLength / 2);
-                pabyIterVals += nLength;
+                if( rasterField->GetType() == FileGDBRasterField::Type::EXTERNAL )
+                {
+                    // coverity[tainted_data,tainted_data_argument]
+                    m_osCacheRasterFieldPath = ReadUTF16String(pabyIterVals, nLength / 2);
+                    sCurField.String = &m_osCacheRasterFieldPath[0];
+                    pabyIterVals += nLength;
+                }
+                else
+                {
+                    /* eCurFieldType = OFTBinary; */
+                    sCurField.Binary.nCount = nLength;
+                    sCurField.Binary.paData = (GByte*) pabyIterVals;
 
-                sCurField.String = &m_osCacheRasterFieldPath[0];
+                    pabyIterVals += nLength;
+
+                    /* Null terminate binary in case it is used as a string */
+                    nChSaved = *pabyIterVals;
+                    *pabyIterVals = '\0';
+                }
+
             }
             break;
         }
