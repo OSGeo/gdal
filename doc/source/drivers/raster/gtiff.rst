@@ -403,7 +403,7 @@ Creation Options
    * ``LERC_ZSTD`` is available when ``LERC`` and ``ZSTD`` are available.
 
    * ``JXL`` is for JPEG-XL, and is only available when using internal libtiff and building GDAL against
-     https://github.com/libjxl/libxl . JXL compression may only be used alongside ``INTERLEAVE=PIXEL`` 
+     https://github.com/libjxl/libjxl . JXL compression may only be used alongside ``INTERLEAVE=PIXEL`` 
      (the default) on datasets with 4 bands or less.
 
    * ``NONE`` is the default.
