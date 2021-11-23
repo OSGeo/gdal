@@ -592,6 +592,10 @@ class OGRProjCT : public OGRCoordinateTransformation
 
     bool        bWebMercatorToWGS84LongLat = false;
 
+    OGRAxisOrientation eSource0AxisOrientation = OAO_Other;
+
+    OGRAxisOrientation eTarget0AxisOrientation = OAO_Other;
+
     int         nErrorCount = 0;
 
     double      dfThreshold = 0.0;
@@ -1079,10 +1083,12 @@ OGRProjCT::OGRProjCT(const OGRProjCT& other) :
     bSourceLatLong(other.bSourceLatLong),
     bSourceWrap(other.bSourceWrap),
     dfSourceWrapLong(other.dfSourceWrapLong),
+    eSource0AxisOrientation(other.eSource0AxisOrientation),
     poSRSTarget((other.poSRSTarget != nullptr) ? (other.poSRSTarget->Clone()) : (nullptr)),
     bTargetLatLong(other.bTargetLatLong),
     bTargetWrap(other.bTargetWrap),
     dfTargetWrapLong(other.dfTargetWrapLong),
+    eTarget0AxisOrientation(other.eTarget0AxisOrientation),
     bWebMercatorToWGS84LongLat(other.bWebMercatorToWGS84LongLat),
     nErrorCount(other.nErrorCount),
     dfThreshold(other.dfThreshold),
@@ -1334,6 +1340,18 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
 
         CPLFree(pszSrcProj4Defn);
         CPLFree(pszDstProj4Defn);
+    }
+    if (bWebMercatorToWGS84LongLat)
+    {
+        poSRSSource->GetAxis(nullptr, 0, &eSource0AxisOrientation);
+        poSRSTarget->GetAxis(nullptr, 0, &eTarget0AxisOrientation);
+    }
+    else
+    {
+        if (bTargetLatLong && bTargetWrap && poSRSTarget)
+            poSRSTarget->GetAxis(nullptr, 0, &eTarget0AxisOrientation);
+        if (bSourceLatLong && bSourceWrap && poSRSSource)
+            poSRSSource->GetAxis(nullptr, 0, &eSource0AxisOrientation);
     }
 
     const char* pszCTOpSelection = CPLGetConfigOption("OGR_CT_OP_SELECTION", nullptr);
@@ -2115,9 +2133,9 @@ int OGRProjCT::TransformWithErrorCodes(
 /* -------------------------------------------------------------------- */
     if( bSourceLatLong && bSourceWrap )
     {
-        OGRAxisOrientation orientation;
+        OGRAxisOrientation orientation = eSource0AxisOrientation;
         assert( poSRSSource );
-        poSRSSource->GetAxis(nullptr, 0, &orientation);
+
         if( orientation == OAO_East )
         {
             for( int i = 0; i < nCount; i++ )
@@ -2156,8 +2174,7 @@ int OGRProjCT::TransformWithErrorCodes(
 
         if( poSRSSource )
         {
-            OGRAxisOrientation orientation;
-            poSRSSource->GetAxis(nullptr, 0, &orientation);
+            OGRAxisOrientation orientation = eSource0AxisOrientation;
             if( orientation != OAO_East )
             {
                 for( int i = 0; i < nCount; i++ )
@@ -2243,8 +2260,7 @@ int OGRProjCT::TransformWithErrorCodes(
 
         if( poSRSTarget )
         {
-            OGRAxisOrientation orientation;
-            poSRSTarget->GetAxis(nullptr, 0, &orientation);
+            OGRAxisOrientation orientation = eTarget0AxisOrientation;
             if( orientation != OAO_East )
             {
                 for( int i = 0; i < nCount; i++ )
@@ -2566,9 +2582,8 @@ int OGRProjCT::TransformWithErrorCodes(
 /* -------------------------------------------------------------------- */
     if( bTargetLatLong && bTargetWrap )
     {
-        OGRAxisOrientation orientation;
+        OGRAxisOrientation orientation = eTarget0AxisOrientation;
         assert( poSRSTarget );
-        poSRSTarget->GetAxis(nullptr, 0, &orientation);
         if( orientation == OAO_East )
         {
             for( int i = 0; i < nCount; i++ )
@@ -3159,7 +3174,8 @@ OGRCoordinateTransformation* OGRProjCT::GetInverse() const
     poNewCT->dfSourceWrapLong = dfTargetWrapLong;
     poNewCT->bSourceIsDynamicCRS = bTargetIsDynamicCRS;
     poNewCT->dfSourceCoordinateEpoch = dfTargetCoordinateEpoch;
-
+    poNewCT->eSource0AxisOrientation = eTarget0AxisOrientation;
+	
     if( poSRSSource )
         poNewCT->poSRSTarget = poSRSSource->Clone();
     poNewCT->bTargetLatLong = bSourceLatLong;
@@ -3167,6 +3183,7 @@ OGRCoordinateTransformation* OGRProjCT::GetInverse() const
     poNewCT->dfTargetWrapLong = dfSourceWrapLong;
     poNewCT->bTargetIsDynamicCRS = bSourceIsDynamicCRS;
     poNewCT->dfTargetCoordinateEpoch = dfSourceCoordinateEpoch;
+    poNewCT->eTarget0AxisOrientation = eSource0AxisOrientation;
 
     poNewCT->ComputeThreshold();
 
