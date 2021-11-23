@@ -214,9 +214,12 @@ geotiff
 
     Path to an include directory with the libgeotiff header files.
 
-.. option:: GEOTIFF_LIBRARY
+.. option:: GEOTIFF_LIBRARY_RELEASE
 
-    Path to a shared or static library file such as libgeotiff.so
+    Path to a shared or static library file, such as ``geotiff.dll``,
+    ``libgeotiff.so``, ``geotiff.lib``, or other name. A similar variable
+    ``GEOTIFF_LIBRARY_DEBUG`` can also be specified to a similar library for
+    building Debug releases.
 
 .. option:: GDAL_USE_GEOTIFF=ON/OFF
 
@@ -352,9 +355,12 @@ PROJ
 
     Path to an include directory with the ``proj.h`` header file.
 
-.. option:: PROJ_LIBRARY
+.. option:: PROJ_LIBRARY_RELEASE
 
-    Path to a shared or static library file.
+    Path to a shared or static library file, such as ``proj.dll``,
+    ``libproj.so``, ``proj.lib``, or other name. A similar variable
+    ``PROJ_LIBRARY_DEBUG`` can also be specified to a similar library for
+    building Debug releases.
 
 
 SQLite3
