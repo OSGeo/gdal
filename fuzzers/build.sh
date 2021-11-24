@@ -54,6 +54,7 @@ fi
 # libsqlite3-dev${ARCH_SUFFIX}
 PACKAGES="zlib1g-dev${ARCH_SUFFIX} libexpat-dev${ARCH_SUFFIX} liblzma-dev${ARCH_SUFFIX} \
           libpng-dev${ARCH_SUFFIX} libgif-dev${ARCH_SUFFIX} \
+          libjpeg-dev${ARCH_SUFFIX} \
           libwebp-dev${ARCH_SUFFIX} \
           libssl-dev${ARCH_SUFFIX} \
           libfreetype6-dev${ARCH_SUFFIX} libfontconfig1-dev${ARCH_SUFFIX} libtiff5-dev${ARCH_SUFFIX} libboost-dev${ARCH_SUFFIX}"
@@ -170,7 +171,7 @@ if [ "$ARCHITECTURE" = "x86_64" ]; then
   NETCDF_SWITCH="--with-netcdf=$SRC/install"
 fi
 
-PKG_CONFIG_PATH=$SRC/install/lib/pkgconfig ./configure --without-libtool --with-liblzma --with-expat --with-sqlite3=$SRC/install --with-xerces=$SRC/install --with-webp ${NETCDF_SWITCH} --with-curl=$SRC/install/bin/curl-config --without-hdf5 --with-jpeg=internal --with-proj=$SRC/install -with-proj-extra-lib-for-test="-L$SRC/install/lib -lcurl -lssl -lcrypto -lz -ltiff" --with-poppler --with-libtiff=internal --with-rename-internal-libtiff-symbols
+PKG_CONFIG_PATH=$SRC/install/lib/pkgconfig ./configure --without-libtool --with-liblzma --with-expat --with-sqlite3=$SRC/install --with-xerces=$SRC/install --with-webp ${NETCDF_SWITCH} --with-curl=$SRC/install/bin/curl-config --without-hdf5 --with-proj=$SRC/install -with-proj-extra-lib-for-test="-L$SRC/install/lib -lcurl -lssl -lcrypto -lz -ltiff" --with-poppler --with-libtiff=internal --with-rename-internal-libtiff-symbols
 # sed -i "s/POPPLER_MINOR_VERSION = 9/POPPLER_MINOR_VERSION = 10/" GDALmake.opt # temporary hack until poppler > 21.9 is released
 
 make clean -s
@@ -181,7 +182,7 @@ export EXTRA_LIBS="-Wl,-Bstatic "
 export EXTRA_LIBS="$EXTRA_LIBS -L$SRC/install/lib -lcurl -lssl -lcrypto -lz"
 # PROJ
 export EXTRA_LIBS="$EXTRA_LIBS -ltiff -lproj "
-export EXTRA_LIBS="$EXTRA_LIBS -lwebp -llzma -lexpat -L$SRC/install/lib -lsqlite3 -lgif -lpng -lz"
+export EXTRA_LIBS="$EXTRA_LIBS -lwebp -llzma -lexpat -L$SRC/install/lib -lsqlite3 -lgif -ljpeg -lpng -lz"
 # Xerces-C related
 export EXTRA_LIBS="$EXTRA_LIBS -L$SRC/install/lib -lxerces-c"
 if [ "$ARCHITECTURE" = "x86_64" ]; then
@@ -189,7 +190,7 @@ if [ "$ARCHITECTURE" = "x86_64" ]; then
   export EXTRA_LIBS="$EXTRA_LIBS -L$SRC/install/lib -lnetcdf -lhdf5_serial_hl -lhdf5_serial -lsz -laec -lz"
 fi
 # poppler related
-export EXTRA_LIBS="$EXTRA_LIBS -L$SRC/install/lib -lpoppler -lfreetype -lfontconfig"
+export EXTRA_LIBS="$EXTRA_LIBS -L$SRC/install/lib -lpoppler -ljpeg -lfreetype -lfontconfig"
 export EXTRA_LIBS="$EXTRA_LIBS -Wl,-Bdynamic -ldl -lpthread"
 
 # to find sqlite3.h
