@@ -321,12 +321,13 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     }
     else
     if( !STARTS_WITH_CI(pszNewName, "PG:") &&
+        !STARTS_WITH_CI(pszNewName, "🐘") &&
         !STARTS_WITH(pszNewName, "postgresql://") )
     {
         if( !bTestOpen )
             CPLError( CE_Failure, CPLE_AppDefined,
                       "%s does not conform to PostgreSQL naming convention,"
-                      " PG:* or postgresql://\n", pszNewName );
+                      " PG:*, 🐘:* or postgresql://\n", pszNewName );
         return FALSE;
     }
 
@@ -524,7 +525,8 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     char* pszConnectionName = CPLStrdup(osConnectionName);
     char* pszConnectionNameNoPrefix = pszConnectionName +
         (STARTS_WITH_CI(pszConnectionName, "PGB:") ? 4 :
-         STARTS_WITH_CI(pszConnectionName, "PG:") ? 3 : 0);
+         STARTS_WITH_CI(pszConnectionName, "PG:") ? 3 :
+         STARTS_WITH_CI(pszConnectionName, "🐘:") ? strlen("🐘:") : 0);
 
 /* -------------------------------------------------------------------- */
 /*      Determine if the connection string contains an optional         */

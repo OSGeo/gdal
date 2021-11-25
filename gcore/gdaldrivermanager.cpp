@@ -507,6 +507,19 @@ int GDALDriverManager::RegisterDriver( GDALDriver * poDriver )
 
     oMapNameToDrivers[CPLString(poDriver->GetDescription()).toupper()] =
         poDriver;
+    const char* pszEmoji = poDriver->GetMetadataItem( GDAL_DMD_EMOJI );
+    if( pszEmoji )
+    {
+        if( oMapNameToDrivers.find(pszEmoji) == oMapNameToDrivers.end() )
+        {
+            oMapNameToDrivers[pszEmoji] = poDriver;
+        }
+        else
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Another driver has set %s has emoji", pszEmoji);
+        }
+    }
 
     int iResult = nDrivers - 1;
 
@@ -562,6 +575,13 @@ void GDALDriverManager::DeregisterDriver( GDALDriver * poDriver )
         return;
 
     oMapNameToDrivers.erase(CPLString(poDriver->GetDescription()).toupper());
+
+    const char* pszEmoji = poDriver->GetMetadataItem( GDAL_DMD_EMOJI );
+    if( pszEmoji )
+    {
+        oMapNameToDrivers.erase(pszEmoji);
+    }
+
     --nDrivers;
     // Move all following drivers down by one to pack the list.
     while( i < nDrivers )

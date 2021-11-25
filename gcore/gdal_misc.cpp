@@ -3206,6 +3206,11 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             printf( "  Long Name: %s\n", GDALGetDriverLongName( hDriver ) );/*ok*/
 
             papszMD = GDALGetMetadata( hDriver, nullptr );
+
+            const char* pszEmoji = CSLFetchNameValue( papszMD, GDAL_DMD_EMOJI );
+            if( pszEmoji )
+                printf( "  Emoji: %s\n", pszEmoji );/*ok*/
+
             if( CPLFetchBool( papszMD, GDAL_DCAP_RASTER, false ) )
                 printf( "  Supports: Raster\n" );/*ok*/
             if( CPLFetchBool( papszMD, GDAL_DCAP_MULTIDIM_RASTER, false ) )

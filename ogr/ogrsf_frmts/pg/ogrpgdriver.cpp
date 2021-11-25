@@ -39,6 +39,7 @@ static int OGRPGDriverIdentify( GDALOpenInfo* poOpenInfo )
 {
     if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "PGB:") &&
         !STARTS_WITH_CI(poOpenInfo->pszFilename, "PG:")&&
+        !STARTS_WITH_CI(poOpenInfo->pszFilename, "🐘")&&
         !STARTS_WITH(poOpenInfo->pszFilename, "postgresql://")  )
         return FALSE;
     return TRUE;
@@ -110,6 +111,7 @@ void RegisterOGRPG()
 
     poDriver->SetDescription( "PostgreSQL" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "PostgreSQL/PostGIS" );
+    poDriver->SetMetadataItem( GDAL_DMD_EMOJI, "🐘");
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/pg.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "PG:" );

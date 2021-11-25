@@ -327,6 +327,9 @@ typedef struct GDALDimensionHS* GDALDimensionH;
 /** Long name of the driver */
 #define GDAL_DMD_LONGNAME "DMD_LONGNAME"
 
+/** Emoji of the driver */
+#define GDAL_DMD_EMOJI "DMD_EMOJI"
+
 /** URL (relative to http://gdal.org/) to the help page of the driver */
 #define GDAL_DMD_HELPTOPIC "DMD_HELPTOPIC"
 
