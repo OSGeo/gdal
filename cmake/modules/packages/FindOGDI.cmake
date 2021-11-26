@@ -21,7 +21,7 @@ endif()
 
 find_path(OGDI_INCLUDE_DIR ecs.h
           HINTS ${PC_OGDI_INCLUDE_DIRS}
-          PATH_SUFFIXES odgi)
+          PATH_SUFFIXES ogdi)
 mark_as_advanced(OGDI_INCLUDE_DIR)
 
 find_library(OGDI_LIBRARY NAMES ogdi libogdi vpf libvpf)
