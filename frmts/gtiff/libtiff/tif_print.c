@@ -108,18 +108,22 @@ _TIFFPrintField(FILE* fd, const TIFFField *fip,
 			fprintf(fd, "%"PRId32, ((int32_t *) raw_data)[j]);
 		else if(fip->field_type == TIFF_IFD)
 			fprintf(fd, "0x%"PRIx32, ((uint32_t *) raw_data)[j]);
-		else if(fip->field_type == TIFF_RATIONAL
-			|| fip->field_type == TIFF_SRATIONAL
-			|| fip->field_type == TIFF_FLOAT)
-			fprintf(fd, "%f", ((float *) raw_data)[j]);
+		else if (fip->field_type == TIFF_RATIONAL
+			|| fip->field_type == TIFF_SRATIONAL) {
+			int tv_size = _TIFFSetGetFieldSize(fip->set_field_type);
+			if(tv_size==8)
+				fprintf(fd, "%lf", ((double*)raw_data)[j]);
+			else
+				fprintf(fd, "%f", ((float *) raw_data)[j]);
+		}
+		else if(fip->field_type == TIFF_FLOAT)
+			fprintf(fd, "%f", ((float*)raw_data)[j]);
 		else if(fip->field_type == TIFF_LONG8)
 			fprintf(fd, "%"PRIu64, ((uint64_t *) raw_data)[j]);
 		else if(fip->field_type == TIFF_SLONG8)
 			fprintf(fd, "%"PRId64, ((int64_t *) raw_data)[j]);
 		else if(fip->field_type == TIFF_IFD8)
 			fprintf(fd, "0x%"PRIx64, ((uint64_t *) raw_data)[j]);
-		else if(fip->field_type == TIFF_FLOAT)
-			fprintf(fd, "%f", ((float *)raw_data)[j]);
 		else if(fip->field_type == TIFF_DOUBLE)
 			fprintf(fd, "%lf", ((double *) raw_data)[j]);
 		else if(fip->field_type == TIFF_ASCII) {
@@ -238,7 +242,7 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 	char *sep;
 	long l, n;
 
-	fprintf(fd, "TIFF Directory at offset 0x%"PRIu64" (%"PRIx64")\n",
+	fprintf(fd, "TIFF Directory at offset 0x%"PRIx64" (%"PRIu64")\n",
 		tif->tif_diroff,
 		tif->tif_diroff);
 	if (TIFFFieldSet(tif,FIELD_SUBFILETYPE)) {
@@ -614,8 +618,10 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 					if(TIFFGetField(tif, tag, &raw_data) != 1)
 						continue;
 				} else {
+					/*--: Rational2Double: For Rationals evaluate "set_field_type" to determine internal storage size. */
+					int tv_size = _TIFFSetGetFieldSize(fip->set_field_type);
 					raw_data = _TIFFmalloc(
-					    _TIFFDataSize(fip->field_type)
+					    tv_size
 					    * value_count);
 					mem_alloc = 1;
 					if(TIFFGetField(tif, tag, raw_data) != 1) {
