@@ -14,7 +14,7 @@
 
 find_package(PkgConfig QUIET)
 if(PKG_CONFIG_FOUND)
-  pkg_check_modules(PC_OGDI QUIET OGDI)
+  pkg_check_modules(PC_OGDI QUIET ogdi)
   set(OGDI_VERSION_STRING ${PC_OGDI_VERSION})
   set(OGDI_INCLUDE_DIRS ${PC_OGDI_INCLUDE_DIRS})
 endif()
