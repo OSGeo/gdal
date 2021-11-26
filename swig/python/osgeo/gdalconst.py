@@ -238,6 +238,7 @@ CPLES_XML = _gdalconst.CPLES_XML
 CPLES_XML_BUT_QUOTES = _gdalconst.CPLES_XML_BUT_QUOTES
 CPLES_URL = _gdalconst.CPLES_URL
 CPLES_SQL = _gdalconst.CPLES_SQL
+CPLES_SQLI = _gdalconst.CPLES_SQLI
 CPLES_CSV = _gdalconst.CPLES_CSV
 GFT_Integer = _gdalconst.GFT_Integer
 GFT_Real = _gdalconst.GFT_Real

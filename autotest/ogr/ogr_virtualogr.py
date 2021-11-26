@@ -47,6 +47,26 @@ require_ogr_sql_sqlite; # to make pyflakes happy
 pytestmark = pytest.mark.usefixtures('require_ogr_sql_sqlite')
 
 
+###############################################################################
+
+@pytest.fixture()
+def require_auto_load_extension():
+    if ogr.GetDriverByName('SQLite') is None:
+        pytest.skip()
+
+    ds = ogr.Open(':memory:')
+    with gdaltest.error_handler():
+        sql_lyr = ds.ExecuteSQL("PRAGMA compile_options")
+    if sql_lyr:
+        for f in sql_lyr:
+            if f.GetField(0) == 'OMIT_LOAD_EXTENSION':
+                ds.ReleaseResultSet(sql_lyr)
+                pytest.skip('SQLite3 built with OMIT_LOAD_EXTENSION')
+        ds.ReleaseResultSet(sql_lyr)
+
+###############################################################################
+
+
 def ogr_virtualogr_run_sql(sql_statement):
 
     ds = ogr.GetDriverByName('SQLite').CreateDataSource(':memory:')
@@ -76,7 +96,7 @@ def ogr_virtualogr_run_sql(sql_statement):
 # Basic tests
 
 
-def test_ogr_virtualogr_1():
+def test_ogr_virtualogr_1(require_auto_load_extension):
     # Invalid syntax
     assert not ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR()")
 
@@ -116,7 +136,7 @@ def test_ogr_virtualogr_1():
 # Test detection of suspicious use of VirtualOGR
 
 
-def test_ogr_virtualogr_2():
+def test_ogr_virtualogr_2(require_auto_load_extension):
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_virtualogr_2.db')
     ds.ExecuteSQL("CREATE VIRTUAL TABLE foo USING VirtualOGR('data/poly.shp')")
     ds.ExecuteSQL("CREATE TABLE spy_table (spy_content VARCHAR)")
@@ -183,7 +203,7 @@ def test_ogr_virtualogr_2():
 # Test GDAL as a SQLite3 dynamically loaded extension
 
 
-def test_ogr_virtualogr_3():
+def test_ogr_virtualogr_3(require_auto_load_extension):
     # Find path of libgdal
     libgdal_name = gdaltest.find_lib('gdal')
     if libgdal_name is None:
@@ -214,7 +234,7 @@ def test_ogr_virtualogr_3():
 # Test ogr_datasource_load_layers()
 
 
-def test_ogr_virtualogr_4():
+def test_ogr_virtualogr_4(require_auto_load_extension):
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_virtualogr_4.db')
     sql_lyr = ds.ExecuteSQL("SELECT ogr_datasource_load_layers('data/poly.shp')")
     ds.ReleaseResultSet(sql_lyr)
@@ -271,7 +291,7 @@ def test_ogr_virtualogr_4():
 # Test failed CREATE VIRTUAL TABLE USING VirtualOGR
 
 
-def test_ogr_virtualogr_5():
+def test_ogr_virtualogr_5(require_auto_load_extension):
 
     # Create a CSV with duplicate column name
     fp = gdal.VSIFOpenL('/vsimem/ogr_virtualogr_5.csv', 'wt')

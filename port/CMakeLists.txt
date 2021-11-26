@@ -265,7 +265,7 @@ endif ()
 
 if (GDAL_USE_LIBLZMA)
   target_compile_definitions(cpl PRIVATE -DHAVE_LZMA)
-  target_include_directories(cpl SYSTEM PRIVATE $<TARGET_PROPERTY:LibLZMA::LibLZMA,INTERFACE_INCLUDE_DIRECTORIES>)
+  target_include_directories(cpl PRIVATE $<TARGET_PROPERTY:LibLZMA::LibLZMA,INTERFACE_INCLUDE_DIRECTORIES>)
   gdal_add_private_link_libraries(LibLZMA::LibLZMA)
 endif ()
 

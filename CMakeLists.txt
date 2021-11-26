@@ -211,6 +211,22 @@ if (RUN_CLANG_TIDY)
         "-warnings-as-errors='${CLANG_TIDY_WARNINGS_AS_ERRORS}'")
   endif ()
 endif ()
+
+if (APPLE)
+  # To avoid the issue mentioned at
+  # https://stackoverflow.com/questions/36523911/osx-homebrew-cmake-libpng-version-mismatch-issue on github action
+  # MacOSX workers that have the Mono framework installed, whose libpng headers will be used instead of the homebrew
+  # ones
+  get_property(
+    result
+    CACHE CMAKE_FIND_FRAMEWORK
+    PROPERTY TYPE)
+  if (NOT result)
+    set(CMAKE_FIND_FRAMEWORK LAST)
+    message("Setting CMAKE_FIND_FRAMEWORK=${CMAKE_FIND_FRAMEWORK}")
+  endif ()
+endif ()
+
 #
 # Developer may want to specify some variable to find proper version.
 # ~~~
@@ -221,7 +237,7 @@ endif ()
 #   4. If nothing specified, use default behavior.
 #
 # for example
-#   $ cmake -DPython_LOOKUP_VERSION=3.6 ..
+#   $ cmake -DPython_LOOKUP_VERSION=3.6.0 ..
 #   $ cmake -DPython_FIND_VIRTUALENV=ONLY ..
 #   $ cmake -DPython_ROOT=C:\Python36 ..
 # ~~~
@@ -232,7 +248,7 @@ if (Python_LOOKUP_VERSION)
   find_package(Python ${Python_LOOKUP_VERSION} EXACT COMPONENTS Interpreter Development NumPy)
 else ()
   set(Python_FIND_STRATEGY LOCATION)
-  find_package(Python COMPONENTS Interpreter Development NumPy)
+  find_package(Python 3.6 COMPONENTS Interpreter Development NumPy)
 endif ()
 set_package_properties(Python PROPERTIES PURPOSE "SWIG_PYTHON: Python binding")
 

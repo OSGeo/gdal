@@ -129,6 +129,8 @@ char *CPLRecodeIconv( const char *pszSource,
                              "This warning will not be emitted anymore",
                              pszSrcEncoding, pszDstEncoding);
                 }
+                if( nSrcLen == 0 )
+                    break;
                 nSrcLen--;
                 pszSrcBuf++;
                 continue;

@@ -417,7 +417,7 @@ CPLErr TileDBRasterBand::IReadBlock( int nBlockXOff,
         tiledb::Stats::disable();
     }
 
-    if ( ( status == tiledb::Query::Status::FAILED ) )
+    if ( status == tiledb::Query::Status::FAILED )
         return CE_Failure;
     else
         return CE_None;
