@@ -4632,7 +4632,8 @@ static void GDALCopyWholeRasterGetSwathSize(
  *
  * Currently the only papszOptions value supported are :
  * <ul>
- * <li>"INTERLEAVE=PIXEL" to force pixel interleaved operation</li>
+ * <li>"INTERLEAVE=PIXEL/BAND" to force pixel (resp. band) interleaved read and
+ * write access pattern (this does not modify the layout of the destination data)</li>
  * <li>"COMPRESSED=YES" to force alignment on target dataset block sizes to
  * achieve best compression.</li>
  * <li>"SKIP_HOLES=YES" to skip chunks for which GDALGetDataCoverageStatus()
@@ -4718,11 +4719,15 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
         bInterleave = true;
 
     pszInterleave = CSLFetchNameValue( papszOptions, "INTERLEAVE" );
-    if( pszInterleave != nullptr
-        && (EQUAL(pszInterleave, "PIXEL") || EQUAL(pszInterleave, "LINE")) )
+    if( pszInterleave != nullptr && EQUAL(pszInterleave, "PIXEL") )
         bInterleave = true;
     else if( pszInterleave != nullptr && EQUAL(pszInterleave, "BAND") )
         bInterleave = false;
+    else if( pszInterleave != nullptr )
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "Unsupported value for option INTERLEAVE");
+    }
 
     // If the destination is compressed, we must try to write blocks just once,
     // to save disk space (GTiff case for example), and to avoid data loss
