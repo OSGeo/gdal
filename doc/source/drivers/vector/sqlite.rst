@@ -339,6 +339,17 @@ Layer Creation Options
 -  **FID=fid_name**: Name of the FID column to create.
    Defaults to OGC_FID.
 
+-  **STRICT=YES/NO**: (SQLite >= 3.37 and GDAL >= 3.35). Defaults to NO.
+   Whether the table should be created as a `strict table <https://sqlite.org/stricttables.html>`__,
+   that is strong column type checking. This normally has little influence when
+   operating only through OGR, since it has typed columns, but can help to
+   strengthen database integrity when the database might be edited by external
+   tools.
+   Note that databases that contain STRICT tables can only be read by SQLite >= 3.37.
+   The set of column data types supported in STRICT mode is: Integer, Integer64, Real,
+   String, DateTime, Date and Time. The COMPRESS_COLUMNS option is ignored in
+   strict mode.
+
 Other Configuration Options
 ---------------------------
 
