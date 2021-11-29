@@ -184,7 +184,7 @@ VSIAzureBlobHandleHelper::VSIAzureBlobHandleHelper(
     m_osStorageKey(osStorageKey),
     m_osSAS(osSAS),
     m_bUseHTTPS(bUseHTTPS),
-    m_bFromManagedIdendities(bFromManagedIdentities)
+    m_bFromManagedIdentities(bFromManagedIdentities)
 {
 }
 
@@ -274,8 +274,7 @@ static CPLString gosAccessToken;
 static GIntBig gnGlobalExpiration = 0;
 
 
-bool VSIAzureBlobHandleHelper::GetConfigurationFromManagedIdentities(
-                                                    CPLString& osAccessToken)
+static bool GetConfigurationFromManagedIdentities(CPLString& osAccessToken)
 {
     std::lock_guard<std::mutex> guard(gMutex);
     time_t nCurTime;
@@ -340,6 +339,172 @@ void VSIAzureBlobHandleHelper::ClearCache()
 }
 
 /************************************************************************/
+/*                    ParseStorageConnectionString()                    */
+/************************************************************************/
+
+static bool ParseStorageConnectionString(const std::string& osStorageConnectionString,
+                                         const std::string& osServicePrefix,
+                                         bool& bUseHTTPS,
+                                         CPLString& osEndpoint,
+                                         CPLString& osStorageAccount,
+                                         CPLString& osStorageKey)
+{
+    osStorageAccount = AzureCSGetParameter(osStorageConnectionString,
+                                           "AccountName", true);
+    osStorageKey = AzureCSGetParameter(osStorageConnectionString,
+                                           "AccountKey", true);
+    if( osStorageAccount.empty() || osStorageKey.empty() )
+        return false;
+
+    CPLString osProtocol(AzureCSGetParameter(
+        osStorageConnectionString, "DefaultEndpointsProtocol", false));
+    bUseHTTPS = (osProtocol != "http");
+
+    CPLString osBlobEndpoint = AzureCSGetParameter(
+        osStorageConnectionString, "BlobEndpoint", false);
+    if( !osBlobEndpoint.empty() )
+    {
+        osEndpoint = osBlobEndpoint;
+    }
+    else
+    {
+        CPLString osEndpointSuffix(AzureCSGetParameter(
+            osStorageConnectionString, "EndpointSuffix", false));
+        if( STARTS_WITH(osEndpointSuffix, "127.0.0.1") )
+            osEndpoint = osEndpointSuffix;
+        else if( !osEndpointSuffix.empty() )
+            osEndpoint = osServicePrefix + "." + osEndpointSuffix;
+    }
+
+    return true;
+}
+
+/************************************************************************/
+/*                 GetConfigurationFromCLIConfigFile()                  */
+/************************************************************************/
+
+static bool GetConfigurationFromCLIConfigFile(const std::string& osServicePrefix,
+                                              bool& bUseHTTPS,
+                                              CPLString& osEndpoint,
+                                              CPLString& osStorageAccount,
+                                              CPLString& osStorageKey,
+                                              CPLString& osSAS,
+                                              bool& bFromManagedIdentities)
+{
+#ifdef _WIN32
+    const char* pszHome = CPLGetConfigOption("USERPROFILE", nullptr);
+    constexpr char SEP_STRING[] = "\\";
+#else
+    const char* pszHome = CPLGetConfigOption("HOME", nullptr);
+    constexpr char SEP_STRING[] = "/";
+#endif
+
+    std::string osDotAzure( pszHome ? pszHome : "" );
+    osDotAzure += SEP_STRING;
+    osDotAzure += ".azure";
+
+    const char* pszAzureConfigDir = CPLGetConfigOption("AZURE_CONFIG_DIR",
+                                                       osDotAzure.c_str());
+    if( pszAzureConfigDir[0] == '\0' )
+        return false;
+
+    std::string osConfigFilename = pszAzureConfigDir;
+    osConfigFilename += SEP_STRING;
+    osConfigFilename += "config";
+
+    VSILFILE* fp = VSIFOpenL( osConfigFilename.c_str(), "rb" );
+    std::string osStorageConnectionString;
+    if( fp == nullptr )
+        return false;
+
+    bool bInStorageSection = false;
+    while( const char* pszLine = CPLReadLineL(fp) )
+    {
+        if( pszLine[0] == '#' || pszLine[0] == ';' )
+        {
+            // comment line
+        }
+        else if( strcmp(pszLine, "[storage]") == 0 )
+        {
+            bInStorageSection = true;
+        }
+        else if( pszLine[0] == '[' )
+        {
+            bInStorageSection = false;
+        }
+        else if( bInStorageSection )
+        {
+            char* pszKey = nullptr;
+            const char* pszValue = CPLParseNameValue(pszLine, &pszKey);
+            if( pszKey && pszValue )
+            {
+                if( EQUAL(pszKey, "account") )
+                {
+                    osStorageAccount = pszValue;
+                }
+                else if( EQUAL(pszKey, "connection_string") )
+                {
+                    osStorageConnectionString = pszValue;
+                }
+                else if( EQUAL(pszKey, "key") )
+                {
+                    osStorageKey = pszValue;
+                }
+                else if( EQUAL(pszKey, "sas_token") )
+                {
+                    osSAS = pszValue;
+                    // Az CLI apparently uses configparser with BasicInterpolation
+                    // where the % character has a special meaning
+                    // See https://docs.python.org/3/library/configparser.html#configparser.BasicInterpolation
+                    // A token might end with %%3D which must be transformed to %3D
+                    osSAS.replaceAll("%%", '%');
+                }
+            }
+            CPLFree(pszKey);
+        }
+    }
+    VSIFCloseL(fp);
+
+    if( !osStorageConnectionString.empty() )
+    {
+        return ParseStorageConnectionString(osStorageConnectionString,
+                                            osServicePrefix,
+                                            bUseHTTPS,
+                                            osEndpoint,
+                                            osStorageAccount,
+                                            osStorageKey);
+    }
+
+    if( osStorageAccount.empty() )
+    {
+        CPLDebug("AZURE", "Missing storage.account in %s",
+                 osConfigFilename.c_str());
+        return false;
+    }
+
+    if( osStorageKey.empty() && osSAS.empty() )
+    {
+        if( CPLTestBool(CPLGetConfigOption("AZURE_NO_SIGN_REQUEST", "NO")) )
+        {
+            return true;
+        }
+
+        CPLString osAccessToken;
+        if( GetConfigurationFromManagedIdentities(osAccessToken) )
+        {
+            bFromManagedIdentities = true;
+            return true;
+        }
+
+        CPLDebug("AZURE", "Missing storage.key or storage.sas_token in %s",
+                 osConfigFilename.c_str());
+        return false;
+    }
+
+    return true;
+}
+
+/************************************************************************/
 /*                        GetConfiguration()                            */
 /************************************************************************/
 
@@ -365,34 +530,12 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(CSLConstList papszOptions,
         CPLGetConfigOption("AZURE_STORAGE_CONNECTION_STRING", "")));
     if( !osStorageConnectionString.empty() )
     {
-        osStorageAccount = AzureCSGetParameter(osStorageConnectionString,
-                                               "AccountName", true);
-        osStorageKey = AzureCSGetParameter(osStorageConnectionString,
-                                               "AccountKey", true);
-        if( osStorageAccount.empty() || osStorageKey.empty() )
-            return false;
-
-        CPLString osProtocol(AzureCSGetParameter(
-            osStorageConnectionString, "DefaultEndpointsProtocol", false));
-        bUseHTTPS = (osProtocol != "http");
-
-        CPLString osBlobEndpoint = AzureCSGetParameter(
-            osStorageConnectionString, "BlobEndpoint", false);
-        if( !osBlobEndpoint.empty() )
-        {
-            osEndpoint = osBlobEndpoint;
-        }
-        else
-        {
-            CPLString osEndpointSuffix(AzureCSGetParameter(
-                osStorageConnectionString, "EndpointSuffix", false));
-            if( STARTS_WITH(osEndpointSuffix, "127.0.0.1") )
-                osEndpoint = osEndpointSuffix;
-            else if( !osEndpointSuffix.empty() )
-                osEndpoint = osServicePrefix + "." + osEndpointSuffix;
-        }
-
-        return true;
+        return ParseStorageConnectionString(osStorageConnectionString,
+                                            osServicePrefix,
+                                            bUseHTTPS,
+                                            osEndpoint,
+                                            osStorageAccount,
+                                            osStorageKey);
     }
     else
     {
@@ -406,7 +549,8 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(CSLConstList papszOptions,
                 CPLGetConfigOption("AZURE_STORAGE_ACCESS_KEY", ""));
             if( osStorageKey.empty() )
             {
-                osSAS = CPLGetConfigOption("AZURE_SAS", "");
+                osSAS = CPLGetConfigOption("AZURE_STORAGE_SAS_TOKEN",
+                   CPLGetConfigOption("AZURE_SAS", "")); // AZURE_SAS for GDAL < 3.5
                 if( osSAS.empty() )
                 {
                     if( CPLTestBool(CPLGetConfigOption("AZURE_NO_SIGN_REQUEST", "NO")) )
@@ -422,7 +566,7 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(CSLConstList papszOptions,
                     }
 
                     const char* pszMsg =
-                        "AZURE_STORAGE_ACCESS_KEY or AZURE_SAS or AZURE_NO_SIGN_REQUEST configuration option "
+                        "AZURE_STORAGE_ACCESS_KEY or AZURE_STORAGE_SAS_TOKEN or AZURE_NO_SIGN_REQUEST configuration option "
                         "not defined";
                     CPLDebug("AZURE", "%s", pszMsg);
                     VSIError(VSIE_AWSInvalidCredentials, "%s", pszMsg);
@@ -433,10 +577,21 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(CSLConstList papszOptions,
         }
     }
 
+    if( GetConfigurationFromCLIConfigFile(osServicePrefix,
+                                          bUseHTTPS,
+                                          osEndpoint,
+                                          osStorageAccount,
+                                          osStorageKey,
+                                          osSAS,
+                                          bFromManagedIdentities) )
+    {
+        return true;
+    }
+
     const char* pszMsg = "Missing AZURE_STORAGE_ACCOUNT+"
-                         "(AZURE_STORAGE_ACCESS_KEY or AZURE_SAS or AZURE_NO_SIGN_REQUEST) or "
+                         "(AZURE_STORAGE_ACCESS_KEY or AZURE_STORAGE_SAS_TOKEN or AZURE_NO_SIGN_REQUEST) or "
                          "AZURE_STORAGE_CONNECTION_STRING "
-                         "configuration options";
+                         "configuration options or Azure CLI configuration file";
     CPLDebug("AZURE", "%s", pszMsg);
     VSIError(VSIE_AWSInvalidCredentials, "%s", pszMsg);
     return false;
@@ -564,7 +719,7 @@ VSIAzureBlobHandleHelper::GetCurlHeaders( const CPLString& osVerb,
                                           const void *,
                                           size_t ) const
 {
-    if( m_bFromManagedIdendities )
+    if( m_bFromManagedIdentities )
     {
         CPLString osAccessToken;
         if( !GetConfigurationFromManagedIdentities(osAccessToken) )
@@ -633,7 +788,7 @@ CPLString VSIAzureBlobHandleHelper::GetSignedURL(CSLConstList papszOptions)
 
     CPLString osVerb(CSLFetchNameValueDef(papszOptions, "VERB", "GET"));
     CPLString osSignedPermissions(CSLFetchNameValueDef(papszOptions,
-        "SIGNEDPERMISSIONS", 
+        "SIGNEDPERMISSIONS",
         (EQUAL(osVerb, "GET") || EQUAL(osVerb, "HEAD")) ? "r" : "w"  ));
 
     CPLString osSignedIdentifier(CSLFetchNameValueDef(papszOptions,
