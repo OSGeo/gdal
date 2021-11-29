@@ -380,7 +380,7 @@ datatype = GDT_Unknown and COMPOSITION_FILE must be the single creation
 option.
 
 The XML schema against which the composition file must validate is
-`pdfcomposition.xsd <https://raw.githubusercontent.com/OSGeo/gdal/master/gdal/data/pdfcomposition.xsd>`__
+`pdfcomposition.xsd <https://raw.githubusercontent.com/OSGeo/gdal/master/data/pdfcomposition.xsd>`__
 
 Example on how to use the API:
 
@@ -393,7 +393,7 @@ Example on how to use the API:
    CSLDestroy(papszOptions);
 
 A sample Python script
-`gdal_create_pdf.py <https://raw.githubusercontent.com/OSGeo/gdal/master/gdal/swig/python/gdal-utils/osgeo_utils/samples/gdal_create_pdf.py>`__
+`gdal_create_pdf.py <https://raw.githubusercontent.com/OSGeo/gdal/master/swig/python/gdal-utils/osgeo_utils/samples/gdal_create_pdf.py>`__
 is also available. Starting with GDAL 3.2, the :ref:`gdal_create` utility can
 also be used.
 
