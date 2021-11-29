@@ -216,7 +216,7 @@ missing, the uncertainty will be set to nodata.
 
 The driver will instantiate the BAG XML metadata by using a template
 file, which is by default,
-`bag_template.xml <https://raw.githubusercontent.com/OSGeo/gdal/master/gdal/data/bag_template.xml>`__,
+`bag_template.xml <https://raw.githubusercontent.com/OSGeo/gdal/master/data/bag_template.xml>`__,
 found in the GDAL data definition files. This template contains
 variables, present as ${KEYNAME} or ${KEYNAME:default_value} in the XML
 file, that can be substituted by providing a creation option whose name
