@@ -31,7 +31,7 @@ The minimal syntax to open a WFS datasource is :
 *http://path/to/WFS/service?SERVICE=WFS*
 
 Additional optional parameters can be specified such as *TYPENAME*,
-*VERSION*, *MAXFEATURES* as specified in WFS specification.
+*VERSION*, *MAXFEATURES* (WFS < 2) or *COUNT* (WFS > 2) as specified in WFS specification.
 
 The name provided to the TYPENAME parameter must be exactly the layer
 name reported by OGR, in particular with its namespace prefix when its
@@ -92,18 +92,31 @@ do on-the-fly compression, will cache on their side the whole content to
 be sent before sending the first bytes on the wire. To avoid this, you
 can set the CPL_CURL_GZIP configuration option to NO.
 
+Paging with WFS 2.0
++++++++++++++++++++
+
 The WFS driver will automatically detect if server supports paging, when
-requesting a WFS 2.0 server.
+requesting a WFS 2.0 server. The page size (number of features fetched in a
+single request) is limited to 100 by default when not declared by the server.
+It can be changed by setting the OGR_WFS_PAGE_SIZE configuration option, or by
+specifying COUNT as a query parameter in the URL of the connection string.
+
+If only the N first features must be downloaded and paging through the whole
+layer is not desirable, the OGR_WFS_PAGING_ALLOWED configuration option should
+be set to OFF.
+
+Paging with WFS 1.0 or 1.1
+++++++++++++++++++++++++++
 
 Some servers (such as MapServer >= 6.0) support the use of STARTINDEX
 that allows doing the requests per "page", and thus to avoid
 downloading the whole content of the layer in a single request. Paging
 was introduced in WFS 2.0.0 but servers may support it as an vendor
 specific option also with WFS 1.0.0 and 1.1.0. The OGR WFS client will
-use paging when the OGR_WFS_PAGING_ALLOWED configuration option is set
+use paging when the OGR_WFS_PAGING_ALLOWED configuration option is explicitly set
 to ON. The page size (number of features fetched in a single request)
-is limited to 100 by default. It can be changed by setting the
-OGR_WFS_PAGE_SIZE configuration option.
+is limited to 100 by default when not declared by the server.
+It can be changed by setting the OGR_WFS_PAGE_SIZE configuration option.
 
 WFS 2.0.2 specification has clarified that the first feature in paging
 is at index 0. But some server implementations of WFS paging have
@@ -112,6 +125,9 @@ The default base start index is 0, as mandated
 by the specification. The OGR_WFS_BASE_START_INDEX configuration
 option can however be set to 1 to be compatible with the server
 implementations that considered the first feature to be at index 1.
+
+Paging options
+++++++++++++++
 
 Those 3 options (OGR_WFS_PAGING_ALLOWED, OGR_WFS_PAGE_SIZE,
 OGR_WFS_BASE_START_INDEX) can also be set in a WFS XML description
