@@ -629,3 +629,35 @@ def test_osr_ct_wkt_non_consistent_with_epsg_definition():
     x, y, _ = ct.TransformPoint(2, 49, 0)
     assert x == 49
     assert y == 2
+
+
+###############################################################################
+# Test effect of OGR_CT_PREFER_OFFICIAL_SRS_DEF=NO
+# https://github.com/OSGeo/PROJ/issues/2955
+
+def test_osr_ct_OGR_CT_PREFER_OFFICIAL_SRS_DEF():
+
+    # Not sure about the minimal version, but works as expected with 7.2.1
+    if osr.GetPROJVersionMajor() * 100 + osr.GetPROJVersionMinor() < 702:
+        pytest.skip('requires PROJ 7.2 or later')
+
+    wkt = "PROJCS[\"OSGB 1936 / British National Grid\",GEOGCS[\"OSGB 1936\",DATUM[\"OSGB_1936\",SPHEROID[\"Airy 1830\",6377563.396,299.3249646,AUTHORITY[\"EPSG\",\"7001\"]],TOWGS84[446.448,-125.157,542.06,0.15,0.247,0.842,-20.489],AUTHORITY[\"EPSG\",\"6277\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4277\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",49],PARAMETER[\"central_meridian\",-2],PARAMETER[\"scale_factor\",0.9996012717],PARAMETER[\"false_easting\",400000],PARAMETER[\"false_northing\",-100000],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH],AUTHORITY[\"EPSG\",\"27700\"]]"
+    s = osr.SpatialReference()
+    s.SetFromUserInput(wkt)
+
+    t = osr.SpatialReference()
+    t.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    t.ImportFromEPSG(4258) # ETRS 89
+
+    # No datum shift
+    ct = osr.CoordinateTransformation(s, t)
+    x, y, _ = ct.TransformPoint(826158.063, 2405844.125, 0)
+    assert abs(x -  9.873) < 0.001, x
+    assert abs(y - 71.127) < 0.001, y
+
+    # Datum shift implied by the TOWGS4 clause
+    with gdaltest.config_option('OGR_CT_PREFER_OFFICIAL_SRS_DEF', 'NO'):
+        ct = osr.CoordinateTransformation(s, t)
+        x, y, _ = ct.TransformPoint(826158.063, 2405844.125, 0)
+        assert abs(x -  9.867) < 0.001, x
+        assert abs(y - 71.125) < 0.001, y

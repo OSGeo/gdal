@@ -42,7 +42,14 @@
 #endif
 
 #ifdef HAVE_LZMA
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdocumentation"
+#endif
 #include <lzma.h>
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 #endif
 
 #ifdef HAVE_ZSTD

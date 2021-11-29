@@ -30,27 +30,19 @@ find_path(PROJ_INCLUDE_DIR proj.h
           PATHS ${PROJ_ROOT}/include
           DOC "Path to PROJ library include directory")
 
-if(MSVC)
-    set(PROJ_NAMES proj proj_i)
-    find_library(PROJ_IMP_LIBRARY
-                 NAMES proj_i
-                 PATHS ${PROJ_ROOT}/lib
-                 DOC "Path to PROJ library file")
-    find_library(PROJ_LIBRARY
-                 NAMES proj
-                 PATHS ${PROJ_ROOT}/lib
-                 DOC "Path to PROJ library file")
-elseif(MINGW OR CYGWIN)
-    find_library(PROJ_LIBRARY
-                 NAMES proj libproj-0 libproj-9 libproj-10 libproj-11 libproj-12 libproj-13
-                 PATHS ${PROJ_ROOT}/lib
-                 DOC "Path to PROJ library file")
-else()
-    find_library(PROJ_LIBRARY
-                 NAMES proj
-                 PATHS ${PROJ_ROOT}/lib
-                 DOC "Path to PROJ library file")
+set(PROJ_NAMES ${PROJ_NAMES} proj proj_i)
+set(PROJ_NAMES_DEBUG ${PROJ_NAMES_DEBUG} projd proj_d)
+
+if(NOT PROJ_LIBRARY)
+  find_library(PROJ_LIBRARY_RELEASE NAMES ${PROJ_NAMES})
+  find_library(PROJ_LIBRARY_DEBUG NAMES ${PROJ_NAMES_DEBUG})
+  include(SelectLibraryConfigurations)
+  select_library_configurations(PROJ)
+  mark_as_advanced(PROJ_LIBRARY_RELEASE PROJ_LIBRARY_DEBUG)
 endif()
+
+unset(PROJ_NAMES)
+unset(PROJ_NAMES_DEBUG)
 
 if(PROJ_INCLUDE_DIR)
     file(READ "${PROJ_INCLUDE_DIR}/proj.h" PROJ_H_CONTENTS)
@@ -74,10 +66,25 @@ if(PROJ_FOUND)
     add_library(PROJ::PROJ UNKNOWN IMPORTED)
     set_target_properties(PROJ::PROJ PROPERTIES
                           INTERFACE_INCLUDE_DIRECTORIES ${PROJ_INCLUDE_DIR}
-                          IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-                          IMPORTED_LOCATION ${PROJ_LIBRARY})
-    if(PROJ_IMP_LIBRARY)
-      set_property(TARGET PROJ::PROJ APPEND PROPERTY IMPORTED_IMPLIB ${PROJ_IMP_LIBRARY})
+                          IMPORTED_LINK_INTERFACE_LANGUAGES "C")
+    if(EXISTS "${PROJ_LIBRARY}")
+      set_target_properties(PROJ::PROJ PROPERTIES
+        IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+        IMPORTED_LOCATION "${PROJ_LIBRARY}")
+    endif()
+    if(EXISTS "${PROJ_LIBRARY_RELEASE}")
+      set_property(TARGET PROJ::PROJ APPEND PROPERTY
+        IMPORTED_CONFIGURATIONS RELEASE)
+      set_target_properties(PROJ::PROJ PROPERTIES
+        IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "C"
+        IMPORTED_LOCATION_RELEASE "${PROJ_LIBRARY_RELEASE}")
+    endif()
+    if(EXISTS "${PROJ_LIBRARY_DEBUG}")
+      set_property(TARGET PROJ::PROJ APPEND PROPERTY
+        IMPORTED_CONFIGURATIONS DEBUG)
+      set_target_properties(PROJ::PROJ PROPERTIES
+        IMPORTED_LINK_INTERFACE_LANGUAGES_DEBUG "C"
+        IMPORTED_LOCATION_DEBUG "${PROJ_LIBRARY_DEBUG}")
     endif()
   endif()
 endif()

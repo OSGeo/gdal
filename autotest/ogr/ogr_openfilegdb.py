@@ -407,10 +407,6 @@ def ogrsf_run(ogrsf_path, gdb_source):
     ret = gdaltest.runexternal(ogrsf_path + ' -ro ' + gdb_source['src'])
 
     success = 'INFO' in ret and 'ERROR' not in ret
-    if not success:
-        print(ret)
-        if gdaltest.is_github_workflow_mac():
-            pytest.xfail('Failure. See https://github.com/rouault/gdal/runs/1331249076?check_suite_focus=true')
     assert success
 
 

@@ -356,6 +356,23 @@ void OGRSQLiteBaseDataSource::CloseDB()
             CPL_IGNORE_RET_VAL( sqlite3_open( m_pszFilename, &hDB ) );
             if( hDB != nullptr )
             {
+#ifdef SQLITE_FCNTL_PERSIST_WAL
+                int nPersistentWAL = -1;
+                sqlite3_file_control(hDB, "main", SQLITE_FCNTL_PERSIST_WAL, &nPersistentWAL);
+                if( nPersistentWAL == 1 )
+                {
+                    nPersistentWAL = 0;
+                    if( sqlite3_file_control(hDB, "main", SQLITE_FCNTL_PERSIST_WAL, &nPersistentWAL) == SQLITE_OK )
+                    {
+                        CPLDebug("SQLITE", "Disabling persistant WAL succeeded");
+                    }
+                    else
+                    {
+                        CPLDebug("SQLITE", "Could not disable persistant WAL");
+                    }
+                }
+#endif
+
                 // Dummy request
                 int nRowCount = 0, nColCount = 0;
                 char** papszResult = nullptr;
@@ -778,6 +795,43 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, bool bRegisterOGR2SQLit
                   m_pszFilename, sqlite3_errmsg( hDB ) );
         return FALSE;
     }
+
+#ifdef SQLITE_DBCONFIG_DEFENSIVE
+    // SQLite builds on recent MacOS enable defensive mode by default, which
+    // causes issues in the VDV driver (when updating a deleted database),
+    // or in the GPKG driver (when modifying a CREATE TABLE DDL with writable_schema=ON)
+    // So disable it.
+    int bDefensiveOldValue = 0;
+    if( sqlite3_db_config(hDB, SQLITE_DBCONFIG_DEFENSIVE, -1, &bDefensiveOldValue) == SQLITE_OK &&
+        bDefensiveOldValue == 1 )
+    {
+        if( sqlite3_db_config(hDB, SQLITE_DBCONFIG_DEFENSIVE, 0, nullptr) == SQLITE_OK )
+        {
+            CPLDebug("SQLITE", "Disabling defensive mode succeeded");
+        }
+        else
+        {
+            CPLDebug("SQLITE", "Could not disable defensive mode");
+        }
+    }
+#endif
+
+#ifdef SQLITE_FCNTL_PERSIST_WAL
+    int nPersistentWAL = -1;
+    sqlite3_file_control(hDB, "main", SQLITE_FCNTL_PERSIST_WAL, &nPersistentWAL);
+    if( nPersistentWAL == 1 )
+    {
+        nPersistentWAL = 0;
+        if( sqlite3_file_control(hDB, "main", SQLITE_FCNTL_PERSIST_WAL, &nPersistentWAL) == SQLITE_OK )
+        {
+            CPLDebug("SQLITE", "Disabling persistant WAL succeeded");
+        }
+        else
+        {
+            CPLDebug("SQLITE", "Could not disable persistant WAL");
+        }
+    }
+#endif
 
     const char* pszVal = CPLGetConfigOption("SQLITE_BUSY_TIMEOUT", "5000");
     if ( pszVal != nullptr ) {

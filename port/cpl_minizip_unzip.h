@@ -64,7 +64,7 @@ extern "C" {
 #endif
 
 #ifndef _ZLIB_H
-#include <zlib.h>
+#include "cpl_zlib_header.h" // to avoid warnings when including zlib.h
 #endif
 
 #ifndef CPL_MINIZIP_IOAPI_H_INCLUDED

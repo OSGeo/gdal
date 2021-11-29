@@ -63,7 +63,7 @@ def aws_test_config():
         'AWS_VIRTUAL_HOSTING': 'NO',
         'AWS_REQUEST_PAYER': '',
         'AWS_DEFAULT_REGION': 'us-east-1',
-        'AWS_DEFAULT_PROFILE': 'default',
+        'AWS_DEFAULT_PROFILE': '',
         'AWS_PROFILE': 'default'
     }
 
@@ -4340,10 +4340,7 @@ def test_vsis3_read_credentials_config_file_non_default_profile(
         'AWS_ACCESS_KEY_ID': '',
         'CPL_AWS_CREDENTIALS_FILE': None,
         'AWS_CONFIG_FILE': None,
-        'AWS_PROFILE': 'myprofile',
-        # The test fails if AWS_DEFAULT_PROFILE is set externally to the test
-        # runner unless it is set to 'myprofile' here.
-        'AWS_DEFAULT_PROFILE': 'myprofile'
+        'AWS_PROFILE': 'myprofile'
     }
 
     os_aws = tmpdir.mkdir(".aws")
@@ -4717,6 +4714,137 @@ def test_vsis3_read_credentials_ec2_expiration(
                 with gdaltest.error_handler():
                     f = open_for_read('/vsis3/s3_fake_bucket/bar')
         assert f is None
+
+###############################################################################
+# Read credentials from an assumed role
+
+
+def test_vsis3_read_credentials_assumed_role(
+        aws_test_config,
+        webserver_port
+):
+    if webserver_port != 8080:
+        pytest.skip('Expected results coded from webserver port = 8080')
+
+    options = {
+        'AWS_SECRET_ACCESS_KEY': '',
+        'AWS_ACCESS_KEY_ID': '',
+        'CPL_AWS_CREDENTIALS_FILE': '/vsimem/aws_credentials',
+        'AWS_CONFIG_FILE': '/vsimem/aws_config',
+        'AWS_PROFILE': 'my_profile',
+        'AWS_STS_ENDPOINT': 'localhost:%d' % webserver_port
+    }
+
+    gdal.VSICurlClearCache()
+
+    gdal.FileFromMemBuffer('/vsimem/aws_credentials', """
+[foo]
+aws_access_key_id = AWS_ACCESS_KEY_ID
+aws_secret_access_key = AWS_SECRET_ACCESS_KEY
+""")
+
+    gdal.FileFromMemBuffer('/vsimem/aws_config', """
+[profile my_profile]
+role_arn = arn:aws:iam::557268267719:role/role
+source_profile = foo
+# below are optional
+external_id = my_external_id
+mfa_serial = my_mfa_serial
+role_session_name = my_role_session_name
+""")
+
+    expired_xml_response = """
+        <AssumeRoleResponse><AssumeRoleResult><Credentials>
+            <AccessKeyId>TEMP_ACCESS_KEY_ID</AccessKeyId>
+            <SecretAccessKey>TEMP_SECRET_ACCESS_KEY</SecretAccessKey>
+            <SessionToken>TEMP_SESSION_TOKEN</SessionToken>
+            <Expiration>1970-01-01T01:00:00Z</Expiration>
+        </Credentials></AssumeRoleResult></AssumeRoleResponse>"""
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        'GET',
+        '/?Action=AssumeRole&ExternalId=my_external_id&RoleArn=arn%3Aaws%3Aiam%3A%3A557268267719%3Arole%2Frole&RoleSessionName=my_role_session_name&SerialNumber=my_mfa_serial&Version=2011-06-15&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AWS_ACCESS_KEY_ID%2F20150101%2Fus-east-1%2Fsts%2Faws4_request&X-Amz-Date=20150101T000000Z&X-Amz-SignedHeaders=host&X-Amz-Signature=cfd8163f2a5438e4957a079c4e40cf36053092722fcb7ecdc4cdc706791684b8',
+        200,
+        {},
+        expired_xml_response)
+    handler.add(
+        'GET',
+        '/?Action=AssumeRole&ExternalId=my_external_id&RoleArn=arn%3Aaws%3Aiam%3A%3A557268267719%3Arole%2Frole&RoleSessionName=my_role_session_name&SerialNumber=my_mfa_serial&Version=2011-06-15&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AWS_ACCESS_KEY_ID%2F20150101%2Fus-east-1%2Fsts%2Faws4_request&X-Amz-Date=20150101T000000Z&X-Amz-SignedHeaders=host&X-Amz-Signature=cfd8163f2a5438e4957a079c4e40cf36053092722fcb7ecdc4cdc706791684b8',
+        200,
+        {},
+        expired_xml_response)
+    handler.add(
+        'GET',
+        '/s3_fake_bucket/resource',
+        200,
+        {},
+        'foo',
+        expected_headers={'Authorization': 'AWS4-HMAC-SHA256 Credential=TEMP_ACCESS_KEY_ID/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token,Signature=d5e8167e066e7439e0e57a43e1167f9ee7efe4b451c72de1a3a150f6fc033403',
+                          'X-Amz-Security-Token': 'TEMP_SESSION_TOKEN'}
+    )
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(options):
+            f = open_for_read('/vsis3/s3_fake_bucket/resource')
+            assert f is not None
+            data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+        gdal.VSIFCloseL(f)
+    assert data == 'foo'
+
+    # Get another resource and check that we renew the expired temporary credentials
+    non_expired_xml_response = """
+        <AssumeRoleResponse><AssumeRoleResult><Credentials>
+            <AccessKeyId>ANOTHER_TEMP_ACCESS_KEY_ID</AccessKeyId>
+            <SecretAccessKey>ANOTHER_TEMP_SECRET_ACCESS_KEY</SecretAccessKey>
+            <SessionToken>ANOTHER_TEMP_SESSION_TOKEN</SessionToken>
+            <Expiration>3000-01-01T01:00:00Z</Expiration>
+        </Credentials></AssumeRoleResult></AssumeRoleResponse>"""
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        'GET',
+        '/?Action=AssumeRole&ExternalId=my_external_id&RoleArn=arn%3Aaws%3Aiam%3A%3A557268267719%3Arole%2Frole&RoleSessionName=my_role_session_name&SerialNumber=my_mfa_serial&Version=2011-06-15&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AWS_ACCESS_KEY_ID%2F20150101%2Fus-east-1%2Fsts%2Faws4_request&X-Amz-Date=20150101T000000Z&X-Amz-SignedHeaders=host&X-Amz-Signature=cfd8163f2a5438e4957a079c4e40cf36053092722fcb7ecdc4cdc706791684b8',
+        200,
+        {},
+        non_expired_xml_response)
+    handler.add(
+        'GET',
+        '/s3_fake_bucket/resource2',
+        200,
+        {},
+        'foo',
+        expected_headers={'Authorization': 'AWS4-HMAC-SHA256 Credential=ANOTHER_TEMP_ACCESS_KEY_ID/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token,Signature=9716b5928ed350263c9492159dccbdc9aac321cfea383d7f67bd8b4c7ca33463',
+                          'X-Amz-Security-Token': 'ANOTHER_TEMP_SESSION_TOKEN'}
+    )
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(options):
+            f = open_for_read('/vsis3/s3_fake_bucket/resource2')
+        assert f is not None
+        data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+        gdal.VSIFCloseL(f)
+    assert data == 'foo'
+
+    # Get another resource and check that we reuse the still valid temporary credentials
+    handler = webserver.SequentialHandler()
+    handler.add(
+        'GET',
+        '/s3_fake_bucket/resource3',
+        200,
+        {},
+        'foo',
+        expected_headers={'Authorization': 'AWS4-HMAC-SHA256 Credential=ANOTHER_TEMP_ACCESS_KEY_ID/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token,Signature=27e28bd4dad95495b851b54ff875b8ebcec6e0f6f5e4adf045153bd0d7958fbb',
+                          'X-Amz-Security-Token': 'ANOTHER_TEMP_SESSION_TOKEN'}
+    )
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(options):
+            f = open_for_read('/vsis3/s3_fake_bucket/resource3')
+        assert f is not None
+        data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+        gdal.VSIFCloseL(f)
+    assert data == 'foo'
+
+    gdal.Unlink('/vsimem/aws_credentials')
+    gdal.Unlink('/vsimem/aws_config')
 
 ###############################################################################
 # Nominal cases (require valid credentials)
