@@ -1055,7 +1055,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
     {
         pszSQL = sqlite3_mprintf(
             "SELECT column_name, mime_type, constraint_name FROM gpkg_data_columns "
-            "WHERE table_name = '%q' AND column_name IS NOT NULL",
+            "WHERE table_name = '%q'",
             m_pszTableName);
         oResultTable = SQLQuery(poDb, pszSQL);
         sqlite3_free(pszSQL);
@@ -1064,6 +1064,8 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
             for ( int iRecord = 0; iRecord < oResultTable->RowCount(); iRecord++ )
             {
                 const char *pszColumn = oResultTable->GetValue(0, iRecord);
+                if( pszColumn == nullptr )
+                    continue;
                 const char *pszMimeType = oResultTable->GetValue(1, iRecord);
                 const char *pszConstraintName = oResultTable->GetValue(2, iRecord);
                 if( pszMimeType && EQUAL(pszMimeType, "application/json") )
@@ -4256,13 +4258,10 @@ char **OGRGeoPackageTableLayer::GetMetadata( const char *pszDomain )
         return OGRLayer::GetMetadata( pszDomain );
 
     char* pszSQL = sqlite3_mprintf(
-        "SELECT md.metadata, md.md_standard_uri, md.mime_type, "
-        "mdr.reference_scope FROM gpkg_metadata md "
+        "SELECT md.metadata, md.md_standard_uri, md.mime_type "
+        "FROM gpkg_metadata md "
         "JOIN gpkg_metadata_reference mdr ON (md.id = mdr.md_file_id ) "
-        "WHERE md.metadata IS NOT NULL AND "
-        "md.md_standard_uri IS NOT NULL AND "
-        "md.mime_type IS NOT NULL AND "
-        "lower(mdr.table_name) = lower('%q') ORDER BY md.id "
+        "WHERE lower(mdr.table_name) = lower('%q') ORDER BY md.id "
         "LIMIT 1000", // to avoid denial of service
         m_pszTableName);
 
@@ -4281,9 +4280,8 @@ char **OGRGeoPackageTableLayer::GetMetadata( const char *pszDomain )
         const char *pszMetadata = oResult->GetValue(0, i);
         const char* pszMDStandardURI = oResult->GetValue(1, i);
         const char* pszMimeType = oResult->GetValue(2, i);
-        //const char* pszReferenceScope = oResult->GetValue(3, i);
-        //int bIsGPKGScope = EQUAL(pszReferenceScope, "geopackage");
-        if( EQUAL(pszMDStandardURI, "http://gdal.org") &&
+        if( pszMetadata && pszMDStandardURI && pszMimeType &&
+            EQUAL(pszMDStandardURI, "http://gdal.org") &&
             EQUAL(pszMimeType, "text/xml") )
         {
             CPLXMLNode* psXMLNode = CPLParseXMLString(pszMetadata);

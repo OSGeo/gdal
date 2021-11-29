@@ -4,10 +4,9 @@ on:
     push:
         paths-ignore:
             - 'doc/**'
-    # Disabled because of https://github.com/OSGeo/issues/4599
-    #pull_request:
-    #    paths-ignore:
-    #        - 'doc/**'
+    pull_request:
+        paths-ignore:
+            - 'doc/**'
 
 
 jobs:
@@ -19,7 +18,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        platform: ['ubuntu-latest','windows-latest','macos-latest']
+        platform: ['ubuntu-latest','windows-latest','macos-10.15']
 
     env:
       PLATFORM: ${{ matrix.platform }}

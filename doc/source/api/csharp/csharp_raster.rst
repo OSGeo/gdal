@@ -151,7 +151,7 @@ The :file:`PaletteInterp` enumeration can be used to distinguish between the var
 
     Band band = dataset.GetRasterBand(1);
     ColorTable ct = band.GetRasterColorTable();
-    if (ct.GetPaletteInterpretation() != PaletteInterp.GPI_RGB)
+    if (ct.GetPaletteInterpretation() == PaletteInterp.GPI_RGB)
     {
         Console.WriteLine("   This raster band has RGB palette interpretation!");
     }

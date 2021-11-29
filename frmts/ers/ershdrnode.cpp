@@ -130,10 +130,53 @@ int ERSHdrNode::ReadLine( VSILFILE * fp, CPLString &osLine )
             {
                 bLastCharWasSlashInQuote = true;
             }
+            // A comment is a '#' up to the end of the line.
+            else if( ch == '#' && !bInQuote )
+            {
+                osLine = osLine.substr(0, i) + "\n";
+            }
         }
     } while( nBracketLevel > 0 );
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                            ParseHeader()                             */
+/*                                                                      */
+/*      We receive the FILE * positioned at the start of the file       */
+/*      and read all children.  This allows reading comment lines       */
+/*      at the start of the file.                                       */
+/************************************************************************/
+
+int ERSHdrNode::ParseHeader( VSILFILE * fp )
+
+{
+    while( true )
+    {
+/* -------------------------------------------------------------------- */
+/*      Read the next line                                              */
+/* -------------------------------------------------------------------- */
+        CPLString osLine;
+        size_t iOff;
+
+        if( !ReadLine( fp, osLine ) )
+            return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Got a DatasetHeader Begin                                       */
+/* -------------------------------------------------------------------- */
+        else if( (iOff = osLine.ifind( " Begin" )) != std::string::npos )
+        {
+            CPLString osName = osLine.substr(0,iOff);
+            osName.Trim();
+
+            if ( osName.tolower() == CPLString("DatasetHeader").tolower() )
+            {
+                return ParseChildren( fp );
+            }
+        }
+    }
 }
 
 /************************************************************************/
@@ -155,7 +198,7 @@ int ERSHdrNode::ParseChildren( VSILFILE * fp, int nRecLevel )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Too many recursion level while parsing .ers header");
-        return false;
+        return FALSE;
     }
 
     while( true )

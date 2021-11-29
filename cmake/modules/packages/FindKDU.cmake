@@ -16,10 +16,10 @@
 # and it defines the KDU::KDU target
 
 if(CMAKE_VERSION VERSION_LESS 3.13)
-    set(KDU_ROOT "KDU-ROOT-NOT-FOUND" CACHE STRING "KAKADU library base directory")
+    set(KDU_ROOT CACHE PATH "KAKADU library base directory")
 endif()
 
-if(KDU_ROOT)
+if(KDU_ROOT AND EXISTS "${KDU_ROOT}/coresys")
     if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64" AND "${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
         file(READ "${KDU_ROOT}/coresys/make/Makefile-Linux-x86-64-gcc" CORESYS_MAKEFILE_CONTENTS)
         string(REGEX REPLACE ".*SHARED_LIB_NAME[ \t]*=[ \t]*([^.]*)(\.so).*" "\\1\\2" KDU_SHARED_LIB_NAME ${CORESYS_MAKEFILE_CONTENTS})

@@ -17,6 +17,7 @@ public:
     ERSHdrNode();
     ~ERSHdrNode();
 
+    int    ParseHeader( VSILFILE *fp );
     int    ParseChildren( VSILFILE *fp, int nRecLevel = 0 );
     int    WriteSelf( VSILFILE *fp, int nIndent );
 

@@ -124,7 +124,8 @@ int OGRElasticDataSource::GetLayerCount()
         pszNextEOL = strchr(pszCur, '\n');
 
         if( STARTS_WITH(pszIndexName, ".security") ||
-            STARTS_WITH(pszIndexName, ".monitoring") )
+            STARTS_WITH(pszIndexName, ".monitoring") ||
+            STARTS_WITH(pszIndexName, ".geoip_databases") )
         {
             continue;
         }

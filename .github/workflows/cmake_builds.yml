@@ -185,8 +185,12 @@ jobs:
   build-mac:
     runs-on: macOS-latest
     env:
-      CMAKE_OPTIONS: -DGDAL_USE_GIFLIB_INTERNAL=YES -DCFITSIO_ROOT=/usr/local/opt/cfitsio  -DPoppler_ROOT=/usr/local/opt/poppler -DPROJ_ROOT=/usr/local/opt/proj -DLibXml2_ROOT=/usr/local/opt/libxml2 -DSPATIALITE_ROOT=/usr/local/opt/libspatialite -DPostgreSQL_ROOT=/usr/local/opt/libpq -DEXPAT_ROOT=/usr/local/opt/expat -DXercesC_ROOT=/usr/local/opt/xerces-c -DSQLite3_ROOT=/usr/local/opt/sqlite -DOpenSSL_ROOT=/usr/local/opt/openssl -DPNG_ROOT=/usr/local/opt/libpng -DJPEG_ROOT=/usr/local/opt/jpeg -DOpenJPEG_ROOT=/usr/local/opt/openjpeg -DGDAL_USE_DAP=OFF -DGDAL_USE_JASPER=OFF
+      CMAKE_OPTIONS: -DGDAL_USE_GIFLIB_INTERNAL=YES -DCFITSIO_ROOT=/usr/local/opt/cfitsio  -DPoppler_ROOT=/usr/local/opt/poppler -DPROJ_ROOT=/usr/local/opt/proj -DLibXml2_ROOT=/usr/local/opt/libxml2 -DSPATIALITE_ROOT=/usr/local/opt/libspatialite -DPostgreSQL_ROOT=/usr/local/opt/libpq -DEXPAT_ROOT=/usr/local/opt/expat -DXercesC_ROOT=/usr/local/opt/xerces-c -DSQLite3_ROOT=/usr/local/opt/sqlite -DOpenSSL_ROOT=/usr/local/opt/openssl -DPNG_ROOT=/usr/local/opt/libpng -DJPEG_ROOT=/usr/local/opt/jpeg -DOpenJPEG_ROOT=/usr/local/opt/openjpeg -DCURL_ROOT=/usr/local/opt/curl -DGDAL_USE_DAP=OFF -DGDAL_USE_JASPER=OFF
     steps:
+    - name: Setup xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: 12.4
     - name: Checkout GDAL
       uses: actions/checkout@v2
     - run: |
@@ -200,14 +204,25 @@ jobs:
         brew install ccache swig
         # gdal is automatically installed as a dependency for postgis
         brew uninstall --ignore-dependencies gdal
+        cd /usr/local/share/proj
+        curl http://download.osgeo.org/proj/proj-datumgrid-1.8.tar.gz > proj-datumgrid-1.8.tar.gz
+        tar xvzf proj-datumgrid-1.8.tar.gz
+        cd $OLDPWD
+        python3 -m pip install -r $GITHUB_WORKSPACE/autotest/requirements.txt
     - name: Configure
       run: |
         mkdir -p $GITHUB_WORKSPACE/build
         cmake -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal ${CMAKE_OPTIONS} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror "-DCMAKE_C_COMPILER_LAUNCHER=ccache" "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build"
     - name: Build
-      run: cmake --build $GITHUB_WORKSPACE/build -j 3
+      run: |
+        cmake --build $GITHUB_WORKSPACE/build -j 3
+        otool -L $GITHUB_WORKSPACE/build/libgdal.dylib
     - name: test
-      # FIXME: only test-copy-words for now. quicktest target fails on test-unit in a few test cases
-      run: cmake --build $GITHUB_WORKSPACE/build --target test-copy-words
+      run: cmake --build $GITHUB_WORKSPACE/build --target quicktest
+    - name: test (with ctest)
+      run: |
+        ctest --test-dir $GITHUB_WORKSPACE/build -V -j 3
+      env:
+        GITHUB_WORKFLOW: "MacOS build"
     - name: Install
       run: cmake --build $GITHUB_WORKSPACE/build --target install -j 3

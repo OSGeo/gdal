@@ -13,6 +13,7 @@ include(CheckFunctionExists)
 include(CMakeDependentOption)
 include(FeatureSummary)
 include(DefineFindPackage2)
+include(CheckSymbolExists)
 
 # Macro to declare a package
 # Accept a CAN_DISABLE option to specify that the package can be disabled
@@ -21,14 +22,16 @@ include(DefineFindPackage2)
 # GDAL_USE_ is OFF.
 # Accept a RECOMMENDED option
 macro(gdal_check_package name purpose)
-    set(_options CAN_DISABLE RECOMMENDED DISABLED_BY_DEFAULT)
+    set(_options CONFIG CAN_DISABLE RECOMMENDED DISABLED_BY_DEFAULT)
     set(_oneValueArgs )
     set(_multiValueArgs COMPONENTS)
     cmake_parse_arguments(_GCP "${_options}" "${_oneValueArgs}" "${_multiValueArgs}" ${ARGN})
     string(TOUPPER ${name} key)
     find_package2(${name} QUIET)
     if(NOT DEFINED ${key}_FOUND)
-        if(_GCP_COMPONENTS)
+        if(_GCP_CONFIG)
+            find_package(${name} CONFIG)
+        elseif(_GCP_COMPONENTS)
             find_package(${name} COMPONENTS ${_GCP_COMPONENTS})
         else()
             find_package(${name})
@@ -264,7 +267,7 @@ endif()
 # 3rd party libraries
 
 gdal_check_package(PCRE2 "Enable PCRE2 support for sqlite3" CAN_DISABLE)
-if(NOT GDAL_USE_PCRE)
+if(NOT GDAL_USE_PCRE2)
     gdal_check_package(PCRE "Enable PCRE support for sqlite3" CAN_DISABLE)
 endif()
 
@@ -366,8 +369,8 @@ gdal_check_package(IDB "enable ogr_IDB driver")
 # TODO: implement FindRASDAMAN
 # libs: -lrasodmg -lclientcomm -lcompression -lnetwork -lraslib
 gdal_check_package(RASDAMAN "enable rasdaman driver")
-gdal_check_package(rdb "enable RIEGL RDB library" CAN_DISABLE)
-gdal_check_package(TileDB "enable TileDB driver" CAN_DISABLE)
+gdal_check_package(rdb "enable RIEGL RDB library" CONFIG CAN_DISABLE)
+gdal_check_package(TileDB "enable TileDB driver" CONFIG CAN_DISABLE)
 gdal_check_package(OpenEXR "OpenEXR >=2.2" CAN_DISABLE)
 
 # OpenJPEG's cmake-CONFIG is broken, so call module explicitly

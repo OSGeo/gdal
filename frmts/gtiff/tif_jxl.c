@@ -292,7 +292,7 @@ JXLPreDecode(TIFF* tif, uint16_t s)
             return 0;
         }
 
-        JxlPixelFormat format = {};
+        JxlPixelFormat format = {0};
         format.num_channels = td->td_planarconfig == PLANARCONFIG_CONTIG ?
                                                     td->td_samplesperpixel : 1;
         format.data_type = jxlDataType;
@@ -484,12 +484,12 @@ JXLPostEncode(TIFF* tif)
             return 0;
         }
 
-        JxlPixelFormat format = {};
+        JxlPixelFormat format = {0};
         format.data_type = GetJXLDataType(tif);
         format.endianness = JXL_NATIVE_ENDIAN;
         format.align = 0;
 
-        JxlBasicInfo basic_info = {};
+        JxlBasicInfo basic_info = {0};
         JxlEncoderInitBasicInfo(&basic_info);
         basic_info.xsize = sp->segment_width;
         basic_info.ysize = sp->segment_height;
@@ -574,7 +574,7 @@ JXLPostEncode(TIFF* tif)
             return 0;
         }
 
-        JxlColorEncoding color_encoding = {};
+        JxlColorEncoding color_encoding = {0};
         JxlColorEncodingSetToSRGB(&color_encoding, /*is_gray*/
             (td->td_planarconfig==PLANARCONFIG_SEPARATE ||
             td->td_samplesperpixel <= 2));

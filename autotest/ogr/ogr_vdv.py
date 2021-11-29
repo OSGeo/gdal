@@ -70,7 +70,7 @@ def test_ogr_idf_1():
         f.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 #
 
@@ -78,7 +78,12 @@ def test_ogr_idf_1():
 def test_ogr_idf_1_with_temp_sqlite_db():
     if ogr.GetDriverByName('SQLite') is None:
         pytest.skip()
-    with gdaltest.config_option('OGR_IDF_TEMP_DB_THRESHOLD', '0'):
+    options = { 'OGR_IDF_TEMP_DB_THRESHOLD': '0' }
+    if sys.platform == 'darwin':
+        # Otherwise we get a failure with system's sqlite 3.32.3 of Big Sur
+        # when chaining ogr_sqlite.py and ogr_vdv.py
+        options['OGR_IDF_DELETE_TEMP_DB'] = 'NO'
+    with gdaltest.config_options(options):
         return test_ogr_idf_1()
 
 ###############################################################################
@@ -112,7 +117,7 @@ def test_ogr_idf_3d():
         f.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 # Run test_ogrsf on .idf
 
@@ -360,7 +365,7 @@ def test_ogr_vdv_7():
 
         gdal.Unlink('/vsimem/vdv/ogr_vdv_7.x10')
 
-    
+
 ###############################################################################
 # Test a few error cases
 

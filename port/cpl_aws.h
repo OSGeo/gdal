@@ -65,6 +65,7 @@ CPLGetAWS_SIGN4_Signature( const CPLString& osSecretAccessKey,
                                const CPLString& osCanonicalURI,
                                const CPLString& osCanonicalQueryString,
                                const CPLString& osXAMZContentSHA256,
+                               bool bAddHeaderAMZContentSHA256,
                                const CPLString& osTimestamp,
                                CPLString& osSignedHeaders );
 
@@ -128,6 +129,15 @@ public:
         static CPLString GetRFC822DateTime();
 };
 
+enum class AWSCredentialsSource
+{
+    REGULAR,         // credentials from env variables or ~/.aws/crediential
+    EC2,             // credentials from EC2 private networking
+    ASSUMED_ROLE     // credentials from an STS assumed role
+                     // See https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-cli.html
+                     // and https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_request.html
+};
+
 class VSIS3HandleHelper final: public IVSIS3LikeHandleHelper
 {
         CPL_DISALLOW_COPY_ASSIGN(VSIS3HandleHelper)
@@ -143,7 +153,7 @@ class VSIS3HandleHelper final: public IVSIS3LikeHandleHelper
         CPLString m_osObjectKey{};
         bool m_bUseHTTPS = false;
         bool m_bUseVirtualHosting = false;
-        bool m_bFromEC2 = false;
+        AWSCredentialsSource m_eCredentialsSource = AWSCredentialsSource::REGULAR;
 
         void RebuildURL() override;
 
@@ -156,14 +166,19 @@ class VSIS3HandleHelper final: public IVSIS3LikeHandleHelper
                                      CPLString& osAccessKeyId,
                                      CPLString& osSessionToken,
                                      CPLString& osRegion,
-                                     CPLString& osCredentials);
+                                     CPLString& osCredentials,
+                                     CPLString& osRoleArn,
+                                     CPLString& osSourceProfile,
+                                     CPLString& osExternalId,
+                                     CPLString& osMFASerial,
+                                     CPLString& osRoleSessionName);
 
         static bool GetConfiguration(CSLConstList papszOptions,
                                      CPLString& osSecretAccessKey,
                                      CPLString& osAccessKeyId,
                                      CPLString& osSessionToken,
                                      CPLString& osRegion,
-                                     bool& bFromEC2);
+                                     AWSCredentialsSource& eCredentialsSource);
   protected:
 
     public:
@@ -175,7 +190,8 @@ class VSIS3HandleHelper final: public IVSIS3LikeHandleHelper
                     const CPLString& osRequestPayer,
                     const CPLString& osBucket,
                     const CPLString& osObjectKey,
-                    bool bUseHTTPS, bool bUseVirtualHosting, bool bFromEC2);
+                    bool bUseHTTPS, bool bUseVirtualHosting,
+                    AWSCredentialsSource eCredentialsSource);
        ~VSIS3HandleHelper();
 
         static VSIS3HandleHelper* BuildFromURI(const char* pszURI,
