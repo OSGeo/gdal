@@ -964,41 +964,77 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
 /*      If no INTERLEAVE creation option is given, we will try to add   */
 /*      one that matches the current srcDS interleaving                 */
 /* -------------------------------------------------------------------- */
-    char** papszOptionsSmart = 0;
+    char** papszOptionsWithInterleave = 0;
     const bool bHasInterleaveCreationOptions =
-         (CSLFetchNameValue(papszOptions, "INTERLEAVE") != 0);
+         (CSLFetchNameValue(papszOptions, "INTERLEAVE") != nullptr);
     if (!bHasInterleaveCreationOptions && poSrcDS)
     {
         const char* srcInterleave = poSrcDS->GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE");
-        const bool isENVIDriver = !strcmpi(this->GetDescription(), "ENVI");
-        char** dstInterleaveOptions = (char**)CPLCalloc(1, sizeof(char*));
-        dstInterleaveOptions = CSLSetNameValue(dstInterleaveOptions, "INTERLEAVE",
-            !srcInterleave ?
-              isENVIDriver ? "BSQ" : "BAND" :
-            !isENVIDriver ? srcInterleave :
-            !strcmpi(srcInterleave, "BAND") ? "BSQ" :
-            !strcmpi(srcInterleave, "PIXEL") ? "BIP" :
-            !strcmpi(srcInterleave, "LINE") ? "BIL" :
-            srcInterleave);
-        const bool bIsDstInterleaveSupported = (GDALValidateCreationOptions(
-          this, dstInterleaveOptions) == TRUE);
+
+        //look for INTERLEAVE values of the driver
+        char** interleavesCSL = 0;
+        const char *pszOptionList = this->GetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST );
+        CPLXMLNode* xmlNode = CPLParseXMLString(pszOptionList);
+        for(CPLXMLNode* child = !xmlNode ? 0 : xmlNode->psChild ; child != 0 ; child = child->psNext)
+        {
+            if ((child->eType == CXT_Element) && EQUAL(child->pszValue, "Option"))
+            {
+                CPLXMLNode* nameAttribute = CPLGetXMLNode(child, "name");
+                if (nameAttribute != nullptr)
+                {
+                    const bool isInterleaveAttribute = nameAttribute->psChild &&
+                        (nameAttribute->psChild->eType == CXT_Text) &&
+                        EQUAL(nameAttribute->psChild->pszValue, "INTERLEAVE");
+                    if (isInterleaveAttribute)
+                    {
+                        for(CPLXMLNode* optionChild = child->psChild ; optionChild != 0 ; optionChild = optionChild->psNext)
+                        {
+                            if ((optionChild->eType == CXT_Element) && EQUAL(optionChild->pszValue, "Value"))
+                            {
+                                CPLXMLNode* optionChildValue = optionChild->psChild;
+                                if (optionChildValue && (optionChildValue->eType == CXT_Text))
+                                {
+                                    interleavesCSL = CSLAddString(interleavesCSL, optionChildValue->pszValue);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        CPLDestroyXMLNode(xmlNode);
+
+        const char* dstInterleaveBand =
+            (CSLFindString(interleavesCSL, "BAND") >= 0) ? "BAND" :
+            (CSLFindString(interleavesCSL, "BSQ") >= 0) ? "BSQ" :
+            nullptr;
+        const char* dstInterleaveLine =
+            (CSLFindString(interleavesCSL, "LINE") >= 0) ? "LINE" :
+            (CSLFindString(interleavesCSL, "BIL") >= 0) ? "BIL" :
+            nullptr;
+        const char* dstInterleavePixel =
+            (CSLFindString(interleavesCSL, "PIXEL") >= 0) ? "PIXEL" :
+            (CSLFindString(interleavesCSL, "BIP") >= 0) ? "BIP" :
+            nullptr;
+        const char* dstInterleave = !srcInterleave ? 0 :
+            EQUAL(srcInterleave, "BAND") ? dstInterleaveBand :
+            EQUAL(srcInterleave, "LINE") ? dstInterleaveLine :
+            EQUAL(srcInterleave, "PIXEL") ? dstInterleavePixel :
+            nullptr;
+        CSLDestroy(interleavesCSL);
+
+        char** dstInterleaveOptions = !dstInterleave ? 0 :
+          CSLSetNameValue(0, "INTERLEAVE", dstInterleave);
+        const bool bIsDstInterleaveSupported = !dstInterleaveOptions ? FALSE :
+          (GDALValidateCreationOptions(this, dstInterleaveOptions) == TRUE);
         if (bIsDstInterleaveSupported)
         {
-            if (papszOptions != 0)
-            {
-              papszOptionsSmart = CSLDuplicate(papszOptions);
-              papszOptionsSmart = CSLMerge(papszOptionsSmart, dstInterleaveOptions);
-            }
-            else
-            {
-                papszOptionsSmart = dstInterleaveOptions;
-                dstInterleaveOptions = 0;
-            }
+            papszOptionsWithInterleave = CSLDuplicate(papszOptions);
+            papszOptionsWithInterleave = CSLMerge(papszOptionsWithInterleave, dstInterleaveOptions);
+            papszOptions = papszOptionsWithInterleave;
         }
         CSLDestroy(dstInterleaveOptions);
     }
-    CSLConstList papszOptionsModified = !papszOptionsSmart ? papszOptions :
-      papszOptionsSmart;
 
 /* -------------------------------------------------------------------- */
 /*      Make sure we cleanup if there is an existing dataset of this    */
@@ -1006,10 +1042,10 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
 /*      it might just be a corrupt file or something.                   */
 /* -------------------------------------------------------------------- */
     const bool bAppendSubdataset =
-        CPLFetchBool(papszOptionsModified,
+        CPLFetchBool(papszOptions,
                      "APPEND_SUBDATASET", false);
     if( !bAppendSubdataset &&
-        CPLFetchBool(papszOptionsModified,
+        CPLFetchBool(papszOptions,
                      "QUIET_DELETE_ON_CREATE_COPY", true) )
     {
         // Someone issuing CreateCopy("foo.tif") on a
@@ -1026,14 +1062,14 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
 
     char** papszOptionsToDelete = nullptr;
     int iIdxQuietDeleteOnCreateCopy =
-        CSLPartialFindString(papszOptionsModified, "QUIET_DELETE_ON_CREATE_COPY=");
+        CSLPartialFindString(papszOptions, "QUIET_DELETE_ON_CREATE_COPY=");
     if( iIdxQuietDeleteOnCreateCopy >= 0 )
     {
-        papszOptionsToDelete = CSLDuplicate(papszOptionsModified);
+        papszOptionsToDelete = CSLDuplicate(papszOptions);
         papszOptionsToDelete =
             CSLRemoveStrings(papszOptionsToDelete, iIdxQuietDeleteOnCreateCopy,
                              1, nullptr);
-        papszOptionsModified = papszOptionsToDelete;
+        papszOptions = papszOptionsToDelete;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1041,19 +1077,19 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
 /*      registered in the global list of open datasets.                 */
 /* -------------------------------------------------------------------- */
     const int iIdxInternalDataset =
-        CSLPartialFindString(papszOptionsModified, "_INTERNAL_DATASET=");
+        CSLPartialFindString(papszOptions, "_INTERNAL_DATASET=");
     bool bInternalDataset = false;
     if( iIdxInternalDataset >= 0 )
     {
         bInternalDataset =
-            CPLFetchBool(papszOptionsModified,
+            CPLFetchBool(papszOptions,
                          "_INTERNAL_DATASET", false);
         if( papszOptionsToDelete == nullptr )
-            papszOptionsToDelete = CSLDuplicate(papszOptionsModified);
+            papszOptionsToDelete = CSLDuplicate(papszOptions);
         papszOptionsToDelete =
             CSLRemoveStrings(papszOptionsToDelete, iIdxInternalDataset,
                              1, nullptr);
-        papszOptionsModified = papszOptionsToDelete;
+        papszOptions = papszOptionsToDelete;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1066,7 +1102,7 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
         if( poSrcGroup != nullptr && GetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER) )
         {
             CPLStringList aosDatasetCO;
-            for( CSLConstList papszIter = papszOptionsModified; papszIter && *papszIter; ++papszIter )
+            for( CSLConstList papszIter = papszOptions; papszIter && *papszIter; ++papszIter )
             {
                 if( !STARTS_WITH_CI(*papszIter, "ARRAY:") )
                     aosDatasetCO.AddString(*papszIter);
@@ -1075,7 +1111,7 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
         }
         else
         {
-            GDALValidateCreationOptions( this, papszOptionsModified );
+            GDALValidateCreationOptions( this, papszOptions );
         }
     }
 
@@ -1106,7 +1142,7 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
         !CPLTestBool(CPLGetConfigOption("GDAL_DEFAULT_CREATE_COPY", "NO")) )
     {
         poDstDS = pfnCreateCopy( pszFilename, poSrcDS, bStrict,
-                                 const_cast<char**>(papszOptionsModified),
+                                 const_cast<char**>(papszOptions),
                                  pfnProgress, pProgressData );
         if( poDstDS != nullptr )
         {
@@ -1124,11 +1160,11 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
     else
     {
         poDstDS = DefaultCreateCopy( pszFilename, poSrcDS, bStrict,
-                                  papszOptionsModified, pfnProgress, pProgressData );
+            papszOptions, pfnProgress, pProgressData );
     }
 
+    CSLDestroy(papszOptionsWithInterleave);
     CSLDestroy(papszOptionsToDelete);
-    CSLDestroy(papszOptionsSmart);
     return poDstDS;
 }
 
