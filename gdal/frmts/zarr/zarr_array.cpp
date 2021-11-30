@@ -1433,13 +1433,13 @@ bool ZarrArray::LoadTileData(const uint64_t* tileIndices,
         return false;
     }
 
-    if( !bMissingTileOut && m_bFortranOrder )
+    if( m_bFortranOrder )
     {
         BlockTranspose(abyRawTileData, abyTmpRawTileData, true);
         std::swap(abyRawTileData, abyTmpRawTileData);
     }
 
-    if( !bMissingTileOut && !abyDecodedTileData.empty() )
+    if( !abyDecodedTileData.empty() )
     {
         const size_t nSourceSize = m_aoDtypeElts.back().nativeOffset +
                                    m_aoDtypeElts.back().nativeSize;
