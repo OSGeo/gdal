@@ -361,9 +361,11 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         if ( (int)psSegInfo->nSegmentHeaderSize < nOffset + 80 * nNICOM )
             GOTO_header_too_small();
 
-        psImage->pszComments = (char *) CPLMalloc(nNICOM*80+1);
-        NITFGetField( psImage->pszComments, pachHeader,
-                      nOffset, 80 * nNICOM );
+        char *pszICOM = (char *) CPLMalloc(nNICOM*80+1);
+        psImage->pszComments = CPLRecode(
+            NITFGetField( pszICOM, pachHeader, nOffset, 80 * nNICOM ),
+            CPL_ENC_ISO8859_1, CPL_ENC_UTF8 );
+        CPLFree(pszICOM);
         nOffset += nNICOM * 80;
     }
 
