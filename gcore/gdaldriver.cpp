@@ -964,7 +964,7 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
 /*      If no INTERLEAVE creation option is given, we will try to add   */
 /*      one that matches the current srcDS interleaving                 */
 /* -------------------------------------------------------------------- */
-    char** papszOptionsWithInterleave = 0;
+    char** papszOptionsWithInterleave = nullptr;
     const bool bHasInterleaveCreationOptions =
          (CSLFetchNameValue(papszOptions, "INTERLEAVE") != nullptr);
     if (!bHasInterleaveCreationOptions && poSrcDS)
@@ -972,30 +972,25 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
         const char* srcInterleave = poSrcDS->GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE");
 
         //look for INTERLEAVE values of the driver
-        char** interleavesCSL = 0;
+        char** interleavesCSL = nullptr;
         const char *pszOptionList = this->GetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST );
-        CPLXMLNode* xmlNode = CPLParseXMLString(pszOptionList);
-        for(CPLXMLNode* child = !xmlNode ? 0 : xmlNode->psChild ; child != 0 ; child = child->psNext)
+        CPLXMLNode* xmlNode = !pszOptionList ? nullptr : CPLParseXMLString(pszOptionList);
+        for(CPLXMLNode* child = !xmlNode ? nullptr : xmlNode->psChild ; child != nullptr ; child = child->psNext)
         {
             if ((child->eType == CXT_Element) && EQUAL(child->pszValue, "Option"))
             {
-                CPLXMLNode* nameAttribute = CPLGetXMLNode(child, "name");
-                if (nameAttribute != nullptr)
+                const char* nameAttribute = CPLGetXMLValue(child, "name", nullptr);
+                const bool isInterleaveAttribute = nameAttribute && EQUAL(nameAttribute, "INTERLEAVE");
+                if (isInterleaveAttribute)
                 {
-                    const bool isInterleaveAttribute = nameAttribute->psChild &&
-                        (nameAttribute->psChild->eType == CXT_Text) &&
-                        EQUAL(nameAttribute->psChild->pszValue, "INTERLEAVE");
-                    if (isInterleaveAttribute)
+                    for(CPLXMLNode* optionChild = child->psChild ; optionChild != nullptr ; optionChild = optionChild->psNext)
                     {
-                        for(CPLXMLNode* optionChild = child->psChild ; optionChild != 0 ; optionChild = optionChild->psNext)
+                        if ((optionChild->eType == CXT_Element) && EQUAL(optionChild->pszValue, "Value"))
                         {
-                            if ((optionChild->eType == CXT_Element) && EQUAL(optionChild->pszValue, "Value"))
+                            CPLXMLNode* optionChildValue = optionChild->psChild;
+                            if (optionChildValue && (optionChildValue->eType == CXT_Text))
                             {
-                                CPLXMLNode* optionChildValue = optionChild->psChild;
-                                if (optionChildValue && (optionChildValue->eType == CXT_Text))
-                                {
-                                    interleavesCSL = CSLAddString(interleavesCSL, optionChildValue->pszValue);
-                                }
+                                interleavesCSL = CSLAddString(interleavesCSL, optionChildValue->pszValue);
                             }
                         }
                     }
@@ -1023,17 +1018,12 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
             nullptr;
         CSLDestroy(interleavesCSL);
 
-        char** dstInterleaveOptions = !dstInterleave ? 0 :
-          CSLSetNameValue(0, "INTERLEAVE", dstInterleave);
-        const bool bIsDstInterleaveSupported = !dstInterleaveOptions ? FALSE :
-          (GDALValidateCreationOptions(this, dstInterleaveOptions) == TRUE);
-        if (bIsDstInterleaveSupported)
+        if (dstInterleave != nullptr)
         {
             papszOptionsWithInterleave = CSLDuplicate(papszOptions);
-            papszOptionsWithInterleave = CSLMerge(papszOptionsWithInterleave, dstInterleaveOptions);
+            papszOptionsWithInterleave = CSLSetNameValue(papszOptionsWithInterleave, "INTERLEAVE", dstInterleave);
             papszOptions = papszOptionsWithInterleave;
         }
-        CSLDestroy(dstInterleaveOptions);
     }
 
 /* -------------------------------------------------------------------- */
