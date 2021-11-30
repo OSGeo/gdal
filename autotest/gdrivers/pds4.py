@@ -319,6 +319,10 @@ def test_pds4_longlat_srs():
     ds.SetGeoTransform([2, 1, 0, 49, 0, -2])
     with gdaltest.error_handler():
         ds = None
+
+    ret = validate_xml(filename)
+    assert ret, 'validation failed'
+
     ds = gdal.Open(filename)
     wkt = ds.GetProjectionRef()
     sr = osr.SpatialReference()
