@@ -383,6 +383,9 @@ void RegisterOGRSQLite()
 "  <Option name='COMPRESS_COLUMNS' type='string' description='=column_name1[,column_name2, ...].  list of (String) columns that must be compressed with ZLib DEFLATE algorithm'/>"
 "  <Option name='OVERWRITE' type='boolean' description='Whether to overwrite an existing table with the layer name to be created' default='NO'/>"
 "  <Option name='FID' type='string' description='Name of the FID column to create' default='OGC_FID'/>"
+#if SQLITE_VERSION_NUMBER >= 3037000
+"  <Option name='STRICT' type='boolean' description='Whether to create the table in STRICT mode (only compatible of readers with sqlite >= 3.37)' default='NO'/>"
+#endif
 "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
