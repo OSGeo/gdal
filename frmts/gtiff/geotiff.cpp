@@ -13265,12 +13265,9 @@ static CPLString ConvertTransferFunctionToString( const uint16_t *pTable,
 
     for( uint32_t i = 0; i < nTableEntries; ++i )
     {
-        if( i == 0 )
-            sValue = sValue.Printf("%d", static_cast<uint32_t>(pTable[i]));
-        else
-            sValue = sValue.Printf( "%s, %d",
-                                    sValue.c_str(),
-                                    static_cast<uint32_t>(pTable[i]));
+        if( i > 0 )
+            sValue += ", ";
+        sValue += CPLSPrintf("%d", static_cast<uint32_t>(pTable[i]));
     }
 
     return sValue;
