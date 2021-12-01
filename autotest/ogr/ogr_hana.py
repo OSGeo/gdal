@@ -59,6 +59,8 @@ def test_ogr_hana_init():
             gdaltest.hana_connection_string = 'DRIVER={\'/usr/sap/hdbclient/libodbcHDB.so\'};HOST=localhost;' \
                                               'PORT=30015;USER=SYSTEM;PASSWORD=mypassword'
 
+    gdaltest.hana_connection_string += ';ENCRYPT=YES;SSL_VALIDATE_CERTIFICATE=false;CHAR_AS_UTF8=1'
+
     conn = create_connection(gdaltest.hana_connection_string)
     gdaltest.hana_schema_name = generate_schema_name(conn, 'gdal_test')
     execute_sql(conn, f'CREATE SCHEMA "{gdaltest.hana_schema_name}"')
@@ -796,7 +798,6 @@ def test_ogr_hana_24():
     assert field_DEC2.GetType() == ogr.OFTReal
     assert field_DEC2.GetWidth() == 20
     assert field_DEC2.GetPrecision() == 0
-    ds = None
 
 
 ###############################################################################
@@ -881,7 +882,8 @@ def test_ogr_hana_cleanup():
 def create_connection(conn_str):
     conn_params = dict(item.split("=") for item in conn_str.split(";"))
     conn = dbapi.connect(address=conn_params['HOST'], port=conn_params['PORT'], user=conn_params['USER'],
-                         password=conn_params['PASSWORD'], ENCRYPT=True, sslValidateCertificate=False, CHAR_AS_UTF8=1)
+                         password=conn_params['PASSWORD'], ENCRYPT=conn_params['ENCRYPT'],
+                         sslValidateCertificate=conn_params['SSL_VALIDATE_CERTIFICATE'], CHAR_AS_UTF8=1)
     conn.setautocommit(False)
     return conn
 

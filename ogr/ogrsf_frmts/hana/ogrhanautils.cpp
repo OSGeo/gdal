@@ -47,11 +47,16 @@ CPLString StringFormat(const char* format, ...)
     size_t size = static_cast<std::size_t>(sz);
 
     if (size < sizeof(smallBuffer))
+    {
+        va_start( args, format );
+        CPLvsnprintf(smallBuffer, size + 1, format, args);
+        va_end( args );
         return CPLString(smallBuffer, size);
+    }
 
+    va_start( args, format );
     std::vector<char> buffer;
     buffer.resize(size + 1);
-    va_start( args, format );
     CPLvsnprintf(buffer.data(), size, format, args);
     va_end( args );
     return CPLString(buffer.data(), size);
