@@ -1427,7 +1427,7 @@ def TranslateOptions(options=None, format=None,
               outputBounds=None, metadataOptions=None,
               outputSRS=None, nogcp=False, GCPs=None,
               noData=None, rgbExpand=None,
-              stats = False, rat = True, resampleAlg=None,
+              stats = False, rat = True, xmp = True, resampleAlg=None,
               callback=None, callback_data=None):
     """ Create a TranslateOptions() object that can be passed to gdal.Translate()
         Keyword arguments are :
@@ -1459,6 +1459,7 @@ def TranslateOptions(options=None, format=None,
           rgbExpand --- Color palette expansion mode: "gray", "rgb", "rgba"
           stats --- whether to calculate statistics
           rat --- whether to write source RAT
+          xmp --- whether to copy XMP metadata
           resampleAlg --- resampling mode
           callback --- callback method
           callback_data --- user data for callback
@@ -1535,6 +1536,8 @@ def TranslateOptions(options=None, format=None,
             new_options += ['-stats']
         if not rat:
             new_options += ['-norat']
+        if not xmp:
+            new_options += ['-noxmp']
         if resampleAlg is not None:
             if resampleAlg in mapGRIORAMethodToString:
                 new_options += ['-r', mapGRIORAMethodToString[resampleAlg]]

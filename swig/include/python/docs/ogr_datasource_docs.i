@@ -13,7 +13,7 @@ Deprecated Use GDALClose() in GDAL 2.0
 Parameters:
 -----------
 
-hDataSource:  handle to allocated datasource object. ";
+hDS:  handle to allocated datasource object. ";
 
 %feature("docstring")  Reference "int OGR_DS_Reference(OGRDataSourceH
 hDataSource) ";
@@ -115,7 +115,7 @@ OGRERR_NONE on success, or OGRERR_UNSUPPORTED_OPERATION if deleting
 layers is not supported for this datasource. ";
 
 %feature("docstring")  GetLayerByName "OGRLayerH
-OGR_DS_GetLayerByName(OGRDataSourceH hDS, const char *pszName)
+OGR_DS_GetLayerByName(OGRDataSourceH hDS, const char *pszLayerName)
 
 Fetch a layer by name.
 
@@ -151,7 +151,7 @@ For more information on the SQL dialect supported internally by OGR
 review theOGR SQL document. Some drivers (i.e. Oracle and PostGIS)
 pass the SQL directly through to the underlying RDBMS.
 
-Starting with OGR 1.10, theSQLITE dialect can also be used.
+TheSQLITE dialect can also be used.
 
 Deprecated Use GDALDatasetExecuteSQL() in GDAL 2.0
 
@@ -160,7 +160,7 @@ Parameters:
 
 hDS:  handle to the data source on which the SQL query is executed.
 
-pszSQLCommand:  the SQL statement to execute.
+pszStatement:  the SQL statement to execute.
 
 hSpatialFilter:  handle to a geometry which represents a spatial
 filter. Can be NULL.
@@ -168,11 +168,10 @@ filter. Can be NULL.
 pszDialect:  allows control of the statement dialect. If set to NULL,
 the OGR SQL engine will be used, except for RDBMS drivers that will
 use their dedicated SQL engine, unless OGRSQL is explicitly passed as
-the dialect. Starting with OGR 1.10, the SQLITE dialect can also be
-used.
+the dialect. The SQLITE dialect can also be used.
 
-a handle to a OGRLayer containing the results of the query.
-Deallocate with OGR_DS_ReleaseResultSet(). ";
+a handle to a OGRLayer containing the results of the query. Deallocate
+with OGR_DS_ReleaseResultSet(). ";
 
 %feature("docstring")  ReleaseResultSet "void
 OGR_DS_ReleaseResultSet(OGRDataSourceH hDS, OGRLayerH hLayer)
@@ -195,7 +194,7 @@ hLayer:  handle to the result of a previous OGR_DS_ExecuteSQL() call.
 ";
 
 %feature("docstring")  TestCapability "int
-OGR_DS_TestCapability(OGRDataSourceH hDS, const char *pszCap)
+OGR_DS_TestCapability(OGRDataSourceH hDS, const char *pszCapability)
 
 Test if capability is available.
 

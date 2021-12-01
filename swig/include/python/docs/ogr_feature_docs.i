@@ -51,8 +51,7 @@ Parameters:
 
 hFeat:  handle to the feature to get the feature definition from.
 
-a handle to the feature definition object on which feature depends.
-";
+a handle to the feature definition object on which feature depends. ";
 
 %feature("docstring")  SetGeometryDirectly "OGRErr
 OGR_F_SetGeometryDirectly(OGRFeatureH hFeat, OGRGeometryH hGeom)
@@ -262,8 +261,8 @@ hFeat:  handle to the feature on which the field is found.
 
 i:  the field to fetch, from 0 to GetFieldCount()-1.
 
-a handle to the field definition (from the OGRFeatureDefn). This is
-an internal reference, and should not be deleted or modified. ";
+a handle to the field definition (from the OGRFeatureDefn). This is an
+internal reference, and should not be deleted or modified. ";
 
 %feature("docstring")  GetFieldIndex "int
 OGR_F_GetFieldIndex(OGRFeatureH hFeat, const char *pszName)
@@ -317,8 +316,8 @@ hFeat:  handle to the feature on which the field is found.
 
 i:  the field to fetch, from 0 to GetGeomFieldCount()-1.
 
-a handle to the field definition (from the OGRFeatureDefn). This is
-an internal reference, and should not be deleted or modified.
+a handle to the field definition (from the OGRFeatureDefn). This is an
+internal reference, and should not be deleted or modified.
 
 GDAL 1.11 ";
 
