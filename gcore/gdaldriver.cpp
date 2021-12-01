@@ -1011,7 +1011,7 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
             (CSLFindString(interleavesCSL, "PIXEL") >= 0) ? "PIXEL" :
             (CSLFindString(interleavesCSL, "BIP") >= 0) ? "BIP" :
             nullptr;
-        const char* dstInterleave = !srcInterleave ? 0 :
+        const char* dstInterleave = !srcInterleave ? nullptr :
             EQUAL(srcInterleave, "BAND") ? dstInterleaveBand :
             EQUAL(srcInterleave, "LINE") ? dstInterleaveLine :
             EQUAL(srcInterleave, "PIXEL") ? dstInterleavePixel :
