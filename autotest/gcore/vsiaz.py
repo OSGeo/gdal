@@ -55,7 +55,8 @@ def startup_and_cleanup():
                 ('AZURE_STORAGE_ACCESS_KEY', None),
                 ('AZURE_STORAGE_SAS_TOKEN', None),
                 ('AZURE_NO_SIGN_REQUEST', None),
-                ('AZURE_CONFIG_DIR', '')):
+                ('AZURE_CONFIG_DIR', ''),
+                ('AZURE_STORAGE_ACCESS_TOKEN', '')):
         az_vars[var] = gdal.GetConfigOption(var)
         gdal.SetConfigOption(var, reset_val)
 
@@ -1534,3 +1535,33 @@ account=foo
         with webserver.install_http_handler(handler):
             f = open_for_read('/vsiaz/az_fake_bucket/resource')
             assert f is None
+
+
+###############################################################################
+# Read credentials from configuration file
+
+
+def test_vsiaz_access_token():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    with gdaltest.config_options({'AZURE_STORAGE_CONNECTION_STRING': None,
+                                  'AZURE_STORAGE_ACCOUNT': 'myaccount',
+                                  'CPL_AZURE_ENDPOINT': '127.0.0.1:%d' % gdaltest.webserver_port,
+                                  'CPL_AZURE_USE_HTTPS': 'NO',
+                                  'AZURE_STORAGE_ACCESS_TOKEN': 'my_token'}):
+        handler = webserver.SequentialHandler()
+        handler.add('GET', '/azure/blob/myaccount/az_fake_bucket/resource', 200,
+                    {'Content-Length': 3},
+                    'foo',
+                    expected_headers={'Authorization': 'Bearer my_token'})
+        with webserver.install_http_handler(handler):
+            f = open_for_read('/vsiaz/az_fake_bucket/resource')
+            assert f is not None
+            data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+            gdal.VSIFCloseL(f)
+
+        assert data == 'foo'
