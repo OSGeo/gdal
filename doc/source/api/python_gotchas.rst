@@ -89,6 +89,20 @@ This problem can manifest itself in subtle ways. For example, it can occur if yo
 
 In this example, the dataset instance was no longer needed after the call to ``GetRasterBand()`` so Python deallocated it *before* calling ``Checksum()``.
 
+.. code-block::
+
+   >>> from osgeo import gdal
+   >>>
+   >>> def load_band(data_filename):
+   >>>     dataset = gdal.Open(data_filename)
+   >>>     return dataset.GetRasterBand(1)
+   >>>
+   >>> band = load_band('c:\\RandomData.img')
+   >>> print(band.Checksum())
+   < Python crashes >
+   
+this example is the same case with above but it looks different. the dataset object is only available in the ``load_band`` function and it'll be deleted right after leaving the function.
+
 This problem occurs because the GDAL and OGR objects are implemented in C++ and the relationships between them are maintained in C++ using pointers. 
 When you delete the dataset instance in Python it causes the C++ object behind it to be deallocated. But the C++ object behind the band instance does not know that this happened, so it contains a pointer to the C++ dataset object that no longer exists.
 When the band tries to access the non-existing object, the process crashes.
