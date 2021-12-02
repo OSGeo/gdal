@@ -1,0 +1,10 @@
+Version 300
+Charset "Neutral"
+Delimiter ","
+Columns 1
+  foo Char(254)
+Data
+
+NONE
+NONE
+NONE

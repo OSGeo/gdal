@@ -672,7 +672,6 @@ class MIFFile final : public IMapInfoFile
     void        PreParseFile();
     int         AddFields(const char *pszLine);
     int         GotoFeature(int nFeatureId);
-    int         NextFeature();
 
     ///////////////
     // Private Write access specific stuff

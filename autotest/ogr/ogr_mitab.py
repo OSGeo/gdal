@@ -2450,3 +2450,35 @@ def test_ogr_mitab_nulldatetime():
     ds = None
 
     ogr.GetDriverByName('MapInfo File').DeleteDataSource(filename)
+
+###############################################################################
+# Test reading .mid files where a field has a newline character
+
+
+def test_ogr_mitab_read_multi_line_mid():
+
+    ds = ogr.Open('data/mitab/multilinemid.mif')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f['Name'] == 'NAME1'
+    assert f['Notes'] == 'MULTI\n\nLINE'
+    assert f['Awesome'] == 'F'
+    f = lyr.GetNextFeature()
+    assert f['Name'] == 'NAME2'
+    assert f['Notes'] == 'MULTI\nLINE2'
+    assert f['Awesome'] == 'F'
+
+###############################################################################
+# Test reading a .mid file with a single field, and an empty line for a record
+
+
+def test_ogr_mitab_read_single_field_mid():
+
+    ds = ogr.Open('data/mitab/single_field.mif')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f['foo'] == '1'
+    f = lyr.GetNextFeature()
+    assert f['foo'] == ''
+    f = lyr.GetNextFeature()
+    assert f['foo'] == '3'
