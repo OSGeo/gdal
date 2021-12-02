@@ -36,6 +36,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
+#include <stdbool.h>
 
 CPL_C_START
 
@@ -54,6 +55,14 @@ char CPL_DLL  **CSVReadParseLine2( FILE *fp, char chDelimiter );
 
 char CPL_DLL  **CSVReadParseLineL( VSILFILE *fp);
 char CPL_DLL  **CSVReadParseLine2L( VSILFILE *fp, char chDelimiter );
+
+char CPL_DLL **CSVReadParseLine3L( VSILFILE *fp,
+                                   size_t nMaxLineSize,
+                                   const char* pszDelimiter,
+                                   bool bHonourStrings,
+                                   bool bKeepLeadingAndClosingQuotes,
+                                   bool bMergeDelimiter,
+                                   bool bSkipBOM );
 
 char CPL_DLL **CSVScanLines( FILE *, int, const char *, CSVCompareCriteria );
 char CPL_DLL **CSVScanLinesL( VSILFILE *, int, const char *, CSVCompareCriteria );
