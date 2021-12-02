@@ -173,6 +173,7 @@ VSIAzureBlobHandleHelper::VSIAzureBlobHandleHelper(
                                             const CPLString& osStorageAccount,
                                             const CPLString& osStorageKey,
                                             const CPLString& osSAS,
+                                            const CPLString& osAccessToken,
                                             bool bUseHTTPS,
                                             bool bFromManagedIdentities ) :
     m_osURL(BuildURL(osEndpoint, osStorageAccount,
@@ -183,6 +184,7 @@ VSIAzureBlobHandleHelper::VSIAzureBlobHandleHelper(
     m_osStorageAccount(osStorageAccount),
     m_osStorageKey(osStorageKey),
     m_osSAS(osSAS),
+    m_osAccessToken(osAccessToken),
     m_bUseHTTPS(bUseHTTPS),
     m_bFromManagedIdentities(bFromManagedIdentities)
 {
@@ -389,6 +391,7 @@ static bool GetConfigurationFromCLIConfigFile(const std::string& osServicePrefix
                                               CPLString& osStorageAccount,
                                               CPLString& osStorageKey,
                                               CPLString& osSAS,
+                                              CPLString& osAccessToken,
                                               bool& bFromManagedIdentities)
 {
 #ifdef _WIN32
@@ -482,6 +485,10 @@ static bool GetConfigurationFromCLIConfigFile(const std::string& osServicePrefix
         return false;
     }
 
+    osAccessToken = CPLGetConfigOption("AZURE_STORAGE_ACCESS_TOKEN", "");
+    if( !osAccessToken.empty() )
+        return true;
+
     if( osStorageKey.empty() && osSAS.empty() )
     {
         if( CPLTestBool(CPLGetConfigOption("AZURE_NO_SIGN_REQUEST", "NO")) )
@@ -489,8 +496,8 @@ static bool GetConfigurationFromCLIConfigFile(const std::string& osServicePrefix
             return true;
         }
 
-        CPLString osAccessToken;
-        if( GetConfigurationFromManagedIdentities(osAccessToken) )
+        CPLString osTmpAccessToken;
+        if( GetConfigurationFromManagedIdentities(osTmpAccessToken) )
         {
             bFromManagedIdentities = true;
             return true;
@@ -515,6 +522,7 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(CSLConstList papszOptions,
                                                 CPLString& osStorageAccount,
                                                 CPLString& osStorageKey,
                                                 CPLString& osSAS,
+                                                CPLString& osAccessToken,
                                                 bool& bFromManagedIdentities)
 {
     bFromManagedIdentities = false;
@@ -544,6 +552,10 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(CSLConstList papszOptions,
             CPLGetConfigOption("AZURE_STORAGE_ACCOUNT", ""));
         if( !osStorageAccount.empty() )
         {
+            osAccessToken = CPLGetConfigOption("AZURE_STORAGE_ACCESS_TOKEN", "");
+            if( !osAccessToken.empty() )
+                return true;
+
             osStorageKey = CSLFetchNameValueDef(papszOptions,
                 "AZURE_STORAGE_ACCESS_KEY",
                 CPLGetConfigOption("AZURE_STORAGE_ACCESS_KEY", ""));
@@ -558,8 +570,8 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(CSLConstList papszOptions,
                         return true;
                     }
 
-                    CPLString osAccessToken;
-                    if( GetConfigurationFromManagedIdentities(osAccessToken) )
+                    CPLString osTmpAccessToken;
+                    if( GetConfigurationFromManagedIdentities(osTmpAccessToken) )
                     {
                         bFromManagedIdentities = true;
                         return true;
@@ -583,6 +595,7 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(CSLConstList papszOptions,
                                           osStorageAccount,
                                           osStorageKey,
                                           osSAS,
+                                          osAccessToken,
                                           bFromManagedIdentities) )
     {
         return true;
@@ -624,11 +637,13 @@ VSIAzureBlobHandleHelper* VSIAzureBlobHandleHelper::BuildFromURI( const char* ps
     CPLString osStorageKey;
     CPLString osEndpoint;
     CPLString osSAS;
+    CPLString osAccessToken;
     bool bFromManagedIdentities = false;
 
     if( !GetConfiguration(papszOptions, eService,
                     bUseHTTPS, osEndpoint,
                     osStorageAccount, osStorageKey, osSAS,
+                    osAccessToken,
                     bFromManagedIdentities) )
     {
         return nullptr;
@@ -651,6 +666,7 @@ VSIAzureBlobHandleHelper* VSIAzureBlobHandleHelper::BuildFromURI( const char* ps
                                   osStorageAccount,
                                   osStorageKey,
                                   osSAS,
+                                  osAccessToken,
                                   bUseHTTPS,
                                   bFromManagedIdentities );
 }
@@ -719,11 +735,18 @@ VSIAzureBlobHandleHelper::GetCurlHeaders( const CPLString& osVerb,
                                           const void *,
                                           size_t ) const
 {
-    if( m_bFromManagedIdentities )
+    if( m_bFromManagedIdentities || !m_osAccessToken.empty() )
     {
         CPLString osAccessToken;
-        if( !GetConfigurationFromManagedIdentities(osAccessToken) )
-            return nullptr;
+        if( m_bFromManagedIdentities )
+        {
+            if( !GetConfigurationFromManagedIdentities(osAccessToken) )
+                return nullptr;
+        }
+        else
+        {
+            osAccessToken = m_osAccessToken;
+        }
 
         struct curl_slist *headers=nullptr;
         headers = curl_slist_append(
