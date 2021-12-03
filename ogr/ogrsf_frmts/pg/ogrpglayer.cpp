@@ -614,7 +614,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
         OGRPGGeomFieldDefn* poGeomFieldDefn = nullptr;
         if( iOGRGeomField >= 0 )
             poGeomFieldDefn = poFeatureDefn->GetGeomFieldDefn(iOGRGeomField);
-        if( iOGRGeomField >= 0 && (
+        if( poGeomFieldDefn && (
                 poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOMETRY ||
                 poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOGRAPHY) )
         {
@@ -767,7 +767,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
 /*      Handle raw binary geometry ... this hasn't been tested in a     */
 /*      while.                                                          */
 /* -------------------------------------------------------------------- */
-        else if( iOGRGeomField >= 0 &&
+        else if( poGeomFieldDefn &&
                  poGeomFieldDefn->ePostgisType == GEOM_TYPE_WKB )
         {
             OGRGeometry *poGeometry = nullptr;
@@ -1874,7 +1874,7 @@ OGRErr OGRPGLayer::GetExtent( int iGeomField, OGREnvelope *psExtent, int bForce 
     CPLString   osCommand;
 
     if( iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount() ||
-        GetLayerDefn()->GetGeomFieldDefn(iGeomField)->GetType() == wkbNone )
+        CPLAssertNotNull(GetLayerDefn()->GetGeomFieldDefn(iGeomField))->GetType() == wkbNone )
     {
         if( iGeomField != 0 )
         {

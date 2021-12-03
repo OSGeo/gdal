@@ -738,6 +738,7 @@ int TIFFInitJXL(TIFF* tif, int scheme)
         static const char module[] = "TIFFInitJXL";
         JXLState* sp;
 
+        (void)scheme;
         assert( scheme == COMPRESSION_JXL );
 
         /*

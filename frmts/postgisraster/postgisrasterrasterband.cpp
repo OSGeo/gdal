@@ -741,8 +741,9 @@ CPLErr PostGISRasterRasterBand::ComputeRasterMinMax( int bApproxOK, double* adfM
     int nOverviewCount = GetOverviewCount();
     for(int i = 0; i < nOverviewCount; i++)
     {
-        if( GetOverview(i)->GetXSize() < 1024 && GetOverview(i)->GetYSize() < 1024 )
-            return GetOverview(i)->ComputeRasterMinMax(bApproxOK, adfMinMax);
+        auto poOverview = GetOverview(i);
+        if( poOverview->GetXSize() < 1024 && poOverview->GetYSize() < 1024 )
+            return poOverview->ComputeRasterMinMax(bApproxOK, adfMinMax);
     }
 
     return CE_Failure;

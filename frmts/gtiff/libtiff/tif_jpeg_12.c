@@ -17,6 +17,7 @@ int TIFFReInitJPEG_12(TIFF *tif, const JPEGOtherSettings *otherSettings,
   JPEGState *sp;
   uint8_t *new_tif_data;
 
+  (void)scheme;
   assert(scheme == COMPRESSION_JPEG);
 
   new_tif_data = (uint8_t *)_TIFFrealloc(tif->tif_data, sizeof(JPEGState));

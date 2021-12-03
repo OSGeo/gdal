@@ -1543,8 +1543,7 @@ std::vector<int> OGRFeatureDefn::ComputeMapForSetFrom( const OGRFeatureDefn* poS
     const int nFieldCount = GetFieldCount();
     for( int i = 0; i < nFieldCount; i++ )
     {
-        const OGRFieldDefn* poFldDefn = GetFieldDefn(i);
-        assert(poFldDefn); /* Make GCC-8 -Wnull-dereference happy */
+        const OGRFieldDefn* poFldDefn = CPLAssertNotNull(GetFieldDefn(i)); /* Make GCC-8 -Wnull-dereference happy */
         const char* pszName = poFldDefn->GetNameRef();
 
         // In the insane case where there are several matches, arbitrarily
@@ -1560,8 +1559,7 @@ std::vector<int> OGRFeatureDefn::ComputeMapForSetFrom( const OGRFeatureDefn* poS
     aoMapSrcToTargetIdx.resize(nSrcFieldCount);
     for( int i = 0; i < nSrcFieldCount; i++ )
     {
-        const OGRFieldDefn* poSrcFldDefn = poSrcFDefn->GetFieldDefn(i);
-        assert(poSrcFldDefn); /* Make GCC-8 -Wnull-dereference happy */
+        const OGRFieldDefn* poSrcFldDefn = CPLAssertNotNull(poSrcFDefn->GetFieldDefn(i)); /* Make GCC-8 -Wnull-dereference happy */
         const char* pszSrcName = poSrcFldDefn->GetNameRef();
 
         auto oIter = oMapNameToTargetFieldIndex.find(pszSrcName);
@@ -1572,8 +1570,7 @@ std::vector<int> OGRFeatureDefn::ComputeMapForSetFrom( const OGRFeatureDefn* poS
             {
                 for( int j = 0; j < nFieldCount; j++ )
                 {
-                    const OGRFieldDefn* poFldDefn = GetFieldDefn(j);
-                    assert(poFldDefn); /* Make GCC-8 -Wnull-dereference happy */
+                    const OGRFieldDefn* poFldDefn = CPLAssertNotNull(GetFieldDefn(j)); /* Make GCC-8 -Wnull-dereference happy */
                     oMapNameToTargetFieldIndexUC[
                         CPLString(poFldDefn->GetNameRef()).toupper()] = j;
                 }
