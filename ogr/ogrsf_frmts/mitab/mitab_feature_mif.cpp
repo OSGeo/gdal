@@ -55,57 +55,6 @@ CPL_CVSID("$Id$")
  *                      class TABFeature
  *====================================================================*/
 
-/************************************************************************/
-/*                            MIDTokenize()                             */
-/*                                                                      */
-/*      We implement a special tokenize function so we can handle       */
-/*      multi-byte delimiters (i.e. MITAB bug 1266).                      */
-/*                                                                      */
-/*      http://bugzilla.maptools.org/show_bug.cgi?id=1266               */
-/************************************************************************/
-static char **MIDTokenize( const char *pszLine, const char *pszDelim )
-
-{
-    char **papszResult = nullptr;
-    int iChar;
-    int iTokenChar = 0;
-    int bInQuotes = FALSE;
-    char *pszToken = static_cast<char *>(CPLMalloc(strlen(pszLine)+1));
-    int nDelimLen = static_cast<int>(strlen(pszDelim));
-
-    for( iChar = 0; pszLine[iChar] != '\0'; iChar++ )
-    {
-        if( bInQuotes && pszLine[iChar] == '"' && pszLine[iChar+1] == '"' )
-        {
-            pszToken[iTokenChar++] = '"';
-            iChar++;
-        }
-        else if( pszLine[iChar] == '"' )
-        {
-            bInQuotes = !bInQuotes;
-        }
-        else if( !bInQuotes && strncmp(pszLine+iChar,pszDelim,nDelimLen) == 0 )
-        {
-            pszToken[iTokenChar] = '\0';
-            papszResult = CSLAddString( papszResult, pszToken );
-
-            iChar += static_cast<int>(strlen(pszDelim)) - 1;
-            iTokenChar = 0;
-        }
-        else
-        {
-            pszToken[iTokenChar++] = pszLine[iChar];
-        }
-    }
-
-    pszToken[iTokenChar++] = '\0';
-    papszResult = CSLAddString( papszResult, pszToken );
-
-    CPLFree( pszToken );
-
-    return papszResult;
-}
-
 /**********************************************************************
  *                   TABFeature::ReadRecordFromMIDFile()
  *
@@ -130,20 +79,17 @@ int TABFeature::ReadRecordFromMIDFile(MIDDATAFile *fp)
 
     const int nFields = GetFieldCount();
 
-    const char *pszLine = fp->GetLastLine();
-
-    if (pszLine == nullptr)
+    char **papszToken = fp->GetTokenizedNextLine();
+    if (papszToken == nullptr)
     {
         CPLError(CE_Failure, CPLE_FileIO,
                "Unexpected EOF while reading attribute record from MID file.");
         return -1;
     }
 
-    char **papszToken = MIDTokenize( pszLine, fp->GetDelimiter() );
-
     // Ensure that a blank line in a mid file is treated as one field
     // containing an empty string.
-    if( nFields == 1 && CSLCount(papszToken) == 0 && pszLine[0] == '\0' )
+    if( nFields == 1 && CSLCount(papszToken) == 0 )
         papszToken = CSLAddString(papszToken,"");
 
     // Make sure we found at least the expected number of field values.
@@ -208,8 +154,6 @@ int TABFeature::ReadRecordFromMIDFile(MIDDATAFile *fp)
              SetField(i,papszToken[i]);
        }
     }
-
-    fp->GetLine();
 
     CSLDestroy(papszToken);
 

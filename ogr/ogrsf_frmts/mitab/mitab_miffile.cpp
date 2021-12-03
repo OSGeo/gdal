@@ -303,17 +303,6 @@ int MIFFile::Open(const char *pszFname, TABAccess eAccess,
             SetCharset("Neutral");
     }
 
-    /* Put the MID file at the correct location, on the first feature */
-    if (m_eAccessMode == TABRead && (m_poMIDFile != nullptr && !bIsEmpty && m_poMIDFile->GetLine() == nullptr))
-    {
-        Close();
-
-        if (bTestOpenNoError)
-            CPLErrorReset();
-
-        return -1;
-    }
-
     m_poMIFFile->SetTranslation(m_dfXMultiplier,m_dfYMultiplier,
                                 m_dfXDisplacement, m_dfYDisplacement);
     if( m_poMIDFile != nullptr )
@@ -775,7 +764,6 @@ void MIFFile::ResetReading()
     if( m_poMIDFile != nullptr )
     {
         m_poMIDFile->Rewind();
-        m_poMIDFile->GetLine();
     }
 
     // We're positioned on first feature.  Feature Ids start at 1.
@@ -902,7 +890,6 @@ void MIFFile::PreParseFile()
     if( m_poMIDFile != nullptr )
     {
         m_poMIDFile->Rewind();
-        m_poMIDFile->GetLine();
     }
 
     m_bPreParsed = TRUE;
@@ -1185,7 +1172,18 @@ int MIFFile::GotoFeature(int nFeatureId)
 
         while(m_nPreloadedId < nFeatureId)
         {
-            if (NextFeature() == FALSE)
+            const char* pszLine;
+            while ( (pszLine = m_poMIFFile->GetLine()) != nullptr )
+            {
+                if (m_poMIFFile->IsValidFeature(pszLine))
+                {
+                    m_nPreloadedId++;
+                    if( m_poMIDFile != nullptr )
+                        CSLDestroy(m_poMIDFile->GetTokenizedNextLine());
+                    break;
+                }
+             }
+            if (pszLine == nullptr)
               return -1;
         }
 
@@ -1195,25 +1193,6 @@ int MIFFile::GotoFeature(int nFeatureId)
     }
 }
 
-/**********************************************************************
- *                   MIFFile::NextFeature()
- **********************************************************************/
-
-GBool MIFFile::NextFeature()
-{
-    const char *pszLine = nullptr;
-    while ((pszLine = m_poMIFFile->GetLine()) != nullptr)
-    {
-        if (m_poMIFFile->IsValidFeature(pszLine))
-        {
-            if( m_poMIDFile != nullptr )
-                m_poMIDFile->GetLine();
-            m_nPreloadedId++;
-            return TRUE;
-        }
-    }
-    return FALSE;
-}
 
 /**********************************************************************
  *                   MIFFile::GetFeatureRef()

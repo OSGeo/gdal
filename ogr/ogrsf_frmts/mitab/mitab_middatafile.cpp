@@ -36,6 +36,7 @@
 #include <cstddef>
 
 #include "cpl_conv.h"
+#include "cpl_csv.h"
 #include "cpl_error.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
@@ -207,6 +208,32 @@ const char *MIDDATAFile::GetLastLine()
     // We should never get here.  Read/Write mode not implemented.
     CPLAssert(false);
     return nullptr;
+}
+
+char** MIDDATAFile::GetTokenizedNextLine()
+{
+    static const int nMaxLineLength = atoi(
+        CPLGetConfigOption("MITAB_MAX_LINE_LENGTH", "1000000"));
+    char** papszTokens = CSVReadParseLine3L( m_fp,
+                                             nMaxLineLength,
+                                             m_pszDelimiter,
+                                             true, // bHonourStrings
+                                             false, // bKeepLeadingAndClosingQuotes
+                                             false, // bMergeDelimiter
+                                             false // bSkipBOM
+                                            );
+    if( papszTokens == nullptr )
+    {
+        if( strstr(CPLGetLastErrorMsg(), "Maximum number of characters allowed reached") )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Maximum number of characters allowed reached. "
+                     "You can set the MITAB_MAX_LINE_LENGTH configuration option "
+                     "to the desired number of bytes (or -1 for unlimited)");
+        }
+        SetEof(TRUE);
+    }
+    return papszTokens;
 }
 
 void MIDDATAFile::WriteLine(const char *pszFormat, ...)

@@ -772,16 +772,26 @@ bool OGRCSVDataSource::OpenTable( const char *pszFilename,
                  nDontHonourStrings <= 1;
                  nDontHonourStrings++ )
             {
-                const bool bDontHonourStrings = CPL_TO_BOOL(nDontHonourStrings);
+                const bool bHonourStrings = !CPL_TO_BOOL(nDontHonourStrings);
                 // Read the first 2 lines to see if they have the same number
                 // of fields, if using tabulation.
                 VSIRewindL(fp);
                 char **papszTokens =
-                    OGRCSVReadParseLineL(fp, '\t', bDontHonourStrings);
+                    CSVReadParseLine3L(fp, OGR_CSV_MAX_LINE_SIZE, "\t",
+                                       bHonourStrings,
+                                       false, // bKeepLeadingAndClosingQuotes
+                                       false, // bMergeDelimiter
+                                       true // bSkipBOM
+                                      );
                 const int nTokens1 = CSLCount(papszTokens);
                 CSLDestroy(papszTokens);
                 papszTokens =
-                    OGRCSVReadParseLineL(fp, '\t', bDontHonourStrings);
+                    CSVReadParseLine3L(fp, OGR_CSV_MAX_LINE_SIZE, "\t",
+                                       bHonourStrings,
+                                       false, // bKeepLeadingAndClosingQuotes
+                                       false, // bMergeDelimiter
+                                       true // bSkipBOM
+                                      );
                 const int nTokens2 = CSLCount(papszTokens);
                 CSLDestroy(papszTokens);
                 if( nTokens1 >= 2 && nTokens1 == nTokens2 )
@@ -822,7 +832,16 @@ bool OGRCSVDataSource::OpenTable( const char *pszFilename,
     if( pszGeonamesGeomFieldPrefix != nullptr && strchr(pszLine, '|') != nullptr )
         chDelimiter = '|';
 
-    char **papszFields = OGRCSVReadParseLineL(fp, chDelimiter, false);
+    char szDelimiter[2];
+    szDelimiter[0] = chDelimiter;
+    szDelimiter[1] = 0;
+    char **papszFields = CSVReadParseLine3L(fp, OGR_CSV_MAX_LINE_SIZE,
+                                            szDelimiter,
+                                            true, // bHonourStrings,
+                                            false, // bKeepLeadingAndClosingQuotes
+                                            false, // bMergeDelimiter
+                                            true // bSkipBOM
+                                           );
 
     if( CSLCount(papszFields) < 2 )
     {
