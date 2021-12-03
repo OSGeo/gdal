@@ -10768,12 +10768,16 @@ CPLErr GTiffDataset::IBuildOverviews(
 /* -------------------------------------------------------------------- */
 /*      Refresh old overviews that were listed.                         */
 /* -------------------------------------------------------------------- */
+    const auto poColorTable = GetRasterBand( panBandList[0] )->GetColorTable();
     if( m_nPlanarConfig == PLANARCONFIG_CONTIG &&
         GDALDataTypeIsComplex(GetRasterBand( panBandList[0] )->
                               GetRasterDataType()) == FALSE &&
-        GetRasterBand( panBandList[0] )->GetColorTable() == nullptr &&
+        (poColorTable == nullptr ||
+         STARTS_WITH_CI(pszResampling, "NEAR") ||
+         poColorTable->IsIdentity()) &&
         (STARTS_WITH_CI(pszResampling, "NEAR") ||
          EQUAL(pszResampling, "AVERAGE") ||
+         EQUAL(pszResampling, "RMS") ||
          EQUAL(pszResampling, "GAUSS") ||
          EQUAL(pszResampling, "CUBIC") ||
          EQUAL(pszResampling, "CUBICSPLINE") ||
