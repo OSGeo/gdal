@@ -39,7 +39,6 @@
 
 namespace hana_utils {
 
-constexpr const short UNKNOWN_DATA_TYPE = std::numeric_limits<short>::max();
 constexpr const char* ARRAY_VALUES_DELIMITER = "^%^";
 
 template<typename Type>

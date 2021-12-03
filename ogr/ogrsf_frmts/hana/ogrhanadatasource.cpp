@@ -500,7 +500,7 @@ short GetArrayDataType(const CPLString& typeName)
     else if (typeName == "TIMESTAMP ARRAY" || typeName == "SECONDDATE ARRAY")
         return odbc::SQLDataTypes::Timestamp;
 
-    return UNKNOWN_DATA_TYPE;
+    return odbc::SQLDataTypes::Unknown;
 }
 
 std::vector<CPLString> GetSupportedArrayTypes()
@@ -1096,7 +1096,7 @@ OGRErr OGRHanaDataSource::GetQueryColumns(
                 typeName = *rsArrayTypes->getString(1);
                 dataType = GetArrayDataType(typeName);
 
-                if (dataType == UNKNOWN_DATA_TYPE)
+                if (dataType == odbc::SQLDataTypes::Unknown)
                 {
                     CPLError(
                         CE_Failure, CPLE_AppDefined,

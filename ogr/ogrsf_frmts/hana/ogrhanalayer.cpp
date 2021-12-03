@@ -819,11 +819,10 @@ OGRErr OGRHanaLayer::GetExtent(int iGeomField, OGREnvelope* extent, int force)
         CPLString clmName =
             (iGeomField < static_cast<int>(geomColumns_.size()))
                 ? geomColumns_[static_cast<std::size_t>(
-                                   geomColumns_.size())]
-                      .name
+                                   geomColumns_.size())].name
                 : "unknown column";
-        CPLDebug(
-            "HANA", "Unable to query extent of '%s' using fast method: %s",
+        CPLError(CE_Failure, CPLE_AppDefined,
+            "Unable to query extent of '%s' using fast method: %s",
             clmName.c_str(), ex.what());
     }
 

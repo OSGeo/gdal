@@ -93,7 +93,7 @@ struct ColumnDescription
     GeometryColumnDescription geometryDescription;
 };
 
-struct FieldTypeInfo
+struct ColumnTypeInfo
 {
     CPLString name;
     short type;
@@ -122,7 +122,7 @@ private:
 
     CPLString schemaName_;
     bool updateMode_;
-    bool isTransactionStarted_;
+    bool isTransactionStarted_ = false;
     std::vector<std::unique_ptr<OGRLayer>> layers_;
     SrsCache srsCache_;
     odbc::EnvironmentRef connEnv_;
@@ -314,7 +314,7 @@ private:
     OGRErr DropTable();
     void FlushPendingFeatures();
     bool HasPendingFeatures() const;
-    FieldTypeInfo GetFieldTypeInfo(OGRFieldDefn& field) const;
+    ColumnTypeInfo GetColumnTypeInfo(const OGRFieldDefn& field) const;
     OGRErr GetGeometryWkb(OGRFeature* feature, int fieldIndex, Binary& binary);
     void ClearBatches();
 
