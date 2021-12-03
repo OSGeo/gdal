@@ -963,8 +963,8 @@ void ZarrArray::BlockTranspose(const std::vector<GByte>& abySrc,
         size_t       dst_inc_offset = 0;
     };
 
-    std::vector<Stack> stack(nDims + 1);
-    assert(!stack.empty()); // to make gcc 9.3 -O2 -Wnull-dereference happy
+    std::vector<Stack> stack(nDims);
+    stack.emplace_back(Stack()); // to make gcc 9.3 -O2 -Wnull-dereference happy
 
     if( bDecode )
     {

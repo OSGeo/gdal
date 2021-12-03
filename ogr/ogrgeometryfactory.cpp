@@ -1246,8 +1246,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
 /* -------------------------------------------------------------------- */
     if( OGR_GT_IsSubClassOf(eGeomType, wkbPolyhedralSurface) )
     {
-        poGeom = forceToMultiPolygon(poGeom);
-        assert(poGeom);
+        poGeom = CPLAssertNotNull(forceToMultiPolygon(poGeom));
         eGeomType = wkbMultiPolygon;
     }
 
@@ -1264,10 +1263,9 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
         {
             poMPoly = poGeom->getLinearGeometry()->toMultiPolygon();
             delete poGeom;
-            poGeom = poMPoly;
+            poGeom = CPLAssertNotNull(poMPoly);
         }
 
-        assert(poGeom);
         poMP->assignSpatialReference(poGeom->getSpatialReference());
 
         for( auto&& poPoly: poMPoly )
