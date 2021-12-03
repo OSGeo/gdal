@@ -2594,7 +2594,8 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
                 CPLDebug("GRIB",
                     "Cannot properly handle GRIB2 files with overlaps and 0-360 longitudes");
             else if (fabs(360 - rPixelSizeX * nRasterXSize) < rPixelSizeX/4 &&
-                meta->gds.projType == GS3_LATLON)
+                     rMinX <= 180 &&
+                     meta->gds.projType == GS3_LATLON)
             {
                 // Find the first row number east of the antimeridian
                 const int nSplitAndSwapColumnCandidate = static_cast<int>(ceil((180 - rMinX) / rPixelSizeX));
