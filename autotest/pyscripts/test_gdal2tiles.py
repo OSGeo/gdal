@@ -356,7 +356,7 @@ def test_gdal2tiles_py_profile_raster():
     test_py_scripts.run_py_script_as_external_script(
         script_path,
         'gdal2tiles',
-        '-q -p raster -z 0-1 '+test_py_scripts.get_data_path('gdrivers')+'small_world.tif tmp/out_gdal2tiles_smallworld')
+        '-q -p raster -z 0-1 --force-kml '+test_py_scripts.get_data_path('gdrivers')+'small_world.tif tmp/out_gdal2tiles_smallworld')
 
     if sys.platform != 'win32':
         # For some reason, the checksums on the kml file on Windows are the ones of the below png
@@ -387,7 +387,7 @@ def test_gdal2tiles_py_profile_raster_xyz():
     test_py_scripts.run_py_script_as_external_script(
         script_path,
         'gdal2tiles',
-        '-q -p raster --xyz -z 0-1 '+test_py_scripts.get_data_path('gdrivers')+'small_world.tif tmp/out_gdal2tiles_smallworld')
+        '-q -p raster --xyz -z 0-1 --force-kml ' +test_py_scripts.get_data_path('gdrivers')+'small_world.tif tmp/out_gdal2tiles_smallworld')
 
     if sys.platform != 'win32':
         # For some reason, the checksums on the kml file on Windows are the ones of the below png
@@ -418,7 +418,7 @@ def test_gdal2tiles_py_profile_geodetic_tmscompatible_xyz():
     test_py_scripts.run_py_script_as_external_script(
         script_path,
         'gdal2tiles',
-        '-q -p geodetic --tmscompatible --xyz -z 0-1 '+test_py_scripts.get_data_path('gdrivers')+'small_world.tif tmp/out_gdal2tiles_smallworld')
+        '-q -p geodetic --tmscompatible --xyz -z 0-1 --force-kml '+test_py_scripts.get_data_path('gdrivers')+'small_world.tif tmp/out_gdal2tiles_smallworld')
 
     if sys.platform != 'win32':
         # For some reason, the checksums on the kml file on Windows are the ones of the below png
