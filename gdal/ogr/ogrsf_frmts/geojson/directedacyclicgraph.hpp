@@ -50,6 +50,7 @@ template<class T, class V = std::string> class DirectedAcyclicGraph
 public:
     DirectedAcyclicGraph() = default;
 
+    void clear() { nodes.clear(); incomingNodes.clear(); outgoingNodes.clear(); names.clear(); }
     void addNode(const T& i, const V& s) { nodes.insert(i); names[i] = s; }
     void removeNode(const T& i);
     const char* addEdge(const T& i, const T& j);
