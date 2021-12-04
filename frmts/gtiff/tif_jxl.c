@@ -557,10 +557,10 @@ JXLPostEncode(TIFF* tif)
                 return 0;
             }
         }
-        if( JxlEncoderOptionsSetInteger(opts, JXL_ENC_OPTION_EFFORT, sp->effort) != JXL_ENC_SUCCESS )
+        if( JxlEncoderFrameSettingsSetOption(opts, JXL_ENC_FRAME_SETTING_EFFORT, sp->effort) != JXL_ENC_SUCCESS )
         {
             TIFFErrorExt(tif->tif_clientdata, module,
-                         "JxlEncoderOptionsSetEffort() failed");
+                         "JxlEncoderFrameSettingsSetOption() failed");
             JxlEncoderDestroy(enc);
             return 0;
         }
