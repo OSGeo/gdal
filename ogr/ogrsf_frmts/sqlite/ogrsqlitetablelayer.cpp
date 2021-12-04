@@ -685,9 +685,8 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char* pszGeomCol)
                 }
             }
         }
-
-        sqlite3_free_table(papszResult);
     }
+    sqlite3_free_table(papszResult);
 
     return CE_None;
 }
