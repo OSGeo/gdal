@@ -426,7 +426,8 @@ static void ParseObject( const char* pszId,
 /*                        EstablishLayerDefn()                          */
 /************************************************************************/
 
-static void EstablishLayerDefn( std::vector<int>& anCurFieldIndices,
+static void EstablishLayerDefn( int nPrevFieldIdx,
+                                std::vector<int>& anCurFieldIndices,
                                 std::map<std::string, int>& oMapFieldNameToIdx,
                                 std::vector<std::unique_ptr<OGRFieldDefn>>& apoFieldDefn,
                                 gdal::DirectedAcyclicGraph<int, std::string>& dag,
@@ -442,7 +443,6 @@ static void EstablishLayerDefn( std::vector<int>& anCurFieldIndices,
         it.val = nullptr;
         it.entry = nullptr;
 
-        int nPrevFieldIdx = -1;
         json_object_object_foreachC( poObjProps, it )
         {
             anCurFieldIndices.clear();
@@ -474,7 +474,10 @@ static bool ParseObjectMain( const char* pszId, json_object* poObj,
                              OGRGeoJSONLayer **ppoMainLayer,
                              json_object* poArcs,
                              ScalingParams* psParams,
-                             int nPassNumber,
+                             std::vector<int>& anCurFieldIndices,
+                             std::map<std::string, int>& oMapFieldNameToIdx,
+                             std::vector<std::unique_ptr<OGRFieldDefn>>& apoFieldDefn,
+                             gdal::DirectedAcyclicGraph<int, std::string>& dag,
                              std::set<int>& aoSetUndeterminedTypeFields)
 {
     bool bNeedSecondPass = false;
@@ -486,7 +489,7 @@ static bool ParseObjectMain( const char* pszId, json_object* poObj,
             json_type_string == json_object_get_type( poType ) )
         {
             const char* pszType = json_object_get_string(poType);
-            if( nPassNumber == 1 && strcmp(pszType, "GeometryCollection") == 0 )
+            if( strcmp(pszType, "GeometryCollection") == 0 )
             {
                 json_object* poGeometries =
                     OGRGeoJSONFindMemberByName(poObj, "geometries");
@@ -509,18 +512,22 @@ static bool ParseObjectMain( const char* pszId, json_object* poObj,
                             pszId ? pszId : "TopoJSON", nullptr,
                             wkbUnknown, poDS, nullptr );
                     OGRFeatureDefn* poDefn = poLayer->GetLayerDefn();
-                    {
-                        OGRFieldDefn fldDefn( "id", OFTString );
-                        poDefn->AddFieldDefn( &fldDefn );
-                    }
 
                     const auto nGeometries =
                         json_object_array_length(poGeometries);
                     // First pass to establish schema.
-                    std::vector<int> anCurFieldIndices;
-                    std::map<std::string, int> oMapFieldNameToIdx;
-                    std::vector<std::unique_ptr<OGRFieldDefn>> apoFieldDefn;
-                    gdal::DirectedAcyclicGraph<int, std::string> dag;
+
+                    std::vector<int> anCurFieldIndicesLocal;
+                    std::map<std::string, int> oMapFieldNameToIdxLocal;
+                    std::vector<std::unique_ptr<OGRFieldDefn>> apoFieldDefnLocal;
+                    gdal::DirectedAcyclicGraph<int, std::string> dagLocal;
+                    std::set<int> aoSetUndeterminedTypeFieldsLocal;
+
+                    apoFieldDefnLocal.emplace_back(
+                        cpl::make_unique<OGRFieldDefn>("id", OFTString));
+                    oMapFieldNameToIdxLocal["id"] = 0;
+                    dagLocal.addNode(0, "id");
+                    const int nPrevFieldIdx = 0;
 
                     for( auto i = decltype(nGeometries){0}; i < nGeometries;
                          i++ )
@@ -530,20 +537,21 @@ static bool ParseObjectMain( const char* pszId, json_object* poObj,
                         if( poGeom != nullptr &&
                             json_type_object == json_object_get_type( poGeom ) )
                         {
-                            EstablishLayerDefn(anCurFieldIndices,
-                                               oMapFieldNameToIdx,
-                                               apoFieldDefn,
-                                               dag,
+                            EstablishLayerDefn(nPrevFieldIdx,
+                                               anCurFieldIndicesLocal,
+                                               oMapFieldNameToIdxLocal,
+                                               apoFieldDefnLocal,
+                                               dagLocal,
                                                poGeom,
-                                               aoSetUndeterminedTypeFields);
+                                               aoSetUndeterminedTypeFieldsLocal);
                         }
                     }
 
-                    const auto sortedFields = dag.getTopologicalOrdering();
-                    CPLAssert( sortedFields.size() == apoFieldDefn.size() );
+                    const auto sortedFields = dagLocal.getTopologicalOrdering();
+                    CPLAssert( sortedFields.size() == apoFieldDefnLocal.size() );
                     for( int idx: sortedFields )
                     {
-                        poDefn->AddFieldDefn(apoFieldDefn[idx].get());
+                        poDefn->AddFieldDefn(apoFieldDefnLocal[idx].get());
                     }
 
                     // Second pass to build objects.
@@ -571,46 +579,60 @@ static bool ParseObjectMain( const char* pszId, json_object* poObj,
                      strcmp(pszType, "Polygon") == 0 ||
                      strcmp(pszType, "MultiPolygon") == 0 )
             {
-                if( nPassNumber == 1 )
+                if( *ppoMainLayer == nullptr )
                 {
-                    if( *ppoMainLayer == nullptr )
-                    {
-                        *ppoMainLayer = new OGRGeoJSONLayer(
-                            "TopoJSON", nullptr, wkbUnknown, poDS, nullptr );
-                        {
-                            OGRFieldDefn fldDefn( "id", OFTString );
-                            (*ppoMainLayer)->
-                                GetLayerDefn()->AddFieldDefn( &fldDefn );
-                        }
-                    }
-                    std::vector<int> anCurFieldIndices;
-                    std::map<std::string, int> oMapFieldNameToIdx;
-                    std::vector<std::unique_ptr<OGRFieldDefn>> apoFieldDefn;
-                    gdal::DirectedAcyclicGraph<int, std::string> dag;
-
-                    EstablishLayerDefn(anCurFieldIndices,
-                                       oMapFieldNameToIdx,
-                                       apoFieldDefn,
-                                       dag,
-                                       poObj,
-                                       aoSetUndeterminedTypeFields);
-                    OGRFeatureDefn* poDefn = (*ppoMainLayer)->GetLayerDefn();
-
-                    const auto sortedFields = dag.getTopologicalOrdering();
-                    CPLAssert( sortedFields.size() == apoFieldDefn.size() );
-                    for( int idx: sortedFields )
-                    {
-                        poDefn->AddFieldDefn(apoFieldDefn[idx].get());
-                    }
-
-                    bNeedSecondPass = true;
+                    *ppoMainLayer = new OGRGeoJSONLayer(
+                        "TopoJSON", nullptr, wkbUnknown, poDS, nullptr );
+                    apoFieldDefn.emplace_back(
+                        cpl::make_unique<OGRFieldDefn>("id", OFTString));
+                    oMapFieldNameToIdx["id"] = 0;
+                    dag.addNode(0, "id");
                 }
-                else
-                    ParseObject(pszId, poObj, *ppoMainLayer, poArcs, psParams);
+
+                const int nPrevFieldIdx = 0;
+                EstablishLayerDefn(nPrevFieldIdx,
+                                   anCurFieldIndices,
+                                   oMapFieldNameToIdx,
+                                   apoFieldDefn,
+                                   dag,
+                                   poObj,
+                                   aoSetUndeterminedTypeFields);
+
+                bNeedSecondPass = true;
             }
         }
     }
     return bNeedSecondPass;
+}
+
+/************************************************************************/
+/*                     ParseObjectMainSecondPass()                      */
+/************************************************************************/
+
+static void ParseObjectMainSecondPass(
+                             const char* pszId, json_object* poObj,
+                             OGRGeoJSONLayer **ppoMainLayer,
+                             json_object* poArcs,
+                             ScalingParams* psParams)
+{
+    if( poObj != nullptr && json_type_object == json_object_get_type( poObj ) )
+    {
+        json_object* poType = OGRGeoJSONFindMemberByName(poObj, "type");
+        if( poType != nullptr &&
+            json_type_string == json_object_get_type( poType ) )
+        {
+            const char* pszType = json_object_get_string(poType);
+            if( strcmp(pszType, "Point") == 0 ||
+                     strcmp(pszType, "MultiPoint") == 0 ||
+                     strcmp(pszType, "LineString") == 0 ||
+                     strcmp(pszType, "MultiLineString") == 0 ||
+                     strcmp(pszType, "Polygon") == 0 ||
+                     strcmp(pszType, "MultiPolygon") == 0 )
+            {
+                ParseObject(pszId, poObj, *ppoMainLayer, poArcs, psParams);
+            }
+        }
+    }
 }
 
 /************************************************************************/
@@ -693,6 +715,11 @@ void OGRTopoJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS )
     if( poObjects == nullptr )
         return;
 
+    std::vector<int> anCurFieldIndices;
+    std::map<std::string, int> oMapFieldNameToIdx;
+    std::vector<std::unique_ptr<OGRFieldDefn>> apoFieldDefn;
+    gdal::DirectedAcyclicGraph<int, std::string> dag;
+
     std::set<int> aoSetUndeterminedTypeFields;
     if( json_type_object == json_object_get_type( poObjects ) )
     {
@@ -706,18 +733,30 @@ void OGRTopoJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS )
             json_object* poObj = it.val;
             bNeedSecondPass |= ParseObjectMain( it.key, poObj, poDS,
                                                 &poMainLayer, poArcs, &sParams,
-                                                1, aoSetUndeterminedTypeFields);
+                                                anCurFieldIndices,
+                                                oMapFieldNameToIdx,
+                                                apoFieldDefn,
+                                                dag,
+                                                aoSetUndeterminedTypeFields);
         }
         if( bNeedSecondPass )
         {
+            OGRFeatureDefn* poDefn = poMainLayer->GetLayerDefn();
+            const auto sortedFields = dag.getTopologicalOrdering();
+            CPLAssert( sortedFields.size() == apoFieldDefn.size() );
+            for( int idx: sortedFields )
+            {
+                poDefn->AddFieldDefn(apoFieldDefn[idx].get());
+            }
+
             it.key = nullptr;
             it.val = nullptr;
             it.entry = nullptr;
             json_object_object_foreachC( poObjects, it )
             {
                 json_object* poObj = it.val;
-                ParseObjectMain(it.key, poObj, poDS, &poMainLayer, poArcs,
-                                &sParams, 2, aoSetUndeterminedTypeFields);
+                ParseObjectMainSecondPass(it.key, poObj, &poMainLayer, poArcs,
+                                          &sParams);
             }
         }
     }
@@ -729,16 +768,28 @@ void OGRTopoJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS )
         {
             json_object* poObj = json_object_array_get_idx(poObjects, i);
             bNeedSecondPass |= ParseObjectMain(nullptr, poObj, poDS, &poMainLayer,
-                                               poArcs, &sParams, 1,
+                                               poArcs, &sParams,
+                                               anCurFieldIndices,
+                                               oMapFieldNameToIdx,
+                                               apoFieldDefn,
+                                               dag,
                                                aoSetUndeterminedTypeFields);
         }
         if( bNeedSecondPass )
         {
+            OGRFeatureDefn* poDefn = poMainLayer->GetLayerDefn();
+            const auto sortedFields = dag.getTopologicalOrdering();
+            CPLAssert( sortedFields.size() == apoFieldDefn.size() );
+            for( int idx: sortedFields )
+            {
+                poDefn->AddFieldDefn(apoFieldDefn[idx].get());
+            }
+
             for( auto i = decltype(nObjects){0}; i < nObjects; i++ )
             {
                 json_object* poObj = json_object_array_get_idx(poObjects, i);
-                ParseObjectMain(nullptr, poObj, poDS, &poMainLayer, poArcs,
-                                &sParams, 2, aoSetUndeterminedTypeFields);
+                ParseObjectMainSecondPass(nullptr, poObj, &poMainLayer, poArcs,
+                                          &sParams);
             }
         }
     }
