@@ -128,14 +128,8 @@ TIFFWriteScanline(TIFF* tif, void* buf, uint32_t row, uint16_t sample)
 		tif->tif_rawcc = 0;
 		tif->tif_rawcp = tif->tif_rawdata;
 
-		if( td->td_stripbytecount_p[strip] > 0 )
-		{
-			/* if we are writing over existing tiles, zero length */
-			td->td_stripbytecount_p[strip] = 0;
-
-			/* this forces TIFFAppendToStrip() to do a seek */
-			tif->tif_curoff = 0;
-		}
+		/* this informs TIFFAppendToStrip() we have changed strip */
+		tif->tif_curoff = 0;
 
 		if (!(*tif->tif_preencode)(tif, sample))
 			return (-1);
@@ -194,10 +188,6 @@ static int _TIFFReserveLargeEnoughWriteBuffer(TIFF* tif, uint32_t strip_or_tile)
                 (tmsize_t)TIFFroundup_64(safe_buffer_size, 1024))) )
                 return 0;
         }
-
-        /* Force TIFFAppendToStrip() to consider placing data at end
-            of file. */
-        tif->tif_curoff = 0;
     }
     return 1;
 }
@@ -246,7 +236,11 @@ TIFFWriteEncodedStrip(TIFF* tif, uint32_t strip, void* data, tmsize_t cc)
 		return ((tmsize_t) -1);
 
         tif->tif_flags |= TIFF_BUF4WRITE;
+
 	tif->tif_curstrip = strip;
+
+	/* this informs TIFFAppendToStrip() we have changed or reset strip */
+	tif->tif_curoff = 0;
 
 	if( !_TIFFReserveLargeEnoughWriteBuffer(tif, strip) ) {
             return ((tmsize_t)(-1));
@@ -346,7 +340,12 @@ TIFFWriteRawStrip(TIFF* tif, uint32_t strip, void* data, tmsize_t cc)
 		if (!TIFFGrowStrips(tif, 1, module))
 			return ((tmsize_t) -1);
 	}
+
 	tif->tif_curstrip = strip;
+
+	/* this informs TIFFAppendToStrip() we have changed or reset strip */
+	tif->tif_curoff = 0;
+
         if (td->td_stripsperimage == 0) {
                 TIFFErrorExt(tif->tif_clientdata, module,"Zero strips per image");
                 return ((tmsize_t) -1);
@@ -412,7 +411,11 @@ TIFFWriteEncodedTile(TIFF* tif, uint32_t tile, void* data, tmsize_t cc)
 		return ((tmsize_t)(-1));
 
         tif->tif_flags |= TIFF_BUF4WRITE;
+
 	tif->tif_curtile = tile;
+
+	/* this informs TIFFAppendToStrip() we have changed or reset tile */
+	tif->tif_curoff = 0;
 
         if( !_TIFFReserveLargeEnoughWriteBuffer(tif, tile) ) {
             return ((tmsize_t)(-1));
@@ -797,7 +800,8 @@ TIFFAppendToStrip(TIFF* tif, uint32_t strip, uint8_t* data, tmsize_t cc)
 		return (0);
 	}
 
-    if( tif->tif_lastvalidoff != 0 && m > tif->tif_lastvalidoff )
+    if( tif->tif_lastvalidoff != 0 && m > tif->tif_lastvalidoff &&
+        td->td_stripbytecount_p[strip] > 0 )
     {
         /* Ouch: we have detected that we are rewriting in place a strip/tile */
         /* with several calls to TIFFAppendToStrip(). The first call was with */
@@ -927,6 +931,7 @@ void
 TIFFSetWriteOffset(TIFF* tif, toff_t off)
 {
 	tif->tif_curoff = off;
+	tif->tif_lastvalidoff = 0;
 }
 
 /* vim: set ts=8 sts=8 sw=8 noet: */
