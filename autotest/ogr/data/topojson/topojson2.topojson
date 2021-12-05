@@ -7,7 +7,7 @@
 "scale": [1.0,10.0],"translate": [100.0,1000.0]
 },
 "objects": {
-"a_layer" : {"type": "GeometryCollection", "geometries" : [ {"type": "LineString", "arcs": [0] } ] },
+"a_layer" : {"type": "GeometryCollection", "geometries" : [ {"type": "LineString", "arcs": [0], "properties": { "name": "line", "id": "foo"} } ] },
 "foo" : {"type": "LineString", "arcs": [0], "id" : "1" }
 }
 }
