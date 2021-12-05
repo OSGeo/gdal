@@ -23,7 +23,7 @@ if (NOT GDAL_USE_LIBJPEG_INTERNAL)
   endif ()
 endif ()
 
-if (NOT GDAL_USE_LIBJPEG_INTERNAL)
+if (NOT GDAL_USE_LIBZ_INTERNAL)
   gdal_target_link_libraries(TARGET gdal_GEOR LIBRARIES ZLIB::ZLIB)
 endif ()
 
