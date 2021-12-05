@@ -1322,8 +1322,18 @@ if test "$JPEG_SETTING" != "no" ; then
   OPT_GDAL_FORMATS="jpeg $OPT_GDAL_FORMATS"
 fi
 
+dnl ---------------------------------------------------------------------------
+dnl Check if user requests renaming internal libjpeg symbols
+dnl ---------------------------------------------------------------------------
 
+AC_ARG_WITH(rename_internal_libjpeg_symbols,[  --with-rename-internal-libjpeg-symbols[=ARG] Prefix internal libjpeg symbols with gdal_ (ARG=yes/no)],,)
 
+RENAME_INTERNAL_LIBJPEG_SYMBOLS=no
+if test "x$with_rename_internal_libjpeg_symbols" = "xyes" -o "x$with_rename_internal_libjpeg_symbols" = "x"; then
+    RENAME_INTERNAL_LIBJPEG_SYMBOLS=yes
+fi
+
+AC_SUBST(RENAME_INTERNAL_LIBJPEG_SYMBOLS,$RENAME_INTERNAL_LIBJPEG_SYMBOLS)
 
 dnl ---------------------------------------------------------------------------
 dnl Select a libtiff library to use.

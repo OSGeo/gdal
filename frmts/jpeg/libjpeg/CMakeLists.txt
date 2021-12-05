@@ -62,5 +62,9 @@ target_include_directories(libjpeg PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOU
 target_compile_options(libjpeg PRIVATE ${GDAL_C_WARNING_FLAGS} ${GDAL_SOFTWARNFLAGS})
 
 target_compile_definitions(libjpeg PRIVATE -DDEFAULT_MAX_MEM=500000000L)
+if (RENAME_INTERNAL_LIBJPEG_SYMBOLS)
+  target_compile_definitions(libjpeg PRIVATE -DRENAME_INTERNAL_LIBJPEG_SYMBOLS)
+endif ()
+
 set_property(TARGET libjpeg PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:libjpeg>)
