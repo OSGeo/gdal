@@ -634,7 +634,7 @@ namespace Selafin {
             delete poHeader;
             return nullptr;
         }
-        vsi_l_offset nStepsBig = (poHeader->nFileSize-nPos)/(poHeader->getPosition(1)-nPos);
+        vsi_l_offset nStepsBig = poHeader->nVar != 0 ? (poHeader->nFileSize-nPos)/(poHeader->getPosition(1)-nPos) : 0;
         if( nStepsBig > INT_MAX )
             poHeader->nSteps=INT_MAX;
         else

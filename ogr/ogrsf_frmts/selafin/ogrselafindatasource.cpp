@@ -414,7 +414,13 @@ int OGRSelafinDataSource::OpenTable(const char * pszFilename) {
 
     // Create two layers for each selected time step: one for points, the other for elements
     poRange.setMaxValue(poHeader->nSteps);
-    const int nNewLayers = static_cast<int>(poRange.getSize());
+    size_t size=poRange.getSize();
+    if (size > INT32_MAX)
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, "Invalid size" );
+        return FALSE;
+    }
+    const int nNewLayers = static_cast<int>(size);
     if (EQUAL(pszFilename, "/vsistdin/")) osBaseLayerName = "layer";
     CPLString osLayerName;
     papoLayers = (OGRSelafinLayer **) CPLRealloc(papoLayers, sizeof(void*) * (nLayers+nNewLayers));
