@@ -2158,6 +2158,29 @@ def test_tiff_ovr_clean_with_mask(external_ovr_and_msk):
 
     gdal.GetDriverByName('GTiff').Delete(filename)
 
+
+###############################################################################
+# Test BuildOverviews(NEAR) on a tiled interleave=band raster that is large compared to
+# the allowed chunk size. This will fallbacks to the tiled based approach instead
+# of the default scanlines based one
+
+
+def test_tiff_ovr_fallback_to_multiband_overview_generate():
+
+    filename = '/vsimem/test_tiff_ovr_issue_4932_src.tif'
+    ds = gdal.Translate(filename, 'data/byte.tif',
+                        options='-b 1 -b 1 -b 1 -co INTERLEAVE=BAND -co TILED=YES -outsize 1024 1024')
+    with gdaltest.config_option('GDAL_OVR_CHUNK_MAX_SIZE', '1000'):
+        ds.BuildOverviews('NEAR', overviewlist=[2, 4, 8])
+    ds = None
+
+    ds = gdal.Open(filename)
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    assert cs == 37308
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete(filename)
+
 ###############################################################################
 # Cleanup
 

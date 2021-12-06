@@ -1042,6 +1042,7 @@ public:
     void          SetColorEntry( int, const GDALColorEntry * );
     int           CreateColorRamp( int, const GDALColorEntry * ,
                                    int, const GDALColorEntry * );
+    bool          IsIdentity() const;
 
     /** Convert a GDALColorTable* to a GDALRasterBandH.
      * @since GDAL 2.3
