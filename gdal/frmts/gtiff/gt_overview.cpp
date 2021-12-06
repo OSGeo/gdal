@@ -989,7 +989,8 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
     aosOpenOptions.SetNameValue("NUM_THREADS",
                                 CSLFetchNameValue(papszOptions, "NUM_THREADS"));
     aosOpenOptions.SetNameValue("SPARSE_OK",
-                                CSLFetchNameValue(papszOptions, "SPARSE_OK"));
+                                CSLFetchNameValueDef(papszOptions, "SPARSE_OK",
+                                     CPLGetConfigOption("SPARSE_OK_OVERVIEW", nullptr)));
     aosOpenOptions.SetNameValue("@MASK_OVERVIEW_DATASET",
                                 CSLFetchNameValue(papszOptions, "MASK_OVERVIEW_DATASET"));
     GDALDataset *hODS = GDALDataset::Open( pszFilename,

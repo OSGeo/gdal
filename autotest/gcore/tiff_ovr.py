@@ -1432,6 +1432,118 @@ def test_tiff_ovr_45(both_endian):
     assert cs == 1087, 'did not get expected checksum'
 
 ###############################################################################
+# Test that SPARSE_OK creation option propagates on internal overviews
+
+
+@pytest.mark.parametrize("apply_sparse", [False,True])
+def test_tiff_ovr_propagate_sparse_ok_creation_option(apply_sparse):
+
+    filename = '/vsimem/test_tiff_ovr_propagate_sparse_ok_creation_option.tif'
+    ds = gdaltest.tiff_drv.Create(filename, 100, 100, options=['SPARSE_OK=YES'] if apply_sparse else [])
+    ds.BuildOverviews('NEAREST', overviewlist=[2])
+    ds = None
+    ds = gdal.Open(filename)
+    has_block = ds.GetRasterBand(1).GetOverview(0).GetMetadataItem("BLOCK_OFFSET_0_0", "TIFF") is not None
+    if apply_sparse:
+        assert not has_block
+    else:
+        assert has_block
+    ds = None
+
+    gdaltest.tiff_drv.Delete(filename)
+
+###############################################################################
+# Test that SPARSE_OK open option propagates on internal overviews
+
+
+@pytest.mark.parametrize("apply_sparse", [False,True])
+def test_tiff_ovr_propagate_sparse_ok_open_option_internal(apply_sparse):
+
+    filename = '/vsimem/test_tiff_ovr_propagate_sparse_ok_open_option_internal.tif'
+    gdaltest.tiff_drv.Create(filename, 100, 100)
+    ds = gdal.OpenEx(filename, gdal.OF_UPDATE | gdal.OF_RASTER, open_options=['SPARSE_OK=YES'] if apply_sparse else [])
+    ds.BuildOverviews('NEAREST', overviewlist=[2])
+    ds = None
+    ds = gdal.Open(filename)
+    has_block = ds.GetRasterBand(1).GetOverview(0).GetMetadataItem("BLOCK_OFFSET_0_0", "TIFF") is not None
+    if apply_sparse:
+        assert not has_block
+    else:
+        assert has_block
+    ds = None
+
+    gdaltest.tiff_drv.Delete(filename)
+
+###############################################################################
+# Test that SPARSE_OK open option propagates on internal overviews
+
+
+@pytest.mark.parametrize("apply_sparse", [False,True])
+def test_tiff_ovr_propagate_sparse_ok_open_option_external(apply_sparse):
+
+    filename = '/vsimem/test_tiff_ovr_propagate_sparse_ok_open_option_external.tif'
+    gdaltest.tiff_drv.Create(filename, 100, 100)
+    ds = gdal.OpenEx(filename, open_options = ['SPARSE_OK=YES'] if apply_sparse else [])
+    ds.BuildOverviews('NEAREST', overviewlist=[2])
+    ds = None
+    ds = gdal.Open(filename)
+    has_block = ds.GetRasterBand(1).GetOverview(0).GetMetadataItem("BLOCK_OFFSET_0_0", "TIFF") is not None
+    if apply_sparse:
+        assert not has_block
+    else:
+        assert has_block
+    ds = None
+
+    gdaltest.tiff_drv.Delete(filename)
+
+###############################################################################
+# Test SPARSE_OK_OVERVIEW on internal overview
+
+
+@pytest.mark.parametrize("apply_sparse", [False,True])
+def test_tiff_ovr_sparse_ok_internal_overview(apply_sparse):
+
+    filename = '/vsimem/test_tiff_ovr_sparse_ok_internal_overview.tif'
+    gdaltest.tiff_drv.Create(filename, 100, 100)
+    ds = gdal.Open(filename, gdal.GA_Update)
+    with gdaltest.config_options({'SPARSE_OK_OVERVIEW': 'YES'} if apply_sparse else {}):
+        ds.BuildOverviews('NEAREST', overviewlist=[2])
+    ds = None
+    ds = gdal.Open(filename)
+    has_block = ds.GetRasterBand(1).GetOverview(0).GetMetadataItem("BLOCK_OFFSET_0_0", "TIFF") is not None
+    if apply_sparse:
+        assert not has_block
+    else:
+        assert has_block
+    ds = None
+
+    gdaltest.tiff_drv.Delete(filename)
+
+###############################################################################
+# Test SPARSE_OK_OVERVIEW on external overview
+
+
+@pytest.mark.parametrize("apply_sparse", [False,True])
+def test_tiff_ovr_sparse_ok_external_overview(apply_sparse):
+
+    filename = '/vsimem/test_tiff_ovr_sparse_ok_external_overview.tif'
+    gdaltest.tiff_drv.Create(filename, 100, 100)
+    ds = gdal.Open(filename)
+    with gdaltest.config_options({'SPARSE_OK_OVERVIEW': 'YES'} if apply_sparse else {}):
+        ds.BuildOverviews('NEAREST', overviewlist=[2])
+    ds = None
+    ds = gdal.Open(filename)
+    has_block = ds.GetRasterBand(1).GetOverview(0).GetMetadataItem("BLOCK_OFFSET_0_0", "TIFF") is not None
+    if apply_sparse:
+        assert not has_block
+    else:
+        assert has_block
+    ds = None
+
+    gdaltest.tiff_drv.Delete(filename)
+
+
+###############################################################################
 # Test overview on a dataset where width * height > 2 billion
 
 
