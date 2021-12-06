@@ -744,6 +744,9 @@ the default behavior of the GTiff driver.
 -  :decl_configoption:`MAX_Z_ERROR_OVERVIEW` : Floating-point value. Default value: 0 (lossless)
    Maximum error threshold on values for LERC/LERC_DEFLATE/LERC_ZSTD compression of overviews, either internal or external.
    Added in GDAL 3.4.1
+-  :decl_configoption:`SPARSE_OK_OVERVIEW` :Boolean value. Default value: OFF
+   When set to ON, blocks whose pixels are all at nodata (or 0 if no nodata is defined)
+   will not be written. Added in GDAL 3.4.1
 -  :decl_configoption:`GDAL_TIFF_INTERNAL_MASK` : See `Internal nodata
    masks <#internal_mask>`__ section. Default value : FALSE.
 -  :decl_configoption:`GDAL_TIFF_INTERNAL_MASK_TO_8BIT` : See `Internal nodata
