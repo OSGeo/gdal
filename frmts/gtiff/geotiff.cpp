@@ -419,8 +419,8 @@ private:
     bool        m_bNeedsRewrite:1;
     bool        m_bLoadingOtherBands:1;
     bool        m_bIsOverview:1;
-    bool        m_bWriteEmptyTiles:1;
-    bool        m_bFillEmptyTilesAtClosing:1;
+    bool        m_bWriteEmptyTiles:1; // Whether a write of a tile entirely at nodata/0 should go to the disk. Default is true, unless SPARSE_OK is set
+    bool        m_bFillEmptyTilesAtClosing:1; // Might only be set to true on newly created files, when SPARSE_OK is not set
     bool        m_bTreatAsSplit:1;
     bool        m_bTreatAsSplitBitmap:1;
     bool        m_bClipWarn:1;
@@ -10049,6 +10049,16 @@ CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset,
     GTiffDataset* poODS = new GTiffDataset();
     poODS->ShareLockWithParentDataset(this);
     poODS->m_pszFilename = CPLStrdup(m_pszFilename);
+    if( CPLTestBool(CPLGetConfigOption("SPARSE_OK_OVERVIEW", "NO")) )
+    {
+        poODS->m_bWriteEmptyTiles = false;
+        poODS->m_bFillEmptyTilesAtClosing = false;
+    }
+    else
+    {
+        poODS->m_bWriteEmptyTiles = m_bWriteEmptyTiles;
+        poODS->m_bFillEmptyTilesAtClosing = m_bFillEmptyTilesAtClosing;
+    }
     poODS->m_nJpegQuality = static_cast<signed char>(l_nJpegQuality);
     poODS->m_nWebPLevel = static_cast<signed char>(nWebpLevel);
     poODS->m_nZLevel = static_cast<signed char>(nZLevel);
@@ -10502,6 +10512,13 @@ CPLErr GTiffDataset::IBuildOverviews(
                 "Cannot add external overviews when there are already "
                 "internal overviews" );
             return CE_Failure;
+        }
+
+        std::unique_ptr<CPLConfigOptionSetter> poSetter;
+        if( !m_bWriteEmptyTiles )
+        {
+            poSetter.reset(
+                new CPLConfigOptionSetter("SPARSE_OK_OVERVIEW", "YES", true));
         }
 
         CPLErr eErr = GDALDataset::IBuildOverviews(
