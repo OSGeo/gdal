@@ -71,6 +71,9 @@ endif ()
 
 if (GDAL_USE_LIBJPEG_INTERNAL)
   target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:libjpeg,SOURCE_DIR>)
+  if (RENAME_INTERNAL_LIBJPEG_SYMBOLS)
+    target_compile_definitions(libtiff PRIVATE -DRENAME_INTERNAL_LIBJPEG_SYMBOLS)
+  endif ()
 endif ()
 
 if (GDAL_USE_LIBLERC_INTERNAL)

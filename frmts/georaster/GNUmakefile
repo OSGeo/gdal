@@ -20,6 +20,9 @@ endif
 
 ifeq ($(JPEG_SETTING),internal)
 CPPFLAGS	:=	$(CPPFLAGS) -I../jpeg/libjpeg
+ifeq ($(RENAME_INTERNAL_LIBJPEG_SYMBOLS),yes)
+CPPFLAGS 	:=	$(CPPFLAGS) -DRENAME_INTERNAL_LIBJPEG_SYMBOLS
+endif
 endif
 
 default:	$(OBJ:.o=.$(OBJ_EXT))

@@ -70,6 +70,9 @@ endif
 
 ifeq ($(JPEG_SETTING),internal)
 ALL_C_FLAGS 	:=	$(ALL_C_FLAGS) -I../../jpeg/libjpeg
+ifeq ($(RENAME_INTERNAL_LIBJPEG_SYMBOLS),yes)
+ALL_C_FLAGS	:=	$(ALL_C_FLAGS) -DRENAME_INTERNAL_LIBJPEG_SYMBOLS
+endif
 endif
 
 ifeq ($(TIFF_JPEG12_ENABLED),yes)
