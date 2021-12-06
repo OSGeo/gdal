@@ -1380,7 +1380,7 @@ const char * GDALDefaultCSVFilename( const char *pszBasename )
     if( pTLSData == nullptr )
         return "/not_existing_dir/not_existing_path";
 
-    const char *pszResult = CPLFindFile( "epsg_csv", pszBasename );
+    const char *pszResult = CPLFindFile( "gdal", pszBasename );
 
     if( pszResult != nullptr )
         return pszResult;
@@ -1389,19 +1389,15 @@ const char * GDALDefaultCSVFilename( const char *pszBasename )
     {
         pTLSData->bCSVFinderInitialized = true;
 
-        if( CPLGetConfigOption("GEOTIFF_CSV", nullptr) != nullptr )
-            CPLPushFinderLocation( CPLGetConfigOption("GEOTIFF_CSV", nullptr));
-
         if( CPLGetConfigOption("GDAL_DATA", nullptr) != nullptr )
             CPLPushFinderLocation( CPLGetConfigOption("GDAL_DATA", nullptr) );
 
-        pszResult = CPLFindFile( "epsg_csv", pszBasename );
+        pszResult = CPLFindFile( "gdal", pszBasename );
 
         if( pszResult != nullptr )
             return pszResult;
     }
 
-#ifdef GDAL_NO_HARDCODED_FIND
     // For systems like sandboxes that do not allow other checks.
     CPLDebug( "CPL_CSV",
               "Failed to find file in GDALDefaultCSVFilename.  "
@@ -1409,29 +1405,6 @@ const char * GDALDefaultCSVFilename( const char *pszBasename )
               pszBasename );
     CPLStrlcpy(pTLSData->szPath, pszBasename, sizeof(pTLSData->szPath));
     return pTLSData->szPath;
-#else
-
-#ifdef GDAL_PREFIX
-  #ifdef MACOSX_FRAMEWORK
-    strcpy( pTLSData->szPath, GDAL_PREFIX "/Resources/epsg_csv/" );
-  #else
-    strcpy( pTLSData->szPath, GDAL_PREFIX "/share/epsg_csv/" );
-  #endif
-#else
-    strcpy( pTLSData->szPath, "/usr/local/share/epsg_csv/" );
-#endif  // GDAL_PREFIX
-
-    CPLStrlcat( pTLSData->szPath, pszBasename, sizeof(pTLSData->szPath) );
-
-    VSILFILE *fp = VSIFOpenL( pTLSData->szPath, "rt" );
-    if( fp == nullptr )
-        CPLStrlcpy( pTLSData->szPath, pszBasename, sizeof(pTLSData->szPath) );
-
-    if( fp != nullptr )
-        VSIFCloseL( fp );
-
-    return pTLSData->szPath;
-#endif  // GDAL_NO_HARDCODED_FIND
 }
 
 /************************************************************************/
