@@ -379,6 +379,19 @@ SQLite3
 
     Control whether to use SQLite3. Defaults to ON when SQLite3 is found.
 
+TEIGHA
+******
+
+The TEIGHA / Open Design Alliance libraries are required for the DWG and DGNv8
+drivers. Note that on Linux, with a SDK consisting of shared libraries,
+the bin/{platform_name} subdirectory of the SDK should be in the LD_LIBRARY_PATH
+so that the linking of applications succeeds.
+The TEIGHA_ROOT variable must be set.
+
+.. option:: TEIGHA_ROOT
+
+    Path to the base directory where the Kernel and Drawings package must be
+    extracted.
 
 TIFF
 ****

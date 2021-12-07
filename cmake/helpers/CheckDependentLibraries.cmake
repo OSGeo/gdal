@@ -416,7 +416,7 @@ endif()
 
 set(Oracle_CAN_USE_CLNTSH_AS_MAIN_LIBRARY ON)
 gdal_check_package(Oracle "Enable Oracle OCI driver")
-gdal_check_package(TEIGHA "")
+gdal_check_package(TEIGHA "Enable DWG and DGNv8 drivers" CAN_DISABLE)
 gdal_check_package(FileGDB "Enable FileGDB (based on closed-source SDK) driver" CAN_DISABLE)
 
 option(GDAL_USE_MSG "Set ON to build MSG driver and download external https://gitlab.eumetsat.int/open-source/PublicDecompWT" OFF)
