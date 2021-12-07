@@ -364,11 +364,11 @@ void OGRSQLiteBaseDataSource::CloseDB()
                     nPersistentWAL = 0;
                     if( sqlite3_file_control(hDB, "main", SQLITE_FCNTL_PERSIST_WAL, &nPersistentWAL) == SQLITE_OK )
                     {
-                        CPLDebug("SQLITE", "Disabling persistant WAL succeeded");
+                        CPLDebug("SQLITE", "Disabling persistent WAL succeeded");
                     }
                     else
                     {
-                        CPLDebug("SQLITE", "Could not disable persistant WAL");
+                        CPLDebug("SQLITE", "Could not disable persistent WAL");
                     }
                 }
 #endif
@@ -824,11 +824,11 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, bool bRegisterOGR2SQLit
         nPersistentWAL = 0;
         if( sqlite3_file_control(hDB, "main", SQLITE_FCNTL_PERSIST_WAL, &nPersistentWAL) == SQLITE_OK )
         {
-            CPLDebug("SQLITE", "Disabling persistant WAL succeeded");
+            CPLDebug("SQLITE", "Disabling persistent WAL succeeded");
         }
         else
         {
-            CPLDebug("SQLITE", "Could not disable persistant WAL");
+            CPLDebug("SQLITE", "Could not disable persistent WAL");
         }
     }
 #endif

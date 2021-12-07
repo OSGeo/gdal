@@ -759,7 +759,7 @@ static const char* ReadLineLargeFile(void* fp, size_t nMaxLineSize )
  * The return result is a stringlist, in the sense of the CSL functions.
  *
  * @param fp File handle. Must not be NULL
- * @param nMaxLineSize Maximimum line size, or 0 for unlimited.
+ * @param nMaxLineSize Maximum line size, or 0 for unlimited.
  * @param pszDelimiter Delimiter sequence for readers (can be multiple bytes)
  * @param bHonourStrings Should be true, unless double quotes should not be
  *                       considered when separating fields.

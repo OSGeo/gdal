@@ -584,7 +584,7 @@ Examples::
     cmake -DPython_ROOT=C:\Python36 ..
 
 
-The following options are advanced onces and only taken into account during
+The following options are advanced ones and only taken into account during
 the ``install`` CMake target.
 
 .. option:: GDAL_PYTHON_INSTALL_PREFIX

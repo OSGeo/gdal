@@ -77,7 +77,7 @@ if(CRYPTOPP_FOUND)
     if(NOT TARGET CRYPTOPP::CRYPTOPP)
         add_library(CRYPTOPP::CRYPTOPP UNKNOWN IMPORTED)
         set_target_properties(CRYPTOPP::CRYPTOPP PROPERTIES
-                              INTERFACE_INLUDE_DIRECTORIES ${CRYPTOPP_INCLUDE_DIR}
+                              INTERFACE_INCLUDE_DIRECTORIES ${CRYPTOPP_INCLUDE_DIR}
                               IMPORTED_LINK_INTERFACE_LANGUAGES "C"
                               IMPORTED_LOCATION ${CRYPTOPP_LIBRARY})
    endif()

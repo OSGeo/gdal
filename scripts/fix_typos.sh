@@ -73,6 +73,8 @@ EXCLUDED_FILES="$EXCLUDED_FILES,WFSServersList.txt"
 EXCLUDED_FILES="$EXCLUDED_FILES,*/sosi/*" # norwegian
 EXCLUDED_FILES="$EXCLUDED_FILES,*/ci/travis/csa_part_1/*,*/ci/travis/csa_part_2/*"
 EXCLUDED_FILES="$EXCLUDED_FILES,*/internal_libqhull/*,*/zlib/*,*/libjpeg/*,*/libjpeg12/*,*/libpng/*,*/libcsf/*,*/degrib/*"
+EXCLUDED_FILES="$EXCLUDED_FILES,./cmake/modules/CMakeCheckCompilerFlagCommonPatterns.cmake"
+EXCLUDED_FILES="$EXCLUDED_FILES,./cmake/modules/Copyright.txt"
 AUTHORIZED_LIST="poSession,FIDN,TRAFIC,HTINK,repID,oCurr,INTREST,oPosition"
 AUTHORIZED_LIST="$AUTHORIZED_LIST,CPL_SUPRESS_CPLUSPLUS,SRP_NAM,ADRG_NAM,'SRP_NAM,AuxilaryTarget"
 # IRIS driver metadata item names: FIXME ?

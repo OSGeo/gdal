@@ -5,7 +5,7 @@
 CheckDependentLibraries.cmake
 -----------------------------
 
-Detect GDAL depenencies and set variable HAVE_*
+Detect GDAL dependencies and set variable HAVE_*
 
 #]=======================================================================]
 
@@ -91,7 +91,7 @@ option(GDAL_USE_XMLREFORMAT "Set ON to use xmlreformat" OFF)
 
 gdal_check_package(MySQL "MySQL" CAN_DISABLE)
 
-# basic libaries
+# basic libraries
 find_package(Boost)
 gdal_check_package(CURL "Enable drivers to use web API" CAN_DISABLE)
 

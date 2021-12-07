@@ -258,3 +258,4 @@ int CPL_DLL creat( const char *path, mode_t mode )
     // CASE_ALG(Gost) (obsolete)
                     "Invalid txe or tye parameters detected. Please check your -txe or -tye argument.");
     assert domain.GetDescription() == 'The maximun speed of the road'
+                    expected_headers={'Authorization': 'SharedKey myaccount2:LCgZcIfQT/du4Xsdv8ZHT1yi+Qrmaw0IxNdI1Cldy+w='})

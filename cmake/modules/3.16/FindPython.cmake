@@ -32,7 +32,7 @@ To manage concurrent versions 3 and 2 of Python, use :module:`FindPython3` and
 
   If components ``Interpreter`` and ``Development`` are both specified, this
   module search only for interpreter with same platform architecture as the one
-  defined by ``CMake`` configuration. This contraint does not apply if only
+  defined by ``CMake`` configuration. This constraint does not apply if only
   ``Interpreter`` component is specified.
 
 Imported Targets
@@ -121,7 +121,7 @@ This module will set the following variables in your project
 ``Python_NumPy_FOUND``
   System has the NumPy.
 ``Python_NumPy_INCLUDE_DIRS``
-  The NumPy include directries.
+  The NumPy include directories.
 ``Python_NumPy_VERSION``
   The NumPy version.
 
@@ -155,7 +155,7 @@ Hints
 
   * ``ON``: Corresponding flag is selected.
   * ``OFF``: Corresponding flag is not selected.
-  * ``ANY``: The two posibilties (``ON`` and ``OFF``) will be searched.
+  * ``ANY``: The two possibilities (``ON`` and ``OFF``) will be searched.
 
   From this 3-tuple, various ABIs will be searched starting from the most
   specialized to the most general. Moreover, ``debug`` versions will be
@@ -220,7 +220,7 @@ Hints
   variable will be used, if any.
 
 ``Python_FIND_VIRTUALENV``
-  This variable defines the handling of virtual environments. It is meaningfull
+  This variable defines the handling of virtual environments. It is meaningful
   only when a virtual environment is active (i.e. the ``activate`` script has
   been evaluated). In this case, it takes precedence over
   ``Python_FIND_REGISTRY`` and ``CMAKE_FIND_FRAMEWORK`` variables.
@@ -278,7 +278,7 @@ setting the following variables:
   When an artifact is specified, all ``HINTS`` will be ignored and no search
   will be performed for this artifact.
 
-  If more than one artifact is specified, it is the user's responsability to
+  If more than one artifact is specified, it is the user's responsibility to
   ensure the consistency of the various artifacts.
 
 Commands

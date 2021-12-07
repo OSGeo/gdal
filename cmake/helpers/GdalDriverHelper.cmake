@@ -29,11 +29,11 @@ GdalDriverHelper
   - PLUGIN_CAPABLE_IF: similar to PLUGIN_CAPABLE,
     but extra conditions provided in <cond> (e.g "NOT GDAL_USE_LIBJSONC_INTERNAL") are needed
 
-  The NO_DEPS option express that the driver has no non-core external depedencies.
+  The NO_DEPS option express that the driver has no non-core external dependencies.
 
   There are several examples to show how to write build cmake script.
 
- ex.1 Driver which is referrenced by other drivers
+ ex.1 Driver which is referenced by other drivers
       Such driver should built-in into library to resolve reference.
 
    add_gdal_driver(TARGET gdal_iso8211 SOURCES iso8211.cpp BUILTIN)
