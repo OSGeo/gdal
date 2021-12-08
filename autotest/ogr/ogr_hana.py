@@ -25,8 +25,6 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 ###############################################################################
-import os
-
 import gdaltest
 import ogrtest
 import pytest
@@ -51,17 +49,22 @@ def test_ogr_hana_init():
 
     uri = gdal.GetConfigOption('OGR_HANA_CONNECTION_STRING', None)
     if uri is not None:
-        gdaltest.hana_connection_string = uri
+        gdaltest.hana_connection_string = uri + ';ENCRYPT=YES;SSL_VALIDATE_CERTIFICATE=false;CHAR_AS_UTF8=1'
     else:
-        if 'GDAL_HANA_TEST_DB' in os.environ:
-            gdaltest.hana_connection_string = os.environ['GDAL_HANA_TEST_DB']
-        else:
-            gdaltest.hana_connection_string = 'DRIVER={\'/usr/sap/hdbclient/libodbcHDB.so\'};HOST=localhost;' \
-                                              'PORT=30015;USER=SYSTEM;PASSWORD=mypassword'
+        gdaltest.hana_connection_string = 'HANA:autotest'
 
-    gdaltest.hana_connection_string += ';ENCRYPT=YES;SSL_VALIDATE_CERTIFICATE=false;CHAR_AS_UTF8=1'
+    conn = None
 
-    conn = create_connection(gdaltest.hana_connection_string)
+    try:
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
+        conn = create_connection(gdaltest.hana_connection_string)
+        gdal.PopErrorHandler()
+    except:
+        gdal.PopErrorHandler()
+
+    if conn is None:
+        pytest.skip()
+
     gdaltest.hana_schema_name = generate_schema_name(conn, 'gdal_test')
     execute_sql(conn, f'CREATE SCHEMA "{gdaltest.hana_schema_name}"')
 
@@ -256,7 +259,6 @@ def test_ogr_hana_6():
         pytest.skip()
 
     sql_lyr = gdaltest.hana_ds.ExecuteSQL('select * from tpoly')
-
     check_bboxes(sql_lyr.GetExtent(), (478315.53125, 481645.3125, 4762880.5, 4765610.5), 0.0001)
 
 
@@ -854,7 +856,7 @@ def test_ogr_hana_27():
 
 def test_ogr_hana_cleanup():
     if gdaltest.hana_ds is None:
-        return 'skip'
+        pytest.skip()
 
     # Cleanup created tables
     gdal.PushErrorHandler('CPLQuietErrorHandler')
