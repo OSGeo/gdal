@@ -801,6 +801,11 @@ OGRErr OGRHanaLayer::GetExtent(int iGeomField, OGREnvelope* extent, int force)
     if( iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount() ||
         GetLayerDefn()->GetGeomFieldDefn(iGeomField)->GetType() == wkbNone )
     {
+        extent->MinX = 0.0;
+        extent->MaxX = 0.0;
+        extent->MinY = 0.0;
+        extent->MaxY = 0.0;
+
         if( iGeomField != 0 )
         {
             CPLError(CE_Failure, CPLE_AppDefined,

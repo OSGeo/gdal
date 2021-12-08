@@ -342,7 +342,7 @@ OGRwkbGeometryType GetGeometryType(
     rsGeomInfo->close();
 
     if (i == 0)
-        ret = OGRwkbGeometryType::wkbNone;
+        ret = OGRwkbGeometryType::wkbUnknown;
     return ret;
 }
 

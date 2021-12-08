@@ -81,8 +81,8 @@ struct AttributeColumnDescription
 struct GeometryColumnDescription
 {
     CPLString name;
-    OGRwkbGeometryType type;
-    int srid;
+    OGRwkbGeometryType type = wkbUnknown;
+    int srid = -1;
     bool isNullable;
 };
 
