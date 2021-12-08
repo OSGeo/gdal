@@ -33,7 +33,10 @@ from osgeo import ogr
 from osgeo import osr
 from osgeo import gdal
 
-from hdbcli import dbapi
+try:
+    from hdbcli import dbapi
+except ImportError:
+    pytest.skip("hdbcli not available", allow_module_level=True)
 
 pytestmark = pytest.mark.require_driver('HANA')
 

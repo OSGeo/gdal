@@ -65,11 +65,15 @@ sudo sh -c "cd $PWD/PROJ/build && make -j3 install"
 sudo sh -c "cd /usr/local/share/proj && curl http://download.osgeo.org/proj/proj-datumgrid-1.8.tar.gz > proj-datumgrid-1.8.tar.gz && tar xvzf proj-datumgrid-1.8.tar.gz"
 sudo sh -c "apt-get remove -y libproj-dev"
 
+# Build odbc-cpp library for HANA
+(wget "https://cmake.org/files/v3.12/cmake-3.12.4.tar.gz" && tar xzf cmake-3.12.4.tar.gz && rm cmake-3.12.4.tar.gz && cd cmake-3.12.4 && ./bootstrap --prefix=/usr/local/ && make && make install && cd ..  && rm -rf cmake-3.12.4)
+(git clone https://github.com/SAP/odbc-cpp-wrapper.git && mkdir odbc-cpp-wrapper/build && cd odbc-cpp-wrapper/build && cmake .. && make -j 2 && make install)
+
 export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 
 # Configure GDAL
 ./autogen.sh
-CC='ccache gcc' CXX='ccache g++' LDFLAGS='-lstdc++' ./configure --prefix=/usr --without-libtool --with-jpeg12 --with-python=/usr/bin/python3 --with-poppler --with-spatialite --with-mysql --with-liblzma --with-webp --with-epsilon --with-proj=/usr/local --with-poppler --with-hdf5 --with-dods-root=/usr --with-sosi --with-mysql --with-rasterlite2 --enable-debug --with-libtiff=internal --with-hide-internal-symbols
+CC='ccache gcc' CXX='ccache g++' LDFLAGS='-lstdc++' ./configure --prefix=/usr --without-libtool --with-jpeg12 --with-python=/usr/bin/python3 --with-poppler --with-spatialite --with-mysql --with-liblzma --with-webp --with-epsilon --with-proj=/usr/local --with-poppler --with-hdf5 --with-dods-root=/usr --with-sosi --with-mysql --with-rasterlite2 --enable-debug --with-libtiff=internal --with-hide-internal-symbols --with-hana
 
 make USER_DEFS=-Werror -j3
 (cd apps && make USER_DEFS=-Werror -j3 test_ogrsf)
@@ -95,7 +99,10 @@ export CPL_ENABLE_USERFAULTFD=NO
 (cd autotest/cpp && make quick_test)
 
 # install pip and use it to install test dependencies
-pip3 install -U -r autotest/requirements.txt
+pip3 install -U $(grep -ivE "hdbcli" autotest/requirements.txt)
+
+# Fails as we cannot install hdbcli by using "pip install hdbcli"
+rm autotest/ogr/ogr_hana.py
 
 # Fails with ERROR 1: OGDI DataSource Open Failed: Could not find the dynamic library "vrf"
 rm autotest/ogr/ogr_ogdi.py

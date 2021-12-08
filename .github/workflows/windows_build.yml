@@ -263,7 +263,7 @@ jobs:
             cd $env:GITHUB_WORKSPACE\autotest\cpp
             exec { nmake /f makefile.vc check MSVC_VER=$env:MSVC_VER $env:WIN64_ARG }
             cd $env:GITHUB_WORKSPACE\autotest
-            pip install -Ur requirements.txt
+            pip install -U $(grep -ivE "hdbcli" requirements.txt)
             exec { pytest -vv }
             cd $env:GITHUB_WORKSPACE\swig\csharp
             exec { nmake /f makefile.vc test }
