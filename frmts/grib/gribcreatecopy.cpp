@@ -456,7 +456,7 @@ bool GRIB2Section3Writer::WriteTransverseMercator()
     const double dfAngUnit = 1e-6;
     WriteScaled(
         oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0), dfAngUnit);
-    WriteScaled(oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0), dfAngUnit);
+    WriteScaled(Lon180to360(oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)), dfAngUnit);
     WriteByte(fp, GRIB2BIT_3 | GRIB2BIT_4); // Resolution and component flags
     float fScale = static_cast<float>(oSRS.GetNormProjParm(
         SRS_PP_SCALE_FACTOR, 0.0));
@@ -496,8 +496,8 @@ bool GRIB2Section3Writer::WritePolarSteregraphic()
     const double dfLatOrigin = oSRS.GetNormProjParm(
                                     SRS_PP_LATITUDE_OF_ORIGIN, 0.0);
     WriteScaled(dfLatOrigin, dfAngUnit);
-    WriteScaled(fmod(oSRS.GetNormProjParm(
-                     SRS_PP_CENTRAL_MERIDIAN, 0.0) + 360.0, 360.0), dfAngUnit);
+    WriteScaled(Lon180to360(oSRS.GetNormProjParm(
+                     SRS_PP_CENTRAL_MERIDIAN, 0.0)), dfAngUnit);
     const double dfLinearUnit = 1e-3;
     WriteScaled(adfGeoTransform[1], dfLinearUnit);
     WriteScaled(fabs(adfGeoTransform[5]), dfLinearUnit);
@@ -554,8 +554,8 @@ bool GRIB2Section3Writer::WriteLCC2SPOrAEA(OGRSpatialReference* poSRS)
     WriteByte( fp, 0);
     WriteScaled(
         poSRS->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0), dfAngUnit);
-    WriteScaled(fmod(oSRS.GetNormProjParm(
-                     SRS_PP_CENTRAL_MERIDIAN, 0.0) + 360.0, 360.0), dfAngUnit);
+    WriteScaled(Lon180to360(oSRS.GetNormProjParm(
+                     SRS_PP_CENTRAL_MERIDIAN, 0.0)), dfAngUnit);
     const double dfLinearUnit = 1e-3;
     WriteScaled(adfGeoTransform[1], dfLinearUnit);
     WriteScaled(fabs(adfGeoTransform[5]), dfLinearUnit);
@@ -590,8 +590,8 @@ bool GRIB2Section3Writer::WriteLAEA()
     WriteScaled(dfLLX, dfAngUnit);
     WriteScaled(
         oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_CENTER, 0.0), dfAngUnit);
-    WriteScaled(fmod(oSRS.GetNormProjParm(
-                SRS_PP_LONGITUDE_OF_CENTER, 0.0) + 360.0, 360.0), dfAngUnit);
+    WriteScaled(Lon180to360(oSRS.GetNormProjParm(
+                SRS_PP_LONGITUDE_OF_CENTER, 0.0)), dfAngUnit);
     WriteByte( fp, GRIB2BIT_3 | GRIB2BIT_4); // Resolution and component flags
     const double dfLinearUnit = 1e-3;
     WriteScaled(adfGeoTransform[1], dfLinearUnit);
