@@ -7744,7 +7744,7 @@ def test_tiff_write_coordinate_epoch():
 
 
 @pytest.mark.parametrize("reopen", [True, False])
-def test_tiff_write_muliple_ifds_directory_rewriting(reopen):
+def test_tiff_write_multiple_ifds_directory_rewriting(reopen):
 
     filename = '/vsimem/out.tif'
     ds = gdal.GetDriverByName('GTiff').Create(filename, 32, 32, options=['TILED=YES', 'SPARSE_OK=YES'])
