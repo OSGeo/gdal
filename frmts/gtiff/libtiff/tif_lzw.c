@@ -146,7 +146,7 @@ typedef struct {
 	int     enc_oldcode;		/* last code encountered */
 	tmsize_t    enc_checkpoint;		/* point at which to clear table */
 #define CHECK_GAP	10000		/* enc_ratio check interval */
-	long    enc_ratio;		/* current compression ratio */
+	tmsize_t    enc_ratio;		/* current compression ratio */
 	tmsize_t    enc_incount;		/* (input) data bytes encoded */
 	tmsize_t    enc_outcount;		/* encoded (output) bytes */
 	uint8_t*  enc_rawlimit;		/* bound on tif_rawdata buffer */
@@ -600,7 +600,7 @@ LZWDecodeCompat(TIFF* tif, uint8_t* op0, tmsize_t occ0, uint16_t s)
 	 * Restart interrupted output operation.
 	 */
 	if (sp->dec_restart) {
-		long residue;
+		tmsize_t residue;
 
 		codep = sp->dec_codep;
 		residue = codep->length - sp->dec_restart;
@@ -985,7 +985,7 @@ LZWEncode(TIFF* tif, uint8_t* bp, tmsize_t cc, uint16_t s)
 				assert(nbits <= BITS_MAX);
 				maxcode = (int) MAXCODE(nbits);
 			} else if (incount >= checkpoint) {
-				long rat;
+				tmsize_t rat;
 				/*
 				 * Check compression ratio and, if things seem
 				 * to be slipping, clear the hash table and
