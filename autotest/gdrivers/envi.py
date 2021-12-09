@@ -393,15 +393,19 @@ def test_envi_bigendian():
 # Test different interleaving
 
 
-def test_envi_interleaving():
+@pytest.mark.parametrize('filename_suffix, expected_interleave', [('bip', 'PIXEL'),
+                                                                  ('bil', 'LINE'),
+                                                                  ('bsq', 'BAND')])
+def test_envi_interleaving(filename_suffix, expected_interleave):
 
-    for filename in ('data/envi/envi_rgbsmall_bip.img', 'data/envi/envi_rgbsmall_bil.img', 'data/envi/envi_rgbsmall_bsq.img'):
-        ds = gdal.Open(filename)
-        assert ds, filename
-        assert ds.GetRasterBand(1).Checksum() == 20718, filename
-        assert ds.GetRasterBand(2).Checksum() == 20669, filename
-        assert ds.GetRasterBand(3).Checksum() == 20895, filename
-        ds = None
+    filename = f'data/envi/envi_rgbsmall_{filename_suffix}.img'
+    ds = gdal.Open(filename)
+    assert ds, filename
+    assert ds.GetMetadataItem('INTERLEAVE', 'IMAGE_STRUCTURE') == expected_interleave
+    assert ds.GetRasterBand(1).Checksum() == 20718, filename
+    assert ds.GetRasterBand(2).Checksum() == 20669, filename
+    assert ds.GetRasterBand(3).Checksum() == 20895, filename
+    ds = None
 
 ###############################################################################
 # Test nodata
@@ -448,14 +452,16 @@ def test_envi_rotation_180():
 
 
 @pytest.mark.parametrize('interleaving', ['bip', 'bil', 'bsq'])
-def test_envi_writing_interleaving(interleaving):
+@pytest.mark.parametrize('explicit', [True, False])
+def test_envi_writing_interleaving(interleaving, explicit):
 
     srcfilename = 'data/envi/envi_rgbsmall_' + interleaving + '.img'
     dstfilename = '/vsimem/out'
     try:
+        creationOptions = ['INTERLEAVE=' + interleaving] if explicit else []
         gdal.Translate(dstfilename, srcfilename,
                        format = 'ENVI',
-                       creationOptions=['INTERLEAVE=' + interleaving])
+                       creationOptions=creationOptions)
         ref_data = open(srcfilename, 'rb').read()
         f = gdal.VSIFOpenL(dstfilename, 'rb')
         if f:

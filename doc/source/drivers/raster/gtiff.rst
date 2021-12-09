@@ -358,6 +358,10 @@ Creation Options
    These are slightly less efficient than BAND interleaving for some
    purposes, but some applications only support pixel interleaved TIFF
    files.
+   Starting with GDAL 3.5, when copying from a source dataset with multiple bands
+   which advertises a INTERLEAVE metadata item, if the INTERLEAVE creation option
+   is not specified, the source dataset INTERLEAVE will be automatically taken
+   into account, unless the COMPRESS creation option is specified.
 
 -  **TILED=YES**: By default striped TIFF files are created. This
    option can be used to force creation of tiled TIFF files.

@@ -922,10 +922,10 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
  * but the data layout (INTERLEAVE as PIXEL/LINE/BAND) of the dst dataset is
  * controlled by the papszOptions creation options, and may differ from the
  * poSrcDS src dataset.
- * Starting from GDAL ?.?, if no INTERLEAVE creation option has been specified
- * in papszOptions, and if the driver supports equivalent interleaving as the
- * src dataset, the CreateCopy() will internally add the proper creation option
- * to get the same data interleaving.
+ * Starting from GDAL 3.5, if no INTERLEAVE and COMPRESS creation option has
+ * been specified in papszOptions, and if the driver supports equivalent
+ * interleaving as the src dataset, the CreateCopy() will internally add the
+ * proper creation option to get the same data interleaving.
  *
  * After you have finished working with the returned dataset, it is
  * <b>required</b> to close it with GDALClose(). This does not only close the
@@ -960,16 +960,19 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
     if( pfnProgress == nullptr )
         pfnProgress = GDALDummyProgress;
 
+    const int nBandCount = poSrcDS->GetRasterCount();
+
 /* -------------------------------------------------------------------- */
 /*      If no INTERLEAVE creation option is given, we will try to add   */
 /*      one that matches the current srcDS interleaving                 */
 /* -------------------------------------------------------------------- */
-    char** papszOptionsWithInterleave = nullptr;
-    const bool bHasInterleaveCreationOptions =
-         (CSLFetchNameValue(papszOptions, "INTERLEAVE") != nullptr);
-    if (!bHasInterleaveCreationOptions && poSrcDS)
+    char** papszOptionsToDelete = nullptr;
+    const char* srcInterleave = poSrcDS->GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE");
+    if (nBandCount > 1 &&
+        srcInterleave != nullptr &&
+        CSLFetchNameValue(papszOptions, "INTERLEAVE") == nullptr &&
+        EQUAL(CSLFetchNameValueDef(papszOptions, "COMPRESS", "NONE"), "NONE"))
     {
-        const char* srcInterleave = poSrcDS->GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE");
 
         //look for INTERLEAVE values of the driver
         char** interleavesCSL = nullptr;
@@ -1011,7 +1014,7 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
             (CSLFindString(interleavesCSL, "PIXEL") >= 0) ? "PIXEL" :
             (CSLFindString(interleavesCSL, "BIP") >= 0) ? "BIP" :
             nullptr;
-        const char* dstInterleave = !srcInterleave ? nullptr :
+        const char* dstInterleave =
             EQUAL(srcInterleave, "BAND") ? dstInterleaveBand :
             EQUAL(srcInterleave, "LINE") ? dstInterleaveLine :
             EQUAL(srcInterleave, "PIXEL") ? dstInterleavePixel :
@@ -1020,9 +1023,10 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
 
         if (dstInterleave != nullptr)
         {
-            papszOptionsWithInterleave = CSLDuplicate(papszOptions);
-            papszOptionsWithInterleave = CSLSetNameValue(papszOptionsWithInterleave, "INTERLEAVE", dstInterleave);
-            papszOptions = papszOptionsWithInterleave;
+            papszOptionsToDelete = CSLDuplicate(papszOptions);
+            papszOptionsToDelete = CSLSetNameValue(papszOptionsToDelete, "INTERLEAVE", dstInterleave);
+            papszOptionsToDelete = CSLSetNameValue(papszOptionsToDelete, "@INTERLEAVE_ADDED_AUTOMATICALLY", "YES");
+            papszOptions = papszOptionsToDelete;
         }
     }
 
@@ -1050,12 +1054,12 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
         }
     }
 
-    char** papszOptionsToDelete = nullptr;
     int iIdxQuietDeleteOnCreateCopy =
         CSLPartialFindString(papszOptions, "QUIET_DELETE_ON_CREATE_COPY=");
     if( iIdxQuietDeleteOnCreateCopy >= 0 )
     {
-        papszOptionsToDelete = CSLDuplicate(papszOptions);
+        if( papszOptionsToDelete == nullptr )
+            papszOptionsToDelete = CSLDuplicate(papszOptions);
         papszOptionsToDelete =
             CSLRemoveStrings(papszOptionsToDelete, iIdxQuietDeleteOnCreateCopy,
                              1, nullptr);
@@ -1111,7 +1115,6 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
 
     const int nXSize = poSrcDS->GetRasterXSize();
     const int nYSize = poSrcDS->GetRasterYSize();
-    const int nBandCount = poSrcDS->GetRasterCount();
     GDALDataType eDT = GDT_Unknown;
     if( nBandCount > 0 )
     {
@@ -1153,7 +1156,6 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
             papszOptions, pfnProgress, pProgressData );
     }
 
-    CSLDestroy(papszOptionsWithInterleave);
     CSLDestroy(papszOptionsToDelete);
     return poDstDS;
 }
