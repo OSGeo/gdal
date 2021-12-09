@@ -41,6 +41,10 @@
 #include <vector>
 
 static bool gbHasLZW = false;
+// Give more weight on expensive operations. Rather arbitrary
+constexpr double PROGRESS_WARP_FACTOR = 2;
+constexpr double PROGRESS_OVR_FACTOR = 2;
+constexpr double PROGRESS_COPY_FACTOR = 1;
 
 extern "C" CPL_DLL void GDALRegister_COG();
 
@@ -574,10 +578,10 @@ static std::unique_ptr<GDALDataset> CreateReprojectedDS(
     const bool bRecreateOvr = EQUAL(pszOverviews, "FORCE_USE_EXISTING") ||
                               EQUAL(pszOverviews, "NONE");
     dfTotalPixelsToProcess =
-        double(nXSize) * nYSize * (nBands + (bHasMask ? 1 : 0)) +
-        ((bHasMask && !bRecreateOvr) ? double(nXSize) * nYSize / 3 : 0) +
-        (!bRecreateOvr ? double(nXSize) * nYSize * nBands / 3: 0) +
-        double(nXSize) * nYSize * (nBands + (bHasMask ? 1 : 0)) * 4. / 3;
+        double(nXSize) * nYSize * (nBands + (bHasMask ? 1 : 0)) * PROGRESS_WARP_FACTOR +
+        ((bHasMask && !bRecreateOvr) ? double(nXSize) * nYSize / 3 : 0) * PROGRESS_OVR_FACTOR +
+        (!bRecreateOvr ? double(nXSize) * nYSize * nBands / 3: 0) * PROGRESS_OVR_FACTOR +
+        double(nXSize) * nYSize * (nBands + (bHasMask ? 1 : 0)) * PROGRESS_COPY_FACTOR;
 
     auto psOptions = GDALWarpAppOptionsNew(papszArg, nullptr);
     CSLDestroy(papszArg);
@@ -585,7 +589,7 @@ static std::unique_ptr<GDALDataset> CreateReprojectedDS(
         return nullptr;
 
     const double dfNextPixels =
-        double(nXSize) * nYSize * (nBands + (bHasMask ? 1 : 0));
+        double(nXSize) * nYSize * (nBands + (bHasMask ? 1 : 0)) * PROGRESS_WARP_FACTOR;
     void* pScaledProgress = GDALCreateScaledProgress(
                 dfCurPixels / dfTotalPixelsToProcess,
                 dfNextPixels / dfTotalPixelsToProcess,
@@ -862,9 +866,9 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
     if( dfTotalPixelsToProcess == 0.0 )
     {
         dfTotalPixelsToProcess =
-            (bGenerateMskOvr ? double(nXSize) * nYSize / 3 : 0) +
-            (bGenerateOvr ? double(nXSize) * nYSize * nBands / 3: 0) +
-            double(nXSize) * nYSize * (nBands + (bHasMask ? 1 : 0)) * 4. / 3;
+            (bGenerateMskOvr ? double(nXSize) * nYSize / 3 : 0) * PROGRESS_OVR_FACTOR +
+            (bGenerateOvr ? double(nXSize) * nYSize * nBands / 3: 0) * PROGRESS_OVR_FACTOR +
+            double(nXSize) * nYSize * (nBands + (bHasMask ? 1 : 0)) * PROGRESS_COPY_FACTOR;
     }
 
     CPLStringList aosOverviewOptions;
@@ -886,7 +890,7 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
                 CSLFetchNameValueDef(papszOptions,
                     "RESAMPLING", GetResampling(poSrcDS)));
 
-        double dfNextPixels = dfCurPixels + double(nXSize) * nYSize / 3;
+        double dfNextPixels = dfCurPixels + double(nXSize) * nYSize / 3 * PROGRESS_OVR_FACTOR;
         void* pScaledProgress = GDALCreateScaledProgress(
                 dfCurPixels / dfTotalPixelsToProcess,
                 dfNextPixels / dfTotalPixelsToProcess,
@@ -926,7 +930,7 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
                 CSLFetchNameValueDef(papszOptions,
                     "RESAMPLING", GetResampling(poSrcDS)));
 
-        double dfNextPixels = dfCurPixels + double(nXSize) * nYSize * nBands / 3;
+        double dfNextPixels = dfCurPixels + double(nXSize) * nYSize * nBands / 3 * PROGRESS_OVR_FACTOR;
         void* pScaledProgress = GDALCreateScaledProgress(
                 dfCurPixels / dfTotalPixelsToProcess,
                 dfNextPixels / dfTotalPixelsToProcess,
