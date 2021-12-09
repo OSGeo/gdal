@@ -1207,6 +1207,7 @@ namespace tut
             ensure( poSrcDS != nullptr );
             auto tmpFilename = "/vsimem/tmp.tif";
             const char* options [] = { "-srcwin", "0", "0", "48", "32",
+                                       "-co", "INTERLEAVE=PIXEL",
                                        "-co", "TILED=YES",
                                        "-co", "BLOCKXSIZE=48",
                                        "-co", "BLOCKYSIZE=32", nullptr };

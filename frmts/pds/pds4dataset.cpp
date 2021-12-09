@@ -4370,11 +4370,18 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
     }
     else if( EQUAL(pszImageFormat, "GEOTIFF") )
     {
-        if( EQUAL(pszInterleave, "BIL") )
+        if( EQUAL(pszInterleave, "BIL"))
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "INTERLEAVE=BIL not supported for GeoTIFF in PDS4" );
-            return nullptr;
+            if( aosOptions.FetchBool("@INTERLEAVE_ADDED_AUTOMATICALLY", false) )
+            {
+                pszInterleave = "BSQ";
+            }
+            else
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "INTERLEAVE=BIL not supported for GeoTIFF in PDS4" );
+                return nullptr;
+            }
         }
         GDALDriver* poDrv = static_cast<GDALDriver*>(
                                             GDALGetDriverByName("GTiff"));

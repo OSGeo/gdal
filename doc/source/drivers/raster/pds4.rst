@@ -98,7 +98,11 @@ The following dataset creation options are available:
    -  **INTERLEAVE**\ =BSQ/BIP/BIL. Pixel organization in the image
       file. BSQ is Band SeQuential, BIP is Band Interleaved per Pixel
       and BIL is Band Interleave Per Line. The default is BSQ. BIL is
-      not valid for IMAGE_FORMAT=GEOTIFF
+      not valid for IMAGE_FORMAT=GEOTIFF.
+      Starting with GDAL 3.5, when copying from a source dataset with multiple bands
+      which advertises a INTERLEAVE metadata item, if the INTERLEAVE creation option
+      is not specified, the source dataset INTERLEAVE will be automatically taken
+      into account.
    -  **USE_SRC_LABEL**\ =YES/NO. Whether to use the source label in
       PDS4 to PDS4 conversions. Defaults to YES.
    -  **ARRAY_TYPE**\ =Array/Array_2D/Array_2D_Image/Array_2D_Map/

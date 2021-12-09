@@ -29,7 +29,11 @@ attribute of the '[description]' section.
 The following creation options are supported:
 
 -  INTERLEAVE=BIP/BIL/BSQ. Respectively band interleaved by pixel, band
-   interleaved by line, band sequential. Default to BIL
+   interleaved by line, band sequential. Default to BIL.
+   Starting with GDAL 3.5, when copying from a source dataset with multiple bands
+   which advertises a INTERLEAVE metadata item, if the INTERLEAVE creation option
+   is not specified, the source dataset INTERLEAVE will be automatically taken
+   into account.
 -  PIXELTYPE=SIGNEDBYTE. To write Byte bands as signed byte instead of
    unsigned byte.
 
