@@ -540,10 +540,12 @@ char **VSISparseFileFilesystemHandler::ReadDir( const char * /* pszPath */ )
 /*                 VSIInstallSparseFileFilesystemHandler()              */
 /************************************************************************/
 
-/**
- * Install /vsisparse/ virtual file handler.
- *
- * @see <a href="gdal_virtual_file_systems.html#gdal_virtual_file_systems_vsisparse">/vsisparse/ documentation</a>
+/*!
+ \brief Install /vsisparse/ virtual file handler.
+
+ \verbatim embed:rst
+ See :ref:`/vsisparse/ documentation <vsisparse>`
+ \endverbatim
  */
 
 void VSIInstallSparseFileHandler()
