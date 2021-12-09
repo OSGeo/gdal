@@ -1974,6 +1974,20 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
     /* Add end of line marker */
     osCommand += "\n";
 
+    // PostgreSQL doesn't provide very helpful reporting of invalid UTF-8
+    // content in COPY mode.
+    if( poDS->IsUTF8ClientEncoding() &&
+        !CPLIsUTF8(osCommand.c_str(), static_cast<int>(osCommand.size())) )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Non UTF-8 content found when writing feature " CPL_FRMT_GIB
+                 " of layer %s: %s",
+                 poFeature->GetFID(),
+                 poFeatureDefn->GetName(),
+                 osCommand.c_str());
+        return OGRERR_FAILURE;
+    }
+
     /* ------------------------------------------------------------ */
     /*      Execute the copy.                                       */
     /* ------------------------------------------------------------ */

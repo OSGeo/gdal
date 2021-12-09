@@ -407,7 +407,7 @@ bool S57Reader::SetOptions( char ** papszOptionsIn )
         nOptionFlags &= ~S57M_RETURN_DSID;
 
     pszOptionValue = CSLFetchNameValue( papszOptions, S57O_RECODE_BY_DSSI );
-    if( pszOptionValue != nullptr && CPLTestBool(pszOptionValue) )
+    if( pszOptionValue == nullptr || CPLTestBool(pszOptionValue) )
         nOptionFlags |= S57M_RECODE_BY_DSSI;
     else
         nOptionFlags &= ~S57M_RECODE_BY_DSSI;
