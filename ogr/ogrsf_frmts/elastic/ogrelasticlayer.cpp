@@ -301,6 +301,18 @@ void OGRElasticLayer::AddGeomFieldDefn( const char* pszName,
 }
 
 /************************************************************************/
+/*                       GetGeomFieldProperties()                       */
+/************************************************************************/
+
+void OGRElasticLayer::GetGeomFieldProperties( int iGeomField,
+                                              std::vector<CPLString>& aosPath,
+                                              bool& bIsGeoPoint )
+{
+    aosPath = m_aaosGeomFieldPaths[iGeomField];
+    bIsGeoPoint = CPL_TO_BOOL(m_abIsGeoPoint[iGeomField]);
+}
+
+/************************************************************************/
 /*                     InitFeatureDefnFromMapping()                     */
 /************************************************************************/
 
@@ -3373,6 +3385,33 @@ OGRErr OGRElasticLayer::SetAttributeFilter(const char* pszFilter)
 }
 
 /************************************************************************/
+/*                          ClampEnvelope()                             */
+/************************************************************************/
+
+void OGRElasticLayer::ClampEnvelope(OGREnvelope& sEnvelope)
+{
+    if( sEnvelope.MinX < -180 )
+        sEnvelope.MinX = -180;
+    if( sEnvelope.MinX > 180 )
+        sEnvelope.MinX = 180;
+
+    if( sEnvelope.MinY < -90 )
+        sEnvelope.MinY = -90;
+    if( sEnvelope.MinY > 90 )
+        sEnvelope.MinY = 90;
+
+    if( sEnvelope.MaxX > 180 )
+        sEnvelope.MaxX = 180;
+    if( sEnvelope.MaxX < -180 )
+        sEnvelope.MaxX = -180;
+
+    if( sEnvelope.MaxY > 90 )
+        sEnvelope.MaxY = 90;
+    if( sEnvelope.MaxY < -90 )
+        sEnvelope.MaxY = -90;
+}
+
+/************************************************************************/
 /*                          SetSpatialFilter()                          */
 /************************************************************************/
 
@@ -3410,26 +3449,7 @@ void OGRElasticLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn )
 
     OGREnvelope sEnvelope;
     poGeomIn->getEnvelope(&sEnvelope);
-
-    if( sEnvelope.MinX < -180 )
-        sEnvelope.MinX = -180;
-    if( sEnvelope.MinX > 180 )
-        sEnvelope.MinX = 180;
-
-    if( sEnvelope.MinY < -90 )
-        sEnvelope.MinY = -90;
-    if( sEnvelope.MinY > 90 )
-        sEnvelope.MinY = 90;
-
-    if( sEnvelope.MaxX > 180 )
-        sEnvelope.MaxX = 180;
-    if( sEnvelope.MaxX < -180 )
-        sEnvelope.MaxX = -180;
-
-    if( sEnvelope.MaxY > 90 )
-        sEnvelope.MaxY = 90;
-    if( sEnvelope.MaxY < -90 )
-        sEnvelope.MaxY = -90;
+    ClampEnvelope(sEnvelope);
 
     if( sEnvelope.MinX == -180 && sEnvelope.MinY == -90 &&
         sEnvelope.MaxX == 180 && sEnvelope.MaxY == 90 )

@@ -36,6 +36,7 @@
 #include "cpl_hash_set.h"
 #include "ogr_p.h"
 #include "cpl_http.h"
+#include "cpl_json.h"
 
 #include <map>
 #include <memory>
@@ -225,6 +226,53 @@ public:
     OGRElasticLayer*    Clone() const;
     void                SetOrderBy( const std::vector<OGRESSortDesc>& v )
                                                         { m_aoSortColumns = v; }
+
+    void                SetFeatureDefnFinalized() { m_bFeatureDefnFinalized = true; }
+    void                GetGeomFieldProperties( int iGeomField,
+                                                std::vector<CPLString>& aosPath,
+                                                bool& bIsGeoPoint );
+
+    static void         ClampEnvelope(OGREnvelope& sEnvelope);
+};
+
+/************************************************************************/
+/*                      OGRElasticAggregationLayer                      */
+/************************************************************************/
+
+class OGRElasticAggregationLayer final: public OGRLayer, public OGRGetNextFeatureThroughRaw<OGRElasticAggregationLayer> {
+
+    OGRElasticDataSource *m_poDS = nullptr;
+    std::string           m_osIndexName{};
+    std::string           m_osGeometryField{};
+    OGRFeatureDefn       *m_poFeatureDefn = nullptr;
+    bool                  m_bFeaturesRequested = false;
+    int                   m_iCurFeature = 0;
+    bool                  m_bRequestHasSpatialFilter = false;
+    int                   m_nGeohashGridMaxSize = 10000;
+    int                   m_nGeohashGridPrecision = -1;
+    CPLJSONObject         m_oFieldDef{};
+    CPLJSONObject         m_oAggregatedFieldsRequest{};
+    std::vector<std::unique_ptr<OGRFeature>> m_apoCachedFeatures{};
+
+                          explicit OGRElasticAggregationLayer(OGRElasticDataSource * poDS);
+    std::string           BuildRequest();
+    void                  IssueAggregationRequest();
+    OGRFeature           *GetNextRawFeature();
+
+public:
+                         ~OGRElasticAggregationLayer() override;
+
+    OGRFeatureDefn       *GetLayerDefn() override { return m_poFeatureDefn; }
+    void                  ResetReading() override;
+    DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRElasticAggregationLayer)
+    GIntBig               GetFeatureCount(int bForce) override;
+    int                   TestCapability(const char *) override;
+
+    using                 OGRLayer::SetSpatialFilter;
+    void                  SetSpatialFilter( OGRGeometry *poGeom ) override;
+
+    static std::unique_ptr<OGRElasticAggregationLayer>
+                          Build(OGRElasticDataSource* poDS, const char* pszAggregation);
 };
 
 /************************************************************************/
@@ -239,6 +287,7 @@ class OGRElasticDataSource final: public GDALDataset {
 
     std::set<CPLString> m_oSetLayers;
     std::vector<std::unique_ptr<OGRElasticLayer>> m_apoLayers;
+    std::unique_ptr<OGRElasticAggregationLayer> m_poAggregationLayer{};
     bool                m_bAllLayersListed = false;
     std::map<OGRLayer*, OGRLayer*> m_oMapResultSet;
     std::map<std::string, std::string> m_oMapHeadersFromEnv{};
@@ -246,6 +295,7 @@ class OGRElasticDataSource final: public GDALDataset {
     bool                CheckVersion();
     int                 GetLayerIndex( const char* pszName );
     void                FetchMapping(const char* pszIndexName);
+    bool                OpenAggregation(const char* pszAggregation);
 
 public:
                             OGRElasticDataSource();
@@ -262,7 +312,7 @@ public:
     int                 m_nMajorVersion = 0;
     int                 m_nMinorVersion = 0;
 
-    int Open(GDALOpenInfo* poOpenInfo);
+    bool Open(GDALOpenInfo* poOpenInfo);
 
     int Create(const char *pszFilename,
                char **papszOptions);
@@ -299,6 +349,10 @@ public:
                                    const char* pszPostContent = nullptr,
                                    const std::vector<int>& anSilentedHTTPErrors = std::vector<int>());
     const CPLString&    GetFID() const { return m_osFID; }
+
+    void                FetchMapping(const char* pszIndexName,
+                                     std::set<CPLString>& oSetLayers,
+                                     std::vector<std::unique_ptr<OGRElasticLayer>>& apoLayers);
 };
 
 #endif /* ndef _OGR_Elastic_H_INCLUDED */
