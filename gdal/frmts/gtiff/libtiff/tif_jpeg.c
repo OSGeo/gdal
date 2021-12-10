@@ -947,7 +947,7 @@ static int JPEGSetupDecode(TIFF *tif) {
   JPEGState *sp = JState(tif);
   TIFFDirectory *td = &tif->tif_dir;
 
-#if defined(JPEG_DUAL_MODE_8_12) && !defined(TIFFInitJPEG)
+#if defined(JPEG_DUAL_MODE_8_12) && !defined(FROM_TIF_JPEG_12)
   if (tif->tif_dir.td_bitspersample == 12) {
     /* We pass a pointer to a copy of otherSettings, since */
     /* TIFFReInitJPEG_12() will clear sp */
@@ -1002,7 +1002,7 @@ int TIFFJPEGIsFullStripRequired(TIFF *tif) {
   int ret;
   JPEGState state;
 
-#if defined(JPEG_DUAL_MODE_8_12) && !defined(TIFFJPEGIsFullStripRequired)
+#if defined(JPEG_DUAL_MODE_8_12) && !defined(FROM_TIF_JPEG_12)
   if (tif->tif_dir.td_bitspersample == 12)
     return TIFFJPEGIsFullStripRequired_12(tif);
 #endif
@@ -1675,7 +1675,7 @@ static int JPEGSetupEncode(TIFF *tif) {
   TIFFDirectory *td = &tif->tif_dir;
   static const char module[] = "JPEGSetupEncode";
 
-#if defined(JPEG_DUAL_MODE_8_12) && !defined(TIFFInitJPEG)
+#if defined(JPEG_DUAL_MODE_8_12) && !defined(FROM_TIF_JPEG_12)
   if (tif->tif_dir.td_bitspersample == 12) {
     /* We pass a pointer to a copy of otherSettings, since */
     /* TIFFReInitJPEG_12() will clear sp */
