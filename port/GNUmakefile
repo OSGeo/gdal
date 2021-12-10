@@ -147,6 +147,3 @@ INST_H_FILES = \
 
 install:
 	for f in $(INST_H_FILES) ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_INCLUDE) ; done
-
-xmlreformat:	xmlreformat.o
-	$(CXX) $(CXXFLAGS) xmlreformat.o $(CONFIG_LIBS) -o xmlreformat

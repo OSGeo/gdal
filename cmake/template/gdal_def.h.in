@@ -12,9 +12,6 @@
 /* Define if gdal used odbc */
 #cmakedefine GDAL_USE_ODBC
 
-/* Define if gdal used xmlreformat */
-#cmakedefine GDAL_USE_XMLREFORMAT
-
 /* Define if gdal used cpl */
 #cmakedefine GDAL_USE_CPL
 

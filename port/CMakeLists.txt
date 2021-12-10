@@ -201,10 +201,6 @@ if (ODBC_FOUND)
   gdal_add_private_link_libraries(ODBC::ODBC ODBC::ODBCINST)
 endif ()
 
-if (GDAL_USE_XMLREFORMAT)
-  target_sources(cpl PRIVATE xmlreformat.cpp)
-endif ()
-
 if (MSVC)
   if (CMAKE_CL_64)
     target_compile_definitions(cpl PRIVATE -D_WIN64)
@@ -226,8 +222,6 @@ endif ()
 
 # for plugin DLFCN: for win32 https://github.com/dlfcn-win32/dlfcn-win32/archive/v1.1.1.tar.gz if(WIN32)
 # find_package(dlfcn- win32 REQUIRED) set(CMAKE_DL_LIBS dlfcn-win32::dl) endif()
-
-add_executable(xmlreformat EXCLUDE_FROM_ALL xmlreformat.cpp)
 
 if (GDAL_USE_LIBXML2)
   target_compile_definitions(cpl PRIVATE -DHAVE_LIBXML2)

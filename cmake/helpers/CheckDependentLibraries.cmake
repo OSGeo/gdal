@@ -87,7 +87,6 @@ define_find_package2(FME fmeobjects/cpp/issesion.h fme)
 
 find_package(ODBC COMPONENTS ODBCINST)
 set_package_properties(ODBC PROPERTIES PURPOSE "Enable DB support thru ODBC")
-option(GDAL_USE_XMLREFORMAT "Set ON to use xmlreformat" OFF)
 
 gdal_check_package(MySQL "MySQL" CAN_DISABLE)
 
