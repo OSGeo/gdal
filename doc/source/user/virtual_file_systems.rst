@@ -41,6 +41,8 @@ Virtual file systems can only be used with GDAL or OGR drivers supporting the "l
 
 Notable exceptions are the netCDF, HDF4 and HDF5 drivers.
 
+.. _vsizip:
+
 /vsizip/ (.zip archives)
 ------------------------
 
@@ -88,6 +90,8 @@ Starting with GDAL 2.4, the :decl_configoption:`GDAL_NUM_THREADS` configuration 
 
 Read and write operations cannot be interleaved. The new zip must be closed before being re-opened in read mode.
 
+.. _vsigzip:
+
 /vsigzip/ (gzipped file)
 ------------------------
 
@@ -110,6 +114,8 @@ When the file is located in a writable location, a file with extension .gz.prope
 Write capabilities are also available, but read and write operations cannot be interleaved.
 
 Starting with GDAL 2.4, the :decl_configoption:`GDAL_NUM_THREADS` configuration option can be set to an integer or ``ALL_CPUS`` to enable multi-threaded compression of a single file. This is similar to the pigz utility in independent mode. By default the input stream is split into 1 MB chunks (the chunk size can be tuned with the :decl_configoption:`CPL_VSIL_DEFLATE_CHUNK_SIZE` configuration option, with values like "x K" or "x M"), and each chunk is independently compressed (and terminated by a nine byte marker 0x00 0x00 0xFF 0xFF 0x00 0x00 0x00 0xFF 0xFF, signaling a full flush of the stream and dictionary, enabling potential independent decoding of each chunk). This slightly reduces the compression rate, so very small chunk sizes should be avoided.
+
+.. _vsitar:
 
 /vsitar/ (.tar, .tgz archives)
 ------------------------------
@@ -135,11 +141,11 @@ Starting with GDAL 2.2, an alternate syntax is available so as to enable chainin
 Network based file systems
 --------------------------
 
-A generic :ref:`/vsicurl/ </vsicurl/>` file system handler exists for online resources that do not require particular signed authentication schemes. It is specialized into sub-filesystems for commercial cloud storage services, such as :ref:`/vsis3/ </vsis3/>`,  :ref:`/vsigs/ </vsigs/>`, :ref:`/vsiaz/ </vsiaz/>`, :ref:`/vsioss/ </vsioss/>` or  :ref:`/vsiswift/ </vsiswift/>`.
+A generic :ref:`/vsicurl/ <vsicurl>` file system handler exists for online resources that do not require particular signed authentication schemes. It is specialized into sub-filesystems for commercial cloud storage services, such as :ref:`/vsis3/ <vsis3>`,  :ref:`/vsigs/ <vsigs>`, :ref:`/vsiaz/ <vsiaz>`, :ref:`/vsioss/ <vsioss>` or  :ref:`/vsiswift/ <vsiswift>`.
 
-When reading of entire files in a streaming way is possible, prefer using the :ref:`/vsicurl_streaming/ </vsicurl_streaming/>`, and its variants for the above cloud storage services, for more efficiency.
+When reading of entire files in a streaming way is possible, prefer using the :ref:`/vsicurl_streaming/ <vsicurl_streaming>`, and its variants for the above cloud storage services, for more efficiency.
 
-.. _`/vsicurl/`:
+.. _vsicurl:
 
 /vsicurl/ (http/https/ftp files: random access)
 +++++++++++++++++++++++++++++++++++++++++++++++
@@ -185,14 +191,14 @@ Starting with GDAL 2.1, ``/vsicurl/`` will try to query directly redirected URLs
 
 :cpp:func:`VSIReadDir` should be able to parse the HTML directory listing returned by the most popular web servers, such as Apache and Microsoft IIS.
 
-.. _`/vsicurl_streaming/`:
+.. _vsicurl_streaming:
 
 /vsicurl_streaming/ (http/https/ftp files: streaming)
 +++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 /vsicurl_streaming/ is a file system handler that allows on-the-fly sequential reading of files streamed through HTTP/FTP web protocols, without prior download of the entire file. It requires GDAL to be built against libcurl.
 
-Although this file handler is able seek to random offsets in the file, this will not be efficient. If you need efficient random access and that the server supports range downloading, you should use the :ref:`/vsicurl/ </vsicurl/>` file system handler instead.
+Although this file handler is able seek to random offsets in the file, this will not be efficient. If you need efficient random access and that the server supports range downloading, you should use the :ref:`/vsicurl/ <vsicurl>` file system handler instead.
 
 Recognized filenames are of the form :file:`/vsicurl_streaming/http[s]://path/to/remote/resource` or :file:`/vsicurl_streaming/ftp://path/to/remote/resource`, where :file:`path/to/remote/resource` is the URL of a remote resource.
 
@@ -204,7 +210,7 @@ The file can be cached in RAM by setting the configuration option :decl_configop
 
 :cpp:func:`VSIStatL` will return the size in st_size member and file nature- file or directory - in st_mode member (the later only reliable with FTP resources for now).
 
-.. _`/vsis3/`:
+.. _vsis3:
 
 /vsis3/ (AWS S3 files)
 ++++++++++++++++++++++
@@ -217,7 +223,7 @@ Deletion of files with :cpp:func:`VSIUnlink` is also supported. Starting with GD
 
 Recognized filenames are of the form :file:`/vsis3/bucket/key`, where ``bucket`` is the name of the S3 bucket and ``key`` is the S3 object "key", i.e. a filename potentially containing subdirectories.
 
-The generalities of :ref:`/vsicurl/ </vsicurl/>` apply.
+The generalities of :ref:`/vsicurl/ <vsicurl>` apply.
 
 Several authentication methods are possible, and are attempted in the following order:
 
@@ -251,7 +257,7 @@ Starting with GDAL 3.5, profiles that use IAM role assumption (see https://docs.
 
 .. versionadded:: 2.1
 
-.. _`/vsis3_streaming/`:
+.. _vsis3_streaming:
 
 /vsis3_streaming/ (AWS S3 files: streaming)
 +++++++++++++++++++++++++++++++++++++++++++
@@ -260,11 +266,11 @@ Starting with GDAL 3.5, profiles that use IAM role assumption (see https://docs.
 
 Recognized filenames are of the form :file:`/vsis3_streaming/bucket/key` where ``bucket`` is the name of the S3 bucket and ``key`` is the S3 object "key", i.e. a filename potentially containing subdirectories.
 
-Authentication options, and read-only features, are identical to :ref:`/vsis3/ </vsis3/>`
+Authentication options, and read-only features, are identical to :ref:`/vsis3/ <vsis3>`
 
 .. versionadded:: 2.1
 
-.. _`/vsigs/`:
+.. _vsigs:
 
 /vsigs/ (Google Cloud Storage files)
 ++++++++++++++++++++++++++++++++++++
@@ -276,7 +282,7 @@ Deletion of files with :cpp:func:`VSIUnlink`, creation of directories with :cpp:
 
 Recognized filenames are of the form :file:`/vsigs/bucket/key` where ``bucket`` is the name of the bucket and ``key`` is the object "key", i.e. a filename potentially containing subdirectories.
 
-The generalities of :ref:`/vsicurl/ </vsicurl/>` apply.
+The generalities of :ref:`/vsicurl/ <vsicurl>` apply.
 
 Several authentication methods are possible, and are attempted in the following order:
 
@@ -295,7 +301,7 @@ Starting with GDAL 3.4, the :decl_configoption:`GS_USER_PROJECT` configuration o
 
 .. versionadded:: 2.2
 
-.. _`/vsigs_streaming/`:
+.. _vsigs_streaming:
 
 /vsigs_streaming/ (Google Cloud Storage files: streaming)
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -304,18 +310,18 @@ Starting with GDAL 3.4, the :decl_configoption:`GS_USER_PROJECT` configuration o
 
 Recognized filenames are of the form :file:`/vsigs_streaming/bucket/key` where ``bucket`` is the name of the bucket and ``key`` is the object "key", i.e. a filename potentially containing subdirectories.
 
-Authentication options, and read-only features, are identical to :ref:`/vsigs/ </vsigs/>`
+Authentication options, and read-only features, are identical to :ref:`/vsigs/ <vsigs>`
 
 .. versionadded:: 2.2
 
-.. _`/vsiaz/`:
+.. _vsiaz:
 
 /vsiaz/ (Microsoft Azure Blob files)
 ++++++++++++++++++++++++++++++++++++
 
 /vsiaz/ is a file system handler that allows on-the-fly random reading of (primarily non-public) files available in Microsoft Azure Blob containers, without prior download of the entire file. It requires GDAL to be built against libcurl.
 
-See :ref:`/vsiadls/ </vsiadls/>` for a related filesystem for Azure Data Lake Storage Gen2.
+See :ref:`/vsiadls/ <vsiadls>` for a related filesystem for Azure Data Lake Storage Gen2.
 
 It also allows sequential writing of files. No seeks or read operations are then allowed, so in particular direct writing of GeoTIFF files with the GTiff driver is not supported, unless, if, starting with GDAL 3.2, the :decl_configoption:`CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE` configuration option is set to ``YES``, in which case random-write access is possible (involves the creation of a temporary local file, whose location is controlled by the :decl_configoption:`CPL_TMPDIR` configuration option).
 A block blob will be created if the file size is below 4 MB. Beyond, an append blob will be created (with a maximum file size of 195 GB).
@@ -324,7 +330,7 @@ Deletion of files with :cpp:func:`VSIUnlink`, creation of directories with :cpp:
 
 Recognized filenames are of the form :file:`/vsiaz/container/key`, where ``container`` is the name of the container and ``key`` is the object "key", i.e. a filename potentially containing subdirectories.
 
-The generalities of :ref:`/vsicurl/ </vsicurl/>` apply.
+The generalities of :ref:`/vsicurl/ <vsicurl>` apply.
 
 Several authentication methods are possible, and are attempted in the following order:
 
@@ -346,7 +352,7 @@ Since GDAL 3.3, the :cpp:func:`VSIGetFileMetadata` and :cpp:func:`VSISetFileMeta
 
 .. versionadded:: 2.3
 
-.. _`/vsiaz_streaming/`:
+.. _vsiaz_streaming:
 
 /vsiaz_streaming/ (Microsoft Azure Blob files: streaming)
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -355,11 +361,11 @@ Since GDAL 3.3, the :cpp:func:`VSIGetFileMetadata` and :cpp:func:`VSISetFileMeta
 
 Recognized filenames are of the form :file:`/vsiaz_streaming/container/key` where ``container`` is the name of the container and ``key`` is the object "key", i.e. a filename potentially containing subdirectories.
 
-Authentication options, and read-only features, are identical to :ref:`/vsiaz/ </vsiaz/>`
+Authentication options, and read-only features, are identical to :ref:`/vsiaz/ <vsiaz>`
 
 .. versionadded:: 2.3
 
-.. _`/vsiadls/`:
+.. _vsiadls:
 
 /vsiadls/ (Microsoft Azure Data Lake Storage Gen2)
 ++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -369,7 +375,7 @@ Authentication options, and read-only features, are identical to :ref:`/vsiaz/ <
 systems, without prior download of the entire file.
 It requires GDAL to be built against libcurl.
 
-It has similar capabilities as :ref:`/vsiaz/ </vsiaz/>`, and in particular uses the same
+It has similar capabilities as :ref:`/vsiaz/ <vsiaz>`, and in particular uses the same
 configuration options for authentication. Its advantages over /vsiaz/ are a real
 management of directory and Unix-style ACL support. Some features require the Azure
 storage to have hierarchical support turned on. Consult its
@@ -386,7 +392,7 @@ The main enhancements over /vsiaz/ are:
 
 .. versionadded:: 3.3
 
-.. _`/vsioss/`:
+.. _vsioss:
 
 /vsioss/ (Alibaba Cloud OSS files)
 ++++++++++++++++++++++++++++++++++
@@ -398,7 +404,7 @@ Deletion of files with :cpp:func:`VSIUnlink` is also supported. Creation of dire
 
 Recognized filenames are of the form :file:`/vsioss/bucket/key` where ``bucket`` is the name of the OSS bucket and ``key`` is the OSS object "key", i.e. a filename potentially containing subdirectories.
 
-The generalities of :ref:`/vsicurl/ </vsicurl/>` apply.
+The generalities of :ref:`/vsicurl/ <vsicurl>` apply.
 
 The :decl_configoption:`OSS_SECRET_ACCESS_KEY` and :decl_configoption:`OSS_ACCESS_KEY_ID` configuration options must be set. The :decl_configoption:`OSS_ENDPOINT` configuration option should normally be set to the appropriate value, which reflects the region attached to the bucket. The default is ``oss-us-east-1.aliyuncs.com``. If the bucket is stored in another region than oss-us-east-1, the code logic will redirect to the appropriate endpoint.
 
@@ -406,7 +412,7 @@ On writing, the file is uploaded using the OSS multipart upload API. The size of
 
 .. versionadded:: 2.3
 
-.. _`/vsioss_streaming/`:
+.. _vsioss_streaming:
 
 /vsioss_streaming/ (Alibaba Cloud OSS files: streaming)
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -415,11 +421,11 @@ On writing, the file is uploaded using the OSS multipart upload API. The size of
 
 Recognized filenames are of the form :file:`/vsioss_streaming/bucket/key` where ``bucket`` is the name of the bucket and ``key`` is the object "key", i.e. a filename potentially containing subdirectories.
 
-Authentication options, and read-only features, are identical to :ref:`/vsioss/ </vsioss/>`
+Authentication options, and read-only features, are identical to :ref:`/vsioss/ <vsioss>`
 
 .. versionadded:: 2.3
 
-.. _`/vsiswift/`:
+.. _vsiswift:
 
 /vsiswift/ (OpenStack Swift Object Storage)
 +++++++++++++++++++++++++++++++++++++++++++
@@ -431,7 +437,7 @@ Deletion of files with :cpp:func:`VSIUnlink` is also supported. Creation of dire
 
 Recognized filenames are of the form :file:`/vsiswift/bucket/key` where ``bucket`` is the name of the swift bucket and ``key`` is the swift object "key", i.e. a filename potentially containing subdirectories.
 
-The generalities of :ref:`/vsicurl/ </vsicurl/>` apply.
+The generalities of :ref:`/vsicurl/ <vsicurl>` apply.
 
 Three authentication methods are possible, and are attempted in the following order:
 
@@ -463,7 +469,7 @@ In some versions of OpenStack Swift, the access to large (segmented) files fails
 
 .. versionadded:: 2.3
 
-.. _`/vsiswift_streaming/`:
+.. _vsiswift_streaming:
 
 /vsiswift_streaming/ (OpenStack Swift Object Storage: streaming)
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -472,16 +478,16 @@ In some versions of OpenStack Swift, the access to large (segmented) files fails
 
 Recognized filenames are of the form :file:`/vsiswift_streaming/bucket/key` where ``bucket`` is the name of the bucket and ``key`` is the object "key", i.e. a filename potentially containing subdirectories.
 
-Authentication options, and read-only features, are identical to :ref:`/vsiswift/ </vsiswift/>`
+Authentication options, and read-only features, are identical to :ref:`/vsiswift/ <vsiswift>`
 
 .. versionadded:: 2.3
 
-.. _`/vsihdfs/`:
+.. _vsihdfs:
 
 /vsihdfs/ (Hadoop File System)
 ++++++++++++++++++++++++++++++
 
-/vsihdfs/ is a file system handler that provides read access to HDFS. This handler requires GDAL to have been built with Java support (``--with-java``) and HDFS support (``--with-hdfs``). Support for this handler is currently only available on Unix-like systems. Note: support for the HTTP REST API (webHdfs) is also available with :ref:`/vsiwebhdfs/`
+/vsihdfs/ is a file system handler that provides read access to HDFS. This handler requires GDAL to have been built with Java support (``--with-java``) and HDFS support (``--with-hdfs``). Support for this handler is currently only available on Unix-like systems. Note: support for the HTTP REST API (webHdfs) is also available with :ref:`vsiwebhdfs`
 
 Recognized filenames are of the form :file:`/vsihdfs/hdfsUri` where ``hdfsUri`` is a valid HDFS URI.
 
@@ -494,7 +500,7 @@ Examples:
 
 .. versionadded:: 2.4
 
-.. _`/vsiwebhdfs/`:
+.. _vsiwebhdfs:
 
 /vsiwebhdfs/ (Web Hadoop File System REST API)
 ++++++++++++++++++++++++++++++++++++++++++++++
@@ -512,7 +518,7 @@ Examples:
 It also allows sequential writing of files. No seeks or read operations are then allowed, so in particular direct writing of GeoTIFF files with the GTiff driver is not supported, unless, if, starting with GDAL 3.2, the :decl_configoption:`CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE` configuration option is set to ``YES``, in which case random-write access is possible (involves the creation of a temporary local file, whose location is controlled by the :decl_configoption:`CPL_TMPDIR` configuration option).
 Deletion of files with :cpp:func:`VSIUnlink` is also supported. Creation of directories with :cpp:func:`VSIMkdir` and deletion of (empty) directories with :cpp:func:`VSIRmdir` are also possible.
 
-The generalities of :ref:`/vsicurl/ </vsicurl/>` apply.
+The generalities of :ref:`/vsicurl/ <vsicurl>` apply.
 
 The following configuration options are available:
 
@@ -526,7 +532,7 @@ This file system handler also allows sequential writing of files (no seeks or re
 
 .. versionadded:: 2.4
 
-.. _`/vsistdin/`:
+.. _vsistdin:
 
 /vsistdin/ (standard input streaming)
 -------------------------------------
@@ -537,7 +543,7 @@ The filename syntax must be only :file:`/vsistdin/`.
 
 The file operations available are of course limited to Read() and forward Seek(). Full seek in the first MB of a file is possible, and it is cached so that closing, re-opening :file:`/vsistdin/` and reading within this first megabyte is possible multiple times in the same process.
 
-.. _`/vsistdout/`:
+.. _vsistdout:
 
 /vsistdout/ (standard output streaming)
 ---------------------------------------
@@ -550,7 +556,7 @@ The file operations available are of course limited to Write().
 
 A variation of this file system exists as the :file:`/vsistdout_redirect/` file system handler, where the output function can be defined with :cpp:func:`VSIStdoutSetRedirection`.
 
-.. _`/vsimem/`:
+.. _vsimem:
 
 /vsimem/ (in-memory files)
 --------------------------
@@ -563,7 +569,7 @@ Directory related functions are supported.
 
 /vsimem/ files are visible within the same process. Multiple threads can access the same underlying file in read mode, provided they used different handles, but concurrent write and read operations on the same underlying file are not supported (locking is left to the responsibility of calling code).
 
-.. _`/vsisubfile/`:
+.. _vsisubfile:
 
 /vsisubfile/ (portions of files)
 --------------------------------
@@ -578,13 +584,12 @@ Examples:
 
 ::
 
-
-/vsisubfile/1000_3000,/data/abc.ntf
-/vsisubfile/5000,../xyz/raw.dat
+    /vsisubfile/1000_3000,/data/abc.ntf
+    /vsisubfile/5000,../xyz/raw.dat
 
 Unlike the /vsimem/ or conventional file system handlers, there is no meaningful support for filesystem operations for creating new files, traversing directories, and deleting files within the /vsisubfile/ area. Only the :cpp:func:`VSIStatL`, :cpp:func:`VSIFOpenL` and operations based on the file handle returned by :cpp:func:`VSIFOpenL` operate properly.
 
-.. _`/vsisparse/`:
+.. _vsisparse:
 
 /vsisparse/ (sparse files)
 --------------------------

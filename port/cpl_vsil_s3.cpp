@@ -4629,12 +4629,14 @@ bool VSIS3Handle::CanRestartOnError(const char* pszErrorMsg,
 /*                      VSIInstallS3FileHandler()                       */
 /************************************************************************/
 
-/**
- * \brief Install /vsis3/ Amazon S3 file system handler (requires libcurl)
- *
- * @see <a href="gdal_virtual_file_systems.html#gdal_virtual_file_systems_vsis3">/vsis3/ documentation</a>
- *
- * @since GDAL 2.1
+/*!
+ \brief Install /vsis3/ Amazon S3 file system handler (requires libcurl)
+
+ \verbatim embed:rst
+ See :ref:`/vsis3/ documentation <vsis3>`
+ \endverbatim
+
+ @since GDAL 2.1
  */
 void VSIInstallS3FileHandler( void )
 {

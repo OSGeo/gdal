@@ -619,37 +619,20 @@ VSIVirtualHandle* VSITarFilesystemHandler::Open( const char *pszFilename,
 /*                    VSIInstallTarFileHandler()                        */
 /************************************************************************/
 
-/**
- * \brief Install /vsitar/ file system handler.
- *
- * A special file handler is installed that allows reading on-the-fly in TAR
- * (regular .tar, or compressed .tar.gz/.tgz) archives.
- *
- * All portions of the file system underneath the base path "/vsitar/" will be
- * handled by this driver.
- *
- * The syntax to open a file inside a tar file is /vsitar/path/to/the/file.tar/path/inside/the/tar/file
- * were path/to/the/file.tar is relative or absolute and path/inside/the/tar/file
- * is the relative path to the file inside the archive.
- *
- * Starting with GDAL 2.2, an alternate syntax is available so as to enable
- * chaining and not being dependent on .tar extension :
- * /vsitar/{/path/to/the/archive}/path/inside/the/tar/file. Note that /path/to/the/archive
- * may also itself this alternate syntax.
- *
- * If the path is absolute, it should begin with a / on a Unix-like OS (or C:\ on Windows),
- * so the line looks like /vsitar//home/gdal/...
- * For example gdalinfo /vsitar/myarchive.tar/subdir1/file1.tif
- *
- * Syntactic sugar : if the tar archive contains only one file located at its
- * root, just mentioning "/vsitar/path/to/the/file.tar" will work
- *
- * VSIStatL() will return the uncompressed size in st_size member and file
- * nature- file or directory - in st_mode member.
- *
- * Directory listing is available through VSIReadDir().
- *
- * @since GDAL 1.8.0
+/*!
+ \brief Install /vsitar/ file system handler.
+
+ A special file handler is installed that allows reading on-the-fly in TAR
+ (regular .tar, or compressed .tar.gz/.tgz) archives.
+
+ All portions of the file system underneath the base path "/vsitar/" will be
+ handled by this driver.
+
+ \verbatim embed:rst
+ See :ref:`/vsitar/ documentation <vsitar>`
+ \endverbatim
+
+ @since GDAL 1.8.0
  */
 
 void VSIInstallTarFileHandler(void)

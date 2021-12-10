@@ -1214,13 +1214,15 @@ retry:
 /*                      VSIInstallWebHdfsHandler()                      */
 /************************************************************************/
 
-/**
- * \brief Install /vsiwebhdfs/ WebHDFS (Hadoop File System) REST API file
- * system handler (requires libcurl)
- *
- * @see <a href="gdal_virtual_file_systems.html#gdal_virtual_file_systems_vsiwebhdfs">/vsiwebhdfs/ documentation</a>
- *
- * @since GDAL 2.4
+/*!
+ \brief Install /vsiwebhdfs/ WebHDFS (Hadoop File System) REST API file
+ system handler (requires libcurl)
+
+ \verbatim embed:rst
+ See :ref:`/vsiwebhdfs/ documentation <vsiwebhdfs>`
+ \endverbatim
+
+ @since GDAL 2.4
  */
 void VSIInstallWebHdfsHandler( void )
 {
