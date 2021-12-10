@@ -486,6 +486,8 @@ class OGRPGDataSource final: public OGRDataSource
 
     char               *pszName = nullptr;
 
+    bool                m_bUTF8ClientEncoding = false;
+
     int                 bDSUpdate = false;
     int                 bHavePostGIS = false;
     int                 bHaveGeography = false;
@@ -540,7 +542,8 @@ class OGRPGDataSource final: public OGRDataSource
     bool                m_bHasGeometryColumns = false;
     bool                m_bHasSpatialRefSys = false;
 
-    int                GetUndefinedSRID() const { return nUndefinedSRID; }
+    int                 GetUndefinedSRID() const { return nUndefinedSRID; }
+    bool                IsUTF8ClientEncoding() const { return m_bUTF8ClientEncoding; }
 
   public:
                         OGRPGDataSource();
