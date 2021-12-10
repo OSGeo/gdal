@@ -3,7 +3,16 @@
 
 #if defined(JPEG_DUAL_MODE_8_12)
 
+#define FROM_TIF_JPEG_12
+
+#ifdef TIFFInitJPEG
+#undef TIFFInitJPEG
+#endif
 #define TIFFInitJPEG TIFFInitJPEG_12
+
+#ifdef TIFFJPEGIsFullStripRequired
+#undef TIFFJPEGIsFullStripRequired
+#endif
 #define TIFFJPEGIsFullStripRequired TIFFJPEGIsFullStripRequired_12
 
 int TIFFInitJPEG_12(TIFF *tif, int scheme);
