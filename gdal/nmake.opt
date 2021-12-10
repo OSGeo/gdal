@@ -295,7 +295,7 @@ ODBC_SUPPORTED = 1
 # Uncomment out the following to enable plugin with Microsoft ODBC Driver 17 for SQL Server support for MSSQL Bulk Copy.
 #MSODBCSQL_VERSION = 17
 #MSODBCSQL_DIR = C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\$(MSODBCSQL_VERSION)0\SDK
-#MSODBCSQL_LIB = "$(MSODBCSQL_DIR)\Lib\x86\msodbcsql$(SQLNCLI_VERSION).lib"
+#MSODBCSQL_LIB = "$(MSODBCSQL_DIR)\Lib\x86\msodbcsql$(MSODBCSQL_VERSION).lib"
 #MSODBCSQL_INCLUDE = "-I$(MSODBCSQL_DIR)\Include" -DMSODBCSQL_VERSION=$(MSODBCSQL_VERSION) -DMSSQL_BCP_SUPPORTED=1
 
 # Comment out the following to disable JPEG support.
