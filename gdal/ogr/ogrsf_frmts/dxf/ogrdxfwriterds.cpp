@@ -69,6 +69,14 @@ OGRDXFWriterDS::~OGRDXFWriterDS()
 /* -------------------------------------------------------------------- */
         CPLDebug( "DXF", "Compose final DXF file from components." );
 
+        if (bSuppressOnClose && fpTemp != nullptr)
+        {
+            CPLDebug( "DXF", "Do not copy final DXF when 'suppress on close'." );
+            VSIFCloseL( fpTemp );
+            VSIUnlink( osTempFilename );
+            fpTemp = nullptr;
+        }
+
         TransferUpdateHeader( fp );
 
         if (fpTemp != nullptr)
