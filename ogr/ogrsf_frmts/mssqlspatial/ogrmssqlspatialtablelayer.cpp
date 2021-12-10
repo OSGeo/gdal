@@ -1390,8 +1390,7 @@ int OGRMSSQLSpatialTableLayer::InitBCP(const char* pszDSN)
         return FALSE;
     }
 
-    SQLUINTEGER timeout = 30;
-    Failed(SQLSetConnectAttr(hDBCBCP, SQL_ATTR_LOGIN_TIMEOUT, (void*)timeout, SQL_IS_INTEGER));
+    Failed(SQLSetConnectAttr(hDBCBCP, SQL_ATTR_LOGIN_TIMEOUT, (void*)30, SQL_IS_INTEGER));
 
     SQLCHAR szOutConnString[1024];
     SQLSMALLINT nOutConnStringLen = 0;

@@ -85,8 +85,13 @@ define_find_package2(RASDAMAN rasdaman.hh raslib)
 define_find_package2(Epsilon epsilon.h epsilon)
 define_find_package2(FME fmeobjects/cpp/issesion.h fme)
 
-find_package(ODBC COMPONENTS ODBCINST)
-set_package_properties(ODBC PROPERTIES PURPOSE "Enable DB support thru ODBC")
+if(WIN32)
+gdal_check_package(ODBC "Enable DB support through ODBC" CAN_DISABLE)
+else()
+gdal_check_package(ODBC "Enable DB support through ODBC" COMPONENTS ODBCINST CAN_DISABLE)
+endif()
+gdal_check_package(MSSQL_NCLI "MSSQL Native Client to enable bulk copy" CAN_DISABLE)
+gdal_check_package(MSSQL_ODBC "MSSQL ODBC driver to enable bulk copy" CAN_DISABLE)
 
 gdal_check_package(MySQL "MySQL" CAN_DISABLE)
 
