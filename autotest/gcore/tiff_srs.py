@@ -891,3 +891,12 @@ def test_tiff_srs_read_GeogGeodeticDatumGeoKey_reserved_range():
     assert sr.GetName() == "WGS 84 / Pseudo-Mercator"
     assert gdal.GetLastErrorMsg() != ''
     assert gdal.GetLastErrorType() == gdal.CE_Warning
+
+
+def test_tiff_srs_read_buggy_sentinel1_ellipsoid_code_4326():
+    # That file has GeogEllipsoidGeoKey=4326, instead of 7030
+    ds = gdal.Open('data/gtiff/buggy_sentinel1_ellipsoid_code_4326.tif')
+    sr = ds.GetSpatialRef()
+    assert gdal.GetLastErrorMsg() == ''
+    assert sr.GetAuthorityCode('GEOGCS|DATUM|SPHEROID') == '7030'
+
