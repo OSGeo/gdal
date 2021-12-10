@@ -1321,6 +1321,26 @@ CPLErr GDALPamDataset::SetGeoTransform( double * padfTransform )
 }
 
 /************************************************************************/
+/*                        DeleteGeoTransform()                          */
+/************************************************************************/
+
+/** Remove geotransform from PAM.
+ *
+ * @since GDAL 3.4.1
+ */
+void GDALPamDataset::DeleteGeoTransform()
+
+{
+    PamInitialize();
+
+    if( psPam && psPam->bHaveGeoTransform )
+    {
+        MarkPamDirty();
+        psPam->bHaveGeoTransform = FALSE;
+    }
+}
+
+/************************************************************************/
 /*                            GetGCPCount()                             */
 /************************************************************************/
 

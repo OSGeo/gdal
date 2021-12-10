@@ -166,6 +166,7 @@ class CPL_DLL GDALPamDataset : public GDALDataset
 
     CPLErr GetGeoTransform( double * ) override;
     CPLErr SetGeoTransform( double * ) override;
+    void DeleteGeoTransform();
 
     int GetGCPCount() override;
     const OGRSpatialReference* GetGCPSpatialRef() const override;
