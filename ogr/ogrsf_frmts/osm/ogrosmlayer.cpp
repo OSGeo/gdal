@@ -298,6 +298,7 @@ OGRFeature *OGROSMLayer::MyGetNextFeature( OGROSMLayer** ppoNewCurLayer,
             while( true )
             {
                 int bRet = poDS->ParseNextChunk(nIdxLayer, nullptr, nullptr);
+                // cppcheck-suppress knownConditionTrueFalse
                 if( nFeatureArraySize != 0 )
                     break;
                 if( bRet == FALSE )

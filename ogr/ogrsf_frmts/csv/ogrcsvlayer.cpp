@@ -1107,8 +1107,7 @@ char **OGRCSVLayer::AutodetectFieldTypes(char **papszOpenOptions,
                     else if( aeFieldType[iField] == OFTReal )
                     {
                         if( eOGRFieldType != OFTInteger &&
-                            eOGRFieldType != OFTInteger64 &&
-                            eOGRFieldType != OFTReal )
+                            eOGRFieldType != OFTInteger64 )
                         {
                             aeFieldType[iField] = OFTString;
                             nStringFieldCount++;
@@ -1126,8 +1125,7 @@ char **OGRCSVLayer::AutodetectFieldTypes(char **papszOpenOptions,
                     }
                     else if( aeFieldType[iField] == OFTDateTime )
                     {
-                        if( eOGRFieldType != OFTDate &&
-                            eOGRFieldType != OFTDateTime )
+                        if( eOGRFieldType != OFTDate )
                         {
                             aeFieldType[iField] = OFTString;
                             nStringFieldCount++;

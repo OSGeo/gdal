@@ -91,7 +91,7 @@ static char *EscapeString( const char *pszInput, bool bEscapeDoubleQuotes = fals
                 nDoubleQuotesCount++;
                 pszOutput[iOut++] = pszInput[iIn];
             }
-            
+
         }
         else if( pszInput[iIn] == '\n' || pszInput[iIn] == '\r' )
         {
@@ -1690,7 +1690,7 @@ int TABFile::WriteFeature(TABFeature *poFeature)
         TABMAPObjHdr::NewObj(poFeature->ValidateMapInfoType(m_poMAPFile),
                              nFeatureId));
 
-    if ( poObjHdr == nullptr || m_poMAPFile == nullptr )
+    if ( poObjHdr == nullptr )
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "Failed writing geometry for feature id %d in %s",
@@ -2988,7 +2988,7 @@ CPLErr TABFile::SetMetadataItem( const char * pszName, const char * pszValue,
 
         m_bNeedTABRewrite = TRUE;
         std::shared_ptr<char> oEscapedString(EscapeString( pszValue ), CPLFree);
-        auto result = IMapInfoFile::SetMetadataItem( DESCRIPTION_KEY, 
+        auto result = IMapInfoFile::SetMetadataItem( DESCRIPTION_KEY,
                                                      oEscapedString.get() );
         if(oEscapedString)
         {

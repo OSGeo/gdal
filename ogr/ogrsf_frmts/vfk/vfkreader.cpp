@@ -329,7 +329,7 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
                     pszLine[nLength] = '\0';
                 }
 
-                if (!poDataBlock && pszBlockName) { /* read all data blocks */
+                if (!poDataBlock) { /* read all data blocks */
                     if (osBlockNameLast.empty() ||
                         !EQUAL(pszBlockName, osBlockNameLast.c_str())) {
                         poDataBlockCurrent = GetDataBlock(pszBlockName);

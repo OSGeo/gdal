@@ -308,7 +308,7 @@ int VSICachedFile::LoadBlocks( vsi_l_offset nStartBlock, size_t nBlockCount,
         }
 
         auto poBlock = cpl::make_unique<VSICacheChunk>();
-        if( !poBlock || !poBlock->Allocate( m_nChunkSize ) )
+        if( !poBlock->Allocate( m_nChunkSize ) )
         {
             return FALSE;
         }
@@ -371,7 +371,7 @@ int VSICachedFile::LoadBlocks( vsi_l_offset nStartBlock, size_t nBlockCount,
         const vsi_l_offset iBlock = nStartBlock + i;
 
         auto poBlock = cpl::make_unique<VSICacheChunk>();
-        if( !poBlock || !poBlock->Allocate( m_nChunkSize ) )
+        if( !poBlock->Allocate( m_nChunkSize ) )
         {
             return FALSE;
         }

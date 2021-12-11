@@ -2591,8 +2591,8 @@ OGRDXFFeature *OGRDXFLayer::TranslateASMEntity()
         DXF_LAYER_READER_ERROR();
         return nullptr;
     }
-    if (nCode == 0)
-        poDS->UnreadValue();
+
+    poDS->UnreadValue();
 
     const char* pszEntityHandle =
         poFeature->GetFieldAsString( "EntityHandle" );
