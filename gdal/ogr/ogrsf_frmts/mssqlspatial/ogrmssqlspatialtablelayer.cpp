@@ -1684,11 +1684,11 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
     {
         if (iCol == nGeomColumnIndex)
         {
-            if (poFeature->GetGeometryRef())
+            OGRGeometry *poGeom = poFeature->GetGeometryRef();
+            if (poGeom != nullptr)
             {
                 /* prepare geometry */
-                OGRGeometry *poGeom = poFeature->GetGeometryRef();
-                if (bUseGeometryValidation  && poGeom != nullptr)
+                if (bUseGeometryValidation)
                 {
                     OGRMSSQLGeometryValidator oValidator(poGeom, nGeomColumnType);
                     if (!oValidator.IsValid())
@@ -1699,7 +1699,17 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
                     }
                 }
 
-                OGRMSSQLGeometryWriter poWriter(poGeom, nGeomColumnType, nSRSId);
+                int nOutgoingSRSId = 0;
+                // Use the SRID specified by the provided feature's geometry, if
+                // its spatial-reference system is known; otherwise, use the SRID
+                // associated with the table
+                OGRSpatialReference *poFeatureSRS = poGeom->getSpatialReference();
+                if (poFeatureSRS)
+                    nOutgoingSRSId = poDS->FetchSRSId(poFeatureSRS);
+                if (nOutgoingSRSId <= 0)
+                    nOutgoingSRSId = nSRSId;
+
+                OGRMSSQLGeometryWriter poWriter(poGeom, nGeomColumnType, nOutgoingSRSId);
                 papstBindBuffer[iCol]->RawData.nSize = poWriter.GetDataLen();
                 papstBindBuffer[iCol]->RawData.pData = (GByte *) CPLMalloc(papstBindBuffer[iCol]->RawData.nSize + 1);
 
