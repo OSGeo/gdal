@@ -428,6 +428,7 @@ class OGRMSSQLSpatialTableLayer final: public OGRMSSQLSpatialLayer
     virtual const char* GetName() override;
 
     virtual OGRErr      SetAttributeFilter( const char * ) override;
+    virtual OGRFeature *GetNextFeature() override;
 
     virtual OGRErr      ISetFeature( OGRFeature *poFeature ) override;
     virtual OGRErr      DeleteFeature( GIntBig nFID ) override;
