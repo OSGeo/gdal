@@ -58,7 +58,7 @@ public:
 protected:
     virtual void LoadMetadata() override;
     char** LoadRPCTxtFile();
-    virtual time_t GetAcquisitionTimeFromString(const char* pszDateTime) override;
+    virtual GIntBig GetAcquisitionTimeFromString(const char* pszDateTime) override;
 protected:
     CPLString m_osIMDSourceFilename{};
     CPLString m_osHDRSourceFilename{};
