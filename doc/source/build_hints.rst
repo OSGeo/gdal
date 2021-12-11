@@ -325,6 +325,60 @@ be found.
 
     Path to library file libltidsdk
 
+MSSQL_NCLI
+**********
+
+Microsoft SQL Native Client Library to enable bulk copy in the MSSQLSpatial
+driver. If both MSSQL_NCLI and MSSQL_ODBC are found and enabled, MSSQL_ODBC
+will be used.
+The library is normally found if installed in standard location, and at version 11.
+
+.. option:: MSSQL_NCLI_VERSION
+
+  Major version of the Native Client, typically 11
+
+.. option:: MSSQL_NCLI_INCLUDE_DIR
+
+  Path to include directory with ``sqlncli.h`` header.
+
+.. option:: MSSQL_NCLI_LIBRARY
+
+  Path to library to be linked.
+
+MSSQL_ODBC
+**********
+
+Microsoft SQL Native ODBC driver Library to enable bulk copy in the MSSQLSpatial
+driver. If both MSSQL_NCLI and MSSQL_ODBC are found and enabled, MSSQL_ODBC
+will be used.
+The library is normally found if installed in standard location, and at version 17.
+
+.. option:: MSSQL_ODBC_VERSION
+
+  Major version of the Native Client, typically 17
+
+.. option:: MSSQL_ODBC_INCLUDE_DIR
+
+  Path to include directory with ``msodbcsql.h`` header.
+
+.. option:: MSSQL_ODBC_LIBRARY
+
+  Path to library to be linked.
+
+ODBC
+****
+
+ODBC is required for various drivers: ODBC, PGeo, Walk, MSSQLSpatial.
+It is normally automatically found in system directories on Unix and Windows.
+
+.. option:: ODBC_INCLUDE_DIR
+
+  Path to ODBC include directory with ``sql.h`` header.
+
+.. option:: ODBC_LIBRARY
+
+  Path to ODBC library to be linked.
+
 
 Oracle
 ******
