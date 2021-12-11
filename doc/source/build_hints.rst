@@ -133,15 +133,30 @@ with the ``CMAKE_PREFIX_PATH`` variable.
 Starting with CMake 3.12, it is also possible to use a
 ``<Packagename>_ROOT`` variable to define the prefix for a particular
 package. See https://cmake.org/cmake/help/latest/release/3.12.html?highlight=root#commands
+Note that the case of the package name matters for the _ROOT, _INCLUDE_DIR
+and _LIBRARY variables.
 
 Most dependencies that would be found can also be disabled by setting the
 following option:
 
-.. option:: GDAL_USE_<Packagename>:BOOL=ON/OFF
+.. option:: GDAL_USE_<Packagename_in_upper_case>:BOOL=ON/OFF
 
     Control whether a found dependency can be used for the GDAL build.
 
-curl
+Crnlib
+******
+
+Crnlib / crunch is required for the DDS driver.
+
+.. option:: Crnlib_INCLUDE_DIR
+
+  Path to Crnlib include directory with ``crunch/crnlib.h`` header.
+
+.. option:: Crnlib_LIBRARY
+
+  Path to Crnlib library to be linked.
+
+CURL
 ****
 
 .. option:: CURL_INCLUDE_DIR
@@ -207,7 +222,7 @@ FileGDB_ROOT or CMAKE_PREFIX_PATH should point to the directory of the SDK.
 
     Path to Debug library file (only used on Windows)
 
-geotiff
+GEOTIFF
 *******
 
 .. option:: GEOTIFF_INCLUDE_DIR
@@ -255,8 +270,8 @@ Can be detected with pkg-config.
     Path to a shared or static library file.
 
 
-KDU (Kakadu)
-************
+KDU
+***
 
 The Kakadu library is required for the JP2KAK and JPIPKAK drivers. There is
 no standardized installation layout, nor fixed library file names, so finding
@@ -420,11 +435,11 @@ PROJ
 SQLite3
 *******
 
-.. option:: SQLITE3_INCLUDE_DIR
+.. option:: SQLite3_INCLUDE_DIR
 
     Path to an include directory with the ``sqlite3.h`` header file.
 
-.. option:: SQLITE3_LIBRARY
+.. option:: SQLite3_LIBRARY
 
     Path to a shared or static library file, such as ``sqlite3.dll``,
     ``libsqlite3.so``, ``sqlite3.lib`` or other name.
