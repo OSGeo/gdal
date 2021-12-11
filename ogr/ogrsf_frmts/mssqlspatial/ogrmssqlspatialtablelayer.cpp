@@ -141,6 +141,7 @@ OGRFeatureDefn* OGRMSSQLSpatialTableLayer::GetLayerDefn()
     if( oGetKey.GetPrimaryKeys( pszTableName, poDS->GetCatalog(), pszSchemaName )
         && oGetKey.Fetch() )
     {
+        CPLFree(pszFIDColumn);
         pszFIDColumn = CPLStrdup(oGetKey.GetColData( 3 ));
 
         if( oGetKey.Fetch() ) // more than one field in key!
