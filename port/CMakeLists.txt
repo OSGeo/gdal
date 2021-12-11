@@ -232,10 +232,10 @@ if (GDAL_USE_LIBXML2)
   gdal_add_private_link_libraries(LibXml2::LibXml2)
 endif ()
 
-if (HAVE_CRYPTPP)
+if (GDAL_USE_CRYPTOPP)
   target_compile_definitions(cpl PRIVATE -DHAVE_CRYPTOPP)
-  target_include_directories(cpl PRIVATE $<TARGET_PROPERTY:CRYPTPP::CRYPTPP,INTERFACE_INCLUDE_DIRECTORIES>)
-  gdal_add_private_link_libraries(CRYPTPP::CRYPTPP)
+  target_include_directories(cpl PRIVATE $<TARGET_PROPERTY:CRYPTOPP::CRYPTOPP,INTERFACE_INCLUDE_DIRECTORIES>)
+  gdal_add_private_link_libraries(CRYPTOPP::CRYPTOPP)
 endif ()
 
 if (TARGET OpenSSL::Crypto)

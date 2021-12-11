@@ -56,8 +56,10 @@ if(CRYPTOPP_INCLUDE_DIR)
     endif()
 endif()
 
-if(CRYPTOPP_INCLUDE_DIR AND CRYPTOPP_LIBRARY)
+if(CRYPTOPP_INCLUDE_DIR AND CRYPTOPP_LIBRARY AND NOT DEFINED CRYPTOPP_TEST_KNOWNBUG)
     cmake_push_check_state(RESET)
+    set(CMAKE_REQUIRED_LIBRARIES ${CRYPTOPP_LIBRARY})
+    set(CMAKE_REQUIRED_INCLUDES ${CRYPTOPP_INCLUDE_DIR})
     # Catch issue with clang++ (https://groups.google.com/forum/#!topic/cryptopp-users/DfWHy3bT0KI)
     check_cxx_source_compiles("#include <cryptopp/osrng.h>
         int main(int argc, char** argv) { CryptoPP::AES::Encryption oEnc; return 0; }" CRYPTOPP_TEST_KNOWNBUG)

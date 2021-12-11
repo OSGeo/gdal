@@ -96,7 +96,6 @@ gdal_check_package(MSSQL_ODBC "MSSQL ODBC driver to enable bulk copy" CAN_DISABL
 gdal_check_package(MySQL "MySQL" CAN_DISABLE)
 
 # basic libraries
-find_package(Boost)
 gdal_check_package(CURL "Enable drivers to use web API" CAN_DISABLE)
 
 gdal_check_package(Iconv "Character set recoding (used in GDAL portability library)" CAN_DISABLE)
@@ -161,7 +160,7 @@ find_package(OpenSSL COMPONENTS Crypto SSL)
 if(OPENSSL_FOUND)
     set(HAVE_OPENSSL ON CACHE INTERNAL "")
 endif()
-gdal_check_package(CryptoPP "Use crypto++ library for CPL.")
+gdal_check_package(CryptoPP "Use crypto++ library for CPL." CAN_DISABLE)
 option(CRYPTOPPL_USE_ONLY_CRYPTODLL_ALG "Use Only cryptoDLL alg. only work on dynamic DLL" OFF)
 
 find_package(PROJ 6.0 REQUIRED)
