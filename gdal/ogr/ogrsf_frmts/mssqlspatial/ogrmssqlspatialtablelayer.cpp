@@ -158,14 +158,15 @@ OGRFeatureDefn* OGRMSSQLSpatialTableLayer::GetLayerDefn()
 /*      Get the column definitions for this table.                      */
 /* -------------------------------------------------------------------- */
     CPLODBCStatement oGetCol( poSession );
-    CPLErr eErr;
 
     if( !oGetCol.GetColumns( pszTableName, poDS->GetCatalog(), pszSchemaName ) )
-        return nullptr;
+    {
+        poFeatureDefn = new OGRFeatureDefn();
+        poFeatureDefn->Reference();
+        return poFeatureDefn;
+    }
 
-    eErr = BuildFeatureDefn( pszLayerName, &oGetCol );
-    if( eErr != CE_None )
-        return nullptr;
+    BuildFeatureDefn( pszLayerName, &oGetCol );
 
     if (eGeomType != wkbNone)
         poFeatureDefn->SetGeomType(eGeomType);
@@ -179,7 +180,7 @@ OGRFeatureDefn* OGRMSSQLSpatialTableLayer::GetLayerDefn()
         CPLError( CE_Failure, CPLE_AppDefined,
                   "No column definitions found for table '%s', layer not usable.",
                   pszLayerName );
-        return nullptr;
+        return poFeatureDefn;
     }
 
 /* -------------------------------------------------------------------- */
@@ -672,6 +673,8 @@ OGRFeature *OGRMSSQLSpatialTableLayer::GetFeature( GIntBig nFeatureId )
 
 OGRErr OGRMSSQLSpatialTableLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
 {
+    GetLayerDefn();
+
     // Make sure we have a geometry field:
     if (iGeomField < 0 || iGeomField >= poFeatureDefn->GetGeomFieldCount() ||
         poFeatureDefn->GetGeomFieldDefn(iGeomField)->GetType() == wkbNone)
