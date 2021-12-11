@@ -939,7 +939,10 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateField( OGRFieldDefn *poFieldIn,
     else if( oField.GetType() == OFTString )
     {
         if( oField.GetSubType() == OGRFieldSubType::OFSTUUID)
+        {
+            m_bHasUUIDColumn = true;
             strcpy( szFieldType, "uniqueidentifier" );
+        }
         else if( oField.GetWidth() == 0 || oField.GetWidth() > 4000 || !bPreservePrecision )
             strcpy( szFieldType, "nvarchar(MAX)" );
         else
@@ -2117,7 +2120,7 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
     }
 
 #if (ODBCVER >= 0x0300) && defined(MSSQL_BCP_SUPPORTED)
-    if (bUseCopy)
+    if (bUseCopy && !m_bHasUUIDColumn)
     {
         return CreateFeatureBCP( poFeature );
     }
