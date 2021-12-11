@@ -783,6 +783,16 @@ OGRErr OGRMSSQLSpatialTableLayer::SetAttributeFilter( const char *pszQueryIn )
 }
 
 /************************************************************************/
+/*                           GetNextFeature()                           */
+/************************************************************************/
+
+OGRFeature *OGRMSSQLSpatialTableLayer::GetNextFeature()
+{
+    poDS->EndCopy();
+    return OGRMSSQLSpatialLayer::GetNextFeature();
+}
+
+/************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
