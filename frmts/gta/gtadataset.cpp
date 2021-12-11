@@ -135,6 +135,12 @@ static CPLString PrintDouble( double dfVal )
 /* ==================================================================== */
 /************************************************************************/
 
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+// Suppresses warning: base class ‘class gta::custom_io’ has accessible non-virtual destructor [-Wnon-virtual-dtor]
+#pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
+#endif
+
 class GTAIO final: public gta::custom_io
 {
   private:
@@ -211,6 +217,10 @@ class GTAIO final: public gta::custom_io
         }
     }
 };
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 
 /************************************************************************/
 /* ==================================================================== */
