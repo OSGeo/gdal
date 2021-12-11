@@ -1802,9 +1802,17 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
                     else
                     {
 
-                        papstBindBuffer[iCol]->VarChar.nSize = (SQLLEN)CPLStrlenUTF8(poFeature->GetFieldAsString(iField)) * 2;
                         wchar_t* buffer = CPLRecodeToWChar( poFeature->GetFieldAsString(iField), CPL_ENC_UTF8, CPL_ENC_UCS2);
-                        memcpy(papstBindBuffer[iCol]->VarChar.pData, buffer, papstBindBuffer[iCol]->VarChar.nSize + 2);
+                        const auto nLen = wcslen(buffer);
+                        papstBindBuffer[iCol]->VarChar.nSize = (SQLLEN)nLen * sizeof(GUInt16);
+#if WCHAR_MAX > 0xFFFFu
+                        // Shorten each character to a two-byte value, as expected by
+                        // the ODBC driver
+                        GUInt16 *panBuffer = reinterpret_cast<GUInt16 *>(buffer);
+                        for( unsigned int nIndex = 1; nIndex <= nLen; nIndex += 1 )
+                            panBuffer[nIndex] = static_cast<GUInt16>(buffer[nIndex]);
+#endif
+                        memcpy(papstBindBuffer[iCol]->VarChar.pData, buffer, papstBindBuffer[iCol]->VarChar.nSize + sizeof(GUInt16));
                         CPLFree(buffer);
 
                         if (Failed2( bcp_collen( hDBCBCP, (DBINT)papstBindBuffer[iCol]->VarChar.nSize, iCol + 1) ))
@@ -1982,10 +1990,19 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
                 {
                     if (poFeature->IsFieldSetAndNotNull( iField ))
                     {
-                        papstBindBuffer[iCol]->VarChar.nSize = (SQLLEN)CPLStrlenUTF8(poFeature->GetFieldAsString(iField)) * 2;
-                        if (papstBindBuffer[iCol]->VarChar.nSize > 0)
+                        const char* pszStr = poFeature->GetFieldAsString(iField);
+                        if (pszStr[0] != 0)
                         {
                             wchar_t* buffer = CPLRecodeToWChar( poFeature->GetFieldAsString(iField), CPL_ENC_UTF8, CPL_ENC_UCS2);
+                            const auto nLen = wcslen(buffer);
+                            papstBindBuffer[iCol]->VarChar.nSize = (SQLLEN)nLen * sizeof(GUInt16);
+#if WCHAR_MAX > 0xFFFFu
+                            // Shorten each character to a two-byte value, as expected by
+                            // the ODBC driver
+                            GUInt16 *panBuffer = reinterpret_cast<GUInt16 *>(buffer);
+                            for( unsigned int nIndex = 1; nIndex <= nLen; nIndex += 1 )
+                                panBuffer[nIndex] = static_cast<GUInt16>(buffer[nIndex]);
+#endif
                             if (Failed2( bcp_moretext( hDBCBCP,
                                 (DBINT)papstBindBuffer[iCol]->VarChar.nSize,
                                 (LPCBYTE)buffer ) ))
