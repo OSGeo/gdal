@@ -12997,15 +12997,29 @@ void GTiffDataset::LookForProjection()
     {
         GTIFDefn *psGTIFDefn = GTIFAllocDefn();
 
+        bool bHasErrorBefore = CPLGetLastErrorType() != 0;
         // Collect (PROJ) error messages and remit them later as warnings
         std::vector<CPLErrorHandlerAccumulatorStruct> aoErrors;
         CPLInstallErrorHandlerAccumulator(aoErrors);
         const int ret = GTIFGetDefn( hGTIF, psGTIFDefn );
         CPLUninstallErrorHandlerAccumulator();
 
+        bool bWarnAboutEllipsoid = true;
+
         if( ret )
         {
             CPLInstallErrorHandlerAccumulator(aoErrors);
+
+            if( psGTIFDefn->Ellipsoid == 4326 &&
+                psGTIFDefn->SemiMajor == 6378137 &&
+                psGTIFDefn->SemiMinor == 6356752.314245)
+            {
+                // Buggy Sentinel1 geotiff files use a wrong 4326 code for the
+                // ellipsoid instead of 7030.
+                psGTIFDefn->Ellipsoid = 7030;
+                bWarnAboutEllipsoid = false;
+            }
+
             OGRSpatialReferenceH hSRS = GTIFGetOGISDefnAsOSR( hGTIF, psGTIFDefn );
             CPLUninstallErrorHandlerAccumulator();
 
@@ -13019,6 +13033,12 @@ void GTiffDataset::LookForProjection()
         std::set<std::string> oSetErrorMsg;
         for( const auto& oError: aoErrors )
         {
+            if( !bWarnAboutEllipsoid &&
+                oError.msg.find("ellipsoid not found") != std::string::npos )
+            {
+                continue;
+            }
+
             // Some error messages might be duplicated in GTIFGetDefn()
             // and GTIFGetOGISDefnAsOSR(). Emit them just once.
             if( oSetErrorMsg.find(oError.msg) == oSetErrorMsg.end() )
@@ -13029,6 +13049,11 @@ void GTiffDataset::LookForProjection()
                           "%s",
                           oError.msg.c_str() );
             }
+        }
+
+        if( !bHasErrorBefore && oSetErrorMsg.empty() )
+        {
+            CPLErrorReset();
         }
 
         if( m_oSRS.IsCompound() )
