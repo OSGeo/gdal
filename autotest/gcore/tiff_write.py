@@ -8104,5 +8104,79 @@ def test_tiff_write_band_setmetadata_read_only():
 
     gdal.GetDriverByName('GTiff').Delete(filename)
 
+###############################################################################
+# Test SetColorTable() on a read-only dataset
+
+
+def test_tiff_write_setcolortable_read_only():
+
+    filename = '/vsimem/out.tif'
+    gdal.GetDriverByName('GTiff').Create(filename, 1, 1)
+
+    ds = gdal.Open(filename)
+    ct = gdal.ColorTable()
+    ct.SetColorEntry(0, (1, 2, 3, 255))
+    assert ds.GetRasterBand(1).SetRasterColorTable(ct) == gdal.CE_None
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_PaletteIndex
+    ds = None
+
+    assert gdal.VSIStatL(filename + '.aux.xml') is not None
+
+    ds = gdal.Open(filename)
+    ct = ds.GetRasterBand(1).GetRasterColorTable()
+    assert ct is not None
+    assert ct.GetColorEntry(0) == (1, 2, 3, 255)
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_PaletteIndex
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete(filename)
+
+
+###############################################################################
+# Test SetColorTable() on a read-only dataset, overriding TIFF tags
+
+
+def test_tiff_write_setcolortable_read_only_overriding_tifftags():
+
+    filename = '/vsimem/out.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(filename, 1, 1)
+    ct = gdal.ColorTable()
+    ct.SetColorEntry(0, (1, 2, 3, 255))
+    assert ds.GetRasterBand(1).SetRasterColorTable(ct) == gdal.CE_None
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_PaletteIndex
+    ds = None
+
+    ds = gdal.Open(filename)
+    ct = gdal.ColorTable()
+    ct.SetColorEntry(0, (4, 5, 6, 255))
+    assert ds.GetRasterBand(1).SetRasterColorTable(ct) == gdal.CE_None
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_PaletteIndex
+    ds = None
+
+    assert gdal.VSIStatL(filename + '.aux.xml') is not None
+
+    ds = gdal.Open(filename)
+    assert ct is not None
+    assert ct.GetColorEntry(0) == (4, 5, 6, 255)
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_PaletteIndex
+    ds = None
+
+    ds = gdal.Open(filename, gdal.GA_Update)
+    ct = gdal.ColorTable()
+    ct.SetColorEntry(0, (7, 8, 9, 255))
+    assert ds.GetRasterBand(1).SetRasterColorTable(ct) == gdal.CE_None
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_PaletteIndex
+    ds = None
+
+    assert gdal.VSIStatL(filename + '.aux.xml') is None
+
+    ds = gdal.Open(filename)
+    assert ct is not None
+    assert ct.GetColorEntry(0) == (7, 8, 9, 255)
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_PaletteIndex
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete(filename)
+
 def test_tiff_write_cleanup():
     gdaltest.tiff_drv = None

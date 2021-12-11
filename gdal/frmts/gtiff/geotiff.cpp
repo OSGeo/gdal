@@ -5791,27 +5791,37 @@ CPLErr GTiffRasterBand::SetColorTable( GDALColorTable * poCT )
 /* -------------------------------------------------------------------- */
 /*      Check if this is even a candidate for applying a PCT.           */
 /* -------------------------------------------------------------------- */
-    if( nBand != 1)
+    if( eAccess == GA_Update )
     {
-        ReportError( CE_Failure, CPLE_NotSupported,
-                  "SetColorTable() can only be called on band 1." );
-        return CE_Failure;
-    }
+        if( nBand != 1)
+        {
+            ReportError( CE_Failure, CPLE_NotSupported,
+                      "SetColorTable() can only be called on band 1." );
+            return CE_Failure;
+        }
 
-    if( m_poGDS->m_nSamplesPerPixel != 1 && m_poGDS->m_nSamplesPerPixel != 2)
-    {
-        ReportError( CE_Failure, CPLE_NotSupported,
-                  "SetColorTable() not supported for multi-sample TIFF "
-                  "files." );
-        return CE_Failure;
-    }
+        if( m_poGDS->m_nSamplesPerPixel != 1 && m_poGDS->m_nSamplesPerPixel != 2)
+        {
+            ReportError( CE_Failure, CPLE_NotSupported,
+                      "SetColorTable() not supported for multi-sample TIFF "
+                      "files." );
+            return CE_Failure;
+        }
 
-    if( eDataType != GDT_Byte && eDataType != GDT_UInt16 )
-    {
-        ReportError( CE_Failure, CPLE_NotSupported,
-                  "SetColorTable() only supported for Byte or UInt16 bands "
-                  "in TIFF format." );
-        return CE_Failure;
+        if( eDataType != GDT_Byte && eDataType != GDT_UInt16 )
+        {
+            ReportError( CE_Failure, CPLE_NotSupported,
+                      "SetColorTable() only supported for Byte or UInt16 bands "
+                      "in TIFF format." );
+            return CE_Failure;
+        }
+
+        // Clear any existing PAM color table
+        if( GDALPamRasterBand::GetColorTable() != nullptr )
+        {
+            GDALPamRasterBand::SetColorTable(nullptr);
+            GDALPamRasterBand::SetColorInterpretation(GCI_Undefined);
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -5819,10 +5829,13 @@ CPLErr GTiffRasterBand::SetColorTable( GDALColorTable * poCT )
 /* -------------------------------------------------------------------- */
     if( poCT == nullptr || poCT->GetColorEntryCount() == 0 )
     {
-        TIFFSetField( m_poGDS->m_hTIFF, TIFFTAG_PHOTOMETRIC,
-                      PHOTOMETRIC_MINISBLACK );
+        if( eAccess == GA_Update )
+        {
+            TIFFSetField( m_poGDS->m_hTIFF, TIFFTAG_PHOTOMETRIC,
+                          PHOTOMETRIC_MINISBLACK );
 
-        TIFFUnsetField( m_poGDS->m_hTIFF, TIFFTAG_COLORMAP );
+            TIFFUnsetField( m_poGDS->m_hTIFF, TIFFTAG_COLORMAP );
+        }
 
         if( m_poGDS->m_poColorTable )
         {
@@ -5836,57 +5849,65 @@ CPLErr GTiffRasterBand::SetColorTable( GDALColorTable * poCT )
 /* -------------------------------------------------------------------- */
 /*      Write out the colortable, and update the configuration.         */
 /* -------------------------------------------------------------------- */
-    int nColors = 65536;
-
-    if( eDataType == GDT_Byte )
-        nColors = 256;
-
-    unsigned short *panTRed = static_cast<unsigned short *>(
-        CPLMalloc(sizeof(unsigned short)*nColors) );
-    unsigned short *panTGreen = static_cast<unsigned short *>(
-        CPLMalloc(sizeof(unsigned short)*nColors) );
-    unsigned short *panTBlue = static_cast<unsigned short *>(
-        CPLMalloc(sizeof(unsigned short)*nColors) );
-
-    for( int iColor = 0; iColor < nColors; ++iColor )
+    CPLErr eErr = CE_None;
+    if( eAccess == GA_Update )
     {
-        if( iColor < poCT->GetColorEntryCount() )
-        {
-            GDALColorEntry sRGB;
-            poCT->GetColorEntryAsRGB( iColor, &sRGB );
+        int nColors = 65536;
 
-            panTRed[iColor] = static_cast<unsigned short>(257 * sRGB.c1);
-            panTGreen[iColor] = static_cast<unsigned short>(257 * sRGB.c2);
-            panTBlue[iColor] = static_cast<unsigned short>(257 * sRGB.c3);
-        }
-        else
+        if( eDataType == GDT_Byte )
+            nColors = 256;
+
+        unsigned short *panTRed = static_cast<unsigned short *>(
+            CPLMalloc(sizeof(unsigned short)*nColors) );
+        unsigned short *panTGreen = static_cast<unsigned short *>(
+            CPLMalloc(sizeof(unsigned short)*nColors) );
+        unsigned short *panTBlue = static_cast<unsigned short *>(
+            CPLMalloc(sizeof(unsigned short)*nColors) );
+
+        for( int iColor = 0; iColor < nColors; ++iColor )
         {
-            panTRed[iColor] = 0;
-            panTGreen[iColor] = 0;
-            panTBlue[iColor] = 0;
+            if( iColor < poCT->GetColorEntryCount() )
+            {
+                GDALColorEntry sRGB;
+                poCT->GetColorEntryAsRGB( iColor, &sRGB );
+
+                panTRed[iColor] = static_cast<unsigned short>(257 * sRGB.c1);
+                panTGreen[iColor] = static_cast<unsigned short>(257 * sRGB.c2);
+                panTBlue[iColor] = static_cast<unsigned short>(257 * sRGB.c3);
+            }
+            else
+            {
+                panTRed[iColor] = 0;
+                panTGreen[iColor] = 0;
+                panTBlue[iColor] = 0;
+            }
         }
+
+        TIFFSetField( m_poGDS->m_hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_PALETTE );
+        TIFFSetField( m_poGDS->m_hTIFF, TIFFTAG_COLORMAP,
+                      panTRed, panTGreen, panTBlue );
+
+        CPLFree( panTRed );
+        CPLFree( panTGreen );
+        CPLFree( panTBlue );
+
+        // libtiff 3.X needs setting this in all cases (creation or update)
+        // whereas libtiff 4.X would just need it if there
+        // was no color table before.
+        m_poGDS->m_bNeedsRewrite = true;
     }
-
-    TIFFSetField( m_poGDS->m_hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_PALETTE );
-    TIFFSetField( m_poGDS->m_hTIFF, TIFFTAG_COLORMAP,
-                  panTRed, panTGreen, panTBlue );
-
-    CPLFree( panTRed );
-    CPLFree( panTGreen );
-    CPLFree( panTBlue );
+    else
+    {
+        eErr = GDALPamRasterBand::SetColorTable(poCT);
+    }
 
     if( m_poGDS->m_poColorTable )
         delete m_poGDS->m_poColorTable;
 
-    // libtiff 3.X needs setting this in all cases (creation or update)
-    // whereas libtiff 4.X would just need it if there
-    // was no color table before.
-    m_poGDS->m_bNeedsRewrite = true;
-
     m_poGDS->m_poColorTable = poCT->Clone();
     m_eBandInterp = GCI_PaletteIndex;
 
-    return CE_None;
+    return eErr;
 }
 
 /************************************************************************/
@@ -15194,6 +15215,16 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
                 poBand->GDALPamRasterBand::GetColorInterpretation();
             if( ePAMColorInterp != GCI_Undefined )
                 poBand->m_eBandInterp = ePAMColorInterp;
+
+            if( i == 1 )
+            {
+                auto poCT = poBand->GDALPamRasterBand::GetColorTable();
+                if( poCT )
+                {
+                    delete m_poColorTable;
+                    m_poColorTable = poCT->Clone();
+                }
+            }
         }
     }
     m_bLoadPam = false;
