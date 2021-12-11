@@ -82,7 +82,6 @@ define_find_package2(LIBCSF csf.h csf)
 define_find_package2(Crnlib crunch/crnlib.h crunch)
 define_find_package2(IDB it.h idb)
 define_find_package2(RASDAMAN rasdaman.hh raslib)
-define_find_package2(Epsilon epsilon.h epsilon)
 define_find_package2(FME fmeobjects/cpp/issesion.h fme)
 
 if(WIN32)
