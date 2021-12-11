@@ -298,7 +298,7 @@ class OGRMSSQLSpatialLayer CPL_NON_FINAL: public OGRLayer
 
     int                *panFieldOrdinals = nullptr;
 
-    CPLErr              BuildFeatureDefn( const char *pszLayerName,
+    void               BuildFeatureDefn( const char *pszLayerName,
                                           CPLODBCStatement *poStmt );
 
     virtual CPLODBCStatement *  GetStatement() { return poStmt; }
