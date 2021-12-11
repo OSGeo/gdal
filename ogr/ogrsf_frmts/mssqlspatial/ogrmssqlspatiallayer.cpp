@@ -242,6 +242,7 @@ void OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
                 break;
 
             case SQL_C_GUID:
+                m_bHasUUIDColumn = true;
                 oField.SetType( OFTString );
                 oField.SetSubType( OFSTUUID );
                 break;

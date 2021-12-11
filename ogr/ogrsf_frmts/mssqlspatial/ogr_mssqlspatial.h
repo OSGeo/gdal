@@ -292,6 +292,9 @@ class OGRMSSQLSpatialLayer CPL_NON_FINAL: public OGRLayer
     char               *pszFIDColumn = nullptr;
     int                nFIDColumnIndex = -1;
 
+    // UUID doesn't work for now in bulk copy mode
+    bool               m_bHasUUIDColumn = false;
+
     int                bIsIdentityFid = FALSE;
 
     int                nLayerStatus = MSSQLLAYERSTATUS_ORIGINAL;
