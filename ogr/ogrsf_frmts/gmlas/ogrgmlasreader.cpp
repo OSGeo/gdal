@@ -2400,9 +2400,7 @@ void GMLASReader::endElement(
     if( m_nCurFieldIdx >= 0 && m_nLevel == m_nCurFieldLevel - 1 )
     {
         const OGRFieldType eType(
-            m_nCurFieldIdx >= 0 ?
-                m_oCurCtxt.m_poFeature->GetFieldDefnRef(m_nCurFieldIdx)->GetType() :
-            OFTString );
+            m_oCurCtxt.m_poFeature->GetFieldDefnRef(m_nCurFieldIdx)->GetType());
 
         // Assign XML content to field value
         if( IsArrayType(eType) )

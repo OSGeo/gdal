@@ -2770,14 +2770,9 @@ OGRErr OGRPGDataSource::FlushSoftTransaction()
 
     bSavePointActive = FALSE;
 
-    OGRErr eErr = OGRERR_NONE;
-    if( nSoftTransactionLevel > 0 )
-    {
-        CPLAssert(nSoftTransactionLevel == 1 );
-        nSoftTransactionLevel = 0;
-        eErr = DoTransactionCommand("COMMIT");
-    }
-    return eErr;
+    CPLAssert(nSoftTransactionLevel == 1 );
+    nSoftTransactionLevel = 0;
+    return DoTransactionCommand("COMMIT");
 }
 
 /************************************************************************/

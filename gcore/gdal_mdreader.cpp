@@ -1142,8 +1142,7 @@ CPLErr GDALWriteIMDFile( const char *pszFilename, char **papszMD )
                     // in a double-quoted string (or single-quote in a single-quoted
                     // string), so we are going to convert double-quotes as
                     // two single-quotes...
-                    const std::string osVal = CPLString(pszValue).replaceAll('"', "''");
-                    bOK &= VSIFPrintfL( fp, "\"%s\";\n", osVal.c_str() ) > 0;
+                    bOK &= VSIFPrintfL( fp, "\"%s\";\n", CPLString(pszValue).replaceAll('"', "''").c_str() ) > 0;
                 }
             }
             else

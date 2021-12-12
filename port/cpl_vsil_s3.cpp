@@ -1098,10 +1098,12 @@ VSIS3WriteHandle::WriteChunked( const void *pBuffer, size_t nSize, size_t nMemb 
 
             while (curl_multi_perform(m_hCurlMulti, &still_running) ==
                                             CURLM_CALL_MULTI_PERFORM &&
+                // cppcheck-suppress knownConditionTrueFalse
                 m_nChunkedBufferOff <  m_nChunkedBufferSize)
             {
                 // loop
             }
+            // cppcheck-suppress knownConditionTrueFalse
             if( !still_running || m_nChunkedBufferOff == m_nChunkedBufferSize )
                 break;
 

@@ -865,7 +865,7 @@ namespace nccfdriver
         std::string gt_name_s;
         const char * gt_name= attrf(ncid, varid, CF_SG_GEOMETRY_TYPE, gt_name_s).c_str();
 
-        if(gt_name == nullptr)
+        if(gt_name[0] == '\0')
         {
             return NONE;
         }

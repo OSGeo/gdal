@@ -281,20 +281,22 @@ static char **CSVSplitLine( const char *pszString,
 
 {
     CPLStringList aosRetList;
+    if( pszString == nullptr )
+        return static_cast<char **>(CPLCalloc(sizeof(char *), 1));
 
     char *pszToken = static_cast<char *>(CPLCalloc(10, 1));
     int nTokenMax = 10;
     const size_t nDelimiterLength = strlen(pszDelimiter);
 
     const char* pszIter = pszString;
-    while( pszIter != nullptr && *pszIter != '\0' )
+    while( *pszIter != '\0' )
     {
         bool bInString = false;
 
         int nTokenLen = 0;
 
         // Try to find the next delimiter, marking end of token.
-        for( ; *pszIter != '\0'; pszIter++ )
+        do
         {
             // End if this is a delimiter skip it and break.
             if( !bInString && strncmp(pszIter, pszDelimiter, nDelimiterLength) == 0 )
@@ -330,7 +332,7 @@ static char **CSVSplitLine( const char *pszString,
 
             pszToken[nTokenLen] = *pszIter;
             nTokenLen++;
-        }
+        } while( *(++pszIter) != '\0' );
 
         pszToken[nTokenLen] = '\0';
         aosRetList.AddString(pszToken);

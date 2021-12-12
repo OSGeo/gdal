@@ -213,7 +213,7 @@ void OGRSpatialReference::Private::clear()
     m_wktImportErrors.clear();
 
     m_pj_crs_modified_during_demote = false;
-    m_pjType = m_pj_crs ? proj_get_type(m_pj_crs) : PJ_TYPE_UNKNOWN;
+    m_pjType = PJ_TYPE_UNKNOWN;
     m_osPrimeMeridianName.clear();
     m_osAngularUnits.clear();
     m_osLinearUnits.clear();

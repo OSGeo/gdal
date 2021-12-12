@@ -567,7 +567,7 @@ int     TABRawBinBlock::GotoByteInFile(int nOffset,
                 if ( !(nOffset < m_nFileOffset ||
                        nOffset >= m_nFileOffset+m_nBlockSize) )
                 {
-                    if ( (nOffset<m_nFileOffset || nOffset>=m_nFileOffset+m_nSizeUsed) &&
+                    if ( (nOffset>=m_nFileOffset+m_nSizeUsed) &&
                          (CommitToFile() != 0 ||
                           ReadFromFile(m_fp, nNewBlockPtr, m_nBlockSize) != 0) )
                     {

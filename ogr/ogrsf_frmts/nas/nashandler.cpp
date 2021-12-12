@@ -843,18 +843,11 @@ void NASHandler::characters( const XMLCh *const chars,
         transcode( chars + nSkipped, m_osCharacters,
                    static_cast<int>(length) - nSkipped );
 
-        if( m_pszCurField == nullptr )
-        {
-            m_pszCurField = CPLStrdup(m_osCharacters);
-        }
-        else
-        {
-            m_pszCurField = static_cast<char *>(
-                CPLRealloc( m_pszCurField,
-                            nCurFieldLength+m_osCharacters.size()+1 ) );
-            memcpy( m_pszCurField + nCurFieldLength, m_osCharacters.c_str(),
-                    m_osCharacters.size() + 1 );
-        }
+        m_pszCurField = static_cast<char *>(
+            CPLRealloc( m_pszCurField,
+                        nCurFieldLength+m_osCharacters.size()+1 ) );
+        memcpy( m_pszCurField + nCurFieldLength, m_osCharacters.c_str(),
+                m_osCharacters.size() + 1 );
     }
     else if( m_pszGeometry != nullptr )
     {

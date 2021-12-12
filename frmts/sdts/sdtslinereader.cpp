@@ -310,15 +310,15 @@ void SDTSLineReader::AttachToPolygons( SDTSTransfer * poTransfer,
 /* -------------------------------------------------------------------- */
         if( poPolyReader == nullptr )
         {
-            int         iPolyLayer = -1;
+            int         iPolyLayer;
 
             if( poLine->oLeftPoly.nRecord != -1 )
             {
                 iPolyLayer = poTransfer->FindLayer(poLine->oLeftPoly.szModule);
             }
-            else if( poLine->oRightPoly.nRecord != -1 )
+            else /* if( poLine->oRightPoly.nRecord != -1 ) */
             {
-               iPolyLayer = poTransfer->FindLayer(poLine->oRightPoly.szModule);
+                iPolyLayer = poTransfer->FindLayer(poLine->oRightPoly.szModule);
             }
 
             if( iPolyLayer == -1 )
