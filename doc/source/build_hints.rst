@@ -143,6 +143,26 @@ following option:
 
     Control whether a found dependency can be used for the GDAL build.
 
+
+CFITSIO
+*******
+
+The C FITS I/O library is required for the :ref:`raster.fits` driver.
+Can be detected with pkg-config.
+
+.. option:: CFITSIO_INCLUDE_DIR
+
+    Path to an include directory with the ``fitsio.h`` header file.
+
+.. option:: PDFium_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_CFITSIO=ON/OFF
+
+    Control whether to use CFITSIO. Defaults to ON when CFITSIO is found.
+
+
 Crnlib
 ******
 
@@ -561,6 +581,7 @@ using SQLite3.
 .. option:: PCRE2_LIBRARY
 
     Path to a shared or static library file with "pcre2-8" in its name
+
 
 PDFium
 ******
