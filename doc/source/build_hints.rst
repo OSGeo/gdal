@@ -281,6 +281,24 @@ If not found, an internal copy of libgeotiff will be used.
     libgeotiff is not found.
 
 
+GTA
+***
+
+The GTA library is required for the :ref:`raster.gta` driver.
+
+.. option:: GTA_INCLUDE_DIR
+
+    Path to an include directory with the ``gta/gta.h`` header file.
+
+.. option:: GTA_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_KEY=ON/OFF
+
+    Control whether to use GTA. Defaults to ON when GTA is found.
+
+
 HEIF
 ****
 
@@ -390,6 +408,10 @@ required.
 .. option:: KEA_LIBRARY
 
     Path to a shared or static library file.
+
+.. option:: GDAL_USE_KEA=ON/OFF
+
+    Control whether to use KEA. Defaults to ON when KEA is found.
 
 
 LURATECH

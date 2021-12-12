@@ -338,14 +338,20 @@ gdal_check_package(HDF5 "Enable HDF5" COMPONENTS "C" "CXX" CAN_DISABLE)
 
 gdal_check_package(WebP "WebP compression" CAN_DISABLE)
 gdal_check_package(FreeXL "Enable XLS driver" CAN_DISABLE)
-gdal_check_package(GTA "")
+
+define_find_package2(GTA gta/gta.h gta PKGCONFIG_NAME gta)
+gdal_check_package(GTA "Enable GTA driver" CAN_DISABLE)
+
 gdal_check_package(MRSID "")
 gdal_check_package(DAP "Data Access Protocol library for server and client." CAN_DISABLE)
 gdal_check_package(Armadillo "C++ library for linear algebra (used for TPS transformation)" CAN_DISABLE)
 gdal_check_package(CFITSIO "C FITS I/O library" CAN_DISABLE)
 gdal_check_package(GEOS "Geometry Engine - Open Source (GDAL core dependency)" RECOMMENDED CAN_DISABLE)
 gdal_check_package(HDF4 "Enable HDF4 driver" CAN_DISABLE)
+
+define_find_package2(KEA libkea/KEACommon.h kea)
 gdal_check_package(KEA "Enable KEA driver" CAN_DISABLE)
+
 gdal_check_package(ECW "Enable ECW driver")
 gdal_check_package(NetCDF "Enable netCDF driver" CAN_DISABLE)
 gdal_check_package(OGDI "Enable ogr_OGDI driver")
