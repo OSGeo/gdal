@@ -33,6 +33,7 @@ This module defines the following variables:
 
 if(CMAKE_VERSION VERSION_LESS 3.13)
     set(RASTERLITE2_ROOT CACHE PATH "")
+    mark_as_advanced(RASTERLITE2_ROOT)
 endif()
 
 find_package(PkgConfig QUIET)

@@ -21,6 +21,7 @@ if(NOT ECW_ROOT AND DEFINED ENV{ECW_ROOT})
 endif()
 
 find_path(ECW_INCLUDE_DIR NCSECWClient.h)
+mark_as_advanced(ECW_INCLUDE_DIR)
 
 if (ECW_INCLUDE_DIR)
     set(MAJOR_VERSION 0)
@@ -71,7 +72,7 @@ if (ECW_VERSION_STRING VERSION_GREATER_EQUAL 5.5)
     find_library(ECW_LIBRARY NCSEcw
                  HINTS ${ECW_ROOT}/lib/cpp11abi/${ECW_ARCH}/release
                        ${ECW_ROOT}/lib/vc141/${ECW_ARCH})
-    mark_as_advanced(ECW_INCLUDE_DIR ECW_LIBRARY)
+    mark_as_advanced(ECW_LIBRARY)
     find_package_handle_standard_args(ECW
                                       REQUIRED_VARS ECW_LIBRARY ECW_INCLUDE_DIR
                                       VERSION_VAR ECW_VERSION_STRING)
@@ -96,7 +97,7 @@ else()
     find_library(ECWnet_LIBRARY NCSCnet)
     find_library(ECWC_LIBRARY NCSEcwC)
     find_library(NCSUtil_LIBRARY NCSUtil)
-    mark_as_advanced(ECW_INCLUDE_DIR ECW_LIBRARY)
+    mark_as_advanced(ECW_LIBRARY ECWnet_LIBRARY ECWC_LIBRARY NCSUtil_LIBRARY)
     find_package_handle_standard_args(ECW
                                       REQUIRED_VARS ECW_LIBRARY ECWnet_LIBRARY ECWC_LIBRARY NCSUtil_LIBRARY ECW_INCLUDE_DIR
                                       VERSION_VAR ECW_VERSION_STRING)

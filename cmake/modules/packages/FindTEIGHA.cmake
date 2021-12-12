@@ -136,6 +136,7 @@ if(WIN32)
 endif()
 if (EXISTS "${TEIGHA_ROOT}/lib/${TEIGHA_PLATFORM}/libTG_Db.a")
     find_library(FREETYPE_LIBRARY NAMES freetype)
+    mark_as_advanced(FREETYPE_LIBRARY)
     list(APPEND TEIGHA_LIBRARIES ${FREETYPE_LIBRARY})
 endif()
 

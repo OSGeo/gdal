@@ -48,6 +48,8 @@ find_library(PDFIUM_LIBRARY
              NAMES pdfium libpdfium
              HINTS ${PC_PDFIUM_LIBRARY_DIRS})
 
+mark_as_advanced(PDFIUM_INCLUDE_DIR PDFIUM_LIBRARY)
+
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(PDFium
                                   FOUND_VAR PDFIUM_FOUND

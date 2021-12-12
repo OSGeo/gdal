@@ -50,6 +50,7 @@ else()
     file(TO_CMAKE_PATH "$ENV{ORACLE_HOME}" ORACLE_HOME)
 endif()
 get_filename_component(XE_HOME "[HKEY_LOCAL_MACHINE\\SOFTWARE\\ORACLE\\KEY_XE;ORACLE_HOME]" ABSOLUTE CACHE)
+mark_as_advanced(XE_HOME)
 
 set(ORACLE_INCLUDES_LOCATION
         ${ORACLE_HOME}/rdbms/public
@@ -171,11 +172,13 @@ foreach(_comp IN LISTS Oracle_known_components)
                      PATHS ${ORACLE_LIB_LOCATION}
                      NO_DEFAULT_PATH
         )
+        mark_as_advanced(Oracle_${_comp}_LIBRARY)
         if(Oracle_${_comp}_header)
             find_path(Oracle_${_comp}_INCLUDE_DIR
                       NAMES ${Oracle_${_comp}_header}
                       PATHS ${ORACLE_INCLUDES_LOCATION}
                       NO_DEFAULT_PATH)
+            mark_as_advanced(Oracle_${_comp}_INCLUDE_DIR)
         endif()
     endif()
 endforeach()

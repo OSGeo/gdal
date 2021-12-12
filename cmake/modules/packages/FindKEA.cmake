@@ -11,12 +11,13 @@
 # and following variables are set:
 #    KEA_INCLUDE_DIR
 #    KEA_LIBRARY
-#    KEA_VERSION
 #
 
 find_path(KEA_INCLUDE_DIR
           NAMES libkea/KEACommon.h libkea/kea-config.h)
 find_library(KEA_LIBRARY NAMES kea libkea)
+
+mark_as_advanced(KEA_INCLUDE_DIR KEA_LIBRARY)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(KEA FOUND_VAR KEA_FOUND
