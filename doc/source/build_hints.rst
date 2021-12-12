@@ -281,6 +281,25 @@ If not found, an internal copy of libgeotiff will be used.
     libgeotiff is not found.
 
 
+HEIF
+****
+
+The HEIF (>= 1.1) library used by the :ref:`raster.heif` driver.
+Can be detected with pkg-config.
+
+.. option:: HEIF_INCLUDE_DIR
+
+    Path to an include directory with the ``libheif/heif.h`` header file.
+
+.. option:: HEIF_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_HEIF=ON/OFF
+
+    Control whether to use HEIF. Defaults to ON when HEIF is found.
+
+
 HDF5
 ****
 

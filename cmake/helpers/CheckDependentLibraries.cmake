@@ -371,6 +371,9 @@ gdal_check_package(TileDB "enable TileDB driver" CONFIG CAN_DISABLE)
 gdal_check_package(OpenEXR "OpenEXR >=2.2" CAN_DISABLE)
 gdal_check_package(MONGOCXX "Enable MongoDBV3 driver" CAN_DISABLE)
 
+define_find_package2(HEIF libheif/heif.h heif PKGCONFIG_NAME libheif)
+gdal_check_package(HEIF "HEIF >= 1.1" CAN_DISABLE)
+
 # OpenJPEG's cmake-CONFIG is broken, so call module explicitly
 find_package(OpenJPEG MODULE)
 if(GDAL_USE_OPENJPEG)
