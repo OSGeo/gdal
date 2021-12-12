@@ -56,7 +56,7 @@ public:
     virtual char** GetMetadataFiles() const override;
 protected:
     virtual void LoadMetadata() override;
-    virtual time_t GetAcquisitionTimeFromString(const char* pszDateTime) override;
+    virtual GIntBig GetAcquisitionTimeFromString(const char* pszDateTime) override;
     char **LoadRPCWktFile() const;
     char **LoadIMDWktFile() const;
 protected:

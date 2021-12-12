@@ -139,9 +139,9 @@ protected:
     /**
      * @brief Convert string like 2012-02-25T00:25:59.9440000Z to time
      * @param pszDateTime String to convert
-     * @return value in time_t
+     * @return value in second sinc epoch 1970-01-01 00:00:00
      */
-    virtual time_t GetAcquisitionTimeFromString(const char* pszDateTime);
+    virtual GIntBig GetAcquisitionTimeFromString(const char* pszDateTime);
     /**
      * @brief ReadXMLToList Transform xml to list of NULL terminated name=value
      *        strings
