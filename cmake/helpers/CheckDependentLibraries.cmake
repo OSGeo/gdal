@@ -80,7 +80,6 @@ endfunction()
 # Custom find_package definitions
 define_find_package2(LIBCSF csf.h csf)
 define_find_package2(Crnlib crunch/crnlib.h crunch)
-define_find_package2(IDB it.h idb)
 define_find_package2(RASDAMAN rasdaman.hh raslib)
 define_find_package2(FME fmeobjects/cpp/issesion.h fme)
 
@@ -429,6 +428,7 @@ option(GDAL_USE_MSG "Set ON to build MSG driver and download external https://gi
 gdal_check_package(KDU "Enable KAKADU" CAN_DISABLE)
 gdal_check_package(LURATECH "Enable JP2Lura driver" CAN_DISABLE)
 gdal_check_package(FME "FME")
+gdal_check_package(IDB "Informix DataBlade client")
 
 # bindings
 gdal_check_package(SWIG "Enable language bindings")

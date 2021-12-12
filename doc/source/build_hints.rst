@@ -255,6 +255,34 @@ The https://cmake.org/cmake/help/latest/module/FindHDF5.html module is used to
 detect the HDF5 library.
 
 
+IDB
+***
+
+The Informix DataBase Client SDK is needed to build the IDB driver.
+IDB_ROOT or CMAKE_PREFIX_PATH should point to the directory of the SDK.
+
+
+.. option:: IDB_INCLUDE_DIR
+
+    Path to an include directory (typically ending with ``incl``) with the ``c++/it.h`` header file.
+
+.. option:: IDB_IFCPP_LIBRARY
+
+    Path to a library file ``ifc++`` (typically in the ``lib/c++`` sub directory)
+
+.. option:: IDB_IFDMI_LIBRARY
+
+    Path to a library file ``ifdmi`` (typically in the ``lib/dmi`` sub directory)
+
+.. option:: IDB_IFSQL_LIBRARY
+
+    Path to a library file ``ifsql`` (typically in the ``lib/esql`` sub directory)
+
+.. option:: IDB_IFCLI_LIBRARY
+
+    Path to a library file ``ifcli`` (typically in the ``lib/cli`` sub directory)
+
+
 JXL
 ***
 
