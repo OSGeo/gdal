@@ -453,6 +453,12 @@ be found.
 
     Path to library file libltidsdk
 
+.. option:: GDAL_ENABLE_FRMT_JP2MRSID
+
+    Whether to enable JPEG2000 support through the MrSID SDK. The default value
+    of this option is OFF.
+
+
 MSSQL_NCLI
 **********
 
