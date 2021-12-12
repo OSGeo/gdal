@@ -67,7 +67,6 @@ ogr_dependent_driver(nas "NAS/ALKIS" "GDAL_USE_XERCESC")
 ogr_dependent_driver(plscenes PLSCENES "GDAL_USE_CURL")
 ogr_dependent_driver(sosi "SOSI:Systematic Organization of Spatial Information" "HAVE_SOCI")
 ogr_dependent_driver(wfs "OGC WFS service" "GDAL_USE_CURL")
-ogr_dependent_driver(dds "DDS" "HAVE_CRNLIB")
 ogr_dependent_driver(ngw "NextGIS Web" "GDAL_USE_CURL")
 ogr_dependent_driver(elastic "ElasticSearch" "GDAL_USE_CURL")
 

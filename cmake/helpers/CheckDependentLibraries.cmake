@@ -79,10 +79,9 @@ endfunction()
 
 # Custom find_package definitions
 define_find_package2(LIBCSF csf.h csf)
-define_find_package2(Crnlib crnlib.h crunch)
+define_find_package2(Crnlib crunch/crnlib.h crunch)
 define_find_package2(IDB it.h idb)
 define_find_package2(RASDAMAN rasdaman.hh raslib)
-define_find_package2(Epsilon epsilon.h epsilon)
 define_find_package2(FME fmeobjects/cpp/issesion.h fme)
 
 if(WIN32)
@@ -96,7 +95,6 @@ gdal_check_package(MSSQL_ODBC "MSSQL ODBC driver to enable bulk copy" CAN_DISABL
 gdal_check_package(MySQL "MySQL" CAN_DISABLE)
 
 # basic libraries
-find_package(Boost)
 gdal_check_package(CURL "Enable drivers to use web API" CAN_DISABLE)
 
 gdal_check_package(Iconv "Character set recoding (used in GDAL portability library)" CAN_DISABLE)
@@ -161,7 +159,7 @@ find_package(OpenSSL COMPONENTS Crypto SSL)
 if(OPENSSL_FOUND)
     set(HAVE_OPENSSL ON CACHE INTERNAL "")
 endif()
-gdal_check_package(CryptoPP "Use crypto++ library for CPL.")
+gdal_check_package(CryptoPP "Use crypto++ library for CPL." CAN_DISABLE)
 option(CRYPTOPPL_USE_ONLY_CRYPTODLL_ALG "Use Only cryptoDLL alg. only work on dynamic DLL" OFF)
 
 find_package(PROJ 6.0 REQUIRED)
@@ -367,7 +365,8 @@ gdal_check_package(LZ4 "LZ4 compression" CAN_DISABLE)
 gdal_check_package(Blosc "Blosc compression" CAN_DISABLE)
 gdal_check_package(JXL "JPEG-XL compression (when used with internal libtiff)" CAN_DISABLE)
 gdal_check_package(CharLS "enable gdal_JPEGLS jpeg loss-less driver" CAN_DISABLE)
-gdal_check_package(OpenMP "")
+# unused for now
+#gdal_check_package(OpenMP "")
 gdal_check_package(Crnlib "enable gdal_DDS driver")
 gdal_check_package(IDB "enable ogr_IDB driver")
 # TODO: implement FindRASDAMAN
