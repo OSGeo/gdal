@@ -7,6 +7,7 @@ find_library(IDB_IFCPP_LIBRARY NAMES ifc++ PATHS ${IDB_ROOT} PATH_SUFFIXES lib/c
 find_library(IDB_IFDMI_LIBRARY NAMES ifdmi PATHS ${IDB_ROOT} PATH_SUFFIXES lib/dmi)
 find_library(IDB_IFSQL_LIBRARY NAMES ifsql PATHS ${IDB_ROOT} PATH_SUFFIXES lib/esql)
 find_library(IDB_IFCLI_LIBRARY NAMES ifcli PATHS ${IDB_ROOT} PATH_SUFFIXES lib/cli)
+mark_as_advanced(IDB_INCLUDE_DIR IDB_IFCPP_LIBRARY IDB_IFDMI_LIBRARY IDB_IFSQL_LIBRARY IDB_IFCLI_LIBRARY)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(IDB
