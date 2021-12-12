@@ -533,6 +533,45 @@ PROJ >= 6 is a required dependency for GDAL.
     building Debug releases.
 
 
+RASTERLITE2
+***********
+
+The RasterLite2 (>= 1.1.0) library used by the :ref:`raster.rasterlite2` driver.
+Can be detected with pkg-config.
+
+.. option:: RASTERLITE2_INCLUDE_DIR
+
+    Path to an include directory with the ``rasterlite2/rasterlite2.h`` header file.
+
+.. option:: RASTERLITE2_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_RASTERLITE2=ON/OFF
+
+    Control whether to use RasterLite2. Defaults to ON when RasterLite2 is found.
+
+
+SPATIALITE
+**********
+
+The Spatialite library used by the :ref:`vector.sqlite` and :ref:`vector.gpkg` drivers,
+and the :ref:`sql_sqlite_dialect`.
+Can be detected with pkg-config.
+
+.. option:: SPATIALITE_INCLUDE_DIR
+
+    Path to an include directory with the ``spatialite.h`` header file.
+
+.. option:: SPATIALITY_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_SPATIALITE=ON/OFF
+
+    Control whether to use Spatialite. Defaults to ON when Spatialite is found.
+
+
 SQLite3
 *******
 
