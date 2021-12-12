@@ -374,6 +374,7 @@ gdal_check_package(RASDAMAN "enable rasdaman driver")
 gdal_check_package(rdb "enable RIEGL RDB library" CONFIG CAN_DISABLE)
 gdal_check_package(TileDB "enable TileDB driver" CONFIG CAN_DISABLE)
 gdal_check_package(OpenEXR "OpenEXR >=2.2" CAN_DISABLE)
+gdal_check_package(MONGOCXX "Enable MongoDBV3 driver" CAN_DISABLE)
 
 # OpenJPEG's cmake-CONFIG is broken, so call module explicitly
 find_package(OpenJPEG MODULE)

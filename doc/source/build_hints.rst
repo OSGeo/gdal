@@ -389,6 +389,33 @@ LURATECH_ROOT or CMAKE_PREFIX_PATH should point to the directory of the SDK.
     Path to library file lib_lwf_jp2.a / lwf_jp2.lib
 
 
+MONGOCXX
+********
+
+The MongoCXX and BsonCXX libraries are needed to build the :ref:`vector.mongodbv3` driver.
+Can be detected with pkg-config.
+
+.. option:: MONGOCXX_INCLUDE_DIR
+
+    Path to an include directory with the ``mongocxx/client.hpp`` header file.
+
+.. option:: BSONCXX_INCLUDE_DIR
+
+    Path to an include directory with the ``bsoncxx/config/version.hpp`` header file.
+
+.. option:: MONGOCXX_LIBRARY
+
+    Path to a library file ``mongocxx``
+
+.. option:: BSONCXX_LIBRARY
+
+    Path to a library file ``bsoncxx``
+
+.. option:: GDAL_USE_MONGOCXX=ON/OFF
+
+    Control whether to use MONGOCXX. Defaults to ON when MONGOCXX is found.
+
+
 MRSID
 *****
 
