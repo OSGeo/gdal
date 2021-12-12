@@ -201,6 +201,7 @@ if(ODBCINST IN_LIST ODBC_FIND_COMPONENTS)
   find_library(ODBC_ODBCINST_LIBRARY
                NAMES odbcinst
                PATHS ${_odbc_lib_paths})
+  mark_as_advanced(ODBC_ODBCINST_LIBRARY)
   if(ODBC_ODBCINST_LIBRARY)
     set(ODBC_ODBCINST_FOUND TRUE)
   endif()

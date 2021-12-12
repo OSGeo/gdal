@@ -32,7 +32,7 @@ if (PKG_CONFIG_FOUND)
   pkg_check_modules(PC_OpenEXR QUIET OpenEXR)
   if(PC_OpenEXR_FOUND)
     list(APPEND OpenEXR_LIB_HINTS ${PC_OpenEXR_LIBRARY_DIRS})
-    list(APPEND OpenEXR_INC_HINTS ${PC_OpenEXR_INCLUDE_DIRS})    
+    list(APPEND OpenEXR_INC_HINTS ${PC_OpenEXR_INCLUDE_DIRS})
     set(OpenEXR_VERSION_STRING ${PC_OpenEXR_VERSION})
   endif()
 endif ()
@@ -81,8 +81,20 @@ else()
                  HINTS ${OpenEXR_LIB_HINTS})
 endif()
 
+mark_as_advanced(OpenEXR_LIBRARY
+                 OpenEXR_UTIL_LIBRARY
+                 OpenEXR_HALF_LIBRARY
+                 OpenEXR_IEX_LIBRARY
+                 OpenEXR_INCLUDE_DIR
+                 Imath_INCLUDE_DIR)
+
 find_package_handle_standard_args(OpenEXR FOUND_VAR OpenEXR_FOUND
-                                  REQUIRED_VARS OpenEXR_LIBRARY OpenEXR_UTIL_LIBRARY OpenEXR_HALF_LIBRARY OpenEXR_IEX_LIBRARY OpenEXR_INCLUDE_DIR Imath_INCLUDE_DIR
+                                  REQUIRED_VARS OpenEXR_LIBRARY
+                                                OpenEXR_UTIL_LIBRARY
+                                                OpenEXR_HALF_LIBRARY
+                                                OpenEXR_IEX_LIBRARY
+                                                OpenEXR_INCLUDE_DIR
+                                                Imath_INCLUDE_DIR
                                   VERSION_VAR OpenEXR_VERSION_STRING)
 
 if (OpenEXR_FOUND)

@@ -65,7 +65,7 @@ ogr_dependent_driver(filegdb FileGDB "GDAL_USE_FILEGDB")
 ogr_dependent_driver(libkml LibKML "GDAL_USE_LIBKML")
 ogr_dependent_driver(nas "NAS/ALKIS" "GDAL_USE_XERCESC")
 ogr_dependent_driver(plscenes PLSCENES "GDAL_USE_CURL")
-ogr_dependent_driver(sosi "SOSI:Systematic Organization of Spatial Information" "HAVE_SOCI")
+ogr_dependent_driver(sosi "SOSI:Systematic Organization of Spatial Information" "GDAL_USE_FYBA")
 ogr_dependent_driver(wfs "OGC WFS service" "GDAL_USE_CURL")
 ogr_dependent_driver(ngw "NextGIS Web" "GDAL_USE_CURL")
 ogr_dependent_driver(elastic "ElasticSearch" "GDAL_USE_CURL")
@@ -109,7 +109,7 @@ endif ()
 
 ogr_dependent_driver(xlsx "Microsoft Office Excel(xlsx)" "HAVE_EXPAT")
 ogr_dependent_driver(xls "Microsoft Office Excel(xls)" "GDAL_USE_FREEXL")
-ogr_dependent_driver(mongodb "MongoDB" "MONGODB_FOUND")
+ogr_dependent_driver(mongodbv3 "MongoDB V3" "GDAL_USE_MONGOCXX")
 ogr_dependent_driver(cad "OpenCAD" "GDAL_USE_OPENCAD OR GDAL_USE_OPENCAD_INTERNAL")
 
 # ######################################################################################################################

@@ -48,6 +48,8 @@ find_library(PODOFO_LIBRARY
              NAMES podofo libpodofo
              HINTS ${PC_PODOFO_LIBRARY_DIRS})
 
+mark_as_advanced(PODOFO_INCLUDE_DIR PODOFO_LIBRARY)
+
 if(PODOFO_INCLUDE_DIR)
   set(version_hdr ${PODOFO_INCLUDE_DIR}/base/podofo_config.h)
   if(EXISTS ${version_hdr})

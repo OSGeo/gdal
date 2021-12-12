@@ -143,10 +143,30 @@ following option:
 
     Control whether a found dependency can be used for the GDAL build.
 
+
+CFITSIO
+*******
+
+The C FITS I/O library is required for the :ref:`raster.fits` driver.
+Can be detected with pkg-config.
+
+.. option:: CFITSIO_INCLUDE_DIR
+
+    Path to an include directory with the ``fitsio.h`` header file.
+
+.. option:: PDFium_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_CFITSIO=ON/OFF
+
+    Control whether to use CFITSIO. Defaults to ON when CFITSIO is found.
+
+
 Crnlib
 ******
 
-Crnlib / crunch is required for the DDS driver.
+Crnlib / crunch is required for the :ref:`raster.dds` driver.
 
 .. option:: Crnlib_INCLUDE_DIR
 
@@ -158,6 +178,8 @@ Crnlib / crunch is required for the DDS driver.
 
 CURL
 ****
+
+It is required for all network accesses (HTTP, etc.).
 
 .. option:: CURL_INCLUDE_DIR
 
@@ -175,6 +197,7 @@ CURL
 ECW
 ***
 
+It is required for the :ref:`raster.ecw` driver.
 Currently only support for ECW SDK 3.3 and 5.5 is offered.
 
 For ECW SDK 5.5, ECW_ROOT or CMAKE_PREFIX_PATH should point to the directory
@@ -205,6 +228,8 @@ FileGDB
 *******
 
 FileGDB_ROOT or CMAKE_PREFIX_PATH should point to the directory of the SDK.
+It is required for the :ref:`vector.filegdb` driver (not to be confused with
+the :ref:`vector.openfilegdb` driver that has no external requirements)
 
 .. option:: FileGDB_INCLUDE_DIR
 
@@ -222,8 +247,38 @@ FileGDB_ROOT or CMAKE_PREFIX_PATH should point to the directory of the SDK.
 
     Path to Debug library file (only used on Windows)
 
+
+FYBA
+****
+
+The OpenFyba libraries are needed to build the :ref:`vector.sosi` driver.
+
+.. option:: FYBA_INCLUDE_DIR
+
+    Path to an include directory with the ``fyba.h`` header file.
+
+.. option:: FYBA_FYBA_LIBRARY
+
+    Path to a library file ``fyba``
+
+.. option:: FYBA_FYGM_LIBRARY
+
+    Path to a library file ``fygm``
+
+.. option:: FYBA_FYUT_LIBRARY
+
+    Path to a library file ``fyut``
+
+.. option:: GDAL_USE_FYBA=ON/OFF
+
+    Control whether to use FYBA. Defaults to ON when FYBA is found.
+
+
 GEOTIFF
 *******
+
+It is required for the :ref:`raster.gtiff` drivers, and a few other drivers.
+If not found, an internal copy of libgeotiff will be used.
 
 .. option:: GEOTIFF_INCLUDE_DIR
 
@@ -246,11 +301,48 @@ GEOTIFF
     libgeotiff is not found.
 
 
+GTA
+***
+
+The GTA library is required for the :ref:`raster.gta` driver.
+
+.. option:: GTA_INCLUDE_DIR
+
+    Path to an include directory with the ``gta/gta.h`` header file.
+
+.. option:: GTA_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_KEY=ON/OFF
+
+    Control whether to use GTA. Defaults to ON when GTA is found.
+
+
+HEIF
+****
+
+The HEIF (>= 1.1) library used by the :ref:`raster.heif` driver.
+Can be detected with pkg-config.
+
+.. option:: HEIF_INCLUDE_DIR
+
+    Path to an include directory with the ``libheif/heif.h`` header file.
+
+.. option:: HEIF_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_HEIF=ON/OFF
+
+    Control whether to use HEIF. Defaults to ON when HEIF is found.
+
+
 HDF5
 ****
 
-The HDF5 C library is needed for the HDF5 and BAG drivers. The HDF5 CXX library
-is needed for the KEA driver.
+The HDF5 C library is needed for the :ref:`raster.hdf5` and :ref:`raster.bag` drivers.
+The HDF5 CXX library is needed for the :ref:`raster.kea` driver.
 The https://cmake.org/cmake/help/latest/module/FindHDF5.html module is used to
 detect the HDF5 library.
 
@@ -258,7 +350,7 @@ detect the HDF5 library.
 IDB
 ***
 
-The Informix DataBase Client SDK is needed to build the IDB driver.
+The Informix DataBase Client SDK is needed to build the :ref:`vector.idb` driver.
 IDB_ROOT or CMAKE_PREFIX_PATH should point to the directory of the SDK.
 
 
@@ -286,7 +378,7 @@ IDB_ROOT or CMAKE_PREFIX_PATH should point to the directory of the SDK.
 JXL
 ***
 
-JPEG-XL library used by the GeoTIFF driver, when built against internal libtiff.
+JPEG-XL library used by the :ref:`raster.gtiff` driver, when built against internal libtiff.
 Can be detected with pkg-config.
 
 .. option:: JXL_INCLUDE_DIR
@@ -301,8 +393,8 @@ Can be detected with pkg-config.
 KDU
 ***
 
-The Kakadu library is required for the JP2KAK and JPIPKAK drivers. There is
-no standardized installation layout, nor fixed library file names, so finding
+The Kakadu library is required for the :ref:`raster.jp2kak` and :ref:`raster.jpipkak` drivers.
+There is no standardized installation layout, nor fixed library file names, so finding
 Kakadu artifacts is a bit challenging. Currently automatic finding of it from
 the KDU_ROOT variable is only implemented for Linux, Mac and Windows x86_64
 builds. For other platforms, users need to manually specify the KDU_LIBRARY
@@ -326,7 +418,7 @@ and KDU_AUX_LIBRARY variable.
 KEA
 ***
 
-The KEA library is required for the KEA driver. The HDF5 CXX library is also
+The KEA library is required for the :ref:`raster.kea` driver. The HDF5 CXX library is also
 required.
 
 .. option:: KEA_INCLUDE_DIR
@@ -337,9 +429,15 @@ required.
 
     Path to a shared or static library file.
 
+.. option:: GDAL_USE_KEA=ON/OFF
+
+    Control whether to use KEA. Defaults to ON when KEA is found.
+
 
 LURATECH
 ********
+
+The Luratech JPEG2000 SDK is required for the :ref:`raster.jp2lura` driver.
 
 LURATECH_ROOT or CMAKE_PREFIX_PATH should point to the directory of the SDK.
 
@@ -352,8 +450,37 @@ LURATECH_ROOT or CMAKE_PREFIX_PATH should point to the directory of the SDK.
     Path to library file lib_lwf_jp2.a / lwf_jp2.lib
 
 
+MONGOCXX
+********
+
+The MongoCXX and BsonCXX libraries are needed to build the :ref:`vector.mongodbv3` driver.
+Can be detected with pkg-config.
+
+.. option:: MONGOCXX_INCLUDE_DIR
+
+    Path to an include directory with the ``mongocxx/client.hpp`` header file.
+
+.. option:: BSONCXX_INCLUDE_DIR
+
+    Path to an include directory with the ``bsoncxx/config/version.hpp`` header file.
+
+.. option:: MONGOCXX_LIBRARY
+
+    Path to a library file ``mongocxx``
+
+.. option:: BSONCXX_LIBRARY
+
+    Path to a library file ``bsoncxx``
+
+.. option:: GDAL_USE_MONGOCXX=ON/OFF
+
+    Control whether to use MONGOCXX. Defaults to ON when MONGOCXX is found.
+
+
 MRSID
 *****
+
+The MRSID Raster DSDK is required for the :ref:`raster.mrsid` driver.
 
 MRSID_ROOT or CMAKE_PREFIX_PATH should point to the directory of the SDK ending with
 Raster_DSDK. Note that on Linux, its lib subdirectory should be in the
@@ -368,10 +495,16 @@ be found.
 
     Path to library file libltidsdk
 
+.. option:: GDAL_ENABLE_FRMT_JP2MRSID
+
+    Whether to enable JPEG2000 support through the MrSID SDK. The default value
+    of this option is OFF.
+
+
 MSSQL_NCLI
 **********
 
-Microsoft SQL Native Client Library to enable bulk copy in the MSSQLSpatial
+Microsoft SQL Native Client Library to enable bulk copy in the :ref:`vector.mssqlspatial`
 driver. If both MSSQL_NCLI and MSSQL_ODBC are found and enabled, MSSQL_ODBC
 will be used.
 The library is normally found if installed in standard location, and at version 11.
@@ -391,7 +524,7 @@ The library is normally found if installed in standard location, and at version 
 MSSQL_ODBC
 **********
 
-Microsoft SQL Native ODBC driver Library to enable bulk copy in the MSSQLSpatial
+Microsoft SQL Native ODBC driver Library to enable bulk copy in the :ref:`vector.mssqlspatial`
 driver. If both MSSQL_NCLI and MSSQL_ODBC are found and enabled, MSSQL_ODBC
 will be used.
 The library is normally found if installed in standard location, and at version 17.
@@ -411,7 +544,8 @@ The library is normally found if installed in standard location, and at version 
 ODBC
 ****
 
-ODBC is required for various drivers: ODBC, PGeo, Walk, MSSQLSpatial.
+ODBC is required for various drivers: :ref:`vector.odbc`, :ref:`vector.pgeo`,
+:ref:`vector.walk` and :ref:`vector.mssqlspatial`.
 It is normally automatically found in system directories on Unix and Windows.
 
 .. option:: ODBC_INCLUDE_DIR
@@ -426,6 +560,9 @@ It is normally automatically found in system directories on Unix and Windows.
 Oracle
 ******
 
+The Oracle Instant Client SDK is required for the :ref:`vector.oci` and
+the :ref:`raster.georaster` drivers
+
 .. option:: Oracle_ROOT
 
     Path to the root directory of the Oracle Instant Client SDK
@@ -434,7 +571,8 @@ Oracle
 PCRE2
 *****
 
-Perl-compatible Regular Expressions support, for the REGEXP operator in SQLite3
+Perl-compatible Regular Expressions support, for the REGEXP operator in drivers
+using SQLite3.
 
 .. option:: PCRE2_INCLUDE_DIR
 
@@ -445,8 +583,28 @@ Perl-compatible Regular Expressions support, for the REGEXP operator in SQLite3
     Path to a shared or static library file with "pcre2-8" in its name
 
 
+PDFium
+******
+
+The PDFium library is one of the possible backends for the :ref:`raster.pdf` driver.
+
+.. option:: PDFium_INCLUDE_DIR
+
+    Path to an include directory with the ``public/fpdfview.h`` header file.
+
+.. option:: PDFium_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_PDFIUM=ON/OFF
+
+    Control whether to use PDFium. Defaults to ON when PDFium is found.
+
+
 PROJ
 ****
+
+PROJ >= 6 is a required dependency for GDAL.
 
 .. option:: PROJ_INCLUDE_DIR
 
@@ -460,8 +618,50 @@ PROJ
     building Debug releases.
 
 
+RASTERLITE2
+***********
+
+The RasterLite2 (>= 1.1.0) library used by the :ref:`raster.rasterlite2` driver.
+Can be detected with pkg-config.
+
+.. option:: RASTERLITE2_INCLUDE_DIR
+
+    Path to an include directory with the ``rasterlite2/rasterlite2.h`` header file.
+
+.. option:: RASTERLITE2_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_RASTERLITE2=ON/OFF
+
+    Control whether to use RasterLite2. Defaults to ON when RasterLite2 is found.
+
+
+SPATIALITE
+**********
+
+The Spatialite library used by the :ref:`vector.sqlite` and :ref:`vector.gpkg` drivers,
+and the :ref:`sql_sqlite_dialect`.
+Can be detected with pkg-config.
+
+.. option:: SPATIALITE_INCLUDE_DIR
+
+    Path to an include directory with the ``spatialite.h`` header file.
+
+.. option:: SPATIALITY_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_SPATIALITE=ON/OFF
+
+    Control whether to use Spatialite. Defaults to ON when Spatialite is found.
+
+
 SQLite3
 *******
+
+It is required for the :ref:`vector.sqlite` and :ref:`vector.gpkg` drivers
+(and also used by other drivers), and the :ref:`sql_sqlite_dialect`.
 
 .. option:: SQLite3_INCLUDE_DIR
 
@@ -479,8 +679,9 @@ SQLite3
 TEIGHA
 ******
 
-The TEIGHA / Open Design Alliance libraries are required for the DWG and DGNv8
-drivers. Note that on Linux, with a SDK consisting of shared libraries,
+The TEIGHA / Open Design Alliance libraries are required for the
+:ref:`vector.dwg` and :ref:`vector.dgnv8` drivers.
+Note that on Linux, with a SDK consisting of shared libraries,
 the bin/{platform_name} subdirectory of the SDK should be in the LD_LIBRARY_PATH
 so that the linking of applications succeeds.
 The TEIGHA_ROOT variable must be set.
@@ -492,6 +693,9 @@ The TEIGHA_ROOT variable must be set.
 
 TIFF
 ****
+
+libtiff required for the :ref:`raster.gtiff` drivers, and a few other drivers.
+If not found, an internal copy of libtiff will be used.
 
 .. option:: TIFF_INCLUDE_DIR
 
@@ -518,10 +722,13 @@ TileDB
 ******
 
 Specify install prefix in the ``CMAKE_PREFIX_PATH`` variable.
+It is required for the :ref:`raster.tiledb` driver
 
 
 OpenEXR
 *******
+
+It is required for the :ref:`raster.exr` driver
 
 Specify ``OpenEXR_ROOT`` variable pointing to the parent directory of
 /lib and /include subdirectories, i.e. /DEV/lib/openexr-3.0.

@@ -290,20 +290,15 @@ if (SQLite3_FOUND)
 endif ()
 
 gdal_check_package(SPATIALITE "Enable spatialite support for sqlite3" CAN_DISABLE)
+gdal_check_package(RASTERLITE2 "Enable RasterLite2 support for sqlite3" CAN_DISABLE)
 
-find_package(Rasterlite2)
-set_package_properties(Rasterlite2 PROPERTIES PURPOSE "Enable rasterlite2 support for sqlite3")
-if(RASTERLITE2_FOUND)
-    if(RASTERLITE2_VERSION_STRING VERSION_GREATER_EQUAL 1.1.0)
-        # GDAL requires rasterlite2 1.1.0 and later
-        set(HAVE_RASTERLITE2 ON CACHE INTERNAL "HAVE_RASTERLITE2")
-    else()
+set(HAVE_RASTERLITE2 ${RASTERLITE2_FOUND})
+if(RASTERLITE2_FOUND AND NOT RASTERLITE2_VERSION_STRING STREQUAL "unknown" )
+    if(NOT RASTERLITE2_VERSION_STRING VERSION_GREATER_EQUAL 1.1.0)
         message(STATUS "Rasterlite2 requires version 1.1.0 and later, detected: ${RASTERLITE2_VERSION_STRING}")
         message(STATUS "Turn off rasterlite2 support")
         set(HAVE_RASTERLITE2 OFF CACHE INTERNAL "HAVE_RASTERLITE2")
     endif()
-else()
-    set(HAVE_RASTERLITE2 OFF CACHE INTERNAL "HAVE_RASTERLITE2")
 endif()
 if(GDAL_USE_RASTERLITE2)
     if(NOT HAVE_RASTERLITE2)
@@ -343,14 +338,23 @@ gdal_check_package(HDF5 "Enable HDF5" COMPONENTS "C" "CXX" CAN_DISABLE)
 
 gdal_check_package(WebP "WebP compression" CAN_DISABLE)
 gdal_check_package(FreeXL "Enable XLS driver" CAN_DISABLE)
-gdal_check_package(GTA "")
+
+define_find_package2(GTA gta/gta.h gta PKGCONFIG_NAME gta)
+gdal_check_package(GTA "Enable GTA driver" CAN_DISABLE)
+
 gdal_check_package(MRSID "")
 gdal_check_package(DAP "Data Access Protocol library for server and client." CAN_DISABLE)
 gdal_check_package(Armadillo "C++ library for linear algebra (used for TPS transformation)" CAN_DISABLE)
+
+define_find_package2(CFITSIO fitsio.h cfitsio PKGCONFIG_NAME cfitsio)
 gdal_check_package(CFITSIO "C FITS I/O library" CAN_DISABLE)
+
 gdal_check_package(GEOS "Geometry Engine - Open Source (GDAL core dependency)" RECOMMENDED CAN_DISABLE)
 gdal_check_package(HDF4 "Enable HDF4 driver" CAN_DISABLE)
+
+define_find_package2(KEA libkea/KEACommon.h kea)
 gdal_check_package(KEA "Enable KEA driver" CAN_DISABLE)
+
 gdal_check_package(ECW "Enable ECW driver")
 gdal_check_package(NetCDF "Enable netCDF driver" CAN_DISABLE)
 gdal_check_package(OGDI "Enable ogr_OGDI driver")
@@ -358,11 +362,14 @@ gdal_check_package(OGDI "Enable ogr_OGDI driver")
 # so disable it by default even if found.
 gdal_check_package(OpenCL "Enable OpenCL (may be used for warping)" DISABLED_BY_DEFAULT)
 gdal_check_package(PostgreSQL "" CAN_DISABLE)
-gdal_check_package(SOSI  "enable ogr_SOSI driver")
+gdal_check_package(FYBA "enable ogr_SOSI driver" CAN_DISABLE)
 gdal_check_package(LibLZMA "LZMA compression" CAN_DISABLE)
 gdal_check_package(LZ4 "LZ4 compression" CAN_DISABLE)
 gdal_check_package(Blosc "Blosc compression" CAN_DISABLE)
+
+define_find_package2(JXL jxl/decode.h jxl PKGCONFIG_NAME libjxl)
 gdal_check_package(JXL "JPEG-XL compression (when used with internal libtiff)" CAN_DISABLE)
+
 gdal_check_package(CharLS "enable gdal_JPEGLS jpeg loss-less driver" CAN_DISABLE)
 # unused for now
 #gdal_check_package(OpenMP "")
@@ -374,6 +381,10 @@ gdal_check_package(RASDAMAN "enable rasdaman driver")
 gdal_check_package(rdb "enable RIEGL RDB library" CONFIG CAN_DISABLE)
 gdal_check_package(TileDB "enable TileDB driver" CONFIG CAN_DISABLE)
 gdal_check_package(OpenEXR "OpenEXR >=2.2" CAN_DISABLE)
+gdal_check_package(MONGOCXX "Enable MongoDBV3 driver" CAN_DISABLE)
+
+define_find_package2(HEIF libheif/heif.h heif PKGCONFIG_NAME libheif)
+gdal_check_package(HEIF "HEIF >= 1.1" CAN_DISABLE)
 
 # OpenJPEG's cmake-CONFIG is broken, so call module explicitly
 find_package(OpenJPEG MODULE)
@@ -407,9 +418,12 @@ endif()
 unset(TMP_GRASS)
 
 # PDF library: one of them enables PDF driver
-gdal_check_package(Poppler "Enable PDF driver" CAN_DISABLE)
-gdal_check_package(PDFium "Enable PDF driver" CAN_DISABLE)
-gdal_check_package(Podofo "Enable PDF driver" CAN_DISABLE)
+gdal_check_package(Poppler "Enable PDF driver (read side)" CAN_DISABLE)
+
+define_find_package2(PDFium public/fpdfview.h pdfium FIND_PATH_SUFFIX pdfium)
+gdal_check_package(PDFium "Enable PDF driver (read side)" CAN_DISABLE)
+
+gdal_check_package(Podofo "Enable PDF driver (read side)" CAN_DISABLE)
 if(GDAL_USE_POPPLER OR GDAL_USE_PDFIUM OR GDAL_USE_PODOFO)
     set(HAVE_PDFLIB ON)
 else()
