@@ -358,7 +358,7 @@ gdal_check_package(OGDI "Enable ogr_OGDI driver")
 # so disable it by default even if found.
 gdal_check_package(OpenCL "Enable OpenCL (may be used for warping)" DISABLED_BY_DEFAULT)
 gdal_check_package(PostgreSQL "" CAN_DISABLE)
-gdal_check_package(SOSI  "enable ogr_SOSI driver")
+gdal_check_package(FYBA "enable ogr_SOSI driver" CAN_DISABLE)
 gdal_check_package(LibLZMA "LZMA compression" CAN_DISABLE)
 gdal_check_package(LZ4 "LZ4 compression" CAN_DISABLE)
 gdal_check_package(Blosc "Blosc compression" CAN_DISABLE)
