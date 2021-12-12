@@ -562,6 +562,23 @@ using SQLite3.
 
     Path to a shared or static library file with "pcre2-8" in its name
 
+PDFium
+******
+
+The PDFium library is one of the possible backends for the :ref:`raster.pdf` driver.
+
+.. option:: PDFium_INCLUDE_DIR
+
+    Path to an include directory with the ``public/fpdfview.h`` header file.
+
+.. option:: PDFium_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_PDFIUM=ON/OFF
+
+    Control whether to use PDFium. Defaults to ON when PDFium is found.
+
 
 PROJ
 ****

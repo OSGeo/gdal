@@ -30,7 +30,7 @@ include(FindPackageHandleStandardArgs)
 
 function(define_find_package2 pkgname include_file library_name)
     set(_options)
-    set(_oneValueArgs PKGCONFIG_NAME)
+    set(_oneValueArgs PKGCONFIG_NAME FIND_PATH_SUFFIX)
     set(_multiValueArgs)
     cmake_parse_arguments(_DFP "${_options}" "${_oneValueArgs}" "${_multiValueArgs}" ${ARGN})
     get_property(DEFINE_FIND_PACKAGE_DEFINED GLOBAL PROPERTY define_find_package_pkgname DEFINED)
@@ -50,6 +50,10 @@ function(define_find_package2 pkgname include_file library_name)
                         BRIEF_DOCS "list of pkg-config names which is defined with define_find_package2"
                         FULL_DOCS "list of pkg-config  names which is defined with define_find_package2."
                                   "The order should be as same as define_find_package_pkgname.")
+        define_property(GLOBAL PROPERTY define_find_package_find_path_suffix
+                        BRIEF_DOCS "list of FIND_PATH_SUFFIX which is defined with define_find_package2"
+                        FULL_DOCS "list of FIND_PATH_SUFFIX which is defined with define_find_package2."
+                                  "The order should be as same as define_find_package_pkgname.")
     endif()
     set_property(GLOBAL APPEND PROPERTY define_find_package_pkgname ${pkgname})
     set_property(GLOBAL APPEND PROPERTY define_find_package_include_file ${include_file})
@@ -58,6 +62,11 @@ function(define_find_package2 pkgname include_file library_name)
         set_property(GLOBAL APPEND PROPERTY define_find_package_pkgconfig_name "${_DFP_PKGCONFIG_NAME}")
     else()
         set_property(GLOBAL APPEND PROPERTY define_find_package_pkgconfig_name "_unset_")
+    endif()
+    if(DEFINED _DFP_FIND_PATH_SUFFIX)
+        set_property(GLOBAL APPEND PROPERTY define_find_package_find_path_suffix "${_DFP_FIND_PATH_SUFFIX}")
+    else()
+        set_property(GLOBAL APPEND PROPERTY define_find_package_find_path_suffix "_unset_")
     endif()
 endfunction()
 
@@ -80,6 +89,8 @@ function(find_package2 pkgname)
         list(GET library_name_list ${index} library_name)
         get_property(pkgconfig_name_list GLOBAL PROPERTY define_find_package_pkgconfig_name)
         list(GET pkgconfig_name_list ${index} pkgconfig_name)
+        get_property(find_path_suffix_list GLOBAL PROPERTY define_find_package_find_path_suffix)
+        list(GET find_path_suffix_list ${index} find_path_suffix)
     else()
         ## debug message
         # find_package_message(${pkgname} "Cannot Find definition for ${pkgname} package" "")
@@ -104,10 +115,16 @@ function(find_package2 pkgname)
         endif()
     endif()
 
+    if(NOT find_path_suffix STREQUAL "_unset_")
+        set(_find_path_suffix "${find_path_suffix}")
+    endif()
+
     if(DEFINED ${key}_ROOT)
         set(HINT_PATH "${${key}_ROOT}")
     endif()
-    find_path(${pkgname}_INCLUDE_DIR ${include_file} HINTS ${HINT_PATH}/include ${_pc_include_dirs})
+    find_path(${pkgname}_INCLUDE_DIR ${include_file}
+              HINTS ${HINT_PATH}/include ${_pc_include_dirs}
+              PATH_SUFFIXES ${_find_path_suffix})
     find_library(${pkgname}_LIBRARY ${library_name} HINTS ${HINT_PATH}/lib ${_pc_library_dirs})
     find_package_handle_standard_args(${pkgname}
                                       FOUND_VAR ${key}_FOUND

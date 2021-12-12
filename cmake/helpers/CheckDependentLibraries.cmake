@@ -412,9 +412,12 @@ endif()
 unset(TMP_GRASS)
 
 # PDF library: one of them enables PDF driver
-gdal_check_package(Poppler "Enable PDF driver" CAN_DISABLE)
-gdal_check_package(PDFium "Enable PDF driver" CAN_DISABLE)
-gdal_check_package(Podofo "Enable PDF driver" CAN_DISABLE)
+gdal_check_package(Poppler "Enable PDF driver (read side)" CAN_DISABLE)
+
+define_find_package2(PDFium public/fpdfview.h pdfium FIND_PATH_SUFFIX pdfium)
+gdal_check_package(PDFium "Enable PDF driver (read side)" CAN_DISABLE)
+
+gdal_check_package(Podofo "Enable PDF driver (read side)" CAN_DISABLE)
 if(GDAL_USE_POPPLER OR GDAL_USE_PDFIUM OR GDAL_USE_PODOFO)
     set(HAVE_PDFLIB ON)
 else()
