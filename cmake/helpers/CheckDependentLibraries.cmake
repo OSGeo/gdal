@@ -455,8 +455,12 @@ set_package_properties(SWIG PROPERTIES
 
 find_package(Perl)
 set_package_properties(Perl PROPERTIES PURPOSE "SWIG_PERL: Perl binding")
-find_Package(JNI)
+
+find_package(JNI)
+find_package(Java COMPONENTS Runtime Development)
+find_program(ANT NAMES ant DOC "ant executable for Java binding")
 set_package_properties(JNI PROPERTIES PURPOSE "SWIG_JAVA: Java binding")
+
 find_package(CSharp)
 set_package_properties(CSharp PROPERTIES PURPOSE "SWIG_CSharp: CSharp binding")
 

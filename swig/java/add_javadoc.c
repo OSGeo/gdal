@@ -124,7 +124,7 @@ char* removeargnames(char* pszBuf)
     return pszBuf;
 }
 
-static void ignore_ret(int x)
+static void ignore_ret(char* x)
 {
 }
 

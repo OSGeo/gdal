@@ -29,10 +29,15 @@ if (BUILD_PYTHON_BINDINGS)
   add_subdirectory(python)
 endif ()
 
+if (SWIG_EXECUTABLE
+    AND Java_JAVAC_EXECUTABLE
+    AND Java_JAVADOC_EXECUTABLE
+    AND JNI_FOUND
+    AND ANT
+    AND BUILD_JAVA_BINDINGS)
+  add_subdirectory(java)
+endif ()
 if (UNIX)
-  if (JNI_FOUND AND BUILD_JAVA_BINDINGS)
-    add_subdirectory(java)
-  endif ()
   if (PERL_FOUND)
     # add_subdirectory(perl)
   endif ()
