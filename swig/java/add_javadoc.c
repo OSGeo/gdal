@@ -246,7 +246,7 @@ begin:
             {
                 char* c = strstr(szLine, "synchronized ");
                 *c = 0;
-                strcat(szLine, c + 13);
+                memmove(c, c + 13, strlen(c + 13) + 1);
             }
             if (strstr(szLine, "public") && !strstr(szLine, "native"))
             {
