@@ -79,9 +79,10 @@ endif ()
 target_link_libraries(gdalalljni PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)
 
 # Build javadoc
+file(STRINGS ${PROJECT_SOURCE_DIR}/VERSION GDAL_VERSION)
+
 option(GDAL_JAVA_GENERATE_JAVADOC "Generate Javadoc of Java bindings" ON)
 if (GDAL_JAVA_GENERATE_JAVADOC)
-  file(STRINGS ${PROJECT_SOURCE_DIR}/VERSION GDAL_VERSION)
   add_executable(add_javadoc add_javadoc.c)
   set(JAVADOC_ZIP ${CMAKE_CURRENT_BINARY_DIR}/javadoc.zip)
   add_custom_command(
