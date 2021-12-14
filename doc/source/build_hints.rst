@@ -910,6 +910,34 @@ the ``install`` CMake target.
     option of ``python setup.py install``. It is only taken into account on
     MacOS systems, when the Python installation is a framework.
 
+Java bindings options
++++++++++++++++++++++
+
+.. option:: BUILD_JAVA_BINDINGS:BOOL=ON/OFF
+
+    Whether Java bindings should be built. It is ON by default, but only
+    effective if Java runtime and development packages are found.
+    The relevant options that can be set are described in
+    https://cmake.org/cmake/help/latest/module/FindJava.html and
+    https://cmake.org/cmake/help/latest/module/FindJNI.html.
+    The ``ant`` binary must also be available in the PATH.
+
+.. option:: GDAL_JAVA_INSTALL_DIR
+
+    Subdirectory into which to install the gdalalljni library and the .jar
+    files. It defaults to "${CMAKE_INSTALL_DATADIR}/java"
+
+Option only to be used by maintainers:
+
+.. option:: GPG_KEY
+
+    GPG key to sign build artifacts. Needed to generate bundle.jar.
+
+.. option:: GPG_PASS
+
+    GPG pass phrase to sign build artifacts.
+
+
 Driver specific options
 +++++++++++++++++++++++
 
