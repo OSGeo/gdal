@@ -48,46 +48,23 @@ target_include_directories(
                          $<TARGET_PROPERTY:appslib,SOURCE_DIR> $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR>)
 target_compile_definitions(gdal_unit_test PRIVATE -DGDAL_TEST_ROOT_DIR="${GDAL_ROOT_TEST_DIR}")
 
-set(TEST_ENV)
+include(GdalSetTestEnv)
+gdal_set_test_env(TEST_ENV)
+
 if (MINGW)
   list(APPEND TEST_ENV SKIP_MEM_INTENSIVE_TEST=YES)
 endif ()
 
-# Set PATH / LD_LIBRARY_PATH
-set(GDAL_OUTPUT_DIR "$<SHELL_PATH:$<TARGET_FILE_DIR:${GDAL_LIB_TARGET_NAME}>>")
 if (WIN32)
   # If running GDAL as a CustomBuild Command os MSBuild, "ERROR bla:" is considered as failing the job. This is rarely
   # the intended behavior
   list(APPEND TEST_ENV "CPL_ERROR_SEPARATOR=\\;")
-
-  string(REPLACE ";" "\\;" PATH_ESCAPED "$ENV{PATH}")
-  list(APPEND TEST_ENV "PATH=${GDAL_OUTPUT_DIR}\\;${PATH_ESCAPED}")
-else ()
-  list(APPEND TEST_ENV "LD_LIBRARY_PATH=${GDAL_OUTPUT_DIR}:$ENV{LD_LIBRARY_PATH}")
 endif ()
 
 if (WIN32 OR APPLE)
   # Recoding tests in test_cpl.cpp fail on Windows and Mac
   list(APPEND TEST_ENV DO_NOT_FAIL_ON_RECODE_ERRORS=YES)
 endif ()
-
-# Set GDAL_DRIVER_PATH We request the TARGET_FILE_DIR of one of the plugins, since the PLUGIN_OUTPUT_DIR will not
-# contain the \Release suffix with MSVC generator
-get_property(PLUGIN_MODULES GLOBAL PROPERTY PLUGIN_MODULES)
-list(LENGTH PLUGIN_MODULES PLUGIN_MODULES_LENGTH)
-if (PLUGIN_MODULES_LENGTH GREATER_EQUAL 1)
-  list(GET PLUGIN_MODULES 0 FIRST_TARGET)
-  set(PLUGIN_OUTPUT_DIR "$<SHELL_PATH:$<TARGET_FILE_DIR:${FIRST_TARGET}>>")
-  list(APPEND TEST_ENV "GDAL_DRIVER_PATH=${PLUGIN_OUTPUT_DIR}")
-else ()
-  # if no plugins are configured, set up a dummy path, to avoid loading installed plugins (from a previous install
-  # execution) that could have a different ABI
-  list(APPEND TEST_ENV "GDAL_DRIVER_PATH=dummy")
-endif ()
-
-# Set GDAL_DATA
-file(TO_NATIVE_PATH "${PROJECT_SOURCE_DIR}/data" GDAL_DATA)
-list(APPEND TEST_ENV "GDAL_DATA=${GDAL_DATA}")
 
 macro (register_test_as_custom_target _test_name _binary_name)
   if (NOT CMAKE_CROSSCOMPILING OR CMAKE_CROSSCOMPILING_EMULATOR)
