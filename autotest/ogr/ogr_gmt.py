@@ -213,3 +213,18 @@ def test_ogr_gmt_coord_only():
         lyr = ds.GetLayer(0)
         f = lyr.GetNextFeature()
         assert not ogrtest.check_feature_geometry(f, 'POINT Z (1 2 3)'), f.GetGeometryRef().ExportToIsoWkt()
+
+
+###############################################################################
+# Test writing to stdout
+
+
+def test_ogr_gmt_write_stdout():
+
+    gdal.VectorTranslate("/vsistdout_redirect//vsimem/test.gmt", "data/poly.shp", format="GMT")
+    ds = ogr.Open("/vsimem/test.gmt")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetGeomType() == ogr.wkbPolygon
+    assert lyr.GetFeatureCount() == 10
+    ds = None
+    gdal.Unlink("/vsimem/test.gmt")
