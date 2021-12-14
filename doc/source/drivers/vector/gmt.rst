@@ -35,3 +35,6 @@ features to existing files, but update of existing features is not
 supported. Each layer is created as a separate .gmt file. If a name that
 ends with .gmt is not given, then the GMT driver will take the layer
 name and add the ".gmt" extension.
+
+Writing to /dev/stdout or /vsistdout/ is supported since GDAL 3.5.0 (note
+that the file will then lack the optional region/bounding box header item)
