@@ -917,6 +917,8 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateField( OGRFieldDefn *poFieldIn,
     {
         if( oField.GetWidth() > 0 && bPreservePrecision )
             snprintf( szFieldType, sizeof(szFieldType), "numeric(%d,0)", oField.GetWidth() );
+        else if( oField.GetSubType() == OFSTInt16 )
+            strcpy( szFieldType, "smallint" );
         else
             strcpy( szFieldType, "int" );
     }
@@ -929,12 +931,14 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateField( OGRFieldDefn *poFieldIn,
     }
     else if( oField.GetType() == OFTReal )
     {
-        if( oField.GetWidth() > 0 && oField.GetPrecision() > 0
+        if( oField.GetWidth() > 0 && oField.GetPrecision() >= 0
             && bPreservePrecision )
             snprintf( szFieldType, sizeof(szFieldType), "numeric(%d,%d)",
                      oField.GetWidth(), oField.GetPrecision() );
+        else if( oField.GetSubType() == OFSTFloat32 )
+            strcpy( szFieldType, "float(23)" );
         else
-            strcpy( szFieldType, "float" );
+            strcpy( szFieldType, "float(53)" );
     }
     else if( oField.GetType() == OFTString )
     {
