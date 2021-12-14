@@ -611,13 +611,31 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
     if (CPLGetConfigOption("PGCLIENTENCODING", nullptr) == nullptr)
     {
-        const char* encoding = "UNICODE";
+        const char* encoding = "UTF8";
         if (PQsetClientEncoding(hPGConn, encoding) == -1)
         {
             CPLError( CE_Warning, CPLE_AppDefined,
                     "PQsetClientEncoding(%s) failed.\n%s",
                     encoding, PQerrorMessage( hPGConn ) );
         }
+    }
+
+    {
+        PGresult* hResult = OGRPG_PQexec(hPGConn, "SHOW client_encoding" );
+        if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK
+            && PQntuples(hResult) == 1 )
+        {
+            const char* pszClientEncoding = PQgetvalue(hResult,0,0);
+            if( pszClientEncoding )
+            {
+                CPLDebug("PG","Client encoding: '%s'", pszClientEncoding);
+                if( EQUAL(pszClientEncoding, "UTF8") )
+                {
+                    m_bUTF8ClientEncoding = true;
+                }
+            }
+        }
+        OGRPGClearResult(hResult);
     }
 
 /* -------------------------------------------------------------------- */
@@ -2752,14 +2770,9 @@ OGRErr OGRPGDataSource::FlushSoftTransaction()
 
     bSavePointActive = FALSE;
 
-    OGRErr eErr = OGRERR_NONE;
-    if( nSoftTransactionLevel > 0 )
-    {
-        CPLAssert(nSoftTransactionLevel == 1 );
-        nSoftTransactionLevel = 0;
-        eErr = DoTransactionCommand("COMMIT");
-    }
-    return eErr;
+    CPLAssert(nSoftTransactionLevel == 1 );
+    nSoftTransactionLevel = 0;
+    return DoTransactionCommand("COMMIT");
 }
 
 /************************************************************************/

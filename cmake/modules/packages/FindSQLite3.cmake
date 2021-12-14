@@ -72,6 +72,7 @@ if(SQLite3_INCLUDE_DIR)
 endif()
 
 if(SQLite3_INCLUDE_DIR AND SQLite3_LIBRARY)
+    cmake_push_check_state(RESET)
     # check column metadata
     if( ${SQLite3_LIBRARY} MATCHES "libsqlite3.a" AND PC_SQLITE3_STATIC_LDFLAGS)
         set(CMAKE_REQUIRED_LIBRARIES ${PC_SQLITE3_STATIC_LDFLAGS})
@@ -93,10 +94,7 @@ if(SQLite3_INCLUDE_DIR AND SQLite3_LIBRARY)
           return sqlite3_auto_extension ((void (*)(void)) 0);
          }")
     check_cxx_source_compiles("${SQLITE3_AUTO_EXTENSION_CHECK}" SQLite3_HAS_NON_DEPRECATED_AUTO_EXTENSION)
-    unset(CMAKE_REQUIRED_FLAGS)
-
-    unset(CMAKE_REQUIRED_LIBRARIES)
-    unset(CMAKE_REQUIRED_INCLUDES)
+    cmake_pop_check_state()
 endif()
 mark_as_advanced(SQLite3_LIBRARY SQLite3_INCLUDE_DIR SQLite3_HAS_COLUMN_METADATA SQLite3_HAS_RTREE)
 

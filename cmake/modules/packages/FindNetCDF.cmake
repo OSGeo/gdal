@@ -54,6 +54,8 @@ if (NETCDF_INCLUDE_DIR AND NETCDF_LIBRARY)
     set (NETCDF_FIND_QUIETLY TRUE)
 endif ()
 find_program(NC_CONFIG NAMES nc-config DOC "NetCDF config command")
+mark_as_advanced(NC_CONFIG)
+
 if(NC_CONFIG)
     execute_process(COMMAND ${NC_CONFIG} --includedir
                     RESULT_VARIABLE nc_res
@@ -83,6 +85,7 @@ if(NETCDF_INCLUDE_DIR AND NETCDF_LIBRARY)
     find_file(NETCDF_MEM_H
              NAMES "netcdf_mem.h"
              HINTS ${NETCDF_INCLUDE_DIR})
+    mark_as_advanced(NETCDF_MEM_H)
     if(NETCDF_MEM_H)
         set(NETCDF_HAS_MEM ON)
     endif()

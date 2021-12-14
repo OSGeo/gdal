@@ -280,9 +280,6 @@ OGRErr OGRMSSQLSpatialDataSource::DeleteLayer( int iLayer )
              sizeof(void *) * (nLayers - iLayer - 1) );
     nLayers--;
 
-    if ( strlen(pszTableName) == 0 )
-        return OGRERR_NONE;
-
 /* -------------------------------------------------------------------- */
 /*      Remove from the database.                                       */
 /* -------------------------------------------------------------------- */

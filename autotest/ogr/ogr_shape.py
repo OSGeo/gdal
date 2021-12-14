@@ -3828,6 +3828,26 @@ def test_ogr_shape_wgs84_with_zero_TOWGS84():
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/test_ogr_shape_wgs84_with_zero_TOWGS84.shp')
 
 ###############################################################################
+# Test a ETRS89-based CRS with a TOWGS84[0,0,0,0,0,0]
+# Test case of https://lists.osgeo.org/pipermail/qgis-developer/2021-November/064340.html
+
+
+def test_ogr_shape_etrs89_with_zero_TOWGS84():
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/test_ogr_shape_etrs89_with_zero_TOWGS84.shp')
+    lyr = ds.CreateLayer('test_ogr_shape_etrs89_with_zero_TOWGS84')
+    ds = None
+    gdal.FileFromMemBuffer('/vsimem/test_ogr_shape_etrs89_with_zero_TOWGS84.prj', """PROJCS["ETRS89 / Portugal TM06", GEOGCS["ETRS89", DATUM["European Terrestrial Reference System 1989", SPHEROID["GRS 1980", 6378137.0, 298.257222101, AUTHORITY["EPSG","7019"]], TOWGS84[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], AUTHORITY["EPSG","6258"]], PRIMEM["Greenwich", 0.0, AUTHORITY["EPSG","8901"]], UNIT["degree", 0.017453292519943295], AXIS["Geodetic longitude", EAST], AXIS["Geodetic latitude", NORTH], AUTHORITY["EPSG","4258"]], PROJECTION["Transverse_Mercator", AUTHORITY["EPSG","9807"]], PARAMETER["central_meridian", -8.133108333333334], PARAMETER["latitude_of_origin", 39.66825833333334], PARAMETER["scale_factor", 1.0], PARAMETER["false_easting", 0.0], PARAMETER["false_northing", 0.0], UNIT["m", 1.0], AXIS["Easting", EAST], AXIS["Northing", NORTH], AUTHORITY["EPSG","3763"]]""")
+    ds = ogr.Open('/vsimem/test_ogr_shape_etrs89_with_zero_TOWGS84.shp')
+    lyr = ds.GetLayer(0)
+    srs = lyr.GetSpatialRef()
+    assert srs.GetAuthorityCode(None) == '3763'
+    assert 'BOUNDCRS' not in srs.ExportToWkt(['FORMAT=WKT2'])
+    ds = None
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/test_ogr_shape_etrs89_with_zero_TOWGS84.shp')
+
+###############################################################################
 # Test REPACK with both implementations
 
 

@@ -258,6 +258,17 @@ def test_pds4_7():
     return ret
 
 ###############################################################################
+# Test CreateCopy() from BIL to IMAGE_FORMAT=GEOTIFF doesn't result in error
+
+
+def test_pds4_from_bil_to_geotiff():
+
+    tst = gdaltest.GDALTest('PDS4', 'envi/envi_rgbsmall_bil.img', 2, 20669, options=['IMAGE_FORMAT=GEOTIFF'])
+    with hide_substitution_warnings_error_handler():
+        ret = tst.testCreateCopy(vsimem=1, strict_in=1, quiet_error_handler=False)
+    return ret
+
+###############################################################################
 # Test SRS support
 
 @pytest.mark.parametrize('proj4str', ['+proj=eqc +lat_ts=43.75 +lat_0=10 +lon_0=-112.5 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',
@@ -319,6 +330,10 @@ def test_pds4_longlat_srs():
     ds.SetGeoTransform([2, 1, 0, 49, 0, -2])
     with gdaltest.error_handler():
         ds = None
+
+    ret = validate_xml(filename)
+    assert ret, 'validation failed'
+
     ds = gdal.Open(filename)
     wkt = ds.GetProjectionRef()
     sr = osr.SpatialReference()

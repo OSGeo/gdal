@@ -35,6 +35,7 @@
 #include "cpl_error.h"
 #include "cpl_minixml.h"
 #include "cpl_string.h"
+#include "cpl_time.h"
 
 CPL_CVSID("$Id$")
 
@@ -146,8 +147,9 @@ void GDALMDReaderRapidEye::LoadMetadata()
     if(nullptr != pszDateTime)
     {
         char buffer[80];
-        time_t timeMid = GetAcquisitionTimeFromString(pszDateTime);
-        strftime (buffer, 80, MD_DATETIMEFORMAT, localtime(&timeMid));
+        GIntBig timeMid = GetAcquisitionTimeFromString(pszDateTime);
+        struct tm tmBuf;
+        strftime (buffer, 80, MD_DATETIMEFORMAT, CPLUnixTimeToYMDHMS(timeMid, &tmBuf));
         m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
                                            MD_NAME_ACQDATETIME, buffer);
     }

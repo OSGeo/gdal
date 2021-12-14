@@ -677,7 +677,7 @@ bool OGRMVTLayer::QuickScanFeature(const GByte* pabyData,
             }
             else if( nKey == MAKE_KEY(knFEATURE_GEOMETRY, WT_DATA) &&
                     bScanGeometries &&
-                    nGeomType >= 1 && nGeomType <= 3 )
+                    nGeomType >= knGEOM_TYPE_POINT && nGeomType <= knGEOM_TYPE_POLYGON )
             {
                 unsigned int nGeometrySize = 0;
                 READ_SIZE(pabyData, pabyDataFeatureEnd, nGeometrySize);
@@ -722,7 +722,7 @@ bool OGRMVTLayer::QuickScanFeature(const GByte* pabyData,
                         }
                     }
                 }
-                else if( nGeomType == knGEOM_TYPE_POLYGON )
+                else /* if( nGeomType == knGEOM_TYPE_POLYGON ) */
                 {
                     eType = wkbPolygon;
                     for( int iIter = 0;
@@ -2138,7 +2138,8 @@ static int OGRMVTDriverIdentify( GDALOpenInfo* poOpenInfo )
                         return FALSE;
                     }
                     else if( nKey == MAKE_KEY(knFEATURE_GEOMETRY, WT_DATA) &&
-                            nGeomType >= 1 && nGeomType <= 3 )
+                            nGeomType >= knGEOM_TYPE_POINT &&
+                            nGeomType <= knGEOM_TYPE_POLYGON )
                     {
                         unsigned int nGeometrySize = 0;
                         READ_VARUINT32(pabyData, pabyDataFeatureEnd, nGeometrySize);
@@ -2206,7 +2207,7 @@ static int OGRMVTDriverIdentify( GDALOpenInfo* poOpenInfo )
                                 }
                             }
                         }
-                        else if( nGeomType == knGEOM_TYPE_POLYGON )
+                        else /* if( nGeomType == knGEOM_TYPE_POLYGON ) */
                         {
                             while( pabyData < pabyDataGeometryEnd )
                             {

@@ -62,164 +62,6 @@
 CPL_CVSID("$Id$")
 
 /************************************************************************/
-/*                            CSVSplitLine()                            */
-/*                                                                      */
-/*      Tokenize a CSV line into fields in the form of a string         */
-/*      list.  This is used instead of the CPLTokenizeString()          */
-/*      because it provides correct CSV escaping and quoting            */
-/*      semantics.                                                      */
-/************************************************************************/
-
-static char **CSVSplitLine( const char *pszString, char chDelimiter,
-                            bool bKeepLeadingAndClosingQuotes,
-                            bool bMergeDelimiter )
-
-{
-    CPLStringList aosRetList;
-
-    char *pszToken = static_cast<char *>(CPLCalloc(10, 1));
-    int nTokenMax = 10;
-
-    while( pszString != nullptr && *pszString != '\0' )
-    {
-        bool bInString = false;
-
-        int nTokenLen = 0;
-
-        // Try to find the next delimiter, marking end of token.
-        for( ; *pszString != '\0'; pszString++ )
-        {
-            // End if this is a delimiter skip it and break.
-            if( !bInString && *pszString == chDelimiter )
-            {
-                pszString++;
-                if( bMergeDelimiter )
-                {
-                    while( *pszString == chDelimiter )
-                        pszString++;
-                }
-                break;
-            }
-
-            if( *pszString == '"' )
-            {
-                if( !bInString || pszString[1] != '"' )
-                {
-                    bInString = !bInString;
-                    if( !bKeepLeadingAndClosingQuotes )
-                        continue;
-                }
-                else  // Doubled quotes in string resolve to one quote.
-                {
-                    pszString++;
-                }
-            }
-
-            if( nTokenLen >= nTokenMax - 2 )
-            {
-                nTokenMax = nTokenMax * 2 + 10;
-                pszToken = static_cast<char *>(CPLRealloc(pszToken, nTokenMax));
-            }
-
-            pszToken[nTokenLen] = *pszString;
-            nTokenLen++;
-        }
-
-        pszToken[nTokenLen] = '\0';
-        aosRetList.AddString(pszToken);
-
-        // If the last token is an empty token, then we have to catch
-        // it now, otherwise we won't reenter the loop and it will be lost.
-        if( *pszString == '\0' && *(pszString - 1) == chDelimiter )
-        {
-            aosRetList.AddString("");
-        }
-    }
-
-    CPLFree(pszToken);
-
-    if( aosRetList.Count() == 0 )
-        return static_cast<char **>(CPLCalloc(sizeof(char *), 1));
-    else
-        return aosRetList.StealList();
-}
-
-/************************************************************************/
-/*                      OGRCSVReadParseLineL()                          */
-/*                                                                      */
-/*      Read one line, and return split into fields.  The return        */
-/*      result is a stringlist, in the sense of the CSL functions.      */
-/************************************************************************/
-
-char **OGRCSVReadParseLineL( VSILFILE *fp, char chDelimiter,
-                             bool bDontHonourStrings,
-                             bool bKeepLeadingAndClosingQuotes,
-                             bool bMergeDelimiter )
-
-{
-    const char *pszLine = CPLReadLineL(fp);
-    if( pszLine == nullptr )
-        return nullptr;
-
-    // Skip BOM.
-    const GByte *pabyData = reinterpret_cast<const GByte *>(pszLine);
-    if( pabyData[0] == 0xEF && pabyData[1] == 0xBB && pabyData[2] == 0xBF )
-        pszLine += 3;
-
-    // Special fix to read NdfcFacilities.xls with un-balanced double quotes.
-    if( chDelimiter == '\t' && bDontHonourStrings )
-    {
-        return CSLTokenizeStringComplex(pszLine, "\t", FALSE, TRUE);
-    }
-
-    // If there are no quotes, then this is the simple case.
-    // Parse, and return tokens.
-    if( strchr(pszLine,'\"') == nullptr )
-        return CSVSplitLine(pszLine, chDelimiter, bKeepLeadingAndClosingQuotes,
-                            bMergeDelimiter);
-
-    try
-    {
-        // We must now count the quotes in our working string, and as
-        // long as it is odd, keep adding new lines.
-        std::string osWorkLine(pszLine);
-
-        size_t i = 0;
-        int nCount = 0;
-
-        while( true )
-        {
-            for( ; i < osWorkLine.size(); i++ )
-            {
-                if( osWorkLine[i] == '\"' )
-                    nCount++;
-            }
-
-            if( nCount % 2 == 0 )
-                break;
-
-            pszLine = CPLReadLineL(fp);
-            if( pszLine == nullptr )
-                break;
-
-            osWorkLine.append("\n");
-            osWorkLine.append(pszLine);
-        }
-
-        char **papszReturn =
-            CSVSplitLine(osWorkLine.c_str(), chDelimiter, bKeepLeadingAndClosingQuotes,
-                         bMergeDelimiter);
-
-        return papszReturn;
-    }
-    catch( const std::exception& e )
-    {
-        CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
-        return nullptr;
-    }
-}
-
-/************************************************************************/
 /*                            OGRCSVLayer()                             */
 /*                                                                      */
 /*      Note that the OGRCSVLayer assumes ownership of the passed       */
@@ -242,14 +84,13 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
     pszFilename(CPLStrdup(pszFilenameIn)),
     bCreateCSVT(false),
     bWriteBOM(false),
-    chDelimiter(chDelimiterIn),
     nCSVFieldCount(0),
     panGeomFieldIndex(nullptr),
     bFirstFeatureAppendedDuringSession(true),
     bHiddenWKTColumn(false),
     iNfdcLongitudeS(-1),
     iNfdcLatitudeS(-1),
-    bDontHonourStrings(false),
+    bHonourStrings(true),
     iLongitudeField(-1),
     iLatitudeField(-1),
     iZField(-1),
@@ -262,6 +103,8 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
     bMergeDelimiter(false),
     bEmptyStringNull(false)
 {
+    szDelimiter[0] = chDelimiterIn;
+    szDelimiter[1] = 0;
     poFeatureDefn = new OGRFeatureDefn(pszLayerNameIn);
     SetDescription(poFeatureDefn->GetName());
     poFeatureDefn->Reference();
@@ -375,7 +218,6 @@ void OGRCSVLayer::BuildFeatureDefn( const char *pszNfdcGeomField,
             // Tokenize the strings and preserve quotes, so we can separate
             // string from numeric this is only used in the test for
             // bHasFieldNames (bug #4361).
-            const char szDelimiter[2] = { chDelimiter, '\0' };
             papszTokens =
                 CSLTokenizeString2(pszLine, szDelimiter,
                                    (CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS |
@@ -516,7 +358,7 @@ void OGRCSVLayer::BuildFeatureDefn( const char *pszNfdcGeomField,
 
             nFieldCount = 0;
 
-            bDontHonourStrings = true;
+            bHonourStrings = false;
         }
     }
 
@@ -537,7 +379,14 @@ void OGRCSVLayer::BuildFeatureDefn( const char *pszNfdcGeomField,
             if( fpCSVT != nullptr )
             {
                 VSIRewindL(fpCSVT);
-                papszFieldTypes = OGRCSVReadParseLineL(fpCSVT, ',', false, false);
+                papszFieldTypes = CSVReadParseLine3L(fpCSVT,
+                                                     OGR_CSV_MAX_LINE_SIZE, // nMaxLineSize
+                                                     ",",
+                                                     true, // bHonourStrings
+                                                     false, // bKeepLeadingAndClosingQuotes
+                                                     false, // bMergeDelimiter,
+                                                     true // bSkipBOM
+                                                    );
                 VSIFCloseL(fpCSVT);
             }
         }
@@ -931,7 +780,7 @@ void OGRCSVLayer::BuildFeatureDefn( const char *pszNfdcGeomField,
 
     if( iNfdcLatitudeS != -1 && iNfdcLongitudeS != -1 )
     {
-        bDontHonourStrings = true;
+        bHonourStrings = false;
         if( poFeatureDefn->GetGeomFieldCount() == 0 )
         {
             poFeatureDefn->SetGeomType(wkbPoint);
@@ -1114,8 +963,14 @@ char **OGRCSVLayer::AutodetectFieldTypes(char **papszOpenOptions,
         while( !VSIFEofL(fpMem) )
         {
             char **papszTokens =
-                OGRCSVReadParseLineL(fpMem, chDelimiter, false,
-                                     bQuotedFieldAsString, bMergeDelimiter);
+                CSVReadParseLine3L(fpMem,
+                                   OGR_CSV_MAX_LINE_SIZE,
+                                   szDelimiter,
+                                   true, // bHonourStrings
+                                   bQuotedFieldAsString,
+                                   bMergeDelimiter,
+                                   true // bSkipBOM
+                                  );
             // Can happen if we just reach EOF while trying to read new bytes.
             if( papszTokens == nullptr )
                 break;
@@ -1133,7 +988,7 @@ char **OGRCSVLayer::AutodetectFieldTypes(char **papszOpenOptions,
             {
                 if( papszTokens[iField][0] == 0 )
                     continue;
-                if( chDelimiter == ';' )
+                if( szDelimiter[0] == ';' )
                 {
                     char *chComma = strchr(papszTokens[iField], ',');
                     if( chComma )
@@ -1252,8 +1107,7 @@ char **OGRCSVLayer::AutodetectFieldTypes(char **papszOpenOptions,
                     else if( aeFieldType[iField] == OFTReal )
                     {
                         if( eOGRFieldType != OFTInteger &&
-                            eOGRFieldType != OFTInteger64 &&
-                            eOGRFieldType != OFTReal )
+                            eOGRFieldType != OFTInteger64 )
                         {
                             aeFieldType[iField] = OFTString;
                             nStringFieldCount++;
@@ -1271,8 +1125,7 @@ char **OGRCSVLayer::AutodetectFieldTypes(char **papszOpenOptions,
                     }
                     else if( aeFieldType[iField] == OFTDateTime )
                     {
-                        if( eOGRFieldType != OFTDate &&
-                            eOGRFieldType != OFTDateTime )
+                        if( eOGRFieldType != OFTDate )
                         {
                             aeFieldType[iField] = OFTString;
                             nStringFieldCount++;
@@ -1402,7 +1255,14 @@ void OGRCSVLayer::ResetReading()
 
     if( bHasFieldNames )
         CSLDestroy(
-            OGRCSVReadParseLineL(fpCSV, chDelimiter, bDontHonourStrings));
+            CSVReadParseLine3L( fpCSV,
+                                OGR_CSV_MAX_LINE_SIZE,
+                                szDelimiter,
+                                bHonourStrings,
+                                false, // bKeepLeadingAndClosingQuotes
+                                false, // bMergeDelimiter,
+                                true // bSkipBOM
+                              ));
 
     bNeedRewindBeforeRead = false;
 
@@ -1418,9 +1278,14 @@ char **OGRCSVLayer::GetNextLineTokens()
     while( true )
     {
         // Read the CSV record.
-        char **papszTokens = OGRCSVReadParseLineL(
-            fpCSV, chDelimiter, bDontHonourStrings, false, bMergeDelimiter);
-
+        char **papszTokens = CSVReadParseLine3L( fpCSV,
+                                OGR_CSV_MAX_LINE_SIZE,
+                                szDelimiter,
+                                bHonourStrings,
+                                false, // bKeepLeadingAndClosingQuotes
+                                bMergeDelimiter,
+                                true // bSkipBOM
+                              );
         if( papszTokens == nullptr )
             return nullptr;
 
@@ -1566,7 +1431,7 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
         {
             if( papszTokens[iAttr][0] != '\0' && !poFieldDefn->IsIgnored() )
             {
-                if( chDelimiter == ';' && eFieldType == OFTReal )
+                if( szDelimiter[0] == ';' && eFieldType == OFTReal )
                 {
                     char *chComma = strchr(papszTokens[iAttr], ',');
                     if( chComma )
@@ -2071,13 +1936,13 @@ OGRErr OGRCSVLayer::WriteHeader()
         {
             if( fpCSV )
                 bOK &=
-                    VSIFPrintfL(fpCSV, "X%cY%cZ", chDelimiter, chDelimiter) > 0;
+                    VSIFPrintfL(fpCSV, "X%sY%sZ", szDelimiter, szDelimiter) > 0;
             if( fpCSVT )
                 bOK &= VSIFPrintfL(fpCSVT, "%s", "CoordX,CoordY,Real") > 0;
             if( poFeatureDefn->GetFieldCount() > 0 )
             {
                 if( fpCSV )
-                    bOK &= VSIFPrintfL(fpCSV, "%c", chDelimiter) > 0;
+                    bOK &= VSIFPrintfL(fpCSV, "%s", szDelimiter) > 0;
                 if( fpCSVT )
                     bOK &= VSIFPrintfL(fpCSVT, "%s", ",") > 0;
             }
@@ -2085,13 +1950,13 @@ OGRErr OGRCSVLayer::WriteHeader()
         else if( eGeometryFormat == OGR_CSV_GEOM_AS_XY )
         {
             if( fpCSV )
-                bOK &= VSIFPrintfL(fpCSV, "X%cY", chDelimiter) > 0;
+                bOK &= VSIFPrintfL(fpCSV, "X%sY", szDelimiter) > 0;
             if( fpCSVT )
                 bOK &= VSIFPrintfL(fpCSVT, "%s", "CoordX,CoordY") > 0;
             if( poFeatureDefn->GetFieldCount() > 0 )
             {
                 if( fpCSV )
-                    bOK &= VSIFPrintfL(fpCSV, "%c", chDelimiter) > 0;
+                    bOK &= VSIFPrintfL(fpCSV, "%s", szDelimiter) > 0;
                 if( fpCSVT )
                     bOK &= VSIFPrintfL(fpCSVT, "%s", ",") > 0;
             }
@@ -2099,13 +1964,13 @@ OGRErr OGRCSVLayer::WriteHeader()
         else if( eGeometryFormat == OGR_CSV_GEOM_AS_YX )
         {
             if( fpCSV )
-                bOK &= VSIFPrintfL(fpCSV, "Y%cX", chDelimiter) > 0;
+                bOK &= VSIFPrintfL(fpCSV, "Y%sX", szDelimiter) > 0;
             if( fpCSVT )
                 bOK &= VSIFPrintfL(fpCSVT, "%s", "CoordY,CoordX") > 0;
             if( poFeatureDefn->GetFieldCount() > 0 )
             {
                 if( fpCSV )
-                    bOK &= VSIFPrintfL(fpCSV, "%c", chDelimiter) > 0;
+                    bOK &= VSIFPrintfL(fpCSV, "%s", szDelimiter) > 0;
                 if(fpCSVT)
                     bOK &= VSIFPrintfL(fpCSVT, "%s", ",") > 0;
             }
@@ -2129,7 +1994,7 @@ OGRErr OGRCSVLayer::WriteHeader()
             if( iField > 0 || bHiddenWKTColumn )
             {
                 if( fpCSV )
-                    bOK &= VSIFPrintfL(fpCSV, "%c", chDelimiter) > 0;
+                    bOK &= VSIFPrintfL(fpCSV, "%s", szDelimiter) > 0;
                 if( fpCSVT )
                     bOK &= VSIFPrintfL(fpCSVT, "%s", ",") > 0;
             }
@@ -2144,7 +2009,7 @@ OGRErr OGRCSVLayer::WriteHeader()
             if( fpCSV )
             {
                 bool bAddDoubleQuote = false;
-                if( chDelimiter == ' ' && pszEscaped[0] != '"' &&
+                if( szDelimiter[0] == ' ' && pszEscaped[0] != '"' &&
                     strchr(pszEscaped, ' ') != nullptr )
                     bAddDoubleQuote = true;
                 if( bAddDoubleQuote )
@@ -2244,7 +2109,7 @@ OGRErr OGRCSVLayer::WriteHeader()
             (poFeatureDefn->GetFieldCount() == 0 && bHiddenWKTColumn) )
         {
             if( fpCSV )
-                bOK &= VSIFPrintfL(fpCSV, "%c", chDelimiter) > 0;
+                bOK &= VSIFPrintfL(fpCSV, "%s", szDelimiter) > 0;
         }
 
         if( bUseCRLF )
@@ -2350,19 +2215,19 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
             while(*pc != '\0')
             {
                 if( *pc == ' ' )
-                    *pc = chDelimiter;
+                    *pc = szDelimiter[0];
                 pc++;
             }
             bRet &= VSIFPrintfL(fpCSV, "%s", szBuffer) > 0;
         }
         else
         {
-            bRet &= VSIFPrintfL(fpCSV, "%c", chDelimiter) > 0;
+            bRet &= VSIFPrintfL(fpCSV, "%s", szDelimiter) > 0;
             if( eGeometryFormat == OGR_CSV_GEOM_AS_XYZ )
-                bRet &= VSIFPrintfL(fpCSV, "%c", chDelimiter) > 0;
+                bRet &= VSIFPrintfL(fpCSV, "%s", szDelimiter) > 0;
         }
         if( poFeatureDefn->GetFieldCount() > 0 )
-            bRet &= VSIFPrintfL(fpCSV, "%c", chDelimiter) > 0;
+            bRet &= VSIFPrintfL(fpCSV, "%s", szDelimiter) > 0;
     }
 
     // Special case to deal with hidden "WKT" geometry column.
@@ -2389,7 +2254,7 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
         char *pszEscaped = nullptr;
 
         if( iField > 0 || bHiddenWKTColumn )
-            bRet &= VSIFPrintfL(fpCSV, "%c", chDelimiter) > 0;
+            bRet &= VSIFPrintfL(fpCSV, "%s", szDelimiter) > 0;
 
         if( eGeometryFormat == OGR_CSV_GEOM_AS_WKT &&
             panGeomFieldIndex[iField] >= 0 )
@@ -2468,7 +2333,7 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
         const size_t nLen = strlen(pszEscaped);
         bNonEmptyLine |= nLen != 0;
         bool bAddDoubleQuote = false;
-        if( chDelimiter == ' ' && pszEscaped[0] != '"' &&
+        if( szDelimiter[0] == ' ' && pszEscaped[0] != '"' &&
             strchr(pszEscaped, ' ') != nullptr )
             bAddDoubleQuote = true;
         if( bAddDoubleQuote )
@@ -2483,7 +2348,7 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
     if( (poFeatureDefn->GetFieldCount() == 1 ||
          (poFeatureDefn->GetFieldCount() == 0 && bHiddenWKTColumn)) &&
         !bNonEmptyLine )
-        bRet &= VSIFPrintfL(fpCSV, "%c", chDelimiter) > 0;
+        bRet &= VSIFPrintfL(fpCSV, "%s", szDelimiter) > 0;
 
     if( bUseCRLF )
         bRet &= VSIFPutcL(13, fpCSV) != EOF;
@@ -2565,7 +2430,7 @@ GIntBig OGRCSVLayer::GetFeatureCount( int bForce )
 
     ResetReading();
 
-    if( chDelimiter == '\t' && bDontHonourStrings )
+    if( szDelimiter[0] == '\t' && !bHonourStrings )
     {
         const int nBufSize = 4096;
         char szBuffer[nBufSize + 1] = {};

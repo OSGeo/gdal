@@ -2201,17 +2201,31 @@ OGRSpatialReference *OGRShapeGeomFieldDefn::GetSpatialRef() const
                     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                     CPLFree(pahSRS);
 
-                    // If the SRS is EPSG:4326 with TOWGS84[0,0,0,0,0,0], then
-                    // just use plain EPSG:4326
+                    auto poBaseGeogCRS = std::unique_ptr<OGRSpatialReference>(
+                        poSRS->CloneGeogCS());
+
+                    // If the base geographic SRS of the SRS is EPSG:4326
+                    // with TOWGS84[0,0,0,0,0,0], then just use the official
+                    // SRS code
+                    // Same with EPSG:4258 (ETRS89), since it's the only known
+                    // TOWGS84[] style transformation to WGS 84, and given the
+                    // "fuzzy" nature of both ETRS89 and WGS 84, there's little
+                    // chance that a non-NULL TOWGS84[] will emerge.
                     const char* pszAuthorityName = nullptr;
                     const char* pszAuthorityCode = nullptr;
+                    const char* pszBaseAuthorityName = nullptr;
+                    const char* pszBaseAuthorityCode = nullptr;
                     if( adfTOWGS84 == std::vector<double>(7) &&
                         (pszAuthorityName = poSRS->GetAuthorityName(nullptr)) != nullptr &&
                         EQUAL(pszAuthorityName, "EPSG") &&
                         (pszAuthorityCode = poSRS->GetAuthorityCode(nullptr)) != nullptr &&
-                        EQUAL(pszAuthorityCode, "4326") )
+                        (pszBaseAuthorityName = poBaseGeogCRS->GetAuthorityName(nullptr)) != nullptr &&
+                        EQUAL(pszBaseAuthorityName, "EPSG") &&
+                        (pszBaseAuthorityCode = poBaseGeogCRS->GetAuthorityCode(nullptr)) != nullptr &&
+                        (EQUAL(pszBaseAuthorityCode, "4326") ||
+                         EQUAL(pszBaseAuthorityCode, "4258")) )
                     {
-                        poSRS->importFromEPSG(4326);
+                        poSRS->importFromEPSG(atoi(pszAuthorityCode));
                     }
                 }
                 else

@@ -162,7 +162,7 @@ if(NOT ODBC_INCLUDE_DIR AND WIN32)
 endif()
 
 ### Find libraries ############################################################
-if(NOT ODBC_LIBRARY)
+
   find_library(ODBC_LIBRARY
     NAMES ${_odbc_lib_names}
     PATHS ${_odbc_lib_paths}
@@ -178,7 +178,7 @@ if(NOT ODBC_LIBRARY)
     endif()
     unset(_lib_path CACHE)
   endforeach()
-endif()
+
 
 # Unset internal lists as no longer used
 unset(_odbc_include_paths)
@@ -201,6 +201,7 @@ if(ODBCINST IN_LIST ODBC_FIND_COMPONENTS)
   find_library(ODBC_ODBCINST_LIBRARY
                NAMES odbcinst
                PATHS ${_odbc_lib_paths})
+  mark_as_advanced(ODBC_ODBCINST_LIBRARY)
   if(ODBC_ODBCINST_LIBRARY)
     set(ODBC_ODBCINST_FOUND TRUE)
   endif()
@@ -214,6 +215,11 @@ find_package_handle_standard_args(ODBC
 unset(_odbc_required_vars)
 
 mark_as_advanced(ODBC_LIBRARY ODBC_INCLUDE_DIR)
+
+if(MSVC)
+  # legacy_stdio_definitions.lib : https://connect.microsoft.com/VisualStudio/feedback/details/1134693/vs-2015-ctp-5-c-vsnwprintf-s-and-other-functions-are-not-exported-in-appcrt140-dll-breaking-linkage-of-static-libraries
+  list(APPEND _odbc_required_libs_paths "legacy_stdio_definitions.lib;odbccp32.lib")
+endif()
 
 set(ODBC_INCLUDE_DIRS ${ODBC_INCLUDE_DIR})
 list(APPEND ODBC_LIBRARIES ${ODBC_LIBRARY})

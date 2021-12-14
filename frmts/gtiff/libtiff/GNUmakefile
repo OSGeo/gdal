@@ -70,6 +70,9 @@ endif
 
 ifeq ($(JPEG_SETTING),internal)
 ALL_C_FLAGS 	:=	$(ALL_C_FLAGS) -I../../jpeg/libjpeg
+ifeq ($(RENAME_INTERNAL_LIBJPEG_SYMBOLS),yes)
+ALL_C_FLAGS	:=	$(ALL_C_FLAGS) -DRENAME_INTERNAL_LIBJPEG_SYMBOLS
+endif
 endif
 
 ifeq ($(TIFF_JPEG12_ENABLED),yes)
@@ -124,18 +127,6 @@ import:
 	@echo
 
 install-obj:	$(EXTRA_DEP) $(O_OBJ:.o=.$(OBJ_EXT))
-
-ifeq ($(RENAME_INTERNAL_LIBTIFF_SYMBOLS),yes)
-../../o/tif_jpeg.$(OBJ_EXT) : tif_jpeg.c t4.h tif_config.h tif_dir.h tif_fax3.h tif_predict.h tiff.h tiffconf.h tiffio.h tiffiop.h tiffvers.h uvcode.h
-	sed "s/defined(TIFFInitJPEG)/0/" < tif_jpeg.c > tmp_tif_jpeg.c
-	$(CC) -c $(ALL_C_FLAGS) tmp_tif_jpeg.c -o $@
-	rm tmp_tif_jpeg.c
-
-../../o/tif_jpeg_12.$(OBJ_EXT) : tif_jpeg_12.c t4.h tif_config.h tif_dir.h tif_fax3.h tif_predict.h tiff.h tiffconf.h tiffio.h tiffiop.h tiffvers.h uvcode.h
-	sed "s/#define TIFFInitJPEG/#undef TIFFInitJPEG\n#  define TIFFInitJPEG/" < tif_jpeg_12.c > tmp_tif_jpeg_12.c
-	$(CC) -c $(ALL_C_FLAGS) tmp_tif_jpeg_12.c -o $@
-	rm tmp_tif_jpeg_12.c
-endif
 
 ../../o/%.$(OBJ_EXT):	%.c t4.h tif_config.h tif_dir.h tif_fax3.h tif_predict.h tiff.h tiffconf.h tiffio.h tiffiop.h tiffvers.h uvcode.h
 	$(CC) -c $(ALL_C_FLAGS) $< -o $@

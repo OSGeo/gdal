@@ -1010,7 +1010,7 @@ def test_rasterio_dataset_invalid_resample_alg(resample_alg):
 def test_rasterio_floating_point_window_no_resampling():
     """ Test fix for #3101 """
 
-    ds = gdal.Translate('/vsimem/test.tif', gdal.Open('data/rgbsmall.tif'))
+    ds = gdal.Translate('/vsimem/test.tif', gdal.Open('data/rgbsmall.tif'), options = '-co INTERLEAVE=PIXEL')
     assert ds.GetMetadataItem('INTERLEAVE', 'IMAGE_STRUCTURE') == 'PIXEL'
 
     # Check that GDALDataset::IRasterIO() in block-based strategy behaves the
@@ -1027,7 +1027,7 @@ def test_rasterio_floating_point_window_no_resampling_numpy():
     # Same as above but using ReadAsArray() instead of ReadRaster()
     numpy = pytest.importorskip('numpy')
 
-    ds = gdal.Translate('/vsimem/test.tif', gdal.Open('data/rgbsmall.tif'))
+    ds = gdal.Translate('/vsimem/test.tif', gdal.Open('data/rgbsmall.tif'), options = '-co INTERLEAVE=PIXEL')
     assert ds.GetMetadataItem('INTERLEAVE', 'IMAGE_STRUCTURE') == 'PIXEL'
 
     data_per_band = numpy.stack([ds.GetRasterBand(i+1).ReadAsArray(0.1,0.2,10.4,11.4,buf_xsize=10,buf_ysize=11) for i in range(3)])

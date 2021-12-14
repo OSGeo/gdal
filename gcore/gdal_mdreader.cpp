@@ -44,6 +44,7 @@
 #include "cpl_error.h"
 #include "cpl_minixml.h"
 #include "cpl_string.h"
+#include "cpl_time.h"
 #include "cpl_vsi.h"
 #include "cplkeywordparser.h"
 #include "gdal_priv.h"
@@ -234,7 +235,7 @@ void GDALMDReaderBase::LoadMetadata()
 /**
  * GetAcqisitionTimeFromString()
  */
-time_t GDALMDReaderBase::GetAcquisitionTimeFromString(
+GIntBig GDALMDReaderBase::GetAcquisitionTimeFromString(
     const char* pszDateTime)
 {
     if(nullptr == pszDateTime)
@@ -262,7 +263,7 @@ time_t GDALMDReaderBase::GetAcquisitionTimeFromString(
     tmDateTime.tm_year = iYear - 1900;
     tmDateTime.tm_isdst = -1;
 
-    return mktime(&tmDateTime);
+    return CPLYMDHMSToUnixTime(&tmDateTime);
 }
 
 /**
@@ -1141,8 +1142,7 @@ CPLErr GDALWriteIMDFile( const char *pszFilename, char **papszMD )
                     // in a double-quoted string (or single-quote in a single-quoted
                     // string), so we are going to convert double-quotes as
                     // two single-quotes...
-                    const std::string osVal = CPLString(pszValue).replaceAll('"', "''");
-                    bOK &= VSIFPrintfL( fp, "\"%s\";\n", osVal.c_str() ) > 0;
+                    bOK &= VSIFPrintfL( fp, "\"%s\";\n", CPLString(pszValue).replaceAll('"', "''").c_str() ) > 0;
                 }
             }
             else

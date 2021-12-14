@@ -1151,24 +1151,23 @@ bool OGRVRTLayer::ResetSourceReading()
 
             const char *pszXField = poXField->GetNameRef();
             const char *pszYField = poYField->GetNameRef();
-            if( apoGeomFieldProps[i]->bUseSpatialSubquery )
+
+            OGRFieldType xType = poXField->GetType();
+            OGRFieldType yType = poYField->GetType();
+            if( !((xType == OFTReal || xType == OFTInteger ||
+                   xType == OFTInteger64) &&
+                  (yType == OFTReal || yType == OFTInteger ||
+                   yType == OFTInteger64)) )
             {
-                OGRFieldType xType = poXField->GetType();
-                OGRFieldType yType = poYField->GetType();
-                if( !((xType == OFTReal || xType == OFTInteger ||
-                       xType == OFTInteger64) &&
-                      (yType == OFTReal || yType == OFTInteger ||
-                       yType == OFTInteger64)) )
-                {
-                    CPLError(CE_Warning, CPLE_AppDefined,
-                             "The '%s' and/or '%s' fields of the source layer "
-                             "are not declared as numeric fields, "
-                             "so the spatial filter cannot be turned into an "
-                             "attribute filter on them",
-                             pszXField, pszYField);
-                    apoGeomFieldProps[i]->bUseSpatialSubquery = false;
-                }
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "The '%s' and/or '%s' fields of the source layer "
+                         "are not declared as numeric fields, "
+                         "so the spatial filter cannot be turned into an "
+                         "attribute filter on them",
+                         pszXField, pszYField);
+                apoGeomFieldProps[i]->bUseSpatialSubquery = false;
             }
+
             if( apoGeomFieldProps[i]->bUseSpatialSubquery )
             {
                 OGREnvelope sEnvelope;

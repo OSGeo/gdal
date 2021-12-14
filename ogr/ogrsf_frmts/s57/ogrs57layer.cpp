@@ -217,6 +217,13 @@ int OGRS57Layer::TestCapability( const char * pszCap )
     if( EQUAL(pszCap, OLCFastSpatialFilter) )
         return false;
 
+    if( EQUAL(pszCap, OLCStringsAsUTF8) )
+    {
+        return poDS->GetModule(0) != nullptr &&
+               (poDS->GetModule(0)->GetOptionFlags()
+                    & S57M_RECODE_BY_DSSI);
+    }
+
     return false;
 }
 

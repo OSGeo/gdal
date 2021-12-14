@@ -1882,6 +1882,7 @@ class MIDDATAFile
 
      const char *GetLine();
      const char *GetLastLine();
+     char** GetTokenizedNextLine();
      int Rewind();
      void SaveLine(const char *pszLine);
      const char *GetSavedLine();

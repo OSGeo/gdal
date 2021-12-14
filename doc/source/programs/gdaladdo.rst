@@ -167,6 +167,10 @@ documented in the GeoTIFF driver documentation.
   and overviews larger than 4GB).
 - IF_SAFER will create BigTIFF if the resulting file *might* exceed 4GB.
 
+Sparse GeoTIFF overview files (that is tiles which are omitted if all their pixels are
+at the nodata value, when there's one, or at 0 otherwise) can be obtained with
+``--config SPARSE_OK_OVERVIEW ON``. Added in GDAL 3.4.1
+
 See the documentation of the :ref:`raster.gtiff` driver for further explanations on all those options.
 
 Setting blocksize in Geotiff overviews

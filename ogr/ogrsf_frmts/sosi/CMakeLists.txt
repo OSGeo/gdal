@@ -2,17 +2,17 @@ add_gdal_driver(
   TARGET ogr_SOSI
   SOURCES ogr_sosi.h
           ogrsosidatatypes.h
-          fyba_melding.cpp
           ogrsosidatasource.cpp
           ogrsosidatatypes.cpp
           ogrsosidriver.cpp
-          ogrsosilayer.cpp)
-target_include_directories(ogr_SOSI $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)
-gdal_target_link_libraries(TARGET ogr_SOSI LIBRARIES SOSI::SOSI SOSI::FYGM SOSI::FYUT)
+          ogrsosilayer.cpp
+          PLUGIN_CAPABLE)
+gdal_standard_includes(ogr_SOSI)
+target_include_directories(ogr_SOSI PRIVATE $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)
+gdal_target_link_libraries(TARGET ogr_SOSI LIBRARIES FYBA::FYBA FYBA::FYGM FYBA::FYUT)
 
-if (CMAKE_HOST_UNIX)
-  target_compile_definitions(ogr_SOSI PRIVATE -DUNIX)
-endif ()
-if (CMAKE_SYSTEM_NAME EQUAL "Linux")
+if (WIN32)
+  target_sources(ogr_SOSI PRIVATE fyba_melding.cpp)
+else ()
   target_compile_definitions(ogr_SOSI PRIVATE -DLINUX)
 endif ()

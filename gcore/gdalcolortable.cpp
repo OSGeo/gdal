@@ -474,3 +474,29 @@ int GDALColorTable::IsSame(const GDALColorTable* poOtherCT) const
             memcmp(&aoEntries[0], &poOtherCT->aoEntries[0], aoEntries.size()
                    * sizeof(GDALColorEntry)) == 0);
 }
+
+/************************************************************************/
+/*                          IsIdentity()                                */
+/************************************************************************/
+
+/**
+ * \brief Returns if the current color table is the identity, that is
+ * for each index i, colortable[i].c1 = .c2 = .c3 = i and .c4 = 255
+ *
+ * @since GDAL 3.4.1
+ */
+
+bool GDALColorTable::IsIdentity() const
+{
+    for( int i = 0; i < static_cast<int>(aoEntries.size()); ++i )
+    {
+        if( aoEntries[i].c1 != i ||
+            aoEntries[i].c2 != i ||
+            aoEntries[i].c3 != i ||
+            aoEntries[i].c4 != 255 )
+        {
+            return false;
+        }
+    }
+    return true;
+}

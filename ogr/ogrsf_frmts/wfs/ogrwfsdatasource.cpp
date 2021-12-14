@@ -664,7 +664,14 @@ bool OGRWFSDataSource::DetectSupportPagingWFS2( CPLXMLNode* psRoot )
             {
                 int nVal = atoi(CPLGetXMLValue(psChild, "DefaultValue", "0"));
                 if( nVal > 0 )
+                {
                     nPageSize = nVal;
+                    const int nPageSizeURL = atoi(CPLURLGetValue(osBaseURL, "COUNT"));
+                    if( nPageSizeURL > 0 && nPageSizeURL < nPageSize )
+                    {
+                        nPageSize = nPageSizeURL;
+                    }
+                }
 
                 break;
             }

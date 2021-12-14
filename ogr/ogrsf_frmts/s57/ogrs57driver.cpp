@@ -185,9 +185,9 @@ void RegisterOGRS57()
         "  <Option name='" S57O_ADD_SOUNDG_DEPTH "' type='boolean' description='Should a DEPTH attribute be added on SOUNDG features and assign the depth of the sounding' default='NO'/>"
         "  <Option name='" S57O_RETURN_PRIMITIVES "' type='boolean' description='Should all the low level geometry primitives be returned as special IsolatedNode, ConnectedNode, Edge and Face layers' default='NO'/>"
         "  <Option name='" S57O_PRESERVE_EMPTY_NUMBERS "' type='boolean' description='If enabled, numeric attributes assigned an empty string as a value will be preserved as a special numeric value' default='NO'/>"
-        "  <Option name='" S57O_LNAM_REFS "' type='boolean' description='Should LNAM and LNAM_REFS fields be attached to features capturing the feature to feature relationships in the FFPT group of the S-57 file' default='YES'/>"
+        "  <Option name='" S57O_LNAM_REFS "' type='boolean' description='Should LNAM and LNAM_REFS fields be attached to features capturing the feature to feature relationships in the FFPT group of the S-57 file' default='NO'/>"
         "  <Option name='" S57O_RETURN_LINKAGES "' type='boolean' description='Should additional attributes relating features to their underlying geometric primitives be attached' default='NO'/>"
-        "  <Option name='" S57O_RECODE_BY_DSSI "' type='boolean' description='Should attribute values be recoded to UTF-8 from the character encoding specified in the S57 DSSI record.' default='NO'/>"
+        "  <Option name='" S57O_RECODE_BY_DSSI "' type='boolean' description='Should attribute values be recoded to UTF-8 from the character encoding specified in the S57 DSSI record.' default='YES'/>"
         "  <Option name='" S57O_LIST_AS_STRING "' type='boolean' description='Whether attributes tagged as list in S57 dictionaries should be reported as a String field' default='NO'/>"
         "</OpenOptionList>");
     poDriver->SetMetadataItem(

@@ -35,6 +35,8 @@
 #include "cpl_error.h"
 #include "cpl_minixml.h"
 #include "cpl_string.h"
+#include "cpl_time.h"
+
 #include "gdal_priv.h"
 
 CPL_CVSID("$Id$")
@@ -137,9 +139,10 @@ void GDALMDReaderResursDK1::LoadMetadata()
             pszTime = "00:00:00.000000";
 
         char buffer[80];
-        time_t timeMid = GetAcquisitionTimeFromString(CPLSPrintf( "%s %s",
+        GIntBig timeMid = GetAcquisitionTimeFromString(CPLSPrintf( "%s %s",
                                                      pszDate, pszTime));
-        strftime (buffer, 80, MD_DATETIMEFORMAT, localtime(&timeMid));
+        struct tm tmBuf;
+        strftime (buffer, 80, MD_DATETIMEFORMAT, CPLUnixTimeToYMDHMS(timeMid, &tmBuf));
         m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
                                            MD_NAME_ACQDATETIME, buffer);
     }
@@ -151,7 +154,7 @@ void GDALMDReaderResursDK1::LoadMetadata()
 /**
  * GetAcqisitionTimeFromString()
  */
-time_t GDALMDReaderResursDK1::GetAcquisitionTimeFromString(
+GIntBig GDALMDReaderResursDK1::GetAcquisitionTimeFromString(
         const char* pszDateTime)
 {
     if(nullptr == pszDateTime)
@@ -184,7 +187,7 @@ time_t GDALMDReaderResursDK1::GetAcquisitionTimeFromString(
     tmDateTime.tm_year = iYear - 1900;
     tmDateTime.tm_isdst = -1;
 
-    return mktime(&tmDateTime) - 10800; // int UTC+3 MSK
+    return CPLYMDHMSToUnixTime(&tmDateTime) - 10800; // int UTC+3 MSK
 }
 
 char** GDALMDReaderResursDK1::AddXMLNameValueToList(char** papszList,

@@ -75,7 +75,7 @@ OGRMSSQLSpatialLayer::~OGRMSSQLSpatialLayer()
 /*      set on a statement.  Sift out geometry and FID fields.          */
 /************************************************************************/
 
-CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
+void OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
                                     CPLODBCStatement *poStmtIn )
 
 {
@@ -242,6 +242,7 @@ CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
                 break;
 
             case SQL_C_GUID:
+                m_bHasUUIDColumn = true;
                 oField.SetType( OFTString );
                 oField.SetSubType( OFSTUUID );
                 break;
@@ -310,8 +311,6 @@ CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
     else
         CPLDebug( "OGR_MSSQLSpatial", "Table %s has no identified FID column.",
                   poFeatureDefn->GetName() );
-
-    return CE_None;
 }
 
 /************************************************************************/

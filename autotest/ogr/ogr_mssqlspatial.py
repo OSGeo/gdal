@@ -162,8 +162,10 @@ def test_ogr_mssqlspatial_3():
                                           max_error=0.001) == 0)
 
         for fld in range(3):
-            assert orig_feat.GetField(fld) == read_feat.GetField(fld), \
-                ('Attribute %d does not match' % fld)
+            if orig_feat.GetField(fld) != read_feat.GetField(fld):
+                orig_feat.DumpReadable()
+                read_feat.DumpReadable()
+                assert False, ('Attribute %d does not match' % fld)
         assert read_feat.GetField('INT64') == 1234567890123
 
         read_feat = None
@@ -191,6 +193,12 @@ def test_ogr_mssqlspatial_4():
     if gdaltest.mssqlspatial_has_z_m:
         wkt_list.append('3d_1')
 
+    use_bcp = 'BCP' in gdal.GetDriverByName('MSSQLSpatial').GetMetadataItem(gdal.DMD_LONGNAME)
+    if use_bcp:
+        MSSQLSPATIAL_USE_BCP = gdal.GetConfigOption('MSSQLSPATIAL_USE_BCP', 'YES')
+        if MSSQLSPATIAL_USE_BCP.upper() in ('NO', 'OFF', 'FALSE'):
+            use_bcp = False
+
     for item in wkt_list:
         wkt_filename = 'data/wkb_wkt/' + item + '.wkt'
         wkt = open(wkt_filename).read()
@@ -207,11 +215,12 @@ def test_ogr_mssqlspatial_4():
                                  'from file "' + wkt_filename + '"')
 
         ######################################################################
-        # Before reading back the record, verify that the newly added feature 
+        # Before reading back the record, verify that the newly added feature
         # is returned from the CreateFeature method with a newly assigned FID.
-        
-        assert dst_feat.GetFID() != -1, \
-            'Assigned FID was not returned in the new feature'
+
+        if not use_bcp:
+            assert dst_feat.GetFID() != -1, \
+                'Assigned FID was not returned in the new feature'
 
         ######################################################################
         # Read back the feature and get the geometry.
@@ -275,14 +284,8 @@ def test_ogr_mssqlspatial_create_feature_in_unregistered_table():
 
     # Create a new MSSQLSpatial data source, one that will find the table just
     # created and make it available via GetLayerByName()
-    use_geometry_columns = gdal.GetConfigOption(
-        'MSSQLSPATIAL_USE_GEOMETRY_COLUMNS')
-    gdal.SetConfigOption('MSSQLSPATIAL_USE_GEOMETRY_COLUMNS', 'NO')
-
-    test_ds = ogr.Open(gdaltest.mssqlspatial_dsname, update=1)
-
-    gdal.SetConfigOption('MSSQLSPATIAL_USE_GEOMETRY_COLUMNS',
-                         use_geometry_columns)
+    with gdaltest.config_option('MSSQLSPATIAL_USE_GEOMETRY_COLUMNS', 'NO'):
+        test_ds = ogr.Open(gdaltest.mssqlspatial_dsname, update=1)
 
     assert test_ds is not None, 'cannot open data source'
 

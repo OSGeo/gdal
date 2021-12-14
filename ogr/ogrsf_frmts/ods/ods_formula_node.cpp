@@ -1120,9 +1120,15 @@ ods_formula_node::EvaluateBinaryArithmetic( IODSCellEvaluator* poEvaluator )
                         return false;
                     break;
                 case ODS_MODULUS  :
-                    if( papoSubExpr[1]->int_value != 0 )
+                    if( papoSubExpr[0]->int_value == INT_MIN && papoSubExpr[1]->int_value == -1 )
+                    {
+                        nVal = 0;
+                    }
+                    else if( papoSubExpr[1]->int_value != 0 )
+                    {
                         nVal = papoSubExpr[0]->int_value %
                             papoSubExpr[1]->int_value;
+                    }
                     else
                         return false;
                     break;

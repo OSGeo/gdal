@@ -795,13 +795,15 @@ struct curl_slist* VSIGSHandle::GetCurlHeaders( const CPLString& osVerb,
 /*                      VSIInstallGSFileHandler()                       */
 /************************************************************************/
 
-/**
- * \brief Install /vsigs/ Google Cloud Storage file system handler
- * (requires libcurl)
- *
- * @see <a href="gdal_virtual_file_systems.html#gdal_virtual_file_systems_vsigs">/vsigs/ documentation</a>
- *
- * @since GDAL 2.2
+/*!
+ \brief Install /vsigs/ Google Cloud Storage file system handler
+ (requires libcurl)
+
+ \verbatim embed:rst
+ See :ref:`/vsigs/ documentation <vsigs>`
+ \endverbatim
+
+ @since GDAL 2.2
  */
 
 void VSIInstallGSFileHandler( void )

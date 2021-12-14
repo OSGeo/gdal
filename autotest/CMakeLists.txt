@@ -91,7 +91,9 @@ if (Python_Interpreter_FOUND)
 
   # Needed for a autotest/osr test
   symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/cpp/data ${CMAKE_CURRENT_BINARY_DIR}/cpp/data)
-  if (NOT SKIP_COPYING_AUTOTEST_SUBDIRS)
+  if (SKIP_COPYING_AUTOTEST_SUBDIRS)
+    message("Skipping copying ${CMAKE_CURRENT_SOURCE_DIR}/pymod")
+  else ()
     symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/pymod ${CMAKE_CURRENT_BINARY_DIR}/pymod)
   endif ()
 
@@ -105,7 +107,9 @@ if (Python_Interpreter_FOUND)
           gnm
           pyscripts
           utilities)
-    if (NOT SKIP_COPYING_AUTOTEST_SUBDIRS)
+    if (SKIP_COPYING_AUTOTEST_SUBDIRS)
+      message("Skipping copying ${CMAKE_CURRENT_SOURCE_DIR}/${tgt}")
+    else ()
       symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/${tgt} ${CMAKE_CURRENT_BINARY_DIR}/${tgt})
     endif ()
     add_custom_target(

@@ -646,7 +646,8 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
         osSQL += "\"";
         osSQL += " ";
         osSQL += OGRSQLiteFieldDefnToSQliteFieldDefn(poFieldDefn,
-                                                     bInternalUse);
+                                                     bInternalUse,
+                                                     false);
     }
 
     if( bAddComma )

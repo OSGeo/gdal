@@ -33,7 +33,7 @@ for you.
 
   If components ``Interpreter`` and ``Development`` are both specified, this
   module search only for interpreter with same platform architecture as the one
-  defined by ``CMake`` configuration. This contraint does not apply if only
+  defined by ``CMake`` configuration. This constraint does not apply if only
   ``Interpreter`` component is specified.
 
 Imported Targets
@@ -122,7 +122,7 @@ This module will set the following variables in your project
 ``Python2_NumPy_FOUND``
   System has the NumPy.
 ``Python2_NumPy_INCLUDE_DIRS``
-  The NumPy include directries.
+  The NumPy include directories.
 ``Python2_NumPy_VERSION``
   The NumPy version.
 
@@ -176,7 +176,7 @@ Hints
   variable will be used, if any.
 
 ``Python2_FIND_VIRTUALENV``
-  This variable defines the handling of virtual environments. It is meaningfull
+  This variable defines the handling of virtual environments. It is meaningful
   only when a virtual environment is active (i.e. the ``activate`` script has
   been evaluated). In this case, it takes precedence over
   ``Python2_FIND_REGISTRY`` and ``CMAKE_FIND_FRAMEWORK`` variables.
@@ -234,7 +234,7 @@ setting the following variables:
   When an artifact is specified, all ``HINTS`` will be ignored and no search
   will be performed for this artifact.
 
-  If more than one artifact is specified, it is the user's responsability to
+  If more than one artifact is specified, it is the user's responsibility to
   ensure the consistency of the various artifacts.
 
 Commands

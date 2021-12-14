@@ -807,6 +807,7 @@
 #define predictFields gdal_predictFields
 #define photoNames gdal_photoNames
 #define orientNames gdal_orientNames
+#define tagnames gdal_tagnames
 #define TWebPFields gdal_TWebPFields
 #define zipFields gdal_zipFields
 #define ZSTDFields gdal_ZSTDFields
@@ -824,8 +825,6 @@
 #define DISABLE_CHECK_TIFFSWABMACROS
 
 #define TIFFInitDumpMode gdal_TIFFInitDumpMode
-#define TIFFReInitJPEG_12 gdal_TIFFReInitJPEG_12
-#define TIFFJPEGIsFullStripRequired_12 gdal_TIFFJPEGIsFullStripRequired_12
 #ifdef LZW_SUPPORT
 #define TIFFInitLZW gdal_TIFFInitLZW
 #endif
@@ -840,6 +839,9 @@
 #endif
 #ifdef JPEG_SUPPORT
 #define TIFFInitJPEG gdal_TIFFInitJPEG
+#define TIFFJPEGIsFullStripRequired gdal_TIFFJPEGIsFullStripRequired
+#define TIFFReInitJPEG_12 gdal_TIFFReInitJPEG_12
+#define TIFFJPEGIsFullStripRequired_12 gdal_TIFFJPEGIsFullStripRequired_12
 #define TIFFInitJPEG_12 gdal_TIFFInitJPEG_12
 #endif
 #ifdef OJPEG_SUPPORT

@@ -573,7 +573,7 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 			const TIFFField *fip;
 			uint32_t value_count;
 			int mem_alloc = 0;
-			void *raw_data;
+			void *raw_data = NULL;
 
 			fip = TIFFFieldWithTag(tif, tag);
 			if(fip == NULL)
@@ -637,7 +637,7 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 			 * _TIFFPrettyPrintField() fall down and print it as
 			 * any other tag.
 			 */
-			if (!_TIFFPrettyPrintField(tif, fip, fd, tag, value_count, raw_data))
+			if (raw_data != NULL && !_TIFFPrettyPrintField(tif, fip, fd, tag, value_count, raw_data))
 				_TIFFPrintField(fd, fip, value_count, raw_data);
 
 			if(mem_alloc)

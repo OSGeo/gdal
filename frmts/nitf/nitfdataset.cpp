@@ -6358,7 +6358,7 @@ static const NITFFieldDescription asFieldDescription [] =
     {  8, "ICAT", "Image Category" } ,
     {  2, "ABPP", "Actual Bits-Per-Pixel Per Band" } ,
     {  1, "PJUST", "Pixel Justification" } ,
-    {780, "ICOM", "Image Comments (up to 9x80 characters)" } ,
+    {720, "ICOM", "Image Comments (up to 9x80 characters)" } ,
     {  3, "IDLVL", "Image Display Level" },
     {  3, "IALVL", "Image Attachment Level" },
     {  5, "ILOCROW", "Image Location Row" },

@@ -1804,8 +1804,8 @@ void ZarrSharedResource::SetZMetadataItem(const std::string& osFilename,
 {
     if( m_bZMetadataEnabled )
     {
-        const std::string osNormalizedFilename =
-                                CPLString(osFilename).replaceAll('\\', '/');
+        CPLString osNormalizedFilename(osFilename);
+        osNormalizedFilename.replaceAll('\\', '/');
         CPLAssert( STARTS_WITH(osNormalizedFilename.c_str(),
                                (m_osRootDirectoryName + '/').c_str()) );
         m_bZMetadataModified = true;

@@ -37,6 +37,10 @@ CPPFLAGS	:=	-iquote ../mem $(XTRA_OPT)  $(CPPFLAGS)
 # # Enable this to compile with -Wextra -Werror and get around the jump complaint.
 # CPPFLAGS += -Wno-clobbered
 
+ifeq ($(RENAME_INTERNAL_LIBJPEG_SYMBOLS),yes)
+CPPFLAGS	:=	-DRENAME_INTERNAL_LIBJPEG_SYMBOLS $(CPPFLAGS)
+endif
+
 default:	install-obj
 
 $(O_OBJ): jpgdataset.cpp vsidataio.cpp

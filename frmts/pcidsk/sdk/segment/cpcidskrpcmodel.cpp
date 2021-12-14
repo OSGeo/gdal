@@ -124,7 +124,7 @@ void CPCIDSKRPCModelSegment::Load()
 
     mbEmpty = false;
 
-    if( data_size - 1024 != 7 * 512 )
+    if( data_size != 1024 + 7 * 512 )
     {
         return ThrowPCIDSKException("Wrong data_size in CPCIDSKRPCModelSegment");
     }

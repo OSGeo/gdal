@@ -55,6 +55,14 @@ NITFCollectSegmentInfo( NITFFile *psFile, int nFileHeaderLenSize, int nOffset,
                         int nHeaderLenSize, int nDataLenSize,
                         GUIntBig *pnNextData );
 
+static void NITFExtractAndRecodeMetadata( char ***ppapszMetadata, const char *pachHeader,
+                                          int nStart, int nLength, const char *pszName,
+                                          const char *pszSrcEncoding );
+
+static int NITFWriteOption( VSILFILE *fp, char **papszOptions,
+                            size_t nWidth, GUIntBig nLocation, const char *pszName,
+                            const char *pszText);
+
 /************************************************************************/
 /*                              NITFOpen()                              */
 /************************************************************************/
@@ -819,16 +827,8 @@ int NITFCreateEx( const char *pszFilename,
     bOK &= NITFGotoOffset(fp, location); \
     bOK &= VSIFWriteL(_text, 1, strlen(_text), fp) == strlen(_text); } while(0)
 
-#define OVR(width,location,name,text) do { 				\
-    const char* _text = text; \
-    const char *pszParamValueMacro; 						\
-    size_t to_write; \
-    pszParamValueMacro = CSLFetchNameValue( papszOptions, #name ); 		\
-    if( pszParamValueMacro == NULL )						\
-        pszParamValueMacro = _text;						\
-    bOK &= NITFGotoOffset(fp, location); \
-    to_write = MIN(width,strlen(pszParamValueMacro)); \
-    bOK &= VSIFWriteL(pszParamValueMacro, 1, to_write, fp) == to_write; } while(0)
+#define OVR(width,location,name,text) \
+    bOK &= NITFWriteOption(fp, papszOptions, width, location, #name, text);
 
 #define WRITE_BYTE(location, val) do { \
     char cVal = val; \
@@ -1071,7 +1071,8 @@ int NITFCreateEx( const char *pszFilename,
         const char* pszICOM = CSLFetchNameValue( papszOptions, "ICOM");
         if (pszICOM != NULL)
         {
-            int nLenICOM = (int)strlen(pszICOM);
+            char *pszRecodedICOM = CPLRecode( pszICOM, CPL_ENC_UTF8, CPL_ENC_ISO8859_1 );
+            int nLenICOM = (int)strlen(pszRecodedICOM);
             int nICOM = (79 + nLenICOM) / 80;
             size_t nToWrite;
             if (nICOM > 9)
@@ -1081,8 +1082,9 @@ int NITFCreateEx( const char *pszFilename,
             }
             PLACE (nCur+nOffset, NICOM    , CPLSPrintf("%01d",nICOM) );
             nToWrite = MIN(nICOM * 80, nLenICOM);
-            bOK &= VSIFWriteL(pszICOM, 1, nToWrite, fp) == nToWrite;
+            bOK &= VSIFWriteL(pszRecodedICOM, 1, nToWrite, fp) == nToWrite;
             nOffset += nICOM * 80;
+            CPLFree(pszRecodedICOM);
         }
         else
         {
@@ -1350,6 +1352,32 @@ int NITFCreateEx( const char *pszFilename,
     if( VSIFCloseL( fp ) != 0 )
         bOK = FALSE;
 
+    return bOK;
+}
+
+static int NITFWriteOption( VSILFILE *psFile, char **papszOptions,
+                            size_t nWidth, GUIntBig nLocation,
+                            const char *pszName, const char *pszText )
+{
+    const char *pszParamValue;
+    char *pszRecodedValue;
+    size_t nToWrite;
+    int bOK = TRUE;
+
+    pszParamValue = CSLFetchNameValue( papszOptions, pszName );
+    if( pszParamValue == NULL )
+    {
+        pszRecodedValue = CPLRecode(pszText, CPL_ENC_UTF8, CPL_ENC_ISO8859_1);
+    }
+    else
+    {
+        pszRecodedValue = CPLRecode(pszParamValue, CPL_ENC_UTF8, CPL_ENC_ISO8859_1);
+    }
+
+    bOK &= NITFGotoOffset(psFile, nLocation);
+    nToWrite = MIN(nWidth, strlen(pszRecodedValue));
+    bOK &= VSIFWriteL(pszRecodedValue, 1, nToWrite, psFile) == nToWrite;
+    CPLFree(pszRecodedValue);
     return bOK;
 }
 
@@ -1827,12 +1855,14 @@ const char *NITFFindTREByIndex( const char *pszTREData, int nTREBytes,
 /*                        NITFExtractMetadata()                         */
 /************************************************************************/
 
-void NITFExtractMetadata( char ***ppapszMetadata, const char *pachHeader,
-                          int nStart, int nLength, const char *pszName )
+static void NITFExtractAndRecodeMetadata( char ***ppapszMetadata, const char *pachHeader,
+                                          int nStart, int nLength, const char *pszName,
+                                          const char *pszSrcEncoding )
 
 {
     char szWork[400];
     char* pszWork;
+    char* pszRecode;
 
     if( nLength <= 0 )
         return;
@@ -1849,10 +1879,27 @@ void NITFExtractMetadata( char ***ppapszMetadata, const char *pachHeader,
     memcpy( pszWork, pachHeader + nStart, nLength );
     pszWork[nLength] = '\0';
 
-    *ppapszMetadata = CSLSetNameValue( *ppapszMetadata, pszName, pszWork );
+    if( strcmp(pszSrcEncoding, CPL_ENC_UTF8) != 0 )
+    {
+        pszRecode = CPLRecode(pszWork, pszSrcEncoding, CPL_ENC_UTF8);
+        *ppapszMetadata = CSLSetNameValue( *ppapszMetadata, pszName, pszRecode );
+        CPLFree(pszRecode);
+    }
+    else
+    {
+        *ppapszMetadata = CSLSetNameValue( *ppapszMetadata, pszName, pszWork );
+    }
 
     if (szWork != pszWork)
         CPLFree(pszWork);
+
+}
+
+void NITFExtractMetadata( char ***ppapszMetadata, const char *pachHeader,
+                          int nStart, int nLength, const char *pszName )
+
+{
+    NITFExtractAndRecodeMetadata( ppapszMetadata, pachHeader, nStart, nLength, pszName, CPL_ENC_ISO8859_1);
 }
 
 /************************************************************************/
@@ -2463,14 +2510,12 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                     NITFExtractMetadata( &papszTmp, pachTRE, *pnTreOffset,
                                         nLength, pszMDItemName );
 
-                    pszValue = CPLRecode(strchr(papszTmp[0], '=') + 1, CPL_ENC_ISO8859_1, CPL_ENC_UTF8);
-                    papszTmp = CSLSetNameValue(papszTmp, pszMDItemName, pszValue);
-
+                    pszValue = CPLStrdup(CSLFetchNameValue(papszTmp, pszMDItemName));
                 }
                 else
                 {
-                    NITFExtractMetadata( &papszTmp, pachTRE, *pnTreOffset,
-                                        nLength, pszMDItemName );
+                    NITFExtractAndRecodeMetadata( &papszTmp, pachTRE, *pnTreOffset,
+                                        nLength, pszMDItemName, CPL_ENC_UTF8 );
 
                     pszValue = CPLStrdup(strchr(papszTmp[0], '=') + 1);
                 }

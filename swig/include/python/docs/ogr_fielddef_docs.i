@@ -461,7 +461,7 @@ By default, fields are nullable.
 
 Even if this method returns FALSE (i.e not-nullable field), it doesn't
 mean that OGRFeature::IsFieldSet() will necessary return TRUE, as
-fields can be temporary unset and null /not-null validation is usually
+fields can be temporary unset and null/not-null validation is usually
 done when OGRLayer::CreateFeature()/SetFeature() is called.
 
 This method is the same as the C++ method OGRFieldDefn::IsNullable().
@@ -538,6 +538,47 @@ bUniqueIn:  TRUE if the field must have a unique constraint.
 
 GDAL 3.2 ";
 
+%feature("docstring")  GetDomainName "const char*
+OGR_Fld_GetDomainName(OGRFieldDefnH hDefn)
+
+Return the name of the field domain for this field.
+
+By default, none (empty string) is returned.
+
+Field domains ( OGRFieldDomain class) are attached at the GDALDataset
+level and should be retrieved with GDALDatasetGetFieldDomain().
+
+This method is the same as the C++ method
+OGRFieldDefn::GetDomainName().
+
+Parameters:
+-----------
+
+hDefn:  handle to the field definition
+
+the field domain name, or an empty string if there is none.
+
+GDAL 3.3 ";
+
+%feature("docstring")  SetDomainName "void
+OGR_Fld_SetDomainName(OGRFieldDefnH hDefn, const char *pszFieldName)
+
+Set the name of the field domain for this field.
+
+Field domains ( OGRFieldDomain) are attached at the GDALDataset level.
+
+This method is the same as the C++ method
+OGRFieldDefn::SetDomainName().
+
+Parameters:
+-----------
+
+hDefn:  handle to the field definition
+
+pszFieldName:  Field domain name.
+
+GDAL 3.3 ";
+
 %feature("docstring")  OGRUpdateFieldType "void
 OGRUpdateFieldType(OGRFieldDefn *poFDefn, OGRFieldType eNewType,
 OGRFieldSubType eNewSubType)
@@ -559,5 +600,352 @@ eNewSubType:  the new field subtype to merge into the existing
 subtype.
 
 GDAL 2.1 ";
+
+%feature("docstring")  OGR_FldDomain_Destroy "void
+OGR_FldDomain_Destroy(OGRFieldDomainH hFieldDomain)
+
+Destroy a field domain.
+
+This is the same as the C++ method OGRFieldDomain::~OGRFieldDomain()
+
+Parameters:
+-----------
+
+hFieldDomain:  the field domain.
+
+GDAL 3.3 ";
+
+%feature("docstring")  OGR_CodedFldDomain_Create "OGRFieldDomainH
+OGR_CodedFldDomain_Create(const char *pszName, const char
+*pszDescription, OGRFieldType eFieldType, OGRFieldSubType
+eFieldSubType, const OGRCodedValue *enumeration)
+
+Creates a new coded field domain.
+
+This is the same as the C++ method
+OGRCodedFieldDomain::OGRCodedFieldDomain() (except that the C function
+copies the enumeration, whereas the C++ method moves it)
+
+Parameters:
+-----------
+
+pszName:  Domain name. Should not be NULL.
+
+pszDescription:  Domain description (can be NULL)
+
+eFieldType:  Field type. Generally numeric. Potentially OFTDateTime
+
+eFieldSubType:  Field subtype.
+
+enumeration:  Enumeration as (code, value) pairs. Should not be NULL.
+The end of the enumeration is marked by a code set to NULL. The
+enumeration will be copied. Each code should appear only once, but it
+is the responsibility of the user to check it.
+
+a new handle that should be freed with OGR_FldDomain_Destroy(), or
+NULL in case of error.
+
+GDAL 3.3 ";
+
+%feature("docstring")  GetUnsetField "static OGRField GetUnsetField()
+";
+
+%feature("docstring")  OGR_RangeFldDomain_Create "OGRFieldDomainH
+OGR_RangeFldDomain_Create(const char *pszName, const char
+*pszDescription, OGRFieldType eFieldType, OGRFieldSubType
+eFieldSubType, const OGRField *psMin, bool bMinIsInclusive, const
+OGRField *psMax, bool bMaxIsInclusive)
+
+Creates a new range field domain.
+
+This is the same as the C++ method
+OGRRangeFieldDomain::OGRRangeFieldDomain().
+
+Parameters:
+-----------
+
+pszName:  Domain name. Should not be NULL.
+
+pszDescription:  Domain description (can be NULL)
+
+eFieldType:  Field type. Among OFTInteger, OFTInteger64, OFTReal and
+OFTDateTime.
+
+eFieldSubType:  Field subtype.
+
+psMin:  Minimum value (can be NULL). The member in the union that is
+read is consistent with eFieldType
+
+bMinIsInclusive:  Whether the minimum value is included in the range.
+
+psMax:  Maximum value (can be NULL). The member in the union that is
+read is consistent with eFieldType
+
+bMaxIsInclusive:  Whether the maximum value is included in the range.
+
+a new handle that should be freed with OGR_FldDomain_Destroy()
+
+GDAL 3.3 ";
+
+%feature("docstring")  OGR_GlobFldDomain_Create "OGRFieldDomainH
+OGR_GlobFldDomain_Create(const char *pszName, const char
+*pszDescription, OGRFieldType eFieldType, OGRFieldSubType
+eFieldSubType, const char *pszGlob)
+
+Creates a new blob field domain.
+
+This is the same as the C++ method
+OGRGlobFieldDomain::OGRGlobFieldDomain()
+
+Parameters:
+-----------
+
+pszName:  Domain name. Should not be NULL.
+
+pszDescription:  Domain description (can be NULL)
+
+eFieldType:  Field type.
+
+eFieldSubType:  Field subtype.
+
+pszGlob:  Glob expression. Should not be NULL.
+
+a new handle that should be freed with OGR_FldDomain_Destroy()
+
+GDAL 3.3 ";
+
+%feature("docstring")  OGR_FldDomain_GetName "const char*
+OGR_FldDomain_GetName(OGRFieldDomainH hFieldDomain)
+
+Get the name of the field domain.
+
+This is the same as the C++ method OGRFieldDomain::GetName()
+
+Parameters:
+-----------
+
+hFieldDomain:  Field domain handle.
+
+the field domain name.
+
+GDAL 3.3 ";
+
+%feature("docstring")  OGR_FldDomain_GetDescription "const char*
+OGR_FldDomain_GetDescription(OGRFieldDomainH hFieldDomain)
+
+Get the description of the field domain.
+
+This is the same as the C++ method OGRFieldDomain::GetDescription()
+
+Parameters:
+-----------
+
+hFieldDomain:  Field domain handle.
+
+the field domain description (might be empty string).
+
+GDAL 3.3 ";
+
+%feature("docstring")  OGR_FldDomain_GetDomainType "OGRFieldDomainType OGR_FldDomain_GetDomainType(OGRFieldDomainH
+hFieldDomain)
+
+Get the type of the field domain.
+
+This is the same as the C++ method OGRFieldDomain::GetDomainType()
+
+Parameters:
+-----------
+
+hFieldDomain:  Field domain handle.
+
+the type of the field domain.
+
+GDAL 3.3 ";
+
+%feature("docstring")  OGR_FldDomain_GetFieldType "OGRFieldType
+OGR_FldDomain_GetFieldType(OGRFieldDomainH hFieldDomain)
+
+Get the field type of the field domain.
+
+This is the same as the C++ method OGRFieldDomain::GetFieldType()
+
+Parameters:
+-----------
+
+hFieldDomain:  Field domain handle.
+
+the field type of the field domain.
+
+GDAL 3.3 ";
+
+%feature("docstring")  OGR_FldDomain_GetFieldSubType "OGRFieldSubType
+OGR_FldDomain_GetFieldSubType(OGRFieldDomainH hFieldDomain)
+
+Get the field subtype of the field domain.
+
+This is the same as OGRFieldDomain::GetFieldSubType()
+
+Parameters:
+-----------
+
+hFieldDomain:  Field domain handle.
+
+the field subtype of the field domain.
+
+GDAL 3.3 ";
+
+%feature("docstring")  OGR_FldDomain_GetSplitPolicy "OGRFieldDomainSplitPolicy OGR_FldDomain_GetSplitPolicy(OGRFieldDomainH
+hFieldDomain)
+
+Get the split policy of the field domain.
+
+This is the same as the C++ method OGRFieldDomain::GetSplitPolicy()
+
+Parameters:
+-----------
+
+hFieldDomain:  Field domain handle.
+
+the split policy of the field domain.
+
+GDAL 3.3 ";
+
+%feature("docstring")  OGR_FldDomain_SetSplitPolicy "void
+OGR_FldDomain_SetSplitPolicy(OGRFieldDomainH hFieldDomain,
+OGRFieldDomainSplitPolicy policy)
+
+Set the split policy of the field domain.
+
+This is the same as the C++ method OGRFieldDomain::SetSplitPolicy()
+
+Parameters:
+-----------
+
+hFieldDomain:  Field domain handle.
+
+policy:  the split policy of the field domain.
+
+GDAL 3.3 ";
+
+%feature("docstring")  OGR_FldDomain_GetMergePolicy "OGRFieldDomainMergePolicy OGR_FldDomain_GetMergePolicy(OGRFieldDomainH
+hFieldDomain)
+
+Get the split policy of the field domain.
+
+This is the same as the C++ method OGRFieldDomain::GetMergePolicy()
+
+Parameters:
+-----------
+
+hFieldDomain:  Field domain handle.
+
+the split policy of the field domain.
+
+GDAL 3.3 ";
+
+%feature("docstring")  OGR_FldDomain_SetMergePolicy "void
+OGR_FldDomain_SetMergePolicy(OGRFieldDomainH hFieldDomain,
+OGRFieldDomainMergePolicy policy)
+
+Set the split policy of the field domain.
+
+This is the same as the C++ method OGRFieldDomain::SetMergePolicy()
+
+Parameters:
+-----------
+
+hFieldDomain:  Field domain handle.
+
+policy:  the split policy of the field domain.
+
+GDAL 3.3 ";
+
+%feature("docstring")  OGR_CodedFldDomain_GetEnumeration "const
+OGRCodedValue* OGR_CodedFldDomain_GetEnumeration(OGRFieldDomainH
+hFieldDomain)
+
+Get the enumeration as (code, value) pairs.
+
+The end of the enumeration is signaled by code == NULL
+
+This is the same as the C++ method
+OGRCodedFieldDomain::GetEnumeration()
+
+Parameters:
+-----------
+
+hFieldDomain:  Field domain handle.
+
+the (code, value) pairs, or nullptr in case of error.
+
+GDAL 3.3 ";
+
+%feature("docstring")  OGR_RangeFldDomain_GetMin "const OGRField*
+OGR_RangeFldDomain_GetMin(OGRFieldDomainH hFieldDomain, bool
+*pbIsInclusiveOut)
+
+Get the minimum value.
+
+Which member in the returned OGRField enum must be read depends on the
+field type.
+
+If no minimum value is set, the OGR_RawField_IsUnset() will return
+true when called on the result.
+
+This is the same as the C++ method OGRRangeFieldDomain::GetMin()
+
+Parameters:
+-----------
+
+hFieldDomain:  Field domain handle.
+
+pbIsInclusiveOut:  set to true if the minimum is included in the
+range.
+
+the minimum value.
+
+GDAL 3.3 ";
+
+%feature("docstring")  OGR_RangeFldDomain_GetMax "const OGRField*
+OGR_RangeFldDomain_GetMax(OGRFieldDomainH hFieldDomain, bool
+*pbIsInclusiveOut)
+
+Get the maximum value.
+
+Which member in the returned OGRField enum must be read depends on the
+field type.
+
+If no maximum value is set, the OGR_RawField_IsUnset() will return
+true when called on the result.
+
+This is the same as the C++ method OGRRangeFieldDomain::GetMax()
+
+Parameters:
+-----------
+
+hFieldDomain:  Field domain handle.
+
+pbIsInclusiveOut:  set to true if the maximum is included in the
+range.
+
+the maximum value.
+
+GDAL 3.3 ";
+
+%feature("docstring")  OGR_GlobFldDomain_GetGlob "const char*
+OGR_GlobFldDomain_GetGlob(OGRFieldDomainH hFieldDomain)
+
+Get the glob expression.
+
+This is the same as the C++ method OGRGlobFieldDomain::GetGlob()
+
+Parameters:
+-----------
+
+hFieldDomain:  Field domain handle.
+
+the glob expression, or nullptr in case of error
+
+GDAL 3.3 ";
 
 }

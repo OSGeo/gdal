@@ -328,6 +328,8 @@ char **GDALJP2AbstractDataset::GetFileList()
     {
         double l_adfGeoTransform[6];
         GetGeoTransform(l_adfGeoTransform);
+        // GetGeoTransform() can modify m_nGeoTransformGeorefSrcIndex
+        // cppcheck-suppress knownConditionTrueFalse
         if( m_nGeoTransformGeorefSrcIndex == m_nWORLDFILEIndex )
         {
             papszFileList = CSLAddString( papszFileList, pszWldFilename );

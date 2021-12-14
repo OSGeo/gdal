@@ -1995,13 +1995,15 @@ bool VSIAzureHandle::IsDirectoryFromExists( const char* /*pszVerb*/,
 /*                      VSIInstallAzureFileHandler()                    */
 /************************************************************************/
 
-/**
- * \brief Install /vsiaz/ Microsoft Azure Blob file system handler
- * (requires libcurl)
- *
- * @see <a href="gdal_virtual_file_systems.html#gdal_virtual_file_systems_vsiaz">/vsiaz/ documentation</a>
- *
- * @since GDAL 2.3
+/*!
+ \brief Install /vsiaz/ Microsoft Azure Blob file system handler
+ (requires libcurl)
+
+ \verbatim embed:rst
+ See :ref:`/vsiaz/ documentation <vsiaz>`
+ \endverbatim
+
+ @since GDAL 2.3
  */
 
 void VSIInstallAzureFileHandler( void )

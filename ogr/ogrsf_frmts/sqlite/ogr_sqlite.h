@@ -280,6 +280,7 @@ class OGRSQLiteTableLayer final: public OGRSQLiteLayer
 
     bool                m_bLaunderColumnNames = true;
     bool                m_bSpatialite2D = false;
+    bool                m_bStrict = false;
 
     CPLString           m_osWHERE{};
     CPLString           m_osQuery{};
@@ -393,6 +394,7 @@ class OGRSQLiteTableLayer final: public OGRSQLiteLayer
     void                SetDeferredSpatialIndexCreation( bool bFlag )
                                 { m_bDeferredSpatialIndexCreation = bFlag; }
     void                SetCompressedColumns( const char* pszCompressedColumns );
+    void                SetStrictFlag( bool bFlag ) { m_bStrict = bFlag; }
 
     int                 CreateSpatialIndex(int iGeomCol);
 
@@ -729,7 +731,8 @@ class RL2RasterBand final: public GDALPamRasterBand
 #endif // HAVE_RASTERLITE2
 
 CPLString OGRSQLiteFieldDefnToSQliteFieldDefn( OGRFieldDefn* poFieldDefn,
-                                               bool bSQLiteDialectInternalUse );
+                                               bool bSQLiteDialectInternalUse,
+                                               bool bStrict );
 
 void OGRSQLiteRegisterInflateDeflate(sqlite3* hDB);
 

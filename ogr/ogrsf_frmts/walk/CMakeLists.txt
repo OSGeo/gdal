@@ -12,4 +12,4 @@ add_gdal_driver(
 gdal_standard_includes(ogr_WALK)
 target_include_directories(ogr_WALK PRIVATE $<TARGET_PROPERTY:ogr_PGeo,SOURCE_DIR>
                                             $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)
-gdal_target_link_libraries(TARGET ogr_WALK LIBRARIES ODBC::ODBC ODBC::ODBCINST)
+gdal_target_link_libraries(TARGET ogr_WALK LIBRARIES ODBC::ODBC)

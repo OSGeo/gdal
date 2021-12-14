@@ -23,7 +23,7 @@ Where:
 | user   = Oracle server user's name login
 | pwd    = user password
 | db     = Oracle server identification (database name)
-| schema = name of a schema                      
+| schema = name of a schema
 | table  = name of a GeoRaster table (table that contains GeoRaster
   columns)
 | column = name of a column data type MDSYS.SDO_GEORASTER
@@ -114,7 +114,11 @@ Creation Options
 -  SRID: Assign a specific EPSG projection/reference system
    identification to the GeoRaster.
 -  **INTERLEAVE**: Band interleaving mode, BAND, LINE, PIXEL (or BSQ,
-   BIL, BIP) for band sequential, Line or Pixel interleaving. 
+   BIL, BIP) for band sequential, Line or Pixel interleaving.
+   Starting with GDAL 3.5, when copying from a source dataset with multiple bands
+   which advertises a INTERLEAVE metadata item, if the INTERLEAVE creation option
+   is not specified, the source dataset INTERLEAVE will be automatically taken
+   into account, unless the COMPRESS creation option is specified.
 -  **DESCRIPTION**: A simple description of a newly created table in SQL
    syntax. If the table already exist, this create option will be
    ignored, e.g.:

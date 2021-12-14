@@ -33,7 +33,7 @@
 * limitations under the License.
 *
 * Author: Lucian Plesea
-* 
+*
 *
 * JPEG band
 * JPEG page compression and decompression functions, file gets compiled twice
@@ -49,10 +49,10 @@
 * On page writes, a mask of all fully zero pixels is built
 * If the mask has some zero pixels, it is written in a JPEG APP3 "Zen" marker
 * If the mask has no zero pixels, a zero length APP3 marker is inserted
-* 
-* On page reads, after the JPEG decompression, if a mask or a zero length APP3 marker is detected, 
+*
+* On page reads, after the JPEG decompression, if a mask or a zero length APP3 marker is detected,
 * the masked pixels with value of zero are set to 1 while the non-masked ones are set to zero
-* 
+*
 */
 
 #include "marfa.h"
@@ -60,8 +60,8 @@
 #include <vector>
 
 CPL_C_START
-#include <jpeglib.h>
-#include <jerror.h>
+#include "jpeglib.h"
+#include "jerror.h"
 CPL_C_END
 
 #define PACKER
@@ -298,7 +298,7 @@ CPLErr JPEG_Codec::CompressJPEG(buf_mgr &dst, buf_mgr &src)
         update_mask(mask, reinterpret_cast<GUInt16 *>(src.buffer), sz.c);
 
     // In case we need to build a Zen chunk
-    char *buffer = nullptr; 
+    char *buffer = nullptr;
 
     if (nzeros != 0) { // build the Zen chunk
         mbuffer.size = 2 * mask.size() + CHUNK_NAME_SIZE;
@@ -551,7 +551,7 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr& dst, buf_mgr& isrc)
         /* store for all coefficients */
         /* See call to jinit_d_coef_controller() from master_selection() */
         /* in libjpeg */
-        vsi_l_offset nRequiredMemory = 
+        vsi_l_offset nRequiredMemory =
             static_cast<vsi_l_offset>(cinfo.image_width) *
             cinfo.image_height * cinfo.num_components *
             ((cinfo.data_precision+7)/8);

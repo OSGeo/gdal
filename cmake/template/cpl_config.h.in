@@ -183,7 +183,7 @@
 /* Define to 1 if you have the `uselocale' function. */
 #cmakedefine HAVE_USELOCALE 1
 
-/* Define to 1 if libc dont deprecate sprintf */
+/* Define to 1 if libc don't deprecate sprintf */
 #ifndef DONT_DEPRECATE_SPRINTF
 #cmakedefine DONT_DEPRECATE_SPRINTF 0
 #endif

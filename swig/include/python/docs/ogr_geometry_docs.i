@@ -333,12 +333,36 @@ This function relates to the SFCOM IWks::WkbSize() method.
 
 This function is the same as the CPP method OGRGeometry::WkbSize().
 
+Use OGR_G_WkbSizeEx() if called on huge geometries (> 2 GB serialized)
+
 Parameters:
 -----------
 
 hGeom:  handle on the geometry to get the binary size from.
 
 size of binary representation in bytes. ";
+
+%feature("docstring")  WkbSizeEx "size_t OGR_G_WkbSizeEx(OGRGeometryH
+hGeom)
+
+Returns size of related binary representation.
+
+This function returns the exact number of bytes required to hold the
+well known binary representation of this geometry object. Its
+computation may be slightly expensive for complex geometries.
+
+This function relates to the SFCOM IWks::WkbSize() method.
+
+This function is the same as the CPP method OGRGeometry::WkbSize().
+
+Parameters:
+-----------
+
+hGeom:  handle on the geometry to get the binary size from.
+
+size of binary representation in bytes.
+
+GDAL 3.3 ";
 
 %feature("docstring")  GetEnvelope "void
 OGR_G_GetEnvelope(OGRGeometryH hGeom, OGREnvelope *psEnvelope)
@@ -590,8 +614,8 @@ Parameters:
 
 hGeom:  handle on the geometry to clone from.
 
-a handle on the copy of the geometry with the spatial reference
-system as the original. ";
+a handle on the copy of the geometry with the spatial reference system
+as the original. ";
 
 %feature("docstring")  GetSpatialReference "OGRSpatialReferenceH
 OGR_G_GetSpatialReference(OGRGeometryH hGeom)
@@ -902,6 +926,51 @@ a newly allocated geometry now owned by the caller, or NULL on
 failure.
 
 GDAL 3.0 ";
+
+%feature("docstring")  MakeValidEx "OGRGeometryH
+OGR_G_MakeValidEx(OGRGeometryH hGeom, CSLConstList papszOptions)
+
+Attempts to make an invalid geometry valid without losing vertices.
+
+Already-valid geometries are cloned without further intervention.
+
+This function is the same as the C++ method OGRGeometry::MakeValid().
+
+See documentation of that method for possible options.
+
+Parameters:
+-----------
+
+hGeom:  The Geometry to make valid.
+
+papszOptions:  Options.
+
+a newly allocated geometry now owned by the caller, or NULL on
+failure.
+
+GDAL 3.4 ";
+
+%feature("docstring")  Normalize "OGRGeometryH
+OGR_G_Normalize(OGRGeometryH hGeom)
+
+Attempts to bring geometry into normalized/canonical form.
+
+This function is the same as the C++ method OGRGeometry::Normalize().
+
+This function is built on the GEOS library; check it for the
+definition of the geometry operation. If OGR is built without the GEOS
+library, this function will always fail, issuing a CPLE_NotSupported
+error.
+
+Parameters:
+-----------
+
+hGeom:  The Geometry to normalize.
+
+a newly allocated geometry now owned by the caller, or NULL on
+failure.
+
+GDAL 3.3 ";
 
 %feature("docstring")  ConvexHull "OGRGeometryH
 OGR_G_ConvexHull(OGRGeometryH hTarget)
@@ -1494,8 +1563,7 @@ Returns if GEOS has prepared geometry support.
 
 TRUE or FALSE ";
 
-%feature("docstring")  OGRCreatePreparedGeometry "OGRPreparedGeometry* OGRCreatePreparedGeometry(const OGRGeometry
-*poGeom)
+%feature("docstring")  OGRCreatePreparedGeometry "OGRPreparedGeometryH OGRCreatePreparedGeometry(OGRGeometryH hGeom)
 
 Creates a prepared geometry.
 
@@ -1504,47 +1572,53 @@ To free with OGRDestroyPreparedGeometry()
 Parameters:
 -----------
 
-poGeom:  input geometry to prepare.
+hGeom:  input geometry to prepare.
 
-handle to a prepared geometry. ";
+handle to a prepared geometry.
+
+GDAL 3.3 ";
 
 %feature("docstring")  OGRDestroyPreparedGeometry "void
-OGRDestroyPreparedGeometry(OGRPreparedGeometry *poPreparedGeom)
+OGRDestroyPreparedGeometry(OGRPreparedGeometryH hPreparedGeom)
 
 Destroys a prepared geometry.
 
 Parameters:
 -----------
 
-poPreparedGeom:  preprated geometry. ";
+hPreparedGeom:  preprated geometry.
+
+GDAL 3.3 ";
 
 %feature("docstring")  OGRPreparedGeometryIntersects "int
-OGRPreparedGeometryIntersects(const OGRPreparedGeometry
-*poPreparedGeom, const OGRGeometry *poOtherGeom)
+OGRPreparedGeometryIntersects(const OGRPreparedGeometryH
+hPreparedGeom, const OGRGeometryH hOtherGeom)
 
 Returns whether a prepared geometry intersects with a geometry.
 
 Parameters:
 -----------
 
-poPreparedGeom:  prepared geometry.
+hPreparedGeom:  prepared geometry.
 
-poOtherGeom:  other geometry.
+hOtherGeom:  other geometry.
 
-TRUE or FALSE. ";
+TRUE or FALSE.
+
+GDAL 3.3 ";
 
 %feature("docstring")  OGRPreparedGeometryContains "int
-OGRPreparedGeometryContains(const OGRPreparedGeometry *poPreparedGeom,
-const OGRGeometry *poOtherGeom)
+OGRPreparedGeometryContains(const OGRPreparedGeometryH hPreparedGeom,
+const OGRGeometryH hOtherGeom)
 
 Returns whether a prepared geometry contains a geometry.
 
 Parameters:
 -----------
 
-poPreparedGeom:  prepared geometry.
+hPreparedGeom:  prepared geometry.
 
-poOtherGeom:  other geometry.
+hOtherGeom:  other geometry.
 
 TRUE or FALSE. ";
 

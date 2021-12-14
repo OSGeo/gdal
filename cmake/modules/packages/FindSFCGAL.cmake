@@ -8,6 +8,8 @@
 #
 
 find_program(SFCGAL_CONFIG sfcgal-config DOC "SFCGAL config command")
+mark_as_advanced(SFCGAL_CONFIG)
+
 if(SFCGAL_CONFIG)
     execute_process(COMMAND ${SFCGAL_CONFIG} --prefix
                     OUTPUT_VARIABLE SC_SFCGAL_PREFIX

@@ -297,7 +297,7 @@ void OGRPGResultLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn 
 
 {
     if( iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount() ||
-        GetLayerDefn()->GetGeomFieldDefn(iGeomField)->GetType() == wkbNone )
+        CPLAssertNotNull(GetLayerDefn()->GetGeomFieldDefn(iGeomField))->GetType() == wkbNone )
     {
         if( iGeomField != 0 )
         {

@@ -19,7 +19,7 @@ function(get_dep_libs _target _link _output_var)
                     list(APPEND _DEP_LIBS "${_res}")
                 endif()
             elseif(_type STREQUAL "UNKNOWN_LIBRARY")
-                # IMPORTED UNKOWN
+                # IMPORTED UNKNOWN
                 get_property(_res TARGET ${_lib} PROPERTY IMPORTED_CONFIGURATIONS SET)
                 if(_res) # use imported target with configurations
                     select_imported_config(${_target} _conf)

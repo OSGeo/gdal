@@ -1412,7 +1412,7 @@ def optparse_init() -> optparse.OptionParser:
     p.add_option_group(g)
 
 
-    p.set_defaults(verbose=False, profile="mercator", kml=False, url='',
+    p.set_defaults(verbose=False, profile="mercator", kml=None, url='',
                    webviewer='all', copyright='', resampling='average', resume=False,
                    googlekey='INSERT_YOUR_KEY_HERE', bingkey='INSERT_YOUR_KEY_HERE',
                    processes=1)
@@ -1775,10 +1775,14 @@ class GDAL2Tiles(object):
         srs4326.ImportFromEPSG(4326)
         srs4326.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
         if self.out_srs and srs4326.ExportToProj4() == self.out_srs.ExportToProj4():
-            self.kml = True
             self.isepsg4326 = True
-            if self.options.verbose:
+            if self.kml is None:
+                self.kml = True
+            if self.kml and self.options.verbose:
                 print("KML autotest OK!")
+
+        if self.kml is None:
+            self.kml = False
 
         # Read the georeference
         self.out_gt = self.warped_input_dataset.GetGeoTransform()

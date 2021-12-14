@@ -499,10 +499,12 @@ char **VSISubFileFilesystemHandler::ReadDir( const char * /* pszPath */ )
 /*                 VSIInstallSubFileFilesystemHandler()                 */
 /************************************************************************/
 
-/**
- * Install /vsisubfile/ virtual file handler.
- *
- * @see <a href="gdal_virtual_file_systems.html#gdal_virtual_file_systems_subfile">/vsisubfile/ documentation</a>
+/*!
+ \brief Install /vsisubfile/ virtual file handler.
+
+ \verbatim embed:rst
+ See :ref:`/vsisubfile/ documentation <vsisubfile>`
+ \endverbatim
  */
 
 void VSIInstallSubFileHandler()

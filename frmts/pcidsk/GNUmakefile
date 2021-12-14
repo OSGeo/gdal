@@ -1,12 +1,15 @@
 
 include ../../GDALmake.opt
 
-ifeq ($(JPEG_SETTING),internal)
-JPEG_INCLUDE	=	-I../jpeg/libjpeg
-endif
-
 ifneq ($(JPEG_SETTING),no)
 JPEG_FLAGS = -DHAVE_LIBJPEG
+endif
+
+ifeq ($(JPEG_SETTING),internal)
+JPEG_INCLUDE	=	-I../jpeg/libjpeg
+ifeq ($(RENAME_INTERNAL_LIBJPEG_SYMBOLS),yes)
+JPEG_FLAGS	:=	-DRENAME_INTERNAL_LIBJPEG_SYMBOLS $(JPEG_FLAGS)
+endif
 endif
 
 ifeq ($(PCIDSK_SETTING),no)

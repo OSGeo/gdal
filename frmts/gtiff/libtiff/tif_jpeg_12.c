@@ -3,7 +3,16 @@
 
 #if defined(JPEG_DUAL_MODE_8_12)
 
+#define FROM_TIF_JPEG_12
+
+#ifdef TIFFInitJPEG
+#undef TIFFInitJPEG
+#endif
 #define TIFFInitJPEG TIFFInitJPEG_12
+
+#ifdef TIFFJPEGIsFullStripRequired
+#undef TIFFJPEGIsFullStripRequired
+#endif
 #define TIFFJPEGIsFullStripRequired TIFFJPEGIsFullStripRequired_12
 
 int TIFFInitJPEG_12(TIFF *tif, int scheme);
@@ -17,6 +26,7 @@ int TIFFReInitJPEG_12(TIFF *tif, const JPEGOtherSettings *otherSettings,
   JPEGState *sp;
   uint8_t *new_tif_data;
 
+  (void)scheme;
   assert(scheme == COMPRESSION_JPEG);
 
   new_tif_data = (uint8_t *)_TIFFrealloc(tif->tif_data, sizeof(JPEGState));

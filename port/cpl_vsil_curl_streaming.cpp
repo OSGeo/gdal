@@ -2037,13 +2037,15 @@ VSISwiftStreamingFSHandler::CreateFileHandle( const char* pszURL )
 /*                 VSIInstallCurlStreamingFileHandler()                 */
 /************************************************************************/
 
-/**
- * \brief Install /vsicurl_streaming/ HTTP/FTP file system handler (requires
- * libcurl).
- *
- * @see <a href="gdal_virtual_file_systems.html#gdal_virtual_file_systems_vsicurl_streaming">/vsicurl_streaming/ documentation</a>
- *
- * @since GDAL 1.10
+/*!
+ \brief Install /vsicurl_streaming/ HTTP/FTP file system handler (requires
+ libcurl).
+
+  \verbatim embed:rst
+ See :ref:`/vsicurl_streaming/ documentation <vsicurl_streaming>`
+ \endverbatim
+
+ @since GDAL 1.10
  */
 void VSIInstallCurlStreamingFileHandler(void)
 {
@@ -2055,13 +2057,15 @@ void VSIInstallCurlStreamingFileHandler(void)
 /*                   VSIInstallS3StreamingFileHandler()                 */
 /************************************************************************/
 
-/**
- * \brief Install /vsis3_streaming/ Amazon S3 file system handler (requires
- * libcurl).
- *
- * @see <a href="gdal_virtual_file_systems.html#gdal_virtual_file_systems_vsis3_streaming">/vsis3_streaming/ documentation</a>
- *
- * @since GDAL 2.1
+/*!
+ \brief Install /vsis3_streaming/ Amazon S3 file system handler (requires
+ libcurl).
+
+  \verbatim embed:rst
+ See :ref:`/vsis3_streaming/ documentation <vsis3_streaming>`
+ \endverbatim
+
+ @since GDAL 2.1
  */
 void VSIInstallS3StreamingFileHandler(void)
 {
@@ -2073,13 +2077,15 @@ void VSIInstallS3StreamingFileHandler(void)
 /*                      VSIInstallGSStreamingFileHandler()              */
 /************************************************************************/
 
-/**
- * \brief Install /vsigs_streaming/ Google Cloud Storage file system handler
- * (requires libcurl)
- *
- * @see <a href="gdal_virtual_file_systems.html#gdal_virtual_file_systems_vsigs_streaming">/vsigs_streaming/ documentation</a>
- *
- * @since GDAL 2.2
+/*!
+ \brief Install /vsigs_streaming/ Google Cloud Storage file system handler
+ (requires libcurl)
+
+  \verbatim embed:rst
+ See :ref:`/vsigs_streaming/ documentation <vsigs_streaming>`
+ \endverbatim
+
+ @since GDAL 2.2
  */
 
 void VSIInstallGSStreamingFileHandler( void )
@@ -2091,13 +2097,15 @@ void VSIInstallGSStreamingFileHandler( void )
 /*                   VSIInstallAzureStreamingFileHandler()              */
 /************************************************************************/
 
-/**
- * \brief Install /vsiaz_streaming/ Microsoft Azure Blob file system handler
- * (requires libcurl)
- *
- * @see <a href="gdal_virtual_file_systems.html#gdal_virtual_file_systems_vsiaz_streaming">/vsiaz_streaming/ documentation</a>1
- *
- * @since GDAL 2.3
+/*!
+ \brief Install /vsiaz_streaming/ Microsoft Azure Blob file system handler
+ (requires libcurl)
+
+  \verbatim embed:rst
+ See :ref:`/vsiaz_streaming/ documentation <vsiaz_streaming>`
+ \endverbatim
+
+ @since GDAL 2.3
  */
 
 void VSIInstallAzureStreamingFileHandler( void )
@@ -2110,13 +2118,15 @@ void VSIInstallAzureStreamingFileHandler( void )
 /*                    VSIInstallOSSStreamingFileHandler()               */
 /************************************************************************/
 
-/**
- * \brief Install /vsioss_streaming/ Alibaba Cloud Object Storage Service (OSS)
- * file system handler (requires libcurl)
- *
- * @see <a href="gdal_virtual_file_systems.html#gdal_virtual_file_systems_vsioss_streaming">/vsioss_streaming/ documentation</a>
- *
- * @since GDAL 2.3
+/*!
+ \brief Install /vsiaz_streaming/ Alibaba Cloud Object Storage Service (OSS)
+ (requires libcurl)
+
+  \verbatim embed:rst
+ See :ref:`/vsioss_streaming/ documentation <vsioss_streaming>`
+ \endverbatim
+
+ @since GDAL 2.3
  */
 
 void VSIInstallOSSStreamingFileHandler( void )
@@ -2129,13 +2139,15 @@ void VSIInstallOSSStreamingFileHandler( void )
 /*                  VSIInstallSwiftStreamingFileHandler()               */
 /************************************************************************/
 
-/**
-  * \brief Install /vsiswift_streamin/ OpenStack Swif Object Storage (Swift) file
- * system handler (requires libcurl)
- *
- * @see <a href="gdal_virtual_file_systems.html#gdal_virtual_file_systems_vsiswift_streaming">/vsiswift_streaming/ documentation</a>
- *
- * @since GDAL 2.3
+/*!
+ \brief Install /vsiswift_streaming/ OpenStack Swif Object Storage (Swift) file
+ system handler (requires libcurl)
+
+  \verbatim embed:rst
+ See :ref:`/vsiswift_streaming/ documentation <vsiswift_streaming>`
+ \endverbatim
+
+ @since GDAL 2.3
  */
 
 void VSIInstallSwiftStreamingFileHandler( void )

@@ -1877,4 +1877,40 @@ namespace tut
         }
     }
 
+
+    // Test effect of MarkSuppressOnClose() on DXF
+    template<>
+    template<>
+    void object::test<21>()
+    {
+        CPLString tmpFilename(CPLGenerateTempFilename(nullptr));
+        tmpFilename += ".dxf";
+        auto poDrv = GDALDriver::FromHandle(GDALGetDriverByName("DXF"));
+        if( poDrv )
+        {
+            auto poDS(GDALDatasetUniquePtr(poDrv->Create(
+                tmpFilename, 0, 0, 0, GDT_Unknown, nullptr )));
+            ensure( poDS != nullptr );
+
+            OGRLayer *poLayer = poDS->CreateLayer("test", nullptr, wkbPoint, nullptr);
+            ensure ( poLayer != nullptr );
+
+            for (double x = 0; x < 100; x++)
+            {
+                OGRFeature *poFeature = OGRFeature::CreateFeature(poLayer->GetLayerDefn());
+                ensure ( poFeature != nullptr );
+                OGRPoint pt(x, 42);
+                ensure ( OGRERR_NONE == poFeature->SetGeometry(&pt) );
+                ensure ( OGRERR_NONE == poLayer->CreateFeature(poFeature) );
+                OGRFeature::DestroyFeature( poFeature );
+            }
+
+            poDS->MarkSuppressOnClose();
+
+            poDS.reset();
+            VSIStatBufL sStat;
+            ensure( 0 != VSIStatL(tmpFilename, &sStat) );
+        }
+    }
+
 } // namespace tut

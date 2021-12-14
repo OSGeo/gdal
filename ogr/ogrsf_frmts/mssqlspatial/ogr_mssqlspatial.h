@@ -292,13 +292,16 @@ class OGRMSSQLSpatialLayer CPL_NON_FINAL: public OGRLayer
     char               *pszFIDColumn = nullptr;
     int                nFIDColumnIndex = -1;
 
+    // UUID doesn't work for now in bulk copy mode
+    bool               m_bHasUUIDColumn = false;
+
     int                bIsIdentityFid = FALSE;
 
     int                nLayerStatus = MSSQLLAYERSTATUS_ORIGINAL;
 
     int                *panFieldOrdinals = nullptr;
 
-    CPLErr              BuildFeatureDefn( const char *pszLayerName,
+    void               BuildFeatureDefn( const char *pszLayerName,
                                           CPLODBCStatement *poStmt );
 
     virtual CPLODBCStatement *  GetStatement() { return poStmt; }
@@ -428,6 +431,7 @@ class OGRMSSQLSpatialTableLayer final: public OGRMSSQLSpatialLayer
     virtual const char* GetName() override;
 
     virtual OGRErr      SetAttributeFilter( const char * ) override;
+    virtual OGRFeature *GetNextFeature() override;
 
     virtual OGRErr      ISetFeature( OGRFeature *poFeature ) override;
     virtual OGRErr      DeleteFeature( GIntBig nFID ) override;

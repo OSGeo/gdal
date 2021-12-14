@@ -11,6 +11,9 @@ endif ()
 if (GDAL_USE_LIBJPEG_INTERNAL)
   target_include_directories(gdal_GEOR PRIVATE $<TARGET_PROPERTY:libjpeg,SOURCE_DIR>)
   target_compile_definitions(gdal_GEOR PRIVATE -DJPEG_SUPPORTED)
+  if (RENAME_INTERNAL_LIBJPEG_SYMBOLS)
+    target_compile_definitions(gdal_GEOR PRIVATE -DRENAME_INTERNAL_LIBJPEG_SYMBOLS)
+  endif ()
 endif ()
 
 gdal_target_link_libraries(TARGET gdal_GEOR LIBRARIES Oracle::OCI)
@@ -23,7 +26,7 @@ if (NOT GDAL_USE_LIBJPEG_INTERNAL)
   endif ()
 endif ()
 
-if (NOT GDAL_USE_LIBJPEG_INTERNAL)
+if (NOT GDAL_USE_LIBZ_INTERNAL)
   gdal_target_link_libraries(TARGET gdal_GEOR LIBRARIES ZLIB::ZLIB)
 endif ()
 

@@ -435,9 +435,9 @@ CPLErr STACTARawDataset::IRasterIO( GDALRWFlag eRWFlag,
         int nBufXOff = 0;
         for( int iX = nMinBlockX; iX <= nMaxBlockX; iX++ )
         {
-            const auto osURL = CPLString(m_osURLTemplate)
-                .replaceAll("{TileRow}", CPLSPrintf("%d", iY + m_nMinMetaTileRow))
-                .replaceAll("{TileCol}", CPLSPrintf("%d", iX + m_nMinMetaTileCol));
+            CPLString osURL(m_osURLTemplate);
+            osURL.replaceAll("{TileRow}", CPLSPrintf("%d", iY + m_nMinMetaTileRow));
+            osURL.replaceAll("{TileCol}", CPLSPrintf("%d", iX + m_nMinMetaTileCol));
 
             const int nTileXOff = std::max(0, nXOff - iX * m_nMetaTileWidth);
             const int nTileXSize =

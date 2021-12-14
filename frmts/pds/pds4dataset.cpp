@@ -2361,8 +2361,18 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
         if( pszProjection == nullptr )
         {
             pszPDS4ProjectionName = "Equirectangular";
-            aoProjParams.push_back(ProjParam("longitude_of_central_meridian", 0.0));
-            aoProjParams.push_back(ProjParam("latitude_of_projection_origin", 0.0));
+            if( bUse_CART_1933_Or_Later )
+            {
+                aoProjParams.push_back(ProjParam("latitude_of_projection_origin", 0.0));
+                aoProjParams.push_back(ProjParam("standard_parallel_1", 0.0));
+                aoProjParams.push_back(ProjParam("longitude_of_central_meridian", 0.0));
+            }
+            else
+            {
+                aoProjParams.push_back(ProjParam("standard_parallel_1", 0.0));
+                aoProjParams.push_back(ProjParam("longitude_of_central_meridian", 0.0));
+                aoProjParams.push_back(ProjParam("latitude_of_projection_origin", 0.0));
+            }
         }
 
         else if( EQUAL(pszProjection, SRS_PT_EQUIRECTANGULAR) )
@@ -4360,11 +4370,18 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
     }
     else if( EQUAL(pszImageFormat, "GEOTIFF") )
     {
-        if( EQUAL(pszInterleave, "BIL") )
+        if( EQUAL(pszInterleave, "BIL"))
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "INTERLEAVE=BIL not supported for GeoTIFF in PDS4" );
-            return nullptr;
+            if( aosOptions.FetchBool("@INTERLEAVE_ADDED_AUTOMATICALLY", false) )
+            {
+                pszInterleave = "BSQ";
+            }
+            else
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "INTERLEAVE=BIL not supported for GeoTIFF in PDS4" );
+                return nullptr;
+            }
         }
         GDALDriver* poDrv = static_cast<GDALDriver*>(
                                             GDALGetDriverByName("GTiff"));
