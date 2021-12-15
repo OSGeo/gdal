@@ -125,4 +125,32 @@ wget -q https://github.com/rouault/pdfium_build_gdal_3_4/releases/download/v2_pd
   && apt-get install -y --fix-missing --no-install-recommends liblcms2-dev \
   && rm -rf /var/lib/apt/lists/*
 
+# HANA: client side
+# Install hdbsql tool
+curl -v -j -k -s -L -H "Cookie: eula_3_1_agreed=tools.hana.ondemand.com/developer-license-3_1.txt" https://tools.hana.ondemand.com/additional/hanaclient-latest-linux-x64.tar.gz --output hanaclient-latest-linux-x64.tar.gz \
+  && tar -xvf hanaclient-latest-linux-x64.tar.gz \
+  && mkdir /usr/sap \
+  && ./client/hdbinst -a client --sapmnt=/usr/sap \
+  && rm -rf client \
+  && rm hanaclient*
+export PATH=/usr/sap/hdbclient:$PATH
+
+wget "https://cmake.org/files/v3.12/cmake-3.12.4.tar.gz" \
+  && tar xzf cmake-3.12.4.tar.gz \
+  && rm cmake-3.12.4.tar.gz \
+  && cd cmake-3.12.4 \
+  && ./bootstrap --prefix=/usr/local/ \
+  && make \
+  && make install \
+  && cd .. \
+  && rm -rf cmake-3.12.4
+
+# Download and compile odbc-cpp-wrapper
+git clone https://github.com/SAP/odbc-cpp-wrapper.git \
+  && mkdir odbc-cpp-wrapper/build \
+  && cd odbc-cpp-wrapper/build \
+  && cmake .. \
+  && make -j 2 \
+  && make install
+
 ldconfig

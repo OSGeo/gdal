@@ -36,6 +36,7 @@ cd /build
     --with-poppler \
     --with-spatialite \
     --with-mysql \
+    --with-hana \
     --with-liblzma \
     --with-webp \
     --with-epsilon \
