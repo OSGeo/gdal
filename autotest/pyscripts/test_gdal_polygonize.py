@@ -193,4 +193,22 @@ def test_gdal_polygonize_4():
     assert '<gml:Polygon srsName="urn:ogc:def:crs:EPSG::26711" gml:id="out.geom.0"><gml:exterior><gml:LinearRing><gml:posList>440720 3751320 440720 3750120 441920 3750120 441920 3751320 440720 3751320</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon>' in content
 
 
+###############################################################################
+# Test -8
 
+
+def test_gdal_polygonize_minus_8():
+
+    script_path = test_py_scripts.get_py_script('gdal_polygonize')
+    if script_path is None:
+        pytest.skip()
+
+    outfilename = 'tmp/out.geojson'
+    test_py_scripts.run_py_script(script_path, 'gdal_polygonize', '-q -8 ' + test_py_scripts.get_data_path('gcore') + 'byte.tif '  + outfilename)
+
+    ds = gdal.OpenEx(outfilename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 229
+    ds = None
+
+    os.unlink(outfilename)
