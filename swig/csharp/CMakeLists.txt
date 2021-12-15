@@ -5,6 +5,10 @@ if (CMAKE_CXX_FLAGS)
   string(REPLACE "/WX" " " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
 endif ()
 
+set(GDAL_CSHARP_INSTALL_DIR
+    "${CMAKE_INSTALL_DATADIR}/csharp"
+    CACHE PATH "Installation sub-directory for CSharp bindings")
+
 # function for csharp build
 function (gdal_csharp_dll)
   set(_options)
@@ -46,6 +50,17 @@ function (gdal_csharp_dll)
     VERBATIM
     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_WRAPPER}.cpp ${_depends} ${CMAKE_CURRENT_BINARY_DIR}/gdal.snk
             ${CMAKE_CURRENT_SOURCE_DIR}/AssemblyInfo.cs)
+
+  install(
+    TARGETS ${_CSHARP_WRAPPER}
+    COMPONENT csharp
+    DESTINATION ${GDAL_CSHARP_INSTALL_DIR})
+
+  install(
+    FILES ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET}
+    COMPONENT csharp
+    DESTINATION ${GDAL_CSHARP_INSTALL_DIR})
+
 endfunction ()
 
 # ######################################################################################################################
@@ -201,7 +216,17 @@ add_custom_target(
           ${CMAKE_CURRENT_BINARY_DIR}/GDALOverviews.exe
           ${CMAKE_CURRENT_BINARY_DIR}/GDALCreateCopy.exe
           ${CMAKE_CURRENT_BINARY_DIR}/GDALGetHistogram.exe)
-add_custom_target(csharp_binding ALL DEPENDS gdalconst_wrap osr_wrap ogr_wrap gdal_wrap csharp_samples)
+add_custom_target(
+  csharp_binding ALL
+  DEPENDS gdalconst_csharp.dll
+          osr_csharp.dll
+          ogr_csharp.dll
+          gdal_csharp.dll
+          gdalconst_wrap
+          osr_wrap
+          ogr_wrap
+          gdal_wrap
+          csharp_samples)
 
 if (CSHARP_INTERPRETER OR WIN32)
   include(GdalSetTestEnv)
