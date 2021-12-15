@@ -24,18 +24,9 @@ function (gdal_csharp_dll)
             ${_CSHARP_SWIG_INTERFACE})
   set_source_files_properties(${_CSHARP_WRAPPER} PROPERTIES GENERATED 1)
 
-  set(_wrapper_name "${_CSHARP_WRAPPER}_csharp")
-  add_library(${_wrapper_name} SHARED ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_WRAPPER}.cpp)
-  if (WIN32)
-    set_target_properties(${_wrapper_name} PROPERTIES OUTPUT_NAME "${_CSHARP_WRAPPER}")
-  endif ()
-  gdal_standard_includes(${_wrapper_name})
-  target_link_libraries(${_wrapper_name} PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)
-
-  if (NOT WIN32)
-    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET}.config
-         "<configuration>\n<dllmap dll=\"${_CSHARP_WRAPPER}\" target=\"${_wrapper_name}\"/>\n</configuration>\n")
-  endif ()
+  add_library(${_CSHARP_WRAPPER} SHARED ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_WRAPPER}.cpp)
+  gdal_standard_includes(${_CSHARP_WRAPPER})
+  target_link_libraries(${_CSHARP_WRAPPER} PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)
 
   set(_depends)
   if (_CSHARP_DEPENDS)
@@ -86,10 +77,7 @@ gdal_csharp_dll(
   SWIG_INTERFACE ${PROJECT_SOURCE_DIR}/swig/include/gdal.i TARGET_SUBDIR gdal
   DEPENDS ogr_csharp.dll osr_csharp.dll)
 
-set_directory_properties(
-  PROPERTIES
-    ADDITIONAL_MAKE_CLEAN_FILES
-    "gdal;ogr;osr;const;gdal_csharp.dll.config;ogr_csharp.dll.config;osr_csharp.dll.config;gdalconst_csharp.dll.config")
+set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "gdal;ogr;osr;const")
 
 # ######################################################################################################################
 # sample commands
@@ -213,8 +201,7 @@ add_custom_target(
           ${CMAKE_CURRENT_BINARY_DIR}/GDALOverviews.exe
           ${CMAKE_CURRENT_BINARY_DIR}/GDALCreateCopy.exe
           ${CMAKE_CURRENT_BINARY_DIR}/GDALGetHistogram.exe)
-add_custom_target(csharp_binding ALL DEPENDS gdalconst_wrap_csharp osr_wrap_csharp ogr_wrap_csharp gdal_wrap_csharp
-                                             csharp_samples)
+add_custom_target(csharp_binding ALL DEPENDS gdalconst_wrap osr_wrap ogr_wrap gdal_wrap csharp_samples)
 
 if (CSHARP_INTERPRETER OR WIN32)
   include(GdalSetTestEnv)
