@@ -190,7 +190,6 @@ void CPL_DLL GDALRegister_Derived(void);
 void CPL_DLL GDALRegister_JP2Lura(void);
 void CPL_DLL GDALRegister_PRF(void);
 void CPL_DLL GDALRegister_NULL(void);
-void CPL_DLL GDALRegister_RDA(void);
 void CPL_DLL GDALRegister_EEDAI(void);
 void CPL_DLL GDALRegister_EEDA(void);
 void CPL_DLL GDALRegister_SIGDEM(void);

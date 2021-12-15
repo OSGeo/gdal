@@ -547,10 +547,6 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_PRF();
 #endif
 
-#ifdef FRMT_rda
-    GDALRegister_RDA();
-#endif
-
 #ifdef FRMT_eeda
     GDALRegister_EEDAI();
     GDALRegister_EEDA();
