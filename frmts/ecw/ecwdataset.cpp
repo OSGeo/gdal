@@ -2767,6 +2767,72 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
             break;
     }
 
+
+/* -------------------------------------------------------------------- */
+/*      If decoding a UInt32 image, check that the SDK is not buggy     */
+/*      There are issues at least in the 5.x series.                    */
+/* -------------------------------------------------------------------- */
+#if ECWSDK_VERSION >= 40
+    if( bIsJPEG2000 &&
+        poDS->eNCSRequestDataType == NCSCT_UINT32 &&
+        CPLTestBool(CPLGetConfigOption("ECW_CHECK_CORRECT_DECODING", "TRUE")) &&
+        !STARTS_WITH_CI(poOpenInfo->pszFilename, "/vsimem/detect_ecw_uint32_bug") )
+    {
+        static bool bUINT32_Ok = false;
+        {
+            CPLMutexHolder oHolder( &hECWDatasetMutex );
+            static bool bTestDone = false;
+            if( !bTestDone )
+            {
+                bTestDone = true;
+                // Minimal J2K 2x2 image with NBITS=20, unsigned, reversible compression
+                // and following values
+                // 0 1048575
+                // 1048574 524288
+
+                static const GByte abyTestUInt32ImageData[] = {
+                    0xFF, 0x4F, 0xFF, 0x51, 0x00, 0x29, 0x00, 0x02, 0x00, 0x00, 0x00, 0x02, 0x00,
+                    0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x02, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x01, 0x13, 0x01, 0x01, 0xFF, 0x52, 0x00, 0x0D, 0x01, 0x00, 0x00,
+                    0x01, 0x00, 0x00, 0x04, 0x04, 0x00, 0x01, 0x99, 0xFF, 0x5C, 0x00, 0x04, 0x40,
+                    0xA0, 0xFF, 0x90, 0x00, 0x0A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1C, 0x00, 0x01,
+                    0xFF, 0x93, 0xDF, 0xF9, 0x40, 0x50, 0x07, 0x68, 0xE0, 0x12, 0xD2, 0xDA, 0xDF,
+                    0xFF, 0x7F, 0x5F, 0xFF, 0xD9 };
+
+                const std::string osTmpFilename = CPLSPrintf("/vsimem/detect_ecw_uint32_bug_%p.j2k", poDS);
+                VSIFCloseL(VSIFileFromMemBuffer(osTmpFilename.c_str(),
+                                                const_cast<GByte*>(abyTestUInt32ImageData),
+                                                sizeof(abyTestUInt32ImageData),
+                                                false));
+                GDALOpenInfo oOpenInfo(osTmpFilename.c_str(), GA_ReadOnly);
+                auto poTmpDS = std::unique_ptr<GDALDataset>(Open( &oOpenInfo, true ));
+                if( poTmpDS )
+                {
+                    uint32_t anValues[4] = {0};
+                    if( poTmpDS->GetRasterBand(1)->RasterIO(GF_Read, 0, 0, 2, 2,
+                            anValues, 2, 2, GDT_UInt32, 0, 0, nullptr) == CE_None &&
+                        anValues[0] == 0 &&
+                        anValues[1] == 1048575 &&
+                        anValues[2] == 1048574 &&
+                        anValues[3] == 524288 )
+                    {
+                        bUINT32_Ok = true;
+                    }
+                }
+                VSIUnlink(osTmpFilename.c_str());
+            }
+        }
+
+        if( !bUINT32_Ok )
+        {
+            CPLDebug("ECW", "ECW SDK used cannot correctly decode UInt32 images. Giving up");
+            delete poDS;
+            return nullptr;
+        }
+    }
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
