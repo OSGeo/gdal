@@ -33,7 +33,7 @@ driver unless the builder purchases a license for the library and
 configures accordingly.
 
 When reading images this driver will represent the bands as being Byte
-(8bit unsigned), 16 bit signed or 16 bit unsigned. Georeferencing and
+(8bit unsigned), 16 bit signed/unsigned, and 32 bit signed/unsigned. Georeferencing and
 coordinate system information will be available if the file is a GeoJP2
 (tm) file. Files color encoded in YCbCr color space will be
 automatically translated to RGB. Paletted images are also supported.

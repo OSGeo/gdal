@@ -302,7 +302,7 @@ def test_jp2kak_17():
 # Test lossless copying of Int16
 
 
-def test_jp2kak_18():
+def test_jp2kak_lossless_int16():
 
     tst = gdaltest.GDALTest('JP2KAK', 'int16.tif', 1, 4672,
                             options=['QUALITY=100'])
@@ -313,12 +313,86 @@ def test_jp2kak_18():
 # Test lossless copying of UInt16
 
 
-def test_jp2kak_19():
+def test_jp2kak_lossless_uint16():
 
     tst = gdaltest.GDALTest('JP2KAK', '../gcore/data/uint16.tif', 1, 4672,
                             options=['QUALITY=100'], filename_absolute=1)
 
     return tst.testCreateCopy(vsimem=1)
+
+###############################################################################
+# Test lossless copying of Int32
+
+
+def test_jp2kak_lossless_int32():
+
+    tst = gdaltest.GDALTest('JP2KAK', '../gcore/data/int32.tif', 1, 4672,
+                            options=['QUALITY=100'], filename_absolute=1)
+
+    return tst.testCreateCopy()
+
+###############################################################################
+# Test lossless copying of UInt32
+
+
+def test_jp2kak_lossless_uint32():
+
+    tst = gdaltest.GDALTest('JP2KAK', '../gcore/data/uint32.tif', 1, 4672,
+                            options=['QUALITY=100'], filename_absolute=1)
+
+    return tst.testCreateCopy(vsimem=1)
+
+###############################################################################
+# Test lossless copying of Int32
+
+
+def test_jp2kak_lossless_int32_nbits_20():
+
+    src_ds = gdal.Translate('', '../gcore/data/int32.tif', options='-of MEM -scale 74 255 -524288 524287')
+    tmpfilename = '/vsimem/test_jp2kak_lossless_int32_nbits_20.j2k'
+    gdal.GetDriverByName('JP2KAK').CreateCopy(tmpfilename, src_ds, options = ['QUALITY=100', 'NBITS=20'])
+    ds = gdal.Open(tmpfilename)
+    assert ds.GetRasterBand(1).ReadRaster() == src_ds.GetRasterBand(1).ReadRaster()
+    gdal.GetDriverByName('JP2KAK').Delete(tmpfilename)
+
+###############################################################################
+# Test lossless copying of UInt32
+
+
+def test_jp2kak_lossless_uint32_nbits_20():
+
+    src_ds = gdal.Translate('', '../gcore/data/uint32.tif', options='-of MEM -scale 74 255 0 1048575')
+    tmpfilename = '/vsimem/test_jp2kak_lossless_uint32_nbits_20.j2k'
+    gdal.GetDriverByName('JP2KAK').CreateCopy(tmpfilename, src_ds, options = ['QUALITY=100', 'NBITS=20'])
+    ds = gdal.Open(tmpfilename)
+    assert ds.GetRasterBand(1).ReadRaster() == src_ds.GetRasterBand(1).ReadRaster()
+    gdal.GetDriverByName('JP2KAK').Delete(tmpfilename)
+
+###############################################################################
+# Test lossy copying of Int32
+
+
+def test_jp2kak_lossy_int32_nbits_20():
+
+    src_ds = gdal.Translate('', '../gcore/data/int32.tif', options='-of MEM -scale 74 255 -524288 524287')
+    tmpfilename = '/vsimem/test_jp2kak_lossy_int32_nbits_20.j2k'
+    gdal.GetDriverByName('JP2KAK').CreateCopy(tmpfilename, src_ds, options = ['QUALITY=80', 'NBITS=20'])
+    ds = gdal.Open(tmpfilename)
+    assert src_ds.GetRasterBand(1).ComputeStatistics(False) == pytest.approx(ds.GetRasterBand(1).ComputeStatistics(False), rel=1e-2)
+    gdal.GetDriverByName('JP2KAK').Delete(tmpfilename)
+
+###############################################################################
+# Test lossy copying of UInt32
+
+
+def test_jp2kak_lossy_uint32_nbits_20():
+
+    src_ds = gdal.Translate('', '../gcore/data/uint32.tif', options='-of MEM -scale 74 255 0 1048575')
+    tmpfilename = '/vsimem/test_jp2kak_lossy_uint32_nbits_20.j2k'
+    gdal.GetDriverByName('JP2KAK').CreateCopy(tmpfilename, src_ds, options = ['QUALITY=80', 'NBITS=20'])
+    ds = gdal.Open(tmpfilename)
+    assert src_ds.GetRasterBand(1).ComputeStatistics(False) == pytest.approx(ds.GetRasterBand(1).ComputeStatistics(False), rel=1e-2)
+    gdal.GetDriverByName('JP2KAK').Delete(tmpfilename)
 
 ###############################################################################
 # Test auto-promotion of 1bit alpha band to 8bit
