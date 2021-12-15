@@ -31,6 +31,7 @@
 
 import os
 import json
+import shutil
 
 
 from osgeo import gdal
@@ -97,19 +98,20 @@ def test_gdalinfo_5():
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
 
-    try:
-        os.remove('../gcore/data/byte.tif.aux.xml')
-    except OSError:
-        pass
+    tmpfilename = 'tmp/test_gdalinfo_5.tif'
+    if os.path.exists(tmpfilename + '.aux.xml'):
+        os.remove(tmpfilename + '.aux.xml')
+    shutil.copy('../gcore/data/byte.tif', tmpfilename)
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gcore/data/byte.tif')
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ' + tmpfilename)
     assert ret.find('STATISTICS_MINIMUM=74') == -1, 'got wrong minimum.'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -stats ../gcore/data/byte.tif')
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -stats ' + tmpfilename)
     assert ret.find('STATISTICS_MINIMUM=74') != -1, 'got wrong minimum (2).'
 
     # We will blow an exception if the file does not exist now!
-    os.remove('../gcore/data/byte.tif.aux.xml')
+    os.remove(tmpfilename + '.aux.xml')
+    os.remove(tmpfilename)
 
 ###############################################################################
 # Test a dataset with overviews and RAT
@@ -150,21 +152,22 @@ def test_gdalinfo_8():
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
 
-    try:
-        os.remove('../gcore/data/byte.tif.aux.xml')
-    except OSError:
-        pass
+    tmpfilename = 'tmp/test_gdalinfo_8.tif'
+    if os.path.exists(tmpfilename + '.aux.xml'):
+        os.remove(tmpfilename + '.aux.xml')
+    shutil.copy('../gcore/data/byte.tif', tmpfilename)
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gcore/data/byte.tif')
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ' + tmpfilename)
     assert ret.find('0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0 0 37 0 0 0 0 0 0 0 57 0 0 0 0 0 0 0 62 0 0 0 0 0 0 0 66 0 0 0 0 0 0 0 0 72 0 0 0 0 0 0 0 31 0 0 0 0 0 0 0 24 0 0 0 0 0 0 0 12 0 0 0 0 0 0 0 0 7 0 0 0 0 0 0 0 12 0 0 0 0 0 0 0 5 0 0 0 0 0 0 0 3 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1') == -1, \
         'did not expect histogram.'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -hist ../gcore/data/byte.tif')
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -hist ' + tmpfilename)
     assert ret.find('0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0 0 37 0 0 0 0 0 0 0 57 0 0 0 0 0 0 0 62 0 0 0 0 0 0 0 66 0 0 0 0 0 0 0 0 72 0 0 0 0 0 0 0 31 0 0 0 0 0 0 0 24 0 0 0 0 0 0 0 12 0 0 0 0 0 0 0 0 7 0 0 0 0 0 0 0 12 0 0 0 0 0 0 0 5 0 0 0 0 0 0 0 3 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1') != -1, \
         'did not get expected histogram.'
 
     # We will blow an exception if the file does not exist now!
-    os.remove('../gcore/data/byte.tif.aux.xml')
+    os.remove(tmpfilename + '.aux.xml')
+    os.remove(tmpfilename)
 
 ###############################################################################
 # Test -mdd option
@@ -234,7 +237,7 @@ def test_gdalinfo_13():
             return 'expected_fail'
         pytest.fail(ret)
 
-    
+
 ###############################################################################
 # Test erroneous use of --config.
 
@@ -358,7 +361,7 @@ def test_gdalinfo_22():
     for expected_string in expected_strings:
         assert expected_string in ret, ('did not find %s' % expected_string)
 
-    
+
 ###############################################################################
 # Test --help-general
 
