@@ -74,6 +74,12 @@ void CPCIDSKBinarySegment::Load()
     if (loaded_) {
         return;
     }
+
+    if( data_size < 1024 )
+    {
+        return ThrowPCIDSKException("Wrong data_size in CPCIDSKBinarySegment");
+    }
+
     if( data_size - 1024 > static_cast<uint64_t>(std::numeric_limits<int>::max()) )
     {
         return ThrowPCIDSKException("too large data_size");
