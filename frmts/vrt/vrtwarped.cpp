@@ -1775,17 +1775,34 @@ CPLErr VRTWarpedRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 {
     VRTWarpedDataset *poWDS = static_cast<VRTWarpedDataset *>( poDS );
+    const GPtrDiff_t nDataBytes
+        = static_cast<GPtrDiff_t>(GDALGetDataTypeSizeBytes(eDataType)) *
+            nBlockXSize * nBlockYSize;
+
     GDALRasterBlock *poBlock = GetLockedBlockRef( nBlockXOff, nBlockYOff, TRUE );
     if( poBlock == nullptr )
         return CE_Failure;
+
+    if( poWDS->m_poWarper )
+    {
+        const GDALWarpOptions *psWO = poWDS->m_poWarper->GetOptions();
+        if( nBand == psWO->nDstAlphaBand )
+        {
+            // For a reader starting by asking on band 1, we should normally
+            // not reach here, because ProcessBlock() on band 1 will have
+            // populated the block cache for the regular bands and the alpha
+            // band.
+            // But if there's no source window corresponding to the block,
+            // the alpha band block will not be written through RasterIO(),
+            // so we nee to initialize it.
+            memset(poBlock->GetDataRef(), 0, nDataBytes);
+        }
+    }
 
     const CPLErr eErr = poWDS->ProcessBlock( nBlockXOff, nBlockYOff );
 
     if( eErr == CE_None && pImage != poBlock->GetDataRef() )
     {
-        const GPtrDiff_t nDataBytes
-            = static_cast<GPtrDiff_t>(GDALGetDataTypeSize(poBlock->GetDataType()) / 8)
-            * poBlock->GetXSize() * poBlock->GetYSize();
         memcpy( pImage, poBlock->GetDataRef(), nDataBytes );
     }
 
@@ -1807,8 +1824,9 @@ CPLErr VRTWarpedRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     // This is a bit tricky. In the case we are warping a VRTWarpedDataset
     // with a destination alpha band, IWriteBlock can be called on that alpha
     // band by GDALWarpDstAlphaMasker
-    // We don't need to do anything since the data will be kept in the block
-    // cache by VRTWarpedRasterBand::IReadBlock.
+    // We don't need to do anything since the data will have hopefully been
+    // read from the block cache before if the reader processes all the bands
+    // of a same block.
     if (poWDS->m_poWarper->GetOptions()->nDstAlphaBand != nBand)
     {
         /* Otherwise, call the superclass method, that will fail of course */
