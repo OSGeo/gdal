@@ -101,9 +101,6 @@ export CPL_ENABLE_USERFAULTFD=NO
 # install pip and use it to install test dependencies
 pip3 install -U $(grep -ivE "hdbcli" autotest/requirements.txt)
 
-# Fails as we cannot install hdbcli by using "pip install hdbcli"
-rm autotest/ogr/ogr_hana.py
-
 # Fails with ERROR 1: OGDI DataSource Open Failed: Could not find the dynamic library "vrf"
 rm autotest/ogr/ogr_ogdi.py
 
