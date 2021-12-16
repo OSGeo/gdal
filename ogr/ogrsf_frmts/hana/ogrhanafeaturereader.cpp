@@ -66,7 +66,7 @@ T castInt(int value)
           || value <= std::numeric_limits<T>::max()))
         throw "Integer value lies outside of the range";
     return static_cast<T>(value);
-};
+}
 
 template<typename T>
 T strToInt(const char* value)
@@ -352,14 +352,14 @@ odbc::Timestamp OGRHanaFeatureReader::GetFieldAsTimestamp(int fieldIndex) const
         int hour = 0;
         int minute = 0;
         int timeZone = 0;
-        float second = 0.0f;
         float secondWithMillisecond = 0.0f;
         feature_.GetFieldAsDateTime(
             fieldIndex, &year, &month, &day, &hour, &minute,
             &secondWithMillisecond, &timeZone);
-        float millisecond = modf(secondWithMillisecond, &second);
-        second = static_cast<int>(nearbyint(second));
-        millisecond = static_cast<int>(nearbyint(millisecond * 1000));
+        double seconds = 0.0;
+        double milliseconds = modf(static_cast<double>(secondWithMillisecond), &seconds);
+        int second = static_cast<int>(nearbyint(seconds));
+        int millisecond = static_cast<int>(nearbyint(milliseconds * 1000));
         return odbc::makeNullable<odbc::timestamp>(
             year, month, day, hour, minute, second, millisecond);
     }
