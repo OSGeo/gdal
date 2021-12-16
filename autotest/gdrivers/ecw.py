@@ -35,6 +35,7 @@ import os.path
 import sys
 import array
 import shutil
+import struct
 from osgeo import gdal
 from osgeo import osr
 
@@ -906,7 +907,6 @@ def test_ecw_28():
     data3 = ds.GetRasterBand(3).ReadRaster(x, y, 1, 1)
     ds = None
 
-    import struct
     struct.unpack('B' * 3, multiband_data)
     struct.unpack('B' * 3, data1 + data2 + data3)
 
@@ -1110,7 +1110,6 @@ def test_ecw_33():
 
     # When heuristics is ON, returned values should be the same as
     # 3-band at a time reading
-    import struct
     tab1 = struct.unpack('B' * 3 * 50 * 50, multiband_data)
     tab2 = struct.unpack('B' * 3 * 50 * 50, data1_1 + data2_1 + data3_2)
     assert tab1 == tab2
@@ -1770,6 +1769,20 @@ def test_ecw_49():
     # expect Y resolution positive
     expected_gt = (6138559.5576418638, 195.5116973254697, 0.0, 2274798.7836679211, 0.0, 198.32414964918371)
     assert gt == expected_gt, 'did not get expected geotransform.'
+
+###############################################################################
+# Test reading UInt32 file
+
+
+def test_ecw_read_uint32_jpeg2000():
+
+    ds = gdal.OpenEx('data/jpeg2000/uint32_2x2_lossless_nbits_20.j2k', gdal.OF_RASTER)
+    if gdaltest.ecw_drv.major_version == 3:
+        assert ds is not None
+    else:
+        if ds is None:
+            pytest.skip('This version of the ECW SDK has issues to decode UInt32 JPEG2000 files')
+    assert struct.unpack('I' * 4, ds.ReadRaster(0,0,2,2)) == (0, 1048575, 1048574, 524288)
 
 ###############################################################################
 
