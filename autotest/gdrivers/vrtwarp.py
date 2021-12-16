@@ -476,3 +476,17 @@ def test_vrtwarp_write_no_duplicated_blocksize():
     assert '<BlockYSize>' in data
     assert ' blockXSize=' not in data
     assert ' blockYSize=' not in data
+
+
+###############################################################################
+# Test reading blocks without source pixels from a warped VRT with an alpha band
+# (#4997)
+
+def test_vrtwarp_alpha_band_and_block_without_source_pixel():
+
+    tmpfilename = '/vsimem/tmp.tif'
+    gdal.Translate(tmpfilename, 'data/vrt/bug4997.vrt')
+    ds = gdal.Open(tmpfilename)
+    assert ds.GetRasterBand(4).Checksum() == 0
+    ds = None
+    gdal.Unlink(tmpfilename)
