@@ -2112,6 +2112,25 @@ def test_gdalwarp_lib_src_nodata_with_dstalpha():
     assert struct.unpack('B' * 3, ds.GetRasterBand(3).ReadRaster()) == (30,  0, 127)
     assert struct.unpack('B' * 3, ds.GetRasterBand(4).ReadRaster()) == (255, 0, 255)
 
+###############################################################################
+# Test warping from a dataset with points outside of Earth (fixes #4934)
+
+
+def test_gdalwarp_lib_src_points_outside_of_earth():
+
+    class MyHandler:
+        def __init__(self):
+            self.failure_raised = False
+
+        def callback(self, err_type, err_no, err_msg):
+            if err_type == gdal.CE_Failure:
+                print(err_type, err_no, err_msg)
+                self.failure_raised = True
+
+    my_error_handler = MyHandler()
+    with gdaltest.error_handler(my_error_handler.callback):
+        gdal.Warp('', '../gdrivers/data/vrt/bug4997_intermediary.vrt', format='VRT')
+    assert not my_error_handler.failure_raised
 
 ###############################################################################
 # Cleanup

@@ -1347,6 +1347,8 @@ bool GDALComputeAreaOfInterest(OGRSpatialReference* poSRS,
         auto poCT = OGRCreateCoordinateTransformation(&oSrcSRSHoriz, poGeog);
         if( poCT )
         {
+            poCT->SetEmitErrors(false);
+
             double x[4], y[4];
             x[0] = adfGT[0];
             y[0] = adfGT[3];
@@ -2614,6 +2616,7 @@ int GDALTransformLonLatToDestGenImgProjTransformer(void* hTransformArg,
     if( poCT == nullptr )
         return false;
 
+    poCT->SetEmitErrors(false);
     if( !poCT->Transform(1, pdfX, pdfY) )
         return false;
 

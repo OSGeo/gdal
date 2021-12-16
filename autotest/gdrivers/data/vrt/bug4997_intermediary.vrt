@@ -1,0 +1,61 @@
+<VRTDataset rasterXSize="317" rasterYSize="316" subClass="VRTWarpedDataset">
+  <SRS dataAxisToSRSAxisMapping="1,2">PROJCS["unknown",GEOGCS["unknown",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Orthographic"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]]</SRS>
+  <GeoTransform> -6.3781370000000000e+06,  4.0144273919659972e+04,  0.0000000000000000e+00,  6.3567523142451793e+06,  0.0000000000000000e+00, -4.0143871898009602e+04</GeoTransform>
+  <Metadata>
+    <MDI key="AREA_OR_POINT">Area</MDI>
+  </Metadata>
+  <Metadata domain="IMAGE_STRUCTURE">
+    <MDI key="INTERLEAVE">PIXEL</MDI>
+  </Metadata>
+  <VRTRasterBand dataType="Byte" band="1" subClass="VRTWarpedRasterBand">
+    <ColorInterp>Red</ColorInterp>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="2" subClass="VRTWarpedRasterBand">
+    <ColorInterp>Green</ColorInterp>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="3" subClass="VRTWarpedRasterBand">
+    <ColorInterp>Blue</ColorInterp>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="4" subClass="VRTWarpedRasterBand">
+    <ColorInterp>Alpha</ColorInterp>
+  </VRTRasterBand>
+  <BlockXSize>317</BlockXSize>
+  <BlockYSize>128</BlockYSize>
+  <GDALWarpOptions>
+    <WarpMemoryLimit>6.71089e+07</WarpMemoryLimit>
+    <ResampleAlg>NearestNeighbour</ResampleAlg>
+    <WorkingDataType>Byte</WorkingDataType>
+    <Option name="INIT_DEST">0</Option>
+    <Option name="ERROR_OUT_IF_EMPTY_SOURCE_WINDOW">FALSE</Option>
+    <SourceDataset relativeToVRT="1">../small_world.tif</SourceDataset>
+    <Transformer>
+      <ApproxTransformer>
+        <MaxError>0.125</MaxError>
+        <BaseTransformer>
+          <GenImgProjTransformer>
+            <SrcGeoTransform>-180,0.900000000000000022,0,90,0,-0.900000000000000022</SrcGeoTransform>
+            <SrcInvGeoTransform>200,1.11111111111111116,0,100,0,-1.11111111111111116</SrcInvGeoTransform>
+            <DstGeoTransform>-6378137,40144.2739196599723,0,6356752.3142451793,0,-40143.8718980096019</DstGeoTransform>
+            <DstInvGeoTransform>158.880367664998829,2.49101528651703209e-05,0,158.349257649966688,0,-2.49104023284206844e-05</DstInvGeoTransform>
+            <ReprojectTransformer>
+              <ReprojectionTransformer>
+                <SourceSRS>GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]</SourceSRS>
+                <TargetSRS>PROJCS["unknown",GEOGCS["unknown",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Orthographic"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]]</TargetSRS>
+                <Options>
+                  <Option key="CENTER_LONG">0</Option>
+                  <Option key="AREA_OF_INTEREST">-180,-90,180,90</Option>
+                </Options>
+              </ReprojectionTransformer>
+            </ReprojectTransformer>
+          </GenImgProjTransformer>
+        </BaseTransformer>
+      </ApproxTransformer>
+    </Transformer>
+    <BandList>
+      <BandMapping src="1" dst="1" />
+      <BandMapping src="2" dst="2" />
+      <BandMapping src="3" dst="3" />
+    </BandList>
+    <DstAlphaBand>4</DstAlphaBand>
+  </GDALWarpOptions>
+</VRTDataset>
