@@ -1041,11 +1041,15 @@ _TIFFVGetField(TIFF* tif, uint32_t tag, va_list ap)
 		case TIFFTAG_TILEOFFSETS:
 			_TIFFFillStriles( tif );
 			*va_arg(ap, const uint64_t**) = td->td_stripoffset_p;
+			if( td->td_stripoffset_p == NULL )
+				ret_val = 0;
 			break;
 		case TIFFTAG_STRIPBYTECOUNTS:
 		case TIFFTAG_TILEBYTECOUNTS:
 			_TIFFFillStriles( tif );
 			*va_arg(ap, const uint64_t**) = td->td_stripbytecount_p;
+			if( td->td_stripbytecount_p == NULL )
+				ret_val = 0;
 			break;
 		case TIFFTAG_MATTEING:
 			*va_arg(ap, uint16_t*) =
