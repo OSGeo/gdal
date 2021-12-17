@@ -34,8 +34,6 @@
 
 extern "C" void CPL_DLL RegisterOGRDWG_DGNV8();
 
-extern "C" int CPL_DLL GDALIsInGlobalDestructor();
-
 static CPLMutex* hMutex = nullptr;
 static bool bInitialized = false;
 static bool bInitSuccess = false;
@@ -156,8 +154,6 @@ OGRDGNV8Services* OGRDGNV8GetServices()
 
 void OGRTEIGHADeinitialize()
 {
-    if( GDALIsInGlobalDestructor()   )
-        return;
     if( bInitSuccess )
     {
         odUninitialize();
