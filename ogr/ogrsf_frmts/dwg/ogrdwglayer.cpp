@@ -1191,8 +1191,6 @@ OGRFeature *OGRDWGLayer::TranslateINSERT( OdDbEntityPtr poEntity )
 
             if ( !openAttr->isInvisible() && openAttr->visibility() != OdDb::kInvisible)
                 uAttrData.Add( CPLSPrintf("%ls", openAttr->tag().c_str()), attrText );
-
-            CPLDebug( "DWG", "TAG: %ls, value %s.", openAttr->tag().c_str(), attrText.c_str() );
         }
 
         poFeature->SetField( "BlockAttributes", uAttrData.ToString().c_str() );
