@@ -39,8 +39,19 @@ extern "C" int CPL_DLL GDALIsInGlobalDestructor();
 static CPLMutex* hMutex = nullptr;
 static bool bInitialized = false;
 static bool bInitSuccess = false;
-static OdStaticRxObject<OGRDWGServices> oDWGServices;
-static OdStaticRxObject<OGRDGNV8Services> oDGNServices;
+
+// We used to define the 2 below objects as static in the global scope
+// However with ODA 2022 on Linux, when OGRTEIGHADeinitialize() is not called,
+// on unloading of the ODA libraries, a crash occured when freeing a singleton
+// inside one of the ODA libraries. It turns out that if the 2 below objects
+// are kept alive, the crash doesn't occur.
+struct OGRODAServicesWrapper
+{
+    OdStaticRxObject<OGRDWGServices> oDWGServices;
+    OdStaticRxObject<OGRDGNV8Services> oDGNServices;
+};
+
+static OGRODAServicesWrapper* poServicesWrapper = nullptr;
 
 /************************************************************************/
 /*                        OGRTEIGHAErrorHandler()                       */
@@ -89,18 +100,20 @@ bool OGRTEIGHAInitialize()
 
     try
     {
-        odInitialize(&oDWGServices);
-        oDWGServices.disableOutput( true );
+        poServicesWrapper = new OGRODAServicesWrapper();
+
+        odInitialize(&poServicesWrapper->oDWGServices);
+        poServicesWrapper->oDWGServices.disableOutput( true );
 
         /********************************************************************/
         /* Find the data file and and initialize the character mapper       */
         /********************************************************************/
-        OdString iniFile = oDWGServices.findFile(OD_T("adinit.dat"));
+        OdString iniFile = poServicesWrapper->oDWGServices.findFile(OD_T("adinit.dat"));
         if (!iniFile.isEmpty())
             OdCharMapper::initialize(iniFile);
 
-        odrxInitialize(&oDGNServices);
-        oDGNServices.disableProgressMeterOutput( true );
+        odrxInitialize(&poServicesWrapper->oDGNServices);
+        poServicesWrapper->oDGNServices.disableProgressMeterOutput( true );
 
         ::odrxDynamicLinker()->loadModule(L"TG_Db", false);
 
@@ -125,7 +138,7 @@ bool OGRTEIGHAInitialize()
 
 OGRDWGServices* OGRDWGGetServices()
 {
-    return &oDWGServices;
+    return poServicesWrapper ? &poServicesWrapper->oDWGServices : nullptr;
 }
 
 /************************************************************************/
@@ -134,7 +147,7 @@ OGRDWGServices* OGRDWGGetServices()
 
 OGRDGNV8Services* OGRDGNV8GetServices()
 {
-    return &oDGNServices;
+    return poServicesWrapper ? &poServicesWrapper->oDGNServices : nullptr;
 }
 
 /************************************************************************/
@@ -150,6 +163,8 @@ void OGRTEIGHADeinitialize()
         odUninitialize();
         odrxUninitialize();
     }
+    delete poServicesWrapper;
+    poServicesWrapper = nullptr;
     bInitialized = false;
     bInitSuccess = false;
     if( hMutex != nullptr )
