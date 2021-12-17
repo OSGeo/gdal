@@ -25,11 +25,11 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
- 
- // This file contains the Virtual File Layer implementation that calls through 
- // to the VSI functions and should be included by HDF5 based drivers that wish 
+
+ // This file contains the Virtual File Layer implementation that calls through
+ // to the VSI functions and should be included by HDF5 based drivers that wish
  // to use the VFL for /vsi file system support.
- 
+
 #ifndef HDF5VFL_H_INCLUDED_
 #define HDF5VFL_H_INCLUDED_
 
@@ -37,8 +37,6 @@
 
 #include <algorithm>
 #include <mutex>
-
-extern "C" int CPL_DLL GDALIsInGlobalDestructor(void);
 
 #ifdef H5FD_FEAT_SUPPORTS_SWMR_IO
 #define HDF5_1_10_OR_LATER
@@ -189,7 +187,7 @@ static haddr_t HDF5_vsil_get_eof(const H5FD_t *_file
     return fh->eof;
 }
 
-static herr_t HDF5_vsil_read(H5FD_t *_file, H5FD_mem_t /* type */, 
+static herr_t HDF5_vsil_read(H5FD_t *_file, H5FD_mem_t /* type */,
                              hid_t /* dxpl_id */,
                              haddr_t addr, size_t size, void *buf /*out*/)
 {
@@ -236,9 +234,9 @@ static hid_t HDF5VFLGetFileDriver()
     {
         hFileDriver = H5FDregister(&HDF5_vsil_g);
 #if H5E_auto_t_vers == 2
-        // also, don't print error messages from KEA driver. 
+        // also, don't print error messages from KEA driver.
         // (which uses H5E_auto_t_vers=2 - the default, hdf uses 1 for some reason).
-        // These tend to be meaningless - ie no GCP's found etc. 
+        // These tend to be meaningless - ie no GCP's found etc.
         // They didn't seem to be shown when we didn't use the VFL layer
         // - maybe VFL turns them on?
         H5Eset_auto(H5E_DEFAULT, nullptr, nullptr);
@@ -253,7 +251,6 @@ static hid_t HDF5VFLGetFileDriver()
 
 static void HDF5VFLUnloadFileDriver()
 {
-    if( !GDALIsInGlobalDestructor() )
     {
         std::lock_guard<std::mutex> oLock(gMutex);
         if( hFileDriver >= 0 )

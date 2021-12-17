@@ -2730,11 +2730,9 @@ void OGRMongoDBDataSource::ReleaseResultSet( OGRLayer * poLayer )
 /*                          OGRMongoDBDriverUnload()                    */
 /************************************************************************/
 
-extern "C" int GDALIsInGlobalDestructor();
-
 static void OGRMongoDBDriverUnload( CPL_UNUSED GDALDriver* poDriver )
 {
-    if( bMongoInitialized != -1 && !GDALIsInGlobalDestructor() )
+    if( bMongoInitialized != -1 )
     {
         client::shutdown();
     }
