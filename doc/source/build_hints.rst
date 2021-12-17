@@ -691,6 +691,13 @@ The TEIGHA_ROOT variable must be set.
     Path to the base directory where the Kernel and Drawings package must be
     extracted.
 
+.. option:: TEIGHA_ACTIVATION_FILE_DIRECTORY
+
+    Path to a directory where a ``OdActivationInfo`` file is located. If the
+    file is somewhere under TEIGHA_ROOT, it will be automatically discovered.
+    Otherwise this variable must be set for recent SDK versions (at least with
+    2021 and later).
+
 TIFF
 ****
 
