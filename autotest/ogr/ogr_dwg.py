@@ -29,12 +29,9 @@
 ###############################################################################
 
 import os
-import shutil
 import json
 
-import gdaltest
-import ogrtest
-from osgeo import gdal, ogr
+from osgeo import gdal
 import pytest
 
 pytestmark = pytest.mark.require_driver('DWG')
