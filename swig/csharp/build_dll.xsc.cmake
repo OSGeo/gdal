@@ -1,11 +1,15 @@
-set(CSC_OPTIONS /unsafe /debug:full /target:library /out:${CSHARP_TARGET})
+#
+# script to build the C# DLLs using csc.exe or msc.exe
+#
+
+set(MSC_OPTIONS /unsafe /debug:full /target:library /out:${CSHARP_TARGET})
 if(CSHARP_DEPENDS)
     foreach(_depends IN LISTS CSHARP_DEPENDS)
-        list(APPEND CSC_OPTIONS /r:${_depends})
+        list(APPEND MSC_OPTIONS /r:${_depends})
     endforeach ()
 endif()
 if(WIN32)
-    list(APPEND CSC_OPTIONS /define:CLR4)
+    list(APPEND MSC_OPTIONS /define:CLR4)
 endif()
 file(GLOB SOURCES "${BUILD_DIR}/${TARGET_SUBDIR}/*.cs")
 list(APPEND SOURCES ${SOURCE_DIR}/AssemblyInfo.cs)
