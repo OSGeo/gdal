@@ -59,7 +59,7 @@ function (gdal_csharp_dll)
   else()
     set(CSHARP_BUILD_COMMAND "build_dll.xsc.cmake" )
   endif()
-  message(CSHARP_BUILD_COMMAND)
+  message(${CSHARP_BUILD_COMMAND})
   add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET}
     COMMAND
