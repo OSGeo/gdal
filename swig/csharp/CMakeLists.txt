@@ -119,11 +119,15 @@ set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "gdal;ogr;osr;co
 # sample commands
 
 function (gdal_build_csharp_sample)
+
+  #setup arguments
   set(_options)
   set(_oneValueArgs SOURCE OUTPUT)
   set(_multiValueArgs DEPENDS SYSTEM_DEPENDS)
   cmake_parse_arguments(_GBCS "${_options}" "${_oneValueArgs}" "${_multiValueArgs}" ${ARGN})
   set(CSC_OPTIONS)
+
+  #setup dependencies
   set(_depends)
   foreach (_dep IN LISTS _GBCS_DEPENDS)
     list(APPEND CSC_OPTIONS /r:${_dep})
@@ -134,10 +138,16 @@ function (gdal_build_csharp_sample)
   endforeach ()
   file(TO_NATIVE_PATH "${_GBCS_SOURCE}" SOURCE_NATIVE)
 
-  add_custom_command(
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT}
-    COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_GBCS_OUTPUT} ${SOURCE_NATIVE}
-    DEPENDS ${_depends} ${_GBCS_SOURCE})
+  #build the sample exe
+  if( DOTNET_FOUND )
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/exe_template.csproj" "${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT}.csproj")
+    add_dotnet( ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT}.csproj )
+  else( DOTNET_FOUND )
+    add_custom_command(
+      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT}
+      COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_GBCS_OUTPUT} ${SOURCE_NATIVE}
+      DEPENDS ${_depends} ${_GBCS_SOURCE})
+  endif ( DOTNET_FOUND )
 endfunction ()
 
 # Build the samples

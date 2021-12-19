@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>${CSHARP_APPLICATION_VERSION}</TargetFramework>
+        <CheckEolTargetFramework>false</CheckEolTargetFramework>
+        <AssemblyVersion>${GDAL_VERSION}</AssemblyVersion>
+        <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    </PropertyGroup>
+    <ItemGroup>
+        <Compile Include="${SOURCE_NATIVE}"></Compile>
+    </ItemGroup>
+</Project>
