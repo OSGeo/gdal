@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFramework>${LIBRARY_VERSION}</TargetFramework>
+        <TargetFramework>${CSHARP_LIBRARY_VERSION}</TargetFramework>
         <AssemblyVersion>${GDAL_VERSION}.0</AssemblyVersion>
         <AssemblyOriginatorKeyFile>..\gdal.snk</AssemblyOriginatorKeyFile^>
         <SignAssembly>true</SignAssembly>

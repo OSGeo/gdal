@@ -1,5 +1,5 @@
 include(GdalStandardIncludes)
-include(csharp.opt.cmake)
+
 
 if (CMAKE_CXX_FLAGS)
   string(REPLACE "-Werror" " " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
@@ -10,7 +10,9 @@ set(GDAL_CSHARP_INSTALL_DIR
     "${CMAKE_INSTALL_DATADIR}/csharp"
     CACHE PATH "Installation sub-directory for CSharp bindings")
 
-
+set(CSHARP_LIBRARY_VERSION "net5" CACHE STRING ".NET version to be used for libraries" net5)
+set(CSHARP_APPLICATION_VERSION "net5" CACHE STRING ".NET version to be used for the sample Applicatons" )
+set(CSHARP_CONFIG "Release" CACHE STRING "Config to be used to compile the C# atrefacts")
 
 # function for csharp build
 function (gdal_csharp_dll)
@@ -55,7 +57,8 @@ function (gdal_csharp_dll)
 
   # run the c# build from build_dll.cmake
   if( DOTNET_FOUND )
-    set(CSHARP_BUILD_COMMAND "build_dll.dotnet.cmake" )
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/dll_template.csproj" "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_CSHARP_TARGET}.csproj")
+    add_dotnet( ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_CSHARP_TARGET}.csproj )
   else()
     set(CSHARP_BUILD_COMMAND "build_dll.xsc.cmake" )
   endif()
