@@ -12,7 +12,19 @@ set(GDAL_CSHARP_INSTALL_DIR
 
 set(CSHARP_LIBRARY_VERSION "net5" CACHE STRING ".NET version to be used for libraries")
 set(CSHARP_APPLICATION_VERSION "net5" CACHE STRING ".NET version to be used for the sample Applicatons" )
-set(CSHARP_CONFIG "Release" CACHE STRING "Config to be used to compile the C# atrefacts")
+set(CSHARP_CONFIG "RELEASE" CACHE STRING "Config to be used to compile the C# atrefacts > RELEASE|CONFIG")
+
+#based on https://stackoverflow.com/questions/39258250/how-to-detect-if-64-bit-msvc-with-cmake
+#TODO - this not going to cope with ARM architectures
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+  set(CSHARP_RID "osx-64")
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux" )
+  set(CSHARP_RID "linux-x64")
+elseif("${CMAKE_GENERATOR_PLATFORM}" STREQUAL "x64")
+  set(CSHARP_RID "win-x64")
+elseif( "${CMAKE_GENERATOR_PLATFORM}" STREQUAL"Win32" )
+  set(CSHARP_RID "win-32")
+endif()
 
 # function for csharp build
 function (gdal_csharp_dll)
@@ -58,7 +70,7 @@ function (gdal_csharp_dll)
   # run the c# build from build_dll.cmake
   if( DOTNET_FOUND )
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/dll_template.csproj" "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_CSHARP_TARGET}.csproj")
-    add_dotnet( ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_CSHARP_TARGET}.csproj )
+    add_dotnet( ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_CSHARP_TARGET}.csproj ${CSHARP_CONFIG})
   else( DOTNET_FOUND )
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET}
@@ -127,6 +139,8 @@ function (gdal_build_csharp_sample)
   cmake_parse_arguments(_GBCS "${_options}" "${_oneValueArgs}" "${_multiValueArgs}" ${ARGN})
   set(CSC_OPTIONS)
 
+
+
   #setup dependencies
   set(_depends)
   foreach (_dep IN LISTS _GBCS_DEPENDS)
@@ -141,7 +155,7 @@ function (gdal_build_csharp_sample)
   #build the sample exe
   if( DOTNET_FOUND )
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/exe_template.csproj" "${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT}.csproj")
-    add_dotnet( ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT}.csproj )
+    add_dotnet( ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT}.csproj ${CSHARP_CONFIG})
   else( DOTNET_FOUND )
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT}

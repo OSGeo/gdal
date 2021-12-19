@@ -2,7 +2,8 @@
     <PropertyGroup>
         <OutputType>library</OutputType>
         <TargetFramework>${CSHARP_LIBRARY_VERSION}</TargetFramework>
-        <AssemblyVersion>${GDAL_VERSION}</AssemblyVersion>
+        <RuntimeIdentifier>${CSHARP_RID}</RuntimeIdentifier>
+        <AssemblyVersion>${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}.${GDAL_VERSION_REV}</AssemblyVersion>
         <AssemblyOriginatorKeyFile>..\gdal.snk</AssemblyOriginatorKeyFile>
         <SignAssembly>true</SignAssembly>
 	    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
