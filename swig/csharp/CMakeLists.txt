@@ -22,7 +22,7 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux" )
   set(CSHARP_RID "linux-x64")
 elseif("${CMAKE_GENERATOR_PLATFORM}" STREQUAL "x64")
   set(CSHARP_RID "win-x64")
-elseif( "${CMAKE_GENERATOR_PLATFORM}" STREQUAL"Win32" )
+elseif( "${CMAKE_GENERATOR_PLATFORM}" STREQUAL "Win32" )
   set(CSHARP_RID "win-32")
 endif()
 
