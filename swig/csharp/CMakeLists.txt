@@ -10,8 +10,8 @@ set(GDAL_CSHARP_INSTALL_DIR
     "${CMAKE_INSTALL_DATADIR}/csharp"
     CACHE PATH "Installation sub-directory for CSharp bindings")
 
-set(CSHARP_LIBRARY_VERSION "net5" CACHE STRING ".NET version to be used for libraries")
-set(CSHARP_APPLICATION_VERSION "net5" CACHE STRING ".NET version to be used for the sample Applicatons" )
+set(CSHARP_LIBRARY_VERSION "net5.0" CACHE STRING ".NET version to be used for libraries")
+set(CSHARP_APPLICATION_VERSION "net5.0" CACHE STRING ".NET version to be used for the sample Applicatons" )
 set(CSHARP_CONFIG "RELEASE" CACHE STRING "Config to be used to compile the C# atrefacts > RELEASE|CONFIG")
 
 #based on https://stackoverflow.com/questions/39258250/how-to-detect-if-64-bit-msvc-with-cmake
@@ -22,7 +22,7 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux" )
   set(CSHARP_RID "linux-x64")
 elseif("${CMAKE_GENERATOR_PLATFORM}" STREQUAL "x64")
   set(CSHARP_RID "win-x64")
-elseif( "${CMAKE_GENERATOR_PLATFORM}" STREQUAL"Win32" )
+elseif( "${CMAKE_GENERATOR_PLATFORM}" STREQUAL "Win32" )
   set(CSHARP_RID "win-32")
 endif()
 
