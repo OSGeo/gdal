@@ -28,7 +28,7 @@
 #            [DEPENDS depend_nuget_packages... ]
 #            [OUTPUT_PATH output_path relative to cmake binary output dir]
 #            [CUSTOM_BUILDPROPS <CustomProp>value</CustomProp>....]
-#            [SOURCES additional_file_dependencies... ]
+#            [SOURCES additional_csproj_dependencies... ]
 #            [ARGUMENTS additional_build_args...]
 #            [PACK_ARGUMENTS additional_pack_args...])
 # ```
@@ -251,6 +251,7 @@ FUNCTION(DOTNET_GET_DEPS _DN_PROJECT arguments)
     SET(DOTNET_CONFIG   ${_DN_CONFIG}   PARENT_SCOPE)
     SET(DOTNET_PLATFORM ${_DN_PLATFORM} PARENT_SCOPE)
     SET(DOTNET_DEPENDS  ${_DN_DEPENDS}  PARENT_SCOPE)
+    SET(DOTNET_SOURCES  ${_DN_SOURCES}  PARENT_SCOPE)
     SET(DOTNET_PROJNAME ${_DN_projname_noext} PARENT_SCOPE)
     SET(DOTNET_PROJPATH ${_DN_abs_proj} PARENT_SCOPE)
     SET(DOTNET_PROJDIR  ${_DN_proj_dir} PARENT_SCOPE)
@@ -285,30 +286,28 @@ FUNCTION(DOTNET_GET_DEPS _DN_PROJECT arguments)
 ENDFUNCTION()
 
 MACRO(ADD_DOTNET_DEPENDENCY_TARGETS tgt)
-    FOREACH(pkg_dep ${DOTNET_DEPENDS})
-        ADD_DEPENDENCIES(${tgt}_${DOTNET_PROJNAME} PKG_${pkg_dep})
-        MESSAGE("     ${DOTNET_PROJNAME} <- ${pkg_dep}")
+    FOREACH(dep ${DOTNET_DEPENDS})
+        ADD_DEPENDENCIES(${tgt}_${DOTNET_PROJNAME} ${dep})
+        MESSAGE("     ${DOTNET_PROJNAME} <- ${dep}")
     ENDFOREACH()
 
     FOREACH(pkg ${DOTNET_PACKAGES})
-        STRING(TOLOWER ${pkg} pkg_lowercase)
-        GET_FILENAME_COMPONENT(cache_path ${NUGET_CACHE_PATH}/${pkg_lowercase} ABSOLUTE)
-        IF(WIN32)
-            SET(rm_command powershell -NoLogo -NoProfile -NonInteractive -Command "Remove-Item -Recurse -Force -ErrorAction Ignore '${cache_path}'\; exit 0")
-        ELSE()
-            SET(rm_command rm -rf ${cache_path})
-        ENDIF()
-        ADD_CUSTOM_TARGET(
-            DOTNET_PURGE_${pkg}
-            COMMAND ${CMAKE_COMMAND} -E echo "======= [x] Purging nuget package cache for ${pkg}"
-            COMMAND ${rm_command}
-            DEPENDS ${DOTNET_deps}
-        )
+        if( NOT( TARGET DOTNET_PURGE_${pkg} ) )
+            STRING(TOLOWER ${pkg} pkg_lowercase)
+            GET_FILENAME_COMPONENT(cache_path ${NUGET_CACHE_PATH}/${pkg_lowercase} ABSOLUTE)
+            IF(WIN32)
+                SET(rm_command powershell -NoLogo -NoProfile -NonInteractive -Command "Remove-Item -Recurse -Force -ErrorAction Ignore '${cache_path}'\; exit 0")
+            ELSE()
+                SET(rm_command rm -rf ${cache_path})
+            ENDIF()
+            ADD_CUSTOM_TARGET(
+                DOTNET_PURGE_${pkg}
+                COMMAND ${CMAKE_COMMAND} -E echo "======= [x] Purging nuget package cache for ${pkg}"
+                COMMAND ${rm_command}
+                DEPENDS ${DOTNET_deps}
+            )
+        endif ( NOT( TARGET DOTNET_PURGE_${pkg} ) )
         ADD_DEPENDENCIES(${tgt}_${DOTNET_PROJNAME} DOTNET_PURGE_${pkg})
-        # Add a target for the built package -- this can be referenced in
-        # another project.
-        ADD_CUSTOM_TARGET(PKG_${pkg})
-        ADD_DEPENDENCIES(PKG_${pkg} ${tgt}_${DOTNET_PROJNAME})
         MESSAGE("==== ${DOTNET_PROJNAME} -> ${pkg}")
     ENDFOREACH()
 ENDMACRO()
@@ -326,6 +325,12 @@ MACRO(DOTNET_BUILD_COMMANDS)
             COMMAND ${CMAKE_COMMAND} -E echo "======= Building .NET project ${DOTNET_PROJNAME} [${DOTNET_CONFIG} ${DOTNET_PLATFORM}]"
             COMMAND ${DOTNET_EXE} restore ${DOTNET_PROJPATH} ${DOTNET_IMPORT_PROPERTIES}
             COMMAND ${DOTNET_EXE} clean ${DOTNET_PROJPATH} ${DOTNET_BUILD_PROPERTIES}
+            if ( ${DOTNET_SOURCES} )
+                COMMAND ${DOTNET_EXE} add ${DOTNET_PROJPATH} reference ${DOTNET_SOURCES}
+            endif ( ${DOTNET_SOURCES} )
+            if ( ${DOTNET_PACKAGES} )
+                COMMAND ${DOTNET_EXE} add ${DOTNET_PROJPATH} package ${DOTNET_PACKAGES}
+            endif( ${DOTNET_PACKAGES} )
             COMMAND ${DOTNET_EXE} build --no-restore ${DOTNET_PROJPATH} -c ${DOTNET_CONFIG} ${DOTNET_BUILD_PROPERTIES} ${DOTNET_BUILD_OPTIONS} ${DOTNET_ARGUMENTS})
         SET(build_dotnet_type "dotnet")
     ENDIF()
