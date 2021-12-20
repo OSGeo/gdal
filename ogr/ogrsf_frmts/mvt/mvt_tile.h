@@ -32,6 +32,7 @@
 #include "cpl_port.h"
 
 #include <memory>
+#include <string>
 #include <vector>
 
 /* See https://github.com/mapbox/vector-tile-spec/blob/master/2.1/vector_tile.proto */
@@ -171,7 +172,7 @@ class MVTTileLayerValue
         void setValue(GInt64 nVal)
             { if (nVal < 0)
                 setSIntValue(nVal);
-              else 
+              else
                 setUIntValue(nVal);
             }
 
