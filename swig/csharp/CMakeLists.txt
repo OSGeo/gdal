@@ -133,13 +133,13 @@ gdal_csharp_dll(
 gdal_csharp_dll(
   TARGET ogr_csharp.dll
   TARGET_SUBDIR ogr
-  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/osr_csharp.dll.csproj)
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/osr/osr_csharp.dll.csproj)
 
 gdal_csharp_dll(
   TARGET gdal_csharp.dll
   TARGET_SUBDIR gdal
-  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/ogr_csharp.dll.csproj
-          ${CMAKE_CURRENT_BINARY_DIR}/osr_csharp.dll)
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/ogr/ogr_csharp.dll.csproj
+          ${CMAKE_CURRENT_BINARY_DIR}/osr/osr_csharp.dll.csproj)
 
 set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "gdal;ogr;osr;const")
 
@@ -182,95 +182,95 @@ endfunction ()
 gdal_build_csharp_sample(
   OUTPUT ogrinfo.exe
   SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/ogrinfo.cs
-  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/ogr_csharp.dll.csproj 
-          ${CMAKE_CURRENT_BINARY_DIR}/osr_csharp.dll.csproj)
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/ogr/ogr_csharp.dll.csproj 
+          ${CMAKE_CURRENT_BINARY_DIR}/osr/osr_csharp.dll.csproj)
 
 gdal_build_csharp_sample(
   OUTPUT createdata.exe
   SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/createdata.cs
-  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/ogr_csharp.dll.csproj
-          ${CMAKE_CURRENT_BINARY_DIR}/osr_csharp.dll.csproj)
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/ogr/ogr_csharp.dll.csproj
+          ${CMAKE_CURRENT_BINARY_DIR}/osr/osr_csharp.dll.csproj)
 
 gdal_build_csharp_sample(
   OUTPUT OSRTransform.exe
   SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/OSRTransform.cs
-  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/osr_csharp.dll.csproj)
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/osr/osr_csharp.dll.csproj)
 
 gdal_build_csharp_sample(
   OUTPUT GDALRead.exe
   SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALRead.cs
-  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gdal_csharp.dll.csproj
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gdal/gdal_csharp.dll.csproj
   SYSTEM_DEPENDS System.Drawing)
 
 gdal_build_csharp_sample(
   OUTPUT GDALReadDirect.exe
   SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALReadDirect.cs
-  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gdal_csharp.dll.csproj
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gdal/gdal_csharp.dll.csproj
   SYSTEM_DEPENDS System.Drawing)
 
 gdal_build_csharp_sample(
   OUTPUT GDALAdjustContrast.exe
   SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALAdjustContrast.cs
-  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gdal_csharp.dll.csproj
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gdal/gdal_csharp.dll.csproj
   SYSTEM_DEPENDS System.Drawing)
 
 gdal_build_csharp_sample(
   OUTPUT GDALDatasetRasterIO.exe
   SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALDatasetRasterIO.cs
-  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gdal_csharp.dll.csproj
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gdal/gdal_csharp.dll.csproj
   SYSTEM_DEPENDS System.Drawing)
 
 gdal_build_csharp_sample(
   OUTPUT GDALWrite.exe 
   SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALWrite.cs
-  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gdal_csharp.dll.csproj)
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gdal/gdal_csharp.dll.csproj)
 
 gdal_build_csharp_sample(
   OUTPUT
   GDALDatasetWrite.exe
   SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALDatasetWrite.cs
-  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gdal_csharp.dll.csproj)
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gdal/gdal_csharp.dll.csproj)
 
 gdal_build_csharp_sample(
   OUTPUT GDALColorTable.exe
   SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALColorTable.cs
-  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gdal_csharp.dll.csproj)
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gdal/gdal_csharp.dll.csproj)
 
 gdal_build_csharp_sample(
   OUTPUT WKT2WKB.exe
   SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/WKT2WKB.cs
-  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/ogr_csharp.dll.csproj)
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/ogr/ogr_csharp.dll.csproj)
 
 gdal_build_csharp_sample(
   OUTPUT OGRGEOS.exe
   SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/OGRGEOS.cs
-  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/ogr_csharp.dll.csproj)
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/ogr/ogr_csharp.dll.csproj)
 
 gdal_build_csharp_sample(
   OUTPUT ReadXML.exe
   SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/ReadXML.cs
-  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gdal_csharp.dll.csproj)
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gdal/gdal_csharp.dll.csproj)
 
 gdal_build_csharp_sample(
   OUTPUT GDALInfo.exe
   SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALInfo.cs
-  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gdal_csharp.dll.csproj
-          ${CMAKE_CURRENT_BINARY_DIR}/osr_csharp.dll.csproj)
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gdal/gdal_csharp.dll.csproj
+          ${CMAKE_CURRENT_BINARY_DIR}/osr/osr_csharp.dll.csproj)
 
 gdal_build_csharp_sample(
   OUTPUT GDALOverviews.exe 
   SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALOverviews.cs
-  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gdal_csharp.dll.csproj)
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gdal/gdal_csharp.dll.csproj)
 
 gdal_build_csharp_sample(
   OUTPUT GDALCreateCopy.exe
   SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALCreateCopy.cs
-  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gdal_csharp.dll.csproj)
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gdal/gdal_csharp.dll.csproj)
 
 gdal_build_csharp_sample(
   OUTPUT GDALGetHistogram.exe
   SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALGetHistogram.cs
-  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gdal_csharp.dll.csproj)
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gdal/gdal_csharp.dll.csproj)
 
 add_custom_target(
   interface
