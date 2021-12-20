@@ -28,11 +28,11 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
+import pytest
 import json
 
 from osgeo import gdal
-import pytest
+import gdaltest
 
 pytestmark = pytest.mark.require_driver('DWG')
 
@@ -87,59 +87,61 @@ def test_ogr_dwg_1():
 
 def test_ogr_dwg_2():
 
-    os.environ["DWG_INLINE_BLOCKS"] = 'FALSE'
-    ds = gdal.OpenEx('data/cad/Building_A_Floor_0_Mapwize.dwg', allowed_drivers=['DWG'])
+    with gdaltest.config_option('DWG_INLINE_BLOCKS', 'FALSE'):
 
-    assert ds is not None
+        ds = gdal.OpenEx('data/cad/Building_A_Floor_0_Mapwize.dwg', allowed_drivers=['DWG'])
 
-    assert ds.GetLayerCount() == 2, 'expected two layers.'
+        assert ds is not None
 
-    zero = ds.GetLayer(0)
+        assert ds.GetLayerCount() == 2, 'expected two layers.'
 
-    assert zero.GetName() == 'blocks', \
-        'layer name is expected to be blocks.'
+        zero = ds.GetLayer(0)
 
-    layer = ds.GetLayer( 'entities' )
-    defn = layer.GetLayerDefn()
+        assert zero.GetName() == 'blocks', \
+            'layer name is expected to be blocks.'
 
-    assert defn.GetFieldCount() == 10, \
-        ('did not get expected number of fields in defn. got %d'
-                             % defn.GetFieldCount())
+        layer = ds.GetLayer( 'entities' )
+        defn = layer.GetLayerDefn()
 
-    fc = layer.GetFeatureCount()
+        assert defn.GetFieldCount() == 10, \
+            ('did not get expected number of fields in defn. got %d'
+                                % defn.GetFieldCount())
 
-    assert fc == 245, ('did not get expected feature count, got %d' % fc)
+        fc = layer.GetFeatureCount()
 
-    layer.ResetReading()
-    layer.SetAttributeFilter("layer = 'Trees'")
-    tree = layer.GetNextFeature()
-    geom = tree.GetGeometryRef()
+        assert fc == 245, ('did not get expected feature count, got %d' % fc)
 
-    assert geom.GetGeometryName() == 'POINT', \
-        'block placement is expected to be POINT.'
+        layer.ResetReading()
+        layer.SetAttributeFilter("layer = 'Trees'")
+        tree = layer.GetNextFeature()
+        geom = tree.GetGeometryRef()
 
-    ds = None
+        assert geom.GetGeometryName() == 'POINT', \
+            'block placement is expected to be POINT.'
+
+        ds = None
 
 def test_ogr_dwg_3():
 
-    os.environ["DWG_INLINE_BLOCKS"] = 'FALSE'
-    ds = gdal.OpenEx('data/cad/Building_A_Floor_0_Mapwize.dwg', allowed_drivers=['DWG'])
+    with gdaltest.config_option('DWG_INLINE_BLOCKS', 'FALSE'):
 
-    assert ds is not None
+        ds = gdal.OpenEx('data/cad/Building_A_Floor_0_Mapwize.dwg', allowed_drivers=['DWG'])
 
-    layer = ds.GetLayer( 'entities' )
-    layer.ResetReading()
-    layer.SetAttributeFilter("layer = 'RoomsID'")
+        assert ds is not None
 
-    dwg_occupants = set()
-    for feature in layer:
-        data = json.loads( feature.GetField("blockattributes") )
-        dwg_occupants.add( data['OCCUPANT'] )
+        layer = ds.GetLayer( 'entities' )
+        layer.ResetReading()
+        layer.SetAttributeFilter("layer = 'RoomsID'")
 
-    occupants = {'Mederic', 'Everybody', 'Mathieu', 'Alex, Manon', 'Perrine', 'Maxime, Cyprien, Etienne, Thierry, Kevin'}
+        dwg_occupants = set()
+        for feature in layer:
+            data = json.loads( feature.GetField("blockattributes") )
+            dwg_occupants.add( data['OCCUPANT'] )
 
-    assert occupants == dwg_occupants, \
-        ('block attribute OCCUPANT for features in layer RoomsID is expected to be %s.' % str(occupants) )
+        occupants = {'Mederic', 'Everybody', 'Mathieu', 'Alex, Manon', 'Perrine', 'Maxime, Cyprien, Etienne, Thierry, Kevin'}
 
-    ds = None
+        assert occupants == dwg_occupants, \
+            ('block attribute OCCUPANT for features in layer RoomsID is expected to be %s.' % str(occupants) )
+
+        ds = None
 
