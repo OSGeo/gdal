@@ -168,6 +168,7 @@ function (gdal_build_csharp_sample)
 
   # setup dependencies
   set(_depends)
+  string(REPLACE ".csproj" "" _GBCS_DEPENDS "${_GBCS_DEPENDS}")
   foreach (_dep IN LISTS _GBCS_DEPENDS)
     list(APPEND CSC_OPTIONS /r:${_dep})
     list(APPEND _depends "${CMAKE_CURRENT_BINARY_DIR}/${_dep}")
@@ -194,7 +195,7 @@ function (gdal_build_csharp_sample)
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT}
       COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_GBCS_OUTPUT} ${SOURCE_NATIVE}
-      DEPENDS ${_depends} ${_GBCS_SOURCE})
+      DEPENDS ${_GBCS_SOURCE})
   endif (DOTNET_FOUND)
 endfunction ()
 

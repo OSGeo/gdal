@@ -325,10 +325,10 @@ MACRO(DOTNET_BUILD_COMMANDS)
             COMMAND ${CMAKE_COMMAND} -E echo "======= Building .NET project ${DOTNET_PROJNAME} [${DOTNET_CONFIG} ${DOTNET_PLATFORM}]"
             COMMAND ${DOTNET_EXE} restore ${DOTNET_PROJPATH} ${DOTNET_IMPORT_PROPERTIES}
             COMMAND ${DOTNET_EXE} clean ${DOTNET_PROJPATH} ${DOTNET_BUILD_PROPERTIES})
-        if ( ${DOTNET_SOURCES} )
+        if ( DOTNET_SOURCES )
             LIST(APPEND build_dotnet_cmds COMMAND ${DOTNET_EXE} add ${DOTNET_PROJPATH} reference ${DOTNET_SOURCES})
         endif ( ${DOTNET_SOURCES} )
-        if ( ${DOTNET_PACKAGES} )
+        if ( DOTNET_PACKAGES )
             LIST(APPEND build_dotnet_cmds COMMAND ${DOTNET_EXE} add ${DOTNET_PROJPATH} package ${DOTNET_PACKAGES})
         endif( ${DOTNET_PACKAGES} )
         LIST(APPEND build_dotnet_cmds COMMAND ${DOTNET_EXE} build --no-restore ${DOTNET_PROJPATH} -c ${DOTNET_CONFIG} ${DOTNET_BUILD_PROPERTIES} ${DOTNET_BUILD_OPTIONS} ${DOTNET_ARGUMENTS})
