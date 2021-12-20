@@ -2,7 +2,7 @@
 # script to build the C# DLLs using csc.exe or msc.exe
 #
 
-set(MSC_OPTIONS /unsafe /debug:full /target:library /out:${CSHARP_TARGET})
+set(MSC_OPTIONS /unsafe /debug:full /target:library /out:${TARGET_SUBDIR}/${CSHARP_TARGET})
 if(CSHARP_DEPENDS)
     foreach(_depends IN LISTS CSHARP_DEPENDS)
         list(APPEND MSC_OPTIONS /r:${_depends})
