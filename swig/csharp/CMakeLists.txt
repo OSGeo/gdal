@@ -200,25 +200,25 @@ gdal_build_csharp_sample(
   OUTPUT GDALRead.exe
   SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALRead.cs
   DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gdal/gdal_csharp.dll.csproj
-  SYSTEM_DEPENDS System.Drawing)
+  SYSTEM_DEPENDS System.Drawing.Common)
 
 gdal_build_csharp_sample(
   OUTPUT GDALReadDirect.exe
   SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALReadDirect.cs
   DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gdal/gdal_csharp.dll.csproj
-  SYSTEM_DEPENDS System.Drawing)
+  SYSTEM_DEPENDS System.Drawing.Common)
 
 gdal_build_csharp_sample(
   OUTPUT GDALAdjustContrast.exe
   SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALAdjustContrast.cs
   DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gdal/gdal_csharp.dll.csproj
-  SYSTEM_DEPENDS System.Drawing)
+  SYSTEM_DEPENDS System.Drawing.Common)
 
 gdal_build_csharp_sample(
   OUTPUT GDALDatasetRasterIO.exe
   SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALDatasetRasterIO.cs
   DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gdal/gdal_csharp.dll.csproj
-  SYSTEM_DEPENDS System.Drawing)
+  SYSTEM_DEPENDS System.Drawing.Common)
 
 gdal_build_csharp_sample(
   OUTPUT GDALWrite.exe 
