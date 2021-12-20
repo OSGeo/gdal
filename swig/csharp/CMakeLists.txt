@@ -31,6 +31,13 @@ elseif ("${CMAKE_GENERATOR_PLATFORM}" STREQUAL "Win32")
   set(CSHARP_RID "win-32")
 endif ()
 
+# needed because of differnces in the packages
+if (DOTNET_FOUND)
+  set(CSHARP_DRAWING "System.Drawing.Common")
+else (DOTNET_FOUND)
+  set(CSHARP_DRAWING "System.Drawing")
+endif (DOTNET_FOUND)
+
 # function for csharp wrapper build
 function (gdal_csharp_wrap)
   # Setup
@@ -229,7 +236,7 @@ gdal_build_csharp_sample(
   DEPENDS
   ${CMAKE_CURRENT_BINARY_DIR}/gdal/gdal_csharp.dll.csproj
   SYSTEM_DEPENDS
-  System.Drawing.Common)
+  ${CSHARP_DRAWING})
 
 gdal_build_csharp_sample(
   OUTPUT
@@ -239,7 +246,7 @@ gdal_build_csharp_sample(
   DEPENDS
   ${CMAKE_CURRENT_BINARY_DIR}/gdal/gdal_csharp.dll.csproj
   SYSTEM_DEPENDS
-  System.Drawing.Common)
+  ${CSHARP_DRAWING})
 
 gdal_build_csharp_sample(
   OUTPUT
@@ -249,7 +256,7 @@ gdal_build_csharp_sample(
   DEPENDS
   ${CMAKE_CURRENT_BINARY_DIR}/gdal/gdal_csharp.dll.csproj
   SYSTEM_DEPENDS
-  System.Drawing.Common)
+  ${CSHARP_DRAWING})
 
 gdal_build_csharp_sample(
   OUTPUT
@@ -259,7 +266,7 @@ gdal_build_csharp_sample(
   DEPENDS
   ${CMAKE_CURRENT_BINARY_DIR}/gdal/gdal_csharp.dll.csproj
   SYSTEM_DEPENDS
-  System.Drawing.Common)
+  ${CSHARP_DRAWING})
 
 gdal_build_csharp_sample(OUTPUT GDALWrite.exe SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALWrite.cs DEPENDS
                          ${CMAKE_CURRENT_BINARY_DIR}/gdal/gdal_csharp.dll.csproj)
