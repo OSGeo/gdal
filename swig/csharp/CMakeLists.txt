@@ -75,6 +75,7 @@ function (gdal_csharp_dll)
   if (_CSHARP_DEPENDS)
     set(_CSHARP_DEPENDS_ARGS "-DCSHARP_DEPENDS=${_CSHARP_DEPENDS}")
     string(REPLACE ";" "\\;" _CSHARP_DEPENDS_ARGS "${_CSHARP_DEPENDS_ARGS}")
+    string(REPLACE ".csproj" "" _CSHARP_DEPENDS_ARGS "${_CSHARP_DEPENDS_ARGS}")
     foreach (_dep IN LISTS _CSHARP_DEPENDS)
       list(APPEND _depends ${CMAKE_CURRENT_BINARY_DIR}/${_dep})
     endforeach ()
@@ -93,7 +94,7 @@ function (gdal_csharp_dll)
         "-DTARGET_SUBDIR=${_CSHARP_TARGET_SUBDIR}" -P "${CMAKE_CURRENT_SOURCE_DIR}/build_dll.xsc.cmake"
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       VERBATIM
-      DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_WRAPPER}.cpp ${_depends} ${CMAKE_CURRENT_BINARY_DIR}/gdal.snk
+      DEPENDS ${_depends} ${CMAKE_CURRENT_BINARY_DIR}/gdal.snk
               ${CMAKE_CURRENT_SOURCE_DIR}/AssemblyInfo.cs)
   endif( DOTNET_FOUND )
 
