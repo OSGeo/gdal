@@ -84,7 +84,7 @@ function (gdal_csharp_dll)
 
   string(REPLACE ".dll" ".csproj" _CSHARP_PROJ ${_CSHARP_TARGET})
   file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_TARGET_SUBDIR}/${_CSHARP_PROJ}" _CSHARP_PROJ)
-  set(CSC_OPTIONS "/unsafe /debug:full /target:library /out:${_CSHARP_TARGET_SUBDIR}/${_CSHARP_TARGET}.dll")
+  set(CSC_OPTIONS /unsafe /debug:full /target:library /out:${_CSHARP_TARGET_SUBDIR}/${_CSHARP_TARGET}.dll)
   if (WIN32)
     list(APPEND CSC_OPTIONS /define:CLR4)
   endif ()
@@ -101,7 +101,7 @@ function (gdal_csharp_dll)
     endforeach ()
   endif (_CSHARP_DEPENDS)
 
-  # run the c# build from build_dll.cmake
+  # run the c# build 
   if (DOTNET_FOUND)
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/dll_template.csproj" "${_CSHARP_PROJ}")
     add_dotnet(${_CSHARP_PROJ} ${CSHARP_CONFIG} DEPENDS interface SOURCES ${_projs})
