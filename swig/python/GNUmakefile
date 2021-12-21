@@ -129,11 +129,16 @@ else ifdef prefix
     endif
 endif
 
+# setuptools 60.0 defaults to SETUPTOOLS_USE_DISTUTILS=local, and thus
+# Debian's specific --install-layout distutils option cannot be used
+SETUPTOOLS_USE_DISTUTILS_OPT=
 ifdef INSTALL_LAYOUT
     setup_opts+=--install-layout=$(INSTALL_LAYOUT)
+    SETUPTOOLS_USE_DISTUTILS_OPT=SETUPTOOLS_USE_DISTUTILS=stdlib
 else
     ifneq ($(shell echo $(site_package_dir) | grep dist-packages),)
         setup_opts+=--install-layout=deb
+        SETUPTOOLS_USE_DISTUTILS_OPT=SETUPTOOLS_USE_DISTUTILS=stdlib
     endif
 endif
 
@@ -148,6 +153,7 @@ install:
 		echo "----------------------------------------------------------------------";\
 	fi
 	env PYTHONPATH=$(site_package_dir)$${PYTHONPATH:+:$$PYTHONPATH} \
+		${SETUPTOOLS_USE_DISTUTILS_OPT} \
 		$(PYTHON) setup.py install ${setup_opts}
 
 # see swig/include/python/docs/README to refresh the  ../include/python/docs/ files
