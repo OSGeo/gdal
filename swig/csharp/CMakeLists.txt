@@ -92,11 +92,9 @@ function (gdal_csharp_dll)
       list(APPEND _dlls ${CMAKE_CURRENT_BINARY_DIR}/${_dep}.dll)
       list(APPEND _projs ${CMAKE_CURRENT_BINARY_DIR}/${_dep}.csproj)
     endforeach ()
+    set(_CSHARP_DEPENDS_ARGS "-DCSHARP_DEPENDS=${_dlls}")
+    string(REPLACE ";" "\\;" _CSHARP_DEPENDS_ARGS "${_CSHARP_DEPENDS_ARGS}")
   endif (_CSHARP_DEPENDS)
-  set(_CSHARP_DEPENDS_ARGS "-DCSHARP_DEPENDS=${_dlls}")
-  string(REPLACE ";" "\\;" _CSHARP_DEPENDS_ARGS "${_CSHARP_DEPENDS_ARGS}")
-
-  endif ()
 
   # run the c# build from build_dll.cmake
   if (DOTNET_FOUND)
@@ -193,9 +191,12 @@ function (gdal_build_csharp_sample)
       list(APPEND CSC_OPTIONS /r:${_dep}.dll)
     endforeach ()
   endif (_GCBS_DEPENDS)
-  foreach (_dep IN LISTS _GBCS_SYSTEM_DEPENDS)
-    list(APPEND CSC_OPTIONS /r:${_dep}.dll)
-  endforeach ()
+  if (_GCBS_SYSTEM_DEPENDS)
+    foreach (_dep IN LISTS _GBCS_SYSTEM_DEPENDS)
+      list(APPEND CSC_OPTIONS /r:${_dep}.dll)
+    endforeach ()
+  endif(_GCBS_SYSTEM_DEPENDS)
+  
   file(TO_NATIVE_PATH "${_GBCS_SOURCE}" SOURCE_NATIVE)
 
   # build the sample exe
