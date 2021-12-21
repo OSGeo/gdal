@@ -112,7 +112,7 @@ function (gdal_csharp_dll)
       SOURCES
       ${_projs}
       BUILD_OPTIONS
-      /o
+      --ouput
       ${_CSHARP_PROJ_PATH})
   else (DOTNET_FOUND)
     file(GLOB _CSHARP_SOURCES "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/*.cs")
@@ -231,7 +231,7 @@ function (gdal_build_csharp_sample)
       SOURCES
       ${_projs}
       BUILD_OPTIONS
-      /o
+      --ouput
       ${_GBCS_PROJ_PATH})
   else (DOTNET_FOUND)
     add_custom_command(
