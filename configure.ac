@@ -379,6 +379,12 @@ AC_CHECK_FUNC_CUSTOM(gmtime_r,[#include <time.h>],[time_t t; struct tm ltime; t 
 AC_CHECK_FUNC_CUSTOM(localtime_r,[#include <time.h>],[time_t t; struct tm ltime; t = time(0); localtime_r( &t, &ltime );])
 AC_LANG_POP(C++)
 
+AC_CHECK_HEADERS([xlocale.h],[GDAL_HAVE_XLOCALE_H=1])
+if test "$GDAL_HAVE_XLOCALE_H" = "1"; then
+  AC_DEFINE_UNQUOTED(GDAL_HAVE_XLOCALE_H, 1,
+            [Define if you have the <xlocale.h> header file.])
+fi
+
 AC_MSG_CHECKING([for uselocale])
 AC_LANG_PUSH(C++)
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
