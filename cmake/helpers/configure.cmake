@@ -37,6 +37,7 @@ check_include_file("unistd.h" HAVE_UNISTD_H)
 check_include_file("stdint.h" HAVE_STDINT_H)
 check_include_file("sys/types.h" HAVE_SYS_TYPES_H)
 check_include_file("locale.h" HAVE_LOCALE_H)
+check_include_file("xlocale.h" GDAL_HAVE_XLOCALE_H)
 check_include_file("errno.h" HAVE_ERRNO_H)
 check_include_file("direct.h" HAVE_DIRECT_H)
 check_include_file("dlfcn.h" HAVE_DLFCN_H)
@@ -267,10 +268,14 @@ else (MSVC)
   set(UNIX_STDIO_64 TRUE)
   set(VSI_LARGE_API_SUPPORTED TRUE)
 
+  if(GDAL_HAVE_XLOCALE_H)
+    set(INCLUDE_XLOCALE_H "#include <xlocale.h>")
+  endif()
   check_c_source_compiles(
     "
         #define _XOPEN_SOURCE 700
         #include <locale.h>
+        ${INCLUDE_XLOCALE_H}
         int main() {
             locale_t alocale = newlocale (LC_NUMERIC_MASK, \"C\", 0);
             locale_t oldlocale = uselocale(alocale);
