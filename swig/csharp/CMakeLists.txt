@@ -84,7 +84,8 @@ function (gdal_csharp_dll)
   string(REPLACE ".dll" ".csproj" _CSHARP_PROJ ${_CSHARP_TARGET})
   file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_CSHARP_PROJ}" _CSHARP_PROJ)
   file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}" _CSHARP_PROJ_PATH)
-  set(CSC_OPTIONS /unsafe /debug:full /target:library /out:${_CSHARP_TARGET_SUBDIR}/${_CSHARP_TARGET})
+  file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_CSHARP_TARGET}" _CSHARP_DLL_TARGET)
+  set(CSC_OPTIONS /unsafe /debug:full /target:library /out:${_CSHARP_DLL_TARGET})
   if (WIN32)
     list(APPEND CSC_OPTIONS /define:CLR4)
   endif ()
@@ -95,7 +96,8 @@ function (gdal_csharp_dll)
   if (_CSHARP_DEPENDS)
     foreach (_dep IN LISTS _CSHARP_DEPENDS)
       file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_dep}" _dep)
-      list(APPEND _dlls ${_dep}.dll)
+      cmake_path(GET _dep FILENAME _filename)
+      list(APPEND _dlls ${_filename}.dll)
       list(APPEND _projs ${_dep}.csproj)
       list(APPEND CSC_OPTIONS /r:${_dep}.dll)
     endforeach ()
@@ -128,7 +130,7 @@ function (gdal_csharp_dll)
       COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} ${_CSHARP_NATIVE_SOURCES}
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       VERBATIM
-      DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gdal.snk ${CMAKE_CURRENT_SOURCE_DIR}/AssemblyInfo.cs)
+      DEPENDS $(dlls) ${CMAKE_CURRENT_BINARY_DIR}/gdal.snk ${CMAKE_CURRENT_SOURCE_DIR}/AssemblyInfo.cs)
   endif (DOTNET_FOUND)
 
   install(
@@ -212,7 +214,8 @@ function (gdal_build_csharp_sample)
   if (_GBCS_DEPENDS)
     foreach (_dep IN LISTS _GBCS_DEPENDS)
       file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_dep}" _dep)
-      list(APPEND _dlls ${_dep}.dll)
+      cmake_path(GET _dep FILENAME _filename)
+      list(APPEND _dlls ${_filename}.dll)
       list(APPEND _projs ${_dep}.csproj)
       list(APPEND CSC_OPTIONS /r:${_dep}.dll)
     endforeach ()
@@ -254,7 +257,7 @@ function (gdal_build_csharp_sample)
       COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_GBCS_OUTPUT} ${SOURCE_NATIVE}
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       VERBATIM
-      DEPENDS ${_GBCS_SOURCE})
+      DEPENDS ${dlls} ${_GBCS_SOURCE})
   endif (DOTNET_FOUND)
 endfunction ()
 
