@@ -72,6 +72,7 @@ function (gdal_csharp_wrap)
     DESTINATION ${GDAL_CSHARP_INSTALL_DIR})
 endfunction (gdal_csharp_wrap)
 
+# function for xxx_csharp.dll build
 function (gdal_csharp_dll)
 
   # Setup
@@ -81,35 +82,41 @@ function (gdal_csharp_dll)
   cmake_parse_arguments(_CSHARP "${_options}" "${_oneValueArgs}" "${_multiValueArgs}" ${ARGN})
   set(_CSHARP_WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR})
 
-  set(CSHARP_PROJ)
-  string(REPLACE ".dll" "" ${_CSHARP_TARGET})
+  string(REPLACE ".dll" ".csproj" _CSHARP_PROJ ${_CSHARP_TARGET})
+  file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_TARGET_SUBDIR}/${_CSHARP_PROJ}" _CSHARP_PROJ)
+  set(CSC_OPTIONS "/unsafe /debug:full /target:library /out:${_CSHARP_TARGET_SUBDIR}/${_CSHARP_TARGET}.dll")
+  if (WIN32)
+    list(APPEND CSC_OPTIONS /define:CLR4)
+  endif ()
 
   # Setup dependencies
   set(_dlls)
   set(_projs)
   if (_CSHARP_DEPENDS)
     foreach (_dep IN LISTS _CSHARP_DEPENDS)
-      list(APPEND _dlls ${CMAKE_CURRENT_BINARY_DIR}/${_dep}.dll)
-      list(APPEND _projs ${CMAKE_CURRENT_BINARY_DIR}/${_dep}.csproj)
+      file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_dep}" _dep)
+      list(APPEND _dlls ${_dep}.dll)
+      list(APPEND _projs ${_dep}.csproj)
+      list(APPEND CSC_OPTIONS /r:${_depends})
     endforeach ()
-    set(_CSHARP_DEPENDS_ARGS "-DCSHARP_DEPENDS=${_dlls}")
-    string(REPLACE ";" "\\;" _CSHARP_DEPENDS_ARGS "${_CSHARP_DEPENDS_ARGS}")
   endif (_CSHARP_DEPENDS)
 
   # run the c# build from build_dll.cmake
   if (DOTNET_FOUND)
-    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/dll_template.csproj"
-                   "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_CSHARP_PROJ}.csproj")
-    add_dotnet(${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_CSHARP_PROJ}.csproj ${CSHARP_CONFIG} DEPENDS
-               interface SOURCES ${_CSHARP_DEPENDS})
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/dll_template.csproj" "${_CSHARP_PROJ}")
+    add_dotnet(${_CSHARP_PROJ} ${CSHARP_CONFIG} DEPENDS interface SOURCES ${_projs})
   else (DOTNET_FOUND)
+    file(GLOB _CSHARP_SOURCES "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/*.cs")
+    list(APPEND _CSHARP_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/AssemblyInfo.cs")
+    set(_CSHARP_NATIVE_SOURCES)
+    foreach (_src IN LISTS _CSHARP_SOURCES)
+      file(TO_NATIVE_PATH "${_src}" _src)
+      list(APPEND _CSHARP_NATIVE_SOURCES "${_src}")
+    endforeach ()
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET}
-      COMMAND
-        ${CMAKE_COMMAND} "-DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}" "-DBUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}"
-        "-DCSHARP_COMPILER=${CSHARP_COMPILER}" "-DCSHARP_TARGET=${_CSHARP_TARGET}" ${_CSHARP_DEPENDS_ARGS}
-        "-DTARGET_SUBDIR=${_CSHARP_TARGET_SUBDIR}" -P "${CMAKE_CURRENT_SOURCE_DIR}/build_dll.xsc.cmake"
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} ${_CSHARP_NATIVE_SOURCES}
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}
       VERBATIM
       DEPENDS ${dlls} ${CMAKE_CURRENT_BINARY_DIR}/gdal.snk ${CMAKE_CURRENT_SOURCE_DIR}/AssemblyInfo.cs)
   endif (DOTNET_FOUND)
@@ -177,17 +184,18 @@ function (gdal_build_csharp_sample)
   cmake_parse_arguments(_GBCS "${_options}" "${_oneValueArgs}" "${_multiValueArgs}" ${ARGN})
   set(CSC_OPTIONS)
 
-  # setup dependencies
-  set(GBCS_PROJ)
-  string(REPLACE ".dll" "" ${_GCBS_OUTPUT})
+  # setup project file
+  string(REPLACE ".dll" ".csproj" _GBCS_PROJ ${_GCBS_OUTPUT})
+  file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_PROJ}" _GBCS_PROJ)
 
   # Setup dependencies
   set(_dlls)
   set(_projs)
   if (_GCBS_DEPENDS)
     foreach (_dep IN LISTS _GCBS_DEPENDS)
-      list(APPEND _dlls ${CMAKE_CURRENT_BINARY_DIR}/${_dep}.dll)
-      list(APPEND _projs ${CMAKE_CURRENT_BINARY_DIR}/${_dep}.csproj)
+      file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_dep}" _dep)
+      list(APPEND _dlls ${_dep}.dll)
+      list(APPEND _projs ${_dep}.csproj)
       list(APPEND CSC_OPTIONS /r:${_dep}.dll)
     endforeach ()
   endif (_GCBS_DEPENDS)
@@ -195,15 +203,15 @@ function (gdal_build_csharp_sample)
     foreach (_dep IN LISTS _GBCS_SYSTEM_DEPENDS)
       list(APPEND CSC_OPTIONS /r:${_dep}.dll)
     endforeach ()
-  endif(_GCBS_SYSTEM_DEPENDS)
-  
+  endif (_GCBS_SYSTEM_DEPENDS)
+
   file(TO_NATIVE_PATH "${_GBCS_SOURCE}" SOURCE_NATIVE)
 
   # build the sample exe
   if (DOTNET_FOUND)
-    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/exe_template.csproj" "${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_PROJ}.csproj")
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/exe_template.csproj" "${_GBCS_PROJ}")
     add_dotnet(
-      ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_PROJ}.csproj
+      ${_GBCS_PROJ}
       ${CSHARP_CONFIG}
       DEPENDS
       csharp_binding
