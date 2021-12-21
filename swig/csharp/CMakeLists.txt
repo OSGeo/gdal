@@ -80,10 +80,10 @@ function (gdal_csharp_dll)
   set(_oneValueArgs TARGET TARGET_SUBDIR)
   set(_multiValueArgs DEPENDS)
   cmake_parse_arguments(_CSHARP "${_options}" "${_oneValueArgs}" "${_multiValueArgs}" ${ARGN})
-  set(_CSHARP_WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR})
 
   string(REPLACE ".dll" ".csproj" _CSHARP_PROJ ${_CSHARP_TARGET})
-  file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_TARGET_SUBDIR}/${_CSHARP_PROJ}" _CSHARP_PROJ)
+  file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_CSHARP_PROJ}" _CSHARP_PROJ)
+  file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}" _CSHARP_PROJ_PATH)
   set(CSC_OPTIONS /unsafe /debug:full /target:library /out:${_CSHARP_TARGET_SUBDIR}/${_CSHARP_TARGET}.dll)
   if (WIN32)
     list(APPEND CSC_OPTIONS /define:CLR4)
@@ -104,7 +104,16 @@ function (gdal_csharp_dll)
   # run the c# build
   if (DOTNET_FOUND)
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/dll_template.csproj" "${_CSHARP_PROJ}")
-    add_dotnet(${_CSHARP_PROJ} ${CSHARP_CONFIG} DEPENDS interface SOURCES ${_projs})
+    add_dotnet(
+      ${_CSHARP_PROJ}
+      ${CSHARP_CONFIG}
+      DEPENDS
+      interface
+      SOURCES
+      ${_projs}
+      BUILD_OPTIONS
+      /o
+      ${_CSHARP_PROJ_PATH})
   else (DOTNET_FOUND)
     file(GLOB _CSHARP_SOURCES "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/*.cs")
     list(APPEND _CSHARP_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/AssemblyInfo.cs")
@@ -113,12 +122,14 @@ function (gdal_csharp_dll)
       file(TO_NATIVE_PATH "${_src}" _src)
       list(APPEND _CSHARP_NATIVE_SOURCES "${_src}")
     endforeach ()
+    message("BUILDING : " ${_CSHARP_TARGET " : " ${CSHARP_COMPILER} ${CSC_OPTIONS} ${_CSHARP_NATIVE_SOURCES})
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET}
       COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} ${_CSHARP_NATIVE_SOURCES}
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       VERBATIM
       DEPENDS ${dlls} ${CMAKE_CURRENT_BINARY_DIR}/gdal.snk ${CMAKE_CURRENT_SOURCE_DIR}/AssemblyInfo.cs)
+    message("BUILT : " ${_CSHARP_TARGET)
   endif (DOTNET_FOUND)
 
   install(
@@ -186,6 +197,7 @@ function (gdal_build_csharp_sample)
   # setup project file
   string(REPLACE ".exe" ".csproj" _GBCS_PROJ ${_GBCS_OUTPUT})
   file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_PROJ}" _GBCS_PROJ)
+  file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}" _GBCS_PROJ_PATH)
 
   # Setup dependencies
   set(_dlls)
@@ -217,7 +229,10 @@ function (gdal_build_csharp_sample)
       PACKAGE
       ${_GBCS_SYSTEM_DEPENDS}
       SOURCES
-      ${_projs})
+      ${_projs}
+      BUILD_OPTIONS
+      /o
+      ${_GBCS_PROJ_PATH})
   else (DOTNET_FOUND)
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT}

@@ -20,7 +20,7 @@
 # ADD_DOTNET -- add a project to be built by dotnet.
 # 
 # ```
-# ADD_DOTNET(<project_file> [RELEASE|DEBUG] [X86|X64|ANYCPU] [NETCOREAPP]
+# ADD_DOTNET(<project_file> [RELEASE|DEBUG] [X86|X64|ANYCPU] 
 #            [CONFIG configuration]
 #            [PLATFORM platform]
 #            [PACKAGE output_nuget_packages... ]
@@ -37,7 +37,7 @@
 #               produced by running the .NET program, and can be consumed from other build steps.
 # 
 # ```
-# RUN_DOTNET(<project_file> [RELEASE|DEBUG] [X86|X64|ANYCPU] [NETCOREAPP]
+# RUN_DOTNET(<project_file> [RELEASE|DEBUG] [X86|X64|ANYCPU] 
 #            [ARGUMENTS program_args...]
 #            [OUTPUT outputs...]
 #            [CONFIG configuration]
@@ -51,7 +51,7 @@
 # ADD_MSBUILD -- add a project to be built by msbuild. Windows-only. When building in Unix systems, msbuild targets are skipped.
 # 
 # ```
-# ADD_MSBUILD(<project_file> [RELEASE|DEBUG] [X86|X64|ANYCPU] [NETCOREAPP]
+# ADD_MSBUILD(<project_file> [RELEASE|DEBUG] [X86|X64|ANYCPU] 
 #            [CONFIG configuration]
 #            [PLATFORM platform]
 #            [PACKAGE output_nuget_packages... ]
@@ -66,7 +66,7 @@
 # and if the program fails to build or run, the build fails. Currently only .NET Core App framework is supported.
 # Multiple smoke tests will be run one-by-one to avoid global resource conflicts.
 #
-# SMOKETEST_DOTNET(<project_file> [RELEASE|DEBUG] [X86|X64|ANYCPU] [NETCOREAPP]
+# SMOKETEST_DOTNET(<project_file> [RELEASE|DEBUG] [X86|X64|ANYCPU] 
 #                 [ARGUMENTS program_args...]
 #                 [CONFIG configuration]
 #                 [PLATFORM platform]
@@ -76,8 +76,6 @@
 #                 [SOURCES additional_file_dependencies... ])
 # 
 # For all the above functions, `RELEASE|DEBUG` overrides `CONFIG`, `X86|X64|ANYCPU` overrides PLATFORM.
-# For Unix systems, the target framework defaults to `netstandard2.0`, unless `NETCOREAPP` is specified.
-# For Windows, the project is built as-is, allowing multi-targeting.
 #
 #
 # DOTNET_REGISTER_LOCAL_REPOSITORY -- register a local NuGet package repository.
@@ -175,7 +173,7 @@ FUNCTION(DOTNET_GET_DEPS _DN_PROJECT arguments)
         # oneValueArgs
         "CONFIG;PLATFORM;VERSION;OUTPUT_PATH" 
         # multiValueArgs
-        "PACKAGE;DEPENDS;ARGUMENTS;PACK_ARGUMENTS;OUTPUT;SOURCES;CUSTOM_BUILDPROPS"
+        "PACKAGE;DEPENDS;ARGUMENTS;PACK_ARGUMENTS;OUTPUT;SOURCES;CUSTOM_BUILDPROPS,BUILD_OPTIONS"
         # the input arguments
         ${arguments})
 
@@ -263,15 +261,6 @@ FUNCTION(DOTNET_GET_DEPS _DN_PROJECT arguments)
 
     IF(_DN_PLATFORM)
         SET(_DN_PLATFORM_PROP "/p:Platform=${_DN_PLATFORM}")
-    ENDIF()
-
-    IF(_DN_NETCOREAPP)
-        SET(_DN_BUILD_OPTIONS -f netcoreapp3.1)
-        SET(_DN_PACK_OPTIONS /p:TargetFrameworks=netcoreapp3.1)
-    ELSEIF(UNIX)
-        # Unix builds default to netstandard2.0
-        SET(_DN_BUILD_OPTIONS -f netstandard2.0)
-        SET(_DN_PACK_OPTIONS /p:TargetFrameworks=netstandard2.0)
     ENDIF()
 
     SET(_DN_IMPORT_PROP ${CMAKE_CURRENT_BINARY_DIR}/${_DN_projname}.imports.props)
