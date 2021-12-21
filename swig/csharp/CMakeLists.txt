@@ -97,7 +97,7 @@ function (gdal_csharp_dll)
       file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_dep}" _dep)
       list(APPEND _dlls ${_dep}.dll)
       list(APPEND _projs ${_dep}.csproj)
-      list(APPEND CSC_OPTIONS /r:${_dep}.dll})
+      list(APPEND CSC_OPTIONS /r:${_dep}.dll)
     endforeach ()
   endif (_CSHARP_DEPENDS)
 
@@ -112,7 +112,7 @@ function (gdal_csharp_dll)
       SOURCES
       ${_projs}
       BUILD_OPTIONS
-      --ouput
+      --output
       ${_CSHARP_PROJ_PATH})
   else (DOTNET_FOUND)
     file(GLOB _CSHARP_SOURCES "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/*.cs")
@@ -231,7 +231,7 @@ function (gdal_build_csharp_sample)
       SOURCES
       ${_projs}
       BUILD_OPTIONS
-      --ouput
+      --output
       ${_GBCS_PROJ_PATH})
   else (DOTNET_FOUND)
     add_custom_command(
