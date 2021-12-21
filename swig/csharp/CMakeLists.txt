@@ -144,6 +144,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Directory.Build.props ${CMAKE_CURRENT
                COPYONLY)
 
 gdal_csharp_wrap(
+  NAMESPACE OSGeo.GDAL
+  WRAPPER gdalconst_wrap
+  SWIG_INTERFACE ${PROJECT_SOURCE_DIR}/swig/include/gdalconst.i 
+  TARGET_SUBDIR const)
+
+gdal_csharp_wrap(
   NAMESPACE
   OSGeo.OSR
   WRAPPER
@@ -347,7 +353,7 @@ gdal_build_csharp_sample(OUTPUT GDALCreateCopy.exe SOURCE ${CMAKE_CURRENT_SOURCE
 gdal_build_csharp_sample(OUTPUT GDALGetHistogram.exe SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALGetHistogram.cs
                          gdal/gdal_csharp)
 
-add_custom_target(interface DEPENDS osr_wrap ogr_wrap gdal_wrap)
+add_custom_target(interface DEPENDS gdalconst_wrap osr_wrap ogr_wrap gdal_wrap)
 
 # Custom target to build the C# sample apps
 add_custom_target(
