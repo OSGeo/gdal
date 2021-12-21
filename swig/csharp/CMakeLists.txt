@@ -235,7 +235,14 @@ function (gdal_build_csharp_sample)
       --output
       ${_GBCS_PROJ_PATH})
   else (DOTNET_FOUND)
-      message("BUILDING : " ${_GBCS_OUTPUT} " : " ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_GBCS_OUTPUT} ${SOURCE_NATIVE})
+    message(
+      "BUILDING : "
+      ${_GBCS_OUTPUT}
+      " : "
+      ${CSHARP_COMPILER}
+      ${CSC_OPTIONS}
+      /out:${_GBCS_OUTPUT}
+      ${SOURCE_NATIVE})
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT}
       COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_GBCS_OUTPUT} ${SOURCE_NATIVE}
