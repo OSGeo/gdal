@@ -185,25 +185,25 @@ function (gdal_build_csharp_sample)
   set(CSC_OPTIONS)
 
   # setup project file
-  string(REPLACE ".dll" ".csproj" _GBCS_PROJ ${_GCBS_OUTPUT})
+  string(REPLACE ".exe" ".csproj" _GBCS_PROJ ${_GBCS_OUTPUT})
   file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_PROJ}" _GBCS_PROJ)
 
   # Setup dependencies
   set(_dlls)
   set(_projs)
-  if (_GCBS_DEPENDS)
+  if (_GBCS_DEPENDS)
     foreach (_dep IN LISTS _GCBS_DEPENDS)
       file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_dep}" _dep)
       list(APPEND _dlls ${_dep}.dll)
       list(APPEND _projs ${_dep}.csproj)
       list(APPEND CSC_OPTIONS /r:${_dep}.dll)
     endforeach ()
-  endif (_GCBS_DEPENDS)
-  if (_GCBS_SYSTEM_DEPENDS)
+  endif (_GBCS_DEPENDS)
+  if (_GBCS_SYSTEM_DEPENDS)
     foreach (_dep IN LISTS _GBCS_SYSTEM_DEPENDS)
       list(APPEND CSC_OPTIONS /r:${_dep}.dll)
     endforeach ()
-  endif (_GCBS_SYSTEM_DEPENDS)
+  endif (_GBCS_SYSTEM_DEPENDS)
 
   file(TO_NATIVE_PATH "${_GBCS_SOURCE}" SOURCE_NATIVE)
 
