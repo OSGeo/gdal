@@ -129,7 +129,7 @@ function (gdal_csharp_dll)
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       VERBATIM
       DEPENDS ${dlls} ${CMAKE_CURRENT_BINARY_DIR}/gdal.snk ${CMAKE_CURRENT_SOURCE_DIR}/AssemblyInfo.cs)
-    message("BUILT : " ${_CSHARP_TARGET)
+    message("BUILT : " ${_CSHARP_TARGET})
   endif (DOTNET_FOUND)
 
   install(
