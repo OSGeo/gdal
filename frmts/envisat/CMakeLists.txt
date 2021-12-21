@@ -16,6 +16,7 @@ target_include_directories(gdal_Envisat PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}
 
 add_executable(dumpgeo EXCLUDE_FROM_ALL dumpgeo.c EnvisatFile.c EnvisatFile.h)
 target_include_directories(dumpgeo PRIVATE $<TARGET_PROPERTY:cpl,SOURCE_DIR>)
-target_link_libraries(dumpgeo PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}> m dl)
+target_link_libraries(dumpgeo PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)
+
 add_executable(envisat_dump EXCLUDE_FROM_ALL envisat_dump.c EnvisatFile.c EnvisatFile.h)
-target_link_libraries(envisat_dump PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}> m dl)
+target_link_libraries(envisat_dump PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)
