@@ -97,7 +97,7 @@ function (gdal_csharp_dll)
       file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_dep}" _dep)
       list(APPEND _dlls ${_dep}.dll)
       list(APPEND _projs ${_dep}.csproj)
-      list(APPEND CSC_OPTIONS /r:${_depends})
+      list(APPEND CSC_OPTIONS /r:${_dep}.dll})
     endforeach ()
   endif (_CSHARP_DEPENDS)
 
