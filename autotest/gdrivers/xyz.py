@@ -310,3 +310,82 @@ def test_xyz_organized_by_columns_float32():
         assert ds.GetGeoTransform() == (-5.0, 10.0, 0.0, 25.0, 0.0, -10.0)
         assert ds.GetRasterBand(1).DataType == gdal.GDT_Float32
         assert struct.unpack('f' * 6, ds.ReadRaster()) == (50.5, 200.0, 100.0, 250.0, 150.0, 300.0)
+
+
+###############################################################################
+# Test case "non-exact" floating point step size (0.1), organized by rows, ascending X
+
+def test_xyz_floating_point_step_organized_by_rows_int16():
+
+    content = """X Y Z
+1.1 1.1 50
+1.2 1.1 100
+1.3 1.1 150
+1.1 1.2 200
+1.2 1.2 250
+1.3 1.2 300
+1.1 1.3 350
+1.2 1.3 400
+1.3 1.3 450
+
+"""
+
+    with gdaltest.tempfile('/vsimem/grid.xyz', content):
+        ds = gdal.Open('/vsimem/grid.xyz')
+        assert ds.RasterXSize == 3 and ds.RasterYSize == 3
+        assert ds.GetGeoTransform() == pytest.approx((1.05, 0.1, 0.0, 1.05, 0, 0.1))
+        assert ds.GetRasterBand(1).DataType == gdal.GDT_Int16
+        assert struct.unpack('h' * 9, ds.ReadRaster()) == (50, 100, 150, 200, 250, 300, 350, 400, 450)
+
+
+###############################################################################
+# Test case "non-exact" floating point step size (0.1), organized by columns, ascending Y
+
+def test_xyz_floating_point_step_organized_by_columns_int16():
+
+    content = """X Y Z
+1.1 1.1 50
+1.1 1.2 100
+1.1 1.3 150
+1.2 1.1 200
+1.2 1.2 250
+1.2 1.3 300
+1.3 1.1 350
+1.3 1.2 400
+1.3 1.3 450
+
+"""
+
+    with gdaltest.tempfile('/vsimem/grid.xyz', content):
+        ds = gdal.Open('/vsimem/grid.xyz')
+        assert ds.RasterXSize == 3 and ds.RasterYSize == 3
+        assert ds.GetGeoTransform() == pytest.approx((1.05, 0.1, 0.0, 1.35, 0, -0.1))
+        assert ds.GetRasterBand(1).DataType == gdal.GDT_Int16
+        assert struct.unpack('h' * 9, ds.ReadRaster()) == (150, 300, 450, 100, 250, 400, 50, 200, 350)
+
+
+###############################################################################
+# Test case "non-exact" floating point step size (0.1), organized by columns, descending Y
+
+def test_xyz_floating_point_step_organized_by_columns_float32():
+
+    content = """X Y Z
+1.1 1.3 50.5
+1.1 1.2 100
+1.1 1.1 150
+1.2 1.3 200
+1.2 1.2 250
+1.2 1.1 300
+1.3 1.3 350
+1.3 1.2 400
+1.3 1.1 450
+
+"""
+
+    with gdaltest.tempfile('/vsimem/grid.xyz', content):
+        ds = gdal.Open('/vsimem/grid.xyz')
+        assert ds.RasterXSize == 3 and ds.RasterYSize == 3
+        assert ds.GetGeoTransform() == pytest.approx((1.05, 0.1, 0.0, 1.35, 0, -0.1))
+        assert ds.GetRasterBand(1).DataType == gdal.GDT_Float32
+        assert struct.unpack('f' * 9, ds.ReadRaster()) == (50.5, 200.0, 350.0, 100.0, 250.0, 400.0, 150.0, 300.0, 450.0)
+
