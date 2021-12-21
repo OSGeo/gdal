@@ -84,7 +84,7 @@ function (gdal_csharp_dll)
   string(REPLACE ".dll" ".csproj" _CSHARP_PROJ ${_CSHARP_TARGET})
   file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_CSHARP_PROJ}" _CSHARP_PROJ)
   file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}" _CSHARP_PROJ_PATH)
-  set(CSC_OPTIONS /unsafe /debug:full /target:library /out:${_CSHARP_TARGET_SUBDIR}/${_CSHARP_TARGET}.dll)
+  set(CSC_OPTIONS /unsafe /debug:full /target:library /out:${_CSHARP_TARGET_SUBDIR}/${_CSHARP_TARGET})
   if (WIN32)
     list(APPEND CSC_OPTIONS /define:CLR4)
   endif ()
@@ -128,8 +128,7 @@ function (gdal_csharp_dll)
       COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} ${_CSHARP_NATIVE_SOURCES}
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       VERBATIM
-      DEPENDS ${dlls} ${CMAKE_CURRENT_BINARY_DIR}/gdal.snk ${CMAKE_CURRENT_SOURCE_DIR}/AssemblyInfo.cs)
-    message("BUILT : " ${_CSHARP_TARGET})
+      DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gdal.snk ${CMAKE_CURRENT_SOURCE_DIR}/AssemblyInfo.cs)
   endif (DOTNET_FOUND)
 
   install(
@@ -174,6 +173,8 @@ gdal_csharp_wrap(
   TARGET_SUBDIR
   gdal)
 
+gdal_csharp_dll(TARGET gdalconst_csharp.dll TARGET_SUBDIR const)
+
 gdal_csharp_dll(TARGET osr_csharp.dll TARGET_SUBDIR osr)
 
 gdal_csharp_dll(TARGET ogr_csharp.dll TARGET_SUBDIR ogr DEPENDS osr/osr_csharp)
@@ -203,7 +204,7 @@ function (gdal_build_csharp_sample)
   set(_dlls)
   set(_projs)
   if (_GBCS_DEPENDS)
-    foreach (_dep IN LISTS _GCBS_DEPENDS)
+    foreach (_dep IN LISTS _GBCS_DEPENDS)
       file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_dep}" _dep)
       list(APPEND _dlls ${_dep}.dll)
       list(APPEND _projs ${_dep}.csproj)
@@ -234,10 +235,13 @@ function (gdal_build_csharp_sample)
       --output
       ${_GBCS_PROJ_PATH})
   else (DOTNET_FOUND)
+      message("BUILDING : " ${_GBCS_OUTPUT} " : " ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_GBCS_OUTPUT} ${SOURCE_NATIVE})
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT}
       COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_GBCS_OUTPUT} ${SOURCE_NATIVE}
-      DEPENDS ${_dlls$} ${_GBCS_SOURCE})
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      VERBATIM
+      DEPENDS ${_GBCS_SOURCE})
   endif (DOTNET_FOUND)
 endfunction ()
 
@@ -261,7 +265,7 @@ gdal_build_csharp_sample(
   osr/osr_csharp)
 
 gdal_build_csharp_sample(OUTPUT OSRTransform.exe SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/OSRTransform.cs DEPENDS
-                         ${CMAKE_CURRENT_BINARY_DIR}/osr/osr_csharp)
+                         osr/osr_csharp)
 
 gdal_build_csharp_sample(
   OUTPUT
@@ -362,7 +366,7 @@ add_custom_target(
           ${CMAKE_CURRENT_BINARY_DIR}/GDALGetHistogram.exe)
 
 # Custom Target to make the c# bindings - will be run as part of ALL but can also be built seperately
-add_custom_target(csharp_binding DEPENDS interface osr_csharp.dll ogr_csharp.dll gdal_csharp.dll)
+add_custom_target(csharp_binding DEPENDS interface gdalconst_csharp.dll osr_csharp.dll ogr_csharp.dll gdal_csharp.dll)
 
 # set up the tests
 if (CSHARP_INTERPRETER OR WIN32)
