@@ -122,7 +122,7 @@ function (gdal_csharp_dll)
       file(TO_NATIVE_PATH "${_src}" _src)
       list(APPEND _CSHARP_NATIVE_SOURCES "${_src}")
     endforeach ()
-    message("BUILDING : " ${_CSHARP_TARGET " : " ${CSHARP_COMPILER} ${CSC_OPTIONS} ${_CSHARP_NATIVE_SOURCES})
+    message("BUILDING : " ${_CSHARP_TARGET} " : " ${CSHARP_COMPILER} ${CSC_OPTIONS} ${_CSHARP_NATIVE_SOURCES})
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET}
       COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} ${_CSHARP_NATIVE_SOURCES}
