@@ -223,7 +223,7 @@ function (gdal_build_csharp_sample)
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT}
       COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_GBCS_OUTPUT} ${SOURCE_NATIVE}
-      DEPENDS ${_dlls$} {_GBCS_SOURCE})
+      DEPENDS ${_dlls$} ${_GBCS_SOURCE})
   endif (DOTNET_FOUND)
 endfunction ()
 
