@@ -112,21 +112,14 @@ function (gdal_csharp_dll)
       DEPENDS
       interface
       SOURCES
-      ${_projs}
-      BUILD_OPTIONS
-      --output
-      ${_CSHARP_PROJ_PATH})
+      ${_projs})
+
   else (DOTNET_FOUND)
-    file(GLOB _CSHARP_SOURCES "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/*.cs")
-    list(APPEND _CSHARP_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/AssemblyInfo.cs")
-    set(_CSHARP_NATIVE_SOURCES)
-    foreach (_src IN LISTS _CSHARP_SOURCES)
-      file(TO_NATIVE_PATH "${_src}" _src)
-      list(APPEND _CSHARP_NATIVE_SOURCES "${_src}")
-    endforeach ()
-    message("BUILDING : " ${_CSHARP_TARGET} " : " ${CSHARP_COMPILER} ${CSC_OPTIONS} ${_CSHARP_NATIVE_SOURCES})
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET}
+      ${CMAKE_COMMAND} "-DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}" "-DCSC_OPTIONS=${_CSC_OPIONS}
+      "-DCSHARP_COMPILER=${CSHARP_COMPILER}" 
+      "-DTARGET_SUBDIR=${_CSHARP_PROJ_PATH}" -P "${CMAKE_CURRENT_SOURCE_DIR}/build_dll.cmake"
       COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} ${_CSHARP_NATIVE_SOURCES}
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       VERBATIM
@@ -239,10 +232,8 @@ function (gdal_build_csharp_sample)
       PACKAGE
       ${_GBCS_SYSTEM_DEPENDS}
       SOURCES
-      ${_projs}
-      BUILD_OPTIONS
-      --output
-      ${_GBCS_PROJ_PATH})
+      ${_projs})
+      
   else (DOTNET_FOUND)
     message(
       "BUILDING : "
