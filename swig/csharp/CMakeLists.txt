@@ -331,6 +331,7 @@ add_custom_target(interface DEPENDS osr_wrap ogr_wrap gdal_wrap)
 add_custom_target(
   csharp_samples ALL
   DEPENDS interface
+          csharp_binding
           ${CMAKE_CURRENT_BINARY_DIR}/ogrinfo.exe
           ${CMAKE_CURRENT_BINARY_DIR}/createdata.exe
           ${CMAKE_CURRENT_BINARY_DIR}/OSRTransform.exe
