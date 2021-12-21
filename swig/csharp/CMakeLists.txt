@@ -106,21 +106,15 @@ function (gdal_csharp_dll)
   # run the c# build
   if (DOTNET_FOUND)
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/dll_template.csproj" "${_CSHARP_PROJ}")
-    add_dotnet(
-      ${_CSHARP_PROJ}
-      ${CSHARP_CONFIG}
-      DEPENDS
-      interface
-      SOURCES
-      ${_projs})
+    add_dotnet(${_CSHARP_PROJ} ${CSHARP_CONFIG} DEPENDS interface SOURCES ${_projs})
 
   else (DOTNET_FOUND)
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET}
-      ${CMAKE_COMMAND} "-DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}" "-DCSC_OPTIONS=${_CSC_OPIONS}
-      "-DCSHARP_COMPILER=${CSHARP_COMPILER}" 
-      "-DTARGET_SUBDIR=${_CSHARP_PROJ_PATH}" -P "${CMAKE_CURRENT_SOURCE_DIR}/build_dll.cmake"
-      COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} ${_CSHARP_NATIVE_SOURCES}
+      COMMAND
+        ${CMAKE_COMMAND} "-DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}" "-DCSC_OPTIONS=${_CSC_OPIONS}"
+        "-DCSHARP_COMPILER=${CSHARP_COMPILER}" "-DTARGET_SUBDIR=${_CSHARP_PROJ_PATH}" -P
+        "${CMAKE_CURRENT_SOURCE_DIR}/build_dll.cmake"
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       VERBATIM
       DEPENDS ${dlls} ${CMAKE_CURRENT_BINARY_DIR}/gdal.snk ${CMAKE_CURRENT_SOURCE_DIR}/AssemblyInfo.cs)
@@ -139,10 +133,14 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Directory.Build.props ${CMAKE_CURRENT
                COPYONLY)
 
 gdal_csharp_wrap(
-  NAMESPACE OSGeo.GDAL
-  WRAPPER gdalconst_wrap
-  SWIG_INTERFACE ${PROJECT_SOURCE_DIR}/swig/include/gdalconst.i 
-  TARGET_SUBDIR const)
+  NAMESPACE
+  OSGeo.GDAL
+  WRAPPER
+  gdalconst_wrap
+  SWIG_INTERFACE
+  ${PROJECT_SOURCE_DIR}/swig/include/gdalconst.i
+  TARGET_SUBDIR
+  const)
 
 gdal_csharp_wrap(
   NAMESPACE
@@ -233,7 +231,7 @@ function (gdal_build_csharp_sample)
       ${_GBCS_SYSTEM_DEPENDS}
       SOURCES
       ${_projs})
-      
+
   else (DOTNET_FOUND)
     message(
       "BUILDING : "
