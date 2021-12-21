@@ -1179,6 +1179,22 @@ OGRFeature *OGRDWGLayer::TranslateINSERT( OdDbEntityPtr poEntity )
         poFeature->SetField( "BlockAngle", dfAngle );
         poFeature->SetField( "BlockScale", 3, &(oTransformer.dfXScale) );
 
+        OdDbObjectIteratorPtr pEntIter = poRef->attributeIterator();
+        OdDbAttributePtr openAttr;
+
+        CPLJSONObject uAttrData = CPLJSONObject();
+        for (; !pEntIter->done(); pEntIter->step())
+        {
+            openAttr = pEntIter->entity()->objectId().safeOpenObject(OdDb::kForRead);
+            
+            CPLString attrText = TextUnescape( openAttr->textString(), false );
+
+            if ( !openAttr->isInvisible() && openAttr->visibility() != OdDb::kInvisible)
+                uAttrData.Add( CPLSPrintf("%ls", openAttr->tag().c_str()), attrText );
+        }
+
+        poFeature->SetField( "BlockAttributes", uAttrData.ToString().c_str() );
+
         return poFeature;
     }
 
