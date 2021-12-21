@@ -130,7 +130,7 @@ function (gdal_csharp_dll)
       COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} ${_CSHARP_NATIVE_SOURCES}
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       VERBATIM
-      DEPENDS $(dlls) ${CMAKE_CURRENT_BINARY_DIR}/gdal.snk ${CMAKE_CURRENT_SOURCE_DIR}/AssemblyInfo.cs)
+      DEPENDS ${dlls} ${CMAKE_CURRENT_BINARY_DIR}/gdal.snk ${CMAKE_CURRENT_SOURCE_DIR}/AssemblyInfo.cs)
   endif (DOTNET_FOUND)
 
   install(
