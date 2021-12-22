@@ -208,6 +208,7 @@ function (gdal_build_csharp_sample)
   file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_PROJ}" _GBCS_PROJ)
   file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}" _GBCS_PROJ_PATH)
   cmake_path(GET _GBCS_OUTPUT STEM _folder)
+  file(MAKE_DIRECTORY  ${CMAKE_CURRENT_BINARY_DIR}${_folder})
 
   # Setup dependencies
   set(_dlls)
@@ -253,7 +254,7 @@ function (gdal_build_csharp_sample)
       " : "
       ${CSHARP_COMPILER}
       ${CSC_OPTIONS}
-      /out:${_GBCS_OUTPUT}
+      /out:${_folder}/${_GBCS_OUTPUT}
       ${SOURCE_NATIVE})
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT}
@@ -261,7 +262,7 @@ function (gdal_build_csharp_sample)
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       VERBATIM
       DEPENDS csharp_binding ${_GBCS_SOURCE})
-    add_custom_target(${_GBCS_OUTPUT} DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT})
+    add_custom_target(${_GBCS_OUTPUT} DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${_folder}/${_GBCS_OUTPUT})
     if (_dlls)
       add_dependencies(${_GBCS_OUTPUT} ${_dlls})
     endif ()
