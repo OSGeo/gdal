@@ -49,8 +49,10 @@ different as described here.
    more features for each block defined in the file. In addition to the
    usual attributes, they will also have a BlockName attribute indicate
    what block they are part of.
--  The entities layer will have new attributes BlockName, BlockScale,
-   and BlockAngle.
+-  The entities layer will have new attributes BlockName, BlockScale, 
+   BlockAngle and BlockAttributes.
+-  BlockAttributes will be a list of (tag x value) pairs of all 
+   visible attributes (JSON encoded).
 -  block referenced will populate these new fields with the
    corresponding information (they are null for all other entities).
 -  block references will not have block geometry inlined - instead they

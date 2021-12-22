@@ -358,5 +358,9 @@ void OGRDWGDataSource::AddStandardFields( OGRFeatureDefn *poFeatureDefn )
     {
         OGRFieldDefn  oBlockNameField( "BlockName", OFTString );
         poFeatureDefn->AddFieldDefn( &oBlockNameField );
+
+        OGRFieldDefn  oBlockAttrField( "BlockAttributes", OFTString );
+        oBlockAttrField.SetSubType(OFSTJSON);
+        poFeatureDefn->AddFieldDefn( &oBlockAttrField );
     }
 }
