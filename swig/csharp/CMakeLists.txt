@@ -106,29 +106,32 @@ function (gdal_csharp_dll)
   # run the c# build
   if (DOTNET_FOUND)
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/dll_template.csproj" "${_CSHARP_PROJ}")
-    add_dotnet(${_CSHARP_PROJ} ${CSHARP_CONFIG} NAME ${_CSHARP_TARGET} DEPENDS csharp_interface ${_dlls} SOURCES ${_projs})
+    add_dotnet(
+      ${_CSHARP_PROJ}
+      ${CSHARP_CONFIG}
+      NAME
+      ${_CSHARP_TARGET}
+      DEPENDS
+      csharp_interface
+      ${_dlls}
+      SOURCES
+      ${_projs})
 
   else (DOTNET_FOUND)
-  message(
-      "BUILDING : "
-      ${_CSHARP_TARGET}
-      " : "
-      ${CSHARP_COMPILER}
-      ${CSC_OPTIONS}
-      /out:${_CSHARP_TARGET})
-  add_custom_command(
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET}
-    COMMAND
-      ${CMAKE_COMMAND} "-DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}" "-DCSC_OPTIONS=${CSC_OPTIONS}"
-      "-DCSHARP_COMPILER=${CSHARP_COMPILER}" "-DTARGET_SUBDIR=${_CSHARP_PROJ_PATH}" -DWORKING=${CMAKE_CURRENT_BINARY_DIR}
-      -P "${CMAKE_CURRENT_SOURCE_DIR}/add_dll_xsc.cmake"
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    VERBATIM
-    DEPENDS csharp_interface ${CMAKE_CURRENT_BINARY_DIR}/gdal.snk ${CMAKE_CURRENT_SOURCE_DIR}/AssemblyInfo.cs)
-  add_custom_target( ${_CSHARP_TARGET} DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET})
-  if ( _dlls)
-    add_dependencies ( ${_CSHARP_TARGET} ${_dlls})
-  endif()
+    message("BUILDING : " ${_CSHARP_TARGET} " : " ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_CSHARP_TARGET})
+    add_custom_command(
+      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET}
+      COMMAND
+        ${CMAKE_COMMAND} "-DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}" "-DCSC_OPTIONS=${CSC_OPTIONS}"
+        "-DCSHARP_COMPILER=${CSHARP_COMPILER}" "-DTARGET_SUBDIR=${_CSHARP_PROJ_PATH}"
+        -DWORKING=${CMAKE_CURRENT_BINARY_DIR} -P "${CMAKE_CURRENT_SOURCE_DIR}/add_dll_xsc.cmake"
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      VERBATIM
+      DEPENDS csharp_interface ${CMAKE_CURRENT_BINARY_DIR}/gdal.snk ${CMAKE_CURRENT_SOURCE_DIR}/AssemblyInfo.cs)
+    add_custom_target(${_CSHARP_TARGET} DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET})
+    if (_dlls)
+      add_dependencies(${_CSHARP_TARGET} ${_dlls})
+    endif ()
   endif (DOTNET_FOUND)
 
   install(
@@ -259,11 +262,11 @@ function (gdal_build_csharp_sample)
       COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_GBCS_OUTPUT} ${SOURCE_NATIVE}
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       VERBATIM
-      DEPENDS csharp_binding ${_GBCS_SOURCE} )
-    add_custom_target( ${_GBCS_OUTPUT} DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT})
-    if ( _dlls)
-      add_dependencies ( ${_GBCS_OUTPUT} ${_dlls})
-    endif()
+      DEPENDS csharp_binding ${_GBCS_SOURCE})
+    add_custom_target(${_GBCS_OUTPUT} DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT})
+    if (_dlls)
+      add_dependencies(${_GBCS_OUTPUT} ${_dlls})
+    endif ()
   endif (DOTNET_FOUND)
 endfunction ()
 
@@ -359,8 +362,8 @@ gdal_build_csharp_sample(OUTPUT GDALOverviews.exe SOURCE ${CMAKE_CURRENT_SOURCE_
 gdal_build_csharp_sample(OUTPUT GDALCreateCopy.exe SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALCreateCopy.cs DEPENDS
                          gdal/gdal_csharp)
 
-gdal_build_csharp_sample(OUTPUT GDALGetHistogram.exe SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALGetHistogram.cs DEPENDS
-                         gdal/gdal_csharp)
+gdal_build_csharp_sample(OUTPUT GDALGetHistogram.exe SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALGetHistogram.cs
+                         DEPENDS gdal/gdal_csharp)
 
 add_custom_target(csharp_interface DEPENDS gdalconst_wrap osr_wrap ogr_wrap gdal_wrap)
 
@@ -387,7 +390,8 @@ add_custom_target(
           GDALGetHistogram.exe)
 
 # Custom Target to make the c# bindings - will be run as part of ALL but can also be built seperately
-add_custom_target(csharp_binding DEPENDS csharp_interface gdalconst_csharp.dll osr_csharp.dll ogr_csharp.dll gdal_csharp.dll)
+add_custom_target(csharp_binding DEPENDS csharp_interface gdalconst_csharp.dll osr_csharp.dll ogr_csharp.dll
+                                         gdal_csharp.dll)
 
 # set up the tests
 if (CSHARP_INTERPRETER OR WIN32)
