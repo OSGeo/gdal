@@ -208,7 +208,7 @@ function (gdal_build_csharp_sample)
   file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_PROJ}" _GBCS_PROJ)
   file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}" _GBCS_PROJ_PATH)
   cmake_path(GET _GBCS_OUTPUT STEM _folder)
-  file(MAKE_DIRECTORY  ${CMAKE_CURRENT_BINARY_DIR}${_folder})
+  file(MAKE_DIRECTORY  ${CMAKE_CURRENT_BINARY_DIR}/${_folder})
 
   # Setup dependencies
   set(_dlls)
@@ -267,6 +267,11 @@ function (gdal_build_csharp_sample)
       add_dependencies(${_GBCS_OUTPUT} ${_dlls})
     endif ()
   endif (DOTNET_FOUND)
+
+  install(
+    FILES ${CMAKE_CURRENT_BINARY_DIR}/${_folder}/${_GBCS_OUTPUT}
+    COMPONENT csharp
+    DESTINATION ${GDAL_CSHARP_INSTALL_DIR})
 endfunction ()
 
 # Build the samples
