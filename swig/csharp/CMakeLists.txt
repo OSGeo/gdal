@@ -106,7 +106,7 @@ function (gdal_csharp_dll)
   # run the c# build
   if (DOTNET_FOUND)
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/dll_template.csproj" "${_CSHARP_PROJ}")
-    add_dotnet(${_CSHARP_PROJ} ${CSHARP_CONFIG} DEPENDS interface SOURCES ${_projs})
+    add_dotnet(${_CSHARP_PROJ} ${CSHARP_CONFIG} NAME ${_CSHARP_TARGET} DEPENDS csharp_interface ${_dlls} SOURCES ${_projs})
 
   else (DOTNET_FOUND)
   message(
@@ -124,7 +124,7 @@ function (gdal_csharp_dll)
       -P "${CMAKE_CURRENT_SOURCE_DIR}/add_dll_xsc.cmake"
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     VERBATIM
-    DEPENDS interface ${CMAKE_CURRENT_BINARY_DIR}/gdal.snk ${CMAKE_CURRENT_SOURCE_DIR}/AssemblyInfo.cs)
+    DEPENDS csharp_interface ${CMAKE_CURRENT_BINARY_DIR}/gdal.snk ${CMAKE_CURRENT_SOURCE_DIR}/AssemblyInfo.cs)
   add_custom_target( ${_CSHARP_TARGET} DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET})
   if ( _dlls)
     add_dependencies ( ${_CSHARP_TARGET} ${_dlls})
@@ -236,6 +236,8 @@ function (gdal_build_csharp_sample)
     add_dotnet(
       ${_GBCS_PROJ}
       ${CSHARP_CONFIG}
+      NAME
+      ${_GBCS_OUTPUT}
       DEPENDS
       csharp_binding
       PACKAGE
@@ -360,13 +362,12 @@ gdal_build_csharp_sample(OUTPUT GDALCreateCopy.exe SOURCE ${CMAKE_CURRENT_SOURCE
 gdal_build_csharp_sample(OUTPUT GDALGetHistogram.exe SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALGetHistogram.cs DEPENDS
                          gdal/gdal_csharp)
 
-add_custom_target(interface DEPENDS gdalconst_wrap osr_wrap ogr_wrap gdal_wrap)
+add_custom_target(csharp_interface DEPENDS gdalconst_wrap osr_wrap ogr_wrap gdal_wrap)
 
 # Custom target to build the C# sample apps
 add_custom_target(
   csharp_samples ALL
-  DEPENDS interface
-          csharp_binding
+  DEPENDS csharp_binding
           ogrinfo.exe
           createdata.exe
           OSRTransform.exe
@@ -386,7 +387,7 @@ add_custom_target(
           GDALGetHistogram.exe)
 
 # Custom Target to make the c# bindings - will be run as part of ALL but can also be built seperately
-add_custom_target(csharp_binding DEPENDS interface gdalconst_csharp.dll osr_csharp.dll ogr_csharp.dll gdal_csharp.dll)
+add_custom_target(csharp_binding DEPENDS csharp_interface gdalconst_csharp.dll osr_csharp.dll ogr_csharp.dll gdal_csharp.dll)
 
 # set up the tests
 if (CSHARP_INTERPRETER OR WIN32)
