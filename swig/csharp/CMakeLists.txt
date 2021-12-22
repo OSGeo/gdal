@@ -109,12 +109,19 @@ function (gdal_csharp_dll)
     add_dotnet(${_CSHARP_PROJ} ${CSHARP_CONFIG} DEPENDS interface SOURCES ${_projs})
 
   else (DOTNET_FOUND)
+  message(
+      "BUILDING : "
+      ${_CSHARP_TARGET}
+      " : "
+      ${CSHARP_COMPILER}
+      ${CSC_OPTIONS}
+      /out:${_CSHARP_TARGET})
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET}
       COMMAND
-        ${CMAKE_COMMAND} "-DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}" "-DCSC_OPTIONS=${_CSC_OPIONS}"
-        "-DCSHARP_COMPILER=${CSHARP_COMPILER}" "-DTARGET_SUBDIR=${_CSHARP_PROJ_PATH}" -P
-        "${CMAKE_CURRENT_SOURCE_DIR}/add_dll_xsc.cmake"
+        ${CMAKE_COMMAND} "-DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}" "-DCSC_OPTIONS=${CSC_OPTIONS}"
+        "-DCSHARP_COMPILER=${CSHARP_COMPILER}" "-DTARGET_SUBDIR=${_CSHARP_PROJ_PATH}" -DWORKING=${CMAKE_CURRENT_BINARY_DIR}
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/add_dll_xsc.cmake"
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       VERBATIM
       DEPENDS ${dlls} ${CMAKE_CURRENT_BINARY_DIR}/gdal.snk ${CMAKE_CURRENT_SOURCE_DIR}/AssemblyInfo.cs)
@@ -342,7 +349,7 @@ gdal_build_csharp_sample(OUTPUT GDALOverviews.exe SOURCE ${CMAKE_CURRENT_SOURCE_
 gdal_build_csharp_sample(OUTPUT GDALCreateCopy.exe SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALCreateCopy.cs DEPENDS
                          gdal/gdal_csharp)
 
-gdal_build_csharp_sample(OUTPUT GDALGetHistogram.exe SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALGetHistogram.cs
+gdal_build_csharp_sample(OUTPUT GDALGetHistogram.exe SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALGetHistogram.cs DEPENDS
                          gdal/gdal_csharp)
 
 add_custom_target(interface DEPENDS gdalconst_wrap osr_wrap ogr_wrap gdal_wrap)
