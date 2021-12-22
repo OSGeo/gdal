@@ -116,15 +116,19 @@ function (gdal_csharp_dll)
       ${CSHARP_COMPILER}
       ${CSC_OPTIONS}
       /out:${_CSHARP_TARGET})
-    add_custom_command(
-      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET}
-      COMMAND
-        ${CMAKE_COMMAND} "-DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}" "-DCSC_OPTIONS=${CSC_OPTIONS}"
-        "-DCSHARP_COMPILER=${CSHARP_COMPILER}" "-DTARGET_SUBDIR=${_CSHARP_PROJ_PATH}" -DWORKING=${CMAKE_CURRENT_BINARY_DIR}
-        -P "${CMAKE_CURRENT_SOURCE_DIR}/add_dll_xsc.cmake"
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-      VERBATIM
-      DEPENDS ${dlls} ${CMAKE_CURRENT_BINARY_DIR}/gdal.snk ${CMAKE_CURRENT_SOURCE_DIR}/AssemblyInfo.cs)
+  add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET}
+    COMMAND
+      ${CMAKE_COMMAND} "-DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}" "-DCSC_OPTIONS=${CSC_OPTIONS}"
+      "-DCSHARP_COMPILER=${CSHARP_COMPILER}" "-DTARGET_SUBDIR=${_CSHARP_PROJ_PATH}" -DWORKING=${CMAKE_CURRENT_BINARY_DIR}
+      -P "${CMAKE_CURRENT_SOURCE_DIR}/add_dll_xsc.cmake"
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    VERBATIM
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gdal.snk ${CMAKE_CURRENT_SOURCE_DIR}/AssemblyInfo.cs)
+  add_custom_target( ${_CSHARP_TARGET} DEPENDS interface)
+  if ( _dlls)
+    add_dependencies ( ${_CSHARP_TARGET} ${_dlls})
+  endif()
   endif (DOTNET_FOUND)
 
   install(
@@ -253,7 +257,11 @@ function (gdal_build_csharp_sample)
       COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_GBCS_OUTPUT} ${SOURCE_NATIVE}
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       VERBATIM
-      DEPENDS ${dlls} ${_GBCS_SOURCE})
+      DEPENDS ${_GBCS_SOURCE})
+    add_custom_target( ${_GBCS_OUTPUT} DEPENDS csharp_bindings)
+    if ( _dlls)
+      add_dependencies ( ${_GBCS_OUTPUT} ${_dlls})
+    endif()
   endif (DOTNET_FOUND)
 endfunction ()
 
@@ -359,23 +367,23 @@ add_custom_target(
   csharp_samples ALL
   DEPENDS interface
           csharp_binding
-          ${CMAKE_CURRENT_BINARY_DIR}/ogrinfo.exe
-          ${CMAKE_CURRENT_BINARY_DIR}/createdata.exe
-          ${CMAKE_CURRENT_BINARY_DIR}/OSRTransform.exe
-          ${CMAKE_CURRENT_BINARY_DIR}/GDALRead.exe
-          ${CMAKE_CURRENT_BINARY_DIR}/GDALReadDirect.exe
-          ${CMAKE_CURRENT_BINARY_DIR}/GDALAdjustContrast.exe
-          ${CMAKE_CURRENT_BINARY_DIR}/GDALDatasetRasterIO.exe
-          ${CMAKE_CURRENT_BINARY_DIR}/GDALWrite.exe
-          ${CMAKE_CURRENT_BINARY_DIR}/GDALDatasetWrite.exe
-          ${CMAKE_CURRENT_BINARY_DIR}/GDALColorTable.exe
-          ${CMAKE_CURRENT_BINARY_DIR}/WKT2WKB.exe
-          ${CMAKE_CURRENT_BINARY_DIR}/OGRGEOS.exe
-          ${CMAKE_CURRENT_BINARY_DIR}/ReadXML.exe
-          ${CMAKE_CURRENT_BINARY_DIR}/GDALInfo.exe
-          ${CMAKE_CURRENT_BINARY_DIR}/GDALOverviews.exe
-          ${CMAKE_CURRENT_BINARY_DIR}/GDALCreateCopy.exe
-          ${CMAKE_CURRENT_BINARY_DIR}/GDALGetHistogram.exe)
+          ogrinfo.exe
+          createdata.exe
+          OSRTransform.exe
+          GDALRead.exe
+          GDALReadDirect.exe
+          GDALAdjustContrast.exe
+          GDALDatasetRasterIO.exe
+          GDALWrite.exe
+          GDALDatasetWrite.exe
+          GDALColorTable.exe
+          WKT2WKB.exe
+          OGRGEOS.exe
+          ReadXML.exe
+          GDALInfo.exe
+          GDALOverviews.exe
+          GDALCreateCopy.exe
+          GDALGetHistogram.exe)
 
 # Custom Target to make the c# bindings - will be run as part of ALL but can also be built seperately
 add_custom_target(csharp_binding DEPENDS interface gdalconst_csharp.dll osr_csharp.dll ogr_csharp.dll gdal_csharp.dll)
