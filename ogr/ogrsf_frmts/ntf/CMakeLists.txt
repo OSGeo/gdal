@@ -15,4 +15,9 @@ add_gdal_driver(
           PLUGIN_CAPABLE
           NO_DEPS)
 gdal_standard_includes(ogr_NTF)
-add_executable(ntfdump EXCLUDE_FROM_ALL ntfdump.cpp)
+
+if (BROKEN)
+  add_executable(ntfdump EXCLUDE_FROM_ALL ntfdump.cpp)
+  target_include_directories(ntfdump PRIVATE $<TARGET_PROPERTY:ogr_NTF,SOURCE_DIR>)
+  target_link_libraries(ntfdump PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}> ogr_NTF)
+endif ()

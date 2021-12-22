@@ -275,10 +275,14 @@ if (Python_Interpreter_FOUND)
     endif ()
   endif ()
 
+  # setuptools 60.0 defaults to SETUPTOOLS_USE_DISTUTILS=local, and thus Debian's specific --install-layout distutils
+  # option cannot be used
   if (DEFINED GDAL_PYTHON_INSTALL_LAYOUT)
     set(INSTALL_ARGS "${INSTALL_ARGS} --install-layout=${GDAL_PYTHON_INSTALL_LAYOUT}")
+    set(SETUPTOOLS_USE_DISTUTILS stdlib)
   elseif ("${SITE_PACKAGE_DIR}" MATCHES "dist-packages")
     set(INSTALL_ARGS "${INSTALL_ARGS} --install-layout=deb")
+    set(SETUPTOOLS_USE_DISTUTILS stdlib)
   endif ()
 
   configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/install_python.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/install_python.cmake

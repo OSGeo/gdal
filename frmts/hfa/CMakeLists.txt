@@ -17,5 +17,6 @@ add_gdal_driver(
 gdal_standard_includes(gdal_HFA)
 target_include_directories(gdal_HFA PRIVATE ${PROJ_INCLUDE_DIRS})
 
-add_executable(hfatest EXCLUDE_FROM_ALL hfatest.cpp)
+add_executable(hfatest EXCLUDE_FROM_ALL hfatest.cpp ../../ogr/ogr_proj_p.cpp)
 gdal_standard_includes(hfatest)
+target_link_libraries(hfatest PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}> gdal_HFA PROJ::PROJ)

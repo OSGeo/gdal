@@ -72,6 +72,9 @@
 #if HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#if GDAL_HAVE_XLOCALE_H
+#include <xlocale.h> // for LC_NUMERIC_MASK on MacOS
+#endif
 
 #ifdef DEBUG_CONFIG_OPTIONS
 #include <set>
