@@ -27,7 +27,7 @@
 #            [PACKAGE output_nuget_packages... ]
 #            [VERSION nuget_package_version]
 #            [DEPENDS depend_nuget_packages... ]
-#            [OUTPUT_PATH output_path relative to cmake binary output dir]
+#            [OUTPUT_PATH output_path]
 #            [CUSTOM_BUILDPROPS <CustomProp>value</CustomProp>....]
 #            [SOURCES additional_csproj_dependencies... ]
 #            [ARGUMENTS additional_build_args...]
@@ -240,7 +240,7 @@ FUNCTION(DOTNET_GET_DEPS _DN_PROJECT arguments)
         SET(_DN_OUTPUT_PATH ${_DN_projname_noext})
     ENDIF()
 
-    GET_FILENAME_COMPONENT(_DN_OUTPUT_PATH ${CMAKE_BINARY_DIR}/${_DN_OUTPUT_PATH} ABSOLUTE)
+    GET_FILENAME_COMPONENT(_DN_OUTPUT_PATH ${_DN_OUTPUT_PATH} ABSOLUTE)
 
     # In a cmake build, the XPLAT libraries are always copied over.
     # Set the proper directory for .NET projects.
@@ -334,14 +334,6 @@ MACRO(DOTNET_BUILD_COMMANDS)
     SET(DOTNET_OUTPUTS "")
     IF(NOT "${DOTNET_PACKAGES}" STREQUAL "")
         MESSAGE("-- Adding ${build_dotnet_type} project ${DOTNET_PROJPATH} (version ${DOTNET_PACKAGE_VERSION})")
-        FOREACH(pkg ${DOTNET_PACKAGES})
-            LIST(APPEND DOTNET_OUTPUTS ${DOTNET_OUTPUT_PATH}/${pkg}.${DOTNET_PACKAGE_VERSION}.nupkg)
-            LIST(APPEND DOTNET_OUTPUTS ${DOTNET_OUTPUT_PATH}/${pkg}.${DOTNET_PACKAGE_VERSION}.symbols.nupkg)
-            LIST(APPEND build_dotnet_cmds COMMAND ${CMAKE_COMMAND} -E remove ${DOTNET_OUTPUT_PATH}/${pkg}.${DOTNET_PACKAGE_VERSION}.nupkg)
-            LIST(APPEND build_dotnet_cmds COMMAND ${CMAKE_COMMAND} -E remove ${DOTNET_OUTPUT_PATH}/${pkg}.${DOTNET_PACKAGE_VERSION}.symbols.nupkg)
-        ENDFOREACH()
-        #LIST(APPEND build_dotnet_cmds COMMAND ${DOTNET_EXE} pack --no-build --no-restore ${DOTNET_PROJPATH} -c ${DOTNET_CONFIG} ${DOTNET_BUILD_PROPERTIES} ${DOTNET_PACK_OPTIONS})
-        #LIST(APPEND build_dotnet_cmds COMMAND ${CMAKE_COMMAND} -E copy ${DOTNET_OUTPUTS} ${CMAKE_BINARY_DIR})
     ELSE()
         MESSAGE("-- Adding ${build_dotnet_type} project ${DOTNET_PROJPATH} (no nupkg)")
     ENDIF()

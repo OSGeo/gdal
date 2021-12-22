@@ -106,16 +106,11 @@ function (gdal_csharp_dll)
   # run the c# build
   if (DOTNET_FOUND)
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/dll_template.csproj" "${_CSHARP_PROJ}")
-    add_dotnet(
-      ${_CSHARP_PROJ}
-      ${CSHARP_CONFIG}
-      NAME
-      ${_CSHARP_TARGET}
-      DEPENDS
-      csharp_interface
-      ${_dlls}
-      SOURCES
-      ${_projs})
+    add_dotnet(${_CSHARP_PROJ} ${CSHARP_CONFIG} NAME ${_CSHARP_TARGET} 
+      VERSION ${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}.${GDAL_VERSION_REV} 
+      OUTPUT_PATH ${_CSHARP_PROJ_PATH}
+      DEPENDS csharp_interface ${_dlls} 
+      SOURCES ${_projs})
 
   else (DOTNET_FOUND)
     message("BUILDING : " ${_CSHARP_TARGET} " : " ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_CSHARP_TARGET})
@@ -241,6 +236,8 @@ function (gdal_build_csharp_sample)
       ${CSHARP_CONFIG}
       NAME
       ${_GBCS_OUTPUT}
+      VERSION ${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}.${GDAL_VERSION_REV} 
+      OUTPUT_PATH ${_GBCS_PROJ_PATH}
       DEPENDS
       csharp_binding
       PACKAGE
