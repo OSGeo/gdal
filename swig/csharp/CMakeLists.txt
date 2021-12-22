@@ -117,15 +117,15 @@ function (gdal_csharp_dll)
       ${CSC_OPTIONS}
       /out:${_CSHARP_TARGET})
   add_custom_command(
-    OUTPUT ${_CSHARP_TARGET}
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET}
     COMMAND
       ${CMAKE_COMMAND} "-DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}" "-DCSC_OPTIONS=${CSC_OPTIONS}"
       "-DCSHARP_COMPILER=${CSHARP_COMPILER}" "-DTARGET_SUBDIR=${_CSHARP_PROJ_PATH}" -DWORKING=${CMAKE_CURRENT_BINARY_DIR}
       -P "${CMAKE_CURRENT_SOURCE_DIR}/add_dll_xsc.cmake"
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     VERBATIM
-    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gdal.snk ${CMAKE_CURRENT_SOURCE_DIR}/AssemblyInfo.cs)
-  add_custom_target( ${_CSHARP_TARGET} DEPENDS interface)
+    DEPENDS interface ${CMAKE_CURRENT_BINARY_DIR}/gdal.snk ${CMAKE_CURRENT_SOURCE_DIR}/AssemblyInfo.cs)
+  add_custom_target( ${_CSHARP_TARGET} DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET})
   if ( _dlls)
     add_dependencies ( ${_CSHARP_TARGET} ${_dlls})
   endif()
@@ -253,12 +253,12 @@ function (gdal_build_csharp_sample)
       /out:${_GBCS_OUTPUT}
       ${SOURCE_NATIVE})
     add_custom_command(
-      OUTPUT ${_GBCS_OUTPUT}
+      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT}
       COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_GBCS_OUTPUT} ${SOURCE_NATIVE}
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       VERBATIM
-      DEPENDS ${_GBCS_SOURCE})
-    add_custom_target( ${_GBCS_OUTPUT} DEPENDS csharp_bindings)
+      DEPENDS csharp_binding ${_GBCS_SOURCE} )
+    add_custom_target( ${_GBCS_OUTPUT} DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT})
     if ( _dlls)
       add_dependencies ( ${_GBCS_OUTPUT} ${_dlls})
     endif()
