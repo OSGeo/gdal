@@ -240,6 +240,15 @@ def test_usgsdem_with_header_of_918_bytes():
                             check_gt=(248500.0, 1.4, 0.0, 3252508.7, 0.0, -1.4))
 
 ###############################################################################
+# Test dataset with 1025 byte records ending with linefeed (#5007
+
+
+def test_usgsdem_record_1025_bytes_ending_with_linefeed():
+
+    tst = gdaltest.GDALTest('USGSDEM', 'usgsdem/record_1025_ending_with_linefeed.dem', 1, 14172)
+    return tst.testOpen()
+
+###############################################################################
 # Cleanup
 
 
@@ -259,6 +268,6 @@ def test_usgsdem_cleanup():
     except OSError:
         pass
 
-    
+
 
 
