@@ -207,6 +207,7 @@ function (gdal_build_csharp_sample)
   string(REPLACE ".exe" ".csproj" _GBCS_PROJ ${_GBCS_OUTPUT})
   file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_PROJ}" _GBCS_PROJ)
   file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}" _GBCS_PROJ_PATH)
+  cmake_path(GET _GBCS_OUTPUT STEM _folder)
 
   # Setup dependencies
   set(_dlls)
@@ -237,7 +238,7 @@ function (gdal_build_csharp_sample)
       NAME
       ${_GBCS_OUTPUT}
       VERSION ${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}.${GDAL_VERSION_REV} 
-      OUTPUT_PATH ${_GBCS_PROJ_PATH}
+      OUTPUT_PATH ${_GBCS_PROJ_PATH}/${_folder}
       DEPENDS
       csharp_binding
       PACKAGE
@@ -256,7 +257,7 @@ function (gdal_build_csharp_sample)
       ${SOURCE_NATIVE})
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT}
-      COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_GBCS_OUTPUT} ${SOURCE_NATIVE}
+      COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_folder}/${_GBCS_OUTPUT} ${SOURCE_NATIVE}
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       VERBATIM
       DEPENDS csharp_binding ${_GBCS_SOURCE})
