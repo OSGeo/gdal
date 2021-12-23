@@ -59,6 +59,15 @@ OGRDWGLayer::OGRDWGLayer( OGRDWGDataSource *poDSIn )
         poFeatureDefn->AddFieldDefn( &oBlockAngleField );
     }
 
+    if (!poDS->GetAttributes().empty()) {
+        std::set<CPLString>::iterator it;
+        for (it = poDS->GetAttributes().begin(); it != poDS->GetAttributes().end(); ++it) {
+            OGRFieldDefn  oAttField(*it, OFTString);
+            poFeatureDefn->AddFieldDefn(&oAttField);
+        }
+      
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Find the *Paper_Space block, which seems to contain all the     */
 /*      regular entities.                                               */
@@ -1266,6 +1275,10 @@ OGRFeature *OGRDWGLayer::TranslateINSERT( OdDbEntityPtr poEntity )
 
             OGRFeature *poAttrFeat = TranslateTEXT( pAttr );
 
+            if( poDS->AttributesAsValues() )
+            {
+                poFeature->SetField(pAttr->tag(), pAttr->textString());
+            }
             if( poAttrFeat )
                 apoPendingFeatures.push( poAttrFeat );
         }

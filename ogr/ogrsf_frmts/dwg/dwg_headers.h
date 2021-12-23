@@ -52,6 +52,7 @@
 
 #include "DbPolyline.h"
 #include "Db2dPolyline.h"
+#include "DbAttributeDefinition.h"
 #include "Db3dPolyline.h"
 #include "Db3dPolylineVertex.h"
 #include "DbLine.h"

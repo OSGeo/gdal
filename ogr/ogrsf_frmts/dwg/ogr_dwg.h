@@ -161,6 +161,8 @@ class OGRDWGDataSource final: public OGRDataSource
     CPLString           m_osName;
     std::vector<OGRLayer*> apoLayers;
 
+    std::set<CPLString> attributeFields;
+
     int                 iEntitiesSectionOffset;
 
     std::map<CPLString,DWGBlockDefinition> oBlockMap;
@@ -175,6 +177,7 @@ class OGRDWGDataSource final: public OGRDataSource
     std::map<CPLString,CPLString> oLineTypeTable;
 
     int                 bInlineBlocks;
+    int                 bAttributesAsValues;
 
     OGRDWGServices     *poServices;
     OdDbDatabasePtr     poDb;
@@ -198,14 +201,17 @@ class OGRDWGDataSource final: public OGRDataSource
     // The following is only used by OGRDWGLayer
 
     int                 InlineBlocks() { return bInlineBlocks; }
+    int                 AttributesAsValues() { return bAttributesAsValues; }
     void                AddStandardFields( OGRFeatureDefn *poDef );
 
     // Implemented in ogrdxf_blockmap.cpp
     void                ReadBlocksSection();
+    void                ReadAttDefinitions();
     OGRGeometry        *SimplifyBlockGeometry( OGRGeometryCollection * );
     DWGBlockDefinition *LookupBlock( const char *pszName );
     std::map<CPLString,DWGBlockDefinition> &GetBlockMap() { return oBlockMap; }
 
+    std::set<CPLString>& GetAttributes() { return attributeFields; };
     // Layer and other Table Handling (ogrdatasource.cpp)
     void                ReadLayerDefinitions();
     void                ReadLineTypeDefinitions();
