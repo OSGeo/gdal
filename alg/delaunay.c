@@ -60,6 +60,8 @@ CPL_CVSID("$Id$")
 
 #include "internal_qhull_headers.h"
 
+#define QHULL_IS_LIBQHULL_R
+
 #else /* INTERNAL_QHULL */
 
 #if defined(QHULL_IS_LIBQHULL_R)

@@ -45,6 +45,12 @@
 #define QHULL_OS_WIN
 #endif
 
+#ifndef DEFqhT
+#define DEFqhT 1
+typedef struct qhT qhT;          /* defined below */
+#endif
+#define gdal_qhT qhT
+
 /* Below a lot of renames and static definition of the symbols so as */
 /* to avoid "contaminating" with a potential external qhull */
 typedef struct setT gdal_setT;
@@ -52,6 +58,8 @@ typedef struct facetT gdal_facetT;
 typedef struct vertexT gdal_vertexT;
 typedef struct qhT gdal_qhT;
 typedef struct ridgeT gdal_ridgeT;
+typedef struct mergeT gdal_mergeT;
+
 #define gdal_realT double
 #define gdal_pointT double
 #define gdal_realT double
@@ -64,9 +72,6 @@ typedef struct ridgeT gdal_ridgeT;
 #define qh_qhstat gdal_qh_qhstat
 #define qh_version gdal_qh_version
 #define qhull_inuse gdal_qhull_inuse
-
-#define qh_compare_vertexpoint gdal_qh_compare_vertexpoint
-static int qh_compare_vertexpoint();
 
 #define qh_intcompare gdal_qh_intcompare
 
@@ -204,10 +209,10 @@ static gdal_boolT qh_sethalfspace();
 static gdal_coordT * qh_sethalfspace_all();
 #define qh_voronoi_center gdal_qh_voronoi_center
 static gdal_pointT * qh_voronoi_center();
-#define dfacet gdal_dfacet
-static void dfacet();
-#define dvertex gdal_dvertex
-static void dvertex();
+#define qh_dfacet gdal_qh_dfacet
+static void qh_dfacet();
+#define qh_dvertex gdal_qh_dvertex
+static void qh_dvertex();
 #define qh_compare_facetarea gdal_qh_compare_facetarea
 static int qh_compare_facetarea();
 #define qh_compare_facetmerge gdal_qh_compare_facetmerge
@@ -377,9 +382,9 @@ static void qh_free();
 #define qh_malloc gdal_qh_malloc
 static void   * qh_malloc();
 #define qh_fprintf gdal_qh_fprintf
-static void qh_fprintf(FILE *fp, int msgcode, const char *fmt, ... );
+static void qh_fprintf(qhT *qh, FILE *fp, int msgcode, const char *fmt, ... );
 /*#define qh_fprintf_rbox gdal_qh_fprintf_rbox*/
-/*static void qh_fprintf_rbox(FILE *fp, int msgcode, const char *fmt, ... );*/
+/*static void qh_fprintf_rbox(qhT *qh, FILE *fp, int msgcode, const char *fmt, ... );*/
 #define qh_findbest gdal_qh_findbest
 static gdal_facetT * qh_findbest();
 #define qh_findbestnew gdal_qh_findbestnew
@@ -412,8 +417,6 @@ static void qh_clear_outputflags();
 static void qh_freebuffers();
 #define qh_freeqhull gdal_qh_freeqhull
 static void qh_freeqhull();
-#define qh_freeqhull2 gdal_qh_freeqhull2
-static void qh_freeqhull2();
 #define qh_init_A gdal_qh_init_A
 static void qh_init_A();
 #define qh_init_B gdal_qh_init_B
@@ -444,10 +447,10 @@ static void qh_option();
 /*static void qh_restore_qhull();*/
 /*#define qh_save_qhull gdal_qh_save_qhull*/
 /*static gdal_qhT    * qh_save_qhull();*/
-#define dfacet gdal_dfacet
-static void dfacet();
-#define dvertex gdal_dvertex
-static void dvertex();
+#define qh_dfacet gdal_qh_dfacet
+static void qh_dfacet();
+#define qh_dvertex gdal_qh_dvertex
+static void qh_dvertex();
 #define qh_printneighborhood gdal_qh_printneighborhood
 static void qh_printneighborhood();
 #define qh_produce_output gdal_qh_produce_output
@@ -524,18 +527,12 @@ static gdal_setT   * qh_basevertices();
 static void qh_checkconnect();
 #define qh_checkzero gdal_qh_checkzero
 static gdal_boolT qh_checkzero();
-#define qh_compareangle gdal_qh_compareangle
-static int qh_compareangle();
-#define qh_comparemerge gdal_qh_comparemerge
-static int qh_comparemerge();
 #define qh_comparevisit gdal_qh_comparevisit
 static int qh_comparevisit();
 #define qh_copynonconvex gdal_qh_copynonconvex
 static void qh_copynonconvex();
 #define qh_degen_redundant_facet gdal_qh_degen_redundant_facet
 static void qh_degen_redundant_facet();
-#define qh_degen_redundant_neighbors gdal_qh_degen_redundant_neighbors
-static void qh_degen_redundant_neighbors();
 #define qh_find_newvertex gdal_qh_find_newvertex
 static gdal_vertexT * qh_find_newvertex();
 #define qh_findbest_test gdal_qh_findbest_test
@@ -605,7 +602,7 @@ static gdal_boolT qh_remove_extravertices();
 #define qh_rename_sharedvertex gdal_qh_rename_sharedvertex
 static gdal_vertexT * qh_rename_sharedvertex();
 #define qh_renameridgevertex gdal_qh_renameridgevertex
-static void qh_renameridgevertex();
+static gdal_boolT qh_renameridgevertex();
 #define qh_renamevertex gdal_qh_renamevertex
 static void qh_renamevertex();
 #define qh_test_appendmerge gdal_qh_test_appendmerge
@@ -651,7 +648,7 @@ static gdal_facetT * qh_makenew_simplicial();
 #define qh_matchneighbor gdal_qh_matchneighbor
 static void qh_matchneighbor();
 #define qh_matchnewfacets gdal_qh_matchnewfacets
-static void qh_matchnewfacets();
+static gdal_coordT qh_matchnewfacets();
 #define qh_matchvertices gdal_qh_matchvertices
 static gdal_boolT qh_matchvertices();
 #define qh_newfacet gdal_qh_newfacet
@@ -664,8 +661,6 @@ static int qh_pointid();
 static void qh_removefacet();
 #define qh_removevertex gdal_qh_removevertex
 static void qh_removevertex();
-#define qh_updatevertices gdal_qh_updatevertices
-static void qh_updatevertices();
 #define qh_addhash gdal_qh_addhash
 static void qh_addhash();
 #define qh_check_bestdist gdal_qh_check_bestdist
@@ -724,8 +719,6 @@ static gdal_setT   * qh_initialvertices();
 static gdal_vertexT * qh_isvertex();
 #define qh_makenewfacets gdal_qh_makenewfacets
 static gdal_vertexT * qh_makenewfacets();
-#define qh_matchduplicates gdal_qh_matchduplicates
-static void qh_matchduplicates();
 #define qh_nearcoplanar gdal_qh_nearcoplanar
 static void qh_nearcoplanar();
 #define qh_nearvertex gdal_qh_nearvertex
@@ -798,8 +791,6 @@ static void qh_partitioncoplanar();
 static void qh_partitionpoint();
 #define qh_partitionvisible gdal_qh_partitionvisible
 static void qh_partitionvisible();
-#define qh_precision gdal_qh_precision
-static void qh_precision();
 #define qh_printsummary gdal_qh_printsummary
 static void qh_printsummary();
 #define qh_appendprint gdal_qh_appendprint
@@ -948,8 +939,6 @@ static void qh_allstatI();
 static void qh_allstatistics();
 #define qh_collectstatistics gdal_qh_collectstatistics
 static void qh_collectstatistics();
-#define qh_freestatistics gdal_qh_freestatistics
-static void qh_freestatistics();
 #define qh_initstatistics gdal_qh_initstatistics
 static void qh_initstatistics();
 #define qh_newstats gdal_qh_newstats
@@ -966,37 +955,150 @@ static void qh_printstatlevel();
 static void qh_printstats();
 #define qh_stddev gdal_qh_stddev
 static gdal_realT qh_stddev();
+#define qh_furthestnewvertex gdal_qh_furthestnewvertex
+static gdal_vertexT * qh_furthestnewvertex();
+#define qh_test_degen_neighbors gdal_qh_test_degen_neighbors
+static void qh_test_degen_neighbors();
+#define qh_drop_mergevertex gdal_qh_drop_mergevertex
+static void qh_drop_mergevertex();
+#define qh_rename_adjacentvertex gdal_qh_rename_adjacentvertex
+static void qh_rename_adjacentvertex();
+#define qh_delridge_merge gdal_qh_delridge_merge
+static void qh_delridge_merge();
+#define qh_joggle_restart gdal_qh_joggle_restart
+static void qh_joggle_restart();
+#define qh_remove_mergetype gdal_qh_remove_mergetype
+static void qh_remove_mergetype();
+#define qh_vertex_bestdist gdal_qh_vertex_bestdist
+static gdal_coordT qh_vertex_bestdist();
+#define qh_buildcone_onlygood gdal_qh_buildcone_onlygood
+static gdal_boolT qh_buildcone_onlygood();
+#define qh_vertex_bestdist2 gdal_qh_vertex_bestdist2
+static gdal_coordT qh_vertex_bestdist2();
+#define qh_neighbor_vertices_facet gdal_qh_neighbor_vertices_facet
+static void qh_neighbor_vertices_facet();
+#define qh_compare_nummerge gdal_qh_compare_nummerge
+static int qh_compare_nummerge();
+#define qh_test_centrum_merge gdal_qh_test_centrum_merge
+static gdal_boolT qh_test_centrum_merge();
+#define qh_lib_check gdal_qh_lib_check
+static void qh_lib_check();
+#define qh_neighbor_vertices gdal_qh_neighbor_vertices
+static gdal_setT* qh_neighbor_vertices();
+#define qh_hasmerge gdal_qh_hasmerge
+static gdal_boolT qh_hasmerge();
+#define qh_furthestvertex gdal_qh_furthestvertex
+static gdal_vertexT* qh_furthestvertex();
+#define qh_maybe_duplicateridges gdal_qh_maybe_duplicateridges
+static void qh_maybe_duplicateridges();
+#define qh_printhelp_topology gdal_qh_printhelp_topology
+static void qh_printhelp_topology();
+#define qh_detmaxoutside gdal_qh_detmaxoutside
+static void qh_detmaxoutside();
+#define qh_merge_pinchedvertices gdal_qh_merge_pinchedvertices
+static void qh_merge_pinchedvertices();
+#define qh_buildcone gdal_qh_buildcone
+static gdal_vertexT* qh_buildcone();
+#define qh_check_dupridge gdal_qh_check_dupridge
+static void qh_check_dupridge();
+#define qh_printhelp_internal gdal_qh_printhelp_internal
+static void qh_printhelp_internal();
+#define qh_version2 gdal_qh_version2
+#define qh_opposite_horizonfacet gdal_qh_opposite_horizonfacet
+static gdal_facetT* qh_opposite_horizonfacet();
+#define qh_matchdupridge gdal_qh_matchdupridge
+static gdal_coordT qh_matchdupridge();
+#define qh_appendvertexmerge gdal_qh_appendvertexmerge
+static void qh_appendvertexmerge();
+#define qh_nextfacet2d gdal_qh_nextfacet2d
+static gdal_facetT* qh_nextfacet2d();
+#define qh_findbest_pinchedvertex gdal_qh_findbest_pinchedvertex
+static gdal_vertexT* qh_findbest_pinchedvertex();
+#define qh_zero gdal_qh_zero
+static void qh_zero();
+#define qh_printhelp_wide gdal_qh_printhelp_wide
+static void qh_printhelp_wide();
+#define qh_findbest_ridgevertex gdal_qh_findbest_ridgevertex
+static gdal_vertexT* qh_findbest_ridgevertex();
+#define qh_checkdelridge gdal_qh_checkdelridge
+static void qh_checkdelridge();
+#define qh_buildcone_mergepinched gdal_qh_buildcone_mergepinched
+static gdal_boolT qh_buildcone_mergepinched();
+#define qh_merge_twisted gdal_qh_merge_twisted
+static void qh_merge_twisted();
+#define qh_replacefacetvertex gdal_qh_replacefacetvertex
+static void qh_replacefacetvertex();
+#define qh_update_vertexneighbors gdal_qh_update_vertexneighbors
+static void qh_update_vertexneighbors();
+#define qh_test_redundant_neighbors gdal_qh_test_redundant_neighbors
+static void qh_test_redundant_neighbors();
+#define qh_checklists gdal_qh_checklists
+static gdal_boolT qh_checklists();
+#define qh_fprintf_stderr gdal_qh_fprintf_stderr
+static void qh_fprintf_stderr(int msgcode, const char *fmt, ...);
+#define qh_getreplacement gdal_qh_getreplacement
+static gdal_facetT* qh_getreplacement();
+#define qh_memcheck gdal_qh_memcheck
+static void qh_memcheck();
+#define qh_addfacetvertex gdal_qh_addfacetvertex
+static gdal_boolT qh_addfacetvertex();
+#define qh_opposite_vertex gdal_qh_opposite_vertex
+static gdal_vertexT* qh_opposite_vertex();
+#define qh_all_vertexmerges gdal_qh_all_vertexmerges
+static void qh_all_vertexmerges();
+#define qh_update_vertexneighbors_cone gdal_qh_update_vertexneighbors_cone
+static void qh_update_vertexneighbors_cone();
+#define qh_initmergesets gdal_qh_initmergesets
+static void qh_initmergesets();
+#define qh_test_nonsimplicial_merge gdal_qh_test_nonsimplicial_merge
+static gdal_boolT qh_test_nonsimplicial_merge();
+#define qh_checkdelfacet gdal_qh_checkdelfacet
+static void qh_checkdelfacet();
+#define qh_next_vertexmerge gdal_qh_next_vertexmerge
+static gdal_mergeT* qh_next_vertexmerge();
+#define qh_getpinchedmerges gdal_qh_getpinchedmerges
+static gdal_boolT qh_getpinchedmerges();
+#define qh_maybe_duplicateridge gdal_qh_maybe_duplicateridge
+static void qh_maybe_duplicateridge();
+#define qh_setlarger_quick gdal_qh_setlarger_quick
+static int qh_setlarger_quick();
+#define qh_freemergesets gdal_qh_freemergesets
+static void qh_freemergesets();
+#define qh_compare_anglemerge gdal_qh_compare_anglemerge
+static int qh_compare_anglemerge();
 
 #ifdef _MSC_VER
 #pragma warning( push )
 #pragma warning( disable : 4324 )
 #pragma warning( disable : 4032 )
 #pragma warning( disable : 4306 )  /* e.g 'type cast' : conversion from 'long' to 'facetT *' of greater size */
+#pragma warning( disable : 4701 )
+#pragma warning( disable : 4703 )
 #endif
 
-#include "internal_libqhull/libqhull.h"
-#include "internal_libqhull/libqhull.c"
-#include "internal_libqhull/poly.c"
-#include "internal_libqhull/poly2.c"
-#include "internal_libqhull/mem.c"
-#include "internal_libqhull/user.c"
-#include "internal_libqhull/global.c"
+#include "internal_libqhull/libqhull_r.h"
+#include "internal_libqhull/libqhull_r.c"
+#include "internal_libqhull/poly_r.c"
+#include "internal_libqhull/poly2_r.c"
+#include "internal_libqhull/mem_r.c"
+#include "internal_libqhull/user_r.c"
+#include "internal_libqhull/global_r.c"
 /*#include "userprintf.c"*/
-#include "internal_libqhull/random.c"
-#include "internal_libqhull/qset.c"
-#include "internal_libqhull/io.c"
-#include "internal_libqhull/usermem.c"
-#include "internal_libqhull/geom.c"
-#include "internal_libqhull/geom2.c"
-#include "internal_libqhull/stat.c"
-#include "internal_libqhull/merge.c"
+#include "internal_libqhull/random_r.c"
+#include "internal_libqhull/qset_r.c"
+#include "internal_libqhull/io_r.c"
+#include "internal_libqhull/usermem_r.c"
+#include "internal_libqhull/geom_r.c"
+#include "internal_libqhull/geom2_r.c"
+#include "internal_libqhull/stat_r.c"
+#include "internal_libqhull/merge_r.c"
 
 #ifdef _MSC_VER
 #pragma warning( pop )
 #endif
 
 /* Replaces userprintf.c implementation */
-static void qh_fprintf(CPL_UNUSED FILE *fp, CPL_UNUSED int msgcode, const char *fmt, ... )
+static void qh_fprintf(qhT *qh, CPL_UNUSED FILE *fp, CPL_UNUSED int msgcode, const char *fmt, ... )
 {
     va_list args;
     va_start(args, fmt);
