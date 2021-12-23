@@ -63,8 +63,17 @@ CPL_CVSID("$Id$")
 #else /* INTERNAL_QHULL */
 
 #if defined(QHULL_IS_LIBQHULL_R)
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable : 4324 ) // 'qhT': structure was padded due to alignment specifier
+#endif
+
 #include "libqhull_r/libqhull_r.h"
 #include "libqhull_r/qset_r.h"
+
+#ifdef _MSC_VER
+#pragma warning( pop )
+#endif
 #elif !defined(QHULL_INCLUDE_SUBDIR_IS_LIBQHULL)
 #include "libqhull.h"
 #include "qset.h"
