@@ -268,7 +268,7 @@ function (gdal_build_csharp_sample)
     endif ()
   endif (DOTNET_FOUND)
 
-  set()
+  set(_GCBS_IMPORTS)
   if (DOTNET_FOUND)
     list(APPEND _GCBS_IMPORTS ${_GBCS_PROJ_PATH}/${_GBCS_OUTPUT})
     list(APPEND _GCBS_IMPORTS ${_GBCS_PROJ_PATH}/${_folder}.dll)
