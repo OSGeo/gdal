@@ -218,7 +218,7 @@ function (gdal_build_csharp_sample)
   file(TO_NATIVE_PATH "${_GBCS_PROJ_PATH}" _GBCS_PROJ_PATH_NATIVE)
   file(MAKE_DIRECTORY  ${_GBCS_PROJ_PATH})
 
-  file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_GCBS_OUTPUT" _GCBS_OUTPUT_NATIVE)
+  file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_GCBS_OUTPUT}" _GCBS_OUTPUT_NATIVE)
 
   # Setup dependencies
   set(_dlls)
