@@ -279,7 +279,7 @@ function (gdal_build_csharp_sample)
       DESTINATION ${GDAL_CSHARP_INSTALL_DIR}
       FILES_MATCHING PATTERN "*.json")
   else()
-    list(APPEND _GCBS_IMPORTS ${_GBCS_OUTPUT})
+    list(APPEND _GCBS_IMPORTS ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT})
   endif()
 
   install(
