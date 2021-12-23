@@ -38,6 +38,12 @@ else (DOTNET_FOUND)
   set(CSHARP_DRAWING "System.Drawing")
 endif (DOTNET_FOUND)
 
+# setup local NuGet repository
+if (DOTNET_FOUND)
+  file(TO_NATIVE_PATH ${CMAKE_CURRENT_BINARY_DIR} _DN_REPO_PATH)
+  DOTNET_REGISTER_LOCAL_REPOSITORY("local" ${_DN_REPO_PATH})
+endif()
+
 # function for csharp wrapper build
 function (gdal_csharp_wrap)
   # Setup
@@ -245,8 +251,9 @@ function (gdal_build_csharp_sample)
       csharp_binding
       PACKAGE
       ${_GBCS_SYSTEM_DEPENDS}
-      SOURCES
-      ${_projs})
+      ${_GBCS_DEPENDS})
+      #SOURCES
+      #${_projs})
 
   else (DOTNET_FOUND)
     message(
@@ -259,7 +266,7 @@ function (gdal_build_csharp_sample)
       ${SOURCE_NATIVE})
       add_custom_command(
         OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT}
-        COMMAND ${CMAKE_COMMAND} -E echo "Building ${_GCBS_OUTPUT}"
+        COMMAND ${CMAKE_COMMAND} -E echo "Building ${_GBCS_OUTPUT}"
         COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_GBCS_OUTPUT} ${SOURCE_NATIVE}
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         VERBATIM
@@ -297,8 +304,8 @@ gdal_build_csharp_sample(
   SOURCE
   ${CMAKE_CURRENT_SOURCE_DIR}/apps/ogrinfo.cs
   DEPENDS
-  ogr/ogr_csharp
-  osr/osr_csharp)
+  ogr_csharp
+  osr_csharp)
 
 gdal_build_csharp_sample(
   OUTPUT
@@ -306,11 +313,11 @@ gdal_build_csharp_sample(
   SOURCE
   ${CMAKE_CURRENT_SOURCE_DIR}/apps/createdata.cs
   DEPENDS
-  ogr/ogr_csharp
-  osr/osr_csharp)
+  ogr_csharp
+  osr_csharp)
 
 gdal_build_csharp_sample(OUTPUT OSRTransform.exe SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/OSRTransform.cs DEPENDS
-                         osr/osr_csharp)
+                         osr_csharp)
 
 gdal_build_csharp_sample(
   OUTPUT
@@ -318,7 +325,7 @@ gdal_build_csharp_sample(
   SOURCE
   ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALRead.cs
   DEPENDS
-  gdal/gdal_csharp
+  gdal_csharp
   SYSTEM_DEPENDS
   ${CSHARP_DRAWING})
 
@@ -328,7 +335,7 @@ gdal_build_csharp_sample(
   SOURCE
   ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALReadDirect.cs
   DEPENDS
-  gdal/gdal_csharp
+  gdal_csharp
   SYSTEM_DEPENDS
   ${CSHARP_DRAWING})
 
@@ -338,7 +345,7 @@ gdal_build_csharp_sample(
   SOURCE
   ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALAdjustContrast.cs
   DEPENDS
-  gdal/gdal_csharp
+  gdal_csharp
   SYSTEM_DEPENDS
   ${CSHARP_DRAWING})
 
@@ -348,24 +355,24 @@ gdal_build_csharp_sample(
   SOURCE
   ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALDatasetRasterIO.cs
   DEPENDS
-  gdal/gdal_csharp
+  gdal_csharp
   SYSTEM_DEPENDS
   ${CSHARP_DRAWING})
 
 gdal_build_csharp_sample(OUTPUT GDALWrite.exe SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALWrite.cs DEPENDS
-                         gdal/gdal_csharp)
+                         gdal_csharp)
 
 gdal_build_csharp_sample(OUTPUT GDALDatasetWrite.exe SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALDatasetWrite.cs
-                         DEPENDS gdal/gdal_csharp)
+                         DEPENDS gdal_csharp)
 
 gdal_build_csharp_sample(OUTPUT GDALColorTable.exe SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALColorTable.cs DEPENDS
-                         gdal/gdal_csharp)
+                         gdal_csharp)
 
-gdal_build_csharp_sample(OUTPUT WKT2WKB.exe SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/WKT2WKB.cs DEPENDS ogr/ogr_csharp)
+gdal_build_csharp_sample(OUTPUT WKT2WKB.exe SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/WKT2WKB.cs DEPENDS ogr_csharp)
 
-gdal_build_csharp_sample(OUTPUT OGRGEOS.exe SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/OGRGEOS.cs DEPENDS ogr/ogr_csharp)
+gdal_build_csharp_sample(OUTPUT OGRGEOS.exe SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/OGRGEOS.cs DEPENDS ogr_csharp)
 
-gdal_build_csharp_sample(OUTPUT ReadXML.exe SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/ReadXML.cs DEPENDS gdal/gdal_csharp)
+gdal_build_csharp_sample(OUTPUT ReadXML.exe SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/ReadXML.cs DEPENDS gdal_csharp)
 
 gdal_build_csharp_sample(
   OUTPUT
@@ -373,17 +380,17 @@ gdal_build_csharp_sample(
   SOURCE
   ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALInfo.cs
   DEPENDS
-  gdal/gdal_csharp
-  osr/osr_csharp)
+  gdal_csharp
+  osr_csharp)
 
 gdal_build_csharp_sample(OUTPUT GDALOverviews.exe SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALOverviews.cs DEPENDS
-                         gdal/gdal_csharp)
+                         gdal_csharp)
 
 gdal_build_csharp_sample(OUTPUT GDALCreateCopy.exe SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALCreateCopy.cs DEPENDS
-                         gdal/gdal_csharp)
+                         gdal_csharp)
 
 gdal_build_csharp_sample(OUTPUT GDALGetHistogram.exe SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALGetHistogram.cs
-                         DEPENDS gdal/gdal_csharp)
+                         DEPENDS gdal_csharp)
 
 add_custom_target(csharp_interface DEPENDS gdalconst_wrap osr_wrap ogr_wrap gdal_wrap)
 

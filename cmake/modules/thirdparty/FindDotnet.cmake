@@ -317,12 +317,12 @@ MACRO(DOTNET_BUILD_COMMANDS)
     ELSE()
         SET(build_dotnet_cmds 
             COMMAND ${CMAKE_COMMAND} -E echo "======= Building .NET project ${DOTNET_PROJNAME} [${DOTNET_CONFIG} ${DOTNET_PLATFORM}]")
-        if ( DOTNET_SOURCES )
-            LIST(APPEND build_dotnet_cmds COMMAND ${DOTNET_EXE} add ${DOTNET_PROJPATH} reference ${DOTNET_SOURCES})
-        endif ( DOTNET_SOURCES )
-        if ( DOTNET_PACKAGES )
-            LIST(APPEND build_dotnet_cmds COMMAND ${DOTNET_EXE} add ${DOTNET_PROJPATH} package ${DOTNET_PACKAGES})
-        endif( DOTNET_PACKAGES )
+        foreach (_src ${DOTNET_SOURCES} )
+            LIST(APPEND build_dotnet_cmds COMMAND ${DOTNET_EXE} add ${DOTNET_PROJPATH} reference ${_src})
+        endforeach ()
+        foreach ( _pkg ${DOTNET_PACKAGES} )
+            LIST(APPEND build_dotnet_cmds COMMAND ${DOTNET_EXE} add ${DOTNET_PROJPATH} package ${_pkg})
+        endforeach()
         LIST(APPEND build_dotnet_cmds
             COMMAND ${DOTNET_EXE} clean ${DOTNET_PROJPATH} ${DOTNET_BUILD_PROPERTIES}
             COMMAND ${DOTNET_EXE} build -c ${DOTNET_CONFIG} ${DOTNET_BUILD_PROPERTIES} ${DOTNET_BUILD_OPTIONS} ${DOTNET_ARGUMENTS} ${DOTNET_PROJPATH})
@@ -336,6 +336,8 @@ MACRO(DOTNET_BUILD_COMMANDS)
     ELSE()
         MESSAGE("-- Adding ${build_dotnet_type} project ${DOTNET_PROJPATH} (no nupkg)")
     ENDIF()
+    
+    LIST(APPEND build_dotnet_cmds COMMAND ${DOTNET_EXE} pack --no-build --no-restore ${DOTNET_PROJPATH} -c ${DOTNET_CONFIG} ${DOTNET_BUILD_PROPERTIES} ${DOTNET_PACK_OPTIONS} --output ${CMAKE_CURRENT_BINARY_DIR})
     LIST(APPEND DOTNET_OUTPUTS ${CMAKE_CURRENT_BINARY_DIR}/${DOTNET_PROJNAME}.buildtimestamp)
     LIST(APPEND build_dotnet_cmds COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/${DOTNET_PROJNAME}.buildtimestamp)
 
