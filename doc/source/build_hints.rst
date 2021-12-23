@@ -626,11 +626,11 @@ found, an internal copy is used.
 
 .. option:: QHULL_INCLUDE_DIR
 
-    Path to an include directory with the ``libqhull_r/libqhull_r.h``, ``qhull_r/libqhull.h`` or ``libqhull/libqhull.h`` header file.
+    Path to an include directory with the ``libqhull_r/libqhull_r.h`` header file.
 
 .. option:: QHULL_LIBRARY
 
-    Path to a shared or static library file.
+    Path to a shared or static library file to the reentrant library.
 
 .. option:: GDAL_USE_QHULL=ON/OFF
 

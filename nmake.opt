@@ -890,14 +890,12 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 
 # QHull configuration. By default use internal libqhull.
 # QHULL_SETTING can be set to INTERNAL, EXTERNAL or NO
-# For external qhull, use qhull 2012 or later
+# For external qhull, use reentrant qhull 2020.2 or later
 !IFNDEF QHULL_SETTING
 QHULL_SETTING = INTERNAL
 !ENDIF
 # To be defined if QHULL_SETTING=EXTERNAL
 # QHULL_INC = -I....
-# To be defined if QHULL_SETTING=EXTERNAL and re-entrant qhull (qhull_r)
-# QHULL_IS_LIBQHULL_R = 1
 # To be defined if QHULL_SETTING=EXTERNAL
 # QHULL_LIB = path_to_libqhull.lib
 
