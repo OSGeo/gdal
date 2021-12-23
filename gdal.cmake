@@ -304,9 +304,6 @@ set(INSTALL_PLUGIN_FULL_DIR "${CMAKE_INSTALL_PREFIX}/${INSTALL_PLUGIN_DIR}")
 add_subdirectory(port)
 
 # Configure internal libraries
-if (GDAL_ENABLE_QHULL AND GDAL_USE_QHULL_INTERNAL)
-  add_subdirectory(alg/internal_libqhull)
-endif ()
 if (GDAL_USE_LIBZ_INTERNAL)
   add_subdirectory(frmts/zlib)
 endif ()
