@@ -1154,6 +1154,7 @@ OGRFeature* OGRDWGLayer::Translate3DFACE(OdDbEntityPtr poEntity)
         pFace->getVertexAt(index, point);
         poLinearRing->addPoint(point.x,point.y,point.z);
     }
+    poLinearRing->closeRings();
     poPolygon->addRingDirectly(poLinearRing);
     poFeature->SetGeometryDirectly(poPolygon);
     PrepareLineStyle(poFeature);
