@@ -618,6 +618,30 @@ PROJ >= 6 is a required dependency for GDAL.
     building Debug releases.
 
 
+QHULL
+*****
+
+The QHULL library is used for the linear interpolation of gdal_grid. If not
+found, an internal copy is used.
+
+.. option:: QHULL_INCLUDE_DIR
+
+    Path to an include directory with the ``libqhull_r/libqhull_r.h``, ``qhull_r/libqhull.h`` or ``libqhull/libqhull.h`` header file.
+
+.. option:: QHULL_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_QHULL=ON/OFF
+
+    Control whether to use QHULL. Defaults to ON when QHULL is found.
+
+.. option:: GDAL_USE_QHULL_INTERNAL=ON/OFF
+
+    Control whether to use internal QHULL copy. Defaults to ON when external
+    QHULL is not found.
+
+
 RASTERLITE2
 ***********
 

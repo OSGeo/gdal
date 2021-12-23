@@ -4677,24 +4677,35 @@ if test "$with_qhull" = "no" ; then
 
 elif test "$with_qhull" = "yes" -o "$with_qhull" = "" ; then
 
-  # Only qhull 2012 is reliable on certain datasets. Older Ubuntu have
-  # qhull/qhull.h
-  AC_CHECK_HEADERS([qhull/libqhull.h])
-  if test "$ac_cv_header_qhull_libqhull_h" = "yes"; then
-    AC_CHECK_LIB(qhull,qh_new_qhull,QHULL_SETTING=yes,QHULL_SETTING=no,)
+  AC_CHECK_HEADERS([libqhull_r/libqhull_r.h])
+  if test "$ac_cv_header_libqhull_r_libqhull_r_h" = "yes"; then
+    AC_CHECK_LIB(qhull_r,qh_new_qhull,QHULL_SETTING=yes,QHULL_SETTING=no,)
     if test "$QHULL_SETTING" = "yes"; then
         QHULL_SETTING=external
-        QHULL_INCLUDE_SUBDIR_IS_LIBQHULL=0
-        LIBS="-lqhull $LIBS"
+        QHULL_IS_LIBQHULL_R=1
+        LIBS="-lqhull_r $LIBS"
     fi
-  fi
-  AC_CHECK_HEADERS([libqhull/libqhull.h])
-  if test "$ac_cv_header_libqhull_libqhull_h" = "yes"; then
-    AC_CHECK_LIB(qhull,qh_new_qhull,QHULL_SETTING=yes,QHULL_SETTING=no,)
-    if test "$QHULL_SETTING" = "yes"; then
-        QHULL_SETTING=external
-        QHULL_INCLUDE_SUBDIR_IS_LIBQHULL=1
-        LIBS="-lqhull $LIBS"
+  else
+    # Only qhull 2012 is reliable on certain datasets. Older Ubuntu have
+    # qhull/qhull.h
+    AC_CHECK_HEADERS([qhull/libqhull.h])
+    if test "$ac_cv_header_qhull_libqhull_h" = "yes"; then
+      AC_CHECK_LIB(qhull,qh_new_qhull,QHULL_SETTING=yes,QHULL_SETTING=no,)
+      if test "$QHULL_SETTING" = "yes"; then
+          QHULL_SETTING=external
+          QHULL_INCLUDE_SUBDIR_IS_LIBQHULL=0
+          LIBS="-lqhull $LIBS"
+      fi
+    fi
+
+    AC_CHECK_HEADERS([libqhull/libqhull.h])
+    if test "$ac_cv_header_libqhull_libqhull_h" = "yes"; then
+      AC_CHECK_LIB(qhull,qh_new_qhull,QHULL_SETTING=yes,QHULL_SETTING=no,)
+      if test "$QHULL_SETTING" = "yes"; then
+          QHULL_SETTING=external
+          QHULL_INCLUDE_SUBDIR_IS_LIBQHULL=1
+          LIBS="-lqhull $LIBS"
+      fi
     fi
   fi
 
@@ -4713,6 +4724,7 @@ fi
 
 AC_SUBST([QHULL_SETTING],$QHULL_SETTING)
 AC_SUBST([QHULL_INCLUDE_SUBDIR_IS_LIBQHULL],$QHULL_INCLUDE_SUBDIR_IS_LIBQHULL)
+AC_SUBST([QHULL_IS_LIBQHULL_R],$QHULL_IS_LIBQHULL_R)
 
 dnl ---------------------------------------------------------------------------
 dnl Check if opencl library is available.
