@@ -257,31 +257,35 @@ function (gdal_build_csharp_sample)
       /out:${_folder}/${_GBCS_OUTPUT}
       ${SOURCE_NATIVE})
     add_custom_command(
-      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_folder}/${_GBCS_OUTPUT}
+      OUTPUT ${_GBCS_OUTPUT}
       COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_folder}/${_GBCS_OUTPUT} ${SOURCE_NATIVE}
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       VERBATIM
       DEPENDS csharp_binding ${_GBCS_SOURCE})
-    add_custom_target(${_GBCS_OUTPUT} DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${_folder}/${_GBCS_OUTPUT})
+    add_custom_target(${_GBCS_OUTPUT} DEPENDS ${_GBCS_OUTPUT})
     if (_dlls)
       add_dependencies(${_GBCS_OUTPUT} ${_dlls})
     endif ()
   endif (DOTNET_FOUND)
 
-  set(_GBCS_IMPORTS ${_GBCS_PROJ_PATH}/${_GBCS_OUTPUT})
+  set()
   if (DOTNET_FOUND)
+    list(APPEND _GCBS_IMPORTS ${_GBCS_PROJ_PATH}/${_GBCS_OUTPUT})
     list(APPEND _GCBS_IMPORTS ${_GBCS_PROJ_PATH}/${_folder}.dll)
+    install(
+      DIRECTORY ${_GBCS_PROJ_PATH}
+      COMPONENT csharp
+      DESTINATION ${GDAL_CSHARP_INSTALL_DIR}
+      FILES_MATCHING PATTERN "*.json")
+  else()
+    list(APPEND _GCBS_IMPORTS ${_GBCS_OUTPUT})
   endif()
 
   install(
     FILES ${_GCBS_IMPORTS}
     COMPONENT csharp
     DESTINATION ${GDAL_CSHARP_INSTALL_DIR})
-  install(
-    DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${_folder}
-    COMPONENT csharp
-    DESTINATION ${GDAL_CSHARP_INSTALL_DIR}
-    FILES_MATCHING PATTERN "*.json")
+  
 endfunction ()
 
 # Build the samples
