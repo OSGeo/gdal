@@ -205,9 +205,10 @@ function (gdal_build_csharp_sample)
 
   # setup project file
   cmake_path(GET _GBCS_OUTPUT STEM _folder)
-  set( _GBCS_PROJ ${_folder}.csproj)
-  file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_folder}/${_GBCS_PROJ}" _GBCS_PROJ)
-  file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_folder}" _GBCS_PROJ_PATH)
+  set( _GBCS_PROJ_PATH ${CMAKE_CURRENT_BINARY_DIR}/${_folder})
+  set( _GBCS_PROJ ${_GBCS_PROJ_PATH}/${_folder})
+  file(TO_NATIVE_PATH "${_GBCS_PROJ}" _GBCS_PROJ_NATIVE)
+  file(TO_NATIVE_PATH "${_GBCS_PROJ_PATH}" _GBCS_PROJ_PATH_NATIVE)
   file(MAKE_DIRECTORY  ${_GBCS_PROJ_PATH})
 
   # Setup dependencies
@@ -232,14 +233,14 @@ function (gdal_build_csharp_sample)
 
   # build the sample exe
   if (DOTNET_FOUND)
-    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/exe_template.csproj" "${_GBCS_PROJ}")
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/exe_template.csproj" "${_GBCS_PROJ}.csproj")
     add_dotnet(
-      ${_GBCS_PROJ}
+      ${_GBCS_PROJ_NATIVE}.csproj
       ${CSHARP_CONFIG}
       NAME
       ${_GBCS_OUTPUT}
       VERSION ${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}.${GDAL_VERSION_REV} 
-      OUTPUT_PATH ${_GBCS_PROJ_PATH}
+      OUTPUT_PATH ${_GBCS_PROJ_PATH_NATIVE}
       DEPENDS
       csharp_binding
       PACKAGE
@@ -257,12 +258,12 @@ function (gdal_build_csharp_sample)
       /out:${_folder}/${_GBCS_OUTPUT}
       ${SOURCE_NATIVE})
     add_custom_command(
-      OUTPUT ${_GBCS_OUTPUT}
+      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT}
       COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_folder}/${_GBCS_OUTPUT} ${SOURCE_NATIVE}
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       VERBATIM
       DEPENDS csharp_binding ${_GBCS_SOURCE})
-    add_custom_target(${_GBCS_OUTPUT} DEPENDS ${_GBCS_OUTPUT})
+    add_custom_target(${_GBCS_OUTPUT} DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT})
     if (_dlls)
       add_dependencies(${_GBCS_OUTPUT} ${_dlls})
     endif ()
@@ -270,8 +271,8 @@ function (gdal_build_csharp_sample)
 
   set(_GCBS_IMPORTS)
   if (DOTNET_FOUND)
-    list(APPEND _GCBS_IMPORTS ${_GBCS_PROJ_PATH}/${_GBCS_OUTPUT})
-    list(APPEND _GCBS_IMPORTS ${_GBCS_PROJ_PATH}/${_folder}.dll)
+    list(APPEND _GCBS_IMPORTS ${_GBCS_PROJ}.exe)
+    list(APPEND _GCBS_IMPORTS ${_GBCS_PROJ}.dll)
     install(
       DIRECTORY ${_GBCS_PROJ_PATH}
       COMPONENT csharp
