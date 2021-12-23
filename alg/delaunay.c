@@ -40,6 +40,7 @@
 
 #include "cpl_error.h"
 #include "cpl_conv.h"
+#include "cpl_string.h"
 #include "gdal_alg.h"
 
 #include <stdio.h>
@@ -123,6 +124,8 @@ GDALTriangulation* GDALTriangulationCreateDelaunay(int nPoints,
     GDALTriFacet* pasFacets;
     int* panMapQHFacetIdToFacetIdx; /* map from QHull facet ID to the index of our GDALTriFacet* array */
     int curlong, totlong;     /* memory remaining after qh_memfreeshort */
+    char* pszTempFilename = NULL;
+    FILE* fpTemp = NULL;
 
     qhT qh_qh;
     qhT *qh= &qh_qh;
@@ -142,22 +145,40 @@ GDALTriangulation* GDALTriangulationCreateDelaunay(int nPoints,
 
     qh_meminit(qh, NULL);
 
+    if( CPLTestBoolean(CPLGetConfigOption("QHULL_LOG_TO_TEMP_FILE", "NO")) )
+    {
+        pszTempFilename = CPLStrdup(CPLGenerateTempFilename(NULL));
+        fpTemp = fopen(pszTempFilename, "wb");
+    }
+    if( fpTemp == NULL )
+        fpTemp = stderr;
+
     /* d: Delaunay */
     /* Qbb: scale last coordinate to [0,m] for Delaunay */
     /* Qc: keep coplanar points with nearest facet */
     /* Qz: add a point-at-infinity for Delaunay triangulation */
     /* Qt: triangulated output */
-    if( qh_new_qhull(qh,
+    int ret = qh_new_qhull(qh,
                      2, nPoints, points, FALSE /* ismalloc */,
-                     "qhull d Qbb Qc Qz Qt", NULL, stderr) != 0 )
+                     "qhull d Qbb Qc Qz Qt", NULL, fpTemp);
+    if( fpTemp != stderr )
     {
-        VSIFree(points);
-        CPLError(CE_Failure, CPLE_AppDefined, "Delaunay triangulation failed");
-        goto end;
+        fclose(fpTemp);
+    }
+    if( pszTempFilename != NULL )
+    {
+        VSIUnlink(pszTempFilename);
+        VSIFree(pszTempFilename);
     }
 
     VSIFree(points);
     points = NULL;
+
+    if( ret != 0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Delaunay triangulation failed");
+        goto end;
+    }
 
     /* Establish a map from QHull facet id to the index in our array of sequential facets */
     panMapQHFacetIdToFacetIdx = (int*)VSI_MALLOC2_VERBOSE(sizeof(int), qh->facet_id);

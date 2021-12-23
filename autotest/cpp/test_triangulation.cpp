@@ -29,6 +29,7 @@
 
 #include "gdal_unit_test.h"
 
+#include "cpl_conv.h"
 #include "gdal_alg.h"
 
 namespace tut
@@ -56,7 +57,9 @@ namespace tut
             double adfX[] = { 0, -5, -5, 5, 5 };
             double adfY[] = { 0, -5, 5, -5, 5 };
             CPLPushErrorHandler(CPLQuietErrorHandler);
+            CPLSetConfigOption("QHULL_LOG_TO_TEMP_FILE", "YES");
             psDT = GDALTriangulationCreateDelaunay(2, adfX, adfY);
+            CPLSetConfigOption("QHULL_LOG_TO_TEMP_FILE", nullptr);
             CPLPopErrorHandler();
             ensure(psDT == nullptr);
         }
@@ -71,7 +74,9 @@ namespace tut
             double adfX[] = { 0, 1, 2, 3 };
             double adfY[] = { 0, 1, 2, 3 };
             CPLPushErrorHandler(CPLQuietErrorHandler);
+            CPLSetConfigOption("QHULL_LOG_TO_TEMP_FILE", "YES");
             psDT = GDALTriangulationCreateDelaunay(4, adfX, adfY);
+            CPLSetConfigOption("QHULL_LOG_TO_TEMP_FILE", nullptr);
             CPLPopErrorHandler();
             ensure(psDT == nullptr);
         }
