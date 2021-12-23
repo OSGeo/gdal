@@ -257,7 +257,7 @@ function (gdal_build_csharp_sample)
       /out:${_folder}/${_GBCS_OUTPUT}
       ${SOURCE_NATIVE})
     add_custom_command(
-      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT}
+      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_folder}/${_GBCS_OUTPUT}
       COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_folder}/${_GBCS_OUTPUT} ${SOURCE_NATIVE}
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       VERBATIM
@@ -268,8 +268,13 @@ function (gdal_build_csharp_sample)
     endif ()
   endif (DOTNET_FOUND)
 
+  set(_GBCS_IMPORTS ${CMAKE_CURRENT_BINARY_DIR}/${_folder}/${_GBCS_OUTPUT})
+  if (DOTNET_FOUND)
+    list(APPEND _GCBS_IMPORTS ${CMAKE_CURRENT_BINARY_DIR}/${_folder}/${_folder}.dll)
+  endif()
+
   install(
-    FILES ${CMAKE_CURRENT_BINARY_DIR}/${_folder}/${_GBCS_OUTPUT}
+    FILES ${_GCBS_IMPORTS}
     COMPONENT csharp
     DESTINATION ${GDAL_CSHARP_INSTALL_DIR})
 endfunction ()
