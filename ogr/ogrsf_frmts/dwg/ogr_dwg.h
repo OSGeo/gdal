@@ -124,6 +124,7 @@ class OGRDWGLayer final: public OGRLayer
     OGRFeature *        TranslateHATCH( OdDbEntityPtr poEntity );
     OGRFeature *        TranslateTEXT( OdDbEntityPtr poEntity );
     OGRFeature *        TranslateINSERT( OdDbEntityPtr poEntity );
+    OGRFeature *        Translate3DFACE(OdDbEntityPtr poEntity);
 
     void                FormatDimension( CPLString &osText, double dfValue );
 
