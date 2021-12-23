@@ -270,7 +270,7 @@ function (gdal_build_csharp_sample)
       add_custom_command(
         OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT}
         COMMAND ${CMAKE_COMMAND} -E echo "Building ${_GBCS_OUTPUT}"
-        COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_GBCS_OUTPUT_NATIVE} ${SOURCE_NATIVE}
+        COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_GCBS_OUTPUT_NATIVE} ${SOURCE_NATIVE}
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         VERBATIM
         DEPENDS csharp_binding ${_GBCS_SOURCE})
