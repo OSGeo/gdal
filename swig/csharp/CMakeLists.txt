@@ -145,7 +145,7 @@ function (gdal_csharp_dll)
       COMMAND ${CMAKE_COMMAND} -E echo
               "copy ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_CSHARP_TARGET} ${CMAKE_CURRENT_BINARY_DIR}"
       COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_CSHARP_TARGET}
-                                        ${CMAKE_CURRENT_BINARY_DIR})
+              ${CMAKE_CURRENT_BINARY_DIR})
     if (_dlls)
       add_dependencies(${_CSHARP_TARGET} ${_dlls})
     endif ()
