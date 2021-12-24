@@ -175,20 +175,28 @@ endif ()
 
 if (GDAL_USE_ICONV)
   target_compile_definitions(cpl PRIVATE -DHAVE_ICONV)
-  if (Iconv_IS_BUILT_IN)
-    target_sources(cpl PRIVATE cpl_recode_iconv.cpp)
-  else ()
+
+  # Create a dedicated object library for Linux CondaForge builds, that could otherwise accidentally include libiconv
+  # header file (that would have define iconv_open libiconv_open) whereas linking to system iconv.
+  add_library(cpl_iconv OBJECT cpl_recode_iconv.cpp)
+  target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:cpl_iconv>)
+  target_compile_options(cpl_iconv PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX})
+  set_property(TARGET cpl_iconv PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
+  target_compile_definitions(cpl_iconv PRIVATE -DHAVE_ICONV)
+  # include path to generated cpl_config.h
+  target_include_directories(cpl_iconv PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+
+  if (NOT Iconv_IS_BUILT_IN)
     if (APPLE)
       # linkage against OSX's system iconv is going to require LIBICONV_PLUG to be defined, but other self-built
       # situations like CondaForge or Homebrew might not need this
       set(CMAKE_REQUIRED_LIBRARIES ${Iconv_LIBRARY})
       check_symbol_exists(_iconv_close "iconv.h" HAVE_ICONV_CLOSE)
       if (HAVE_ICONV_CLOSE)
-        target_compile_definitions(cpl PRIVATE -DLIBICONV_PLUG)
+        target_compile_definitions(cpl_iconv PRIVATE -DLIBICONV_PLUG)
       endif (HAVE_ICONV_CLOSE)
     endif (APPLE)
-    target_sources(cpl PRIVATE cpl_recode_iconv.cpp)
-    target_include_directories(cpl PRIVATE $<TARGET_PROPERTY:Iconv::Iconv,INTERFACE_INCLUDE_DIRECTORIES>)
+    target_include_directories(cpl_iconv PRIVATE $<TARGET_PROPERTY:Iconv::Iconv,INTERFACE_INCLUDE_DIRECTORIES>)
     gdal_add_private_link_libraries(Iconv::Iconv)
   endif ()
 endif ()
