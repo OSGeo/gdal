@@ -144,6 +144,16 @@ following option:
     Control whether a found dependency can be used for the GDAL build.
 
 
+Armadillo
+*********
+
+The Armadillo C++ library is used to speed up computations related to the
+Thin Plate Spline transformer. See https://cmake.org/cmake/help/latest/module/FindArmadillo.html
+for details.
+On Windows builds using Conda-Forge depedencies, the following packages may also
+need to be installed: ``blas blas-devel libblas libcblas liblapack liblapacke``
+
+
 CFITSIO
 *******
 
@@ -616,6 +626,30 @@ PROJ >= 6 is a required dependency for GDAL.
     ``libproj.so``, ``proj.lib``, or other name. A similar variable
     ``PROJ_LIBRARY_DEBUG`` can also be specified to a similar library for
     building Debug releases.
+
+
+QHULL
+*****
+
+The QHULL library is used for the linear interpolation of gdal_grid. If not
+found, an internal copy is used.
+
+.. option:: QHULL_INCLUDE_DIR
+
+    Path to an include directory with the ``libqhull_r/libqhull_r.h`` header file.
+
+.. option:: QHULL_LIBRARY
+
+    Path to a shared or static library file to the reentrant library.
+
+.. option:: GDAL_USE_QHULL=ON/OFF
+
+    Control whether to use QHULL. Defaults to ON when QHULL is found.
+
+.. option:: GDAL_USE_QHULL_INTERNAL=ON/OFF
+
+    Control whether to use internal QHULL copy. Defaults to ON when external
+    QHULL is not found.
 
 
 RASTERLITE2

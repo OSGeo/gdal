@@ -62,6 +62,7 @@
 #include "DbText.h"
 #include "DbCircle.h"
 #include "DbSpline.h"
+#include "DbFace.h"
 #include "DbBlockReference.h"
 #include "DbAttribute.h"
 #include "DbFiler.h"

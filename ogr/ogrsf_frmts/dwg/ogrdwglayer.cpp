@@ -1129,6 +1129,39 @@ public:
 };
 
 /************************************************************************/
+/*                        Translate3DFACE()                             */
+/************************************************************************/
+
+OGRFeature* OGRDWGLayer::Translate3DFACE(OdDbEntityPtr poEntity)
+{
+    OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
+    OdDbFacePtr pFace = OdDbFace::cast(poEntity);
+
+    TranslateGenericProperties(poFeature, poEntity);
+
+    /* -------------------------------------------------------------------- */
+    /*      Create a polygon geometry from the vertices.                    */
+    /* -------------------------------------------------------------------- */
+    OGRPolygon* poPolygon = new OGRPolygon();
+
+    OGRLinearRing* poLinearRing = new OGRLinearRing();
+
+    OdInt16 index;
+    OdGePoint3d point;
+
+    for (index = 0; index <= 3; index++)
+    {
+        pFace->getVertexAt(index, point);
+        poLinearRing->addPoint(point.x,point.y,point.z);
+    }
+    poLinearRing->closeRings();
+    poPolygon->addRingDirectly(poLinearRing);
+    poFeature->SetGeometryDirectly(poPolygon);
+    PrepareLineStyle(poFeature);
+    return poFeature;
+}
+
+/************************************************************************/
 /*                          TranslateINSERT()                           */
 /************************************************************************/
 
@@ -1385,6 +1418,10 @@ OGRFeature *OGRDWGLayer::GetNextUnfilteredFeature()
         else if( EQUAL(pszEntityClassName,"AcDbHatch") )
         {
             poFeature = TranslateHATCH( poEntity );
+        }
+        else if (EQUAL(pszEntityClassName, "AcDbFace"))
+        {
+            poFeature = Translate3DFACE(poEntity);
         }
         else if( EQUAL(pszEntityClassName,"AcDbBlockReference") )
         {

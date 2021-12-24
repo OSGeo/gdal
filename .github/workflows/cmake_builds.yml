@@ -158,7 +158,7 @@ jobs:
             libnetcdf openjpeg poppler libtiff libpng xerces-c expat libxml2 kealib json-c \
             cfitsio freexl geotiff jpeg libpq libspatialite libwebp-base pcre pcre2 postgresql \
             sqlite tiledb zstd charls cryptopp cgal jasper doxygen librttopo libkml openssl xz \
-            openjdk ant
+            openjdk ant qhull armadillo blas blas-devel libblas libcblas liblapack liblapacke
         cd $CONDA_PREFIX/Library/share/proj
         curl http://download.osgeo.org/proj/proj-datumgrid-1.8.tar.gz > proj-datumgrid-1.8.tar.gz
         tar xvzf proj-datumgrid-1.8.tar.gz

@@ -29,6 +29,15 @@
  ****************************************************************************/
 
 #include "cpl_port.h"
+
+#ifdef HAVE_STRINGS_H
+#undef HAVE_STRINGS_H
+#endif
+
+#ifdef HAVE_STRING_H
+#undef HAVE_STRING_H
+#endif
+
 #include "gt_wkt_srs.h"
 
 #include <cmath>
