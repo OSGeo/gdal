@@ -406,6 +406,63 @@ gdal_check_package(GTA "Enable GTA driver" CAN_DISABLE)
 gdal_check_package(MRSID "")
 gdal_check_package(DAP "Data Access Protocol library for server and client." CAN_DISABLE)
 gdal_check_package(Armadillo "C++ library for linear algebra (used for TPS transformation)" CAN_DISABLE)
+if (ARMADILLO_FOUND)
+  # On Conda, the armadillo package has no dependency on lapack, but the later is required for successful linking. So
+  # try to build & link a test program using Armadillo.
+  cmake_push_check_state(RESET)
+  set(CMAKE_REQUIRED_INCLUDES "${ARMADILLO_INCLUDE_DIRS}")
+  set(CMAKE_REQUIRED_LIBRARIES "${ARMADILLO_LIBRARIES}")
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedReleaseDLL")
+  set(CMAKE_TRY_COMPILE_CONFIGURATION "Release")
+  check_cxx_source_compiles(
+    "
+        #include <armadillo>
+        int main(int argc, char** argv) {
+			arma::mat matInput(2,2);
+			const arma::mat& matInv = arma::inv(matInput);
+			return 0;
+		}
+    "
+    ARMADILLO_TEST_PROGRAM_WITHOUT_LAPACK_COMPILES)
+  unset(CMAKE_MSVC_RUNTIME_LIBRARY)
+  unset(CMAKE_TRY_COMPILE_CONFIGURATION)
+  cmake_pop_check_state()
+  if (NOT ARMADILLO_TEST_PROGRAM_WITHOUT_LAPACK_COMPILES)
+    find_package(LAPACK)
+    if (LAPACK_FOUND)
+      list(APPEND ARMADILLO_LIBRARIES ${LAPACK_LIBRARIES})
+      cmake_push_check_state(RESET)
+      set(CMAKE_REQUIRED_INCLUDES "${ARMADILLO_INCLUDE_DIRS}")
+      set(CMAKE_REQUIRED_LIBRARIES "${ARMADILLO_LIBRARIES}")
+      set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedReleaseDLL")
+      set(CMAKE_TRY_COMPILE_CONFIGURATION "Release")
+      check_cxx_source_compiles(
+        "
+        #include <armadillo>
+        int main(int argc, char** argv) {
+			arma::mat matInput(2,2);
+			const arma::mat& matInv = arma::inv(matInput);
+			return 0;
+		}
+    "
+        ARMADILLO_TEST_PROGRAM_WITH_LAPACK_COMPILES)
+      unset(CMAKE_MSVC_RUNTIME_LIBRARY)
+      unset(CMAKE_TRY_COMPILE_CONFIGURATION)
+      cmake_pop_check_state()
+    endif ()
+  endif ()
+  if (NOT ARMADILLO_TEST_PROGRAM_WITHOUT_LAPACK_COMPILES AND NOT ARMADILLO_TEST_PROGRAM_WITH_LAPACK_COMPILES)
+    message(WARNING "Armadillo found, but test program does not build. Disabling it.")
+    if (DEFINED ENV{CONDA_PREFIX})
+      message(
+        WARNING
+          "To enable Armadillo, you may need to install the following Conda-Forge packages: blas blas-devel libblas libcblas liblapack liblapacke"
+        )
+    endif ()
+    set(GDAL_USE_ARMADILLO CACHE BOOL OFF FORCE)
+  endif ()
+
+endif ()
 
 define_find_package2(CFITSIO fitsio.h cfitsio PKGCONFIG_NAME cfitsio)
 gdal_check_package(CFITSIO "C FITS I/O library" CAN_DISABLE)
