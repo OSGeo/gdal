@@ -28,6 +28,15 @@
  ****************************************************************************/
 
 #include "cpl_port.h"  // Must be first.
+
+#ifdef HAVE_STRINGS_H
+#undef HAVE_STRINGS_H
+#endif
+
+#ifdef HAVE_STRING_H
+#undef HAVE_STRING_H
+#endif
+
 #include "gtiff.h"
 
 #include <cassert>
@@ -56,7 +65,6 @@
 #include <utility>
 #include <vector>
 
-#include "cpl_config.h"
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_error_internal.h"
