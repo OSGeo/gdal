@@ -44,10 +44,10 @@
 #include "cpl_error.h"
 #include "cpl_multiproc.h"
 
-// clang complains about C-style cast in #define like CURL_ZERO_TERMINATED
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wold-style-cast"
+// gcc or clang complains about C-style cast in #define like CURL_ZERO_TERMINATED
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
 #endif
 
 #ifdef HAVE_CURL
@@ -2606,6 +2606,6 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
     return TRUE;
 }
 
-#if defined(__clang__)
-#pragma clang diagnostic pop
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
 #endif
