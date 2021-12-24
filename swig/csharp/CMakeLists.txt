@@ -267,7 +267,7 @@ function (gdal_build_csharp_sample)
       " : "
       ${CSHARP_COMPILER}
       ${CSC_OPTIONS}
-      /out:${_GBCS_OUTPUT}
+      /out:${_GCBS_OUTPUT_NATIVE}
       ${SOURCE_NATIVE})
       add_custom_command(
         OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT}
