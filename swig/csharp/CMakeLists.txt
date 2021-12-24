@@ -41,8 +41,8 @@ endif (DOTNET_FOUND)
 # setup local NuGet repository
 if (DOTNET_FOUND)
   file(TO_NATIVE_PATH ${CMAKE_CURRENT_BINARY_DIR} _DN_REPO_PATH)
-  DOTNET_REGISTER_LOCAL_REPOSITORY("local" ${_DN_REPO_PATH})
-endif()
+  dotnet_register_local_repository("local" ${_DN_REPO_PATH})
+endif ()
 
 # function for csharp wrapper build
 function (gdal_csharp_wrap)
@@ -112,11 +112,20 @@ function (gdal_csharp_dll)
   # run the c# build
   if (DOTNET_FOUND)
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/dll_template.csproj" "${_CSHARP_PROJ}")
-    add_dotnet(${_CSHARP_PROJ} ${CSHARP_CONFIG} NAME ${_CSHARP_TARGET} 
-      VERSION ${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}.${GDAL_VERSION_REV} 
-      OUTPUT_PATH ${_CSHARP_PROJ_PATH}
-      DEPENDS csharp_interface ${_dlls} 
-      SOURCES ${_projs})
+    add_dotnet(
+      ${_CSHARP_PROJ}
+      ${CSHARP_CONFIG}
+      NAME
+      ${_CSHARP_TARGET}
+      VERSION
+      ${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}.${GDAL_VERSION_REV}
+      OUTPUT_PATH
+      ${_CSHARP_PROJ_PATH}
+      DEPENDS
+      csharp_interface
+      ${_dlls}
+      SOURCES
+      ${_projs})
 
   else (DOTNET_FOUND)
     message("BUILDING : " ${_CSHARP_TARGET} " : " ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_CSHARP_TARGET})
@@ -131,9 +140,12 @@ function (gdal_csharp_dll)
       DEPENDS csharp_interface ${CMAKE_CURRENT_BINARY_DIR}/gdal.snk ${CMAKE_CURRENT_SOURCE_DIR}/AssemblyInfo.cs)
     add_custom_target(${_CSHARP_TARGET} DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET})
     add_custom_command(
-    TARGET ${_CSHARP_TARGET} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E echo copy ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_CSHARP_TARGET} ${CMAKE_CURRENT_BINARY_DIR} 
-    COMMAND ${CMAKE_COMMAND} -E file(COPY ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_CSHARP_TARGET} ${CMAKE_CURRENT_BINARY_DIR})
+      TARGET ${_CSHARP_TARGET}
+      POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E echo
+              "copy ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_CSHARP_TARGET} ${CMAKE_CURRENT_BINARY_DIR}"
+      COMMAND ${CMAKE_COMMAND} -E file (COPY ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_CSHARP_TARGET}
+                                        ${CMAKE_CURRENT_BINARY_DIR}))
     if (_dlls)
       add_dependencies(${_CSHARP_TARGET} ${_dlls})
     endif ()
@@ -215,11 +227,11 @@ function (gdal_build_csharp_sample)
 
   # setup project file
   cmake_path(GET _GBCS_OUTPUT STEM _folder)
-  set( _GBCS_PROJ_PATH ${CMAKE_CURRENT_BINARY_DIR}/${_folder})
-  set( _GBCS_PROJ ${_GBCS_PROJ_PATH}/${_folder})
+  set(_GBCS_PROJ_PATH ${CMAKE_CURRENT_BINARY_DIR}/${_folder})
+  set(_GBCS_PROJ ${_GBCS_PROJ_PATH}/${_folder})
   file(TO_NATIVE_PATH "${_GBCS_PROJ}" _GBCS_PROJ_NATIVE)
   file(TO_NATIVE_PATH "${_GBCS_PROJ_PATH}" _GBCS_PROJ_PATH_NATIVE)
-  file(MAKE_DIRECTORY  ${_GBCS_PROJ_PATH})
+  file(MAKE_DIRECTORY ${_GBCS_PROJ_PATH})
 
   file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT}" _GBCS_OUTPUT_NATIVE)
 
@@ -251,15 +263,16 @@ function (gdal_build_csharp_sample)
       ${CSHARP_CONFIG}
       NAME
       ${_GBCS_OUTPUT}
-      VERSION ${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}.${GDAL_VERSION_REV} 
-      OUTPUT_PATH ${_GBCS_PROJ_PATH_NATIVE}
+      VERSION
+      ${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}.${GDAL_VERSION_REV}
+      OUTPUT_PATH
+      ${_GBCS_PROJ_PATH_NATIVE}
       DEPENDS
       csharp_binding
       PACKAGE
       ${_GBCS_SYSTEM_DEPENDS}
       ${_GBCS_DEPENDS})
-      #SOURCES
-      #${_projs})
+    # SOURCES ${_projs})
 
   else (DOTNET_FOUND)
     message(
@@ -270,14 +283,14 @@ function (gdal_build_csharp_sample)
       ${CSC_OPTIONS}
       /out:${_GBCS_OUTPUT_NATIVE}
       ${SOURCE_NATIVE})
-      add_custom_command(
-        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT}
-        COMMAND ${CMAKE_COMMAND} -E echo "Building ${_GBCS_OUTPUT}"
-        COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_GBCS_OUTPUT_NATIVE} ${SOURCE_NATIVE}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-        VERBATIM
-        DEPENDS csharp_binding ${_GBCS_SOURCE})
-      add_custom_target(${_GBCS_OUTPUT} DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT})
+    add_custom_command(
+      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT}
+      COMMAND ${CMAKE_COMMAND} -E echo "Building ${_GBCS_OUTPUT}"
+      COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_GBCS_OUTPUT_NATIVE} ${SOURCE_NATIVE}
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      VERBATIM
+      DEPENDS csharp_binding ${_GBCS_SOURCE})
+    add_custom_target(${_GBCS_OUTPUT} DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT})
     if (_dlls)
       add_dependencies(${_GBCS_OUTPUT} ${_dlls})
     endif ()
@@ -291,16 +304,17 @@ function (gdal_build_csharp_sample)
       DIRECTORY ${_GBCS_PROJ_PATH}
       COMPONENT csharp
       DESTINATION ${GDAL_CSHARP_INSTALL_DIR}
-      FILES_MATCHING PATTERN "*.json")
-  else()
+      FILES_MATCHING
+      PATTERN "*.json")
+  else ()
     list(APPEND _GCBS_IMPORTS ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT})
-  endif()
+  endif ()
 
   install(
     FILES ${_GCBS_IMPORTS}
     COMPONENT csharp
     DESTINATION ${GDAL_CSHARP_INSTALL_DIR})
-  
+
 endfunction ()
 
 # Build the samples
@@ -365,8 +379,7 @@ gdal_build_csharp_sample(
   SYSTEM_DEPENDS
   ${CSHARP_DRAWING})
 
-gdal_build_csharp_sample(OUTPUT GDALWrite.exe SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALWrite.cs DEPENDS
-                         gdal_csharp)
+gdal_build_csharp_sample(OUTPUT GDALWrite.exe SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALWrite.cs DEPENDS gdal_csharp)
 
 gdal_build_csharp_sample(OUTPUT GDALDatasetWrite.exe SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALDatasetWrite.cs
                          DEPENDS gdal_csharp)
