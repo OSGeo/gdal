@@ -131,7 +131,8 @@ function (gdal_csharp_dll)
       DEPENDS csharp_interface ${CMAKE_CURRENT_BINARY_DIR}/gdal.snk ${CMAKE_CURRENT_SOURCE_DIR}/AssemblyInfo.cs)
     add_custom_target(${_CSHARP_TARGET} DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET})
     add_custom_command(
-    TARGET ${_CSHARP_TARGET}
+    TARGET ${_CSHARP_TARGET} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E echo copy ${_CSHARP_DLL_TARGET} ${_CSHARP_PROJ_PATH} 
     COMMAND ${CMAKE_COMMAND} -E copy ${_CSHARP_DLL_TARGET} ${_CSHARP_PROJ_PATH})
     if (_dlls)
       add_dependencies(${_CSHARP_TARGET} ${_dlls})
