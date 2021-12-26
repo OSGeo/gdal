@@ -292,7 +292,7 @@ function (gdal_build_csharp_sample)
       DEPENDS csharp_binding ${_GBCS_SOURCE})
     add_custom_target(${_GBCS_OUTPUT} DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT})
     add_custom_command(TARGET ${_GBCS_OUTPUT} 
-    COMMAND -E echo "Built ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT})
+    COMMAND -E echo "Built ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT}")
     if (_dlls)
       add_dependencies(${_GBCS_OUTPUT} ${_dlls})
     endif ()
