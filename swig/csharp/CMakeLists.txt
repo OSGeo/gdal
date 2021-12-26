@@ -22,7 +22,7 @@ set(CSHARP_CONFIG
 # based on https://stackoverflow.com/questions/39258250/how-to-detect-if-64-bit-msvc-with-cmake TODO - this not going to
 # cope with ARM architectures
 if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-  set(CSHARP_RID "osx-64")
+  set(CSHARP_RID "osx-x64")
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
   set(CSHARP_RID "linux-x64")
 elseif ("${CMAKE_GENERATOR_PLATFORM}" STREQUAL "x64")
@@ -286,7 +286,7 @@ function (gdal_build_csharp_sample)
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT}
       COMMAND ${CMAKE_COMMAND} -E echo "Building ${_GBCS_OUTPUT_NATIVE}"
-      COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_GBCS_OUTPUT_NATIVE} ${SOURCE_NATIVE}
+      COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_GBCS_OUTPUT_NATIVE} -v ${SOURCE_NATIVE}
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       VERBATIM
       DEPENDS csharp_binding ${_GBCS_SOURCE})
