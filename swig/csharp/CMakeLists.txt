@@ -271,8 +271,7 @@ function (gdal_build_csharp_sample)
       csharp_binding
       PACKAGE
       ${_GBCS_SYSTEM_DEPENDS}
-      ${_GBCS_DEPENDS})
-    # SOURCES ${_projs})
+      ${_GBCS_DEPENDS}))
 
   else (DOTNET_FOUND)
     message(
@@ -286,7 +285,7 @@ function (gdal_build_csharp_sample)
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT}
       COMMAND ${CMAKE_COMMAND} -E echo "Building ${_GBCS_OUTPUT_NATIVE}"
-      COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_GBCS_OUTPUT_NATIVE} -v ${SOURCE_NATIVE}
+      COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_GBCS_OUTPUT_NATIVE} ${SOURCE_NATIVE}
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       VERBATIM
       DEPENDS csharp_binding ${_GBCS_SOURCE})
@@ -322,7 +321,7 @@ endfunction ()
 # Build the samples
 gdal_build_csharp_sample(
   OUTPUT
-  ogrinfo.exe
+  cs_ogrinfo.exe
   SOURCE
   ${CMAKE_CURRENT_SOURCE_DIR}/apps/ogrinfo.cs
   DEPENDS
@@ -419,7 +418,7 @@ add_custom_target(csharp_interface DEPENDS gdalconst_wrap osr_wrap ogr_wrap gdal
 add_custom_target(
   csharp_samples ALL
   DEPENDS csharp_binding
-          ogrinfo.exe
+          cs_ogrinfo.exe
           createdata.exe
           OSRTransform.exe
           GDALRead.exe
