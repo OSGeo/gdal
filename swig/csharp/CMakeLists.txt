@@ -271,7 +271,7 @@ function (gdal_build_csharp_sample)
       csharp_binding
       PACKAGE
       ${_GBCS_SYSTEM_DEPENDS}
-      ${_GBCS_DEPENDS}))
+      ${_GBCS_DEPENDS})
 
   else (DOTNET_FOUND)
     message(
