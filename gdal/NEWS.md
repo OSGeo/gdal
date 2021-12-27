@@ -1,3 +1,173 @@
+# GDAL/OGR 3.4.1 Release Notes
+
+## Build
+
+* configure.ac: fix detection of OpenEXR >= 3 (#4766)
+* Add support for PCRE2 (to replace deprecated PCRE) (#4822)
+* nmake.opt: fix wrong variable name in example MSODBCSQL_LIB
+* Add support for external libqhull_r (#4040)
+
+## GDAL 3.4.1 - Overview of Changes
+
+### Algorithms
+
+* viewshed.cpp: remove hidden bidirectional unicode character in code comment
+
+### Port
+
+* CPLRecodeIconv(): avoid potential unsigned integer overflow (ossfuzz #41201)
+* CPLRecode(): ZIP support: avoid warnings on MacOS
+* IVSIS3LikeFSHandler::CopyFile(): always take into account ret code of CopyObject()
+* CPLZLibInflate(): workaround issue with /opt/intel/oneapi/intelpython/latest/lib/libz.so.1 from intel/oneapi-basekit Docker image
+
+### Core
+
+* GDALDataset::MarkSuppressOnClose(): delete auxiliary files (#4791)
+* GDALPamRasterBand::CloneInfo(): deal correctly with NaN nodata to avoid generating useless .aux.xml file (#4847)
+* External overviews: automatically turn PLANARCONFIG_CONTIG for WebP overviews
+
+### Utilities
+
+* gdaladdo -clean: remove overviews of mask (#1047)
+* gdalwarp -crop_to_cutline: fix extremely long loop (#4826)
+* gdalwarp: do not emit "Point outside of projection domain" / "tolerance condition error" (#4934)
+* gdal_polygonize.py: remove use of Unicode double quote characters
+* gdal_polygonize.py: make -8 switch work again (#5000)
+* gdal_sieve.py: fix exception when source dataset has no nodata value (3.4.0 regression) (#4899)
+* gdal2tiles: making --no-kml option takes effect (#4936)
+* gdal2tiles: XML escape input filename (#5032)
+
+### Raster drivers
+
+COG driver:
+ * only create RGB JPEG with mask if 4-band is alpha (#4853)
+ * fix potential generation failure when main imagery has overview and mask none
+
+ECW driver:
+ * do not try to open UInt32 JPEG2000 if the SDK is buggy (#3860)
+
+ERS driver:
+ * Add support for comments in ERS files (#4835)
+
+GRIB driver:
+ * fix thread-safetey of errSprintf()
+ * avoid read heap buffer overflow due to inappropriate split-and-swap on dataset with weird georeferencing (ossfuzz #41260, #41637)
+ * fix writing negative longitude of natural origin for Transverse Mercator
+
+GTiff driver:
+ * only emit warnings on libgeotiff PROJ errors (#4801)
+ * Initialize jxl structures with zeros.
+ * LERC overview related improvements (#4848):
+   + COMPRESS_OVERVIEW configuration option now honours LERC_DEFLATE and LERC_ZSTD for external overviews
+   + MAX_Z_ERROR_OVERVIEW configuration option is added for LERC compressed internal and external overviews.
+   + ZLEVEL_OVERVIEW configuration option is added for DEFLATE/LERC_DEFLATE compressed internal and external overviews.
+   + ZSTD_LEVEL_OVERVIEW configuration option is added for ZSTD/LERC_ZSTD compressed internal and external overviews.
+ * fix performance issue when reading transfer functions (#4923)
+ * propagate SPARSE_OK to overviews (#4932)
+ * avoid huge memory allocation when generating overviews on large single-band 1-bit tiled files (#4932)
+ * make SetGCPs(), SetGeoTransform(), SetSpatialRef(), SetNoDataValue(), SetMetadata[Item]() write to PAM .aux.xml on read only files (#4877)
+ * add support for reading/writing color table from/into PAM .aux.xml (#4897)
+ * do not warn about buggy Sentinel1 geotiff files use a wrong 4326 code for the ellipsoid
+ * Internal libtiff: fix issue with rewrite-in-place logic of libtiff #309
+
+KEA driver:
+ * print error message when opening of kea file fails
+
+NITF driver:
+ * Add ISO-8859-1 decoding for file and image header metadata
+
+PCIDSK driver:
+ * fix write heap-buffer-overflow (ossfuzz #41993)
+
+PDS4 driver:
+ * write conformant Equirectangular when input raster is a geographic CRS
+
+USGSDEM driver:
+ * fix reading datasets with 1025 byte records ending with line feed (#5007)
+
+VRT driver:
+ * Warped VRT: fix issue with blocks without sources and alpha band (#4997)
+
+XYZ driver:
+ * Fix incorrect failure to open ASCII-file due to floating point comparison
+
+Zarr driver:
+ * be robust to duplicated array and group names in NCZarr metadata, which could lead to performance issues
+ * fixes 'runtime error: reference binding to null pointer of type 'unsigned char' (ossfuzz #41517)
+
+## OGR 3.4.1 - Overview of Changes
+
+### OGRSpatialReference
+
+* OGR_CT: add a OGR_CT_PREFER_OFFICIAL_SRS_DEF config option
+
+### Vector drivers
+
+DXF driver:
+ * Do not copy final DXF when MarkSuppressOnClose was called
+
+DWG/DGNv8 drivers:
+ * avoid potential crash with ODA 2022 on Linux when driver unloading doesn't occur properly
+ * DWG: Add block attributes to entities layer (#5013)
+
+ElasticSearch driver:
+ * do not try to open reserved .geoip_databases to avoid error message with recent Elastic versions
+
+GPKG driver:
+ * fix nullptr dereference on corrupted databases with sqlite >= 3.35
+
+MSSQL driver:
+ * fix compilation warnings on Linux
+ * avoid GetLayerDefn() to return null, and call it in GetExtent()
+ * DeleteLayer(): remove suspicious test 'strlen(pszTableName) == 0' that causes a read after free
+ * fix issue when inserting strings in bulk copy mode on Linux
+ * make GetNextFeature() end bulk copy mode
+ * CreateFeature in bulk copy mode: make it use feature geometry SRID when set
+ * disable bulk mode when a UUID field is found, as this doesn't work currently
+ * do not set field width when reading smallint/int/bigint/float/real columns, and correctly roundtrip smallint/Int16 (#3345)
+
+ODS driver:
+ * avoid crashing 'floating-point exception' when evaluating -2147483648 % -1 (ossfuzz #41541)
+
+OpenFileGDB driver:
+ * correctly parse raster fields of type == 2 which are inlined binary content (#4881)
+
+PG driver:
+ * skip all leading whitespace in SQL statements. (#4787)
+
+Selafin driver:
+ * fix time step count when none dataset in the file
+
+Shape driver:
+ * better deal with ETRS89 based CRS with TOWGS84[0,0,0,0,0,0,0]
+
+SQLite driver:
+ * Various fixes for MacOS system SQLite
+
+S57 driver:
+ * enable recoding to UTF-8 by default (RECODE_BY_DSSI=YES open option) (#4751)
+
+TopoJSON driver:
+ * fix duplicate 'id' field, and other potential issues when reading fields
+
+WFS driver:
+ * if COUNT is present in WFS >= 2, use it as the page size. Also clarify doc
+
+## SWIG Language Bindings
+
+All bindings:
+ * add missing CPLES_SQLI constant (#4878)
+
+CSharp bindings:
+ * Re-target apps to netcoreapp2.2, fix broken build (#4792)
+
+Java bindings:
+ * add_javadoc.c: robustness fixes and fix crash on MacOS
+
+Python bindings:
+ * Change GetFieldAsBinary to use VSIMalloc. (#4774)
+ * install target: fix/workaround for setuptools 60.0 and Debian --install-layout
+
 # GDAL/OGR 3.4.0 Release Notes
 
 ## In a nutshell...
