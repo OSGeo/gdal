@@ -2,7 +2,7 @@
 # A CMake Module for finding and using C# (.NET and Mono).
 #
 #The following variables are consume:
-#   CSHARP_MONO - set to yes to force the use of Mono. Default is look ofr .NET first
+#   CSHARP_MONO - set to yes to force the use of Mono. Default is look for .NET first
 #
 # The following variables are set:
 #   CSHARP_FOUND - set to ON if C# is found

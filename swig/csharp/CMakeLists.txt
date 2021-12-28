@@ -17,7 +17,7 @@ set(CSHARP_APPLICATION_VERSION
     CACHE STRING ".NET version to be used for the sample Applicatons")
 set(CSHARP_CONFIG
     "RELEASE"
-    CACHE STRING "Config to be used to compile the C# atrefacts > RELEASE|CONFIG")
+    CACHE STRING "Config to be used to compile the C# artefacts > RELEASE|CONFIG")
 
 # based on https://stackoverflow.com/questions/39258250/how-to-detect-if-64-bit-msvc-with-cmake TODO - this not going to
 # cope with ARM architectures
