@@ -332,7 +332,7 @@ gdal_build_csharp_sample(
 
 gdal_build_csharp_sample(
   OUTPUT
-  createdata.exe
+  cs_createdata.exe
   SOURCE
   ${CMAKE_CURRENT_SOURCE_DIR}/apps/createdata.cs
   DEPENDS
@@ -421,7 +421,7 @@ add_custom_target(
   csharp_samples ALL
   DEPENDS csharp_binding
           cs_ogrinfo.exe
-          createdata.exe
+          cs_createdata.exe
           OSRTransform.exe
           GDALRead.exe
           GDALReadDirect.exe
