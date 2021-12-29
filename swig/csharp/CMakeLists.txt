@@ -295,7 +295,11 @@ function (gdal_build_csharp_sample)
 
   set(_GCBS_IMPORTS)
   if (DOTNET_FOUND)
-    list(APPEND _GCBS_IMPORTS ${_GBCS_PROJ}.exe)
+    if(WIN32)
+      list(APPEND _GCBS_IMPORTS ${_GBCS_PROJ}.exe)
+    elseif(WIN32)
+      list(APPEND _GCBS_IMPORTS ${_GBCS_PROJ})
+    endif(WIN32)
     list(APPEND _GCBS_IMPORTS ${_GBCS_PROJ}.dll)
     install(
       DIRECTORY ${_GBCS_PROJ_PATH}
