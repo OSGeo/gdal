@@ -290,10 +290,6 @@ function (gdal_build_csharp_sample)
       VERBATIM
       DEPENDS csharp_binding ${_GBCS_SOURCE})
     add_custom_target(${_GBCS_OUTPUT} DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT})
-    add_custom_command(
-      TARGET ${_GBCS_OUTPUT}
-      POST_BUILD
-      COMMAND -E echo "Built ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT}")
     if (_dlls)
       add_dependencies(${_GBCS_OUTPUT} ${_dlls})
     endif ()
@@ -420,8 +416,6 @@ add_custom_target(csharp_interface DEPENDS gdalconst_wrap osr_wrap ogr_wrap gdal
 add_custom_target(
   csharp_samples ALL
   DEPENDS csharp_binding
-          cs_ogrinfo.exe
-          cs_createdata.exe
           OSRTransform.exe
           GDALRead.exe
           GDALReadDirect.exe
