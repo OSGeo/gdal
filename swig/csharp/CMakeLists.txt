@@ -237,13 +237,11 @@ function (gdal_build_csharp_sample)
 
   # Setup dependencies
   set(_dlls)
-  set(_projs)
   if (_GBCS_DEPENDS)
     foreach (_dep IN LISTS _GBCS_DEPENDS)
       file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_dep}" _dep)
       cmake_path(GET _dep FILENAME _filename)
       list(APPEND _dlls ${_filename}.dll)
-      list(APPEND _projs ${_dep}.csproj)
       list(APPEND CSC_OPTIONS /r:${_dep}.dll)
     endforeach ()
   endif (_GBCS_DEPENDS)
@@ -319,7 +317,7 @@ endfunction ()
 # Build the samples
 gdal_build_csharp_sample(
   OUTPUT
-  cs_ogrinfo.exe
+  OgrInfo.exe
   SOURCE
   ${CMAKE_CURRENT_SOURCE_DIR}/apps/ogrinfo.cs
   DEPENDS
@@ -328,7 +326,7 @@ gdal_build_csharp_sample(
 
 gdal_build_csharp_sample(
   OUTPUT
-  cs_createdata.exe
+  CreateData.exe
   SOURCE
   ${CMAKE_CURRENT_SOURCE_DIR}/apps/createdata.cs
   DEPENDS
@@ -416,7 +414,8 @@ add_custom_target(csharp_interface DEPENDS gdalconst_wrap osr_wrap ogr_wrap gdal
 add_custom_target(
   csharp_samples ALL
   DEPENDS csharp_binding
-          
+          OgrInfo.exe
+          CreateData.exe
           OSRTransform.exe
           GDALRead.exe
           GDALReadDirect.exe
