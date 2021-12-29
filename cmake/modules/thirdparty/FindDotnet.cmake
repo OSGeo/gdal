@@ -160,8 +160,8 @@ FUNCTION(DOTNET_REGISTER_LOCAL_REPOSITORY repo_name repo_path)
     ELSE()
         GET_FILENAME_COMPONENT(nuget_config ~/.nuget/NuGet/NuGet.Config ABSOLUTE)
         EXECUTE_PROCESS(COMMAND ${DOTNET_EXE} nuget locals all --list OUTPUT_QUIET)
-        EXECUTE_PROCESS(COMMAND sed -i "/${repo_name}/d" "${nuget_config}")
-        EXECUTE_PROCESS(COMMAND sed -i "s#</packageSources>#  <add key=\\\"${repo_name}\\\" value=\\\"${repo_path}\\\" />\\n  </packageSources>#g" "${nuget_config}")
+        EXECUTE_PROCESS(COMMAND sed -e "/${repo_name}/d"-i'' "${nuget_config}")
+        EXECUTE_PROCESS(COMMAND sed -e "s#</packageSources>#  <add key=\\\"${repo_name}\\\" value=\\\"${repo_path}\\\" />\\n  </packageSources>#g" -i'' "${nuget_config}")
     ENDIF()
 ENDFUNCTION()
 
@@ -329,9 +329,9 @@ MACRO(DOTNET_BUILD_COMMANDS)
         SET(build_dotnet_type "dotnet")
     ENDIF()
 
-    # DOTNET_OUTPUTS refer to artifacts produced, that the BUILD_proj_name target depends on.
-    SET(DOTNET_OUTPUTS "")
-    IF(NOT "${DOTNET_PACKAGES}" STREQUAL "")
+    # DOTNET_OUTPUTS refer to artifacts produced, that the proj_name target depends on.
+    SET(DOTNET_OUTPUTS)
+    IF(NOT DOTNET_PACKAGES})
         MESSAGE("-- Adding ${build_dotnet_type} project ${DOTNET_PROJPATH} (version ${DOTNET_PACKAGE_VERSION})")
     ELSE()
         MESSAGE("-- Adding ${build_dotnet_type} project ${DOTNET_PROJPATH} (no nupkg)")
