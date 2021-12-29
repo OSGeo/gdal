@@ -329,9 +329,9 @@ MACRO(DOTNET_BUILD_COMMANDS)
         SET(build_dotnet_type "dotnet")
     ENDIF()
 
-    # DOTNET_OUTPUTS refer to artifacts produced, that the BUILD_proj_name target depends on.
-    SET(DOTNET_OUTPUTS "")
-    IF(NOT "${DOTNET_PACKAGES}" STREQUAL "")
+    # DOTNET_OUTPUTS refer to artifacts produced, that the proj_name target depends on.
+    SET(DOTNET_OUTPUTS)
+    IF(NOT DOTNET_PACKAGES})
         MESSAGE("-- Adding ${build_dotnet_type} project ${DOTNET_PROJPATH} (version ${DOTNET_PACKAGE_VERSION})")
     ELSE()
         MESSAGE("-- Adding ${build_dotnet_type} project ${DOTNET_PROJPATH} (no nupkg)")
