@@ -77,7 +77,7 @@ jobs:
   build-linux-ubuntu-focal-using-mono:
     runs-on: ubuntu-20.04
     env:
-      CMAKE_OPTIONS: -DPython_LOOKUP_VERSION=3.8 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache -DBUILD_PYTHON_BINDINGS:BOOL=OFF -DBUILD_JAVA_BINDINGS:BOOL=OFF
+      CMAKE_OPTIONS: -DPython_LOOKUP_VERSION=3.8 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache 
     steps:
     - name: Checkout GDAL
       uses: actions/checkout@v2

@@ -347,7 +347,7 @@ MACRO(DOTNET_BUILD_COMMANDS)
         ${build_dotnet_cmds}
         )
     ADD_CUSTOM_TARGET(
-        ${DOTNET_PROJNAME} ALL
+        ${DOTNET_PROJNAME}
         DEPENDS ${DOTNET_OUTPUTS})
 
 ENDMACRO()
