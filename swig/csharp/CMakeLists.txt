@@ -295,11 +295,11 @@ function (gdal_build_csharp_sample)
 
   set(_GCBS_IMPORTS)
   if (DOTNET_FOUND)
-    if(WIN32)
+    if (WIN32)
       list(APPEND _GCBS_IMPORTS ${_GBCS_PROJ}.exe)
-    elseif(WIN32)
+    elseif (WIN32)
       list(APPEND _GCBS_IMPORTS ${_GBCS_PROJ})
-    endif(WIN32)
+    endif (WIN32)
     list(APPEND _GCBS_IMPORTS ${_GBCS_PROJ}.dll)
     install(
       DIRECTORY ${_GBCS_PROJ_PATH}
@@ -416,7 +416,7 @@ add_custom_target(csharp_interface DEPENDS gdalconst_wrap osr_wrap ogr_wrap gdal
 
 # Custom Target to make the c# bindings - will be run as part of ALL but can also be built seperately
 add_custom_target(csharp_binding ALL DEPENDS csharp_interface gdalconst_csharp.dll osr_csharp.dll ogr_csharp.dll
-                                         gdal_csharp.dll)
+                                             gdal_csharp.dll)
 
 # set up the tests
 if (CSHARP_INTERPRETER OR WIN32)
