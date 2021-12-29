@@ -420,8 +420,6 @@ add_custom_target(csharp_interface DEPENDS gdalconst_wrap osr_wrap ogr_wrap gdal
 add_custom_target(
   csharp_samples ALL
   DEPENDS csharp_binding
-          cs_ogrinfo.exe
-          cs_createdata.exe
           OSRTransform.exe
           GDALRead.exe
           GDALReadDirect.exe
