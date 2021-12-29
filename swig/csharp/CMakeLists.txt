@@ -287,7 +287,7 @@ function (gdal_build_csharp_sample)
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       VERBATIM
       DEPENDS csharp_binding ${_GBCS_SOURCE})
-    add_custom_target(${_GBCS_OUTPUT} DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT})
+    add_custom_target(${_GBCS_OUTPUT} ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT})
     if (_dlls)
       add_dependencies(${_GBCS_OUTPUT} ${_dlls})
     endif ()
@@ -410,30 +410,8 @@ gdal_build_csharp_sample(OUTPUT GDALGetHistogram.exe SOURCE ${CMAKE_CURRENT_SOUR
 
 add_custom_target(csharp_interface DEPENDS gdalconst_wrap osr_wrap ogr_wrap gdal_wrap)
 
-# Custom target to build the C# sample apps
-add_custom_target(
-  csharp_samples ALL
-  DEPENDS csharp_binding
-          OgrInfo.exe
-          CreateData.exe
-          OSRTransform.exe
-          GDALRead.exe
-          GDALReadDirect.exe
-          GDALAdjustContrast.exe
-          GDALDatasetRasterIO.exe
-          GDALWrite.exe
-          GDALDatasetWrite.exe
-          GDALColorTable.exe
-          WKT2WKB.exe
-          OGRGEOS.exe
-          ReadXML.exe
-          GDALInfo.exe
-          GDALOverviews.exe
-          GDALCreateCopy.exe
-          GDALGetHistogram.exe)
-
 # Custom Target to make the c# bindings - will be run as part of ALL but can also be built seperately
-add_custom_target(csharp_binding DEPENDS csharp_interface gdalconst_csharp.dll osr_csharp.dll ogr_csharp.dll
+add_custom_target(csharp_binding ALL DEPENDS csharp_interface gdalconst_csharp.dll osr_csharp.dll ogr_csharp.dll
                                          gdal_csharp.dll)
 
 # set up the tests
