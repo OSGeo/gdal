@@ -165,7 +165,7 @@ inline static double CalcHeight(double dfZ, double dfZ2, GDALViewshedMode eMode)
  * @param dfCurvCoeff Coefficient to consider the effect of the curvature and refraction.
  * The height of the DEM is corrected according to the following formula:
  * [Height] -= dfCurvCoeff * [Target Distance]^2 / [Earth Diameter]
- * For the effect of the atmospheric refraction we can use 0.85714‬.
+ * For the effect of the atmospheric refraction we can use 0.85714.
  *
  * @param eMode The mode of the viewshed calculation.
  * Possible values GVM_Diagonal = 1, GVM_Edge = 2 (default), GVM_Max = 3, GVM_Min = 4.

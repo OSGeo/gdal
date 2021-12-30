@@ -3485,7 +3485,20 @@ void* CPLZLibInflate( const void* ptr, size_t nBytes,
     strm.opaque = nullptr;
     strm.avail_in = static_cast<uInt>(nBytes);
     strm.next_in = static_cast<Bytef*>(const_cast<void*>(ptr));
-    int ret = inflateInit2(&strm, MAX_WBITS + 32);
+    int ret;
+    // MAX_WBITS + 32 mode which detects automatically gzip vs zlib encapsulation
+    // seems to be broken with /opt/intel/oneapi/intelpython/latest/lib/libz.so.1
+    // from intel/oneapi-basekit Docker image
+    if(  nBytes > 2 &&
+         static_cast<const GByte*>(ptr)[0] == 0x1F &&
+         static_cast<const GByte*>(ptr)[1] == 0x8B )
+    {
+        ret = inflateInit2(&strm, MAX_WBITS + 16); // gzip
+    }
+    else
+    {
+        ret = inflateInit2(&strm, MAX_WBITS); // zlib
+    }
     if( ret != Z_OK )
     {
         return nullptr;
