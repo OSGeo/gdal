@@ -340,6 +340,7 @@ void qh_printfacetlist(qhT *qh, facetT *facetlist, setT *facets, boolT printall)
   facetT *facet, **facetp;
 
   if (facetlist)
+    /* coverity[check_return] */
     qh_checklists(qh, facetlist);
   qh_fprintf(qh, qh->ferr, 9424, "printfacetlist: vertices\n");
   qh_printbegin(qh, qh->ferr, qh_PRINTfacets, facetlist, facets, printall);

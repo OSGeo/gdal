@@ -79,6 +79,7 @@ void qh_setaddnth(qhT *qh, setT **setp, int nth, void *newelem) {
   oldp= (setelemT *)SETelemaddr_(*setp, oldsize, void);   /* NULL */
   newp= oldp+1;
   for (i=oldsize-nth+1; i--; )  /* move at least NULL  */
+    /* coverity[overrun-local] */
     (newp--)->p= (oldp--)->p;       /* may overwrite *sizep */
   newp->p= newelem;
 } /* setaddnth */
@@ -144,6 +145,7 @@ void qh_setappend(qhT *qh, setT **setp, void *newelem) {
   count= (sizep->i)++ - 1;
   endp= (setelemT *)SETelemaddr_(*setp, count, void);
   (endp++)->p= newelem;
+  /* coverity[overrun-local] */
   endp->p= NULL;
 } /* setappend */
 
@@ -185,6 +187,7 @@ void qh_setappend_set(qhT *qh, setT **setp, setT *setA) {
   }
   if (sizeA > 0) {
     sizep->i= size+sizeA+1;   /* memcpy may overwrite */
+    /* coverity[overrun-buffer-arg] */
     memcpy((char *)&((*setp)->e[size].p), (char *)&(setA->e[0].p), (size_t)(sizeA+1) * SETelemsize);
   }
 } /* setappend_set */
@@ -219,6 +222,7 @@ void qh_setappend2ndlast(qhT *qh, setT **setp, void *newelem) {
     endp= (setelemT *)SETelemaddr_(*setp, count, void); /* NULL */
     lastp= endp-1;
     *(endp++)= *lastp;
+    /* coverity[overrun-local] */
     endp->p= NULL;    /* may overwrite *sizep */
     lastp->p= newelem;
 } /* setappend2ndlast */
@@ -478,6 +482,7 @@ void *qh_setdelnthsorted(qhT *qh, setT *set, int nth) {
   newp= (setelemT *)SETelemaddr_(set, nth, void);
   elem= newp->p;
   oldp= newp+1;
+  /* coverity[overrun-local] */
   while (((newp++)->p= (oldp++)->p))
     ; /* copy remaining elements and NULL */
   if ((sizep->i--)==0)         /*  if was a full set */
@@ -649,11 +654,13 @@ int qh_setequal_except(setT *setA, void *skipelemA, setT *setB, void *skipelemB)
       if (!(skipelemB= *elemB++))
         return 0;
     }
+    /* coverity[overrun-local] */
     if (!*elemA)
       break;
     if (*elemA++ != *elemB++)
       return 0;
   }
+  /* coverity[overrun-local] */
   if (skip != 2 || *elemB)
     return 0;
   return 1;
@@ -851,7 +858,7 @@ int qh_setindex(setT *set, void *atelem) {
       the new set is qhmem.LASTsize
     otherwise use quick memory,
       the new set is 2x larger, rounded up to next qh_memsize
-       
+
     if temp set, updates qh->qhmem.tempstack
 
   design:
@@ -1071,6 +1078,7 @@ setT *qh_setnew_delnthsorted(qhT *qh, setT *set, int size, int nth, int prepend)
     *(newp++)= *oldp++;
     break;
   default:
+    /* coverity[overrun-local] */
     memcpy((char *)newp, (char *)oldp, (size_t)tailsize * SETelemsize);
     newp += tailsize;
   }
