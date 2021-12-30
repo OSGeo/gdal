@@ -1,7 +1,7 @@
 #
 # A CMake Module for finding and using C# (.NET and Mono).
 #
-#The following variables are consume:
+#The following variables are consumed:
 #   CSHARP_MONO - set to yes to force the use of Mono. Default is look for .NET first
 #
 # The following variables are set:
@@ -39,14 +39,7 @@ if( CSHARP_MONO )
 else()
   find_package( Dotnet )
   if( NOT DOTNET_FOUND )
-    if( WIN32 )
-      find_package( DotNetFrameworkSdk )
-      if( NOT CSHARP_DOTNET_FOUND )
-        find_package( Mono )
-      endif( )
-    else( UNIX )
-      find_package( Mono )
-    endif( )
+    find_package( Mono )
   endif()
 endif()
 
@@ -54,11 +47,6 @@ if( DOTNET_FOUND )
   set( CSHARP_TYPE ".NET" CACHE STRING "Using the .NET compiler" )
   set( CSHARP_VERSION ${DOTNET_VERSION} CACHE STRING "C# .NET compiler version" FORCE )
   set( CSHARP_COMPILER ${DOTNET_EXE} CACHE STRING "Full path to .NET compiler" FORCE )
-  set( CSHARP_INTERPRETER "" CACHE INTERNAL "Interpreter not required for .NET" FORCE )
-elseif( CSHARP_DOTNET_FOUND )
-  set( CSHARP_TYPE ".NET" CACHE STRING "Using the .NET compiler" )
-  set( CSHARP_VERSION ${CSHARP_DOTNET_VERSION} CACHE STRING "C# .NET compiler version" FORCE )
-  set( CSHARP_COMPILER ${CSHARP_DOTNET_COMPILER_${CSHARP_DOTNET_VERSION}} CACHE STRING "Full path to .NET compiler" FORCE )
   set( CSHARP_INTERPRETER "" CACHE INTERNAL "Interpreter not required for .NET" FORCE )
 elseif( CSHARP_MONO_FOUND )
   set( CSHARP_TYPE "Mono" CACHE STRING "Using the Mono compiler" )
