@@ -17,7 +17,7 @@ set(CSHARP_APPLICATION_VERSION
     CACHE STRING ".NET version to be used for the sample Applicatons")
 set(CSHARP_CONFIG
     "RELEASE"
-    CACHE STRING "Config to be used to compile the C# atrefacts > RELEASE|CONFIG")
+    CACHE STRING "Config to be used to compile the C# artefacts > RELEASE|CONFIG")
 
 # based on https://stackoverflow.com/questions/39258250/how-to-detect-if-64-bit-msvc-with-cmake TODO - this not going to
 # cope with ARM architectures
@@ -102,7 +102,7 @@ function (gdal_csharp_dll)
   if (_CSHARP_DEPENDS)
     foreach (_dep IN LISTS _CSHARP_DEPENDS)
       file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_dep}" _dep)
-      cmake_path(GET _dep FILENAME _filename)
+      get_filename_component(_filename ${_dep} NAME)
       list(APPEND _dlls ${_filename}.dll)
       list(APPEND _projs ${_dep}.csproj)
       list(APPEND CSC_OPTIONS /r:${_dep}.dll)
@@ -226,7 +226,7 @@ function (gdal_build_csharp_sample)
   set(CSC_OPTIONS)
 
   # setup project file
-  cmake_path(GET _GBCS_OUTPUT STEM _folder)
+  get_filename_component(_folder ${_GBCS_OUTPUT} NAME_WE)
   set(_GBCS_PROJ_PATH ${CMAKE_CURRENT_BINARY_DIR}/${_folder})
   set(_GBCS_PROJ ${_GBCS_PROJ_PATH}/${_folder})
   file(TO_NATIVE_PATH "${_GBCS_PROJ}" _GBCS_PROJ_NATIVE)
@@ -240,7 +240,7 @@ function (gdal_build_csharp_sample)
   if (_GBCS_DEPENDS)
     foreach (_dep IN LISTS _GBCS_DEPENDS)
       file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_dep}" _dep)
-      cmake_path(GET _dep FILENAME _filename)
+      get_filename_component(_filename ${_dep} NAME)
       list(APPEND _dlls ${_filename}.dll)
       list(APPEND CSC_OPTIONS /r:${_dep}.dll)
     endforeach ()
