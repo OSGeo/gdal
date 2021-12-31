@@ -297,3 +297,36 @@ jobs:
         GITHUB_WORKFLOW: "MacOS build"
     - name: Install
       run: cmake --build $GITHUB_WORKSPACE/build --target install -j 3
+
+  build-windows-conda-csharp-only:
+    runs-on: windows-latest
+    env:
+        architecture: x64
+        generator: Visual Studio 16 2019
+
+    steps:
+    # To avoid git clone to mess with the line endings of GDAL autotest data
+    # files that look like text, but should be handled as binary content
+    - name: Set git core.autocrlf to false
+      run: |
+        git config --global core.autocrlf false
+    - name: Checkout GDAL
+      uses: actions/checkout@v2
+    - uses: conda-incubator/setup-miniconda@v2
+      with:
+        activate-environment: gdalenv
+        python-version: 3.7
+        channels: conda-forge
+    - name: Install dependency
+      shell: bash -l {0}
+      run: |
+        conda install --yes --quiet --name gdalenv curl libiconv icu git python=3.7 swig numpy pytest pytest-env zlib clcache lxml
+        conda install --yes --quiet --name gdalenv -c conda-forge libgdal
+    - name: Configure
+      shell: bash -l {0}
+      run: |
+        mkdir -p $GITHUB_WORKSPACE/build
+        cmake -A ${architecture} -G "${generator}" -DGDAL_CSHARP_ONLY=ON -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX" -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" 
+    - name: Build
+      shell: bash -l {0}
+      run: cmake --build $GITHUB_WORKSPACE/build --config Release --target csharp_samples -j 2

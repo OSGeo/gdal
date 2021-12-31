@@ -7,5 +7,12 @@
         <AssemblyOriginatorKeyFile>..\gdal.snk</AssemblyOriginatorKeyFile>
         <SignAssembly>true</SignAssembly>
 	    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <PackageId>${_PACKAGE_NAME}</PackageId>
+        <Authors>GDAL Contributors</Authors>
+        <Company>GDAL Project</Company>
+        <Copyright>Copyright GDAL Contributors</Copyright>
     </PropertyGroup>
+    <ItemGroup>
+        <None Include="$<TARGET_FILE:${_CSHARP_WRAP_DLL}>" Pack="true" PackagePath="runtimes\${CSHARP_RID}\native" />
+    </ItemGroup>
 </Project>

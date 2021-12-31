@@ -24,7 +24,7 @@
 # ADD_DOTNET(<project_file> [RELEASE|DEBUG] [X86|X64|ANYCPU] 
 #            [CONFIG configuration]
 #            [PLATFORM platform]
-#            [PACKAGE output_nuget_packages... ]
+#            [PACKAGE nuget_package_dependencies... ]
 #            [VERSION nuget_package_version]
 #            [DEPENDS depend_nuget_packages... ]
 #            [OUTPUT_PATH output_path]
@@ -160,7 +160,7 @@ FUNCTION(DOTNET_REGISTER_LOCAL_REPOSITORY repo_name repo_path)
     ELSE()
         GET_FILENAME_COMPONENT(nuget_config ~/.nuget/NuGet/NuGet.Config ABSOLUTE)
         EXECUTE_PROCESS(COMMAND ${DOTNET_EXE} nuget locals all --list OUTPUT_QUIET)
-        EXECUTE_PROCESS(COMMAND sed -e "/${repo_name}/d"-i'' "${nuget_config}")
+        EXECUTE_PROCESS(COMMAND sed -e "/${repo_name}/d" -i'' "${nuget_config}")
         EXECUTE_PROCESS(COMMAND sed -e "s#</packageSources>#  <add key=\\\"${repo_name}\\\" value=\\\"${repo_path}\\\" />\\n  </packageSources>#g" -i'' "${nuget_config}")
     ENDIF()
 ENDFUNCTION()
@@ -282,7 +282,7 @@ ENDFUNCTION()
 MACRO(ADD_DOTNET_DEPENDENCY_TARGETS )
     FOREACH(dep ${DOTNET_DEPENDS})
         ADD_DEPENDENCIES(${DOTNET_PROJNAME} ${dep})
-        MESSAGE("     ${DOTNET_PROJNAME} <- ${dep}")
+        MESSAGE("     ${DOTNET_PROJNAME} has dependency ${dep}")
     ENDFOREACH()
 
     FOREACH(pkg ${DOTNET_PACKAGES})
@@ -302,7 +302,7 @@ MACRO(ADD_DOTNET_DEPENDENCY_TARGETS )
             )
         endif ( NOT( TARGET DOTNET_PURGE_${pkg} ) )
         ADD_DEPENDENCIES(${DOTNET_PROJNAME} DOTNET_PURGE_${pkg})
-        MESSAGE("==== ${DOTNET_PROJNAME} -> ${pkg}")
+        MESSAGE("==== ${DOTNET_PROJNAME} uses nuget package ${pkg}")
     ENDFOREACH()
 ENDMACRO()
 
@@ -321,7 +321,11 @@ MACRO(DOTNET_BUILD_COMMANDS)
             LIST(APPEND build_dotnet_cmds COMMAND ${DOTNET_EXE} add ${DOTNET_PROJPATH} reference ${_src})
         endforeach ()
         foreach ( _pkg ${DOTNET_PACKAGES} )
-            LIST(APPEND build_dotnet_cmds COMMAND ${DOTNET_EXE} add ${DOTNET_PROJPATH} package ${_pkg})
+            set(_ADD_PROPERTIES)
+            if ( _pkg MATCHES "^OSGeo*.")
+                set(_ADD_PROPERTIES "--version \"${DOTNET_PACKAGE_VERSION}\"")
+            endif()
+            LIST(APPEND build_dotnet_cmds COMMAND ${DOTNET_EXE} add ${DOTNET_PROJPATH} package ${_ADD_PROPERTIES} ${_pkg})
         endforeach()
         LIST(APPEND build_dotnet_cmds
             COMMAND ${DOTNET_EXE} clean ${DOTNET_PROJPATH} ${DOTNET_BUILD_PROPERTIES}
@@ -337,13 +341,16 @@ MACRO(DOTNET_BUILD_COMMANDS)
         MESSAGE("-- Adding ${build_dotnet_type} project ${DOTNET_PROJPATH} (no nupkg)")
     ENDIF()
     
-    LIST(APPEND build_dotnet_cmds COMMAND ${DOTNET_EXE} pack --no-build --no-restore ${DOTNET_PROJPATH} -c ${DOTNET_CONFIG} ${DOTNET_BUILD_PROPERTIES} ${DOTNET_PACK_OPTIONS} --output ${CMAKE_CURRENT_BINARY_DIR})
+    LIST(APPEND build_dotnet_cmds COMMAND ${DOTNET_EXE} pack 
+                        --no-build --no-restore ${DOTNET_PROJPATH} 
+                        -c ${DOTNET_CONFIG} ${DOTNET_BUILD_PROPERTIES} ${DOTNET_PACK_OPTIONS} 
+                        --output ${CMAKE_CURRENT_BINARY_DIR} -p:PackageVersion=${DOTNET_PACKAGE_VERSION} )
     LIST(APPEND DOTNET_OUTPUTS ${CMAKE_CURRENT_BINARY_DIR}/${DOTNET_PROJNAME}.buildtimestamp)
     LIST(APPEND build_dotnet_cmds COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/${DOTNET_PROJNAME}.buildtimestamp)
 
     ADD_CUSTOM_COMMAND(
         OUTPUT ${DOTNET_OUTPUTS}
-        DEPENDS ${DOTNET_deps}
+        DEPENDS ${DOTNET_deps}  ${DOTNET_PROJPATH}
         ${build_dotnet_cmds}
         )
     ADD_CUSTOM_TARGET(
