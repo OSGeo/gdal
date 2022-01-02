@@ -1196,7 +1196,7 @@ def create_base_tile(tile_job_info: 'TileJobInfo', tile_detail: 'TileDetail') ->
                         swne, tile_job_info.options
                     ).encode('utf-8'))
 
-def create_overview_tile(base_tz: int, base_tiles: list[tuple[int, int]], output_folder: str, tile_job_info: 'TileJobInfo', options: Options):
+def create_overview_tile(base_tz: int, base_tiles: List[Tuple[int, int]], output_folder: str, tile_job_info: 'TileJobInfo', options: Options):
     """ Generating an overview tile from no more than 4 underlying tiles(base tiles) """
 
     mem_driver = gdal.GetDriverByName('MEM')
@@ -1293,7 +1293,7 @@ def create_overview_tile(base_tz: int, base_tiles: list[tuple[int, int]], output
                     ).encode('utf-8'))
 
 
-def group_overview_base_tiles(base_tz: int, tile_job_info: 'TileJobInfo') -> list[list[tuple[int, int]]]:
+def group_overview_base_tiles(base_tz: int, tile_job_info: 'TileJobInfo') -> List[List[Tuple[int, int]]]:
     """ Group base tiles that belong to the same overview tile """
 
     overview_to_bases = {}
@@ -1313,7 +1313,7 @@ def group_overview_base_tiles(base_tz: int, tile_job_info: 'TileJobInfo') -> lis
     return list(overview_to_bases.values())
 
 
-def count_overview_tiles(tile_job_info: 'TileJobInfo'):
+def count_overview_tiles(tile_job_info: 'TileJobInfo') -> int:
     tile_number = 0
     for tz in range(tile_job_info.tmaxz - 1, tile_job_info.tminz - 1, -1):
         tminx, tminy, tmaxx, tmaxy = tile_job_info.tminmax[tz]
