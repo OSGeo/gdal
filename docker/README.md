@@ -7,7 +7,7 @@ Each directory contains a `./build.sh` for convenient building of the image.
 Note: the mention of the overall licensing terms of the GDAL build is to the
 best of our knowledge and not guaranteed. Users should check by themselves.
 
-# Alpine based (3.14)
+# Alpine based (3.15)
 
 ## Small: `osgeo/gdal:alpine-small-latest`
 
