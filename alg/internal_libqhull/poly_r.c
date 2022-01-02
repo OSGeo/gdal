@@ -452,6 +452,7 @@ int qh_gethash(qhT *qh, int hashsize, setT *set, int size, int firstindex, void 
     hash= (ptr_intT)((long long)(ptr_intT)(*elemp) - (ptr_intT) skipelem);
     break;
   case 2:
+    /* coverity[overrun-local] */
     hash= (ptr_intT)((long long)(ptr_intT)(*elemp) + (ptr_intT)elemp[1] - (ptr_intT) skipelem);
     break;
   case 3:
