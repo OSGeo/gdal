@@ -1196,138 +1196,130 @@ def create_base_tile(tile_job_info: 'TileJobInfo', tile_detail: 'TileDetail') ->
                         swne, tile_job_info.options
                     ).encode('utf-8'))
 
+def create_overview_tile(base_tz: int, base_tiles: list[tuple[int, int]], output_folder: str, tile_job_info: 'TileJobInfo', options: Options):
+    """ Generating an overview tile from no more than 4 underlying tiles(base tiles) """
 
-
-def create_overview_tiles(tile_job_info: 'TileJobInfo', output_folder: str, options: Options) -> None:
-    """Generation of the overview tiles (higher in the pyramid) based on existing tiles"""
     mem_driver = gdal.GetDriverByName('MEM')
     tile_driver = tile_job_info.tile_driver
     out_driver = gdal.GetDriverByName(tile_driver)
 
     tilebands = tile_job_info.nb_data_bands + 1
 
-    # Usage of existing tiles: from 4 underlying tiles generate one as overview.
+    dsquery = mem_driver.Create('', 2 * tile_job_info.tile_size,
+                                2 * tile_job_info.tile_size, tilebands)
+    # TODO: fill the null value
+    dstile = mem_driver.Create('', tile_job_info.tile_size, tile_job_info.tile_size,
+                               tilebands)
 
-    tcount = 0
-    for tz in range(tile_job_info.tmaxz - 1, tile_job_info.tminz - 1, -1):
-        tminx, tminy, tmaxx, tmaxy = tile_job_info.tminmax[tz]
-        tcount += (1 + abs(tmaxx - tminx)) * (1 + abs(tmaxy - tminy))
+    usable_base_tiles = []
 
-    ti = 0
+    for base_tile in base_tiles:
+        base_tx = base_tile[0]
+        base_ty = base_tile[1]
+        base_ty_real = GDAL2Tiles.getYTile(base_ty, base_tz, options)
 
-    if tcount == 0:
+        base_tile_path = os.path.join(output_folder, str(base_tz), str(base_tx),
+                                      "%s.%s" % (base_ty_real, tile_job_info.tile_extension))
+        if not os.path.isfile(base_tile_path):
+            continue
+
+        dsquerytile = gdal.Open(base_tile_path, gdal.GA_ReadOnly)
+
+        if base_tx % 2 == 0:
+            tileposx = 0
+        else:
+            tileposx = tile_job_info.tile_size
+
+        if options.xyz and options.profile == 'raster':
+            if base_ty % 2 == 0:
+                tileposy = 0
+            else:
+                tileposy = tile_job_info.tile_size
+        else:
+            if base_ty % 2 == 0:
+                tileposy = tile_job_info.tile_size
+            else:
+                tileposy = 0
+
+        dsquery.WriteRaster(
+            tileposx, tileposy, tile_job_info.tile_size,
+            tile_job_info.tile_size,
+            dsquerytile.ReadRaster(0, 0,
+                                   tile_job_info.tile_size,
+                                   tile_job_info.tile_size),
+            band_list=list(range(1, tilebands + 1)))
+
+        usable_base_tiles.append(base_tile)
+
+    overview_tz = base_tz - 1
+    overview_tx = base_tiles[0][0] >> 1
+    overview_ty = base_tiles[0][1] >> 1
+    overview_ty_real = GDAL2Tiles.getYTile(overview_ty, overview_tz, options)
+
+    tilefilename = os.path.join(output_folder, str(overview_tz), str(overview_tx),
+                                "%s.%s" % (overview_ty_real, tile_job_info.tile_extension))
+    if options.verbose:
+        print(tilefilename)
+    if options.resume and os.path.exists(tilefilename):
+        if options.verbose:
+            print("Tile generation skipped because of --resume")
         return
 
-    if not options.quiet:
-        print("Generating Overview Tiles:")
+    # Create directories for the tile
+    os.makedirs(os.path.dirname(tilefilename), exist_ok=True)
 
-    progress_bar = ProgressBar(tcount)
-    progress_bar.start()
+    if usable_base_tiles:
+        scale_query_to_tile(dsquery, dstile, tile_driver, options,
+                            tilefilename=tilefilename)
+        # Write a copy of tile to png/jpg
+        if options.resampling != 'antialias':
+            # Write a copy of tile to png/jpg
+            out_driver.CreateCopy(tilefilename, dstile, strict=0)
 
+        if options.verbose:
+            print("\tbuild from zoom", base_tz, " tiles:", *base_tiles)
+
+        # Create a KML file for this tile.
+        if tile_job_info.kml:
+            swne = get_tile_swne(tile_job_info, options)
+            if swne is not None:
+                with open(os.path.join(
+                    output_folder,
+                    '%d/%d/%d.kml' % (overview_tz, overview_tx, overview_ty_real)
+                ), 'wb') as f:
+                    f.write(generate_kml(
+                        overview_tx, overview_ty, overview_tz, tile_job_info.tile_extension, tile_job_info.tile_size,
+                        swne, options, [(t[0], t[1], base_tz) for t in base_tiles]
+                    ).encode('utf-8'))
+
+
+def group_overview_base_tiles(base_tz: int, tile_job_info: 'TileJobInfo') -> list[list[tuple[int, int]]]:
+    """ Group base tiles that belong to the same overview tile """
+
+    overview_to_bases = {}
+    tminx, tminy, tmaxx, tmaxy = tile_job_info.tminmax[base_tz]
+    for ty in range(tmaxy, tminy - 1, -1):
+        overview_ty = ty >> 1
+        for tx in range(tminx, tmaxx + 1):
+            overview_tx = tx >> 1
+            base_tile = (tx, ty)
+            overview_tile = (overview_tx, overview_ty)
+
+            if overview_tile not in overview_to_bases:
+                overview_to_bases[overview_tile] = []
+
+            overview_to_bases[overview_tile].append(base_tile)
+
+    return list(overview_to_bases.values())
+
+
+def count_overview_tiles(tile_job_info: 'TileJobInfo'):
+    tile_number = 0
     for tz in range(tile_job_info.tmaxz - 1, tile_job_info.tminz - 1, -1):
         tminx, tminy, tmaxx, tmaxy = tile_job_info.tminmax[tz]
-        for ty in range(tmaxy, tminy - 1, -1):
-            for tx in range(tminx, tmaxx + 1):
+        tile_number += (1 + abs(tmaxx - tminx)) * (1 + abs(tmaxy - tminy))
 
-                ti += 1
-                ytile = GDAL2Tiles.getYTile(ty, tz, options)
-                tilefilename = os.path.join(output_folder,
-                                            str(tz),
-                                            str(tx),
-                                            "%s.%s" % (ytile, tile_job_info.tile_extension))
-
-                if options.verbose:
-                    print(ti, '/', tcount, tilefilename)
-
-                if options.resume and os.path.exists(tilefilename):
-                    if options.verbose:
-                        print("Tile generation skipped because of --resume")
-                    else:
-                        progress_bar.log_progress()
-                    continue
-
-                # Create directories for the tile
-                os.makedirs(os.path.dirname(tilefilename), exist_ok=True)
-
-                dsquery = mem_driver.Create('', 2 * tile_job_info.tile_size,
-                                            2 * tile_job_info.tile_size, tilebands)
-                # TODO: fill the null value
-                dstile = mem_driver.Create('', tile_job_info.tile_size, tile_job_info.tile_size,
-                                           tilebands)
-
-                # TODO: Implement more clever walking on the tiles with cache functionality
-                # probably walk should start with reading of four tiles from top left corner
-                # Hilbert curve
-
-                children = []
-                # Read the tiles and write them to query window
-                for y in range(2 * ty, 2 * ty + 2):
-                    for x in range(2 * tx, 2 * tx + 2):
-                        minx, miny, maxx, maxy = tile_job_info.tminmax[tz + 1]
-                        if x >= minx and x <= maxx and y >= miny and y <= maxy:
-                            ytile2 = GDAL2Tiles.getYTile(y, tz+1, options)
-                            base_tile_path = os.path.join(output_folder, str(tz + 1), str(x),
-                                                          "%s.%s" % (ytile2, tile_job_info.tile_extension))
-                            if not os.path.isfile(base_tile_path):
-                                continue
-
-                            dsquerytile = gdal.Open(
-                                base_tile_path,
-                                gdal.GA_ReadOnly)
-
-                            if x == 2*tx:
-                                tileposx = 0
-                            else:
-                                tileposx = tile_job_info.tile_size
-
-                            if options.xyz and options.profile == 'raster':
-                                if y == 2*ty:
-                                    tileposy = 0
-                                else:
-                                    tileposy = tile_job_info.tile_size
-                            else:
-                                if y == 2*ty:
-                                    tileposy = tile_job_info.tile_size
-                                else:
-                                    tileposy = 0
-
-                            dsquery.WriteRaster(
-                                tileposx, tileposy, tile_job_info.tile_size,
-                                tile_job_info.tile_size,
-                                dsquerytile.ReadRaster(0, 0,
-                                                       tile_job_info.tile_size,
-                                                       tile_job_info.tile_size),
-                                band_list=list(range(1, tilebands + 1)))
-                            children.append([x, y, tz + 1])
-
-                if children:
-                    scale_query_to_tile(dsquery, dstile, tile_driver, options,
-                                        tilefilename=tilefilename)
-                    # Write a copy of tile to png/jpg
-                    if options.resampling != 'antialias':
-                        # Write a copy of tile to png/jpg
-                        out_driver.CreateCopy(tilefilename, dstile, strict=0)
-
-                    if options.verbose:
-                        print("\tbuild from zoom", tz + 1,
-                              " tiles:", (2 * tx, 2 * ty), (2 * tx + 1, 2 * ty),
-                              (2 * tx, 2 * ty + 1), (2 * tx + 1, 2 * ty + 1))
-
-                    # Create a KML file for this tile.
-                    if tile_job_info.kml:
-                        swne = get_tile_swne(tile_job_info, options)
-                        if swne is not None:
-                            with open(os.path.join(
-                                output_folder,
-                                '%d/%d/%d.kml' % (tz, tx, ytile)
-                            ), 'wb') as f:
-                                f.write(generate_kml(
-                                    tx, ty, tz, tile_job_info.tile_extension, tile_job_info.tile_size,
-                                    swne, options, children
-                                ).encode('utf-8'))
-
-                if not options.verbose and not options.quiet:
-                    progress_bar.log_progress()
+    return tile_number
 
 
 def optparse_init() -> optparse.OptionParser:
@@ -3182,19 +3174,32 @@ def single_threaded_tiling(input_file: str, output_folder: str, options: Options
         print("Tiles details calc complete.")
 
     if not options.verbose and not options.quiet:
-        progress_bar = ProgressBar(len(tile_details))
-        progress_bar.start()
+        base_progress_bar = ProgressBar(len(tile_details))
+        base_progress_bar.start()
 
     for tile_detail in tile_details:
         create_base_tile(conf, tile_detail)
 
         if not options.verbose and not options.quiet:
-            progress_bar.log_progress()
+            base_progress_bar.log_progress()
 
     if getattr(threadLocal, 'cached_ds', None):
         del threadLocal.cached_ds
 
-    create_overview_tiles(conf, output_folder, options)
+    if not options.quiet:
+        print("Generating Overview Tiles:")
+
+        if not options.verbose:
+            overview_progress_bar = ProgressBar(count_overview_tiles(conf))
+            overview_progress_bar.start()
+
+    for base_tz in range(conf.tmaxz, conf.tminz, -1):
+        base_tile_groups = group_overview_base_tiles(base_tz, conf)
+        for base_tiles in base_tile_groups:
+            create_overview_tile(base_tz, base_tiles, output_folder, conf, options)
+            if not options.verbose and not options.quiet:
+                overview_progress_bar.log_progress()
+
 
     shutil.rmtree(os.path.dirname(conf.src_file))
 
@@ -3218,22 +3223,35 @@ def multi_threaded_tiling(input_file: str, output_folder: str, options: Options)
         print("Tiles details calc complete.")
 
     if not options.verbose and not options.quiet:
-        progress_bar = ProgressBar(len(tile_details))
-        progress_bar.start()
+        base_progress_bar = ProgressBar(len(tile_details))
+        base_progress_bar.start()
 
     # TODO: gbataille - check the confs for which each element is an array... one useless level?
     # TODO: gbataille - assign an ID to each job for print in verbose mode "ReadRaster Extent ..."
     for _ in pool.imap_unordered(partial(create_base_tile, conf), tile_details, chunksize=128):
         if not options.verbose and not options.quiet:
-            progress_bar.log_progress()
+            base_progress_bar.log_progress()
 
-    pool.close()
-    pool.join()     # Jobs finished
+    if not options.quiet:
+        print("Generating Overview Tiles:")
+
+        if not options.verbose:
+            overview_progress_bar = ProgressBar(count_overview_tiles(conf))
+            overview_progress_bar.start()
+
+    for base_tz in range(conf.tmaxz, conf.tminz, -1):
+        base_tile_groups = group_overview_base_tiles(base_tz, conf)
+        for _ in pool.imap_unordered(partial(create_overview_tile, base_tz, output_folder=output_folder,
+                                             tile_job_info=conf, options=options), base_tile_groups, chunksize=128):
+            if not options.verbose and not options.quiet:
+                overview_progress_bar.log_progress()
+
 
     # Set the maximum cache back to the original value
     set_cache_max(gdal_cache_max)
 
-    create_overview_tiles(conf, output_folder, options)
+    pool.close()
+    pool.join()     # Jobs finished
 
     shutil.rmtree(os.path.dirname(conf.src_file))
 
