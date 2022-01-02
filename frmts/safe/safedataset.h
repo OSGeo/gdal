@@ -197,7 +197,7 @@ class SAFECalibratedRasterBand : public GDALPamRasterBand
 
     static TimePoint getTimePoint(const char * pszTime);
     static double getTimeDiff(TimePoint oT1, TimePoint oT2);
-    TimePoint getazTime(TimePoint oStart, TimePoint oStop, long nNumOfLines, int nOffset);
+    static TimePoint getazTime(TimePoint oStart, TimePoint oStop, long nNumOfLines, int nOffset);
 
     int getCalibrationVectorIndex(int nLineNo);
     int getPixelIndex(int nPixelNo);
