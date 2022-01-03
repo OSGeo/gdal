@@ -3225,7 +3225,8 @@ def multi_threaded_tiling(input_file: str, output_folder: str, options: Options)
 
     # TODO: gbataille - check the confs for which each element is an array... one useless level?
     # TODO: gbataille - assign an ID to each job for print in verbose mode "ReadRaster Extent ..."
-    for _ in pool.imap_unordered(partial(create_base_tile, conf), tile_details, chunksize=128):
+    chunksize = max(1, min(128, len(tile_details) // nb_processes))
+    for _ in pool.imap_unordered(partial(create_base_tile, conf), tile_details, chunksize=chunksize):
         if not options.verbose and not options.quiet:
             base_progress_bar.log_progress()
 
@@ -3238,17 +3239,17 @@ def multi_threaded_tiling(input_file: str, output_folder: str, options: Options)
 
     for base_tz in range(conf.tmaxz, conf.tminz, -1):
         base_tile_groups = group_overview_base_tiles(base_tz, conf)
+        chunksize = max(1, min(128, len(base_tile_groups) // nb_processes))
         for _ in pool.imap_unordered(partial(create_overview_tile, base_tz, output_folder=output_folder,
-                                             tile_job_info=conf, options=options), base_tile_groups, chunksize=128):
+                                             tile_job_info=conf, options=options), base_tile_groups, chunksize=chunksize):
             if not options.verbose and not options.quiet:
                 overview_progress_bar.log_progress()
 
+    pool.close()
+    pool.join()     # Jobs finished
 
     # Set the maximum cache back to the original value
     set_cache_max(gdal_cache_max)
-
-    pool.close()
-    pool.join()     # Jobs finished
 
     shutil.rmtree(os.path.dirname(conf.src_file))
 
