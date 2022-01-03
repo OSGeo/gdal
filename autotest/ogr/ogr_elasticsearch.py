@@ -2774,10 +2774,10 @@ def test_ogr_elasticsearch_aggregation_all_options():
                            """{"version":{"number":"6.8.0"}}""")
 
     ds = gdal.OpenEx('ES:/vsimem/fakeelasticsearch',
-                     open_options=['AGGREGATION={"index":"test","geohash_grid":{"size":100,"precision":4},"fields":{"min":["a"],"max":["b"],"avg":["c"],"sum":["d"],"count":["e"],"stats":["f"]}}'])
+                     open_options=['AGGREGATION={"index":"test","geohash_grid":{"size":100,"precision":4},"fields":{"min":["a", "f"],"max":["b"],"avg":["c"],"sum":["d"],"count":["e"],"stats":["f"]}}'])
     assert ds is not None
     lyr = ds.GetLayer(0)
-
+    assert lyr.GetLayerDefn().GetFieldCount() == 12
 
     response = {
         "aggregations":
@@ -2813,7 +2813,7 @@ def test_ogr_elasticsearch_aggregation_all_options():
         }
     }
 
-    request = """/vsimem/fakeelasticsearch/test/_search&POSTFIELDS={"size":0,"aggs":{"grid":{"geohash_grid":{"field":"a_geopoint.coordinates","precision":4,"size":100},"aggs":{"centroid":{"geo_centroid":{"field":"a_geopoint.coordinates"}},"a_min":{"min":{"field":"a"}},"b_max":{"max":{"field":"b"}},"c_avg":{"avg":{"field":"c"}},"d_sum":{"sum":{"field":"d"}},"e_count":{"value_count":{"field":"e"}},"f_stats":{"stats":{"field":"f"}}}}}}"""
+    request = """/vsimem/fakeelasticsearch/test/_search&POSTFIELDS={"size":0,"aggs":{"grid":{"geohash_grid":{"field":"a_geopoint.coordinates","precision":4,"size":100},"aggs":{"centroid":{"geo_centroid":{"field":"a_geopoint.coordinates"}},"f_stats":{"stats":{"field":"f"}},"a_min":{"min":{"field":"a"}},"b_max":{"max":{"field":"b"}},"c_avg":{"avg":{"field":"c"}},"d_sum":{"sum":{"field":"d"}},"e_count":{"value_count":{"field":"e"}}}}}}"""
     gdal.FileFromMemBuffer(request, json.dumps(response))
 
     f = lyr.GetNextFeature()

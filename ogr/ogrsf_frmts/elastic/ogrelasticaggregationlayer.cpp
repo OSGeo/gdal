@@ -157,6 +157,36 @@ std::unique_ptr<OGRElasticAggregationLayer>
     if( poLayer->m_oFieldDef.IsValid() &&
         poLayer->m_oFieldDef.GetType() == CPLJSONObject::Type::Object )
     {
+        // Start with stats, to keep track of the created columns, and
+        // avoid duplicating them if a users ask for stats and min/max/etc.
+        // on the same property.
+        {
+            auto oOp = poLayer->m_oFieldDef["stats"];
+            if( oOp.IsValid() && oOp.GetType() == CPLJSONObject::Type::Array )
+            {
+                for( const auto& oField: oOp.ToArray() )
+                {
+                    if( oField.GetType() == CPLJSONObject::Type::String )
+                    {
+                        for( const char* pszOp: { "min", "max", "avg", "sum", "count" } )
+                        {
+                            OGRFieldDefn oFieldDefn(
+                                CPLSPrintf("%s_%s", oField.ToString().c_str(), pszOp),
+                                strcmp(pszOp, "count") == 0 ? OFTInteger64 : OFTReal);
+                            poLayer->m_poFeatureDefn->AddFieldDefn(&oFieldDefn);
+                        }
+
+                        CPLJSONObject oAgg;
+                        CPLJSONObject oFieldAgg;
+                        oFieldAgg.Add("field", oField.ToString());
+                        oAgg.Add("stats", oFieldAgg);
+                        poLayer->m_oAggregatedFieldsRequest.Add(
+                            CPLSPrintf("%s_stats", oField.ToString().c_str()), oAgg);
+                    }
+                }
+            }
+        }
+
         for( const char* pszOp: { "min", "max", "avg", "sum", "count" } )
         {
             auto oOp = poLayer->m_oFieldDef[pszOp];
@@ -166,42 +196,21 @@ std::unique_ptr<OGRElasticAggregationLayer>
                 {
                     if( oField.GetType() == CPLJSONObject::Type::String )
                     {
-                        OGRFieldDefn oFieldDefn(
-                            CPLSPrintf("%s_%s", oField.ToString().c_str(), pszOp),
-                            strcmp(pszOp, "count") == 0 ? OFTInteger64 : OFTReal);
-                        poLayer->m_poFeatureDefn->AddFieldDefn(&oFieldDefn);
+                        const char* pszFieldName = CPLSPrintf("%s_%s", oField.ToString().c_str(), pszOp);
+                        if( poLayer->m_poFeatureDefn->GetFieldIndex(pszFieldName) < 0 )
+                        {
+                            OGRFieldDefn oFieldDefn(
+                                pszFieldName,
+                                strcmp(pszOp, "count") == 0 ? OFTInteger64 : OFTReal);
+                            poLayer->m_poFeatureDefn->AddFieldDefn(&oFieldDefn);
 
-                        CPLJSONObject oAgg;
-                        CPLJSONObject oFieldAgg;
-                        oFieldAgg.Add("field", oField.ToString());
-                        oAgg.Add(strcmp(pszOp, "count") == 0 ? "value_count": pszOp, oFieldAgg);
-                        poLayer->m_oAggregatedFieldsRequest.Add(oFieldDefn.GetNameRef(), oAgg);
+                            CPLJSONObject oAgg;
+                            CPLJSONObject oFieldAgg;
+                            oFieldAgg.Add("field", oField.ToString());
+                            oAgg.Add(strcmp(pszOp, "count") == 0 ? "value_count": pszOp, oFieldAgg);
+                            poLayer->m_oAggregatedFieldsRequest.Add(oFieldDefn.GetNameRef(), oAgg);
+                        }
                     }
-                }
-            }
-        }
-
-        auto oOp = poLayer->m_oFieldDef["stats"];
-        if( oOp.IsValid() && oOp.GetType() == CPLJSONObject::Type::Array )
-        {
-            for( const auto& oField: oOp.ToArray() )
-            {
-                if( oField.GetType() == CPLJSONObject::Type::String )
-                {
-                    for( const char* pszOp: { "min", "max", "avg", "sum", "count" } )
-                    {
-                        OGRFieldDefn oFieldDefn(
-                            CPLSPrintf("%s_%s", oField.ToString().c_str(), pszOp),
-                            strcmp(pszOp, "count") == 0 ? OFTInteger64 : OFTReal);
-                        poLayer->m_poFeatureDefn->AddFieldDefn(&oFieldDefn);
-                    }
-
-                    CPLJSONObject oAgg;
-                    CPLJSONObject oFieldAgg;
-                    oFieldAgg.Add("field", oField.ToString());
-                    oAgg.Add("stats", oFieldAgg);
-                    poLayer->m_oAggregatedFieldsRequest.Add(
-                        CPLSPrintf("%s_stats", oField.ToString().c_str()), oAgg);
                 }
             }
         }
