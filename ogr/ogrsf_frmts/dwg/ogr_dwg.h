@@ -177,7 +177,7 @@ class OGRDWGDataSource final: public OGRDataSource
     std::map<CPLString,CPLString> oLineTypeTable;
 
     int                 bInlineBlocks;
-    int                 bAttributesAsValues;
+    int                 bAttributes;
 
     OGRDWGServices     *poServices;
     OdDbDatabasePtr     poDb;
@@ -201,7 +201,7 @@ class OGRDWGDataSource final: public OGRDataSource
     // The following is only used by OGRDWGLayer
 
     int                 InlineBlocks() { return bInlineBlocks; }
-    int                 AttributesAsValues() { return bAttributesAsValues; }
+    int                 Attributes() { return bAttributes; }
     void                AddStandardFields( OGRFeatureDefn *poDef );
 
     // Implemented in ogrdxf_blockmap.cpp

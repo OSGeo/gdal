@@ -40,7 +40,7 @@ OGRDWGDataSource::OGRDWGDataSource() :
   fp(nullptr),
   iEntitiesSectionOffset(0),
   bInlineBlocks(FALSE),
-  bAttributesAsValues(FALSE),
+  bAttributes(FALSE),
   poServices(nullptr),
   poDb(static_cast<const OdRxObject*>(nullptr))
 
@@ -103,8 +103,8 @@ int OGRDWGDataSource::Open( OGRDWGServices *poServicesIn,
 
     bInlineBlocks = CPLTestBool(
         CPLGetConfigOption( "DWG_INLINE_BLOCKS", "TRUE" ) );
-    bAttributesAsValues = CPLTestBool(
-    CPLGetConfigOption( "DWG_ATTRIBUTES_AS_VALUES", "FALSE" ) );
+    bAttributes = CPLTestBool(
+    CPLGetConfigOption( "DWG_ATTRIBUTES", "FALSE" ) );
 
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
@@ -148,7 +148,7 @@ int OGRDWGDataSource::Open( OGRDWGServices *poServicesIn,
 /*      Create out layer object - we will need it when interpreting     */
 /*      blocks.                                                         */
 /* -------------------------------------------------------------------- */
-    if(bAttributesAsValues){
+    if(bAttributes){
         ReadAttDefinitions();
     }
     apoLayers.push_back( new OGRDWGLayer( this ) );
@@ -160,7 +160,7 @@ int OGRDWGDataSource::Open( OGRDWGServices *poServicesIn,
 
 
 /************************************************************************/
-/*                        ReadAttDefinitions()                        */
+/*                        ReadAttDefinitions()                          */
 /************************************************************************/
 
 void OGRDWGDataSource::ReadAttDefinitions()
@@ -190,11 +190,11 @@ void OGRDWGDataSource::ReadAttDefinitions()
             /* -------------------------------------------------------------------- */
             OdRxClass* poClass = poEntity->isA();
             const OdString osName = poClass->name();
-            const char* pszEntityClassName = (const char*)osName;
+            const char* pszEntityClassName =  osName;
             if (EQUAL(pszEntityClassName, "AcDbAttributeDefinition"))
             {
                 OdDbAttributeDefinitionPtr poAttributeDefinition = OdDbAttributeDefinition::cast(poEntity);
-                const char* tagName = (const char*)poAttributeDefinition->tag();
+                const char* tagName = poAttributeDefinition->tag();
                 attName = new CPLString(tagName);
                 if (attributeFields.count(*attName) == 0) {
                     attributeFields.insert(*attName);

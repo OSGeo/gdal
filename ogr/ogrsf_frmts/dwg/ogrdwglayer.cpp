@@ -1275,7 +1275,7 @@ OGRFeature *OGRDWGLayer::TranslateINSERT( OdDbEntityPtr poEntity )
 
             OGRFeature *poAttrFeat = TranslateTEXT( pAttr );
 
-            if( poDS->AttributesAsValues() )
+            if( poDS->Attributes() )
             {
                 poFeature->SetField(pAttr->tag(), pAttr->textString());
             }
