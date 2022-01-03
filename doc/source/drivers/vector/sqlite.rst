@@ -451,7 +451,7 @@ Links
 -----
 
 -  `http://www.sqlite.org <http://www.sqlite.org/>`__: Main SQLite page.
--  http://www.gaia-gis.it/spatialite/: SpatiaLite extension to SQLite.
+-  https://www.gaia-gis.it/fossil/libspatialite/index: SpatiaLite extension to SQLite.
 -  `FDO RFC 16 <http://trac.osgeo.org/fdo/wiki/FDORfc16>`__: FDO
    Provider for SQLite
 -  :ref:`RasterLite2 driver <raster.rasterlite2>`

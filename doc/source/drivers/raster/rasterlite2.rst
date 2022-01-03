@@ -149,5 +149,5 @@ See Also
 --------
 
 -  `Rasterlite2 home
-   page <https://www.gaia-gis.it/fossil/libRasterLite2/home>`__
+   page <https://www.gaia-gis.it/fossil/librasterlite2/index>`__
 -  :ref:`OGR SQLite driver <vector.sqlite>`

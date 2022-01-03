@@ -252,7 +252,7 @@ See Also
 --------
 
 -  `Spatialite and Rasterlite home
-   page <http://www.gaia-gis.it/spatialite>`__
+   page <https://www.gaia-gis.it/fossil/libspatialite/index>`__
 -  `Rasterlite
    manual <http://www.gaia-gis.it/gaia-sins/rasterlite-docs/rasterlite-man.pdf>`__
 -  `Rasterlite
