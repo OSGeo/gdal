@@ -323,7 +323,7 @@ MACRO(DOTNET_BUILD_COMMANDS)
         foreach ( _pkg ${DOTNET_PACKAGES} )
             set(_ADD_PROPERTIES)
             if ( _pkg MATCHES "^OSGeo*.")
-                set(_ADD_PROPERTIES "--version \"${DOTNET_PACKAGE_VERSION}\"")
+                set(_ADD_PROPERTIES --version "${DOTNET_PACKAGE_VERSION}")
             endif()
             LIST(APPEND build_dotnet_cmds COMMAND ${DOTNET_EXE} add ${DOTNET_PROJPATH} package ${_ADD_PROPERTIES} ${_pkg})
         endforeach()
@@ -350,6 +350,7 @@ MACRO(DOTNET_BUILD_COMMANDS)
 
     ADD_CUSTOM_COMMAND(
         OUTPUT ${DOTNET_OUTPUTS}
+        VERBATIM
         DEPENDS ${DOTNET_deps}  ${DOTNET_PROJPATH}
         ${build_dotnet_cmds}
         )

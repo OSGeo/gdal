@@ -45,6 +45,7 @@ Related Documents
        :maxdepth: 1
 
        csharp_compile
+       csharp_compile_cmake
        csharp_raster
        csharp_vector
        csharp_usage

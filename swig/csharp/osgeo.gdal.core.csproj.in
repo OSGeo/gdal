@@ -1,13 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>${CSHARP_LIBRARY_VERSION}</TargetFramework>
-    <PackageId>OSGeo.GDAL.Core</PackageId>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <RuntimeIdentifier>${CSHARP_RID}</RuntimeIdentifier>
+    <AssemblyVersion>${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}.${GDAL_VERSION_REV}</AssemblyVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
   <ItemGroup>
-      <Content Include="gdal.snk">
-        <Pack>true</Pack>
-        </Content>
+      <Compile Include="${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALEmpty.cs"></Compile>
   </ItemGroup>
 </Project>

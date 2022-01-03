@@ -28,7 +28,7 @@ set(CSHARP_CONFIG
 set(_VERSION_STRING ${GDAL_VERSION_NO_DEV_SUFFIX})
 if (GDAL_DEV_SUFFIX)
   set(_VERSION_STRING ${_VERSION_STRING}-${GDAL_DEV_SUFFIX})
-endif()
+endif ()
 
 # based on https://stackoverflow.com/questions/39258250/how-to-detect-if-64-bit-msvc-with-cmake TODO - this not going to
 # cope with ARM architectures
@@ -61,17 +61,21 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Directory.Build.props ${CMAKE_CURRENT
                COPYONLY)
 
 # Crate some placmarker package for dependencies
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/osgeo.gdal.core.csproj.in" "${CMAKE_CURRENT_BINARY_DIR}/osgeo.gdal.core.csproj")
-add_custom_target( OSGeo.GDAL.Core
-  COMMAND ${DOTNET_EXE} pack ${CMAKE_CURRENT_BINARY_DIR}/osgeo.gdal.core.csproj
-                             -c ${CSHARP_CONFIG} --output ${CMAKE_CURRENT_BINARY_DIR} 
-                             -p:PackageVersion=${_VERSION_STRING} -p:OutDir="Core")
-
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/osgeo.gdal.config.csproj.in" "${CMAKE_CURRENT_BINARY_DIR}/osgeo.gdal.config.csproj")
-add_custom_target( OSGeo.GDAL.Config
-COMMAND ${DOTNET_EXE} pack ${CMAKE_CURRENT_BINARY_DIR}/osgeo.gdal.config.csproj
-                            -c ${CSHARP_CONFIG} --output ${CMAKE_CURRENT_BINARY_DIR} 
-                            -p:PackageVersion=${_VERSION_STRING} -p:OutDir="Config")
+if (DOTNET_FOUND)
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/osgeo.gdal.core.csproj.in"
+                 "${CMAKE_CURRENT_BINARY_DIR}/osgeo.gdal.core.csproj")
+  add_dotnet(
+    ${CMAKE_CURRENT_BINARY_DIR}/osgeo.gdal.core.csproj
+    ${CSHARP_CONFIG}
+    NAME
+    OSGeo.GDAL.Core
+    VERSION
+    ${_VERSION_STRING}
+    OUTPUT_PATH
+    ${CMAKE_CURRENT_BINARY_DIR})
+else ()
+  add_custom_target(OSGeo.GDAL.Core)
+endif ()
 
 # function for csharp wrapper build
 function (gdal_csharp_wrap)
@@ -152,14 +156,18 @@ function (gdal_csharp_dll)
 
   # run the c# build
   if (DOTNET_FOUND)
-    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/dll_template.csproj" "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_root}.csproj.in")
-    file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_root}-$<CONFIG>.csproj INPUT ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_root}.csproj.in )
-    add_custom_command (
-      COMMAND ${CMAKE_COMMAND} -E "copy_if_different" "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_root}-$<CONFIG>.csproj" "${_CSHARP_PROJ}"
-      VERBATIM
-      PRE_BUILD
-      DEPENDS  "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_root}-$<CONFIG>.csproj"
-      OUTPUT   ${_CSHARP_PROJ})
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/dll_template.csproj"
+                   "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_root}.csproj.in")
+    file(
+      GENERATE
+      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_root}-$<CONFIG>.csproj
+      INPUT ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_root}.csproj.in)
+    add_custom_command(
+      COMMAND ${CMAKE_COMMAND} -E "copy_if_different"
+              "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_root}-$<CONFIG>.csproj" "${_CSHARP_PROJ}"
+      VERBATIM PRE_BUILD
+      DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_root}-$<CONFIG>.csproj"
+      OUTPUT ${_CSHARP_PROJ})
     add_dotnet(
       ${_CSHARP_PROJ}
       ${CSHARP_CONFIG}
@@ -198,9 +206,13 @@ function (gdal_csharp_dll)
     endif ()
   endif (DOTNET_FOUND)
 
+  set(_CSHARP_IMPORTS ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_CSHARP_TARGET})
+  if (DOTNET_FOUND)
+    list(APPEND ${CMAKE_CURRENT_BINARY_DIR}/${_PACKAGE_NAME}.${_VERSION_STRING}.nupkg)
+  endif ()
+
   install(
-    FILES ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_CSHARP_TARGET}
-          ${CMAKE_CURRENT_BINARY_DIR}/${_PACKAGE_NAME}.${_VERSION_STRING}.nupkg
+    FILES ${_CSHARP_IMPORTS}
     COMPONENT csharp
     DESTINATION ${GDAL_CSHARP_INSTALL_DIR})
 
@@ -249,23 +261,40 @@ gdal_csharp_wrap(
 
 gdal_csharp_dll(TARGET gdalconst_csharp.dll TARGET_SUBDIR const WRAP_DLL gdalconst_wrap PACKAGE_NAME OSGeo.GDAL.CONST)
 
-gdal_csharp_dll(TARGET osr_csharp.dll TARGET_SUBDIR osr WRAP_DLL osr_wrap PACKAGE_NAME OSGeo.OSR SYSTEM_DEPENDS OSGeo.GDAL.Core OSGeo.GDAL.Config)
+gdal_csharp_dll(
+  TARGET osr_csharp.dll
+         TARGET_SUBDIR
+         osr
+         WRAP_DLL
+         osr_wrap
+         PACKAGE_NAME
+         OSGeo.OSR
+         SYSTEM_DEPENDS
+         OSGeo.GDAL.Core)
 
-gdal_csharp_dll(TARGET ogr_csharp.dll TARGET_SUBDIR ogr WRAP_DLL ogr_wrap DEPENDS osr_csharp gdalconst_csharp SYSTEM_DEPENDS OSGeo.OSR OSGeo.GDAL.CONST OSGeo.GDAL.Core  OSGeo.GDAL.Config PACKAGE_NAME
-                                                                OSGeo.OGR)
+gdal_csharp_dll(
+  TARGET ogr_csharp.dll TARGET_SUBDIR ogr WRAP_DLL ogr_wrap
+  DEPENDS osr_csharp
+          gdalconst_csharp
+          SYSTEM_DEPENDS
+          OSGeo.OSR
+          OSGeo.GDAL.CONST
+          OSGeo.GDAL.Core
+          PACKAGE_NAME
+          OSGeo.OGR)
 
 gdal_csharp_dll(
   TARGET gdal_csharp.dll TARGET_SUBDIR gdal
   DEPENDS osr_csharp
           ogr_csharp
           gdalconst_csharp
-          WRAP_DLL gdal_wrap
+          WRAP_DLL
+          gdal_wrap
           SYSTEM_DEPENDS
           OSGeo.OSR
           OSGeo.OGR
           OSGeo.GDAL.CONST
           OSGeo.GDAL.Core
-          OSGeo.GDAL.Config
           PACKAGE_NAME
           OSGeo.GDAL)
 
@@ -305,7 +334,7 @@ function (gdal_build_csharp_sample)
   endif (_GBCS_DEPENDS)
   if (_GBCS_SYSTEM_DEPENDS)
     foreach (_dep IN LISTS _GBCS_SYSTEM_DEPENDS)
-      if (NOT _dep MATCHES "^/OSGeo*.")
+      if (NOT _dep MATCHES "^OSGeo*.")
         list(APPEND CSC_OPTIONS /r:${_dep}.dll)
       endif ()
     endforeach ()
@@ -347,8 +376,12 @@ function (gdal_build_csharp_sample)
       VERBATIM
       DEPENDS csharp_binding ${_GBCS_SOURCE})
     add_custom_target(${_GBCS_OUTPUT} ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${_GBCS_OUTPUT})
-    if (_dlls)
-      add_dependencies(${_GBCS_OUTPUT} ${_dlls})
+    if (_GBCS_SYSTEM_DEPENDS)
+      foreach (_dep in LISTS _GBCS_SYSTEM_DEPENDS)
+        if (_dep MATCHES "^OSGeo*")
+          add_dependencies(${_GBCS_OUTPUT} ${_dep})
+        endif ()
+      endforeach ()
     endif ()
   endif (DOTNET_FOUND)
 
@@ -360,7 +393,7 @@ function (gdal_build_csharp_sample)
       list(APPEND _GCBS_IMPORTS ${_GBCS_PROJ})
     endif (WIN32)
     list(APPEND _GCBS_IMPORTS ${_GBCS_PROJ}.dll)
-    list(APPEND ${_GBCS_PROJ}.nuspec)
+    list(APPEND ${_GBCS_PROJ}.nupkg)
     install(
       DIRECTORY ${_GBCS_PROJ_PATH}
       COMPONENT csharp
