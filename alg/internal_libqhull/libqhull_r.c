@@ -1219,7 +1219,7 @@ void qh_partitioncoplanar(qhT *qh, pointT *point, facetT *facet, realT *dist, bo
       zinc_(Zpartangle);
       angle= qh_getangle(qh, facet->normal, bestfacet->normal);
       if (angle < 0) {
-        nearest= qh_vertex_bestdist(qh, bestfacet->vertices);
+        /* nearest= qh_vertex_bestdist(qh, bestfacet->vertices) */;
         /* typically due to deleted vertex and coplanar facets, e.g.,
         RBOX 1000 s Z1 G1e-13 t1001185205 | QHULL Tv */
         zinc_(Zpartcorner);

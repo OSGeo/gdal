@@ -4329,8 +4329,6 @@ int GDALUseTransformer( void *pTransformArg,
 
 void *GDALCloneTransformer( void *pTransformArg )
 {
-    VALIDATE_POINTER1( pTransformArg, "GDALCloneTransformer", nullptr );
-
     GDALTransformerInfo *psInfo =
         static_cast<GDALTransformerInfo *>(pTransformArg);
 
@@ -4381,8 +4379,6 @@ void *GDALCloneTransformer( void *pTransformArg )
 void* GDALCreateSimilarTransformer( void* pTransformArg,
                                     double dfRatioX, double dfRatioY )
 {
-    VALIDATE_POINTER1( pTransformArg, "GDALCreateSimilarTransformer", nullptr );
-
     GDALTransformerInfo *psInfo =
         static_cast<GDALTransformerInfo *>(pTransformArg);
 

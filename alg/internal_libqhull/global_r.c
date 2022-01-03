@@ -337,9 +337,9 @@ void qh_freebuffers(qhT *qh) {
     free temporary sets
 */
 void qh_freebuild(qhT *qh, boolT allmem) {
-  facetT *facet, *previousfacet= NULL;
-  vertexT *vertex, *previousvertex= NULL;
-  ridgeT *ridge, **ridgep, *previousridge= NULL;
+  facetT *facet /*, *previousfacet= NULL*/;
+  vertexT *vertex /*, *previousvertex= NULL*/;
+  ridgeT *ridge, **ridgep /*, *previousridge= NULL */;
   mergeT *merge, **mergep;
   int newsize;
   boolT freeall;
@@ -370,8 +370,8 @@ void qh_freebuild(qhT *qh, boolT allmem) {
         qh->newvertex_list= qh->vertex_list= NULL;
         break;
       }
-      previousvertex= vertex; /* in case of memory fault */
-      QHULL_UNUSED(previousvertex)
+      /* previousvertex= vertex; */ /* in case of memory fault */
+      /* QHULL_UNUSED(previousvertex) */
     }
   }else if (qh->VERTEXneighbors) {
     FORALLvertices
@@ -392,8 +392,8 @@ void qh_freebuild(qhT *qh, boolT allmem) {
             qh_delridge(qh, ridge);
           else
             ridge->seen= True;
-          previousridge= ridge; /* in case of memory fault */
-          QHULL_UNUSED(previousridge)
+          /* previousridge= ridge; */ /* in case of memory fault */
+          /* QHULL_UNUSED(previousridge) */
         }
       }
       qh_setfree(qh, &(facet->outsideset));
@@ -407,8 +407,8 @@ void qh_freebuild(qhT *qh, boolT allmem) {
         qh_memfree(qh, facet, (int)sizeof(facetT));
         qh->visible_list= qh->newfacet_list= qh->facet_list= NULL;
       }
-      previousfacet= facet; /* in case of memory fault */
-      QHULL_UNUSED(previousfacet)
+      /* previousfacet= facet; */ /* in case of memory fault */
+      /* QHULL_UNUSED(previousfacet) */
     }
   }else {
     freeall= True;
@@ -2201,7 +2201,7 @@ void qh_lib_check(int qhullLibraryType, int qhTsize, int vertexTsize, int ridgeT
       last_errcode= 6253;
     }
     if (qhmemTsize && qhmemTsize != sizeof(qhmemT)) {
-      qh_fprintf_stderr(6254, "qh_lib_check: Incorrect qhull library called.  Size of qhmemT for caller is %d, but for qhull library is %d.\n", qhmemTsize, sizeof(qhmemT));
+      qh_fprintf_stderr(6254, "qh_lib_check: Incorrect qhull library called.  Size of qhmemT for caller is %d, but for qhull library is %d.\n", qhmemTsize, (int)sizeof(qhmemT));
       last_errcode= 6254;
     }
     if (last_errcode) {

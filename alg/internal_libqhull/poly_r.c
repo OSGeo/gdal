@@ -203,7 +203,7 @@ void qh_attachnewfacets(qhT *qh /* qh.visible_list, qh.newfacet_list */) {
   trace4((qh, qh->ferr, 4094, "qh_attachnewfacets: clear f.ridges and f.neighbors for visible facets, may become invalid before qh_deletevisible\n"));
   FORALLvisible_facets {
     if (visible->ridges)
-      SETfirst_(visible->ridges)= NULL; 
+      SETfirst_(visible->ridges)= NULL;
     SETfirst_(visible->neighbors)= NULL;
   }
   qh->NEWtentative= False;
@@ -269,7 +269,7 @@ void qh_delfacet(qhT *qh, facetT *facet) {
   void **freelistp; /* used if !qh_NOmem by qh_memfree_() */
 
   trace3((qh, qh->ferr, 3057, "qh_delfacet: delete f%d\n", facet->id));
-  if (qh->CHECKfrequently || qh->VERIFYoutput) { 
+  if (qh->CHECKfrequently || qh->VERIFYoutput) {
     if (!qh->NOerrexit) {
       qh_checkdelfacet(qh, facet, qh->facet_mergeset);
       qh_checkdelfacet(qh, facet, qh->degen_mergeset);
@@ -382,8 +382,10 @@ setT *qh_facetintersect(qhT *qh, facetT *facetA, facetT *facetB,
   i= j= 0;
   if (facetB == *neighborsA++)
     *skipA= 0;
+  /* coverity[overrun-local] */
   else if (facetB == *neighborsA++)
     *skipA= 1;
+  /* coverity[overrun-local] */
   else if (facetB == *neighborsA++)
     *skipA= 2;
   else {
@@ -396,8 +398,10 @@ setT *qh_facetintersect(qhT *qh, facetT *facetA, facetT *facetB,
   }
   if (facetA == *neighborsB++)
     *skipB= 0;
+  /* coverity[overrun-local] */
   else if (facetA == *neighborsB++)
     *skipB= 1;
+  /* coverity[overrun-local] */
   else if (facetA == *neighborsB++)
     *skipB= 2;
   else {
@@ -448,6 +452,7 @@ int qh_gethash(qhT *qh, int hashsize, setT *set, int size, int firstindex, void 
     hash= (ptr_intT)((long long)(ptr_intT)(*elemp) - (ptr_intT) skipelem);
     break;
   case 2:
+    /* coverity[overrun-local] */
     hash= (ptr_intT)((long long)(ptr_intT)(*elemp) + (ptr_intT)elemp[1] - (ptr_intT) skipelem);
     break;
   case 3:
@@ -781,7 +786,7 @@ facetT *qh_makenew_simplicial(qhT *qh, facetT *visible, vertexT *apex, int *numn
         if ismatch and matching facet doesn't have a match
           match the facets by updating their neighbor sets
         else
-          note: dupridge detected when a match 'f&d skip %d' has already been seen 
+          note: dupridge detected when a match 'f&d skip %d' has already been seen
                 need to mark all of the dupridges for qh_matchdupridge
           indicate a duplicate ridge by qh_DUPLICATEridge and f.dupridge
           add facet to hashtable
@@ -800,13 +805,13 @@ facetT *qh_makenew_simplicial(qhT *qh, facetT *visible, vertexT *apex, int *numn
 
   details at "indicate a duplicate ridge":
     if !ismatch and matchfacet,
-      dupridge is between hashed facet@skip/matchfacet@matchskip and arg newfacet@newskip/unknown 
+      dupridge is between hashed facet@skip/matchfacet@matchskip and arg newfacet@newskip/unknown
       set newfacet@newskip, facet@skip, and matchfacet@matchskip to qh_DUPLICATEridge
       add newfacet and matchfacet to hash_table
-      if ismatch and matchfacet, 
+      if ismatch and matchfacet,
         same as !ismatch and matchfacet -- it matches facet instead of matchfacet
       if !ismatch and !matchfacet
-        dupridge between hashed facet@skip/unknown and arg newfacet@newskip/unknown 
+        dupridge between hashed facet@skip/unknown and arg newfacet@newskip/unknown
         set newfacet@newskip and facet@skip to qh_DUPLICATEridge
         add newfacet to hash_table
       if ismatch and matchfacet==qh_DUPLICATEridge
@@ -872,10 +877,12 @@ void qh_matchneighbor(qhT *qh, facetT *newfacet, int newskip, int hashsize, int 
                   matchfacet->id, facet->id);
               qh_errexit2(qh, qh_ERRtopology, matchfacet, facet);
           }
+          else {
           SETelem_(matchfacet->neighbors, matchskip)= qh_DUPLICATEridge; /* matchskip>=0 by QH6260 */
           matchfacet->dupridge= True;
           qh_addhash(matchfacet, qh->hash_table, hashsize, hash);
           *hashcount += 2;
+          }
         }
       }
       trace4((qh, qh->ferr, 4052, "qh_matchneighbor: new f%d skip %d duplicates ridge for f%d skip %d matching f%d ismatch %d at hash %d\n",
@@ -901,11 +908,11 @@ void qh_matchneighbor(qhT *qh, facetT *newfacet, int newskip, int hashsize, int 
     all facets are simplicial
 
   returns:
-    if dupridges and merging 
+    if dupridges and merging
       returns maxdupdist (>=0.0) from vertex to opposite facet
       sets facet->dupridge
       missing neighbor links identify dupridges to be merged (qh_DUPLICATEridge)
-    else  
+    else
       qh.newfacet_list with full neighbor sets
         vertices for the nth neighbor match all but the nth vertex
     if not merging and qh.FORCEoutput
@@ -919,7 +926,7 @@ void qh_matchneighbor(qhT *qh, facetT *newfacet, int newskip, int hashsize, int 
     assumes qh.hash_table is NULL
     vertex->neighbors has not been updated yet
     do not allocate memory after qh.hash_table (need to free it cleanly)
-    
+
   design:
     truncate neighbor sets to horizon facet for all new facets
     initialize a hash table
@@ -958,6 +965,7 @@ coordT qh_matchnewfacets(qhT *qh /* qh.newfacet_list */) {
   qh_newhashtable(qh, numnew*(qh->hull_dim-1)); /* twice what is normally needed,
                                      but every ridge could be DUPLICATEridge */
   hashsize= qh_setsize(qh, qh->hash_table);
+  if( hashsize == 0 ) return 0.0; /* make coverity happy */
   FORALLnew_facets {
     if (!newfacet->simplicial) {
       qh_fprintf(qh, qh->ferr, 6377, "qhull internal error (qh_matchnewfacets): expecting simplicial facets on qh.newfacet_list f%d for qh_matchneighbors, qh_matchneighbor, and qh_matchdupridge.  Got non-simplicial f%d\n",
@@ -1064,12 +1072,14 @@ boolT qh_matchvertices(qhT *qh, int firstindex, setT *verticesA, int skipA,
         return False;
       skipBp= elemBp;  /* one extra like FOREACH */
     }
+    /* coverity[overrun-local] */
   }while (*(++elemAp));
   if (!skipBp)
     skipBp= ++elemBp;
   *skipB= SETindex_(verticesB, skipB); /* i.e., skipBp - verticesB
                                        verticesA and verticesB are the same size, otherwise trace4 may segfault */
   *same= !((skipA & 0x1) ^ (*skipB & 0x1)); /* result is 0 or 1 */
+  /* coverity[overrun-local] */
   trace4((qh, qh->ferr, 4054, "qh_matchvertices: matched by skip %d(v%d) and skip %d(v%d) same? %d\n",
           skipA, (*skipAp)->id, *skipB, (*(skipBp-1))->id, *same));
   return(True);
@@ -1164,6 +1174,7 @@ int qh_pointid(qhT *qh, pointT *point) {
   else if (point >= qh->first_point
   && point < qh->first_point + qh->num_points * qh->hull_dim) {
     offset= (ptr_intT)(point - qh->first_point);
+    /* coverity[divide_arg] */
     id= offset / qh->hull_dim;
   }else if ((id= qh_setindex(qh->other_points, point)) != -1)
     id += qh->num_points;
@@ -1240,7 +1251,7 @@ void qh_removevertex(qhT *qh, vertexT *vertex) {
     update vertex neighbors and delete interior vertices
 
   returns:
-    if qh.VERTEXneighbors, 
+    if qh.VERTEXneighbors,
       if qh.newvertex_list,
          removes visible neighbors from vertex neighbors
       if qh.newfacet_list
@@ -1249,7 +1260,7 @@ void qh_removevertex(qhT *qh, vertexT *vertex) {
          interior vertices added to qh.del_vertices for later partitioning as coplanar points
     if not qh.VERTEXneighbors (not merging)
       interior vertices of visible facets added to qh.del_vertices for later partitioning as coplanar points
-  
+
   notes
     [jan'19] split off qh_update_vertexneighbors_cone.  Optimize the remaining cases in a future release
     called by qh_triangulate_facet after triangulating a non-simplicial facet, followed by reset_lists
@@ -1304,7 +1315,7 @@ void qh_update_vertexneighbors(qhT *qh /* qh.newvertex_list, newfacet_list, visi
           qh_setappend(qh, &vertex->neighbors, newfacet);
       }else {  /* called after qh_merge_pinchedvertices.  In 7-D, many more neighbors than new facets.  qh_setin is expensive */
         FOREACHvertex_(newfacet->vertices)
-          qh_setunique(qh, &vertex->neighbors, newfacet); 
+          qh_setunique(qh, &vertex->neighbors, newfacet);
       }
     }
     trace3((qh, qh->ferr, 3058, "qh_update_vertexneighbors: delete interior vertices for qh.visible_list (f%d)\n",
@@ -1350,7 +1361,7 @@ void qh_update_vertexneighbors(qhT *qh /* qh.newvertex_list, newfacet_list, visi
     update vertex neighbors for a cone of new facets and delete interior vertices
 
   returns:
-    if qh.VERTEXneighbors, 
+    if qh.VERTEXneighbors,
       if qh.newvertex_list,
          removes visible neighbors from vertex neighbors
       if qh.newfacet_list
@@ -1359,7 +1370,7 @@ void qh_update_vertexneighbors(qhT *qh /* qh.newvertex_list, newfacet_list, visi
          interior vertices added to qh.del_vertices for later partitioning as coplanar points
     if not qh.VERTEXneighbors (not merging)
       interior vertices of visible facets added to qh.del_vertices for later partitioning as coplanar points
-  
+
   notes
     called by qh_addpoint after create cone and before premerge
 
