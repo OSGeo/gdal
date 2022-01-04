@@ -73,65 +73,14 @@ jobs:
         export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib
         $GITHUB_WORKSPACE/install-gdal/bin/gdalinfo --version
         PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/python3/dist-packages python3 -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
-
-  build-linux-ubuntu-focal-using-mono:
-    runs-on: ubuntu-20.04
-    env:
-      CMAKE_OPTIONS: -DPython_LOOKUP_VERSION=3.8 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache 
-    steps:
-    - name: Checkout GDAL
-      uses: actions/checkout@v2
-    - run: |
-        cmake --version
-    - name: Install dependency
+    - name: Rerun using Mono
       run: |
-        sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
-        sudo apt-get update
-        sudo apt-get install -y -q bison libjpeg-dev libgif-dev liblzma-dev libzstd-dev libgeos-dev git \
-           libcurl4-gnutls-dev libproj-dev libxml2-dev  libxerces-c-dev libnetcdf-dev netcdf-bin \
-           libpoppler-dev libpoppler-private-dev gpsbabel libhdf4-alt-dev libhdf5-serial-dev libpodofo-dev poppler-utils \
-           libfreexl-dev unixodbc-dev libwebp-dev libepsilon-dev liblcms2-2 libcrypto++-dev libdap-dev libkml-dev \
-           libmysqlclient-dev libarmadillo-dev wget libfyba-dev libjsoncpp-dev libexpat1-dev \
-           libclc-dev ocl-icd-opencl-dev libsqlite3-dev sqlite3-pcre libpcre3-dev libspatialite-dev libsfcgal-dev fossil libcairo2-dev libjson-c-dev libdeflate-dev liblz4-dev libblosc-dev \
-           libqhull-dev libcfitsio-dev libogdi-dev libopenjp2-7-dev libcharls-dev libheif-dev \
-           python3-dev libpython3-dev libpython3.8-dev python3.8-dev python3-numpy python3-lxml pyflakes python3-setuptools python3-pip python3-venv \
-           python3-pytest swig doxygen texlive-latex-base make cppcheck ccache g++ \
-           libpq-dev libpqtypes-dev postgresql-12 postgresql-12-postgis-3 postgresql-client-12 postgresql-12-postgis-3-scripts
-        # MSSQL: client side
-        curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
-        curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
-        sudo apt-get update
-        sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17 unixodbc-dev
-        #
-        # Workaround bug in ogdi packaging
-        sudo ln -s /usr/lib/ogdi/libvrf.so /usr/lib
-        #
-        python3 -m pip install -U pip wheel setuptools numpy
-        python3 -m pip install -r $GITHUB_WORKSPACE/autotest/requirements.txt
-    - name: Configure
-      run: |
-        mkdir -p $GITHUB_WORKSPACE/superbuild
-        cd $GITHUB_WORKSPACE/superbuild
-        printf "cmake_minimum_required(VERSION 3.10)\nproject(test)\nenable_testing()\nadd_subdirectory(gdal)" > CMakeLists.txt
-        ln -s .. gdal
-        mkdir build
-        cd build
-        cmake  ${CMAKE_OPTIONS} -DCSHARP_MONO=ON -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror -DGDAL_USE_PUBLICDECOMPWT:BOOL=ON  ..
-    - name: Build
-      run: |
-        cmake --build $GITHUB_WORKSPACE/superbuild/build -j $(nproc)
-    - name: test (with command targets)
-      run: |
-        cmake --build $GITHUB_WORKSPACE/superbuild/build --target quicktest -j $(nproc)
-    - name: test (with ctest)
-      run: |
-        ctest --test-dir $GITHUB_WORKSPACE/superbuild/build -V
-    - name: install
-      run: |
+        cd $GITHUB_WORKSPACE/superbuild/build
+        rm -rf swig/csharp
+        cmake  ${CMAKE_OPTIONS} -DCSHARP_MONO=ON -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror -DGDAL_USE_PUBLICDECOMPWT:BOOL=ON ..
         cmake --build $GITHUB_WORKSPACE/superbuild/build --target install -j $(nproc)
-        export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib
-        $GITHUB_WORKSPACE/install-gdal/bin/gdalinfo --version
-        PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/python3/dist-packages python3 -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
+        ctest -R csharp
+
   build-windows-msys2-mingw:
     runs-on: windows-latest
     env:
