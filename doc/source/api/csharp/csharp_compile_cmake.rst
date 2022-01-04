@@ -49,13 +49,13 @@ Building with .NET
 
 If the build environment has .NET 5.0 installed and GDAL is built, then the c# bindings will be built using .NET by default.
 
-The details of building GDAL are documented elsewhere, but the there are likel to be variants of the following commands run from the root directory of the gdal repository:
+The details of building GDAL are documented elsewhere, but there are likely to be variants of the following commands run from the root directory of the gdal repository:
 
 .. code-block::
 
     cmake -DCMAKE_INSTALL_PREFIX ../install -B ../build -S .
     cmake --build ../build --config Release
-    cmake --build ../build --config Release --target installation
+    cmake --build ../build --config Release --target install
 
 The C# bindings and sample apps are installed in the install directory (in the above case that would be `../install`, in the `share/csharp` sub folder. There would be the following files:
 
@@ -68,7 +68,7 @@ The C# bindings and sample apps are installed in the install directory (in the a
 * :file:`osr_wrap.dll` or :file:`libosr_wrap.so` or :file:`libosr_wrap.dylib`
 * :file:`osr_wrap.dll` or :file:`libosr_wrap.so` or :file:`libosr_wrap.dylib`
 * :file:`gdalconst_wrap.dll` or :file:`libgdalconst_wrap.so` or :file:`libgdalconst_wrap.dylib`
-* various sample applications - as *.exe on Windows or just as * on Unix along with *.dll for each app and the runtime config files.
+* various sample applications - as \*.exe on Windows, or just as \* on Unix, along with \*.dll for each app and the runtime config files.
 
 There are also subdirectories for each of the sample apps, holding the config files.
 
@@ -89,8 +89,8 @@ To do this you need to add a local repistory pointing to the GDAL install direct
 
 Once this is done, you add the GDAL packages into your project as normal.
 
-.. note:: These packages only install the bindings and do not install core GDAL. It is for you as the developer to
-make sure that the GDAL binaries are available in the search path.
+.. note:: These packages only install the bindings and do not install core GDAL. It is for you as the developer to make sure that the GDAL binaries are available in the search path.
+
 
 .. note:: The NuGET packages are created with the same version number as the version of GDAL in the build system.
           If you are building in a GIT repository, then the build system automatically makes the version with a x.y.z-dev pre-release tag.
@@ -101,16 +101,16 @@ make sure that the GDAL binaries are available in the search path.
 Building on Mono
 ----------------
 
- If the build environment does not have .NET 5.0 or msbuild installed and GDAL is built, then the c# bindings will be built using Mono by default. Mon building can also be forced 
- by setting CSHARP_MONO.
+If the build environment does not have .NET 5.0 or msbuild installed and GDAL is built, then the c# bindings will be built using Mono by default. Mono building can also be forced 
+by setting CSHARP_MONO.
 
-The details of building GDAL are documented elsewhere, but the there are likel to be variants of the following commands run from the root directory of the gdal repository:
+The details of building GDAL are documented elsewhere, but the there are likely to be variants of the following commands run from the root directory of the gdal repository:
 
 .. code-block::
 
     cmake -DCMAKE_INSTALL_PREFIX ../install -DCSHARP_MONO=ON -B ../build -S .
     cmake --build ../build --config Release
-    cmake --build ../build --config Release --target installation
+    cmake --build ../build --config Release --target install
 
 The C# bindings and sample apps are installed in the install directory (in the above case that would be `../install`, in the `share/csharp` sub folder. There would be the following files:
 
@@ -123,7 +123,7 @@ The C# bindings and sample apps are installed in the install directory (in the a
 * :file:`osr_wrap.dll` or :file:`libosr_wrap.so` or :file:`libosr_wrap.dylib`
 * :file:`osr_wrap.dll` or :file:`libosr_wrap.so` or :file:`libosr_wrap.dylib`
 * :file:`gdalconst_wrap.dll` or :file:`libgdalconst_wrap.so` or :file:`libgdalconst_wrap.dylib`
-* various sample applications as *.exe on all platforms.
+* various sample applications as \*.exe on all platforms.
 
 Using the Mono Bindings
 -----------------------
@@ -147,12 +147,12 @@ To do this, Cmake must be run with the GDAL_CSHARP_ONLY flag set and only one of
 
 
 +--------------------------------+---------------------------------+
-| csharp-binding                 | Just the bindings               |
+| csharp_binding                 | Just the bindings               |
 +--------------------------------+---------------------------------+
 | csharp_samples                 | The bindings and the sample apps|
 +--------------------------------+---------------------------------+
 
-.. note:: Do not build the install target when running standalone, it will finalization
+.. note:: Do not build the install target when running standalone, it will fail!
 
 As an example:
 
@@ -161,5 +161,5 @@ As an example:
     cmake -DGDAL_CSHARP_ONLY=ON -B ../build -S .
     cmake --build ../build --config Release --target csharp_samples
 
-The output from this build is axactly the same as document as above, except that the outputs will be in `../build/swig/csharp` and some of the sub folders.
+The output from this build is axactly the same as documented as above, except that the outputs will be in `../build/swig/csharp` and some of the sub folders.
 

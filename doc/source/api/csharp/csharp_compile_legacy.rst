@@ -1,4 +1,4 @@
-.. _csharp_compile:
+.. _csharp_compile_legacy:
 
 ================================================================================
 Compiling the C# bindings - Legacy Scripts
