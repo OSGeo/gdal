@@ -9,7 +9,7 @@ SQL SQLite dialect
 The SQLite "dialect" can be used as an alternate SQL dialect to the
 :ref:`ogr_sql_dialect`.
 This assumes that GDAL/OGR is built with support for SQLite, and preferably
-with `Spatialite <http://www.gaia-gis.it/spatialite/>`_ support too to benefit from spatial functions.
+with `Spatialite <https://www.gaia-gis.it/fossil/libspatialite/index>`_ support too to benefit from spatial functions.
 
 The SQLite dialect may be used with any OGR datasource, like the OGR SQL dialect. It
 is available through the GDALDataset::ExecuteSQL() method by specifying the pszDialect to
@@ -173,7 +173,7 @@ For example we can select the annotation features as:
 Spatialite SQL functions
 ++++++++++++++++++++++++
 
-When GDAL/OGR is build with support for the `Spatialite <http://www.gaia-gis.it/spatialite/>`_ library,
+When GDAL/OGR is build with support for the `Spatialite <https://www.gaia-gis.it/fossil/libspatialite/index>`_ library,
 a lot of `extra SQL functions <http://www.gaia-gis.it/gaia-sins/spatialite-sql-latest.html>`_,
 in particular spatial functions, can be used in results column fields, WHERE clauses, etc....
 
