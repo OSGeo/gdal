@@ -377,7 +377,7 @@ void OGRFlatGeobufLayer::writeHeader(VSILFILE *poFp, uint64_t featuresCount, std
 
         if( pszWKT && CPLIsUTF8(pszWKT, -1) )
         {
-            char *pszWKTtmp = CPLForceToASCII(pszWKT);
+            char *pszWKTtmp = CPLForceToASCII(pszWKT, -1, '?');
             CPLFree(pszWKT);
             pszWKT = pszWKTtmp;
         }
