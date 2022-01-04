@@ -475,6 +475,7 @@ set(GDAL_DATA_FILES
     data/gml_registry.xml
     data/gmlasconf.xml
     data/gmlasconf.xsd
+    data/grib2_table_versions.csv
     data/grib2_center.csv
     data/grib2_process.csv
     data/grib2_subcenter.csv

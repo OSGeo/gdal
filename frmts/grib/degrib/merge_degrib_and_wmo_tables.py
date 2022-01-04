@@ -13,7 +13,8 @@ import requests
 
 # URL of the WMO GRIB2 tables repository
 wmo_github_repo = 'wmo-im/GRIB2'
-wmo_base_url = f'https://raw.githubusercontent.com/{wmo_github_repo}/master'
+wmo_github_tag = 'v28.1'
+wmo_base_url = f'https://raw.githubusercontent.com/{wmo_github_repo}/{wmo_github_tag}'
 
 script_dir_name = os.path.dirname(os.path.realpath(__file__))
 
@@ -26,6 +27,10 @@ output_dir = os.path.join(os.path.dirname(
     os.path.dirname(os.path.dirname(script_dir_name))), 'data')
 assert os.path.exists(output_dir)
 
+with open(os.path.join(output_dir, "grib2_table_versions.csv"), "wt") as f:
+    f.write("component,version\n")
+    f.write(f"wmo,{wmo_github_tag}\n")
+    f.write(f"degrib,2.25\n")
 
 r = requests.get(f"https://api.github.com/repos/{wmo_github_repo}/commits/HEAD", headers={
                  "Accept": "application/vnd.github.VERSION.sha"})
