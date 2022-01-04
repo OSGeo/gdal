@@ -2,9 +2,9 @@ option(GDAL_CSHARP_ONLY "Compile C# bindings on existing GDAL installation" OFF)
 
 if (GDAL_CSHARP_ONLY)
   find_package(GDAL REQUIRED)
-else (GDAL_CSHARP_ONLY)
+else ()
   include(GdalStandardIncludes)
-endif (GDAL_CSHARP_ONLY)
+endif ()
 
 if (CMAKE_CXX_FLAGS)
   string(REPLACE "-Werror" " " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
@@ -45,9 +45,9 @@ endif ()
 # needed because of differnces in the packages
 if (DOTNET_FOUND)
   set(CSHARP_DRAWING "System.Drawing.Common")
-else (DOTNET_FOUND)
+else ()
   set(CSHARP_DRAWING "System.Drawing")
-endif (DOTNET_FOUND)
+endif ()
 
 # setup local NuGet repository
 if (DOTNET_FOUND)
@@ -105,10 +105,10 @@ function (gdal_csharp_wrap)
   if (GDAL_CSHARP_ONLY)
     include_directories(${GDAL_INCLUDE_DIR})
     target_link_libraries(${_CSHARP_WRAPPER} PRIVATE ${GDAL_LIBRARY})
-  else (GDAL_CSHARP_ONLY)
+  else ()
     gdal_standard_includes(${_CSHARP_WRAPPER})
     target_link_libraries(${_CSHARP_WRAPPER} PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)
-  endif (GDAL_CSHARP_ONLY)
+  endif ()
 
   install(
     TARGETS ${_CSHARP_WRAPPER}
@@ -182,7 +182,7 @@ function (gdal_csharp_dll)
       PACKAGE
       ${_CSHARP_SYSTEM_DEPENDS})
 
-  else (DOTNET_FOUND)
+  else ()
     message("BUILDING : " ${_CSHARP_TARGET} " : " ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_CSHARP_TARGET})
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET}
@@ -204,7 +204,7 @@ function (gdal_csharp_dll)
     if (_CSHARP_SYSTEM_DEPENDS)
       add_dependencies(${_PACKAGE_NAME} ${_CSHARP_SYSTEM_DEPENDS})
     endif ()
-  endif (DOTNET_FOUND)
+  endif ()
 
   set(_CSHARP_IMPORTS ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_CSHARP_TARGET})
   if (DOTNET_FOUND)
@@ -359,7 +359,7 @@ function (gdal_build_csharp_sample)
       PACKAGE
       ${_GBCS_SYSTEM_DEPENDS})
 
-  else (DOTNET_FOUND)
+  else ()
     message(
       "BUILDING : "
       ${_GBCS_OUTPUT}
@@ -383,15 +383,15 @@ function (gdal_build_csharp_sample)
         endif ()
       endforeach ()
     endif ()
-  endif (DOTNET_FOUND)
+  endif ()
 
   set(_GCBS_IMPORTS)
   if (DOTNET_FOUND)
     if (WIN32)
       list(APPEND _GCBS_IMPORTS ${_GBCS_PROJ}.exe)
-    elseif (WIN32)
+    else ()
       list(APPEND _GCBS_IMPORTS ${_GBCS_PROJ})
-    endif (WIN32)
+    endif ()
     list(APPEND _GCBS_IMPORTS ${_GBCS_PROJ}.dll)
     list(APPEND ${_GBCS_PROJ}.nupkg)
     install(
@@ -632,9 +632,7 @@ add_custom_target(
           GDALTest.exe)
 
 # set up the tests
-if (CSHARP_INTERPRETER
-    OR WIN32
-    AND NOT (GDAL_CSHARP_ONLY))
+if ((CSHARP_INTERPRETER OR WIN32) AND NOT (GDAL_CSHARP_ONLY))
   include(GdalSetTestEnv)
   gdal_set_test_env(TEST_ENV)
 
