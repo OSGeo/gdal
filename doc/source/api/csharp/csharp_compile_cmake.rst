@@ -51,7 +51,7 @@ If the build environment has .NET 5.0 installed and GDAL is built, then the c# b
 
 The details of building GDAL are documented elsewhere, but the there are likel to be variants of the following commands run from the root directory of the gdal repository:
 
-.. code-bock::
+.. code-block::
 
     cmake -DCMAKE_INSTALL_PREFIX ../install -B ../build -S .
     cmake --build ../build --config Release
@@ -106,7 +106,7 @@ Building on Mono
 
 The details of building GDAL are documented elsewhere, but the there are likel to be variants of the following commands run from the root directory of the gdal repository:
 
-.. code-bock::
+.. code-block::
 
     cmake -DCMAKE_INSTALL_PREFIX ../install -DCSHARP_MONO=ON -B ../build -S .
     cmake --build ../build --config Release
@@ -156,7 +156,7 @@ To do this, Cmake must be run with the GDAL_CSHARP_ONLY flag set and only one of
 
 As an example:
 
-.. code-bock::
+.. code-block::
 
     cmake -DGDAL_CSHARP_ONLY=ON -B ../build -S .
     cmake --build ../build --config Release --target csharp_samples
