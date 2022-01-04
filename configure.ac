@@ -4706,7 +4706,6 @@ elif test "$with_qhull" = "yes" -o "$with_qhull" = "" ; then
         AC_MSG_ERROR([--with-qhull requested, but library not found!])
       else
         QHULL_SETTING=internal
-        QHULL_INCLUDE_SUBDIR_IS_LIBQHULL=1
       fi
     fi
   fi
