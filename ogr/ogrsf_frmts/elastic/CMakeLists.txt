@@ -1,5 +1,12 @@
-add_gdal_driver(TARGET ogr_Elastic SOURCES ogr_elastic.h ogrelasticdatasource.cpp ogrelasticdriver.cpp
-                                           ogrelasticlayer.cpp PLUGIN_CAPABLE_IF "NOT GDAL_USE_LIBJSONC_INTERNAL")
+add_gdal_driver(
+  TARGET ogr_Elastic
+  SOURCES ogr_elastic.h
+          ogrelasticdatasource.cpp
+          ogrelasticdriver.cpp
+          ogrelasticlayer.cpp
+          ogrelasticaggregationlayer.cpp
+          PLUGIN_CAPABLE_IF
+          "NOT GDAL_USE_LIBJSONC_INTERNAL")
 gdal_standard_includes(ogr_Elastic)
 target_include_directories(ogr_Elastic PRIVATE ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/geojson)
 if (GDAL_USE_LIBJSONC_INTERNAL)

@@ -93,6 +93,8 @@ int OGRElasticDataSource::GetLayerCount()
 {
     if( m_bAllLayersListed )
     {
+        if( m_poAggregationLayer )
+            return 1;
         return static_cast<int>(m_apoLayers.size());
     }
     m_bAllLayersListed = true;
@@ -141,9 +143,11 @@ int OGRElasticDataSource::GetLayerCount()
 /*                            FetchMapping()                            */
 /************************************************************************/
 
-void OGRElasticDataSource::FetchMapping(const char* pszIndexName)
+void OGRElasticDataSource::FetchMapping(const char* pszIndexName,
+                                        std::set<CPLString>& oSetLayers,
+                                        std::vector<std::unique_ptr<OGRElasticLayer>>& apoLayers)
 {
-    if( m_oSetLayers.find(pszIndexName) != m_oSetLayers.end() )
+    if( oSetLayers.find(pszIndexName) != oSetLayers.end() )
         return;
 
     CPLString osURL(m_osURL + CPLString("/") + pszIndexName +
@@ -172,22 +176,22 @@ void OGRElasticDataSource::FetchMapping(const char* pszIndexName)
                 if( aosMappings.size() == 1 &&
                     (aosMappings[0] == "FeatureCollection" || aosMappings[0] == "default") )
                 {
-                    m_oSetLayers.insert(pszIndexName);
+                    oSetLayers.insert(pszIndexName);
                     OGRElasticLayer* poLayer = new OGRElasticLayer(
                         pszIndexName, pszIndexName, aosMappings[0], this, papszOpenOptions);
                     poLayer->InitFeatureDefnFromMapping(
                         CPL_json_object_object_get(poMappings, aosMappings[0]),
                         "", std::vector<CPLString>());
-                    m_apoLayers.push_back(std::unique_ptr<OGRElasticLayer>(poLayer));
+                    apoLayers.push_back(std::unique_ptr<OGRElasticLayer>(poLayer));
                 }
                 else
                 {
                     for(size_t i=0; i<aosMappings.size();i++)
                     {
                         CPLString osLayerName(pszIndexName + CPLString("_") + aosMappings[i]);
-                        if( m_oSetLayers.find(osLayerName) == m_oSetLayers.end() )
+                        if( oSetLayers.find(osLayerName) == oSetLayers.end() )
                         {
-                            m_oSetLayers.insert(osLayerName);
+                            oSetLayers.insert(osLayerName);
                             OGRElasticLayer* poLayer = new OGRElasticLayer(
                                 osLayerName,
                                 pszIndexName, aosMappings[i], this, papszOpenOptions);
@@ -195,24 +199,29 @@ void OGRElasticDataSource::FetchMapping(const char* pszIndexName)
                                 CPL_json_object_object_get(poMappings, aosMappings[i]),
                                 "", std::vector<CPLString>());
 
-                            m_apoLayers.push_back(std::unique_ptr<OGRElasticLayer>(poLayer));
+                            apoLayers.push_back(std::unique_ptr<OGRElasticLayer>(poLayer));
                         }
                     }
                 }
             }
             else
             {
-                m_oSetLayers.insert(pszIndexName);
+                oSetLayers.insert(pszIndexName);
                 OGRElasticLayer* poLayer = new OGRElasticLayer(
                    pszIndexName, pszIndexName, "", this, papszOpenOptions);
                 poLayer->InitFeatureDefnFromMapping(poMappings, "", std::vector<CPLString>());
-                m_apoLayers.push_back(std::unique_ptr<OGRElasticLayer>(poLayer));
+                apoLayers.push_back(std::unique_ptr<OGRElasticLayer>(poLayer));
             }
         }
 
 
         json_object_put(poRes);
     }
+}
+
+void OGRElasticDataSource::FetchMapping(const char* pszIndexName)
+{
+    FetchMapping(pszIndexName, m_oSetLayers, m_apoLayers);
 }
 
 /************************************************************************/
@@ -263,7 +272,11 @@ OGRLayer *OGRElasticDataSource::GetLayer(int iLayer) {
     if (iLayer < 0 || iLayer >= nLayers)
         return nullptr;
     else
+    {
+        if( m_poAggregationLayer )
+            return m_poAggregationLayer.get();
         return m_apoLayers[iLayer].get();
+    }
 }
 
 /************************************************************************/
@@ -279,7 +292,8 @@ OGRErr OGRElasticDataSource::DeleteLayer( int iLayer )
         return OGRERR_FAILURE;
     }
 
-    if( iLayer < 0 || iLayer >= GetLayerCount() )
+    GetLayerCount();
+    if( iLayer < 0 || iLayer >= static_cast<int>(m_apoLayers.size()) )
         return OGRERR_FAILURE;
 
 /* -------------------------------------------------------------------- */
@@ -715,10 +729,21 @@ bool OGRElasticDataSource::CheckVersion()
 }
 
 /************************************************************************/
+/*                           OpenAggregation()                          */
+/************************************************************************/
+
+bool OGRElasticDataSource::OpenAggregation(const char* pszAggregation)
+{
+    m_bAllLayersListed = true;
+    m_poAggregationLayer = OGRElasticAggregationLayer::Build(this, pszAggregation);
+    return m_poAggregationLayer != nullptr;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRElasticDataSource::Open(GDALOpenInfo* poOpenInfo)
+bool OGRElasticDataSource::Open(GDALOpenInfo* poOpenInfo)
 {
     eAccess = poOpenInfo->eAccess;
     m_pszName = CPLStrdup(poOpenInfo->pszFilename);
@@ -760,10 +785,19 @@ int OGRElasticDataSource::Open(GDALOpenInfo* poOpenInfo)
     }
 
     if( !CheckVersion() )
-        return FALSE;
+        return false;
 
     const char* pszLayerName = CSLFetchNameValue(poOpenInfo->papszOpenOptions,
                                                  "LAYER");
+    const char* pszAggregation = CSLFetchNameValue(poOpenInfo->papszOpenOptions,
+                                                   "AGGREGATION");
+    if( pszLayerName && pszAggregation )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "LAYER and AGGREGATION open options are mutually exclusive");
+        return false;
+    }
+
     if( pszLayerName )
     {
         bool bFound = GetLayerByName(pszLayerName) != nullptr;
@@ -771,7 +805,10 @@ int OGRElasticDataSource::Open(GDALOpenInfo* poOpenInfo)
         return bFound;
     }
 
-    return TRUE;
+    if( pszAggregation )
+        return OpenAggregation(pszAggregation);
+
+    return true;
 }
 
 /************************************************************************/
@@ -878,13 +915,13 @@ int OGRElasticDataSource::Create(const char *pszFilename,
 
 int OGRElasticDataSource::GetLayerIndex( const char* pszName )
 {
-    const int nLayerCount = GetLayerCount();
-    for( int i=0; i < nLayerCount; ++i )
+    GetLayerCount();
+    for( int i=0; i < static_cast<int>(m_apoLayers.size()); ++i )
     {
         if( strcmp( m_apoLayers[i]->GetName(), pszName ) == 0 )
             return i;
     }
-    for( int i=0; i < nLayerCount; ++i )
+    for( int i=0; i < static_cast<int>(m_apoLayers.size()); ++i )
     {
         if( EQUAL( m_apoLayers[i]->GetName(), pszName ) )
             return i;
@@ -900,10 +937,10 @@ OGRLayer* OGRElasticDataSource::ExecuteSQL( const char *pszSQLCommand,
                                             OGRGeometry *poSpatialFilter,
                                             const char *pszDialect )
 {
-    const int nLayerCount = GetLayerCount();
-    for(int i=0; i<nLayerCount; i++ )
+    GetLayerCount();
+    for(auto& poLayer: m_apoLayers)
     {
-        m_apoLayers[i]->SyncToDisk();
+        poLayer->SyncToDisk();
     }
 
 /* -------------------------------------------------------------------- */
@@ -916,7 +953,7 @@ OGRLayer* OGRElasticDataSource::ExecuteSQL( const char *pszSQLCommand,
         while( *pszLayerName == ' ' )
             pszLayerName++;
 
-        for( int iLayer = 0; iLayer < nLayerCount; iLayer++ )
+        for( int iLayer = 0; iLayer < static_cast<int>(m_apoLayers.size()); iLayer++ )
         {
             if( EQUAL(m_apoLayers[iLayer]->GetName(),
                       pszLayerName ))
