@@ -634,6 +634,10 @@ QHULL
 The QHULL library is used for the linear interpolation of gdal_grid. If not
 found, an internal copy is used.
 
+.. option:: QHULL_PACKAGE_NAME
+
+   Name of the pkg-config package, typically ``qhull_r`` or ``qhullstatic_r``. Defaults to ``qhull_r``
+
 .. option:: QHULL_INCLUDE_DIR
 
     Path to an include directory with the ``libqhull_r/libqhull_r.h`` header file.
