@@ -1198,8 +1198,13 @@ OGRFeature *OGRDWGLayer::TranslateINSERT( OdDbEntityPtr poEntity )
             
             CPLString attrText = TextUnescape( openAttr->textString(), false );
 
-            if ( !openAttr->isInvisible() && openAttr->visibility() != OdDb::kInvisible)
+            if ( !openAttr->isInvisible() && openAttr->visibility() != OdDb::kInvisible) {
                 uAttrData.Add( CPLSPrintf("%ls", openAttr->tag().c_str()), attrText );
+                if (poDS->Attributes())
+                {
+                    poFeature->SetField(CPLSPrintf("%ls", openAttr->tag().c_str()), attrText);
+                }
+            }
         }
 
         poFeature->SetField( "BlockAttributes", uAttrData.ToString().c_str() );
@@ -1277,7 +1282,10 @@ OGRFeature *OGRDWGLayer::TranslateINSERT( OdDbEntityPtr poEntity )
 
             if( poDS->Attributes() )
             {
-                poFeature->SetField(pAttr->tag(), pAttr->textString());
+                CPLString attrText = TextUnescape(pAttr->textString(), false);
+                poFeature->SetField(CPLSPrintf("%ls", pAttr->tag().c_str()), attrText);
+                if (poAttrFeat)
+                    poAttrFeat->SetField(CPLSPrintf("%ls", pAttr->tag().c_str()), attrText);
             }
             if( poAttrFeat )
                 apoPendingFeatures.push( poAttrFeat );
