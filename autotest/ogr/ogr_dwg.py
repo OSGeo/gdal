@@ -157,6 +157,12 @@ def test_ogr_dwg_4():
         layer = ds.GetLayer( 'entities' )
         defn = layer.GetLayerDefn()
         
+        foundmathieu = None
+        for feature in layer:
+            if feature.GetField("OCCUPANT") == 'Mathieu' :
+                foundmathieu = 'yes'
+            
+        
         assert defn.GetFieldCount() == 28, \
             ('did not get expected number of fields in defn. got %d'
                                 % defn.GetFieldsCount())
@@ -165,6 +171,9 @@ def test_ogr_dwg_4():
             ('did not get the expected field in defn. AVAILABILITY')
         assert defn.GetFieldIndex('ROOM') >-1, \
             ('did not get the expected field in defn. ROOM')
+
+        assert foundmathieu == 'yes', \
+            ('Mathieu was not found as OCCUPANT field value')
         
 
         ds = None
