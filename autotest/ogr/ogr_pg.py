@@ -4757,6 +4757,7 @@ def test_ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL('DELLAYER:ogr_pg_87')
     gdaltest.pg_ds.ExecuteSQL('DELLAYER:ogr_pg_json')
     gdaltest.pg_ds.ExecuteSQL('DELLAYER:test_ogr_pg_uuid')
+    gdaltest.pg_ds.ExecuteSQL('DELLAYER:layer_polygon_with_multipolygon')
 
     # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
     gdaltest.pg_ds.ExecuteSQL('DELLAYER:AutoTest-schema.tpoly')
@@ -4846,6 +4847,23 @@ def test_ogr_pg_url():
     ds = gdal.OpenEx(url, gdal.OF_VECTOR, open_options=open_options)
     assert ds is not None
 
+###############################################################################
+# Test error on EndCopy()
+
+def test_ogr_pg_copy_error(with_and_without_postgis):
+
+    if gdaltest.pg_ds is None or not with_and_without_postgis:
+        pytest.skip()
+
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
+    src_lyr = src_ds.CreateLayer('layer_polygon_with_multipolygon', geom_type = ogr.wkbPolygon)
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('MULTIPOLYGON(((0 0,0 1,1 1,0 0)))'))
+    src_lyr.CreateFeature(f)
+    with gdaltest.enable_exceptions():
+        with pytest.raises(RuntimeError):
+            gdal.VectorTranslate('PG:' + gdaltest.pg_connection_string,
+                                 src_ds)
 
 
 def test_ogr_pg_cleanup():
