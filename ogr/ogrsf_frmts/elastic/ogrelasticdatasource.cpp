@@ -86,25 +86,26 @@ int OGRElasticDataSource::TestCapability(const char * pszCap)
 }
 
 /************************************************************************/
-/*                             GetLayerCount()                          */
+/*                             GetIndexList()                           */
 /************************************************************************/
 
-int OGRElasticDataSource::GetLayerCount()
+std::vector<std::string> OGRElasticDataSource::GetIndexList(const char* pszQueriedIndexName)
 {
-    if( m_bAllLayersListed )
+    std::vector<std::string> aosList;
+    std::string osURL(m_osURL);
+    osURL +=  "/_cat/indices";
+    if( pszQueriedIndexName )
     {
-        if( m_poAggregationLayer )
-            return 1;
-        return static_cast<int>(m_apoLayers.size());
+        osURL += '/';
+        osURL += pszQueriedIndexName;
     }
-    m_bAllLayersListed = true;
-
-    CPLHTTPResult* psResult = HTTPFetch((m_osURL + "/_cat/indices?h=i").c_str(), nullptr);
+    osURL += "?h=i";
+    CPLHTTPResult* psResult = HTTPFetch(osURL.c_str(), nullptr);
     if( psResult == nullptr || psResult->pszErrBuf != nullptr ||
         psResult->pabyData == nullptr )
     {
         CPLHTTPDestroyResult(psResult);
-        return 0;
+        return aosList;
     }
 
     char* pszCur = (char*)psResult->pabyData;
@@ -132,10 +133,33 @@ int OGRElasticDataSource::GetLayerCount()
             continue;
         }
 
-        FetchMapping(pszIndexName);
+        aosList.push_back(pszIndexName);
+    }
+    CPLHTTPDestroyResult(psResult);
+
+    return aosList;
+}
+
+/************************************************************************/
+/*                             GetLayerCount()                          */
+/************************************************************************/
+
+int OGRElasticDataSource::GetLayerCount()
+{
+    if( m_bAllLayersListed )
+    {
+        if( m_poAggregationLayer )
+            return 1;
+        return static_cast<int>(m_apoLayers.size());
+    }
+    m_bAllLayersListed = true;
+
+    const auto aosList = GetIndexList(nullptr);
+    for( const std::string& osIndexName: aosList )
+    {
+        FetchMapping(osIndexName.c_str());
     }
 
-    CPLHTTPDestroyResult(psResult);
     return static_cast<int>(m_apoLayers.size());
 }
 
@@ -230,6 +254,8 @@ void OGRElasticDataSource::FetchMapping(const char* pszIndexName)
 
 OGRLayer* OGRElasticDataSource::GetLayerByName(const char* pszName)
 {
+    const bool bIsMultipleTargetName =
+        strchr(pszName, '*') != nullptr || strchr(pszName, ',') != nullptr;
     if( !m_bAllLayersListed )
     {
         for( auto& poLayer: m_apoLayers )
@@ -239,28 +265,60 @@ OGRLayer* OGRElasticDataSource::GetLayerByName(const char* pszName)
                 return poLayer.get();
             }
         }
-        size_t nSizeBefore = m_apoLayers.size();
-        FetchMapping(pszName);
-        const char* pszLastUnderscore = strrchr(pszName, '_');
-        if( pszLastUnderscore && m_apoLayers.size() == nSizeBefore )
+        if( !bIsMultipleTargetName )
         {
-            CPLString osIndexName(pszName);
-            osIndexName.resize( pszLastUnderscore - pszName);
-            FetchMapping(osIndexName);
-        }
-        for( auto& poLayer: m_apoLayers )
-        {
-            if( EQUAL( poLayer->GetIndexName(), pszName) )
+            size_t nSizeBefore = m_apoLayers.size();
+            FetchMapping(pszName);
+            const char* pszLastUnderscore = strrchr(pszName, '_');
+            if( pszLastUnderscore && m_apoLayers.size() == nSizeBefore )
             {
-                return poLayer.get();
+                CPLString osIndexName(pszName);
+                osIndexName.resize( pszLastUnderscore - pszName);
+                FetchMapping(osIndexName);
+            }
+            for( auto& poLayer: m_apoLayers )
+            {
+                if( EQUAL( poLayer->GetIndexName(), pszName) )
+                {
+                    return poLayer.get();
+                }
             }
         }
-        return nullptr;
     }
     else
     {
-        return GDALDataset::GetLayerByName(pszName);
+        auto poLayer = GDALDataset::GetLayerByName(pszName);
+        if( poLayer )
+            return poLayer;
     }
+
+    if( !bIsMultipleTargetName )
+    {
+        return nullptr;
+    }
+
+    // Deal with wildcard layer names
+    std::string osSanitizedName(pszName);
+    const auto nPos = osSanitizedName.find(",-");
+    if( nPos != std::string::npos )
+        osSanitizedName.resize(nPos);
+    const auto aosList = GetIndexList(osSanitizedName.c_str());
+    if( aosList.empty() || aosList[0].find('*') != std::string::npos ||
+        aosList[0].find(',') != std::string::npos )
+    {
+        return nullptr;
+    }
+
+    // For the sake of simplicity, take the schema of one the layers/indices
+    // that match the wildcard.
+    // We could potentially issue a /wildcard*/_mapping request and build a
+    // schema that merges all mappings, but that would be more involved.
+    auto poReferenceLayer = dynamic_cast<OGRElasticLayer*>(GetLayerByName(aosList[0].c_str()));
+    if( poReferenceLayer == nullptr )
+        return nullptr;
+
+    m_apoLayers.push_back(cpl::make_unique<OGRElasticLayer>(pszName, poReferenceLayer));
+    return m_apoLayers.back().get();
 }
 
 /************************************************************************/
@@ -766,6 +824,10 @@ bool OGRElasticDataSource::Open(GDALOpenInfo* poOpenInfo)
     m_bFlattenNestedAttributes = CPLFetchBool(
             poOpenInfo->papszOpenOptions, "FLATTEN_NESTED_ATTRIBUTES", true);
     m_osFID = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "FID", "ogc_fid");
+
+    // Only used for wildcard layers
+    m_bAddSourceIndexName = CPLFetchBool(
+            poOpenInfo->papszOpenOptions, "ADD_SOURCE_INDEX_NAME", false);
 
     const char* pszHeadersFromEnv = CPLGetConfigOption("ES_FORWARD_HTTP_HEADERS_FROM_ENV",
         CSLFetchNameValue(poOpenInfo->papszOpenOptions, "FORWARD_HTTP_HEADERS_FROM_ENV"));
