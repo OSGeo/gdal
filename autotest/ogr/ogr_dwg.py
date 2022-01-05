@@ -157,7 +157,7 @@ def test_ogr_dwg_4():
         layer = ds.GetLayer( 'entities' )
         defn = layer.GetLayerDefn()
         
-        foundMathieu = Fallse
+        foundMathieu = False
         for feature in layer:
             if feature.GetField("OCCUPANT") == 'Mathieu' :
                 foundMathieu = True
