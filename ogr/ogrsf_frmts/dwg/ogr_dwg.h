@@ -211,7 +211,7 @@ class OGRDWGDataSource final: public OGRDataSource
     DWGBlockDefinition *LookupBlock( const char *pszName );
     std::map<CPLString,DWGBlockDefinition> &GetBlockMap() { return oBlockMap; }
 
-    std::set<CPLString>& GetAttributes() { return attributeFields; };
+    std::set<CPLString>& GetAttributes() { return attributeFields; }
     // Layer and other Table Handling (ogrdatasource.cpp)
     void                ReadLayerDefinitions();
     void                ReadLineTypeDefinitions();
