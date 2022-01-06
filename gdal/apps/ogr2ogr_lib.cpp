@@ -3226,7 +3226,14 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
             if( nRetCode != 0 && !psOptions->bSkipFailures )
                 poODS->RollbackTransaction();
             else
-                poODS->CommitTransaction();
+            {
+                OGRErr eRet = poODS->CommitTransaction();
+                if( eRet != OGRERR_NONE &&
+                    eRet != OGRERR_UNSUPPORTED_OPERATION )
+                {
+                    nRetCode = 1;
+                }
+            }
         }
     }
 
