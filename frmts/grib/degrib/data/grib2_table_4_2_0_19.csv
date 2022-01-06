@@ -1,0 +1,37 @@
+subcat,short_name,name,unit,unit_conv
+0,"VIS","Visibility","m",UC_M2StatuteMile
+1,"ALBDO","Albedo","%",UC_NONE
+2,"TSTM","Thunderstorm probability","%",UC_NONE
+3,"MIXHT","Mixed layer depth","m",UC_NONE
+4,"VOLASH","Volcanic ash","0=not present; 1=present; 255=missing",UC_NONE
+5,"ICIT","Icing top","m",UC_NONE
+6,"ICIB","Icing base","m",UC_NONE
+7,"ICI","Icing","0=None; 1=Light; 2=Moderate; 3=Severe; 255=missing",UC_NONE
+8,"TURBT","Turbulance top","m",UC_NONE
+9,"TURBB","Turbulence base","m",UC_NONE
+10,"TURB","Turbulance","0=None(smooth); 1=Light; 2=Moderate; 3=Severe; 4=Extreme; 255=missing",UC_NONE
+11,"TKE","Turbulent kinetic energy","J/kg",UC_NONE
+12,"PBLREG","Planetary boundary layer regime","0=Reserved; 1=Stable; 2=Mechanically driven turbulence; 3=Forced convection; 4=Free convection; 255=missing",UC_NONE
+13,"CONTI","Contrail intensity","0=Contrail not present; 1=Contrail present; 255=missing",UC_NONE
+14,"CONTET","Contrail engine type","0=Low bypass; 1=High bypass; 2=Non bypass; 255=missing",UC_NONE
+15,"CONTT","Contrail top","m",UC_NONE
+16,"CONTB","Contrail base","m",UC_NONE
+17,"MXSALB","Maximum snow albedo","%",UC_NONE
+18,"SNFALB","Snow free albedo","%",UC_NONE
+19,"SALBD","Snow albedo","%",UC_NONE
+20,"ICIP","Icing","%",UC_NONE
+21,"CTP","In-Cloud Turbulence","%",UC_NONE
+22,"CAT","Clear Air Turbulence","%",UC_NONE
+23,"SLDP","Supercooled Large Droplet Probability","%",UC_NONE
+24,"CONTKE","Convective Turbulent Kinetic Energy","J/kg",UC_NONE
+25,"WIWW","Weather Interpretation ww (WMO)"," ",UC_NONE
+26,"CONVO","Convective Outlook","0=No Risk Area; 1=Reserved; 2=General Thunderstorm Risk Area; 3=Reserved; 4=Slight Risk Area; 5=Reserved; 6=Moderate Risk Area;  7=Reserved; 8=High Risk Area; 9-10=Reserved; 11=Dry Thunderstorm (Dry Lightning) Risk Area; 12-13=Reserved; 14=Critical Risk Area; 15-17=Reserved18=Extremely Critical Risk Area; 255=missing",UC_NONE
+27,"ICESC","Icing Scenario","0=None; 1=General, 2=Convective 3=Stratiform; 4=Freezing; 5-191=Reserved; 255=missing",UC_NONE
+28,"MWTURB","Mountain Wave Turbulence (Eddy Dissipation Rate)","m^(2/3)/s",UC_NONE
+29,"CATEDR","Clear Air Turbulence (CAT) (Eddy Dissipation Rate)","m^(2/3)/s",UC_NONE
+30,"EDPARM","Eddy Dissipation Parameter","m^(2/3)/s",UC_NONE
+31,"MXEDPRM","Maximum of Eddy Dissipation Parameter in Layer","m^(2/3)/s",UC_NONE
+32,"HIFREL","Highest Freezing Level","m",UC_NONE
+33,"VISLFOG","Visibility Through Liquid Fog","m",UC_NONE
+34,"VISIFOG","Visibility Through Ice Fog","m",UC_NONE
+35,"VISBSN","Visibility Through Blowing Snow","m",UC_NONE

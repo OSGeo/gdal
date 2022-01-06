@@ -1,0 +1,4 @@
+subcat,short_name,name,unit,unit_conv
+0,"CPPOP","Conditional percent precipitation amount fractile for an overall period","kg/(m^2)",UC_NONE
+1,"PPOSP","Percent precipitation in a sub-period of an overall period","%",UC_NONE
+2,"PoP","Probability of 0.01 inch of precipitation","%",UC_NONE

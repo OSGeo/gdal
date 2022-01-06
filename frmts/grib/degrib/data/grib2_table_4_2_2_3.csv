@@ -1,0 +1,29 @@
+subcat,short_name,name,unit,unit_conv
+0,"SOTYP","Soil type","1=Sand; 2=Loamy sand; 3=Sandy loam; 4=Silt loam; 5=Organic (redefined); 6=Sandy clay loam; 7=Silt clay loam; 8=Clay loam; 9=Sandy clay; 10=Silty clay; 11=Clay",UC_NONE
+1,"UPLST","Upper layer soil temperature","K",UC_NONE
+2,"UPLSM","Upper layer soil moisture","kg/(m^3)",UC_NONE
+3,"LOWLSM","Lower layer soil moisture","kg/(m^3)",UC_NONE
+4,"BOTLST","Bottom layer soil temperature","K",UC_NONE
+5,"SOILL","Liquid volumetric soil moisture (non-frozen)","Proportion",UC_NONE
+6,"RLYRS","Number of soil layers in root zone","Numeric",UC_NONE
+7,"SMREF","Transpiration stress-onset (soil moisture)","Proportion",UC_NONE
+8,"SMDRY","Direct evaporation cease (soil moisture)","Proportion",UC_NONE
+9,"POROS","Soil porosity","Proportion",UC_NONE
+10,"LIQVSM","Liquid volumetric soil moisture (non-frozen)","m^3/m^3",UC_NONE
+11,"VOLTSO","Volumetric transpiration stress-onset (soil moisture)","m^3/m^3",UC_NONE
+12,"TRANSO","Transpiration stress-onset (soil moisture)","kg/m^3",UC_NONE
+13,"VOLDEC","Volumetric direct evaporation cease (soil moisture)","m^3/m^3",UC_NONE
+14,"DIREC","Direct evaporation cease (soil moisture)","kg/m^3",UC_NONE
+15,"SOILP","Soil porosity","m^3/m^3",UC_NONE
+16,"VSOSM","Volumetric saturation of soil moisture","m^3/m^3",UC_NONE
+17,"SATOSM","Saturation of soil moisture","kg/m^3",UC_NONE
+18,"SOILTMP","Soil Temperature","K",UC_NONE
+19,"SOILMOI","Soil Moisture","kg/(m^3)",UC_NONE
+20,"CISOILM","Column-Integrated Soil Moisture","kg/(m^2)",UC_NONE
+21,"SOILICE","Soil Ice","kg/(m^3)",UC_NONE
+22,"CISICE","Column-Integrated Soil Ice","kg/(m^2)",UC_NONE
+23,"LWSNWP","Liquid Water in Snow Pack","kg/(m^2)",UC_NONE
+24,"FRSTINX","Frost Index","kg/day",UC_NONE
+25,"SNWDEB","Snow Depth at Elevation Bands","kg/(m^2)",UC_NONE
+26,"SHFLX","Soil Heat Flux","W/(m^2)",UC_NONE
+27,"SOILDEP","Soil Depth","m",UC_NONE

@@ -1,0 +1,4 @@
+subcat,short_name,name,unit,unit_conv
+0,"WTMP","Water temperature","K",UC_NONE
+1,"DSLM","Deviation of sea level from mean","m",UC_NONE
+2,"CH","Heat Exchange Coefficient","",UC_NONE

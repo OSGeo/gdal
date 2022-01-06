@@ -1,0 +1,18 @@
+subcat,short_name,name,unit,unit_conv
+0,"BSWID","Base spectrum width","m/s",UC_NONE
+1,"BREF","Base reflectivity","dB",UC_NONE
+2,"BRVEL","Base radial velocity","m/s",UC_NONE
+3,"VERIL","Vertically-integrated liquid","kg/m",UC_NONE
+4,"LMAXBR","Layer maximum base reflectivity","dB",UC_NONE
+5,"PREC","Precipitation","kg/(m^2)",UC_NONE
+6,"RDSP1","Radar spectra (1)","-",UC_NONE
+7,"RDSP2","Radar spectra (2)","-",UC_NONE
+8,"RDSP3","Radar spectra (3)","-",UC_NONE
+9,"RFCD","Reflectivity of Cloud Droplets","dB",UC_NONE
+10,"RFCI","Reflectivity of Cloud Ice","dB",UC_NONE
+11,"RFSNOW","Reflectivity of Snow","dB",UC_NONE
+12,"RFRAIN","Reflectivity of Rain","dB",UC_NONE
+13,"RFGRPL","Reflectivity of Graupel","dB",UC_NONE
+14,"RFHAIL","Reflectivity of Hail","dB",UC_NONE
+15,"HSR","Hybrid Scan Reflectivity","dB",UC_NONE
+16,"HSRHT","Hybrid Scan Reflectivity Height","m",UC_NONE
