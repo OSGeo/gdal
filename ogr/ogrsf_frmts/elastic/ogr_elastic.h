@@ -68,60 +68,61 @@ class OGRESSortDesc
 /************************************************************************/
 
 class OGRElasticLayer final: public OGRLayer {
-    OGRElasticDataSource                *m_poDS;
+    OGRElasticDataSource                *m_poDS = nullptr;
 
-    CPLString                            m_osIndexName;
-    CPLString                            m_osMappingName;
+    CPLString                            m_osIndexName{};
+    CPLString                            m_osMappingName{};
 
-    OGRFeatureDefn                      *m_poFeatureDefn;
-    bool                                 m_bFeatureDefnFinalized;
+    OGRFeatureDefn                      *m_poFeatureDefn = nullptr;
+    bool                                 m_bFeatureDefnFinalized = false;
+    bool                                 m_bAddSourceIndexName = false;
 
-    bool                                 m_bManualMapping;
-    bool                                 m_bSerializeMapping;
-    CPLString                            m_osWriteMapFilename;
-    bool                                 m_bStoreFields;
-    char                               **m_papszStoredFields;
-    char                               **m_papszNotAnalyzedFields;
-    char                               **m_papszNotIndexedFields;
-    char                               **m_papszFieldsWithRawValue;
+    bool                                 m_bManualMapping = false;
+    bool                                 m_bSerializeMapping = false;
+    CPLString                            m_osWriteMapFilename{};
+    bool                                 m_bStoreFields = false;
+    char                               **m_papszStoredFields = nullptr;
+    char                               **m_papszNotAnalyzedFields = nullptr;
+    char                               **m_papszNotIndexedFields = nullptr;
+    char                               **m_papszFieldsWithRawValue = nullptr;
 
-    CPLString                            m_osESSearch;
-    std::vector<OGRESSortDesc>           m_aoSortColumns;
+    CPLString                            m_osESSearch{};
+    std::vector<OGRESSortDesc>           m_aoSortColumns{};
 
-    CPLString                            m_osBulkContent;
-    int                                  m_nBulkUpload;
+    CPLString                            m_osBulkContent{};
+    int                                  m_nBulkUpload{};
 
-    CPLString                            m_osFID;
+    CPLString                            m_osFID{};
 
-    std::vector< std::vector<CPLString> > m_aaosFieldPaths;
-    std::map< CPLString, int>             m_aosMapToFieldIndex;
+    std::vector< std::vector<CPLString> > m_aaosFieldPaths{};
+    std::map< CPLString, int>             m_aosMapToFieldIndex{};
 
-    std::vector< std::vector<CPLString> > m_aaosGeomFieldPaths;
-    std::map< CPLString, int>             m_aosMapToGeomFieldIndex;
-    std::vector< OGRCoordinateTransformation* > m_apoCT;
-    std::vector< int >                    m_abIsGeoPoint;
-    ESGeometryTypeMapping                 m_eGeomTypeMapping;
-    CPLString                             m_osPrecision;
+    std::vector< std::vector<CPLString> > m_aaosGeomFieldPaths{};
+    std::map< CPLString, int>             m_aosMapToGeomFieldIndex{};
+    std::vector< OGRCoordinateTransformation* > m_apoCT{};
+    std::vector< int >                    m_abIsGeoPoint{};
+    ESGeometryTypeMapping                 m_eGeomTypeMapping = ES_GEOMTYPE_AUTO;
+    CPLString                             m_osPrecision{};
 
-    CPLString                             m_osScrollID;
-    GIntBig                               m_iCurID;
-    GIntBig                               m_nNextFID; // for creation
-    int                                   m_iCurFeatureInPage;
-    std::vector<OGRFeature*>              m_apoCachedFeatures;
-    bool                                  m_bEOF;
+    CPLString                             m_osScrollID{};
+    GIntBig                               m_iCurID = 0;
+    GIntBig                               m_nNextFID = -1; // for creation
+    int                                   m_iCurFeatureInPage = 0;
+    std::vector<OGRFeature*>              m_apoCachedFeatures{};
+    bool                                  m_bEOF = false;
 
-    json_object*                          m_poSpatialFilter;
-    CPLString                             m_osJSONFilter;
-    bool                                  m_bFilterMustBeClientSideEvaluated;
-    json_object*                          m_poJSONFilter;
+    json_object*                          m_poSpatialFilter = nullptr;
+    CPLString                             m_osJSONFilter{};
+    bool                                  m_bFilterMustBeClientSideEvaluated = false;
+    json_object*                          m_poJSONFilter = nullptr;
 
-    bool                                  m_bIgnoreSourceID;
-    bool                                  m_bDotAsNestedField;
+    bool                                  m_bIgnoreSourceID = false;
+    bool                                  m_bDotAsNestedField = true;
 
-    bool                                  m_bAddPretty;
-    bool                                  m_bGeoShapeAsGeoJSON;
+    bool                                  m_bAddPretty = false;
+    bool                                  m_bGeoShapeAsGeoJSON = false;
 
-    CPLString                             m_osSingleQueryTimeout;
+    CPLString                             m_osSingleQueryTimeout{};
     double                                m_dfSingleQueryTimeout = 0;
     double                                m_dfFeatureIterationTimeout = 0;
     //! Timestamp after which the query must be terminated
@@ -133,6 +134,8 @@ class OGRElasticLayer final: public OGRLayer {
     CPLString                             m_osSingleQueryTerminateAfter;
 
     bool                                  m_bUseSingleQueryParams = false;
+
+    void                                  CopyMembersTo(OGRElasticLayer* poNew);
 
     bool                                  PushIndex();
     CPLString                             BuildMap();
@@ -182,6 +185,8 @@ public:
                                          OGRElasticDataSource* poDS,
                                          char** papszOptions,
                                          const char* pszESSearch = nullptr);
+                        OGRElasticLayer( const char* pszLayerName,
+                                         OGRElasticLayer* poReferenceLayer );
                         virtual ~OGRElasticLayer();
 
     virtual void        ResetReading() override;
@@ -223,7 +228,7 @@ public:
     void                SetFID(const CPLString& m_osFIDIn) { m_osFID = m_osFIDIn; }
     void                SetNextFID(GIntBig nNextFID) { m_nNextFID = nNextFID; }
 
-    OGRElasticLayer*    Clone() const;
+    OGRElasticLayer*    Clone();
     void                SetOrderBy( const std::vector<OGRESSortDesc>& v )
                                                         { m_aoSortColumns = v; }
 
@@ -296,6 +301,7 @@ class OGRElasticDataSource final: public GDALDataset {
     int                 GetLayerIndex( const char* pszName );
     void                FetchMapping(const char* pszIndexName);
     bool                OpenAggregation(const char* pszAggregation);
+    std::vector<std::string> GetIndexList(const char* pszQueriedIndexName);
 
 public:
                             OGRElasticDataSource();
@@ -309,6 +315,7 @@ public:
     int                 m_nFeatureCountToEstablishFeatureDefn;
     bool                m_bJSonField;
     bool                m_bFlattenNestedAttributes;
+    bool                m_bAddSourceIndexName = false; // Only used for wildcard layers
     int                 m_nMajorVersion = 0;
     int                 m_nMinorVersion = 0;
 

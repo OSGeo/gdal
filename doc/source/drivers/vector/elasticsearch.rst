@@ -357,6 +357,18 @@ It will return a layer with a Point geometry field and the following fields:
 - ``field_c_sum`` of type Real
 - ``field_c_count`` of type Integer64
 
+Multi-target layers
+-------------------
+
+.. versionadded:: 3.5.0
+
+The GetLayerByName() method accepts a layer name that can be a comma-separated
+list of indices, potentially combined with the '*' wildcard character. See
+https://www.elastic.co/guide/en/elasticsearch/reference/current/multi-index.html.
+Note that in the current implementation, the field definition will be established
+from the one of the matching layers, but not all, so using this functionality will be
+appropriate when the multiple matching layers share the same schema.
+
 Getting metadata
 ----------------
 
