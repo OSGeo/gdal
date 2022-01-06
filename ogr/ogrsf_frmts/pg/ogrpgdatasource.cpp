@@ -103,13 +103,22 @@ OGRPGDataSource::~OGRPGDataSource()
 /*                              FlushCache()                            */
 /************************************************************************/
 
-void OGRPGDataSource::FlushCache(bool /* bAtClosing */)
+OGRErr OGRPGDataSource::FlushCacheWithRet(bool /* bAtClosing */)
 {
-    EndCopy();
-    for( int iLayer = 0; iLayer < nLayers; iLayer++ )
+    OGRErr eErr = EndCopy();
+    if( eErr == OGRERR_NONE )
     {
-        papoLayers[iLayer]->RunDeferredCreationIfNecessary();
+        for( int iLayer = 0; iLayer < nLayers; iLayer++ )
+        {
+            papoLayers[iLayer]->RunDeferredCreationIfNecessary();
+        }
     }
+    return eErr;
+}
+
+void OGRPGDataSource::FlushCache(bool bAtClosing)
+{
+    FlushCacheWithRet(bAtClosing);
 }
 
 /************************************************************************/
@@ -2587,12 +2596,16 @@ OGRErr OGRPGDataSource::CommitTransaction()
     /*CPLDebug("PG", "poDS=%p CommitTransaction() nSoftTransactionLevel=%d",
              this, nSoftTransactionLevel);*/
 
-    FlushCache(false);
+    OGRErr eErr = FlushCacheWithRet(false);
+    if( eErr != OGRERR_NONE )
+    {
+        RollbackTransaction();
+        return eErr;
+    }
 
     nSoftTransactionLevel--;
     bUserTransactionActive = FALSE;
 
-    OGRErr eErr;
     if( bSavePointActive )
     {
         CPLAssert(nSoftTransactionLevel > 0);
