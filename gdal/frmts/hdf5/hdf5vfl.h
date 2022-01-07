@@ -44,6 +44,10 @@ extern "C" int CPL_DLL GDALIsInGlobalDestructor(void);
 #define HDF5_1_10_OR_LATER
 #endif
 
+#ifdef H5FD_FEAT_MEMMANAGE
+#define HDF5_1_13_OR_LATER
+#endif
+
 static std::mutex gMutex;
 static hid_t hFileDriver = -1;
 
@@ -71,6 +75,11 @@ static void HDF5VFLUnloadFileDriver();
 
 /* See https://support.hdfgroup.org/HDF5/doc/TechNotes/VFL.html */
 static const H5FD_class_t HDF5_vsil_g = {
+#ifdef HDF5_1_13_OR_LATER
+/* value: 513 has been reserved with hdfgroup and is registered at:
+     * https://portal.hdfgroup.org/pages/viewpage.action?pageId=74188097 */
+    (H5FD_class_value_t)(513),
+#endif
     "vsil",                     /* name */
     MAXADDR,                    /* maxaddr  */
     H5F_CLOSE_WEAK,             /* fc_degree  */
@@ -104,6 +113,10 @@ static const H5FD_class_t HDF5_vsil_g = {
     HDF5_vsil_truncate,         /* truncate */
     nullptr,                    /* lock */
     nullptr,                    /* unlock */
+#ifdef HDF5_1_13_OR_LATER
+    nullptr,                    /* del */
+    nullptr,                    /* ctl */
+#endif
     H5FD_FLMAP_DICHOTOMY        /* fl_map */
 };
 
