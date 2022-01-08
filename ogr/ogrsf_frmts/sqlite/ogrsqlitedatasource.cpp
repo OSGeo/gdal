@@ -329,6 +329,27 @@ OGRSQLiteBaseDataSource::~OGRSQLiteBaseDataSource()
         GDALOpenInfoUnDeclareFileNotToOpen(m_pszFilename);
     }
 
+    if( !m_osFinalFilename.empty() )
+    {
+        if( !bSuppressOnClose )
+        {
+            CPLDebug("SQLITE", "Copying temporary file %s onto %s",
+                     m_pszFilename, m_osFinalFilename.c_str());
+            if( CPLCopyFile(m_osFinalFilename.c_str(), m_pszFilename) != 0 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Copy temporary file %s onto %s failed",
+                         m_pszFilename, m_osFinalFilename.c_str());
+            }
+        }
+        CPLDebug("SQLITE", "Deleting temporary file %s", m_pszFilename);
+        if( VSIUnlink(m_pszFilename) != 0 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Deleting temporary file %s failed", m_pszFilename);
+        }
+    }
+
     CPLFree(m_pszFilename);
 }
 
@@ -989,7 +1010,21 @@ bool OGRSQLiteDataSource::Create( const char * pszNameIn, char **papszOptions )
 {
     CPLString osCommand;
 
-    m_pszFilename = CPLStrdup( pszNameIn );
+    const bool bUseTempFile =
+        CPLTestBool(CPLGetConfigOption("CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "NO")) &&
+        (VSIHasOptimizedReadMultiRange(pszNameIn) != FALSE ||
+         EQUAL(CPLGetConfigOption("CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", ""), "FORCED"));
+
+    if( bUseTempFile )
+    {
+        m_osFinalFilename = pszNameIn;
+        m_pszFilename = CPLStrdup(CPLGenerateTempFilename(CPLGetFilename(pszNameIn)));
+        CPLDebug("SQLITE", "Creating temporary file %s", m_pszFilename);
+    }
+    else
+    {
+        m_pszFilename = CPLStrdup( pszNameIn );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Check that spatialite extensions are loaded if required to      */
