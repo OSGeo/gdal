@@ -172,7 +172,9 @@ Layer Creation Options
 -  **GEOM_TYPE**: The GEOM_TYPE layer creation option can be set to one
    of "geometry", "geography" (PostGIS >= 1.5), "BYTEA" or "OID" to
    force the type of geometry used for a table. For a PostGIS database,
-   "geometry" is the default value.
+   "geometry" is the default value. PostGIS "geography" is by definition
+   EPSG:4326 but the driver has no built-in reprojection logic so it is
+   safest to use always `-t_srs EPSG:4326` with GEOM_TYPE=geography.
 -  **OVERWRITE**: This may be "YES" to force an existing layer of the
    desired name to be destroyed before creating the requested layer.
 -  **LAUNDER**: This may be "YES" to force new fields created on this
