@@ -1817,6 +1817,17 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
     if( poSRS != nullptr )
         nSRSId = FetchSRSId( poSRS );
 
+    if( eType != wkbNone && EQUAL(pszGeomType, "geography") &&
+        nSRSId != nUndefinedSRID && nSRSId != 4326 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "geography type only supports SRS = EPSG:4326");
+
+        CPLFree( pszTableName );
+        CPLFree( pszSchemaName );
+        return nullptr;
+    }
+
     const char *pszGeometryType = OGRToOGCGeomType(eType);
 
     int bDeferredCreation = CPLTestBool(CPLGetConfigOption( "OGR_PG_DEFERRED_CREATION", "YES" ));
