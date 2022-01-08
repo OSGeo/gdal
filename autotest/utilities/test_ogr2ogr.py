@@ -2111,8 +2111,8 @@ def test_ogr2ogr_57():
     content = f.read()
     f.close()
 
-    assert ("""CREATE TABLE "public"."test_ogr2ogr_57" (    "id" SERIAL,    CONSTRAINT "test_ogr2ogr_57_pk" PRIMARY KEY ("id") )""" in content and \
-       """INSERT INTO "public"."test_ogr2ogr_57" ("wkt" , "id" , "str") VALUES ('010100000000000000000000000000000000000000', 10, 'a')""" in content)
+    assert ("""CREATE TABLE "public"."test_ogr2ogr_57" ( "id" SERIAL, CONSTRAINT "test_ogr2ogr_57_pk" PRIMARY KEY ("id") )""" in content and \
+       """INSERT INTO "public"."test_ogr2ogr_57" ("WKT" , "id" , "str") VALUES ('010100000000000000000000000000000000000000', 10, 'a')""" in content)
 
     os.unlink('tmp/test_ogr2ogr_57.sql')
 
@@ -2123,8 +2123,8 @@ def test_ogr2ogr_57():
     content = f.read()
     f.close()
 
-    assert ("""CREATE TABLE "public"."test_ogr2ogr_57" (    "ogc_fid" SERIAL,    CONSTRAINT "test_ogr2ogr_57_pk" PRIMARY KEY ("ogc_fid") )""" in content and \
-       """INSERT INTO "public"."test_ogr2ogr_57" ("wkt" , "str") VALUES ('010100000000000000000000000000000000000000', 'a')""" in content)
+    assert ("""CREATE TABLE "public"."test_ogr2ogr_57" ( "ogc_fid" SERIAL, CONSTRAINT "test_ogr2ogr_57_pk" PRIMARY KEY ("ogc_fid") )""" in content and \
+       """INSERT INTO "public"."test_ogr2ogr_57" ("WKT" , "str") VALUES ('010100000000000000000000000000000000000000', 'a')""" in content)
 
     os.unlink('tmp/test_ogr2ogr_57.sql')
 
