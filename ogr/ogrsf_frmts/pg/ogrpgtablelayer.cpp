@@ -562,7 +562,12 @@ int OGRPGTableLayer::ReadTableDefinition()
                 else if( EQUAL(pszType,"geography") )
                 {
                     poGeomFieldDefn->ePostgisType = GEOM_TYPE_GEOGRAPHY;
-                    poGeomFieldDefn->nSRSId = 4326;
+                    if( !(poDS->sPostGISVersion.nMajor >= 3 ||
+                         (poDS->sPostGISVersion.nMajor == 2 && poDS->sPostGISVersion.nMinor >= 2)) )
+                    {
+                        // EPSG:4326 was a requirement for geography before PostGIS 2.2
+                        poGeomFieldDefn->nSRSId = 4326;
+                    }
                 }
                 else
                 {
@@ -749,7 +754,7 @@ void OGRPGTableLayer::SetTableDefinition(const char* pszFIDColumnName,
         else if( EQUAL(pszGeomType,"geography") )
         {
             poGeomFieldDefn->ePostgisType = GEOM_TYPE_GEOGRAPHY;
-            poGeomFieldDefn->nSRSId = 4326;
+            poGeomFieldDefn->nSRSId = nSRSId;
         }
         else
         {
