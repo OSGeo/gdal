@@ -257,12 +257,15 @@ class ColorPalette:
         return s
 
     def write_file(self, color_filename: Optional[PathLikeOrStr] = None, with_ndv: bool = True):
+        tmp_fd = None
         if color_filename is None:
-            color_filename = tempfile.mktemp(suffix='.txt')
+            tmp_fd, color_filename = tempfile.mkstemp(suffix='.txt')
         os.makedirs(os.path.dirname(color_filename), exist_ok=True)
         with open(color_filename, mode='w') as fp:
             for key in self.get_all_keys(with_ndv):
                 fp.write(self.get_txt_color_entry(key))
+        if tmp_fd:
+            os.close(tmp_fd)
         return color_filename
 
     def to_mem_buffer(self, with_ndv: bool = True) -> str:
@@ -376,20 +379,23 @@ def xml_to_color_file(xml_filename: Path, **kwargs) -> Tuple[ColorPalette, Path]
 
 def get_file_from_strings(color_palette: ColorPaletteOrPathOrStrings) -> Tuple[str, str]:
     temp_color_filename = None
+    tmp_fd = None
     if isinstance(color_palette, ColorPalette):
-        temp_color_filename = tempfile.mktemp(suffix='.txt')
+        tmp_fd, temp_color_filename = tempfile.mkstemp(suffix='.txt')
         color_filename = temp_color_filename
         color_palette.write_color_file(temp_color_filename)
     elif base.is_path_like(color_palette):
         color_filename = color_palette
     elif isinstance(color_palette, Sequence):
-        temp_color_filename = tempfile.mktemp(suffix='.txt')
+        tmp_fd, temp_color_filename = tempfile.mkstemp(suffix='.txt')
         color_filename = temp_color_filename
         with open(temp_color_filename, 'w') as f:
             for item in color_palette:
                 f.write(item + '\n')
     else:
         raise Exception('Unknown color palette type {}'.format(color_palette))
+    if tmp_fd:
+        os.close(tmp_fd)
     return color_filename, temp_color_filename
 
 
