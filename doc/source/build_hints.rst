@@ -164,7 +164,7 @@ Can be detected with pkg-config.
 
     Path to an include directory with the ``fitsio.h`` header file.
 
-.. option:: PDFium_LIBRARY
+.. option:: CFITSIO_LIBRARY
 
     Path to a shared or static library file.
 
