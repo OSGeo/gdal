@@ -151,11 +151,7 @@ if (Python_Interpreter_FOUND)
   else ()
     set(GNM_ENABLED "False")
   endif ()
-  if (Python_NumPy_FOUND)
-    set(HAVE_NUMPY "True")
-  else ()
-    set(HAVE_NUMPY "False")
-  endif ()
+
   file(TO_NATIVE_PATH "${GDAL_PYTHON_CSOURCE_DIR}" GDAL_PYTHON_EXT_SOURCE_DIR)
   if (_isMultiConfig)
     set(GDAL_LIB_DIR "os.path.dirname('$<TARGET_FILE:${GDAL_LIB_TARGET_NAME}>')")
@@ -179,6 +175,9 @@ if (Python_Interpreter_FOUND)
     set(GDAL_LIB_DIR "'${_gdal_lib_directory}'")
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in ${CMAKE_CURRENT_BINARY_DIR}/setup.py @ONLY)
   endif ()
+
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/README.rst ${CMAKE_CURRENT_BINARY_DIR}/README.rst @ONLY)
+
   file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/get_suffix.py
        "from setuptools.command.build_ext import EXTENSION_SUFFIXES; print(EXTENSION_SUFFIXES[0])\n")
   execute_process(

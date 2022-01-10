@@ -73,6 +73,13 @@ jobs:
         export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib
         $GITHUB_WORKSPACE/install-gdal/bin/gdalinfo --version
         PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/python3/dist-packages python3 -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
+    - name: Standalone Python bindings build
+      run: |
+        (cd $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python && python setup.py sdist)
+        mv $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python/dist/GDAL-*.tar.gz gdal-python.tar.gz
+        rm -rf $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python
+        # Set PATH so that gdal-config is found
+        PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH pip install --user gdal-python.tar.gz
 
   build-windows-msys2-mingw:
     runs-on: windows-latest
