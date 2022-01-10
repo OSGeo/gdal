@@ -2167,21 +2167,34 @@ def test_ogr_pg_47():
     gdaltest.pg_ds.ExecuteSQL("DELETE FROM spatial_ref_sys")
     gdaltest.pg_ds.ExecuteSQL("""INSERT INTO "spatial_ref_sys" ("srid","auth_name","auth_srid","srtext","proj4text") VALUES (4326,'EPSG',4326,'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]','+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs ')""")
 
+    gdaltest.pg_ds.ExecuteSQL("""INSERT INTO "spatial_ref_sys" ("srid","auth_name","auth_srid","srtext","proj4text") VALUES (4269,'EPSG',4269,'GEOGCS["NAD83",DATUM["North_American_Datum_1983",SPHEROID["GRS 1980",6378137,298.257222101,AUTHORITY["EPSG","7019"]],AUTHORITY["EPSG","6269"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4269"]]','+proj=longlat +datum=NAD83 +no_defs ')""")
+
     if gdaltest.pg_ds.GetLayerByName('geography_columns') is None:
         pytest.skip('autotest database must be created with PostGIS >= 1.5')
+
+    sql_lyr = gdaltest.pg_ds.ExecuteSQL('SELECT postgis_version()')
+    version = sql_lyr.GetNextFeature().GetField(0)
+    gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
+    version = version[0:version.find(' ')].split('.')
+    version = int(version[0]), int(version[1])
 
     gdaltest.pg_ds = None
     gdaltest.pg_ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
 
     srs = osr.SpatialReference()
 
-    # Only EPSG:4326 is supported
+    # Only geographic SRS is supported
     srs.ImportFromEPSG(32631)
     with gdaltest.error_handler():
         lyr = gdaltest.pg_ds.CreateLayer('test_geog', srs=srs, options=['GEOM_TYPE=geography', 'GEOMETRY_NAME=my_geog'])
     assert lyr is None
 
-    srs.ImportFromEPSG(4326)
+    if version[0] >= 3 or (version[0] == 2 and version[1] >= 2):
+        srid = 4269
+    else:
+        srid = 4326
+
+    srs.ImportFromEPSG(srid)
     lyr = gdaltest.pg_ds.CreateLayer('test_geog', srs=srs, options=['GEOM_TYPE=geography', 'GEOMETRY_NAME=my_geog'])
     field_defn = ogr.FieldDefn("test_string", ogr.OFTString)
     lyr.CreateField(field_defn)
@@ -2224,6 +2237,8 @@ def test_ogr_pg_47():
     # Get the layer by name
     lyr = gdaltest.pg_ds.GetLayerByName('test_geog')
     assert lyr.GetExtent() == (2.0, 2.0, 49.0, 49.0), 'bad extent for test_geog'
+
+    assert lyr.GetSpatialRef().GetAuthorityCode(None) == str(srid)
 
     feat = lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
