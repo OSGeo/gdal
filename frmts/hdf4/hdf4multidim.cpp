@@ -38,6 +38,10 @@
 #include <map>
 #include <set>
 
+#if defined(__clang__) || defined(_MSC_VER)
+#define COMPILER_WARNS_ABOUT_ABSTRACT_VBASE_INIT
+#endif
+
 extern CPLMutex *hHDF4Mutex;
 extern const char * const pszGDALSignature;
 
@@ -1686,7 +1690,9 @@ HDF4AbstractAttribute::HDF4AbstractAttribute(const std::string& osParentName,
                              const std::shared_ptr<HDF4SharedResources>& poShared,
                              int32 iNumType,
                              int32 nValues):
+#if !defined(COMPILER_WARNS_ABOUT_ABSTRACT_VBASE_INIT)
     GDALAbstractMDArray(osParentName, osName),
+#endif
     GDALAttribute(osParentName, osName),
     m_poShared(poShared),
     m_dt( iNumType == DFNT_CHAR8 ?

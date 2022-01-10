@@ -24,7 +24,7 @@ add_gdal_driver(
           parsexsd.h
   BUILTIN)
 gdal_standard_includes(ogr_GML)
-if (HAVE_EXPAT)
+if (GDAL_USE_EXPAT)
   target_compile_definitions(ogr_GML PRIVATE -DHAVE_EXPAT)
   gdal_target_link_libraries(TARGET ogr_GML LIBRARIES EXPAT::EXPAT)
 endif ()

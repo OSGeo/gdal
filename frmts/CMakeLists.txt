@@ -154,7 +154,7 @@ gdal_dependent_format(jp2lura "JPEG-2000 (based on Luratech)" "GDAL_USE_LURATECH
 # ESRI ArcSDE C API SDK
 gdal_dependent_format(sde "ESRI ArcSDE Raster" "HAVE_SDE")
 # LizardTech's decoding software development kit (DSDK)
-gdal_dependent_format(mrsid "Multi-resolution Seamless Image Database" "HAVE_MRSID")
+gdal_dependent_format(mrsid "Multi-resolution Seamless Image Database" "GDAL_USE_MRSID")
 # gdal_dependent_format(mrsid_lidar "Multi-resolution Seamless Image Database - LiDAR support" "HAVE_MRSID")
 gdal_dependent_format(georaster "Oracle Spatial GeoRaster" "HAVE_ORACLE" DRIVER_NAME_OPTION GEOR)
 gdal_dependent_format(ecw "ERDAS JPEG2000 (.jp2)" "HAVE_ECW")

@@ -36,17 +36,16 @@ if (GDAL_USE_LIBPNG_INTERNAL)
   target_compile_definitions(gdal_MRF PRIVATE -DINTERNAL_PNG)
 endif ()
 
-if (GDAL_USE_LIBZ_INTERNAL)
+if (GDAL_USE_ZLIB_INTERNAL)
   target_include_directories(gdal_MRF PRIVATE $<TARGET_PROPERTY:libz,SOURCE_DIR>)
 endif ()
 
-if (GDAL_USE_LIBLERC_INTERNAL)
+if (GDAL_USE_LIBLERC_INTERNAL AND GDAL_USE_LIBLERCV1_INTERNAL)
   target_sources(gdal_MRF PRIVATE LERC_band.cpp)
-  target_include_directories(gdal_MRF PRIVATE $<TARGET_PROPERTY:liblerc,SOURCE_DIR> $<TARGET_PROPERTY:lerc,SOURCE_DIR>)
+  target_include_directories(gdal_MRF PRIVATE $<TARGET_PROPERTY:liblercv1,SOURCE_DIR>
+                                              $<TARGET_PROPERTY:lerc,SOURCE_DIR>)
   target_compile_definitions(gdal_MRF PRIVATE -DLERC)
-endif ()
 
-if (GDAL_USE_LIBLERC_INTERNAL)
   add_subdirectory(LERCV1)
 endif ()
 
@@ -60,7 +59,7 @@ if (NOT GDAL_USE_LIBPNG_INTERNAL)
   gdal_target_link_libraries(TARGET gdal_MRF LIBRARIES PNG::PNG)
 endif ()
 
-if (NOT GDAL_USE_LIBZ_INTERNAL)
+if (NOT GDAL_USE_ZLIB_INTERNAL)
   gdal_target_link_libraries(TARGET gdal_MRF LIBRARIES ZLIB::ZLIB)
 endif ()
 

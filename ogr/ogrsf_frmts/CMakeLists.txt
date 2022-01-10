@@ -55,9 +55,9 @@ ogr_optional_driver(mapml MapML)
 # ######################################################################################################################
 #
 # XML drivers
-ogr_dependent_driver(gpx "GPX - GPS Exchange Format" "HAVE_EXPAT")
+ogr_dependent_driver(gpx "GPX - GPS Exchange Format" "GDAL_USE_EXPAT")
 ogr_dependent_driver(gmlas GMLAS "GDAL_USE_XERCESC;OGR_ENABLE_PGDUMP")
-ogr_dependent_driver(svg "Scalable Vector Graphics" "HAVE_EXPAT")
+ogr_dependent_driver(svg "Scalable Vector Graphics" "GDAL_USE_EXPAT")
 ogr_dependent_driver(csw CSW "GDAL_USE_CURL")
 ogr_dependent_driver(dods DODS "GDAL_USE_DAP;GDAL_USE_LIBXML2")
 ogr_dependent_driver(dwg DWG "GDAL_USE_TEIGHA")
@@ -107,7 +107,7 @@ if (OGR_ENABLE_GRASS)
   endif ()
 endif ()
 
-ogr_dependent_driver(xlsx "Microsoft Office Excel(xlsx)" "HAVE_EXPAT")
+ogr_dependent_driver(xlsx "Microsoft Office Excel(xlsx)" "GDAL_USE_EXPAT")
 ogr_dependent_driver(xls "Microsoft Office Excel(xls)" "GDAL_USE_FREEXL")
 ogr_dependent_driver(mongodbv3 "MongoDB V3" "GDAL_USE_MONGOCXX")
 ogr_dependent_driver(cad "OpenCAD" "GDAL_USE_OPENCAD OR GDAL_USE_OPENCAD_INTERNAL")
@@ -119,9 +119,9 @@ ogr_dependent_driver(oci "Oracle OCI" "HAVE_ORACLE")
 # to be removed in GDAL 3.5 ogr_dependent_driver(db2 "IBM DB2" "GDAL_USE_ODBC")
 ogr_dependent_driver(idb "IDB" "HAVE_IDB")
 # to be removed in GDAL 3.5 ogr_dependent_driver(arcobjects ARCOBJECTS "ARCOBJECTS_FOUND")
-ogr_dependent_driver(ods ODS "HAVE_EXPAT")
-ogr_dependent_driver(ogdi "OGDI" "HAVE_OGDI")
-ogr_dependent_driver(lvbag "LVBAG" "HAVE_EXPAT")
+ogr_dependent_driver(ods ODS "GDAL_USE_EXPAT")
+ogr_dependent_driver(ogdi "OGDI" "GDAL_USE_OGDI")
+ogr_dependent_driver(lvbag "LVBAG" "GDAL_USE_EXPAT")
 
 # Add generic in last line
 add_subdirectory(generic)
