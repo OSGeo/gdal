@@ -1131,7 +1131,7 @@ void unpk_g2ncep(CPL_UNUSED sInt4 *kfildo, float *ain, sInt4 *iain, sInt4 *nd2x3
       if (curIndex == 18) {   /* forecast time is stored in octet 18-22 */
          if (gfld->ipdtmpl[i] < -1 * (0x3fffffff)) {
             /* Undoing the incorrect decoding of the negative number. */
-            is4[curIndex] = -1 * (is4[curIndex]^(0x80000000));
+            is4[curIndex] = -1 * (int)(((unsigned)is4[curIndex])^(0x80000000));
          }
       }
       curIndex += abs(templatespds[pdsIndex].mappds[i]);
