@@ -143,6 +143,11 @@ void GDALGPKGMBTilesLikePseudoDataset::SetGlobalOffsetScale(double dfOffset,
 /*                      GDALGPKGMBTilesLikeRasterBand()                 */
 /************************************************************************/
 
+#ifdef __MINGW64__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
+
 GDALGPKGMBTilesLikeRasterBand::GDALGPKGMBTilesLikeRasterBand(
     GDALGPKGMBTilesLikePseudoDataset* poTPD, int nTileWidth, int nTileHeight) :
     m_poTPD(CPLAssertNotNull(poTPD)), // make GCC 7 -Wnull-dereference happy in -O2
@@ -154,6 +159,10 @@ GDALGPKGMBTilesLikeRasterBand::GDALGPKGMBTilesLikeRasterBand(
     nBlockXSize = nTileWidth;
     nBlockYSize = nTileHeight;
 }
+
+#ifdef __MINGW64__
+#pragma GCC diagnostic pop
+#endif
 
 /************************************************************************/
 /*                              FlushCache()                            */
