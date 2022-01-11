@@ -52,8 +52,8 @@ class VSIAzureBlobHandleHelper final: public IVSIS3LikeHandleHelper
 
         enum class Service
         {
-            BLOB,
-            ADLS,
+            SERVICE_BLOB,
+            SERVICE_ADLS,
         };
 
         static bool     GetConfiguration(CSLConstList papszOptions,
