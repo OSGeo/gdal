@@ -147,7 +147,7 @@ if (NOT GDAL_USE_ZLIB)
   set(GDAL_USE_ZLIB_INTERNAL
       ON
       CACHE BOOL "Use internal zlib copy (if set to ON, has precedence over GDAL_USE_ZLIB)")
-  if (NOT GDAL_USE_LIBZ_INTERNAL)
+  if (NOT GDAL_USE_ZLIB_INTERNAL)
     message(FATAL_ERROR "GDAL_USE_ZLIB or GDAL_USE_ZLIB_INTERNAL must be set to ON")
   endif ()
 else ()
