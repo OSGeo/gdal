@@ -8,67 +8,16 @@ FindHDF4
 
 Find the HDF4 includes and get all installed hdf4 library settings
 
-Component supported:  XDR FORTRAN
-
 The following vars are set if hdf4 is found.
 
 .. variable:: HDF4_FOUND
 
   True if found, otherwise all other vars are undefined
 
-.. variable:: HDF4_INCLUDE_DIR
-
-  The include dir for main *.h files
-
-.. variable:: HDF4_FORTRAN_INCLUDE_DIR
-
-  The include dir for fortran modules and headers
-  (Not yet implemented)
-
-.. variable:: HDF4_VERSION_STRING
-
-  full version (e.g. 4.2.0)
-
-.. variable:: HDF4_VERSION_MAJOR
-
-  major part of version (e.g. 4)
-
-.. variable:: HDF4_VERSION_MINOR
-
-  minor part (e.g. 2)
-
-The following boolean vars will be defined
-
-.. variable:: HDF4_ENABLE_PARALLEL
-
-  1 if HDF4 parallel supported
-  (Not yet implemented)
-
-.. variable:: HDF4_BUILD_FORTRAN
-
-  1 if HDF4 was compiled with fortran on
-
-.. variable:: HDF4_BUILD_CPP_LIB
-
-  1 if HDF4 was compiled with cpp on
-  (Not yet implemented)
-
-.. variable:: HDF4_BUILD_TOOLS
-
-  1 if HDF4 was compiled with tools on
-  (Not yet implemented)
-
-Target names that are valid (depending on enabled options)
-will be the following(Not yet implemented)
-
-hdf              : HDF4 C library
-hdf_f90cstub     : used by Fortran to C interface
-hdf_fortran      : Fortran HDF4 library
-mfhdf            : HDF4 multi-file C interface library
-xdr              : RPC library
-mfhdf_f90cstub   : used by Fortran to C interface to multi-file library
-mfhdf_fortran    : Fortran multi-file library
-
+IMPORTED targets
+^^^^^^^^^^^^^^^^
+This module defines the following :prop_tgt:`IMPORTED` target:
+``HDF4::HDF4``
 #
 #]=======================================================================]
 #
@@ -78,9 +27,7 @@ include(SelectLibraryConfigurations)
 
 set(HDF4_PATHS
     /usr/lib/hdf4
-    /usr/share/hdf4
     /usr/local/hdf4
-    /usr/local/hdf4/share
     )
 
 find_path(HDF4_INCLUDE_DIR hdf.h
@@ -107,116 +54,69 @@ if(HDF4_INCLUDE_DIR AND EXISTS "${HDF4_INCLUDE_DIR}/hfile.h")
     endif()
 endif()
 
+if(NOT DEFINED HDF4_COMPONENTS)
+  set(HDF4_COMPONENTS df mfhdf xdr szip)
+endif()
+
 if(HDF4_INCLUDE_DIR)
     # Debian supplies the HDF4 library which does not conflict with NetCDF.
     # Test for Debian flavor first. Hint: install the libhdf4-alt-dev package.
-    foreach(tgt IN ITEMS dfalt mfhdfalt df mfhdf hdf4)
+    foreach(tgt IN LISTS HDF4_COMPONENTS)
+        if(tgt STREQUAL "df")
+          # hdf.lib (dynamic) used by conda, but libhdf.lib (static) also present
+          set(_names_debug  ${tgt}altd ${tgt}d hdfd libhdfd)
+          set(_names_release ${tgt}alt ${tgt} hdf libhdf)
+        else()
+          set(_names_debug  ${tgt}altd ${tgt}d)
+          set(_names_release ${tgt}alt ${tgt})
+        endif()
         find_library(HDF4_${tgt}_LIBRARY_DEBUG
-                     NAMES ${tgt}d
+                     NAMES ${_names_debug}
                      PATHS ${HDF4_PATHS}/lib)
         find_library(HDF4_${tgt}_LIBRARY_RELEASE
-                     NAMES ${tgt}
+                     NAMES ${_names_release}
                      PATHS ${HDF4_PATHS}/lib)
         select_library_configurations(HDF4_${tgt})
         mark_as_advanced(HDF4_${tgt}_LIBRARY HDF4_${tgt}_LIBRARY_RELEASE HDF4_${tgt}_LIBRARY_DEBUG )
     endforeach()
-    if(HDF4_dfalt_LIBRARY AND HDF4_mfhdfalt_LIBRARY)
-        set(HDF4_LIBRARY ${HDF4_dfalt_LIBRARY} ${HDF4_mfhdfalt_LIBRARY})
-        if(NOT TARGET HDF4::HDF4)
-            add_library(HDF4::HDF4 UNKNOWN IMPORTED)
-            set_target_properties(HDF4::HDF4 PROPERTIES
-                                  INTERFACE_INCLUDE_DIRECTORIES ${HDF4_INCLUDE_DIR}
-                                  IMPORTED_LINK_INTERFACE_LANGUAGES C
-                                  IMPORTED_LOCATION "${HDF4_dfalt_LIBRARY}")
-            add_library(HDF4::MFHDF UNKNOWN IMPORTED)
-            set_target_properties(HDF4::MFHDF PROPERTIES
-                                  IMPORTED_LINK_INTERFACE_LANGUAGES C
-                                  IMPORTED_LOCATION "${HDF4_mfhdfalt_LIBRARY}")
-        endif()
-    elseif(HDF4_df_LIBRARY AND HDF4_mfhdf_LIBRARY)
-        set(HDF4_LIBRARY ${HDF4_df_LIBRARY} ${HDF4_mfhdf_LIBRARY})
-        if(NOT TARGET HDF4::HDF4)
-            add_library(HDF4::HDF4 UNKNOWN IMPORTED)
-            set_target_properties(HDF4::HDF4 PROPERTIES
-                                  INTERFACE_INCLUDE_DIRECTORIES ${HDF4_INCLUDE_DIR}
-                                  IMPORTED_LINK_INTERFACE_LANGUAGES C
-                                  IMPORTED_LOCATION "${HDF4_df_LIBRARY}")
-            add_library(HDF4::MFHDF UNKNOWN IMPORTED)
-            set_target_properties(HDF4::MFHDF PROPERTIES
-                                  IMPORTED_LINK_INTERFACE_LANGUAGES C
-                                  IMPORTED_LOCATION "${HDF4_mfhdf_LIBRARY}")
-        endif()
-    elseif(HDF4_hdf4_LIBRARY)
-        set(HDF4_LIBRARY ${HDF4_hdf4_LIBRARY})
-        if(NOT TARGET HDF4::HDF4)
-            add_library(HDF4::HDF4 UNKNOWN IMPORTED)
-            set_target_properties(HDF4::HDF4 PROPERTIES
-                                  INTERFACE_INCLUDE_DIRECTORIES ${HDF4_INCLUDE_DIR}
-                                  IMPORTED_LINK_INTERFACE_LANGUAGES C
-                                  IMPORTED_LOCATION "${HDF4_hdf4_LIBRARY}")
-        endif()
-    endif()
-    mark_as_advanced(HDF4_dfalt_LIBRARY HDF4_mfhdfalt_LIBRARY
-                     HDF4_df_LIBRARY HDF4_mfhdf_LIBRARY
-                     HDF4_hdf4_LIBRARY)
 
-    list (FIND HDF4_FIND_COMPONENTS "XDR" _nextcomp)
-    if (_nextcomp GREATER -1)
-        find_library(HDF4_XDR_LIBRARY_DEBUG
-                     NAMES xdrd
-                     PATHS ${HDF4_PATHS}/lib)
-        find_library(HDF4_XDR_LIBRARY_RELEASE
-                     NAMES xdr
-                     PATHS ${HDF4_PATHS}/lib)
-        select_library_configurations(HDF4_XDR)
-        mark_as_advanced(HDF4_XDR_LIBRARY_RELEASE HDF4_XDR_LIBRARY_DEBUG)
-        if(NOT TARGET HDF4::XDR)
-            add_library(HDF4::XDR UNKNOWN IMPORTED)
-            set_target_properties(HDF4::XDR PROPERTIES
-                                  IMPORTED_LINK_INTERFACE_LANGUAGES C
-                                  IMPORTED_LOCATION "${HDF4_XDR_LIBRARY}")
+    set(HDF4_LIBRARIES)
+    foreach(_comp IN LISTS HDF4_COMPONENTS)
+        if(HDF4_${_comp}_LIBRARY)
+            list(APPEND HDF4_LIBRARIES "${HDF4_${_comp}_LIBRARY}")
         endif()
-    endif()
+    endforeach()
 
-    list (FIND HDF4_FIND_COMPONENTS "FORTRAN" _nextcomp)
-    if (_nextcomp GREATER -1)
-        find_path(HDF4_FORTRAN_INCLUDE_DIR hdf.f90
-                  PATHS ${HDF4_PATHS}
-                  PATH_SUFFIXES
-                  include
-                  Include
-                  hdf
-                  hdf4
-                  )
-        if(HDF4_FORTRAN_INCLUDE_DIR)
-            find_library(HDF4_FORTRAN_LIBRARY
-                         NAMES df_fortran
-                         PATHS ${HDF4_PATHS}/lib)
-            find_library(HDF4_FORTRAN_MF_LIBRARY
-                         NAMES mfhdf_fortran
-                         PATHS ${HDF4_PATHS}/lib)
-            mark_as_advanced(HDF4_FORTRAN_LIBRARY HDF4_FORTRAN_MF_LIBRARY)
-            if(NOT TARGET HDF4::FORTRAN)
-                add_library(HDF4::FORTRAN UNKNOWN IMPORTED)
-                set_target_properties(HDF4::FORTRAN PROPERTIES
-                                      INTERFACE_INCLUDE_DIRECTORIES ${HDF4_INCLUDE_DIR}
-                                      IMPORTED_LINK_INTERFACE_LANGUAGES C
-                                      IMPORTED_LOCATION "${HDF4_XDR_LIBRARY}")
-            endif()
-        endif()
+    if(WIN32)
+        list(APPEND HDF4_LIBRARIES ws2_32.lib)
     endif()
 endif()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(HDF4
                                   FOUND_VAR HDF4_FOUND
-                                  REQUIRED_VARS HDF4_LIBRARY HDF4_INCLUDE_DIR
+                                  REQUIRED_VARS HDF4_df_LIBRARY HDF4_mfhdf_LIBRARY HDF4_INCLUDE_DIR
                                   VERSION_VAR HDF4_VERSION
                                   HANDLE_COMPONENTS
                                   )
 
 # set output variables
 if(HDF4_FOUND)
-    set(HDF4_LIBRARIES ${HDF4_LIBRARY})
-    set(HDF4_INCLUDE_DIRS ${HDF4_INCLUDE_DIR})
+  if(NOT TARGET HDF4::HDF4)
+      set(INCR 1)
+      set(HDF4_TARGETS)
+      foreach(_lib IN LISTS HDF4_LIBRARIES)
+          add_library(HDF4::HDF4_${INCR} UNKNOWN IMPORTED)
+          set_target_properties(HDF4::HDF4_${INCR} PROPERTIES
+                                IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+                                IMPORTED_LOCATION "${_lib}")
+          list(APPEND HDF4_TARGETS HDF4::HDF4_${INCR})
+          math(EXPR INCR "${INCR}+1")
+      endforeach()
+
+      add_library(HDF4::HDF4 INTERFACE IMPORTED)
+      set_target_properties(HDF4::HDF4 PROPERTIES
+                            INTERFACE_INCLUDE_DIRECTORIES ${HDF4_INCLUDE_DIR}
+                            INTERFACE_LINK_LIBRARIES "${HDF4_TARGETS}")
+  endif()
 endif()

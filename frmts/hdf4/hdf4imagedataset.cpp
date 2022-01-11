@@ -28,7 +28,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(NOMINMAX)
 // min/max are defined here on Windows, so block them.
 // TODO: Move this to someplace more appropriate.
 #  define NOMINMAX

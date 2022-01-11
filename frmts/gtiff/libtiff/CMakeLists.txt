@@ -65,7 +65,7 @@ target_compile_definitions(libtiff PRIVATE -DPIXARLOG_SUPPORT -DZIP_SUPPORT)
 target_compile_definitions(libtiff PRIVATE -DJPEG_SUPPORT -DOJPEG_SUPPORT)
 
 # Include first internal libraries
-if (GDAL_USE_LIBZ_INTERNAL)
+if (GDAL_USE_ZLIB_INTERNAL)
   target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:libz,SOURCE_DIR>)
 endif ()
 
@@ -82,7 +82,7 @@ if (GDAL_USE_LIBLERC_INTERNAL)
 endif ()
 
 # Now external libraries
-if (NOT GDAL_USE_LIBZ_INTERNAL)
+if (NOT GDAL_USE_ZLIB_INTERNAL)
   target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:ZLIB::ZLIB,INTERFACE_INCLUDE_DIRECTORIES>)
   gdal_add_private_link_libraries(ZLIB::ZLIB)
 endif ()

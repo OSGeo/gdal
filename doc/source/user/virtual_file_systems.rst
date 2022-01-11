@@ -644,6 +644,8 @@ This is done with the :cpp:func:`VSICreateCachedFile` function, that is implicit
 
 The default size of caching for each file is 25 MB (25 MB for each file that is cached), and can be controlled with the ``VSI_CACHE_SIZE`` configuration option (value in bytes).
 
+.. _vsicrypt:
+
 /vsicrypt/ (encrypted files)
 ----------------------------
 

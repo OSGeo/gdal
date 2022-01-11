@@ -4,7 +4,7 @@ add_gdal_driver(
   BUILTIN)
 gdal_standard_includes(gdal_MBTiles)
 target_include_directories(gdal_MBTiles PRIVATE ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/mvt)
-if (GDAL_USE_LIBZ_INTERNAL)
+if (GDAL_USE_ZLIB_INTERNAL)
   target_include_directories(gdal_MBTiles PRIVATE $<TARGET_PROPERTY:libz,SOURCE_DIR>)
 endif ()
 if (GDAL_USE_LIBJSONC_INTERNAL)

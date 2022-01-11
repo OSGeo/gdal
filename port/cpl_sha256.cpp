@@ -520,9 +520,21 @@ typedef byte cryptopp_byte;
 #endif // HAVE_CRYPTOPP
 
 #ifdef HAVE_OPENSSL_CRYPTO
+
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#endif
+
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
 #endif
 
 
@@ -531,7 +543,6 @@ typedef byte cryptopp_byte;
 /************************************************************************/
 
 #if defined(HAVE_OPENSSL_CRYPTO)
-
 static int CPLOpenSSLNullPassphraseCallback(char * /*buf*/,
                                             int /*size*/,
                                             int /*rwflag*/, void * /*u*/)
