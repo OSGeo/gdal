@@ -121,6 +121,12 @@ if (GDAL_USE_WEBP)
   gdal_add_private_link_libraries(WEBP::WebP)
 endif ()
 
+if (NOT GDAL_USE_LIBLERC_INTERNAL AND GDAL_USE_LERC)
+  target_compile_definitions(libtiff PRIVATE -DLERC_SUPPORT)
+  target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:LERC::LERC,INTERFACE_INCLUDE_DIRECTORIES>)
+  gdal_add_private_link_libraries(LERC::LERC)
+endif ()
+
 if (RENAME_INTERNAL_LIBTIFF_SYMBOLS)
   target_compile_definitions(libtiff PRIVATE -DRENAME_INTERNAL_LIBTIFF_SYMBOLS)
 endif ()
