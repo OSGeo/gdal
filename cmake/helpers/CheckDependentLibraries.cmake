@@ -294,7 +294,17 @@ set(GDAL_USE_LIBCSF_INTERNAL ON)
 
 option(GDAL_USE_LIBLERCV1_INTERNAL "Set ON to build mrf driver with internal libLERC V1" ON)
 
-option(GDAL_USE_LIBLERC_INTERNAL "Set ON to build mrf driver with internal libLERC (V2)" ON)
+# DISABLED_BY_DEFAULT since it prevents MRF Lerc support (see frmts/mrf/CMakeLists.txt)
+gdal_check_package(LERC "Enable LERC (external)" CAN_DISABLE DISABLED_BY_DEFAULT)
+if (NOT GDAL_USE_LERC)
+  set(GDAL_USE_LIBLERC_INTERNAL
+      ON
+      CACHE BOOL "Use internal liblerc copy (if set to ON, has precedence over GDAL_USE_LERC)")
+else ()
+  set(GDAL_USE_LIBLERC_INTERNAL
+      OFF
+      CACHE BOOL "Use internal liblerc copy (if set to ON, has precedence over GDAL_USE_LERC)")
+endif ()
 
 # Disable by default the use of external shapelib, as currently the SAOffset member that holds file offsets in it is a
 # 'unsigned long', hence 32 bit on 32 bit platforms, whereas we can handle DBFs file > 4 GB. Internal shapelib has not

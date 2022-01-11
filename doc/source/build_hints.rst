@@ -767,18 +767,42 @@ driver. The HDF5 CXX library is also required.
 LERC
 ****
 
-This is an internal library used by the :ref:`raster.marfa` driver and the
-internal libtiff.
+`LERC <https://github.com/esri/lerc>`_ (V2) is an open-source image or raster format
+which supports rapid encoding and decoding for any pixel type (not just RGB or Byte).
+Users set the maximum compression error per pixel while encoding, so the precision
+of the original input image is preserved (within user defined error bounds).
+
+.. warning::
+
+    Use of the external LERC library is not recommended, as it cannot be used
+    by the :ref:`raster.marfa` driver currently (that one requires the internal
+    LERC copy). The external LERC Library can only be used by the internal libtiff,
+    which can also use the internal LERC copy.
+
+
+.. option:: LERC_INCLUDE_DIR
+
+    Path to an include directory with the ``Lerc_c_api.h`` header file.
+
+.. option:: LERC_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_LERC=ON/OFF
+
+    Control whether to use LERC (V2). Defaults to *OFF* when LERC (V2) is found.
 
 .. option:: GDAL_USE_LIBLERC_INTERNAL=ON/OFF
 
-    Control whether to use the Lerc (V2) internal library. Defaults to ON.
+    Control whether to use the LERC (V2) internal library. Defaults to ON,
+    unless GDAL_USE_LERC is set to ON.
 
 
 LERCV1
 ******
 
-This is an internal library used by the :ref:`raster.marfa` driver
+This is an internal library used by the :ref:`raster.marfa` driver. It offers the
+LERC v1 compression.
 
 .. option:: GDAL_USE_LIBLERCV1_INTERNAL=ON/OFF
 
