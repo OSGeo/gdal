@@ -418,10 +418,10 @@ if (ARMADILLO_FOUND)
     "
         #include <armadillo>
         int main(int argc, char** argv) {
-			arma::mat matInput(2,2);
-			const arma::mat& matInv = arma::inv(matInput);
-			return 0;
-		}
+            arma::mat matInput(2,2);
+            const arma::mat& matInv = arma::inv(matInput);
+            return 0;
+        }
     "
     ARMADILLO_TEST_PROGRAM_WITHOUT_LAPACK_COMPILES)
   unset(CMAKE_MSVC_RUNTIME_LIBRARY)
@@ -440,11 +440,11 @@ if (ARMADILLO_FOUND)
         "
         #include <armadillo>
         int main(int argc, char** argv) {
-			arma::mat matInput(2,2);
-			const arma::mat& matInv = arma::inv(matInput);
-			return 0;
-		}
-    "
+            arma::mat matInput(2,2);
+            const arma::mat& matInv = arma::inv(matInput);
+            return 0;
+        }
+        "
         ARMADILLO_TEST_PROGRAM_WITH_LAPACK_COMPILES)
       unset(CMAKE_MSVC_RUNTIME_LIBRARY)
       unset(CMAKE_TRY_COMPILE_CONFIGURATION)

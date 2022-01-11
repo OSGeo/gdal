@@ -16,21 +16,20 @@ find_path(MYSQL_INCLUDE_DIR
           DOC "MySQL Client library includes")
 
 if( MYSQL_INCLUDE_DIR AND EXISTS "${MYSQL_INCLUDE_DIR}/mysql_version.h" )
-	file( STRINGS "${MYSQL_INCLUDE_DIR}/mysql_version.h"
-		MYSQL_VERSION_H REGEX "^#define[ \t]+MYSQL_SERVER_VERSION[ \t]+\"[^\"]+\".*$" )
-	string( REGEX REPLACE
-		"^.*MYSQL_SERVER_VERSION[ \t]+\"([^\"]+)\".*$" "\\1" MYSQL_VERSION_STRING
-		"${MYSQL_VERSION_H}" )
+    file( STRINGS "${MYSQL_INCLUDE_DIR}/mysql_version.h"
+          MYSQL_VERSION_H REGEX "^#define[ \t]+MYSQL_SERVER_VERSION[ \t]+\"[^\"]+\".*$" )
+    string( REGEX REPLACE
+            "^.*MYSQL_SERVER_VERSION[ \t]+\"([^\"]+)\".*$" "\\1" MYSQL_VERSION_STRING
+            "${MYSQL_VERSION_H}" )
 endif()
 
-find_library(MYSQL_LIBRARY
-						 NAMES mysqlclient mysqlclient_r)
+find_library(MYSQL_LIBRARY NAMES mysqlclient mysqlclient_r)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(MySQL
                                   FOUND_VAR MYSQL_FOUND
                                   REQUIRED_VARS MYSQL_LIBRARY MYSQL_INCLUDE_DIR
-																	VERSION_VAR MYSQL_VERSION_STRING)
+                                  VERSION_VAR MYSQL_VERSION_STRING)
 include(FeatureSummary)
 set_package_properties(MYSQL PROPERTIES
                        DESCRIPTION "MySQL Client library"
