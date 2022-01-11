@@ -986,10 +986,10 @@ Option only to be used by maintainers:
 Driver specific options
 +++++++++++++++++++++++
 
-.. option:: GDAL_USE_PUBLICDECOMPWT=ON
+.. option:: GDAL_USE_PUBLICDECOMPWT
 
-    The :ref:`raster.msg` driver is built only if this option is set. Its effect is to
-    download the https://gitlab.eumetsat.int/open-source/PublicDecompWT.git
+    The :ref:`raster.msg` driver is built only if this option is set to ON (default is OFF).
+    Its effect is to download the https://gitlab.eumetsat.int/open-source/PublicDecompWT.git
     repository (requires the ``git`` binary to be available at configuration time)
     into the build tree and build the needed files from it into the driver.
 

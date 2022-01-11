@@ -557,7 +557,7 @@ gdal_check_package(Oracle "Enable Oracle OCI driver")
 gdal_check_package(TEIGHA "Enable DWG and DGNv8 drivers" CAN_DISABLE)
 gdal_check_package(FileGDB "Enable FileGDB (based on closed-source SDK) driver" CAN_DISABLE)
 
-option(GDAL_USE_MSG
+option(GDAL_USE_PUBLICDECOMPWT
        "Set ON to build MSG driver and download external https://gitlab.eumetsat.int/open-source/PublicDecompWT" OFF)
 
 # proprietary libraries KAKADU
