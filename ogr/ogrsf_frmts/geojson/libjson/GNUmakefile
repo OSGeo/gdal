@@ -1,7 +1,7 @@
 # $Id$
 #
 # Makefile building json-c library (http://oss.metaparadigm.com/json-c/)
-# 
+#
 include ../../../../GDALmake.opt
 
 OBJ = \
@@ -13,7 +13,9 @@ OBJ = \
 	linkhash.o \
 	printbuf.o \
 	json_object_iterator.o \
-	json_c_version.o
+	json_c_version.o \
+	random_seed.o \
+	strerror_override.o
 
 O_OBJ = $(foreach file,$(OBJ),../../o/$(file))
 
