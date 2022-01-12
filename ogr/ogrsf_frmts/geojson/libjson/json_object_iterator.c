@@ -80,6 +80,7 @@ struct json_object_iterator json_object_iter_begin(struct json_object *obj)
  */
 struct json_object_iterator json_object_iter_end(const struct json_object *obj)
 {
+    (void)obj;
 	struct json_object_iterator iter;
 
 	JASSERT(NULL != obj);

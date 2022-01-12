@@ -20,6 +20,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "cpl_string.h"
+
 #ifdef HAVE_STDARG_H
 #include <stdarg.h>
 #else /* !HAVE_STDARG_H */
@@ -28,8 +30,6 @@
 
 #include "debug.h"
 #include "printbuf.h"
-#include "snprintf_compat.h"
-#include "vasprintf_compat.h"
 
 static int printbuf_extend(struct printbuf *p, int min_size);
 
@@ -127,40 +127,30 @@ int printbuf_memset(struct printbuf *pb, int offset, int charvalue, int len)
 	return 0;
 }
 
+/* Use CPLVASPrintf for portability issues */
 int sprintbuf(struct printbuf *p, const char *msg, ...)
 {
-	va_list ap;
-	char *t;
-	int size;
-	char buf[128];
+  va_list ap;
+  char *t;
+  int size, ret;
 
-	/* user stack buffer first */
-	va_start(ap, msg);
-	size = vsnprintf(buf, 128, msg, ap);
-	va_end(ap);
-	/* if string is greater than stack buffer, then use dynamic string
-	 * with vasprintf.  Note: some implementation of vsnprintf return -1
-	 * if output is truncated whereas some return the number of bytes that
-	 * would have been written - this code handles both cases.
-	 */
-	if (size == -1 || size > 127)
-	{
-		va_start(ap, msg);
-		if ((size = vasprintf(&t, msg, ap)) < 0)
-		{
-			va_end(ap);
-			return -1;
-		}
-		va_end(ap);
-		printbuf_memappend(p, t, size);
-		free(t);
-		return size;
-	}
-	else
-	{
-		printbuf_memappend(p, buf, size);
-		return size;
-	}
+  /* user stack buffer first */
+  va_start(ap, msg);
+  size = CPLVASPrintf(&t, msg, ap);
+  va_end(ap);
+  if( size == -1 )
+      return -1;
+
+  if (strcmp(msg, "%f") == 0)
+  {
+      char* pszComma = strchr(t, ',');
+      if (pszComma)
+          *pszComma = '.';
+  }
+
+  ret = printbuf_memappend(p, t, size);
+  CPLFree(t);
+  return ret;
 }
 
 void printbuf_reset(struct printbuf *p)

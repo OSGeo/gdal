@@ -672,6 +672,8 @@ void json_object_object_del(struct json_object *jso, const char *key)
 static int json_object_boolean_to_json_string(struct json_object *jso, struct printbuf *pb,
                                               int level, int flags)
 {
+    (void)level;
+    (void)flags;
 	if (JC_BOOL(jso)->c_boolean)
 		return printbuf_strappend(pb, "true");
 	return printbuf_strappend(pb, "false");
@@ -719,6 +721,8 @@ int json_object_set_boolean(struct json_object *jso, json_bool new_value)
 static int json_object_int_to_json_string(struct json_object *jso, struct printbuf *pb, int level,
                                           int flags)
 {
+    (void)level;
+    (void)flags;
 	/* room for 19 digits, the sign char, and a null term */
 	char sbuf[21];
 	if (JC_INT(jso)->cint_type == json_object_int_type_int64)
@@ -1004,6 +1008,7 @@ int json_c_set_serialization_double_format(const char *double_format, int global
 static int json_object_double_to_json_string_format(struct json_object *jso, struct printbuf *pb,
                                                     int level, int flags, const char *format)
 {
+    (void)level;
 	struct json_object_double *jsodbl = JC_DOUBLE(jso);
 	char buf[128], *p, *q;
 	int size;
@@ -1151,6 +1156,8 @@ static int _json_object_userdata_to_json_string(struct json_object *jso, struct 
 int json_object_userdata_to_json_string(struct json_object *jso, struct printbuf *pb, int level,
                                         int flags)
 {
+    (void)level;
+    (void)flags;
 	int userdata_len = strlen((const char *)jso->_userdata);
 	printbuf_memappend(pb, (const char *)jso->_userdata, userdata_len);
 	return userdata_len;
@@ -1158,6 +1165,7 @@ int json_object_userdata_to_json_string(struct json_object *jso, struct printbuf
 
 void json_object_free_userdata(struct json_object *jso, void *userdata)
 {
+    (void)jso;
 	free(userdata);
 }
 
@@ -1234,6 +1242,7 @@ int json_object_set_double(struct json_object *jso, double new_value)
 static int json_object_string_to_json_string(struct json_object *jso, struct printbuf *pb,
                                              int level, int flags)
 {
+    (void)level;
 	ssize_t len = JC_STRING(jso)->len;
 	printbuf_strappend(pb, "\"");
 	json_escape_str(pb, get_string_component(jso), len < 0 ? -(ssize_t)len : len, flags);
@@ -1653,6 +1662,9 @@ static int json_object_copy_serializer_data(struct json_object *src, struct json
 int json_c_shallow_copy_default(json_object *src, json_object *parent, const char *key,
                                 size_t index, json_object **dst)
 {
+    (void)parent;
+    (void)key;
+    (void)index;
 	switch (src->o_type)
 	{
 	case json_type_boolean: *dst = json_object_new_boolean(JC_BOOL(src)->c_boolean); break;

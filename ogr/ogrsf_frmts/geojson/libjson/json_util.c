@@ -53,6 +53,7 @@
 #include "debug.h"
 #include "json_inttypes.h"
 #include "json_object.h"
+#include "json_object_private.h"
 #include "json_tokener.h"
 #include "json_util.h"
 #include "printbuf.h"
