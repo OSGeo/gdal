@@ -1,0 +1,20 @@
+subcat,short_name,name,unit,unit_conv
+0,"ACCES","Air concentration of Caesium 137","Bq/(m^3)",UC_NONE
+1,"ACIOD","Air concentration of Iodine 131","Bq/(m^3)",UC_NONE
+2,"ACRADP","Air concentration of radioactive pollutant","Bq/(m^3)",UC_NONE
+3,"GDCES","Ground deposition of Caesium 137","Bq/(m^2)",UC_NONE
+4,"GDIOD","Ground deposition of Iodine 131","Bq/(m^2)",UC_NONE
+5,"GDRADP","Ground deposition of radioactive pollutant","Bq/(m^2)",UC_NONE
+6,"TIACCP","Time-integrated air concentration of caesium pollutant","(Bq s)/(m^3)",UC_NONE
+7,"TIACIP","Time-integrated air concentration of iodine pollutant","(Bq s)/(m^3)",UC_NONE
+8,"TIACRP","Time-integrated air concentration of radioactive pollutant","(Bq s)/(m^3)",UC_NONE
+9,"","Reserved","-",UC_NONE
+10,"AIRCON","Air Concentration","Bq/(m^3)",UC_NONE
+11,"WETDEP","Wet Deposition","Bq/(m^2)",UC_NONE
+12,"DRYDEP","Dry Deposition","Bq/(m^2)",UC_NONE
+13,"TOTLWD","Total Deposition (Wet + Dry)","Bq/(m^2)",UC_NONE
+14,"SACON","Specific Activity Concentration","Bq/kg",UC_NONE
+15,"MAXACON","Maximum of Air Concentration in Layer","Bq/(m^3)",UC_NONE
+16,"HMXACON","Height of Maximum of Air Concentration","m",UC_NONE
+17,"CIAIRC","Column-Integrated Air Concentration","Bq/(m^2)",UC_NONE
+18,"CAACL","Column-Averaged Air Concentration in Layer","Bq/(m^3)",UC_NONE

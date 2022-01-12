@@ -24,20 +24,23 @@ set(GDAL_SWIG_COMMON_INTERFACE_FILES
 
 option(BUILD_PYTHON_BINDINGS "Build Python bindings" ON)
 option(BUILD_JAVA_BINDINGS "Build Java bindings" ON)
+option(BUILD_CSHARP_BINDINGS "Build CSharp bindings" ON)
 
 if (BUILD_PYTHON_BINDINGS)
   add_subdirectory(python)
 endif ()
 
-if (UNIX)
-  if (JNI_FOUND AND BUILD_JAVA_BINDINGS)
-    add_subdirectory(java)
-  endif ()
-  if (PERL_FOUND)
-    # add_subdirectory(perl)
-  endif ()
-else ()
-  if (CSHARP_FOUND)
-    # add_subdirectory(csharp)
-  endif ()
+if (SWIG_EXECUTABLE
+    AND Java_JAVAC_EXECUTABLE
+    AND Java_JAVADOC_EXECUTABLE
+    AND JNI_FOUND
+    AND ANT
+    AND BUILD_JAVA_BINDINGS)
+  add_subdirectory(java)
+endif ()
+
+if (BUILD_CSHARP_BINDINGS
+    AND SWIG_EXECUTABLE
+    AND CSHARP_FOUND)
+  add_subdirectory(csharp)
 endif ()

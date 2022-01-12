@@ -28,6 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import json
 import time
 
 import ogrtest
@@ -2615,3 +2616,366 @@ def test_ogr_elasticsearch_timeout_terminate_after():
     assert lyr.GetNextFeature() is not None
     time.sleep(0.15)
     assert lyr.GetNextFeature() is None
+
+###############################################################################
+# Test aggregation
+
+
+def test_ogr_elasticsearch_aggregation_minimum():
+
+    ogr_elasticsearch_delete_files()
+
+    gdal.FileFromMemBuffer("/vsimem/fakeelasticsearch",
+                           """{"version":{"number":"6.8.0"}}""")
+
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/test/_mapping?pretty""", """
+    {
+        "test":
+        {
+            "mappings":
+            {
+                "default":
+                {
+                    "properties":
+                    {
+                        "a_geopoint":
+                        {
+                            "properties":
+                            {
+                                "coordinates":
+                                {
+                                    "type": "geo_point"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    """)
+
+    ds = gdal.OpenEx('ES:/vsimem/fakeelasticsearch',
+                     open_options=['AGGREGATION={"index":"test"}'])
+    assert ds is not None
+    lyr = ds.GetLayer(0)
+    assert lyr.TestCapability(ogr.OLCStringsAsUTF8) == 1
+
+    response = {
+        "aggregations":
+        {
+            "grid":
+            {
+                "buckets": [
+                {
+                      "key": "dummy_key",
+                      "doc_count": 9876543210,
+                      "centroid": {
+                        "location": {
+                          "lat": 60,
+                          "lon": 50
+                        },
+                        "count": 9876543210
+                      }
+                },
+                {
+                      "key": "dummy_key2",
+                      "doc_count": 1,
+                      "centroid": {
+                        "location": {
+                          "lat": -60.5,
+                          "lon": -50.5
+                        },
+                        "count": 1
+                      }
+                },
+                ]
+            }
+        }
+    }
+
+    request = """/vsimem/fakeelasticsearch/test/_search&POSTFIELDS={"size":0,"aggs":{"grid":{"geohash_grid":{"field":"a_geopoint.coordinates","precision":2,"size":10000},"aggs":{"centroid":{"geo_centroid":{"field":"a_geopoint.coordinates"}}}}}}"""
+    gdal.FileFromMemBuffer(request, json.dumps(response))
+    assert lyr.GetFeatureCount() == 2
+    gdal.Unlink(request)
+
+    ds = gdal.OpenEx('ES:/vsimem/fakeelasticsearch',
+                     open_options=['AGGREGATION={"index":"test"}'])
+    assert ds is not None
+    lyr = ds.GetLayer(0)
+    gdal.FileFromMemBuffer(request, json.dumps(response))
+    f = lyr.GetNextFeature()
+    gdal.Unlink(request)
+
+    assert f is not None
+    assert f['key'] == 'dummy_key'
+    assert f['doc_count'] == 9876543210
+    assert f.GetGeometryRef().ExportToWkt() == 'POINT (50 60)'
+
+    f = lyr.GetNextFeature()
+    assert f is not None
+    assert f['key'] == 'dummy_key2'
+    assert f.GetGeometryRef().ExportToWkt() == 'POINT (-50.5 -60.5)'
+
+    assert lyr.GetFeatureCount() == 2
+
+    # Test spatial filter coordinate clamping
+    lyr.SetSpatialFilterRect(-200,-200,200,200)
+    lyr.ResetReading()
+    gdal.FileFromMemBuffer(request, json.dumps(response))
+    assert lyr.GetFeatureCount() == 2
+    gdal.Unlink(request)
+
+    # Test normal spatial filter
+    lyr.SetSpatialFilterRect(1,2,3,4)
+    lyr.ResetReading()
+
+    request = """/vsimem/fakeelasticsearch/test/_search&POSTFIELDS={"size":0,"aggs":{"filtered":{"filter":{"geo_bounding_box":{"a_geopoint.coordinates":{"top_left":{"lat":4.0,"lon":1.0},"bottom_right":{"lat":2.0,"lon":3.0}}}},"aggs":{"grid":{"geohash_grid":{"field":"a_geopoint.coordinates","precision":5,"size":10000},"aggs":{"centroid":{"geo_centroid":{"field":"a_geopoint.coordinates"}}}}}}}}"""
+
+    response = {
+        "aggregations":
+        {
+            "filtered":
+            {
+                "grid":
+                {
+                    "buckets": [
+                    {
+                          "key": "dummy_key3",
+                          "doc_count": 1,
+                          "centroid": {
+                            "location": {
+                              "lat": 3.0,
+                              "lon": 2.0
+                            }
+                          }
+                    }
+                    ]
+                }
+            }
+        }
+    }
+
+    gdal.FileFromMemBuffer(request, json.dumps(response))
+    f = lyr.GetNextFeature()
+    gdal.Unlink(request)
+    assert f is not None
+    assert f['key'] == 'dummy_key3'
+
+###############################################################################
+# Test aggregation
+
+
+def test_ogr_elasticsearch_aggregation_all_options():
+
+    ogr_elasticsearch_delete_files()
+
+    gdal.FileFromMemBuffer("/vsimem/fakeelasticsearch",
+                           """{"version":{"number":"6.8.0"}}""")
+
+    ds = gdal.OpenEx('ES:/vsimem/fakeelasticsearch',
+                     open_options=['AGGREGATION={"index":"test","geohash_grid":{"size":100,"precision":4},"fields":{"min":["a", "f"],"max":["b"],"avg":["c"],"sum":["d"],"count":["e"],"stats":["f"]}}'])
+    assert ds is not None
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetFieldCount() == 12
+
+    response = {
+        "aggregations":
+        {
+            "grid":
+            {
+                "buckets": [
+                {
+                      "key": "dummy_key",
+                      "doc_count": 9876543210,
+                      "centroid": {
+                        "location": {
+                          "lat": 60,
+                          "lon": 50
+                        },
+                        "count": 9876543210
+                      },
+                      "a_min": { "value": 1.5 },
+                      "b_max": { "value": 2.5 },
+                      "c_avg": { "value": 3.5 },
+                      "d_sum": { "value": 4.5 },
+                      "e_count": { "value": 9876543211 },
+                      "f_stats": {
+                          "min": 1,
+                          "max": 2,
+                          "avg": 3,
+                          "sum": 4,
+                          "count": 9876543212
+                      }
+                },
+                ]
+            }
+        }
+    }
+
+    request = """/vsimem/fakeelasticsearch/test/_search&POSTFIELDS={"size":0,"aggs":{"grid":{"geohash_grid":{"field":"a_geopoint.coordinates","precision":4,"size":100},"aggs":{"centroid":{"geo_centroid":{"field":"a_geopoint.coordinates"}},"f_stats":{"stats":{"field":"f"}},"a_min":{"min":{"field":"a"}},"b_max":{"max":{"field":"b"}},"c_avg":{"avg":{"field":"c"}},"d_sum":{"sum":{"field":"d"}},"e_count":{"value_count":{"field":"e"}}}}}}"""
+    gdal.FileFromMemBuffer(request, json.dumps(response))
+
+    f = lyr.GetNextFeature()
+    gdal.Unlink(request)
+
+    assert f['key'] == 'dummy_key'
+    assert f['doc_count'] == 9876543210
+    assert f['a_min'] == 1.5
+    assert f['b_max'] == 2.5
+    assert f['c_avg'] == 3.5
+    assert f['d_sum'] == 4.5
+    assert f['e_count'] == 9876543211
+    assert f['f_min'] == 1
+    assert f['f_max'] == 2
+    assert f['f_avg'] == 3
+    assert f['f_sum'] == 4
+    assert f['f_count'] == 9876543212
+    assert f.GetGeometryRef().ExportToWkt() == 'POINT (50 60)'
+
+
+###############################################################################
+# Test GetLayerByName() with a wildcard name
+
+
+def test_ogr_elasticsearch_wildcard_layer_name():
+
+    ogr_elasticsearch_delete_files()
+
+    gdal.FileFromMemBuffer("/vsimem/fakeelasticsearch",
+                           """{"version":{"number":"6.8.0"}}""")
+
+    ds = gdal.OpenEx('ES:/vsimem/fakeelasticsearch')
+
+    gdal.FileFromMemBuffer(
+        """/vsimem/fakeelasticsearch/_cat/indices/test*?h=i""", 'test1\ntest2\n')
+
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/test1/_mapping?pretty""", """
+    {
+        "test1":
+        {
+            "mappings":
+            {
+                "default":
+                {
+                    "properties":
+                    {
+                        "a_geopoint":
+                        {
+                            "properties":
+                            {
+                                "coordinates":
+                                {
+                                    "type": "geo_point"
+                                }
+                            }
+                        },
+                        "str_field": { "type": "string"},
+                        "str_field2": { "type": "string"}
+                    }
+                }
+            }
+        }
+    }
+    """)
+
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/test1/default/_search?scroll=1m&size=100""",
+                           """{
+"_scroll_id": "my_scrollid",
+    "hits":
+    {
+        "hits":[
+        {
+            "_index": "test1",
+            "_id": "my_id",
+            "_source": {
+                "a_geopoint": {
+                    "type": "Point",
+                    "coordinates": [2.0,49.0]
+                },
+                "str_field": "foo",
+                "str_field2": "bar"
+            }
+        }]
+    }
+}""")
+    gdal.FileFromMemBuffer(
+        """/vsimem/fakeelasticsearch/_search/scroll?scroll=1m&scroll_id=my_scrollid""", "{}")
+    gdal.FileFromMemBuffer(
+        """/vsimem/fakeelasticsearch/_search/scroll?scroll_id=my_scrollid&CUSTOMREQUEST=DELETE""", '{}')
+
+    lyr = ds.GetLayerByName('test*,-test3')
+    assert lyr.GetLayerDefn().GetFieldCount() == 3
+    assert lyr.GetLayerDefn().GetGeomFieldCount() == 1
+
+
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/test*,-test3/default/_search?scroll=1m&size=100""",
+                           """{
+"_scroll_id": "my_scrollid",
+    "hits":
+    {
+        "hits":[
+        {
+            "_index": "test1",
+            "_id": "my_id",
+            "_source": {
+                "a_geopoint": {
+                    "type": "Point",
+                    "coordinates": [2.0,49.0]
+                },
+                "str_field": "foo",
+                "str_field2": "bar"
+            }
+        },
+        {
+            "_index": "test2",
+            "_id": "my_id2",
+            "_source": {
+                "a_geopoint": {
+                    "type": "Point",
+                    "coordinates": [3.0,50.0]
+                },
+                "str_field": "foo2",
+                "str_field2": "bar2"
+            }
+        }
+        ]
+    }
+}""")
+    gdal.FileFromMemBuffer(
+        """/vsimem/fakeelasticsearch/_search/scroll?scroll=1m&scroll_id=my_scrollid""", "{}")
+    gdal.FileFromMemBuffer(
+        """/vsimem/fakeelasticsearch/_search/scroll?scroll_id=my_scrollid&CUSTOMREQUEST=DELETE""", '{}')
+
+    f = lyr.GetNextFeature()
+    assert f['_id'] == 'my_id'
+    assert f['str_field'] == 'foo'
+    assert f['str_field2'] == 'bar'
+    assert f.GetGeometryRef().ExportToWkt() == 'POINT (2 49)'
+
+    f = lyr.GetNextFeature()
+    assert f['_id'] == 'my_id2'
+    assert f['str_field'] == 'foo2'
+    assert f['str_field2'] == 'bar2'
+    assert f.GetGeometryRef().ExportToWkt() == 'POINT (3 50)'
+
+    # Test with ADD_SOURCE_INDEX_NAME
+    ds = gdal.OpenEx('ES:/vsimem/fakeelasticsearch', open_options = ['ADD_SOURCE_INDEX_NAME=YES'])
+
+    lyr = ds.GetLayerByName('test*,-test3')
+    assert lyr.GetLayerDefn().GetFieldCount() == 4
+    assert lyr.GetLayerDefn().GetGeomFieldCount() == 1
+
+    f = lyr.GetNextFeature()
+    assert f['_index'] == 'test1'
+    assert f['_id'] == 'my_id'
+    assert f['str_field'] == 'foo'
+    assert f['str_field2'] == 'bar'
+    assert f.GetGeometryRef().ExportToWkt() == 'POINT (2 49)'
+
+    f = lyr.GetNextFeature()
+    assert f['_index'] == 'test2'
+    assert f['_id'] == 'my_id2'
+    assert f['str_field'] == 'foo2'
+    assert f['str_field2'] == 'bar2'
+    assert f.GetGeometryRef().ExportToWkt() == 'POINT (3 50)'

@@ -2619,11 +2619,9 @@ static GDALDataset* OGRMongoDBv3DriverOpen( GDALOpenInfo* poOpenInfo )
 /*                        OGRMongoDBv3DriverUnload()                    */
 /************************************************************************/
 
-extern "C" int GDALIsInGlobalDestructor();
-
 static void OGRMongoDBv3DriverUnload( GDALDriver* )
 {
-    if( g_pInst != nullptr && !GDALIsInGlobalDestructor() )
+    if( g_pInst != nullptr )
     {
         delete g_pInst;
         g_pInst = nullptr;

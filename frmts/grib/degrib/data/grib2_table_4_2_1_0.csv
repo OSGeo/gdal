@@ -1,0 +1,8 @@
+subcat,short_name,name,unit,unit_conv
+0,"FFLDG","Flash flood guidance","kg/(m^2)",UC_NONE
+1,"FFLDRO","Flash flood runoff","kg/(m^2)",UC_NONE
+2,"RSSC","Remotely sensed snow cover","50=no-snow/no-cloud; 100=Clouds; 250=Snow; 255=missing",UC_NONE
+3,"ESCT","Elevation of snow covered terrain","0-90=elevation in increments of 100m; 254=clouds; 255=missing",UC_NONE
+4,"SWEPON","Snow water equivalent percent of normal","%",UC_NONE
+5,"BGRUN","Baseflow-groundwater runoff","kg/(m^2)",UC_NONE
+6,"SSRUN","Storm surface runoff","kg/(m^2)",UC_NONE

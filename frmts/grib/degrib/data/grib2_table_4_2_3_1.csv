@@ -1,0 +1,31 @@
+subcat,short_name,name,unit,unit_conv
+0,"ESTP","Estimated precipitation","kg/(m^2)",UC_NONE
+1,"IRRATE","Instantaneous rain rate","kg/(m^2*s)",UC_NONE
+2,"CTOPH","Cloud top height","kg/(m^2*s)",UC_NONE
+3,"CTOPHQI","Cloud top height quality indicator","0=Nominal cloud top height quality; 1=Fog in segment; 2=Poor quality height estimation; 3=Fog in segment and poor quality height estimation",UC_NONE
+4,"ESTUGRD","Estimated u component of wind","m/s",UC_NONE
+5,"ESTVGRD","Estimated v component of wind","m/s",UC_NONE
+6,"NPIXU","Number of pixels used","Numeric",UC_NONE
+7,"SOLZA","Solar zenith angle","Degree",UC_NONE
+8,"RAZA","Relative azimuth angle","Degree",UC_NONE
+9,"RFL06","Reflectance in 0.6 micron channel","%",UC_NONE
+10,"RFL08","Reflectance in 0.8 micron channel","%",UC_NONE
+11,"RFL16","Reflectance in 1.6 micron channel","%",UC_NONE
+12,"RFL39","Reflectance in 3.9 micron channel","%",UC_NONE
+13,"ATMDIV","Atmospheric divergence","1/s",UC_NONE
+14,"CBTMP","Cloudy Brightness Temperature","K",UC_NONE
+15,"CSBTMP","Clear Sky Brightness Temperature","K",UC_NONE
+16,"CLDRAD","Cloudy Radiance (with respect to wave number)","W/(m*sr)",UC_NONE
+17,"CSKYRAD","Clear Sky Radiance (with respect to wave number)","W/(m*sr)",UC_NONE
+18,"","Reserved","-",UC_NONE
+19,"WINDS","Wind Speed","m/s",UC_NONE
+20,"AOT06","Aerosol Optical Thickness at 0.635 µm","",UC_NONE
+21,"AOT08","Aerosol Optical Thickness at 0.810 µm","",UC_NONE
+22,"AOT16","Aerosol Optical Thickness at 1.640 µm","",UC_NONE
+23,"ANGCOE","Angstrom Coefficient","",UC_NONE
+24,"","Reserved","-",UC_NONE
+25,"","Reserved","-",UC_NONE
+26,"","Reserved","-",UC_NONE
+27,"BRFLF","Bidirectional Reflecance Factor","Numeric",UC_NONE
+28,"SPBRT","Brightness Temperature","K",UC_NONE
+29,"SRAD","Scaled Radiance","Numeric",UC_NONE

@@ -1,0 +1,11 @@
+subcat,short_name,name,unit,unit_conv
+0,"SRAD","Scaled radiance","Numeric",UC_NONE
+1,"SALBEDO","Scaled albedo","Numeric",UC_NONE
+2,"SBTMP","Scaled brightness temperature","Numeric",UC_NONE
+3,"SPWAT","Scaled precipitable water","Numeric",UC_NONE
+4,"SLFTI","Scaled lifted index","Numeric",UC_NONE
+5,"SCTPRES","Scaled cloud top pressure","Numeric",UC_NONE
+6,"SSTMP","Scaled skin temperature","Numeric",UC_NONE
+7,"CLOUDM","Cloud mask","0=clear over water; 1=clear over land; 2=cloud",UC_NONE
+8,"PIXST","Pixel scene type","0=No scene; 1=needle; 2=broad-leafed; 3=Deciduous needle; 4=Deciduous broad-leafed; 5=Deciduous mixed; 6=Closed shrub; 7=Open shrub; 8=Woody savannah; 9=Savannah; 10=Grassland; 11=wetland; 12=Cropland; 13=Urban; 14=crops; 15=snow; 16=Desert; 17=Water; 18=Tundra; 97=Snow on land; 98=Snow on water; 99=Sun-glint; 100=General cloud; 101=fog Stratus; 102=Stratocumulus; 103=Low cloud; 104=Nimbotratus; 105=Altostratus; 106=Medium cloud; 107=Cumulus; 108=Cirrus; 109=High cloud; 110=Unknown cloud",UC_NONE
+9,"FIREDI","Fire detection indicator","0=No fire detected; 1=Possible fire detected; 2=Probable fire detected",UC_NONE

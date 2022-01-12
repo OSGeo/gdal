@@ -1667,10 +1667,14 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
       meta->pds2.sect4.f_validCutOff = 1;
       meta->pds2.sect4.cutOff = is4[14 + nOffset] * 3600 + is4[16 + nOffset] * 60;
    }
-   if (is4[18 + nOffset] == GRIB2MISSING_s4) {
-      errSprintf ("Missing 'forecast' time?\n");
-      return -5;
+/*   if (is4[18] == GRIB2MISSING_s4) */
+   if (is4[18] < -1 * (0x3fffffff)) {
+      //printf ("  Warning - Forecast time %ld is 'too' negative.\n", is4[18]);
+      //printf ("  Assuming incorrect decoding of 2s complement.");
+      is4[18] = (unsigned)(-1) * (is4[18]^(0x80000000));
+      //printf ("  Using %ld\n", is4[18]);
    }
+
    meta->pds2.sect4.foreUnit = is4[17 + nOffset];
    if (ParseSect4Time2sec (meta->pds2.refTime, is4[18 + nOffset], is4[17 + nOffset],
                            &(meta->pds2.sect4.foreSec)) != 0) {

@@ -61,7 +61,8 @@ static GDALDataset *OGRGMTDriverOpen( GDALOpenInfo* poOpenInfo )
 
     OGRGmtDataSource *poDS = new OGRGmtDataSource();
 
-    if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update ) )
+    if( !poDS->Open( poOpenInfo->pszFilename, nullptr, nullptr,
+                     poOpenInfo->eAccess == GA_Update ) )
     {
         delete poDS;
         return nullptr;

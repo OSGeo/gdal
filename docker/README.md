@@ -7,7 +7,7 @@ Each directory contains a `./build.sh` for convenient building of the image.
 Note: the mention of the overall licensing terms of the GDAL build is to the
 best of our knowledge and not guaranteed. Users should check by themselves.
 
-# Alpine based (3.14)
+# Alpine based (3.15)
 
 ## Small: `osgeo/gdal:alpine-small-latest`
 
@@ -17,7 +17,7 @@ best of our knowledge and not guaranteed. Users should check by themselves.
 * Using internal libtiff and libgeotiff
 * External libraries enabled: ultrasmall + libexpat, libpq, libssl
 * No GDAL Python
-* Base PROJ grid package
+* Base PROJ grid package (http://download.osgeo.org/proj/proj-datumgrid-1.8.zip)
 * Overall licensing terms of the GDAL build: permissive (X/MIT, BSD style, Apache, etc..)
 
 See [alpine-small/Dockerfile](alpine-small/Dockerfile)
@@ -31,7 +31,7 @@ See [alpine-small/Dockerfile](alpine-small/Dockerfile)
 * External libraries enabled: small + libgeos, libhdf5, libhdf5, libkea, libnetcdf, libfreexl,
   libspatialite, libxml2, libpoppler, openexr, libheif, libdeflate
 * GDAL Python (Python 3.9)
-* Base PROJ grid package
+* Base PROJ grid package (http://download.osgeo.org/proj/proj-datumgrid-1.8.zip)
 * Overall licensing terms of the GDAL build: copy-left (GPL) + LGPL + permissive
 
 See [alpine-normal/Dockerfile](alpine-normal/Dockerfile)
@@ -47,7 +47,7 @@ See [alpine-normal/Dockerfile](alpine-normal/Dockerfile)
 * External libraries enabled: libsqlite3, libproj, libcurl, libjpeg, libpng, libwebp,
   libzstd, libexpat, libxerces-c, libpq, libssl, libgeos
 * GDAL Python (Python 3.8)
-* Base PROJ grid package
+* Base PROJ grid package (http://download.osgeo.org/proj/proj-datumgrid-1.8.zip)
 * Overall licensing terms of the GDAL build: LGPL + permissive (X/MIT, BSD style, Apache, etc..)
 
 See [ubuntu-small/Dockerfile](ubuntu-small/Dockerfile)
@@ -62,7 +62,7 @@ See [ubuntu-small/Dockerfile](ubuntu-small/Dockerfile)
   mongocxx 3.4, libspatialite, unixodbc, libxml2, libcfitsio, libmysqlclient,
   libkml, libpoppler, pdfium, openexr, libheif, libdeflate
 * GDAL Python (Python 3.8)
-* *All* PROJ grid packages
+* *All* PROJ grid packages (equivalent of latest of proj-data-X.zip from http://download.osgeo.org/proj/ at time of generation, > 500 MB)
 * Overall licensing terms of the GDAL build: copy-left (GPL) + LGPL + permissive
 
 See [ubuntu-full/Dockerfile](ubuntu-full/Dockerfile)

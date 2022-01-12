@@ -379,6 +379,12 @@ AC_CHECK_FUNC_CUSTOM(gmtime_r,[#include <time.h>],[time_t t; struct tm ltime; t 
 AC_CHECK_FUNC_CUSTOM(localtime_r,[#include <time.h>],[time_t t; struct tm ltime; t = time(0); localtime_r( &t, &ltime );])
 AC_LANG_POP(C++)
 
+AC_CHECK_HEADERS([xlocale.h],[GDAL_HAVE_XLOCALE_H=1])
+if test "$GDAL_HAVE_XLOCALE_H" = "1"; then
+  AC_DEFINE_UNQUOTED(GDAL_HAVE_XLOCALE_H, 1,
+            [Define if you have the <xlocale.h> header file.])
+fi
+
 AC_MSG_CHECKING([for uselocale])
 AC_LANG_PUSH(C++)
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
@@ -4731,42 +4737,43 @@ if test "$with_qhull" = "no" ; then
 
 elif test "$with_qhull" = "yes" -o "$with_qhull" = "" ; then
 
-  # Only qhull 2012 is reliable on certain datasets. Older Ubuntu have
-  # qhull/qhull.h
-  AC_CHECK_HEADERS([qhull/libqhull.h])
-  if test "$ac_cv_header_qhull_libqhull_h" = "yes"; then
-    AC_CHECK_LIB(qhull,qh_new_qhull,QHULL_SETTING=yes,QHULL_SETTING=no,)
-    if test "$QHULL_SETTING" = "yes"; then
-        QHULL_SETTING=external
-        QHULL_INCLUDE_SUBDIR_IS_LIBQHULL=0
-        LIBS="-lqhull $LIBS"
-    fi
-  fi
-  AC_CHECK_HEADERS([libqhull/libqhull.h])
-  if test "$ac_cv_header_libqhull_libqhull_h" = "yes"; then
-    AC_CHECK_LIB(qhull,qh_new_qhull,QHULL_SETTING=yes,QHULL_SETTING=no,)
-    if test "$QHULL_SETTING" = "yes"; then
-        QHULL_SETTING=external
-        QHULL_INCLUDE_SUBDIR_IS_LIBQHULL=1
-        LIBS="-lqhull $LIBS"
-    fi
+  AC_ARG_WITH(qhull_pkgname,[  --with-qhull-pkgname[=ARG]     pkg-config name of the reentrant qhull library, typically qhull_r (default) or qhullstatic_r],,)
+
+  if test "x$with_qhull_pkgname" = "x" ; then
+    with_qhull_pkgname=qhull_r
   fi
 
-  if test "$QHULL_SETTING" = "no" ; then
-    if test "$with_qhull" = "yes"; then
+  PKG_PROG_PKG_CONFIG([0.21])
+  PKG_CHECK_MODULES([QHULL],[$with_qhull_pkgname], [HAVE_QHULL=yes], [HAVE_QHULL=no])
+
+  dnl First try with pkg-config
+  if test "$HAVE_QHULL" = "yes" ; then
+    QHULL_SETTING=external
+    CFLAGS="$CFLAGS $QHULL_CFLAGS"
+    LIBS="$LIBS $QHULL_LIBS"
+  else
+    AC_CHECK_HEADERS([libqhull_r/libqhull_r.h])
+    if test "$ac_cv_header_libqhull_r_libqhull_r_h" = "yes"; then
+      AC_CHECK_LIB(qhull_r,qh_new_qhull,QHULL_SETTING=yes,QHULL_SETTING=no,)
+      if test "$QHULL_SETTING" = "yes"; then
+        QHULL_SETTING=external
+        LIBS="-lqhull_r $LIBS"
+      fi
+    fi
+
+    if test "$QHULL_SETTING" = "no" ; then
+      if test "$with_qhull" = "yes"; then
         AC_MSG_ERROR([--with-qhull requested, but library not found!])
-    else
+      else
         QHULL_SETTING=internal
-        QHULL_INCLUDE_SUBDIR_IS_LIBQHULL=1
+      fi
     fi
   fi
 else
   QHULL_SETTING=internal
-  QHULL_INCLUDE_SUBDIR_IS_LIBQHULL=1
 fi
 
 AC_SUBST([QHULL_SETTING],$QHULL_SETTING)
-AC_SUBST([QHULL_INCLUDE_SUBDIR_IS_LIBQHULL],$QHULL_INCLUDE_SUBDIR_IS_LIBQHULL)
 
 dnl ---------------------------------------------------------------------------
 dnl Check if opencl library is available.

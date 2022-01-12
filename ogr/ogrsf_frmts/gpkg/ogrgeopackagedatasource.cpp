@@ -211,12 +211,12 @@ OGRErr GDALGeoPackageDataset::SetApplicationAndUserVersionId()
 
     // PRAGMA application_id available since SQLite 3.7.17
 #if SQLITE_VERSION_NUMBER >= 3007017
-    const char *pszPragma = CPLSPrintf(
+    const auto osPragma = CPLString().Printf(
         "PRAGMA application_id = %u;"
         "PRAGMA user_version = %u",
         m_nApplicationId,
         m_nUserVersion);
-    return SQLCommand(hDB, pszPragma);
+    return SQLCommand(hDB, osPragma.c_str());
 #else
     CPLAssert( m_pszFilename != NULL );
 
@@ -4032,11 +4032,17 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
 
     }
 
+    const bool bUseTempFile =
+        CPLTestBool(CPLGetConfigOption("CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "NO")) &&
+        (VSIHasOptimizedReadMultiRange(pszFilename) != FALSE ||
+         EQUAL(CPLGetConfigOption("CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", ""), "FORCED"));
+
     bool bFileExists = false;
     if( VSIStatL( pszFilename, &sStatBuf ) == 0 )
     {
         bFileExists = true;
         if( nBandsIn == 0 ||
+            bUseTempFile ||
             !CPLTestBool(CSLFetchNameValueDef(papszOptions, "APPEND_SUBDATASET", "NO")) )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -4046,7 +4052,17 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
             return FALSE;
         }
     }
-    m_pszFilename = CPLStrdup(pszFilename);
+
+    if( bUseTempFile )
+    {
+        m_osFinalFilename = pszFilename;
+        m_pszFilename = CPLStrdup(CPLGenerateTempFilename(CPLGetFilename(pszFilename)));
+        CPLDebug("GPKG", "Creating temporary file %s", m_pszFilename);
+    }
+    else
+    {
+        m_pszFilename = CPLStrdup(pszFilename);
+    }
     m_bNew = true;
     eAccess = GA_Update;
     m_bDateTimeWithTZ = EQUAL(CSLFetchNameValueDef(

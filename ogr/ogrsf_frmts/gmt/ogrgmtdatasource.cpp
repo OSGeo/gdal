@@ -60,12 +60,15 @@ OGRGmtDataSource::~OGRGmtDataSource()
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRGmtDataSource::Open( const char *pszFilename, int bUpdateIn )
+int OGRGmtDataSource::Open( const char *pszFilename,
+                            VSILFILE* fp,
+                            const OGRSpatialReference* poSRS,
+                            int bUpdateIn )
 
 {
     bUpdate = CPL_TO_BOOL( bUpdateIn );
 
-    OGRGmtLayer *poLayer = new OGRGmtLayer( pszFilename, bUpdate );
+    OGRGmtLayer *poLayer = new OGRGmtLayer( pszFilename, fp, poSRS, bUpdate );
     if( !poLayer->bValidFile )
     {
         delete poLayer;
@@ -146,18 +149,23 @@ OGRGmtDataSource::ICreateLayer( const char * pszLayerName,
 /*      datasource name ends in .gmt we will override the provided      */
 /*      layer name with the name from the gmt.                          */
 /* -------------------------------------------------------------------- */
-    CPLString osPath = CPLGetPath( pszName );
-    CPLString osFilename;
 
-    if( EQUAL(CPLGetExtension(pszName),"gmt") )
-        osFilename = pszName;
-    else
+    CPLString osPath = CPLGetPath( pszName );
+    CPLString osFilename(pszName);
+    const char* pszFlags = "wb+";
+
+    if( osFilename == "/dev/stdout" )
+        osFilename = "/vsistdout";
+
+    if( STARTS_WITH(osFilename, "/vsistdout") )
+        pszFlags = "wb";
+    else if( !EQUAL(CPLGetExtension(pszName),"gmt") )
         osFilename = CPLFormFilename( osPath, pszLayerName, "gmt" );
 
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
-    VSILFILE *fp = VSIFOpenL( osFilename, "w" );
+    VSILFILE *fp = VSIFOpenL( osFilename, pszFlags );
     if( fp == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
@@ -170,8 +178,11 @@ OGRGmtDataSource::ICreateLayer( const char * pszLayerName,
 /*      Write out header.                                               */
 /* -------------------------------------------------------------------- */
     VSIFPrintfL( fp, "# @VGMT1.0%s\n", pszGeom );
-    VSIFPrintfL( fp, "# REGION_STUB                                      "
-                 "                       \n" );
+    if( !STARTS_WITH(osFilename, "/vsistdout") )
+    {
+        VSIFPrintfL( fp, "# REGION_STUB                                      "
+                     "                       \n" );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Write the projection, if possible.                              */
@@ -205,16 +216,19 @@ OGRGmtDataSource::ICreateLayer( const char * pszLayerName,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Finish header and close.                                        */
-/* -------------------------------------------------------------------- */
-    VSIFCloseL( fp );
-
-/* -------------------------------------------------------------------- */
 /*      Return open layer handle.                                       */
 /* -------------------------------------------------------------------- */
-    if( Open( osFilename, TRUE ) )
-        return papoLayers[nLayers-1];
+    if( Open( osFilename, fp, poSRS, TRUE ) )
+    {
+        auto poLayer = papoLayers[nLayers-1];
+        if( strcmp(pszGeom, "") != 0 )
+        {
+            poLayer->GetLayerDefn()->SetGeomType(wkbFlatten(eType));
+        }
+        return poLayer;
+    }
 
+    VSIFCloseL(fp);
     return nullptr;
 }
 

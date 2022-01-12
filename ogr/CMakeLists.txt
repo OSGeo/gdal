@@ -79,7 +79,7 @@ target_include_directories(ogr PRIVATE $<TARGET_PROPERTY:ogr_geojson,SOURCE_DIR>
 set_property(TARGET ogr PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:ogr>)
 
-if (GDAL_USE_LIBZ_INTERNAL)
+if (GDAL_USE_ZLIB_INTERNAL)
   target_include_directories(ogr PRIVATE $<TARGET_PROPERTY:libz,SOURCE_DIR>)
 endif ()
 
@@ -115,7 +115,7 @@ if (GDAL_USE_SFCGAL)
   endif ()
 endif ()
 
-if (NOT GDAL_USE_LIBZ_INTERNAL)
+if (NOT GDAL_USE_ZLIB_INTERNAL)
   target_compile_definitions(ogr PRIVATE -DHAVE_ZLIB_H -DHAVE_ZLIB)
   if (MSVC)
     target_compile_definitions(ogr PRIVATE -DZLIB_DLL)
@@ -124,7 +124,7 @@ if (NOT GDAL_USE_LIBZ_INTERNAL)
   gdal_add_private_link_libraries(ZLIB::ZLIB)
 endif ()
 
-if (HAVE_EXPAT)
+if (GDAL_USE_EXPAT)
   target_compile_definitions(ogr PRIVATE -DHAVE_EXPAT)
   target_include_directories(ogr PRIVATE ${EXPAT_INCLUDE_DIRS})
   gdal_add_private_link_libraries(EXPAT::EXPAT)

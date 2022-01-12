@@ -2,23 +2,23 @@
  * Copyright (c) 1988-1997 Sam Leffler
  * Copyright (c) 1991-1997 Silicon Graphics, Inc.
  *
- * Permission to use, copy, modify, distribute, and sell this software and
+ * Permission to use, copy, modify, distribute, and sell this software and 
  * its documentation for any purpose is hereby granted without fee, provided
  * that (i) the above copyright notices and this permission notice appear in
  * all copies of the software and related documentation, and (ii) the names of
  * Sam Leffler and Silicon Graphics may not be used in any advertising or
  * publicity relating to the software without the specific, prior written
  * permission of Sam Leffler and Silicon Graphics.
- *
- * THE SOFTWARE IS PROVIDED "AS-IS" AND WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS, IMPLIED OR OTHERWISE, INCLUDING WITHOUT LIMITATION, ANY
- * WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
- *
+ * 
+ * THE SOFTWARE IS PROVIDED "AS-IS" AND WITHOUT WARRANTY OF ANY KIND, 
+ * EXPRESS, IMPLIED OR OTHERWISE, INCLUDING WITHOUT LIMITATION, ANY 
+ * WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.  
+ * 
  * IN NO EVENT SHALL SAM LEFFLER OR SILICON GRAPHICS BE LIABLE FOR
  * ANY SPECIAL, INCIDENTAL, INDIRECT OR CONSEQUENTIAL DAMAGES OF ANY KIND,
  * OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
- * WHETHER OR NOT ADVISED OF THE POSSIBILITY OF DAMAGE, AND ON ANY THEORY OF
- * LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
+ * WHETHER OR NOT ADVISED OF THE POSSIBILITY OF DAMAGE, AND ON ANY THEORY OF 
+ * LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE 
  * OF THIS SOFTWARE.
  */
 
@@ -184,7 +184,7 @@ TIFFFillStripPartial( TIFF *tif, int strip, tmsize_t read_ahead, int restart )
                 read_ahead_mod = read_ahead;
         if (read_ahead_mod > tif->tif_rawdatasize) {
                 assert( restart );
-
+                
                 tif->tif_curstrip = NOSTRIP;
                 if ((tif->tif_flags & TIFF_MYBUFFER) == 0) {
                         TIFFErrorExt(tif->tif_clientdata, module,
@@ -208,7 +208,7 @@ TIFFFillStripPartial( TIFF *tif, int strip, tmsize_t read_ahead, int restart )
                 unused_data = tif->tif_rawdataloaded - (tif->tif_rawcp - tif->tif_rawdata);
         else
                 unused_data = 0;
-
+        
         if( unused_data > 0 )
         {
 		assert((tif->tif_flags&TIFF_BUFFERMMAP)==0);
@@ -256,7 +256,7 @@ TIFFFillStripPartial( TIFF *tif, int strip, tmsize_t read_ahead, int restart )
 
         tif->tif_rawcc = tif->tif_rawdataloaded;
         tif->tif_rawcp = tif->tif_rawdata;
-
+                        
         if (!isFillOrder(tif, td->td_fillorder) &&
             (tif->tif_flags & TIFF_NOBITREV) == 0) {
 		assert((tif->tif_flags&TIFF_BUFFERMMAP)==0);
@@ -339,7 +339,6 @@ TIFFSeek(TIFF* tif, uint32_t row, uint16_t sample )
         whole_strip = TIFFGetStrileByteCount(tif, strip) < 10
                 || isMapped(tif);
         if( td->td_compression == COMPRESSION_LERC ||
-            td->td_compression == COMPRESSION_JXL ||
             td->td_compression == COMPRESSION_JBIG )
         {
             /* Ideally plugins should have a way to declare they don't support
@@ -349,7 +348,7 @@ TIFFSeek(TIFF* tif, uint32_t row, uint16_t sample )
 #else
         whole_strip = 1;
 #endif
-
+        
         if( !whole_strip )
         {
                 /* 16 is for YCbCr mode where we may need to read 16 */
@@ -371,7 +370,7 @@ TIFFSeek(TIFF* tif, uint32_t row, uint16_t sample )
          * only reading the first part.
          */
 	if (strip != tif->tif_curstrip) {	/* different strip, refill */
-
+                
                 if( whole_strip )
                 {
                         if (!TIFFFillStrip(tif, strip))
@@ -389,7 +388,7 @@ TIFFSeek(TIFF* tif, uint32_t row, uint16_t sample )
         */
         else if( !whole_strip )
         {
-                if( ((tif->tif_rawdata + tif->tif_rawdataloaded) - tif->tif_rawcp) < read_ahead
+                if( ((tif->tif_rawdata + tif->tif_rawdataloaded) - tif->tif_rawcp) < read_ahead 
                     && (uint64_t) tif->tif_rawdataoff + tif->tif_rawdataloaded < TIFFGetStrileByteCount(tif, strip) )
                 {
                         if( !TIFFFillStripPartial(tif,strip,read_ahead,0) )
@@ -418,14 +417,14 @@ TIFFSeek(TIFF* tif, uint32_t row, uint16_t sample )
                                 return (0);
                 }
 	}
-
+        
 	if (row != tif->tif_row) {
 		/*
 		 * Seek forward to the desired row.
 		 */
 
                 /* TODO: Will this really work with partial buffers? */
-
+                
 		if (!(*tif->tif_seek)(tif, row - tif->tif_row))
 			return (0);
 		tif->tif_row = row;
@@ -453,7 +452,7 @@ TIFFReadScanline(TIFF* tif, void* buf, uint32_t row, uint16_t sample)
 
 		if (e)
 			(*tif->tif_postdecode)(tif, (uint8_t*) buf,
-			    tif->tif_scanlinesize);
+			    tif->tif_scanlinesize);  
 	}
 	return (e > 0 ? 1 : -1);
 }
@@ -540,7 +539,7 @@ TIFFReadEncodedStrip(TIFF* tif, uint32_t strip, void* buf, tmsize_t size)
 	return(stripsize);
 }
 
-/* Variant of TIFFReadEncodedStrip() that does
+/* Variant of TIFFReadEncodedStrip() that does 
  * * if *buf == NULL, *buf = _TIFFmalloc(bufsizetoalloc) only after TIFFFillStrip() has
  *   succeeded. This avoid excessive memory allocation in case of truncated
  *   file.
@@ -752,15 +751,12 @@ TIFFFillStrip(TIFF* tif, uint32_t strip)
 			    (bytecount - 4096) / 10 > (uint64_t)stripsize  )
 			{
 				uint64_t newbytecount = (uint64_t)stripsize * 10 + 4096;
-				if( newbytecount == 0 || newbytecount > (uint64_t)TIFF_INT64_MAX )
-				{
-					TIFFErrorExt(tif->tif_clientdata, module,
-					  "Too large strip byte count %"PRIu64", strip %"PRIu32". Limiting to %"PRIu64,
-					     bytecount,
-					     strip,
-					     newbytecount);
-					bytecount = newbytecount;
-				}
+				TIFFErrorExt(tif->tif_clientdata, module,
+				  "Too large strip byte count %"PRIu64", strip %"PRIu32". Limiting to %"PRIu64,
+				     bytecount,
+				     strip,
+				     newbytecount);
+				bytecount = newbytecount;
 			}
 		}
 
@@ -818,7 +814,7 @@ TIFFFillStrip(TIFF* tif, uint32_t strip)
                         tif->tif_rawdataoff = 0;
                         tif->tif_rawdataloaded = (tmsize_t) bytecount;
 
-			/*
+			/* 
 			 * When we have tif_rawdata reference directly into the memory mapped file
 			 * we need to be pretty careful about how we use the rawdata.  It is not
 			 * a general purpose working buffer as it normally otherwise is.  So we
@@ -879,7 +875,7 @@ TIFFFillStrip(TIFF* tif, uint32_t strip)
 
                         tif->tif_rawdataoff = 0;
                         tif->tif_rawdataloaded = bytecountm;
-
+                        
 			if (!isFillOrder(tif, td->td_fillorder) &&
 			    (tif->tif_flags & TIFF_NOBITREV) == 0)
 				TIFFReverseBits(tif->tif_rawdata, bytecountm);
@@ -955,7 +951,7 @@ TIFFReadEncodedTile(TIFF* tif, uint32_t tile, void* buf, tmsize_t size)
 		return ((tmsize_t)(-1));
 }
 
-/* Variant of TIFFReadTile() that does
+/* Variant of TIFFReadTile() that does 
  * * if *buf == NULL, *buf = _TIFFmalloc(bufsizetoalloc) only after TIFFFillTile() has
  *   succeeded. This avoid excessive memory allocation in case of truncated
  *   file.
@@ -974,7 +970,7 @@ _TIFFReadTileAndAllocBuffer(TIFF* tif,
                                                (tmsize_t)(-1)));
 }
 
-/* Variant of TIFFReadEncodedTile() that does
+/* Variant of TIFFReadEncodedTile() that does 
  * * if *buf == NULL, *buf = _TIFFmalloc(bufsizetoalloc) only after TIFFFillTile() has
  *   succeeded. This avoid excessive memory allocation in case of truncated
  *   file.
@@ -1146,15 +1142,12 @@ TIFFFillTile(TIFF* tif, uint32_t tile)
 			    (bytecount - 4096) / 10 > (uint64_t)stripsize  )
 			{
 				uint64_t newbytecount = (uint64_t)stripsize * 10 + 4096;
-				if( newbytecount == 0 || newbytecount > (uint64_t)TIFF_INT64_MAX )
-				{
-					TIFFErrorExt(tif->tif_clientdata, module,
-					  "Too large tile byte count %"PRIu64", tile %"PRIu32". Limiting to %"PRIu64,
-					     bytecount,
-					     tile,
-					     newbytecount);
-					bytecount = newbytecount;
-				}
+				TIFFErrorExt(tif->tif_clientdata, module,
+				  "Too large tile byte count %"PRIu64", tile %"PRIu32". Limiting to %"PRIu64,
+				     bytecount,
+				     tile,
+				     newbytecount);
+				bytecount = newbytecount;
 			}
 		}
 
@@ -1256,7 +1249,7 @@ TIFFFillTile(TIFF* tif, uint32_t tile)
 
                         tif->tif_rawdataoff = 0;
                         tif->tif_rawdataloaded = bytecountm;
-
+                        
 			if (tif->tif_rawdata != NULL &&
                             !isFillOrder(tif, td->td_fillorder) &&
 			    (tif->tif_flags & TIFF_NOBITREV) == 0)
@@ -1337,7 +1330,7 @@ TIFFStartStrip(TIFF* tif, uint32_t strip)
 	if (tif->tif_flags&TIFF_NOREADRAW)
 	{
 		tif->tif_rawcp = NULL;
-		tif->tif_rawcc = 0;
+		tif->tif_rawcc = 0;  
 	}
 	else
 	{

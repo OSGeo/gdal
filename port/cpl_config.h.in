@@ -153,6 +153,9 @@
 /* Define to 1 if you have the <values.h> header file. */
 #undef HAVE_VALUES_H
 
+/* Define to 1 if you have the <xlocale.h> header file. */
+#undef GDAL_HAVE_XLOCALE_H
+
 /* Define to 1 if you have the `vprintf' function. */
 #undef HAVE_VPRINTF
 

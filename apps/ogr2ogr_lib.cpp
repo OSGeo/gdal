@@ -3226,7 +3226,14 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
             if( nRetCode != 0 && !psOptions->bSkipFailures )
                 poODS->RollbackTransaction();
             else
-                poODS->CommitTransaction();
+            {
+                OGRErr eRet = poODS->CommitTransaction();
+                if( eRet != OGRERR_NONE &&
+                    eRet != OGRERR_UNSUPPORTED_OPERATION )
+                {
+                    nRetCode = 1;
+                }
+            }
         }
     }
 
@@ -3694,6 +3701,9 @@ std::unique_ptr<TargetLayerInfo> SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         CPLErrorReset();
 
         char** papszLCOTemp = CSLDuplicate(m_papszLCO);
+        const auto papszDestCreationOptions =
+            m_poDstDS->GetDriver()->GetMetadataItem(
+                GDAL_DS_LAYER_CREATIONOPTIONLIST);
 
         int eGCreateLayerType = eGType;
         if( anRequestedGeomFields.empty() &&
@@ -3713,10 +3723,14 @@ std::unique_ptr<TargetLayerInfo> SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
                  m_poDstDS->TestCapability(ODsCCreateGeomFieldAfterCreateLayer) &&
                  ((!poSrcFDefn->GetGeomFieldDefn(0)->IsNullable() &&
                    CSLFetchNameValue(m_papszLCO, "GEOMETRY_NULLABLE") == nullptr &&
+                   (papszDestCreationOptions == nullptr ||
+                    strstr(papszDestCreationOptions, "GEOMETRY_NULLABLE") != nullptr) &&
                    !m_bForceNullable) ||
                   (poSrcLayer->GetGeometryColumn() != nullptr &&
                    CSLFetchNameValue(m_papszLCO, "GEOMETRY_NAME") == nullptr &&
                    !EQUAL(poSrcLayer->GetGeometryColumn(), "") &&
+                   (papszDestCreationOptions == nullptr ||
+                    strstr(papszDestCreationOptions, "GEOMETRY_NAME") == nullptr) &&
                    poSrcFDefn->GetFieldIndex(poSrcLayer->GetGeometryColumn()) < 0)) )
         {
             anRequestedGeomFields.push_back(0);
@@ -3735,10 +3749,8 @@ std::unique_ptr<TargetLayerInfo> SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
             anRequestedGeomFields.empty() &&
             nSrcGeomFieldCount >= 1 &&
             !poSrcFDefn->GetGeomFieldDefn(0)->IsNullable() &&
-            m_poDstDS->GetDriver()->GetMetadataItem(
-                GDAL_DS_LAYER_CREATIONOPTIONLIST) != nullptr &&
-            strstr(m_poDstDS->GetDriver()->GetMetadataItem(
-                GDAL_DS_LAYER_CREATIONOPTIONLIST), "GEOMETRY_NULLABLE") != nullptr &&
+            papszDestCreationOptions != nullptr &&
+            strstr(papszDestCreationOptions, "GEOMETRY_NULLABLE") != nullptr &&
             CSLFetchNameValue(m_papszLCO, "GEOMETRY_NULLABLE") == nullptr &&
             !m_bForceNullable )
         {
@@ -3748,10 +3760,8 @@ std::unique_ptr<TargetLayerInfo> SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
 
         // Use source geometry field name as much as possible
         if( eGType != wkbNone &&
-            m_poDstDS->GetDriver()->GetMetadataItem(
-                GDAL_DS_LAYER_CREATIONOPTIONLIST) != nullptr &&
-            strstr(m_poDstDS->GetDriver()->GetMetadataItem(
-                GDAL_DS_LAYER_CREATIONOPTIONLIST), "GEOMETRY_NAME") != nullptr &&
+            papszDestCreationOptions &&
+            strstr(papszDestCreationOptions, "GEOMETRY_NAME") != nullptr &&
             CSLFetchNameValue(m_papszLCO, "GEOMETRY_NAME") == nullptr )
         {
             int iSrcGeomField = -1;
@@ -3785,8 +3795,8 @@ std::unique_ptr<TargetLayerInfo> SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         // manually.
         if( poSrcLayer->GetMetadataItem(OLMD_FID64) != nullptr &&
             EQUAL(poSrcLayer->GetMetadataItem(OLMD_FID64), "YES") &&
-            m_poDstDS->GetDriver()->GetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST) != nullptr &&
-            strstr(m_poDstDS->GetDriver()->GetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST), "FID64") != nullptr &&
+            papszDestCreationOptions &&
+            strstr(papszDestCreationOptions, "FID64") != nullptr &&
             CSLFetchNameValue(m_papszLCO, "FID64") == nullptr )
         {
             papszLCOTemp = CSLSetNameValue(papszLCOTemp, "FID64", "YES");
@@ -3798,8 +3808,8 @@ std::unique_ptr<TargetLayerInfo> SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         if( !m_bUnsetFid && !bAppend &&
             poSrcLayer->GetFIDColumn() != nullptr &&
             !EQUAL(poSrcLayer->GetFIDColumn(), "") &&
-            m_poDstDS->GetDriver()->GetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST) != nullptr &&
-            strstr(m_poDstDS->GetDriver()->GetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST), "='FID'") != nullptr &&
+            papszDestCreationOptions != nullptr &&
+            strstr(papszDestCreationOptions, "='FID'") != nullptr &&
             CSLFetchNameValue(m_papszLCO, "FID") == nullptr )
         {
             papszLCOTemp = CSLSetNameValue(papszLCOTemp, "FID", poSrcLayer->GetFIDColumn());
@@ -3818,9 +3828,9 @@ std::unique_ptr<TargetLayerInfo> SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         if( m_bNativeData &&
             poSrcLayer->GetMetadataItem("NATIVE_DATA", "NATIVE_DATA") != nullptr &&
             poSrcLayer->GetMetadataItem("NATIVE_MEDIA_TYPE", "NATIVE_DATA") != nullptr &&
-            m_poDstDS->GetDriver()->GetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST) != nullptr &&
-            strstr(m_poDstDS->GetDriver()->GetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST), "NATIVE_DATA") != nullptr &&
-            strstr(m_poDstDS->GetDriver()->GetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST), "NATIVE_MEDIA_TYPE") != nullptr )
+            papszDestCreationOptions != nullptr &&
+            strstr(papszDestCreationOptions, "NATIVE_DATA") != nullptr &&
+            strstr(papszDestCreationOptions, "NATIVE_MEDIA_TYPE") != nullptr )
         {
             papszLCOTemp = CSLSetNameValue(papszLCOTemp, "NATIVE_DATA",
                     poSrcLayer->GetMetadataItem("NATIVE_DATA", "NATIVE_DATA"));

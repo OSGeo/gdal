@@ -1,0 +1,6 @@
+subcat,short_name,name,unit,unit_conv
+0,"DIRC","Current direction","Degree true",UC_NONE
+1,"SPC","Current speed","m/s",UC_NONE
+2,"UOGRD","u-component of current","m/s",UC_NONE
+3,"VOGRD","v-component of current","m/s",UC_NONE
+4,"RIPCOP","Rip Current Occurrence Probability","%",UC_NONE

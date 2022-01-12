@@ -1035,11 +1035,34 @@ CSVScanLinesIngested( CSVTable *psTable, int iKeyField, const char * pszValue,
 }
 
 /************************************************************************/
+/*                            CSVRewind()                               */
+/*                                                                      */
+/*      Rewind a CSV file based on a passed in filename.                */
+/*      This is aimed at being used with CSVGetNextLine().              */
+/************************************************************************/
+
+void CSVRewind( const char *pszFilename )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Get access to the table.                                        */
+/* -------------------------------------------------------------------- */
+    CPLAssert( pszFilename != nullptr );
+
+    CSVTable * const psTable = CSVAccess( pszFilename );
+    if( psTable != nullptr )
+        psTable->iLastLine = -1;
+}
+
+/************************************************************************/
 /*                           CSVGetNextLine()                           */
 /*                                                                      */
 /*      Fetch the next line of a CSV file based on a passed in          */
 /*      filename.  Returns NULL at end of file, or if file is not       */
 /*      really established.                                             */
+/*      This ingests the whole file into memory if not already done.    */
+/*      When reaching end of file, CSVRewind() may be used to read      */
+/*      again from the beginning.                                       */
 /************************************************************************/
 
 char **CSVGetNextLine( const char *pszFilename )
@@ -1054,6 +1077,8 @@ char **CSVGetNextLine( const char *pszFilename )
     CSVTable * const psTable = CSVAccess( pszFilename );
     if( psTable == nullptr )
         return nullptr;
+
+    CSVIngest( psTable->pszFilename );
 
 /* -------------------------------------------------------------------- */
 /*      If we use CSVGetNextLine() we can pretty much assume we have    */

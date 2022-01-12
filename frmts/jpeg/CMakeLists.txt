@@ -20,7 +20,7 @@ else ()
   gdal_target_link_libraries(TARGET gdal_JPEG LIBRARIES JPEG::JPEG)
 endif ()
 
-if (GDAL_USE_LIBZ_INTERNAL)
+if (GDAL_USE_ZLIB_INTERNAL)
   target_include_directories(gdal_JPEG PRIVATE $<TARGET_PROPERTY:libz,SOURCE_DIR>)
 else ()
   gdal_target_link_libraries(TARGET gdal_JPEG LIBRARIES ZLIB::ZLIB)

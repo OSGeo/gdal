@@ -49,8 +49,10 @@ different as described here.
    more features for each block defined in the file. In addition to the
    usual attributes, they will also have a BlockName attribute indicate
    what block they are part of.
--  The entities layer will have new attributes BlockName, BlockScale,
-   and BlockAngle.
+-  The entities layer will have new attributes BlockName, BlockScale, 
+   BlockAngle and BlockAttributes.
+-  BlockAttributes will be a list of (tag x value) pairs of all 
+   visible attributes (JSON encoded).
 -  block referenced will populate these new fields with the
    corresponding information (they are null for all other entities).
 -  block references will not have block geometry inlined - instead they
@@ -59,6 +61,13 @@ different as described here.
 The intention is that with DWG_INLINE_BLOCKS disabled, the block
 references will remain as references and the original block definitions
 will be available via the blocks layer.
+
+DWG_ATTRIBUTES
+--------------
+
+If option is set to TRUE value, then block attributes are treated as
+feature attributes, one feature attribute for each tag. This option allow
+convertion to rows and columns data such as database tables
 
 Building
 --------

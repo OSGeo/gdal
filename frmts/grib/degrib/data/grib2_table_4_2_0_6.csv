@@ -1,0 +1,51 @@
+subcat,short_name,name,unit,unit_conv
+0,"CICE","Cloud Ice","kg/(m^2)",UC_NONE
+1,"TCDC","Total cloud cover","%",UC_NONE
+2,"CDCON","Convective cloud cover","%",UC_NONE
+3,"LCDC","Low cloud cover","%",UC_NONE
+4,"MCDC","Medium cloud cover","%",UC_NONE
+5,"HCDC","High cloud cover","%",UC_NONE
+6,"CWAT","Cloud water","kg/(m^2)",UC_NONE
+7,"CDCA","Cloud amount","%",UC_NONE
+8,"CDCT","Cloud type","0=clear; 1=Cumulonimbus; 2=Stratus; 3=Stratocumulus; 4=Cumulus; 5=Altostratus; 6=Nimbostratus; 7=Altocumulus; 8=Cirrostratus; 9=Cirrocumulus; 10=Cirrus; 11=Cumulonimbus (fog); 12=Stratus (fog); 13=Stratocumulus (fog); 14=Cumulus (fog); 15=Altostratus (fog); 16=Nimbostratus (fog); 17=Altocumulus (fog); 18=Cirrostratus (fog); 19=Cirrocumulus (fog); 20=Cirrus (fog); 191=unknown; 255=missing",UC_NONE
+9,"TMAXT","Thunderstorm maximum tops","m",UC_NONE
+10,"THUNC","Thunderstorm coverage","0=none; 1=isolated (1%-2%); 2=few (3%-15%); 3=scattered (16%-45%); 4=numerous (> 45%); 255=missing",UC_NONE
+11,"CDCB","Cloud base","m",UC_M2Feet
+12,"CDCT","Cloud top","m",UC_M2Feet
+13,"CEIL","Ceiling","m",UC_M2Feet
+14,"CDLYR","Non-convective cloud cover","%",UC_NONE
+15,"CWORK","Cloud work function","J/kg",UC_NONE
+16,"CUEFI","Convective cloud efficiency","-",UC_NONE
+17,"TCOND","Total condensate","kg/kg",UC_NONE
+18,"TCOLW","Total column-integrated cloud water","kg/(m^2)",UC_NONE
+19,"TCOLI","Total column-integrated cloud ice","kg/(m^2)",UC_NONE
+20,"TCOLC","Total column-integrated condensate","kg/(m^2)",UC_NONE
+21,"FICE","Ice fraction of total condensate","-",UC_NONE
+22,"CDCC","Cloud cover","%",UC_NONE
+23,"CDCIMR","Cloud ice mixing ratio","kg/kg",UC_NONE
+24,"SUNS","Sunshine","Numeric",UC_NONE
+25,"CBHE","Horizontal extent of cumulonimbus (CB)","%",UC_NONE
+26,"HCONCB","Height of Convective Cloud Base","m",UC_NONE
+27,"HCONCT","Height of Convective Cloud Top","m",UC_NONE
+28,"NCONCD","Number Concentration of Cloud Droplets","1/kg",UC_NONE
+29,"NCCICE","Number Concentration of Cloud Ice","1/kg",UC_NONE
+30,"NDENCD","Number Density of Cloud Droplets","1/(m^3)",UC_NONE
+31,"NDCICE","Number Density of Cloud Ice","1/(m^3)",UC_NONE
+32,"FRACCC","Fraction of Cloud Cover","Numeric",UC_NONE
+33,"SUNSD","SunShine Duration","s",UC_NONE
+34,"SLWTC","Surface Long Wave Effective Total Cloudiness","Numeric",UC_NONE
+35,"SSWTC","Surface Short Wave Effective Total Cloudiness","Numeric",UC_NONE
+36,"FSTRPC","Fraction of Stratiform Precipitation Cover","Proportion",UC_NONE
+37,"FCONPC","Fraction of Convective Precipitation Cover","Proportion",UC_NONE
+38,"MASSDCD","Mass Density of Cloud Droplets","kg/(m^3)",UC_NONE
+39,"MASSDCI","Mass Density of Cloud Ice","kg/(m^3)",UC_NONE
+40,"MDCCWD","Mass Density of Convective Cloud Water Droplets","kg/(m^3)",UC_NONE
+41,"","Reserved","-",UC_NONE
+42,"","Reserved","-",UC_NONE
+43,"","Reserved","-",UC_NONE
+44,"","Reserved","-",UC_NONE
+45,"","Reserved","-",UC_NONE
+46,"","Reserved","-",UC_NONE
+47,"VFRCWD","Volume Fraction of Cloud Water Droplets","Numeric",UC_NONE
+48,"VFRCICE","Volume Fraction of Cloud Ice Particles","Numeric",UC_NONE
+49,"VFRCIW","Volume Fraction of Cloud (Ice and/or Water)","Numeric",UC_NONE

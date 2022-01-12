@@ -35,6 +35,11 @@ CPL_CVSID("$Id$")
 
 #ifdef HAVE_LIBXML2
 
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#endif
+
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunknown-pragmas"
@@ -48,6 +53,10 @@ CPL_CVSID("$Id$")
 
 #ifdef __clang__
 #pragma clang diagnostic pop
+#endif
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
 #endif
 
 // For CHECK_ARITY and clang 5

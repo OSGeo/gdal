@@ -938,8 +938,8 @@ const char *CPLExtractRelativePath( const char *pszBaseDir,
  * <pre>
  * CPLCleanTrailingSlash( "abc/def/" ) == "abc/def"
  * CPLCleanTrailingSlash( "abc/def" ) == "abc/def"
- * CPLCleanTrailingSlash( "c:\abc\def\" ) == "c:\abc\def"
- * CPLCleanTrailingSlash( "c:\abc\def" ) == "c:\abc\def"
+ * CPLCleanTrailingSlash( "c:\\abc\\def\\" ) == "c:\\abc\\def"
+ * CPLCleanTrailingSlash( "c:\\abc\\def" ) == "c:\\abc\\def"
  * CPLCleanTrailingSlash( "abc" ) == "abc"
  * </pre>
  *

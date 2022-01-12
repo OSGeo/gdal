@@ -20,7 +20,7 @@ typedef __int64 int64_t;
 
 #ifdef JSON_C_HAVE_INTTYPES_H
 #include <inttypes.h>
-#if defined(__MSVCRT__)
+#if defined(__MSVCRT__) && !(defined(__MINGW64__) && __GNUC__ >= 10)
 #  undef PRId64
 #  define PRId64 "I64d"
 #endif

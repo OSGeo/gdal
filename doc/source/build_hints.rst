@@ -54,6 +54,15 @@ You can unset existing cached variables, by using the -U switch of cmake, for ex
 
     cmake .. -UGDAL_USE_*
 
+
+.. warning::
+
+    When iterating to configure GDAL to add/modify/remove dependencies,
+    some cache variables can remain in CMakeCache.txt from previous runs, and
+    conflict with new settings. If strange errors appear during cmake run,
+    you may try removing CMakeCache.txt to start from a clean state.
+
+
 CMake general configure options
 +++++++++++++++++++++++++++++++
 
@@ -144,17 +153,47 @@ following option:
     Control whether a found dependency can be used for the GDAL build.
 
 
+Armadillo
+*********
+
+The `Armadillo <http://arma.sourceforge.net/>`_ C++ library is used to speed up computations related to the
+Thin Plate Spline transformer. See https://cmake.org/cmake/help/latest/module/FindArmadillo.html
+for details.
+On Windows builds using Conda-Forge depedencies, the following packages may also
+need to be installed: ``blas blas-devel libblas libcblas liblapack liblapacke``
+
+
+Blosc
+*****
+
+`Blosc <https://github.com/Blosc/c-blosc>`_ is a library which offers
+a meta-compression, with different backends (LZ4, Snappy, Zlib, Zstd, etc.).
+It is used by the :ref:`raster.zarr` driver.
+
+.. option:: BLOSC_INCLUDE_DIR
+
+    Path to an include directory with the ``blosc.h`` header file.
+
+.. option:: BLOSC_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_BLOSC=ON/OFF
+
+    Control whether to use Blosc. Defaults to ON when Blosc is found.
+
+
 CFITSIO
 *******
 
-The C FITS I/O library is required for the :ref:`raster.fits` driver.
-Can be detected with pkg-config.
+The `C FITS I/O <https://heasarc.gsfc.nasa.gov/fitsio/>`_ library is required for the :ref:`raster.fits` driver.
+It can be detected with pkg-config.
 
 .. option:: CFITSIO_INCLUDE_DIR
 
     Path to an include directory with the ``fitsio.h`` header file.
 
-.. option:: PDFium_LIBRARY
+.. option:: CFITSIO_LIBRARY
 
     Path to a shared or static library file.
 
@@ -163,10 +202,32 @@ Can be detected with pkg-config.
     Control whether to use CFITSIO. Defaults to ON when CFITSIO is found.
 
 
+CharLS
+******
+
+`CharLS <https://github.com/team-charls/charls>`_ is a C++ implementation of the
+JPEG-LS standard for lossless and near-lossless image compression and decompression.
+It is used by the :ref:`raster.jpegls` driver.
+with pkg-config.
+
+.. option:: CHARLS_INCLUDE_DIR
+
+    Path to an include directory with the ``charls/charls.h`` header file.
+
+.. option:: CHARLS_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_CHARLS=ON/OFF
+
+    Control whether to use CharLS. Defaults to ON when CharLS is found.
+
+
 Crnlib
 ******
 
-Crnlib / crunch is required for the :ref:`raster.dds` driver.
+`Crnlib / crunch <https://github.com/rouault/crunch/tree/build_fixes>`_ is
+required for the :ref:`raster.dds` driver.
 
 .. option:: Crnlib_INCLUDE_DIR
 
@@ -176,10 +237,11 @@ Crnlib / crunch is required for the :ref:`raster.dds` driver.
 
   Path to Crnlib library to be linked.
 
+
 CURL
 ****
 
-It is required for all network accesses (HTTP, etc.).
+`libcurl <https://curl.se/>`_ is required for all network accesses (HTTP, etc.).
 
 .. option:: CURL_INCLUDE_DIR
 
@@ -194,10 +256,59 @@ It is required for all network accesses (HTTP, etc.).
 
     Control whether to use Curl. Defaults to ON when Curl is found.
 
+
+CryptoPP
+********
+
+The `Crypto++ <https://github.com/weidai11/cryptopp>`_ library can be used for the RSA SHA256 signing
+functionality used by some authentication methods of Google Cloud. It might be
+required to use the :ref:`raster.eedai` images or use the :ref:`/vsigs/ <vsigs>` virtual file
+system.
+It is also required for the :ref:`/vsicrypt/ <vsicrypt>` virtual file system.
+
+.. option:: CRYPTOPP_INCLUDE_DIR
+
+    Path to the base include directory.
+
+.. option:: CRYPTOPP_LIBRARY_RELEASE
+
+    Path to a shared or static library file.  A similar variable
+    ``CRYPTOPP_LIBRARY_DEBUG`` can also be specified to a similar library for
+    building Debug releases.
+
+.. option:: GDAL_USE_CRYPTOPP=ON/OFF
+
+    Control whether to use CryptoPP. Defaults to ON when CryptoPP is found.
+
+
+Deflate
+*******
+
+`libdeflate <https://github.com/ebiggers/libdeflate>`_ is a compression library
+which offers the lossless Deflate/Zip compression algorithm.
+It offers faster performance than ZLib, but is not a full replacement for it,
+consequently it must be used as a complement to ZLib.
+
+
+.. option:: Deflate_INCLUDE_DIR
+
+    Path to an include directory with the ``libdeflate.h`` header file.
+
+.. option:: Deflate_LIBRARY_RELEASE
+
+    Path to a shared or static library file. A similar variable
+    ``Deflate_LIBRARY_DEBUG`` can also be specified to a similar library for
+    building Debug releases.
+
+.. option:: GDAL_USE_DEFLATE=ON/OFF
+
+    Control whether to use Deflate. Defaults to ON when Deflate is found.
+
+
 ECW
 ***
 
-It is required for the :ref:`raster.ecw` driver.
+The Hexagon ECW SDK (closed source/proprietary) is required for the :ref:`raster.ecw` driver.
 Currently only support for ECW SDK 3.3 and 5.5 is offered.
 
 For ECW SDK 5.5, ECW_ROOT or CMAKE_PREFIX_PATH should point to the directory
@@ -224,12 +335,37 @@ ending with ERDAS-ECW_JPEG_2000_SDK-5.5.0/Desktop_Read-Only.
 
     Path to library file libNCSUtil (only needed for SDK 3.3)
 
+
+EXPAT
+*****
+
+`Expat <https://github.com/libexpat/libexpat>`_ is a stream-oriented XML parser
+library which is required to enable XML parsing capabilities in an important
+number of OGR drivers (GML, GeoRSS, GPX, KML, LVBAG, OSM, ODS, SVG, WFS, XSLX, etc.).
+It is strongly recommended. Other driver such as ILI or GMLAS may also require
+the XercesC library.
+
+.. option:: EXPAT_INCLUDE_DIR
+
+    Path to the include directory with the ``expat.h`` header file.
+
+.. option:: EXPAT_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_EXPAT=ON/OFF
+
+    Control whether to use EXPAT. Defaults to ON when EXPAT is found.
+
+
 FileGDB
 *******
 
-FileGDB_ROOT or CMAKE_PREFIX_PATH should point to the directory of the SDK.
-It is required for the :ref:`vector.filegdb` driver (not to be confused with
+The `FileGDB SDK <https://github.com/Esri/file-geodatabase-api>`_ (closed source/proprietary)
+is required for the :ref:`vector.filegdb` driver (not to be confused with
 the :ref:`vector.openfilegdb` driver that has no external requirements)
+
+FileGDB_ROOT or CMAKE_PREFIX_PATH should point to the directory of the SDK.
 
 .. option:: FileGDB_INCLUDE_DIR
 
@@ -248,10 +384,29 @@ the :ref:`vector.openfilegdb` driver that has no external requirements)
     Path to Debug library file (only used on Windows)
 
 
+FreeXL
+******
+
+The `FreeXL <https://www.gaia-gis.it/fossil/freexl/index>`_ library is required
+for the :ref:`vector.xls` driver.
+
+.. option:: FREEXL_INCLUDE_DIR
+
+    Path to an include directory with the ``freexl.h`` header file.
+
+.. option:: FREEXL_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_FREEXL=ON/OFF
+
+    Control whether to use FreeXL. Defaults to ON when FreeXL is found.
+
+
 FYBA
 ****
 
-The OpenFyba libraries are needed to build the :ref:`vector.sosi` driver.
+The `OpenFyba <https://github.com/kartverket/fyba>`_ libraries are needed to build the :ref:`vector.sosi` driver.
 
 .. option:: FYBA_INCLUDE_DIR
 
@@ -301,10 +456,55 @@ If not found, an internal copy of libgeotiff will be used.
     libgeotiff is not found.
 
 
+GEOS
+****
+
+`GEOS <https://github.com/libgeos/geos>`_ is a C++ library for performing operations
+on two-dimensional vector geometries. It is used as the backend for most geometry
+processing operations available in OGR (intersection, buffer, etc.).
+The ``geos-config`` program can be used to detect it.
+
+.. option:: GEOS_INCLUDE_DIR
+
+    Path to an include directory with the ``geos_c.h`` header file.
+
+.. option:: GEOS_LIBRARY
+
+    Path to a shared or static library file (libgeos_c).
+
+.. option:: GDAL_USE_GEOS=ON/OFF
+
+    Control whether to use GEOS. Defaults to ON when GEOS is found.
+
+
+GIF
+***
+
+`giflib <http://giflib.sourceforge.net/>`_ is required for the :ref:`raster.gif` driver.
+If not found, an internal copy will be used.
+
+.. option:: GIF_INCLUDE_DIR
+
+    Path to an include directory with the ``gif_lib.h`` header file.
+
+.. option:: GIF_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_GIF=ON/OFF
+
+    Control whether to use external giflib. Defaults to ON when external giflib is found.
+
+.. option:: GDAL_USE_GIFLIB_INTERNAL=ON/OFF
+
+    Control whether to use internal giflib copy. Defaults to ON when external
+    giflib is not found.
+
+
 GTA
 ***
 
-The GTA library is required for the :ref:`raster.gta` driver.
+The `GTA <https://marlam.de/gta/>`_ library is required for the :ref:`raster.gta` driver.
 
 .. option:: GTA_INCLUDE_DIR
 
@@ -322,8 +522,8 @@ The GTA library is required for the :ref:`raster.gta` driver.
 HEIF
 ****
 
-The HEIF (>= 1.1) library used by the :ref:`raster.heif` driver.
-Can be detected with pkg-config.
+The `HEIF <https://github.com/strukturag/libheif>`_ (>= 1.1) library used by the :ref:`raster.heif` driver.
+It can be detected with pkg-config.
 
 .. option:: HEIF_INCLUDE_DIR
 
@@ -337,20 +537,91 @@ Can be detected with pkg-config.
 
     Control whether to use HEIF. Defaults to ON when HEIF is found.
 
+HDF4
+****
+
+The `HDF4 <https://support.hdfgroup.org/products/hdf4/>`_ C library is needed
+for the :ref:`raster.hdf4` driver.
+
+.. option:: HDF4_INCLUDE_DIR
+
+    Path to an include directory with the ``hdf.h`` header file.
+
+.. option:: HDF4_df_LIBRARY_RELEASE
+
+    Path to a shared or static ``dfalt`` or ``df`` library file. A similar variable
+    ``HDF4_df_LIBRARY_DEBUG`` can also be specified to a similar library for
+    building Debug releases.
+
+.. option:: HDF4_mfhdf_LIBRARY_RELEASE
+
+    Path to a shared or static ``mfhdfalt`` or ``mfhdf`` library file. A similar variable
+    ``HDF4_mfhdf_LIBRARY_DEBUG`` can also be specified to a similar library for
+    building Debug releases.
+
+.. option:: HDF4_xdr_LIBRARY_RELEASE
+
+    Path to a shared or static ``xdr`` library file. A similar variable
+    ``HDF4_xdr_LIBRARY_DEBUG`` can also be specified to a similar library for
+    building Debug releases.
+    It is generally not needed for Linux builds
+
+.. option:: HDF4_szip_LIBRARY_RELEASE
+
+    Path to a shared or static ``szip`` library file. A similar variable
+    ``HDF4_szip_LIBRARY_DEBUG`` can also be specified to a similar library for
+    building Debug releases.
+    It is generally not needed for Linux builds
+
+.. option:: HDF4_COMPONENTS
+
+    The value of this option is a list which defaults to ``df;mfhdf;xdr;szip``.
+    It may be customized if the linking of HDF4 require different libraries,
+    in which case HDF4_{comp_name}_LIBRARY_[RELEASE/DEBUG] variables will be
+    available to configure the library file.
+
+.. option:: GDAL_USE_HDF4=ON/OFF
+
+    Control whether to use HDF4. Defaults to ON when HDF4 is found.
+
 
 HDF5
 ****
 
-The HDF5 C library is needed for the :ref:`raster.hdf5` and :ref:`raster.bag` drivers.
+The `HDF5 <https://github.com/HDFGroup/hdf5>`_ C library is needed for the
+:ref:`raster.hdf5` and :ref:`raster.bag` drivers.
 The HDF5 CXX library is needed for the :ref:`raster.kea` driver.
 The https://cmake.org/cmake/help/latest/module/FindHDF5.html module is used to
 detect the HDF5 library.
 
 
+Iconv
+*****
+
+The `Iconv <https://www.gnu.org/software/libiconv/>`_ library is used to convert
+text from one encoding to another encoding.
+It is generally available as a system library for Unix-like systems. On Windows,
+GDAL can leverage the API of the operating system for a few base conversions,
+but using Iconv will provide additional capabilities.
+
+.. option:: Iconv_INCLUDE_DIR
+
+    Path to an include directory with the ``iconv.h`` header file.
+
+.. option:: Iconv_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_ICONV=ON/OFF
+
+    Control whether to use Iconv. Defaults to ON when Iconv is found.
+
+
 IDB
 ***
 
-The Informix DataBase Client SDK is needed to build the :ref:`vector.idb` driver.
+The Informix DataBase Client SDK (closed source/proprietary)  is needed to build
+the :ref:`vector.idb` driver.
 IDB_ROOT or CMAKE_PREFIX_PATH should point to the directory of the SDK.
 
 
@@ -375,11 +646,69 @@ IDB_ROOT or CMAKE_PREFIX_PATH should point to the directory of the SDK.
     Path to a library file ``ifcli`` (typically in the ``lib/cli`` sub directory)
 
 
+JPEG
+****
+
+libjpeg is required for the :ref:`raster.jpeg` driver, and may be used by a few
+other drivers (:ref:`raster.gpkg`, :ref:`raster.marfa`, internal libtiff, etc.)
+If not found, an internal copy of libjpeg (6b) will be used.
+Using `libjpeg-turbo <https://github.com/libjpeg-turbo/libjpeg-turbo>`_ is highly
+recommended to get best performance.
+See https://cmake.org/cmake/help/latest/module/FindJPEG.html for more details
+on how the library is detected.
+
+.. option:: JPEG_INCLUDE_DIR
+
+    Path to an include directory with the ``jpeglib.h`` header file.
+
+.. option:: JPEG_LIBRARY_RELEASE
+
+    Path to a shared or static library file. A similar variable
+    ``JPEG_LIBRARY_DEBUG`` can also be specified to a similar library for
+    building Debug releases.
+
+.. option:: GDAL_USE_JPEG=ON/OFF
+
+    Control whether to use external libjpeg. Defaults to ON when external libjpeg is found.
+
+.. option:: GDAL_USE_LIBJPEG_INTERNAL=ON/OFF
+
+    Control whether to use internal libjpeg copy. Defaults to ON when external
+    libjpeg is not found.
+
+
+JSON-C
+******
+
+The `json-c <https://github.com/json-c/json-c>`_ library is required to read and
+write JSON content.
+It can be detected with pkg-config.
+If not found, an internal copy of json-c will be used.
+
+.. option:: JSONC_INCLUDE_DIR
+
+    Path to an include directory with the ``json.h`` header file.
+
+.. option:: JSONC_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_JSONC=ON/OFF
+
+    Control whether to use JSON-C. Defaults to ON when JSON-C is found.
+
+.. option:: GDAL_USE_LIBJSONC_INTERNAL=ON/OFF
+
+    Control whether to use internal JSON-C copy. Defaults to ON when external
+    JSON-C is not found.
+
+
 JXL
 ***
 
-JPEG-XL library used by the :ref:`raster.gtiff` driver, when built against internal libtiff.
-Can be detected with pkg-config.
+The `libjxl <https://github.com/libjxl/libjxl>` library used by the
+:ref:`raster.gtiff` driver, when built against internal libtiff.
+It can be detected with pkg-config.
 
 .. option:: JXL_INCLUDE_DIR
 
@@ -393,7 +722,8 @@ Can be detected with pkg-config.
 KDU
 ***
 
-The Kakadu library is required for the :ref:`raster.jp2kak` and :ref:`raster.jpipkak` drivers.
+The Kakadu library (proprietary) is required for the :ref:`raster.jp2kak` and
+:ref:`raster.jpipkak` drivers.
 There is no standardized installation layout, nor fixed library file names, so finding
 Kakadu artifacts is a bit challenging. Currently automatic finding of it from
 the KDU_ROOT variable is only implemented for Linux, Mac and Windows x86_64
@@ -418,8 +748,8 @@ and KDU_AUX_LIBRARY variable.
 KEA
 ***
 
-The KEA library is required for the :ref:`raster.kea` driver. The HDF5 CXX library is also
-required.
+The `KEA <http://www.kealib.org/>`_ library is required for the :ref:`raster.kea`
+driver. The HDF5 CXX library is also required.
 
 .. option:: KEA_INCLUDE_DIR
 
@@ -434,10 +764,123 @@ required.
     Control whether to use KEA. Defaults to ON when KEA is found.
 
 
+LERC
+****
+
+`LERC <https://github.com/esri/lerc>`_ (V2) is an open-source image or raster format
+which supports rapid encoding and decoding for any pixel type (not just RGB or Byte).
+Users set the maximum compression error per pixel while encoding, so the precision
+of the original input image is preserved (within user defined error bounds).
+
+.. warning::
+
+    Use of the external LERC library is not recommended, as it cannot be used
+    by the :ref:`raster.marfa` driver currently (that one requires the internal
+    LERC copy). The external LERC Library can only be used by the internal libtiff,
+    which can also use the internal LERC copy.
+
+
+.. option:: LERC_INCLUDE_DIR
+
+    Path to an include directory with the ``Lerc_c_api.h`` header file.
+
+.. option:: LERC_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_LERC=ON/OFF
+
+    Control whether to use LERC (V2). Defaults to *OFF* when LERC (V2) is found.
+
+.. option:: GDAL_USE_LIBLERC_INTERNAL=ON/OFF
+
+    Control whether to use the LERC (V2) internal library. Defaults to ON,
+    unless GDAL_USE_LERC is set to ON.
+
+
+LERCV1
+******
+
+This is an internal library used by the :ref:`raster.marfa` driver. It offers the
+LERC v1 compression.
+
+.. option:: GDAL_USE_LIBLERCV1_INTERNAL=ON/OFF
+
+    Control whether to use the Lerc V1 internal library. Defaults to ON.
+
+LibKML
+******
+
+`LibKML <https://github.com/libkml/libkml>`_ is required for the :ref:`vector.libkml` driver.
+It can be detected with pkg-config.
+
+.. option:: LIBKML_INCLUDE_DIR
+
+    Path to the base include directory.
+
+.. option:: LIBKML_BASE_LIBRARY
+
+    Path to a shared or static library file for ``kmlbase``
+
+.. option:: LIBKML_DOM_LIBRARY
+
+    Path to a shared or static library file for ``kmldom``
+
+.. option:: LIBKML_ENGINE_LIBRARY
+
+    Path to a shared or static library file for ``kmlengine``
+
+.. option:: GDAL_USE_LIBKML=ON/OFF
+
+    Control whether to use LibKML. Defaults to ON when LibKML is found.
+
+
+LibLZMA
+*******
+
+`LibLZMA <https://tukaani.org/xz/>`_ is a compression library which offers
+the lossless LZMA2 compression algorithm.
+It is used by the internal libtiff library or the :ref:`raster.zarr` driver.
+
+.. option:: LIBLZMA_INCLUDE_DIR
+
+    Path to an include directory with the ``lzma.h`` header file.
+
+.. option:: LIBLZMA_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_LIBLZMA=ON/OFF
+
+    Control whether to use LibLZMA. Defaults to ON when LibLZMA is found.
+
+
+LibXml2
+*******
+
+The `LibXml2 <http://xmlsoft.org/>`_ processing library is used to do validation of XML files against
+a XML Schema (.xsd) in a few drivers (PDF, GMLAS, GML OGR VRT) and for advanced
+capabilities in GMLJP2v2 generation.
+
+.. option:: LIBXML2_INCLUDE_DIR
+
+    Path to the base include directory.
+
+.. option:: LIBXML2_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_LIBXML2=ON/OFF
+
+    Control whether to use LibXml2. Defaults to ON when LibXml2 is found.
+
+
+
 LURATECH
 ********
 
-The Luratech JPEG2000 SDK is required for the :ref:`raster.jp2lura` driver.
+The Luratech JPEG2000 SDK (closed source/proprietary) is required for the
+:ref:`raster.jp2lura` driver.
 
 LURATECH_ROOT or CMAKE_PREFIX_PATH should point to the directory of the SDK.
 
@@ -450,11 +893,34 @@ LURATECH_ROOT or CMAKE_PREFIX_PATH should point to the directory of the SDK.
     Path to library file lib_lwf_jp2.a / lwf_jp2.lib
 
 
+LZ4
+***
+
+`LZ4 <https://github.com/lz4/lz4>`_ is a compression library which offers
+the lossless LZ4 compression algorithm.
+It is used by the :ref:`raster.zarr` driver.
+
+.. option:: LZ4_INCLUDE_DIR
+
+    Path to an include directory with the ``lz4.h`` header file.
+
+.. option:: LZ4_LIBRARY_RELEASE
+
+    Path to a shared or static library file.  A similar variable
+    ``LZ4_LIBRARY_DEBUG`` can also be specified to a similar library for
+    building Debug releases.
+
+.. option:: GDAL_USE_LZ4=ON/OFF
+
+    Control whether to use LZ4. Defaults to ON when LZ4 is found.
+
+
 MONGOCXX
 ********
 
-The MongoCXX and BsonCXX libraries are needed to build the :ref:`vector.mongodbv3` driver.
-Can be detected with pkg-config.
+The `MongoCXX <https://github.com/mongodb/mongo-cxx-driver>`_ and BsonCXX libraries
+are needed to build the :ref:`vector.mongodbv3` driver.
+They can be detected with pkg-config.
 
 .. option:: MONGOCXX_INCLUDE_DIR
 
@@ -480,7 +946,8 @@ Can be detected with pkg-config.
 MRSID
 *****
 
-The MRSID Raster DSDK is required for the :ref:`raster.mrsid` driver.
+The MRSID Raster DSDK (closed source/proprietary) is required for the
+:ref:`raster.mrsid` driver.
 
 MRSID_ROOT or CMAKE_PREFIX_PATH should point to the directory of the SDK ending with
 Raster_DSDK. Note that on Linux, its lib subdirectory should be in the
@@ -500,13 +967,17 @@ be found.
     Whether to enable JPEG2000 support through the MrSID SDK. The default value
     of this option is OFF.
 
+.. option:: GDAL_USE_MRSDI=ON/OFF
+
+    Control whether to use MRSID. Defaults to ON when MRSID is found.
+
 
 MSSQL_NCLI
 **********
 
-Microsoft SQL Native Client Library to enable bulk copy in the :ref:`vector.mssqlspatial`
-driver. If both MSSQL_NCLI and MSSQL_ODBC are found and enabled, MSSQL_ODBC
-will be used.
+The Microsoft SQL Native Client Library (closed source/proprietary) is required
+to enable bulk copy in the :ref:`vector.mssqlspatial` driver.
+If both MSSQL_NCLI and MSSQL_ODBC are found and enabled, MSSQL_ODBC will be used.
 The library is normally found if installed in standard location, and at version 11.
 
 .. option:: MSSQL_NCLI_VERSION
@@ -521,12 +992,13 @@ The library is normally found if installed in standard location, and at version 
 
   Path to library to be linked.
 
+
 MSSQL_ODBC
 **********
 
-Microsoft SQL Native ODBC driver Library to enable bulk copy in the :ref:`vector.mssqlspatial`
-driver. If both MSSQL_NCLI and MSSQL_ODBC are found and enabled, MSSQL_ODBC
-will be used.
+The Microsoft SQL Native ODBC driver Library (closed source/proprietary) is required
+to enable bulk copy in the :ref:`vector.mssqlspatial` driver.
+If both MSSQL_NCLI and MSSQL_ODBC are found and enabled, MSSQL_ODBC will be used.
 The library is normally found if installed in standard location, and at version 17.
 
 .. option:: MSSQL_ODBC_VERSION
@@ -540,6 +1012,46 @@ The library is normally found if installed in standard location, and at version 
 .. option:: MSSQL_ODBC_LIBRARY
 
   Path to library to be linked.
+
+
+MYSQL
+*****
+
+The MySQL or MariaDB client library is required to enable the :ref:`vector.mysql`
+driver.
+
+.. option:: MYSQL_INCLUDE_DIR
+
+  Path to include directory with ``mysql.h`` header file.
+
+.. option:: MYSQL_LIBRARY
+
+  Path to library to be linked.
+
+.. option:: GDAL_USE_MYSQL=ON/OFF
+
+    Control whether to use MYSQL. Defaults to ON when MYSQL is found.
+
+
+NetCDF
+******
+
+The `netCDF <https://github.com/Unidata/netcdf-c>`_ is required to enable the
+:ref:`raster.netcdf` driver.
+The ``nc-config`` program can be used to detect it.
+
+.. option:: NETCDF_INCLUDE_DIR
+
+    Path to an include directory with the ``netcdf.h`` header file.
+
+.. option:: NETCDF_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_NETCDF=ON/OFF
+
+    Control whether to use netCDF. Defaults to ON when netCDF is found.
+
 
 ODBC
 ****
@@ -557,11 +1069,108 @@ It is normally automatically found in system directories on Unix and Windows.
   Path to ODBC library to be linked.
 
 
+OGDI
+****
+
+The `OGDI <https://github.com/libogdi/ogdi/>`_ library is required for the :ref:`vector.ogdi`
+driver. It can be detected with pkg-config.
+
+.. option:: OGDI_INCLUDE_DIR
+
+    Path to an include directory with the ``ecs.h`` header file.
+
+.. option:: OGDI_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_OGDI=ON/OFF
+
+    Control whether to use OGDI. Defaults to ON when OGDI is found.
+
+
+OpenCL
+******
+
+The OpenCL library may be used to accelerate warping computations, typically
+with a GPU.
+
+.. note:: It is disabled by default even when detected, since the current OpenCL
+          warping implementation lags behind the generic implementation.
+
+.. option:: OpenCL_INCLUDE_DIR
+
+    Path to an include directory with the ``CL/cl.h`` header file.
+
+.. option:: OpenCL_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_OPENCL=ON/OFF
+
+    Control whether to use OPENCL. Defaults to *OFF* when OPENCL is found.
+
+
+OpenEXR
+*******
+
+`OpenEXR <https://github.com/AcademySoftwareFoundation/openexr>`_ is required for the :ref:`raster.exr` driver
+
+Specify ``OpenEXR_ROOT`` variable pointing to the parent directory of
+/lib and /include subdirectories, i.e. /DEV/lib/openexr-3.0.
+For OpenEXR >= 3 additionally specify ``Imath_ROOT`` as this is a
+separate library now, i.e. /DEV/lib/imath-3.1.3
+
+or
+
+Specify root directory adding to the ``CMAKE_PREFIX_PATH`` variable to find OpenEXR's pkgconfig.
+For example -DCMAKE_PREFIX_PATH=/DEV/lib/openexr-3.0;/DEV/lib/imath-3.1.3
+
+or
+
+Get real specific and set
+``OpenEXR_INCLUDE_DIR``, ``Imath_INCLUDE_DIR``,
+``OpenEXR_LIBRARY``, ``OpenEXR_UTIL_LIBRARY``,
+``OpenEXR_HALF_LIBRARY``, ``OpenEXR_IEX_LIBRARY``
+explicitly
+
+
+OpenJPEG
+********
+
+The `OpenJPEG <https://github.com/uclouvain/openjpeg>`_ library is an open-source
+JPEG-2000 codec written in C language. It is required for the
+:ref:`raster.jp2openjpeg` driver, or other drivers that use JPEG-2000 functionality.
+
+.. option:: OPENJPEG_INCLUDE_DIR
+
+    Path to an include directory with the ``openjpeg.h`` header file.
+
+.. option:: OPENJPEG_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_OPENJPEG=ON/OFF
+
+    Control whether to use OpenJPEG. Defaults to *OFF* when OpenJPEG is found.
+
+
+OpenSSL
+*******
+
+The Crypto component of the `OpenSSL <https://github.com/openssl/openssl>`_ library
+can be used for the RSA SHA256 signing functionality used by some authentication
+methods of Google Cloud. It might be required to use the :ref:`raster.eedai`
+images or use the :ref:`/vsigs/ <vsigs>` virtual file system.
+
+See https://cmake.org/cmake/help/latest/module/FindOpenSSL.html for details on
+how to configure the library
+
+
 Oracle
 ******
 
-The Oracle Instant Client SDK is required for the :ref:`vector.oci` and
-the :ref:`raster.georaster` drivers
+The Oracle Instant Client SDK (closed source/proprietary) is required for the
+:ref:`vector.oci` and the :ref:`raster.georaster` drivers
 
 .. option:: Oracle_ROOT
 
@@ -571,8 +1180,8 @@ the :ref:`raster.georaster` drivers
 PCRE2
 *****
 
-Perl-compatible Regular Expressions support, for the REGEXP operator in drivers
-using SQLite3.
+`PCRE2 <https://github.com/PhilipHazel/pcre2>`_ implements Perl-compatible
+Regular Expressions support. It is used for the REGEXP operator in drivers using SQLite3.
 
 .. option:: PCRE2_INCLUDE_DIR
 
@@ -586,7 +1195,8 @@ using SQLite3.
 PDFium
 ******
 
-The PDFium library is one of the possible backends for the :ref:`raster.pdf` driver.
+The `PDFium <https://github.com/rouault/pdfium_build_gdal_3_4>`_ library is one
+of the possible backends for the :ref:`raster.pdf` driver.
 
 .. option:: PDFium_INCLUDE_DIR
 
@@ -601,10 +1211,79 @@ The PDFium library is one of the possible backends for the :ref:`raster.pdf` dri
     Control whether to use PDFium. Defaults to ON when PDFium is found.
 
 
+PNG
+***
+
+`libpng <https://github.com/glennrp/libpng>`_ is required for the :ref:`raster.png`
+driver, and may be used by a few other drivers (:ref:`raster.grib`, :ref:`raster.gpkg`, etc.)
+If not found, an internal copy of libpng will be used.
+See https://cmake.org/cmake/help/latest/module/FindPNG.html for more details
+on how the library is detected.
+
+.. option:: PNG_PNG_INCLUDE_DIR
+
+    Path to an include directory with the ``png.h`` header file.
+
+.. option:: PNG_LIBRARY_RELEASE
+
+    Path to a shared or static library file. A similar variable
+    ``PNG_LIBRARY_DEBUG`` can also be specified to a similar library for
+    building Debug releases.
+
+.. option:: GDAL_USE_PNG=ON/OFF
+
+    Control whether to use external libpng. Defaults to ON when external libpng is found.
+
+.. option:: GDAL_USE_LIBPNG_INTERNAL=ON/OFF
+
+    Control whether to use internal libpng copy. Defaults to ON when external
+    libpng is not found.
+
+
+Poppler
+*******
+
+The `Poppler <https://poppler.freedesktop.org/>`_ library is one
+of the possible backends for the :ref:`raster.pdf` driver.
+
+.. option:: POPPLER_INCLUDE_DIR
+
+    Path to an include directory with the ``poppler-config.h`` header file.
+
+.. option:: POPPLER_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_PDFIUM=ON/OFF
+
+    Control whether to use Poppler. Defaults to ON when Poppler is found.
+
+
+PostgreSQL
+**********
+
+The `PostgreSQL client library <https://www.postgresql.org/>`_ is required for
+the :ref:`vector.pg` and :ref:`raster.postgisraster` drivers.
+
+.. option:: PostgreSQL_INCLUDE_DIR
+
+    Path to an include directory with the ``libpq-fe.h`` header file.
+
+.. option:: PostgreSQL_LIBRARY_RELEASE
+
+    Path to a shared or static library file ``pq`` / ``libpq``. A similar variable
+    ``PostgreSQL_LIBRARY_DEBUG`` can also be specified to a similar library for
+    building Debug releases.
+
+.. option:: GDAL_USE_POSTGRESQL=ON/OFF
+
+    Control whether to use PostgreSQL. Defaults to ON when PostgreSQL is found.
+
+
 PROJ
 ****
 
-PROJ >= 6 is a required dependency for GDAL.
+`PROJ <https://github.com/OSGeo/PROJ/>`_ >= 6 is a *required* dependency for GDAL.
 
 .. option:: PROJ_INCLUDE_DIR
 
@@ -618,11 +1297,40 @@ PROJ >= 6 is a required dependency for GDAL.
     building Debug releases.
 
 
+QHULL
+*****
+
+The `QHULL <https://github.com/qhull/qhull>`_ library is used for the linear
+interpolation of gdal_grid. If not found, an internal copy is used.
+
+.. option:: QHULL_PACKAGE_NAME
+
+   Name of the pkg-config package, typically ``qhull_r`` or ``qhullstatic_r``. Defaults to ``qhull_r``
+
+.. option:: QHULL_INCLUDE_DIR
+
+    Path to an include directory with the ``libqhull_r/libqhull_r.h`` header file.
+
+.. option:: QHULL_LIBRARY
+
+    Path to a shared or static library file to the reentrant library.
+
+.. option:: GDAL_USE_QHULL=ON/OFF
+
+    Control whether to use QHULL. Defaults to ON when QHULL is found.
+
+.. option:: GDAL_USE_QHULL_INTERNAL=ON/OFF
+
+    Control whether to use internal QHULL copy. Defaults to ON when external
+    QHULL is not found.
+
+
 RASTERLITE2
 ***********
 
-The RasterLite2 (>= 1.1.0) library used by the :ref:`raster.rasterlite2` driver.
-Can be detected with pkg-config.
+The `RasterLite2 <https://www.gaia-gis.it/fossil/librasterlite2/index>`_ (>= 1.1.0)
+library used by the :ref:`raster.rasterlite2` driver.
+It can be detected with pkg-config.
 
 .. option:: RASTERLITE2_INCLUDE_DIR
 
@@ -637,18 +1345,26 @@ Can be detected with pkg-config.
     Control whether to use RasterLite2. Defaults to ON when RasterLite2 is found.
 
 
+rdb
+***
+
+The `RDB <https://repository.riegl.com/software/libraries/rdblib>`
+(closed source/proprietary) library is required for the :ref:`raster.rdb` driver.
+Specify install prefix in the ``CMAKE_PREFIX_PATH`` variable.
+
+
 SPATIALITE
 **********
 
-The Spatialite library used by the :ref:`vector.sqlite` and :ref:`vector.gpkg` drivers,
-and the :ref:`sql_sqlite_dialect`.
-Can be detected with pkg-config.
+The `Spatialite <https://www.gaia-gis.it/fossil/libspatialite/index>`_ library
+used by the :ref:`vector.sqlite` and :ref:`vector.gpkg` drivers, and the :ref:`sql_sqlite_dialect`.
+It can be detected with pkg-config.
 
 .. option:: SPATIALITE_INCLUDE_DIR
 
     Path to an include directory with the ``spatialite.h`` header file.
 
-.. option:: SPATIALITY_LIBRARY
+.. option:: SPATIALITE_LIBRARY
 
     Path to a shared or static library file.
 
@@ -660,8 +1376,9 @@ Can be detected with pkg-config.
 SQLite3
 *******
 
-It is required for the :ref:`vector.sqlite` and :ref:`vector.gpkg` drivers
-(and also used by other drivers), and the :ref:`sql_sqlite_dialect`.
+The `SQLite3 <https://sqlite.org/index.html>`_ library  is required for the
+:ref:`vector.sqlite` and :ref:`vector.gpkg` drivers (and also used by other drivers),
+and the :ref:`sql_sqlite_dialect`.
 
 .. option:: SQLite3_INCLUDE_DIR
 
@@ -676,11 +1393,46 @@ It is required for the :ref:`vector.sqlite` and :ref:`vector.gpkg` drivers
 
     Control whether to use SQLite3. Defaults to ON when SQLite3 is found.
 
+
+SFCGAL
+******
+
+`SFCGAL <https://github.com/Oslandia/SFCGAL>`_ is a geometry library which
+supports ISO 19107:2013 and OGC Simple Features Access 1.2 for 3D operations
+(PolyhedralSurface, TINs, ...)
+
+.. option:: SFCGAL_INCLUDE_DIR
+
+    Path to the base include directory.
+
+.. option:: SFCGAL_LIBRARY_RELEASE
+
+    Path to a shared or static library file. A similar variable
+    ``SFCGAL_LIBRARY_DEBUG`` can also be specified to a similar library for
+    building Debug releases.
+
+.. option:: GDAL_USE_SFCGAL=ON/OFF
+
+    Control whether to use SFCGAL. Defaults to ON when SFCGAL is found.
+
+
+SWIG
+****
+
+`SWIG <http://swig.org/>`_ is a software development tool that connects
+programs written in C and C++ with a variety of high-level programming languages.
+It is used for the Python, Java and CSharp bindings.
+
+.. option:: SWIG_EXECUTABLE
+
+    Path to the SWIG executable
+
+
 TEIGHA
 ******
 
-The TEIGHA / Open Design Alliance libraries are required for the
-:ref:`vector.dwg` and :ref:`vector.dgnv8` drivers.
+The TEIGHA / Open Design Alliance libraries (closed source/proprietary) are
+required for the :ref:`vector.dwg` and :ref:`vector.dgnv8` drivers.
 Note that on Linux, with a SDK consisting of shared libraries,
 the bin/{platform_name} subdirectory of the SDK should be in the LD_LIBRARY_PATH
 so that the linking of applications succeeds.
@@ -691,10 +1443,19 @@ The TEIGHA_ROOT variable must be set.
     Path to the base directory where the Kernel and Drawings package must be
     extracted.
 
+.. option:: TEIGHA_ACTIVATION_FILE_DIRECTORY
+
+    Path to a directory where a ``OdActivationInfo`` file is located. If the
+    file is somewhere under TEIGHA_ROOT, it will be automatically discovered.
+    Otherwise this variable must be set for recent SDK versions (at least with
+    2021 and later).
+
+
 TIFF
 ****
 
-libtiff required for the :ref:`raster.gtiff` drivers, and a few other drivers.
+`libtiff <https://gitlab.com/libtiff/libtiff/>`_ is required for the
+:ref:`raster.gtiff` drivers, and a few other drivers.
 If not found, an internal copy of libtiff will be used.
 
 .. option:: TIFF_INCLUDE_DIR
@@ -721,32 +1482,95 @@ If not found, an internal copy of libtiff will be used.
 TileDB
 ******
 
+The `TileDB <https://github.com/TileDB-Inc/TileDB>` library is required for the :ref:`raster.tiledb` driver.
 Specify install prefix in the ``CMAKE_PREFIX_PATH`` variable.
-It is required for the :ref:`raster.tiledb` driver
 
 
-OpenEXR
+WebP
+****
+
+`WebP <https://github.com/webmproject/libwebp>`_ is a image compression library.
+It is required for the :ref:`raster.webp` driver, and may be used by the
+:ref:`raster.gpkg` and the internal libtiff library.
+
+.. option:: WEBP_INCLUDE_DIR
+
+    Path to an include directory with the ``webp/encode.h`` header file.
+
+.. option:: WEBP_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_WEBP=ON/OFF
+
+    Control whether to use WebP. Defaults to ON when WebP is found.
+
+
+XercesC
 *******
 
-It is required for the :ref:`raster.exr` driver
+`Xerces-C <https://github.com/apache/xerces-c>`_ is a stream-oriented XML parser
+library which is required to enable XML parsing capabilities in the :ref:`vector.nas`,
+:ref:`vector.ili` and :ref:`vector.gmlas` drivers.
+It can also be used as an alternative to Expat for the GML driver.
 
-Specify ``OpenEXR_ROOT`` variable pointing to the parent directory of
-/lib and /include subdirectories, i.e. /DEV/lib/openexr-3.0.
-For OpenEXR >= 3 additionally specify ``Imath_ROOT`` as this is a
-separate library now, i.e. /DEV/lib/imath-3.1.3
+.. option:: XercesC_INCLUDE_DIR
 
-or
+    Path to the base include directory.
 
-Specify root directory adding to the ``CMAKE_PREFIX_PATH`` variable to find OpenEXR's pkgconfig.
-For example -DCMAKE_PREFIX_PATH=/DEV/lib/openexr-3.0;/DEV/lib/imath-3.1.3
+.. option:: XercesC_LIBRARY
 
-or
+    Path to a shared or static library file.
 
-Get real specific and set
-``OpenEXR_INCLUDE_DIR``, ``Imath_INCLUDE_DIR``,
-``OpenEXR_LIBRARY``, ``OpenEXR_UTIL_LIBRARY``,
-``OpenEXR_HALF_LIBRARY``, ``OpenEXR_IEX_LIBRARY``
-explicitly
+.. option:: GDAL_USE_XERCESC=ON/OFF
+
+    Control whether to use XercesC. Defaults to ON when XercesC is found.
+
+
+ZLIB
+****
+
+`ZLib <https://github.com/madler/zlib>`_ is a compression library which offers
+the lossless Deflate/Zip compression algorithm.
+
+.. option:: ZLIB_INCLUDE_DIR
+
+    Path to an include directory with the ``zlib.h`` header file.
+
+.. option:: ZLIB_LIBRARY_RELEASE
+
+    Path to a shared or static library file. A similar variable
+    ``ZLIB_LIBRARY_DEBUG`` can also be specified to a similar library for
+    building Debug releases.
+
+.. option:: GDAL_USE_ZLIB=ON/OFF
+
+    Control whether to use ZLIB. Defaults to ON when ZLIB is found.
+
+.. option:: GDAL_USE_ZLIB_INTERNAL=ON/OFF
+
+    Control whether to use internal zlib copy. Defaults to ON when external
+    zlib is not found.
+
+
+ZSTD
+****
+
+`ZSTD <https://github.com/facebook/zstd>`_ is a compression library which offers
+the lossless ZStd compression algorithm (faster than Deflate/ZIP, but incompatible
+with it). It is used by the internal libtiff library or the :ref:`raster.zarr` driver.
+
+.. option:: ZSTD_INCLUDE_DIR
+
+    Path to an include directory with the ``zstd.h`` header file.
+
+.. option:: ZSTD_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_ZSTD=ON/OFF
+
+    Control whether to use ZSTD. Defaults to ON when ZSTD is found.
 
 
 Selection of drivers
@@ -910,13 +1734,41 @@ the ``install`` CMake target.
     option of ``python setup.py install``. It is only taken into account on
     MacOS systems, when the Python installation is a framework.
 
+Java bindings options
++++++++++++++++++++++
+
+.. option:: BUILD_JAVA_BINDINGS:BOOL=ON/OFF
+
+    Whether Java bindings should be built. It is ON by default, but only
+    effective if Java runtime and development packages are found.
+    The relevant options that can be set are described in
+    https://cmake.org/cmake/help/latest/module/FindJava.html and
+    https://cmake.org/cmake/help/latest/module/FindJNI.html.
+    The ``ant`` binary must also be available in the PATH.
+
+.. option:: GDAL_JAVA_INSTALL_DIR
+
+    Subdirectory into which to install the gdalalljni library and the .jar
+    files. It defaults to "${CMAKE_INSTALL_DATADIR}/java"
+
+Option only to be used by maintainers:
+
+.. option:: GPG_KEY
+
+    GPG key to sign build artifacts. Needed to generate bundle.jar.
+
+.. option:: GPG_PASS
+
+    GPG pass phrase to sign build artifacts.
+
+
 Driver specific options
 +++++++++++++++++++++++
 
-.. option:: GDAL_USE_PUBLICDECOMPWT=ON
+.. option:: GDAL_USE_PUBLICDECOMPWT
 
-    The :ref:`raster.msg` driver is built only if this option is set. Its effect is to
-    download the https://gitlab.eumetsat.int/open-source/PublicDecompWT.git
+    The :ref:`raster.msg` driver is built only if this option is set to ON (default is OFF).
+    Its effect is to download the https://gitlab.eumetsat.int/open-source/PublicDecompWT.git
     repository (requires the ``git`` binary to be available at configuration time)
     into the build tree and build the needed files from it into the driver.
 

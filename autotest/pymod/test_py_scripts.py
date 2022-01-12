@@ -41,6 +41,7 @@ import importlib
 #
 
 # path relative to gdal root
+scripts_subdir = 'swig/python/gdal-utils/scripts'
 utils_subdir = 'swig/python/gdal-utils/osgeo_utils'
 samples_subdir = utils_subdir + '/samples'
 samples_path = '../../' + samples_subdir
@@ -54,7 +55,7 @@ def get_py_script(script_name):
     # how to get to {root_dir}/gdal from {root_dir}/autotest/X
     base_gdal_path = os.path.join(os.getcwd(), '..', '..')
     # now we need to look for the script in the utils or samples subdirs...
-    for subdir in [utils_subdir, samples_subdir]:
+    for subdir in [scripts_subdir, samples_subdir]:
         try:
             test_path = os.path.join(base_gdal_path, subdir)
             test_file_path = os.path.join(test_path, script_name + '.py')

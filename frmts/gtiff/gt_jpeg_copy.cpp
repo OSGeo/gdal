@@ -27,6 +27,15 @@
  ****************************************************************************/
 
 #include "cpl_port.h"
+
+#ifdef HAVE_STRINGS_H
+#undef HAVE_STRINGS_H
+#endif
+
+#ifdef HAVE_STRING_H
+#undef HAVE_STRING_H
+#endif
+
 #include "gt_jpeg_copy.h"
 
 #include "cpl_vsi.h"

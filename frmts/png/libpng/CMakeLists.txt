@@ -15,7 +15,7 @@ add_library(
   pngtrans.c
   pngwio.c
   pngwtran.c)
-if (GDAL_USE_LIBZ_INTERNAL)
+if (GDAL_USE_ZLIB_INTERNAL)
   target_include_directories(libpng PRIVATE $<TARGET_PROPERTY:libz,SOURCE_DIR>)
 else ()
   target_include_directories(libpng PRIVATE ${ZLIB_INCLUDE_DIRS})

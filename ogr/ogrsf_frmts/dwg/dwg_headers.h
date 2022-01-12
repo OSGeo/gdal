@@ -52,6 +52,7 @@
 
 #include "DbPolyline.h"
 #include "Db2dPolyline.h"
+#include "DbAttributeDefinition.h"
 #include "Db3dPolyline.h"
 #include "Db3dPolylineVertex.h"
 #include "DbLine.h"
@@ -62,6 +63,7 @@
 #include "DbText.h"
 #include "DbCircle.h"
 #include "DbSpline.h"
+#include "DbFace.h"
 #include "DbBlockReference.h"
 #include "DbAttribute.h"
 #include "DbFiler.h"

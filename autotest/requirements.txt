@@ -1,5 +1,5 @@
 pytest>=6.0.0
 pytest-sugar
 pytest-env
-lxml==4.6.3
+lxml==4.6.5
 hdbcli
