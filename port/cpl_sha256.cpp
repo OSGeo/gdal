@@ -496,6 +496,14 @@ void CPL_HMAC_SHA256( const void *pKey, size_t nKeyLen,
 #pragma warning( disable : 4244 )
 #endif
 
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Weffc++"
+#pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#pragma GCC diagnostic ignored "-Wshadow"
+#endif
+
 #ifdef USE_ONLY_CRYPTODLL_ALG
 #include "cryptopp/dll.h"
 #else
@@ -511,6 +519,10 @@ void CPL_HMAC_SHA256( const void *pKey, size_t nKeyLen,
 typedef CryptoPP::byte cryptopp_byte;
 #else
 typedef byte cryptopp_byte;
+#endif
+
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
 #endif
 
 #ifdef _MSC_VER
