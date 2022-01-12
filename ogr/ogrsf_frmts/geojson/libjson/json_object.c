@@ -8,6 +8,8 @@
  *
  */
 
+#include "cpl_port.h"
+
 #include "config.h"
 
 #include "strerror_override.h"
@@ -216,8 +218,9 @@ static int json_escape_str(struct printbuf *pb, const char *str, size_t len, int
 {
 	int pos = 0, start_offset = 0;
 	unsigned char c;
-	while (len--)
+	while (len)
 	{
+		--len;
 		c = str[pos];
 		switch (c)
 		{
@@ -729,7 +732,7 @@ static int json_object_int_to_json_string(struct json_object *jso, struct printb
 		snprintf(sbuf, sizeof(sbuf), "%" PRId64, JC_INT(jso)->cint.c_int64);
 	else
 		snprintf(sbuf, sizeof(sbuf), "%" PRIu64, JC_INT(jso)->cint.c_uint64);
-	return printbuf_memappend(pb, sbuf, strlen(sbuf));
+	return printbuf_memappend(pb, sbuf, (int)strlen(sbuf));
 }
 
 struct json_object *json_object_new_int(int32_t i)
@@ -1017,11 +1020,11 @@ static int json_object_double_to_json_string_format(struct json_object *jso, str
 	 * ECMA 262 section 9.8.1 defines
 	 * how to handle these cases as strings
 	 */
-	if (isnan(jsodbl->c_double))
+	if (CPLIsNan(jsodbl->c_double))
 	{
 		size = snprintf(buf, sizeof(buf), "NaN");
 	}
-	else if (isinf(jsodbl->c_double))
+	else if (CPLIsInf(jsodbl->c_double))
 	{
 		if (jsodbl->c_double > 0)
 			size = snprintf(buf, sizeof(buf), "Infinity");
@@ -1085,7 +1088,7 @@ static int json_object_double_to_json_string_format(struct json_object *jso, str
 			/* drop trailing zeroes */
 			if (*p != 0)
 				*(++p) = 0;
-			size = p - buf;
+			size = (int)(p - buf);
 		}
 	}
 	// although unlikely, snprintf can fail
@@ -1158,7 +1161,7 @@ int json_object_userdata_to_json_string(struct json_object *jso, struct printbuf
 {
     (void)level;
     (void)flags;
-	int userdata_len = strlen((const char *)jso->_userdata);
+	int userdata_len = (int)strlen((const char *)jso->_userdata);
 	printbuf_memappend(pb, (const char *)jso->_userdata, userdata_len);
 	return userdata_len;
 }
@@ -1289,8 +1292,11 @@ static struct json_object *_json_object_new_string(const char *s, const size_t l
 	if (!jso)
 		return NULL;
 	jso->len = len;
-	memcpy(jso->c_string.idata, s, len);
-	jso->c_string.idata[len] = '\0';
+	char* strdata;
+	uintptr_t strdata_addr = (uintptr_t)&(jso->c_string.idata);
+	memcpy(&strdata, &(strdata_addr), sizeof(char*));
+	memcpy(strdata, s, len);
+	strdata[len] = '\0';
 	return &jso->base;
 }
 
@@ -1324,7 +1330,7 @@ int json_object_get_string_len(const struct json_object *jso)
 	case json_type_string:
 	{
 		len = JC_STRING_C(jso)->len;
-		return (len < 0) ? -(ssize_t)len : len;
+		return (len < 0) ? (int)(-(ssize_t)len) : (int)len;
 	}
 	default: return 0;
 	}
@@ -1642,9 +1648,11 @@ static int json_object_copy_serializer_data(struct json_object *src, struct json
 	// else if ... other supported serializers ...
 	else
 	{
+        void* func_ptr;
+        memcpy(&func_ptr, &(dst->_to_json_string), sizeof(void*));
 		_json_c_set_last_err(
 		    "json_object_deep_copy: unable to copy unknown serializer data: %p\n",
-		    (void *)dst->_to_json_string);
+		    func_ptr);
 		return -1;
 	}
 	dst->_user_delete = src->_user_delete;

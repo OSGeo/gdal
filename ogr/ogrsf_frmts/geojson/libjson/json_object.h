@@ -509,7 +509,7 @@ JSON_EXPORT void json_object_object_del(struct json_object *obj, const char *key
  * @param iter the object iterator, use type json_object_iter
  */
 #define json_object_object_foreachC(obj, iter)                                                  \
-	for (iter.entry = json_object_get_object(obj)->head;                                    \
+	for (iter.entry = json_object_get_object(obj) ? json_object_get_object(obj)->head : NULL; \
 	     (iter.entry ? (iter.key = (char *)lh_entry_k(iter.entry),                          \
 	                   iter.val = (struct json_object *)lh_entry_v(iter.entry), iter.entry) \
 	                 : 0);                                                                  \

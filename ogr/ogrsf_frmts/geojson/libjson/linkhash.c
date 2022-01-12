@@ -12,6 +12,8 @@
 
 #include "config.h"
 
+#include "cpl_port.h"
+
 #include <assert.h>
 #include <limits.h>
 #include <stdarg.h>
@@ -250,6 +252,8 @@ acceptable.  Do NOT use for cryptographic purposes.
 */
 
 /* clang-format off */
+
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static uint32_t hashlittle(const void *key, size_t length, uint32_t initval)
 {
 	uint32_t a,b,c; /* internal state */
