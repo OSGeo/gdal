@@ -278,8 +278,8 @@ class GTiffDataset final : public GDALPamDataset
 public:
     struct MaskOffset
     {
-        int nMask;
-        int nOffset;
+        uint64_t nMask;
+        uint64_t nRoundUpBitTest;
     };
 
 private:
@@ -9333,23 +9333,190 @@ bool GTiffDataset::SubmitCompressionJob( int nStripOrTile, GByte* pabyData,
 /*                          DiscardLsb()                                */
 /************************************************************************/
 
-template<class T> static void DiscardLsbT(GByte* pabyBuffer,
+template<class T> bool MustNotDiscardLsb(T value, bool bHasNoData, T nodata)
+{
+    return bHasNoData && value == nodata;
+}
+
+template<> bool MustNotDiscardLsb<float>(float value, bool bHasNoData, float nodata)
+{
+    return (bHasNoData && value == nodata) || !std::isfinite(value);
+}
+
+template<> bool MustNotDiscardLsb<double>(double value, bool bHasNoData, double nodata)
+{
+    return (bHasNoData && value == nodata) || !std::isfinite(value);
+}
+
+template<class T> T AdjustValue(T value, uint64_t nRoundUpBitTest);
+
+template<class T> T AdjustValueInt(T value, uint64_t nRoundUpBitTest)
+{
+    if( value >= static_cast<T>(std::numeric_limits<T>::max() - (nRoundUpBitTest << 1)) )
+        return static_cast<T>(value - (nRoundUpBitTest << 1));
+    return static_cast<T>(value + (nRoundUpBitTest << 1));
+}
+
+template<> int8_t AdjustValue<int8_t>(int8_t value, uint64_t nRoundUpBitTest)
+{
+    return AdjustValueInt(value, nRoundUpBitTest);
+}
+
+template<> uint8_t AdjustValue<uint8_t>(uint8_t value, uint64_t nRoundUpBitTest)
+{
+    return AdjustValueInt(value, nRoundUpBitTest);
+}
+
+template<> int16_t AdjustValue<int16_t>(int16_t value, uint64_t nRoundUpBitTest)
+{
+    return AdjustValueInt(value, nRoundUpBitTest);
+}
+
+template<> uint16_t AdjustValue<uint16_t>(uint16_t value, uint64_t nRoundUpBitTest)
+{
+    return AdjustValueInt(value, nRoundUpBitTest);
+}
+
+template<> int32_t AdjustValue<int32_t>(int32_t value, uint64_t nRoundUpBitTest)
+{
+    return AdjustValueInt(value, nRoundUpBitTest);
+}
+
+template<> uint32_t AdjustValue<uint32_t>(uint32_t value, uint64_t nRoundUpBitTest)
+{
+    return AdjustValueInt(value, nRoundUpBitTest);
+}
+
+template<> float AdjustValue<float>(float value, uint64_t)
+{
+    return std::nextafter(value, std::numeric_limits<float>::max());
+}
+
+template<> double AdjustValue<double>(double value, uint64_t)
+{
+    return std::nextafter(value, std::numeric_limits<double>::max());
+}
+
+template<class Teffective, class T> T RoundValueDiscardLsb(const void* ptr,
+                                                           uint64_t nMask,
+                                                           uint64_t nRoundUpBitTest);
+
+template<class T> T RoundValueDiscardLsbUnsigned(const void* ptr,
+                                                uint64_t nMask,
+                                                uint64_t nRoundUpBitTest)
+{
+    const uint64_t newval = (*reinterpret_cast<const T*>(ptr) & nMask) + (nRoundUpBitTest << 1U);
+    if( newval > static_cast<uint64_t>(std::numeric_limits<T>::max()) )
+        return static_cast<T>(std::numeric_limits<T>::max() & nMask);
+    return static_cast<T>(newval);
+}
+
+template<class T> T RoundValueDiscardLsbSigned(const void* ptr,
+                                               uint64_t nMask,
+                                               uint64_t nRoundUpBitTest)
+{
+    T oldval = *reinterpret_cast<const T*>(ptr);
+    if( oldval < 0 )
+    {
+        return static_cast<T>(oldval & nMask);
+    }
+    const uint64_t newval = (*reinterpret_cast<const T*>(ptr) & nMask) + (nRoundUpBitTest << 1U);
+    if( newval > static_cast<uint64_t>(std::numeric_limits<T>::max()) )
+        return static_cast<T>(std::numeric_limits<T>::max() & nMask);
+    return static_cast<T>(newval);
+}
+
+template<> uint16_t RoundValueDiscardLsb<uint16_t, uint16_t>(const void* ptr,
+                                                             uint64_t nMask,
+                                                             uint64_t nRoundUpBitTest)
+{
+    return RoundValueDiscardLsbUnsigned<uint16_t>(ptr, nMask, nRoundUpBitTest);
+}
+
+template<> uint32_t RoundValueDiscardLsb<uint32_t, uint32_t>(const void* ptr,
+                                                             uint64_t nMask,
+                                                             uint64_t nRoundUpBitTest)
+{
+    return RoundValueDiscardLsbUnsigned<uint32_t>(ptr, nMask, nRoundUpBitTest);
+}
+
+template<> int8_t RoundValueDiscardLsb<int8_t, int8_t>(const void* ptr,
+                                                          uint64_t nMask,
+                                                          uint64_t nRoundUpBitTest)
+{
+    return RoundValueDiscardLsbSigned<int8_t>(ptr, nMask, nRoundUpBitTest);
+}
+
+template<> int16_t RoundValueDiscardLsb<int16_t, int16_t>(const void* ptr,
+                                                             uint64_t nMask,
+                                                             uint64_t nRoundUpBitTest)
+{
+    return RoundValueDiscardLsbSigned<int16_t>(ptr, nMask, nRoundUpBitTest);
+}
+
+template<> int32_t RoundValueDiscardLsb<int32_t, int32_t>(const void* ptr,
+                                                             uint64_t nMask,
+                                                             uint64_t nRoundUpBitTest)
+{
+    return RoundValueDiscardLsbSigned<int32_t>(ptr, nMask, nRoundUpBitTest);
+}
+
+template<> uint32_t RoundValueDiscardLsb<float, uint32_t>(const void* ptr,
+                                                             uint64_t nMask,
+                                                             uint64_t nRoundUpBitTest)
+{
+    return RoundValueDiscardLsbUnsigned<uint32_t>(ptr, nMask, nRoundUpBitTest);
+}
+
+template<> uint64_t RoundValueDiscardLsb<double, uint64_t>(const void* ptr,
+                                                             uint64_t nMask,
+                                                             uint64_t nRoundUpBitTest)
+{
+    return RoundValueDiscardLsbUnsigned<uint64_t>(ptr, nMask, nRoundUpBitTest);
+}
+
+
+template<class Teffective, class T> static void DiscardLsbT(GByte* pabyBuffer,
                                          size_t nBytes,
                                          int iBand,
                                          int nBands,
                                          uint16_t nPlanarConfig,
-                                         const GTiffDataset::MaskOffset* panMaskOffsetLsb)
+                                         const GTiffDataset::MaskOffset* panMaskOffsetLsb,
+                                         bool bHasNoData,
+                                         Teffective nNoDataValue)
 {
+    static_assert(sizeof(Teffective) == sizeof(T), "sizeof(Teffective) == sizeof(T)");
     if( nPlanarConfig == PLANARCONFIG_SEPARATE )
     {
-        const int nMask = panMaskOffsetLsb[iBand].nMask;
-        const int nOffset = panMaskOffsetLsb[iBand].nOffset;
+        const auto nMask = panMaskOffsetLsb[iBand].nMask;
+        const auto nRoundUpBitTest = panMaskOffsetLsb[iBand].nRoundUpBitTest;
         for( size_t i = 0; i < nBytes/sizeof(T); ++i )
         {
-            reinterpret_cast<T*>(pabyBuffer)[i] =
-                static_cast<T>(
-                    (reinterpret_cast<T *>(pabyBuffer)[i] & nMask) |
-                    nOffset);
+            if( MustNotDiscardLsb(reinterpret_cast<Teffective *>(
+                    pabyBuffer)[i], bHasNoData, nNoDataValue) )
+            {
+                continue;
+            }
+
+            if( reinterpret_cast<T *>(pabyBuffer)[i] & nRoundUpBitTest )
+            {
+                reinterpret_cast<T*>(pabyBuffer)[i] = RoundValueDiscardLsb<Teffective, T>(
+                    &(reinterpret_cast<T *>(pabyBuffer)[i]), nMask, nRoundUpBitTest);
+            }
+            else
+            {
+                reinterpret_cast<T*>(pabyBuffer)[i] =
+                    static_cast<T>(reinterpret_cast<T *>(pabyBuffer)[i] & nMask);
+            }
+
+            // Make sure that by discarding LSB we don't end up to a value
+            // that is no the nodata value
+            if( MustNotDiscardLsb(reinterpret_cast<Teffective *>(
+                                    pabyBuffer)[i], bHasNoData, nNoDataValue) )
+            {
+                reinterpret_cast<Teffective*>(pabyBuffer)[i] =
+                    AdjustValue(nNoDataValue, nRoundUpBitTest);
+            }
         }
     }
     else
@@ -9358,30 +9525,86 @@ template<class T> static void DiscardLsbT(GByte* pabyBuffer,
         {
             for( int j = 0; j < nBands; ++j )
             {
-                reinterpret_cast<T*>(pabyBuffer)[i + j] =
-                    static_cast<T>(
-                        (reinterpret_cast<T*>(pabyBuffer)[i + j] &
-                            panMaskOffsetLsb[j].nMask) |
-                        panMaskOffsetLsb[j].nOffset);
+                if( MustNotDiscardLsb(reinterpret_cast<Teffective *>(
+                        pabyBuffer)[i + j], bHasNoData, nNoDataValue) )
+                {
+                    continue;
+                }
+
+                if( reinterpret_cast<T *>(pabyBuffer)[i + j] & panMaskOffsetLsb[j].nRoundUpBitTest )
+                {
+                    reinterpret_cast<T*>(pabyBuffer)[i + j] = RoundValueDiscardLsb<Teffective, T>(
+                        &(reinterpret_cast<T *>(pabyBuffer)[i + j]),
+                        panMaskOffsetLsb[j].nMask,
+                        panMaskOffsetLsb[j].nRoundUpBitTest);
+                }
+                else
+                {
+                    reinterpret_cast<T*>(pabyBuffer)[i + j] =
+                        static_cast<T>(
+                            (reinterpret_cast<T*>(pabyBuffer)[i + j] &
+                                panMaskOffsetLsb[j].nMask));
+                }
+
+                // Make sure that by discarding LSB we don't end up to a value
+                // that is no the nodata value
+                if( MustNotDiscardLsb(reinterpret_cast<Teffective *>(
+                                        pabyBuffer)[i + j], bHasNoData, nNoDataValue) )
+                {
+                    reinterpret_cast<Teffective*>(pabyBuffer)[i + j] =
+                        AdjustValue(nNoDataValue, panMaskOffsetLsb[j].nRoundUpBitTest);
+                }
             }
         }
     }
 }
 
-void GTiffDataset::DiscardLsb( GByte* pabyBuffer, GPtrDiff_t nBytes, int iBand ) const
+static void DiscardLsb( GByte* pabyBuffer, GPtrDiff_t nBytes, int iBand,
+                        int nBands,
+                        uint16_t nSampleFormat,
+                        uint16_t nBitsPerSample,
+                        uint16_t nPlanarConfig,
+                        const GTiffDataset::MaskOffset* panMaskOffsetLsb,
+                        bool bHasNoData,
+                        double dfNoDataValue )
 {
-    if( m_nBitsPerSample == 8 )
+    if( nBitsPerSample == 8 && nSampleFormat == SAMPLEFORMAT_UINT )
     {
-        if( m_nPlanarConfig == PLANARCONFIG_SEPARATE )
+        uint8_t nNoDataValue = 0;
+        if( bHasNoData &&
+            dfNoDataValue >= std::numeric_limits<uint8_t>::min() &&
+            dfNoDataValue <= std::numeric_limits<uint8_t>::max() &&
+            dfNoDataValue == static_cast<uint8_t>(dfNoDataValue) )
         {
-            const int nMask = m_panMaskOffsetLsb[iBand].nMask;
-            const int nOffset = m_panMaskOffsetLsb[iBand].nOffset;
+            nNoDataValue = static_cast<uint8_t>(dfNoDataValue);
+        }
+        else
+        {
+            bHasNoData = false;
+        }
+        if( nPlanarConfig == PLANARCONFIG_SEPARATE )
+        {
+            const auto nMask = static_cast<unsigned>(panMaskOffsetLsb[iBand].nMask);
+            const auto nRoundUpBitTest = static_cast<unsigned>(panMaskOffsetLsb[iBand].nRoundUpBitTest);
             for( decltype(nBytes) i = 0; i < nBytes; ++i )
             {
+                if( bHasNoData && pabyBuffer[i] == nNoDataValue )
+                    continue;
+
                 // Keep 255 in case it is alpha.
                 if( pabyBuffer[i] != 255 )
-                    pabyBuffer[i] =
-                        static_cast<GByte>((pabyBuffer[i] & nMask) | nOffset);
+                {
+                    if( pabyBuffer[i] & nRoundUpBitTest )
+                        pabyBuffer[i] = static_cast<GByte>(std::min(
+                            255U, (pabyBuffer[i] & nMask) + (nRoundUpBitTest << 1U)));
+                    else
+                        pabyBuffer[i] = static_cast<GByte>(pabyBuffer[i] & nMask);
+
+                    // Make sure that by discarding LSB we don't end up to a value
+                    // that is no the nodata value
+                    if( bHasNoData && pabyBuffer[i] == nNoDataValue )
+                        pabyBuffer[i] = AdjustValue(nNoDataValue, nRoundUpBitTest);
+                }
             }
         }
         else
@@ -9390,25 +9613,147 @@ void GTiffDataset::DiscardLsb( GByte* pabyBuffer, GPtrDiff_t nBytes, int iBand )
             {
                 for( int j = 0; j < nBands; ++j )
                 {
+                    if( bHasNoData && pabyBuffer[i + j] == nNoDataValue )
+                        continue;
+
                     // Keep 255 in case it is alpha.
                     if( pabyBuffer[i + j] != 255 )
-                        pabyBuffer[i + j] =
-                            static_cast<GByte>((pabyBuffer[i + j] &
-                                                m_panMaskOffsetLsb[j].nMask) | m_panMaskOffsetLsb[j].nOffset);
+                    {
+                        if( pabyBuffer[i + j] & panMaskOffsetLsb[j].nRoundUpBitTest )
+                        {
+                            pabyBuffer[i + j] =
+                                static_cast<GByte>(std::min(255U,
+                                        (pabyBuffer[i + j] &
+                                         static_cast<unsigned>(panMaskOffsetLsb[j].nMask)) +
+                                        (static_cast<unsigned>(panMaskOffsetLsb[j].nRoundUpBitTest) << 1U)));
+                        }
+                        else
+                        {
+                            pabyBuffer[i + j] =
+                                static_cast<GByte>(pabyBuffer[i + j] &
+                                                   panMaskOffsetLsb[j].nMask);
+                        }
+
+                        // Make sure that by discarding LSB we don't end up to a value
+                        // that is no the nodata value
+                        if( bHasNoData && pabyBuffer[i + j] == nNoDataValue )
+                            pabyBuffer[i + j] = AdjustValue(nNoDataValue, panMaskOffsetLsb[j].nRoundUpBitTest);
+
+                    }
                 }
             }
         }
     }
-    else if( m_nBitsPerSample == 16 )
+    else if( nBitsPerSample == 8 && nSampleFormat == SAMPLEFORMAT_INT )
     {
-        DiscardLsbT<GUInt16>(pabyBuffer, nBytes, iBand, nBands, m_nPlanarConfig,
-                            m_panMaskOffsetLsb);
+        int8_t nNoDataValue = 0;
+        if( bHasNoData &&
+            dfNoDataValue >= std::numeric_limits<int8_t>::min() &&
+            dfNoDataValue <= std::numeric_limits<int8_t>::max() &&
+            dfNoDataValue == static_cast<int8_t>(dfNoDataValue) )
+        {
+            nNoDataValue = static_cast<int8_t>(dfNoDataValue);
+        }
+        else
+        {
+            bHasNoData = false;
+        }
+        DiscardLsbT<int8_t, int8_t>(
+            pabyBuffer, nBytes, iBand, nBands, nPlanarConfig,
+            panMaskOffsetLsb, bHasNoData, nNoDataValue);
     }
-    else if( m_nBitsPerSample == 32 )
+    else if( nBitsPerSample == 16 && nSampleFormat == SAMPLEFORMAT_INT )
     {
-        DiscardLsbT<GUInt32>(pabyBuffer, nBytes, iBand, nBands, m_nPlanarConfig,
-                            m_panMaskOffsetLsb);
+        int16_t nNoDataValue = 0;
+        if( bHasNoData &&
+            dfNoDataValue >= std::numeric_limits<int16_t>::min() &&
+            dfNoDataValue <= std::numeric_limits<int16_t>::max() &&
+            dfNoDataValue == static_cast<int16_t>(dfNoDataValue) )
+        {
+            nNoDataValue = static_cast<int16_t>(dfNoDataValue);
+        }
+        else
+        {
+            bHasNoData = false;
+        }
+        DiscardLsbT<int16_t, int16_t>(
+            pabyBuffer, nBytes, iBand, nBands, nPlanarConfig,
+            panMaskOffsetLsb, bHasNoData, nNoDataValue);
     }
+    else if( nBitsPerSample == 16 && nSampleFormat == SAMPLEFORMAT_UINT )
+    {
+        uint16_t nNoDataValue = 0;
+        if( bHasNoData &&
+            dfNoDataValue >= std::numeric_limits<uint16_t>::min() &&
+            dfNoDataValue <= std::numeric_limits<uint16_t>::max() &&
+            dfNoDataValue == static_cast<uint16_t>(dfNoDataValue) )
+        {
+            nNoDataValue = static_cast<uint16_t>(dfNoDataValue);
+        }
+        else
+        {
+            bHasNoData = false;
+        }
+        DiscardLsbT<uint16_t, uint16_t>(
+            pabyBuffer, nBytes, iBand, nBands, nPlanarConfig,
+            panMaskOffsetLsb, bHasNoData, nNoDataValue);
+    }
+    else if( nBitsPerSample == 32 && nSampleFormat == SAMPLEFORMAT_INT )
+    {
+        int32_t nNoDataValue = 0;
+        if( bHasNoData &&
+            dfNoDataValue >= std::numeric_limits<int32_t>::min() &&
+            dfNoDataValue <= std::numeric_limits<int32_t>::max() &&
+            dfNoDataValue == static_cast<int32_t>(dfNoDataValue) )
+        {
+            nNoDataValue = static_cast<int32_t>(dfNoDataValue);
+        }
+        else
+        {
+            bHasNoData = false;
+        }
+        DiscardLsbT<int32_t, int32_t>(
+            pabyBuffer, nBytes, iBand, nBands, nPlanarConfig,
+            panMaskOffsetLsb, bHasNoData, nNoDataValue);
+    }
+    else if( nBitsPerSample == 32 && nSampleFormat == SAMPLEFORMAT_UINT )
+    {
+        uint32_t nNoDataValue = 0;
+        if( bHasNoData &&
+            dfNoDataValue >= std::numeric_limits<uint32_t>::min() &&
+            dfNoDataValue <= std::numeric_limits<uint32_t>::max() &&
+            dfNoDataValue == static_cast<uint32_t>(dfNoDataValue) )
+        {
+            nNoDataValue = static_cast<uint32_t>(dfNoDataValue);
+        }
+        else
+        {
+            bHasNoData = false;
+        }
+        DiscardLsbT<uint32_t, uint32_t>(
+            pabyBuffer, nBytes, iBand, nBands, nPlanarConfig,
+            panMaskOffsetLsb, bHasNoData, nNoDataValue);
+    }
+    else if( nBitsPerSample == 32 && nSampleFormat == SAMPLEFORMAT_IEEEFP )
+    {
+        float fNoDataValue = static_cast<float>(dfNoDataValue);
+        DiscardLsbT<float, uint32_t>(
+            pabyBuffer, nBytes, iBand, nBands, nPlanarConfig,
+            panMaskOffsetLsb, bHasNoData, fNoDataValue);
+    }
+    else if( nBitsPerSample == 64 && nSampleFormat == SAMPLEFORMAT_IEEEFP )
+    {
+        DiscardLsbT<double, uint64_t>(
+            pabyBuffer, nBytes, iBand, nBands, nPlanarConfig,
+            panMaskOffsetLsb, bHasNoData, dfNoDataValue);
+    }
+}
+
+void GTiffDataset::DiscardLsb( GByte* pabyBuffer, GPtrDiff_t nBytes, int iBand ) const
+{
+    ::DiscardLsb(pabyBuffer, nBytes, iBand, nBands,
+                 m_nSampleFormat, m_nBitsPerSample, m_nPlanarConfig,
+                 m_panMaskOffsetLsb, m_bNoDataSet, m_dfNoDataValue );
 }
 
 /************************************************************************/
@@ -12178,11 +12523,11 @@ CPLString GTiffFormatGDALNoDataTagValue( double dfNoData )
 /*                         WriteNoDataValue()                           */
 /************************************************************************/
 
-void GTiffDataset::WriteNoDataValue( TIFF *l_hTIFF, double dfNoData )
+void GTiffDataset::WriteNoDataValue( TIFF *hTIFF, double dfNoData )
 
 {
     CPLString osVal( GTiffFormatGDALNoDataTagValue(dfNoData) );
-    TIFFSetField( l_hTIFF, TIFFTAG_GDAL_NODATA, osVal.c_str() );
+    TIFFSetField( hTIFF, TIFFTAG_GDAL_NODATA, osVal.c_str() );
 }
 
 /************************************************************************/
@@ -15682,44 +16027,87 @@ static signed char GTiffGetJpegTablesMode(char** papszOptions)
 /*                        GetDiscardLsbOption()                         */
 /************************************************************************/
 
-void GTiffDataset::GetDiscardLsbOption(char** papszOptions)
+static GTiffDataset::MaskOffset* GetDiscardLsbOption(TIFF* hTIFF, char** papszOptions)
 {
     const char* pszBits = CSLFetchNameValue( papszOptions, "DISCARD_LSB" );
     if( pszBits == nullptr)
-        return;
+        return nullptr;
 
-    if( m_nPhotometric == PHOTOMETRIC_PALETTE )
+    uint16_t nPhotometric = 0;
+    TIFFGetFieldDefaulted(hTIFF, TIFFTAG_PHOTOMETRIC, &nPhotometric);
+
+    uint16_t nBitsPerSample = 0;
+    if( !TIFFGetField(hTIFF, TIFFTAG_BITSPERSAMPLE, &nBitsPerSample) )
+        nBitsPerSample = 1;
+
+    uint16_t nSamplesPerPixel = 0;
+    if( !TIFFGetField(hTIFF, TIFFTAG_SAMPLESPERPIXEL, &nSamplesPerPixel) )
+        nSamplesPerPixel = 1;
+
+    uint16_t nSampleFormat = 0;
+    if( !TIFFGetField(hTIFF, TIFFTAG_SAMPLEFORMAT, &nSampleFormat) )
+        nSampleFormat = SAMPLEFORMAT_UINT;
+
+    if( nPhotometric == PHOTOMETRIC_PALETTE )
     {
-        ReportError(CE_Warning, CPLE_AppDefined,
+        CPLError(CE_Warning, CPLE_AppDefined,
                  "DISCARD_LSB ignored on a paletted image");
-        return;
+        return nullptr;
     }
-    if( !(m_nBitsPerSample == 8 || m_nBitsPerSample == 16 || m_nBitsPerSample == 32) )
+    if( !(nBitsPerSample == 8 ||
+          nBitsPerSample == 16 ||
+          nBitsPerSample == 32 ||
+          nBitsPerSample == 64) )
     {
-        ReportError(CE_Warning, CPLE_AppDefined,
-                 "DISCARD_LSB ignored on non 8, 16 or 32 bits integer images");
-        return;
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "DISCARD_LSB ignored on non 8, 16, 32 or 64 bits images");
+        return nullptr;
     }
 
     char** papszTokens = CSLTokenizeString2( pszBits, ",", 0 );
     const int nTokens = CSLCount(papszTokens);
-    if( nTokens == 1 || nTokens == nBands )
+    GTiffDataset::MaskOffset* panMaskOffsetLsb = nullptr;
+    if( nTokens == 1 || nTokens == nSamplesPerPixel )
     {
-        m_panMaskOffsetLsb = static_cast<MaskOffset*>(CPLCalloc(nBands, sizeof(MaskOffset)));
-        for( int i = 0; i < nBands; ++i )
+        panMaskOffsetLsb = static_cast<GTiffDataset::MaskOffset*>(
+            CPLCalloc(nSamplesPerPixel, sizeof(GTiffDataset::MaskOffset)));
+        for( int i = 0; i < nSamplesPerPixel; ++i )
         {
-            int nBits = atoi(papszTokens[nTokens == 1 ? 0 : i]);
-            m_panMaskOffsetLsb[i].nMask = ~((1 << nBits)-1);
+            const int nBits = atoi(papszTokens[nTokens == 1 ? 0 : i]);
+            const int nMaxBits =
+                (nSampleFormat == SAMPLEFORMAT_IEEEFP && nBits == 32) ? 23-1 :
+                (nSampleFormat == SAMPLEFORMAT_IEEEFP && nBits == 64) ? 53-1 :
+                nSampleFormat == SAMPLEFORMAT_INT ? nBitsPerSample - 1:
+                nBitsPerSample;
+
+            if( nBits < 0 || nBits > nMaxBits)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                     "DISCARD_LSB ignored: values should be in [0,%d] range",
+                     nMaxBits);
+                VSIFree(panMaskOffsetLsb);
+                return nullptr;
+            }
+            panMaskOffsetLsb[i].nMask = ~((static_cast<uint64_t>(1) << nBits)-1);
             if( nBits > 1 )
-                m_panMaskOffsetLsb[i].nOffset = 1 << (nBits - 1);
+            {
+                panMaskOffsetLsb[i].nRoundUpBitTest = static_cast<uint64_t>(1) << (nBits-1);
+            }
         }
     }
     else
     {
-        ReportError(CE_Warning, CPLE_AppDefined,
+        CPLError(CE_Warning, CPLE_AppDefined,
                  "DISCARD_LSB ignored: wrong number of components");
     }
     CSLDestroy(papszTokens);
+    return panMaskOffsetLsb;
+}
+
+
+void GTiffDataset::GetDiscardLsbOption(char** papszOptions)
+{
+    m_panMaskOffsetLsb = ::GetDiscardLsbOption(m_hTIFF, papszOptions);
 }
 
 /************************************************************************/
