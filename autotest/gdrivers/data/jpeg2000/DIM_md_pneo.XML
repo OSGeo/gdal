@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?xml-stylesheet href="LIBRARY/STYLE.XSL" type="text/xsl" ?>
+<Dimap_Document version="1.1">
+  <Metadata_Identification>
+    <METADATA_FORMAT version="2.0">DIMAP</METADATA_FORMAT>
+    <METADATA_PROFILE>PNEO_SENSOR</METADATA_PROFILE>
+    <METADATA_SUBPROFILE>PRODUCT</METADATA_SUBPROFILE>
+    <METADATA_LANGUAGE>en</METADATA_LANGUAGE>
+  </Metadata_Identification>
+  <Dataset_Content>  
+   <Dataset_Extent>
+      <EXTENT_TYPE>Bounding_Polygon</EXTENT_TYPE>
+      <Vertex>
+        <LON>144.840636904079</LON>
+        <LAT>-37.76255126780603</LAT>
+        <COL>1</COL>
+        <ROW>1</ROW>
+      </Vertex>
+      <Vertex>
+        <LON>145.0707684049999</LON>
+        <LAT>-37.76262507869971</LAT>
+        <COL>10375</COL>
+        <ROW>1</ROW>
+      </Vertex>
+      <Vertex>
+        <LON>145.0709608547251</LON>
+        <LAT>-37.87458462982676</LAT>
+        <COL>10375</COL>
+        <ROW>6132</ROW>
+      </Vertex>
+      <Vertex>
+        <LON>144.8404320970826</LON>
+        <LAT>-37.87444098444605</LAT>
+        <COL>1</COL>
+        <ROW>6132</ROW>
+      </Vertex>
+      <Center>
+        <LON>144.9556995652217</LON>
+        <LAT>-37.81855049019464</LAT>
+        <COL>5188</COL>
+        <ROW>3066</ROW>
+      </Center>
+    </Dataset_Extent>
+  </Dataset_Content>  
+  <Coordinate_Reference_System>
+    <Geodetic_CRS>
+      <CRS_TABLES version="0.0">EPSG</CRS_TABLES>
+      <GEODETIC_CRS_TYPE>GEOGRAPHIC2D</GEODETIC_CRS_TYPE>
+      <GEODETIC_CRS_NAME>WGS84</GEODETIC_CRS_NAME>
+      <GEODETIC_CRS_CODE>urn:ogc:def:crs:EPSG::4326</GEODETIC_CRS_CODE>
+    </Geodetic_CRS>
+  </Coordinate_Reference_System>
+  <Geometric_Data>
+    <Use_Area>
+      <Located_Geometric_Values>
+        <Ground_Sample_Distance>
+          <GSD_ACROSS_TRACK unit="m">0.7054510257833884</GSD_ACROSS_TRACK>
+          <GSD_ALONG_TRACK unit="m">0.7145258524056943</GSD_ALONG_TRACK>
+        </Ground_Sample_Distance>
+      </Located_Geometric_Values>
+      <Located_Geometric_Values>
+        <Ground_Sample_Distance>
+          <GSD_ACROSS_TRACK unit="m">0.7059011471512184</GSD_ACROSS_TRACK>
+          <GSD_ALONG_TRACK unit="m">0.7146027093640137</GSD_ALONG_TRACK>
+        </Ground_Sample_Distance>
+      </Located_Geometric_Values>
+      <Located_Geometric_Values>
+        <Ground_Sample_Distance>
+          <GSD_ACROSS_TRACK unit="m">0.7058404840473139</GSD_ACROSS_TRACK>
+          <GSD_ALONG_TRACK unit="m">0.7146858168174818</GSD_ALONG_TRACK>
+        </Ground_Sample_Distance>
+      </Located_Geometric_Values>
+    </Use_Area>
+  </Geometric_Data>
+  <Dataset_Sources>
+    <Source_Identification>
+      <Strip_Source>
+        <MISSION>PNEO</MISSION>
+        <MISSION_INDEX>3</MISSION_INDEX>
+        <IMAGING_DATE>2021-08-27</IMAGING_DATE>
+        <IMAGING_TIME>00:00:00.0Z</IMAGING_TIME>
+      </Strip_Source>
+    </Source_Identification>
+  </Dataset_Sources>
+</Dimap_Document>
