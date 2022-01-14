@@ -595,6 +595,25 @@ The https://cmake.org/cmake/help/latest/module/FindHDF5.html module is used to
 detect the HDF5 library.
 
 
+HDFS
+****
+
+The `Hadoop File System <https://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-hdfs/LibHdfs.html>`_ native library is needed
+for the :ref:`/vsihdfs/ <vsihdfs>` virtual file system.
+
+.. option:: HDFS_INCLUDE_DIR
+
+    Path to an include directory with the ``hdfs.h`` header file.
+
+.. option:: HDFS_LIBRARY
+
+    Path to a shared or static ``hdfs`` library file.
+
+.. option:: GDAL_USE_HDFS=ON/OFF
+
+    Control whether to use HDFS. Defaults to ON when HDFS is found.
+
+
 Iconv
 *****
 
