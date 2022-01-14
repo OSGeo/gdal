@@ -155,38 +155,37 @@ Examples
 
       % ogrinfo -ro HANA:"DRIVER={HDBODBC};DATABASE=HAN;HOST=localhost;PORT=30015;USER=mylogin;PASSWORD=mypassword;SCHEMA=MYSCHEMA" -so "planet_osm_line"
 
-   The output of *ogrinfo test.gml -ro -al* is:
-   ::
-        Layer name: planet_osm_line
-        Geometry: Line String
-        Feature Count: 81013
-        Extent: (732496.086304, 6950959.464783) - (1018694.144531, 7204272.976379)
-        Layer SRS WKT:
-        PROJCS["WGS 84 / Pseudo-Mercator",
-            GEOGCS["WGS 84",
-                DATUM["WGS_1984",
-                      SPHEROID["WGS 84",6378137,298.257223563, AHORITY["EPSG","7030"]], AUTHORITY["EPSG","6326"]],
-                PRIMEM["Greenwich",0, AUTHORITY["EPSG","8901"]],
-                UNIT["degree",0.0174532925199433, AUTHORITY["EPSG","9122"]],
-                AUTHORITY["EPSG","4326"]],
-            PROJECTION["Mercator_1SP"],
-            PARAMETER["central_meridian",0],
-            PARAMETER["scale_factor",1],
-            PARAMETER["false_easting",0],
-            PARAMETER["false_northing",0],
-            UNIT["metre",1,AUTHORITY["EPSG","9001"]],
-            AXIS["X",EAST],
-            AXIS["Y",NORTH],
-            AUTHORITY["EPSG","3857"]]
-        Geometry Column = way
-        osm_id: Integer64 (0.0)
-        access: String (4000.0)
-        addr:housename: String (4000.0)
-        addr:housenumber: String (4000.0)
-        addr:interpolation: String (4000.0)
-        admin_level: String (4000.0)
-        aerialway: String (4000.0)
-        aeroway: String (4000.0)
+      Layer name: planet_osm_line
+      Geometry: Line String
+      Feature Count: 81013
+      Extent: (732496.086304, 6950959.464783) - (1018694.144531, 7204272.976379)
+      Layer SRS WKT:
+      PROJCS["WGS 84 / Pseudo-Mercator",
+          GEOGCS["WGS 84",
+              DATUM["WGS_1984",
+                  SPHEROID["WGS 84",6378137,298.257223563, AHORITY["EPSG","7030"]],
+                  AUTHORITY["EPSG","6326"]],
+                  PRIMEM["Greenwich",0, AUTHORITY["EPSG","8901"]],
+                  UNIT["degree",0.0174532925199433, AUTHORITY["EPSG","9122"]],
+                  AUTHORITY["EPSG","4326"]],
+              PROJECTION["Mercator_1SP"],
+              PARAMETER["central_meridian",0],
+              PARAMETER["scale_factor",1],
+              PARAMETER["false_easting",0],
+              PARAMETER["false_northing",0],
+              UNIT["metre",1,AUTHORITY["EPSG","9001"]],
+              AXIS["X",EAST],
+              AXIS["Y",NORTH],
+              AUTHORITY["EPSG","3857"]]
+      Geometry Column = way
+      osm_id: Integer64 (0.0)
+      access: String (4000.0)
+      addr:housename: String (4000.0)
+      addr:housenumber: String (4000.0)
+      addr:interpolation: String (4000.0)
+      admin_level: String (4000.0)
+      aerialway: String (4000.0)
+      aeroway: String (4000.0)
 
 -  This example shows how to export data from the 'points' table to a shapefile called 'points_output.shp'.
 
@@ -210,5 +209,5 @@ See Also
 --------
 
 -  `SAP HANA Home Page <https://www.sap.com/products/hana.html>`__
--  `SAP HANA Spatial Reference<https://help.sap.com/viewer/cbbbfc20871e4559abfd45a78ad58c02/2.0.03/en-US/e1c934157bd14021a3b43b5822b2cbe9.html>`__
+-  `SAP HANA Spatial Reference <https://help.sap.com/viewer/cbbbfc20871e4559abfd45a78ad58c02/2.0.03/en-US/e1c934157bd14021a3b43b5822b2cbe9.html>`__
 -  `SAP HANA ODBC Connection Properties <https://help.sap.com/viewer/0eec0d68141541d1b07893a39944924e/2.0.02/en-US/7cab593774474f2f8db335710b2f5c50.html>`__
