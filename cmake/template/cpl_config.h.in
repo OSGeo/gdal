@@ -143,6 +143,9 @@
 /* Define to 1 if GCC atomic builtins are available */
 #cmakedefine HAVE_GCC_ATOMIC_BUILTINS 1
 
+/* Define to 1 if GCC bswap builtins are available */
+#cmakedefine HAVE_GCC_BSWAP 1
+
 /* Define to name of 64bit fopen function */
 #cmakedefine VSI_FOPEN64 @VSI_FOPEN64@
 

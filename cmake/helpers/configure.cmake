@@ -312,6 +312,12 @@ else ()
 
   check_c_source_compiles(
     "
+        int main(int argc, char** argv) { (void)__builtin_bswap32(0); (void)__builtin_bswap64(0); return 0; }
+    "
+    HAVE_GCC_BSWAP)
+
+  check_c_source_compiles(
+    "
         #include <sys/types.h>
         #include <sys/socket.h>
         #include <netdb.h>
