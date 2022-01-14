@@ -379,12 +379,33 @@ bool FindSRS( const char *pszInput, OGRSpatialReference &oSRS )
 
         const OGRErr eErr = oSRS.SetFromUserInput( pszInput );
 
-       if(  eErr != OGRERR_NONE ) {
+        if(  eErr != OGRERR_NONE ) {
             CPLDebug( "gdalsrsinfo", "did not get SRS from user input" );
         }
         else {
             CPLDebug( "gdalsrsinfo", "got SRS from user input" );
             bGotSRS = true;
+
+            if( CPLGetConfigOption("OSR_USE_NON_DEPRECATED", nullptr) == nullptr )
+            {
+                const char* pszAuthName = oSRS.GetAuthorityName(nullptr);
+                const char* pszAuthCode = oSRS.GetAuthorityCode(nullptr);
+
+                CPLConfigOptionSetter oSetter("OSR_USE_NON_DEPRECATED", "NO", false);
+                OGRSpatialReference oSRS2;
+                oSRS2.SetFromUserInput( pszInput );
+                const char* pszAuthCode2 = oSRS2.GetAuthorityCode(nullptr);
+                if( pszAuthName && pszAuthCode &&
+                    pszAuthCode2 &&
+                    !EQUAL(pszAuthCode, pszAuthCode2) )
+                {
+                    printf("CRS %s is deprecated, and the following output "
+                           "will use its non-deprecated replacement %s:%s.\n"
+                           "To use the original CRS, set the OSR_USE_NON_DEPRECATED "
+                           "configuration option to NO.\n",
+                           pszInput, pszAuthName, pszAuthCode);
+                }
+            }
         }
     }
 
