@@ -18,7 +18,9 @@ mark_as_advanced(GDAL_ENABLE_PLUGINS_NO_DEPS)
 
 option(GDAL_ENABLE_QHULL "use qhull" ON)
 option(ENABLE_IPO "Enable Inter-Procedural Optimization if possible" OFF)
-option(GDAL_ENABLE_MACOSX_FRAMEWORK "Enable Framework on Mac OS X" OFF)
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  option(GDAL_ENABLE_MACOSX_FRAMEWORK "Enable Framework on Mac OS X" OFF)
+endif ()
 option(GDAL_BUILD_OPTIONAL_DRIVERS "Whether to build GDAL optional drivers by default" ON)
 option(OGR_BUILD_OPTIONAL_DRIVERS "Whether to build OGR optional drivers by default" ON)
 

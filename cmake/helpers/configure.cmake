@@ -358,12 +358,10 @@ else ()
   set(HOST_FILLORDER FILLORDER_LSB2MSB)
 endif ()
 
-if (UNIX)
-  if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(MACOSX_FRAMEWORK ON)
-  else ()
-    set(MACOSX_FRAMEWORK OFF)
-  endif ()
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  set(MACOSX_FRAMEWORK ${GDAL_ENABLE_MACOSX_FRAMEWORK})
+else ()
+  set(MACOSX_FRAMEWORK OFF)
 endif ()
 
 # vim: ts=4 sw=4 sts=4 et
