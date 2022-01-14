@@ -118,9 +118,11 @@ else ()
   endif ()
 
   find_library(M_LIB m)
+  mark_as_advanced(M_LIB)
 
   option(GDAL_USE_CPL_MULTIPROC_PTHREAD "Set to ON if you want to use pthreads based multiprocessing support."
          ${_WITH_PT_OPTION_ON})
+  mark_as_advanced(GDAL_USE_CPL_MULTIPROC_PTHREAD)
   set(CPL_MULTIPROC_PTHREAD ${GDAL_USE_CPL_MULTIPROC_PTHREAD})
   check_c_source_compiles(
     "

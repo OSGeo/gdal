@@ -257,13 +257,8 @@ if (GDAL_USE_OPENSSL
   endif ()
 endif ()
 
-if (CRYPTOPP_USE_ONLY_CRYPTODLL_ALG AND NOT BUILD_SHARED_LIBS)
+if (CRYPTOPP_USE_ONLY_CRYPTODLL_ALG)
   # Define USE_ONLY_CRYPTODLL_ALG is running against cryptopp.dll, but not if statically linking
-  # USE_ONLY_CRYPTODLL_ALG=YES
-  #
-  # When linking against the DLL: CRYPTOPP_LIB = c:/install-cryptopp-x64/lib/cryptopp.lib
-  #
-  # When linking against the static lib: CRYPTOPP_LIB = c:/install-cryptopp-x64/lib/cryptlib.lib
   target_compile_definitions(cpl PRIVATE -DUSE_ONLY_CRYPTODLL_ALG)
 endif ()
 
