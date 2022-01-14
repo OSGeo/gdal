@@ -74,6 +74,12 @@
 #define RPC_MAX_LONG        "MAX_LONG"
 #define RPC_MAX_LAT         "MAX_LAT"
 
+/* Pleiades Neo nomenclature */
+#define RPC_LAT_NUM_COEFF  "LAT_NUM_COEFF"
+#define RPC_LAT_DEN_COEFF  "LAT_DEN_COEFF"
+#define RPC_LON_NUM_COEFF  "LON_NUM_COEFF"
+#define RPC_LON_DEN_COEFF  "LON_DEN_COEFF"
+
 /**
  * Enumerator of metadata readers
  */
