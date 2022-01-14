@@ -162,6 +162,8 @@ else ()
   check_include_file("string.h" HAVE_STRING_H)
 
   check_function_exists(strtof HAVE_STRTOF)
+  check_function_exists(strtoll HAVE_STRTOLL)
+  check_function_exists(strtoull HAVE_STRTOULL)
 
   check_include_file("sys/stat.h" HAVE_SYS_STAT_H)
   if (${CMAKE_SYSTEM} MATCHES "Linux")
@@ -173,10 +175,17 @@ else ()
 
   check_function_exists(readlink HAVE_READLINK)
   check_function_exists(posix_spawnp HAVE_POSIX_SPAWNP)
+  check_function_exists(posix_memalign HAVE_POSIX_MEMALIGN)
   check_function_exists(vfork HAVE_VFORK)
   check_function_exists(mmap HAVE_MMAP)
+  check_function_exists(sigaction HAVE_SIGACTION)
   check_function_exists(statvfs HAVE_STATVFS)
+  check_function_exists(statvfs64 HAVE_STATVFS64)
   check_function_exists(lstat HAVE_LSTAT)
+
+  check_function_exists(getrlimit HAVE_GETRLIMIT)
+  check_symbol_exists(RLIMIT_AS "sys/resource.h" HAVE_RLIMIT_AS)
+
   check_function_exists(ftell64 HAVE_FTELL64)
   if (HAVE_FTELL64)
     set(VSI_FTELL64 "ftell64")
@@ -334,7 +343,7 @@ else ()
 
   include(FindInt128)
   if (INT128_FOUND)
-    add_definitions(-DHAVE_UINT128_T)
+    set(HAVE_UINT128_T TRUE)
   endif ()
 
   if (HAVE_HIDE_INTERNAL_SYMBOLS)
