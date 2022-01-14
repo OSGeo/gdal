@@ -164,6 +164,14 @@ else ()
     set(WFLAG_EFFCXX -Weffc++)
   endif ()
 
+  if (CMAKE_BUILD_TYPE MATCHES Debug)
+    check_c_compiler_flag(-ftrapv HAVE_FTRAPV)
+    if (HAVE_FTRAPV)
+      set(GDAL_C_WARNING_FLAGS ${GDAL_C_WARNING_FLAGS} -ftrapv)
+      set(GDAL_CXX_WARNING_FLAGS ${GDAL_CXX_WARNING_FLAGS} -ftrapv)
+    endif ()
+  endif ()
+
 endif ()
 
 # message("GDAL_C_WARNING_FLAGS: ${GDAL_C_WARNING_FLAGS}") message("GDAL_CXX_WARNING_FLAGS: ${GDAL_CXX_WARNING_FLAGS}")
