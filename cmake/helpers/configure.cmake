@@ -104,7 +104,7 @@ if (MSVC)
 
   set(VSI_STAT64 _stat64)
   set(VSI_STAT64_T __stat64)
-else (MSVC)
+else ()
   # linux, mac and mingw/windows
   test_big_endian(WORDS_BIGENDIAN)
   if (MINGW)
@@ -162,6 +162,12 @@ else (MSVC)
   check_function_exists(strtof HAVE_STRTOF)
 
   check_include_file("sys/stat.h" HAVE_SYS_STAT_H)
+  if (${CMAKE_SYSTEM} MATCHES "Linux")
+      check_include_file("linux/fs.h" HAVE_LINUX_FS_H)
+      if( NOT HAVE_LINUX_FS_H )
+        message(FATAL_ERROR "Required linux/fs.h file is missing.")
+      endif()
+  endif ()
 
   check_function_exists(readlink HAVE_READLINK)
   check_function_exists(posix_spawnp HAVE_POSIX_SPAWNP)
