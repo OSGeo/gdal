@@ -42,7 +42,7 @@ The HANA driver passes SQL statements directly to HANA by
 default, rather than evaluating them internally when using the
 ExecuteSQL() call on the OGRDataSource, or the -sql command option to
 ogr2ogr. Attribute query expressions are also passed directly through to
-HANA. It's also possible to request the ogr Pg driver to handle
+HANA. It's also possible to request the ogr HANA driver to handle
 SQL commands with the :ref:`OGR SQL <ogr_sql_dialect>` engine, by
 passing **"OGRSQL"** string to the ExecuteSQL() method, as the name of
 the SQL dialect.
@@ -127,7 +127,7 @@ by executing the following query from the tenant database.
    ::
 
       % SELECT SQL_PORT FROM SYS.M_SERVICES WHERE ((SERVICE_NAME='indexserver' and COORDINATOR_TYPE= 'MASTER') or (SERVICE_NAME='xsengine'))
-	  
+
 For more details, see **Section 2.9 Connections for Multitenant Database Containers**
 in `SAP HANA Multitenant Database Containers <https://help.sap.com/doc/0987e3b51fb74e5a8631385fe4599c97/2.0.00/en-us/sap_hana_multitenant_database_containers_en.pdf>`__.
 
@@ -141,9 +141,9 @@ Examples
    ::
 
       % ogrinfo -ro HANA:"DRIVER={HDBODBC};DATABASE=HAN;HOST=localhost;PORT=30015;USER=mylogin;PASSWORD=mypassword;SCHEMA=MYSCHEMA"
-	  
+
    or
-   
+
    ::
 
       % ogrinfo -ro HANA:"DSN=MYHANADB;USER=mylogin;PASSWORD=mypassword;SCHEMA=MYSCHEMA"
@@ -157,36 +157,36 @@ Examples
 
    The output of *ogrinfo test.gml -ro -al* is:
    ::
-		Layer name: planet_osm_line
-		Geometry: Line String
-		Feature Count: 81013
-		Extent: (732496.086304, 6950959.464783) - (1018694.144531, 7204272.976379)
-		Layer SRS WKT:
-		PROJCS["WGS 84 / Pseudo-Mercator",
-        	GEOGCS["WGS 84",
-			    DATUM["WGS_1984",
-  				    SPHEROID["WGS 84",6378137,298.257223563, AHORITY["EPSG","7030"]], AUTHORITY["EPSG","6326"]],
-				PRIMEM["Greenwich",0, AUTHORITY["EPSG","8901"]],
-				UNIT["degree",0.0174532925199433, AUTHORITY["EPSG","9122"]],
-				AUTHORITY["EPSG","4326"]],
-			PROJECTION["Mercator_1SP"],
-			PARAMETER["central_meridian",0],
-			PARAMETER["scale_factor",1],
-			PARAMETER["false_easting",0],
-			PARAMETER["false_northing",0],
-			UNIT["metre",1,	AUTHORITY["EPSG","9001"]],
-			AXIS["X",EAST],
-			AXIS["Y",NORTH],
-			AUTHORITY["EPSG","3857"]]
-		Geometry Column = way
-		osm_id: Integer64 (0.0)
-		access: String (4000.0)
-		addr:housename: String (4000.0)
-		addr:housenumber: String (4000.0)
-		addr:interpolation: String (4000.0)
-		admin_level: String (4000.0)
-		aerialway: String (4000.0)
-		aeroway: String (4000.0)
+        Layer name: planet_osm_line
+        Geometry: Line String
+        Feature Count: 81013
+        Extent: (732496.086304, 6950959.464783) - (1018694.144531, 7204272.976379)
+        Layer SRS WKT:
+        PROJCS["WGS 84 / Pseudo-Mercator",
+            GEOGCS["WGS 84",
+                DATUM["WGS_1984",
+                      SPHEROID["WGS 84",6378137,298.257223563, AHORITY["EPSG","7030"]], AUTHORITY["EPSG","6326"]],
+                PRIMEM["Greenwich",0, AUTHORITY["EPSG","8901"]],
+                UNIT["degree",0.0174532925199433, AUTHORITY["EPSG","9122"]],
+                AUTHORITY["EPSG","4326"]],
+            PROJECTION["Mercator_1SP"],
+            PARAMETER["central_meridian",0],
+            PARAMETER["scale_factor",1],
+            PARAMETER["false_easting",0],
+            PARAMETER["false_northing",0],
+            UNIT["metre",1,AUTHORITY["EPSG","9001"]],
+            AXIS["X",EAST],
+            AXIS["Y",NORTH],
+            AUTHORITY["EPSG","3857"]]
+        Geometry Column = way
+        osm_id: Integer64 (0.0)
+        access: String (4000.0)
+        addr:housename: String (4000.0)
+        addr:housenumber: String (4000.0)
+        addr:interpolation: String (4000.0)
+        admin_level: String (4000.0)
+        aerialway: String (4000.0)
+        aeroway: String (4000.0)
 
 -  This example shows how to export data from the 'points' table to a shapefile called 'points_output.shp'.
 
