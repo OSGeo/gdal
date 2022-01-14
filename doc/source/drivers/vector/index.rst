@@ -63,6 +63,7 @@ Vector drivers
    gpx
    grass
    gtm
+   hana
    idb
    idrisi
    ili

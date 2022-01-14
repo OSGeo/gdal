@@ -519,6 +519,13 @@ The `GTA <https://marlam.de/gta/>`_ library is required for the :ref:`raster.gta
     Control whether to use GTA. Defaults to ON when GTA is found.
 
 
+HANA
+****
+
+The `odbc-cpp-wrapper library <https://github.com/SAP/odbc-cpp-wrapper>`_ is required for
+the :ref:`vector.hana` driver.
+
+
 HEIF
 ****
 
