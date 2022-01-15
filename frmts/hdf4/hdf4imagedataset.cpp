@@ -3557,7 +3557,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->hGR = GRstart( poDS->hHDF4 );
         if( poDS->hGR == -1 )
         {
-            // Release mutex otherwise wel deadlock with GDALDataset own mutex.
+            // Release mutex otherwise we deadlock with GDALDataset own mutex.
             CPLReleaseMutex(hHDF4Mutex);
             delete poDS;
             CPLAcquireMutex(hHDF4Mutex, 1000.0);

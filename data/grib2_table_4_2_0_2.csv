@@ -12,7 +12,7 @@
 6,"MNTSF","Montgomery stream function","(m^2)/(s^2)","UC_NONE"
 7,"SGCVV","Sigma coordinate vertical velocity","1/s","UC_NONE"
 8,"VVEL","Vertical velocity (pressure)","Pa/s","UC_NONE"
-9,"DZDT","Verical velocity (geometric)","m/s","UC_NONE"
+9,"DZDT","Vertical velocity (geometric)","m/s","UC_NONE"
 10,"ABSV","Absolute vorticity","1/s","UC_NONE"
 11,"ABSD","Absolute divergence","1/s","UC_NONE"
 12,"RELV","Relative vorticity","1/s","UC_NONE"

@@ -398,7 +398,7 @@ CPLString &CPLString::replaceAll( char chBefore,
 /**
  * Returns whether the string ends with another string
  * @param osStr other string.
- * @return true if the string ends wit osStr.
+ * @return true if the string ends with osStr.
  */
 bool CPLString::endsWith( const std::string& osStr ) const
 {

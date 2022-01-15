@@ -33,7 +33,7 @@ metaname.cpp file (those files have been extracted with the extract_tables.py
 script run on metaname.cpp file, before removing the tables from it), and which
 are located in frmts/grib/degrib/data, with CSV tables originating from WMO
 (https://github.com/wmo-im/GRIB2). The merge is done with the merge_degrib_and_wmo_tables.py
-script. To update to a newer versin of the WMO tables, update the wmo_github_tag
+script. To update to a newer version of the WMO tables, update the wmo_github_tag
 variable at the top of the script.
 
 When adding a new table, it must be referenced in the GDAL_DATA_FILES variable
