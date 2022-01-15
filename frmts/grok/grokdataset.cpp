@@ -773,97 +773,52 @@ CPLErr JP2GrokDataset::ReadBlock( int nBand, VSILFILE* fpIn,
         std::min(nBlockXSize, nRasterXSize - nBlockXOff * nBlockXSize);
     const int nHeightToRead =
         std::min(nBlockYSize, nRasterYSize - nBlockYOff * nBlockYSize);
-
-    // todo: re-enable single tile optimization
-/*
-    if( m_ppCodec &&
-        CPLTestBool(CPLGetConfigOption("USE_GROK_SINGLE_TILE_OPTIM", "YES")) )
-    {
-        if( (*m_pnLastLevel == -1 || *m_pnLastLevel == iLevel) &&
-            *m_ppCodec != nullptr && *m_ppStream != nullptr && *m_ppsImage != nullptr )
-        {
-            pCodec = *m_ppCodec;
-            pStream = *m_ppStream;
-            psImage = *m_ppsImage;
-        }
-        else
-        {
-            // For some reason, we need to "reboot" all the machinery if
-            // changing of overview level. Should be fixed in openjpeg
-            if( *m_ppCodec )
-                opj_destroy_codec(*m_ppCodec);
-            if( *m_ppStream)
-                opj_stream_destroy(*m_ppStream);
-            if( *m_ppsImage)
-                opj_image_destroy(*m_ppsImage);
-            *m_ppCodec = nullptr;
-            *m_ppStream = nullptr;
-            *m_ppsImage = nullptr;
-        }
-    }
-*/
     *m_pnLastLevel = iLevel;
 
-    //todo: uncomment when todo above is fixed
-    //if( pCodec == nullptr )
-    {
-        if( m_psJP2GrokFile )
-        {
-            pStream = JP2GrokCreateReadStream( m_psJP2GrokFile, nCodeStreamLength);
-        }
-        else
-        {
-            sJP2GrokFile.fp = fpIn;
-            sJP2GrokFile.nBaseOffset = nCodeStreamStart;
-            pStream = JP2GrokCreateReadStream(&sJP2GrokFile, nCodeStreamLength);
-        }
-        if( pStream == nullptr )
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "JP2GrokCreateReadStream() failed");
-            eErr = CE_Failure;
-            goto end;
-        }
+
+	if( m_psJP2GrokFile )
+	{
+		pStream = JP2GrokCreateReadStream( m_psJP2GrokFile, nCodeStreamLength);
+	}
+	else
+	{
+		sJP2GrokFile.fp = fpIn;
+		sJP2GrokFile.nBaseOffset = nCodeStreamStart;
+		pStream = JP2GrokCreateReadStream(&sJP2GrokFile, nCodeStreamLength);
+	}
+	if( pStream == nullptr )
+	{
+		CPLError(CE_Failure, CPLE_AppDefined, "JP2GrokCreateReadStream() failed");
+		eErr = CE_Failure;
+		goto end;
+	}
 
 
-        pCodec = grk_decompress_create(GRK_CODEC_J2K,pStream);
-        if( pCodec == nullptr )
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "grk_create_decompress() failed");
-            eErr = CE_Failure;
-            goto end;
-        }
+	pCodec = grk_decompress_create(GRK_CODEC_J2K,pStream);
+	if( pCodec == nullptr )
+	{
+		CPLError(CE_Failure, CPLE_AppDefined, "grk_create_decompress() failed");
+		eErr = CE_Failure;
+		goto end;
+	}
 
-        grk_decompress_core_params parameters;
-        grk_decompress_set_default_params(&parameters);
+	grk_decompress_core_params parameters;
+	grk_decompress_set_default_params(&parameters);
 
-        if (! grk_decompress_init(pCodec,&parameters))
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "grk_decompress_init() failed");
-            eErr = CE_Failure;
-            goto end;
-        }
+	if (! grk_decompress_init(pCodec,&parameters))
+	{
+		CPLError(CE_Failure, CPLE_AppDefined, "grk_decompress_init() failed");
+		eErr = CE_Failure;
+		goto end;
+	}
 
-
-        // Todo - deal with blocks
-#if 0
-        if( getenv("GRK_NUM_THREADS") == nullptr )
-        {
-            if( m_nBlocksToLoad <= 1 )
-                grk_codec_set_threads(pCodec, GetNumThreads());
-            else
-                grk_codec_set_threads(pCodec, GetNumThreads() / m_nBlocksToLoad);
-        }
-#endif
-
-        parameters.reduce = iLevel;
-        if(!grk_decompress_read_header(pCodec,NULL))
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "grk_read_header() failed (psImage=%p)", psImage);
-            eErr = CE_Failure;
-            goto end;
-        }
-    }
-
+	parameters.reduce = iLevel;
+	if(!grk_decompress_read_header(pCodec,NULL))
+	{
+		CPLError(CE_Failure, CPLE_AppDefined, "grk_read_header() failed (psImage=%p)", psImage);
+		eErr = CE_Failure;
+		goto end;
+	}
 
 	if (bUseSetDecodeArea)
 	{
@@ -1051,22 +1006,10 @@ CPLErr JP2GrokDataset::ReadBlock( int nBand, VSILFILE* fpIn,
     }
 
 end:
-//todo: re-enable single tile optimization
-/*
-  if( m_ppGrkCodec != nullptr &&
-      CPLTestBool(CPLGetConfigOption("USE_OPENJPEG_SINGLE_TILE_OPTIM", "YES")) )
-  {
-      *m_ppGrkCodec = pCodec;
-      *m_ppGrkStream = pStream;
-      *m_ppsGrkImage = psImage;
-  }
-  else */
-  {
-      if( pCodec && pStream )
-          grk_decompress_end(pCodec);
-      grk_object_unref(pStream);
-      grk_object_unref(pCodec);
-  }
+  if( pCodec && pStream )
+	  grk_decompress_end(pCodec);
+  grk_object_unref(pStream);
+  grk_object_unref(pCodec);
 
     return eErr;
 }
