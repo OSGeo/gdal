@@ -34,43 +34,10 @@
 #pragma clang diagnostic ignored "-Wdocumentation"
 #endif
 
-//#define GROK
-
-#ifdef GROK
-
 #include <cstdint>
 #include <cstddef>
 #include <grok.h>
 #include <grk_config.h>
-
-#else
-
-#include <openjpeg.h>
-#include <opj_config.h>
-
-typedef opj_codec_t grk_codec;
-typedef opj_stream_t grk_stream;
-typedef opj_image_t grk_image;
-
-typedef OPJ_COLOR_SPACE  GRK_COLOR_SPACE;
-#define GRK_CLRSPC_SRGB OPJ_CLRSPC_SRGB
-#define GRK_CLRSPC_GRAY OPJ_CLRSPC_GRAY
-#define GRK_CLRSPC_SYCC OPJ_CLRSPC_SYCC
-#define GRK_CLRSPC_UNKNOWN OPJ_CLRSPC_UNKNOWN
-
-#define GRK_CODEC_J2K OPJ_CODEC_J2K
-#define GRK_CODEC_JP2 OPJ_CODEC_JP2
-
-#define GRK_LRCP OPJ_LRCP
-#define GRK_RLCP OPJ_RLCP
-#define GRK_RPCL OPJ_RPCL
-#define GRK_PCRL OPJ_PCRL
-#define GRK_CPRL OPJ_CPRL
-
-#define GRK_J2K_MAXRLVLS OPJ_J2K_MAXRLVLS
-#define GRK_PROFILE_1 OPJ_PROFILE_1
-
-#endif
 
 
 #ifdef __clang__
@@ -179,7 +146,7 @@ static size_t JP2GrokDataset_Write(void* pBuffer, size_t nBytes,
 /*                       JP2GrokDataset_Seek()                      */
 /************************************************************************/
 
-static OPJ_BOOL JP2GrokDataset_Seek(int64_t nBytes, void * pUserData)
+static bool JP2GrokDataset_Seek(uint64_t nBytes, void * pUserData)
 {
     JP2GrokFile* psJP2GrokFile = (JP2GrokFile* )pUserData;
 #ifdef DEBUG_IO
@@ -188,23 +155,6 @@ static OPJ_BOOL JP2GrokDataset_Seek(int64_t nBytes, void * pUserData)
 #endif
     return VSIFSeekL(psJP2GrokFile->fp, psJP2GrokFile->nBaseOffset +nBytes,
                      SEEK_SET) == 0;
-}
-
-/************************************************************************/
-/*                     JP2GrokDataset_Skip()                        */
-/************************************************************************/
-
-static int64_t JP2GrokDataset_Skip(int64_t nBytes, void * pUserData)
-{
-    JP2GrokFile* psJP2GrokFile = (JP2GrokFile* )pUserData;
-    vsi_l_offset nOffset = VSIFTellL(psJP2GrokFile->fp);
-    nOffset += nBytes;
-#ifdef DEBUG_IO
-    CPLDebug("GROK", "JP2GrokDataset_Skip(" CPL_FRMT_GUIB " -> " CPL_FRMT_GUIB ")",
-             static_cast<GUIntBig>(nBytes), static_cast<GUIntBig>(nOffset));
-#endif
-    VSIFSeekL(psJP2GrokFile->fp, nOffset, SEEK_SET);
-    return nBytes;
 }
 
 /************************************************************************/
@@ -783,17 +733,16 @@ CPLErr JP2GrokDataset::IBuildOverviews( const char *pszResampling,
 static grk_stream* JP2GrokCreateReadStream(JP2GrokFile* psJP2GrokFile,
                                                  vsi_l_offset nSize)
 {
-    grk_stream *pStream = opj_stream_create(1024, TRUE); // Default 1MB is way too big for some datasets
+    auto pStream = grk_stream_new(1024, TRUE);
     if( pStream == nullptr )
         return nullptr;
 
     VSIFSeekL(psJP2GrokFile->fp, psJP2GrokFile->nBaseOffset, SEEK_SET);
-    opj_stream_set_user_data_length(pStream, nSize);
+    grk_stream_set_user_data_length(pStream, nSize);
 
-    opj_stream_set_read_function(pStream, JP2GrokDataset_Read);
-    opj_stream_set_seek_function(pStream, JP2GrokDataset_Seek);
-    opj_stream_set_skip_function(pStream, JP2GrokDataset_Skip);
-    opj_stream_set_user_data(pStream, psJP2GrokFile, nullptr);
+    grk_stream_set_write_function(pStream, JP2GrokDataset_Write);
+    grk_stream_set_read_function(pStream, JP2GrokDataset_Read);
+    grk_stream_set_user_data(pStream, psJP2GrokFile, nullptr);
 
     return pStream;
 }
@@ -858,28 +807,6 @@ CPLErr JP2GrokDataset::ReadBlock( int nBand, VSILFILE* fpIn,
     //todo: uncomment when todo above is fixed
     //if( pCodec == nullptr )
     {
-        pCodec = opj_create_decompress(GRK_CODEC_J2K);
-        if( pCodec == nullptr )
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "opj_create_decompress() failed");
-            eErr = CE_Failure;
-            goto end;
-        }
-
-        opj_set_info_handler(pCodec, JP2GrokDataset_InfoCallback,nullptr);
-        opj_set_warning_handler(pCodec, JP2GrokDataset_WarningCallback, nullptr);
-        opj_set_error_handler(pCodec, JP2GrokDataset_ErrorCallback,nullptr);
-
-        opj_dparameters_t parameters;
-        opj_set_default_decoder_parameters(&parameters);
-
-        if (! opj_setup_decoder(pCodec,&parameters))
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "opj_setup_decoder() failed");
-            eErr = CE_Failure;
-            goto end;
-        }
-
         if( m_psJP2GrokFile )
         {
             pStream = JP2GrokCreateReadStream( m_psJP2GrokFile, nCodeStreamLength);
@@ -896,73 +823,94 @@ CPLErr JP2GrokDataset::ReadBlock( int nBand, VSILFILE* fpIn,
             eErr = CE_Failure;
             goto end;
         }
+
+
+        pCodec = grk_decompress_create(GRK_CODEC_J2K,pStream);
+        if( pCodec == nullptr )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "grk_create_decompress() failed");
+            eErr = CE_Failure;
+            goto end;
+        }
+
+        grk_decompress_core_params parameters;
+        grk_decompress_set_default_params(&parameters);
+
+        if (! grk_decompress_init(pCodec,&parameters))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "grk_decompress_init() failed");
+            eErr = CE_Failure;
+            goto end;
+        }
+
+
         // Todo - deal with blocks
 #if 0
         if( getenv("GRK_NUM_THREADS") == nullptr )
         {
             if( m_nBlocksToLoad <= 1 )
-                opj_codec_set_threads(pCodec, GetNumThreads());
+                grk_codec_set_threads(pCodec, GetNumThreads());
             else
-                opj_codec_set_threads(pCodec, GetNumThreads() / m_nBlocksToLoad);
+                grk_codec_set_threads(pCodec, GetNumThreads() / m_nBlocksToLoad);
         }
 #endif
 
-        if(!opj_read_header(pStream,pCodec,&psImage))
+        parameters.reduce = iLevel;
+        if(!grk_decompress_read_header(pCodec,NULL))
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "opj_read_header() failed (psImage=%p)", psImage);
-            // Hopefully the situation is better on openjpeg 2.2 regarding cleanup
+            CPLError(CE_Failure, CPLE_AppDefined, "grk_read_header() failed (psImage=%p)", psImage);
             eErr = CE_Failure;
             goto end;
         }
     }
 
-    if (!opj_set_decoded_resolution_factor( pCodec, iLevel ))
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "opj_set_decoded_resolution_factor() failed");
-        eErr = CE_Failure;
-        goto end;
-    }
 
-    if (bUseSetDecodeArea)
-    {
-        /* We need to explicitly set the resolution factor on the image */
-        /* otherwise opj_set_decode_area() will assume we decode at full */
-        /* resolution. */
-        /* If using parameters.cp_reduce instead of opj_set_decoded_resolution_factor() */
-        /* we wouldn't need to do that, as opj_read_header() would automatically */
-        /* assign the comps[].factor to the appropriate value */
-        for(unsigned int iBand = 0; iBand < psImage->numcomps; iBand ++)
-        {
-            psImage->comps[iBand].factor = iLevel;
-        }
-        /* The decode area must be expressed in grid reference, ie at full*/
-        /* scale */
-        if (!opj_set_decode_area(pCodec,psImage,
-                                 m_nX0 + static_cast<int>(static_cast<GIntBig>(nBlockXOff*nBlockXSize) * nParentXSize / nRasterXSize),
-                                 m_nY0 + static_cast<int>(static_cast<GIntBig>(nBlockYOff*nBlockYSize) * nParentYSize / nRasterYSize),
-                                 m_nX0 + static_cast<int>(static_cast<GIntBig>(nBlockXOff*nBlockXSize+nWidthToRead) * nParentXSize / nRasterXSize),
-                                 m_nY0 + static_cast<int>(static_cast<GIntBig>(nBlockYOff*nBlockYSize+nHeightToRead) * nParentYSize / nRasterYSize)))
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "opj_set_decode_area() failed");
-            eErr = CE_Failure;
-            goto end;
-        }
-        if (!opj_decode(pCodec,pStream, psImage))
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "opj_decode() failed");
-            eErr = CE_Failure;
-            goto end;
-        }
-    }
-    else
-    {
-        if (!opj_get_decoded_tile( pCodec, pStream, psImage, nTileNumber ))
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "opj_get_decoded_tile() failed");
-            eErr = CE_Failure;
-            goto end;
-        }
-    }
+	if (bUseSetDecodeArea)
+	{
+		/* We need to explicitly set the resolution factor on the image */
+		/* otherwise grk_set_decode_area() will assume we decode at full */
+		/* resolution. */
+		/* If using parameters.cp_reduce instead of grk_set_decoded_resolution_factor() */
+		/* we wouldn't need to do that, as grk_read_header() would automatically */
+		/* assign the comps[].factor to the appropriate value */
+		//Todo deal with this
+		/*
+		for(unsigned int iBand = 0; iBand < psImage->numcomps; iBand ++)
+		{
+			psImage->comps[iBand].factor = iLevel;
+		}
+		*/
+		/* The decode area must be expressed in grid reference, ie at full*/
+		/* scale */
+		if (!grk_decompress_set_window(pCodec,
+								 m_nX0 + static_cast<int>(static_cast<GIntBig>(nBlockXOff*nBlockXSize) * nParentXSize / nRasterXSize),
+								 m_nY0 + static_cast<int>(static_cast<GIntBig>(nBlockYOff*nBlockYSize) * nParentYSize / nRasterYSize),
+								 m_nX0 + static_cast<int>(static_cast<GIntBig>(nBlockXOff*nBlockXSize+nWidthToRead) * nParentXSize / nRasterXSize),
+								 m_nY0 + static_cast<int>(static_cast<GIntBig>(nBlockYOff*nBlockYSize+nHeightToRead) * nParentYSize / nRasterYSize)))
+		{
+			CPLError(CE_Failure, CPLE_AppDefined, "grk_set_decode_area() failed");
+			eErr = CE_Failure;
+			goto end;
+		}
+		if (!grk_decompress(pCodec,NULL))
+		{
+			CPLError(CE_Failure, CPLE_AppDefined, "grk_decode() failed");
+			eErr = CE_Failure;
+			goto end;
+		}
+	}
+	else
+	{
+		if (!grk_decompress_tile( pCodec, nTileNumber ))
+		{
+			CPLError(CE_Failure, CPLE_AppDefined, "grk_get_decoded_tile() failed");
+			eErr = CE_Failure;
+			goto end;
+		}
+	}
+
+
+	psImage = grk_decompress_get_composited_image(pCodec);
 
     for(unsigned int iBand = 0; iBand < psImage->numcomps; iBand ++)
     {
@@ -1119,24 +1067,22 @@ CPLErr JP2GrokDataset::ReadBlock( int nBand, VSILFILE* fpIn,
     }
 
 end:
-    if( m_ppCodec != nullptr &&
-        CPLTestBool(CPLGetConfigOption("USE_OPENJPEG_SINGLE_TILE_OPTIM", "YES")) )
-    {
-        *m_ppCodec = pCodec;
-        *m_ppStream = pStream;
-        *m_ppsImage = psImage;
-    }
-    else
-    {
-        if( pCodec && pStream )
-            opj_end_decompress(pCodec,pStream);
-        if( pStream )
-            opj_stream_destroy(pStream);
-        if( pCodec )
-            opj_destroy_codec(pCodec);
-        if( psImage )
-            opj_image_destroy(psImage);
-    }
+//todo: re-enable single tile optimization
+/*
+  if( m_ppGrkCodec != nullptr &&
+      CPLTestBool(CPLGetConfigOption("USE_OPENJPEG_SINGLE_TILE_OPTIM", "YES")) )
+  {
+      *m_ppGrkCodec = pCodec;
+      *m_ppGrkStream = pStream;
+      *m_ppsGrkImage = psImage;
+  }
+  else */
+  {
+      if( pCodec && pStream )
+          grk_decompress_end(pCodec);
+      grk_object_unref(pStream);
+      grk_object_unref(pCodec);
+  }
 
     return eErr;
 }
@@ -1228,14 +1174,12 @@ JP2GrokDataset::~JP2GrokDataset()
 
     if( iLevel == 0 )
     {
-        if( m_ppCodec )
-            opj_destroy_codec(*m_ppCodec);
+        if (m_ppCodec)
+           grk_object_unref(*m_ppCodec);
         delete m_ppCodec;
-        if( m_ppStream )
-            opj_stream_destroy(*m_ppStream);
+        if (m_ppStream)
+           grk_object_unref(*m_ppStream);
         delete m_ppStream;
-        if( m_ppsImage )
-            opj_image_destroy(*m_ppsImage);
         delete m_ppsImage;
         CPLFree(m_psJP2GrokFile);
         delete m_pnLastLevel;
@@ -1679,6 +1623,25 @@ GDALDataset *JP2GrokDataset::Open( GDALOpenInfo * poOpenInfo )
     if (!Identify(poOpenInfo) || poOpenInfo->fpL == nullptr)
         return nullptr;
 
+
+    int numThreads = 0;
+    const char* pszThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS");
+    if (EQUAL(pszThreads, "ALL_CPUS"))
+        numThreads = CPLGetNumCPUs();
+    else
+        numThreads = atoi(pszThreads);
+    if (numThreads > 128){
+        numThreads = 128;
+    }
+    if (numThreads <= 0){
+        numThreads = 1;
+    }
+    grk_initialize(nullptr, numThreads);
+
+    grk_set_info_handler(JP2GrokDataset_InfoCallback,nullptr);
+    grk_set_warning_handler(JP2GrokDataset_WarningCallback,nullptr);
+    grk_set_error_handler(JP2GrokDataset_ErrorCallback,nullptr);
+
     /* Detect which codec to use : J2K or JP2 ? */
     vsi_l_offset nCodeStreamLength = 0;
     vsi_l_offset nCodeStreamStart = JP2GrokFindCodeStream(poOpenInfo->fpL,
@@ -1690,30 +1653,10 @@ GDALDataset *JP2GrokDataset::Open( GDALOpenInfo * poOpenInfo )
         return nullptr;
     }
 
-    auto eCodecFormat = (nCodeStreamStart == 0) ? GRK_CODEC_J2K : GRK_CODEC_JP2;
+    GRK_CODEC_FORMAT eCodecFormat = (nCodeStreamStart == 0) ? GRK_CODEC_J2K : GRK_CODEC_JP2;
 
-    auto pCodec = opj_create_decompress(GRK_CODEC_J2K);
-    if( pCodec == nullptr )
-        return nullptr;
-
-    opj_set_info_handler(pCodec, JP2GrokDataset_InfoCallback,nullptr);
-    opj_set_warning_handler(pCodec, JP2GrokDataset_WarningCallback, nullptr);
-    opj_set_error_handler(pCodec, JP2GrokDataset_ErrorCallback,nullptr);
-
-    opj_dparameters_t parameters;
-    opj_set_default_decoder_parameters(&parameters);
-
-    if (! opj_setup_decoder(pCodec,&parameters))
-    {
-        opj_destroy_codec(pCodec);
-        return nullptr;
-    }
-
-    if( getenv("GRK_NUM_THREADS") == nullptr )
-    {
-        JP2GrokDataset oTmpDS;
-        opj_codec_set_threads(pCodec, oTmpDS.GetNumThreads());
-    }
+    grk_decompress_core_params parameters;
+    grk_decompress_set_default_params(&parameters);
 
     JP2GrokFile* psJP2GrokFile = static_cast<JP2GrokFile*>(
         CPLMalloc(sizeof(JP2GrokFile)));
@@ -1721,49 +1664,60 @@ GDALDataset *JP2GrokDataset::Open( GDALOpenInfo * poOpenInfo )
     psJP2GrokFile->nBaseOffset = nCodeStreamStart;
     grk_stream * pStream = JP2GrokCreateReadStream(psJP2GrokFile,
                                                          nCodeStreamLength);
+    if (!pStream){
+        return nullptr;
+    }
+
+    auto pCodec = grk_decompress_create(GRK_CODEC_J2K,pStream);
+    if( pCodec == nullptr ){
+        grk_object_unref(pStream);
+        return nullptr;
+    }
+    if (! grk_decompress_init(pCodec,&parameters))
+    {
+        return nullptr;
+    }
 
     grk_image * psImage = nullptr;
 
     if( pStream == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "JP2GrokCreateReadStream() failed");
-        opj_stream_destroy(pStream);
-        opj_destroy_codec(pCodec);
+        grk_object_unref(pStream);
+        grk_object_unref(pCodec);
         CPLFree(psJP2GrokFile);
         return nullptr;
     }
 
-    if(!opj_read_header(pStream,pCodec,&psImage))
+    grk_header_info headerInfo;
+    if(!grk_decompress_read_header(pCodec,&headerInfo))
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "opj_read_header() failed");
-        opj_destroy_codec(pCodec);
-        opj_stream_destroy(pStream);
-        opj_image_destroy(psImage);
+        CPLError(CE_Failure, CPLE_AppDefined, "grk_read_header() failed");
+        grk_object_unref(pCodec);
+        grk_object_unref(pStream);
         CPLFree(psJP2GrokFile);
         return nullptr;
     }
 
-    auto pCodeStreamInfo = opj_get_cstr_info(pCodec);
     uint32_t nTileW,nTileH;
-    nTileW = pCodeStreamInfo->tdx;
-    nTileH = pCodeStreamInfo->tdy;
+    nTileW = headerInfo.t_width;
+    nTileH = headerInfo.t_height;
 #ifdef DEBUG
     uint32_t  nX0,nY0;
     uint32_t nTilesX,nTilesY;
-    nX0 = pCodeStreamInfo->tx0;
-    nY0 = pCodeStreamInfo->ty0;
-    nTilesX = pCodeStreamInfo->tw;
-    nTilesY = pCodeStreamInfo->th;
-    int mct = pCodeStreamInfo->m_default_tile_info.mct;
+    nX0 = headerInfo.tx0;
+    nY0 = headerInfo.ty0;
+    nTilesX = headerInfo.t_width;
+    nTilesY = headerInfo.t_height;
+    int mct = headerInfo.mct;
 #endif
-    int numResolutions = pCodeStreamInfo->m_default_tile_info.tccp_info[0].numresolutions;
-    opj_destroy_cstr_info(&pCodeStreamInfo);
-
+    int numResolutions = headerInfo.numresolutions;
+    psImage = grk_decompress_get_composited_image(pCodec);
     if (psImage == nullptr)
     {
-        opj_destroy_codec(pCodec);
-        opj_stream_destroy(pStream);
-        opj_image_destroy(psImage);
+        grk_object_unref(pCodec);
+        grk_object_unref(pStream);
+        grk_object_unref(&psImage->obj);
         CPLFree(psJP2GrokFile);
         return nullptr;
     }
@@ -1791,8 +1745,8 @@ GDALDataset *JP2GrokDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLDebug("GROK", "psImage->comps[%d].y0 = %u", i, psImage->comps[i].y0);
         CPLDebug("GROK", "psImage->comps[%d].w = %u", i, psImage->comps[i].w);
         CPLDebug("GROK", "psImage->comps[%d].h = %u", i, psImage->comps[i].h);
-        CPLDebug("GROK", "psImage->comps[%d].resno_decoded = %d", i, psImage->comps[i].resno_decoded);
-        CPLDebug("GROK", "psImage->comps[%d].factor = %d", i, psImage->comps[i].factor);
+        //CPLDebug("GROK", "psImage->comps[%d].resno_decoded = %d", i, psImage->comps[i].resno_decoded);
+        //CPLDebug("GROK", "psImage->comps[%d].factor = %d", i, psImage->comps[i].factor);
         CPLDebug("GROK", "psImage->comps[%d].prec = %d", i, psImage->comps[i].prec);
         CPLDebug("GROK", "psImage->comps[%d].sgnd = %d", i, psImage->comps[i].sgnd);
     }
@@ -1809,9 +1763,9 @@ GDALDataset *JP2GrokDataset::Open( GDALOpenInfo * poOpenInfo )
         psImage->comps[0].h != psImage->y1 - psImage->y0)
     {
         CPLDebug("GROK", "Unable to handle that image (1)");
-        opj_destroy_codec(pCodec);
-        opj_stream_destroy(pStream);
-        opj_image_destroy(psImage);
+        grk_object_unref(pCodec);
+        grk_object_unref(pStream);
+        grk_object_unref(&psImage->obj);
         CPLFree(psJP2GrokFile);
         return nullptr;
     }
@@ -1857,9 +1811,9 @@ GDALDataset *JP2GrokDataset::Open( GDALOpenInfo * poOpenInfo )
                 psImage->comps[iBand-1].h != psImage->comps[0].h )
             {
                 CPLDebug("GROK", "Unable to handle that image (2)");
-                opj_destroy_codec(pCodec);
-                opj_stream_destroy(pStream);
-                opj_image_destroy(psImage);
+                grk_object_unref(pCodec);
+                grk_object_unref(pStream);
+                grk_object_unref(&psImage->obj);
                 CPLFree(psJP2GrokFile);
                 return nullptr;
             }
@@ -2017,7 +1971,7 @@ GDALDataset *JP2GrokDataset::Open( GDALOpenInfo * poOpenInfo )
                                 CPLFree(pabyCT);
                             }
                         }
-                        /* There's a bug/misfeature in openjpeg: the color_space
+                        /* There's a bug/misfeature in Grok: the color_space
                            only gets set at read tile time */
                         else if( EQUAL(oSubBox.GetType(),"colr") &&
                                  nDataLength == 7 )
@@ -2141,7 +2095,7 @@ GDALDataset *JP2GrokDataset::Open( GDALOpenInfo * poOpenInfo )
             psImage->comps[poDS->nAlphaIndex ].prec == 1 &&
             CPLFetchBool(
                 poOpenInfo->papszOpenOptions, "1BIT_ALPHA_PROMOTION",
-                CPLTestBool(CPLGetConfigOption("JP2OPENJPEG_PROMOTE_1BIT_ALPHA_AS_8BIT", "YES")));
+                CPLTestBool(CPLGetConfigOption("JP2GROK_PROMOTE_1BIT_ALPHA_AS_8BIT", "YES")));
         if( bPromoteTo8Bit )
             CPLDebug("JP2Grok", "Alpha band is promoted from 1 bit to 8 bit");
 
@@ -2229,6 +2183,7 @@ GDALDataset *JP2GrokDataset::Open( GDALOpenInfo * poOpenInfo )
             poODS->m_psJP2GrokFile = poDS->m_psJP2GrokFile;
         }
         poODS->m_pnLastLevel = poDS->m_pnLastLevel;
+
         poODS->m_nX0 = poDS->m_nX0;
         poODS->m_nY0 = poDS->m_nY0;
 
@@ -2240,7 +2195,7 @@ GDALDataset *JP2GrokDataset::Open( GDALOpenInfo * poOpenInfo )
                 psImage->comps[poDS->nAlphaIndex].prec == 1 &&
                 CPLFetchBool(
                     poOpenInfo->papszOpenOptions, "1BIT_ALPHA_PROMOTION",
-                    CPLTestBool(CPLGetConfigOption("JP2OPENJPEG_PROMOTE_1BIT_ALPHA_AS_8BIT", "YES")));
+                    CPLTestBool(CPLGetConfigOption("JP2GROK_PROMOTE_1BIT_ALPHA_AS_8BIT", "YES")));
 
             poODS->SetBand( iBand, new JP2GrokRasterBand( poODS, iBand, eDataType,
                                                               bPromoteTo8Bit ? 8: psImage->comps[iBand-1].prec,
@@ -2257,9 +2212,8 @@ GDALDataset *JP2GrokDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else
     {
-        opj_destroy_codec(pCodec);
-        opj_stream_destroy(pStream);
-        opj_image_destroy(psImage);
+        grk_object_unref(pCodec);
+        grk_object_unref(pStream);
         CPLFree(psJP2GrokFile);
         pCodec = nullptr;
         pStream = nullptr;
@@ -3062,28 +3016,29 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
 /*      Setup encoder                                                  */
 /* -------------------------------------------------------------------- */
 
-    opj_cparameters_t parameters;
-    opj_set_default_encoder_parameters(&parameters);
+    grk_cparameters parameters;
+    grk_compress_set_default_params(&parameters);
     if (bSOP)
         parameters.csty |= 0x02;
     if (bEPH)
         parameters.csty |= 0x04;
-    parameters.cp_disto_alloc = 1;
-    parameters.tcp_numlayers = (int)adfRates.size();
+    parameters.allocationByRateDistoration = TRUE;
+    parameters.numlayers = (int)adfRates.size();
     for(int i=0;i<(int)adfRates.size();i++)
-        parameters.tcp_rates[i] = (float) adfRates[i];
-    parameters.cp_tx0 = 0;
-    parameters.cp_ty0 = 0;
+        parameters.layer_rate[i] = (float) adfRates[i];
+    parameters.tx0 = 0;
+    parameters.ty0 = 0;
     parameters.tile_size_on = TRUE;
-    parameters.cp_tdx = nBlockXSize;
-    parameters.cp_tdy = nBlockYSize;
+    parameters.t_width = nBlockXSize;
+    parameters.t_height = nBlockYSize;
     parameters.irreversible = bIsIrreversible;
     parameters.numresolution = nNumResolutions;
     parameters.prog_order = eProgOrder;
-    parameters.tcp_mct = static_cast<char>(bYCC);
+    parameters.mct = static_cast<char>(bYCC);
     parameters.cblockw_init = nCblockW;
     parameters.cblockh_init = nCblockH;
-    parameters.mode = 0;
+    parameters.cblk_sty = 0;
+
 
     // Was buggy before for some of the options
     const char* pszCodeBlockStyle = CSLFetchNameValue(papszOptions, "CODEBLOCK_STYLE");
@@ -3094,7 +3049,7 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
             int nVal = atoi(pszCodeBlockStyle);
             if( nVal >= 0 && nVal <= 63 )
             {
-                parameters.mode = nVal;
+                parameters.cblk_sty = nVal;
             }
             else
             {
@@ -3112,27 +3067,27 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
             {
                 if( EQUAL(*papszIter, "BYPASS") )
                 {
-                    parameters.mode |= (1 << 0);
+                    parameters.cblk_sty |= (1 << 0);
                 }
                 else if( EQUAL(*papszIter, "RESET") )
                 {
-                    parameters.mode |= (1 << 1);
+                    parameters.cblk_sty |= (1 << 1);
                 }
                 else if( EQUAL(*papszIter, "TERMALL") )
                 {
-                    parameters.mode |= (1 << 2);
+                    parameters.cblk_sty |= (1 << 2);
                 }
                 else if( EQUAL(*papszIter, "VSC") )
                 {
-                    parameters.mode |= (1 << 3);
+                    parameters.cblk_sty |= (1 << 3);
                 }
                 else if( EQUAL(*papszIter, "PREDICTABLE") )
                 {
-                    parameters.mode |= (1 << 4);
+                    parameters.cblk_sty |= (1 << 4);
                 }
                 else if( EQUAL(*papszIter, "SEGSYM") )
                 {
-                    parameters.mode |= (1 << 5);
+                    parameters.cblk_sty |= (1 << 5);
                 }
                 else
                 {
@@ -3166,23 +3121,23 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
     const char* pszTileParts = CSLFetchNameValueDef(papszOptions, "TILEPARTS", "DISABLED");
     if( EQUAL(pszTileParts, "RESOLUTIONS") )
     {
-        parameters.tp_on = 1;
-        parameters.tp_flag = 'R';
+        parameters.enableTilePartGeneration = true;
+        parameters.newTilePartProgressionDivider = 'R';
     }
     else if( EQUAL(pszTileParts, "LAYERS") )
     {
-        if( parameters.tcp_numlayers == 1 )
+        if( parameters.numlayers == 1 )
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "TILEPARTS=LAYERS has no real interest with single-layer codestream");
         }
-        parameters.tp_on = 1;
-        parameters.tp_flag = 'L';
+        parameters.enableTilePartGeneration = true;
+        parameters.newTilePartProgressionDivider = 'L';
     }
     else if( EQUAL(pszTileParts, "COMPONENTS") )
     {
-        parameters.tp_on = 1;
-        parameters.tp_flag = 'C';
+        parameters.enableTilePartGeneration = true;
+        parameters.newTilePartProgressionDivider = 'C';
     }
     else if( !EQUAL(pszTileParts, "DISABLED") )
     {
@@ -3196,7 +3151,7 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
     }
 
     auto pasBandParams =
-            (opj_image_cmptparm_t*)CPLMalloc(nBands * sizeof(opj_image_cmptparm_t));
+            (grk_image_comp*)CPLMalloc(nBands * sizeof(grk_image_comp));
     int iBand;
     int bSamePrecision = TRUE;
     int b1BitAlpha = FALSE;
@@ -3253,9 +3208,35 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
                   "INSPIRE_TG=YES recommends 1BIT_ALPHA=YES (Recommendation 38)");
     }
 
-    /* Always ask OpenJPEG to do codestream only. We will take care */
+    /* -------------------------------------------------------------------- */
+    /*      Create the dataset.                                             */
+    /* -------------------------------------------------------------------- */
+
+        const char* pszAccess = STARTS_WITH_CI(pszFilename, "/vsisubfile/") ? "r+b" : "w+b";
+        VSILFILE* fp = VSIFOpenL(pszFilename, pszAccess);
+        if (fp == nullptr)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot create file");
+            CPLFree(pasBandParams);
+            pasBandParams = nullptr;
+            delete poGMLJP2Box;
+            return nullptr;
+        }
+
+
+
+    JP2GrokFile _sJP2GrokFile;
+    _sJP2GrokFile.fp = fp;
+    _sJP2GrokFile.nBaseOffset = VSIFTellL(fp);
+    grk_stream * pStream = grk_stream_new(1024*1024, FALSE);
+    grk_stream_set_write_function(pStream, JP2GrokDataset_Write);
+    grk_stream_set_read_function(pStream, JP2GrokDataset_Read);
+    grk_stream_set_seek_function(pStream, JP2GrokDataset_Seek);
+    grk_stream_set_user_data(pStream, &_sJP2GrokFile, nullptr);
+
+    /* Always ask Grok to do codestream only. We will take care */
     /* of JP2 boxes */
-    grk_codec* pCodec = opj_create_compress(GRK_CODEC_J2K);
+    auto pCodec = grk_compress_create(GRK_CODEC_J2K, pStream);
     if (pCodec == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -3264,10 +3245,6 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
         delete poGMLJP2Box;
         return nullptr;
     }
-
-    opj_set_info_handler(pCodec, JP2GrokDataset_InfoCallback,nullptr);
-    opj_set_warning_handler(pCodec, JP2GrokDataset_WarningCallback,nullptr);
-    opj_set_error_handler(pCodec, JP2GrokDataset_ErrorCallback,nullptr);
 
     GRK_COLOR_SPACE eColorSpace = GRK_CLRSPC_GRAY;
 
@@ -3285,14 +3262,14 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
         eColorSpace = GRK_CLRSPC_SRGB;
     }
 
-    grk_image* psImage = opj_image_tile_create(nBands,pasBandParams,
+    auto psImage = grk_image_new(nBands,pasBandParams,
                                                  eColorSpace);
 
     if (psImage == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "grk_imageile_create() failed");
-        opj_destroy_codec(pCodec);
+        grk_object_unref(pCodec);
         CPLFree(pasBandParams);
         pasBandParams = nullptr;
         delete poGMLJP2Box;
@@ -3306,23 +3283,16 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
     psImage->color_space = eColorSpace;
     psImage->numcomps = nBands;
 
-    if (!opj_setup_encoder(pCodec,&parameters,psImage))
+    if (!grk_compress_init(pCodec,&parameters,psImage))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "opj_setup_encoder() failed");
-        opj_image_destroy(psImage);
-        opj_destroy_codec(pCodec);
+        grk_object_unref(&psImage->obj);
+        grk_object_unref(pCodec);
         CPLFree(pasBandParams);
         pasBandParams = nullptr;
         delete poGMLJP2Box;
         return nullptr;
-    }
-
-
-    if( getenv("GRK_NUM_THREADS") == nullptr )
-    {
-        JP2GrokDataset oTmpDS;
-        opj_codec_set_threads(pCodec, oTmpDS.GetNumThreads());
     }
 
     CPLStringList aosOptions;
@@ -3335,35 +3305,19 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
     {
         aosOptions.AddString("TLM=YES");
     }
-
+/*
     if( !opj_encoder_set_extra_options(pCodec, aosOptions.List()) )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                 "opj_encoder_set_extra_options() failed");
-        opj_image_destroy(psImage);
-        opj_destroy_codec(pCodec);
+        grk_object_unref(&psImage->obj);
+        grk_object_unref(pCodec);
         CPLFree(pasBandParams);
         pasBandParams = nullptr;
         delete poGMLJP2Box;
         return nullptr;
     }
-
-/* -------------------------------------------------------------------- */
-/*      Create the dataset.                                             */
-/* -------------------------------------------------------------------- */
-
-    const char* pszAccess = STARTS_WITH_CI(pszFilename, "/vsisubfile/") ? "r+b" : "w+b";
-    VSILFILE* fp = VSIFOpenL(pszFilename, pszAccess);
-    if (fp == nullptr)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot create file");
-        opj_image_destroy(psImage);
-        opj_destroy_codec(pCodec);
-        CPLFree(pasBandParams);
-        pasBandParams = nullptr;
-        delete poGMLJP2Box;
-        return nullptr;
-    }
+*/
 
 /* -------------------------------------------------------------------- */
 /*      Add JP2 boxes.                                                  */
@@ -3770,8 +3724,8 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
             {
                 VSIFCloseL(fp);
                 VSIFCloseL(fpSrc);
-                opj_image_destroy(psImage);
-                opj_destroy_codec(pCodec);
+                grk_object_unref(&psImage->obj);
+                grk_object_unref(pCodec);
                 delete poGMLJP2Box;
                 return nullptr;
             }
@@ -3796,8 +3750,8 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
             {
                 VSIFCloseL(fp);
                 VSIFCloseL(fpSrc);
-                opj_image_destroy(psImage);
-                opj_destroy_codec(pCodec);
+                grk_object_unref(&psImage->obj);
+                grk_object_unref(pCodec);
                 delete poGMLJP2Box;
                 return nullptr;
             }
@@ -3808,22 +3762,20 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
     }
     else
     {
-        JP2GrokFile sJP2GrokFile;
-        sJP2GrokFile.fp = fp;
-        sJP2GrokFile.nBaseOffset = VSIFTellL(fp);
-        grk_stream * pStream = opj_stream_create(1024*1024, FALSE);
-        opj_stream_set_write_function(pStream, JP2GrokDataset_Write);
-        opj_stream_set_seek_function(pStream, JP2GrokDataset_Seek);
-        opj_stream_set_skip_function(pStream, JP2GrokDataset_Skip);
-        opj_stream_set_user_data(pStream, &sJP2GrokFile, nullptr);
+        JP2GrokFile __sJP2GrokFile;
+        __sJP2GrokFile.fp = fp;
+        __sJP2GrokFile.nBaseOffset = VSIFTellL(fp);
+        grk_stream_set_write_function(pStream,JP2GrokDataset_Write);
+        grk_stream_set_seek_function(pStream,JP2GrokDataset_Seek);
+        grk_stream_set_user_data(pStream,&__sJP2GrokFile, nullptr);
 
-        if (!opj_start_compress(pCodec,psImage,pStream))
+        if (!grk_compress_start(pCodec))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                     "opj_start_compress() failed");
-            opj_stream_destroy(pStream);
-            opj_image_destroy(psImage);
-            opj_destroy_codec(pCodec);
+            grk_object_unref(pStream);
+            grk_object_unref(&psImage->obj);
+            grk_object_unref(pCodec);
             VSIFCloseL(fp);
             delete poGMLJP2Box;
             return nullptr;
@@ -3855,9 +3807,9 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
         }
         if (pTempBuffer == nullptr)
         {
-            opj_stream_destroy(pStream);
-            opj_image_destroy(psImage);
-            opj_destroy_codec(pCodec);
+            grk_object_unref(pStream);
+            grk_object_unref(&psImage->obj);
+            grk_object_unref(pCodec);
             VSIFCloseL(fp);
             delete poGMLJP2Box;
             return nullptr;
@@ -3870,9 +3822,9 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
                                             ((nBands == 4) ? nBlockXSize * nBlockYSize : 0));
             if (pYUV420Buffer == nullptr)
             {
-                opj_stream_destroy(pStream);
-                opj_image_destroy(psImage);
-                opj_destroy_codec(pCodec);
+                grk_object_unref(pStream);
+                grk_object_unref(&psImage->obj);
+                grk_object_unref(pCodec);
                 CPLFree(pTempBuffer);
                 VSIFCloseL(fp);
                 delete poGMLJP2Box;
@@ -4030,11 +3982,10 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
                         if (nBands == 4)
                             nBytesToWrite += nBlockXSize * nBlockYSize;
 
-                        if (!opj_write_tile(pCodec,
+                        if (!grk_compress_tile(pCodec,
                                             iTile,
                                             pYUV420Buffer,
-                                            nBytesToWrite,
-                                            pStream))
+                                            nBytesToWrite))
                         {
                             CPLError(CE_Failure, CPLE_AppDefined,
                                     "opj_write_tile() failed");
@@ -4043,11 +3994,10 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
                     }
                     else
                     {
-                        if (!opj_write_tile(pCodec,
+                    	 if (!grk_compress_tile(pCodec,
                                             iTile,
                                             pabyActiveBuffer,
-                                            nWidthToRead * nHeightToRead * nBands * nDataTypeSize,
-                                            pStream))
+                                            nWidthToRead * nHeightToRead * nBands * nDataTypeSize))
                         {
                             CPLError(CE_Failure, CPLE_AppDefined,
                                     "opj_write_tile() failed");
@@ -4068,30 +4018,30 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
 
         if (eErr != CE_None)
         {
-            opj_stream_destroy(pStream);
-            opj_image_destroy(psImage);
-            opj_destroy_codec(pCodec);
+            grk_object_unref(pStream);
+            grk_object_unref(&psImage->obj);
+            grk_object_unref(pCodec);
             VSIFCloseL(fp);
             delete poGMLJP2Box;
             return nullptr;
         }
 
-        if (!opj_end_compress(pCodec,pStream))
+        if (!grk_compress_end(pCodec))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                     "opj_end_compress() failed");
-            opj_stream_destroy(pStream);
-            opj_image_destroy(psImage);
-            opj_destroy_codec(pCodec);
+            grk_object_unref(pStream);
+            grk_object_unref(&psImage->obj);
+            grk_object_unref(pCodec);
             VSIFCloseL(fp);
             delete poGMLJP2Box;
             return nullptr;
         }
-        opj_stream_destroy(pStream);
+        grk_object_unref(pStream);
     }
 
-    opj_image_destroy(psImage);
-    opj_destroy_codec(pCodec);
+    grk_object_unref(&psImage->obj);
+    grk_object_unref(pCodec);
 
 /* -------------------------------------------------------------------- */
 /*      Patch JP2C box length and add trailing JP2 boxes                */
