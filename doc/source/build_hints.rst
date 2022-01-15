@@ -276,6 +276,11 @@ It is also required for the :ref:`/vsicrypt/ <vsicrypt>` virtual file system.
     ``CRYPTOPP_LIBRARY_DEBUG`` can also be specified to a similar library for
     building Debug releases.
 
+.. option:: CRYPTOPP_USE_ONLY_CRYPTODLL_ALG=ON/OFF
+
+    Defaults to OFF. Might be required to set to ON when linking against
+    cryptopp.dll
+
 .. option:: GDAL_USE_CRYPTOPP=ON/OFF
 
     Control whether to use CryptoPP. Defaults to ON when CryptoPP is found.

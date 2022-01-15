@@ -167,7 +167,9 @@ endif ()
 cmake_dependent_option(GDAL_USE_OPENSSL "Set ON to use OpenSSL" ON OPENSSL_FOUND OFF)
 
 gdal_check_package(CryptoPP "Use crypto++ library for CPL." CAN_DISABLE)
-option(CRYPTOPPL_USE_ONLY_CRYPTODLL_ALG "Use Only cryptoDLL alg. only work on dynamic DLL" OFF)
+if (GDAL_USE_CRYPTOPP)
+  option(CRYPTOPP_USE_ONLY_CRYPTODLL_ALG "Use Only cryptoDLL alg. only work on dynamic DLL" OFF)
+endif ()
 
 find_package(PROJ 6.0 REQUIRED)
 
