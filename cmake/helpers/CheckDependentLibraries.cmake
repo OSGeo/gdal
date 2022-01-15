@@ -551,6 +551,8 @@ else ()
 endif ()
 unset(TMP_GRASS)
 
+gdal_check_package(HDFS "Enable Hadoop File System through native library" CAN_DISABLE)
+
 # PDF library: one of them enables PDF driver
 gdal_check_package(Poppler "Enable PDF driver (read side)" CAN_DISABLE)
 
