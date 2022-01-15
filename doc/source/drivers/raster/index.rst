@@ -103,6 +103,7 @@ Raster drivers
    isis3
    jdem
    jp2ecw
+   jp2grok
    jp2kak
    jp2lura
    jp2mrsid

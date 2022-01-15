@@ -3,11 +3,11 @@ OBJ	=	openjpegdataset.obj
 
 GDAL_ROOT	=	..\..
 
-PLUGIN_DLL = gdal_JP2OpenJPEG.dll
+PLUGIN_DLL = gdal_JP2Grok.dll
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
-EXTRAFLAGS = -I.. $(OPENJPEG_CFLAGS)
+EXTRAFLAGS = -I.. $(GROK_CFLAGS)
 
 default:	$(OBJ)
 	xcopy /D  /Y *.obj ..\o

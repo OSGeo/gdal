@@ -3427,6 +3427,47 @@ if test "$HAVE_OPENJPEG" != "no" ; then
   OPT_GDAL_FORMATS="openjpeg $OPT_GDAL_FORMATS"
 fi
 
+
+dnl ---------------------------------------------------------------------------
+dnl Select a Grok Library to use, or disable driver.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(grok,[  --with-grok     Include JPEG-2000 support via Grok library],,)
+
+HAVE_GROK=no
+
+if test "$with_grok" = "no" ; then
+
+  AC_MSG_NOTICE([Grok (JPEG2000) support disabled.])
+
+else
+
+  PKG_PROG_PKG_CONFIG([0.21])
+  PKG_CHECK_MODULES([GROK], [libgrokj2k >= 9.5.0],
+        [GROK_VERSION=`$PKG_CONFIG --modversion libgrokj2k`],
+        [GROK_VERSION=;])
+
+  if test -n "$GROK_CFLAGS"; then
+
+    # Test that the package found is for the right architecture
+    saved_LIBS="$LIBS"
+    LIBS="$GROK_LIBS"
+    AC_CHECK_LIB(grokj2k,grk_version, [HAVE_GROK=yes], [HAVE_GROK=no])
+    LIBS="$saved_LIBS"
+
+    if test "$HAVE_GROK" = "yes"; then
+        EXTRA_INCLUDES="$GROK_CFLAGS $EXTRA_INCLUDES"
+        LIBS="$GROK_LIBS $LIBS"
+    fi
+  fi
+fi
+
+if test "$HAVE_GROK" != "no" ; then
+  OPT_GDAL_FORMATS="grok $OPT_GDAL_FORMATS"
+fi
+
+
+
 dnl ---------------------------------------------------------------------------
 dnl Select a FGDB API to use, or disable driver.
 dnl ---------------------------------------------------------------------------
@@ -6309,6 +6350,7 @@ LOC_MSG([  OCI support:               ${HAVE_OCI}])
 LOC_MSG([  ODBC support:              ${ODBC_SETTING}])
 LOC_MSG([  OGDI support:              ${HAVE_OGDI}])
 LOC_MSG([  OpenCL support:            ${OPENCL_SETTING}])
+LOC_MSG([  Grok support:              ${HAVE_GROK}])
 LOC_MSG([  OpenJPEG support:          ${HAVE_OPENJPEG}])
 LOC_MSG([  PCIDSK support:            ${PCIDSK_SETTING}])
 LOC_MSG([  PCRaster support:          ${PCRASTER_SETTING}])

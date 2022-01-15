@@ -1,7 +1,7 @@
 
 include ../../GDALmake.opt
 
-OBJ	=	openjpegdataset.o
+OBJ	=	grokdataset.o
 
 CPPFLAGS        :=       -iquote .. $(CPPFLAGS)
 
@@ -12,7 +12,7 @@ clean:
 
 install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
 
-PLUGIN_SO = gdal_JP2OpenJPEG.so
+PLUGIN_SO = gdal_JP2Grok.so
 
 plugin: $(PLUGIN_SO)
 

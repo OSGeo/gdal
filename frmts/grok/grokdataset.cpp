@@ -1,12 +1,13 @@
 /******************************************************************************
  *
- * Project:  JPEG2000 driver based on OpenJPEG library
- * Purpose:  JPEG2000 driver based on OpenJPEG library
- * Author:   Even Rouault, <even dot rouault at spatialys dot com>
+ * Project:  JPEG2000 driver based on Grok library
+ * Purpose:  JPEG2000 driver based on Grok library
+ * Author:   Aaron Boxer, <boxerab at protonmail dot com>
  *
  ******************************************************************************
  * Copyright (c) 2010-2014, Even Rouault <even dot rouault at spatialys dot com>
  * Copyright (c) 2015, European Union (European Environment Agency)
+ * Copyright (c) 2022, Grok Image Compression
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,7 +28,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-/* This file is to be used with openjpeg 2.1 or later */
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunknown-pragmas"
@@ -64,19 +64,19 @@
 CPL_CVSID("$Id$")
 
 /************************************************************************/
-/*                  JP2OpenJPEGDataset_ErrorCallback()                  */
+/*                  JP2GrokDataset_ErrorCallback()                  */
 /************************************************************************/
 
-static void JP2OpenJPEGDataset_ErrorCallback(const char *pszMsg, CPL_UNUSED void *unused)
+static void JP2GrokDataset_ErrorCallback(const char *pszMsg, CPL_UNUSED void *unused)
 {
     CPLError(CE_Failure, CPLE_AppDefined, "%s", pszMsg);
 }
 
 /************************************************************************/
-/*               JP2OpenJPEGDataset_WarningCallback()                   */
+/*               JP2GrokDataset_WarningCallback()                   */
 /************************************************************************/
 
-static void JP2OpenJPEGDataset_WarningCallback(const char *pszMsg, CPL_UNUSED void *unused)
+static void JP2GrokDataset_WarningCallback(const char *pszMsg, CPL_UNUSED void *unused)
 {
     if( strcmp(pszMsg, "No incltree created.\n") == 0 ||
         strcmp(pszMsg, "No imsbtree created.\n") == 0 ||
@@ -101,10 +101,10 @@ static void JP2OpenJPEGDataset_WarningCallback(const char *pszMsg, CPL_UNUSED vo
 }
 
 /************************************************************************/
-/*                 JP2OpenJPEGDataset_InfoCallback()                    */
+/*                 JP2GrokDataset_InfoCallback()                    */
 /************************************************************************/
 
-static void JP2OpenJPEGDataset_InfoCallback(const char *pszMsg, CPL_UNUSED void *unused)
+static void JP2GrokDataset_InfoCallback(const char *pszMsg, CPL_UNUSED void *unused)
 {
     char* pszMsgTmp = VSIStrdup(pszMsg);
     if( pszMsgTmp == nullptr )
@@ -115,7 +115,7 @@ static void JP2OpenJPEGDataset_InfoCallback(const char *pszMsg, CPL_UNUSED void 
         pszMsgTmp[nLen-1] = '\0';
         nLen --;
     }
-    CPLDebug("OPENJPEG", "info: %s", pszMsgTmp);
+    CPLDebug("GROK", "info: %s", pszMsgTmp);
     CPLFree(pszMsgTmp);
 }
 
@@ -123,19 +123,19 @@ typedef struct
 {
     VSILFILE*    fp;
     vsi_l_offset nBaseOffset;
-} JP2OpenJPEGFile;
+} JP2GrokFile;
 
 /************************************************************************/
-/*                      JP2OpenJPEGDataset_Read()                       */
+/*                      JP2GrokDataset_Read()                       */
 /************************************************************************/
 
-static OPJ_SIZE_T JP2OpenJPEGDataset_Read(void* pBuffer, OPJ_SIZE_T nBytes,
+static OPJ_SIZE_T JP2GrokDataset_Read(void* pBuffer, OPJ_SIZE_T nBytes,
                                        void *pUserData)
 {
-    JP2OpenJPEGFile* psJP2OpenJPEGFile = (JP2OpenJPEGFile* )pUserData;
-    OPJ_SIZE_T nRet = static_cast<OPJ_SIZE_T>(VSIFReadL(pBuffer, 1, nBytes, psJP2OpenJPEGFile->fp));
+    JP2GrokFile* psJP2GrokFile = (JP2GrokFile* )pUserData;
+    OPJ_SIZE_T nRet = static_cast<OPJ_SIZE_T>(VSIFReadL(pBuffer, 1, nBytes, psJP2GrokFile->fp));
 #ifdef DEBUG_IO
-    CPLDebug("OPENJPEG", "JP2OpenJPEGDataset_Read(" CPL_FRMT_GUIB ") = " CPL_FRMT_GUIB,
+    CPLDebug("GROK", "JP2GrokDataset_Read(" CPL_FRMT_GUIB ") = " CPL_FRMT_GUIB,
              static_cast<GUIntBig>(nBytes), static_cast<GUIntBig>(nRet));
 #endif
     if (nRet == 0)
@@ -145,16 +145,16 @@ static OPJ_SIZE_T JP2OpenJPEGDataset_Read(void* pBuffer, OPJ_SIZE_T nBytes,
 }
 
 /************************************************************************/
-/*                      JP2OpenJPEGDataset_Write()                      */
+/*                      JP2GrokDataset_Write()                      */
 /************************************************************************/
 
-static OPJ_SIZE_T JP2OpenJPEGDataset_Write(void* pBuffer, OPJ_SIZE_T nBytes,
+static OPJ_SIZE_T JP2GrokDataset_Write(void* pBuffer, OPJ_SIZE_T nBytes,
                                        void *pUserData)
 {
-    JP2OpenJPEGFile* psJP2OpenJPEGFile = (JP2OpenJPEGFile* )pUserData;
-    OPJ_SIZE_T nRet = static_cast<OPJ_SIZE_T>(VSIFWriteL(pBuffer, 1, nBytes, psJP2OpenJPEGFile->fp));
+    JP2GrokFile* psJP2GrokFile = (JP2GrokFile* )pUserData;
+    OPJ_SIZE_T nRet = static_cast<OPJ_SIZE_T>(VSIFWriteL(pBuffer, 1, nBytes, psJP2GrokFile->fp));
 #ifdef DEBUG_IO
-    CPLDebug("OPENJPEG", "JP2OpenJPEGDataset_Write(" CPL_FRMT_GUIB ") = " CPL_FRMT_GUIB,
+    CPLDebug("GROK", "JP2GrokDataset_Write(" CPL_FRMT_GUIB ") = " CPL_FRMT_GUIB,
              static_cast<GUIntBig>(nBytes), static_cast<GUIntBig>(nRet));
 #endif
     if( nRet != nBytes )
@@ -163,48 +163,48 @@ static OPJ_SIZE_T JP2OpenJPEGDataset_Write(void* pBuffer, OPJ_SIZE_T nBytes,
 }
 
 /************************************************************************/
-/*                       JP2OpenJPEGDataset_Seek()                      */
+/*                       JP2GrokDataset_Seek()                      */
 /************************************************************************/
 
-static OPJ_BOOL JP2OpenJPEGDataset_Seek(OPJ_OFF_T nBytes, void * pUserData)
+static OPJ_BOOL JP2GrokDataset_Seek(OPJ_OFF_T nBytes, void * pUserData)
 {
-    JP2OpenJPEGFile* psJP2OpenJPEGFile = (JP2OpenJPEGFile* )pUserData;
+    JP2GrokFile* psJP2GrokFile = (JP2GrokFile* )pUserData;
 #ifdef DEBUG_IO
-    CPLDebug("OPENJPEG", "JP2OpenJPEGDataset_Seek(" CPL_FRMT_GUIB ")",
+    CPLDebug("GROK", "JP2GrokDataset_Seek(" CPL_FRMT_GUIB ")",
              static_cast<GUIntBig>(nBytes));
 #endif
-    return VSIFSeekL(psJP2OpenJPEGFile->fp, psJP2OpenJPEGFile->nBaseOffset +nBytes,
+    return VSIFSeekL(psJP2GrokFile->fp, psJP2GrokFile->nBaseOffset +nBytes,
                      SEEK_SET) == 0;
 }
 
 /************************************************************************/
-/*                     JP2OpenJPEGDataset_Skip()                        */
+/*                     JP2GrokDataset_Skip()                        */
 /************************************************************************/
 
-static OPJ_OFF_T JP2OpenJPEGDataset_Skip(OPJ_OFF_T nBytes, void * pUserData)
+static OPJ_OFF_T JP2GrokDataset_Skip(OPJ_OFF_T nBytes, void * pUserData)
 {
-    JP2OpenJPEGFile* psJP2OpenJPEGFile = (JP2OpenJPEGFile* )pUserData;
-    vsi_l_offset nOffset = VSIFTellL(psJP2OpenJPEGFile->fp);
+    JP2GrokFile* psJP2GrokFile = (JP2GrokFile* )pUserData;
+    vsi_l_offset nOffset = VSIFTellL(psJP2GrokFile->fp);
     nOffset += nBytes;
 #ifdef DEBUG_IO
-    CPLDebug("OPENJPEG", "JP2OpenJPEGDataset_Skip(" CPL_FRMT_GUIB " -> " CPL_FRMT_GUIB ")",
+    CPLDebug("GROK", "JP2GrokDataset_Skip(" CPL_FRMT_GUIB " -> " CPL_FRMT_GUIB ")",
              static_cast<GUIntBig>(nBytes), static_cast<GUIntBig>(nOffset));
 #endif
-    VSIFSeekL(psJP2OpenJPEGFile->fp, nOffset, SEEK_SET);
+    VSIFSeekL(psJP2GrokFile->fp, nOffset, SEEK_SET);
     return nBytes;
 }
 
 /************************************************************************/
 /* ==================================================================== */
-/*                           JP2OpenJPEGDataset                         */
+/*                           JP2GrokDataset                         */
 /* ==================================================================== */
 /************************************************************************/
 
-class JP2OpenJPEGRasterBand;
+class JP2GrokRasterBand;
 
-class JP2OpenJPEGDataset final: public GDALJP2AbstractDataset
+class JP2GrokDataset final: public GDALJP2AbstractDataset
 {
-    friend class JP2OpenJPEGRasterBand;
+    friend class JP2GrokRasterBand;
 
     std::string  m_osFilename;
     VSILFILE   *fp = nullptr; /* Large FILE API */
@@ -223,14 +223,14 @@ class JP2OpenJPEGDataset final: public GDALJP2AbstractDataset
     int         nParentYSize = 0;
     int         iLevel = 0;
     int         nOverviewCount = 0;
-    JP2OpenJPEGDataset** papoOverviewDS = nullptr;
+    JP2GrokDataset** papoOverviewDS = nullptr;
     bool        bUseSetDecodeArea = false;
     bool        bSingleTiled = false;
 #if IS_OPENJPEG_OR_LATER(2,3,0)
     opj_codec_t**    m_ppCodec = nullptr;
     opj_stream_t **  m_ppStream = nullptr;
     opj_image_t **   m_ppsImage = nullptr;
-    JP2OpenJPEGFile* m_psJP2OpenJPEGFile = nullptr;
+    JP2GrokFile* m_psJP2GrokFile = nullptr;
     int*             m_pnLastLevel = nullptr;
 #endif
     int         m_nX0 = 0;
@@ -247,8 +247,8 @@ class JP2OpenJPEGDataset final: public GDALJP2AbstractDataset
     virtual int         CloseDependentDatasets() override;
 
   public:
-                JP2OpenJPEGDataset();
-    virtual ~JP2OpenJPEGDataset();
+                JP2GrokDataset();
+    virtual ~JP2GrokDataset();
 
     static int Identify( GDALOpenInfo * poOpenInfo );
     static GDALDataset  *Open( GDALOpenInfo * );
@@ -300,32 +300,32 @@ class JP2OpenJPEGDataset final: public GDALJP2AbstractDataset
                            int nBlockXOff, int nBlockYOff, void * pImage,
                            int nBandCount, int *panBandMap );
 
-    int         PreloadBlocks( JP2OpenJPEGRasterBand* poBand,
+    int         PreloadBlocks( JP2GrokRasterBand* poBand,
                                int nXOff, int nYOff, int nXSize, int nYSize,
                                int nBandCount, int *panBandMap );
 
-    static void JP2OpenJPEGReadBlockInThread(void* userdata);
+    static void JP2GrokReadBlockInThread(void* userdata);
 };
 
 /************************************************************************/
 /* ==================================================================== */
-/*                         JP2OpenJPEGRasterBand                        */
+/*                         JP2GrokRasterBand                        */
 /* ==================================================================== */
 /************************************************************************/
 
-class JP2OpenJPEGRasterBand final: public GDALPamRasterBand
+class JP2GrokRasterBand final: public GDALPamRasterBand
 {
-    friend class JP2OpenJPEGDataset;
+    friend class JP2GrokDataset;
     int             bPromoteTo8Bit;
     GDALColorTable* poCT;
 
   public:
 
-                JP2OpenJPEGRasterBand( JP2OpenJPEGDataset * poDS, int nBand,
+                JP2GrokRasterBand( JP2GrokDataset * poDS, int nBand,
                                        GDALDataType eDataType, int nBits,
                                        int bPromoteTo8Bit,
                                        int nBlockXSize, int nBlockYSize );
-    virtual ~JP2OpenJPEGRasterBand();
+    virtual ~JP2GrokRasterBand();
 
     virtual CPLErr          IReadBlock( int, int, void * ) override;
     virtual CPLErr          IRasterIO( GDALRWFlag eRWFlag,
@@ -345,10 +345,10 @@ class JP2OpenJPEGRasterBand final: public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                        JP2OpenJPEGRasterBand()                       */
+/*                        JP2GrokRasterBand()                       */
 /************************************************************************/
 
-JP2OpenJPEGRasterBand::JP2OpenJPEGRasterBand( JP2OpenJPEGDataset *poDSIn, int nBandIn,
+JP2GrokRasterBand::JP2GrokRasterBand( JP2GrokDataset *poDSIn, int nBandIn,
                                               GDALDataType eDataTypeIn, int nBits,
                                               int bPromoteTo8BitIn,
                                               int nBlockXSizeIn, int nBlockYSizeIn )
@@ -371,10 +371,10 @@ JP2OpenJPEGRasterBand::JP2OpenJPEGRasterBand( JP2OpenJPEGDataset *poDSIn, int nB
 }
 
 /************************************************************************/
-/*                      ~JP2OpenJPEGRasterBand()                        */
+/*                      ~JP2GrokRasterBand()                        */
 /************************************************************************/
 
-JP2OpenJPEGRasterBand::~JP2OpenJPEGRasterBand()
+JP2GrokRasterBand::~JP2GrokRasterBand()
 {
     delete poCT;
 }
@@ -397,10 +397,10 @@ static CPL_INLINE GByte CLAMP_0_255(int val)
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr JP2OpenJPEGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr JP2GrokRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                           void * pImage )
 {
-    JP2OpenJPEGDataset *poGDS = (JP2OpenJPEGDataset *) poDS;
+    JP2GrokDataset *poGDS = (JP2GrokDataset *) poDS;
 
 #ifdef DEBUG_VERBOSE
     int nXOff = nBlockXOff * nBlockXSize;
@@ -409,13 +409,13 @@ CPLErr JP2OpenJPEGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     int nYSize = std::min( nBlockYSize, nRasterYSize - nYOff );
     if( poGDS->iLevel == 0 )
     {
-        CPLDebug("OPENJPEG",
+        CPLDebug("GROK",
                  "ds.GetRasterBand(%d).ReadRaster(%d,%d,%d,%d)",
                  nBand, nXOff, nYOff, nXSize, nYSize);
     }
     else
     {
-        CPLDebug("OPENJPEG",
+        CPLDebug("GROK",
                  "ds.GetRasterBand(%d).GetOverview(%d).ReadRaster(%d,%d,%d,%d)",
                  nBand, poGDS->iLevel - 1, nXOff, nYOff, nXSize, nYSize);
     }
@@ -433,14 +433,14 @@ CPLErr JP2OpenJPEGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*                             IRasterIO()                              */
 /************************************************************************/
 
-CPLErr JP2OpenJPEGRasterBand::IRasterIO( GDALRWFlag eRWFlag,
+CPLErr JP2GrokRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                          int nXOff, int nYOff, int nXSize, int nYSize,
                                          void * pData, int nBufXSize, int nBufYSize,
                                          GDALDataType eBufType,
                                          GSpacing nPixelSpace, GSpacing nLineSpace,
                                          GDALRasterIOExtraArg* psExtraArg )
 {
-    JP2OpenJPEGDataset *poGDS = (JP2OpenJPEGDataset *) poDS;
+    JP2GrokDataset *poGDS = (JP2GrokDataset *) poDS;
 
     if( eRWFlag != GF_Read )
         return CE_Failure;
@@ -482,7 +482,7 @@ CPLErr JP2OpenJPEGRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /*                            GetNumThreads()                           */
 /************************************************************************/
 
-int JP2OpenJPEGDataset::GetNumThreads()
+int JP2GrokDataset::GetNumThreads()
 {
     if( nThreads >= 1 )
         return nThreads;
@@ -500,14 +500,14 @@ int JP2OpenJPEGDataset::GetNumThreads()
 }
 
 /************************************************************************/
-/*                   JP2OpenJPEGReadBlockInThread()                     */
+/*                   JP2GrokReadBlockInThread()                     */
 /************************************************************************/
 
 class JobStruct
 {
 public:
 
-    JP2OpenJPEGDataset* poGDS;
+    JP2GrokDataset* poGDS;
     int                 nBand;
     std::vector< std::pair<int, int> > oPairs;
     volatile int        nCurPair;
@@ -516,12 +516,12 @@ public:
     VOLATILE_BOOL       bSuccess;
 };
 
-void JP2OpenJPEGDataset::JP2OpenJPEGReadBlockInThread(void* userdata)
+void JP2GrokDataset::JP2GrokReadBlockInThread(void* userdata)
 {
     int nPair;
     JobStruct* poJob = (JobStruct*) userdata;
 
-    JP2OpenJPEGDataset* poGDS = poJob->poGDS;
+    JP2GrokDataset* poGDS = poJob->poGDS;
     int nBand = poJob->nBand;
     int nPairs = (int)poJob->oPairs.size();
     int nBandCount = poJob->nBandCount;
@@ -529,7 +529,7 @@ void JP2OpenJPEGDataset::JP2OpenJPEGReadBlockInThread(void* userdata)
     VSILFILE* fp = VSIFOpenL(poGDS->m_osFilename.c_str(), "rb");
     if( fp == nullptr )
     {
-        CPLDebug("OPENJPEG", "Cannot open %s", poGDS->m_osFilename.c_str());
+        CPLDebug("GROK", "Cannot open %s", poGDS->m_osFilename.c_str());
         poJob->bSuccess = false;
         //VSIFree(pDummy);
         return;
@@ -568,7 +568,7 @@ void JP2OpenJPEGDataset::JP2OpenJPEGReadBlockInThread(void* userdata)
 /*                           PreloadBlocks()                            */
 /************************************************************************/
 
-int JP2OpenJPEGDataset::PreloadBlocks(JP2OpenJPEGRasterBand* poBand,
+int JP2GrokDataset::PreloadBlocks(JP2GrokRasterBand* poBand,
                                       int nXOff, int nYOff, int nXSize, int nYSize,
                                       int nBandCount, int *panBandMap)
 {
@@ -623,7 +623,7 @@ int JP2OpenJPEGDataset::PreloadBlocks(JP2OpenJPEGRasterBand* poBand,
             }
             int i;
 
-            CPLDebug("OPENJPEG", "%d blocks to load (%d threads)", m_nBlocksToLoad, l_nThreads);
+            CPLDebug("GROK", "%d blocks to load (%d threads)", m_nBlocksToLoad, l_nThreads);
 
             oJob.poGDS = this;
             oJob.nBand = poBand->GetBand();
@@ -657,7 +657,7 @@ int JP2OpenJPEGDataset::PreloadBlocks(JP2OpenJPEGRasterBand* poBand,
 
             for(i=0;i<l_nThreads;i++)
             {
-                pahThreads[i] = CPLCreateJoinableThread(JP2OpenJPEGReadBlockInThread, &oJob);
+                pahThreads[i] = CPLCreateJoinableThread(JP2GrokReadBlockInThread, &oJob);
                 if( pahThreads[i] == nullptr )
                     oJob.bSuccess = false;
             }
@@ -682,7 +682,7 @@ int JP2OpenJPEGDataset::PreloadBlocks(JP2OpenJPEGRasterBand* poBand,
 /*                             IRasterIO()                              */
 /************************************************************************/
 
-CPLErr  JP2OpenJPEGDataset::IRasterIO( GDALRWFlag eRWFlag,
+CPLErr  JP2GrokDataset::IRasterIO( GDALRWFlag eRWFlag,
                                int nXOff, int nYOff, int nXSize, int nYSize,
                                void * pData, int nBufXSize, int nBufYSize,
                                GDALDataType eBufType,
@@ -697,7 +697,7 @@ CPLErr  JP2OpenJPEGDataset::IRasterIO( GDALRWFlag eRWFlag,
     if( nBandCount < 1 )
         return CE_Failure;
 
-    JP2OpenJPEGRasterBand* poBand = (JP2OpenJPEGRasterBand*) GetRasterBand(panBandMap[0]);
+    JP2GrokRasterBand* poBand = (JP2GrokRasterBand*) GetRasterBand(panBandMap[0]);
 
 /* ==================================================================== */
 /*      Do we have overviews that would be appropriate to satisfy       */
@@ -740,7 +740,7 @@ CPLErr  JP2OpenJPEGDataset::IRasterIO( GDALRWFlag eRWFlag,
 /*                          IBuildOverviews()                           */
 /************************************************************************/
 
-CPLErr JP2OpenJPEGDataset::IBuildOverviews( const char *pszResampling,
+CPLErr JP2GrokDataset::IBuildOverviews( const char *pszResampling,
                                        int nOverviews, int *panOverviewList,
                                        int nListBands, int *panBandList,
                                        GDALProgressFunc pfnProgress,
@@ -766,23 +766,23 @@ CPLErr JP2OpenJPEGDataset::IBuildOverviews( const char *pszResampling,
 
 
 /************************************************************************/
-/*                    JP2OpenJPEGCreateReadStream()                     */
+/*                    JP2GrokCreateReadStream()                     */
 /************************************************************************/
 
-static opj_stream_t* JP2OpenJPEGCreateReadStream(JP2OpenJPEGFile* psJP2OpenJPEGFile,
+static opj_stream_t* JP2GrokCreateReadStream(JP2GrokFile* psJP2GrokFile,
                                                  vsi_l_offset nSize)
 {
     opj_stream_t *pStream = opj_stream_create(1024, TRUE); // Default 1MB is way too big for some datasets
     if( pStream == nullptr )
         return nullptr;
 
-    VSIFSeekL(psJP2OpenJPEGFile->fp, psJP2OpenJPEGFile->nBaseOffset, SEEK_SET);
+    VSIFSeekL(psJP2GrokFile->fp, psJP2GrokFile->nBaseOffset, SEEK_SET);
     opj_stream_set_user_data_length(pStream, nSize);
 
-    opj_stream_set_read_function(pStream, JP2OpenJPEGDataset_Read);
-    opj_stream_set_seek_function(pStream, JP2OpenJPEGDataset_Seek);
-    opj_stream_set_skip_function(pStream, JP2OpenJPEGDataset_Skip);
-    opj_stream_set_user_data(pStream, psJP2OpenJPEGFile, nullptr);
+    opj_stream_set_read_function(pStream, JP2GrokDataset_Read);
+    opj_stream_set_seek_function(pStream, JP2GrokDataset_Seek);
+    opj_stream_set_skip_function(pStream, JP2GrokDataset_Skip);
+    opj_stream_set_user_data(pStream, psJP2GrokFile, nullptr);
 
     return pStream;
 }
@@ -791,7 +791,7 @@ static opj_stream_t* JP2OpenJPEGCreateReadStream(JP2OpenJPEGFile* psJP2OpenJPEGF
 /*                             ReadBlock()                              */
 /************************************************************************/
 
-CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fpIn,
+CPLErr JP2GrokDataset::ReadBlock( int nBand, VSILFILE* fpIn,
                                       int nBlockXOff, int nBlockYOff, void * pImage,
                                       int nBandCount, int* panBandMap )
 {
@@ -799,9 +799,9 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fpIn,
     opj_codec_t*    pCodec = nullptr;
     opj_stream_t *  pStream = nullptr;
     opj_image_t *   psImage = nullptr;
-    JP2OpenJPEGFile sJP2OpenJPEGFile; // keep it in this scope
+    JP2GrokFile sJP2GrokFile; // keep it in this scope
 
-    JP2OpenJPEGRasterBand* poBand = (JP2OpenJPEGRasterBand*) GetRasterBand(nBand);
+    JP2GrokRasterBand* poBand = (JP2GrokRasterBand*) GetRasterBand(nBand);
     int nBlockXSize = poBand->nBlockXSize;
     int nBlockYSize = poBand->nBlockYSize;
     GDALDataType eDataType = poBand->eDataType;
@@ -853,9 +853,9 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fpIn,
             goto end;
         }
 
-        opj_set_info_handler(pCodec, JP2OpenJPEGDataset_InfoCallback,nullptr);
-        opj_set_warning_handler(pCodec, JP2OpenJPEGDataset_WarningCallback, nullptr);
-        opj_set_error_handler(pCodec, JP2OpenJPEGDataset_ErrorCallback,nullptr);
+        opj_set_info_handler(pCodec, JP2GrokDataset_InfoCallback,nullptr);
+        opj_set_warning_handler(pCodec, JP2GrokDataset_WarningCallback, nullptr);
+        opj_set_error_handler(pCodec, JP2GrokDataset_ErrorCallback,nullptr);
 
         opj_dparameters_t parameters;
         opj_set_default_decoder_parameters(&parameters);
@@ -868,20 +868,20 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fpIn,
         }
 
 #if IS_OPENJPEG_OR_LATER(2,3,0)
-        if( m_psJP2OpenJPEGFile )
+        if( m_psJP2GrokFile )
         {
-            pStream = JP2OpenJPEGCreateReadStream( m_psJP2OpenJPEGFile, nCodeStreamLength);
+            pStream = JP2GrokCreateReadStream( m_psJP2GrokFile, nCodeStreamLength);
         }
         else
 #endif
         {
-            sJP2OpenJPEGFile.fp = fpIn;
-            sJP2OpenJPEGFile.nBaseOffset = nCodeStreamStart;
-            pStream = JP2OpenJPEGCreateReadStream(&sJP2OpenJPEGFile, nCodeStreamLength);
+            sJP2GrokFile.fp = fpIn;
+            sJP2GrokFile.nBaseOffset = nCodeStreamStart;
+            pStream = JP2GrokCreateReadStream(&sJP2GrokFile, nCodeStreamLength);
         }
         if( pStream == nullptr )
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "JP2OpenJPEGCreateReadStream() failed");
+            CPLError(CE_Failure, CPLE_AppDefined, "JP2GrokCreateReadStream() failed");
             eErr = CE_Failure;
             goto end;
         }
@@ -974,7 +974,7 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fpIn,
     {
         GDALRasterBlock *poBlock = nullptr;
         int iBand = (panBandMap) ? panBandMap[xBand] : xBand + 1;
-        int bPromoteTo8Bit = ((JP2OpenJPEGRasterBand*)GetRasterBand(iBand))->bPromoteTo8Bit;
+        int bPromoteTo8Bit = ((JP2GrokRasterBand*)GetRasterBand(iBand))->bPromoteTo8Bit;
 
         void* pDstBuffer = nullptr;
         if (iBand == nBand)
@@ -982,7 +982,7 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fpIn,
         else
         {
             AcquireMutex();
-            poBlock = ((JP2OpenJPEGRasterBand*)GetRasterBand(iBand))->
+            poBlock = ((JP2GrokRasterBand*)GetRasterBand(iBand))->
                 TryGetLockedBlockRef(nBlockXOff,nBlockYOff);
             if (poBlock != nullptr)
             {
@@ -1142,9 +1142,9 @@ end:
 /*                         GetOverviewCount()                           */
 /************************************************************************/
 
-int JP2OpenJPEGRasterBand::GetOverviewCount()
+int JP2GrokRasterBand::GetOverviewCount()
 {
-    JP2OpenJPEGDataset *poGDS = cpl::down_cast<JP2OpenJPEGDataset*>(poDS);
+    JP2GrokDataset *poGDS = cpl::down_cast<JP2GrokDataset*>(poDS);
     if( !poGDS->AreOverviewsEnabled() )
         return 0;
 
@@ -1158,12 +1158,12 @@ int JP2OpenJPEGRasterBand::GetOverviewCount()
 /*                            GetOverview()                             */
 /************************************************************************/
 
-GDALRasterBand* JP2OpenJPEGRasterBand::GetOverview(int iOvrLevel)
+GDALRasterBand* JP2GrokRasterBand::GetOverview(int iOvrLevel)
 {
     if( GDALPamRasterBand::GetOverviewCount() > 0 )
         return GDALPamRasterBand::GetOverview(iOvrLevel);
 
-    JP2OpenJPEGDataset *poGDS = (JP2OpenJPEGDataset *) poDS;
+    JP2GrokDataset *poGDS = (JP2GrokDataset *) poDS;
     if (iOvrLevel < 0 || iOvrLevel >= poGDS->nOverviewCount)
         return nullptr;
 
@@ -1174,9 +1174,9 @@ GDALRasterBand* JP2OpenJPEGRasterBand::GetOverview(int iOvrLevel)
 /*                       GetColorInterpretation()                       */
 /************************************************************************/
 
-GDALColorInterp JP2OpenJPEGRasterBand::GetColorInterpretation()
+GDALColorInterp JP2GrokRasterBand::GetColorInterpretation()
 {
-    JP2OpenJPEGDataset *poGDS = (JP2OpenJPEGDataset *) poDS;
+    JP2GrokDataset *poGDS = (JP2GrokDataset *) poDS;
 
     if( poCT )
         return GCI_PaletteIndex;
@@ -1202,23 +1202,23 @@ GDALColorInterp JP2OpenJPEGRasterBand::GetColorInterpretation()
 
 /************************************************************************/
 /* ==================================================================== */
-/*                           JP2OpenJPEGDataset                         */
+/*                           JP2GrokDataset                         */
 /* ==================================================================== */
 /************************************************************************/
 
 /************************************************************************/
-/*                        JP2OpenJPEGDataset()                          */
+/*                        JP2GrokDataset()                          */
 /************************************************************************/
 
-JP2OpenJPEGDataset::JP2OpenJPEGDataset()
+JP2GrokDataset::JP2GrokDataset()
 {
 }
 
 /************************************************************************/
-/*                         ~JP2OpenJPEGDataset()                        */
+/*                         ~JP2GrokDataset()                        */
 /************************************************************************/
 
-JP2OpenJPEGDataset::~JP2OpenJPEGDataset()
+JP2GrokDataset::~JP2GrokDataset()
 
 {
     FlushCache(true);
@@ -1235,7 +1235,7 @@ JP2OpenJPEGDataset::~JP2OpenJPEGDataset()
         if( m_ppsImage )
             opj_image_destroy(*m_ppsImage);
         delete m_ppsImage;
-        CPLFree(m_psJP2OpenJPEGFile);
+        CPLFree(m_psJP2GrokFile);
         delete m_pnLastLevel;
     }
 #endif
@@ -1363,7 +1363,7 @@ JP2OpenJPEGDataset::~JP2OpenJPEGDataset()
                 {
                     if( (vsi_l_offset)(GUInt32)(nLengthJP2C + 8) == (nLengthJP2C + 8) )
                     {
-                        CPLDebug("OPENJPEG", "Patching length of JP2C box with real length");
+                        CPLDebug("GROK", "Patching length of JP2C box with real length");
                         VSIFSeekL(fp, nOffsetJP2C - 8, SEEK_SET);
                         GUInt32 nLength = (GUInt32)nLengthJP2C + 8;
                         CPL_MSBPTR32(&nLength);
@@ -1385,7 +1385,7 @@ JP2OpenJPEGDataset::~JP2OpenJPEGDataset()
                      (nOffsetASOC == 0 || nOffsetASOC > nOffsetJP2C) &&
                      (nOffsetUUID == 0 || nOffsetUUID > nOffsetJP2C) )
             {
-                CPLDebug("OPENJPEG", "Rewriting boxes after codestream");
+                CPLDebug("GROK", "Rewriting boxes after codestream");
 
                 /* Update IPR flag */
                 if( nLengthIHDR == 14 )
@@ -1449,7 +1449,7 @@ JP2OpenJPEGDataset::~JP2OpenJPEGDataset()
             {
                 VSIFCloseL( fp );
 
-                CPLDebug("OPENJPEG", "Rewriting whole file");
+                CPLDebug("GROK", "Rewriting whole file");
 
                 const char* apszOptions[] = {
                     "USE_SRC_CODESTREAM=YES", "CODEC=JP2", "WRITE_METADATA=YES",
@@ -1473,14 +1473,14 @@ JP2OpenJPEGDataset::~JP2OpenJPEGDataset()
             VSIFCloseL( fp );
     }
 
-    JP2OpenJPEGDataset::CloseDependentDatasets();
+    JP2GrokDataset::CloseDependentDatasets();
 }
 
 /************************************************************************/
 /*                      CloseDependentDatasets()                        */
 /************************************************************************/
 
-int JP2OpenJPEGDataset::CloseDependentDatasets()
+int JP2GrokDataset::CloseDependentDatasets()
 {
     int bRet = GDALJP2AbstractDataset::CloseDependentDatasets();
     if ( papoOverviewDS )
@@ -1498,7 +1498,7 @@ int JP2OpenJPEGDataset::CloseDependentDatasets()
 /*                           SetSpatialRef()                            */
 /************************************************************************/
 
-CPLErr JP2OpenJPEGDataset::SetSpatialRef( const OGRSpatialReference * poSRS )
+CPLErr JP2GrokDataset::SetSpatialRef( const OGRSpatialReference * poSRS )
 {
     if( eAccess == GA_Update )
     {
@@ -1516,7 +1516,7 @@ CPLErr JP2OpenJPEGDataset::SetSpatialRef( const OGRSpatialReference * poSRS )
 /*                           SetGeoTransform()                          */
 /************************************************************************/
 
-CPLErr JP2OpenJPEGDataset::SetGeoTransform( double *padfGeoTransform )
+CPLErr JP2GrokDataset::SetGeoTransform( double *padfGeoTransform )
 {
     if( eAccess == GA_Update )
     {
@@ -1536,7 +1536,7 @@ CPLErr JP2OpenJPEGDataset::SetGeoTransform( double *padfGeoTransform )
 /*                           SetGCPs()                                  */
 /************************************************************************/
 
-CPLErr JP2OpenJPEGDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
+CPLErr JP2GrokDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
                                     const OGRSpatialReference* poSRS )
 {
     if( eAccess == GA_Update )
@@ -1566,7 +1566,7 @@ CPLErr JP2OpenJPEGDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListI
 /*                            SetMetadata()                             */
 /************************************************************************/
 
-CPLErr JP2OpenJPEGDataset::SetMetadata( char ** papszMetadata,
+CPLErr JP2GrokDataset::SetMetadata( char ** papszMetadata,
                                         const char * pszDomain )
 {
     if( eAccess == GA_Update )
@@ -1586,7 +1586,7 @@ CPLErr JP2OpenJPEGDataset::SetMetadata( char ** papszMetadata,
 /*                            SetMetadata()                             */
 /************************************************************************/
 
-CPLErr JP2OpenJPEGDataset::SetMetadataItem( const char * pszName,
+CPLErr JP2GrokDataset::SetMetadataItem( const char * pszName,
                                             const char * pszValue,
                                             const char * pszDomain )
 {
@@ -1609,7 +1609,7 @@ CPLErr JP2OpenJPEGDataset::SetMetadataItem( const char * pszName,
 static const unsigned char jpc_header[] = {0xff,0x4f,0xff,0x51}; // SOC + RSIZ markers
 static const unsigned char jp2_box_jp[] = {0x6a,0x50,0x20,0x20}; /* 'jP  ' */
 
-int JP2OpenJPEGDataset::Identify( GDALOpenInfo * poOpenInfo )
+int JP2GrokDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 {
     if( poOpenInfo->nHeaderBytes >= 16
@@ -1625,10 +1625,10 @@ int JP2OpenJPEGDataset::Identify( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
-/*                        JP2OpenJPEGFindCodeStream()                   */
+/*                        JP2GrokFindCodeStream()                   */
 /************************************************************************/
 
-static vsi_l_offset JP2OpenJPEGFindCodeStream( VSILFILE* fp,
+static vsi_l_offset JP2GrokFindCodeStream( VSILFILE* fp,
                                                vsi_l_offset* pnLength )
 {
     vsi_l_offset nCodeStreamStart = 0;
@@ -1671,7 +1671,7 @@ static vsi_l_offset JP2OpenJPEGFindCodeStream( VSILFILE* fp,
 /*                                Open()                                */
 /************************************************************************/
 
-GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
+GDALDataset *JP2GrokDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     if (!Identify(poOpenInfo) || poOpenInfo->fpL == nullptr)
@@ -1679,7 +1679,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     /* Detect which codec to use : J2K or JP2 ? */
     vsi_l_offset nCodeStreamLength = 0;
-    vsi_l_offset nCodeStreamStart = JP2OpenJPEGFindCodeStream(poOpenInfo->fpL,
+    vsi_l_offset nCodeStreamStart = JP2GrokFindCodeStream(poOpenInfo->fpL,
                                                               &nCodeStreamLength);
 
     if( nCodeStreamStart == 0 && nCodeStreamLength == 0 )
@@ -1694,9 +1694,9 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     if( pCodec == nullptr )
         return nullptr;
 
-    opj_set_info_handler(pCodec, JP2OpenJPEGDataset_InfoCallback,nullptr);
-    opj_set_warning_handler(pCodec, JP2OpenJPEGDataset_WarningCallback, nullptr);
-    opj_set_error_handler(pCodec, JP2OpenJPEGDataset_ErrorCallback,nullptr);
+    opj_set_info_handler(pCodec, JP2GrokDataset_InfoCallback,nullptr);
+    opj_set_warning_handler(pCodec, JP2GrokDataset_WarningCallback, nullptr);
+    opj_set_error_handler(pCodec, JP2GrokDataset_ErrorCallback,nullptr);
 
     opj_dparameters_t parameters;
     opj_set_default_decoder_parameters(&parameters);
@@ -1710,26 +1710,26 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
 #if IS_OPENJPEG_OR_LATER(2,3,0)
     if( getenv("OPJ_NUM_THREADS") == nullptr )
     {
-        JP2OpenJPEGDataset oTmpDS;
+        JP2GrokDataset oTmpDS;
         opj_codec_set_threads(pCodec, oTmpDS.GetNumThreads());
     }
 #endif
 
-    JP2OpenJPEGFile* psJP2OpenJPEGFile = static_cast<JP2OpenJPEGFile*>(
-        CPLMalloc(sizeof(JP2OpenJPEGFile)));
-    psJP2OpenJPEGFile->fp = poOpenInfo->fpL;
-    psJP2OpenJPEGFile->nBaseOffset = nCodeStreamStart;
-    opj_stream_t * pStream = JP2OpenJPEGCreateReadStream(psJP2OpenJPEGFile,
+    JP2GrokFile* psJP2GrokFile = static_cast<JP2GrokFile*>(
+        CPLMalloc(sizeof(JP2GrokFile)));
+    psJP2GrokFile->fp = poOpenInfo->fpL;
+    psJP2GrokFile->nBaseOffset = nCodeStreamStart;
+    opj_stream_t * pStream = JP2GrokCreateReadStream(psJP2GrokFile,
                                                          nCodeStreamLength);
 
     opj_image_t * psImage = nullptr;
 
     if( pStream == nullptr )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "JP2OpenJPEGCreateReadStream() failed");
+        CPLError(CE_Failure, CPLE_AppDefined, "JP2GrokCreateReadStream() failed");
         opj_stream_destroy(pStream);
         opj_destroy_codec(pCodec);
-        CPLFree(psJP2OpenJPEGFile);
+        CPLFree(psJP2GrokFile);
         return nullptr;
     }
 
@@ -1739,7 +1739,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         opj_destroy_codec(pCodec);
         opj_stream_destroy(pStream);
         opj_image_destroy(psImage);
-        CPLFree(psJP2OpenJPEGFile);
+        CPLFree(psJP2GrokFile);
         return nullptr;
     }
 
@@ -1764,37 +1764,37 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         opj_destroy_codec(pCodec);
         opj_stream_destroy(pStream);
         opj_image_destroy(psImage);
-        CPLFree(psJP2OpenJPEGFile);
+        CPLFree(psJP2GrokFile);
         return nullptr;
     }
 
 #ifdef DEBUG
-    CPLDebug("OPENJPEG", "nX0 = %u", nX0);
-    CPLDebug("OPENJPEG", "nY0 = %u", nY0);
-    CPLDebug("OPENJPEG", "nTileW = %u", nTileW);
-    CPLDebug("OPENJPEG", "nTileH = %u", nTileH);
-    CPLDebug("OPENJPEG", "nTilesX = %u", nTilesX);
-    CPLDebug("OPENJPEG", "nTilesY = %u", nTilesY);
-    CPLDebug("OPENJPEG", "mct = %d", mct);
-    CPLDebug("OPENJPEG", "psImage->x0 = %u", psImage->x0);
-    CPLDebug("OPENJPEG", "psImage->y0 = %u", psImage->y0);
-    CPLDebug("OPENJPEG", "psImage->x1 = %u", psImage->x1);
-    CPLDebug("OPENJPEG", "psImage->y1 = %u", psImage->y1);
-    CPLDebug("OPENJPEG", "psImage->numcomps = %d", psImage->numcomps);
-    //CPLDebug("OPENJPEG", "psImage->color_space = %d", psImage->color_space);
-    CPLDebug("OPENJPEG", "numResolutions = %d", numResolutions);
+    CPLDebug("GROK", "nX0 = %u", nX0);
+    CPLDebug("GROK", "nY0 = %u", nY0);
+    CPLDebug("GROK", "nTileW = %u", nTileW);
+    CPLDebug("GROK", "nTileH = %u", nTileH);
+    CPLDebug("GROK", "nTilesX = %u", nTilesX);
+    CPLDebug("GROK", "nTilesY = %u", nTilesY);
+    CPLDebug("GROK", "mct = %d", mct);
+    CPLDebug("GROK", "psImage->x0 = %u", psImage->x0);
+    CPLDebug("GROK", "psImage->y0 = %u", psImage->y0);
+    CPLDebug("GROK", "psImage->x1 = %u", psImage->x1);
+    CPLDebug("GROK", "psImage->y1 = %u", psImage->y1);
+    CPLDebug("GROK", "psImage->numcomps = %d", psImage->numcomps);
+    //CPLDebug("GROK", "psImage->color_space = %d", psImage->color_space);
+    CPLDebug("GROK", "numResolutions = %d", numResolutions);
     for(int i=0;i<(int)psImage->numcomps;i++)
     {
-        CPLDebug("OPENJPEG", "psImage->comps[%d].dx = %u", i, psImage->comps[i].dx);
-        CPLDebug("OPENJPEG", "psImage->comps[%d].dy = %u", i, psImage->comps[i].dy);
-        CPLDebug("OPENJPEG", "psImage->comps[%d].x0 = %u", i, psImage->comps[i].x0);
-        CPLDebug("OPENJPEG", "psImage->comps[%d].y0 = %u", i, psImage->comps[i].y0);
-        CPLDebug("OPENJPEG", "psImage->comps[%d].w = %u", i, psImage->comps[i].w);
-        CPLDebug("OPENJPEG", "psImage->comps[%d].h = %u", i, psImage->comps[i].h);
-        CPLDebug("OPENJPEG", "psImage->comps[%d].resno_decoded = %d", i, psImage->comps[i].resno_decoded);
-        CPLDebug("OPENJPEG", "psImage->comps[%d].factor = %d", i, psImage->comps[i].factor);
-        CPLDebug("OPENJPEG", "psImage->comps[%d].prec = %d", i, psImage->comps[i].prec);
-        CPLDebug("OPENJPEG", "psImage->comps[%d].sgnd = %d", i, psImage->comps[i].sgnd);
+        CPLDebug("GROK", "psImage->comps[%d].dx = %u", i, psImage->comps[i].dx);
+        CPLDebug("GROK", "psImage->comps[%d].dy = %u", i, psImage->comps[i].dy);
+        CPLDebug("GROK", "psImage->comps[%d].x0 = %u", i, psImage->comps[i].x0);
+        CPLDebug("GROK", "psImage->comps[%d].y0 = %u", i, psImage->comps[i].y0);
+        CPLDebug("GROK", "psImage->comps[%d].w = %u", i, psImage->comps[i].w);
+        CPLDebug("GROK", "psImage->comps[%d].h = %u", i, psImage->comps[i].h);
+        CPLDebug("GROK", "psImage->comps[%d].resno_decoded = %d", i, psImage->comps[i].resno_decoded);
+        CPLDebug("GROK", "psImage->comps[%d].factor = %d", i, psImage->comps[i].factor);
+        CPLDebug("GROK", "psImage->comps[%d].prec = %d", i, psImage->comps[i].prec);
+        CPLDebug("GROK", "psImage->comps[%d].sgnd = %d", i, psImage->comps[i].sgnd);
     }
 #endif
 
@@ -1808,11 +1808,11 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         psImage->comps[0].w != psImage->x1 - psImage->x0 ||
         psImage->comps[0].h != psImage->y1 - psImage->y0)
     {
-        CPLDebug("OPENJPEG", "Unable to handle that image (1)");
+        CPLDebug("GROK", "Unable to handle that image (1)");
         opj_destroy_codec(pCodec);
         opj_stream_destroy(pStream);
         opj_image_destroy(psImage);
-        CPLFree(psJP2OpenJPEGFile);
+        CPLFree(psJP2GrokFile);
         return nullptr;
     }
 
@@ -1846,7 +1846,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if (bIs420)
     {
-        CPLDebug("OPENJPEG", "420 format");
+        CPLDebug("GROK", "420 format");
     }
     else
     {
@@ -1856,11 +1856,11 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
             if( psImage->comps[iBand-1].w != psImage->comps[0].w ||
                 psImage->comps[iBand-1].h != psImage->comps[0].h )
             {
-                CPLDebug("OPENJPEG", "Unable to handle that image (2)");
+                CPLDebug("GROK", "Unable to handle that image (2)");
                 opj_destroy_codec(pCodec);
                 opj_stream_destroy(pStream);
                 opj_image_destroy(psImage);
-                CPLFree(psJP2OpenJPEGFile);
+                CPLFree(psJP2GrokFile);
                 return nullptr;
             }
         }
@@ -1869,10 +1869,10 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    JP2OpenJPEGDataset     *poDS;
+    JP2GrokDataset     *poDS;
     int                 iBand;
 
-    poDS = new JP2OpenJPEGDataset();
+    poDS = new JP2GrokDataset();
     poDS->m_osFilename = poOpenInfo->pszFilename;
     if( eCodecFormat == OPJ_CODEC_JP2 )
         poDS->eAccess = poOpenInfo->eAccess;
@@ -1975,12 +1975,12 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
                             {
                                 int nEntries = (pabyCT[0] << 8) | pabyCT[1];
                                 int nComponents = pabyCT[2];
-                                /* CPLDebug("OPENJPEG", "Color table found"); */
+                                /* CPLDebug("GROK", "Color table found"); */
                                 if( nEntries <= 256 && nComponents == 3 )
                                 {
-                                    /*CPLDebug("OPENJPEG", "resol[0] = %d", pabyCT[3]);
-                                    CPLDebug("OPENJPEG", "resol[1] = %d", pabyCT[4]);
-                                    CPLDebug("OPENJPEG", "resol[2] = %d", pabyCT[5]);*/
+                                    /*CPLDebug("GROK", "resol[0] = %d", pabyCT[3]);
+                                    CPLDebug("GROK", "resol[1] = %d", pabyCT[4]);
+                                    CPLDebug("GROK", "resol[2] = %d", pabyCT[5]);*/
                                     if( pabyCT[3] == 7 && pabyCT[4] == 7 && pabyCT[5] == 7 &&
                                         nDataLength == 2 + 1 + 3 + 3 * nEntries )
                                     {
@@ -2034,34 +2034,34 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
                                     if( enumcs == 16 )
                                     {
                                         poDS->eColorSpace = OPJ_CLRSPC_SRGB;
-                                        CPLDebug("OPENJPEG", "SRGB color space");
+                                        CPLDebug("GROK", "SRGB color space");
                                     }
                                     else if( enumcs == 17 )
                                     {
                                         poDS->eColorSpace = OPJ_CLRSPC_GRAY;
-                                        CPLDebug("OPENJPEG", "Grayscale color space");
+                                        CPLDebug("GROK", "Grayscale color space");
                                     }
                                     else if( enumcs == 18 )
                                     {
                                         poDS->eColorSpace = OPJ_CLRSPC_SYCC;
-                                        CPLDebug("OPENJPEG", "SYCC color space");
+                                        CPLDebug("GROK", "SYCC color space");
                                     }
                                     else if( enumcs == 20 )
                                     {
                                         /* Used by J2KP4files/testfiles_jp2/file7.jp2 */
                                         poDS->eColorSpace = OPJ_CLRSPC_SRGB;
-                                        CPLDebug("OPENJPEG", "e-sRGB color space");
+                                        CPLDebug("GROK", "e-sRGB color space");
                                     }
                                     else if( enumcs == 21 )
                                     {
                                         /* Used by J2KP4files/testfiles_jp2/file5.jp2 */
                                         poDS->eColorSpace = OPJ_CLRSPC_SRGB;
-                                        CPLDebug("OPENJPEG", "ROMM-RGB color space");
+                                        CPLDebug("GROK", "ROMM-RGB color space");
                                     }
                                     else
                                     {
                                         poDS->eColorSpace = OPJ_CLRSPC_UNKNOWN;
-                                        CPLDebug("OPENJPEG", "Unknown color space");
+                                        CPLDebug("GROK", "Unknown color space");
                                     }
                                 }
                                 CPLFree(pabyContent);
@@ -2114,7 +2114,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
                                 }
                                 else
                                 {
-                                    CPLDebug("OPENJPEG", "Unsupported cdef content");
+                                    CPLDebug("GROK", "Unsupported cdef content");
                                 }
                                 CPLFree(pabyContent);
                             }
@@ -2143,10 +2143,10 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
                 poOpenInfo->papszOpenOptions, "1BIT_ALPHA_PROMOTION",
                 CPLTestBool(CPLGetConfigOption("JP2OPENJPEG_PROMOTE_1BIT_ALPHA_AS_8BIT", "YES")));
         if( bPromoteTo8Bit )
-            CPLDebug("JP2OpenJPEG", "Alpha band is promoted from 1 bit to 8 bit");
+            CPLDebug("JP2Grok", "Alpha band is promoted from 1 bit to 8 bit");
 
-        JP2OpenJPEGRasterBand* poBand =
-            new JP2OpenJPEGRasterBand( poDS, iBand, eDataType,
+        JP2GrokRasterBand* poBand =
+            new JP2GrokRasterBand( poDS, iBand, eDataType,
                                         bPromoteTo8Bit ? 8: psImage->comps[iBand-1].prec,
                                         bPromoteTo8Bit,
                                         nBlockXSize, nBlockYSize);
@@ -2173,7 +2173,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->m_ppCodec = new opj_codec_t* (pCodec);
         poDS->m_ppStream = new opj_stream_t* (pStream);
         poDS->m_ppsImage = new opj_image_t* (psImage);
-        poDS->m_psJP2OpenJPEGFile = psJP2OpenJPEGFile;
+        poDS->m_psJP2GrokFile = psJP2GrokFile;
     }
     poDS->m_pnLastLevel = new int(-1);
 #endif
@@ -2186,10 +2186,10 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         nW = (nW + 1) / 2;
         nH = (nH + 1) / 2;
 
-        poDS->papoOverviewDS = (JP2OpenJPEGDataset**) CPLRealloc(
+        poDS->papoOverviewDS = (JP2GrokDataset**) CPLRealloc(
                     poDS->papoOverviewDS,
-                    (poDS->nOverviewCount + 1) * sizeof(JP2OpenJPEGDataset*));
-        JP2OpenJPEGDataset* poODS = new JP2OpenJPEGDataset();
+                    (poDS->nOverviewCount + 1) * sizeof(JP2GrokDataset*));
+        JP2GrokDataset* poODS = new JP2GrokDataset();
         poODS->m_osFilename = poDS->m_osFilename;
         poODS->nParentXSize = poDS->nRasterXSize;
         poODS->nParentYSize = poDS->nRasterYSize;
@@ -2229,7 +2229,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
             poODS->m_ppCodec = poDS->m_ppCodec;
             poODS->m_ppStream = poDS->m_ppStream;
             poODS->m_ppsImage = poDS->m_ppsImage;
-            poODS->m_psJP2OpenJPEGFile = poDS->m_psJP2OpenJPEGFile;
+            poODS->m_psJP2GrokFile = poDS->m_psJP2GrokFile;
         }
         poODS->m_pnLastLevel = poDS->m_pnLastLevel;
 #endif
@@ -2246,7 +2246,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
                     poOpenInfo->papszOpenOptions, "1BIT_ALPHA_PROMOTION",
                     CPLTestBool(CPLGetConfigOption("JP2OPENJPEG_PROMOTE_1BIT_ALPHA_AS_8BIT", "YES")));
 
-            poODS->SetBand( iBand, new JP2OpenJPEGRasterBand( poODS, iBand, eDataType,
+            poODS->SetBand( iBand, new JP2GrokRasterBand( poODS, iBand, eDataType,
                                                               bPromoteTo8Bit ? 8: psImage->comps[iBand-1].prec,
                                                               bPromoteTo8Bit,
                                                               nBlockXSize, nBlockYSize ) );
@@ -2266,7 +2266,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         opj_destroy_codec(pCodec);
         opj_stream_destroy(pStream);
         opj_image_destroy(psImage);
-        CPLFree(psJP2OpenJPEGFile);
+        CPLFree(psJP2GrokFile);
         pCodec = nullptr;
         pStream = nullptr;
         psImage = nullptr;
@@ -2327,7 +2327,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*                           WriteBox()                                 */
 /************************************************************************/
 
-void JP2OpenJPEGDataset::WriteBox(VSILFILE* fp, GDALJP2Box* poBox)
+void JP2GrokDataset::WriteBox(VSILFILE* fp, GDALJP2Box* poBox)
 {
     GUInt32   nLBox;
     GUInt32   nTBox;
@@ -2349,7 +2349,7 @@ void JP2OpenJPEGDataset::WriteBox(VSILFILE* fp, GDALJP2Box* poBox)
 /*                         WriteGDALMetadataBox()                       */
 /************************************************************************/
 
-void JP2OpenJPEGDataset::WriteGDALMetadataBox( VSILFILE* fp,
+void JP2GrokDataset::WriteGDALMetadataBox( VSILFILE* fp,
                                                GDALDataset* poSrcDS,
                                                char** papszOptions )
 {
@@ -2364,7 +2364,7 @@ void JP2OpenJPEGDataset::WriteGDALMetadataBox( VSILFILE* fp,
 /*                         WriteXMLBoxes()                              */
 /************************************************************************/
 
-void JP2OpenJPEGDataset::WriteXMLBoxes( VSILFILE* fp, GDALDataset* poSrcDS,
+void JP2GrokDataset::WriteXMLBoxes( VSILFILE* fp, GDALDataset* poSrcDS,
                                          CPL_UNUSED char** papszOptions )
 {
     int nBoxes = 0;
@@ -2381,7 +2381,7 @@ void JP2OpenJPEGDataset::WriteXMLBoxes( VSILFILE* fp, GDALDataset* poSrcDS,
 /*                           WriteXMPBox()                              */
 /************************************************************************/
 
-void JP2OpenJPEGDataset::WriteXMPBox ( VSILFILE* fp, GDALDataset* poSrcDS,
+void JP2GrokDataset::WriteXMPBox ( VSILFILE* fp, GDALDataset* poSrcDS,
                                        CPL_UNUSED char** papszOptions )
 {
     GDALJP2Box* poBox = GDALJP2Metadata::CreateXMPBox(poSrcDS);
@@ -2394,7 +2394,7 @@ void JP2OpenJPEGDataset::WriteXMPBox ( VSILFILE* fp, GDALDataset* poSrcDS,
 /*                           WriteIPRBox()                              */
 /************************************************************************/
 
-void JP2OpenJPEGDataset::WriteIPRBox ( VSILFILE* fp, GDALDataset* poSrcDS,
+void JP2GrokDataset::WriteIPRBox ( VSILFILE* fp, GDALDataset* poSrcDS,
                                        CPL_UNUSED char** papszOptions )
 {
     GDALJP2Box* poBox = GDALJP2Metadata::CreateIPRBox(poSrcDS);
@@ -2421,7 +2421,7 @@ static int FloorPowerOfTwo(int nVal)
 /*                          CreateCopy()                                */
 /************************************************************************/
 
-GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
+GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
                                            GDALDataset *poSrcDS,
                                            CPL_UNUSED int bStrict, char ** papszOptions,
                                            GDALProgressFunc pfnProgress,
@@ -2443,7 +2443,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     if (poCT != nullptr && nBands != 1)
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "JP2OpenJPEG driver only supports a color table for a single-band dataset");
+                  "JP2Grok driver only supports a color table for a single-band dataset");
         return nullptr;
     }
 
@@ -2453,7 +2453,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         && eDataType != GDT_Int32 && eDataType != GDT_UInt32)
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "JP2OpenJPEG driver only supports creating Byte, GDT_Int16, GDT_UInt16, GDT_Int32, GDT_UInt32");
+                  "JP2Grok driver only supports creating Byte, GDT_Int16, GDT_UInt16, GDT_Int32, GDT_UInt32");
         return nullptr;
     }
 
@@ -2517,13 +2517,13 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
 
         if (nXSize < nBlockXSize)
         {
-            CPLDebug("OPENJPEG", "Adjusting block width from %d to %d",
+            CPLDebug("GROK", "Adjusting block width from %d to %d",
                      nBlockXSize, nXSize);
             nBlockXSize = nXSize;
         }
         if (nYSize < nBlockYSize)
         {
-            CPLDebug("OPENJPEG", "Adjusting block width from %d to %d",
+            CPLDebug("GROK", "Adjusting block width from %d to %d",
                      nBlockYSize, nYSize);
             nBlockYSize = nYSize;
         }
@@ -3044,7 +3044,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
             /* Return the GDALDaset object */
 
             GDALOpenInfo oOpenInfo(pszFilename, GA_Update);
-            GDALDataset *poDS = JP2OpenJPEGDataset::Open(&oOpenInfo);
+            GDALDataset *poDS = JP2GrokDataset::Open(&oOpenInfo);
 
             /* Copy essential metadata */
 
@@ -3249,7 +3249,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
             }
             else
             {
-                CPLDebug("OPENJPEG", "Using 1-bit alpha channel");
+                CPLDebug("GROK", "Using 1-bit alpha channel");
                 pasBandParams[iBand].sgnd = 0;
                 pasBandParams[iBand].prec = 1;
                 bSamePrecision = FALSE;
@@ -3276,9 +3276,9 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         return nullptr;
     }
 
-    opj_set_info_handler(pCodec, JP2OpenJPEGDataset_InfoCallback,nullptr);
-    opj_set_warning_handler(pCodec, JP2OpenJPEGDataset_WarningCallback,nullptr);
-    opj_set_error_handler(pCodec, JP2OpenJPEGDataset_ErrorCallback,nullptr);
+    opj_set_info_handler(pCodec, JP2GrokDataset_InfoCallback,nullptr);
+    opj_set_warning_handler(pCodec, JP2GrokDataset_WarningCallback,nullptr);
+    opj_set_error_handler(pCodec, JP2GrokDataset_ErrorCallback,nullptr);
 
     OPJ_COLOR_SPACE eColorSpace = OPJ_CLRSPC_GRAY;
 
@@ -3333,7 +3333,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
 
     if( getenv("OPJ_NUM_THREADS") == nullptr )
     {
-        JP2OpenJPEGDataset oTmpDS;
+        JP2GrokDataset oTmpDS;
         opj_codec_set_threads(pCodec, oTmpDS.GetNumThreads());
     }
 
@@ -3510,7 +3510,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
                     const GDALColorEntry* psEntry = poCT->GetColorEntry(i);
                     if( psEntry->c4 != 255 )
                     {
-                        CPLDebug("OPENJPEG", "Color table has at least one non-opaque value. "
+                        CPLDebug("GROK", "Color table has at least one non-opaque value. "
                                 "This may cause compatibility problems with some readers. "
                                 "In which case use CT_COMPONENTS=3 creation option");
                         nCTComponentCount = 4;
@@ -3724,7 +3724,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         fpSrc = VSIFOpenL( osSrcFilename, "rb" );
         if( fpSrc )
         {
-            nCodeStreamStart = JP2OpenJPEGFindCodeStream(fpSrc,
+            nCodeStreamStart = JP2GrokFindCodeStream(fpSrc,
                                                          &nCodeStreamLength);
         }
         if( nCodeStreamLength == 0 )
@@ -3823,14 +3823,14 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     }
     else
     {
-        JP2OpenJPEGFile sJP2OpenJPEGFile;
-        sJP2OpenJPEGFile.fp = fp;
-        sJP2OpenJPEGFile.nBaseOffset = VSIFTellL(fp);
+        JP2GrokFile sJP2GrokFile;
+        sJP2GrokFile.fp = fp;
+        sJP2GrokFile.nBaseOffset = VSIFTellL(fp);
         opj_stream_t * pStream = opj_stream_create(1024*1024, FALSE);
-        opj_stream_set_write_function(pStream, JP2OpenJPEGDataset_Write);
-        opj_stream_set_seek_function(pStream, JP2OpenJPEGDataset_Seek);
-        opj_stream_set_skip_function(pStream, JP2OpenJPEGDataset_Skip);
-        opj_stream_set_user_data(pStream, &sJP2OpenJPEGFile, nullptr);
+        opj_stream_set_write_function(pStream, JP2GrokDataset_Write);
+        opj_stream_set_seek_function(pStream, JP2GrokDataset_Seek);
+        opj_stream_set_skip_function(pStream, JP2GrokDataset_Skip);
+        opj_stream_set_user_data(pStream, &sJP2GrokFile, nullptr);
 
         if (!opj_start_compress(pCodec,psImage,pStream))
         {
@@ -4188,7 +4188,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 
     GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
-    JP2OpenJPEGDataset *poDS = (JP2OpenJPEGDataset*) JP2OpenJPEGDataset::Open(&oOpenInfo);
+    JP2GrokDataset *poDS = (JP2GrokDataset*) JP2GrokDataset::Open(&oOpenInfo);
 
     if( poDS )
     {
@@ -4230,26 +4230,26 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
 }
 
 /************************************************************************/
-/*                      GDALRegister_JP2OpenJPEG()                      */
+/*                      GDALRegister_JP2Grok()                      */
 /************************************************************************/
 
-void GDALRegister_JP2OpenJPEG()
+void GDALRegister_JP2Grok()
 
 {
-    if( !GDAL_CHECK_VERSION( "JP2OpenJPEG driver" ) )
+    if( !GDAL_CHECK_VERSION( "JP2Grok driver" ) )
         return;
 
-    if( GDALGetDriverByName( "JP2OpenJPEG" ) != nullptr )
+    if( GDALGetDriverByName( "JP2Grok" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription( "JP2OpenJPEG" );
+    poDriver->SetDescription( "JP2Grok" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "JPEG-2000 driver based on OpenJPEG library" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/jp2openjpeg.html" );
+                               "JPEG-2000 driver based on Grok library" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/jp2grok.html" );
     poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/jp2" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "jp2 j2k" );
@@ -4326,9 +4326,9 @@ void GDALRegister_JP2OpenJPEG()
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-    poDriver->pfnIdentify = JP2OpenJPEGDataset::Identify;
-    poDriver->pfnOpen = JP2OpenJPEGDataset::Open;
-    poDriver->pfnCreateCopy = JP2OpenJPEGDataset::CreateCopy;
+    poDriver->pfnIdentify = JP2GrokDataset::Identify;
+    poDriver->pfnOpen = JP2GrokDataset::Open;
+    poDriver->pfnCreateCopy = JP2GrokDataset::CreateCopy;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
