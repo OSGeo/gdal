@@ -34,9 +34,16 @@
 #pragma clang diagnostic ignored "-Wdocumentation"
 #endif
 
+//#define GROK
+
+#ifdef GROK
 
 #include <cstdint>
 #include <cstddef>
+#include <grok.h>
+#include <grk_config.h>
+
+#else
 
 #include <openjpeg.h>
 #include <opj_config.h>
@@ -44,6 +51,27 @@
 typedef opj_codec_t grk_codec;
 typedef opj_stream_t grk_stream;
 typedef opj_image_t grk_image;
+
+typedef OPJ_COLOR_SPACE  GRK_COLOR_SPACE;
+#define GRK_CLRSPC_SRGB OPJ_CLRSPC_SRGB
+#define GRK_CLRSPC_GRAY OPJ_CLRSPC_GRAY
+#define GRK_CLRSPC_SYCC OPJ_CLRSPC_SYCC
+#define GRK_CLRSPC_UNKNOWN OPJ_CLRSPC_UNKNOWN
+
+#define GRK_CODEC_J2K OPJ_CODEC_J2K
+#define GRK_CODEC_JP2 OPJ_CODEC_JP2
+
+#define GRK_LRCP OPJ_LRCP
+#define GRK_RLCP OPJ_RLCP
+#define GRK_RPCL OPJ_RPCL
+#define GRK_PCRL OPJ_PCRL
+#define GRK_CPRL OPJ_CPRL
+
+#define GRK_J2K_MAXRLVLS OPJ_J2K_MAXRLVLS
+#define GRK_PROFILE_1 OPJ_PROFILE_1
+
+#endif
+
 
 #ifdef __clang__
 #pragma clang diagnostic pop
@@ -196,7 +224,7 @@ class JP2GrokDataset final: public GDALJP2AbstractDataset
     vsi_l_offset nCodeStreamStart = 0;
     vsi_l_offset nCodeStreamLength = 0;
 
-    OPJ_COLOR_SPACE eColorSpace = OPJ_CLRSPC_UNKNOWN;
+    GRK_COLOR_SPACE eColorSpace = GRK_CLRSPC_UNKNOWN;
     int         nRedIndex = 0;
     int         nGreenIndex = 1;
     int         nBlueIndex = 2;
@@ -826,7 +854,7 @@ CPLErr JP2GrokDataset::ReadBlock( int nBand, VSILFILE* fpIn,
 
     if( pCodec == nullptr )
     {
-        pCodec = opj_create_decompress(OPJ_CODEC_J2K);
+        pCodec = opj_create_decompress(GRK_CODEC_J2K);
         if( pCodec == nullptr )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "opj_create_decompress() failed");
@@ -865,7 +893,7 @@ CPLErr JP2GrokDataset::ReadBlock( int nBand, VSILFILE* fpIn,
             goto end;
         }
 
-        if( getenv("OPJ_NUM_THREADS") == nullptr )
+        if( getenv("GRK_NUM_THREADS") == nullptr )
         {
             if( m_nBlocksToLoad <= 1 )
                 opj_codec_set_threads(pCodec, GetNumThreads());
@@ -1153,10 +1181,10 @@ GDALColorInterp JP2GrokRasterBand::GetColorInterpretation()
     if( nBand == poGDS->nAlphaIndex + 1 )
         return GCI_AlphaBand;
 
-    if (poGDS->nBands <= 2 && poGDS->eColorSpace == OPJ_CLRSPC_GRAY)
+    if (poGDS->nBands <= 2 && poGDS->eColorSpace == GRK_CLRSPC_GRAY)
         return GCI_GrayIndex;
-    else if (poGDS->eColorSpace == OPJ_CLRSPC_SRGB ||
-             poGDS->eColorSpace == OPJ_CLRSPC_SYCC)
+    else if (poGDS->eColorSpace == GRK_CLRSPC_SRGB ||
+             poGDS->eColorSpace == GRK_CLRSPC_SYCC)
     {
         if( nBand == poGDS->nRedIndex + 1 )
             return GCI_RedBand;
@@ -1656,9 +1684,9 @@ GDALDataset *JP2GrokDataset::Open( GDALOpenInfo * poOpenInfo )
         return nullptr;
     }
 
-    OPJ_CODEC_FORMAT eCodecFormat = (nCodeStreamStart == 0) ? OPJ_CODEC_J2K : OPJ_CODEC_JP2;
+    auto eCodecFormat = (nCodeStreamStart == 0) ? GRK_CODEC_J2K : GRK_CODEC_JP2;
 
-    grk_codec* pCodec = opj_create_decompress(OPJ_CODEC_J2K);
+    auto pCodec = opj_create_decompress(GRK_CODEC_J2K);
     if( pCodec == nullptr )
         return nullptr;
 
@@ -1675,7 +1703,7 @@ GDALDataset *JP2GrokDataset::Open( GDALOpenInfo * poOpenInfo )
         return nullptr;
     }
 
-    if( getenv("OPJ_NUM_THREADS") == nullptr )
+    if( getenv("GRK_NUM_THREADS") == nullptr )
     {
         JP2GrokDataset oTmpDS;
         opj_codec_set_threads(pCodec, oTmpDS.GetNumThreads());
@@ -1709,7 +1737,7 @@ GDALDataset *JP2GrokDataset::Open( GDALOpenInfo * poOpenInfo )
         return nullptr;
     }
 
-    opj_codestream_info_v2_t* pCodeStreamInfo = opj_get_cstr_info(pCodec);
+    auto pCodeStreamInfo = opj_get_cstr_info(pCodec);
     uint32_t nTileW,nTileH;
     nTileW = pCodeStreamInfo->tdx;
     nTileH = pCodeStreamInfo->tdy;
@@ -1798,7 +1826,7 @@ GDALDataset *JP2GrokDataset::Open( GDALOpenInfo * poOpenInfo )
             eDataType = GDT_UInt16;
     }
 
-    int bIs420  =  (psImage->color_space != OPJ_CLRSPC_SRGB &&
+    int bIs420  =  (psImage->color_space != GRK_CLRSPC_SRGB &&
                     eDataType == GDT_Byte &&
                     (psImage->numcomps == 3 || psImage->numcomps == 4) &&
                     psImage->comps[1].w == psImage->comps[0].w / 2 &&
@@ -1840,7 +1868,7 @@ GDALDataset *JP2GrokDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new JP2GrokDataset();
     poDS->m_osFilename = poOpenInfo->pszFilename;
-    if( eCodecFormat == OPJ_CODEC_JP2 )
+    if( eCodecFormat == GRK_CODEC_JP2 )
         poDS->eAccess = poOpenInfo->eAccess;
     poDS->eColorSpace = psImage->color_space;
     poDS->nRasterXSize = psImage->x1 - psImage->x0;
@@ -1913,7 +1941,7 @@ GDALDataset *JP2GrokDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Look for color table or cdef box                                */
 /* -------------------------------------------------------------------- */
-    if( eCodecFormat == OPJ_CODEC_JP2 )
+    if( eCodecFormat == GRK_CODEC_JP2 )
     {
         vsi_l_offset nCurOffset = VSIFTellL(poDS->fp);
 
@@ -1999,34 +2027,34 @@ GDALDataset *JP2GrokDataset::Open( GDALOpenInfo * poOpenInfo )
                                                      (pabyContent[6]);
                                     if( enumcs == 16 )
                                     {
-                                        poDS->eColorSpace = OPJ_CLRSPC_SRGB;
+                                        poDS->eColorSpace = GRK_CLRSPC_SRGB;
                                         CPLDebug("GROK", "SRGB color space");
                                     }
                                     else if( enumcs == 17 )
                                     {
-                                        poDS->eColorSpace = OPJ_CLRSPC_GRAY;
+                                        poDS->eColorSpace = GRK_CLRSPC_GRAY;
                                         CPLDebug("GROK", "Grayscale color space");
                                     }
                                     else if( enumcs == 18 )
                                     {
-                                        poDS->eColorSpace = OPJ_CLRSPC_SYCC;
+                                        poDS->eColorSpace = GRK_CLRSPC_SYCC;
                                         CPLDebug("GROK", "SYCC color space");
                                     }
                                     else if( enumcs == 20 )
                                     {
                                         /* Used by J2KP4files/testfiles_jp2/file7.jp2 */
-                                        poDS->eColorSpace = OPJ_CLRSPC_SRGB;
+                                        poDS->eColorSpace = GRK_CLRSPC_SRGB;
                                         CPLDebug("GROK", "e-sRGB color space");
                                     }
                                     else if( enumcs == 21 )
                                     {
                                         /* Used by J2KP4files/testfiles_jp2/file5.jp2 */
-                                        poDS->eColorSpace = OPJ_CLRSPC_SRGB;
+                                        poDS->eColorSpace = GRK_CLRSPC_SRGB;
                                         CPLDebug("GROK", "ROMM-RGB color space");
                                     }
                                     else
                                     {
-                                        poDS->eColorSpace = OPJ_CLRSPC_UNKNOWN;
+                                        poDS->eColorSpace = GRK_CLRSPC_UNKNOWN;
                                         CPLDebug("GROK", "Unknown color space");
                                     }
                                 }
@@ -2422,14 +2450,14 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Analyze creation options.                                       */
 /* -------------------------------------------------------------------- */
-    OPJ_CODEC_FORMAT eCodecFormat = OPJ_CODEC_J2K;
+    auto eCodecFormat = GRK_CODEC_J2K;
     const char* pszCodec = CSLFetchNameValueDef(papszOptions, "CODEC", nullptr);
     if (pszCodec)
     {
         if (EQUAL(pszCodec, "JP2"))
-            eCodecFormat = OPJ_CODEC_JP2;
+            eCodecFormat = GRK_CODEC_JP2;
         else if (EQUAL(pszCodec, "J2K"))
-            eCodecFormat = OPJ_CODEC_J2K;
+            eCodecFormat = GRK_CODEC_J2K;
         else
         {
             CPLError(CE_Warning, CPLE_NotSupported,
@@ -2442,10 +2470,10 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
         if (strlen(pszFilename) > 4 &&
             EQUAL(pszFilename + strlen(pszFilename) - 4, ".JP2"))
         {
-            eCodecFormat = OPJ_CODEC_JP2;
+            eCodecFormat = GRK_CODEC_JP2;
         }
     }
-    if( eCodecFormat != OPJ_CODEC_JP2 && bInspireTG )
+    if( eCodecFormat != GRK_CODEC_JP2 && bInspireTG )
     {
         CPLError(CE_Warning, CPLE_NotSupported,
                   "INSPIRE_TG=YES mandates CODEC=JP2 (TG requirement 21)");
@@ -2489,19 +2517,19 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
         }
     }
 
-    OPJ_PROG_ORDER eProgOrder = OPJ_LRCP;
+    auto eProgOrder = GRK_LRCP;
     const char* pszPROGORDER =
             CSLFetchNameValueDef(papszOptions, "PROGRESSION", "LRCP");
     if (EQUAL(pszPROGORDER, "LRCP"))
-        eProgOrder = OPJ_LRCP;
+        eProgOrder = GRK_LRCP;
     else if (EQUAL(pszPROGORDER, "RLCP"))
-        eProgOrder = OPJ_RLCP;
+        eProgOrder = GRK_RLCP;
     else if (EQUAL(pszPROGORDER, "RPCL"))
-        eProgOrder = OPJ_RPCL;
+        eProgOrder = GRK_RPCL;
     else if (EQUAL(pszPROGORDER, "PCRL"))
-        eProgOrder = OPJ_PCRL;
+        eProgOrder = GRK_PCRL;
     else if (EQUAL(pszPROGORDER, "CPRL"))
-        eProgOrder = OPJ_CPRL;
+        eProgOrder = GRK_CPRL;
     else
     {
         CPLError(CE_Warning, CPLE_NotSupported,
@@ -2829,7 +2857,7 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
 
     int bGeoreferencingCompatOfGeoJP2 = FALSE;
     int bGeoreferencingCompatOfGMLJP2 = FALSE;
-    if( eCodecFormat == OPJ_CODEC_JP2 && (bGMLJP2Option || bGeoJP2Option) )
+    if( eCodecFormat == GRK_CODEC_JP2 && (bGMLJP2Option || bGeoJP2Option) )
     {
         if( poSrcDS->GetGCPCount() > 0 )
         {
@@ -2892,7 +2920,7 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
     const bool bGeoBoxesAfter =
         CPLFetchBool(papszOptions, "GEOBOXES_AFTER_JP2C", bInspireTG);
     GDALJP2Box* poGMLJP2Box = nullptr;
-    if( eCodecFormat == OPJ_CODEC_JP2 && bGMLJP2Option && bGeoreferencingCompatOfGMLJP2 )
+    if( eCodecFormat == GRK_CODEC_JP2 && bGMLJP2Option && bGeoreferencingCompatOfGMLJP2 )
     {
         if( nGMLJP2Version == 1)
             poGMLJP2Box = oJP2MD.CreateGMLJP2(nXSize,nYSize);
@@ -3115,7 +3143,7 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
         "{512,512},{256,512},{128,512},{64,512},{32,512},{16,512},{8,512},{4,512},{2,512}");
     char **papszTokens = CSLTokenizeStringComplex( pszPrecincts, "{},", FALSE, FALSE );
     int nPrecincts = CSLCount(papszTokens) / 2;
-    for(int i=0;i<nPrecincts && i < OPJ_J2K_MAXRLVLS;i++)
+    for(int i=0;i<nPrecincts && i < GRK_J2K_MAXRLVLS;i++)
     {
         int nPCRW = atoi(papszTokens[2*i]);
         int nPCRH = atoi(papszTokens[2*i+1]);
@@ -3158,10 +3186,10 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
 
     if( bProfile1 )
     {
-        parameters.rsiz = OPJ_PROFILE_1;
+        parameters.rsiz = GRK_PROFILE_1;
     }
 
-    opj_image_cmptparm_t* pasBandParams =
+    auto pasBandParams =
             (opj_image_cmptparm_t*)CPLMalloc(nBands * sizeof(opj_image_cmptparm_t));
     int iBand;
     int bSamePrecision = TRUE;
@@ -3221,7 +3249,7 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
 
     /* Always ask OpenJPEG to do codestream only. We will take care */
     /* of JP2 boxes */
-    grk_codec* pCodec = opj_create_compress(OPJ_CODEC_J2K);
+    grk_codec* pCodec = opj_create_compress(GRK_CODEC_J2K);
     if (pCodec == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -3235,20 +3263,20 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
     opj_set_warning_handler(pCodec, JP2GrokDataset_WarningCallback,nullptr);
     opj_set_error_handler(pCodec, JP2GrokDataset_ErrorCallback,nullptr);
 
-    OPJ_COLOR_SPACE eColorSpace = OPJ_CLRSPC_GRAY;
+    GRK_COLOR_SPACE eColorSpace = GRK_CLRSPC_GRAY;
 
     if( bYCBCR420 )
     {
-        eColorSpace = OPJ_CLRSPC_SYCC;
+        eColorSpace = GRK_CLRSPC_SYCC;
     }
     else if( (nBands == 3 || nBands == 4) &&
              nRedBandIndex >= 0 && nGreenBandIndex >= 0 && nBlueBandIndex >= 0 )
     {
-        eColorSpace = OPJ_CLRSPC_SRGB;
+        eColorSpace = GRK_CLRSPC_SRGB;
     }
     else if (poCT != nullptr)
     {
-        eColorSpace = OPJ_CLRSPC_SRGB;
+        eColorSpace = GRK_CLRSPC_SRGB;
     }
 
     grk_image* psImage = opj_image_tile_create(nBands,pasBandParams,
@@ -3285,7 +3313,7 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
     }
 
 
-    if( getenv("OPJ_NUM_THREADS") == nullptr )
+    if( getenv("GRK_NUM_THREADS") == nullptr )
     {
         JP2GrokDataset oTmpDS;
         opj_codec_set_threads(pCodec, oTmpDS.GetNumThreads());
@@ -3337,7 +3365,7 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
     vsi_l_offset nStartJP2C = 0;
     int bUseXLBoxes = FALSE;
 
-    if( eCodecFormat == OPJ_CODEC_JP2  )
+    if( eCodecFormat == GRK_CODEC_JP2  )
     {
         GDALJP2Box jPBox(fp);
         jPBox.SetType("jP  ");
@@ -3430,11 +3458,11 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
         colrBox.AppendUInt8(0); /* PREC: Precedence. 0=(field reserved for ISO use) */
         colrBox.AppendUInt8(0); /* APPROX: Colourspace approximation. */
         GUInt32 enumcs = 16;
-        if( eColorSpace == OPJ_CLRSPC_SRGB )
+        if( eColorSpace == GRK_CLRSPC_SRGB )
             enumcs = 16;
-        else if(  eColorSpace == OPJ_CLRSPC_GRAY )
+        else if(  eColorSpace == GRK_CLRSPC_GRAY )
             enumcs = 17;
-        else if(  eColorSpace == OPJ_CLRSPC_SYCC )
+        else if(  eColorSpace == GRK_CLRSPC_SYCC )
             enumcs = 18;
         colrBox.AppendUInt32(enumcs); /* EnumCS: Enumerated colourspace */
 
@@ -3501,7 +3529,7 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
 
         GDALJP2Box cdefBox(fp);
         if( ((nBands == 3 || nBands == 4) &&
-             (eColorSpace == OPJ_CLRSPC_SRGB || eColorSpace == OPJ_CLRSPC_SYCC) &&
+             (eColorSpace == GRK_CLRSPC_SRGB || eColorSpace == GRK_CLRSPC_SYCC) &&
              (nRedBandIndex != 0 || nGreenBandIndex != 1 || nBlueBandIndex != 2)) ||
             nAlphaBandIndex >= 0)
         {
@@ -3514,10 +3542,10 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
                 if( i != nAlphaBandIndex )
                 {
                     cdefBox.AppendUInt16(0);   /* Signification: This channel is the colour image data for the associated colour */
-                    if( eColorSpace == OPJ_CLRSPC_GRAY && nComponents == 2)
+                    if( eColorSpace == GRK_CLRSPC_GRAY && nComponents == 2)
                         cdefBox.AppendUInt16(1); /* Colour of the component: associated with a particular colour */
-                    else if ((eColorSpace == OPJ_CLRSPC_SRGB ||
-                            eColorSpace == OPJ_CLRSPC_SYCC) &&
+                    else if ((eColorSpace == GRK_CLRSPC_SRGB ||
+                            eColorSpace == GRK_CLRSPC_SYCC) &&
                             (nComponents == 3 || nComponents == 4) )
                     {
                         if( i == nRedBandIndex )
@@ -3685,7 +3713,7 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
         }
     }
 
-    if( eCodecFormat == OPJ_CODEC_JP2  )
+    if( eCodecFormat == GRK_CODEC_JP2  )
     {
         // Start codestream box
         nStartJP2C = VSIFTellL(fp);
@@ -4062,7 +4090,7 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Patch JP2C box length and add trailing JP2 boxes                */
 /* -------------------------------------------------------------------- */
-    if( eCodecFormat == OPJ_CODEC_JP2 &&
+    if( eCodecFormat == GRK_CODEC_JP2 &&
         !CPLFetchBool(papszOptions, "JP2C_LENGTH_ZERO", false) /* debug option */ )
     {
         vsi_l_offset nEndJP2C = VSIFTellL(fp);
