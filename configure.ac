@@ -3443,7 +3443,7 @@ if test "$with_grok" = "no" ; then
 else
 
   PKG_PROG_PKG_CONFIG([0.21])
-  PKG_CHECK_MODULES([GROK], [libgrokj2k >= 9.5.0],
+  PKG_CHECK_MODULES([GROK], [libgrokj2k >= 9.6.0],
         [GROK_VERSION=`$PKG_CONFIG --modversion libgrokj2k`],
         [GROK_VERSION=;])
 
