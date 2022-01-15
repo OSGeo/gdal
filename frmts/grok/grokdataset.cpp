@@ -825,8 +825,10 @@ CPLErr JP2GrokDataset::ReadBlock( int nBand, VSILFILE* fpIn,
     const int nHeightToRead =
         std::min(nBlockYSize, nRasterYSize - nBlockYOff * nBlockYSize);
 
+    // todo: re-enable single tile optimization
+/*
     if( m_ppCodec &&
-        CPLTestBool(CPLGetConfigOption("USE_OPENJPEG_SINGLE_TILE_OPTIM", "YES")) )
+        CPLTestBool(CPLGetConfigOption("USE_GROK_SINGLE_TILE_OPTIM", "YES")) )
     {
         if( (*m_pnLastLevel == -1 || *m_pnLastLevel == iLevel) &&
             *m_ppCodec != nullptr && *m_ppStream != nullptr && *m_ppsImage != nullptr )
@@ -850,9 +852,11 @@ CPLErr JP2GrokDataset::ReadBlock( int nBand, VSILFILE* fpIn,
             *m_ppsImage = nullptr;
         }
     }
+*/
     *m_pnLastLevel = iLevel;
 
-    if( pCodec == nullptr )
+    //todo: uncomment when todo above is fixed
+    //if( pCodec == nullptr )
     {
         pCodec = opj_create_decompress(GRK_CODEC_J2K);
         if( pCodec == nullptr )
@@ -892,7 +896,8 @@ CPLErr JP2GrokDataset::ReadBlock( int nBand, VSILFILE* fpIn,
             eErr = CE_Failure;
             goto end;
         }
-
+        // Todo - deal with blocks
+#if 0
         if( getenv("GRK_NUM_THREADS") == nullptr )
         {
             if( m_nBlocksToLoad <= 1 )
@@ -900,6 +905,7 @@ CPLErr JP2GrokDataset::ReadBlock( int nBand, VSILFILE* fpIn,
             else
                 opj_codec_set_threads(pCodec, GetNumThreads() / m_nBlocksToLoad);
         }
+#endif
 
         if(!opj_read_header(pStream,pCodec,&psImage))
         {
