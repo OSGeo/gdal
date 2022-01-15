@@ -37,30 +37,13 @@
 
 #include <cstdint>
 #include <cstddef>
-typedef int OPJ_BOOL;
-#define OPJ_TRUE 1
-#define OPJ_FALSE 0
-typedef char          OPJ_CHAR;
-typedef float         OPJ_FLOAT32;
-typedef double        OPJ_FLOAT64;
-typedef unsigned char OPJ_BYTE;
-typedef int8_t   OPJ_INT8;
-typedef uint8_t  OPJ_UINT8;
-typedef int16_t  OPJ_INT16;
-typedef uint16_t OPJ_UINT16;
-typedef int32_t  OPJ_INT32;
-typedef uint32_t OPJ_UINT32;
-typedef int64_t  OPJ_INT64;
-typedef uint64_t OPJ_UINT64;
-typedef int64_t  OPJ_OFF_T; /* 64-bit file offset type */
-typedef size_t   OPJ_SIZE_T;
-
-
-#include <grok.h>
-#include <grk_config.h>
 
 #include <openjpeg.h>
 #include <opj_config.h>
+
+typedef opj_codec_t grk_codec;
+typedef opj_stream_t grk_stream;
+typedef opj_image_t grk_image;
 
 #ifdef __clang__
 #pragma clang diagnostic pop
@@ -131,17 +114,17 @@ typedef struct
 /*                      JP2GrokDataset_Read()                       */
 /************************************************************************/
 
-static OPJ_SIZE_T JP2GrokDataset_Read(void* pBuffer, OPJ_SIZE_T nBytes,
+static size_t JP2GrokDataset_Read(void* pBuffer, size_t nBytes,
                                        void *pUserData)
 {
     JP2GrokFile* psJP2GrokFile = (JP2GrokFile* )pUserData;
-    OPJ_SIZE_T nRet = static_cast<OPJ_SIZE_T>(VSIFReadL(pBuffer, 1, nBytes, psJP2GrokFile->fp));
+    size_t nRet = static_cast<size_t>(VSIFReadL(pBuffer, 1, nBytes, psJP2GrokFile->fp));
 #ifdef DEBUG_IO
     CPLDebug("GROK", "JP2GrokDataset_Read(" CPL_FRMT_GUIB ") = " CPL_FRMT_GUIB,
              static_cast<GUIntBig>(nBytes), static_cast<GUIntBig>(nRet));
 #endif
     if (nRet == 0)
-        nRet = static_cast<OPJ_SIZE_T>(-1);
+        nRet = static_cast<size_t>(-1);
 
     return nRet;
 }
@@ -150,17 +133,17 @@ static OPJ_SIZE_T JP2GrokDataset_Read(void* pBuffer, OPJ_SIZE_T nBytes,
 /*                      JP2GrokDataset_Write()                      */
 /************************************************************************/
 
-static OPJ_SIZE_T JP2GrokDataset_Write(void* pBuffer, OPJ_SIZE_T nBytes,
+static size_t JP2GrokDataset_Write(void* pBuffer, size_t nBytes,
                                        void *pUserData)
 {
     JP2GrokFile* psJP2GrokFile = (JP2GrokFile* )pUserData;
-    OPJ_SIZE_T nRet = static_cast<OPJ_SIZE_T>(VSIFWriteL(pBuffer, 1, nBytes, psJP2GrokFile->fp));
+    size_t nRet = static_cast<size_t>(VSIFWriteL(pBuffer, 1, nBytes, psJP2GrokFile->fp));
 #ifdef DEBUG_IO
     CPLDebug("GROK", "JP2GrokDataset_Write(" CPL_FRMT_GUIB ") = " CPL_FRMT_GUIB,
              static_cast<GUIntBig>(nBytes), static_cast<GUIntBig>(nRet));
 #endif
     if( nRet != nBytes )
-        return static_cast<OPJ_SIZE_T>(-1);
+        return static_cast<size_t>(-1);
     return nRet;
 }
 
@@ -168,7 +151,7 @@ static OPJ_SIZE_T JP2GrokDataset_Write(void* pBuffer, OPJ_SIZE_T nBytes,
 /*                       JP2GrokDataset_Seek()                      */
 /************************************************************************/
 
-static OPJ_BOOL JP2GrokDataset_Seek(OPJ_OFF_T nBytes, void * pUserData)
+static OPJ_BOOL JP2GrokDataset_Seek(int64_t nBytes, void * pUserData)
 {
     JP2GrokFile* psJP2GrokFile = (JP2GrokFile* )pUserData;
 #ifdef DEBUG_IO
@@ -183,7 +166,7 @@ static OPJ_BOOL JP2GrokDataset_Seek(OPJ_OFF_T nBytes, void * pUserData)
 /*                     JP2GrokDataset_Skip()                        */
 /************************************************************************/
 
-static OPJ_OFF_T JP2GrokDataset_Skip(OPJ_OFF_T nBytes, void * pUserData)
+static int64_t JP2GrokDataset_Skip(int64_t nBytes, void * pUserData)
 {
     JP2GrokFile* psJP2GrokFile = (JP2GrokFile* )pUserData;
     vsi_l_offset nOffset = VSIFTellL(psJP2GrokFile->fp);
@@ -228,9 +211,9 @@ class JP2GrokDataset final: public GDALJP2AbstractDataset
     JP2GrokDataset** papoOverviewDS = nullptr;
     bool        bUseSetDecodeArea = false;
     bool        bSingleTiled = false;
-    opj_codec_t**    m_ppCodec = nullptr;
-    opj_stream_t **  m_ppStream = nullptr;
-    opj_image_t **   m_ppsImage = nullptr;
+    grk_codec**    m_ppCodec = nullptr;
+    grk_stream **  m_ppStream = nullptr;
+    grk_image **   m_ppsImage = nullptr;
     JP2GrokFile* m_psJP2GrokFile = nullptr;
     int*             m_pnLastLevel = nullptr;
     int         m_nX0 = 0;
@@ -769,10 +752,10 @@ CPLErr JP2GrokDataset::IBuildOverviews( const char *pszResampling,
 /*                    JP2GrokCreateReadStream()                     */
 /************************************************************************/
 
-static opj_stream_t* JP2GrokCreateReadStream(JP2GrokFile* psJP2GrokFile,
+static grk_stream* JP2GrokCreateReadStream(JP2GrokFile* psJP2GrokFile,
                                                  vsi_l_offset nSize)
 {
-    opj_stream_t *pStream = opj_stream_create(1024, TRUE); // Default 1MB is way too big for some datasets
+    grk_stream *pStream = opj_stream_create(1024, TRUE); // Default 1MB is way too big for some datasets
     if( pStream == nullptr )
         return nullptr;
 
@@ -796,9 +779,9 @@ CPLErr JP2GrokDataset::ReadBlock( int nBand, VSILFILE* fpIn,
                                       int nBandCount, int* panBandMap )
 {
     CPLErr          eErr = CE_None;
-    opj_codec_t*    pCodec = nullptr;
-    opj_stream_t *  pStream = nullptr;
-    opj_image_t *   psImage = nullptr;
+    grk_codec*    pCodec = nullptr;
+    grk_stream *  pStream = nullptr;
+    grk_image *   psImage = nullptr;
     JP2GrokFile sJP2GrokFile; // keep it in this scope
 
     JP2GrokRasterBand* poBand = (JP2GrokRasterBand*) GetRasterBand(nBand);
@@ -1014,7 +997,7 @@ CPLErr JP2GrokDataset::ReadBlock( int nBand, VSILFILE* fpIn,
             GByte* pDst = (GByte*)pDstBuffer;
             if( iBand == 4 )
             {
-                const OPJ_INT32* pSrcA = psImage->comps[3].data;
+                const int32_t* pSrcA = psImage->comps[3].data;
                 for(GPtrDiff_t j=0;j<nHeightToRead;j++)
                 {
                     memcpy(pDst + j*nBlockXSize,
@@ -1024,9 +1007,9 @@ CPLErr JP2GrokDataset::ReadBlock( int nBand, VSILFILE* fpIn,
             }
             else
             {
-                const OPJ_INT32* pSrcY = psImage->comps[0].data;
-                const OPJ_INT32* pSrcCb = psImage->comps[1].data;
-                const OPJ_INT32* pSrcCr = psImage->comps[2].data;
+                const int32_t* pSrcY = psImage->comps[0].data;
+                const int32_t* pSrcCb = psImage->comps[1].data;
+                const int32_t* pSrcCr = psImage->comps[2].data;
                 for(GPtrDiff_t j=0;j<nHeightToRead;j++)
                 {
                     for(int i=0;i<nWidthToRead;i++)
@@ -1675,7 +1658,7 @@ GDALDataset *JP2GrokDataset::Open( GDALOpenInfo * poOpenInfo )
 
     OPJ_CODEC_FORMAT eCodecFormat = (nCodeStreamStart == 0) ? OPJ_CODEC_J2K : OPJ_CODEC_JP2;
 
-    opj_codec_t* pCodec = opj_create_decompress(OPJ_CODEC_J2K);
+    grk_codec* pCodec = opj_create_decompress(OPJ_CODEC_J2K);
     if( pCodec == nullptr )
         return nullptr;
 
@@ -1702,10 +1685,10 @@ GDALDataset *JP2GrokDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLMalloc(sizeof(JP2GrokFile)));
     psJP2GrokFile->fp = poOpenInfo->fpL;
     psJP2GrokFile->nBaseOffset = nCodeStreamStart;
-    opj_stream_t * pStream = JP2GrokCreateReadStream(psJP2GrokFile,
+    grk_stream * pStream = JP2GrokCreateReadStream(psJP2GrokFile,
                                                          nCodeStreamLength);
 
-    opj_image_t * psImage = nullptr;
+    grk_image * psImage = nullptr;
 
     if( pStream == nullptr )
     {
@@ -1727,12 +1710,12 @@ GDALDataset *JP2GrokDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     opj_codestream_info_v2_t* pCodeStreamInfo = opj_get_cstr_info(pCodec);
-    OPJ_UINT32 nTileW,nTileH;
+    uint32_t nTileW,nTileH;
     nTileW = pCodeStreamInfo->tdx;
     nTileH = pCodeStreamInfo->tdy;
 #ifdef DEBUG
-    OPJ_UINT32  nX0,nY0;
-    OPJ_UINT32 nTilesX,nTilesY;
+    uint32_t  nX0,nY0;
+    uint32_t nTilesX,nTilesY;
     nX0 = pCodeStreamInfo->tx0;
     nY0 = pCodeStreamInfo->ty0;
     nTilesX = pCodeStreamInfo->tw;
@@ -2152,9 +2135,9 @@ GDALDataset *JP2GrokDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( poDS->bSingleTiled && poDS->bUseSetDecodeArea )
     {
-        poDS->m_ppCodec = new opj_codec_t* (pCodec);
-        poDS->m_ppStream = new opj_stream_t* (pStream);
-        poDS->m_ppsImage = new opj_image_t* (psImage);
+        poDS->m_ppCodec = new grk_codec* (pCodec);
+        poDS->m_ppStream = new grk_stream* (pStream);
+        poDS->m_ppsImage = new grk_image* (psImage);
         poDS->m_psJP2GrokFile = psJP2GrokFile;
     }
     poDS->m_pnLastLevel = new int(-1);
@@ -3238,7 +3221,7 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
 
     /* Always ask OpenJPEG to do codestream only. We will take care */
     /* of JP2 boxes */
-    opj_codec_t* pCodec = opj_create_compress(OPJ_CODEC_J2K);
+    grk_codec* pCodec = opj_create_compress(OPJ_CODEC_J2K);
     if (pCodec == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -3268,13 +3251,13 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
         eColorSpace = OPJ_CLRSPC_SRGB;
     }
 
-    opj_image_t* psImage = opj_image_tile_create(nBands,pasBandParams,
+    grk_image* psImage = opj_image_tile_create(nBands,pasBandParams,
                                                  eColorSpace);
 
     if (psImage == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "opj_image_tile_create() failed");
+                 "grk_imageile_create() failed");
         opj_destroy_codec(pCodec);
         CPLFree(pasBandParams);
         pasBandParams = nullptr;
@@ -3794,7 +3777,7 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
         JP2GrokFile sJP2GrokFile;
         sJP2GrokFile.fp = fp;
         sJP2GrokFile.nBaseOffset = VSIFTellL(fp);
-        opj_stream_t * pStream = opj_stream_create(1024*1024, FALSE);
+        grk_stream * pStream = opj_stream_create(1024*1024, FALSE);
         opj_stream_set_write_function(pStream, JP2GrokDataset_Write);
         opj_stream_set_seek_function(pStream, JP2GrokDataset_Seek);
         opj_stream_set_skip_function(pStream, JP2GrokDataset_Skip);
