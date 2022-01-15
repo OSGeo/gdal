@@ -1473,7 +1473,7 @@ def test_ogr_openfilegdb_read_domains():
     domain = ds.GetFieldDomain('SpeedLimit')
     assert domain is not None
     assert domain.GetName() == 'SpeedLimit'
-    assert domain.GetDescription() == 'The maximun speed of the road'
+    assert domain.GetDescription() == 'The maximum speed of the road'
     assert domain.GetDomainType() == ogr.OFDT_RANGE
     assert domain.GetFieldType() == fld_defn.GetType()
     assert domain.GetFieldSubType() == fld_defn.GetSubType()
