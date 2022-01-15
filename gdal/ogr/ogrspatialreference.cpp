@@ -11000,6 +11000,10 @@ OGRSpatialReferenceH* OGRSpatialReference::FindMatches(
  * configuration option can be set to YES to enable past behavior.
  * The AddGuessedTOWGS84() method can also be used for that purpose.
  *
+ * The method will also by default substitute a deprecated EPSG code by its
+ * non-deprecated replacement. If this behavior is not desired, the
+ * OSR_USE_NON_DEPRECATED configuration option can be set to NO.
+ *
  * This method is the same as the C function OSRImportFromEPSGA().
  *
  * @param nCode a CRS code.
@@ -11040,9 +11044,9 @@ OGRErr OGRSpatialReference::importFromEPSGA( int nCode )
         return OGRERR_FAILURE;
     }
 
-    if( proj_is_deprecated(obj) ) {
+    if( bUseNonDeprecated && proj_is_deprecated(obj) ) {
         auto list = proj_get_non_deprecated(d->getPROJContext(), obj);
-        if( list && bUseNonDeprecated ) {
+        if( list ) {
             const auto count = proj_list_get_count(list);
             if( count == 1 ) {
                 auto nonDeprecated =
