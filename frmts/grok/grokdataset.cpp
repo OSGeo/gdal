@@ -34,16 +34,37 @@
 #pragma clang diagnostic ignored "-Wdocumentation"
 #endif
 
+
+#include <cstdint>
+#include <cstddef>
+typedef int OPJ_BOOL;
+#define OPJ_TRUE 1
+#define OPJ_FALSE 0
+typedef char          OPJ_CHAR;
+typedef float         OPJ_FLOAT32;
+typedef double        OPJ_FLOAT64;
+typedef unsigned char OPJ_BYTE;
+typedef int8_t   OPJ_INT8;
+typedef uint8_t  OPJ_UINT8;
+typedef int16_t  OPJ_INT16;
+typedef uint16_t OPJ_UINT16;
+typedef int32_t  OPJ_INT32;
+typedef uint32_t OPJ_UINT32;
+typedef int64_t  OPJ_INT64;
+typedef uint64_t OPJ_UINT64;
+typedef int64_t  OPJ_OFF_T; /* 64-bit file offset type */
+typedef size_t   OPJ_SIZE_T;
+
+
+#include <grok.h>
+#include <grk_config.h>
+
 #include <openjpeg.h>
 #include <opj_config.h>
 
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
-
-#define IS_OPENJPEG_OR_LATER(major,minor,patch) \
-    ((OPJ_VERSION_MAJOR * 10000 + OPJ_VERSION_MINOR * 100 + OPJ_VERSION_BUILD) >= \
-        ((major)*10000+(minor)*100+(patch)))
 
 #include <cassert>
 #include <vector>
@@ -78,26 +99,7 @@ static void JP2GrokDataset_ErrorCallback(const char *pszMsg, CPL_UNUSED void *un
 
 static void JP2GrokDataset_WarningCallback(const char *pszMsg, CPL_UNUSED void *unused)
 {
-    if( strcmp(pszMsg, "No incltree created.\n") == 0 ||
-        strcmp(pszMsg, "No imsbtree created.\n") == 0 ||
-        strcmp(pszMsg,
-               "tgt_create tree->numnodes == 0, no tree created.\n") == 0 )
-    {
-        // Ignore warnings related to empty tag-trees. There's nothing wrong
-        // about that.
-        // Fixed submitted upstream with
-        // https://github.com/uclouvain/openjpeg/pull/893
-        return;
-    }
-    if( strcmp(pszMsg, "Empty SOT marker detected: Psot=12.\n") == 0 )
-    {
-        static int bWarningEmitted = FALSE;
-        if( bWarningEmitted )
-            return;
-        bWarningEmitted = TRUE;
-    }
-    if( strcmp(pszMsg, "JP2 box which are after the codestream will not be read by this function.\n") != 0 )
-        CPLError(CE_Warning, CPLE_AppDefined, "%s", pszMsg);
+   CPLError(CE_Warning, CPLE_AppDefined, "%s", pszMsg);
 }
 
 /************************************************************************/
@@ -226,13 +228,11 @@ class JP2GrokDataset final: public GDALJP2AbstractDataset
     JP2GrokDataset** papoOverviewDS = nullptr;
     bool        bUseSetDecodeArea = false;
     bool        bSingleTiled = false;
-#if IS_OPENJPEG_OR_LATER(2,3,0)
     opj_codec_t**    m_ppCodec = nullptr;
     opj_stream_t **  m_ppStream = nullptr;
     opj_image_t **   m_ppsImage = nullptr;
     JP2GrokFile* m_psJP2GrokFile = nullptr;
     int*             m_pnLastLevel = nullptr;
-#endif
     int         m_nX0 = 0;
     int         m_nY0 = 0;
 
@@ -814,7 +814,6 @@ CPLErr JP2GrokDataset::ReadBlock( int nBand, VSILFILE* fpIn,
     const int nHeightToRead =
         std::min(nBlockYSize, nRasterYSize - nBlockYOff * nBlockYSize);
 
-#if IS_OPENJPEG_OR_LATER(2,3,0)
     if( m_ppCodec &&
         CPLTestBool(CPLGetConfigOption("USE_OPENJPEG_SINGLE_TILE_OPTIM", "YES")) )
     {
@@ -843,7 +842,6 @@ CPLErr JP2GrokDataset::ReadBlock( int nBand, VSILFILE* fpIn,
     *m_pnLastLevel = iLevel;
 
     if( pCodec == nullptr )
-#endif
     {
         pCodec = opj_create_decompress(OPJ_CODEC_J2K);
         if( pCodec == nullptr )
@@ -867,13 +865,11 @@ CPLErr JP2GrokDataset::ReadBlock( int nBand, VSILFILE* fpIn,
             goto end;
         }
 
-#if IS_OPENJPEG_OR_LATER(2,3,0)
         if( m_psJP2GrokFile )
         {
             pStream = JP2GrokCreateReadStream( m_psJP2GrokFile, nCodeStreamLength);
         }
         else
-#endif
         {
             sJP2GrokFile.fp = fpIn;
             sJP2GrokFile.nBaseOffset = nCodeStreamStart;
@@ -886,7 +882,6 @@ CPLErr JP2GrokDataset::ReadBlock( int nBand, VSILFILE* fpIn,
             goto end;
         }
 
-#if IS_OPENJPEG_OR_LATER(2,2,0)
         if( getenv("OPJ_NUM_THREADS") == nullptr )
         {
             if( m_nBlocksToLoad <= 1 )
@@ -894,20 +889,13 @@ CPLErr JP2GrokDataset::ReadBlock( int nBand, VSILFILE* fpIn,
             else
                 opj_codec_set_threads(pCodec, GetNumThreads() / m_nBlocksToLoad);
         }
-#endif
 
         if(!opj_read_header(pStream,pCodec,&psImage))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "opj_read_header() failed (psImage=%p)", psImage);
-#if IS_OPENJPEG_OR_LATER(2,2,0)
             // Hopefully the situation is better on openjpeg 2.2 regarding cleanup
             eErr = CE_Failure;
             goto end;
-#else
-            // We may leak objects, but the cleanup of openjpeg can cause
-            // double frees sometimes...
-            return CE_Failure;
-#endif
         }
     }
 
@@ -1114,7 +1102,6 @@ CPLErr JP2GrokDataset::ReadBlock( int nBand, VSILFILE* fpIn,
     }
 
 end:
-#if IS_OPENJPEG_OR_LATER(2,3,0)
     if( m_ppCodec != nullptr &&
         CPLTestBool(CPLGetConfigOption("USE_OPENJPEG_SINGLE_TILE_OPTIM", "YES")) )
     {
@@ -1123,7 +1110,6 @@ end:
         *m_ppsImage = psImage;
     }
     else
-#endif
     {
         if( pCodec && pStream )
             opj_end_decompress(pCodec,pStream);
@@ -1223,7 +1209,6 @@ JP2GrokDataset::~JP2GrokDataset()
 {
     FlushCache(true);
 
-#if IS_OPENJPEG_OR_LATER(2,3,0)
     if( iLevel == 0 )
     {
         if( m_ppCodec )
@@ -1238,7 +1223,7 @@ JP2GrokDataset::~JP2GrokDataset()
         CPLFree(m_psJP2GrokFile);
         delete m_pnLastLevel;
     }
-#endif
+
 
     if( iLevel == 0 && fp != nullptr )
     {
@@ -1707,13 +1692,11 @@ GDALDataset *JP2GrokDataset::Open( GDALOpenInfo * poOpenInfo )
         return nullptr;
     }
 
-#if IS_OPENJPEG_OR_LATER(2,3,0)
     if( getenv("OPJ_NUM_THREADS") == nullptr )
     {
         JP2GrokDataset oTmpDS;
         opj_codec_set_threads(pCodec, oTmpDS.GetNumThreads());
     }
-#endif
 
     JP2GrokFile* psJP2GrokFile = static_cast<JP2GrokFile*>(
         CPLMalloc(sizeof(JP2GrokFile)));
@@ -2167,7 +2150,6 @@ GDALDataset *JP2GrokDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poCT != nullptr )
         numResolutions = 0;
 
-#if IS_OPENJPEG_OR_LATER(2,3,0)
     if( poDS->bSingleTiled && poDS->bUseSetDecodeArea )
     {
         poDS->m_ppCodec = new opj_codec_t* (pCodec);
@@ -2176,7 +2158,6 @@ GDALDataset *JP2GrokDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->m_psJP2GrokFile = psJP2GrokFile;
     }
     poDS->m_pnLastLevel = new int(-1);
-#endif
 
     while (poDS->nOverviewCount+1 < numResolutions &&
            (nW > 128 || nH > 128) &&
@@ -2223,7 +2204,6 @@ GDALDataset *JP2GrokDataset::Open( GDALOpenInfo * poOpenInfo )
         poODS->nCodeStreamLength = nCodeStreamLength;
         poODS->bIs420 = bIs420;
 
-#if IS_OPENJPEG_OR_LATER(2,3,0)
         if( poODS->bSingleTiled && poODS->bUseSetDecodeArea )
         {
             poODS->m_ppCodec = poDS->m_ppCodec;
@@ -2232,7 +2212,6 @@ GDALDataset *JP2GrokDataset::Open( GDALOpenInfo * poOpenInfo )
             poODS->m_psJP2GrokFile = poDS->m_psJP2GrokFile;
         }
         poODS->m_pnLastLevel = poDS->m_pnLastLevel;
-#endif
         poODS->m_nX0 = poDS->m_nX0;
         poODS->m_nY0 = poDS->m_nY0;
 
@@ -2255,13 +2234,11 @@ GDALDataset *JP2GrokDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->papoOverviewDS[poDS->nOverviewCount ++] = poODS;
     }
 
-#if IS_OPENJPEG_OR_LATER(2,3,0)
     if( poDS->bSingleTiled && poDS->bUseSetDecodeArea )
     {
         // nothing
     }
     else
-#endif
     {
         opj_destroy_codec(pCodec);
         opj_stream_destroy(pStream);
@@ -2669,7 +2646,6 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
     int bYCC = ((nBands == 3 || nBands == 4) &&
             CPLTestBool(CSLFetchNameValueDef(papszOptions, "YCC", "TRUE")));
 
-#if !(IS_OPENJPEG_OR_LATER(2,2,0))
     /* Depending on the way OpenJPEG <= r2950 is built, YCC with 4 bands might work on
      * Debug mode, but this relies on unreliable stack buffer overflows, so
      * better err on the safe side */
@@ -2683,7 +2659,6 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
         }
         bYCC = FALSE;
     }
-#endif
 
     if( bYCBCR420 && bYCC )
     {
@@ -3093,7 +3068,6 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
     parameters.cblockh_init = nCblockH;
     parameters.mode = 0;
 
-#if IS_OPENJPEG_OR_LATER(2,3,0)
     // Was buggy before for some of the options
     const char* pszCodeBlockStyle = CSLFetchNameValue(papszOptions, "CODEBLOCK_STYLE");
     if( pszCodeBlockStyle )
@@ -3153,8 +3127,6 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
             CSLDestroy(papszTokens);
         }
     }
-#endif
-
     /* Add precincts */
     const char* pszPrecincts = CSLFetchNameValueDef(papszOptions, "PRECINCTS",
         "{512,512},{256,512},{128,512},{64,512},{32,512},{16,512},{8,512},{4,512},{2,512}");
@@ -3329,7 +3301,6 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
         return nullptr;
     }
 
-#if IS_OPENJPEG_OR_LATER(2,4,0)
 
     if( getenv("OPJ_NUM_THREADS") == nullptr )
     {
@@ -3343,12 +3314,10 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
         aosOptions.AddString("PLT=YES");
     }
 
-#if IS_OPENJPEG_OR_LATER(2,5,0)
     if( CPLTestBool(CSLFetchNameValueDef(papszOptions, "TLM", "FALSE")) )
     {
         aosOptions.AddString("TLM=YES");
     }
-#endif
 
     if( !opj_encoder_set_extra_options(pCodec, aosOptions.List()) )
     {
@@ -3361,7 +3330,6 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
         delete poGMLJP2Box;
         return nullptr;
     }
-#endif
 
 /* -------------------------------------------------------------------- */
 /*      Create the dataset.                                             */
@@ -4313,15 +4281,9 @@ void GDALRegister_JP2Grok()
 "   <Option name='WRITE_METADATA' type='boolean' description='Whether metadata should be written, in a dedicated JP2 XML box' default='NO'/>"
 "   <Option name='MAIN_MD_DOMAIN_ONLY' type='boolean' description='(Only if WRITE_METADATA=YES) Whether only metadata from the main domain should be written' default='NO'/>"
 "   <Option name='USE_SRC_CODESTREAM' type='boolean' description='When source dataset is JPEG2000, whether to reuse the codestream of the source dataset unmodified' default='NO'/>"
-#if IS_OPENJPEG_OR_LATER(2,3,0)
 "   <Option name='CODEBLOCK_STYLE' type='string' description='Comma-separated combination of BYPASS, RESET, TERMALL, VSC, PREDICTABLE, SEGSYM or value between 0 and 63'/>"
-#endif
-#if IS_OPENJPEG_OR_LATER(2,4,0)
 "   <Option name='PLT' type='boolean' description='True to insert PLT marker segments' default='false'/>"
-#endif
-#if IS_OPENJPEG_OR_LATER(2,5,0)
 "   <Option name='TLM' type='boolean' description='True to insert TLM marker segments' default='false'/>"
-#endif
 "</CreationOptionList>"  );
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
