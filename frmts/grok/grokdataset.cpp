@@ -867,19 +867,6 @@ CPLErr JP2GrokDataset::ReadBlock( int nBand, VSILFILE* fpIn,
 
 	if (bUseSetDecodeArea)
 	{
-		/* We need to explicitly set the resolution factor on the image */
-		/* otherwise grk_set_decode_area() will assume we decode at full */
-		/* resolution. */
-		/* If using parameters.cp_reduce instead of grk_set_decoded_resolution_factor() */
-		/* we wouldn't need to do that, as grk_read_header() would automatically */
-		/* assign the comps[].factor to the appropriate value */
-		//Todo deal with this
-		/*
-		for(unsigned int iBand = 0; iBand < psImage->numcomps; iBand ++)
-		{
-			psImage->comps[iBand].factor = iLevel;
-		}
-		*/
 		/* The decode area must be expressed in grid reference, ie at full*/
 		/* scale */
 		if (!grk_decompress_set_window(pCodec,
@@ -908,10 +895,7 @@ CPLErr JP2GrokDataset::ReadBlock( int nBand, VSILFILE* fpIn,
 			goto end;
 		}
 	}
-
-
 	psImage = grk_decompress_get_composited_image(pCodec);
-
     for(unsigned int iBand = 0; iBand < psImage->numcomps; iBand ++)
     {
         if( psImage->comps[iBand].data == nullptr )
@@ -3283,6 +3267,12 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
     psImage->color_space = eColorSpace;
     psImage->numcomps = nBands;
 
+    CPLStringList aosOptions;
+    if( CPLTestBool(CSLFetchNameValueDef(papszOptions, "PLT", "FALSE")) )
+        parameters.writePLT = true;
+    if( CPLTestBool(CSLFetchNameValueDef(papszOptions, "TLM", "FALSE")) )
+    	parameters.writeTLM = true;
+
     if (!grk_compress_init(pCodec,&parameters,psImage))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -3295,29 +3285,6 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
         return nullptr;
     }
 
-    CPLStringList aosOptions;
-    if( CPLTestBool(CSLFetchNameValueDef(papszOptions, "PLT", "FALSE")) )
-    {
-        aosOptions.AddString("PLT=YES");
-    }
-
-    if( CPLTestBool(CSLFetchNameValueDef(papszOptions, "TLM", "FALSE")) )
-    {
-        aosOptions.AddString("TLM=YES");
-    }
-/*
-    if( !opj_encoder_set_extra_options(pCodec, aosOptions.List()) )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                "opj_encoder_set_extra_options() failed");
-        grk_object_unref(&psImage->obj);
-        grk_object_unref(pCodec);
-        CPLFree(pasBandParams);
-        pasBandParams = nullptr;
-        delete poGMLJP2Box;
-        return nullptr;
-    }
-*/
 
 /* -------------------------------------------------------------------- */
 /*      Add JP2 boxes.                                                  */
