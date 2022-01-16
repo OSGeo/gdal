@@ -9405,9 +9405,12 @@ template<class T> T RoundValueDiscardLsbUnsigned(const void* ptr,
                                                 uint64_t nMask,
                                                 uint64_t nRoundUpBitTest)
 {
-    const uint64_t newval = (*reinterpret_cast<const T*>(ptr) & nMask) + (nRoundUpBitTest << 1U);
-    if( newval > static_cast<uint64_t>(std::numeric_limits<T>::max()) )
+    if( (*reinterpret_cast<const T*>(ptr) & nMask) >
+            static_cast<uint64_t>(std::numeric_limits<T>::max()) - (nRoundUpBitTest << 1U) )
+    {
         return static_cast<T>(std::numeric_limits<T>::max() & nMask);
+    }
+    const uint64_t newval = (*reinterpret_cast<const T*>(ptr) & nMask) + (nRoundUpBitTest << 1U);
     return static_cast<T>(newval);
 }
 
