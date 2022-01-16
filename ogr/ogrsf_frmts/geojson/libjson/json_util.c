@@ -290,7 +290,7 @@ const char *json_type_to_name(enum json_type o_type)
 	int o_type_int = (int)o_type;
 	if (o_type_int < 0 || o_type_int >= (int)NELEM(json_type_name))
 	{
-		_json_c_set_last_err("json_type_to_name: type %d is out of range [0,%d]\n", o_type,
+		_json_c_set_last_err("json_type_to_name: type %d is out of range [0,%u]\n", o_type,
 		                     NELEM(json_type_name));
 		return NULL;
 	}
