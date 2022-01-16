@@ -1643,6 +1643,7 @@ static int json_object_copy_serializer_data(struct json_object *src, struct json
 	if (dst->_to_json_string == json_object_userdata_to_json_string ||
 	    dst->_to_json_string == _json_object_userdata_to_json_string)
 	{
+		assert(src->_userdata);
 		dst->_userdata = strdup(src->_userdata);
 	}
 	// else if ... other supported serializers ...
