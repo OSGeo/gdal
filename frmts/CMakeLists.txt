@@ -175,3 +175,8 @@ target_include_directories(
                      $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR> $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR>)
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:gdal_frmts>)
 set_property(TARGET gdal_frmts PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
+
+# Install drivers.ini along with plugins
+get_target_property(PLUGIN_OUTPUT_DIR ${GDAL_LIB_TARGET_NAME} PLUGIN_OUTPUT_DIR)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/drivers.ini ${PLUGIN_OUTPUT_DIR}/drivers.ini COPYONLY)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/drivers.ini DESTINATION ${INSTALL_PLUGIN_DIR})

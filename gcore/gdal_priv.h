@@ -1645,6 +1645,7 @@ class CPL_DLL GDALDriverManager : public GDALMajorObject
     int         nDrivers = 0;
     GDALDriver  **papoDrivers = nullptr;
     std::map<CPLString, GDALDriver*> oMapNameToDrivers{};
+    std::string                      m_osDriversIniPath{};
 
     GDALDriver  *GetDriver_unlocked( int iDriver )
             { return (iDriver >= 0 && iDriver < nDrivers) ?
@@ -1671,8 +1672,9 @@ class CPL_DLL GDALDriverManager : public GDALMajorObject
     void        DeregisterDriver( GDALDriver * );
 
     // AutoLoadDrivers is a no-op if compiled with GDAL_NO_AUTOLOAD defined.
-    static void        AutoLoadDrivers();
-    void        AutoSkipDrivers();
+    void               AutoLoadDrivers();
+    void               AutoSkipDrivers();
+    void               ReorderDrivers();
 
     static void        AutoLoadPythonDrivers();
 };
