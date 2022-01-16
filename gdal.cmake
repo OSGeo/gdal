@@ -165,6 +165,7 @@ else ()
   endif ()
 
   if (CMAKE_BUILD_TYPE MATCHES Debug)
+    add_definitions(-DDEBUG)
     check_c_compiler_flag(-ftrapv HAVE_FTRAPV)
     if (HAVE_FTRAPV)
       set(GDAL_C_WARNING_FLAGS ${GDAL_C_WARNING_FLAGS} -ftrapv)
