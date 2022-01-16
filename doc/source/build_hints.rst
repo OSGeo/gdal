@@ -1695,6 +1695,14 @@ that are not part of GDAL core dependencies (e.g. are netCDF, HDF4, Oracle, PDF,
     Building such drivers as plugins is generally not necessary, hence
     the use of a different option from GDAL_ENABLE_PLUGINS.
 
+In some circumstances, it might be desirable to prevent loading of GDAL plugins.
+This can be done with:
+
+.. option:: GDAL_AUTOLOAD_PLUGINS:BOOL=ON/OFF
+
+    Set to OFF to disable loading of GDAL plugins. Default is ON.
+
+
 Python bindings options
 +++++++++++++++++++++++
 
