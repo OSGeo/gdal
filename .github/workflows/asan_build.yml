@@ -27,4 +27,4 @@ jobs:
           restore-keys: ${{ runner.os }}-cache-asan-
 
       - name: Build
-        run: docker run --privileged=true -e CI -e WORK_DIR="$PWD" -v $PWD:$PWD -v /var/run/docker.sock:/var/run/docker.sock ubuntu:16.04 $PWD/.github/workflows/asan/start.sh
+        run: docker run --privileged=true -e CI -e WORK_DIR="$PWD" -v $PWD:$PWD -v /var/run/docker.sock:/var/run/docker.sock ubuntu:20.04 $PWD/.github/workflows/asan/start.sh
