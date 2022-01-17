@@ -4677,21 +4677,36 @@ if test "$with_qhull" = "no" ; then
 
 elif test "$with_qhull" = "yes" -o "$with_qhull" = "" ; then
 
-  AC_CHECK_HEADERS([libqhull_r/libqhull_r.h])
-  if test "$ac_cv_header_libqhull_r_libqhull_r_h" = "yes"; then
-    AC_CHECK_LIB(qhull_r,qh_new_qhull,QHULL_SETTING=yes,QHULL_SETTING=no,)
-    if test "$QHULL_SETTING" = "yes"; then
-        QHULL_SETTING=external
-        LIBS="-lqhull_r $LIBS"
-    fi
+  AC_ARG_WITH(qhull_pkgname,[  --with-qhull-pkgname[=ARG]     pkg-config name of the reentrant qhull library, typically qhull_r (default) or qhullstatic_r],,)
+
+  if test "x$with_qhull_pkgname" = "x" ; then
+    with_qhull_pkgname=qhull_r
   fi
 
-  if test "$QHULL_SETTING" = "no" ; then
-    if test "$with_qhull" = "yes"; then
+  PKG_PROG_PKG_CONFIG([0.21])
+  PKG_CHECK_MODULES([QHULL],[$with_qhull_pkgname], [HAVE_QHULL=yes], [HAVE_QHULL=no])
+
+  dnl First try with pkg-config
+  if test "$HAVE_QHULL" = "yes" ; then
+    QHULL_SETTING=external
+    CFLAGS="$CFLAGS $QHULL_CFLAGS"
+    LIBS="$LIBS $QHULL_LIBS"
+  else
+    AC_CHECK_HEADERS([libqhull_r/libqhull_r.h])
+    if test "$ac_cv_header_libqhull_r_libqhull_r_h" = "yes"; then
+      AC_CHECK_LIB(qhull_r,qh_new_qhull,QHULL_SETTING=yes,QHULL_SETTING=no,)
+      if test "$QHULL_SETTING" = "yes"; then
+        QHULL_SETTING=external
+        LIBS="-lqhull_r $LIBS"
+      fi
+    fi
+
+    if test "$QHULL_SETTING" = "no" ; then
+      if test "$with_qhull" = "yes"; then
         AC_MSG_ERROR([--with-qhull requested, but library not found!])
-    else
+      else
         QHULL_SETTING=internal
-        QHULL_INCLUDE_SUBDIR_IS_LIBQHULL=1
+      fi
     fi
   fi
 else

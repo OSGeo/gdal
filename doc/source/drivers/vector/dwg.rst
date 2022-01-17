@@ -62,6 +62,13 @@ The intention is that with DWG_INLINE_BLOCKS disabled, the block
 references will remain as references and the original block definitions
 will be available via the blocks layer.
 
+DWG_ATTRIBUTES
+--------------
+
+If option is set to TRUE value, then block attributes are treated as
+feature attributes, one feature attribute for each tag. This option allow
+convertion to rows and columns data such as database tables
+
 Building
 --------
 

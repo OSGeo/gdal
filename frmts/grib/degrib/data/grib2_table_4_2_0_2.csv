@@ -1,0 +1,48 @@
+subcat,short_name,name,unit,unit_conv
+0,"WDIR","Wind direction (from which blowing)","deg true",UC_NONE
+1,"WIND","Wind speed","m/s",UC_MS2Knots
+2,"UGRD","u-component of wind","m/s",UC_NONE
+3,"VGRD","v-component of wind","m/s",UC_NONE
+4,"STRM","Stream function","(m^2)/s",UC_NONE
+5,"VPOT","Velocity potential","(m^2)/s",UC_NONE
+6,"MNTSF","Montgomery stream function","(m^2)/(s^2)",UC_NONE
+7,"SGCVV","Sigma coordinate vertical velocity","1/s",UC_NONE
+8,"VVEL","Vertical velocity (pressure)","Pa/s",UC_NONE
+9,"DZDT","Vertical velocity (geometric)","m/s",UC_NONE
+10,"ABSV","Absolute vorticity","1/s",UC_NONE
+11,"ABSD","Absolute divergence","1/s",UC_NONE
+12,"RELV","Relative vorticity","1/s",UC_NONE
+13,"RELD","Relative divergence","1/s",UC_NONE
+14,"PVORT","Potential vorticity","K(m^2)/(kg s)",UC_NONE
+15,"VUCSH","Vertical u-component shear","1/s",UC_NONE
+16,"VVCSH","Vertical v-component shear","1/s",UC_NONE
+17,"UFLX","Momentum flux; u component","N/(m^2)",UC_NONE
+18,"VFLX","Momentum flux; v component","N/(m^2)",UC_NONE
+19,"WMIXE","Wind mixing energy","J",UC_NONE
+20,"BLYDP","Boundary layer dissipation","W/(m^2)",UC_NONE
+21,"MAXGUST","Maximum wind speed","m/s",UC_NONE
+22,"GUST","Wind speed (gust)","m/s",UC_MS2Knots
+23,"UGUST","u-component of wind (gust)","m/s",UC_NONE
+24,"VGUST","v-component of wind (gust)","m/s",UC_NONE
+25,"VWSH","Vertical speed shear","1/s",UC_NONE
+26,"MFLX","Horizontal momentum flux","N/(m^2)",UC_NONE
+27,"USTM","U-component storm motion","m/s",UC_NONE
+28,"VSTM","V-component storm motion","m/s",UC_NONE
+29,"CD","Drag coefficient","-",UC_NONE
+30,"FRICV","Frictional velocity","m/s",UC_NONE
+31,"TDCMOM","Turbulent Diffusion Coefficient for Momentum","(m^2)/s",UC_NONE
+32,"ETACVV","Eta Coordinate Vertical Velocity","1/s",UC_NONE
+33,"WINDF","Wind Fetch","m",UC_NONE
+34,"NWIND","Normal Wind Component","m/s",UC_NONE
+35,"TWIND","Tangential Wind Component","m/s",UC_NONE
+36,"AFRWE","Amplitude Function for Rossby Wave Envelope for Meridional Wind","m/s",UC_NONE
+37,"NTSS","Northward Turbulent Surface Stress","1/(m^2)",UC_NONE
+38,"ETSS","Eastward Turbulent Surface Stress","1/(m^2)",UC_NONE
+39,"EWTPARM","Eastward Wind Tendency Due to Parameterizations","m/(s^2)",UC_NONE
+40,"NWTPARM","Northward Wind Tendency Due to Parameterizations","m/(s^2)",UC_NONE
+41,"UGWIND","U-Component of Geostrophic Wind","m/s",UC_NONE
+42,"VGWIND","V-Component of Geostrophic Wind","m/s",UC_NONE
+43,"GEOWD","Geostrophic Wind Direction","deg true",UC_NONE
+44,"GEOWS","Geostrophic Wind Speed","m/s",UC_NONE
+45,"UNDIV","Unbalanced Component of Divergence","1/s",UC_NONE
+46,"VORTADV","Vorticity Advection","1/(s^2)",UC_NONE

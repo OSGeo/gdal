@@ -172,7 +172,7 @@ The available creation options are:
    filename is the main filename with a .tif extension.
 -  **GEOTIFF_AS_REGULAR_EXTERNAL**\ =YES/NO. Whether the GeoTIFF file,
    if uncompressed, should be registered as a regular raw file. Defaults
-   to YES, so as to maximimze the compatibility with earlier version of
+   to YES, so as to maximize the compatibility with earlier version of
    the ISIS3 driver.
 -  **GEOTIFF_OPTIONS**\ =string. Comma separated list of KEY=VALUE
    tuples to forward to the GeoTIFF driver. e.g.

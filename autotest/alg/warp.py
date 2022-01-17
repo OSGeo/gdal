@@ -1663,7 +1663,7 @@ def test_warp_54():
     gdal.Unlink('/vsimem/warp_54.tif')
 
 ###############################################################################
-# Test warped VRT with source overview, target GT != GenImgProjetion target GT
+# Test warped VRT with source overview, target GT != GenImgProjection target GT
 # and subsampling (#6972)
 
 

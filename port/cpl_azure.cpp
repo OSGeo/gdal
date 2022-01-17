@@ -527,7 +527,7 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(CSLConstList papszOptions,
 {
     bFromManagedIdentities = false;
 
-    const CPLString osServicePrefix ( eService == Service::BLOB ? "blob" : "dfs" );
+    const CPLString osServicePrefix ( eService == Service::SERVICE_BLOB ? "blob" : "dfs" );
     bUseHTTPS = CPLTestBool(CPLGetConfigOption("CPL_AZURE_USE_HTTPS", "YES"));
     osEndpoint =
         CPLGetConfigOption("CPL_AZURE_ENDPOINT",
@@ -630,7 +630,7 @@ VSIAzureBlobHandleHelper* VSIAzureBlobHandleHelper::BuildFromURI( const char* ps
 
     const auto eService = strcmp(pszFSPrefix, "/vsiaz/") == 0 ||
                           strcmp(pszFSPrefix, "/vsiaz_streaming/") == 0 ?
-                                                Service::BLOB : Service::ADLS;
+                                                Service::SERVICE_BLOB : Service::SERVICE_ADLS;
 
     bool bUseHTTPS = true;
     CPLString osStorageAccount;

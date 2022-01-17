@@ -9822,7 +9822,7 @@ SWgetfillvalue(int32 swathID, const char *fieldname, VOIDP fillval)
 |                                                                             |
 |  FUNCTION: SWdetach                                                         |
 |                                                                             |
-|  DESCRIPTION: Detachs swath structure and performs housekeeping             |
+|  DESCRIPTION: Detaches swath structure and performs housekeeping            |
 |                                                                             |
 |                                                                             |
 |  Return Value    Type     Units     Description                             |

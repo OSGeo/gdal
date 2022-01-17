@@ -145,3 +145,36 @@ def test_ogr_dwg_3():
 
         ds = None
 
+
+def test_ogr_dwg_4():
+
+    with gdaltest.config_options({'DWG_INLINE_BLOCKS':'FALSE','DWG_ATTRIBUTES':'TRUE'}):
+
+        ds = gdal.OpenEx('data/cad/Building_A_Floor_0_Mapwize.dwg', allowed_drivers=['DWG'])
+
+        assert ds is not None
+
+        layer = ds.GetLayer( 'entities' )
+        defn = layer.GetLayerDefn()
+        
+        foundMathieu = False
+        for feature in layer:
+            if feature.GetField("OCCUPANT") == 'Mathieu' :
+                foundMathieu = True
+            
+        
+        assert defn.GetFieldCount() == 28, \
+            ('did not get expected number of fields in defn. got %d'
+                                % defn.GetFieldsCount())
+                                
+        assert defn.GetFieldIndex('AVAILABILITY') >-1, \
+            ('did not get the expected field in defn. AVAILABILITY')
+        assert defn.GetFieldIndex('ROOM') >-1, \
+            ('did not get the expected field in defn. ROOM')
+
+        assert foundMathieu, \
+            ('Mathieu was not found as OCCUPANT field value')
+        
+
+        ds = None
+

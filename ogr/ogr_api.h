@@ -610,8 +610,6 @@ OGRErr CPL_DLL OGR_L_SetAttributeFilter( OGRLayerH, const char * );
 void   CPL_DLL OGR_L_ResetReading( OGRLayerH );
 OGRFeatureH CPL_DLL OGR_L_GetNextFeature( OGRLayerH ) CPL_WARN_UNUSED_RESULT;
 
-/*! @endcond */
-
 /** Conveniency macro to iterate over features of a layer.
  *
  * Typical usage is:

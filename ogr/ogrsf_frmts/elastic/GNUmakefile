@@ -2,7 +2,7 @@
 
 include ../../../GDALmake.opt
 
-OBJ	=	ogrelasticdriver.o ogrelasticdatasource.o ogrelasticlayer.o
+OBJ	=	ogrelasticdriver.o ogrelasticdatasource.o ogrelasticlayer.o ogrelasticaggregationlayer.o
 
 CPPFLAGS	:=	$(JSON_INCLUDE) -iquote .. -iquote ../.. -iquote ../geojson $(CPPFLAGS)
 

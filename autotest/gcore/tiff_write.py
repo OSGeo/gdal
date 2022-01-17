@@ -5244,7 +5244,7 @@ def test_tiff_write_134():
         val1 = struct.unpack('B', ds.GetRasterBand(1).ReadRaster())[0]
         val2 = struct.unpack('B', ds.GetRasterBand(2).ReadRaster())[0]
         val3 = struct.unpack('B', ds.GetRasterBand(3).ReadRaster())[0]
-        assert val1 == 127 and val2 == 126 and val3 == 124
+        assert val1 == 127 and val2 == 126 and val3 == 128
         ds = None
         gdaltest.tiff_drv.Delete('/vsimem/tiff_write_134.tif')
 
@@ -5263,18 +5263,140 @@ def test_tiff_write_134():
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_134_src.tif')
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_134.tif')
 
+    for (inval, expected_val) in [(0, 0), (1, 0), (2, 0), (3, 0), (4, 8), (254, 255), (255, 255)]:
+        for interleave in ['BAND', 'PIXEL']:
+            ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_134.tif', 1, 1, 2, gdal.GDT_Byte, options=['DISCARD_LSB=3', 'INTERLEAVE='+interleave])
+            ds.GetRasterBand(1).Fill(inval)
+            ds = None
+            ds = gdal.Open('/vsimem/tiff_write_134.tif')
+            val1 = struct.unpack('B', ds.GetRasterBand(1).ReadRaster())[0]
+            assert val1 == expected_val, (inval, expected_val)
+            ds = None
+            gdaltest.tiff_drv.Delete('/vsimem/tiff_write_134.tif')
+
+    for (inval, expected_val) in [(-32768, -32768),
+                                  (-32767,-32768),
+                                  (-32764,-32768),
+                                  (-8, -8),
+                                  (-1, -8), # this truncation is questionable
+                                  (0, 0),
+                                  (1,0),
+                                  (3, 0),
+                                  (4,8),
+                                  (8,8),
+                                  (32766,32760),
+                                  (32767, 32760)]:
+        for interleave in ['BAND', 'PIXEL']:
+            ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_134.tif', 1, 1, 2, gdal.GDT_Int16, options=['DISCARD_LSB=3', 'INTERLEAVE='+interleave])
+            ds.GetRasterBand(1).Fill(inval)
+            ds = None
+            ds = gdal.Open('/vsimem/tiff_write_134.tif')
+            val1 = struct.unpack('h', ds.GetRasterBand(1).ReadRaster())[0]
+            assert val1 == expected_val, (inval, expected_val)
+            ds = None
+            gdaltest.tiff_drv.Delete('/vsimem/tiff_write_134.tif')
+
+    for (inval, expected_val) in [(0,0), (1,0), (3, 0), (4,8), (8,8), (65534,65528), (65535,65528)]:
+        for interleave in ['BAND', 'PIXEL']:
+            ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_134.tif', 1, 1, 2, gdal.GDT_UInt16, options=['DISCARD_LSB=3', 'INTERLEAVE='+interleave])
+            ds.GetRasterBand(1).Fill(inval)
+            ds = None
+            ds = gdal.Open('/vsimem/tiff_write_134.tif')
+            val1 = struct.unpack('H', ds.GetRasterBand(1).ReadRaster())[0]
+            assert val1 == expected_val, (inval, expected_val)
+            ds = None
+            gdaltest.tiff_drv.Delete('/vsimem/tiff_write_134.tif')
+
     for interleave in ['BAND', 'PIXEL']:
-        for dt in [gdal.GDT_Byte, gdal.GDT_UInt16, gdal.GDT_UInt32]:
+        for dt in [gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16, gdal.GDT_Int32, gdal.GDT_UInt32, gdal.GDT_Float32, gdal.GDT_Float64]:
             ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_134.tif', 1, 1, 3, dt, options=['DISCARD_LSB=3', 'INTERLEAVE='+interleave])
-            ds.GetRasterBand(1).Fill(127)
-            ds.GetRasterBand(2).Fill(127)
+            if dt == gdal.GDT_Int16:
+                ds.GetRasterBand(1).Fill(-127)
+            else:
+                ds.GetRasterBand(1).Fill(127)
+            ds.GetRasterBand(2).Fill(123)
             ds.GetRasterBand(3).Fill(127)
             ds = None
             ds = gdal.Open('/vsimem/tiff_write_134.tif')
+            val1 = struct.unpack('h', ds.GetRasterBand(1).ReadRaster(0,0,1,1,1,1,gdal.GDT_Int16))[0]
+            val2 = struct.unpack('h', ds.GetRasterBand(2).ReadRaster(0,0,1,1,1,1,gdal.GDT_Int16))[0]
+            val3 = struct.unpack('h', ds.GetRasterBand(3).ReadRaster(0,0,1,1,1,1,gdal.GDT_Int16))[0]
+            if dt in (gdal.GDT_Float32, gdal.GDT_Float64):
+                assert val1 == 127 and val2 == 123 and val3 == 127, (interleave, dt, (val1, val2, val3))
+            elif dt == gdal.GDT_Int16:
+                assert val1 == -128 and val2 == 120 and val3 == 128, (interleave, dt, (val1, val2, val3))
+            else:
+                assert val1 == 128 and val2 == 120 and val3 == 128, (interleave, dt, (val1, val2, val3))
+            ds = None
+            gdaltest.tiff_drv.Delete('/vsimem/tiff_write_134.tif')
+
+    # Test with nodata
+    for interleave in ['BAND', 'PIXEL']:
+        for dt in [gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16, gdal.GDT_Int32, gdal.GDT_UInt32, gdal.GDT_Float32, gdal.GDT_Float64]:
+            ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_134.tif', 1, 1, 2, dt, options=['DISCARD_LSB=3', 'INTERLEAVE='+interleave])
+            ds.GetRasterBand(1).SetNoDataValue(127)
+            ds.GetRasterBand(1).Fill(127)
+            ds = None
+            ds = gdal.Open('/vsimem/tiff_write_134.tif')
             val1 = struct.unpack('B', ds.GetRasterBand(1).ReadRaster(0,0,1,1,1,1,gdal.GDT_Byte))[0]
-            val2 = struct.unpack('B', ds.GetRasterBand(2).ReadRaster(0,0,1,1,1,1,gdal.GDT_Byte))[0]
-            val3 = struct.unpack('B', ds.GetRasterBand(3).ReadRaster(0,0,1,1,1,1,gdal.GDT_Byte))[0]
-            assert val1 == 124 and val2 == 124 and val3 == 124
+            assert val1 == 127, (interleave, dt, val1)
+            ds = None
+            gdaltest.tiff_drv.Delete('/vsimem/tiff_write_134.tif')
+
+    # Test with nodata and discarding non-nodata value would result to nodata without correction
+    for interleave in ['BAND', 'PIXEL']:
+        for dt in [gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16, gdal.GDT_Int32, gdal.GDT_UInt32, gdal.GDT_Float32, gdal.GDT_Float64]:
+            ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_134.tif', 1, 1, 2, dt, options=['DISCARD_LSB=3', 'INTERLEAVE='+interleave])
+            ds.GetRasterBand(1).SetNoDataValue(0)
+            ds.GetRasterBand(1).Fill(1)
+            ds = None
+            ds = gdal.Open('/vsimem/tiff_write_134.tif')
+            val1 = struct.unpack('B', ds.GetRasterBand(1).ReadRaster(0,0,1,1,1,1,gdal.GDT_Byte))[0]
+            if dt in (gdal.GDT_Float32, gdal.GDT_Float64):
+                assert val1 == 1, (interleave, dt, val1)
+            else:
+                assert val1 == 8, (interleave, dt, val1)
+            ds = None
+            gdaltest.tiff_drv.Delete('/vsimem/tiff_write_134.tif')
+
+    # Test with nodata out of range for integer values
+    for interleave in ['BAND', 'PIXEL']:
+        for dt in [gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16, gdal.GDT_Int32, gdal.GDT_UInt32, gdal.GDT_Float32, gdal.GDT_Float64]:
+            ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_134.tif', 1, 1, 2, dt, options=['DISCARD_LSB=3', 'INTERLEAVE='+interleave])
+            ds.GetRasterBand(1).SetNoDataValue(127.5)
+            ds.GetRasterBand(1).Fill(127)
+            ds = None
+            ds = gdal.Open('/vsimem/tiff_write_134.tif')
+            assert ds.GetRasterBand(1).GetNoDataValue() == 127.5
+            val1 = struct.unpack('B', ds.GetRasterBand(1).ReadRaster(0,0,1,1,1,1,gdal.GDT_Byte))[0]
+            if dt in (gdal.GDT_Float32, gdal.GDT_Float64):
+                assert val1 == 127, (interleave, dt, val1)
+            else:
+                assert val1 == 128, (interleave, dt, val1)
+            ds = None
+            gdaltest.tiff_drv.Delete('/vsimem/tiff_write_134.tif')
+
+    # Test with some non-integer float value
+    for interleave in ['BAND', 'PIXEL']:
+        for dt in [gdal.GDT_Float32, gdal.GDT_Float64]:
+            ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_134.tif', 1, 1, 2, dt, options=['DISCARD_LSB=3', 'INTERLEAVE='+interleave])
+            ds.GetRasterBand(1).Fill(-0.3)
+            ds = None
+            ds = gdal.Open('/vsimem/tiff_write_134.tif')
+            val1 = struct.unpack('d', ds.GetRasterBand(1).ReadRaster(0,0,1,1,1,1,gdal.GDT_Float64))[0]
+            assert val1 != -0.3 and abs(val1 - -0.3) < 1e-5, dt
+            ds = None
+            gdaltest.tiff_drv.Delete('/vsimem/tiff_write_134.tif')
+
+    # Test with nan
+    for interleave in ['BAND', 'PIXEL']:
+        for dt in [gdal.GDT_Float32, gdal.GDT_Float64]:
+            ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_134.tif', 1, 1, 2, dt, options=['DISCARD_LSB=3', 'INTERLEAVE='+interleave])
+            ds.GetRasterBand(1).Fill(float('nan'))
+            ds = None
+            ds = gdal.Open('/vsimem/tiff_write_134.tif')
+            val1 = struct.unpack('f', ds.GetRasterBand(1).ReadRaster(0,0,1,1,1,1,gdal.GDT_Float32))[0]
+            assert math.isnan(val1)
             ds = None
             gdaltest.tiff_drv.Delete('/vsimem/tiff_write_134.tif')
 

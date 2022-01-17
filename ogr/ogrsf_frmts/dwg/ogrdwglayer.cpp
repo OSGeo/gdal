@@ -59,6 +59,15 @@ OGRDWGLayer::OGRDWGLayer( OGRDWGDataSource *poDSIn )
         poFeatureDefn->AddFieldDefn( &oBlockAngleField );
     }
 
+    if (!poDS->GetAttributes().empty()) {
+        std::set<CPLString>::iterator it;
+        for (it = poDS->GetAttributes().begin(); it != poDS->GetAttributes().end(); ++it) {
+            OGRFieldDefn  oAttField(*it, OFTString);
+            poFeatureDefn->AddFieldDefn(&oAttField);
+        }
+      
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Find the *Paper_Space block, which seems to contain all the     */
 /*      regular entities.                                               */
@@ -1222,8 +1231,13 @@ OGRFeature *OGRDWGLayer::TranslateINSERT( OdDbEntityPtr poEntity )
             
             CPLString attrText = TextUnescape( openAttr->textString(), false );
 
-            if ( !openAttr->isInvisible() && openAttr->visibility() != OdDb::kInvisible)
+            if ( !openAttr->isInvisible() && openAttr->visibility() != OdDb::kInvisible) {
                 uAttrData.Add( CPLSPrintf("%ls", openAttr->tag().c_str()), attrText );
+                if (poDS->Attributes())
+                {
+                    poFeature->SetField(CPLSPrintf("%ls", openAttr->tag().c_str()), attrText);
+                }
+            }
         }
 
         poFeature->SetField( "BlockAttributes", uAttrData.ToString().c_str() );
@@ -1299,6 +1313,13 @@ OGRFeature *OGRDWGLayer::TranslateINSERT( OdDbEntityPtr poEntity )
 
             OGRFeature *poAttrFeat = TranslateTEXT( pAttr );
 
+            if( poDS->Attributes() )
+            {
+                CPLString attrText = TextUnescape(pAttr->textString(), false);
+                poFeature->SetField(CPLSPrintf("%ls", pAttr->tag().c_str()), attrText);
+                if (poAttrFeat)
+                    poAttrFeat->SetField(CPLSPrintf("%ls", pAttr->tag().c_str()), attrText);
+            }
             if( poAttrFeat )
                 apoPendingFeatures.push( poAttrFeat );
         }

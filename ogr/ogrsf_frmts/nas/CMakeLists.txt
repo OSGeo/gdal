@@ -11,7 +11,7 @@ add_gdal_driver(
   BUILTIN) # BUILTIN because of GML dependency
 gdal_standard_includes(ogr_NAS)
 target_include_directories(ogr_NAS PRIVATE $<TARGET_PROPERTY:ogr_GML,SOURCE_DIR>)
-if (HAVE_EXPAT)
+if (GDAL_USE_EXPAT)
   target_compile_definitions(ogr_NAS PRIVATE -DHAVE_EXPAT)
   gdal_target_link_libraries(TARGET ogr_NAS LIBRARIES EXPAT::EXPAT)
 endif ()

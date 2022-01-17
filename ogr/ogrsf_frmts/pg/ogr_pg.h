@@ -531,6 +531,8 @@ class OGRPGDataSource final: public OGRDataSource
 
     OGRErr              FlushSoftTransaction();
 
+    OGRErr              FlushCacheWithRet(bool bAtClosing);
+
   public:
     PGver               sPostgreSQLVersion = {0,0,0};
     PGver               sPostGISVersion = {0,0,0};

@@ -5,7 +5,7 @@ add_gdal_driver(
   BUILTIN)
 gdal_standard_includes(ogr_KML)
 
-if (HAVE_EXPAT)
+if (GDAL_USE_EXPAT)
   target_sources(ogr_KML PRIVATE kml.cpp kmlnode.cpp kmlvector.h kml.h kmlnode.h kmlvector.cpp)
   target_compile_definitions(ogr_KML PRIVATE -DHAVE_EXPAT)
   gdal_target_link_libraries(TARGET ogr_KML LIBRARIES EXPAT::EXPAT)

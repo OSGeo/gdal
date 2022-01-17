@@ -14,7 +14,7 @@ target_include_directories(ogr_ODS PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_BIN
                                            $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR>)
 add_executable(testparser EXCLUDE_FROM_ALL testparser.cpp)
 
-if (HAVE_EXPAT)
+if (GDAL_USE_EXPAT)
   gdal_target_link_libraries(TARGET ogr_ODS LIBRARIES EXPAT::EXPAT)
   target_compile_definitions(ogr_ODS PRIVATE -DHAVE_EXPAT=1)
 endif ()

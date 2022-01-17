@@ -100,6 +100,10 @@ the default behavior of the GRIB driver.
    Celsius (°C). With GRIB_NORMALIZE_UNITS=NO, they are reported in
    degree Kelvin (°K).
 
+-  GRIB_RESOURCE_DIR=path : Path to a directory where grib2_*.csv tables
+   are located. If not specified, the GDAL_DATA configuration option (or hard
+   coded paths) used for all GDAL resources will be used.
+
 Open options
 ------------
 

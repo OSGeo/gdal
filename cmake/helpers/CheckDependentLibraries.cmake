@@ -78,7 +78,7 @@ function (split_libpath _lib)
 endfunction ()
 
 # Custom find_package definitions
-define_find_package2(LIBCSF csf.h csf)
+
 define_find_package2(Crnlib crunch/crnlib.h crunch)
 define_find_package2(RASDAMAN rasdaman.hh raslib)
 define_find_package2(FME fmeobjects/cpp/issesion.h fme)
@@ -134,7 +134,7 @@ endif ()
 
 gdal_check_package(LibXml2 "Read and write XML formats" CAN_DISABLE)
 
-gdal_check_package(EXPAT "Read and write XML formats" RECOMMENDED)
+gdal_check_package(EXPAT "Read and write XML formats" RECOMMENDED CAN_DISABLE)
 gdal_check_package(XercesC "Read and write XML formats (needed for GMLAS and ILI drivers)" CAN_DISABLE)
 if (HAVE_EXPAT OR GDAL_USE_XERCESC)
   set(HAVE_XMLPARSER ON)
@@ -144,28 +144,32 @@ endif ()
 
 gdal_check_package(ZLIB "zlib (external)" CAN_DISABLE)
 if (NOT GDAL_USE_ZLIB)
-  set(GDAL_USE_LIBZ_INTERNAL
+  set(GDAL_USE_ZLIB_INTERNAL
       ON
       CACHE BOOL "Use internal zlib copy (if set to ON, has precedence over GDAL_USE_ZLIB)")
-  if (NOT GDAL_USE_LIBZ_INTERNAL)
-    message(FATAL_ERROR "GDAL_USE_ZLIB or GDAL_USE_LIBZ_INTERNAL must be set to ON")
+  if (NOT GDAL_USE_ZLIB_INTERNAL)
+    message(FATAL_ERROR "GDAL_USE_ZLIB or GDAL_USE_ZLIB_INTERNAL must be set to ON")
   endif ()
 else ()
-  set(GDAL_USE_LIBZ_INTERNAL
+  set(GDAL_USE_ZLIB_INTERNAL
       OFF
       CACHE BOOL "Use internal zlib copy (if set to ON, has precedence over GDAL_USE_ZLIB)")
 endif ()
 
 gdal_check_package(Deflate "Enable libdeflate compression library (complement to ZLib)" CAN_DISABLE)
 
-find_package(OpenSSL COMPONENTS Crypto SSL)
-if (OPENSSL_FOUND)
-  set(HAVE_OPENSSL
-      ON
-      CACHE INTERNAL "")
+find_package(OpenSSL COMPONENTS SSL Crypto)
+if (GDAL_USE_OPENSSL)
+  if (NOT OPENSSL_FOUND)
+    message(FATAL_ERROR "Configured to use GDAL_USE_OPENSSL, but not found")
+  endif ()
 endif ()
+cmake_dependent_option(GDAL_USE_OPENSSL "Set ON to use OpenSSL" ON OPENSSL_FOUND OFF)
+
 gdal_check_package(CryptoPP "Use crypto++ library for CPL." CAN_DISABLE)
-option(CRYPTOPPL_USE_ONLY_CRYPTODLL_ALG "Use Only cryptoDLL alg. only work on dynamic DLL" OFF)
+if (GDAL_USE_CRYPTOPP)
+  option(CRYPTOPP_USE_ONLY_CRYPTODLL_ALG "Use Only cryptoDLL alg. only work on dynamic DLL" OFF)
+endif ()
 
 find_package(PROJ 6.0 REQUIRED)
 
@@ -279,20 +283,30 @@ else ()
       CACHE BOOL "Use internal QHULL copy (if set to ON, has precedence over GDAL_USE_QHULL)")
 endif ()
 
-gdal_check_package(LIBCSF "libcsf (external, used by PCRaster driver)" CAN_DISABLE)
-if (NOT GDAL_USE_LIBCSF)
-  set(GDAL_USE_LIBCSF_INTERNAL
-      ON
-      CACHE BOOL
-            "Set ON to build pcraster driver with internal libcsf (if set to ON, has precedence over GDAL_USE_LIBCSF)")
-else ()
-  set(GDAL_USE_LIBCSF_INTERNAL
-      OFF
-      CACHE BOOL
-            "Set ON to build pcraster driver with internal libcsf (if set to ON, has precedence over GDAL_USE_LIBCSF)")
-endif ()
+# libcsf upstream is now at https://github.com/pcraster/rasterformat, but the library name has been changed to
+# pcraster_raster_format and it is forced as a static library (at least as of commit
+# https://github.com/pcraster/rasterformat/commit/88fae8652fd36d878648f3fe303306c3dc68b7e6) So do not allow external
+# libcsf for now define_find_package2(LIBCSF csf.h csf)
 
-option(GDAL_USE_LIBLERC_INTERNAL "Set ON to build mrf driver with internal libLERC" ON)
+# gdal_check_package(LIBCSF "libcsf (external, used by PCRaster driver)" CAN_DISABLE) if (NOT GDAL_USE_LIBCSF)
+# set(GDAL_USE_LIBCSF_INTERNAL ON CACHE BOOL "Set ON to build pcraster driver with internal libcsf (if set to ON, has
+# precedence over GDAL_USE_LIBCSF)") else () set(GDAL_USE_LIBCSF_INTERNAL OFF CACHE BOOL "Set ON to build pcraster
+# driver with internal libcsf (if set to ON, has precedence over GDAL_USE_LIBCSF)") endif ()
+set(GDAL_USE_LIBCSF_INTERNAL ON)
+
+option(GDAL_USE_LIBLERCV1_INTERNAL "Set ON to build mrf driver with internal libLERC V1" ON)
+
+# DISABLED_BY_DEFAULT since it prevents MRF Lerc support (see frmts/mrf/CMakeLists.txt)
+gdal_check_package(LERC "Enable LERC (external)" CAN_DISABLE DISABLED_BY_DEFAULT)
+if (NOT GDAL_USE_LERC)
+  set(GDAL_USE_LIBLERC_INTERNAL
+      ON
+      CACHE BOOL "Use internal liblerc copy (if set to ON, has precedence over GDAL_USE_LERC)")
+else ()
+  set(GDAL_USE_LIBLERC_INTERNAL
+      OFF
+      CACHE BOOL "Use internal liblerc copy (if set to ON, has precedence over GDAL_USE_LERC)")
+endif ()
 
 # Disable by default the use of external shapelib, as currently the SAOffset member that holds file offsets in it is a
 # 'unsigned long', hence 32 bit on 32 bit platforms, whereas we can handle DBFs file > 4 GB. Internal shapelib has not
@@ -403,7 +417,7 @@ gdal_check_package(FreeXL "Enable XLS driver" CAN_DISABLE)
 define_find_package2(GTA gta/gta.h gta PKGCONFIG_NAME gta)
 gdal_check_package(GTA "Enable GTA driver" CAN_DISABLE)
 
-gdal_check_package(MRSID "")
+gdal_check_package(MRSID "MrSID raster SDK" CAN_DISABLE)
 gdal_check_package(DAP "Data Access Protocol library for server and client." CAN_DISABLE)
 gdal_check_package(Armadillo "C++ library for linear algebra (used for TPS transformation)" CAN_DISABLE)
 if (ARMADILLO_FOUND)
@@ -418,10 +432,10 @@ if (ARMADILLO_FOUND)
     "
         #include <armadillo>
         int main(int argc, char** argv) {
-			arma::mat matInput(2,2);
-			const arma::mat& matInv = arma::inv(matInput);
-			return 0;
-		}
+            arma::mat matInput(2,2);
+            const arma::mat& matInv = arma::inv(matInput);
+            return 0;
+        }
     "
     ARMADILLO_TEST_PROGRAM_WITHOUT_LAPACK_COMPILES)
   unset(CMAKE_MSVC_RUNTIME_LIBRARY)
@@ -440,11 +454,11 @@ if (ARMADILLO_FOUND)
         "
         #include <armadillo>
         int main(int argc, char** argv) {
-			arma::mat matInput(2,2);
-			const arma::mat& matInv = arma::inv(matInput);
-			return 0;
-		}
-    "
+            arma::mat matInput(2,2);
+            const arma::mat& matInv = arma::inv(matInput);
+            return 0;
+        }
+        "
         ARMADILLO_TEST_PROGRAM_WITH_LAPACK_COMPILES)
       unset(CMAKE_MSVC_RUNTIME_LIBRARY)
       unset(CMAKE_TRY_COMPILE_CONFIGURATION)
@@ -475,7 +489,7 @@ gdal_check_package(KEA "Enable KEA driver" CAN_DISABLE)
 
 gdal_check_package(ECW "Enable ECW driver")
 gdal_check_package(NetCDF "Enable netCDF driver" CAN_DISABLE)
-gdal_check_package(OGDI "Enable ogr_OGDI driver")
+gdal_check_package(OGDI "Enable ogr_OGDI driver" CAN_DISABLE)
 # OpenCL warping gives different results than the ones expected by autotest, so disable it by default even if found.
 gdal_check_package(OpenCL "Enable OpenCL (may be used for warping)" DISABLED_BY_DEFAULT)
 gdal_check_package(PostgreSQL "" CAN_DISABLE)
@@ -537,6 +551,8 @@ else ()
 endif ()
 unset(TMP_GRASS)
 
+gdal_check_package(HDFS "Enable Hadoop File System through native library" CAN_DISABLE)
+
 # PDF library: one of them enables PDF driver
 gdal_check_package(Poppler "Enable PDF driver (read side)" CAN_DISABLE)
 
@@ -557,7 +573,7 @@ gdal_check_package(Oracle "Enable Oracle OCI driver")
 gdal_check_package(TEIGHA "Enable DWG and DGNv8 drivers" CAN_DISABLE)
 gdal_check_package(FileGDB "Enable FileGDB (based on closed-source SDK) driver" CAN_DISABLE)
 
-option(GDAL_USE_MSG
+option(GDAL_USE_PUBLICDECOMPWT
        "Set ON to build MSG driver and download external https://gitlab.eumetsat.int/open-source/PublicDecompWT" OFF)
 
 # proprietary libraries KAKADU
