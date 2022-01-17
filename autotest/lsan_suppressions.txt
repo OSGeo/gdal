@@ -1,0 +1,12 @@
+leak:SwigPyClientData_New
+leak:spatialite_alloc_connection
+leak:/usr/bin/zip
+leak:/usr/lib/x86_64-linux-gnu/libfontconfig.so.1
+leak:/usr/bin/python2.7
+leak:/usr/lib/python2.7/lib-dynload/_ctypes.x86_64-linux-gnu.so
+leak:/usr/bin/python3.6
+leak:/usr/lib/python3.6/lib-dynload/_ctypes.x86_64-linux-gnu.so
+leak:/usr/local/lib/python3.6/dist-packages/numpy/core/_multiarray_umath.cpython-36m-x86_64-linux-gnu.so
+leak:PyDataMem_NEW
+leak:PyArray_NewFromDescr_int
+leak:/usr/bin/python3.8
