@@ -71,7 +71,7 @@ Policy
 
 - New contributions may require a significant review effort from a GDAL committer (ie
   someone with direct modification rights to the source repository). While the
-  project has now access to funded maintainers, it must be understood that they might not be
+  project has funded maintainers, it must be understood that they might not be
   immediately available to do reviews of significant code additions. Contributors
   may contract GDAL committers to have such task done within a more predictable timeline.
 
