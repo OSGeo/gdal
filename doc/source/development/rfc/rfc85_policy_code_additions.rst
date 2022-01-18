@@ -46,7 +46,7 @@ Policy
   a complicated registration process, the GDAL team is unlikely to support
   driver inclusion.
 
-- If the binary SDK is no longer current, or modernized to work with latest
+- If the binary SDK is no longer supported, or modernized to work with current
   compilers and GDAL, the driver can be dropped. This rule also applies to open-source
   dependencies that are no longer maintained or are superseded by other alternatives.
 
