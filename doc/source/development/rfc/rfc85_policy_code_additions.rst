@@ -15,7 +15,7 @@ Summary
 -------
 
 This document describes the policies that the GDAL project will apply to assess
-substantial code additions, typically new drivers, in particular coming for new
+substantial code additions, typically new drivers, in particular coming from new
 contributors to the project.
 
 Motivation
