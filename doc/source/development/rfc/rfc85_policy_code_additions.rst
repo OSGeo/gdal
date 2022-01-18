@@ -30,7 +30,7 @@ new maintainers.
 
 Being a free & open-source project, the GDAL project will apply stronger scrutiny to
 code that requires a binary SDK and encourage contributors to submit code additions
-that do not depend on such binary SDK or license such SDK under free & open-source
+that do not depend on such binary SDK, or license SDKs under free & open-source
 license terms.
 
 Policy
