@@ -63,7 +63,7 @@ Policy
   day-to-day life of the project, and need to monitor closely the communication
   channels of the project: issue tracker, mailing lists, etc. They are expected at
   a minimum to respond in a timely manner to changes that affect the whole project:
-  CI, build scripts,upgrade of dependencies & build tools, documentation etc.
+  CI, build scripts, upgrade of dependencies & build tools, documentation etc.
   They are also expected to help sharing the burden of maintenance and participate
   to the global health of the project by doing pull request reviews, tackling general
   bug reports, functional enhancements, documentation and infrastructure enhancements,
