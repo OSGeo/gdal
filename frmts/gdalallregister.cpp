@@ -62,8 +62,12 @@ static char *szConfiguredFormats = "GDAL_FORMATS";
 void CPL_STDCALL GDALAllRegister()
 
 {
+    auto poDriverManager = GetGDALDriverManager();
     // AutoLoadDrivers is a no-op if compiled with GDAL_NO_AUTOLOAD defined.
-    GetGDALDriverManager()->AutoLoadDrivers();
+    poDriverManager->AutoLoadDrivers();
+
+    // NOTE: frmts/drivers.ini in the same directory should be kept in same
+    // order as this file
 
 #ifdef FRMT_vrt
     GDALRegister_VRT();
@@ -349,10 +353,6 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_COASP();
 #endif
 
-#ifdef FRMT_tms
-    GDALRegister_TMS();
-#endif
-
 #ifdef FRMT_r
     GDALRegister_R();
 #endif
@@ -592,7 +592,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_STACIT();
 #endif
 
-    // NOTE: you need to generally your own driver before that line.
+    // NOTE: you need to generally insert your own driver before that line.
+
+    // NOTE: frmts/drivers.ini in the same directory should be kept in same
+    // order as this file
 
 /* -------------------------------------------------------------------- */
 /*     GNM and OGR drivers                                              */
@@ -627,11 +630,13 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_HTTP();
 #endif
 
-    GetGDALDriverManager()->AutoLoadPythonDrivers();
+    poDriverManager->AutoLoadPythonDrivers();
 
 /* -------------------------------------------------------------------- */
 /*      Deregister any drivers explicitly marked as suppressed by the   */
 /*      GDAL_SKIP environment variable.                                 */
 /* -------------------------------------------------------------------- */
-    GetGDALDriverManager()->AutoSkipDrivers();
+    poDriverManager->AutoSkipDrivers();
+
+    poDriverManager->ReorderDrivers();
 }

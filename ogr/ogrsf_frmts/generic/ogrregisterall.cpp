@@ -42,6 +42,9 @@ void OGRRegisterAll()
 
 void OGRRegisterAllInternal()
 {
+    // NOTE: frmts/drivers.ini in the same directory should be kept in same
+    // order as this file
+
 #ifdef DB2_ENABLED
     RegisterOGRDB2();
 #endif
@@ -290,6 +293,11 @@ void OGRRegisterAllInternal()
 #ifdef MAPML_ENABLED
     RegisterOGRMapML();
 #endif
+
+    // NOTE: you need to generally insert your own driver before that line.
+
+    // NOTE: frmts/drivers.ini in the same directory should be kept in same
+    // order as this file
 
 /* Put TIGER and AVCBIN at end since they need poOpenInfo->GetSiblingFiles() */
 #ifdef TIGER_ENABLED
