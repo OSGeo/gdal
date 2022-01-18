@@ -701,17 +701,14 @@ CPLErr JPEG_Band::Compress(buf_mgr &dst, buf_mgr &src) {
     if (GDT_Byte != img.dt)
         return codec.CompressJPEG12(dst, src);
 #endif
-#if defined(BRUNSLI)
+#if !defined(BRUNSLI)
+    return codec.CompressJPEG(dst, src);
+#else
     auto dst_size = dst.size; // Save the original size
-#endif
     auto err_code = codec.CompressJPEG(dst, src);
     if (codec.JFIF || err_code != CE_None)
         return err_code;
 
-#if !defined(BRUNSLI)
-    CPLError(CE_Failure, CPLE_NotSupported, "MRF: JPEG-XL (brunsli) compression requested, yet this GDAL was not compiled with BRUNSLI support");
-    return CE_Failure;
-#else
     // The JFIF is in dst buffer
     std::vector<GByte> out;
     if (!EncodeBrunsli(dst.size, reinterpret_cast<uint8_t*>(dst.buffer), &out, brunsli_fun_callback)) {
