@@ -66,7 +66,7 @@ Policy
   day-to-day life of the GDAL project, and need to monitor closely the communication
   channels of the project: issue tracker, mailing lists, etc.
   
-- Maintainers are expected to supporting their contributions by triaging bug reports,
+- Maintainers are expected to support their contributions by triaging bug reports,
   reviewing related pull requests and RFCs, making functional enhancements, testing
   releases, and improving documentation, tests, and infrastructure.
 
