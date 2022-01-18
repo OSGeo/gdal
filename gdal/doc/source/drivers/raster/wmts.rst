@@ -65,8 +65,7 @@ The WMTS driver can open :
 
       gdalinfo "WMTS:http://maps.wien.gv.at/wmts/1.0.0/WMTSCapabilities.xml,layer=lb"
 
--  the *WMTS:* prefix with open options URL (required), LAYER,
-   TILEMATRIXSET, TILEMATRIX, ZOOM_LEVEL, STYLE, EXTENDBEYONDDATELINE.
+-  the *WMTS:* prefix with open options
 
    ::
 
@@ -77,6 +76,65 @@ disambiguation was done with the layer parameter/open option, or if a
 layer has more than one style or a tile matrix set, a list of
 subdatasets will be returned. If there is only one layer, it will be
 opened on the default style and the first tile matrix set listed.
+
+Open options
+------------
+
+The following open options are available:
+
+- **URL**: URL (or filename for local files) to GetCapabilities response document.
+  Required if not specified in the connection string (e.g if using "WMTS:" only)
+
+- **LAYER**: Layer identifier
+
+- **TILEMATRIXSET**: Tile Matrix Set identifier, which determines the CRS into
+  which the layer will be exposed. Must be one of the listed tile matrix
+  for the layer.
+
+- **TILEMATRIX**: Tile Matrix identifier. Must be one of the listed tile matrix of
+  the select tile matrix set for the layer. Mutually exclusive with ZOOM_LEVEL.
+  If not specified the last tile matrix, i.e. the one with the best resolution,
+  is selected.
+
+- **ZOOM_LEVEL**: Index of the maximum zoom level tile matrix to use for the
+  full resolution GDAL dataset (lower zoom levels will be used for overviews).
+  The first one (ie the one of lower resolution) is indexed 0.
+  Mutually exclusive with TILEMATRIX.
+  If not specified the last tile matrix, i.e. the one with the best resolution,
+  is selected.
+
+- **STYLE**: Style identifier. Must be one of layer.
+
+- **EXTENDBEYONDDATELINE** = YES/NO.  Whether to make the extent go over dateline
+  and warp tile requests. See ExtendBeyondDateLine parameter of the local service
+  description XML file described below for more details.
+
+- **EXTENT_METHOD** = AUTO/LAYER_BBOX/TILE_MATRIX_SET/MOST_PRECISE_TILE_MATRIX.
+  GDAL needs to retrieve an extent for the layer. Different sources are possible.
+  WGS84BoundingBox element at the Layer level, BoundingBox elements with potentially
+  several CRS at the Layer level, BoundingBox of the TileMatrixSet definitions
+  shared by all layers, and TileMatrixLimit definitions at the Layer level.
+  By default (AUTO), GDAL will try first with a WGS84BoundingBox/BoundingBox corresponding
+  to the CRS implied by the select TileMatrixSet. If not available, if will
+  fallback to a BoundingBox in another CRS and reproject it to the selected CRS.
+  If not available, it will fallback to the most precise tile matrix of the
+  selected TileMatrixSet and will clip it with the bounding box implied by the
+  most precise zoom level of the TileMatrixLimit of the layer.
+  If LAYER_BBOX is specified, only WGS84BoundingBox/BoundingBox elements are
+  considered.
+  If TILE_MATRIX_SET is specified, the BoundingBox element of the selected
+  TileMatrixSet will be used.
+  If MOST_PRECISE_TILE_MATRIX is specified, the implit extent of the
+  most precise tile matrix will be used.
+
+- **CLIP_EXTENT_WITH_MOST_PRECISE_TILE_MATRIX** = YES/NO (GDAL >= 3.4.2).
+  Whether to use the implied bounds of the most precise TileMatrix to clip the
+  layer extent (defaults to NO if the layer bounding box is used, YES otherwise)
+
+- **CLIP_EXTENT_WITH_MOST_PRECISE_TILE_MATRIX_LIMITS** = YES/NO (GDAL >= 3.4.2).
+  Whether to use the implied bounds of the most precise TileMatrixLimit to clip the
+  layer extent (defaults to NO if the layer bounding box is used, YES otherwise)
+
 
 Local service description XML file
 ----------------------------------
