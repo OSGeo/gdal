@@ -25,7 +25,7 @@ The GDAL project has historically been quite open to new code additions, includi
 drivers that rely on proprietary licensed and/or closed-source SDKs (called
 "binary SDK" in the rest of this document). This approach is part
 of its strengths, but also comes at a price, with the software becoming larger
-and larger, with sometimes contributions being abandoned by their authors without
+and larger, and with contributions sometimes being abandoned by their authors without
 new maintainers.
 
 Being a free & open-source project, the GDAL project will apply stronger scrutiny to
