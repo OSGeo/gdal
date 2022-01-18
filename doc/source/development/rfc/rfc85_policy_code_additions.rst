@@ -45,6 +45,9 @@ Policy
 - If the driver require a binary SDK not downloadable without cost, or that requires
   a complicated registration process, the GDAL team is unlikely to support
   driver inclusion.
+- GDAL supports multiple operating systems, and new drivers should support as many as
+  is practical. At a minimum, drivers should work with the latest and OS-vendor supported
+  releases of operating systems the driver is documented to work with.
 
 - If the binary SDK is no longer supported, or modernized to work with current
   compilers and GDAL, the driver can be dropped. This rule also applies to open-source
