@@ -62,15 +62,17 @@ Policy
   2 month time-frame, it can be dropped from the tree entirely by a designated
   GDAL maintainer for all releases going forward.
 
-- Contributors of significant code additions are expected to participate to the
-  day-to-day life of the project, and need to monitor closely the communication
-  channels of the project: issue tracker, mailing lists, etc. They are expected at
-  a minimum to respond in a timely manner to changes that affect the whole project:
-  CI, build scripts, upgrade of dependencies & build tools, documentation etc.
-  They are also expected to help sharing the burden of maintenance and participate
-  to the global health of the project by doing pull request reviews, tackling general
-  bug reports, functional enhancements, documentation and infrastructure enhancements,
-  etc.
+- Contributors of significant code additions are expected to participate in the
+  day-to-day life of the GDAL project, and need to monitor closely the communication
+  channels of the project: issue tracker, mailing lists, etc.
+  
+- Maintainers are expected to supporting their contributions by triaging bug reports,
+  reviewing related pull requests and RFCs, making functional enhancements, testing
+  releases, and improving documentation, tests, and infrastructure.
+
+- In addition, maintainers are expected to respond in a timely manner to wider 
+  project changes (CI, build scripts, upgrade of dependencies, build tools,
+  documentation, etc.) as it pertains to their contributions.
 
 - New contributions may require a significant review effort from a GDAL committer (ie
   someone with direct modification rights to the source repository). While the
