@@ -57,7 +57,7 @@ static void *pCacheFlushHelperHandlerUserData = nullptr;
 * @param cacheManager unused for now, just in case in the future a cache redesign could allow several cache block pools
 */
 bool CPL_STDCALL
-ApplyCacheHelperFlushHandler( const GDALDataset* currentDataset, const GDALDataset* datasetThatCouldBeFlushed, void* CPL_UNUSED cacheManager)
+ApplyCacheHelperFlushHandler( const GDALDataset* currentDataset, const GDALDataset* datasetThatCouldBeFlushed, void* cacheManager)
 {
     bool result = false;
     if( pfnCacheFlushHelperHandler != nullptr ) //quick test to avoid locking
@@ -79,7 +79,7 @@ ApplyCacheHelperFlushHandler( const GDALDataset* currentDataset, const GDALDatas
 */
 
 GDALCacheFlushHelperHandler CPL_STDCALL
-GDALSetCacheFlushHelperHandler(GDALCacheFlushHelperHandler pfnCacheHelperHandlerNew, void* cacheManager, void* pUserData)
+GDALSetCacheFlushHelperHandler(GDALCacheFlushHelperHandler pfnCacheHelperHandlerNew, void* CPL_UNUSED cacheManager, void* pUserData)
 {
     GDALCacheFlushHelperHandler pfnOldHandler = nullptr;
     CPLMutexHolderD( &hCacheHelperMutex );
