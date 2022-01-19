@@ -314,15 +314,6 @@ static const char * const apszRPCTXT20ValItems[] =
     nullptr
 };
 
-static const char * const apszRPCTXT20ValItemsLonLat[] =
-{
-    RPC_LAT_NUM_COEFF,
-    RPC_LAT_DEN_COEFF,
-    RPC_LON_NUM_COEFF,
-    RPC_LON_DEN_COEFF,
-    nullptr
-};
-
 char** GDALMDReaderPleiades::LoadRPCXmlFile()
 {
     CPLXMLNode* pNode = CPLParseXMLFile(m_osRPBSourceFilename);
