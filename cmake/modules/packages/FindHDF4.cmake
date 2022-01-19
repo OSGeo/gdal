@@ -38,6 +38,7 @@ find_path(HDF4_INCLUDE_DIR hdf.h
           hdf
           hdf4
           )
+mark_as_advanced(HDF4_INCLUDE_DIR)
 
 if(HDF4_INCLUDE_DIR AND EXISTS "${HDF4_INCLUDE_DIR}/hfile.h")
     file(STRINGS "${HDF4_INCLUDE_DIR}/hfile.h" hdf4_version_string

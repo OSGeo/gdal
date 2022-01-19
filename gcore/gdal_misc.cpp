@@ -679,7 +679,7 @@ template<class T> static inline void ClampAndRound(
 /**
  * \brief Adjust a value to the output data type
  *
- * Adjustment consist in clamping to minimum/maxmimum values of the data type
+ * Adjustment consist in clamping to minimum/maximum values of the data type
  * and rounding for integral types.
  *
  * @param eDT target data type.

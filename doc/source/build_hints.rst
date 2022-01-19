@@ -276,6 +276,11 @@ It is also required for the :ref:`/vsicrypt/ <vsicrypt>` virtual file system.
     ``CRYPTOPP_LIBRARY_DEBUG`` can also be specified to a similar library for
     building Debug releases.
 
+.. option:: CRYPTOPP_USE_ONLY_CRYPTODLL_ALG=ON/OFF
+
+    Defaults to OFF. Might be required to set to ON when linking against
+    cryptopp.dll
+
 .. option:: GDAL_USE_CRYPTOPP=ON/OFF
 
     Control whether to use CryptoPP. Defaults to ON when CryptoPP is found.
@@ -600,6 +605,25 @@ The `HDF5 <https://github.com/HDFGroup/hdf5>`_ C library is needed for the
 The HDF5 CXX library is needed for the :ref:`raster.kea` driver.
 The https://cmake.org/cmake/help/latest/module/FindHDF5.html module is used to
 detect the HDF5 library.
+
+
+HDFS
+****
+
+The `Hadoop File System <https://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-hdfs/LibHdfs.html>`_ native library is needed
+for the :ref:`/vsihdfs/ <vsihdfs>` virtual file system.
+
+.. option:: HDFS_INCLUDE_DIR
+
+    Path to an include directory with the ``hdfs.h`` header file.
+
+.. option:: HDFS_LIBRARY
+
+    Path to a shared or static ``hdfs`` library file.
+
+.. option:: GDAL_USE_HDFS=ON/OFF
+
+    Control whether to use HDFS. Defaults to ON when HDFS is found.
 
 
 Iconv
@@ -1677,6 +1701,14 @@ that are not part of GDAL core dependencies (e.g. are netCDF, HDF4, Oracle, PDF,
     dependencies that are part of GDAL core dependencies (e.g GPX).
     Building such drivers as plugins is generally not necessary, hence
     the use of a different option from GDAL_ENABLE_PLUGINS.
+
+In some circumstances, it might be desirable to prevent loading of GDAL plugins.
+This can be done with:
+
+.. option:: GDAL_AUTOLOAD_PLUGINS:BOOL=ON/OFF
+
+    Set to OFF to disable loading of GDAL plugins. Default is ON.
+
 
 Python bindings options
 +++++++++++++++++++++++

@@ -1,10 +1,12 @@
 # CMake4GDAL project is distributed under X/MIT license. See accompanying file LICENSE.txt.
 
+#[[
 option(AUTOTEST_DOWNLOAD_TEST_DATA "Autotest to download test data" OFF)
 option(AUTOTEST_SLOW_TEST "Autotest to run slow test" OFF)
 if (NOT DEFINED ENV{CTEST_PARALLEL_LEVEL})
   set(PARALLEL_OPTION "-j1")
 endif ()
+]]
 
 if (Python_Interpreter_FOUND)
 

@@ -72,6 +72,15 @@ if (GDAL_USE_XERCESC)
     PROPERTY COMPILE_DEFINITIONS HAVE_XERCES)
 endif ()
 
+option(GDAL_AUTOLOAD_PLUGINS "Set to OFF to prevent any attempt at loading plugins" ON)
+mark_as_advanced(GDAL_AUTOLOAD_PLUGINS)
+if (NOT GDAL_AUTOLOAD_PLUGINS)
+  set_property(
+    SOURCE gdaldrivermanager.cpp
+    APPEND
+    PROPERTY COMPILE_DEFINITIONS GDAL_NO_AUTOLOAD)
+endif ()
+
 if (HAVE_SSSE3_AT_COMPILE_TIME)
   target_compile_definitions(gcore PRIVATE -DHAVE_SSSE3_AT_COMPILE_TIME)
   target_sources(gcore PRIVATE rasterio_ssse3.cpp)

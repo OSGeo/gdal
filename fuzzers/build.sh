@@ -83,14 +83,29 @@ make install
 cd ..
 
 # build poppler
+
+# We *need* to build with the sanitize flags for the address sanitizer,
+# because the C++ library is built with
+# https://github.com/google/sanitizers/wiki/AddressSanitizerContainerOverflow enabled
+# and we'd get false-positives (https://github.com/google/sanitizers/wiki/AddressSanitizerContainerOverflow#false-positives)
+# as https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=43668 if we don't
+# build GDAL's dependencies with different flags
+if [ "$SANITIZER" = "address" ]; then
+  POPPLER_C_FLAGS=$CFLAGS
+  POPPLER_CXX_FLAGS=$CXXFLAGS
+else
+  POPPLER_C_FLAGS=$NON_FUZZING_CFLAGS
+  POPPLER_CXX_FLAGS=$NON_FUZZING_CXXFLAGS
+fi
+
 cd poppler
 mkdir -p build
 cd build
 cmake .. \
   -DCMAKE_INSTALL_PREFIX=$SRC/install \
   -DCMAKE_BUILD_TYPE=debug \
-  -DCMAKE_C_FLAGS="$NON_FUZZING_CFLAGS" \
-  -DCMAKE_CXX_FLAGS="$NON_FUZZING_CXXFLAGS" \
+  -DCMAKE_C_FLAGS="$POPPLER_C_FLAGS" \
+  -DCMAKE_CXX_FLAGS="$POPPLER_CXX_FLAGS" \
   -DENABLE_UNSTABLE_API_ABI_HEADERS=ON \
   -DBUILD_SHARED_LIBS=OFF \
   -DFONT_CONFIGURATION=generic \

@@ -45,7 +45,7 @@
 39,"ALRRC","Altimeter Range Relative Correction","-","UC_NONE"
 40,"MNWSOW","10 Metre Neutral Wind Speed Over Waves","m/s","UC_NONE"
 41,"MWDIRW","10 Metre Wind Direction Over Waves","Degree true","UC_NONE"
-42,"WESP","Wave Engery Spectrum","s/((m^2)*rad)","UC_NONE"
+42,"WESP","Wave Energy Spectrum","s/((m^2)*rad)","UC_NONE"
 43,"KSSEW","Kurtosis of The Sea Surface Elevation Due to Waves","-","UC_NONE"
 44,"BENINX","Benjamin-Feir Index","-","UC_NONE"
 45,"SPFTR","Spectral Peakedness Factor","1/s","UC_NONE"

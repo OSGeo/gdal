@@ -1,7 +1,6 @@
 add_library(
   libjson OBJECT
   arraylist.h
-  bits.h
   config.h
   debug.h
   json.h
@@ -24,7 +23,9 @@ add_library(
   json_tokener.c
   json_util.c
   linkhash.c
-  printbuf.c)
+  printbuf.c
+  random_seed.c
+  strerror_override.c)
 # -D_XOPEN_SOURCE=700 to enable strdup() definition in C11 mode
 target_compile_definitions(libjson PRIVATE -D_XOPEN_SOURCE=700)
 target_include_directories(libjson PRIVATE $<TARGET_PROPERTY:cpl,SOURCE_DIR> $<TARGET_PROPERTY:cpl,BINARY_DIR>)

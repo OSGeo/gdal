@@ -1,10 +1,10 @@
 # CMake4GDAL project is distributed under X/MIT license. See accompanying file LICENSE.txt.
 
 # Switches to control build targets(cached)
-option(ENABLE_GNM "Build GNM module" ON)
-option(ENABLE_PAM "Set ON to enable pam" ON)
-option(BUILD_APPS "Build command utilities" ON)
-option(BUILD_DOCS "Build documents" ON)
+option(ENABLE_GNM "Build GNM (Geography Network Model) component" ON)
+option(ENABLE_PAM "Set ON to enable Persistent Auxiliary Metadata (.aux.xml)" ON)
+option(BUILD_APPS "Build command line utilities" ON)
+option(BUILD_DOCS "Build documentation" ON)
 
 # This option is to build drivers as plugins, for drivers that have external dependencies, that are not parf of GDAL
 # core dependencies Examples are netCDF, HDF4, Oracle, PDF, etc. This global setting can be overridden at the driver
@@ -16,9 +16,10 @@ option(GDAL_ENABLE_PLUGINS "Set ON to build drivers that have non-core external 
 option(GDAL_ENABLE_PLUGINS_NO_DEPS "Set ON to build drivers that have no non-core external dependencies as plugin" OFF)
 mark_as_advanced(GDAL_ENABLE_PLUGINS_NO_DEPS)
 
-option(GDAL_ENABLE_QHULL "use qhull" ON)
 option(ENABLE_IPO "Enable Inter-Procedural Optimization if possible" OFF)
-option(GDAL_ENABLE_MACOSX_FRAMEWORK "Enable Framework on Mac OS X" OFF)
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  option(GDAL_ENABLE_MACOSX_FRAMEWORK "Enable Framework on Mac OS X" OFF)
+endif ()
 option(GDAL_BUILD_OPTIONAL_DRIVERS "Whether to build GDAL optional drivers by default" ON)
 option(OGR_BUILD_OPTIONAL_DRIVERS "Whether to build OGR optional drivers by default" ON)
 
@@ -161,6 +162,15 @@ else ()
   check_cxx_compiler_flag(-Weffc++ HAVE_WFLAG_EFFCXX)
   if (HAVE_WFLAG_EFFCXX)
     set(WFLAG_EFFCXX -Weffc++)
+  endif ()
+
+  if (CMAKE_BUILD_TYPE MATCHES Debug)
+    add_definitions(-DDEBUG)
+    check_c_compiler_flag(-ftrapv HAVE_FTRAPV)
+    if (HAVE_FTRAPV)
+      set(GDAL_C_WARNING_FLAGS ${GDAL_C_WARNING_FLAGS} -ftrapv)
+      set(GDAL_CXX_WARNING_FLAGS ${GDAL_CXX_WARNING_FLAGS} -ftrapv)
+    endif ()
   endif ()
 
 endif ()
