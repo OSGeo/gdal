@@ -431,6 +431,7 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandlerBase
                      vsi_l_offset nSourceSize,
                      const char* pszSource,
                      const char* pszTarget,
+                     CSLConstList papszOptions,
                      GDALProgressFunc pProgressFunc,
                      void *pProgressData);
     virtual int MkdirInternal( const char *pszDirname, long nMode, bool bDoStatCheck );
@@ -447,6 +448,8 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandlerBase
                                  CSLConstList papszMetadata );
 
     int RmdirRecursiveInternal( const char* pszDirname, int nBatchSize);
+
+    virtual bool IsAllowedHeaderForObjectCreation( const char* /* pszHeaderName */ ) { return false; }
 
     IVSIS3LikeFSHandler() = default;
 
