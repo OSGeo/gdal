@@ -414,3 +414,15 @@ def test_gdalbuildvrt_lib_warnings_and_custom_error_handler():
     assert vrt_ds
     assert not err_handler.got_failure
     assert err_handler.got_warning
+
+
+###############################################################################
+def test_gdalbuildvrt_lib_strict_mode():
+
+    with gdaltest.enable_exceptions():
+        with gdaltest.error_handler():
+            assert gdal.BuildVRT('', ['../gcore/data/byte.tif', 'i_dont_exist.tif'], strict = False) is not None
+
+    with gdaltest.enable_exceptions():
+        with pytest.raises(Exception):
+            gdal.BuildVRT('', ['../gcore/data/byte.tif', 'i_dont_exist.tif'], strict = True)
