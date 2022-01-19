@@ -1,10 +1,10 @@
 # CMake4GDAL project is distributed under X/MIT license. See accompanying file LICENSE.txt.
 
 # Switches to control build targets(cached)
-option(ENABLE_GNM "Build GNM module" ON)
-option(ENABLE_PAM "Set ON to enable pam" ON)
-option(BUILD_APPS "Build command utilities" ON)
-option(BUILD_DOCS "Build documents" ON)
+option(ENABLE_GNM "Build GNM (Geography Network Model) component" ON)
+option(ENABLE_PAM "Set ON to enable Persistent Auxiliary Metadata (.aux.xml)" ON)
+option(BUILD_APPS "Build command line utilities" ON)
+option(BUILD_DOCS "Build documentation" ON)
 
 # This option is to build drivers as plugins, for drivers that have external dependencies, that are not parf of GDAL
 # core dependencies Examples are netCDF, HDF4, Oracle, PDF, etc. This global setting can be overridden at the driver
@@ -16,9 +16,10 @@ option(GDAL_ENABLE_PLUGINS "Set ON to build drivers that have non-core external 
 option(GDAL_ENABLE_PLUGINS_NO_DEPS "Set ON to build drivers that have no non-core external dependencies as plugin" OFF)
 mark_as_advanced(GDAL_ENABLE_PLUGINS_NO_DEPS)
 
-option(GDAL_ENABLE_QHULL "use qhull" ON)
 option(ENABLE_IPO "Enable Inter-Procedural Optimization if possible" OFF)
-option(GDAL_ENABLE_MACOSX_FRAMEWORK "Enable Framework on Mac OS X" OFF)
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  option(GDAL_ENABLE_MACOSX_FRAMEWORK "Enable Framework on Mac OS X" OFF)
+endif ()
 option(GDAL_BUILD_OPTIONAL_DRIVERS "Whether to build GDAL optional drivers by default" ON)
 option(OGR_BUILD_OPTIONAL_DRIVERS "Whether to build OGR optional drivers by default" ON)
 
@@ -164,6 +165,15 @@ else ()
   check_cxx_compiler_flag(-Weffc++ HAVE_WFLAG_EFFCXX)
   if (HAVE_WFLAG_EFFCXX)
     set(WFLAG_EFFCXX -Weffc++)
+  endif ()
+
+  if (CMAKE_BUILD_TYPE MATCHES Debug)
+    add_definitions(-DDEBUG)
+    check_c_compiler_flag(-ftrapv HAVE_FTRAPV)
+    if (HAVE_FTRAPV)
+      set(GDAL_C_WARNING_FLAGS ${GDAL_C_WARNING_FLAGS} -ftrapv)
+      set(GDAL_CXX_WARNING_FLAGS ${GDAL_CXX_WARNING_FLAGS} -ftrapv)
+    endif ()
   endif ()
 
 endif ()
@@ -478,6 +488,69 @@ set(GDAL_DATA_FILES
     data/gml_registry.xml
     data/gmlasconf.xml
     data/gmlasconf.xsd
+    data/grib2_table_versions.csv
+    data/grib2_center.csv
+    data/grib2_process.csv
+    data/grib2_subcenter.csv
+    data/grib2_table_4_2_0_0.csv
+    data/grib2_table_4_2_0_13.csv
+    data/grib2_table_4_2_0_14.csv
+    data/grib2_table_4_2_0_15.csv
+    data/grib2_table_4_2_0_16.csv
+    data/grib2_table_4_2_0_17.csv
+    data/grib2_table_4_2_0_18.csv
+    data/grib2_table_4_2_0_190.csv
+    data/grib2_table_4_2_0_191.csv
+    data/grib2_table_4_2_0_19.csv
+    data/grib2_table_4_2_0_1.csv
+    data/grib2_table_4_2_0_20.csv
+    data/grib2_table_4_2_0_2.csv
+    data/grib2_table_4_2_0_3.csv
+    data/grib2_table_4_2_0_4.csv
+    data/grib2_table_4_2_0_5.csv
+    data/grib2_table_4_2_0_6.csv
+    data/grib2_table_4_2_0_7.csv
+    data/grib2_table_4_2_10_0.csv
+    data/grib2_table_4_2_10_191.csv
+    data/grib2_table_4_2_10_1.csv
+    data/grib2_table_4_2_10_2.csv
+    data/grib2_table_4_2_10_3.csv
+    data/grib2_table_4_2_10_4.csv
+    data/grib2_table_4_2_1_0.csv
+    data/grib2_table_4_2_1_1.csv
+    data/grib2_table_4_2_1_2.csv
+    data/grib2_table_4_2_20_0.csv
+    data/grib2_table_4_2_20_1.csv
+    data/grib2_table_4_2_20_2.csv
+    data/grib2_table_4_2_2_0.csv
+    data/grib2_table_4_2_2_3.csv
+    data/grib2_table_4_2_2_4.csv
+    data/grib2_table_4_2_2_5.csv
+    data/grib2_table_4_2_3_0.csv
+    data/grib2_table_4_2_3_1.csv
+    data/grib2_table_4_2_3_2.csv
+    data/grib2_table_4_2_3_3.csv
+    data/grib2_table_4_2_3_4.csv
+    data/grib2_table_4_2_3_5.csv
+    data/grib2_table_4_2_3_6.csv
+    data/grib2_table_4_2_4_0.csv
+    data/grib2_table_4_2_4_10.csv
+    data/grib2_table_4_2_4_1.csv
+    data/grib2_table_4_2_4_2.csv
+    data/grib2_table_4_2_4_3.csv
+    data/grib2_table_4_2_4_4.csv
+    data/grib2_table_4_2_4_5.csv
+    data/grib2_table_4_2_4_6.csv
+    data/grib2_table_4_2_4_7.csv
+    data/grib2_table_4_2_4_8.csv
+    data/grib2_table_4_2_4_9.csv
+    data/grib2_table_4_2_local_Canada.csv
+    data/grib2_table_4_2_local_HPC.csv
+    data/grib2_table_4_2_local_index.csv
+    data/grib2_table_4_2_local_MRMS.csv
+    data/grib2_table_4_2_local_NCEP.csv
+    data/grib2_table_4_2_local_NDFD.csv
+    data/grib2_table_4_5.csv
     data/gt_datum.csv
     data/gt_ellips.csv
     data/header.dxf
@@ -640,12 +713,15 @@ add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_D
 include(SystemSummary)
 system_summary(DESCRIPTION "GDAL is now configured on;")
 
-# Do not warn about Shapelib being an optional package not found, as we don't recommend using it Mono/DotNetFrameworkSdk
-# is also an internal detail of CSharp that we don't want to report
+# Do not warn about Shapelib being an optional package not found, as we don't recommend using it. Same for external
+# LERC. Mono/DotNetFrameworkSdk is also an internal detail of CSharp that we don't want to report
 get_property(_packages_not_found GLOBAL PROPERTY PACKAGES_NOT_FOUND)
 set(_new_packages_not_found)
 foreach (_package IN LISTS _packages_not_found)
   if (NOT ${_package} STREQUAL "Shapelib"
+      AND NOT ${_package} STREQUAL "LERC"
+      AND NOT ${_package} STREQUAL "OpenCAD"
+      AND NOT ${_package} STREQUAL "Podofo"
       AND NOT ${_package} STREQUAL "Mono"
       AND NOT ${_package} STREQUAL "DotNetFrameworkSdk")
     set(_new_packages_not_found ${_new_packages_not_found} "${_package}")

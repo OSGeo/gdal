@@ -314,6 +314,15 @@ static const char * const apszRPCTXT20ValItems[] =
     nullptr
 };
 
+static const char * const apszRPCTXT20ValItemsLonLat[] =
+{
+    RPC_LAT_NUM_COEFF,
+    RPC_LAT_DEN_COEFF,
+    RPC_LON_NUM_COEFF,
+    RPC_LON_DEN_COEFF,
+    nullptr
+};
+
 char** GDALMDReaderPleiades::LoadRPCXmlFile()
 {
     CPLXMLNode* pNode = CPLParseXMLFile(m_osRPBSourceFilename);
@@ -408,8 +417,16 @@ char** GDALMDReaderPleiades::LoadRPCXmlFile()
             // supplies geographic coordinates (lon, lat) and an altitude (alt)"""
             const char* pszValue = CSLFetchNameValue(papszRawRPCList,
                  CPLSPrintf("Inverse_Model.%s_%d", apszRPCTXT20ValItems[i], j));
-            if(nullptr != pszValue)
+            if(nullptr != pszValue){
                 value = value + " " + CPLString(pszValue);
+            }
+            else {
+                 pszValue = CSLFetchNameValue(papszRawRPCList,
+                 CPLSPrintf("ImagetoGround_Values.%s_%d", apszRPCTXT20ValItemsLonLat[i], j));
+                 if(nullptr != pszValue){
+                    value = value + " " + CPLString(pszValue);
+                 }
+            }
         }
         papszRPB = CSLAddNameValue(papszRPB, apszRPCTXT20ValItems[i], value);
     }

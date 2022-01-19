@@ -1080,7 +1080,6 @@ OGRProjCT::OGRProjCT()
 /*                  OGRProjCT(const OGRProjCT& other)                   */
 /************************************************************************/
 
-//! @cond Doxygen_Suppress
 OGRProjCT::OGRProjCT(const OGRProjCT& other) :
     poSRSSource((other.poSRSSource != nullptr) ? (other.poSRSSource->Clone()) : (nullptr)),
     bSourceLatLong(other.bSourceLatLong),

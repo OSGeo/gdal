@@ -34,7 +34,7 @@ function(check_compiler_machine_option outvar feature)
   if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(x86|AMD64)")
     if(MSVC AND (${feature} MATCHES "SSE"))
       # SSE2 and SSE are default on
-	  set(_FLAGS " ")
+      set(_FLAGS " ")
     elseif(MSVC)
       # Only Visual Studio 2017 version 15.3 / Visual C++ 19.11 & up have support for AVX-512.
       # https://blogs.msdn.microsoft.com/vcblog/2017/07/11/microsoft-visual-studio-2017-supports-intel-avx-512/
@@ -65,7 +65,7 @@ function(check_compiler_machine_option outvar feature)
       endif()
     else() # not MSVC and not ICC => GCC, Clang, Open64
       string(TOLOWER ${feature} _flag)
-	  string(REPLACE "_" "." _flag "${_flag}")
+      string(REPLACE "_" "." _flag "${_flag}")
       __check_compiler_flag("-m${_flag}" test_${_flag})
       if(test_${_flag})
         set(header_table

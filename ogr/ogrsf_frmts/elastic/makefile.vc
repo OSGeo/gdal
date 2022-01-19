@@ -1,5 +1,5 @@
 
-OBJ	=	ogrelasticdriver.obj ogrelasticdatasource.obj ogrelasticlayer.obj
+OBJ	=	ogrelasticdriver.obj ogrelasticdatasource.obj ogrelasticlayer.obj ogrelasticaggregationlayer.obj
 EXTRAFLAGS =	-DHAVE_CURL $(CURL_CFLAGS) $(CURL_INC) -I.. -I..\..  -I..\geojson -I..\geojson\libjson
 
 GDAL_ROOT	=	..\..\..

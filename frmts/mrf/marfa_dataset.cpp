@@ -2110,8 +2110,8 @@ CPLErr MRFDataset::WriteTile(void* buff, GUIntBig infooffset, GUIntBig size)
 
         // Spacing should be 0 in MP safe mode, this doesn't have much of effect
         // Use the existing data, spacing content is not guaranteed
-        for (GUIntBig pending = spacing; pending != 0; pending -= std::max(pending, size))
-            VSIFWriteL(buff, 1, static_cast<size_t>(std::max(pending, size)), l_dfp); // Usually only once
+        for (GUIntBig pending = spacing; pending != 0; pending -= std::min(pending, size))
+            VSIFWriteL(buff, 1, static_cast<size_t>(std::min(pending, size)), l_dfp); // Usually only once
 
         if (static_cast<size_t>(size) != VSIFWriteL(buff, 1, static_cast<size_t>(size), l_dfp))
             ret = CE_Failure;

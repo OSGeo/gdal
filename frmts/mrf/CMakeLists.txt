@@ -3,7 +3,6 @@ add_gdal_driver(
   SOURCES BitMask2D.h
           JPEG_band.cpp
           PNG_band.cpp
-          LERC_band.cpp
           marfa.h
           marfa_dataset.cpp
           mrf_band.cpp
@@ -36,18 +35,22 @@ if (GDAL_USE_LIBPNG_INTERNAL)
   target_compile_definitions(gdal_MRF PRIVATE -DINTERNAL_PNG)
 endif ()
 
-if (GDAL_USE_LIBZ_INTERNAL)
+if (GDAL_USE_ZLIB_INTERNAL)
   target_include_directories(gdal_MRF PRIVATE $<TARGET_PROPERTY:libz,SOURCE_DIR>)
 endif ()
 
-if (GDAL_USE_LIBLERC_INTERNAL)
+# MRF Lerc support only possible for internal LercLib since it requires Lerc2.h
+if ((GDAL_USE_LIBLERC_INTERNAL) AND GDAL_USE_LIBLERCV1_INTERNAL)
+  # if ((GDAL_USE_LIBLERC_INTERNAL OR GDAL_USE_LERC) AND GDAL_USE_LIBLERCV1_INTERNAL)
   target_sources(gdal_MRF PRIVATE LERC_band.cpp)
-  target_include_directories(gdal_MRF PRIVATE $<TARGET_PROPERTY:liblerc,SOURCE_DIR> $<TARGET_PROPERTY:lerc,SOURCE_DIR>)
+  target_include_directories(gdal_MRF PRIVATE $<TARGET_PROPERTY:liblercv1,SOURCE_DIR>)
   target_compile_definitions(gdal_MRF PRIVATE -DLERC)
+
+  add_subdirectory(LERCV1)
 endif ()
 
-if (GDAL_USE_LIBLERC_INTERNAL)
-  add_subdirectory(LERCV1)
+if (GDAL_USE_LIBLERC_INTERNAL AND GDAL_USE_LIBLERCV1_INTERNAL)
+  target_include_directories(gdal_MRF PRIVATE $<TARGET_PROPERTY:lerc,SOURCE_DIR>)
 endif ()
 
 # Now external libs
@@ -60,9 +63,12 @@ if (NOT GDAL_USE_LIBPNG_INTERNAL)
   gdal_target_link_libraries(TARGET gdal_MRF LIBRARIES PNG::PNG)
 endif ()
 
-if (NOT GDAL_USE_LIBZ_INTERNAL)
+if (NOT GDAL_USE_ZLIB_INTERNAL)
   gdal_target_link_libraries(TARGET gdal_MRF LIBRARIES ZLIB::ZLIB)
 endif ()
+
+# if (NOT GDAL_USE_LIBLERC_INTERNAL AND GDAL_USE_LERC AND GDAL_USE_LIBLERCV1_INTERNAL) gdal_target_link_libraries(TARGET
+# gdal_MRF LIBRARIES LERC::LERC) endif ()
 
 if (GDAL_USE_ZSTD)
   target_compile_definitions(gdal_MRF PRIVATE -DZSTD_SUPPORT)

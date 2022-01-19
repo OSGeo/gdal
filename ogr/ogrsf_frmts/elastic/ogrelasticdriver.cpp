@@ -140,6 +140,7 @@ void RegisterOGRElastic() {
 "  <Option name='USERPWD' type='string' "
         "description='Basic authentication as username:password'/>"
 "  <Option name='LAYER' type='string' description='Index name or index_mapping to use for restricting layer listing'/>"
+"  <Option name='AGGREGATION' type='string' description='JSon serialized description of an aggreation request'/>"
 "  <Option name='BATCH_SIZE' type='integer' description='Number of features to retrieve per batch' default='100'/>"
 "  <Option name='FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN' type='integer' description='Number of features to retrieve to establish feature definition. -1 = unlimited' default='100'/>"
 "  <Option name='SINGLE_QUERY_TIMEOUT' type='float' description='Timeout in second for request such as GetFeatureCount() or GetExtent()'/>"
@@ -152,6 +153,7 @@ void RegisterOGRElastic() {
 "  <Option name='BULK_SIZE' type='integer' description='Size in bytes of the buffer for bulk upload' default='1000000'/>"
 "  <Option name='FID' type='string' description='Field name, with integer values, to use as FID' default='ogc_fid'/>"
 "  <Option name='FORWARD_HTTP_HEADERS_FROM_ENV' type='string' description='Comma separated list of http_header_name=env_variable_name'/>"
+"  <Option name='ADD_SOURCE_INDEX_NAME' type='boolean' description='Whether to add the index name as a field for wildcard layers' default='NO'/>"
 "</OpenOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,

@@ -75,6 +75,8 @@ The open options available are :
    the OGR Elasticsearch driver is invoked from a web server that stores the HTTP
    headers of incoming request into environment variables.
    The ES_FORWARD_HTTP_HEADERS_FROM_ENV configuration option can also be used.
+-  **AGGREGATION**\ = string (GDAL >= 3.5). JSON-serialized definition of an
+   :ref:`aggregation <vector.elasticsearch.aggregations>`.
 
 Elasticsearch vs OGR concepts
 -----------------------------
@@ -151,7 +153,7 @@ It is also possible to directly use a Elasticsearch filter by setting
 the string passed to SetAttributeFilter() as a JSon serialized object,
 e.g.
 
-::
+.. code-block:: json
 
    { "post_filter": { "term": { "properties.EAS_ID": 169 } } }
 
@@ -218,7 +220,7 @@ The following filter can be used to restrict the search to the "poly"
 index and its "FeatureCollection" type mapping (Elasticsearch 1.X and
 2.X)
 
-::
+.. code-block:: json
 
    { "filter": {
        "indices" : {
@@ -236,7 +238,7 @@ index and its "FeatureCollection" type mapping (Elasticsearch 1.X and
 
 For Elasticsearch 5.X (works also with 2.X) :
 
-::
+.. code-block:: json
 
    { "post_filter": {
        "indices" : {
@@ -254,7 +256,118 @@ For Elasticsearch 5.X (works also with 2.X) :
        }
    }
 
-Aggregations are not supported.
+Aggregations are not supported through the ExecuteSQL() interface, but through
+the below described mechanism.
+
+.. _vector.elasticsearch.aggregations:
+
+Aggregations
+------------
+
+.. versionadded:: 3.5.0
+
+The driver can support issuing aggregation requests to an index. ElasticSearch
+aggregations can potentially be rather complex, so the driver currently limits
+to geohash grid based spatial aggegrations, with additional fields with
+statistical indicators (min, max, average, .), which can be used for example
+to generate heatmaps. The specification of the aggegation is done through
+the ``AGGREGATION`` open option, whose value is a JSON serialized object whose
+members are:
+
+- ``index`` (required): the name of the index to query.
+
+- ``geometry_field`` (optional): the path to the geometry field on which to do
+  `geohash grid aggregation <https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-geohashgrid-aggregation.html>`__. For documents with points encoded as GeoJSON, this will
+  be for example `geometry.coordinates`. When this property is not specified,
+  the driver will analyze the mapping and use the geometry field definition
+  found into it (provided there is a single one). Note that aggegration on
+  geo_shape geometries is only supported since Elasticsearch 7 and may require
+  a non-free license.
+
+- ``geohash_grid`` (optional): a JSon object, describing a few characteristics of
+  the geohash_grid, that can have the following members:
+
+    * ``size`` (optional): maximum number of geohash buckets to return per query. The
+      default is 10,000. If ``precision`` is specified and the number of results
+      would exceed ``size``, then the server will trim the results, by sorting
+      by decreasing number of documents matched.
+
+    * ``precision`` (optional): string length of the geohashes used to define
+      cells/buckets in the results, in the [1,12] range. A geohash of size 1
+      can generate up to 32 buckets, of size 2 up to 32*32 buckets, etc.
+      When it is not specified, the driver will automatically compute a value,
+      taking into account the ``size`` parameter and the spatial filter, so that
+      the theoretical number of buckets returned does not exceed ``size``.
+
+- ``fields`` (optional): a JSon object, describing which additional statistical
+  fields should be added, that can have the following members:
+
+      * ``min`` (optional): array with the paths to index properties on which
+        to compute the minimum during aggegation.
+
+      * ``max`` (optional): array with the paths to index properties on which
+        to compute the maxium  during aggegation.
+
+      * ``avg`` (optional): array with the paths to index properties on which
+        to compute the average during aggegation.
+
+      * ``sum`` (optional): array with the paths to index properties on which
+        to compute the sum during aggegation.
+
+      * ``count`` (optional): array with the paths to index properties on which
+        to compute the value_count during aggegation.
+
+      * ``stats`` (optional): array with the paths to index properties on which
+        to compute all the above indicators during aggegation.
+
+  When using a GeoJSON mapping, the path to an index property is typically
+  ``property.some_name``.
+
+When specifying the AGGREGATION open option, a single read-only layer called
+``aggregation`` will be returned. A spatial filter can be set on it using the
+standard OGR SetSpatialFilter() API: it is applied prior to aggregation.
+
+An example of a potential value for the AGGREGATION open option can be:
+
+.. code-block:: json
+
+    {
+        "index": "my_points",
+        "geometry_field": "geometry.coordinates",
+        "geohash_grid": {
+            "size": 1000,
+            "precision": 3
+        },
+        "fields": {
+            "min": [ "field_a", "field_b"],
+            "stats": [ "field_c" ]
+        }
+    }
+
+
+It will return a layer with a Point geometry field and the following fields:
+
+- ``key`` of type String: the value of the geohash of the corresponding bucket
+- ``doc_count`` of type Integer64: the number of matching documents in the bucket
+- ``field_a_min`` of type Real
+- ``field_b_min`` of type Real
+- ``field_c_min`` of type Real
+- ``field_c_max`` of type Real
+- ``field_c_avg`` of type Real
+- ``field_c_sum`` of type Real
+- ``field_c_count`` of type Integer64
+
+Multi-target layers
+-------------------
+
+.. versionadded:: 3.5.0
+
+The GetLayerByName() method accepts a layer name that can be a comma-separated
+list of indices, potentially combined with the '*' wildcard character. See
+https://www.elastic.co/guide/en/elasticsearch/reference/current/multi-index.html.
+Note that in the current implementation, the field definition will be established
+from the one of the matching layers, but not all, so using this functionality will be
+appropriate when the multiple matching layers share the same schema.
 
 Getting metadata
 ----------------
@@ -398,19 +511,25 @@ Examples
 
    ogrinfo ES:http://example.com:9200
 
-| **Filtering on a Elastic Search field:**
+**Filtering on a Elastic Search field:**
 
 ::
 
    ogrinfo -ro ES: my_type -where '{ "post_filter": { "term": { "properties.EAS_ID": 168 } } }'
 
-| **Using "match" query on Windows:**
-| On Windows the query must be between double quotes and double quotes
-  inside the query must be escaped.
+**Using "match" query on Windows:**
+On Windows the query must be between double quotes and double quotes
+inside the query must be escaped.
 
 ::
 
    C:\GDAL_on_Windows>ogrinfo ES: my_type -where "{\"query\": { \"match\": { \"properties.NAME\": \"Helsinki\" } } }"
+
+**Basic aggregation:**
+
+::
+
+   ogrinfo -ro ES: my_type -oo "AGGREGATION={\"index\":\"my_points\"}"
 
 **Load an Elasticsearch index with a shapefile:**
 

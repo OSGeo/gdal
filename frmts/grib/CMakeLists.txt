@@ -47,7 +47,7 @@ add_gdal_driver(
           degrib/g2clib/jpcunpack.c
           degrib/degrib/hazard.c
           PLUGIN_CAPABLE_IF
-          "NOT GDAL_USE_LIBPNG_INTERNAL;NOT GDAL_USE_LIBZ_INTERNAL"
+          "NOT GDAL_USE_LIBPNG_INTERNAL;NOT GDAL_USE_ZLIB_INTERNAL"
           NO_DEPS)
 gdal_standard_includes(gdal_GRIB)
 
@@ -113,7 +113,7 @@ else ()
   target_sources(gdal_GRIB PRIVATE degrib/g2clib/pngunpack.c degrib/g2clib/dec_png.c)
 endif ()
 
-if (GDAL_USE_LIBZ_INTERNAL)
+if (GDAL_USE_ZLIB_INTERNAL)
   target_include_directories(gdal_GRIB PRIVATE $<TARGET_PROPERTY:libz,SOURCE_DIR>)
 else ()
   gdal_target_link_libraries(TARGET gdal_GRIB LIBRARIES ZLIB::ZLIB)
