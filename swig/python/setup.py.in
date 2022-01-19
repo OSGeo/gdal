@@ -21,9 +21,16 @@ from setuptools import Extension
 # Switches
 # ---------------------------------------------------------------------------
 
-include_dirs = ['@PROJECT_BINARY_DIR@/port', '@PROJECT_SOURCE_DIR@/port', '@PROJECT_BINARY_DIR@/gcore', '@PROJECT_SOURCE_DIR@/gcore', '@PROJECT_SOURCE_DIR@/alg', '@PROJECT_SOURCE_DIR@/ogr/', '@PROJECT_SOURCE_DIR@/ogr/ogrsf_frmts', '@PROJECT_SOURCE_DIR@/gnm', '@PROJECT_SOURCE_DIR@/apps']
-library_dirs = [@GDAL_LIB_DIR@]
-libraries = ['gdal']
+is_standalone_build = not os.path.exists('@PROJECT_BINARY_DIR@/swig/python')
+
+if is_standalone_build:
+    include_dirs = []
+    library_dirs = []
+    libraries = []
+else:
+    include_dirs = ['@PROJECT_BINARY_DIR@/port', '@PROJECT_SOURCE_DIR@/port', '@PROJECT_BINARY_DIR@/gcore', '@PROJECT_SOURCE_DIR@/gcore', '@PROJECT_SOURCE_DIR@/alg', '@PROJECT_SOURCE_DIR@/ogr/', '@PROJECT_SOURCE_DIR@/ogr/ogrsf_frmts', '@PROJECT_SOURCE_DIR@/gnm', '@PROJECT_SOURCE_DIR@/apps']
+    library_dirs = [@GDAL_LIB_DIR@]
+    libraries = ['gdal']
 
 
 # ---------------------------------------------------------------------------
@@ -32,14 +39,33 @@ libraries = ['gdal']
 
 # Function to find numpy's include directory
 def get_numpy_include():
-    if @HAVE_NUMPY@:
-        # Fix numpy installation using setuptools
-        __builtins__.__NUMPY_SETUP__ = False
+    # Fix numpy installation using setuptools
+    __builtins__.__NUMPY_SETUP__ = False
 
-        import numpy
-        return numpy.get_include()
+    import numpy
+    return numpy.get_include()
 
-    return '.'
+
+class gdal_config_error(Exception):
+    pass
+
+
+def fetch_config(option, gdal_config='gdal-config'):
+
+    command = gdal_config + " --%s" % option
+
+    import subprocess
+    command, args = command.split()[0], command.split()[1]
+    try:
+        p = subprocess.Popen([command, args], stdout=subprocess.PIPE)
+    except OSError:
+        e = sys.exc_info()[1]
+        raise gdal_config_error(e)
+    r = p.stdout.readline().decode('ascii').strip()
+    p.stdout.close()
+    p.wait()
+
+    return r
 
 
 def supports_cxx11(compiler, compiler_flag=None):
@@ -91,21 +117,55 @@ def has_flag(compiler, flagname):
             return False
     return True
 
+# ---------------------------------------------------------------------------
+# Imports
+# ---------------------------------------------------------------------------
+
+numpy_include_dir = '.'
+try:
+    numpy_include_dir = get_numpy_include()
+    HAVE_NUMPY = numpy_include_dir != '.'
+    if not HAVE_NUMPY:
+        print("WARNING: numpy found, but numpy headers were not found!  Array support will not be enabled")
+except ImportError:
+    HAVE_NUMPY = False
+    print('WARNING: numpy not available!  Array support will not be enabled')
+
+
 class gdal_ext(build_ext):
+
+    GDAL_CONFIG = 'gdal-config'
+    user_options = build_ext.user_options[:]
+    user_options.extend([
+        ('gdal-config=', None,
+         "The name of the gdal-config binary and/or a full path to it"),
+    ])
 
     def run(self):
         build_ext.run(self)
 
     def initialize_options(self):
+        global numpy_include_dir
         build_ext.initialize_options(self)
 
-        self.numpy_include_dir = get_numpy_include()
-        self.gdaldir = None
+        self.numpy_include_dir = numpy_include_dir
+        self.gdal_config = self.GDAL_CONFIG
         self.extra_cflags = []
         self.parallel = True
 
     def get_compiler(self):
         return self.compiler or ('msvc' if os.name == 'nt' else 'unix')
+
+
+    def get_gdal_config(self, option):
+        try:
+            return fetch_config(option, gdal_config=self.gdal_config)
+        except gdal_config_error:
+            msg = 'Could not find gdal-config. Make sure you have installed the GDAL native library and development headers.'
+            import sys
+            import traceback
+            traceback_string = ''.join(traceback.format_exception(*sys.exc_info()))
+            raise gdal_config_error(traceback_string + '\n' + msg)
 
 
     def build_extensions(self):
@@ -139,6 +199,8 @@ class gdal_ext(build_ext):
     def finalize_options(self):
         global include_dirs, library_dirs
 
+        include_dirs_found = self.include_dirs is not None or len(include_dirs) != 0
+
         if self.include_dirs is None:
             self.include_dirs = include_dirs
         # Needed on recent MacOSX
@@ -156,7 +218,28 @@ class gdal_ext(build_ext):
 
         build_ext.finalize_options(self)
 
-        self.include_dirs.append(self.numpy_include_dir)
+        if numpy_include_dir != '.':
+	        self.include_dirs.append(self.numpy_include_dir)
+
+        if self.get_compiler() == 'msvc':
+            return
+
+        if not include_dirs_found:
+            # Get paths from gdal-config
+            gdaldir = self.get_gdal_config('prefix')
+            self.library_dirs.append(os.path.join(gdaldir, 'lib'))
+            self.include_dirs.append(os.path.join(gdaldir, 'include'))
+
+            cflags = self.get_gdal_config('cflags')
+            if cflags:
+                self.extra_cflags = cflags.split()
+
+    def build_extension(self, ext):
+        # We override this instead of setting extra_compile_args directly on
+        # the Extension() instantiations below because we want to use the same
+        # logic to resolve the location of gdal-config throughout.
+        ext.extra_compile_args.extend(self.extra_cflags)
+        return build_ext.build_extension(self, ext)
 
 
 extra_link_args = []
@@ -198,11 +281,12 @@ ext_modules = [gdal_module,
                osr_module,
                ogr_module]
 
-if @GNM_ENABLED@:
+GNM_ENABLED = @GNM_ENABLED@
+if GNM_ENABLED:
     ext_modules.append(gnm_module)
 
 extras_require=None
-if @HAVE_NUMPY@:
+if HAVE_NUMPY:
     ext_modules.append(array_module)
     extras_require={'numpy': ['numpy > 1.0.0']}
 
@@ -211,7 +295,7 @@ packages = find_packages(utils_package_root)
 packages = ['osgeo'] + packages
 package_dir = {'osgeo': 'osgeo', '': utils_package_root}
 
-readme = open('@CMAKE_CURRENT_SOURCE_DIR@/README.rst', encoding="utf-8").read()
+readme = open('README.rst', encoding="utf-8").read()
 
 name = 'GDAL'
 version = '@GDAL_VERSION_NO_DEV_SUFFIX@'

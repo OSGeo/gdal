@@ -142,7 +142,6 @@ void CPL_DLL GDALRegister_SRP(void);
 void CPL_DLL GDALRegister_COASP(void);
 void CPL_DLL GDALRegister_BLX(void);
 void CPL_DLL GDALRegister_LCP(void);
-void CPL_DLL GDALRegister_TMS(void);
 void CPL_DLL GDALRegister_EIR(void);
 void CPL_DLL GDALRegister_ESRIC(void);
 void CPL_DLL GDALRegister_GEOR(void);

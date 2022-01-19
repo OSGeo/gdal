@@ -807,7 +807,8 @@ def test_vsigs_read_credentials_oauth2_service_account_json_file():
 
     gdal.FileFromMemBuffer('/vsimem/service_account.json', """{
   "private_key": "-----BEGIN PRIVATE KEY-----\nMIICeAIBADANBgkqhkiG9w0BAQEFAASCAmIwggJeAgEAAoGBAOlwJQLLDG1HeLrk\nVNcFR5Qptto/rJE5emRuy0YmkVINT4uHb1be7OOo44C2Ev8QPVtNHHS2XwCY5gTm\ni2RfIBLv+VDMoVQPqqE0LHb0WeqGmM5V1tHbmVnIkCcKMn3HpK30grccuBc472LQ\nDVkkGqIiGu0qLAQ89JP/r0LWWySRAgMBAAECgYAWjsS00WRBByAOh1P/dz4kfidy\nTabiXbiLDf3MqJtwX2Lpa8wBjAc+NKrPXEjXpv0W3ou6Z4kkqKHJpXGg4GRb4N5I\n2FA+7T1lA0FCXa7dT2jvgJLgpBepJu5b//tqFqORb4A4gMZw0CiPN3sUsWsSw5Hd\nDrRXwp6sarzG77kvZQJBAPgysAmmXIIp9j1hrFSkctk4GPkOzZ3bxKt2Nl4GFrb+\nbpKSon6OIhP1edrxTz1SMD1k5FiAAVUrMDKSarbh5osCQQDwxq4Tvf/HiYz79JBg\nWz5D51ySkbg01dOVgFW3eaYAdB6ta/o4vpHhnbrfl6VO9oUb3QR4hcrruwnDHsw3\n4mDTAkEA9FPZjbZSTOSH/cbgAXbdhE4/7zWOXj7Q7UVyob52r+/p46osAk9i5qj5\nKvnv2lrFGDrwutpP9YqNaMtP9/aLnwJBALLWf9n+GAv3qRZD0zEe1KLPKD1dqvrj\nj+LNjd1Xp+tSVK7vMs4PDoAMDg+hrZF3HetSQM3cYpqxNFEPgRRJOy0CQQDQlZHI\nyzpSgEiyx8O3EK1iTidvnLXbtWabvjZFfIE/0OhfBmN225MtKG3YLV2HoUvpajLq\ngwE6fxOLyJDxuWRf\n-----END PRIVATE KEY-----\n",
-  "client_email": "CLIENT_EMAIL"
+  "client_email": "CLIENT_EMAIL",
+  "type": "service_account"
                            }""")
 
     gdal.SetConfigOption('GOOGLE_APPLICATION_CREDENTIALS', '/vsimem/service_account.json')
@@ -887,6 +888,84 @@ def test_vsigs_read_credentials_oauth2_service_account_json_file():
     gdal.Unlink('/vsimem/service_account.json')
 
     assert data == 'foo'
+
+###############################################################################
+# Read credentials with OAuth2 authorized user through a json configuration file
+
+
+def test_vsigs_read_credentials_oauth2_authorized_user_json_file():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.SetConfigOption('GS_SECRET_ACCESS_KEY', '')
+    gdal.SetConfigOption('GS_ACCESS_KEY_ID', '')
+
+    gdal.FileFromMemBuffer('/vsimem/authorized_user.json', """{
+      "client_id": "CLIENT_ID",
+      "client_secret": "CLIENT_SECRET",
+      "refresh_token": "REFRESH_TOKEN",
+      "type": "authorized_user"
+    }""")
+
+    gdal.SetConfigOption('GOOGLE_APPLICATION_CREDENTIALS', '/vsimem/authorized_user.json')
+
+    gdal.SetConfigOption('GOA2_AUTH_URL_TOKEN',
+                         'http://localhost:%d/accounts.google.com/o/oauth2/token' % gdaltest.webserver_port)
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+
+    def method(request):
+        content = request.rfile.read(int(request.headers['Content-Length'])).decode('ascii')
+        if content != 'refresh_token=REFRESH_TOKEN&client_id=CLIENT_ID&client_secret=CLIENT_SECRET&grant_type=refresh_token':
+            sys.stderr.write('Bad POST content: %s\n' % content)
+            request.send_response(403)
+            return
+
+        request.send_response(200)
+        request.send_header('Content-type', 'text/plain')
+        content = """{
+                "access_token" : "ACCESS_TOKEN",
+                "token_type" : "Bearer",
+                "expires_in" : 3600,
+                }"""
+        request.send_header('Content-Length', len(content))
+        request.end_headers()
+        request.wfile.write(content.encode('ascii'))
+
+    handler.add('POST', '/accounts.google.com/o/oauth2/token', custom_method=method)
+
+    def method(request):
+        if 'Authorization' not in request.headers:
+            sys.stderr.write('Bad headers: %s\n' % str(request.headers))
+            request.send_response(403)
+            return
+        expected_authorization = 'Bearer ACCESS_TOKEN'
+        if request.headers['Authorization'] != expected_authorization:
+            sys.stderr.write("Bad Authorization: '%s'\n" % str(request.headers['Authorization']))
+            request.send_response(403)
+            return
+
+        request.send_response(200)
+        request.send_header('Content-type', 'text/plain')
+        request.send_header('Content-Length', 3)
+        request.end_headers()
+        request.wfile.write("""foo""".encode('ascii'))
+
+    handler.add('GET', '/gs_fake_bucket/resource', custom_method=method)
+    with webserver.install_http_handler(handler):
+        f = open_for_read('/vsigs/gs_fake_bucket/resource')
+        assert f is not None
+        data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+        gdal.VSIFCloseL(f)
+
+    assert data == 'foo'
+
+    gdal.SetConfigOption('GOA2_AUTH_URL_TOKEN', None)
+    gdal.SetConfigOption('GOOGLE_APPLICATION_CREDENTIALS', '')
+    gdal.Unlink('/vsimem/service_account.json')
 
 ###############################################################################
 # Read credentials from simulated ~/.boto

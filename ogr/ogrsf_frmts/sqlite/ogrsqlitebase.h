@@ -120,6 +120,7 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL: public GDALPamDataset
 {
   protected:
     char               *m_pszFilename = nullptr;
+    std::string         m_osFinalFilename{}; // use when generating a network hosted file with CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE=YES
     bool                m_bCallUndeclareFileNotToOpen = false;
 
     sqlite3             *hDB = nullptr;

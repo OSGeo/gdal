@@ -151,6 +151,21 @@ class CPL_DLL OGREnvelope
         return MinX <= other.MinX && MinY <= other.MinY &&
                MaxX >= other.MaxX && MaxY >= other.MaxY;
     }
+
+    /** Return whether the current rectangle is equal to the other rectangle */
+    bool operator== (const OGREnvelope& other) const
+    {
+        return MinX == other.MinX &&
+               MinY == other.MinY &&
+               MaxX == other.MaxX &&
+               MaxY == other.MaxY;
+    }
+
+    /** Return whether the current rectangle is not equal to the other rectangle */
+    bool operator!= (const OGREnvelope& other) const
+    {
+        return !(*this == other);
+    }
 };
 
 } // extern "C++"

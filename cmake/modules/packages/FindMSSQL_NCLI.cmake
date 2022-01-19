@@ -28,7 +28,7 @@ This module defines the following variables:
   MSSQL_NCLI_INCLUDE_DIRS   - where to find sqlncli.h, etc.
   MSSQL_NCLI_LIBRARIES      - List of libraries when using MSSQL_NCLI.
   MSSQL_NCLI_FOUND          - True if MSSQL_NCLI found.
-  MSSQL_NCLI_VERSION		- Major Version (11, 10, ...). Can be a input variable too
+  MSSQL_NCLI_VERSION        - Major Version (11, 10, ...). Can be a input variable too
 
 #]=======================================================================]
 

@@ -82,3 +82,19 @@ jobs:
             cd doc
             make .doxygen_up_to_date >log.txt 2>&1
             if grep -i warning log.txt | grep -v -e russian -e brazilian; then echo "Doxygen warnings found" && cat log.txt && /bin/false; else echo "No Doxygen warnings found"; fi
+
+  other_checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install Requirements
+        run: |
+            sudo apt install python3-pip wget
+            sudo pip3 install jsonschema
+
+      - name: Check json files
+        run: |
+            wget https://raw.githubusercontent.com/rouault/zenodo_json_schema/master/zenodo-json-schema.json
+            jsonschema -i .zenodo.json zenodo-json-schema.json

@@ -1817,6 +1817,38 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
     if( poSRS != nullptr )
         nSRSId = FetchSRSId( poSRS );
 
+    if( eType != wkbNone && EQUAL(pszGeomType, "geography") )
+    {
+        if( poSRS != nullptr && !poSRS->IsGeographic() )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "geography type only supports geographic SRS");
+
+            CPLFree( pszTableName );
+            CPLFree( pszSchemaName );
+            return nullptr;
+        }
+
+        if( !(sPostGISVersion.nMajor >= 3 ||
+              (sPostGISVersion.nMajor == 2 && sPostGISVersion.nMinor >= 2)) &&
+            nSRSId != nUndefinedSRID && nSRSId != 4326 )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "geography type in PostGIS < 2.2 only supports SRS = EPSG:4326");
+
+            CPLFree( pszTableName );
+            CPLFree( pszSchemaName );
+            return nullptr;
+        }
+
+        if( nSRSId == nUndefinedSRID )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Assuming EPSG:4326 for geographic type (but no implicit reprojection to it will be done)");
+            nSRSId = 4326;
+        }
+    }
+
     const char *pszGeometryType = OGRToOGCGeomType(eType);
 
     int bDeferredCreation = CPLTestBool(CPLGetConfigOption( "OGR_PG_DEFERRED_CREATION", "YES" ));

@@ -465,30 +465,50 @@ bool VSIGSHandleHelper::GetConfiguration(CSLConstList papszOptions,
             osRefreshToken, osClientId, osClientSecret, nullptr);
     }
 
-    CPLString osServiceAccountJson( CSLFetchNameValueDef(papszOptions,
+    CPLString osJsonFile( CSLFetchNameValueDef(papszOptions,
         "GOOGLE_APPLICATION_CREDENTIALS",
         CPLGetConfigOption("GOOGLE_APPLICATION_CREDENTIALS", "")));
-    if( !osServiceAccountJson.empty() )
+    if( !osJsonFile.empty() )
     {
         CPLJSONDocument oDoc;
-        if( !oDoc.Load(osServiceAccountJson) )
+        if( !oDoc.Load(osJsonFile) )
         {
             return false;
         }
-        CPLString osPrivateKey = oDoc.GetRoot().GetString("private_key");
-        osPrivateKey.replaceAll("\\n", "\n").replaceAll("\n\n", "\n").replaceAll("\r", "");
-        CPLString osClientEmail = oDoc.GetRoot().GetString("client_email");
-        const char* pszScope =
-            CSLFetchNameValueDef( papszOptions, "GS_OAUTH2_SCOPE",
-            CPLGetConfigOption("GS_OAUTH2_SCOPE",
-                "https://www.googleapis.com/auth/devstorage.read_write"));
 
-        return oManager.SetAuthFromServiceAccount(
-                osPrivateKey,
-                osClientEmail,
-                pszScope,
-                nullptr,
-                nullptr);
+        // JSON file can be of type 'service_account' or 'authorized_user'
+        CPLString osJsonFileType = oDoc.GetRoot().GetString("type");
+
+        if ( strcmp(osJsonFileType, "service_account") == 0 )
+        {
+            CPLString osPrivateKey = oDoc.GetRoot().GetString("private_key");
+            osPrivateKey.replaceAll("\\n", "\n").replaceAll("\n\n", "\n").replaceAll("\r", "");
+            CPLString osClientEmail = oDoc.GetRoot().GetString("client_email");
+            const char* pszScope =
+                CSLFetchNameValueDef( papszOptions, "GS_OAUTH2_SCOPE",
+                CPLGetConfigOption("GS_OAUTH2_SCOPE",
+                    "https://www.googleapis.com/auth/devstorage.read_write"));
+
+            return oManager.SetAuthFromServiceAccount(
+                    osPrivateKey,
+                    osClientEmail,
+                    pszScope,
+                    nullptr,
+                    nullptr);
+        }
+        else if ( strcmp(osJsonFileType, "authorized_user") == 0 )
+        {
+            CPLString osClientId = oDoc.GetRoot().GetString("client_id");
+            CPLString osClientSecret = oDoc.GetRoot().GetString("client_secret");
+            osRefreshToken = oDoc.GetRoot().GetString("refresh_token");
+
+            return oManager.SetAuthFromRefreshToken(
+                    osRefreshToken,
+                    osClientId,
+                    osClientSecret,
+                    nullptr);
+        }
+        return false;
     }
 
     CPLString osPrivateKey = CSLFetchNameValueDef(papszOptions,

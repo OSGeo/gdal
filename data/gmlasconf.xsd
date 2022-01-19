@@ -1032,7 +1032,7 @@ Use ogr_gmlas:FeatureCollection / ogr_gmlas:featureMember wrapping
         When comparing the XPath exclusion rules and the
         XPath of the elements/attributes of the parsed
         documents, and when the namespace of the XPath
-        exclusion rule has been difined, the URI will be
+        exclusion rule has been defined, the URI will be
         used as the unambiguous key. Otherwise prefix
         matching will be used.
         </xs:documentation>
