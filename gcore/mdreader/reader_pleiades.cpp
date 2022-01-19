@@ -338,6 +338,15 @@ char** GDALMDReaderPleiades::LoadRPCXmlFile()
     {
         papszRawRPCList = ReadXMLToList(pGRFMNode->psChild, papszRawRPCList);
     }
+    else
+    {
+        pGRFMNode = CPLSearchXMLNode(pNode, "=Rational_Function_Model");
+
+        if(pGRFMNode != nullptr)
+        {
+            papszRawRPCList = ReadXMLToList(pGRFMNode->psChild, papszRawRPCList);
+        }
+    }
 
     if( nullptr == papszRawRPCList )
     {
