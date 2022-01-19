@@ -81,6 +81,7 @@ ApplyCacheHelperFlushHandler( const GDALDataset* currentDataset, const GDALDatas
 GDALCacheFlushHelperHandler CPL_STDCALL
 GDALSetCacheFlushHelperHandler(GDALCacheFlushHelperHandler pfnCacheHelperHandlerNew, void* CPL_UNUSED cacheManager, void* pUserData)
 {
+    (void)cacheManager;//unused
     GDALCacheFlushHelperHandler pfnOldHandler = nullptr;
     CPLMutexHolderD( &hCacheHelperMutex );
     pfnOldHandler = pfnCacheFlushHelperHandler;
