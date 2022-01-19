@@ -422,7 +422,7 @@ char** GDALMDReaderPleiades::LoadRPCXmlFile()
             }
             else {
                  pszValue = CSLFetchNameValue(papszRawRPCList,
-                 CPLSPrintf("ImagetoGround_Values.%s_%d", apszRPCTXT20ValItemsLonLat[i], j));
+                 CPLSPrintf("GroundtoImage_Values.%s_%d", apszRPCTXT20ValItems[i], j));
                  if(nullptr != pszValue){
                     value = value + " " + CPLString(pszValue);
                  }
