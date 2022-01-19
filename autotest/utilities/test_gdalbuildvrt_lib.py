@@ -379,3 +379,38 @@ def test_gdalbuildvrt_lib_bandList():
     gdal.ErrorReset()
     assert gdal.BuildVRT('', [src2_ds, src_ds], bandList = [1, 2]) is not None
     assert gdal.GetLastErrorType() == 0
+
+
+###############################################################################
+def test_gdalbuildvrt_lib_warnings_and_custom_error_handler():
+
+    class GdalErrorHandler(object):
+        def __init__(self):
+            self.got_failure = False
+            self.got_warning = False
+
+        def handler(self, err_level, err_no, err_msg):
+            if err_level == gdal.CE_Failure:
+                self.got_failure = True
+            elif err_level == gdal.CE_Warning:
+                self.got_warning = True
+
+    # Heterogenous band numbers should result in a warning from BuildVRT()
+    ds_one_band = gdal.Open('../gcore/data/byte.tif')
+    ds_two_band = gdal.Translate('', ds_one_band, bandList = [1, 1], format = 'VRT')
+
+    err_handler = GdalErrorHandler()
+    with gdaltest.error_handler(err_handler.handler):
+        with gdaltest.enable_exceptions():
+            vrt_ds = gdal.BuildVRT('', [ds_one_band, ds_two_band])
+    assert vrt_ds
+    assert not err_handler.got_failure
+    assert err_handler.got_warning
+
+    err_handler = GdalErrorHandler()
+    with gdaltest.error_handler(err_handler.handler):
+        with gdaltest.enable_exceptions():
+            vrt_ds = gdal.BuildVRT('', [ds_two_band, ds_one_band])
+    assert vrt_ds
+    assert not err_handler.got_failure
+    assert err_handler.got_warning
