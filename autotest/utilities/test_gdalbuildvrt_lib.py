@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import gdaltest
 import pytest
 import struct
 
@@ -336,3 +337,45 @@ def test_gdalbuildvrt_lib_resampling_methods(resampleAlg, resampleAlgStr):
     option_list = gdal.BuildVRTOptions(resampleAlg=resampleAlg, options='__RETURN_OPTION_LIST__')
     assert option_list == ['-r', resampleAlgStr]
     assert gdal.BuildVRT('', '../gcore/data/byte.tif', resampleAlg=resampleAlg) is not None
+
+
+###############################################################################
+def test_gdalbuildvrt_lib_bandList():
+
+    src_ds = gdal.GetDriverByName('MEM').Create('src1', 3, 1, 2)
+    src_ds.SetGeoTransform([2,0.001,0,49,0,-0.001])
+    src_ds.GetRasterBand(1).Fill(255)
+    src_ds.GetRasterBand(2).Fill(0)
+
+    vrt_ds = gdal.BuildVRT('', [src_ds], bandList = [2, 1, 2])
+    assert vrt_ds.GetRasterBand(1).Checksum() == 0
+    assert vrt_ds.GetRasterBand(2).Checksum() != 0
+    assert vrt_ds.GetRasterBand(3).Checksum() == 0
+
+    with gdaltest.error_handler():
+        assert gdal.BuildVRT('', [src_ds], bandList = [3]) is None
+
+    src2_ds = gdal.GetDriverByName('MEM').Create('src2', 3, 1, 3)
+    src2_ds.SetGeoTransform([2,0.001,0,49,0,-0.001])
+
+    # If no explicit band list, we require all sources to have the same
+    # number of bands
+    with gdaltest.error_handler():
+        gdal.ErrorReset()
+        assert gdal.BuildVRT('', [src_ds, src2_ds]) is not None
+        assert gdal.GetLastErrorType() != 0
+
+    with gdaltest.error_handler():
+        gdal.ErrorReset()
+        assert gdal.BuildVRT('', [src2_ds, src_ds]) is not None
+        assert gdal.GetLastErrorType() != 0
+
+    # If explicit band list, we tolerate different band count, provided that
+    # all requested bands are available.
+    gdal.ErrorReset()
+    assert gdal.BuildVRT('', [src_ds, src2_ds], bandList = [1, 2]) is not None
+    assert gdal.GetLastErrorType() == 0
+
+    gdal.ErrorReset()
+    assert gdal.BuildVRT('', [src2_ds, src_ds], bandList = [1, 2]) is not None
+    assert gdal.GetLastErrorType() == 0
