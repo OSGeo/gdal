@@ -105,6 +105,7 @@ rm -f ogr/ogr_fgdb.py ogr/ogr_pgeo.py
 
 # install test dependencies
 sudo python3 -m pip install -U -r ./requirements.txt
+sudo python3 -m pip install -U hdbcli
 
 # Run each module in its own pytest process.
 # This makes sure the output from the address sanitizer is relevant

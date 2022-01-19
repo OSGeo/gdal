@@ -99,7 +99,7 @@ export CPL_ENABLE_USERFAULTFD=NO
 (cd autotest/cpp && make quick_test)
 
 # install pip and use it to install test dependencies
-pip3 install -U $(grep -ivE "hdbcli" autotest/requirements.txt)
+pip3 install -U -r autotest/requirements.txt
 
 # Fails with ERROR 1: OGDI DataSource Open Failed: Could not find the dynamic library "vrf"
 rm autotest/ogr/ogr_ogdi.py
