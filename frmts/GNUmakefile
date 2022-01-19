@@ -30,3 +30,5 @@ install:
 	$(MAKE) -C vrt install
 	$(MAKE) -C mem install
 	$(MAKE) -C raw install
+	$(INSTALL_DIR) $(DESTDIR)$(INST_LIB)/gdalplugins
+	$(INSTALL_DATA) drivers.ini $(DESTDIR)$(INST_LIB)/gdalplugins

@@ -1913,4 +1913,32 @@ namespace tut
         }
     }
 
+    // Test OGREnvelope
+    template<>
+    template<>
+    void object::test<22>()
+    {
+        OGREnvelope s1;
+        ensure(!s1.IsInit());
+        {
+            OGREnvelope s2(s1);
+            ensure(s1 == s2);
+            ensure(!(s1 != s2));
+        }
+
+        s1.MinX = 0;
+        s1.MinY = 1;
+        s1.MaxX = 2;
+        s1.MaxX = 3;
+        ensure(s1.IsInit());
+        {
+            OGREnvelope s2(s1);
+            ensure(s1 == s2);
+            ensure(!(s1 != s2));
+            s2.MinX += 1;
+            ensure(s1 != s2);
+            ensure(!(s1 == s2));
+        }
+    }
+
 } // namespace tut

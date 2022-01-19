@@ -451,7 +451,10 @@ const char* CPLGetWineVersion()
     }
 
     const char * (CDECL *pwine_get_version)(void);
-    pwine_get_version = reinterpret_cast<const char* (*)(void)>(GetProcAddress(hntdll, "wine_get_version"));
+    const auto ret = GetProcAddress(hntdll, "wine_get_version");
+    static_assert(sizeof(pwine_get_version) == sizeof(ret),
+                  "sizeof(pwine_get_version) == sizeof(ret)");
+    memcpy(&pwine_get_version, &ret, sizeof(ret));
     if( pwine_get_version == nullptr )
     {
         return nullptr;

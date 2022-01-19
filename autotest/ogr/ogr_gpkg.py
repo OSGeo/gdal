@@ -5182,3 +5182,29 @@ def test_ogr_gpkg_crs_coordinate_epoch():
     ds = None
 
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Test CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE
+
+
+def test_ogr_gpkg_CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE():
+
+    # First check that CPL_TMPDIR is ignored for regular files
+    filename = '/vsimem/test_ogr_gpkg_CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE.gpkg'
+    with gdaltest.config_option('CPL_TMPDIR', '/i_do/not/exist'):
+        ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+    assert ds is not None
+    ds = None
+    gdal.Unlink(filename)
+
+    # Now check that CPL_TMPDIR is honored for CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE=FORCED
+    with gdaltest.config_options({'CPL_TMPDIR': '/vsimem/temporary_location',
+                                  'CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE': 'FORCED'}):
+        ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+    assert ds is not None
+    assert gdal.VSIStatL(filename) is None
+    assert len(gdal.ReadDir('/vsimem/temporary_location')) != 0
+    ds = None
+    assert gdal.VSIStatL(filename) is not None
+    assert gdal.ReadDir('/vsimem/temporary_location') is None

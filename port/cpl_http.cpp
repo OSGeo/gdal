@@ -236,7 +236,7 @@ CPLErr LoadCAPICertificates(const char *pszName,
 
 // Load certificates from Windows Crypto API store.
 static
-CURLcode CPL_ssl_ctx_callback(CURL *pCurl, void *pSSL, void *)
+CURLcode CPL_ssl_ctx_callback(CURL *, void *pSSL, void *)
 {
     SSL_CTX *pSSL_CTX = static_cast<SSL_CTX*>(pSSL);
     if( pSSL_CTX == nullptr )
@@ -276,7 +276,7 @@ CURLcode CPL_ssl_ctx_callback(CURL *pCurl, void *pSSL, void *)
 
             CPLDebug("HTTP",
                      "Loading %d certificates from Windows store.",
-                     poWindowsCertificateList->size());
+                     static_cast<int>(poWindowsCertificateList->size()));
         }
     }
 

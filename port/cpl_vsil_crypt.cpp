@@ -62,17 +62,20 @@ constexpr char VSICRYPT_PREFIX_WITHOUT_SLASH[] = "/vsicrypt";
 constexpr unsigned int VSICRYPT_READ = 0x1;
 constexpr unsigned int VSICRYPT_WRITE = 0x2;
 
-#ifdef _MSC_VER
-#pragma warning( push )
-#pragma warning( disable : 4505 )
-#endif
-
 /* Begin of crypto++ headers */
 #ifdef _MSC_VER
 #pragma warning( push )
 #pragma warning( disable : 4189 )
 #pragma warning( disable : 4512 )
 #pragma warning( disable : 4244 )
+#pragma warning( disable : 4505 )
+#endif
+
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Weffc++"
+#pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
+#pragma GCC diagnostic ignored "-Wold-style-cast"
 #endif
 
 #ifdef USE_ONLY_CRYPTODLL_ALG
@@ -97,6 +100,10 @@ constexpr unsigned int VSICRYPT_WRITE = 0x2;
 #include "cryptopp/filters.h"
 #include "cryptopp/modes.h"
 #include "cryptopp/osrng.h"
+
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
 
 #ifdef _MSC_VER
 #pragma warning( pop )

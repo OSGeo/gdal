@@ -1245,7 +1245,8 @@ def test_wmts_20():
     <ServiceMetadataURL xlink:href="/vsimem/wmts_20.xml"/>
 </Capabilities>""")
 
-    ds = gdal.Open('WMTS:/vsimem/wmts_20.xml')
+    ds = gdal.OpenEx('WMTS:/vsimem/wmts_20.xml',
+                     open_options = ["CLIP_EXTENT_WITH_MOST_PRECISE_TILE_MATRIX_LIMITS=YES"])
     assert ds is not None
     assert ds.RasterXSize == 512
     assert ds.RasterYSize == 256

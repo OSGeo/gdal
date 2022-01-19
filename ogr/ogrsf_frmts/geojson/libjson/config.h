@@ -95,7 +95,9 @@
 #endif
 
 /* Define to 1 if you have the <unistd.h> header file. */
-#undef HAVE_UNISTD_H
+#ifndef _WIN32
+#define HAVE_UNISTD_H 1
+#endif
 
 /* Define to 1 if you have the `vprintf' function. */
 #ifdef _MSC_VER
@@ -122,5 +124,10 @@
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
+
+#define HAVE_DECL_ISNAN
+#define HAVE_DECL_ISINF
+#define HAVE_DECL_INFINITY
+#define HAVE_DECL_NAN
 
 #include "cpl_config.h"

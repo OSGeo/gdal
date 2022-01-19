@@ -98,7 +98,7 @@ user decide if the decoder should unpack the Bit-map ( if applicable )
 and the data values or just return the field description information.
 
 Note that a struct gribfield is allocated by g2_getfld, and it also
-contains pointers to many arrays of data that are alloated during decoding.
+contains pointers to many arrays of data that are allocated during decoding.
 Because of this, users are encouraged to free up this memory, when it is
 no longer needed, by an explicit call to routine g2_free.
 

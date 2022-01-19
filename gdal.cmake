@@ -1,10 +1,10 @@
 # CMake4GDAL project is distributed under X/MIT license. See accompanying file LICENSE.txt.
 
 # Switches to control build targets(cached)
-option(ENABLE_GNM "Build GNM module" ON)
-option(ENABLE_PAM "Set ON to enable pam" ON)
-option(BUILD_APPS "Build command utilities" ON)
-option(BUILD_DOCS "Build documents" ON)
+option(ENABLE_GNM "Build GNM (Geography Network Model) component" ON)
+option(ENABLE_PAM "Set ON to enable Persistent Auxiliary Metadata (.aux.xml)" ON)
+option(BUILD_APPS "Build command line utilities" ON)
+option(BUILD_DOCS "Build documentation" ON)
 
 # This option is to build drivers as plugins, for drivers that have external dependencies, that are not parf of GDAL
 # core dependencies Examples are netCDF, HDF4, Oracle, PDF, etc. This global setting can be overridden at the driver
@@ -16,9 +16,10 @@ option(GDAL_ENABLE_PLUGINS "Set ON to build drivers that have non-core external 
 option(GDAL_ENABLE_PLUGINS_NO_DEPS "Set ON to build drivers that have no non-core external dependencies as plugin" OFF)
 mark_as_advanced(GDAL_ENABLE_PLUGINS_NO_DEPS)
 
-option(GDAL_ENABLE_QHULL "use qhull" ON)
 option(ENABLE_IPO "Enable Inter-Procedural Optimization if possible" OFF)
-option(GDAL_ENABLE_MACOSX_FRAMEWORK "Enable Framework on Mac OS X" OFF)
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  option(GDAL_ENABLE_MACOSX_FRAMEWORK "Enable Framework on Mac OS X" OFF)
+endif ()
 option(GDAL_BUILD_OPTIONAL_DRIVERS "Whether to build GDAL optional drivers by default" ON)
 option(OGR_BUILD_OPTIONAL_DRIVERS "Whether to build OGR optional drivers by default" ON)
 
@@ -161,6 +162,15 @@ else ()
   check_cxx_compiler_flag(-Weffc++ HAVE_WFLAG_EFFCXX)
   if (HAVE_WFLAG_EFFCXX)
     set(WFLAG_EFFCXX -Weffc++)
+  endif ()
+
+  if (CMAKE_BUILD_TYPE MATCHES Debug)
+    add_definitions(-DDEBUG)
+    check_c_compiler_flag(-ftrapv HAVE_FTRAPV)
+    if (HAVE_FTRAPV)
+      set(GDAL_C_WARNING_FLAGS ${GDAL_C_WARNING_FLAGS} -ftrapv)
+      set(GDAL_CXX_WARNING_FLAGS ${GDAL_CXX_WARNING_FLAGS} -ftrapv)
+    endif ()
   endif ()
 
 endif ()
@@ -700,12 +710,15 @@ add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_D
 include(SystemSummary)
 system_summary(DESCRIPTION "GDAL is now configured on;")
 
-# Do not warn about Shapelib being an optional package not found, as we don't recommend using it Mono/DotNetFrameworkSdk
-# is also an internal detail of CSharp that we don't want to report
+# Do not warn about Shapelib being an optional package not found, as we don't recommend using it. Same for external
+# LERC. Mono/DotNetFrameworkSdk is also an internal detail of CSharp that we don't want to report
 get_property(_packages_not_found GLOBAL PROPERTY PACKAGES_NOT_FOUND)
 set(_new_packages_not_found)
 foreach (_package IN LISTS _packages_not_found)
   if (NOT ${_package} STREQUAL "Shapelib"
+      AND NOT ${_package} STREQUAL "LERC"
+      AND NOT ${_package} STREQUAL "OpenCAD"
+      AND NOT ${_package} STREQUAL "Podofo"
       AND NOT ${_package} STREQUAL "Mono"
       AND NOT ${_package} STREQUAL "DotNetFrameworkSdk")
     set(_new_packages_not_found ${_new_packages_not_found} "${_package}")

@@ -165,7 +165,7 @@ def process_table_4_2():
         product_type = int(m.group(1))
         category = int(m.group(2))
 
-        # Instanciate final table
+        # Instantiate final table
         table_name = f'grib2_table_4_2_{product_type}_{category}.csv'
         if table_name not in dict_tables:
             dict_tables[table_name] = [None for i in range(256)]

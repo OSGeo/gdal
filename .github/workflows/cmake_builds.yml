@@ -73,6 +73,13 @@ jobs:
         export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib
         $GITHUB_WORKSPACE/install-gdal/bin/gdalinfo --version
         PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/python3/dist-packages python3 -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
+    - name: Standalone Python bindings build
+      run: |
+        (cd $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python && python setup.py sdist)
+        mv $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python/dist/GDAL-*.tar.gz gdal-python.tar.gz
+        rm -rf $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python
+        # Set PATH so that gdal-config is found
+        PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH pip install --user gdal-python.tar.gz
 
   build-windows-msys2-mingw:
     runs-on: windows-latest
@@ -117,7 +124,7 @@ jobs:
       # Disable Python bindings because of 'ValueError: filename D:/a/gdal/gdal/swig/python/osgeo/__init__.py does not start with the input_base_dir D:/a/gdal/gdal/swig/python/osgeo/\' when running lib2to3
       # BUILD_CSHARP_BINDINGS=OFF because we get "AssemblyInfo.cs(98,12): error CS0246: The type or namespace name 'SecurityRules' could not be found (are you missing a using directive or an assembly reference?)" with Microsoft (R) Visual C# 2005 Compiler version 8.00.50727.9031 for Microsoft (R) Windows (R) 2005 Framework version 2.0.50727
       - name: Configure
-        run: cmake -DCMAKE_BUILD_TYPE=release -G "${env:generator}" "-DCMAKE_C_COMPILER_LAUNCHER=c:\tools\msys64\mingw64\bin\ccache.exe" "-DCMAKE_CXX_COMPILER_LAUNCHER=c:\tools\msys64\mingw64\bin\ccache.exe" "-DCMAKE_PREFIX_PATH=C:\tools\msys64\mingw64" "-DCMAKE_UNITY_BUILD=${env:CMAKE_UNITY_BUILD}" -S . -B "build" -DLIBXML2_INCLUDE_DIR=C:/tools/msys64/mingw64/include -DGDAL_USE_LIBXML2:BOOL=OFF -DGDAL_USE_MYSQL:BOOL=OFF -DBUILD_PYTHON_BINDINGS:BOOL=OFF -DBUILD_CSHARP_BINDINGS=OFF
+        run: cmake -DCMAKE_BUILD_TYPE=release -G "${env:generator}" "-DCMAKE_C_COMPILER_LAUNCHER=c:\tools\msys64\mingw64\bin\ccache.exe" "-DCMAKE_CXX_COMPILER_LAUNCHER=c:\tools\msys64\mingw64\bin\ccache.exe" "-DCMAKE_PREFIX_PATH=C:\tools\msys64\mingw64" "-DCMAKE_UNITY_BUILD=${env:CMAKE_UNITY_BUILD}" -S . -B "build" -DLIBXML2_INCLUDE_DIR=C:/tools/msys64/mingw64/include -DGDAL_USE_LIBXML2:BOOL=OFF -DGDAL_USE_MYSQL:BOOL=OFF -DBUILD_PYTHON_BINDINGS:BOOL=OFF -DBUILD_CSHARP_BINDINGS=OFF -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror
         working-directory: ${{ github.workspace }}
       - name: Build
         run: cmake --build build -j 3
@@ -165,8 +172,8 @@ jobs:
         cd $OLDPWD
     - name: Configure
       shell: bash -l {0}
-      # FIXME: Spatialite and Jasper manually disabled because of linking errors: spatialite needs rttopo, and jasper lacks jp2_box_destroy
-      # Disable MySQL because of ogr\ogrsf_frmts\mysql\ogr_mysql.h(47,10): fatal error C1083: Cannot open include file: 'mysql.h': No such file or directory
+      # FIXME: Jasper manually disabled because of linking errors: lacks jp2_box_destroy
+      # Disable MySQL because of "error LNK2038: mismatch detected for '_MSC_VER': value '1800' doesn't match value '1900' in ogrmysqldatasource.obj" and other errors
       # Disable LIBKML because of issue at linking time with kmlXXXX.lib being debug libraries
       # Note that the leading space in CMAKE_C/CXX_FLAGS=" /WX" is due to using Bash on Windows that would
       # otherwise interpret /bla has a file relative to the Bash root directory and would replace it by a path like c:\Program Files\git\WX
@@ -174,7 +181,7 @@ jobs:
       # BUILD_CSHARP_BINDINGS=OFF because we get "AssemblyInfo.cs(98,12): error CS0246: The type or namespace name 'SecurityRules' could not be found (are you missing a using directive or an assembly reference?)" with Microsoft (R) Visual C# 2005 Compiler version 8.00.50727.9031 for Microsoft (R) Windows (R) 2005 Framework version 2.0.50727
       run: |
         mkdir -p $GITHUB_WORKSPACE/build
-        cmake -A ${architecture} -G "${generator}" "-DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal" "-DCMAKE_C_COMPILER_LAUNCHER=clcache" "-DCMAKE_CXX_COMPILER_LAUNCHER=clcache" "-DCMAKE_PREFIX_PATH=${CONDA_PREFIX}" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DSPATIALITE_LIBRARY:FILEPATH= -DJASPER_LIBRARY_RELEASE:FILEPATH= -DMYSQL_LIBRARY:FILEPATH= -DLIBKML_BASE_LIBRARY:FILEPATH= -DGDAL_ENABLE_PLUGINS:BOOL=ON -DGDAL_ENABLE_PLUGINS_NO_DEPS:BOOL=ON -DGDAL_USE_PUBLICDECOMPWT:BOOL=ON -DBUILD_JAVA_BINDINGS=OFF -DBUILD_CSHARP_BINDINGS=OFF -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX"
+        cmake -A ${architecture} -G "${generator}" "-DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal" "-DCMAKE_C_COMPILER_LAUNCHER=clcache" "-DCMAKE_CXX_COMPILER_LAUNCHER=clcache" "-DCMAKE_PREFIX_PATH=${CONDA_PREFIX}" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DJASPER_LIBRARY_RELEASE:FILEPATH= -DLIBKML_BASE_LIBRARY:FILEPATH= -DGDAL_ENABLE_PLUGINS:BOOL=ON -DGDAL_ENABLE_PLUGINS_NO_DEPS:BOOL=ON -DGDAL_USE_PUBLICDECOMPWT:BOOL=ON -DBUILD_JAVA_BINDINGS=OFF -DBUILD_CSHARP_BINDINGS=OFF -DGDAL_USE_MYSQL:BOOL=OFF -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX"
     - name: Build
       shell: bash -l {0}
       run: cmake --build $GITHUB_WORKSPACE/build --config Release -j 2

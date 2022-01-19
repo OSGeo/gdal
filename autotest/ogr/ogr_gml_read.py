@@ -2998,7 +2998,7 @@ def test_ogr_gml_67():
     gdal.Unlink(filename[0:-3] + "gfs")
 
 ###############################################################################
-# Test reading GML with xsd with a choice of geometry properites
+# Test reading GML with xsd with a choice of geometry properties
 
 
 def test_ogr_gml_68():
