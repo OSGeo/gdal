@@ -49,11 +49,16 @@ def open_for_read(uri):
 def startup_and_cleanup():
 
     az_vars = {}
-    for var in ('AZURE_STORAGE_CONNECTION_STRING', 'AZURE_STORAGE_ACCOUNT',
-                'AZURE_STORAGE_ACCESS_KEY', 'AZURE_SAS', 'AZURE_NO_SIGN_REQUEST'):
+    for var, reset_val in (
+                ('AZURE_STORAGE_CONNECTION_STRING', None),
+                ('AZURE_STORAGE_ACCOUNT', None),
+                ('AZURE_STORAGE_ACCESS_KEY', None),
+                ('AZURE_STORAGE_SAS_TOKEN', None),
+                ('AZURE_NO_SIGN_REQUEST', None),
+                ('AZURE_CONFIG_DIR', ''),
+                ('AZURE_STORAGE_ACCESS_TOKEN', '')):
         az_vars[var] = gdal.GetConfigOption(var)
-        if az_vars[var] is not None:
-            gdal.SetConfigOption(var, "")
+        gdal.SetConfigOption(var, reset_val)
 
     assert gdal.GetSignedURL('/vsiaz/foo/bar') is None
 
@@ -69,8 +74,6 @@ def startup_and_cleanup():
 
     gdal.SetConfigOption('AZURE_STORAGE_CONNECTION_STRING',
                          'DefaultEndpointsProtocol=http;AccountName=myaccount;AccountKey=MY_ACCOUNT_KEY;EndpointSuffix=127.0.0.1:%d' % gdaltest.webserver_port)
-    gdal.SetConfigOption('AZURE_STORAGE_ACCOUNT', '')
-    gdal.SetConfigOption('AZURE_STORAGE_ACCESS_KEY', '')
     gdal.SetConfigOption('CPL_AZURE_TIMESTAMP', 'my_timestamp')
 
     yield
@@ -294,7 +297,7 @@ def test_vsiaz_fake_readdir():
     assert dir_contents == ['mycontainer1', 'mycontainer2']
 
 ###############################################################################
-# Test AZURE_SAS option with fake server
+# Test AZURE_STORAGE_SAS_TOKEN option with fake server
 
 
 def test_vsiaz_sas_fake():
@@ -304,7 +307,11 @@ def test_vsiaz_sas_fake():
 
     gdal.VSICurlClearCache()
 
-    with gdaltest.config_options({ 'AZURE_STORAGE_ACCOUNT': 'test', 'AZURE_SAS': 'sig=sas', 'CPL_AZURE_ENDPOINT' : '127.0.0.1:%d' % gdaltest.webserver_port, 'CPL_AZURE_USE_HTTPS': 'NO', 'AZURE_STORAGE_CONNECTION_STRING': ''}):
+    with gdaltest.config_options({'AZURE_STORAGE_ACCOUNT': 'test',
+                                  'AZURE_STORAGE_SAS_TOKEN': 'sig=sas',
+                                  'CPL_AZURE_ENDPOINT' : '127.0.0.1:%d' % gdaltest.webserver_port,
+                                  'CPL_AZURE_USE_HTTPS': 'NO',
+                                  'AZURE_STORAGE_CONNECTION_STRING': ''}):
 
         handler = webserver.SequentialHandler()
 
@@ -1390,3 +1397,171 @@ def test_vsiaz_fake_metadata():
     handler.add('PUT', '/azure/blob/myaccount/test/foo.bin?comp=metadata', 404)
     with webserver.install_http_handler(handler):
         assert not gdal.SetFileMetadata('/vsiaz/test/foo.bin', {'x-ms-meta-foo': 'bar'}, 'METADATA')
+
+
+###############################################################################
+# Read credentials from configuration file
+
+
+def test_vsiaz_read_credentials_config_file_connection_string():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    config_content = """
+[unrelated]
+account=foo
+[storage]
+connection_string = DefaultEndpointsProtocol=http;AccountName=myaccount2;AccountKey=MY_ACCOUNT_KEY;EndpointSuffix=127.0.0.1:%d
+""" % gdaltest.webserver_port
+
+    with gdaltest.tempfile('/vsimem/azure_config_dir/config', config_content), \
+         gdaltest.config_options({'AZURE_STORAGE_CONNECTION_STRING': None,
+                                  'AZURE_CONFIG_DIR': '/vsimem/azure_config_dir'}):
+        handler = webserver.SequentialHandler()
+        handler.add('GET', '/azure/blob/myaccount2/az_fake_bucket/resource', 200,
+                    {'Content-Length': 3},
+                    'foo',
+                    expected_headers={'Authorization': 'SharedKey myaccount2:LCgZcIfQT/du4Xsdv8ZHT1yi+Qrmaw0IxNdI1Cldy+w='})
+        with webserver.install_http_handler(handler):
+            f = open_for_read('/vsiaz/az_fake_bucket/resource')
+            assert f is not None
+            data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+            gdal.VSIFCloseL(f)
+
+        assert data == 'foo'
+
+
+###############################################################################
+# Read credentials from configuration file
+
+
+def test_vsiaz_read_credentials_config_file_account_and_key():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    config_content = """
+[unrelated]
+account=foo
+[storage]
+account = myaccount2
+key = MY_ACCOUNT_KEY
+"""
+
+    with gdaltest.tempfile('/vsimem/azure_config_dir/config', config_content), \
+         gdaltest.config_options({'AZURE_STORAGE_CONNECTION_STRING': None,
+                                  'CPL_AZURE_ENDPOINT': '127.0.0.1:%d' % gdaltest.webserver_port,
+                                  'CPL_AZURE_USE_HTTPS': 'NO',
+                                  'AZURE_CONFIG_DIR': '/vsimem/azure_config_dir'}):
+        handler = webserver.SequentialHandler()
+        handler.add('GET', '/azure/blob/myaccount2/az_fake_bucket/resource', 200,
+                    {'Content-Length': 3},
+                    'foo',
+                    expected_headers={'Authorization': 'SharedKey myaccount2:LCgZcIfQT/du4Xsdv8ZHT1yi+Qrmaw0IxNdI1Cldy+w='})
+        with webserver.install_http_handler(handler):
+            f = open_for_read('/vsiaz/az_fake_bucket/resource')
+            assert f is not None
+            data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+            gdal.VSIFCloseL(f)
+
+        assert data == 'foo'
+
+
+###############################################################################
+# Read credentials from configuration file
+
+
+def test_vsiaz_read_credentials_config_file_account_and_sas_token():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    config_content = """
+[unrelated]
+account=foo
+[storage]
+account = myaccount2
+sas_token = sig=sas
+"""
+
+    with gdaltest.tempfile('/vsimem/azure_config_dir/config', config_content), \
+         gdaltest.config_options({'AZURE_STORAGE_CONNECTION_STRING': None,
+                                  'CPL_AZURE_ENDPOINT': '127.0.0.1:%d' % gdaltest.webserver_port,
+                                  'CPL_AZURE_USE_HTTPS': 'NO',
+                                  'AZURE_CONFIG_DIR': '/vsimem/azure_config_dir'}):
+        handler = webserver.SequentialHandler()
+        handler.add('GET', '/azure/blob/myaccount2/az_fake_bucket/resource?sig=sas', 200,
+                    {'Content-Length': 3},
+                    'foo')
+        with webserver.install_http_handler(handler):
+            f = open_for_read('/vsiaz/az_fake_bucket/resource')
+            assert f is not None
+            data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+            gdal.VSIFCloseL(f)
+
+        assert data == 'foo'
+
+
+###############################################################################
+# Read credentials from configuration file
+
+
+def test_vsiaz_read_credentials_config_file_missing_account():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    config_content = """
+[unrelated]
+account=foo
+[storage]
+"""
+
+    with gdaltest.tempfile('/vsimem/azure_config_dir/config', config_content), \
+         gdaltest.config_options({'AZURE_STORAGE_CONNECTION_STRING': None,
+                                  'CPL_AZURE_ENDPOINT': '127.0.0.1:%d' % gdaltest.webserver_port,
+                                  'CPL_AZURE_USE_HTTPS': 'NO',
+                                  'AZURE_CONFIG_DIR': '/vsimem/azure_config_dir'}):
+        handler = webserver.SequentialHandler()
+        with webserver.install_http_handler(handler):
+            f = open_for_read('/vsiaz/az_fake_bucket/resource')
+            assert f is None
+
+
+###############################################################################
+# Read credentials from configuration file
+
+
+def test_vsiaz_access_token():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    with gdaltest.config_options({'AZURE_STORAGE_CONNECTION_STRING': None,
+                                  'AZURE_STORAGE_ACCOUNT': 'myaccount',
+                                  'CPL_AZURE_ENDPOINT': '127.0.0.1:%d' % gdaltest.webserver_port,
+                                  'CPL_AZURE_USE_HTTPS': 'NO',
+                                  'AZURE_STORAGE_ACCESS_TOKEN': 'my_token'}):
+        handler = webserver.SequentialHandler()
+        handler.add('GET', '/azure/blob/myaccount/az_fake_bucket/resource', 200,
+                    {'Content-Length': 3},
+                    'foo',
+                    expected_headers={'Authorization': 'Bearer my_token'})
+        with webserver.install_http_handler(handler):
+            f = open_for_read('/vsiaz/az_fake_bucket/resource')
+            assert f is not None
+            data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+            gdal.VSIFCloseL(f)
+
+        assert data == 'foo'

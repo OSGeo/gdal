@@ -41,6 +41,8 @@ Virtual file systems can only be used with GDAL or OGR drivers supporting the "l
 
 Notable exceptions are the netCDF, HDF4 and HDF5 drivers.
 
+.. _vsizip:
+
 /vsizip/ (.zip archives)
 ------------------------
 
@@ -88,6 +90,8 @@ Starting with GDAL 2.4, the :decl_configoption:`GDAL_NUM_THREADS` configuration 
 
 Read and write operations cannot be interleaved. The new zip must be closed before being re-opened in read mode.
 
+.. _vsigzip:
+
 /vsigzip/ (gzipped file)
 ------------------------
 
@@ -110,6 +114,8 @@ When the file is located in a writable location, a file with extension .gz.prope
 Write capabilities are also available, but read and write operations cannot be interleaved.
 
 Starting with GDAL 2.4, the :decl_configoption:`GDAL_NUM_THREADS` configuration option can be set to an integer or ``ALL_CPUS`` to enable multi-threaded compression of a single file. This is similar to the pigz utility in independent mode. By default the input stream is split into 1 MB chunks (the chunk size can be tuned with the :decl_configoption:`CPL_VSIL_DEFLATE_CHUNK_SIZE` configuration option, with values like "x K" or "x M"), and each chunk is independently compressed (and terminated by a nine byte marker 0x00 0x00 0xFF 0xFF 0x00 0x00 0x00 0xFF 0xFF, signaling a full flush of the stream and dictionary, enabling potential independent decoding of each chunk). This slightly reduces the compression rate, so very small chunk sizes should be avoided.
+
+.. _vsitar:
 
 /vsitar/ (.tar, .tgz archives)
 ------------------------------
@@ -135,11 +141,11 @@ Starting with GDAL 2.2, an alternate syntax is available so as to enable chainin
 Network based file systems
 --------------------------
 
-A generic :ref:`/vsicurl/ </vsicurl/>` file system handler exists for online resources that do not require particular signed authentication schemes. It is specialized into sub-filesystems for commercial cloud storage services, such as :ref:`/vsis3/ </vsis3/>`,  :ref:`/vsigs/ </vsigs/>`, :ref:`/vsiaz/ </vsiaz/>`, :ref:`/vsioss/ </vsioss/>` or  :ref:`/vsiswift/ </vsiswift/>`.
+A generic :ref:`/vsicurl/ <vsicurl>` file system handler exists for online resources that do not require particular signed authentication schemes. It is specialized into sub-filesystems for commercial cloud storage services, such as :ref:`/vsis3/ <vsis3>`,  :ref:`/vsigs/ <vsigs>`, :ref:`/vsiaz/ <vsiaz>`, :ref:`/vsioss/ <vsioss>` or  :ref:`/vsiswift/ <vsiswift>`.
 
-When reading of entire files in a streaming way is possible, prefer using the :ref:`/vsicurl_streaming/ </vsicurl_streaming/>`, and its variants for the above cloud storage services, for more efficiency.
+When reading of entire files in a streaming way is possible, prefer using the :ref:`/vsicurl_streaming/ <vsicurl_streaming>`, and its variants for the above cloud storage services, for more efficiency.
 
-.. _`/vsicurl/`:
+.. _vsicurl:
 
 /vsicurl/ (http/https/ftp files: random access)
 +++++++++++++++++++++++++++++++++++++++++++++++
@@ -185,14 +191,14 @@ Starting with GDAL 2.1, ``/vsicurl/`` will try to query directly redirected URLs
 
 :cpp:func:`VSIReadDir` should be able to parse the HTML directory listing returned by the most popular web servers, such as Apache and Microsoft IIS.
 
-.. _`/vsicurl_streaming/`:
+.. _vsicurl_streaming:
 
 /vsicurl_streaming/ (http/https/ftp files: streaming)
 +++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 /vsicurl_streaming/ is a file system handler that allows on-the-fly sequential reading of files streamed through HTTP/FTP web protocols, without prior download of the entire file. It requires GDAL to be built against libcurl.
 
-Although this file handler is able seek to random offsets in the file, this will not be efficient. If you need efficient random access and that the server supports range downloading, you should use the :ref:`/vsicurl/ </vsicurl/>` file system handler instead.
+Although this file handler is able seek to random offsets in the file, this will not be efficient. If you need efficient random access and that the server supports range downloading, you should use the :ref:`/vsicurl/ <vsicurl>` file system handler instead.
 
 Recognized filenames are of the form :file:`/vsicurl_streaming/http[s]://path/to/remote/resource` or :file:`/vsicurl_streaming/ftp://path/to/remote/resource`, where :file:`path/to/remote/resource` is the URL of a remote resource.
 
@@ -204,7 +210,7 @@ The file can be cached in RAM by setting the configuration option :decl_configop
 
 :cpp:func:`VSIStatL` will return the size in st_size member and file nature- file or directory - in st_mode member (the later only reliable with FTP resources for now).
 
-.. _`/vsis3/`:
+.. _vsis3:
 
 /vsis3/ (AWS S3 files)
 ++++++++++++++++++++++
@@ -217,13 +223,13 @@ Deletion of files with :cpp:func:`VSIUnlink` is also supported. Starting with GD
 
 Recognized filenames are of the form :file:`/vsis3/bucket/key`, where ``bucket`` is the name of the S3 bucket and ``key`` is the S3 object "key", i.e. a filename potentially containing subdirectories.
 
-The generalities of :ref:`/vsicurl/ </vsicurl/>` apply.
+The generalities of :ref:`/vsicurl/ <vsicurl>` apply.
 
 Several authentication methods are possible, and are attempted in the following order:
 
 1. If :decl_configoption:`AWS_NO_SIGN_REQUEST=YES` configuration option is set, request signing is disabled. This option might be used for buckets with public access rights. Available since GDAL 2.3
 2. The :decl_configoption:`AWS_SECRET_ACCESS_KEY` and :decl_configoption:`AWS_ACCESS_KEY_ID` configuration options can be set. The :decl_configoption:`AWS_SESSION_TOKEN` configuration option must be set when temporary credentials are used.
-3. Starting with GDAL 2.3, alternate ways of providing credentials similar to what the "aws" command line utility or Boto3 support can be used. If the above mentioned environment variables are not provided, the ``~/.aws/credentials`` or ``UserProfile%/.aws/credentials`` file will be read (or the file pointed by :decl_configoption:`CPL_AWS_CREDENTIALS_FILE`). The profile may be specified with the :decl_configoption:`AWS_DEFAULT_PROFILE` environment variable, or starting with GDAL 3.2 with the :decl_configoption:`AWS_PROFILE` environment variable (the default profile is "default").
+3. Starting with GDAL 2.3, alternate ways of providing credentials similar to what the "aws" command line utility or Boto3 support can be used. If the above mentioned environment variables are not provided, the ``~/.aws/credentials`` or ``%UserProfile%/.aws/credentials`` file will be read (or the file pointed by :decl_configoption:`CPL_AWS_CREDENTIALS_FILE`). The profile may be specified with the :decl_configoption:`AWS_DEFAULT_PROFILE` environment variable, or starting with GDAL 3.2 with the :decl_configoption:`AWS_PROFILE` environment variable (the default profile is "default").
 4. The ``~/.aws/config`` or ``%UserProfile%/.aws/config`` file may also be used (or the file pointer by :decl_configoption:`AWS_CONFIG_FILE`) to retrieve credentials and the AWS region.
 5. If none of the above method succeeds, instance profile credentials will be retrieved when GDAL is used on EC2 instances.
 
@@ -251,7 +257,7 @@ Starting with GDAL 3.5, profiles that use IAM role assumption (see https://docs.
 
 .. versionadded:: 2.1
 
-.. _`/vsis3_streaming/`:
+.. _vsis3_streaming:
 
 /vsis3_streaming/ (AWS S3 files: streaming)
 +++++++++++++++++++++++++++++++++++++++++++
@@ -260,11 +266,11 @@ Starting with GDAL 3.5, profiles that use IAM role assumption (see https://docs.
 
 Recognized filenames are of the form :file:`/vsis3_streaming/bucket/key` where ``bucket`` is the name of the S3 bucket and ``key`` is the S3 object "key", i.e. a filename potentially containing subdirectories.
 
-Authentication options, and read-only features, are identical to :ref:`/vsis3/ </vsis3/>`
+Authentication options, and read-only features, are identical to :ref:`/vsis3/ <vsis3>`
 
 .. versionadded:: 2.1
 
-.. _`/vsigs/`:
+.. _vsigs:
 
 /vsigs/ (Google Cloud Storage files)
 ++++++++++++++++++++++++++++++++++++
@@ -276,7 +282,7 @@ Deletion of files with :cpp:func:`VSIUnlink`, creation of directories with :cpp:
 
 Recognized filenames are of the form :file:`/vsigs/bucket/key` where ``bucket`` is the name of the bucket and ``key`` is the object "key", i.e. a filename potentially containing subdirectories.
 
-The generalities of :ref:`/vsicurl/ </vsicurl/>` apply.
+The generalities of :ref:`/vsicurl/ <vsicurl>` apply.
 
 Several authentication methods are possible, and are attempted in the following order:
 
@@ -284,10 +290,11 @@ Several authentication methods are possible, and are attempted in the following 
 2. The :decl_configoption:`GS_SECRET_ACCESS_KEY` and :decl_configoption:`GS_ACCESS_KEY_ID` configuration options can be set for AWS-style authentication
 3. The :decl_configoption:`GDAL_HTTP_HEADER_FILE` configuration option to point to a filename of a text file with "key: value" headers. Typically, it must contain a "Authorization: Bearer XXXXXXXXX" line.
 4. (GDAL >= 2.3) The :decl_configoption:`GS_OAUTH2_REFRESH_TOKEN` configuration option can be set to use OAuth2 client authentication. See http://code.google.com/apis/accounts/docs/OAuth2.html This refresh token can be obtained with the ``gdal_auth.py -s storage`` or ``gdal_auth.py -s storage-rw`` script Note: instead of using the default GDAL application credentials, you may define the :decl_configoption:`GS_OAUTH2_CLIENT_ID` and :decl_configoption:`GS_OAUTH2_CLIENT_SECRET` configuration options (need to be defined both for gdal_auth.py and later execution of /vsigs)
-5. (GDAL >= 2.3) The :decl_configoption:`GOOGLE_APPLICATION_CREDENTIALS` configuration option can be set to point to a JSON file containing OAuth2 service account credentials, in particular a private key and a client email. See https://developers.google.com/identity/protocols/OAuth2ServiceAccount for more details on this authentication method. The bucket must grant the "Storage Legacy Bucket Owner" or "Storage Legacy Bucket Reader" permissions to the service account. The :decl_configoption:`GS_OAUTH2_SCOPE` configuration option can be set to change the default permission scope from "https://www.googleapis.com/auth/devstorage.read_write" to "https://www.googleapis.com/auth/devstorage.read_only" if needed.
-6. (GDAL >= 2.3) Variant of the previous method. The :decl_configoption:`GS_OAUTH2_PRIVATE_KEY` (or :decl_configoption:`GS_OAUTH2_PRIVATE_KEY_FILE)` and :decl_configoption:`GS_OAUTH2_CLIENT_EMAIL` can be set to use OAuth2 service account authentication. See https://developers.google.com/identity/protocols/OAuth2ServiceAccount for more details on this authentication method. The :decl_configoption:`GS_OAUTH2_PRIVATE_KEY` configuration option must contain the private key as a inline string, starting with ``-----BEGIN PRIVATE KEY-----``. Alternatively the :decl_configoption:`GS_OAUTH2_PRIVATE_KEY_FILE` configuration option can be set to indicate a filename that contains such a private key. The bucket must grant the "Storage Legacy Bucket Owner" or "Storage Legacy Bucket Reader" permissions to the service account. The :decl_configoption:`GS_OAUTH2_SCOPE` configuration option can be set to change the default permission scope from "https://www.googleapis.com/auth/devstorage.read_write" to "https://www.googleapis.com/auth/devstorage.read_only" if needed.
-7. (GDAL >= 2.3) An alternate way of providing credentials similar to what the "gsutil" command line utility or Boto3 support can be used. If the above mentioned environment variables are not provided, the :file:`~/.boto` or :file:`UserProfile%/.boto` file will be read (or the file pointed by :decl_configoption:`CPL_GS_CREDENTIALS_FILE`) for the gs_secret_access_key and gs_access_key_id entries for AWS style authentication. If not found, it will look for the gs_oauth2_refresh_token (and optionally client_id and client_secret) entry for OAuth2 client authentication.
-8. (GDAL >= 2.3) Finally if none of the above method succeeds, the code will check if the current machine is a Google Compute Engine instance, and if so will use the permissions associated to it (using the default service account associated with the VM). To force a machine to be detected as a GCE instance (for example for code running in a container with no access to the boot logs), you can set :decl_configoption:`CPL_MACHINE_IS_GCE` to ``YES``.
+5. (GDAL >= 2.3) The :decl_configoption:`GOOGLE_APPLICATION_CREDENTIALS` configuration option can be set to point to a JSON file containing OAuth2 service account credentials (``type: service_account``), in particular a private key and a client email. See https://developers.google.com/identity/protocols/OAuth2ServiceAccount for more details on this authentication method. The bucket must grant the "Storage Legacy Bucket Owner" or "Storage Legacy Bucket Reader" permissions to the service account. The :decl_configoption:`GS_OAUTH2_SCOPE` configuration option can be set to change the default permission scope from "https://www.googleapis.com/auth/devstorage.read_write" to "https://www.googleapis.com/auth/devstorage.read_only" if needed.
+6. (GDAL >= 3.4.2) The :decl_configoption:`GOOGLE_APPLICATION_CREDENTIALS` configuration option can be set to point to a JSON file containing OAuth2 user credentials (``type: authorized_user``).
+7. (GDAL >= 2.3) Variant of the previous method. The :decl_configoption:`GS_OAUTH2_PRIVATE_KEY` (or :decl_configoption:`GS_OAUTH2_PRIVATE_KEY_FILE)` and :decl_configoption:`GS_OAUTH2_CLIENT_EMAIL` can be set to use OAuth2 service account authentication. See https://developers.google.com/identity/protocols/OAuth2ServiceAccount for more details on this authentication method. The :decl_configoption:`GS_OAUTH2_PRIVATE_KEY` configuration option must contain the private key as a inline string, starting with ``-----BEGIN PRIVATE KEY-----``. Alternatively the :decl_configoption:`GS_OAUTH2_PRIVATE_KEY_FILE` configuration option can be set to indicate a filename that contains such a private key. The bucket must grant the "Storage Legacy Bucket Owner" or "Storage Legacy Bucket Reader" permissions to the service account. The :decl_configoption:`GS_OAUTH2_SCOPE` configuration option can be set to change the default permission scope from "https://www.googleapis.com/auth/devstorage.read_write" to "https://www.googleapis.com/auth/devstorage.read_only" if needed.
+8. (GDAL >= 2.3) An alternate way of providing credentials similar to what the "gsutil" command line utility or Boto3 support can be used. If the above mentioned environment variables are not provided, the :file:`~/.boto` or :file:`UserProfile%/.boto` file will be read (or the file pointed by :decl_configoption:`CPL_GS_CREDENTIALS_FILE`) for the gs_secret_access_key and gs_access_key_id entries for AWS style authentication. If not found, it will look for the gs_oauth2_refresh_token (and optionally client_id and client_secret) entry for OAuth2 client authentication.
+9. (GDAL >= 2.3) Finally if none of the above method succeeds, the code will check if the current machine is a Google Compute Engine instance, and if so will use the permissions associated to it (using the default service account associated with the VM). To force a machine to be detected as a GCE instance (for example for code running in a container with no access to the boot logs), you can set :decl_configoption:`CPL_MACHINE_IS_GCE` to ``YES``.
 
 Since GDAL 3.1, the Rename() operation is supported (first doing a copy of the original file and then deleting it).
 
@@ -295,7 +302,7 @@ Starting with GDAL 3.4, the :decl_configoption:`GS_USER_PROJECT` configuration o
 
 .. versionadded:: 2.2
 
-.. _`/vsigs_streaming/`:
+.. _vsigs_streaming:
 
 /vsigs_streaming/ (Google Cloud Storage files: streaming)
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -304,18 +311,18 @@ Starting with GDAL 3.4, the :decl_configoption:`GS_USER_PROJECT` configuration o
 
 Recognized filenames are of the form :file:`/vsigs_streaming/bucket/key` where ``bucket`` is the name of the bucket and ``key`` is the object "key", i.e. a filename potentially containing subdirectories.
 
-Authentication options, and read-only features, are identical to :ref:`/vsigs/ </vsigs/>`
+Authentication options, and read-only features, are identical to :ref:`/vsigs/ <vsigs>`
 
 .. versionadded:: 2.2
 
-.. _`/vsiaz/`:
+.. _vsiaz:
 
 /vsiaz/ (Microsoft Azure Blob files)
 ++++++++++++++++++++++++++++++++++++
 
 /vsiaz/ is a file system handler that allows on-the-fly random reading of (primarily non-public) files available in Microsoft Azure Blob containers, without prior download of the entire file. It requires GDAL to be built against libcurl.
 
-See :ref:`/vsiadls/ </vsiadls/>` for a related filesystem for Azure Data Lake Storage Gen2.
+See :ref:`/vsiadls/ <vsiadls>` for a related filesystem for Azure Data Lake Storage Gen2.
 
 It also allows sequential writing of files. No seeks or read operations are then allowed, so in particular direct writing of GeoTIFF files with the GTiff driver is not supported, unless, if, starting with GDAL 3.2, the :decl_configoption:`CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE` configuration option is set to ``YES``, in which case random-write access is possible (involves the creation of a temporary local file, whose location is controlled by the :decl_configoption:`CPL_TMPDIR` configuration option).
 A block blob will be created if the file size is below 4 MB. Beyond, an append blob will be created (with a maximum file size of 195 GB).
@@ -324,17 +331,21 @@ Deletion of files with :cpp:func:`VSIUnlink`, creation of directories with :cpp:
 
 Recognized filenames are of the form :file:`/vsiaz/container/key`, where ``container`` is the name of the container and ``key`` is the object "key", i.e. a filename potentially containing subdirectories.
 
-The generalities of :ref:`/vsicurl/ </vsicurl/>` apply.
+The generalities of :ref:`/vsicurl/ <vsicurl>` apply.
 
 Several authentication methods are possible, and are attempted in the following order:
 
 1. The :decl_configoption:`AZURE_STORAGE_CONNECTION_STRING` configuration option, given in the access key section of the administration interface. It contains both the account name and a secret key.
+
 2. The :decl_configoption:`AZURE_STORAGE_ACCOUNT` configuration option is set to specify the account name AND
 
-    a) The :decl_configoption:`AZURE_STORAGE_ACCESS_KEY` configuration option is set to specify the secret key.
-    b) The :decl_configoption:`AZURE_NO_SIGN_REQUEST=YES` configuration option is set, so as to disable any request signing. This option might be used for accounts with public access rights. Available since GDAL 3.2
-    c) The :decl_configoption:`AZURE_SAS` configuration option is set to specify a Shared Access Signature. This SAS is appended to URLs built by the /vsiaz/ file system handler. Its value should already be URL-encoded and should not contain any leading '?' or '&' character (e.g. a valid one may look like "st=2019-07-18T03%3A53%3A22Z&se=2035-07-19T03%3A53%3A00Z&sp=rl&sv=2018-03-28&sr=c&sig=2RIXmLbLbiagYnUd49rgx2kOXKyILrJOgafmkODhRAQ%3D"). Available since GDAL 3.2
-    d) The current machine is a Azure Virtual Machine with Azure Active Directory permissions assigned to it (see https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/qs-configure-portal-windows-vm). Available since GDAL 3.3
+    a) (GDAL >= 3.5) The :decl_configoption:`AZURE_STORAGE_ACCESS_TOKEN` configuration option is set to specify the access token, that will be included in a "Authorization: Bearer ${AZURE_STORAGE_ACCESS_TOKEN}" header. This access token is typically obtained using Microsoft Authentication Library (MSAL).
+    b) The :decl_configoption:`AZURE_STORAGE_ACCESS_KEY` configuration option is set to specify the secret key.
+    c) The :decl_configoption:`AZURE_NO_SIGN_REQUEST=YES` configuration option is set, so as to disable any request signing. This option might be used for accounts with public access rights. Available since GDAL 3.2
+    d) The :decl_configoption:`AZURE_STORAGE_SAS_TOKEN` configuration option (``AZURE_SAS`` if GDAL < 3.5) is set to specify a Shared Access Signature. This SAS is appended to URLs built by the /vsiaz/ file system handler. Its value should already be URL-encoded and should not contain any leading '?' or '&' character (e.g. a valid one may look like "st=2019-07-18T03%3A53%3A22Z&se=2035-07-19T03%3A53%3A00Z&sp=rl&sv=2018-03-28&sr=c&sig=2RIXmLbLbiagYnUd49rgx2kOXKyILrJOgafmkODhRAQ%3D"). Available since GDAL 3.2
+    e) The current machine is a Azure Virtual Machine with Azure Active Directory permissions assigned to it (see https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/qs-configure-portal-windows-vm). Available since GDAL 3.3
+
+3. Starting with GDAL 3.5, the `configuration file <https://github.com/MicrosoftDocs/azure-docs-cli/blob/main/docs-ref-conceptual/azure-cli-configuration.md>` of the "az" command line utility can be used. The following keys of the ``[storage]`` section will be used in the following priority: ``connection_string``, ``account`` + ``key`` or ``account`` + ``sas_token``
 
 Since GDAL 3.1, the :cpp:func:`VSIRename` operation is supported (first doing a copy of the original file and then deleting it)
 
@@ -342,7 +353,7 @@ Since GDAL 3.3, the :cpp:func:`VSIGetFileMetadata` and :cpp:func:`VSISetFileMeta
 
 .. versionadded:: 2.3
 
-.. _`/vsiaz_streaming/`:
+.. _vsiaz_streaming:
 
 /vsiaz_streaming/ (Microsoft Azure Blob files: streaming)
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -351,11 +362,11 @@ Since GDAL 3.3, the :cpp:func:`VSIGetFileMetadata` and :cpp:func:`VSISetFileMeta
 
 Recognized filenames are of the form :file:`/vsiaz_streaming/container/key` where ``container`` is the name of the container and ``key`` is the object "key", i.e. a filename potentially containing subdirectories.
 
-Authentication options, and read-only features, are identical to :ref:`/vsiaz/ </vsiaz/>`
+Authentication options, and read-only features, are identical to :ref:`/vsiaz/ <vsiaz>`
 
 .. versionadded:: 2.3
 
-.. _`/vsiadls/`:
+.. _vsiadls:
 
 /vsiadls/ (Microsoft Azure Data Lake Storage Gen2)
 ++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -365,7 +376,7 @@ Authentication options, and read-only features, are identical to :ref:`/vsiaz/ <
 systems, without prior download of the entire file.
 It requires GDAL to be built against libcurl.
 
-It has similar capabilities as :ref:`/vsiaz/ </vsiaz/>`, and in particular uses the same
+It has similar capabilities as :ref:`/vsiaz/ <vsiaz>`, and in particular uses the same
 configuration options for authentication. Its advantages over /vsiaz/ are a real
 management of directory and Unix-style ACL support. Some features require the Azure
 storage to have hierarchical support turned on. Consult its
@@ -382,7 +393,7 @@ The main enhancements over /vsiaz/ are:
 
 .. versionadded:: 3.3
 
-.. _`/vsioss/`:
+.. _vsioss:
 
 /vsioss/ (Alibaba Cloud OSS files)
 ++++++++++++++++++++++++++++++++++
@@ -394,7 +405,7 @@ Deletion of files with :cpp:func:`VSIUnlink` is also supported. Creation of dire
 
 Recognized filenames are of the form :file:`/vsioss/bucket/key` where ``bucket`` is the name of the OSS bucket and ``key`` is the OSS object "key", i.e. a filename potentially containing subdirectories.
 
-The generalities of :ref:`/vsicurl/ </vsicurl/>` apply.
+The generalities of :ref:`/vsicurl/ <vsicurl>` apply.
 
 The :decl_configoption:`OSS_SECRET_ACCESS_KEY` and :decl_configoption:`OSS_ACCESS_KEY_ID` configuration options must be set. The :decl_configoption:`OSS_ENDPOINT` configuration option should normally be set to the appropriate value, which reflects the region attached to the bucket. The default is ``oss-us-east-1.aliyuncs.com``. If the bucket is stored in another region than oss-us-east-1, the code logic will redirect to the appropriate endpoint.
 
@@ -402,7 +413,7 @@ On writing, the file is uploaded using the OSS multipart upload API. The size of
 
 .. versionadded:: 2.3
 
-.. _`/vsioss_streaming/`:
+.. _vsioss_streaming:
 
 /vsioss_streaming/ (Alibaba Cloud OSS files: streaming)
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -411,11 +422,11 @@ On writing, the file is uploaded using the OSS multipart upload API. The size of
 
 Recognized filenames are of the form :file:`/vsioss_streaming/bucket/key` where ``bucket`` is the name of the bucket and ``key`` is the object "key", i.e. a filename potentially containing subdirectories.
 
-Authentication options, and read-only features, are identical to :ref:`/vsioss/ </vsioss/>`
+Authentication options, and read-only features, are identical to :ref:`/vsioss/ <vsioss>`
 
 .. versionadded:: 2.3
 
-.. _`/vsiswift/`:
+.. _vsiswift:
 
 /vsiswift/ (OpenStack Swift Object Storage)
 +++++++++++++++++++++++++++++++++++++++++++
@@ -427,7 +438,7 @@ Deletion of files with :cpp:func:`VSIUnlink` is also supported. Creation of dire
 
 Recognized filenames are of the form :file:`/vsiswift/bucket/key` where ``bucket`` is the name of the swift bucket and ``key`` is the swift object "key", i.e. a filename potentially containing subdirectories.
 
-The generalities of :ref:`/vsicurl/ </vsicurl/>` apply.
+The generalities of :ref:`/vsicurl/ <vsicurl>` apply.
 
 Three authentication methods are possible, and are attempted in the following order:
 
@@ -459,7 +470,7 @@ In some versions of OpenStack Swift, the access to large (segmented) files fails
 
 .. versionadded:: 2.3
 
-.. _`/vsiswift_streaming/`:
+.. _vsiswift_streaming:
 
 /vsiswift_streaming/ (OpenStack Swift Object Storage: streaming)
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -468,16 +479,16 @@ In some versions of OpenStack Swift, the access to large (segmented) files fails
 
 Recognized filenames are of the form :file:`/vsiswift_streaming/bucket/key` where ``bucket`` is the name of the bucket and ``key`` is the object "key", i.e. a filename potentially containing subdirectories.
 
-Authentication options, and read-only features, are identical to :ref:`/vsiswift/ </vsiswift/>`
+Authentication options, and read-only features, are identical to :ref:`/vsiswift/ <vsiswift>`
 
 .. versionadded:: 2.3
 
-.. _`/vsihdfs/`:
+.. _vsihdfs:
 
 /vsihdfs/ (Hadoop File System)
 ++++++++++++++++++++++++++++++
 
-/vsihdfs/ is a file system handler that provides read access to HDFS. This handler requires GDAL to have been built with Java support (``--with-java``) and HDFS support (``--with-hdfs``). Support for this handler is currently only available on Unix-like systems. Note: support for the HTTP REST API (webHdfs) is also available with :ref:`/vsiwebhdfs/`
+/vsihdfs/ is a file system handler that provides read access to HDFS. This handler requires GDAL to have been built with Java support (``--with-java``) and HDFS support (``--with-hdfs``). Support for this handler is currently only available on Unix-like systems. Note: support for the HTTP REST API (webHdfs) is also available with :ref:`vsiwebhdfs`
 
 Recognized filenames are of the form :file:`/vsihdfs/hdfsUri` where ``hdfsUri`` is a valid HDFS URI.
 
@@ -490,7 +501,7 @@ Examples:
 
 .. versionadded:: 2.4
 
-.. _`/vsiwebhdfs/`:
+.. _vsiwebhdfs:
 
 /vsiwebhdfs/ (Web Hadoop File System REST API)
 ++++++++++++++++++++++++++++++++++++++++++++++
@@ -508,7 +519,7 @@ Examples:
 It also allows sequential writing of files. No seeks or read operations are then allowed, so in particular direct writing of GeoTIFF files with the GTiff driver is not supported, unless, if, starting with GDAL 3.2, the :decl_configoption:`CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE` configuration option is set to ``YES``, in which case random-write access is possible (involves the creation of a temporary local file, whose location is controlled by the :decl_configoption:`CPL_TMPDIR` configuration option).
 Deletion of files with :cpp:func:`VSIUnlink` is also supported. Creation of directories with :cpp:func:`VSIMkdir` and deletion of (empty) directories with :cpp:func:`VSIRmdir` are also possible.
 
-The generalities of :ref:`/vsicurl/ </vsicurl/>` apply.
+The generalities of :ref:`/vsicurl/ <vsicurl>` apply.
 
 The following configuration options are available:
 
@@ -522,7 +533,7 @@ This file system handler also allows sequential writing of files (no seeks or re
 
 .. versionadded:: 2.4
 
-.. _`/vsistdin/`:
+.. _vsistdin:
 
 /vsistdin/ (standard input streaming)
 -------------------------------------
@@ -533,7 +544,7 @@ The filename syntax must be only :file:`/vsistdin/`.
 
 The file operations available are of course limited to Read() and forward Seek(). Full seek in the first MB of a file is possible, and it is cached so that closing, re-opening :file:`/vsistdin/` and reading within this first megabyte is possible multiple times in the same process.
 
-.. _`/vsistdout/`:
+.. _vsistdout:
 
 /vsistdout/ (standard output streaming)
 ---------------------------------------
@@ -546,7 +557,7 @@ The file operations available are of course limited to Write().
 
 A variation of this file system exists as the :file:`/vsistdout_redirect/` file system handler, where the output function can be defined with :cpp:func:`VSIStdoutSetRedirection`.
 
-.. _`/vsimem/`:
+.. _vsimem:
 
 /vsimem/ (in-memory files)
 --------------------------
@@ -559,7 +570,7 @@ Directory related functions are supported.
 
 /vsimem/ files are visible within the same process. Multiple threads can access the same underlying file in read mode, provided they used different handles, but concurrent write and read operations on the same underlying file are not supported (locking is left to the responsibility of calling code).
 
-.. _`/vsisubfile/`:
+.. _vsisubfile:
 
 /vsisubfile/ (portions of files)
 --------------------------------
@@ -574,13 +585,12 @@ Examples:
 
 ::
 
-
-/vsisubfile/1000_3000,/data/abc.ntf
-/vsisubfile/5000,../xyz/raw.dat
+    /vsisubfile/1000_3000,/data/abc.ntf
+    /vsisubfile/5000,../xyz/raw.dat
 
 Unlike the /vsimem/ or conventional file system handlers, there is no meaningful support for filesystem operations for creating new files, traversing directories, and deleting files within the /vsisubfile/ area. Only the :cpp:func:`VSIStatL`, :cpp:func:`VSIFOpenL` and operations based on the file handle returned by :cpp:func:`VSIFOpenL` operate properly.
 
-.. _`/vsisparse/`:
+.. _vsisparse:
 
 /vsisparse/ (sparse files)
 --------------------------
@@ -633,6 +643,8 @@ The :cpp:class:`VSICachedFile` class only handles read operations at that time, 
 This is done with the :cpp:func:`VSICreateCachedFile` function, that is implicitly used by a number of the above mentioned file systems (namely the default one for standard file system operations, and the /vsicurl/ and other related network file systems) if the ``VSI_CACHE`` configuration option is set to ``YES``.
 
 The default size of caching for each file is 25 MB (25 MB for each file that is cached), and can be controlled with the ``VSI_CACHE_SIZE`` configuration option (value in bytes).
+
+.. _vsicrypt:
 
 /vsicrypt/ (encrypted files)
 ----------------------------

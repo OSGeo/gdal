@@ -94,7 +94,7 @@ def test_ogr_s57_check_layers():
         assert lyr.GetLayerDefn().GetGeomType() == lyr_info[1], \
             ('Expected %d layer type in layer %s, but got %d.' % (lyr_info[1], lyr_info[0], lyr.GetLayerDefn().GetGeomType()))
 
-    
+
 ###############################################################################
 # Check the COALNE feature.
 
@@ -383,7 +383,7 @@ def test_ogr_s57_online_4():
         except OSError:
             pytest.skip()
 
-    gdal.SetConfigOption('OGR_S57_OPTIONS', 'RETURN_PRIMITIVES=ON,RETURN_LINKAGES=ON,LNAM_REFS=ON,RECODE_BY_DSSI=ON')
+    gdal.SetConfigOption('OGR_S57_OPTIONS', 'RETURN_PRIMITIVES=ON,RETURN_LINKAGES=ON,LNAM_REFS=ON')
     ds = ogr.Open('tmp/cache/ENC_ROOT/JP34NC94.000')
     gdal.SetConfigOption('OGR_S57_OPTIONS', None)
     lyr = ds.GetLayerByName('LNDMRK')

@@ -489,8 +489,7 @@ OGRLayer *OGRVRTDataSource::InstantiateUnionLayer(
             papoFields[nFields] = new OGRFieldDefn(&oFieldDefn);
             nFields++;
         }
-        else if( psSubNode->eType == CXT_Element &&
-                 EQUAL(psSubNode->pszValue, "GeometryField") )
+        else if( EQUAL(psSubNode->pszValue, "GeometryField") )
         {
             const char *l_pszName = CPLGetXMLValue(psSubNode, "name", nullptr);
             if( l_pszName == nullptr )

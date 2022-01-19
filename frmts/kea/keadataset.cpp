@@ -151,9 +151,12 @@ GDALDataset *KEADataset::Open( GDALOpenInfo * poOpenInfo )
 
             return pDataset;
         }
-        catch (const kealib::KEAIOException &)
+        catch (const kealib::KEAIOException &e)
         {
             // was a problem - can't be a valid file
+            CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Attempt to open file `%s' failed. Error: %s\n",
+                  poOpenInfo->pszFilename, e.what() );
             return nullptr;
         }
     }

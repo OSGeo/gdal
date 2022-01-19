@@ -1,0 +1,47 @@
+subcat,short_name,name,unit,unit_conv
+0,"WVSP1","Wave spectra (1)","-",UC_NONE
+1,"WVSP2","Wave spectra (2)","-",UC_NONE
+2,"WVSP3","Wave spectra (3)","-",UC_NONE
+3,"HTSGW","Significant height of combined wind waves and swell","m",UC_M2Feet
+4,"WVDIR","Direction of wind waves","Degree true",UC_NONE
+5,"WVHGT","Significant height of wind waves","m",UC_M2Feet
+6,"WVPER","Mean period of wind waves","s",UC_NONE
+7,"SWDIR","Direction of swell waves","Degree true",UC_NONE
+8,"SWELL","Significant height of swell waves","m",UC_NONE
+9,"SWPER","Mean period of swell waves","s",UC_NONE
+10,"DIRPW","Primary wave direction","Degree true",UC_NONE
+11,"PERPW","Primary wave mean period","s",UC_NONE
+12,"DIRSW","Secondary wave direction","Degree true",UC_NONE
+13,"PERSW","Secondary wave mean period","s",UC_NONE
+14,"WWSDIR","Direction of Combined Wind Waves and Swell","Degree true",UC_NONE
+15,"MWSPER","Mean Period of Combined Wind Waves and Swell","s",UC_NONE
+16,"CDWW","Coefficient of Drag With Waves","-",UC_NONE
+17,"FRICV","Friction Velocity","m/s",UC_NONE
+18,"WSTR","Wave Stress","N/(m^2)",UC_NONE
+19,"NWSTR","Normalised Waves Stress","-",UC_NONE
+20,"MSSW","Mean Square Slope of Waves","-",UC_NONE
+21,"USSD","U-component Surface Stokes Drift","m/s",UC_NONE
+22,"VSSD","V-component Surface Stokes Drift","m/s",UC_NONE
+23,"PMAXWH","Period of Maximum Individual Wave Height","s",UC_NONE
+24,"MAXWH","Maximum Individual Wave Height","m",UC_NONE
+25,"IMWF","Inverse Mean Wave Frequency","s",UC_NONE
+26,"IMFWW","Inverse Mean Frequency of The Wind Waves","s",UC_NONE
+27,"IMFTSW","Inverse Mean Frequency of The Total Swell","s",UC_NONE
+28,"MZWPER","Mean Zero-Crossing Wave Period","s",UC_NONE
+29,"MZPWW","Mean Zero-Crossing Period of The Wind Waves","s",UC_NONE
+30,"MZPTSW","Mean Zero-Crossing Period of The Total Swell","s",UC_NONE
+31,"WDIRW","Wave Directional Width","-",UC_NONE
+32,"DIRWWW","Directional Width of The Wind Waves","-",UC_NONE
+33,"DIRWTS","Directional Width of The Total Swell","-",UC_NONE
+34,"PWPER","Peak Wave Period","s",UC_NONE
+35,"PPERWW","Peak Period of The Wind Waves","s",UC_NONE
+36,"PPERTS","Peak Period of The Total Swell","s",UC_NONE
+37,"ALTWH","Altimeter Wave Height","m",UC_NONE
+38,"ALCWH","Altimeter Corrected Wave Height","m",UC_NONE
+39,"ALRRC","Altimeter Range Relative Correction","-",UC_NONE
+40,"MNWSOW","10 Metre Neutral Wind Speed Over Waves","m/s",UC_NONE
+41,"MWDIRW","10 Metre Wind Direction Over Waves","Degree true",UC_NONE
+42,"WESP","Wave Energy Spectrum","s/((m^2)*rad)",UC_NONE
+43,"KSSEW","Kurtosis of The Sea Surface Elevation Due to Waves","-",UC_NONE
+44,"BENINX","Benjamin-Feir Index","-",UC_NONE
+45,"SPFTR","Spectral Peakedness Factor","1/s",UC_NONE

@@ -53,8 +53,6 @@ static int    bNCSInitialized = FALSE;
 
 void ECWInitialize( void );
 
-extern "C" int CPL_DLL GDALIsInGlobalDestructor(void);
-
 #define BLOCK_SIZE 256
 
 GDALDataset* ECWDatasetOpenJPEG2000(GDALOpenInfo* poOpenInfo);
@@ -1040,35 +1038,7 @@ ECWDataset::~ECWDataset()
 
     CPLMutexHolder oHolder( &hECWDatasetMutex );
 
-    // bInGDALGlobalDestructor is set to TRUE by gdaldllmain.cpp/GDALDestroy() so as
-    // to avoid an issue with the ECW SDK 3.3 where the destructor of CNCSJP2File::CNCSJP2FileVector CNCSJP2File::sm_Files;
-    // static resource allocated in NCJP2File.cpp can be called before GDALDestroy(), causing
-    // ECW SDK resources ( CNCSJP2File files ) to be closed before we get here.
-    //
-    // We also have an issue with ECW SDK 5.0 and ECW files on Linux when
-    // running a multi-threaded test under Java if there's still an ECW dataset
-    // not explicitly closed at process termination.
-    /*  #0  0x00007fffb26e7a80 in NCSAtomicAdd64 () from /home/even/ecwjp2_sdk/redistributable/x64/libNCSEcw.so
-        #1  0x00007fffb2aa7684 in NCS::SDK::CBuffer2D::Free() () from /home/even/ecwjp2_sdk/redistributable/x64/libNCSEcw.so
-        #2  0x00007fffb2aa7727 in NCS::SDK::CBuffer2D::~CBuffer2D() () from /home/even/ecwjp2_sdk/redistributable/x64/libNCSEcw.so
-        #3  0x00007fffb29aa7be in NCS::ECW::CReader::~CReader() () from /home/even/ecwjp2_sdk/redistributable/x64/libNCSEcw.so
-        #4  0x00007fffb29aa819 in NCS::ECW::CReader::~CReader() () from /home/even/ecwjp2_sdk/redistributable/x64/libNCSEcw.so
-        #5  0x00007fffb291fd3a in NCS::CView::Close(bool) () from /home/even/ecwjp2_sdk/redistributable/x64/libNCSEcw.so
-        #6  0x00007fffb2927529 in NCS::CView::~CView() () from /home/even/ecwjp2_sdk/redistributable/x64/libNCSEcw.so
-        #7  0x00007fffb29277f9 in NCS::CView::~CView() () from /home/even/ecwjp2_sdk/redistributable/x64/libNCSEcw.so
-        #8  0x00007fffb71a9a53 in ECWDataset::~ECWDataset (this=0x7fff942cce10, __in_chrg=<optimized out>) at ecwdataset.cpp:1003
-        #9  0x00007fffb71a9cca in ECWDataset::~ECWDataset (this=0x7fff942cce10, __in_chrg=<optimized out>) at ecwdataset.cpp:1039
-        #10 0x00007fffb7551f98 in GDALDriverManager::~GDALDriverManager (this=0x7ffff01981a0, __in_chrg=<optimized out>) at gdaldrivermanager.cpp:196
-        #11 0x00007fffb7552140 in GDALDriverManager::~GDALDriverManager (this=0x7ffff01981a0, __in_chrg=<optimized out>) at gdaldrivermanager.cpp:288
-        #12 0x00007fffb7552e18 in GDALDestroyDriverManager () at gdaldrivermanager.cpp:824
-        #13 0x00007fffb7551c61 in GDALDestroy () at gdaldllmain.cpp:80
-        #14 0x00007ffff7de990e in _dl_fini () at dl-fini.c:254
-    */
-    // Not reproducible with similar test in C++, but this might be
-    // just a matter of luck related to the order in which the
-    // libraries are unloaded, so just don't try to delete poFileView
-    // from the GDAL destructor.
-    if( poFileView != nullptr && !GDALIsInGlobalDestructor() )
+    if( poFileView != nullptr )
     {
 #if ECWSDK_VERSION >= 55
         delete poFileView;
@@ -2767,6 +2737,72 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
             break;
     }
 
+
+/* -------------------------------------------------------------------- */
+/*      If decoding a UInt32 image, check that the SDK is not buggy     */
+/*      There are issues at least in the 5.x series.                    */
+/* -------------------------------------------------------------------- */
+#if ECWSDK_VERSION >= 40
+    if( bIsJPEG2000 &&
+        poDS->eNCSRequestDataType == NCSCT_UINT32 &&
+        CPLTestBool(CPLGetConfigOption("ECW_CHECK_CORRECT_DECODING", "TRUE")) &&
+        !STARTS_WITH_CI(poOpenInfo->pszFilename, "/vsimem/detect_ecw_uint32_bug") )
+    {
+        static bool bUINT32_Ok = false;
+        {
+            CPLMutexHolder oHolder( &hECWDatasetMutex );
+            static bool bTestDone = false;
+            if( !bTestDone )
+            {
+                bTestDone = true;
+                // Minimal J2K 2x2 image with NBITS=20, unsigned, reversible compression
+                // and following values
+                // 0 1048575
+                // 1048574 524288
+
+                static const GByte abyTestUInt32ImageData[] = {
+                    0xFF, 0x4F, 0xFF, 0x51, 0x00, 0x29, 0x00, 0x02, 0x00, 0x00, 0x00, 0x02, 0x00,
+                    0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x02, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x01, 0x13, 0x01, 0x01, 0xFF, 0x52, 0x00, 0x0D, 0x01, 0x00, 0x00,
+                    0x01, 0x00, 0x00, 0x04, 0x04, 0x00, 0x01, 0x99, 0xFF, 0x5C, 0x00, 0x04, 0x40,
+                    0xA0, 0xFF, 0x90, 0x00, 0x0A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1C, 0x00, 0x01,
+                    0xFF, 0x93, 0xDF, 0xF9, 0x40, 0x50, 0x07, 0x68, 0xE0, 0x12, 0xD2, 0xDA, 0xDF,
+                    0xFF, 0x7F, 0x5F, 0xFF, 0xD9 };
+
+                const std::string osTmpFilename = CPLSPrintf("/vsimem/detect_ecw_uint32_bug_%p.j2k", poDS);
+                VSIFCloseL(VSIFileFromMemBuffer(osTmpFilename.c_str(),
+                                                const_cast<GByte*>(abyTestUInt32ImageData),
+                                                sizeof(abyTestUInt32ImageData),
+                                                false));
+                GDALOpenInfo oOpenInfo(osTmpFilename.c_str(), GA_ReadOnly);
+                auto poTmpDS = std::unique_ptr<GDALDataset>(Open( &oOpenInfo, true ));
+                if( poTmpDS )
+                {
+                    uint32_t anValues[4] = {0};
+                    if( poTmpDS->GetRasterBand(1)->RasterIO(GF_Read, 0, 0, 2, 2,
+                            anValues, 2, 2, GDT_UInt32, 0, 0, nullptr) == CE_None &&
+                        anValues[0] == 0 &&
+                        anValues[1] == 1048575 &&
+                        anValues[2] == 1048574 &&
+                        anValues[3] == 524288 )
+                    {
+                        bUINT32_Ok = true;
+                    }
+                }
+                VSIUnlink(osTmpFilename.c_str());
+            }
+        }
+
+        if( !bUINT32_Ok )
+        {
+            CPLDebug("ECW", "ECW SDK used cannot correctly decode UInt32 images. Giving up");
+            delete poDS;
+            return nullptr;
+        }
+    }
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
@@ -3523,10 +3559,7 @@ static void GDALDeregister_ECW( GDALDriver * )
     if( bNCSInitialized )
     {
         bNCSInitialized = FALSE;
-        if( !GDALIsInGlobalDestructor() )
-        {
-            NCSecwShutdown();
-        }
+        NCSecwShutdown();
     }
 #endif
 #endif

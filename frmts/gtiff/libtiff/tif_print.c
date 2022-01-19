@@ -81,7 +81,7 @@ _TIFFPrintField(FILE* fd, const TIFFField *fip,
     /* Print a user-friendly name for tags of relatively common use, but */
     /* which aren't registered by libtiff itself. */
     const char* field_name = fip->field_name;
-    if( strncmp(fip->field_name, "Tag ", 4) == 0 ) {
+    if( fip->field_name != NULL && strncmp(fip->field_name, "Tag ", 4) == 0 ) {
         for( size_t i = 0; i < NTAGS; ++i ) {
             if( fip->field_tag == tagnames[i].tag ) {
                 field_name = tagnames[i].name;
@@ -149,7 +149,7 @@ _TIFFPrettyPrintField(TIFF* tif, const TIFFField *fip, FILE* fd, uint32_t tag,
         (void) tif;
 
 	/* do not try to pretty print auto-defined fields */
-	if (strncmp(fip->field_name,"Tag ", 4) == 0) {
+	if (fip->field_name != NULL && strncmp(fip->field_name,"Tag ", 4) == 0) {
 		return 0;
 	}
         
@@ -573,7 +573,7 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 			const TIFFField *fip;
 			uint32_t value_count;
 			int mem_alloc = 0;
-			void *raw_data;
+			void *raw_data = NULL;
 
 			fip = TIFFFieldWithTag(tif, tag);
 			if(fip == NULL)
@@ -637,7 +637,7 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 			 * _TIFFPrettyPrintField() fall down and print it as
 			 * any other tag.
 			 */
-			if (!_TIFFPrettyPrintField(tif, fip, fd, tag, value_count, raw_data))
+			if (raw_data != NULL && !_TIFFPrettyPrintField(tif, fip, fd, tag, value_count, raw_data))
 				_TIFFPrintField(fd, fip, value_count, raw_data);
 
 			if(mem_alloc)

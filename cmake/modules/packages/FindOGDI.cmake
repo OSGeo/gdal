@@ -24,10 +24,12 @@ find_path(OGDI_INCLUDE_DIR ecs.h
           PATH_SUFFIXES ogdi)
 mark_as_advanced(OGDI_INCLUDE_DIR)
 
-find_library(OGDI_LIBRARY NAMES ogdi libogdi vpf libvpf)
+find_library(OGDI_LIBRARY NAMES ogdi libogdi)
+mark_as_advanced(OGDI_LIBRARY)
 
 if(OGDI_INCLUDE_DIR AND OGDI_LIBRARY)
   find_program(OGDI_CONFIG_EXE ogdi-config)
+  mark_as_advanced(OGDI_CONFIG_EXE)
   execute_process(COMMAND ${OGDI_CONFIG_EXE} --version
     OUTPUT_VARIABLE OGDI_VERSION
     OUTPUT_STRIP_TRAILING_WHITESPACE

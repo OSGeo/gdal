@@ -30,9 +30,9 @@
 #include "memdataset.h"
 #include "gdal_alg_priv.h"
 #include "ogrsqlitevfs.h"
+#include "cpl_error.h"
 
 #include <algorithm>
-#include <cassert>
 #include <limits>
 
 CPL_CVSID("$Id$")
@@ -143,18 +143,26 @@ void GDALGPKGMBTilesLikePseudoDataset::SetGlobalOffsetScale(double dfOffset,
 /*                      GDALGPKGMBTilesLikeRasterBand()                 */
 /************************************************************************/
 
+#ifdef __MINGW64__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
+
 GDALGPKGMBTilesLikeRasterBand::GDALGPKGMBTilesLikeRasterBand(
     GDALGPKGMBTilesLikePseudoDataset* poTPD, int nTileWidth, int nTileHeight) :
-    m_poTPD(poTPD),
+    m_poTPD(CPLAssertNotNull(poTPD)), // make GCC 7 -Wnull-dereference happy in -O2
     m_bHasNoData(false),
     m_dfNoDataValue(0.0)
 {
-    assert( m_poTPD != nullptr ); // make GCC 7 -Wnull-dereference happy in -O2
     eDataType = m_poTPD->m_eDT;
     m_nDTSize = m_poTPD->m_nDTSize;
     nBlockXSize = nTileWidth;
     nBlockYSize = nTileHeight;
 }
+
+#ifdef __MINGW64__
+#pragma GCC diagnostic pop
+#endif
 
 /************************************************************************/
 /*                              FlushCache()                            */

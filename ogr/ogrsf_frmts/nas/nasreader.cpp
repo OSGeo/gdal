@@ -954,7 +954,7 @@ bool NASReader::PrescanForSchema( bool bGetExtents,
     for( int i = 0; i < m_nClassCount; i++ )
     {
         CPLDebug("NAS",
-                 "%s: %lld features.\n",
+                 "%s: " CPL_FRMT_GIB " features.\n",
                  m_papoClass[i]->GetName(),
                  m_papoClass[i]->GetFeatureCount() );
     }

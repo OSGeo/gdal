@@ -74,6 +74,12 @@
 #define RPC_MAX_LONG        "MAX_LONG"
 #define RPC_MAX_LAT         "MAX_LAT"
 
+/* Pleiades Neo nomenclature */
+#define RPC_LAT_NUM_COEFF  "LAT_NUM_COEFF"
+#define RPC_LAT_DEN_COEFF  "LAT_DEN_COEFF"
+#define RPC_LON_NUM_COEFF  "LON_NUM_COEFF"
+#define RPC_LON_DEN_COEFF  "LON_DEN_COEFF"
+
 /**
  * Enumerator of metadata readers
  */
@@ -139,9 +145,9 @@ protected:
     /**
      * @brief Convert string like 2012-02-25T00:25:59.9440000Z to time
      * @param pszDateTime String to convert
-     * @return value in time_t
+     * @return value in second sinc epoch 1970-01-01 00:00:00
      */
-    virtual time_t GetAcquisitionTimeFromString(const char* pszDateTime);
+    virtual GIntBig GetAcquisitionTimeFromString(const char* pszDateTime);
     /**
      * @brief ReadXMLToList Transform xml to list of NULL terminated name=value
      *        strings

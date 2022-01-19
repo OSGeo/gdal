@@ -21,6 +21,10 @@ Creation Options:
 
 -  **INTERLEAVE=PIXEL/LINE/BAND**: Establish output interleaving, the
    default is BAND.
+   Starting with GDAL 3.5, when copying from a source dataset with multiple bands
+   which advertises a INTERLEAVE metadata item, if the INTERLEAVE creation option
+   is not specified, the source dataset INTERLEAVE will be automatically taken
+   into account.
 
 NOTE: Implemented as ``gdal/frmts/raw/pauxdataset.cpp``.
 

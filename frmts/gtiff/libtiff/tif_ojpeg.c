@@ -795,6 +795,17 @@ OJPEGDecode(TIFF* tif, uint8_t* buf, tmsize_t cc, uint16_t s)
             TIFFErrorExt(tif->tif_clientdata,module,"Cannot decode: decoder not correctly initialized");
             return 0;
         }
+        if( sp->libjpeg_session_active == 0 )
+        {
+            /* This should normally not happen, except that it does when */
+            /* using TIFFReadScanline() which calls OJPEGPostDecode() for */
+            /* each scanline, which assumes that a whole strile was read */
+            /* and may thus incorrectly consider it has read the whole image, causing */
+            /* OJPEGLibjpegSessionAbort() to be called prematurely. */
+            /* Triggered by https://gitlab.com/libtiff/libtiff/-/issues/337 */
+            TIFFErrorExt(tif->tif_clientdata,module,"Cannot decode: libjpeg_session_active == 0");
+            return 0;
+        }
         if( sp->error_in_raw_data_decoding )
         {
             return 0;
@@ -901,6 +912,13 @@ OJPEGPostDecode(TIFF* tif, uint8_t* buf, tmsize_t cc)
 	OJPEGState* sp=(OJPEGState*)tif->tif_data;
 	(void)buf;
 	(void)cc;
+	/* This function somehow incorrectly assumes that a whole strile was read, */
+	/* which is not true when TIFFReadScanline() is called, */
+	/* and may thus incorrectly consider it has read the whole image, causing */
+	/* OJPEGLibjpegSessionAbort() to be called prematurely. */
+	/* So this logic should be fixed to take into account cc, or disable */
+	/* the scan line reading interface. */
+	/* Triggered by https://gitlab.com/libtiff/libtiff/-/issues/337 */
 	sp->write_curstrile++;
 	if (sp->write_curstrile%tif->tif_dir.td_stripsperimage==0)  
 	{

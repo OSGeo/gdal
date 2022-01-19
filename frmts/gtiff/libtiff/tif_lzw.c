@@ -130,7 +130,7 @@ typedef struct {
 
 	/* Decoding specific data */
 	long    dec_nbitsmask;		/* lzw_nbits 1 bits, right adjusted */
-	long    dec_restart;		/* restart count */
+	tmsize_t dec_restart;		/* restart count */
 #ifdef LZW_CHECKEOS
 	uint64_t  dec_bitsleft;		/* available bits in raw data */
 	tmsize_t old_tif_rawcc;         /* value of tif_rawcc at the end of the previous TIFLZWDecode() call */
@@ -144,11 +144,11 @@ typedef struct {
 
 	/* Encoding specific data */
 	int     enc_oldcode;		/* last code encountered */
-	long    enc_checkpoint;		/* point at which to clear table */
+	tmsize_t    enc_checkpoint;		/* point at which to clear table */
 #define CHECK_GAP	10000		/* enc_ratio check interval */
-	long    enc_ratio;		/* current compression ratio */
-	long    enc_incount;		/* (input) data bytes encoded */
-	long    enc_outcount;		/* encoded (output) bytes */
+	tmsize_t    enc_ratio;		/* current compression ratio */
+	tmsize_t    enc_incount;		/* (input) data bytes encoded */
+	tmsize_t    enc_outcount;		/* encoded (output) bytes */
 	uint8_t*  enc_rawlimit;		/* bound on tif_rawdata buffer */
 	hash_t* enc_hashtab;		/* kept separate for small machines */
 } LZWCodecState;
@@ -362,7 +362,7 @@ LZWDecode(TIFF* tif, uint8_t* op0, tmsize_t occ0, uint16_t s)
 	static const char module[] = "LZWDecode";
 	LZWCodecState *sp = DecoderState(tif);
 	uint8_t *op = (uint8_t*) op0;
-	long occ = (long) occ0;
+	tmsize_t occ = occ0;
 	uint8_t *tp;
 	uint8_t *bp;
 	hcode_t code;
@@ -376,15 +376,10 @@ LZWDecode(TIFF* tif, uint8_t* op0, tmsize_t occ0, uint16_t s)
         assert(sp->dec_codetab != NULL);
 
 	/*
-	  Fail if value does not fit in long.
-	*/
-	if ((tmsize_t) occ != occ0)
-	        return (0);
-	/*
 	 * Restart interrupted output operation.
 	 */
 	if (sp->dec_restart) {
-		long residue;
+		tmsize_t residue;
 
 		codep = sp->dec_codep;
 		residue = codep->length - sp->dec_restart;
@@ -516,7 +511,7 @@ LZWDecode(TIFF* tif, uint8_t* op0, tmsize_t occ0, uint16_t s)
 					codep = codep->next;
 				} while (codep && codep->length > occ);
 				if (codep) {
-					sp->dec_restart = (long)occ;
+					sp->dec_restart = occ;
 					tp = op + occ;
 					do  {
 						*--tp = codep->value;
@@ -561,8 +556,8 @@ LZWDecode(TIFF* tif, uint8_t* op0, tmsize_t occ0, uint16_t s)
 
 	if (occ > 0) {
 		TIFFErrorExt(tif->tif_clientdata, module,
-			"Not enough data at scanline %"PRIu32" (short %ld bytes)",
-			     tif->tif_row, occ);
+			"Not enough data at scanline %"PRIu32" (short %"PRIu64" bytes)",
+			     tif->tif_row, (uint64_t)occ);
 		return (0);
 	}
 	return (1);
@@ -590,7 +585,7 @@ LZWDecodeCompat(TIFF* tif, uint8_t* op0, tmsize_t occ0, uint16_t s)
 	static const char module[] = "LZWDecodeCompat";
 	LZWCodecState *sp = DecoderState(tif);
 	uint8_t *op = (uint8_t*) op0;
-	long occ = (long) occ0;
+	tmsize_t occ = occ0;
 	uint8_t *tp;
 	uint8_t *bp;
 	int code, nbits;
@@ -602,16 +597,10 @@ LZWDecodeCompat(TIFF* tif, uint8_t* op0, tmsize_t occ0, uint16_t s)
 	assert(sp != NULL);
 
 	/*
-	  Fail if value does not fit in long.
-	*/
-	if ((tmsize_t) occ != occ0)
-	        return (0);
-
-	/*
 	 * Restart interrupted output operation.
 	 */
 	if (sp->dec_restart) {
-		long residue;
+		tmsize_t residue;
 
 		codep = sp->dec_codep;
 		residue = codep->length - sp->dec_restart;
@@ -776,8 +765,8 @@ LZWDecodeCompat(TIFF* tif, uint8_t* op0, tmsize_t occ0, uint16_t s)
 
 	if (occ > 0) {
 		TIFFErrorExt(tif->tif_clientdata, module,
-			"Not enough data at scanline %"PRIu32" (short %ld bytes)",
-			     tif->tif_row, occ);
+			"Not enough data at scanline %"PRIu32" (short %"PRIu64" bytes)",
+			     tif->tif_row, (uint64_t)occ);
 		return (0);
 	}
 	return (1);
@@ -883,7 +872,7 @@ LZWEncode(TIFF* tif, uint8_t* bp, tmsize_t cc, uint16_t s)
 	register int h, c;
 	hcode_t ent;
 	long disp;
-	long incount, outcount, checkpoint;
+	tmsize_t incount, outcount, checkpoint;
 	unsigned long nextdata;
         long nextbits;
 	int free_ent, maxcode, nbits;
@@ -996,7 +985,7 @@ LZWEncode(TIFF* tif, uint8_t* bp, tmsize_t cc, uint16_t s)
 				assert(nbits <= BITS_MAX);
 				maxcode = (int) MAXCODE(nbits);
 			} else if (incount >= checkpoint) {
-				long rat;
+				tmsize_t rat;
 				/*
 				 * Check compression ratio and, if things seem
 				 * to be slipping, clear the hash table and
@@ -1049,7 +1038,7 @@ LZWPostEncode(TIFF* tif)
 	uint8_t* op = tif->tif_rawcp;
 	long nextbits = sp->lzw_nextbits;
 	unsigned long nextdata = sp->lzw_nextdata;
-	long outcount = sp->enc_outcount;
+	tmsize_t outcount = sp->enc_outcount;
 	int nbits = sp->lzw_nbits;
 
 	if (op > sp->enc_rawlimit) {

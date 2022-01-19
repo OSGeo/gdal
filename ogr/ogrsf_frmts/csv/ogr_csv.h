@@ -40,7 +40,7 @@
 #else
 # define GDAL_OVERRIDE override
 #endif // MSVC <= 2010
- 
+
 
 typedef enum
 {
@@ -54,11 +54,6 @@ typedef enum
 
 class OGRCSVDataSource;
 
-char **OGRCSVReadParseLineL( VSILFILE *fp, char chDelimiter,
-                             bool bDontHonourStrings = false,
-                             bool bKeepLeadingAndClosingQuotes = false,
-                             bool bMergeDelimiter = false );
-
 typedef enum
 {
     CREATE_FIELD_DO_NOTHING,
@@ -67,6 +62,8 @@ typedef enum
 } OGRCSVCreateFieldAction;
 
 void OGRCSVDriverRemoveFromMap(const char *pszName, GDALDataset *poDS);
+
+constexpr size_t OGR_CSV_MAX_LINE_SIZE = 1024 * 1024;
 
 /************************************************************************/
 /*                             OGRCSVLayer                              */
@@ -104,7 +101,7 @@ class OGRCSVLayer final: public OGRLayer
     char               *pszFilename;
     bool                bCreateCSVT;
     bool                bWriteBOM;
-    char                chDelimiter;
+    char                szDelimiter[2] = {0};
 
     int                 nCSVFieldCount;
     int                *panGeomFieldIndex;
@@ -115,7 +112,7 @@ class OGRCSVLayer final: public OGRLayer
     // specific
     int                 iNfdcLongitudeS;
     int                 iNfdcLatitudeS;
-    bool                bDontHonourStrings;
+    bool                bHonourStrings;
 
     int                 iLongitudeField;
     int                 iLatitudeField;
@@ -154,7 +151,7 @@ class OGRCSVLayer final: public OGRLayer
     virtual ~OGRCSVLayer() GDAL_OVERRIDE;
 
     const char         *GetFilename() const { return pszFilename; }
-    char                GetDelimiter() const { return chDelimiter; }
+    char                GetDelimiter() const { return szDelimiter[0]; }
     bool                GetCRLF() const { return bUseCRLF; }
     bool                GetCreateCSVT() const { return bCreateCSVT; }
     bool                GetWriteBOM() const { return bWriteBOM; }

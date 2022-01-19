@@ -31,6 +31,7 @@
 #include "pcidsk_exception.h"
 #include "core/pcidsk_utils.h"
 
+#include <limits>
 #include <vector>
 #include <string>
 #include <cassert>
@@ -74,7 +75,17 @@ void CPCIDSKBinarySegment::Load()
         return;
     }
 
-    seg_data.SetSize((int)data_size - 1024);
+    if( data_size < 1024 )
+    {
+        return ThrowPCIDSKException("Wrong data_size in CPCIDSKBinarySegment");
+    }
+
+    if( data_size - 1024 > static_cast<uint64_t>(std::numeric_limits<int>::max()) )
+    {
+        return ThrowPCIDSKException("too large data_size");
+    }
+
+    seg_data.SetSize((int)(data_size - 1024));
 
     ReadFromFile(seg_data.buffer, 0, data_size - 1024);
 

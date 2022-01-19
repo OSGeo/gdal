@@ -1119,6 +1119,21 @@ void unpk_g2ncep(CPL_UNUSED sInt4 *kfildo, float *ain, sInt4 *iain, sInt4 *nd2x3
         g2_free (gfld);
         return;
       }
+      /* 2020-08-04 Taylor: In 2015-10-07, Vuong added the ability for the PDS
+       * template to have negative forecast times, so data encoded with the
+       * update has -1 * abs(value).  Unfortunately negative values encoded via
+       * older versions used 2s complement.  So the updated decoder has to deal
+       * with both correctly and incorrectly decoded neg values.
+       *
+       * To resolve this, negative numbers that are < -1 * 2^30-1 are assumed
+       * to have been a 2s complement number that was incorrectly decoded.
+       * */
+      if (curIndex == 18) {   /* forecast time is stored in octet 18-22 */
+         if (gfld->ipdtmpl[i] < -1 * (0x3fffffff)) {
+            /* Undoing the incorrect decoding of the negative number. */
+            is4[curIndex] = -1 * (int)(((unsigned)is4[curIndex])^(0x80000000));
+         }
+      }
       curIndex += abs(templatespds[pdsIndex].mappds[i]);
    }
    }
@@ -1198,7 +1213,7 @@ void unpk_g2ncep(CPL_UNUSED sInt4 *kfildo, float *ain, sInt4 *iain, sInt4 *nd2x3
    }
    f_ignoreScan = 0;
    /* Check if integer type... is5[20] == 1 implies integer (code table 5.1),
-    * but only for certain templates. (0,1,2,3,40,41,40000,40010). (not 4,50,51) 
+    * but only for certain templates. (0,1,2,3,40,41,40000,40010). (not 4,50,51)
     */
    if ((is5[20] == 1) && ((is5[9] != 4) && (is5[9] != 50) && (is5[9] != 51))) {
       /* integer data, use iain */

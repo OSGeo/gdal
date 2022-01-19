@@ -1,0 +1,31 @@
+subcat,short_name,name,unit,unit_conv
+0,"TMP","Temperature","K",UC_K2F
+1,"VTMP","Virtual temperature","K",UC_K2F
+2,"POT","Potential temperature","K",UC_K2F
+3,"EPOT","Pseudo-adiabatic potential temperature","K",UC_K2F
+4,"TMAX","Maximum temperature","K",UC_K2F
+5,"TMIN","Minimum temperature","K",UC_K2F
+6,"DPT","Dew point temperature","K",UC_K2F
+7,"DEPR","Dew point depression","K",UC_NONE
+8,"LAPR","Lapse rate","K/m",UC_NONE
+9,"TMPA","Temperature anomaly","K",UC_K2F
+10,"LHTFL","Latent heat net flux","W/(m^2)",UC_NONE
+11,"SHTFL","Sensible heat net flux","W/(m^2)",UC_NONE
+12,"HEATX","Heat index","K",UC_K2F
+13,"WCF","Wind chill factor","K",UC_K2F
+14,"MINDPD","Minimum dew point depression","K",UC_K2F
+15,"VPTMP","Virtual potential temperature","K",UC_K2F
+16,"SNOHF","Snow phase change heat flux","W/m^2",UC_NONE
+17,"SKINT","Skin temperature","K",UC_K2F
+18,"SNOT","Snow Temperature (top of snow)","K",UC_K2F
+19,"TTCHT","Turbulent Transfer Coefficient for Heat","Numeric",UC_NONE
+20,"TDCHT","Turbulent Diffusion Coefficient for Heat","m^2/s",UC_NONE
+21,"APTMP","Apparent Temperature","K",UC_K2F
+22,"TTSWR","Temperature Tendency due to Short-Wave Radiation","K/s",UC_NONE
+23,"TTLWR","Temperature Tendency due to Long-Wave Radiation","K/s",UC_NONE
+24,"TTSWRCS","Temperature Tendency due to Short-Wave Radiation, Clear Sky","K/s",UC_NONE
+25,"TTLWRCS","Temperature Tendency due to Long-Wave Radiation, Clear Sky","K/s",UC_NONE
+26,"TTPARM","Temperature Tendency due to parameterizations","K/s",UC_NONE
+27,"WETBT","Wet Bulb Temperature","K",UC_K2F
+28,"UCTMP","Unbalanced Component of Temperature","K",UC_K2F
+29,"TMPADV","Temperature Advection","K/s",UC_NONE

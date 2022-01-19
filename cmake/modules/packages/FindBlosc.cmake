@@ -40,6 +40,7 @@ if(NOT BLOSC_FOUND)
 
   find_path(BLOSC_INCLUDE_DIR blosc.h ${BLOSC_INCLUDE_OPTS})
   find_library(BLOSC_LIBRARY blosc ${BLOSC_LIBRARY_OPTS})
+  mark_as_advanced(BLOSC_INCLUDE_DIR BLOSC_LIBRARY)
   if(BLOSC_INCLUDE_DIR)
     file(STRINGS ${BLOSC_INCLUDE_DIR}/blosc.h _ver_strings
       REGEX "BLOSC_VERSION_[^ ]* [0-9]+"

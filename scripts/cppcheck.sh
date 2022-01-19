@@ -42,7 +42,7 @@ fi
 
 CPPCHECK_VERSION_GT_2_7=$(expr "$CPPCHECK_VERSION" \>= 2.7 || /bin/true)
 if test "$CPPCHECK_VERSION_GT_2_7" = 1; then
-    POSIX="--library=posix"
+    POSIX="--library=gnu"
 else
     POSIX="--std=posix"
 fi

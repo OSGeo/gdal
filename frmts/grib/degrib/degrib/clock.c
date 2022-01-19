@@ -1001,7 +1001,7 @@ void Clock_Print (char *buffer, int n, double l_clock, const char *format,
  * ARGUMENTS
  *     buffer = Destination to write the format to. (Output)
  *          n = The number of characters in buffer. (Input)
- *      l_clock = The time stored as a double (asumed in UTC). (Input)
+ *      l_clock = The time stored as a double (assumed in UTC). (Input)
  *     format = The desired output format. (Input)
  *   timeZone = Hours to add to local time to get UTC. (Input)
  * f_dayCheck = True if we should check if daylight savings is in effect,

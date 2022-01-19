@@ -8,7 +8,7 @@
  * This include file contains common declarations for the forward and
  * inverse DCT modules.  These declarations are private to the DCT managers
  * (jcdctmgr.c, jddctmgr.c) and the individual DCT algorithms.
- * The individual DCT algorithms are kept in separate files to ease 
+ * The individual DCT algorithms are kept in separate files to ease
  * machine-dependent tuning (e.g., assembly coding).
  */
 
@@ -102,7 +102,17 @@ typedef FAST_FLOAT FLOAT_MULT_TYPE; /* preferred floating type */
 #define jpeg_idct_4x4		jpeg_idct_4x4_12
 #define jpeg_idct_2x2		jpeg_idct_2x2_12
 #define jpeg_idct_1x1		jpeg_idct_1x1_12
-#endif /* NEED_SHORT_EXTERNAL_NAMES */
+#elif defined(RENAME_INTERNAL_LIBJPEG_SYMBOLS)
+#define jpeg_fdct_islow		gdal_jpeg_fdct_islow
+#define jpeg_fdct_ifast	    gdal_jpeg_fdct_ifast
+#define jpeg_fdct_float		gdal_jpeg_fdct_float
+#define jpeg_idct_islow		gdal_jpeg_idct_islow
+#define jpeg_idct_ifast		gdal_jpeg_idct_ifast
+#define jpeg_idct_float	    gdal_jpeg_idct_float
+#define jpeg_idct_4x4		gdal_jpeg_idct_4x4
+#define jpeg_idct_2x2		gdal_jpeg_idct_2x2
+#define jpeg_idct_1x1		gdal_jpeg_idct_1x1
+#endif
 
 /* Extern declarations for the forward and inverse DCT routines. */
 

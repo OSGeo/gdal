@@ -614,7 +614,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
         OGRPGGeomFieldDefn* poGeomFieldDefn = nullptr;
         if( iOGRGeomField >= 0 )
             poGeomFieldDefn = poFeatureDefn->GetGeomFieldDefn(iOGRGeomField);
-        if( iOGRGeomField >= 0 && (
+        if( poGeomFieldDefn && (
                 poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOMETRY ||
                 poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOGRAPHY) )
         {
@@ -767,7 +767,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
 /*      Handle raw binary geometry ... this hasn't been tested in a     */
 /*      while.                                                          */
 /* -------------------------------------------------------------------- */
-        else if( iOGRGeomField >= 0 &&
+        else if( poGeomFieldDefn &&
                  poGeomFieldDefn->ePostgisType == GEOM_TYPE_WKB )
         {
             OGRGeometry *poGeometry = nullptr;
@@ -1874,7 +1874,7 @@ OGRErr OGRPGLayer::GetExtent( int iGeomField, OGREnvelope *psExtent, int bForce 
     CPLString   osCommand;
 
     if( iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount() ||
-        GetLayerDefn()->GetGeomFieldDefn(iGeomField)->GetType() == wkbNone )
+        CPLAssertNotNull(GetLayerDefn()->GetGeomFieldDefn(iGeomField))->GetType() == wkbNone )
     {
         if( iGeomField != 0 )
         {
@@ -2044,7 +2044,12 @@ int OGRPGLayer::ReadResultDefinition(PGresult *hInitialResultIn)
             if (nTypeOID == poDS->GetGeographyOID())
             {
                 poGeomFieldDefn->ePostgisType = GEOM_TYPE_GEOGRAPHY;
-                poGeomFieldDefn->nSRSId = 4326;
+                if( !(poDS->sPostGISVersion.nMajor >= 3 ||
+                     (poDS->sPostGISVersion.nMajor == 2 && poDS->sPostGISVersion.nMinor >= 2)) )
+                {
+                    // EPSG:4326 was a requirement for geography before PostGIS 2.2
+                    poGeomFieldDefn->nSRSId = 4326;
+                }
             }
             else
                 poGeomFieldDefn->ePostgisType = GEOM_TYPE_GEOMETRY;

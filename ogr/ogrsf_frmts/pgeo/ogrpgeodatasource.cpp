@@ -349,8 +349,8 @@ OGRLayer* OGRPGeoDataSource::GetLayerByName( const char* pszLayerName )
                            0)   // HasM
       == CE_None )
   {
-      poLayer = poInvisibleLayer.get();
       m_apoInvisibleLayers.emplace_back( std::move( poInvisibleLayer ) );
+      poLayer = m_apoInvisibleLayers.back().get();
   }
   return poLayer;
 }

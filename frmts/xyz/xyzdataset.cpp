@@ -1147,6 +1147,15 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
         else if( nDataLineNum == 2 && dfX == dfLastX )
         {
             // Detect datasets organized by columns
+            if ( dfY == dfLastY )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                     "Ungridded dataset: At line " CPL_FRMT_GIB ", Failed to detect grid layout.",
+                     nLineNum);
+                VSIFCloseL(fp);
+                return nullptr;
+            }
+
             bColOrganization = true;
             const double dfStepY = dfY - dfLastY;
             adfStepY.push_back(fabs(dfStepY));
@@ -1158,7 +1167,7 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
             {
                 const double dfStepY = dfY - dfLastY;
                 const double dfExpectedStepY = adfStepY.back() * bStepYSign;
-                if( dfStepY != dfExpectedStepY )
+                if( fabs(( dfStepY - dfExpectedStepY ) / dfExpectedStepY ) > RELATIVE_ERROR )
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                          "Ungridded dataset: At line " CPL_FRMT_GIB ", Y spacing was %f. Expected %f",
@@ -1169,15 +1178,16 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
             }
             else if( dfX > dfLastX )
             {
+                const double dfStepX = dfX - dfLastX;
                 if( adfStepX.empty() )
                 {
-                    adfStepX.push_back(dfX - dfLastX);
+                    adfStepX.push_back(dfStepX);
                 }
-                else if( dfX - dfLastX != adfStepX.back() )
+                else if( fabs(( dfStepX - adfStepX.back() ) / adfStepX.back() ) > RELATIVE_ERROR )
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                          "Ungridded dataset: At line " CPL_FRMT_GIB ", X spacing was %f. Expected %f",
-                         nLineNum, dfX - dfLastX, adfStepX.back());
+                         nLineNum, dfStepX, adfStepX.back());
                     VSIFCloseL(fp);
                     return nullptr;
                 }

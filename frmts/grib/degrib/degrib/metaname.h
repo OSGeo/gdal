@@ -33,16 +33,9 @@ int ComputeUnit (int convert, char * origName, sChar f_unit, double *unitM,
 int ComputeUnit (int prodType, int templat, int cat, int subcat, sChar f_unit,
                  double *unitM, double *unitB, char *name);
 */
-typedef struct {
-    const char *name, *comment, *unit;
-} GRIB2SurfTable;
-
-GRIB2SurfTable Table45Index (int i, int *f_reserved, uShort2 center,
-                             uShort2 subcenter);
-/*
-GRIB2SurfTable Table45Index (int i, int *f_reserved);
-int Table45Index (int i);
-*/
+int Table45Lookup (int code, uShort2 center, uShort2 subcenter,
+                   int *f_reserved,
+                   const char** shortName, const char** name, const char** unit);
 
 int IsData_NDFD (unsigned short int center, unsigned short int subcenter);
 

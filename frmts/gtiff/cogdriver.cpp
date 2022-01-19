@@ -26,6 +26,16 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+
+#ifdef HAVE_STRINGS_H
+#undef HAVE_STRINGS_H
+#endif
+
+#ifdef HAVE_STRING_H
+#undef HAVE_STRING_H
+#endif
+
 #include "gdal_priv.h"
 #include "gtiff.h"
 #include "gt_overview.h"
@@ -849,13 +859,28 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
             nCurLevel --;
         }
     }
-    else
+    else if( bGenerateMskOvr || bGenerateOvr )
     {
-        while( nTmpXSize > nOvrThresholdSize || nTmpYSize > nOvrThresholdSize )
+        if( !bGenerateOvr )
         {
-            nTmpXSize /= 2;
-            nTmpYSize /= 2;
-            asOverviewDims.push_back(std::pair<int,int>(nTmpXSize, nTmpYSize));
+            // If generating only .msk.ovr, use the exact overview size as
+            // the overviews of the imagery.
+            for(int i = 0; i < poFirstBand->GetOverviewCount(); i++ )
+            {
+                auto poOvrBand = poFirstBand->GetOverview(i);
+                asOverviewDims.push_back(std::pair<int,int>(
+                    poOvrBand->GetXSize(), poOvrBand->GetYSize()));
+            }
+        }
+        else
+        {
+            while( nTmpXSize > nOvrThresholdSize ||
+                   nTmpYSize > nOvrThresholdSize )
+            {
+                nTmpXSize /= 2;
+                nTmpYSize /= 2;
+                asOverviewDims.push_back(std::pair<int,int>(nTmpXSize, nTmpYSize));
+            }
         }
     }
 

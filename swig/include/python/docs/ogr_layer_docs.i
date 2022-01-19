@@ -1131,6 +1131,8 @@ This method is the same as the C++ method OGRLayer::SetIgnoredFields()
 Parameters:
 -----------
 
+hLayer:  handle to the layer
+
 papszFields:  an array of field names terminated by NULL item. If NULL
 is passed, the ignored list is cleared.
 

@@ -16,4 +16,6 @@ endif ()
 
 add_executable(mvt_tile_test EXCLUDE_FROM_ALL mvt_tile_test.cpp)
 gdal_standard_includes(mvt_tile_test)
+target_include_directories(mvt_tile_test PRIVATE $<TARGET_PROPERTY:ogr_MVT,SOURCE_DIR>
+                                                 $<TARGET_PROPERTY:ogr_OSM,SOURCE_DIR>)
 target_link_libraries(mvt_tile_test PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)

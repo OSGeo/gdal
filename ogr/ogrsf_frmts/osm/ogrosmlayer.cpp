@@ -26,6 +26,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
@@ -40,7 +42,6 @@
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
-#include "cpl_port.h"
 #include "cpl_progress.h"
 #include "cpl_string.h"
 #include "cpl_time.h"
@@ -298,6 +299,7 @@ OGRFeature *OGROSMLayer::MyGetNextFeature( OGROSMLayer** ppoNewCurLayer,
             while( true )
             {
                 int bRet = poDS->ParseNextChunk(nIdxLayer, nullptr, nullptr);
+                // cppcheck-suppress knownConditionTrueFalse
                 if( nFeatureArraySize != 0 )
                     break;
                 if( bRet == FALSE )

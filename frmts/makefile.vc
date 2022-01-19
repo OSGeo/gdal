@@ -260,3 +260,5 @@ plugins-install:
 		&& $(MAKE) /f makefile.vc plugin-install \
 		&& cd .. \
 		|| exit 1
+	-mkdir $(PLUGINDIR)
+	$(INSTALL) drivers.ini $(PLUGINDIR)

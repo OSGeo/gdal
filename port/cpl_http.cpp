@@ -44,10 +44,10 @@
 #include "cpl_error.h"
 #include "cpl_multiproc.h"
 
-// clang complains about C-style cast in #define like CURL_ZERO_TERMINATED
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wold-style-cast"
+// gcc or clang complains about C-style cast in #define like CURL_ZERO_TERMINATED
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
 #endif
 
 #ifdef HAVE_CURL
@@ -236,7 +236,7 @@ CPLErr LoadCAPICertificates(const char *pszName,
 
 // Load certificates from Windows Crypto API store.
 static
-CURLcode CPL_ssl_ctx_callback(CURL *pCurl, void *pSSL, void *)
+CURLcode CPL_ssl_ctx_callback(CURL *, void *pSSL, void *)
 {
     SSL_CTX *pSSL_CTX = static_cast<SSL_CTX*>(pSSL);
     if( pSSL_CTX == nullptr )
@@ -276,7 +276,7 @@ CURLcode CPL_ssl_ctx_callback(CURL *pCurl, void *pSSL, void *)
 
             CPLDebug("HTTP",
                      "Loading %d certificates from Windows store.",
-                     poWindowsCertificateList->size());
+                     static_cast<int>(poWindowsCertificateList->size()));
         }
     }
 
@@ -2606,6 +2606,6 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
     return TRUE;
 }
 
-#if defined(__clang__)
-#pragma clang diagnostic pop
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
 #endif

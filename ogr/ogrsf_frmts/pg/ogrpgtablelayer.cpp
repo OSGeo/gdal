@@ -562,7 +562,12 @@ int OGRPGTableLayer::ReadTableDefinition()
                 else if( EQUAL(pszType,"geography") )
                 {
                     poGeomFieldDefn->ePostgisType = GEOM_TYPE_GEOGRAPHY;
-                    poGeomFieldDefn->nSRSId = 4326;
+                    if( !(poDS->sPostGISVersion.nMajor >= 3 ||
+                         (poDS->sPostGISVersion.nMajor == 2 && poDS->sPostGISVersion.nMinor >= 2)) )
+                    {
+                        // EPSG:4326 was a requirement for geography before PostGIS 2.2
+                        poGeomFieldDefn->nSRSId = 4326;
+                    }
                 }
                 else
                 {
@@ -749,7 +754,7 @@ void OGRPGTableLayer::SetTableDefinition(const char* pszFIDColumnName,
         else if( EQUAL(pszGeomType,"geography") )
         {
             poGeomFieldDefn->ePostgisType = GEOM_TYPE_GEOGRAPHY;
-            poGeomFieldDefn->nSRSId = 4326;
+            poGeomFieldDefn->nSRSId = nSRSId;
         }
         else
         {
@@ -1973,6 +1978,20 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
 
     /* Add end of line marker */
     osCommand += "\n";
+
+    // PostgreSQL doesn't provide very helpful reporting of invalid UTF-8
+    // content in COPY mode.
+    if( poDS->IsUTF8ClientEncoding() &&
+        !CPLIsUTF8(osCommand.c_str(), static_cast<int>(osCommand.size())) )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Non UTF-8 content found when writing feature " CPL_FRMT_GIB
+                 " of layer %s: %s",
+                 poFeature->GetFID(),
+                 poFeatureDefn->GetName(),
+                 osCommand.c_str());
+        return OGRERR_FAILURE;
+    }
 
     /* ------------------------------------------------------------ */
     /*      Execute the copy.                                       */

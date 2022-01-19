@@ -1347,6 +1347,8 @@ bool GDALComputeAreaOfInterest(OGRSpatialReference* poSRS,
         auto poCT = OGRCreateCoordinateTransformation(&oSrcSRSHoriz, poGeog);
         if( poCT )
         {
+            poCT->SetEmitErrors(false);
+
             double x[4], y[4];
             x[0] = adfGT[0];
             y[0] = adfGT[3];
@@ -2615,6 +2617,7 @@ int GDALTransformLonLatToDestGenImgProjTransformer(void* hTransformArg,
     if( poCT == nullptr )
         return false;
 
+    poCT->SetEmitErrors(false);
     if( !poCT->Transform(1, pdfX, pdfY) )
         return false;
 
@@ -4326,8 +4329,6 @@ int GDALUseTransformer( void *pTransformArg,
 
 void *GDALCloneTransformer( void *pTransformArg )
 {
-    VALIDATE_POINTER1( pTransformArg, "GDALCloneTransformer", nullptr );
-
     GDALTransformerInfo *psInfo =
         static_cast<GDALTransformerInfo *>(pTransformArg);
 
@@ -4378,8 +4379,6 @@ void *GDALCloneTransformer( void *pTransformArg )
 void* GDALCreateSimilarTransformer( void* pTransformArg,
                                     double dfRatioX, double dfRatioY )
 {
-    VALIDATE_POINTER1( pTransformArg, "GDALCreateSimilarTransformer", nullptr );
-
     GDALTransformerInfo *psInfo =
         static_cast<GDALTransformerInfo *>(pTransformArg);
 

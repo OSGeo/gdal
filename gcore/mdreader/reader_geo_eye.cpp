@@ -39,6 +39,7 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_string.h"
+#include "cpl_time.h"
 
 CPL_CVSID("$Id$")
 
@@ -201,9 +202,10 @@ void GDALMDReaderGeoEye::LoadMetadata()
     if(nullptr != pszDateTime)
     {
         char buffer[80];
-        time_t timeMid = GetAcquisitionTimeFromString(pszDateTime);
+        GIntBig timeMid = GetAcquisitionTimeFromString(pszDateTime);
 
-        strftime (buffer, 80, MD_DATETIMEFORMAT, localtime(&timeMid));
+        struct tm tmBuf;
+        strftime (buffer, 80, MD_DATETIMEFORMAT, CPLUnixTimeToYMDHMS(timeMid, &tmBuf));
         m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
                                            MD_NAME_ACQDATETIME, buffer);
     }
@@ -212,7 +214,7 @@ void GDALMDReaderGeoEye::LoadMetadata()
 /**
  * GetAcqisitionTimeFromString()
  */
-time_t GDALMDReaderGeoEye::GetAcquisitionTimeFromString(
+GIntBig GDALMDReaderGeoEye::GetAcquisitionTimeFromString(
         const char* pszDateTime)
 {
     if(nullptr == pszDateTime)
@@ -242,7 +244,7 @@ time_t GDALMDReaderGeoEye::GetAcquisitionTimeFromString(
     tmDateTime.tm_year = iYear - 1900;
     tmDateTime.tm_isdst = -1;
 
-    return mktime(&tmDateTime);
+    return CPLYMDHMSToUnixTime(&tmDateTime);
 }
 
 /**

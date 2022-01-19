@@ -250,7 +250,7 @@ def test_aaigrid_10():
         except OSError:
             pass
 
-    
+
 ###############################################################################
 # Test SIGNIFICANT_DIGITS creation option (same as DECIMAL_PRECISION test)
 
@@ -351,7 +351,52 @@ NODATA_value  2.2250738585072014e-308
 
     gdal.Unlink('/vsimem/aaigrid_15.asc')
 
+
 ###############################################################################
+# Test support for D12 AAIGRID with null value (#5095)
 
 
+def test_aaigrid_null():
+
+    gdal.FileFromMemBuffer('/vsimem/test_aaigrid_null.asc', """ncols        4
+nrows        1
+xllcorner    0
+yllcorner    -1
+cellsize     1
+NODATA_value  null
+null 1.5 null 3.5
+""")
+
+    ds = gdal.Open('/vsimem/test_aaigrid_null.asc')
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Float32
+    assert ds.GetRasterBand(1).GetNoDataValue() < -1e38
+    assert ds.GetRasterBand(1).ComputeRasterMinMax() == (1.5,3.5)
+    ds = None
+
+    gdal.Unlink('/vsimem/test_aaigrid_null.asc')
+
+
+###############################################################################
+# Test support for D12 AAIGRID with null value and force AAIGRID_DATATYPE=Float64 (#5095)
+
+
+def test_aaigrid_null_float64():
+
+    gdal.FileFromMemBuffer('/vsimem/test_aaigrid_null.asc', """ncols        4
+nrows        1
+xllcorner    0
+yllcorner    -1
+cellsize     1
+NODATA_value  null
+null 1.5 null 3.5
+""")
+
+    with gdaltest.config_option('AAIGRID_DATATYPE', 'Float64'):
+        ds = gdal.Open('/vsimem/test_aaigrid_null.asc')
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Float64
+    assert ds.GetRasterBand(1).GetNoDataValue() < -1e308
+    assert ds.GetRasterBand(1).ComputeRasterMinMax() == (1.5,3.5)
+    ds = None
+
+    gdal.Unlink('/vsimem/test_aaigrid_null.asc')
 

@@ -2,7 +2,7 @@
 # GDAL specific script to extract exported libtiff symbols that can be renamed
 # to keep them internal to GDAL as much as possible
 
-gcc ./*.c -fPIC -shared -o libtiff.so -I. -I../../../port  -DPIXARLOG_SUPPORT -DZIP_SUPPORT -DOJPEG_SUPPORT -DLZMA_SUPPORT -DZSTD_SUPPORT ${ZSTD_INCLUDE} -DWEBP_SUPPORT ${WEBP_INCLUDE} -DLERC_SUPPORT -I../../../third_party/LercLib -DHOST_FILLORDER=0
+gcc ./*.c -fPIC -shared -o libtiff.so -I. -I../../../port  -I../../../generated_headers  -DPIXARLOG_SUPPORT -DZIP_SUPPORT -DOJPEG_SUPPORT -DLZMA_SUPPORT -DZSTD_SUPPORT ${ZSTD_INCLUDE} -DWEBP_SUPPORT ${WEBP_INCLUDE} -DLERC_SUPPORT -I../../../third_party/LercLib -DHOST_FILLORDER=0
 
 OUT_FILE=gdal_libtiff_symbol_rename.h
 
@@ -47,8 +47,6 @@ EOF
     echo "#define TIFFInitDumpMode gdal_TIFFInitDumpMode"
 
     # Pasted and adapted from tif_codec.c
-    echo "#define TIFFReInitJPEG_12 gdal_TIFFReInitJPEG_12"
-    echo "#define TIFFJPEGIsFullStripRequired_12 gdal_TIFFJPEGIsFullStripRequired_12"
     echo "#ifdef LZW_SUPPORT"
     echo "#define TIFFInitLZW gdal_TIFFInitLZW"
     echo "#endif"
@@ -63,7 +61,10 @@ EOF
     echo "#endif"
     echo "#ifdef JPEG_SUPPORT"
     echo "#define TIFFInitJPEG gdal_TIFFInitJPEG"
+    echo "#define TIFFJPEGIsFullStripRequired gdal_TIFFJPEGIsFullStripRequired"
     # Manually added
+    echo "#define TIFFReInitJPEG_12 gdal_TIFFReInitJPEG_12"
+    echo "#define TIFFJPEGIsFullStripRequired_12 gdal_TIFFJPEGIsFullStripRequired_12"
     echo "#define TIFFInitJPEG_12 gdal_TIFFInitJPEG_12"
     echo "#endif"
     echo "#ifdef OJPEG_SUPPORT"

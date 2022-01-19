@@ -38,7 +38,7 @@ import pytest
 # Test TopoJSON
 
 
-def test_ogr_toposjon_1():
+def test_ogr_toposjon_objects_is_array():
 
     ds = ogr.Open('data/topojson/topojson1.topojson')
     lyr = ds.GetLayer(0)
@@ -47,8 +47,11 @@ def test_ogr_toposjon_1():
     assert ogrtest.check_feature_geometry(feat, 'LINESTRING (100 1000,110 1000,110 1100)') == 0
     lyr = ds.GetLayer(1)
     assert lyr.GetName() == 'TopoJSON'
+    assert lyr.GetLayerDefn().GetFieldCount() == 2
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == 'id'
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == 'name'
     expected_results = [
-        (None, None, 'POINT EMPTY'),
+        ('foo', None, 'POINT EMPTY'),
         (None, None, 'POINT EMPTY'),
         (None, None, 'POINT EMPTY'),
         (None, None, 'POINT (100 1010)'),
@@ -97,12 +100,17 @@ def test_ogr_toposjon_1():
     ds = None
 
 
-def test_ogr_toposjon_2():
+def test_ogr_toposjon_objects_is_dict():
 
     ds = ogr.Open('data/topojson/topojson2.topojson')
     lyr = ds.GetLayer(0)
     assert lyr.GetName() == 'a_layer'
+    assert lyr.GetLayerDefn().GetFieldCount() == 2
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == 'id'
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == 'name'
     feat = lyr.GetNextFeature()
+    assert feat['id'] == 'foo'
+    assert feat['name'] == 'line'
     assert ogrtest.check_feature_geometry(feat, 'LINESTRING (100 1000,110 1000,110 1100)') == 0
     lyr = ds.GetLayer(1)
     assert lyr.GetName() == 'TopoJSON'
@@ -111,7 +119,7 @@ def test_ogr_toposjon_2():
     ds = None
 
 
-def test_ogr_toposjon_3():
+def test_ogr_toposjon_no_transform():
 
     ds = ogr.Open('data/topojson/topojson3.topojson')
     lyr = ds.GetLayer(0)

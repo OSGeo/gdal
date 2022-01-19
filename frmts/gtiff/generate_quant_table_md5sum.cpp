@@ -61,7 +61,7 @@ static const GByte* GTIFFFindNextTable( const GByte* paby, GByte byMarker,
     return nullptr;
 }
 
-void generate(int nBands, uint16_t nPhotometric, uint nBitsPerSample)
+void generate(int nBands, uint16_t nPhotometric, uint16_t nBitsPerSample)
 {
     char** papszOpts = nullptr;
     papszOpts = CSLSetNameValue(papszOpts,

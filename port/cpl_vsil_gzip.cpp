@@ -2439,19 +2439,20 @@ const char* VSIGZipFilesystemHandler::GetOptions()
 /*                   VSIInstallGZipFileHandler()                        */
 /************************************************************************/
 
-/**
- * \brief Install GZip file system handler.
- *
- * A special file handler is installed that allows reading on-the-fly and
- * writing in GZip (.gz) files.
- *
- * All portions of the file system underneath the base
- * path "/vsigzip/" will be handled by this driver.
- *
- * Additional documentation is to be found at:
- * http://trac.osgeo.org/gdal/wiki/UserDocs/ReadInZip
- *
- * @since GDAL 1.6.0
+/*!
+ \brief Install GZip file system handler.
+
+ A special file handler is installed that allows reading on-the-fly and
+ writing in GZip (.gz) files.
+
+ All portions of the file system underneath the base
+ path "/vsigzip/" will be handled by this driver.
+
+ \verbatim embed:rst
+ See :ref:`/vsigzip/ documentation <vsigzip>`
+ \endverbatim
+
+ @since GDAL 1.6.0
  */
 
 void VSIInstallGZipFileHandler()
@@ -3293,46 +3294,20 @@ void VSIZipWriteHandle::StartNewFile( VSIZipWriteHandle* poSubFile )
 /*                    VSIInstallZipFileHandler()                        */
 /************************************************************************/
 
-/**
- * \brief Install ZIP file system handler.
- *
- * A special file handler is installed that allows reading on-the-fly in ZIP
- * (.zip) archives.
- *
- * All portions of the file system underneath the base path "/vsizip/" will be
- * handled by this driver.
- *
- * The syntax to open a file inside a zip file is
- * /vsizip/path/to/the/file.zip/path/inside/the/zip/file where
- * path/to/the/file.zip is relative or absolute and path/inside/the/zip/file is
- * the relative path to the file inside the archive.
- *
- * Starting with GDAL 2.2, an alternate syntax is available so as to enable
- * chaining and not being dependent on .zip extension :
- * /vsizip/{/path/to/the/archive}/path/inside/the/zip/file.
- * Note that /path/to/the/archive may also itself use this alternate syntax.
- *
- * If the path is absolute, it should begin with a / on a Unix-like OS (or C:\
- * on Windows), so the line looks like /vsizip//home/gdal/...  For example
- * gdalinfo /vsizip/myarchive.zip/subdir1/file1.tif
- *
- * Syntactic sugar : if the .zip file contains only one file located at its
- * root, just mentioning "/vsizip/path/to/the/file.zip" will work
- *
- * VSIStatL() will return the uncompressed size in st_size member and file
- * nature- file or directory - in st_mode member.
- *
- * Directory listing is available through VSIReadDir().
- *
- * Since GDAL 1.8.0, write capabilities are available. They allow creating
- * a new zip file and adding new files to an already existing (or just created)
- * zip file. Read and write operations cannot be interleaved : the new zip must
- * be closed before being re-opened for read.
- *
- * Additional documentation is to be found at
- * http://trac.osgeo.org/gdal/wiki/UserDocs/ReadInZip
- *
- * @since GDAL 1.6.0
+/*!
+ \brief Install ZIP file system handler.
+
+ A special file handler is installed that allows reading on-the-fly in ZIP
+ (.zip) archives.
+
+ All portions of the file system underneath the base path "/vsizip/" will be
+ handled by this driver.
+
+ \verbatim embed:rst
+ See :ref:`/vsizip/ documentation <vsizip>`
+ \endverbatim
+
+ @since GDAL 1.6.0
  */
 
 void VSIInstallZipFileHandler()
@@ -3510,7 +3485,20 @@ void* CPLZLibInflate( const void* ptr, size_t nBytes,
     strm.opaque = nullptr;
     strm.avail_in = static_cast<uInt>(nBytes);
     strm.next_in = static_cast<Bytef*>(const_cast<void*>(ptr));
-    int ret = inflateInit2(&strm, MAX_WBITS + 32);
+    int ret;
+    // MAX_WBITS + 32 mode which detects automatically gzip vs zlib encapsulation
+    // seems to be broken with /opt/intel/oneapi/intelpython/latest/lib/libz.so.1
+    // from intel/oneapi-basekit Docker image
+    if(  nBytes > 2 &&
+         static_cast<const GByte*>(ptr)[0] == 0x1F &&
+         static_cast<const GByte*>(ptr)[1] == 0x8B )
+    {
+        ret = inflateInit2(&strm, MAX_WBITS + 16); // gzip
+    }
+    else
+    {
+        ret = inflateInit2(&strm, MAX_WBITS); // zlib
+    }
     if( ret != Z_OK )
     {
         return nullptr;

@@ -97,30 +97,13 @@ OGRElasticLayer::OGRElasticLayer( const char* pszLayerName,
                     ? pszMappingName ? pszMappingName : ""
                     : ""),
     m_poFeatureDefn(new OGRFeatureDefn(pszLayerName)),
-    m_bFeatureDefnFinalized(false),
-    m_bManualMapping(false),
-    m_bSerializeMapping(false),
     m_osWriteMapFilename(
         CSLFetchNameValueDef(papszOptions, "WRITE_MAPPING",
                              poDS->m_pszWriteMap ? poDS->m_pszWriteMap : "")),
     m_bStoreFields(CPLFetchBool(papszOptions, "STORE_FIELDS", false)),
-    m_papszStoredFields(nullptr),
-    m_papszNotAnalyzedFields(nullptr),
-    m_papszNotIndexedFields(nullptr),
-    m_papszFieldsWithRawValue(nullptr),
     m_osESSearch(pszESSearch ? pszESSearch : ""),
     m_nBulkUpload(poDS->m_nBulkUpload),
-    m_eGeomTypeMapping(ES_GEOMTYPE_AUTO),
     m_osPrecision(CSLFetchNameValueDef(papszOptions, "GEOM_PRECISION", "")),
-    m_iCurID(0),
-    m_nNextFID(-1),
-    m_iCurFeatureInPage(0),
-    m_bEOF(false),
-    m_poSpatialFilter(nullptr),
-    m_bFilterMustBeClientSideEvaluated(false),
-    m_poJSONFilter(nullptr),
-    m_bIgnoreSourceID(false),
-    m_bDotAsNestedField(true),
     // Undocumented. Only useful for developers.
     m_bAddPretty(CPLTestBool(CPLGetConfigOption("ES_ADD_PRETTY", "FALSE"))),
     m_bGeoShapeAsGeoJSON(EQUAL(CSLFetchNameValueDef(papszOptions, "GEO_SHAPE_ENCODING", "GeoJSON"), "GeoJSON"))
@@ -195,16 +178,63 @@ OGRElasticLayer::OGRElasticLayer( const char* pszLayerName,
 }
 
 /************************************************************************/
-/*                              Clone()                                 */
+/*                           OGRElasticLayer()                          */
 /************************************************************************/
 
-OGRElasticLayer* OGRElasticLayer::Clone() const
+OGRElasticLayer::OGRElasticLayer( const char* pszLayerName,
+                                  OGRElasticLayer* poReferenceLayer ):
+    OGRElasticLayer(pszLayerName,
+                    pszLayerName,
+                    poReferenceLayer->m_osMappingName,
+                    poReferenceLayer->m_poDS,
+                    nullptr)
 {
-    OGRElasticLayer* poNew = new OGRElasticLayer(m_poFeatureDefn->GetName(),
-                                                 m_osIndexName,
-                                                 m_osMappingName,
-                                                 m_poDS,
-                                                 nullptr);
+    m_bAddSourceIndexName = poReferenceLayer->m_poDS->m_bAddSourceIndexName;
+
+    poReferenceLayer->CopyMembersTo(this);
+    auto poFeatureDefn = new OGRFeatureDefn(pszLayerName);
+    if( m_bAddSourceIndexName )
+    {
+        OGRFieldDefn oFieldDefn("_index", OFTString);
+        poFeatureDefn->AddFieldDefn(&oFieldDefn);
+        m_aaosFieldPaths.insert(m_aaosFieldPaths.begin(), std::vector<CPLString>());
+
+        for( auto& kv: m_aosMapToFieldIndex )
+        {
+            kv.second ++;
+        }
+    }
+
+    {
+        const int nFieldCount = m_poFeatureDefn->GetFieldCount();
+        for( int i = 0; i < nFieldCount; i++ )
+            poFeatureDefn->AddFieldDefn( m_poFeatureDefn->GetFieldDefn( i ) );
+    }
+
+    {
+        // Remove the default geometry field created instantiation.
+        poFeatureDefn->DeleteGeomFieldDefn(0);
+        const int nGeomFieldCount = m_poFeatureDefn->GetGeomFieldCount();
+        for( int i = 0; i < nGeomFieldCount; i++ )
+            poFeatureDefn->AddGeomFieldDefn( m_poFeatureDefn->GetGeomFieldDefn( i ) );
+    }
+
+    m_poFeatureDefn->Release();
+    m_poFeatureDefn = poFeatureDefn;
+    m_poFeatureDefn->Reference();
+
+    CPLAssert(static_cast<int>(m_aaosFieldPaths.size()) == m_poFeatureDefn->GetFieldCount());
+    CPLAssert(static_cast<int>(m_aaosGeomFieldPaths.size()) == m_poFeatureDefn->GetGeomFieldCount());
+}
+
+/************************************************************************/
+/*                            CopyMembersTo()                           */
+/************************************************************************/
+
+void OGRElasticLayer::CopyMembersTo(OGRElasticLayer* poNew)
+{
+    FinalizeFeatureDefn();
+
     poNew->m_poFeatureDefn->Release();
     poNew->m_poFeatureDefn =
         const_cast<OGRElasticLayer*>(this)->GetLayerDefn()->Clone();
@@ -230,6 +260,20 @@ OGRElasticLayer* OGRElasticLayer::Clone() const
     poNew->m_nSingleQueryTerminateAfter = m_nSingleQueryTerminateAfter;
     poNew->m_nFeatureIterationTerminateAfter = m_nFeatureIterationTerminateAfter;
     poNew->m_osSingleQueryTerminateAfter = m_osSingleQueryTerminateAfter;
+}
+
+/************************************************************************/
+/*                              Clone()                                 */
+/************************************************************************/
+
+OGRElasticLayer* OGRElasticLayer::Clone()
+{
+    OGRElasticLayer* poNew = new OGRElasticLayer(m_poFeatureDefn->GetName(),
+                                                 m_osIndexName,
+                                                 m_osMappingName,
+                                                 m_poDS,
+                                                 nullptr);
+    CopyMembersTo(poNew);
     return poNew;
 }
 
@@ -298,6 +342,18 @@ void OGRElasticLayer::AddGeomFieldDefn( const char* pszName,
     m_poFeatureDefn->AddGeomFieldDefn(&oFieldDefn);
 
     m_apoCT.push_back(nullptr);
+}
+
+/************************************************************************/
+/*                       GetGeomFieldProperties()                       */
+/************************************************************************/
+
+void OGRElasticLayer::GetGeomFieldProperties( int iGeomField,
+                                              std::vector<CPLString>& aosPath,
+                                              bool& bIsGeoPoint )
+{
+    aosPath = m_aaosGeomFieldPaths[iGeomField];
+    bIsGeoPoint = CPL_TO_BOOL(m_abIsGeoPoint[iGeomField]);
 }
 
 /************************************************************************/
@@ -1214,6 +1270,13 @@ OGRFeature *OGRElasticLayer::GetNextRawFeature()
         OGRFeature* poFeature = new OGRFeature(m_poFeatureDefn);
         if( pszId )
             poFeature->SetField("_id", pszId);
+
+        if( m_bAddSourceIndexName )
+        {
+            json_object* poIndex = CPL_json_object_object_get(poHit, "_index");
+            if( poId != nullptr && json_object_get_type(poId) == json_type_string )
+                poFeature->SetField("_index", json_object_get_string(poIndex));
+        }
 
         if( !m_osESSearch.empty() )
         {
@@ -3373,6 +3436,33 @@ OGRErr OGRElasticLayer::SetAttributeFilter(const char* pszFilter)
 }
 
 /************************************************************************/
+/*                          ClampEnvelope()                             */
+/************************************************************************/
+
+void OGRElasticLayer::ClampEnvelope(OGREnvelope& sEnvelope)
+{
+    if( sEnvelope.MinX < -180 )
+        sEnvelope.MinX = -180;
+    if( sEnvelope.MinX > 180 )
+        sEnvelope.MinX = 180;
+
+    if( sEnvelope.MinY < -90 )
+        sEnvelope.MinY = -90;
+    if( sEnvelope.MinY > 90 )
+        sEnvelope.MinY = 90;
+
+    if( sEnvelope.MaxX > 180 )
+        sEnvelope.MaxX = 180;
+    if( sEnvelope.MaxX < -180 )
+        sEnvelope.MaxX = -180;
+
+    if( sEnvelope.MaxY > 90 )
+        sEnvelope.MaxY = 90;
+    if( sEnvelope.MaxY < -90 )
+        sEnvelope.MaxY = -90;
+}
+
+/************************************************************************/
 /*                          SetSpatialFilter()                          */
 /************************************************************************/
 
@@ -3410,26 +3500,7 @@ void OGRElasticLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn )
 
     OGREnvelope sEnvelope;
     poGeomIn->getEnvelope(&sEnvelope);
-
-    if( sEnvelope.MinX < -180 )
-        sEnvelope.MinX = -180;
-    if( sEnvelope.MinX > 180 )
-        sEnvelope.MinX = 180;
-
-    if( sEnvelope.MinY < -90 )
-        sEnvelope.MinY = -90;
-    if( sEnvelope.MinY > 90 )
-        sEnvelope.MinY = 90;
-
-    if( sEnvelope.MaxX > 180 )
-        sEnvelope.MaxX = 180;
-    if( sEnvelope.MaxX < -180 )
-        sEnvelope.MaxX = -180;
-
-    if( sEnvelope.MaxY > 90 )
-        sEnvelope.MaxY = 90;
-    if( sEnvelope.MaxY < -90 )
-        sEnvelope.MaxY = -90;
+    ClampEnvelope(sEnvelope);
 
     if( sEnvelope.MinX == -180 && sEnvelope.MinY == -90 &&
         sEnvelope.MaxX == 180 && sEnvelope.MaxY == 90 )

@@ -40,6 +40,9 @@ endif
 
 ifeq ($(JPEG_SETTING),internal)
 TIFF_OPTS 	:=	$(TIFF_OPTS) -I../jpeg/libjpeg
+ifeq ($(RENAME_INTERNAL_LIBJPEG_SYMBOLS),yes)
+TIFF_OPTS	:=	-DRENAME_INTERNAL_LIBJPEG_SYMBOLS $(TIFF_OPTS)
+endif
 endif
 
 CPPFLAGS	:=	 -iquote .. $(GEOTIFF_INCLUDE) $(PROJ_INCLUDE) $(PROJ_FLAGS) $(TIFF_OPTS) $(CPPFLAGS)
@@ -76,6 +79,6 @@ lib-geotiff:
 install-obj:	$(SUBLIBS) $(O_OBJ:.o=.$(OBJ_EXT))
 
 generate_quant_table_md5sum: generate_quant_table_md5sum.cpp
-	$(CXX) -O2 -g -Wall generate_quant_table_md5sum.cpp -o generate_quant_table_md5sum -iquote ../../port -iquote ../../gcore -iquote ../../ogr -L../../ -lgdal
+	$(CXX) -O2 -g -Wall generate_quant_table_md5sum.cpp -o generate_quant_table_md5sum -iquote ../../port -iquote ../../generated_headers -iquote ../../gcore -iquote ../../ogr -L../../ -lgdal
 	./generate_quant_table_md5sum > quant_table_md5sum.h
 	$(RM) -f generate_quant_table_md5sum

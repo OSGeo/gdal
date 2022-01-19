@@ -1,4 +1,0 @@
-if(EXISTS $ENV{DESTDIR})
-  set(ROOT_DIR_ARG "--root=$ENV{DESTDIR}")
-endif()
-execute_process(COMMAND @Python_EXECUTABLE@ setup.py install ${ROOT_DIR_ARG} @INSTALL_ARGS@)

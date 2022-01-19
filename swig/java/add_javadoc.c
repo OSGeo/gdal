@@ -124,16 +124,24 @@ char* removeargnames(char* pszBuf)
     return pszBuf;
 }
 
+static void ignore_ret(char* x)
+{
+}
 
 int main(int argc, char* argv[])
 {
     const char* patch_filename = argv[1];
 
     FILE* fSrc = fopen(patch_filename, "rt");
+    if( fSrc == NULL )
+    {
+        fprintf(stderr, "Cannot open %s\n", patch_filename);
+        return 1;
+    }
     FILE* fDst;
     JavaDocInstance* instances = (JavaDocInstance*)calloc(sizeof(JavaDocInstance), 3000);
     int nInstances = 0;
-    char szLine[256];
+    char szLine[512];
     char szClass[256];
     char javadoc[16384];
     szClass[0] = 0;
@@ -181,12 +189,25 @@ begin:
     int i;
     for(i=3;i<argc;i++)
     {
+        if( strstr(argv[i], "AsyncReader.java") )
+        {
+            fprintf(stderr, "Skipping %s\n", argv[i]);
+            continue;
+        }
         fSrc = fopen(argv[i], "rt");
-        if (fSrc == NULL) continue;
+        if (fSrc == NULL)
+        {
+            fprintf(stderr, "Cannot open %s\n", argv[i]);
+            continue;
+        }
         char szDstName[1024];
         sprintf(szDstName, "%s/%s", argv[2], argv[i]);
         fDst = fopen(szDstName, "wt");
-        if (fDst == NULL) continue;
+        if (fDst == NULL)
+        {
+            fprintf(stderr, "Cannot write %s\n", szDstName);
+            continue;
+        }
         szClass[0] = 0;
         char szPackage[256];
         szPackage[0] = 0;
@@ -225,7 +246,7 @@ begin:
             {
                 char* c = strstr(szLine, "synchronized ");
                 *c = 0;
-                strcat(szLine, c + 13);
+                memmove(c, c + 13, strlen(c + 13) + 1);
             }
             if (strstr(szLine, "public") && !strstr(szLine, "native"))
             {
@@ -234,7 +255,7 @@ begin:
                     strcpy(szMethodName, szLine);
                     do
                     {
-                        fgets(szLine, 255, fSrc);
+                        ignore_ret(fgets(szLine, 255, fSrc));
                         strcpy(szMethodName + strlen(szMethodName) - 1, szLine);
                     } while (!strchr(szMethodName,')'));
                     strcpy(szLine, szMethodName);
@@ -261,7 +282,7 @@ begin:
                             {
                                 do
                                 {
-                                    fgets(szLine, 255, fSrc);
+                                    ignore_ret(fgets(szLine, 255, fSrc));
                                 } while (!strchr(szLine,'}'));
                             }
                             break;
@@ -289,7 +310,7 @@ begin:
                                         nBrackets --;
                                     }
                                 }
-                                fgets(szLine, 255, fSrc);
+                                ignore_ret(fgets(szLine, 255, fSrc));
                             } while(bFoundOpen == FALSE || nBrackets > 0);
                         }
                         else

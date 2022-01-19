@@ -40,7 +40,7 @@
 
 #include "cpl_error.h"
 #include "cpl_conv.h"
-#include "cpl_multiproc.h"
+#include "cpl_string.h"
 #include "gdal_alg.h"
 
 #include <stdio.h>
@@ -62,25 +62,22 @@ CPL_CVSID("$Id$")
 
 #else /* INTERNAL_QHULL */
 
-#if !defined(QHULL_INCLUDE_SUBDIR_IS_LIBQHULL)
-#include "libqhull.h"
-#include "qset.h"
-#elif QHULL_INCLUDE_SUBDIR_IS_LIBQHULL
-#include "libqhull/libqhull.h"
-#include "libqhull/qset.h"
-#else
-#include "qhull/libqhull.h"
-#include "qhull/qset.h"
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable : 4324 ) // 'qhT': structure was padded due to alignment specifier
+#endif
+
+#include "libqhull_r/libqhull_r.h"
+#include "libqhull_r/qset_r.h"
+
+#ifdef _MSC_VER
+#pragma warning( pop )
 #endif
 
 #endif /* INTERNAL_QHULL */
 
 #endif /* HAVE_INTERNAL_OR_EXTERNAL_QHULL*/
 
-
-#if HAVE_INTERNAL_OR_EXTERNAL_QHULL
-static CPLMutex* hMutex = NULL;
-#endif
 
 /************************************************************************/
 /*                       GDALHasTriangulation()                         */
@@ -127,25 +124,17 @@ GDALTriangulation* GDALTriangulationCreateDelaunay(int nPoints,
     GDALTriFacet* pasFacets;
     int* panMapQHFacetIdToFacetIdx; /* map from QHull facet ID to the index of our GDALTriFacet* array */
     int curlong, totlong;     /* memory remaining after qh_memfreeshort */
+    char* pszTempFilename = NULL;
+    FILE* fpTemp = NULL;
 
-    /* QHull is not thread safe, so we need to protect all operations with a mutex */
-    CPLCreateOrAcquireMutex(&hMutex, 1000);
+    qhT qh_qh;
+    qhT *qh= &qh_qh;
 
-#if qh_QHpointer  /* see user.h */
-    if (qh_qh)
-    {
-        fprintf (stderr, "QH6238: Qhull link error.  The global variable qh_qh was not initialized\n\
-                 to NULL by global.c.  Please compile this program with -Dqh_QHpointer_dllimport\n\
-                 as well as -Dqh_QHpointer, or use libqhullstatic, or use a different tool chain.\n\n");
-        CPLReleaseMutex(hMutex);
-        return NULL;
-    }
-#endif
+    QHULL_LIB_CHECK /* Check for compatible library */
 
     points = (coordT*)VSI_MALLOC2_VERBOSE(sizeof(double)*2, nPoints);
     if( points == NULL )
     {
-        CPLReleaseMutex(hMutex);
         return NULL;
     }
     for(i=0;i<nPoints;i++)
@@ -154,56 +143,69 @@ GDALTriangulation* GDALTriangulationCreateDelaunay(int nPoints,
         points[2*i+1] = padfY[i];
     }
 
+    qh_meminit(qh, NULL);
+
+    if( CPLTestBoolean(CPLGetConfigOption("QHULL_LOG_TO_TEMP_FILE", "NO")) )
+    {
+        pszTempFilename = CPLStrdup(CPLGenerateTempFilename(NULL));
+        fpTemp = fopen(pszTempFilename, "wb");
+    }
+    if( fpTemp == NULL )
+        fpTemp = stderr;
+
     /* d: Delaunay */
     /* Qbb: scale last coordinate to [0,m] for Delaunay */
     /* Qc: keep coplanar points with nearest facet */
     /* Qz: add a point-at-infinity for Delaunay triangulation */
     /* Qt: triangulated output */
-    if( qh_new_qhull(2, nPoints, points, FALSE /* ismalloc */,
-                      "qhull d Qbb Qc Qz Qt", NULL, stderr) != 0 )
+    int ret = qh_new_qhull(qh,
+                     2, nPoints, points, FALSE /* ismalloc */,
+                     "qhull d Qbb Qc Qz Qt", NULL, fpTemp);
+    if( fpTemp != stderr )
     {
-        VSIFree(points);
-        CPLError(CE_Failure, CPLE_AppDefined, "Delaunay triangulation failed");
-        goto end;
+        fclose(fpTemp);
+    }
+    if( pszTempFilename != NULL )
+    {
+        VSIUnlink(pszTempFilename);
+        VSIFree(pszTempFilename);
     }
 
     VSIFree(points);
     points = NULL;
 
-#if qh_QHpointer  /* see user.h */
-    if (qh_qh == NULL)
+    if( ret != 0 )
     {
-        CPLReleaseMutex(hMutex);
-        return NULL;
+        CPLError(CE_Failure, CPLE_AppDefined, "Delaunay triangulation failed");
+        goto end;
     }
-#endif
 
     /* Establish a map from QHull facet id to the index in our array of sequential facets */
-    panMapQHFacetIdToFacetIdx = (int*)VSI_MALLOC2_VERBOSE(sizeof(int), qh facet_id);
+    panMapQHFacetIdToFacetIdx = (int*)VSI_MALLOC2_VERBOSE(sizeof(int), qh->facet_id);
     if( panMapQHFacetIdToFacetIdx == NULL )
     {
         goto end;
     }
-    memset(panMapQHFacetIdToFacetIdx, 0xFF, sizeof(int) * qh facet_id);
+    memset(panMapQHFacetIdToFacetIdx, 0xFF, sizeof(int) * qh->facet_id);
 
-    for(j = 0, facet = qh facet_list;
+    for(j = 0, facet = qh->facet_list;
         facet != NULL && facet->next != NULL;
         facet = facet->next)
     {
-        if( facet->upperdelaunay != qh UPPERdelaunay )
+        if( facet->upperdelaunay != qh->UPPERdelaunay )
             continue;
 
-        if( qh_setsize(facet->vertices) != 3 ||
-            qh_setsize(facet->neighbors) != 3 )
+        if( qh_setsize(qh, facet->vertices) != 3 ||
+            qh_setsize(qh, facet->neighbors) != 3 )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Triangulation resulted in non triangular facet %d: vertices=%d",
-                     facet->id, qh_setsize(facet->vertices));
+                     facet->id, qh_setsize(qh, facet->vertices));
             VSIFree(panMapQHFacetIdToFacetIdx);
             goto end;
         }
 
-        CPLAssert(facet->id < qh facet_id);
+        CPLAssert(facet->id < qh->facet_id);
         panMapQHFacetIdToFacetIdx[facet->id] = j++;
     }
 
@@ -219,20 +221,20 @@ GDALTriangulation* GDALTriangulationCreateDelaunay(int nPoints,
     psDT->pasFacets = pasFacets;
 
     // Store vertex and neighbor information for each triangle.
-    for(facet = qh facet_list;
+    for(facet = qh->facet_list;
         facet != NULL && facet->next != NULL;
         facet = facet->next)
     {
         int k;
-        if( facet->upperdelaunay != qh UPPERdelaunay )
+        if( facet->upperdelaunay != qh->UPPERdelaunay )
             continue;
         k = panMapQHFacetIdToFacetIdx[facet->id];
         pasFacets[k].anVertexIdx[0] =
-            qh_pointid(((vertexT*) facet->vertices->e[0].p)->point);
+            qh_pointid(qh, ((vertexT*) facet->vertices->e[0].p)->point);
         pasFacets[k].anVertexIdx[1] =
-            qh_pointid(((vertexT*) facet->vertices->e[1].p)->point);
+            qh_pointid(qh, ((vertexT*) facet->vertices->e[1].p)->point);
         pasFacets[k].anVertexIdx[2] =
-            qh_pointid(((vertexT*) facet->vertices->e[2].p)->point);
+            qh_pointid(qh, ((vertexT*) facet->vertices->e[2].p)->point);
         pasFacets[k].anNeighborIdx[0] =
             panMapQHFacetIdToFacetIdx[((facetT*) facet->neighbors->e[0].p)->id];
         pasFacets[k].anNeighborIdx[1] =
@@ -244,10 +246,8 @@ GDALTriangulation* GDALTriangulationCreateDelaunay(int nPoints,
     VSIFree(panMapQHFacetIdToFacetIdx);
 
 end:
-    qh_freeqhull(!qh_ALL);
-    qh_memfreeshort(&curlong, &totlong);
-
-    CPLReleaseMutex(hMutex);
+    qh_freeqhull(qh, !qh_ALL);
+    qh_memfreeshort(qh, &curlong, &totlong);
 
     return psDT;
 #else /* HAVE_INTERNAL_OR_EXTERNAL_QHULL */
@@ -625,19 +625,4 @@ int GDALTriangulationFindFacetDirected(const GDALTriangulation* psDT,
 
     CPLDebug("GDAL", "Using brute force lookup");
     return GDALTriangulationFindFacetBruteForce(psDT, dfX, dfY, panOutputFacetIdx);
-}
-
-/************************************************************************/
-/*                         GDALTriangulationTerminate()                 */
-/************************************************************************/
-
-void GDALTriangulationTerminate()
-{
-#if HAVE_INTERNAL_OR_EXTERNAL_QHULL
-    if( hMutex != NULL )
-    {
-        CPLDestroyMutex(hMutex);
-        hMutex = NULL;
-    }
-#endif
 }

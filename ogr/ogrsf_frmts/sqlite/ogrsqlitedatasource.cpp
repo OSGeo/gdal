@@ -329,6 +329,27 @@ OGRSQLiteBaseDataSource::~OGRSQLiteBaseDataSource()
         GDALOpenInfoUnDeclareFileNotToOpen(m_pszFilename);
     }
 
+    if( !m_osFinalFilename.empty() )
+    {
+        if( !bSuppressOnClose )
+        {
+            CPLDebug("SQLITE", "Copying temporary file %s onto %s",
+                     m_pszFilename, m_osFinalFilename.c_str());
+            if( CPLCopyFile(m_osFinalFilename.c_str(), m_pszFilename) != 0 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Copy temporary file %s onto %s failed",
+                         m_pszFilename, m_osFinalFilename.c_str());
+            }
+        }
+        CPLDebug("SQLITE", "Deleting temporary file %s", m_pszFilename);
+        if( VSIUnlink(m_pszFilename) != 0 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Deleting temporary file %s failed", m_pszFilename);
+        }
+    }
+
     CPLFree(m_pszFilename);
 }
 
@@ -364,11 +385,11 @@ void OGRSQLiteBaseDataSource::CloseDB()
                     nPersistentWAL = 0;
                     if( sqlite3_file_control(hDB, "main", SQLITE_FCNTL_PERSIST_WAL, &nPersistentWAL) == SQLITE_OK )
                     {
-                        CPLDebug("SQLITE", "Disabling persistant WAL succeeded");
+                        CPLDebug("SQLITE", "Disabling persistent WAL succeeded");
                     }
                     else
                     {
-                        CPLDebug("SQLITE", "Could not disable persistant WAL");
+                        CPLDebug("SQLITE", "Could not disable persistent WAL");
                     }
                 }
 #endif
@@ -824,14 +845,48 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, bool bRegisterOGR2SQLit
         nPersistentWAL = 0;
         if( sqlite3_file_control(hDB, "main", SQLITE_FCNTL_PERSIST_WAL, &nPersistentWAL) == SQLITE_OK )
         {
-            CPLDebug("SQLITE", "Disabling persistant WAL succeeded");
+            CPLDebug("SQLITE", "Disabling persistent WAL succeeded");
         }
         else
         {
-            CPLDebug("SQLITE", "Could not disable persistant WAL");
+            CPLDebug("SQLITE", "Could not disable persistent WAL");
         }
     }
 #endif
+
+    const char* pszSqlitePragma =
+                            CPLGetConfigOption("OGR_SQLITE_PRAGMA", nullptr);
+    CPLString osJournalMode =
+                        CPLGetConfigOption("OGR_SQLITE_JOURNAL", "");
+
+    bool bPageSizeFound = false;
+    if (pszSqlitePragma != nullptr)
+    {
+        char** papszTokens = CSLTokenizeString2( pszSqlitePragma, ",",
+                                                 CSLT_HONOURSTRINGS );
+        for(int i=0; papszTokens[i] != nullptr; i++ )
+        {
+            if( STARTS_WITH_CI(papszTokens[i], "PAGE_SIZE") )
+                bPageSizeFound = true;
+            if( STARTS_WITH_CI(papszTokens[i], "JOURNAL_MODE") )
+            {
+                const char* pszEqual = strchr(papszTokens[i], '=');
+                if( pszEqual )
+                {
+                    osJournalMode = pszEqual + 1;
+                    osJournalMode.Trim();
+                    // Only apply journal_mode after changing page_size
+                    continue;
+                }
+            }
+
+            const char* pszSQL = CPLSPrintf("PRAGMA %s", papszTokens[i]);
+
+            CPL_IGNORE_RET_VAL(
+                sqlite3_exec( hDB, pszSQL, nullptr, nullptr, nullptr ) );
+        }
+        CSLDestroy(papszTokens);
+    }
 
     const char* pszVal = CPLGetConfigOption("SQLITE_BUSY_TIMEOUT", "5000");
     if ( pszVal != nullptr ) {
@@ -910,40 +965,6 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, bool bRegisterOGR2SQLit
         }
     }
 
-    const char* pszSqlitePragma =
-                            CPLGetConfigOption("OGR_SQLITE_PRAGMA", nullptr);
-    CPLString osJournalMode =
-                        CPLGetConfigOption("OGR_SQLITE_JOURNAL", "");
-
-    bool bPageSizeFound = false;
-    if (pszSqlitePragma != nullptr)
-    {
-        char** papszTokens = CSLTokenizeString2( pszSqlitePragma, ",",
-                                                 CSLT_HONOURSTRINGS );
-        for(int i=0; papszTokens[i] != nullptr; i++ )
-        {
-            if( STARTS_WITH_CI(papszTokens[i], "PAGE_SIZE") )
-                bPageSizeFound = true;
-            if( STARTS_WITH_CI(papszTokens[i], "JOURNAL_MODE") )
-            {
-                const char* pszEqual = strchr(papszTokens[i], '=');
-                if( pszEqual )
-                {
-                    osJournalMode = pszEqual + 1;
-                    osJournalMode.Trim();
-                    // Only apply journal_mode after changing page_size
-                    continue;
-                }
-            }
-
-            const char* pszSQL = CPLSPrintf("PRAGMA %s", papszTokens[i]);
-
-            CPL_IGNORE_RET_VAL(
-                sqlite3_exec( hDB, pszSQL, nullptr, nullptr, nullptr ) );
-        }
-        CSLDestroy(papszTokens);
-    }
-
     if( !bPageSizeFound && (flagsIn & SQLITE_OPEN_CREATE) != 0 )
     {
         // Since sqlite 3.12 the default page_size is now 4096. But we
@@ -989,7 +1010,21 @@ bool OGRSQLiteDataSource::Create( const char * pszNameIn, char **papszOptions )
 {
     CPLString osCommand;
 
-    m_pszFilename = CPLStrdup( pszNameIn );
+    const bool bUseTempFile =
+        CPLTestBool(CPLGetConfigOption("CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "NO")) &&
+        (VSIHasOptimizedReadMultiRange(pszNameIn) != FALSE ||
+         EQUAL(CPLGetConfigOption("CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", ""), "FORCED"));
+
+    if( bUseTempFile )
+    {
+        m_osFinalFilename = pszNameIn;
+        m_pszFilename = CPLStrdup(CPLGenerateTempFilename(CPLGetFilename(pszNameIn)));
+        CPLDebug("SQLITE", "Creating temporary file %s", m_pszFilename);
+    }
+    else
+    {
+        m_pszFilename = CPLStrdup( pszNameIn );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Check that spatialite extensions are loaded if required to      */
@@ -2853,6 +2888,7 @@ OGRSQLiteDataSource::ICreateLayer( const char * pszLayerNameIn,
     else if( bDeferredSpatialIndexCreation )
         poLayer->SetDeferredSpatialIndexCreation( true );
     poLayer->SetCompressedColumns( CSLFetchNameValue(papszOptions,"COMPRESS_COLUMNS") );
+    poLayer->SetStrictFlag( CPLFetchBool(papszOptions, "STRICT", false) );
 
     CPLFree( pszLayerName );
 

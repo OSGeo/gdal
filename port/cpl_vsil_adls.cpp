@@ -2146,13 +2146,15 @@ struct curl_slist* VSIADLSHandle::GetCurlHeaders( const CPLString& osVerb,
 /*                      VSIInstallADLSFileHandler()                    */
 /************************************************************************/
 
-/**
- * \brief Install /vsiadls/ Microsoft Azure Data Lake Storage Gen2 file system handler
- * (requires libcurl)
- *
- * @see <a href="gdal_virtual_file_systems.html#gdal_virtual_file_systems_vsiadls">/vsiadls/ documentation</a>
- *
- * @since GDAL 3.3
+/*!
+ \brief Install /vsiaz/ Microsoft Azure Data Lake Storage Gen2 file system handler
+ (requires libcurl)
+
+ \verbatim embed:rst
+ See :ref:`/vsiadls/ documentation <vsiadls>`
+ \endverbatim
+
+ @since GDAL 3.3
  */
 
 void VSIInstallADLSFileHandler( void )

@@ -289,7 +289,7 @@ typedef unsigned int  GUIntptr_t;
 
 #endif
 
-#if defined(__MSVCRT__) || (defined(WIN32) && defined(_MSC_VER))
+#if (defined(__MSVCRT__) && !(defined(__MINGW64__) && __GNUC__ >= 10)) || (defined(WIN32) && defined(_MSC_VER))
   #define CPL_FRMT_GB_WITHOUT_PREFIX     "I64"
 #elif HAVE_LONG_LONG
 /** Printf formatting suffix for GIntBig */

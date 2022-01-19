@@ -162,8 +162,10 @@ def test_ogr_mssqlspatial_3():
                                           max_error=0.001) == 0)
 
         for fld in range(3):
-            assert orig_feat.GetField(fld) == read_feat.GetField(fld), \
-                ('Attribute %d does not match' % fld)
+            if orig_feat.GetField(fld) != read_feat.GetField(fld):
+                orig_feat.DumpReadable()
+                read_feat.DumpReadable()
+                assert False, ('Attribute %d does not match' % fld)
         assert read_feat.GetField('INT64') == 1234567890123
 
         read_feat = None
@@ -191,6 +193,12 @@ def test_ogr_mssqlspatial_4():
     if gdaltest.mssqlspatial_has_z_m:
         wkt_list.append('3d_1')
 
+    use_bcp = 'BCP' in gdal.GetDriverByName('MSSQLSpatial').GetMetadataItem(gdal.DMD_LONGNAME)
+    if use_bcp:
+        MSSQLSPATIAL_USE_BCP = gdal.GetConfigOption('MSSQLSPATIAL_USE_BCP', 'YES')
+        if MSSQLSPATIAL_USE_BCP.upper() in ('NO', 'OFF', 'FALSE'):
+            use_bcp = False
+
     for item in wkt_list:
         wkt_filename = 'data/wkb_wkt/' + item + '.wkt'
         wkt = open(wkt_filename).read()
@@ -207,11 +215,12 @@ def test_ogr_mssqlspatial_4():
                                  'from file "' + wkt_filename + '"')
 
         ######################################################################
-        # Before reading back the record, verify that the newly added feature 
+        # Before reading back the record, verify that the newly added feature
         # is returned from the CreateFeature method with a newly assigned FID.
-        
-        assert dst_feat.GetFID() != -1, \
-            'Assigned FID was not returned in the new feature'
+
+        if not use_bcp:
+            assert dst_feat.GetFID() != -1, \
+                'Assigned FID was not returned in the new feature'
 
         ######################################################################
         # Read back the feature and get the geometry.
@@ -275,14 +284,8 @@ def test_ogr_mssqlspatial_create_feature_in_unregistered_table():
 
     # Create a new MSSQLSpatial data source, one that will find the table just
     # created and make it available via GetLayerByName()
-    use_geometry_columns = gdal.GetConfigOption(
-        'MSSQLSPATIAL_USE_GEOMETRY_COLUMNS')
-    gdal.SetConfigOption('MSSQLSPATIAL_USE_GEOMETRY_COLUMNS', 'NO')
-
-    test_ds = ogr.Open(gdaltest.mssqlspatial_dsname, update=1)
-
-    gdal.SetConfigOption('MSSQLSPATIAL_USE_GEOMETRY_COLUMNS',
-                         use_geometry_columns)
+    with gdaltest.config_option('MSSQLSPATIAL_USE_GEOMETRY_COLUMNS', 'NO'):
+        test_ds = ogr.Open(gdaltest.mssqlspatial_dsname, update=1)
 
     assert test_ds is not None, 'cannot open data source'
 
@@ -318,33 +321,190 @@ def test_ogr_mssqlspatial_create_feature_in_unregistered_table():
     feature.Destroy()
 
 ###############################################################################
-# Test UUID datatype support
+# Test all datatype support
 
-def test_ogr_mssqlspatial_uuid():
+def test_ogr_mssqlspatial_datatypes():
     if gdaltest.mssqlspatial_ds is None:
         pytest.skip()
 
-    lyr = gdaltest.mssqlspatial_ds.CreateLayer('test_ogr_mssql_uuid')
+    lyr = gdaltest.mssqlspatial_ds.CreateLayer('test_ogr_mssql_datatypes')
+
+    fd = ogr.FieldDefn('int32', ogr.OFTInteger)
+    assert lyr.CreateField(fd) == 0
+
+    fd = ogr.FieldDefn('int16', ogr.OFTInteger)
+    fd.SetSubType(ogr.OFSTInt16)
+    assert lyr.CreateField(fd) == 0
+
+    fd = ogr.FieldDefn('int64', ogr.OFTInteger64)
+    assert lyr.CreateField(fd) == 0
+
+    fd = ogr.FieldDefn('float32', ogr.OFTReal)
+    fd.SetSubType(ogr.OFSTFloat32)
+    assert lyr.CreateField(fd) == 0
+
+    fd = ogr.FieldDefn('float64', ogr.OFTReal)
+    assert lyr.CreateField(fd) == 0
+
+    fd = ogr.FieldDefn('numeric', ogr.OFTReal)
+    fd.SetWidth(12)
+    fd.SetPrecision(6)
+    assert lyr.CreateField(fd) == 0
+
+    fd = ogr.FieldDefn('numeric_width_9_prec_0_from_int', ogr.OFTInteger)
+    fd.SetWidth(9)
+    fd.SetPrecision(0)
+    assert lyr.CreateField(fd) == 0
+
+    fd = ogr.FieldDefn('numeric_width_9_prec_0_from_real', ogr.OFTReal)
+    fd.SetWidth(9)
+    fd.SetPrecision(0)
+    assert lyr.CreateField(fd) == 0
+
+    fd = ogr.FieldDefn('numeric_width_18_prec_0', ogr.OFTInteger64)
+    fd.SetWidth(18)
+    fd.SetPrecision(0)
+    assert lyr.CreateField(fd) == 0
+
+    fd = ogr.FieldDefn('string', ogr.OFTString)
+    assert lyr.CreateField(fd) == 0
+
+    fd = ogr.FieldDefn('string_limited', ogr.OFTString)
+    fd.SetWidth(5)
+    assert lyr.CreateField(fd) == 0
+
+    fd = ogr.FieldDefn('date', ogr.OFTDate)
+    assert lyr.CreateField(fd) == 0
+
+    fd = ogr.FieldDefn('time', ogr.OFTTime)
+    assert lyr.CreateField(fd) == 0
+
+    fd = ogr.FieldDefn('datetime', ogr.OFTDateTime)
+    assert lyr.CreateField(fd) == 0
 
     fd = ogr.FieldDefn('uid', ogr.OFTString)
     fd.SetSubType(ogr.OFSTUUID)
+    assert lyr.CreateField(fd) == 0
 
+    fd = ogr.FieldDefn('binary', ogr.OFTBinary)
     assert lyr.CreateField(fd) == 0
 
     lyr.StartTransaction()
     f = ogr.Feature(lyr.GetLayerDefn())
+    f['int32'] = (1 << 31) - 1
+    f['int16'] = (1 << 15) - 1
+    f['int64'] = (1 << 63) - 1
+    f['float32'] = 1.25
+    f['float64'] = 1.25123456789
+    f['numeric'] = 123456.789012
+    f['numeric_width_9_prec_0_from_int'] = 123456789
+    f['numeric_width_9_prec_0_from_real'] = 123456789
+    f['numeric_width_18_prec_0'] = 12345678912345678
+    f['string'] = 'unlimited string'
+    f['string_limited'] = 'abcd\u00e9'
+    f['date'] = '2021/12/11'
+    f['time'] = '12:34:56'
+    f['datetime'] = '2021/12/11 12:34:56'
     f['uid'] = '6F9619FF-8B86-D011-B42D-00C04FC964FF'
+    f.SetFieldBinaryFromHexString('binary', '0123465789ABCDEF')
     lyr.CreateFeature(f)
     lyr.CommitTransaction()
 
     test_ds = ogr.Open(gdaltest.mssqlspatial_dsname, update=0)
-    lyr = test_ds.GetLayer('test_ogr_mssql_uuid')
-    fd = lyr.GetLayerDefn().GetFieldDefn(0)
+    lyr = test_ds.GetLayer('test_ogr_mssql_datatypes')
+    lyr_defn = lyr.GetLayerDefn()
+
+    fd = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('int32'))
+    assert fd.GetType() == ogr.OFTInteger
+    assert fd.GetSubType() == ogr.OFSTNone
+    assert fd.GetWidth() == 0
+
+    fd = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('int16'))
+    assert fd.GetType() == ogr.OFTInteger
+    assert fd.GetSubType() == ogr.OFSTInt16
+    assert fd.GetWidth() == 0
+
+    fd = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('int64'))
+    assert fd.GetType() == ogr.OFTInteger64
+    assert fd.GetSubType() == ogr.OFSTNone
+    assert fd.GetWidth() == 0
+
+    fd = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('float32'))
+    assert fd.GetType() == ogr.OFTReal
+    assert fd.GetSubType() == ogr.OFSTFloat32
+    assert fd.GetWidth() == 0
+
+    fd = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('float64'))
+    assert fd.GetType() == ogr.OFTReal
+    assert fd.GetSubType() == ogr.OFSTNone
+    assert fd.GetWidth() == 0
+
+    fd = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('numeric'))
+    assert fd.GetType() == ogr.OFTReal
+    assert fd.GetSubType() == ogr.OFSTNone
+    assert fd.GetWidth() == 12
+    assert fd.GetPrecision() == 6
+
+    fd = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('numeric_width_9_prec_0_from_int'))
+    assert fd.GetType() == ogr.OFTInteger
+    assert fd.GetSubType() == ogr.OFSTNone
+    assert fd.GetWidth() == 9
+    assert fd.GetPrecision() == 0
+
+    fd = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('numeric_width_9_prec_0_from_real'))
+    assert fd.GetType() == ogr.OFTInteger
+    assert fd.GetSubType() == ogr.OFSTNone
+    assert fd.GetWidth() == 9
+    assert fd.GetPrecision() == 0
+
+    fd = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('numeric_width_18_prec_0'))
+    assert fd.GetType() == ogr.OFTInteger64
+    assert fd.GetSubType() == ogr.OFSTNone
+    assert fd.GetWidth() == 18
+    assert fd.GetPrecision() == 0
+
+    fd = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('string'))
+    assert fd.GetType() == ogr.OFTString
+    assert fd.GetWidth() == 0
+
+    fd = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('string_limited'))
+    assert fd.GetType() == ogr.OFTString
+    assert fd.GetWidth() == 5
+
+    fd = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('date'))
+    assert fd.GetType() == ogr.OFTDate
+
+    fd = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('time'))
+    # We get a string currently
+    # assert fd.GetType() == ogr.OFTTime
+
+    fd = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('datetime'))
+    assert fd.GetType() == ogr.OFTDateTime
+
+    fd = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('uid'))
     assert fd.GetType() == ogr.OFTString
     assert fd.GetSubType() == ogr.OFSTUUID
-    f = lyr.GetNextFeature()
 
-    assert f.GetField(0) == '6F9619FF-8B86-D011-B42D-00C04FC964FF'
+    fd = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('binary'))
+    assert fd.GetType() == ogr.OFTBinary
+
+    f = lyr.GetNextFeature()
+    assert f['int32'] == (1 << 31) - 1
+    assert f['int16'] == (1 << 15) - 1
+    assert f['int64'] == (1 << 63) - 1
+    assert f['float32'] == 1.25
+    assert f['float64'] == 1.25123456789
+    assert f['numeric'] == 123456.789012
+    assert f['numeric_width_9_prec_0_from_int'] == 123456789
+    assert f['numeric_width_9_prec_0_from_real'] == 123456789
+    assert f['numeric_width_18_prec_0'] == 12345678912345678
+    assert f['string'] == 'unlimited string'
+    assert f['string_limited'] == 'abcd\u00e9'
+    assert f['date'] == '2021/12/11'
+    assert f['time'] == '12:34:56' or f['time'].startswith('12:34:56.0')
+    assert f['datetime'] == '2021/12/11 12:34:56'
+    assert f['uid'] == '6F9619FF-8B86-D011-B42D-00C04FC964FF'
+    assert f['binary'] == '0123465789ABCDEF'
 
     test_ds.Destroy()
 
@@ -363,7 +523,7 @@ def test_ogr_mssqlspatial_cleanup():
     gdaltest.mssqlspatial_ds = ogr.Open(gdaltest.mssqlspatial_dsname, update=1)
     gdaltest.mssqlspatial_ds.ExecuteSQL('DROP TABLE Unregistered')
     gdaltest.mssqlspatial_ds.ExecuteSQL('DROP TABLE tpoly')
-    gdaltest.mssqlspatial_ds.ExecuteSQL('DROP TABLE test_ogr_mssql_uuid')
+    gdaltest.mssqlspatial_ds.ExecuteSQL('DROP TABLE test_ogr_mssql_datatypes')
 
     gdaltest.mssqlspatial_ds = None
 

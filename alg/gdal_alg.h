@@ -684,11 +684,6 @@ int CPL_DLL GDALTriangulationFindFacetDirected( const GDALTriangulation* psDT,
 void CPL_DLL GDALTriangulationFree(GDALTriangulation* psDT);
 
 /*! @cond Doxygen_Suppress */
-// GDAL internal use only
-void GDALTriangulationTerminate(void);
-/*! @endcond */
-
-/*! @cond Doxygen_Suppress */
 #ifndef CPL_WARN_DEPRECATED_GDALOpenVerticalShiftGrid
 #define CPL_WARN_DEPRECATED_GDALOpenVerticalShiftGrid CPL_WARN_DEPRECATED
 #endif

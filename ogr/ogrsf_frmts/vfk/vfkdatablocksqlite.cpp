@@ -199,7 +199,7 @@ bool VFKDataBlockSQLite::SetGeometryLineString(VFKFeatureSQLite *poLine, OGRLine
     /* store also geometry in DB */
     CPLAssert( !rowIdFeat.empty() );
     if( bValid && poReader->IsSpatial() &&
-        SaveGeometryToDB(bValid ? poLine->GetGeometry() : nullptr,
+        SaveGeometryToDB(poLine->GetGeometry(),
                          rowIdFeat[0]) != OGRERR_FAILURE )
     {
         nGeometries++;

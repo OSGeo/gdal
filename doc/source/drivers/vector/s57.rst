@@ -158,14 +158,14 @@ They can also be specified independently as open options to the driver.
    useful when translated S-57 to S-57 losslessly. Default is OFF.
 -  **LNAM_REFS**\ =ON/OFF: Should LNAM and LNAM_REFS fields be attached
    to features capturing the feature to feature relationships in the
-   FFPT group of the S-57 file. Default is ON.
+   FFPT group of the S-57 file. Default is OFF.
 -  **RETURN_LINKAGES**\ =ON/OFF: Should additional attributes relating
    features to their underlying geometric primitives be attached. These
    are the values of the FSPT group, and are primarily needed when doing
    S-57 to S-57 translations. Default is OFF.
 -  **RECODE_BY_DSSI**\ =ON/OFF: Should attribute values be
    recoded to UTF-8 from the character encoding specified in the S57
-   DSSI record. Default is OFF.
+   DSSI record. Default is ON starting with GDAL 3.4.1.
 -  **LIST_AS_STRING**\ =ON/OFF: (GDAL >= 3.2) Whether attributes tagged as list in S57
    dictionaries should be reported as a String field, instead of a StringList.
    Default is OFF. Before GDAL 3.2, the behavior was equivalent to setting

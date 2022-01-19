@@ -56,11 +56,14 @@ CPL_CVSID("$Id$")
 #ifdef HAVE_RECENT_LIBXML2
 #include <string.h>
 
-#ifdef __clang__
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#endif
+#if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunknown-pragmas"
 #pragma clang diagnostic ignored "-Wdocumentation"
-#pragma clang diagnostic ignored "-Wold-style-cast"
 #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
 #endif
 
@@ -68,8 +71,11 @@ CPL_CVSID("$Id$")
 #include <libxml/parserInternals.h>
 #include <libxml/catalog.h>
 
-#ifdef __clang__
+#if defined(__clang__)
 #pragma clang diagnostic pop
+#endif
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
 #endif
 
 #include "cpl_string.h"

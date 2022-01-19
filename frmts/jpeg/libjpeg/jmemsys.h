@@ -41,7 +41,16 @@
 #define jpeg_open_backing_store	jpeg_open_backing_store_12
 #define jpeg_mem_init		jpeg_mem_init_12
 #define jpeg_mem_term		jpeg_mem_term_12
-#endif /* NEED_SHORT_EXTERNAL_NAMES */
+#elif defined(RENAME_INTERNAL_LIBJPEG_SYMBOLS)
+#define jpeg_get_small		gdal_jpeg_get_small
+#define jpeg_free_small		gdal_jpeg_free_small
+#define jpeg_get_large		gdal_jpeg_get_large
+#define jpeg_free_large		gdal_jpeg_free_large
+#define jpeg_mem_available	gdal_jpeg_mem_available
+#define jpeg_open_backing_store	gdal_jpeg_open_backing_store
+#define jpeg_mem_init		gdal_jpeg_mem_init
+#define jpeg_mem_term		gdal_jpeg_mem_term
+#endif
 
 
 /*

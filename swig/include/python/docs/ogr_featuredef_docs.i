@@ -143,7 +143,7 @@ OGRERR_NONE in case of success.
 OGR 1.9.0 ";
 
 %feature("docstring")  ReorderFieldDefns "OGRErr
-OGR_FD_ReorderFieldDefns(OGRFeatureDefnH hDefn, int *panMap)
+OGR_FD_ReorderFieldDefns(OGRFeatureDefnH hDefn, const int *panMap)
 
 Reorder the field definitions in the array of the feature definition.
 

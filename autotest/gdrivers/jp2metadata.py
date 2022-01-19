@@ -53,18 +53,16 @@ def test_jp2metadata_1():
         assert gt[i] == pytest.approx(expected_gt[i], abs=1e-5)
 
 ###############################################################################
-# Test Pleiades imagery metadata
+# Test Pleiades & Pleiades Neo imagery metadata
 
 
-def test_jp2metadata_2():
-
-    # Pleiades product description http://www.cscrs.itu.edu.tr/assets/downloads/PleiadesUserGuide.pdf
+def _test_jp2metadata(file_path):
     try:
-        os.remove('data/jpeg2000/IMG_md_ple_R1C1.jp2.aux.xml')
+        os.remove(f'{file_path}.aux.xml')
     except OSError:
         pass
 
-    ds = gdal.Open('data/jpeg2000/IMG_md_ple_R1C1.jp2', gdal.GA_ReadOnly)
+    ds = gdal.Open(file_path, gdal.GA_ReadOnly)
     if ds is None:
         pytest.skip()
 
@@ -82,9 +80,43 @@ def test_jp2metadata_2():
     assert 'ACQUISITIONDATETIME' in md, \
         'ACQUISITIONDATETIME not present in IMAGERY Domain'
 
+    # RPC validity
+    md_rpc = ds.GetMetadata('RPC')
+    keys_rpc = set(md_rpc.keys())
+
+    mandatory_keys_rpc = {'HEIGHT_OFF', 'HEIGHT_SCALE', 'LAT_OFF', 'LAT_SCALE',
+                          'LINE_DEN_COEFF', 'LINE_NUM_COEFF', 'LINE_OFF',
+                          'LINE_SCALE', 'LONG_OFF', 'LONG_SCALE',
+                          'SAMP_DEN_COEFF', 'SAMP_NUM_COEFF', 'SAMP_OFF',
+                          'SAMP_SCALE'}
+
+    diff = mandatory_keys_rpc.difference(keys_rpc)
+    diff = [str(d) for d in diff]
+    if diff:
+        pytest.fail(f'mandatory key.s missing : {", ".join(diff)}')
+
+    empty_keys = []
+    for k, v in md_rpc.items():
+        if not v:
+            empty_keys.append(k)
+    if empty_keys:
+        pytest.fail(f'empty key.s : {", ".join(empty_keys)}')
+
     ds = None
 
-    assert not os.path.exists('data/jpeg2000/IMG_md_ple_R1C1.jp2.aux.xml')
+    assert not os.path.exists(f'{file_path}.aux.xml')
+
+
+def test_jp2metadata_2():
+    # Pleiades product description https://content.satimagingcorp.com/media/pdf/User_Guide_Pleiades.pdf
+    file_path = 'data/jpeg2000/IMG_md_ple_R1C1.jp2'
+    _test_jp2metadata(file_path)
+
+
+def test_jp2metadata_2b():
+    # Pleiades Neo product
+    file_path = 'data/jpeg2000/IMG_md_pneo_R1C1.jp2'
+    _test_jp2metadata(file_path)
 
 
 ###############################################################################

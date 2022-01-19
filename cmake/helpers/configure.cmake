@@ -37,6 +37,7 @@ check_include_file("unistd.h" HAVE_UNISTD_H)
 check_include_file("stdint.h" HAVE_STDINT_H)
 check_include_file("sys/types.h" HAVE_SYS_TYPES_H)
 check_include_file("locale.h" HAVE_LOCALE_H)
+check_include_file("xlocale.h" GDAL_HAVE_XLOCALE_H)
 check_include_file("errno.h" HAVE_ERRNO_H)
 check_include_file("direct.h" HAVE_DIRECT_H)
 check_include_file("dlfcn.h" HAVE_DLFCN_H)
@@ -103,7 +104,7 @@ if (MSVC)
 
   set(VSI_STAT64 _stat64)
   set(VSI_STAT64_T __stat64)
-else (MSVC)
+else ()
   # linux, mac and mingw/windows
   test_big_endian(WORDS_BIGENDIAN)
   if (MINGW)
@@ -117,9 +118,11 @@ else (MSVC)
   endif ()
 
   find_library(M_LIB m)
+  mark_as_advanced(M_LIB)
 
   option(GDAL_USE_CPL_MULTIPROC_PTHREAD "Set to ON if you want to use pthreads based multiprocessing support."
          ${_WITH_PT_OPTION_ON})
+  mark_as_advanced(GDAL_USE_CPL_MULTIPROC_PTHREAD)
   set(CPL_MULTIPROC_PTHREAD ${GDAL_USE_CPL_MULTIPROC_PTHREAD})
   check_c_source_compiles(
     "
@@ -159,15 +162,30 @@ else (MSVC)
   check_include_file("string.h" HAVE_STRING_H)
 
   check_function_exists(strtof HAVE_STRTOF)
+  check_function_exists(strtoll HAVE_STRTOLL)
+  check_function_exists(strtoull HAVE_STRTOULL)
 
   check_include_file("sys/stat.h" HAVE_SYS_STAT_H)
+  if (${CMAKE_SYSTEM} MATCHES "Linux")
+      check_include_file("linux/fs.h" HAVE_LINUX_FS_H)
+      if( NOT HAVE_LINUX_FS_H )
+        message(FATAL_ERROR "Required linux/fs.h file is missing.")
+      endif()
+  endif ()
 
   check_function_exists(readlink HAVE_READLINK)
   check_function_exists(posix_spawnp HAVE_POSIX_SPAWNP)
+  check_function_exists(posix_memalign HAVE_POSIX_MEMALIGN)
   check_function_exists(vfork HAVE_VFORK)
   check_function_exists(mmap HAVE_MMAP)
+  check_function_exists(sigaction HAVE_SIGACTION)
   check_function_exists(statvfs HAVE_STATVFS)
+  check_function_exists(statvfs64 HAVE_STATVFS64)
   check_function_exists(lstat HAVE_LSTAT)
+
+  check_function_exists(getrlimit HAVE_GETRLIMIT)
+  check_symbol_exists(RLIMIT_AS "sys/resource.h" HAVE_RLIMIT_AS)
+
   check_function_exists(ftell64 HAVE_FTELL64)
   if (HAVE_FTELL64)
     set(VSI_FTELL64 "ftell64")
@@ -267,10 +285,14 @@ else (MSVC)
   set(UNIX_STDIO_64 TRUE)
   set(VSI_LARGE_API_SUPPORTED TRUE)
 
+  if(GDAL_HAVE_XLOCALE_H)
+    set(INCLUDE_XLOCALE_H "#include <xlocale.h>")
+  endif()
   check_c_source_compiles(
     "
         #define _XOPEN_SOURCE 700
         #include <locale.h>
+        ${INCLUDE_XLOCALE_H}
         int main() {
             locale_t alocale = newlocale (LC_NUMERIC_MASK, \"C\", 0);
             locale_t oldlocale = uselocale(alocale);
@@ -299,6 +321,12 @@ else (MSVC)
 
   check_c_source_compiles(
     "
+        int main(int argc, char** argv) { (void)__builtin_bswap32(0); (void)__builtin_bswap64(0); return 0; }
+    "
+    HAVE_GCC_BSWAP)
+
+  check_c_source_compiles(
+    "
         #include <sys/types.h>
         #include <sys/socket.h>
         #include <netdb.h>
@@ -315,7 +343,7 @@ else (MSVC)
 
   include(FindInt128)
   if (INT128_FOUND)
-    add_definitions(-DHAVE_UINT128_T)
+    set(HAVE_UINT128_T TRUE)
   endif ()
 
   if (HAVE_HIDE_INTERNAL_SYMBOLS)
@@ -347,12 +375,10 @@ else ()
   set(HOST_FILLORDER FILLORDER_LSB2MSB)
 endif ()
 
-if (UNIX)
-  if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(MACOSX_FRAMEWORK ON)
-  else ()
-    set(MACOSX_FRAMEWORK OFF)
-  endif ()
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  set(MACOSX_FRAMEWORK ${GDAL_ENABLE_MACOSX_FRAMEWORK})
+else ()
+  set(MACOSX_FRAMEWORK OFF)
 endif ()
 
 # vim: ts=4 sw=4 sts=4 et

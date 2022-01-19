@@ -19,6 +19,11 @@ gdal_format(vrt "Virtual GDAL Datasets")
 add_subdirectory(derived)
 
 # default formats
+
+if (CMAKE_BUILD_TYPE MATCHES "Debug" OR GDAL_ENABLE_FRMT_NULL)
+  gdal_optional_format(null "NULL dummy driver")
+endif ()
+
 gdal_format(hfa "Erdas Imagine .img")
 gdal_optional_format(sdts "SDTS translator")
 gdal_optional_format(nitf "National Imagery Transmission Format")
@@ -60,7 +65,7 @@ gdal_optional_format(r "R Object Data Store")
 gdal_optional_format(northwood "NWT_GRD/NWT_GRC -- Northwood/Vertical Mapper File Format")
 gdal_optional_format(saga "SAGA GIS Binary Driver")
 gdal_optional_format(xyz "ASCII Gridded XYZ")
-gdal_dependent_format(heif "HEIF" "HEIF_FOUND")
+gdal_dependent_format(heif "HEIF" "GDAL_USE_HEIF")
 gdal_optional_format(esric "ESRI compact cache")
 gdal_optional_format(hf2 "HF2/HFZ heightfield raster")
 gdal_optional_format(kmlsuperoverlay "")
@@ -115,7 +120,7 @@ gdal_dependent_format(rasdaman "Rasdaman GDAL driver" "HAVE_RASDAMAN")
 gdal_dependent_format(hdf5 "Hierarchical Data Format Release 5 (HDF5)" "GDAL_USE_HDF5")
 gdal_dependent_format(plmosaic "PLMosaic (Planet Labs Mosaics API)" "GDAL_USE_CURL")
 gdal_dependent_format(wms "Web Map Services" "GDAL_USE_CURL")
-gdal_dependent_format(gta "Generic Tagged Arrays" "GTA_FOUND")
+gdal_dependent_format(gta "Generic Tagged Arrays" "GDAL_USE_GTA")
 gdal_dependent_format(webp "WebP" "GDAL_USE_WEBP")
 gdal_dependent_format(hdf4 "Hierarchical Data Format Release 4 (HDF4)" "GDAL_USE_HDF4")
 gdal_dependent_format(rasterlite "Rasterlite - Rasters in SQLite DB" "GDAL_USE_SQLITE3;OGR_ENABLE_SQLITE")
@@ -154,7 +159,7 @@ gdal_dependent_format(jp2lura "JPEG-2000 (based on Luratech)" "GDAL_USE_LURATECH
 # ESRI ArcSDE C API SDK
 gdal_dependent_format(sde "ESRI ArcSDE Raster" "HAVE_SDE")
 # LizardTech's decoding software development kit (DSDK)
-gdal_dependent_format(mrsid "Multi-resolution Seamless Image Database" "HAVE_MRSID")
+gdal_dependent_format(mrsid "Multi-resolution Seamless Image Database" "GDAL_USE_MRSID")
 # gdal_dependent_format(mrsid_lidar "Multi-resolution Seamless Image Database - LiDAR support" "HAVE_MRSID")
 gdal_dependent_format(georaster "Oracle Spatial GeoRaster" "HAVE_ORACLE" DRIVER_NAME_OPTION GEOR)
 gdal_dependent_format(ecw "ERDAS JPEG2000 (.jp2)" "HAVE_ECW")
@@ -170,3 +175,8 @@ target_include_directories(
                      $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR> $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR>)
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:gdal_frmts>)
 set_property(TARGET gdal_frmts PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
+
+# Install drivers.ini along with plugins
+get_target_property(PLUGIN_OUTPUT_DIR ${GDAL_LIB_TARGET_NAME} PLUGIN_OUTPUT_DIR)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/drivers.ini ${PLUGIN_OUTPUT_DIR}/drivers.ini COPYONLY)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/drivers.ini DESTINATION ${INSTALL_PLUGIN_DIR})

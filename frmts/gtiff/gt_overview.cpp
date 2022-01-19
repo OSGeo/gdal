@@ -29,6 +29,15 @@
  ****************************************************************************/
 
 #include "cpl_port.h"
+
+#ifdef HAVE_STRINGS_H
+#undef HAVE_STRINGS_H
+#endif
+
+#ifdef HAVE_STRING_H
+#undef HAVE_STRING_H
+#endif
+
 #include "gt_overview.h"
 
 #include <cstdlib>
@@ -989,7 +998,8 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
     aosOpenOptions.SetNameValue("NUM_THREADS",
                                 CSLFetchNameValue(papszOptions, "NUM_THREADS"));
     aosOpenOptions.SetNameValue("SPARSE_OK",
-                                CSLFetchNameValue(papszOptions, "SPARSE_OK"));
+                                CSLFetchNameValueDef(papszOptions, "SPARSE_OK",
+                                     CPLGetConfigOption("SPARSE_OK_OVERVIEW", nullptr)));
     aosOpenOptions.SetNameValue("@MASK_OVERVIEW_DATASET",
                                 CSLFetchNameValue(papszOptions, "MASK_OVERVIEW_DATASET"));
     GDALDataset *hODS = GDALDataset::Open( pszFilename,
@@ -1104,11 +1114,14 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
 
     CPLErr eErr = CE_None;
 
+    const auto poColorTable = papoBandList[0]->GetColorTable();
     if(  ((bSourceIsPixelInterleaved && bSourceIsJPEG2000) ||
           (nCompression != COMPRESSION_NONE)) &&
          nPlanarConfig == PLANARCONFIG_CONTIG &&
          !GDALDataTypeIsComplex(papoBandList[0]->GetRasterDataType()) &&
-         papoBandList[0]->GetColorTable() == nullptr &&
+          (poColorTable == nullptr ||
+           STARTS_WITH_CI(pszResampling, "NEAR") ||
+           poColorTable->IsIdentity()) &&
          (STARTS_WITH_CI(pszResampling, "NEAR") ||
           EQUAL(pszResampling, "AVERAGE") ||
           EQUAL(pszResampling, "RMS") ||

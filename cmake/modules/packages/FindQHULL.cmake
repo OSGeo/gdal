@@ -7,32 +7,37 @@
 #
 # Copyright (c) 2017,2018, Hiroshi Miura <miurahr@linux.com>
 #
+# Input variables:
+#    QHULL_PACKAGE_NAME: name of the pkg-config package, typically qhull_r or qhullstatic_r
+#
 # If it's found it sets QHULL_FOUND to TRUE
 # and following variables are set:
 #    QHULL_INCLUDE_DIR
-#    QHULL_INCLUDE_SUBDIR (qhull/libqhull)
 #    QHULL_LIBRARY
-#    QHULL_NEWQHULL (TRUE/FALSE)
 #
 
-find_path(QHULL_INCLUDE_DIR qhull/libqhull.h)
-if(QHULL_INCLUDE_DIR)
-    set(QHULL_INCLUDE_SUBDIR "qhull")
-else()
-    find_path(LIBQHULL_INCLUDE_DIR libqhull/libqhull.h)
-    if(LIBQHULL_INCLUDE_DIR)
-        set(QHULL_INCLUDE_SUBDIR "libqhull")
-    endif()
+set(QHULL_PACKAGE_NAME qhull_r CACHE STRING "Name of the pkg-config package, typically qhull_r or qhullstatic_r")
+mark_as_advanced(QHULL_PACKAGE_NAME)
+
+find_package(PkgConfig QUIET)
+if(PKG_CONFIG_FOUND)
+    pkg_check_modules(PC_QHULL QUIET ${QHULL_PACKAGE_NAME})
 endif()
 
-find_library(QHULL_LIBRARY NAMES qhull libqhull)
-mark_as_advanced(QHULL_INCLUDE_SUBDIR QHULL_INCLUDE_DIR QHULL_LIBRARY)
+find_path(QHULL_INCLUDE_DIR libqhull_r/libqhull_r.h
+          HINTS ${PC_QHULL_INCLUDE_DIRS})
 
-include(CheckLibraryExists)
-check_library_exists(qhull gqh_new_qhull ${QHULL_LIBRARY} QHULL_NEWQHULL)
+if(PC_QHULL_FOUND)
+  set(_library_name "${PC_QHULL_LIBRARIES}")
+else()
+  set(_library_name qhull_r qhullstatic_r)
+endif()
+find_library(QHULL_LIBRARY NAMES ${_library_name}
+             HINTS ${PC_QHULL_LIBRARY_DIRS})
+unset(_library_name)
+
+mark_as_advanced(QHULL_INCLUDE_DIR QHULL_LIBRARY)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(QHULL
-    REQUIRED_VARS QHULL_LIBRARY QHULL_INCLUDE_DIR
-    VERSION_VAR QHULL_NEWQHULL
-)
+    REQUIRED_VARS QHULL_LIBRARY QHULL_INCLUDE_DIR)

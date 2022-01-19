@@ -34,9 +34,15 @@ for f in $MODIFIED; do
     *CMakeLists.txt)
       ;;
 
-  *)
-    continue
-    ;;
+    *gdal.cmake)
+      ;;
+
+    *cmake/helpers/CheckDependentLibraries.cmake)
+      ;;
+
+    *)
+      continue
+      ;;
   esac
 
   m=$f.prepare

@@ -762,13 +762,15 @@ bool VSISwiftHandle::Authenticate()
 /*                     VSIInstallSwiftFileHandler()                     */
 /************************************************************************/
 
-/**
- * \brief Install /vsiswift/ OpenStack Swif Object Storage (Swift) file
- * system handler (requires libcurl)
- *
- * @see <a href="gdal_virtual_file_systems.html#gdal_virtual_file_systems_vsiswift">/vsiswift/ documentation</a>
- *
- * @since GDAL 2.3
+/*!
+ \brief Install /vsiswift/ OpenStack Swif Object Storage (Swift) file
+ system handler (requires libcurl)
+
+ \verbatim embed:rst
+ See :ref:`/vsiswift/ documentation <vsiswift>`
+ \endverbatim
+
+ @since GDAL 2.3
  */
 void VSIInstallSwiftFileHandler( void )
 {

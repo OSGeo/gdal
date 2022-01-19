@@ -270,7 +270,7 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( nBandTypes < 5 )
         nBytesPerPixel = 1;
-    else if( nBandTypes == 5 )
+    else /* if( nBandTypes == 5 ) */
         nBytesPerPixel = 3;
 
     const int nBytesPerLine = nBytesPerPixel * nWidth;

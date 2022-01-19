@@ -35,13 +35,13 @@ add_library(
   tif_webp.c
   tif_color.c
   tif_dumpmode.c
-  # tif_jpeg.c
+  tif_jpeg.c
   tif_packbits.c
   tif_thunder.c
   tiff.h
   tif_compress.c
   tif_error.c
-  # tif_jpeg_12.c
+  tif_jpeg_12.c
   tif_pixarlog.c
   tif_tile.c
   tiffconf.h
@@ -65,12 +65,15 @@ target_compile_definitions(libtiff PRIVATE -DPIXARLOG_SUPPORT -DZIP_SUPPORT)
 target_compile_definitions(libtiff PRIVATE -DJPEG_SUPPORT -DOJPEG_SUPPORT)
 
 # Include first internal libraries
-if (GDAL_USE_LIBZ_INTERNAL)
+if (GDAL_USE_ZLIB_INTERNAL)
   target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:libz,SOURCE_DIR>)
 endif ()
 
 if (GDAL_USE_LIBJPEG_INTERNAL)
   target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:libjpeg,SOURCE_DIR>)
+  if (RENAME_INTERNAL_LIBJPEG_SYMBOLS)
+    target_compile_definitions(libtiff PRIVATE -DRENAME_INTERNAL_LIBJPEG_SYMBOLS)
+  endif ()
 endif ()
 
 if (GDAL_USE_LIBLERC_INTERNAL)
@@ -79,7 +82,7 @@ if (GDAL_USE_LIBLERC_INTERNAL)
 endif ()
 
 # Now external libraries
-if (NOT GDAL_USE_LIBZ_INTERNAL)
+if (NOT GDAL_USE_ZLIB_INTERNAL)
   target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:ZLIB::ZLIB,INTERFACE_INCLUDE_DIRECTORIES>)
   gdal_add_private_link_libraries(ZLIB::ZLIB)
 endif ()
@@ -97,7 +100,7 @@ endif ()
 
 if (GDAL_JPEG12_SUPPORTED)
   target_compile_definitions(libtiff PRIVATE -DJPEG_DUAL_MODE_8_12)
-  target_include_directories(libtiff PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+  target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:libjpeg12,BINARY_DIR>)
 endif ()
 
 if (GDAL_USE_LIBLZMA)
@@ -118,29 +121,14 @@ if (GDAL_USE_WEBP)
   gdal_add_private_link_libraries(WEBP::WebP)
 endif ()
 
+if (NOT GDAL_USE_LIBLERC_INTERNAL AND GDAL_USE_LERC)
+  target_compile_definitions(libtiff PRIVATE -DLERC_SUPPORT)
+  target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:LERC::LERC,INTERFACE_INCLUDE_DIRECTORIES>)
+  gdal_add_private_link_libraries(LERC::LERC)
+endif ()
+
 if (RENAME_INTERNAL_LIBTIFF_SYMBOLS)
   target_compile_definitions(libtiff PRIVATE -DRENAME_INTERNAL_LIBTIFF_SYMBOLS)
-
-  target_include_directories(libtiff PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-
-  # A few hacks in tif_jpeg.c and tif_jpeg_12.c to deal with the #define game of gdal_libtiff_symbol_rename.h
-  file(READ ${CMAKE_CURRENT_SOURCE_DIR}/tif_jpeg.c tif_jpeg_content)
-  string(REPLACE "defined(TIFFInitJPEG)" "0" tif_jpeg_content "${tif_jpeg_content}")
-  file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/tif_jpeg_modified.c.tmp "${tif_jpeg_content}")
-  execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/tif_jpeg_modified.c.tmp
-                          ${CMAKE_CURRENT_BINARY_DIR}/tif_jpeg_modified.c)
-
-  file(READ ${CMAKE_CURRENT_SOURCE_DIR}/tif_jpeg_12.c tif_jpeg_12_content)
-  string(REPLACE "#define TIFFInitJPEG TIFFInitJPEG_12" "#undef TIFFInitJPEG\n#define TIFFInitJPEG TIFFInitJPEG_12"
-                 tif_jpeg_12_content "${tif_jpeg_12_content}")
-  file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/tif_jpeg_12_modified.c.tmp "${tif_jpeg_12_content}")
-  execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/tif_jpeg_12_modified.c.tmp
-                          ${CMAKE_CURRENT_BINARY_DIR}/tif_jpeg_12_modified.c)
-
-  target_sources(libtiff PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/tif_jpeg_modified.c
-                                 ${CMAKE_CURRENT_BINARY_DIR}/tif_jpeg_12_modified.c gdal_libtiff_symbol_rename.h)
-else ()
-  target_sources(libtiff PRIVATE tif_jpeg.c tif_jpeg_12.c gdal_libtiff_symbol_rename.h)
 endif ()
 
 if (MSVC)

@@ -226,6 +226,8 @@ RUN if echo "$WITH_PDFIUM" | grep -Eiq "^(y(es)?|1|true)$"  ; then ( \
 
 # Build libjxl
 RUN . /buildscripts/bh-set-envvars.sh \
+    && apt-get update -y \
+    && apt-get install -y --fix-missing --no-install-recommends libgflags-dev${APT_ARCH_SUFFIX} \
     && git clone https://github.com/libjxl/libjxl.git --recursive \
     && cd libjxl \
     && mkdir build \

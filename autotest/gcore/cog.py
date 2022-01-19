@@ -1076,3 +1076,22 @@ def test_cog_copy_xmp():
     _check_cog(filename)
 
     gdal.Unlink(filename)
+
+###############################################################################
+# Test creating COG from a source dataset that has overview with 'odd' sizes
+# and a mask without overview
+
+
+def test_cog_odd_overview_size_and_msk():
+
+    filename = '/vsimem/test_cog_odd_overview_size_and_msk.tif'
+    src_ds = gdal.GetDriverByName('MEM').Create('', 511, 511)
+    src_ds.BuildOverviews('NEAR', [2])
+    src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+    ds = gdal.GetDriverByName('COG').CreateCopy(filename, src_ds, options=['BLOCKSIZE=256'])
+    assert ds
+    assert ds.GetRasterBand(1).GetOverview(0).XSize == 256
+    assert ds.GetRasterBand(1).GetMaskBand().GetOverview(0).XSize == 256
+    ds = None
+
+    gdal.Unlink(filename)

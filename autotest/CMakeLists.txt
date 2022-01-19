@@ -1,10 +1,12 @@
 # CMake4GDAL project is distributed under X/MIT license. See accompanying file LICENSE.txt.
 
+#[[
 option(AUTOTEST_DOWNLOAD_TEST_DATA "Autotest to download test data" OFF)
 option(AUTOTEST_SLOW_TEST "Autotest to run slow test" OFF)
 if (NOT DEFINED ENV{CTEST_PARALLEL_LEVEL})
   set(PARALLEL_OPTION "-j1")
 endif ()
+]]
 
 if (Python_Interpreter_FOUND)
 
@@ -91,7 +93,9 @@ if (Python_Interpreter_FOUND)
 
   # Needed for a autotest/osr test
   symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/cpp/data ${CMAKE_CURRENT_BINARY_DIR}/cpp/data)
-  if (NOT SKIP_COPYING_AUTOTEST_SUBDIRS)
+  if (SKIP_COPYING_AUTOTEST_SUBDIRS)
+    message("Skipping copying ${CMAKE_CURRENT_SOURCE_DIR}/pymod")
+  else ()
     symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/pymod ${CMAKE_CURRENT_BINARY_DIR}/pymod)
   endif ()
 
@@ -105,7 +109,9 @@ if (Python_Interpreter_FOUND)
           gnm
           pyscripts
           utilities)
-    if (NOT SKIP_COPYING_AUTOTEST_SUBDIRS)
+    if (SKIP_COPYING_AUTOTEST_SUBDIRS)
+      message("Skipping copying ${CMAKE_CURRENT_SOURCE_DIR}/${tgt}")
+    else ()
       symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/${tgt} ${CMAKE_CURRENT_BINARY_DIR}/${tgt})
     endif ()
     add_custom_target(

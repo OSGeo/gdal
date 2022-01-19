@@ -51,6 +51,8 @@ def gdal_polygonize(src_filename: Optional[str] = None, band_number: Union[int, 
     if isinstance(band_number, str) and not band_number.startswith('mask'):
         band_number = int(band_number)
 
+    options = options or []
+
     if connectedness8:
         options.append('8CONNECTED=8')
 
@@ -59,20 +61,6 @@ def gdal_polygonize(src_filename: Optional[str] = None, band_number: Union[int, 
 
     if dst_layername is None:
         dst_layername = 'out'
-
-    options = options or []
-
-    # =============================================================================
-    # 	Verify we have next gen bindings with the polygonize method.
-    # =============================================================================
-    try:
-        gdal.Polygonize
-    except AttributeError:
-        print('')
-        print('gdal.Polygonize() not available.  You are likely using "old gen"')
-        print('bindings or an older version of the next gen bindings.')
-        print('')
-        return 1
 
     # =============================================================================
     # Open source file

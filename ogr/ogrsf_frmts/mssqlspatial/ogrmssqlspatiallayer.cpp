@@ -75,7 +75,7 @@ OGRMSSQLSpatialLayer::~OGRMSSQLSpatialLayer()
 /*      set on a statement.  Sift out geometry and FID fields.          */
 /************************************************************************/
 
-CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
+void OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
                                     CPLODBCStatement *poStmtIn )
 
 {
@@ -198,11 +198,14 @@ CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
         }
 
         OGRFieldDefn    oField( poStmtIn->GetColName(iCol), OFTString );
-        oField.SetWidth( MAX(0,poStmtIn->GetColSize( iCol )) );
 
         switch( CPLODBCStatement::GetTypeMapping(poStmtIn->GetColType(iCol)) )
         {
             case SQL_C_SSHORT:
+                oField.SetType( OFTInteger );
+                oField.SetSubType( OFSTInt16 );
+                break;
+
             case SQL_C_USHORT:
             case SQL_C_SLONG:
             case SQL_C_ULONG:
@@ -216,17 +219,26 @@ CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
 
             case SQL_C_BINARY:
                 oField.SetType( OFTBinary );
+                oField.SetWidth( MAX(0,poStmtIn->GetColSize( iCol )) );
                 break;
 
             case SQL_C_NUMERIC:
                 oField.SetType( OFTReal );
                 oField.SetPrecision( poStmtIn->GetColPrecision(iCol) );
+                oField.SetWidth( MAX(0,poStmtIn->GetColSize( iCol )) );
+                if( oField.GetPrecision() == 0 && oField.GetWidth() <= 9 )
+                    oField.SetType( OFTInteger );
+                else if( oField.GetPrecision() == 0 && oField.GetWidth() <= 18 )
+                    oField.SetType( OFTInteger64 );
                 break;
 
             case SQL_C_FLOAT:
+                oField.SetType( OFTReal );
+                oField.SetSubType( OFSTFloat32 );
+                break;
+
             case SQL_C_DOUBLE:
                 oField.SetType( OFTReal );
-                oField.SetWidth( 0 );
                 break;
 
             case SQL_C_DATE:
@@ -242,12 +254,14 @@ CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
                 break;
 
             case SQL_C_GUID:
+                m_bHasUUIDColumn = true;
                 oField.SetType( OFTString );
                 oField.SetSubType( OFSTUUID );
                 break;
 
 
             default:
+                oField.SetWidth( MAX(0,poStmtIn->GetColSize( iCol )) );
                 /* leave it as OFTString */;
         }
 
@@ -310,8 +324,6 @@ CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
     else
         CPLDebug( "OGR_MSSQLSpatial", "Table %s has no identified FID column.",
                   poFeatureDefn->GetName() );
-
-    return CE_None;
 }
 
 /************************************************************************/

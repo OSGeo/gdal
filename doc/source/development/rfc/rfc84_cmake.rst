@@ -11,6 +11,7 @@ Contact: even.rouault at spatialys.com,
          nyall.dawson at gmail.com,
          howard at hobu.co
 Started: 2021-09-22
+Updated: 2022-01-17
 Status:  Adopted (implementation in progress)
 ======== ==================================================
 
@@ -91,24 +92,20 @@ can however be worked around by doing 2 builds and merging build artifacts.
 Phases / Schedule
 -----------------
 
-The following is a rather conservative tentative schedule:
+The following is the planned schedule:
 
-- Add CMake as an experimental build system. Add it in master to ease the
-  contribution. Its experimental/development status will be mentioned in general
-  GDAL documentation and in the report output when running cmake.
-
-  ==> Target: GDAL 3.5 / May 2022
-
-- Formally deprecate GNUmakefile and NMake base file systems.
+- Add CMake as a new build system, and formally deprecate GNUmakefile and NMake
+  base file systems.
   Users and packagers are encouraged to switch to CMake and actively report
   (and help fixing) issues the find in the process.
+  GDAL 3.5.x point releases will be used to address reported issues.
 
-  ==> Target: GDAL 3.6 / November 2022
+  ==> Target: GDAL 3.5 / May 2022
 
 - Completely remove GNUmakefile and NMake base file systems, and make CMake the
   only build system in GDAL source tree.
 
-  ==> Target: GDAL 3.7 / May 2023
+  ==> Target: GDAL 3.6 / November 2022
 
 Details
 -------

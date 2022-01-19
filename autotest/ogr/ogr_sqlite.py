@@ -3207,6 +3207,84 @@ def test_ogr_sqlite_without_rowid():
 
 
 ###############################################################################
+# Test table in STRICT mode (sqlite >= 3.37)
+
+
+def test_ogr_sqlite_strict():
+
+    if 'FORCE_SQLITE_STRICT' not in os.environ and \
+        'STRICT' not in gdal.GetDriverByName('SQLite').GetMetadataItem(gdal.DMD_CREATIONOPTIONLIST):
+        pytest.skip('sqlite >= 3.37 required')
+
+    tmpfilename = '/vsimem/strict.db'
+    try:
+        ds = ogr.GetDriverByName('SQLite').CreateDataSource(tmpfilename)
+        lyr = ds.CreateLayer('t', options=['STRICT=YES'])
+        lyr.CreateField(ogr.FieldDefn('int_field', ogr.OFTInteger))
+        lyr.CreateField(ogr.FieldDefn('int64_field', ogr.OFTInteger64))
+        lyr.CreateField(ogr.FieldDefn('text_field', ogr.OFTString))
+        lyr.CreateField(ogr.FieldDefn('blob_field', ogr.OFTBinary))
+        ds = None
+
+        ds = ogr.Open(tmpfilename, update=1)
+        sql_lyr = ds.ExecuteSQL("SELECT sql FROM sqlite_master WHERE name='t'")
+        f = sql_lyr.GetNextFeature()
+        sql = f['sql']
+        ds.ReleaseResultSet(sql_lyr)
+        assert ') STRICT' in sql
+
+        lyr = ds.GetLayer('t')
+        lyr.CreateField(ogr.FieldDefn('real_field', ogr.OFTReal))
+        lyr.CreateField(ogr.FieldDefn('datetime_field', ogr.OFTDateTime))
+        lyr.CreateField(ogr.FieldDefn('date_field', ogr.OFTDate))
+        lyr.CreateField(ogr.FieldDefn('time_field', ogr.OFTTime))
+        ds = None
+
+        ds = ogr.Open(tmpfilename, update=1)
+        lyr = ds.GetLayer('t')
+        layer_defn = lyr.GetLayerDefn()
+        assert layer_defn.GetFieldCount() == 8
+        assert layer_defn.GetFieldDefn(0).GetType() == ogr.OFTInteger
+        assert layer_defn.GetFieldDefn(1).GetType() == ogr.OFTInteger64
+        assert layer_defn.GetFieldDefn(2).GetType() == ogr.OFTString
+        assert layer_defn.GetFieldDefn(3).GetType() == ogr.OFTBinary
+        assert layer_defn.GetFieldDefn(4).GetType() == ogr.OFTReal
+        assert layer_defn.GetFieldDefn(5).GetType() == ogr.OFTDateTime
+        assert layer_defn.GetFieldDefn(6).GetType() == ogr.OFTDate
+        assert layer_defn.GetFieldDefn(7).GetType() == ogr.OFTTime
+
+        ds = None
+    finally:
+        gdal.Unlink(tmpfilename)
+
+
+
+###############################################################################
+# Test CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE
+
+
+def test_ogr_sqlite_CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE():
+
+    # First check that CPL_TMPDIR is ignored for regular files
+    filename = '/vsimem/test_ogr_sqlite_CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE.db'
+    with gdaltest.config_option('CPL_TMPDIR', '/i_do/not/exist'):
+        ds = ogr.GetDriverByName('SQLite').CreateDataSource(filename)
+    assert ds is not None
+    ds = None
+    gdal.Unlink(filename)
+
+    # Now check that CPL_TMPDIR is honored for CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE=FORCED
+    with gdaltest.config_options({'CPL_TMPDIR': '/vsimem/temporary_location',
+                                  'CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE': 'FORCED'}):
+        ds = ogr.GetDriverByName('SQLite').CreateDataSource(filename)
+    assert ds is not None
+    assert gdal.VSIStatL(filename) is None
+    assert len(gdal.ReadDir('/vsimem/temporary_location')) != 0
+    ds = None
+    assert gdal.VSIStatL(filename) is not None
+    assert gdal.ReadDir('/vsimem/temporary_location') is None
+
+###############################################################################
 #
 
 

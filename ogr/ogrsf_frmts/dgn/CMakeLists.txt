@@ -11,5 +11,15 @@ add_gdal_driver(
           PLUGIN_CAPABLE
           NO_DEPS)
 gdal_standard_includes(ogr_DGN)
-add_executable(dgnwritetest EXCLUDE_FROM_ALL dgnwritetest.cpp)
-add_executable(dgndump EXCLUDE_FROM_ALL dgndump.cpp)
+
+if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.12)
+  if (NOT OGR_ENABLE_DGN_PLUGIN)
+    add_executable(dgnwritetest EXCLUDE_FROM_ALL dgnwritetest.cpp)
+    target_include_directories(dgnwritetest PRIVATE $<TARGET_PROPERTY:gdal_iso8211,SOURCE_DIR>)
+    target_link_libraries(dgnwritetest PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}> ogr_DGN)
+
+    add_executable(dgndump EXCLUDE_FROM_ALL dgndump.cpp)
+    target_include_directories(dgndump PRIVATE $<TARGET_PROPERTY:gdal_iso8211,SOURCE_DIR>)
+    target_link_libraries(dgndump PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}> ogr_DGN)
+  endif ()
+endif ()

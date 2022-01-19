@@ -196,8 +196,8 @@ class SAFECalibratedRasterBand : public GDALPamRasterBand
     CalibrationType m_eCalibrationType = SIGMA_NOUGHT;
 
     static TimePoint getTimePoint(const char * pszTime);
-    double getTimeDiff(TimePoint oT1, TimePoint oT2);
-    TimePoint getazTime(TimePoint oStart, TimePoint oStop, long nNumOfLines, int nOffset);
+    static double getTimeDiff(TimePoint oT1, TimePoint oT2);
+    static TimePoint getazTime(TimePoint oStart, TimePoint oStop, long nNumOfLines, int nOffset);
 
     int getCalibrationVectorIndex(int nLineNo);
     int getPixelIndex(int nPixelNo);

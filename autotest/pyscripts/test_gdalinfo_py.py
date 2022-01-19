@@ -29,7 +29,7 @@
 ###############################################################################
 
 import os
-
+import shutil
 
 import test_py_scripts
 import pytest
@@ -98,19 +98,20 @@ def test_gdalinfo_py_5():
     if script_path is None:
         pytest.skip()
 
-    try:
-        os.remove(test_py_scripts.get_data_path('gcore') + 'byte.tif.aux.xml')
-    except OSError:
-        pass
+    tmpfilename = 'tmp/test_gdalinfo_py_5.tif'
+    if os.path.exists(tmpfilename + '.aux.xml'):
+        os.remove(tmpfilename + '.aux.xml')
+    shutil.copy(test_py_scripts.get_data_path('gcore') + 'byte.tif', tmpfilename)
 
-    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', test_py_scripts.get_data_path('gcore') + 'byte.tif')
+    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', tmpfilename)
     assert ret.find('STATISTICS_MINIMUM=74') == -1, 'got wrong minimum.'
 
-    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '-stats ' + test_py_scripts.get_data_path('gcore') + 'byte.tif')
+    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '-stats ' + tmpfilename)
     assert ret.find('STATISTICS_MINIMUM=74') != -1, 'got wrong minimum (2).'
 
     # We will blow an exception if the file does not exist now!
-    os.remove(test_py_scripts.get_data_path('gcore') + 'byte.tif.aux.xml')
+    os.remove(tmpfilename + '.aux.xml')
+    os.remove(tmpfilename)
 
 ###############################################################################
 # Test a dataset with overviews and RAT
@@ -153,21 +154,22 @@ def test_gdalinfo_py_8():
     if script_path is None:
         pytest.skip()
 
-    try:
-        os.remove(test_py_scripts.get_data_path('gcore') + 'byte.tif.aux.xml')
-    except OSError:
-        pass
+    tmpfilename = 'tmp/test_gdalinfo_py_8.tif'
+    if os.path.exists(tmpfilename + '.aux.xml'):
+        os.remove(tmpfilename + '.aux.xml')
+    shutil.copy(test_py_scripts.get_data_path('gcore') + 'byte.tif', tmpfilename)
 
-    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', test_py_scripts.get_data_path('gcore') + 'byte.tif')
+    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', tmpfilename)
     assert ret.find('0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0 0 37 0 0 0 0 0 0 0 57 0 0 0 0 0 0 0 62 0 0 0 0 0 0 0 66 0 0 0 0 0 0 0 0 72 0 0 0 0 0 0 0 31 0 0 0 0 0 0 0 24 0 0 0 0 0 0 0 12 0 0 0 0 0 0 0 0 7 0 0 0 0 0 0 0 12 0 0 0 0 0 0 0 5 0 0 0 0 0 0 0 3 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1') == -1, \
         'did not expect histogram.'
 
-    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '-hist ' + test_py_scripts.get_data_path('gcore') + 'byte.tif')
+    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '-hist ' + tmpfilename)
     assert ret.find('0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0 0 37 0 0 0 0 0 0 0 57 0 0 0 0 0 0 0 62 0 0 0 0 0 0 0 66 0 0 0 0 0 0 0 0 72 0 0 0 0 0 0 0 31 0 0 0 0 0 0 0 24 0 0 0 0 0 0 0 12 0 0 0 0 0 0 0 0 7 0 0 0 0 0 0 0 12 0 0 0 0 0 0 0 5 0 0 0 0 0 0 0 3 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1') != -1, \
         'did not get expected histogram.'
 
     # We will blow an exception if the file does not exist now!
-    os.remove(test_py_scripts.get_data_path('gcore') + 'byte.tif.aux.xml')
+    os.remove(tmpfilename + '.aux.xml')
+    os.remove(tmpfilename)
 
 ###############################################################################
 # Test -mdd option

@@ -40,6 +40,9 @@ typedef struct {
 #ifdef NEED_12_BIT_NAMES
 #define jpeg_make_c_derived_tbl	jpeg_make_c_derived_tbl_12
 #define jpeg_gen_optimal_table	jpeg_gen_optimal_table_12
+#elif defined(RENAME_INTERNAL_LIBJPEG_SYMBOLS)
+#define jpeg_make_c_derived_tbl	gdal_jpeg_make_c_derived_tbl
+#define jpeg_gen_optimal_table	gdal_jpeg_gen_optimal_table
 #endif
 
 /* Expand a Huffman table definition into the derived format */

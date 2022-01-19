@@ -77,6 +77,7 @@ if(JPEG_INCLUDE_DIR AND EXISTS "${JPEG_INCLUDE_DIR}/jpeglib.h")
   if (NOT jpeg_lib_version)
     # libjpeg-turbo sticks JPEG_LIB_VERSION in jconfig.h
     find_path(jconfig_dir jconfig.h)
+    mark_as_advanced(jconfig_dir)
     if (jconfig_dir)
       file(STRINGS "${jconfig_dir}/jconfig.h"
         jpeg_lib_version REGEX "^#define[\t ]+JPEG_LIB_VERSION[\t ]+.*")

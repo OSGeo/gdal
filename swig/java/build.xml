@@ -1,23 +1,26 @@
 <?xml version="1.0"?>
-<project name="gdal" default="all">
+<project name="gdal" default="all" xmlns:unless="ant:unless">
 
 	<description>Builds the Java SWIG bindings-proxy classes for GDAL/OGR</description>
 
-	
+
 	<target name="init" description="Initialize, reading version info">
-		<loadfile property="version" srcFile="${basedir}/../../VERSION">
+		<property name="version_filename" value="${basedir}/../../VERSION"/>
+        <property name="build_dir" value="."/>
+		<loadfile property="version" srcFile="${version_filename}">
 			<filterchain>
 				<striplinebreaks/>
 			</filterchain>
 		</loadfile>
 		<echo message="version = ${version}"/>
-		<property name="mvn.dir" value="build/maven"/>
+		<property name="mvn.dir" value="${build_dir}/build/maven"/>
 		<property name="mvn.base" value="gdal-${version}"/>
+		<property name="source_apps" value="apps"/>
 	</target>
 
 	<target name="compile" depends="init" description="Compile the source files.">
-		<mkdir dir="build/classes"/>
-		<javac srcdir="org" destdir="build/classes" 
+		<mkdir dir="${build_dir}/build/classes"/>
+		<javac srcdir="${build_dir}/org" destdir="${build_dir}/build/classes"
 		       debug="on" source="7" target="7"
 		       includeantruntime="false" deprecation="true">
 		</javac>
@@ -25,30 +28,30 @@
 	</target>
 
 	<target name="archive" depends="compile" description="Build a jar.">
-		<jar destfile="gdal.jar">
-			<fileset dir="build/classes">
+		<jar destfile="${build_dir}/gdal.jar">
+			<fileset dir="${build_dir}/build/classes">
 				<include name="**/*.class"/>
 			</fileset>
 		</jar>
 	</target>
-	
+
 	<target name="compile_tests" depends="archive" description="Compile the tests files.">
-		<mkdir dir="build/apps"/>
-		<javac srcdir="apps" destdir="build/apps" 
+		<mkdir dir="${build_dir}/build/apps"/>
+		<javac srcdir="${source_apps}" destdir="${build_dir}/build/apps"
 		       debug="on" source="7" target="7"
-		       includeantruntime="false" deprecation="true" classpath="gdal.jar">
+		       includeantruntime="false" deprecation="true" classpath="${build_dir}/gdal.jar">
 		</javac>
 		<echo>compilation of tests complete</echo>
 	</target>
-        
+
         <target name="all" depends="compile_tests" description="Build a jar and test apps.">
         </target>
 
         <target name="maven" depends="compile_tests" description="Build maven artifacts">
 		<mkdir dir="${mvn.dir}"/>
 
-		<!-- run the javadoc generation -->
-		<exec executable="./make_doc.sh"/>
+		<!-- run the javadoc generation (skipped by CMake builds since they do in build_java_doc.cmake) -->
+		<exec unless:set="skip_make_doc" executable="./make_doc.sh" dir="${build_dir}"/>
 
 		<!-- copy over pom -->
 		<copy file="pom.xml" filtering="true"
@@ -59,9 +62,9 @@
 		</copy>
 
 		<!-- copy over main jar, javadoc jar, and source jar -->
-		<copy file="gdal.jar" tofile="${mvn.dir}/${mvn.base}.jar"/>
-		<jar destfile="${mvn.dir}/${mvn.base}-javadoc.jar" basedir="java"/>
-		<jar destfile="${mvn.dir}/${mvn.base}-sources.jar" basedir="."
+		<copy file="${build_dir}/gdal.jar" tofile="${mvn.dir}/${mvn.base}.jar"/>
+		<jar destfile="${mvn.dir}/${mvn.base}-javadoc.jar" basedir="${build_dir}/java"/>
+		<jar destfile="${mvn.dir}/${mvn.base}-sources.jar" basedir="${build_dir}"
 		     includes="org/**/*.java"/>
 
         </target>
@@ -101,7 +104,7 @@
 		</exec>
 	</target>
 	<target name="clean" description="Clean up old files.">
-		<delete dir="build"/>
+		<delete dir="${build_dir}/build"/>
 	</target>
 
 </project>

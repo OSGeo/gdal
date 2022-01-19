@@ -8,7 +8,7 @@ or other support forums. GitHub issues are for bug
 reports and suggestions for new features.
 
 If you think there is an issue with coordinate order in GDAL 3.0, then it is
-likely an intended behaviour. See https://github.com/OSGeo/gdal/issues/1974
+likely an intended behavior. See https://github.com/OSGeo/gdal/issues/1974
 for more explanations.
 
 The GDAL project is made of contributions from various individuals and

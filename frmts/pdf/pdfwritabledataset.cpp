@@ -198,7 +198,7 @@ OGRErr PDFWritableVectorDataset::SyncToDisk()
 
     int nWidth, nHeight;
 
-    if (dfRatio < 1)
+    if (dfRatio < 1.0)
     {
         nWidth = 1024;
         const double dfHeight = nWidth * dfRatio;
