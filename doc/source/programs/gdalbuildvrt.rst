@@ -26,7 +26,9 @@ Synopsis
                 [-a_srs srs_def]
                 [-r {nearest,bilinear,cubic,cubicspline,lanczos,average,mode}]
                 [-oo NAME=VALUE]*
-                [-input_file_list my_list.txt] [-overwrite] output.vrt [gdalfile]*
+                [-input_file_list my_list.txt] [-overwrite]
+                [-strict | -non_strict]
+                output.vrt [gdalfile]*
 
 Description
 -----------
@@ -193,6 +195,18 @@ changed in later versions.
 .. option:: -overwrite
 
     Overwrite the VRT if it already exists.
+
+.. option:: -strict
+
+    Turn warnings as failures. This is mutually exclusive with -non_strict, the latter which is the default.
+
+    .. versionadded:: 3.4.2
+
+.. option:: -non_strict
+
+    Skip source datasets that have issues with warnings, and continue processing. This is the default.
+
+    .. versionadded:: 3.4.2
 
 Examples
 --------

@@ -218,6 +218,7 @@ static int  GetSrcDstWin(DatasetProperty* psDP,
 class VRTBuilder
 {
     /* Input parameters */
+    bool                bStrict = false;
     char               *pszOutputFilename = nullptr;
     int                 nInputFiles = 0;
     char              **ppszInputFilenames = nullptr;
@@ -266,14 +267,15 @@ class VRTBuilder
     int                 bHasRunBuild = 0;
     int                 bHasDatasetMask = 0;
 
-    int         AnalyseRaster(GDALDatasetH hDS,
+    std::string         AnalyseRaster(GDALDatasetH hDS,
                               DatasetProperty* psDatasetProperties);
 
     void        CreateVRTSeparate(VRTDatasetH hVRTDS);
     void        CreateVRTNonSeparate(VRTDatasetH hVRTDS);
 
     public:
-                VRTBuilder(const char* pszOutputFilename,
+                VRTBuilder(bool bStrictIn,
+                           const char* pszOutputFilename,
                            int nInputFiles,
                            const char* const * ppszInputFilenames,
                            GDALDatasetH *pahSrcDSIn,
@@ -299,7 +301,7 @@ class VRTBuilder
 /*                          VRTBuilder()                                */
 /************************************************************************/
 
-VRTBuilder::VRTBuilder(const char* pszOutputFilenameIn,
+VRTBuilder::VRTBuilder(bool bStrictIn, const char* pszOutputFilenameIn,
                        int nInputFilesIn,
                        const char* const * ppszInputFilenamesIn,
                        GDALDatasetH *pahSrcDSIn,
@@ -314,7 +316,8 @@ VRTBuilder::VRTBuilder(const char* pszOutputFilenameIn,
                        bool bUseSrcMaskBandIn,
                        const char* pszOutputSRSIn,
                        const char* pszResamplingIn,
-                       const char* const * papszOpenOptionsIn )
+                       const char* const * papszOpenOptionsIn ):
+    bStrict(bStrictIn)
 {
     pszOutputFilename = CPLStrdup(pszOutputFilenameIn);
     nInputFiles = nInputFilesIn;
@@ -442,7 +445,7 @@ static CPLString GetProjectionName(const char* pszProjection)
 /*                           AnalyseRaster()                            */
 /************************************************************************/
 
-int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psDatasetProperties)
+std::string VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psDatasetProperties)
 {
     GDALDataset* poDS = GDALDataset::FromHandle(hDS);
     const char* dsFileName = poDS->GetDescription();
@@ -486,7 +489,7 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psDatasetPrope
                 nInputFiles++;
             }
         }
-        return FALSE;
+        return "SILENTLY_IGNORE";
     }
 
     const char* proj = poDS->GetProjectionRef();
@@ -513,29 +516,20 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psDatasetPrope
         }
         else if (bHasGeoTransform != bGotGeoTransform)
         {
-            CPLError(CE_Warning, CPLE_NotSupported,
-                    "gdalbuildvrt -separate cannot stack ungeoreferenced and georeferenced images. Skipping %s",
-                    dsFileName);
-            return FALSE;
+            return "gdalbuildvrt -separate cannot stack ungeoreferenced and georeferenced images.";
         }
         else if (!bHasGeoTransform &&
                     (nRasterXSize != poDS->GetRasterXSize() ||
                     nRasterYSize != poDS->GetRasterYSize()))
         {
-            CPLError(CE_Warning, CPLE_NotSupported,
-                    "gdalbuildvrt -separate cannot stack ungeoreferenced images that have not the same dimensions. Skipping %s",
-                    dsFileName);
-            return FALSE;
+            return "gdalbuildvrt -separate cannot stack ungeoreferenced images that have not the same dimensions.";
         }
     }
     else
     {
         if (!bGotGeoTransform)
         {
-            CPLError(CE_Warning, CPLE_NotSupported,
-                    "gdalbuildvrt does not support ungeoreferenced image. Skipping %s",
-                    dsFileName);
-            return FALSE;
+            return "gdalbuildvrt does not support ungeoreferenced image.";
         }
         bHasGeoTransform = TRUE;
     }
@@ -545,17 +539,11 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psDatasetPrope
         if (padfGeoTransform[GEOTRSFRM_ROTATION_PARAM1] != 0 ||
             padfGeoTransform[GEOTRSFRM_ROTATION_PARAM2] != 0)
         {
-            CPLError(CE_Warning, CPLE_NotSupported,
-                    "gdalbuildvrt does not support rotated geo transforms. Skipping %s",
-                    dsFileName);
-            return FALSE;
+            return "gdalbuildvrt does not support rotated geo transforms.";
         }
         if (padfGeoTransform[GEOTRSFRM_NS_RES] >= 0)
         {
-            CPLError(CE_Warning, CPLE_NotSupported,
-                    "gdalbuildvrt does not support positive NS resolution. Skipping %s",
-                    dsFileName);
-            return FALSE;
+            return "gdalbuildvrt does not support positive NS resolution.";
         }
     }
 
@@ -579,16 +567,20 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psDatasetPrope
     int _nBands = GDALGetRasterCount(hDS);
     if (_nBands == 0)
     {
-        CPLError(CE_Warning, CPLE_AppDefined,
-                    "Skipping %s as it has no bands", dsFileName);
-        return FALSE;
+        return "Dataset has no bands";
     }
     else if (_nBands > 1 && bSeparate)
     {
-        CPLError(CE_Warning, CPLE_AppDefined, "%s has %d bands. Only the first one will "
-                    "be taken into account in the -separate case",
-                    dsFileName, _nBands);
-        _nBands = 1;
+        if( bStrict )
+            return CPLSPrintf("%s has %d bands. Only one expected.", dsFileName, _nBands);
+        else
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                 "%s has %d bands. Only the first one will "
+                 "be taken into account in the -separate case",
+                 dsFileName, _nBands);
+            _nBands = 1;
+        }
     }
 
     GDALRasterBand* poFirstBand = poDS->GetRasterBand(1);
@@ -717,9 +709,7 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psDatasetPrope
                 const int nSelBand = panSelectedBandList[j];
                 if( nSelBand <= 0 || nSelBand > _nBands )
                 {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "Invalid band number: %d", nSelBand);
-                    return FALSE;
+                    return CPLSPrintf("Invalid band number: %d", nSelBand);
                 }
                 GDALRasterBand* poBand = poDS->GetRasterBand(nSelBand);
                 asBandProperties[j].colorInterpretation =
@@ -775,32 +765,25 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psDatasetPrope
             {
                 CPLString osExpected = GetProjectionName(pszProjectionRef);
                 CPLString osGot = GetProjectionName(proj);
-                CPLError(CE_Warning, CPLE_NotSupported,
-                         "gdalbuildvrt does not support heterogeneous "
-                         "projection: expected %s, got %s. Skipping %s",
+                return CPLSPrintf("gdalbuildvrt does not support heterogeneous "
+                         "projection: expected %s, got %s.",
                          osExpected.c_str(),
-                         osGot.c_str(),
-                         dsFileName);
-                return FALSE;
+                         osGot.c_str());
             }
         }
         if (!bSeparate)
         {
             if (!bExplicitBandList && _nBands != nTotalBands)
             {
-                CPLError(CE_Warning, CPLE_NotSupported,
-                         "gdalbuildvrt does not support heterogeneous band "
-                         "numbers: expected %d, got %d. Skipping %s",
-                         nTotalBands, _nBands, dsFileName);
-                return FALSE;
+                return CPLSPrintf("gdalbuildvrt does not support heterogeneous band "
+                                 "numbers: expected %d, got %d.",
+                                 nTotalBands, _nBands);
             }
             else if( bExplicitBandList && _nBands < nMaxSelectedBandNo )
             {
-                CPLError(CE_Warning, CPLE_NotSupported,
-                         "gdalbuildvrt does not support heterogeneous band "
-                         "numbers: expected at least %d, got %d. Skipping %s",
-                         nMaxSelectedBandNo, _nBands, dsFileName);
-                return FALSE;
+                return CPLSPrintf("gdalbuildvrt does not support heterogeneous band "
+                                  "numbers: expected at least %d, got %d.",
+                                  nMaxSelectedBandNo, _nBands);
             }
 
             for(int j=0;j<nSelectedBands;j++)
@@ -811,29 +794,22 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psDatasetPrope
                 if (asBandProperties[j].colorInterpretation !=
                             poBand->GetColorInterpretation())
                 {
-                    CPLError(CE_Warning, CPLE_NotSupported,
-                             "gdalbuildvrt does not support heterogeneous "
-                             "band color interpretation: expected %s, got %s. "
-                             "Skipping %s",
+                    return CPLSPrintf("gdalbuildvrt does not support heterogeneous "
+                             "band color interpretation: expected %s, got %s.",
                              GDALGetColorInterpretationName(
                                  asBandProperties[j].colorInterpretation),
                              GDALGetColorInterpretationName(
-                                 poBand->GetColorInterpretation()),
-                             dsFileName);
-                    return FALSE;
+                                 poBand->GetColorInterpretation()));
                 }
                 if (asBandProperties[j].dataType != poBand->GetRasterDataType())
                 {
-                    CPLError(CE_Warning, CPLE_NotSupported,
+                    return CPLSPrintf(
                              "gdalbuildvrt does not support heterogeneous "
-                             "band data type: expected %s, got %s. "
-                             "Skipping %s",
+                             "band data type: expected %s, got %s.",
                              GDALGetDataTypeName(
                                  asBandProperties[j].dataType),
                              GDALGetDataTypeName(
-                                 poBand->GetRasterDataType()),
-                             dsFileName);
-                    return FALSE;
+                                 poBand->GetRasterDataType()));
                 }
                 if (asBandProperties[j].colorTable)
                 {
@@ -842,10 +818,7 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psDatasetPrope
                     if (colorTable == nullptr ||
                         colorTable->GetColorEntryCount() != nRefColorEntryCount)
                     {
-                        CPLError(CE_Warning, CPLE_NotSupported,
-                                    "gdalbuildvrt does not support rasters with different color tables (different number of color table entries). Skipping %s",
-                                dsFileName);
-                        return FALSE;
+                        return "gdalbuildvrt does not support rasters with different color tables (different number of color table entries)";
                     }
 
                     /* Check that the palette are the same too */
@@ -879,32 +852,26 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psDatasetPrope
                     (asBandProperties[j].bHasOffset &&
                      psDatasetProperties->adfOffset[j] != asBandProperties[j].dfOffset) )
                 {
-                    CPLError(CE_Warning, CPLE_NotSupported,
+                    return CPLSPrintf(
                              "gdalbuildvrt does not support heterogeneous "
-                             "band offset: expected (%d,%f), got (%d,%f). "
-                             "Skipping %s",
+                             "band offset: expected (%d,%f), got (%d,%f).",
                              static_cast<int>(asBandProperties[j].bHasOffset),
                              asBandProperties[j].dfOffset,
                              static_cast<int>(psDatasetProperties->abHasOffset[j]),
-                             psDatasetProperties->adfOffset[j],
-                             dsFileName);
-                    return FALSE;
+                             psDatasetProperties->adfOffset[j]);
                 }
 
                 if( psDatasetProperties->abHasScale[j] != asBandProperties[j].bHasScale ||
                     (asBandProperties[j].bHasScale &&
                      psDatasetProperties->adfScale[j] != asBandProperties[j].dfScale) )
                 {
-                    CPLError(CE_Warning, CPLE_NotSupported,
+                    return CPLSPrintf(
                              "gdalbuildvrt does not support heterogeneous "
-                             "band scale: expected (%d,%f), got (%d,%f). "
-                             "Skipping %s",
+                             "band scale: expected (%d,%f), got (%d,%f).",
                              static_cast<int>(asBandProperties[j].bHasScale),
                              asBandProperties[j].dfScale,
                              static_cast<int>(psDatasetProperties->abHasScale[j]),
-                             psDatasetProperties->adfScale[j],
-                             dsFileName);
-                    return FALSE;
+                             psDatasetProperties->adfScale[j]);
                 }
 
             }
@@ -944,7 +911,7 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psDatasetPrope
         }
     }
 
-    return TRUE;
+    return "";
 }
 
 /************************************************************************/
@@ -1428,14 +1395,15 @@ GDALDataset* VRTBuilder::Build(GDALProgressFunc pfnProgress, void * pProgressDat
 
         GDALDatasetH hDS =
             (pahSrcDS) ? pahSrcDS[i] :
-                GDALOpenEx( ppszInputFilenames[i],
-                            GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR, nullptr,
+                GDALOpenEx( dsFileName,
+                            GDAL_OF_RASTER, nullptr,
                             papszOpenOptions, nullptr );
         asDatasetProperties[i].isFileOK = FALSE;
 
         if (hDS)
         {
-            if (AnalyseRaster( hDS, &asDatasetProperties[i] ))
+            const auto osErrorMsg = AnalyseRaster( hDS, &asDatasetProperties[i] );
+            if (osErrorMsg.empty())
             {
                 asDatasetProperties[i].isFileOK = TRUE;
                 nCountValid ++;
@@ -1443,11 +1411,33 @@ GDALDataset* VRTBuilder::Build(GDALProgressFunc pfnProgress, void * pProgressDat
             }
             if( pahSrcDS == nullptr )
                 GDALClose(hDS);
+            if( !osErrorMsg.empty() && osErrorMsg != "SILENTLY_IGNORE" )
+            {
+                if( bStrict )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined, "%s", osErrorMsg.c_str());
+                    return nullptr;
+                }
+                else
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined, "%s Skipping %s",
+                             osErrorMsg.c_str(), dsFileName);
+                }
+            }
         }
         else
         {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "Can't open %s. Skipping it", dsFileName);
+            if( bStrict )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Can't open %s.", dsFileName);
+                return nullptr;
+            }
+            else
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Can't open %s. Skipping it", dsFileName);
+            }
         }
     }
 
@@ -1617,6 +1607,7 @@ static bool add_file_to_list(const char* filename, const char* tile_index,
  */
 struct GDALBuildVRTOptions
 {
+    bool bStrict;
     char *pszResolution;
     int bSeparate;
     int bAllowProjectionDifference;
@@ -1775,7 +1766,8 @@ GDALDatasetH GDALBuildVRT( const char *pszDest,
     if (psOptions->pszSrcNoData != nullptr && psOptions->pszVRTNoData == nullptr)
         psOptions->pszVRTNoData = CPLStrdup(psOptions->pszSrcNoData);
 
-    VRTBuilder oBuilder(pszDest, nSrcCount, papszSrcDSNames, pahSrcDS,
+    VRTBuilder oBuilder(psOptions->bStrict,
+                        pszDest, nSrcCount, papszSrcDSNames, pahSrcDS,
                         psOptions->panSelectedBandList, psOptions->nBandCount,
                         eStrategy, psOptions->we_res, psOptions->ns_res, psOptions->bTargetAlignedPixels,
                         psOptions->xmin, psOptions->ymin, psOptions->xmax, psOptions->ymax,
@@ -1852,6 +1844,7 @@ GDALBuildVRTOptions *GDALBuildVRTOptionsNew(char** papszArgv,
     psOptions->pfnProgress = GDALDummyProgress;
     psOptions->pProgressData = nullptr;
     psOptions->bUseSrcMaskBand = true;
+    psOptions->bStrict = false;
 
 /* -------------------------------------------------------------------- */
 /*      Parse arguments.                                                */
@@ -1859,7 +1852,15 @@ GDALBuildVRTOptions *GDALBuildVRTOptionsNew(char** papszArgv,
     int argc = CSLCount(papszArgv);
     for( int iArg = 0; papszArgv != nullptr && iArg < argc; iArg++ )
     {
-        if( EQUAL(papszArgv[iArg],"-tileindex") && iArg + 1 < argc )
+        if( strcmp(papszArgv[iArg],"-strict") == 0 )
+        {
+            psOptions->bStrict = true;
+        }
+        else if( strcmp(papszArgv[iArg],"-non_strict") == 0 )
+        {
+            psOptions->bStrict = false;
+        }
+        else if( EQUAL(papszArgv[iArg],"-tileindex") && iArg + 1 < argc )
         {
             tile_index = papszArgv[++iArg];
         }
