@@ -104,7 +104,7 @@ struct VSIDIRS3: public VSIDIR
     bool IssueListDir();
     bool AnalyseS3FileList( const CPLString& osBaseURL,
                             const char* pszXML,
-                            bool bIgnoreGlacierStorageClass,
+                            const std::set<std::string>& oSetIgnoredStorageClasses,
                             bool& bIsTruncated );
     void clear();
 };
@@ -127,7 +127,7 @@ void VSIDIRS3::clear()
 bool VSIDIRS3::AnalyseS3FileList(
     const CPLString& osBaseURL,
     const char* pszXML,
-    bool bIgnoreGlacierStorageClass,
+    const std::set<std::string>& oSetIgnoredStorageClasses,
     bool &bIsTruncated)
 {
 #if DEBUG_VERBOSE
@@ -213,8 +213,8 @@ bool VSIDIRS3::AnalyseS3FileList(
                 {
                     const char* pszStorageClass = CPLGetXMLValue(psIter,
                         "StorageClass", "");
-                    if( bIgnoreGlacierStorageClass &&
-                        EQUAL(pszStorageClass, "GLACIER") )
+                    if( oSetIgnoredStorageClasses.find(pszStorageClass) !=
+                            oSetIgnoredStorageClasses.end() )
                     {
                         continue;
                     }
@@ -472,12 +472,10 @@ bool VSIDIRS3::IssueListDir()
         }
         else
         {
-            const bool bIgnoreGlacier = CPLTestBool(
-                CPLGetConfigOption("CPL_VSIL_CURL_IGNORE_GLACIER_STORAGE", "YES"));
             bool bIsTruncated;
             bool ret = AnalyseS3FileList( osBaseURL,
                                           requestHelper.sWriteFuncData.pBuffer,
-                                          bIgnoreGlacier,
+                                          VSICurlFilesystemHandlerBase::GetS3IgnoredStorageClasses(),
                                           bIsTruncated );
 
             curl_easy_cleanup(hCurlHandle);
@@ -522,14 +520,14 @@ bool VSICurlFilesystemHandlerBase::AnalyseS3FileList(
     const char* pszXML,
     CPLStringList& osFileList,
     int nMaxFiles,
-    bool bIgnoreGlacierStorageClass,
+    const std::set<std::string>& oSetIgnoredStorageClasses,
     bool& bIsTruncated )
 {
     VSIDIRS3 oDir(this);
     oDir.nMaxFiles = nMaxFiles;
     bool ret =
         oDir.AnalyseS3FileList(osBaseURL, pszXML,
-                               bIgnoreGlacierStorageClass, bIsTruncated);
+                               oSetIgnoredStorageClasses, bIsTruncated);
     for(const auto &entry: oDir.aoEntries )
     {
         osFileList.AddString(entry->pszName);

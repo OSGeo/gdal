@@ -215,7 +215,7 @@ protected:
                             const char* pszXML,
                             CPLStringList& osFileList,
                             int nMaxFiles,
-                            bool bIgnoreGlacierStorageClass,
+                            const std::set<std::string>& oSetIgnoredStorageClasses,
                             bool& bIsTruncated );
 
     void AnalyseSwiftFileList( const CPLString& osBaseURL,
@@ -300,6 +300,8 @@ public:
     virtual CPLString GetURLFromFilename( const CPLString& osFilename );
 
     std::string GetStreamingFilename(const std::string& osFilename) const override = 0;
+
+    static std::set<std::string> GetS3IgnoredStorageClasses();
 };
 
 

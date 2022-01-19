@@ -4037,13 +4037,11 @@ char** VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
             CPLString osBaseURL(pszDirname);
             osBaseURL += "/";
             bool bIsTruncated = true;
-            const bool bIgnoreGlacier = CPLTestBool(
-                CPLGetConfigOption("CPL_VSIL_CURL_IGNORE_GLACIER_STORAGE", "YES"));
             bool ret = AnalyseS3FileList( osBaseURL,
                                sWriteFuncData.pBuffer,
                                osFileList,
                                nMaxFiles,
-                               bIgnoreGlacier,
+                               GetS3IgnoredStorageClasses(),
                                bIsTruncated );
             // If the list is truncated, then don't report it.
             if( ret && !bIsTruncated )
@@ -4071,6 +4069,32 @@ char** VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
     }
 
     return nullptr;
+}
+
+/************************************************************************/
+/*                       GetS3IgnoredStorageClasses()                   */
+/************************************************************************/
+
+std::set<std::string> VSICurlFilesystemHandlerBase::GetS3IgnoredStorageClasses()
+{
+    std::set<std::string> oSetIgnoredStorageClasses;
+    const char* pszIgnoredStorageClasses =
+        CPLGetConfigOption("CPL_VSIL_CURL_IGNORE_STORAGE_CLASSES", nullptr);
+    const char* pszIgnoreGlacierStorage =
+        CPLGetConfigOption("CPL_VSIL_CURL_IGNORE_GLACIER_STORAGE", nullptr);
+    CPLStringList aosIgnoredStorageClasses(
+        CSLTokenizeString2(
+            pszIgnoredStorageClasses ?
+                pszIgnoredStorageClasses : "GLACIER,DEEP_ARCHIVE", ",", 0));
+    for( int i = 0; i < aosIgnoredStorageClasses.size(); ++i )
+        oSetIgnoredStorageClasses.insert(aosIgnoredStorageClasses[i]);
+    if( pszIgnoredStorageClasses == nullptr &&
+        pszIgnoreGlacierStorage != nullptr &&
+        !CPLTestBool(pszIgnoreGlacierStorage) )
+    {
+        oSetIgnoredStorageClasses.clear();
+    }
+    return oSetIgnoredStorageClasses;
 }
 
 /************************************************************************/

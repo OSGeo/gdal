@@ -248,6 +248,10 @@ The :decl_configoption:`AWS_VIRTUAL_HOSTING` configuration option defaults to ``
 On writing, the file is uploaded using the S3 multipart upload API. The size of chunks is set to 50 MB by default, allowing creating files up to 500 GB (10000 parts of 50 MB each). If larger files are needed, then increase the value of the :decl_configoption:`VSIS3_CHUNK_SIZE` config option to a larger value (expressed in MB). In case the process is killed and the file not properly closed, the multipart upload will remain open, causing Amazon to charge you for the parts storage. You'll have to abort yourself with other means such "ghost" uploads (e.g. with the s3cmd utility) For files smaller than the chunk size, a simple PUT request is used instead of the multipart upload API.
 
 Since GDAL 2.4, when listing a directory, files with GLACIER storage class are ignored unless the :decl_configoption:`CPL_VSIL_CURL_IGNORE_GLACIER_STORAGE` configuration option is set to ``NO``.
+This option has been superseded in GDAL 3.5 per the
+:decl_configoption:`CPL_VSIL_CURL_IGNORE_STORAGE_CLASSES` configuration option that
+accept a comma-separated list of storage class names and defaults to ``GLACIER,DEEP_ARCHIVE``
+(if set to empty, objects of all storage classes are retrieved).
 
 Since GDAL 3.1, the :cpp:func:`VSIRename` operation is supported (first doing a copy of the original file and then deleting it)
 

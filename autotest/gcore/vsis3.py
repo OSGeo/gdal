@@ -1017,6 +1017,12 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
                     <Size>456789</Size>
                      <StorageClass>GLACIER</StorageClass>
                 </Contents>
+                <Contents>
+                    <Key>a_dir with_space/i_am_a_deep_archive_file</Key>
+                    <LastModified>2015-10-16T12:34:56.000Z</LastModified>
+                    <Size>456789</Size>
+                     <StorageClass>DEEP_ARCHIVE</StorageClass>
+                </Contents>
                 <CommonPrefixes>
                     <Prefix>a_dir with_space/subdir/</Prefix>
                 </CommonPrefixes>
@@ -1133,6 +1139,7 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
         dir_contents = gdal.ReadDir('/vsis3/s3_fake_bucket2/a_dir')
     assert dir_contents == ['test.txt']
 
+    # Test CPL_VSIL_CURL_IGNORE_GLACIER_STORAGE=NO
     gdal.VSICurlClearCache()
     handler = webserver.SequentialHandler()
     handler.add(
@@ -1154,6 +1161,12 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
                     <Size>456789</Size>
                      <StorageClass>GLACIER</StorageClass>
                 </Contents>
+                <Contents>
+                    <Key>a_dir/i_am_a_deep_archive_file</Key>
+                    <LastModified>2015-10-16T12:34:56.000Z</LastModified>
+                    <Size>456789</Size>
+                     <StorageClass>DEEP_ARCHIVE</StorageClass>
+                </Contents>
                 <CommonPrefixes>
                     <Prefix>a_dir/subdir/</Prefix>
                 </CommonPrefixes>
@@ -1163,7 +1176,46 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
     with gdaltest.config_option('CPL_VSIL_CURL_IGNORE_GLACIER_STORAGE', 'NO'):
         with webserver.install_http_handler(handler):
             dir_contents = gdal.ReadDir('/vsis3/s3_fake_bucket2/a_dir')
-    assert dir_contents == ['resource4.bin', 'i_am_a_glacier_file', 'subdir']
+    assert dir_contents == ['resource4.bin', 'i_am_a_glacier_file', 'i_am_a_deep_archive_file', 'subdir']
+
+    # Test CPL_VSIL_CURL_IGNORE_STORAGE_CLASSES=
+    gdal.VSICurlClearCache()
+    handler = webserver.SequentialHandler()
+    handler.add(
+        'GET',
+        '/s3_fake_bucket2/?delimiter=%2F&prefix=a_dir%2F',
+        200,
+        {},
+        """<?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+                <Prefix>a_dir/</Prefix>
+                <Contents>
+                    <Key>a_dir/resource4.bin</Key>
+                    <LastModified>2015-10-16T12:34:56.000Z</LastModified>
+                    <Size>456789</Size>
+                </Contents>
+                <Contents>
+                    <Key>a_dir/i_am_a_glacier_file</Key>
+                    <LastModified>2015-10-16T12:34:56.000Z</LastModified>
+                    <Size>456789</Size>
+                     <StorageClass>GLACIER</StorageClass>
+                </Contents>
+                <Contents>
+                    <Key>a_dir/i_am_a_deep_archive_file</Key>
+                    <LastModified>2015-10-16T12:34:56.000Z</LastModified>
+                    <Size>456789</Size>
+                     <StorageClass>DEEP_ARCHIVE</StorageClass>
+                </Contents>
+                <CommonPrefixes>
+                    <Prefix>a_dir/subdir/</Prefix>
+                </CommonPrefixes>
+            </ListBucketResult>
+        """
+    )
+    with gdaltest.config_option('CPL_VSIL_CURL_IGNORE_STORAGE_CLASSES', ''):
+        with webserver.install_http_handler(handler):
+            dir_contents = gdal.ReadDir('/vsis3/s3_fake_bucket2/a_dir')
+    assert dir_contents == ['resource4.bin', 'i_am_a_glacier_file', 'i_am_a_deep_archive_file', 'subdir']
 
     # Test CPL_VSIL_CURL_NON_CACHED
     for config_option_value in [
