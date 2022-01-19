@@ -210,7 +210,7 @@ def test_ogr_dwg_5():
 
         ds = None
 
-def test_ogr_dwg_5():
+def test_ogr_dwg_6():
 
     with gdaltest.config_options({'DWG_INLINE_BLOCKS':'FALSE','DWG_ATTRIBUTES':'TRUE'}):
 
