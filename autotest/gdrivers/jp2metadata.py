@@ -108,7 +108,7 @@ def _test_jp2metadata(file_path):
 
 
 def test_jp2metadata_2():
-    # Pleiades product description http://www.cscrs.itu.edu.tr/assets/downloads/PleiadesUserGuide.pdf
+    # Pleiades product description https://content.satimagingcorp.com/media/pdf/User_Guide_Pleiades.pdf
     file_path = 'data/jpeg2000/IMG_md_ple_R1C1.jp2'
     _test_jp2metadata(file_path)
 
