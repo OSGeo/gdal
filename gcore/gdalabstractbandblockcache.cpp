@@ -46,7 +46,7 @@ static int nAllBandsKeptAlivedBlocks = 0;
 #endif
 
 static CPLMutex *hCacheHelperMutex = nullptr;
-static GDALCacheFlushHelperHandler pfnCacheFlushHelperHandler = 0;
+static GDALCacheFlushHelperHandler pfnCacheFlushHelperHandler = nullptr;
 static void *pCacheFlushHelperHandlerUserData = nullptr;
 
 /**

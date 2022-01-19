@@ -991,7 +991,7 @@ CPLErr GDALRasterBlock::Internalize()
                     {
                         GDALDataset* targetDataset = poTarget->poBand->GetDataset();
                         const bool isSameDataset = (targetDataset == poThisDS);
-                        const bool canFlushTargetDataset = isSameDataset || ApplyCacheHelperFlushHandler(poThisDS, targetDataset, 0);
+                        const bool canFlushTargetDataset = isSameDataset || ApplyCacheHelperFlushHandler(poThisDS, targetDataset, nullptr);
                         if( canFlushTargetDataset )
                         {
                             if( CPLAtomicCompareAndExchange(
