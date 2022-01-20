@@ -302,6 +302,11 @@ Variables attributes for: tos, lon, lat and time
      time#bounds=time_bnds
      time#original_units=seconds since 2001-1-1
 
+On writing, when using the CreateCopy() interface or gdal_translate, dataset
+level metadata that follows the naming convention NC_GLOBAL#key=value will be
+used to write the netCDF attributes. Metadata set at the band level using
+key=value will also be used to write variable attributes.
+
 Product specific behavior
 --------------------------
 
@@ -371,6 +376,14 @@ Creation Options
 
 -  **PIXELTYPE=[DEFAULT/SIGNEDBYTE]**: By setting this to SIGNEDBYTE, a
    new Byte file can be forced to be written as signed byte.
+
+-  **WRITE_GDAL_VERSION=[YES/NO]**: (GDAL >= 3.5.0)
+   Define if a "GDAL" text global attribute should be added on file creation
+   with the GDAL version. Defaults to YES
+
+-  **WRITE_GDAL_HISTORY=[YES/NO]**: (GDAL >= 3.5.0)
+   Define if the "history" global attribute should be prepended with a date/time
+   and GDAL information. Defaults to YES.
 
 Creation of multidimensional files with CreateCopy() 2D raster API
 ------------------------------------------------------------------
