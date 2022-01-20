@@ -60,11 +60,13 @@ bool CPL_STDCALL
 ApplyCacheHelperFlushHandler( const GDALDataset* currentDataset, const GDALDataset* datasetThatCouldBeFlushed, void* cacheManager)
 {
     bool result = false;
-    if( pfnCacheFlushHelperHandler != nullptr ) //quick test to avoid locking
+    volatile GDALCacheFlushHelperHandler* pPfnCacheFlushHelperHandler = &pfnCacheFlushHelperHandler;//to avoid compiler warning about "inner-if" always true
+    if(pPfnCacheFlushHelperHandler != nullptr ) //quick test to avoid locking
     {
         CPLMutexHolderD( &hCacheHelperMutex );
-        if( pfnCacheFlushHelperHandler != nullptr )
-            result = pfnCacheFlushHelperHandler(currentDataset, datasetThatCouldBeFlushed, cacheManager, pCacheFlushHelperHandlerUserData);
+        GDALCacheFlushHelperHandler _pfnCacheFlushHelperHandler = *pPfnCacheFlushHelperHandler;
+        if( _pfnCacheFlushHelperHandler != nullptr )
+            result = _pfnCacheFlushHelperHandler(currentDataset, datasetThatCouldBeFlushed, cacheManager, pCacheFlushHelperHandlerUserData);
     }
     return result;
 }
