@@ -12,4 +12,5 @@ A BibTeX entry for LaTeX users is
     organization = {Open Source Geospatial Foundation},
     year = {2022},
     url = {https://gdal.org},
+    doi = {10.5281/zenodo.5884351},
   }
