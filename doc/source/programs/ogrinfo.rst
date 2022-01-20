@@ -16,9 +16,9 @@ Synopsis
 
 .. code-block::
 
-    ogrinfo [--help-general] [-ro] [-q] [-where restricted_where|\@filename]
+    ogrinfo [--help-general] [-ro] [-q] [-where restricted_where|@filename]
             [-spat xmin ymin xmax ymax] [-geomfield field] [-fid fid]
-            [-sql statement|\@filename] [-dialect dialect] [-al] [-rl] [-so] [-fields={YES/NO}]
+            [-sql statement|@filename] [-dialect dialect] [-al] [-rl] [-so] [-fields={YES/NO}]
             [-geom={YES/NO/SUMMARY/WKT/ISO_WKT}] [--formats] [[-oo NAME=VALUE] ...]
             [-nomd] [-listmdd] [-mdd domain|`all`]*
             [-nocount] [-noextent] [-nogeomtype] [-wkt_format WKT1|WKT2|...]

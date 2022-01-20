@@ -1017,6 +1017,12 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
                     <Size>456789</Size>
                      <StorageClass>GLACIER</StorageClass>
                 </Contents>
+                <Contents>
+                    <Key>a_dir with_space/i_am_a_deep_archive_file</Key>
+                    <LastModified>2015-10-16T12:34:56.000Z</LastModified>
+                    <Size>456789</Size>
+                     <StorageClass>DEEP_ARCHIVE</StorageClass>
+                </Contents>
                 <CommonPrefixes>
                     <Prefix>a_dir with_space/subdir/</Prefix>
                 </CommonPrefixes>
@@ -1133,6 +1139,7 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
         dir_contents = gdal.ReadDir('/vsis3/s3_fake_bucket2/a_dir')
     assert dir_contents == ['test.txt']
 
+    # Test CPL_VSIL_CURL_IGNORE_GLACIER_STORAGE=NO
     gdal.VSICurlClearCache()
     handler = webserver.SequentialHandler()
     handler.add(
@@ -1154,6 +1161,12 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
                     <Size>456789</Size>
                      <StorageClass>GLACIER</StorageClass>
                 </Contents>
+                <Contents>
+                    <Key>a_dir/i_am_a_deep_archive_file</Key>
+                    <LastModified>2015-10-16T12:34:56.000Z</LastModified>
+                    <Size>456789</Size>
+                     <StorageClass>DEEP_ARCHIVE</StorageClass>
+                </Contents>
                 <CommonPrefixes>
                     <Prefix>a_dir/subdir/</Prefix>
                 </CommonPrefixes>
@@ -1163,7 +1176,46 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
     with gdaltest.config_option('CPL_VSIL_CURL_IGNORE_GLACIER_STORAGE', 'NO'):
         with webserver.install_http_handler(handler):
             dir_contents = gdal.ReadDir('/vsis3/s3_fake_bucket2/a_dir')
-    assert dir_contents == ['resource4.bin', 'i_am_a_glacier_file', 'subdir']
+    assert dir_contents == ['resource4.bin', 'i_am_a_glacier_file', 'i_am_a_deep_archive_file', 'subdir']
+
+    # Test CPL_VSIL_CURL_IGNORE_STORAGE_CLASSES=
+    gdal.VSICurlClearCache()
+    handler = webserver.SequentialHandler()
+    handler.add(
+        'GET',
+        '/s3_fake_bucket2/?delimiter=%2F&prefix=a_dir%2F',
+        200,
+        {},
+        """<?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+                <Prefix>a_dir/</Prefix>
+                <Contents>
+                    <Key>a_dir/resource4.bin</Key>
+                    <LastModified>2015-10-16T12:34:56.000Z</LastModified>
+                    <Size>456789</Size>
+                </Contents>
+                <Contents>
+                    <Key>a_dir/i_am_a_glacier_file</Key>
+                    <LastModified>2015-10-16T12:34:56.000Z</LastModified>
+                    <Size>456789</Size>
+                     <StorageClass>GLACIER</StorageClass>
+                </Contents>
+                <Contents>
+                    <Key>a_dir/i_am_a_deep_archive_file</Key>
+                    <LastModified>2015-10-16T12:34:56.000Z</LastModified>
+                    <Size>456789</Size>
+                     <StorageClass>DEEP_ARCHIVE</StorageClass>
+                </Contents>
+                <CommonPrefixes>
+                    <Prefix>a_dir/subdir/</Prefix>
+                </CommonPrefixes>
+            </ListBucketResult>
+        """
+    )
+    with gdaltest.config_option('CPL_VSIL_CURL_IGNORE_STORAGE_CLASSES', ''):
+        with webserver.install_http_handler(handler):
+            dir_contents = gdal.ReadDir('/vsis3/s3_fake_bucket2/a_dir')
+    assert dir_contents == ['resource4.bin', 'i_am_a_glacier_file', 'i_am_a_deep_archive_file', 'subdir']
 
     # Test CPL_VSIL_CURL_NON_CACHED
     for config_option_value in [
@@ -1680,29 +1732,19 @@ def test_vsis3_4(aws_test_config, webserver_port):
     # Empty file
     handler = webserver.SequentialHandler()
 
-    def method(request):
-        length_is_nonzero = request.headers['Content-Length'] != '0'
-        type_not_foo = request.headers['Content-Type'] != 'foo'
-        encoding_not_bar = request.headers['Content-Encoding'] != 'bar'
-        if length_is_nonzero or type_not_foo or encoding_not_bar:
-            sys.stderr.write(
-                'Did not get expected headers: %s\n' % str(request.headers)
-            )
-            request.send_response(400)
-            return
-
-        request.send_response(200)
-        request.send_header('Content-Length', 0)
-        request.end_headers()
-
-    handler.add('PUT', '/s3_fake_bucket3/empty_file.bin', custom_method=method)
+    handler.add('PUT', '/s3_fake_bucket3/empty_file.bin', 200,
+                headers={'Content-Length': '0'},
+                expected_headers={'Content-Length': '0',
+                                  'Content-Type': 'foo',
+                                  'Content-Encoding': 'bar',
+                                  'x-amz-storage-class': 'GLACIER'})
 
     with webserver.install_http_handler(handler):
         f = gdal.VSIFOpenExL(
             '/vsis3/s3_fake_bucket3/empty_file.bin',
             'wb',
             0,
-            ['Content-Type=foo', 'Content-Encoding=bar']
+            ['Content-Type=foo', 'Content-Encoding=bar', 'x-amz-storage-class=GLACIER']
         )
         assert f is not None
         gdal.ErrorReset()
@@ -3088,32 +3130,12 @@ def test_vsis3_sync_etag(aws_test_config, webserver_port):
         404
     )
 
-    def method(request):
-        if request.headers['Content-Length'] != '3':
-            sys.stderr.write(
-                'Did not get expected headers: %s\n' % str(request.headers)
-            )
-            request.send_response(400)
-            request.send_header('Content-Length', 0)
-            request.end_headers()
-            return
-
-        request.wfile.write('HTTP/1.1 100 Continue\r\n\r\n'.encode('ascii'))
-
-        content = request.rfile.read(3).decode('ascii')
-        if content != 'foo':
-            sys.stderr.write('Did not get expected content: %s\n' % content)
-            request.send_response(400)
-            request.send_header('Content-Length', 0)
-            request.end_headers()
-            return
-
-        request.send_response(200)
-        request.send_header('Content-Length', 0)
-        request.send_header('ETag', '"acbd18db4cc2f85cedef654fccc4a4d8"')
-        request.end_headers()
-
-    handler.add('PUT', '/out/testsync.txt', custom_method=method)
+    handler.add('PUT', '/out/testsync.txt', 200,
+                headers = {'Content-Length': 0,
+                           'ETag': '"acbd18db4cc2f85cedef654fccc4a4d8"'},
+                expected_body = b'foo',
+                expected_headers = {'Content-Length': '3',
+                                    'x-amz-storage-class': 'GLACIER'})
 
     gdal.FileFromMemBuffer('/vsimem/testsync.txt', 'foo')
 
@@ -3124,7 +3146,8 @@ def test_vsis3_sync_etag(aws_test_config, webserver_port):
 
     tab = [0]
     with webserver.install_http_handler(handler):
-        assert gdal.Sync('/vsimem/testsync.txt', '/vsis3/out', options=options,
+        assert gdal.Sync('/vsimem/testsync.txt', '/vsis3/out',
+                         options=options + ['x-amz-storage-class=GLACIER'],
                          callback=cbk, callback_data=tab)
     assert tab[0] == 1.0
 
@@ -3469,28 +3492,15 @@ def test_vsis3_sync_source_target_in_vsis3(
         "foo"
     )
 
-    def method(request):
-        if request.headers['Content-Length'] != '0':
-            sys.stderr.write(
-                'Did not get expected headers: %s\n' % str(request.headers)
-            )
-            request.send_response(400)
-            return
-        if request.headers['x-amz-copy-source'] != '/in/testsync.txt':
-            sys.stderr.write(
-                'Did not get expected headers: %s\n' % str(request.headers)
-            )
-            request.send_response(400)
-            return
-
-        request.send_response(200)
-        request.send_header('Content-Length', 0)
-        request.end_headers()
-
-    handler.add('PUT', '/out/testsync.txt', custom_method=method)
+    handler.add('PUT', '/out/testsync.txt', 200,
+                headers = {'Content-Length': 0},
+                expected_headers = {'Content-Length': '0',
+                                    'x-amz-copy-source': '/in/testsync.txt',
+                                    'x-amz-storage-class': 'GLACIER'})
 
     with webserver.install_http_handler(handler):
-        assert gdal.Sync('/vsis3/in/testsync.txt', '/vsis3/out/')
+        assert gdal.Sync('/vsis3/in/testsync.txt', '/vsis3/out/',
+                         options = ['x-amz-storage-class=GLACIER'])
 
 ###############################################################################
 # Test rename
@@ -3738,19 +3748,13 @@ def test_vsis3_fake_sync_multithreaded_upload_chunk_size(
         200
     )
 
-    def method(request):
-        request.protocol_version = 'HTTP/1.1'
-        response = '''<?xml version="1.0" encoding="UTF-8"?>
+    handler.add('POST', '/test_bucket/test/foo?uploads', 200,
+                expected_headers = {'x-amz-storage-class': 'GLACIER'},
+                body = b'''<?xml version="1.0" encoding="UTF-8"?>
         <InitiateMultipartUploadResult>
         <UploadId>my_id</UploadId>
-        </InitiateMultipartUploadResult>'''
-        request.send_response(200)
-        request.send_header('Content-type', 'application/xml')
-        request.send_header('Content-Length', len(response))
-        request.end_headers()
-        request.wfile.write(response.encode('ascii'))
-
-    handler.add('POST', '/test_bucket/test/foo?uploads', custom_method=method)
+        </InitiateMultipartUploadResult>''',
+                headers = {'Content-type': 'application/xml'})
 
     def method(request):
         if request.headers['Content-Length'] != '3':
@@ -3830,7 +3834,9 @@ def test_vsis3_fake_sync_multithreaded_upload_chunk_size(
         with webserver.install_http_handler(handler):
             assert gdal.Sync('/vsimem/test',
                              '/vsis3/test_bucket',
-                             options=['NUM_THREADS=1', 'CHUNK_SIZE=3'],
+                             options=['NUM_THREADS=1',
+                                      'CHUNK_SIZE=3',
+                                      'x-amz-storage-class=GLACIER'],
                              callback=cbk, callback_data=tab)
     assert tab[0] == 1.0
 

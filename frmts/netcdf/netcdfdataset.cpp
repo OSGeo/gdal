@@ -8424,7 +8424,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
 static void CopyMetadata( GDALDataset* poSrcDS,
                           GDALRasterBand* poSrcBand,
                           GDALRasterBand* poDstBand,
-                          int fpImage, int CDFVarID,
+                          int nCdfId, int CDFVarID,
                           const char *pszPrefix )
 {
     char **papszFieldData = nullptr;
@@ -8536,10 +8536,10 @@ static void CopyMetadata( GDALDataset* poSrcDS,
             CPLDebug("GDAL_netCDF", "copy name=[%s] value=[%s]",
                      osMetaName.c_str(), osMetaValue.c_str());
 #endif
-            if( NCDFPutAttr(fpImage, CDFVarID, osMetaName,
+            if( NCDFPutAttr(nCdfId, CDFVarID, osMetaName,
                             osMetaValue) != CE_None )
                 CPLDebug("GDAL_netCDF", "NCDFPutAttr(%d, %d, %s, %s) failed",
-                         fpImage, CDFVarID,
+                         nCdfId, CDFVarID,
                          osMetaName.c_str(), osMetaValue.c_str());
         }
     }

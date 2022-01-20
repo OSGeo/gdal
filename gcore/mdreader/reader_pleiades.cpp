@@ -314,15 +314,6 @@ static const char * const apszRPCTXT20ValItems[] =
     nullptr
 };
 
-static const char * const apszRPCTXT20ValItemsLonLat[] =
-{
-    RPC_LAT_NUM_COEFF,
-    RPC_LAT_DEN_COEFF,
-    RPC_LON_NUM_COEFF,
-    RPC_LON_DEN_COEFF,
-    nullptr
-};
-
 char** GDALMDReaderPleiades::LoadRPCXmlFile()
 {
     CPLXMLNode* pNode = CPLParseXMLFile(m_osRPBSourceFilename);
@@ -337,6 +328,15 @@ char** GDALMDReaderPleiades::LoadRPCXmlFile()
     if(pGRFMNode != nullptr)
     {
         papszRawRPCList = ReadXMLToList(pGRFMNode->psChild, papszRawRPCList);
+    }
+    else
+    {
+        pGRFMNode = CPLSearchXMLNode(pNode, "=Rational_Function_Model");
+
+        if(pGRFMNode != nullptr)
+        {
+            papszRawRPCList = ReadXMLToList(pGRFMNode->psChild, papszRawRPCList);
+        }
     }
 
     if( nullptr == papszRawRPCList )
@@ -422,7 +422,7 @@ char** GDALMDReaderPleiades::LoadRPCXmlFile()
             }
             else {
                  pszValue = CSLFetchNameValue(papszRawRPCList,
-                 CPLSPrintf("ImagetoGround_Values.%s_%d", apszRPCTXT20ValItemsLonLat[i], j));
+                 CPLSPrintf("GroundtoImage_Values.%s_%d", apszRPCTXT20ValItems[i], j));
                  if(nullptr != pszValue){
                     value = value + " " + CPLString(pszValue);
                  }

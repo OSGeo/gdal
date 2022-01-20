@@ -427,8 +427,8 @@ void XMLSetAttributeVal(CPLXMLNode *parent, const char*pszName, std::vector<doub
         if (val != values[i])
             single_val = false;
         value.append(PrintDouble(values[i]) + " ");
-        value.resize(value.size() - 1); // Cut the last space
     }
+    value.resize(value.size() - 1); // Cut the last space
     if (single_val)
         value = PrintDouble(values[0]);
     CPLCreateXMLNode(parent, CXT_Attribute, pszName);
