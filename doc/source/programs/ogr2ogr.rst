@@ -16,8 +16,8 @@ Synopsis
 .. code-block::
 
     ogr2ogr [--help-general] [-skipfailures] [-append] [-update]
-            [-select field_list] [-where restricted_where|\@filename]
-            [-progress] [-sql <sql statement>|\@filename] [-dialect dialect]
+            [-select field_list] [-where restricted_where|@filename]
+            [-progress] [-sql <sql statement>|@filename] [-dialect dialect]
             [-preserve_fid] [-fid FID] [-limit nb_features]
             [-spat xmin ymin xmax ymax] [-spat_srs srs_def] [-geomfield field]
             [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def] [-ct string]
