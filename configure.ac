@@ -5711,7 +5711,7 @@ if test "$with_brunsli" != "" -a "$with_brunsli" != "no" ; then
   BRUNSLI_ENABLED="yes"
   AC_SUBST(BRUNSLI_ENABLED, $BRUNSLI_ENABLED)
   AC_SUBST(BRUNSLI_INCLUDE, -I$prefix/include)
-  AC_SUBST(BRUNSLI_LIB, "-lbrunslicommon -lbrunslienc -lbrunslidec -lbrotlicommon -lbrotlienc -lbrotlidec")
+  AC_SUBST(BRUNSLI_LIB, "-lbrunslienc-c -lbrunslidec-c")
 fi
 
 dnl ---------------------------------------------------------------------------
