@@ -215,7 +215,7 @@ protected:
                             const char* pszXML,
                             CPLStringList& osFileList,
                             int nMaxFiles,
-                            bool bIgnoreGlacierStorageClass,
+                            const std::set<std::string>& oSetIgnoredStorageClasses,
                             bool& bIsTruncated );
 
     void AnalyseSwiftFileList( const CPLString& osBaseURL,
@@ -300,6 +300,8 @@ public:
     virtual CPLString GetURLFromFilename( const CPLString& osFilename );
 
     std::string GetStreamingFilename(const std::string& osFilename) const override = 0;
+
+    static std::set<std::string> GetS3IgnoredStorageClasses();
 };
 
 
@@ -431,6 +433,7 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandlerBase
                      vsi_l_offset nSourceSize,
                      const char* pszSource,
                      const char* pszTarget,
+                     CSLConstList papszOptions,
                      GDALProgressFunc pProgressFunc,
                      void *pProgressData);
     virtual int MkdirInternal( const char *pszDirname, long nMode, bool bDoStatCheck );
@@ -447,6 +450,8 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandlerBase
                                  CSLConstList papszMetadata );
 
     int RmdirRecursiveInternal( const char* pszDirname, int nBatchSize);
+
+    virtual bool IsAllowedHeaderForObjectCreation( const char* /* pszHeaderName */ ) { return false; }
 
     IVSIS3LikeFSHandler() = default;
 
