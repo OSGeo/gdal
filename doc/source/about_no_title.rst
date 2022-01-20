@@ -10,3 +10,7 @@ GDAL is a translator library for raster and vector geospatial data formats that 
 .. _`NEWS`: https://github.com/OSGeo/gdal/blob/v3.4.1/gdal/NEWS.md
 
 See :ref:`software_using_gdal`
+
+.. image:: ../images/zenodo.5884351.png
+   :alt:   DOI 10.5281/zenodo.5884351
+   :target: https://doi.org/10.5281/zenodo.5884351
