@@ -946,14 +946,14 @@ HAVE_LERC=internal
 !ENDIF
 
 # Uncomment to build MRF with brunsli support
-# BRUNSLI_DIR = \brunsli
-# BROTLI_DIR = $(BRUNSLI_DIR)
-# BRUNSLI_INC = -I$(BRUNSLI_DIR)/include
-# BRUNSLI_LIB_DIR = $(BRUNSLI_DIR)/lib
-# BROTLI_LIB_DIR = $(BROTLI_DIR)/lib
-# BRUNSLI_LIB = $(BRUNSLI_LIB_DIR)/brunslicommon-static.lib $(BRUNSLI_LIB_DIR)/brunslienc-static.lib $(BRUNSLI_LIB_DIR)/brunslidec-static.lib
-# BROTLI_LIB = $(BROTLI_LIB_DIR)/brotlicommon-static.lib $(BROTLI_LIB_DIR)/brotlienc-static.lib $(BROTLI_LIB_DIR)/brotlidec-static.lib
-
+#BRUNSLI_DIR = C:/brunsli
+#BRUNSLI_INC = $(BRUNSLI_DIR)/include
+#!IF "$(DEBUG)" == "1"
+#BRUNSLI_LIB_DIR = $(BRUNSLI_DIR)/lib/debug
+#!ELSE
+#BRUNSLI_LIB_DIR = $(BRUNSLI_DIR)/lib
+#!ENDIF
+#BRUNSLI_LIB = $(BRUNSLI_LIB_DIR)/brunslienc-c.lib $(BRUNSLI_LIB_DIR)/brunslidec-c.lib
 
 # Comment out the following if you want to build JPEGLS with CHARLS support
 #CHARLS_INC=-IE:\work\GIS\gdal\supportlibs\charls\include\
