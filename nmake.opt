@@ -962,14 +962,14 @@ HAVE_LERC=internal
 !ENDIF
 
 # Uncomment to build MRF with brunsli support
-# BRUNSLI_DIR = \brunsli
-# BROTLI_DIR = $(BRUNSLI_DIR)
-# BRUNSLI_INC = -I$(BRUNSLI_DIR)/include
-# BRUNSLI_LIB_DIR = $(BRUNSLI_DIR)/lib
-# BROTLI_LIB_DIR = $(BROTLI_DIR)/lib
-# BRUNSLI_LIB = $(BRUNSLI_LIB_DIR)/brunslicommon-static.lib $(BRUNSLI_LIB_DIR)/brunslienc-static.lib $(BRUNSLI_LIB_DIR)/brunslidec-static.lib
-# BROTLI_LIB = $(BROTLI_LIB_DIR)/brotlicommon-static.lib $(BROTLI_LIB_DIR)/brotlienc-static.lib $(BROTLI_LIB_DIR)/brotlidec-static.lib
-
+#BRUNSLI_DIR = C:/brunsli
+#BRUNSLI_INC = $(BRUNSLI_DIR)/include
+#!IF "$(DEBUG)" == "1"
+#BRUNSLI_LIB_DIR = $(BRUNSLI_DIR)/lib/debug
+#!ELSE
+#BRUNSLI_LIB_DIR = $(BRUNSLI_DIR)/lib
+#!ENDIF
+#BRUNSLI_LIB = $(BRUNSLI_LIB_DIR)/brunslienc-c.lib $(BRUNSLI_LIB_DIR)/brunslidec-c.lib
 
 # Comment out the following if you want to build JPEGLS with CHARLS support
 #CHARLS_INC=-IE:\work\GIS\gdal\supportlibs\charls\include\
@@ -1196,7 +1196,7 @@ SYM_PREFIX=_
 EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
 	$(KAK_LIB_LINK) $(ECW_LIB_LINK) $(LURATECH_LIB_LINK) $(HDF4_LIB_LINK) $(FME_LIB) $(MRSID_LIB_LINK) \
 	$(FITS_LIB_LINK) $(JPEG_LIB) $(NETCDF_LIB_LINK) $(PROJ4_LIB) \
-        $(GEOTIFF_LIB) $(TIFF_LIB) $(PROJ_LIBRARY) $(SQLITE_LIB) $(ODBCCPP_LIB) \
+	$(GEOTIFF_LIB) $(TIFF_LIB) $(PROJ_LIBRARY) $(SQLITE_LIB) $(ODBCCPP_LIB) \
 	$(MYSQL_LIB) $(GEOS_LIB) $(HDF5_LIB_LINK) $(KEA_LIB_LINK) $(ARCOBJECTS_LIB) $(DWG_LIB_LINK) \
 	$(IDB_LIB) $(CURL_LIB) $(DODS_LIB) $(PCIDSK_LIB) \
 	$(ODBCLIB) $(JASPER_LIB) $(PNG_LIB) $(ZLIB_LIB) $(LIBDEFLATE_LIB) $(ADD_LIBS) $(OPENJPEG_LIB) \
