@@ -331,14 +331,17 @@ SAGADataset::SAGADataset() :
 
 SAGADataset::~SAGADataset()
 {
-    SAGARasterBand *poGRB = static_cast<SAGARasterBand *>(GetRasterBand( 1 ));
-    const CPLString osPath = CPLGetPath( GetDescription() );
-    const CPLString osName = CPLGetBasename( GetDescription() );
-    const CPLString osFilename = CPLFormCIFilename( osPath, osName, ".sgrd" );
-    WriteHeader( osFilename, poGRB->GetRasterDataType(),
-                 poGRB->nRasterXSize, poGRB->nRasterYSize,
-                 poGRB->m_Xmin, poGRB->m_Ymin, poGRB->m_Cellsize,
-                 poGRB->m_NoData, 1.0, false );
+    if (headerDirty)
+    {
+        SAGARasterBand *poGRB = static_cast<SAGARasterBand *>(GetRasterBand( 1 ));
+        const CPLString osPath = CPLGetPath( GetDescription() );
+        const CPLString osName = CPLGetBasename( GetDescription() );
+        const CPLString osFilename = CPLFormCIFilename( osPath, osName, ".sgrd" );
+        WriteHeader( osFilename, poGRB->GetRasterDataType(),
+                     poGRB->nRasterXSize, poGRB->nRasterYSize,
+                     poGRB->m_Xmin, poGRB->m_Ymin, poGRB->m_Cellsize,
+                     poGRB->m_NoData, 1.0, false );
+    }
     CPLFree( pszProjection );
     FlushCache(true);
     if( fp != nullptr )
