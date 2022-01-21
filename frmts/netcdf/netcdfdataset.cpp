@@ -86,9 +86,12 @@ static bool NCDFIsGDALVersionGTE(const char *pszVersion, int nTarget);
 
 static void NCDFAddGDALHistory(
     int fpImage,
-    const char *pszFilename, const char *pszOldHist,
+    const char *pszFilename,
+    bool bWriteGDALVersion,
+    bool bWriteGDALHistory,
+    const char *pszOldHist,
     const char *pszFunctionName,
-    const char *pszCFVersion = NCDF_CONVENTIONS_CF_V1_5 );
+    const char *pszCFVersion = GDAL_DEFAULT_NCDF_CONVENTIONS );
 
 static void NCDFAddHistory( int fpImage, const char *pszAddHist,
                             const char *pszOldHist );
@@ -6170,7 +6173,10 @@ OGRLayer *netCDFDataset::ICreateLayer( const char *pszName,
             return nullptr;
 
         nLayerCDFId = poLayerDataset->cdfid;
-        NCDFAddGDALHistory(nLayerCDFId, osLayerFilename, "", "Create",
+        NCDFAddGDALHistory(nLayerCDFId, osLayerFilename,
+                           bWriteGDALVersion,
+                           bWriteGDALHistory,
+                           "", "Create",
                            NCDF_CONVENTIONS_CF_V1_6);
     }
 #ifdef NETCDF_HAS_NC4
@@ -6184,7 +6190,10 @@ OGRLayer *netCDFDataset::ICreateLayer( const char *pszName,
         if( status != NC_NOERR )
             return nullptr;
 
-        NCDFAddGDALHistory(nLayerCDFId, osFilename, "", "Create",
+        NCDFAddGDALHistory(nLayerCDFId, osFilename,
+                           bWriteGDALVersion,
+                           bWriteGDALHistory,
+                           "", "Create",
                            NCDF_CONVENTIONS_CF_V1_6);
     }
 #endif
@@ -8757,10 +8766,16 @@ netCDFDataset::Create( const char *pszFilename,
     if( poDS->cdfid >= 0 )
     {
         const char * CF_Vector_Conv = poDS->bSGSupport ? NCDF_CONVENTIONS_CF_V1_8 : NCDF_CONVENTIONS_CF_V1_6;
-
-        NCDFAddGDALHistory(poDS->cdfid, pszFilename, "", "Create",
+        poDS->bWriteGDALVersion = CPLTestBool(
+            CSLFetchNameValueDef(papszOptions, "WRITE_GDAL_VERSION", "YES"));
+        poDS->bWriteGDALHistory = CPLTestBool(
+            CSLFetchNameValueDef(papszOptions, "WRITE_GDAL_HISTORY", "YES"));
+        NCDFAddGDALHistory(poDS->cdfid, pszFilename,
+                           poDS->bWriteGDALVersion,
+                           poDS->bWriteGDALHistory,
+                           "", "Create",
                            (nBands == 0) ? CF_Vector_Conv
-                                         : NCDF_CONVENTIONS_CF_V1_5);
+                                         : GDAL_DEFAULT_NCDF_CONVENTIONS);
     }
 
     // Define bands.
@@ -8889,9 +8904,16 @@ netCDFDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
     // Copy global metadata.
     // Add Conventions, GDAL info and history.
     CopyMetadata(poSrcDS, nullptr, nullptr, poDS->cdfid, NC_GLOBAL, nullptr);
+    const bool bWriteGDALVersion = CPLTestBool(
+        CSLFetchNameValueDef(papszOptions, "WRITE_GDAL_VERSION", "YES"));
+    const bool bWriteGDALHistory = CPLTestBool(
+        CSLFetchNameValueDef(papszOptions, "WRITE_GDAL_HISTORY", "YES"));
     NCDFAddGDALHistory(poDS->cdfid, pszFilename,
-                       poSrcDS->GetMetadataItem("NC_GLOBAL#history", ""),
-                       "CreateCopy");
+                       bWriteGDALVersion,
+                       bWriteGDALHistory,
+                       poSrcDS->GetMetadataItem("NC_GLOBAL#history"),
+                       "CreateCopy",
+                       poSrcDS->GetMetadataItem("NC_GLOBAL#Conventions"));
 
     pfnProgress(0.1, nullptr, pProgressData);
 
@@ -9530,6 +9552,8 @@ void GDALRegister_netCDF()
 "       <Value>CF_1.8</Value>"
 "   </Option>"
 "   <Option name='CONFIG_FILE' type='string' scope='vector' description='Path to a XML configuration file (or content inlined)'/>"
+"   <Option name='WRITE_GDAL_VERSION' type='boolean' default='YES'/>"
+"   <Option name='WRITE_GDAL_HISTORY' type='boolean' default='YES'/>"
 "</CreationOptionList>"
                               );
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
@@ -9576,7 +9600,7 @@ void GDALRegister_netCDF()
 
     // Make driver config and capabilities available.
     poDriver->SetMetadataItem("NETCDF_VERSION", nc_inq_libvers());
-    poDriver->SetMetadataItem("NETCDF_CONVENTIONS", NCDF_CONVENTIONS_CF_V1_5);
+    poDriver->SetMetadataItem("NETCDF_CONVENTIONS", GDAL_DEFAULT_NCDF_CONVENTIONS);
 #ifdef NETCDF_HAS_NC2
     poDriver->SetMetadataItem("NETCDF_HAS_NC2", "YES");
 #endif
@@ -9726,31 +9750,49 @@ static bool NCDFIsGDALVersionGTE(const char *pszVersion, int nTarget)
 // Add Conventions, GDAL version and history.
 static void NCDFAddGDALHistory( int fpImage,
                                 const char *pszFilename,
+                                bool bWriteGDALVersion,
+                                bool bWriteGDALHistory,
                                 const char *pszOldHist,
                                 const char *pszFunctionName,
                                 const char *pszCFVersion )
 {
+    if( pszCFVersion == nullptr )
+    {
+        pszCFVersion = GDAL_DEFAULT_NCDF_CONVENTIONS;
+    }
     int status = nc_put_att_text(fpImage, NC_GLOBAL, "Conventions",
                                  strlen(pszCFVersion), pszCFVersion);
     NCDF_ERR(status);
 
-    const char *pszNCDF_GDAL = GDALVersionInfo("--version");
-    status = nc_put_att_text(fpImage, NC_GLOBAL, "GDAL",
-                             strlen(pszNCDF_GDAL), pszNCDF_GDAL);
-    NCDF_ERR(status);
+    if( bWriteGDALVersion )
+    {
+        const char *pszNCDF_GDAL = GDALVersionInfo("--version");
+        status = nc_put_att_text(fpImage, NC_GLOBAL, "GDAL",
+                                 strlen(pszNCDF_GDAL), pszNCDF_GDAL);
+        NCDF_ERR(status);
+    }
 
-    // Add history.
-    CPLString osTmp;
+    if( bWriteGDALHistory )
+    {
+        // Add history.
+        CPLString osTmp;
 #ifdef GDAL_SET_CMD_LINE_DEFINED_TMP
-    if( !EQUAL(GDALGetCmdLine(), "") )
-        osTmp = GDALGetCmdLine();
-    else
-        osTmp = CPLSPrintf("GDAL %s( %s, ... )", pszFunctionName, pszFilename);
+        if( !EQUAL(GDALGetCmdLine(), "") )
+            osTmp = GDALGetCmdLine();
+        else
+            osTmp = CPLSPrintf("GDAL %s( %s, ... )", pszFunctionName, pszFilename);
 #else
-    osTmp = CPLSPrintf("GDAL %s( %s, ... )", pszFunctionName, pszFilename);
+        osTmp = CPLSPrintf("GDAL %s( %s, ... )", pszFunctionName, pszFilename);
 #endif
 
-    NCDFAddHistory(fpImage, osTmp.c_str(), pszOldHist);
+        NCDFAddHistory(fpImage, osTmp.c_str(), pszOldHist);
+    }
+    else if( pszOldHist != nullptr )
+    {
+        status = nc_put_att_text(fpImage, NC_GLOBAL, "history",
+                                 strlen(pszOldHist), pszOldHist);
+        NCDF_ERR(status);
+    }
 }
 
 // Code taken from cdo and libcdi, used for writing the history attribute.

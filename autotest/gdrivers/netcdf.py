@@ -4914,6 +4914,51 @@ def test_netcdf__crs_wkt():
     assert ds.GetSpatialRef().IsGeographic()
 
 
+def test_netcdf_default_metadata():
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+
+    tmpfilename = 'tmp/test_netcdf_default_metadata.nc'
+    gdal.GetDriverByName('netCDF').CreateCopy(tmpfilename, src_ds)
+    ds = gdal.Open(tmpfilename)
+    assert ds.GetMetadataItem("NC_GLOBAL#GDAL") == gdal.VersionInfo("")
+    assert 'GDAL CreateCopy' in ds.GetMetadataItem("NC_GLOBAL#history")
+    assert ds.GetMetadataItem("NC_GLOBAL#conventions").startswith('CF')
+    ds = None
+    gdal.Unlink(tmpfilename)
+
+
+def test_netcdf_default_metadata_with_existing_history_and_conventions():
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+    src_ds.SetMetadataItem("NC_GLOBAL#history", "past history")
+    src_ds.SetMetadataItem("NC_GLOBAL#Conventions", "my conventions")
+
+    tmpfilename = 'tmp/test_netcdf_default_metadata_with_existing_history_and_conventions.nc'
+    gdal.GetDriverByName('netCDF').CreateCopy(tmpfilename, src_ds)
+    ds = gdal.Open(tmpfilename)
+    assert 'GDAL CreateCopy' in ds.GetMetadataItem("NC_GLOBAL#history")
+    assert 'past history' in ds.GetMetadataItem("NC_GLOBAL#history")
+    assert ds.GetMetadataItem("NC_GLOBAL#conventions") == "my conventions"
+    ds = None
+    gdal.Unlink(tmpfilename)
+
+
+def test_netcdf_default_metadata_disabled():
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+
+    tmpfilename = 'tmp/test_netcdf_default_metadata_disabled.nc'
+    gdal.GetDriverByName('netCDF').CreateCopy(tmpfilename, src_ds,
+                  options = ['WRITE_GDAL_VERSION=NO', 'WRITE_GDAL_HISTORY=NO'])
+    ds = gdal.Open(tmpfilename)
+    assert ds.GetMetadataItem("NC_GLOBAL#GDAL") is None
+    assert ds.GetMetadataItem("NC_GLOBAL#history") is None
+    ds = None
+    gdal.Unlink(tmpfilename)
+
+
+
 def test_clean_tmp():
     # [KEEP THIS AS THE LAST TEST]
     # i.e. please do not add any tests after this one. Put new ones above.
