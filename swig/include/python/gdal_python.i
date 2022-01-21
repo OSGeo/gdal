@@ -2379,6 +2379,7 @@ def BuildVRTOptions(options=None,
                     srcNodata=None,
                     VRTNodata=None,
                     hideNodata=None,
+                    strict=False,
                     callback=None, callback_data=None):
     """ Create a BuildVRTOptions() object that can be passed to gdal.BuildVRT()
         Keyword arguments are :
@@ -2396,6 +2397,7 @@ def BuildVRTOptions(options=None,
           srcNodata --- source nodata value(s).
           VRTNodata --- nodata values at the VRT band level.
           hideNodata --- whether to make the VRT band not report the NoData value.
+          strict --- set to True if warnings should be failures
           callback --- callback method.
           callback_data --- user data for callback.
     """
@@ -2441,6 +2443,8 @@ def BuildVRTOptions(options=None,
             new_options += ['-vrtnodata', str(VRTNodata)]
         if hideNodata:
             new_options += ['-hidenodata']
+        if strict:
+            new_options += ['-strict']
 
     if return_option_list:
         return new_options
