@@ -317,7 +317,7 @@ CPLErr SAGARasterBand::SetNoDataValue(double dfNoData)
 
     m_NoData = dfNoData;
     SAGADataset * poSAGADS = static_cast<SAGADataset *>(poDS);
-    poSAGADS->headerDirty=1;
+    poSAGADS->headerDirty = true;
     return CE_None;
 }
 
