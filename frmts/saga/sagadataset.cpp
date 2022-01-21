@@ -72,6 +72,7 @@ class SAGADataset final: public GDALPamDataset
                                double dfZFactor, bool bTopToBottom );
     VSILFILE *fp;
     char     *pszProjection;
+    bool headerDirty=0;
 
   public:
         SAGADataset();
@@ -312,6 +313,8 @@ double SAGARasterBand::GetNoDataValue( int * pbSuccess )
 CPLErr SAGARasterBand::SetNoDataValue(double dfNoData)
 {
     m_NoData = dfNoData;
+    SAGADataset * poSAGADS = static_cast<SAGADataset *>(poDS);
+    poSAGADS->headerDirty=1;
     return CE_None;
 }
 
@@ -327,8 +330,15 @@ SAGADataset::SAGADataset() :
 {}
 
 SAGADataset::~SAGADataset()
-
 {
+    SAGARasterBand *poGRB = static_cast<SAGARasterBand *>(GetRasterBand( 1 ));
+    const CPLString osPath = CPLGetPath( GetDescription() );
+    const CPLString osName = CPLGetBasename( GetDescription() );
+    const CPLString osFilename = CPLFormCIFilename( osPath, osName, ".sgrd" );
+    WriteHeader( osFilename, poGRB->GetRasterDataType(),
+                 poGRB->nRasterXSize, poGRB->nRasterYSize,
+                 poGRB->m_Xmin, poGRB->m_Ymin, poGRB->m_Cellsize,
+                 poGRB->m_NoData, 1.0, false );
     CPLFree( pszProjection );
     FlushCache(true);
     if( fp != nullptr )
@@ -784,25 +794,15 @@ CPLErr SAGADataset::SetGeoTransform( double *padfGeoTransform )
     const double dfMinY =
         padfGeoTransform[5] * (nRasterYSize - 0.5) + padfGeoTransform[3];
 
-    const CPLString osPath = CPLGetPath( GetDescription() );
-    const CPLString osName = CPLGetBasename( GetDescription() );
-    const CPLString osHDRFilename = CPLFormCIFilename( osPath, osName, ".sgrd" );
 
-    CPLErr eErr = WriteHeader( osHDRFilename, poGRB->GetRasterDataType(),
-                               poGRB->nRasterXSize, poGRB->nRasterYSize,
-                               dfMinX, dfMinY, padfGeoTransform[1],
-                               poGRB->m_NoData, 1.0, false );
-
-    if( eErr == CE_None )
-    {
-        poGRB->m_Xmin = dfMinX;
-        poGRB->m_Ymin = dfMinY;
-        poGRB->m_Cellsize = padfGeoTransform[1];
-        poGRB->m_Cols = nRasterXSize;
-        poGRB->m_Rows = nRasterYSize;
-    }
-
-    return eErr;
+    poGRB->m_Xmin = dfMinX;
+    poGRB->m_Ymin = dfMinY;
+    poGRB->m_Cellsize = padfGeoTransform[1];
+    poGRB->m_Cols = nRasterXSize;
+    poGRB->m_Rows = nRasterYSize;
+    headerDirty = 1;
+    
+    return CE_None;
 }
 
 /************************************************************************/
