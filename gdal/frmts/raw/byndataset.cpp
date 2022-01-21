@@ -205,6 +205,10 @@ int BYNDataset::Identify( GDALOpenInfo *poOpenInfo )
         hHeader.nScale     < 0 || hHeader.nScale     > 1 )
         return FALSE;
 
+#if 0
+    // We have disabled those checks as invalid values are often found in some
+    // datasets, such as http://s3.microsurvey.com/os/fieldgenius/geoids/Lithuania.zip
+    // We don't use those fields, so we may just ignore them.
     if((hHeader.nTideSys   < 0 || hHeader.nTideSys   > 2 ||
         hHeader.nPtType    < 0 || hHeader.nPtType    > 1 ))
     {
@@ -216,6 +220,7 @@ int BYNDataset::Identify( GDALOpenInfo *poOpenInfo )
                 return FALSE;
         }
     }
+#endif
 
     if( hHeader.nScale == 0 )
     {
