@@ -201,7 +201,8 @@ def test_saga_9():
     ds = None
 
     ds = gdal.Open('tmp/test9.sdat')
-    ret = ds.GetRasterBand(1).SetNoDataValue(56)
+    with gdaltest.error_handler():
+        ret = ds.GetRasterBand(1).SetNoDataValue(56)
     assert ret == gdalconst.CE_Failure
     # make sure nodata value is not changed
     assert ds.GetRasterBand(1).GetNoDataValue() == -99999
