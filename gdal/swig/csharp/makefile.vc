@@ -71,10 +71,11 @@ template.csproj:
     echo ^<Project Sdk="Microsoft.NET.Sdk"^> > $@
     echo ^<PropertyGroup^> >> $@
     echo ^<TargetFramework^>$(NETSTANDARD)^</TargetFramework^> >> $@
+    echo ^<PlatformTarget^>AnyCPU^</PlatformTarget^> >> $@
     echo ^<AssemblyVersion^>$(GDAL_VERSION).0^</AssemblyVersion^> >> $@
     echo ^<AssemblyOriginatorKeyFile^>..\gdal.snk^</AssemblyOriginatorKeyFile^> >> $@
     echo ^<SignAssembly^>true^</SignAssembly^> >> $@
-	echo ^<AllowUnsafeBlocks^>true^</AllowUnsafeBlocks^> >> $@
+    echo ^<AllowUnsafeBlocks^>true^</AllowUnsafeBlocks^> >> $@
     echo ^</PropertyGroup^> >> $@
     echo ^</Project^> >> $@
 !ELSE
@@ -103,21 +104,21 @@ gdal_csharp: template.csproj
 !IFDEF NETSTANDARD
     cd const
     copy ..\template.csproj gdalconst_csharp.csproj
-    dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID)
+    dotnet build -c $(DOTNET_CONFIG) -o "build"
     cd ..
     cd osr
     copy ..\template.csproj osr_csharp.csproj
-    dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID)
+    dotnet build -c $(DOTNET_CONFIG) -o "build"
     cd ..
     cd ogr
     copy ..\template.csproj ogr_csharp.csproj
     dotnet add reference ..\osr\osr_csharp.csproj
-    dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID)
+    dotnet build -c $(DOTNET_CONFIG) -o "build"
     cd ..
     cd gdal
     copy ..\template.csproj gdal_csharp.csproj
     dotnet add reference ..\osr\osr_csharp.csproj ..\ogr\ogr_csharp.csproj
-    dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID)
+    dotnet build -c $(DOTNET_CONFIG) -o "build"
     cd ..
 !ELSE
     $(CSC) $(CSDEBUG) /unsafe /target:library /out:osr_csharp.dll osr\*.cs AssemblyInfo.cs
