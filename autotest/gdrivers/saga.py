@@ -31,7 +31,7 @@
 
 import os
 from osgeo import gdal
-
+from osgeo import gdalconst
 
 import gdaltest
 
@@ -200,11 +200,18 @@ def test_saga_9():
     ds = gdal.GetDriverByName('SAGA').Create('tmp/test9.sdat', 2, 2, 1, gdal_type)
     ds = None
 
+    ds = gdal.Open('tmp/test9.sdat')
+    ret = ds.GetRasterBand(1).SetNoDataValue(56)
+    assert ret == gdalconst.CE_Failure
+    # make sure nodata value is not changed
+    assert ds.GetRasterBand(1).GetNoDataValue() == -99999
+
+    ds = None
     ds = gdal.Open('tmp/test9.sdat', gdal.GA_Update)
 
-    ds.GetRasterBand(1).SetNoDataValue(56)
+    ret = ds.GetRasterBand(1).SetNoDataValue(56)
+    assert ret == gdalconst.CE_None
     nd = ds.GetRasterBand(1).GetNoDataValue()
-    # ds.SetGeoTransform(ds.GetGeoTransform())
     assert nd == 56
 
     ds = None
@@ -217,5 +224,4 @@ def test_saga_9():
         os.remove('tmp/test9.sdat')
     except OSError:
         pass
-
 
