@@ -132,6 +132,7 @@ public:
     CPLErr          IWriteBlock( int, int, void * ) override;
 
     double          GetNoDataValue( int *pbSuccess = nullptr ) override;
+    CPLErr          SetNoDataValue(double dfNoData) override;
 };
 
 /************************************************************************/
@@ -302,6 +303,16 @@ double SAGARasterBand::GetNoDataValue( int * pbSuccess )
         *pbSuccess = TRUE;
 
     return m_NoData;
+}
+
+/************************************************************************/
+/*                           SetNoDataValue()                           */
+/************************************************************************/
+
+CPLErr SAGARasterBand::SetNoDataValue(double dfNoData)
+{
+    m_NoData = dfNoData;
+    return CE_None;
 }
 
 /************************************************************************/
