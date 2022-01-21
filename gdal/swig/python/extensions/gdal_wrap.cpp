@@ -7735,28 +7735,31 @@ static void PopStackingErrorHandler(std::vector<ErrorStruct>* paoErrors, bool bS
     CPLPopErrorHandler();
 
     // If the operation was successful, do not emit regular CPLError()
-    // that would be caught by the PythonBindingErrorHandler and turned into
+    // of CE_Failure type that would be caught by the PythonBindingErrorHandler
+    // and turned into
     // Python exceptions. Just emit them with the previous error handler
-    if( bSuccess )
-    {
-        for( size_t iError = 0; iError < paoErrors->size(); ++iError )
-        {
-            pfnPreviousHandler( (*paoErrors)[iError].type,
-                    (*paoErrors)[iError].no,
-                    (*paoErrors)[iError].msg );
-        }
 
-        CPLErrorReset();
-    }
-    else
+    for( size_t iError = 0; iError < paoErrors->size(); ++iError )
     {
-        for( size_t iError = 0; iError < paoErrors->size(); ++iError )
+        CPLErr eErrClass = (*paoErrors)[iError].type;
+        if( bSuccess && eErrClass == CE_Failure )
         {
-            CPLError( (*paoErrors)[iError].type,
+            pfnPreviousHandler( eErrClass,
+                                (*paoErrors)[iError].no,
+                                (*paoErrors)[iError].msg );
+        }
+        else
+        {
+            CPLError( eErrClass,
                     (*paoErrors)[iError].no,
                     "%s",
                     (*paoErrors)[iError].msg );
         }
+    }
+
+    if( bSuccess )
+    {
+        CPLErrorReset();
     }
 }
 

@@ -580,7 +580,7 @@ def test_pixfun_log10_r():
     assert refds is not None, ('Unable to open "%s" dataset.' % reffilename)
     refdata = refds.GetRasterBand(1).ReadAsArray()
 
-    assert numpy.alltrue(data == numpy.log10(refdata))
+    assert numpy.allclose(data, numpy.log10(refdata))
 
 
 ###############################################################################
