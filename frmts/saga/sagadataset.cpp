@@ -72,7 +72,7 @@ class SAGADataset final: public GDALPamDataset
                                double dfZFactor, bool bTopToBottom );
     VSILFILE *fp;
     char     *pszProjection;
-    bool headerDirty=0;
+    bool headerDirty = false;
 
   public:
         SAGADataset();
@@ -114,8 +114,6 @@ class SAGARasterBand final: public GDALPamRasterBand
 {
     friend class SAGADataset;
 
-    int             m_Cols;
-    int             m_Rows;
     double          m_Xmin;
     double          m_Ymin;
     double          m_Cellsize;
@@ -141,8 +139,6 @@ public:
 /************************************************************************/
 
 SAGARasterBand::SAGARasterBand( SAGADataset *poDS_, int nBand_ ) :
-    m_Cols(0),
-    m_Rows(0),
     m_Xmin(0.0),
     m_Ymin(0.0),
     m_Cellsize(0.0),
@@ -312,6 +308,13 @@ double SAGARasterBand::GetNoDataValue( int * pbSuccess )
 
 CPLErr SAGARasterBand::SetNoDataValue(double dfNoData)
 {
+    if( eAccess == GA_ReadOnly )
+    {
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Unable to set no data value, dataset opened read only.\n" );
+        return CE_Failure;
+    }
+
     m_NoData = dfNoData;
     SAGADataset * poSAGADS = static_cast<SAGADataset *>(poDS);
     poSAGADS->headerDirty=1;
@@ -682,8 +685,6 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
     poBand->m_Ymin = dYmin;
     poBand->m_NoData = dNoData;
     poBand->m_Cellsize = dCellsize;
-    poBand->m_Rows = nRows;
-    poBand->m_Cols = nCols;
 
     poDS->SetBand( 1, poBand );
 
@@ -801,9 +802,7 @@ CPLErr SAGADataset::SetGeoTransform( double *padfGeoTransform )
     poGRB->m_Xmin = dfMinX;
     poGRB->m_Ymin = dfMinY;
     poGRB->m_Cellsize = padfGeoTransform[1];
-    poGRB->m_Cols = nRasterXSize;
-    poGRB->m_Rows = nRasterYSize;
-    headerDirty = 1;
+    headerDirty = true;
     
     return CE_None;
 }
