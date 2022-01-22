@@ -2253,9 +2253,10 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                  static_cast<double>(layer_bytes[layer_count - 1]));
     } else {
         // Use RATE option.
-        char** dRateStr = CSLTokenizeStringComplex(CSLFetchNameValue(papszOptions,"RATE"),
-                                                   ",", FALSE, FALSE );
-        int rate_count = CSLCount( dRateStr );
+        CPLStringList aosRate(CSLTokenizeStringComplex(
+                CSLFetchNameValue(papszOptions,"RATE"),",", FALSE, FALSE ));
+
+        int rate_count = CSLCount( aosRate );
         if(rate_count <= 0) {
             CPLError(CE_Fatal, CPLE_AppDefined,
                      "RATE argument must be followed by a string identifying one or more bit-rates, separated by commas.\n");
