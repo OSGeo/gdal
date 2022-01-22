@@ -2284,7 +2284,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         double currentBitRate;
         bool bDash = false;
 
-        if (strcmp(dRateStr[0], "-") == 0) {
+        if (strcmp(aosRate[0], "-") == 0) {
             bDash = true;
             j = 1;
             // shift array to the left and force last element to 0 to assign all remaining bits
@@ -2292,7 +2292,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
         const int nb_elements = rate_count-j;
         for (i = 0; i < nb_elements; i++, j++) {
-            currentBitRate = CPLAtof(dRateStr[j]);
+            currentBitRate = CPLAtof(aosRate[j]);
             if( currentBitRate < 0.0 || currentBitRate > 100.0 )
             {
                 CPLError(CE_Failure, CPLE_IllegalArg,
