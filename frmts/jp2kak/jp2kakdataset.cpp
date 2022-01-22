@@ -2263,8 +2263,6 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             return nullptr;
         } else  {
             bool bValid = true;
-            //if((rate_count != layer_count || (layer_count < rate_count &&  layer_count ) && rate_count > 2 || ) {
-
             // compare NUMBER of layers defined by LAYERS or CLayers and the number of layers defined by RATE
             // and is not 1 or 2
             //  1) the number of rates specified here is identical to the specified number of layers;
