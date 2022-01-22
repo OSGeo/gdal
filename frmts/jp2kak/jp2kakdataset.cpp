@@ -2258,7 +2258,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
         int rate_count = CSLCount( aosRate );
         if(rate_count <= 0) {
-            CPLError(CE_Failure, CPLE_AppDefined,
+            CPLError(CE_Failure, CPLE_IllegalArg,
                      "RATE argument must be followed by a string identifying one or more bit-rates, separated by commas.");
             return nullptr;
         } else  {
@@ -2282,7 +2282,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             }
 
             if(!bValid) {
-                CPLError(CE_Failure, CPLE_AppDefined,
+                CPLError(CE_Failure, CPLE_IllegalArg,
                          "The relationship between the number of bit-rates "
                          "specified by the \"RATE\" argument and the number of quality layers "
                          "explicitly specified via \"Clayers\" does not conform to the rules "
