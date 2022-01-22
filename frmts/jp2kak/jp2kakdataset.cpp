@@ -2943,7 +2943,7 @@ void GDALRegister_JP2KAK()
 "   <Option name='NBITS' type='int' description="
 "'BITS (precision) for sub-byte files (1-7), sub-uint16 (9-15)'/>"
 "   <Option name='RATE' type='string' description='bit-rates separated by commas'/>"
-"   <Option name='Creversible' type='string'/>"
+"   <Option name='Creversible' type='boolean'/>"
 "   <Option name='Corder' type='string'/>"
 "   <Option name='Cprecincts' type='string'/>"
 "   <Option name='Cmodes' type='string'/>"
