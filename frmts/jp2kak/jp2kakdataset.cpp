@@ -2258,27 +2258,42 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
         int rate_count = CSLCount( aosRate );
         if(rate_count <= 0) {
-            CPLError(CE_Fatal, CPLE_AppDefined,
-                     "RATE argument must be followed by a string identifying one or more bit-rates, separated by commas.\n");
-        } else if(bLayerOpt && (rate_count != layer_count || layer_count < rate_count) && rate_count > 2) {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "RATE argument must be followed by a string identifying one or more bit-rates, separated by commas.");
+            return nullptr;
+        } else  {
+            bool bValid = true;
+            //if((rate_count != layer_count || (layer_count < rate_count &&  layer_count ) && rate_count > 2 || ) {
+
             // compare NUMBER of layers defined by LAYERS or CLayers and the number of layers defined by RATE
             // and is not 1 or 2
-            //  If Clayers is not used, the number of layers is set to the number of rates specified here.
-            //  If Clayers is used to specify an actual number of quality layers, one of the following must be true:
             //  1) the number of rates specified here is identical to the specified number of layers;
-            //  or 2) one or two rates are specified using this argument.
-            CPLError(CE_Fatal, CPLE_AppDefined,
-                     "The relationship between the number of bit-rates "
-                     "specified by the \"RATE\" argument and the number of quality layers "
-                     "explicitly specified via \"Clayers\" does not conform to the rules "
-                     "supplied in the description of the \"RATE\" argument\n");
+            // E.g RATE=1,3 LAYERS=1 => not valid
+            // E.g RATE=1,3 LAYERS=2 => valid
+            // E.g RATE=1,3 LAYERS=6 => valid
+            // The number of layers must be 2 or more and intervening  layers will be assigned roughly logarithmically
+            // spaced bit-rates. When only one rate is specified, an internal heuristic determines  a lower bound and
+            // logarithmically spaces the layer rates over the rang
+            if((rate_count > layer_count) || layer_count == 0) {
+                bValid = false;
+            }
+
+            // E.g RATE=1,3,4,5 LAYERS=3 => not valid
+            if(rate_count > 2 && rate_count != layer_count) {
+                bValid = false;
+            }
+
+            if(!bValid) {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "The relationship between the number of bit-rates "
+                         "specified by the \"RATE\" argument and the number of quality layers "
+                         "explicitly specified via \"Clayers\" does not conform to the rules "
+                         "supplied in the description of the \"RATE\" argument");
+                return nullptr;
+            }
         }
 
-        if(bLayerOpt) {
-            layer_bytes.resize(layer_count);
-        } else {
-            layer_bytes.resize(rate_count);
-        }
+        layer_bytes.resize(layer_count);
 
         int i, j = 0;
         double currentBitRate;
@@ -2312,7 +2327,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             // swap to end
             layer_bytes[layer_count-1] = layer_bytes[0];
             layer_bytes[0] = 0;
-        } else if(rate_count == 2){
+        } else if(rate_count == 2 && layer_count > 2){
             // 2 elements
             layer_bytes[layer_count-1] = layer_bytes[rate_count-1];
             layer_bytes[rate_count-1] = 0;
