@@ -2218,7 +2218,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     const bool bReversible =
             CSLFetchNameValue(papszOptions,"Creversible") != nullptr
             ? CPLFetchBool( papszOptions, "Creversible", false )
-            : (dfQuality < 99.5);
+            : (dfQuality >= 99.5);
 
     std::vector<kdu_long> layer_bytes;
 
