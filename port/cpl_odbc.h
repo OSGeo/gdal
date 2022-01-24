@@ -251,6 +251,9 @@ class CPL_DLL CPLODBCStatement {
 
   public:
 
+    /**
+     * Flags which control ODBC statement behavior.
+     */
     enum Flag
     {
        /**
