@@ -79,7 +79,7 @@ jobs:
         rm -rf swig/csharp
         cmake  ${CMAKE_OPTIONS} -DCSHARP_MONO=ON -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror -DGDAL_USE_PUBLICDECOMPWT:BOOL=ON ..
         cmake --build $GITHUB_WORKSPACE/superbuild/build --target install -j $(nproc)
-        ctest -R csharp
+        ctest --test-dir $GITHUB_WORKSPACE/superbuild/build -V -R "^csharp.*"
     - name: Standalone Python bindings build
       run: |
         (cd $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python && python setup.py sdist)
@@ -285,3 +285,9 @@ jobs:
     - name: Build
       shell: bash -l {0}
       run: cmake --build $GITHUB_WORKSPACE/build --config Release --target csharp_samples -j 2
+    - name: test (with ctest)
+      shell: bash -l {0}
+      run: |
+        ctest --test-dir $GITHUB_WORKSPACE/build -C Release -V -j 3 -R "^csharp.*"
+      env:
+        SKIP_OGR_GMLAS_HUGE_PROCESSING_TIME: YES

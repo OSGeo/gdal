@@ -154,6 +154,8 @@ To do this, Cmake must be run with the GDAL_CSHARP_ONLY flag set and only one of
 
 .. note:: Do not build the install target when running standalone, it will fail!
 
+.. note:: Do not run a bare ctest command on this build, it will likely fail! Use something like `ctest -R "^csharp.*"` instead.
+
 As an example:
 
 .. code-block::
