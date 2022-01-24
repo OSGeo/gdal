@@ -1,4 +1,4 @@
-# CMake4GDAL project is distributed under X/MIT license. See accompanying file LICENSE.txt.
+# CMake4GDAL project is distributed under MIT license. See accompanying file LICENSE.txt.
 
 add_library(gnm_frmts_db OBJECT gnmdb.h gnmdbdriver.cpp gnmdbnetwork.cpp)
 gdal_standard_includes(gnm_frmts_db)

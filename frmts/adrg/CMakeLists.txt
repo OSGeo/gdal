@@ -1,4 +1,4 @@
-# CMake4GDAL project is distributed under X/MIT license. See accompanying file LICENSE.txt. There are gdal_ADRG and
+# CMake4GDAL project is distributed under MIT license. See accompanying file LICENSE.txt. There are gdal_ADRG and
 # gdal_SRP driver
 add_gdal_driver(
   TARGET gdal_ADRG

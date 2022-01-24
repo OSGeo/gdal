@@ -22,7 +22,7 @@ GDAL - Geospatial Data Abstraction Library
 [![Powered by NumFOCUS](https://img.shields.io/badge/powered%20by-NumFOCUS-orange.svg?style=flat&colorA=E1523D&colorB=007D8A )](http://numfocus.org)
 
 
-GDAL is an open source X/MIT licensed translator library for raster and vector geospatial data formats.
+GDAL is an open source MIT licensed translator library for raster and vector geospatial data formats.
 
 * Main site: https://gdal.org - Developer and user docs, links to other resources
 * GIT repository: https://github.com/OSGeo/gdal

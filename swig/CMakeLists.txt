@@ -1,4 +1,4 @@
-# CMake4GDAL project is distributed under X/MIT license. See accompanying file LICENSE.txt.
+# CMake4GDAL project is distributed under MIT license. See accompanying file LICENSE.txt.
 
 set(GDAL_SWIG_COMMON_INTERFACE_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/include/Band.i

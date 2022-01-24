@@ -18,7 +18,7 @@ best of our knowledge and not guaranteed. Users should check by themselves.
 * External libraries enabled: ultrasmall + libexpat, libpq, libssl
 * No GDAL Python
 * Base PROJ grid package (http://download.osgeo.org/proj/proj-datumgrid-1.8.zip)
-* Overall licensing terms of the GDAL build: permissive (X/MIT, BSD style, Apache, etc..)
+* Overall licensing terms of the GDAL build: permissive (MIT, BSD style, Apache, etc..)
 
 See [alpine-small/Dockerfile](alpine-small/Dockerfile)
 
@@ -48,7 +48,7 @@ See [alpine-normal/Dockerfile](alpine-normal/Dockerfile)
   libzstd, libexpat, libxerces-c, libpq, libssl, libgeos
 * GDAL Python (Python 3.8)
 * Base PROJ grid package (http://download.osgeo.org/proj/proj-datumgrid-1.8.zip)
-* Overall licensing terms of the GDAL build: LGPL + permissive (X/MIT, BSD style, Apache, etc..)
+* Overall licensing terms of the GDAL build: LGPL + permissive (MIT, BSD style, Apache, etc..)
 
 See [ubuntu-small/Dockerfile](ubuntu-small/Dockerfile)
 

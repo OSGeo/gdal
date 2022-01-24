@@ -1119,7 +1119,7 @@ with hillshading.py:
 
 .. code-block:: python
 
-    # Licence: X/MIT
+    # Licence: MIT
     # Copyright 2016, Even Rouault
     import math
 

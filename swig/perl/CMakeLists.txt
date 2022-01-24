@@ -1,4 +1,4 @@
-# CMake4GDAL project is distributed under X/MIT license. See accompanying file LICENSE.txt.
+# CMake4GDAL project is distributed under MIT license. See accompanying file LICENSE.txt.
 
 find_package(Perl)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib/Geo/GDAL)
