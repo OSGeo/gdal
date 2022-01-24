@@ -56,6 +56,7 @@ Alternatively, for a few selected GPSBabel formats, just specifying the
 filename might be sufficient. The list includes for now :
 
 -  garmin_txt
+-  gtrnctr
 -  gdb
 -  magellan
 -  mapsend

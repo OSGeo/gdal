@@ -58,6 +58,8 @@ static bool OGRGPSBabelDriverIdentifyInternal(
             return false;
         pszGPSBabelDriverName = "osm";
     }
+    else if (strstr(reinterpret_cast<const char*>(poOpenInfo->pabyHeader), "<TrainingCenterDatabase") != nullptr)
+        pszGPSBabelDriverName = "gtrnctr";
     else if (strstr(reinterpret_cast<const char*>(poOpenInfo->pabyHeader), "$GPGSA") != nullptr ||
                 strstr(reinterpret_cast<const char*>(poOpenInfo->pabyHeader), "$GPGGA") != nullptr)
         pszGPSBabelDriverName = "nmea";
