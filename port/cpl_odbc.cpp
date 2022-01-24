@@ -1204,8 +1204,6 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
         // This allows retrieval of the original numeric value as a double via GetColDataAsDouble with risk of loss of precision.
         // Additionally, some ODBC drivers (e.g. the MS Access ODBC driver) require reading numeric values using numeric
         // data types, otherwise incorrect values can result. See https://github.com/OSGeo/gdal/issues/3885
-        // (Note that even for numeric types we still also retrieve the value as a string, so that GetColData calls
-        // will not see any change in behaviour)
         if ( m_padColValuesAsDouble &&
                 ( m_panColType[iCol] == SQL_DOUBLE || m_panColType[iCol] == SQL_FLOAT || m_panColType[iCol] == SQL_REAL) )
         {
@@ -1231,6 +1229,12 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
                 CPLError( CE_Failure, CPLE_AppDefined, "%s",
                           m_poSession->GetLastError() );
                 return FALSE;
+            }
+            else
+            {
+                m_papszColValues[iCol] = nullptr;
+                m_panColValueLengths[iCol] = 0;
+                continue;
             }
         }
 

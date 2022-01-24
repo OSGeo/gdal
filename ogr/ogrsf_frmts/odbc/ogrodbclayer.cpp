@@ -263,7 +263,7 @@ OGRFeature *OGRODBCLayer::GetNextRawFeature()
         const OGRFieldType eType = poFeatureDefn->GetFieldDefn(iField)->GetType();
         int iSrcField = panFieldOrdinals[iField]-1;
 
-        if ( eType == OFTReal )
+        if ( eType == OFTReal && poStmt->Flags() & CPLODBCStatement::Flag::RetrieveNumericColumnsAsDouble )
         {
             // for OFTReal fields we retrieve the value directly as a double
             // to avoid loss of precision associated with double/float->string conversion

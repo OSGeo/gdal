@@ -259,6 +259,8 @@ class CPL_DLL CPLODBCStatement {
         * By default numeric column values are retrieved as characters. Retrieving as character is the safest behavior, but can risk loss
         * of precision.
         *
+        * If set, GetColDataAsDouble should be used for numeric columns instead of GetColData.
+        *
         * Warning: this flag can expose issues in particular ODBC drivers on different platforms. Use with caution.
         */
        RetrieveNumericColumnsAsDouble = 1 << 0,
@@ -269,6 +271,11 @@ class CPL_DLL CPLODBCStatement {
 
     /** Return statement handle */
     HSTMT          GetStatement() { return m_hStmt; }
+
+    /**
+     * Returns statement flags.
+     */
+    int            Flags() const { return m_nFlags; }
 
     // Command buffer related.
     void           Clear();
