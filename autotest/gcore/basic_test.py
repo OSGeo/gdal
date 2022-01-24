@@ -173,7 +173,7 @@ def test_basic_test_8():
 
     license_text = gdal.VersionInfo('LICENSE')
     assert (
-        license_text.startswith('GDAL/OGR is released under the MIT/X license')
+        license_text.startswith('GDAL/OGR is released under the MIT license')
         or 'GDAL/OGR Licensing' in license_text
     )
 

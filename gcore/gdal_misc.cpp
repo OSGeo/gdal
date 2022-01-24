@@ -2270,7 +2270,7 @@ const char * CPL_STDCALL GDALVersionInfo( const char *pszRequest )
         if (!pszResultLicence)
         {
             pszResultLicence = CPLStrdup(
-                     "GDAL/OGR is released under the MIT/X license.\n"
+                     "GDAL/OGR is released under the MIT license.\n"
                      "The LICENSE.TXT distributed with GDAL/OGR should\n"
                      "contain additional details.\n" );
         }

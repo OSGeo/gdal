@@ -109,12 +109,12 @@ Note: all the following are build options, not required.
 === gdal/alg ===
 
 * contour.cpp: Joint copyright between FrankW and ACT.
-* gdal_crs.c: derived from old GRASS/UMichigan code also under MIT/X license, properly noted in headers.
+* gdal_crs.c: derived from old GRASS/UMichigan code also under MIT license, properly noted in headers.
 * gdalmediancut.cpp: derived from libtiff tiffmedian.c utility under a GDAL compatible license.  Properly noted in headers.
-* gdalrasterize.cpp: Derived from OpenEV code.  Relicensed from LGPL to MIT/X by explicit grant from copyright holder (Frank Warmerdam).
+* gdalrasterize.cpp: Derived from OpenEV code.  Relicensed from LGPL to MIT by explicit grant from copyright holder (Frank Warmerdam).
 * gvgcpfit.c: Believed to be derived from Numerical Recipes in C.  It has not been used for some time, but was still in the CVS repository.  I have now removed it.
-* llrasterize.c: Derived from GD which has compatible MIT/X license.  Properly noted in header.
-* thinplatespline.cpp: Contributed by VIZRT Inc.,  Relicensed to MIT/X with their explicit permission as noted in the header.
+* llrasterize.c: Derived from GD which has compatible MIT license.  Properly noted in header.
+* thinplatespline.cpp: Contributed by VIZRT Inc.,  Relicensed to MIT with their explicit permission as noted in the header.
 
 === gdal/data ===
 
@@ -144,11 +144,11 @@ Note: all the following are build options, not required.
 
 === gdal/ogr/ogrsf_frmts/generic ===
 
-* Some files here (and elsewhere in OGR) copyright Softmap Inc (but MIT/X).
+* Some files here (and elsewhere in OGR) copyright Softmap Inc (but MIT).
 
 === gdal/ogr/ogrsf_frmts/avc ===
 
-* Some copyright Daniel Morissette, MIT/X.
+* Some copyright Daniel Morissette, MIT.
 * Included copy of dbfopen.h from Shapelib.  We really ought to reference the one in ../shape.
 
 === gdal/ogr/ogrsf_frmts/csv ===
@@ -157,7 +157,7 @@ Note: all the following are build options, not required.
 
 === gdal/ogr/ogrsf_frmts/dgn ===
 
-* Copyright Avenza Systems (MIT/X).
+* Copyright Avenza Systems (MIT).
 * dgn_pge.cpp, dgn_pge.h, pge_test.cpp, vbe_pge.cpp: copyright Pacific Gas and Electric, all rights reserved!  (this has all been removed from trunk)
 * web/* docs lack any copyright message.  The isff.txt originally came from Intergraph and dgn.html is a reformatted version of that.  Perhaps these ought to move out of GDAL CVS tree - action: this has been removed from svn. (#1813)
 
@@ -167,7 +167,7 @@ Note: all the following are build options, not required.
 
 === gdal/ogr/ogrsf_frmts/fme ===
 
-* All code is Copyright Safe Software, "All Rights Reserved"! - License changed to MIT/X with explicit permission from Dale Lutz.  Copyright still held by Safe.
+* All code is Copyright Safe Software, "All Rights Reserved"! - License changed to MIT with explicit permission from Dale Lutz.  Copyright still held by Safe.
 
 === gdal/ogr/ogrsf_frmts/gml ===
 
@@ -176,11 +176,11 @@ Note: all the following are build options, not required.
 
 === gdal/ogr/ogrsf_frmts/grass ===
 
-* copyright Radim Blazek, MIT/X.
+* copyright Radim Blazek, MIT.
 
 === gdal/ogr/ogrsf_frmts/ili ===
 
-* ili level code copyright Pirmin Kalberer (Sourcepole), MIT/X.
+* ili level code copyright Pirmin Kalberer (Sourcepole), MIT.
 * iom/ili2c.jar is ambiguous.  (#1812) (removed - ok)
 * iom source code is all LGPL (per iom/README.src.txt) but none of the source files have a copyright or license header.  Action: this file has been removed. (#1812)
 
@@ -190,7 +190,7 @@ Note: all the following are build options, not required.
 
 === gdal/ogr/ogrsf_frmts/mitab ===
 
-* Copyright Daniel Morissette, Stepane Villeneuve, Frank Warmerdam (MIT/X).
+* Copyright Daniel Morissette, Stepane Villeneuve, Frank Warmerdam (MIT).
 * Some code derived from MapServer with credit in headers, no problem foreseen.
 * All clean.
 
@@ -213,7 +213,7 @@ Note: all the following are build options, not required.
 
 === gdal/ogr/ogrsf_frmts/ogdi ===
 
-* Copyright Daniel Morrissette, MIT/X.
+* Copyright Daniel Morrissette, MIT.
 
 === gdal/ogr/ogrsf_frmts/pg ===
 
@@ -242,9 +242,9 @@ Note: all the following are build options, not required.
 
 === gdal/ogr/ogrsf_frmts/shape ===
 
-* inline copy of Shapelib which is dual licensed MIT/X and LGPL.
+* inline copy of Shapelib which is dual licensed MIT and LGPL.
 * Note, Shapelib code was written while I was at PCI, but permission was given to release it as open source.
-* Some (OGR) code is Copyright Softmap Inc, MIT/X.
+* Some (OGR) code is Copyright Softmap Inc, MIT.
 
 === gdal/ogr/ogrsf_frmts/sqlite ===
 
@@ -260,14 +260,14 @@ Note: all the following are build options, not required.
 
 === gdal/ogr/ogrsf_frmts ===
 
-* Some copyright softmap Inc, all MIT/X.
+* Some copyright softmap Inc, all MIT.
 
 === gdal/ogr ===
 
 * SpatialReferenceIdl.idl, GeometryIdl.idl, CoverageIdl.idl: From OGC spec package I believe.  (removed)
 * ogr_capi_test.c: no copyright message, written by Daniel Morissette. Added copyright.
 * oledbgis.h: No copyright message, mostly OGC spec constants.
-* ogr_swq.h, swq.c: Has alternate form of MIT/X license.  On review this license is functionally equivalent to the general GDAL license.
+* ogr_swq.h, swq.c: Has alternate form of MIT license.  On review this license is functionally equivalent to the general GDAL license.
 * Copyright holders include Frank Warmerdam, Daniel Morissette, Softmap Inc., Stephane Villeneuve., Andrey Kiselev, Information Interoperability Institute
 
 === gdal/frmts/aaigrid ===
@@ -276,7 +276,7 @@ Note: all the following are build options, not required.
 
 === gdal/frmts/aigrid ===
 
-* aigccitt.c: Derived from libtiff - MIT/X.
+* aigccitt.c: Derived from libtiff - MIT.
 * FrankW, clean.
 
 === gdal/frmts/airsar ===
@@ -337,7 +337,7 @@ See [http://home.gdal.org/projects/bsb/ipi.html]
 === gdal/frmts/gif ===
 
 * FrankW, clean.
-* libungif is under the MIT/X license as established in ticket #1818.
+* libungif is under the MIT license as established in ticket #1818.
 
 === gdal/frmts/grass ===
 
@@ -346,10 +346,10 @@ See [http://home.gdal.org/projects/bsb/ipi.html]
 
 === gdal/frmts/gtiff ===
 
-* tif_float.c: Industrial Light and Magic - MIT/X style, but with a credit requirement. Added license notice in gdal/LICENSE.TXT, setup ticket #1819 to streamline it's use.
-* tif_memio.c: FrankW, Mike Johnson and MancTec AB - MIT/X.
+* tif_float.c: Industrial Light and Magic - MIT style, but with a credit requirement. Added license notice in gdal/LICENSE.TXT, setup ticket #1819 to streamline it's use.
+* tif_memio.c: FrankW, Mike Johnson and MancTec AB - MIT.
 * Contains copy of libtiff, license terms explicit in source files.
-* Contains copy of libgeotiff, license terms not made clear.  A review of libgeotiff's LICENSE file makes it clear code is public domain unless otherwise noted (which would be FrankW's MIT/X code)
+* Contains copy of libgeotiff, license terms not made clear.  A review of libgeotiff's LICENSE file makes it clear code is public domain unless otherwise noted (which would be FrankW's MIT code)
 
 === gdal/frmts/gxf ===
 
