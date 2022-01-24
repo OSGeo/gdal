@@ -1462,8 +1462,12 @@ def test_ogr_fgdb_alias():
 def test_ogr_openfilegdb_read_domains():
 
     ds = gdal.OpenEx('data/filegdb/Domains.gdb', gdal.OF_VECTOR)
+
+    assert set(ds.GetFieldDomainNames()) == {'MedianType', 'RoadSurfaceType', 'SpeedLimit'}
+
     with gdaltest.error_handler():
         assert ds.GetFieldDomain('i_dont_exist') is None
+
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 

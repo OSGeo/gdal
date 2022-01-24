@@ -798,6 +798,8 @@ private:
 
     virtual int         TestCapability( const char * );
 
+    virtual std::vector<std::string> GetFieldDomainNames(CSLConstList papszOptions = nullptr) const;
+
     virtual const OGRFieldDomain* GetFieldDomain(const std::string& name) const;
 
     virtual bool        AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,

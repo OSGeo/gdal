@@ -886,6 +886,7 @@ OGRErr CPL_DLL GDALDatasetCommitTransaction(GDALDatasetH hDS);
 OGRErr CPL_DLL GDALDatasetRollbackTransaction(GDALDatasetH hDS);
 void CPL_DLL GDALDatasetClearStatistics(GDALDatasetH hDS);
 
+char CPL_DLL ** GDALDatasetGetFieldDomainNames(GDALDatasetH, CSLConstList) CPL_WARN_UNUSED_RESULT;
 OGRFieldDomainH CPL_DLL GDALDatasetGetFieldDomain(GDALDatasetH hDS,
                                                   const char* pszName);
 bool CPL_DLL GDALDatasetAddFieldDomain(GDALDatasetH hDS,

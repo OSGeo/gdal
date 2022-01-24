@@ -2314,6 +2314,10 @@ class Dataset(MajorObject):
         r"""ClearStatistics(Dataset self)"""
         return _gdal.Dataset_ClearStatistics(self, *args)
 
+    def GetFieldDomainNames(self, *args) -> "char **":
+        r"""GetFieldDomainNames(Dataset self, char ** options=None) -> char **"""
+        return _gdal.Dataset_GetFieldDomainNames(self, *args)
+
     def GetFieldDomain(self, *args):
         r"""GetFieldDomain(Dataset self, char const * name) -> FieldDomain"""
         return _gdal.Dataset_GetFieldDomain(self, *args)

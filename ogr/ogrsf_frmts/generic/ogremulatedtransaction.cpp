@@ -132,6 +132,7 @@ class OGRDataSourceWithTransaction final: public OGRDataSource
     virtual OGRErr      CommitTransaction() override;
     virtual OGRErr      RollbackTransaction() override;
 
+    virtual std::vector<std::string> GetFieldDomainNames(CSLConstList papszOptions = nullptr) const override;
     virtual const OGRFieldDomain* GetFieldDomain(const std::string& name) const override;
     virtual bool        AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,
                                        std::string& failureReason) override;
@@ -436,6 +437,12 @@ OGRErr OGRDataSourceWithTransaction::RollbackTransaction()
     if( bHasReopenedDS )
         RemapLayers();
     return eErr;
+}
+
+std::vector<std::string> OGRDataSourceWithTransaction::GetFieldDomainNames(CSLConstList papszOptions) const
+{
+    if( !m_poBaseDataSource ) return std::vector<std::string>();
+    return m_poBaseDataSource->GetFieldDomainNames(papszOptions);
 }
 
 const OGRFieldDomain* OGRDataSourceWithTransaction::GetFieldDomain(const std::string& name) const

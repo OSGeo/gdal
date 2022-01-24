@@ -114,6 +114,7 @@ class CPL_DLL OGRMutexedDataSource : public OGRDataSource
                                          const char * pszValue,
                                          const char * pszDomain = "" ) override;
 
+    virtual std::vector<std::string> GetFieldDomainNames(CSLConstList papszOptions = nullptr) const override;
     virtual const OGRFieldDomain* GetFieldDomain(const std::string& name) const override;
 
     virtual bool        AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,

@@ -8437,6 +8437,62 @@ void GDALDatasetClearStatistics(GDALDatasetH hDS)
     GDALDataset::FromHandle(hDS)->ClearStatistics();
 }
 
+
+/************************************************************************/
+/*                        GetFieldDomainNames()                         */
+/************************************************************************/
+
+/** Returns a list of the names of all field domains stored in the dataset.
+ *
+ * @note The default implementation assumes that drivers fully populate m_oMapFieldDomains
+ * when opening a dataset. If this assumption is incorrect then
+ * a specialized implementation of GetFieldDomainNames() must be implemented.
+ *
+ * @param papszOptions Driver specific options determining how attributes
+ * should be retrieved. Pass nullptr for default behavior.
+ *
+ * @return list of field domain names
+ * @since GDAL 3.5
+ */
+std::vector<std::string> GDALDataset::GetFieldDomainNames(CPL_UNUSED CSLConstList papszOptions) const{
+
+    std::vector<std::string> names;
+    names.reserve( m_oMapFieldDomains.size() );
+    for(const auto& it : m_oMapFieldDomains ) {
+        names.emplace_back( it.first );
+    }
+    return names;
+}
+
+
+/************************************************************************/
+/*                      GDALDatasetGetFieldDomainNames()                */
+/************************************************************************/
+
+/** Returns a list of the names of all field domains stored in the dataset.
+ *
+ * This is the same as the C++ method GDALDataset::GetFieldDomainNames().
+ *
+ * @param hDS Dataset handle.
+ * @param papszOptions Driver specific options determining how attributes
+ * should be retrieved. Pass nullptr for default behavior.
+ *
+ * @return list of field domain names, to be freed with CSLDestroy()
+ * @since GDAL 3.5
+ */
+char ** GDALDatasetGetFieldDomainNames( GDALDatasetH hDS,CSLConstList papszOptions )
+{
+    VALIDATE_POINTER1(hDS, __func__, nullptr);
+    auto names = GDALDataset::FromHandle(hDS)->GetFieldDomainNames(papszOptions);
+    CPLStringList res;
+    for( const auto& name: names )
+    {
+        res.AddString(name.c_str());
+    }
+    return res.StealList();
+}
+
+
 /************************************************************************/
 /*                        GetFieldDomain()                              */
 /************************************************************************/
@@ -8491,6 +8547,10 @@ OGRFieldDomainH GDALDatasetGetFieldDomain(GDALDatasetH hDS,
  *
  * Anticipated failures will not be emitted through the CPLError()
  * infrastructure, but will be reported in the failureReason output parameter.
+ *
+ * @note Drivers should make sure to update m_oMapFieldDomains in order for the
+ * default implementation of GetFieldDomainNames() to work correctly, or alternatively
+ * a specialized implementation of GetFieldDomainNames() should be implemented.
  *
  * @param domain The domain definition.
  * @param failureReason      Output parameter. Will contain an error message if
