@@ -21,7 +21,7 @@ target_include_directories(gdal_PDF PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/vrt
                                             ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/mem)
 
 if (GDAL_USE_POPPLER)
-  target_include_directories(gdal_PDF PRIVATE ${POPPLER_INCLUDE_DIRS} ${POPPLER_INCLUDE_DIRS}/../)
+  target_include_directories(gdal_PDF PRIVATE ${POPPLER_INCLUDE_DIR} ${POPPLER_INCLUDE_DIR}/../)
   gdal_target_link_libraries(TARGET gdal_PDF LIBRARIES POPPLER::Poppler)
   string(REGEX REPLACE "([0-9]+)\\.([0-9]+).*" "\\1" POPPLER_VERSION_MAJOR ${POPPLER_VERSION_STRING})
   string(REGEX REPLACE "([0-9]+)\\.([0-9]+).*" "\\2" POPPLER_VERSION_MINOR ${POPPLER_VERSION_STRING})
