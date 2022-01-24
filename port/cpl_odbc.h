@@ -225,6 +225,8 @@ class CPL_DLL CPLODBCStatement {
 
     CPL_DISALLOW_COPY_ASSIGN(CPLODBCStatement)
 
+    int m_nFlags = 0;
+
     CPLODBCSession     *m_poSession = nullptr;
     HSTMT               m_hStmt = nullptr;
 
@@ -248,7 +250,21 @@ class CPL_DLL CPLODBCStatement {
     size_t         m_nStatementLen = 0;
 
   public:
-    explicit CPLODBCStatement( CPLODBCSession * );
+
+    enum Flag
+    {
+       /**
+        * Numeric column values should be retrieved as doubles, using either the SQL_C_DOUBLE or SQL_C_FLOAT types.
+        *
+        * By default numeric column values are retrieved as characters. Retrieving as character is the safest behavior, but can risk loss
+        * of precision.
+        *
+        * Warning: this flag can expose issues in particular ODBC drivers on different platforms. Use with caution.
+        */
+       RetrieveNumericColumnsAsDouble = 1 << 0,
+    };
+
+    explicit CPLODBCStatement( CPLODBCSession *, int flags = 0 );
     ~CPLODBCStatement();
 
     /** Return statement handle */

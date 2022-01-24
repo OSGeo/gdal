@@ -753,8 +753,14 @@ const char *CPLODBCSession::GetLastError()
 /*                          CPLODBCStatement()                          */
 /************************************************************************/
 
-/** Constructor */
-CPLODBCStatement::CPLODBCStatement( CPLODBCSession *poSession ) :
+/**
+ * Constructor.
+ *
+ * The optional flags argument can be used to specify flags which control
+ * the behavior of the statement.
+*/
+CPLODBCStatement::CPLODBCStatement( CPLODBCSession *poSession, const int flags ) :
+    m_nFlags(flags),
     m_poSession(poSession)
 {
 
@@ -857,8 +863,15 @@ int CPLODBCStatement::CollectResultsInfo()
         static_cast<char **>(CPLCalloc(sizeof(char *), m_nColCount + 1));
     m_panColValueLengths = static_cast<CPL_SQLLEN *>(
         CPLCalloc(sizeof(CPL_SQLLEN), m_nColCount + 1));
-    m_padColValuesAsDouble =
-        static_cast<double *>(CPLCalloc(sizeof(double), m_nColCount + 1));
+    if ( m_nFlags & Flag::RetrieveNumericColumnsAsDouble )
+    {
+        m_padColValuesAsDouble =
+            static_cast<double *>(CPLCalloc(sizeof(double), m_nColCount + 1));
+    }
+    else
+    {
+        m_padColValuesAsDouble = nullptr;
+    }
 
     m_panColType =
         static_cast<SQLSMALLINT *>(CPLCalloc(sizeof(SQLSMALLINT), m_nColCount));
@@ -1177,7 +1190,8 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
     for( SQLSMALLINT iCol = 0; iCol < m_nColCount; iCol++ )
     {
         CPL_SQLLEN cbDataLen = 0;
-        m_padColValuesAsDouble[iCol] = std::numeric_limits< double >::quiet_NaN();
+        if ( m_padColValuesAsDouble )
+            m_padColValuesAsDouble[iCol] = std::numeric_limits< double >::quiet_NaN();
         SQLSMALLINT nFetchType = GetTypeMapping( m_panColType[iCol] );
 
         // Handle values other than WCHAR and BINARY as CHAR.
@@ -1186,13 +1200,14 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
 
         char szWrkData[513] = {};
 
-        // Always read numeric columns using numeric data types and populate native double column values array.
+        // If RetrieveNumericColumnsAsDouble flag is set, then read numeric columns using numeric data types and populate native double column values array.
         // This allows retrieval of the original numeric value as a double via GetColDataAsDouble with risk of loss of precision.
         // Additionally, some ODBC drivers (e.g. the MS Access ODBC driver) require reading numeric values using numeric
         // data types, otherwise incorrect values can result. See https://github.com/OSGeo/gdal/issues/3885
         // (Note that even for numeric types we still also retrieve the value as a string, so that GetColData calls
         // will not see any change in behaviour)
-        if (m_panColType[iCol] == SQL_DOUBLE || m_panColType[iCol] == SQL_FLOAT || m_panColType[iCol] == SQL_REAL)
+        if ( m_padColValuesAsDouble &&
+                ( m_panColType[iCol] == SQL_DOUBLE || m_panColType[iCol] == SQL_FLOAT || m_panColType[iCol] == SQL_REAL) )
         {
             if (m_panColType[iCol] == SQL_DOUBLE )
             {
@@ -1209,7 +1224,7 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
                 nRetCode = SQLGetData( m_hStmt, iCol + 1, SQL_C_FLOAT,
                             &fValue, sizeof(fValue), &cbDataLen );
                 if( cbDataLen != SQL_NULL_DATA )
-                    m_padColValuesAsDouble[iCol] = fValue;
+                    m_padColValuesAsDouble[iCol] = static_cast< double >( fValue );
             }
             if( nRetCode != SQL_NO_DATA && Failed( nRetCode ) )
             {
@@ -1455,6 +1470,9 @@ int CPLODBCStatement::GetColDataLength( int iCol )
  * Returns NaN if a non-numeric column is requested or the actual column value
  * is "NULL".
  *
+ * @warning this method can only be used if the Flag::RetrieveNumericColumnsAsDouble
+ * flag was set for the CPLODBCStatement.
+ *
  * @param iCol the zero based column to fetch.
  *
  * @return numeric column value or NaN on failure.
@@ -1463,7 +1481,7 @@ int CPLODBCStatement::GetColDataLength( int iCol )
 double CPLODBCStatement::GetColDataAsDouble( int iCol ) const
 
 {
-    if( iCol < 0 || iCol >= m_nColCount )
+    if( !m_padColValuesAsDouble || iCol < 0 || iCol >= m_nColCount )
         return std::numeric_limits< double >::quiet_NaN();
     else
         return m_padColValuesAsDouble[iCol];
@@ -1482,6 +1500,9 @@ double CPLODBCStatement::GetColDataAsDouble( int iCol ) const
  * Returns NaN if a non-numeric column is requested or the actual column value
  * is "NULL".
  *
+ * @warning this method can only be used if the Flag::RetrieveNumericColumnsAsDouble
+ * flag was set for the CPLODBCStatement.
+ *
  * @param pszColName the name of the column requested.
  *
  * @return numeric column value or NaN on failure.
@@ -1490,6 +1511,9 @@ double CPLODBCStatement::GetColDataAsDouble( int iCol ) const
 double CPLODBCStatement::GetColDataAsDouble( const char *pszColName ) const
 
 {
+    if( !m_padColValuesAsDouble )
+        return std::numeric_limits< double >::quiet_NaN();
+
     const int iCol = GetColId( pszColName );
 
     if( iCol == -1 )
@@ -1773,8 +1797,11 @@ void CPLODBCStatement::Clear()
         CSLDestroy( m_papszColNames );
         m_papszColNames = nullptr;
 
-        CPLFree( m_papszColValues );
-        m_papszColValues = nullptr;
+        if ( m_papszColValues )
+        {
+            CPLFree( m_papszColValues );
+            m_papszColValues = nullptr;
+        }
 
         CPLFree( m_panColValueLengths );
         m_panColValueLengths = nullptr;
