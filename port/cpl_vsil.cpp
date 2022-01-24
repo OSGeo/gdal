@@ -565,6 +565,8 @@ int VSIRename( const char * oldpath, const char * newpath )
  *     For upload to /vsis3/, this chunk size must be set at least to 5 MB.
  *     The default is 8 MB since GDAL 3.3</li>
  * <li>x-amz-KEY=value. (GDAL >= 3.5) MIME header to pass during creation of a /vsis3/ object.</li>
+ * <li>x-goog-KEY=value. (GDAL >= 3.5) MIME header to pass during creation of a /vsigs/ object.</li>
+ * <li>x-ms-KEY=value. (GDAL >= 3.5) MIME header to pass during creation of a /vsiaz/ or /vsiadls/ object.</li>
  * </ul>
  * @param pProgressFunc Progress callback, or NULL.
  * @param pProgressData User data of progress callback, or NULL.

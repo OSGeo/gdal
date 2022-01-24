@@ -171,6 +171,8 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
 
     void ClearCache() override;
 
+    bool IsAllowedHeaderForObjectCreation( const char* pszHeaderName ) override { return STARTS_WITH(pszHeaderName, "x-ms-"); }
+
   public:
     VSIADLSFSHandler() = default;
     ~VSIADLSFSHandler() override = default;
@@ -226,7 +228,8 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
                          size_t nBufferSize,
                          IVSIS3LikeHandleHelper *poS3HandleHelper,
                          int nMaxRetry,
-                         double dfRetryDelay);
+                         double dfRetryDelay,
+                         CSLConstList papszOptions);
 
     // Multipart upload (mapping of S3 interface)
     bool SupportsParallelMultipartUpload() const override { return true; }
@@ -236,9 +239,9 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
                                 IVSIS3LikeHandleHelper * poS3HandleHelper,
                                 int nMaxRetry,
                                 double dfRetryDelay,
-                                CSLConstList /* papszOptions */) override {
+                                CSLConstList papszOptions) override {
         return UploadFile(osFilename, Event::CREATE_FILE, 0, nullptr, 0,
-                          poS3HandleHelper, nMaxRetry, dfRetryDelay) ?
+                          poS3HandleHelper, nMaxRetry, dfRetryDelay, papszOptions) ?
             std::string("dummy") : std::string();
     }
 
@@ -250,11 +253,12 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
                          size_t nBufferSize,
                          IVSIS3LikeHandleHelper *poS3HandleHelper,
                          int nMaxRetry,
-                         double dfRetryDelay) override
+                         double dfRetryDelay,
+                         CSLConstList /* papszOptions */) override
     {
         return UploadFile(osFilename, Event::APPEND_DATA,
                           nPosition, pabyBuffer, nBufferSize,
-                          poS3HandleHelper, nMaxRetry, dfRetryDelay) ?
+                          poS3HandleHelper, nMaxRetry, dfRetryDelay, nullptr) ?
             std::string("dummy") : std::string();
     }
 
@@ -267,7 +271,7 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
                            double dfRetryDelay) override
     {
         return UploadFile(osFilename, Event::FLUSH, nTotalSize, nullptr, 0,
-                          poS3HandleHelper, nMaxRetry, dfRetryDelay);
+                          poS3HandleHelper, nMaxRetry, dfRetryDelay, nullptr);
     }
 
     bool AbortMultipart(const CPLString& /* osFilename */,
@@ -1062,7 +1066,8 @@ class VSIADLSWriteHandle final : public VSIAppendWriteHandle
 
     bool                Send(bool bIsLastBlock) override;
 
-    bool                SendInternal(VSIADLSFSHandler::Event event);
+    bool                SendInternal(VSIADLSFSHandler::Event event,
+                                     CSLConstList papszOptions);
 
     void                InvalidateParentDirectory();
 
@@ -1072,7 +1077,7 @@ class VSIADLSWriteHandle final : public VSIAppendWriteHandle
                           VSIAzureBlobHandleHelper* poHandleHelper );
         virtual ~VSIADLSWriteHandle();
 
-        bool CreateFile();
+        bool CreateFile(CSLConstList papszOptions);
 };
 
 /************************************************************************/
@@ -1113,9 +1118,9 @@ void VSIADLSWriteHandle::InvalidateParentDirectory()
 /*                          CreateFile()                                */
 /************************************************************************/
 
-bool VSIADLSWriteHandle::CreateFile()
+bool VSIADLSWriteHandle::CreateFile(CSLConstList papszOptions)
 {
-    m_bCreated = SendInternal(VSIADLSFSHandler::Event::CREATE_FILE);
+    m_bCreated = SendInternal(VSIADLSFSHandler::Event::CREATE_FILE, papszOptions);
     return m_bCreated;
 }
 
@@ -1128,10 +1133,10 @@ bool VSIADLSWriteHandle::Send(bool bIsLastBlock)
     if( !m_bCreated )
         return false;
     // If we have a non-empty buffer, append it
-    if( m_nBufferOff != 0 && !SendInternal(VSIADLSFSHandler::Event::APPEND_DATA) )
+    if( m_nBufferOff != 0 && !SendInternal(VSIADLSFSHandler::Event::APPEND_DATA, nullptr) )
         return false;
     // If we are the last block, send the flush event
-    if( bIsLastBlock && !SendInternal(VSIADLSFSHandler::Event::FLUSH) )
+    if( bIsLastBlock && !SendInternal(VSIADLSFSHandler::Event::FLUSH, nullptr) )
         return false;
     return true;
 }
@@ -1140,7 +1145,8 @@ bool VSIADLSWriteHandle::Send(bool bIsLastBlock)
 /*                          SendInternal()                              */
 /************************************************************************/
 
-bool VSIADLSWriteHandle::SendInternal(VSIADLSFSHandler::Event event)
+bool VSIADLSWriteHandle::SendInternal(VSIADLSFSHandler::Event event,
+                                      CSLConstList papszOptions)
 {
     // coverity[tainted_data]
     const int nMaxRetry = atoi(CPLGetConfigOption("GDAL_HTTP_MAX_RETRY",
@@ -1155,7 +1161,7 @@ bool VSIADLSWriteHandle::SendInternal(VSIADLSFSHandler::Event event)
         event == VSIADLSFSHandler::Event::APPEND_DATA ? m_nCurOffset - m_nBufferOff :
                                                         m_nCurOffset,
         m_pabyBuffer, m_nBufferOff, m_poHandleHelper.get(),
-        nMaxRetry, dfRetryDelay);
+        nMaxRetry, dfRetryDelay, papszOptions);
 }
 
 /************************************************************************/
@@ -1200,7 +1206,7 @@ VSIVirtualHandle* VSIADLSFSHandler::Open( const char *pszFilename,
             return nullptr;
         auto poHandle = std::unique_ptr<VSIADLSWriteHandle>(
             new VSIADLSWriteHandle(this, pszFilename, poHandleHelper));
-        if( !poHandle->CreateFile() )
+        if( !poHandle->CreateFile(papszOptions) )
         {
             return nullptr;
         }
@@ -1829,7 +1835,8 @@ bool VSIADLSFSHandler::UploadFile(const CPLString& osFilename,
                                   size_t nBufferSize,
                                   IVSIS3LikeHandleHelper *poHandleHelper,
                                   int nMaxRetry,
-                                  double dfRetryDelay)
+                                  double dfRetryDelay,
+                                  CSLConstList papszOptions)
 {
     NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
     NetworkStatisticsFile oContextFile(osFilename);
@@ -1882,7 +1889,9 @@ bool VSIADLSFSHandler::UploadFile(const CPLString& osFilename,
             CPLHTTPSetOptions(hCurlHandle,
                               poHandleHelper->GetURL().c_str(),
                               nullptr));
-        headers = VSICurlSetContentTypeFromExt(headers, osFilename.c_str());
+        headers = VSICurlSetCreationHeadersFromOptions(headers,
+                                                       papszOptions,
+                                                       osFilename.c_str());
 
         CPLString osContentLength; // leave it in this scope
 

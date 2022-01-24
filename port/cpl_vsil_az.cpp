@@ -460,6 +460,8 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
 
     void ClearCache() override;
 
+    bool IsAllowedHeaderForObjectCreation( const char* pszHeaderName ) override { return STARTS_WITH(pszHeaderName, "x-ms-"); }
+
   public:
     VSIAzureFSHandler() = default;
     ~VSIAzureFSHandler() override = default;
@@ -505,7 +507,8 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
                        size_t nBufferSize,
                        IVSIS3LikeHandleHelper *poS3HandleHelper,
                        int nMaxRetry,
-                       double dfRetryDelay);
+                       double dfRetryDelay,
+                       CSLConstList papszOptions);
     bool PutBlockList(const CPLString& osFilename,
                       const std::vector<CPLString>& aosBlockIds,
                       IVSIS3LikeHandleHelper *poS3HandleHelper,
@@ -531,10 +534,11 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
                          size_t nBufferSize,
                          IVSIS3LikeHandleHelper *poS3HandleHelper,
                          int nMaxRetry,
-                         double dfRetryDelay) override
+                         double dfRetryDelay,
+                         CSLConstList papszOptions) override
     {
         return PutBlock(osFilename, nPartNumber, pabyBuffer, nBufferSize,
-                        poS3HandleHelper, nMaxRetry, dfRetryDelay);
+                        poS3HandleHelper, nMaxRetry, dfRetryDelay, papszOptions);
     }
 
     bool CompleteMultipart(const CPLString& osFilename,
@@ -1570,7 +1574,8 @@ CPLString VSIAzureFSHandler::PutBlock(const CPLString& osFilename,
                                     size_t nBufferSize,
                                     IVSIS3LikeHandleHelper *poS3HandleHelper,
                                     int nMaxRetry,
-                                    double dfRetryDelay)
+                                    double dfRetryDelay,
+                                    CSLConstList papszOptions)
 {
     NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
     NetworkStatisticsFile oContextFile(osFilename);
@@ -1608,6 +1613,9 @@ CPLString VSIAzureFSHandler::PutBlock(const CPLString& osFilename,
             CPLHTTPSetOptions(hCurlHandle,
                             poS3HandleHelper->GetURL().c_str(),
                             nullptr));
+        headers = VSICurlSetCreationHeadersFromOptions(headers,
+                                                       papszOptions,
+                                                       osFilename.c_str());
         headers = curl_slist_append(headers, osContentLength.c_str());
         headers = VSICurlMergeHeaders(headers,
                         poS3HandleHelper->GetCurlHeaders("PUT", headers,

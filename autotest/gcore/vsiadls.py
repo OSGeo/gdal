@@ -352,11 +352,12 @@ def test_vsiadls_fake_write():
 
     # Small file
     handler = webserver.SequentialHandler()
-    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin?resource=file', 201)
+    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin?resource=file', 201,
+                expected_headers = {'x-ms-client-request-id': 'REQUEST_ID'})
     handler.add('PATCH', '/azure/blob/myaccount/test_copy/file.bin?action=append&position=0', 202, expected_body = b'foo')
     handler.add('PATCH', '/azure/blob/myaccount/test_copy/file.bin?action=flush&close=true&position=3', 200)
     with webserver.install_http_handler(handler):
-        f = gdal.VSIFOpenL('/vsiadls/test_copy/file.bin', 'wb')
+        f = gdal.VSIFOpenExL('/vsiadls/test_copy/file.bin', 'wb', 0, ['x-ms-client-request-id=REQUEST_ID'])
         assert f is not None
         assert gdal.VSIFWriteL('foo', 1, 3, f) == 3
         assert gdal.VSIFCloseL(f) == 0
