@@ -52,7 +52,7 @@ if(WIN32)
               PATHS "${MSSQL_ODBC_ROOT}/Include")
     mark_as_advanced(MSSQL_ODBC_INCLUDE_DIR)
 
-    if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "AMD64")
+    if("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
         set(MSSQL_ODBC_DIR_ARCH x64)
     else()
         set(MSSQL_ODBC_DIR_ARCH x86)
