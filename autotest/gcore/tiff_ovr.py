@@ -347,21 +347,23 @@ def test_tiff_ovr_9(both_endian):
         ds.BuildOverviews('AVERAGE', overviewlist=[2])
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    exp_cs = 5562
+    exp_cs_list = (5562,
+                   5635,
+                   5601, # libjpeg 9e
+                  )
 
     ds = None
 
-    assert cs == exp_cs or cs == 5635, 'got wrong overview checksum.'
+    assert cs in exp_cs_list
 
     # Re-check after dataset reopening
     ds = gdal.Open('tmp/ovr9.tif', gdal.GA_ReadOnly)
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    exp_cs = 5562
 
     ds = None
 
-    assert cs == exp_cs or cs == 5635, 'got wrong overview checksum.'
+    assert cs in exp_cs_list
 
 ###############################################################################
 # Similar to tiff_ovr_9 but with internal overviews.
@@ -386,11 +388,13 @@ def test_tiff_ovr_10(both_endian):
     assert ds is not None, 'Failed to open copy of test dataset.'
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    exp_cs = 5562
 
     ds = None
 
-    assert cs == exp_cs or cs == 5635, 'got wrong overview checksum.'
+    assert cs in (5562,
+                  5635,
+                  5601, # libjpeg 9e
+                 )
 
 ###############################################################################
 # Overview on a dataset with NODATA_VALUES
