@@ -249,7 +249,10 @@ def test_nitf_10():
     src_ds = gdal.Open('tmp/nitf9.ntf')
     expected_cs = src_ds.GetRasterBand(2).Checksum()
     src_ds = None
-    assert expected_cs == 22296 or expected_cs == 22259
+    assert expected_cs in (22296,
+                           22259,
+                           22415, # libjpeg 9e
+                          )
 
     tst = gdaltest.GDALTest('NITF', '../tmp/nitf9.ntf', 2, expected_cs)
     return tst.testCreateCopy()

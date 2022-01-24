@@ -625,13 +625,12 @@ def test_rmf_31c():
     assert ds is not None, ('Can\'t open ' + ds_name)
     expected_cs1 = [25789, 27405, 31974]
     expected_cs2 = [23764, 25265, 33585] # osx
+    expected_cs_jpeg9e = [21031, 26574, 34780] # libjpeg 9e
     cs = [ds.GetRasterBand(1).Checksum(),
           ds.GetRasterBand(2).Checksum(),
           ds.GetRasterBand(3).Checksum()]
 
-    assert cs == expected_cs1 or cs == expected_cs2, \
-        ('Invalid checksum %s expected %s or %s.' %
-                             (str(cs), str(expected_cs1), str(expected_cs2)))
+    assert cs in (expected_cs1, expected_cs2, expected_cs_jpeg9e)
 
 
 def test_rmf_31d():
