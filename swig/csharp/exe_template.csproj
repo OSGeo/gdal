@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>${CSHARP_APPLICATION_VERSION}</TargetFramework>
+        <RuntimeIdentifier>${CSHARP_RID}</RuntimeIdentifier>
+        <CheckEolTargetFramework>false</CheckEolTargetFramework>
+        <AssemblyVersion>${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}.${GDAL_VERSION_REV}</AssemblyVersion>
+        <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    </PropertyGroup>
+    <ItemGroup>
+        <Compile Include="${SOURCE_NATIVE}"></Compile>
+    </ItemGroup>
+</Project>

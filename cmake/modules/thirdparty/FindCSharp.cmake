@@ -1,6 +1,9 @@
 #
 # A CMake Module for finding and using C# (.NET and Mono).
 #
+#The following variables are consumed:
+#   CSHARP_MONO - set to yes to force the use of Mono. Default is look for .NET first
+#
 # The following variables are set:
 #   CSHARP_FOUND - set to ON if C# is found
 #   CSHARP_USE_FILE - the path to the C# use file
@@ -15,8 +18,6 @@
 #   http://gdcm.svn.sf.net/viewvc/gdcm/trunk/CMake/FindCSharp.cmake
 # Copyright (c) 2006-2010 Mathieu Malaterre <mathieu.malaterre@gmail.com>
 #
-
-# TODO: ADD ABILITY TO SELECT WHICH C# COMPILER eg. .NET or Mono (if both exist). For the moment, .NET is selected above Mono.
 
 # Make sure find package macros are included
 include( FindPackageHandleStandardArgs )
@@ -33,19 +34,19 @@ if( NOT ${CSHARP_PLATFORM} MATCHES "x86|x64|anycpu|itanium" )
   message( FATAL_ERROR "The C# target platform '${CSHARP_PLATFORM}' is not valid. Please enter one of the following: x86, x64, anycpu, or itanium" )
 endif( )
 
-if( WIN32 )
-  find_package( DotNetFrameworkSdk )
-  if( NOT CSHARP_DOTNET_FOUND )
-    find_package( Mono )
-  endif( )
-else( UNIX )
+if( CSHARP_MONO )
   find_package( Mono )
-endif( )
+else()
+  find_package( Dotnet )
+  if( NOT DOTNET_FOUND )
+    find_package( Mono )
+  endif()
+endif()
 
-if( CSHARP_DOTNET_FOUND )
+if( DOTNET_FOUND )
   set( CSHARP_TYPE ".NET" CACHE STRING "Using the .NET compiler" )
-  set( CSHARP_VERSION ${CSHARP_DOTNET_VERSION} CACHE STRING "C# .NET compiler version" FORCE )
-  set( CSHARP_COMPILER ${CSHARP_DOTNET_COMPILER_${CSHARP_DOTNET_VERSION}} CACHE STRING "Full path to .NET compiler" FORCE )
+  set( CSHARP_VERSION ${DOTNET_VERSION} CACHE STRING "C# .NET compiler version" FORCE )
+  set( CSHARP_COMPILER ${DOTNET_EXE} CACHE STRING "Full path to .NET compiler" FORCE )
   set( CSHARP_INTERPRETER "" CACHE INTERNAL "Interpreter not required for .NET" FORCE )
 elseif( CSHARP_MONO_FOUND )
   set( CSHARP_TYPE "Mono" CACHE STRING "Using the Mono compiler" )
