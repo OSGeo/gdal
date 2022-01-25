@@ -268,6 +268,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
                                          char **papszOptions ) override;
         int                 TestCapability( const char * ) override;
 
+        std::vector<std::string> GetFieldDomainNames(CSLConstList papszOptions = nullptr) const override;
         const OGRFieldDomain* GetFieldDomain(const std::string& name) const override;
         bool                AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,
                                            std::string& failureReason) override;

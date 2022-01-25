@@ -7177,6 +7177,53 @@ const char* GDALGeoPackageDataset::GetGeometryTypeString(OGRwkbGeometryType eTyp
 }
 
 /************************************************************************/
+/*                           GetFieldDomainNames()                      */
+/************************************************************************/
+
+std::vector<std::string> GDALGeoPackageDataset::GetFieldDomainNames(CSLConstList) const
+{
+    if( !HasDataColumnConstraintsTable() )
+        return std::vector<std::string>();
+
+    std::vector<std::string> oDomainNamesList;
+
+    std::unique_ptr<SQLResult> oResultTable;
+    {
+        std::string osSQL =
+            "SELECT constraint_name "
+            "FROM gpkg_data_column_constraints "
+            "WHERE constraint_name NOT LIKE '_%_domain_description' "
+            "ORDER BY constraint_name "
+            "LIMIT 10000" // to avoid denial of service
+            ;
+        oResultTable = SQLQuery(hDB, osSQL.c_str());
+        if( !oResultTable )
+            return oDomainNamesList;
+    }
+
+    if( oResultTable->RowCount() == 10000 )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Number of rows returned for field domain names has been "
+                 "truncated.");
+    }
+    else if( oResultTable->RowCount() > 0 )
+    {
+        oDomainNamesList.reserve(oResultTable->RowCount());
+        for ( int i = 0; i < oResultTable->RowCount(); i++ )
+        {
+            const char *pszConstraintName = oResultTable->GetValue(0, i);
+            if ( !pszConstraintName )
+                continue;
+
+            oDomainNamesList.emplace_back( pszConstraintName );
+        }
+    }
+
+    return oDomainNamesList;
+}
+
+/************************************************************************/
 /*                           GetFieldDomain()                           */
 /************************************************************************/
 
