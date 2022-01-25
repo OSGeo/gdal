@@ -217,8 +217,8 @@ Layer Creation Options
 ~~~~~~~~~~~~~~~~~~~~~~
 
 -  **GEOMETRY_NAME**: Column to use for the geometry column. Default to
-   "geom". Note: This option was called GEOMETRY_COLUMN in releases before
-   GDAL 2
+   "geom" if it is not named in the source data.
+   Note: This option was called GEOMETRY_COLUMN in releases before GDAL 2
 -  **GEOMETRY_NULLABLE**: Whether the values of the
    geometry column can be NULL. Can be set to NO so that geometry is
    required. Default to "YES"
