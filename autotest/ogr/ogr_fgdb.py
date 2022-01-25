@@ -1934,6 +1934,7 @@ def test_ogr_fgdb_20(openfilegdb_drv, fgdb_drv):
 
         ds = None
 
+    openfilegdb_drv.Deregister()
     # sys.exit(0)
 
 
