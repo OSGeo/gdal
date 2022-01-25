@@ -51,7 +51,11 @@ OGRPGeoDataSource::OGRPGeoDataSource() :
     papoLayers(nullptr),
     nLayers(0),
     pszName(nullptr)
-{}
+{
+    // Retrieve numeric values from MS Access files using ODBC numeric types, to avoid
+    // loss of precision and missing values on Windows (see https://github.com/OSGeo/gdal/issues/3885)
+    m_nStatementFlags |= CPLODBCStatement::Flag::RetrieveNumericColumnsAsDouble;
+}
 
 /************************************************************************/
 /*                         ~OGRPGeoDataSource()                         */
@@ -212,7 +216,7 @@ int OGRPGeoDataSource::Open( GDALOpenInfo *poOpenInfo )
             continue;
         }
 
-        OGRPGeoTableLayer  *poLayer = new OGRPGeoTableLayer( this );
+        OGRPGeoTableLayer  *poLayer = new OGRPGeoTableLayer( this, m_nStatementFlags );
 
         if( poLayer->Initialize( papszRecord[0],         // TableName
                                  papszRecord[1],         // FieldName
@@ -247,7 +251,7 @@ int OGRPGeoDataSource::Open( GDALOpenInfo *poOpenInfo )
             continue;
         }
 
-        OGRPGeoTableLayer  *poLayer = new OGRPGeoTableLayer( this );
+        OGRPGeoTableLayer  *poLayer = new OGRPGeoTableLayer( this, m_nStatementFlags );
 
         if( poLayer->Initialize( osTableName.c_str(),         // TableName
                                  nullptr,         // FieldName
@@ -335,7 +339,7 @@ OGRLayer* OGRPGeoDataSource::GetLayerByName( const char* pszLayerName )
           return poInvisibleLayer.get();
   }
 
-  std::unique_ptr< OGRPGeoTableLayer > poInvisibleLayer( new OGRPGeoTableLayer( this ) );
+  std::unique_ptr< OGRPGeoTableLayer > poInvisibleLayer( new OGRPGeoTableLayer( this, m_nStatementFlags ) );
 
   if( poInvisibleLayer->Initialize( pszLayerName,         // TableName
                            nullptr,         // FieldName
@@ -438,7 +442,7 @@ OGRLayer * OGRPGeoDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Execute statement.                                              */
 /* -------------------------------------------------------------------- */
-    CPLODBCStatement *poStmt = new CPLODBCStatement( &oSession );
+    CPLODBCStatement *poStmt = new CPLODBCStatement( &oSession, m_nStatementFlags );
 
     poStmt->Append( pszSQLCommand );
     if( !poStmt->ExecuteSQL() )

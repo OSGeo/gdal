@@ -37,9 +37,10 @@ CPL_CVSID("$Id$")
 /*                          OGRPGeoTableLayer()                         */
 /************************************************************************/
 
-OGRPGeoTableLayer::OGRPGeoTableLayer( OGRPGeoDataSource *poDSIn ) :
+OGRPGeoTableLayer::OGRPGeoTableLayer(OGRPGeoDataSource *poDSIn, int nODBCStatementFlags) :
     pszQuery(nullptr)
 {
+    m_nStatementFlags = nODBCStatementFlags;
     poDS = poDSIn;
     iNextShapeId = 0;
     nSRSId = -1;
@@ -283,7 +284,7 @@ OGRErr OGRPGeoTableLayer::ResetStatement()
 
     iNextShapeId = 0;
 
-    poStmt = new CPLODBCStatement( poDS->GetSession() );
+    poStmt = new CPLODBCStatement( poDS->GetSession(), m_nStatementFlags );
     poStmt->Append( "SELECT * FROM " );
     poStmt->Append( poFeatureDefn->GetName() );
     if( pszQuery != nullptr )
@@ -324,7 +325,7 @@ OGRFeature *OGRPGeoTableLayer::GetFeature( GIntBig nFeatureId )
 
     iNextShapeId = nFeatureId;
 
-    poStmt = new CPLODBCStatement( poDS->GetSession() );
+    poStmt = new CPLODBCStatement( poDS->GetSession(), m_nStatementFlags );
     poStmt->Append( "SELECT * FROM " );
     poStmt->Append( poFeatureDefn->GetName() );
     poStmt->Appendf( " WHERE %s = " CPL_FRMT_GIB, pszFIDColumn, nFeatureId );

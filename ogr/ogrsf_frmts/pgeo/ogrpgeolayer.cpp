@@ -264,17 +264,36 @@ OGRFeature *OGRPGeoLayer::GetNextRawFeature()
 /* -------------------------------------------------------------------- */
     for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
+        const OGRFieldType eType = poFeatureDefn->GetFieldDefn(iField)->GetType();
         int iSrcField = panFieldOrdinals[iField]-1;
-        const char *pszValue = poStmt->GetColData( iSrcField );
 
-        if( pszValue == nullptr )
-            poFeature->SetFieldNull( iField );
-        else if( poFeature->GetFieldDefnRef(iField)->GetType() == OFTBinary )
-            poFeature->SetField( iField,
-                                 poStmt->GetColDataLength(iSrcField),
-                                 (GByte *) pszValue );
+        if ( eType == OFTReal && (poStmt->Flags() & CPLODBCStatement::Flag::RetrieveNumericColumnsAsDouble) )
+        {
+            // for OFTReal fields we retrieve the value directly as a double
+            // to avoid loss of precision associated with double/float->string conversion
+            const double dfValue = poStmt->GetColDataAsDouble( iSrcField );
+            if ( std::isnan( dfValue ) )
+            {
+                poFeature->SetFieldNull( iField );
+            }
+            else
+            {
+                poFeature->SetField( iField, dfValue );
+            }
+        }
         else
-            poFeature->SetField( iField, pszValue );
+        {
+            const char *pszValue = poStmt->GetColData( iSrcField );
+
+            if( pszValue == nullptr )
+                poFeature->SetFieldNull( iField );
+            else if( poFeature->GetFieldDefnRef(iField)->GetType() == OFTBinary )
+                poFeature->SetField( iField,
+                                     poStmt->GetColDataLength(iSrcField),
+                                     (GByte *) pszValue );
+            else
+                poFeature->SetField( iField, pszValue );
+        }
     }
 
 /* -------------------------------------------------------------------- */
