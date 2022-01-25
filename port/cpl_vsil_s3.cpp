@@ -873,7 +873,7 @@ bool VSIS3WriteHandle::UploadPart()
                            static_cast<vsi_l_offset>(m_nBufferSize) * (m_nPartNumber-1),
                            m_pabyBuffer, m_nBufferOff,
                            m_poS3HandleHelper,
-                           m_nMaxRetry, m_dfRetryDelay);
+                           m_nMaxRetry, m_dfRetryDelay, nullptr);
     m_nBufferOff = 0;
     if( !osEtag.empty() )
     {
@@ -890,7 +890,8 @@ CPLString IVSIS3LikeFSHandler::UploadPart(const CPLString& osFilename,
                                           size_t nBufferSize,
                                           IVSIS3LikeHandleHelper *poS3HandleHelper,
                                           int nMaxRetry,
-                                          double dfRetryDelay)
+                                          double dfRetryDelay,
+                                          CSLConstList /* papszOptions */)
 {
     NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
     NetworkStatisticsFile oContextFile(osFilename);
@@ -4436,7 +4437,8 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
                             pBuffer, nSizeToRead,
                             poS3HandleHelper.get(),
                             queue->nMaxRetry,
-                            queue->dfRetryDelay);
+                            queue->dfRetryDelay,
+                            queue->aosObjectCreationOptions.List());
                         if( !osEtag.empty() )
                         {
                             std::lock_guard<std::mutex> lock(queue->sMutex);
