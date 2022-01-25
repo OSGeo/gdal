@@ -5074,6 +5074,9 @@ SWIGINTERN bool GDALDatasetShadow_AddFieldDomain(GDALDatasetShadow *self,OGRFiel
 SWIGINTERN bool GDALDatasetShadow_DeleteFieldDomain(GDALDatasetShadow *self,char const *name){
       return GDALDatasetDeleteFieldDomain(self, name, NULL);
   }
+SWIGINTERN bool GDALDatasetShadow_UpdateFieldDomain(GDALDatasetShadow *self,OGRFieldDomainShadow *fieldDomain){
+      return GDALDatasetUpdateFieldDomain(self, (OGRFieldDomainH)fieldDomain, NULL);
+  }
 SWIGINTERN CPLErr GDALDatasetShadow_ReadRaster1(GDALDatasetShadow *self,double xoff,double yoff,double xsize,double ysize,void **buf,int *buf_xsize=0,int *buf_ysize=0,GDALDataType *buf_type=0,int band_list=0,int *pband_list=0,GIntBig *buf_pixel_space=0,GIntBig *buf_line_space=0,GIntBig *buf_band_space=0,GDALRIOResampleAlg resample_alg=GRIORA_NearestNeighbour,GDALProgressFunc callback=NULL,void *callback_data=NULL,void *inputOutputBuf=NULL){
     *buf = NULL;
 
@@ -21265,6 +21268,58 @@ SWIGINTERN PyObject *_wrap_Dataset_DeleteFieldDomain(PyObject *SWIGUNUSEDPARM(se
   return resultobj;
 fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Dataset_UpdateFieldDomain(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
+  OGRFieldDomainShadow *arg2 = (OGRFieldDomainShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject *swig_obj[2] ;
+  bool result;
+  
+  if (!SWIG_Python_UnpackTuple(args, "Dataset_UpdateFieldDomain", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Dataset_UpdateFieldDomain" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALDatasetShadow * >(argp1);
+  res2 = SWIG_ConvertPtr(swig_obj[1], &argp2,SWIGTYPE_p_OGRFieldDomainShadow, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Dataset_UpdateFieldDomain" "', argument " "2"" of type '" "OGRFieldDomainShadow *""'"); 
+  }
+  arg2 = reinterpret_cast< OGRFieldDomainShadow * >(argp2);
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (bool)GDALDatasetShadow_UpdateFieldDomain(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_bool(static_cast< bool >(result));
+  return resultobj;
+fail:
   return NULL;
 }
 
@@ -43941,6 +43996,7 @@ static PyMethodDef SwigMethods[] = {
 	 { "Dataset_GetFieldDomain", _wrap_Dataset_GetFieldDomain, METH_VARARGS, "Dataset_GetFieldDomain(Dataset self, char const * name) -> FieldDomain"},
 	 { "Dataset_AddFieldDomain", _wrap_Dataset_AddFieldDomain, METH_VARARGS, "Dataset_AddFieldDomain(Dataset self, FieldDomain fieldDomain) -> bool"},
 	 { "Dataset_DeleteFieldDomain", _wrap_Dataset_DeleteFieldDomain, METH_VARARGS, "Dataset_DeleteFieldDomain(Dataset self, char const * name) -> bool"},
+	 { "Dataset_UpdateFieldDomain", _wrap_Dataset_UpdateFieldDomain, METH_VARARGS, "Dataset_UpdateFieldDomain(Dataset self, FieldDomain fieldDomain) -> bool"},
 	 { "Dataset_ReadRaster1", (PyCFunction)(void(*)(void))_wrap_Dataset_ReadRaster1, METH_VARARGS|METH_KEYWORDS, "Dataset_ReadRaster1(Dataset self, double xoff, double yoff, double xsize, double ysize, int * buf_xsize=None, int * buf_ysize=None, GDALDataType * buf_type=None, int band_list=0, GIntBig * buf_pixel_space=None, GIntBig * buf_line_space=None, GIntBig * buf_band_space=None, GDALRIOResampleAlg resample_alg=GRIORA_NearestNeighbour, GDALProgressFunc callback=0, void * callback_data=None, void * inputOutputBuf=None) -> CPLErr"},
 	 { "Dataset_swigregister", Dataset_swigregister, METH_O, NULL},
 	 { "delete_Group", _wrap_delete_Group, METH_O, "delete_Group(Group self)"},

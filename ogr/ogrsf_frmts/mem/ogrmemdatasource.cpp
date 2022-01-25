@@ -143,6 +143,8 @@ int OGRMemDataSource::TestCapability( const char *pszCap )
         return TRUE;
     else if( EQUAL(pszCap, ODsCDeleteFieldDomain) )
         return TRUE;
+    else if( EQUAL(pszCap, ODsCUpdateFieldDomain) )
+        return TRUE;
 
     return FALSE;
 }
@@ -205,5 +207,23 @@ bool OGRMemDataSource::DeleteFieldDomain(const std::string &name, std::string &f
         }
     }
 
+    return true;
+}
+
+
+/************************************************************************/
+/*                           UpdateFieldDomain()                        */
+/************************************************************************/
+
+bool OGRMemDataSource::UpdateFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain, std::string &failureReason)
+{
+    const auto domainName = domain->GetName();
+    const auto iter = m_oMapFieldDomains.find(domainName);
+    if( iter == m_oMapFieldDomains.end() )
+    {
+        failureReason = "No matching domain found";
+        return false;
+    }
+    m_oMapFieldDomains[domainName] = std::move(domain);
     return true;
 }

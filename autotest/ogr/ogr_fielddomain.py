@@ -203,3 +203,41 @@ def test_delete_domain_assigned_to_field():
     assert not lyr.GetLayerDefn().GetFieldDefn(0).GetDomainName()
     assert not lyr.GetLayerDefn().GetFieldDefn(1).GetDomainName()
     assert not lyr2.GetLayerDefn().GetFieldDefn(0).GetDomainName()
+
+
+def test_update_field_domain():
+    ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
+    assert ds.AddFieldDomain(ogr.CreateGlobFieldDomain('name', 'desc', ogr.OFTString, ogr.OFSTNone, '*'))
+    assert ds.AddFieldDomain(ogr.CreateGlobFieldDomain('name2', 'desc2', ogr.OFTString, ogr.OFSTNone, '*a'))
+
+    assert ds.GetFieldDomain('name').GetName() == 'name'
+    assert ds.GetFieldDomain('name').GetDescription() == 'desc'
+    assert ds.GetFieldDomain('name').GetGlob() == '*'
+
+    assert ds.GetFieldDomain('name2').GetName() == 'name2'
+    assert ds.GetFieldDomain('name2').GetDescription() == 'desc2'
+    assert ds.GetFieldDomain('name2').GetGlob() == '*a'
+
+    # try updating domain which doesn't exist
+    no_matching_domain = ogr.CreateGlobFieldDomain('nomatch', 'desc', ogr.OFTString, ogr.OFSTNone, '*')
+    assert not ds.UpdateFieldDomain(no_matching_domain)
+
+    new_domain1 = ogr.CreateGlobFieldDomain('name', 'different desc', ogr.OFTString, ogr.OFSTNone, '*b')
+    assert ds.UpdateFieldDomain(new_domain1)
+    assert ds.GetFieldDomain('name').GetName() == 'name'
+    assert ds.GetFieldDomain('name').GetDescription() == 'different desc'
+    assert ds.GetFieldDomain('name').GetGlob() == '*b'
+
+    assert ds.GetFieldDomain('name2').GetName() == 'name2'
+    assert ds.GetFieldDomain('name2').GetDescription() == 'desc2'
+    assert ds.GetFieldDomain('name2').GetGlob() == '*a'
+
+    new_domain2 = ogr.CreateGlobFieldDomain('name2', 'different desc 2', ogr.OFTString, ogr.OFSTNone, '*c')
+    assert ds.UpdateFieldDomain(new_domain2)
+    assert ds.GetFieldDomain('name').GetName() == 'name'
+    assert ds.GetFieldDomain('name').GetDescription() == 'different desc'
+    assert ds.GetFieldDomain('name').GetGlob() == '*b'
+
+    assert ds.GetFieldDomain('name2').GetName() == 'name2'
+    assert ds.GetFieldDomain('name2').GetDescription() == 'different desc 2'
+    assert ds.GetFieldDomain('name2').GetGlob() == '*c'

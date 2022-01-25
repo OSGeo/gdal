@@ -121,6 +121,9 @@ class CPL_DLL OGRMutexedDataSource : public OGRDataSource
                                        std::string& failureReason) override;
     virtual bool        DeleteFieldDomain(const std::string& name,
                                           std::string& failureReason) override;
+    virtual bool        UpdateFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,
+                                          std::string& failureReason) override;
+
 
     virtual std::shared_ptr<GDALGroup> GetRootGroup() const override;
 

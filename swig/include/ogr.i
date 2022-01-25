@@ -491,6 +491,7 @@ typedef void retGetPoints;
 %constant char *ODsCRandomLayerWrite   = "RandomLayerWrite ";
 %constant char *ODsCAddFieldDomain     = "AddFieldDomain";
 %constant char *ODsCDeleteFieldDomain  = "DeleteFieldDomain";
+%constant char *ODsCUpdateFieldDomain  = "UpdateFieldDomain";
 
 %constant char *ODrCCreateDataSource   = "CreateDataSource";
 %constant char *ODrCDeleteDataSource   = "DeleteDataSource";

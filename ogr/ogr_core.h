@@ -850,6 +850,7 @@ int CPL_DLL OGRParseDate( const char *pszInput, OGRField *psOutput,
 #define ODsCRandomLayerWrite    "RandomLayerWrite " /**< Dataset capability for supporting CreateFeature on layer in random order */
 #define ODsCAddFieldDomain     "AddFieldDomain"     /**< Dataset capability for supporting AddFieldDomain() (at least partially) */
 #define ODsCDeleteFieldDomain  "DeleteFieldDomain"  /**< Dataset capability for supporting DeleteFieldDomain()*/
+#define ODsCUpdateFieldDomain  "UpdateFieldDomain"  /**< Dataset capability for supporting UpdateFieldDomain()*/
 
 #define ODrCCreateDataSource   "CreateDataSource"   /**< Driver capability for datasource creation */
 #define ODrCDeleteDataSource   "DeleteDataSource"   /**< Driver capability for datasource deletion */

@@ -138,6 +138,8 @@ class OGRDataSourceWithTransaction final: public OGRDataSource
                                        std::string& failureReason) override;
     virtual bool        DeleteFieldDomain(const std::string& name,
                                           std::string& failureReason) override;
+    virtual bool        UpdateFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,
+                                          std::string& failureReason) override;
 
     virtual std::shared_ptr<GDALGroup> GetRootGroup() const override;
 
@@ -463,6 +465,12 @@ bool OGRDataSourceWithTransaction::DeleteFieldDomain(const std::string &name, st
 {
     if( !m_poBaseDataSource ) return false;
     return m_poBaseDataSource->DeleteFieldDomain(name, failureReason);
+}
+
+bool OGRDataSourceWithTransaction::UpdateFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain, std::string &failureReason)
+{
+    if( !m_poBaseDataSource ) return false;
+    return m_poBaseDataSource->UpdateFieldDomain(std::move(domain), failureReason);
 }
 
 std::shared_ptr<GDALGroup> OGRDataSourceWithTransaction::GetRootGroup() const

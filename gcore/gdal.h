@@ -895,6 +895,9 @@ bool CPL_DLL GDALDatasetAddFieldDomain(GDALDatasetH hDS,
 bool CPL_DLL GDALDatasetDeleteFieldDomain(GDALDatasetH hDS,
                                           const char* pszName,
                                           char** ppszFailureReason);
+bool CPL_DLL GDALDatasetUpdateFieldDomain(GDALDatasetH hDS,
+                                          OGRFieldDomainH hFieldDomain,
+                                          char** ppszFailureReason);
 
 /* ==================================================================== */
 /*      GDALRasterBand ... one band/channel in a dataset.               */
