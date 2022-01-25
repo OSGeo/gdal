@@ -805,6 +805,9 @@ private:
     virtual bool        AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,
                                        std::string& failureReason);
 
+    virtual bool        DeleteFieldDomain(const std::string& name,
+                                          std::string& failureReason);
+
     virtual OGRLayer   *CreateLayer( const char *pszName,
                                      OGRSpatialReference *poSpatialRef = nullptr,
                                      OGRwkbGeometryType eGType = wkbUnknown,

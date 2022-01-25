@@ -1032,6 +1032,13 @@ OGRErr AbortSQL() {
   }
   %clear OGRFieldDomainShadow* fieldDomain;
 
+  %apply Pointer NONNULL {const char* name};
+  bool DeleteFieldDomain(const char* name)
+  {
+      return GDALDatasetDeleteFieldDomain(self, name, NULL);
+  }
+  %clear const char* name;
+
 } /* extend */
 }; /* GDALDatasetShadow */
 

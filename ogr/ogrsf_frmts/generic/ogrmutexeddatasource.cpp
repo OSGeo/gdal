@@ -258,6 +258,12 @@ bool OGRMutexedDataSource::AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& doma
     return m_poBaseDataSource->AddFieldDomain(std::move(domain), failureReason);
 }
 
+bool OGRMutexedDataSource::DeleteFieldDomain(const std::string &name, std::string &failureReason)
+{
+    CPLMutexHolderOptionalLockD(m_hGlobalMutex);
+    return m_poBaseDataSource->DeleteFieldDomain(name, failureReason);
+}
+
 std::shared_ptr<GDALGroup> OGRMutexedDataSource::GetRootGroup() const
 {
     CPLMutexHolderOptionalLockD(m_hGlobalMutex);

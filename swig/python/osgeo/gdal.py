@@ -2326,6 +2326,10 @@ class Dataset(MajorObject):
         r"""AddFieldDomain(Dataset self, FieldDomain fieldDomain) -> bool"""
         return _gdal.Dataset_AddFieldDomain(self, *args)
 
+    def DeleteFieldDomain(self, *args) -> "bool":
+        r"""DeleteFieldDomain(Dataset self, char const * name) -> bool"""
+        return _gdal.Dataset_DeleteFieldDomain(self, *args)
+
     def ReadRaster1(self, *args, **kwargs):
         r"""ReadRaster1(Dataset self, double xoff, double yoff, double xsize, double ysize, int * buf_xsize=None, int * buf_ysize=None, GDALDataType * buf_type=None, int band_list=0, GIntBig * buf_pixel_space=None, GIntBig * buf_line_space=None, GIntBig * buf_band_space=None, GDALRIOResampleAlg resample_alg=GRIORA_NearestNeighbour, GDALProgressFunc callback=0, void * callback_data=None, void * inputOutputBuf=None) -> CPLErr"""
         return _gdal.Dataset_ReadRaster1(self, *args, **kwargs)

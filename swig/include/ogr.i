@@ -490,6 +490,7 @@ typedef void retGetPoints;
 /* Note the unfortunate trailing space at the end of the string */
 %constant char *ODsCRandomLayerWrite   = "RandomLayerWrite ";
 %constant char *ODsCAddFieldDomain     = "AddFieldDomain";
+%constant char *ODsCDeleteFieldDomain  = "DeleteFieldDomain";
 
 %constant char *ODrCCreateDataSource   = "CreateDataSource";
 %constant char *ODrCDeleteDataSource   = "DeleteDataSource";

@@ -121,9 +121,14 @@ def test_ogr_fielddomain_mem_driver():
 
     ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
 
+    assert ds.GetFieldDomainNames() is None
+
     assert ds.GetFieldDomain('foo') is None
 
     assert ds.AddFieldDomain(ogr.CreateGlobFieldDomain('name', 'desc', ogr.OFTString, ogr.OFSTNone, '*'))
+
+    assert ds.GetFieldDomainNames() == ['name']
+
     assert ds.GetFieldDomain('name').GetDomainType() == ogr.OFDT_GLOB
 
     with pytest.raises(Exception):
@@ -135,9 +140,66 @@ def test_ogr_fielddomain_mem_driver():
     # Duplicate domain
     assert not ds.AddFieldDomain(ogr.CreateGlobFieldDomain('name', 'desc', ogr.OFTString, ogr.OFSTNone, '*'))
 
+    assert ds.GetFieldDomainNames() == ['name']
+
+    assert ds.AddFieldDomain(ogr.CreateGlobFieldDomain('name2', 'desc', ogr.OFTString, ogr.OFSTNone, '*'))
+
+    assert set(ds.GetFieldDomainNames()) == {'name', 'name2'}
+
+    # try deleting a domain which doesn't exist
+    assert not ds.DeleteFieldDomain('xxx')
+
+    assert ds.DeleteFieldDomain('name')
+
+    assert ds.GetFieldDomain('name') is None
+    assert ds.GetFieldDomainNames() == ['name2']
+
+    assert not ds.DeleteFieldDomain('name')
+
+    assert ds.DeleteFieldDomain('name2')
+
+    assert ds.GetFieldDomain('name2') is None
+    assert ds.GetFieldDomainNames() is None
+
 
 def test_ogr_fielddomain_get_set_domain_name():
 
     fld_defn = ogr.FieldDefn('foo', ogr.OFTInteger)
     fld_defn.SetDomainName('fooDomain')
     assert fld_defn.GetDomainName() == 'fooDomain'
+
+
+def test_delete_domain_assigned_to_field():
+    ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
+    assert ds.AddFieldDomain(ogr.CreateGlobFieldDomain('name', 'desc', ogr.OFTString, ogr.OFSTNone, '*'))
+    assert ds.AddFieldDomain(ogr.CreateGlobFieldDomain('name2', 'desc', ogr.OFTString, ogr.OFSTNone, '*'))
+
+    lyr = ds.CreateLayer('ogr_mem_1')
+    field_defn = ogr.FieldDefn('new_string', ogr.OFTString)
+    field_defn.SetDomainName('name')
+    lyr.CreateField(field_defn)
+    field_defn = ogr.FieldDefn('new_string2', ogr.OFTString)
+    field_defn.SetDomainName('name2')
+    lyr.CreateField(field_defn)
+
+    lyr2 = ds.CreateLayer('ogr_mem_2')
+    field_defn = ogr.FieldDefn('new_string3', ogr.OFTString)
+    field_defn.SetDomainName('name')
+    lyr2.CreateField(field_defn)
+
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetDomainName() == 'name'
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetDomainName() == 'name2'
+    assert lyr2.GetLayerDefn().GetFieldDefn(0).GetDomainName() == 'name'
+
+    # deleting domain should remove it from field definitions too
+    assert ds.DeleteFieldDomain('name')
+
+    assert not lyr.GetLayerDefn().GetFieldDefn(0).GetDomainName()
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetDomainName() == 'name2'
+    assert not lyr2.GetLayerDefn().GetFieldDefn(0).GetDomainName()
+
+    assert ds.DeleteFieldDomain('name2')
+
+    assert not lyr.GetLayerDefn().GetFieldDefn(0).GetDomainName()
+    assert not lyr.GetLayerDefn().GetFieldDefn(1).GetDomainName()
+    assert not lyr2.GetLayerDefn().GetFieldDefn(0).GetDomainName()
