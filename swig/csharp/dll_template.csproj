@@ -2,11 +2,11 @@
     <PropertyGroup>
         <OutputType>library</OutputType>
         <TargetFramework>${CSHARP_LIBRARY_VERSION}</TargetFramework>
-        <RuntimeIdentifier>${CSHARP_RID}</RuntimeIdentifier>
+        <PlatformTarget>AnyCPU</PlatformTarget>
         <AssemblyVersion>${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}.${GDAL_VERSION_REV}</AssemblyVersion>
         <AssemblyOriginatorKeyFile>..\gdal.snk</AssemblyOriginatorKeyFile>
         <SignAssembly>true</SignAssembly>
-	    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <PackageId>${_PACKAGE_NAME}</PackageId>
         <Authors>GDAL Contributors</Authors>
         <Company>GDAL Project</Company>
