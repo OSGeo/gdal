@@ -53,7 +53,12 @@
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
 #include "cpl_vsi_virtual.h"
+#include "cpl_vsil_curl_class.h"
 
+// To avoid aliasing to GetDiskFreeSpace to GetDiskFreeSpaceA on Windows
+#ifdef GetDiskFreeSpace
+#undef GetDiskFreeSpace
+#endif
 
 CPL_CVSID("$Id$")
 
@@ -2814,6 +2819,10 @@ void VSICleanupFileManager()
         CPLDestroyMutex(hVSIFileManagerMutex);
         hVSIFileManagerMutex = nullptr;
     }
+
+#ifdef HAVE_CURL
+    cpl::VSICURLDestroyCacheFileProp();
+#endif
 }
 
 /************************************************************************/

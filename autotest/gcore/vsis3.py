@@ -1729,6 +1729,16 @@ def test_vsis3_4(aws_test_config, webserver_port):
     with webserver.install_http_handler(handler):
         assert gdal.VSIStatL('/vsis3/s3_fake_bucket3/empty_file.bin').size == 3
 
+    handler = webserver.SequentialHandler()
+    handler.add(
+        'HEAD',
+        '/s3_fake_bucket3/empty_file.bin',
+        200,
+        {'Connection': 'close', 'Content-Length': '3'}
+    )
+    with webserver.install_http_handler(handler):
+        assert gdal.VSIStatL('/vsis3_streaming/s3_fake_bucket3/empty_file.bin').size == 3
+
     # Empty file
     handler = webserver.SequentialHandler()
 
@@ -1761,6 +1771,10 @@ def test_vsis3_4(aws_test_config, webserver_port):
     )
     with webserver.install_http_handler(handler):
         assert gdal.VSIStatL('/vsis3/s3_fake_bucket3/empty_file.bin').size == 0
+
+    # Check that the update of the file results in the /vsis3_streaming/
+    # cached properties to be updated
+    assert gdal.VSIStatL('/vsis3_streaming/s3_fake_bucket3/empty_file.bin').size == 0
 
     # Invalid seek
     handler = webserver.SequentialHandler()
@@ -4856,7 +4870,7 @@ role_session_name = my_role_session_name
 # Nominal cases (require valid credentials)
 
 
-def test_vsis3_extra_1(aws_test_config):
+def test_vsis3_extra_1():
 
     if not gdaltest.built_against_curl():
         pytest.skip()
@@ -4968,6 +4982,40 @@ def test_vsis3_extra_1(aws_test_config):
 
         ret = gdal.Rmdir(subpath)
         assert ret >= 0, ('Rmdir(%s) should not return an error' % subpath)
+
+        def test_sync():
+            local_file = "gdal_sync_test.bin"
+            remote_file = path +"/" + local_file
+
+            f = gdal.VSIFOpenL(local_file, "wb")
+            gdal.VSIFWriteL('foo' * 10000, 1, 3 * 10000, f)
+            gdal.VSIFCloseL(f)
+
+            gdal.Sync(local_file, remote_file)
+            gdal.Unlink(local_file)
+            gdal.Sync(remote_file, local_file)
+
+            assert gdal.VSIStatL(local_file).size == 3 * 10000
+
+            f = gdal.VSIFOpenL(local_file, "wb")
+            gdal.VSIFWriteL('foobar' * 10000, 1, 6 * 10000, f)
+            gdal.VSIFCloseL(f)
+
+            gdal.Sync(local_file, remote_file)
+
+            assert gdal.VSIStatL(remote_file).size == 6 * 10000
+
+            s = gdal.VSIStatL(remote_file.replace('/vsis3/', '/vsis3_streaming/')).size
+            assert s == 6 * 10000
+
+            gdal.Unlink(local_file)
+            gdal.Sync(remote_file, local_file)
+
+            assert gdal.VSIStatL(local_file).size == 6 * 10000
+
+            gdal.Unlink(remote_file)
+
+        test_sync()
 
         return
 
