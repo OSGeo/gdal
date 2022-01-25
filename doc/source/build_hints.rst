@@ -1270,15 +1270,15 @@ Poppler
 The `Poppler <https://poppler.freedesktop.org/>`_ library is one
 of the possible backends for the :ref:`raster.pdf` driver.
 
-.. option:: POPPLER_INCLUDE_DIR
+.. option:: Poppler_INCLUDE_DIR
 
     Path to an include directory with the ``poppler-config.h`` header file.
 
-.. option:: POPPLER_LIBRARY
+.. option:: Poppler_LIBRARY
 
     Path to a shared or static library file.
 
-.. option:: GDAL_USE_PDFIUM=ON/OFF
+.. option:: GDAL_USE_POPPLER=ON/OFF
 
     Control whether to use Poppler. Defaults to ON when Poppler is found.
 
