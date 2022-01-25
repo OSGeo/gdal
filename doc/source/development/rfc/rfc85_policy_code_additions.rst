@@ -8,7 +8,7 @@ RFC 85: Policy regarding substantial code additions
 Authors: Howard Butler, Even Rouault
 ======== ==================================================
 Started: 2022-01-17
-Status:  Development
+Status:  Adopted
 ======== ==================================================
 
 Summary
@@ -65,12 +65,12 @@ Policy
 - Contributors of significant code additions are expected to participate in the
   day-to-day life of the GDAL project, and need to monitor closely the communication
   channels of the project: issue tracker, mailing lists, etc.
-  
+
 - Maintainers are expected to support their contributions by triaging bug reports,
   reviewing related pull requests and RFCs, making functional enhancements, testing
   releases, and improving documentation, tests, and infrastructure.
 
-- In addition, maintainers are expected to respond in a timely manner to wider 
+- In addition, maintainers are expected to respond in a timely manner to wider
   project changes (CI, build scripts, upgrade of dependencies, build tools,
   documentation, etc.) as it pertains to their contributions.
 
@@ -86,5 +86,4 @@ Policy
 Voting history
 --------------
 
-TBD
-
++1 from PSC members MateuszL, KurtS, TamasS, SeanG, HowardB, JukkaR and EvenR.
