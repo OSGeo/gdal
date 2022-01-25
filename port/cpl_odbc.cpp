@@ -1201,7 +1201,7 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
         char szWrkData[513] = {};
 
         // If RetrieveNumericColumnsAsDouble flag is set, then read numeric columns using numeric data types and populate native double column values array.
-        // This allows retrieval of the original numeric value as a double via GetColDataAsDouble with risk of loss of precision.
+        // This allows retrieval of the original numeric value as a double via GetColDataAsDouble without risk of loss of precision.
         // Additionally, some ODBC drivers (e.g. the MS Access ODBC driver) require reading numeric values using numeric
         // data types, otherwise incorrect values can result. See https://github.com/OSGeo/gdal/issues/3885
         if ( m_padColValuesAsDouble &&
