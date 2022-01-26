@@ -64,10 +64,24 @@ class GDALTGADataset final: public GDALPamDataset
 {
         friend class GDALTGARasterBand;
 
+        struct ScanlineState
+        {
+            // Offset in the file of the start of the scanline
+            vsi_l_offset        nOffset = 0;
+            bool                bRemainingPixelsAreRLERun = false;
+            // Number of pixels remaining from a previous scanline.
+            // See https://en.wikipedia.org/wiki/Truevision_TGA#Specification_discrepancies
+            // TGA v2.0 specification states  "Run-length Packets should never encode pixels from more than one scan line."
+            // but earlier specification said the contrary.
+            int                 nRemainingPixelsPrevScanline = 0;
+            // Value of pixels remaining from a previous RLE run
+            std::vector<GByte>  abyDataPrevRLERun{};
+        };
+
         ImageHeader m_sImageHeader;
         VSILFILE   *m_fpImage;
         unsigned    m_nImageDataOffset = 0;
-        std::vector<vsi_l_offset> m_anScanlineOffsets{};
+        std::vector<ScanlineState> m_aoScanlineState{};
         int         m_nLastLineKnownOffset = 0;
         bool        m_bFourthChannelIsAlpha = false;
 
@@ -274,9 +288,9 @@ CPLErr GDALTGARasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff, void*
     const int nLine = (poGDS->m_sImageHeader.nImageDescriptor & (1 << 5)) ?
                             nBlockYOff : nRasterYSize - 1 - nBlockYOff;
     const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
-    if( !poGDS->m_anScanlineOffsets.empty() ) // RLE
+    if( !poGDS->m_aoScanlineState.empty() ) // RLE
     {
-        if( poGDS->m_anScanlineOffsets[nLine] == 0 )
+        if( poGDS->m_aoScanlineState[nLine].nOffset == 0 )
         {
             for( int i = poGDS->m_nLastLineKnownOffset; i < nLine; i++ )
             {
@@ -289,46 +303,67 @@ CPLErr GDALTGARasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff, void*
                 }
             }
         }
-        VSIFSeekL(poGDS->m_fpImage, poGDS->m_anScanlineOffsets[nLine], SEEK_SET);
+        VSIFSeekL(poGDS->m_fpImage, poGDS->m_aoScanlineState[nLine].nOffset, SEEK_SET);
         int x = 0;
         std::vector<GByte> abyData;
         const int nBytesPerPixel =
             (nBands == 1) ? nDTSize : (nBands == 4) ? 4 : poGDS->m_sImageHeader.nPixelDepth / 8;
+
+        // Deal with a run from a previous scanline that continues on next
+        // one(s)
+        bool bRLERun = false;
+        int nRemainingPixelsPrevScanline =
+            poGDS->m_aoScanlineState[nLine].nRemainingPixelsPrevScanline;
         while( x < nRasterXSize )
         {
-            GByte nRepeatCount = 0;
-            VSIFReadL(&nRepeatCount, 1, 1, poGDS->m_fpImage);
-            const int nPixelsToFill = std::min(nRasterXSize - x,
-                                               (nRepeatCount & 0x7f) + 1);
-            if( nRepeatCount & 0x80 )
+            int nPixelsToFillUnclamped;
+            if( nRemainingPixelsPrevScanline != 0 )
             {
-                if( pImage == nullptr )
+                abyData = poGDS->m_aoScanlineState[nLine].abyDataPrevRLERun;
+                bRLERun = poGDS->m_aoScanlineState[nLine].bRemainingPixelsAreRLERun;
+                nPixelsToFillUnclamped = nRemainingPixelsPrevScanline;
+            }
+            else
+            {
+                GByte nRepeatCount = 0;
+                VSIFReadL(&nRepeatCount, 1, 1, poGDS->m_fpImage);
+                bRLERun = ( nRepeatCount & 0x80 ) != 0;
+                nPixelsToFillUnclamped = (nRepeatCount & 0x7f) + 1;
+            }
+            const int nPixelsToFill = std::min(nRasterXSize - x,
+                                               nPixelsToFillUnclamped);
+            if( bRLERun )
+            {
+                if( nBands == 1 )
                 {
-                    VSIFSeekL(poGDS->m_fpImage, nBytesPerPixel, SEEK_CUR);
-                }
-                else
-                {
-                    if( nBands == 1 )
+                    if( nRemainingPixelsPrevScanline == 0 )
                     {
-                        VSIFReadL(static_cast<GByte*>(pImage) + x * nDTSize,
+                        abyData.resize(nDTSize);
+                        VSIFReadL(&abyData[0],
                                   1,
                                   nDTSize,
                                   poGDS->m_fpImage);
-                        if( nPixelsToFill > 1 )
-                        {
-                            GDALCopyWords(static_cast<GByte*>(pImage) + x * nDTSize,
-                                        eDataType,
-                                        0,
-                                        static_cast<GByte*>(pImage) + (x+1) * nDTSize,
-                                        eDataType,
-                                        nDTSize,
-                                        nPixelsToFill - 1);
-                        }
                     }
-                    else
+                    if( pImage != nullptr )
+                    {
+                        GDALCopyWords(&abyData[0],
+                                    eDataType,
+                                    0,
+                                    static_cast<GByte*>(pImage) + x * nDTSize,
+                                    eDataType,
+                                    nDTSize,
+                                    nPixelsToFill);
+                    }
+                }
+                else
+                {
+                    if( nRemainingPixelsPrevScanline == 0 )
                     {
                         abyData.resize(4);
                         VSIFReadL(&abyData[0], 1, nBytesPerPixel, poGDS->m_fpImage);
+                    }
+                    if( pImage != nullptr )
+                    {
                         if( poGDS->m_sImageHeader.nPixelDepth == 16 )
                         {
                             const GUInt16 nValue = abyData[0] | (abyData[1] << 8);
@@ -395,16 +430,16 @@ CPLErr GDALTGARasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff, void*
                 }
             }
             x += nPixelsToFill;
+            nRemainingPixelsPrevScanline = nPixelsToFillUnclamped - nPixelsToFill;
         }
-        if( x != nRasterXSize )
-        {
-            CPLError(CE_Failure, CPLE_FileIO,
-                     "RLE packet does not terminate on scan line boundary");
-            return CE_Failure;
-        }
+
         if( nLine + 1 < nRasterYSize )
         {
-            poGDS->m_anScanlineOffsets[nLine+1] = VSIFTellL(poGDS->m_fpImage);
+            poGDS->m_aoScanlineState[nLine + 1].nOffset = VSIFTellL(poGDS->m_fpImage);
+            poGDS->m_aoScanlineState[nLine + 1].bRemainingPixelsAreRLERun = bRLERun;
+            poGDS->m_aoScanlineState[nLine + 1].nRemainingPixelsPrevScanline = nRemainingPixelsPrevScanline;
+            if( nRemainingPixelsPrevScanline )
+                poGDS->m_aoScanlineState[nLine + 1].abyDataPrevRLERun = abyData;
         }
         if( pImage && nBands == 1 )
         {
@@ -618,8 +653,8 @@ GDALDataset* GDALTGADataset::Open(GDALOpenInfo* poOpenInfo)
     {
         // nHeight is a GUInt16, so well bounded...
         // coverity[tainted_data]
-        poDS->m_anScanlineOffsets.resize(nHeight);
-        poDS->m_anScanlineOffsets[0] = poDS->m_nImageDataOffset;
+        poDS->m_aoScanlineState.resize(nHeight);
+        poDS->m_aoScanlineState[0].nOffset = poDS->m_nImageDataOffset;
     }
     if( sHeader.eImageType == UNCOMPRESSED_COLORMAP ||
         sHeader.eImageType == RLE_COLORMAP ||
