@@ -2483,9 +2483,6 @@ void GDALRegister_MEM()
 "   </Option>"
 "</CreationOptionList>" );
 
-    poDriver->SetMetadataItem( GDAL_DCAP_FIELD_DOMAINS, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_CREATION_FIELD_DOMAIN_TYPES, "Coded Range Glob" );
-
     // Define GDAL_NO_OPEN_FOR_MEM_DRIVER macro to undefine Open() method for
     // MEM driver.  Otherwise, bad user input can trigger easily a GDAL crash
     // as random pointers can be passed as a string.  All code in GDAL tree
