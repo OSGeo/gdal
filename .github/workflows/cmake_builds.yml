@@ -253,7 +253,10 @@ jobs:
     - name: Install
       run: cmake --build $GITHUB_WORKSPACE/build --target install -j 3
 
+  # Disabled for now since bindings in master use GDALDatasetGetFieldDomainNames
+  # but libgdal from Conda has not it yet.
   build-windows-conda-csharp-only:
+    if: ${{ false }}  # disable for now
     runs-on: windows-latest
     env:
         architecture: x64
