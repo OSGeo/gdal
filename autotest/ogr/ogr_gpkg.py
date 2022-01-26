@@ -4692,10 +4692,15 @@ def test_ogr_gpkg_field_domains():
 
     assert ds.TestCapability(ogr.ODsCAddFieldDomain)
 
+    assert ds.GetFieldDomainNames() is None
+
     assert ds.GetFieldDomain('does_not_exist') is None
 
     assert ds.AddFieldDomain(ogr.CreateRangeFieldDomain('range_domain_int', 'my desc', ogr.OFTInteger, ogr.OFSTNone, 1, True, 2, False))
     assert ds.GetFieldDomain('range_domain_int') is not None
+
+    assert set(ds.GetFieldDomainNames()) == {'range_domain_int'}
+
     assert not ds.AddFieldDomain(ogr.CreateRangeFieldDomain('range_domain_int', 'my desc', ogr.OFTInteger, ogr.OFSTNone, 1, True, 2, True))
 
     assert ds.AddFieldDomain(ogr.CreateRangeFieldDomain('range_domain_int64', '', ogr.OFTInteger64, ogr.OFSTNone, -1234567890123, False, 1234567890123, True))
@@ -4722,6 +4727,22 @@ def test_ogr_gpkg_field_domains():
     assert ds.AddFieldDomain(ogr.CreateCodedFieldDomain('enum_domain_guess_real', '', ogr.OFTReal, ogr.OFSTNone, {1: "one", 1.5: "one dot five", 1234567890123: "1234567890123", 3: "three"}))
     assert ds.AddFieldDomain(ogr.CreateCodedFieldDomain('enum_domain_guess_string_single', '', ogr.OFTString, ogr.OFSTNone, {"three": "three"}))
     assert ds.AddFieldDomain(ogr.CreateCodedFieldDomain('enum_domain_guess_string', '', ogr.OFTString, ogr.OFSTNone, {1: "one", 1.5: "one dot five", "three": "three", 4: "four"}))
+
+    assert set(ds.GetFieldDomainNames()) == {'enum_domain',
+                                             'enum_domain_guess_int',
+                                             'enum_domain_guess_int64',
+                                             'enum_domain_guess_int64_single_1',
+                                             'enum_domain_guess_int64_single_2',
+                                             'enum_domain_guess_int_single',
+                                             'enum_domain_guess_real',
+                                             'enum_domain_guess_real_single',
+                                             'enum_domain_guess_string',
+                                             'enum_domain_guess_string_single',
+                                             'glob_domain',
+                                             'range_domain_int',
+                                             'range_domain_int64',
+                                             'range_domain_real',
+                                             'range_domain_real_inf'}
 
     lyr = ds.CreateLayer('test')
 
@@ -4758,6 +4779,22 @@ def test_ogr_gpkg_field_domains():
     sql_lyr = ds.ExecuteSQL('SELECT * FROM gpkg_data_column_constraints')
     assert sql_lyr is not None
     ds.ReleaseResultSet(sql_lyr)
+
+    assert set(ds.GetFieldDomainNames()) == {'enum_domain',
+                                             'enum_domain_guess_int',
+                                             'enum_domain_guess_int64',
+                                             'enum_domain_guess_int64_single_1',
+                                             'enum_domain_guess_int64_single_2',
+                                             'enum_domain_guess_int_single',
+                                             'enum_domain_guess_real',
+                                             'enum_domain_guess_real_single',
+                                             'enum_domain_guess_string',
+                                             'enum_domain_guess_string_single',
+                                             'glob_domain',
+                                             'range_domain_int',
+                                             'range_domain_int64',
+                                             'range_domain_real',
+                                             'range_domain_real_inf'}
 
     domain = ds.GetFieldDomain('range_domain_int')
     assert domain is not None
@@ -4909,6 +4946,22 @@ def test_ogr_gpkg_field_domains():
     idx = lyr_defn.GetFieldIndex('with_glob_domain')
     fld_defn = lyr_defn.GetFieldDefn(idx)
     assert fld_defn.GetDomainName() == 'glob_domain'
+
+    assert set(ds.GetFieldDomainNames()) == {'enum_domain',
+                                             'enum_domain_guess_int',
+                                             'enum_domain_guess_int64',
+                                             'enum_domain_guess_int64_single_1',
+                                             'enum_domain_guess_int64_single_2',
+                                             'enum_domain_guess_int_single',
+                                             'enum_domain_guess_real',
+                                             'enum_domain_guess_real_single',
+                                             'enum_domain_guess_string',
+                                             'enum_domain_guess_string_single',
+                                             'glob_domain',
+                                             'range_domain_int',
+                                             'range_domain_int64',
+                                             'range_domain_real',
+                                             'range_domain_real_inf'}
 
     ds = None
 

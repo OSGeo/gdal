@@ -1011,6 +1011,13 @@ OGRErr AbortSQL() {
       GDALDatasetClearStatistics(self);
   }
 
+%apply (char **CSL) {char **};
+  char **GetFieldDomainNames(char** options = 0)
+  {
+    return GDALDatasetGetFieldDomainNames(self, options);
+  }
+%clear char **;
+
   %apply Pointer NONNULL {const char* name};
   OGRFieldDomainShadow* GetFieldDomain(const char* name)
   {

@@ -872,3 +872,27 @@ const OGRFieldDomain* FGdbDataSource::GetFieldDomain(const std::string& name) co
     m_oMapFieldDomains[domainName] = std::move(poDomain);
     return GDALDataset::GetFieldDomain(name);
 }
+
+
+/************************************************************************/
+/*                        GetFieldDomainNames()                         */
+/************************************************************************/
+
+std::vector<std::string> FGdbDataSource::GetFieldDomainNames(CSLConstList) const
+{
+    std::vector<std::wstring> oDomainNamesWList;
+    const auto hr = m_pGeodatabase->GetDomains(oDomainNamesWList);
+    if (FAILED(hr))
+    {
+        GDBErr(hr, "Failed in GetDomains()");
+        return std::vector<std::string>();
+    }
+
+    std::vector<std::string> oDomainNamesList;
+    oDomainNamesList.reserve(oDomainNamesWList.size());
+    for ( const auto& osNameW : oDomainNamesWList )
+    {
+        oDomainNamesList.emplace_back(WStringToString(osNameW));
+    }
+    return oDomainNamesList;
+}
