@@ -1,8 +1,0 @@
-add_gdal_driver(TARGET gdal_RDA SOURCES rdadataset.cpp PLUGIN_CAPABLE_IF "NOT GDAL_USE_LIBJSONC_INTERNAL" NO_DEPS)
-gdal_standard_includes(gdal_RDA)
-target_include_directories(gdal_RDA PRIVATE ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/geojson)
-if (GDAL_USE_LIBJSONC_INTERNAL)
-  target_include_directories(gdal_RDA PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
-else ()
-  gdal_target_link_libraries(TARGET gdal_RDA LIBRARIES JSONC::JSONC)
-endif ()
