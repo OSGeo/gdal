@@ -89,7 +89,10 @@ if(HDF4_INCLUDE_DIR)
     endforeach()
 
     if(WIN32)
-        list(APPEND HDF4_LIBRARIES ws2_32.lib)
+        find_library(WS2_32_LIBRARY ws2_32)
+        if(WS2_32_LIBRARY)
+          list(APPEND HDF4_LIBRARIES ${WS2_32_LIBRARY})
+        endif()
     endif()
 endif()
 
