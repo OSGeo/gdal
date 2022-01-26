@@ -296,7 +296,7 @@ if (MINGW)
   # excluding any optimizations that take up extra space. Given that the issue is a string table overflowing, -Os seemed
   # appropriate.
   if (CMAKE_BUILD_TYPE MATCHES Debug)
-    set_compile_options(-Os)
+    add_compile_options(-Os)
   endif ()
 endif ()
 
