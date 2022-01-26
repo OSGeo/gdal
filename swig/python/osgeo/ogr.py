@@ -361,6 +361,10 @@ ODsCRandomLayerWrite = _ogr.ODsCRandomLayerWrite
 
 ODsCAddFieldDomain = _ogr.ODsCAddFieldDomain
 
+ODsCDeleteFieldDomain = _ogr.ODsCDeleteFieldDomain
+
+ODsCUpdateFieldDomain = _ogr.ODsCUpdateFieldDomain
+
 ODrCCreateDataSource = _ogr.ODrCCreateDataSource
 
 ODrCDeleteDataSource = _ogr.ODrCDeleteDataSource

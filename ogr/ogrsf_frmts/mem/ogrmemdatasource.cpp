@@ -141,6 +141,10 @@ int OGRMemDataSource::TestCapability( const char *pszCap )
         return TRUE;
     else if( EQUAL(pszCap, ODsCAddFieldDomain) )
         return TRUE;
+    else if( EQUAL(pszCap, ODsCDeleteFieldDomain) )
+        return TRUE;
+    else if( EQUAL(pszCap, ODsCUpdateFieldDomain) )
+        return TRUE;
 
     return FALSE;
 }
@@ -171,6 +175,55 @@ bool OGRMemDataSource::AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,
         return false;
     }
     const auto domainName = domain->GetName();
+    m_oMapFieldDomains[domainName] = std::move(domain);
+    return true;
+}
+
+/************************************************************************/
+/*                           DeleteFieldDomain()                        */
+/************************************************************************/
+
+bool OGRMemDataSource::DeleteFieldDomain(const std::string &name, std::string &failureReason)
+{
+    const auto iter = m_oMapFieldDomains.find(name);
+    if( iter == m_oMapFieldDomains.end() )
+    {
+        failureReason = "Domain does not exist";
+        return false;
+    }
+
+    m_oMapFieldDomains.erase(iter);
+
+    for( int i = 0; i < nLayers; i++ )
+    {
+        OGRMemLayer* poLayer = papoLayers[i];
+        for( int j = 0; j < poLayer->GetLayerDefn()->GetFieldCount(); ++j )
+        {
+            OGRFieldDefn* poFieldDefn = poLayer->GetLayerDefn()->GetFieldDefn(j);
+            if ( poFieldDefn->GetDomainName() == name )
+            {
+                poFieldDefn->SetDomainName(std::string());
+            }
+        }
+    }
+
+    return true;
+}
+
+
+/************************************************************************/
+/*                           UpdateFieldDomain()                        */
+/************************************************************************/
+
+bool OGRMemDataSource::UpdateFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain, std::string &failureReason)
+{
+    const auto domainName = domain->GetName();
+    const auto iter = m_oMapFieldDomains.find(domainName);
+    if( iter == m_oMapFieldDomains.end() )
+    {
+        failureReason = "No matching domain found";
+        return false;
+    }
     m_oMapFieldDomains[domainName] = std::move(domain);
     return true;
 }
