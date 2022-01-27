@@ -7190,7 +7190,7 @@ std::vector<std::string> GDALGeoPackageDataset::GetFieldDomainNames(CSLConstList
     std::unique_ptr<SQLResult> oResultTable;
     {
         std::string osSQL =
-            "SELECT constraint_name "
+            "SELECT DISTINCT constraint_name "
             "FROM gpkg_data_column_constraints "
             "WHERE constraint_name NOT LIKE '_%_domain_description' "
             "ORDER BY constraint_name "
