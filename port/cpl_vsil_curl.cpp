@@ -2782,11 +2782,16 @@ VSICurlFilesystemHandlerBase::GetCachedFileProp( const char* pszURL,
                                              FileProp& oFileProp )
 {
     CPLMutexHolder oHolder( &hMutex );
-
-    return oCacheFileProp.tryGet(std::string(pszURL), oFileProp) &&
-            // Let a chance to use new auth parameters
-           !(oFileProp.eExists == EXIST_NO &&
-             gnGenerationAuthParameters != oFileProp.nGenerationAuthParameters);
+    bool inCache;
+    if( oCacheFileProp.tryGet(std::string(pszURL), inCache) )
+    {
+        if( VSICURLGetCachedFileProp(pszURL, oFileProp) )
+        {
+            return true;
+        }
+        oCacheFileProp.remove(std::string(pszURL));
+    }
+    return false;
 }
 
 /************************************************************************/
@@ -2798,9 +2803,8 @@ VSICurlFilesystemHandlerBase::SetCachedFileProp( const char* pszURL,
                                              FileProp& oFileProp )
 {
     CPLMutexHolder oHolder( &hMutex );
-
-    oFileProp.nGenerationAuthParameters = gnGenerationAuthParameters;
-    oCacheFileProp.insert(std::string(pszURL), oFileProp);
+    oCacheFileProp.insert(std::string(pszURL), true);
+    VSICURLSetCachedFileProp(pszURL, oFileProp);
 }
 
 /************************************************************************/
@@ -2909,7 +2913,15 @@ void VSICurlFilesystemHandlerBase::ClearCache()
 
     GetRegionCache()->clear();
 
-    oCacheFileProp.clear();
+    {
+        const auto lambda = [](
+            const lru11::KeyValuePair<std::string, bool>& kv)
+        {
+            VSICURLInvalidateCachedFileProp(kv.key.c_str());
+        };
+        oCacheFileProp.cwalk(lambda);
+        oCacheFileProp.clear();
+    }
 
     oCacheDirList.clear();
     nCachedFilesInDirList = 0;
@@ -2944,7 +2956,7 @@ void VSICurlFilesystemHandlerBase::PartialClearCache(const char* pszFilenamePref
     {
         std::list<std::string> keysToRemove;
         auto lambda = [&keysToRemove, &osURL](
-            const lru11::KeyValuePair<std::string, FileProp>& kv)
+            const lru11::KeyValuePair<std::string, bool>& kv)
         {
             if( strncmp(kv.key.c_str(), osURL, osURL.size()) == 0 )
                 keysToRemove.push_back(kv.key);
@@ -2953,6 +2965,7 @@ void VSICurlFilesystemHandlerBase::PartialClearCache(const char* pszFilenamePref
         for( auto& key: keysToRemove )
             oCacheFileProp.remove(key);
     }
+    VSICURLInvalidateCachedFilePropPrefix(osURL.c_str());
 
     {
         const size_t nLen = strlen(pszFilenamePrefix);
@@ -4880,6 +4893,84 @@ int VSICurlParseUnixPermissions(const char* pszPermissions)
     return nMode;
 }
 
+/************************************************************************/
+/*                  Cache of file properties.                           */
+/************************************************************************/
+
+static std::mutex oCacheFilePropMutex;
+static lru11::Cache<std::string, FileProp>* poCacheFileProp = nullptr;
+
+/************************************************************************/
+/*                   VSICURLGetCachedFileProp()                         */
+/************************************************************************/
+
+bool VSICURLGetCachedFileProp( const char* pszURL, FileProp& oFileProp )
+{
+    std::lock_guard<std::mutex> oLock(oCacheFilePropMutex);
+    return poCacheFileProp != nullptr &&
+           poCacheFileProp->tryGet(std::string(pszURL), oFileProp) &&
+            // Let a chance to use new auth parameters
+           !(oFileProp.eExists == EXIST_NO &&
+             gnGenerationAuthParameters != oFileProp.nGenerationAuthParameters);
+}
+
+/************************************************************************/
+/*                   VSICURLSetCachedFileProp()                         */
+/************************************************************************/
+
+void VSICURLSetCachedFileProp( const char* pszURL, FileProp& oFileProp )
+{
+    std::lock_guard<std::mutex> oLock(oCacheFilePropMutex);
+    if( poCacheFileProp == nullptr )
+        poCacheFileProp = new lru11::Cache<std::string, FileProp>(100 * 1024);
+    oFileProp.nGenerationAuthParameters = gnGenerationAuthParameters;
+    poCacheFileProp->insert(std::string(pszURL), oFileProp);
+}
+
+/************************************************************************/
+/*                   VSICURLInvalidateCachedFileProp()                  */
+/************************************************************************/
+
+void VSICURLInvalidateCachedFileProp( const char* pszURL )
+{
+    std::lock_guard<std::mutex> oLock(oCacheFilePropMutex);
+    if( poCacheFileProp != nullptr )
+        poCacheFileProp->remove(std::string(pszURL));
+}
+
+/************************************************************************/
+/*               VSICURLInvalidateCachedFilePropPrefix()                */
+/************************************************************************/
+
+void VSICURLInvalidateCachedFilePropPrefix( const char* pszURL )
+{
+    std::lock_guard<std::mutex> oLock(oCacheFilePropMutex);
+    if( poCacheFileProp != nullptr )
+    {
+        std::list<std::string> keysToRemove;
+        const size_t nURLSize = strlen(pszURL);
+        auto lambda = [&keysToRemove, &pszURL, nURLSize](
+            const lru11::KeyValuePair<std::string, FileProp>& kv)
+        {
+            if( strncmp(kv.key.c_str(), pszURL, nURLSize) == 0 )
+                keysToRemove.push_back(kv.key);
+        };
+        poCacheFileProp->cwalk(lambda);
+        for( auto& key: keysToRemove )
+            poCacheFileProp->remove(key);
+    }
+}
+
+/************************************************************************/
+/*                   VSICURLDestroyCacheFileProp()                      */
+/************************************************************************/
+
+void VSICURLDestroyCacheFileProp()
+{
+    std::lock_guard<std::mutex> oLock(oCacheFilePropMutex);
+    delete poCacheFileProp;
+    poCacheFileProp = nullptr;
+}
 
 } /* end of namespace cpl */
 
@@ -5076,8 +5167,8 @@ void VSIInstallCurlFileHandler( void )
 void VSICurlClearCache( void )
 {
     // FIXME ? Currently we have different filesystem instances for
-    // vsicurl/, /vsis3/, /vsigs/ . So each one has its own cache of regions,
-    // file size, etc.
+    // vsicurl/, /vsis3/, /vsigs/ . So each one has its own cache of regions.
+    // File properties cache are now shared
     CSLConstList papszPrefix = VSIFileManager::GetPrefixes();
     for( size_t i = 0; papszPrefix && papszPrefix[i]; ++i )
     {
