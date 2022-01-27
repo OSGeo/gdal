@@ -7929,6 +7929,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
     int nGroupID = -1;
     int nVarID = -1;
 
+    std::map<std::array<int, 3>, std::vector<std::pair<int, int>>> oMap2DDimsToGroupAndVar;
 #ifdef NETCDF_HAS_NC4
     if( (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0 &&
         STARTS_WITH(CSLFetchNameValueDef(poDS->papszMetadata, "NC_GLOBAL#mission_name", ""), "Sentinel 3") &&
@@ -7950,7 +7951,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
         poDS->FilterVars(cdfid, (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0,
                         (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0,
                         papszIgnoreVars, &nRasterVars, &nGroupID, &nVarID,
-                        &nIgnoredVars);
+                        &nIgnoredVars, oMap2DDimsToGroupAndVar);
     }
     CSLDestroy(papszIgnoreVars);
 
@@ -7983,15 +7984,26 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
 
     // We have more than one variable with 2 dimensions in the
     // file, then treat this as a subdataset container dataset.
+    bool bSeveralVariablesAsBands = false;
     if( (nRasterVars > 1) && !bTreatAsSubdataset )
     {
-        poDS->CreateSubDatasetList(cdfid);
-        poDS->SetMetadata(poDS->papszMetadata);
-        CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
-                                    // with GDALDataset own mutex.
-        poDS->TryLoadXML();
-        CPLAcquireMutex(hNCMutex, 1000.0);
-        return poDS;
+        if( CPLFetchBool(poOpenInfo->papszOpenOptions, "VARIABLES_AS_BANDS", false)
+            && oMap2DDimsToGroupAndVar.size() == 1 )
+        {
+            nGroupID = oMap2DDimsToGroupAndVar.begin()->second.front().first;
+            nVarID = oMap2DDimsToGroupAndVar.begin()->second.front().second;
+            bSeveralVariablesAsBands = true;
+        }
+        else
+        {
+            poDS->CreateSubDatasetList(cdfid);
+            poDS->SetMetadata(poDS->papszMetadata);
+            CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
+                                        // with GDALDataset own mutex.
+            poDS->TryLoadXML();
+            CPLAcquireMutex(hNCMutex, 1000.0);
+            return poDS;
+        }
     }
 
     // If we are not treating things as a subdataset, then capture
@@ -8388,13 +8400,30 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
             return nullptr;
         }
     }
-    for( unsigned int lev = 0; lev < nTotLevCount ; lev++ )
+    if( bSeveralVariablesAsBands )
     {
-        netCDFRasterBand *poBand =
-            new netCDFRasterBand(poDS, cdfid, var, nDim, lev, panBandZLev,
-                                 panBandDimPos, paDimIds, lev + 1,
-                                 anExtraDimGroupIds, anExtraDimVarIds);
-        poDS->SetBand(lev + 1, poBand);
+        const auto& listVariables = oMap2DDimsToGroupAndVar.begin()->second;
+        for( int iBand = 0; iBand < static_cast<int>(listVariables.size()); ++iBand )
+        {
+            int bandVarGroupId = listVariables[iBand].first;
+            int bandVarId = listVariables[iBand].second;
+            netCDFRasterBand *poBand =
+                new netCDFRasterBand(poDS, bandVarGroupId, bandVarId, nDim, 0, nullptr,
+                                     panBandDimPos, paDimIds, iBand + 1,
+                                     anExtraDimGroupIds, anExtraDimVarIds);
+            poDS->SetBand(iBand + 1, poBand);
+        }
+    }
+    else
+    {
+        for( unsigned int lev = 0; lev < nTotLevCount ; lev++ )
+        {
+            netCDFRasterBand *poBand =
+                new netCDFRasterBand(poDS, cdfid, var, nDim, lev, panBandZLev,
+                                     panBandDimPos, paDimIds, lev + 1,
+                                     anExtraDimGroupIds, anExtraDimVarIds);
+            poDS->SetBand(lev + 1, poBand);
+        }
     }
 
     CPLFree(paDimIds);
@@ -9595,6 +9624,10 @@ void GDALRegister_netCDF()
 "   <Option name='HONOUR_VALID_RANGE' type='boolean' scope='raster' "
     "description='Whether to set to nodata pixel values outside of the "
     "validity range' default='YES'/>"
+"   <Option name='VARIABLES_AS_BANDS' type='boolean' scope='raster' "
+    "description='Whether 2D variables that share the same indexing dimensions "
+    "should be exposed as several bands of a same dataset instead of several "
+    "subdatasets.' default='NO'/>"
 "</OpenOptionList>" );
 
 
@@ -11761,7 +11794,8 @@ CPLErr netCDFDataset::FilterVars( int nCdfId, bool bKeepRasters,
                                   bool bKeepVectors, char **papszIgnoreVars,
                                   int *pnRasterVars,
                                   int *pnGroupId, int *pnVarId,
-                                  int *pnIgnoredVars )
+                                  int *pnIgnoredVars,
+                                  std::map<std::array<int, 3>, std::vector<std::pair<int, int>>>& oMap2DDimsToGroupAndVar)
 {
     int nVars = 0;
     int nRasterVars = 0;
@@ -11857,9 +11891,18 @@ CPLErr netCDFDataset::FilterVars( int nCdfId, bool bKeepRasters,
                         {
                             bRasterCandidate = false;
                         }
+                        else
+                        {
+                            std::array<int, 3> oKey{anDimIds[0], anDimIds[1], vartype};
+                            oMap2DDimsToGroupAndVar[oKey].emplace_back(
+                                std::pair<int, int>(nCdfId, v));
+                        }
                     }
                     else
                     {
+                        std::array<int, 3> oKey{anDimIds[0], anDimIds[1], vartype};
+                        oMap2DDimsToGroupAndVar[oKey].emplace_back(
+                            std::pair<int, int>(nCdfId, v));
                         bIsVectorOnly = false;
                     }
                 }
@@ -11962,7 +12005,7 @@ CPLErr netCDFDataset::FilterVars( int nCdfId, bool bKeepRasters,
     {
         FilterVars(panSubGroupIds[i], bKeepRasters, bKeepVectors,
                    papszIgnoreVars, pnRasterVars, pnGroupId, pnVarId,
-                   pnIgnoredVars);
+                   pnIgnoredVars, oMap2DDimsToGroupAndVar);
     }
     CPLFree(panSubGroupIds);
 

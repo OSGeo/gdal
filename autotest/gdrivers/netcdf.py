@@ -525,7 +525,7 @@ def test_netcdf_13():
 # check for scale/offset for two variables
 
 
-def test_netcdf_14():
+def test_netcdf_two_vars_as_subdatasets():
 
     ds = gdal.Open('NETCDF:data/netcdf/two_vars_scale_offset.nc:z')
 
@@ -541,6 +541,29 @@ def test_netcdf_14():
 
     scale = ds.GetRasterBand(1).GetScale()
     offset = ds.GetRasterBand(1).GetOffset()
+
+    assert scale == 0.1 and offset == 2.5, \
+        ('Incorrect scale(%f) or offset(%f)' % (scale, offset))
+
+###############################################################################
+# check for opening similar variables as multiple bands of the
+# same dataset
+
+
+def test_netcdf_two_vars_as_multiple_bands():
+
+    ds = gdal.OpenEx('data/netcdf/two_vars_scale_offset.nc',
+                     open_options = ['VARIABLES_AS_BANDS=YES'])
+    assert ds.RasterCount == 2
+
+    scale = ds.GetRasterBand(1).GetScale()
+    offset = ds.GetRasterBand(1).GetOffset()
+
+    assert scale == 0.01 and offset == 1.5, \
+        ('Incorrect scale(%f) or offset(%f)' % (scale, offset))
+
+    scale = ds.GetRasterBand(2).GetScale()
+    offset = ds.GetRasterBand(2).GetOffset()
 
     assert scale == 0.1 and offset == 2.5, \
         ('Incorrect scale(%f) or offset(%f)' % (scale, offset))

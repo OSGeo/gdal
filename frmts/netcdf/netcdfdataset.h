@@ -30,12 +30,14 @@
 #ifndef NETCDFDATASET_H_INCLUDED_
 #define NETCDFDATASET_H_INCLUDED_
 
+#include <array>
 #include <ctime>
 #include <cfloat>
 #include <cstdlib>
 #include <functional>
 #include <map>
 #include <memory>
+#include <utility>
 #include <vector>
 
 #include "cpl_mem_cache.h"
@@ -858,7 +860,10 @@ class netCDFDataset final: public GDALPamDataset
 
     CPLErr FilterVars( int nCdfId, bool bKeepRasters, bool bKeepVectors,
                        char **papszIgnoreVars, int *pnRasterVars,
-                       int *pnGroupId, int *pnVarId, int *pnIgnoredVars );
+                       int *pnGroupId, int *pnVarId, int *pnIgnoredVars,
+                       // key is (dim1Id, dim2Id, nc_type varType)
+                       // value is (groupId, varId)
+                       std::map<std::array<int, 3>, std::vector<std::pair<int, int>>>& oMap2DDimsToGroupAndVar);
     CPLErr CreateGrpVectorLayers( int nCdfId, CPLString osFeatureType,
                                   std::vector<int> anPotentialVectorVarID,
                                   std::map<int, int> oMapDimIdToCount,
