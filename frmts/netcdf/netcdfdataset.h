@@ -746,8 +746,8 @@ class netCDFDataset final: public GDALPamDataset
     bool         bWriteGDALHistory = true;
 
     /* projection/GT */
-    double       adfGeoTransform[6];
-    char         *pszProjection;
+    double       m_adfGeoTransform[6];
+    char         *m_pszProjection = nullptr;
     int          nXDimID;
     int          nYDimID;
     bool         bIsProjected;
@@ -756,10 +756,10 @@ class netCDFDataset final: public GDALPamDataset
 
     /* state vars */
     bool         bDefineMode;
-    bool         bSetProjection;
-    bool         bSetGeoTransform;
-    bool         bAddedProjectionVarsDefs;
-    bool         bAddedProjectionVarsData;
+    bool         m_bHasProjection = false;
+    bool         m_bHasGeoTransform = false;
+    bool         m_bAddedProjectionVarsDefs = false;
+    bool         m_bAddedProjectionVarsData = false;
     bool         bAddedGridMappingRef;
 
     /* create vars */
@@ -879,6 +879,9 @@ class netCDFDataset final: public GDALPamDataset
     static GDALDataset *OpenMultiDim( GDALOpenInfo * );
     std::shared_ptr<GDALGroup> m_poRootGroup{};
 #endif
+
+    void SetGeoTransformNoUpdate( double * );
+    void SetProjectionNoUpdate( const char* );
 
   protected:
 

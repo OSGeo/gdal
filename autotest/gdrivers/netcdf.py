@@ -291,10 +291,10 @@ def test_netcdf_2():
     assert ds.GetRasterBand(1).GetNoDataValue() is None
     ds = None
 
-    # Test that in raster-only mode, update isn't supported (not sure what would be missing for that...)
-    with gdaltest.error_handler():
-        ds = gdal.Open('tmp/netcdf2.nc', gdal.GA_Update)
-    assert ds is None
+    # Test update mode
+    ds = gdal.Open('tmp/netcdf2.nc', gdal.GA_Update)
+    assert ds.GetRasterBand(1).GetNoDataValue() is None
+    ds = None
 
     gdaltest.clean_tmp()
 
