@@ -2773,15 +2773,6 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
     // Temp variables to use in SetGeoTransform() and SetProjection().
     double adfTempGeoTransform[6] = { 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 };
 
-    if( !bReadSRSOnly && (xdim == 1 || ydim == 1) )
-    {
-        CPLError(CE_Warning, CPLE_AppDefined,
-                 "1-pixel width/height files not supported, "
-                 "xdim: %ld ydim: %ld",
-                 static_cast<long>(xdim), static_cast<long>(ydim));
-        return;
-    }
-
     // Look for grid_mapping metadata.
     const char *pszValue = pszGivenGM;
     CPLString osTmpGridMapping; // let is in this outer scope as pszValue may point to it
@@ -3634,6 +3625,16 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                     nVarDimYID = -1;
                 }
             }
+        }
+
+        if( (nVarDimXID >= 0 && xdim == 1) || (nVarDimXID >= 0 && ydim == 1) )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "1-pixel width/height files not supported, "
+                     "xdim: %ld ydim: %ld",
+                     static_cast<long>(xdim), static_cast<long>(ydim));
+            nVarDimXID = -1;
+            nVarDimYID = -1;
         }
     }
 
@@ -9230,9 +9231,10 @@ netCDFDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
 
     // Copy projection.
     void *pScaledProgress = nullptr;
-    if( pszWKT )
+    if( bGotGeoTransform || (pszWKT && pszWKT[0] != 0) )
     {
-        poDS->SetProjection(pszWKT);
+        poDS->SetProjection(pszWKT ? pszWKT : "");
+
         // Now we can call AddProjectionVars() directly.
         poDS->m_bHasGeoTransform = bGotGeoTransform;
         poDS->AddProjectionVars(true, nullptr, nullptr);
@@ -9246,6 +9248,12 @@ netCDFDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
         panBandDimPos[1] = nDim - 2;
         GDALDestroyScaledProgress(pScaledProgress);
     }
+    else
+    {
+        poDS->bBottomUp = CPL_TO_BOOL(
+            CSLFetchBoolean(papszOptions, "WRITE_BOTTOMUP", TRUE));
+    }
+
 
     // Write extra dim values - after projection for optimization.
     if( nDim > 2 )
