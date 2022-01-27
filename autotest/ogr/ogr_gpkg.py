@@ -4728,6 +4728,7 @@ def test_ogr_gpkg_field_domains():
     assert ds.AddFieldDomain(ogr.CreateCodedFieldDomain('enum_domain_guess_string_single', '', ogr.OFTString, ogr.OFSTNone, {"three": "three"}))
     assert ds.AddFieldDomain(ogr.CreateCodedFieldDomain('enum_domain_guess_string', '', ogr.OFTString, ogr.OFSTNone, {1: "one", 1.5: "one dot five", "three": "three", 4: "four"}))
 
+    assert len(ds.GetFieldDomainNames()) == len(set(ds.GetFieldDomainNames()))
     assert set(ds.GetFieldDomainNames()) == {'enum_domain',
                                              'enum_domain_guess_int',
                                              'enum_domain_guess_int64',
