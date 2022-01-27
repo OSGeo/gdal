@@ -54,6 +54,7 @@ You can unset existing cached variables, by using the -U switch of cmake, for ex
 
     cmake .. -UGDAL_USE_*
 
+You can assemble these dependency settings (plus the ones described below) in the file ``cmake/ConfigUser.cmake``. That file has also an example on how to specify a different shared library name then the default one.
 
 .. warning::
 

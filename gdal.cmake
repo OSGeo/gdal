@@ -256,6 +256,14 @@ function (gdal_add_private_link_libraries)
 endfunction (gdal_add_private_link_libraries)
 
 add_library(${GDAL_LIB_TARGET_NAME} gcore/gdal.h)
+
+# If a shared lib renaming has been set in ConfigUser.cmake
+if (GDAL_SHAREDLIB_OUTPUT_NAME)
+  set_target_properties(GDAL PROPERTIES RUNTIME_OUTPUT_NAME ${GDAL_SHAREDLIB_OUTPUT_NAME})
+else ()
+  set_target_properties(${GDAL_LIB_TARGET_NAME} PROPERTIES OUTPUT_NAME "gdal")
+endif ()
+
 set_target_properties(${GDAL_LIB_TARGET_NAME} PROPERTIES OUTPUT_NAME "gdal")
 add_library(GDAL::GDAL ALIAS ${GDAL_LIB_TARGET_NAME})
 add_dependencies(${GDAL_LIB_TARGET_NAME} generate_gdal_version_h)
