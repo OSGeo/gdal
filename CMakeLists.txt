@@ -89,7 +89,7 @@ include(CTest)
 
 # Include defaults
 if (EXISTS ConfigUser.cmake)
-  include (ConfigUser.cmake)
+  include(ConfigUser.cmake)
 endif ()
 
 set(GDAL_LIB_TARGET_NAME GDAL)
