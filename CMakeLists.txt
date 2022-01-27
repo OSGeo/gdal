@@ -88,7 +88,9 @@ project(gdal LANGUAGES C CXX)
 include(CTest)
 
 # Include defaults
-include ("${CMAKE_SOURCE_DIR}/cmake/ConfigUser.cmake")
+if (EXISTS ConfigUser.cmake)
+  include (ConfigUser.cmake)
+endif ()
 
 set(GDAL_LIB_TARGET_NAME GDAL)
 
