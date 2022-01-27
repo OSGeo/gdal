@@ -4981,6 +4981,25 @@ def test_netcdf_default_metadata_disabled():
     gdal.Unlink(tmpfilename)
 
 
+def test_netcdf_update_metadata():
+
+    tmpfilename = 'tmp/test_netcdf_update_metadata.nc'
+    ds = gdal.GetDriverByName('netCDF').Create(tmpfilename, 2, 2)
+    ds.GetRasterBand(1).SetMetadata({'foo': 'bar'})
+    ds.SetMetadata({'NC_GLOBAL#bar': 'baz',
+                    'another_item': 'some_value',
+                    'bla#ignored': 'ignored'})
+    ds = None
+
+    ds = gdal.Open(tmpfilename)
+    assert ds.GetRasterBand(1).GetMetadataItem('foo') == 'bar'
+    assert ds.GetMetadataItem('NC_GLOBAL#bar') == 'baz'
+    assert ds.GetMetadataItem('NC_GLOBAL#GDAL_another_item') == 'some_value'
+    assert ds.GetMetadataItem('bla#ignored') is None
+    ds = None
+
+    gdal.Unlink(tmpfilename)
+
 
 def test_clean_tmp():
     # [KEEP THIS AS THE LAST TEST]

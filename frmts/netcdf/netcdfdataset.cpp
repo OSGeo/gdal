@@ -251,6 +251,9 @@ class netCDFRasterBand final: public GDALPamRasterBand
     virtual CPLErr SetUnitType( const char * ) override;
     virtual CPLErr IReadBlock( int, int, void * ) override;
     virtual CPLErr IWriteBlock( int, int, void * ) override;
+
+    virtual CPLErr SetMetadataItem( const char* pszName, const char* pszValue, const char* pszDomain = "" ) override;
+    virtual CPLErr SetMetadata( char** papszMD, const char* pszDomain = "" ) override;
 };
 
 /************************************************************************/
@@ -577,7 +580,7 @@ netCDFRasterBand::netCDFRasterBand( const netCDFRasterBand::CONSTRUCTOR_OPEN&,
         {
             // set PIXELTYPE=SIGNEDBYTE
             // See http://trac.osgeo.org/gdal/wiki/rfc14_imagestructure
-            SetMetadataItem("PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE");
+            GDALPamRasterBand::SetMetadataItem("PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE");
         }
     }
 
@@ -634,7 +637,6 @@ netCDFRasterBand::netCDFRasterBand( const netCDFRasterBand::CONSTRUCTOR_OPEN&,
 
     SetBlockSize();
 }
-
 
 void netCDFRasterBand::SetBlockSize()
 {
@@ -893,7 +895,7 @@ netCDFRasterBand::netCDFRasterBand( const netCDFRasterBand::CONSTRUCTOR_CREATE&,
         // For unsigned byte set PIXELTYPE=SIGNEDBYTE.
         // See http://trac.osgeo.org/gdal/wiki/rfc14_imagestructure
         if( bSignedData )
-            SetMetadataItem("PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE");
+            GDALPamRasterBand::SetMetadataItem("PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE");
     }
 
     if( nc_datatype != NC_BYTE &&
@@ -924,6 +926,74 @@ netCDFRasterBand::~netCDFRasterBand()
     netCDFRasterBand::FlushCache(true);
     CPLFree(panBandZPos);
     CPLFree(panBandZLev);
+}
+
+/************************************************************************/
+/*                        SetMetadataItem()                             */
+/************************************************************************/
+
+CPLErr netCDFRasterBand::SetMetadataItem( const char* pszName,
+                                          const char* pszValue,
+                                          const char* pszDomain )
+{
+    if( GetAccess() != GA_Update )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                  "netCDFRasterBand::SetMetadataItem() can only be "
+                  "called in update mode");
+        return CE_Failure;
+    }
+
+    if( (pszDomain == nullptr || pszDomain[0] == '\0') && pszValue != nullptr )
+    {
+        // Same logic as in CopyMetadata()
+
+        const char * const papszIgnoreBand[] = { CF_ADD_OFFSET, CF_SCALE_FACTOR,
+                                          "valid_range", "_Unsigned",
+                                          _FillValue, "coordinates",
+                                          nullptr };
+        // Do not copy varname, stats, NETCDF_DIM_*, nodata
+        // and items in papszIgnoreBand.
+        if( STARTS_WITH(pszName, "NETCDF_VARNAME") ||
+            STARTS_WITH(pszName, "STATISTICS_") ||
+            STARTS_WITH(pszName, "NETCDF_DIM_") ||
+            STARTS_WITH(pszName, "missing_value") ||
+            STARTS_WITH(pszName, "_FillValue") ||
+            CSLFindString(papszIgnoreBand, pszName) != -1 )
+        {
+            // do nothing
+        }
+        else
+        {
+            cpl::down_cast<netCDFDataset*>(poDS)->SetDefineMode(true);
+
+            if( !NCDFPutAttr(cdfid, nZId, pszName, pszValue) )
+                return CE_Failure;
+        }
+    }
+
+    return GDALPamRasterBand::SetMetadataItem(pszName, pszValue, pszDomain);
+}
+
+/************************************************************************/
+/*                          SetMetadata()                               */
+/************************************************************************/
+
+CPLErr netCDFRasterBand::SetMetadata( char** papszMD, const char* pszDomain )
+{
+    if( pszDomain == nullptr || pszDomain[0] == '\0' )
+    {
+        // We don't handle metadata item removal for now
+        for( const char* const*  papszIter = papszMD; papszIter && *papszIter; ++papszIter )
+        {
+            char* pszName = nullptr;
+            const char* pszValue = CPLParseNameValue(*papszIter, &pszName);
+            if( pszName && pszValue )
+                SetMetadataItem(pszName, pszValue);
+            CPLFree(pszName);
+        }
+    }
+    return GDALPamRasterBand::SetMetadata(papszMD, pszDomain);
 }
 
 /************************************************************************/
@@ -1424,7 +1494,7 @@ CPLErr netCDFRasterBand::CreateBandMetadata( const int *paDimIds,
     //  BandPos1 = (nBand - BandPos0*(3*4)) / (4)
     //  BandPos2 = (nBand - BandPos0*(3*4)) % (4)
 
-    SetMetadataItem("NETCDF_VARNAME", szVarName);
+    GDALPamRasterBand::SetMetadataItem("NETCDF_VARNAME", szVarName);
     int Sum = 1;
     if( nd == 3 )
     {
@@ -1461,7 +1531,7 @@ CPLErr netCDFRasterBand::CreateBandMetadata( const int *paDimIds,
         int nVarID = panExtraDimVarIds[i];
         if( nVarID < 0 )
         {
-            SetMetadataItem(szMetaName, CPLSPrintf("%d", result + 1));
+            GDALPamRasterBand::SetMetadataItem(szMetaName, CPLSPrintf("%d", result + 1));
         }
         else
         {
@@ -1578,7 +1648,7 @@ CPLErr netCDFRasterBand::CreateBandMetadata( const int *paDimIds,
             // Save dimension value.
             // NOTE: removed #original_units as not part of CF-1.
 
-            SetMetadataItem(szMetaName, szMetaTemp);
+            GDALPamRasterBand::SetMetadataItem(szMetaName, szMetaTemp);
         }
 
         // Avoid int32 overflow. Perhaps something more sensible to do here ?
@@ -1604,7 +1674,7 @@ CPLErr netCDFRasterBand::CreateBandMetadata( const int *paDimIds,
         char *pszMetaValue = nullptr;
         if( NCDFGetAttr(cdfid, nZId, szMetaName, &pszMetaValue) == CE_None )
         {
-            SetMetadataItem(szMetaName, pszMetaValue);
+            GDALPamRasterBand::SetMetadataItem(szMetaName, pszMetaValue);
         }
         else
         {
@@ -2441,6 +2511,70 @@ char **netCDFDataset::GetMetadata( const char *pszDomain )
     }
 
     return GDALDataset::GetMetadata(pszDomain);
+}
+
+/************************************************************************/
+/*                        SetMetadataItem()                             */
+/************************************************************************/
+
+CPLErr netCDFDataset::SetMetadataItem( const char* pszName,
+                                          const char* pszValue,
+                                          const char* pszDomain )
+{
+    if( GetAccess() != GA_Update )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                  "netCDFDataset::SetMetadataItem() can only be "
+                  "called in update mode");
+        return CE_Failure;
+    }
+
+    if( (pszDomain == nullptr || pszDomain[0] == '\0') && pszValue != nullptr )
+    {
+        std::string osName(pszName);
+
+        // Same logic as in CopyMetadata()
+        if( STARTS_WITH(osName.c_str(), "NC_GLOBAL#") )
+            osName = osName.substr(strlen("NC_GLOBAL#"));
+        else if( strchr(osName.c_str(), '#') == nullptr )
+            osName = "GDAL_" + osName;
+
+        if( STARTS_WITH(osName.c_str(), "NETCDF_DIM_") ||
+            strchr(osName.c_str(), '#') != nullptr )
+        {
+            // do nothing
+        }
+        else
+        {
+            SetDefineMode(true);
+
+            if( !NCDFPutAttr(cdfid, NC_GLOBAL, osName.c_str(), pszValue) )
+                return CE_Failure;
+        }
+    }
+
+    return GDALPamDataset::SetMetadataItem(pszName, pszValue, pszDomain);
+}
+
+/************************************************************************/
+/*                          SetMetadata()                               */
+/************************************************************************/
+
+CPLErr netCDFDataset::SetMetadata( char** papszMD, const char* pszDomain )
+{
+    if( pszDomain == nullptr || pszDomain[0] == '\0' )
+    {
+        // We don't handle metadata item removal for now
+        for( const char* const*  papszIter = papszMD; papszIter && *papszIter; ++papszIter )
+        {
+            char* pszName = nullptr;
+            const char* pszValue = CPLParseNameValue(*papszIter, &pszName);
+            if( pszName && pszValue )
+                SetMetadataItem(pszName, pszValue);
+            CPLFree(pszName);
+        }
+    }
+    return GDALPamDataset::SetMetadata(papszMD, pszDomain);
 }
 
 /************************************************************************/
@@ -4194,7 +4328,7 @@ int netCDFDataset::ProcessCFGeolocation( int nGroupId, int nVarId )
                     if( bSwitchedXY )
                     {
                         std::swap(pszGeolocXFullName, pszGeolocYFullName);
-                        SetMetadataItem("SWAP_XY", "YES", "GEOLOCATION");
+                        GDALPamDataset::SetMetadataItem("SWAP_XY", "YES", "GEOLOCATION");
                     }
 
                     bAddGeoloc = true;
@@ -4202,25 +4336,25 @@ int netCDFDataset::ProcessCFGeolocation( int nGroupId, int nVarId )
                              "using variables %s and %s for GEOLOCATION",
                              pszGeolocXFullName, pszGeolocYFullName);
 
-                    SetMetadataItem("SRS", SRS_WKT_WGS84_LAT_LONG, "GEOLOCATION");
+                    GDALPamDataset::SetMetadataItem("SRS", SRS_WKT_WGS84_LAT_LONG, "GEOLOCATION");
 
                     CPLString osTMP;
                     osTMP.Printf("NETCDF:\"%s\":%s",
                                  osFilename.c_str(), pszGeolocXFullName);
 
-                    SetMetadataItem("X_DATASET", osTMP, "GEOLOCATION");
-                    SetMetadataItem("X_BAND", "1" , "GEOLOCATION");
+                    GDALPamDataset::SetMetadataItem("X_DATASET", osTMP, "GEOLOCATION");
+                    GDALPamDataset::SetMetadataItem("X_BAND", "1" , "GEOLOCATION");
                     osTMP.Printf("NETCDF:\"%s\":%s",
                                  osFilename.c_str(), pszGeolocYFullName);
 
-                    SetMetadataItem("Y_DATASET", osTMP, "GEOLOCATION");
-                    SetMetadataItem("Y_BAND", "1", "GEOLOCATION");
+                    GDALPamDataset::SetMetadataItem("Y_DATASET", osTMP, "GEOLOCATION");
+                    GDALPamDataset::SetMetadataItem("Y_BAND", "1", "GEOLOCATION");
 
-                    SetMetadataItem("PIXEL_OFFSET", "0", "GEOLOCATION");
-                    SetMetadataItem("PIXEL_STEP", "1", "GEOLOCATION");
+                    GDALPamDataset::SetMetadataItem("PIXEL_OFFSET", "0", "GEOLOCATION");
+                    GDALPamDataset::SetMetadataItem("PIXEL_STEP", "1", "GEOLOCATION");
 
-                    SetMetadataItem("LINE_OFFSET", "0", "GEOLOCATION");
-                    SetMetadataItem("LINE_STEP", "1", "GEOLOCATION");
+                    GDALPamDataset::SetMetadataItem("LINE_OFFSET", "0", "GEOLOCATION");
+                    GDALPamDataset::SetMetadataItem("LINE_STEP", "1", "GEOLOCATION");
                 }
                 else
                 {
@@ -4264,7 +4398,7 @@ CPLErr netCDFDataset::Set1DGeolocation( int nGroupId, int nVarId,
     // Write metadata.
     char szTemp[ NC_MAX_NAME + 1 + 32 ] = {};
     snprintf(szTemp, sizeof(szTemp), "%s_VALUES", szDimName);
-    SetMetadataItem(szTemp, pszVarValues, "GEOLOCATION2");
+    GDALPamDataset::SetMetadataItem(szTemp, pszVarValues, "GEOLOCATION2");
 
     CPLFree(pszVarValues);
 
@@ -7998,7 +8132,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
     // Case where there is no raster variable
     if( nRasterVars == 0 && !bTreatAsSubdataset )
     {
-        poDS->SetMetadata(poDS->papszMetadata);
+        poDS->GDALPamDataset::SetMetadata(poDS->papszMetadata);
         CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
                                     // with GDALDataset own mutex.
         poDS->TryLoadXML();
@@ -8037,7 +8171,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
         else
         {
             poDS->CreateSubDatasetList(cdfid);
-            poDS->SetMetadata(poDS->papszMetadata);
+            poDS->GDALPamDataset::SetMetadata(poDS->papszMetadata);
             CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
                                         // with GDALDataset own mutex.
             poDS->TryLoadXML();
@@ -8406,7 +8540,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
     }
 
     // Store Metadata.
-    poDS->SetMetadata(poDS->papszMetadata);
+    poDS->GDALPamDataset::SetMetadata(poDS->papszMetadata);
 
     // Create bands.
 
@@ -9080,7 +9214,7 @@ netCDFDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
 
     // Copy geolocation info.
     if( poSrcDS->GetMetadata("GEOLOCATION") != nullptr )
-        poDS->SetMetadata(poSrcDS->GetMetadata("GEOLOCATION"), "GEOLOCATION");
+        poDS->GDALPamDataset::SetMetadata(poSrcDS->GetMetadata("GEOLOCATION"), "GEOLOCATION");
 
     // Copy geotransform.
     bool bGotGeoTransform = false;

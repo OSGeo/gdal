@@ -915,6 +915,9 @@ class netCDFDataset final: public GDALPamDataset
     virtual char      **GetMetadataDomainList() override;
     char ** GetMetadata( const char * ) override;
 
+    virtual CPLErr SetMetadataItem( const char* pszName, const char* pszValue, const char* pszDomain = "" ) override;
+    virtual CPLErr SetMetadata( char** papszMD, const char* pszDomain = "" ) override;
+
     virtual int  TestCapability(const char* pszCap) override;
 
     virtual int  GetLayerCount() override { return static_cast<int>(this->papoLayers.size()); }
