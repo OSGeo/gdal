@@ -1978,6 +1978,19 @@ OGRErr OGRSQLiteTableLayer::DeleteField( int iFieldToDelete )
 
     ResetReading();
 
+    if( m_poDS->SoftStartTransaction() != OGRERR_NONE )
+        return OGRERR_FAILURE;
+
+    // ALTER TABLE ... DROP COLUMN ... was first implemented in 3.35.0 but
+    // there was bug fixes related to it until 3.35.5
+#if SQLITE_VERSION_NUMBER >= 3035005L
+    const char* pszFieldName =
+        m_poFeatureDefn->GetFieldDefn(iFieldToDelete)->GetNameRef();
+    OGRErr eErr = SQLCommand( m_poDS->GetDB(),
+                       CPLString().Printf("ALTER TABLE \"%s\" DROP COLUMN \"%s\"",
+                          SQLEscapeName(m_pszTableName).c_str(),
+                          SQLEscapeName(pszFieldName).c_str()).c_str() );
+#else
 /* -------------------------------------------------------------------- */
 /*      Build list of old fields, and the list of new fields.           */
 /* -------------------------------------------------------------------- */
@@ -2015,16 +2028,39 @@ OGRErr OGRSQLiteTableLayer::DeleteField( int iFieldToDelete )
 
     CPLFree( pszFieldListForSelect );
     CPLFree( pszNewFieldList );
+#endif
 
-    if (eErr != OGRERR_NONE)
-        return eErr;
+/* -------------------------------------------------------------------- */
+/*      Check foreign key integrity if enforcement of foreign keys      */
+/*      constraint is enabled.                                          */
+/* -------------------------------------------------------------------- */
+    if( eErr == OGRERR_NONE &&
+        SQLGetInteger(m_poDS->GetDB(), "PRAGMA foreign_keys", nullptr) )
+    {
+        CPLDebug("SQLite", "Running PRAGMA foreign_key_check");
+        eErr = m_poDS->PragmaCheck("foreign_key_check", "", 0);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Finish                                                          */
 /* -------------------------------------------------------------------- */
-    eErr = m_poFeatureDefn->DeleteFieldDefn( iFieldToDelete );
 
-    RecomputeOrdinals();
+    if( eErr == OGRERR_NONE)
+    {
+        eErr = m_poDS->SoftCommitTransaction();
+        if( eErr == OGRERR_NONE)
+        {
+            eErr = m_poFeatureDefn->DeleteFieldDefn( iFieldToDelete );
+
+            RecomputeOrdinals();
+
+            ResetReading();
+        }
+    }
+    else
+    {
+        m_poDS->SoftRollbackTransaction();
+    }
 
     return eErr;
 }
