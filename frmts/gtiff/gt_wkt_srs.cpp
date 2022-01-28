@@ -3038,6 +3038,8 @@ CPLErr GTIFWktFromMemBufEx( int nSize, unsigned char *pabyBuffer,
     unsigned short nRasterType = 0;
 
     GTIF *hGTIF = GTIFNew(hTIFF);
+    if (hGTIF)
+        GTIFAttachPROJContext(hGTIF, OSRGetProjTLSContext());
 
     if( hGTIF != nullptr && GDALGTIFKeyGetSHORT(hGTIF, GTRasterTypeGeoKey,
                                              &nRasterType, 0, 1 ) == 1
@@ -3245,6 +3247,9 @@ CPLErr GTIFMemBufFromSRS( OGRSpatialReferenceH hSRS, const double *padfGeoTransf
     if( hSRS != nullptr || bPixelIsPoint )
     {
         hGTIF = GTIFNew(hTIFF);
+        if (hGTIF)
+            GTIFAttachPROJContext(hGTIF, OSRGetProjTLSContext());
+
         if( hSRS != nullptr )
             GTIFSetFromOGISDefnEx( hGTIF, hSRS,
                                    GEOTIFF_KEYS_STANDARD,
