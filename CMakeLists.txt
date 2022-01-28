@@ -88,7 +88,7 @@ project(gdal LANGUAGES C CXX)
 include(CTest)
 
 # Include defaults
-if (EXISTS ConfigUser.cmake)
+if (EXISTS "${PROJECT_SOURCE_DIR}/ConfigUser.cmake")
   include(ConfigUser.cmake)
 endif ()
 
