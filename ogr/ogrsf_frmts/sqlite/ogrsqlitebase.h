@@ -175,6 +175,8 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL: public GDALPamDataset
     OGRErr              SoftStartTransaction();
     OGRErr              SoftCommitTransaction();
     OGRErr              SoftRollbackTransaction();
+
+    OGRErr              PragmaCheck(const char * pszPragma, const char * pszExpected, int nRowsExpected);
 };
 
 /************************************************************************/

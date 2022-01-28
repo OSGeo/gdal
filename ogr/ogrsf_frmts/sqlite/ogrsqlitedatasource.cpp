@@ -425,6 +425,56 @@ void OGRSQLiteBaseDataSource::CloseDB()
     }
 }
 
+/* Returns the first row of first column of SQL as integer */
+OGRErr OGRSQLiteBaseDataSource::PragmaCheck(
+    const char * pszPragma, const char * pszExpected, int nRowsExpected )
+{
+    CPLAssert( pszPragma != nullptr );
+    CPLAssert( pszExpected != nullptr );
+    CPLAssert( nRowsExpected >= 0 );
+
+    char **papszResult = nullptr;
+    int nRowCount = 0;
+    int nColCount = 0;
+    char *pszErrMsg = nullptr;
+
+    int rc = sqlite3_get_table(
+        hDB,
+        CPLSPrintf("PRAGMA %s", pszPragma),
+        &papszResult, &nRowCount, &nColCount, &pszErrMsg );
+
+    if( rc != SQLITE_OK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Unable to execute PRAGMA %s: %s", pszPragma,
+                  pszErrMsg ? pszErrMsg : "(null)" );
+        sqlite3_free( pszErrMsg );
+        return OGRERR_FAILURE;
+    }
+
+    if ( nRowCount != nRowsExpected )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "bad result for PRAGMA %s, got %d rows, expected %d",
+                  pszPragma, nRowCount, nRowsExpected );
+        sqlite3_free_table(papszResult);
+        return OGRERR_FAILURE;
+    }
+
+    if ( nRowCount > 0 && ! EQUAL(papszResult[1], pszExpected) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "invalid %s (expected '%s', got '%s')",
+                  pszPragma, pszExpected, papszResult[1]);
+        sqlite3_free_table(papszResult);
+        return OGRERR_FAILURE;
+    }
+
+    sqlite3_free_table(papszResult);
+
+    return OGRERR_NONE;
+}
+
 /************************************************************************/
 /*                        OGRSQLiteDataSource()                         */
 /************************************************************************/
