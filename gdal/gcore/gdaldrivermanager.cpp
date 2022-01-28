@@ -608,7 +608,7 @@ GDALDriver * GDALDriverManager::GetDriverByName( const char * pszName )
     if( EQUAL(pszName, "CartoDB") )
         pszName = "Carto";
 
-    return oMapNameToDrivers[CPLString(pszName).toupper()];
+    return GetDriverByName_unlocked(pszName);
 }
 
 /************************************************************************/

@@ -1650,8 +1650,10 @@ class CPL_DLL GDALDriverManager : public GDALMajorObject
             { return (iDriver >= 0 && iDriver < nDrivers) ?
                   papoDrivers[iDriver] : nullptr; }
 
-    GDALDriver  *GetDriverByName_unlocked( const char * pszName )
-            { return oMapNameToDrivers[CPLString(pszName).toupper()]; }
+    GDALDriver  *GetDriverByName_unlocked( const char * pszName ) const
+            { auto oIter = oMapNameToDrivers.find(CPLString(pszName).toupper());
+              return oIter == oMapNameToDrivers.end() ? nullptr : oIter->second;
+            }
 
     static char** GetSearchPaths(const char* pszGDAL_DRIVER_PATH);
 
