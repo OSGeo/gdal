@@ -4560,7 +4560,27 @@ OGRErr OGRGeoPackageTableLayer::DeleteField( int iFieldToDelete )
     if( !RunDeferredSpatialIndexUpdate() )
         return OGRERR_FAILURE;
 
+    const char* pszFieldName =
+        m_poFeatureDefn->GetFieldDefn(iFieldToDelete)->GetNameRef();
+
 /* -------------------------------------------------------------------- */
+/*      Drop any iterator since we change the DB structure              */
+/* -------------------------------------------------------------------- */
+    m_poDS->ResetReadingAllLayers();
+
+    if( m_poDS->SoftStartTransaction() != OGRERR_NONE )
+        return OGRERR_FAILURE;
+
+    // ALTER TABLE ... DROP COLUMN ... was first implemented in 3.35.0 but
+    // there was bug fixes related to it until 3.35.5
+#if SQLITE_VERSION_NUMBER >= 3035005L
+    OGRErr eErr = SQLCommand( m_poDS->GetDB(),
+                       CPLString().Printf("ALTER TABLE \"%s\" DROP COLUMN \"%s\"",
+                          SQLEscapeName(m_pszTableName).c_str(),
+                          SQLEscapeName(pszFieldName).c_str()).c_str() );
+#else
+/* -------------------------------------------------------------------- */
+/*      Recreate table in a transaction                                 */
 /*      Build list of old fields, and the list of new fields.           */
 /* -------------------------------------------------------------------- */
     std::vector<OGRFieldDefn*> apoFields;
@@ -4576,21 +4596,8 @@ OGRErr OGRGeoPackageTableLayer::DeleteField( int iFieldToDelete )
     CPLString osFieldListForSelect( BuildSelectFieldList(apoFields) );
     CPLString osColumnsForCreate( GetColumnsOfCreateTable(apoFields) );
 
-/* -------------------------------------------------------------------- */
-/*      Drop any iterator since we change the DB structure              */
-/* -------------------------------------------------------------------- */
-    m_poDS->ResetReadingAllLayers();
-
-/* -------------------------------------------------------------------- */
-/*      Recreate table in a transaction                                 */
-/* -------------------------------------------------------------------- */
-    if( m_poDS->SoftStartTransaction() != OGRERR_NONE )
-        return OGRERR_FAILURE;
-
     OGRErr eErr = RecreateTable(osColumnsForCreate, osFieldListForSelect);
-
-    const char* pszFieldName =
-        m_poFeatureDefn->GetFieldDefn(iFieldToDelete)->GetNameRef();
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Update gpkg_extensions if needed.                               */
@@ -4671,10 +4678,13 @@ OGRErr OGRGeoPackageTableLayer::DeleteField( int iFieldToDelete )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Check foreign key integrity.                                    */
+/*      Check foreign key integrity if enforcement of foreign keys      */
+/*      constraint is enabled.                                          */
 /* -------------------------------------------------------------------- */
-    if( eErr == OGRERR_NONE )
+    if( eErr == OGRERR_NONE &&
+        SQLGetInteger(m_poDS->GetDB(), "PRAGMA foreign_keys", nullptr) )
     {
+        CPLDebug("GPKG", "Running PRAGMA foreign_key_check");
         eErr = m_poDS->PragmaCheck("foreign_key_check", "", 0);
     }
 
