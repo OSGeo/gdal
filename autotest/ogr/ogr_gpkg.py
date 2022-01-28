@@ -2832,7 +2832,25 @@ def test_ogr_gpkg_36():
 
     new_field_defn = ogr.FieldDefn('bar', ogr.OFTReal)
     new_field_defn.SetSubType(ogr.OFSTFloat32)
+    new_field_defn.SetWidth(10)
+    new_field_defn.SetDefault('5')
+
+    # Schema only change
     assert lyr.AlterFieldDefn(0, new_field_defn, ogr.ALTER_ALL_FLAG) == 0
+
+    # Full table rewrite
+    new_field_defn.SetNullable(False)
+    assert lyr.AlterFieldDefn(0, new_field_defn, ogr.ALTER_ALL_FLAG) == 0
+
+    # Full table rewrite
+    new_field_defn.SetUnique(True)
+    assert lyr.AlterFieldDefn(0, new_field_defn, ogr.ALTER_ALL_FLAG) == 0
+
+    # Violation of not-null constraint
+    new_field_defn = ogr.FieldDefn('baz', ogr.OFTString)
+    new_field_defn.SetNullable(False)
+    with gdaltest.error_handler():
+        assert lyr.AlterFieldDefn(1 , new_field_defn, ogr.ALTER_ALL_FLAG) != 0
 
     lyr.ResetReading()
     f = lyr.GetNextFeature()
@@ -2842,6 +2860,13 @@ def test_ogr_gpkg_36():
         pytest.fail()
     f = None
 
+    # Just change the name, and run it outside an existing transaction
+    lyr.StartTransaction()
+    new_field_defn = ogr.FieldDefn('baw2', ogr.OFTString)
+    assert lyr.AlterFieldDefn(0, new_field_defn, ogr.ALTER_ALL_FLAG) == 0
+    lyr.CommitTransaction()
+
+    # Just change the name, and run it under an existing transaction
     lyr.StartTransaction()
     new_field_defn = ogr.FieldDefn('baw', ogr.OFTString)
     assert lyr.AlterFieldDefn(0, new_field_defn, ogr.ALTER_ALL_FLAG) == 0
@@ -2902,7 +2927,9 @@ def test_ogr_gpkg_36():
     # Unlink before AlterFieldDefn
     gdal.Unlink(dbname)
     with gdaltest.error_handler():
-        ret = lyr.AlterFieldDefn(0, ogr.FieldDefn('bar'), ogr.ALTER_ALL_FLAG)
+        new_field_defn = ogr.FieldDefn('bar')
+        new_field_defn.SetNullable(False)
+        ret = lyr.AlterFieldDefn(0, new_field_defn, ogr.ALTER_ALL_FLAG)
     assert ret != 0
     with gdaltest.error_handler():
         ds = None
