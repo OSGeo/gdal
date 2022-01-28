@@ -56,7 +56,7 @@ You can unset existing cached variables, by using the -U switch of cmake, for ex
 
 You can assemble dependency settings in a file ``ConfigUser.cmake`` and use it with the -C option.
 The file contains set() commands that use the CACHE option. You can set for example a different name
-for the shared lib, *e.g.* ``set (GDAL_LIB_OUTPUT_NAME gdal_x64 CACHE STRING "" FORCE)``
+for the shared lib, *e.g.* ``set (GDAL_LIB_OUTPUT_NAME gdal_x64 CACHE STRING "" FORCE)``::
 
     cmake .. -C ConfigUser.cmake
 
