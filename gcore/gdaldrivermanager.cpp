@@ -926,6 +926,8 @@ void GDALDriverManager::ReorderDrivers()
 
     CPLMutexHolderD( &hDMMutex );
 
+    CPLAssert(static_cast<int>(oMapNameToDrivers.size()) == nDrivers);
+
     VSILFILE* fp = VSIFOpenL(m_osDriversIniPath.c_str(), "rb");
     if( fp == nullptr )
         return;
