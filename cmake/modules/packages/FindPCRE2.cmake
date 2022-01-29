@@ -9,7 +9,7 @@
 # Find the native PCRE2 headers and libraries.
 
 find_path(PCRE2_INCLUDE_DIR NAMES pcre2.h)
-find_library(PCRE2_LIBRARY NAMES pcre2-8)
+find_library(PCRE2_LIBRARY NAMES pcre2-8 pcre2-8d pcre2-8-static pcre2-8-staticd NAMES_PER_DIR)
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(PCRE2
                                   FOUND_VAR PCRE2_FOUND
