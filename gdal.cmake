@@ -257,7 +257,9 @@ endfunction (gdal_add_private_link_libraries)
 
 add_library(${GDAL_LIB_TARGET_NAME} gcore/gdal.h)
 
-set(GDAL_LIB_OUTPUT_NAME "gdal" CACHE STRING "Name of the GDAL library")
+set(GDAL_LIB_OUTPUT_NAME
+    "gdal"
+    CACHE STRING "Name of the GDAL library")
 # If a shared lib renaming has been set in ConfigUser.cmake
 set_target_properties(${GDAL_LIB_TARGET_NAME} PROPERTIES OUTPUT_NAME ${GDAL_LIB_OUTPUT_NAME})
 
@@ -355,20 +357,14 @@ set(INSTALL_PLUGIN_FULL_DIR "${CMAKE_INSTALL_PREFIX}/${INSTALL_PLUGIN_DIR}")
 add_subdirectory(port)
 
 # Configure internal libraries
-if (GDAL_USE_LIBZ_INTERNAL)
+if (GDAL_USE_ZLIB_INTERNAL)
   add_subdirectory(frmts/zlib)
 endif ()
 if (GDAL_USE_LIBJSONC_INTERNAL)
   add_subdirectory(ogr/ogrsf_frmts/geojson/libjson)
 endif ()
-if (GDAL_USE_LIBTIFF_INTERNAL)
-  option(RENAME_INTERNAL_LIBTIFF_SYMBOLS "Rename internal libtiff symbols" ON)
-  add_subdirectory(frmts/gtiff/libtiff)
-endif ()
-if (GDAL_USE_LIBGEOTIFF_INTERNAL)
-  option(RENAME_INTERNAL_LIBGEOTIFF_SYMBOLS "Rename internal libgeotiff symbols" ON)
-  add_subdirectory(frmts/gtiff/libgeotiff)
-endif ()
+
+# JPEG options need to be defined before internal libtiff
 if (GDAL_USE_LIBJPEG_INTERNAL)
   option(RENAME_INTERNAL_LIBJPEG_SYMBOLS "Rename internal libjpeg symbols" ON)
   add_subdirectory(frmts/jpeg/libjpeg)
@@ -376,6 +372,15 @@ endif ()
 option(GDAL_JPEG12_SUPPORTED "Set ON to use libjpeg12 support" ON)
 if (GDAL_JPEG12_SUPPORTED)
   add_subdirectory(frmts/jpeg/libjpeg12)
+endif ()
+
+if (GDAL_USE_LIBTIFF_INTERNAL)
+  option(RENAME_INTERNAL_LIBTIFF_SYMBOLS "Rename internal libtiff symbols" ON)
+  add_subdirectory(frmts/gtiff/libtiff)
+endif ()
+if (GDAL_USE_LIBGEOTIFF_INTERNAL)
+  option(RENAME_INTERNAL_LIBGEOTIFF_SYMBOLS "Rename internal libgeotiff symbols" ON)
+  add_subdirectory(frmts/gtiff/libgeotiff)
 endif ()
 if (GDAL_USE_GIFLIB_INTERNAL)
   add_subdirectory(frmts/gif/giflib)
