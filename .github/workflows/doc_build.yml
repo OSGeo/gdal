@@ -60,3 +60,32 @@ jobs:
     #  with:
     #    name: Misspelled
     #    path: doc/build/spelling/output.txt
+    - name: Deploy ssh key
+      if: ${{ github.ref_name == 'master' }}
+      shell: bash -l {0}
+      run: |
+        mkdir /root/.ssh && echo "${{ secrets.SSH_KEY_DOCS }}" > /root/.ssh/id_rsa
+        wc /root/.ssh/id_rsa
+        chmod 700 /root/.ssh && chmod 600 /root/.ssh/id_rsa
+        ssh-keyscan -t rsa github.com >> /root/.ssh/known_hosts
+        eval `ssh-agent -s`
+        ssh-add /root/.ssh/id_rsa
+    - name: Deploy to gdal.org
+      if: ${{ github.ref_name == 'master' }}
+      shell: bash -l {0}
+      run: |
+        set -x
+        set -e
+        mkdir /__w/html
+        cd /__w/html
+        cp -r /__w/gdal/gdal/doc/build/html/* .
+        git init
+        git config user.email "proj4bot@proj4.bot"
+        git config user.name "GDAL Bot"
+        git remote add origin git@github.com:OSGeo/gdal-docs.git
+        git remote -v
+        echo "gdal.org" > CNAME
+        touch .nojekyll
+        git add -A
+        git commit -m "Update with OSGeo/gdal commit $GITHUB_SHA"
+        git push -f origin master
