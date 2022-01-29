@@ -2569,6 +2569,18 @@ def test_ogr_gpkg_34():
     assert gdal.GetLastErrorMsg() != ''
     gdal.ErrorReset()
     ds.ExecuteSQL('ALTER TABLE "weird\'layer""name" RENAME TO "weird2\'layer""name"')
+    ds = None
+
+    ds = ogr.Open(dbname, update=1)
+    ds.ExecuteSQL('ALTER TABLE "weird2\'layer""name" RENAME COLUMN "foo" TO "bar"')
+    assert gdal.GetLastErrorMsg() == ''
+    lyr = ds.GetLayerByName(new_layer_name)
+    assert lyr.GetLayerDefn().GetFieldIndex('bar') >= 0
+
+    ds.ExecuteSQL('ALTER TABLE "weird2\'layer""name" DROP COLUMN "bar"')
+    assert gdal.GetLastErrorMsg() == ''
+    assert lyr.GetLayerDefn().GetFieldIndex('bar') < 0
+
     ds.ExecuteSQL('VACUUM')
     ds = None
 
