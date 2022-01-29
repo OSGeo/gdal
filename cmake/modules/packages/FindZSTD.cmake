@@ -46,7 +46,7 @@ find_path(
 )
 find_library(
   ZSTD_LIBRARY
-  NAMES zstd
+  NAMES zstd zstd_static NAMES_PER_DIR
   PATHS ${PC_ZSTD_LIBRARY_DIRS}
 )
 
