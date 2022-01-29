@@ -812,20 +812,30 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference& oSRS)
     // Add epoch column if needed
     if( oSRS.GetCoordinateEpoch() > 0 && !m_bHasEpochColumn )
     {
-        if( !m_bHasDefinition12_063 )
-        {
-            if( !ConvertGpkgSpatialRefSysToExtensionWkt2() )
-            {
-                return DEFAULT_SRID;
-            }
-        }
+        if( SoftStartTransaction() != OGRERR_NONE )
+            return DEFAULT_SRID;
 
-        if( SQLCommand(hDB,
+        if( ( !m_bHasDefinition12_063 &&
+              !ConvertGpkgSpatialRefSysToExtensionWkt2() ) ||
+            SQLCommand(hDB,
                 "ALTER TABLE gpkg_spatial_ref_sys "
-                "ADD COLUMN epoch DOUBLE") != OGRERR_NONE )
+                "ADD COLUMN epoch DOUBLE") != OGRERR_NONE ||
+            SQLCommand(hDB,
+                "UPDATE gpkg_extensions SET extension_name = 'gpkg_crs_wkt_1_1' "
+                "WHERE extension_name = 'gpkg_crs_wkt'") != OGRERR_NONE ||
+            SQLCommand(hDB,
+                "INSERT INTO gpkg_extensions "
+                "(table_name, column_name, extension_name, definition, scope) "
+                "VALUES "
+                "('gpkg_spatial_ref_sys', 'epoch', 'gpkg_crs_wkt_1_1', 'http://www.geopackage.org/spec/#extension_crs_wkt', 'read-write')") != OGRERR_NONE )
         {
+            SoftRollbackTransaction();
             return DEFAULT_SRID;
         }
+
+        if( SoftCommitTransaction() != OGRERR_NONE )
+            return DEFAULT_SRID;
+
         m_bHasEpochColumn = true;
     }
 
@@ -1115,7 +1125,7 @@ const std::map< CPLString, std::vector<GPKGExtensionDesc> > &
             "'gpkg_geom_MULTISURFACE', 'gpkg_geom_CURVE', 'gpkg_geom_SURFACE', "
             "'gpkg_geom_POLYHEDRALSURFACE', 'gpkg_geom_TIN', 'gpkg_geom_TRIANGLE', "
             "'gpkg_rtree_index', 'gpkg_geometry_type_trigger', 'gpkg_srs_id_trigger', "
-            "'gpkg_crs_wkt', 'gpkg_schema')");
+            "'gpkg_crs_wkt', 'gpkg_crs_wkt_1_1', 'gpkg_schema')");
     const int nTableLimit = GetOGRTableLimit();
     if( nTableLimit > 0 )
     {
@@ -6207,7 +6217,8 @@ void GDALGeoPackageDataset::CheckUnknownExtensions(bool bCheckRasterTable)
             "'gpkg_2d_gridded_coverage', " // Name in OGC 17-066r1 final
             "'gpkg_metadata', "
             "'gpkg_schema', "
-            "'gpkg_crs_wkt')) "
+            "'gpkg_crs_wkt', "
+            "'gpkg_crs_wkt_1_1')) "
 #ifdef WORKAROUND_SQLITE3_BUGS
             "OR 0 "
 #endif
@@ -6226,7 +6237,8 @@ void GDALGeoPackageDataset::CheckUnknownExtensions(bool bCheckRasterTable)
             "'gpkg_2d_gridded_coverage', " // Name in OGC 17-066r1 final
             "'gpkg_metadata', "
             "'gpkg_schema', "
-            "'gpkg_crs_wkt')) "
+            "'gpkg_crs_wkt', "
+            "'gpkg_crs_wkt_1_1')) "
 #ifdef WORKAROUND_SQLITE3_BUGS
             "OR 0 "
 #endif
