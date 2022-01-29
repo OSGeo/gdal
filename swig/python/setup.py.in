@@ -30,7 +30,7 @@ if is_standalone_build:
 else:
     include_dirs = ['@PROJECT_BINARY_DIR@/port', '@PROJECT_SOURCE_DIR@/port', '@PROJECT_BINARY_DIR@/gcore', '@PROJECT_SOURCE_DIR@/gcore', '@PROJECT_SOURCE_DIR@/alg', '@PROJECT_SOURCE_DIR@/ogr/', '@PROJECT_SOURCE_DIR@/ogr/ogrsf_frmts', '@PROJECT_SOURCE_DIR@/gnm', '@PROJECT_SOURCE_DIR@/apps']
     library_dirs = [@GDAL_LIB_DIR@]
-    libraries = ['gdal']
+    libraries = ['@GDAL_LIB_OUTPUT_NAME@']
 
 
 # ---------------------------------------------------------------------------

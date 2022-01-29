@@ -208,6 +208,42 @@ jobs:
         gdalinfo --version
         PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/site-packages python3 -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
 
+  build-windows-minimum:
+    runs-on: windows-latest
+    env:
+        architecture: x64
+        generator: Visual Studio 16 2019
+    steps:
+    # To avoid git clone to mess with the line endings of GDAL autotest data
+    # files that look like text, but should be handled as binary content
+    - name: Set git core.autocrlf to false
+      run: |
+        git config --global core.autocrlf false
+    - name: Checkout GDAL
+      uses: actions/checkout@v2
+    - uses: conda-incubator/setup-miniconda@v2
+      with:
+        activate-environment: gdalenv
+        python-version: 3.7
+        channels: conda-forge
+    - run: |
+        cmake --version
+    - name: Install dependency
+      shell: bash -l {0}
+      run: |
+        conda install --yes --quiet --name gdalenv -c conda-forge proj clcache
+    - name: Configure
+      shell: bash -l {0}
+      # Disable MySQL because of "error LNK2038: mismatch detected for '_MSC_VER': value '1800' doesn't match value '1900' in ogrmysqldatasource.obj" and other errors
+      run: |
+        mkdir -p $GITHUB_WORKSPACE/build
+        export CONDA_PREFIX_BACKUP=${CONDA_PREFIX}
+        conda deactivate
+        cmake -A ${architecture} -G "${generator}" "-DCMAKE_C_COMPILER_LAUNCHER=clcache" "-DCMAKE_CXX_COMPILER_LAUNCHER=clcache" "-DPROJ_INCLUDE_DIR=${CONDA_PREFIX_BACKUP}/Library/include" "-DPROJ_LIBRARY=${CONDA_PREFIX_BACKUP}/Library/lib/proj.lib" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DGDAL_USE_MYSQL:BOOL=OFF -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX"
+    - name: Build
+      shell: bash -l {0}
+      run: cmake --build $GITHUB_WORKSPACE/build --config Release -j 2
+
   build-mac:
     runs-on: macOS-latest
     env:
