@@ -8,7 +8,7 @@
 # Copyright (c) 2017,2018, Hiroshi Miura <miurahr@linux.com>
 #
 # Input variables:
-#    QHULL_PACKAGE_NAME: name of the pkg-config package, typically qhull_r or qhullstatic_r
+#    QHULL_PACKAGE_NAME: name (or list of names) of the pkg-config package, typically qhull_r or qhullstatic_r
 #
 # If it's found it sets QHULL_FOUND to TRUE
 # and following variables are set:
@@ -16,12 +16,12 @@
 #    QHULL_LIBRARY
 #
 
-set(QHULL_PACKAGE_NAME qhull_r CACHE STRING "Name of the pkg-config package, typically qhull_r or qhullstatic_r")
+set(QHULL_PACKAGE_NAME "qhull_r;qhullstatic_r" CACHE STRING "Names of the pkg-config package, typically qhull_r or qhullstatic_r")
 mark_as_advanced(QHULL_PACKAGE_NAME)
 
 find_package(PkgConfig QUIET)
 if(PKG_CONFIG_FOUND)
-    pkg_check_modules(PC_QHULL QUIET ${QHULL_PACKAGE_NAME})
+    pkg_search_module(PC_QHULL QUIET ${QHULL_PACKAGE_NAME})
 endif()
 
 find_path(QHULL_INCLUDE_DIR libqhull_r/libqhull_r.h
