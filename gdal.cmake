@@ -300,8 +300,9 @@ if (MINGW)
   # Workaround for export too large error - force problematic large file to be optimized to prevent string table
   # overflow error Used -Os instead of -O2 as previous issues had mentioned, since -Os is roughly speaking -O2,
   # excluding any optimizations that take up extra space. Given that the issue is a string table overflowing, -Os seemed
-  # appropriate.
-  if (CMAKE_BUILD_TYPE MATCHES Debug)
+  # appropriate. Solves issue of https://github.com/OSGeo/gdal/issues/4706 with for example x86_64-w64-mingw32-gcc-posix
+  # (GCC) 9.3-posix 20200320
+  if (CMAKE_BUILD_TYPE MATCHES Debug OR CMAKE_BUILD_TYPE STREQUAL "")
     add_compile_options(-Os)
   endif ()
 endif ()
