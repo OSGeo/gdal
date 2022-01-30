@@ -407,11 +407,11 @@ set(GDAL_RASTER_FORMAT_SOURCE_DIR "${PROJECT_SOURCE_DIR}/frmts")
 set(GDAL_VECTOR_FORMAT_SOURCE_DIR "${PROJECT_SOURCE_DIR}/ogr/ogrsf_frmts")
 
 # We need to forward declare a few OGR drivers because raster formats need them
-option(OGR_ENABLE_AVC "Set ON to build OGR AVC driver" ${OGR_BUILD_OPTIONAL_DRIVERS})
-cmake_dependent_option(OGR_ENABLE_SQLITE "Set ON to build OGR SQLite driver" ${OGR_BUILD_OPTIONAL_DRIVERS}
+option(OGR_ENABLE_DRIVER_AVC "Set ON to build OGR AVC driver" ${OGR_BUILD_OPTIONAL_DRIVERS})
+cmake_dependent_option(OGR_ENABLE_DRIVER_SQLITE "Set ON to build OGR SQLite driver" ${OGR_BUILD_OPTIONAL_DRIVERS}
                        "GDAL_USE_SQLITE3" OFF)
-cmake_dependent_option(OGR_ENABLE_GPKG "Set ON to build OGR GPKG driver" ${OGR_BUILD_OPTIONAL_DRIVERS}
-                       "GDAL_USE_SQLITE3;OGR_ENABLE_SQLITE" OFF)
+cmake_dependent_option(OGR_ENABLE_DRIVER_GPKG "Set ON to build OGR GPKG driver" ${OGR_BUILD_OPTIONAL_DRIVERS}
+                       "GDAL_USE_SQLITE3;OGR_ENABLE_DRIVER_SQLITE" OFF)
 
 add_subdirectory(frmts)
 add_subdirectory(ogr/ogrsf_frmts)

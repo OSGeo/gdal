@@ -20,7 +20,7 @@ add_subdirectory(derived)
 
 # default formats
 
-if (CMAKE_BUILD_TYPE MATCHES "Debug" OR GDAL_ENABLE_FRMT_NULL)
+if (CMAKE_BUILD_TYPE MATCHES "Debug" OR GDAL_ENABLE_DRIVER_NULL)
   gdal_optional_format(null "NULL dummy driver")
 endif ()
 
@@ -90,7 +90,7 @@ gdal_optional_format(ogcapi "OGCAPI")
 
 # optional Formats
 gdal_optional_format(bsb "Maptech/NOAA BSB Nautical Chart Format")
-gdal_dependent_format(aigrid "Arc/Info Binary Grid Format" "OGR_ENABLE_AVC")
+gdal_dependent_format(aigrid "Arc/Info Binary Grid Format" "OGR_ENABLE_DRIVER_AVC")
 gdal_optional_format(arg "ARG: Azavea Raster Grid")
 gdal_optional_format(usgsdem "USGS ASCII DEM (and CDED)")
 gdal_optional_format(airsar "AirSAR Polarimetric Format")
@@ -122,8 +122,8 @@ gdal_dependent_format(wms "Web Map Services" "GDAL_USE_CURL")
 gdal_dependent_format(gta "Generic Tagged Arrays" "GDAL_USE_GTA")
 gdal_dependent_format(webp "WebP" "GDAL_USE_WEBP")
 gdal_dependent_format(hdf4 "Hierarchical Data Format Release 4 (HDF4)" "GDAL_USE_HDF4")
-gdal_dependent_format(rasterlite "Rasterlite - Rasters in SQLite DB" "GDAL_USE_SQLITE3;OGR_ENABLE_SQLITE")
-gdal_dependent_format(mbtiles "MBTile" "GDAL_USE_SQLITE3;OGR_ENABLE_GPKG")
+gdal_dependent_format(rasterlite "Rasterlite - Rasters in SQLite DB" "GDAL_USE_SQLITE3;OGR_ENABLE_DRIVER_SQLITE")
+gdal_dependent_format(mbtiles "MBTile" "GDAL_USE_SQLITE3;OGR_ENABLE_DRIVER_GPKG")
 gdal_dependent_format(postgisraster "PostGIS Raster driver" "GDAL_USE_POSTGRESQL")
 gdal_dependent_format(dods "OPeNDAP Grid Client" "GDAL_USE_DAP")
 gdal_dependent_format(dds "DirectDraw Surface" "GDAL_USE_CRNLIB")
@@ -140,8 +140,8 @@ gdal_dependent_format(rdb "RIEGL RDB Map Pixel (.mpx) driver" "rdb_FOUND")
 
 # for circulate dependency, grass is NOT always compiled in.
 gdal_dependent_format(grass "GRASS" "HAVE_GRASS")
-add_feature_info(gdal_GRASS GDAL_ENABLE_FRMT_GRASS "GRASS raster format")
-if (GDAL_ENABLE_FRMT_GRASS)
+add_feature_info(gdal_GRASS GDAL_ENABLE_DRIVER_GRASS "GRASS raster format")
+if (GDAL_ENABLE_DRIVER_GRASS)
   if (HAVE_GRASS AND HAVE_POSTGRESQL)
 
   else ()

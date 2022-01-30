@@ -1037,7 +1037,7 @@ be found.
 
     Path to library file libltidsdk
 
-.. option:: GDAL_ENABLE_FRMT_JP2MRSID
+.. option:: GDAL_ENABLE_DRIVER_JP2MRSID
 
     Whether to enable JPEG2000 support through the MrSID SDK. The default value
     of this option is OFF.
@@ -1696,9 +1696,9 @@ built-in in the GDAL core library.
 
 The following options are available to select a subset of drivers:
 
-.. option:: GDAL_ENABLE_FRMT_<driver_name>:BOOL=ON/OFF
+.. option:: GDAL_ENABLE_DRIVER_<driver_name>:BOOL=ON/OFF
 
-.. option:: OGR_ENABLE_<driver_name>:BOOL=ON/OFF
+.. option:: OGR_ENABLE_DRIVER_<driver_name>:BOOL=ON/OFF
 
     Independently of options that control global behavior, drivers can be individually
     enabled or disabled with those options.
@@ -1709,23 +1709,23 @@ The following options are available to select a subset of drivers:
 
     Globally enable/disable all GDAL/raster or OGR/vector drivers.
     More exactly, setting those variables to ON affect the default value of the
-    ``GDAL_ENABLE_FRMT_<driver_name>`` or ``OGR_ENABLE_<driver_name>`` variables
+    ``GDAL_ENABLE_DRIVER_<driver_name>`` or ``OGR_ENABLE_DRIVER_<driver_name>`` variables
     (when they are not yet set).
 
     This can be combined with individual activation of a subset of drivers by using
-    the ``GDAL_ENABLE_FRMT_<driver_name>:BOOL=ON`` or ``OGR_ENABLE_<driver_name>:BOOL=ON``
+    the ``GDAL_ENABLE_DRIVER_<driver_name>:BOOL=ON`` or ``OGR_ENABLE_DRIVER_<driver_name>:BOOL=ON``
     variables. Note that changing the value of GDAL_BUILD_OPTIONAL_DRIVERS/
     OGR_BUILD_OPTIONAL_DRIVERS after a first run of CMake does not change the
     activation of individual drivers. It might be needed to pass
-    ``-UGDAL_ENABLE_FRMT_* -UOGR_ENABLE_*`` to reset their state.
+    ``-UGDAL_ENABLE_DRIVER_* -UOGR_ENABLE_DRIVER_*`` to reset their state.
 
 
 Example of minimal build with the JP2OpenJPEG and SVG drivers enabled::
 
-    cmake .. -UGDAL_ENABLE_FRMT_* -UOGR_ENABLE_* \
+    cmake .. -UGDAL_ENABLE_DRIVER_* -UOGR_ENABLE_DRIVER_* \
              -DGDAL_BUILD_OPTIONAL_DRIVERS:BOOL=OFF -DOGR_BUILD_OPTIONAL_DRIVERS:BOOL=OFF \
-             -DGDAL_ENABLE_FRMT_JP2OPENPEG:BOOL=ON \
-             -DOGR_ENABLE_SVG:BOOL=ON
+             -DGDAL_ENABLE_DRIVER_JP2OPENPEG:BOOL=ON \
+             -DOGR_ENABLE_DRIVER_SVG:BOOL=ON
 
 Build drivers as plugins
 ++++++++++++++++++++++++
@@ -1743,36 +1743,36 @@ The list of drivers that can be built as plugins can be obtained with::
 The following options are available to select the plugin/builtin status of
 a driver:
 
-.. option:: GDAL_ENABLE_FRMT_<driver_name>_PLUGIN:BOOL=ON/OFF
+.. option:: GDAL_ENABLE_DRIVER_<driver_name>_PLUGIN:BOOL=ON/OFF
 
-.. option:: OGR_ENABLE_<driver_name>_PLUGIN:BOOL=ON/OFF
+.. option:: OGR_ENABLE_DRIVER_<driver_name>_PLUGIN:BOOL=ON/OFF
 
     Independently of options that control global behavior, drivers can be individually
     enabled or disabled with those options.
 
     Note that for the driver to be built, the corresponding base
-    ``GDAL_ENABLE_FRMT_{driver_name}:BOOL=ON`` or ``OGR_ENABLE_{driver_name}:BOOL=ON`` option must
+    ``GDAL_ENABLE_DRIVER_{driver_name}:BOOL=ON`` or ``OGR_ENABLE_DRIVER_{driver_name}:BOOL=ON`` option must
     be set.
 
 .. option:: GDAL_ENABLE_PLUGINS:BOOL=ON/OFF
 
     Globally enable/disable building all (plugin capable), GDAL and OGR, drivers as plugins.
     More exactly, setting that variable to ON affects the default value of the
-    ``GDAL_ENABLE_FRMT_<driver_name>_PLUGIN`` or ``OGR_ENABLE_<driver_name>_PLUGIN``
+    ``GDAL_ENABLE_DRIVER_<driver_name>_PLUGIN`` or ``OGR_ENABLE_DRIVER_<driver_name>_PLUGIN``
     variables (when they are not yet set).
 
     This can be combined with individual activation/deactivation of the plugin status with the
-    ``GDAL_ENABLE_FRMT_{driver_name}_PLUGIN:BOOL`` or ``OGR_ENABLE_{driver_name}_PLUGIN:BOOL`` variables.
+    ``GDAL_ENABLE_DRIVER_{driver_name}_PLUGIN:BOOL`` or ``OGR_ENABLE_DRIVER_{driver_name}_PLUGIN:BOOL`` variables.
     Note that changing the value of GDAL_ENABLE_PLUGINS after a first
     run of CMake does not change the activation of the plugin status of individual drivers.
-    It might be needed to pass ``-UGDAL_ENABLE_FRMT_* -UOGR_ENABLE_*`` to reset their state.
+    It might be needed to pass ``-UGDAL_ENABLE_DRIVER_* -UOGR_ENABLE_DRIVER_*`` to reset their state.
 
 
 Example of build with all potential drivers as plugins, except the JP2OpenJPEG one::
 
-    cmake .. -UGDAL_ENABLE_FRMT_* -UOGR_ENABLE_* \
+    cmake .. -UGDAL_ENABLE_DRIVER_* -UOGR_ENABLE_DRIVER_* \
              -DGDAL_ENABLE_PLUGINS:BOOL=ON \
-             -DGDAL_ENABLE_FRMT_JP2OPENPEG_PLUGIN:BOOL=OFF
+             -DGDAL_ENABLE_DRIVER_JP2OPENPEG_PLUGIN:BOOL=OFF
 
 There is a subtelty regarding ``GDAL_ENABLE_PLUGINS:BOOL=ON``. It only controls
 the plugin status of plugin-capable drivers that have external dependencies,

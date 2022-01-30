@@ -30,7 +30,7 @@ if (NOT GDAL_USE_ZLIB_INTERNAL)
   gdal_target_link_libraries(TARGET gdal_GEOR LIBRARIES ZLIB::ZLIB)
 endif ()
 
-if (GDAL_ENABLE_FRMT_GEOR_PLUGIN)
+if (GDAL_ENABLE_DRIVER_GEOR_PLUGIN)
   # A bit ugly to add this file from the JPEG driver !
   target_sources(gdal_GEOR PRIVATE ../jpeg/vsidataio.cpp)
 endif ()

@@ -61,31 +61,31 @@
 #cmakedefine OGR_USE_JSONC_INTERNAL
 
 /*** RASTER FORMATS ***/
-#cmakedefine GDAL_ENABLE_FRMT_GTIFF
-#cmakedefine GDAL_ENABLE_FRMT_JPEG
-#cmakedefine GDAL_ENABLE_FRMT_HFA
-#cmakedefine GDAL_ENABLE_FRMT_BMP
-#cmakedefine GDAL_ENABLE_FRMT_DIMAP
-#cmakedefine GDAL_ENABLE_FRMT_MEM
-#cmakedefine GDAL_ENABLE_FRMT_RAW
-#cmakedefine GDAL_ENABLE_FRMT_VRT
-#cmakedefine GDAL_ENABLE_FRMT_PNG
-#cmakedefine GDAL_ENABLE_FRMT_GIF
-#cmakedefine GDAL_ENABLE_FRMT_TIL
+#cmakedefine GDAL_ENABLE_DRIVER_GTIFF
+#cmakedefine GDAL_ENABLE_DRIVER_JPEG
+#cmakedefine GDAL_ENABLE_DRIVER_HFA
+#cmakedefine GDAL_ENABLE_DRIVER_BMP
+#cmakedefine GDAL_ENABLE_DRIVER_DIMAP
+#cmakedefine GDAL_ENABLE_DRIVER_MEM
+#cmakedefine GDAL_ENABLE_DRIVER_RAW
+#cmakedefine GDAL_ENABLE_DRIVER_VRT
+#cmakedefine GDAL_ENABLE_DRIVER_PNG
+#cmakedefine GDAL_ENABLE_DRIVER_GIF
+#cmakedefine GDAL_ENABLE_DRIVER_TIL
 
 /*** VECTOR FORMATS ***/
-#cmakedefine OGR_ENABLE_MITAB
-#cmakedefine OGR_ENABLE_CSV
-#cmakedefine OGR_ENABLE_DFX
-#cmakedefine OGR_ENABLE_GEOJSON
-#cmakedefine OGR_ENABLE_MEM
-#cmakedefine OGR_ENABLE_VRT
-#cmakedefine OGR_ENABLE_GPX
-#cmakedefine OGR_ENABLE_SHP
-#cmakedefine OGR_ENABLE_WFS
-#cmakedefine OGR_ENABLE_PG
-#cmakedefine OGR_ENABLE_SQLITE
-#cmakedefine OGR_ENABLE_MYSQL
-#cmakedefine OGR_ENABLE_LIBKML
-#cmakedefine OGR_ENABLE_GML
-#cmakedefine OGR_ENABLE_KML
+#cmakedefine OGR_ENABLE_DRIVER_MITAB
+#cmakedefine OGR_ENABLE_DRIVER_CSV
+#cmakedefine OGR_ENABLE_DRIVER_DFX
+#cmakedefine OGR_ENABLE_DRIVER_GEOJSON
+#cmakedefine OGR_ENABLE_DRIVER_MEM
+#cmakedefine OGR_ENABLE_DRIVER_VRT
+#cmakedefine OGR_ENABLE_DRIVER_GPX
+#cmakedefine OGR_ENABLE_DRIVER_SHP
+#cmakedefine OGR_ENABLE_DRIVER_WFS
+#cmakedefine OGR_ENABLE_DRIVER_PG
+#cmakedefine OGR_ENABLE_DRIVER_SQLITE
+#cmakedefine OGR_ENABLE_DRIVER_MYSQL
+#cmakedefine OGR_ENABLE_DRIVER_LIBKML
+#cmakedefine OGR_ENABLE_DRIVER_GML
+#cmakedefine OGR_ENABLE_DRIVER_KML

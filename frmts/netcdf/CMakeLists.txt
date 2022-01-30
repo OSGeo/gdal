@@ -12,7 +12,7 @@ set(_SOURCES
     netcdf_sentinel3_sral_mwr.cpp)
 add_gdal_driver(TARGET gdal_netCDF SOURCES ${_SOURCES} PLUGIN_CAPABLE)
 unset(_SOURCES)
-if (GDAL_ENABLE_FRMT_NETCDF)
+if (GDAL_ENABLE_DRIVER_NETCDF)
   target_compile_definitions(gdal_netCDF PRIVATE -DNETCDF_PLUGIN)
 endif ()
 

@@ -11,9 +11,9 @@ set(SOURCE
     ogrdwglayer.cpp
     ogrteigha.cpp)
 add_gdal_driver(TARGET ogr_DWG_DGNV8 SOURCES ${SOURCE} DRIVER_NAME_OPTION DWG PLUGIN_CAPABLE)
-if (OGR_ENABLE_DWG_PLUGIN)
+if (OGR_ENABLE_DRIVER_DWG_PLUGIN)
   # a bit ugly but we need those symbols from the DXF driver Note: we need to use target_sources() to add them, and not
-  # edit the SOURCE variable, as the OGR_ENABLE_DWG_PLUGIN variable is automatically created only after
+  # edit the SOURCE variable, as the OGR_ENABLE_DRIVER_DWG_PLUGIN variable is automatically created only after
   # add_gdal_driver()
   target_sources(ogr_DWG_DGNV8 PRIVATE ../dxf/ogr_autocad_services.cpp ../dxf/ogrdxf_polyline_smooth.cpp
                                        ../dxf/intronurbs.cpp)

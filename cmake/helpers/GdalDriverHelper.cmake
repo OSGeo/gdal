@@ -21,7 +21,7 @@ GdalDriverHelper
   Drivers should specify one and only one of:
   - BUILTIN: the driver is built-in into library, and cannot be built as a plugin
   - PLUGIN_CAPABLE: the driver can be built as a plugin.
-    This only happens if the GDAL_ENABLE_FRMT_{foo}_PLUGIN or OGR_ENABLE_{foo}_PLUGIN
+    This only happens if the GDAL_ENABLE_DRIVER_{foo}_PLUGIN or OGR_ENABLE_DRIVER_{foo}_PLUGIN
     variable is set to ON.
     The default value of that variable is :
     - the value of GDAL_ENABLE_PLUGINS option when NO_DEPS is not specified (e.g ECW, HDF4, etc.)
@@ -114,7 +114,7 @@ function(add_gdal_driver)
             string(TOUPPER ${_DRIVER_DRIVER_NAME_OPTION} _KEY)
         endif()
         if( IS_OGR EQUAL -1) # raster
-            set(_enable_plugin_var GDAL_ENABLE_FRMT_${_KEY})
+            set(_enable_plugin_var GDAL_ENABLE_DRIVER_${_KEY})
             if( NOT DEFINED ${_enable_plugin_var} )
                 message(FATAL_ERROR "Option ${_enable_plugin_var} does not exist")
             endif()
@@ -125,7 +125,7 @@ function(add_gdal_driver)
                 set(_DRIVER_PLUGIN_BUILD ON)
             endif()
         else()
-            set(_enable_plugin_var OGR_ENABLE_${_KEY})
+            set(_enable_plugin_var OGR_ENABLE_DRIVER_${_KEY})
             if( NOT DEFINED ${_enable_plugin_var} )
                 message(FATAL_ERROR "Option ${_enable_plugin_var} does not exist")
             endif()
@@ -262,7 +262,7 @@ include(CMakeDependentOption)
 
 macro(check_depend_condition depends)
     foreach(_dep IN ITEMS ${depends})
-        if( "${_dep}" MATCHES "GDAL_ENABLE_FRMT_" OR "${_dep}" MATCHES "OGR_ENABLE_")
+        if( "${_dep}" MATCHES "GDAL_ENABLE_DRIVER_" OR "${_dep}" MATCHES "OGR_ENABLE_DRIVER_")
             if(NOT DEFINED "${_dep}")
                 message(FATAL_ERROR "Condition ${depends} refers to variable ${_dep} which is not defined")
             endif()
@@ -272,7 +272,7 @@ endmacro()
 
 # gdal_dependent_format(format desc depend) do followings:
 # - add subdirectory 'format'
-# - define option "GDAL_ENABLE_FRMT_NAME" then set to default OFF/ON
+# - define option "GDAL_ENABLE_DRIVER_NAME" then set to default OFF/ON
 # - when enabled, add definition"-DFRMT_format"
 # - when dependency specified by depend fails, force OFF
 macro(gdal_dependent_format format desc depends)
@@ -286,18 +286,18 @@ macro(gdal_dependent_format format desc depends)
         string(TOUPPER ${format} key)
     endif()
     check_depend_condition(${depends})
-    cmake_dependent_option(GDAL_ENABLE_FRMT_${key} "Set ON to build ${desc} format" ${GDAL_BUILD_OPTIONAL_DRIVERS}
+    cmake_dependent_option(GDAL_ENABLE_DRIVER_${key} "Set ON to build ${desc} format" ${GDAL_BUILD_OPTIONAL_DRIVERS}
                            "${depends}" OFF)
-    add_feature_info(gdal_${key} GDAL_ENABLE_FRMT_${key} "${desc}")
-    if (GDAL_ENABLE_FRMT_${key} AND NOT _GDF_SKIP_ADD_SUBDIRECTORY)
+    add_feature_info(gdal_${key} GDAL_ENABLE_DRIVER_${key} "${desc}")
+    if (GDAL_ENABLE_DRIVER_${key} AND NOT _GDF_SKIP_ADD_SUBDIRECTORY)
         add_subdirectory(${format})
     endif ()
 endmacro()
 
 macro(gdal_format format desc)
     string(TOUPPER ${format} key desc)
-    set(GDAL_ENABLE_FRMT_${key} ON CACHE BOOL "" FORCE)
-    add_feature_info(gdal_${key} GDAL_ENABLE_FRMT_${key} "${desc}")
+    set(GDAL_ENABLE_DRIVER_${key} ON CACHE BOOL "" FORCE)
+    add_feature_info(gdal_${key} GDAL_ENABLE_DRIVER_${key} "${desc}")
     add_subdirectory(${format})
 endmacro()
 
@@ -311,15 +311,15 @@ macro(gdal_optional_format format desc)
     else()
         string(TOUPPER ${format} key)
     endif()
-    option(GDAL_ENABLE_FRMT_${key} "Set ON to build ${desc} format" ${GDAL_BUILD_OPTIONAL_DRIVERS})
-    add_feature_info(gdal_${key} GDAL_ENABLE_FRMT_${key} "${desc}")
-    if (GDAL_ENABLE_FRMT_${key})
+    option(GDAL_ENABLE_DRIVER_${key} "Set ON to build ${desc} format" ${GDAL_BUILD_OPTIONAL_DRIVERS})
+    add_feature_info(gdal_${key} GDAL_ENABLE_DRIVER_${key} "${desc}")
+    if (GDAL_ENABLE_DRIVER_${key})
         add_subdirectory(${format})
     endif ()
 endmacro()
 
 # ogr_dependent_driver(NAME desc depend) do followings:
-# - define option "OGR_ENABLE_<name>" with default OFF
+# - define option "OGR_ENABLE_DRIVER_<name>" with default OFF
 # - add subdirectory 'name'
 # - when dependency specified by depend fails, force OFF
 
@@ -327,39 +327,39 @@ macro(ogr_dependent_driver name desc depend)
     string(TOUPPER ${name} key)
     check_depend_condition(${depend})
     if( NOT("${key}" STREQUAL "GPKG" OR "${key}" STREQUAL "SQLITE" OR "${key}" STREQUAL "AVC") )
-        cmake_dependent_option(OGR_ENABLE_${key} "Set ON to build OGR ${desc} driver" ${OGR_BUILD_OPTIONAL_DRIVERS}
+        cmake_dependent_option(OGR_ENABLE_DRIVER_${key} "Set ON to build OGR ${desc} driver" ${OGR_BUILD_OPTIONAL_DRIVERS}
                                "${depend}" OFF)
     endif()
-    add_feature_info(ogr_${key} OGR_ENABLE_${key} "${desc}")
-    if (OGR_ENABLE_${key})
+    add_feature_info(ogr_${key} OGR_ENABLE_DRIVER_${key} "${desc}")
+    if (OGR_ENABLE_DRIVER_${key})
         add_subdirectory(${name})
     endif ()
 endmacro()
 
 # ogr_optional_driver(name desc) do followings:
-# - define option "OGR_ENABLE_<name>" with default OFF
+# - define option "OGR_ENABLE_DRIVER_<name>" with default OFF
 # - add subdirectory 'name' when enabled
 macro(ogr_optional_driver name desc)
     string(TOUPPER ${name} key)
-    option(OGR_ENABLE_${key} "Set ON to build OGR ${desc} driver" ${OGR_BUILD_OPTIONAL_DRIVERS})
-    add_feature_info(ogr_${key} OGR_ENABLE_${key} "${desc}")
-    if (OGR_ENABLE_${key})
+    option(OGR_ENABLE_DRIVER_${key} "Set ON to build OGR ${desc} driver" ${OGR_BUILD_OPTIONAL_DRIVERS})
+    add_feature_info(ogr_${key} OGR_ENABLE_DRIVER_${key} "${desc}")
+    if (OGR_ENABLE_DRIVER_${key})
         add_subdirectory(${name})
     endif ()
 endmacro()
 
 # ogr_default_driver(name desc)
-# - set "OGR_ENABLE_<name>" is ON but configurable.
+# - set "OGR_ENABLE_DRIVER_<name>" is ON but configurable.
 # - add subdirectory "name"
 macro(ogr_default_driver name desc)
     string(TOUPPER ${name} key)
-    set(OGR_ENABLE_${key} ON CACHE BOOL "${desc}" FORCE)
-    add_feature_info(ogr_${key} OGR_ENABLE_${key} "${desc}")
+    set(OGR_ENABLE_DRIVER_${key} ON CACHE BOOL "${desc}" FORCE)
+    add_feature_info(ogr_${key} OGR_ENABLE_DRIVER_${key} "${desc}")
     add_subdirectory(${name})
 endmacro()
 macro(ogr_default_driver2 name key desc)
-    set(OGR_ENABLE_${key} ON CACHE BOOL "${desc}" FORCE)
-    add_feature_info(ogr_${key} OGR_ENABLE_${key} "${desc}")
+    set(OGR_ENABLE_DRIVER_${key} ON CACHE BOOL "${desc}" FORCE)
+    add_feature_info(ogr_${key} OGR_ENABLE_DRIVER_${key} "${desc}")
     add_subdirectory(${name})
 endmacro()
 

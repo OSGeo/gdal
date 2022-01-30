@@ -13,7 +13,7 @@ add_gdal_driver(
 gdal_standard_includes(ogr_DGN)
 
 if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.12)
-  if (NOT OGR_ENABLE_DGN_PLUGIN)
+  if (NOT OGR_ENABLE_DRIVER_DGN_PLUGIN)
     add_executable(dgnwritetest EXCLUDE_FROM_ALL dgnwritetest.cpp)
     target_include_directories(dgnwritetest PRIVATE $<TARGET_PROPERTY:gdal_iso8211,SOURCE_DIR>)
     target_link_libraries(dgnwritetest PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}> ogr_DGN)
