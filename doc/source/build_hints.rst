@@ -177,6 +177,10 @@ for details.
 On Windows builds using Conda-Forge depedencies, the following packages may also
 need to be installed: ``blas blas-devel libblas libcblas liblapack liblapacke``
 
+.. option:: GDAL_USE_ARMADILLO=ON/OFF
+
+    Control whether to use Armadillo. Defaults to ON when Armadillo is found.
+
 
 Blosc
 *****
@@ -411,6 +415,10 @@ FileGDB_ROOT or CMAKE_PREFIX_PATH should point to the directory of the SDK.
 
     Path to Debug library file (only used on Windows)
 
+.. option:: GDAL_USE_FILEGDB=ON/OFF
+
+    Control whether to use FileGDB. Defaults to ON when FileGDB is found.
+
 
 FreeXL
 ******
@@ -542,7 +550,7 @@ The `GTA <https://marlam.de/gta/>`_ library is required for the :ref:`raster.gta
 
     Path to a shared or static library file.
 
-.. option:: GDAL_USE_KEY=ON/OFF
+.. option:: GDAL_USE_GTA=ON/OFF
 
     Control whether to use GTA. Defaults to ON when GTA is found.
 
@@ -621,6 +629,10 @@ The `HDF5 <https://github.com/HDFGroup/hdf5>`_ C library is needed for the
 The HDF5 CXX library is needed for the :ref:`raster.kea` driver.
 The https://cmake.org/cmake/help/latest/module/FindHDF5.html module is used to
 detect the HDF5 library.
+
+.. option:: GDAL_USE_HDF5=ON/OFF
+
+    Control whether to use HDF5. Defaults to ON when HDF5 is found.
 
 
 HDFS
@@ -769,6 +781,10 @@ It can be detected with pkg-config.
 
     Path to a shared or static library file.
 
+.. option:: GDAL_USE_JXL=ON/OFF
+
+    Control whether to use JXL. Defaults to ON when JXL is found.
+
 
 KDU
 ***
@@ -795,6 +811,10 @@ and KDU_AUX_LIBRARY variable.
 
     Path to a shared library file whose name is like libkdu_aXYR.so on Unix
     or kdu_aXYR.lib on Windows, where X.Y is the Kakadu version.
+
+.. option:: GDAL_USE_KDU=ON/OFF
+
+    Control whether to use KDU. Defaults to ON when KDU is found.
 
 KEA
 ***
@@ -943,6 +963,10 @@ LURATECH_ROOT or CMAKE_PREFIX_PATH should point to the directory of the SDK.
 
     Path to library file lib_lwf_jp2.a / lwf_jp2.lib
 
+.. option:: GDAL_USE_LURATECH=ON/OFF
+
+    Control whether to use LURATECH. Defaults to ON when LURATECH is found.
+
 
 LZ4
 ***
@@ -1018,7 +1042,7 @@ be found.
     Whether to enable JPEG2000 support through the MrSID SDK. The default value
     of this option is OFF.
 
-.. option:: GDAL_USE_MRSDI=ON/OFF
+.. option:: GDAL_USE_MRSID=ON/OFF
 
     Control whether to use MRSID. Defaults to ON when MRSID is found.
 
@@ -1043,6 +1067,10 @@ The library is normally found if installed in standard location, and at version 
 
   Path to library to be linked.
 
+.. option:: GDAL_USE_MSSQL_NCLI=ON/OFF
+
+    Control whether to use MSSQL_NCLI. Defaults to ON when MSSQL_NCLI is found.
+
 
 MSSQL_ODBC
 **********
@@ -1063,6 +1091,10 @@ The library is normally found if installed in standard location, and at version 
 .. option:: MSSQL_ODBC_LIBRARY
 
   Path to library to be linked.
+
+.. option:: GDAL_USE_MSSQL_ODBC=ON/OFF
+
+    Control whether to use MSSQL_ODBC. Defaults to ON when MSSQL_ODBC is found.
 
 
 MYSQL
@@ -1118,6 +1150,10 @@ It is normally automatically found in system directories on Unix and Windows.
 .. option:: ODBC_LIBRARY
 
   Path to ODBC library to be linked.
+
+.. option:: GDAL_USE_ODBC=ON/OFF
+
+    Control whether to use ODBC. Defaults to ON when ODBC is found.
 
 
 OGDI
@@ -1184,6 +1220,10 @@ Get real specific and set
 ``OpenEXR_HALF_LIBRARY``, ``OpenEXR_IEX_LIBRARY``
 explicitly
 
+.. option:: GDAL_USE_OPENEXR=ON/OFF
+
+    Control whether to use OpenEXR. Defaults to ON when OpenEXR is found.
+
 
 OpenJPEG
 ********
@@ -1216,6 +1256,10 @@ images or use the :ref:`/vsigs/ <vsigs>` virtual file system.
 See https://cmake.org/cmake/help/latest/module/FindOpenSSL.html for details on
 how to configure the library
 
+.. option:: GDAL_USE_OPENSSL=ON/OFF
+
+    Control whether to use OpenSSL. Defaults to ON when OpenSSL is found.
+
 
 Oracle
 ******
@@ -1245,6 +1289,10 @@ Regular Expressions support. It is used for the REGEXP operator in drivers using
 .. option:: PCRE2_LIBRARY
 
     Path to a shared or static library file with "pcre2-8" in its name
+
+.. option:: GDAL_USE_PCRE2=ON/OFF
+
+    Control whether to use PCRE2. Defaults to ON when PCRE2 is found.
 
 
 PDFium
@@ -1407,6 +1455,10 @@ The `RDB <https://repository.riegl.com/software/libraries/rdblib>`
 (closed source/proprietary) library is required for the :ref:`raster.rdb` driver.
 Specify install prefix in the ``CMAKE_PREFIX_PATH`` variable.
 
+.. option:: GDAL_USE_RDB=ON/OFF
+
+    Control whether to use rdb. Defaults to ON when rdb is found.
+
 
 SPATIALITE
 **********
@@ -1505,6 +1557,10 @@ The TEIGHA_ROOT variable must be set.
     Otherwise this variable must be set for recent SDK versions (at least with
     2021 and later).
 
+.. option:: GDAL_USE_TEIGHA=ON/OFF
+
+    Control whether to use TEIGHA. Defaults to ON when TEIGHA is found.
+
 
 TIFF
 ****
@@ -1539,6 +1595,10 @@ TileDB
 
 The `TileDB <https://github.com/TileDB-Inc/TileDB>` library is required for the :ref:`raster.tiledb` driver.
 Specify install prefix in the ``CMAKE_PREFIX_PATH`` variable.
+
+.. option:: GDAL_USE_TILEDB=ON/OFF
+
+    Control whether to use TileDB. Defaults to ON when TileDB is found.
 
 
 WebP
