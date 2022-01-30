@@ -151,11 +151,6 @@ gdal_check_package(LibXml2 "Read and write XML formats" CAN_DISABLE)
 
 gdal_check_package(EXPAT "Read and write XML formats" RECOMMENDED CAN_DISABLE)
 gdal_check_package(XercesC "Read and write XML formats (needed for GMLAS and ILI drivers)" CAN_DISABLE)
-if (HAVE_EXPAT OR GDAL_USE_XERCESC)
-  set(HAVE_XMLPARSER ON)
-else ()
-  set(HAVE_XMLPARSER OFF)
-endif ()
 
 gdal_check_package(ZLIB "zlib (external)" CAN_DISABLE)
 invert_on_off(GDAL_USE_ZLIB NOT_GDAL_USE_ZLIB)
