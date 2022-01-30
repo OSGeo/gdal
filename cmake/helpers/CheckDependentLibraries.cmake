@@ -221,6 +221,12 @@ set(GDAL_USE_LIBPNG_INTERNAL
     CACHE BOOL "Use internal libpng copy (if set to ON, has precedence over GDAL_USE_PNG)")
 
 gdal_check_package(JPEG "JPEG compression library (external)" CAN_DISABLE)
+if (GDAL_USE_JPEG AND (JPEG_LIBRARY MATCHES ".*turbojpeg\.(so|lib)"))
+  message(
+    FATAL_ERROR
+      "JPEG_LIBRARY should point to a library with libjpeg ABI, not TurboJPEG. See https://libjpeg-turbo.org/About/TurboJPEG for the difference"
+    )
+endif ()
 invert_on_off(GDAL_USE_JPEG NOT_GDAL_USE_JPEG)
 set(GDAL_USE_LIBJPEG_INTERNAL
     ${NOT_GDAL_USE_JPEG}

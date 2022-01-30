@@ -720,6 +720,12 @@ recommended to get best performance.
 See https://cmake.org/cmake/help/latest/module/FindJPEG.html for more details
 on how the library is detected.
 
+.. note::
+
+    When using libjpeg-turbo, JPEG_LIBRARY[_RELEASE/_DEBUG] should point to a
+    library with libjpeg ABI, not TurboJPEG.
+    See https://libjpeg-turbo.org/About/TurboJPEG for the difference.
+
 .. option:: JPEG_INCLUDE_DIR
 
     Path to an include directory with the ``jpeglib.h`` header file.
