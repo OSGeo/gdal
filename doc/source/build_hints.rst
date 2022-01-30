@@ -740,6 +740,20 @@ on how the library is detected.
     libjpeg is not found.
 
 
+JPEG12
+******
+
+libjpeg-12 bit can be used by the :ref:`raster.jpeg`, :ref:`raster.gtiff` (when using internal libtiff),
+:ref:`raster.jpeg`, :ref:`raster.marfa` and :ref:`raster.nitf` drivers to handle
+JPEG images with a 12 bit depth. It is only supported with the internal libjpeg (6b).
+This can be used independently of if for regular 8 bit JPEG an external or internal
+libjpeg is used.
+
+.. option:: GDAL_USE_LIBJPEG12_INTERNAL=ON/OFF
+
+    Control whether to use internal libjpeg-12 copy. Defaults to ON.
+
+
 JSON-C
 ******
 

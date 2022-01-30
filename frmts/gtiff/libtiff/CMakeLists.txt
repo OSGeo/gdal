@@ -98,7 +98,7 @@ if (GDAL_USE_DEFLATE)
   gdal_add_private_link_libraries(Deflate::Deflate)
 endif ()
 
-if (GDAL_JPEG12_SUPPORTED)
+if (GDAL_USE_LIBJPEG12_INTERNAL)
   target_compile_definitions(libtiff PRIVATE -DJPEG_DUAL_MODE_8_12)
   target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:libjpeg12,BINARY_DIR>)
 endif ()
