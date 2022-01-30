@@ -3,8 +3,8 @@
 /* Define if gdal used libz*/
 #cmakedefine GDAL_USE_ZLIB
 
-/* Define to 1 gdal used internal libz*/
-#cmakedefine01 GDAL_USE_ZLIB_INTERNAL
+/* Define if gdal used internal libz*/
+#cmakedefine GDAL_USE_ZLIB_INTERNAL
 
 /* Define if gdal used libcurl */
 #cmakedefine GDAL_USE_CURL
@@ -12,53 +12,44 @@
 /* Define if gdal used odbc */
 #cmakedefine GDAL_USE_ODBC
 
-/* Define if gdal used cpl */
-#cmakedefine GDAL_USE_CPL
-
 /* Define if pam enable in gdal */
-#cmakedefine GDAL_PAM_ENABLED
+#cmakedefine ENABLE_PAM
 
 /* Define if gdal use geos*/
-#cmakedefine01 GDAL_HAVE_GEOS
+#cmakedefine GDAL_USE_GEOS
 
 /* Define if gdal use opencl*/
-#cmakedefine GDAL_HAVE_OPENCL
+#cmakedefine GDAL_USE_OPENCL
 
 /* Define if gdal use armadillo*/
-#cmakedefine GDAL_HAVE_ARMADILLO
+#cmakedefine GDAL_USE_ARMADILLO
 
 /* Define if gdal use iconv*/
-#cmakedefine GDAL_HAVE_ICONV
+#cmakedefine GDAL_USE_ICONV
 
 /* Define if gdal use internal libtiff*/
 #cmakedefine GDAL_USE_LIBTIFF_INTERNAL
-#cmakedefine GDAL_HAVE_TIFF
-#cmakedefine GDAL_PIXARLOG_SUPPORT
+#cmakedefine GDAL_USE_TIFF
 
 /* Define if gdal use internal libjpeg*/
 #cmakedefine GDAL_USE_LIBJPEG_INTERNAL
-#cmakedefine GDAL_HAVE_JPEG
-#cmakedefine GDAL_JPEG_SUPPORT
-#cmakedefine GDAL_OJPEG_SUPPORT
+#cmakedefine GDAL_USE_JPEG
 
 /* Define if gdal use internal libpng*/
 #cmakedefine GDAL_USE_LIBPNG_INTERNAL
-#cmakedefine GDAL_HAVE_PNG
+#cmakedefine GDAL_USE_PNG
 
 /* Define if gdal use internal libgif*/
 #cmakedefine GDAL_USE_LIBGIF_INTERNAL
-#cmakedefine GDAL_HAVE_GIF
+#cmakedefine GDAL_USE_GIF
 
-#cmakedefine GDAL_HAVE_EXPAT
-#cmakedefine GDAL_HAVE_SQLITE
-#cmakedefine GDAL_HAVE_PG
-#cmakedefine GDAL_HAVE_SQLITE
-#cmakedefine GDAL_HAVE_MYSQL
-#cmakedefine GDAL_HAVE_BOOST
-#cmakedefine GDAL_HAVE_HAVE_LIBKML
+#cmakedefine GDAL_USE_EXPAT
+#cmakedefine GDAL_USE_POSTGRESQL
+#cmakedefine GDAL_USE_SQLITE3
+#cmakedefine GDAL_USE_MYSQL
+#cmakedefine GDAL_USE_LIBKML
 
-#cmakedefine GDAL_ENABLE_OGR
-#cmakedefine OGR_USE_JSONC_INTERNAL
+#cmakedefine GDAL_USE_LIBJSONC_INTERNAL
 
 /*** RASTER FORMATS ***/
 #cmakedefine GDAL_ENABLE_DRIVER_GTIFF
@@ -76,12 +67,12 @@
 /*** VECTOR FORMATS ***/
 #cmakedefine OGR_ENABLE_DRIVER_MITAB
 #cmakedefine OGR_ENABLE_DRIVER_CSV
-#cmakedefine OGR_ENABLE_DRIVER_DFX
+#cmakedefine OGR_ENABLE_DRIVER_DXF
 #cmakedefine OGR_ENABLE_DRIVER_GEOJSON
 #cmakedefine OGR_ENABLE_DRIVER_MEM
 #cmakedefine OGR_ENABLE_DRIVER_VRT
 #cmakedefine OGR_ENABLE_DRIVER_GPX
-#cmakedefine OGR_ENABLE_DRIVER_SHP
+#cmakedefine OGR_ENABLE_DRIVER_SHAPE
 #cmakedefine OGR_ENABLE_DRIVER_WFS
 #cmakedefine OGR_ENABLE_DRIVER_PG
 #cmakedefine OGR_ENABLE_DRIVER_SQLITE
