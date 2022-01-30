@@ -242,6 +242,10 @@ required for the :ref:`raster.dds` driver.
 
   Path to Crnlib library to be linked.
 
+.. option:: GDAL_USE_CRNLIB=ON/OFF
+
+    Control whether to use Crnlib. Defaults to ON when Crnlib is found.
+
 
 CURL
 ****
@@ -344,6 +348,10 @@ ending with ERDAS-ECW_JPEG_2000_SDK-5.5.0/Desktop_Read-Only.
 .. option:: NCSUtil_LIBRARY
 
     Path to library file libNCSUtil (only needed for SDK 3.3)
+
+.. option:: GDAL_USE_ECW=ON/OFF
+
+    Control whether to use ECW. Defaults to ON when ECW is found.
 
 
 EXPAT
@@ -673,6 +681,10 @@ IDB_ROOT or CMAKE_PREFIX_PATH should point to the directory of the SDK.
 .. option:: IDB_IFCLI_LIBRARY
 
     Path to a library file ``ifcli`` (typically in the ``lib/cli`` sub directory)
+
+.. option:: GDAL_USE_IDB=ON/OFF
+
+    Control whether to use IDB. Defaults to ON when IDB is found.
 
 
 JPEG
@@ -1180,7 +1192,7 @@ JPEG-2000 codec written in C language. It is required for the
 
 .. option:: GDAL_USE_OPENJPEG=ON/OFF
 
-    Control whether to use OpenJPEG. Defaults to *OFF* when OpenJPEG is found.
+    Control whether to use OpenJPEG. Defaults to ON when OpenJPEG is found.
 
 
 OpenSSL
@@ -1204,6 +1216,10 @@ The Oracle Instant Client SDK (closed source/proprietary) is required for the
 .. option:: Oracle_ROOT
 
     Path to the root directory of the Oracle Instant Client SDK
+
+.. option:: GDAL_USE_ORACLE=ON/OFF
+
+    Control whether to use Oracle. Defaults to ON when Oracle is found.
 
 
 PCRE2

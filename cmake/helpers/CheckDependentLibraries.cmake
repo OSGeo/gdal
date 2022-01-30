@@ -18,7 +18,7 @@ include(CheckSymbolExists)
 # GDAL_USE_{name in upper case} option. Accept a DISABLED_BY_DEFAULT option to specify that the default value of
 # GDAL_USE_ is OFF. Accept a RECOMMENDED option
 macro (gdal_check_package name purpose)
-  set(_options CONFIG CAN_DISABLE RECOMMENDED DISABLED_BY_DEFAULT)
+  set(_options CONFIG CAN_DISABLE RECOMMENDED DISABLED_BY_DEFAULT ALWAYS_ON_WHEN_FOUND)
   set(_oneValueArgs VERSION)
   set(_multiValueArgs COMPONENTS)
   cmake_parse_arguments(_GCP "${_options}" "${_oneValueArgs}" "${_multiValueArgs}" ${ARGN})
@@ -53,6 +53,7 @@ macro (gdal_check_package name purpose)
       set_package_properties(${name} PROPERTIES PURPOSE ${purpose})
     endif ()
   endif ()
+
   if (_GCP_CAN_DISABLE OR _GCP_DISABLED_BY_DEFAULT)
     if (GDAL_USE_${key})
       if (NOT HAVE_${key})
@@ -67,6 +68,8 @@ macro (gdal_check_package name purpose)
       endif ()
     endif ()
     cmake_dependent_option(GDAL_USE_${key} "Set ON to use ${key}" ${_gcpp_status} "HAVE_${key}" OFF)
+  elseif (NOT _GCP_ALWAYS_ON_WHEN_FOUND)
+    message(FATAL_ERROR "Programming error: missing CAN_DISABLE or DISABLED_BY_DEFAULT option for component ${name}")
   endif ()
 endmacro ()
 
@@ -440,7 +443,7 @@ gdal_check_package(HDF4 "Enable HDF4 driver" CAN_DISABLE)
 define_find_package2(KEA libkea/KEACommon.h kea)
 gdal_check_package(KEA "Enable KEA driver" CAN_DISABLE)
 
-gdal_check_package(ECW "Enable ECW driver")
+gdal_check_package(ECW "Enable ECW driver" CAN_DISABLE)
 gdal_check_package(NetCDF "Enable netCDF driver" CAN_DISABLE)
 gdal_check_package(OGDI "Enable ogr_OGDI driver" CAN_DISABLE)
 # OpenCL warping gives different results than the ones expected by autotest, so disable it by default even if found.
@@ -456,10 +459,10 @@ gdal_check_package(JXL "JPEG-XL compression (when used with internal libtiff)" C
 
 gdal_check_package(CharLS "enable gdal_JPEGLS jpeg loss-less driver" CAN_DISABLE)
 # unused for now gdal_check_package(OpenMP "")
-gdal_check_package(Crnlib "enable gdal_DDS driver")
-gdal_check_package(IDB "enable ogr_IDB driver")
+gdal_check_package(Crnlib "enable gdal_DDS driver" CAN_DISABLE)
+gdal_check_package(IDB "enable ogr_IDB driver" CAN_DISABLE)
 # TODO: implement FindRASDAMAN libs: -lrasodmg -lclientcomm -lcompression -lnetwork -lraslib
-gdal_check_package(RASDAMAN "enable rasdaman driver")
+gdal_check_package(RASDAMAN "enable rasdaman driver" CAN_DISABLE)
 gdal_check_package(rdb "enable RIEGL RDB library" CONFIG CAN_DISABLE)
 gdal_check_package(TileDB "enable TileDB driver" CONFIG CAN_DISABLE)
 gdal_check_package(OpenEXR "OpenEXR >=2.2" CAN_DISABLE)
@@ -507,12 +510,12 @@ unset(TMP_GRASS)
 gdal_check_package(HDFS "Enable Hadoop File System through native library" CAN_DISABLE)
 
 # PDF library: one of them enables PDF driver
-gdal_check_package(Poppler "Enable PDF driver (read side)" CAN_DISABLE)
+gdal_check_package(Poppler "Enable PDF driver with Poppler (read side)" CAN_DISABLE)
 
 define_find_package2(PDFium public/fpdfview.h pdfium FIND_PATH_SUFFIX pdfium)
-gdal_check_package(PDFium "Enable PDF driver (read side)" CAN_DISABLE)
+gdal_check_package(PDFium "Enable PDF driver with Pdfium (read side)" CAN_DISABLE)
 
-gdal_check_package(Podofo "Enable PDF driver (read side)" CAN_DISABLE)
+gdal_check_package(Podofo "Enable PDF driver with Podofo (read side)" CAN_DISABLE)
 if (GDAL_USE_POPPLER
     OR GDAL_USE_PDFIUM
     OR GDAL_USE_PODOFO)
@@ -522,7 +525,7 @@ else ()
 endif ()
 
 set(Oracle_CAN_USE_CLNTSH_AS_MAIN_LIBRARY ON)
-gdal_check_package(Oracle "Enable Oracle OCI driver")
+gdal_check_package(Oracle "Enable Oracle OCI driver" CAN_DISABLE)
 gdal_check_package(TEIGHA "Enable DWG and DGNv8 drivers" CAN_DISABLE)
 gdal_check_package(FileGDB "Enable FileGDB (based on closed-source SDK) driver" CAN_DISABLE)
 
@@ -532,11 +535,10 @@ option(GDAL_USE_PUBLICDECOMPWT
 # proprietary libraries KAKADU
 gdal_check_package(KDU "Enable KAKADU" CAN_DISABLE)
 gdal_check_package(LURATECH "Enable JP2Lura driver" CAN_DISABLE)
-gdal_check_package(FME "FME")
-gdal_check_package(IDB "Informix DataBlade client")
+# gdal_check_package(FME "FME")
 
 # bindings
-gdal_check_package(SWIG "Enable language bindings")
+gdal_check_package(SWIG "Enable language bindings" ALWAYS_ON_WHEN_FOUND)
 set_package_properties(
   SWIG PROPERTIES
   DESCRIPTION

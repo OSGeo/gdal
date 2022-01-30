@@ -114,9 +114,9 @@ ogr_dependent_driver(cad "OpenCAD" "GDAL_USE_OPENCAD OR GDAL_USE_OPENCAD_INTERNA
 # ######################################################################################################################
 # proprietary libraries
 ogr_dependent_driver(fme "FME" "HAVE_FME")
-ogr_dependent_driver(oci "Oracle OCI" "HAVE_ORACLE")
+ogr_dependent_driver(oci "Oracle OCI" "GDAL_USE_ORACLE")
 # to be removed in GDAL 3.5 ogr_dependent_driver(db2 "IBM DB2" "GDAL_USE_ODBC")
-ogr_dependent_driver(idb "IDB" "HAVE_IDB")
+ogr_dependent_driver(idb "IDB" "GDAL_USE_IDB")
 # to be removed in GDAL 3.5 ogr_dependent_driver(arcobjects ARCOBJECTS "ARCOBJECTS_FOUND")
 ogr_dependent_driver(ods ODS "GDAL_USE_EXPAT")
 ogr_dependent_driver(ogdi "OGDI" "GDAL_USE_OGDI")
