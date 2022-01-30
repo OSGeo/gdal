@@ -46,6 +46,7 @@
 #include <set>
 #include <queue>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -8165,8 +8166,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
         if( CPLFetchBool(poOpenInfo->papszOpenOptions, "VARIABLES_AS_BANDS", false)
             && oMap2DDimsToGroupAndVar.size() == 1 )
         {
-            nGroupID = oMap2DDimsToGroupAndVar.begin()->second.front().first;
-            nVarID = oMap2DDimsToGroupAndVar.begin()->second.front().second;
+            std::tie(nGroupID, nVarID) = oMap2DDimsToGroupAndVar.begin()->second.front();
             bSeveralVariablesAsBands = true;
         }
         else
