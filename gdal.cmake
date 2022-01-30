@@ -762,4 +762,16 @@ if (NOT SILENCE_EXPERIMENTAL_WARNING)
   message(WARNING "CMake builds are considered only EXPERIMENTAL for now. Do not use them for production.")
 endif ()
 
+if (DEFINED GDAL_USE_EXTERNAL_LIBS_OLD_CACHED)
+  if (GDAL_USE_EXTERNAL_LIBS_OLD_CACHED AND NOT GDAL_USE_EXTERNAL_LIBS)
+    message(
+      WARNING
+        "Setting GDAL_USE_EXTERNAL_LIBS=OFF after an initial invocation to ON may require to invoke CMake with \"-UGDAL_USE_*\""
+      )
+  endif ()
+endif ()
+set(GDAL_USE_EXTERNAL_LIBS_OLD_CACHED
+    ${GDAL_USE_EXTERNAL_LIBS}
+    CACHE INTERNAL "Previous value of GDAL_USE_EXTERNAL_LIBS")
+
 # vim: ts=4 sw=4 sts=4 et

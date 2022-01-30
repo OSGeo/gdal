@@ -234,12 +234,11 @@ jobs:
         conda install --yes --quiet --name gdalenv -c conda-forge proj clcache
     - name: Configure
       shell: bash -l {0}
-      # Disable MySQL because of "error LNK2038: mismatch detected for '_MSC_VER': value '1800' doesn't match value '1900' in ogrmysqldatasource.obj" and other errors
       run: |
         mkdir -p $GITHUB_WORKSPACE/build
         export CONDA_PREFIX_BACKUP=${CONDA_PREFIX}
         conda deactivate
-        cmake -A ${architecture} -G "${generator}" "-DCMAKE_C_COMPILER_LAUNCHER=clcache" "-DCMAKE_CXX_COMPILER_LAUNCHER=clcache" "-DPROJ_INCLUDE_DIR=${CONDA_PREFIX_BACKUP}/Library/include" "-DPROJ_LIBRARY=${CONDA_PREFIX_BACKUP}/Library/lib/proj.lib" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DGDAL_USE_MYSQL:BOOL=OFF -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX"
+        cmake -A ${architecture} -G "${generator}" "-DCMAKE_C_COMPILER_LAUNCHER=clcache" "-DCMAKE_CXX_COMPILER_LAUNCHER=clcache" "-DPROJ_INCLUDE_DIR=${CONDA_PREFIX_BACKUP}/Library/include" "-DPROJ_LIBRARY=${CONDA_PREFIX_BACKUP}/Library/lib/proj.lib" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX" -DGDAL_USE_EXTERNAL_LIBS:BOOL=OFF
     - name: Build
       shell: bash -l {0}
       run: cmake --build $GITHUB_WORKSPACE/build --config Release -j 2

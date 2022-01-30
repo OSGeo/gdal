@@ -157,6 +157,16 @@ following option:
 
     Control whether a found dependency can be used for the GDAL build.
 
+It is also possible to ask GDAL to disable the use of any external dependency
+(besides the required one, PROJ) by default by setting the following option to
+OFF. Individual libraries shall then be enabled explicitly with
+GDAL_USE_<Packagename_in_upper_case>:BOOL=ON.
+
+.. option:: GDAL_USE_EXTERNAL_LIBS:BOOL=ON/OFF
+
+     This option should be set before CMakeCache.txt is created. If it is set
+     to OFF after CMakeCache.txt is created, then cmake should be reinvoked with
+     "-UGDAL_USE_*" to cancel the activation of previously detected libraries.
 
 Armadillo
 *********

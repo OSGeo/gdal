@@ -14,6 +14,11 @@ include(FeatureSummary)
 include(DefineFindPackage2)
 include(CheckSymbolExists)
 
+option(
+  GDAL_USE_EXTERNAL_LIBS
+  "Whether detected external libraries should be used by default. This should be set before CMakeCache.txt is created."
+  ON)
+
 # Macro to declare a package Accept a CAN_DISABLE option to specify that the package can be disabled if found, with the
 # GDAL_USE_{name in upper case} option. Accept a DISABLED_BY_DEFAULT option to specify that the default value of
 # GDAL_USE_ is OFF. Accept a RECOMMENDED option
@@ -55,13 +60,20 @@ macro (gdal_check_package name purpose)
   endif ()
 
   if (_GCP_CAN_DISABLE OR _GCP_DISABLED_BY_DEFAULT)
+    set(_gcpp_status ON)
     if (GDAL_USE_${key})
       if (NOT HAVE_${key})
         message(FATAL_ERROR "Configured to use ${key}, but not found")
       endif ()
+    elseif (NOT GDAL_USE_EXTERNAL_LIBS)
+      set(_gcpp_status OFF)
+      if (HAVE_${key} AND NOT GDAL_USE_${key})
+        message(
+          "${key} has been found, but is disabled due to GDAL_USE_EXTERNAL_LIBS=OFF. Enable it by setting GDAL_USE_${key}=ON"
+          )
+      endif ()
     endif ()
-    set(_gcpp_status ON)
-    if (_GCP_DISABLED_BY_DEFAULT)
+    if (_gcpp_status AND _GCP_DISABLED_BY_DEFAULT)
       set(_gcpp_status OFF)
       if (HAVE_${key} AND NOT GDAL_USE_${key})
         message("${key} has been found, but is disabled by default. Enable it by setting GDAL_USE_${key}=ON")
