@@ -736,9 +736,9 @@ void PLMosaicDataset::CreateMosaicCachePathIfNecessary()
         if( VSIStatL(osMosaicPath, &sStatBuf) != 0 )
         {
             CPLPushErrorHandler(CPLQuietErrorHandler);
-            VSIMkdir(osCachePathRoot, 0755);
-            VSIMkdir(osCachePath, 0755);
-            VSIMkdir(osMosaicPath, 0755);
+            CPL_IGNORE_RET_VAL(VSIMkdir(osCachePathRoot, 0755));
+            CPL_IGNORE_RET_VAL(VSIMkdir(osCachePath, 0755));
+            CPL_IGNORE_RET_VAL(VSIMkdir(osMosaicPath, 0755));
             CPLPopErrorHandler();
         }
     }
