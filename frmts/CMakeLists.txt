@@ -175,6 +175,12 @@ target_include_directories(
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:gdal_frmts>)
 set_property(TARGET gdal_frmts PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 
+# Special case for HTTP driver since it is included in the frmts/wcs/ directory
+# We should ultimately make it a separate frmts/http/ to clean up things.
+if (GDAL_ENABLE_DRIVER_HTTP AND NOT GDAL_ENABLE_DRIVER_HTTP_PLUGIN)
+  target_compile_definitions(gdal_frmts PRIVATE -DFRMT_http)
+endif ()
+
 # Install drivers.ini along with plugins
 get_target_property(PLUGIN_OUTPUT_DIR ${GDAL_LIB_TARGET_NAME} PLUGIN_OUTPUT_DIR)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/drivers.ini ${PLUGIN_OUTPUT_DIR}/drivers.ini COPYONLY)
