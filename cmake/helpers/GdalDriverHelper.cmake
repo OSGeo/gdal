@@ -27,7 +27,7 @@ GdalDriverHelper
     - the value of GDAL_ENABLE_PLUGINS option when NO_DEPS is not specified (e.g ECW, HDF4, etc.)
     - the value of GDAL_ENABLE_PLUGINS_NO_DEPS option when NO_DEPS is specified
   - PLUGIN_CAPABLE_IF: similar to PLUGIN_CAPABLE,
-    but extra conditions provided in <cond> (e.g "NOT GDAL_USE_LIBJSONC_INTERNAL") are needed
+    but extra conditions provided in <cond> (e.g "NOT GDAL_USE_JSONC_INTERNAL") are needed
 
   The NO_DEPS option express that the driver has no non-core external dependencies.
 

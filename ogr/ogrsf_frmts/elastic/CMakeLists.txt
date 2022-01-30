@@ -6,10 +6,10 @@ add_gdal_driver(
           ogrelasticlayer.cpp
           ogrelasticaggregationlayer.cpp
           PLUGIN_CAPABLE_IF
-          "NOT GDAL_USE_LIBJSONC_INTERNAL")
+          "NOT GDAL_USE_JSONC_INTERNAL")
 gdal_standard_includes(ogr_Elastic)
 target_include_directories(ogr_Elastic PRIVATE ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/geojson)
-if (GDAL_USE_LIBJSONC_INTERNAL)
+if (GDAL_USE_JSONC_INTERNAL)
   target_include_directories(ogr_Elastic PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
 else ()
   gdal_target_link_libraries(TARGET ogr_Elastic LIBRARIES JSONC::JSONC)

@@ -5,7 +5,7 @@ add_gdal_driver(
   BUILTIN)
 gdal_standard_includes(ogr_CouchDB)
 target_include_directories(ogr_CouchDB PRIVATE $<TARGET_PROPERTY:ogr_geojson,SOURCE_DIR>)
-if (GDAL_USE_LIBJSONC_INTERNAL)
+if (GDAL_USE_JSONC_INTERNAL)
   target_include_directories(ogr_CouchDB PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
 else ()
   gdal_target_link_libraries(TARGET ogr_CouchDB LIBRARIES JSONC::JSONC)

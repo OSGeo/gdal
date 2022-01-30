@@ -5,7 +5,7 @@ add_gdal_driver(
 gdal_standard_includes(gdal_GIF)
 target_compile_definitions(gdal_GIF PRIVATE -DHAVE_GIF)
 
-if (GDAL_USE_GIFLIB_INTERNAL)
+if (GDAL_USE_GIF_INTERNAL)
   target_include_directories(gdal_GIF PRIVATE $<TARGET_PROPERTY:giflib,SOURCE_DIR>)
 else ()
   gdal_target_link_libraries(TARGET gdal_GIF LIBRARIES GIF::GIF)

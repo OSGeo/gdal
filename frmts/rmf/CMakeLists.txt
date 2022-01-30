@@ -9,7 +9,7 @@ add_gdal_driver(
           NO_DEPS)
 gdal_standard_includes(gdal_RMF)
 
-if (HAVE_JPEG OR GDAL_USE_LIBJPEG_INTERNAL)
+if (HAVE_JPEG OR GDAL_USE_JPEG_INTERNAL)
   target_compile_definitions(gdal_RMF PRIVATE -DHAVE_LIBJPEG)
 endif ()
 if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)

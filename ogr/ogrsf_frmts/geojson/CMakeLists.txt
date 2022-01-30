@@ -16,7 +16,7 @@ add_gdal_driver(
   BUILTIN)
 gdal_standard_includes(ogr_geojson)
 target_include_directories(ogr_geojson PRIVATE $<TARGET_PROPERTY:appslib,SOURCE_DIR>)
-if (GDAL_USE_LIBJSONC_INTERNAL)
+if (GDAL_USE_JSONC_INTERNAL)
   target_include_directories(ogr_geojson PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
 else ()
   gdal_target_link_libraries(TARGET ogr_geojson LIBRARIES JSONC::JSONC)

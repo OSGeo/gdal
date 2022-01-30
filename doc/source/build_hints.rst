@@ -486,7 +486,7 @@ If not found, an internal copy of libgeotiff will be used.
 
     Control whether to use external libgeotiff. Defaults to ON when external libgeotiff is found.
 
-.. option:: GDAL_USE_LIBGEOTIFF_INTERNAL=ON/OFF
+.. option:: GDAL_USE_GEOTIFF_INTERNAL=ON/OFF
 
     Control whether to use internal libgeotiff copy. Defaults to ON when external
     libgeotiff is not found.
@@ -531,7 +531,7 @@ If not found, an internal copy will be used.
 
     Control whether to use external giflib. Defaults to ON when external giflib is found.
 
-.. option:: GDAL_USE_GIFLIB_INTERNAL=ON/OFF
+.. option:: GDAL_USE_GIF_INTERNAL=ON/OFF
 
     Control whether to use internal giflib copy. Defaults to ON when external
     giflib is not found.
@@ -740,7 +740,7 @@ on how the library is detected.
 
     Control whether to use external libjpeg. Defaults to ON when external libjpeg is found.
 
-.. option:: GDAL_USE_LIBJPEG_INTERNAL=ON/OFF
+.. option:: GDAL_USE_JPEG_INTERNAL=ON/OFF
 
     Control whether to use internal libjpeg copy. Defaults to ON when external
     libjpeg is not found.
@@ -755,7 +755,7 @@ JPEG images with a 12 bit depth. It is only supported with the internal libjpeg 
 This can be used independently of if for regular 8 bit JPEG an external or internal
 libjpeg is used.
 
-.. option:: GDAL_USE_LIBJPEG12_INTERNAL=ON/OFF
+.. option:: GDAL_USE_JPEG12_INTERNAL=ON/OFF
 
     Control whether to use internal libjpeg-12 copy. Defaults to ON.
 
@@ -780,7 +780,7 @@ If not found, an internal copy of json-c will be used.
 
     Control whether to use JSON-C. Defaults to ON when JSON-C is found.
 
-.. option:: GDAL_USE_LIBJSONC_INTERNAL=ON/OFF
+.. option:: GDAL_USE_JSONC_INTERNAL=ON/OFF
 
     Control whether to use internal JSON-C copy. Defaults to ON when external
     JSON-C is not found.
@@ -883,7 +883,7 @@ of the original input image is preserved (within user defined error bounds).
 
     Control whether to use LERC (V2). Defaults to *OFF* when LERC (V2) is found.
 
-.. option:: GDAL_USE_LIBLERC_INTERNAL=ON/OFF
+.. option:: GDAL_USE_LERC_INTERNAL=ON/OFF
 
     Control whether to use the LERC (V2) internal library. Defaults to ON,
     unless GDAL_USE_LERC is set to ON.
@@ -895,7 +895,7 @@ LERCV1
 This is an internal library used by the :ref:`raster.marfa` driver. It offers the
 LERC v1 compression.
 
-.. option:: GDAL_USE_LIBLERCV1_INTERNAL=ON/OFF
+.. option:: GDAL_USE_LERCV1_INTERNAL=ON/OFF
 
     Control whether to use the Lerc V1 internal library. Defaults to ON.
 
@@ -1357,7 +1357,7 @@ on how the library is detected.
 
     Control whether to use external libpng. Defaults to ON when external libpng is found.
 
-.. option:: GDAL_USE_LIBPNG_INTERNAL=ON/OFF
+.. option:: GDAL_USE_PNG_INTERNAL=ON/OFF
 
     Control whether to use internal libpng copy. Defaults to ON when external
     libpng is not found.
@@ -1604,7 +1604,7 @@ If not found, an internal copy of libtiff will be used.
 
     Control whether to use external libtiff. Defaults to ON when external libtiff is found.
 
-.. option:: GDAL_USE_LIBTIFF_INTERNAL=ON/OFF
+.. option:: GDAL_USE_TIFF_INTERNAL=ON/OFF
 
     Control whether to use internal libtiff copy. Defaults to ON when external
     libtiff is not found.

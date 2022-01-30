@@ -140,7 +140,7 @@ if (NOT WIN32)
 endif ()
 
 # Internal libraries first
-if (GDAL_USE_LIBJSONC_INTERNAL)
+if (GDAL_USE_JSONC_INTERNAL)
   target_include_directories(cpl PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
 endif ()
 
@@ -153,7 +153,7 @@ if (GDAL_USE_ZLIB_INTERNAL)
 endif ()
 
 # Now external libraries
-if (NOT GDAL_USE_LIBJSONC_INTERNAL)
+if (NOT GDAL_USE_JSONC_INTERNAL)
   target_include_directories(cpl PRIVATE $<TARGET_PROPERTY:JSONC::JSONC,INTERFACE_INCLUDE_DIRECTORIES>)
   gdal_add_private_link_libraries(JSONC::JSONC)
 endif ()

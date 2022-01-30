@@ -107,6 +107,22 @@ function (invert_on_off arg out)
   endif ()
 endfunction ()
 
+function (gdal_internal_library libname)
+  set(_options REQUIRED)
+  set(_oneValueArgs)
+  set(_multiValueArgs)
+  cmake_parse_arguments(_GIL "${_options}" "${_oneValueArgs}" "${_multiValueArgs}" ${ARGN})
+  invert_on_off(GDAL_USE_${libname} NOT_GDAL_USE_${libname})
+  set(GDAL_USE_${libname}_INTERNAL
+      ${NOT_GDAL_USE_${libname}}
+      CACHE BOOL "Use internal ${libname} copy (if set to ON, has precedence over GDAL_USE_${libname})")
+  if (_GIL_REQUIRED
+      AND (NOT GDAL_USE_${libname})
+      AND (NOT GDAL_USE_${libname}_INTERNAL))
+    message(FATAL_ERROR "GDAL_USE_${libname} or GDAL_USE_${libname}_INTERNAL must be set to ON")
+  endif ()
+endfunction ()
+
 # Custom find_package definitions
 
 define_find_package2(Crnlib crunch/crnlib.h crunch)
@@ -168,13 +184,7 @@ gdal_check_package(EXPAT "Read and write XML formats" RECOMMENDED CAN_DISABLE)
 gdal_check_package(XercesC "Read and write XML formats (needed for GMLAS and ILI drivers)" CAN_DISABLE)
 
 gdal_check_package(ZLIB "zlib (external)" CAN_DISABLE)
-invert_on_off(GDAL_USE_ZLIB NOT_GDAL_USE_ZLIB)
-set(GDAL_USE_ZLIB_INTERNAL
-    ${NOT_GDAL_USE_ZLIB}
-    CACHE BOOL "Use internal zlib copy (if set to ON, has precedence over GDAL_USE_ZLIB)")
-if ((NOT GDAL_USE_ZLIB) AND (NOT GDAL_USE_ZLIB_INTERNAL))
-  message(FATAL_ERROR "GDAL_USE_ZLIB or GDAL_USE_ZLIB_INTERNAL must be set to ON")
-endif ()
+gdal_internal_library(ZLIB REQUIRED)
 
 gdal_check_package(Deflate "Enable libdeflate compression library (complement to ZLib)" CAN_DISABLE)
 
@@ -193,32 +203,17 @@ set_package_properties(
   URL "https://libtiff.gitlab.io/libtiff/"
   DESCRIPTION "Support for the Tag Image File Format (TIFF)."
   TYPE RECOMMENDED)
-invert_on_off(GDAL_USE_TIFF NOT_GDAL_USE_TIFF)
-set(GDAL_USE_LIBTIFF_INTERNAL
-    ${NOT_GDAL_USE_TIFF}
-    CACHE BOOL "Use internal libtiff copy (if set to ON, has precedence over GDAL_USE_TIFF)")
-if ((NOT GDAL_USE_TIFF) AND (NOT GDAL_USE_LIBTIFF_INTERNAL))
-  message(FATAL_ERROR "GDAL_USE_TIFF or GDAL_USE_LIBTIFF_INTERNAL must be set to ON")
-endif ()
+gdal_internal_library(TIFF REQUIRED)
 
 gdal_check_package(ZSTD "ZSTD compression library" CAN_DISABLE)
 gdal_check_package(SFCGAL "gdal core supports ISO 19107:2013 and OGC Simple Features Access 1.2 for 3D operations"
                    CAN_DISABLE)
 
 gdal_check_package(GeoTIFF "libgeotiff library (external)" CAN_DISABLE)
-invert_on_off(GDAL_USE_GEOTIFF NOT_GDAL_USE_GEOTIFF)
-set(GDAL_USE_LIBGEOTIFF_INTERNAL
-    ${NOT_GDAL_USE_GEOTIFF}
-    CACHE BOOL "Use internal libgeotiff copy (if set to ON, has precedence over GDAL_USE_GEOTIFF)")
-if ((NOT GDAL_USE_GEOTIFF) AND (NOT GDAL_USE_LIBGEOTIFF_INTERNAL))
-  message(FATAL_ERROR "GDAL_USE_GEOTIFF or GDAL_USE_LIBGEOTIFF_INTERNAL must be set to ON")
-endif ()
+gdal_internal_library(GEOTIFF REQUIRED)
 
 gdal_check_package(PNG "PNG compression library (external)" CAN_DISABLE)
-invert_on_off(GDAL_USE_PNG NOT_GDAL_USE_PNG)
-set(GDAL_USE_LIBPNG_INTERNAL
-    ${NOT_GDAL_USE_PNG}
-    CACHE BOOL "Use internal libpng copy (if set to ON, has precedence over GDAL_USE_PNG)")
+gdal_internal_library(PNG)
 
 gdal_check_package(JPEG "JPEG compression library (external)" CAN_DISABLE)
 if (GDAL_USE_JPEG AND (JPEG_LIBRARY MATCHES ".*turbojpeg\.(so|lib)"))
@@ -227,40 +222,19 @@ if (GDAL_USE_JPEG AND (JPEG_LIBRARY MATCHES ".*turbojpeg\.(so|lib)"))
       "JPEG_LIBRARY should point to a library with libjpeg ABI, not TurboJPEG. See https://libjpeg-turbo.org/About/TurboJPEG for the difference"
     )
 endif ()
-invert_on_off(GDAL_USE_JPEG NOT_GDAL_USE_JPEG)
-set(GDAL_USE_LIBJPEG_INTERNAL
-    ${NOT_GDAL_USE_JPEG}
-    CACHE BOOL "Use internal libjpeg copy (if set to ON, has precedence over GDAL_USE_JPEG)")
+gdal_internal_library(JPEG)
 
 gdal_check_package(GIF "GIF compression library (external)" CAN_DISABLE)
-invert_on_off(GDAL_USE_GIF NOT_GDAL_USE_GIF)
-set(GDAL_USE_GIFLIB_INTERNAL
-    ${NOT_GDAL_USE_GIF}
-    CACHE BOOL "Use internal giflib copy (if set to ON, has precedence over GDAL_USE_GIF)")
+gdal_internal_library(GIF)
 
 gdal_check_package(JSONC "json-c library (external)" CAN_DISABLE)
-invert_on_off(GDAL_USE_JSONC NOT_GDAL_USE_JSONC)
-set(GDAL_USE_LIBJSONC_INTERNAL
-    ${NOT_GDAL_USE_JSONC}
-    CACHE BOOL "Use internal libjson-c copy (if set to ON, has precedence over GDAL_USE_JSONC)")
-if ((NOT GDAL_USE_JSONC) AND (NOT GDAL_USE_LIBJSONC_INTERNAL))
-  message(FATAL_ERROR "GDAL_USE_JSONC or GDAL_USE_LIBJSONC_INTERNAL must be set to ON")
-endif ()
+gdal_internal_library(JSONC REQUIRED)
 
 gdal_check_package(OpenCAD "libopencad (external, used by OpenCAD driver)" CAN_DISABLE)
-invert_on_off(GDAL_USE_OPENCAD NOT_GDAL_USE_OPENCAD)
-set(GDAL_USE_OPENCAD_INTERNAL
-    ${NOT_GDAL_USE_OPENCAD}
-    CACHE BOOL "Use internal libopencad copy (if set to ON, has precedence over GDAL_USE_OPENCAD)")
+gdal_internal_library(OPENCAD)
 
 gdal_check_package(QHULL "Enable QHULL (external)" CAN_DISABLE)
-invert_on_off(GDAL_USE_QHULL NOT_GDAL_USE_QHULL)
-set(GDAL_USE_QHULL_INTERNAL
-    ${NOT_GDAL_USE_QHULL}
-    CACHE BOOL "Use internal QHULL copy (if set to ON, has precedence over GDAL_USE_QHULL)")
-if ((NOT GDAL_USE_QHULL) AND (NOT GDAL_USE_QHULL_INTERNAL))
-  message(FATAL_ERROR "GDAL_USE_QHULL or GDAL_USE_QHULL_INTERNAL must be set to ON")
-endif ()
+gdal_internal_library(QHULL)
 
 # libcsf upstream is now at https://github.com/pcraster/rasterformat, but the library name has been changed to
 # pcraster_raster_format and it is forced as a static library (at least as of commit
@@ -273,14 +247,11 @@ endif ()
 # driver with internal libcsf (if set to ON, has precedence over GDAL_USE_LIBCSF)") endif ()
 set(GDAL_USE_LIBCSF_INTERNAL ON)
 
-option(GDAL_USE_LIBLERCV1_INTERNAL "Set ON to build mrf driver with internal libLERC V1" ON)
+option(GDAL_USE_LERCV1_INTERNAL "Set ON to build mrf driver with internal libLERC V1" ON)
 
 # DISABLED_BY_DEFAULT since it prevents MRF Lerc support (see frmts/mrf/CMakeLists.txt)
 gdal_check_package(LERC "Enable LERC (external)" CAN_DISABLE DISABLED_BY_DEFAULT)
-invert_on_off(GDAL_USE_LERC NOT_GDAL_USE_LERC)
-set(GDAL_USE_LIBLERC_INTERNAL
-    ${NOT_GDAL_USE_LERC}
-    CACHE BOOL "Use internal liblerc copy (if set to ON, has precedence over GDAL_USE_LERC)")
+gdal_internal_library(LERC)
 
 # Disable by default the use of external shapelib, as currently the SAOffset member that holds file offsets in it is a
 # 'unsigned long', hence 32 bit on 32 bit platforms, whereas we can handle DBFs file > 4 GB. Internal shapelib has not

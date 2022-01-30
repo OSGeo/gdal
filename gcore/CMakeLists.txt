@@ -92,7 +92,7 @@ endif ()
 
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:gcore>)
 
-if (GDAL_USE_LIBJSONC_INTERNAL)
+if (GDAL_USE_JSONC_INTERNAL)
   target_include_directories(gcore PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
 endif ()
 
@@ -103,7 +103,7 @@ endif ()
 add_subdirectory(mdreader)
 
 # External libs now
-if (NOT GDAL_USE_LIBJSONC_INTERNAL)
+if (NOT GDAL_USE_JSONC_INTERNAL)
   target_include_directories(gcore PRIVATE ${JSONC_INCLUDE_DIRS})
   gdal_add_private_link_libraries(JSONC::JSONC)
 endif ()

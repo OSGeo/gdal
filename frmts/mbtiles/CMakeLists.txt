@@ -7,7 +7,7 @@ target_include_directories(gdal_MBTiles PRIVATE ${GDAL_VECTOR_FORMAT_SOURCE_DIR}
 if (GDAL_USE_ZLIB_INTERNAL)
   target_include_directories(gdal_MBTiles PRIVATE $<TARGET_PROPERTY:libz,SOURCE_DIR>)
 endif ()
-if (GDAL_USE_LIBJSONC_INTERNAL)
+if (GDAL_USE_JSONC_INTERNAL)
   target_include_directories(gdal_MBTiles PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
 endif ()
 
@@ -22,7 +22,7 @@ gdal_target_link_libraries(TARGET gdal_MBTiles LIBRARIES SQLite::SQLite3)
 if (NOT GDAL_USE_ZLIB_INTERNAL)
   gdal_target_link_libraries(TARGET gdal_MBTiles LIBRARIES ZLIB::ZLIB)
 endif ()
-if (NOT GDAL_USE_LIBJSONC_INTERNAL)
+if (NOT GDAL_USE_JSONC_INTERNAL)
   gdal_target_link_libraries(TARGET gdal_MBTiles LIBRARIES JSONC::JSONC)
 endif ()
 target_include_directories(
