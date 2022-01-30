@@ -163,13 +163,7 @@ endif ()
 
 gdal_check_package(Deflate "Enable libdeflate compression library (complement to ZLib)" CAN_DISABLE)
 
-find_package(OpenSSL COMPONENTS SSL Crypto)
-if (GDAL_USE_OPENSSL)
-  if (NOT OPENSSL_FOUND)
-    message(FATAL_ERROR "Configured to use GDAL_USE_OPENSSL, but not found")
-  endif ()
-endif ()
-cmake_dependent_option(GDAL_USE_OPENSSL "Set ON to use OpenSSL" ON OPENSSL_FOUND OFF)
+gdal_check_package(OpenSSL "Use OpenSSL library" COMPONENTS SSL Crypto CAN_DISABLE)
 
 gdal_check_package(CryptoPP "Use crypto++ library for CPL." CAN_DISABLE)
 if (GDAL_USE_CRYPTOPP)
