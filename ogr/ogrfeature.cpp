@@ -549,8 +549,9 @@ OGRGeometry *OGRFeature::StealGeometry( int iGeomField )
  * Sort of an inverse to OGR_FSetGeometryDirectly().
  *
  * After this call the OGRFeature will have a NULL geometry.
- *
- * @return the pointer to the geometry.
+ * 
+ * @param hFeat feature from which to steal the first geometry.
+ * @return the pointer to the stolen geometry.
  */
 
 OGRGeometryH OGR_F_StealGeometry( OGRFeatureH hFeat )
@@ -576,9 +577,9 @@ OGRGeometryH OGR_F_StealGeometry( OGRFeatureH hFeat )
  *
  * After this call the OGRFeature will have a NULL geometry.
  * 
- * @param iGeomField index of the geometry field.
- *
- * @return the pointer to the geometry.
+ * @param hFeat feature from which to steal a geometry.
+ * @param iGeomField index of the geometry field to steal.
+ * @return the pointer to the stolen geometry.
  */
 
 OGRGeometryH OGR_F_StealGeometryEx( OGRFeatureH hFeat, int iGeomField )
