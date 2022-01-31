@@ -80,6 +80,11 @@ if (GDAL_USE_TIFF_INTERNAL AND GDAL_USE_JXL)
   gdal_target_link_libraries(TARGET gdal_GTIFF LIBRARIES JXL::JXL)
 endif ()
 
+if (GDAL_USE_WEBP)
+  target_compile_definitions(gdal_GTIFF PRIVATE -DWEBP_SUPPORT)
+  target_include_directories(gdal_GTIFF PRIVATE $<TARGET_PROPERTY:WEBP::WebP,INTERFACE_INCLUDE_DIRECTORIES>)
+endif ()
+
 if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
   set_property(SOURCE geotiff.cpp gt_wkt_srs.cpp PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
   # These files has CPL_CVSID("$id$") which break ODR and UNITY_BUILD
