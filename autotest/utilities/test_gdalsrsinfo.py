@@ -145,7 +145,7 @@ def test_gdalsrsinfo_9():
     _, err = gdaltest.runexternal_out_and_err(
         test_cli_utilities.get_gdalsrsinfo_path() + ' nonexistent_file')
 
-    assert err.strip() == "ERROR 1: ERROR - failed to load SRS definition from nonexistent_file"
+    assert 'ERROR - failed to load SRS definition from nonexistent_file' in err.strip()
 
 
 ###############################################################################
