@@ -42,6 +42,10 @@ ifeq ($(JPEG_SETTING),internal)
 TIFF_OPTS 	:=	$(TIFF_OPTS) -I../jpeg/libjpeg
 endif
 
+ifeq ($(WEBP_SETTING),yes)
+TIFF_OPTS 	:=	-DWEBP_SUPPORT $(TIFF_OPTS)
+endif
+
 CPPFLAGS	:=	 -iquote .. $(GEOTIFF_INCLUDE) $(PROJ_INCLUDE) $(PROJ_FLAGS) $(TIFF_OPTS) $(CPPFLAGS)
 
 CXXFLAGS        :=      $(WARN_EFFCPLUSPLUS)  $(CXXFLAGS)
