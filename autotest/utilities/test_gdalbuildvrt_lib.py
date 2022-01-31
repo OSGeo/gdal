@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import gdaltest
 import pytest
 import struct
 
@@ -336,3 +337,92 @@ def test_gdalbuildvrt_lib_resampling_methods(resampleAlg, resampleAlgStr):
     option_list = gdal.BuildVRTOptions(resampleAlg=resampleAlg, options='__RETURN_OPTION_LIST__')
     assert option_list == ['-r', resampleAlgStr]
     assert gdal.BuildVRT('', '../gcore/data/byte.tif', resampleAlg=resampleAlg) is not None
+
+
+###############################################################################
+def test_gdalbuildvrt_lib_bandList():
+
+    src_ds = gdal.GetDriverByName('MEM').Create('src1', 3, 1, 2)
+    src_ds.SetGeoTransform([2,0.001,0,49,0,-0.001])
+    src_ds.GetRasterBand(1).Fill(255)
+    src_ds.GetRasterBand(2).Fill(0)
+
+    vrt_ds = gdal.BuildVRT('', [src_ds], bandList = [2, 1, 2])
+    assert vrt_ds.GetRasterBand(1).Checksum() == 0
+    assert vrt_ds.GetRasterBand(2).Checksum() != 0
+    assert vrt_ds.GetRasterBand(3).Checksum() == 0
+
+    with gdaltest.error_handler():
+        assert gdal.BuildVRT('', [src_ds], bandList = [3]) is None
+
+    src2_ds = gdal.GetDriverByName('MEM').Create('src2', 3, 1, 3)
+    src2_ds.SetGeoTransform([2,0.001,0,49,0,-0.001])
+
+    # If no explicit band list, we require all sources to have the same
+    # number of bands
+    with gdaltest.error_handler():
+        gdal.ErrorReset()
+        assert gdal.BuildVRT('', [src_ds, src2_ds]) is not None
+        assert gdal.GetLastErrorType() != 0
+
+    with gdaltest.error_handler():
+        gdal.ErrorReset()
+        assert gdal.BuildVRT('', [src2_ds, src_ds]) is not None
+        assert gdal.GetLastErrorType() != 0
+
+    # If explicit band list, we tolerate different band count, provided that
+    # all requested bands are available.
+    gdal.ErrorReset()
+    assert gdal.BuildVRT('', [src_ds, src2_ds], bandList = [1, 2]) is not None
+    assert gdal.GetLastErrorType() == 0
+
+    gdal.ErrorReset()
+    assert gdal.BuildVRT('', [src2_ds, src_ds], bandList = [1, 2]) is not None
+    assert gdal.GetLastErrorType() == 0
+
+
+###############################################################################
+def test_gdalbuildvrt_lib_warnings_and_custom_error_handler():
+
+    class GdalErrorHandler(object):
+        def __init__(self):
+            self.got_failure = False
+            self.got_warning = False
+
+        def handler(self, err_level, err_no, err_msg):
+            if err_level == gdal.CE_Failure:
+                self.got_failure = True
+            elif err_level == gdal.CE_Warning:
+                self.got_warning = True
+
+    # Heterogenous band numbers should result in a warning from BuildVRT()
+    ds_one_band = gdal.Open('../gcore/data/byte.tif')
+    ds_two_band = gdal.Translate('', ds_one_band, bandList = [1, 1], format = 'VRT')
+
+    err_handler = GdalErrorHandler()
+    with gdaltest.error_handler(err_handler.handler):
+        with gdaltest.enable_exceptions():
+            vrt_ds = gdal.BuildVRT('', [ds_one_band, ds_two_band])
+    assert vrt_ds
+    assert not err_handler.got_failure
+    assert err_handler.got_warning
+
+    err_handler = GdalErrorHandler()
+    with gdaltest.error_handler(err_handler.handler):
+        with gdaltest.enable_exceptions():
+            vrt_ds = gdal.BuildVRT('', [ds_two_band, ds_one_band])
+    assert vrt_ds
+    assert not err_handler.got_failure
+    assert err_handler.got_warning
+
+
+###############################################################################
+def test_gdalbuildvrt_lib_strict_mode():
+
+    with gdaltest.enable_exceptions():
+        with gdaltest.error_handler():
+            assert gdal.BuildVRT('', ['../gcore/data/byte.tif', 'i_dont_exist.tif'], strict = False) is not None
+
+    with gdaltest.enable_exceptions():
+        with pytest.raises(Exception):
+            gdal.BuildVRT('', ['../gcore/data/byte.tif', 'i_dont_exist.tif'], strict = True)

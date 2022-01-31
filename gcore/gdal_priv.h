@@ -798,10 +798,18 @@ private:
 
     virtual int         TestCapability( const char * );
 
+    virtual std::vector<std::string> GetFieldDomainNames(CSLConstList papszOptions = nullptr) const;
+
     virtual const OGRFieldDomain* GetFieldDomain(const std::string& name) const;
 
     virtual bool        AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,
                                        std::string& failureReason);
+
+    virtual bool        DeleteFieldDomain(const std::string& name,
+                                          std::string& failureReason);
+
+    virtual bool        UpdateFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,
+                                          std::string& failureReason);
 
     virtual OGRLayer   *CreateLayer( const char *pszName,
                                      OGRSpatialReference *poSpatialRef = nullptr,
@@ -1651,8 +1659,10 @@ class CPL_DLL GDALDriverManager : public GDALMajorObject
             { return (iDriver >= 0 && iDriver < nDrivers) ?
                   papoDrivers[iDriver] : nullptr; }
 
-    GDALDriver  *GetDriverByName_unlocked( const char * pszName )
-            { return oMapNameToDrivers[CPLString(pszName).toupper()]; }
+    GDALDriver  *GetDriverByName_unlocked( const char * pszName ) const
+            { auto oIter = oMapNameToDrivers.find(CPLString(pszName).toupper());
+              return oIter == oMapNameToDrivers.end() ? nullptr : oIter->second;
+            }
 
     static char** GetSearchPaths(const char* pszGDAL_DRIVER_PATH);
 

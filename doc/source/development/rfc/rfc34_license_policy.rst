@@ -27,7 +27,7 @@ executable and distributed beyond the creator to also be offered under
 open source terms.
 
 Non-Reciprocal FOSS License: A open source software license, such as
-MIT/X, BSD or LGPL, that does not place any requirements on other linked
+MIT, BSD or LGPL, that does not place any requirements on other linked
 components in the same executable at distribution time.
 
 Proprietary License: Software provided under terms that do not adhere to
@@ -40,7 +40,7 @@ distributor or end user.
 Rationale
 ---------
 
-GDAL/OGR is distributed under the Non-Reciprocal MIT/X open source
+GDAL/OGR is distributed under the Non-Reciprocal MIT open source
 license which facilitates it's use by proprietary and open source
 applications, and facilitates the inclusion of proprietary format
 drivers along side the open source format drivers. However, it is still
@@ -76,7 +76,7 @@ the driver:
    such as the GPL, and should not be mixed with proprietary drivers or
    applications.
 -  "NONRECIPROCAL": the driver is available under a non-reciprocal FOSS
-   license such as MIT/X, or LGPL. This is the default if no licensing
+   license such as MIT, or LGPL. This is the default if no licensing
    policy is declared and is the natural policy of drivers provided as
    part of GDAL without outside dependencies.
 -  "PROPRIETARY": the driver, usually due to use of proprietary

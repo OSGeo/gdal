@@ -162,39 +162,43 @@ class GPKGChecker(object):
         c.execute("PRAGMA table_info(gpkg_spatial_ref_sys)")
         columns = c.fetchall()
         has_definition_12_063 = False
+        has_epoch = False
         for (_, name, _, _, _, _) in columns:
             if name == 'definition_12_063':
                 has_definition_12_063 = True
+            if name == 'epoch':
+                has_epoch = True
 
         c.execute("SELECT 1 FROM sqlite_master WHERE name = 'gpkg_extensions'")
         row = None
         if c.fetchone() is not None:
-            c.execute("SELECT scope FROM gpkg_extensions WHERE "
-                      "extension_name = 'gpkg_crs_wkt'")
+            c.execute("SELECT scope, extension_name FROM gpkg_extensions WHERE "
+                      "extension_name IN ('gpkg_crs_wkt', 'gpkg_crs_wkt_1_1')")
             row = c.fetchone()
         if row:
-            scope, = row
+            scope, extension_name = row
             self._assert(scope == 'read-write', 145,
-                         'scope of gpkg_crs_wkt extension should be read-write')
+                         f'scope of {extension_name} extension should be read-write')
             self._assert(
                 has_definition_12_063, 145,
                 "gpkg_spatial_ref_sys should have a definition_12_063 column, "
-                "as gpkg_crs_wkt extension is declared")
+                f"as {extension_name} extension is declared")
+            if has_epoch:
+                self._assert(
+                    extension_name == 'gpkg_crs_wkt_1_1', 145,
+                    "gpkg_extensions should declare gpkg_crs_wkt_1_1 extension "
+                    "as gpkg_spatial_ref_sys has a epoch column")
         else:
             self._assert(
                 not has_definition_12_063, 145,
                 "gpkg_extensions should declare gpkg_crs_wkt extension "
                 "as gpkg_spatial_ref_sys has a definition_12_063 column")
+            self._assert(
+                not has_epoch, 145,
+                "gpkg_extensions should declare gpkg_crs_wkt_1_1 extension "
+                "as gpkg_spatial_ref_sys has a epoch column")
 
         if has_definition_12_063:
-
-            has_epoch_column = False
-            try:
-                c.execute("SELECT epoch FROM gpkg_spatial_ref_sys")
-                has_epoch_column = True
-            except:
-                pass
-
             expected_columns = [
                 (0, 'srs_name', 'TEXT', 1, None, 0),
                 (1, 'srs_id', 'INTEGER', 1, None, 1),
@@ -204,7 +208,7 @@ class GPKGChecker(object):
                 (5, 'description', 'TEXT', 0, None, 0),
                 (6, 'definition_12_063', 'TEXT', 1, None, 0)
             ]
-            if has_epoch_column:
+            if has_epoch:
                 expected_columns += [(7, 'epoch', 'DOUBLE', 0, None, 0)]
         else:
             expected_columns = [
@@ -1430,6 +1434,7 @@ class GPKGChecker(object):
                             'gpkg_metadata',
                             'gpkg_schema',
                             'gpkg_crs_wkt',
+                            'gpkg_crs_wkt_1_1',
                             'gpkg_elevation_tiles',  # deprecated one
                             'gpkg_2d_gridded_coverage'
                             ]

@@ -8437,6 +8437,62 @@ void GDALDatasetClearStatistics(GDALDatasetH hDS)
     GDALDataset::FromHandle(hDS)->ClearStatistics();
 }
 
+
+/************************************************************************/
+/*                        GetFieldDomainNames()                         */
+/************************************************************************/
+
+/** Returns a list of the names of all field domains stored in the dataset.
+ *
+ * @note The default implementation assumes that drivers fully populate m_oMapFieldDomains
+ * when opening a dataset. If this assumption is incorrect then
+ * a specialized implementation of GetFieldDomainNames() must be implemented.
+ *
+ * @param papszOptions Driver specific options determining how attributes
+ * should be retrieved. Pass nullptr for default behavior.
+ *
+ * @return list of field domain names
+ * @since GDAL 3.5
+ */
+std::vector<std::string> GDALDataset::GetFieldDomainNames(CPL_UNUSED CSLConstList papszOptions) const{
+
+    std::vector<std::string> names;
+    names.reserve( m_oMapFieldDomains.size() );
+    for(const auto& it : m_oMapFieldDomains ) {
+        names.emplace_back( it.first );
+    }
+    return names;
+}
+
+
+/************************************************************************/
+/*                      GDALDatasetGetFieldDomainNames()                */
+/************************************************************************/
+
+/** Returns a list of the names of all field domains stored in the dataset.
+ *
+ * This is the same as the C++ method GDALDataset::GetFieldDomainNames().
+ *
+ * @param hDS Dataset handle.
+ * @param papszOptions Driver specific options determining how attributes
+ * should be retrieved. Pass nullptr for default behavior.
+ *
+ * @return list of field domain names, to be freed with CSLDestroy()
+ * @since GDAL 3.5
+ */
+char ** GDALDatasetGetFieldDomainNames( GDALDatasetH hDS,CSLConstList papszOptions )
+{
+    VALIDATE_POINTER1(hDS, __func__, nullptr);
+    auto names = GDALDataset::FromHandle(hDS)->GetFieldDomainNames(papszOptions);
+    CPLStringList res;
+    for( const auto& name: names )
+    {
+        res.AddString(name.c_str());
+    }
+    return res.StealList();
+}
+
+
 /************************************************************************/
 /*                        GetFieldDomain()                              */
 /************************************************************************/
@@ -8492,6 +8548,10 @@ OGRFieldDomainH GDALDatasetGetFieldDomain(GDALDatasetH hDS,
  * Anticipated failures will not be emitted through the CPLError()
  * infrastructure, but will be reported in the failureReason output parameter.
  *
+ * @note Drivers should make sure to update m_oMapFieldDomains in order for the
+ * default implementation of GetFieldDomainNames() to work correctly, or alternatively
+ * a specialized implementation of GetFieldDomainNames() should be implemented.
+ *
  * @param domain The domain definition.
  * @param failureReason      Output parameter. Will contain an error message if
  *                           an error occurs.
@@ -8542,6 +8602,160 @@ bool GDALDatasetAddFieldDomain(GDALDatasetH hDS,
     std::string failureReason;
     const bool bRet =
         GDALDataset::FromHandle(hDS)->AddFieldDomain(
+             std::move(poDomain), failureReason);
+    if( ppszFailureReason )
+    {
+        *ppszFailureReason = failureReason.empty() ?
+                                nullptr : CPLStrdup(failureReason.c_str());
+    }
+    return bRet;
+}
+
+
+/************************************************************************/
+/*                        DeleteFieldDomain()                           */
+/************************************************************************/
+
+/** Removes a field domain from the dataset.
+ *
+ * Only a few drivers will support this operation.
+ *
+ * At the time of writing (GDAL 3.5), only the Memory and GeoPackage drivers
+ * support this operation. A dataset having at least some support for this
+ * operation should report the ODsCDeleteFieldDomain dataset capability.
+ *
+ * Anticipated failures will not be emitted through the CPLError()
+ * infrastructure, but will be reported in the failureReason output parameter.
+ *
+ * @note Drivers should make sure to update m_oMapFieldDomains in order for the
+ * default implementation of GetFieldDomainNames() to work correctly, or alternatively
+ * a specialized implementation of GetFieldDomainNames() should be implemented.
+ *
+ * @param name The domain name.
+ * @param failureReason      Output parameter. Will contain an error message if
+ *                           an error occurs.
+ * @return true in case of success.
+ * @since GDAL 3.5
+ */
+bool GDALDataset::DeleteFieldDomain(CPL_UNUSED const std::string& name,
+                                    std::string& failureReason)
+{
+    failureReason = "DeleteFieldDomain not supported by this driver";
+    return false;
+}
+
+/************************************************************************/
+/*                  GDALDatasetDeleteFieldDomain()                      */
+/************************************************************************/
+
+/** Removes a field domain from the dataset.
+ *
+ * Only a few drivers will support this operation.
+ *
+ * At the time of writing (GDAL 3.5), only the Memory and GeoPackage drivers
+ * support this operation. A dataset having at least some support for this
+ * operation should report the ODsCDeleteFieldDomain dataset capability.
+ *
+ * Anticipated failures will not be emitted through the CPLError()
+ * infrastructure, but will be reported in the ppszFailureReason output parameter.
+ *
+ * @param hDS                Dataset handle.
+ * @param pszName            The domain name.
+ * @param ppszFailureReason  Output parameter. Will contain an error message if
+ *                           an error occurs (*ppszFailureReason to be freed
+ *                           with CPLFree). May be NULL.
+ * @return true in case of success.
+ * @since GDAL 3.3
+ */
+bool GDALDatasetDeleteFieldDomain(GDALDatasetH hDS,
+                                  const char* pszName,
+                                  char** ppszFailureReason)
+{
+    VALIDATE_POINTER1(hDS, __func__, false);
+    VALIDATE_POINTER1(pszName, __func__, false);
+    std::string failureReason;
+    const bool bRet =
+        GDALDataset::FromHandle(hDS)->DeleteFieldDomain(
+             pszName, failureReason);
+    if( ppszFailureReason )
+    {
+        *ppszFailureReason = failureReason.empty() ?
+                                nullptr : CPLStrdup(failureReason.c_str());
+    }
+    return bRet;
+}
+
+
+/************************************************************************/
+/*                       UpdateFieldDomain()                            */
+/************************************************************************/
+
+
+/** Updates an existing field domain by replacing its definition.
+ *
+ * The existing field domain with matching name will be replaced.
+ *
+ * Only a few drivers will support this operation, and some of them might only
+ * support it only for some types of field domains.
+ * At the time of writing (GDAL 3.5), only the Memory driver
+ * supports this operation. A dataset having at least some support for this
+ * operation should report the ODsCUpdateFieldDomain dataset capability.
+ *
+ * Anticipated failures will not be emitted through the CPLError()
+ * infrastructure, but will be reported in the failureReason output parameter.
+ *
+ * @param domain The domain definition.
+ * @param failureReason      Output parameter. Will contain an error message if
+ *                           an error occurs.
+ * @return true in case of success.
+ * @since GDAL 3.5
+ */
+bool GDALDataset::UpdateFieldDomain(CPL_UNUSED std::unique_ptr<OGRFieldDomain> &&domain, std::string &failureReason)
+{
+    failureReason = "UpdateFieldDomain not supported by this driver";
+    return false;
+}
+
+
+/************************************************************************/
+/*                  GDALDatasetUpdateFieldDomain()                      */
+/************************************************************************/
+
+/** Updates an existing field domain by replacing its definition.
+ *
+ * The existing field domain with matching name will be replaced.
+ *
+ * Only a few drivers will support this operation, and some of them might only
+ * support it only for some types of field domains.
+ * At the time of writing (GDAL 3.5), only the Memory driver
+ * supports this operation. A dataset having at least some support for this
+ * operation should report the ODsCUpdateFieldDomain dataset capability.
+ *
+ * Anticipated failures will not be emitted through the CPLError()
+ * infrastructure, but will be reported in the failureReason output parameter.
+ *
+ * @param hDS                Dataset handle.
+ * @param hFieldDomain       The domain definition. Contrary to the C++ version,
+ *                           the passed object is copied.
+ * @param ppszFailureReason  Output parameter. Will contain an error message if
+ *                           an error occurs (*ppszFailureReason to be freed
+ *                           with CPLFree). May be NULL.
+ * @return true in case of success.
+ * @since GDAL 3.5
+ */
+bool GDALDatasetUpdateFieldDomain(GDALDatasetH hDS,
+                                  OGRFieldDomainH hFieldDomain,
+                                  char** ppszFailureReason)
+{
+    VALIDATE_POINTER1(hDS, __func__, false);
+    VALIDATE_POINTER1(hFieldDomain, __func__, false);
+    auto poDomain = std::unique_ptr<OGRFieldDomain>(
+                 OGRFieldDomain::FromHandle(hFieldDomain)->Clone());
+    if( poDomain == nullptr )
+        return false;
+    std::string failureReason;
+    const bool bRet =
+        GDALDataset::FromHandle(hDS)->UpdateFieldDomain(
              std::move(poDomain), failureReason);
     if( ppszFailureReason )
     {

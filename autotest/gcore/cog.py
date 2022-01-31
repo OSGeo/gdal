@@ -395,7 +395,10 @@ def test_cog_small_world_to_web_mercator():
         if gt[i] != pytest.approx(expected_gt[i], abs=1e-10 * abs(expected_gt[i])):
             assert False, gt
     got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(3)]
-    assert got_cs == [26293, 23439, 14955] or got_cs == [26228, 22085, 12992]
+    assert got_cs in ([26293, 23439, 14955],
+                      [26228, 22085, 12992],
+                      [25088, 23140, 13265], # libjpeg 9e
+                     )
     assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 17849
     assert ds.GetRasterBand(1).GetOverviewCount() == 0
     ds = None
@@ -444,7 +447,11 @@ def test_cog_byte_to_web_mercator():
     for i in range(6):
         if gt[i] != pytest.approx(expected_gt[i], abs=1e-10 * abs(expected_gt[i])):
             assert False, gt
-    assert ds.GetRasterBand(1).Checksum() in (4363, 4264, 4362) # 4264 on Mac , 4362 on Mac / Conda
+    assert ds.GetRasterBand(1).Checksum() in (4363,
+                                              4264, # got on Mac at some point
+                                              4362, # libjpeg 9d
+                                              4569, # libjpeg 9e
+                                             )
     assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 4356
     assert ds.GetRasterBand(1).GetOverviewCount() == 2
     ds = None
@@ -525,7 +532,11 @@ def test_cog_byte_to_web_mercator_manual():
     for i in range(6):
         if gt[i] != pytest.approx(expected_gt[i], abs=1e-10 * abs(expected_gt[i])):
             assert False, gt
-    assert ds.GetRasterBand(1).Checksum() in (4363, 4264, 4362) # 4264 on Mac , 4362 on Mac / Conda
+    assert ds.GetRasterBand(1).Checksum() in (4363,
+                                              4264, # got on Mac at some point
+                                              4362, # libjpeg 9d
+                                              4569, # libjpeg 9e
+                                             )
     assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 4356
     assert ds.GetRasterBand(1).GetOverviewCount() == 2
     ds = None

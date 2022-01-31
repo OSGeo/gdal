@@ -225,6 +225,8 @@ class CPL_DLL CPLODBCStatement {
 
     CPL_DISALLOW_COPY_ASSIGN(CPLODBCStatement)
 
+    int m_nFlags = 0;
+
     CPLODBCSession     *m_poSession = nullptr;
     HSTMT               m_hStmt = nullptr;
 
@@ -239,6 +241,7 @@ class CPL_DLL CPLODBCStatement {
 
     char         **m_papszColValues = nullptr;
     CPL_SQLLEN       *m_panColValueLengths = nullptr;
+    double        *m_padColValuesAsDouble = nullptr;
 
     int            Failed( int );
 
@@ -247,11 +250,35 @@ class CPL_DLL CPLODBCStatement {
     size_t         m_nStatementLen = 0;
 
   public:
-    explicit CPLODBCStatement( CPLODBCSession * );
+
+    /**
+     * Flags which control ODBC statement behavior.
+     */
+    enum Flag
+    {
+       /**
+        * Numeric column values should be retrieved as doubles, using either the SQL_C_DOUBLE or SQL_C_FLOAT types.
+        *
+        * By default numeric column values are retrieved as characters. Retrieving as character is the safest behavior, but can risk loss
+        * of precision.
+        *
+        * If set, GetColDataAsDouble should be used for numeric columns instead of GetColData.
+        *
+        * Warning: this flag can expose issues in particular ODBC drivers on different platforms. Use with caution.
+        */
+       RetrieveNumericColumnsAsDouble = 1 << 0,
+    };
+
+    explicit CPLODBCStatement( CPLODBCSession *, int flags = 0 );
     ~CPLODBCStatement();
 
     /** Return statement handle */
     HSTMT          GetStatement() { return m_hStmt; }
+
+    /**
+     * Returns statement flags.
+     */
+    int            Flags() const { return m_nFlags; }
 
     // Command buffer related.
     void           Clear();
@@ -279,10 +306,14 @@ class CPL_DLL CPLODBCStatement {
     short          GetColNullable( int );
     const char    *GetColColumnDef( int );
 
-    int            GetColId( const char * );
+    int            GetColId( const char * ) const;
     const char    *GetColData( int, const char * = nullptr );
     const char    *GetColData( const char *, const char * = nullptr );
     int            GetColDataLength( int );
+
+    double         GetColDataAsDouble( int ) const;
+    double         GetColDataAsDouble( const char * ) const;
+
     int            GetRowCountAffected();
 
     // Fetch special metadata.

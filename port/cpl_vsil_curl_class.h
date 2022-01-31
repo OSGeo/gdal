@@ -191,7 +191,12 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
     std::unique_ptr<RegionCacheType> m_poRegionCacheDoNotUseDirectly{}; // do not access directly. Use GetRegionCache();
     RegionCacheType* GetRegionCache();
 
-    lru11::Cache<std::string, FileProp>  oCacheFileProp;
+    // LRU cache that just keeps in memory if this file system handler is
+    // spposed to know the file properties of a file. The actual cache is a
+    // shared one among all network file systems.
+    // The aim of that design is that invalidating /vsis3/foo results in
+    // /vsis3_streaming/foo to be invalidated as well.
+    lru11::Cache<std::string, bool>  oCacheFileProp;
 
     int                                       nCachedFilesInDirList = 0;
     lru11::Cache<std::string, CachedDirList>  oCacheDirList;
@@ -494,7 +499,8 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandlerBase
                          size_t nBufferSize,
                          IVSIS3LikeHandleHelper *poS3HandleHelper,
                          int nMaxRetry,
-                         double dfRetryDelay);
+                         double dfRetryDelay,
+                         CSLConstList papszOptions);
     virtual bool CompleteMultipart(const CPLString& osFilename,
                            const CPLString& osUploadID,
                            const std::vector<CPLString>& aosEtags,
@@ -824,6 +830,15 @@ void MultiPerform(CURLM* hCurlMultiHandle,
 void VSICURLResetHeaderAndWriterFunctions(CURL* hCurlHandle);
 
 int VSICurlParseUnixPermissions(const char* pszPermissions);
+
+// Cache of file properties (size, etc.)
+bool VSICURLGetCachedFileProp( const char* pszURL,
+                               FileProp& oFileProp );
+void VSICURLSetCachedFileProp( const char* pszURL,
+                               FileProp& oFileProp );
+void VSICURLInvalidateCachedFileProp( const char* pszURL );
+void VSICURLInvalidateCachedFilePropPrefix( const char* pszURL );
+void VSICURLDestroyCacheFileProp();
 
 } // namespace cpl
 

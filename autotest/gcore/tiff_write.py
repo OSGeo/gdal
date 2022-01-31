@@ -369,7 +369,9 @@ def test_tiff_write_13():
     size = os.stat('tmp/sasha.tif').st_size
 
     gdaltest.tiff_drv.Delete('tmp/sasha.tif')
-    assert cs == 17347 or cs == 14445, 'fail: bad checksum'
+    assert cs in (17347, 14445,
+                  14135, # libjpeg 9e
+                 )
 
     if md['LIBTIFF'] == 'INTERNAL':
         # 22816 with libjpeg-6b or libjpeg-turbo
@@ -3309,6 +3311,7 @@ def test_tiff_write_92():
         ds = None
 
         ds = gdal.Open('tmp/tiff_write_92.tif', gdal.GA_Update)
+        assert ds.GetMetadataItem('JPEG_QUALITY', 'IMAGE_STRUCTURE') == str(quality)
         if jpeg_quality_overview is not False:
             gdal.SetConfigOption('JPEG_QUALITY_OVERVIEW', '%d' % jpeg_quality_overview)
         ds.BuildOverviews('NEAR', overviewlist=[2, 4])
@@ -4629,11 +4632,11 @@ def test_tiff_write_126():
 
     src_ds = gdal.Open('../gdrivers/data/small_world_400pct.vrt')
 
-    options_list = [(['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR'], [48788, 56561], [61397, 2463, 2454], [29605, 33654], [10904, 10453]),
-                    (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'JPEGTABLESMODE=0'], [48788, 56561], [61397, 2463, 2454], [29605, 33654], [10904, 10453]),
-                    (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'TILED=YES'], [48788, 56561], [61397, 2463, 2454], [29605, 33654], [10904, 10453]),
-                    (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'BLOCKYSIZE=800'], [48788, 56561], [61397, 2463, 2454], [29605, 33654], [10904, 10453]),
-                    (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'BLOCKYSIZE=64'], [48788, 56561], [61397, 2463, 2454], [29605, 33654], [10904, 10453]),
+    options_list = [(['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR'], [48788, 56561, 56462], [61397, 2463, 2454, 2727], [29605, 33654, 34633], [10904, 10453, 10361]),
+                    (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'JPEGTABLESMODE=0'], [48788, 56561, 56462], [61397, 2463, 2454, 2727], [29605, 33654, 34633], [10904, 10453, 10361]),
+                    (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'TILED=YES'], [48788, 56561, 56462], [61397, 2463, 2454, 2727], [29605, 33654, 34633], [10904, 10453, 10361]),
+                    (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'BLOCKYSIZE=800'], [48788, 56561, 56462], [61397, 2463, 2454, 2727], [29605, 33654, 34633], [10904, 10453, 10361]),
+                    (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'BLOCKYSIZE=64'], [48788, 56561, 56462], [61397, 2463, 2454, 2727], [29605, 33654, 34633], [10904, 10453, 10361]),
                     (['COMPRESS=JPEG'], [49887, 58937], [59311, 2826], [30829, 34806], [11664, 58937]),
                     (['COMPRESS=JPEG', 'INTERLEAVE=BAND'], [49887, 58937], [59311, 2826], [30829, 34806], [11664, 58937]),
                     (['COMPRESS=JPEG', 'INTERLEAVE=BAND', 'TILED=YES'], [49887, 58937], [59311, 2826], [30829, 34806], [11664, 58937]),

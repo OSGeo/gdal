@@ -5062,11 +5062,20 @@ SWIGINTERN OGRErr GDALDatasetShadow_RollbackTransaction(GDALDatasetShadow *self)
 SWIGINTERN void GDALDatasetShadow_ClearStatistics(GDALDatasetShadow *self){
       GDALDatasetClearStatistics(self);
   }
+SWIGINTERN char **GDALDatasetShadow_GetFieldDomainNames(GDALDatasetShadow *self,char** options = NULL){
+    return GDALDatasetGetFieldDomainNames(self, options);
+  }
 SWIGINTERN OGRFieldDomainShadow *GDALDatasetShadow_GetFieldDomain(GDALDatasetShadow *self,char const *name){
     return (OGRFieldDomainShadow*) GDALDatasetGetFieldDomain(self, name);
   }
 SWIGINTERN bool GDALDatasetShadow_AddFieldDomain(GDALDatasetShadow *self,OGRFieldDomainShadow *fieldDomain){
       return GDALDatasetAddFieldDomain(self, (OGRFieldDomainH)fieldDomain, NULL);
+  }
+SWIGINTERN bool GDALDatasetShadow_DeleteFieldDomain(GDALDatasetShadow *self,char const *name){
+      return GDALDatasetDeleteFieldDomain(self, name, NULL);
+  }
+SWIGINTERN bool GDALDatasetShadow_UpdateFieldDomain(GDALDatasetShadow *self,OGRFieldDomainShadow *fieldDomain){
+      return GDALDatasetUpdateFieldDomain(self, (OGRFieldDomainH)fieldDomain, NULL);
   }
 SWIGINTERN CPLErr GDALDatasetShadow_ReadRaster1(GDALDatasetShadow *self,double xoff,double yoff,double xsize,double ysize,void **buf,int *buf_xsize=0,int *buf_ysize=0,GDALDataType *buf_type=0,int band_list=0,int *pband_list=0,GIntBig *buf_pixel_space=0,GIntBig *buf_line_space=0,GIntBig *buf_band_space=0,GDALRIOResampleAlg resample_alg=GRIORA_NearestNeighbour,GDALProgressFunc callback=NULL,void *callback_data=NULL,void *inputOutputBuf=NULL){
     *buf = NULL;
@@ -7412,28 +7421,31 @@ static void PopStackingErrorHandler(std::vector<ErrorStruct>* paoErrors, bool bS
     CPLPopErrorHandler();
 
     // If the operation was successful, do not emit regular CPLError()
-    // that would be caught by the PythonBindingErrorHandler and turned into
+    // of CE_Failure type that would be caught by the PythonBindingErrorHandler
+    // and turned into
     // Python exceptions. Just emit them with the previous error handler
-    if( bSuccess )
-    {
-        for( size_t iError = 0; iError < paoErrors->size(); ++iError )
-        {
-            pfnPreviousHandler( (*paoErrors)[iError].type,
-                    (*paoErrors)[iError].no,
-                    (*paoErrors)[iError].msg );
-        }
 
-        CPLErrorReset();
-    }
-    else
+    for( size_t iError = 0; iError < paoErrors->size(); ++iError )
     {
-        for( size_t iError = 0; iError < paoErrors->size(); ++iError )
+        CPLErr eErrClass = (*paoErrors)[iError].type;
+        if( bSuccess && eErrClass == CE_Failure )
         {
-            CPLError( (*paoErrors)[iError].type,
+            pfnPreviousHandler( eErrClass,
+                                (*paoErrors)[iError].no,
+                                (*paoErrors)[iError].msg );
+        }
+        else
+        {
+            CPLError( eErrClass,
                     (*paoErrors)[iError].no,
                     "%s",
                     (*paoErrors)[iError].msg );
         }
+    }
+
+    if( bSuccess )
+    {
+        CPLErrorReset();
     }
 }
 
@@ -21021,6 +21033,81 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_Dataset_GetFieldDomainNames(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
+  char **arg2 = (char **) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[2] ;
+  char **result = 0 ;
+
+  if (!SWIG_Python_UnpackTuple(args, "Dataset_GetFieldDomainNames", 1, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Dataset_GetFieldDomainNames" "', argument " "1"" of type '" "GDALDatasetShadow *""'");
+  }
+  arg1 = reinterpret_cast< GDALDatasetShadow * >(argp1);
+  if (swig_obj[1]) {
+    {
+      /* %typemap(in) char **options */
+      int bErr = FALSE;
+      arg2 = CSLFromPySequence(swig_obj[1], &bErr);
+      if( bErr )
+      {
+        SWIG_fail;
+      }
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char **)GDALDatasetShadow_GetFieldDomainNames(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  {
+    /* %typemap(out) char **CSL -> ( string ) */
+    char **stringarray = result;
+    if ( stringarray == NULL ) {
+      resultobj = Py_None;
+      Py_INCREF( resultobj );
+    }
+    else {
+      int len = CSLCount( stringarray );
+      resultobj = PyList_New( len );
+      for ( int i = 0; i < len; ++i ) {
+        PyObject *o = GDALPythonObjectFromCStr( stringarray[i] );
+        PyList_SetItem(resultobj, i, o );
+      }
+    }
+    CSLDestroy(result);
+  }
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
+  }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
+  }
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_Dataset_GetFieldDomain(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
@@ -21124,6 +21211,113 @@ SWIGINTERN PyObject *_wrap_Dataset_AddFieldDomain(PyObject *SWIGUNUSEDPARM(self)
   }
   resultobj = SWIG_From_bool(static_cast< bool >(result));
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Dataset_DeleteFieldDomain(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
+  char *arg2 = (char *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  PyObject *swig_obj[2] ;
+  bool result;
+
+  if (!SWIG_Python_UnpackTuple(args, "Dataset_DeleteFieldDomain", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Dataset_DeleteFieldDomain" "', argument " "1"" of type '" "GDALDatasetShadow *""'");
+  }
+  arg1 = reinterpret_cast< GDALDatasetShadow * >(argp1);
+  res2 = SWIG_AsCharPtrAndSize(swig_obj[1], &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Dataset_DeleteFieldDomain" "', argument " "2"" of type '" "char const *""'");
+  }
+  arg2 = reinterpret_cast< char * >(buf2);
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (bool)GDALDatasetShadow_DeleteFieldDomain(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_bool(static_cast< bool >(result));
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  return resultobj;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Dataset_UpdateFieldDomain(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
+  OGRFieldDomainShadow *arg2 = (OGRFieldDomainShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject *swig_obj[2] ;
+  bool result;
+  
+  if (!SWIG_Python_UnpackTuple(args, "Dataset_UpdateFieldDomain", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Dataset_UpdateFieldDomain" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALDatasetShadow * >(argp1);
+  res2 = SWIG_ConvertPtr(swig_obj[1], &argp2,SWIGTYPE_p_OGRFieldDomainShadow, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Dataset_UpdateFieldDomain" "', argument " "2"" of type '" "OGRFieldDomainShadow *""'"); 
+  }
+  arg2 = reinterpret_cast< OGRFieldDomainShadow * >(argp2);
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (bool)GDALDatasetShadow_UpdateFieldDomain(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_bool(static_cast< bool >(result));
   return resultobj;
 fail:
   return NULL;
@@ -43798,8 +43992,11 @@ static PyMethodDef SwigMethods[] = {
 	 { "Dataset_CommitTransaction", _wrap_Dataset_CommitTransaction, METH_O, "Dataset_CommitTransaction(Dataset self) -> OGRErr"},
 	 { "Dataset_RollbackTransaction", _wrap_Dataset_RollbackTransaction, METH_O, "Dataset_RollbackTransaction(Dataset self) -> OGRErr"},
 	 { "Dataset_ClearStatistics", _wrap_Dataset_ClearStatistics, METH_O, "Dataset_ClearStatistics(Dataset self)"},
+	 { "Dataset_GetFieldDomainNames", _wrap_Dataset_GetFieldDomainNames, METH_VARARGS, "Dataset_GetFieldDomainNames(Dataset self, char ** options=None) -> char **"},
 	 { "Dataset_GetFieldDomain", _wrap_Dataset_GetFieldDomain, METH_VARARGS, "Dataset_GetFieldDomain(Dataset self, char const * name) -> FieldDomain"},
 	 { "Dataset_AddFieldDomain", _wrap_Dataset_AddFieldDomain, METH_VARARGS, "Dataset_AddFieldDomain(Dataset self, FieldDomain fieldDomain) -> bool"},
+	 { "Dataset_DeleteFieldDomain", _wrap_Dataset_DeleteFieldDomain, METH_VARARGS, "Dataset_DeleteFieldDomain(Dataset self, char const * name) -> bool"},
+	 { "Dataset_UpdateFieldDomain", _wrap_Dataset_UpdateFieldDomain, METH_VARARGS, "Dataset_UpdateFieldDomain(Dataset self, FieldDomain fieldDomain) -> bool"},
 	 { "Dataset_ReadRaster1", (PyCFunction)(void(*)(void))_wrap_Dataset_ReadRaster1, METH_VARARGS|METH_KEYWORDS, "Dataset_ReadRaster1(Dataset self, double xoff, double yoff, double xsize, double ysize, int * buf_xsize=None, int * buf_ysize=None, GDALDataType * buf_type=None, int band_list=0, GIntBig * buf_pixel_space=None, GIntBig * buf_line_space=None, GIntBig * buf_band_space=None, GDALRIOResampleAlg resample_alg=GRIORA_NearestNeighbour, GDALProgressFunc callback=0, void * callback_data=None, void * inputOutputBuf=None) -> CPLErr"},
 	 { "Dataset_swigregister", Dataset_swigregister, METH_O, NULL},
 	 { "delete_Group", _wrap_delete_Group, METH_O, "delete_Group(Group self)"},

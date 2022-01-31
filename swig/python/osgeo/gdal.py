@@ -1268,6 +1268,7 @@ def BuildVRTOptions(options=None,
                     srcNodata=None,
                     VRTNodata=None,
                     hideNodata=None,
+                    strict=False,
                     callback=None, callback_data=None):
     """ Create a BuildVRTOptions() object that can be passed to gdal.BuildVRT()
         Keyword arguments are :
@@ -1285,6 +1286,7 @@ def BuildVRTOptions(options=None,
           srcNodata --- source nodata value(s).
           VRTNodata --- nodata values at the VRT band level.
           hideNodata --- whether to make the VRT band not report the NoData value.
+          strict --- set to True if warnings should be failures
           callback --- callback method.
           callback_data --- user data for callback.
     """
@@ -1330,6 +1332,8 @@ def BuildVRTOptions(options=None,
             new_options += ['-vrtnodata', str(VRTNodata)]
         if hideNodata:
             new_options += ['-hidenodata']
+        if strict:
+            new_options += ['-strict']
 
     if return_option_list:
         return new_options
@@ -2310,6 +2314,10 @@ class Dataset(MajorObject):
         r"""ClearStatistics(Dataset self)"""
         return _gdal.Dataset_ClearStatistics(self, *args)
 
+    def GetFieldDomainNames(self, *args) -> "char **":
+        r"""GetFieldDomainNames(Dataset self, char ** options=None) -> char **"""
+        return _gdal.Dataset_GetFieldDomainNames(self, *args)
+
     def GetFieldDomain(self, *args):
         r"""GetFieldDomain(Dataset self, char const * name) -> FieldDomain"""
         return _gdal.Dataset_GetFieldDomain(self, *args)
@@ -2317,6 +2325,14 @@ class Dataset(MajorObject):
     def AddFieldDomain(self, *args):
         r"""AddFieldDomain(Dataset self, FieldDomain fieldDomain) -> bool"""
         return _gdal.Dataset_AddFieldDomain(self, *args)
+
+    def DeleteFieldDomain(self, *args) -> "bool":
+        r"""DeleteFieldDomain(Dataset self, char const * name) -> bool"""
+        return _gdal.Dataset_DeleteFieldDomain(self, *args)
+
+    def UpdateFieldDomain(self, *args) -> "bool":
+        r"""UpdateFieldDomain(Dataset self, FieldDomain fieldDomain) -> bool"""
+        return _gdal.Dataset_UpdateFieldDomain(self, *args)
 
     def ReadRaster1(self, *args, **kwargs):
         r"""ReadRaster1(Dataset self, double xoff, double yoff, double xsize, double ysize, int * buf_xsize=None, int * buf_ysize=None, GDALDataType * buf_type=None, int band_list=0, GIntBig * buf_pixel_space=None, GIntBig * buf_line_space=None, GIntBig * buf_band_space=None, GDALRIOResampleAlg resample_alg=GRIORA_NearestNeighbour, GDALProgressFunc callback=0, void * callback_data=None, void * inputOutputBuf=None) -> CPLErr"""

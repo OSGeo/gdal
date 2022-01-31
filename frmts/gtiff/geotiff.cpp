@@ -104,6 +104,7 @@
 #include "tifvsi.h"
 #include "xtiffio.h"
 #include "quant_table_md5sum.h"
+#include "quant_table_md5sum_jpeg9e.h"
 
 CPL_CVSID("$Id$")
 
@@ -17158,9 +17159,17 @@ int GTiffDataset::GuessJPEGQuality( bool& bOutHasQuantizationTable,
 
     if( nBands == 3 && m_nBitsPerSample == 8 && m_nPhotometric == PHOTOMETRIC_YCBCR )
     {
-        return GuessJPEGQualityFromMD5(md5JPEGQuantTable_3_YCBCR_8bit,
+        int nRet = GuessJPEGQualityFromMD5(md5JPEGQuantTable_3_YCBCR_8bit,
                                        static_cast<const GByte*>(pJPEGTable),
                                        static_cast<int>(nJPEGTableSize));
+        if( nRet < 0 )
+        {
+            // libjpeg 9e has modified the YCbCr quantization tables.
+            nRet = GuessJPEGQualityFromMD5(md5JPEGQuantTable_3_YCBCR_8bit_jpeg9e,
+                                       static_cast<const GByte*>(pJPEGTable),
+                                       static_cast<int>(nJPEGTableSize));
+        }
+        return nRet;
     }
 
     char** papszLocalParameters = nullptr;

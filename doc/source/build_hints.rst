@@ -54,6 +54,11 @@ You can unset existing cached variables, by using the -U switch of cmake, for ex
 
     cmake .. -UGDAL_USE_*
 
+You can assemble dependency settings in a file ``ConfigUser.cmake`` and use it with the -C option.
+The file contains set() commands that use the CACHE option. You can set for example a different name
+for the shared lib, *e.g.* ``set (GDAL_LIB_OUTPUT_NAME gdal_x64 CACHE STRING "" FORCE)``::
+
+    cmake .. -C ConfigUser.cmake
 
 .. warning::
 
@@ -1277,15 +1282,15 @@ Poppler
 The `Poppler <https://poppler.freedesktop.org/>`_ library is one
 of the possible backends for the :ref:`raster.pdf` driver.
 
-.. option:: POPPLER_INCLUDE_DIR
+.. option:: Poppler_INCLUDE_DIR
 
     Path to an include directory with the ``poppler-config.h`` header file.
 
-.. option:: POPPLER_LIBRARY
+.. option:: Poppler_LIBRARY
 
     Path to a shared or static library file.
 
-.. option:: GDAL_USE_PDFIUM=ON/OFF
+.. option:: GDAL_USE_POPPLER=ON/OFF
 
     Control whether to use Poppler. Defaults to ON when Poppler is found.
 

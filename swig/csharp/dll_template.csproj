@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <OutputType>library</OutputType>
+        <TargetFramework>${CSHARP_LIBRARY_VERSION}</TargetFramework>
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <AssemblyVersion>${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}.${GDAL_VERSION_REV}</AssemblyVersion>
+        <AssemblyOriginatorKeyFile>..\gdal.snk</AssemblyOriginatorKeyFile>
+        <SignAssembly>true</SignAssembly>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <PackageId>${_PACKAGE_NAME}</PackageId>
+        <Authors>GDAL Contributors</Authors>
+        <Company>GDAL Project</Company>
+        <Copyright>Copyright GDAL Contributors</Copyright>
+    </PropertyGroup>
+    <ItemGroup>
+        <None Include="$<TARGET_FILE:${_CSHARP_WRAP_DLL}>" Pack="true" PackagePath="runtimes\${CSHARP_RID}\native" />
+    </ItemGroup>
+</Project>

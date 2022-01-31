@@ -2270,7 +2270,7 @@ const char * CPL_STDCALL GDALVersionInfo( const char *pszRequest )
         if (!pszResultLicence)
         {
             pszResultLicence = CPLStrdup(
-                     "GDAL/OGR is released under the MIT/X license.\n"
+                     "GDAL/OGR is released under the MIT license.\n"
                      "The LICENSE.TXT distributed with GDAL/OGR should\n"
                      "contain additional details.\n" );
         }
@@ -3264,6 +3264,11 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                 printf( "  Supports: Coordinate epoch.\n" );/*ok*/
             if( CPLFetchBool( papszMD, GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, false ) )
                 printf( "  Supports: Multiple vector layers.\n" );/*ok*/
+            if( CPLFetchBool( papszMD, GDAL_DCAP_FIELD_DOMAINS, false ) )
+                printf( "  Supports: Reading field domains.\n" );/*ok*/
+            if( CSLFetchNameValue( papszMD, GDAL_DMD_CREATION_FIELD_DOMAIN_TYPES ) )
+              printf( "  Creation field domain types: %s\n",/*ok*/
+                      CSLFetchNameValue( papszMD, GDAL_DMD_CREATION_FIELD_DOMAIN_TYPES ) );
 
             for( const char* key: { GDAL_DMD_CREATIONOPTIONLIST,
                                     GDAL_DMD_MULTIDIM_DATASET_CREATIONOPTIONLIST,

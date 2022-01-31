@@ -125,7 +125,7 @@ CPLErr BYNRasterBand::SetScale( double dfNewValue )
 /* ==================================================================== */
 /************************************************************************/
 
-BYNDataset::BYNDataset() : 
+BYNDataset::BYNDataset() :
         fpImage(nullptr),
         pszProjection(nullptr),
         hHeader{0,0,0,0,0,0,0,0,0.0,0,0,0,0,0,0,0,0,0.0,0.0,0,0,0.0,0}
@@ -205,6 +205,10 @@ int BYNDataset::Identify( GDALOpenInfo *poOpenInfo )
         hHeader.nScale     < 0 || hHeader.nScale     > 1 )
         return FALSE;
 
+#if 0
+    // We have disabled those checks as invalid values are often found in some
+    // datasets, such as http://s3.microsurvey.com/os/fieldgenius/geoids/Lithuania.zip
+    // We don't use those fields, so we may just ignore them.
     if((hHeader.nTideSys   < 0 || hHeader.nTideSys   > 2 ||
         hHeader.nPtType    < 0 || hHeader.nPtType    > 1 ))
     {
@@ -216,28 +220,29 @@ int BYNDataset::Identify( GDALOpenInfo *poOpenInfo )
                 return FALSE;
         }
     }
+#endif
 
     if( hHeader.nScale == 0 )
     {
-        if( ( std::abs( static_cast<GIntBig>( hHeader.nSouth ) - 
+        if( ( std::abs( static_cast<GIntBig>( hHeader.nSouth ) -
                         ( hHeader.nDLat / 2 ) ) > BYN_MAX_LAT ) ||
-            ( std::abs( static_cast<GIntBig>( hHeader.nNorth ) + 
+            ( std::abs( static_cast<GIntBig>( hHeader.nNorth ) +
                         ( hHeader.nDLat / 2 ) ) > BYN_MAX_LAT ) ||
-            ( std::abs( static_cast<GIntBig>( hHeader.nWest ) - 
+            ( std::abs( static_cast<GIntBig>( hHeader.nWest ) -
                         ( hHeader.nDLon / 2 ) ) > BYN_MAX_LON ) ||
-            ( std::abs( static_cast<GIntBig>( hHeader.nEast ) + 
+            ( std::abs( static_cast<GIntBig>( hHeader.nEast ) +
                         ( hHeader.nDLon / 2 ) ) > BYN_MAX_LON ) )
             return FALSE;
     }
     else
     {
-        if( ( std::abs( static_cast<GIntBig>( hHeader.nSouth ) - 
+        if( ( std::abs( static_cast<GIntBig>( hHeader.nSouth ) -
                         ( hHeader.nDLat / 2 ) ) > BYN_MAX_LAT_SCL ) ||
-            ( std::abs( static_cast<GIntBig>( hHeader.nNorth ) + 
+            ( std::abs( static_cast<GIntBig>( hHeader.nNorth ) +
                         ( hHeader.nDLat / 2 ) ) > BYN_MAX_LAT_SCL ) ||
-            ( std::abs( static_cast<GIntBig>( hHeader.nWest ) - 
+            ( std::abs( static_cast<GIntBig>( hHeader.nWest ) -
                         ( hHeader.nDLon / 2 ) ) > BYN_MAX_LON_SCL ) ||
-            ( std::abs( static_cast<GIntBig>( hHeader.nEast ) + 
+            ( std::abs( static_cast<GIntBig>( hHeader.nEast ) +
                         ( hHeader.nDLon / 2 ) ) > BYN_MAX_LON_SCL ) )
             return FALSE;
     }
@@ -282,7 +287,7 @@ GDALDataset *BYNDataset::Open( GDALOpenInfo * poOpenInfo )
     double dfDLat  = poDS->hHeader.nDLat;
     double dfDLon  = poDS->hHeader.nDLon;
 
-    if( poDS->hHeader.nScale == 1 ) 
+    if( poDS->hHeader.nScale == 1 )
     {
         dfSouth *= BYN_SCALE;
         dfNorth *= BYN_SCALE;
@@ -335,7 +340,7 @@ GDALDataset *BYNDataset::Open( GDALOpenInfo * poOpenInfo )
     /*********************/
     /* Set data type     */
     /*********************/
- 
+
     GDALDataType eDT = GDT_Unknown;
 
     if ( poDS->hHeader.nSizeOf == 2 )
@@ -358,7 +363,7 @@ GDALDataset *BYNDataset::Open( GDALOpenInfo * poOpenInfo )
 
     BYNRasterBand *poBand = new BYNRasterBand(
         poDS, 1, poDS->fpImage, BYN_HDR_SZ,
-        nDTSize, poDS->nRasterXSize * nDTSize, eDT, 
+        nDTSize, poDS->nRasterXSize * nDTSize, eDT,
         CPL_IS_LSB == bIsLSB );
 
     poDS->SetBand( 1, poBand );
@@ -421,7 +426,7 @@ const char *BYNDataset::_GetProjectionRef()
 
     /* Try to use a prefefined EPSG compound CS */
 
-    if( hHeader.nDatum == 1 && hHeader.nVDatum == 2 ) 
+    if( hHeader.nDatum == 1 && hHeader.nVDatum == 2 )
     {
         oSRS.importFromEPSG( BYN_DATUM_1_VDATUM_2 );
         oSRS.exportToWkt( &pszProjection );
@@ -440,10 +445,10 @@ const char *BYNDataset::_GetProjectionRef()
     {
         /* Build GEOGCS based on Ellipsoid (Table 3) */
 
-        if( hHeader.nEllipsoid > -1 && 
-            hHeader.nEllipsoid < static_cast<GInt16> 
+        if( hHeader.nEllipsoid > -1 &&
+            hHeader.nEllipsoid < static_cast<GInt16>
                                  (CPL_ARRAYSIZE(EllipsoidTable)))
-            oSRS.SetGeogCS( 
+            oSRS.SetGeogCS(
                 CPLSPrintf("BYN Ellipsoid(%d)", hHeader.nEllipsoid),
                 "Unspecified",
                 EllipsoidTable[ hHeader.nEllipsoid ].pszName,
@@ -481,10 +486,10 @@ const char *BYNDataset::_GetProjectionRef()
 
     /* Create CPMPD_CS with GEOGCS and VERT_CS */
 
-    if( oSRSComp.SetCompoundCS( 
-            CPLSPrintf("BYN Datum(%d) & VDatum(%d)", 
-            hHeader.nDatum, hHeader.nDatum), 
-            &oSRS, 
+    if( oSRSComp.SetCompoundCS(
+            CPLSPrintf("BYN Datum(%d) & VDatum(%d)",
+            hHeader.nDatum, hHeader.nDatum),
+            &oSRS,
             &oSRSVert ) == CE_None )
     {
         /* Return COMPD_CS with GEOGCS and VERT_CS */
@@ -529,7 +534,7 @@ CPLErr BYNDataset::_SetProjection( const char* pszProjString )
             return CE_None;
         }
     }
-    
+
     OGRSpatialReference oSRSTemp;
 
     /* Try to match GEOGCS */
@@ -724,7 +729,7 @@ GDALDataset *BYNDataset::Create( const char * pszFilename,
                                  GDALDataType eType,
                                  char ** /* papszOptions */ )
 {
-    if( eType != GDT_Int16 && 
+    if( eType != GDT_Int16 &&
         eType != GDT_Int32 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -809,7 +814,7 @@ void BYNDataset::UpdateHeader()
     double dfSouth = dfNorth - ( ( nRasterYSize - 1 ) * dfDLat );
     double dfEast  = dfWest  + ( ( nRasterXSize - 1 ) * dfDLon );
 
-    if( hHeader.nScale == 1 ) 
+    if( hHeader.nScale == 1 )
     {
         dfSouth /= BYN_SCALE;
         dfNorth /= BYN_SCALE;
@@ -831,43 +836,43 @@ void BYNDataset::UpdateHeader()
     header2buffer( &hHeader, abyBuf );
 
     const char* pszValue = GetMetadataItem("GLOBAL");
-    if(pszValue != nullptr) 
+    if(pszValue != nullptr)
         hHeader.nGlobal  = static_cast<GInt16>( atoi( pszValue ) );
 
     pszValue = GetMetadataItem("TYPE");
-    if(pszValue != nullptr) 
+    if(pszValue != nullptr)
         hHeader.nType    = static_cast<GInt16>( atoi( pszValue ) );
 
     pszValue = GetMetadataItem("DESCRIPTION");
-    if(pszValue != nullptr) 
+    if(pszValue != nullptr)
         hHeader.nDescrip = static_cast<GInt16>( atoi( pszValue ) );
 
     pszValue = GetMetadataItem("SUBTYPE");
-    if(pszValue != nullptr) 
+    if(pszValue != nullptr)
         hHeader.nSubType = static_cast<GInt16>( atoi( pszValue ) );
 
     pszValue = GetMetadataItem("WO");
-    if(pszValue != nullptr) 
+    if(pszValue != nullptr)
         hHeader.dfWo     = CPLAtof( pszValue );
 
     pszValue = GetMetadataItem("GM");
-    if(pszValue != nullptr) 
+    if(pszValue != nullptr)
         hHeader.dfGM     = CPLAtof( pszValue );
 
     pszValue = GetMetadataItem("TIDESYSTEM");
-    if(pszValue != nullptr) 
+    if(pszValue != nullptr)
         hHeader.nTideSys = static_cast<GInt16>( atoi( pszValue ) );
 
     pszValue = GetMetadataItem("REALIZATION");
-    if(pszValue != nullptr) 
+    if(pszValue != nullptr)
         hHeader.nRealiz  = static_cast<GInt16>( atoi( pszValue ) );
 
     pszValue = GetMetadataItem("EPOCH");
-    if(pszValue != nullptr) 
+    if(pszValue != nullptr)
         hHeader.dEpoch   = static_cast<float>( CPLAtof( pszValue ) );
 
     pszValue = GetMetadataItem("PTTYPE");
-    if(pszValue != nullptr) 
+    if(pszValue != nullptr)
         hHeader.nPtType  = static_cast<GInt16>( atoi( pszValue ) );
 
     CPL_IGNORE_RET_VAL(VSIFSeekL( fpImage, 0, SEEK_SET ));

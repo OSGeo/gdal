@@ -1,4 +1,4 @@
-# CMake4GDAL project is distributed under X/MIT license. See accompanying file LICENSE.txt.
+# CMake4GDAL project is distributed under MIT license. See accompanying file LICENSE.txt.
 
 # Switches to control build targets(cached)
 option(ENABLE_GNM "Build GNM (Geography Network Model) component" ON)
@@ -25,6 +25,9 @@ option(OGR_BUILD_OPTIONAL_DRIVERS "Whether to build OGR optional drivers by defa
 
 # libgdal shared/satic library generation
 option(BUILD_SHARED_LIBS "Set ON to build shared library" ON)
+
+# Option to set preferred C# compiler
+option(CSHARP_MONO "Whether to force the C# compiler to be Mono" OFF)
 
 # ######################################################################################################################
 # Detect available warning flags
@@ -253,7 +256,13 @@ function (gdal_add_private_link_libraries)
 endfunction (gdal_add_private_link_libraries)
 
 add_library(${GDAL_LIB_TARGET_NAME} gcore/gdal.h)
-set_target_properties(${GDAL_LIB_TARGET_NAME} PROPERTIES OUTPUT_NAME "gdal")
+
+set(GDAL_LIB_OUTPUT_NAME
+    "gdal"
+    CACHE STRING "Name of the GDAL library")
+# If a shared lib renaming has been set in ConfigUser.cmake
+set_target_properties(${GDAL_LIB_TARGET_NAME} PROPERTIES OUTPUT_NAME ${GDAL_LIB_OUTPUT_NAME})
+
 add_library(GDAL::GDAL ALIAS ${GDAL_LIB_TARGET_NAME})
 add_dependencies(${GDAL_LIB_TARGET_NAME} generate_gdal_version_h)
 if (M_LIB)
@@ -293,7 +302,7 @@ if (MINGW)
   # excluding any optimizations that take up extra space. Given that the issue is a string table overflowing, -Os seemed
   # appropriate.
   if (CMAKE_BUILD_TYPE MATCHES Debug)
-    set_compile_options(-Os)
+    add_compile_options(-Os)
   endif ()
 endif ()
 
@@ -348,20 +357,14 @@ set(INSTALL_PLUGIN_FULL_DIR "${CMAKE_INSTALL_PREFIX}/${INSTALL_PLUGIN_DIR}")
 add_subdirectory(port)
 
 # Configure internal libraries
-if (GDAL_USE_LIBZ_INTERNAL)
+if (GDAL_USE_ZLIB_INTERNAL)
   add_subdirectory(frmts/zlib)
 endif ()
 if (GDAL_USE_LIBJSONC_INTERNAL)
   add_subdirectory(ogr/ogrsf_frmts/geojson/libjson)
 endif ()
-if (GDAL_USE_LIBTIFF_INTERNAL)
-  option(RENAME_INTERNAL_LIBTIFF_SYMBOLS "Rename internal libtiff symbols" ON)
-  add_subdirectory(frmts/gtiff/libtiff)
-endif ()
-if (GDAL_USE_LIBGEOTIFF_INTERNAL)
-  option(RENAME_INTERNAL_LIBGEOTIFF_SYMBOLS "Rename internal libgeotiff symbols" ON)
-  add_subdirectory(frmts/gtiff/libgeotiff)
-endif ()
+
+# JPEG options need to be defined before internal libtiff
 if (GDAL_USE_LIBJPEG_INTERNAL)
   option(RENAME_INTERNAL_LIBJPEG_SYMBOLS "Rename internal libjpeg symbols" ON)
   add_subdirectory(frmts/jpeg/libjpeg)
@@ -369,6 +372,15 @@ endif ()
 option(GDAL_JPEG12_SUPPORTED "Set ON to use libjpeg12 support" ON)
 if (GDAL_JPEG12_SUPPORTED)
   add_subdirectory(frmts/jpeg/libjpeg12)
+endif ()
+
+if (GDAL_USE_LIBTIFF_INTERNAL)
+  option(RENAME_INTERNAL_LIBTIFF_SYMBOLS "Rename internal libtiff symbols" ON)
+  add_subdirectory(frmts/gtiff/libtiff)
+endif ()
+if (GDAL_USE_LIBGEOTIFF_INTERNAL)
+  option(RENAME_INTERNAL_LIBGEOTIFF_SYMBOLS "Rename internal libgeotiff symbols" ON)
+  add_subdirectory(frmts/gtiff/libgeotiff)
 endif ()
 if (GDAL_USE_GIFLIB_INTERNAL)
   add_subdirectory(frmts/gif/giflib)

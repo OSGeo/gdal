@@ -58,6 +58,8 @@ static bool OGRGPSBabelDriverIdentifyInternal(
             return false;
         pszGPSBabelDriverName = "osm";
     }
+    else if (strstr(reinterpret_cast<const char*>(poOpenInfo->pabyHeader), "<TrainingCenterDatabase") != nullptr)
+        pszGPSBabelDriverName = "gtrnctr";
     else if (strstr(reinterpret_cast<const char*>(poOpenInfo->pabyHeader), "$GPGSA") != nullptr ||
                 strstr(reinterpret_cast<const char*>(poOpenInfo->pabyHeader), "$GPGGA") != nullptr)
         pszGPSBabelDriverName = "nmea";
@@ -191,6 +193,7 @@ void RegisterOGRGPSBabel()
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GPSBabel" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/gpsbabel.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "mps gdb osm tcx igc" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "GPSBABEL:" );
 

@@ -79,6 +79,8 @@ class VSIGSFSHandler final : public IVSIS3LikeFSHandler
 
     void ClearCache() override;
 
+    bool IsAllowedHeaderForObjectCreation( const char* pszHeaderName ) override { return STARTS_WITH(pszHeaderName, "x-goog-"); }
+
   public:
     VSIGSFSHandler() = default;
     ~VSIGSFSHandler() override;

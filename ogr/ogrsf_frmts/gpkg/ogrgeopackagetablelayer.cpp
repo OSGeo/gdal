@@ -4560,7 +4560,27 @@ OGRErr OGRGeoPackageTableLayer::DeleteField( int iFieldToDelete )
     if( !RunDeferredSpatialIndexUpdate() )
         return OGRERR_FAILURE;
 
+    const char* pszFieldName =
+        m_poFeatureDefn->GetFieldDefn(iFieldToDelete)->GetNameRef();
+
 /* -------------------------------------------------------------------- */
+/*      Drop any iterator since we change the DB structure              */
+/* -------------------------------------------------------------------- */
+    m_poDS->ResetReadingAllLayers();
+
+    if( m_poDS->SoftStartTransaction() != OGRERR_NONE )
+        return OGRERR_FAILURE;
+
+    // ALTER TABLE ... DROP COLUMN ... was first implemented in 3.35.0 but
+    // there was bug fixes related to it until 3.35.5
+#if SQLITE_VERSION_NUMBER >= 3035005L
+    OGRErr eErr = SQLCommand( m_poDS->GetDB(),
+                       CPLString().Printf("ALTER TABLE \"%s\" DROP COLUMN \"%s\"",
+                          SQLEscapeName(m_pszTableName).c_str(),
+                          SQLEscapeName(pszFieldName).c_str()).c_str() );
+#else
+/* -------------------------------------------------------------------- */
+/*      Recreate table in a transaction                                 */
 /*      Build list of old fields, and the list of new fields.           */
 /* -------------------------------------------------------------------- */
     std::vector<OGRFieldDefn*> apoFields;
@@ -4576,21 +4596,8 @@ OGRErr OGRGeoPackageTableLayer::DeleteField( int iFieldToDelete )
     CPLString osFieldListForSelect( BuildSelectFieldList(apoFields) );
     CPLString osColumnsForCreate( GetColumnsOfCreateTable(apoFields) );
 
-/* -------------------------------------------------------------------- */
-/*      Drop any iterator since we change the DB structure              */
-/* -------------------------------------------------------------------- */
-    m_poDS->ResetReadingAllLayers();
-
-/* -------------------------------------------------------------------- */
-/*      Recreate table in a transaction                                 */
-/* -------------------------------------------------------------------- */
-    if( m_poDS->SoftStartTransaction() != OGRERR_NONE )
-        return OGRERR_FAILURE;
-
     OGRErr eErr = RecreateTable(osColumnsForCreate, osFieldListForSelect);
-
-    const char* pszFieldName =
-        m_poFeatureDefn->GetFieldDefn(iFieldToDelete)->GetNameRef();
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Update gpkg_extensions if needed.                               */
@@ -4671,10 +4678,13 @@ OGRErr OGRGeoPackageTableLayer::DeleteField( int iFieldToDelete )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Check foreign key integrity.                                    */
+/*      Check foreign key integrity if enforcement of foreign keys      */
+/*      constraint is enabled.                                          */
 /* -------------------------------------------------------------------- */
-    if( eErr == OGRERR_NONE )
+    if( eErr == OGRERR_NONE &&
+        SQLGetInteger(m_poDS->GetDB(), "PRAGMA foreign_keys", nullptr) )
     {
+        CPLDebug("GPKG", "Running PRAGMA foreign_key_check");
         eErr = m_poDS->PragmaCheck("foreign_key_check", "", 0);
     }
 
@@ -4731,8 +4741,8 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
 /*      Check that the new column name is not a duplicate.              */
 /* -------------------------------------------------------------------- */
 
-    const CPLString osOldColName(
-            m_poFeatureDefn->GetFieldDefn(iFieldToAlter)->GetNameRef() );
+    OGRFieldDefn* poFieldDefnToAlter = m_poFeatureDefn->GetFieldDefn(iFieldToAlter);
+    const CPLString osOldColName( poFieldDefnToAlter->GetNameRef() );
     const CPLString osNewColName( (nFlagsIn & ALTER_NAME_FLAG) ?
                                   CPLString(poNewFieldDefn->GetNameRef()) :
                                   osOldColName );
@@ -4757,38 +4767,65 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Build list of old fields, and the list of new fields.           */
+/*      Build the modified field definition from the flags.             */
 /* -------------------------------------------------------------------- */
-    OGRFieldDefn oTmpFieldDefn(m_poFeatureDefn->GetFieldDefn(iFieldToAlter));
-    if( (nFlagsIn & ALTER_NAME_FLAG) )
-        oTmpFieldDefn.SetName(poNewFieldDefn->GetNameRef());
-    if( (nFlagsIn & ALTER_TYPE_FLAG) )
+    OGRFieldDefn oTmpFieldDefn(poFieldDefnToAlter);
+    bool bUseRewriteSchemaMethod = ( m_poDS->nSoftTransactionLevel == 0 );
+    int nActualFlags = 0;
+    if( bRenameCol )
     {
+        nActualFlags |= ALTER_NAME_FLAG;
+        oTmpFieldDefn.SetName(poNewFieldDefn->GetNameRef());
+    }
+    if( (nFlagsIn & ALTER_TYPE_FLAG) != 0 &&
+        (poFieldDefnToAlter->GetType() != poNewFieldDefn->GetType() ||
+         poFieldDefnToAlter->GetSubType() != poNewFieldDefn->GetSubType()) )
+    {
+        nActualFlags |= ALTER_TYPE_FLAG;
         oTmpFieldDefn.SetSubType(OFSTNone);
         oTmpFieldDefn.SetType(poNewFieldDefn->GetType());
         oTmpFieldDefn.SetSubType(poNewFieldDefn->GetSubType());
     }
-    if (nFlagsIn & ALTER_WIDTH_PRECISION_FLAG)
+    if ( (nFlagsIn & ALTER_WIDTH_PRECISION_FLAG) != 0 &&
+         (poFieldDefnToAlter->GetWidth() != poNewFieldDefn->GetWidth() ||
+          poFieldDefnToAlter->GetPrecision() != poNewFieldDefn->GetPrecision()) )
     {
+        nActualFlags |= ALTER_WIDTH_PRECISION_FLAG;
         oTmpFieldDefn.SetWidth(poNewFieldDefn->GetWidth());
         oTmpFieldDefn.SetPrecision(poNewFieldDefn->GetPrecision());
     }
-    if( (nFlagsIn & ALTER_NULLABLE_FLAG) )
+    if( (nFlagsIn & ALTER_NULLABLE_FLAG) != 0 &&
+        poFieldDefnToAlter->IsNullable() != poNewFieldDefn->IsNullable() )
     {
+        nActualFlags |= ALTER_NULLABLE_FLAG;
+        bUseRewriteSchemaMethod = false;
         oTmpFieldDefn.SetNullable(poNewFieldDefn->IsNullable());
     }
-    if( (nFlagsIn & ALTER_DEFAULT_FLAG) )
+    if( (nFlagsIn & ALTER_DEFAULT_FLAG) != 0 &&
+        !( (poFieldDefnToAlter->GetDefault() == nullptr && poNewFieldDefn->GetDefault() == nullptr) ||
+           (poFieldDefnToAlter->GetDefault() != nullptr && poNewFieldDefn->GetDefault() != nullptr &&
+            strcmp(poFieldDefnToAlter->GetDefault(), poNewFieldDefn->GetDefault()) == 0) ) )
     {
+        nActualFlags |= ALTER_DEFAULT_FLAG;
         oTmpFieldDefn.SetDefault(poNewFieldDefn->GetDefault());
     }
-    if( (nFlagsIn & ALTER_UNIQUE_FLAG) )
+    if( (nFlagsIn & ALTER_UNIQUE_FLAG) != 0 &&
+        poFieldDefnToAlter->IsUnique() != poNewFieldDefn->IsUnique() )
     {
-      oTmpFieldDefn.SetUnique( poNewFieldDefn->IsUnique());
+        nActualFlags |= ALTER_UNIQUE_FLAG;
+        bUseRewriteSchemaMethod = false;
+        oTmpFieldDefn.SetUnique( poNewFieldDefn->IsUnique());
     }
-    if( (nFlagsIn & ALTER_DOMAIN_FLAG) )
+    if( (nFlagsIn & ALTER_DOMAIN_FLAG) != 0 &&
+        poFieldDefnToAlter->GetDomainName() != poNewFieldDefn->GetDomainName() )
     {
-      oTmpFieldDefn.SetDomainName( poNewFieldDefn->GetDomainName());
+        nActualFlags |= ALTER_DOMAIN_FLAG;
+        oTmpFieldDefn.SetDomainName( poNewFieldDefn->GetDomainName());
     }
+
+/* -------------------------------------------------------------------- */
+/*      Build list of old fields, and the list of new fields.           */
+/* -------------------------------------------------------------------- */
     std::vector<OGRFieldDefn*> apoFields;
     std::vector<OGRFieldDefn*> apoFieldsOld;
     for( int iField = 0; iField < m_poFeatureDefn->GetFieldCount(); iField++ )
@@ -4813,7 +4850,15 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
 /* -------------------------------------------------------------------- */
     m_poDS->ResetReadingAllLayers();
 
-    const bool bUseFastMethod = ( m_poDS->nSoftTransactionLevel == 0 );
+    // ALTER TABLE ... RENAME COLUMN ... was first implemented in 3.25.0 but
+    // 3.26.0 was required so that foreign key constraints are updated as well
+#if SQLITE_VERSION_NUMBER >= 3026000L
+    const bool bUseRenameColumn = (nActualFlags == ALTER_NAME_FLAG);
+    if( bUseRenameColumn )
+        bUseRewriteSchemaMethod = false;
+#else
+    constexpr bool bUseRenameColumn = false;
+#endif
 
     if( m_poDS->SoftStartTransaction() != OGRERR_NONE )
         return OGRERR_FAILURE;
@@ -4826,7 +4871,8 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
 /*      column if renaming. We re-install some indexes afterwards.      */
 /* -------------------------------------------------------------------- */
     std::unique_ptr<SQLResult> oTriggers;
-    if( bRenameCol )
+    // cppcheck-suppress knownConditionTrueFalse
+    if( bRenameCol && !bUseRenameColumn )
     {
         char* pszSQL = sqlite3_mprintf(
             "SELECT name, type, sql FROM sqlite_master WHERE "
@@ -4851,7 +4897,22 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
         }
     }
 
-    if( !bUseFastMethod )
+#if SQLITE_VERSION_NUMBER >= 3026000L
+    if( bUseRenameColumn )
+    {
+        if( eErr == OGRERR_NONE )
+        {
+            CPLDebug("GPKG", "Running ALTER TABLE RENAME COLUMN");
+            eErr = SQLCommand( m_poDS->GetDB(),
+                       CPLString().Printf("ALTER TABLE \"%s\" RENAME COLUMN \"%s\" TO \"%s\"",
+                          SQLEscapeName(m_pszTableName).c_str(),
+                          SQLEscapeName(osOldColName).c_str(),
+                          SQLEscapeName(osNewColName).c_str()).c_str() );
+        }
+    }
+    else
+#endif
+    if( !bUseRewriteSchemaMethod )
     {
 /* -------------------------------------------------------------------- */
 /*      If we are within a transaction, we cannot use the method       */
@@ -4969,11 +5030,24 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Run integrity check.                                            */
+/*      Run integrity check only if explicitly required.                */
 /* -------------------------------------------------------------------- */
-    if( eErr == OGRERR_NONE )
+    if( eErr == OGRERR_NONE &&
+        CPLTestBool(CPLGetConfigOption("OGR_GPKG_INTEGRITY_CHECK", "NO")) )
     {
+        CPLDebug("GPKG", "Running PRAGMA integrity_check");
         eErr = m_poDS->PragmaCheck("integrity_check", "ok", 1);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Otherwise check foreign key integrity if enforcement of foreign */
+/*      kets constraint is enabled.                                     */
+/* -------------------------------------------------------------------- */
+    else if( eErr == OGRERR_NONE &&
+        SQLGetInteger(m_poDS->GetDB(), "PRAGMA foreign_keys", nullptr) )
+    {
+        CPLDebug("GPKG", "Running PRAGMA foreign_key_check");
+        eErr = m_poDS->PragmaCheck("foreign_key_check", "", 0);
     }
 
 /* -------------------------------------------------------------------- */
@@ -4984,7 +5058,7 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
         eErr = m_poDS->SoftCommitTransaction();
 
         // We need to force database reopening due to schema change
-        if( eErr == OGRERR_NONE && bUseFastMethod && !m_poDS->ReOpenDB() )
+        if( eErr == OGRERR_NONE && bUseRewriteSchemaMethod && !m_poDS->ReOpenDB() )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot reopen database");
             eErr = OGRERR_FAILURE;
@@ -5023,48 +5097,45 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
 
         if( eErr == OGRERR_NONE )
         {
-            OGRFieldDefn* poFieldDefn =
-                m_poFeatureDefn->GetFieldDefn(iFieldToAlter);
-
             bool bRunDoSpecialProcessingForColumnCreation = false;
             bool bDeleteFromGpkgDataColumns = false;
-            if (nFlagsIn & ALTER_TYPE_FLAG)
+            if (nActualFlags & ALTER_TYPE_FLAG)
             {
-                if( poFieldDefn->GetSubType() == OFSTJSON &&
+                if( poFieldDefnToAlter->GetSubType() == OFSTJSON &&
                     poNewFieldDefn->GetSubType() == OFSTNone )
                 {
                     bDeleteFromGpkgDataColumns = true;
                 }
-                else if ( poFieldDefn->GetSubType() == OFSTNone &&
+                else if ( poFieldDefnToAlter->GetSubType() == OFSTNone &&
                           poNewFieldDefn->GetType() == OFTString &&
                           poNewFieldDefn->GetSubType() == OFSTJSON )
                 {
                     bRunDoSpecialProcessingForColumnCreation = true;
                 }
 
-                poFieldDefn->SetSubType(OFSTNone);
-                poFieldDefn->SetType(poNewFieldDefn->GetType());
-                poFieldDefn->SetSubType(poNewFieldDefn->GetSubType());
+                poFieldDefnToAlter->SetSubType(OFSTNone);
+                poFieldDefnToAlter->SetType(poNewFieldDefn->GetType());
+                poFieldDefnToAlter->SetSubType(poNewFieldDefn->GetSubType());
             }
-            if (nFlagsIn & ALTER_NAME_FLAG)
+            if (nActualFlags & ALTER_NAME_FLAG)
             {
-                poFieldDefn->SetName(poNewFieldDefn->GetNameRef());
+                poFieldDefnToAlter->SetName(poNewFieldDefn->GetNameRef());
             }
-            if (nFlagsIn & ALTER_WIDTH_PRECISION_FLAG)
+            if (nActualFlags & ALTER_WIDTH_PRECISION_FLAG)
             {
-                poFieldDefn->SetWidth(poNewFieldDefn->GetWidth());
-                poFieldDefn->SetPrecision(poNewFieldDefn->GetPrecision());
+                poFieldDefnToAlter->SetWidth(poNewFieldDefn->GetWidth());
+                poFieldDefnToAlter->SetPrecision(poNewFieldDefn->GetPrecision());
             }
-            if (nFlagsIn & ALTER_NULLABLE_FLAG)
-                poFieldDefn->SetNullable(poNewFieldDefn->IsNullable());
-            if (nFlagsIn & ALTER_DEFAULT_FLAG)
-                poFieldDefn->SetDefault(poNewFieldDefn->GetDefault());
-            if (nFlagsIn & ALTER_UNIQUE_FLAG)
-                poFieldDefn->SetUnique(poNewFieldDefn->IsUnique());
-            if ( (nFlagsIn & ALTER_DOMAIN_FLAG) &&
-                poFieldDefn->GetDomainName() != poNewFieldDefn->GetDomainName() )
+            if (nActualFlags & ALTER_NULLABLE_FLAG)
+                poFieldDefnToAlter->SetNullable(poNewFieldDefn->IsNullable());
+            if (nActualFlags & ALTER_DEFAULT_FLAG)
+                poFieldDefnToAlter->SetDefault(poNewFieldDefn->GetDefault());
+            if (nActualFlags & ALTER_UNIQUE_FLAG)
+                poFieldDefnToAlter->SetUnique(poNewFieldDefn->IsUnique());
+            if ( (nActualFlags & ALTER_DOMAIN_FLAG) &&
+                poFieldDefnToAlter->GetDomainName() != poNewFieldDefn->GetDomainName() )
             {
-                if( !poFieldDefn->GetDomainName().empty() )
+                if( !poFieldDefnToAlter->GetDomainName().empty() )
                 {
                     bDeleteFromGpkgDataColumns = true;
                 }
@@ -5074,7 +5145,7 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
                     bRunDoSpecialProcessingForColumnCreation = true;
                 }
 
-                poFieldDefn->SetDomainName(poNewFieldDefn->GetDomainName());
+                poFieldDefnToAlter->SetDomainName(poNewFieldDefn->GetDomainName());
             }
 
             if( bDeleteFromGpkgDataColumns )
@@ -5084,14 +5155,14 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
                     "lower(table_name) = lower('%q') AND "
                     "lower(column_name) = lower('%q')",
                     m_pszTableName,
-                    poFieldDefn->GetNameRef() );
+                    poFieldDefnToAlter->GetNameRef() );
                 eErr = SQLCommand( m_poDS->GetDB(), pszSQL );
                 sqlite3_free(pszSQL);
             }
 
             if( bRunDoSpecialProcessingForColumnCreation )
             {
-                if( !DoSpecialProcessingForColumnCreation(poFieldDefn) )
+                if( !DoSpecialProcessingForColumnCreation(poFieldDefnToAlter) )
                     eErr = OGRERR_FAILURE;
             }
 

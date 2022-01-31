@@ -30,12 +30,14 @@
 #ifndef NETCDFDATASET_H_INCLUDED_
 #define NETCDFDATASET_H_INCLUDED_
 
+#include <array>
 #include <ctime>
 #include <cfloat>
 #include <cstdlib>
 #include <functional>
 #include <map>
 #include <memory>
+#include <utility>
 #include <vector>
 
 #include "cpl_mem_cache.h"
@@ -99,6 +101,7 @@
 static const size_t NCDF_MAX_STR_LEN = 8192;
 #define NCDF_CONVENTIONS     "Conventions"
 #define NCDF_CONVENTIONS_CF_V1_5  "CF-1.5"
+#define GDAL_DEFAULT_NCDF_CONVENTIONS NCDF_CONVENTIONS_CF_V1_5
 #define NCDF_CONVENTIONS_CF_V1_6  "CF-1.6"
 #define NCDF_CONVENTIONS_CF_V1_8  "CF-1.8"
 #define NCDF_CRS_WKT         "crs_wkt"
@@ -739,9 +742,12 @@ class netCDFDataset final: public GDALPamDataset
     nccfdriver::OGR_NCScribe FieldScribe;
     nccfdriver::WBufferManager bufManager;
 
+    bool         bWriteGDALVersion = true;
+    bool         bWriteGDALHistory = true;
+
     /* projection/GT */
-    double       adfGeoTransform[6];
-    char         *pszProjection;
+    double       m_adfGeoTransform[6];
+    char         *m_pszProjection = nullptr;
     int          nXDimID;
     int          nYDimID;
     bool         bIsProjected;
@@ -750,10 +756,10 @@ class netCDFDataset final: public GDALPamDataset
 
     /* state vars */
     bool         bDefineMode;
-    bool         bSetProjection;
-    bool         bSetGeoTransform;
-    bool         bAddedProjectionVarsDefs;
-    bool         bAddedProjectionVarsData;
+    bool         m_bHasProjection = false;
+    bool         m_bHasGeoTransform = false;
+    bool         m_bAddedProjectionVarsDefs = false;
+    bool         m_bAddedProjectionVarsData = false;
     bool         bAddedGridMappingRef;
 
     /* create vars */
@@ -854,7 +860,10 @@ class netCDFDataset final: public GDALPamDataset
 
     CPLErr FilterVars( int nCdfId, bool bKeepRasters, bool bKeepVectors,
                        char **papszIgnoreVars, int *pnRasterVars,
-                       int *pnGroupId, int *pnVarId, int *pnIgnoredVars );
+                       int *pnGroupId, int *pnVarId, int *pnIgnoredVars,
+                       // key is (dim1Id, dim2Id, nc_type varType)
+                       // value is (groupId, varId)
+                       std::map<std::array<int, 3>, std::vector<std::pair<int, int>>>& oMap2DDimsToGroupAndVar);
     CPLErr CreateGrpVectorLayers( int nCdfId, CPLString osFeatureType,
                                   std::vector<int> anPotentialVectorVarID,
                                   std::map<int, int> oMapDimIdToCount,
@@ -870,6 +879,9 @@ class netCDFDataset final: public GDALPamDataset
     static GDALDataset *OpenMultiDim( GDALOpenInfo * );
     std::shared_ptr<GDALGroup> m_poRootGroup{};
 #endif
+
+    void SetGeoTransformNoUpdate( double * );
+    void SetProjectionNoUpdate( const char* );
 
   protected:
 
@@ -902,6 +914,9 @@ class netCDFDataset final: public GDALPamDataset
 
     virtual char      **GetMetadataDomainList() override;
     char ** GetMetadata( const char * ) override;
+
+    virtual CPLErr SetMetadataItem( const char* pszName, const char* pszValue, const char* pszDomain = "" ) override;
+    virtual CPLErr SetMetadata( char** papszMD, const char* pszDomain = "" ) override;
 
     virtual int  TestCapability(const char* pszCap) override;
 

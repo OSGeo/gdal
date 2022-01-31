@@ -107,6 +107,13 @@ the health of the project:
 
     .. container:: horizontal-logo
 
+        .. image:: ../../images/sponsors/logo-l3harris.png
+           :class: img-logos
+           :width: 150 px
+           :target: https://www.l3harrisgeospatial.com
+
+    .. container:: horizontal-logo
+
         .. image:: ../../images/sponsors/logo-mapgears.png
            :class: img-logos
            :width: 150 px

@@ -291,10 +291,10 @@ def test_netcdf_2():
     assert ds.GetRasterBand(1).GetNoDataValue() is None
     ds = None
 
-    # Test that in raster-only mode, update isn't supported (not sure what would be missing for that...)
-    with gdaltest.error_handler():
-        ds = gdal.Open('tmp/netcdf2.nc', gdal.GA_Update)
-    assert ds is None
+    # Test update mode
+    ds = gdal.Open('tmp/netcdf2.nc', gdal.GA_Update)
+    assert ds.GetRasterBand(1).GetNoDataValue() is None
+    ds = None
 
     gdaltest.clean_tmp()
 
@@ -525,7 +525,7 @@ def test_netcdf_13():
 # check for scale/offset for two variables
 
 
-def test_netcdf_14():
+def test_netcdf_two_vars_as_subdatasets():
 
     ds = gdal.Open('NETCDF:data/netcdf/two_vars_scale_offset.nc:z')
 
@@ -541,6 +541,29 @@ def test_netcdf_14():
 
     scale = ds.GetRasterBand(1).GetScale()
     offset = ds.GetRasterBand(1).GetOffset()
+
+    assert scale == 0.1 and offset == 2.5, \
+        ('Incorrect scale(%f) or offset(%f)' % (scale, offset))
+
+###############################################################################
+# check for opening similar variables as multiple bands of the
+# same dataset
+
+
+def test_netcdf_two_vars_as_multiple_bands():
+
+    ds = gdal.OpenEx('data/netcdf/two_vars_scale_offset.nc',
+                     open_options = ['VARIABLES_AS_BANDS=YES'])
+    assert ds.RasterCount == 2
+
+    scale = ds.GetRasterBand(1).GetScale()
+    offset = ds.GetRasterBand(1).GetOffset()
+
+    assert scale == 0.01 and offset == 1.5, \
+        ('Incorrect scale(%f) or offset(%f)' % (scale, offset))
+
+    scale = ds.GetRasterBand(2).GetScale()
+    offset = ds.GetRasterBand(2).GetOffset()
 
     assert scale == 0.1 and offset == 2.5, \
         ('Incorrect scale(%f) or offset(%f)' % (scale, offset))
@@ -4912,6 +4935,70 @@ def test_netcdf_write_4D():
 def test_netcdf__crs_wkt():
     ds = gdal.Open('data/netcdf/netcdf_crs_wkt.nc')
     assert ds.GetSpatialRef().IsGeographic()
+
+
+def test_netcdf_default_metadata():
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+
+    tmpfilename = 'tmp/test_netcdf_default_metadata.nc'
+    gdal.GetDriverByName('netCDF').CreateCopy(tmpfilename, src_ds)
+    ds = gdal.Open(tmpfilename)
+    assert ds.GetMetadataItem("NC_GLOBAL#GDAL") == gdal.VersionInfo("")
+    assert 'GDAL CreateCopy' in ds.GetMetadataItem("NC_GLOBAL#history")
+    assert ds.GetMetadataItem("NC_GLOBAL#conventions").startswith('CF')
+    ds = None
+    gdal.Unlink(tmpfilename)
+
+
+def test_netcdf_default_metadata_with_existing_history_and_conventions():
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+    src_ds.SetMetadataItem("NC_GLOBAL#history", "past history")
+    src_ds.SetMetadataItem("NC_GLOBAL#Conventions", "my conventions")
+
+    tmpfilename = 'tmp/test_netcdf_default_metadata_with_existing_history_and_conventions.nc'
+    gdal.GetDriverByName('netCDF').CreateCopy(tmpfilename, src_ds)
+    ds = gdal.Open(tmpfilename)
+    assert 'GDAL CreateCopy' in ds.GetMetadataItem("NC_GLOBAL#history")
+    assert 'past history' in ds.GetMetadataItem("NC_GLOBAL#history")
+    assert ds.GetMetadataItem("NC_GLOBAL#conventions") == "my conventions"
+    ds = None
+    gdal.Unlink(tmpfilename)
+
+
+def test_netcdf_default_metadata_disabled():
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+
+    tmpfilename = 'tmp/test_netcdf_default_metadata_disabled.nc'
+    gdal.GetDriverByName('netCDF').CreateCopy(tmpfilename, src_ds,
+                  options = ['WRITE_GDAL_VERSION=NO', 'WRITE_GDAL_HISTORY=NO'])
+    ds = gdal.Open(tmpfilename)
+    assert ds.GetMetadataItem("NC_GLOBAL#GDAL") is None
+    assert ds.GetMetadataItem("NC_GLOBAL#history") is None
+    ds = None
+    gdal.Unlink(tmpfilename)
+
+
+def test_netcdf_update_metadata():
+
+    tmpfilename = 'tmp/test_netcdf_update_metadata.nc'
+    ds = gdal.GetDriverByName('netCDF').Create(tmpfilename, 2, 2)
+    ds.GetRasterBand(1).SetMetadata({'foo': 'bar'})
+    ds.SetMetadata({'NC_GLOBAL#bar': 'baz',
+                    'another_item': 'some_value',
+                    'bla#ignored': 'ignored'})
+    ds = None
+
+    ds = gdal.Open(tmpfilename)
+    assert ds.GetRasterBand(1).GetMetadataItem('foo') == 'bar'
+    assert ds.GetMetadataItem('NC_GLOBAL#bar') == 'baz'
+    assert ds.GetMetadataItem('NC_GLOBAL#GDAL_another_item') == 'some_value'
+    assert ds.GetMetadataItem('bla#ignored') is None
+    ds = None
+
+    gdal.Unlink(tmpfilename)
 
 
 def test_clean_tmp():

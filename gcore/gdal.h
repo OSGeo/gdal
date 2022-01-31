@@ -512,6 +512,21 @@ typedef struct GDALDimensionHS* GDALDimensionH;
  */
 #define GDAL_DCAP_MULTIPLE_VECTOR_LAYERS "DCAP_MULTIPLE_VECTOR_LAYERS"
 
+/** Capability set by drivers for formats which support reading field domains.
+ *
+ * @since GDAL 3.5
+ */
+#define GDAL_DCAP_FIELD_DOMAINS "DCAP_FIELD_DOMAINS"
+
+/** List of (space separated) field domain types support by the AddFieldDomain() API.
+ *
+ * Supported values are Coded, Range and Glob, corresponding to the OGRFieldDomainType::OFDT_CODED,
+ * OGRFieldDomainType::OFDT_RANGE, and OGRFieldDomainType::OFDT_GLOB field domain types respectively.
+ *
+ * @since GDAL 3.5
+ */
+#define GDAL_DMD_CREATION_FIELD_DOMAIN_TYPES "DMD_CREATION_FIELD_DOMAIN_TYPES"
+
 /** Value for GDALDimension::GetType() specifying the X axis of a horizontal CRS.
  * @since GDAL 3.1
  */
@@ -886,11 +901,18 @@ OGRErr CPL_DLL GDALDatasetCommitTransaction(GDALDatasetH hDS);
 OGRErr CPL_DLL GDALDatasetRollbackTransaction(GDALDatasetH hDS);
 void CPL_DLL GDALDatasetClearStatistics(GDALDatasetH hDS);
 
+char CPL_DLL ** GDALDatasetGetFieldDomainNames(GDALDatasetH, CSLConstList) CPL_WARN_UNUSED_RESULT;
 OGRFieldDomainH CPL_DLL GDALDatasetGetFieldDomain(GDALDatasetH hDS,
                                                   const char* pszName);
 bool CPL_DLL GDALDatasetAddFieldDomain(GDALDatasetH hDS,
                                        OGRFieldDomainH hFieldDomain,
                                        char** ppszFailureReason);
+bool CPL_DLL GDALDatasetDeleteFieldDomain(GDALDatasetH hDS,
+                                          const char* pszName,
+                                          char** ppszFailureReason);
+bool CPL_DLL GDALDatasetUpdateFieldDomain(GDALDatasetH hDS,
+                                          OGRFieldDomainH hFieldDomain,
+                                          char** ppszFailureReason);
 
 /* ==================================================================== */
 /*      GDALRasterBand ... one band/channel in a dataset.               */

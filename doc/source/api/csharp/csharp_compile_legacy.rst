@@ -1,7 +1,7 @@
-.. _csharp_compile:
+.. _csharp_compile_legacy:
 
 ================================================================================
-Compiling the C# bindings
+Compiling the C# bindings - Legacy Scripts
 ================================================================================
 
 This page describes the primary steps when creating the GDAL/OGR C# binaries from the source.

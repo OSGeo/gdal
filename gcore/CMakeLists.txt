@@ -1,4 +1,4 @@
-# CMake4GDAL project is distributed under X/MIT license. See accompanying file LICENSE.txt.
+# CMake4GDAL project is distributed under MIT license. See accompanying file LICENSE.txt.
 add_library(
   gcore OBJECT
   gdalopeninfo.cpp
@@ -118,6 +118,15 @@ if (GDAL_USE_LIBXML2)
   target_compile_definitions(gcore PRIVATE -DHAVE_LIBXML2)
   target_include_directories(gcore PRIVATE ${LIBXML2_INCLUDE_DIRS})
   gdal_add_private_link_libraries(LibXml2::LibXml2)
+
+  # Some libxml2 builds may require Iconv (libxml2/libxml/encoding.h includes iconv.h if LIBXML_ICONV_ENABLED is
+  # defined)
+  if (GDAL_USE_ICONV)
+    if (NOT Iconv_IS_BUILT_IN)
+      target_include_directories(gcore PRIVATE $<TARGET_PROPERTY:Iconv::Iconv,INTERFACE_INCLUDE_DIRECTORIES>)
+    endif ()
+  endif ()
+
 endif ()
 if (GDAL_USE_GEOS)
   target_compile_definitions(gcore PRIVATE -DHAVE_GEOS)

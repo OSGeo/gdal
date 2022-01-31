@@ -609,7 +609,7 @@ GDALDriver * GDALDriverManager::GetDriverByName( const char * pszName )
     if( EQUAL(pszName, "CartoDB") )
         pszName = "Carto";
 
-    return oMapNameToDrivers[CPLString(pszName).toupper()];
+    return GetDriverByName_unlocked(pszName);
 }
 
 /************************************************************************/
@@ -925,6 +925,8 @@ void GDALDriverManager::ReorderDrivers()
         return;
 
     CPLMutexHolderD( &hDMMutex );
+
+    CPLAssert(static_cast<int>(oMapNameToDrivers.size()) == nDrivers);
 
     VSILFILE* fp = VSIFOpenL(m_osDriversIniPath.c_str(), "rb");
     if( fp == nullptr )

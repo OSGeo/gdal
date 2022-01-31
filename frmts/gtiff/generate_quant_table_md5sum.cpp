@@ -27,11 +27,19 @@
  ****************************************************************************/
 
 #include <cassert>
-#include "cpl_md5.h"
+
 #include "cpl_error.h"
 #include "cpl_string.h"
 #include <tiffio.h>
 #include "gdal_priv.h"
+
+#define CPLMD5Init internal_CPLMD5Init
+#define CPLMD5Update internal_CPLMD5Update
+#define CPLMD5Final internal_CPLMD5Final
+#define CPLMD5Transform internal_CPLMD5Transform
+#define CPLMD5String internal_CPLMD5String
+#include "cpl_md5.h"
+#include "cpl_md5.cpp"
 
 static const GByte* GTIFFFindNextTable( const GByte* paby, GByte byMarker,
                                         int nLen, int* pnLenTable )
@@ -79,7 +87,7 @@ void generate(int nBands, uint16_t nPhotometric, uint16_t nBitsPerSample)
                                                 "NBITS", "12");
 
     CPLString osTmpFilename;
-    osTmpFilename.Printf( "/vsimem/gtiffdataset_guess_jpeg_quality_tmp" );
+    osTmpFilename.Printf( "gtiffdataset_guess_jpeg_quality_tmp" );
 
     for( int nQuality = 1; nQuality <= 100; ++nQuality )
     {
@@ -134,6 +142,8 @@ void generate(int nBands, uint16_t nPhotometric, uint16_t nBitsPerSample)
 
         TIFFClose(hTIFFTmp);
     }
+
+    VSIUnlink(osTmpFilename);
 
     CSLDestroy(papszOpts);
 }

@@ -375,7 +375,8 @@ def test_vsigs_write():
 
     gdal.VSICurlClearCache()
     with webserver.install_http_handler(webserver.SequentialHandler()):
-        f = gdal.VSIFOpenL('/vsigs/gs_fake_bucket3/another_file.bin', 'wb')
+        f = gdal.VSIFOpenExL('/vsigs/gs_fake_bucket3/another_file.bin', 'wb', 0,
+                             ['Content-Type=foo', 'Content-Encoding=bar', 'x-goog-storage-class=NEARLINE'])
         assert f is not None
         assert gdal.VSIFSeekL(f, gdal.VSIFTellL(f), 0) == 0
         assert gdal.VSIFSeekL(f, 0, 1) == 0
@@ -387,7 +388,10 @@ def test_vsigs_write():
     handler = webserver.SequentialHandler()
 
     def method(request):
-        if request.headers['Content-Length'] != '6':
+        if request.headers['Content-Length'] != '6' or \
+           request.headers['Content-Type'] != 'foo' or \
+           request.headers['Content-Encoding'] != 'bar' or \
+           request.headers['x-goog-storage-class'] != 'NEARLINE':
             sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
             request.send_response(400)
             request.send_header('Content-Length', 0)

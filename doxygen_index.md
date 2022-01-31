@@ -5,7 +5,7 @@ Introduction
 ----
 
 [GDAL](https://gdal.org) is a translator library for raster and
-vector geospatial data formats that is released under an X/MIT style Open
+vector geospatial data formats that is released under an MIT style Open
 Source license by the
 [Open Source Geospatial Foundation](http://www.osgeo.org/).  As a library, it
 presents a single raster abstract data model and a single vector abstract data

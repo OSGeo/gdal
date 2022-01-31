@@ -46,7 +46,7 @@ Process :
 
 2.2) Update two instances of year in ../CITATION file to the current year.
 
-3) Update the VERSION file.
+3) Update the VERSION file (if not already done)
 
 3.1) Update the version information in the following files:
      - ./swig/python/setup.py (gdal python package)
@@ -353,4 +353,9 @@ e) Click the "Release" button and that is it! The release should be available in
 Note: gdal-announce@ is moderated. Make sure that your email address is approved
 ('mod' tick disabled in https://lists.osgeo.org/mailman/admin/gdal-announce/members),
 or your message manually approved, with an administrator of the list.
+
+22) For a feature release: after it has been done, in the master branch, update
+    the VERSION to the next one and in gcore/gdal_version.h.in, update
+    GDAL_VERSION_MAJOR/_MINOR, GDAL_RELEASE_NAME (with a dev suffix, like "3.5.0dev"),
+    and set GDAL_RELEASE_DATE to a date like {YEAR}9999.
 

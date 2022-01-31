@@ -55,7 +55,7 @@ find_path(MSSQL_NCLI_INCLUDE_DIR NAMES sqlncli.h
           PATHS "${MSSQL_NCLI_ROOT}/Include")
 mark_as_advanced(MSSQL_NCLI_INCLUDE_DIR)
 
-if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "AMD64")
+if("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
     set(MSSQL_NCLI_DIR_ARCH x64)
 else()
     set(MSSQL_NCLI_DIR_ARCH x86)
