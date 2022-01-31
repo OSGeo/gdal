@@ -13,7 +13,7 @@ set(SOURCE
 add_gdal_driver(TARGET gdal_HDF5 SOURCES ${SOURCE} PLUGIN_CAPABLE)
 
 # When build as plugin, initialize all drivers from Register_HDF5
-if (GDAL_ENABLE_FRMT_HDF5_PLUGIN)
+if (GDAL_ENABLE_DRIVER_HDF5_PLUGIN)
   target_compile_definitions(gdal_HDF5 PRIVATE -DHDF5_PLUGIN)
 endif ()
 if (DEFINED HDF5_DEFINITIONS)

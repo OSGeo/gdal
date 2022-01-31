@@ -92,7 +92,7 @@ endif ()
 
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:gcore>)
 
-if (GDAL_USE_LIBJSONC_INTERNAL)
+if (GDAL_USE_JSONC_INTERNAL)
   target_include_directories(gcore PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
 endif ()
 
@@ -103,15 +103,15 @@ endif ()
 add_subdirectory(mdreader)
 
 # External libs now
-if (NOT GDAL_USE_LIBJSONC_INTERNAL)
+if (NOT GDAL_USE_JSONC_INTERNAL)
   target_include_directories(gcore PRIVATE ${JSONC_INCLUDE_DIRS})
   gdal_add_private_link_libraries(JSONC::JSONC)
 endif ()
 
-if (NOT DEFINED OGR_ENABLE_SQLITE)
-  message(FATAL_ERROR "OGR_ENABLE_SQLITE should be set to ON or OFF")
+if (NOT DEFINED OGR_ENABLE_DRIVER_SQLITE)
+  message(FATAL_ERROR "OGR_ENABLE_DRIVER_SQLITE should be set to ON or OFF")
 endif ()
-if (OGR_ENABLE_SQLITE)
+if (OGR_ENABLE_DRIVER_SQLITE)
   target_compile_definitions(gcore PRIVATE -DSQLITE_ENABLED)
 endif ()
 if (GDAL_USE_LIBXML2)

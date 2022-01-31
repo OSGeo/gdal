@@ -2,7 +2,7 @@ add_gdal_driver(TARGET gdal_BSB SOURCES bsb_read.h bsb_read.c bsbdataset.cpp PLU
 gdal_standard_includes(gdal_BSB)
 
 if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.12)
-  if (NOT GDAL_ENABLE_FRMT_BSB_PLUGIN)
+  if (NOT GDAL_ENABLE_DRIVER_BSB_PLUGIN)
     add_executable(bsb2raw EXCLUDE_FROM_ALL bsb2raw.c)
     target_include_directories(bsb2raw PRIVATE $<TARGET_PROPERTY:gdal_BSB,SOURCE_DIR>)
     target_link_libraries(bsb2raw PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}> gdal_BSB)

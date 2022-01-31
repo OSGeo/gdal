@@ -16,19 +16,19 @@ add_gdal_driver(
           ogrgmlasxlinkresolver.cpp
           xercesc_headers.h
           PLUGIN_CAPABLE_IF
-          "NOT GDAL_USE_LIBJSONC_INTERNAL")
+          "NOT GDAL_USE_JSONC_INTERNAL")
 gdal_standard_includes(ogr_GMLAS)
 target_include_directories(
   ogr_GMLAS PRIVATE ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/geojson ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/mem
                     ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/pgdump)
 
 # Internal libs first
-if (GDAL_USE_LIBJSONC_INTERNAL)
+if (GDAL_USE_JSONC_INTERNAL)
   target_include_directories(ogr_GMLAS PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
 endif ()
 
 # External libs then
-if (NOT GDAL_USE_LIBJSONC_INTERNAL)
+if (NOT GDAL_USE_JSONC_INTERNAL)
   gdal_target_link_libraries(TARGET ogr_GMLAS LIBRARIES JSONC::JSONC)
 endif ()
 

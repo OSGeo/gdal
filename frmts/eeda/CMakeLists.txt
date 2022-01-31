@@ -5,12 +5,12 @@ add_gdal_driver(
           eedadataset.cpp
           eedacommon.cpp
           PLUGIN_CAPABLE_IF
-          "NOT GDAL_USE_LIBJSONC_INTERNAL"
+          "NOT GDAL_USE_JSONC_INTERNAL"
           NO_DEPS)
 gdal_standard_includes(gdal_EEDA)
 target_include_directories(gdal_EEDA PRIVATE $<TARGET_PROPERTY:ogr_geojson,SOURCE_DIR>)
 
-if (GDAL_USE_LIBJSONC_INTERNAL)
+if (GDAL_USE_JSONC_INTERNAL)
   target_include_directories(gdal_EEDA PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
 else ()
   gdal_target_link_libraries(TARGET gdal_EEDA LIBRARIES JSONC::JSONC)

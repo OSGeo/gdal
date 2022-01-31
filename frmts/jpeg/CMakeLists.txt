@@ -5,15 +5,15 @@ add_gdal_driver(
 gdal_standard_includes(gdal_JPEG)
 
 target_include_directories(gdal_JPEG PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/mem)
-if (GDAL_JPEG12_SUPPORTED)
+if (GDAL_USE_JPEG12_INTERNAL)
   target_sources(gdal_JPEG PRIVATE jpgdataset_12.cpp vsidataio_12.cpp)
   target_include_directories(gdal_JPEG PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
   target_compile_definitions(gdal_JPEG PRIVATE JPEG_DUAL_MODE_8_12)
 endif ()
 
-if (GDAL_USE_LIBJPEG_INTERNAL)
+if (GDAL_USE_JPEG_INTERNAL)
   target_include_directories(gdal_JPEG PRIVATE $<TARGET_PROPERTY:libjpeg,SOURCE_DIR>)
-  if (RENAME_INTERNAL_LIBJPEG_SYMBOLS)
+  if (RENAME_INTERNAL_JPEG_SYMBOLS)
     target_compile_definitions(gdal_JPEG PRIVATE -DRENAME_INTERNAL_LIBJPEG_SYMBOLS)
   endif ()
 else ()

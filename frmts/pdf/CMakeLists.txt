@@ -26,7 +26,7 @@ if (GDAL_USE_POPPLER)
   string(REGEX REPLACE "([0-9]+)\\.([0-9]+).*" "\\1" Poppler_VERSION_MAJOR ${Poppler_VERSION_STRING})
   string(REGEX REPLACE "([0-9]+)\\.([0-9]+).*" "\\2" Poppler_VERSION_MINOR ${Poppler_VERSION_STRING})
   # Strip leading zero
-  if ("${POPPLER_VERSION_MINOR}" MATCHES "0?[0-9]+")
+  if ("${Poppler_VERSION_MINOR}" MATCHES "0?[0-9]+")
     string(REGEX REPLACE "0?([0-9]+)" "\\1" Poppler_VERSION_MINOR ${Poppler_VERSION_MINOR})
   endif ()
   if (Poppler_VERSION_MAJOR GREATER 21)

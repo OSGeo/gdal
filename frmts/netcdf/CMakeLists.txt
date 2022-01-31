@@ -12,9 +12,9 @@ set(_SOURCES
     netcdf_sentinel3_sral_mwr.cpp)
 add_gdal_driver(TARGET gdal_netCDF SOURCES ${_SOURCES} PLUGIN_CAPABLE)
 unset(_SOURCES)
-if (GDAL_ENABLE_FRMT_NETCDF)
-  target_compile_definitions(gdal_netCDF PRIVATE -DNETCDF_PLUGIN)
-endif ()
+
+# We unconditionaly enable the GMT driver when enabling the netCDF one
+target_compile_definitions(gdal_netCDF PRIVATE -DNETCDF_PLUGIN)
 
 gdal_standard_includes(gdal_netCDF)
 gdal_target_link_libraries(TARGET gdal_netCDF LIBRARIES NETCDF::netCDF)

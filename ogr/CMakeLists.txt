@@ -83,7 +83,7 @@ if (GDAL_USE_ZLIB_INTERNAL)
   target_include_directories(ogr PRIVATE $<TARGET_PROPERTY:libz,SOURCE_DIR>)
 endif ()
 
-if (GDAL_USE_LIBJSONC_INTERNAL)
+if (GDAL_USE_JSONC_INTERNAL)
   target_include_directories(ogr PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
 endif ()
 
@@ -137,7 +137,7 @@ if (GDAL_USE_XERCESC)
   gdal_add_private_link_libraries(XercesC::XercesC)
 endif ()
 
-if (NOT GDAL_USE_LIBJSONC_INTERNAL)
+if (NOT GDAL_USE_JSONC_INTERNAL)
   target_include_directories(ogr PRIVATE ${JSONC_INCLUDE_DIR})
   gdal_add_private_link_libraries(JSONC::JSONC)
 endif ()
