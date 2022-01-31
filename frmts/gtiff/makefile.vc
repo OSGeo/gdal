@@ -2,7 +2,7 @@
 OBJ		=	geotiff.obj gt_wkt_srs.obj gt_overview.obj \
 			tifvsi.obj gt_citation.obj gt_jpeg_copy.obj cogdriver.obj
 
-EXTRAFLAGS	= 	-I.. $(PROJ_FLAGS) $(PROJ_INCLUDE) $(TIFF_INC) $(GEOTIFF_INC) $(JPEG_FLAGS) $(LERC_INC) $(ZSTD_FLAGS) $(ZLIB_FLAGS) $(LIBDEFLATE_FLAGS) $(JXL_FLAGS)
+EXTRAFLAGS	= 	-I.. $(PROJ_FLAGS) $(PROJ_INCLUDE) $(TIFF_INC) $(GEOTIFF_INC) $(JPEG_FLAGS) $(LERC_INC) $(ZSTD_FLAGS) $(ZLIB_FLAGS) $(LIBDEFLATE_FLAGS) $(JXL_FLAGS) $(WEBP_FLAGS)
 
 GDAL_ROOT	=	..\..
 
@@ -37,6 +37,10 @@ JPEG_FLAGS =	-I..\jpeg -I$(JPEGDIR) -DHAVE_LIBJPEG
 !ELSE
 JPEG_FLAGS =	-I..\jpeg -I..\jpeg\libjpeg -DHAVE_LIBJPEG
 !ENDIF
+!ENDIF
+
+!IFDEF WEBP_CFLAGS
+WEBP_FLAGS =	$(WEBP_CFLAGS) -DWEBP_SUPPORT
 !ENDIF
 
 
