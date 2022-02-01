@@ -450,6 +450,7 @@ void RegisterOGRGeoPackage()
 "  <Option name='WHERE' type='string' scope='raster' description='SQL WHERE clause to be appended to tile requests'/>"
 COMPRESSION_OPTIONS
 "  <Option name='PRELUDE_STATEMENTS' type='string' scope='raster,vector' description='SQL statement(s) to send on the SQLite connection before any other ones'/>"
+"  <Option name='NOLOCK' type='boolean' description='Whether the database should be opened in nolock mode'/>"
 "</OpenOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,

@@ -1226,6 +1226,12 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
     eAccess = poOpenInfo->eAccess;
     m_pszFilename = CPLStrdup( osFilename );
 
+    if( poOpenInfo->papszOpenOptions )
+    {
+        CSLDestroy(papszOpenOptions);
+        papszOpenOptions = CSLDuplicate(poOpenInfo->papszOpenOptions);
+    }
+
 #ifdef ENABLE_SQL_GPKG_FORMAT
     if( poOpenInfo->pabyHeader &&
         STARTS_WITH((const char*)poOpenInfo->pabyHeader, "-- SQL GPKG") &&
@@ -5853,6 +5859,16 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
             if( m_papoLayers[i]->SyncToDisk() != OGRERR_NONE )
                 return nullptr;
         }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      DEBUG "SELECT nolock" command.                                  */
+/* -------------------------------------------------------------------- */
+    if( pszDialect != nullptr && EQUAL(pszDialect, "DEBUG") &&
+        EQUAL(osSQLCommand, "SELECT nolock") )
+    {
+        return new OGRSQLiteSingleFeatureLayer
+                                (osSQLCommand, m_bNoLock ? 1 : 0 );
     }
 
 /* -------------------------------------------------------------------- */
