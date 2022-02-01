@@ -48,6 +48,6 @@ if (RENAME_INTERNAL_GEOTIFF_SYMBOLS)
 endif ()
 set_property(TARGET geotiff PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 
-gdal_target_link_libraries(TARGET geotiff LIBRARIES PROJ::proj)
+gdal_target_link_libraries(geotiff PRIVATE PROJ::proj)
 
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:geotiff>)

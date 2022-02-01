@@ -17,4 +17,4 @@ add_gdal_driver(
 
 gdal_standard_includes(ogr_DB2)
 target_include_directories(ogr_DB2 PRIVATE $<TARGET_PROPERTY:gdal_MEM,SOURCE_DIR> $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR>)
-gdal_target_link_libraries(TARGET ogr_DB2 LIBRARIES ODBC::ODBC)
+gdal_target_link_libraries(ogr_DB2 PRIVATE ODBC::ODBC)

@@ -17,7 +17,7 @@ unset(_SOURCES)
 target_compile_definitions(gdal_netCDF PRIVATE -DNETCDF_PLUGIN)
 
 gdal_standard_includes(gdal_netCDF)
-gdal_target_link_libraries(TARGET gdal_netCDF LIBRARIES NETCDF::netCDF)
+gdal_target_link_libraries(gdal_netCDF PRIVATE NETCDF::netCDF)
 if (NETCDF_HAS_NC4)
   target_compile_definitions(gdal_netCDF PRIVATE -DNETCDF_HAS_NC4)
 endif ()

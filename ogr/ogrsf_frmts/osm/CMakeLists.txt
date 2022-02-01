@@ -8,10 +8,10 @@ target_include_directories(ogr_OSM PRIVATE $<TARGET_PROPERTY:ogrsf_generic,SOURC
                                            ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/sqlite)
 if (GDAL_USE_EXPAT)
   target_compile_definitions(ogr_OSM PRIVATE -DHAVE_EXPAT=1)
-  gdal_target_link_libraries(TARGET ogr_OSM LIBRARIES EXPAT::EXPAT)
+  gdal_target_link_libraries(ogr_OSM PRIVATE EXPAT::EXPAT)
 endif ()
 if (GDAL_USE_SQLITE3)
-  gdal_target_link_libraries(TARGET ogr_OSM LIBRARIES SQLite::SQLite3)
+  gdal_target_link_libraries(ogr_OSM PRIVATE SQLite::SQLite3)
 endif ()
 
 if (BROKEN)

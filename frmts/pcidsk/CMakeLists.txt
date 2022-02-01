@@ -13,5 +13,5 @@ target_include_directories(gdal_PCIDSK PRIVATE $<TARGET_PROPERTY:pcidsk_sdk,SOUR
 add_subdirectory(sdk)
 
 if (NOT GDAL_USE_JPEG_INTERNAL)
-  gdal_target_link_libraries(TARGET gdal_PCIDSK LIBRARIES JPEG::JPEG)
+  gdal_target_link_libraries(gdal_PCIDSK PRIVATE JPEG::JPEG)
 endif ()

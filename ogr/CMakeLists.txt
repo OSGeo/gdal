@@ -89,7 +89,7 @@ endif ()
 
 target_compile_definitions(ogr PRIVATE HAVE_MITAB)
 
-gdal_target_link_libraries(TARGET ogr LIBRARIES PROJ::proj)
+gdal_target_link_libraries(ogr PRIVATE PROJ::proj)
 
 # External libs then
 if (GDAL_USE_GEOS)

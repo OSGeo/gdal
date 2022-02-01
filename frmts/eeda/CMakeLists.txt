@@ -13,5 +13,5 @@ target_include_directories(gdal_EEDA PRIVATE $<TARGET_PROPERTY:ogr_geojson,SOURC
 if (GDAL_USE_JSONC_INTERNAL)
   target_include_directories(gdal_EEDA PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
 else ()
-  gdal_target_link_libraries(TARGET gdal_EEDA LIBRARIES JSONC::JSONC)
+  gdal_target_link_libraries(gdal_EEDA PRIVATE JSONC::JSONC)
 endif ()
