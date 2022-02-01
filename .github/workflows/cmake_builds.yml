@@ -202,6 +202,7 @@ jobs:
         ctest --test-dir $GITHUB_WORKSPACE/build -C Release -V -j 3
       env:
         SKIP_OGR_GMLAS_HUGE_PROCESSING_TIME: YES
+        SKIP_GDAL_HTTP_SSL_VERIFYSTATUS: YES
     - name: Install
       shell: bash -l {0}
       run: |

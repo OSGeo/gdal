@@ -30,6 +30,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import os
 import subprocess
 import sys
 from osgeo import gdal
@@ -160,6 +161,10 @@ def test_http_ssl_verifystatus():
 
         # The test actually works on Travis Mac
         if sys.platform == 'darwin' and gdal.GetConfigOption('TRAVIS', None) is not None:
+            pytest.skip()
+
+        # The test actually works on build-windows-conda
+        if 'SKIP_GDAL_HTTP_SSL_VERIFYSTATUS' in os.environ:
             pytest.skip()
 
         pytest.fail(last_err)
