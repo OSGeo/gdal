@@ -62,27 +62,27 @@ mark_as_advanced(PROJ_INCLUDE_DIR PROJ_LIBRARY)
 if(PROJ_FOUND)
   set(PROJ_LIBRARIES ${PROJ_LIBRARY})
   set(PROJ_INCLUDE_DIRS ${PROJ_INCLUDE_DIR})
-  if(NOT TARGET PROJ::PROJ)
-    add_library(PROJ::PROJ UNKNOWN IMPORTED)
-    set_target_properties(PROJ::PROJ PROPERTIES
+  if(NOT TARGET PROJ::proj)
+    add_library(PROJ::proj UNKNOWN IMPORTED)
+    set_target_properties(PROJ::proj PROPERTIES
                           INTERFACE_INCLUDE_DIRECTORIES ${PROJ_INCLUDE_DIR}
                           IMPORTED_LINK_INTERFACE_LANGUAGES "C")
     if(EXISTS "${PROJ_LIBRARY}")
-      set_target_properties(PROJ::PROJ PROPERTIES
+      set_target_properties(PROJ::proj PROPERTIES
         IMPORTED_LINK_INTERFACE_LANGUAGES "C"
         IMPORTED_LOCATION "${PROJ_LIBRARY}")
     endif()
     if(EXISTS "${PROJ_LIBRARY_RELEASE}")
-      set_property(TARGET PROJ::PROJ APPEND PROPERTY
+      set_property(TARGET PROJ::proj APPEND PROPERTY
         IMPORTED_CONFIGURATIONS RELEASE)
-      set_target_properties(PROJ::PROJ PROPERTIES
+      set_target_properties(PROJ::proj PROPERTIES
         IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "C"
         IMPORTED_LOCATION_RELEASE "${PROJ_LIBRARY_RELEASE}")
     endif()
     if(EXISTS "${PROJ_LIBRARY_DEBUG}")
-      set_property(TARGET PROJ::PROJ APPEND PROPERTY
+      set_property(TARGET PROJ::proj APPEND PROPERTY
         IMPORTED_CONFIGURATIONS DEBUG)
-      set_target_properties(PROJ::PROJ PROPERTIES
+      set_target_properties(PROJ::proj PROPERTIES
         IMPORTED_LINK_INTERFACE_LANGUAGES_DEBUG "C"
         IMPORTED_LOCATION_DEBUG "${PROJ_LIBRARY_DEBUG}")
     endif()

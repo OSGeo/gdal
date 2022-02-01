@@ -88,8 +88,8 @@ if (GDAL_USE_JSONC_INTERNAL)
 endif ()
 
 target_compile_definitions(ogr PRIVATE HAVE_MITAB)
-target_include_directories(ogr PRIVATE ${PROJ_INCLUDE_DIRS})
-gdal_add_private_link_libraries(PROJ::PROJ)
+
+gdal_target_link_libraries(TARGET ogr LIBRARIES PROJ::proj)
 
 # External libs then
 if (GDAL_USE_GEOS)

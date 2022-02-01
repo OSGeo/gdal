@@ -195,7 +195,11 @@ if (GDAL_USE_CRYPTOPP)
   option(CRYPTOPP_USE_ONLY_CRYPTODLL_ALG "Use Only cryptoDLL alg. only work on dynamic DLL" OFF)
 endif ()
 
-find_package(PROJ 6.0 REQUIRED)
+# First check with CMake config files, and then fallback to the FindPROJ module.
+find_package(PROJ 8.0 CONFIG)
+if (NOT PROJ_FOUND)
+  find_package(PROJ 6.0 REQUIRED)
+endif ()
 
 gdal_check_package(TIFF "Support for the Tag Image File Format (TIFF)." VERSION 4.0 CAN_DISABLE)
 set_package_properties(
