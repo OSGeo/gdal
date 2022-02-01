@@ -2199,6 +2199,14 @@ OGRGeometry::IsValid() const
         if( hThisGeosGeom != nullptr  )
         {
             bResult = GEOSisValid_r( hGEOSCtxt, hThisGeosGeom );
+#ifdef DEBUG_VERBOSE
+            if( !bResult )
+            {
+                char* pszReason = GEOSisValidReason_r( hGEOSCtxt, hThisGeosGeom );
+                CPLDebug("OGR", "%s", pszReason);
+                GEOSFree(pszReason);
+            }
+#endif
             GEOSGeom_destroy_r( hGEOSCtxt, hThisGeosGeom );
         }
         freeGEOSContext( hGEOSCtxt );
