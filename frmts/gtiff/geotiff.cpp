@@ -106,6 +106,11 @@
 #include "quant_table_md5sum.h"
 #include "quant_table_md5sum_jpeg9e.h"
 
+// Needed to expose WEBP_LOSSLESS option
+#ifdef WEBP_SUPPORT
+#include "webp/encode.h"
+#endif
+
 CPL_CVSID("$Id$")
 
 static bool bGlobalInExternalOvr = false;
