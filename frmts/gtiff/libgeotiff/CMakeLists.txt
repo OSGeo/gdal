@@ -28,6 +28,8 @@ add_library(
   geokeys.h
   geotiffio.h)
 include(GdalStandardIncludes)
+include(GdalDriverHelper)
+
 gdal_standard_includes(geotiff)
 target_compile_options(geotiff PRIVATE ${GDAL_C_WARNING_FLAGS})
 
@@ -46,8 +48,6 @@ if (RENAME_INTERNAL_GEOTIFF_SYMBOLS)
 endif ()
 set_property(TARGET geotiff PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 
-target_include_directories(geotiff PRIVATE $<TARGET_PROPERTY:PROJ::proj,INTERFACE_INCLUDE_DIRECTORIES>)
-target_compile_definitions(geotiff PRIVATE $<TARGET_PROPERTY:PROJ::proj,INTERFACE_COMPILE_DEFINITIONS>)
-gdal_add_private_link_libraries(PROJ::proj)
+gdal_target_link_libraries(TARGET geotiff LIBRARIES PROJ::proj)
 
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:geotiff>)

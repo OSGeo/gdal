@@ -197,7 +197,7 @@ endif ()
 
 # First check with CMake config files, and then fallback to the FindPROJ module.
 find_package(PROJ 8.0 CONFIG)
-if (NOT TARGET PROJ::proj)
+if (NOT PROJ_FOUND)
   find_package(PROJ 6.0 REQUIRED)
 endif ()
 
