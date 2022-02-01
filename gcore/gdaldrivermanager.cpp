@@ -955,7 +955,8 @@ void GDALDriverManager::ReorderDrivers()
         }
         else if( bInOrderSection )
         {
-            const auto osUCDriverName = CPLString(pszLine).toupper();
+            CPLString osUCDriverName(pszLine);
+            osUCDriverName.toupper();
             if( oSetOrderedDrivers.find(osUCDriverName) !=
                                                 oSetOrderedDrivers.end() )
             {
