@@ -134,8 +134,9 @@ if (GDAL_USE_GEOS)
   gdal_add_private_link_libraries(GEOS::GEOS)
 endif ()
 
-target_include_directories(gcore PRIVATE ${PROJ_INCLUDE_DIRS})
-gdal_add_private_link_libraries(PROJ::PROJ)
+target_include_directories(gcore PRIVATE $<TARGET_PROPERTY:PROJ::proj,INTERFACE_INCLUDE_DIRECTORIES>)
+target_compile_definitions(gcore PRIVATE $<TARGET_PROPERTY:PROJ::proj,INTERFACE_COMPILE_DEFINITIONS>)
+gdal_add_private_link_libraries(PROJ::proj)
 
 include(TargetPublicHeader)
 target_public_header(

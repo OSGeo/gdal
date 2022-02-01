@@ -58,7 +58,7 @@ endif ()
 
 # Now deal with external dependencies
 
-gdal_target_link_libraries(TARGET gdal_GTIFF LIBRARIES PROJ::PROJ)
+gdal_target_link_libraries(TARGET gdal_GTIFF LIBRARIES PROJ::proj)
 
 if (NOT GDAL_USE_TIFF_INTERNAL)
   target_compile_definitions(gdal_GTIFF PRIVATE -DPIXARLOG_SUPPORT)

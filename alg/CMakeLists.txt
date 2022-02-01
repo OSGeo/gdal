@@ -71,8 +71,9 @@ if (GDAL_USE_OPENCL)
   target_sources(alg PRIVATE gdalwarpkernel_opencl.h gdalwarpkernel_opencl.cpp)
 endif ()
 
-target_include_directories(alg PRIVATE ${PROJ_INCLUDE_DIRS})
-gdal_add_private_link_libraries(PROJ::PROJ)
+target_include_directories(alg PRIVATE $<TARGET_PROPERTY:PROJ::proj,INTERFACE_INCLUDE_DIRECTORIES>)
+target_compile_definitions(alg PRIVATE $<TARGET_PROPERTY:PROJ::proj,INTERFACE_COMPILE_DEFINITIONS>)
+gdal_add_private_link_libraries(PROJ::proj)
 
 if (GDAL_USE_QHULL_INTERNAL)
   target_compile_definitions(alg PRIVATE -DINTERNAL_QHULL)

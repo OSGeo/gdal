@@ -46,6 +46,8 @@ if (RENAME_INTERNAL_GEOTIFF_SYMBOLS)
 endif ()
 set_property(TARGET geotiff PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 
-target_include_directories(geotiff PRIVATE ${PROJ_INCLUDE_DIR})
-gdal_add_private_link_libraries(PROJ::PROJ)
+target_include_directories(geotiff PRIVATE $<TARGET_PROPERTY:PROJ::proj,INTERFACE_INCLUDE_DIRECTORIES>)
+target_compile_definitions(geotiff PRIVATE $<TARGET_PROPERTY:PROJ::proj,INTERFACE_COMPILE_DEFINITIONS>)
+gdal_add_private_link_libraries(PROJ::proj)
+
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:geotiff>)

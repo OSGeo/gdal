@@ -26,7 +26,7 @@ gdal_standard_includes(ogr_SQLite)
 
 target_compile_definitions(ogr_SQLite PRIVATE -DHAVE_SQLITE)
 gdal_target_link_libraries(TARGET ogr_SQLite LIBRARIES SQLite::SQLite3)
-gdal_target_link_libraries(TARGET ogr_SQLite LIBRARIES PROJ::PROJ)
+gdal_target_link_libraries(TARGET ogr_SQLite LIBRARIES PROJ::proj)
 
 if (GDAL_USE_PCRE2)
   target_compile_definitions(ogr_SQLite PRIVATE -DHAVE_PCRE2)
