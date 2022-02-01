@@ -61,7 +61,7 @@ jobs:
     #    name: Misspelled
     #    path: doc/build/spelling/output.txt
     - name: Deploy ssh key
-      if: ${{ github.ref_name == 'master' && github.repository == 'OSGeo/gdal' }} 
+      if: ${{ github.ref_name == 'master' && github.repository == 'OSGeo/gdal' }}
       shell: bash -l {0}
       run: |
         mkdir /root/.ssh && echo "${{ secrets.SSH_KEY_DOCS }}" > /root/.ssh/id_rsa
@@ -75,9 +75,16 @@ jobs:
       run: |
         set -x
         set -e
-        mkdir /__w/html
-        cd /__w/html
-        cp -r /__w/gdal/gdal/doc/build/html/* .
+        cd /__w/gdal
+        mv gdal/doc/build/html gdal-docs
+        rm gdal-docs/gdal.pdf
+        cp gdal/doc/build/latex/gdal.pdf gdal-docs
+        cp gdal/data/gdalicon.png gdal-docs # For GDAL autotest...
+        cd gdal-docs
+        wget http://download.osgeo.org/gdal/for_doc/javadoc.zip -O /tmp/javadoc.zip
+        wget http://download.osgeo.org/gdal/for_doc/python-doc.tar.gz -O /tmp/python-doc.tar.gz
+        unzip -q /tmp/javadoc.zip
+        tar xzf /tmp/python-doc.tar.gz
         git init
         git config user.email "proj4bot@proj4.bot"
         git config user.name "GDAL Bot"
