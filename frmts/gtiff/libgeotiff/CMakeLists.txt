@@ -1,3 +1,5 @@
+include(GdalDriverHelper)
+
 add_library(
   geotiff OBJECT
   cpl_serv.h
@@ -39,8 +41,7 @@ if (GDAL_USE_TIFF_INTERNAL)
     target_compile_definitions(geotiff PRIVATE -DRENAME_INTERNAL_LIBTIFF_SYMBOLS)
   endif ()
 else ()
-  target_include_directories(geotiff PRIVATE ${TIFF_INCLUDE_DIRS})
-  gdal_add_private_link_libraries(${TIFF_LIBRARIES})
+  gdal_target_link_libraries(geotiff PRIVATE TIFF::TIFF)
 endif ()
 if (RENAME_INTERNAL_GEOTIFF_SYMBOLS)
   target_compile_definitions(geotiff PRIVATE -DRENAME_INTERNAL_LIBGEOTIFF_SYMBOLS)
@@ -48,6 +49,6 @@ if (RENAME_INTERNAL_GEOTIFF_SYMBOLS)
 endif ()
 set_property(TARGET geotiff PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 
-gdal_target_link_libraries(TARGET geotiff LIBRARIES PROJ::proj)
+gdal_target_link_libraries(geotiff PRIVATE PROJ::proj)
 
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:geotiff>)

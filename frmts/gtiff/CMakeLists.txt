@@ -58,26 +58,26 @@ endif ()
 
 # Now deal with external dependencies
 
-gdal_target_link_libraries(TARGET gdal_GTIFF LIBRARIES PROJ::proj)
+gdal_target_link_libraries(gdal_GTIFF PRIVATE PROJ::proj)
 
 if (NOT GDAL_USE_TIFF_INTERNAL)
   target_compile_definitions(gdal_GTIFF PRIVATE -DPIXARLOG_SUPPORT)
-  gdal_target_link_libraries(TARGET gdal_GTIFF LIBRARIES TIFF::TIFF)
+  gdal_target_link_libraries(gdal_GTIFF PRIVATE TIFF::TIFF)
 endif ()
 
 if (GDAL_ENABLE_DRIVER_JPEG AND GDAL_USE_JPEG)
   target_compile_definitions(gdal_GTIFF PRIVATE -DHAVE_LIBJPEG)
-  gdal_target_link_libraries(TARGET gdal_GTIFF LIBRARIES JPEG::JPEG)
+  gdal_target_link_libraries(gdal_GTIFF PRIVATE JPEG::JPEG)
 endif ()
 
 if (NOT GDAL_USE_GEOTIFF_INTERNAL)
-  gdal_target_link_libraries(TARGET gdal_GTIFF LIBRARIES GEOTIFF::GEOTIFF)
+  gdal_target_link_libraries(gdal_GTIFF PRIVATE GEOTIFF::GEOTIFF)
 endif ()
 
 if (GDAL_USE_TIFF_INTERNAL AND GDAL_USE_JXL)
   target_sources(gdal_GTIFF PRIVATE tif_jxl.c)
   target_compile_definitions(gdal_GTIFF PRIVATE -DHAVE_JXL)
-  gdal_target_link_libraries(TARGET gdal_GTIFF LIBRARIES JXL::JXL)
+  gdal_target_link_libraries(gdal_GTIFF PRIVATE JXL::JXL)
 endif ()
 
 if (GDAL_USE_WEBP)

@@ -27,4 +27,4 @@ if (HDF4_HAS_MAXOPENFILES)
   target_compile_definitions(gdal_HDF4 PRIVATE -DHDF4_HAS_MAXOPENFILES)
 endif ()
 
-gdal_target_link_libraries(TARGET gdal_HDF4 LIBRARIES HDF4::HDF4)
+gdal_target_link_libraries(gdal_HDF4 PRIVATE HDF4::HDF4)

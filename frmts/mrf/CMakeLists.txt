@@ -56,15 +56,15 @@ endif ()
 # Now external libs
 
 if (NOT GDAL_USE_JPEG_INTERNAL)
-  gdal_target_link_libraries(TARGET gdal_MRF LIBRARIES JPEG::JPEG)
+  gdal_target_link_libraries(gdal_MRF PRIVATE JPEG::JPEG)
 endif ()
 
 if (NOT GDAL_USE_PNG_INTERNAL)
-  gdal_target_link_libraries(TARGET gdal_MRF LIBRARIES PNG::PNG)
+  gdal_target_link_libraries(gdal_MRF PRIVATE PNG::PNG)
 endif ()
 
 if (NOT GDAL_USE_ZLIB_INTERNAL)
-  gdal_target_link_libraries(TARGET gdal_MRF LIBRARIES ZLIB::ZLIB)
+  gdal_target_link_libraries(gdal_MRF PRIVATE ZLIB::ZLIB)
 endif ()
 
 # if (NOT GDAL_USE_LERC_INTERNAL AND GDAL_USE_LERC AND GDAL_USE_LERCV1_INTERNAL) gdal_target_link_libraries(TARGET
@@ -72,5 +72,5 @@ endif ()
 
 if (GDAL_USE_ZSTD)
   target_compile_definitions(gdal_MRF PRIVATE -DZSTD_SUPPORT)
-  gdal_target_link_libraries(TARGET gdal_MRF LIBRARIES ZSTD::zstd)
+  gdal_target_link_libraries(gdal_MRF PRIVATE ZSTD::zstd)
 endif ()

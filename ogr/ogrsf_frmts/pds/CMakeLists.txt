@@ -7,5 +7,5 @@ target_include_directories(ogr_PDS PRIVATE $<TARGET_PROPERTY:gdal_PDS,SOURCE_DIR
 if (GDAL_USE_JSONC_INTERNAL)
   target_include_directories(ogr_PDS PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
 else ()
-  gdal_target_link_libraries(TARGET ogr_PDS LIBRARIES JSONC::JSONC)
+  gdal_target_link_libraries(ogr_PDS PRIVATE JSONC::JSONC)
 endif ()

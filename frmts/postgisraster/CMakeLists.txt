@@ -12,4 +12,4 @@ add_gdal_driver(
 gdal_standard_includes(gdal_PostGISRaster)
 target_include_directories(gdal_PostGISRaster PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/vrt ${PostgreSQL_INCLUDE_DIRS})
 target_compile_definitions(gdal_PostGISRaster PRIVATE -DHAVE_PG)
-gdal_target_link_libraries(TARGET gdal_PostGISRaster LIBRARIES ${PostgreSQL_LIBRARIES})
+gdal_target_link_libraries(gdal_PostGISRaster PRIVATE ${PostgreSQL_LIBRARIES})

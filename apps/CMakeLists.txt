@@ -25,7 +25,7 @@ target_include_directories(
   appslib PRIVATE $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR> $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>
                   $<TARGET_PROPERTY:ogr_geojson,SOURCE_DIR> $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR>)
 
-gdal_target_link_libraries(TARGET appslib LIBRARIES PROJ::proj)
+gdal_target_link_libraries(appslib PRIVATE PROJ::proj)
 
 set_property(TARGET appslib PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
@@ -36,8 +36,7 @@ endif ()
 if (GDAL_USE_JSONC_INTERNAL)
   target_include_directories(appslib PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
 else ()
-  target_include_directories(appslib PRIVATE ${JSONC_INCLUDE_DIRS})
-  gdal_add_private_link_libraries(${JSONC_LIBRARIES})
+  gdal_target_link_libraries(appslib PRIVATE JSONC::JSONC)
 endif ()
 
 include(TargetPublicHeader)

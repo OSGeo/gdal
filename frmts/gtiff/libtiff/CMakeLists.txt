@@ -1,3 +1,5 @@
+include(GdalDriverHelper)
+
 add_library(
   libtiff OBJECT
   tif_dir.c
@@ -83,19 +85,16 @@ endif ()
 
 # Now external libraries
 if (NOT GDAL_USE_ZLIB_INTERNAL)
-  target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:ZLIB::ZLIB,INTERFACE_INCLUDE_DIRECTORIES>)
-  gdal_add_private_link_libraries(ZLIB::ZLIB)
+  gdal_target_link_libraries(libtiff PRIVATE ZLIB::ZLIB)
 endif ()
 
 if (NOT GDAL_USE_JPEG_INTERNAL)
-  target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:JPEG::JPEG,INTERFACE_INCLUDE_DIRECTORIES>)
-  gdal_add_private_link_libraries(JPEG::JPEG)
+  gdal_target_link_libraries(libtiff PRIVATE JPEG::JPEG)
 endif ()
 
 if (GDAL_USE_DEFLATE)
   target_compile_definitions(libtiff PRIVATE -DLIBDEFLATE_SUPPORT)
-  target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:Deflate::Deflate,INTERFACE_INCLUDE_DIRECTORIES>)
-  gdal_add_private_link_libraries(Deflate::Deflate)
+  gdal_target_link_libraries(libtiff PRIVATE Deflate::Deflate)
 endif ()
 
 if (GDAL_USE_JPEG12_INTERNAL)
@@ -105,26 +104,22 @@ endif ()
 
 if (GDAL_USE_LIBLZMA)
   target_compile_definitions(libtiff PRIVATE -DLZMA_SUPPORT)
-  target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:LibLZMA::LibLZMA,INTERFACE_INCLUDE_DIRECTORIES>)
-  gdal_add_private_link_libraries(LibLZMA::LibLZMA)
+  gdal_target_link_libraries(libtiff PRIVATE LibLZMA::LibLZMA)
 endif ()
 
 if (GDAL_USE_ZSTD)
   target_compile_definitions(libtiff PRIVATE -DZSTD_SUPPORT)
-  target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:ZSTD::zstd,INTERFACE_INCLUDE_DIRECTORIES>)
-  gdal_add_private_link_libraries(ZSTD::zstd)
+  gdal_target_link_libraries(libtiff PRIVATE ZSTD::zstd)
 endif ()
 
 if (GDAL_USE_WEBP)
   target_compile_definitions(libtiff PRIVATE -DWEBP_SUPPORT)
-  target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:WEBP::WebP,INTERFACE_INCLUDE_DIRECTORIES>)
-  gdal_add_private_link_libraries(WEBP::WebP)
+  gdal_target_link_libraries(libtiff PRIVATE WEBP::WebP)
 endif ()
 
 if (NOT GDAL_USE_LERC_INTERNAL AND GDAL_USE_LERC)
   target_compile_definitions(libtiff PRIVATE -DLERC_SUPPORT)
-  target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:LERC::LERC,INTERFACE_INCLUDE_DIRECTORIES>)
-  gdal_add_private_link_libraries(LERC::LERC)
+  gdal_target_link_libraries(libtiff PRIVATE LERC::LERC)
 endif ()
 
 if (RENAME_INTERNAL_TIFF_SYMBOLS)

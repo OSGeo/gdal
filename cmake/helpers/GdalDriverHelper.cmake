@@ -16,7 +16,7 @@ GdalDriverHelper
                             [NO_DEPS]
                           )
            gdal_standard_includes(<target_name>)
-           gdal_target_link_libraries(TARGET <target_name> LIBRARIES <library> [<library2> [..]])
+           gdal_target_link_libraries(<target_name> PRIVATE <library> [<library2> [..]])
 
   Drivers should specify one and only one of:
   - BUILTIN: the driver is built-in into library, and cannot be built as a plugin
@@ -53,8 +53,7 @@ GdalDriverHelper
    add_gdal_driver(TARGET    gdal_WEBP
                    SOURCES   gdal_webp.c gdal_webp.h PLUGIN_CAPABLE)
    gdal_standard_includes(gdal_WEBP)
-   target_include_directories(gdal_WEBP PRIVATE ${WEBP_INCLUDE_DIRS} ${TIFF_INCLUDE_DIRS})
-   gdal_target_link_libraries(TARGET gdal_WEBP LIBRARIES ${WEBP_LIBRARIES} ${TIFF_LIBRARIES})
+   gdal_target_link_libraries(gdal_WEBP PRIVATE WEBP::WebP)
 
 
  ex.4  Driver which is depend on internal bundled thirdparty libraries
@@ -227,22 +226,19 @@ function(gdal_target_interfaces _TARGET)
     endforeach ()
 endfunction()
 
-function(gdal_target_link_libraries)
-    set(_oneValueArgs TARGET)
-    set(_multiValueArgs LIBRARIES)
+function(gdal_target_link_libraries target)
+    set(_oneValueArgs)
+    set(_multiValueArgs PRIVATE)
     cmake_parse_arguments(_DRIVER "" "${_oneValueArgs}" "${_multiValueArgs}" ${ARGN})
-    if (NOT _DRIVER_TARGET)
-        message(FATAL_ERROR "GDAL_TARGET_LINK_LIBRARIES(): TARGET is a mandatory argument.")
+    if (NOT _DRIVER_PRIVATE)
+        message(FATAL_ERROR "gdal_target_link_libraries(): PRIVATE is a mandatory argument.")
     endif ()
-    if (NOT _DRIVER_LIBRARIES)
-        message(FATAL_ERROR "GDAL_TARGET_LINK_LIBRARIES(): LIBRARIES is a mandatory argument.")
-    endif ()
-    is_plugin(RES ${_DRIVER_TARGET})
+    is_plugin(RES ${target})
     if (RES)
-        target_link_libraries(${_DRIVER_TARGET} PRIVATE ${_DRIVER_LIBRARIES})
+        target_link_libraries(${target} PRIVATE ${_DRIVER_PRIVATE})
     else ()
-        gdal_target_interfaces(${_DRIVER_TARGET} ${_DRIVER_LIBRARIES})
-        gdal_add_private_link_libraries(${_DRIVER_LIBRARIES})
+        gdal_target_interfaces(${target} ${_DRIVER_PRIVATE})
+        gdal_add_private_link_libraries(${_DRIVER_PRIVATE})
     endif ()
 endfunction()
 
