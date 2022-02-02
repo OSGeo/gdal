@@ -2232,7 +2232,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     //       also introducing some visual weighting to the rate-distortion
     //       optimization objective associated with all N quality layers.
     //       That means: combines both QUALITY and RATE
-    if(CSLFetchNameValue(papszOptions,"RATE") == nullptr) {
+    if(CSLFetchNameValue(papszOptions,"RATE") == nullptr && !bReversible) {
         layer_bytes.resize(layer_count);
         double dfLayerBytes =
                 (nXSize * static_cast<double>(nYSize) * dfQuality / 100.0)
