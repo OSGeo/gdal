@@ -196,12 +196,12 @@ jobs:
         cmake --build $GITHUB_WORKSPACE/build --config Release --target quicktest
     - name: test (with ctest)
       shell: bash -l {0}
-      # Exclude HTTP driver because of failures noted in https://github.com/OSGeo/gdal/commit/023ac422dc9002df72bf9ae0b9c09ebe8471a72a
       run: |
-        export GDAL_SKIP=HTTP
         ctest --test-dir $GITHUB_WORKSPACE/build -C Release -V -j 3
       env:
         SKIP_OGR_GMLAS_HUGE_PROCESSING_TIME: YES
+        SKIP_OGR_GMLAS_HTTP_RELATED: YES
+        SKIP_GDAL_HTTP_SSL_VERIFYSTATUS: YES
     - name: Install
       shell: bash -l {0}
       run: |

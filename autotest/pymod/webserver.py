@@ -356,6 +356,16 @@ class GDAL_HttpServer(HTTPServer):
         self.running = False
         self.stop_requested = False
 
+    def server_bind(self):
+        # From https://bugs.python.org/issue41135
+        # Needed on Windows so that we don't start as server on a port already
+        # occupied
+        import socket
+        if hasattr(socket, 'SO_EXCLUSIVEADDRUSE'):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+            HTTPServer.allow_reuse_address = 0
+        HTTPServer.server_bind(self)
+
     def is_running(self):
         return self.running
 
