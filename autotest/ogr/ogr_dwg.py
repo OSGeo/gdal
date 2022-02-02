@@ -204,41 +204,7 @@ def test_ogr_dwg_5():
         layer = ds.GetLayer( 'entities' )
         defn = layer.GetLayerDefn()
 
-        assert defn.GetFieldCount() == 30, \
-            ('did not get expected number of fields in defn. got %d'
-                                % defn.GetFieldCount())
-
-        ds = None
-
-def test_ogr_dwg_6():
-
-    with gdaltest.config_options({'DWG_INLINE_BLOCKS':'FALSE','DWG_ATTRIBUTES':'TRUE'}):
-
-        ds = gdal.OpenEx('data/cad/attribs.dwg', allowed_drivers=['DWG'])
-
-        assert ds is not None
-
-        layer = ds.GetLayer( 'entities' )
-        defn = layer.GetLayerDefn()
-
         assert defn.GetFieldCount() == 32, \
-            ('did not get expected number of fields in defn. got %d'
-                                % defn.GetFieldCount())
-
-        ds = None
-        
-
-
-    with gdaltest.config_options({'DWG_INLINE_BLOCKS':'FALSE','DWG_ATTRIBUTES':'TRUE','DWG_ALL_ATTRIBUTES':'FALSE'}):
-
-        ds = gdal.OpenEx('data/cad/attribs.dwg', allowed_drivers=['DWG'])
-
-        assert ds is not None
-
-        layer = ds.GetLayer( 'entities' )
-        defn = layer.GetLayerDefn()
-
-        assert defn.GetFieldCount() == 11, \
             ('did not get expected number of fields in defn. got %d'
                                 % defn.GetFieldCount())
 
