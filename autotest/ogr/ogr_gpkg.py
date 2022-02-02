@@ -2569,6 +2569,18 @@ def test_ogr_gpkg_34():
     assert gdal.GetLastErrorMsg() != ''
     gdal.ErrorReset()
     ds.ExecuteSQL('ALTER TABLE "weird\'layer""name" RENAME TO "weird2\'layer""name"')
+    ds = None
+
+    ds = ogr.Open(dbname, update=1)
+    ds.ExecuteSQL('ALTER TABLE "weird2\'layer""name" RENAME COLUMN "foo" TO "bar"')
+    assert gdal.GetLastErrorMsg() == ''
+    lyr = ds.GetLayerByName(new_layer_name)
+    assert lyr.GetLayerDefn().GetFieldIndex('bar') >= 0
+
+    ds.ExecuteSQL('ALTER TABLE "weird2\'layer""name" DROP COLUMN "bar"')
+    assert gdal.GetLastErrorMsg() == ''
+    assert lyr.GetLayerDefn().GetFieldIndex('bar') < 0
+
     ds.ExecuteSQL('VACUUM')
     ds = None
 
@@ -2832,7 +2844,25 @@ def test_ogr_gpkg_36():
 
     new_field_defn = ogr.FieldDefn('bar', ogr.OFTReal)
     new_field_defn.SetSubType(ogr.OFSTFloat32)
+    new_field_defn.SetWidth(10)
+    new_field_defn.SetDefault('5')
+
+    # Schema only change
     assert lyr.AlterFieldDefn(0, new_field_defn, ogr.ALTER_ALL_FLAG) == 0
+
+    # Full table rewrite
+    new_field_defn.SetNullable(False)
+    assert lyr.AlterFieldDefn(0, new_field_defn, ogr.ALTER_ALL_FLAG) == 0
+
+    # Full table rewrite
+    new_field_defn.SetUnique(True)
+    assert lyr.AlterFieldDefn(0, new_field_defn, ogr.ALTER_ALL_FLAG) == 0
+
+    # Violation of not-null constraint
+    new_field_defn = ogr.FieldDefn('baz', ogr.OFTString)
+    new_field_defn.SetNullable(False)
+    with gdaltest.error_handler():
+        assert lyr.AlterFieldDefn(1 , new_field_defn, ogr.ALTER_ALL_FLAG) != 0
 
     lyr.ResetReading()
     f = lyr.GetNextFeature()
@@ -2842,6 +2872,13 @@ def test_ogr_gpkg_36():
         pytest.fail()
     f = None
 
+    # Just change the name, and run it outside an existing transaction
+    lyr.StartTransaction()
+    new_field_defn = ogr.FieldDefn('baw2', ogr.OFTString)
+    assert lyr.AlterFieldDefn(0, new_field_defn, ogr.ALTER_ALL_FLAG) == 0
+    lyr.CommitTransaction()
+
+    # Just change the name, and run it under an existing transaction
     lyr.StartTransaction()
     new_field_defn = ogr.FieldDefn('baw', ogr.OFTString)
     assert lyr.AlterFieldDefn(0, new_field_defn, ogr.ALTER_ALL_FLAG) == 0
@@ -2902,7 +2939,9 @@ def test_ogr_gpkg_36():
     # Unlink before AlterFieldDefn
     gdal.Unlink(dbname)
     with gdaltest.error_handler():
-        ret = lyr.AlterFieldDefn(0, ogr.FieldDefn('bar'), ogr.ALTER_ALL_FLAG)
+        new_field_defn = ogr.FieldDefn('bar')
+        new_field_defn.SetNullable(False)
+        ret = lyr.AlterFieldDefn(0, new_field_defn, ogr.ALTER_ALL_FLAG)
     assert ret != 0
     with gdaltest.error_handler():
         ds = None
@@ -4115,6 +4154,64 @@ def test_ogr_gpkg_wal():
     gdal.Unlink(filename + '-wal')
     gdal.Unlink(filename + '-shm')
 
+###############################################################################
+# Test NOLOCK open option
+
+
+def test_ogr_gpkg_nolock():
+
+    def get_nolock(ds):
+        sql_lyr = ds.ExecuteSQL('SELECT nolock', dialect='DEBUG')
+        f = sql_lyr.GetNextFeature()
+        res = True if f[0] == 1 else False
+        ds.ReleaseResultSet(sql_lyr)
+        return res
+
+    # needs to be a real file
+    filename = 'tmp/test_ogr_gpkg_nolock.gpkg'
+
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+    lyr = ds.CreateLayer('foo')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    ds = gdal.OpenEx(filename, gdal.OF_VECTOR, open_options=['NOLOCK=YES'])
+    assert ds
+    assert get_nolock(ds)
+
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    ds2 = ogr.Open(filename, update = 1)
+    lyr2 = ds2.GetLayer(0)
+    f = ogr.Feature(lyr2.GetLayerDefn())
+    # Without lockless mode on ds, this would timeout and fail
+    assert lyr2.CreateFeature(f) == ogr.OGRERR_NONE
+    f = None
+    ds2 = None
+    ds = None
+
+    # Lockless mode should NOT be honored by GDAL in upate mode
+    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE, open_options=['NOLOCK=YES'])
+    assert ds
+    assert not get_nolock(ds)
+    ds = None
+
+    # Now turn on WAL
+    ds = ogr.Open(filename, update = 1)
+    ds.ExecuteSQL('PRAGMA journal_mode = WAL')
+    ds = None
+
+    # Lockless mode should NOT be honored by GDAL on a WAL enabled file
+    ds = gdal.OpenEx(filename, gdal.OF_VECTOR, open_options=['NOLOCK=YES'])
+    assert ds
+    assert not get_nolock(ds)
+    ds = None
+
+    gdal.Unlink(filename)
+    gdal.Unlink(filename + '-wal')
+    gdal.Unlink(filename + '-shm')
 
 ###############################################################################
 # Run test_ogrsf

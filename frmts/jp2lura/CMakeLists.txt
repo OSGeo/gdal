@@ -9,4 +9,4 @@ add_gdal_driver(
           PLUGIN_CAPABLE)
 
 gdal_standard_includes(gdal_JP2Lura)
-gdal_target_link_libraries(TARGET gdal_JP2Lura LIBRARIES LURATECH::LURATECH)
+gdal_target_link_libraries(gdal_JP2Lura PRIVATE LURATECH::LURATECH)

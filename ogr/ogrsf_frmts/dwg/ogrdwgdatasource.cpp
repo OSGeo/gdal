@@ -41,6 +41,7 @@ OGRDWGDataSource::OGRDWGDataSource() :
   iEntitiesSectionOffset(0),
   bInlineBlocks(FALSE),
   bAttributes(FALSE),
+  bAllAttributes(TRUE),
   poServices(nullptr),
   poDb(static_cast<const OdRxObject*>(nullptr))
 
@@ -105,6 +106,8 @@ int OGRDWGDataSource::Open( OGRDWGServices *poServicesIn,
         CPLGetConfigOption( "DWG_INLINE_BLOCKS", "TRUE" ) );
     bAttributes = CPLTestBool(
     CPLGetConfigOption( "DWG_ATTRIBUTES", "FALSE" ) );
+    bAllAttributes = CPLTestBool(
+        CPLGetConfigOption("DWG_ALL_ATTRIBUTES", "TRUE"));
 
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
@@ -194,10 +197,12 @@ void OGRDWGDataSource::ReadAttDefinitions()
             if (EQUAL(pszEntityClassName, "AcDbAttributeDefinition"))
             {
                 OdDbAttributeDefinitionPtr poAttributeDefinition = OdDbAttributeDefinition::cast(poEntity);
-                const char* tagName = poAttributeDefinition->tag();
-                attName = new CPLString(tagName);
-                if (attributeFields.count(*attName) == 0) {
-                    attributeFields.insert(*attName);
+                if (bAllAttributes || !poAttributeDefinition->isInvisible()) {
+                    const char* tagName = poAttributeDefinition->tag();
+                    attName = new CPLString(tagName);
+                    if (attributeFields.count(*attName) == 0) {
+                        attributeFields.insert(*attName);
+                    }
                 }
 
             }

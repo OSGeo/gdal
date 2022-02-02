@@ -2,7 +2,7 @@ add_gdal_driver(TARGET gdal_CEOS SOURCES ceosopen.h ceosdataset.cpp ceosopen.c P
 gdal_standard_includes(gdal_CEOS)
 
 if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.12)
-  if (NOT GDAL_ENABLE_FRMT_CEOS_PLUGIN)
+  if (NOT GDAL_ENABLE_DRIVER_CEOS_PLUGIN)
     add_executable(ceostest EXCLUDE_FROM_ALL ceostest.c)
     target_include_directories(ceostest PRIVATE $<TARGET_PROPERTY:gdal_CEOS,SOURCE_DIR>)
     target_link_libraries(ceostest PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}> gdal_CEOS)

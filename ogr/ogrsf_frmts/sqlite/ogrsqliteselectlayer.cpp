@@ -288,8 +288,12 @@ GIntBig OGRSQLiteSelectLayerCommonBehaviour::GetFeatureCount( int bForce )
         m_osSQLCurrent.ifind(" EXCEPT ") == std::string::npos )
         return 1;
 
-    if( m_poLayer->GetFeatureQuery() != nullptr || (m_poLayer->GetFilterGeom() != nullptr && !m_bSpatialFilterInSQL) )
+    if( m_poLayer->GetFeatureQuery() != nullptr ||
+        (m_poLayer->GetFilterGeom() != nullptr && !m_bSpatialFilterInSQL) ||
+        STARTS_WITH_CI(m_osSQLCurrent.c_str(), "PRAGMA table_info(") )
+    {
         return m_poLayer->BaseGetFeatureCount(bForce);
+    }
 
     CPLString osFeatureCountSQL("SELECT COUNT(*) FROM (");
     osFeatureCountSQL += m_osSQLCurrent;

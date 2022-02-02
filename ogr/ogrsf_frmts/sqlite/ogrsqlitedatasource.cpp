@@ -425,6 +425,56 @@ void OGRSQLiteBaseDataSource::CloseDB()
     }
 }
 
+/* Returns the first row of first column of SQL as integer */
+OGRErr OGRSQLiteBaseDataSource::PragmaCheck(
+    const char * pszPragma, const char * pszExpected, int nRowsExpected )
+{
+    CPLAssert( pszPragma != nullptr );
+    CPLAssert( pszExpected != nullptr );
+    CPLAssert( nRowsExpected >= 0 );
+
+    char **papszResult = nullptr;
+    int nRowCount = 0;
+    int nColCount = 0;
+    char *pszErrMsg = nullptr;
+
+    int rc = sqlite3_get_table(
+        hDB,
+        CPLSPrintf("PRAGMA %s", pszPragma),
+        &papszResult, &nRowCount, &nColCount, &pszErrMsg );
+
+    if( rc != SQLITE_OK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Unable to execute PRAGMA %s: %s", pszPragma,
+                  pszErrMsg ? pszErrMsg : "(null)" );
+        sqlite3_free( pszErrMsg );
+        return OGRERR_FAILURE;
+    }
+
+    if ( nRowCount != nRowsExpected )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "bad result for PRAGMA %s, got %d rows, expected %d",
+                  pszPragma, nRowCount, nRowsExpected );
+        sqlite3_free_table(papszResult);
+        return OGRERR_FAILURE;
+    }
+
+    if ( nRowCount > 0 && ! EQUAL(papszResult[1], pszExpected) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "invalid %s (expected '%s', got '%s')",
+                  pszPragma, pszExpected, papszResult[1]);
+        sqlite3_free_table(papszResult);
+        return OGRERR_FAILURE;
+    }
+
+    sqlite3_free_table(papszResult);
+
+    return OGRERR_NONE;
+}
+
 /************************************************************************/
 /*                        OGRSQLiteDataSource()                         */
 /************************************************************************/
@@ -780,6 +830,26 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, bool bRegisterOGR2SQLit
     if( bRegisterOGR2SQLiteExtensions )
         OGR2SQLITE_Register();
 
+    const bool bUseOGRVFS =
+        CPLTestBool(CPLGetConfigOption("SQLITE_USE_OGR_VFS", "NO"));
+
+#ifdef SQLITE_OPEN_URI
+    if ( m_osFilenameForSQLiteOpen.empty() &&
+          (flagsIn & SQLITE_OPEN_READWRITE) == 0 &&
+          !(bUseOGRVFS || STARTS_WITH(m_pszFilename, "/vsi")) &&
+          !STARTS_WITH(m_pszFilename, "file:") &&
+          CPLTestBool(CSLFetchNameValueDef(papszOpenOptions, "NOLOCK", "NO")) )
+    {
+        m_osFilenameForSQLiteOpen = "file:";
+        m_osFilenameForSQLiteOpen += m_pszFilename;
+        m_osFilenameForSQLiteOpen += "?nolock=1";
+    }
+#endif
+    if( m_osFilenameForSQLiteOpen.empty() )
+    {
+        m_osFilenameForSQLiteOpen = m_pszFilename;
+    }
+
     // No mutex since OGR objects are not supposed to be used concurrently
     // from multiple threads.
     int flags = flagsIn | SQLITE_OPEN_NOMUTEX;
@@ -787,110 +857,143 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, bool bRegisterOGR2SQLit
     // This code enables support for named memory databases in SQLite.
     // SQLITE_USE_URI is checked only to enable backward compatibility, in
     // case we accidentally hijacked some other format.
-    if( STARTS_WITH(m_pszFilename, "file:") &&
+    if( STARTS_WITH(m_osFilenameForSQLiteOpen.c_str(), "file:") &&
         CPLTestBool(CPLGetConfigOption("SQLITE_USE_URI", "YES")) )
     {
         flags |= SQLITE_OPEN_URI;
     }
 #endif
 
-    int rc = SQLITE_OK;
-
-    const bool bUseOGRVFS =
-        CPLTestBool(CPLGetConfigOption("SQLITE_USE_OGR_VFS", "NO"));
-    if (bUseOGRVFS || STARTS_WITH(m_pszFilename, "/vsi"))
-    {
-        pMyVFS = OGRSQLiteCreateVFS(OGRSQLiteBaseDataSourceNotifyFileOpened, this);
-        sqlite3_vfs_register(pMyVFS, 0);
-        rc = sqlite3_open_v2( m_pszFilename, &hDB, flags, pMyVFS->zName );
-    }
-    else
-    {
-        rc = sqlite3_open_v2( m_pszFilename, &hDB, flags, nullptr );
-    }
-
-    if( rc != SQLITE_OK )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "sqlite3_open(%s) failed: %s",
-                  m_pszFilename, sqlite3_errmsg( hDB ) );
-        return FALSE;
-    }
-
-#ifdef SQLITE_DBCONFIG_DEFENSIVE
-    // SQLite builds on recent MacOS enable defensive mode by default, which
-    // causes issues in the VDV driver (when updating a deleted database),
-    // or in the GPKG driver (when modifying a CREATE TABLE DDL with writable_schema=ON)
-    // So disable it.
-    int bDefensiveOldValue = 0;
-    if( sqlite3_db_config(hDB, SQLITE_DBCONFIG_DEFENSIVE, -1, &bDefensiveOldValue) == SQLITE_OK &&
-        bDefensiveOldValue == 1 )
-    {
-        if( sqlite3_db_config(hDB, SQLITE_DBCONFIG_DEFENSIVE, 0, nullptr) == SQLITE_OK )
-        {
-            CPLDebug("SQLITE", "Disabling defensive mode succeeded");
-        }
-        else
-        {
-            CPLDebug("SQLITE", "Could not disable defensive mode");
-        }
-    }
-#endif
-
-#ifdef SQLITE_FCNTL_PERSIST_WAL
-    int nPersistentWAL = -1;
-    sqlite3_file_control(hDB, "main", SQLITE_FCNTL_PERSIST_WAL, &nPersistentWAL);
-    if( nPersistentWAL == 1 )
-    {
-        nPersistentWAL = 0;
-        if( sqlite3_file_control(hDB, "main", SQLITE_FCNTL_PERSIST_WAL, &nPersistentWAL) == SQLITE_OK )
-        {
-            CPLDebug("SQLITE", "Disabling persistent WAL succeeded");
-        }
-        else
-        {
-            CPLDebug("SQLITE", "Could not disable persistent WAL");
-        }
-    }
-#endif
+    bool bPageSizeFound = false;
 
     const char* pszSqlitePragma =
                             CPLGetConfigOption("OGR_SQLITE_PRAGMA", nullptr);
     CPLString osJournalMode =
                         CPLGetConfigOption("OGR_SQLITE_JOURNAL", "");
 
-    bool bPageSizeFound = false;
-    if (pszSqlitePragma != nullptr)
+    for( int iterOpen = 0; iterOpen < 2 ; iterOpen++ )
     {
-        char** papszTokens = CSLTokenizeString2( pszSqlitePragma, ",",
-                                                 CSLT_HONOURSTRINGS );
-        for(int i=0; papszTokens[i] != nullptr; i++ )
+        int rc;
+        if (bUseOGRVFS || STARTS_WITH(m_pszFilename, "/vsi"))
         {
-            if( STARTS_WITH_CI(papszTokens[i], "PAGE_SIZE") )
-                bPageSizeFound = true;
-            if( STARTS_WITH_CI(papszTokens[i], "JOURNAL_MODE") )
-            {
-                const char* pszEqual = strchr(papszTokens[i], '=');
-                if( pszEqual )
-                {
-                    osJournalMode = pszEqual + 1;
-                    osJournalMode.Trim();
-                    // Only apply journal_mode after changing page_size
-                    continue;
-                }
-            }
-
-            const char* pszSQL = CPLSPrintf("PRAGMA %s", papszTokens[i]);
-
-            CPL_IGNORE_RET_VAL(
-                sqlite3_exec( hDB, pszSQL, nullptr, nullptr, nullptr ) );
+            pMyVFS = OGRSQLiteCreateVFS(OGRSQLiteBaseDataSourceNotifyFileOpened, this);
+            sqlite3_vfs_register(pMyVFS, 0);
+            rc = sqlite3_open_v2( m_osFilenameForSQLiteOpen.c_str(), &hDB, flags, pMyVFS->zName );
         }
-        CSLDestroy(papszTokens);
-    }
+        else
+        {
+            rc = sqlite3_open_v2( m_osFilenameForSQLiteOpen.c_str(), &hDB, flags, nullptr );
+        }
 
-    const char* pszVal = CPLGetConfigOption("SQLITE_BUSY_TIMEOUT", "5000");
-    if ( pszVal != nullptr ) {
-        sqlite3_busy_timeout(hDB, atoi(pszVal));
+        if( rc != SQLITE_OK )
+        {
+            CPLError( CE_Failure, CPLE_OpenFailed,
+                      "sqlite3_open(%s) failed: %s",
+                      m_pszFilename, sqlite3_errmsg( hDB ) );
+            return FALSE;
+        }
+
+#ifdef SQLITE_DBCONFIG_DEFENSIVE
+        // SQLite builds on recent MacOS enable defensive mode by default, which
+        // causes issues in the VDV driver (when updating a deleted database),
+        // or in the GPKG driver (when modifying a CREATE TABLE DDL with writable_schema=ON)
+        // So disable it.
+        int bDefensiveOldValue = 0;
+        if( sqlite3_db_config(hDB, SQLITE_DBCONFIG_DEFENSIVE, -1, &bDefensiveOldValue) == SQLITE_OK &&
+            bDefensiveOldValue == 1 )
+        {
+            if( sqlite3_db_config(hDB, SQLITE_DBCONFIG_DEFENSIVE, 0, nullptr) == SQLITE_OK )
+            {
+                CPLDebug("SQLITE", "Disabling defensive mode succeeded");
+            }
+            else
+            {
+                CPLDebug("SQLITE", "Could not disable defensive mode");
+            }
+        }
+#endif
+
+#ifdef SQLITE_FCNTL_PERSIST_WAL
+        int nPersistentWAL = -1;
+        sqlite3_file_control(hDB, "main", SQLITE_FCNTL_PERSIST_WAL, &nPersistentWAL);
+        if( nPersistentWAL == 1 )
+        {
+            nPersistentWAL = 0;
+            if( sqlite3_file_control(hDB, "main", SQLITE_FCNTL_PERSIST_WAL, &nPersistentWAL) == SQLITE_OK )
+            {
+                CPLDebug("SQLITE", "Disabling persistent WAL succeeded");
+            }
+            else
+            {
+                CPLDebug("SQLITE", "Could not disable persistent WAL");
+            }
+        }
+#endif
+
+        if (pszSqlitePragma != nullptr)
+        {
+            char** papszTokens = CSLTokenizeString2( pszSqlitePragma, ",",
+                                                     CSLT_HONOURSTRINGS );
+            for(int i=0; papszTokens[i] != nullptr; i++ )
+            {
+                if( STARTS_WITH_CI(papszTokens[i], "PAGE_SIZE") )
+                    bPageSizeFound = true;
+                if( STARTS_WITH_CI(papszTokens[i], "JOURNAL_MODE") )
+                {
+                    const char* pszEqual = strchr(papszTokens[i], '=');
+                    if( pszEqual )
+                    {
+                        osJournalMode = pszEqual + 1;
+                        osJournalMode.Trim();
+                        // Only apply journal_mode after changing page_size
+                        continue;
+                    }
+                }
+
+                const char* pszSQL = CPLSPrintf("PRAGMA %s", papszTokens[i]);
+
+                CPL_IGNORE_RET_VAL(
+                    sqlite3_exec( hDB, pszSQL, nullptr, nullptr, nullptr ) );
+            }
+            CSLDestroy(papszTokens);
+        }
+
+        const char* pszVal = CPLGetConfigOption("SQLITE_BUSY_TIMEOUT", "5000");
+        if ( pszVal != nullptr ) {
+            sqlite3_busy_timeout(hDB, atoi(pszVal));
+        }
+
+#ifdef SQLITE_OPEN_URI
+        if( iterOpen == 0 && m_osFilenameForSQLiteOpen != m_pszFilename &&
+            m_osFilenameForSQLiteOpen.find("?nolock=1") != std::string::npos )
+        {
+            int nRowCount = 0, nColCount = 0;
+            char** papszResult = nullptr;
+            rc = sqlite3_get_table( hDB,
+                            "PRAGMA journal_mode",
+                            &papszResult, &nRowCount, &nColCount,
+                            nullptr );
+            bool bWal = false;
+            // rc == SQLITE_CANTOPEN seems to be what we get when issuing the
+            // above in nolock mode on a wal enabled file
+            if( rc != SQLITE_OK || (nRowCount == 1 && nColCount == 1 &&
+                papszResult[1] && EQUAL(papszResult[1], "wal")) )
+            {
+                bWal = true;
+            }
+            sqlite3_free_table(papszResult);
+            if( bWal )
+            {
+                flags &= ~SQLITE_OPEN_URI;
+                sqlite3_close(hDB);
+                hDB = nullptr;
+                CPLDebug("SQLite", "Cannot open %s in nolock mode because it is presumably in -wal mode", m_pszFilename);
+                m_osFilenameForSQLiteOpen = m_pszFilename;
+                continue;
+            }
+        }
+#endif
+        break;
     }
 
     if( (flagsIn & SQLITE_OPEN_CREATE) == 0 )
@@ -907,7 +1010,7 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, bool bRegisterOGR2SQLit
         int nRowCount = 0, nColCount = 0;
         char** papszResult = nullptr;
         char* pszErrMsg = nullptr;
-        rc = sqlite3_get_table( hDB,
+        int rc = sqlite3_get_table( hDB,
                         "SELECT 1 FROM sqlite_master "
                         "WHERE (type = 'trigger' OR type = 'view') AND ("
                         "sql LIKE '%%ogr_geocode%%' OR "
@@ -963,6 +1066,13 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, bool bRegisterOGR2SQLit
                 return FALSE;
             }
         }
+    }
+
+    if( m_osFilenameForSQLiteOpen != m_pszFilename &&
+            m_osFilenameForSQLiteOpen.find("?nolock=1") != std::string::npos )
+    {
+        m_bNoLock = true;
+        CPLDebug("SQLite", "%s open in nolock mode", m_pszFilename);
     }
 
     if( !bPageSizeFound && (flagsIn & SQLITE_OPEN_CREATE) != 0 )

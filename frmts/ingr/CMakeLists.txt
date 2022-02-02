@@ -9,16 +9,16 @@ add_gdal_driver(
           JpegHelper.cpp
           JpegHelper.h
           PLUGIN_CAPABLE_IF
-          "NOT GDAL_USE_LIBTIFF_INTERNAL"
+          "NOT GDAL_USE_TIFF_INTERNAL"
           NO_DEPS)
 gdal_standard_includes(gdal_INGR)
 target_include_directories(gdal_INGR PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/gtiff)
 
-if (GDAL_USE_LIBTIFF_INTERNAL)
+if (GDAL_USE_TIFF_INTERNAL)
   target_include_directories(gdal_INGR PRIVATE $<TARGET_PROPERTY:libtiff,SOURCE_DIR>)
-  if (RENAME_INTERNAL_LIBTIFF_SYMBOLS)
+  if (RENAME_INTERNAL_TIFF_SYMBOLS)
     target_compile_definitions(gdal_INGR PRIVATE -DRENAME_INTERNAL_LIBTIFF_SYMBOLS)
   endif ()
 else ()
-  gdal_target_link_libraries(TARGET gdal_INGR LIBRARIES TIFF::TIFF)
+  gdal_target_link_libraries(gdal_INGR PRIVATE TIFF::TIFF)
 endif ()

@@ -69,6 +69,13 @@ If option is set to TRUE value, then block attributes are treated as
 feature attributes, one feature attribute for each tag. This option allow
 convertion to rows and columns data such as database tables
 
+DWG_ALL_ATTRIBUTES
+------------------
+
+If option is set to FALSE value, then block attributes are ignored if the
+visible property of the tag attribute is false. To see all attributes set
+DWG_ALL_ATTRIBUTES to TRUE value (this is the default value)
+
 Building
 --------
 

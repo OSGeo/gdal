@@ -133,7 +133,7 @@ def CheckFeatures(lyr, field1='foo5', field2='bar10', field3='baz15', field4='ba
         feat = lyr.GetNextFeature()
         i = i + 1
 
-    
+
 
 def CheckColumnOrder(lyr, expected_order):
 
@@ -224,19 +224,27 @@ def test_ogr_rfc35_sqlite_3():
 
     CheckFeatures(lyr, field3='baz25')
 
-    fd = ogr.FieldDefn("baz5", ogr.OFTString)
+    fd = ogr.FieldDefn("baz5_tmp", ogr.OFTString)
     fd.SetWidth(5)
 
     lyr_defn = lyr.GetLayerDefn()
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("baz25"), fd, ogr.ALTER_ALL_FLAG)
 
-    CheckFeatures(lyr, field3='baz5')
+    CheckFeatures(lyr, field3='baz5_tmp')
 
     lyr_defn = lyr.GetLayerDefn()
-    fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('baz5'))
+    fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('baz5_tmp'))
     assert fld_defn.GetWidth() == 5
 
-    CheckFeatures(lyr, field3='baz5')
+    CheckFeatures(lyr, field3='baz5_tmp')
+
+    # Change only name
+    fd = ogr.FieldDefn("baz5", ogr.OFTString)
+    fd.SetWidth(5)
+    lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("baz5_tmp"), fd, ogr.ALTER_ALL_FLAG)
+
+    fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('baz5'))
+    assert fld_defn.GetWidth() == 5
 
 ###############################################################################
 # Test AlterFieldDefn() for change of type

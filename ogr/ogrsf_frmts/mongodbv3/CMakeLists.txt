@@ -5,4 +5,4 @@ list(REMOVE_ITEM GDAL_CXX_WARNING_FLAGS_WITHOUT_NO_OPERATOR_NAMES "-fno-operator
 target_compile_options(ogr_MongoDBv3
                        PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${GDAL_CXX_WARNING_FLAGS_WITHOUT_NO_OPERATOR_NAMES}>)
 target_include_directories(ogr_MongoDBv3 PRIVATE $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)
-gdal_target_link_libraries(TARGET ogr_MongoDBv3 LIBRARIES MONGOCXX::MONGOCXX MONGOCXX::BSONCXX)
+gdal_target_link_libraries(ogr_MongoDBv3 PRIVATE MONGOCXX::MONGOCXX MONGOCXX::BSONCXX)

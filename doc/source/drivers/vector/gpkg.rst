@@ -167,6 +167,13 @@ The following open options are available:
         The attached database must be a GeoPackage one too, so
         that its geometry blobs are properly recognized (so typically not a Spatialite one)
 
+-  **NOLOCK**\= YES/NO (GDAL >= 3.4.2). Defaults is NO.
+   Whether the database should be used without doing any file locking. Setting
+   it to YES will only be honoured when opening in read-only mode and if the
+   journal mode is not WAL.
+   This corresponds to the nolock=1 query parameter described at
+   https://www.sqlite.org/uri.html
+
 Note: open options are typically specified with "-oo name=value" syntax
 in most OGR utilities, or with the GDALOpenEx() API call.
 
