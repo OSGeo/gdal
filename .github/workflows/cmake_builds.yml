@@ -89,10 +89,9 @@ jobs:
         PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH pip install --user gdal-python.tar.gz
 
   build-windows-msys2-mingw:
-    runs-on: windows-latest
+    runs-on: windows-2022
     env:
       generator: MinGW Makefiles
-      JAVA_HOME: "C:\\Program Files\\Java\\zulu-11-azure-jdk_11.33.15-11.0.4-win_x64"
     steps:
       # To avoid git clone to mess with the line endings of GDAL autotest data
       # files that look like text, but should be handled as binary content
@@ -101,6 +100,10 @@ jobs:
           git config --global core.autocrlf false
       - name: Checkout GDAL
         uses: actions/checkout@v2
+      - name: populate JAVA_HOME
+        shell: pwsh
+        run: |
+            echo "JAVA_HOME=$env:JAVA_HOME_11_X64" >> %GITHUB_ENV%
       - name: Install MSYS2
         run: choco install --yes msys2
       - name: Install development packages
@@ -143,11 +146,10 @@ jobs:
       #    PROJ_LIB: "C:\\tools\\msys64\\mingw64\\share\\proj"
 
   build-windows-conda:
-    runs-on: windows-latest
+    runs-on: windows-2022
     env:
         architecture: x64
-        generator: Visual Studio 16 2019
-        JAVA_HOME: "C:\\Program Files\\Java\\zulu-11-azure-jdk_11.33.15-11.0.4-win_x64"
+        generator: Visual Studio 17 2022
     steps:
     # To avoid git clone to mess with the line endings of GDAL autotest data
     # files that look like text, but should be handled as binary content
@@ -156,17 +158,21 @@ jobs:
         git config --global core.autocrlf false
     - name: Checkout GDAL
       uses: actions/checkout@v2
+    - name: populate JAVA_HOME
+      shell: pwsh
+      run: |
+        echo "JAVA_HOME=$env:JAVA_HOME_11_X64" >> %GITHUB_ENV%
     - uses: conda-incubator/setup-miniconda@v2
       with:
         activate-environment: gdalenv
-        python-version: 3.7
+        python-version: 3.9
         channels: conda-forge
     - run: |
         cmake --version
     - name: Install dependency
       shell: bash -l {0}
       run: |
-        conda install --yes --quiet --name gdalenv curl libiconv icu python=3.7 swig numpy pytest pytest-env zlib clcache lxml
+        conda install --yes --quiet --name gdalenv curl libiconv icu python=3.9 swig numpy pytest pytest-env zlib clcache lxml
         conda install --yes --quiet --name gdalenv -c conda-forge proj geos hdf4 hdf5 kealib \
             libnetcdf openjpeg poppler libtiff libpng xerces-c expat libxml2 kealib json-c \
             cfitsio freexl geotiff jpeg libpq libspatialite libwebp-base pcre pcre2 postgresql \
@@ -208,13 +214,14 @@ jobs:
         cmake --build $GITHUB_WORKSPACE/build --config Release --target install
         export PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH
         gdalinfo --version
-        PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/site-packages python3 -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
+        python -VV
+        PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/site-packages python -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
 
   build-windows-minimum:
-    runs-on: windows-latest
+    runs-on: windows-2022
     env:
         architecture: x64
-        generator: Visual Studio 16 2019
+        generator: Visual Studio 17 2022
     steps:
     # To avoid git clone to mess with the line endings of GDAL autotest data
     # files that look like text, but should be handled as binary content
@@ -226,7 +233,7 @@ jobs:
     - uses: conda-incubator/setup-miniconda@v2
       with:
         activate-environment: gdalenv
-        python-version: 3.7
+        python-version: 3.9
         channels: conda-forge
     - run: |
         cmake --version
@@ -294,10 +301,10 @@ jobs:
   # but libgdal from Conda has not it yet.
   build-windows-conda-csharp-only:
     if: ${{ false }}  # disable for now
-    runs-on: windows-latest
+    runs-on: windows-2022
     env:
         architecture: x64
-        generator: Visual Studio 16 2019
+        generator: Visual Studio 17 2022
 
     steps:
     # To avoid git clone to mess with the line endings of GDAL autotest data
@@ -310,12 +317,12 @@ jobs:
     - uses: conda-incubator/setup-miniconda@v2
       with:
         activate-environment: gdalenv
-        python-version: 3.7
+        python-version: 3.9
         channels: conda-forge
     - name: Install dependency
       shell: bash -l {0}
       run: |
-        conda install --yes --quiet --name gdalenv curl libiconv icu python=3.7 swig numpy pytest pytest-env zlib clcache lxml
+        conda install --yes --quiet --name gdalenv curl libiconv icu python=3.9 swig numpy pytest pytest-env zlib clcache lxml
         conda install --yes --quiet --name gdalenv -c conda-forge libgdal
     - name: Configure
       shell: bash -l {0}
