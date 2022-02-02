@@ -38,6 +38,14 @@
 #include "cpl_minixml.h" // the only way right now to extract schema information
 #include "filegdb_gdbtoogrfieldtype.h"
 
+// See https://github.com/Esri/file-geodatabase-api/issues/46
+// On certain FileGDB datasets with binary fields, iterating over a result set
+// where the binary field is requested crashes in EnumRows::Next() at the
+// second iteration.
+// The workaround consists in iterating only over OBJECTID in the main loop,
+// and requesting each feature in a separate request.
+#define WORKAROUND_CRASH_ON_CDF_WITH_BINARY_FIELD
+
 CPL_CVSID("$Id$")
 
 using std::string;
@@ -3099,6 +3107,23 @@ void FGdbLayer::ResetReading()
 
     EndBulkLoad();
 
+#ifdef WORKAROUND_CRASH_ON_CDF_WITH_BINARY_FIELD
+    const auto wstrSubFieldBackup = m_wstrSubfields;
+    if( !m_apoByteArrays.empty() )
+    {
+        m_bWorkaroundCrashOnCDFWithBinaryField = CPLTestBool(
+            CPLGetConfigOption("OGR_FGDB_WORKAROUND_CRASH_ON_BINARY_FIELD", "YES"));
+        if( m_bWorkaroundCrashOnCDFWithBinaryField )
+        {
+            m_wstrSubfields = StringToWString(m_strOIDFieldName);
+            if( !m_strShapeFieldName.empty() && m_poFilterGeom && !m_poFilterGeom->IsEmpty() )
+            {
+                m_wstrSubfields += StringToWString(", " + m_strShapeFieldName);
+            }
+        }
+    }
+#endif
+
     if (m_poFilterGeom && !m_poFilterGeom->IsEmpty())
     {
         // Search spatial
@@ -3114,16 +3139,18 @@ void FGdbLayer::ResetReading()
 
         if( FAILED(hr = m_pTable->Search(m_wstrSubfields, m_wstrWhereClause, env, true, *m_pEnumRows)) )
             GDBErr(hr, "Failed Searching");
-
-        m_bFilterDirty = false;
-
-        return;
+    }
+    else
+    {
+        // Search non-spatial
+        if( FAILED(hr = m_pTable->Search(m_wstrSubfields, m_wstrWhereClause, true, *m_pEnumRows)) )
+            GDBErr(hr, "Failed Searching");
     }
 
-    // Search non-spatial
-
-    if( FAILED(hr = m_pTable->Search(m_wstrSubfields, m_wstrWhereClause, true, *m_pEnumRows)) )
-        GDBErr(hr, "Failed Searching");
+#ifdef WORKAROUND_CRASH_ON_CDF_WITH_BINARY_FIELD
+    if( !m_apoByteArrays.empty() && m_bWorkaroundCrashOnCDFWithBinaryField )
+        m_wstrSubfields = wstrSubFieldBackup;
+#endif
 
     m_bFilterDirty = false;
 }
@@ -3183,11 +3210,12 @@ bool FGdbBaseLayer::OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature)
     int32 oid = -1;
     if (FAILED(hr = pRow->GetOID(oid)))
     {
-        //this should never happen
-        delete pOutFeature;
-        return false;
+        //this should never happen unless not selecting the OBJECTID
     }
-    pOutFeature->SetFID(oid);
+    else
+    {
+        pOutFeature->SetFID(oid);
+    }
 
     /////////////////////////////////////////////////////////
     // Translate Geometry
@@ -3427,6 +3455,59 @@ OGRFeature* FGdbLayer::GetNextFeature()
         ResetReading();
 
     EndBulkLoad();
+
+#ifdef WORKAROUND_CRASH_ON_CDF_WITH_BINARY_FIELD
+    if( !m_apoByteArrays.empty() && m_bWorkaroundCrashOnCDFWithBinaryField )
+    {
+        while( true )
+        {
+            if (m_pEnumRows == nullptr)
+                return nullptr;
+
+            long hr;
+
+            Row rowOnlyOid;
+
+            if (FAILED(hr = m_pEnumRows->Next(rowOnlyOid)))
+            {
+                GDBErr(hr, "Failed fetching features");
+                return nullptr;
+            }
+
+            if (hr != S_OK)
+            {
+                // It's OK, we are done fetching - failure is caught by FAILED macro
+                return nullptr;
+            }
+
+            int32 oid = -1;
+            if (FAILED(hr = rowOnlyOid.GetOID(oid)))
+            {
+                GDBErr(hr, "Failed to get oid");
+                continue;
+            }
+
+            EnumRows       enumRows;
+            OGRFeature* pOGRFeature = nullptr;
+            Row rowFull;
+            if (GetRow(enumRows, rowFull, oid) != OGRERR_NONE ||
+                !OGRFeatureFromGdbRow(&rowFull, &pOGRFeature))
+            {
+                GDBErr(hr, CPLSPrintf("Failed translating FGDB row [%d] to OGR Feature", oid));
+
+                //return NULL;
+                continue; //skip feature
+            }
+
+            if( (m_poFilterGeom == nullptr
+                 || FilterGeometry( pOGRFeature->GetGeometryRef() )) )
+            {
+                return pOGRFeature;
+            }
+            delete pOGRFeature;
+        }
+    }
+#endif
 
     OGRFeature* poFeature = FGdbBaseLayer::GetNextFeature();
     if( poFeature )
