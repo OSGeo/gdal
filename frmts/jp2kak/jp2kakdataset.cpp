@@ -2285,7 +2285,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 CPLError(CE_Failure, CPLE_IllegalArg,
                          "The relationship between the number of bit-rates "
                          "specified by the \"RATE\" argument and the number of quality layers "
-                         "explicitly specified via \"Clayers\" does not conform to the rules "
+                         "explicitly specified via \"Layers\" does not conform to the rules "
                          "supplied in the description of the \"RATE\" argument");
                 return nullptr;
             }
