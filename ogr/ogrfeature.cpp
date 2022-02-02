@@ -564,7 +564,7 @@ OGRGeometryH OGR_F_StealGeometry( OGRFeatureH hFeat )
 }
 
 /************************************************************************/
-/*                        OGR_F_StealGeometryEx()                         */
+/*                       OGR_F_StealGeometryEx()                        */
 /************************************************************************/
 
 /**
@@ -573,9 +573,10 @@ OGRGeometryH OGR_F_StealGeometry( OGRFeatureH hFeat )
  * Fetch the geometry from this feature, and clear the reference to the
  * geometry on the feature.  This is a mechanism for the application to
  * take over ownership of the geometry from the feature without copying.
- * Sort of an inverse to OGR_FSetGeometryDirectly().
+ * This is the functional opposite of OGR_F_SetGeomFieldDirectly.
  *
- * After this call the OGRFeature will have a NULL geometry.
+ * After this call the OGRFeature will have a NULL geometry for the
+ * geometry field of index iGeomField.
  * 
  * @param hFeat feature from which to steal a geometry.
  * @param iGeomField index of the geometry field to steal.
