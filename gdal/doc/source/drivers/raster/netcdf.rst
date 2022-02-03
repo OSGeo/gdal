@@ -229,6 +229,10 @@ The following open options are available:
    nodata pixel values outside of the validity range indicated by
    valid_min, valid_max or valid_range attributes. Default is YES.
 
+-  **IGNORE_XY_AXIS_NAME_CHECKS**\ =YES/NO: (GDAL >= 3.4.2) Whether X/Y dimensions
+   should be always considered as geospatial axis, even if the lack
+   conventional attributes confirming it. Default is NO.
+
 Creation Issues
 ---------------
 
