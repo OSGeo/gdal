@@ -32,6 +32,8 @@ website and note the ones that end in ``.py``.
 Developers
 ----------
 
+Read the gdal-utils project charter, `RFC-78 <https://gdal.org/development/rfc/rfc78_gdal_utils_package.html>`__.
+
 Clone or download the gdal project: https://github.com/OSGeo/gdal/
 
 In your IDE set gdal-utils as the root folder,
