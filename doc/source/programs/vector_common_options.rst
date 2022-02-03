@@ -51,6 +51,7 @@ All GDAL OGR command line programs support the following common options.
     A value of OFF will disable all debug messages.
     Another value will select only debug messages containing
     that string in the debug prefix code.
+    Multiple prefixes need to be separated by `|`.
 
 .. option:: --help-general
 
