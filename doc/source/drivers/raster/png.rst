@@ -14,7 +14,7 @@ as precisions of eight and sixteen bits per sample.
 
 The GDAL PNG Driver is built using the libpng library. Also note that
 the GeoTIFF driver supports tiled TIFF with DEFLATE compressed tiles,
-which is the same compression algorithm that PNG uses.
+which is the same compression algorithm that PNG at its core uses.
 
 PNG files are linearly compressed, so random reading of large PNG files
 can be very inefficient (resulting in many restarts of decompression
@@ -35,9 +35,6 @@ pixel types other than 16bit unsigned will be written as eight bit.
 
 XMP metadata can be extracted from the file,
 and will be stored as XML raw content in the xml:XMP metadata domain.
-
-The maximum dimension of a PNG file that can be created is set to
-1000000x1000000 pixels by libpng.
 
 Driver capabilities
 -------------------
