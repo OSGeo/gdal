@@ -2232,26 +2232,8 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     //       also introducing some visual weighting to the rate-distortion
     //       optimization objective associated with all N quality layers.
     //       That means: combines both QUALITY and RATE
-    if(CSLFetchNameValue(papszOptions,"RATE") == nullptr && !bReversible) {
-        layer_bytes.resize(layer_count);
-        double dfLayerBytes =
-                (nXSize * static_cast<double>(nYSize) * dfQuality / 100.0)
-                * GDALGetDataTypeSizeBytes(eType)
-                * GDALGetRasterCount(poSrcDS);
-
-        if (dfLayerBytes > 2000000000.0 && sizeof(kdu_long) == 4) {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "Trimming maximum size of file 2GB from %.1fGB\n"
-                     "to avoid overflow of kdu_long layer size.",
-                     dfLayerBytes / 1000000000.0);
-            dfLayerBytes = 2000000000.0;
-        }
-
-        layer_bytes[layer_count - 1] = static_cast<kdu_long>(dfLayerBytes);
-
-        CPLDebug("JP2KAK", "layer_bytes[] = %g\n",
-                 static_cast<double>(layer_bytes[layer_count - 1]));
-    } else {
+    const char* pszRate = CSLFetchNameValue(papszOptions,"RATE") ;
+    if( pszRate != nullptr ) {
         // Use RATE option.
         CPLStringList aosRate(CSLTokenizeStringComplex(
                 CSLFetchNameValue(papszOptions,"RATE"),",", FALSE, FALSE ));
@@ -2335,6 +2317,25 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             // force assign all remaining compressed bits
             layer_bytes[layer_count-1] = 0;
         }
+    } else if( !bReversible ) {
+        layer_bytes.resize(layer_count);
+        double dfLayerBytes =
+                (nXSize * static_cast<double>(nYSize) * dfQuality / 100.0)
+                * GDALGetDataTypeSizeBytes(eType)
+                * GDALGetRasterCount(poSrcDS);
+
+        if (dfLayerBytes > 2000000000.0 && sizeof(kdu_long) == 4) {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Trimming maximum size of file 2GB from %.1fGB\n"
+                     "to avoid overflow of kdu_long layer size.",
+                     dfLayerBytes / 1000000000.0);
+            dfLayerBytes = 2000000000.0;
+        }
+
+        layer_bytes[layer_count - 1] = static_cast<kdu_long>(dfLayerBytes);
+
+        CPLDebug("JP2KAK", "layer_bytes[] = %g\n",
+                 static_cast<double>(layer_bytes[layer_count - 1]));
     }
 
     // Do we want to use more than one tile?
