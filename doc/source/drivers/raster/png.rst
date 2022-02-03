@@ -31,6 +31,9 @@ pixel types other than 16bit unsigned will be written as eight bit.
 XMP metadata can be extracted from the file,
 and will be stored as XML raw content in the xml:XMP metadata domain.
 
+The maximum dimension of a PNG file that can be created is set to
+1000000x1000000 pixels by libpng.
+
 Driver capabilities
 -------------------
 
