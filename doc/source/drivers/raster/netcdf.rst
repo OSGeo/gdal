@@ -274,6 +274,10 @@ The following open options are available:
    nodata pixel values outside of the validity range indicated by
    valid_min, valid_max or valid_range attributes. Default is YES.
 
+-  **IGNORE_XY_AXIS_NAME_CHECKS**\ =YES/NO: (GDAL >= 3.4.2) Whether X/Y dimensions
+   should be always considered as geospatial axis, even if the lack
+   conventional attributes confirming it. Default is NO.
+
 -  **VARIABLES_AS_BANDS**\ =YES/NO: (GDAL >= 3.5) If set to YES, and if the
    netCDF file only contains 2D variables of the same type and indexed by the
    same dimensions, then they should be reported as multiple bands of a same dataset.
@@ -500,9 +504,9 @@ Configuration Options
    represent the latitude and longitude only by their attributes (STRICT)
    or also by guessing the name (YES), default is YES.
 
--  **GDAL_NETCDF_IGNORE_XY_AXIS_NAME_CHECKS=[YES/NO]** : When a dimension
-   has been identified as latitude or longitude by its attributes, check
-   if its name also matches the convention, default is NO.
+-  **GDAL_NETCDF_IGNORE_XY_AXIS_NAME_CHECKS=[YES/NO]** : Whether X/Y dimensions
+   should be always considered as geospatial axis, even if the lack
+   conventional attributes confirming it. Default is NO.
 
 VSI Virtual File System API support
 -----------------------------------
