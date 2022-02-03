@@ -5062,7 +5062,7 @@ SWIGINTERN OGRErr GDALDatasetShadow_RollbackTransaction(GDALDatasetShadow *self)
 SWIGINTERN void GDALDatasetShadow_ClearStatistics(GDALDatasetShadow *self){
       GDALDatasetClearStatistics(self);
   }
-SWIGINTERN char **GDALDatasetShadow_GetFieldDomainNames(GDALDatasetShadow *self,char** options = NULL){
+SWIGINTERN char **GDALDatasetShadow_GetFieldDomainNames(GDALDatasetShadow *self,char **options=0){
     return GDALDatasetGetFieldDomainNames(self, options);
   }
 SWIGINTERN OGRFieldDomainShadow *GDALDatasetShadow_GetFieldDomain(GDALDatasetShadow *self,char const *name){
@@ -21034,18 +21034,18 @@ fail:
 
 
 SWIGINTERN PyObject *_wrap_Dataset_GetFieldDomainNames(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
   char **arg2 = (char **) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   PyObject *swig_obj[2] ;
   char **result = 0 ;
-
+  
   if (!SWIG_Python_UnpackTuple(args, "Dataset_GetFieldDomainNames", 1, 2, swig_obj)) SWIG_fail;
   res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Dataset_GetFieldDomainNames" "', argument " "1"" of type '" "GDALDatasetShadow *""'");
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Dataset_GetFieldDomainNames" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
   }
   arg1 = reinterpret_cast< GDALDatasetShadow * >(argp1);
   if (swig_obj[1]) {
@@ -21098,6 +21098,7 @@ SWIGINTERN PyObject *_wrap_Dataset_GetFieldDomainNames(PyObject *SWIGUNUSEDPARM(
     /* %typemap(freearg) char **options */
     CSLDestroy( arg2 );
   }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
 fail:
   {
@@ -21218,7 +21219,7 @@ fail:
 
 
 SWIGINTERN PyObject *_wrap_Dataset_DeleteFieldDomain(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
   char *arg2 = (char *) 0 ;
   void *argp1 = 0 ;
@@ -21228,11 +21229,11 @@ SWIGINTERN PyObject *_wrap_Dataset_DeleteFieldDomain(PyObject *SWIGUNUSEDPARM(se
   int alloc2 = 0 ;
   PyObject *swig_obj[2] ;
   bool result;
-
+  
   if (!SWIG_Python_UnpackTuple(args, "Dataset_DeleteFieldDomain", 2, 2, swig_obj)) SWIG_fail;
   res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Dataset_DeleteFieldDomain" "', argument " "1"" of type '" "GDALDatasetShadow *""'");
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Dataset_DeleteFieldDomain" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
   }
   arg1 = reinterpret_cast< GDALDatasetShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(swig_obj[1], &buf2, NULL, &alloc2);
@@ -21265,6 +21266,7 @@ SWIGINTERN PyObject *_wrap_Dataset_DeleteFieldDomain(PyObject *SWIGUNUSEDPARM(se
   }
   resultobj = SWIG_From_bool(static_cast< bool >(result));
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
 fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
@@ -21273,7 +21275,7 @@ fail:
 
 
 SWIGINTERN PyObject *_wrap_Dataset_UpdateFieldDomain(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
   OGRFieldDomainShadow *arg2 = (OGRFieldDomainShadow *) 0 ;
   void *argp1 = 0 ;
@@ -21318,6 +21320,7 @@ SWIGINTERN PyObject *_wrap_Dataset_UpdateFieldDomain(PyObject *SWIGUNUSEDPARM(se
 #endif
   }
   resultobj = SWIG_From_bool(static_cast< bool >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
 fail:
   return NULL;
@@ -39299,6 +39302,66 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_DataTypeUnion(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALDataType arg1 ;
+  GDALDataType arg2 ;
+  PyObject *swig_obj[2] ;
+  GDALDataType result;
+  
+  if (!SWIG_Python_UnpackTuple(args, "DataTypeUnion", 2, 2, swig_obj)) SWIG_fail;
+  {
+    // %typemap(in) GDALDataType
+    int val = 0;
+    int ecode = SWIG_AsVal_int(swig_obj[0], &val);
+    if (!SWIG_IsOK(ecode)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode), "invalid value for GDALDataType");
+    }
+    if( val < GDT_Unknown || val >= GDT_TypeCount )
+    {
+      SWIG_exception_fail(SWIG_ValueError, "Invalid value for GDALDataType");
+    }
+    arg1 = static_cast<GDALDataType>(val);
+  }
+  {
+    // %typemap(in) GDALDataType
+    int val = 0;
+    int ecode = SWIG_AsVal_int(swig_obj[1], &val);
+    if (!SWIG_IsOK(ecode)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode), "invalid value for GDALDataType");
+    }
+    if( val < GDT_Unknown || val >= GDT_TypeCount )
+    {
+      SWIG_exception_fail(SWIG_ValueError, "Invalid value for GDALDataType");
+    }
+    arg2 = static_cast<GDALDataType>(val);
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (GDALDataType)GDALDataTypeUnion(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_GetColorInterpretationName(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   GDALColorInterp arg1 ;
@@ -44259,6 +44322,7 @@ static PyMethodDef SwigMethods[] = {
 	 { "DataTypeIsComplex", _wrap_DataTypeIsComplex, METH_O, "DataTypeIsComplex(GDALDataType eDataType) -> int"},
 	 { "GetDataTypeName", _wrap_GetDataTypeName, METH_O, "GetDataTypeName(GDALDataType eDataType) -> char const *"},
 	 { "GetDataTypeByName", _wrap_GetDataTypeByName, METH_O, "GetDataTypeByName(char const * pszDataTypeName) -> GDALDataType"},
+	 { "DataTypeUnion", _wrap_DataTypeUnion, METH_VARARGS, "DataTypeUnion(GDALDataType a, GDALDataType b) -> GDALDataType"},
 	 { "GetColorInterpretationName", _wrap_GetColorInterpretationName, METH_O, "GetColorInterpretationName(GDALColorInterp eColorInterp) -> char const *"},
 	 { "GetPaletteInterpretationName", _wrap_GetPaletteInterpretationName, METH_O, "GetPaletteInterpretationName(GDALPaletteInterp ePaletteInterp) -> char const *"},
 	 { "DecToDMS", _wrap_DecToDMS, METH_VARARGS, "DecToDMS(double arg1, char const * arg2, int arg3=2) -> char const *"},
