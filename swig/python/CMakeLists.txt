@@ -217,7 +217,7 @@ if (Python_Interpreter_FOUND)
   endif ()
   add_custom_command(
     OUTPUT ${PY_SO_LIST}
-    COMMAND ${CMAKE_COMMAND} -P ${BUILD_EXT_FILENAME}
+    COMMAND ${CMAKE_COMMAND} ${WERROR_DEV_FLAG} -P ${BUILD_EXT_FILENAME}
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     DEPENDS ${GDAL_LIB_TARGET_NAME} ${GDAL_PYTHON_PYSOURCES} ${GDAL_PYTHON_CSOURCES})
 
@@ -238,7 +238,7 @@ if (Python_Interpreter_FOUND)
   endif ()
   add_custom_target(
     python_wheel
-    COMMAND ${CMAKE_COMMAND} -P ${BUILD_BDIST_WHEEL_FILENAME}
+    COMMAND ${CMAKE_COMMAND} ${WERROR_DEV_FLAG} -P ${BUILD_BDIST_WHEEL_FILENAME}
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     DEPENDS ${PY_SO_LIST})
 
@@ -254,9 +254,15 @@ if (Python_Interpreter_FOUND)
   set(INSTALL_ARGS "--single-version-externally-managed --record=record.txt")
   if (DEFINED GDAL_PYTHON_INSTALL_PREFIX)
     file(TO_NATIVE_PATH "${GDAL_PYTHON_INSTALL_PREFIX}" NATIVE_GDAL_PYTHON_INSTALL_PREFIX)
+    if (WIN32)
+      string(REPLACE "\\" "\\\\" NATIVE_GDAL_PYTHON_INSTALL_PREFIX "${NATIVE_GDAL_PYTHON_INSTALL_PREFIX}")
+    endif ()
     set(INSTALL_ARGS "${INSTALL_ARGS} \"--prefix=${NATIVE_GDAL_PYTHON_INSTALL_PREFIX}\"")
   elseif (CMAKE_INSTALL_PREFIX)
     file(TO_NATIVE_PATH "${CMAKE_INSTALL_PREFIX}" NATIVE_CMAKE_INSTALL_PREFIX)
+    if (WIN32)
+      string(REPLACE "\\" "\\\\" NATIVE_CMAKE_INSTALL_PREFIX "${NATIVE_CMAKE_INSTALL_PREFIX}")
+    endif ()
     if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
       file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/is_std_unix_layout.py
            "import sys;print(\"FALSE\" if \"framework\" in sys.prefix.lower() else \"TRUE\")\n")
@@ -295,14 +301,15 @@ if (Python_Interpreter_FOUND)
         GENERATE
         OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/install_binding_$<CONFIG>.cmake
         CONTENT
-          "execute_process(COMMAND $<IF:$<CONFIG:Release>,${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/install_python.cmake,${CMAKE_COMMAND} -E echo \"setup.py install only run in Release configuration\">
+          "execute_process(COMMAND $<IF:$<CONFIG:Release>,${CMAKE_COMMAND} ${WERROR_DEV_FLAG} -P ${CMAKE_CURRENT_BINARY_DIR}/install_python.cmake,${CMAKE_COMMAND} -E echo \"setup.py install only run in Release configuration\">
                                           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})")
       install(SCRIPT ${CMAKE_CURRENT_BINARY_DIR}/install_binding_$<CONFIG>.cmake)
     else ()
       message(WARNING "Installing Python bindings with a multi generator requires CMake >= 3.14")
     endif ()
   else ()
-    install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/install_python.cmake
+    install(
+      CODE "execute_process(COMMAND ${CMAKE_COMMAND} ${WERROR_DEV_FLAG} -P ${CMAKE_CURRENT_BINARY_DIR}/install_python.cmake
                                   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})")
 
   endif ()
