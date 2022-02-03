@@ -2286,6 +2286,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         }
 
         const int nb_elements = rate_count-j;
+        CPLDebug("JP2KAK", "dfPixelTotal = %g\n",dfPixelsTotal);
         for (i = 0; i < nb_elements; i++, j++) {
             currentBitRate = CPLAtof(aosRate[j]);
             if( currentBitRate < 0.0 || currentBitRate > 100.0 )
@@ -2316,6 +2317,11 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         if(bDash) {
             // force assign all remaining compressed bits
             layer_bytes[layer_count-1] = 0;
+        }
+
+        uint k;
+        for(k = 0; k < layer_bytes.size();k++) {
+            CPLDebug("JP2KAK", "layer_bytes[%d] = %g\n", k, static_cast<double>(layer_bytes[k]));
         }
     } else if( !bReversible ) {
         layer_bytes.resize(layer_count);
