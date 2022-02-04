@@ -10,7 +10,6 @@ export PYTEST="python3 -m pytest -vv -p no:sugar --color=no"
 
 # install pip and use it to install test dependencies
 pip3 install -U -r autotest/requirements.txt
-pip3 install -U hdbcli
 
 # Run all the Python autotests
 
