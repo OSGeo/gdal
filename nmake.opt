@@ -636,22 +636,6 @@ PCIDSK_SETTING=INTERNAL
 #MYSQL_INC_DIR = D:\Software\MySQLServer4.1\include
 #MYSQL_LIB = D:\Software\MySQLServer4.1\lib\opt\libmysql.lib advapi32.lib
 
-# SAP HANA Libraries
-# Uncomment the following to enable odbc-cpp-wrapper library.
-# See https://github.com/SAP/odbc-cpp-wrapper
-#ODBCCPP_PATH = C:\odbccpp-build
-!IFDEF ODBCCPP_PATH
-ODBCCPP_INC = $(ODBCCPP_PATH)\include
-ODBCCPP_LIB = $(ODBCCPP_PATH)\lib\odbccpp.lib
-!ENDIF
-
-!IFDEF ODBCCPP_LIB
-# Uncomment the following lines to enable SAP HANA Spatial support.
-#HANA_ENABLED = YES
-# Uncomment the follwing if you prefer to build SAP HANA Spatial support as a plugin.
-#HANA_PLUGIN = YES
-!ENDIF
-
 # INGRES Libraries
 # Uncomment the following to enable Ingres format.
 # INGRES_HOME = $(II_SYSTEM)\ingres
@@ -1196,7 +1180,7 @@ SYM_PREFIX=_
 EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
 	$(KAK_LIB_LINK) $(ECW_LIB_LINK) $(LURATECH_LIB_LINK) $(HDF4_LIB_LINK) $(FME_LIB) $(MRSID_LIB_LINK) \
 	$(FITS_LIB_LINK) $(JPEG_LIB) $(NETCDF_LIB_LINK) $(PROJ4_LIB) \
-	$(GEOTIFF_LIB) $(TIFF_LIB) $(PROJ_LIBRARY) $(SQLITE_LIB) $(ODBCCPP_LIB) \
+	$(GEOTIFF_LIB) $(TIFF_LIB) $(PROJ_LIBRARY) $(SQLITE_LIB) \
 	$(MYSQL_LIB) $(GEOS_LIB) $(HDF5_LIB_LINK) $(KEA_LIB_LINK) $(ARCOBJECTS_LIB) $(DWG_LIB_LINK) \
 	$(IDB_LIB) $(CURL_LIB) $(DODS_LIB) $(PCIDSK_LIB) \
 	$(ODBCLIB) $(JASPER_LIB) $(PNG_LIB) $(ZLIB_LIB) $(LIBDEFLATE_LIB) $(ADD_LIBS) $(OPENJPEG_LIB) \
