@@ -79,6 +79,29 @@ CPL_CVSID("$Id$")
  * dataset should be honoured.  That is, don't just GDALClose() it unless it
  * was opened with GDALOpenShared().
  *
+ * It is possible to "transfer" the ownership of the source dataset
+ * to the warped dataset in the following way:
+ *
+ * \verbatim
+ *      GDALDatasetH src_ds = GDALOpen("source.tif");
+ *      GDALDatasetH warped_ds = GDALAutoCreateWarpedVRT( src_ds, ... );
+ *      GDALReleaseDataset(src_ds); // src_ds is not "owned" fully by warped_ds. Do NOT use GDALClose(src_ds) here
+ *      ...
+ *      ...
+ *      GDALReleaseDataset(warped_ds); // or GDALClose(warped_ds);
+ * \endverbatim
+ *
+ * Traditonal nested calls are also possible of course:
+ *
+ * \verbatim
+ *      GDALDatasetH src_ds = GDALOpen("source.tif");
+ *      GDALDatasetH warped_ds = GDALAutoCreateWarpedVRT( src_ds, ... );
+ *      ...
+ *      ...
+ *      GDALReleaseDataset(warped_ds); // or GDALClose(warped_ds);
+ *      GDALReleaseDataset(src_ds); // or GDALClose(src_ds);
+ * \endverbatim
+ *
  * The returned dataset will have no associated filename for itself.  If you
  * want to write the virtual dataset description to a file, use the
  * GDALSetDescription() function (or SetDescription() method) on the dataset
@@ -303,6 +326,34 @@ GDALAutoCreateWarpedVRTEx( GDALDatasetH hSrcDS,
  * to the passed in hSrcDS.  Reference counting semantics on the source
  * dataset should be honoured.  That is, don't just GDALClose() it unless it
  * was opened with GDALOpenShared().
+ *
+ * It is possible to "transfer" the ownership of the source dataset
+ * to the warped dataset in the following way:
+ *
+ * \verbatim
+ *      GDALDatasetH src_ds = GDALOpen("source.tif");
+ *      GDALDatasetH warped_ds = GDALAutoCreateWarpedVRT( src_ds, ... );
+ *      GDALReleaseDataset(src_ds); // src_ds is not "owned" fully by warped_ds. Do NOT use GDALClose(src_ds) here
+ *      ...
+ *      ...
+ *      GDALReleaseDataset(warped_ds); // or GDALClose(warped_ds);
+ * \endverbatim
+ *
+ * Traditonal nested calls are also possible of course:
+ *
+ * \verbatim
+ *      GDALDatasetH src_ds = GDALOpen("source.tif");
+ *      GDALDatasetH warped_ds = GDALAutoCreateWarpedVRT( src_ds, ... );
+ *      ...
+ *      ...
+ *      GDALReleaseDataset(warped_ds); // or GDALClose(warped_ds);
+ *      GDALReleaseDataset(src_ds); // or GDALClose(src_ds);
+ * \endverbatim
+ *
+ * The returned dataset will have no associated filename for itself.  If you
+ * want to write the virtual dataset description to a file, use the
+ * GDALSetDescription() function (or SetDescription() method) on the dataset
+ * to assign a filename before it is closed.
  *
  * @param hSrcDS The source dataset.
  *
