@@ -135,9 +135,6 @@ curl -v -j -k -s -L -H "Cookie: eula_3_1_agreed=tools.hana.ondemand.com/develope
   && rm hanaclient*
 export PATH=/usr/sap/hdbclient:$PATH
 
-wget -q https://github.com/Kitware/CMake/releases/download/v3.12.4/cmake-3.12.4-Linux-x86_64.sh -O cmake.sh \
-  && sh cmake.sh --prefix=/usr/local/ --exclude-subdir
-
 # Download and compile odbc-cpp-wrapper
 git clone https://github.com/SAP/odbc-cpp-wrapper.git \
   && mkdir odbc-cpp-wrapper/build \
