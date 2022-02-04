@@ -1954,7 +1954,7 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
 
         char** papszOpenOptions = GDALDeserializeOpenOptionsFromXML(psTree);
         psWO->hSrcDS = GDALOpenEx(
-            pszValue, GDAL_OF_SHARED | GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
+            pszValue, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
             nullptr,
             papszOpenOptions, nullptr );
         CSLDestroy(papszOpenOptions);
