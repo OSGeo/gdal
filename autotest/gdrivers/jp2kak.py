@@ -525,15 +525,17 @@ def test_jp2openjpeg_test_multi_rate():
     # 6.1e+03 -> 6075 (24300 * 2 * 0.125F)
     # 9.1e+03 -> 9112 (24300 * 3 * 0.125F)
     # 1.2e+04 -> 12150 (24300 * 4 * 0.125F)
-    assert (arr[4][5][1] == 'Kdu-Layer-Info: log_2{Delta-D(squared-error)/Delta-L(bytes)}, L(bytes)\n -21.9,  4.6e+03\n '
-                          '-22.9,  6.1e+03\n -24.9,  9.1e+03\n -26.2,  1.2e+04\n')
 
     split = arr[4][5][1].split(',')
-
     # 4 layers + 2 blocs for extra information
     assert len(split) == 6
+
+    assert split[2].split('\n')[0].strip() == '4.6e+03'
+    assert split[3].split('\n')[0].strip() == '6.1e+03'
+    assert split[4].split('\n')[0].strip() == '9.1e+03'
+    assert split[5].split('\n')[0].strip() == '1.2e+04'
+
     gdal.Unlink('/vsimem/jp2kak_22.jp2')
-    return False
 
 ###############################################################################
 # Test multiple RATE parameters  using dash as first value
@@ -554,15 +556,14 @@ def test_jp2openjpeg_test_multi_rate_dash():
     # 0
     # 0
 
-    assert (arr[4][5][1] == 'Kdu-Layer-Info: log_2{Delta-D(squared-error)/Delta-L(bytes)}, L(bytes)\n -26.4, '
-                            ' 1.2e+04\n -27.9,  1.5e+04\n -29.9,  1.9e+04\n-192.0,  2.4e+04\n')
-
     split = arr[4][5][1].split(',')
 
     # 4 layers + 2 blocs for extra information
     assert len(split) == 6
+
+    assert split[2].split('\n')[0].strip() == '1.2e+04'
+
     gdal.Unlink('/vsimem/jp2kak_22.jp2')
-    return False
 
 ###############################################################################
 # Test single RATE parameter
@@ -579,15 +580,15 @@ def test_jp2openjpeg_test_single_rate():
     # dfPixelsTotal = 24300
     # First layers are 0; only the last one has a defined value
     # 4.6e+03 -> 4556 (24300 * 1.5 * 0.125F)
-    assert (arr[4][5][1] == 'Kdu-Layer-Info: log_2{Delta-D(squared-error)/Delta-L(bytes)}, L(bytes)\n -17.7, '
-                            ' 1.2e+03\n -18.8,  1.9e+03\n -20.0,  2.8e+03\n -21.9,  4.6e+03\n')
 
     split = arr[4][5][1].split(',')
 
     # 4 layers + 2 blocs for extra information
     assert len(split) == 6
+
+    assert split[5].split('\n')[0].strip() == '4.6e+03'
+
     gdal.Unlink('/vsimem/jp2kak_22.jp2')
-    return False
 
 ###############################################################################
 # Test single RATE parameter with defined quality < 99.5
@@ -604,15 +605,14 @@ def test_jp2openjpeg_test_multi_rate_quality_50():
     # dfPixelsTotal = 24300
     # First layers are 0; only the last one has a defined value
     # 4.6e+03 -> 4556 (24300 * 1.5 * 0.125F)
-    assert (arr[4][5][1] == 'Kdu-Layer-Info: log_2{Delta-D(squared-error)/Delta-L(bytes)}, L(bytes)\n -17.7, '
-                            ' 1.2e+03\n -18.8,  1.9e+03\n -20.0,  2.8e+03\n -21.9,  4.6e+03\n')
 
     split = arr[4][5][1].split(',')
 
     # 4 layers + 2 blocs for extra information
     assert len(split) == 6
+    assert split[5].split('\n')[0].strip() == '4.6e+03'
+
     gdal.Unlink('/vsimem/jp2kak_22.jp2')
-    return False
 
 ###############################################################################
 # Test single RATE parameter with defined quality > 99.5
@@ -629,15 +629,14 @@ def test_jp2openjpeg_test_multi_rate_quality_100():
     # dfPixelsTotal = 24300
     # First layers are 0; only the last one has a defined value
     # 4.6e+03 -> 4556 (24300 * 1.5 * 0.125F)
-    assert (arr[4][5][1] == 'Kdu-Layer-Info: log_2{Delta-D(squared-error)/Delta-L(bytes)}, L(bytes)\n -17.6, '
-                            ' 1.3e+03\n -18.8,  1.9e+03\n -19.9,  2.8e+03\n -21.7,  4.6e+03\n')
-
     split = arr[4][5][1].split(',')
 
     # 4 layers + 2 blocs for extra information
     assert len(split) == 6
+
+    assert split[5].split('\n')[0].strip() == '4.6e+03'
+
     gdal.Unlink('/vsimem/jp2kak_22.jp2')
-    return False
 
 ###############################################################################
 # Test single RATE parameter with defined quality > 99.5 and the Creversible option
@@ -655,15 +654,14 @@ def test_jp2openjpeg_test_multi_rate_quality_100_reversible():
     # dfPixelsTotal = 24300
     # First layers are 0; only the last one has a defined value
     # 4.6e+03 -> 4556 (24300 * 1.5 * 0.125F)
-    assert (arr[4][5][1] == 'Kdu-Layer-Info: log_2{Delta-D(squared-error)/Delta-L(bytes)}, L(bytes)\n -17.6,  '
-                            '1.3e+03\n -18.8,  1.9e+03\n -19.9,  2.8e+03\n -21.7,  4.6e+03\n')
-
     split = arr[4][5][1].split(',')
 
     # 4 layers + 2 blocs for extra information
     assert len(split) == 6
+
+    assert split[5].split('\n')[0].strip() == '4.6e+03'
+
     gdal.Unlink('/vsimem/jp2kak_22.jp2')
-    return False
 
 ###############################################################################
 # Test single RATE parameter with defined quality > 99.5 and the Creversible option
@@ -681,15 +679,14 @@ def test_jp2openjpeg_test_multi_rate_quality_100_no_reversible():
     # dfPixelsTotal = 24300
     # First layers are 0; only the last one has a defined value
     # 4.6e+03 -> 4556 (24300 * 1.5 * 0.125F)
-    assert (arr[4][5][1] == 'Kdu-Layer-Info: log_2{Delta-D(squared-error)/Delta-L(bytes)}, L(bytes)\n -17.7, '
-                            ' 1.2e+03\n -18.8,  1.9e+03\n -20.0,  2.8e+03\n -21.9,  4.6e+03\n')
-
     split = arr[4][5][1].split(',')
 
     # 4 layers + 2 blocs for extra information
     assert len(split) == 6
+
+    assert split[5].split('\n')[0].strip() == '4.6e+03'
+
     gdal.Unlink('/vsimem/jp2kak_22.jp2')
-    return False
 
 ###############################################################################
 # Test quality > 99.5 and the Creversible option
@@ -702,17 +699,12 @@ def test_jp2openjpeg_test_quality_100_no_reversible():
     arr = []
     find_elements_with_name(node, "Field", "COM", arr)
 
-    assert (arr[4][5][1] == 'Kdu-Layer-Info: log_2{Delta-D(squared-error)/Delta-L(bytes)}, L(bytes)\n -22.2, '
-                            ' 5.3e+03\n -23.3,  6.9e+03\n -24.5,  8.8e+03\n -25.7,  1.1e+04\n -26.8,  1.3e+04\n -28.0, '
-                            ' 1.6e+04\n -29.2,  1.9e+04\n -30.4,  2.1e+04\n -31.5,  2.5e+04\n -32.7,  2.5e+04\n -33.9,'
-                            '  2.5e+04\n -33.9,  9.7e+04\n')
-
     split = arr[4][5][1].split(',')
 
     # 12 layers + 2 blocs for extra information
     assert len(split) == 14
+
     gdal.Unlink('/vsimem/jp2kak_22.jp2')
-    return False
 
 ###############################################################################
 # Test quality > 99.5 and the Creversible option
@@ -724,11 +716,6 @@ def test_jp2openjpeg_test_quality_100_reversible():
 
     arr = []
     find_elements_with_name(node, "Field", "COM", arr)
-
-    assert (arr[4][5][1] == 'Kdu-Layer-Info: log_2{Delta-D(squared-error)/Delta-L(bytes)}, L(bytes)\n -15.0, '
-                            ' 7.3e+02\n -16.2,  1.0e+03\n -17.4,  1.4e+03\n -18.5,  1.9e+03\n -19.7,  2.9e+03\n -20.9, '
-                            ' 4.1e+03\n -22.1,  5.7e+03\n -23.2,  7.4e+03\n -24.4,  9.2e+03\n -25.6,  1.1e+04\n -29.2, '
-                            ' 1.7e+04\n-192.0,  2.5e+04\n')
 
     split = arr[4][5][1].split(',')
 
