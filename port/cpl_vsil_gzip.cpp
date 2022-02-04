@@ -814,11 +814,6 @@ bool VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
 
         int read_size =
             static_cast<int>(Read(outbuf, 1, static_cast<uInt>(size)));
-        if( read_size == 0 )
-        {
-            // CPL_VSIL_GZ_RETURN(FALSE);
-            return false;
-        }
         if( original_nWhence == SEEK_END )
         {
             if( size != read_size )
@@ -826,6 +821,11 @@ bool VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
                 z_err = Z_STREAM_END;
                 break;
             }
+        }
+        else if( read_size == 0 )
+        {
+            // CPL_VSIL_GZ_RETURN(FALSE);
+            return false;
         }
         offset -= read_size;
     }
