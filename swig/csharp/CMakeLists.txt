@@ -683,8 +683,9 @@ add_custom_target(
 
 # set up the tests
 
-include(GdalSetTestEnv)
-gdal_set_test_env(TEST_ENV)
+include(GdalSetRuntimeEnv)
+gdal_set_runtime_env(TEST_ENV)
+
 set(_ex)
 if (CSHARP_INTERPRETER)
   file(TO_NATIVE_PATH ${CMAKE_CURRENT_BINARY_DIR} _MONO_PATH)
