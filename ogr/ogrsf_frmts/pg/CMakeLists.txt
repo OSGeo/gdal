@@ -9,4 +9,4 @@ add_gdal_driver(
           PLUGIN_CAPABLE)
 gdal_standard_includes(ogr_PG)
 target_include_directories(ogr_PG PRIVATE ${PostgreSQL_INCLUDE_DIRS} $<TARGET_PROPERTY:ogr_PGDump,SOURCE_DIR>)
-gdal_target_link_libraries(TARGET ogr_PG LIBRARIES PostgreSQL::PostgreSQL)
+gdal_target_link_libraries(ogr_PG PRIVATE PostgreSQL::PostgreSQL)

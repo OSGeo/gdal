@@ -4479,7 +4479,7 @@ CPLErr netCDFDataset::_SetProjection( const char * pszNewProjection )
         return CE_Failure;
     }
 
-    if( m_bHasGeoTransform && !m_bHasProjection )
+    if( m_bHasGeoTransform )
     {
         SetProjectionNoUpdate(pszNewProjection);
 
@@ -4527,7 +4527,7 @@ CPLErr netCDFDataset::SetGeoTransform ( double * padfTransform )
               padfTransform[0], padfTransform[1], padfTransform[2],
               padfTransform[3], padfTransform[4], padfTransform[5]);
 
-    if( m_bHasProjection && !m_bHasGeoTransform )
+    if( m_bHasProjection )
     {
         SetGeoTransformNoUpdate(padfTransform);
 

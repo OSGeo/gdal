@@ -38,6 +38,8 @@ add_library(
 add_dependencies(alg generate_gdal_version_h)
 
 include(GdalStandardIncludes)
+include(GdalDriverHelper)
+
 gdal_standard_includes(alg)
 target_compile_options(alg PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST}
                                    ${WFLAG_EFFCXX}>)
@@ -53,26 +55,23 @@ if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
 endif ()
 
 if (GDAL_USE_GEOS)
-  target_include_directories(alg PRIVATE ${GEOS_INCLUDE_DIRS})
   target_compile_definitions(alg PRIVATE -DHAVE_GEOS=1)
-  gdal_add_private_link_libraries(GEOS::GEOS)
+  gdal_target_link_libraries(alg PRIVATE GEOS::GEOS)
 endif ()
 
 if (GDAL_USE_ARMADILLO)
   target_include_directories(alg PRIVATE ${ARMADILLO_INCLUDE_DIRS})
   target_compile_definitions(alg PRIVATE -DHAVE_ARMADILLO)
-  gdal_add_private_link_libraries(${ARMADILLO_LIBRARIES})
+  gdal_target_link_libraries(alg PRIVATE ${ARMADILLO_LIBRARIES})
 endif ()
 
 if (GDAL_USE_OPENCL)
-  target_include_directories(alg PRIVATE ${OpenCL_INCLUDE_DIRS})
-  gdal_add_private_link_libraries(OpenCL::OpenCL)
+  gdal_target_link_libraries(alg PRIVATE OpenCL::OpenCL)
   target_compile_definitions(alg PRIVATE -DHAVE_OPENCL)
   target_sources(alg PRIVATE gdalwarpkernel_opencl.h gdalwarpkernel_opencl.cpp)
 endif ()
 
-target_include_directories(alg PRIVATE ${PROJ_INCLUDE_DIRS})
-gdal_add_private_link_libraries(PROJ::PROJ)
+gdal_target_link_libraries(alg PRIVATE PROJ::proj)
 
 if (GDAL_USE_QHULL_INTERNAL)
   target_compile_definitions(alg PRIVATE -DINTERNAL_QHULL)
@@ -81,7 +80,7 @@ if (GDAL_USE_QHULL_INTERNAL)
 elseif (GDAL_USE_QHULL)
   target_compile_definitions(alg PRIVATE -DEXTERNAL_QHULL)
   target_include_directories(alg PRIVATE ${QHULL_INCLUDE_DIR})
-  gdal_add_private_link_libraries(${QHULL_LIBRARY})
+  gdal_target_link_libraries(alg PRIVATE ${QHULL_LIBRARY})
 endif ()
 
 if (HAVE_SSE_AT_COMPILE_TIME)

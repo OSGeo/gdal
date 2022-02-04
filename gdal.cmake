@@ -300,8 +300,9 @@ if (MINGW)
   # Workaround for export too large error - force problematic large file to be optimized to prevent string table
   # overflow error Used -Os instead of -O2 as previous issues had mentioned, since -Os is roughly speaking -O2,
   # excluding any optimizations that take up extra space. Given that the issue is a string table overflowing, -Os seemed
-  # appropriate.
-  if (CMAKE_BUILD_TYPE MATCHES Debug)
+  # appropriate. Solves issue of https://github.com/OSGeo/gdal/issues/4706 with for example x86_64-w64-mingw32-gcc-posix
+  # (GCC) 9.3-posix 20200320
+  if (CMAKE_BUILD_TYPE MATCHES Debug OR CMAKE_BUILD_TYPE STREQUAL "")
     add_compile_options(-Os)
   endif ()
 endif ()
@@ -360,35 +361,35 @@ add_subdirectory(port)
 if (GDAL_USE_ZLIB_INTERNAL)
   add_subdirectory(frmts/zlib)
 endif ()
-if (GDAL_USE_LIBJSONC_INTERNAL)
+if (GDAL_USE_JSONC_INTERNAL)
   add_subdirectory(ogr/ogrsf_frmts/geojson/libjson)
 endif ()
 
 # JPEG options need to be defined before internal libtiff
-if (GDAL_USE_LIBJPEG_INTERNAL)
-  option(RENAME_INTERNAL_LIBJPEG_SYMBOLS "Rename internal libjpeg symbols" ON)
+if (GDAL_USE_JPEG_INTERNAL)
+  option(RENAME_INTERNAL_JPEG_SYMBOLS "Rename internal libjpeg symbols" ON)
   add_subdirectory(frmts/jpeg/libjpeg)
 endif ()
-option(GDAL_JPEG12_SUPPORTED "Set ON to use libjpeg12 support" ON)
-if (GDAL_JPEG12_SUPPORTED)
+option(GDAL_USE_JPEG12_INTERNAL "Set ON to use internal libjpeg12 support" ON)
+if (GDAL_USE_JPEG12_INTERNAL)
   add_subdirectory(frmts/jpeg/libjpeg12)
 endif ()
 
-if (GDAL_USE_LIBTIFF_INTERNAL)
-  option(RENAME_INTERNAL_LIBTIFF_SYMBOLS "Rename internal libtiff symbols" ON)
+if (GDAL_USE_TIFF_INTERNAL)
+  option(RENAME_INTERNAL_TIFF_SYMBOLS "Rename internal libtiff symbols" ON)
   add_subdirectory(frmts/gtiff/libtiff)
 endif ()
-if (GDAL_USE_LIBGEOTIFF_INTERNAL)
-  option(RENAME_INTERNAL_LIBGEOTIFF_SYMBOLS "Rename internal libgeotiff symbols" ON)
+if (GDAL_USE_GEOTIFF_INTERNAL)
+  option(RENAME_INTERNAL_GEOTIFF_SYMBOLS "Rename internal libgeotiff symbols" ON)
   add_subdirectory(frmts/gtiff/libgeotiff)
 endif ()
-if (GDAL_USE_GIFLIB_INTERNAL)
+if (GDAL_USE_GIF_INTERNAL)
   add_subdirectory(frmts/gif/giflib)
 endif ()
-if (GDAL_USE_LIBPNG_INTERNAL)
+if (GDAL_USE_PNG_INTERNAL)
   add_subdirectory(frmts/png/libpng)
 endif ()
-if (GDAL_USE_LIBLERC_INTERNAL)
+if (GDAL_USE_LERC_INTERNAL)
   add_subdirectory(third_party/LercLib)
 endif ()
 if (GDAL_USE_SHAPELIB_INTERNAL)
@@ -407,11 +408,11 @@ set(GDAL_RASTER_FORMAT_SOURCE_DIR "${PROJECT_SOURCE_DIR}/frmts")
 set(GDAL_VECTOR_FORMAT_SOURCE_DIR "${PROJECT_SOURCE_DIR}/ogr/ogrsf_frmts")
 
 # We need to forward declare a few OGR drivers because raster formats need them
-option(OGR_ENABLE_AVC "Set ON to build OGR AVC driver" ${OGR_BUILD_OPTIONAL_DRIVERS})
-cmake_dependent_option(OGR_ENABLE_SQLITE "Set ON to build OGR SQLite driver" ${OGR_BUILD_OPTIONAL_DRIVERS}
+option(OGR_ENABLE_DRIVER_AVC "Set ON to build OGR AVC driver" ${OGR_BUILD_OPTIONAL_DRIVERS})
+cmake_dependent_option(OGR_ENABLE_DRIVER_SQLITE "Set ON to build OGR SQLite driver" ${OGR_BUILD_OPTIONAL_DRIVERS}
                        "GDAL_USE_SQLITE3" OFF)
-cmake_dependent_option(OGR_ENABLE_GPKG "Set ON to build OGR GPKG driver" ${OGR_BUILD_OPTIONAL_DRIVERS}
-                       "GDAL_USE_SQLITE3;OGR_ENABLE_SQLITE" OFF)
+cmake_dependent_option(OGR_ENABLE_DRIVER_GPKG "Set ON to build OGR GPKG driver" ${OGR_BUILD_OPTIONAL_DRIVERS}
+                       "GDAL_USE_SQLITE3;OGR_ENABLE_DRIVER_SQLITE" OFF)
 
 add_subdirectory(frmts)
 add_subdirectory(ogr/ogrsf_frmts)
@@ -471,6 +472,8 @@ get_property(_plugins GLOBAL PROPERTY PLUGIN_MODULES)
 add_custom_target(gdal_plugins DEPENDS ${_plugins})
 
 # ######################################################################################################################
+
+# Note: this file is generated but not used.
 configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/gdal_def.h.in ${CMAKE_CURRENT_BINARY_DIR}/gcore/gdal_def.h @ONLY)
 
 # ######################################################################################################################
@@ -761,5 +764,17 @@ endif ()
 if (NOT SILENCE_EXPERIMENTAL_WARNING)
   message(WARNING "CMake builds are considered only EXPERIMENTAL for now. Do not use them for production.")
 endif ()
+
+if (DEFINED GDAL_USE_EXTERNAL_LIBS_OLD_CACHED)
+  if (GDAL_USE_EXTERNAL_LIBS_OLD_CACHED AND NOT GDAL_USE_EXTERNAL_LIBS)
+    message(
+      WARNING
+        "Setting GDAL_USE_EXTERNAL_LIBS=OFF after an initial invocation to ON may require to invoke CMake with \"-UGDAL_USE_*\""
+      )
+  endif ()
+endif ()
+set(GDAL_USE_EXTERNAL_LIBS_OLD_CACHED
+    ${GDAL_USE_EXTERNAL_LIBS}
+    CACHE INTERNAL "Previous value of GDAL_USE_EXTERNAL_LIBS")
 
 # vim: ts=4 sw=4 sts=4 et

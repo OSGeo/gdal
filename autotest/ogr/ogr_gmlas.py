@@ -837,7 +837,7 @@ class GMLASHTTPHandler(BaseHTTPRequestHandler):
 ###############################################################################
 # Test schema caching
 
-
+@pytest.mark.skipif('SKIP_OGR_GMLAS_HTTP_RELATED' in os.environ, reason='test skipped on CI due to timeout on Windows Conda builds with parallel ctest')
 def test_ogr_gmlas_cache():
 
     drv = gdal.GetDriverByName('HTTP')
@@ -1238,7 +1238,7 @@ def test_ogr_gmlas_remove_unused_layers_and_fields():
 ###############################################################################
 #  Test xlink resolution
 
-
+@pytest.mark.skipif('SKIP_OGR_GMLAS_HTTP_RELATED' in os.environ, reason='test skipped on CI due to timeout on Windows Conda builds with parallel ctest')
 def test_ogr_gmlas_xlink_resolver():
 
     drv = gdal.GetDriverByName('HTTP')

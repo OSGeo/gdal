@@ -12,14 +12,14 @@ on:
 jobs:
 
   windows_build:
-    runs-on: windows-latest
+    runs-on: windows-2022
     if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
 
     strategy:
       matrix:
         include:
-          - VS_VERSION: Visual Studio 16
-            VS_VER: 2019
+          - VS_VERSION: Visual Studio 17
+            VS_VER: 2022
             SDK: release-1911 # gisinternals SDK version still to 2017
             MSVC_VER: 1920
             platform: x86
@@ -76,7 +76,7 @@ jobs:
       - name: Set compiler environment
         shell: cmd
         run: |
-            if "%VS_VER%" == "2019" CALL "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\Tools\VsDevCmd.bat" -arch=%ARCHITECTURE%
+            if "%VS_VER%" == "2022" CALL "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat" -arch=%ARCHITECTURE%
             echo PATH=%PATH%>> %GITHUB_ENV%
             echo INCLUDE=%INCLUDE%>> %GITHUB_ENV%
             echo LIB=%LIB%>> %GITHUB_ENV%

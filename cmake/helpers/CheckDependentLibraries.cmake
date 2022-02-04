@@ -14,24 +14,32 @@ include(FeatureSummary)
 include(DefineFindPackage2)
 include(CheckSymbolExists)
 
+option(
+  GDAL_USE_EXTERNAL_LIBS
+  "Whether detected external libraries should be used by default. This should be set before CMakeCache.txt is created."
+  ON)
+
 # Macro to declare a package Accept a CAN_DISABLE option to specify that the package can be disabled if found, with the
 # GDAL_USE_{name in upper case} option. Accept a DISABLED_BY_DEFAULT option to specify that the default value of
 # GDAL_USE_ is OFF. Accept a RECOMMENDED option
 macro (gdal_check_package name purpose)
-  set(_options CONFIG CAN_DISABLE RECOMMENDED DISABLED_BY_DEFAULT)
-  set(_oneValueArgs)
+  set(_options CONFIG CAN_DISABLE RECOMMENDED DISABLED_BY_DEFAULT ALWAYS_ON_WHEN_FOUND)
+  set(_oneValueArgs VERSION)
   set(_multiValueArgs COMPONENTS)
   cmake_parse_arguments(_GCP "${_options}" "${_oneValueArgs}" "${_multiValueArgs}" ${ARGN})
   string(TOUPPER ${name} key)
   find_package2(${name} QUIET)
   if (NOT DEFINED ${key}_FOUND)
-    if (_GCP_CONFIG)
-      find_package(${name} CONFIG)
-    elseif (_GCP_COMPONENTS)
-      find_package(${name} COMPONENTS ${_GCP_COMPONENTS})
-    else ()
-      find_package(${name})
+    set(_find_package_args)
+    if (_GCP_VERSION)
+      list(APPEND _find_package_args ${_GCP_VERSION})
     endif ()
+    if (_GCP_CONFIG)
+      list(APPEND _find_package_args CONFIG)
+    elseif (_GCP_COMPONENTS)
+      list(APPEND _find_package_args COMPONENTS ${_GCP_COMPONENTS})
+    endif ()
+    find_package(${name} ${_find_package_args})
   endif ()
   if (${key}_FOUND OR ${name}_FOUND)
     set(HAVE_${key} ON)
@@ -50,20 +58,30 @@ macro (gdal_check_package name purpose)
       set_package_properties(${name} PROPERTIES PURPOSE ${purpose})
     endif ()
   endif ()
+
   if (_GCP_CAN_DISABLE OR _GCP_DISABLED_BY_DEFAULT)
+    set(_gcpp_status ON)
     if (GDAL_USE_${key})
       if (NOT HAVE_${key})
         message(FATAL_ERROR "Configured to use ${key}, but not found")
       endif ()
+    elseif (NOT GDAL_USE_EXTERNAL_LIBS)
+      set(_gcpp_status OFF)
+      if (HAVE_${key} AND NOT GDAL_USE_${key})
+        message(
+          "${key} has been found, but is disabled due to GDAL_USE_EXTERNAL_LIBS=OFF. Enable it by setting GDAL_USE_${key}=ON"
+          )
+      endif ()
     endif ()
-    set(_gcpp_status ON)
-    if (_GCP_DISABLED_BY_DEFAULT)
+    if (_gcpp_status AND _GCP_DISABLED_BY_DEFAULT)
       set(_gcpp_status OFF)
       if (HAVE_${key} AND NOT GDAL_USE_${key})
         message("${key} has been found, but is disabled by default. Enable it by setting GDAL_USE_${key}=ON")
       endif ()
     endif ()
     cmake_dependent_option(GDAL_USE_${key} "Set ON to use ${key}" ${_gcpp_status} "HAVE_${key}" OFF)
+  elseif (NOT _GCP_ALWAYS_ON_WHEN_FOUND)
+    message(FATAL_ERROR "Programming error: missing CAN_DISABLE or DISABLED_BY_DEFAULT option for component ${name}")
   endif ()
 endmacro ()
 
@@ -74,6 +92,34 @@ function (split_libpath _lib)
     get_filename_component(_name ${${_lib}} NAME_WE)
     string(REGEX REPLACE "^lib" "" _name ${_name})
     set(${_lib} -L${_path} -l${_name})
+  endif ()
+endfunction ()
+
+function (invert_on_off arg out)
+  if (${arg})
+    set(${out}
+        OFF
+        PARENT_SCOPE)
+  else ()
+    set(${out}
+        ON
+        PARENT_SCOPE)
+  endif ()
+endfunction ()
+
+function (gdal_internal_library libname)
+  set(_options REQUIRED)
+  set(_oneValueArgs)
+  set(_multiValueArgs)
+  cmake_parse_arguments(_GIL "${_options}" "${_oneValueArgs}" "${_multiValueArgs}" ${ARGN})
+  invert_on_off(GDAL_USE_${libname} NOT_GDAL_USE_${libname})
+  set(GDAL_USE_${libname}_INTERNAL
+      ${NOT_GDAL_USE_${libname}}
+      CACHE BOOL "Use internal ${libname} copy (if set to ON, has precedence over GDAL_USE_${libname})")
+  if (_GIL_REQUIRED
+      AND (NOT GDAL_USE_${libname})
+      AND (NOT GDAL_USE_${libname}_INTERNAL))
+    message(FATAL_ERROR "GDAL_USE_${libname} or GDAL_USE_${libname}_INTERNAL must be set to ON")
   endif ()
 endfunction ()
 
@@ -136,152 +182,63 @@ gdal_check_package(LibXml2 "Read and write XML formats" CAN_DISABLE)
 
 gdal_check_package(EXPAT "Read and write XML formats" RECOMMENDED CAN_DISABLE)
 gdal_check_package(XercesC "Read and write XML formats (needed for GMLAS and ILI drivers)" CAN_DISABLE)
-if (HAVE_EXPAT OR GDAL_USE_XERCESC)
-  set(HAVE_XMLPARSER ON)
-else ()
-  set(HAVE_XMLPARSER OFF)
-endif ()
 
 gdal_check_package(ZLIB "zlib (external)" CAN_DISABLE)
-if (NOT GDAL_USE_ZLIB)
-  set(GDAL_USE_ZLIB_INTERNAL
-      ON
-      CACHE BOOL "Use internal zlib copy (if set to ON, has precedence over GDAL_USE_ZLIB)")
-  if (NOT GDAL_USE_ZLIB_INTERNAL)
-    message(FATAL_ERROR "GDAL_USE_ZLIB or GDAL_USE_ZLIB_INTERNAL must be set to ON")
-  endif ()
-else ()
-  set(GDAL_USE_ZLIB_INTERNAL
-      OFF
-      CACHE BOOL "Use internal zlib copy (if set to ON, has precedence over GDAL_USE_ZLIB)")
-endif ()
+gdal_internal_library(ZLIB REQUIRED)
 
 gdal_check_package(Deflate "Enable libdeflate compression library (complement to ZLib)" CAN_DISABLE)
 
-find_package(OpenSSL COMPONENTS SSL Crypto)
-if (GDAL_USE_OPENSSL)
-  if (NOT OPENSSL_FOUND)
-    message(FATAL_ERROR "Configured to use GDAL_USE_OPENSSL, but not found")
-  endif ()
-endif ()
-cmake_dependent_option(GDAL_USE_OPENSSL "Set ON to use OpenSSL" ON OPENSSL_FOUND OFF)
+gdal_check_package(OpenSSL "Use OpenSSL library" COMPONENTS SSL Crypto CAN_DISABLE)
 
 gdal_check_package(CryptoPP "Use crypto++ library for CPL." CAN_DISABLE)
 if (GDAL_USE_CRYPTOPP)
   option(CRYPTOPP_USE_ONLY_CRYPTODLL_ALG "Use Only cryptoDLL alg. only work on dynamic DLL" OFF)
 endif ()
 
-find_package(PROJ 6.0 REQUIRED)
+# First check with CMake config files, and then fallback to the FindPROJ module.
+find_package(PROJ 8.0 CONFIG)
+if (NOT PROJ_FOUND)
+  find_package(PROJ 6.0 REQUIRED)
+endif ()
 
-find_package(TIFF 4.0)
-if (TIFF_FOUND)
-  set(HAVE_TIFF ON)
-  set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} ${TIFF_INCLUDE_DIR})
-  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${TIFF_LIBRARIES})
-  set(GDAL_USE_LIBTIFF_INTERNAL
-      OFF
-      CACHE BOOL "")
-endif ()
-if (NOT HAVE_TIFF)
-  set(GDAL_USE_LIBTIFF_INTERNAL
-      ON
-      CACHE BOOL "")
-endif ()
+gdal_check_package(TIFF "Support for the Tag Image File Format (TIFF)." VERSION 4.0 CAN_DISABLE)
 set_package_properties(
   TIFF PROPERTIES
   URL "https://libtiff.gitlab.io/libtiff/"
-  DESCRIPTION "support for the Tag Image File Format (TIFF)."
+  DESCRIPTION "Support for the Tag Image File Format (TIFF)."
   TYPE RECOMMENDED)
+gdal_internal_library(TIFF REQUIRED)
 
 gdal_check_package(ZSTD "ZSTD compression library" CAN_DISABLE)
 gdal_check_package(SFCGAL "gdal core supports ISO 19107:2013 and OGC Simple Features Access 1.2 for 3D operations"
                    CAN_DISABLE)
 
 gdal_check_package(GeoTIFF "libgeotiff library (external)" CAN_DISABLE)
-if (NOT GDAL_USE_GEOTIFF)
-  set(GDAL_USE_LIBGEOTIFF_INTERNAL
-      ON
-      CACHE BOOL "Use internal libgeotiff copy (if set to ON, has precedence over GDAL_USE_GEOTIFF)")
-  if (NOT GDAL_USE_LIBGEOTIFF_INTERNAL)
-    message(FATAL_ERROR "GDAL_USE_GEOTIFF or GDAL_USE_LIBGEOTIFF_INTERNAL must be set to ON")
-  endif ()
-else ()
-  set(GDAL_USE_LIBGEOTIFF_INTERNAL
-      OFF
-      CACHE BOOL "Use internal libgeotiff copy (if set to ON, has precedence over GDAL_USE_GEOTIFF)")
-endif ()
+gdal_internal_library(GEOTIFF REQUIRED)
 
 gdal_check_package(PNG "PNG compression library (external)" CAN_DISABLE)
-if (NOT GDAL_USE_PNG)
-  set(GDAL_USE_LIBPNG_INTERNAL
-      ON
-      CACHE BOOL "Use internal libpng copy (if set to ON, has precedence over GDAL_USE_PNG)")
-else ()
-  set(GDAL_USE_LIBPNG_INTERNAL
-      OFF
-      CACHE BOOL "Use internal libpng copy (if set to ON, has precedence over GDAL_USE_PNG)")
-endif ()
+gdal_internal_library(PNG)
 
 gdal_check_package(JPEG "JPEG compression library (external)" CAN_DISABLE)
-if (NOT GDAL_USE_JPEG)
-  set(GDAL_USE_LIBJPEG_INTERNAL
-      ON
-      CACHE BOOL "Use internal libjpeg copy (if set to ON, has precedence over GDAL_USE_JPEG)")
-else ()
-  set(GDAL_USE_LIBJPEG_INTERNAL
-      OFF
-      CACHE BOOL "Use internal libjpeg copy (if set to ON, has precedence over GDAL_USE_JPEG)")
+if (GDAL_USE_JPEG AND (JPEG_LIBRARY MATCHES ".*turbojpeg\.(so|lib)"))
+  message(
+    FATAL_ERROR
+      "JPEG_LIBRARY should point to a library with libjpeg ABI, not TurboJPEG. See https://libjpeg-turbo.org/About/TurboJPEG for the difference"
+    )
 endif ()
+gdal_internal_library(JPEG)
 
 gdal_check_package(GIF "GIF compression library (external)" CAN_DISABLE)
-if (NOT GDAL_USE_GIF)
-  set(GDAL_USE_GIFLIB_INTERNAL
-      ON
-      CACHE BOOL "Use internal giflib copy (if set to ON, has precedence over GDAL_USE_GIF)")
-else ()
-  set(GDAL_USE_GIFLIB_INTERNAL
-      OFF
-      CACHE BOOL "Use internal giflib copy (if set to ON, has precedence over GDAL_USE_GIF)")
-endif ()
+gdal_internal_library(GIF)
 
 gdal_check_package(JSONC "json-c library (external)" CAN_DISABLE)
-if (NOT GDAL_USE_JSONC)
-  set(GDAL_USE_LIBJSONC_INTERNAL
-      ON
-      CACHE BOOL "Use internal libjson-c copy (if set to ON, has precedence over GDAL_USE_JSONC)")
-  if (NOT GDAL_USE_LIBJSONC_INTERNAL)
-    message(FATAL_ERROR "GDAL_USE_JSONC or GDAL_USE_LIBJSONC_INTERNAL must be set to ON")
-  endif ()
-else ()
-  set(GDAL_USE_LIBJSONC_INTERNAL
-      OFF
-      CACHE BOOL "Use internal libjson-c copy (if set to ON, has precedence over GDAL_USE_JSONC)")
-endif ()
+gdal_internal_library(JSONC REQUIRED)
 
 gdal_check_package(OpenCAD "libopencad (external, used by OpenCAD driver)" CAN_DISABLE)
-if (NOT GDAL_USE_OPENCAD)
-  set(GDAL_USE_OPENCAD_INTERNAL
-      ON
-      CACHE BOOL "Use internal libopencad copy (if set to ON, has precedence over GDAL_USE_OPENCAD)")
-else ()
-  set(GDAL_USE_OPENCAD_INTERNAL
-      OFF
-      CACHE BOOL "Use internal libopencad copy (if set to ON, has precedence over GDAL_USE_OPENCAD)")
-endif ()
+gdal_internal_library(OPENCAD)
 
 gdal_check_package(QHULL "Enable QHULL (external)" CAN_DISABLE)
-if (NOT GDAL_USE_QHULL)
-  set(GDAL_USE_QHULL_INTERNAL
-      ON
-      CACHE BOOL "Use internal QHULL copy (if set to ON, has precedence over GDAL_USE_QHULL)")
-  if (NOT GDAL_USE_QHULL_INTERNAL)
-    message(FATAL_ERROR "GDAL_USE_QHULL or GDAL_USE_QHULL_INTERNAL must be set to ON")
-  endif ()
-else ()
-  set(GDAL_USE_QHULL_INTERNAL
-      OFF
-      CACHE BOOL "Use internal QHULL copy (if set to ON, has precedence over GDAL_USE_QHULL)")
-endif ()
+gdal_internal_library(QHULL)
 
 # libcsf upstream is now at https://github.com/pcraster/rasterformat, but the library name has been changed to
 # pcraster_raster_format and it is forced as a static library (at least as of commit
@@ -294,19 +251,11 @@ endif ()
 # driver with internal libcsf (if set to ON, has precedence over GDAL_USE_LIBCSF)") endif ()
 set(GDAL_USE_LIBCSF_INTERNAL ON)
 
-option(GDAL_USE_LIBLERCV1_INTERNAL "Set ON to build mrf driver with internal libLERC V1" ON)
+option(GDAL_USE_LERCV1_INTERNAL "Set ON to build mrf driver with internal libLERC V1" ON)
 
 # DISABLED_BY_DEFAULT since it prevents MRF Lerc support (see frmts/mrf/CMakeLists.txt)
 gdal_check_package(LERC "Enable LERC (external)" CAN_DISABLE DISABLED_BY_DEFAULT)
-if (NOT GDAL_USE_LERC)
-  set(GDAL_USE_LIBLERC_INTERNAL
-      ON
-      CACHE BOOL "Use internal liblerc copy (if set to ON, has precedence over GDAL_USE_LERC)")
-else ()
-  set(GDAL_USE_LIBLERC_INTERNAL
-      OFF
-      CACHE BOOL "Use internal liblerc copy (if set to ON, has precedence over GDAL_USE_LERC)")
-endif ()
+gdal_internal_library(LERC)
 
 # Disable by default the use of external shapelib, as currently the SAOffset member that holds file offsets in it is a
 # 'unsigned long', hence 32 bit on 32 bit platforms, whereas we can handle DBFs file > 4 GB. Internal shapelib has not
@@ -487,7 +436,7 @@ gdal_check_package(HDF4 "Enable HDF4 driver" CAN_DISABLE)
 define_find_package2(KEA libkea/KEACommon.h kea)
 gdal_check_package(KEA "Enable KEA driver" CAN_DISABLE)
 
-gdal_check_package(ECW "Enable ECW driver")
+gdal_check_package(ECW "Enable ECW driver" CAN_DISABLE)
 gdal_check_package(NetCDF "Enable netCDF driver" CAN_DISABLE)
 gdal_check_package(OGDI "Enable ogr_OGDI driver" CAN_DISABLE)
 # OpenCL warping gives different results than the ones expected by autotest, so disable it by default even if found.
@@ -503,10 +452,10 @@ gdal_check_package(JXL "JPEG-XL compression (when used with internal libtiff)" C
 
 gdal_check_package(CharLS "enable gdal_JPEGLS jpeg loss-less driver" CAN_DISABLE)
 # unused for now gdal_check_package(OpenMP "")
-gdal_check_package(Crnlib "enable gdal_DDS driver")
-gdal_check_package(IDB "enable ogr_IDB driver")
+gdal_check_package(Crnlib "enable gdal_DDS driver" CAN_DISABLE)
+gdal_check_package(IDB "enable ogr_IDB driver" CAN_DISABLE)
 # TODO: implement FindRASDAMAN libs: -lrasodmg -lclientcomm -lcompression -lnetwork -lraslib
-gdal_check_package(RASDAMAN "enable rasdaman driver")
+gdal_check_package(RASDAMAN "enable rasdaman driver" CAN_DISABLE)
 gdal_check_package(rdb "enable RIEGL RDB library" CONFIG CAN_DISABLE)
 gdal_check_package(TileDB "enable TileDB driver" CONFIG CAN_DISABLE)
 gdal_check_package(OpenEXR "OpenEXR >=2.2" CAN_DISABLE)
@@ -554,12 +503,12 @@ unset(TMP_GRASS)
 gdal_check_package(HDFS "Enable Hadoop File System through native library" CAN_DISABLE)
 
 # PDF library: one of them enables PDF driver
-gdal_check_package(Poppler "Enable PDF driver (read side)" CAN_DISABLE)
+gdal_check_package(Poppler "Enable PDF driver with Poppler (read side)" CAN_DISABLE)
 
 define_find_package2(PDFium public/fpdfview.h pdfium FIND_PATH_SUFFIX pdfium)
-gdal_check_package(PDFium "Enable PDF driver (read side)" CAN_DISABLE)
+gdal_check_package(PDFium "Enable PDF driver with Pdfium (read side)" CAN_DISABLE)
 
-gdal_check_package(Podofo "Enable PDF driver (read side)" CAN_DISABLE)
+gdal_check_package(Podofo "Enable PDF driver with Podofo (read side)" CAN_DISABLE)
 if (GDAL_USE_POPPLER
     OR GDAL_USE_PDFIUM
     OR GDAL_USE_PODOFO)
@@ -569,7 +518,7 @@ else ()
 endif ()
 
 set(Oracle_CAN_USE_CLNTSH_AS_MAIN_LIBRARY ON)
-gdal_check_package(Oracle "Enable Oracle OCI driver")
+gdal_check_package(Oracle "Enable Oracle OCI driver" CAN_DISABLE)
 gdal_check_package(TEIGHA "Enable DWG and DGNv8 drivers" CAN_DISABLE)
 gdal_check_package(FileGDB "Enable FileGDB (based on closed-source SDK) driver" CAN_DISABLE)
 
@@ -579,11 +528,10 @@ option(GDAL_USE_PUBLICDECOMPWT
 # proprietary libraries KAKADU
 gdal_check_package(KDU "Enable KAKADU" CAN_DISABLE)
 gdal_check_package(LURATECH "Enable JP2Lura driver" CAN_DISABLE)
-gdal_check_package(FME "FME")
-gdal_check_package(IDB "Informix DataBlade client")
+# gdal_check_package(FME "FME")
 
 # bindings
-gdal_check_package(SWIG "Enable language bindings")
+gdal_check_package(SWIG "Enable language bindings" ALWAYS_ON_WHEN_FOUND)
 set_package_properties(
   SWIG PROPERTIES
   DESCRIPTION

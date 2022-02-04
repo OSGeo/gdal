@@ -157,6 +157,16 @@ following option:
 
     Control whether a found dependency can be used for the GDAL build.
 
+It is also possible to ask GDAL to disable the use of any external dependency
+(besides the required one, PROJ) by default by setting the following option to
+OFF. Individual libraries shall then be enabled explicitly with
+GDAL_USE_<Packagename_in_upper_case>:BOOL=ON.
+
+.. option:: GDAL_USE_EXTERNAL_LIBS:BOOL=ON/OFF
+
+     This option should be set before CMakeCache.txt is created. If it is set
+     to OFF after CMakeCache.txt is created, then cmake should be reinvoked with
+     "-UGDAL_USE_*" to cancel the activation of previously detected libraries.
 
 Armadillo
 *********
@@ -166,6 +176,10 @@ Thin Plate Spline transformer. See https://cmake.org/cmake/help/latest/module/Fi
 for details.
 On Windows builds using Conda-Forge depedencies, the following packages may also
 need to be installed: ``blas blas-devel libblas libcblas liblapack liblapacke``
+
+.. option:: GDAL_USE_ARMADILLO=ON/OFF
+
+    Control whether to use Armadillo. Defaults to ON when Armadillo is found.
 
 
 Blosc
@@ -241,6 +255,10 @@ required for the :ref:`raster.dds` driver.
 .. option:: Crnlib_LIBRARY
 
   Path to Crnlib library to be linked.
+
+.. option:: GDAL_USE_CRNLIB=ON/OFF
+
+    Control whether to use Crnlib. Defaults to ON when Crnlib is found.
 
 
 CURL
@@ -345,6 +363,10 @@ ending with ERDAS-ECW_JPEG_2000_SDK-5.5.0/Desktop_Read-Only.
 
     Path to library file libNCSUtil (only needed for SDK 3.3)
 
+.. option:: GDAL_USE_ECW=ON/OFF
+
+    Control whether to use ECW. Defaults to ON when ECW is found.
+
 
 EXPAT
 *****
@@ -392,6 +414,10 @@ FileGDB_ROOT or CMAKE_PREFIX_PATH should point to the directory of the SDK.
 .. option:: FileGDB_LIBRARY_DEBUG
 
     Path to Debug library file (only used on Windows)
+
+.. option:: GDAL_USE_FILEGDB=ON/OFF
+
+    Control whether to use FileGDB. Defaults to ON when FileGDB is found.
 
 
 FreeXL
@@ -460,7 +486,7 @@ If not found, an internal copy of libgeotiff will be used.
 
     Control whether to use external libgeotiff. Defaults to ON when external libgeotiff is found.
 
-.. option:: GDAL_USE_LIBGEOTIFF_INTERNAL=ON/OFF
+.. option:: GDAL_USE_GEOTIFF_INTERNAL=ON/OFF
 
     Control whether to use internal libgeotiff copy. Defaults to ON when external
     libgeotiff is not found.
@@ -505,7 +531,7 @@ If not found, an internal copy will be used.
 
     Control whether to use external giflib. Defaults to ON when external giflib is found.
 
-.. option:: GDAL_USE_GIFLIB_INTERNAL=ON/OFF
+.. option:: GDAL_USE_GIF_INTERNAL=ON/OFF
 
     Control whether to use internal giflib copy. Defaults to ON when external
     giflib is not found.
@@ -524,7 +550,7 @@ The `GTA <https://marlam.de/gta/>`_ library is required for the :ref:`raster.gta
 
     Path to a shared or static library file.
 
-.. option:: GDAL_USE_KEY=ON/OFF
+.. option:: GDAL_USE_GTA=ON/OFF
 
     Control whether to use GTA. Defaults to ON when GTA is found.
 
@@ -611,6 +637,10 @@ The HDF5 CXX library is needed for the :ref:`raster.kea` driver.
 The https://cmake.org/cmake/help/latest/module/FindHDF5.html module is used to
 detect the HDF5 library.
 
+.. option:: GDAL_USE_HDF5=ON/OFF
+
+    Control whether to use HDF5. Defaults to ON when HDF5 is found.
+
 
 HDFS
 ****
@@ -681,6 +711,10 @@ IDB_ROOT or CMAKE_PREFIX_PATH should point to the directory of the SDK.
 
     Path to a library file ``ifcli`` (typically in the ``lib/cli`` sub directory)
 
+.. option:: GDAL_USE_IDB=ON/OFF
+
+    Control whether to use IDB. Defaults to ON when IDB is found.
+
 
 JPEG
 ****
@@ -692,6 +726,12 @@ Using `libjpeg-turbo <https://github.com/libjpeg-turbo/libjpeg-turbo>`_ is highl
 recommended to get best performance.
 See https://cmake.org/cmake/help/latest/module/FindJPEG.html for more details
 on how the library is detected.
+
+.. note::
+
+    When using libjpeg-turbo, JPEG_LIBRARY[_RELEASE/_DEBUG] should point to a
+    library with libjpeg ABI, not TurboJPEG.
+    See https://libjpeg-turbo.org/About/TurboJPEG for the difference.
 
 .. option:: JPEG_INCLUDE_DIR
 
@@ -707,10 +747,24 @@ on how the library is detected.
 
     Control whether to use external libjpeg. Defaults to ON when external libjpeg is found.
 
-.. option:: GDAL_USE_LIBJPEG_INTERNAL=ON/OFF
+.. option:: GDAL_USE_JPEG_INTERNAL=ON/OFF
 
     Control whether to use internal libjpeg copy. Defaults to ON when external
     libjpeg is not found.
+
+
+JPEG12
+******
+
+libjpeg-12 bit can be used by the :ref:`raster.jpeg`, :ref:`raster.gtiff` (when using internal libtiff),
+:ref:`raster.jpeg`, :ref:`raster.marfa` and :ref:`raster.nitf` drivers to handle
+JPEG images with a 12 bit depth. It is only supported with the internal libjpeg (6b).
+This can be used independently of if for regular 8 bit JPEG an external or internal
+libjpeg is used.
+
+.. option:: GDAL_USE_JPEG12_INTERNAL=ON/OFF
+
+    Control whether to use internal libjpeg-12 copy. Defaults to ON.
 
 
 JSON-C
@@ -733,7 +787,7 @@ If not found, an internal copy of json-c will be used.
 
     Control whether to use JSON-C. Defaults to ON when JSON-C is found.
 
-.. option:: GDAL_USE_LIBJSONC_INTERNAL=ON/OFF
+.. option:: GDAL_USE_JSONC_INTERNAL=ON/OFF
 
     Control whether to use internal JSON-C copy. Defaults to ON when external
     JSON-C is not found.
@@ -753,6 +807,10 @@ It can be detected with pkg-config.
 .. option:: JXL_LIBRARY
 
     Path to a shared or static library file.
+
+.. option:: GDAL_USE_JXL=ON/OFF
+
+    Control whether to use JXL. Defaults to ON when JXL is found.
 
 
 KDU
@@ -780,6 +838,10 @@ and KDU_AUX_LIBRARY variable.
 
     Path to a shared library file whose name is like libkdu_aXYR.so on Unix
     or kdu_aXYR.lib on Windows, where X.Y is the Kakadu version.
+
+.. option:: GDAL_USE_KDU=ON/OFF
+
+    Control whether to use KDU. Defaults to ON when KDU is found.
 
 KEA
 ***
@@ -828,7 +890,7 @@ of the original input image is preserved (within user defined error bounds).
 
     Control whether to use LERC (V2). Defaults to *OFF* when LERC (V2) is found.
 
-.. option:: GDAL_USE_LIBLERC_INTERNAL=ON/OFF
+.. option:: GDAL_USE_LERC_INTERNAL=ON/OFF
 
     Control whether to use the LERC (V2) internal library. Defaults to ON,
     unless GDAL_USE_LERC is set to ON.
@@ -840,7 +902,7 @@ LERCV1
 This is an internal library used by the :ref:`raster.marfa` driver. It offers the
 LERC v1 compression.
 
-.. option:: GDAL_USE_LIBLERCV1_INTERNAL=ON/OFF
+.. option:: GDAL_USE_LERCV1_INTERNAL=ON/OFF
 
     Control whether to use the Lerc V1 internal library. Defaults to ON.
 
@@ -928,6 +990,10 @@ LURATECH_ROOT or CMAKE_PREFIX_PATH should point to the directory of the SDK.
 
     Path to library file lib_lwf_jp2.a / lwf_jp2.lib
 
+.. option:: GDAL_USE_LURATECH=ON/OFF
+
+    Control whether to use LURATECH. Defaults to ON when LURATECH is found.
+
 
 LZ4
 ***
@@ -998,12 +1064,12 @@ be found.
 
     Path to library file libltidsdk
 
-.. option:: GDAL_ENABLE_FRMT_JP2MRSID
+.. option:: GDAL_ENABLE_DRIVER_JP2MRSID
 
     Whether to enable JPEG2000 support through the MrSID SDK. The default value
     of this option is OFF.
 
-.. option:: GDAL_USE_MRSDI=ON/OFF
+.. option:: GDAL_USE_MRSID=ON/OFF
 
     Control whether to use MRSID. Defaults to ON when MRSID is found.
 
@@ -1028,6 +1094,10 @@ The library is normally found if installed in standard location, and at version 
 
   Path to library to be linked.
 
+.. option:: GDAL_USE_MSSQL_NCLI=ON/OFF
+
+    Control whether to use MSSQL_NCLI. Defaults to ON when MSSQL_NCLI is found.
+
 
 MSSQL_ODBC
 **********
@@ -1048,6 +1118,10 @@ The library is normally found if installed in standard location, and at version 
 .. option:: MSSQL_ODBC_LIBRARY
 
   Path to library to be linked.
+
+.. option:: GDAL_USE_MSSQL_ODBC=ON/OFF
+
+    Control whether to use MSSQL_ODBC. Defaults to ON when MSSQL_ODBC is found.
 
 
 MYSQL
@@ -1103,6 +1177,10 @@ It is normally automatically found in system directories on Unix and Windows.
 .. option:: ODBC_LIBRARY
 
   Path to ODBC library to be linked.
+
+.. option:: GDAL_USE_ODBC=ON/OFF
+
+    Control whether to use ODBC. Defaults to ON when ODBC is found.
 
 
 OGDI
@@ -1169,6 +1247,10 @@ Get real specific and set
 ``OpenEXR_HALF_LIBRARY``, ``OpenEXR_IEX_LIBRARY``
 explicitly
 
+.. option:: GDAL_USE_OPENEXR=ON/OFF
+
+    Control whether to use OpenEXR. Defaults to ON when OpenEXR is found.
+
 
 OpenJPEG
 ********
@@ -1187,7 +1269,7 @@ JPEG-2000 codec written in C language. It is required for the
 
 .. option:: GDAL_USE_OPENJPEG=ON/OFF
 
-    Control whether to use OpenJPEG. Defaults to *OFF* when OpenJPEG is found.
+    Control whether to use OpenJPEG. Defaults to ON when OpenJPEG is found.
 
 
 OpenSSL
@@ -1201,6 +1283,10 @@ images or use the :ref:`/vsigs/ <vsigs>` virtual file system.
 See https://cmake.org/cmake/help/latest/module/FindOpenSSL.html for details on
 how to configure the library
 
+.. option:: GDAL_USE_OPENSSL=ON/OFF
+
+    Control whether to use OpenSSL. Defaults to ON when OpenSSL is found.
+
 
 Oracle
 ******
@@ -1211,6 +1297,10 @@ The Oracle Instant Client SDK (closed source/proprietary) is required for the
 .. option:: Oracle_ROOT
 
     Path to the root directory of the Oracle Instant Client SDK
+
+.. option:: GDAL_USE_ORACLE=ON/OFF
+
+    Control whether to use Oracle. Defaults to ON when Oracle is found.
 
 
 PCRE2
@@ -1226,6 +1316,10 @@ Regular Expressions support. It is used for the REGEXP operator in drivers using
 .. option:: PCRE2_LIBRARY
 
     Path to a shared or static library file with "pcre2-8" in its name
+
+.. option:: GDAL_USE_PCRE2=ON/OFF
+
+    Control whether to use PCRE2. Defaults to ON when PCRE2 is found.
 
 
 PDFium
@@ -1270,7 +1364,7 @@ on how the library is detected.
 
     Control whether to use external libpng. Defaults to ON when external libpng is found.
 
-.. option:: GDAL_USE_LIBPNG_INTERNAL=ON/OFF
+.. option:: GDAL_USE_PNG_INTERNAL=ON/OFF
 
     Control whether to use internal libpng copy. Defaults to ON when external
     libpng is not found.
@@ -1388,6 +1482,10 @@ The `RDB <https://repository.riegl.com/software/libraries/rdblib>`
 (closed source/proprietary) library is required for the :ref:`raster.rdb` driver.
 Specify install prefix in the ``CMAKE_PREFIX_PATH`` variable.
 
+.. option:: GDAL_USE_RDB=ON/OFF
+
+    Control whether to use rdb. Defaults to ON when rdb is found.
+
 
 SPATIALITE
 **********
@@ -1486,6 +1584,10 @@ The TEIGHA_ROOT variable must be set.
     Otherwise this variable must be set for recent SDK versions (at least with
     2021 and later).
 
+.. option:: GDAL_USE_TEIGHA=ON/OFF
+
+    Control whether to use TEIGHA. Defaults to ON when TEIGHA is found.
+
 
 TIFF
 ****
@@ -1509,7 +1611,7 @@ If not found, an internal copy of libtiff will be used.
 
     Control whether to use external libtiff. Defaults to ON when external libtiff is found.
 
-.. option:: GDAL_USE_LIBTIFF_INTERNAL=ON/OFF
+.. option:: GDAL_USE_TIFF_INTERNAL=ON/OFF
 
     Control whether to use internal libtiff copy. Defaults to ON when external
     libtiff is not found.
@@ -1520,6 +1622,10 @@ TileDB
 
 The `TileDB <https://github.com/TileDB-Inc/TileDB>` library is required for the :ref:`raster.tiledb` driver.
 Specify install prefix in the ``CMAKE_PREFIX_PATH`` variable.
+
+.. option:: GDAL_USE_TILEDB=ON/OFF
+
+    Control whether to use TileDB. Defaults to ON when TileDB is found.
 
 
 WebP
@@ -1617,9 +1723,9 @@ built-in in the GDAL core library.
 
 The following options are available to select a subset of drivers:
 
-.. option:: GDAL_ENABLE_FRMT_<driver_name>:BOOL=ON/OFF
+.. option:: GDAL_ENABLE_DRIVER_<driver_name>:BOOL=ON/OFF
 
-.. option:: OGR_ENABLE_<driver_name>:BOOL=ON/OFF
+.. option:: OGR_ENABLE_DRIVER_<driver_name>:BOOL=ON/OFF
 
     Independently of options that control global behavior, drivers can be individually
     enabled or disabled with those options.
@@ -1630,23 +1736,23 @@ The following options are available to select a subset of drivers:
 
     Globally enable/disable all GDAL/raster or OGR/vector drivers.
     More exactly, setting those variables to ON affect the default value of the
-    ``GDAL_ENABLE_FRMT_<driver_name>`` or ``OGR_ENABLE_<driver_name>`` variables
+    ``GDAL_ENABLE_DRIVER_<driver_name>`` or ``OGR_ENABLE_DRIVER_<driver_name>`` variables
     (when they are not yet set).
 
     This can be combined with individual activation of a subset of drivers by using
-    the ``GDAL_ENABLE_FRMT_<driver_name>:BOOL=ON`` or ``OGR_ENABLE_<driver_name>:BOOL=ON``
+    the ``GDAL_ENABLE_DRIVER_<driver_name>:BOOL=ON`` or ``OGR_ENABLE_DRIVER_<driver_name>:BOOL=ON``
     variables. Note that changing the value of GDAL_BUILD_OPTIONAL_DRIVERS/
     OGR_BUILD_OPTIONAL_DRIVERS after a first run of CMake does not change the
     activation of individual drivers. It might be needed to pass
-    ``-UGDAL_ENABLE_FRMT_* -UOGR_ENABLE_*`` to reset their state.
+    ``-UGDAL_ENABLE_DRIVER_* -UOGR_ENABLE_DRIVER_*`` to reset their state.
 
 
 Example of minimal build with the JP2OpenJPEG and SVG drivers enabled::
 
-    cmake .. -UGDAL_ENABLE_FRMT_* -UOGR_ENABLE_* \
+    cmake .. -UGDAL_ENABLE_DRIVER_* -UOGR_ENABLE_DRIVER_* \
              -DGDAL_BUILD_OPTIONAL_DRIVERS:BOOL=OFF -DOGR_BUILD_OPTIONAL_DRIVERS:BOOL=OFF \
-             -DGDAL_ENABLE_FRMT_JP2OPENPEG:BOOL=ON \
-             -DOGR_ENABLE_SVG:BOOL=ON
+             -DGDAL_ENABLE_DRIVER_JP2OPENPEG:BOOL=ON \
+             -DOGR_ENABLE_DRIVER_SVG:BOOL=ON
 
 Build drivers as plugins
 ++++++++++++++++++++++++
@@ -1664,36 +1770,36 @@ The list of drivers that can be built as plugins can be obtained with::
 The following options are available to select the plugin/builtin status of
 a driver:
 
-.. option:: GDAL_ENABLE_FRMT_<driver_name>_PLUGIN:BOOL=ON/OFF
+.. option:: GDAL_ENABLE_DRIVER_<driver_name>_PLUGIN:BOOL=ON/OFF
 
-.. option:: OGR_ENABLE_<driver_name>_PLUGIN:BOOL=ON/OFF
+.. option:: OGR_ENABLE_DRIVER_<driver_name>_PLUGIN:BOOL=ON/OFF
 
     Independently of options that control global behavior, drivers can be individually
     enabled or disabled with those options.
 
     Note that for the driver to be built, the corresponding base
-    ``GDAL_ENABLE_FRMT_{driver_name}:BOOL=ON`` or ``OGR_ENABLE_{driver_name}:BOOL=ON`` option must
+    ``GDAL_ENABLE_DRIVER_{driver_name}:BOOL=ON`` or ``OGR_ENABLE_DRIVER_{driver_name}:BOOL=ON`` option must
     be set.
 
 .. option:: GDAL_ENABLE_PLUGINS:BOOL=ON/OFF
 
     Globally enable/disable building all (plugin capable), GDAL and OGR, drivers as plugins.
     More exactly, setting that variable to ON affects the default value of the
-    ``GDAL_ENABLE_FRMT_<driver_name>_PLUGIN`` or ``OGR_ENABLE_<driver_name>_PLUGIN``
+    ``GDAL_ENABLE_DRIVER_<driver_name>_PLUGIN`` or ``OGR_ENABLE_DRIVER_<driver_name>_PLUGIN``
     variables (when they are not yet set).
 
     This can be combined with individual activation/deactivation of the plugin status with the
-    ``GDAL_ENABLE_FRMT_{driver_name}_PLUGIN:BOOL`` or ``OGR_ENABLE_{driver_name}_PLUGIN:BOOL`` variables.
+    ``GDAL_ENABLE_DRIVER_{driver_name}_PLUGIN:BOOL`` or ``OGR_ENABLE_DRIVER_{driver_name}_PLUGIN:BOOL`` variables.
     Note that changing the value of GDAL_ENABLE_PLUGINS after a first
     run of CMake does not change the activation of the plugin status of individual drivers.
-    It might be needed to pass ``-UGDAL_ENABLE_FRMT_* -UOGR_ENABLE_*`` to reset their state.
+    It might be needed to pass ``-UGDAL_ENABLE_DRIVER_* -UOGR_ENABLE_DRIVER_*`` to reset their state.
 
 
 Example of build with all potential drivers as plugins, except the JP2OpenJPEG one::
 
-    cmake .. -UGDAL_ENABLE_FRMT_* -UOGR_ENABLE_* \
+    cmake .. -UGDAL_ENABLE_DRIVER_* -UOGR_ENABLE_DRIVER_* \
              -DGDAL_ENABLE_PLUGINS:BOOL=ON \
-             -DGDAL_ENABLE_FRMT_JP2OPENPEG_PLUGIN:BOOL=OFF
+             -DGDAL_ENABLE_DRIVER_JP2OPENPEG_PLUGIN:BOOL=OFF
 
 There is a subtelty regarding ``GDAL_ENABLE_PLUGINS:BOOL=ON``. It only controls
 the plugin status of plugin-capable drivers that have external dependencies,

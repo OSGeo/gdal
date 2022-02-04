@@ -41,7 +41,9 @@ JPEG_READ_MASK to NO.
 
 The GDAL JPEG Driver is built using the Independent JPEG Group's jpeg
 library. Also note that the GeoTIFF driver supports tiled TIFF with JPEG
-compressed tiles.
+compressed tiles. This can be used to apply JPEG compression to datasets
+that exceed the maximum dimensions of 65,535x65,535 pixels for a single
+JPEG image.
 
 It is also possible to use the JPEG driver with the libjpeg-turbo, a
 version of libjpeg, API and ABI compatible with IJG libjpeg-6b, which

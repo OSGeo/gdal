@@ -11,4 +11,4 @@ add_gdal_driver(
 gdal_standard_includes(ogr_FME)
 target_include_directories(ogr_FME PRIVATE ${FME_INCLUDE_DIR} $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)
 target_compile_definitions(ogr_FME PRIVATE -DSUPPORT_INDIRECT_FMEDLL -DSUPPORT_PERSISTENT_CACHE)
-gdal_target_link_libraries(TARGET ogr_FME LIBRARIES ${FME_LIBRARY})
+gdal_target_link_libraries(ogr_FME PRIVATE ${FME_LIBRARY})

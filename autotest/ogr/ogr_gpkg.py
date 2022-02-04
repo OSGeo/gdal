@@ -4154,6 +4154,64 @@ def test_ogr_gpkg_wal():
     gdal.Unlink(filename + '-wal')
     gdal.Unlink(filename + '-shm')
 
+###############################################################################
+# Test NOLOCK open option
+
+
+def test_ogr_gpkg_nolock():
+
+    def get_nolock(ds):
+        sql_lyr = ds.ExecuteSQL('SELECT nolock', dialect='DEBUG')
+        f = sql_lyr.GetNextFeature()
+        res = True if f[0] == 1 else False
+        ds.ReleaseResultSet(sql_lyr)
+        return res
+
+    # needs to be a real file
+    filename = 'tmp/test_ogr_gpkg_nolock.gpkg'
+
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+    lyr = ds.CreateLayer('foo')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    ds = gdal.OpenEx(filename, gdal.OF_VECTOR, open_options=['NOLOCK=YES'])
+    assert ds
+    assert get_nolock(ds)
+
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    ds2 = ogr.Open(filename, update = 1)
+    lyr2 = ds2.GetLayer(0)
+    f = ogr.Feature(lyr2.GetLayerDefn())
+    # Without lockless mode on ds, this would timeout and fail
+    assert lyr2.CreateFeature(f) == ogr.OGRERR_NONE
+    f = None
+    ds2 = None
+    ds = None
+
+    # Lockless mode should NOT be honored by GDAL in upate mode
+    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE, open_options=['NOLOCK=YES'])
+    assert ds
+    assert not get_nolock(ds)
+    ds = None
+
+    # Now turn on WAL
+    ds = ogr.Open(filename, update = 1)
+    ds.ExecuteSQL('PRAGMA journal_mode = WAL')
+    ds = None
+
+    # Lockless mode should NOT be honored by GDAL on a WAL enabled file
+    ds = gdal.OpenEx(filename, gdal.OF_VECTOR, open_options=['NOLOCK=YES'])
+    assert ds
+    assert not get_nolock(ds)
+    ds = None
+
+    gdal.Unlink(filename)
+    gdal.Unlink(filename + '-wal')
+    gdal.Unlink(filename + '-shm')
 
 ###############################################################################
 # Run test_ogrsf

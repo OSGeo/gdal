@@ -12,9 +12,14 @@ GDAL includes support for reading, and creating .png files. Greyscale,
 pseudo-colored, Paletted, RGB and RGBA PNG files are supported as well
 as precisions of eight and sixteen bits per sample.
 
+The GDAL PNG Driver is built using the libpng library. Also note that
+the GeoTIFF driver supports tiled TIFF with DEFLATE compressed tiles,
+which is the same compression algorithm that PNG at its core uses.
+
 PNG files are linearly compressed, so random reading of large PNG files
 can be very inefficient (resulting in many restarts of decompression
-from the start of the file).
+from the start of the file). The maximum dimension of a PNG file that
+can be created by GDAL is set to 1,000,000x1,000,000 pixels by libpng.
 
 Text chunks are translated into metadata, typically with multiple lines
 per item. :ref:`raster.wld` with the extensions of .pgw, .pngw or

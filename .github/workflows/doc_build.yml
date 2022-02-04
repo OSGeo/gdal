@@ -1,0 +1,97 @@
+name: Docs
+
+on: [push, pull_request]
+
+jobs:
+  docs:
+    name: Docs
+
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+    container: osgeo/proj-docs
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Print versions
+      shell: bash -l {0}
+      run: |
+          python3 --version
+          sphinx-build --version
+          python3 -m pip list --not-required --format=columns
+    - name: Lint .rst files
+      shell: bash -l {0}
+      run: |
+        if find . -name '*.rst' | xargs grep -P '\t'; then echo 'Tabs are bad, please use four spaces in .rst files.'; false; fi
+        if find . -name '*.rst' | xargs grep "\.\.versionadded"; then echo 'Wrong annotation. Should be .. versionadded'; false; fi
+        if find . -name '*.rst' | xargs grep "\.\.note"; then echo 'Wrong annotation. Should be .. note'; false; fi
+        if find . -name '*.rst' | xargs grep "\.\.warning"; then echo 'Wrong annotation. Should be .. warning'; false; fi
+        if find . -name '*.rst' | xargs grep "\.\.codeblock"; then echo 'Wrong annotation. Should be .. codeblock'; false; fi
+      working-directory: ./doc
+    - name: Doxygen
+      shell: bash -l {0}
+      run: |
+        mkdir -p doc/build
+        doxygen Doxyfile
+    - name: HTML
+      shell: bash -l {0}
+      run: |
+        make html
+      working-directory: ./doc
+    - name: PDF
+      shell: bash -l {0}
+      run: |
+        make latexpdf
+      working-directory: ./doc
+    #- name: Spelling
+    #  shell: bash -l {0}
+    #  run: |
+    #    make spelling
+    #  working-directory: ./doc
+    - uses: actions/upload-artifact@v2
+      with:
+        name: PDF
+        path: doc/build/latex/gdal.pdf
+    - uses: actions/upload-artifact@v2
+      with:
+        name: HTML
+        path: doc/build/html/*
+    #- uses: actions/upload-artifact@v2
+    #  with:
+    #    name: Misspelled
+    #    path: doc/build/spelling/output.txt
+    - name: Deploy ssh key
+      if: ${{ github.ref_name == 'master' && github.repository == 'OSGeo/gdal' }}
+      shell: bash -l {0}
+      run: |
+        mkdir /root/.ssh && echo "${{ secrets.SSH_KEY_DOCS }}" > /root/.ssh/id_rsa
+        chmod 700 /root/.ssh && chmod 600 /root/.ssh/id_rsa
+        ssh-keyscan -t rsa github.com >> /root/.ssh/known_hosts
+        eval `ssh-agent -s`
+        ssh-add /root/.ssh/id_rsa
+    - name: Deploy to gdal.org
+      if: ${{ github.ref_name == 'master' && github.repository == 'OSGeo/gdal' }}
+      shell: bash -l {0}
+      run: |
+        set -x
+        set -e
+        cd /__w/gdal
+        mv gdal/doc/build/html gdal-docs
+        rm gdal-docs/gdal.pdf
+        cp gdal/doc/build/latex/gdal.pdf gdal-docs
+        cp gdal/data/gdalicon.png gdal-docs # For GDAL autotest...
+        cd gdal-docs
+        wget http://download.osgeo.org/gdal/for_doc/javadoc.zip -O /tmp/javadoc.zip
+        wget http://download.osgeo.org/gdal/for_doc/python-doc.tar.gz -O /tmp/python-doc.tar.gz
+        unzip -q /tmp/javadoc.zip
+        tar xzf /tmp/python-doc.tar.gz
+        git init
+        git config user.email "proj4bot@proj4.bot"
+        git config user.name "GDAL Bot"
+        git remote add origin git@github.com:OSGeo/gdal-docs.git
+        git remote -v
+        echo "gdal.org" > CNAME
+        touch .nojekyll
+        git add -A
+        git commit -m "Update with OSGeo/gdal commit $GITHUB_SHA"
+        git push -f origin master

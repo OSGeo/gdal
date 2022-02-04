@@ -412,7 +412,7 @@ static std::string GDALType2ILWIS(GDALDataType type)
     return sStoreType;
 }
 
-static CPLErr GetStoreType(std::string pszFileName, ilwisStoreType &stStoreType)
+static CPLErr GetStoreType(const std::string& pszFileName, ilwisStoreType &stStoreType)
 {
     std::string st = ReadElement("MapStore", "Type", pszFileName.c_str());
 

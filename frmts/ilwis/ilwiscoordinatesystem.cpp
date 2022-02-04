@@ -307,7 +307,7 @@ static int fetchParams(const std::string& csyFileName, double * padfPrjParams)
  * --- Gauss Colombia
  * --- Gauss-Boaga Italy
 **/
-static int mapTMParams(std::string sProj, double dfZone, double &dfFalseEasting, double &dfCentralMeridian)
+static int mapTMParams(const std::string& sProj, double dfZone, double &dfFalseEasting, double &dfCentralMeridian)
 {
     if( STARTS_WITH_CI(sProj.c_str(), "Gauss-Krueger Germany") )
     {
@@ -345,7 +345,7 @@ static int mapTMParams(std::string sProj, double dfZone, double &dfFalseEasting,
  * Compute the scale factor from Latitude_Of_True_Scale parameter.
  *
 **/
-static void scaleFromLATTS( std::string sEllips, double phits, double &scale )
+static void scaleFromLATTS( const std::string& sEllips, double phits, double &scale )
 {
     if( STARTS_WITH_CI(sEllips.c_str(), "Sphere") )
     {

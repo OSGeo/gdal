@@ -67,7 +67,7 @@ std::string WStringToString(const std::wstring& utf16string)
 /*                                GDBErr()                               */
 /*************************************************************************/
 
-bool GDBErr(long int hr, std::string desc, CPLErr errType, const char* pszAddMsg)
+bool GDBErr(long int hr, const std::string& desc, CPLErr errType, const char* pszAddMsg)
 {
     std::wstring fgdb_error_desc_w;
     fgdbError er;
@@ -94,7 +94,7 @@ bool GDBErr(long int hr, std::string desc, CPLErr errType, const char* pszAddMsg
 /*                            GDBDebug()                                 */
 /*************************************************************************/
 
-bool GDBDebug(long int hr, std::string desc)
+bool GDBDebug(long int hr, const std::string& desc)
 {
     std::wstring fgdb_error_desc_w;
     fgdbError er;
@@ -119,7 +119,7 @@ bool GDBDebug(long int hr, std::string desc)
 /*                            GDBToOGRGeometry()                         */
 /*************************************************************************/
 
-bool GDBToOGRGeometry(string geoType, bool hasZ, bool hasM, OGRwkbGeometryType* pOut)
+bool GDBToOGRGeometry(const std::string& geoType, bool hasZ, bool hasM, OGRwkbGeometryType* pOut)
 {
     if (geoType == "esriGeometryPoint")
     {
@@ -266,7 +266,7 @@ bool OGRToGDBFieldType(OGRFieldType ogrType, OGRFieldSubType eSubType, std::stri
 /*                       GDBFieldTypeToWidthPrecision()                  */
 /*************************************************************************/
 
-bool GDBFieldTypeToWidthPrecision(std::string &gdbType, int *width, int *precision)
+bool GDBFieldTypeToWidthPrecision(const std::string &gdbType, int *width, int *precision)
 {
     *precision = 0;
 

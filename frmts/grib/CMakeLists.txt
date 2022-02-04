@@ -47,7 +47,7 @@ add_gdal_driver(
           degrib/g2clib/jpcunpack.c
           degrib/degrib/hazard.c
           PLUGIN_CAPABLE_IF
-          "NOT GDAL_USE_LIBPNG_INTERNAL;NOT GDAL_USE_ZLIB_INTERNAL"
+          "NOT GDAL_USE_PNG_INTERNAL;NOT GDAL_USE_ZLIB_INTERNAL"
           NO_DEPS)
 gdal_standard_includes(gdal_GRIB)
 
@@ -103,18 +103,18 @@ target_include_directories(
   gdal_GRIB PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/degrib/degrib>
                     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/degrib/g2clib> $<TARGET_PROPERTY:gdal_MEM,SOURCE_DIR>)
 target_compile_options(gdal_GRIB PRIVATE ${GDAL_SOFTWARNFLAGS}) # FIXME: only needed for files within degrib/ actually
-if (GDAL_USE_LIBPNG_INTERNAL)
+if (GDAL_USE_PNG_INTERNAL)
   target_include_directories(gdal_GRIB PRIVATE $<TARGET_PROPERTY:libpng,SOURCE_DIR>)
   target_compile_definitions(gdal_GRIB PRIVATE -DUSE_PNG)
   target_sources(gdal_GRIB PRIVATE degrib/g2clib/pngunpack.c degrib/g2clib/dec_png.c)
 else ()
   target_compile_definitions(gdal_GRIB PRIVATE -DUSE_PNG)
-  gdal_target_link_libraries(TARGET gdal_GRIB LIBRARIES PNG::PNG)
+  gdal_target_link_libraries(gdal_GRIB PRIVATE PNG::PNG)
   target_sources(gdal_GRIB PRIVATE degrib/g2clib/pngunpack.c degrib/g2clib/dec_png.c)
 endif ()
 
 if (GDAL_USE_ZLIB_INTERNAL)
   target_include_directories(gdal_GRIB PRIVATE $<TARGET_PROPERTY:libz,SOURCE_DIR>)
 else ()
-  gdal_target_link_libraries(TARGET gdal_GRIB LIBRARIES ZLIB::ZLIB)
+  gdal_target_link_libraries(gdal_GRIB PRIVATE ZLIB::ZLIB)
 endif ()

@@ -23,6 +23,7 @@ add_executable(
   test_gdal_dted.cpp
   test_gdal_gtiff.cpp
   test_ogr.cpp
+  test_ogr_lgpl.cpp
   test_ogr_geos.cpp
   test_ogr_shape.cpp
   test_osr.cpp
@@ -176,7 +177,7 @@ if ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(x86_64|AMD64)" AND CMAKE_SIZEOF_VOID_P
     gdal_test_target(testsse4_1 testsse.cpp)
     gdal_test_target(testavx2 testsse.cpp)
     target_compile_options(testssse3 PRIVATE ${GDAL_SSSE3_FLAG})
-    target_compile_options(testsse4_1 PRIVATE ${GDAL_SSSE3_FLAG} ${GDAL_SSSE41_FLAG})
+    target_compile_options(testsse4_1 PRIVATE ${GDAL_SSSE3_FLAG} ${GDAL_SSE41_FLAG})
     target_compile_options(testavx2 PRIVATE ${GDAL_AVX2_FLAG})
     register_test_as_custom_target(test-ssse3 testssse3)
     register_test_as_custom_target(test-sse41 testsse4_1)
