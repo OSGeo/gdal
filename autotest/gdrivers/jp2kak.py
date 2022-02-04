@@ -36,7 +36,7 @@ from osgeo import gdal
 import gdaltest
 import pytest
 
-# pytestmark = pytest.mark.require_driver('JP2KAK')
+pytestmark = pytest.mark.require_driver('JP2KAK')
 
 ###############################################################################
 @pytest.fixture(autouse=True, scope='module')
