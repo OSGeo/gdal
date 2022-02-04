@@ -428,6 +428,8 @@ endif ()
 # Utilities
 add_subdirectory(apps)
 
+add_subdirectory(scripts)
+
 # Add all library dependencies of target gdal
 get_property(GDAL_PRIVATE_LINK_LIBRARIES GLOBAL PROPERTY gdal_private_link_libraries)
 target_link_libraries(${GDAL_LIB_TARGET_NAME} PRIVATE ${GDAL_PRIVATE_LINK_LIBRARIES})

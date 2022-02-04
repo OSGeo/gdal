@@ -170,8 +170,8 @@ if (Java_Runtime_FOUND)
     set(CLASSPATH_SEPARATOR ":")
   endif ()
 
-  include(GdalSetTestEnv)
-  gdal_set_test_env(TEST_ENV)
+  include(GdalSetRuntimeEnv)
+  gdal_set_runtime_env(TEST_ENV)
 
   set(JAVA_RUN ${Java_JAVA_EXECUTABLE} "-Djava.library.path=$<SHELL_PATH:$<TARGET_FILE_DIR:gdalalljni>>" -cp
                "gdal.jar${CLASSPATH_SEPARATOR}build/apps")
