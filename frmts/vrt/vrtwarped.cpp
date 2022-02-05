@@ -1634,8 +1634,29 @@ CPLXMLNode *VRTWarpedDataset::SerializeToXML( const char *pszVRTPathIn )
         if( VSIStatExL( psSDS->psChild->pszValue, &sStat,
                         VSI_STAT_EXISTS_FLAG) == 0 )
         {
+            std::string osVRTFilename = pszVRTPathIn;
+            std::string osSourceDataset = psSDS->psChild->pszValue;
+            char* pszCurDir = CPLGetCurrentDir();
+            if( CPLIsFilenameRelative(osSourceDataset.c_str()) &&
+                !CPLIsFilenameRelative(osVRTFilename.c_str()) &&
+                pszCurDir != nullptr )
+            {
+                osSourceDataset = CPLFormFilename(pszCurDir,
+                                                  osSourceDataset.c_str(),
+                                                  nullptr);
+            }
+            else if( !CPLIsFilenameRelative(osSourceDataset.c_str()) &&
+                     CPLIsFilenameRelative(osVRTFilename.c_str()) &&
+                     pszCurDir != nullptr )
+            {
+                osVRTFilename = CPLFormFilename(pszCurDir,
+                                                osVRTFilename.c_str(),
+                                                nullptr);
+            }
+            CPLFree(pszCurDir);
             char *pszRelativePath = CPLStrdup(
-                CPLExtractRelativePath( pszVRTPathIn, psSDS->psChild->pszValue,
+                CPLExtractRelativePath( osVRTFilename.c_str(),
+                                        osSourceDataset.c_str(),
                                         &bRelativeToVRT ) );
 
             CPLFree( psSDS->psChild->pszValue );
