@@ -31,7 +31,7 @@ For the full list see
 Developers
 ----------
 
-Read the gdal-utils project charter, `RFC-78 <https://gdal.org/development/rfc/rfc78_gdal_utils_package.html>`__.
+Read the :ref:`gdal-utils project charter <rfc-78>`.
 
 Clone or download the gdal project: https://github.com/OSGeo/gdal/
 
