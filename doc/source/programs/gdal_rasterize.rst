@@ -216,7 +216,7 @@ file, pulling the top elevation from the ROOF_H attribute.
 
 ::
 
-    gdal_rasterize -a ROOF_H -where 'class="A"' -l footprints footprints.shp city_dem.tif
+    gdal_rasterize -a ROOF_H -where "class='A'" -l footprints footprints.shp city_dem.tif
 
 The following would burn all polygons from footprint.shp into a new 1000x1000
 rgb TIFF as the color red.  Note that :option:`-b` is not used; the order of the :option:`-burn`
