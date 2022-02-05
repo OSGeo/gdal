@@ -26,8 +26,7 @@ Commonly used utilities include:
 -  ogrmerge
 
 For the full list see
-`Programs <https://gdal.org/programs/index.html#programs>`__ on the GDAL
-website and note the ones that end in ``.py``.
+:ref:`Programs <programs>` and note the ones that end in ``.py``.
 
 Developers
 ----------
