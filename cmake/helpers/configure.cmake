@@ -47,30 +47,16 @@ check_type_size("unsigned long" SIZEOF_UNSIGNED_LONG)
 check_type_size("void*" SIZEOF_VOIDP)
 set(HAVE_LONG_LONG 1)
 
-# check_include_file("ieeefp.h" HAVE_IEEEFP_H) if(HAVE_IEEEFP_H)
 set(HAVE_IEEEFP TRUE)
-# endif()
 
 check_function_exists("atoll" HAVE_ATOLL)
 check_function_exists("strtof" HAVE_DECL_STRTOF)
 
 if (MSVC)
-  check_include_file("search.h" HAVE_SEARCH_H)
-  check_function_exists(localtime_r HAVE_LOCALTIME_R)
-  check_function_exists("fopen64" HAVE_FOPEN64)
-  check_function_exists("stat64" HAVE_STAT64)
-
-  if (NOT CPL_DISABLE_STDCALL)
-    set(CPL_STDCALL __stdcall)
-  endif ()
-
   set(HAVE_DOPRNT 0)
   set(HAVE_VPRINTF 1)
   set(HAVE_VSNPRINTF 1)
   set(HAVE_SNPRINTF 1)
-  if (MSVC_VERSION LESS 1900)
-    set(snprintf _snprintf)
-  endif ()
 
   set(HAVE_GETCWD 1)
   if (NOT DEFINED (getcwd))
@@ -92,15 +78,6 @@ if (MSVC)
   set(HAVE_LOCALTIME_R 0)
   set(HAVE_DLFCN_H 1)
   set(HOST_FILLORDER FILLORDER_LSB2MSB)
-  set(HAVE_IEEEFP 1)
-
-  if (NOT __cplusplus)
-    if (NOT inline)
-      set(inline __inline)
-    endif ()
-  endif ()
-
-  set(lfind _lfind)
 
   set(VSI_STAT64 _stat64)
   set(VSI_STAT64_T __stat64)
