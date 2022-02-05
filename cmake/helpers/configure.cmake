@@ -72,11 +72,6 @@ if (MSVC)
     set(snprintf _snprintf)
   endif ()
 
-  set(HAVE_GETCWD 1)
-  if (NOT DEFINED (getcwd))
-    set(getcwd _getcwd)
-  endif ()
-
   set(HAVE_ASSERT_H 1)
   set(HAVE_FCNTL_H 1)
   set(HAVE_UNISTD_H 0)
