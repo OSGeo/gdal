@@ -42,7 +42,7 @@ In your IDE set gdal-utils as the root folder,
    launch wrappers created by pip and added to PYTHONHOME/Scripts)
 
    **./osgeo_utils/samples** - working python scripts but not typically
-   avaialble in path (run them with ``python
+   available in path (run them with ``python
    path/to/samples/something.py``)
 
 Discuss via `gdal-dev mailing
