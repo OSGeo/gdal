@@ -66,6 +66,9 @@ void gvBurnScanlineBasic( GDALRasterizeInfo *psInfo,
                           double dfVariant )
 
 {
+    constexpr double dfMinVariant = static_cast<double>(std::numeric_limits<T>::lowest());
+    constexpr double dfMaxVariant = static_cast<double>(std::numeric_limits<T>::max());
+
     for( int iBand = 0; iBand < psInfo->nBands; iBand++ )
     {
         const double burnValue = ( psInfo->padfBurnValue[iBand] +
@@ -77,15 +80,23 @@ void gvBurnScanlineBasic( GDALRasterizeInfo *psInfo,
                                     + nY * psInfo->nLineSpace + nXStart * psInfo->nPixelSpace;
         int nPixels = nXEnd - nXStart + 1;
         if( psInfo->eMergeAlg == GRMA_Add ) {
-            while( nPixels-- > 0 ) 
+            while( nPixels-- > 0 )
             {
-                *reinterpret_cast<T*>(pabyInsert) += static_cast<T>(burnValue);
+                double dfVal = static_cast<double>(*reinterpret_cast<T*>(pabyInsert)) + burnValue;
+                *reinterpret_cast<T*>(pabyInsert) = static_cast<T>(
+                            ( dfMinVariant > dfVal ) ? dfMinVariant :
+                            ( dfMaxVariant < dfVal ) ? dfMaxVariant :
+                            dfVal );
                 pabyInsert += psInfo->nPixelSpace;
             }
         } else {
-            while( nPixels-- > 0 ) 
+            const T nVal = static_cast<T>(
+                            ( dfMinVariant > burnValue ) ? dfMinVariant :
+                            ( dfMaxVariant < burnValue ) ? dfMaxVariant :
+                            burnValue );
+            while( nPixels-- > 0 )
             {
-                *reinterpret_cast<T*>(pabyInsert) = static_cast<T>(burnValue);
+                *reinterpret_cast<T*>(pabyInsert) = nVal;
                 pabyInsert += psInfo->nPixelSpace;
             }
         }
@@ -731,10 +742,10 @@ static CPLErr GDALRasterizeOptions( char **papszOptions,
  *
  *      GDALSetGeoTransform(hMemDset,adfGeoTransform);
  *      GDALSetProjection(hMemDset,pszProjection); // Can not
- *      
+ *
  *      // Do something ...
  *      // Need an array of OGRGeometry objects,The assumption here is pahGeoms
- *      
+ *
  *      int bandList[3] = { 1, 2, 3};
  *      std::vector<double> geomBurnValue(nGeomCount*nBandCount,255.0);
  *      CPLErr err = GDALRasterizeGeometries(hMemDset, nBandCount, bandList,
