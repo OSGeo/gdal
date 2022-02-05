@@ -2714,12 +2714,12 @@ namespace tut
         }
         {
             CPLJSonStreamingWriter x(nullptr, nullptr);
-            x.Add(static_cast<GIntBig>(-10000) * 1000000);
+            x.Add(static_cast<std::int64_t>(-10000) * 1000000);
             ensure_equals( x.GetString(), std::string("-10000000000") );
         }
         {
             CPLJSonStreamingWriter x(nullptr, nullptr);
-            x.Add(static_cast<GUInt64>(10000) * 1000000);
+            x.Add(static_cast<std::uint64_t>(10000) * 1000000);
             ensure_equals( x.GetString(), std::string("10000000000") );
         }
         {

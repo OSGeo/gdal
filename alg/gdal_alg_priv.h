@@ -34,6 +34,8 @@
 
 #ifndef DOXYGEN_SKIP
 
+#include <cstdint>
+
 #include "gdal_alg.h"
 #include "ogr_spatialref.h"
 
@@ -146,10 +148,10 @@ public:
 
 struct IntEqualityTest
 {
-    bool operator()(GInt32 a, GInt32 b) const { return a == b; }
+    bool operator()(std::int64_t a, std::int64_t b) const { return a == b; }
 };
 
-typedef GDALRasterPolygonEnumeratorT<GInt32, IntEqualityTest> GDALRasterPolygonEnumerator;
+typedef GDALRasterPolygonEnumeratorT<std::int64_t, IntEqualityTest> GDALRasterPolygonEnumerator;
 
 typedef void* (*GDALTransformDeserializeFunc)( CPLXMLNode *psTree );
 

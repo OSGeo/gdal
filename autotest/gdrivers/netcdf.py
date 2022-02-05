@@ -4782,9 +4782,6 @@ def test_netcdf_open_coords_no_georef_indexing_variables():
 
 def test_netcdf_metadata_sentinel5():
 
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip()
-
     ds = gdal.Open('data/netcdf/fake_ISO_METADATA.nc')
     assert ds is not None
     assert "json:ISO_METADATA" in ds.GetMetadataDomainList()
@@ -5015,6 +5012,68 @@ def test_netcdf_read_gmt_file():
     ds = gdal.Open('data/netcdf/gmt_file.nc')
     gt = ds.GetGeoTransform()
     assert gt == pytest.approx((-34.6671666666667, 0.001, 0.0, 35.58483333333329, 0.0, -0.001)), gt
+
+
+###############################################################################
+
+def test_netcdf_read_int64():
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    ds = gdal.Open('data/netcdf/int64.nc')
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Int64
+    assert struct.unpack('q' * 4, ds.ReadRaster()) == (10000000001, 1,
+                                                       -10000000000, 10000000000)
+
+
+###############################################################################
+
+
+def test_netcdf_write_int64():
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    src_ds = gdal.Open('data/netcdf/int64.nc')
+    gdaltest.netcdf_drv.CreateCopy('tmp/int64.nc', src_ds)
+    ds = gdal.Open('tmp/int64.nc')
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Int64
+    assert struct.unpack('q' * 4, ds.ReadRaster()) == (10000000001, 1,
+                                                       -10000000000, 10000000000)
+    ds = None
+    os.unlink('tmp/int64.nc')
+
+###############################################################################
+
+
+def test_netcdf_read_uint64():
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    ds = gdal.Open('data/netcdf/uint64.nc')
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt64
+    assert struct.unpack('Q' * 4, ds.ReadRaster()) == (10000000001, 1,
+                                                       0, 10000000000)
+
+
+###############################################################################
+
+
+def test_netcdf_write_uint64():
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    src_ds = gdal.Open('data/netcdf/uint64.nc')
+    gdaltest.netcdf_drv.CreateCopy('tmp/uint64.nc', src_ds)
+    ds = gdal.Open('tmp/uint64.nc')
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt64
+    assert struct.unpack('Q' * 4, ds.ReadRaster()) == (10000000001, 1,
+                                                       0, 10000000000)
+    ds = None
+    os.unlink('tmp/uint64.nc')
 
 
 def test_clean_tmp():

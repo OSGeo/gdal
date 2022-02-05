@@ -102,6 +102,12 @@ static GDALDataType GetWorkDataType(GDALDataType eDataType)
         eWrkDT = GDT_Float64;
         break;
 
+      case GDT_Int64:
+      case GDT_UInt64:
+        // FIXME when we can request the nodata value as something != double
+        eWrkDT = GDT_Float64;
+        break;
+
       default:
         CPLAssert( false );
         eWrkDT = GDT_Float64;

@@ -456,20 +456,6 @@ static void EncodeElt(const std::vector<DtypeElt>& elts,
                         CPL_SWAP32(*reinterpret_cast<const uint32_t*>(pSrc + elt.gdalOffset + 4));
                     memcpy(pDst + elt.nativeOffset + 4, &val, sizeof(val));
                 }
-                else if( elt.nativeType == DtypeElt::NativeType::SIGNED_INT )
-                {
-                    CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Float64 );
-                    const double dbl = *reinterpret_cast<const double*>(pSrc + elt.gdalOffset);
-                    int64_t val = CPL_SWAP64(static_cast<int64_t>(dbl));
-                    memcpy(pDst + elt.nativeOffset, &val, sizeof(val));
-                }
-                else if( elt.nativeType == DtypeElt::NativeType::UNSIGNED_INT )
-                {
-                    CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Float64 );
-                    const double dbl = *reinterpret_cast<const double*>(pSrc + elt.gdalOffset);
-                    uint64_t val = CPL_SWAP64(static_cast<uint64_t>(dbl));
-                    memcpy(pDst + elt.nativeOffset, &val, sizeof(val));
-                }
                 else
                 {
                     const uint64_t val = CPL_SWAP64(
@@ -510,22 +496,6 @@ static void EncodeElt(const std::vector<DtypeElt>& elts,
                 bool bHasWarned = false;
                 const uint16_t uint16Val = CPLFloatToHalf(uint32Val, bHasWarned);
                 memcpy(pDst + elt.nativeOffset, &uint16Val, sizeof(uint16Val));
-            }
-            else if( elt.nativeType == DtypeElt::NativeType::SIGNED_INT &&
-                     elt.nativeSize == 8 )
-            {
-                CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Float64 );
-                const double dbl = *reinterpret_cast<const double*>(pSrc + elt.gdalOffset);
-                const int64_t val = static_cast<int64_t>(dbl);
-                memcpy(pDst + elt.nativeOffset, &val, sizeof(val));
-            }
-            else if( elt.nativeType == DtypeElt::NativeType::UNSIGNED_INT &&
-                     elt.nativeSize == 8 )
-            {
-                CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Float64 );
-                const double dbl = *reinterpret_cast<const double*>(pSrc + elt.gdalOffset);
-                const uint64_t val = static_cast<uint64_t>(dbl);
-                memcpy(pDst + elt.nativeOffset, &val, sizeof(val));
             }
             else
             {
@@ -1101,22 +1071,6 @@ static void DecodeSourceElt(const std::vector<DtypeElt>& elts,
                     *reinterpret_cast<uint32_t*>(pDst + elt.gdalOffset + 4) =
                         CPL_SWAP32(val);
                 }
-                else if( elt.nativeType == DtypeElt::NativeType::SIGNED_INT )
-                {
-                    CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Float64 );
-                    int64_t val;
-                    memcpy(&val, pSrc + elt.nativeOffset, sizeof(val));
-                    *reinterpret_cast<double*>(pDst + elt.gdalOffset) = static_cast<double>(
-                        CPL_SWAP64(val));
-                }
-                else if( elt.nativeType == DtypeElt::NativeType::UNSIGNED_INT )
-                {
-                    CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Float64 );
-                    uint64_t val;
-                    memcpy(&val, pSrc + elt.nativeOffset, sizeof(val));
-                    *reinterpret_cast<double*>(pDst + elt.gdalOffset) = static_cast<double>(
-                        CPL_SWAP64(val));
-                }
                 else
                 {
                     uint64_t val;
@@ -1157,24 +1111,6 @@ static void DecodeSourceElt(const std::vector<DtypeElt>& elts,
                 memcpy(&uint16Val, pSrc + elt.nativeOffset, sizeof(uint16Val));
                 uint32_t uint32Val = CPLHalfToFloat(uint16Val);
                 memcpy(pDst + elt.gdalOffset, &uint32Val, sizeof(uint32Val));
-            }
-            else if( elt.nativeType == DtypeElt::NativeType::SIGNED_INT &&
-                     elt.nativeSize == 8 )
-            {
-                CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Float64 );
-                int64_t intVal;
-                memcpy(&intVal, pSrc + elt.nativeOffset, sizeof(intVal));
-                double dblVal = static_cast<double>(intVal);
-                memcpy(pDst + elt.gdalOffset, &dblVal, sizeof(dblVal));
-            }
-            else if( elt.nativeType == DtypeElt::NativeType::UNSIGNED_INT &&
-                     elt.nativeSize == 8 )
-            {
-                CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Float64 );
-                uint64_t intVal;
-                memcpy(&intVal, pSrc + elt.nativeOffset, sizeof(intVal));
-                double dblVal = static_cast<double>(intVal);
-                memcpy(pDst + elt.gdalOffset, &dblVal, sizeof(dblVal));
             }
             else
             {
@@ -2988,8 +2924,7 @@ static GDALExtendedDataType ParseDtype(bool isZarrV2,
             else if( chType == 'i' && nBytes == 8 )
             {
                 elt.nativeType = DtypeElt::NativeType::SIGNED_INT;
-                elt.gdalTypeIsApproxOfNative = true;
-                eDT = GDT_Float64;
+                eDT = GDT_Int64;
             }
             else if( chType == 'u' && nBytes == 2 )
             {
@@ -3004,8 +2939,7 @@ static GDALExtendedDataType ParseDtype(bool isZarrV2,
             else if( chType == 'u' && nBytes == 8 )
             {
                 elt.nativeType = DtypeElt::NativeType::UNSIGNED_INT;
-                elt.gdalTypeIsApproxOfNative = true;
-                eDT = GDT_Float64;
+                eDT = GDT_UInt64;
             }
             else if( chType == 'f' && nBytes == 2 )
             {

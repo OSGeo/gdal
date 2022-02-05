@@ -1431,6 +1431,10 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDSIn, int nBandIn ):
             eDataType = GDT_CFloat32;
         else if( nSampleFormat == SAMPLEFORMAT_COMPLEXINT )
             eDataType = GDT_CInt32;
+        else if( nSampleFormat == SAMPLEFORMAT_INT )
+            eDataType = GDT_Int64;
+        else
+            eDataType = GDT_UInt64;
     }
     else if( nBitsPerSample == 128 )
     {
@@ -8527,6 +8531,18 @@ inline bool GTiffDataset::IsFirstPixelEqualToNoData( const void* pBuffer )
                *(static_cast<const GInt32*>(pBuffer)) ==
                         static_cast<GInt32>(dfEffectiveNoData);
     }
+    if( m_nBitsPerSample == 64 && eDT == GDT_UInt64 )
+    {
+        return GDALIsValueInRange<std::uint64_t>(dfEffectiveNoData) &&
+               *(static_cast<const std::uint64_t*>(pBuffer)) ==
+                        static_cast<std::uint64_t>(dfEffectiveNoData);
+    }
+    if( m_nBitsPerSample == 64 && eDT == GDT_Int64 )
+    {
+        return GDALIsValueInRange<std::int64_t>(dfEffectiveNoData) &&
+               *(static_cast<const std::int64_t*>(pBuffer)) ==
+                        static_cast<std::int64_t>(dfEffectiveNoData);
+    }
     if( m_nBitsPerSample == 32 && eDT == GDT_Float32 )
     {
         if( CPLIsNan(m_dfNoDataValue) )
@@ -9434,6 +9450,16 @@ template<> uint32_t AdjustValue<uint32_t>(uint32_t value, uint64_t nRoundUpBitTe
     return AdjustValueInt(value, nRoundUpBitTest);
 }
 
+template<> int64_t AdjustValue<int64_t>(int64_t value, uint64_t nRoundUpBitTest)
+{
+    return AdjustValueInt(value, nRoundUpBitTest);
+}
+
+template<> uint64_t AdjustValue<uint64_t>(uint64_t value, uint64_t nRoundUpBitTest)
+{
+    return AdjustValueInt(value, nRoundUpBitTest);
+}
+
 template<> float AdjustValue<float>(float value, uint64_t)
 {
     return std::nextafter(value, std::numeric_limits<float>::max());
@@ -9490,6 +9516,12 @@ template<> uint32_t RoundValueDiscardLsb<uint32_t, uint32_t>(const void* ptr,
     return RoundValueDiscardLsbUnsigned<uint32_t>(ptr, nMask, nRoundUpBitTest);
 }
 
+template<> uint64_t RoundValueDiscardLsb<uint64_t, uint64_t>(const void* ptr,
+                                                             uint64_t nMask,
+                                                             uint64_t nRoundUpBitTest)
+{
+    return RoundValueDiscardLsbUnsigned<uint64_t>(ptr, nMask, nRoundUpBitTest);
+}
 template<> int8_t RoundValueDiscardLsb<int8_t, int8_t>(const void* ptr,
                                                           uint64_t nMask,
                                                           uint64_t nRoundUpBitTest)
@@ -9509,6 +9541,13 @@ template<> int32_t RoundValueDiscardLsb<int32_t, int32_t>(const void* ptr,
                                                              uint64_t nRoundUpBitTest)
 {
     return RoundValueDiscardLsbSigned<int32_t>(ptr, nMask, nRoundUpBitTest);
+}
+
+template<> int64_t RoundValueDiscardLsb<int64_t, int64_t>(const void* ptr,
+                                                             uint64_t nMask,
+                                                             uint64_t nRoundUpBitTest)
+{
+    return RoundValueDiscardLsbSigned<int64_t>(ptr, nMask, nRoundUpBitTest);
 }
 
 template<> uint32_t RoundValueDiscardLsb<float, uint32_t>(const void* ptr,
@@ -9781,6 +9820,44 @@ static void DiscardLsb( GByte* pabyBuffer, GPtrDiff_t nBytes, int iBand,
             bHasNoData = false;
         }
         DiscardLsbT<uint32_t, uint32_t>(
+            pabyBuffer, nBytes, iBand, nBands, nPlanarConfig,
+            panMaskOffsetLsb, bHasNoData, nNoDataValue);
+    }
+    else if( nBitsPerSample == 64 && nSampleFormat == SAMPLEFORMAT_INT )
+    {
+        // FIXME: we should not rely on dfNoDataValue when we support native data type for nodata
+        int64_t nNoDataValue = 0;
+        if( bHasNoData &&
+            dfNoDataValue >= static_cast<double>(std::numeric_limits<int64_t>::min()) &&
+            dfNoDataValue <= static_cast<double>(std::numeric_limits<int64_t>::max()) &&
+            dfNoDataValue == static_cast<double>(static_cast<int64_t>(dfNoDataValue)) )
+        {
+            nNoDataValue = static_cast<int64_t>(dfNoDataValue);
+        }
+        else
+        {
+            bHasNoData = false;
+        }
+        DiscardLsbT<int64_t, int64_t>(
+            pabyBuffer, nBytes, iBand, nBands, nPlanarConfig,
+            panMaskOffsetLsb, bHasNoData, nNoDataValue);
+    }
+    else if( nBitsPerSample == 64 && nSampleFormat == SAMPLEFORMAT_UINT )
+    {
+        // FIXME: we should not rely on dfNoDataValue when we support native data type for nodata
+        uint64_t nNoDataValue = 0;
+        if( bHasNoData &&
+            dfNoDataValue >= static_cast<double>(std::numeric_limits<uint64_t>::min()) &&
+            dfNoDataValue <= static_cast<double>(std::numeric_limits<uint64_t>::max()) &&
+            dfNoDataValue == static_cast<double>(static_cast<uint64_t>(dfNoDataValue)) )
+        {
+            nNoDataValue = static_cast<uint64_t>(dfNoDataValue);
+        }
+        else
+        {
+            bHasNoData = false;
+        }
+        DiscardLsbT<uint64_t, uint64_t>(
             pabyBuffer, nBytes, iBand, nBands, nPlanarConfig,
             panMaskOffsetLsb, bHasNoData, nNoDataValue);
     }
@@ -16545,7 +16622,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 
     uint16_t l_nSampleFormat = 0;
     if( (eType == GDT_Byte && EQUAL(pszPixelType,"SIGNEDBYTE"))
-        || eType == GDT_Int16 || eType == GDT_Int32 )
+        || eType == GDT_Int16 || eType == GDT_Int32 || eType == GDT_Int64 )
         l_nSampleFormat = SAMPLEFORMAT_INT;
     else if( eType == GDT_CInt16 || eType == GDT_CInt32 )
         l_nSampleFormat = SAMPLEFORMAT_COMPLEXINT;

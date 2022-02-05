@@ -52,15 +52,15 @@ import pytest
                           [">i2", 'h', gdal.GDT_Int16, None, None],
                           ["<i4", 'i', gdal.GDT_Int32, None, None],
                           [">i4", 'i', gdal.GDT_Int32, None, None],
-                          ["<i8", 'q', gdal.GDT_Float64, None, None],
-                          [">i8", 'q', gdal.GDT_Float64, None, None],
+                          ["<i8", 'q', gdal.GDT_Int64, None, None],
+                          [">i8", 'q', gdal.GDT_Int64, None, None],
                           ["<u2", 'H', gdal.GDT_UInt16, None, None],
                           [">u2", 'H', gdal.GDT_UInt16, None, None],
                           ["<u4", 'I', gdal.GDT_UInt32, None, None],
                           [">u4", 'I', gdal.GDT_UInt32, None, None],
                           ["<u4", 'I', gdal.GDT_UInt32, 4000000000, 4000000000],
-                          ["<u8", 'Q', gdal.GDT_Float64, 4000000000, 4000000000],
-                          [">u8", 'Q', gdal.GDT_Float64, None, None],
+                          ["<u8", 'Q', gdal.GDT_UInt64, 4000000000, 4000000000],
+                          [">u8", 'Q', gdal.GDT_UInt64, None, None],
                           ["<f4", 'f', gdal.GDT_Float32, None, None],
                           [">f4", 'f', gdal.GDT_Float32, None, None],
                           ["<f4", 'f', gdal.GDT_Float32, 1.5, 1.5],
@@ -141,8 +141,6 @@ def test_zarr_basic(dtype, structtype, gdaltype, fill_value, nodata_value, use_o
 
         if structtype == 'b':
             structtype_read = 'h'
-        elif structtype in ('q', 'Q'):
-            structtype_read = 'd'
         else:
             structtype_read = structtype
 

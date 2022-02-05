@@ -2471,7 +2471,7 @@ void GDALRegister_MEM()
     poDriver->SetMetadataItem( GDAL_DCAP_MULTIDIM_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "In Memory Raster" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-                               "Byte Int16 UInt16 Int32 UInt32 Float32 Float64 "
+                               "Byte Int16 UInt16 Int32 UInt32 Int64 UInt64 Float32 Float64 "
                                "CInt16 CInt32 CFloat32 CFloat64" );
     poDriver->SetMetadataItem( GDAL_DCAP_COORDINATE_EPOCH, "YES" );
 

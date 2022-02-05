@@ -4784,6 +4784,12 @@ inline double GetPixelValue( GDALDataType eDataType,
         case GDT_Int32:
             dfValue = static_cast<const GInt32 *>(pData)[iOffset];
             break;
+        case GDT_UInt64:
+            dfValue = static_cast<double>(static_cast<const std::uint64_t *>(pData)[iOffset]);
+            break;
+        case GDT_Int64:
+            dfValue = static_cast<double>(static_cast<const std::int64_t *>(pData)[iOffset]);
+            break;
         case GDT_Float32:
         {
             const float fValue = static_cast<const float *>(pData)[iOffset];

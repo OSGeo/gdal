@@ -137,6 +137,12 @@ void gvBurnScanline( void *pCBData, int nY, int nXStart, int nXEnd,
         case GDT_UInt32:
             gvBurnScanlineBasic<GUInt32>( psInfo, nY, nXStart, nXEnd, dfVariant );
             break;
+        case GDT_Int64:
+            gvBurnScanlineBasic<std::int64_t>( psInfo, nY, nXStart, nXEnd, dfVariant );
+            break;
+        case GDT_UInt64:
+            gvBurnScanlineBasic<std::uint64_t>( psInfo, nY, nXStart, nXEnd, dfVariant );
+            break;
         case GDT_Float32:
             gvBurnScanlineBasic<float>( psInfo, nY, nXStart, nXEnd, dfVariant );
             break;
@@ -168,7 +174,8 @@ void gvBurnPointBasic( GDALRasterizeInfo *psInfo,
                                  + nY * psInfo->nLineSpace + nX * psInfo->nPixelSpace;
 
         T* pbyPixel = reinterpret_cast<T*>(pbyInsert);
-        burnValue += ( psInfo->eMergeAlg != GRMA_Add ) ? 0 : *pbyPixel;
+        if( psInfo->eMergeAlg == GRMA_Add )
+            burnValue += static_cast<double>(*pbyPixel);
         GDALCopyWord(burnValue, *pbyPixel);
     }
 }
@@ -202,6 +209,12 @@ void gvBurnPoint( void *pCBData, int nY, int nX, double dfVariant )
             break;
         case GDT_UInt32:
             gvBurnPointBasic<GUInt32>( psInfo, nY, nX, dfVariant );
+            break;
+        case GDT_Int64:
+            gvBurnPointBasic<std::int64_t>( psInfo, nY, nX, dfVariant );
+            break;
+        case GDT_UInt64:
+            gvBurnPointBasic<std::uint64_t>( psInfo, nY, nX, dfVariant );
             break;
         case GDT_Float32:
             gvBurnPointBasic<float>( psInfo, nY, nX, dfVariant );

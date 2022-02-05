@@ -391,6 +391,10 @@ netCDFRasterBand::netCDFRasterBand( const netCDFRasterBand::CONSTRUCTOR_OPEN&,
             eDataType = GDT_UInt16;
         else if( nc_datatype == NC_UINT )
             eDataType = GDT_UInt32;
+        else if( nc_datatype == NC_INT64 )
+            eDataType = GDT_Int64;
+        else if( nc_datatype == NC_UINT64 )
+            eDataType = GDT_UInt64;
 #endif
         else
         {
@@ -589,7 +593,8 @@ netCDFRasterBand::netCDFRasterBand( const netCDFRasterBand::CONSTRUCTOR_OPEN&,
 #ifdef NETCDF_HAS_NC4
     if( nc_datatype == NC_UBYTE ||
         nc_datatype == NC_USHORT ||
-        nc_datatype == NC_UINT )
+        nc_datatype == NC_UINT ||
+        nc_datatype == NC_UINT64 )
         bSignedData = false;
 #endif
 
@@ -779,6 +784,34 @@ netCDFRasterBand::netCDFRasterBand( const netCDFRasterBand::CONSTRUCTOR_CREATE&,
             nc_datatype = NC_DOUBLE;
             break;
 #ifdef NETCDF_HAS_NC4
+        case GDT_Int64:
+            if( poNCDFDS->eFormat == NCDF_FORMAT_NC4 )
+            {
+                nc_datatype = NC_INT64;
+            }
+            else
+            {
+                if( nBand == 1 )
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                            "Unsupported GDAL datatype %s, treat as NC_DOUBLE.", "Int64");
+                nc_datatype = NC_DOUBLE;
+                eDataType = GDT_Float64;
+            }
+            break;
+        case GDT_UInt64:
+            if( poNCDFDS->eFormat == NCDF_FORMAT_NC4 )
+            {
+                nc_datatype = NC_UINT64;
+            }
+            else
+            {
+                if( nBand == 1 )
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                            "Unsupported GDAL datatype %s, treat as NC_DOUBLE.", "UInt64");
+                nc_datatype = NC_DOUBLE;
+                eDataType = GDT_Float64;
+            }
+            break;
         case GDT_UInt16:
             if( poNCDFDS->eFormat == NCDF_FORMAT_NC4 )
             {
@@ -2004,6 +2037,22 @@ bool netCDFRasterBand::FetchNetcdfChunk( size_t xstart,
             CheckData<unsigned int>(pImage, pImageNC, edge[nBandXPos],
                                     nYChunkSize, false);
     }
+    else if( eDataType == GDT_Int64 )
+    {
+        status = nc_get_vara_longlong(cdfid, nZId, start, edge,
+                                      static_cast<long long *>(pImageNC));
+        if( status == NC_NOERR )
+            CheckData<std::int64_t>(pImage, pImageNC, edge[nBandXPos],
+                                    nYChunkSize, false);
+    }
+    else if( eDataType == GDT_UInt64 )
+    {
+        status = nc_get_vara_ulonglong(cdfid, nZId, start, edge,
+                                       static_cast<unsigned long long *>(pImageNC));
+        if( status == NC_NOERR )
+            CheckData<std::uint64_t>(pImage, pImageNC, edge[nBandXPos],
+                                     nYChunkSize, false);
+    }
     else if ( eDataType == GDT_CInt16 )
     {
         status = nc_get_vara(cdfid, nZId, start, edge,
@@ -2305,6 +2354,18 @@ CPLErr netCDFRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
     {
         status = nc_put_vara_uint(cdfid, nZId, start, edge,
                                   static_cast<unsigned int *>(pImage));
+    }
+    else if( eDataType == GDT_UInt64 &&
+             static_cast<netCDFDataset *>(poDS)->eFormat == NCDF_FORMAT_NC4 )
+    {
+        status = nc_put_vara_ulonglong(cdfid, nZId, start, edge,
+                                       static_cast<unsigned long long *>(pImage));
+    }
+    else if( eDataType == GDT_Int64 &&
+             static_cast<netCDFDataset *>(poDS)->eFormat == NCDF_FORMAT_NC4 )
+    {
+        status = nc_put_vara_longlong(cdfid, nZId, start, edge,
+                                      static_cast<long long *>(pImage));
     }
 #endif
     else
@@ -8948,9 +9009,19 @@ netCDFDataset::Create( const char *pszFilename,
 
     CPLMutexHolderD(&hNCMutex);
 
+    CPLStringList aosOptions(CSLDuplicate(papszOptions));
+#ifdef NETCDF_HAS_NC4
+    if( aosOptions.FetchNameValue("FORMAT") == nullptr &&
+        (eType == GDT_UInt16 || eType == GDT_UInt32 ||
+         eType == GDT_UInt64 || eType == GDT_Int64) )
+    {
+        CPLDebug("netCDF", "Selecting FORMAT=NC4 due to data type");
+        aosOptions.SetNameValue("FORMAT", "NC4");
+    }
+#endif
     netCDFDataset *poDS = netCDFDataset::CreateLL(pszFilename,
                                                   nXSize, nYSize, nBands,
-                                                  papszOptions);
+                                                  aosOptions.List());
 
     if( !poDS )
         return nullptr;
@@ -9088,7 +9159,7 @@ netCDFDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
         return nullptr;
     }
 
-    GDALDataType eDT;
+    GDALDataType eDT = GDT_Unknown;
     GDALRasterBand *poSrcBand = nullptr;
     for( int iBand = 1; iBand <= nBands; iBand++ )
     {
@@ -9107,9 +9178,19 @@ netCDFDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
         return nullptr;
 
     // Same as in Create().
+    CPLStringList aosOptions(CSLDuplicate(papszOptions));
+#ifdef NETCDF_HAS_NC4
+    if( aosOptions.FetchNameValue("FORMAT") == nullptr &&
+        (eDT == GDT_UInt16 || eDT == GDT_UInt32 ||
+         eDT == GDT_UInt64 || eDT == GDT_Int64) )
+    {
+        CPLDebug("netCDF", "Selecting FORMAT=NC4 due to data type");
+        aosOptions.SetNameValue("FORMAT", "NC4");
+    }
+#endif
     netCDFDataset *poDS = netCDFDataset::CreateLL(pszFilename,
                                                    nXSize, nYSize, nBands,
-                                                   papszOptions);
+                                                   aosOptions.List());
     if( !poDS )
         return nullptr;
 
@@ -9399,17 +9480,41 @@ netCDFDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
             eErr = NCDFCopyBand<GByte>(poSrcBand, poDstBand, nXSize, nYSize,
                                        GDALScaledProgress, pScaledProgress);
         }
-        else if( (eDT == GDT_UInt16) || (eDT == GDT_Int16) )
+        else if( eDT == GDT_UInt16 )
         {
-            CPLDebug("GDAL_netCDF", "GInt16 Band#%d", iBand);
+            CPLDebug("GDAL_netCDF", "GUInt16 Band#%d", iBand);
             eErr = NCDFCopyBand<GInt16>(poSrcBand, poDstBand, nXSize, nYSize,
                                         GDALScaledProgress, pScaledProgress);
         }
-        else if( (eDT == GDT_UInt32) || (eDT == GDT_Int32) )
+        else if( eDT == GDT_Int16 )
         {
             CPLDebug("GDAL_netCDF", "GInt16 Band#%d", iBand);
+            eErr = NCDFCopyBand<GUInt16>(poSrcBand, poDstBand, nXSize, nYSize,
+                                         GDALScaledProgress, pScaledProgress);
+        }
+        else if( eDT == GDT_UInt32 )
+        {
+            CPLDebug("GDAL_netCDF", "GUInt32 Band#%d", iBand);
+            eErr = NCDFCopyBand<GUInt32>(poSrcBand, poDstBand, nXSize, nYSize,
+                                         GDALScaledProgress, pScaledProgress);
+        }
+        else if( eDT == GDT_Int32 )
+        {
+            CPLDebug("GDAL_netCDF", "GInt32 Band#%d", iBand);
             eErr = NCDFCopyBand<GInt32>(poSrcBand, poDstBand, nXSize, nYSize,
-                                        GDALScaledProgress, pScaledProgress);
+                                         GDALScaledProgress, pScaledProgress);
+        }
+        else if( eDT == GDT_UInt64 )
+        {
+            CPLDebug("GDAL_netCDF", "GUInt64 Band#%d", iBand);
+            eErr = NCDFCopyBand<std::uint64_t>(poSrcBand, poDstBand, nXSize, nYSize,
+                                               GDALScaledProgress, pScaledProgress);
+        }
+        else if( eDT == GDT_Int64 )
+        {
+            CPLDebug("GDAL_netCDF", "GInt64 Band#%d", iBand);
+            eErr = NCDFCopyBand<std::int64_t>(poSrcBand, poDstBand, nXSize, nYSize,
+                                              GDALScaledProgress, pScaledProgress);
         }
         else if( eDT == GDT_Float32 )
         {
@@ -9728,6 +9833,14 @@ void GDALRegister_netCDF()
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Network Common Data Format");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/netcdf.html");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "nc");
+    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
+#ifdef NETCDF_HAS_NC4
+                              "Byte UInt16 Int16 UInt32 Int32 Int64 UInt64 "
+#else
+                              "Byte Int16 Int32 "
+#endif
+                              "Float32 Float64 "
+                              "CInt16 CInt32 CFloat32 CFloat64" );
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "   <Option name='FORMAT' type='string-select' default='NC'>"

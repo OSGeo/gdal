@@ -2947,6 +2947,8 @@ static int getAlignment(GDALDataType ntype)
         case GDT_Float32:
             return 4;
         case GDT_Float64:
+        case GDT_Int64:
+        case GDT_UInt64:
             return 8;
         case GDT_CInt16:
             return 2;

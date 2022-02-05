@@ -180,6 +180,10 @@ GDALDataType HDF5Dataset::GetDataType(hid_t TypeID)
             return GDT_Int32;
         else if( H5Tequal(H5T_NATIVE_UINT,   TypeID) )
             return GDT_UInt32;
+        else if( H5Tequal(H5T_NATIVE_INT64,  TypeID) )
+            return GDT_Int64;
+        else if( H5Tequal(H5T_NATIVE_UINT64, TypeID) )
+            return GDT_UInt64;
         else if( H5Tequal(H5T_NATIVE_LONG,   TypeID) )
         {
 #if SIZEOF_UNSIGNED_LONG == 4

@@ -1783,39 +1783,53 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
                                 !GDALDataTypeIsComplex(eBandType));
                 if( bSrcIsInteger && bDstIsInteger )
                 {
-                    GInt32 nDstMin = 0;
-                    GUInt32 nDstMax = 0;
+                    std::int64_t nDstMin = 0;
+                    std::uint64_t nDstMax = 0;
                     switch( eBandType )
                     {
                         case GDT_Byte:
-                            nDstMin = 0;
-                            nDstMax = 255;
+                            nDstMin = std::numeric_limits<std::uint8_t>::min();
+                            nDstMax = std::numeric_limits<std::uint8_t>::max();
                             break;
                         case GDT_UInt16:
-                            nDstMin = 0;
-                            nDstMax = 65535;
+                            nDstMin = std::numeric_limits<std::uint16_t>::min();
+                            nDstMax = std::numeric_limits<std::uint16_t>::max();
                             break;
                         case GDT_Int16:
-                            nDstMin = -32768;
-                            nDstMax = 32767;
+                            nDstMin = std::numeric_limits<std::int16_t>::min();
+                            nDstMax = std::numeric_limits<std::int16_t>::max();
                             break;
                         case GDT_UInt32:
-                            nDstMin = 0;
-                            nDstMax = 0xFFFFFFFFU;
+                            nDstMin = std::numeric_limits<std::uint32_t>::min();
+                            nDstMax = std::numeric_limits<std::uint32_t>::max();
                             break;
                         case GDT_Int32:
-                            nDstMin = 0x80000000;
-                            nDstMax = 0x7FFFFFFF;
+                            nDstMin = std::numeric_limits<std::int32_t>::min();
+                            nDstMax = std::numeric_limits<std::int32_t>::max();
+                            break;
+                        case GDT_UInt64:
+                            nDstMin = std::numeric_limits<std::uint64_t>::min();
+                            nDstMax = std::numeric_limits<std::uint64_t>::max();
+                            break;
+                        case GDT_Int64:
+                            nDstMin = std::numeric_limits<std::int64_t>::min();
+                            nDstMax = std::numeric_limits<std::int64_t>::max();
                             break;
                         default:
                             CPLAssert(false);
                             break;
                     }
 
-                    GInt32 nMin = atoi(pszMin);
-                    GUInt32 nMax = static_cast<GUInt32>(strtoul(pszMax, nullptr, 10));
-                    if( nMin < nDstMin || nMax > nDstMax )
-                        bFilterOutStatsMetadata = true;
+                    try
+                    {
+                        const auto nMin = std::stoll(pszMin);
+                        const auto nMax = std::stoull(pszMax);
+                        if( nMin < nDstMin || nMax > nDstMax )
+                            bFilterOutStatsMetadata = true;
+                    }
+                    catch( const std::exception& )
+                    {
+                    }
                 }
                 // Float64 is large enough to hold all integer <= 32 bit or float32 values
                 // there might be other OK cases, but ere on safe side for now

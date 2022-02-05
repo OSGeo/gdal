@@ -8312,6 +8312,22 @@ def test_tiff_write_predictor_2_float64():
     ds = None
     gdal.Unlink(filename)
 
+###############################################################################
+
+
+def test_tiff_write_uint64():
+
+    ut = gdaltest.GDALTest('GTiff', 'gtiff/uint64.tif', 1, 1)
+    return ut.testCreateCopy()
+
+###############################################################################
+
+
+def test_tiff_write_int64():
+
+    ut = gdaltest.GDALTest('GTiff', 'gtiff/int64.tif', 1, 65535)
+    return ut.testCreateCopy()
+
 
 def test_tiff_write_cleanup():
     gdaltest.tiff_drv = None
