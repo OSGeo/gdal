@@ -27,7 +27,10 @@ Description
 This utility will automatically mosaic a set of images.  All the images must
 be in the same coordinate system and have a matching number of bands, but
 they may be overlapping, and at different resolutions. In areas of overlap,
-the last image will be copied over earlier ones.
+the last image will be copied over earlier ones. Nodata/transparency values
+are considered on a band by band level, i.e. a nodata/transparent pixel on
+one source band will not set a nodata/transparent value on all bands for the
+target pixel in the resulting raster nor will it overwrite a valid pixel value.
 
 .. program:: gdal_merge
 

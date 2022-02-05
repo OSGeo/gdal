@@ -76,7 +76,7 @@ def processTool(toolName):
     index = 0
 
     while index < len(lines):
-        if lines[index].find("Usage:") >= 0:
+        if 'usage:' in lines[index].lower():
             break
         index += 1
 
@@ -212,38 +212,36 @@ def main(argv):
 
     gdaltools = ["gdal2tiles.py",
                  "gdal2xyz.py",
-                 "gdaladdo",\
-                 #                "gdal_auth.py",\
-                 "gdalbuildvrt",\
-                 "gdal_calc.py",\
-                 "gdalchksum.py",\
-                 "gdalcompare.py",\
-                 "gdal-config",\
-                 "gdal_contour",\
-                 "gdaldem",\
-                 "gdal_edit.py",\
-                 "gdalenhance",\
-                 "gdal_fillnodata.py",\
-                 "gdal_grid",\
-                 "gdalident.py",\
-                 "gdalimport.py",\
-                 "gdalinfo",\
-                 "gdallocationinfo",\
-                 "gdalmanage",\
-                 "gdal_merge.py",\
-                 "gdalmove.py",\
-                 "gdal_polygonize.py",\
-                 "gdal_proximity.py",\
-                 "gdal_rasterize",\
-                 "gdal_retile.py",\
-                 "gdalserver",\
-                 "gdal_sieve.py",\
-                 "gdalsrsinfo",\
-                 "gdaltindex",\
-                 "gdaltransform",\
-                 "gdal_translate",\
-                 "gdalwarp",\
-                 "gdal_viewshed",\
+                 "gdaladdo",
+                 "gdalbuildvrt",
+                 "gdal_calc.py",
+                 "gdalchksum.py",
+                 "gdalcompare.py",
+                 "gdal-config",
+                 "gdal_contour",
+                 "gdaldem",
+                 "gdal_edit.py",
+                 "gdalenhance",
+                 "gdal_fillnodata.py",
+                 "gdal_grid",
+                 "gdalident.py",
+                 "gdalimport.py",
+                 "gdalinfo",
+                 "gdallocationinfo",
+                 "gdalmanage",
+                 "gdal_merge.py",
+                 "gdalmove.py",
+                 "gdal_polygonize.py",
+                 "gdal_proximity.py",
+                 "gdal_rasterize",
+                 "gdal_retile.py",
+                 "gdal_sieve.py",
+                 "gdalsrsinfo",
+                 "gdaltindex",
+                 "gdaltransform",
+                 "gdal_translate",
+                 "gdalwarp",
+                 "gdal_viewshed",
                  "gdal_create"]
 
     ogrtools = ["ogr2ogr",

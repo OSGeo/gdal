@@ -18,7 +18,11 @@ add_gdal_driver(
           tifvsi.cpp
   BUILTIN CXX_WFLAGS_EFFCXX)
 gdal_standard_includes(gdal_GTIFF)
-target_include_directories(gdal_GTIFF PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/jpeg)
+
+if (GDAL_ENABLE_DRIVER_JPEG)
+  target_compile_definitions(gdal_GTIFF PRIVATE -DHAVE_LIBJPEG)
+  target_include_directories(gdal_GTIFF PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/jpeg)
+endif ()
 
 if (GDAL_USE_TIFF_INTERNAL AND NOT GDAL_USE_GEOTIFF_INTERNAL)
   message(FATAL_ERROR "When GDAL_USE_TIFF_INTERNAL=ON, GDAL_USE_GEOTIFF_INTERNAL must be also set to ON")
@@ -42,7 +46,6 @@ endif ()
 
 if (GDAL_USE_JPEG_INTERNAL)
   target_include_directories(gdal_GTIFF PRIVATE $<TARGET_PROPERTY:libjpeg,SOURCE_DIR>)
-  target_compile_definitions(gdal_GTIFF PRIVATE -DHAVE_LIBJPEG)
   if (RENAME_INTERNAL_JPEG_SYMBOLS)
     target_compile_definitions(gdal_GTIFF PRIVATE -DRENAME_INTERNAL_LIBJPEG_SYMBOLS)
   endif ()
@@ -65,8 +68,7 @@ if (NOT GDAL_USE_TIFF_INTERNAL)
   gdal_target_link_libraries(gdal_GTIFF PRIVATE TIFF::TIFF)
 endif ()
 
-if (GDAL_ENABLE_DRIVER_JPEG AND GDAL_USE_JPEG)
-  target_compile_definitions(gdal_GTIFF PRIVATE -DHAVE_LIBJPEG)
+if (NOT GDAL_USE_JPEG_INTERNAL AND GDAL_USE_JPEG)
   gdal_target_link_libraries(gdal_GTIFF PRIVATE JPEG::JPEG)
 endif ()
 
