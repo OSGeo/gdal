@@ -3,6 +3,12 @@
 #ifndef CPL_CONFIG_H
 #define CPL_CONFIG_H
 
+#ifdef _WIN32
+# ifndef CPL_DISABLE_STDCALL
+#  define CPL_STDCALL __stdcall
+# endif
+#endif
+
 /* Define if you want to use pthreads based multiprocessing support */
 #cmakedefine CPL_MULTIPROC_PTHREAD 1
 
