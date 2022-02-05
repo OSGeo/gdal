@@ -10,9 +10,8 @@ version of the utilities without changing GDAL. This is where
 **gdal-utils** comes in.
 
 **gdal-utils**: is the GDAL Python Utilities *distribution*. This is
-what you install. It's home page is https://pypi.org/project/gdal-utils/
-. Install it with ``pip install gdal-utils`` and it will up or downgrade
-the utilities in place.
+what you install. Its home page is https://pypi.org/project/gdal-utils/
+. Install with ``pip install gdal-utils``.
 
 **osgeo_utils**: is the python *package*. This is what you use in your
 code after installing, e.g. ``from osgeo_utils import ...``. If you're
@@ -26,8 +25,8 @@ Commonly used utilities include:
 -  ogrmerge
 
 For the full list see
-`Programs <https://gdal.org/programs/index.html#programs>`__ on the GDAL
-website and note the ones that end in ``.py``.
+:ref:`Programs <programs>` and note the ones that end in ``.py``.
+
 
 Developers
 ----------
