@@ -45,9 +45,6 @@ In your IDE set gdal-utils as the root folder,
    available in path (run them with ``python
    path/to/samples/something.py``)
 
-Discuss via `gdal-dev mailing
-list <https://lists.osgeo.org/mailman/listinfo/gdal-dev>`__.
-
 Improve the docs by editing the RST pages in
 `.../doc/source <https://github.com/OSGeo/gdal/tree/master/doc/source>`__
 which generate the web pages:
