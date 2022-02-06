@@ -25,7 +25,6 @@ add_library(
   tif_close.c
   tif_dirread.c
   tif_flush.c
-  tif_ojpeg.c
   tif_strip.c
   tif_zip.c
   tif_codec.c
@@ -37,13 +36,11 @@ add_library(
   tif_webp.c
   tif_color.c
   tif_dumpmode.c
-  tif_jpeg.c
   tif_packbits.c
   tif_thunder.c
   tiff.h
   tif_compress.c
   tif_error.c
-  tif_jpeg_12.c
   tif_pixarlog.c
   tif_tile.c
   tiffconf.h
@@ -64,7 +61,10 @@ if (MSVC)
 endif ()
 
 target_compile_definitions(libtiff PRIVATE -DPIXARLOG_SUPPORT -DZIP_SUPPORT)
-target_compile_definitions(libtiff PRIVATE -DJPEG_SUPPORT -DOJPEG_SUPPORT)
+
+if (GDAL_USE_JPEG_INTERNAL OR GDAL_USE_JPEG)
+  target_compile_definitions(libtiff PRIVATE -DJPEG_SUPPORT -DOJPEG_SUPPORT)
+endif ()
 
 # Include first internal libraries
 if (GDAL_USE_ZLIB_INTERNAL)
@@ -72,6 +72,7 @@ if (GDAL_USE_ZLIB_INTERNAL)
 endif ()
 
 if (GDAL_USE_JPEG_INTERNAL)
+  target_sources(libtiff PRIVATE tif_jpeg.c tif_ojpeg.c)
   target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:libjpeg,SOURCE_DIR>)
   if (RENAME_INTERNAL_JPEG_SYMBOLS)
     target_compile_definitions(libtiff PRIVATE -DRENAME_INTERNAL_LIBJPEG_SYMBOLS)
@@ -89,7 +90,21 @@ if (NOT GDAL_USE_ZLIB_INTERNAL)
 endif ()
 
 if (NOT GDAL_USE_JPEG_INTERNAL)
-  gdal_target_link_libraries(libtiff PRIVATE JPEG::JPEG)
+  # Use a separate object library so that external libjpeg headers are only applied to tif_jpeg.c and tif_ojpeg.c, but
+  # not tif_jpeg_12.c !
+  add_library(libtiff_jpeg OBJECT tif_jpeg.c tif_ojpeg.c)
+  target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:libtiff_jpeg>)
+  target_compile_options(libtiff_jpeg PRIVATE ${GDAL_C_WARNING_FLAGS})
+  set_property(TARGET libtiff_jpeg PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
+  target_compile_definitions(libtiff_jpeg PRIVATE -DJPEG_SUPPORT -DOJPEG_SUPPORT)
+  target_include_directories(libtiff_jpeg PRIVATE $<TARGET_PROPERTY:cpl,SOURCE_DIR> $<TARGET_PROPERTY:cpl,BINARY_DIR>)
+  gdal_target_link_libraries(libtiff_jpeg PRIVATE JPEG::JPEG)
+  if (GDAL_USE_JPEG12_INTERNAL)
+    target_compile_definitions(libtiff_jpeg PRIVATE -DJPEG_DUAL_MODE_8_12)
+  endif ()
+  if (RENAME_INTERNAL_TIFF_SYMBOLS)
+    target_compile_definitions(libtiff_jpeg PRIVATE -DRENAME_INTERNAL_LIBTIFF_SYMBOLS)
+  endif ()
 endif ()
 
 if (GDAL_USE_DEFLATE)
@@ -98,6 +113,7 @@ if (GDAL_USE_DEFLATE)
 endif ()
 
 if (GDAL_USE_JPEG12_INTERNAL)
+  target_sources(libtiff PRIVATE tif_jpeg_12.c)
   target_compile_definitions(libtiff PRIVATE -DJPEG_DUAL_MODE_8_12)
   target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:libjpeg12,BINARY_DIR>)
 endif ()

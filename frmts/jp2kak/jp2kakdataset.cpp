@@ -2319,8 +2319,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             layer_bytes[layer_count-1] = 0;
         }
 
-        uint k;
-        for(k = 0; k < layer_bytes.size();k++) {
+        for(uint32_t k = 0; k < layer_bytes.size();k++) {
             CPLDebug("JP2KAK", "layer_bytes[%d] = %g\n", k, static_cast<double>(layer_bytes[k]));
         }
     } else if( !bReversible ) {
