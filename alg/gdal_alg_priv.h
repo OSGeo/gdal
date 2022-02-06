@@ -62,7 +62,12 @@ typedef struct {
     int nPixelSpace;
     GSpacing nLineSpace;
     GSpacing nBandSpace;
-    const double *padfBurnValue;
+    GDALDataType eBurnValueType;
+    union
+    {
+        const std::int64_t* int64_values;
+        const double *double_values;
+    } burnValues;
     GDALBurnValueSrc eBurnValueSource;
     GDALRasterMergeAlg eMergeAlg;
 } GDALRasterizeInfo;
