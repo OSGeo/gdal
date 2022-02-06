@@ -625,7 +625,6 @@ static OGRErr CreatePartsFromLineString(
     std::map<double, OGRPoint*> moRepers;
     poPkLayer->ResetReading();
     OGRFeature* pReperFeature = nullptr;
-    double dfTestDistance = 0.0;
     while( (pReperFeature = poPkLayer->GetNextFeature()) != nullptr )
     {
         const double dfReperPos = pReperFeature->GetFieldAsDouble(nMValField);
@@ -644,7 +643,7 @@ static OGRErr CreatePartsFromLineString(
                 }
             }
             // Check if reper is inside the path
-            dfTestDistance = Project(pPathGeom, pPt);
+            const double dfTestDistance = Project(pPathGeom, pPt);
             if( dfTestDistance < 0 )
             {
                 if( !bQuiet )
