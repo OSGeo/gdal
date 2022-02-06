@@ -284,3 +284,8 @@ if (GDAL_USE_HDFS)
   target_compile_definitions(cpl PRIVATE -DHDFS_ENABLED)
   gdal_target_link_libraries(cpl PRIVATE HDFS::HDFS)
 endif ()
+
+if (MSVC)
+  # needed for cpl_aws_win32
+  gdal_target_link_libraries(cpl PRIVATE wbemuuid)
+endif ()

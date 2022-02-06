@@ -464,12 +464,6 @@ if (MSVC)
   endif ()
 endif ()
 
-# Windows(Mingw/MSVC) link libraries
-if (CMAKE_SYSTEM_NAME MATCHES "Windows")
-  # wbemuuid needed for port/cpl_aws_win32.cpp
-  target_link_libraries(${GDAL_LIB_TARGET_NAME} PRIVATE wsock32 ws2_32 secur32 psapi wbemuuid)
-endif ()
-
 get_property(_plugins GLOBAL PROPERTY PLUGIN_MODULES)
 add_custom_target(gdal_plugins DEPENDS ${_plugins})
 

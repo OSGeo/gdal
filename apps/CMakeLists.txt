@@ -142,10 +142,6 @@ if (BUILD_APPS)
       target_link_libraries(${UTILCMD} PRIVATE ${JSONC_LIBRARIES})
     endif ()
     target_link_libraries(${UTILCMD} PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)
-    # Windows(Mingw/MSVC) link libraries
-    if (CMAKE_SYSTEM_NAME MATCHES "Windows")
-      target_link_libraries(${UTILCMD} PRIVATE wsock32 ws2_32 psapi)
-    endif ()
   endforeach ()
   install(TARGETS ${APPS_TARGETS} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 

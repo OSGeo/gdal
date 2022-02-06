@@ -47,3 +47,8 @@ endif ()
 if (NOT GDAL_USE_TIFF_INTERNAL)
   gdal_target_link_libraries(gdal_PDS PRIVATE TIFF::TIFF)
 endif ()
+
+if (CMAKE_SYSTEM_NAME MATCHES "Windows")
+  # ws2_32 needed for gethostname()
+  gdal_target_link_libraries(gdal_PDS PRIVATE ws2_32)
+endif ()

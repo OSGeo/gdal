@@ -133,6 +133,12 @@ endif ()
 
 gdal_target_link_libraries(gcore PRIVATE PROJ::proj)
 
+# Windows(Mingw/MSVC) link libraries
+if (CMAKE_SYSTEM_NAME MATCHES "Windows")
+  # psapi needed for gdalpython.cpp (EnumProcessModules)
+  gdal_target_link_libraries(gcore PRIVATE psapi)
+endif ()
+
 include(TargetPublicHeader)
 target_public_header(
   TARGET
