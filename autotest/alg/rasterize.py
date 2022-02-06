@@ -184,7 +184,7 @@ def test_rasterize_3():
 
     # Check results.
 
-    expected = 15006
+    expected = 15037
     checksum = target_ds.GetRasterBand(2).Checksum()
     if checksum != expected:
         print(checksum)

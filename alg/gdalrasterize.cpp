@@ -46,6 +46,7 @@
 #include "cpl_vsi.h"
 #include "gdal.h"
 #include "gdal_priv.h"
+#include "gdal_priv_templates.hpp"
 #include "ogr_api.h"
 #include "ogr_core.h"
 #include "ogr_feature.h"
@@ -54,7 +55,6 @@
 #include "ogrsf_frmts.h"
 
 CPL_CVSID("$Id$")
-
 
 /************************************************************************/
 /*                        gvBurnScanlineBasic()                         */
@@ -66,9 +66,6 @@ void gvBurnScanlineBasic( GDALRasterizeInfo *psInfo,
                           double dfVariant )
 
 {
-    constexpr double dfMinVariant = static_cast<double>(std::numeric_limits<T>::lowest());
-    constexpr double dfMaxVariant = static_cast<double>(std::numeric_limits<T>::max());
-
     for( int iBand = 0; iBand < psInfo->nBands; iBand++ )
     {
         const double burnValue = ( psInfo->padfBurnValue[iBand] +
@@ -83,17 +80,12 @@ void gvBurnScanlineBasic( GDALRasterizeInfo *psInfo,
             while( nPixels-- > 0 )
             {
                 double dfVal = static_cast<double>(*reinterpret_cast<T*>(pabyInsert)) + burnValue;
-                *reinterpret_cast<T*>(pabyInsert) = static_cast<T>(
-                            ( dfMinVariant > dfVal ) ? dfMinVariant :
-                            ( dfMaxVariant < dfVal ) ? dfMaxVariant :
-                            dfVal );
+                GDALCopyWord(dfVal, *reinterpret_cast<T*>(pabyInsert));
                 pabyInsert += psInfo->nPixelSpace;
             }
         } else {
-            const T nVal = static_cast<T>(
-                            ( dfMinVariant > burnValue ) ? dfMinVariant :
-                            ( dfMaxVariant < burnValue ) ? dfMaxVariant :
-                            burnValue );
+            T nVal;
+            GDALCopyWord(burnValue, nVal);
             while( nPixels-- > 0 )
             {
                 *reinterpret_cast<T*>(pabyInsert) = nVal;
@@ -166,9 +158,6 @@ void gvBurnPointBasic( GDALRasterizeInfo *psInfo,
                        int nY, int nX, double dfVariant )
 
 {
-    constexpr double dfMinVariant = std::numeric_limits<T>::lowest();
-    constexpr double dfMaxVariant = std::numeric_limits<T>::max();
-
     for( int iBand = 0; iBand < psInfo->nBands; iBand++ )
     {
         double burnValue = ( psInfo->padfBurnValue[iBand] +
@@ -180,10 +169,7 @@ void gvBurnPointBasic( GDALRasterizeInfo *psInfo,
 
         T* pbyPixel = reinterpret_cast<T*>(pbyInsert);
         burnValue += ( psInfo->eMergeAlg != GRMA_Add ) ? 0 : *pbyPixel;
-        *pbyPixel = static_cast<T>(
-                    ( dfMinVariant > burnValue ) ? dfMinVariant :
-                    ( dfMaxVariant < burnValue ) ? dfMaxVariant :
-                    burnValue );
+        GDALCopyWord(burnValue, *pbyPixel);
     }
 }
 
