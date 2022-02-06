@@ -27,11 +27,10 @@ Commonly used utilities include:
 For the full list see
 :ref:`Programs <programs>` and note the ones that end in ``.py``.
 
-
 Developers
 ----------
 
-Read the gdal-utils project charter, `RFC-78 <https://gdal.org/development/rfc/rfc78_gdal_utils_package.html>`__.
+Read the :ref:`gdal-utils project charter <rfc-78>`.
 
 Clone or download the gdal project: https://github.com/OSGeo/gdal/
 
@@ -42,11 +41,8 @@ In your IDE set gdal-utils as the root folder,
    launch wrappers created by pip and added to PYTHONHOME/Scripts)
 
    **./osgeo_utils/samples** - working python scripts but not typically
-   avaialble in path (run them with ``python
+   available in path (run them with ``python
    path/to/samples/something.py``)
-
-Discuss via `gdal-dev mailing
-list <https://lists.osgeo.org/mailman/listinfo/gdal-dev>`__.
 
 Improve the docs by editing the RST pages in
 `.../doc/source <https://github.com/OSGeo/gdal/tree/master/doc/source>`__
