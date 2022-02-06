@@ -8,7 +8,7 @@ if (GDAL_USE_ZLIB_INTERNAL)
   target_include_directories(gdal_GEOR PRIVATE $<TARGET_PROPERTY:libz,SOURCE_DIR>)
 endif ()
 
-if (GDAL_USE_JPEG_INTERNAL)
+if (GDAL_ENABLE_DRIVER_JPEG AND GDAL_USE_JPEG_INTERNAL)
   target_include_directories(gdal_GEOR PRIVATE $<TARGET_PROPERTY:libjpeg,SOURCE_DIR>)
   target_compile_definitions(gdal_GEOR PRIVATE -DJPEG_SUPPORTED)
   if (RENAME_INTERNAL_JPEG_SYMBOLS)
@@ -18,19 +18,16 @@ endif ()
 
 gdal_target_link_libraries(gdal_GEOR PRIVATE Oracle::OCI)
 
-if (NOT GDAL_USE_JPEG_INTERNAL)
-  if (HAVE_JPEG)
-    target_include_directories(gdal_GEOR PRIVATE ${JPEG_INCLUDE_DIRS})
-    target_compile_definitions(gdal_GEOR PRIVATE -DJPEG_SUPPORTED)
-    gdal_target_link_libraries(gdal_GEOR PRIVATE JPEG::JPEG)
-  endif ()
+if (GDAL_ENABLE_DRIVER_JPEG AND (NOT GDAL_USE_JPEG_INTERNAL))
+  target_compile_definitions(gdal_GEOR PRIVATE -DJPEG_SUPPORTED)
+  gdal_target_link_libraries(gdal_GEOR PRIVATE JPEG::JPEG)
 endif ()
 
 if (NOT GDAL_USE_ZLIB_INTERNAL)
   gdal_target_link_libraries(gdal_GEOR PRIVATE ZLIB::ZLIB)
 endif ()
 
-if (GDAL_ENABLE_DRIVER_GEOR_PLUGIN)
+if (GDAL_ENABLE_DRIVER_JPEG AND GDAL_ENABLE_DRIVER_GEOR_PLUGIN)
   # A bit ugly to add this file from the JPEG driver !
   target_sources(gdal_GEOR PRIVATE ../jpeg/vsidataio.cpp)
 endif ()
