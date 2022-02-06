@@ -132,7 +132,10 @@ def gdal_edit(argv):
             yres = float(argv[i + 1])
             i = i + 1
         elif argv[i] == '-a_nodata' and i < len(argv) - 1:
-            nodata = float(argv[i + 1])
+            try:
+                nodata = int(argv[i + 1])
+            except:
+                nodata = float(argv[i + 1])
             i = i + 1
         elif argv[i] == '-scale' and i < len(argv) -1:
             scale.append(float(argv[i+1]))
@@ -292,12 +295,12 @@ def gdal_edit(argv):
 
     if scale:
         if len(scale) == 1:
-            scale = scale * ds.RasterCount 
+            scale = scale * ds.RasterCount
         elif len(scale) != ds.RasterCount:
             print('If more than one scale value is provided, their number must match the number of bands.')
             print('')
             return Usage()
-    
+
     if offset:
         if len(offset) == 1:
             offset = offset * ds.RasterCount
@@ -305,7 +308,7 @@ def gdal_edit(argv):
             print('If more than one offset value is provided, their number must match the number of bands.')
             print('')
             return Usage()
-    
+
     wkt = None
     if srs == '' or srs == 'None':
         ds.SetProjection('')

@@ -4220,3 +4220,119 @@ double GDALAdjustNoDataCloseToFloatMax(double dfVal)
         return kMaxFloat;
     return dfVal;
 }
+
+/************************************************************************/
+/*                        GDALCopyNoDataValue()                         */
+/************************************************************************/
+
+void GDALCopyNoDataValue(GDALRasterBand* poDstBand,
+                         GDALRasterBand* poSrcBand)
+{
+
+    int bSuccess;
+    const auto eSrcDataType = poSrcBand->GetRasterDataType();
+    const auto eDstDataType = poDstBand->GetRasterDataType();
+    if( eSrcDataType == GDT_Int64 )
+    {
+        const auto nNoData = poSrcBand->GetNoDataValueAsInt64( &bSuccess );
+        if( bSuccess )
+        {
+            if( eDstDataType == GDT_Int64 )
+            {
+                poDstBand->SetNoDataValueAsInt64(nNoData);
+            }
+            else if( eDstDataType == GDT_UInt64 )
+            {
+                if( nNoData >= 0 )
+                    poDstBand->SetNoDataValueAsUInt64(static_cast<uint64_t>(nNoData));
+            }
+            else if( nNoData == static_cast<int64_t>(static_cast<double>(nNoData)) )
+            {
+                poDstBand->SetNoDataValue(static_cast<double>(nNoData));
+            }
+        }
+    }
+    else if( eSrcDataType == GDT_UInt64 )
+    {
+        const auto nNoData = poSrcBand->GetNoDataValueAsUInt64( &bSuccess );
+        if( bSuccess )
+        {
+            if( eDstDataType == GDT_UInt64 )
+            {
+                poDstBand->SetNoDataValueAsUInt64(nNoData);
+            }
+            else if( eDstDataType == GDT_Int64 )
+            {
+                if( nNoData < static_cast<uint64_t>(std::numeric_limits<int64_t>::max()))
+                {
+                    poDstBand->SetNoDataValueAsInt64(static_cast<int64_t>(nNoData));
+                }
+            }
+            else if( nNoData == static_cast<uint64_t>(static_cast<double>(nNoData)) )
+            {
+                poDstBand->SetNoDataValue(static_cast<double>(nNoData));
+            }
+        }
+    }
+    else
+    {
+        const auto dfNoData = poSrcBand->GetNoDataValue( &bSuccess );
+        if( bSuccess )
+        {
+            if( eDstDataType == GDT_Int64 )
+            {
+                if( dfNoData >= static_cast<double>(std::numeric_limits<int64_t>::min()) &&
+                    dfNoData <= static_cast<double>(std::numeric_limits<int64_t>::max()) &&
+                    dfNoData == static_cast<double>(static_cast<int64_t>(dfNoData)) )
+                {
+                    poDstBand->SetNoDataValueAsInt64(static_cast<int64_t>(dfNoData));
+                }
+            }
+            else if( eDstDataType == GDT_UInt64 )
+            {
+                if( dfNoData >= static_cast<double>(std::numeric_limits<uint64_t>::min()) &&
+                    dfNoData <= static_cast<double>(std::numeric_limits<uint64_t>::max()) &&
+                    dfNoData == static_cast<double>(static_cast<uint64_t>(dfNoData)) )
+                {
+                    poDstBand->SetNoDataValueAsInt64(static_cast<uint64_t>(dfNoData));
+                }
+            }
+            else
+            {
+                poDstBand->SetNoDataValue( dfNoData );
+            }
+        }
+    }
+}
+
+/************************************************************************/
+/*                     GDALGetNoDataValueCastToDouble()                 */
+/************************************************************************/
+
+double GDALGetNoDataValueCastToDouble(int64_t nVal)
+{
+    const double dfVal = static_cast<double>(nVal);
+    if( static_cast<int64_t>(dfVal) != nVal )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "GetNoDataValue() returns an approximate value of the "
+                 "true nodata value = " CPL_FRMT_GIB ". Use "
+                 "GetNoDataValueAsInt64() instead",
+                 static_cast<GIntBig>(nVal));
+    }
+    return dfVal;
+}
+
+double GDALGetNoDataValueCastToDouble(uint64_t nVal)
+{
+    const double dfVal = static_cast<double>(nVal);
+    if( static_cast<uint64_t>(dfVal) != nVal )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "GetNoDataValue() returns an approximate value of the "
+                 "true nodata value = " CPL_FRMT_GUIB ". Use "
+                 "GetNoDataValueAsUInt64() instead",
+                 static_cast<GUIntBig>(nVal));
+    }
+    return dfVal;
+}

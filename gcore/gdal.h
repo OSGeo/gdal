@@ -51,6 +51,7 @@
 #endif
 
 #include <stdbool.h>
+#include <stdint.h>
 
 /* -------------------------------------------------------------------- */
 /*      Significant constants.                                          */
@@ -1007,7 +1008,11 @@ int CPL_DLL CPL_STDCALL GDALHasArbitraryOverviews( GDALRasterBandH );
 int CPL_DLL CPL_STDCALL GDALGetOverviewCount( GDALRasterBandH );
 GDALRasterBandH CPL_DLL CPL_STDCALL GDALGetOverview( GDALRasterBandH, int );
 double CPL_DLL CPL_STDCALL GDALGetRasterNoDataValue( GDALRasterBandH, int * );
+int64_t CPL_DLL CPL_STDCALL GDALGetRasterNoDataValueAsInt64( GDALRasterBandH, int * );
+uint64_t CPL_DLL CPL_STDCALL GDALGetRasterNoDataValueAsUInt64( GDALRasterBandH, int * );
 CPLErr CPL_DLL CPL_STDCALL GDALSetRasterNoDataValue( GDALRasterBandH, double );
+CPLErr CPL_DLL CPL_STDCALL GDALSetRasterNoDataValueAsInt64( GDALRasterBandH, int64_t );
+CPLErr CPL_DLL CPL_STDCALL GDALSetRasterNoDataValueAsUInt64( GDALRasterBandH, uint64_t );
 CPLErr CPL_DLL CPL_STDCALL GDALDeleteRasterNoDataValue( GDALRasterBandH );
 char CPL_DLL ** CPL_STDCALL GDALGetRasterCategoryNames( GDALRasterBandH );
 CPLErr CPL_DLL CPL_STDCALL GDALSetRasterCategoryNames( GDALRasterBandH, CSLConstList );
@@ -1664,9 +1669,17 @@ GDALAttributeH CPL_DLL GDALMDArrayCreateAttribute(GDALMDArrayH hArray,
 const void CPL_DLL *GDALMDArrayGetRawNoDataValue(GDALMDArrayH hArray);
 double CPL_DLL GDALMDArrayGetNoDataValueAsDouble(GDALMDArrayH hArray,
                                                  int* pbHasNoDataValue);
+int64_t CPL_DLL GDALMDArrayGetNoDataValueAsInt64(GDALMDArrayH hArray,
+                                                 int* pbHasNoDataValue);
+uint64_t CPL_DLL GDALMDArrayGetNoDataValueAsUInt64(GDALMDArrayH hArray,
+                                                  int* pbHasNoDataValue);
 int CPL_DLL GDALMDArraySetRawNoDataValue(GDALMDArrayH hArray, const void*);
 int CPL_DLL GDALMDArraySetNoDataValueAsDouble(GDALMDArrayH hArray,
                                               double dfNoDataValue);
+int CPL_DLL GDALMDArraySetNoDataValueAsInt64(GDALMDArrayH hArray,
+                                             int64_t nNoDataValue);
+int CPL_DLL GDALMDArraySetNoDataValueAsUInt64(GDALMDArrayH hArray,
+                                              uint64_t nNoDataValue);
 int CPL_DLL GDALMDArraySetScale(GDALMDArrayH hArray, double dfScale);
 int CPL_DLL GDALMDArraySetScaleEx(GDALMDArrayH hArray, double dfScale, GDALDataType eStorageType);
 double CPL_DLL GDALMDArrayGetScale(GDALMDArrayH hArray, int *pbHasValue);

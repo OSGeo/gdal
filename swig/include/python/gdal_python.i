@@ -646,6 +646,30 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
         else:
             virtualmem = self.GetTiledVirtualMem(eAccess,xoff,yoff,xsize,ysize,tilexsize,tileysize,datatype,cache_size,options)
         return gdal_array.VirtualMemGetArray( virtualmem )
+
+  def GetNoDataValue(self):
+    """GetNoDataValue(Band self) -> value """
+
+    if self.DataType == gdalconst.GDT_Int64:
+        return _gdal.Band_GetNoDataValueAsInt64(self)
+
+    if self.DataType == gdalconst.GDT_UInt64:
+        return _gdal.Band_GetNoDataValueAsUInt64(self)
+
+    return _gdal.Band_GetNoDataValue(self)
+
+
+  def SetNoDataValue(self, value):
+    """SetNoDataValue(Band self, value) -> CPLErr"""
+
+    if self.DataType == gdalconst.GDT_Int64:
+        return _gdal.Band_SetNoDataValueAsInt64(self, value)
+
+    if self.DataType == gdalconst.GDT_UInt64:
+        return _gdal.Band_SetNoDataValueAsUInt64(self, value)
+
+    return _gdal.Band_SetNoDataValue(self, value)
+
 %}
 }
 
@@ -1217,6 +1241,31 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
 
   shape = property(fget=GetShape, doc='Returns the shape of the array.')
 
+  def GetNoDataValue(self):
+    """GetNoDataValue(MDArray self) -> value """
+
+    dt = self.GetDataType()
+    if dt.GetClass() == GEDTC_NUMERIC and dt.GetNumericDataType() == gdalconst.GDT_Int64:
+        return _gdal.MDArray_GetNoDataValueAsInt64(self)
+
+    if dt.GetClass() == GEDTC_NUMERIC and dt.GetNumericDataType() == gdalconst.GDT_UInt64:
+        return _gdal.MDArray_GetNoDataValueAsUInt64(self)
+
+    return _gdal.MDArray_GetNoDataValueAsDouble(self)
+
+
+  def SetNoDataValue(self, value):
+    """SetNoDataValue(MDArray self, value) -> CPLErr"""
+
+    dt = self.GetDataType()
+    if dt.GetClass() == GEDTC_NUMERIC and dt.GetNumericDataType() == gdalconst.GDT_Int64:
+        return _gdal.MDArray_SetNoDataValueInt64(self, value)
+
+    if dt.GetClass() == GEDTC_NUMERIC and dt.GetNumericDataType() == gdalconst.GDT_UInt64:
+        return _gdal.MDArray_SetNoDataValueUInt64(self, value)
+
+    return _gdal.MDArray_SetNoDataValueDouble(self, value)
+
 %}
 }
 
@@ -1406,7 +1455,7 @@ def MultiDimInfo(ds, **kwargs):
 
 
 def _strHighPrec(x):
-    return x if isinstance(x, str) else '%.18g' % x
+    return ('%.18g' % x) if isinstance(x, float) else str(x)
 
 mapGRIORAMethodToString = {
     gdalconst.GRIORA_NearestNeighbour: 'near',

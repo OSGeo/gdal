@@ -8320,6 +8320,32 @@ def test_tiff_write_uint64():
     ut = gdaltest.GDALTest('GTiff', 'gtiff/uint64.tif', 1, 1)
     return ut.testCreateCopy()
 
+
+###############################################################################
+
+
+def test_tiff_write_uint64_nodata():
+
+    filename = '/vsimem/test_tiff_write_uint64_nodata.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(filename, 1, 1, 1, gdal.GDT_UInt64)
+    val = (1 << 64)-1
+    assert ds.GetRasterBand(1).SetNoDataValue(val) == gdal.CE_None
+    ds = None
+
+    filename_copy = '/vsimem/test_tiff_write_uint64_nodata_filename_copy.tif'
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetNoDataValue() == val
+    ds = gdal.GetDriverByName('GTiff').CreateCopy(filename_copy, ds)
+    ds = None
+
+    ds = gdal.Open(filename_copy)
+    assert ds.GetRasterBand(1).GetNoDataValue() == val
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete(filename)
+    gdal.GetDriverByName('GTiff').Delete(filename_copy)
+
+
 ###############################################################################
 
 
@@ -8327,6 +8353,34 @@ def test_tiff_write_int64():
 
     ut = gdaltest.GDALTest('GTiff', 'gtiff/int64.tif', 1, 65535)
     return ut.testCreateCopy()
+
+
+###############################################################################
+
+
+def test_tiff_write_int64_nodata():
+
+    filename = '/vsimem/test_tiff_write_int64_nodata.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(filename, 1, 1, 1, gdal.GDT_Int64)
+    val = -(1 << 63)
+    assert ds.GetRasterBand(1).SetNoDataValue(val) == gdal.CE_None
+    ds = None
+
+    filename_copy = '/vsimem/test_tiff_write_int64_nodata_filename_copy.tif'
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetNoDataValue() == val
+    ds = gdal.GetDriverByName('GTiff').CreateCopy(filename_copy, ds)
+    ds = None
+
+    ds = gdal.Open(filename_copy)
+    assert ds.GetRasterBand(1).GetNoDataValue() == val
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete(filename)
+    gdal.GetDriverByName('GTiff').Delete(filename_copy)
+
+
+###############################################################################
 
 
 def test_tiff_write_cleanup():

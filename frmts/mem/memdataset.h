@@ -154,22 +154,6 @@ class CPL_DLL MEMRasterBand CPL_NON_FINAL: public GDALPamRasterBand
     GSpacing    nLineOffset;
     int         bOwnData;
 
-    int         bNoDataSet;
-    double      dfNoData;
-
-    std::unique_ptr<GDALColorTable> m_poColorTable;
-    GDALColorInterp eColorInterp;
-
-    CPLString      m_osUnitType;
-    CPLStringList  m_aosCategoryNames;
-
-    double         dfOffset;
-    double         dfScale;
-
-    CPLXMLNode    *psSavedHistograms;
-
-    std::unique_ptr<GDALRasterAttributeTable> m_poRAT;
-
   public:
                    MEMRasterBand( GDALDataset *poDS, int nBand,
                                   GByte *pabyData, GDALDataType eType,
@@ -187,37 +171,6 @@ class CPL_DLL MEMRasterBand CPL_NON_FINAL: public GDALPamRasterBand
                                   GSpacing nPixelSpaceBuf,
                                   GSpacing nLineSpaceBuf,
                                   GDALRasterIOExtraArg* psExtraArg ) override;
-    virtual double GetNoDataValue( int *pbSuccess = nullptr ) override;
-    virtual CPLErr SetNoDataValue( double ) override;
-    virtual CPLErr DeleteNoDataValue() override;
-
-    virtual GDALColorInterp GetColorInterpretation() override;
-    virtual GDALColorTable *GetColorTable() override;
-    virtual CPLErr SetColorTable( GDALColorTable * ) override;
-
-    virtual GDALRasterAttributeTable *GetDefaultRAT() override;
-    virtual CPLErr SetDefaultRAT( const GDALRasterAttributeTable * poRAT ) override;
-
-    virtual CPLErr SetColorInterpretation( GDALColorInterp ) override;
-
-    virtual const char *GetUnitType() override;
-    CPLErr SetUnitType( const char * ) override;
-
-    virtual char **GetCategoryNames() override;
-    virtual CPLErr SetCategoryNames( char ** ) override;
-
-    virtual double GetOffset( int *pbSuccess = nullptr ) override;
-    CPLErr SetOffset( double ) override;
-    virtual double GetScale( int *pbSuccess = nullptr ) override;
-    CPLErr SetScale( double ) override;
-
-    virtual CPLErr SetDefaultHistogram( double dfMin, double dfMax,
-                                        int nBuckets, GUIntBig *panHistogram ) override;
-    virtual CPLErr GetDefaultHistogram( double *pdfMin, double *pdfMax,
-                                        int *pnBuckets,
-                                        GUIntBig ** ppanHistogram,
-                                        int bForce,
-                                        GDALProgressFunc, void *pProgressData) override;
 
     virtual int GetOverviewCount() override;
     virtual GDALRasterBand *GetOverview(int) override;

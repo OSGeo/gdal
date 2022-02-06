@@ -116,6 +116,10 @@ static CPLErr NCDFGet1DVar( int nCdfId, int nVarId, char **pszValue );
 static CPLErr NCDFPut1DVar( int nCdfId, int nVarId, const char *pszValue );
 
 static double NCDFGetDefaultNoDataValue( int nCdfId, int nVarId, int nVarType, bool& bGotNoData );
+#ifdef NETCDF_HAS_NC4
+static int64_t NCDFGetDefaultNoDataValueAsInt64( int nCdfId, int nVarId, bool& bGotNoData );
+static uint64_t NCDFGetDefaultNoDataValueAsUInt64( int nCdfId, int nVarId, bool& bGotNoData );
+#endif
 
 // Replace this where used.
 static char **NCDFTokenizeArray( const char *pszValue );
@@ -175,6 +179,10 @@ class netCDFRasterBand final: public GDALPamRasterBand
     int         *panBandZLev;
     bool        m_bNoDataSet = false;
     double      m_dfNoDataValue = 0;
+    bool        m_bNoDataSetAsInt64 = false;
+    int64_t     m_nNodataValueInt64 = 0;
+    bool        m_bNoDataSetAsUInt64 = false;
+    uint64_t    m_nNodataValueUInt64 = 0;
     bool        bValidRangeValid = false;
     double      adfValidRange[2]{0,0};
     bool        m_bHaveScale = false;
@@ -203,6 +211,9 @@ class netCDFRasterBand final: public GDALPamRasterBand
                                       void* pImage );
 
     void            SetNoDataValueNoUpdate(double dfNoData);
+    void            SetNoDataValueNoUpdate(int64_t nNoData);
+    void            SetNoDataValueNoUpdate(uint64_t nNoData);
+
     void            SetOffsetNoUpdate(double dfVal);
     void            SetScaleNoUpdate(double dfVal);
     void            SetUnitTypeNoUpdate(const char* pszNewValue);
@@ -243,7 +254,11 @@ class netCDFRasterBand final: public GDALPamRasterBand
     virtual ~netCDFRasterBand();
 
     virtual double GetNoDataValue( int * ) override;
+    virtual int64_t GetNoDataValueAsInt64( int *pbSuccess = nullptr ) override;
+    virtual uint64_t GetNoDataValueAsUInt64( int *pbSuccess = nullptr ) override;
     virtual CPLErr SetNoDataValue( double ) override;
+    virtual CPLErr SetNoDataValueAsInt64( int64_t nNoData ) override;
+    virtual CPLErr SetNoDataValueAsUInt64( uint64_t nNoData ) override;
     // virtual CPLErr DeleteNoDataValue();
     virtual double GetOffset( int * ) override;
     virtual CPLErr SetOffset( double ) override;
@@ -430,8 +445,36 @@ netCDFRasterBand::netCDFRasterBand( const netCDFRasterBand::CONSTRUCTOR_OPEN&,
     // Fetch missing value.
     double dfNoData = 0.0;
     bool bGotNoData = false;
+#ifdef NETCDF_HAS_NC4
+    int64_t nNoDataAsInt64 = 0;
+    bool bGotNoDataAsInt64 = false;
+    uint64_t nNoDataAsUInt64 = 0;
+    bool bGotNoDataAsUInt64 = false;
+#endif
     if( status == NC_NOERR )
     {
+#ifdef NETCDF_HAS_NC4
+        nc_type nAttrType = NC_NAT;
+        size_t nAttrLen = 0;
+        status = nc_inq_att(cdfid, nZId, pszNoValueName, &nAttrType, &nAttrLen);
+        if( status == NC_NOERR && nAttrLen == 1 && nAttrType == NC_INT64 )
+        {
+            long long v;
+            nc_get_att_longlong(cdfid, nZId, pszNoValueName, &v);
+            bGotNoData = true;
+            bGotNoDataAsInt64 = true;
+            nNoDataAsInt64 = static_cast<int64_t>(v);
+        }
+        else if( status == NC_NOERR && nAttrLen == 1 && nAttrType == NC_UINT64 )
+        {
+            unsigned long long v;
+            nc_get_att_ulonglong(cdfid, nZId, pszNoValueName, &v);
+            bGotNoData = true;
+            bGotNoDataAsUInt64 = true;
+            nNoDataAsUInt64 = static_cast<uint64_t>(v);
+        }
+        else
+#endif
         if( NCDFGetAttr(cdfid, nZId, pszNoValueName, &dfNoData) == CE_None )
         {
             bGotNoData = true;
@@ -445,6 +488,19 @@ netCDFRasterBand::netCDFRasterBand( const netCDFRasterBand::CONSTRUCTOR_OPEN&,
     if( !bGotNoData )
     {
         nc_inq_vartype(cdfid, nZId, &vartype);
+#ifdef NETCDF_HAS_NC4
+        if( vartype == NC_INT64 )
+        {
+            nNoDataAsInt64 = NCDFGetDefaultNoDataValueAsInt64(cdfid, nZId, bGotNoData);
+            bGotNoDataAsInt64 = bGotNoData;
+        }
+        else if( vartype == NC_UINT64 )
+        {
+            nNoDataAsUInt64 = NCDFGetDefaultNoDataValueAsUInt64(cdfid, nZId, bGotNoData);
+            bGotNoDataAsUInt64 = bGotNoData;
+        }
+        else
+#endif
         if( vartype != NC_CHAR &&
             vartype != NC_BYTE
 #ifdef NETCDF_HAS_NC4
@@ -604,10 +660,64 @@ netCDFRasterBand::netCDFRasterBand( const netCDFRasterBand::CONSTRUCTOR_OPEN&,
     if( bGotNoData )
     {
         // Set nodata value.
-#ifdef NCDF_DEBUG
-        CPLDebug("GDAL_netCDF", "SetNoDataValue(%f) read", dfNoData);
+#ifdef NETCDF_HAS_NC4
+        if( bGotNoDataAsInt64 )
+        {
+            if( eDataType == GDT_Int64 )
+            {
+                SetNoDataValueNoUpdate(nNoDataAsInt64);
+            }
+            else if (eDataType == GDT_UInt64 &&
+                     nNoDataAsInt64 >= 0 )
+            {
+                SetNoDataValueNoUpdate(static_cast<uint64_t>(nNoDataAsInt64));
+            }
+            else
+            {
+                SetNoDataValueNoUpdate(static_cast<double>(nNoDataAsInt64));
+            }
+        }
+        else if( bGotNoDataAsUInt64 )
+        {
+            if( eDataType == GDT_UInt64 )
+            {
+                SetNoDataValueNoUpdate(nNoDataAsUInt64);
+            }
+            else if (eDataType == GDT_UInt64 &&
+                     nNoDataAsUInt64 <= static_cast<uint64_t>(std::numeric_limits<int64_t>::max()) )
+            {
+                SetNoDataValueNoUpdate(static_cast<int64_t>(nNoDataAsUInt64));
+            }
+            else
+            {
+                SetNoDataValueNoUpdate(static_cast<double>(nNoDataAsUInt64));
+            }
+        }
+        else
+        {
 #endif
-        SetNoDataValueNoUpdate(dfNoData);
+#ifdef NCDF_DEBUG
+            CPLDebug("GDAL_netCDF", "SetNoDataValue(%f) read", dfNoData);
+#endif
+            if( eDataType == GDT_Int64 &&
+                dfNoData >= static_cast<double>(std::numeric_limits<int64_t>::min()) &&
+                dfNoData <= static_cast<double>(std::numeric_limits<int64_t>::max()) &&
+                dfNoData == static_cast<double>(static_cast<int64_t>(dfNoData)) )
+            {
+                SetNoDataValueNoUpdate(static_cast<int64_t>(dfNoData));
+            }
+            else if( eDataType == GDT_UInt64 &&
+                     dfNoData >= static_cast<double>(std::numeric_limits<uint64_t>::min()) &&
+                     dfNoData <= static_cast<double>(std::numeric_limits<uint64_t>::max()) &&
+                     dfNoData == static_cast<double>(static_cast<uint64_t>(dfNoData)) )
+            {
+                SetNoDataValueNoUpdate(static_cast<uint64_t>(dfNoData));
+            }
+            else
+            {
+                SetNoDataValueNoUpdate(dfNoData);
+            }
+        }
     }
 
     // Create Band Metadata.
@@ -1198,13 +1308,64 @@ void netCDFRasterBand::SetUnitTypeNoUpdate( const char *pszNewValue )
 double netCDFRasterBand::GetNoDataValue( int *pbSuccess )
 
 {
-    if( pbSuccess )
-        *pbSuccess = static_cast<int>(m_bNoDataSet);
+    if( m_bNoDataSetAsInt64 )
+    {
+        if( pbSuccess )
+            *pbSuccess = TRUE;
+        return GDALGetNoDataValueCastToDouble(m_nNodataValueInt64);
+    }
+
+    if( m_bNoDataSetAsUInt64 )
+    {
+        if( pbSuccess )
+            *pbSuccess = TRUE;
+        return GDALGetNoDataValueCastToDouble(m_nNodataValueUInt64);
+    }
 
     if( m_bNoDataSet )
+    {
+        if( pbSuccess )
+            *pbSuccess = TRUE;
         return m_dfNoDataValue;
+    }
 
     return GDALPamRasterBand::GetNoDataValue(pbSuccess);
+}
+
+/************************************************************************/
+/*                        GetNoDataValueAsInt64()                       */
+/************************************************************************/
+
+int64_t netCDFRasterBand::GetNoDataValueAsInt64( int *pbSuccess )
+
+{
+    if( m_bNoDataSetAsInt64 )
+    {
+        if( pbSuccess )
+            *pbSuccess = TRUE;
+
+        return m_nNodataValueInt64;
+    }
+
+    return GDALPamRasterBand::GetNoDataValueAsInt64(pbSuccess);
+}
+
+/************************************************************************/
+/*                        GetNoDataValueAsUInt64()                      */
+/************************************************************************/
+
+uint64_t netCDFRasterBand::GetNoDataValueAsUInt64( int *pbSuccess )
+
+{
+    if( m_bNoDataSetAsUInt64 )
+    {
+        if( pbSuccess )
+            *pbSuccess = TRUE;
+
+        return m_nNodataValueUInt64;
+    }
+
+    return GDALPamRasterBand::GetNoDataValueAsUInt64(pbSuccess);
 }
 
 /************************************************************************/
@@ -1329,6 +1490,176 @@ void netCDFRasterBand::SetNoDataValueNoUpdate(double dfNoData)
 {
     m_dfNoDataValue = dfNoData;
     m_bNoDataSet = true;
+    m_bNoDataSetAsInt64 = false;
+    m_bNoDataSetAsUInt64 = false;
+}
+
+/************************************************************************/
+/*                        SetNoDataValueAsInt64()                       */
+/************************************************************************/
+
+CPLErr netCDFRasterBand::SetNoDataValueAsInt64( int64_t nNoData )
+
+{
+    CPLMutexHolderD(&hNCMutex);
+
+    // If already set to new value, don't do anything.
+    if( m_bNoDataSetAsInt64 && nNoData == m_nNodataValueInt64 )
+        return CE_None;
+
+    // Write value if in update mode.
+    if( poDS->GetAccess() == GA_Update )
+    {
+        // netcdf-4 does not allow to set _FillValue after leaving define mode,
+        // but it is ok if variable has not been written to, so only print debug.
+        // See bug #4484.
+        if( m_bNoDataSetAsInt64 &&
+            !reinterpret_cast<netCDFDataset *>(poDS)->GetDefineMode() )
+        {
+            CPLDebug("GDAL_netCDF",
+                     "Setting NoDataValue to " CPL_FRMT_GIB " (previously set to " CPL_FRMT_GIB ") "
+                     "but file is no longer in define mode (id #%d, band #%d)",
+                     static_cast<GIntBig>(nNoData), static_cast<GIntBig>(m_nNodataValueInt64), cdfid, nBand);
+        }
+#ifdef NCDF_DEBUG
+        else
+        {
+            CPLDebug("GDAL_netCDF",
+                     "Setting NoDataValue to " CPL_FRMT_GIB " (id #%d, band #%d)",
+                     static_cast<GIntBig>(nNoData), cdfid, nBand);
+        }
+#endif
+        // Make sure we are in define mode.
+        reinterpret_cast<netCDFDataset *>(poDS)->SetDefineMode(true);
+
+        int status;
+#ifdef NETCDF_HAS_NC4
+        if( eDataType == GDT_Int64 &&
+                 reinterpret_cast<netCDFDataset *>(poDS)->eFormat ==
+                 NCDF_FORMAT_NC4 )
+        {
+            long long tmp = static_cast<long long>(nNoData);
+            status = nc_put_att_longlong (cdfid, nZId, _FillValue,
+                                          nc_datatype, 1, &tmp);
+        }
+#endif
+        else
+        {
+            double dfNoData = static_cast<double>(nNoData);
+            status = nc_put_att_double(cdfid, nZId, _FillValue,
+                                       nc_datatype, 1, &dfNoData);
+        }
+
+        NCDF_ERR(status);
+
+        // Update status if write worked.
+        if( status == NC_NOERR )
+        {
+            SetNoDataValueNoUpdate(nNoData);
+            return CE_None;
+        }
+
+        return CE_Failure;
+    }
+
+    SetNoDataValueNoUpdate(nNoData);
+    return CE_None;
+}
+
+/************************************************************************/
+/*                       SetNoDataValueNoUpdate()                       */
+/************************************************************************/
+
+void netCDFRasterBand::SetNoDataValueNoUpdate(int64_t nNoData)
+{
+    m_nNodataValueInt64 = nNoData;
+    m_bNoDataSet = false;
+    m_bNoDataSetAsInt64 = true;
+    m_bNoDataSetAsUInt64 = false;
+}
+
+/************************************************************************/
+/*                        SetNoDataValueAsUInt64()                      */
+/************************************************************************/
+
+CPLErr netCDFRasterBand::SetNoDataValueAsUInt64( uint64_t nNoData )
+
+{
+    CPLMutexHolderD(&hNCMutex);
+
+    // If already set to new value, don't do anything.
+    if( m_bNoDataSetAsUInt64 && nNoData == m_nNodataValueUInt64 )
+        return CE_None;
+
+    // Write value if in update mode.
+    if( poDS->GetAccess() == GA_Update )
+    {
+        // netcdf-4 does not allow to set _FillValue after leaving define mode,
+        // but it is ok if variable has not been written to, so only print debug.
+        // See bug #4484.
+        if( m_bNoDataSetAsUInt64 &&
+            !reinterpret_cast<netCDFDataset *>(poDS)->GetDefineMode() )
+        {
+            CPLDebug("GDAL_netCDF",
+                     "Setting NoDataValue to " CPL_FRMT_GUIB " (previously set to " CPL_FRMT_GUIB ") "
+                     "but file is no longer in define mode (id #%d, band #%d)",
+                     static_cast<GUIntBig>(nNoData), static_cast<GUIntBig>(m_nNodataValueUInt64), cdfid, nBand);
+        }
+#ifdef NCDF_DEBUG
+        else
+        {
+            CPLDebug("GDAL_netCDF",
+                     "Setting NoDataValue to " CPL_FRMT_GUIB " (id #%d, band #%d)",
+                     static_cast<GUIntBig>(nNoData), cdfid, nBand);
+        }
+#endif
+        // Make sure we are in define mode.
+        reinterpret_cast<netCDFDataset *>(poDS)->SetDefineMode(true);
+
+        int status;
+#ifdef NETCDF_HAS_NC4
+        if( eDataType == GDT_UInt64 &&
+                 reinterpret_cast<netCDFDataset *>(poDS)->eFormat ==
+                 NCDF_FORMAT_NC4 )
+        {
+            unsigned long long tmp = static_cast<long long>(nNoData);
+            status = nc_put_att_ulonglong (cdfid, nZId, _FillValue,
+                                           nc_datatype, 1, &tmp);
+        }
+#endif
+        else
+        {
+            double dfNoData = static_cast<double>(nNoData);
+            status = nc_put_att_double(cdfid, nZId, _FillValue,
+                                       nc_datatype, 1, &dfNoData);
+        }
+
+        NCDF_ERR(status);
+
+        // Update status if write worked.
+        if( status == NC_NOERR )
+        {
+            SetNoDataValueNoUpdate(nNoData);
+            return CE_None;
+        }
+
+        return CE_Failure;
+    }
+
+    SetNoDataValueNoUpdate(nNoData);
+    return CE_None;
+}
+
+/************************************************************************/
+/*                       SetNoDataValueNoUpdate()                       */
+/************************************************************************/
+
+void netCDFRasterBand::SetNoDataValueNoUpdate(uint64_t nNoData)
+{
+    m_nNodataValueUInt64 = nNoData;
+    m_bNoDataSet = false;
+    m_bNoDataSetAsInt64 = false;
+    m_bNoDataSetAsUInt64 = true;
 }
 
 /************************************************************************/
@@ -9424,14 +9755,7 @@ netCDFDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
         poDS->SetBand(iBand, poBand);
 
         // Set nodata value, if any.
-        // poBand->SetNoDataValue(poSrcBand->GetNoDataValue(0));
-        int bNoDataSet = FALSE;
-        double dfNoDataValue = poSrcBand->GetNoDataValue(&bNoDataSet);
-        if( bNoDataSet )
-        {
-            CPLDebug("GDAL_netCDF", "SetNoDataValue(%f) source", dfNoDataValue);
-            poBand->SetNoDataValue(dfNoDataValue);
-        }
+        GDALCopyNoDataValue(poBand, poSrcBand);
 
         // Copy Metadata for band.
         CopyMetadata(nullptr,
@@ -11455,6 +11779,54 @@ double NCDFGetDefaultNoDataValue( int nCdfId, int nVarId, int nVarType, bool& bG
 
     return dfNoData;
 }
+
+#ifdef NETCDF_HAS_NC4
+
+/************************************************************************/
+/*                      NCDFGetDefaultNoDataValueAsInt64()              */
+/************************************************************************/
+
+static int64_t NCDFGetDefaultNoDataValueAsInt64( int nCdfId, int nVarId, bool& bGotNoData )
+
+{
+    int nNoFill = 0;
+    long long nFillVal = 0;
+    if( nc_inq_var_fill( nCdfId, nVarId, &nNoFill, &nFillVal ) == NC_NOERR )
+    {
+        if( !nNoFill )
+        {
+            bGotNoData = true;
+            return static_cast<int64_t>(nFillVal);
+        }
+    }
+    else
+        return static_cast<int64_t>(NC_FILL_INT64);
+    return 0;
+}
+
+/************************************************************************/
+/*                     NCDFGetDefaultNoDataValueAsUInt64()              */
+/************************************************************************/
+
+static uint64_t NCDFGetDefaultNoDataValueAsUInt64( int nCdfId, int nVarId, bool& bGotNoData )
+
+{
+    int nNoFill = 0;
+    unsigned long long nFillVal = 0;
+    if( nc_inq_var_fill( nCdfId, nVarId, &nNoFill, &nFillVal ) == NC_NOERR )
+    {
+        if( !nNoFill )
+        {
+            bGotNoData = true;
+            return static_cast<uint64_t>(nFillVal);
+        }
+    }
+    else
+        return static_cast<uint64_t>(NC_FILL_UINT64);
+    return 0;
+}
+
+#endif
 
 static int NCDFDoesVarContainAttribVal( int nCdfId,
                                         const char *const *papszAttribNames,

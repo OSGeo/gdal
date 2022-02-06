@@ -48,7 +48,6 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 GDALNoDataMaskBand::GDALNoDataMaskBand( GDALRasterBand *poParentIn ) :
-    dfNoDataValue(poParentIn->GetNoDataValue()),
     poParent(poParentIn)
 {
     poDS = nullptr;
@@ -59,6 +58,14 @@ GDALNoDataMaskBand::GDALNoDataMaskBand( GDALRasterBand *poParentIn ) :
 
     eDataType = GDT_Byte;
     poParent->GetBlockSize( &nBlockXSize, &nBlockYSize );
+
+    const auto eParentDT = poParent->GetRasterDataType();
+    if( eParentDT == GDT_Int64 )
+        nNoDataValueInt64 = poParent->GetNoDataValueAsInt64();
+    else if( eParentDT == GDT_UInt64 )
+        nNoDataValueUInt64 = poParent->GetNoDataValueAsUInt64();
+    else
+        dfNoDataValue = poParent->GetNoDataValue();
 }
 
 /************************************************************************/
@@ -104,8 +111,7 @@ static GDALDataType GetWorkDataType(GDALDataType eDataType)
 
       case GDT_Int64:
       case GDT_UInt64:
-        // FIXME when we can request the nodata value as something != double
-        eWrkDT = GDT_Float64;
+        eWrkDT = eDataType;
         break;
 
       default:
@@ -139,6 +145,16 @@ bool GDALNoDataMaskBand::IsNoDataInRange(double dfNoDataValue,
       case GDT_Int32:
       {
           return GDALIsValueInRange<GInt32>(dfNoDataValue);
+      }
+
+      case GDT_UInt64:
+      {
+          return GDALIsValueInRange<uint64_t>(dfNoDataValue);
+      }
+
+      case GDT_Int64:
+      {
+          return GDALIsValueInRange<int64_t>(dfNoDataValue);
       }
 
       case GDT_Float32:
@@ -201,8 +217,8 @@ CPLErr GDALNoDataMaskBand::IRasterIO( GDALRWFlag eRWFlag,
     {
         return CE_Failure;
     }
-
-    const GDALDataType eWrkDT = GetWorkDataType( poParent->GetRasterDataType() );
+    const auto eParentDT = poParent->GetRasterDataType();
+    const GDALDataType eWrkDT = GetWorkDataType( eParentDT );
 
     // Optimization in common use case (#4488).
     // This avoids triggering the block cache on this band, which helps
@@ -354,6 +370,50 @@ CPLErr GDALNoDataMaskBand::IRasterIO( GDALRWFlag eRWFlag,
                         if( bIsNoDataNan && CPLIsNan(dfVal))
                             *pabyLineDest = 0;
                         else if( ARE_REAL_EQUAL(dfVal, dfNoDataValue) )
+                            *pabyLineDest = 0;
+                        else
+                            *pabyLineDest = 255;
+                        ++i;
+                        pabyLineDest += nPixelSpace;
+                    }
+                }
+            }
+            break;
+
+            case GDT_Int64:
+            {
+                const auto* panSrc = static_cast<const int64_t *>(pTemp);
+
+                size_t i = 0;
+                for( int iY = 0; iY < nBufYSize; iY++ )
+                {
+                    GByte* pabyLineDest = pabyDest + iY * nLineSpace;
+                    for( int iX = 0; iX < nBufXSize; iX++ )
+                    {
+                        const auto nVal = panSrc[i];
+                        if( nVal == nNoDataValueInt64 )
+                            *pabyLineDest = 0;
+                        else
+                            *pabyLineDest = 255;
+                        ++i;
+                        pabyLineDest += nPixelSpace;
+                    }
+                }
+            }
+            break;
+
+            case GDT_UInt64:
+            {
+                const auto* panSrc = static_cast<const uint64_t *>(pTemp);
+
+                size_t i = 0;
+                for( int iY = 0; iY < nBufYSize; iY++ )
+                {
+                    GByte* pabyLineDest = pabyDest + iY * nLineSpace;
+                    for( int iX = 0; iX < nBufXSize; iX++ )
+                    {
+                        const auto nVal = panSrc[i];
+                        if( nVal == nNoDataValueUInt64 )
                             *pabyLineDest = 0;
                         else
                             *pabyLineDest = 255;

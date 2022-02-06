@@ -5076,6 +5076,62 @@ def test_netcdf_write_uint64():
     os.unlink('tmp/uint64.nc')
 
 
+###############################################################################
+
+
+def test_netcdf_write_uint64_nodata():
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    filename = 'tmp/test_tiff_write_uint64_nodata.nc'
+    ds = gdal.GetDriverByName('netCDF').Create(filename, 1, 1, 1, gdal.GDT_UInt64)
+    val = (1 << 64)-1
+    assert ds.GetRasterBand(1).SetNoDataValue(val) == gdal.CE_None
+    ds = None
+
+    filename_copy = 'tmp/test_tiff_write_uint64_nodata_filename_copy.nc'
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetNoDataValue() == val
+    ds = gdal.GetDriverByName('netCDF').CreateCopy(filename_copy, ds)
+    ds = None
+
+    ds = gdal.Open(filename_copy)
+    assert ds.GetRasterBand(1).GetNoDataValue() == val
+    ds = None
+
+    gdal.GetDriverByName('netCDF').Delete(filename)
+    gdal.GetDriverByName('netCDF').Delete(filename_copy)
+
+
+###############################################################################
+
+
+def test_netcdf_write_int64_nodata():
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    filename = 'tmp/test_tiff_write_int64_nodata.nc'
+    ds = gdal.GetDriverByName('netCDF').Create(filename, 1, 1, 1, gdal.GDT_Int64)
+    val = -(1 << 63)
+    assert ds.GetRasterBand(1).SetNoDataValue(val) == gdal.CE_None
+    ds = None
+
+    filename_copy = 'tmp/test_tiff_write_int64_nodata_filename_copy.nc'
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetNoDataValue() == val
+    ds = gdal.GetDriverByName('netCDF').CreateCopy(filename_copy, ds)
+    ds = None
+
+    ds = gdal.Open(filename_copy)
+    assert ds.GetRasterBand(1).GetNoDataValue() == val
+    ds = None
+
+    gdal.GetDriverByName('netCDF').Delete(filename)
+    gdal.GetDriverByName('netCDF').Delete(filename_copy)
+
+
 def test_clean_tmp():
     # [KEEP THIS AS THE LAST TEST]
     # i.e. please do not add any tests after this one. Put new ones above.

@@ -1078,10 +1078,36 @@ ZarrRasterBand::ZarrRasterBand(const std::shared_ptr<GDALMDArray>& poArray):
 double ZarrRasterBand::GetNoDataValue(int* pbHasNoData)
 {
     bool bHasNodata = false;
-    double dfRes = m_poArray->GetNoDataValueAsDouble(&bHasNodata);
+    const auto res = m_poArray->GetNoDataValueAsDouble(&bHasNodata);
     if( pbHasNoData )
         *pbHasNoData = bHasNodata;
-    return dfRes;
+    return res;
+}
+
+/************************************************************************/
+/*                        GetNoDataValueAsInt64()                       */
+/************************************************************************/
+
+int64_t ZarrRasterBand::GetNoDataValueAsInt64(int* pbHasNoData)
+{
+    bool bHasNodata = false;
+    const auto res = m_poArray->GetNoDataValueAsInt64(&bHasNodata);
+    if( pbHasNoData )
+        *pbHasNoData = bHasNodata;
+    return res;
+}
+
+/************************************************************************/
+/*                       GetNoDataValueAsUInt64()                       */
+/************************************************************************/
+
+uint64_t ZarrRasterBand::GetNoDataValueAsUInt64(int* pbHasNoData)
+{
+    bool bHasNodata = false;
+    const auto res = m_poArray->GetNoDataValueAsUInt64(&bHasNodata);
+    if( pbHasNoData )
+        *pbHasNoData = bHasNodata;
+    return res;
 }
 
 /************************************************************************/
@@ -1091,6 +1117,24 @@ double ZarrRasterBand::GetNoDataValue(int* pbHasNoData)
 CPLErr ZarrRasterBand::SetNoDataValue(double dfNoData)
 {
     return m_poArray->SetNoDataValue(dfNoData) ? CE_None : CE_Failure;
+}
+
+/************************************************************************/
+/*                       SetNoDataValueAsInt64()                        */
+/************************************************************************/
+
+CPLErr ZarrRasterBand::SetNoDataValueAsInt64(int64_t nNoData)
+{
+    return m_poArray->SetNoDataValue(nNoData) ? CE_None : CE_Failure;
+}
+
+/************************************************************************/
+/*                       SetNoDataValueAsUInt64()                       */
+/************************************************************************/
+
+CPLErr ZarrRasterBand::SetNoDataValueAsUInt64(uint64_t nNoData)
+{
+    return m_poArray->SetNoDataValue(nNoData) ? CE_None : CE_Failure;
 }
 
 /************************************************************************/

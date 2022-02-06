@@ -37,6 +37,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cstdlib>
 #include <limits>
 #include <map>
 #include <set>
@@ -539,6 +540,51 @@ static void StripUselessItemsFromCompressorConfiguration(CPLJSONObject& o)
 }
 
 /************************************************************************/
+/*                ZarrArray::SerializeNumericNoData()                   */
+/************************************************************************/
+
+void ZarrArray::SerializeNumericNoData(CPLJSONObject& oRoot) const
+{
+    if( m_oType.GetNumericDataType() == GDT_Int64 )
+    {
+        const auto nVal = GetNoDataValueAsInt64();
+        oRoot.Add("fill_value", static_cast<GInt64>(nVal));
+    }
+    else if( m_oType.GetNumericDataType() == GDT_UInt64 )
+    {
+        const auto nVal = GetNoDataValueAsUInt64();
+        if( nVal <= static_cast<uint64_t>(std::numeric_limits<int64_t>::max()) )
+        {
+            oRoot.Add("fill_value", static_cast<GInt64>(nVal));
+        }
+        else if( nVal == static_cast<uint64_t>(static_cast<double>(nVal)) )
+        {
+            oRoot.Add("fill_value", static_cast<double>(nVal));
+        }
+        else
+        {
+            // not really compliant...
+            oRoot.Add("fill_value",
+                      CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(nVal)));
+        }
+    }
+    else
+    {
+        const double dfVal = GetNoDataValueAsDouble();
+        if( std::isnan(dfVal) )
+            oRoot.Add("fill_value", "NaN");
+        else if( dfVal == std::numeric_limits<double>::infinity() )
+            oRoot.Add("fill_value", "Infinity");
+        else if( dfVal == -std::numeric_limits<double>::infinity() )
+            oRoot.Add("fill_value", "-Infinity");
+        else if( GDALDataTypeIsInteger(m_oType.GetNumericDataType()) )
+            oRoot.Add("fill_value", static_cast<GInt64>(dfVal));
+        else
+            oRoot.Add("fill_value", dfVal);
+    }
+}
+
+/************************************************************************/
 /*                    ZarrArray::SerializeV2()                          */
 /************************************************************************/
 
@@ -580,17 +626,7 @@ void ZarrArray::SerializeV2()
         {
             case GEDTC_NUMERIC:
             {
-                const double dfVal = GetNoDataValueAsDouble();
-                if( std::isnan(dfVal) )
-                    oRoot.Add("fill_value", "NaN");
-                else if( dfVal == std::numeric_limits<double>::infinity() )
-                    oRoot.Add("fill_value", "Infinity");
-                else if( dfVal == -std::numeric_limits<double>::infinity() )
-                    oRoot.Add("fill_value", "-Infinity");
-                else if( GDALDataTypeIsInteger(m_oType.GetNumericDataType()) )
-                    oRoot.Add("fill_value", static_cast<GInt64>(dfVal));
-                else
-                    oRoot.Add("fill_value", dfVal);
+                SerializeNumericNoData(oRoot);
                 break;
             }
 
@@ -698,17 +734,7 @@ void ZarrArray::SerializeV3(const CPLJSONObject& oAttrs)
     }
     else
     {
-        const double dfVal = GetNoDataValueAsDouble();
-        if( std::isnan(dfVal) )
-            oRoot.Add("fill_value", "NaN");
-        else if( dfVal == std::numeric_limits<double>::infinity() )
-            oRoot.Add("fill_value", "Infinity");
-        else if( dfVal == -std::numeric_limits<double>::infinity() )
-            oRoot.Add("fill_value", "-Infinity");
-        else if( GDALDataTypeIsInteger(m_oType.GetNumericDataType()) )
-            oRoot.Add("fill_value", static_cast<GInt64>(dfVal));
-        else
-            oRoot.Add("fill_value", dfVal);
+        SerializeNumericNoData(oRoot);
     }
 
     oRoot.Add("chunk_memory_layout", m_bFortranOrder ? "F": "C");
@@ -3639,12 +3665,31 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
         if( oType.GetClass() == GEDTC_NUMERIC &&
             CPLGetValueType(osFillValue.c_str()) != CPL_VALUE_STRING )
         {
-            // Be tolerant with numeric values serialized as strings.
-            const double dfNoDataValue = CPLAtof(osFillValue.c_str());
             abyNoData.resize(oType.GetSize());
-            GDALCopyWords(&dfNoDataValue, GDT_Float64, 0,
-                          &abyNoData[0], oType.GetNumericDataType(), 0,
-                          1);
+            // Be tolerant with numeric values serialized as strings.
+            if( oType.GetNumericDataType() == GDT_Int64 )
+            {
+                const int64_t nVal = static_cast<int64_t>(
+                    std::strtoll(osFillValue.c_str(), nullptr, 10));
+                GDALCopyWords(&nVal, GDT_Int64, 0,
+                              &abyNoData[0], oType.GetNumericDataType(), 0,
+                              1);
+            }
+            else if( oType.GetNumericDataType() == GDT_UInt64 )
+            {
+                const uint64_t nVal = static_cast<uint64_t>(
+                    std::strtoull(osFillValue.c_str(), nullptr, 10));
+                GDALCopyWords(&nVal, GDT_UInt64, 0,
+                              &abyNoData[0], oType.GetNumericDataType(), 0,
+                              1);
+            }
+            else
+            {
+                const double dfNoDataValue = CPLAtof(osFillValue.c_str());
+                GDALCopyWords(&dfNoDataValue, GDT_Float64, 0,
+                              &abyNoData[0], oType.GetNumericDataType(), 0,
+                              1);
+            }
         }
         else if( oType.GetClass() == GEDTC_NUMERIC )
         {
@@ -3726,10 +3771,32 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
         if( oType.GetClass() == GEDTC_NUMERIC )
         {
             const double dfNoDataValue = oFillValue.ToDouble();
-            abyNoData.resize(oType.GetSize());
-            GDALCopyWords(&dfNoDataValue, GDT_Float64, 0,
-                          &abyNoData[0], oType.GetNumericDataType(), 0,
-                          1);
+            if( oType.GetNumericDataType() == GDT_Int64 )
+            {
+                const int64_t nNoDataValue = static_cast<int64_t>(oFillValue.ToLong());
+                abyNoData.resize(oType.GetSize());
+                GDALCopyWords(&nNoDataValue, GDT_Int64, 0,
+                              &abyNoData[0], oType.GetNumericDataType(), 0,
+                              1);
+            }
+            else if( oType.GetNumericDataType() == GDT_UInt64 &&
+                     /* we can't really deal with nodata value between */
+                     /* int64::max and uint64::max due to json-c limitations */
+                     dfNoDataValue >= 0 )
+            {
+                const int64_t nNoDataValue = static_cast<int64_t>(oFillValue.ToLong());
+                abyNoData.resize(oType.GetSize());
+                GDALCopyWords(&nNoDataValue, GDT_Int64, 0,
+                              &abyNoData[0], oType.GetNumericDataType(), 0,
+                              1);
+            }
+            else
+            {
+                abyNoData.resize(oType.GetSize());
+                GDALCopyWords(&dfNoDataValue, GDT_Float64, 0,
+                              &abyNoData[0], oType.GetNumericDataType(), 0,
+                              1);
+            }
         }
         else
         {

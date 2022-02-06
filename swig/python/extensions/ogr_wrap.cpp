@@ -9531,12 +9531,7 @@ SWIGINTERN PyObject *_wrap_Layer_GetFeature(PyObject *SWIGUNUSEDPARM(self), PyOb
   }
   arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
   {
-    PY_LONG_LONG val;
-    if ( !PyArg_Parse(swig_obj[1],"L",&val) ) {
-      PyErr_SetString(PyExc_TypeError, "not an integer");
-      SWIG_fail;
-    }
-    arg2 = (GIntBig)val;
+    arg2 = (GIntBig)PyLong_AsLongLong(swig_obj[1]);
   }
   {
     if ( bUseExceptions ) {
@@ -9621,12 +9616,7 @@ SWIGINTERN PyObject *_wrap_Layer_SetNextByIndex(PyObject *SWIGUNUSEDPARM(self), 
   }
   arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
   {
-    PY_LONG_LONG val;
-    if ( !PyArg_Parse(swig_obj[1],"L",&val) ) {
-      PyErr_SetString(PyExc_TypeError, "not an integer");
-      SWIG_fail;
-    }
-    arg2 = (GIntBig)val;
+    arg2 = (GIntBig)PyLong_AsLongLong(swig_obj[1]);
   }
   {
     if ( bUseExceptions ) {
@@ -9824,12 +9814,7 @@ SWIGINTERN PyObject *_wrap_Layer_DeleteFeature(PyObject *SWIGUNUSEDPARM(self), P
   }
   arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
   {
-    PY_LONG_LONG val;
-    if ( !PyArg_Parse(swig_obj[1],"L",&val) ) {
-      PyErr_SetString(PyExc_TypeError, "not an integer");
-      SWIG_fail;
-    }
-    arg2 = (GIntBig)val;
+    arg2 = (GIntBig)PyLong_AsLongLong(swig_obj[1]);
   }
   {
     if ( bUseExceptions ) {
@@ -10018,9 +10003,7 @@ SWIGINTERN PyObject *_wrap_Layer_GetFeatureCount(PyObject *SWIGUNUSEDPARM(self),
 #endif
   }
   {
-    char szTmp[32];
-    sprintf(szTmp, CPL_FRMT_GIB, result);
-    resultobj = PyLong_FromString(szTmp, NULL, 10);
+    resultobj = PyLong_FromLongLong(result);
   }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
@@ -10948,9 +10931,7 @@ SWIGINTERN PyObject *_wrap_Layer_GetFeaturesRead(PyObject *SWIGUNUSEDPARM(self),
 #endif
   }
   {
-    char szTmp[32];
-    sprintf(szTmp, CPL_FRMT_GIB, result);
-    resultobj = PyLong_FromString(szTmp, NULL, 10);
+    resultobj = PyLong_FromLongLong(result);
   }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
@@ -13964,9 +13945,7 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsInteger64__SWIG_0(PyObject *SWIGUNU
 #endif
   }
   {
-    char szTmp[32];
-    sprintf(szTmp, CPL_FRMT_GIB, result);
-    resultobj = PyLong_FromString(szTmp, NULL, 10);
+    resultobj = PyLong_FromLongLong(result);
   }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
@@ -14018,9 +13997,7 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsInteger64__SWIG_1(PyObject *SWIGUNU
 #endif
   }
   {
-    char szTmp[32];
-    sprintf(szTmp, CPL_FRMT_GIB, result);
-    resultobj = PyLong_FromString(szTmp, NULL, 10);
+    resultobj = PyLong_FromLongLong(result);
   }
   {
     /* %typemap(freearg) (const char *utf8_path) */
@@ -15869,9 +15846,7 @@ SWIGINTERN PyObject *_wrap_Feature_GetFID(PyObject *SWIGUNUSEDPARM(self), PyObje
 #endif
   }
   {
-    char szTmp[32];
-    sprintf(szTmp, CPL_FRMT_GIB, result);
-    resultobj = PyLong_FromString(szTmp, NULL, 10);
+    resultobj = PyLong_FromLongLong(result);
   }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
@@ -15896,12 +15871,7 @@ SWIGINTERN PyObject *_wrap_Feature_SetFID(PyObject *SWIGUNUSEDPARM(self), PyObje
   }
   arg1 = reinterpret_cast< OGRFeatureShadow * >(argp1);
   {
-    PY_LONG_LONG val;
-    if ( !PyArg_Parse(swig_obj[1],"L",&val) ) {
-      PyErr_SetString(PyExc_TypeError, "not an integer");
-      SWIG_fail;
-    }
-    arg2 = (GIntBig)val;
+    arg2 = (GIntBig)PyLong_AsLongLong(swig_obj[1]);
   }
   {
     if ( bUseExceptions ) {
@@ -16467,12 +16437,7 @@ SWIGINTERN PyObject *_wrap_Feature_SetFieldInteger64(PyObject *SWIGUNUSEDPARM(se
   } 
   arg2 = static_cast< int >(val2);
   {
-    PY_LONG_LONG val;
-    if ( !PyArg_Parse(swig_obj[2],"L",&val) ) {
-      PyErr_SetString(PyExc_TypeError, "not an integer");
-      SWIG_fail;
-    }
-    arg3 = (GIntBig)val;
+    arg3 = (GIntBig)PyLong_AsLongLong(swig_obj[2]);
   }
   {
     if ( bUseExceptions ) {
