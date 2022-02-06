@@ -976,6 +976,7 @@ HAVE_LERC=internal
 #HEIF_LIB = C:\dev\install-libheif\lib\heif.lib
 
 # Comment out for JXL support (in internal libtiff)
+# Add -DHAVE_JxlEncoderFrameSettingsSetOption to JXL_CFLAGS if using a libjxl version > 0.6.1
 #JXL_CFLAGS = -Ic:\dev\install-libjxl\include
 #JXL_LIB = C:\dev\install-libjxl\lib\libjxl.lib
 

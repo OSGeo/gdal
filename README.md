@@ -14,7 +14,7 @@ GDAL - Geospatial Data Abstraction Library
 [![Build Status](https://travis-ci.com/OSGeo/gdal.svg?branch=master)](https://travis-ci.com/OSGeo/gdal)
 [![Build status](https://ci.appveyor.com/api/projects/status/jtwx0pcr0y01i17p/branch/master?svg=true)](https://ci.appveyor.com/project/OSGeo/gdal)
 [![Build Status](https://scan.coverity.com/projects/749/badge.svg?flat=1)](https://scan.coverity.com/projects/gdal)
-[![Documentation build Status](https://dev.azure.com/osgeo/gdal/_apis/build/status/OSGeo.gdal.doc?branchName=master&jobName=Documentation)](https://dev.azure.com/osgeo/gdal/_build/latest?definitionId=2&branchName=master&jobName=Documentation)
+[![Documentation build Status](https://github.com/OSGeo/gdal/workflows/Docs/badge.svg)](https://github.com/osgeo/gdal/actions?query=workflow%3A%22Docs%22+branch%3Amaster)
 [![Fuzzing Status](https://oss-fuzz-build-logs.storage.googleapis.com/badges/gdal.svg)](https://bugs.chromium.org/p/oss-fuzz/issues/list?sort=-opened&can=1&q=proj:gdal)
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5884351.svg)](https://doi.org/10.5281/zenodo.5884351)

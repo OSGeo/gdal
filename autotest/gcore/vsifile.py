@@ -1027,3 +1027,16 @@ def test_vsifile_vsizip_error():
                 assert gdal.VSIFCloseL(f) < 0
         gdal.Unlink(filename)
 
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/5225
+
+
+def test_vsifile_vsitar_gz_with_tar_multiple_of_65536_bytes():
+
+    f = gdal.VSIFOpenL('/vsitar/data/tar_of_65536_bytes.tar.gz/zero.bin', 'rb')
+    assert f is not None
+    read_bytes = gdal.VSIFReadL(1, 65024, f)
+    gdal.VSIFCloseL(f)
+    assert read_bytes == b'\x00' * 65024
+    gdal.Unlink('data/tar_of_65536_bytes.tar.gz.properties')

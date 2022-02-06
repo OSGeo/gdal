@@ -92,7 +92,7 @@ endif ()
 
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:gcore>)
 
-if (GDAL_USE_LIBJSONC_INTERNAL)
+if (GDAL_USE_JSONC_INTERNAL)
   target_include_directories(gcore PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
 endif ()
 
@@ -103,21 +103,19 @@ endif ()
 add_subdirectory(mdreader)
 
 # External libs now
-if (NOT GDAL_USE_LIBJSONC_INTERNAL)
-  target_include_directories(gcore PRIVATE ${JSONC_INCLUDE_DIRS})
-  gdal_add_private_link_libraries(JSONC::JSONC)
+if (NOT GDAL_USE_JSONC_INTERNAL)
+  gdal_target_link_libraries(gcore PRIVATE JSONC::JSONC)
 endif ()
 
-if (NOT DEFINED OGR_ENABLE_SQLITE)
-  message(FATAL_ERROR "OGR_ENABLE_SQLITE should be set to ON or OFF")
+if (NOT DEFINED OGR_ENABLE_DRIVER_SQLITE)
+  message(FATAL_ERROR "OGR_ENABLE_DRIVER_SQLITE should be set to ON or OFF")
 endif ()
-if (OGR_ENABLE_SQLITE)
+if (OGR_ENABLE_DRIVER_SQLITE)
   target_compile_definitions(gcore PRIVATE -DSQLITE_ENABLED)
 endif ()
 if (GDAL_USE_LIBXML2)
   target_compile_definitions(gcore PRIVATE -DHAVE_LIBXML2)
-  target_include_directories(gcore PRIVATE ${LIBXML2_INCLUDE_DIRS})
-  gdal_add_private_link_libraries(LibXml2::LibXml2)
+  gdal_target_link_libraries(gcore PRIVATE LibXml2::LibXml2)
 
   # Some libxml2 builds may require Iconv (libxml2/libxml/encoding.h includes iconv.h if LIBXML_ICONV_ENABLED is
   # defined)
@@ -130,12 +128,10 @@ if (GDAL_USE_LIBXML2)
 endif ()
 if (GDAL_USE_GEOS)
   target_compile_definitions(gcore PRIVATE -DHAVE_GEOS)
-  target_include_directories(gcore PRIVATE ${GEOS_INCLUDE_DIRS})
-  gdal_add_private_link_libraries(GEOS::GEOS)
+  gdal_target_link_libraries(gcore PRIVATE GEOS::GEOS)
 endif ()
 
-target_include_directories(gcore PRIVATE ${PROJ_INCLUDE_DIRS})
-gdal_add_private_link_libraries(PROJ::PROJ)
+gdal_target_link_libraries(gcore PRIVATE PROJ::proj)
 
 include(TargetPublicHeader)
 target_public_header(

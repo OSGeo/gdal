@@ -94,7 +94,7 @@ else
       GDAL_PYTHONPATH=$(python3 -c "from distutils.command.build import build;from distutils.dist import Distribution;b = build(Distribution());b.finalize_options();print(b.build_platlib)")
   fi
   if test "$GDAL_PYTHONPATH" != ""; then
-      GDAL_PYTHONPATH="$GDAL_ROOT/swig/python/$GDAL_PYTHONPATH"
+      GDAL_PYTHONPATH="$GDAL_ROOT/swig/python/$GDAL_PYTHONPATH:$GDAL_ROOT/swig/python/gdal-utils"
       if [[ ! "${PYTHONPATH}" =~ $GDAL_PYTHONPATH ]]; then
           export PYTHONPATH="$GDAL_PYTHONPATH:$PYTHONPATH"
           echo "Setting PYTHONPATH=$PYTHONPATH"

@@ -23,6 +23,7 @@ add_executable(
   test_gdal_dted.cpp
   test_gdal_gtiff.cpp
   test_ogr.cpp
+  test_ogr_lgpl.cpp
   test_ogr_geos.cpp
   test_ogr_shape.cpp
   test_osr.cpp
@@ -48,8 +49,8 @@ target_include_directories(
                          $<TARGET_PROPERTY:appslib,SOURCE_DIR> $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR>)
 target_compile_definitions(gdal_unit_test PRIVATE -DGDAL_TEST_ROOT_DIR="${GDAL_ROOT_TEST_DIR}")
 
-include(GdalSetTestEnv)
-gdal_set_test_env(TEST_ENV)
+include(GdalSetRuntimeEnv)
+gdal_set_runtime_env(TEST_ENV)
 
 if (MINGW)
   list(APPEND TEST_ENV SKIP_MEM_INTENSIVE_TEST=YES)
@@ -176,7 +177,7 @@ if ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(x86_64|AMD64)" AND CMAKE_SIZEOF_VOID_P
     gdal_test_target(testsse4_1 testsse.cpp)
     gdal_test_target(testavx2 testsse.cpp)
     target_compile_options(testssse3 PRIVATE ${GDAL_SSSE3_FLAG})
-    target_compile_options(testsse4_1 PRIVATE ${GDAL_SSSE3_FLAG} ${GDAL_SSSE41_FLAG})
+    target_compile_options(testsse4_1 PRIVATE ${GDAL_SSSE3_FLAG} ${GDAL_SSE41_FLAG})
     target_compile_options(testavx2 PRIVATE ${GDAL_AVX2_FLAG})
     register_test_as_custom_target(test-ssse3 testssse3)
     register_test_as_custom_target(test-sse41 testsse4_1)

@@ -60,6 +60,7 @@ OBJ = \
     test_gdal_gtiff.o \
     test_triangulation.o \
     test_ogr.o \
+    test_ogr_lgpl.o \
     test_ogr_geos.o \
     test_ogr_shape.o \
     test_osr.o \

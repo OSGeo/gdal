@@ -38,4 +38,4 @@ gdal_standard_includes(gdal_WMS)
 target_include_directories(gdal_WMS PRIVATE ${CURL_INCLUDE_DIRS} $<TARGET_PROPERTY:alg,SOURCE_DIR>
                                             $<TARGET_PROPERTY:gdal_raw,SOURCE_DIR>)
 target_compile_definitions(gdal_WMS PRIVATE -DHAVE_CURL)
-gdal_target_link_libraries(TARGET gdal_WMS LIBRARIES CURL::libcurl)
+gdal_target_link_libraries(gdal_WMS PRIVATE CURL::libcurl)

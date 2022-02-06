@@ -2990,8 +2990,11 @@ void GTIFPrintDefnEx( GTIF *psGTIF, GTIFDefn * psDefn, FILE * fp )
 void GTIFPrintDefn( GTIFDefn * psDefn, FILE * fp )
 {
     GTIF *psGTIF = GTIFNew(NULL);
-    GTIFPrintDefnEx(psGTIF, psDefn, fp);
-    GTIFFree(psGTIF);
+    if( psGTIF )
+    {
+        GTIFPrintDefnEx(psGTIF, psDefn, fp);
+        GTIFFree(psGTIF);
+    }
 }
 
 /************************************************************************/

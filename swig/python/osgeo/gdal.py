@@ -2314,7 +2314,7 @@ class Dataset(MajorObject):
         r"""ClearStatistics(Dataset self)"""
         return _gdal.Dataset_ClearStatistics(self, *args)
 
-    def GetFieldDomainNames(self, *args) -> "char **":
+    def GetFieldDomainNames(self, *args):
         r"""GetFieldDomainNames(Dataset self, char ** options=None) -> char **"""
         return _gdal.Dataset_GetFieldDomainNames(self, *args)
 
@@ -2326,11 +2326,11 @@ class Dataset(MajorObject):
         r"""AddFieldDomain(Dataset self, FieldDomain fieldDomain) -> bool"""
         return _gdal.Dataset_AddFieldDomain(self, *args)
 
-    def DeleteFieldDomain(self, *args) -> "bool":
+    def DeleteFieldDomain(self, *args):
         r"""DeleteFieldDomain(Dataset self, char const * name) -> bool"""
         return _gdal.Dataset_DeleteFieldDomain(self, *args)
 
-    def UpdateFieldDomain(self, *args) -> "bool":
+    def UpdateFieldDomain(self, *args):
         r"""UpdateFieldDomain(Dataset self, FieldDomain fieldDomain) -> bool"""
         return _gdal.Dataset_UpdateFieldDomain(self, *args)
 

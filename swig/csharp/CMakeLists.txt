@@ -96,7 +96,7 @@ function (gdal_csharp_wrap)
       ${_CSHARP_WRAPPER} -Wall -I${PROJECT_SOURCE_DIR}/swig/include -I${PROJECT_SOURCE_DIR}/swig/include/csharp
       -I${PROJECT_SOURCE_DIR}/gdal -c++ -csharp -o ${_CSHARP_WRAPPER}.cpp ${_CSHARP_SWIG_INTERFACE}
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    DEPENDS ${GDAL_SWIG_COMMON_INCLUDE} ${PROJECT_SOURCE_DIR}/swig/include/csharp/typemaps_csharp.i
+    DEPENDS ${GDAL_SWIG_COMMON_INTERFACE_FILES} ${PROJECT_SOURCE_DIR}/swig/include/csharp/typemaps_csharp.i
             ${_CSHARP_SWIG_INTERFACE})
 
   # add the wrapper dll
@@ -683,8 +683,9 @@ add_custom_target(
 
 # set up the tests
 
-include(GdalSetTestEnv)
-gdal_set_test_env(TEST_ENV)
+include(GdalSetRuntimeEnv)
+gdal_set_runtime_env(TEST_ENV)
+
 set(_ex)
 if (CSHARP_INTERPRETER)
   file(TO_NATIVE_PATH ${CMAKE_CURRENT_BINARY_DIR} _MONO_PATH)

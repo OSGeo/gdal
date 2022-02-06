@@ -1230,14 +1230,17 @@ OGRFeature *OGRDWGLayer::TranslateINSERT( OdDbEntityPtr poEntity )
             openAttr = pEntIter->entity()->objectId().safeOpenObject(OdDb::kForRead);
             
             CPLString attrText = TextUnescape( openAttr->textString(), false );
-
-            if ( !openAttr->isInvisible() && openAttr->visibility() != OdDb::kInvisible) {
-                uAttrData.Add( CPLSPrintf("%ls", openAttr->tag().c_str()), attrText );
-                if (poDS->Attributes())
-                {
-                    poFeature->SetField(CPLSPrintf("%ls", openAttr->tag().c_str()), attrText);
-                }
+            
+            const char* fieldName = CPLSPrintf("%ls", openAttr->tag().c_str());
+            if (poDS->AllAttributes() || (!openAttr->isInvisible() && openAttr->visibility() != OdDb::kInvisible)) {
+                uAttrData.Add(fieldName, attrText );
             }
+
+            if (poDS->Attributes() && poFeatureDefn->GetFieldIndex(fieldName) != -1)
+            {
+                poFeature->SetField(fieldName, attrText);
+            }
+
         }
 
         poFeature->SetField( "BlockAttributes", uAttrData.ToString().c_str() );
@@ -1312,13 +1315,13 @@ OGRFeature *OGRDWGLayer::TranslateINSERT( OdDbEntityPtr poEntity )
             oStyleProperties.clear();
 
             OGRFeature *poAttrFeat = TranslateTEXT( pAttr );
-
-            if( poDS->Attributes() )
+            const char* fieldName = CPLSPrintf("%ls", pAttr->tag().c_str());
+            if( poDS->Attributes() && poFeatureDefn->GetFieldIndex(fieldName) != -1)
             {
                 CPLString attrText = TextUnescape(pAttr->textString(), false);
-                poFeature->SetField(CPLSPrintf("%ls", pAttr->tag().c_str()), attrText);
+                poFeature->SetField(fieldName, attrText);
                 if (poAttrFeat)
-                    poAttrFeat->SetField(CPLSPrintf("%ls", pAttr->tag().c_str()), attrText);
+                    poAttrFeat->SetField(fieldName, attrText);
             }
             if( poAttrFeat )
                 apoPendingFeatures.push( poAttrFeat );
