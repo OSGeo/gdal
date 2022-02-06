@@ -24,23 +24,38 @@ The following vars are set if HDFS (the native library provided with Hadoop) is 
 
 include(FindPackageHandleStandardArgs)
 
+find_library(JAVA_JVM_LIBRARY NAMES jvm PATH_SUFFIXES native)
 find_path(HDFS_INCLUDE_DIR NAMES hdfs.h)
 find_library(HDFS_LIBRARY NAMES hdfs PATH_SUFFIXES native)
 
+mark_as_advanced(JAVA_JVM_LIBRARY)
 mark_as_advanced(HDFS_INCLUDE_DIR HDFS_LIBRARY)
+
+find_package_handle_standard_args(JVM
+                                  FOUND_VAR JVM_FOUND
+                                  REQUIRED_VARS JAVA_JVM_LIBRARY)
+
 find_package_handle_standard_args(HDFS
                                   FOUND_VAR HDFS_FOUND
-                                  REQUIRED_VARS HDFS_LIBRARY HDFS_INCLUDE_DIR)
+                                  REQUIRED_VARS JVM_FOUND HDFS_LIBRARY HDFS_INCLUDE_DIR)
 
 if(HDFS_FOUND)
     set(HDFS_LIBRARIES ${HDFS_LIBRARY})
     set(HDFS_INCLUDE_DIRS ${HDFS_INCLUDE_DIR})
 
     if(NOT TARGET HDFS::HDFS)
+
+        add_library(JVM::JVM UNKNOWN IMPORTED)
+        set_target_properties(JVM::JVM PROPERTIES
+                              IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+                              IMPORTED_LOCATION "${JAVA_JVM_LIBRARY}")
+
+
         add_library(HDFS::HDFS UNKNOWN IMPORTED)
         set_target_properties(HDFS::HDFS PROPERTIES
                               INTERFACE_INCLUDE_DIRECTORIES "${HDFS_INCLUDE_DIR}"
                               IMPORTED_LINK_INTERFACE_LANGUAGES "C"
                               IMPORTED_LOCATION "${HDFS_LIBRARY}")
+
     endif()
 endif()
