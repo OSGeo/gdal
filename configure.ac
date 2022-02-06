@@ -6145,6 +6145,11 @@ else
 
     if test "$HAVE_JXL" = "yes"; then
         LIBS="$JXL_LIBS $LIBS"
+
+        AC_CHECK_LIB(jxl,JxlEncoderFrameSettingsSetOption, [HAVE_JxlEncoderFrameSettingsSetOption=yes], [HAVE_JxlEncoderFrameSettingsSetOption=no])
+        if test "$HAVE_JxlEncoderFrameSettingsSetOption" = "yes"; then
+            JXL_CFLAGS="$JXL_CFLAGS -DHAVE_JxlEncoderFrameSettingsSetOption"
+        fi
     fi
   fi
 fi
