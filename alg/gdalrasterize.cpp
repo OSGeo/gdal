@@ -110,7 +110,6 @@ void gvBurnScanline( void *pCBData, int nY, int nXStart, int nXEnd,
         return;
 
     CPLAssert( nY >= 0 && nY < psInfo->nYSize );
-    CPLAssert( nXStart <= nXEnd );
     CPLAssert( nXStart < psInfo->nXSize );
     CPLAssert( nXEnd >= 0 );
 
