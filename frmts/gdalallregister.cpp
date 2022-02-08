@@ -320,10 +320,6 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_IDRISI();
 #endif
 
-#ifdef FRMT_ingr
-    GDALRegister_INGR();
-#endif
-
 #ifdef FRMT_gsg
     GDALRegister_GSAG();
     GDALRegister_GSBG();

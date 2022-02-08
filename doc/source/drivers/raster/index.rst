@@ -93,7 +93,6 @@ Raster drivers
    hfa
    Idrisi
    ilwis
-   intergraphraster
    iris
    isce
    isg
