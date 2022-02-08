@@ -166,9 +166,6 @@ ogrlineref$(EXE):	ogrlineref.$(OBJ_EXT)  $(DEP_LIBS)
 ogr2ogr$(EXE):	ogr2ogr_bin.$(OBJ_EXT)  $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
-testepsg$(EXE):	testepsg.$(OBJ_EXT) $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
-
 ogrtindex$(EXE):	ogrtindex.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
