@@ -176,9 +176,6 @@ void OGRRegisterAllInternal()
 #ifdef GEORSS_ENABLED
     RegisterOGRGeoRSS();
 #endif
-#ifdef GTM_ENABLED
-    RegisterOGRGTM();
-#endif
 #ifdef VFK_ENABLED
     RegisterOGRVFK();
 #endif

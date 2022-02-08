@@ -521,7 +521,6 @@ void CPL_DLL RegisterOGRGeoconcept();
 void CPL_DLL RegisterOGRIngres();
 void CPL_DLL RegisterOGRNAS();
 void CPL_DLL RegisterOGRGeoRSS();
-void CPL_DLL RegisterOGRGTM();
 void CPL_DLL RegisterOGRVFK();
 void CPL_DLL RegisterOGRPGDump();
 void CPL_DLL RegisterOGROSM();

@@ -55,7 +55,6 @@ Vector drivers
    gpsbabel
    gpx
    grass
-   gtm
    idb
    idrisi
    ili
