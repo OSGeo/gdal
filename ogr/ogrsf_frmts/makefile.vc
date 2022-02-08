@@ -9,7 +9,6 @@ DIRLIST		=	generic geojson shape ntf sdts tiger s57 dgn mitab gml \
 			geoconcept georss gtm dxf pgdump gpsbabel \
 			pds edigeo svg idrisi \
 			sxf openfilegdb wasp selafin jml vdv mvt flatgeobuf mapml \
-			$(ARCOBJECTS_DIR) \
 			$(OGDIDIR) $(FMEDIR) $(OCIDIR) $(PG_DIR) $(DWGDIR) \
 			$(ODBCDIR) $(SQLITE_DIR) $(MYSQL_DIR) $(ILI_DIR) \
 			$(IDB_DIR) $(NAS_DIR) $(DODSDIR) \
@@ -18,7 +17,7 @@ DIRLIST		=	generic geojson shape ntf sdts tiger s57 dgn mitab gml \
 			$(INGRESDIR) $(ELASTICDIR) $(GPKGDIR) $(OSMDIR) $(VFKDIR) $(CARTODIR) $(AMIGOCLOUD_DIR) \
 			$(PLSCENESDIR) $(CSWDIR) $(MONGODBDIR) $(MONGODBV3DIR) $(GMLAS_DIR) $(CAD_DIR) $(NGW_DIR)
 
-PLUGINDIRLIST	=	$(PLUGIN_ARCOBJECTS_DIR) \
+PLUGINDIRLIST	=	\
 			$(PLUGIN_DWG_DIR) \
 			$(PLUGIN_PG_DIR) \
 			$(PLUGIN_SOSI_DIR) \
@@ -97,15 +96,6 @@ FGDB_DIR = filegdb
 FGDB_OBJ = filegdb\*.obj
 !ELSE
 PLUGIN_FGDB_DIR = filegdb
-!ENDIF
-!ENDIF
-
-!IFDEF HAS_ARCOBJECTS
-!IF "$(ARCOBJECTS_PLUGIN)" != "YES"
-ARCOBJECTS_DIR = arcobjects
-ARCOBJECTS_OBJ = arcobjects\*.obj
-!ELSE
-PLUGIN_ARCOBJECTS_DIR = arcobjects
 !ENDIF
 !ENDIF
 
@@ -279,7 +269,7 @@ default:
 				 vdv\*.obj mvt\*.obj flatgeobuf\*.obj mapml\*.obj \
 				$(OGDIOBJ) $(ODBCOBJ) $(SQLITE_OBJ) \
 				$(FMEOBJ) $(OCIOBJ) $(PG_OBJ) $(MYSQL_OBJ) \
-				$(ILI_OBJ) $(DWG_OBJ) $(FGDB_OBJ) $(ARCDRIVER_OBJ) $(IDB_OBJ) \
+				$(ILI_OBJ) $(DWG_OBJ) $(FGDB_OBJ) $(IDB_OBJ) \
 				$(DODS_OBJ) $(NAS_OBJ) $(LIBKMLOBJ) $(WFS_OBJ) \
 				$(SOSI_OBJ) $(COUCHDB_OBJ) $(CLOUDANT_OBJ) $(XLS_OBJ) $(ODS_OBJ) $(XLSX_OBJ) $(LVBAG_OBJ)  \
 				$(INGRESOBJ) $(ELASTIC_OBJ) $(GPKG_OBJ) $(OSM_OBJ) $(VFK_OBJ) $(CARTO_OBJ) $(AMIGOCLOUD_OBJ) $(PLSCENES_OBJ) \

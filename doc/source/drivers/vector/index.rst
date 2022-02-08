@@ -27,7 +27,6 @@ Vector drivers
    :maxdepth: 1
 
    amigocloud
-   ao
    avcbin
    avce00
    cad
