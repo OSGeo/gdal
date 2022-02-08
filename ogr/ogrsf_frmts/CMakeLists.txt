@@ -86,7 +86,6 @@ ogr_dependent_driver(mysql MySQL "GDAL_USE_MYSQL")
 ogr_dependent_driver(pg PostGIS "GDAL_USE_POSTGRESQL;OGR_ENABLE_DRIVER_PGDUMP")
 ogr_dependent_driver(mssqlspatial MSSQLSPATIAL "GDAL_USE_ODBC")
 ogr_dependent_driver(odbc ODBC "GDAL_USE_ODBC")
-ogr_dependent_driver(walk "WALK Spatial data" "GDAL_USE_ODBC")
 ogr_dependent_driver(pgeo "PGEO" "GDAL_USE_ODBC")
 
 # for dependency problem, grass is not always compiled in.

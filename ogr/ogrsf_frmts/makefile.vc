@@ -34,8 +34,8 @@ OGDIOBJ =	ogdi\*.obj
 !ENDIF
 
 !IFDEF ODBC_SUPPORTED
-ODBCDIR	=	odbc pgeo mssqlspatial walk
-ODBCOBJ =	odbc\*.obj pgeo\*.obj mssqlspatial\*.obj walk\*.obj
+ODBCDIR	=	odbc pgeo mssqlspatial
+ODBCOBJ =	odbc\*.obj pgeo\*.obj mssqlspatial\*.obj
 !ENDIF
 
 !IFDEF SQLNCLI_LIB

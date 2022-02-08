@@ -1129,8 +1129,8 @@ The ``nc-config`` program can be used to detect it.
 ODBC
 ****
 
-ODBC is required for various drivers: :ref:`vector.odbc`, :ref:`vector.pgeo`,
-:ref:`vector.walk` and :ref:`vector.mssqlspatial`.
+ODBC is required for various drivers: :ref:`vector.odbc`, :ref:`vector.pgeo`
+and :ref:`vector.mssqlspatial`.
 It is normally automatically found in system directories on Unix and Windows.
 
 .. option:: ODBC_INCLUDE_DIR

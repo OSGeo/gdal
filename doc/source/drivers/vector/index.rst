@@ -99,7 +99,6 @@ Vector drivers
    vdv
    vfk
    vrt
-   walk
    wasp
    wfs
    xls

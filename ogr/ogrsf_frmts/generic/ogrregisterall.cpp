@@ -214,9 +214,6 @@ void OGRRegisterAllInternal()
 #ifdef ELASTIC_ENABLED
     RegisterOGRElastic();
 #endif
-#ifdef WALK_ENABLED
-    RegisterOGRWalk();
-#endif
 #ifdef CARTO_ENABLED
     RegisterOGRCarto();
 #endif
