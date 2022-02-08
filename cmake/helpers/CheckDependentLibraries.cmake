@@ -488,28 +488,6 @@ if (GDAL_USE_LIBKML)
   string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(LibKML COMPONENTS DOM ENGINE)\n")
 endif ()
 
-gdal_check_package(Jasper "Enable JPEG2000 support" CAN_DISABLE)
-if (HAVE_JASPER)
-  # Detect GeoJP2 UUID hack
-  include(CheckCSourceCompiles)
-  set(CMAKE_REQUIRED_QUIET "yes")
-  set(CMAKE_REQUIRED_LIBRARIES jasper)
-  check_c_source_compiles(
-    "#ifdef __cplusplus\nextern \"C\"\n#endif\n char jp2_encode_uuid ();int main () {return jp2_encode_uuid ();;return 0;}"
-    HAVE_JASPER_UUID)
-  unset(CMAKE_REQUIRED_QUIET)
-  unset(CMAKE_REQUIRED_LIBRARIES)
-  if (HAVE_JASPER_UUID)
-    message(STATUS "Jasper GeoJP2 UUID hack detected.")
-    if (TARGET JASPER::Jasper)
-      set_property(
-        TARGET JASPER::Jasper
-        APPEND
-        PROPERTY INTERFACE_COMPILE_DEFINITIONS "HAVE_JASPER_UUID")
-    endif ()
-  endif ()
-endif ()
-
 # CXX is only needed for KEA driver
 gdal_check_package(HDF5 "Enable HDF5" COMPONENTS "C" "CXX" CAN_DISABLE)
 

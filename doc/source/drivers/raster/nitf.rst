@@ -173,7 +173,7 @@ JPEG2000 compression (write support)
 
 JPEG2000 compression is available when using the IC=C8 creation option,
 if the JP2ECW (SDK 3.3, or for later versions assuming the user has the key to
-enable JPEG2000 writing), JP2KAK, JP2OpenJPEG or Jasper driver are available.
+enable JPEG2000 writing), JP2KAK or JP2OpenJPEG driver are available.
 
 They are tried in that order when several ones are available, unless the
 JPEG2000_DRIVER creation option (added in GDAL 3.4) is set to explicitly specify
@@ -202,8 +202,6 @@ the JPEG2000 capable driver to use.
   pixel and per band. It can be adjusted with the QUALITY creation option.
   When those profiles are specified, the J2KLRA TRE will also be written, unless
   the J2KLRA=NO creation option is specified.
-
--  Jasper JPEG2000 driver: only in the CreateCopy() case.
 
 Links
 -----

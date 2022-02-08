@@ -1938,7 +1938,7 @@ Start a Conda enabled console and assuming there is a c:\\dev directory
         cmake proj geos hdf4 hdf5 \
         libnetcdf openjpeg poppler libtiff libpng xerces-c expat libxml2 kealib json-c \
         cfitsio freexl geotiff jpeg libpq libspatialite libwebp-base pcre postgresql \
-        sqlite tiledb zstd charls cryptopp cgal jasper librttopo libkml openssl xz
+        sqlite tiledb zstd charls cryptopp cgal librttopo libkml openssl xz
 
 .. note::
 

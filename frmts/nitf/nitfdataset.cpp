@@ -617,7 +617,7 @@ NITFDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
             // to be opened by a random driver.
             static const char * const apszDrivers[] = {
                 "JP2KAK", "JP2ECW", "JP2MRSID",
-                "JPEG2000", "JP2OPENJPEG", nullptr };
+                "JP2OPENJPEG", nullptr };
             poDS->poJ2KDataset = reinterpret_cast<GDALDataset*>(
                 GDALOpenEx( osDSName, GDAL_OF_RASTER, apszDrivers, nullptr, nullptr) );
 
@@ -4231,12 +4231,6 @@ NITFDataset::NITFCreateCopy(
                     /* Try with JP2OPENJPEG as an alternate driver */
                     poJ2KDriver =
                         GetGDALDriverManager()->GetDriverByName( "JP2OPENJPEG" );
-                }
-                if( poJ2KDriver == nullptr )
-                {
-                    /* Try with Jasper as an alternate driver */
-                    poJ2KDriver =
-                        GetGDALDriverManager()->GetDriverByName( "JPEG2000" );
                 }
             }
             if( poJ2KDriver == nullptr )

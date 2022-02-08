@@ -240,12 +240,6 @@ endif
 endif
 
 #
-# JPEG-2000 Support via JasPer library.
-#
-HAVE_JASPER     = @HAVE_JASPER@
-JASPER_FLAGS	= @JASPER_FLAGS@
-
-#
 # MrSID support via LizardTech's DSDK
 #
 MRSID_FLAGS	= @MRSID_FLAGS@

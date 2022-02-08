@@ -1718,15 +1718,6 @@ bool GRIB2Section567Writer::WriteJPEG2000(char** papszOptions)
                         CPLSPrintf("%f", 100.0 / nCompressionRatio ));
         }
     }
-    else if( EQUAL(poJ2KDriver->GetDescription(), "JPEG2000") )
-    {
-        if( !bLossLess )
-        {
-            aosJ2KOptions.SetNameValue("mode", "real");
-            aosJ2KOptions.SetNameValue("rate",
-                        CPLSPrintf("%f", 1.0 / nCompressionRatio ));
-        }
-    }
     else if( EQUAL(poJ2KDriver->GetDescription(), "JP2ECW") )
     {
         if( bLossLess )

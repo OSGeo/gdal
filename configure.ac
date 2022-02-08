@@ -3339,56 +3339,6 @@ if test "$NETCDF_SETTING" != "no" ; then
 
 fi
 
-
-dnl ---------------------------------------------------------------------------
-dnl Select a JasPer Library to use, or disable driver.
-dnl ---------------------------------------------------------------------------
-
-AC_ARG_WITH(jasper,[  --with-jasper[=ARG]     Include JPEG-2000 support via JasPer library (ARG=path)],,)
-
-if test "$with_jasper" = "no" ; then
-
-  HAVE_JASPER=no
-
-  AC_MSG_NOTICE([JasPer (JPEG2000) support disabled.])
-
-elif test "$with_jasper" = "yes" -o "$with_jasper" = "" ; then
-
-  AC_CHECK_LIB(jasper,jpc_decode,HAVE_JASPER=yes,HAVE_JASPER=no,)
-  AC_CHECK_LIB(jasper,jp2_decode,HAVE_JASPER=yes,HAVE_JASPER=no,)
-  AC_CHECK_LIB(jasper,pgx_decode,HAVE_JASPER=yes,HAVE_JASPER=no,)
-
-  if test "$HAVE_JASPER" = "yes" ; then
-    LIBS="-ljasper $LIBS"
-  fi
-else
-
-  HAVE_JASPER=yes
-  LIBS="-L$with_jasper -L$with_jasper/lib -ljasper $LIBS"
-  EXTRA_INCLUDES="-I$with_jasper -I$with_jasper/include $EXTRA_INCLUDES"
-
-  AC_MSG_NOTICE([using JasPer library from $with_jasper.])
-fi
-
-if test "$HAVE_JASPER" != "no" ; then
-  OPT_GDAL_FORMATS="jpeg2000 $OPT_GDAL_FORMATS"
-
-  dnl Test whether we have UUID JasPer hack
-
-  AC_CHECK_LIB(jasper,jp2_encode_uuid,HAVE_JASPER_UUID=yes,HAVE_JASPER_UUID=no,)
-
-  if test "$HAVE_JASPER_UUID" = "yes" ; then
-    AC_MSG_NOTICE([hacked JasPer version found (JasPer UUID), GeoJP2 enabled.])
-    JASPER_FLAGS=-DHAVE_JASPER_UUID
-  else
-    AC_MSG_NOTICE([hacked JasPer version not found, GeoJP2 disabled.])
-  fi
-fi
-
-AC_SUBST([HAVE_JASPER],$HAVE_JASPER)
-AC_SUBST([JASPER_FLAGS],$JASPER_FLAGS)
-
-
 dnl ---------------------------------------------------------------------------
 dnl Select a OpenJPEG Library to use, or disable driver.
 dnl ---------------------------------------------------------------------------
@@ -6274,11 +6224,6 @@ LOC_MSG([  Ingres support:            ${HAVE_INGRES}])
 LOC_MSG([  JP2Lura support:           ${HAVE_JP2LURA}])
 LOC_MSG([  JPEG 12 bit:               ${JPEG12_ENABLED}])
 LOC_MSG([  JPEG-in-TIFF 12 bit:       ${TIFF_JPEG12_ENABLED}])
-if test "x$HAVE_JASPER_UUID" != "x" ; then
-  LOC_MSG([  JPEG JasPer support:       ${HAVE_JASPER} (GeoJP2=${HAVE_JASPER_UUID})])
-else
-  LOC_MSG([  JPEG JasPer support:       ${HAVE_JASPER}])
-fi
 LOC_MSG([  JPEG-Lossless/CharLS:      ${HAVE_CHARLS}])
 LOC_MSG([  Kakadu support:            ${HAVE_KAKADU}])
 LOC_MSG([  Kea support:               ${HAVE_KEA}])
