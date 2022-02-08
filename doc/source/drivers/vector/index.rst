@@ -33,7 +33,6 @@ Vector drivers
    carto
    csv
    csw
-   db2
    dgn
    dgnv8
    dods

@@ -45,9 +45,6 @@ void OGRRegisterAllInternal()
     // NOTE: frmts/drivers.ini in the same directory should be kept in same
     // order as this file
 
-#ifdef DB2_ENABLED
-    RegisterOGRDB2();
-#endif
 #ifdef SHAPE_ENABLED
     RegisterOGRShape();
 #endif
