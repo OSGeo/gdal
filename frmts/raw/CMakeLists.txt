@@ -13,7 +13,6 @@ add_gdal_driver(
           eirdataset.cpp
           envidataset.cpp
           fastdataset.cpp
-          fujibasdataset.cpp
           genbindataset.cpp
           gscdataset.cpp
           gtxdataset.cpp

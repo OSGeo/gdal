@@ -411,7 +411,6 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_PAux();
     GDALRegister_MFF();
     GDALRegister_HKV();
-    GDALRegister_FujiBAS();
     GDALRegister_GSC();
     GDALRegister_FAST();
     GDALRegister_BT();

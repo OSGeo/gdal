@@ -70,7 +70,6 @@ Raster drivers
    fast
    fit
    fits
-   fujibas
    genbin
    georaster
    gff
