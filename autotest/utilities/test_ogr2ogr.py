@@ -647,28 +647,15 @@ def test_ogr2ogr_21():
         pytest.skip()
 
     try:
-        os.remove('tmp/testogr2ogr21.gtm')
+        os.remove('tmp/testogr2ogr21.gpx')
     except OSError:
         pass
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() +
-                         ' -f GPSTrackMaker tmp/testogr2ogr21.gtm data/dataforogr2ogr21.csv ' +
-                         '-sql "SELECT comment, name FROM dataforogr2ogr21" -nlt POINT')
-    ds = ogr.Open('tmp/testogr2ogr21.gtm')
-
-    assert ds is not None
-    ds.GetLayer(0).GetLayerDefn()
-    lyr = ds.GetLayer(0)
-    feat = lyr.GetNextFeature()
-    if feat.GetFieldAsString('name') != 'NAME' or \
-       feat.GetFieldAsString('comment') != 'COMMENT':
-        print(feat.GetFieldAsString('comment'))
-        ds.Destroy()
-        os.remove('tmp/testogr2ogr21.gtm')
-        pytest.fail(feat.GetFieldAsString('name'))
-
-    ds.Destroy()
-    os.remove('tmp/testogr2ogr21.gtm')
+                         ' -f GPX tmp/testogr2ogr21.gpx data/dataforogr2ogr21.csv ' +
+                         '-sql "SELECT name AS route_name, 0 as route_fid FROM dataforogr2ogr21" -nlt POINT -nln route_points')
+    assert '<name>NAME</name>' in open('tmp/testogr2ogr21.gpx', 'rt').read()
+    os.remove('tmp/testogr2ogr21.gpx')
 
 
 ###############################################################################
