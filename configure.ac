@@ -1739,7 +1739,7 @@ AC_DEFUN([INTERNAL_FORMATS],[aaigrid adrg aigrid airsar arg blx bmp bsb cals ceo
 AC_DEFUN([INTERNAL_OPT_FORMATS],[grib ozi pdf rik])
 AC_DEFUN([INTERNAL_DRIVERS],[avc cad csv dgn dxf edigeo flatgeobuf geoconcept georss gml gmt gpsbabel gpx gtm jml mapml mvt ntf openfilegdb pgdump rec s57 selafin shape svg sxf tiger vdv wasp])dnl
 AC_DEFUN([CURL_FORMATS],[eeda plmosaic wcs wms wmts daas ogcapi])dnl
-AC_DEFUN([CURL_DRIVERS],[amigocloud carto cloudant couchdb csw elastic ngw plscenes wfs])dnl
+AC_DEFUN([CURL_DRIVERS],[amigocloud carto csw elastic ngw plscenes wfs])dnl
 AC_DEFUN([SQLITE_FORMATS],[rasterlite mbtiles])dnl
 AC_DEFUN([SQLITE_DRIVERS],[gpkg vfk osm])dnl
 AC_DEFUN([EXPAT_DRIVERS],[ods xlsx lvbag])dnl

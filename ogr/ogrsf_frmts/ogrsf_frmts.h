@@ -536,8 +536,6 @@ void CPL_DLL RegisterOGRGeomedia();
 void CPL_DLL RegisterOGRMDB();
 void CPL_DLL RegisterOGREDIGEO();
 void CPL_DLL RegisterOGRSVG();
-void CPL_DLL RegisterOGRCouchDB();
-void CPL_DLL RegisterOGRCloudant();
 void CPL_DLL RegisterOGRIdrisi();
 void CPL_DLL RegisterOGRXLS();
 void CPL_DLL RegisterOGRODS();

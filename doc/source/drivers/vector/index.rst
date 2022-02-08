@@ -31,8 +31,6 @@ Vector drivers
    avce00
    cad
    carto
-   cloudant
-   couchdb
    csv
    csw
    db2
