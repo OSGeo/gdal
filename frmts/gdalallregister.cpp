@@ -416,7 +416,6 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_BT();
     GDALRegister_LAN();
     GDALRegister_CPG();
-    GDALRegister_IDA();
     GDALRegister_NDF();
     GDALRegister_EIR();
     GDALRegister_DIPEx();

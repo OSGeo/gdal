@@ -17,7 +17,6 @@ add_gdal_driver(
           gscdataset.cpp
           gtxdataset.cpp
           hkvdataset.cpp
-          idadataset.cpp
           krodataset.cpp
           iscedataset.cpp
           landataset.cpp

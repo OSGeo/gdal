@@ -91,7 +91,6 @@ Raster drivers
    heif
    hf2
    hfa
-   ida
    Idrisi
    ilwis
    intergraphraster
