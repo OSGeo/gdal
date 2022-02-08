@@ -47,7 +47,6 @@ Vector drivers
    geoconcept
    geojson
    geojsonseq
-   geomedia
    georss
    gmlas
    gml

@@ -39,8 +39,7 @@ CPL_CVSID("$Id$")
 static int OGRPGeoDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
-    if (STARTS_WITH_CI(poOpenInfo->pszFilename, "WALK:")
-        || STARTS_WITH_CI(poOpenInfo->pszFilename, "GEOMEDIA:"))
+    if (STARTS_WITH_CI(poOpenInfo->pszFilename, "WALK:"))
     {
         return FALSE;
     }
@@ -51,7 +50,7 @@ static int OGRPGeoDriverIdentify( GDALOpenInfo* poOpenInfo )
     if( !EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"mdb") )
         return FALSE;
 
-    // Could potentially be a PGeo, Walk, Geomedia or generic ODBC database
+    // Could potentially be a PGeo, Walk or generic ODBC database
     return -1;
 }
 

@@ -122,7 +122,7 @@ void OGRRegisterAllInternal()
     RegisterOGRWAsP();
 #endif
 
-/* Register before PGeo and Geomedia drivers */
+/* Register before PGeo driver */
 /* that don't work well on Linux */
 #ifdef MDB_ENABLED
     RegisterOGRMDB();
@@ -208,9 +208,6 @@ void OGRRegisterAllInternal()
 #endif
 #ifdef SOSI_ENABLED
     RegisterOGRSOSI();
-#endif
-#ifdef GEOMEDIA_ENABLED
-    RegisterOGRGeomedia();
 #endif
 #ifdef EDIGEO_ENABLED
     RegisterOGREDIGEO();
