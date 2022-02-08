@@ -3712,49 +3712,6 @@ if test "$HAVE_MRSID" != "no" ; then
 fi
 
 dnl ---------------------------------------------------------------------------
-dnl Select MrSID/MG4 Lidar library or disable driver.
-dnl ---------------------------------------------------------------------------
-
-MRSID_LIDAR_FLAGS=
-HAVE_MRSID_LIDAR=no
-
-AC_ARG_WITH(mrsid_lidar,[  --with-mrsid_lidar[=ARG]      Include MrSID/MG4 LiDAR support (ARG=path to LizardTech LiDAR SDK or no)],,)
-
-if test "x$with_mrsid_lidar" = "xno"  -o "x$with_mrsid_lidar" = "x" ; then
-  HAVE_MRSID_LIDAR=no
-  AC_MSG_NOTICE([MrSID/MG4 Lidar support disabled.])
-else
-  MRSID_LIDAR_BASE="$with_mrsid_lidar"
-
-  if test -r "$MRSID_LIDAR_BASE/include/lidar/Version.h" ; then
-    AC_MSG_RESULT([found LizardTech LiDAR SDK 1.1 or newer.])
-    HAVE_MRSID_LIDAR=yes
-  else
-    HAVE_MRSID_LIDAR=no
-    AC_MSG_RESULT([not found.])
-    AC_MSG_ERROR([  MrSID/MG4 Lidar requested, but components not found.])
-  fi
-
-  if test $HAVE_MRSID_LIDAR = yes ; then
-    if test -e "$MRSID_LIDAR_BASE/lib/liblti_lidar_dsdk.so" \
-         -o -e "$MRSID_LIDAR_BASE/lib/liblti_lidar_dsdk.dylib"; then
-      MRSID_LIDAR_LIBS="-L$MRSID_LIDAR_BASE/lib -llti_lidar_dsdk"
-      MRSID_LIDAR_INCLUDE="-I$MRSID_LIDAR_BASE/include"
-    else
-      MRSID_LIDAR_LIBS="-L$MRSID_LIDAR_BASE/lib/Release -llti_lidar_dsdk"
-      MRSID_LIDAR_INCLUDE="-I$MRSID_LIDAR_BASE/include"
-    fi
-  fi
-fi
-
-AC_SUBST(MRSID_LIDAR_INCLUDE,$MRSID_LIDAR_INCLUDE)
-AC_SUBST(MRSID_LIDAR_LIBS,$MRSID_LIDAR_LIBS)
-
-if test "$HAVE_MRSID_LIDAR" != "no" ; then
-  OPT_GDAL_FORMATS="mrsid_lidar $OPT_GDAL_FORMATS"
-fi
-
-dnl ---------------------------------------------------------------------------
 dnl Check if LuraTech library is available.
 dnl ---------------------------------------------------------------------------
 
@@ -6183,7 +6140,6 @@ LOC_MSG([  LZ4 support:               ${HAVE_LZ4}])
 LOC_MSG([  MDB support:               ${MDB_ENABLED}])
 LOC_MSG([  MongoCXX v3 support:       ${MONGOCXXV3_ENABLED}])
 LOC_MSG([  MongoDB support:           ${MONGODB_ENABLED}])
-LOC_MSG([  MrSID/MG4 Lidar support:   ${HAVE_MRSID_LIDAR}])
 LOC_MSG([  MrSID support:             ${HAVE_MRSID}])
 LOC_MSG([  MSG support:               ${HAVE_MSG}])
 LOC_MSG([  MySQL support:             ${HAVE_MYSQL}])

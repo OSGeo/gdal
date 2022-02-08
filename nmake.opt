@@ -603,15 +603,15 @@ KAKADU_7_5_OR_LATER = YES
 #KEA_LIB = c:\kea\libkea.lib
 
 # Uncomment the following for MrSID support.  Only MRSID_DIR is required,
-# which may point to a MrSID Raster SDK, Lidar SDK, or the combined SDK, and
-# will auto-configure the mrsid and/or mrsid_lidar drivers as appropriate.
+# which may point to a MrSID Raster SDK and
+# will auto-configure the mrsid driver as appropriate.
 # Other configuration options can be specified to control specific features
 # that may be available.  See comments at the top of frmts/mrsid/nmake.opt
 # for more details.
 #MRSID_DIR =	d:\projects\mrsid
 #MRSID_JP2 =    YES
 
-!IF DEFINED(MRSID_DIR) || DEFINED(MRSID_RASTER_DIR) || DEFINED(MRSID_LIDAR_DIR)
+!IF DEFINED(MRSID_DIR) || DEFINED(MRSID_RASTER_DIR)
 !IF EXIST(frmts\mrsid\nmake.opt)
 !INCLUDE frmts\mrsid\nmake.opt
 !ENDIF
@@ -1028,7 +1028,7 @@ GDALLIB = $(GDAL_ROOT)\$(GDAL_LIB_NAME)
 ODBCLIB = legacy_stdio_definitions.lib odbc32.lib odbccp32.lib user32.lib
 !ENDIF
 
-!IF DEFINED(MRSID_DIR) || DEFINED(MRSID_RASTER_DIR) || DEFINED(MRSID_LIDAR_DIR)
+!IF DEFINED(MRSID_DIR) || DEFINED(MRSID_RASTER_DIR)
 !IF "$(MRSID_PLUGIN)" != "YES"
 MRSID_LIB_LINK = $(MRSID_LIB)
 !ELSE
@@ -1175,7 +1175,7 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
 	$(MYSQL_LIB) $(GEOS_LIB) $(HDF5_LIB_LINK) $(KEA_LIB_LINK) $(ARCOBJECTS_LIB) $(DWG_LIB_LINK) \
 	$(IDB_LIB) $(CURL_LIB) $(DODS_LIB) $(PCIDSK_LIB) \
 	$(ODBCLIB) $(PNG_LIB) $(ZLIB_LIB) $(LIBDEFLATE_LIB) $(ADD_LIBS) $(OPENJPEG_LIB) \
-	$(MRSID_LIDAR_LIB) $(LIBKML_LIBS) $(SOSI_LIBS) $(PDF_LIB_LINK) $(LZMA_LIBS) $(ZSTD_LIBS) $(BLOSC_LIBS) $(LZ4_LIBS) \
+	$(LIBKML_LIBS) $(SOSI_LIBS) $(PDF_LIB_LINK) $(LZMA_LIBS) $(ZSTD_LIBS) $(BLOSC_LIBS) $(LZ4_LIBS) \
 	$(LIBICONV_LIBRARY) $(WEBP_LIBS) $(TILEDB_LIBS) $(FGDB_LIB_LINK) $(FREEXL_LIBS) $(GTA_LIBS) \
 	$(INGRES_LIB) $(LIBXML2_LIB) $(PCRE_LIB) $(PCRE2_LIB) $(MONGODB_LIB_LINK) $(MONGODBV3_LIB_LINK) $(CRYPTOPP_LIB) $(OPENSSL_LIB) ws2_32.lib \
 	$(RDB_LIB) $(CRUNCH_LIB) $(OPENEXR_LIB) $(HEIF_LIB) $(LERC_LIB) $(JXL_LIB) $(BRUNSLI_LIB) $(QHULL_LIB) \

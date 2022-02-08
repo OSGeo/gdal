@@ -123,7 +123,6 @@ Raster drivers
    mem
    mff
    mff2
-   mg4lidar
    mrsid
    msg
    msgn
