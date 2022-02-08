@@ -15,7 +15,6 @@ SUBDIRS-$(HAVE_SQLITE)	+= sqlite
 SUBDIRS-$(HAVE_FGDB)    += filegdb
 SUBDIRS-$(HAVE_INGRES)  += ingres
 SUBDIRS-$(HAVE_LIBKML)  += libkml
-SUBDIRS-$(MDB_ENABLED)  += mdb
 SUBDIRS-$(HAVE_FREEXL)  += xls
 SUBDIRS-$(HAVE_SOSI)	+= sosi
 SUBDIRS-$(HAVE_MONGODB) += mongodb

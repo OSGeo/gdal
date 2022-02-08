@@ -75,10 +75,6 @@ ifeq ($(HAVE_SOSI),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DSOSI_ENABLED
 endif
 
-ifeq ($(MDB_ENABLED),yes)
-CXXFLAGS :=	$(CXXFLAGS) -DMDB_ENABLED
-endif
-
 ifeq ($(HAVE_FREEXL),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DXLS_ENABLED
 endif

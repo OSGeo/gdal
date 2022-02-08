@@ -65,7 +65,6 @@ Vector drivers
    libkml
    lvbag
    mapml
-   mdb
    memory
    mitab
    mongodb

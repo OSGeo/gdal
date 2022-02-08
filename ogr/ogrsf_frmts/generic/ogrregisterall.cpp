@@ -121,13 +121,6 @@ void OGRRegisterAllInternal()
 #ifdef WASP_ENABLED
     RegisterOGRWAsP();
 #endif
-
-/* Register before PGeo driver */
-/* that don't work well on Linux */
-#ifdef MDB_ENABLED
-    RegisterOGRMDB();
-#endif
-
 #ifdef PGEO_ENABLED
     RegisterOGRPGeo();
 #endif

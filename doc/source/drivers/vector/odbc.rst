@@ -103,4 +103,3 @@ See Also
 -  `MSDN ODBC API
    Reference <http://msdn.microsoft.com/en-us/library/ms714562(VS.85).aspx>`__
 -  :ref:`PGeo driver <vector.pgeo>`
--  :ref:`MDB driver <vector.mdb>`
