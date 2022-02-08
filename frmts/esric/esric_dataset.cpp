@@ -363,7 +363,7 @@ CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void* pData) {
     int lxx = static_cast<int>(parent->resolutions.size() - lvl - 1);
     int bx, by;
     bx = (nBlockXOff / BSZ) * BSZ;
-    by = (nBlockXOff / BSZ) * BSZ;
+    by = (nBlockYOff / BSZ) * BSZ;
     CPLString fname;
     fname = CPLString().Printf("%s/L%02d/R%04xC%04x.bundle", parent->dname.c_str(), lxx, by, bx);
     Bundle& bundle = parent->GetBundle(fname);
