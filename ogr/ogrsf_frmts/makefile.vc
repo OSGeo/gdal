@@ -5,7 +5,7 @@ GDAL_ROOT	=	..\..
 !IFDEF INCLUDE_OGR_FRMTS
 
 DIRLIST		=	generic geojson shape ntf sdts tiger s57 dgn mitab gml \
-			avc rec mem vrt csv gmt kml gpx \
+			avc mem vrt csv gmt kml gpx \
 			geoconcept georss dxf pgdump gpsbabel \
 			pds edigeo svg idrisi \
 			sxf openfilegdb wasp selafin jml vdv mvt flatgeobuf mapml \
@@ -225,7 +225,7 @@ default:
 	lib /out:ogrsf_frmts.lib generic\*.obj shape\*.obj ntf\*.obj \
 				 sdts\*.obj s57\*.obj tiger\*.obj gml\*.obj \
 				 mitab\*.obj dgn\*.obj avc\*.obj mem\*.obj \
-				 vrt\*.obj csv\*.obj rec\*.obj kml\*.obj \
+				 vrt\*.obj csv\*.obj kml\*.obj \
 				 gmt\*.obj geoconcept\*.obj \
 				 geojson\*.obj geojson\libjson\*.obj \
 				 gpx\*.obj georss\*.obj \

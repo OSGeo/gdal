@@ -69,9 +69,6 @@ void OGRRegisterAllInternal()
 #ifdef VRT_ENABLED
     RegisterOGRVRT();
 #endif
-#ifdef REC_ENABLED
-    RegisterOGRREC();
-#endif
 #ifdef MEM_ENABLED
     RegisterOGRMEM();
 #endif
