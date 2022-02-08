@@ -3834,35 +3834,6 @@ AC_SUBST(MYSQL_INC,$MYSQL_INC)
 AC_SUBST(MYSQL_LIB,$MYSQL_LIB)
 
 dnl ---------------------------------------------------------------------------
-dnl INGRES support.
-dnl ---------------------------------------------------------------------------
-
-AC_ARG_WITH(ingres,[  --with-ingres=ARG     Include Ingres (ARG=$II_SYSTEM)],,)
-
-AC_MSG_CHECKING([for Ingres])
-
-if test "$with_ingres" = "no" -o "x$with_ingres" = "x" ; then
-  HAVE_INGRES=no
-  II_SYSTEM=
-  INGRES_LIB=
-  INGRES_INC=
-  AC_MSG_RESULT([no])
-elif test "$with_ingres" = "yes" ; then
-  AC_MSG_ERROR([--with-ingres requires a path argument ($II_SYSTEM)])
-else
-  HAVE_INGRES=yes
-  II_SYSTEM=$with_ingres
-  INGRES_LIB="-L$II_SYSTEM/ingres/lib \
-	-liiapi.1 -lcompat.1 -lq.1 -lframe.1"
-  INGRES_INC=-I$II_SYSTEM/ingres/files
-fi
-
-AC_SUBST(HAVE_INGRES,$HAVE_INGRES)
-AC_SUBST(II_SYSTEM,$II_SYSTEM)
-AC_SUBST(INGRES_LIB,$INGRES_LIB)
-AC_SUBST(INGRES_INC,$INGRES_INC)
-
-dnl ---------------------------------------------------------------------------
 dnl Check for Xerces C++ Parser support.
 dnl ---------------------------------------------------------------------------
 
@@ -5940,7 +5911,6 @@ LOC_MSG([  JXL support:               ${HAVE_JXL}])
 LOC_MSG([  HDFS support:              ${HDFS_ENABLED}])
 LOC_MSG([  HEIF support:              ${HAVE_HEIF}])
 LOC_MSG([  INFORMIX DataBlade support:${HAVE_IDB}])
-LOC_MSG([  Ingres support:            ${HAVE_INGRES}])
 LOC_MSG([  JP2Lura support:           ${HAVE_JP2LURA}])
 LOC_MSG([  JPEG 12 bit:               ${JPEG12_ENABLED}])
 LOC_MSG([  JPEG-in-TIFF 12 bit:       ${TIFF_JPEG12_ENABLED}])

@@ -139,9 +139,6 @@ void OGRRegisterAllInternal()
 #ifdef OCI_ENABLED
     RegisterOGROCI();
 #endif
-#ifdef INGRES_ENABLED
-    RegisterOGRIngres();
-#endif
 /* Register OpenFileGDB before FGDB as it is more capable for read-only */
 #ifdef OPENFILEGDB_ENABLED
     RegisterOGROpenFileGDB();

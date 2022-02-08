@@ -13,7 +13,6 @@ SUBDIRS-$(HAVE_OCI)	+= oci
 SUBDIRS-$(HAVE_OGR_PG)	+= pg
 SUBDIRS-$(HAVE_SQLITE)	+= sqlite
 SUBDIRS-$(HAVE_FGDB)    += filegdb
-SUBDIRS-$(HAVE_INGRES)  += ingres
 SUBDIRS-$(HAVE_LIBKML)  += libkml
 SUBDIRS-$(HAVE_FREEXL)  += xls
 SUBDIRS-$(HAVE_SOSI)	+= sosi

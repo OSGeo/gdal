@@ -35,10 +35,6 @@ ifeq ($(HAVE_MYSQL),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DMYSQL_ENABLED
 endif
 
-ifeq ($(HAVE_INGRES),yes)
-CXXFLAGS :=	$(CXXFLAGS) -DINGRES_ENABLED
-endif
-
 ifeq ($(PCIDSK_SETTING),internal)
 CXXFLAGS :=	$(CXXFLAGS) -DPCIDSK_ENABLED
 endif

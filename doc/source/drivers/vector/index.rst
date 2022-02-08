@@ -58,7 +58,6 @@ Vector drivers
    idb
    idrisi
    ili
-   ingres
    jml
    kml
    libkml
