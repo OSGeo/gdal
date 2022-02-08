@@ -757,10 +757,6 @@ if (_has_found_disabled_packages)
   message("\n")
 endif ()
 
-if (NOT SILENCE_EXPERIMENTAL_WARNING)
-  message(WARNING "CMake builds are considered only EXPERIMENTAL for now. Do not use them for production.")
-endif ()
-
 if (DEFINED GDAL_USE_EXTERNAL_LIBS_OLD_CACHED)
   if (GDAL_USE_EXTERNAL_LIBS_OLD_CACHED AND NOT GDAL_USE_EXTERNAL_LIBS)
     message(

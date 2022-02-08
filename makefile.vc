@@ -1,5 +1,5 @@
 GDAL_ROOT = .
- 
+
 !INCLUDE nmake.opt
 
 !IF !DEFINED(PROJ_INCLUDE)
@@ -7,7 +7,7 @@ GDAL_ROOT = .
 !ENDIF
 
 ##############################################################################
-# The following determines whether we are linking all the OGR formats 
+# The following determines whether we are linking all the OGR formats
 # into the DLL, or only the minimum spatial reference related stuff required
 # for a raster-gdal build.
 
@@ -16,15 +16,15 @@ GDAL_ROOT = .
 #		/INCLUDE:_OGR_G_GetPointCount@4
 
 OGR_BASE_INCLUDE = /INCLUDE:$(SYM_PREFIX)OSRValidate \
-		/INCLUDE:$(SYM_PREFIX)OGR_G_GetPointCount 
+		/INCLUDE:$(SYM_PREFIX)OGR_G_GetPointCount
 
 
 OGR_OBJ = ogr\ogrsf_frmts\ogrsf_frmts.lib ogr\ogr.lib
 OGR_INCLUDE = $(OGR_BASE_INCLUDE) \
 		/INCLUDE:$(SYM_PREFIX)OGRRegisterAll
 
-!IFDEF INCLUDE_GNM_FRMTS        
-CPPFLAGS = $(CPPFLAGS) -DGNM_ENABLED        
+!IFDEF INCLUDE_GNM_FRMTS
+CPPFLAGS = $(CPPFLAGS) -DGNM_ENABLED
 !ENDIF
 
 !IF DEFINED(STDCALL) && !DEFINED(WIN64)
@@ -59,9 +59,10 @@ PLUGIN_TARGET = plugin_dir
 TARGET_LIB = staticlib
 !ENDIF
 
-DEFAULT_TARGETS = 
+DEFAULT_TARGETS =
 
 default:	$(TARGET_LIB) $(PLUGIN_TARGET) apps_dir
+	@echo;Starting with GDAL 3.5, the nmake build system is deprecated in favor of the CMake build system. The nmake build system will be completely removed in GDAL 3.6
 
 # Batch commands to clean main build output are stored in a macro so they can be reused by different
 # targets in an inline temporary batch file.
@@ -130,6 +131,7 @@ generate_gdal_version_h:
 	cd ..
 
 port_dir:
+	@echo;Starting with GDAL 3.5, the nmake build system is deprecated in favor of the CMake build system. The nmake build system will be completely removed in GDAL 3.6
 	cd port
 	$(MAKE) /f makefile.vc
 	cd ..
