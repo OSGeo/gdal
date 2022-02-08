@@ -28,7 +28,6 @@ Vector drivers
 
    amigocloud
    ao
-   arcgen
    avcbin
    avce00
    cad
