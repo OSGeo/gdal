@@ -1664,6 +1664,16 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
         }
     }
 
+    if( SQLGetInteger(hDB,
+            "SELECT 1 FROM sqlite_master WHERE name = 'gpkg_ogr_metadata' "
+            "AND type = 'table'", nullptr) == 1 &&
+        SQLGetInteger(hDB,
+            "SELECT 1 FROM gpkg_ogr_metadata WHERE key = 'DATETIME_FORMAT' "
+            "AND value = 'UTC'", nullptr) == 1 )
+    {
+        m_bDateTimeWithTZ = false;
+    }
+
     if( eAccess == GA_Update )
     {
         FixupWrongRTreeTrigger();
@@ -4228,6 +4238,16 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
             osSQL += ";";
             osSQL += pszCREATE_GPKG_GEOMETRY_COLUMNS;
         }
+    }
+
+    if( !m_bDateTimeWithTZ && SQLGetInteger(hDB,
+            "SELECT 1 FROM sqlite_master WHERE name = 'gpkg_ogr_metadata' "
+            "AND type = 'table'", nullptr) == 0 )
+    {
+        if( !osSQL.empty() )
+            osSQL += ';';
+        osSQL += "CREATE TABLE gpkg_ogr_metadata(key TEXT NOT NULL PRIMARY KEY,value TEXT);"
+                 "INSERT INTO gpkg_ogr_metadata VALUES('DATETIME_FORMAT','UTC')";
     }
 
     const bool bCreateTriggers =

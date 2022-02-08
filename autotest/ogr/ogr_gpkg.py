@@ -4477,11 +4477,14 @@ def test_ogr_gpkg_prelude_statements():
 ###############################################################################
 # Test DATETIME_FORMAT
 
-
-def test_ogr_gpkg_datetime_timezones():
+@pytest.mark.parametrize('reopen_after_create', [False, True])
+def test_ogr_gpkg_datetime_timezones(reopen_after_create):
 
     filename = '/vsimem/test_ogr_gpkg_datetime_timezones.gpkg'
     ds = gdaltest.gpkg_dr.CreateDataSource(filename, options = ['DATETIME_FORMAT=UTC'])
+    if reopen_after_create:
+        ds = None
+        ds = ogr.Open(filename, update=1)
     lyr = ds.CreateLayer('test')
     lyr.CreateField(ogr.FieldDefn('dt', ogr.OFTDateTime))
     for val in ['2020/01/01 01:34:56', '2020/01/01 01:34:56+00', '2020/01/01 01:34:56.789+02']:
