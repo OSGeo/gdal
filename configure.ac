@@ -2444,64 +2444,6 @@ fi
 AC_SUBST(GEOTIFF_SETTING,$GEOTIFF_SETTING)
 AC_SUBST(GEOTIFF_INCLUDE,$GEOTIFF_INCLUDE)
 
-
-dnl ---------------------------------------------------------------------------
-dnl Check for CharLS
-dnl ---------------------------------------------------------------------------
-
-AC_ARG_WITH(charls,
-            AS_HELP_STRING([--with-charls],[Include JPEG-Lossless support]),,)
-
-HAVE_CHARLS=no
-CHARLS_INC=
-
-if test "$with_charls" = "yes" -o "$with_charls" = "" ; then
-  dnl CharLS 2.1
-  AC_CHECK_HEADERS([charls/version.h])
-  if test "$ac_cv_header_charls_version_h" = "yes"; then
-    AC_LANG_PUSH([C++])
-    AC_CHECK_LIB(charls,JpegLsDecode,HAVE_CHARLS=yes)
-    AC_LANG_POP([C++])
-    if test "$HAVE_CHARLS" = "yes"; then
-        LIBS="-lcharls $LIBS"
-        CHARLS_INC="-DCHARLS_2_1"
-    else
-        AC_LANG_PUSH([C++])
-        AC_CHECK_LIB(CharLS,JpegLsDecode,HAVE_CHARLS=yes)
-        AC_LANG_POP([C++])
-        if test "$HAVE_CHARLS" = "yes"; then
-            LIBS="-lCharLS $LIBS"
-            CHARLS_INC="-DCHARLS_2_1"
-        fi
-    fi
-  else
-    dnl CharLS 1.x
-    AC_CHECK_HEADERS([CharLS/interface.h])
-    if test "$ac_cv_header_CharLS_interface_h" = "yes"; then
-      AC_CHECK_LIB(CharLS,JpegLsDecode,HAVE_CHARLS=yes)
-      if test "$HAVE_CHARLS" = "yes"; then
-          LIBS="-lCharLS $LIBS"
-          CHARLS_INC="-DCHARLS_INTERFACE_H"
-      fi
-    else
-      dnl CharLS 2.0
-      AC_CHECK_HEADERS([CharLS/charls.h])
-      if test "$ac_cv_header_CharLS_charls_h" = "yes"; then
-        AC_LANG_PUSH([C++])
-        AC_CHECK_LIB(CharLS,JpegLsDecode,HAVE_CHARLS=yes)
-        AC_LANG_POP([C++])
-        if test "$HAVE_CHARLS" = "yes"; then
-            LIBS="-lCharLS $LIBS"
-            CHARLS_INC="-DCHARLS_2"
-        fi
-      fi
-    fi
-  fi
-fi
-
-AC_SUBST(HAVE_CHARLS,$HAVE_CHARLS)
-AC_SUBST(CHARLS_INC,$CHARLS_INC)
-
 dnl ---------------------------------------------------------------------------
 dnl Check for JPEG 12 bit
 dnl ---------------------------------------------------------------------------
@@ -6224,7 +6166,6 @@ LOC_MSG([  Ingres support:            ${HAVE_INGRES}])
 LOC_MSG([  JP2Lura support:           ${HAVE_JP2LURA}])
 LOC_MSG([  JPEG 12 bit:               ${JPEG12_ENABLED}])
 LOC_MSG([  JPEG-in-TIFF 12 bit:       ${TIFF_JPEG12_ENABLED}])
-LOC_MSG([  JPEG-Lossless/CharLS:      ${HAVE_CHARLS}])
 LOC_MSG([  Kakadu support:            ${HAVE_KAKADU}])
 LOC_MSG([  Kea support:               ${HAVE_KEA}])
 LOC_MSG([  LERC support:              ${HAVE_LERC}])

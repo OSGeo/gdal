@@ -16,7 +16,7 @@ sudo apt-get install -y python-dev python-pip
 sudo apt-get install -y g++
 sudo apt-get install -y libssl-dev
 sudo apt-get install -y --allow-unauthenticated libsfcgal-dev
-sudo apt-get install -y --allow-unauthenticated fossil libgeotiff-dev libcharls-dev libopenjp2-7-dev libcairo2-dev
+sudo apt-get install -y --allow-unauthenticated fossil libgeotiff-dev libopenjp2-7-dev libcairo2-dev
 
 wget https://github.com/Esri/file-geodatabase-api/raw/master/FileGDB_API_1.5/FileGDB_API_1_5_64gcc51.tar.gz
 tar xzf FileGDB_API_1_5_64gcc51.tar.gz

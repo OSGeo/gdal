@@ -512,10 +512,6 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_HF2();
 #endif
 
-#ifdef FRMT_jpegls
-    GDALRegister_JPEGLS();
-#endif
-
 #ifdef FRMT_ozi
     GDALRegister_OZI();
 #endif
