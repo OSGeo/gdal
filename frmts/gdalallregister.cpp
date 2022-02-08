@@ -230,7 +230,6 @@ void CPL_STDCALL GDALAllRegister()
 #endif
 
 #ifdef FRMT_netcdf
-    GDALRegister_GMT();
     GDALRegister_netCDF();
 #endif
 

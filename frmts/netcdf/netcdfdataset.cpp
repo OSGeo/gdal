@@ -10364,10 +10364,6 @@ void GDALRegister_netCDF()
     poDriver->pfnUnloadDriver = NCDFUnloadDriver;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
-
-#ifdef NETCDF_PLUGIN
-    GDALRegister_GMT();
-#endif
 }
 
 /************************************************************************/

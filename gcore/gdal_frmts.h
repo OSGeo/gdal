@@ -94,7 +94,6 @@ void CPL_DLL GDALRegister_MG4Lidar(void);
 void CPL_DLL GDALRegister_PCIDSK(void);
 void CPL_DLL GDALRegister_BT(void);
 void CPL_DLL GDALRegister_DODS(void);
-void CPL_DLL GDALRegister_GMT(void);
 void CPL_DLL GDALRegister_netCDF(void);
 void CPL_DLL GDALRegister_LAN(void);
 void CPL_DLL GDALRegister_CPG(void);

@@ -73,7 +73,6 @@ Raster drivers
    georaster
    gff
    gif
-   gmt
    gpkg
    grass
    grassasciigrid

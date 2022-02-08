@@ -6,7 +6,6 @@ GDAL_ROOT	=	..\..
 OBJ		=	netcdfdataset.obj \
 			netcdflayer.obj \
 			netcdfwriterconfig.obj \
-			gmtdataset.obj \
 			netcdfsg.obj \
 			netcdflayersg.obj \
 			netcdfsgwriterutil.obj \
