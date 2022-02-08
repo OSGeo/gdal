@@ -1671,7 +1671,7 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
    if (is4[18] < -1 * (0x3fffffff)) {
       //printf ("  Warning - Forecast time %ld is 'too' negative.\n", is4[18]);
       //printf ("  Assuming incorrect decoding of 2s complement.");
-      is4[18] = (unsigned)(-1) * (is4[18]^(0x80000000));
+      is4[18] = -1 * (int)(((unsigned)is4[18])^(0x80000000));
       //printf ("  Using %ld\n", is4[18]);
    }
 
