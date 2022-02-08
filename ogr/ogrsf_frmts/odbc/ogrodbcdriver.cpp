@@ -38,9 +38,7 @@ CPL_CVSID("$Id$")
 static int OGRODBCDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
-    if (STARTS_WITH_CI(poOpenInfo->pszFilename, "WALK:")
-        || STARTS_WITH_CI(poOpenInfo->pszFilename, "GEOMEDIA:")
-        || STARTS_WITH_CI(poOpenInfo->pszFilename, "PGEO:"))
+    if (STARTS_WITH_CI(poOpenInfo->pszFilename, "PGEO:"))
     {
         return FALSE;
     }
@@ -50,7 +48,7 @@ static int OGRODBCDriverIdentify( GDALOpenInfo* poOpenInfo )
 
     const char* psExtension(CPLGetExtension(poOpenInfo->pszFilename));
     if( EQUAL(psExtension,"mdb") )
-        return -1; // Could potentially be a PGeo, Walk or Geomedia MDB database
+        return -1; // Could potentially be a PGeo MDB database
 
     if ( OGRODBCDataSource::IsSupportedMsAccessFileExtension( psExtension ) )
         return TRUE; // An Access database which isn't a .MDB file (we checked that above), so this is the only candidate driver
