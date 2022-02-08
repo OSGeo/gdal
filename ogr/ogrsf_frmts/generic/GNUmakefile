@@ -47,10 +47,6 @@ ifeq ($(PCIDSK_SETTING),external)
 CXXFLAGS :=	$(CXXFLAGS) -DPCIDSK_ENABLED
 endif
 
-ifeq ($(HAVE_FME),yes)
-CXXFLAGS :=	$(CXXFLAGS) -DFME_ENABLED
-endif
-
 ifeq ($(HAVE_DODS),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DDODS_ENABLED
 endif

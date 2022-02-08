@@ -477,7 +477,6 @@ void OGRRegisterAllInternal();
 void CPL_DLL RegisterOGRFileGDB();
 void CPL_DLL RegisterOGRShape();
 void CPL_DLL RegisterOGRNTF();
-void CPL_DLL RegisterOGRFME();
 void CPL_DLL RegisterOGRSDTS();
 void CPL_DLL RegisterOGRTiger();
 void CPL_DLL RegisterOGRS57();

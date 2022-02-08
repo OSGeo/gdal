@@ -174,9 +174,6 @@ void OGRRegisterAllInternal()
 #ifdef FLATGEOBUF_ENABLED
     RegisterOGRFlatGeobuf();
 #endif
-#ifdef FME_ENABLED
-    RegisterOGRFME();
-#endif
 #ifdef IDB_ENABLED
     RegisterOGRIDB();
 #endif

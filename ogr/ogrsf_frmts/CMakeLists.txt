@@ -110,7 +110,6 @@ ogr_dependent_driver(cad "OpenCAD" "GDAL_USE_OPENCAD OR GDAL_USE_OPENCAD_INTERNA
 
 # ######################################################################################################################
 # proprietary libraries
-ogr_dependent_driver(fme "FME" "HAVE_FME")
 ogr_dependent_driver(oci "Oracle OCI" "GDAL_USE_ORACLE")
 ogr_dependent_driver(idb "IDB" "GDAL_USE_IDB")
 ogr_dependent_driver(ods ODS "GDAL_USE_EXPAT")

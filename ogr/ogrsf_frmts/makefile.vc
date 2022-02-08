@@ -9,7 +9,7 @@ DIRLIST		=	generic geojson shape ntf sdts tiger s57 dgn mitab gml \
 			geoconcept georss gtm dxf pgdump gpsbabel \
 			pds edigeo svg idrisi \
 			sxf openfilegdb wasp selafin jml vdv mvt flatgeobuf mapml \
-			$(OGDIDIR) $(FMEDIR) $(OCIDIR) $(PG_DIR) $(DWGDIR) \
+			$(OGDIDIR) $(OCIDIR) $(PG_DIR) $(DWGDIR) \
 			$(ODBCDIR) $(SQLITE_DIR) $(MYSQL_DIR) $(ILI_DIR) \
 			$(IDB_DIR) $(NAS_DIR) $(DODSDIR) \
 			$(LIBKMLDIR) $(WFSDIR) $(SOSIDIR) \
@@ -65,11 +65,6 @@ INGRESOBJ	=	ingres\*.obj
 !ELSE
 PLUGIN_INGRESDIR =	ingres
 !ENDIF
-!ENDIF
-
-!IFDEF FME_DIR
-FMEDIR = fme
-FMEOBJ = fme\*.obj
 !ENDIF
 
 !IFDEF PG_INC_DIR
@@ -261,7 +256,7 @@ default:
 				 openfilegdb\*.obj wasp\*.obj selafin\*.obj jml\*.obj \
 				 vdv\*.obj mvt\*.obj flatgeobuf\*.obj mapml\*.obj \
 				$(OGDIOBJ) $(ODBCOBJ) $(SQLITE_OBJ) \
-				$(FMEOBJ) $(OCIOBJ) $(PG_OBJ) $(MYSQL_OBJ) \
+				$(OCIOBJ) $(PG_OBJ) $(MYSQL_OBJ) \
 				$(ILI_OBJ) $(DWG_OBJ) $(FGDB_OBJ) $(IDB_OBJ) \
 				$(DODS_OBJ) $(NAS_OBJ) $(LIBKMLOBJ) $(WFS_OBJ) \
 				$(SOSI_OBJ) $(XLS_OBJ) $(ODS_OBJ) $(XLSX_OBJ) $(LVBAG_OBJ)  \

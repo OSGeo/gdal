@@ -2610,56 +2610,6 @@ AC_SUBST(HAVE_OGDI,$HAVE_OGDI)
 AC_SUBST(OGDI_INCLUDE,$OGDI_INCLUDE)
 
 dnl ---------------------------------------------------------------------------
-dnl Select FME_HOME or disable FME support.
-dnl ---------------------------------------------------------------------------
-
-X_FME_HOME=
-export X_FME_HOME
-
-AC_ARG_WITH(fme,[  --with-fme[=ARG]        Include FMEObjects support (ARG=FME_HOME path)],,)
-
-AC_MSG_CHECKING([for FMEObjects])
-
-if test "$with_fme" = "no" ; then
-
-  AC_MSG_RESULT([disabled by user])
-
-elif test "$with_fme" = "yes" ; then
-
-  if test "$FME_HOME" = "" ; then
-    AC_MSG_ERROR([no, FME_HOME not defined!])
-  elif test -f $FME_HOME/fmeobjects/cpp/isession.h ; then
-    AC_MSG_RESULT([yes])
-    X_FME_HOME=$FME_HOME
-  else
-    AC_MSG_ERROR([FME_HOME defined, but $FME_HOME/fmeobjects/cpp/issesion.h not found.])
-  fi
-
-elif test "$with_fme" = "" ; then
-
-  if test "$FME_HOME" = "" ; then
-    AC_MSG_RESULT([no])
-  elif test -f $FME_HOME/fmeobjects/cpp/isession.h ; then
-    AC_MSG_RESULT([yes])
-    X_FME_HOME=$FME_HOME
-  else
-    AC_MSG_RESULT([no, FME_HOME defined, but $FME_HOME/fmeobjects/cpp/issesion.h not found.])
-  fi
-
-else
-
-  if test -f $with_fme/fmeobjects/cpp/isession.h ; then
-    AC_MSG_RESULT([yes])
-    X_FME_HOME=$with_fme
-  else
-    AC_MSG_ERROR([$with_fme/fmeobjects/cpp/issesion.h not found!])
-  fi
-
-fi
-
-AC_SUBST(X_FME_HOME,$X_FME_HOME)
-
-dnl ---------------------------------------------------------------------------
 dnl Select a SOSI lib to use, or disable driver.
 dnl ---------------------------------------------------------------------------
 

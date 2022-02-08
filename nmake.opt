@@ -676,9 +676,6 @@ INGRES_LIB = "$(INGRES_HOME)\lib\iilibapi.lib" \
 #IDB_LIB=$(INFORMIXDIR)\lib\cpp\libthc++.lib \
 #	$(INFORMIXDIR)\lib\dmi\libthdmi.lib $(INFORMIXDIR)\lib\isqlt09a.lib
 
-# Uncomment the following and update to enable FME support.
-#FME_DIR =	d:\Software\fme
-
 # Uncomment the following to enable FITS format support
 #FITS_PLUGIN = NO
 #FITS_INC_DIR =	c:\dev32\usr\include\cfitsio
@@ -1169,7 +1166,7 @@ SYM_PREFIX=_
 !ENDIF
 
 EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
-	$(KAK_LIB_LINK) $(ECW_LIB_LINK) $(LURATECH_LIB_LINK) $(HDF4_LIB_LINK) $(FME_LIB) $(MRSID_LIB_LINK) \
+	$(KAK_LIB_LINK) $(ECW_LIB_LINK) $(LURATECH_LIB_LINK) $(HDF4_LIB_LINK) $(MRSID_LIB_LINK) \
 	$(FITS_LIB_LINK) $(JPEG_LIB) $(NETCDF_LIB_LINK) $(PROJ4_LIB) \
 	$(GEOTIFF_LIB) $(TIFF_LIB) $(PROJ_LIBRARY) $(SQLITE_LIB) \
 	$(MYSQL_LIB) $(GEOS_LIB) $(HDF5_LIB_LINK) $(KEA_LIB_LINK) $(DWG_LIB_LINK) \

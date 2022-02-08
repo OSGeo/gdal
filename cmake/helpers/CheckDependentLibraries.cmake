@@ -239,7 +239,6 @@ endfunction ()
 
 define_find_package2(Crnlib crunch/crnlib.h crunch)
 define_find_package2(RASDAMAN rasdaman.hh raslib)
-define_find_package2(FME fmeobjects/cpp/issesion.h fme)
 
 if (WIN32)
   gdal_check_package(ODBC "Enable DB support through ODBC" CAN_DISABLE)
@@ -678,7 +677,6 @@ option(GDAL_USE_PUBLICDECOMPWT
 # proprietary libraries KAKADU
 gdal_check_package(KDU "Enable KAKADU" CAN_DISABLE)
 gdal_check_package(LURATECH "Enable JP2Lura driver" CAN_DISABLE)
-# gdal_check_package(FME "FME")
 
 # bindings
 gdal_check_package(SWIG "Enable language bindings" ALWAYS_ON_WHEN_FOUND)
