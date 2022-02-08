@@ -244,9 +244,6 @@ void OGRRegisterAllInternal()
 #ifdef MONGODBV3_ENABLED
     RegisterOGRMongoDBv3();
 #endif
-#ifdef MONGODB_ENABLED
-    RegisterOGRMongoDB();
-#endif
 #ifdef VDV_ENABLED
     RegisterOGRVDV();
 #endif

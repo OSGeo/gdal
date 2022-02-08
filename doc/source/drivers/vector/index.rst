@@ -65,7 +65,6 @@ Vector drivers
    mapml
    memory
    mitab
-   mongodb
    mongodbv3
    mssqlspatial
    mvt

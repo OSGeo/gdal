@@ -2684,79 +2684,6 @@ AC_SUBST(SOSI_LIB, $SOSI_LIB)
 AC_SUBST(SOSI_INC, $SOSI_INC)
 
 dnl ---------------------------------------------------------------------------
-dnl MongoCXX driver
-dnl ---------------------------------------------------------------------------
-
-AC_ARG_WITH(mongocxx,[  --with-mongocxx[=ARG]        Include MongoCXX support (ARG=Path, yes or no)],,)
-
-MONGODB_ENABLED=no
-
-if test "$with_mongocxx" = "no" ; then
-
-  echo "MONGODB support disabled."
-
-elif test "$with_mongocxx" = "yes" -o "$with_mongocxx" = "" ; then
-
-    AC_MSG_CHECKING([for MongoCXX])
-
-    rm -f testmongocxx.*
-    rm -f testmongocxx
-    echo "#include <mongo/client/dbclient.h>" > testmongocxx.cpp
-    echo "using namespace mongo;" >> testmongocxx.cpp
-    echo "int main() { client::initialize(client::Options()); return 0; }" >> testmongocxx.cpp
-    if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testmongocxx.cpp -lmongoclient -lboost_system -lboost_thread -lboost_regex -o testmongocxx 2>&1`" ; then
-        AC_MSG_RESULT([MongoCXX found])
-        MONGODB_ENABLED="yes"
-        MONGODB_LIB=" -lmongoclient -lboost_system -lboost_thread -lboost_regex"
-    else
-        if test "$with_mongocxx" = "yes"; then
-            AC_MSG_ERROR([MongoCXX not found.])
-        else
-            AC_MSG_RESULT([MongoCXX not found.])
-        fi
-    fi
-    rm -f testmongocxx.*
-    rm -f testmongocxx
-
-else
-
-  AC_ARG_WITH(boost-lib-path,
-          [  --with-boost-lib-path=ARG   Path to boost libraries for mongocxx client],,,)
-
-  AC_MSG_CHECKING([for libmongoclient.so in in $with_mongocxx/lib])
-  MONGODB_ENABLED=yes
-  if test -r $with_mongocxx/lib/libmongoclient.so; then
-    AC_MSG_RESULT([found.])
-    MONGODB_LIB="-L$with_mongocxx/lib -lmongoclient"
-  elif test -r $with_mongocxx/lib/libmongoclient.dylib; then
-    AC_MSG_RESULT([found.])
-    MONGODB_LIB="-L$with_mongocxx/lib -lmongoclient"
-  else
-    AC_MSG_ERROR([not found.])
-  fi
-
-  if test "$with_boost_lib_path" = "" ; then
-    MONGODB_LIB="$MONGODB_LIB -lboost_system -lboost_thread -lboost_regex"
-  else
-    MONGODB_LIB="$MONGODB_LIB -L$with_boost_lib_path -lboost_system -lboost_thread -lboost_regex"
-  fi
-
-  AC_MSG_CHECKING([for mongo/client/dbclient.h in $with_mongocxx/include])
-  if test -r $with_mongocxx/include/mongo/client/dbclient.h ; then
-    AC_MSG_RESULT([found.])
-    MONGODB_INC="-I$with_mongocxx/include"
-  else
-    AC_MSG_ERROR([not found.])
-  fi
-
-fi
-
-AC_SUBST(MONGODB_ENABLED, $MONGODB_ENABLED)
-AC_SUBST(MONGODB_LIB, $MONGODB_LIB)
-AC_SUBST(MONGODB_INC, $MONGODB_INC)
-
-
-dnl ---------------------------------------------------------------------------
 dnl MongoCXXv3 driver
 dnl ---------------------------------------------------------------------------
 
@@ -5929,7 +5856,6 @@ LOC_MSG([  libxml2 support:           ${HAVE_LIBXML2}])
 LOC_MSG([  LIBZ support:              ${LIBZ_SETTING}])
 LOC_MSG([  LZ4 support:               ${HAVE_LZ4}])
 LOC_MSG([  MongoCXX v3 support:       ${MONGOCXXV3_ENABLED}])
-LOC_MSG([  MongoDB support:           ${MONGODB_ENABLED}])
 LOC_MSG([  MrSID support:             ${HAVE_MRSID}])
 LOC_MSG([  MSG support:               ${HAVE_MSG}])
 LOC_MSG([  MySQL support:             ${HAVE_MYSQL}])
