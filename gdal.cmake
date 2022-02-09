@@ -653,13 +653,9 @@ install(
 
 if (NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
   # Generate GdalConfig.cmake and GdalConfigVersion.cmake
-  export(
-    EXPORT gdal-export
-    NAMESPACE GDAL::
-    FILE gdal-export.cmake)
   install(
     EXPORT gdal-export
-    FILE GDALConfig.cmake
+    FILE GDAL-targets.cmake
     NAMESPACE GDAL::
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gdal/
     EXPORT_LINK_INTERFACE_LIBRARIES)
@@ -671,6 +667,8 @@ if (NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
     # SameMinorVersion)
     COMPATIBILITY ExactVersion)
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/GDALConfigVersion.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gdal/)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/template/GDALConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/GDALConfig.cmake @ONLY)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/GDALConfig.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gdal/)
 
   # gdal-config utility command generation
   include(GenerateConfig)
