@@ -11,10 +11,14 @@ In Windows CMD shell::
     conda activate gdal
     conda install gdal
 
-    :: Get the current gdal code
+    :: Get the current gdal code (limited to most recent 50 commits)
     :: We assume you've forked the gdal repository on GitHub under your username.
     set GITHUB_USERNAME=my_username
     git clone --depth=50 https://%GITHUB_USERNAME%@github.com/%GITHUB_USERNAME%/gdal.git
+
+    :: Allow checking out of remote branches
+    git remote set-branches origin "*"
+    git fetch -v --depth=50
 
     :: Create the local branch you'll be developing in
     git branch gdal-utils-mine
@@ -26,5 +30,5 @@ In Windows CMD shell::
     :: Replace the gdal-utils installed via conda with our dev environment version
     pip install --editable .
 
-    :: Start hacking! (Launch VS-Code and open current dir)
+    :: Start hacking! (Launch VS-Code with current dir. Adjust for your IDE)
     code .
