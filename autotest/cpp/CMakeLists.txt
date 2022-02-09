@@ -23,6 +23,7 @@ add_executable(
   test_gdal_dted.cpp
   test_gdal_gtiff.cpp
   test_ogr.cpp
+  test_ogr_geometry_stealing.cpp
   test_ogr_lgpl.cpp
   test_ogr_geos.cpp
   test_ogr_shape.cpp
