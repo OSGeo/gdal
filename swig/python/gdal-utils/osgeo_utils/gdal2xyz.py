@@ -78,7 +78,7 @@ def gdal2xyz(srcfile: PathOrDS, dstfile: PathLikeOrStr = None,
     progress_callback = get_progress_callback(progress_callback)
 
     # Open source file.
-    ds = open_ds(srcfile, access_mode=gdal.GA_ReadOnly)
+    ds = open_ds(srcfile)
     if ds is None:
         raise Exception(f'Could not open {srcfile}.')
 

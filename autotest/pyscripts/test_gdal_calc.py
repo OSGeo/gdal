@@ -125,6 +125,22 @@ def test_gdal_calc_py_1():
     for i, checksum in zip(range(test_count), (input_checksum[0], input_checksum[1], input_checksum[1])):
         check_file(out[i], checksum, i+1)
 
+    # Test update
+    ds = gdal.Open(out[2], gdal.GA_Update)
+    ds.GetRasterBand(1).Fill(0)
+    ds = None
+    test_py_scripts.run_py_script(script_path, 'gdal_calc',
+                                  f'-Z {infile} --Z_band=2 --calc=Z --outfile {out[2]}')
+    check_file(out[2], input_checksum[1])
+
+    # Test un-intended updated
+    ds = gdal.Open(out[2], gdal.GA_Update)
+    ds.GetRasterBand(1).Fill(0)
+    zero_cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+    test_py_scripts.run_py_script(script_path, 'gdal_calc',
+                                  f'-Z {infile} --Z_band=2 --calc=Z --format GTiff --outfile {out[2]}')
+    check_file(out[2], zero_cs)
 
 def test_gdal_calc_py_2():
     """ test simple formulas """
