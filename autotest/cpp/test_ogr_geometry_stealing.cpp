@@ -48,15 +48,15 @@ namespace tut
             test_data_file_name += "multi_geom.csv";
 
             // Open data file with multi geometries feature layer
-            const char *const papszOpenOptions[] = {"AUTODETECT_TYPE=YES", "GEOM_POSSIBLE_NAMES=point,linestring", "KEEP_GEOM_COLUMNS=NO", NULL};
-            hDS = GDALOpenEx(test_data_file_name.c_str(), GDAL_OF_VECTOR, NULL, papszOpenOptions, NULL);
-            if (hDS == NULL)
+            const char *const papszOpenOptions[] = {"AUTODETECT_TYPE=YES", "GEOM_POSSIBLE_NAMES=point,linestring", "KEEP_GEOM_COLUMNS=NO", nullptr};
+            hDS = GDALOpenEx(test_data_file_name.c_str(), GDAL_OF_VECTOR, nullptr, papszOpenOptions, nullptr);
+            if (hDS == nullptr)
             {
                 printf("Can't open layer file %s.\n", test_data_file_name.c_str());
                 exit(1);
             }
             hLayer = GDALDatasetGetLayer(hDS, 0);
-            if (hLayer == NULL)
+            if (hLayer == nullptr)
             {
                 printf("Can't get layer in file %s.\n", test_data_file_name.c_str());
                 exit(1);
