@@ -581,6 +581,7 @@ OGRGeometryH OGR_F_StealGeometry( OGRFeatureH hFeat )
  * @param hFeat feature from which to steal a geometry.
  * @param iGeomField index of the geometry field to steal.
  * @return the pointer to the stolen geometry.
+ * @since GDAL 3.5
  */
 
 OGRGeometryH OGR_F_StealGeometryEx( OGRFeatureH hFeat, int iGeomField )
