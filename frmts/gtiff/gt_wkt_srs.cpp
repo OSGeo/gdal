@@ -770,6 +770,14 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
         }
     }
 
+    // Avoid later division by zero.
+    if( psDefn->UOMAngleInDegrees == 0 )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Invalid value for GeogAngularUnitSizeGeoKey.");
+        psDefn->UOMAngleInDegrees = 1;
+    }
+
     if( pszDatumName != nullptr )
         WKTMassageDatum( &pszDatumName );
 

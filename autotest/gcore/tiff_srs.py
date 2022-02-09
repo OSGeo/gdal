@@ -900,3 +900,12 @@ def test_tiff_srs_read_buggy_sentinel1_ellipsoid_code_4326():
     assert gdal.GetLastErrorMsg() == ''
     assert sr.GetAuthorityCode('GEOGCS|DATUM|SPHEROID') == '7030'
 
+
+def test_tiff_srs_read_invalid_GeogAngularUnitSizeGeoKey():
+    # That file has GeogAngularUnitSizeGeoKey = 0
+    ds = gdal.Open('data/gtiff/invalid_GeogAngularUnitSizeGeoKey.tif')
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ds.GetSpatialRef()
+    assert gdal.GetLastErrorMsg() != ''
+
