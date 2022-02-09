@@ -52,5 +52,5 @@ See Also
 --------
 
 -  Description of the `"rasterfile"
-   format <https://cran.r-project.org/web/packages/raster/vignettes/rasterfile.pdf>`__
+   format <https://rspatial.org/raster/pkg/appendix2.html>`__
 

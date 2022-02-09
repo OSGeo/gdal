@@ -34,7 +34,7 @@ CPPFLAGS +=	-iquote $(GDAL_ROOT)/gnm
 endif
 
 ifeq ($(HAVE_GEOS),yes)
-CPPFLAGS 	:=	$(CPPFLAGS) -DHAVE_GEOS=1 $(GEOS_CFLAGS)
+CPPFLAGS 	:=	$(CPPFLAGS) -DHAVE_GEOS=1
 endif
 
 NON_DEFAULT_LIST = 	multireadtest$(EXE) dumpoverviews$(EXE) \
