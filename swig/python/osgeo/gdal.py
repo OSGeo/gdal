@@ -4078,6 +4078,10 @@ def GetDataTypeByName(*args):
     r"""GetDataTypeByName(char const * pszDataTypeName) -> GDALDataType"""
     return _gdal.GetDataTypeByName(*args)
 
+def DataTypeUnion(*args):
+    r"""DataTypeUnion(GDALDataType a, GDALDataType b) -> GDALDataType"""
+    return _gdal.DataTypeUnion(*args)
+
 def GetColorInterpretationName(*args):
     r"""GetColorInterpretationName(GDALColorInterp eColorInterp) -> char const *"""
     return _gdal.GetColorInterpretationName(*args)
