@@ -39,10 +39,10 @@ endif ()
 
 # External libs next
 if (NOT GDAL_USE_JSONC_INTERNAL)
-  gdal_target_link_libraries(gdal_PDS PRIVATE JSONC::JSONC)
+  gdal_target_link_libraries(gdal_PDS PRIVATE ${JSONC_LIBRARIES})
 endif ()
 if (NOT GDAL_USE_GEOTIFF_INTERNAL)
-  gdal_target_link_libraries(gdal_PDS PRIVATE GEOTIFF::GEOTIFF)
+  gdal_target_link_libraries(gdal_PDS PRIVATE ${GeoTIFF_LIBRARIES})
 endif ()
 if (NOT GDAL_USE_TIFF_INTERNAL)
   gdal_target_link_libraries(gdal_PDS PRIVATE TIFF::TIFF)

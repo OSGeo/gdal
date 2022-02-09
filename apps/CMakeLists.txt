@@ -36,7 +36,7 @@ endif ()
 if (GDAL_USE_JSONC_INTERNAL)
   target_include_directories(appslib PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
 else ()
-  gdal_target_link_libraries(appslib PRIVATE JSONC::JSONC)
+  gdal_target_link_libraries(appslib PRIVATE ${JSONC_LIBRARIES})
 endif ()
 
 include(TargetPublicHeader)

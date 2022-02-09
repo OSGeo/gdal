@@ -12,5 +12,5 @@ target_include_directories(ogr_Elastic PRIVATE ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/
 if (GDAL_USE_JSONC_INTERNAL)
   target_include_directories(ogr_Elastic PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
 else ()
-  gdal_target_link_libraries(ogr_Elastic PRIVATE JSONC::JSONC)
+  gdal_target_link_libraries(ogr_Elastic PRIVATE ${JSONC_LIBRARIES})
 endif ()
