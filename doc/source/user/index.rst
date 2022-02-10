@@ -16,3 +16,4 @@ User oriented documentation
    ogr_feature_style
    coordinate_epoch
    configoptions
+   gdal_python_utilities
