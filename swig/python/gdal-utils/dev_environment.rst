@@ -8,8 +8,10 @@ In Windows CMD shell::
 
     :: Create dev enironment and install gdal & python
     conda create -n gdal
-    conda activate gdal
-    conda install gdal
+    conda activate gdal]
+
+    # ensure to get community maintained version via conda-forge
+    conda install -c conda-forge gdal
 
     :: Get the current gdal code (limited to most recent 50 commits)
     :: We assume you've forked the gdal repository on GitHub under your username.
