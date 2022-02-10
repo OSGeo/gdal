@@ -4984,8 +4984,8 @@ def test_vsis3_extra_1():
         assert ret >= 0, ('Rmdir(%s) should not return an error' % subpath)
 
         def test_sync():
-            local_file = "gdal_sync_test.bin"
-            remote_file = path +"/" + local_file
+            local_file = "tmp/gdal_sync_test.bin"
+            remote_file = path + "/gdal_sync_test.bin"
 
             f = gdal.VSIFOpenL(local_file, "wb")
             gdal.VSIFWriteL('foo' * 10000, 1, 3 * 10000, f)
@@ -5013,6 +5013,7 @@ def test_vsis3_extra_1():
 
             assert gdal.VSIStatL(local_file).size == 6 * 10000
 
+            gdal.Unlink(local_file)
             gdal.Unlink(remote_file)
 
         test_sync()
