@@ -704,6 +704,11 @@ if (NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
   set(CONFIG_INST_CFLAGS "-I${CMAKE_INSTALL_PREFIX}/${GDAL_INSTALL_INCLUDEDIR}")
   set(CONFIG_INST_DATA "${CMAKE_INSTALL_PREFIX}/${GDAL_RESOURCE_PATH}")
   get_dep_libs(${GDAL_LIB_TARGET_NAME} "gdal_private_link_libraries" CONFIG_INST_DEP_LIBS)
+  set(cxx_libs "${CMAKE_CXX_IMPLICIT_LINK_LIBRARIES}")
+  list(REMOVE_ITEM cxx_libs ${CMAKE_C_IMPLICIT_LINK_LIBRARIES})
+  foreach(lib IN LISTS cxx_libs)
+    string(APPEND CONFIG_INST_DEP_LIBS " -l${lib}")
+  endforeach()
   configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/gdal.pc.in ${CMAKE_CURRENT_BINARY_DIR}/gdal.pc @ONLY)
   install(
     FILES ${CMAKE_CURRENT_BINARY_DIR}/gdal.pc
