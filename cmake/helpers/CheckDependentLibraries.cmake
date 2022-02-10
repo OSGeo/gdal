@@ -375,7 +375,7 @@ if (ARMADILLO_FOUND)
   cmake_push_check_state(RESET)
   set(CMAKE_REQUIRED_INCLUDES "${ARMADILLO_INCLUDE_DIRS}")
   set(CMAKE_REQUIRED_LIBRARIES "${ARMADILLO_LIBRARIES}")
-  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedReleaseDLL")
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
   set(CMAKE_TRY_COMPILE_CONFIGURATION "Release")
   check_cxx_source_compiles(
     "
@@ -397,7 +397,7 @@ if (ARMADILLO_FOUND)
       cmake_push_check_state(RESET)
       set(CMAKE_REQUIRED_INCLUDES "${ARMADILLO_INCLUDE_DIRS}")
       set(CMAKE_REQUIRED_LIBRARIES "${ARMADILLO_LIBRARIES}")
-      set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedReleaseDLL")
+      set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
       set(CMAKE_TRY_COMPILE_CONFIGURATION "Release")
       check_cxx_source_compiles(
         "
