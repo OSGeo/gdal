@@ -101,6 +101,17 @@ jobs:
     - name: Test post-install usage (with CMake)
       run: |
         ./autotest/postinstall/test_cmake.sh $GITHUB_WORKSPACE/install-gdal
+    - name: Rerun with static linkage
+      run: |
+        cd $GITHUB_WORKSPACE/superbuild/build
+        cmake  ${CMAKE_OPTIONS} -DBUILD_SHARED_LIBS=OFF -DCSHARP_MONO=OFF -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal-static ..
+        cmake --build $GITHUB_WORKSPACE/superbuild/build --target install -- -j$(nproc)
+    - name: Test post-install usage (static, with pkg-config)
+      run: |
+        ./autotest/postinstall/test_pkg-config.sh $GITHUB_WORKSPACE/install-gdal-static --static
+    - name: Test post-install usage (static, with CMake)
+      run: |
+        ./autotest/postinstall/test_cmake.sh $GITHUB_WORKSPACE/install-gdal-static --static
 
   build-windows-msys2-mingw:
     runs-on: windows-2022

@@ -4,6 +4,8 @@
 #
 # First required argument is the installed prefix, which
 # is used to set PKG_CONFIG_PATH and LD_LIBRARY_PATH/DYLD_LIBRARY_PATH
+#
+# Second, optional argument can be '--static', to skip the ldd check.
 
 echo "Running post-install tests with CMake"
 
@@ -70,7 +72,9 @@ cd test_c/build
 cmake .. -DCMAKE_BUILD_TYPE=Release -DGDAL_DIR=$prefix/lib/cmake/gdal
 cmake --build .
 
-check_ldd test_c
+if test "$2" != "--static"; then
+  check_ldd test_c
+fi
 check_version test_c
 
 cd ../..
@@ -82,7 +86,9 @@ cd test_cpp/build
 cmake .. -DCMAKE_BUILD_TYPE=Debug -DGDAL_DIR=$prefix/lib/cmake/gdal
 cmake --build .
 
-check_ldd test_cpp
+if test "$2" != "--static"; then
+  check_ldd test_cpp
+fi
 check_version test_cpp
 
 cd ../..
