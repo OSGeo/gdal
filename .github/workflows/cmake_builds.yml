@@ -95,6 +95,9 @@ jobs:
         rm -rf $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python
         # Set PATH so that gdal-config is found
         PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH pip install --user gdal-python.tar.gz
+    - name: Test post-install usage (with pkg-config)
+      run: |
+        ./autotest/postinstall/test_pkg-config.sh $GITHUB_WORKSPACE/install-gdal
 
   build-windows-msys2-mingw:
     runs-on: windows-2022
@@ -306,6 +309,9 @@ jobs:
         GITHUB_WORKFLOW: "MacOS build"
     - name: Install
       run: cmake --build $GITHUB_WORKSPACE/build --target install -j 3
+    - name: Test post-install usage (with pkg-config)
+      run: |
+        ./autotest/postinstall/test_pkg-config.sh $GITHUB_WORKSPACE/install-gdal
 
   # Disabled for now since bindings in master use GDALDatasetGetFieldDomainNames
   # but libgdal from Conda has not it yet.
