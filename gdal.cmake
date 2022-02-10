@@ -709,6 +709,10 @@ if (NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
   foreach(lib IN LISTS cxx_libs)
     string(APPEND CONFIG_INST_DEP_LIBS " -l${lib}")
   endforeach()
+  if(NOT BUILD_SHARED_LIBS)
+    string(APPEND CONFIG_INST_LIBS " ${CONFIG_INST_DEP_LIBS}")
+    set(CONFIG_INST_DEP_LIBS "")
+  endif()
   configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/gdal.pc.in ${CMAKE_CURRENT_BINARY_DIR}/gdal.pc @ONLY)
   install(
     FILES ${CMAKE_CURRENT_BINARY_DIR}/gdal.pc
