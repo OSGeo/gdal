@@ -892,6 +892,13 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
     int nResFactor = 1 << (iOverview+1);
 
+
+    GDALRasterIOExtraArg sExtraArgTmp;
+    INIT_RASTERIO_EXTRA_ARG(sExtraArgTmp);
+    sExtraArgTmp.eResampleAlg = psExtraArg->eResampleAlg;
+    sExtraArgTmp.pfnProgress = psExtraArg->pfnProgress;
+    sExtraArgTmp.pProgressData = psExtraArg->pProgressData;
+
     return poGDS->IRasterIO(eRWFlag,
                             nXOff * nResFactor,
                             nYOff * nResFactor,
@@ -899,7 +906,7 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                             (nYSize == nRasterYSize) ? poGDS->nRasterYSize : nYSize * nResFactor,
                             pData, nBufXSize, nBufYSize,
                             eBufType, 1, &nBand,
-                            nPixelSpace, nLineSpace, nLineSpace*nBufYSize, psExtraArg);
+                            nPixelSpace, nLineSpace, nLineSpace*nBufYSize, &sExtraArgTmp);
 }
 
 /************************************************************************/
@@ -1920,13 +1927,18 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
             return CE_Failure;
         }
 
+        GDALRasterIOExtraArg sExtraArgDefault;
+        INIT_RASTERIO_EXTRA_ARG(sExtraArgDefault);
+        sExtraArgDefault.pfnProgress = psExtraArg->pfnProgress;
+        sExtraArgDefault.pProgressData = psExtraArg->pProgressData;
+
         CPLErr eErr = IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                 pabyTemp, nXSize, nYSize,
                                 eBufType, nBandCount, panBandMap,
                                 nBufDataTypeSize,
                                 (GIntBig)nBufDataTypeSize* nXSize,
                                 (GIntBig)nBufDataTypeSize*nXSize*nYSize,
-                                psExtraArg);
+                                &sExtraArgDefault);
 
         if( eErr == CE_None )
         {
@@ -1938,15 +1950,17 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
 
             for( int i = 0; i < nBandCount; i++ )
             {
-                nRet = CPLPrintPointer(szBuffer, pabyTemp + i * nBufDataTypeSize, sizeof(szBuffer));
+                nRet = CPLPrintPointer(szBuffer,
+                                       pabyTemp + static_cast<size_t>(i) * nBufDataTypeSize * nXSize * nYSize,
+                                       sizeof(szBuffer));
                 szBuffer[nRet] = 0;
                 char** papszOptions = CSLSetNameValue(nullptr, "DATAPOINTER", szBuffer);
 
                 papszOptions = CSLSetNameValue(papszOptions, "PIXELOFFSET",
-                    CPLSPrintf(CPL_FRMT_GIB, (GIntBig)nBufDataTypeSize * nBandCount));
+                    CPLSPrintf("%d", nBufDataTypeSize));
 
                 papszOptions = CSLSetNameValue(papszOptions, "LINEOFFSET",
-                    CPLSPrintf(CPL_FRMT_GIB, (GIntBig)nBufDataTypeSize * nBandCount * nXSize));
+                    CPLSPrintf(CPL_FRMT_GIB, (GIntBig)nBufDataTypeSize * nXSize));
 
                 poMEMDS->AddBand(eBufType, papszOptions);
                 CSLDestroy(papszOptions);
