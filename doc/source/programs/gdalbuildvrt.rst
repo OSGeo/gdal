@@ -79,7 +79,7 @@ changed in later versions.
 
     `user` must be used in combination with the :option:`-tr` option to specify the target resolution.
 
-.. option:: -tr <res> <yres>
+.. option:: -tr <xres> <yres>
 
     Set target resolution. The values must be expressed in georeferenced units.
     Both must be positive values. Specifying those values is of course incompatible with
