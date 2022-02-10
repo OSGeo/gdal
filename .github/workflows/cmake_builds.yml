@@ -98,6 +98,9 @@ jobs:
     - name: Test post-install usage (with pkg-config)
       run: |
         ./autotest/postinstall/test_pkg-config.sh $GITHUB_WORKSPACE/install-gdal
+    - name: Test post-install usage (with CMake)
+      run: |
+        ./autotest/postinstall/test_cmake.sh $GITHUB_WORKSPACE/install-gdal
 
   build-windows-msys2-mingw:
     runs-on: windows-2022
@@ -312,6 +315,9 @@ jobs:
     - name: Test post-install usage (with pkg-config)
       run: |
         ./autotest/postinstall/test_pkg-config.sh $GITHUB_WORKSPACE/install-gdal
+    - name: Test post-install usage (with CMake)
+      run: |
+        ./autotest/postinstall/test_cmake.sh $GITHUB_WORKSPACE/install-gdal
 
   # Disabled for now since bindings in master use GDALDatasetGetFieldDomainNames
   # but libgdal from Conda has not it yet.
