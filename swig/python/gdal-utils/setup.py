@@ -48,11 +48,11 @@ def define_entry_points(scripts, entry_points=None):
             'gdal_merge = scripts.gdal_merge',
             ... ]
     """
-    xx = []
+    console_scripts = []
     for f in scripts:
         name = Path(f).stem # 'gdal_edit' from 'gdal_edit.py'
-        xx.append([f'{name} = scripts.{name}'])
-    entry_points = {'console_scripts': xx}
+        console_scripts.append([f'{name} = scripts.{name}'])
+    entry_points = {'console_scripts': console_scripts}
     return entry_points
 
 setup(
