@@ -117,7 +117,12 @@ jobs:
         ./autotest/postinstall/test_pkg-config.sh $GITHUB_WORKSPACE/install-gdal-static --static
     - name: Test post-install usage (static, with CMake)
       run: |
-        ./autotest/postinstall/test_cmake.sh $GITHUB_WORKSPACE/install-gdal-static --static
+        if ./autotest/postinstall/test_cmake.sh $GITHUB_WORKSPACE/install-gdal-static --static; then
+          echo 'Unexpected pass' >&2
+          exit 1
+        else
+          echo 'Expected fail'
+        fi
 
   build-windows-msys2-mingw:
     runs-on: windows-2022
