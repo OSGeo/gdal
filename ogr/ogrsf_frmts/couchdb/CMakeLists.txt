@@ -8,5 +8,5 @@ target_include_directories(ogr_CouchDB PRIVATE $<TARGET_PROPERTY:ogr_geojson,SOU
 if (GDAL_USE_JSONC_INTERNAL)
   target_include_directories(ogr_CouchDB PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
 else ()
-  gdal_target_link_libraries(ogr_CouchDB PRIVATE JSONC::JSONC)
+  gdal_target_link_libraries(ogr_CouchDB PRIVATE ${JSONC_LIBRARIES})
 endif ()

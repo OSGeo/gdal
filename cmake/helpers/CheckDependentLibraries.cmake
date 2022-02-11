@@ -19,15 +19,52 @@ option(
   "Whether detected external libraries should be used by default. This should be set before CMakeCache.txt is created."
   ON)
 
-# Macro to declare a package Accept a CAN_DISABLE option to specify that the package can be disabled if found, with the
-# GDAL_USE_{name in upper case} option. Accept a DISABLED_BY_DEFAULT option to specify that the default value of
-# GDAL_USE_ is OFF. Accept a RECOMMENDED option
+set(GDAL_IMPORT_DEPENDENCIES "")
+
+# Package acceptance based on a candidate target list.
+# If a matching target is found, sets ${name}_FOUND to TRUE,
+# ${name}_INCLUDE_DIRS to "" and ${name}_LIBRARIES to the target name.
+# If `REQUIRED` is used, ${name}_FOUND is set to FALSE if no target matches.
+function(gdal_check_package_target name)
+  if("REQUIRED" IN_LIST ARGN)
+    list(REMOVE_ITEM ARGN "REQUIRED")
+    set(${name}_FOUND FALSE PARENT_SCOPE)
+  endif()
+  foreach(target IN LISTS ARGN)
+    if(TARGET ${target})
+      set(${name}_INCLUDE_DIRS "" PARENT_SCOPE)
+      set(${name}_LIBRARIES "${target}" PARENT_SCOPE)
+      set(${name}_FOUND TRUE PARENT_SCOPE)
+      return()
+    endif()
+  endforeach()
+endfunction()
+
+# Macro to declare a dependency on an external package.
+# If not marked with the ALWAYS_ON_WHEN_FOUND option, dependencies can be
+# marked for user control with either the CAN_DISABLE or DISABLED_BY_DEFAULT
+# option. User control is done via a cache variable GDAL_USE_{name in upper case}
+# with the default value ON for CAN_DISABLE or OFF for DISABLED_BY_DEFAULT.
+# The RECOMMENDED option is used for the feature summary.
+# The VERSION, CONFIG, COMPONENTS and NAMES parameters are passed to find_package().
+# Using NAMES with find_package() implies config mode. However, gdal_check_package()
+# attemps another find_package() without NAMES if the config mode attempt was not
+# successful, allowing a fallback to Find modules.
+# The TARGETS parameter can define a list of candidate targets. If given, a
+# package will only be accepted if it defines one of the given targets. The matching
+# target will be saved in ${name}_LIBRARIES.
+# The NAMES and TARGETS map to GDAL_CHECK_PACKAGE_${name}_NAMES and
+# GDAL_CHECK_PACKAGE_${name}_TARGETS cache variables which can be used to
+# overwrite the default config and targets names.
+# The required find_dependency() commands for exported config are appended to
+# the GDAL_IMPORT_DEPENDENCIES string.
 macro (gdal_check_package name purpose)
   set(_options CONFIG CAN_DISABLE RECOMMENDED DISABLED_BY_DEFAULT ALWAYS_ON_WHEN_FOUND)
-  set(_oneValueArgs VERSION)
-  set(_multiValueArgs COMPONENTS)
+  set(_oneValueArgs VERSION NAMES)
+  set(_multiValueArgs COMPONENTS TARGETS)
   cmake_parse_arguments(_GCP "${_options}" "${_oneValueArgs}" "${_multiValueArgs}" ${ARGN})
   string(TOUPPER ${name} key)
+  set(_find_dependency_args "")
   find_package2(${name} QUIET)
   if (NOT DEFINED ${key}_FOUND)
     set(_find_package_args)
@@ -36,10 +73,38 @@ macro (gdal_check_package name purpose)
     endif ()
     if (_GCP_CONFIG)
       list(APPEND _find_package_args CONFIG)
-    elseif (_GCP_COMPONENTS)
+    endif ()
+    if (_GCP_COMPONENTS)
       list(APPEND _find_package_args COMPONENTS ${_GCP_COMPONENTS})
     endif ()
-    find_package(${name} ${_find_package_args})
+    if (_GCP_NAMES)
+      set(GDAL_CHECK_PACKAGE_${name}_NAMES "${_GCP_NAMES}" CACHE STRING "Config file name for ${name}")
+      mark_as_advanced(GDAL_CHECK_PACKAGE_${name}_NAMES)
+    endif ()
+    if (_GCP_TARGETS)
+      set(GDAL_CHECK_PACKAGE_${name}_TARGETS "${_GCP_TARGETS}" CACHE STRING "Target name candidates for ${name}")
+      mark_as_advanced(GDAL_CHECK_PACKAGE_${name}_TARGETS)
+    endif ()
+    if (GDAL_CHECK_PACKAGE_${name}_NAMES)
+      find_package(${name} NAMES ${GDAL_CHECK_PACKAGE_${name}_NAMES} ${_find_package_args})
+      gdal_check_package_target(${name} ${GDAL_CHECK_PACKAGE_${name}_TARGETS} REQUIRED)
+      if (${name}_FOUND)
+        get_filename_component(_find_dependency_args "${${name}_CONFIG}" NAME)
+        string(REPLACE ";" " " _find_dependency_args "${name} CONFIGS ${_find_dependency_args} ${_find_package_args}")
+      endif ()
+    endif ()
+    if (NOT ${name}_FOUND)
+      find_package(${name} ${_find_package_args})
+      if (${name}_FOUND)
+        gdal_check_package_target(${name} ${GDAL_CHECK_PACKAGE_${name}_TARGETS})
+      elseif (${key}_FOUND) # Some find modules do not set <Pkg>_FOUND
+        gdal_check_package_target(${key} ${GDAL_CHECK_PACKAGE_${name}_TARGETS})
+        set(${name}_FOUND "${key}_FOUND")
+      endif ()
+      if (${name}_FOUND)
+        set(REPLACE ";" " " _find_dependency_args "${name} ${_find_package_args}")
+      endif()
+    endif ()
   endif ()
   if (${key}_FOUND OR ${name}_FOUND)
     set(HAVE_${key} ON)
@@ -83,6 +148,12 @@ macro (gdal_check_package name purpose)
   elseif (NOT _GCP_ALWAYS_ON_WHEN_FOUND)
     message(FATAL_ERROR "Programming error: missing CAN_DISABLE or DISABLED_BY_DEFAULT option for component ${name}")
   endif ()
+
+  if(NOT BUILD_SHARED_LIBS AND GDAL_USE_${key} AND _find_dependency_args)
+    string(REPLACE "\"" "\\\"" _find_dependency_args "${_find_dependency_args}")
+    string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(${_find_dependency_args})\n")
+  endif()
+  unset(_find_dependency_args)
 endmacro ()
 
 function (split_libpath _lib)
@@ -180,7 +251,10 @@ endif ()
 
 gdal_check_package(LibXml2 "Read and write XML formats" CAN_DISABLE)
 
-gdal_check_package(EXPAT "Read and write XML formats" RECOMMENDED CAN_DISABLE)
+gdal_check_package(EXPAT "Read and write XML formats" RECOMMENDED CAN_DISABLE
+  NAMES expat
+  TARGETS expat::expat EXPAT::EXPAT
+)
 gdal_check_package(XercesC "Read and write XML formats (needed for GMLAS and ILI drivers)" CAN_DISABLE)
 
 gdal_check_package(ZLIB "zlib (external)" CAN_DISABLE)
@@ -209,11 +283,17 @@ set_package_properties(
   TYPE RECOMMENDED)
 gdal_internal_library(TIFF REQUIRED)
 
-gdal_check_package(ZSTD "ZSTD compression library" CAN_DISABLE)
+gdal_check_package(ZSTD "ZSTD compression library" CAN_DISABLE
+  NAMES zstd
+  TARGETS zstd::libzstd_shared zstd::libzstd_static ZSTD::zstd
+)
 gdal_check_package(SFCGAL "gdal core supports ISO 19107:2013 and OGC Simple Features Access 1.2 for 3D operations"
                    CAN_DISABLE)
 
-gdal_check_package(GeoTIFF "libgeotiff library (external)" CAN_DISABLE)
+gdal_check_package(GeoTIFF "libgeotiff library (external)" CAN_DISABLE
+  NAMES GeoTIFF
+  TARGETS geotiff_library GEOTIFF::GEOTIFF
+)
 gdal_internal_library(GEOTIFF REQUIRED)
 
 gdal_check_package(PNG "PNG compression library (external)" CAN_DISABLE)
@@ -231,8 +311,20 @@ gdal_internal_library(JPEG)
 gdal_check_package(GIF "GIF compression library (external)" CAN_DISABLE)
 gdal_internal_library(GIF)
 
-gdal_check_package(JSONC "json-c library (external)" CAN_DISABLE)
+gdal_check_package(JSONC "json-c library (external)" CAN_DISABLE
+  NAMES json-c
+  TARGETS json-c::json-c JSONC::JSONC
+)
 gdal_internal_library(JSONC REQUIRED)
+if(TARGET json-c::json-c)
+  get_target_property(include_dirs json-c::json-c INTERFACE_INCLUDE_DIRECTORIES)
+  find_path(GDAL_JSON_INCLUDE_DIR NAMES json.h PATHS ${include_dirs} PATH_SUFFIXES json-c NO_DEFAULT_PATH)
+  list(APPEND include_dirs "${GDAL_JSON_INCLUDE_DIR}")
+  list(REMOVE_DUPLICATES include_dirs)
+  set_target_properties(json-c::json-c PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${GDAL_JSON_INCLUDE_DIR}"
+  )
+endif()
 
 gdal_check_package(OpenCAD "libopencad (external, used by OpenCAD driver)" CAN_DISABLE)
 gdal_internal_library(OPENCAD)
@@ -430,7 +522,10 @@ endif ()
 define_find_package2(CFITSIO fitsio.h cfitsio PKGCONFIG_NAME cfitsio)
 gdal_check_package(CFITSIO "C FITS I/O library" CAN_DISABLE)
 
-gdal_check_package(GEOS "Geometry Engine - Open Source (GDAL core dependency)" RECOMMENDED CAN_DISABLE)
+gdal_check_package(GEOS "Geometry Engine - Open Source (GDAL core dependency)" RECOMMENDED CAN_DISABLE
+  NAMES GEOS
+  TARGETS GEOS::geos_c GEOS::GEOS
+)
 gdal_check_package(HDF4 "Enable HDF4 driver" CAN_DISABLE)
 
 define_find_package2(KEA libkea/KEACommon.h kea)

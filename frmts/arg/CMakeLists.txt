@@ -5,6 +5,5 @@ target_include_directories(gdal_ARG PRIVATE $<TARGET_PROPERTY:gdal_raw,SOURCE_DI
 if (GDAL_USE_JSONC_INTERNAL)
   target_include_directories(gdal_ARG PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
 else ()
-  target_include_directories(gdal_ARG PRIVATE ${JSONC_INCLUDE_DIR})
-  gdal_target_link_libraries(gdal_ARG PRIVATE ${JSONC_LIBRARY})
+  gdal_target_link_libraries(gdal_ARG PRIVATE ${JSONC_LIBRARIES})
 endif ()

@@ -1,0 +1,3 @@
+include(CMakeFindDependencyMacro)
+@GDAL_IMPORT_DEPENDENCIES@
+include("${CMAKE_CURRENT_LIST_DIR}/GDAL-targets.cmake")
