@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Setup script for gdal-utils.
 from glob import glob
-from importlib.metadata import entry_points
+# from importlib.metadata import entry_points
 from pathlib import Path
 
 from setuptools import setup, find_packages
