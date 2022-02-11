@@ -10,21 +10,26 @@
 ###############################################################################
 # Copyright (c) 2020, SAP SE
 #
-# This library is free software; you can redistribute it and/or
-# modify it under the terms of the GNU Library General Public
-# License as published by the Free Software Foundation; either
-# version 2 of the License, or (at your option) any later version.
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
 #
-# This library is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# Library General Public License for more details.
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
 #
-# You should have received a copy of the GNU Library General Public
-# License along with this library; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-# Boston, MA 02111-1307, USA.
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
 ###############################################################################
+from os import environ
+
 import gdaltest
 import ogrtest
 import pytest
@@ -41,151 +46,85 @@ except ImportError:
 pytestmark = pytest.mark.require_driver('HANA')
 
 
-###############################################################################
-# Initialize SAP HANA data source.
+@pytest.fixture(scope="module", autouse=True)
+def setup_driver():
+    driver = ogr.GetDriverByName('HANA')
+    if driver is None:
+        pytest.skip("HANA driver not available", allow_module_level=True)
 
-def test_ogr_hana_init():
-    gdaltest.hana_ds = None
-    gdaltest.hana_drv = ogr.GetDriverByName('HANA')
-    if gdaltest.hana_drv is None:
-        pytest.skip()
+    conn = create_connection()
 
-    uri = gdal.GetConfigOption('OGR_HANA_CONNECTION_STRING', None)
-    if uri is not None:
-        gdaltest.hana_connection_string = uri + ';ENCRYPT=YES;SSL_VALIDATE_CERTIFICATE=false;CHAR_AS_UTF8=1'
-    else:
-        gdaltest.hana_connection_string = 'HANA:autotest'
+    uid = execute_sql_scalar(conn, "SELECT REPLACE(CURRENT_UTCDATE, '-', '') || '_' || BINTOHEX(SYSUUID) FROM DUMMY;")
+    gdaltest.hana_schema_name = '{}_{}'.format('gdal_test', uid)
 
-    conn = None
-
-    try:
-        gdal.PushErrorHandler('CPLQuietErrorHandler')
-        conn = create_connection(gdaltest.hana_connection_string)
-        gdal.PopErrorHandler()
-    except:
-        gdal.PopErrorHandler()
-
-    if conn is None:
-        pytest.skip()
-
-    gdaltest.hana_schema_name = generate_schema_name(conn, 'gdal_test')
     execute_sql(conn, f'CREATE SCHEMA "{gdaltest.hana_schema_name}"')
 
-    gdaltest.hana_ds = open_datasource()
-    if gdaltest.hana_ds is None:
-        pytest.skip()
+    ds = open_datasource(1)
+    create_tpoly_table(ds)
 
-    for capabilities in [ogr.ODsCCreateLayer,
-                         ogr.ODsCDeleteLayer,
-                         ogr.ODsCCreateGeomFieldAfterCreateLayer,
-                         ogr.ODsCMeasuredGeometries,
-                         ogr.ODsCTransactions]:
-        assert gdaltest.hana_ds.TestCapability(capabilities)
+    yield
 
-    layer = gdaltest.hana_ds.ExecuteSQL("SELECT * FROM \"SYS\".\"M_DATABASE\"")
-    f = layer.GetNextFeature()
-    print('Version: ' + f.GetField("VERSION"))
-    gdaltest.hana_ds.ReleaseResultSet(layer)
+    execute_sql(conn, f'DROP SCHEMA "{gdaltest.hana_schema_name}" CASCADE')
+
+
+@pytest.fixture()
+def ogrsf_path():
+    import test_cli_utilities
+    path = test_cli_utilities.get_test_ogrsf_path()
+    if path is None:
+        pytest.skip('ogrsf test utility not found')
+    return path
 
 
 ###############################################################################
-#  Create a table from data/poly.shp
+# Test data source capabilities
 
 def test_ogr_hana_1():
-    if gdaltest.hana_ds is None:
-        pytest.skip()
+    def test_capabilities(update, capabilities):
+        ds = open_datasource(update)
+        assert ds is not None, 'Data source is none'
 
-    layer_name = 'TPOLY'
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
-    gdaltest.hana_ds.ExecuteSQL('DELLAYER:%s' % layer_name)
-    gdal.PopErrorHandler()
+        for capability in capabilities:
+            assert ds.TestCapability(capability[0]) == capability[1]
 
-    shp_ds = ogr.Open('data/poly.shp')
-    shp_layer = shp_ds.GetLayer(0)
+    test_capabilities(0, [[ogr.ODsCCreateLayer, False],
+                          [ogr.ODsCDeleteLayer, False],
+                          [ogr.ODsCCreateGeomFieldAfterCreateLayer, False],
+                          [ogr.ODsCMeasuredGeometries, True],
+                          [ogr.ODsCCurveGeometries, False],
+                          [ogr.ODsCTransactions, True]])
 
-    ######################################################
-    # Create Layer
-    gdaltest.hana_layer = gdaltest.hana_ds.CreateLayer(layer_name, srs=shp_layer.GetSpatialRef())
-
-    ######################################################
-    # Check layer name
-
-    assert gdaltest.hana_layer.GetName() == layer_name, \
-        pytest.fail('GetName() returned %s instead of %s' % (gdaltest.hana_layer.GetName(), layer_name))
-
-    ######################################################
-    # Check capabilities
-
-    for capabilities in [ogr.OLCFastFeatureCount,
-                         ogr.OLCFastSpatialFilter,
-                         ogr.OLCFastGetExtent,
-                         ogr.OLCCreateField,
-                         ogr.OLCCreateGeomField,
-                         ogr.OLCDeleteFeature,
-                         ogr.OLCAlterFieldDefn,
-                         ogr.OLCRandomWrite,
-                         ogr.OLCTransactions]:
-        assert gdaltest.hana_layer.TestCapability(capabilities)
-
-    ######################################################
-    # Setup Schema
-    ogrtest.quick_create_layer_def(gdaltest.hana_layer,
-                                   [('AREA', ogr.OFTReal),
-                                    ('EAS_ID', ogr.OFTInteger64),
-                                    ('PRFEDEA', ogr.OFTString),
-                                    ('SHORTNAME', ogr.OFTString, 8)])
-
-    ######################################################
-    # Check fields
-
-    feat_def = gdaltest.hana_layer.GetLayerDefn()
-    if feat_def.GetGeomFieldCount() != 1:
-        pytest.fail('geometry field not found')
-
-    if feat_def.GetFieldCount() != 4:
-        pytest.fail('GetFieldCount() returned %d instead of %d' % (4, feat_def.GetFieldCount()))
-
-    ######################################################
-    # Copy in poly.shp
-
-    dst_feat = ogr.Feature(feature_def=gdaltest.hana_layer.GetLayerDefn())
-
-    feat = shp_layer.GetNextFeature()
-    while feat is not None:
-        dst_feat.SetFrom(feat)
-        gdaltest.hana_layer.CreateFeature(dst_feat)
-        feat = shp_layer.GetNextFeature()
-
-    dst_feat.Destroy()
-
-    shp_ds.Destroy()
+    test_capabilities(1, [[ogr.ODsCCreateLayer, True],
+                          [ogr.ODsCDeleteLayer, True],
+                          [ogr.ODsCCreateGeomFieldAfterCreateLayer, True],
+                          [ogr.ODsCMeasuredGeometries, True],
+                          [ogr.ODsCCurveGeometries, False],
+                          [ogr.ODsCTransactions, True]])
 
 
 ###############################################################################
-# Verify data that has been just written
+# Verify data in TPOLY table
 
 def test_ogr_hana_2():
-    if gdaltest.hana_ds is None:
-        pytest.skip()
+    ds = open_datasource()
+    layer = ds.GetLayerByName('TPOLY')
 
     shp_ds = ogr.Open('data/poly.shp')
     shp_layer = shp_ds.GetLayer(0)
 
-    assert gdaltest.hana_layer.GetFeatureCount() == shp_layer.GetFeatureCount(), \
+    assert layer.GetFeatureCount() == shp_layer.GetFeatureCount(), \
         'feature count does not match'
-    assert gdaltest.hana_layer.GetSpatialRef().GetAuthorityCode(None) == shp_layer.GetSpatialRef().GetAuthorityCode(
-        None), \
+    assert layer.GetSpatialRef().GetAuthorityCode(None) == shp_layer.GetSpatialRef().GetAuthorityCode(None), \
         'spatial ref does not match'
 
-    gdaltest.hana_layer.SetAttributeFilter(None)
-    field_count = gdaltest.hana_layer.GetLayerDefn().GetFieldCount()
+    layer.SetAttributeFilter(None)
+    field_count = layer.GetLayerDefn().GetFieldCount()
     orig_feat = shp_layer.GetNextFeature()
 
     while orig_feat is not None:
-        read_feat = gdaltest.hana_layer.GetNextFeature()
+        read_feat = layer.GetNextFeature()
 
-        assert read_feat.GetFieldCount() == field_count, \
-            'Field count does not match'
+        assert read_feat.GetFieldCount() == field_count, 'Field count does not match'
 
         assert (ogrtest.check_feature_geometry(read_feat, orig_feat.GetGeometryRef(),
                                                max_error=0.001) == 0)
@@ -193,30 +132,21 @@ def test_ogr_hana_2():
             assert orig_feat.GetField(fld) == read_feat.GetField(fld), \
                 ('Attribute %d does not match' % fld)
 
-        read_feat.Destroy()
-        orig_feat.Destroy()
-
         orig_feat = shp_layer.GetNextFeature()
-
-    shp_ds.Destroy()
 
 
 ###############################################################################
 # Test attribute filter
 
 def test_ogr_hana_3():
-    if gdaltest.hana_ds is None:
-        pytest.skip()
+    ds = open_datasource()
+    layer = ds.GetLayerByName('tpoly')
 
-    expect = [168, 169, 166, 165]
+    layer.SetAttributeFilter('EAS_ID > 160 AND EAS_ID < 170')
+    tr = ogrtest.check_features_against_list(layer, 'EAS_ID', [168, 169, 166, 165])
 
-    gdaltest.hana_layer.SetAttributeFilter('EAS_ID > 160 AND EAS_ID < 170')
-    tr = ogrtest.check_features_against_list(gdaltest.hana_layer, 'EAS_ID', expect)
-
-    assert gdaltest.hana_layer.GetFeatureCount() == 4, \
-        'GetFeatureCount() returned %d instead of 4' % gdaltest.hana_layer.GetFeatureCount()
-
-    gdaltest.hana_layer.SetAttributeFilter(None)
+    assert layer.GetFeatureCount() == 4, \
+        'GetFeatureCount() returned %d instead of 4' % layer.GetFeatureCount()
 
     assert tr
 
@@ -225,30 +155,24 @@ def test_ogr_hana_3():
 # Test spatial filter
 
 def test_ogr_hana_4():
-    if gdaltest.hana_ds is None:
-        pytest.skip()
+    ds = open_datasource()
+    layer = ds.GetLayerByName('TPOLY')
 
     geom = ogr.CreateGeometryFromWkt('LINESTRING(479505 4763195,480526 4762819)')
-    gdaltest.hana_layer.SetSpatialFilter(geom)
+    layer.SetSpatialFilter(geom)
 
-    assert gdaltest.hana_layer.GetFeatureCount() == 1, \
-        'GetFeatureCount() returned %d instead of 1' % gdaltest.hana_layer.GetFeatureCount()
+    assert layer.GetFeatureCount() == 1, \
+        'GetFeatureCount() returned %d instead of 1' % layer.GetFeatureCount()
 
-    tr = ogrtest.check_features_against_list(gdaltest.hana_layer, 'EAS_ID', [158])
-
-    gdaltest.hana_layer.SetSpatialFilter(None)
-
-    assert tr
+    assert ogrtest.check_features_against_list(layer, 'EAS_ID', [158])
 
 
 ###############################################################################
 # Test reading a layer extent
 
 def test_ogr_hana_5():
-    if gdaltest.hana_ds is None:
-        pytest.skip()
-
-    layer = gdaltest.hana_ds.GetLayerByName('tpoly')
+    ds = open_datasource()
+    layer = ds.GetLayerByName('tpoly')
     assert layer is not None, 'did not get tpoly layer'
 
     check_bboxes(layer.GetExtent(), (478315.53125, 481645.3125, 4762880.5, 4765610.5), 0.0001)
@@ -258,53 +182,47 @@ def test_ogr_hana_5():
 # Test reading a SQL result layer extent
 
 def test_ogr_hana_6():
-    if gdaltest.hana_ds is None:
-        pytest.skip()
-
-    sql_lyr = gdaltest.hana_ds.ExecuteSQL('select * from tpoly')
-    check_bboxes(sql_lyr.GetExtent(), (478315.53125, 481645.3125, 4762880.5, 4765610.5), 0.0001)
+    ds = open_datasource()
+    layer = ds.ExecuteSQL('SELECT * FROM TPOLY')
+    check_bboxes(layer.GetExtent(), (478315.53125, 481645.3125, 4762880.5, 4765610.5), 0.0001)
 
 
 ###############################################################################
 # Test returned spatial reference
 
 def test_ogr_hana_7():
-    if gdaltest.hana_ds is None:
-        pytest.skip()
-
-    sql_layer = gdaltest.hana_ds.ExecuteSQL('SELECT * FROM tpoly')
-    assert sql_layer.GetSpatialRef().GetAuthorityCode(None) == '27700', \
+    ds = open_datasource()
+    layer = ds.ExecuteSQL('SELECT * FROM TPOLY')
+    assert layer.GetSpatialRef().GetAuthorityCode(None) == '27700', \
         'returned wrong spatial reference id'
-
-    gdaltest.hana_ds.ReleaseResultSet(sql_layer)
+    ds.ReleaseResultSet(layer)
 
 
 ###############################################################################
 # Test returned geometry type
 
 def test_ogr_hana_8():
-    if gdaltest.hana_ds is None:
-        pytest.skip()
-
-    layer = gdaltest.hana_ds.ExecuteSQL('SELECT * FROM TPOLY')
+    ds = open_datasource()
+    layer = ds.ExecuteSQL('SELECT * FROM TPOLY')
     assert layer.GetLayerDefn().GetGeomFieldDefn(0).GetType() == ogr.wkbPolygon, \
         'Returned wrong geometry type'
-
-    gdaltest.hana_ds.ReleaseResultSet(layer)
+    ds.ReleaseResultSet(layer)
 
 
 ###############################################################################
 # Write new features with geometries and verify them
 
 def test_ogr_hana_9():
-    if gdaltest.hana_ds is None:
-        pytest.skip()
+    layer_name = get_test_name()
+    ds = open_datasource(1)
+    create_tpoly_table(ds, layer_name)
 
-    dst_feat = ogr.Feature(feature_def=gdaltest.hana_layer.GetLayerDefn())
+    layer = ds.GetLayerByName(layer_name)
+
+    dst_feat = ogr.Feature(feature_def=layer.GetLayerDefn())
     wkt_list = ['10', '2', '1', '3d_1', '4', '5', '6']
 
     for item in wkt_list:
-
         wkt = open('data/wkb_wkt/' + item + '.wkt').read()
         geom = ogr.CreateGeometryFromWkt(wkt)
 
@@ -314,95 +232,45 @@ def test_ogr_hana_9():
         dst_feat.SetGeometryDirectly(geom)
         dst_feat.SetField('PRFEDEA', item)
         dst_feat.SetFID(-1)
-        gdaltest.hana_layer.CreateFeature(dst_feat)
+        layer.CreateFeature(dst_feat)
 
         ######################################################################
         # Read back the feature and get the geometry.
 
-        gdaltest.hana_layer.SetAttributeFilter("PRFEDEA = '%s'" % item)
+        layer.SetAttributeFilter("PRFEDEA = '%s'" % item)
 
-        feat_read = gdaltest.hana_layer.GetNextFeature()
+        feat_read = layer.GetNextFeature()
 
         if ogrtest.check_feature_geometry(feat_read, geom) != 0:
             print(item)
             print(wkt)
             pytest.fail(geom)
 
-        feat_read.Destroy()
-
-    dst_feat.Destroy()
-    gdaltest.hana_layer.ResetReading()
+    layer.ResetReading()
 
 
 ###############################################################################
 # Test ExecuteSQL() without geometry
 
 def test_ogr_hana_10():
-    if gdaltest.hana_ds is None:
-        pytest.skip()
-
-    gdaltest.hana_layer.SetAttributeFilter(None)
-
-    layer = gdaltest.hana_ds.ExecuteSQL('SELECT EAS_ID FROM tpoly WHERE EAS_ID IN (158, 170) ')
-
+    ds = open_datasource()
+    layer = ds.ExecuteSQL('SELECT EAS_ID FROM tpoly WHERE EAS_ID IN (158, 170) ')
     assert layer.GetFeatureCount() == 2, \
         'GetFeatureCount() returned %d instead of 2' % layer.GetFeatureCount()
-
-    tr = ogrtest.check_features_against_list(layer, 'EAS_ID', [158, 170])
-
-    gdaltest.hana_ds.ReleaseResultSet(layer)
-
-    assert tr
+    assert ogrtest.check_features_against_list(layer, 'EAS_ID', [158, 170])
 
 
 ###############################################################################
 # Test ExecuteSQL() results layers without geometry
 
-
 def test_ogr_hana_11():
-    if gdaltest.hana_ds is None:
-        pytest.skip()
+    ds = open_datasource()
+    layer = ds.ExecuteSQL('SELECT DISTINCT EAS_ID FROM TPOLY ORDER BY EAS_ID DESC')
+    assert layer.GetFeatureCount() == 10
 
-    layer = gdaltest.hana_ds.ExecuteSQL('SELECT DISTINCT EAS_ID FROM TPOLY ORDER BY EAS_ID DESC')
-
-    assert layer.GetFeatureCount() == 11
-
-    expect = [179, 173, 172, 171, 170, 169, 168, 166, 165, 158, None]
-    tr = ogrtest.check_features_against_list(layer, 'EAS_ID', expect)
-
-    gdaltest.hana_ds.ReleaseResultSet(layer)
-
-    assert tr
-
-
-###############################################################################
-# Test ExecuteSQL() results layers with geometry
-
-def test_ogr_hana_12():
-    if gdaltest.hana_ds is None:
-        pytest.skip()
-
-    wkt_id = '5'
-    layer = gdaltest.hana_ds.ExecuteSQL("SELECT * FROM TPOLY WHERE PRFEDEA = '%s'" % wkt_id)
-    assert layer.GetLayerDefn().GetGeomFieldCount() == 1, \
-        "GetGeomFieldCount() must return 1"
-
-    tr = ogrtest.check_features_against_list(layer, 'PRFEDEA', [wkt_id])
-    if tr:
-        layer.ResetReading()
-        feat_read = layer.GetNextFeature()
-        wkt = open('data/wkb_wkt/' + wkt_id + '.wkt').read()
-        if ogrtest.check_feature_geometry(feat_read, wkt) != 0:
-            tr = 0
-        feat_read.Destroy()
-
-    geom = ogr.CreateGeometryFromWkt('LINESTRING(-10 -10,0 0)')
-    layer.SetSpatialFilter(geom)
-
-    assert layer.GetFeatureCount() == 0
-    assert layer.GetNextFeature() is None, 'GetNextFeature() did not return None'
-
-    gdaltest.hana_ds.ReleaseResultSet(layer)
+    expected = [179, 173, 172, 171, 170, 169, 168, 166, 165, 158]
+    tr = ogrtest.check_features_against_list(layer, 'EAS_ID', expected)
+    ds.ReleaseResultSet(layer)
 
     assert tr
 
@@ -410,80 +278,74 @@ def test_ogr_hana_12():
 ###############################################################################
 # Test ExecuteSQL() with empty result set
 
-def test_ogr_hana_13():
-    if gdaltest.hana_ds is None:
-        pytest.skip()
+def test_ogr_hana_12():
+    ds = open_datasource()
 
-    layer = gdaltest.hana_ds.ExecuteSQL('SELECT * FROM TPOLY WHERE EAS_ID = 7892342')
+    layer = ds.ExecuteSQL('SELECT * FROM TPOLY WHERE EAS_ID = 7892342')
     assert layer is not None, 'Expected a non None layer'
 
     feat = layer.GetNextFeature()
     assert feat is None, 'Expected no features'
 
-    gdaltest.hana_ds.ReleaseResultSet(layer)
+    ds.ReleaseResultSet(layer)
 
 
 ###############################################################################
 # Test ExecuteSQL() with quoted table name
 
-def test_ogr_hana_14():
-    if gdaltest.hana_ds is None:
-        pytest.skip()
-
-    layer = gdaltest.hana_ds.ExecuteSQL('SELECT EAS_ID FROM "TPOLY" WHERE EAS_ID IN (158, 170) ')
-
-    tr = ogrtest.check_features_against_list(layer, 'EAS_ID', [158, 170])
-
-    gdaltest.hana_ds.ReleaseResultSet(layer)
-
-    assert tr
+def test_ogr_hana_13():
+    ds = open_datasource()
+    layer = ds.ExecuteSQL('SELECT EAS_ID FROM "TPOLY" WHERE EAS_ID IN (158, 170) ')
+    assert ogrtest.check_features_against_list(layer, 'EAS_ID', [158, 170])
 
 
 ###############################################################################
 # Test GetFeature() method with an invalid id
 
-def test_ogr_hana_15():
-    if gdaltest.hana_ds is None:
-        pytest.skip()
-
-    layer = gdaltest.hana_ds.GetLayerByName('tpoly')
+def test_ogr_hana_14():
+    ds = open_datasource()
+    layer = ds.GetLayerByName('tpoly')
     assert layer.GetFeature(0) is None
 
 
 ###############################################################################
 # Test inserting features without geometry
 
-def test_ogr_hana_16():
-    if gdaltest.hana_ds is None:
-        pytest.skip()
+def test_ogr_hana_15():
+    layer_name = get_test_name()
+    ds = open_datasource(1)
+    create_tpoly_table(ds, layer_name)
+    layer = ds.GetLayerByName(layer_name)
+    feat_count = layer.GetFeatureCount()
 
-    feat_count = gdaltest.hana_layer.GetFeatureCount()
-
-    dst_feat = ogr.Feature(feature_def=gdaltest.hana_layer.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=layer.GetLayerDefn())
     dst_feat.SetField('PRFEDEA', '7777')
     dst_feat.SetField('EAS_ID', 2000)
     dst_feat.SetFID(-1)
-    gdaltest.hana_layer.CreateFeature(dst_feat)
-    dst_feat.Destroy()
+    layer.CreateFeature(dst_feat)
 
-    assert (feat_count + 1) == gdaltest.hana_layer.GetFeatureCount(), \
-        ('Feature count %d is not as expected %d' % (gdaltest.hana_layer.GetFeatureCount(), feat_count + 1))
+    assert (feat_count + 1) == layer.GetFeatureCount(), \
+        ('Feature count %d is not as expected %d' % (layer.GetFeatureCount(), feat_count + 1))
 
 
 ###############################################################################
 # Test reading features without geometry
 
-def test_ogr_hana_17():
-    if gdaltest.hana_ds is None:
-        pytest.skip()
+def test_ogr_hana_16():
+    layer_name = get_test_name()
+    ds = open_datasource(1)
+    create_tpoly_table(ds, layer_name)
+    layer = ds.GetLayerByName(layer_name)
 
-    gdaltest.hana_layer.SetAttributeFilter("PRFEDEA = '%s'" % 7777)
-    feat_read = gdaltest.hana_layer.GetNextFeature()
+    feat = ogr.Feature(feature_def=layer.GetLayerDefn())
+    feat.SetField('PRFEDEA', '7777')
+    feat.SetField('EAS_ID', 2000)
+    feat.SetFID(-1)
+    layer.CreateFeature(feat)
 
-    assert feat_read.GetGeometryRef() is None, \
-        'NULL geometry is expected'
-
-    gdaltest.hana_layer.SetAttributeFilter(None)
+    layer.SetAttributeFilter("PRFEDEA = '7777'")
+    feat = layer.GetNextFeature()
+    assert feat.GetGeometryRef() is None, 'NULL geometry is expected'
 
 
 ###############################################################################
@@ -494,54 +356,55 @@ def test_ogr_hana_17():
 #
 # No geometry in this test.
 
-def test_ogr_hana_18():
-    if gdaltest.hana_ds is None:
-        pytest.skip()
-
-    dst_feat = ogr.Feature(feature_def=gdaltest.hana_layer.GetLayerDefn())
+def test_ogr_hana_17():
+    layer_name = get_test_name()
+    ds = open_datasource(1)
+    create_tpoly_table(ds, layer_name)
+    layer = ds.GetLayerByName(layer_name)
+    dst_feat = ogr.Feature(feature_def=layer.GetLayerDefn())
 
     dst_feat.SetField('PRFEDEA', 'CrazyKey')
     dst_feat.SetField('SHORTNAME', 'Crazy"\'Long')
-    gdaltest.hana_layer.CreateFeature(dst_feat)
-    dst_feat.Destroy()
+    layer.CreateFeature(dst_feat)
 
-    gdaltest.hana_layer.SetAttributeFilter("PRFEDEA = 'CrazyKey'")
-    feat_read = gdaltest.hana_layer.GetNextFeature()
+    layer.SetAttributeFilter("PRFEDEA = 'CrazyKey'")
+    feat_read = layer.GetNextFeature()
 
     assert feat_read is not None, 'creating crazy feature failed!'
 
     assert feat_read.GetField('shortname') == 'Crazy"\'L', \
-        ('Vvalue not properly escaped or truncated:' +
-         feat_read.GetField('shortname'))
-
-    feat_read.Destroy()
+        ('Value not properly escaped or truncated:' + feat_read.GetField('shortname'))
 
 
 ###############################################################################
 # Verify inplace update of a feature with SetFeature()
 
-def test_ogr_hana_19():
-    if gdaltest.hana_ds is None:
-        pytest.skip()
+def test_ogr_hana_18():
+    layer_name = get_test_name()
+    ds = open_datasource(1)
+    create_tpoly_table(ds, layer_name)
+    layer = ds.GetLayerByName(layer_name)
 
-    gdaltest.hana_layer.SetAttributeFilter("PRFEDEA = 'CrazyKey'")
-    feat = gdaltest.hana_layer.GetNextFeature()
-    gdaltest.hana_layer.SetAttributeFilter(None)
+    feat_new = ogr.Feature(feature_def=layer.GetLayerDefn())
+    feat_new.SetField('PRFEDEA', '9999')
+    layer.CreateFeature(feat_new)
+    feat_new.Destroy()
+
+    layer.SetAttributeFilter("PRFEDEA = '9999'")
+    feat = layer.GetNextFeature()
+    layer.SetAttributeFilter(None)
 
     feat.SetField('SHORTNAME', 'Reset')
-
-    point = ogr.Geometry(ogr.wkbPoint)
+    point = ogr.Geometry(ogr.wkbPoint25D)
     point.SetPoint(0, 5, 6, 7)
     feat.SetGeometryDirectly(point)
 
-    if gdaltest.hana_layer.SetFeature(feat) != 0:
-        feat.Destroy()
-        pytest.fail('SetFeature() method failed.')
+    assert layer.SetFeature(feat) == 0, 'SetFeature() method failed.'
 
     fid = feat.GetFID()
     feat.Destroy()
 
-    feat = gdaltest.hana_layer.GetFeature(fid)
+    feat = layer.GetFeature(fid)
     assert feat is not None, ('GetFeature(%d) failed.' % fid)
 
     shortname = feat.GetField('SHORTNAME')
@@ -553,70 +416,57 @@ def test_ogr_hana_19():
         pytest.fail('Geometry update failed')
 
     feat.SetGeometryDirectly(None)
-
-    if gdaltest.hana_layer.SetFeature(feat) != 0:
-        feat.Destroy()
-        pytest.fail('SetFeature() method failed.')
-
-    feat.Destroy()
-
-    feat = gdaltest.hana_layer.GetFeature(fid)
-    assert feat.GetGeometryRef() is None, \
-        'Geometry update failed. null geometry expected'
+    assert layer.SetFeature(feat) == 0, 'SetFeature() method failed.'
+    feat = layer.GetFeature(fid)
+    assert feat.GetGeometryRef() is None, 'Geometry update failed. null geometry expected'
 
     feat.SetFieldNull('SHORTNAME')
-    gdaltest.hana_layer.SetFeature(feat)
-    feat = gdaltest.hana_layer.GetFeature(fid)
+    layer.SetFeature(feat)
+    feat = layer.GetFeature(fid)
     assert feat.IsFieldNull('SHORTNAME'), 'SHORTNAME update failed. null value expected'
 
     # Test updating non-existing feature
     feat.SetFID(-10)
-    if gdaltest.hana_layer.SetFeature(feat) != ogr.OGRERR_NON_EXISTING_FEATURE:
-        feat.Destroy()
-        pytest.fail('Expected failure of SetFeature().')
-
-    feat.Destroy()
+    assert layer.SetFeature(feat) == ogr.OGRERR_NON_EXISTING_FEATURE, \
+        'Expected failure of SetFeature().'
 
 
 ###############################################################################
 # Verify that DeleteFeature() works properly
 
-def test_ogr_hana_20():
-    if gdaltest.hana_ds is None:
-        pytest.skip()
-
-    gdaltest.hana_layer.SetAttributeFilter("PRFEDEA = 'CrazyKey'")
-    feat = gdaltest.hana_layer.GetNextFeature()
-    gdaltest.hana_layer.SetAttributeFilter(None)
+def test_ogr_hana_19():
+    layer_name = get_test_name()
+    ds = open_datasource(1)
+    create_tpoly_table(ds, layer_name)
+    layer = ds.GetLayerByName(layer_name)
+    layer.SetAttributeFilter("PRFEDEA = '35043411'")
+    feat = layer.GetNextFeature()
+    layer.SetAttributeFilter(None)
 
     fid = feat.GetFID()
-    feat.Destroy()
+    assert layer.DeleteFeature(fid) == 0, 'DeleteFeature() method failed.'
 
-    assert gdaltest.hana_layer.DeleteFeature(fid) == 0, 'DeleteFeature() method failed.'
+    layer.SetAttributeFilter("PRFEDEA = '35043411'")
+    feat = layer.GetNextFeature()
+    layer.SetAttributeFilter(None)
 
-    gdaltest.hana_layer.SetAttributeFilter("PRFEDEA = 'CrazyKey'")
-    feat = gdaltest.hana_layer.GetNextFeature()
-    gdaltest.hana_layer.SetAttributeFilter(None)
-
-    if feat is not None:
-        feat.Destroy()
-        pytest.fail('DeleteFeature() seems to have had no effect.')
+    assert feat is None, 'DeleteFeature() seems to have had no effect.'
 
     # Test deleting non-existing feature
-    assert gdaltest.hana_layer.DeleteFeature(-10) == ogr.OGRERR_NON_EXISTING_FEATURE, \
+    assert layer.DeleteFeature(-10) == ogr.OGRERR_NON_EXISTING_FEATURE, \
         'Expected failure of DeleteFeature().'
 
 
 ###############################################################################
 # Test default values
 
-def test_ogr_hana_21():
-    if gdaltest.hana_ds is None:
-        pytest.skip()
+def test_ogr_hana_20():
+    ds = open_datasource(1)
 
+    layer_name = get_test_name()
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
-    layer = gdaltest.hana_ds.CreateLayer('ogr_hana_21', srs, options=[])
+    layer = ds.CreateLayer(layer_name, srs, options=[])
 
     field_values = [999, 1, 6823, 623445, 78912394123, 12.253, 534.23749234, 7234.89732, "'2018/04/25'", "'21:15:47'",
                     "'2018/04/25 21:15:47.987'", "'hello'", None, '74657374737472696e67', None, [], [], [], [],
@@ -711,14 +561,13 @@ def test_ogr_hana_21():
     new_feat.SetFieldNull('FIELD_STRING_NULL')
     new_feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt(field_values[19]))
     assert layer.CreateFeature(new_feat) == ogr.OGRERR_NONE
-    new_feat.Destroy()
 
     layer.ResetReading()
 
     layer_defn = layer.GetLayerDefn()
 
-    ds = open_datasource()
-    layer_new = ds.GetLayerByName('OGR_HANA_21')
+    ds = open_datasource(0)
+    layer_new = ds.GetLayerByName(layer_name)
     layer_defn_new = layer_new.GetLayerDefn()
     feat = layer_new.GetNextFeature()
 
@@ -736,24 +585,18 @@ def test_ogr_hana_21():
             pytest.fail('Values in field %s do not match (actual: %s, expected: %s)' %
                         (field_name, actual, expected_value))
 
-    feat.Destroy()
-    ds = None
-
 
 ###############################################################################
 # Test creating a field with the fid name
 
-def test_ogr_hana_22():
-    if gdaltest.hana_ds is None:
-        pytest.skip()
+def test_ogr_hana_21():
+    ds = open_datasource(1)
+    layer = ds.CreateLayer(get_test_name(), geom_type=ogr.wkbNone, options=['FID=fid', 'LAUNDER=NO'])
 
-    layer = gdaltest.hana_ds.CreateLayer('OGR_HANA_22', geom_type=ogr.wkbNone, options=['FID=fid', 'LAUNDER=NO'])
-
-    gdal.PushErrorHandler()
-    assert layer.CreateField(ogr.FieldDefn('str', ogr.OFTString)) == 0
-    assert layer.CreateField(ogr.FieldDefn('fid', ogr.OFTString)) != 0
-    assert layer.CreateField(ogr.FieldDefn('fid', ogr.OFTInteger)) != 0
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        assert layer.CreateField(ogr.FieldDefn('str', ogr.OFTString)) == 0
+        assert layer.CreateField(ogr.FieldDefn('fid', ogr.OFTString)) != 0
+        assert layer.CreateField(ogr.FieldDefn('fid', ogr.OFTInteger)) != 0
 
     layer.ResetReading()
 
@@ -761,36 +604,33 @@ def test_ogr_hana_22():
 ###############################################################################
 # Test very large query
 
-def test_ogr_hana_23():
-    if gdaltest.hana_ds is None:
-        pytest.skip()
+def test_ogr_hana_22():
+    ds = open_datasource()
 
     query = 'eas_id = 169'
-    for id in range(1000):
-        query = query + (' or eas_id = %d' % (id + 1000))
+    for eid in range(1000):
+        query = query + (' or eas_id = %d' % (eid + 1000))
 
-    gdaltest.hana_layer.SetAttributeFilter(query)
-    tr = ogrtest.check_features_against_list(gdaltest.hana_layer, 'eas_id', [169])
-    gdaltest.hana_layer.SetAttributeFilter(None)
-
-    assert tr
+    layer = ds.GetLayerByName('TPOLY')
+    layer.SetAttributeFilter(query)
+    assert ogrtest.check_features_against_list(layer, 'eas_id', [169])
 
 
 ###############################################################################
 # Test COLUMN_TYPES layer creation option
 
-def test_ogr_hana_24():
-    if gdaltest.hana_ds is None:
-        pytest.skip()
+def test_ogr_hana_23():
+    ds = open_datasource(1)
 
-    layer = gdaltest.hana_ds.CreateLayer('OGR_HANA_24',
-                                         options=['COLUMN_TYPES=SINT=SMALLINT,DEC1=DECIMAL(10,5),DEC2=DECIMAL(20,0)'])
+    layer_name = get_test_name()
+    layer = ds.CreateLayer(layer_name,
+                           options=['COLUMN_TYPES=SINT=SMALLINT,DEC1=DECIMAL(10,5),DEC2=DECIMAL(20,0)'])
     layer.CreateField(ogr.FieldDefn('SINT', ogr.OFTString))
     layer.CreateField(ogr.FieldDefn('DEC1', ogr.OFTString))
     layer.CreateField(ogr.FieldDefn('DEC2', ogr.OFTString))
 
     ds = open_datasource()
-    layer = ds.GetLayerByName('OGR_HANA_24')
+    layer = ds.GetLayerByName(layer_name)
     layer_defn = layer.GetLayerDefn()
     field_SINT = layer_defn.GetFieldDefn(layer_defn.GetFieldIndex('SINT'))
     field_DEC1 = layer_defn.GetFieldDefn(layer_defn.GetFieldIndex('DEC1'))
@@ -808,16 +648,9 @@ def test_ogr_hana_24():
 ###############################################################################
 # Run test_ogrsf
 
-def test_ogr_hana_25():
-    if gdaltest.hana_ds is None:
-        pytest.skip()
-
-    import test_cli_utilities
-    if test_cli_utilities.get_test_ogrsf_path() is None:
-        pytest.skip()
-
-    conn_str = gdaltest.hana_connection_string + ';SCHEMA=' + gdaltest.hana_schema_name
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' "' + 'HANA:' + conn_str + '" TPOLY')
+def test_ogr_hana_24(ogrsf_path):
+    conn_str = get_connection_str() + ';SCHEMA=' + gdaltest.hana_schema_name
+    ret = gdaltest.runexternal(ogrsf_path + ' "' + 'HANA:' + conn_str + '" TPOLY')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
@@ -825,16 +658,9 @@ def test_ogr_hana_25():
 ###############################################################################
 # Run test_ogrsf with -sql
 
-def test_ogr_hana_26():
-    if gdaltest.hana_ds is None:
-        pytest.skip()
-
-    import test_cli_utilities
-    if test_cli_utilities.get_test_ogrsf_path() is None:
-        pytest.skip()
-
-    conn_str = gdaltest.hana_connection_string + ';SCHEMA=' + gdaltest.hana_schema_name
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' "' + 'HANA:' + conn_str +
+def test_ogr_hana_25(ogrsf_path):
+    conn_str = get_connection_str() + ';SCHEMA=' + gdaltest.hana_schema_name
+    ret = gdaltest.runexternal(ogrsf_path + ' "' + 'HANA:' + conn_str +
                                '" -sql "SELECT * FROM TPOLY"')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
@@ -843,54 +669,108 @@ def test_ogr_hana_26():
 ###############################################################################
 # Test retrieving an error from ExecuteSQL()
 
-def test_ogr_hana_27():
-    if gdaltest.hana_ds is None:
-        pytest.skip()
-
+def test_ogr_hana_26():
+    ds = open_datasource()
     gdal.ErrorReset()
     with gdaltest.error_handler():
-        layer = gdaltest.hana_ds.ExecuteSQL('SELECT FROM')
+        layer = ds.ExecuteSQL('SELECT FROM')
     assert gdal.GetLastErrorMsg() != ''
     assert layer is None
 
 
 ###############################################################################
-# Cleanup
+#  Create a table from data/poly.shp
 
-def test_ogr_hana_cleanup():
-    if gdaltest.hana_ds is None:
-        pytest.skip()
+def create_tpoly_table(ds, layer_name='TPOLY'):
+    with gdaltest.error_handler():
+        ds.ExecuteSQL('DELLAYER:%s' % layer_name)
 
-    # Cleanup created tables
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    shp_ds = ogr.Open('data/poly.shp')
+    shp_layer = shp_ds.GetLayer(0)
 
-    gdaltest.hana_ds.ExecuteSQL('DELLAYER:tpoly')
-    gdaltest.hana_ds.ExecuteSQL('DELLAYER:ogr_hana_21')
-    gdaltest.hana_ds.ExecuteSQL('DELLAYER:ogr_hana_22')
-    gdaltest.hana_ds.ExecuteSQL('DELLAYER:ogr_hana_24')
+    ######################################################
+    # Create Layer
+    layer = ds.CreateLayer(layer_name, srs=shp_layer.GetSpatialRef())
 
-    gdal.PopErrorHandler()
+    ######################################################
+    # Check layer name
 
-    gdaltest.hana_ds.Destroy()
-    gdaltest.hana_ds = None
+    assert layer.GetName() == layer_name, \
+        pytest.fail('GetName() returned %s instead of %s' % (layer.GetName(), layer_name))
 
-    conn = create_connection(gdaltest.hana_connection_string)
-    execute_sql(conn, f'DROP SCHEMA "{gdaltest.hana_schema_name}" CASCADE')
+    ######################################################
+    # Check capabilities
 
-    gdaltest.hana_connection_string = None
-    gdaltest.hana_schema_name = None
+    for capabilities in [ogr.OLCFastFeatureCount,
+                         ogr.OLCFastSpatialFilter,
+                         ogr.OLCFastGetExtent,
+                         ogr.OLCCreateField,
+                         ogr.OLCCreateGeomField,
+                         ogr.OLCDeleteFeature,
+                         ogr.OLCAlterFieldDefn,
+                         ogr.OLCRandomWrite,
+                         ogr.OLCTransactions]:
+        assert layer.TestCapability(capabilities)
+
+    ######################################################
+    # Setup Schema
+    ogrtest.quick_create_layer_def(layer,
+                                   [('AREA', ogr.OFTReal),
+                                    ('EAS_ID', ogr.OFTInteger64),
+                                    ('PRFEDEA', ogr.OFTString),
+                                    ('SHORTNAME', ogr.OFTString, 8)])
+
+    ######################################################
+    # Check fields
+
+    feat_def = layer.GetLayerDefn()
+    assert feat_def.GetGeomFieldCount() == 1, 'geometry field not found'
+    assert feat_def.GetFieldCount() == 4, \
+        'GetFieldCount() returned %d instead of %d' % (4, feat_def.GetFieldCount())
+
+    ######################################################
+    # Copy in poly.shp
+
+    dst_feat = ogr.Feature(feature_def=layer.GetLayerDefn())
+
+    feat = shp_layer.GetNextFeature()
+    while feat is not None:
+        dst_feat.SetFrom(feat)
+        layer.CreateFeature(dst_feat)
+        feat = shp_layer.GetNextFeature()
 
 
 ###############################################################################
 # Helper methods
 
-def create_connection(conn_str):
+def get_connection_str():
+    uri = gdal.GetConfigOption('OGR_HANA_CONNECTION_STRING', None)
+    if uri is not None:
+        conn_str = uri + ';ENCRYPT=YES;SSL_VALIDATE_CERTIFICATE=false;CHAR_AS_UTF8=1'
+    else:
+        conn_str = 'HANA:autotest'
+
+    return conn_str
+
+
+def create_connection():
+    conn_str = get_connection_str()
     conn_params = dict(item.split("=") for item in conn_str.split(";"))
-    conn = dbapi.connect(address=conn_params['HOST'], port=conn_params['PORT'], user=conn_params['USER'],
-                         password=conn_params['PASSWORD'], ENCRYPT=conn_params['ENCRYPT'],
-                         sslValidateCertificate=conn_params['SSL_VALIDATE_CERTIFICATE'], CHAR_AS_UTF8=1)
+
+    with gdaltest.error_handler():
+        conn = dbapi.connect(address=conn_params['HOST'], port=conn_params['PORT'], user=conn_params['USER'],
+                             password=conn_params['PASSWORD'], ENCRYPT=conn_params['ENCRYPT'],
+                             sslValidateCertificate=conn_params['SSL_VALIDATE_CERTIFICATE'], CHAR_AS_UTF8=1)
+
+    if conn is None:
+        pytest.skip()
     conn.setautocommit(False)
     return conn
+
+
+def get_test_name():
+    name = environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    return name.replace('test_', '').upper()
 
 
 def execute_sql(conn, sql):
@@ -911,13 +791,8 @@ def execute_sql_scalar(conn, sql):
     return res
 
 
-def generate_schema_name(conn, prefix):
-    uid = execute_sql_scalar(conn, "SELECT REPLACE(CURRENT_UTCDATE, '-', '') || '_' || BINTOHEX(SYSUUID) FROM DUMMY;")
-    return '{}_{}'.format(prefix, uid)
-
-
-def open_datasource(update=1):
-    return ogr.Open('HANA:' + gdaltest.hana_connection_string + ';SCHEMA=' + gdaltest.hana_schema_name, update=update)
+def open_datasource(update=0):
+    return ogr.Open('HANA:' + get_connection_str() + ';SCHEMA=' + gdaltest.hana_schema_name, update=update)
 
 
 def check_bboxes(actual, expected, max_error=0.001):
