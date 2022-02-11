@@ -579,7 +579,7 @@ LogLuvEncode32(TIFF* tif, uint8_t* bp, tmsize_t cc, uint16_t s)
 	uint32_t* tp;
 	uint32_t b;
 	tmsize_t occ;
-	int rc=0, mask;
+	int rc=0;
 	tmsize_t beg;
 
         (void)s;
@@ -603,6 +603,7 @@ LogLuvEncode32(TIFF* tif, uint8_t* bp, tmsize_t cc, uint16_t s)
 	op = tif->tif_rawcp;
 	occ = tif->tif_rawdatasize - tif->tif_rawcc;
 	for (shft = 24; shft >= 0; shft -=8) {
+		const uint32_t mask = 0xffU << shft;		/* find next run */
 		for (i = 0; i < npixels; i += rc) {
 			if (occ < 4) {
 				tif->tif_rawcp = op;
@@ -612,7 +613,6 @@ LogLuvEncode32(TIFF* tif, uint8_t* bp, tmsize_t cc, uint16_t s)
 				op = tif->tif_rawcp;
 				occ = tif->tif_rawdatasize - tif->tif_rawcc;
 			}
-			mask = 0xff << shft;		/* find next run */
 			for (beg = i; beg < npixels; beg += rc) {
 				b = tp[beg] & mask;
 				rc = 1;
@@ -804,7 +804,7 @@ L16fromY(LogLuvState* sp, uint8_t* op, tmsize_t n)
 static
 #endif
 void
-XYZtoRGB24(float xyz[3], uint8_t rgb[3])
+XYZtoRGB24(float* xyz, uint8_t* rgb)
 {
 	double	r, g, b;
 					/* assume CCIR-709 primaries */
@@ -958,7 +958,7 @@ uv_decode(double *up, double *vp, int c)	/* decode (u',v') index */
 static
 #endif
 void
-LogLuv24toXYZ(uint32_t p, float XYZ[3])
+LogLuv24toXYZ(uint32_t p, float* XYZ)
 {
 	int	Ce;
 	double	L, u, v, s, x, y;
@@ -986,7 +986,7 @@ LogLuv24toXYZ(uint32_t p, float XYZ[3])
 static
 #endif
 uint32_t
-LogLuv24fromXYZ(float XYZ[3], int em)
+LogLuv24fromXYZ(float* XYZ, int em)
 {
 	int	Le, Ce;
 	double	u, v, s;
@@ -1099,7 +1099,7 @@ Luv24fromLuv48(LogLuvState* sp, uint8_t* op, tmsize_t n)
 static
 #endif
 void
-LogLuv32toXYZ(uint32_t p, float XYZ[3])
+LogLuv32toXYZ(uint32_t p, float* XYZ)
 {
 	double	L, u, v, s, x, y;
 					/* decode luminance */
@@ -1124,7 +1124,7 @@ LogLuv32toXYZ(uint32_t p, float XYZ[3])
 static
 #endif
 uint32_t
-LogLuv32fromXYZ(float XYZ[3], int em)
+LogLuv32fromXYZ(float* XYZ, int em)
 {
 	unsigned int	Le, ue, ve;
 	double	u, v, s;
