@@ -3577,7 +3577,8 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
             CPLTestBool(CPLGetConfigOption("GDAL_NETCDF_IGNORE_XY_AXIS_NAME_CHECKS", "NO")) ||
             // Dataset from https://github.com/OSGeo/gdal/issues/4075 has a res and transform attributes
             (FetchAttr(nGroupId, nVarId, "res") != nullptr &&
-             FetchAttr(nGroupId, nVarId, "transform") != nullptr);
+             FetchAttr(nGroupId, nVarId, "transform") != nullptr) ||
+            FetchAttr(nGroupId, NC_GLOBAL, "GMT_version") != nullptr;
 
         // Check that they are 1D or 2D variables
         if( nVarDimXID >= 0 )
