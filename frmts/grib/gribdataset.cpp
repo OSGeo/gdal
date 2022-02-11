@@ -981,7 +981,7 @@ CPLErr GRIBRasterBand::IReadBlock( int /* nBlockXOff */,
            (nCopyWords - nSplitAndSwapColumn) * sizeof(double));
 
     if (nSplitAndSwapColumn > 0)
-        memcpy(reinterpret_cast<void*>(reinterpret_cast<double*>(pImage) + nSplitAndSwapColumn),
+        memcpy(reinterpret_cast<void*>(reinterpret_cast<double*>(pImage) + nCopyWords - nSplitAndSwapColumn),
             m_Grib_Data + static_cast<size_t>(nGribDataXSize) * (nGribDataYSize - nBlockYOff - 1),
             nSplitAndSwapColumn * sizeof(double));
 
