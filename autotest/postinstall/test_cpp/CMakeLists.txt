@@ -11,5 +11,6 @@ target_link_libraries(test_cpp PRIVATE GDAL::GDAL)
 # This test needs `sql.h` from ODBC. ODBC will not become a general dependency of GDAL::GDAL.
 find_package(ODBC)
 if (ODBC_FOUND)
+  target_compile_definitions(test_cpp PRIVATE USE_ODBC)
   target_link_libraries(test_cpp PRIVATE ODBC::ODBC)
 endif ()
