@@ -20,7 +20,7 @@ from setuptools import find_packages
 from setuptools import Extension
 
 # If CXX is defined in the environment, it will be used to link the .so
-# but distutils will be confused if it is made of several words like 'ccache g++'
+# but setuptools will be confused if it is made of several words like 'ccache g++'
 # and it will try to use only the first word.
 # See https://lists.osgeo.org/pipermail/gdal-dev/2016-July/044686.html
 # Note: in general when doing "make", CXX will not be defined, unless it is defined as
@@ -32,13 +32,13 @@ if 'CXX' in os.environ and os.environ['CXX'].strip().find(' ') >= 0:
     if os.environ['CXX'].strip().startswith('ccache ') and os.environ['CXX'].strip()[len('ccache '):].find(' ') < 0:
         os.environ['CXX'] = os.environ['CXX'].strip()[len('ccache '):]
     else:
-        print('WARNING: "CXX=%s" was defined in the environment and contains more than one word. Unsetting it since that is incompatible of distutils' % os.environ['CXX'])
+        print('WARNING: "CXX=%s" was defined in the environment and contains more than one word. Unsetting it since that is incompatible of setuptools' % os.environ['CXX'])
         del os.environ['CXX']
 if 'CC' in os.environ and os.environ['CC'].strip().find(' ') >= 0:
     if os.environ['CC'].strip().startswith('ccache ') and os.environ['CC'].strip()[len('ccache '):].find(' ') < 0:
         os.environ['CC'] = os.environ['CC'].strip()[len('ccache '):]
     else:
-        print('WARNING: "CC=%s" was defined in the environment and contains more than one word. Unsetting it since that is incompatible of distutils' % os.environ['CC'])
+        print('WARNING: "CC=%s" was defined in the environment and contains more than one word. Unsetting it since that is incompatible of setuptools' % os.environ['CC'])
         del os.environ['CC']
 
 # ---------------------------------------------------------------------------
@@ -153,12 +153,11 @@ int main () { return 0; }""")
 ###Based on: https://stackoverflow.com/questions/28641408/how-to-tell-which-compiler-will-be-invoked-for-a-python-c-extension-in-setuptool
 def has_flag(compiler, flagname):
     import tempfile
-    from distutils.errors import CompileError
     with tempfile.NamedTemporaryFile('w', suffix='.cpp') as f:
         f.write('int main (int argc, char **argv) { return 0; }')
         try:
             compiler.compile([f.name], extra_postargs=[flagname])
-        except CompileError:
+        except Exception:
             return False
     return True
 
