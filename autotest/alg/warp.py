@@ -1772,3 +1772,25 @@ def test_warp_rms_2():
     ds = gdal.Open('data/utmsmall_rms.vrt')
     # 29818 on non-Intel archs
     assert ds.GetRasterBand(1).Checksum() in (29818, 29819)
+
+
+def test_warp_mode_ties():
+    # when performing mode resampling the result in case of a tie will be
+    # the first value identified as the mode in scanline processing
+    numpy = pytest.importorskip('numpy')
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 3, 3, 1, gdal.GDT_Int16)
+    src_ds.SetGeoTransform([1, 1, 0,
+                            1, 0, 1])
+    src_ds.GetRasterBand(1).WriteArray(numpy.array([[1, 1, 1],
+                                                    [2, 3, 4],
+                                                    [5, 5, 5]]))
+    out_ds = gdal.Warp('', src_ds, format='MEM', resampleAlg='mode', xRes=3, yRes=3)
+
+    assert out_ds.GetRasterBand(1).ReadAsArray()[0, 0] == 1
+
+    src_ds.GetRasterBand(1).WriteArray(numpy.array([[1, 5, 1],
+                                                    [2, 5, 4],
+                                                    [5, 1, 0]]))
+    out_ds = gdal.Warp('', src_ds, format='MEM', resampleAlg='mode', xRes=3, yRes=3)
+    assert out_ds.GetRasterBand(1).ReadAsArray()[0, 0] == 5

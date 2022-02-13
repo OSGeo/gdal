@@ -223,7 +223,7 @@ with control information.
 
     ``rms`` root mean square / quadratic mean of all non-NODATA contributing pixels (GDAL >= 3.3)
 
-    ``mode``: mode resampling, selects the value which appears most often of all the sampled points.
+    ``mode``: mode resampling, selects the value which appears most often of all the sampled points. In the case of ties, the first value identified as the mode will be selected.
 
     ``max``: maximum resampling, selects the maximum value from all non-NODATA contributing pixels.
 
