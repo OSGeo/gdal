@@ -844,6 +844,11 @@ static CPLErr Log10PixelFuncHelper( void **papoSources, int nSources,
         const void * const pImag =
             static_cast<GByte *>(papoSources[0]) + nOffset;
 
+        /* We should compute fact * log10( sqrt( dfReal * dfReal + dfImag * dfImag ) ) */
+        /* Given that log10(sqrt(x)) = 0.5 * log10(x) */
+        /* we can remove the sqrt() by multiplying fact by 0.5 */
+        fact *= 0.5;
+
         /* ---- Set pixels ---- */
         size_t ii = 0;
         for( int iLine = 0; iLine < nYSize; ++iLine ) {
@@ -853,7 +858,7 @@ static CPLErr Log10PixelFuncHelper( void **papoSources, int nSources,
                 const double dfImag = GetSrcVal(pImag, eSrcType, ii);
 
                 const double dfPixVal =
-                    fact * log10( sqrt( dfReal * dfReal + dfImag * dfImag ) );
+                    fact * log10( dfReal * dfReal + dfImag * dfImag );
 
                 GDALCopyWords(
                     &dfPixVal, GDT_Float64, 0,
