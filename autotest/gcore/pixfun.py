@@ -390,6 +390,52 @@ def test_pixfun_mul_c():
 
 
 ###############################################################################
+# Verify the division of 2 (real) datasets.
+
+def test_pixfun_div_r():
+
+    filename = 'data/vrt/pixfun_div_r.vrt'
+    ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
+    assert ds is not None, ('Unable to open "%s" dataset.' % filename)
+    data = ds.GetRasterBand(1).ReadAsArray()
+
+    reffilename = 'data/int32.tif'
+    refds = gdal.Open(reffilename)
+    assert refds is not None, ('Unable to open "%s" dataset.' % reffilename)
+    refdata1 = refds.GetRasterBand(1).ReadAsArray(0, 0, 5, 6)
+
+    reffilename = 'data/float32.tif'
+    refds = gdal.Open(reffilename)
+    assert refds is not None, ('Unable to open "%s" dataset.' % reffilename)
+    refdata2 = refds.GetRasterBand(1).ReadAsArray(10, 10, 5, 6)
+
+    assert numpy.alltrue(data == (refdata1.astype('float32') / refdata2))
+
+
+###############################################################################
+# Verify the division of 2 (complex) datasets.
+
+def test_pixfun_div_c():
+
+    filename = 'data/vrt/pixfun_div_c.vrt'
+    ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
+    assert ds is not None, ('Unable to open "%s" dataset.' % filename)
+    data = ds.GetRasterBand(1).ReadAsArray()
+
+    reffilename = 'data/cfloat64.tif'
+    refds = gdal.Open(reffilename)
+    assert refds is not None, ('Unable to open "%s" dataset.' % reffilename)
+    refdata1 = refds.GetRasterBand(1).ReadAsArray(0, 0, 5, 6)
+
+    reffilename = 'data/cint_sar.tif'
+    refds = gdal.Open(reffilename)
+    assert refds is not None, ('Unable to open "%s" dataset.' % reffilename)
+    refdata2 = refds.GetRasterBand(1).ReadAsArray()
+
+    assert numpy.alltrue(data == (refdata1 / refdata2).astype('complex64'))
+
+
+###############################################################################
 # Verify the product with complex conjugate of a complex datasets.
 
 def test_pixfun_cmul_c():

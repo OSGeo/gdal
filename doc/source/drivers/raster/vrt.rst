@@ -838,6 +838,10 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - 2
      - -
      - computes the difference between 2 raster bands (``b1 - b2``)
+   * - **div**
+     - 2
+     - -
+     - divide one rasted band by another (``b1 / b2``). Note: no check is performed on zero division
    * - **imag**
      - 1
      - -

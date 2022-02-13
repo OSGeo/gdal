@@ -6,7 +6,7 @@
  * Author:   Antonio Valentino <antonio.valentino@tiscali.it>
  *
  ******************************************************************************
- * Copyright (c) 2008-2014 Antonio Valentino <antonio.valentino@tiscali.it>
+ * Copyright (c) 2008-2014,2022 Antonio Valentino <antonio.valentino@tiscali.it>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -76,6 +76,11 @@ static CPLErr DiffPixelFunc( void **papoSources, int nSources, void *pData,
                              int nPixelSpace, int nLineSpace );
 
 static CPLErr MulPixelFunc( void **papoSources, int nSources, void *pData,
+                            int nXSize, int nYSize,
+                            GDALDataType eSrcType, GDALDataType eBufType,
+                            int nPixelSpace, int nLineSpace );
+
+static CPLErr DivPixelFunc( void **papoSources, int nSources, void *pData,
                             int nXSize, int nYSize,
                             GDALDataType eSrcType, GDALDataType eBufType,
                             int nPixelSpace, int nLineSpace );
@@ -620,6 +625,73 @@ static CPLErr MulPixelFunc( void **papoSources, int nSources, void *pData,
     return CE_None;
 }  // MulPixelFunc
 
+static CPLErr DivPixelFunc( void **papoSources, int nSources, void *pData,
+                            int nXSize, int nYSize,
+                            GDALDataType eSrcType, GDALDataType eBufType,
+                            int nPixelSpace, int nLineSpace )
+{
+    /* ---- Init ---- */
+    if( nSources != 2 ) return CE_Failure;
+
+    /* ---- Set pixels ---- */
+    if( GDALDataTypeIsComplex( eSrcType ) )
+    {
+        const int nOffset = GDALGetDataTypeSizeBytes( eSrcType ) / 2;
+        const void * const pReal0 = papoSources[0];
+        const void * const pImag0 =
+            static_cast<GByte *>(papoSources[0]) + nOffset;
+        const void * const pReal1 = papoSources[1];
+        const void * const pImag1 =
+            static_cast<GByte *>(papoSources[1]) + nOffset;
+
+        /* ---- Set pixels ---- */
+        size_t ii = 0;
+        for( int iLine = 0; iLine < nYSize; ++iLine ) {
+            for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
+                // Source raster pixels may be obtained with GetSrcVal macro.
+                const double dfReal0 = GetSrcVal(pReal0, eSrcType, ii);
+                const double dfReal1 = GetSrcVal(pReal1, eSrcType, ii);
+                const double dfImag0 = GetSrcVal(pImag0, eSrcType, ii);
+                const double dfImag1 = GetSrcVal(pImag1, eSrcType, ii);
+                const double dfAux = dfReal1 * dfReal1 + dfImag1 * dfImag1;
+
+                const double adfPixVal[2] = {
+                    dfAux == 0 ? std::numeric_limits<double>::infinity() :
+                        dfReal0 * dfReal1 / dfAux + dfImag0 * dfImag1 / dfAux,
+                    dfAux == 0 ? std::numeric_limits<double>::infinity() :
+                        dfReal1 / dfAux * dfImag0 - dfReal0 * dfImag1 / dfAux
+                };
+
+                GDALCopyWords(
+                    adfPixVal, GDT_CFloat64, 0,
+                    static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
+                    iCol * nPixelSpace, eBufType, nPixelSpace, 1);
+            }
+        }
+    }
+    else
+    {
+        /* ---- Set pixels ---- */
+        size_t ii = 0;
+        for( int iLine = 0; iLine < nYSize; ++iLine ) {
+            for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
+                const double dfVal = GetSrcVal(papoSources[1], eSrcType, ii);
+                double dfPixVal =
+                        dfVal == 0 ? std::numeric_limits<double>::infinity() :
+                        GetSrcVal(papoSources[0], eSrcType, ii) /  dfVal;
+
+                GDALCopyWords(
+                    &dfPixVal, GDT_Float64, 0,
+                    static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
+                    iCol * nPixelSpace, eBufType, nPixelSpace, 1);
+            }
+        }
+    }
+
+    /* ---- Return success ---- */
+    return CE_None;
+}  // DivPixelFunc
+
 static CPLErr CMulPixelFunc( void **papoSources, int nSources, void *pData,
                              int nXSize, int nYSize,
                              GDALDataType eSrcType, GDALDataType eBufType,
@@ -1091,6 +1163,8 @@ CPLErr InterpolatePixelFunc( void **papoSources, int nSources, void *pData,
  * - "sum": sum 2 or more raster bands
  * - "diff": computes the difference between 2 raster bands (b1 - b2)
  * - "mul": multiply 2 or more raster bands
+ * - "div": divide one rasted band by another (b1 / b2).
+ *          Note: no check is performed on zero division
  * - "cmul": multiply the first band for the complex conjugate of the second
  * - "inv": inverse (1./x). Note: no check is performed on zero division
  * - "intensity": computes the intensity Re(x*conj(x)) of a single raster band
@@ -1127,6 +1201,7 @@ CPLErr GDALRegisterDefaultPixelFunc()
     GDALAddDerivedBandPixelFunc("sum", SumPixelFunc);
     GDALAddDerivedBandPixelFunc("diff", DiffPixelFunc);
     GDALAddDerivedBandPixelFunc("mul", MulPixelFunc);
+    GDALAddDerivedBandPixelFunc("div", DivPixelFunc);
     GDALAddDerivedBandPixelFunc("cmul", CMulPixelFunc);
     GDALAddDerivedBandPixelFunc("inv", InvPixelFunc);
     GDALAddDerivedBandPixelFunc("intensity", IntensityPixelFunc);
