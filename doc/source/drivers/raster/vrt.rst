@@ -882,6 +882,10 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - 1
      - -
      - extract phase from a single raster band [-PI,PI] (0 or PI for non-complex)
+   * - **polar**
+     - 2
+     - -
+     - make a complex band using input bands for amplitude and phase values ``b1 * exp( j * b2 )``
    * - **pow**
      - 1
      - ``power``

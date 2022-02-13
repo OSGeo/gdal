@@ -114,7 +114,7 @@ def test_pixfun_imag_r():
 
 
 ###############################################################################
-# Verify imaginary part extraction from a real dataset.
+# Verify complex dataset generation form real and imaginary parts.
 
 def test_pixfun_complex():
 
@@ -129,6 +129,24 @@ def test_pixfun_complex():
     refdata = refds.GetRasterBand(1).ReadAsArray()
 
     assert numpy.allclose(data, refdata + 1j * refdata)
+
+
+###############################################################################
+# Verify complex dataset generation form amplitude and phase parts.
+
+def test_pixfun_polar():
+
+    filename = 'data/vrt/pixfun_polar.vrt'
+    ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
+    assert ds is not None, ('Unable to open "%s" dataset.' % filename)
+    data = ds.GetRasterBand(1).ReadAsArray()
+
+    reffilename = 'data/int32.tif'
+    refds = gdal.Open(reffilename)
+    assert refds is not None, ('Unable to open "%s" dataset.' % reffilename)
+    refdata = refds.GetRasterBand(1).ReadAsArray()
+
+    assert numpy.allclose(data, refdata * numpy.exp(1j * refdata))
 
 
 ###############################################################################

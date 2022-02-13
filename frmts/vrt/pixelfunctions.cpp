@@ -50,6 +50,11 @@ static CPLErr ComplexPixelFunc( void **papoSources, int nSources, void *pData,
                                 GDALDataType eSrcType, GDALDataType eBufType,
                                 int nPixelSpace, int nLineSpace );
 
+static CPLErr PolarPixelFunc( void **papoSources, int nSources, void *pData,
+                              int nXSize, int nYSize,
+                              GDALDataType eSrcType, GDALDataType eBufType,
+                              int nPixelSpace, int nLineSpace );
+
 static CPLErr ModulePixelFunc( void **papoSources, int nSources, void *pData,
                                int nXSize, int nYSize,
                                GDALDataType eSrcType, GDALDataType eBufType,
@@ -267,7 +272,40 @@ static CPLErr ComplexPixelFunc( void **papoSources, int nSources, void *pData,
 
     /* ---- Return success ---- */
     return CE_None;
-}  // MakeComplexPixelFunc
+}  // ComplexPixelFunc
+
+static CPLErr PolarPixelFunc( void **papoSources, int nSources, void *pData,
+                              int nXSize, int nYSize,
+                              GDALDataType eSrcType, GDALDataType eBufType,
+                              int nPixelSpace, int nLineSpace )
+{
+    /* ---- Init ---- */
+    if( nSources != 2 ) return CE_Failure;
+
+    const void * const pAmp = papoSources[0];
+    const void * const pPhase = papoSources[1];
+
+    /* ---- Set pixels ---- */
+    size_t ii = 0;
+    for( int iLine = 0; iLine < nYSize; ++iLine ) {
+        for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
+            // Source raster pixels may be obtained with GetSrcVal macro.
+            const double dfAmp = GetSrcVal(pAmp, eSrcType, ii);
+            const double dfPhase = GetSrcVal(pPhase, eSrcType, ii);
+            const double adfPixVal[2] = {
+                dfAmp * std::cos(dfPhase),  // re
+                dfAmp * std::sin(dfPhase)   // im
+            };
+
+            GDALCopyWords(adfPixVal, GDT_CFloat64, 0,
+                          static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
+                          iCol * nPixelSpace, eBufType, nPixelSpace, 1);
+        }
+    }
+
+    /* ---- Return success ---- */
+    return CE_None;
+}  // PolarPixelFunc
 
 static CPLErr ModulePixelFunc( void **papoSources, int nSources, void *pData,
                                int nXSize, int nYSize,
@@ -1160,6 +1198,8 @@ CPLErr InterpolatePixelFunc( void **papoSources, int nSources, void *pData,
  *           non-complex)
  * - "complex": make a complex band merging two bands used as real and
  *              imag values
+ * - "polar": make a complex band using input bands for amplitude and
+ *            phase values (b1 * exp( j * b2 ))
  * - "mod": extract module from a single raster band (real or complex)
  * - "phase": extract phase from a single raster band [-PI,PI] (0 or PI for
               non-complex)
@@ -1205,6 +1245,7 @@ CPLErr GDALRegisterDefaultPixelFunc()
     GDALAddDerivedBandPixelFunc("real", RealPixelFunc);
     GDALAddDerivedBandPixelFunc("imag", ImagPixelFunc);
     GDALAddDerivedBandPixelFunc("complex", ComplexPixelFunc);
+    GDALAddDerivedBandPixelFunc("polar", PolarPixelFunc);
     GDALAddDerivedBandPixelFunc("mod", ModulePixelFunc);
     GDALAddDerivedBandPixelFunc("phase", PhasePixelFunc);
     GDALAddDerivedBandPixelFunc("conj", ConjPixelFunc);
