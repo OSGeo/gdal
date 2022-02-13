@@ -150,6 +150,60 @@ def test_pixfun_polar():
 
 
 ###############################################################################
+# Verify complex dataset generation form amplitude and phase parts.
+
+def test_pixfun_polar_amplitude():
+
+    filename = 'data/vrt/pixfun_polar_amplitude.vrt'
+    ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
+    assert ds is not None, ('Unable to open "%s" dataset.' % filename)
+    data = ds.GetRasterBand(1).ReadAsArray()
+
+    reffilename = 'data/int32.tif'
+    refds = gdal.Open(reffilename)
+    assert refds is not None, ('Unable to open "%s" dataset.' % reffilename)
+    refdata = refds.GetRasterBand(1).ReadAsArray()
+
+    assert numpy.allclose(data, refdata * numpy.exp(1j * refdata))
+
+
+###############################################################################
+# Verify complex dataset generation form intensity and phase parts.
+
+def test_pixfun_polar_intensity():
+
+    filename = 'data/vrt/pixfun_polar_intensity.vrt'
+    ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
+    assert ds is not None, ('Unable to open "%s" dataset.' % filename)
+    data = ds.GetRasterBand(1).ReadAsArray()
+
+    reffilename = 'data/int32.tif'
+    refds = gdal.Open(reffilename)
+    assert refds is not None, ('Unable to open "%s" dataset.' % reffilename)
+    refdata = refds.GetRasterBand(1).ReadAsArray()
+
+    assert numpy.allclose(data, numpy.sqrt(refdata) * numpy.exp(1j * refdata))
+
+
+###############################################################################
+# Verify complex dataset generation form amplitude (dB) and phase parts.
+
+def test_pixfun_polar_dB():
+
+    filename = 'data/vrt/pixfun_polar_dB.vrt'
+    ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
+    assert ds is not None, ('Unable to open "%s" dataset.' % filename)
+    data = ds.GetRasterBand(1).ReadAsArray()
+
+    reffilename = 'data/int32.tif'
+    refds = gdal.Open(reffilename)
+    assert refds is not None, ('Unable to open "%s" dataset.' % reffilename)
+    refdata = refds.GetRasterBand(1).ReadAsArray()
+
+    assert numpy.allclose(data, 10**(refdata/20) * numpy.exp(1j * refdata))
+
+
+###############################################################################
 # Verify modulus extraction from a complex (float) dataset.
 
 def test_pixfun_mod_c():

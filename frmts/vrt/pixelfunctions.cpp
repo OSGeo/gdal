@@ -53,7 +53,8 @@ static CPLErr ComplexPixelFunc( void **papoSources, int nSources, void *pData,
 static CPLErr PolarPixelFunc( void **papoSources, int nSources, void *pData,
                               int nXSize, int nYSize,
                               GDALDataType eSrcType, GDALDataType eBufType,
-                              int nPixelSpace, int nLineSpace );
+                              int nPixelSpace, int nLineSpace,
+                              CSLConstList papszArgs );
 
 static CPLErr ModulePixelFunc( void **papoSources, int nSources, void *pData,
                                int nXSize, int nYSize,
@@ -274,13 +275,38 @@ static CPLErr ComplexPixelFunc( void **papoSources, int nSources, void *pData,
     return CE_None;
 }  // ComplexPixelFunc
 
+typedef enum {
+    GAT_amplitude,
+    GAT_intensity,
+    GAT_dB
+} PolarAmplitudeType;
+
 static CPLErr PolarPixelFunc( void **papoSources, int nSources, void *pData,
                               int nXSize, int nYSize,
                               GDALDataType eSrcType, GDALDataType eBufType,
-                              int nPixelSpace, int nLineSpace )
+                              int nPixelSpace, int nLineSpace,
+                              CSLConstList papszArgs )
 {
     /* ---- Init ---- */
     if( nSources != 2 ) return CE_Failure;
+
+    const char pszName[] = "amplitude_type";
+    const char* pszVal = CSLFetchNameValue(papszArgs, pszName);
+    PolarAmplitudeType amplitudeType = GAT_amplitude;
+    if ( pszVal != nullptr )
+    {
+        if ( strcmp( pszVal, "INTENSITY" ) == 0 )
+            amplitudeType = GAT_intensity;
+        else if ( strcmp( pszVal, "dB" ) == 0 )
+            amplitudeType = GAT_dB;
+        else if ( strcmp( pszVal, "AMPLITUDE" ) != 0 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid value for pixel function argument '%s': %s",
+                     pszName, pszVal);
+            return CE_Failure;
+        }
+    }
 
     const void * const pAmp = papoSources[0];
     const void * const pPhase = papoSources[1];
@@ -290,7 +316,21 @@ static CPLErr PolarPixelFunc( void **papoSources, int nSources, void *pData,
     for( int iLine = 0; iLine < nYSize; ++iLine ) {
         for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
             // Source raster pixels may be obtained with GetSrcVal macro.
-            const double dfAmp = GetSrcVal(pAmp, eSrcType, ii);
+            double dfAmp = GetSrcVal(pAmp, eSrcType, ii);
+            switch ( amplitudeType )
+            {
+                case GAT_intensity:
+                    // clip to zero
+                    dfAmp = dfAmp <= 0 ? 0 : std::sqrt( dfAmp );
+                    break;
+                case GAT_dB:
+                    dfAmp = dfAmp <= 0 ?
+                                -std::numeric_limits<double>::infinity() :
+                                pow(10, dfAmp / 20.);
+                    break;
+                case GAT_amplitude:
+                    break;
+            }
             const double dfPhase = GetSrcVal(pPhase, eSrcType, ii);
             const double adfPixVal[2] = {
                 dfAmp * std::cos(dfPhase),  // re
@@ -1245,7 +1285,7 @@ CPLErr GDALRegisterDefaultPixelFunc()
     GDALAddDerivedBandPixelFunc("real", RealPixelFunc);
     GDALAddDerivedBandPixelFunc("imag", ImagPixelFunc);
     GDALAddDerivedBandPixelFunc("complex", ComplexPixelFunc);
-    GDALAddDerivedBandPixelFunc("polar", PolarPixelFunc);
+    GDALAddDerivedBandPixelFuncWithArgs("polar", PolarPixelFunc, nullptr);
     GDALAddDerivedBandPixelFunc("mod", ModulePixelFunc);
     GDALAddDerivedBandPixelFunc("phase", PhasePixelFunc);
     GDALAddDerivedBandPixelFunc("conj", ConjPixelFunc);
