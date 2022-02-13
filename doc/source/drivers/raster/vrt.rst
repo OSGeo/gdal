@@ -810,6 +810,10 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - Number of input sources
      - PixelFunctionArguments
      - Description
+   * - **amp2dB**
+     - 1
+     - -
+     - perform conversion to dB of the abs of a single raster band (real or complex): ``20. * log10( abs( x ) )``
    * - **cmul**
      - 2
      - -
@@ -825,7 +829,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
    * - **dB**
      - 1
      - -
-     - perform conversion to dB of the abs of a single raster band (real or complex): ``20. * log10( abs( x ) )``
+     - perform conversion to dB of the abs of a single raster band (real or complex): ``20. * log10( abs( x ) )``. Deprecated in GDAL 3.5, please use ``amp2dB`` instead.
    * - **dB2amp**
      - 1
      - -
@@ -882,6 +886,10 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - 1
      - ``power``
      - raise a single raster band to a constant power, specified with argument ``power`` (real only)
+   * - **pow2dB**
+     - 1
+     - -
+     - perform conversion to dB of the abs of a single raster band (real or complex): ``10. * log10( abs( x ) )``
    * - **real**
      - 1
      - -
