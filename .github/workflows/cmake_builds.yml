@@ -98,6 +98,9 @@ jobs:
     - name: Test post-install usage (with pkg-config)
       run: |
         ./autotest/postinstall/test_pkg-config.sh $GITHUB_WORKSPACE/install-gdal
+    - name: Test post-install usage (with gdal-config)
+      run: |
+        ./autotest/postinstall/test_gdal-config.sh $GITHUB_WORKSPACE/install-gdal
     - name: Test post-install usage (with CMake)
       run: |
         ./autotest/postinstall/test_cmake.sh $GITHUB_WORKSPACE/install-gdal
@@ -115,6 +118,9 @@ jobs:
     - name: Test post-install usage (static, with pkg-config)
       run: |
         ./autotest/postinstall/test_pkg-config.sh $GITHUB_WORKSPACE/install-gdal-static --static
+    - name: Test post-install usage (static, with gdal-config)
+      run: |
+        ./autotest/postinstall/test_gdal-config.sh $GITHUB_WORKSPACE/install-gdal-static --static
     - name: Test post-install usage (static, with CMake)
       run: |
         if ./autotest/postinstall/test_cmake.sh $GITHUB_WORKSPACE/install-gdal-static --static; then
@@ -337,6 +343,9 @@ jobs:
     - name: Test post-install usage (with pkg-config)
       run: |
         ./autotest/postinstall/test_pkg-config.sh $GITHUB_WORKSPACE/install-gdal
+    - name: Test post-install usage (with gdal-config)
+      run: |
+        ./autotest/postinstall/test_gdal-config.sh $GITHUB_WORKSPACE/install-gdal
     - name: Test post-install usage (with CMake)
       run: |
         ./autotest/postinstall/test_cmake.sh $GITHUB_WORKSPACE/install-gdal
