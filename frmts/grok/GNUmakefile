@@ -1,7 +1,7 @@
 
 include ../../GDALmake.opt
 
-OBJ	=	grokdataset.o
+OBJ	=	grokdataset.o jp2dataset.o
 
 CPPFLAGS        :=       -iquote .. $(CPPFLAGS)
 

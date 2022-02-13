@@ -57,34 +57,35 @@
 #include "vrt/vrtdataset.h"
 
 #include <algorithm>
+#include "jp2dataset.h"
 
 //#define DEBUG_IO
 
 CPL_CVSID("$Id$")
 
 /************************************************************************/
-/*                  JP2GrokDataset_ErrorCallback()                  */
+/*                  JP2Dataset_ErrorCallback()                  */
 /************************************************************************/
 
-static void JP2GrokDataset_ErrorCallback(const char *pszMsg, CPL_UNUSED void *unused)
+static void JP2Dataset_ErrorCallback(const char *pszMsg, CPL_UNUSED void *unused)
 {
     CPLError(CE_Failure, CPLE_AppDefined, "%s", pszMsg);
 }
 
 /************************************************************************/
-/*               JP2GrokDataset_WarningCallback()                   */
+/*               JP2Dataset_WarningCallback()                   */
 /************************************************************************/
 
-static void JP2GrokDataset_WarningCallback(const char *pszMsg, CPL_UNUSED void *unused)
+static void JP2Dataset_WarningCallback(const char *pszMsg, CPL_UNUSED void *unused)
 {
    CPLError(CE_Warning, CPLE_AppDefined, "%s", pszMsg);
 }
 
 /************************************************************************/
-/*                 JP2GrokDataset_InfoCallback()                    */
+/*                 JP2Dataset_InfoCallback()                    */
 /************************************************************************/
 
-static void JP2GrokDataset_InfoCallback(const char *pszMsg, CPL_UNUSED void *unused)
+static void JP2Dataset_InfoCallback(const char *pszMsg, CPL_UNUSED void *unused)
 {
     char* pszMsgTmp = VSIStrdup(pszMsg);
     if( pszMsgTmp == nullptr )
@@ -95,27 +96,22 @@ static void JP2GrokDataset_InfoCallback(const char *pszMsg, CPL_UNUSED void *unu
         pszMsgTmp[nLen-1] = '\0';
         nLen --;
     }
-    CPLDebug("GROK", "info: %s", pszMsgTmp);
+    CPLDebug("JP2Dataset", "info: %s", pszMsgTmp);
     CPLFree(pszMsgTmp);
 }
 
-typedef struct
-{
-    VSILFILE*    fp;
-    vsi_l_offset nBaseOffset;
-} JP2GrokFile;
 
 /************************************************************************/
-/*                      JP2GrokDataset_Read()                       */
+/*                      JP2Dataset_Read()                       */
 /************************************************************************/
 
-static size_t JP2GrokDataset_Read(void* pBuffer, size_t nBytes,
+static size_t JP2Dataset_Read(void* pBuffer, size_t nBytes,
                                        void *pUserData)
 {
-    JP2GrokFile* psJP2GrokFile = (JP2GrokFile* )pUserData;
+    JP2File* psJP2GrokFile = (JP2File* )pUserData;
     size_t nRet = static_cast<size_t>(VSIFReadL(pBuffer, 1, nBytes, psJP2GrokFile->fp));
 #ifdef DEBUG_IO
-    CPLDebug("GROK", "JP2GrokDataset_Read(" CPL_FRMT_GUIB ") = " CPL_FRMT_GUIB,
+    CPLDebug("GROK", "JP2Dataset_Read(" CPL_FRMT_GUIB ") = " CPL_FRMT_GUIB,
              static_cast<GUIntBig>(nBytes), static_cast<GUIntBig>(nRet));
 #endif
     if (nRet == 0)
@@ -125,16 +121,16 @@ static size_t JP2GrokDataset_Read(void* pBuffer, size_t nBytes,
 }
 
 /************************************************************************/
-/*                      JP2GrokDataset_Write()                      */
+/*                      JP2Dataset_Write()                      */
 /************************************************************************/
 
-static size_t JP2GrokDataset_Write(void* pBuffer, size_t nBytes,
+static size_t JP2Dataset_Write(void* pBuffer, size_t nBytes,
                                        void *pUserData)
 {
-    JP2GrokFile* psJP2GrokFile = (JP2GrokFile* )pUserData;
+    JP2File* psJP2GrokFile = (JP2File* )pUserData;
     size_t nRet = static_cast<size_t>(VSIFWriteL(pBuffer, 1, nBytes, psJP2GrokFile->fp));
 #ifdef DEBUG_IO
-    CPLDebug("GROK", "JP2GrokDataset_Write(" CPL_FRMT_GUIB ") = " CPL_FRMT_GUIB,
+    CPLDebug("GROK", "JP2Dataset_Write(" CPL_FRMT_GUIB ") = " CPL_FRMT_GUIB,
              static_cast<GUIntBig>(nBytes), static_cast<GUIntBig>(nRet));
 #endif
     if( nRet != nBytes )
@@ -143,962 +139,54 @@ static size_t JP2GrokDataset_Write(void* pBuffer, size_t nBytes,
 }
 
 /************************************************************************/
-/*                       JP2GrokDataset_Seek()                      */
+/*                       JP2Dataset_Seek()                      */
 /************************************************************************/
 
-static bool JP2GrokDataset_Seek(uint64_t nBytes, void * pUserData)
+static bool JP2Dataset_Seek(uint64_t nBytes, void * pUserData)
 {
-    JP2GrokFile* psJP2GrokFile = (JP2GrokFile* )pUserData;
+    JP2File* psJP2GrokFile = (JP2File* )pUserData;
 #ifdef DEBUG_IO
-    CPLDebug("GROK", "JP2GrokDataset_Seek(" CPL_FRMT_GUIB ")",
+    CPLDebug("GROK", "JP2Dataset_Seek(" CPL_FRMT_GUIB ")",
              static_cast<GUIntBig>(nBytes));
 #endif
     return VSIFSeekL(psJP2GrokFile->fp, psJP2GrokFile->nBaseOffset +nBytes,
                      SEEK_SET) == 0;
 }
 
-/************************************************************************/
-/* ==================================================================== */
-/*                           JP2GrokDataset                         */
-/* ==================================================================== */
-/************************************************************************/
-
-class JP2GrokRasterBand;
-
-class JP2GrokDataset final: public GDALJP2AbstractDataset
-{
-    friend class JP2GrokRasterBand;
-
-    std::string  m_osFilename;
-    VSILFILE   *fp = nullptr; /* Large FILE API */
-    vsi_l_offset nCodeStreamStart = 0;
-    vsi_l_offset nCodeStreamLength = 0;
-
-    GRK_COLOR_SPACE eColorSpace = GRK_CLRSPC_UNKNOWN;
-    int         nRedIndex = 0;
-    int         nGreenIndex = 1;
-    int         nBlueIndex = 2;
-    int         nAlphaIndex = -1;
-
-    int         bIs420 = FALSE;
-
-    int         nParentXSize = 0;
-    int         nParentYSize = 0;
-    int         iLevel = 0;
-    int         nOverviewCount = 0;
-    JP2GrokDataset** papoOverviewDS = nullptr;
-    bool        bUseSetDecodeArea = false;
-    bool        bSingleTiled = false;
-    grk_codec**    m_ppCodec = nullptr;
-    grk_stream **  m_ppStream = nullptr;
-    grk_image **   m_ppsImage = nullptr;
-    JP2GrokFile* m_psJP2GrokFile = nullptr;
-    int*             m_pnLastLevel = nullptr;
-    int         m_nX0 = 0;
-    int         m_nY0 = 0;
-
-    int         nThreads = -1;
-    int         m_nBlocksToLoad = 0;
-    int         GetNumThreads();
-    int         bEnoughMemoryToLoadOtherBands = TRUE;
-    int         bRewrite = FALSE;
-    int         bHasGeoreferencingAtOpening = FALSE;
-
-  protected:
-    virtual int         CloseDependentDatasets() override;
-
-  public:
-                JP2GrokDataset();
-    virtual ~JP2GrokDataset();
-
-    static int Identify( GDALOpenInfo * poOpenInfo );
-    static GDALDataset  *Open( GDALOpenInfo * );
+class JP2GrokDataset : public JP2Dataset {
+	friend class JP2RasterBand;
+public:
+	virtual ~JP2GrokDataset();
+    GDALColorInterp GetColorInterpretation(int nBand) override;
+	static grk_stream* CreateReadStream(JP2File* psJP2GrokFile,
+	                                                 vsi_l_offset nSize);
+    CPLErr      ReadBlock( int nBand, VSILFILE* fp,
+                           int nBlockXOff, int nBlockYOff, void * pImage,
+                           int nBandCount, int *panBandMap ) override;
     static GDALDataset  *CreateCopy( const char * pszFilename,
                                            GDALDataset *poSrcDS,
                                            int bStrict, char ** papszOptions,
                                            GDALProgressFunc pfnProgress,
                                            void * pProgressData );
-
-    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
-
-    virtual CPLErr SetGeoTransform( double* ) override;
-
-    CPLErr SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
-                    const OGRSpatialReference* poSRS ) override ;
-
-    virtual CPLErr      SetMetadata( char ** papszMetadata,
-                             const char * pszDomain = "" ) override;
-    virtual CPLErr      SetMetadataItem( const char * pszName,
-                                 const char * pszValue,
-                                 const char * pszDomain = "" ) override;
-
-    virtual CPLErr  IRasterIO( GDALRWFlag eRWFlag,
-                               int nXOff, int nYOff, int nXSize, int nYSize,
-                               void * pData, int nBufXSize, int nBufYSize,
-                               GDALDataType eBufType,
-                               int nBandCount, int *panBandMap,
-                               GSpacing nPixelSpace, GSpacing nLineSpace,
-                               GSpacing nBandSpace,
-                               GDALRasterIOExtraArg* psExtraArg) override;
-
-    CPLErr IBuildOverviews( const char *pszResampling,
-                                       int nOverviews, int *panOverviewList,
-                                       int nListBands, int *panBandList,
-                                       GDALProgressFunc pfnProgress,
-                                       void *pProgressData ) override;
-
-    static void         WriteBox(VSILFILE* fp, GDALJP2Box* poBox);
-    static void         WriteGDALMetadataBox( VSILFILE* fp, GDALDataset* poSrcDS,
-                                       char** papszOptions );
-    static void         WriteXMLBoxes( VSILFILE* fp, GDALDataset* poSrcDS,
-                                       char** papszOptions );
-    static void         WriteXMPBox( VSILFILE* fp, GDALDataset* poSrcDS,
-                                     char** papszOptions );
-    static void         WriteIPRBox( VSILFILE* fp, GDALDataset* poSrcDS,
-                                     char** papszOptions );
-
-    CPLErr      ReadBlock( int nBand, VSILFILE* fp,
-                           int nBlockXOff, int nBlockYOff, void * pImage,
-                           int nBandCount, int *panBandMap );
-
-    int         PreloadBlocks( JP2GrokRasterBand* poBand,
-                               int nXOff, int nYOff, int nXSize, int nYSize,
-                               int nBandCount, int *panBandMap );
-
-    static void JP2GrokReadBlockInThread(void* userdata);
-};
-
-/************************************************************************/
-/* ==================================================================== */
-/*                         JP2GrokRasterBand                        */
-/* ==================================================================== */
-/************************************************************************/
-
-class JP2GrokRasterBand final: public GDALPamRasterBand
-{
-    friend class JP2GrokDataset;
-    int             bPromoteTo8Bit;
-    GDALColorTable* poCT;
-
-  public:
-
-                JP2GrokRasterBand( JP2GrokDataset * poDS, int nBand,
-                                       GDALDataType eDataType, int nBits,
-                                       int bPromoteTo8Bit,
-                                       int nBlockXSize, int nBlockYSize );
-    virtual ~JP2GrokRasterBand();
-
-    virtual CPLErr          IReadBlock( int, int, void * ) override;
-    virtual CPLErr          IRasterIO( GDALRWFlag eRWFlag,
-                                  int nXOff, int nYOff, int nXSize, int nYSize,
-                                  void * pData, int nBufXSize, int nBufYSize,
-                                  GDALDataType eBufType,
-                                  GSpacing nPixelSpace, GSpacing nLineSpace,
-                                  GDALRasterIOExtraArg* psExtraArg) override;
-
-    virtual GDALColorInterp GetColorInterpretation() override;
-    virtual GDALColorTable* GetColorTable() override { return poCT; }
-
-    virtual int             GetOverviewCount() override;
-    virtual GDALRasterBand* GetOverview(int iOvrLevel) override;
-
-    virtual int HasArbitraryOverviews() override { return poCT == nullptr; }
-};
-
-/************************************************************************/
-/*                        JP2GrokRasterBand()                       */
-/************************************************************************/
-
-JP2GrokRasterBand::JP2GrokRasterBand( JP2GrokDataset *poDSIn, int nBandIn,
-                                              GDALDataType eDataTypeIn, int nBits,
-                                              int bPromoteTo8BitIn,
-                                              int nBlockXSizeIn, int nBlockYSizeIn )
-
-{
-    this->eDataType = eDataTypeIn;
-    this->nBlockXSize = nBlockXSizeIn;
-    this->nBlockYSize = nBlockYSizeIn;
-    this->bPromoteTo8Bit = bPromoteTo8BitIn;
-    poCT = nullptr;
-
-    if( (nBits % 8) != 0 )
-        GDALRasterBand::SetMetadataItem("NBITS",
-                        CPLString().Printf("%d",nBits),
-                        "IMAGE_STRUCTURE" );
-    GDALRasterBand::SetMetadataItem("COMPRESSION", "JPEG2000",
-                    "IMAGE_STRUCTURE" );
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
-}
-
-/************************************************************************/
-/*                      ~JP2GrokRasterBand()                        */
-/************************************************************************/
-
-JP2GrokRasterBand::~JP2GrokRasterBand()
-{
-    delete poCT;
-}
-
-/************************************************************************/
-/*                            CLAMP_0_255()                             */
-/************************************************************************/
-
-static CPL_INLINE GByte CLAMP_0_255(int val)
-{
-    if (val < 0)
-        return 0;
-    else if (val > 255)
-        return 255;
-    else
-        return (GByte)val;
-}
-
-/************************************************************************/
-/*                             IReadBlock()                             */
-/************************************************************************/
-
-CPLErr JP2GrokRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                          void * pImage )
-{
-    JP2GrokDataset *poGDS = (JP2GrokDataset *) poDS;
-
-#ifdef DEBUG_VERBOSE
-    int nXOff = nBlockXOff * nBlockXSize;
-    int nYOff = nBlockYOff * nBlockYSize;
-    int nXSize = std::min( nBlockXSize, nRasterXSize - nXOff );
-    int nYSize = std::min( nBlockYSize, nRasterYSize - nYOff );
-    if( poGDS->iLevel == 0 )
+    static GDALDataset  *Open( GDALOpenInfo * );
+private:
+    static CPL_INLINE GByte CLAMP_0_255(int val)
     {
-        CPLDebug("GROK",
-                 "ds.GetRasterBand(%d).ReadRaster(%d,%d,%d,%d)",
-                 nBand, nXOff, nYOff, nXSize, nYSize);
-    }
-    else
-    {
-        CPLDebug("GROK",
-                 "ds.GetRasterBand(%d).GetOverview(%d).ReadRaster(%d,%d,%d,%d)",
-                 nBand, poGDS->iLevel - 1, nXOff, nYOff, nXSize, nYSize);
-    }
-#endif
-
-    if ( poGDS->bEnoughMemoryToLoadOtherBands )
-        return poGDS->ReadBlock(nBand, poGDS->fp, nBlockXOff, nBlockYOff, pImage,
-                                poGDS->nBands, nullptr);
-    else
-        return poGDS->ReadBlock(nBand, poGDS->fp, nBlockXOff, nBlockYOff, pImage,
-                                1, &nBand);
-}
-
-/************************************************************************/
-/*                             IRasterIO()                              */
-/************************************************************************/
-
-CPLErr JP2GrokRasterBand::IRasterIO( GDALRWFlag eRWFlag,
-                                         int nXOff, int nYOff, int nXSize, int nYSize,
-                                         void * pData, int nBufXSize, int nBufYSize,
-                                         GDALDataType eBufType,
-                                         GSpacing nPixelSpace, GSpacing nLineSpace,
-                                         GDALRasterIOExtraArg* psExtraArg )
-{
-    JP2GrokDataset *poGDS = (JP2GrokDataset *) poDS;
-
-    if( eRWFlag != GF_Read )
-        return CE_Failure;
-
-/* ==================================================================== */
-/*      Do we have overviews that would be appropriate to satisfy       */
-/*      this request?                                                   */
-/* ==================================================================== */
-    if( (nBufXSize < nXSize || nBufYSize < nYSize)
-        && GetOverviewCount() > 0 )
-    {
-        int bTried;
-        CPLErr eErr = TryOverviewRasterIO( eRWFlag,
-                                    nXOff, nYOff, nXSize, nYSize,
-                                    pData, nBufXSize, nBufYSize,
-                                    eBufType,
-                                    nPixelSpace, nLineSpace,
-                                    psExtraArg,
-                                    &bTried );
-        if( bTried )
-            return eErr;
-    }
-
-    int nRet = poGDS->PreloadBlocks(this, nXOff, nYOff, nXSize, nYSize, 0, nullptr);
-    if( nRet < 0 )
-        return CE_Failure;
-    poGDS->bEnoughMemoryToLoadOtherBands = nRet;
-
-    CPLErr eErr = GDALPamRasterBand::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                         pData, nBufXSize, nBufYSize, eBufType,
-                                         nPixelSpace, nLineSpace, psExtraArg );
-
-    // cppcheck-suppress redundantAssignment
-    poGDS->bEnoughMemoryToLoadOtherBands = TRUE;
-    return eErr;
-}
-
-/************************************************************************/
-/*                            GetNumThreads()                           */
-/************************************************************************/
-
-int JP2GrokDataset::GetNumThreads()
-{
-    if( nThreads >= 1 )
-        return nThreads;
-
-    const char* pszThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS");
-    if (EQUAL(pszThreads, "ALL_CPUS"))
-        nThreads = CPLGetNumCPUs();
-    else
-        nThreads = atoi(pszThreads);
-    if (nThreads > 128)
-        nThreads = 128;
-    if (nThreads <= 0)
-        nThreads = 1;
-    return nThreads;
-}
-
-/************************************************************************/
-/*                   JP2GrokReadBlockInThread()                     */
-/************************************************************************/
-
-class JobStruct
-{
-public:
-
-    JP2GrokDataset* poGDS;
-    int                 nBand;
-    std::vector< std::pair<int, int> > oPairs;
-    volatile int        nCurPair;
-    int                 nBandCount;
-    int                *panBandMap;
-    VOLATILE_BOOL       bSuccess;
-};
-
-void JP2GrokDataset::JP2GrokReadBlockInThread(void* userdata)
-{
-    int nPair;
-    JobStruct* poJob = (JobStruct*) userdata;
-
-    JP2GrokDataset* poGDS = poJob->poGDS;
-    int nBand = poJob->nBand;
-    int nPairs = (int)poJob->oPairs.size();
-    int nBandCount = poJob->nBandCount;
-    int* panBandMap = poJob->panBandMap;
-    VSILFILE* fp = VSIFOpenL(poGDS->m_osFilename.c_str(), "rb");
-    if( fp == nullptr )
-    {
-        CPLDebug("GROK", "Cannot open %s", poGDS->m_osFilename.c_str());
-        poJob->bSuccess = false;
-        //VSIFree(pDummy);
-        return;
-    }
-
-    while( (nPair = CPLAtomicInc(&(poJob->nCurPair))) < nPairs &&
-            poJob->bSuccess )
-    {
-        int nBlockXOff = poJob->oPairs[nPair].first;
-        int nBlockYOff = poJob->oPairs[nPair].second;
-        poGDS->AcquireMutex();
-        GDALRasterBlock* poBlock = poGDS->GetRasterBand(nBand)->
-                GetLockedBlockRef(nBlockXOff,nBlockYOff, TRUE);
-        poGDS->ReleaseMutex();
-        if (poBlock == nullptr)
-        {
-            poJob->bSuccess = false;
-            break;
-        }
-
-        void* pDstBuffer = poBlock->GetDataRef();
-        if( poGDS->ReadBlock(nBand, fp, nBlockXOff, nBlockYOff, pDstBuffer,
-                             nBandCount, panBandMap) != CE_None )
-        {
-            poJob->bSuccess = false;
-        }
-
-        poBlock->DropLock();
-    }
-
-    VSIFCloseL(fp);
-    //VSIFree(pDummy);
-}
-
-/************************************************************************/
-/*                           PreloadBlocks()                            */
-/************************************************************************/
-
-int JP2GrokDataset::PreloadBlocks(JP2GrokRasterBand* poBand,
-                                      int nXOff, int nYOff, int nXSize, int nYSize,
-                                      int nBandCount, int *panBandMap)
-{
-    int bRet = TRUE;
-    int nXStart = nXOff / poBand->nBlockXSize;
-    int nXEnd = (nXOff + nXSize - 1) / poBand->nBlockXSize;
-    int nYStart = nYOff / poBand->nBlockYSize;
-    int nYEnd = (nYOff + nYSize - 1) / poBand->nBlockYSize;
-    GIntBig nReqMem = (GIntBig)(nXEnd - nXStart + 1) * (nYEnd - nYStart + 1) *
-                      poBand->nBlockXSize * poBand->nBlockYSize * (GDALGetDataTypeSize(poBand->eDataType) / 8);
-
-    int nMaxThreads = GetNumThreads();
-    if( !bUseSetDecodeArea && nMaxThreads > 1 )
-    {
-        if( nReqMem > GDALGetCacheMax64() / (nBandCount == 0 ? 1 : nBandCount) )
-            return FALSE;
-
-        JobStruct oJob;
-        m_nBlocksToLoad = 0;
-        try
-        {
-            for(int nBlockXOff = nXStart; nBlockXOff <= nXEnd; ++nBlockXOff)
-            {
-                for(int nBlockYOff = nYStart; nBlockYOff <= nYEnd; ++nBlockYOff)
-                {
-                    GDALRasterBlock* poBlock = poBand->TryGetLockedBlockRef(nBlockXOff,nBlockYOff);
-                    if (poBlock != nullptr)
-                    {
-                        poBlock->DropLock();
-                        continue;
-                    }
-                    oJob.oPairs.push_back( std::pair<int,int>(nBlockXOff, nBlockYOff) );
-                    m_nBlocksToLoad ++;
-                }
-            }
-        }
-        catch( const std::bad_alloc& )
-        {
-            CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory error");
-            m_nBlocksToLoad = 0;
-            return -1;
-        }
-
-        if( m_nBlocksToLoad > 1 )
-        {
-            const int l_nThreads = std::min(m_nBlocksToLoad, nMaxThreads);
-            CPLJoinableThread** pahThreads = (CPLJoinableThread**) VSI_CALLOC_VERBOSE( sizeof(CPLJoinableThread*), l_nThreads );
-            if( pahThreads == nullptr )
-            {
-                m_nBlocksToLoad = 0;
-                return -1;
-            }
-            int i;
-
-            CPLDebug("GROK", "%d blocks to load (%d threads)", m_nBlocksToLoad, l_nThreads);
-
-            oJob.poGDS = this;
-            oJob.nBand = poBand->GetBand();
-            oJob.nCurPair = -1;
-            if( nBandCount > 0 )
-            {
-                oJob.nBandCount = nBandCount;
-                oJob.panBandMap = panBandMap;
-            }
-            else
-            {
-                if( nReqMem <= GDALGetCacheMax64() / nBands )
-                {
-                    oJob.nBandCount = nBands;
-                    oJob.panBandMap = nullptr;
-                }
-                else
-                {
-                    bRet = FALSE;
-                    oJob.nBandCount = 1;
-                    oJob.panBandMap = &oJob.nBand;
-                }
-            }
-            oJob.bSuccess = true;
-
-            /* Flushes all dirty blocks from cache to disk to avoid them */
-            /* to be flushed randomly, and simultaneously, from our worker threads, */
-            /* which might cause races in the output driver. */
-            /* This is a workaround to a design defect of the block cache */
-            GDALRasterBlock::FlushDirtyBlocks();
-
-            for(i=0;i<l_nThreads;i++)
-            {
-                pahThreads[i] = CPLCreateJoinableThread(JP2GrokReadBlockInThread, &oJob);
-                if( pahThreads[i] == nullptr )
-                    oJob.bSuccess = false;
-            }
-            TemporarilyDropReadWriteLock();
-            for(i=0;i<l_nThreads;i++)
-                CPLJoinThread( pahThreads[i] );
-            ReacquireReadWriteLock();
-            CPLFree(pahThreads);
-            if( !oJob.bSuccess )
-            {
-                m_nBlocksToLoad = 0;
-                return -1;
-            }
-            m_nBlocksToLoad = 0;
-        }
-    }
-
-    return bRet;
-}
-
-/************************************************************************/
-/*                             IRasterIO()                              */
-/************************************************************************/
-
-CPLErr  JP2GrokDataset::IRasterIO( GDALRWFlag eRWFlag,
-                               int nXOff, int nYOff, int nXSize, int nYSize,
-                               void * pData, int nBufXSize, int nBufYSize,
-                               GDALDataType eBufType,
-                               int nBandCount, int *panBandMap,
-                               GSpacing nPixelSpace, GSpacing nLineSpace,
-                               GSpacing nBandSpace,
-                               GDALRasterIOExtraArg* psExtraArg)
-{
-    if( eRWFlag != GF_Read )
-        return CE_Failure;
-
-    if( nBandCount < 1 )
-        return CE_Failure;
-
-    JP2GrokRasterBand* poBand = (JP2GrokRasterBand*) GetRasterBand(panBandMap[0]);
-
-/* ==================================================================== */
-/*      Do we have overviews that would be appropriate to satisfy       */
-/*      this request?                                                   */
-/* ==================================================================== */
-
-    if( (nBufXSize < nXSize || nBufYSize < nYSize)
-        && poBand->GetOverviewCount() > 0 )
-    {
-        int bTried;
-        CPLErr eErr = TryOverviewRasterIO( eRWFlag,
-                                    nXOff, nYOff, nXSize, nYSize,
-                                    pData, nBufXSize, nBufYSize,
-                                    eBufType,
-                                    nBandCount, panBandMap,
-                                    nPixelSpace, nLineSpace,
-                                    nBandSpace,
-                                    psExtraArg,
-                                    &bTried );
-        if( bTried )
-            return eErr;
-    }
-
-    bEnoughMemoryToLoadOtherBands = PreloadBlocks(poBand, nXOff, nYOff, nXSize, nYSize, nBandCount, panBandMap);
-
-    CPLErr eErr = GDALPamDataset::IRasterIO(   eRWFlag,
-                                        nXOff, nYOff, nXSize, nYSize,
-                                        pData, nBufXSize, nBufYSize,
-                                        eBufType,
-                                        nBandCount, panBandMap,
-                                        nPixelSpace, nLineSpace, nBandSpace,
-                                        psExtraArg );
-
-    bEnoughMemoryToLoadOtherBands = TRUE;
-    return eErr;
-}
-
-
-/************************************************************************/
-/*                          IBuildOverviews()                           */
-/************************************************************************/
-
-CPLErr JP2GrokDataset::IBuildOverviews( const char *pszResampling,
-                                       int nOverviews, int *panOverviewList,
-                                       int nListBands, int *panBandList,
-                                       GDALProgressFunc pfnProgress,
-                                       void *pProgressData )
-
-{
-    // In order for building external overviews to work properly, we
-    // discard any concept of internal overviews when the user
-    // first requests to build external overviews.
-    for( int i = 0; i < nOverviewCount; i++ )
-    {
-        delete papoOverviewDS[i];
-    }
-    CPLFree(papoOverviewDS);
-    papoOverviewDS = nullptr;
-    nOverviewCount = 0;
-
-    return GDALPamDataset::IBuildOverviews(pszResampling,
-                                           nOverviews, panOverviewList,
-                                           nListBands, panBandList,
-                                           pfnProgress, pProgressData);
-}
-
-
-/************************************************************************/
-/*                    JP2GrokCreateReadStream()                     */
-/************************************************************************/
-
-static grk_stream* JP2GrokCreateReadStream(JP2GrokFile* psJP2GrokFile,
-                                                 vsi_l_offset nSize)
-{
-    auto pStream = grk_stream_new(1024, TRUE);
-    if( pStream == nullptr )
-        return nullptr;
-
-    VSIFSeekL(psJP2GrokFile->fp, psJP2GrokFile->nBaseOffset, SEEK_SET);
-    grk_stream_set_user_data_length(pStream, nSize);
-
-    grk_stream_set_write_function(pStream, JP2GrokDataset_Write);
-    grk_stream_set_read_function(pStream, JP2GrokDataset_Read);
-    grk_stream_set_user_data(pStream, psJP2GrokFile, nullptr);
-
-    return pStream;
-}
-
-/************************************************************************/
-/*                             ReadBlock()                              */
-/************************************************************************/
-
-CPLErr JP2GrokDataset::ReadBlock( int nBand, VSILFILE* fpIn,
-                                      int nBlockXOff, int nBlockYOff, void * pImage,
-                                      int nBandCount, int* panBandMap )
-{
-    CPLErr          eErr = CE_None;
-    grk_codec*    pCodec = nullptr;
-    grk_stream *  pStream = nullptr;
-    grk_image *   psImage = nullptr;
-    JP2GrokFile sJP2GrokFile; // keep it in this scope
-
-    JP2GrokRasterBand* poBand = (JP2GrokRasterBand*) GetRasterBand(nBand);
-    int nBlockXSize = poBand->nBlockXSize;
-    int nBlockYSize = poBand->nBlockYSize;
-    GDALDataType eDataType = poBand->eDataType;
-
-    int nDataTypeSize = (GDALGetDataTypeSize(eDataType) / 8);
-
-    int nTileNumber = nBlockXOff + nBlockYOff * poBand->nBlocksPerRow;
-    const int nWidthToRead =
-        std::min(nBlockXSize, nRasterXSize - nBlockXOff * nBlockXSize);
-    const int nHeightToRead =
-        std::min(nBlockYSize, nRasterYSize - nBlockYOff * nBlockYSize);
-    *m_pnLastLevel = iLevel;
-
-
-	if( m_psJP2GrokFile )
-	{
-		pStream = JP2GrokCreateReadStream( m_psJP2GrokFile, nCodeStreamLength);
-	}
-	else
-	{
-		sJP2GrokFile.fp = fpIn;
-		sJP2GrokFile.nBaseOffset = nCodeStreamStart;
-		pStream = JP2GrokCreateReadStream(&sJP2GrokFile, nCodeStreamLength);
-	}
-	if( pStream == nullptr )
-	{
-		CPLError(CE_Failure, CPLE_AppDefined, "JP2GrokCreateReadStream() failed");
-		eErr = CE_Failure;
-		goto end;
-	}
-
-
-	pCodec = grk_decompress_create(GRK_CODEC_J2K,pStream);
-	if( pCodec == nullptr )
-	{
-		CPLError(CE_Failure, CPLE_AppDefined, "grk_create_decompress() failed");
-		eErr = CE_Failure;
-		goto end;
-	}
-
-	grk_decompress_core_params parameters;
-	grk_decompress_set_default_params(&parameters);
-
-	if (! grk_decompress_init(pCodec,&parameters))
-	{
-		CPLError(CE_Failure, CPLE_AppDefined, "grk_decompress_init() failed");
-		eErr = CE_Failure;
-		goto end;
-	}
-
-	parameters.reduce = iLevel;
-	if(!grk_decompress_read_header(pCodec,NULL))
-	{
-		CPLError(CE_Failure, CPLE_AppDefined, "grk_read_header() failed (psImage=%p)", psImage);
-		eErr = CE_Failure;
-		goto end;
-	}
-
-	if (bUseSetDecodeArea)
-	{
-		/* The decode area must be expressed in grid reference, ie at full*/
-		/* scale */
-		if (!grk_decompress_set_window(pCodec,
-								 m_nX0 + static_cast<int>(static_cast<GIntBig>(nBlockXOff*nBlockXSize) * nParentXSize / nRasterXSize),
-								 m_nY0 + static_cast<int>(static_cast<GIntBig>(nBlockYOff*nBlockYSize) * nParentYSize / nRasterYSize),
-								 m_nX0 + static_cast<int>(static_cast<GIntBig>(nBlockXOff*nBlockXSize+nWidthToRead) * nParentXSize / nRasterXSize),
-								 m_nY0 + static_cast<int>(static_cast<GIntBig>(nBlockYOff*nBlockYSize+nHeightToRead) * nParentYSize / nRasterYSize)))
-		{
-			CPLError(CE_Failure, CPLE_AppDefined, "grk_set_decode_area() failed");
-			eErr = CE_Failure;
-			goto end;
-		}
-		if (!grk_decompress(pCodec,NULL))
-		{
-			CPLError(CE_Failure, CPLE_AppDefined, "grk_decode() failed");
-			eErr = CE_Failure;
-			goto end;
-		}
-	}
-	else
-	{
-		if (!grk_decompress_tile( pCodec, nTileNumber ))
-		{
-			CPLError(CE_Failure, CPLE_AppDefined, "grk_get_decoded_tile() failed");
-			eErr = CE_Failure;
-			goto end;
-		}
-	}
-	psImage = grk_decompress_get_composited_image(pCodec);
-    for(unsigned int iBand = 0; iBand < psImage->numcomps; iBand ++)
-    {
-        if( psImage->comps[iBand].data == nullptr )
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "psImage->comps[%d].data == nullptr", iBand);
-            eErr = CE_Failure;
-            goto end;
-        }
-    }
-
-    for(int xBand = 0; xBand < nBandCount; xBand ++)
-    {
-        GDALRasterBlock *poBlock = nullptr;
-        int iBand = (panBandMap) ? panBandMap[xBand] : xBand + 1;
-        int bPromoteTo8Bit = ((JP2GrokRasterBand*)GetRasterBand(iBand))->bPromoteTo8Bit;
-
-        void* pDstBuffer = nullptr;
-        if (iBand == nBand)
-            pDstBuffer = pImage;
+        if (val < 0)
+            return 0;
+        else if (val > 255)
+            return 255;
         else
-        {
-            AcquireMutex();
-            poBlock = ((JP2GrokRasterBand*)GetRasterBand(iBand))->
-                TryGetLockedBlockRef(nBlockXOff,nBlockYOff);
-            if (poBlock != nullptr)
-            {
-                ReleaseMutex();
-                poBlock->DropLock();
-                continue;
-            }
-
-            poBlock = GetRasterBand(iBand)->
-                GetLockedBlockRef(nBlockXOff,nBlockYOff, TRUE);
-            ReleaseMutex();
-            if (poBlock == nullptr)
-            {
-                continue;
-            }
-
-            pDstBuffer = poBlock->GetDataRef();
-        }
-
-        if (bIs420)
-        {
-            if( (int)psImage->comps[0].w < nWidthToRead ||
-                (int)psImage->comps[0].h < nHeightToRead ||
-                psImage->comps[1].w != (psImage->comps[0].w + 1) / 2 ||
-                psImage->comps[1].h != (psImage->comps[0].h + 1) / 2 ||
-                psImage->comps[2].w != (psImage->comps[0].w + 1) / 2 ||
-                psImage->comps[2].h != (psImage->comps[0].h + 1) / 2 ||
-                (nBands == 4 && (
-                    (int)psImage->comps[3].w < nWidthToRead ||
-                    (int)psImage->comps[3].h < nHeightToRead)) )
-            {
-                CPLError(CE_Failure, CPLE_AssertionFailed,
-                         "Assertion at line %d of %s failed",
-                         __LINE__, __FILE__);
-                if (poBlock != nullptr)
-                    poBlock->DropLock();
-                eErr = CE_Failure;
-                goto end;
-            }
-
-            GByte* pDst = (GByte*)pDstBuffer;
-            if( iBand == 4 )
-            {
-                const int32_t* pSrcA = psImage->comps[3].data;
-                for(GPtrDiff_t j=0;j<nHeightToRead;j++)
-                {
-                    memcpy(pDst + j*nBlockXSize,
-                            pSrcA + j * psImage->comps[0].w,
-                            nWidthToRead);
-                }
-            }
-            else
-            {
-                const int32_t* pSrcY = psImage->comps[0].data;
-                const int32_t* pSrcCb = psImage->comps[1].data;
-                const int32_t* pSrcCr = psImage->comps[2].data;
-                for(GPtrDiff_t j=0;j<nHeightToRead;j++)
-                {
-                    for(int i=0;i<nWidthToRead;i++)
-                    {
-                        int Y = pSrcY[j * psImage->comps[0].w + i];
-                        int Cb = pSrcCb[(j/2) * psImage->comps[1].w + (i/2)];
-                        int Cr = pSrcCr[(j/2) * psImage->comps[2].w + (i/2)];
-                        if (iBand == 1)
-                            pDst[j * nBlockXSize + i] = CLAMP_0_255((int)(Y + 1.402 * (Cr - 128)));
-                        else if (iBand == 2)
-                            pDst[j * nBlockXSize + i] = CLAMP_0_255((int)(Y - 0.34414 * (Cb - 128) - 0.71414 * (Cr - 128)));
-                        else if (iBand == 3)
-                            pDst[j * nBlockXSize + i] = CLAMP_0_255((int)(Y + 1.772 * (Cb - 128)));
-                    }
-                }
-            }
-
-            if( bPromoteTo8Bit )
-            {
-                for(GPtrDiff_t j=0;j<nHeightToRead;j++)
-                {
-                    for(int i=0;i<nWidthToRead;i++)
-                    {
-                        pDst[j * nBlockXSize + i] *= 255;
-                    }
-                }
-            }
-        }
-        else
-        {
-            if( (int)psImage->comps[iBand-1].w < nWidthToRead ||
-                (int)psImage->comps[iBand-1].h < nHeightToRead )
-            {
-                CPLError(CE_Failure, CPLE_AssertionFailed,
-                         "Assertion at line %d of %s failed",
-                         __LINE__, __FILE__);
-                if (poBlock != nullptr)
-                    poBlock->DropLock();
-                eErr = CE_Failure;
-                goto end;
-            }
-
-            if( bPromoteTo8Bit )
-            {
-                for(GPtrDiff_t j=0;j<nHeightToRead;j++)
-                {
-                    for(int i=0;i<nWidthToRead;i++)
-                    {
-                        psImage->comps[iBand-1].data[j * psImage->comps[iBand-1].w + i] *= 255;
-                    }
-                }
-            }
-
-            if ((int)psImage->comps[iBand-1].w == nBlockXSize &&
-                (int)psImage->comps[iBand-1].h == nBlockYSize)
-            {
-                GDALCopyWords64(psImage->comps[iBand-1].data, GDT_Int32, 4,
-                            pDstBuffer, eDataType, nDataTypeSize, static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize);
-            }
-            else
-            {
-                for(GPtrDiff_t j=0;j<nHeightToRead;j++)
-                {
-                    GDALCopyWords(psImage->comps[iBand-1].data + j * psImage->comps[iBand-1].w, GDT_Int32, 4,
-                                (GByte*)pDstBuffer + j * nBlockXSize * nDataTypeSize, eDataType, nDataTypeSize,
-                                nWidthToRead);
-                }
-            }
-        }
-
-        if (poBlock != nullptr)
-            poBlock->DropLock();
+            return (GByte)val;
     }
+    GRK_COLOR_SPACE eColorSpace = GRK_CLRSPC_UNKNOWN;
+    grk_codec**    m_ppCodec = nullptr;
+    grk_stream **  m_ppStream = nullptr;
+    grk_image **   m_ppsImage = nullptr;
+};
 
-end:
-  if( pCodec && pStream )
-	  grk_decompress_end(pCodec);
-  grk_object_unref(pStream);
-  grk_object_unref(pCodec);
 
-    return eErr;
-}
-
-/************************************************************************/
-/*                         GetOverviewCount()                           */
-/************************************************************************/
-
-int JP2GrokRasterBand::GetOverviewCount()
-{
-    JP2GrokDataset *poGDS = cpl::down_cast<JP2GrokDataset*>(poDS);
-    if( !poGDS->AreOverviewsEnabled() )
-        return 0;
-
-    if( GDALPamRasterBand::GetOverviewCount() > 0 )
-        return GDALPamRasterBand::GetOverviewCount();
-
-    return poGDS->nOverviewCount;
-}
-
-/************************************************************************/
-/*                            GetOverview()                             */
-/************************************************************************/
-
-GDALRasterBand* JP2GrokRasterBand::GetOverview(int iOvrLevel)
-{
-    if( GDALPamRasterBand::GetOverviewCount() > 0 )
-        return GDALPamRasterBand::GetOverview(iOvrLevel);
-
-    JP2GrokDataset *poGDS = (JP2GrokDataset *) poDS;
-    if (iOvrLevel < 0 || iOvrLevel >= poGDS->nOverviewCount)
-        return nullptr;
-
-    return poGDS->papoOverviewDS[iOvrLevel]->GetRasterBand(nBand);
-}
-
-/************************************************************************/
-/*                       GetColorInterpretation()                       */
-/************************************************************************/
-
-GDALColorInterp JP2GrokRasterBand::GetColorInterpretation()
-{
-    JP2GrokDataset *poGDS = (JP2GrokDataset *) poDS;
-
-    if( poCT )
-        return GCI_PaletteIndex;
-
-    if( nBand == poGDS->nAlphaIndex + 1 )
-        return GCI_AlphaBand;
-
-    if (poGDS->nBands <= 2 && poGDS->eColorSpace == GRK_CLRSPC_GRAY)
-        return GCI_GrayIndex;
-    else if (poGDS->eColorSpace == GRK_CLRSPC_SRGB ||
-             poGDS->eColorSpace == GRK_CLRSPC_SYCC)
-    {
-        if( nBand == poGDS->nRedIndex + 1 )
-            return GCI_RedBand;
-        if( nBand == poGDS->nGreenIndex + 1 )
-            return GCI_GreenBand;
-        if( nBand == poGDS->nBlueIndex + 1 )
-            return GCI_BlueBand;
-    }
-
-    return GCI_Undefined;
-}
-
-/************************************************************************/
-/* ==================================================================== */
-/*                           JP2GrokDataset                         */
-/* ==================================================================== */
-/************************************************************************/
-
-/************************************************************************/
-/*                        JP2GrokDataset()                          */
-/************************************************************************/
-
-JP2GrokDataset::JP2GrokDataset()
-{
-}
-
-/************************************************************************/
-/*                         ~JP2GrokDataset()                        */
-/************************************************************************/
-
-JP2GrokDataset::~JP2GrokDataset()
-
-{
-    FlushCache(true);
-
+JP2GrokDataset::~JP2GrokDataset() {
     if( iLevel == 0 )
     {
         if (m_ppCodec)
@@ -1108,10 +196,11 @@ JP2GrokDataset::~JP2GrokDataset()
            grk_object_unref(*m_ppStream);
         delete m_ppStream;
         delete m_ppsImage;
-        CPLFree(m_psJP2GrokFile);
+        CPLFree(m_psJP2File);
         delete m_pnLastLevel;
     }
 
+    FlushCache(true);
 
     if( iLevel == 0 && fp != nullptr )
     {
@@ -1345,953 +434,298 @@ JP2GrokDataset::~JP2GrokDataset()
         else
             VSIFCloseL( fp );
     }
-
-    JP2GrokDataset::CloseDependentDatasets();
+    CloseDependentDatasets();
 }
 
-/************************************************************************/
-/*                      CloseDependentDatasets()                        */
-/************************************************************************/
+GDALColorInterp JP2GrokDataset::GetColorInterpretation(int nBand) {
+    if( nBand == nAlphaIndex + 1 )
+        return GCI_AlphaBand;
 
-int JP2GrokDataset::CloseDependentDatasets()
-{
-    int bRet = GDALJP2AbstractDataset::CloseDependentDatasets();
-    if ( papoOverviewDS )
+    if (nBands <= 2 && eColorSpace == GRK_CLRSPC_GRAY)
+        return GCI_GrayIndex;
+    else if (eColorSpace == GRK_CLRSPC_SRGB ||
+             eColorSpace == GRK_CLRSPC_SYCC)
     {
-        for( int i = 0; i < nOverviewCount; i++ )
-            delete papoOverviewDS[i];
-        CPLFree( papoOverviewDS );
-        papoOverviewDS = nullptr;
-        bRet = TRUE;
+        if( nBand == nRedIndex + 1 )
+            return GCI_RedBand;
+        if( nBand == nGreenIndex + 1 )
+            return GCI_GreenBand;
+        if( nBand == nBlueIndex + 1 )
+            return GCI_BlueBand;
     }
-    return bRet;
+
+    return GCI_Undefined;
 }
 
-/************************************************************************/
-/*                           SetSpatialRef()                            */
-/************************************************************************/
-
-CPLErr JP2GrokDataset::SetSpatialRef( const OGRSpatialReference * poSRS )
+grk_stream* JP2GrokDataset::CreateReadStream(JP2File* psJP2GrokFile,
+                                                 vsi_l_offset nSize)
 {
-    if( eAccess == GA_Update )
-    {
-        bRewrite = TRUE;
-        m_oSRS.Clear();
-        if( poSRS )
-            m_oSRS = *poSRS;
-        return CE_None;
-    }
-    else
-        return GDALJP2AbstractDataset::SetSpatialRef(poSRS);
-}
-
-/************************************************************************/
-/*                           SetGeoTransform()                          */
-/************************************************************************/
-
-CPLErr JP2GrokDataset::SetGeoTransform( double *padfGeoTransform )
-{
-    if( eAccess == GA_Update )
-    {
-        bRewrite = TRUE;
-        memcpy(adfGeoTransform, padfGeoTransform, 6* sizeof(double));
-        bGeoTransformValid = !(
-            adfGeoTransform[0] == 0.0 && adfGeoTransform[1] == 1.0 &&
-            adfGeoTransform[2] == 0.0 && adfGeoTransform[3] == 0.0 &&
-            adfGeoTransform[4] == 0.0 && adfGeoTransform[5] == 1.0);
-        return CE_None;
-    }
-    else
-        return GDALJP2AbstractDataset::SetGeoTransform(padfGeoTransform);
-}
-
-/************************************************************************/
-/*                           SetGCPs()                                  */
-/************************************************************************/
-
-CPLErr JP2GrokDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
-                                    const OGRSpatialReference* poSRS )
-{
-    if( eAccess == GA_Update )
-    {
-        bRewrite = TRUE;
-        if( nGCPCount > 0 )
-        {
-            GDALDeinitGCPs( nGCPCount, pasGCPList );
-            CPLFree( pasGCPList );
-        }
-
-        m_oSRS.Clear();
-        if( poSRS )
-            m_oSRS = *poSRS;
-
-        nGCPCount = nGCPCountIn;
-        pasGCPList = GDALDuplicateGCPs( nGCPCount, pasGCPListIn );
-
-        return CE_None;
-    }
-    else
-        return GDALJP2AbstractDataset::SetGCPs(nGCPCountIn, pasGCPListIn,
-                                               poSRS);
-}
-
-/************************************************************************/
-/*                            SetMetadata()                             */
-/************************************************************************/
-
-CPLErr JP2GrokDataset::SetMetadata( char ** papszMetadata,
-                                        const char * pszDomain )
-{
-    if( eAccess == GA_Update )
-    {
-        bRewrite = TRUE;
-        if( pszDomain == nullptr || EQUAL(pszDomain, "") )
-        {
-            CSLDestroy(m_papszMainMD);
-            m_papszMainMD = CSLDuplicate(papszMetadata);
-        }
-        return GDALDataset::SetMetadata(papszMetadata, pszDomain);
-    }
-    return GDALJP2AbstractDataset::SetMetadata(papszMetadata, pszDomain);
-}
-
-/************************************************************************/
-/*                            SetMetadata()                             */
-/************************************************************************/
-
-CPLErr JP2GrokDataset::SetMetadataItem( const char * pszName,
-                                            const char * pszValue,
-                                            const char * pszDomain )
-{
-    if( eAccess == GA_Update )
-    {
-        bRewrite = TRUE;
-        if( pszDomain == nullptr || EQUAL(pszDomain, "") )
-        {
-            m_papszMainMD = CSLSetNameValue( GetMetadata(), pszName, pszValue );
-        }
-        return GDALDataset::SetMetadataItem(pszName, pszValue, pszDomain);
-    }
-    return GDALJP2AbstractDataset::SetMetadataItem(pszName, pszValue, pszDomain);
-}
-
-/************************************************************************/
-/*                            Identify()                                */
-/************************************************************************/
-
-static const unsigned char jpc_header[] = {0xff,0x4f,0xff,0x51}; // SOC + RSIZ markers
-static const unsigned char jp2_box_jp[] = {0x6a,0x50,0x20,0x20}; /* 'jP  ' */
-
-int JP2GrokDataset::Identify( GDALOpenInfo * poOpenInfo )
-
-{
-    if( poOpenInfo->nHeaderBytes >= 16
-        && (memcmp( poOpenInfo->pabyHeader, jpc_header,
-                    sizeof(jpc_header) ) == 0
-            || memcmp( poOpenInfo->pabyHeader + 4, jp2_box_jp,
-                    sizeof(jp2_box_jp) ) == 0
-           ) )
-        return TRUE;
-
-    else
-        return FALSE;
-}
-
-/************************************************************************/
-/*                        JP2GrokFindCodeStream()                   */
-/************************************************************************/
-
-static vsi_l_offset JP2GrokFindCodeStream( VSILFILE* fp,
-                                               vsi_l_offset* pnLength )
-{
-    vsi_l_offset nCodeStreamStart = 0;
-    vsi_l_offset nCodeStreamLength = 0;
-
-    VSIFSeekL(fp, 0, SEEK_SET);
-    GByte abyHeader[16];
-    VSIFReadL(abyHeader, 1, 16, fp);
-
-    if (memcmp( abyHeader, jpc_header, sizeof(jpc_header) ) == 0)
-    {
-        VSIFSeekL(fp, 0, SEEK_END);
-        nCodeStreamLength = VSIFTellL(fp);
-    }
-    else if (memcmp( abyHeader + 4, jp2_box_jp, sizeof(jp2_box_jp) ) == 0)
-    {
-        /* Find offset of first jp2c box */
-        GDALJP2Box oBox( fp );
-        if( oBox.ReadFirst() )
-        {
-            while( strlen(oBox.GetType()) > 0 )
-            {
-                if( EQUAL(oBox.GetType(),"jp2c") )
-                {
-                    nCodeStreamStart = VSIFTellL(fp);
-                    nCodeStreamLength = oBox.GetDataLength();
-                    break;
-                }
-
-                if (!oBox.ReadNext())
-                    break;
-            }
-        }
-    }
-    *pnLength = nCodeStreamLength;
-    return nCodeStreamStart;
-}
-
-/************************************************************************/
-/*                                Open()                                */
-/************************************************************************/
-
-GDALDataset *JP2GrokDataset::Open( GDALOpenInfo * poOpenInfo )
-
-{
-    if (!Identify(poOpenInfo) || poOpenInfo->fpL == nullptr)
-        return nullptr;
-
-
-    int numThreads = 0;
-    const char* pszThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS");
-    if (EQUAL(pszThreads, "ALL_CPUS"))
-        numThreads = CPLGetNumCPUs();
-    else
-        numThreads = atoi(pszThreads);
-    if (numThreads > 128){
-        numThreads = 128;
-    }
-    if (numThreads <= 0){
-        numThreads = 1;
-    }
-    grk_initialize(nullptr, numThreads);
-
-    grk_set_info_handler(JP2GrokDataset_InfoCallback,nullptr);
-    grk_set_warning_handler(JP2GrokDataset_WarningCallback,nullptr);
-    grk_set_error_handler(JP2GrokDataset_ErrorCallback,nullptr);
-
-    /* Detect which codec to use : J2K or JP2 ? */
-    vsi_l_offset nCodeStreamLength = 0;
-    vsi_l_offset nCodeStreamStart = JP2GrokFindCodeStream(poOpenInfo->fpL,
-                                                              &nCodeStreamLength);
-
-    if( nCodeStreamStart == 0 && nCodeStreamLength == 0 )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "No code-stream in JP2 file");
-        return nullptr;
-    }
-
-    GRK_CODEC_FORMAT eCodecFormat = (nCodeStreamStart == 0) ? GRK_CODEC_J2K : GRK_CODEC_JP2;
-
-    grk_decompress_core_params parameters;
-    grk_decompress_set_default_params(&parameters);
-
-    JP2GrokFile* psJP2GrokFile = static_cast<JP2GrokFile*>(
-        CPLMalloc(sizeof(JP2GrokFile)));
-    psJP2GrokFile->fp = poOpenInfo->fpL;
-    psJP2GrokFile->nBaseOffset = nCodeStreamStart;
-    grk_stream * pStream = JP2GrokCreateReadStream(psJP2GrokFile,
-                                                         nCodeStreamLength);
-    if (!pStream){
-        return nullptr;
-    }
-
-    auto pCodec = grk_decompress_create(GRK_CODEC_J2K,pStream);
-    if( pCodec == nullptr ){
-        grk_object_unref(pStream);
-        return nullptr;
-    }
-    if (! grk_decompress_init(pCodec,&parameters))
-    {
-        return nullptr;
-    }
-
-    grk_image * psImage = nullptr;
-
+    auto pStream = grk_stream_new(1024, TRUE);
     if( pStream == nullptr )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "JP2GrokCreateReadStream() failed");
-        grk_object_unref(pStream);
-        grk_object_unref(pCodec);
-        CPLFree(psJP2GrokFile);
         return nullptr;
-    }
 
-    grk_header_info headerInfo;
-    if(!grk_decompress_read_header(pCodec,&headerInfo))
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "grk_read_header() failed");
-        grk_object_unref(pCodec);
-        grk_object_unref(pStream);
-        CPLFree(psJP2GrokFile);
-        return nullptr;
-    }
+    VSIFSeekL(psJP2GrokFile->fp, psJP2GrokFile->nBaseOffset, SEEK_SET);
+    grk_stream_set_user_data_length(pStream, nSize);
 
-    uint32_t nTileW,nTileH;
-    nTileW = headerInfo.t_width;
-    nTileH = headerInfo.t_height;
-#ifdef DEBUG
-    uint32_t  nX0,nY0;
-    uint32_t nTilesX,nTilesY;
-    nX0 = headerInfo.tx0;
-    nY0 = headerInfo.ty0;
-    nTilesX = headerInfo.t_width;
-    nTilesY = headerInfo.t_height;
-    int mct = headerInfo.mct;
-#endif
-    int numResolutions = headerInfo.numresolutions;
-    psImage = grk_decompress_get_composited_image(pCodec);
-    if (psImage == nullptr)
-    {
-        grk_object_unref(pCodec);
-        grk_object_unref(pStream);
-        grk_object_unref(&psImage->obj);
-        CPLFree(psJP2GrokFile);
-        return nullptr;
-    }
+    grk_stream_set_write_function(pStream, JP2Dataset_Write);
+    grk_stream_set_read_function(pStream, JP2Dataset_Read);
+    grk_stream_set_user_data(pStream, psJP2GrokFile, nullptr);
 
-#ifdef DEBUG
-    CPLDebug("GROK", "nX0 = %u", nX0);
-    CPLDebug("GROK", "nY0 = %u", nY0);
-    CPLDebug("GROK", "nTileW = %u", nTileW);
-    CPLDebug("GROK", "nTileH = %u", nTileH);
-    CPLDebug("GROK", "nTilesX = %u", nTilesX);
-    CPLDebug("GROK", "nTilesY = %u", nTilesY);
-    CPLDebug("GROK", "mct = %d", mct);
-    CPLDebug("GROK", "psImage->x0 = %u", psImage->x0);
-    CPLDebug("GROK", "psImage->y0 = %u", psImage->y0);
-    CPLDebug("GROK", "psImage->x1 = %u", psImage->x1);
-    CPLDebug("GROK", "psImage->y1 = %u", psImage->y1);
-    CPLDebug("GROK", "psImage->numcomps = %d", psImage->numcomps);
-    //CPLDebug("GROK", "psImage->color_space = %d", psImage->color_space);
-    CPLDebug("GROK", "numResolutions = %d", numResolutions);
-    for(int i=0;i<(int)psImage->numcomps;i++)
-    {
-        CPLDebug("GROK", "psImage->comps[%d].dx = %u", i, psImage->comps[i].dx);
-        CPLDebug("GROK", "psImage->comps[%d].dy = %u", i, psImage->comps[i].dy);
-        CPLDebug("GROK", "psImage->comps[%d].x0 = %u", i, psImage->comps[i].x0);
-        CPLDebug("GROK", "psImage->comps[%d].y0 = %u", i, psImage->comps[i].y0);
-        CPLDebug("GROK", "psImage->comps[%d].w = %u", i, psImage->comps[i].w);
-        CPLDebug("GROK", "psImage->comps[%d].h = %u", i, psImage->comps[i].h);
-        //CPLDebug("GROK", "psImage->comps[%d].resno_decoded = %d", i, psImage->comps[i].resno_decoded);
-        //CPLDebug("GROK", "psImage->comps[%d].factor = %d", i, psImage->comps[i].factor);
-        CPLDebug("GROK", "psImage->comps[%d].prec = %d", i, psImage->comps[i].prec);
-        CPLDebug("GROK", "psImage->comps[%d].sgnd = %d", i, psImage->comps[i].sgnd);
-    }
-#endif
+    return pStream;
+}
 
-    if (psImage->x1 <= psImage->x0 ||
-        psImage->y1 <= psImage->y0 ||
-        psImage->numcomps == 0 ||
-        (psImage->comps[0].w >> 31) != 0 ||
-        (psImage->comps[0].h >> 31) != 0 ||
-        (nTileW >> 31) != 0 ||
-        (nTileH >> 31) != 0 ||
-        psImage->comps[0].w != psImage->x1 - psImage->x0 ||
-        psImage->comps[0].h != psImage->y1 - psImage->y0)
-    {
-        CPLDebug("GROK", "Unable to handle that image (1)");
-        grk_object_unref(pCodec);
-        grk_object_unref(pStream);
-        grk_object_unref(&psImage->obj);
-        CPLFree(psJP2GrokFile);
-        return nullptr;
-    }
+/************************************************************************/
+/*                             ReadBlock()                              */
+/************************************************************************/
 
-    GDALDataType eDataType = GDT_Byte;
-    if (psImage->comps[0].prec > 16)
-    {
-        if (psImage->comps[0].sgnd)
-            eDataType = GDT_Int32;
-        else
-            eDataType = GDT_UInt32;
-    }
-    else if (psImage->comps[0].prec > 8)
-    {
-        if (psImage->comps[0].sgnd)
-            eDataType = GDT_Int16;
-        else
-            eDataType = GDT_UInt16;
-    }
+CPLErr JP2GrokDataset::ReadBlock( int nBand, VSILFILE* fpIn,
+                                      int nBlockXOff, int nBlockYOff, void * pImage,
+                                      int nBandCount, int* panBandMap )
+{
+    CPLErr          eErr = CE_None;
+    int nBlockXSize=0;
+    int nBlockYSize=0;
+    GDALDataType eDataType=GDT_Unknown;
+    int nBlocksPerRow=0;
+    getBandInfo(nBand,nBlockXSize,nBlockYSize,eDataType,nBlocksPerRow);
+    int nTileNumber = nBlockXOff + nBlockYOff * nBlocksPerRow;
 
-    int bIs420  =  (psImage->color_space != GRK_CLRSPC_SRGB &&
-                    eDataType == GDT_Byte &&
-                    (psImage->numcomps == 3 || psImage->numcomps == 4) &&
-                    psImage->comps[1].w == psImage->comps[0].w / 2 &&
-                    psImage->comps[1].h == psImage->comps[0].h / 2 &&
-                    psImage->comps[2].w == psImage->comps[0].w / 2 &&
-                    psImage->comps[2].h == psImage->comps[0].h / 2) &&
-                    (psImage->numcomps == 3 ||
-                     (psImage->numcomps == 4 &&
-                      psImage->comps[3].w == psImage->comps[0].w &&
-                      psImage->comps[3].h == psImage->comps[0].h));
+    int nDataTypeSize = (GDALGetDataTypeSize(eDataType) / 8);
+    const int nWidthToRead =
+        std::min(nBlockXSize, nRasterXSize - nBlockXOff * nBlockXSize);
+    const int nHeightToRead =
+        std::min(nBlockYSize, nRasterYSize - nBlockYOff * nBlockYSize);
+    *m_pnLastLevel = iLevel;
 
-    if (bIs420)
+    grk_codec*    pCodec = nullptr;
+    grk_stream *  pStream = nullptr;
+    grk_image *   psImage = nullptr;
+    JP2File sJP2GrokFile; // keep it in this scope
+	if( m_psJP2File )
+	{
+		pStream = CreateReadStream( m_psJP2File, nCodeStreamLength);
+	}
+	else
+	{
+		sJP2GrokFile.fp = fpIn;
+		sJP2GrokFile.nBaseOffset = nCodeStreamStart;
+		pStream = CreateReadStream(&sJP2GrokFile, nCodeStreamLength);
+	}
+	if( pStream == nullptr )
+	{
+		CPLError(CE_Failure, CPLE_AppDefined, "CreateReadStream() failed");
+		eErr = CE_Failure;
+		goto end;
+	}
+	pCodec = grk_decompress_create(GRK_CODEC_J2K,pStream);
+	if( pCodec == nullptr )
+	{
+		CPLError(CE_Failure, CPLE_AppDefined, "grk_create_decompress() failed");
+		eErr = CE_Failure;
+		goto end;
+	}
+	grk_decompress_core_params parameters;
+	grk_decompress_set_default_params(&parameters);
+	if (! grk_decompress_init(pCodec,&parameters))
+	{
+		CPLError(CE_Failure, CPLE_AppDefined, "grk_decompress_init() failed");
+		eErr = CE_Failure;
+		goto end;
+	}
+	parameters.reduce = iLevel;
+	if(!grk_decompress_read_header(pCodec,NULL))
+	{
+		CPLError(CE_Failure, CPLE_AppDefined, "grk_read_header() failed (psImage=%p)", psImage);
+		eErr = CE_Failure;
+		goto end;
+	}
+	if (bUseSetDecodeArea)
+	{
+		/* The decode area must be expressed in grid reference, ie at full*/
+		/* scale */
+		if (!grk_decompress_set_window(pCodec,
+								 m_nX0 + static_cast<int>(static_cast<GIntBig>(nBlockXOff*nBlockXSize) * nParentXSize / nRasterXSize),
+								 m_nY0 + static_cast<int>(static_cast<GIntBig>(nBlockYOff*nBlockYSize) * nParentYSize / nRasterYSize),
+								 m_nX0 + static_cast<int>(static_cast<GIntBig>(nBlockXOff*nBlockXSize+nWidthToRead) * nParentXSize / nRasterXSize),
+								 m_nY0 + static_cast<int>(static_cast<GIntBig>(nBlockYOff*nBlockYSize+nHeightToRead) * nParentYSize / nRasterYSize)))
+		{
+			CPLError(CE_Failure, CPLE_AppDefined, "grk_set_decode_area() failed");
+			eErr = CE_Failure;
+			goto end;
+		}
+		if (!grk_decompress(pCodec,NULL))
+		{
+			CPLError(CE_Failure, CPLE_AppDefined, "grk_decode() failed");
+			eErr = CE_Failure;
+			goto end;
+		}
+	}
+	else
+	{
+		if (!grk_decompress_tile( pCodec, nTileNumber ))
+		{
+			CPLError(CE_Failure, CPLE_AppDefined, "grk_get_decoded_tile() failed");
+			eErr = CE_Failure;
+			goto end;
+		}
+	}
+	psImage = grk_decompress_get_composited_image(pCodec);
+    for(unsigned int iBand = 0; iBand < psImage->numcomps; iBand ++)
     {
-        CPLDebug("GROK", "420 format");
-    }
-    else
-    {
-        int iBand;
-        for(iBand = 2; iBand <= (int)psImage->numcomps; iBand ++)
+        if( psImage->comps[iBand].data == nullptr )
         {
-            if( psImage->comps[iBand-1].w != psImage->comps[0].w ||
-                psImage->comps[iBand-1].h != psImage->comps[0].h )
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "psImage->comps[%d].data == nullptr", iBand);
+            eErr = CE_Failure;
+            goto end;
+        }
+    }
+    for(int xBand = 0; xBand < nBandCount; xBand ++)
+    {
+        GDALRasterBlock *poBlock = nullptr;
+        int iBand = (panBandMap) ? panBandMap[xBand] : xBand + 1;
+        int bPromoteTo8Bit = ((JP2RasterBand*)GetRasterBand(iBand))->bPromoteTo8Bit;
+
+        void* pDstBuffer = nullptr;
+        if (iBand == nBand)
+            pDstBuffer = pImage;
+        else
+        {
+            AcquireMutex();
+            poBlock = ((JP2RasterBand*)GetRasterBand(iBand))->
+                TryGetLockedBlockRef(nBlockXOff,nBlockYOff);
+            if (poBlock != nullptr)
             {
-                CPLDebug("GROK", "Unable to handle that image (2)");
-                grk_object_unref(pCodec);
-                grk_object_unref(pStream);
-                grk_object_unref(&psImage->obj);
-                CPLFree(psJP2GrokFile);
-                return nullptr;
+                ReleaseMutex();
+                poBlock->DropLock();
+                continue;
             }
-        }
-    }
 
-/* -------------------------------------------------------------------- */
-/*      Create a corresponding GDALDataset.                             */
-/* -------------------------------------------------------------------- */
-    JP2GrokDataset     *poDS;
-    int                 iBand;
-
-    poDS = new JP2GrokDataset();
-    poDS->m_osFilename = poOpenInfo->pszFilename;
-    if( eCodecFormat == GRK_CODEC_JP2 )
-        poDS->eAccess = poOpenInfo->eAccess;
-    poDS->eColorSpace = psImage->color_space;
-    poDS->nRasterXSize = psImage->x1 - psImage->x0;
-    poDS->nRasterYSize = psImage->y1 - psImage->y0;
-    poDS->nBands = psImage->numcomps;
-    poDS->fp = poOpenInfo->fpL;
-    poOpenInfo->fpL = nullptr;
-    poDS->nCodeStreamStart = nCodeStreamStart;
-    poDS->nCodeStreamLength = nCodeStreamLength;
-    poDS->bIs420 = bIs420;
-    poDS->bSingleTiled = (poDS->nRasterXSize == (int)nTileW &&
-                          poDS->nRasterYSize == (int)nTileH);
-    poDS->m_nX0 = psImage->x0;
-    poDS->m_nY0 = psImage->y0;
-
-    int nBlockXSize = (int)nTileW;
-    int nBlockYSize = (int)nTileH;
-
-    if( CPLFetchBool(poOpenInfo->papszOpenOptions, "USE_TILE_AS_BLOCK", false) )
-    {
-        poDS->bUseSetDecodeArea = false;
-    }
-    /* Some Sentinel2 preview datasets are 343x343 large, but with 8x8 blocks */
-    /* Using the tile API for that is super slow, so expose a single block */
-    else if( poDS->nRasterXSize <= 1024 &&  poDS->nRasterYSize <= 1024 &&
-             nTileW < 32 && nTileH < 32 )
-    {
-        poDS->bUseSetDecodeArea = true;
-        nBlockXSize = poDS->nRasterXSize;
-        nBlockYSize = poDS->nRasterYSize;
-    }
-    else
-    {
-        poDS->bUseSetDecodeArea =
-            poDS->bSingleTiled &&
-            (poDS->nRasterXSize > 1024 ||
-            poDS->nRasterYSize > 1024);
-
-        /* Other Sentinel2 preview datasets are 343x343 and 60m are 1830x1830, but they */
-        /* are tiled with tile dimensions 2048x2048. It would be a waste of */
-        /* memory to allocate such big blocks */
-        if( poDS->nRasterXSize < (int)nTileW &&
-            poDS->nRasterYSize < (int)nTileH )
-        {
-            poDS->bUseSetDecodeArea = TRUE;
-            nBlockXSize = poDS->nRasterXSize;
-            nBlockYSize = poDS->nRasterYSize;
-            if (nBlockXSize > 2048) nBlockXSize = 2048;
-            if (nBlockYSize > 2048) nBlockYSize = 2048;
-        }
-        else if (poDS->bUseSetDecodeArea)
-        {
-            // Arbitrary threshold... ~4 million at least needed for the GRIB2
-            // images mentioned below.
-            if( nTileH == 1 && nTileW < 20 * 1024 * 1024 )
+            poBlock = GetRasterBand(iBand)->
+                GetLockedBlockRef(nBlockXOff,nBlockYOff, TRUE);
+            ReleaseMutex();
+            if (poBlock == nullptr)
             {
-                // Some GRIB2 JPEG2000 compressed images are a 2D image organized
-                // as a single line image...
+                continue;
+            }
+
+            pDstBuffer = poBlock->GetDataRef();
+        }
+        if (bIs420)
+        {
+            if( (int)psImage->comps[0].w < nWidthToRead ||
+                (int)psImage->comps[0].h < nHeightToRead ||
+                psImage->comps[1].w != (psImage->comps[0].w + 1) / 2 ||
+                psImage->comps[1].h != (psImage->comps[0].h + 1) / 2 ||
+                psImage->comps[2].w != (psImage->comps[0].w + 1) / 2 ||
+                psImage->comps[2].h != (psImage->comps[0].h + 1) / 2 ||
+                (nBands == 4 && (
+                    (int)psImage->comps[3].w < nWidthToRead ||
+                    (int)psImage->comps[3].h < nHeightToRead)) )
+            {
+                CPLError(CE_Failure, CPLE_AssertionFailed,
+                         "Assertion at line %d of %s failed",
+                         __LINE__, __FILE__);
+                if (poBlock != nullptr)
+                    poBlock->DropLock();
+                eErr = CE_Failure;
+                goto end;
+            }
+            GByte* pDst = (GByte*)pDstBuffer;
+            if( iBand == 4 )
+            {
+                const int32_t* pSrcA = psImage->comps[3].data;
+                for(GPtrDiff_t j=0;j<nHeightToRead;j++)
+                {
+                    memcpy(pDst + j*nBlockXSize,
+                            pSrcA + j * psImage->comps[0].w,
+                            nWidthToRead);
+                }
             }
             else
             {
-                if (nBlockXSize > 1024) nBlockXSize = 1024;
-                if (nBlockYSize > 1024) nBlockYSize = 1024;
-            }
-        }
-    }
-
-    GDALColorTable* poCT = nullptr;
-
-/* -------------------------------------------------------------------- */
-/*      Look for color table or cdef box                                */
-/* -------------------------------------------------------------------- */
-    if( eCodecFormat == GRK_CODEC_JP2 )
-    {
-        vsi_l_offset nCurOffset = VSIFTellL(poDS->fp);
-
-        GDALJP2Box oBox( poDS->fp );
-        if( oBox.ReadFirst() )
-        {
-            while( strlen(oBox.GetType()) > 0 )
-            {
-                if( EQUAL(oBox.GetType(),"jp2h") )
+                const int32_t* pSrcY = psImage->comps[0].data;
+                const int32_t* pSrcCb = psImage->comps[1].data;
+                const int32_t* pSrcCr = psImage->comps[2].data;
+                for(GPtrDiff_t j=0;j<nHeightToRead;j++)
                 {
-                    GDALJP2Box oSubBox( poDS->fp );
-
-                    for( oSubBox.ReadFirstChild( &oBox );
-                         strlen(oSubBox.GetType()) > 0;
-                         oSubBox.ReadNextChild( &oBox ) )
+                    for(int i=0;i<nWidthToRead;i++)
                     {
-                        GIntBig nDataLength = oSubBox.GetDataLength();
-                        if( poCT == nullptr &&
-                            EQUAL(oSubBox.GetType(),"pclr") &&
-                            nDataLength >= 3 &&
-                            nDataLength <= 2 + 1 + 4 + 4 * 256 )
-                        {
-                            GByte* pabyCT = oSubBox.ReadBoxData();
-                            if( pabyCT != nullptr )
-                            {
-                                int nEntries = (pabyCT[0] << 8) | pabyCT[1];
-                                int nComponents = pabyCT[2];
-                                /* CPLDebug("GROK", "Color table found"); */
-                                if( nEntries <= 256 && nComponents == 3 )
-                                {
-                                    /*CPLDebug("GROK", "resol[0] = %d", pabyCT[3]);
-                                    CPLDebug("GROK", "resol[1] = %d", pabyCT[4]);
-                                    CPLDebug("GROK", "resol[2] = %d", pabyCT[5]);*/
-                                    if( pabyCT[3] == 7 && pabyCT[4] == 7 && pabyCT[5] == 7 &&
-                                        nDataLength == 2 + 1 + 3 + 3 * nEntries )
-                                    {
-                                        poCT = new GDALColorTable();
-                                        for(int i=0;i<nEntries;i++)
-                                        {
-                                            GDALColorEntry sEntry;
-                                            sEntry.c1 = pabyCT[6 + 3 * i];
-                                            sEntry.c2 = pabyCT[6 + 3 * i + 1];
-                                            sEntry.c3 = pabyCT[6 + 3 * i + 2];
-                                            sEntry.c4 = 255;
-                                            poCT->SetColorEntry(i, &sEntry);
-                                        }
-                                    }
-                                }
-                                else if ( nEntries <= 256 && nComponents == 4 )
-                                {
-                                    if( pabyCT[3] == 7 && pabyCT[4] == 7 &&
-                                        pabyCT[5] == 7 && pabyCT[6] == 7 &&
-                                        nDataLength == 2 + 1 + 4 + 4 * nEntries )
-                                    {
-                                        poCT = new GDALColorTable();
-                                        for(int i=0;i<nEntries;i++)
-                                        {
-                                            GDALColorEntry sEntry;
-                                            sEntry.c1 = pabyCT[7 + 4 * i];
-                                            sEntry.c2 = pabyCT[7 + 4 * i + 1];
-                                            sEntry.c3 = pabyCT[7 + 4 * i + 2];
-                                            sEntry.c4 = pabyCT[7 + 4 * i + 3];
-                                            poCT->SetColorEntry(i, &sEntry);
-                                        }
-                                    }
-                                }
-                                CPLFree(pabyCT);
-                            }
-                        }
-                        /* There's a bug/misfeature in Grok: the color_space
-                           only gets set at read tile time */
-                        else if( EQUAL(oSubBox.GetType(),"colr") &&
-                                 nDataLength == 7 )
-                        {
-                            GByte* pabyContent = oSubBox.ReadBoxData();
-                            if( pabyContent != nullptr )
-                            {
-                                if( pabyContent[0] == 1 /* enumerated colourspace */ )
-                                {
-                                    GUInt32 enumcs = (pabyContent[3] << 24) |
-                                                     (pabyContent[4] << 16) |
-                                                     (pabyContent[5] << 8) |
-                                                     (pabyContent[6]);
-                                    if( enumcs == 16 )
-                                    {
-                                        poDS->eColorSpace = GRK_CLRSPC_SRGB;
-                                        CPLDebug("GROK", "SRGB color space");
-                                    }
-                                    else if( enumcs == 17 )
-                                    {
-                                        poDS->eColorSpace = GRK_CLRSPC_GRAY;
-                                        CPLDebug("GROK", "Grayscale color space");
-                                    }
-                                    else if( enumcs == 18 )
-                                    {
-                                        poDS->eColorSpace = GRK_CLRSPC_SYCC;
-                                        CPLDebug("GROK", "SYCC color space");
-                                    }
-                                    else if( enumcs == 20 )
-                                    {
-                                        /* Used by J2KP4files/testfiles_jp2/file7.jp2 */
-                                        poDS->eColorSpace = GRK_CLRSPC_SRGB;
-                                        CPLDebug("GROK", "e-sRGB color space");
-                                    }
-                                    else if( enumcs == 21 )
-                                    {
-                                        /* Used by J2KP4files/testfiles_jp2/file5.jp2 */
-                                        poDS->eColorSpace = GRK_CLRSPC_SRGB;
-                                        CPLDebug("GROK", "ROMM-RGB color space");
-                                    }
-                                    else
-                                    {
-                                        poDS->eColorSpace = GRK_CLRSPC_UNKNOWN;
-                                        CPLDebug("GROK", "Unknown color space");
-                                    }
-                                }
-                                CPLFree(pabyContent);
-                            }
-                        }
-                        /* Check if there's an alpha channel or odd channel attribution */
-                        else if( EQUAL(oSubBox.GetType(),"cdef") &&
-                                 nDataLength == 2 + poDS->nBands * 6 )
-                        {
-                            GByte* pabyContent = oSubBox.ReadBoxData();
-                            if( pabyContent != nullptr )
-                            {
-                                int nEntries = (pabyContent[0] << 8) | pabyContent[1];
-                                if( nEntries == poDS->nBands )
-                                {
-                                    poDS->nRedIndex = -1;
-                                    poDS->nGreenIndex = -1;
-                                    poDS->nBlueIndex = -1;
-                                    for(int i=0;i<poDS->nBands;i++)
-                                    {
-                                        int CNi = (pabyContent[2+6*i] << 8) | pabyContent[2+6*i+1];
-                                        int Typi = (pabyContent[2+6*i+2] << 8) | pabyContent[2+6*i+3];
-                                        int Asoci = (pabyContent[2+6*i+4] << 8) | pabyContent[2+6*i+5];
-                                        if( CNi < 0 || CNi >= poDS->nBands )
-                                        {
-                                            CPLError(CE_Failure, CPLE_AppDefined,
-                                                     "Wrong value of CN%d=%d", i, CNi);
-                                            break;
-                                        }
-                                        if( Typi == 0 )
-                                        {
-                                            if( Asoci == 1 )
-                                                poDS->nRedIndex = CNi;
-                                            else if( Asoci == 2 )
-                                                poDS->nGreenIndex = CNi;
-                                            else if( Asoci == 3 )
-                                                poDS->nBlueIndex = CNi;
-                                            else if( Asoci < 0 || (Asoci > poDS->nBands && Asoci != 65535) )
-                                            {
-                                                CPLError(CE_Failure, CPLE_AppDefined,
-                                                     "Wrong value of Asoc%d=%d", i, Asoci);
-                                                break;
-                                            }
-                                        }
-                                        else if( Typi == 1 )
-                                        {
-                                            poDS->nAlphaIndex = CNi;
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    CPLDebug("GROK", "Unsupported cdef content");
-                                }
-                                CPLFree(pabyContent);
-                            }
-                        }
+                        int Y = pSrcY[j * psImage->comps[0].w + i];
+                        int Cb = pSrcCb[(j/2) * psImage->comps[1].w + (i/2)];
+                        int Cr = pSrcCr[(j/2) * psImage->comps[2].w + (i/2)];
+                        if (iBand == 1)
+                            pDst[j * nBlockXSize + i] = CLAMP_0_255((int)(Y + 1.402 * (Cr - 128)));
+                        else if (iBand == 2)
+                            pDst[j * nBlockXSize + i] = CLAMP_0_255((int)(Y - 0.34414 * (Cb - 128) - 0.71414 * (Cr - 128)));
+                        else if (iBand == 3)
+                            pDst[j * nBlockXSize + i] = CLAMP_0_255((int)(Y + 1.772 * (Cb - 128)));
                     }
                 }
-
-                if (!oBox.ReadNext())
-                    break;
             }
-        }
-
-        VSIFSeekL(poDS->fp, nCurOffset, SEEK_SET);
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Create band information objects.                                */
-/* -------------------------------------------------------------------- */
-    for( iBand = 1; iBand <= poDS->nBands; iBand++ )
-    {
-        const bool bPromoteTo8Bit =
-            iBand == poDS->nAlphaIndex + 1 &&
-            psImage->comps[(poDS->nAlphaIndex==0 && poDS->nBands > 1) ? 1 : 0].prec == 8 &&
-            psImage->comps[poDS->nAlphaIndex ].prec == 1 &&
-            CPLFetchBool(
-                poOpenInfo->papszOpenOptions, "1BIT_ALPHA_PROMOTION",
-                CPLTestBool(CPLGetConfigOption("JP2GROK_PROMOTE_1BIT_ALPHA_AS_8BIT", "YES")));
-        if( bPromoteTo8Bit )
-            CPLDebug("JP2Grok", "Alpha band is promoted from 1 bit to 8 bit");
-
-        JP2GrokRasterBand* poBand =
-            new JP2GrokRasterBand( poDS, iBand, eDataType,
-                                        bPromoteTo8Bit ? 8: psImage->comps[iBand-1].prec,
-                                        bPromoteTo8Bit,
-                                        nBlockXSize, nBlockYSize);
-        if( iBand == 1 && poCT != nullptr )
-            poBand->poCT = poCT;
-        poDS->SetBand( iBand, poBand );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Create overview datasets.                                       */
-/* -------------------------------------------------------------------- */
-    int nW = poDS->nRasterXSize;
-    int nH = poDS->nRasterYSize;
-    poDS->nParentXSize = poDS->nRasterXSize;
-    poDS->nParentYSize = poDS->nRasterYSize;
-
-    /* Lower resolutions are not compatible with a color-table */
-    if( poCT != nullptr )
-        numResolutions = 0;
-
-    if( poDS->bSingleTiled && poDS->bUseSetDecodeArea )
-    {
-        poDS->m_ppCodec = new grk_codec* (pCodec);
-        poDS->m_ppStream = new grk_stream* (pStream);
-        poDS->m_ppsImage = new grk_image* (psImage);
-        poDS->m_psJP2GrokFile = psJP2GrokFile;
-    }
-    poDS->m_pnLastLevel = new int(-1);
-
-    while (poDS->nOverviewCount+1 < numResolutions &&
-           (nW > 128 || nH > 128) &&
-           (poDS->bUseSetDecodeArea || ((nTileW % 2) == 0 && (nTileH % 2) == 0)))
-    {
-        // This must be this exact formula per the JPEG2000 standard
-        nW = (nW + 1) / 2;
-        nH = (nH + 1) / 2;
-
-        poDS->papoOverviewDS = (JP2GrokDataset**) CPLRealloc(
-                    poDS->papoOverviewDS,
-                    (poDS->nOverviewCount + 1) * sizeof(JP2GrokDataset*));
-        JP2GrokDataset* poODS = new JP2GrokDataset();
-        poODS->m_osFilename = poDS->m_osFilename;
-        poODS->nParentXSize = poDS->nRasterXSize;
-        poODS->nParentYSize = poDS->nRasterYSize;
-        poODS->SetDescription( poOpenInfo->pszFilename );
-        poODS->iLevel = poDS->nOverviewCount + 1;
-        poODS->bSingleTiled = poDS->bSingleTiled;
-        poODS->bUseSetDecodeArea = poDS->bUseSetDecodeArea;
-        poODS->nRedIndex = poDS->nRedIndex;
-        poODS->nGreenIndex = poDS->nGreenIndex;
-        poODS->nBlueIndex = poDS->nBlueIndex;
-        poODS->nAlphaIndex = poDS->nAlphaIndex;
-        if (!poDS->bUseSetDecodeArea)
-        {
-            nTileW /= 2;
-            nTileH /= 2;
-            nBlockXSize = (int)nTileW;
-            nBlockYSize = (int)nTileH;
+            if( bPromoteTo8Bit )
+            {
+                for(GPtrDiff_t j=0;j<nHeightToRead;j++)
+                {
+                    for(int i=0;i<nWidthToRead;i++)
+                    {
+                        pDst[j * nBlockXSize + i] *= 255;
+                    }
+                }
+            }
         }
         else
         {
-            nBlockXSize = std::min(nW, (int)nTileW);
-            nBlockYSize = std::min(nH, (int)nTileH);
+            if( (int)psImage->comps[iBand-1].w < nWidthToRead ||
+                (int)psImage->comps[iBand-1].h < nHeightToRead )
+            {
+                CPLError(CE_Failure, CPLE_AssertionFailed,
+                         "Assertion at line %d of %s failed",
+                         __LINE__, __FILE__);
+                if (poBlock != nullptr)
+                    poBlock->DropLock();
+                eErr = CE_Failure;
+                goto end;
+            }
+
+            if( bPromoteTo8Bit )
+            {
+                for(GPtrDiff_t j=0;j<nHeightToRead;j++)
+                {
+                    for(int i=0;i<nWidthToRead;i++)
+                    {
+                        psImage->comps[iBand-1].data[j * psImage->comps[iBand-1].w + i] *= 255;
+                    }
+                }
+            }
+
+            if ((int)psImage->comps[iBand-1].w == nBlockXSize &&
+                (int)psImage->comps[iBand-1].h == nBlockYSize)
+            {
+                GDALCopyWords64(psImage->comps[iBand-1].data, GDT_Int32, 4,
+                            pDstBuffer, eDataType, nDataTypeSize, static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize);
+            }
+            else
+            {
+                for(GPtrDiff_t j=0;j<nHeightToRead;j++)
+                {
+                    GDALCopyWords(psImage->comps[iBand-1].data + j * psImage->comps[iBand-1].w, GDT_Int32, 4,
+                                (GByte*)pDstBuffer + j * nBlockXSize * nDataTypeSize, eDataType, nDataTypeSize,
+                                nWidthToRead);
+                }
+            }
         }
-
-        poODS->eColorSpace = poDS->eColorSpace;
-        poODS->nRasterXSize = nW;
-        poODS->nRasterYSize = nH;
-        poODS->nBands = poDS->nBands;
-        poODS->fp = poDS->fp;
-        poODS->nCodeStreamStart = nCodeStreamStart;
-        poODS->nCodeStreamLength = nCodeStreamLength;
-        poODS->bIs420 = bIs420;
-
-        if( poODS->bSingleTiled && poODS->bUseSetDecodeArea )
-        {
-            poODS->m_ppCodec = poDS->m_ppCodec;
-            poODS->m_ppStream = poDS->m_ppStream;
-            poODS->m_ppsImage = poDS->m_ppsImage;
-            poODS->m_psJP2GrokFile = poDS->m_psJP2GrokFile;
-        }
-        poODS->m_pnLastLevel = poDS->m_pnLastLevel;
-
-        poODS->m_nX0 = poDS->m_nX0;
-        poODS->m_nY0 = poDS->m_nY0;
-
-        for( iBand = 1; iBand <= poDS->nBands; iBand++ )
-        {
-            const bool bPromoteTo8Bit =
-                iBand == poDS->nAlphaIndex + 1 &&
-                psImage->comps[(poDS->nAlphaIndex==0 && poDS->nBands > 1) ? 1 : 0].prec == 8 &&
-                psImage->comps[poDS->nAlphaIndex].prec == 1 &&
-                CPLFetchBool(
-                    poOpenInfo->papszOpenOptions, "1BIT_ALPHA_PROMOTION",
-                    CPLTestBool(CPLGetConfigOption("JP2GROK_PROMOTE_1BIT_ALPHA_AS_8BIT", "YES")));
-
-            poODS->SetBand( iBand, new JP2GrokRasterBand( poODS, iBand, eDataType,
-                                                              bPromoteTo8Bit ? 8: psImage->comps[iBand-1].prec,
-                                                              bPromoteTo8Bit,
-                                                              nBlockXSize, nBlockYSize ) );
-        }
-
-        poDS->papoOverviewDS[poDS->nOverviewCount ++] = poODS;
+        if (poBlock != nullptr)
+            poBlock->DropLock();
     }
+end:
+  if( pCodec && pStream )
+	  grk_decompress_end(pCodec);
+  grk_object_unref(pStream);
+  grk_object_unref(pCodec);
 
-    if( poDS->bSingleTiled && poDS->bUseSetDecodeArea )
-    {
-        // nothing
-    }
-    else
-    {
-        grk_object_unref(pCodec);
-        grk_object_unref(pStream);
-        CPLFree(psJP2GrokFile);
-        pCodec = nullptr;
-        pStream = nullptr;
-        psImage = nullptr;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      More metadata.                                                  */
-/* -------------------------------------------------------------------- */
-    if( poDS->nBands > 1 )
-    {
-        poDS->GDALDataset::SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
-    }
-
-    poOpenInfo->fpL = poDS->fp;
-    vsi_l_offset nCurOffset = VSIFTellL(poDS->fp);
-    poDS->LoadJP2Metadata(poOpenInfo);
-    VSIFSeekL(poDS->fp, nCurOffset, SEEK_SET);
-    poOpenInfo->fpL = nullptr;
-
-    poDS->bHasGeoreferencingAtOpening =
-        (!poDS->m_oSRS.IsEmpty()||
-         poDS->nGCPCount != 0 || poDS->bGeoTransformValid);
-
-/* -------------------------------------------------------------------- */
-/*      Vector layers                                                   */
-/* -------------------------------------------------------------------- */
-    if( poOpenInfo->nOpenFlags & GDAL_OF_VECTOR )
-    {
-        poDS->LoadVectorLayers(
-            CPLFetchBool(poOpenInfo->papszOpenOptions,
-                         "OPEN_REMOTE_GML", false));
-
-        // If file opened in vector-only mode and there's no vector,
-        // return
-        if( (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) == 0 &&
-            poDS->GetLayerCount() == 0 )
-        {
-            delete poDS;
-            return nullptr;
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Initialize any PAM information.                                 */
-/* -------------------------------------------------------------------- */
-    poDS->SetDescription( poOpenInfo->pszFilename );
-    poDS->TryLoadXML();
-
-/* -------------------------------------------------------------------- */
-/*      Check for overviews.                                            */
-/* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
-
-    return poDS;
+    return eErr;
 }
-
-/************************************************************************/
-/*                           WriteBox()                                 */
-/************************************************************************/
-
-void JP2GrokDataset::WriteBox(VSILFILE* fp, GDALJP2Box* poBox)
-{
-    GUInt32   nLBox;
-    GUInt32   nTBox;
-
-    if( poBox == nullptr )
-        return;
-
-    nLBox = (int) poBox->GetDataLength() + 8;
-    nLBox = CPL_MSBWORD32( nLBox );
-
-    memcpy(&nTBox, poBox->GetType(), 4);
-
-    VSIFWriteL( &nLBox, 4, 1, fp );
-    VSIFWriteL( &nTBox, 4, 1, fp );
-    VSIFWriteL(poBox->GetWritableData(), 1, (int) poBox->GetDataLength(), fp);
-}
-
-/************************************************************************/
-/*                         WriteGDALMetadataBox()                       */
-/************************************************************************/
-
-void JP2GrokDataset::WriteGDALMetadataBox( VSILFILE* fp,
-                                               GDALDataset* poSrcDS,
-                                               char** papszOptions )
-{
-    GDALJP2Box* poBox = GDALJP2Metadata::CreateGDALMultiDomainMetadataXMLBox(
-        poSrcDS, CPLFetchBool(papszOptions, "MAIN_MD_DOMAIN_ONLY", false));
-    if( poBox )
-        WriteBox(fp, poBox);
-    delete poBox;
-}
-
-/************************************************************************/
-/*                         WriteXMLBoxes()                              */
-/************************************************************************/
-
-void JP2GrokDataset::WriteXMLBoxes( VSILFILE* fp, GDALDataset* poSrcDS,
-                                         CPL_UNUSED char** papszOptions )
-{
-    int nBoxes = 0;
-    GDALJP2Box** papoBoxes = GDALJP2Metadata::CreateXMLBoxes(poSrcDS, &nBoxes);
-    for(int i=0;i<nBoxes;i++)
-    {
-        WriteBox(fp, papoBoxes[i]);
-        delete papoBoxes[i];
-    }
-    CPLFree(papoBoxes);
-}
-
-/************************************************************************/
-/*                           WriteXMPBox()                              */
-/************************************************************************/
-
-void JP2GrokDataset::WriteXMPBox ( VSILFILE* fp, GDALDataset* poSrcDS,
-                                       CPL_UNUSED char** papszOptions )
-{
-    GDALJP2Box* poBox = GDALJP2Metadata::CreateXMPBox(poSrcDS);
-    if( poBox )
-        WriteBox(fp, poBox);
-    delete poBox;
-}
-
-/************************************************************************/
-/*                           WriteIPRBox()                              */
-/************************************************************************/
-
-void JP2GrokDataset::WriteIPRBox ( VSILFILE* fp, GDALDataset* poSrcDS,
-                                       CPL_UNUSED char** papszOptions )
-{
-    GDALJP2Box* poBox = GDALJP2Metadata::CreateIPRBox(poSrcDS);
-    if( poBox )
-        WriteBox(fp, poBox);
-    delete poBox;
-}
-/************************************************************************/
-/*                         FloorPowerOfTwo()                            */
-/************************************************************************/
-
-static int FloorPowerOfTwo(int nVal)
-{
-    int nBits = 0;
-    while( nVal > 1 )
-    {
-        nBits ++;
-        nVal >>= 1;
-    }
-    return 1 << nBits;
-}
-
 /************************************************************************/
 /*                          CreateCopy()                                */
 /************************************************************************/
@@ -3152,13 +1586,13 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
 
 
 
-    JP2GrokFile _sJP2GrokFile;
+    JP2File _sJP2GrokFile;
     _sJP2GrokFile.fp = fp;
     _sJP2GrokFile.nBaseOffset = VSIFTellL(fp);
     grk_stream * pStream = grk_stream_new(1024*1024, FALSE);
-    grk_stream_set_write_function(pStream, JP2GrokDataset_Write);
-    grk_stream_set_read_function(pStream, JP2GrokDataset_Read);
-    grk_stream_set_seek_function(pStream, JP2GrokDataset_Seek);
+    grk_stream_set_write_function(pStream, JP2Dataset_Write);
+    grk_stream_set_read_function(pStream, JP2Dataset_Read);
+    grk_stream_set_seek_function(pStream, JP2Dataset_Seek);
     grk_stream_set_user_data(pStream, &_sJP2GrokFile, nullptr);
 
     /* Always ask Grok to do codestream only. We will take care */
@@ -3573,7 +2007,7 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
         fpSrc = VSIFOpenL( osSrcFilename, "rb" );
         if( fpSrc )
         {
-            nCodeStreamStart = JP2GrokFindCodeStream(fpSrc,
+            nCodeStreamStart = FindCodeStream(fpSrc,
                                                          &nCodeStreamLength);
         }
         if( nCodeStreamLength == 0 )
@@ -3672,12 +2106,12 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
     }
     else
     {
-        JP2GrokFile __sJP2GrokFile;
-        __sJP2GrokFile.fp = fp;
-        __sJP2GrokFile.nBaseOffset = VSIFTellL(fp);
-        grk_stream_set_write_function(pStream,JP2GrokDataset_Write);
-        grk_stream_set_seek_function(pStream,JP2GrokDataset_Seek);
-        grk_stream_set_user_data(pStream,&__sJP2GrokFile, nullptr);
+        JP2File sJP2GrokFile;
+        sJP2GrokFile.fp = fp;
+        sJP2GrokFile.nBaseOffset = VSIFTellL(fp);
+        grk_stream_set_write_function(pStream,JP2Dataset_Write);
+        grk_stream_set_seek_function(pStream,JP2Dataset_Seek);
+        grk_stream_set_user_data(pStream,&sJP2GrokFile, nullptr);
 
         if (!grk_compress_start(pCodec))
         {
@@ -4073,100 +2507,675 @@ GDALDataset * JP2GrokDataset::CreateCopy( const char * pszFilename,
 
     return poDS;
 }
+/************************************************************************/
+/*                                Open()                                */
+/************************************************************************/
+GDALDataset *JP2GrokDataset::Open( GDALOpenInfo * poOpenInfo )
+
+{
+    if (!Identify(poOpenInfo) || poOpenInfo->fpL == nullptr)
+        return nullptr;
+
+
+    int numThreads = 0;
+    const char* pszThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS");
+    if (EQUAL(pszThreads, "ALL_CPUS"))
+        numThreads = CPLGetNumCPUs();
+    else
+        numThreads = atoi(pszThreads);
+    if (numThreads > 128){
+        numThreads = 128;
+    }
+    if (numThreads <= 0){
+        numThreads = 1;
+    }
+    grk_initialize(nullptr, numThreads);
+
+    grk_set_info_handler(JP2Dataset_InfoCallback,nullptr);
+    grk_set_warning_handler(JP2Dataset_WarningCallback,nullptr);
+    grk_set_error_handler(JP2Dataset_ErrorCallback,nullptr);
+
+    /* Detect which codec to use : J2K or JP2 ? */
+    vsi_l_offset nCodeStreamLength = 0;
+    vsi_l_offset nCodeStreamStart = FindCodeStream(poOpenInfo->fpL,
+                                                              &nCodeStreamLength);
+
+    if( nCodeStreamStart == 0 && nCodeStreamLength == 0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "No code-stream in JP2 file");
+        return nullptr;
+    }
+
+    GRK_CODEC_FORMAT eCodecFormat = (nCodeStreamStart == 0) ? GRK_CODEC_J2K : GRK_CODEC_JP2;
+
+    grk_decompress_core_params parameters;
+    grk_decompress_set_default_params(&parameters);
+
+    JP2File* psJP2GrokFile = static_cast<JP2File*>(
+        CPLMalloc(sizeof(JP2File)));
+    psJP2GrokFile->fp = poOpenInfo->fpL;
+    psJP2GrokFile->nBaseOffset = nCodeStreamStart;
+    grk_stream * pStream = CreateReadStream(psJP2GrokFile,
+                                                         nCodeStreamLength);
+    if (!pStream){
+        return nullptr;
+    }
+
+    auto pCodec = grk_decompress_create(GRK_CODEC_J2K,pStream);
+    if( pCodec == nullptr ){
+        grk_object_unref(pStream);
+        return nullptr;
+    }
+    if (! grk_decompress_init(pCodec,&parameters))
+    {
+        return nullptr;
+    }
+
+    grk_image * psImage = nullptr;
+
+    if( pStream == nullptr )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "CreateReadStream() failed");
+        grk_object_unref(pStream);
+        grk_object_unref(pCodec);
+        CPLFree(psJP2GrokFile);
+        return nullptr;
+    }
+
+    grk_header_info headerInfo;
+    if(!grk_decompress_read_header(pCodec,&headerInfo))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "grk_read_header() failed");
+        grk_object_unref(pCodec);
+        grk_object_unref(pStream);
+        CPLFree(psJP2GrokFile);
+        return nullptr;
+    }
+
+    uint32_t nTileW,nTileH;
+    nTileW = headerInfo.t_width;
+    nTileH = headerInfo.t_height;
+#ifdef DEBUG
+    uint32_t  nX0,nY0;
+    uint32_t nTilesX,nTilesY;
+    nX0 = headerInfo.tx0;
+    nY0 = headerInfo.ty0;
+    nTilesX = headerInfo.t_width;
+    nTilesY = headerInfo.t_height;
+    int mct = headerInfo.mct;
+#endif
+    int numResolutions = headerInfo.numresolutions;
+    psImage = grk_decompress_get_composited_image(pCodec);
+    if (psImage == nullptr)
+    {
+        grk_object_unref(pCodec);
+        grk_object_unref(pStream);
+        grk_object_unref(&psImage->obj);
+        CPLFree(psJP2GrokFile);
+        return nullptr;
+    }
+
+#ifdef DEBUG
+    CPLDebug("GROK", "nX0 = %u", nX0);
+    CPLDebug("GROK", "nY0 = %u", nY0);
+    CPLDebug("GROK", "nTileW = %u", nTileW);
+    CPLDebug("GROK", "nTileH = %u", nTileH);
+    CPLDebug("GROK", "nTilesX = %u", nTilesX);
+    CPLDebug("GROK", "nTilesY = %u", nTilesY);
+    CPLDebug("GROK", "mct = %d", mct);
+    CPLDebug("GROK", "psImage->x0 = %u", psImage->x0);
+    CPLDebug("GROK", "psImage->y0 = %u", psImage->y0);
+    CPLDebug("GROK", "psImage->x1 = %u", psImage->x1);
+    CPLDebug("GROK", "psImage->y1 = %u", psImage->y1);
+    CPLDebug("GROK", "psImage->numcomps = %d", psImage->numcomps);
+    //CPLDebug("GROK", "psImage->color_space = %d", psImage->color_space);
+    CPLDebug("GROK", "numResolutions = %d", numResolutions);
+    for(int i=0;i<(int)psImage->numcomps;i++)
+    {
+        CPLDebug("GROK", "psImage->comps[%d].dx = %u", i, psImage->comps[i].dx);
+        CPLDebug("GROK", "psImage->comps[%d].dy = %u", i, psImage->comps[i].dy);
+        CPLDebug("GROK", "psImage->comps[%d].x0 = %u", i, psImage->comps[i].x0);
+        CPLDebug("GROK", "psImage->comps[%d].y0 = %u", i, psImage->comps[i].y0);
+        CPLDebug("GROK", "psImage->comps[%d].w = %u", i, psImage->comps[i].w);
+        CPLDebug("GROK", "psImage->comps[%d].h = %u", i, psImage->comps[i].h);
+        //CPLDebug("GROK", "psImage->comps[%d].resno_decoded = %d", i, psImage->comps[i].resno_decoded);
+        //CPLDebug("GROK", "psImage->comps[%d].factor = %d", i, psImage->comps[i].factor);
+        CPLDebug("GROK", "psImage->comps[%d].prec = %d", i, psImage->comps[i].prec);
+        CPLDebug("GROK", "psImage->comps[%d].sgnd = %d", i, psImage->comps[i].sgnd);
+    }
+#endif
+
+    if (psImage->x1 <= psImage->x0 ||
+        psImage->y1 <= psImage->y0 ||
+        psImage->numcomps == 0 ||
+        (psImage->comps[0].w >> 31) != 0 ||
+        (psImage->comps[0].h >> 31) != 0 ||
+        (nTileW >> 31) != 0 ||
+        (nTileH >> 31) != 0 ||
+        psImage->comps[0].w != psImage->x1 - psImage->x0 ||
+        psImage->comps[0].h != psImage->y1 - psImage->y0)
+    {
+        CPLDebug("GROK", "Unable to handle that image (1)");
+        grk_object_unref(pCodec);
+        grk_object_unref(pStream);
+        grk_object_unref(&psImage->obj);
+        CPLFree(psJP2GrokFile);
+        return nullptr;
+    }
+
+    GDALDataType eDataType = GDT_Byte;
+    if (psImage->comps[0].prec > 16)
+    {
+        if (psImage->comps[0].sgnd)
+            eDataType = GDT_Int32;
+        else
+            eDataType = GDT_UInt32;
+    }
+    else if (psImage->comps[0].prec > 8)
+    {
+        if (psImage->comps[0].sgnd)
+            eDataType = GDT_Int16;
+        else
+            eDataType = GDT_UInt16;
+    }
+
+    int bIs420  =  (psImage->color_space != GRK_CLRSPC_SRGB &&
+                    eDataType == GDT_Byte &&
+                    (psImage->numcomps == 3 || psImage->numcomps == 4) &&
+                    psImage->comps[1].w == psImage->comps[0].w / 2 &&
+                    psImage->comps[1].h == psImage->comps[0].h / 2 &&
+                    psImage->comps[2].w == psImage->comps[0].w / 2 &&
+                    psImage->comps[2].h == psImage->comps[0].h / 2) &&
+                    (psImage->numcomps == 3 ||
+                     (psImage->numcomps == 4 &&
+                      psImage->comps[3].w == psImage->comps[0].w &&
+                      psImage->comps[3].h == psImage->comps[0].h));
+
+    if (bIs420)
+    {
+        CPLDebug("GROK", "420 format");
+    }
+    else
+    {
+        int iBand;
+        for(iBand = 2; iBand <= (int)psImage->numcomps; iBand ++)
+        {
+            if( psImage->comps[iBand-1].w != psImage->comps[0].w ||
+                psImage->comps[iBand-1].h != psImage->comps[0].h )
+            {
+                CPLDebug("GROK", "Unable to handle that image (2)");
+                grk_object_unref(pCodec);
+                grk_object_unref(pStream);
+                grk_object_unref(&psImage->obj);
+                CPLFree(psJP2GrokFile);
+                return nullptr;
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create a corresponding GDALDataset.                             */
+/* -------------------------------------------------------------------- */
+    JP2GrokDataset     *poDS;
+    int                 iBand;
+
+    poDS = new JP2GrokDataset();
+    poDS->m_osFilename = poOpenInfo->pszFilename;
+    if( eCodecFormat == GRK_CODEC_JP2 )
+        poDS->eAccess = poOpenInfo->eAccess;
+    poDS->eColorSpace = psImage->color_space;
+    poDS->nRasterXSize = psImage->x1 - psImage->x0;
+    poDS->nRasterYSize = psImage->y1 - psImage->y0;
+    poDS->nBands = psImage->numcomps;
+    poDS->fp = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
+    poDS->nCodeStreamStart = nCodeStreamStart;
+    poDS->nCodeStreamLength = nCodeStreamLength;
+    poDS->bIs420 = bIs420;
+    poDS->bSingleTiled = (poDS->nRasterXSize == (int)nTileW &&
+                          poDS->nRasterYSize == (int)nTileH);
+    poDS->m_nX0 = psImage->x0;
+    poDS->m_nY0 = psImage->y0;
+
+    int nBlockXSize = (int)nTileW;
+    int nBlockYSize = (int)nTileH;
+
+    if( CPLFetchBool(poOpenInfo->papszOpenOptions, "USE_TILE_AS_BLOCK", false) )
+    {
+        poDS->bUseSetDecodeArea = false;
+    }
+    /* Some Sentinel2 preview datasets are 343x343 large, but with 8x8 blocks */
+    /* Using the tile API for that is super slow, so expose a single block */
+    else if( poDS->nRasterXSize <= 1024 &&  poDS->nRasterYSize <= 1024 &&
+             nTileW < 32 && nTileH < 32 )
+    {
+        poDS->bUseSetDecodeArea = true;
+        nBlockXSize = poDS->nRasterXSize;
+        nBlockYSize = poDS->nRasterYSize;
+    }
+    else
+    {
+        poDS->bUseSetDecodeArea =
+            poDS->bSingleTiled &&
+            (poDS->nRasterXSize > 1024 ||
+            poDS->nRasterYSize > 1024);
+
+        /* Other Sentinel2 preview datasets are 343x343 and 60m are 1830x1830, but they */
+        /* are tiled with tile dimensions 2048x2048. It would be a waste of */
+        /* memory to allocate such big blocks */
+        if( poDS->nRasterXSize < (int)nTileW &&
+            poDS->nRasterYSize < (int)nTileH )
+        {
+            poDS->bUseSetDecodeArea = TRUE;
+            nBlockXSize = poDS->nRasterXSize;
+            nBlockYSize = poDS->nRasterYSize;
+            if (nBlockXSize > 2048) nBlockXSize = 2048;
+            if (nBlockYSize > 2048) nBlockYSize = 2048;
+        }
+        else if (poDS->bUseSetDecodeArea)
+        {
+            // Arbitrary threshold... ~4 million at least needed for the GRIB2
+            // images mentioned below.
+            if( nTileH == 1 && nTileW < 20 * 1024 * 1024 )
+            {
+                // Some GRIB2 JPEG2000 compressed images are a 2D image organized
+                // as a single line image...
+            }
+            else
+            {
+                if (nBlockXSize > 1024) nBlockXSize = 1024;
+                if (nBlockYSize > 1024) nBlockYSize = 1024;
+            }
+        }
+    }
+
+    GDALColorTable* poCT = nullptr;
+
+/* -------------------------------------------------------------------- */
+/*      Look for color table or cdef box                                */
+/* -------------------------------------------------------------------- */
+    if( eCodecFormat == GRK_CODEC_JP2 )
+    {
+        vsi_l_offset nCurOffset = VSIFTellL(poDS->fp);
+
+        GDALJP2Box oBox( poDS->fp );
+        if( oBox.ReadFirst() )
+        {
+            while( strlen(oBox.GetType()) > 0 )
+            {
+                if( EQUAL(oBox.GetType(),"jp2h") )
+                {
+                    GDALJP2Box oSubBox( poDS->fp );
+
+                    for( oSubBox.ReadFirstChild( &oBox );
+                         strlen(oSubBox.GetType()) > 0;
+                         oSubBox.ReadNextChild( &oBox ) )
+                    {
+                        GIntBig nDataLength = oSubBox.GetDataLength();
+                        if( poCT == nullptr &&
+                            EQUAL(oSubBox.GetType(),"pclr") &&
+                            nDataLength >= 3 &&
+                            nDataLength <= 2 + 1 + 4 + 4 * 256 )
+                        {
+                            GByte* pabyCT = oSubBox.ReadBoxData();
+                            if( pabyCT != nullptr )
+                            {
+                                int nEntries = (pabyCT[0] << 8) | pabyCT[1];
+                                int nComponents = pabyCT[2];
+                                /* CPLDebug("GROK", "Color table found"); */
+                                if( nEntries <= 256 && nComponents == 3 )
+                                {
+                                    /*CPLDebug("GROK", "resol[0] = %d", pabyCT[3]);
+                                    CPLDebug("GROK", "resol[1] = %d", pabyCT[4]);
+                                    CPLDebug("GROK", "resol[2] = %d", pabyCT[5]);*/
+                                    if( pabyCT[3] == 7 && pabyCT[4] == 7 && pabyCT[5] == 7 &&
+                                        nDataLength == 2 + 1 + 3 + 3 * nEntries )
+                                    {
+                                        poCT = new GDALColorTable();
+                                        for(int i=0;i<nEntries;i++)
+                                        {
+                                            GDALColorEntry sEntry;
+                                            sEntry.c1 = pabyCT[6 + 3 * i];
+                                            sEntry.c2 = pabyCT[6 + 3 * i + 1];
+                                            sEntry.c3 = pabyCT[6 + 3 * i + 2];
+                                            sEntry.c4 = 255;
+                                            poCT->SetColorEntry(i, &sEntry);
+                                        }
+                                    }
+                                }
+                                else if ( nEntries <= 256 && nComponents == 4 )
+                                {
+                                    if( pabyCT[3] == 7 && pabyCT[4] == 7 &&
+                                        pabyCT[5] == 7 && pabyCT[6] == 7 &&
+                                        nDataLength == 2 + 1 + 4 + 4 * nEntries )
+                                    {
+                                        poCT = new GDALColorTable();
+                                        for(int i=0;i<nEntries;i++)
+                                        {
+                                            GDALColorEntry sEntry;
+                                            sEntry.c1 = pabyCT[7 + 4 * i];
+                                            sEntry.c2 = pabyCT[7 + 4 * i + 1];
+                                            sEntry.c3 = pabyCT[7 + 4 * i + 2];
+                                            sEntry.c4 = pabyCT[7 + 4 * i + 3];
+                                            poCT->SetColorEntry(i, &sEntry);
+                                        }
+                                    }
+                                }
+                                CPLFree(pabyCT);
+                            }
+                        }
+                        /* There's a bug/misfeature in Grok: the color_space
+                           only gets set at read tile time */
+                        else if( EQUAL(oSubBox.GetType(),"colr") &&
+                                 nDataLength == 7 )
+                        {
+                            GByte* pabyContent = oSubBox.ReadBoxData();
+                            if( pabyContent != nullptr )
+                            {
+                                if( pabyContent[0] == 1 /* enumerated colourspace */ )
+                                {
+                                    GUInt32 enumcs = (pabyContent[3] << 24) |
+                                                     (pabyContent[4] << 16) |
+                                                     (pabyContent[5] << 8) |
+                                                     (pabyContent[6]);
+                                    if( enumcs == 16 )
+                                    {
+                                        poDS->eColorSpace = GRK_CLRSPC_SRGB;
+                                        CPLDebug("GROK", "SRGB color space");
+                                    }
+                                    else if( enumcs == 17 )
+                                    {
+                                        poDS->eColorSpace = GRK_CLRSPC_GRAY;
+                                        CPLDebug("GROK", "Grayscale color space");
+                                    }
+                                    else if( enumcs == 18 )
+                                    {
+                                        poDS->eColorSpace = GRK_CLRSPC_SYCC;
+                                        CPLDebug("GROK", "SYCC color space");
+                                    }
+                                    else if( enumcs == 20 )
+                                    {
+                                        /* Used by J2KP4files/testfiles_jp2/file7.jp2 */
+                                        poDS->eColorSpace = GRK_CLRSPC_SRGB;
+                                        CPLDebug("GROK", "e-sRGB color space");
+                                    }
+                                    else if( enumcs == 21 )
+                                    {
+                                        /* Used by J2KP4files/testfiles_jp2/file5.jp2 */
+                                        poDS->eColorSpace = GRK_CLRSPC_SRGB;
+                                        CPLDebug("GROK", "ROMM-RGB color space");
+                                    }
+                                    else
+                                    {
+                                        poDS->eColorSpace = GRK_CLRSPC_UNKNOWN;
+                                        CPLDebug("GROK", "Unknown color space");
+                                    }
+                                }
+                                CPLFree(pabyContent);
+                            }
+                        }
+                        /* Check if there's an alpha channel or odd channel attribution */
+                        else if( EQUAL(oSubBox.GetType(),"cdef") &&
+                                 nDataLength == 2 + poDS->nBands * 6 )
+                        {
+                            GByte* pabyContent = oSubBox.ReadBoxData();
+                            if( pabyContent != nullptr )
+                            {
+                                int nEntries = (pabyContent[0] << 8) | pabyContent[1];
+                                if( nEntries == poDS->nBands )
+                                {
+                                    poDS->nRedIndex = -1;
+                                    poDS->nGreenIndex = -1;
+                                    poDS->nBlueIndex = -1;
+                                    for(int i=0;i<poDS->nBands;i++)
+                                    {
+                                        int CNi = (pabyContent[2+6*i] << 8) | pabyContent[2+6*i+1];
+                                        int Typi = (pabyContent[2+6*i+2] << 8) | pabyContent[2+6*i+3];
+                                        int Asoci = (pabyContent[2+6*i+4] << 8) | pabyContent[2+6*i+5];
+                                        if( CNi < 0 || CNi >= poDS->nBands )
+                                        {
+                                            CPLError(CE_Failure, CPLE_AppDefined,
+                                                     "Wrong value of CN%d=%d", i, CNi);
+                                            break;
+                                        }
+                                        if( Typi == 0 )
+                                        {
+                                            if( Asoci == 1 )
+                                                poDS->nRedIndex = CNi;
+                                            else if( Asoci == 2 )
+                                                poDS->nGreenIndex = CNi;
+                                            else if( Asoci == 3 )
+                                                poDS->nBlueIndex = CNi;
+                                            else if( Asoci < 0 || (Asoci > poDS->nBands && Asoci != 65535) )
+                                            {
+                                                CPLError(CE_Failure, CPLE_AppDefined,
+                                                     "Wrong value of Asoc%d=%d", i, Asoci);
+                                                break;
+                                            }
+                                        }
+                                        else if( Typi == 1 )
+                                        {
+                                            poDS->nAlphaIndex = CNi;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    CPLDebug("GROK", "Unsupported cdef content");
+                                }
+                                CPLFree(pabyContent);
+                            }
+                        }
+                    }
+                }
+
+                if (!oBox.ReadNext())
+                    break;
+            }
+        }
+
+        VSIFSeekL(poDS->fp, nCurOffset, SEEK_SET);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create band information objects.                                */
+/* -------------------------------------------------------------------- */
+    for( iBand = 1; iBand <= poDS->nBands; iBand++ )
+    {
+        const bool bPromoteTo8Bit =
+            iBand == poDS->nAlphaIndex + 1 &&
+            psImage->comps[(poDS->nAlphaIndex==0 && poDS->nBands > 1) ? 1 : 0].prec == 8 &&
+            psImage->comps[poDS->nAlphaIndex ].prec == 1 &&
+            CPLFetchBool(
+                poOpenInfo->papszOpenOptions, "1BIT_ALPHA_PROMOTION",
+                CPLTestBool(CPLGetConfigOption("JP2GROK_PROMOTE_1BIT_ALPHA_AS_8BIT", "YES")));
+        if( bPromoteTo8Bit )
+            CPLDebug("JP2Grok", "Alpha band is promoted from 1 bit to 8 bit");
+
+        JP2RasterBand* poBand =
+            new JP2RasterBand( poDS, iBand, eDataType,
+                                        bPromoteTo8Bit ? 8: psImage->comps[iBand-1].prec,
+                                        bPromoteTo8Bit,
+                                        nBlockXSize, nBlockYSize);
+        if( iBand == 1 && poCT != nullptr )
+            poBand->poCT = poCT;
+        poDS->SetBand( iBand, poBand );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create overview datasets.                                       */
+/* -------------------------------------------------------------------- */
+    int nW = poDS->nRasterXSize;
+    int nH = poDS->nRasterYSize;
+    poDS->nParentXSize = poDS->nRasterXSize;
+    poDS->nParentYSize = poDS->nRasterYSize;
+
+    /* Lower resolutions are not compatible with a color-table */
+    if( poCT != nullptr )
+        numResolutions = 0;
+
+    if( poDS->bSingleTiled && poDS->bUseSetDecodeArea )
+    {
+        poDS->m_ppCodec = new grk_codec* (pCodec);
+        poDS->m_ppStream = new grk_stream* (pStream);
+        poDS->m_ppsImage = new grk_image* (psImage);
+        poDS->m_psJP2File = psJP2GrokFile;
+    }
+    poDS->m_pnLastLevel = new int(-1);
+
+    while (poDS->nOverviewCount+1 < numResolutions &&
+           (nW > 128 || nH > 128) &&
+           (poDS->bUseSetDecodeArea || ((nTileW % 2) == 0 && (nTileH % 2) == 0)))
+    {
+        // This must be this exact formula per the JPEG2000 standard
+        nW = (nW + 1) / 2;
+        nH = (nH + 1) / 2;
+
+        poDS->papoOverviewDS = (JP2Dataset**) CPLRealloc(
+                    poDS->papoOverviewDS,
+                    (poDS->nOverviewCount + 1) * sizeof(JP2GrokDataset*));
+        JP2GrokDataset* poODS = new JP2GrokDataset();
+        poODS->m_osFilename = poDS->m_osFilename;
+        poODS->nParentXSize = poDS->nRasterXSize;
+        poODS->nParentYSize = poDS->nRasterYSize;
+        poODS->SetDescription( poOpenInfo->pszFilename );
+        poODS->iLevel = poDS->nOverviewCount + 1;
+        poODS->bSingleTiled = poDS->bSingleTiled;
+        poODS->bUseSetDecodeArea = poDS->bUseSetDecodeArea;
+        poODS->nRedIndex = poDS->nRedIndex;
+        poODS->nGreenIndex = poDS->nGreenIndex;
+        poODS->nBlueIndex = poDS->nBlueIndex;
+        poODS->nAlphaIndex = poDS->nAlphaIndex;
+        if (!poDS->bUseSetDecodeArea)
+        {
+            nTileW /= 2;
+            nTileH /= 2;
+            nBlockXSize = (int)nTileW;
+            nBlockYSize = (int)nTileH;
+        }
+        else
+        {
+            nBlockXSize = std::min(nW, (int)nTileW);
+            nBlockYSize = std::min(nH, (int)nTileH);
+        }
+
+        poODS->eColorSpace = poDS->eColorSpace;
+        poODS->nRasterXSize = nW;
+        poODS->nRasterYSize = nH;
+        poODS->nBands = poDS->nBands;
+        poODS->fp = poDS->fp;
+        poODS->nCodeStreamStart = nCodeStreamStart;
+        poODS->nCodeStreamLength = nCodeStreamLength;
+        poODS->bIs420 = bIs420;
+
+        if( poODS->bSingleTiled && poODS->bUseSetDecodeArea )
+        {
+            poODS->m_ppCodec = poDS->m_ppCodec;
+            poODS->m_ppStream = poDS->m_ppStream;
+            poODS->m_ppsImage = poDS->m_ppsImage;
+            poODS->m_psJP2File = poDS->m_psJP2File;
+        }
+        poODS->m_pnLastLevel = poDS->m_pnLastLevel;
+
+        poODS->m_nX0 = poDS->m_nX0;
+        poODS->m_nY0 = poDS->m_nY0;
+
+        for( iBand = 1; iBand <= poDS->nBands; iBand++ )
+        {
+            const bool bPromoteTo8Bit =
+                iBand == poDS->nAlphaIndex + 1 &&
+                psImage->comps[(poDS->nAlphaIndex==0 && poDS->nBands > 1) ? 1 : 0].prec == 8 &&
+                psImage->comps[poDS->nAlphaIndex].prec == 1 &&
+                CPLFetchBool(
+                    poOpenInfo->papszOpenOptions, "1BIT_ALPHA_PROMOTION",
+                    CPLTestBool(CPLGetConfigOption("JP2GROK_PROMOTE_1BIT_ALPHA_AS_8BIT", "YES")));
+
+            poODS->SetBand( iBand, new JP2RasterBand( poODS, iBand, eDataType,
+                                                              bPromoteTo8Bit ? 8: psImage->comps[iBand-1].prec,
+                                                              bPromoteTo8Bit,
+                                                              nBlockXSize, nBlockYSize ) );
+        }
+
+        poDS->papoOverviewDS[poDS->nOverviewCount ++] = poODS;
+    }
+
+    if( poDS->bSingleTiled && poDS->bUseSetDecodeArea )
+    {
+        // nothing
+    }
+    else
+    {
+        grk_object_unref(pCodec);
+        grk_object_unref(pStream);
+        CPLFree(psJP2GrokFile);
+        pCodec = nullptr;
+        pStream = nullptr;
+        psImage = nullptr;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      More metadata.                                                  */
+/* -------------------------------------------------------------------- */
+    if( poDS->nBands > 1 )
+    {
+        poDS->GDALDataset::SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
+    }
+
+    poOpenInfo->fpL = poDS->fp;
+    vsi_l_offset nCurOffset = VSIFTellL(poDS->fp);
+    poDS->LoadJP2Metadata(poOpenInfo);
+    VSIFSeekL(poDS->fp, nCurOffset, SEEK_SET);
+    poOpenInfo->fpL = nullptr;
+
+    poDS->bHasGeoreferencingAtOpening =
+        (!poDS->m_oSRS.IsEmpty()||
+         poDS->nGCPCount != 0 || poDS->bGeoTransformValid);
+
+/* -------------------------------------------------------------------- */
+/*      Vector layers                                                   */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->nOpenFlags & GDAL_OF_VECTOR )
+    {
+        poDS->LoadVectorLayers(
+            CPLFetchBool(poOpenInfo->papszOpenOptions,
+                         "OPEN_REMOTE_GML", false));
+
+        // If file opened in vector-only mode and there's no vector,
+        // return
+        if( (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) == 0 &&
+            poDS->GetLayerCount() == 0 )
+        {
+            delete poDS;
+            return nullptr;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
+
+/* -------------------------------------------------------------------- */
+/*      Check for overviews.                                            */
+/* -------------------------------------------------------------------- */
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+
+    return poDS;
+}
 
 /************************************************************************/
 /*                      GDALRegister_JP2Grok()                      */
 /************************************************************************/
-
 void GDALRegister_JP2Grok()
-
 {
-    if( !GDAL_CHECK_VERSION( "JP2Grok driver" ) )
-        return;
-
-    if( GDALGetDriverByName( "JP2Grok" ) != nullptr )
-        return;
-
-    GDALDriver *poDriver = new GDALDriver();
-
-    poDriver->SetDescription( "JP2Grok" );
-    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "JPEG-2000 driver based on Grok library" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/jp2grok.html" );
-    poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/jp2" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "jp2 j2k" );
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-                               "Byte Int16 UInt16 Int32 UInt32" );
-
-    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
-"<OpenOptionList>"
-"   <Option name='1BIT_ALPHA_PROMOTION' type='boolean' description='Whether a 1-bit alpha channel should be promoted to 8-bit' default='YES'/>"
-"   <Option name='OPEN_REMOTE_GML' type='boolean' description='Whether to load remote vector layers referenced by a link in a GMLJP2 v2 box' default='NO'/>"
-"   <Option name='GEOREF_SOURCES' type='string' description='Comma separated list made with values INTERNAL/GMLJP2/GEOJP2/WORLDFILE/PAM/NONE that describe the priority order for georeferencing' default='PAM,GEOJP2,GMLJP2,WORLDFILE'/>"
-"   <Option name='USE_TILE_AS_BLOCK' type='boolean' description='Whether to always use the JPEG-2000 block size as the GDAL block size' default='NO'/>"
-"</OpenOptionList>" );
-
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
-"<CreationOptionList>"
-"   <Option name='CODEC' type='string-select' default='according to file extension. If unknown, default to J2K'>"
-"       <Value>JP2</Value>"
-"       <Value>J2K</Value>"
-"   </Option>"
-"   <Option name='GeoJP2' type='boolean' description='Whether to emit a GeoJP2 box' default='YES'/>"
-"   <Option name='GMLJP2' type='boolean' description='Whether to emit a GMLJP2 v1 box' default='YES'/>"
-"   <Option name='GMLJP2V2_DEF' type='string' description='Definition file to describe how a GMLJP2 v2 box should be generated. If set to YES, a minimal instance will be created'/>"
-"   <Option name='QUALITY' type='string' description='Single quality value or comma separated list of increasing quality values for several layers, each in the 0-100 range' default='25'/>"
-"   <Option name='REVERSIBLE' type='boolean' description='True if the compression is reversible' default='false'/>"
-"   <Option name='RESOLUTIONS' type='int' description='Number of resolutions.' min='1' max='30'/>"
-"   <Option name='BLOCKXSIZE' type='int' description='Tile Width' default='1024'/>"
-"   <Option name='BLOCKYSIZE' type='int' description='Tile Height' default='1024'/>"
-"   <Option name='PROGRESSION' type='string-select' default='LRCP'>"
-"       <Value>LRCP</Value>"
-"       <Value>RLCP</Value>"
-"       <Value>RPCL</Value>"
-"       <Value>PCRL</Value>"
-"       <Value>CPRL</Value>"
-"   </Option>"
-"   <Option name='SOP' type='boolean' description='True to insert SOP markers' default='false'/>"
-"   <Option name='EPH' type='boolean' description='True to insert EPH markers' default='false'/>"
-"   <Option name='YCBCR420' type='boolean' description='if RGB must be resampled to YCbCr 4:2:0' default='false'/>"
-"   <Option name='YCC' type='boolean' description='if RGB must be transformed to YCC color space (lossless MCT transform)' default='YES'/>"
-"   <Option name='NBITS' type='int' description='Bits (precision) for sub-byte files (1-7), sub-uint16 (9-15), sub-uint32 (17-31)'/>"
-"   <Option name='1BIT_ALPHA' type='boolean' description='Whether to encode the alpha channel as a 1-bit channel' default='NO'/>"
-"   <Option name='ALPHA' type='boolean' description='Whether to force encoding last channel as alpha channel' default='NO'/>"
-"   <Option name='PROFILE' type='string-select' description='Which codestream profile to use' default='AUTO'>"
-"       <Value>AUTO</Value>"
-"       <Value>UNRESTRICTED</Value>"
-"       <Value>PROFILE_1</Value>"
-"   </Option>"
-"   <Option name='INSPIRE_TG' type='boolean' description='Whether to use features that comply with Inspire Orthoimagery Technical Guidelines' default='NO'/>"
-"   <Option name='JPX' type='boolean' description='Whether to advertise JPX features when a GMLJP2 box is written (or use JPX branding if GMLJP2 v2)' default='YES'/>"
-"   <Option name='GEOBOXES_AFTER_JP2C' type='boolean' description='Whether to place GeoJP2/GMLJP2 boxes after the code-stream' default='NO'/>"
-"   <Option name='PRECINCTS' type='string' description='Precincts size as a string of the form {w,h},{w,h},... with power-of-two values'/>"
-"   <Option name='TILEPARTS' type='string-select' description='Whether to generate tile-parts and according to which criterion' default='DISABLED'>"
-"       <Value>DISABLED</Value>"
-"       <Value>RESOLUTIONS</Value>"
-"       <Value>LAYERS</Value>"
-"       <Value>COMPONENTS</Value>"
-"   </Option>"
-"   <Option name='CODEBLOCK_WIDTH' type='int' description='Codeblock width' default='64' min='4' max='1024'/>"
-"   <Option name='CODEBLOCK_HEIGHT' type='int' description='Codeblock height' default='64' min='4' max='1024'/>"
-"   <Option name='CT_COMPONENTS' type='int' min='3' max='4' description='If there is one color table, number of color table components to write. Autodetected if not specified.'/>"
-"   <Option name='WRITE_METADATA' type='boolean' description='Whether metadata should be written, in a dedicated JP2 XML box' default='NO'/>"
-"   <Option name='MAIN_MD_DOMAIN_ONLY' type='boolean' description='(Only if WRITE_METADATA=YES) Whether only metadata from the main domain should be written' default='NO'/>"
-"   <Option name='USE_SRC_CODESTREAM' type='boolean' description='When source dataset is JPEG2000, whether to reuse the codestream of the source dataset unmodified' default='NO'/>"
-"   <Option name='CODEBLOCK_STYLE' type='string' description='Comma-separated combination of BYPASS, RESET, TERMALL, VSC, PREDICTABLE, SEGSYM or value between 0 and 63'/>"
-"   <Option name='PLT' type='boolean' description='True to insert PLT marker segments' default='false'/>"
-"   <Option name='TLM' type='boolean' description='True to insert TLM marker segments' default='false'/>"
-"</CreationOptionList>"  );
-
-    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-
-    poDriver->pfnIdentify = JP2GrokDataset::Identify;
-    poDriver->pfnOpen = JP2GrokDataset::Open;
+	auto  poDriver = JP2Dataset::CreateDriver("JP2Grok driver",
+												"JP2Grok",
+												"JPEG-2000 driver based on Grok library",
+												"drivers/raster/jp2grok.html");
+	if (!poDriver)
+		return;
+    poDriver->pfnOpen 		= JP2GrokDataset::Open;
     poDriver->pfnCreateCopy = JP2GrokDataset::CreateCopy;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
