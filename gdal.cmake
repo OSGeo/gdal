@@ -309,7 +309,6 @@ endif ()
 
 # Install properties
 if (GDAL_ENABLE_MACOSX_FRAMEWORK)
-  set(CMAKE_MACOSX_RPATH ON)
   set(FRAMEWORK_VERSION ${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR})
   set(FRAMEWORK_DESTINATION
       "Library/Frameworks"
@@ -667,7 +666,8 @@ if (NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
     # SameMinorVersion)
     COMPATIBILITY ExactVersion)
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/GDALConfigVersion.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gdal/)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/template/GDALConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/GDALConfig.cmake @ONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/template/GDALConfig.cmake.in
+                 ${CMAKE_CURRENT_BINARY_DIR}/GDALConfig.cmake @ONLY)
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/GDALConfig.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gdal/)
 
   # gdal-config utility command generation
