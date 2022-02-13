@@ -156,32 +156,47 @@ function(gdal_get_lflags _result)
     set(${_result} "${_libs_out}" PARENT_SCOPE)
 endfunction()
 
-function(generate_config _target _link _template _output)
+# Generate gdal-config utility command and pkg-config module gdal.pc
+function(gdal_generate_config)
+    set(one_value_keywords "TARGET;GLOBAL_PROPERTY;GDAL_CONFIG;PKG_CONFIG")
+    cmake_parse_arguments(PARSE_ARGV 0 arg "" "${one_value_keywords}" "")
+
+    if (ENABLE_GNM)
+        set(CONFIG_GNM_ENABLED "yes")
+    else ()
+        set(CONFIG_GNM_ENABLED "no")
+    endif ()
+    get_property(gdal_formats GLOBAL PROPERTY GDAL_FORMATS)
+    get_property(ogr_formats GLOBAL PROPERTY OGR_FORMATS)
+    string(REPLACE ";" " " CONFIG_FORMATS "${gdal_formats} ${ogr_formats}")
+
     if(NOT DEFINED CMAKE_INSTALL_PREFIX)
         set(CONFIG_PREFIX "/usr/local") # default
     else()
-        set(CONFIG_PREFIX ${CMAKE_INSTALL_PREFIX})
+        set(CONFIG_PREFIX "${CMAKE_INSTALL_PREFIX}")
     endif()
-    set(CONFIG_CFLAGS "-I${CONFIG_PREFIX}/include")
-    get_property(_target_lib_name TARGET ${_target} PROPERTY OUTPUT_NAME)
+    set(CONFIG_DATA "${CONFIG_PREFIX}/${GDAL_RESOURCE_PATH}")
+    set(CONFIG_CFLAGS "-I${CONFIG_PREFIX}/${GDAL_INSTALL_INCLUDEDIR}")
 
-    set(CONFIG_DATA "${CONFIG_PREFIX}/share/${_target_lib_name}")
-    if(CONFIG_PREFIX STREQUAL "/usr")
-        set(CONFIG_LIBS "${CMAKE_LINK_LIBRARY_FLAG}${_target_lib_name}")
-    else()
-        set(CONFIG_LIBS "${CMAKE_LIBRARY_PATH_FLAG}${CONFIG_PREFIX}/lib ${CMAKE_LINK_LIBRARY_FLAG}${_target_lib_name}")
+    get_property(target_lib_name TARGET "${arg_TARGET}" PROPERTY OUTPUT_NAME)
+    set(CONFIG_LIBS "${CMAKE_LINK_LIBRARY_FLAG}${target_lib_name}")
+    if(NOT CONFIG_PREFIX IN_LIST CMAKE_C_IMPLICIT_LINK_LIBRARIES)
+        string(PREPEND CONFIG_LIBS "${CMAKE_LIBRARY_PATH_FLAG}${CONFIG_PREFIX}/${CMAKE_INSTALL_LIBDIR} ")
     endif()
 
-    # dep-libs
-    get_property(_LIBS GLOBAL PROPERTY ${_link})
-    gdal_get_lflags(CONFIG_INST_DEP_LIBS ${_LIBS})
+    get_property(libs GLOBAL PROPERTY "${arg_GLOBAL_PROPERTY}")
+    if(NOT MSVC AND CMAKE_THREAD_LIBS_INIT)
+        list(APPEND libs ${CMAKE_THREAD_LIBS_INIT})
+    endif()
+    list(APPEND libs ${CMAKE_CXX_IMPLICIT_LINK_LIBRARIES})
+    list(REMOVE_ITEM libs ${CMAKE_C_IMPLICIT_LINK_LIBRARIES})
+    gdal_get_lflags(CONFIG_DEP_LIBS ${libs})
+    if(NOT BUILD_SHARED_LIBS)
+        # Make `--libs` simply work, even for static builds.
+        string(APPEND CONFIG_LIBS " ${CONFIG_DEP_LIBS}")
+        set(CONFIG_DEP_LIBS "")
+    endif()
 
-    get_filename_component(_output_dir ${_output} DIRECTORY)
-    get_filename_component(_output_name ${_output} NAME)
-    configure_file(${_template} ${_output_dir}/tmp/${_output_name} @ONLY)
-    file(COPY ${_output_dir}/tmp/${_output_name}
-         DESTINATION ${_output_dir}
-         FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-    )
-
+    configure_file("${GDAL_CMAKE_TEMPLATE_PATH}/gdal-config.in" "${arg_GDAL_CONFIG}" @ONLY)
+    configure_file("${GDAL_CMAKE_TEMPLATE_PATH}/gdal.pc.in" "${arg_PKG_CONFIG}" @ONLY)
 endfunction()

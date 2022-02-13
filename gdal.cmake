@@ -670,18 +670,13 @@ if (NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/template/GDALConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/GDALConfig.cmake @ONLY)
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/GDALConfig.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gdal/)
 
-  # gdal-config utility command generation
-  include(GenerateConfig)
-  if (ENABLE_GNM)
-    set(CONFIG_GNM_ENABLED "yes")
-  else ()
-    set(CONFIG_GNM_ENABLED "no")
-  endif ()
-  get_property(_GDAL_FORMATS GLOBAL PROPERTY GDAL_FORMATS)
-  get_property(_OGR_FORMATS GLOBAL PROPERTY OGR_FORMATS)
-  string(REPLACE ";" " " CONFIG_FORMATS "${_GDAL_FORMATS} ${_OGR_FORMATS}")
-  generate_config(${GDAL_LIB_TARGET_NAME} "gdal_private_link_libraries" ${GDAL_CMAKE_TEMPLATE_PATH}/gdal-config.in
-                  ${PROJECT_BINARY_DIR}/apps/gdal-config)
+  # Generate gdal-config utility command and pkg-config module gdal.pc
+  include(GdalGenerateConfig)
+  gdal_generate_config(
+    TARGET "${GDAL_LIB_TARGET_NAME}"
+    GLOBAL_PROPERTY "gdal_private_link_libraries"
+    GDAL_CONFIG "${PROJECT_BINARY_DIR}/apps/gdal-config"
+    PKG_CONFIG "${CMAKE_CURRENT_BINARY_DIR}/gdal.pc")
   add_custom_target(gdal_config ALL DEPENDS ${PROJECT_BINARY_DIR}/apps/gdal-config)
   install(
     PROGRAMS ${PROJECT_BINARY_DIR}/apps/gdal-config
@@ -694,31 +689,6 @@ if (NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
                 WORLD_READ
                 WORLD_EXECUTE
     COMPONENT applications)
-
-  # pkg-config resource
-  get_property(
-    _gdal_lib_name
-    TARGET ${GDAL_LIB_TARGET_NAME}
-    PROPERTY OUTPUT_NAME)
-  set(CONFIG_INST_LIBS "-L${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} -l${_gdal_lib_name}")
-  set(CONFIG_INST_CFLAGS "-I${CMAKE_INSTALL_PREFIX}/${GDAL_INSTALL_INCLUDEDIR}")
-  set(CONFIG_INST_DATA "${CMAKE_INSTALL_PREFIX}/${GDAL_RESOURCE_PATH}")
-  get_property(_LIBS GLOBAL PROPERTY gdal_private_link_libraries)
-  gdal_get_lflags(CONFIG_INST_DEP_LIBS ${_LIBS})
-  set(cxx_libs "${CMAKE_CXX_IMPLICIT_LINK_LIBRARIES}")
-  list(REMOVE_ITEM cxx_libs ${CMAKE_C_IMPLICIT_LINK_LIBRARIES})
-  foreach(lib IN LISTS cxx_libs)
-    string(APPEND CONFIG_INST_DEP_LIBS " -l${lib}")
-  endforeach()
-  if(NOT MSVC AND CMAKE_THREAD_LIBS_INIT)
-    string(REPLACE ";" " " thread_libs_init "${CMAKE_THREAD_LIBS_INIT}")
-    string(APPEND CONFIG_INST_DEP_LIBS " ${thread_libs_init}")
-  endif()
-  if(NOT BUILD_SHARED_LIBS)
-    string(APPEND CONFIG_INST_LIBS " ${CONFIG_INST_DEP_LIBS}")
-    set(CONFIG_INST_DEP_LIBS "")
-  endif()
-  configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/gdal.pc.in ${CMAKE_CURRENT_BINARY_DIR}/gdal.pc @ONLY)
   install(
     FILES ${CMAKE_CURRENT_BINARY_DIR}/gdal.pc
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
