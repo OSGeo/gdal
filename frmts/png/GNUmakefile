@@ -37,6 +37,10 @@ CPPFLAGS	:=	$(XTRA_OPT)  $(CPPFLAGS)
 # Enable this to compile with -Wextra -Werror and get around the jump complaint.
 # CPPFLAGS += -Wno-clobbered
 
+ifeq ($(RENAME_INTERNAL_PNG_SYMBOLS),yes)
+CPPFLAGS 	:=	$(CPPFLAGS) -DRENAME_INTERNAL_PNG_SYMBOLS
+endif
+
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
 clean:

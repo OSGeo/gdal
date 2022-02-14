@@ -11,10 +11,11 @@ and has been extensively tested for over 15 years.
 http://www.libpng.org
 
 
-GDAL changes (stored in libpng_gdal.patch)
+GDAL changes
 ------------
 
-* Make screwy MSPaint "zero chunks" only a warning, not error. See r18808 and #3416
+* Make screwy MSPaint "zero chunks" only a warning, not error. See r18808 and #3416 (stored in libpng_gdal.patch)
+* Modification of pnglibconf.h to allow rename symbols (sorted in pnglibconf.h.patch)
 
 Other changes
 -------------

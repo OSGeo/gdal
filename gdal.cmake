@@ -386,6 +386,7 @@ if (GDAL_USE_GIF_INTERNAL)
   add_subdirectory(frmts/gif/giflib)
 endif ()
 if (GDAL_USE_PNG_INTERNAL)
+  option(RENAME_INTERNAL_PNG_SYMBOLS "Rename internal libpng symbols" ON)
   add_subdirectory(frmts/png/libpng)
 endif ()
 if (GDAL_USE_LERC_INTERNAL)
@@ -673,10 +674,14 @@ if (NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
   # Generate gdal-config utility command and pkg-config module gdal.pc
   include(GdalGenerateConfig)
   gdal_generate_config(
-    TARGET "${GDAL_LIB_TARGET_NAME}"
-    GLOBAL_PROPERTY "gdal_private_link_libraries"
-    GDAL_CONFIG "${PROJECT_BINARY_DIR}/apps/gdal-config"
-    PKG_CONFIG "${CMAKE_CURRENT_BINARY_DIR}/gdal.pc")
+    TARGET
+    "${GDAL_LIB_TARGET_NAME}"
+    GLOBAL_PROPERTY
+    "gdal_private_link_libraries"
+    GDAL_CONFIG
+    "${PROJECT_BINARY_DIR}/apps/gdal-config"
+    PKG_CONFIG
+    "${CMAKE_CURRENT_BINARY_DIR}/gdal.pc")
   install(
     PROGRAMS ${PROJECT_BINARY_DIR}/apps/gdal-config
     DESTINATION ${CMAKE_INSTALL_BINDIR}
