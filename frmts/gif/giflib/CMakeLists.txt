@@ -11,3 +11,6 @@ add_library(
 set_property(TARGET giflib PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:giflib>)
 # target_compile_options(giflib PRIVATE ${GDAL_C_WARNING_FLAGS} ${SOFTWARNFLAGS})
+if (RENAME_INTERNAL_GIF_SYMBOLS)
+  target_compile_definitions(giflib PUBLIC -DRENAME_INTERNAL_GIF_SYMBOLS)
+endif ()
