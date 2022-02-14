@@ -104,7 +104,7 @@ Software using GDAL
 - `StarSpan  <https://github.com/Ecotrust/starspan>`_  raster/vector analysis.
 - `TacitView  <https://www.insitu.com/information-delivery/information-processing/tacitview>`_  An imagery visualization and exploitation package for military intelligence.
 - `TatukGIS  <http://www.tatukgis.com>`_  Desktop GIS mapping and data editing application.
-- `Team Awareness Kit <https://tak.gov>`_  Suite of georeferenced imagery and situational awareness tools. Developed for military planning and execution for U.S. Special Operations Command Operators. TAK is also used by Fire Fighters, Emergency Management, First Responders and Law Enforcement.
+- `Team Awareness Kit <https://tak.gov>`_  Suite of georeferenced imagery and situational awareness tools developed for military planning and execution, now available for civilian use.
 - `TerraGo Technologies  <http://www.terragotech.com>`_  The GeoPDF file format is used to distribute and collaborate geospatial data and uses GDAL for data import/export.
 - `t-rex  <http://t-rex.tileserver.ch>`_  Vector tile server written in Rust.
 - `TerrainView  <http://www.viewtec.net>`_  Interactive real-time 3D GIS Software.
