@@ -677,17 +677,9 @@ if (NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
     GLOBAL_PROPERTY "gdal_private_link_libraries"
     GDAL_CONFIG "${PROJECT_BINARY_DIR}/apps/gdal-config"
     PKG_CONFIG "${CMAKE_CURRENT_BINARY_DIR}/gdal.pc")
-  add_custom_target(gdal_config ALL DEPENDS ${PROJECT_BINARY_DIR}/apps/gdal-config)
   install(
     PROGRAMS ${PROJECT_BINARY_DIR}/apps/gdal-config
     DESTINATION ${CMAKE_INSTALL_BINDIR}
-    PERMISSIONS OWNER_READ
-                OWNER_WRITE
-                OWNER_EXECUTE
-                GROUP_READ
-                GROUP_EXECUTE
-                WORLD_READ
-                WORLD_EXECUTE
     COMPONENT applications)
   install(
     FILES ${CMAKE_CURRENT_BINARY_DIR}/gdal.pc
