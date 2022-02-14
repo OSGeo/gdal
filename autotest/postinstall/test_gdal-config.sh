@@ -1,13 +1,13 @@
 #!/bin/sh
 
-# Post-install tests with pkg-config
+# Post-install tests with gdal-config
 #
 # First required argument is the installed prefix, which
-# is used to set PKG_CONFIG_PATH and LD_LIBRARY_PATH/DYLD_LIBRARY_PATH
+# is used to set LD_LIBRARY_PATH/DYLD_LIBRARY_PATH
 #
 # Second, optional argument can be '--static', to skip the ldd check.
 
-echo "Running post-install tests with pkg-config"
+echo "Running post-install tests with gdal-config"
 
 prefix=$1
 if [ -z "$prefix" ]; then
@@ -15,7 +15,7 @@ if [ -z "$prefix" ]; then
     exit 1
 fi
 
-export PKG_CONFIG_PATH=$prefix/lib/pkgconfig
+GDAL_CONFIG="${GDAL_CONFIG:-$prefix/bin/gdal-config}"
 
 # Run tests from shell, count any errors
 ERRORS=0
@@ -49,18 +49,18 @@ check_ldd(){
   esac
 }
 
-PKG_CONFIG_MODVERSION=$(pkg-config gdal --modversion)
+GDAL_CONFIG_VERSION=$(${GDAL_CONFIG} --version)
 
 check_version(){
   printf "Testing expected version ... "
   NTESTS=$(($NTESTS + 1))
   VERSION_OUTPUT=$(./$1)
   case "$VERSION_OUTPUT" in
-    $PKG_CONFIG_MODVERSION*)
+    $GDAL_CONFIG_VERSION*)
       echo "passed" ;;
     *)
       ERRORS=$(($ERRORS + 1))
-      echo "failed: '$VERSION_OUTPUT' != '$PKG_CONFIG_MODVERSION'" ;;
+      echo "failed: '$VERSION_OUTPUT' != '$GDAL_CONFIG_VERSION'" ;;
   esac
 }
 
@@ -69,7 +69,7 @@ cd $(dirname $0)
 echo Testing C app
 cd test_c
 make clean
-make
+make "GDAL_CONFIG=${GDAL_CONFIG}"
 
 if test "$2" != "--static"; then
   check_ldd test_c
@@ -82,7 +82,7 @@ cd ..
 echo Testing C++ app
 cd test_cpp
 make clean
-make
+make "GDAL_CONFIG=${GDAL_CONFIG}"
 
 if test "$2" != "--static"; then
   check_ldd test_cpp

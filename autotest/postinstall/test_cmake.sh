@@ -1,13 +1,13 @@
 #!/bin/sh
 
-# Post-install tests with pkg-config
+# Post-install tests with CMake
 #
 # First required argument is the installed prefix, which
 # is used to set PKG_CONFIG_PATH and LD_LIBRARY_PATH/DYLD_LIBRARY_PATH
 #
 # Second, optional argument can be '--static', to skip the ldd check.
 
-echo "Running post-install tests with pkg-config"
+echo "Running post-install tests with CMake"
 
 prefix=$1
 if [ -z "$prefix" ]; then
@@ -67,30 +67,32 @@ check_version(){
 cd $(dirname $0)
 
 echo Testing C app
-cd test_c
-make clean
-make
+mkdir -p test_c/build
+cd test_c/build
+cmake .. -DCMAKE_BUILD_TYPE=Release -DGDAL_DIR=$prefix/lib/cmake/gdal
+cmake --build .
 
 if test "$2" != "--static"; then
   check_ldd test_c
 fi
 check_version test_c
 
-make clean
-cd ..
+cd ../..
+rm -Rf test_c/build
 
 echo Testing C++ app
-cd test_cpp
-make clean
-make
+mkdir -p test_cpp/build
+cd test_cpp/build
+cmake .. -DCMAKE_BUILD_TYPE=Debug -DGDAL_DIR=$prefix/lib/cmake/gdal
+cmake --build .
 
 if test "$2" != "--static"; then
   check_ldd test_cpp
 fi
 check_version test_cpp
 
-make clean
-cd ..
+cd ../..
+rm -Rf test_cpp/build
 
 echo "$ERRORS tests failed out of $NTESTS"
 exit $ERRORS

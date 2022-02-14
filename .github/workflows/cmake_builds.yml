@@ -95,6 +95,40 @@ jobs:
         rm -rf $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python
         # Set PATH so that gdal-config is found
         PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH pip install --user gdal-python.tar.gz
+    - name: Test post-install usage (with pkg-config)
+      run: |
+        ./autotest/postinstall/test_pkg-config.sh $GITHUB_WORKSPACE/install-gdal
+    - name: Test post-install usage (with gdal-config)
+      run: |
+        ./autotest/postinstall/test_gdal-config.sh $GITHUB_WORKSPACE/install-gdal
+    - name: Test post-install usage (with CMake)
+      run: |
+        ./autotest/postinstall/test_cmake.sh $GITHUB_WORKSPACE/install-gdal
+    - name: Rerun with static linkage
+      run: |
+        cd $GITHUB_WORKSPACE/superbuild/build
+        cmake  ${CMAKE_OPTIONS} .. \
+          -DBUILD_SHARED_LIBS=OFF \
+          -DBUILD_TESTING=OFF \
+          -DCSHARP_MONO=OFF \
+          -DGDAL_USE_HDF4=OFF \
+          -DGDAL_USE_HDF5=OFF \
+          -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal-static
+        cmake --build $GITHUB_WORKSPACE/superbuild/build --target install -- -j$(nproc)
+    - name: Test post-install usage (static, with pkg-config)
+      run: |
+        ./autotest/postinstall/test_pkg-config.sh $GITHUB_WORKSPACE/install-gdal-static --static
+    - name: Test post-install usage (static, with gdal-config)
+      run: |
+        ./autotest/postinstall/test_gdal-config.sh $GITHUB_WORKSPACE/install-gdal-static --static
+    - name: Test post-install usage (static, with CMake)
+      run: |
+        if ./autotest/postinstall/test_cmake.sh $GITHUB_WORKSPACE/install-gdal-static --static; then
+          echo 'Unexpected pass' >&2
+          exit 1
+        else
+          echo 'Expected fail'
+        fi
 
   build-windows-msys2-mingw:
     runs-on: windows-2022
@@ -306,6 +340,15 @@ jobs:
         GITHUB_WORKFLOW: "MacOS build"
     - name: Install
       run: cmake --build $GITHUB_WORKSPACE/build --target install -j 3
+    - name: Test post-install usage (with pkg-config)
+      run: |
+        ./autotest/postinstall/test_pkg-config.sh $GITHUB_WORKSPACE/install-gdal
+    - name: Test post-install usage (with gdal-config)
+      run: |
+        ./autotest/postinstall/test_gdal-config.sh $GITHUB_WORKSPACE/install-gdal
+    - name: Test post-install usage (with CMake)
+      run: |
+        ./autotest/postinstall/test_cmake.sh $GITHUB_WORKSPACE/install-gdal
 
   # Disabled for now since bindings in master use GDALDatasetGetFieldDomainNames
   # but libgdal from Conda has not it yet.

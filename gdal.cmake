@@ -670,49 +670,24 @@ if (NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
                  ${CMAKE_CURRENT_BINARY_DIR}/GDALConfig.cmake @ONLY)
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/GDALConfig.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gdal/)
 
-  # gdal-config utility command generation
-  include(GenerateConfig)
-  if (ENABLE_GNM)
-    set(CONFIG_GNM_ENABLED "yes")
-  else ()
-    set(CONFIG_GNM_ENABLED "no")
-  endif ()
-  get_property(_GDAL_FORMATS GLOBAL PROPERTY GDAL_FORMATS)
-  get_property(_OGR_FORMATS GLOBAL PROPERTY OGR_FORMATS)
-  string(REPLACE ";" " " CONFIG_FORMATS "${_GDAL_FORMATS} ${_OGR_FORMATS}")
-  generate_config(${GDAL_LIB_TARGET_NAME} "gdal_private_link_libraries" ${GDAL_CMAKE_TEMPLATE_PATH}/gdal-config.in
-                  ${PROJECT_BINARY_DIR}/apps/gdal-config)
-  add_custom_target(gdal_config ALL DEPENDS ${PROJECT_BINARY_DIR}/apps/gdal-config)
+  # Generate gdal-config utility command and pkg-config module gdal.pc
+  include(GdalGenerateConfig)
+  gdal_generate_config(
+    TARGET "${GDAL_LIB_TARGET_NAME}"
+    GLOBAL_PROPERTY "gdal_private_link_libraries"
+    GDAL_CONFIG "${PROJECT_BINARY_DIR}/apps/gdal-config"
+    PKG_CONFIG "${CMAKE_CURRENT_BINARY_DIR}/gdal.pc")
   install(
     PROGRAMS ${PROJECT_BINARY_DIR}/apps/gdal-config
     DESTINATION ${CMAKE_INSTALL_BINDIR}
-    PERMISSIONS OWNER_READ
-                OWNER_WRITE
-                OWNER_EXECUTE
-                GROUP_READ
-                GROUP_EXECUTE
-                WORLD_READ
-                WORLD_EXECUTE
     COMPONENT applications)
-
-  # pkg-config resource
-  get_property(
-    _gdal_lib_name
-    TARGET ${GDAL_LIB_TARGET_NAME}
-    PROPERTY OUTPUT_NAME)
-  set(CONFIG_INST_LIBS "-L${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} -l${_gdal_lib_name}")
-  set(CONFIG_INST_CFLAGS "-I${CMAKE_INSTALL_PREFIX}/${GDAL_INSTALL_INCLUDEDIR}")
-  set(CONFIG_INST_DATA "${CMAKE_INSTALL_PREFIX}/${GDAL_RESOURCE_PATH}")
-  get_dep_libs(${GDAL_LIB_TARGET_NAME} "gdal_private_link_libraries" CONFIG_INST_DEP_LIBS)
-  configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/gdal.pc.in ${CMAKE_CURRENT_BINARY_DIR}/gdal.pc @ONLY)
   install(
     FILES ${CMAKE_CURRENT_BINARY_DIR}/gdal.pc
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
     COMPONENT libraries)
 endif ()
 
-configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/uninstall.cmake.in ${PROJECT_BINARY_DIR}/cmake_uninstall.cmake IMMEDIATE
-               @ONLY)
+configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/uninstall.cmake.in ${PROJECT_BINARY_DIR}/cmake_uninstall.cmake @ONLY)
 add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 
 # Print summary
