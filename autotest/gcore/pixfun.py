@@ -782,9 +782,9 @@ def test_pixfun_log10_c():
 ###############################################################################
 # Verify amplitude to dB computation of real dataset.
 
-def test_pixfun_amp2dB_r():
+def test_pixfun_dB_r():
 
-    filename = 'data/vrt/pixfun_amp2dB_r.vrt'
+    filename = 'data/vrt/pixfun_dB_r.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
     assert ds is not None, ('Unable to open "%s" dataset.' % filename)
     data = ds.GetRasterBand(1).ReadAsArray()
@@ -800,9 +800,9 @@ def test_pixfun_amp2dB_r():
 ###############################################################################
 # Verify amplitude to dB computation of imag dataset.
 
-def test_pixfun_amp2dB_c():
+def test_pixfun_dB_c():
 
-    filename = 'data/vrt/pixfun_amp2dB_c.vrt'
+    filename = 'data/vrt/pixfun_dB_c.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
     assert ds is not None, ('Unable to open "%s" dataset.' % filename)
     data = ds.GetRasterBand(1).ReadAsArray()
@@ -815,11 +815,46 @@ def test_pixfun_amp2dB_c():
 
 
 ###############################################################################
-# Verify power to dB computation of real dataset.
+# Verify amplitude to dB computation of real dataset.
 
-def test_pixfun_pow2dB_r():
+def test_pixfun_dB_r_amplitude():
 
-    filename = 'data/vrt/pixfun_pow2dB_r.vrt'
+    filename = 'data/vrt/pixfun_dB_r_amplitude.vrt'
+    ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
+    assert ds is not None, ('Unable to open "%s" dataset.' % filename)
+    data = ds.GetRasterBand(1).ReadAsArray()
+
+    reffilename = 'data/float32.tif'
+    refds = gdal.Open(reffilename)
+    assert refds is not None, ('Unable to open "%s" dataset.' % reffilename)
+    refdata = refds.GetRasterBand(1).ReadAsArray()
+
+    assert numpy.allclose(data, 20. * numpy.log10(refdata))
+
+
+###############################################################################
+# Verify amplitude to dB computation of imag dataset.
+
+def test_pixfun_dB_c_amplitude():
+
+    filename = 'data/vrt/pixfun_dB_c_amplitude.vrt'
+    ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
+    assert ds is not None, ('Unable to open "%s" dataset.' % filename)
+    data = ds.GetRasterBand(1).ReadAsArray()
+
+    reffilename = 'data/cint_sar.tif'
+    refds = gdal.Open(reffilename)
+    assert refds is not None, ('Unable to open "%s" dataset.' % reffilename)
+    refdata = refds.GetRasterBand(1).ReadAsArray()
+    assert numpy.allclose(data, 20. * numpy.log10(numpy.abs(refdata)))
+
+
+###############################################################################
+# Verify intensity to dB computation of real dataset.
+
+def test_pixfun_dB_r_intensity():
+
+    filename = 'data/vrt/pixfun_dB_r_intensity.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
     assert ds is not None, ('Unable to open "%s" dataset.' % filename)
     data = ds.GetRasterBand(1).ReadAsArray()
@@ -833,11 +868,11 @@ def test_pixfun_pow2dB_r():
 
 
 ###############################################################################
-# Verify power to dB computation of imag dataset.
+# Verify intensity to dB computation of imag dataset.
 
-def test_pixfun_pow2dB_c():
+def test_pixfun_dB_c_intensity():
 
-    filename = 'data/vrt/pixfun_pow2dB_c.vrt'
+    filename = 'data/vrt/pixfun_dB_c_intensity.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
     assert ds is not None, ('Unable to open "%s" dataset.' % filename)
     data = ds.GetRasterBand(1).ReadAsArray()

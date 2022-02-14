@@ -1,8 +1,9 @@
 <VRTDataset rasterXSize="5" rasterYSize="6">
   <VRTRasterBand dataType="Float32" band="1" subClass="VRTDerivedRasterBand">
     <Description>dB</Description>
-    <PixelFunctionType>amp2dB</PixelFunctionType>
+    <PixelFunctionType>dB</PixelFunctionType>
     <SourceTransferType>CFloat64</SourceTransferType>
+    <PixelFunctionArguments fact="20." />
     <SimpleSource>
       <SourceFilename relativeToVRT="1">../cint_sar.tif</SourceFilename>
       <SourceBand>1</SourceBand>

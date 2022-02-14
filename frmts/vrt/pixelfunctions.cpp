@@ -971,25 +971,20 @@ static CPLErr Log10PixelFunc( void **papoSources, int nSources, void *pData,
                                 nPixelSpace, nLineSpace, 1.0);
 } // Log10PixelFunc
 
-static CPLErr Amp2dBPixelFunc( void **papoSources, int nSources, void *pData,
-                               int nXSize, int nYSize,
-                               GDALDataType eSrcType, GDALDataType eBufType,
-                               int nPixelSpace, int nLineSpace )
+static CPLErr DBPixelFunc( void **papoSources, int nSources, void *pData,
+                           int nXSize, int nYSize,
+                           GDALDataType eSrcType, GDALDataType eBufType,
+                           int nPixelSpace, int nLineSpace,
+                           CSLConstList papszArgs)
 {
-    return Log10PixelFuncHelper(papoSources, nSources, pData,
-                                nXSize, nYSize, eSrcType, eBufType,
-                                nPixelSpace, nLineSpace, 20.0);
-} // Amp2dBPixelFunc
+    double dfFact = 20.;
+    if ( FetchDoubleArg(papszArgs, "fact", &dfFact, &dfFact ) != CE_None )
+        return CE_Failure;
 
-static CPLErr Pow2dBPixelFunc( void **papoSources, int nSources, void *pData,
-                               int nXSize, int nYSize,
-                               GDALDataType eSrcType, GDALDataType eBufType,
-                               int nPixelSpace, int nLineSpace )
-{
     return Log10PixelFuncHelper(papoSources, nSources, pData,
                                 nXSize, nYSize, eSrcType, eBufType,
-                                nPixelSpace, nLineSpace, 10.0);
-} // Pow2dBPixelFunc
+                                nPixelSpace, nLineSpace, dfFact);
+} // DBPixelFunc
 
 static CPLErr PowPixelFuncHelper( void **papoSources, int nSources, void *pData,
                                   int nXSize, int nYSize,
@@ -1184,12 +1179,9 @@ CPLErr InterpolatePixelFunc( void **papoSources, int nSources, void *pData,
  * - "log10": compute the logarithm (base 10) of the abs of a single raster
  *            band (real or complex): log10( abs( x ) )
  * - "dB": perform conversion to dB of the abs of a single raster
- *         band (real or complex): 20. * log10( abs( x ) )
- *         Deprecated in GDAL 3.5, please use amp2dB insted.
- * - "amp2dB": perform conversion to dB of the abs of a single raster
- *         band (real or complex): 20. * log10( abs( x ) )
- * - "pow2dB": perform conversion to dB of the abs of a single raster
- *         band (real or complex): 10. * log10( abs( x ) )
+ *         band (real or complex): 20. * log10( abs( x ) ).
+ *         Note: the optional fact paremeter can be set to 10. to get the
+ *         alternative formula: 10. * log10( abs( x ) )
  * - "dB2amp": perform scale conversion from logarithmic to linear
  *             (amplitude) (i.e. 10 ^ ( x / 20 ) ) of a single raster
  *                 band (real only)
@@ -1224,9 +1216,7 @@ CPLErr GDALRegisterDefaultPixelFunc()
     GDALAddDerivedBandPixelFunc("intensity", IntensityPixelFunc);
     GDALAddDerivedBandPixelFunc("sqrt", SqrtPixelFunc);
     GDALAddDerivedBandPixelFunc("log10", Log10PixelFunc);
-    GDALAddDerivedBandPixelFunc("dB", Amp2dBPixelFunc);
-    GDALAddDerivedBandPixelFunc("amp2dB", Amp2dBPixelFunc);
-    GDALAddDerivedBandPixelFunc("pow2dB", Pow2dBPixelFunc);
+    GDALAddDerivedBandPixelFuncWithArgs("dB", DBPixelFunc, nullptr);
     GDALAddDerivedBandPixelFunc("dB2amp", dB2AmpPixelFunc);
     GDALAddDerivedBandPixelFunc("dB2pow", dB2PowPixelFunc);
     GDALAddDerivedBandPixelFuncWithArgs("pow", PowPixelFunc, nullptr);
