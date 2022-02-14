@@ -63,7 +63,7 @@ target_compile_options(libjpeg PRIVATE ${GDAL_C_WARNING_FLAGS} ${GDAL_SOFTWARNFL
 
 target_compile_definitions(libjpeg PRIVATE -DDEFAULT_MAX_MEM=500000000L)
 if (RENAME_INTERNAL_JPEG_SYMBOLS)
-  target_compile_definitions(libjpeg PRIVATE -DRENAME_INTERNAL_LIBJPEG_SYMBOLS)
+  target_compile_definitions(libjpeg PUBLIC -DRENAME_INTERNAL_LIBJPEG_SYMBOLS)
 endif ()
 
 set_property(TARGET libjpeg PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})

@@ -24,36 +24,29 @@ if (GDAL_USE_JPEG12_INTERNAL)
 endif ()
 
 if (GDAL_USE_JPEG_INTERNAL)
-  target_include_directories(gdal_MRF PRIVATE $<TARGET_PROPERTY:libjpeg,SOURCE_DIR>)
-  if (RENAME_INTERNAL_JPEG_SYMBOLS)
-    target_compile_definitions(gdal_MRF PRIVATE -DRENAME_INTERNAL_LIBJPEG_SYMBOLS)
-  endif ()
+  gdal_add_vendored_lib(gdal_MRF libjpeg)
 endif ()
 
 if (GDAL_USE_PNG_INTERNAL)
-  target_include_directories(gdal_MRF PRIVATE $<TARGET_PROPERTY:libpng,SOURCE_DIR>)
-  target_compile_definitions(gdal_MRF PRIVATE -DINTERNAL_PNG)
-  if (RENAME_INTERNAL_PNG_SYMBOLS)
-    target_compile_definitions(gdal_MRF PRIVATE -DRENAME_INTERNAL_PNG_SYMBOLS)
-  endif ()
+  gdal_add_vendored_lib(gdal_MRF libpng)
 endif ()
 
 if (GDAL_USE_ZLIB_INTERNAL)
-  target_include_directories(gdal_MRF PRIVATE $<TARGET_PROPERTY:libz,SOURCE_DIR>)
+  gdal_add_vendored_lib(gdal_MRF libz)
 endif ()
 
 # MRF Lerc support only possible for internal LercLib since it requires Lerc2.h
 if ((GDAL_USE_LERC_INTERNAL) AND GDAL_USE_LERCV1_INTERNAL)
   # if ((GDAL_USE_LERC_INTERNAL OR GDAL_USE_LERC) AND GDAL_USE_LERCV1_INTERNAL)
   target_sources(gdal_MRF PRIVATE LERC_band.cpp)
-  target_include_directories(gdal_MRF PRIVATE $<TARGET_PROPERTY:liblercv1,SOURCE_DIR>)
+  gdal_add_vendored_lib(gdal_MRF PRIVATE liblercv1)
   target_compile_definitions(gdal_MRF PRIVATE -DLERC)
 
   add_subdirectory(LERCV1)
 endif ()
 
 if (GDAL_USE_LERC_INTERNAL AND GDAL_USE_LERCV1_INTERNAL)
-  target_include_directories(gdal_MRF PRIVATE $<TARGET_PROPERTY:lerc,SOURCE_DIR>)
+  gdal_add_vendored_lib(gdal_MRF lerc)
 endif ()
 
 # Now external libs

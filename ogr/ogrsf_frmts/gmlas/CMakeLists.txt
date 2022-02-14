@@ -24,7 +24,7 @@ target_include_directories(
 
 # Internal libs first
 if (GDAL_USE_JSONC_INTERNAL)
-  target_include_directories(ogr_GMLAS PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
+  gdal_add_vendored_lib(ogr_GMLAS libjson)
 endif ()
 
 # External libs then

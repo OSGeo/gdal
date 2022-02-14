@@ -353,9 +353,6 @@ endif ()
 
 set(INSTALL_PLUGIN_FULL_DIR "${CMAKE_INSTALL_PREFIX}/${INSTALL_PLUGIN_DIR}")
 
-# detect portability libs and set, so it should add at first Common Portability layer
-add_subdirectory(port)
-
 # Configure internal libraries
 if (GDAL_USE_ZLIB_INTERNAL)
   add_subdirectory(frmts/zlib)
@@ -363,6 +360,9 @@ endif ()
 if (GDAL_USE_JSONC_INTERNAL)
   add_subdirectory(ogr/ogrsf_frmts/geojson/libjson)
 endif ()
+
+# Internal zlib and jsonc must be declared before
+add_subdirectory(port)
 
 # JPEG options need to be defined before internal libtiff
 if (GDAL_USE_JPEG_INTERNAL)
@@ -372,6 +372,11 @@ endif ()
 option(GDAL_USE_JPEG12_INTERNAL "Set ON to use internal libjpeg12 support" ON)
 if (GDAL_USE_JPEG12_INTERNAL)
   add_subdirectory(frmts/jpeg/libjpeg12)
+endif ()
+
+# Lerc options need to be defined before internal libtiff
+if (GDAL_USE_LERC_INTERNAL)
+  add_subdirectory(third_party/LercLib)
 endif ()
 
 if (GDAL_USE_TIFF_INTERNAL)
@@ -388,9 +393,6 @@ endif ()
 if (GDAL_USE_PNG_INTERNAL)
   option(RENAME_INTERNAL_PNG_SYMBOLS "Rename internal libpng symbols" ON)
   add_subdirectory(frmts/png/libpng)
-endif ()
-if (GDAL_USE_LERC_INTERNAL)
-  add_subdirectory(third_party/LercLib)
 endif ()
 if (GDAL_USE_SHAPELIB_INTERNAL)
   option(RENAME_INTERNAL_SHAPELIB_SYMBOLS "Rename internal Shapelib symbols" ON)

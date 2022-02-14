@@ -34,7 +34,7 @@ if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
 endif ()
 
 if (GDAL_USE_JSONC_INTERNAL)
-  target_include_directories(appslib PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
+  gdal_add_vendored_lib(appslib libjson)
 else ()
   gdal_target_link_libraries(appslib PRIVATE ${JSONC_LIBRARIES})
 endif ()
