@@ -48,7 +48,11 @@ import sys
 import tempfile
 import threading
 from functools import partial
-from multiprocessing import Pool
+if 'mpi4py.futures' in sys.modules:
+    from mpi4py.futures import MPIPoolExecutor
+    from mpi4py import MPI
+else:
+    from multiprocessing import Pool
 from typing import List, NoReturn, Tuple, Optional, Any
 from uuid import uuid4
 from xml.etree import ElementTree
@@ -1263,9 +1267,6 @@ def create_overview_tile(base_tz: int, base_tiles: List[Tuple[int, int]], output
             print("Tile generation skipped because of --resume")
         return
 
-    # Create directories for the tile
-    os.makedirs(os.path.dirname(tilefilename), exist_ok=True)
-
     if usable_base_tiles:
         scale_query_to_tile(dsquery, dstile, tile_driver, options,
                             tilefilename=tilefilename)
@@ -1291,7 +1292,7 @@ def create_overview_tile(base_tz: int, base_tiles: List[Tuple[int, int]], output
                     ).encode('utf-8'))
 
 
-def group_overview_base_tiles(base_tz: int, tile_job_info: 'TileJobInfo') -> List[List[Tuple[int, int]]]:
+def group_overview_base_tiles(base_tz: int, output_folder: str, tile_job_info: 'TileJobInfo') -> List[List[Tuple[int, int]]]:
     """ Group base tiles that belong to the same overview tile """
 
     overview_to_bases = {}
@@ -1307,6 +1308,13 @@ def group_overview_base_tiles(base_tz: int, tile_job_info: 'TileJobInfo') -> Lis
                 overview_to_bases[overview_tile] = []
 
             overview_to_bases[overview_tile].append(base_tile)
+
+    # Create directories for the tiles
+    overview_tz = base_tz - 1
+    for tx in range(tminx, tmaxx + 1):
+        overview_tx = tx >> 1
+        tiledirname = os.path.join(output_folder, str(overview_tz), str(overview_tx))
+        os.makedirs(tiledirname, exist_ok=True)
 
     return list(overview_to_bases.values())
 
@@ -1613,7 +1621,11 @@ class GDAL2Tiles(object):
             self.tile_size = options.tilesize
         self.tiledriver = 'PNG'
         self.tileext = 'png'
-        self.tmp_dir = tempfile.mkdtemp()
+        if 'mpi4py.futures' in sys.modules:
+            os.makedirs(output_folder, exist_ok=True)
+            self.tmp_dir = tempfile.mkdtemp(dir=output_folder)
+        else:
+            self.tmp_dir = tempfile.mkdtemp()
         self.tmp_vrt_filename = os.path.join(self.tmp_dir, str(uuid4()) + '.vrt')
 
         # Should we read bigger window of the input raster and scale it down?
@@ -2098,6 +2110,12 @@ class GDAL2Tiles(object):
         tile_details = []
 
         tz = self.tmaxz
+
+        # Create directories for the tiles
+        for tx in range(tminx, tmaxx + 1):
+            tiledirname = os.path.join(self.output_folder, str(tz), str(tx))
+            os.makedirs(tiledirname, exist_ok=True)
+
         for ty in range(tmaxy, tminy - 1, -1):
             for tx in range(tminx, tmaxx + 1):
 
@@ -2112,9 +2130,6 @@ class GDAL2Tiles(object):
                     if self.options.verbose:
                         print("Tile generation skipped because of --resume")
                     continue
-
-                # Create directories for the tile
-                os.makedirs(os.path.dirname(tilefilename), exist_ok=True)
 
                 if self.options.profile == 'mercator':
                     # Tile bounds in EPSG:3857
@@ -3191,7 +3206,7 @@ def single_threaded_tiling(input_file: str, output_folder: str, options: Options
             overview_progress_bar.start()
 
     for base_tz in range(conf.tmaxz, conf.tminz, -1):
-        base_tile_groups = group_overview_base_tiles(base_tz, conf)
+        base_tile_groups = group_overview_base_tiles(base_tz, output_folder, conf)
         for base_tiles in base_tile_groups:
             create_overview_tile(base_tz, base_tiles, output_folder, conf, options)
             if not options.verbose and not options.quiet:
@@ -3204,12 +3219,28 @@ def single_threaded_tiling(input_file: str, output_folder: str, options: Options
 def multi_threaded_tiling(input_file: str, output_folder: str, options: Options) -> None:
     nb_processes = options.nb_processes or 1
 
-    # Make sure that all processes do not consume more than `gdal.GetCacheMax()`
     gdal_cache_max = gdal.GetCacheMax()
-    gdal_cache_max_per_process = max(1024 * 1024, math.floor(gdal_cache_max / nb_processes))
-    set_cache_max(gdal_cache_max_per_process)
 
-    pool = Pool(processes=nb_processes)
+    if 'mpi4py.futures' in sys.modules:
+        # no way to find number of ranks per host so
+        # must assume user has set cache max correctly
+        nb_processes = MPI.COMM_WORLD.Get_size()
+        pool = MPIPoolExecutor(max_workers=nb_processes)
+        # copy interface of multiprocessing.Pool
+        def pool_imap_unordered(self, func, data, **kwargs):
+            return self.map(func, data, **kwargs, unordered=True)
+        pool.imap_unordered = pool_imap_unordered.__get__(pool)
+        def pool_close(self):
+            pass
+        pool.close = pool_close.__get__(pool)
+        def pool_join(self):
+            self.shutdown()
+        pool.join = pool_join.__get__(pool)
+    else:
+        # Make sure that all processes do not consume more than `gdal.GetCacheMax()`
+        gdal_cache_max_per_process = max(1024 * 1024, math.floor(gdal_cache_max / nb_processes))
+        set_cache_max(gdal_cache_max_per_process)
+        pool = Pool(processes=nb_processes)
 
     if options.verbose:
         print("Begin tiles details calc")
@@ -3238,7 +3269,7 @@ def multi_threaded_tiling(input_file: str, output_folder: str, options: Options)
             overview_progress_bar.start()
 
     for base_tz in range(conf.tmaxz, conf.tminz, -1):
-        base_tile_groups = group_overview_base_tiles(base_tz, conf)
+        base_tile_groups = group_overview_base_tiles(base_tz, output_folder, conf)
         chunksize = max(1, min(128, len(base_tile_groups) // nb_processes))
         for _ in pool.imap_unordered(partial(create_overview_tile, base_tz, output_folder=output_folder,
                                              tile_job_info=conf, options=options), base_tile_groups, chunksize=chunksize):
@@ -3271,7 +3302,7 @@ def main(argv: List[str]) -> int:
     input_file, output_folder, options = process_args(argv[1:])
     nb_processes = options.nb_processes or 1
 
-    if nb_processes == 1:
+    if nb_processes == 1 and 'mpi4py.futures' not in sys.modules:
         single_threaded_tiling(input_file, output_folder, options)
     else:
         multi_threaded_tiling(input_file, output_folder, options)
