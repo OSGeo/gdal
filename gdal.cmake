@@ -355,6 +355,7 @@ set(INSTALL_PLUGIN_FULL_DIR "${CMAKE_INSTALL_PREFIX}/${INSTALL_PLUGIN_DIR}")
 
 # Configure internal libraries
 if (GDAL_USE_ZLIB_INTERNAL)
+  option(RENAME_INTERNAL_ZLIB_SYMBOLS "Rename internal zlib symbols" ON)
   add_subdirectory(frmts/zlib)
 endif ()
 if (GDAL_USE_JSONC_INTERNAL)
