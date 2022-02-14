@@ -140,7 +140,7 @@ if (APPLE)
     PROPERTY TYPE)
   if (NOT result)
     set(CMAKE_FIND_FRAMEWORK LAST)
-    message("Setting CMAKE_FIND_FRAMEWORK=${CMAKE_FIND_FRAMEWORK}")
+    message(STATUS "Setting CMAKE_FIND_FRAMEWORK=${CMAKE_FIND_FRAMEWORK}")
   endif ()
 endif ()
 

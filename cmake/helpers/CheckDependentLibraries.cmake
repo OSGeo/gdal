@@ -133,7 +133,7 @@ macro (gdal_check_package name purpose)
     elseif (NOT GDAL_USE_EXTERNAL_LIBS)
       set(_gcpp_status OFF)
       if (HAVE_${key} AND NOT GDAL_USE_${key})
-        message(
+        message(STATUS
           "${key} has been found, but is disabled due to GDAL_USE_EXTERNAL_LIBS=OFF. Enable it by setting GDAL_USE_${key}=ON"
           )
       endif ()
@@ -141,7 +141,7 @@ macro (gdal_check_package name purpose)
     if (_gcpp_status AND _GCP_DISABLED_BY_DEFAULT)
       set(_gcpp_status OFF)
       if (HAVE_${key} AND NOT GDAL_USE_${key})
-        message("${key} has been found, but is disabled by default. Enable it by setting GDAL_USE_${key}=ON")
+        message(STATUS "${key} has been found, but is disabled by default. Enable it by setting GDAL_USE_${key}=ON")
       endif ()
     endif ()
     cmake_dependent_option(GDAL_USE_${key} "Set ON to use ${key}" ${_gcpp_status} "HAVE_${key}" OFF)
