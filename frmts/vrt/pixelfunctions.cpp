@@ -74,7 +74,8 @@ static CPLErr ConjPixelFunc( void **papoSources, int nSources, void *pData,
 static CPLErr SumPixelFunc( void **papoSources, int nSources, void *pData,
                             int nXSize, int nYSize,
                             GDALDataType eSrcType, GDALDataType eBufType,
-                            int nPixelSpace, int nLineSpace );
+                            int nPixelSpace, int nLineSpace,
+                            CSLConstList papszArgs );
 
 static CPLErr DiffPixelFunc( void **papoSources, int nSources, void *pData,
                              int nXSize, int nYSize,
@@ -84,7 +85,8 @@ static CPLErr DiffPixelFunc( void **papoSources, int nSources, void *pData,
 static CPLErr MulPixelFunc( void **papoSources, int nSources, void *pData,
                             int nXSize, int nYSize,
                             GDALDataType eSrcType, GDALDataType eBufType,
-                            int nPixelSpace, int nLineSpace );
+                            int nPixelSpace, int nLineSpace,
+                            CSLConstList papszArgs );
 
 static CPLErr DivPixelFunc( void **papoSources, int nSources, void *pData,
                             int nXSize, int nYSize,
@@ -99,7 +101,8 @@ static CPLErr CMulPixelFunc( void **papoSources, int nSources, void *pData,
 static CPLErr InvPixelFunc( void **papoSources, int nSources, void *pData,
                             int nXSize, int nYSize,
                             GDALDataType eSrcType, GDALDataType eBufType,
-                            int nPixelSpace, int nLineSpace );
+                            int nPixelSpace, int nLineSpace,
+                            CSLConstList papszArgs );
 
 static CPLErr IntensityPixelFunc( void **papoSources, int nSources, void *pData,
                                   int nXSize, int nYSize,
@@ -153,14 +156,23 @@ template<typename T> inline double GetSrcVal(const void* pSource, GDALDataType e
     return 0;
 }
 
-static CPLErr FetchDoubleArg(CSLConstList papszArgs, const char *pszName, double* pdfX)
+static CPLErr FetchDoubleArg(CSLConstList papszArgs, const char *pszName,
+                             double* pdfX, double* pdfDefault = nullptr)
 {
     const char* pszVal = CSLFetchNameValue(papszArgs, pszName);
 
     if ( pszVal == nullptr )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Missing pixel function argument: %s", pszName);
-        return CE_Failure;
+        if ( pdfDefault == nullptr )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Missing pixel function argument: %s", pszName);
+            return CE_Failure;
+        }
+        else
+        {
+            *pdfX = *pdfDefault;
+            return CE_None;
+        }
     }
 
     char *pszEnd = nullptr;
@@ -513,10 +525,14 @@ static CPLErr ConjPixelFunc( void **papoSources, int nSources, void *pData,
 static CPLErr SumPixelFunc(void **papoSources, int nSources, void *pData,
                     int nXSize, int nYSize,
                     GDALDataType eSrcType, GDALDataType eBufType,
-                    int nPixelSpace, int nLineSpace)
+                    int nPixelSpace, int nLineSpace, CSLConstList papszArgs )
 {
     /* ---- Init ---- */
     if( nSources < 2 ) return CE_Failure;
+
+    double dfK = 0.0;
+    if ( FetchDoubleArg(papszArgs, "k", &dfK, &dfK ) != CE_None )
+        return CE_Failure;
 
     /* ---- Set pixels ---- */
     if( GDALDataTypeIsComplex( eSrcType ) )
@@ -527,7 +543,7 @@ static CPLErr SumPixelFunc(void **papoSources, int nSources, void *pData,
         size_t ii = 0;
         for( int iLine = 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
-                double adfSum[2] = { 0.0, 0.0 };
+                double adfSum[2] = { dfK, 0.0 };
 
                 for( int iSrc = 0; iSrc < nSources; ++iSrc ) {
                     const void * const pReal = papoSources[iSrc];
@@ -552,7 +568,7 @@ static CPLErr SumPixelFunc(void **papoSources, int nSources, void *pData,
         size_t ii = 0;
         for( int iLine = 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
-                double dfSum = 0;  // Not complex.
+                double dfSum = dfK;  // Not complex.
 
                 for( int iSrc = 0; iSrc < nSources; ++iSrc ) {
                     // Source raster pixels may be obtained with GetSrcVal macro.
@@ -634,10 +650,15 @@ static CPLErr DiffPixelFunc( void **papoSources, int nSources, void *pData,
 static CPLErr MulPixelFunc( void **papoSources, int nSources, void *pData,
                             int nXSize, int nYSize,
                             GDALDataType eSrcType, GDALDataType eBufType,
-                            int nPixelSpace, int nLineSpace )
+                            int nPixelSpace, int nLineSpace,
+                            CSLConstList papszArgs )
 {
     /* ---- Init ---- */
     if( nSources < 2 ) return CE_Failure;
+
+    double dfK = 1.0;
+    if ( FetchDoubleArg(papszArgs, "k", &dfK, &dfK ) != CE_None )
+        return CE_Failure;
 
     /* ---- Set pixels ---- */
     if( GDALDataTypeIsComplex( eSrcType ) )
@@ -648,7 +669,7 @@ static CPLErr MulPixelFunc( void **papoSources, int nSources, void *pData,
         size_t ii = 0;
         for( int iLine = 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
-                double adfPixVal[2] = { 1.0, 0.0 };
+                double adfPixVal[2] = { dfK, 0.0 };
 
                 for( int iSrc = 0; iSrc < nSources; ++iSrc ) {
                     const void * const pReal = papoSources[iSrc];
@@ -679,7 +700,7 @@ static CPLErr MulPixelFunc( void **papoSources, int nSources, void *pData,
         size_t ii = 0;
         for( int iLine = 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
-                double dfPixVal = 1.0;  // Not complex.
+                double dfPixVal = dfK;  // Not complex.
 
                 for( int iSrc = 0; iSrc < nSources; ++iSrc ) {
                     // Source raster pixels may be obtained with GetSrcVal macro.
@@ -832,10 +853,15 @@ static CPLErr CMulPixelFunc( void **papoSources, int nSources, void *pData,
 static CPLErr InvPixelFunc( void **papoSources, int nSources, void *pData,
                             int nXSize, int nYSize,
                             GDALDataType eSrcType, GDALDataType eBufType,
-                            int nPixelSpace, int nLineSpace )
+                            int nPixelSpace, int nLineSpace,
+                            CSLConstList papszArgs )
 {
     /* ---- Init ---- */
     if( nSources != 1 ) return CE_Failure;
+
+    double dfK = 1.0;
+    if ( FetchDoubleArg(papszArgs, "k", &dfK, &dfK ) != CE_None )
+        return CE_Failure;
 
     /* ---- Set pixels ---- */
     if( GDALDataTypeIsComplex( eSrcType ) )
@@ -853,8 +879,8 @@ static CPLErr InvPixelFunc( void **papoSources, int nSources, void *pData,
                 const double dfImag = GetSrcVal(pImag, eSrcType, ii);
                 const double dfAux = dfReal * dfReal + dfImag * dfImag;
                 const double adfPixVal[2] = {
-                    dfAux == 0 ? std::numeric_limits<double>::infinity() : dfReal / dfAux,
-                    dfAux == 0 ? std::numeric_limits<double>::infinity() : -dfImag / dfAux };
+                    dfAux == 0 ? std::numeric_limits<double>::infinity() : dfK * dfReal / dfAux,
+                    dfAux == 0 ? std::numeric_limits<double>::infinity() : - dfK * dfImag / dfAux };
 
                 GDALCopyWords(
                     adfPixVal, GDT_CFloat64, 0,
@@ -874,7 +900,7 @@ static CPLErr InvPixelFunc( void **papoSources, int nSources, void *pData,
                 const double dfVal = GetSrcVal(papoSources[0], eSrcType, ii);
                 const double dfPixVal =
                     dfVal == 0 ? std::numeric_limits<double>::infinity() :
-                    1.0 / dfVal;
+                    dfK / dfVal;
 
                 GDALCopyWords(
                     &dfPixVal, GDT_Float64, 0,
@@ -1289,12 +1315,12 @@ CPLErr GDALRegisterDefaultPixelFunc()
     GDALAddDerivedBandPixelFunc("mod", ModulePixelFunc);
     GDALAddDerivedBandPixelFunc("phase", PhasePixelFunc);
     GDALAddDerivedBandPixelFunc("conj", ConjPixelFunc);
-    GDALAddDerivedBandPixelFunc("sum", SumPixelFunc);
+    GDALAddDerivedBandPixelFuncWithArgs("sum", SumPixelFunc, nullptr);
     GDALAddDerivedBandPixelFunc("diff", DiffPixelFunc);
-    GDALAddDerivedBandPixelFunc("mul", MulPixelFunc);
+    GDALAddDerivedBandPixelFuncWithArgs("mul", MulPixelFunc, nullptr);
     GDALAddDerivedBandPixelFunc("div", DivPixelFunc);
     GDALAddDerivedBandPixelFunc("cmul", CMulPixelFunc);
-    GDALAddDerivedBandPixelFunc("inv", InvPixelFunc);
+    GDALAddDerivedBandPixelFuncWithArgs("inv", InvPixelFunc, nullptr);
     GDALAddDerivedBandPixelFunc("intensity", IntensityPixelFunc);
     GDALAddDerivedBandPixelFunc("sqrt", SqrtPixelFunc);
     GDALAddDerivedBandPixelFunc("log10", Log10PixelFunc);

@@ -864,8 +864,8 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - interpolate a value at time (or position) ``t`` given input sources beginning at ``t0`` with spacing ``dt`` using linear interpolation
    * - **inv**
      - 1
-     - -
-     - inverse (1./x). Note: no check is performed on zero division
+     - 1 (optional)
+     - inverse (``1./x``). If the optional ``k`` parameter is set then the result is multiplied by ``k`` (``k/x``). Note: no check is performed on zero division
    * - **log10**
      - 1
      - -
@@ -876,8 +876,8 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - extract module from a single raster band (real or complex)
    * - **mul**
      - >= 2
-     - -
-     - multiply 2 or more raster bands
+     - 1 (optional)
+     - multiply 2 or more raster bands. If the optional ``k`` parameter is provided then the result is multiplied by the scalar ``k``.
    * - **phase**
      - 1
      - -
@@ -904,8 +904,8 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - perform the square root of a single raster band (real only)
    * - **sum**
      - >= 2
-     - -
-     - sum 2 or more raster bands
+     - 1 (optional)
+     - sum 2 or more raster bands. If the optional ``k`` parameter is provided then it is added to each element of the result.
 
 Writing Pixel Functions
 +++++++++++++++++++++++

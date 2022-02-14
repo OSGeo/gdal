@@ -378,6 +378,26 @@ def test_pixfun_sum_c():
 
 
 ###############################################################################
+# Verify the sum of 3 (real) datasets and a scalar constant k.
+
+def test_pixfun_sum_k():
+
+    filename = 'data/vrt/pixfun_sum_k.vrt'
+    ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
+    assert ds is not None, ('Unable to open "%s" dataset.' % filename)
+    data = ds.GetRasterBand(1).ReadAsArray()
+
+    k = 2.
+    refdata = numpy.full(data.shape, k, dtype='float')
+    for reffilename in ('data/uint16.tif', 'data/int32.tif',
+                        'data/float32.tif'):
+        refds = gdal.Open(reffilename)
+        assert refds is not None, ('Unable to open "%s" dataset.' % reffilename)
+        refdata += refds.GetRasterBand(1).ReadAsArray()
+
+    assert numpy.alltrue(data == refdata)
+
+###############################################################################
 # Verify the difference of 2 (real) datasets.
 
 def test_pixfun_diff_r():
@@ -459,6 +479,27 @@ def test_pixfun_mul_c():
     refdata = refds.GetRasterBand(1).ReadAsArray()
 
     assert numpy.alltrue(data == refdata * refdata)
+
+
+###############################################################################
+# Verify the product of 3 (real) datasets and a scalar constant k.
+
+def test_pixfun_mul_k():
+
+    filename = 'data/vrt/pixfun_mul_k.vrt'
+    ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
+    assert ds is not None, ('Unable to open "%s" dataset.' % filename)
+    data = ds.GetRasterBand(1).ReadAsArray()
+
+    k = 2.
+    refdata = numpy.full(data.shape, k, dtype='float')
+    for reffilename in ('data/uint16.tif', 'data/int32.tif',
+                        'data/float32.tif'):
+        refds = gdal.Open(reffilename)
+        assert refds is not None, ('Unable to open "%s" dataset.' % reffilename)
+        refdata *= refds.GetRasterBand(1).ReadAsArray()
+
+    assert numpy.alltrue(data == refdata)
 
 
 ###############################################################################
@@ -627,6 +668,26 @@ def test_pixfun_inv_c_zero():
     data = ds.GetRasterBand(1).ReadAsArray()
     assert math.isinf(data[0][0].real)
     assert math.isinf(data[0][0].imag)
+
+
+###############################################################################
+# Verify computation of the inverse of a real datasets multiplied by a scalar k.
+
+def test_pixfun_inv_k():
+
+    filename = 'data/vrt/pixfun_inv_k.vrt'
+    ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
+    assert ds is not None, ('Unable to open "%s" dataset.' % filename)
+    data = ds.GetRasterBand(1).ReadAsArray()
+
+    reffilename = 'data/uint16.tif'
+    refds = gdal.Open(reffilename)
+    assert refds is not None, ('Unable to open "%s" dataset.' % reffilename)
+    refdata = refds.GetRasterBand(1).ReadAsArray()
+    refdata = refdata.astype('float64')
+
+    k = 2.
+    assert numpy.alltrue(data == k / refdata)
 
 
 ###############################################################################
