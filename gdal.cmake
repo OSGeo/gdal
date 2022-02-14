@@ -356,9 +356,11 @@ set(INSTALL_PLUGIN_FULL_DIR "${CMAKE_INSTALL_PREFIX}/${INSTALL_PLUGIN_DIR}")
 # Configure internal libraries
 if (GDAL_USE_ZLIB_INTERNAL)
   option(RENAME_INTERNAL_ZLIB_SYMBOLS "Rename internal zlib symbols" ON)
+  mark_as_advanced(RENAME_INTERNAL_ZLIB_SYMBOLS)
   add_subdirectory(frmts/zlib)
 endif ()
 if (GDAL_USE_JSONC_INTERNAL)
+  # Internal libjson symbols are renamed by default
   add_subdirectory(ogr/ogrsf_frmts/geojson/libjson)
 endif ()
 
@@ -368,6 +370,7 @@ add_subdirectory(port)
 # JPEG options need to be defined before internal libtiff
 if (GDAL_USE_JPEG_INTERNAL)
   option(RENAME_INTERNAL_JPEG_SYMBOLS "Rename internal libjpeg symbols" ON)
+  mark_as_advanced(RENAME_INTERNAL_JPEG_SYMBOLS)
   add_subdirectory(frmts/jpeg/libjpeg)
 endif ()
 option(GDAL_USE_JPEG12_INTERNAL "Set ON to use internal libjpeg12 support" ON)
@@ -377,15 +380,18 @@ endif ()
 
 # Lerc options need to be defined before internal libtiff
 if (GDAL_USE_LERC_INTERNAL)
+  # Internal liblerc uses a dedicated namespace
   add_subdirectory(third_party/LercLib)
 endif ()
 
 if (GDAL_USE_TIFF_INTERNAL)
   option(RENAME_INTERNAL_TIFF_SYMBOLS "Rename internal libtiff symbols" ON)
+  mark_as_advanced(RENAME_INTERNAL_TIFF_SYMBOLS)
   add_subdirectory(frmts/gtiff/libtiff)
 endif ()
 if (GDAL_USE_GEOTIFF_INTERNAL)
   option(RENAME_INTERNAL_GEOTIFF_SYMBOLS "Rename internal libgeotiff symbols" ON)
+  mark_as_advanced(RENAME_INTERNAL_GEOTIFF_SYMBOLS)
   add_subdirectory(frmts/gtiff/libgeotiff)
 endif ()
 if (GDAL_USE_GIF_INTERNAL)
@@ -393,10 +399,12 @@ if (GDAL_USE_GIF_INTERNAL)
 endif ()
 if (GDAL_USE_PNG_INTERNAL)
   option(RENAME_INTERNAL_PNG_SYMBOLS "Rename internal libpng symbols" ON)
+  mark_as_advanced(RENAME_INTERNAL_PNG_SYMBOLS)
   add_subdirectory(frmts/png/libpng)
 endif ()
 if (GDAL_USE_SHAPELIB_INTERNAL)
   option(RENAME_INTERNAL_SHAPELIB_SYMBOLS "Rename internal Shapelib symbols" ON)
+  mark_as_advanced(RENAME_INTERNAL_SHAPELIB_SYMBOLS)
 endif ()
 
 # Core components
