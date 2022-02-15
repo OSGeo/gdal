@@ -1029,6 +1029,7 @@ static CPLErr ExpPixelFunc( void **papoSources, int nSources, void *pData,
 
     if ( FetchDoubleArg(papszArgs, "fact", &dfFact, &dfFact ) != CE_None )
         return CE_Failure;
+    if ( dfFact == 0. ) return CE_Failure;
 
     return ExpPixelFuncHelper(papoSources, nSources, pData,
                               nXSize, nYSize, eSrcType, eBufType,
