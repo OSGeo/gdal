@@ -48,11 +48,6 @@ import sys
 import tempfile
 import threading
 from functools import partial
-if 'mpi4py.futures' in sys.modules:
-    from mpi4py.futures import MPIPoolExecutor
-    from mpi4py import MPI
-else:
-    from multiprocessing import Pool
 from typing import List, NoReturn, Tuple, Optional, Any
 from uuid import uuid4
 from xml.etree import ElementTree
@@ -1367,6 +1362,9 @@ def optparse_init() -> optparse.OptionParser:
                  dest="nb_processes",
                  type='int',
                  help="Number of processes to use for tiling")
+    p.add_option("--mpi",
+                 action="store_true", dest="mpi",
+                 help="Assume launched by mpiexec and ignore --processes")
     p.add_option("--tilesize", dest="tilesize",  metavar="PIXELS", default=256,
                  type='int',
                  help="Width and height in pixel of a tile")
@@ -1621,7 +1619,7 @@ class GDAL2Tiles(object):
             self.tile_size = options.tilesize
         self.tiledriver = 'PNG'
         self.tileext = 'png'
-        if 'mpi4py.futures' in sys.modules:
+        if options.mpi:
             os.makedirs(output_folder, exist_ok=True)
             self.tmp_dir = tempfile.mkdtemp(dir=output_folder)
         else:
@@ -3221,7 +3219,9 @@ def multi_threaded_tiling(input_file: str, output_folder: str, options: Options)
 
     gdal_cache_max = gdal.GetCacheMax()
 
-    if 'mpi4py.futures' in sys.modules:
+    if options.mpi:
+        from mpi4py.futures import MPIPoolExecutor
+        from mpi4py import MPI
         # no way to find number of ranks per host so
         # must assume user has set cache max correctly
         nb_processes = MPI.COMM_WORLD.Get_size()
@@ -3237,6 +3237,7 @@ def multi_threaded_tiling(input_file: str, output_folder: str, options: Options)
             self.shutdown()
         pool.join = pool_join.__get__(pool)
     else:
+        from multiprocessing import Pool
         # Make sure that all processes do not consume more than `gdal.GetCacheMax()`
         gdal_cache_max_per_process = max(1024 * 1024, math.floor(gdal_cache_max / nb_processes))
         set_cache_max(gdal_cache_max_per_process)
@@ -3302,7 +3303,7 @@ def main(argv: List[str]) -> int:
     input_file, output_folder, options = process_args(argv[1:])
     nb_processes = options.nb_processes or 1
 
-    if nb_processes == 1 and 'mpi4py.futures' not in sys.modules:
+    if nb_processes == 1 and not options.mpi:
         single_threaded_tiling(input_file, output_folder, options)
     else:
         multi_threaded_tiling(input_file, output_folder, options)
