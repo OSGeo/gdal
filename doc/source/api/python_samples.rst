@@ -1,4 +1,4 @@
-python_samples:
+.. _python_samples:
 
 ================================================================================
 Python Sample scripts
