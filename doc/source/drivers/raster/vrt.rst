@@ -842,6 +842,10 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - 2
      - -
      - divide one rasted band by another (``b1 / b2``)
+   * - **exp**
+     - 1
+     - 2 (optional)
+     - computes the exponential of each element in the input band ``x`` (of real values): ``e ^ x``. The function also accepts two optional parameters: ``base`` and ``fact`` that allow to compute the generalized formula: ``base ^ ( x / fact )``. Note: this function is the recommended one to perform conversion form logaritmic scale (dB): `` 10. ^ (x / 20.)``, in this case ``base = 10.`` and ``fact = 20.``
    * - **imag**
      - 1
      - -
