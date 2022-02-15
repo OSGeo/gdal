@@ -841,7 +841,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
    * - **div**
      - 2
      - -
-     - divide one rasted band by another (``b1 / b2``). Note: no check is performed on zero division
+     - divide one rasted band by another (``b1 / b2``)
    * - **imag**
      - 1
      - -
@@ -849,7 +849,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
    * - **intensity**
      - 1
      - -
-     - computes the intensity ``Re(x*conj(x))`` of a single raster band (real or complex)
+     - computes the intensity ``Re( x * conj(x) )`` of a single raster band (real or complex)
    * - **interpolate_exp**
      - >= 2
      - ``t0``, ``dt``, ``t``
@@ -861,7 +861,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
    * - **inv**
      - 1
      - 1 (optional)
-     - inverse (``1./x``). If the optional ``k`` parameter is set then the result is multiplied by ``k`` (``k/x``). Note: no check is performed on zero division
+     - inverse (``1./x``). If the optional ``k`` parameter is set then the result is multiplied by ``k`` (``k / x``)
    * - **log10**
      - 1
      - -
@@ -898,6 +898,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - >= 2
      - 1 (optional)
      - sum 2 or more raster bands. If the optional ``k`` parameter is provided then it is added to each element of the result.
+
 
 Writing Pixel Functions
 +++++++++++++++++++++++
