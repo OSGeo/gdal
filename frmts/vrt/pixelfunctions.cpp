@@ -1214,12 +1214,12 @@ CPLErr InterpolatePixelFunc( void **papoSources, int nSources, void *pData,
  *             (amplitude) (i.e. 10 ^ ( x / 20 ) ) of a single raster
  *             band (real only).
  *             Deprecated in GDAL v3.5. Please use the ``exp`` pixel function with
- *             ``base = 10.`` and ``facr = 20.``
+ *             ``base = 10.`` and ``fact = 20.``
  * - "dB2pow": perform scale conversion from logarithmic to linear
  *             (power) (i.e. 10 ^ ( x / 10 ) ) of a single raster
  *             band (real only)
  *             Deprecated in GDAL v3.5. Please use the ``exp`` pixel function with
- *             ``base = 10.`` and ``facr = 10.``
+ *             ``base = 10.`` and ``fact = 10.``
  * - "pow": raise a single raster band to a constant power
  * - "interpolate_linear": interpolate values between two raster bands
  *                         using linear interpolation
