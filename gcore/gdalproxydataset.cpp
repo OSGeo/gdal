@@ -439,7 +439,7 @@ RB_PROXY_METHOD_WITH_RET(CPLVirtualMem*, nullptr, GetVirtualMemAuto,
 /************************************************************************/
 
 void GDALProxyRasterBand::UnrefUnderlyingRasterBand(
-    GDALRasterBand* /* poUnderlyingRasterBand */ )
+    GDALRasterBand* /* poUnderlyingRasterBand */ ) const
 {}
 
 /*! @endcond */

@@ -37,7 +37,7 @@ class NGWWrapperRasterBand : public GDALProxyRasterBand
     GDALRasterBand *poBaseBand;
 
 protected:
-    virtual GDALRasterBand *RefUnderlyingRasterBand() override { return poBaseBand; }
+    virtual GDALRasterBand *RefUnderlyingRasterBand() const override { return poBaseBand; }
 
 public:
     explicit NGWWrapperRasterBand( GDALRasterBand* poBaseBandIn ) :
