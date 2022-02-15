@@ -19,7 +19,7 @@ Synopsis
     gdal2tiles.py [-p profile] [-r resampling] [-s srs] [-z zoom]
                   [-e] [-a nodata] [-v] [-q] [-h] [-k] [-n] [-u url]
                   [-w webviewer] [-t title] [-c copyright]
-                  [--processes=NB_PROCESSES] [--xyz]
+                  [--processes=NB_PROCESSES] [--mpi] [--xyz]
                   --tilesize=PIXELS
                   [-g googlekey] [-b bingkey] input_file [output_dir] [COMMON_OPTIONS]
 
@@ -108,6 +108,13 @@ can publish a picture without proper georeferencing too.
   Number of parallel processes to use for tiling, to speed-up the computation.
 
   .. versionadded:: 2.3
+
+.. option:: --mpi
+
+  Assume launched by mpiexec, enable MPI parallelism and ignore --processes.
+  Requires working MPI environment and the MPI for Python (mpi4py) package.
+
+  .. versionadded:: 3.5
 
 .. option:: --tilesize=<PIXELS>
 
@@ -212,3 +219,10 @@ MapML generation:
 .. code-block::
 
   gdal2tiles.py --zoom=16-18 -w mapml -p APSTILE --url "https://example.com" input.tif output_folder
+
+
+MPI example:
+
+.. code-block::
+
+  mpiexec -n $NB_PROCESSES gdal2tiles.py --mpi --zoom=2-5 input.tif output_folder
