@@ -4156,31 +4156,22 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
 
     if( !STARTS_WITH_CI(pszResampling, "NEAR") )
     {
-        int nMaskFlags;
-        // Special case if we are the alpha band. We want it to be considered
+        // Special case if we are an alpha/mask band. We want it to be considered
         // as the mask band to avoid alpha=0 to be taken into account in average
         // computation.
-        if( poSrcBand->GetColorInterpretation() == GCI_AlphaBand )
+        if( poSrcBand->IsMaskBand() )
         {
             poMaskBand = poSrcBand;
-            nMaskFlags = GMF_ALPHA | GMF_PER_DATASET;
-        }
-        // Same as above for mask band. I'd wish we had a better way of conveying this !
-        else if( CPLTestBool(CPLGetConfigOption(
-                    "GDAL_REGENERATED_BAND_IS_MASK", "NO")) )
-        {
-            poMaskBand = poSrcBand;
-            nMaskFlags = GMF_PER_DATASET;
+            bUseNoDataMask = true;
         }
         else
         {
             poMaskBand = poSrcBand->GetMaskBand();
-            nMaskFlags = poSrcBand->GetMaskFlags();
+            const int nMaskFlags = poSrcBand->GetMaskFlags();
             bCanUseCascaded = (nMaskFlags == GMF_NODATA ||
                                nMaskFlags == GMF_ALL_VALID);
+            bUseNoDataMask = (nMaskFlags & GMF_ALL_VALID) == 0;
         }
-
-        bUseNoDataMask = (nMaskFlags & GMF_ALL_VALID) == 0;
     }
 
 /* -------------------------------------------------------------------- */
@@ -4906,9 +4897,7 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
     const GDALDataType eWrkDataType =
         GDALGetOvrWorkDataType(pszResampling, eDataType);
 
-    // I'd wish we had a better way of conveying this !
-    const bool bIsMask = CPLTestBool(CPLGetConfigOption(
-                    "GDAL_REGENERATED_BAND_IS_MASK", "NO"));
+    const bool bIsMask = papoSrcBands[0]->IsMaskBand();
 
     // If we have a nodata mask and we are doing something more complicated
     // than nearest neighbouring, we have to fetch to nodata mask.
@@ -5296,8 +5285,7 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
 
                     if( bUseNoDataMask && eErr == CE_None )
                     {
-                        const bool bUseSrcAsMaskBand = bIsMask || papoSrcBands[iBand]->GetColorInterpretation() == GCI_AlphaBand;
-                        auto poMaskBand = bUseSrcAsMaskBand ? poSrcBand : poSrcBand->GetMaskBand();
+                        auto poMaskBand = poSrcBand->IsMaskBand() ? poSrcBand : poSrcBand->GetMaskBand();
                         eErr = poMaskBand->RasterIO(
                             GF_Read,
                             nChunkXOffQueried, nChunkYOffQueried,

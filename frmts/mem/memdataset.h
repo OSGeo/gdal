@@ -154,6 +154,8 @@ class CPL_DLL MEMRasterBand CPL_NON_FINAL: public GDALPamRasterBand
     GSpacing    nLineOffset;
     int         bOwnData;
 
+    bool           m_bIsMask = false;
+
   public:
                    MEMRasterBand( GDALDataset *poDS, int nBand,
                                   GByte *pabyData, GDALDataType eType,
@@ -176,6 +178,7 @@ class CPL_DLL MEMRasterBand CPL_NON_FINAL: public GDALPamRasterBand
     virtual GDALRasterBand *GetOverview(int) override;
 
     virtual CPLErr          CreateMaskBand( int nFlagsIn ) override;
+    virtual bool            IsMaskBand() const override;
 
     // Allow access to MEM driver's private internal memory buffer.
     GByte *GetData() const { return(pabyData); }

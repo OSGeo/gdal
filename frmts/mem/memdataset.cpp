@@ -445,8 +445,10 @@ CPLErr MEMRasterBand::CreateMaskBand( int nFlagsIn )
 
     nMaskFlags = nFlagsIn;
     bOwnMask = true;
-    poMask = new MEMRasterBand( pabyMaskData, GDT_Byte,
+    auto poMemMaskBand = new MEMRasterBand( pabyMaskData, GDT_Byte,
                                 nRasterXSize, nRasterYSize );
+    poMask = poMemMaskBand;
+    poMemMaskBand->m_bIsMask = true;
     if( (nFlagsIn & GMF_PER_DATASET) != 0 && nBand == 1 && poMemDS != nullptr )
     {
         for( int i = 2; i <= poMemDS->GetRasterCount(); ++i )
@@ -460,6 +462,15 @@ CPLErr MEMRasterBand::CreateMaskBand( int nFlagsIn )
         }
     }
     return CE_None;
+}
+
+/************************************************************************/
+/*                            IsMaskBand()                              */
+/************************************************************************/
+
+bool MEMRasterBand::IsMaskBand() const
+{
+    return m_bIsMask || GDALPamRasterBand::IsMaskBand();
 }
 
 /************************************************************************/

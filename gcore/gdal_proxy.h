@@ -195,6 +195,8 @@ class CPL_DLL GDALProxyRasterBand : public GDALRasterBand
     GDALRasterBand *GetMaskBand() override;
     int GetMaskFlags() override;
     CPLErr CreateMaskBand( int nFlags ) override;
+    bool            IsMaskBand() const override;
+    GDALMaskValueRange GetMaskValueRange() const override;
 
     CPLVirtualMem  *GetVirtualMemAuto( GDALRWFlag eRWFlag,
                                        int *pnPixelSpace,
@@ -424,6 +426,8 @@ class GDALProxyPoolMaskBand : public GDALProxyPoolRasterBand
                            GDALDataType eDataType,
                            int nBlockXSize, int nBlockYSize );
     ~GDALProxyPoolMaskBand() override;
+
+    bool            IsMaskBand() const override { return true; }
 };
 
 #endif

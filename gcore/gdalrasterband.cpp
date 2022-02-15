@@ -6644,6 +6644,51 @@ CPLErr CPL_STDCALL GDALCreateMaskBand( GDALRasterBandH hBand, int nFlags )
 }
 
 /************************************************************************/
+/*                            IsMaskBand()                              */
+/************************************************************************/
+
+/**
+ * \brief Returns whether a band is a mask band.
+ *
+ * Mask band must be understood in the broad term: it can be a per-dataset
+ * mask band, an alpha band, or an implicit mask band.
+ * Typically the return of GetMaskBand()->IsMaskBand() should be true.
+ *
+ * @return true if the band is a mask band.
+ *
+ * @see GDALDataset::CreateMaskBand()
+ *
+ * @since GDAL 3.5.0
+ *
+ */
+
+bool GDALRasterBand::IsMaskBand() const
+{
+    // The GeoTIFF driver, among others, override this method to
+    // also handle external .msk bands.
+    return const_cast<GDALRasterBand*>(this)->GetColorInterpretation() == GCI_AlphaBand;
+}
+
+/************************************************************************/
+/*                         GetMaskValueRange()                          */
+/************************************************************************/
+
+/**
+ * \brief Returns the range of values that a mask band can take.
+ *
+ * @return the range of values that a mask band can take.
+ *
+ * @since GDAL 3.5.0
+ *
+ */
+
+GDALMaskValueRange GDALRasterBand::GetMaskValueRange() const
+{
+    return GMVR_UNKNOWN;
+}
+
+
+/************************************************************************/
 /*                    GetIndexColorTranslationTo()                      */
 /************************************************************************/
 

@@ -557,6 +557,8 @@ class CPL_DLL VRTRasterBand CPL_NON_FINAL: public GDALRasterBand
 
     void SetIsMaskBand();
 
+    virtual bool            IsMaskBand() const override;
+
     CPLErr UnsetNoDataValue();
 
     virtual int         CloseDependentDatasets();
