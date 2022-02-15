@@ -353,20 +353,24 @@ endif ()
 
 set(INSTALL_PLUGIN_FULL_DIR "${CMAKE_INSTALL_PREFIX}/${INSTALL_PLUGIN_DIR}")
 
-# detect portability libs and set, so it should add at first Common Portability layer
-add_subdirectory(port)
-
 # Configure internal libraries
 if (GDAL_USE_ZLIB_INTERNAL)
+  option(RENAME_INTERNAL_ZLIB_SYMBOLS "Rename internal zlib symbols" ON)
+  mark_as_advanced(RENAME_INTERNAL_ZLIB_SYMBOLS)
   add_subdirectory(frmts/zlib)
 endif ()
 if (GDAL_USE_JSONC_INTERNAL)
+  # Internal libjson symbols are renamed by default
   add_subdirectory(ogr/ogrsf_frmts/geojson/libjson)
 endif ()
+
+# Internal zlib and jsonc must be declared before
+add_subdirectory(port)
 
 # JPEG options need to be defined before internal libtiff
 if (GDAL_USE_JPEG_INTERNAL)
   option(RENAME_INTERNAL_JPEG_SYMBOLS "Rename internal libjpeg symbols" ON)
+  mark_as_advanced(RENAME_INTERNAL_JPEG_SYMBOLS)
   add_subdirectory(frmts/jpeg/libjpeg)
 endif ()
 option(GDAL_USE_JPEG12_INTERNAL "Set ON to use internal libjpeg12 support" ON)
@@ -374,25 +378,35 @@ if (GDAL_USE_JPEG12_INTERNAL)
   add_subdirectory(frmts/jpeg/libjpeg12)
 endif ()
 
+# Lerc options need to be defined before internal libtiff
+if (GDAL_USE_LERC_INTERNAL)
+  # Internal liblerc uses a dedicated namespace
+  add_subdirectory(third_party/LercLib)
+endif ()
+
 if (GDAL_USE_TIFF_INTERNAL)
   option(RENAME_INTERNAL_TIFF_SYMBOLS "Rename internal libtiff symbols" ON)
+  mark_as_advanced(RENAME_INTERNAL_TIFF_SYMBOLS)
   add_subdirectory(frmts/gtiff/libtiff)
 endif ()
 if (GDAL_USE_GEOTIFF_INTERNAL)
   option(RENAME_INTERNAL_GEOTIFF_SYMBOLS "Rename internal libgeotiff symbols" ON)
+  mark_as_advanced(RENAME_INTERNAL_GEOTIFF_SYMBOLS)
   add_subdirectory(frmts/gtiff/libgeotiff)
 endif ()
 if (GDAL_USE_GIF_INTERNAL)
+  option(RENAME_INTERNAL_GIF_SYMBOLS "Rename internal giflib symbols" ON)
+  mark_as_advanced(RENAME_INTERNAL_GIF_SYMBOLS)
   add_subdirectory(frmts/gif/giflib)
 endif ()
 if (GDAL_USE_PNG_INTERNAL)
+  option(RENAME_INTERNAL_PNG_SYMBOLS "Rename internal libpng symbols" ON)
+  mark_as_advanced(RENAME_INTERNAL_PNG_SYMBOLS)
   add_subdirectory(frmts/png/libpng)
-endif ()
-if (GDAL_USE_LERC_INTERNAL)
-  add_subdirectory(third_party/LercLib)
 endif ()
 if (GDAL_USE_SHAPELIB_INTERNAL)
   option(RENAME_INTERNAL_SHAPELIB_SYMBOLS "Rename internal Shapelib symbols" ON)
+  mark_as_advanced(RENAME_INTERNAL_SHAPELIB_SYMBOLS)
 endif ()
 
 # Core components
@@ -673,10 +687,14 @@ if (NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
   # Generate gdal-config utility command and pkg-config module gdal.pc
   include(GdalGenerateConfig)
   gdal_generate_config(
-    TARGET "${GDAL_LIB_TARGET_NAME}"
-    GLOBAL_PROPERTY "gdal_private_link_libraries"
-    GDAL_CONFIG "${PROJECT_BINARY_DIR}/apps/gdal-config"
-    PKG_CONFIG "${CMAKE_CURRENT_BINARY_DIR}/gdal.pc")
+    TARGET
+    "${GDAL_LIB_TARGET_NAME}"
+    GLOBAL_PROPERTY
+    "gdal_private_link_libraries"
+    GDAL_CONFIG
+    "${PROJECT_BINARY_DIR}/apps/gdal-config"
+    PKG_CONFIG
+    "${CMAKE_CURRENT_BINARY_DIR}/gdal.pc")
   install(
     PROGRAMS ${PROJECT_BINARY_DIR}/apps/gdal-config
     DESTINATION ${CMAKE_INSTALL_BINDIR}

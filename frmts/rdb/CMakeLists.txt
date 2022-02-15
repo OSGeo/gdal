@@ -4,7 +4,7 @@ target_include_directories(gdal_RDB PRIVATE ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/geo
 gdal_target_link_libraries(TARGET gdal_RDB PRIVATE LIBRARIES rdbcpp)
 
 if (GDAL_USE_JSONC_INTERNAL)
-  target_include_directories(gdal_RDB PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
+  gdal_add_vendored_lib(gdal_RDB libjson)
 else ()
   gdal_target_link_libraries(gdal_RDB PRIVATE ${JSONC_LIBRARIES})
 endif ()

@@ -12,7 +12,7 @@ gdal_standard_includes(ogr_Carto)
 target_include_directories(ogr_Carto PRIVATE $<TARGET_PROPERTY:ogr_PGDump,SOURCE_DIR>
                                              $<TARGET_PROPERTY:ogr_geojson,SOURCE_DIR>)
 if (GDAL_USE_JSONC_INTERNAL)
-  target_include_directories(ogr_Carto PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
+  gdal_add_vendored_lib(ogr_Carto libjson)
 else ()
   gdal_target_link_libraries(ogr_Carto PRIVATE ${JSONC_LIBRARIES})
 endif ()

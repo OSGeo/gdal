@@ -32,11 +32,8 @@ endif ()
 # have the headers of libtiff/libgeotiff
 
 if (GDAL_USE_TIFF_INTERNAL)
+  gdal_add_vendored_lib(gdal_GTIFF libtiff)
   target_compile_definitions(gdal_GTIFF PRIVATE -DINTERNAL_LIBTIFF)
-  target_include_directories(gdal_GTIFF PRIVATE $<TARGET_PROPERTY:libtiff,SOURCE_DIR>)
-  if (RENAME_INTERNAL_TIFF_SYMBOLS)
-    target_compile_definitions(gdal_GTIFF PRIVATE -DRENAME_INTERNAL_LIBTIFF_SYMBOLS)
-  endif ()
 
   if (GDAL_USE_DEFLATE)
     target_compile_definitions(gdal_GTIFF PRIVATE -DLIBDEFLATE_SUPPORT)
@@ -45,18 +42,12 @@ if (GDAL_USE_TIFF_INTERNAL)
 endif ()
 
 if (GDAL_USE_JPEG_INTERNAL)
-  target_include_directories(gdal_GTIFF PRIVATE $<TARGET_PROPERTY:libjpeg,SOURCE_DIR>)
-  if (RENAME_INTERNAL_JPEG_SYMBOLS)
-    target_compile_definitions(gdal_GTIFF PRIVATE -DRENAME_INTERNAL_LIBJPEG_SYMBOLS)
-  endif ()
+  gdal_add_vendored_lib(gdal_GTIFF libjpeg)
 endif ()
 
 if (GDAL_USE_GEOTIFF_INTERNAL)
-  target_include_directories(gdal_GTIFF PRIVATE $<TARGET_PROPERTY:geotiff,SOURCE_DIR>)
+  gdal_add_vendored_lib(gdal_GTIFF geotiff)
   target_compile_definitions(gdal_GTIFF PRIVATE -DINTERNAL_LIBGEOTIFF)
-  if (RENAME_INTERNAL_GEOTIFF_SYMBOLS)
-    target_compile_definitions(gdal_GTIFF PRIVATE -DRENAME_INTERNAL_LIBGEOTIFF_SYMBOLS)
-  endif ()
 endif ()
 
 # Now deal with external dependencies

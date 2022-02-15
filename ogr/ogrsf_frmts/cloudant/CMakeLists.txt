@@ -7,7 +7,7 @@ target_include_directories(ogr_Cloudant PRIVATE ${CURL_INCLUDE_DIR} $<TARGET_PRO
                                                 $<TARGET_PROPERTY:ogr_CouchDB,SOURCE_DIR>)
 gdal_target_link_libraries(ogr_Cloudant PRIVATE CURL::libcurl)
 if (GDAL_USE_JSONC_INTERNAL)
-  target_include_directories(ogr_Cloudant PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
+  gdal_add_vendored_lib(ogr_Cloudant libjson)
 else ()
   gdal_target_link_libraries(ogr_Cloudant PRIVATE ${JSONC_LIBRARIES})
 endif ()

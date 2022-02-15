@@ -80,11 +80,11 @@ set_property(TARGET ogr PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:ogr>)
 
 if (GDAL_USE_ZLIB_INTERNAL)
-  target_include_directories(ogr PRIVATE $<TARGET_PROPERTY:libz,SOURCE_DIR>)
+  gdal_add_vendored_lib(ogr libz)
 endif ()
 
 if (GDAL_USE_JSONC_INTERNAL)
-  target_include_directories(ogr PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
+  gdal_add_vendored_lib(ogr libjson)
 endif ()
 
 target_compile_definitions(ogr PRIVATE HAVE_MITAB)

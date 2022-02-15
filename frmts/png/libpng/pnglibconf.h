@@ -217,4 +217,11 @@
 #define PNG_sCAL_PRECISION 5
 #define PNG_sRGB_PROFILE_CHECKS 2
 /* end of settings */
+
+/* added by GDAL */
+#undef PNG_READ_INT_FUNCTIONS_SUPPORTED
+#ifdef RENAME_INTERNAL_PNG_SYMBOLS
+#include "gdal_libpng_symbol_rename.h"
+#endif
+
 #endif /* PNGLCONF_H */

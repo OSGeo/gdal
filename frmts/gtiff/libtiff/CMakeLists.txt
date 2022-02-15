@@ -68,20 +68,17 @@ endif ()
 
 # Include first internal libraries
 if (GDAL_USE_ZLIB_INTERNAL)
-  target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:libz,SOURCE_DIR>)
+  gdal_add_vendored_lib(libtiff libz)
 endif ()
 
 if (GDAL_USE_JPEG_INTERNAL)
   target_sources(libtiff PRIVATE tif_jpeg.c tif_ojpeg.c)
-  target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:libjpeg,SOURCE_DIR>)
-  if (RENAME_INTERNAL_JPEG_SYMBOLS)
-    target_compile_definitions(libtiff PRIVATE -DRENAME_INTERNAL_LIBJPEG_SYMBOLS)
-  endif ()
+  gdal_add_vendored_lib(libtiff libjpeg)
 endif ()
 
 if (GDAL_USE_LERC_INTERNAL)
   target_compile_definitions(libtiff PRIVATE -DLERC_SUPPORT)
-  target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:lerc,SOURCE_DIR>)
+  gdal_add_vendored_lib(libtiff lerc)
 endif ()
 
 # Now external libraries
@@ -139,7 +136,7 @@ if (NOT GDAL_USE_LERC_INTERNAL AND GDAL_USE_LERC)
 endif ()
 
 if (RENAME_INTERNAL_TIFF_SYMBOLS)
-  target_compile_definitions(libtiff PRIVATE -DRENAME_INTERNAL_LIBTIFF_SYMBOLS)
+  target_compile_definitions(libtiff PUBLIC -DRENAME_INTERNAL_LIBTIFF_SYMBOLS)
 endif ()
 
 if (MSVC)
