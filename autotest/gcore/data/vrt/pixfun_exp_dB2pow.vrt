@@ -3,7 +3,7 @@
     <Description>dB to power</Description>
     <PixelFunctionType>exp</PixelFunctionType>
     <SourceTransferType>Float64</SourceTransferType>
-    <PixelFunctionArguments base="10." fact="10." />
+    <PixelFunctionArguments base="10." fact="0.1" />
     <SimpleSource>
       <SourceFilename relativeToVRT="1">../float32.tif</SourceFilename>
       <SourceBand>1</SourceBand>

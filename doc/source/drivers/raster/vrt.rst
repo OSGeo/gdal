@@ -829,11 +829,11 @@ GDAL provides a set of default pixel functions that can be used without writing 
    * - **dB2amp**
      - 1
      - -
-     - perform scale conversion from logarithmic to linear (amplitude) (i.e. ``10 ^ ( x / 20 )`` ) of a single raster band (real only)
+     - perform scale conversion from logarithmic to linear (amplitude) (i.e. ``10 ^ ( x / 20 )`` ) of a single raster band (real only). Deprecated in GDAL v3.5. Please use the ``exp`` pixel function with ``base = 10.`` and ``fact = 0.05`` i.e. ``1./20``
    * - **dB2pow**
      - 1
      - -
-     - perform scale conversion from logarithmic to linear (power) (i.e. ``10 ^ ( x / 10 )`` ) of a single raster band (real only)
+     - perform scale conversion from logarithmic to linear (power) (i.e. ``10 ^ ( x / 10 )`` ) of a single raster band (real only). Deprecated in GDAL v3.5. Please use the ``exp`` pixel function with ``base = 10.`` and ``fact = 0.1`` i.e. ``1./10``
    * - **diff**
      - 2
      - -
@@ -845,7 +845,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
    * - **exp**
      - 1
      - 2 (optional)
-     - computes the exponential of each element in the input band ``x`` (of real values): ``e ^ x``. The function also accepts two optional parameters: ``base`` and ``fact`` that allow to compute the generalized formula: ``base ^ ( x / fact )``. Note: this function is the recommended one to perform conversion form logaritmic scale (dB): `` 10. ^ (x / 20.)``, in this case ``base = 10.`` and ``fact = 20.``
+     - computes the exponential of each element in the input band ``x`` (of real values): ``e ^ x``. The function also accepts two optional parameters: ``base`` and ``fact`` that allow to compute the generalized formula: ``base ^ ( fact * x )``. Note: this function is the recommended one to perform conversion form logaritmic scale (dB): `` 10. ^ (x / 20.)``, in this case ``base = 10.`` and ``fact = 0.05`` i.e. ``1. / 20``
    * - **imag**
      - 1
      - -

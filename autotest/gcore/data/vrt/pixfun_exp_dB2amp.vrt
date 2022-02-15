@@ -3,7 +3,7 @@
     <Description>db to amplitude</Description>
     <PixelFunctionType>exp</PixelFunctionType>
     <SourceTransferType>Float64</SourceTransferType>
-    <PixelFunctionArguments base="10." fact="20." />
+    <PixelFunctionArguments base="10." fact="0.05" />
     <SimpleSource>
       <SourceFilename relativeToVRT="1">../float32.tif</SourceFilename>
       <SourceBand>1</SourceBand>

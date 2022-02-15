@@ -1002,7 +1002,7 @@ static CPLErr ExpPixelFuncHelper( void **papoSources, int nSources, void *pData,
         for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
             // Source raster pixels may be obtained with GetSrcVal macro.
             const double dfPixVal =
-                pow(base, GetSrcVal(papoSources[0], eSrcType, ii) / fact);
+                pow(base, GetSrcVal(papoSources[0], eSrcType, ii) * fact);
 
             GDALCopyWords(
                 &dfPixVal, GDT_Float64, 0,
@@ -1029,7 +1029,6 @@ static CPLErr ExpPixelFunc( void **papoSources, int nSources, void *pData,
 
     if ( FetchDoubleArg(papszArgs, "fact", &dfFact, &dfFact ) != CE_None )
         return CE_Failure;
-    if ( dfFact == 0. ) return CE_Failure;
 
     return ExpPixelFuncHelper(papoSources, nSources, pData,
                               nXSize, nYSize, eSrcType, eBufType,
@@ -1043,7 +1042,7 @@ static CPLErr dB2AmpPixelFunc( void **papoSources, int nSources, void *pData,
 {
     return ExpPixelFuncHelper(papoSources, nSources, pData,
                               nXSize, nYSize, eSrcType, eBufType,
-                              nPixelSpace, nLineSpace, 10.0, 20.0);
+                              nPixelSpace, nLineSpace, 10.0, 1./20);
 }  // dB2AmpPixelFunc
 
 static CPLErr dB2PowPixelFunc( void **papoSources, int nSources, void *pData,
@@ -1053,7 +1052,7 @@ static CPLErr dB2PowPixelFunc( void **papoSources, int nSources, void *pData,
 {
     return ExpPixelFuncHelper(papoSources, nSources, pData,
                               nXSize, nYSize, eSrcType, eBufType,
-                              nPixelSpace, nLineSpace, 10.0, 10.0);
+                              nPixelSpace, nLineSpace, 10.0, 1./10);
 }  // dB2PowPixelFunc
 
 static CPLErr PowPixelFunc( void **papoSources, int nSources, void *pData,
@@ -1206,20 +1205,20 @@ CPLErr InterpolatePixelFunc( void **papoSources, int nSources, void *pData,
  * - "exp": computes the exponential of each element in the input band ``x``
  *          (of real values): ``e ^ x``.
  *          The function also accepts two optional parameters: ``base`` and ``fact``
- *          that allow to compute the generalized formula: ``base ^ ( x / fact )``.
+ *          that allow to compute the generalized formula: ``base ^ ( fact * x)``.
  *          Note: this function is the recommended one to perform conversion
  *          form logaritmic scale (dB): `` 10. ^ (x / 20.)``, in this case
- *          ``base = 10.`` and ``fact = 20.``
+ *          ``base = 10.`` and ``fact = 1./20``
  * - "dB2amp": perform scale conversion from logarithmic to linear
  *             (amplitude) (i.e. 10 ^ ( x / 20 ) ) of a single raster
  *             band (real only).
  *             Deprecated in GDAL v3.5. Please use the ``exp`` pixel function with
- *             ``base = 10.`` and ``fact = 20.``
+ *             ``base = 10.`` and ``fact = 0.05`` i.e. ``1./20``
  * - "dB2pow": perform scale conversion from logarithmic to linear
  *             (power) (i.e. 10 ^ ( x / 10 ) ) of a single raster
  *             band (real only)
  *             Deprecated in GDAL v3.5. Please use the ``exp`` pixel function with
- *             ``base = 10.`` and ``fact = 10.``
+ *             ``base = 10.`` and ``fact = 0.1`` i.e. ``1./10``
  * - "pow": raise a single raster band to a constant power
  * - "interpolate_linear": interpolate values between two raster bands
  *                         using linear interpolation
