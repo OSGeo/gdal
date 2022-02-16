@@ -131,6 +131,7 @@ jobs:
         fi
 
   build-windows-msys2-mingw:
+    if: ${{ false }}  # disable for now. See https://github.com/OSGeo/gdal/issues/5317
     runs-on: windows-2022
     env:
       generator: MinGW Makefiles
