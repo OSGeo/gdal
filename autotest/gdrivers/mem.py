@@ -501,7 +501,9 @@ def test_mem_11():
     ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
     assert ds.CreateMaskBand(gdal.GMF_PER_DATASET) == 0
     assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET
+    assert not ds.GetRasterBand(1).IsMaskBand()
     mask = ds.GetRasterBand(1).GetMaskBand()
+    assert mask.IsMaskBand()
     cs = mask.Checksum()
     assert cs == 0
     mask.Fill(255)
@@ -645,6 +647,18 @@ def test_mem_nodata_uint64():
     val = (1 << 64)-1
     assert ds.GetRasterBand(1).SetNoDataValue(val) == gdal.CE_None
     assert ds.GetRasterBand(1).GetNoDataValue() == val
+
+
+###############################################################################
+# Check IsMaskBand() on an alpha band
+
+
+def test_mem_alpha_ismaskband():
+
+    ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 2)
+    ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
+    assert not ds.GetRasterBand(1).IsMaskBand()
+    assert ds.GetRasterBand(2).IsMaskBand()
 
 
 ###############################################################################

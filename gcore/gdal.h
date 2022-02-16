@@ -1116,6 +1116,7 @@ GDALRasterBandH CPL_DLL CPL_STDCALL GDALGetMaskBand( GDALRasterBandH hBand );
 int CPL_DLL CPL_STDCALL GDALGetMaskFlags( GDALRasterBandH hBand );
 CPLErr CPL_DLL CPL_STDCALL
                        GDALCreateMaskBand( GDALRasterBandH hBand, int nFlags );
+bool CPL_DLL GDALIsMaskBand( GDALRasterBandH hBand );
 
 /** Flag returned by GDALGetMaskFlags() to indicate that all pixels are valid */
 #define GMF_ALL_VALID     0x01

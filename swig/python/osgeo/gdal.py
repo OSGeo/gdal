@@ -3610,6 +3610,10 @@ class Band(MajorObject):
         r"""CreateMaskBand(Band self, int nFlags) -> CPLErr"""
         return _gdal.Band_CreateMaskBand(self, *args)
 
+    def IsMaskBand(self, *args):
+        r"""IsMaskBand(Band self) -> bool"""
+        return _gdal.Band_IsMaskBand(self, *args)
+
     def GetHistogram(self, *args, **kwargs):
         r"""GetHistogram(Band self, double min=-0.5, double max=255.5, int buckets=256, int include_out_of_range=0, int approx_ok=1, GDALProgressFunc callback=0, void * callback_data=None) -> CPLErr"""
         return _gdal.Band_GetHistogram(self, *args, **kwargs)

@@ -484,6 +484,10 @@ public:
       return GDALCreateMaskBand( self, nFlags );
   }
 
+  bool IsMaskBand() {
+      return GDALIsMaskBand( self );
+  }
+
 #if defined(SWIGPYTHON) || defined(SWIGPERL)
 #if defined(SWIGPERL)
 %apply (int len, GUIntBig *output) {(int buckets, GUIntBig *panHistogram)};
