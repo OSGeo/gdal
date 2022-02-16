@@ -2133,6 +2133,28 @@ def test_gdalwarp_lib_src_points_outside_of_earth():
     assert not my_error_handler.failure_raised
 
 ###############################################################################
+# Test warping from a dataset in rotated pole projection, including the North
+# pole to geographic
+
+
+def test_gdalwarp_lib_from_ob_tran_including_north_pole_to_geographic():
+
+    # Not completely sure about the minimum version to have ob_tran working fine.
+    if osr.GetPROJVersionMajor() < 7:
+        pytest.skip('requires PROJ 7 or later')
+
+    ds = gdal.Warp('', '../gdrivers/data/small_world.tif',
+                   format='VRT',
+                   dstSRS = '+proj=ob_tran +o_proj=longlat +o_lon_p=189.477233886719 +o_lat_p=31.7581653594971 +lon_0=267.596992492676 +datum=WGS84 +no_defs',
+                   outputBounds = [32.4624074, -53.5375933, 327.538, 53.538],
+                   warpOptions = ['SAMPLE_GRID=YES', 'SOURCE_EXTRA=5'])
+    out_ds = gdal.Warp('', ds, format = 'VRT', dstSRS = 'EPSG:4326')
+    gt = out_ds.GetGeoTransform()
+    assert gt[0] == -180
+    assert gt[3] == 90
+    assert gt[0] + gt[1] * out_ds.RasterXSize == pytest.approx(180, abs=0.1)
+
+###############################################################################
 # Cleanup
 
 

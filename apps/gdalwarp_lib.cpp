@@ -3346,6 +3346,18 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
                 double MinY = adfExtent[1];
                 int bSuccess = TRUE;
 
+                // +/-180 deg in longitude do not roundtrip sometimes
+                if( MinX == -180 )
+                    MinX += 1e-6;
+                if( MaxX == 180 )
+                    MaxX -= 1e-6;
+
+                // +/-90 deg in latitude do not roundtrip sometimes
+                if( MinY == -90 )
+                    MinY += 1e-6;
+                if( MaxY == 90 )
+                    MaxY -= 1e-6;
+
                 /* Check that the edges of the target image are in the validity area */
                 /* of the target projection */
                 const int N_STEPS = 20;
