@@ -2118,7 +2118,7 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
                     asWriteFuncHeaderData[iReq].nEndOffset);
 
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Request for %s failed", rangeStr);
+                     "Request for %s failed with response_code=%ld", rangeStr, response_code);
             nRet = -1;
         }
         else if( nRet == 0 )
