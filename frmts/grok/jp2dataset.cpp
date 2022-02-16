@@ -208,6 +208,26 @@ int JP2Dataset::GetNumThreads()
         nThreads = 1;
     return nThreads;
 }
+GDALColorInterp JP2Dataset::GetColorInterpretation(int nBand) {
+    if( nBand == nAlphaIndex + 1 )
+        return GCI_AlphaBand;
+
+    if (nBands <= 2 && eColorSpace == JP2_CLRSPC_GRAY)
+        return GCI_GrayIndex;
+    else if (eColorSpace == JP2_CLRSPC_SRGB ||
+             eColorSpace == JP2_CLRSPC_SYCC)
+    {
+        if( nBand == nRedIndex + 1 )
+            return GCI_RedBand;
+        if( nBand == nGreenIndex + 1 )
+            return GCI_GreenBand;
+        if( nBand == nBlueIndex + 1 )
+            return GCI_BlueBand;
+    }
+
+    return GCI_Undefined;
+}
+
 /************************************************************************/
 /*                           WriteBox()                                 */
 /************************************************************************/

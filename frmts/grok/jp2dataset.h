@@ -41,9 +41,22 @@
 #include "gdaljp2metadata.h"
 #include "vrt/vrtdataset.h"
 
+enum JP2_COLOR_SPACE {
+	JP2_CLRSPC_UNKNOWN,
+	JP2_CLRSPC_SRGB,
+	JP2_CLRSPC_GRAY,
+	JP2_CLRSPC_SYCC
+};
+
+enum JP2_CODEC_FORMAT {
+	JP2_CODEC_JP2,
+	JP2_CODEC_J2K
+};
+
+
 /************************************************************************/
 /* ==================================================================== */
-/*                           JP2GrokDataset                         */
+/*                           JP2Dataset                         */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -65,7 +78,7 @@ public:
     volatile int        nCurPair;
     int                 nBandCount;
     int                *panBandMap;
-    VOLATILE_BOOL       bSuccess;
+    volatile bool       bSuccess;
 };
 
 class JP2RasterBand;
@@ -74,7 +87,7 @@ class JP2Dataset : public GDALJP2AbstractDataset {
     friend class JP2RasterBand;
 public:
     virtual ~JP2Dataset() = default;
-    virtual GDALColorInterp GetColorInterpretation(int nBand)= 0;
+    GDALColorInterp GetColorInterpretation(int nBand);
 
     static int Identify( GDALOpenInfo * poOpenInfo );
 	static GDALDriver* CreateDriver(const char* driverVersion,
@@ -162,7 +175,7 @@ protected:
     int         bRewrite = FALSE;
     int         bHasGeoreferencingAtOpening = FALSE;
     JP2Dataset** papoOverviewDS = nullptr;
-    JP2File* m_psJP2File = nullptr;
+    JP2_COLOR_SPACE eColorSpace = JP2_CLRSPC_UNKNOWN;
 };
 
 

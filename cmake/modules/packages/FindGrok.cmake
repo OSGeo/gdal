@@ -39,7 +39,6 @@ endif()
 
 find_path(GROK_INCLUDE_DIR grk_config.h
           PATH_SUFFIXES
-              grok-9.6
               grok-9.7
           HINTS ${PC_GROK_INCLUDE_DIRS}
           DOC "Location of Grok Headers"
@@ -54,7 +53,7 @@ mark_as_advanced(GROK_LIBRARY GROK_INCLUDE_DIR)
 if(GROK_INCLUDE_DIR)
     if(GROK_VERSION_STRING)
         string(REGEX MATCH "([0-9]+).([0-9]+).([0-9]+)" GRK_VERSION ${GROK_VERSION_STRING})
-        if(OPJ_VERSION)
+        if(GRK_VERSION)
             transform_version(GROK_VERSION_NUM ${CMAKE_MATCH_1} ${CMAKE_MATCH_2} ${CMAKE_MATCH_3})
         else()
             message(FATAL "Grok version not found")
@@ -64,10 +63,10 @@ if(GROK_INCLUDE_DIR)
             if(EXISTS "${GROK_INCLUDE_DIR}/grk_config.h")
                 file(READ "${GROK_INCLUDE_DIR}/grk_config.h" VERSION_H_CONTENTS)
                 string(REGEX MATCH "GRK_PACKAGE_VERSION[ \t]+\"([0-9]+).([0-9]+).([0-9]+)\""
-                       OPJ_VERSION ${VERSION_H_CONTENTS})
+                       GRK_VERSION ${VERSION_H_CONTENTS})
                 string(REGEX MATCH "([0-9]+).([0-9]+).([0-9]+)"
-                       OPJ_VERSION ${OPJ_VERSION})
-                if(OPJ_VERSION)
+                       GRK_VERSION ${GRK_VERSION})
+                if(GRK_VERSION)
                     transform_version(GROK_VERSION_NUM ${CMAKE_MATCH_1} ${CMAKE_MATCH_2} ${CMAKE_MATCH_3})
                 else()
                     message(FATAL "Grok header version not found")
@@ -79,14 +78,14 @@ if(GROK_INCLUDE_DIR)
             set(REV_VERSION 0)
             if(EXISTS "${GROK_INCLUDE_DIR}/grk_config.h")
                 file(READ "${GROK_INCLUDE_DIR}/grk_config.h" VERSION_H_CONTENTS)
-                string(REGEX MATCH "OPJ_VERSION_MAJOR[ \t]+([0-9]+)"
+                string(REGEX MATCH "GRK_VERSION_MAJOR[ \t]+([0-9]+)"
                   MAJOR_VERSION ${VERSION_H_CONTENTS})
                 string (REGEX MATCH "([0-9]+)" MAJOR_VERSION ${MAJOR_VERSION})
-                string(REGEX MATCH "OPJ_VERSION_MINOR[ \t]+([0-9]+)"
+                string(REGEX MATCH "GRK_VERSION_MINOR[ \t]+([0-9]+)"
                   MINOR_VERSION ${VERSION_H_CONTENTS})
                 string (REGEX MATCH "([0-9]+)"
                   MINOR_VERSION ${MINOR_VERSION})
-                string(REGEX MATCH "OPJ_VERSION_BUILD[ \t]+([0-9]+)"
+                string(REGEX MATCH "GRK_VERSION_BUILD[ \t]+([0-9]+)"
                   REV_VERSION ${VERSION_H_CONTENTS})
                 string (REGEX MATCH "([0-9]+)"
                   REV_VERSION ${REV_VERSION})
