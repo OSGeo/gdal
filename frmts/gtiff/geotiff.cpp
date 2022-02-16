@@ -11223,6 +11223,10 @@ CPLErr GTiffDataset::IBuildOverviews(
                         m_papoOverviewDS[i]->m_poMaskDS->GetRasterBand(1);
             }
         }
+
+        CPLConfigOptionSetter oSetterRegeneratedBandIsMask(
+            "GDAL_REGENERATED_BAND_IS_MASK", "YES", true);
+
         eErr = GDALRegenerateOverviews(
             m_poMaskDS->GetRasterBand(1),
             nMaskOverviews,
