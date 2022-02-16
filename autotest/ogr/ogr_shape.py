@@ -4944,6 +4944,25 @@ def test_ogr_shape_write_multipolygon_parts_slightly_overlapping():
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(outfilename)
 
 ###############################################################################
+# Test writing a multipolygon with parts of non constant Z (#5315)
+
+
+def test_ogr_shape_write_multipolygon_parts_non_constant_z():
+
+    outfilename = '/vsimem/out.shp'
+    gdal.VectorTranslate(outfilename, 'data/shp/multipointz_non_constant_z.shp')
+    ds = ogr.Open(outfilename)
+    lyr = ds.GetLayer(0)
+
+    f = lyr.GetNextFeature()
+    geom = f.GetGeometryRef()
+    assert geom.GetGeometryType() == ogr.wkbMultiPolygon25D
+    assert geom.GetGeometryCount() == 7
+    ds = None
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(outfilename)
+
+###############################################################################
 
 
 def test_ogr_shape_cleanup():

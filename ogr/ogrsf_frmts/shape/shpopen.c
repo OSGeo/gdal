@@ -2609,7 +2609,8 @@ static int SHPGetPartVertexCount( const SHPObject * psObject, int iPart )
 static int SHPRewindIsInnerRing( const SHPObject * psObject,
                                  int iOpRing,
                                  double dfTestX, double dfTestY,
-                                 double dfRelativeTolerance ) {
+                                 double dfRelativeTolerance,
+                                 int bSameZ, double dfTestZ ) {
 /* -------------------------------------------------------------------- */
 /*      Determine if this ring is an inner ring or an outer ring        */
 /*      relative to all the other rings.  For now we assume the         */
@@ -2627,6 +2628,25 @@ static int SHPRewindIsInnerRing( const SHPObject * psObject,
 
         const int nVertStartCheck = psObject->panPartStart[iCheckRing];
         const int nVertCountCheck = SHPGetPartVertexCount(psObject, iCheckRing);
+
+        /* Ignore rings that don't have the same (constant) Z value as the point. */
+        /* As noted in SHPRewindObject(), this is a simplification */
+        /* of what we should ideally do. */
+        if( !bSameZ )
+        {
+            int bZTestOK = TRUE;
+            for( int iVert = nVertStartCheck + 1;
+                     iVert < nVertStartCheck + nVertCountCheck; ++iVert )
+            {
+                if( psObject->padfZ[iVert] != dfTestZ )
+                {
+                    bZTestOK = FALSE;
+                    break;
+                }
+            }
+            if( !bZTestOK )
+                continue;
+        }
 
         for( int iEdge = 0; iEdge < nVertCountCheck; iEdge++ )
         {
@@ -2693,6 +2713,23 @@ SHPRewindObject( CPL_UNUSED SHPHandle hSHP,
         return 0;
 
 /* -------------------------------------------------------------------- */
+/*      Test if all points have the same Z value.                       */
+/* -------------------------------------------------------------------- */
+    int bSameZ = TRUE;
+    if( psObject->nSHPType == SHPT_POLYGONZ ||
+        psObject->nSHPType == SHPT_POLYGONM )
+    {
+        for( int iVert = 1; iVert < psObject->nVertices; ++iVert )
+        {
+            if( psObject->padfZ[iVert] != psObject->padfZ[0] )
+            {
+                bSameZ = FALSE;
+                break;
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Process each of the rings.                                      */
 /* -------------------------------------------------------------------- */
     int  bAltered = 0;
@@ -2704,36 +2741,62 @@ SHPRewindObject( CPL_UNUSED SHPHandle hSHP,
         if (nVertCount < 2)
             continue;
 
-        int bInner = FALSE;
-        for( int iTolerance = 0; iTolerance < 2; iTolerance++ )
+        /* If a ring has a non-constant Z value, then consider it as an outer */
+        /* ring. */
+        /* NOTE: this is a rough approximation. If we were smarter, */
+        /* we would check that all points of the ring are coplanar, and compare */
+        /* that to other rings in the same (oblique) plane. */
+        int bDoIsInnerRingTest = TRUE;
+        if( !bSameZ )
         {
-            /* In a first attempt, use a relaxed criterion to decide if a point */
-            /* is inside another ring. If all points of the current ring are in the */
-            /* "grey" zone w.r.t that criterion, which seems really unlikely, */
-            /* then use the strict criterion for another pass. */
-            const double dfRelativeTolerance = (iTolerance == 0) ? 1e-9 : 0;
-            for( int iVert = nVertStart; iVert + 1 < nVertStart + nVertCount; ++iVert )
+            int bPartSameZ = TRUE;
+            for( int iVert = nVertStart + 1; iVert < nVertStart + nVertCount; ++iVert )
             {
-                /* Use point in the middle of segment to avoid testing
-                * common points of rings.
-                */
-                const double dfTestX = ( psObject->padfX[iVert] +
-                                         psObject->padfX[iVert + 1] ) / 2;
-                const double dfTestY = ( psObject->padfY[iVert] +
-                                         psObject->padfY[iVert + 1] ) / 2;
+                if( psObject->padfZ[iVert] != psObject->padfZ[nVertStart] )
+                {
+                    bPartSameZ = FALSE;
+                    break;
+                }
+            }
+            if( !bPartSameZ )
+                bDoIsInnerRingTest = FALSE;
+        }
 
-                bInner = SHPRewindIsInnerRing(psObject, iOpRing, dfTestX, dfTestY,
-                                              dfRelativeTolerance);
+        int bInner = FALSE;
+        if( bDoIsInnerRingTest )
+        {
+            for( int iTolerance = 0; iTolerance < 2; iTolerance++ )
+            {
+                /* In a first attempt, use a relaxed criterion to decide if a point */
+                /* is inside another ring. If all points of the current ring are in the */
+                /* "grey" zone w.r.t that criterion, which seems really unlikely, */
+                /* then use the strict criterion for another pass. */
+                const double dfRelativeTolerance = (iTolerance == 0) ? 1e-9 : 0;
+                for( int iVert = nVertStart; iVert + 1 < nVertStart + nVertCount; ++iVert )
+                {
+                    /* Use point in the middle of segment to avoid testing
+                    * common points of rings.
+                    */
+                    const double dfTestX = ( psObject->padfX[iVert] +
+                                             psObject->padfX[iVert + 1] ) / 2;
+                    const double dfTestY = ( psObject->padfY[iVert] +
+                                             psObject->padfY[iVert + 1] ) / 2;
+                    const double dfTestZ = !bSameZ ? psObject->padfZ[nVertStart] : 0;
+
+                    bInner = SHPRewindIsInnerRing(psObject, iOpRing, dfTestX, dfTestY,
+                                                  dfRelativeTolerance,
+                                                  bSameZ, dfTestZ);
+                    if( bInner >= 0 )
+                        break;
+                }
                 if( bInner >= 0 )
                     break;
             }
-            if( bInner >= 0 )
-                break;
-        }
-        if( bInner < 0 )
-        {
-            /* Completely degenerate case. Do not bother touching order. */
-            continue;
+            if( bInner < 0 )
+            {
+                /* Completely degenerate case. Do not bother touching order. */
+                continue;
+            }
         }
 
 /* -------------------------------------------------------------------- */
