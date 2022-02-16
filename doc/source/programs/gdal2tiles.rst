@@ -113,6 +113,8 @@ can publish a picture without proper georeferencing too.
 
   Assume launched by mpiexec, enable MPI parallelism and ignore --processes.
   Requires working MPI environment and the MPI for Python (mpi4py) package.
+  User should set GDAL_CACHEMAX to an appropriate cache size per process
+  based on memory per node and the number of processes launched per node.
 
   .. versionadded:: 3.5
 
@@ -225,4 +227,4 @@ MPI example:
 
 .. code-block::
 
-  mpiexec -n $NB_PROCESSES gdal2tiles.py --mpi --zoom=2-5 input.tif output_folder
+  mpiexec -n $NB_PROCESSES gdal2tiles.py --mpi --config GDAL_CACHEMAX 500 --zoom=2-5 input.tif output_folder

@@ -1364,7 +1364,8 @@ def optparse_init() -> optparse.OptionParser:
                  help="Number of processes to use for tiling")
     p.add_option("--mpi",
                  action="store_true", dest="mpi",
-                 help="Assume launched by mpiexec and ignore --processes")
+                 help="Assume launched by mpiexec and ignore --processes. "
+                      "User should set GDAL_CACHEMAX to size per process.")
     p.add_option("--tilesize", dest="tilesize",  metavar="PIXELS", default=256,
                  type='int',
                  help="Width and height in pixel of a tile")
