@@ -8305,5 +8305,43 @@ def test_tiff_write_setcolortable_read_only_overriding_tifftags():
 
     gdal.GetDriverByName('GTiff').Delete(filename)
 
+
+###############################################################################
+# Test setting incompatible settings for PREDICTOR
+
+
+@pytest.mark.parametrize("dt, options",
+                         [(gdal.GDT_UInt16, ['PREDICTOR=2', 'NBITS=12']),
+                          (gdal.GDT_UInt32, ['PREDICTOR=3']),
+                          (gdal.GDT_UInt16, ['PREDICTOR=invalid'])
+                          ])
+def test_tiff_write_incompatible_predictor(dt, options):
+
+    filename = '/vsimem/out.tif'
+    with gdaltest.error_handler():
+        assert gdal.GetDriverByName('GTiff').Create(filename, 1, 1, 1, dt, options + ['COMPRESS=LZW']) is None
+
+
+###############################################################################
+# Test PREDICTOR=2 with 64 bit samples
+
+def test_tiff_write_predictor_2_float64():
+
+    md = gdal.GetDriverByName('GTiff').GetMetadata()
+    if md['LIBTIFF'] != 'INTERNAL':
+        pytest.skip('libtiff > 4.3.0 or internal libtiff needed')
+
+    filename = '/vsimem/out.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(filename, 2, 1, 1, gdal.GDT_Float64, ['COMPRESS=LZW', 'PREDICTOR=2'])
+    data = struct.pack('d' * 2, 1, 2)
+    ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, data)
+    ds = None
+    ds = gdal.Open(filename)
+    assert ds.GetMetadataItem('PREDICTOR', 'IMAGE_STRUCTURE') == '2'
+    assert ds.ReadRaster() == data
+    ds = None
+    gdal.Unlink(filename)
+
+
 def test_tiff_write_cleanup():
     gdaltest.tiff_drv = None
