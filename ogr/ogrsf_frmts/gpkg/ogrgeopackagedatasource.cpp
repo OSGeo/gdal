@@ -6603,6 +6603,50 @@ void OGRGeoPackageSTSRID(sqlite3_context* pContext,
 }
 
 /************************************************************************/
+/*                   OGRGeoPackageSTMakeValid()                         */
+/************************************************************************/
+
+static
+void OGRGeoPackageSTMakeValid(sqlite3_context* pContext,
+                              int argc, sqlite3_value** argv)
+{
+    if( sqlite3_value_type (argv[0]) != SQLITE_BLOB )
+    {
+        sqlite3_result_null(pContext);
+        return;
+    }
+    int nBLOBLen = sqlite3_value_bytes (argv[0]);
+    const GByte* pabyBLOB = (const GByte *) sqlite3_value_blob (argv[0]);
+
+    GPkgHeader sHeader;
+    if( !OGRGeoPackageGetHeader( pContext, argc, argv, &sHeader, false) )
+    {
+        sqlite3_result_null(pContext);
+        return;
+    }
+
+    auto poGeom = std::unique_ptr<OGRGeometry>(
+                        GPkgGeometryToOGR(pabyBLOB, nBLOBLen, nullptr));
+    if( poGeom == nullptr )
+    {
+        sqlite3_result_null(pContext);
+        return;
+    }
+    auto poValid = std::unique_ptr<OGRGeometry>(poGeom->MakeValid());
+    if( poValid == nullptr )
+    {
+        sqlite3_result_null(pContext);
+        return;
+    }
+
+    size_t nBLOBDestLen = 0;
+    GByte* pabyDestBLOB =
+                    GPkgGeometryFromOGR(poValid.get(), sHeader.iSrsId, &nBLOBDestLen);
+    sqlite3_result_blob(pContext, pabyDestBLOB,
+                        static_cast<int>(nBLOBDestLen), VSIFree);
+}
+
+/************************************************************************/
 /*                      OGRGeoPackageTransform()                        */
 /************************************************************************/
 
@@ -7079,6 +7123,24 @@ void GDALGeoPackageDataset::InstallSQLFunctions()
     sqlite3_create_function(hDB, "ImportFromEPSG", 1,
                             SQLITE_UTF8, this,
                             OGRGeoPackageImportFromEPSG, nullptr, nullptr);
+
+    // ST_MakeValid() only available (at time of writing) in
+    // Spatialite builds against (GPL) liblwgeom
+    // In the future, if they use GEOS 3.8 MakeValid, we could
+    // get rid of this.
+    int rc = sqlite3_exec(hDB,
+        "SELECT ST_MakeValid(ST_GeomFromText('POINT (0 0)'))",
+        nullptr, nullptr, nullptr);
+
+    /* Reset error flag */
+    sqlite3_exec(hDB, "SELECT 1", nullptr, nullptr, nullptr);
+
+    if (rc != SQLITE_OK)
+    {
+        sqlite3_create_function(hDB, "ST_MakeValid", 1,
+                                SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
+                                OGRGeoPackageSTMakeValid, nullptr, nullptr);
+    }
 
     // Debug functions
     if( CPLTestBool(CPLGetConfigOption("GPKG_DEBUG", "FALSE")) )
