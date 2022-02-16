@@ -313,13 +313,12 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
     }
 
     VSIStatBufL sStat;
-    CPLString osTmp;
     int bRelativeToVRT = FALSE;  // TODO(schwehr): Make this a bool?
-    const char *pszRelativePath = nullptr;
+    std::string osSourceFilename;
 
     if( m_bRelativeToVRTOri >= 0 )
     {
-        pszRelativePath = m_osSourceFileNameOri;
+        osSourceFilename = m_osSourceFileNameOri;
         bRelativeToVRT = m_bRelativeToVRTOri;
     }
     else if( strstr(m_osSrcDSName, "/vsicurl/http") != nullptr ||
@@ -327,7 +326,7 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
     {
         // Testing the existence of remote resources can be excruciating
         // slow, so let's just suppose they exist.
-        pszRelativePath = m_osSrcDSName;
+        osSourceFilename = m_osSrcDSName;
         bRelativeToVRT = FALSE;
     }
     // If this isn't actually a file, don't even try to know if it is a
@@ -338,7 +337,7 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
     else if( VSIStatExL( m_osSrcDSName, &sStat,
                          VSI_STAT_EXISTS_FLAG ) != 0 )
     {
-        pszRelativePath = m_osSrcDSName;
+        osSourceFilename = m_osSrcDSName;
         bRelativeToVRT = FALSE;
         for( size_t i = 0;
              i < sizeof(apszSpecialSyntax) / sizeof(apszSpecialSyntax[0]);
@@ -349,28 +348,27 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
             osPrefix.resize(strchr(pszSyntax, ':') - pszSyntax + 1);
             if( pszSyntax[osPrefix.size()] == '"' )
                 osPrefix += '"';
-            if( EQUALN(pszRelativePath, osPrefix, osPrefix.size()) )
+            if( EQUALN(osSourceFilename.c_str(), osPrefix, osPrefix.size()) )
             {
                 if( STARTS_WITH_CI(pszSyntax + osPrefix.size(), "{ANY}") )
                 {
-                    const char* pszLastPart = strrchr(pszRelativePath, ':') + 1;
+                    const char* pszLastPart = strrchr(osSourceFilename.c_str(), ':') + 1;
                     // CSV:z:/foo.xyz
                     if( (pszLastPart[0] == '/' || pszLastPart[0] == '\\') &&
-                        pszLastPart - pszRelativePath >= 3 &&
+                        pszLastPart - osSourceFilename.c_str() >= 3 &&
                         pszLastPart[-3] == ':' )
                         pszLastPart -= 2;
-                    CPLString osPrefixFilename(pszRelativePath);
-                    osPrefixFilename.resize(pszLastPart - pszRelativePath);
-                    pszRelativePath =
+                    CPLString osPrefixFilename(osSourceFilename);
+                    osPrefixFilename.resize(pszLastPart - osSourceFilename.c_str());
+                    osSourceFilename =
                         CPLExtractRelativePath( pszVRTPath, pszLastPart,
                                                 &bRelativeToVRT );
-                    osTmp = osPrefixFilename + pszRelativePath;
-                    pszRelativePath = osTmp.c_str();
+                    osSourceFilename = osPrefixFilename + osSourceFilename;
                 }
                 else if( STARTS_WITH_CI(pszSyntax + osPrefix.size(),
                                         "{FILENAME}") )
                 {
-                    CPLString osFilename(pszRelativePath + osPrefix.size());
+                    CPLString osFilename(osSourceFilename.c_str() + osPrefix.size());
                     size_t nPos = 0;
                     if( osFilename.size() >= 3 && osFilename[1] == ':' &&
                         (osFilename[2] == '\\' || osFilename[2] == '/') )
@@ -383,11 +381,10 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
                     {
                         const CPLString osSuffix = osFilename.substr(nPos);
                         osFilename.resize(nPos);
-                        pszRelativePath =
+                        osSourceFilename =
                             CPLExtractRelativePath( pszVRTPath, osFilename,
                                         &bRelativeToVRT );
-                        osTmp = osPrefix + pszRelativePath + osSuffix;
-                        pszRelativePath = osTmp.c_str();
+                        osSourceFilename = osPrefix + osSourceFilename + osSuffix;
                     }
                 }
                 break;
@@ -396,12 +393,33 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
     }
     else
     {
-        pszRelativePath =
-            CPLExtractRelativePath( pszVRTPath, m_osSrcDSName,
+        std::string osVRTFilename = pszVRTPath;
+        std::string osSourceDataset = m_osSrcDSName;
+        char* pszCurDir = CPLGetCurrentDir();
+        if( CPLIsFilenameRelative(osSourceDataset.c_str()) &&
+            !CPLIsFilenameRelative(osVRTFilename.c_str()) &&
+            pszCurDir != nullptr )
+        {
+            osSourceDataset = CPLFormFilename(pszCurDir,
+                                              osSourceDataset.c_str(),
+                                              nullptr);
+        }
+        else if( !CPLIsFilenameRelative(osSourceDataset.c_str()) &&
+                 CPLIsFilenameRelative(osVRTFilename.c_str()) &&
+                 pszCurDir != nullptr )
+        {
+            osVRTFilename = CPLFormFilename(pszCurDir,
+                                            osVRTFilename.c_str(),
+                                            nullptr);
+        }
+        CPLFree(pszCurDir);
+        osSourceFilename =
+            CPLExtractRelativePath( osVRTFilename.c_str(),
+                                    osSourceDataset.c_str(),
                                     &bRelativeToVRT );
     }
 
-    CPLSetXMLValue( psSrc, "SourceFilename", pszRelativePath );
+    CPLSetXMLValue( psSrc, "SourceFilename", osSourceFilename.c_str() );
 
     CPLCreateXMLNode(
         CPLCreateXMLNode( CPLGetXMLNode( psSrc, "SourceFilename" ),
