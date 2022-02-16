@@ -881,7 +881,7 @@ OGRSpatialReference* OGRHanaDataSource::GetSrsById(int srid)
     CPLString wkt = GetSrsWktById(*conn_, srid);
     if (!wkt.empty())
     {
-        srs = std::make_unique<OGRSpatialReference>();
+        srs = cpl::make_unique<OGRSpatialReference>();
         OGRErr err = srs->importFromWkt(wkt.c_str());
         if (OGRERR_NONE != err)
             err = srs->importFromEPSG(srid);
@@ -1217,8 +1217,7 @@ void OGRHanaDataSource::InitializeLayers(
             if (pos != tables.end())
                 tables.erase(pos);
 
-            std::unique_ptr<OGRHanaTableLayer> layer =
-                std::make_unique<OGRHanaTableLayer>(this, updatable);
+            auto layer = cpl::make_unique<OGRHanaTableLayer>(this, updatable);
             OGRErr err =
                 layer->Initialize(schemaName_.c_str(), tableName->c_str());
             if (OGRERR_NONE == err)
@@ -1558,8 +1557,7 @@ OGRLayer* OGRHanaDataSource::ICreateLayer(
     }
 
     // Create new layer object
-    std::unique_ptr<OGRHanaTableLayer> layer =
-        std::make_unique<OGRHanaTableLayer>(this, true);
+    auto layer = cpl::make_unique<OGRHanaTableLayer>(this, true);
     OGRErr err = layer->Initialize(schemaName_.c_str(), layerName.c_str());
     if (err == OGRERR_FAILURE)
         return nullptr;
@@ -1626,8 +1624,7 @@ OGRLayer* OGRHanaDataSource::ExecuteSQL(
     }
     if (STARTS_WITH_CI(sqlCommand, "SELECT"))
     {
-        std::unique_ptr<OGRHanaResultLayer> layer =
-            std::make_unique<OGRHanaResultLayer>(this);
+        auto layer = cpl::make_unique<OGRHanaResultLayer>(this);
         OGRErr err = layer->Initialize(sqlCommand, spatialFilter);
         if (OGRERR_NONE == err)
             return layer.release();

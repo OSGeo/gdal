@@ -398,8 +398,7 @@ OGRFeature* OGRHanaLayer::ReadFeature()
     if (!resultSet_->next())
         return nullptr;
 
-    std::unique_ptr<OGRFeature> feature =
-        std::make_unique<OGRFeature>(featureDefn_);
+    auto feature = cpl::make_unique<OGRFeature>(featureDefn_);
     feature->SetFID(nextFeatureId_);
 
     unsigned short paramIndex = 0;
@@ -656,8 +655,7 @@ OGRErr OGRHanaLayer::ReadFeatureDefinition(
     const CPLString& query,
     const char* featureDefName)
 {
-    std::unique_ptr<OGRFeatureDefn> featureDef =
-        std::make_unique<OGRFeatureDefn>(featureDefName);
+    auto featureDef = cpl::make_unique<OGRFeatureDefn>(featureDefName);
     featureDef->Reference();
 
     std::vector<ColumnDescription> columnDescriptions;
@@ -697,8 +695,7 @@ OGRErr OGRHanaLayer::ReadFeatureDefinition(
 
         AttributeColumnDescription attributeColumnDesc =
             clmDesc.attributeDescription;
-        std::unique_ptr<OGRFieldDefn> field(
-            CreateFieldDefn(attributeColumnDesc));
+        auto field = cpl::make_unique<OGRFieldDefn>(CreateFieldDefn(attributeColumnDesc));
 
         if ((field->GetType() == OFTInteger || field->GetType() == OFTInteger64)
             && (fidFieldIndex_ == OGRNullFID && primKeys.size() > 0))

@@ -52,8 +52,7 @@ static GDALDataset* OGRHanaDriverOpen(GDALOpenInfo* openInfo)
     if (!OGRHanaDriverIdentify(openInfo))
         return nullptr;
 
-    std::unique_ptr<OGRHanaDataSource> ds =
-        std::make_unique<OGRHanaDataSource>();
+    auto ds = cpl::make_unique<OGRHanaDataSource>();
     if (!ds->Open(
             openInfo->pszFilename, openInfo->papszOpenOptions,
             openInfo->eAccess == GA_Update))
@@ -73,8 +72,7 @@ static GDALDataset* OGRHanaDriverCreate(
     CPL_UNUSED GDALDataType eDT,
     CPL_UNUSED char** options)
 {
-    std::unique_ptr<OGRHanaDataSource> ds =
-        std::make_unique<OGRHanaDataSource>();
+    auto ds = cpl::make_unique<OGRHanaDataSource>();
     if (!ds->Open(name, options, TRUE))
     {
         CPLError(
@@ -99,7 +97,7 @@ void RegisterOGRHANA()
     if (GDALGetDriverByName("HANA") != nullptr)
         return;
 
-    std::unique_ptr<GDALDriver> driver = std::make_unique<GDALDriver>();
+    auto driver = cpl::make_unique<GDALDriver>();
     driver->SetDescription("HANA");
     driver->SetMetadataItem(GDAL_DMD_LONGNAME, "SAP HANA");
     driver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
