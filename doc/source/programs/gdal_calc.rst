@@ -138,7 +138,10 @@ but no projection checking is performed (unless projectionCheck option is used).
 
 .. option:: --overwrite
 
-    Overwrite output file if it already exists.
+    Overwrite output file if it already exists. Overwriting must be understood
+    here as deleting and recreating the file from scratch. Note that if this option
+    is *not* specified and the output file already exists, it will be updated in
+    place.
 
 .. option:: --debug
 
