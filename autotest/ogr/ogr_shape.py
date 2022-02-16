@@ -4914,6 +4914,36 @@ def test_ogr_shape_write_multipolygon_z_non_finite():
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/test.shp')
 
 ###############################################################################
+# Test writing a multipolygon with parts slightly overlapping
+
+
+def test_ogr_shape_write_multipolygon_parts_slightly_overlapping():
+
+    outfilename = '/vsimem/out.shp'
+    gdal.VectorTranslate(outfilename, 'data/shp/slightly_overlapping_polygons.shp')
+    ds = ogr.Open(outfilename)
+    lyr = ds.GetLayer(0)
+
+    f = lyr.GetNextFeature()
+    geom = f.GetGeometryRef()
+    assert geom.GetGeometryType() == ogr.wkbMultiPolygon
+    assert geom.GetGeometryCount() == 3
+
+    # When using the full analyzer mode, one of the ring will be considered as
+    # the inner ring of another one (which is arguable, as they are slightly
+    # overlapping.
+    with gdaltest.config_option('OGR_ORGANIZE_POLYGONS', 'DEFAULT'):
+        lyr.ResetReading()
+        f = lyr.GetNextFeature()
+        geom = f.GetGeometryRef()
+        assert geom.GetGeometryType() == ogr.wkbMultiPolygon
+        assert geom.GetGeometryCount() == 2
+
+    ds = None
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(outfilename)
+
+###############################################################################
 
 
 def test_ogr_shape_cleanup():

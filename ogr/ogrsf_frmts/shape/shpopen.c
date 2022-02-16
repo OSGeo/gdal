@@ -2608,7 +2608,8 @@ static int SHPGetPartVertexCount( const SHPObject * psObject, int iPart )
 /* Return -1 in case of ambiguity */
 static int SHPRewindIsInnerRing( const SHPObject * psObject,
                                  int iOpRing,
-                                 double dfTestX, double dfTestY ) {
+                                 double dfTestX, double dfTestY,
+                                 double dfRelativeTolerance ) {
 /* -------------------------------------------------------------------- */
 /*      Determine if this ring is an inner ring or an outer ring        */
 /*      relative to all the other rings.  For now we assume the         */
@@ -2635,36 +2636,33 @@ static int SHPRewindIsInnerRing( const SHPObject * psObject,
             else
                 iNext = 0;
 
+            const double y0 = psObject->padfY[iEdge+nVertStartCheck];
+            const double y1 = psObject->padfY[iNext+nVertStartCheck];
             /* Rule #1:
              * Test whether the edge 'straddles' the horizontal ray from
              * the test point (dfTestY,dfTestY)
              * The rule #1 also excludes edges colinear with the ray.
              */
-            if ( ( psObject->padfY[iEdge+nVertStartCheck] < dfTestY
-                    && dfTestY <= psObject->padfY[iNext+nVertStartCheck] )
-                    || ( psObject->padfY[iNext+nVertStartCheck] < dfTestY
-                        && dfTestY <= psObject->padfY[iEdge+nVertStartCheck] ) )
+            if ( ( y0 < dfTestY && dfTestY <= y1 )
+                    || ( y1 < dfTestY && dfTestY <= y0 ) )
             {
                 /* Rule #2:
                  * Test if edge-ray intersection is on the right from the
                  * test point (dfTestY,dfTestY)
                  */
-                const double intersect =
-                    ( psObject->padfX[iEdge+nVertStartCheck]
-                        + ( dfTestY - psObject->padfY[iEdge+nVertStartCheck] )
-                        / ( psObject->padfY[iNext+nVertStartCheck] -
-                            psObject->padfY[iEdge+nVertStartCheck] )
-                        * ( psObject->padfX[iNext+nVertStartCheck] -
-                            psObject->padfX[iEdge+nVertStartCheck] ) );
+                const double x0 = psObject->padfX[iEdge+nVertStartCheck];
+                const double x1 = psObject->padfX[iNext+nVertStartCheck];
+                const double intersect_minus_testX =
+                    (x0 - dfTestX) + (dfTestY - y0) / (y1 - y0) * (x1 - x0);
 
-                if (intersect < dfTestX)
+                if( fabs(intersect_minus_testX) <= dfRelativeTolerance * fabs(dfTestX) )
+                {
+                    /* Potential shared edge, or slightly overlapping polygons */
+                    return -1;
+                }
+                else if (intersect_minus_testX < 0)
                 {
                     bInner = !bInner;
-                }
-                else if( intersect == dfTestX )
-                {
-                    /* Potential shared edge */
-                    return -1;
                 }
             }
         }
@@ -2707,17 +2705,28 @@ SHPRewindObject( CPL_UNUSED SHPHandle hSHP,
             continue;
 
         int bInner = FALSE;
-        for( int iVert = nVertStart; iVert + 1 < nVertStart + nVertCount; ++iVert )
+        for( int iTolerance = 0; iTolerance < 2; iTolerance++ )
         {
-            /* Use point in the middle of segment to avoid testing
-            * common points of rings.
-            */
-            const double dfTestX = ( psObject->padfX[iVert] +
-                                     psObject->padfX[iVert + 1] ) / 2;
-            const double dfTestY = ( psObject->padfY[iVert] +
-                                     psObject->padfY[iVert + 1] ) / 2;
+            /* In a first attempt, use a relaxed criterion to decide if a point */
+            /* is inside another ring. If all points of the current ring are in the */
+            /* "grey" zone w.r.t that criterion, which seems really unlikely, */
+            /* then use the strict criterion for another pass. */
+            const double dfRelativeTolerance = (iTolerance == 0) ? 1e-9 : 0;
+            for( int iVert = nVertStart; iVert + 1 < nVertStart + nVertCount; ++iVert )
+            {
+                /* Use point in the middle of segment to avoid testing
+                * common points of rings.
+                */
+                const double dfTestX = ( psObject->padfX[iVert] +
+                                         psObject->padfX[iVert + 1] ) / 2;
+                const double dfTestY = ( psObject->padfY[iVert] +
+                                         psObject->padfY[iVert + 1] ) / 2;
 
-            bInner = SHPRewindIsInnerRing(psObject, iOpRing, dfTestX, dfTestY);
+                bInner = SHPRewindIsInnerRing(psObject, iOpRing, dfTestX, dfTestY,
+                                              dfRelativeTolerance);
+                if( bInner >= 0 )
+                    break;
+            }
             if( bInner >= 0 )
                 break;
         }
