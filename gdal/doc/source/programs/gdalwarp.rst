@@ -329,7 +329,10 @@ with control information.
 
 .. option:: -overwrite
 
-    Overwrite the target dataset if it already exists.
+    Overwrite the target dataset if it already exists. Overwriting must be understood
+    here as deleting and recreating the file from scratch. Note that if this option
+    is *not* specified and the output file already exists, it will be updated in
+    place.
 
 .. option:: -nomd
 

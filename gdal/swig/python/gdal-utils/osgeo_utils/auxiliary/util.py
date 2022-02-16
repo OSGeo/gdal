@@ -221,7 +221,7 @@ class OpenDS:
     @staticmethod
     def _open_ds(
         filename: PathLikeOrStr,
-        access_mode=gdal.GA_ReadOnly,
+        access_mode=gdal.OF_READONLY | gdal.OF_RASTER,
         ovr_idx: Optional[Union[int, float]] = None,
         ovr_only: bool = False,
         open_options: Optional[Union[Dict[str, str], Sequence[str]]] = None,
