@@ -616,7 +616,7 @@ def test_rasterio_9():
                                           callback_data=tab)
     assert data is not None
     cs = rasterio_9_checksum(data, 162 * 16, 150 * 16)
-    assert cs == 30836
+    assert cs == 18981
     assert tab[0] == pytest.approx(1.0, abs=1e-5)
 
 ###############################################################################
@@ -723,8 +723,8 @@ def test_rasterio_13():
 
         ar_ds = mem_ds.ReadAsArray(0, 0, 4, 3, buf_xsize=8, buf_ysize=3, resample_alg=gdal.GRIORA_Cubic)
 
-        expected_ar = numpy.array([[0, 0, 0, 0, 0, 0, 0, 0], [0, 255, 255, 255, 255, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]])
-        assert numpy.array_equal(ar_ds, expected_ar), dt
+        expected_ar = numpy.array([[0, 0, 0, 0, 0, 0, 0, 0], [0, 255, 255, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]])
+        assert numpy.array_equal(ar_ds, expected_ar), (ar_ds, dt)
 
 
 ###############################################################################
