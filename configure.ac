@@ -6371,3 +6371,7 @@ fi
 if test "$HAVE_TEIGHA" = "yes" -a "$ECW_54" = "yes"; then
     AC_MSG_WARN([Both Teigha SDK and ECW SDK >= 5.4 found. This was found to cause crashes in ECW driver.])
 fi
+
+AC_MSG_NOTICE([])
+AC_MSG_NOTICE([])
+AC_MSG_WARN([Starting with GDAL 3.5, the autoconf build system is deprecated in favor of the CMake build system. The autoconf build system will be completely removed in GDAL 3.6])
