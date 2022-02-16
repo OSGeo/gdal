@@ -108,6 +108,8 @@ class FGdbLayer final: public FGdbBaseLayer
 {
   friend class FGdbDataSource;
 
+  bool                m_bWorkaroundCrashOnCDFWithBinaryField = false;
+
   int                 m_bBulkLoadAllowed;
   int                 m_bBulkLoadInProgress;
 
