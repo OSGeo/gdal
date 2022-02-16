@@ -146,7 +146,6 @@ if (BUILD_APPS)
   add_executable(gdalwarpsimple EXCLUDE_FROM_ALL gdalwarpsimple.c)
   add_executable(multireadtest EXCLUDE_FROM_ALL multireadtest.cpp)
   add_executable(test_ogrsf test_ogrsf.cpp)
-  add_executable(testepsg EXCLUDE_FROM_ALL testepsg.cpp)
   add_executable(testreprojmulti EXCLUDE_FROM_ALL testreprojmulti.cpp)
 
   foreach (
@@ -159,7 +158,6 @@ if (BUILD_APPS)
           gdalwarpsimple
           multireadtest
           test_ogrsf
-          testepsg
           testreprojmulti)
     # Add that include directory before all others so the gdal_version.h from it is included and not
     # gcore/gdal_version.h
