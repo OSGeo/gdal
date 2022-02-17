@@ -1105,10 +1105,20 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
 
     CPLErr eErr = CE_None;
 
+    // If we have an alpha band, we want it to be generated before downsampling
+    // other bands
+    bool bHasAlphaBand = false;
+    for( int iBand = 0; iBand < nBands; iBand++ )
+    {
+        if( papoBandList[iBand]->GetColorInterpretation() == GCI_AlphaBand )
+            bHasAlphaBand = true;
+    }
+
     const auto poColorTable = papoBandList[0]->GetColorTable();
-    if(  ((bSourceIsPixelInterleaved && bSourceIsJPEG2000) ||
-          (nCompression != COMPRESSION_NONE)) &&
-         nPlanarConfig == PLANARCONFIG_CONTIG &&
+    if(  ((((bSourceIsPixelInterleaved && bSourceIsJPEG2000) ||
+            (nCompression != COMPRESSION_NONE)) &&
+           nPlanarConfig == PLANARCONFIG_CONTIG) ||
+          bHasAlphaBand) &&
          !GDALDataTypeIsComplex(papoBandList[0]->GetRasterDataType()) &&
           (poColorTable == nullptr ||
            STARTS_WITH_CI(pszResampling, "NEAR") ||
