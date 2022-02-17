@@ -3773,10 +3773,18 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition,
 /* -------------------------------------------------------------------- */
     if( !CPLTestBool(CSLFetchNameValueDef(papszOptions, "ALLOW_FILE_ACCESS", "YES")) )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Cannot import %s due to ALLOW_FILE_ACCESS=NO",
-                 pszDefinition);
-        return OGRERR_FAILURE;
+        VSIStatBufL sStat;
+        if( STARTS_WITH(pszDefinition, "/vsi") ||
+            VSIStatExL(pszDefinition, &sStat, VSI_STAT_EXISTS_FLAG) == 0 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot import %s due to ALLOW_FILE_ACCESS=NO",
+                     pszDefinition);
+            return OGRERR_FAILURE;
+        }
+        // We used to silently return an error without a CE_Failure message
+        // Cf https://github.com/Toblerity/Fiona/issues/1063
+        return OGRERR_CORRUPT_DATA;
     }
 
     CPLConfigOptionSetter oSetter("CPL_ALLOW_VSISTDIN", "NO", true);
