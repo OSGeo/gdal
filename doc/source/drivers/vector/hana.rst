@@ -102,7 +102,7 @@ Layer Creation Options
    "NO" then the types REAL, INTEGER and VARCHAR will be used instead.
    The default is "YES".
 -  **DEFAULT_STRING_SIZE**: Specifies default string column size. The
-   default value is 4000.
+   default value is 256.
 -  **GEOMETRY_NAME**: Specifies the name of the geometry column in new
    table. If omitted it defaults to *GEOMETRY*.
 -  **GEOMETRY_NULLABLE**: Specifies whether the values of the geometry
