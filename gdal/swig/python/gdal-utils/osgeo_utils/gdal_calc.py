@@ -103,6 +103,10 @@ def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDa
     if debug:
         print(f"gdal_calc.py starting calculation {calc}")
 
+    if outfile and os.path.isfile(outfile) and not overwrite:
+        if type or format or creation_options or hideNoData or extent or projwin:
+            raise Exception("One or several options implying file creation have been provided but Output file exists, must use --overwrite option!")
+
     # Single calc value compatibility
     if isinstance(calc, (list, tuple)):
         calc = calc
@@ -202,7 +206,7 @@ def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDa
                     myFile = filename
                     filename = None
                 else:
-                    myFile = open_ds(filename, gdal.GA_ReadOnly)
+                    myFile = open_ds(filename)
                 if not myFile:
                     raise IOError(f"No such file or directory: '{filename}'")
 
@@ -310,7 +314,7 @@ def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDa
         if debug:
             print(f"Output file {outfile} exists - filling in results into file")
 
-        myOut = open_ds(outfile, gdal.GA_Update)
+        myOut = open_ds(outfile, access_mode = gdal.OF_UPDATE | gdal.OF_RASTER)
         if myOut is None:
             error = 'but cannot be opened for update'
         elif [myOut.RasterXSize, myOut.RasterYSize] != DimensionsCheck:
