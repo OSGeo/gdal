@@ -8,7 +8,7 @@ SAP HANA
 .. build_dependencies:: odbc-cpp-wrapper
 
 This driver implements read and write access for spatial data stored in
-an SAP HANA database.
+an `SAP HANA <https://www.sap.com/products/hana.html>`__ database.
 
 Driver capabilities
 -------------------
@@ -42,7 +42,7 @@ The HANA driver passes SQL statements directly to HANA by
 default, rather than evaluating them internally when using the
 ExecuteSQL() call on the OGRDataSource, or the -sql command option to
 ogr2ogr. Attribute query expressions are also passed directly through to
-HANA. It's also possible to request the ogr HANA driver to handle
+HANA. It's also possible to request the OGR HANA driver to handle
 SQL commands with the :ref:`OGR SQL <ogr_sql_dialect>` engine, by
 passing **"OGRSQL"** string to the ExecuteSQL() method, as the name of
 the SQL dialect.
@@ -62,7 +62,7 @@ Dataset Open options
 
 -  **DSN**\ =string: Data source name.
 -  **DRIVER**\ =string:  Name or a path to a driver. For example, DRIVER={HDBODBC} (Windows) or DRIVER=/usr/sap/hdbclient/libodbcHDB.so (Linux/MacOS).
--  **HOST**\ =string: Server hostname. 
+-  **HOST**\ =string: Server host name. 
 -  **PORT**\ =integer: Port number.
 -  **USER**\ =string: User name.
 -  **PASSWORD**\ =string: User password.
@@ -126,7 +126,7 @@ by executing the following query from the tenant database.
 
    ::
 
-      % SELECT SQL_PORT FROM SYS.M_SERVICES WHERE ((SERVICE_NAME='indexserver' and COORDINATOR_TYPE= 'MASTER') or (SERVICE_NAME='xsengine'))
+      SELECT SQL_PORT FROM SYS.M_SERVICES WHERE ((SERVICE_NAME='indexserver' and COORDINATOR_TYPE= 'MASTER') or (SERVICE_NAME='xsengine'))
 
 For more details, see **Section 2.9 Connections for Multitenant Database Containers**
 in `SAP HANA Multitenant Database Containers <https://help.sap.com/doc/0987e3b51fb74e5a8631385fe4599c97/2.0.00/en-us/sap_hana_multitenant_database_containers_en.pdf>`__.
@@ -136,24 +136,24 @@ Examples
 --------
 
 -  This example shows how to list HANA layers on a specified host using
-   `ogrinfo <http://www.gdal.org/ogrinfo.html>`__ command.
+   :ref:`ogrinfo` command.
 
    ::
 
-      % ogrinfo -ro HANA:"DRIVER={HDBODBC};DATABASE=HAN;HOST=localhost;PORT=30015;USER=mylogin;PASSWORD=mypassword;SCHEMA=MYSCHEMA"
+      ogrinfo -ro HANA:"DRIVER={HDBODBC};DATABASE=HAN;HOST=localhost;PORT=30015;USER=mylogin;PASSWORD=mypassword;SCHEMA=MYSCHEMA"
 
    or
 
    ::
 
-      % ogrinfo -ro HANA:"DSN=MYHANADB;USER=mylogin;PASSWORD=mypassword;SCHEMA=MYSCHEMA"
+      ogrinfo -ro HANA:"DSN=MYHANADB;USER=mylogin;PASSWORD=mypassword;SCHEMA=MYSCHEMA"
 
 -  This example shows how to print summary information about a given layer,
-   i.e. 'planet_osm_line', using `ogrinfo <http://www.gdal.org/ogrinfo.html>`__.
+   i.e. 'planet_osm_line', using :ref:`ogrinfo`.
 
    ::
 
-      % ogrinfo -ro HANA:"DRIVER={HDBODBC};DATABASE=HAN;HOST=localhost;PORT=30015;USER=mylogin;PASSWORD=mypassword;SCHEMA=MYSCHEMA" -so "planet_osm_line"
+      ogrinfo -ro HANA:"DRIVER={HDBODBC};DATABASE=HAN;HOST=localhost;PORT=30015;USER=mylogin;PASSWORD=mypassword;SCHEMA=MYSCHEMA" -so "planet_osm_line"
 
       Layer name: planet_osm_line
       Geometry: Line String
@@ -191,19 +191,20 @@ Examples
 
    ::
 
-      % ogr2ogr -f "ESRI Shapefile" "D:\\points_output.shp" HANA:"DRIVER={HDBODBC};DATABASE=HAN;HOST=localhost;PORT=30015;USER=mylogin;PASSWORD=mypassword;SCHEMA=GIS;TABLES=points"
+      ogr2ogr -f "ESRI Shapefile" "D:\\points_output.shp" HANA:"DRIVER={HDBODBC};DATABASE=HAN;HOST=localhost;PORT=30015;USER=mylogin;PASSWORD=mypassword;SCHEMA=GIS;TABLES=points"
 
 -  This example shows how to create and populate a table with data taken from a shapefile.
 
    ::
 
-      % ogr2ogr -f HANA HANA:"DRIVER={HDBODBC};DATABASE=HAN;HOST=localhost;PORT=30015;USER=mylogin;PASSWORD=mypassword;SCHEMA=MYSCHEMA" myshapefile.shp
+      ogr2ogr -f HANA HANA:"DRIVER={HDBODBC};DATABASE=HAN;HOST=localhost;PORT=30015;USER=mylogin;PASSWORD=mypassword;SCHEMA=MYSCHEMA" myshapefile.shp
 
 
 For developers
 --------------
 
-To compile the SAP HANA driver, odbc-cpp-wrapper <https://github.com/SAP/odbc-cpp-wrapper/>`__ library needs to be linked or installed. For more details, see comments in nmake.opt or configure.ac files to build the driver for Windows or Linux/MacOS correspondingly.
+To compile the SAP HANA driver, `odbc-cpp-wrapper <https://github.com/SAP/odbc-cpp-wrapper/>`__ library needs to be linked or installed.
+For more details, see comments in nmake.opt or configure.ac files to build the driver for Windows or Linux/MacOS correspondingly.
 
 See Also
 --------
