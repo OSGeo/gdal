@@ -771,6 +771,7 @@ CPLString IVSIS3LikeFSHandler::InitiateMultipartUpload(
                                                        osFilename.c_str());
         headers = VSICurlMergeHeaders(headers,
                         poS3HandleHelper->GetCurlHeaders("POST", headers));
+        headers = curl_slist_append(headers, "Content-Length: 0"); // Required by GCS in HTTP 1.1
 
         CurlRequestHelper requestHelper;
         const long response_code =

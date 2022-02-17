@@ -80,11 +80,11 @@ set_property(TARGET ogr PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:ogr>)
 
 if (GDAL_USE_ZLIB_INTERNAL)
-  target_include_directories(ogr PRIVATE $<TARGET_PROPERTY:libz,SOURCE_DIR>)
+  gdal_add_vendored_lib(ogr libz)
 endif ()
 
 if (GDAL_USE_JSONC_INTERNAL)
-  target_include_directories(ogr PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
+  gdal_add_vendored_lib(ogr libjson)
 endif ()
 
 target_compile_definitions(ogr PRIVATE HAVE_MITAB)
@@ -94,7 +94,7 @@ gdal_target_link_libraries(ogr PRIVATE PROJ::proj)
 # External libs then
 if (GDAL_USE_GEOS)
   target_compile_definitions(ogr PRIVATE -DHAVE_GEOS=1)
-  gdal_target_link_libraries(ogr PRIVATE GEOS::GEOS)
+  gdal_target_link_libraries(ogr PRIVATE ${GEOS_LIBRARIES})
 endif ()
 
 if (GDAL_USE_SFCGAL)
@@ -123,7 +123,7 @@ endif ()
 
 if (GDAL_USE_EXPAT)
   target_compile_definitions(ogr PRIVATE -DHAVE_EXPAT)
-  gdal_target_link_libraries(ogr PRIVATE EXPAT::EXPAT)
+  gdal_target_link_libraries(ogr PRIVATE ${EXPAT_LIBRARIES})
 endif ()
 
 if (GDAL_USE_XERCESC)
@@ -133,7 +133,7 @@ if (GDAL_USE_XERCESC)
 endif ()
 
 if (NOT GDAL_USE_JSONC_INTERNAL)
-  gdal_target_link_libraries(ogr PRIVATE JSONC::JSONC)
+  gdal_target_link_libraries(ogr PRIVATE ${JSONC_LIBRARIES})
 endif ()
 
 include(TargetPublicHeader)

@@ -56,7 +56,7 @@ endif ()
 
 if (GDAL_USE_GEOS)
   target_compile_definitions(alg PRIVATE -DHAVE_GEOS=1)
-  gdal_target_link_libraries(alg PRIVATE GEOS::GEOS)
+  gdal_target_link_libraries(alg PRIVATE ${GEOS_LIBRARIES})
 endif ()
 
 if (GDAL_USE_ARMADILLO)

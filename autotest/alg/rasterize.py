@@ -80,7 +80,7 @@ def test_rasterize_1():
     # Run the algorithm.
 
     err = gdal.RasterizeLayer(target_ds, [3, 2, 1], rast_mem_lyr,
-                              burn_values=[200, 220, 240])
+                              burn_values=[256, 220, -1])
 
     assert err == 0, 'got non-zero result code from RasterizeLayer'
 
@@ -93,7 +93,14 @@ def test_rasterize_1():
         gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_1.tif', target_ds)
         pytest.fail('Did not get expected image checksum')
 
-    
+    _, maxval = target_ds.GetRasterBand(3).ComputeRasterMinMax()
+    assert maxval == 255
+
+    minval, _ = target_ds.GetRasterBand(1).ComputeRasterMinMax()
+    assert minval == 0
+
+
+
 ###############################################################################
 # Test rasterization with ALL_TOUCHED.
 
@@ -133,7 +140,7 @@ def test_rasterize_2():
         gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_2.tif', target_ds)
         pytest.fail('Did not get expected image checksum')
 
-    
+
 ###############################################################################
 # Rasterization with BURN_VALUE_FROM.
 
@@ -177,14 +184,14 @@ def test_rasterize_3():
 
     # Check results.
 
-    expected = 15006
+    expected = 15037
     checksum = target_ds.GetRasterBand(2).Checksum()
     if checksum != expected:
         print(checksum)
         gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_3.tif', target_ds)
         pytest.fail('Did not get expected image checksum')
 
-    
+
 ###############################################################################
 # Rasterization with ATTRIBUTE.
 
@@ -238,7 +245,7 @@ def test_rasterize_4():
         gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_4.tif', target_ds)
         pytest.fail('Did not get expected image checksum')
 
-    
+
 ###############################################################################
 # Rasterization with MERGE_ALG=ADD.
 
@@ -289,7 +296,7 @@ def test_rasterize_5():
     # Run the algorithm.
 
     err = gdal.RasterizeLayer(target_ds, [1, 2, 3], rast_mem_lyr,
-                              burn_values=[100, 110, 120],
+                              burn_values=[256, 110, -1],
                               options=["MERGE_ALG=ADD"])
 
     assert err == 0, 'got non-zero result code from RasterizeLayer'
@@ -303,7 +310,12 @@ def test_rasterize_5():
         gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_5.tif', target_ds)
         pytest.fail('Did not get expected image checksum')
 
-    
+    _, maxval = target_ds.GetRasterBand(1).ComputeRasterMinMax()
+    assert maxval == 255
+
+    minval, _ = target_ds.GetRasterBand(3).ComputeRasterMinMax()
+    assert minval == 0
+
 
 ###############################################################################
 # Test bug fix for #5580 (used to hang)

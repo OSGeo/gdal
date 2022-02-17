@@ -446,6 +446,7 @@ OGRErr CPL_DLL OGR_F_SetGeometryDirectly( OGRFeatureH, OGRGeometryH );
 OGRErr CPL_DLL OGR_F_SetGeometry( OGRFeatureH, OGRGeometryH );
 OGRGeometryH CPL_DLL OGR_F_GetGeometryRef( OGRFeatureH );
 OGRGeometryH CPL_DLL OGR_F_StealGeometry( OGRFeatureH ) CPL_WARN_UNUSED_RESULT;
+OGRGeometryH CPL_DLL OGR_F_StealGeometryEx( OGRFeatureH, int iGeomField ) CPL_WARN_UNUSED_RESULT;
 OGRFeatureH CPL_DLL OGR_F_Clone( OGRFeatureH ) CPL_WARN_UNUSED_RESULT;
 int    CPL_DLL OGR_F_Equal( OGRFeatureH, OGRFeatureH );
 

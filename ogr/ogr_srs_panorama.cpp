@@ -224,63 +224,63 @@ OGRErr OSRImportFromPanorama( OGRSpatialReferenceH hSRS,
  *
  * @param iProjSys Input projection system code, used in GIS "Panorama".
  *
- *      <h4>Supported Projections</h4>
- * \code{.unparsed}
- *      1:  Gauss-Kruger (Transverse Mercator)
- *      2:  Lambert Conformal Conic 2SP
- *      5:  Stereographic
- *      6:  Azimuthal Equidistant (Postel)
- *      8:  Mercator
- *      10: Polyconic
- *      13: Polar Stereographic
- *      15: Gnomonic
- *      17: Universal Transverse Mercator (UTM)
- *      18: Wagner I (Kavraisky VI)
- *      19: Mollweide
- *      20: Equidistant Conic
- *      24: Lambert Azimuthal Equal Area
- *      27: Equirectangular
- *      28: Cylindrical Equal Area (Lambert)
- *      29: International Map of the World Polyconic
- * \endcode
+ * Supported Projections are:
+ * <ul>
+ * <li>1:  Gauss-Kruger (Transverse Mercator)</li>
+ * <li>2:  Lambert Conformal Conic 2SP</li>
+ * <li>5:  Stereographic</li>
+ * <li>6:  Azimuthal Equidistant (Postel)</li>
+ * <li>8:  Mercator</li>
+ * <li>10: Polyconic</li>
+ * <li>13: Polar Stereographic</li>
+ * <li>15: Gnomonic</li>
+ * <li>17: Universal Transverse Mercator (UTM)</li>
+ * <li>18: Wagner I (Kavraisky VI)</li>
+ * <li>19: Mollweide</li>
+ * <li>20: Equidistant Conic</li>
+ * <li>24: Lambert Azimuthal Equal Area</li>
+ * <li>27: Equirectangular</li>
+ * <li>28: Cylindrical Equal Area (Lambert)</li>
+ * <li>29: International Map of the World Polyconic</li>
+ * </ul>
  *
  * @param iDatum Input coordinate system.
  *
- *      <h4>Supported Datums</h4>
- * \code{.unparsed}
- *       1: Pulkovo, 1942
- *       2: WGS, 1984
- *       3: OSGB 1936 (British National Grid)
- *       9: Pulkovo, 1995
- * \endcode
+ * Supported Datums are:
+ * <ul>
+ * <li>1: Pulkovo, 1942</li>
+ * <li>2: WGS, 1984</li>
+ * <li>3: OSGB 1936 (British National Grid)</li>
+ * <li>9: Pulkovo, 1995</li>
+ * </ul>
  *
  * @param iEllips Input spheroid.
  *
- *      <h4>Supported Spheroids</h4>
- * \code{.unparsed}
- *       1: Krassovsky, 1940
- *       2: WGS, 1972
- *       3: International, 1924 (Hayford, 1909)
- *       4: Clarke, 1880
- *       5: Clarke, 1866 (NAD1927)
- *       6: Everest, 1830
- *       7: Bessel, 1841
- *       8: Airy, 1830
- *       9: WGS, 1984 (GPS)
- * \endcode
+ * Supported Spheroids are:
+ * <ul>
+ * <li>1: Krassovsky, 1940</li>
+ * <li>2: WGS, 1972</li>
+ * <li>3: International, 1924 (Hayford, 1909)</li>
+ * <li>4: Clarke, 1880</li>
+ * <li>5: Clarke, 1866 (NAD1927)</li>
+ * <li>6: Everest, 1830</li>
+ * <li>7: Bessel, 1841</li>
+ * <li>8: Airy, 1830</li>
+ * <li>9: WGS, 1984 (GPS)</li>
+ * </ul>
  *
  * @param padfPrjParams Array of 8 coordinate system parameters:
  *
- * \code{.unparsed}
- *      [0]  Latitude of the first standard parallel (radians)
- *      [1]  Latitude of the second standard parallel (radians)
- *      [2]  Latitude of center of projection (radians)
- *      [3]  Longitude of center of projection (radians)
- *      [4]  Scaling factor
- *      [5]  False Easting
- *      [6]  False Northing
- *      [7]  Zone number
- * \endcode
+ * <ul>
+ * <li>[0]  Latitude of the first standard parallel (radians)</li>
+ * <li>[1]  Latitude of the second standard parallel (radians)</li>
+ * <li>[2]  Latitude of center of projection (radians)</li>
+ * <li>[3]  Longitude of center of projection (radians)</li>
+ * <li>[4]  Scaling factor</li>
+ * <li>[5]  False Easting</li>
+ * <li>[6]  False Northing</li>
+ * <li>[7]  Zone number</li>
+ * </ul>
  *
  * Particular projection uses different parameters, unused ones may be set to
  * zero. If NULL supplied instead of array pointer default values will be used
@@ -547,23 +547,23 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
  *
  * @param iVCS Input vertical coordinate system ID.
  *
- * <h4>Supported VCS</h4>
- * \code{.unparsed}
- *   1: Baltic 1977 height (EPSG:5705)
- *   2: AHD height (EPSG:5711)
- *   4: Ostend height (EPSG:5710)
- *   5: Ostend height (EPSG:5710)
- *  10: Piraeus height (EPSG:5716)
- *  11: DNN height (EPSG:5733)
- *  16: NAP height (EPSG:5709)
- *  17: NN54 height (EPSG:5776)
- *  20: N60 height (EPSG:5717)
- *  21: RH2000 height (EPSG:5613)
- *  23: Antalya height (EPSG:5775)
- *  24: NGVD29 height (ftUS) (EPSG:5702)
- *  25: Baltic 1977 height (EPSG:5705)
- *  27: MSL height (EPSG:5714)
- * \endcode   
+ * Supported VCS are:
+ * <ul>
+ * <li>1: Baltic 1977 height (EPSG:5705)</li>
+ * <li>2: AHD height (EPSG:5711)</li>
+ * <li>4: Ostend height (EPSG:5710)</li>
+ * <li>5: Ostend height (EPSG:5710)</li>
+ * <li>10: Piraeus height (EPSG:5716)</li>
+ * <li>11: DNN height (EPSG:5733)</li>
+ * <li>16: NAP height (EPSG:5709)</li>
+ * <li>17: NN54 height (EPSG:5776)</li>
+ * <li>20: N60 height (EPSG:5717)</li>
+ * <li>21: RH2000 height (EPSG:5613)</li>
+ * <li>23: Antalya height (EPSG:5775)</li>
+ * <li>24: NGVD29 height (ftUS) (EPSG:5702)</li>
+ * <li>25: Baltic 1977 height (EPSG:5705)</li>
+ * <li>27: MSL height (EPSG:5714)</li>
+ * </ul>
  */
 OGRErr OGRSpatialReference::importVertCSFromPanorama(int iVCS)
 {
@@ -576,7 +576,7 @@ OGRErr OGRSpatialReference::importVertCSFromPanorama(int iVCS)
 
     if(nEPSG == 0 )
     {
-        CPLError(CE_Warning, CPLE_NotSupported, 
+        CPLError(CE_Warning, CPLE_NotSupported,
                  "Vertical coordinate system (Panorama index %d) not supported", iVCS);
         return OGRERR_UNSUPPORTED_SRS;
     }
@@ -586,7 +586,7 @@ OGRErr OGRSpatialReference::importVertCSFromPanorama(int iVCS)
     OGRErr eImportFromEPSGErr = sr.importFromEPSG(nEPSG);
     if(eImportFromEPSGErr != OGRERR_NONE)
     {
-        CPLError(CE_Warning, CPLE_None, 
+        CPLError(CE_Warning, CPLE_None,
                  "Vertical coordinate system (Panorama index %d, EPSG %d) "
                  "import from EPSG error", iVCS, nEPSG);
         return OGRERR_UNSUPPORTED_SRS;
@@ -594,17 +594,17 @@ OGRErr OGRSpatialReference::importVertCSFromPanorama(int iVCS)
 
     if(sr.IsVertical() != 1)
     {
-        CPLError(CE_Warning, CPLE_None, 
+        CPLError(CE_Warning, CPLE_None,
                  "Coordinate system (Panorama index %d, EPSG %d) "
                  "is not Vertical", iVCS, nEPSG);
         return OGRERR_UNSUPPORTED_SRS;
     }
 
-    OGRErr eSetVertCSErr = SetVertCS(sr.GetAttrValue("VERT_CS"), 
+    OGRErr eSetVertCSErr = SetVertCS(sr.GetAttrValue("VERT_CS"),
                                      sr.GetAttrValue("VERT_DATUM"));
     if(eSetVertCSErr != OGRERR_NONE)
     {
-        CPLError(CE_Warning, CPLE_None, 
+        CPLError(CE_Warning, CPLE_None,
                 "Vertical coordinate system (Panorama index %d, EPSG %d) "
                 "set error", iVCS, nEPSG);
         return eSetVertCSErr;

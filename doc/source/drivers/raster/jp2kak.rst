@@ -181,7 +181,18 @@ documentation to better understand their meaning.
 -  **Rlevels**: Kakadu library default used.
 -  **Rweight**: Kakadu library default used.
 -  **Qguard**: Kakadu library default used.
+-  **Creversible**: If not set and QUALITY >= 99.5, set to "yes", otherwise to "false".
 -  **Sprofile**: Kakadu library default used.
+-  **RATE**: Kakadu library default used.
+   One or more bit-rates, expressed in terms of the ratio between the total number of compressed bits
+   (including headers) and the product of the largest horizontal and  vertical image component dimensions. A dash, -,
+   may be used in place of the first bit-rate in the list to indicate that the final quality layer should include all
+   compressed bits. If Clayers is not used, the number of layers is set to the number of rates specified here.
+   If Clayers is used to specify an actual number of quality layers, one of the following must be true: 1) the number
+   of rates specified here is identical to the specified number of layers; or 2) one or two rates are specified using
+   this argument.  When two rates are specified, the number of layers must be 2 or more and intervening layers will be
+   assigned roughly logarithmically spaced bit-rates. When only one rate is specified, an internal heuristic determines
+   a lower bound and logarithmically spaces the layer rates over the range. The rates have to be in ASC order.
 
 Known Kakadu Issues
 -------------------

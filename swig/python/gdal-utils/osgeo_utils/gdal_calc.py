@@ -35,11 +35,11 @@ import textwrap
 from numbers import Number
 from typing import Union, Tuple, Optional, Sequence, Dict
 import argparse
+import glob
 import os
 import os.path
 import sys
 import string
-from collections import defaultdict
 
 import numpy
 
@@ -102,6 +102,10 @@ def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDa
 
     if debug:
         print(f"gdal_calc.py starting calculation {calc}")
+
+    if outfile and os.path.isfile(outfile) and not overwrite:
+        if type or format or creation_options or hideNoData or extent or projwin:
+            raise Exception("One or several options implying file creation have been provided but Output file exists, must use --overwrite option!")
 
     # Single calc value compatibility
     if isinstance(calc, (list, tuple)):
@@ -202,7 +206,7 @@ def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDa
                     myFile = filename
                     filename = None
                 else:
-                    myFile = open_ds(filename, gdal.GA_ReadOnly)
+                    myFile = open_ds(filename)
                 if not myFile:
                     raise IOError(f"No such file or directory: '{filename}'")
 
@@ -310,7 +314,7 @@ def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDa
         if debug:
             print(f"Output file {outfile} exists - filling in results into file")
 
-        myOut = open_ds(outfile, gdal.GA_Update)
+        myOut = open_ds(outfile, access_mode = gdal.OF_UPDATE | gdal.OF_RASTER)
         if myOut is None:
             error = 'but cannot be opened for update'
         elif [myOut.RasterXSize, myOut.RasterYSize] != DimensionsCheck:
@@ -344,7 +348,13 @@ def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDa
         # find data type to use
         if not type:
             # use the largest type of the input files
-            myOutType = max(myDataTypeNum)
+            if hasattr(gdal, 'DataTypeUnion'):
+                myOutType = myDataTypeNum[0]
+                for dt in myDataTypeNum:
+                    myOutType = gdal.DataTypeUnion(myOutType, dt)
+            else:
+                # GDAL < 3.5: not super reliable as it depends on the values of the GDALDataType enumeration ...
+                myOutType = max(myDataTypeNum)
         else:
             myOutType = type
             if isinstance(myOutType, str):
@@ -427,6 +437,24 @@ def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDa
         nXValid = myBlockSize[0]
         nYValid = myBlockSize[1]
 
+        count_file_per_alpha = {}
+        largest_datatype_per_alpha = {}
+        for i, Alpha in enumerate(myAlphaList):
+            if Alpha in myAlphaFileLists:
+                # populate lettered arrays with values
+                if allBandsIndex is not None and allBandsIndex == i:
+                    myBandNo = bandNo
+                else:
+                    myBandNo = myBands[i]
+                band = myFiles[i].GetRasterBand(myBandNo)
+                if Alpha not in count_file_per_alpha:
+                    count_file_per_alpha[Alpha] = 1
+                    largest_datatype_per_alpha[Alpha] = band.DataType
+                else:
+                    count_file_per_alpha[Alpha] += 1
+                    if hasattr(gdal, 'DataTypeUnion'):
+                        largest_datatype_per_alpha[Alpha] = gdal.DataTypeUnion(largest_datatype_per_alpha[Alpha], band.DataType)
+
         # loop through X-lines
         for X in range(0, nXBlocks):
 
@@ -447,11 +475,7 @@ def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDa
                 ProgressCt += 1
                 if 10 * ProgressCt / ProgressEnd % 10 != ProgressMk and not quiet:
                     ProgressMk = 10 * ProgressCt / ProgressEnd % 10
-                    from sys import version_info
-                    if version_info >= (3, 0, 0):
-                        exec('print("%d.." % (10*ProgressMk), end=" ")')
-                    else:
-                        exec('print 10*ProgressMk, "..",')
+                    print("%d.." % (10*ProgressMk), end=" ")
 
                 # change the block size of the final piece
                 if Y == nYBlocks - 1:
@@ -467,7 +491,16 @@ def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDa
                 # make local namespace for calculation
                 local_namespace = {}
 
-                val_lists = defaultdict(list)
+                # Create destination numpy arrays for each alpha
+                numpy_arrays = {}
+                counter_per_alpha = {}
+                for Alpha in count_file_per_alpha:
+                    dtype = gdal_array.GDALTypeCodeToNumericTypeCode(largest_datatype_per_alpha[Alpha])
+                    if count_file_per_alpha[Alpha] == 1:
+                        numpy_arrays[Alpha] = numpy.empty((nYValid, nXValid), dtype=dtype)
+                    else:
+                        numpy_arrays[Alpha] = numpy.empty((count_file_per_alpha[Alpha], nYValid, nXValid), dtype=dtype)
+                    counter_per_alpha[Alpha] = 0
 
                 # fetch data for each input layer
                 for i, Alpha in enumerate(myAlphaList):
@@ -477,9 +510,21 @@ def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDa
                         myBandNo = bandNo
                     else:
                         myBandNo = myBands[i]
-                    myval = gdal_array.BandReadAsArray(myFiles[i].GetRasterBand(myBandNo),
-                                                       xoff=myX, yoff=myY,
-                                                       win_xsize=nXValid, win_ysize=nYValid)
+
+                    if Alpha in myAlphaFileLists:
+                        if count_file_per_alpha[Alpha] == 1:
+                            buf_obj = numpy_arrays[Alpha]
+                        else:
+                            buf_obj = numpy_arrays[Alpha][counter_per_alpha[Alpha]]
+                        myval = gdal_array.BandReadAsArray(myFiles[i].GetRasterBand(myBandNo),
+                                                           xoff=myX, yoff=myY,
+                                                           win_xsize=nXValid, win_ysize=nYValid,
+                                                           buf_obj=buf_obj)
+                        counter_per_alpha[Alpha] += 1
+                    else:
+                        myval = gdal_array.BandReadAsArray(myFiles[i].GetRasterBand(myBandNo),
+                                                           xoff=myX, yoff=myY,
+                                                           win_xsize=nXValid, win_ysize=nYValid)
                     if myval is None:
                         raise Exception(f'Input block reading failed from filename {filename[i]}')
 
@@ -495,14 +540,12 @@ def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDa
                         myNDVs = 1 * numpy.logical_or(myNDVs == 1, myval == myNDV[i])
 
                     # add an array of values for this block to the eval namespace
-                    if Alpha in myAlphaFileLists:
-                        val_lists[Alpha].append(myval)
-                    else:
+                    if not Alpha in myAlphaFileLists:
                         local_namespace[Alpha] = myval
                     myval = None
 
                 for lst in myAlphaFileLists:
-                    local_namespace[lst] = val_lists[lst]
+                    local_namespace[lst] = numpy_arrays[lst]
 
                 # try the calculation on the array blocks
                 this_calc = calc[bandNo - 1 if len(calc) > 1 else 0]
@@ -563,8 +606,12 @@ class GDALCalc(GDALScript):
 
         self.add_example('add two files together',
                          '-A input1.tif -B input2.tif --outfile=result.tif --calc="A+B"')
-        self.add_example('average of two layers',
+        self.add_example('average of two files',
                          '-A input.tif -B input2.tif --outfile=result.tif --calc="(A+B)/2"')
+        self.add_example('average of many files',
+                         '-A input.tif input2.tif input3.tif ... inputN.tif --outfile=result.tif --calc="average(A,axis=0)"')
+        self.add_example('average of many files (using wildcards)',
+                         '-A input*.tif --outfile=result.tif --calc="average(A,axis=0)"')
         self.add_example('set values of zero and below to null',
                          '-A input.tif --outfile=result.tif --calc="A*(A>0)" --NoDataValue=0')
         self.add_example('using logical operator to keep a range of values from input',
@@ -651,8 +698,17 @@ class GDALCalc(GDALScript):
                 alpha_val = kwargs[alpha]
                 del kwargs[alpha]
                 if alpha_val is not None:
-                    alpha_val = [s.strip('"') for s in alpha_val]
-                    input_files[alpha] = alpha_val if len(alpha_val) > 1 else alpha_val[0]
+                    dst_alpha_val = []
+                    for val in alpha_val:
+                        val = val.strip('"')
+                        # If the shell didn't already expand wildcards
+                        if ('?' in val or '*' in val) and not os.path.exists(val):
+                            dst_alpha_val += glob.glob(val)
+                        else:
+                            dst_alpha_val.append(val)
+                    if len(dst_alpha_val) == 0:
+                        raise Exception('-A ' + ' '.join(alpha_val) + ' did not expand to any file')
+                    input_files[alpha] = dst_alpha_val if len(dst_alpha_val) > 1 else dst_alpha_val[0]
             band_key = alpha + '_band'
             if band_key in kwargs:
                 band_val = kwargs[band_key]

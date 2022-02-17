@@ -58,6 +58,8 @@ if(DAP_INCLUDE_DIR AND DAP_LIBRARY)
            OUTPUT_VARIABLE DAP_VERSION
            OUTPUT_STRIP_TRAILING_WHITESPACE
     )
+    # Isolate version in what dap-config --version returned
+    string(REGEX MATCH "([0-9]+\\.)?([0-9]+\\.)?([0-9]+)" DAP_VERSION ${DAP_VERSION})
 endif()
 
 include(FindPackageHandleStandardArgs)

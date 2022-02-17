@@ -420,6 +420,9 @@ Creation Options
 -  **PREDICTOR=[1/2/3]**: Set the predictor for LZW, DEFLATE and ZSTD
    compression. The default is 1 (no predictor), 2 is horizontal
    differencing and 3 is floating point prediction.
+   PREDICTOR=2 is only supported for 8, 16, 32 and 64 bit samples (support
+   for 64 bit was added in libtiff > 4.3.0).
+   PREDICTOR=3 is only supported for 16, 32 and 64 bit floating-point data.
 
 -  **DISCARD_LSB=nbits or nbits_band1,nbits_band2,...nbits_bandN**:
    Set the number of least-significant bits to clear,

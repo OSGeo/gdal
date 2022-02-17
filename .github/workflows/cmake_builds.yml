@@ -22,6 +22,12 @@ jobs:
     steps:
     - name: Checkout GDAL
       uses: actions/checkout@v2
+    - name: Install CMake 3.10.2
+      run: |
+        cd ${GITHUB_WORKSPACE}
+        wget https://github.com/Kitware/CMake/releases/download/v3.10.2/cmake-3.10.2-Linux-x86_64.tar.gz
+        tar xzf cmake-3.10.2-Linux-x86_64.tar.gz
+        echo "$GITHUB_WORKSPACE/cmake-3.10.2-Linux-x86_64/bin" >> $GITHUB_PATH
     - run: |
         cmake --version
     - name: Install dependency
@@ -57,19 +63,21 @@ jobs:
         ln -s .. gdal
         mkdir build
         cd build
-        cmake  ${CMAKE_OPTIONS} -Werror=dev -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror -DGDAL_USE_PUBLICDECOMPWT:BOOL=ON .. -DWERROR_DEV_FLAG="-Werror=dev"
+        cmake  ${CMAKE_OPTIONS} -Werror=dev -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror -DGDAL_USE_PUBLICDECOMPWT:BOOL=ON -DPUBLICDECOMPWT_URL=https://github.com/rouault/PublicDecompWT .. -DWERROR_DEV_FLAG="-Werror=dev"
     - name: Build
       run: |
-        cmake --build $GITHUB_WORKSPACE/superbuild/build -j $(nproc)
+        cmake --build $GITHUB_WORKSPACE/superbuild/build -- -j$(nproc)
+      env:
+        GIT_LFS_SKIP_SMUDGE: 1 # for PublicDecompWT github repository clone
     - name: test (with command targets)
       run: |
-        cmake --build $GITHUB_WORKSPACE/superbuild/build --target quicktest -j $(nproc)
+        cmake --build $GITHUB_WORKSPACE/superbuild/build --target quicktest -- -j$(nproc)
     - name: test (with ctest)
       run: |
         ctest --test-dir $GITHUB_WORKSPACE/superbuild/build -V
     - name: install
       run: |
-        cmake --build $GITHUB_WORKSPACE/superbuild/build --target install -j $(nproc)
+        cmake --build $GITHUB_WORKSPACE/superbuild/build --target install -- -j$(nproc)
         export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib
         $GITHUB_WORKSPACE/install-gdal/bin/gdalinfo --version
         PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/python3/dist-packages python3 -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
@@ -77,8 +85,8 @@ jobs:
       run: |
         cd $GITHUB_WORKSPACE/superbuild/build
         rm -rf swig/csharp
-        cmake  ${CMAKE_OPTIONS} -DCSHARP_MONO=ON -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror -DGDAL_USE_PUBLICDECOMPWT:BOOL=ON ..
-        cmake --build $GITHUB_WORKSPACE/superbuild/build --target install -j $(nproc)
+        cmake  ${CMAKE_OPTIONS} -DCSHARP_MONO=ON -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror ..
+        cmake --build $GITHUB_WORKSPACE/superbuild/build --target install -- -j$(nproc)
         ctest --test-dir $GITHUB_WORKSPACE/superbuild/build -V -R "^csharp.*"
     - name: Standalone Python bindings build
       run: |
@@ -87,8 +95,43 @@ jobs:
         rm -rf $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python
         # Set PATH so that gdal-config is found
         PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH pip install --user gdal-python.tar.gz
+    - name: Test post-install usage (with pkg-config)
+      run: |
+        ./autotest/postinstall/test_pkg-config.sh $GITHUB_WORKSPACE/install-gdal
+    - name: Test post-install usage (with gdal-config)
+      run: |
+        ./autotest/postinstall/test_gdal-config.sh $GITHUB_WORKSPACE/install-gdal
+    - name: Test post-install usage (with CMake)
+      run: |
+        ./autotest/postinstall/test_cmake.sh $GITHUB_WORKSPACE/install-gdal
+    - name: Rerun with static linkage
+      run: |
+        cd $GITHUB_WORKSPACE/superbuild/build
+        cmake  ${CMAKE_OPTIONS} .. \
+          -DBUILD_SHARED_LIBS=OFF \
+          -DBUILD_TESTING=OFF \
+          -DCSHARP_MONO=OFF \
+          -DGDAL_USE_HDF4=OFF \
+          -DGDAL_USE_HDF5=OFF \
+          -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal-static
+        cmake --build $GITHUB_WORKSPACE/superbuild/build --target install -- -j$(nproc)
+    - name: Test post-install usage (static, with pkg-config)
+      run: |
+        ./autotest/postinstall/test_pkg-config.sh $GITHUB_WORKSPACE/install-gdal-static --static
+    - name: Test post-install usage (static, with gdal-config)
+      run: |
+        ./autotest/postinstall/test_gdal-config.sh $GITHUB_WORKSPACE/install-gdal-static --static
+    - name: Test post-install usage (static, with CMake)
+      run: |
+        if ./autotest/postinstall/test_cmake.sh $GITHUB_WORKSPACE/install-gdal-static --static; then
+          echo 'Unexpected pass' >&2
+          exit 1
+        else
+          echo 'Expected fail'
+        fi
 
   build-windows-msys2-mingw:
+    if: ${{ false }}  # disable for now. See https://github.com/OSGeo/gdal/issues/5317
     runs-on: windows-2022
     env:
       generator: MinGW Makefiles
@@ -192,10 +235,12 @@ jobs:
       # BUILD_JAVA_BINDINGS=OFF because we get "Error occurred during initialization of VM.   Corrupted ZIP library: C:\Miniconda\envs\gdalenv\Library\bin\zip.dll" when running java. Not reproducible on a standard VM
       run: |
         mkdir -p $GITHUB_WORKSPACE/build
-        cmake -A ${architecture} -G "${generator}" -Werror=dev "-DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal" "-DCMAKE_C_COMPILER_LAUNCHER=clcache" "-DCMAKE_CXX_COMPILER_LAUNCHER=clcache" "-DCMAKE_PREFIX_PATH=${CONDA_PREFIX}" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DJASPER_LIBRARY_RELEASE:FILEPATH= -DLIBKML_BASE_LIBRARY:FILEPATH= -DGDAL_ENABLE_PLUGINS:BOOL=ON -DGDAL_ENABLE_PLUGINS_NO_DEPS:BOOL=ON -DGDAL_USE_PUBLICDECOMPWT:BOOL=ON -DBUILD_JAVA_BINDINGS=OFF -DBUILD_CSHARP_BINDINGS=ON -DGDAL_USE_MYSQL:BOOL=OFF -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX" -DWERROR_DEV_FLAG="-Werror=dev"
+        cmake -A ${architecture} -G "${generator}" -Werror=dev "-DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal" "-DCMAKE_C_COMPILER_LAUNCHER=clcache" "-DCMAKE_CXX_COMPILER_LAUNCHER=clcache" "-DCMAKE_PREFIX_PATH=${CONDA_PREFIX}" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DJASPER_LIBRARY_RELEASE:FILEPATH= -DLIBKML_BASE_LIBRARY:FILEPATH= -DGDAL_ENABLE_PLUGINS:BOOL=ON -DGDAL_ENABLE_PLUGINS_NO_DEPS:BOOL=ON -DGDAL_USE_PUBLICDECOMPWT:BOOL=ON -DPUBLICDECOMPWT_URL=https://github.com/rouault/PublicDecompWT -DBUILD_JAVA_BINDINGS=OFF -DBUILD_CSHARP_BINDINGS=ON -DGDAL_USE_MYSQL:BOOL=OFF -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX" -DWERROR_DEV_FLAG="-Werror=dev"
     - name: Build
       shell: bash -l {0}
       run: cmake --build $GITHUB_WORKSPACE/build --config Release -j 2
+      env:
+        GIT_LFS_SKIP_SMUDGE: 1 # for PublicDecompWT github repository clone
     - name: test
       shell: bash -l {0}
       run: |
@@ -296,6 +341,15 @@ jobs:
         GITHUB_WORKFLOW: "MacOS build"
     - name: Install
       run: cmake --build $GITHUB_WORKSPACE/build --target install -j 3
+    - name: Test post-install usage (with pkg-config)
+      run: |
+        ./autotest/postinstall/test_pkg-config.sh $GITHUB_WORKSPACE/install-gdal
+    - name: Test post-install usage (with gdal-config)
+      run: |
+        ./autotest/postinstall/test_gdal-config.sh $GITHUB_WORKSPACE/install-gdal
+    - name: Test post-install usage (with CMake)
+      run: |
+        ./autotest/postinstall/test_cmake.sh $GITHUB_WORKSPACE/install-gdal
 
   # Disabled for now since bindings in master use GDALDatasetGetFieldDomainNames
   # but libgdal from Conda has not it yet.

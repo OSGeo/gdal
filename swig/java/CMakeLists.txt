@@ -62,13 +62,16 @@ endforeach ()
 set(GDALALLJNI_SOURCES
     ${CMAKE_CURRENT_BINARY_DIR}/org/gdal/gdal/gdal_wrap.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/org/gdal/gdalconst/gdalconst_wrap.c
-    ${CMAKE_CURRENT_BINARY_DIR}/org/gdal/ogr/ogr_wrap.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/org/gdal/osr/osr_wrap.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/org/gdal/gnm/gnm_wrap.cpp)
+    ${CMAKE_CURRENT_BINARY_DIR}/org/gdal/ogr/ogr_wrap.cpp ${CMAKE_CURRENT_BINARY_DIR}/org/gdal/osr/osr_wrap.cpp)
+if (ENABLE_GNM)
+  list(APPEND GDALALLJNI_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/org/gdal/gnm/gnm_wrap.cpp)
+endif ()
 add_library(gdalalljni SHARED ${GDALALLJNI_SOURCES})
 gdal_standard_includes(gdalalljni)
-target_include_directories(gdalalljni PRIVATE ${JNI_INCLUDE_DIRS} $<TARGET_PROPERTY:gnm,SOURCE_DIR>
-                                              ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(gdalalljni PRIVATE ${JNI_INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR})
+if (ENABLE_GNM)
+  target_include_directories(gdalalljni PRIVATE $<TARGET_PROPERTY:gnm,SOURCE_DIR>)
+endif ()
 get_property(_isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
 if (_isMultiConfig)
   set_target_properties(gdalalljni PROPERTIES LIBRARY_OUTPUT_DIRECTORY_DEBUG ${CMAKE_CURRENT_BINARY_DIR}/debug
@@ -170,8 +173,8 @@ if (Java_Runtime_FOUND)
     set(CLASSPATH_SEPARATOR ":")
   endif ()
 
-  include(GdalSetTestEnv)
-  gdal_set_test_env(TEST_ENV)
+  include(GdalSetRuntimeEnv)
+  gdal_set_runtime_env(TEST_ENV)
 
   set(JAVA_RUN ${Java_JAVA_EXECUTABLE} "-Djava.library.path=$<SHELL_PATH:$<TARGET_FILE_DIR:gdalalljni>>" -cp
                "gdal.jar${CLASSPATH_SEPARATOR}build/apps")

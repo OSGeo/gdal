@@ -34,9 +34,9 @@ if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
 endif ()
 
 if (GDAL_USE_JSONC_INTERNAL)
-  target_include_directories(appslib PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
+  gdal_add_vendored_lib(appslib libjson)
 else ()
-  gdal_target_link_libraries(appslib PRIVATE JSONC::JSONC)
+  gdal_target_link_libraries(appslib PRIVATE ${JSONC_LIBRARIES})
 endif ()
 
 include(TargetPublicHeader)
@@ -55,6 +55,7 @@ if (BUILD_APPS)
   add_executable(gdallocationinfo gdallocationinfo.cpp)
   add_executable(gdalmanage gdalmanage.cpp)
   add_executable(gdalsrsinfo gdalsrsinfo.cpp)
+  target_link_libraries(gdalsrsinfo PRIVATE PROJ::proj)
   add_executable(gdaltindex gdaltindex.cpp)
   add_executable(gdal_rasterize gdal_rasterize_bin.cpp)
   add_executable(gdaldem gdaldem_bin.cpp)
@@ -63,7 +64,12 @@ if (BUILD_APPS)
   add_executable(gdal_viewshed gdal_viewshed.cpp)
   add_executable(ogrinfo commonutils.h ogrinfo.cpp)
   add_executable(ogr2ogr ogr2ogr_bin.cpp)
+
   add_executable(ogrlineref ogrlineref.cpp)
+  if (GDAL_USE_GEOS)
+    target_compile_definitions(ogrlineref PRIVATE -DHAVE_GEOS=1)
+  endif ()
+
   add_executable(ogrtindex ogrtindex.cpp)
   add_executable(nearblack nearblack_bin.cpp)
   add_executable(gdalmdiminfo gdalmdiminfo_bin.cpp)
@@ -127,25 +133,7 @@ if (BUILD_APPS)
     if (MSVC OR MINGW)
       target_compile_definitions(${UTILCMD} PRIVATE -DSUPPORTS_WMAIN)
     endif ()
-    if (GDAL_USE_JSONC_INTERNAL)
-      target_include_directories(${UTILCMD} PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
-    endif ()
-
-    # Now external libs
-    if (GDAL_USE_GEOS)
-      target_include_directories(${UTILCMD} PRIVATE ${GEOS_INCLUDE_DIRS})
-      target_compile_definitions(${UTILCMD} PRIVATE -DHAVE_GEOS=1)
-    endif ()
-    if (NOT GDAL_USE_JSONC_INTERNAL)
-      target_include_directories(${UTILCMD} PRIVATE ${JSONC_INCLUDE_DIRS})
-      target_link_libraries(${UTILCMD} PRIVATE ${JSONC_LIBRARIES})
-    endif ()
-    target_include_directories(${UTILCMD} PRIVATE ${PROJ_INCLUDE_DIRS})
     target_link_libraries(${UTILCMD} PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)
-    # Windows(Mingw/MSVC) link libraries
-    if (CMAKE_SYSTEM_NAME MATCHES "Windows")
-      target_link_libraries(${UTILCMD} PRIVATE wsock32 ws2_32 psapi)
-    endif ()
   endforeach ()
   install(TARGETS ${APPS_TARGETS} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
@@ -158,7 +146,6 @@ if (BUILD_APPS)
   add_executable(gdalwarpsimple EXCLUDE_FROM_ALL gdalwarpsimple.c)
   add_executable(multireadtest EXCLUDE_FROM_ALL multireadtest.cpp)
   add_executable(test_ogrsf test_ogrsf.cpp)
-  add_executable(testepsg EXCLUDE_FROM_ALL testepsg.cpp)
   add_executable(testreprojmulti EXCLUDE_FROM_ALL testreprojmulti.cpp)
 
   foreach (
@@ -171,7 +158,6 @@ if (BUILD_APPS)
           gdalwarpsimple
           multireadtest
           test_ogrsf
-          testepsg
           testreprojmulti)
     # Add that include directory before all others so the gdal_version.h from it is included and not
     # gcore/gdal_version.h

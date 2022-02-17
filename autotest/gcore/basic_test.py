@@ -722,3 +722,8 @@ def test_gdal_EscapeString_errors():
 
     # Allocation will be > 4 GB
     assert gdal.EscapeString( b'"' * (((1 << 32)-1) // 6 + 1), gdal.CPLES_XML ) is None
+
+
+def test_gdal_DataTypeUnion():
+
+    assert gdal.DataTypeUnion(gdal.GDT_Byte, gdal.GDT_UInt16) == gdal.GDT_UInt16

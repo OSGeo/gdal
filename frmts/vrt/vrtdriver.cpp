@@ -403,12 +403,15 @@ VRTCreateCopy( const char * pszFilename,
         poVRTDS->SetMaskBand( poVRTMaskBand );
     }
 
-    CPLErrorReset();
-    poVRTDS->FlushCache(true);
-    if( CPLGetLastErrorType() != CE_None )
+    if( strcmp(pszFilename, "") != 0 )
     {
-        delete poVRTDS;
-        poVRTDS = nullptr;
+        CPLErrorReset();
+        poVRTDS->FlushCache(true);
+        if( CPLGetLastErrorType() != CE_None )
+        {
+            delete poVRTDS;
+            poVRTDS = nullptr;
+        }
     }
 
     return poVRTDS;

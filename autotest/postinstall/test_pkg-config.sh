@@ -4,6 +4,8 @@
 #
 # First required argument is the installed prefix, which
 # is used to set PKG_CONFIG_PATH and LD_LIBRARY_PATH/DYLD_LIBRARY_PATH
+#
+# Second, optional argument can be '--static', to skip the ldd check.
 
 echo "Running post-install tests with pkg-config"
 
@@ -69,7 +71,9 @@ cd test_c
 make clean
 make
 
-check_ldd test_c
+if test "$2" != "--static"; then
+  check_ldd test_c
+fi
 check_version test_c
 
 make clean
@@ -80,7 +84,9 @@ cd test_cpp
 make clean
 make
 
-check_ldd test_cpp
+if test "$2" != "--static"; then
+  check_ldd test_cpp
+fi
 check_version test_cpp
 
 make clean

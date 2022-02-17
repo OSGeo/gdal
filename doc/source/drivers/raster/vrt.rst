@@ -824,20 +824,28 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - computes the complex conjugate of a single raster band (just a copy if the input is non-complex)
    * - **dB**
      - 1
-     - -
-     - perform conversion to dB of the abs of a single raster band (real or complex): ``20. * log10( abs( x ) )``
+     - ``fact`` (optional)
+     - perform conversion to dB of the abs of a single raster band (real or complex): ``20. * log10( abs( x ) )``. The optional ``fact`` paremeter can be set to ``10`` to get the alternative formula: ``10. * log10( abs( x ) )``
    * - **dB2amp**
      - 1
      - -
-     - perform scale conversion from logarithmic to linear (amplitude) (i.e. ``10 ^ ( x / 20 )`` ) of a single raster band (real only)
+     - perform scale conversion from logarithmic to linear (amplitude) (i.e. ``10 ^ ( x / 20 )`` ) of a single raster band (real only). Deprecated in GDAL v3.5. Please use the ``exp`` pixel function with ``base = 10.`` and ``fact = 0.05`` i.e. ``1./20``
    * - **dB2pow**
      - 1
      - -
-     - perform scale conversion from logarithmic to linear (power) (i.e. ``10 ^ ( x / 10 )`` ) of a single raster band (real only)
+     - perform scale conversion from logarithmic to linear (power) (i.e. ``10 ^ ( x / 10 )`` ) of a single raster band (real only). Deprecated in GDAL v3.5. Please use the ``exp`` pixel function with ``base = 10.`` and ``fact = 0.1`` i.e. ``1./10``
    * - **diff**
      - 2
      - -
      - computes the difference between 2 raster bands (``b1 - b2``)
+   * - **div**
+     - 2
+     - -
+     - divide one rasted band by another (``b1 / b2``)
+   * - **exp**
+     - 1
+     - ``base`` (optional), ``fact`` (optional)
+     - computes the exponential of each element in the input band ``x`` (of real values): ``e ^ x``. The function also accepts two optional parameters: ``base`` and ``fact`` that allow to compute the generalized formula: ``base ^ ( fact * x )``. Note: this function is the recommended one to perform conversion form logaritmic scale (dB): `` 10. ^ (x / 20.)``, in this case ``base = 10.`` and ``fact = 0.05`` i.e. ``1. / 20``
    * - **imag**
      - 1
      - -
@@ -845,7 +853,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
    * - **intensity**
      - 1
      - -
-     - computes the intensity ``Re(x*conj(x))`` of a single raster band (real or complex)
+     - computes the intensity ``Re( x * conj(x) )`` of a single raster band (real or complex)
    * - **interpolate_exp**
      - >= 2
      - ``t0``, ``dt``, ``t``
@@ -856,8 +864,8 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - interpolate a value at time (or position) ``t`` given input sources beginning at ``t0`` with spacing ``dt`` using linear interpolation
    * - **inv**
      - 1
-     - -
-     - inverse (1./x). Note: no check is performed on zero division
+     - ``k`` (optional)
+     - inverse (``1./x``). If the optional ``k`` parameter is set then the result is multiplied by ``k`` (``k / x``)
    * - **log10**
      - 1
      - -
@@ -868,12 +876,16 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - extract module from a single raster band (real or complex)
    * - **mul**
      - >= 2
-     - -
-     - multiply 2 or more raster bands
+     - ``k`` (optional)
+     - multiply 2 or more raster bands. If the optional ``k`` parameter is provided then the result is multiplied by the scalar ``k``.
    * - **phase**
      - 1
      - -
      - extract phase from a single raster band [-PI,PI] (0 or PI for non-complex)
+   * - **polar**
+     - 2
+     - ``amplitude_type`` (optinal)
+     - make a complex band using input bands for amplitude and phase values ``b1 * exp( j * b2 )``. The optional (string) parameter ``amplitude_type`` can be ``AMPLITUDE`` (default) ``INTENSITY`` or ``dB``. Note: if ``amplitude_type`` is set to ``INTENSITY`` then negative values are clipped to zero.
    * - **pow**
      - 1
      - ``power``
@@ -888,8 +900,8 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - perform the square root of a single raster band (real only)
    * - **sum**
      - >= 2
-     - -
-     - sum 2 or more raster bands
+     - ``k`` (optional)
+     - sum 2 or more raster bands. If the optional ``k`` parameter is provided then it is added to each element of the result.
 
 Writing Pixel Functions
 +++++++++++++++++++++++

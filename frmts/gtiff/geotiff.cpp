@@ -11223,6 +11223,10 @@ CPLErr GTiffDataset::IBuildOverviews(
                         m_papoOverviewDS[i]->m_poMaskDS->GetRasterBand(1);
             }
         }
+
+        CPLConfigOptionSetter oSetterRegeneratedBandIsMask(
+            "GDAL_REGENERATED_BAND_IS_MASK", "YES", true);
+
         eErr = GDALRegenerateOverviews(
             m_poMaskDS->GetRasterBand(1),
             nMaskOverviews,
@@ -16259,10 +16263,130 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
             return nullptr;
     }
 
+/* -------------------------------------------------------------------- */
+/*      How many bits per sample?  We have a special case if NBITS      */
+/*      specified for GDT_Byte, GDT_UInt16, GDT_UInt32.                 */
+/* -------------------------------------------------------------------- */
+    int l_nBitsPerSample = GDALGetDataTypeSizeBits(eType);
+    if( CSLFetchNameValue(papszParamList, "NBITS") != nullptr )
+    {
+        int nMinBits = 0;
+        int nMaxBits = 0;
+        l_nBitsPerSample = atoi(CSLFetchNameValue(papszParamList, "NBITS"));
+        if( eType == GDT_Byte )
+        {
+            nMinBits = 1;
+            nMaxBits = 8;
+        }
+        else if( eType == GDT_UInt16 )
+        {
+            nMinBits = 9;
+            nMaxBits = 16;
+        }
+        else if( eType == GDT_UInt32 )
+        {
+            nMinBits = 17;
+            nMaxBits = 32;
+        }
+        else if( eType == GDT_Float32 )
+        {
+            if( l_nBitsPerSample != 16 && l_nBitsPerSample != 32 )
+            {
+                ReportError( pszFilename, CE_Warning, CPLE_NotSupported,
+                     "Only NBITS=16 is supported for data type Float32");
+                l_nBitsPerSample = GDALGetDataTypeSizeBits(eType);
+            }
+        }
+        else
+        {
+            ReportError( pszFilename, CE_Warning, CPLE_NotSupported,
+                     "NBITS is not supported for data type %s",
+                     GDALGetDataTypeName(eType));
+            l_nBitsPerSample = GDALGetDataTypeSizeBits(eType);
+        }
+
+        if( nMinBits != 0 )
+        {
+            if( l_nBitsPerSample < nMinBits )
+            {
+                ReportError( pszFilename,CE_Warning, CPLE_AppDefined,
+                         "NBITS=%d is invalid for data type %s. Using NBITS=%d",
+                         l_nBitsPerSample, GDALGetDataTypeName(eType),
+                         nMinBits);
+                l_nBitsPerSample = nMinBits;
+            }
+            else if( l_nBitsPerSample > nMaxBits )
+            {
+                ReportError( pszFilename,CE_Warning, CPLE_AppDefined,
+                         "NBITS=%d is invalid for data type %s. Using NBITS=%d",
+                         l_nBitsPerSample, GDALGetDataTypeName(eType),
+                         nMaxBits);
+                l_nBitsPerSample = nMaxBits;
+            }
+        }
+    }
+
     int nPredictor = PREDICTOR_NONE;
     pszValue = CSLFetchNameValue( papszParamList, "PREDICTOR" );
     if( pszValue != nullptr )
+    {
         nPredictor = atoi( pszValue );
+    }
+
+    // Do early checks as libtiff will only error out when starting to write.
+    if( nPredictor != PREDICTOR_NONE &&
+        CPLTestBool(CPLGetConfigOption("GDAL_GTIFF_PREDICTOR_CHECKS", "YES")) )
+    {
+#if (TIFFLIB_VERSION > 20210416) || defined(INTERNAL_LIBTIFF)
+#define HAVE_PREDICTOR_2_FOR_64BIT
+#endif
+        if( nPredictor == 2 )
+        {
+            if( l_nBitsPerSample != 8 &&
+                l_nBitsPerSample != 16 &&
+                l_nBitsPerSample != 32
+#ifdef HAVE_PREDICTOR_2_FOR_64BIT
+                && l_nBitsPerSample != 64
+#endif
+                )
+            {
+#if !defined(HAVE_PREDICTOR_2_FOR_64BIT)
+                if( l_nBitsPerSample == 64 )
+                {
+                    ReportError( pszFilename, CE_Failure, CPLE_AppDefined,
+                                 "PREDICTOR=2 is only supported with 64 bit samples "
+                                 "starting with libtiff > 4.3.0." );
+                }
+                else
+#endif
+                {
+                    ReportError( pszFilename, CE_Failure, CPLE_AppDefined,
+#ifdef HAVE_PREDICTOR_2_FOR_64BIT
+                             "PREDICTOR=2 is only supported with 8/16/32/64 bit samples."
+#else
+                             "PREDICTOR=2 is only supported with 8/16/32 bit samples."
+#endif
+                           );
+                }
+                return nullptr;
+            }
+        }
+        else if( nPredictor == 3 )
+        {
+            if( eType != GDT_Float32 && eType != GDT_Float64 )
+            {
+                ReportError( pszFilename, CE_Failure, CPLE_AppDefined,
+                             "PREDICTOR=3 is only supported with Float32 or Float64.");
+                return nullptr;
+            }
+        }
+        else
+        {
+            ReportError( pszFilename, CE_Failure, CPLE_AppDefined,
+                         "PREDICTOR=%s is not supported.", pszValue );
+            return nullptr;
+        }
+    }
 
     const int l_nZLevel = GTiffGetZLevel(papszParamList);
     const int l_nLZMAPreset = GTiffGetLZMAPreset(papszParamList);
@@ -16486,69 +16610,6 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         TIFFSetField( l_hTIFF, TIFFTAG_COMPRESSION, COMPRESSION_NONE );
         TIFFFreeDirectory( l_hTIFF );
         TIFFCreateDirectory( l_hTIFF );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      How many bits per sample?  We have a special case if NBITS      */
-/*      specified for GDT_Byte, GDT_UInt16, GDT_UInt32.                 */
-/* -------------------------------------------------------------------- */
-    int l_nBitsPerSample = GDALGetDataTypeSizeBits(eType);
-    if( CSLFetchNameValue(papszParamList, "NBITS") != nullptr )
-    {
-        int nMinBits = 0;
-        int nMaxBits = 0;
-        l_nBitsPerSample = atoi(CSLFetchNameValue(papszParamList, "NBITS"));
-        if( eType == GDT_Byte )
-        {
-            nMinBits = 1;
-            nMaxBits = 8;
-        }
-        else if( eType == GDT_UInt16 )
-        {
-            nMinBits = 9;
-            nMaxBits = 16;
-        }
-        else if( eType == GDT_UInt32 )
-        {
-            nMinBits = 17;
-            nMaxBits = 32;
-        }
-        else if( eType == GDT_Float32 )
-        {
-            if( l_nBitsPerSample != 16 && l_nBitsPerSample != 32 )
-            {
-                ReportError( pszFilename, CE_Warning, CPLE_NotSupported,
-                     "Only NBITS=16 is supported for data type Float32");
-                l_nBitsPerSample = GDALGetDataTypeSizeBits(eType);
-            }
-        }
-        else
-        {
-            ReportError( pszFilename, CE_Warning, CPLE_NotSupported,
-                     "NBITS is not supported for data type %s",
-                     GDALGetDataTypeName(eType));
-            l_nBitsPerSample = GDALGetDataTypeSizeBits(eType);
-        }
-
-        if( nMinBits != 0 )
-        {
-            if( l_nBitsPerSample < nMinBits )
-            {
-                ReportError( pszFilename,CE_Warning, CPLE_AppDefined,
-                         "NBITS=%d is invalid for data type %s. Using NBITS=%d",
-                         l_nBitsPerSample, GDALGetDataTypeName(eType),
-                         nMinBits);
-                l_nBitsPerSample = nMinBits;
-            }
-            else if( l_nBitsPerSample > nMaxBits )
-            {
-                ReportError( pszFilename,CE_Warning, CPLE_AppDefined,
-                         "NBITS=%d is invalid for data type %s. Using NBITS=%d",
-                         l_nBitsPerSample, GDALGetDataTypeName(eType),
-                         nMaxBits);
-                l_nBitsPerSample = nMaxBits;
-            }
-        }
     }
 
 /* -------------------------------------------------------------------- */

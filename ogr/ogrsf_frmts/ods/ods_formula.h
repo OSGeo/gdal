@@ -117,7 +117,6 @@ class ods_formula_node {
     void           FreeSubExpr();
     std::string    TransformToString() const;
 
-    // TODO: It appears that all the Evaluate methods should return bool.
     bool           EvaluateOR( IODSCellEvaluator* poEvaluator );
     bool           EvaluateAND( IODSCellEvaluator* poEvaluator );
     bool           EvaluateNOT( IODSCellEvaluator* poEvaluator );

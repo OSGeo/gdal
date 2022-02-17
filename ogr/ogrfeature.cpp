@@ -549,8 +549,9 @@ OGRGeometry *OGRFeature::StealGeometry( int iGeomField )
  * Sort of an inverse to OGR_FSetGeometryDirectly().
  *
  * After this call the OGRFeature will have a NULL geometry.
- *
- * @return the pointer to the geometry.
+ * 
+ * @param hFeat feature from which to steal the first geometry.
+ * @return the pointer to the stolen geometry.
  */
 
 OGRGeometryH OGR_F_StealGeometry( OGRFeatureH hFeat )
@@ -560,6 +561,36 @@ OGRGeometryH OGR_F_StealGeometry( OGRFeatureH hFeat )
 
     return OGRGeometry::ToHandle(
         OGRFeature::FromHandle(hFeat)->StealGeometry());
+}
+
+/************************************************************************/
+/*                       OGR_F_StealGeometryEx()                        */
+/************************************************************************/
+
+/**
+ * \brief Take away ownership of geometry.
+ *
+ * Fetch the geometry from this feature, and clear the reference to the
+ * geometry on the feature.  This is a mechanism for the application to
+ * take over ownership of the geometry from the feature without copying.
+ * This is the functional opposite of OGR_F_SetGeomFieldDirectly.
+ *
+ * After this call the OGRFeature will have a NULL geometry for the
+ * geometry field of index iGeomField.
+ * 
+ * @param hFeat feature from which to steal a geometry.
+ * @param iGeomField index of the geometry field to steal.
+ * @return the pointer to the stolen geometry.
+ * @since GDAL 3.5
+ */
+
+OGRGeometryH OGR_F_StealGeometryEx( OGRFeatureH hFeat, int iGeomField )
+
+{
+    VALIDATE_POINTER1( hFeat, "OGR_F_StealGeometryEx", nullptr );
+
+    return OGRGeometry::ToHandle(
+        OGRFeature::FromHandle(hFeat)->StealGeometry( iGeomField ));
 }
 
 /************************************************************************/

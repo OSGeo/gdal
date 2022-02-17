@@ -1385,6 +1385,26 @@ def test_osr_basic_set_from_user_input_non_existing_authority():
     assert srs.SetFromUserInput("non_existing_auth:1234") != 0
 
 
+###############################################################################
+# Test IAU: CRS
+
+
+def test_osr_basic_set_from_user_input_IAU():
+
+    if osr.GetPROJVersionMajor() * 100 + osr.GetPROJVersionMinor() < 802:
+        pytest.skip('requires PROJ 8.2 or later')
+
+    srs = osr.SpatialReference()
+    assert srs.SetFromUserInput('IAU:49910') == ogr.OGRERR_NONE
+
+    srs = osr.SpatialReference()
+    assert srs.SetFromUserInput('IAU:2015:49910') == ogr.OGRERR_NONE
+
+    # Error
+    srs = osr.SpatialReference()
+    assert srs.SetFromUserInput('IAU:0000:49910') != ogr.OGRERR_NONE
+
+
 def test_osr_basic_set_from_user_input_GEODCRS():
 
     srs = osr.SpatialReference()

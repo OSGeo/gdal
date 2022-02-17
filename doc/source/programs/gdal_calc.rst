@@ -44,7 +44,9 @@ but no projection checking is performed (unless projectionCheck option is used).
 
     Input gdal raster file, you can use any letter (a-z, A-Z).  (lower case supported since GDAL 3.3)
 
-    A letter may be repeated (GDAL >= 3.3). The effect will be to create a 3-dim numpy array.
+    A letter may be repeated, or several values (separated by space) can be provided (GDAL >= 3.3).
+    Since GDAL 3.5, wildcard exceptions (using ?, \*) are supported for all shells/platforms.
+    The effect will be to create a 3-dim numpy array.
     In such a case, the calculation formula must use this input as a 3-dim array and must return a 2D array (see examples below).
     In case the calculation does not return a 2D array an error would be generated.
 
@@ -136,7 +138,10 @@ but no projection checking is performed (unless projectionCheck option is used).
 
 .. option:: --overwrite
 
-    Overwrite output file if it already exists.
+    Overwrite output file if it already exists. Overwriting must be understood
+    here as deleting and recreating the file from scratch. Note that if this option
+    is *not* specified and the output file already exists, it will be updated in
+    place.
 
 .. option:: --debug
 
@@ -213,7 +218,7 @@ Average of three layers (two options with the same result):
 
 .. code-block::
 
-    gdal_calc.py -A input1.tif -A input2.tif -A input3.tif --outfile=result.tif --calc="numpy.average(a,axis=0)".
+    gdal_calc.py -A input1.tif input2.tif input3.tif --outfile=result.tif --calc="numpy.average(a,axis=0)".
 
 Maximum of three layers  (two options with the same result):
 
@@ -225,7 +230,7 @@ Maximum of three layers  (two options with the same result):
 
 .. code-block::
 
-    gdal_calc.py -A input1.tif -A input2.tif -A input3.tif --outfile=result.tif --calc="numpy.max(A,axis=0)"
+    gdal_calc.py -A input1.tif input2.tif input3.tif --outfile=result.tif --calc="numpy.max(A,axis=0)"
 
 Set values of zero and below to null:
 

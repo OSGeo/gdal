@@ -34,7 +34,7 @@ CPPFLAGS +=	-iquote $(GDAL_ROOT)/gnm
 endif
 
 ifeq ($(HAVE_GEOS),yes)
-CPPFLAGS 	:=	$(CPPFLAGS) -DHAVE_GEOS=1 $(GEOS_CFLAGS)
+CPPFLAGS 	:=	$(CPPFLAGS) -DHAVE_GEOS=1
 endif
 
 NON_DEFAULT_LIST = 	multireadtest$(EXE) dumpoverviews$(EXE) \
@@ -164,9 +164,6 @@ ogrlineref$(EXE):	ogrlineref.$(OBJ_EXT)  $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) $<  $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 ogr2ogr$(EXE):	ogr2ogr_bin.$(OBJ_EXT)  $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
-
-testepsg$(EXE):	testepsg.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 ogrtindex$(EXE):	ogrtindex.$(OBJ_EXT) $(DEP_LIBS)

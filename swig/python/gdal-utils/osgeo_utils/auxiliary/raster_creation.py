@@ -136,7 +136,7 @@ def copy_raster_and_add_overviews(
     shutil.copy(filename_src, ds_base)
     files_list.append(ds_base)
 
-    ds = open_ds(ds_with_ovrs, gdal.GA_Update)
+    ds = open_ds(ds_with_ovrs, access_mode = gdal.OF_UPDATE | gdal.OF_RASTER)
     size = (ds.RasterXSize, ds.RasterYSize)
     ds.BuildOverviews(overview_alg, overviewlist=overview_list)
 

@@ -10,38 +10,13 @@ endif ()
 
 if (Python_Interpreter_FOUND)
 
-  set(PYTHON_RUN_ENV)
-
-  # Set PATH / LD_LIBRARY_PATH
-  set(GDAL_OUTPUT_DIR "$<SHELL_PATH:$<TARGET_FILE_DIR:${GDAL_LIB_TARGET_NAME}>>")
-  set(GDAL_APPS_OUTPUT_DIR "$<SHELL_PATH:$<TARGET_FILE_DIR:gdalinfo>>")
+  include(GdalSetRuntimeEnv)
+  gdal_set_runtime_env(PYTHON_RUN_ENV)
 
   if (WIN32)
     # If running GDAL as a CustomBuild Command os MSBuild, "ERROR bla:" is considered as failing the job. This is rarely
     # the intended behavior
     list(APPEND PYTHON_RUN_ENV "CPL_ERROR_SEPARATOR=\\;")
-
-    string(REPLACE ";" "\\;" PATH_ESCAPED "$ENV{PATH}")
-    list(APPEND PYTHON_RUN_ENV "PATH=${GDAL_OUTPUT_DIR}\\;${GDAL_APPS_OUTPUT_DIR}\\;${PATH_ESCAPED}")
-  else ()
-    list(APPEND PYTHON_RUN_ENV "PATH=${GDAL_APPS_OUTPUT_DIR}:$ENV{PATH}")
-    list(APPEND PYTHON_RUN_ENV "LD_LIBRARY_PATH=${GDAL_OUTPUT_DIR}:$ENV{LD_LIBRARY_PATH}")
-  endif ()
-
-  list(APPEND PYTHON_RUN_ENV "PYTHONPATH=${PROJECT_BINARY_DIR}/swig/python/")
-
-  # Set GDAL_DRIVER_PATH We request the TARGET_FILE_DIR of one of the plugins, since the PLUGIN_OUTPUT_DIR will not
-  # contain the \Release suffix with MSVC generator
-  get_property(PLUGIN_MODULES GLOBAL PROPERTY PLUGIN_MODULES)
-  list(LENGTH PLUGIN_MODULES PLUGIN_MODULES_LENGTH)
-  if (PLUGIN_MODULES_LENGTH GREATER_EQUAL 1)
-    list(GET PLUGIN_MODULES 0 FIRST_TARGET)
-    set(PLUGIN_OUTPUT_DIR "$<SHELL_PATH:$<TARGET_FILE_DIR:${FIRST_TARGET}>>")
-    list(APPEND PYTHON_RUN_ENV "GDAL_DRIVER_PATH=${PLUGIN_OUTPUT_DIR}")
-  else ()
-    # if no plugins are configured, set up a dummy path, to avoid loading installed plugins (from a previous install
-    # execution) that could have a different ABI
-    list(APPEND PYTHON_RUN_ENV "GDAL_DRIVER_PATH=dummy")
   endif ()
 
   # Set TEST_ENV that goes into pytest.ini
@@ -77,14 +52,14 @@ if (Python_Interpreter_FOUND)
         RESULT res
         SYMBOLIC)
       if (NOT res EQUAL 0)
-        message("Copying content of ${source} to ${destination}")
+        message(STATUS "Copying content of ${source} to ${destination}")
         execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory ${source} ${destination})
       endif ()
     else ()
       if (NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
         execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${source} ${destination})
       else ()
-        message("Copying content of ${source} to ${destination}")
+        message(STATUS "Copying content of ${source} to ${destination}")
         execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory ${source} ${destination})
       endif ()
     endif ()
@@ -94,7 +69,7 @@ if (Python_Interpreter_FOUND)
   # Needed for a autotest/osr test
   symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/cpp/data ${CMAKE_CURRENT_BINARY_DIR}/cpp/data)
   if (SKIP_COPYING_AUTOTEST_SUBDIRS)
-    message("Skipping copying ${CMAKE_CURRENT_SOURCE_DIR}/pymod")
+    message(STATUS "Skipping copying ${CMAKE_CURRENT_SOURCE_DIR}/pymod")
   else ()
     symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/pymod ${CMAKE_CURRENT_BINARY_DIR}/pymod)
   endif ()
@@ -110,7 +85,7 @@ if (Python_Interpreter_FOUND)
           pyscripts
           utilities)
     if (SKIP_COPYING_AUTOTEST_SUBDIRS)
-      message("Skipping copying ${CMAKE_CURRENT_SOURCE_DIR}/${tgt}")
+      message(STATUS "Skipping copying ${CMAKE_CURRENT_SOURCE_DIR}/${tgt}")
     else ()
       symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/${tgt} ${CMAKE_CURRENT_BINARY_DIR}/${tgt})
     endif ()

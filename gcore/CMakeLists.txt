@@ -52,8 +52,8 @@ target_compile_options(gcore PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE
 target_include_directories(
   gcore
   PRIVATE $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR> $<TARGET_PROPERTY:ogr_geojson,SOURCE_DIR>
-          $<TARGET_PROPERTY:gnm_frmts,SOURCE_DIR> $<TARGET_PROPERTY:gdal_GTIFF,SOURCE_DIR>
-          $<TARGET_PROPERTY:gdal_MEM,SOURCE_DIR> $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR>)
+          $<TARGET_PROPERTY:gdal_GTIFF,SOURCE_DIR> $<TARGET_PROPERTY:gdal_MEM,SOURCE_DIR>
+          $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR>)
 set_property(TARGET gcore PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 
 if (NOT DEFINED GDAL_RESOURCE_PATH)
@@ -104,7 +104,7 @@ add_subdirectory(mdreader)
 
 # External libs now
 if (NOT GDAL_USE_JSONC_INTERNAL)
-  gdal_target_link_libraries(gcore PRIVATE JSONC::JSONC)
+  gdal_target_link_libraries(gcore PRIVATE ${JSONC_LIBRARIES})
 endif ()
 
 if (NOT DEFINED OGR_ENABLE_DRIVER_SQLITE)
@@ -128,10 +128,16 @@ if (GDAL_USE_LIBXML2)
 endif ()
 if (GDAL_USE_GEOS)
   target_compile_definitions(gcore PRIVATE -DHAVE_GEOS)
-  gdal_target_link_libraries(gcore PRIVATE GEOS::GEOS)
+  gdal_target_link_libraries(gcore PRIVATE ${GEOS_LIBRARIES})
 endif ()
 
 gdal_target_link_libraries(gcore PRIVATE PROJ::proj)
+
+# Windows(Mingw/MSVC) link libraries
+if (CMAKE_SYSTEM_NAME MATCHES "Windows")
+  # psapi needed for gdalpython.cpp (EnumProcessModules)
+  gdal_target_link_libraries(gcore PRIVATE psapi)
+endif ()
 
 include(TargetPublicHeader)
 target_public_header(

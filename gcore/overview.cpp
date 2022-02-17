@@ -3512,7 +3512,10 @@ static CPLErr GDALResampleChunk32R_Convolution(
     if( EQUAL(pszResampling, "BILINEAR") )
         eResample = GRA_Bilinear;
     else if( EQUAL(pszResampling, "CUBIC") )
+    {
         eResample = GRA_Cubic;
+        bKernelWithNegativeWeights = true;
+    }
     else if( EQUAL(pszResampling, "CUBICSPLINE") )
         eResample = GRA_CubicSpline;
     else if( EQUAL(pszResampling, "LANCZOS") )

@@ -143,7 +143,7 @@ endif ()
 
 # Internal libraries first
 if (GDAL_USE_JSONC_INTERNAL)
-  target_include_directories(cpl PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
+  gdal_add_vendored_lib(cpl libjson)
 endif ()
 
 target_compile_definitions(cpl PRIVATE -DHAVE_LIBZ -DZIP_SUPPORT)
@@ -151,12 +151,12 @@ target_public_header(TARGET gdal HEADERS cpl_minizip_ioapi.h cpl_minizip_unzip.h
 target_sources(cpl PRIVATE cpl_vsil_gzip.cpp cpl_minizip_ioapi.cpp cpl_minizip_unzip.cpp cpl_minizip_zip.cpp)
 
 if (GDAL_USE_ZLIB_INTERNAL)
-  target_include_directories(cpl PRIVATE $<TARGET_PROPERTY:libz,SOURCE_DIR>)
+  gdal_add_vendored_lib(cpl libz)
 endif ()
 
 # Now external libraries
 if (NOT GDAL_USE_JSONC_INTERNAL)
-  gdal_target_link_libraries(cpl PRIVATE JSONC::JSONC)
+  gdal_target_link_libraries(cpl PRIVATE ${JSONC_LIBRARIES})
 endif ()
 
 if (NOT GDAL_USE_ZLIB_INTERNAL)
@@ -257,7 +257,7 @@ endif ()
 
 if (GDAL_USE_ZSTD)
   target_compile_definitions(cpl PRIVATE -DHAVE_ZSTD)
-  gdal_target_link_libraries(cpl PRIVATE ZSTD::zstd)
+  gdal_target_link_libraries(cpl PRIVATE ${ZSTD_LIBRARIES})
 endif ()
 
 if (GDAL_USE_LIBLZMA)
@@ -283,4 +283,12 @@ endif ()
 if (GDAL_USE_HDFS)
   target_compile_definitions(cpl PRIVATE -DHDFS_ENABLED)
   gdal_target_link_libraries(cpl PRIVATE HDFS::HDFS)
+  if (JNI_FOUND)
+    gdal_target_link_libraries(cpl PRIVATE HDFS::JVM)
+  endif ()
+endif ()
+
+if (MSVC)
+  # needed for cpl_aws_win32
+  gdal_target_link_libraries(cpl PRIVATE wbemuuid)
 endif ()

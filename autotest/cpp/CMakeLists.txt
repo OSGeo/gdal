@@ -23,6 +23,7 @@ add_executable(
   test_gdal_dted.cpp
   test_gdal_gtiff.cpp
   test_ogr.cpp
+  test_ogr_geometry_stealing.cpp
   test_ogr_lgpl.cpp
   test_ogr_geos.cpp
   test_ogr_shape.cpp
@@ -49,8 +50,8 @@ target_include_directories(
                          $<TARGET_PROPERTY:appslib,SOURCE_DIR> $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR>)
 target_compile_definitions(gdal_unit_test PRIVATE -DGDAL_TEST_ROOT_DIR="${GDAL_ROOT_TEST_DIR}")
 
-include(GdalSetTestEnv)
-gdal_set_test_env(TEST_ENV)
+include(GdalSetRuntimeEnv)
+gdal_set_runtime_env(TEST_ENV)
 
 if (MINGW)
   list(APPEND TEST_ENV SKIP_MEM_INTENSIVE_TEST=YES)
