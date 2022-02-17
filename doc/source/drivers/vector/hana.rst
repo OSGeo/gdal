@@ -115,7 +115,7 @@ Layer Creation Options
 -  **COLUMN_TYPES**: Specifies a comma-separated list of strings in 
    the format field_name=hana_field_type that define column types.
 -  **BATCH_SIZE**: Specifies the number of bytes to be written per one
-   batch. The default value is 1024.
+   batch. The default value is 4194304 (4MB).
 
 Multitenant Database Containers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
