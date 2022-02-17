@@ -227,4 +227,4 @@ MPI example:
 
 .. code-block::
 
-  mpiexec -n $NB_PROCESSES -x GDAL_CACHEMAX=500 gdal2tiles.py --mpi --zoom=2-5 input.tif output_folder
+  mpiexec -n $NB_PROCESSES gdal2tiles.py --mpi --config GDAL_CACHEMAX 500 --zoom=2-5 input.tif output_folder
