@@ -850,9 +850,6 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
                  "transform.",
                  nFailedCount, nSamplePoints);
 
-/* -------------------------------------------------------------------- */
-/*      Special case for geolocation array, to quickly find the bounds. */
-/* -------------------------------------------------------------------- */
     bool bIsGeographicCoords = false;
     if( pfnTransformer == GDALGenImgProjTransform )
     {
@@ -867,6 +864,9 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
             pGIPTI->adfDstGeoTransform[4] == 0 &&
             pGIPTI->adfDstGeoTransform[5] == 1 )
         {
+/* -------------------------------------------------------------------- */
+/*      Special case for geolocation array, to quickly find the bounds. */
+/* -------------------------------------------------------------------- */
             const GDALGeoLocTransformInfo* pGLTI =
                 static_cast<const GDALGeoLocTransformInfo*>(pGIPTI->pSrcTransformArg);
 
@@ -913,6 +913,76 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
                 dfMinYOut = std::min(dfMinYOut, yOut);
                 dfMaxXOut = std::max(dfMaxXOut, xOut);
                 dfMaxYOut = std::max(dfMaxYOut, yOut);
+            }
+        }
+        else if( pGIPTI->pSrcTransformer == nullptr &&
+                 pGIPTI->pDstTransformer == nullptr &&
+                 pGIPTI->pReproject == GDALReprojectionTransform &&
+                 pGIPTI->adfDstGeoTransform[0] == 0 &&
+                 pGIPTI->adfDstGeoTransform[1] == 1 &&
+                 pGIPTI->adfDstGeoTransform[2] == 0 &&
+                 pGIPTI->adfDstGeoTransform[3] == 0 &&
+                 pGIPTI->adfDstGeoTransform[4] == 0 &&
+                 pGIPTI->adfDstGeoTransform[5] == 1 )
+        {
+/* -------------------------------------------------------------------- */
+/*  Special case for warping using source geotransform and reprojection */
+/*  to deal with the poles.                                             */
+/* -------------------------------------------------------------------- */
+            const GDALReprojectionTransformInfo* psRTI =
+                static_cast<const GDALReprojectionTransformInfo*>(pGIPTI->pReprojectArg);
+            const auto poTargetCRS = psRTI->poForwardTransform->GetTargetCS();
+            if( poTargetCRS != nullptr &&
+                psRTI->poReverseTransform != nullptr &&
+                poTargetCRS->IsGeographic() &&
+                fabs(poTargetCRS->GetAngularUnits() - CPLAtof(SRS_UA_DEGREE_CONV)) < 1e-9 )
+            {
+                bIsGeographicCoords = true;
+
+                std::unique_ptr<CPLConfigOptionSetter> poSetter;
+                if( pGIPTI->bCheckWithInvertPROJ )
+                {
+                    // CHECK_WITH_INVERT_PROJ=YES prevent reliable transformation
+                    // of poles.
+                    poSetter = cpl::make_unique<CPLConfigOptionSetter>(
+                                    "CHECK_WITH_INVERT_PROJ", "NO", false);
+                    GDALRefreshGenImgProjTransformer(pTransformArg);
+                    // GDALRefreshGenImgProjTransformer() has invalidated psRTI
+                    psRTI = static_cast<const GDALReprojectionTransformInfo*>(
+                                                        pGIPTI->pReprojectArg);
+                }
+
+                for( int sign = -1; sign <= 1; sign += 2 )
+                {
+                    double X = 0.0;
+                    const double Yinit = 90.0 * sign;
+                    double Y = Yinit;
+                    if( psRTI->poReverseTransform->Transform(1, &X, &Y) )
+                    {
+                        const auto invGT = pGIPTI->adfSrcInvGeoTransform;
+                        const double x = invGT[0] + X * invGT[1] + Y * invGT[2];
+                        const double y = invGT[3] + X * invGT[4] + Y * invGT[5];
+                        if( x >= 0 && x <= nInXSize && y >= 0 && y <= nInYSize )
+                        {
+                            if( psRTI->poForwardTransform->Transform(1, &X, &Y) &&
+                                fabs(Y - Yinit) <= 1e-6 )
+                            {
+                                dfMinXOut = -180;
+                                dfMaxXOut = 180;
+                                if( sign < 0 )
+                                    dfMinYOut = Yinit;
+                                else
+                                    dfMaxYOut = Yinit;
+                            }
+                        }
+                    }
+                }
+
+                if( poSetter )
+                {
+                    poSetter.reset();
+                    GDALRefreshGenImgProjTransformer(pTransformArg);
+                }
             }
         }
     }
@@ -2171,6 +2241,8 @@ void GDALRefreshGenImgProjTransformer( void* hTransformArg )
     if( psInfo->pReprojectArg &&
         psInfo->bCheckWithInvertPROJ != GetCurrentCheckWithInvertPROJ() )
     {
+        psInfo->bCheckWithInvertPROJ = !psInfo->bCheckWithInvertPROJ;
+
         CPLXMLNode* psXML =
             GDALSerializeTransformer(psInfo->pReproject,
                                      psInfo->pReprojectArg);
