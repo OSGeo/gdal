@@ -1177,7 +1177,7 @@ It is normally automatically found in system directories on Unix and Windows.
 
 
 ODBC-CPP
-******
+********
 
 The `odbc-cpp-wrapper library <https://github.com/SAP/odbc-cpp-wrapper>`_ is required for
 the :ref:`vector.hana` driver.
