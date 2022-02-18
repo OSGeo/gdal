@@ -98,10 +98,10 @@ CPLString BuildSpatialFilter(uint dbVersion, const OGRGeometry& geom, const CPLS
 
     // TODO: add support for non-rectangular filter, see m_bFilterIsEnvelope flag.
     if ( dbVersion == 1 )
-        return StringFormat("\"%s\".ST_IntersectsRect(ST_GeomFromText('POINT(%.18g %.18g)', %d), ST_GeomFromText('POINT(%.18g %.18g)', %d)) = 1",
+        return CPLString().Printf("\"%s\".ST_IntersectsRect(ST_GeomFromText('POINT(%.18g %.18g)', %d), ST_GeomFromText('POINT(%.18g %.18g)', %d)) = 1",
                             clmName.c_str(), minX, minY, srid, maxX, maxY, srid);
     else
-        return StringFormat("\"%s\".ST_IntersectsRectPlanar(ST_GeomFromText('POINT(%.18g %.18g)', %d), ST_GeomFromText('POINT(%.18g %.18g)', %d)) = 1",
+        return CPLString().Printf("\"%s\".ST_IntersectsRectPlanar(ST_GeomFromText('POINT(%.18g %.18g)', %d), ST_GeomFromText('POINT(%.18g %.18g)', %d)) = 1",
                             clmName.c_str(), minX, minY, srid, maxX, maxY, srid);
 }
 
@@ -288,7 +288,7 @@ void OGRHanaLayer::BuildQueryStatement()
              attrColumns_)
             columns.push_back(QuotedIdentifier(attributeColumnDesc.name));
 
-        queryStatement_ = StringFormat(
+        queryStatement_ = CPLString().Printf(
             "SELECT %s FROM (%s) %s", JoinStrings(columns, ", ").c_str(),
             rawQuery_.c_str(), whereClause_.c_str());
     }
@@ -297,7 +297,7 @@ void OGRHanaLayer::BuildQueryStatement()
         if (whereClause_.empty())
             queryStatement_ = rawQuery_;
         else
-            queryStatement_ = StringFormat(
+            queryStatement_ = CPLString().Printf(
                 "SELECT * FROM (%s) %s", rawQuery_.c_str(),
                 whereClause_.c_str());
     }
@@ -737,10 +737,10 @@ void OGRHanaLayer::ReadGeometryExtent(int geomField, OGREnvelope* extent)
         bool hasSrsPlanarEquivalent = dataSource_->HasSrsPlanarEquivalent(srid);
         CPLString geomColumn = !hasSrsPlanarEquivalent
                                    ? quotedClmName
-                                   : StringFormat(
+                                   : CPLString().Printf(
                                        "%s.ST_SRID(%d)", quotedClmName.c_str(),
                                        ToPlanarSRID(srid));
-        CPLString columns = StringFormat(
+        CPLString columns = CPLString().Printf(
             "MIN(%s.ST_XMin()), MIN(%s.ST_YMin()), MAX(%s.ST_XMax()), "
             "MAX(%s.ST_YMax())",
             geomColumn.c_str(), geomColumn.c_str(), geomColumn.c_str(),
@@ -749,10 +749,10 @@ void OGRHanaLayer::ReadGeometryExtent(int geomField, OGREnvelope* extent)
     }
     else
     {
-        CPLString columns = StringFormat(
+        CPLString columns = CPLString().Printf(
             "ST_EnvelopeAggr(%s) AS ext", QuotedIdentifier(clmName).c_str());
         CPLString subQuery = BuildQuery(rawQuery_.c_str(), columns);
-        sql = StringFormat(
+        sql = CPLString().Printf(
             "SELECT ext.ST_XMin(),ext.ST_YMin(),ext.ST_XMax(),ext.ST_YMax() "
             "FROM (%s)",
             subQuery.c_str());
@@ -841,7 +841,7 @@ OGRErr OGRHanaLayer::GetExtent(int iGeomField, OGREnvelope* extent, int force)
 GIntBig OGRHanaLayer::GetFeatureCount(CPL_UNUSED int force)
 {
     GIntBig ret = FALSE;
-    CPLString sql = StringFormat(
+    CPLString sql = CPLString().Printf(
         "SELECT COUNT(*) FROM (%s) AS tmp", queryStatement_.c_str());
     odbc::StatementRef stmt = dataSource_->CreateStatement();
     odbc::ResultSetRef rs = stmt->executeQuery(sql.c_str());

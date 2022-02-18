@@ -48,7 +48,6 @@ bool CanCastIntBigTo(GIntBig value)
            && value <= static_cast<GIntBig>(std::numeric_limits<Type>::max());
 }
 
-CPLString StringFormat(const char* format, ...);
 const char* SkipLeadingSpaces(const char* value);
 CPLString JoinStrings(
     const std::vector<CPLString>& strs,

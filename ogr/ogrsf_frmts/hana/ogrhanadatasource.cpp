@@ -200,12 +200,12 @@ CPLString BuildConnectionString(char** openOptions)
     // see
     // https://stackoverflow.com/questions/55150362/maybe-illegal-character-in-odbc-sql-server-connection-string-pwd
     if (paramDSN != nullptr)
-        return StringFormat(
+        return CPLString().Printf(
             "DSN=%s;UID=%s;PWD={%s};CURRENTSCHEMA=\"%s\";CHAR_AS_UTF8=1;%s",
             paramDSN, paramUser, paramPassword, paramSchema,
             JoinStrings(params, ";").c_str());
     else
-        return StringFormat(
+        return CPLString().Printf(
             "DRIVER={%s};SERVERNODE=%s:%s;DATABASENAME=%s;UID=%s;"
             "PWD={%s};CURRENTSCHEMA=\"%s\";CHAR_AS_UTF8=1;%s",
             paramDriver, paramHost, paramPort, paramDatabase, paramUser,
@@ -250,7 +250,7 @@ int GetColumnSrid(
 {
     CPLString clmName = QuotedIdentifier(columnName);
 
-    CPLString sql = StringFormat(
+    CPLString sql = CPLString().Printf(
         "SELECT %s.ST_SRID() FROM (%s) WHERE %s IS NOT NULL", clmName.c_str(),
         query.c_str(), clmName.c_str());
 
@@ -265,7 +265,7 @@ int GetSridWithFilter(odbc::Connection& conn, const CPLString& whereCondition)
     int ret = -1;
 
     odbc::StatementRef stmt = conn.createStatement();
-    CPLString sql = StringFormat(
+    CPLString sql = CPLString().Printf(
         "SELECT SRS_ID FROM SYS.ST_SPATIAL_REFERENCE_SYSTEMS WHERE %s",
         whereCondition.c_str());
     odbc::ResultSetRef rsSrs = stmt->executeQuery(sql.c_str());
@@ -311,7 +311,7 @@ OGRwkbGeometryType GetGeometryType(
 {
     CPLString clmName = QuotedIdentifier(columnName);
 
-    CPLString sql = StringFormat(
+    CPLString sql = CPLString().Printf(
         "SELECT DISTINCT UPPER(%s.ST_GeometryType()), %s.ST_Is3D(), "
         "%s.ST_IsMeasured() FROM %s WHERE %s IS NOT NULL",
         clmName.c_str(), clmName.c_str(), clmName.c_str(), query.c_str(),
@@ -930,7 +930,7 @@ int OGRHanaDataSource::GetSrsId(OGRSpatialReference* srs)
     {
         authorityCode = atoi(srsLocal.GetAuthorityCode(nullptr));
         int ret = GetSridWithFilter(
-            *conn_, StringFormat(
+            *conn_, CPLString().Printf(
                         "SRS_ID = %d AND ORGANIZATION = '%s'", authorityCode,
                         authorityName));
         if (ret != -1)
@@ -950,7 +950,7 @@ int OGRHanaDataSource::GetSrsId(OGRSpatialReference* srs)
         return -1;
 
     int ret = GetSridWithFilter(
-        *conn_, StringFormat("DEFINITION = '%s'", strWkt.c_str()));
+        *conn_, CPLString().Printf("DEFINITION = '%s'", strWkt.c_str()));
     if (ret != -1)
         return ret;
 

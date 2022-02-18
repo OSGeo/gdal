@@ -34,34 +34,6 @@ CPL_CVSID("$Id$")
 
 namespace hana_utils {
 
-CPLString StringFormat(const char* format, ...)
-{
-    va_list args;
-    va_start( args, format );
-    char smallBuffer[1024];
-    int sz = CPLvsnprintf(smallBuffer, 0, format, args);
-    va_end( args );
-
-    if (sz <= 0)
-        throw std::runtime_error("Error during formatting.");
-    size_t size = static_cast<std::size_t>(sz);
-
-    if (size < sizeof(smallBuffer))
-    {
-        va_start( args, format );
-        CPLvsnprintf(smallBuffer, size + 1, format, args);
-        va_end( args );
-        return CPLString(smallBuffer, size);
-    }
-
-    va_start( args, format );
-    std::vector<char> buffer;
-    buffer.resize(size + 1);
-    CPLvsnprintf(buffer.data(), size, format, args);
-    va_end( args );
-    return CPLString(buffer.data(), size);
-}
-
 const char* SkipLeadingSpaces(const char* value)
 {
     while (*value == ' ')
@@ -168,52 +140,32 @@ bool IsGeometryTypeSupported(OGRwkbGeometryType wkbType)
     case OGRwkbGeometryType::wkbMultiPoint:
     case OGRwkbGeometryType::wkbMultiLineString:
     case OGRwkbGeometryType::wkbMultiPolygon:
-    case OGRwkbGeometryType::wkbGeometryCollection:
     case OGRwkbGeometryType::wkbCircularString:
+    case OGRwkbGeometryType::wkbGeometryCollection:
         return true;
     default:
-        switch (wkbType)
-        {
-        case OGRwkbGeometryType::wkbPoint25D:
-        case OGRwkbGeometryType::wkbLineString25D:
-        case OGRwkbGeometryType::wkbPolygon25D:
-        case OGRwkbGeometryType::wkbMultiPoint25D:
-        case OGRwkbGeometryType::wkbMultiLineString25D:
-        case OGRwkbGeometryType::wkbMultiPolygon25D:
-        case OGRwkbGeometryType::wkbGeometryCollection25D:
-            return true;
-        default:
-            return false;
-        }
+        return false;
     }
 }
 
 OGRwkbGeometryType ToWkbType(const char* type, bool hasZ, bool hasM)
 {
-    auto zmGeometryType = [hasZ, hasM](OGRwkbGeometryType gtype) {
-        if (hasZ)
-            return OGR_GT_SetZ(gtype);
-        if (hasM)
-            return OGR_GT_SetM(gtype);
-        return gtype;
-    };
-
     if (strcmp(type, "ST_POINT") == 0)
-        return zmGeometryType(OGRwkbGeometryType::wkbPoint);
+        return OGR_GT_SetModifier(OGRwkbGeometryType::wkbPoint, hasZ, hasM);
     else if (strcmp(type, "ST_MULTIPOINT") == 0)
-        return zmGeometryType(OGRwkbGeometryType::wkbMultiPoint);
+        return OGR_GT_SetModifier(OGRwkbGeometryType::wkbMultiPoint, hasZ, hasM);
     else if (strcmp(type, "ST_LINESTRING") == 0)
-        return zmGeometryType(OGRwkbGeometryType::wkbLineString);
+        return OGR_GT_SetModifier(OGRwkbGeometryType::wkbLineString, hasZ, hasM);
     else if (strcmp(type, "ST_MULTILINESTRING") == 0)
-        return zmGeometryType(OGRwkbGeometryType::wkbMultiLineString);
+        return OGR_GT_SetModifier(OGRwkbGeometryType::wkbMultiLineString, hasZ, hasM);
     else if (strcmp(type, "ST_POLYGON") == 0)
-        return zmGeometryType(OGRwkbGeometryType::wkbPolygon);
+        return OGR_GT_SetModifier(OGRwkbGeometryType::wkbPolygon, hasZ, hasM);
     else if (strcmp(type, "ST_MULTIPOLYGON") == 0)
-        return zmGeometryType(OGRwkbGeometryType::wkbMultiPolygon);
+        return OGR_GT_SetModifier(OGRwkbGeometryType::wkbMultiPolygon, hasZ, hasM);
     else if (strcmp(type, "ST_CIRCULARSTRING") == 0)
-        return zmGeometryType(OGRwkbGeometryType::wkbCircularString);
+        return OGR_GT_SetModifier(OGRwkbGeometryType::wkbCircularString, hasZ, hasM);
     else if (strcmp(type, "ST_GEOMETRYCOLLECTION") == 0)
-        return zmGeometryType(OGRwkbGeometryType::wkbGeometryCollection);
+        return OGR_GT_SetModifier(OGRwkbGeometryType::wkbGeometryCollection, hasZ, hasM);
     return OGRwkbGeometryType::wkbUnknown;
 }
 

@@ -299,7 +299,7 @@ CPLString GetColumnDefinition(const ColumnTypeInfo& typeInfo)
         return typeInfo.name;
     case odbc::SQLDataTypes::Decimal:
     case odbc::SQLDataTypes::Numeric:
-        return StringFormat("DECIMAL(%d,%d)", typeInfo.width, typeInfo.precision);
+        return CPLString().Printf("DECIMAL(%d,%d)", typeInfo.width, typeInfo.precision);
     case odbc::SQLDataTypes::VarChar:
     case odbc::SQLDataTypes::WVarChar:
     case odbc::SQLDataTypes::Binary:
@@ -307,7 +307,7 @@ CPLString GetColumnDefinition(const ColumnTypeInfo& typeInfo)
     case odbc::SQLDataTypes::WLongVarChar:
         return (typeInfo.width == 0)
                 ? typeInfo.name
-                : StringFormat("%s(%d)", typeInfo.name.c_str(), typeInfo.width);
+                : CPLString().Printf("%s(%d)", typeInfo.name.c_str(), typeInfo.width);
     default:
         return "UNKNOWN";
     }
@@ -474,7 +474,7 @@ std::pair<OGRErr, std::size_t> OGRHanaTableLayer::ExecuteUpdate(
 
 odbc::PreparedStatementRef OGRHanaTableLayer::CreateDeleteFeatureStatement()
 {
-    CPLString sql = StringFormat(
+    CPLString sql = CPLString().Printf(
         "DELETE FROM %s WHERE %s = ?",
         GetFullTableNameQuoted(schemaName_, tableName_).c_str(),
         QuotedIdentifier(GetFIDColumn()).c_str());
@@ -520,7 +520,7 @@ odbc::PreparedStatementRef OGRHanaTableLayer::CreateInsertFeatureStatement(bool 
         parseFunctionsChecked_ = true;
     }
 
-    const CPLString sql = StringFormat(
+    const CPLString sql = CPLString().Printf(
         "INSERT INTO %s (%s) VALUES(%s)",
         GetFullTableNameQuoted(schemaName_, tableName_).c_str(),
         JoinStrings(columns, ", ").c_str(), JoinStrings(values, ", ").c_str());
@@ -568,7 +568,7 @@ odbc::PreparedStatementRef OGRHanaTableLayer::CreateUpdateFeatureStatement()
         parseFunctionsChecked_ = true;
     }
 
-    const CPLString sql = StringFormat(
+    const CPLString sql = CPLString().Printf(
         "UPDATE %s SET %s WHERE %s = ?",
         GetFullTableNameQuoted(schemaName_, tableName_).c_str(),
         JoinStrings(values, ", ").c_str(),
@@ -1133,7 +1133,7 @@ OGRErr OGRHanaTableLayer::ICreateFeature(OGRFeature* feature)
 
         if (!withFID)
         {
-            const CPLString sql = StringFormat(
+            const CPLString sql = CPLString().Printf(
                 "SELECT CURRENT_IDENTITY_VALUE() \"current identity value\" FROM %s",
                 GetFullTableNameQuoted(schemaName_, tableName_).c_str());
 
@@ -1366,10 +1366,10 @@ OGRErr OGRHanaTableLayer::CreateField(OGRFieldDefn* srsField, int approxOK)
         }
 
         clmClause +=
-            StringFormat(" DEFAULT %s", GetColumnDefaultValue(dstField));
+            CPLString().Printf(" DEFAULT %s", GetColumnDefaultValue(dstField));
     }
 
-    const CPLString sql = StringFormat(
+    const CPLString sql = CPLString().Printf(
         "ALTER TABLE %s ADD(%s)",
         GetFullTableNameQuoted(schemaName_, tableName_).c_str(),
         clmClause.c_str());
@@ -1434,7 +1434,7 @@ OGRErr OGRHanaTableLayer::CreateGeomField(OGRGeomFieldDefn* geomField, int)
                             ? LaunderName(geomField->GetNameRef())
                             : CPLString(geomField->GetNameRef());
     int srid = dataSource_->GetSrsId(geomField->GetSpatialRef());
-    CPLString sql = StringFormat(
+    CPLString sql = CPLString().Printf(
         "ALTER TABLE %s ADD(%s ST_GEOMETRY(%d))",
         GetFullTableNameQuoted(schemaName_, tableName_).c_str(),
         QuotedIdentifier(clmName).c_str(), srid);
@@ -1495,7 +1495,7 @@ OGRErr OGRHanaTableLayer::DeleteField(int field)
     }
 
     CPLString clmName = featureDefn_->GetFieldDefn(field)->GetNameRef();
-    CPLString sql = StringFormat(
+    CPLString sql = CPLString().Printf(
         "ALTER TABLE %s DROP (%s)",
         GetFullTableNameQuoted(schemaName_, tableName_).c_str(),
         QuotedIdentifier(clmName).c_str());
@@ -1557,7 +1557,7 @@ OGRErr OGRHanaTableLayer::AlterFieldDefn(
             && (strcmp(fieldDefn->GetNameRef(), newFieldDefn->GetNameRef())
                 != 0))
         {
-            CPLString sql = StringFormat(
+            CPLString sql = CPLString().Printf(
                 "RENAME COLUMN %s TO %s",
                 GetFullColumnNameQuoted(
                     schemaName_, tableName_, fieldDefn->GetNameRef())
@@ -1601,7 +1601,7 @@ OGRErr OGRHanaTableLayer::AlterFieldDefn(
                            : CPLString(newFieldDefn->GetDefault()));
             }
 
-            CPLString sql = StringFormat(
+            CPLString sql = CPLString().Printf(
                 "ALTER TABLE %s ALTER(%s %s)",
                 GetFullTableNameQuoted(schemaName_, tableName_).c_str(),
                 QuotedIdentifier(clmName).c_str(), fieldTypeDef.c_str());
