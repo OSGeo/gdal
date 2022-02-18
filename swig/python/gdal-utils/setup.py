@@ -36,7 +36,7 @@ __readme_type__ = 'text/x-rst'
 package_root = '.'   # package sources are under this dir
 packages = find_packages(package_root)  # include all packages under package_root
 package_dir = {'': package_root}  # packages sources are under package_root
-scripts = glob('./scripts/*.py') # command line scripts
+scripts = sorted(glob('./scripts/*.py'), reverse=True) # command line scripts
 
 def define_entry_points(scripts, entry_points=None):
     """
