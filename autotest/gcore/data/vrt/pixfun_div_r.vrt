@@ -1,0 +1,18 @@
+<VRTDataset rasterXSize="5" rasterYSize="6">
+  <VRTRasterBand dataType="Float32" band="1" subClass="VRTDerivedRasterBand">
+    <Description>Division</Description>
+    <PixelFunctionType>div</PixelFunctionType>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">../int32.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="5" ySize="6"/>
+      <DstRect xOff="0" yOff="0" xSize="5" ySize="6"/>
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">../float32.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="10" yOff="10" xSize="5" ySize="6"/>
+      <DstRect xOff="0" yOff="0" xSize="5" ySize="6"/>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>

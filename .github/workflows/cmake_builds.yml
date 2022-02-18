@@ -95,6 +95,40 @@ jobs:
         rm -rf $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python
         # Set PATH so that gdal-config is found
         PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH pip install --user gdal-python.tar.gz
+    - name: Test post-install usage (with pkg-config)
+      run: |
+        ./autotest/postinstall/test_pkg-config.sh $GITHUB_WORKSPACE/install-gdal
+    - name: Test post-install usage (with gdal-config)
+      run: |
+        ./autotest/postinstall/test_gdal-config.sh $GITHUB_WORKSPACE/install-gdal
+    - name: Test post-install usage (with CMake)
+      run: |
+        ./autotest/postinstall/test_cmake.sh $GITHUB_WORKSPACE/install-gdal
+    - name: Rerun with static linkage
+      run: |
+        cd $GITHUB_WORKSPACE/superbuild/build
+        cmake  ${CMAKE_OPTIONS} .. \
+          -DBUILD_SHARED_LIBS=OFF \
+          -DBUILD_TESTING=OFF \
+          -DCSHARP_MONO=OFF \
+          -DGDAL_USE_HDF4=OFF \
+          -DGDAL_USE_HDF5=OFF \
+          -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal-static
+        cmake --build $GITHUB_WORKSPACE/superbuild/build --target install -- -j$(nproc)
+    - name: Test post-install usage (static, with pkg-config)
+      run: |
+        ./autotest/postinstall/test_pkg-config.sh $GITHUB_WORKSPACE/install-gdal-static --static
+    - name: Test post-install usage (static, with gdal-config)
+      run: |
+        ./autotest/postinstall/test_gdal-config.sh $GITHUB_WORKSPACE/install-gdal-static --static
+    - name: Test post-install usage (static, with CMake)
+      run: |
+        if ./autotest/postinstall/test_cmake.sh $GITHUB_WORKSPACE/install-gdal-static --static; then
+          echo 'Unexpected pass' >&2
+          exit 1
+        else
+          echo 'Expected fail'
+        fi
 
   build-windows-msys2-mingw:
     runs-on: windows-2022
@@ -140,8 +174,9 @@ jobs:
       #  libxml2 disabled because currently causes a 'Imported target "LibXml2::LibXml2" includes non-existent path "/mingw64/include/libxml2" in its INTERFACE_INCLUDE_DIRECTORIES'
       # Disable mySQL since C:/mysql/lib/mysqlclient.lib (unrelated to msys) is found, which causes linking issues
       # Disable Python bindings because of 'ValueError: filename D:/a/gdal/gdal/swig/python/osgeo/__init__.py does not start with the input_base_dir D:/a/gdal/gdal/swig/python/osgeo/\' when running lib2to3
+      # Set explicitly CMAKE_C|CXX_COMPILER otherwise C:/ProgramData/chocolatey/bin/gcc.exe would be used
       - name: Configure
-        run: cmake -DCMAKE_BUILD_TYPE=release -G "${env:generator}" -Werror=dev "-DCMAKE_C_COMPILER_LAUNCHER=c:\tools\msys64\mingw64\bin\ccache.exe" "-DCMAKE_CXX_COMPILER_LAUNCHER=c:\tools\msys64\mingw64\bin\ccache.exe" "-DCMAKE_PREFIX_PATH=C:\tools\msys64\mingw64" "-DCMAKE_UNITY_BUILD=${env:CMAKE_UNITY_BUILD}" -S . -B "build" -DLIBXML2_INCLUDE_DIR=C:/tools/msys64/mingw64/include -DGDAL_USE_LIBXML2:BOOL=OFF -DGDAL_USE_MYSQL:BOOL=OFF -DBUILD_PYTHON_BINDINGS:BOOL=OFF -DBUILD_CSHARP_BINDINGS=ON -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror -DWERROR_DEV_FLAG="-Werror=dev"
+        run: cmake -DCMAKE_BUILD_TYPE=release -G "${env:generator}" -Werror=dev "-DCMAKE_C_COMPILER=c:/tools/msys64/mingw64/bin/gcc.exe" "-DCMAKE_CXX_COMPILER=c:/tools/msys64/mingw64/bin/g++.exe" "-DCMAKE_C_COMPILER_LAUNCHER=c:\tools\msys64\mingw64\bin\ccache.exe" "-DCMAKE_CXX_COMPILER_LAUNCHER=c:\tools\msys64\mingw64\bin\ccache.exe" "-DCMAKE_PREFIX_PATH=C:\tools\msys64\mingw64" "-DCMAKE_UNITY_BUILD=${env:CMAKE_UNITY_BUILD}" -S . -B "build" -DLIBXML2_INCLUDE_DIR=C:/tools/msys64/mingw64/include -DGDAL_USE_LIBXML2:BOOL=OFF -DGDAL_USE_MYSQL:BOOL=OFF -DBUILD_PYTHON_BINDINGS:BOOL=OFF -DBUILD_CSHARP_BINDINGS=ON -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror -DWERROR_DEV_FLAG="-Werror=dev"
         working-directory: ${{ github.workspace }}
       - name: Build
         run: cmake --build build -j 3
@@ -306,6 +341,15 @@ jobs:
         GITHUB_WORKFLOW: "MacOS build"
     - name: Install
       run: cmake --build $GITHUB_WORKSPACE/build --target install -j 3
+    - name: Test post-install usage (with pkg-config)
+      run: |
+        ./autotest/postinstall/test_pkg-config.sh $GITHUB_WORKSPACE/install-gdal
+    - name: Test post-install usage (with gdal-config)
+      run: |
+        ./autotest/postinstall/test_gdal-config.sh $GITHUB_WORKSPACE/install-gdal
+    - name: Test post-install usage (with CMake)
+      run: |
+        ./autotest/postinstall/test_cmake.sh $GITHUB_WORKSPACE/install-gdal
 
   # Disabled for now since bindings in master use GDALDatasetGetFieldDomainNames
   # but libgdal from Conda has not it yet.

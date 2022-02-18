@@ -3,13 +3,13 @@ add_gdal_driver(TARGET gdal_PNG SOURCES pngdataset.cpp pngdataset.h PLUGIN_CAPAB
 gdal_standard_includes(gdal_PNG)
 
 if (GDAL_USE_PNG_INTERNAL)
-  target_include_directories(gdal_PNG PRIVATE $<TARGET_PROPERTY:libpng,SOURCE_DIR>)
+  gdal_add_vendored_lib(gdal_PNG libpng)
 else ()
   gdal_target_link_libraries(gdal_PNG PRIVATE PNG::PNG)
 endif ()
 
 if (GDAL_USE_ZLIB_INTERNAL)
-  target_include_directories(gdal_PNG PRIVATE $<TARGET_PROPERTY:libz,SOURCE_DIR>)
+  gdal_add_vendored_lib(gdal_PNG libz)
 else ()
   gdal_target_link_libraries(gdal_PNG PRIVATE ZLIB::ZLIB)
 endif ()

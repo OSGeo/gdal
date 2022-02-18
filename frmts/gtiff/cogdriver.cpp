@@ -1303,7 +1303,7 @@ void GDALCOGDriver::InitializeCreationOptionList()
 "  <Option name='EXTENT' type='string' description='"
         "Target extent as minx,miny,maxx,maxy for reprojection'/>"
 "  <Option name='ALIGNED_LEVELS' type='int' description='"
-        "Number of overview levels for which the tiles from GeoTIFF and the "
+        "Number of resolution levels for which the tiles from GeoTIFF and the "
         "specified tiling scheme match'/>"
 "  <Option name='ADD_ALPHA' type='boolean' description='Can be set to NO to "
         "disable the addition of an alpha band in case of reprojection' default='YES'/>"

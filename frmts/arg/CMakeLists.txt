@@ -3,7 +3,7 @@ gdal_standard_includes(gdal_ARG)
 target_include_directories(gdal_ARG PRIVATE $<TARGET_PROPERTY:gdal_raw,SOURCE_DIR>
                                             $<TARGET_PROPERTY:ogr_geojson,SOURCE_DIR>)
 if (GDAL_USE_JSONC_INTERNAL)
-  target_include_directories(gdal_ARG PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
+  gdal_add_vendored_lib(gdal_ARG libjson)
 else ()
   gdal_target_link_libraries(gdal_ARG PRIVATE ${JSONC_LIBRARIES})
 endif ()

@@ -222,7 +222,7 @@ void GetCeosField(CeosRecord_t *record, int32 start_byte,
     HFree(mod_buf);
 }
 
-void SetCeosField(CeosRecord_t *record, int32 start_byte, char *format, void *value)
+void SetCeosField(CeosRecord_t *record, int32 start_byte, const char *format, int intValue, double dblValue)
 {
     int field_size;
     char * temp_buf = NULL;
@@ -250,6 +250,7 @@ void SetCeosField(CeosRecord_t *record, int32 start_byte, char *format, void *va
     {
     case 'b':
     case 'B':
+#if 0
         /* Binary data type */
         if(field_size > 1)
         {
@@ -258,33 +259,44 @@ void SetCeosField(CeosRecord_t *record, int32 start_byte, char *format, void *va
             memcpy(value,temp_buf,field_size);
         }
         break;
+#endif
+        fprintf(stderr, "SetCeosField with format=%c not implemented",
+                format[0]);
+        HFree(temp_buf);
+        return;
 
     case 'i':
     case 'I':
         /* Integer data type */
         snprintf( szPrintfFormat, sizeof(szPrintfFormat), "%%%s%c",format+1, 'd');
-        snprintf( temp_buf, field_size+1, szPrintfFormat, *(int *) value);
+        snprintf( temp_buf, field_size+1, szPrintfFormat, intValue);
         break;
 
     case 'f':
     case 'F':
         /* Double precision floating point data type */
         snprintf( szPrintfFormat, sizeof(szPrintfFormat), "%%%s%c", format+1, 'g');
-        snprintf( temp_buf, field_size+1, szPrintfFormat, *(double *)value);
+        snprintf( temp_buf, field_size+1, szPrintfFormat, dblValue);
         break;
 
     case 'e':
     case 'E':
         /* Double precision floating point data type (forced exponent) */
         snprintf( szPrintfFormat, sizeof(szPrintfFormat), "%%%s%c", format+1, 'e');
-        snprintf( temp_buf, field_size+1, szPrintfFormat, *(double *)value);
+        snprintf( temp_buf, field_size+1, szPrintfFormat, dblValue);
         break;
 
     case 'a':
     case 'A':
+#if 0
         strncpy(temp_buf,value,field_size+1);
         temp_buf[field_size] = '0';
         break;
+#endif
+        fprintf(stderr, "SetCeosField with format=%c not implemented",
+                format[0]);
+        HFree(temp_buf);
+        return;
 
     default:
         /* Unknown format */
@@ -303,7 +315,7 @@ void SetIntCeosField(CeosRecord_t *record, int32 start_byte, int32 length, int32
     char total_len[12];   /* 12 because 2^32 -> 4294967296 + I + null */
 
     snprintf(total_len,sizeof(total_len),"I%d",length);
-    SetCeosField(record,start_byte,total_len,&integer_value);
+    SetCeosField(record,start_byte,total_len,integer_value,0.0);
 }
 
 CeosRecord_t *FindCeosRecord(Link_t *record_list, CeosTypeCode_t typecode, int32 fileid, int32 flavor, int32 subsequence)

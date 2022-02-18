@@ -2263,6 +2263,19 @@ if test "$PNG_SETTING" != "no" ; then
 fi
 
 dnl ---------------------------------------------------------------------------
+dnl Check if user requests renaming internal libpng symbols
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(rename_internal_libpng_symbols,[  --with-rename-internal-libpng-symbols[=ARG] Prefix internal libpng symbols with gdal_ (ARG=yes/no)],,)
+
+RENAME_INTERNAL_PNG_SYMBOLS=no
+if test "x$with_rename_internal_libpng_symbols" = "xyes" -o "x$with_rename_internal_libpng_symbols" = "x"; then
+    RENAME_INTERNAL_PNG_SYMBOLS=yes
+fi
+
+AC_SUBST(RENAME_INTERNAL_PNG_SYMBOLS,$RENAME_INTERNAL_PNG_SYMBOLS)
+
+dnl ---------------------------------------------------------------------------
 dnl Enable DDS driver.
 dnl ---------------------------------------------------------------------------
 
@@ -6358,3 +6371,7 @@ fi
 if test "$HAVE_TEIGHA" = "yes" -a "$ECW_54" = "yes"; then
     AC_MSG_WARN([Both Teigha SDK and ECW SDK >= 5.4 found. This was found to cause crashes in ECW driver.])
 fi
+
+AC_MSG_NOTICE([])
+AC_MSG_NOTICE([])
+AC_MSG_WARN([Starting with GDAL 3.5, the autoconf build system is deprecated in favor of the CMake build system. The autoconf build system will be completely removed in GDAL 3.6])

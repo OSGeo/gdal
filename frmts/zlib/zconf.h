@@ -329,4 +329,8 @@ typedef uLong FAR uLongf;
 #   pragma map(inflate_copyright,"INCOPY")
 #endif
 
+#ifdef RENAME_INTERNAL_ZLIB_SYMBOLS
+#include "gdal_zlib_symbol_rename.h"
+#endif
+
 #endif /* ZCONF_H */

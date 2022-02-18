@@ -237,11 +237,13 @@ Reprojection related creation options
 - **EXTENT=minx,miny,maxx,maxy**: Set the extent of the target raster, in the
   units of TARGET_SRS. Only taken into account if TARGET_SRS is specified.
 
-- **ALIGNED_LEVELS=INT**: Number of overview levels for which GeoTIFF tile and
+- **ALIGNED_LEVELS=INT**: Number of resolution levels for which GeoTIFF tile and
   tiles defined in the tiling scheme match. When specifying this option, padding tiles will be
   added to the left and top sides of the target raster, when needed, so that
   a GeoTIFF tile matches with a tile of the tiling scheme.
   Only taken into account if TILING_SCHEME is different from CUSTOM.
+  Effect of this option is only visible when settting it at 2 or more, since the
+  full resolution level is by default aligned with the tiling scheme.
   For a tiling scheme whose consecutive zoom level resolutions differ by a
   factor of 2, care must be taken in setting this value to a high number of
   levels, as up to 2^(ALIGNED_LEVELS-1) tiles can be added in each dimension.

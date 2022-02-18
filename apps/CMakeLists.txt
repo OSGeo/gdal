@@ -34,7 +34,7 @@ if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
 endif ()
 
 if (GDAL_USE_JSONC_INTERNAL)
-  target_include_directories(appslib PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
+  gdal_add_vendored_lib(appslib libjson)
 else ()
   gdal_target_link_libraries(appslib PRIVATE ${JSONC_LIBRARIES})
 endif ()
@@ -146,7 +146,6 @@ if (BUILD_APPS)
   add_executable(gdalwarpsimple EXCLUDE_FROM_ALL gdalwarpsimple.c)
   add_executable(multireadtest EXCLUDE_FROM_ALL multireadtest.cpp)
   add_executable(test_ogrsf test_ogrsf.cpp)
-  add_executable(testepsg EXCLUDE_FROM_ALL testepsg.cpp)
   add_executable(testreprojmulti EXCLUDE_FROM_ALL testreprojmulti.cpp)
 
   foreach (
@@ -159,7 +158,6 @@ if (BUILD_APPS)
           gdalwarpsimple
           multireadtest
           test_ogrsf
-          testepsg
           testreprojmulti)
     # Add that include directory before all others so the gdal_version.h from it is included and not
     # gcore/gdal_version.h

@@ -178,7 +178,7 @@ else ()
 
 endif ()
 
-# message("GDAL_C_WARNING_FLAGS: ${GDAL_C_WARNING_FLAGS}") message("GDAL_CXX_WARNING_FLAGS: ${GDAL_CXX_WARNING_FLAGS}")
+# message(STATUS "GDAL_C_WARNING_FLAGS: ${GDAL_C_WARNING_FLAGS}") message(STATUS "GDAL_CXX_WARNING_FLAGS: ${GDAL_CXX_WARNING_FLAGS}")
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
   check_cxx_compiler_flag(-fno-finite-math-only HAVE_FLAG_NO_FINITE_MATH_ONLY)
@@ -309,7 +309,6 @@ endif ()
 
 # Install properties
 if (GDAL_ENABLE_MACOSX_FRAMEWORK)
-  set(CMAKE_MACOSX_RPATH ON)
   set(FRAMEWORK_VERSION ${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR})
   set(FRAMEWORK_DESTINATION
       "Library/Frameworks"
@@ -354,20 +353,24 @@ endif ()
 
 set(INSTALL_PLUGIN_FULL_DIR "${CMAKE_INSTALL_PREFIX}/${INSTALL_PLUGIN_DIR}")
 
-# detect portability libs and set, so it should add at first Common Portability layer
-add_subdirectory(port)
-
 # Configure internal libraries
 if (GDAL_USE_ZLIB_INTERNAL)
+  option(RENAME_INTERNAL_ZLIB_SYMBOLS "Rename internal zlib symbols" ON)
+  mark_as_advanced(RENAME_INTERNAL_ZLIB_SYMBOLS)
   add_subdirectory(frmts/zlib)
 endif ()
 if (GDAL_USE_JSONC_INTERNAL)
+  # Internal libjson symbols are renamed by default
   add_subdirectory(ogr/ogrsf_frmts/geojson/libjson)
 endif ()
+
+# Internal zlib and jsonc must be declared before
+add_subdirectory(port)
 
 # JPEG options need to be defined before internal libtiff
 if (GDAL_USE_JPEG_INTERNAL)
   option(RENAME_INTERNAL_JPEG_SYMBOLS "Rename internal libjpeg symbols" ON)
+  mark_as_advanced(RENAME_INTERNAL_JPEG_SYMBOLS)
   add_subdirectory(frmts/jpeg/libjpeg)
 endif ()
 option(GDAL_USE_JPEG12_INTERNAL "Set ON to use internal libjpeg12 support" ON)
@@ -375,25 +378,35 @@ if (GDAL_USE_JPEG12_INTERNAL)
   add_subdirectory(frmts/jpeg/libjpeg12)
 endif ()
 
+# Lerc options need to be defined before internal libtiff
+if (GDAL_USE_LERC_INTERNAL)
+  # Internal liblerc uses a dedicated namespace
+  add_subdirectory(third_party/LercLib)
+endif ()
+
 if (GDAL_USE_TIFF_INTERNAL)
   option(RENAME_INTERNAL_TIFF_SYMBOLS "Rename internal libtiff symbols" ON)
+  mark_as_advanced(RENAME_INTERNAL_TIFF_SYMBOLS)
   add_subdirectory(frmts/gtiff/libtiff)
 endif ()
 if (GDAL_USE_GEOTIFF_INTERNAL)
   option(RENAME_INTERNAL_GEOTIFF_SYMBOLS "Rename internal libgeotiff symbols" ON)
+  mark_as_advanced(RENAME_INTERNAL_GEOTIFF_SYMBOLS)
   add_subdirectory(frmts/gtiff/libgeotiff)
 endif ()
 if (GDAL_USE_GIF_INTERNAL)
+  option(RENAME_INTERNAL_GIF_SYMBOLS "Rename internal giflib symbols" ON)
+  mark_as_advanced(RENAME_INTERNAL_GIF_SYMBOLS)
   add_subdirectory(frmts/gif/giflib)
 endif ()
 if (GDAL_USE_PNG_INTERNAL)
+  option(RENAME_INTERNAL_PNG_SYMBOLS "Rename internal libpng symbols" ON)
+  mark_as_advanced(RENAME_INTERNAL_PNG_SYMBOLS)
   add_subdirectory(frmts/png/libpng)
-endif ()
-if (GDAL_USE_LERC_INTERNAL)
-  add_subdirectory(third_party/LercLib)
 endif ()
 if (GDAL_USE_SHAPELIB_INTERNAL)
   option(RENAME_INTERNAL_SHAPELIB_SYMBOLS "Rename internal Shapelib symbols" ON)
+  mark_as_advanced(RENAME_INTERNAL_SHAPELIB_SYMBOLS)
 endif ()
 
 # Core components
@@ -667,52 +680,32 @@ if (NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
     # SameMinorVersion)
     COMPATIBILITY ExactVersion)
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/GDALConfigVersion.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gdal/)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/template/GDALConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/GDALConfig.cmake @ONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/template/GDALConfig.cmake.in
+                 ${CMAKE_CURRENT_BINARY_DIR}/GDALConfig.cmake @ONLY)
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/GDALConfig.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gdal/)
 
-  # gdal-config utility command generation
-  include(GenerateConfig)
-  if (ENABLE_GNM)
-    set(CONFIG_GNM_ENABLED "yes")
-  else ()
-    set(CONFIG_GNM_ENABLED "no")
-  endif ()
-  get_property(_GDAL_FORMATS GLOBAL PROPERTY GDAL_FORMATS)
-  get_property(_OGR_FORMATS GLOBAL PROPERTY OGR_FORMATS)
-  string(REPLACE ";" " " CONFIG_FORMATS "${_GDAL_FORMATS} ${_OGR_FORMATS}")
-  generate_config(${GDAL_LIB_TARGET_NAME} "gdal_private_link_libraries" ${GDAL_CMAKE_TEMPLATE_PATH}/gdal-config.in
-                  ${PROJECT_BINARY_DIR}/apps/gdal-config)
-  add_custom_target(gdal_config ALL DEPENDS ${PROJECT_BINARY_DIR}/apps/gdal-config)
+  # Generate gdal-config utility command and pkg-config module gdal.pc
+  include(GdalGenerateConfig)
+  gdal_generate_config(
+    TARGET
+    "${GDAL_LIB_TARGET_NAME}"
+    GLOBAL_PROPERTY
+    "gdal_private_link_libraries"
+    GDAL_CONFIG
+    "${PROJECT_BINARY_DIR}/apps/gdal-config"
+    PKG_CONFIG
+    "${CMAKE_CURRENT_BINARY_DIR}/gdal.pc")
   install(
     PROGRAMS ${PROJECT_BINARY_DIR}/apps/gdal-config
     DESTINATION ${CMAKE_INSTALL_BINDIR}
-    PERMISSIONS OWNER_READ
-                OWNER_WRITE
-                OWNER_EXECUTE
-                GROUP_READ
-                GROUP_EXECUTE
-                WORLD_READ
-                WORLD_EXECUTE
     COMPONENT applications)
-
-  # pkg-config resource
-  get_property(
-    _gdal_lib_name
-    TARGET ${GDAL_LIB_TARGET_NAME}
-    PROPERTY OUTPUT_NAME)
-  set(CONFIG_INST_LIBS "-L${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} -l${_gdal_lib_name}")
-  set(CONFIG_INST_CFLAGS "-I${CMAKE_INSTALL_PREFIX}/${GDAL_INSTALL_INCLUDEDIR}")
-  set(CONFIG_INST_DATA "${CMAKE_INSTALL_PREFIX}/${GDAL_RESOURCE_PATH}")
-  get_dep_libs(${GDAL_LIB_TARGET_NAME} "gdal_private_link_libraries" CONFIG_INST_DEP_LIBS)
-  configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/gdal.pc.in ${CMAKE_CURRENT_BINARY_DIR}/gdal.pc @ONLY)
   install(
     FILES ${CMAKE_CURRENT_BINARY_DIR}/gdal.pc
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
     COMPONENT libraries)
 endif ()
 
-configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/uninstall.cmake.in ${PROJECT_BINARY_DIR}/cmake_uninstall.cmake IMMEDIATE
-               @ONLY)
+configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/uninstall.cmake.in ${PROJECT_BINARY_DIR}/cmake_uninstall.cmake @ONLY)
 add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 
 # Print summary
@@ -739,24 +732,16 @@ set_property(GLOBAL PROPERTY PACKAGES_NOT_FOUND ${_new_packages_not_found})
 feature_summary(DESCRIPTION "Enabled drivers and features and found dependency packages" WHAT ALL)
 set_property(GLOBAL PROPERTY PACKAGES_NOT_FOUND ${_packages_not_found})
 
-set(_has_found_disabled_packages 0)
+set(disabled_packages "")
 get_property(_packages_found GLOBAL PROPERTY PACKAGES_FOUND)
 foreach (_package IN LISTS _packages_found)
   string(TOUPPER ${_package} key)
   if (DEFINED GDAL_USE_${key} AND NOT GDAL_USE_${key})
-    if (NOT _has_found_disabled_packages)
-      set(_has_found_disabled_packages 1)
-      message("\nDisabled components:")
-    endif ()
-    message("* ${key} component has been detected, but is disabled with GDAL_USE_${key}=${GDAL_USE_${key}}")
+    string(APPEND disabled_packages " *${key} component has been detected, but is disabled with GDAL_USE_${key}=${GDAL_USE_${key}}\n")
   endif ()
 endforeach ()
-if (_has_found_disabled_packages)
-  message("\n")
-endif ()
-
-if (NOT SILENCE_EXPERIMENTAL_WARNING)
-  message(WARNING "CMake builds are considered only EXPERIMENTAL for now. Do not use them for production.")
+if (disabled_packages)
+  message(STATUS "Disabled components:\n\n${disabled_packages}\n")
 endif ()
 
 if (DEFINED GDAL_USE_EXTERNAL_LIBS_OLD_CACHED)

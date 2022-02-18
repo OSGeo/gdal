@@ -5,15 +5,12 @@ add_gdal_driver(
   DEF FRMT_georaster PLUGIN_CAPABLE_IF "NOT GDAL_USE_ZLIB_INTERNAL;NOT GDAL_USE_JPEG_INTERNAL")
 gdal_standard_includes(gdal_GEOR)
 if (GDAL_USE_ZLIB_INTERNAL)
-  target_include_directories(gdal_GEOR PRIVATE $<TARGET_PROPERTY:libz,SOURCE_DIR>)
+  gdal_add_vendored_lib(gdal_GEOR libz)
 endif ()
 
 if (GDAL_ENABLE_DRIVER_JPEG AND GDAL_USE_JPEG_INTERNAL)
-  target_include_directories(gdal_GEOR PRIVATE $<TARGET_PROPERTY:libjpeg,SOURCE_DIR>)
+  gdal_add_vendored_lib(gdal_GEOR libjpeg)
   target_compile_definitions(gdal_GEOR PRIVATE -DJPEG_SUPPORTED)
-  if (RENAME_INTERNAL_JPEG_SYMBOLS)
-    target_compile_definitions(gdal_GEOR PRIVATE -DRENAME_INTERNAL_LIBJPEG_SYMBOLS)
-  endif ()
 endif ()
 
 gdal_target_link_libraries(gdal_GEOR PRIVATE Oracle::OCI)

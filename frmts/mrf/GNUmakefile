@@ -37,6 +37,11 @@ endif
 
 ifeq ($(PNG_SETTING),internal)
 XTRA_OPT        :=      $(XTRA_OPT) -I../png/libpng -DINTERNAL_PNG
+
+ifeq ($(RENAME_INTERNAL_PNG_SYMBOLS),yes)
+XTRA_OPT 	:=	$(XTRA_OPT) -DRENAME_INTERNAL_PNG_SYMBOLS
+endif
+
 endif
 
 ifeq ($(LIBZ_SETTING),internal)

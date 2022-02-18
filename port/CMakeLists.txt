@@ -143,7 +143,7 @@ endif ()
 
 # Internal libraries first
 if (GDAL_USE_JSONC_INTERNAL)
-  target_include_directories(cpl PRIVATE $<TARGET_PROPERTY:libjson,SOURCE_DIR>)
+  gdal_add_vendored_lib(cpl libjson)
 endif ()
 
 target_compile_definitions(cpl PRIVATE -DHAVE_LIBZ -DZIP_SUPPORT)
@@ -151,7 +151,7 @@ target_public_header(TARGET gdal HEADERS cpl_minizip_ioapi.h cpl_minizip_unzip.h
 target_sources(cpl PRIVATE cpl_vsil_gzip.cpp cpl_minizip_ioapi.cpp cpl_minizip_unzip.cpp cpl_minizip_zip.cpp)
 
 if (GDAL_USE_ZLIB_INTERNAL)
-  target_include_directories(cpl PRIVATE $<TARGET_PROPERTY:libz,SOURCE_DIR>)
+  gdal_add_vendored_lib(cpl libz)
 endif ()
 
 # Now external libraries

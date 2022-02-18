@@ -1,0 +1,14 @@
+<VRTDataset rasterXSize="20" rasterYSize="20">
+  <VRTRasterBand dataType="Float64" band="1" subClass="VRTDerivedRasterBand">
+    <Description>dB to power</Description>
+    <PixelFunctionType>exp</PixelFunctionType>
+    <SourceTransferType>Float64</SourceTransferType>
+    <PixelFunctionArguments base="10." fact="0.1" />
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">../float32.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="20" ySize="20"/>
+      <DstRect xOff="0" yOff="0" xSize="20" ySize="20"/>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>

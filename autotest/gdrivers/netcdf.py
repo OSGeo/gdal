@@ -5001,6 +5001,15 @@ def test_netcdf_update_metadata():
     gdal.Unlink(tmpfilename)
 
 
+def test_netcdf_read_gmt_file():
+    """ Test reading a GMT generated file that doesn't completely follow
+        netCDF CF conventions regarding axis naming """
+
+    ds = gdal.Open('data/netcdf/gmt_file.nc')
+    gt = ds.GetGeoTransform()
+    assert gt == pytest.approx((-34.6671666666667, 0.001, 0.0, 35.58483333333329, 0.0, -0.001)), gt
+
+
 def test_clean_tmp():
     # [KEEP THIS AS THE LAST TEST]
     # i.e. please do not add any tests after this one. Put new ones above.

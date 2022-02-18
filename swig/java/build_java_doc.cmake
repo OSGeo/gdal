@@ -1,4 +1,4 @@
-message("Building javadoc")
+message(STATUS "Building javadoc")
 
 file(GLOB_RECURSE SOURCE_JAVA_FILES RELATIVE "${BUILD_DIR}" "${BUILD_DIR}/org/*.java")
 

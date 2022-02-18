@@ -83,7 +83,12 @@ Both multi-threading mechanism can be combined together.
 Option Options
 --------------
 
-The following open option is available:
+The following open options are available:
+
+-  **STRICT=YES/NO**: (GDAL >= 3.5 and OpenJPEG >= 2.5) Whether strict/pedantic
+   decoding mode should be enabled.
+   This can be set to NO to allow decoding (some) broken files, typically
+   truncated single-tiled files . Default to YES (strict mode)
 
 -  **1BIT_ALPHA_PROMOTION=YES/NO**: Whether a 1-bit alpha channel should
    be promoted to 8-bit. Defaults to YES.

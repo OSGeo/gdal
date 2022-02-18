@@ -184,7 +184,7 @@ function (gdal_csharp_dll)
 
   else ()
     if (CMAKE_VERBOSE_MAKEFILE)
-      message("BUILDING : " ${_CSHARP_TARGET} " : " ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_CSHARP_TARGET})
+      message(STATUS "BUILDING : " ${_CSHARP_TARGET} " : " ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_CSHARP_TARGET})
     endif ()
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET}
@@ -362,13 +362,8 @@ function (gdal_build_csharp_sample)
   else ()
     if (CMAKE_VERBOSE_MAKEFILE)
       message(
-        "BUILDING : "
-        ${_GBCS_OUTPUT}
-        " : "
-        ${CSHARP_COMPILER}
-        ${CSC_OPTIONS}
-        /out:${_GBCS_OUTPUT_NATIVE}
-        ${SOURCE_NATIVE})
+        STATUS
+          "BUILDING : ${_GBCS_OUTPUT} : ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_GBCS_OUTPUT_NATIVE} ${SOURCE_NATIVE}")
     endif ()
     add_custom_command(
       OUTPUT ${OUTPUT_FILENAME}

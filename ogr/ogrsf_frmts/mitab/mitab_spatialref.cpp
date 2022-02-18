@@ -184,6 +184,7 @@ const MapInfoDatumInfo asDatumInfoList[] =
 { 6124, 112, "Rikets_koordinatsystem_1990",10,498,  -36, 568,  0, 0, 0, 0, 0},
 { 0,    113, "Lisboa_DLX",                 4, -303, -62, 105,  0, 0, 0, 0, 0},
 { 0,    114, "Melrica_1973_D73",           4, -223, 110, 37,   0, 0, 0, 0, 0},
+{ 6258, 115, "European_Terrestrial_Reference_System_1989", 0, 0,    0,   0,    0, 0, 0, 0, 0},
 { 6258, 115, "Euref_89",                   0, 0,    0,   0,    0, 0, 0, 0, 0},
 { 6283, 116, "GDA94",                      0, 0,    0,   0,    0, 0, 0, 0, 0},
 { 6283, 116, "Geocentric_Datum_of_Australia_1994", 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -1538,13 +1539,49 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
 
     // Get datum information
     const char *pszWKTDatum = poSpatialRef->GetAttrValue("DATUM");
-    int nDatumEPSGCode = -1;
-    const char *pszDatumAuthority = poSpatialRef->GetAuthorityName("DATUM");
-    const char *pszDatumCode = poSpatialRef->GetAuthorityCode("DATUM");
 
-    if (pszDatumCode && pszDatumAuthority && EQUAL(pszDatumAuthority, "EPSG"))
+    const auto GetDatumCode = [](const OGRSpatialReference* poSRS)
     {
-        nDatumEPSGCode = atoi(pszDatumCode);
+        const char *pszDatumAuthority = poSRS->GetAuthorityName("DATUM");
+        const char *pszDatumCode = poSRS->GetAuthorityCode("DATUM");
+        if (pszDatumCode && pszDatumAuthority && EQUAL(pszDatumAuthority, "EPSG"))
+        {
+            return atoi(pszDatumCode);
+        }
+        return -1;
+    };
+
+    int nDatumEPSGCode = GetDatumCode(poSpatialRef);
+    if( nDatumEPSGCode < 0 )
+    {
+        const auto GetDatumCodeFromCRSIndirect = [&GetDatumCode](
+                    const OGRSpatialReference* poSRS, const char* pszNode)
+        {
+            const char* pszAuthorityName = poSRS->GetAuthorityName(pszNode);
+            const char* pszAuthorityCode = poSRS->GetAuthorityCode(pszNode);
+            if( pszAuthorityName && pszAuthorityCode )
+            {
+                OGRSpatialReference oSRSTmp;
+                if( oSRSTmp.SetFromUserInput(
+                        CPLSPrintf("%s:%s", pszAuthorityName, pszAuthorityCode)) == OGRERR_NONE )
+                {
+                    return GetDatumCode(&oSRSTmp);
+                }
+            }
+            return -1;
+        };
+
+        // When the CRS is built from WKT2 CRS string, the DATUM code will
+        // typically be absent from the CRS string.
+        // Try to get the AUTHORITY:CODE from the CRS to instanciate
+        // a temporary CRS and get its DATUM code.
+        nDatumEPSGCode = GetDatumCodeFromCRSIndirect(poSpatialRef, nullptr);
+        if( nDatumEPSGCode < 0 && !poSpatialRef->IsGeographic() )
+        {
+            // If there's no AUTHORITY:CODE on the CRS, then retry with its
+            // geographic CRS
+            nDatumEPSGCode = GetDatumCodeFromCRSIndirect(poSpatialRef, "GEOGCS");
+        }
     }
 
     /*-----------------------------------------------------------------
