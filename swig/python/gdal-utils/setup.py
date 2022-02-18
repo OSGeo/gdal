@@ -36,7 +36,7 @@ __readme_type__ = 'text/x-rst'
 package_root = '.'   # package sources are under this dir
 packages = find_packages(package_root)  # include all packages under package_root
 package_dir = {'': package_root}  # packages sources are under package_root
-scripts = sorted(glob('./scripts/*.py'), reverse=True) # command line scripts
+scripts = sorted(glob('./osgeo_utils/*.py'), reverse=True) # command line scripts
 
 def define_entry_points(scripts, entry_points=None):
     """
@@ -51,7 +51,7 @@ def define_entry_points(scripts, entry_points=None):
     console_scripts = []
     for f in scripts:
         name = Path(f).stem # 'gdal_edit' from 'gdal_edit.py'
-        console_scripts.append([f'{name} = scripts.{name}'])
+        console_scripts.append([f'{name} = scripts.{name}:main'])
     entry_points = {'console_scripts': console_scripts}
     return entry_points
 
