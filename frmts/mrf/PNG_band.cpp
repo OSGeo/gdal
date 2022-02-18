@@ -241,7 +241,7 @@ CPLErr PNG_Codec::CompressPNG(buf_mgr &dst, buf_mgr &src)
     int zlvl = img.quality / 10;
     if (0 == zlvl)
         zlvl = 1;
-        png_set_compression_level(pngp, zlvl);
+    png_set_compression_level(pngp, zlvl);
 
     // Custom strategy for zlib, set using the band option Z_STRATEGY
     if (deflate_flags & ZFLAG_SMASK)
