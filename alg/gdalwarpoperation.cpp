@@ -2923,6 +2923,21 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
         return CE_None;
     }
 
+    // For scenarios where warping is used as a "decoration", try to clamp
+    // source pixel coordinates to integer when very close.
+    const auto roundIfCloseEnough = [](double dfVal)
+    {
+        const double dfRounded = std::round(dfVal);
+        if( std::fabs(dfRounded - dfVal) < 1e-6 )
+            return dfRounded;
+        return dfVal;
+    };
+
+    dfMinXOut = roundIfCloseEnough(dfMinXOut);
+    dfMinYOut = roundIfCloseEnough(dfMinYOut);
+    dfMaxXOut = roundIfCloseEnough(dfMaxXOut);
+    dfMaxYOut = roundIfCloseEnough(dfMaxYOut);
+
 /* -------------------------------------------------------------------- */
 /*      How much of a window around our source pixel might we need      */
 /*      to collect data from based on the resampling kernel?  Even      */
@@ -2970,7 +2985,7 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
 #if DEBUG_VERBOSE
     CPLDebug(
         "WARP",
-        "dst=(%d,%d,%d,%d) raw src=(minx=%.8g,miny=%.8g,maxx=%.8g,maxy=%.8g)",
+        "dst=(%d,%d,%d,%d) raw src=(minx=%.18g,miny=%.18g,maxx=%.18g,maxy=%.18g)",
         nDstXOff, nDstYOff, nDstXSize, nDstYSize,
         dfMinXOut, dfMinYOut, dfMaxXOut, dfMaxYOut);
 #endif
