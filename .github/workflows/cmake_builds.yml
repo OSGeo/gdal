@@ -373,6 +373,9 @@ jobs:
       shell: bash -l {0}
       run:
         ${CONDA_PREFIX}/Scripts/clcache -s
+    - name: Show gdal.pc
+      shell: bash -l {0}
+      run: cat $GITHUB_WORKSPACE/build/gdal.pc
 
   build-windows-minimum:
     runs-on: windows-2022
@@ -408,6 +411,9 @@ jobs:
     - name: Build
       shell: bash -l {0}
       run: cmake --build $GITHUB_WORKSPACE/build --config Release -j 2
+    - name: Show gdal.pc
+      shell: bash -l {0}
+      run: cat $GITHUB_WORKSPACE/build/gdal.pc
 
   build-mac:
     runs-on: macOS-latest
