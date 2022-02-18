@@ -1,3 +1,11 @@
+if ((NOT WIN32) OR MINGW)
+    set(split_libs_default ON)
+else ()
+    set(split_libs_default OFF)
+endif ()
+option(GDAL_SPLIT_EXPORTED_LIBS "Split library path and name on export" ${split_libs_default})
+
+
 # Return a flat list of libs including target linking requirements.
 function(gdal_flatten_link_libraries _result)
     set(_libs "")
@@ -188,7 +196,9 @@ function(gdal_get_lflags _result)
         elseif(CMAKE_LINK_LIBRARY_FLAG STREQUAL "-l" AND _lib MATCHES "^-l")
             # use _lib
         elseif(EXISTS "${_lib}")
-            gdal_split_library_to_lflags(_lib _other "${_lib}")
+            if(GDAL_SPLIT_EXPORTED_LIBS)
+                gdal_split_library_to_lflags(_lib _other "${_lib}")
+            endif()
         else()
             set(_lib "${CMAKE_LINK_LIBRARY_FLAG}${_lib}")
         endif()
