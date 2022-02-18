@@ -64,7 +64,7 @@ Software using GDAL
 - `MicroImages TNT <http://www.microimages.com>`_  advanced software for geospatial analysis (Windows, Linux, Mac OS X and UNIX)
 - `Micromine  <http://www.micromine.com>`_  A mining software solution that uses GDAL for reading/writing various geospatial file formats.
 - `Mirone  <http://w3.ualg.pt/~jluis/mirone>`_  Matlab based package for geospatial, oceanographic and geophysical analysis of grids
-- `MultiSpec <https://engineering.purdue.edu/~biehl/MultiSpec/>` Application for interactively analyzing multispectral/hyperspectral image data.
+- `MultiSpec <https://engineering.purdue.edu/~biehl/MultiSpec/>`_ Application for interactively analyzing multispectral/hyperspectral image data.
 - `Mygeodata Converter  <http://mygeodata.eu/apps/converter/index_EN.html>`_  Online converter of GDAL raster and OGR vector formats
 - `NASA Ames Stereo Pipeline  <https://ti.arc.nasa.gov/tech/asr/groups/intelligent-robotics/ngt/stereo/>`_  Software for creating terrain models and ortho images from planetary stereo images.
 - `NASA WorldWind  <https://worldwind.arc.nasa.gov/>`_   Multiplatform virtual globe library to quickly and easily create interactive visualizations of 3D globes, map and geographical information.
