@@ -74,7 +74,7 @@ CPLStringList::CPLStringList( char **papszListIn, int bTakeOwnership ):
 
 /**
  * CPLStringList constructor.
- * 
+ *
  * The input list is copied.
  *
  * @param papszListIn the NULL terminated list of strings to ingest.
@@ -357,7 +357,10 @@ CPLStringList &CPLStringList::AddStringDirectly( char *pszNewString )
 CPLStringList &CPLStringList::AddString( const char *pszNewString )
 
 {
-    return AddStringDirectly( CPLStrdup( pszNewString ) );
+    char* pszDupString = VSI_STRDUP_VERBOSE(pszNewString);
+    if( pszDupString == nullptr )
+        return *this;
+    return AddStringDirectly(pszDupString);
 }
 
 /************************************************************************/
