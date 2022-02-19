@@ -38,6 +38,7 @@
 #include "tiffiop.h"
 #include <float.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define FAILED_FII    ((uint32_t) -1)
 
@@ -826,6 +827,10 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryDataAndRealloc(
         return TIFFReadDirEntryErrOk;
 }
 
+/* Caution: if raising that value, make sure int32 / uint32 overflows can't occur
+ * elsewhere */
+#define MAX_SIZE_TAG_DATA       2147483647U
+
 static enum TIFFReadDirEntryErr TIFFReadDirEntryArrayWithLimit(
         TIFF* tif, TIFFDirEntry* direntry, uint32_t* count, uint32_t desttypesize,
         void** value, uint64_t maxcount)
@@ -858,9 +863,9 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryArrayWithLimit(
          * in either the current data type or the dest data type.  This also
          * avoids problems with overflow of tmsize_t on 32bit systems.
          */
-	if ((uint64_t)(2147483647 / typesize) < target_count64)
+	if ((uint64_t)(MAX_SIZE_TAG_DATA / typesize) < target_count64)
 		return(TIFFReadDirEntryErrSizesan);
-	if ((uint64_t)(2147483647 / desttypesize) < target_count64)
+	if ((uint64_t)(MAX_SIZE_TAG_DATA / desttypesize) < target_count64)
 		return(TIFFReadDirEntryErrSizesan);
 
 	*count=(uint32_t)target_count64;
@@ -5062,18 +5067,28 @@ TIFFFetchNormalTag(TIFF* tif, TIFFDirEntry* dp, int recover)
 				err=TIFFReadDirEntryByteArray(tif,dp,&data);
 				if (err==TIFFReadDirEntryErrOk)
 				{
-					uint32_t mb = 0;
+					size_t mb = 0;
 					int n;
 					if (data != NULL)
 					{
-					    uint8_t* ma = data;
-					    while (mb<(uint32_t)dp->tdir_count)
-					    {
-					            if (*ma==0)
-					                    break;
-					            ma++;
-					            mb++;
-					    }
+						if (dp->tdir_count > 0 && data[dp->tdir_count - 1] == 0)
+						{
+							/* optimization: if data is known to be 0 terminated, we can use strlen() */
+							mb = strlen((const char*)data);
+						}
+						else
+						{
+							/* general case. equivalent to non-portable */
+							/* mb = strnlen((const char*)data, (uint32_t)dp->tdir_count); */
+							uint8_t* ma = data;
+							while (mb<(uint32_t)dp->tdir_count)
+							{
+								if (*ma==0)
+									break;
+								ma++;
+								mb++;
+							}
+						}
 					}
 					if (mb+1<(uint32_t)dp->tdir_count)
 						TIFFWarningExt(tif->tif_clientdata,module,"ASCII value for tag \"%s\" contains null byte in value; value incorrectly truncated during reading due to implementation limitations",fip->field_name);
@@ -5081,17 +5096,19 @@ TIFFFetchNormalTag(TIFF* tif, TIFFDirEntry* dp, int recover)
 					{
 						uint8_t* o;
 						TIFFWarningExt(tif->tif_clientdata,module,"ASCII value for tag \"%s\" does not end in null byte",fip->field_name);
-						if ((uint32_t)dp->tdir_count + 1 != dp->tdir_count + 1)
-							o=NULL;
-						else
-							o=_TIFFmalloc((uint32_t)dp->tdir_count + 1);
+						/* TIFFReadDirEntryArrayWithLimit() ensures this can't be larger than MAX_SIZE_TAG_DATA */
+						assert((uint32_t)dp->tdir_count + 1 == dp->tdir_count + 1);
+						o=_TIFFmalloc((uint32_t)dp->tdir_count + 1);
 						if (o==NULL)
 						{
 							if (data!=NULL)
 								_TIFFfree(data);
 							return(0);
 						}
-						_TIFFmemcpy(o,data,(uint32_t)dp->tdir_count);
+						if (dp->tdir_count > 0 )
+						{
+							_TIFFmemcpy(o,data,(uint32_t)dp->tdir_count);
+						}
 						o[(uint32_t)dp->tdir_count]=0;
 						if (data!=0)
 							_TIFFfree(data);
