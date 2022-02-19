@@ -6,6 +6,18 @@ endif ()
 option(GDAL_SPLIT_EXPORTED_LIBS "Split library path and name on export" ${split_libs_default})
 
 
+# Join the list items and add double quotes around items which contain whitespace
+function(gdal_join_and_quote _var)
+    set(string "")
+    foreach(item IN LISTS ${_var})
+        if("${item}" MATCHES " ")
+            set(item "\"${item}\"")
+        endif()
+        string(APPEND string " ${item}")
+    endforeach()
+    set(${_var} "${string}" PARENT_SCOPE)
+endfunction()
+
 # Return a flat list of libs including target linking requirements.
 function(gdal_flatten_link_libraries _result)
     set(_libs "")
@@ -210,7 +222,6 @@ function(gdal_get_lflags _result)
             list(APPEND _libs_out "${_lib}")
         endif()
     endwhile()
-    string(REPLACE ";" " " _libs_out "${_libs_out}")
     set(${_result} "${_libs_out}" PARENT_SCOPE)
 endfunction()
 
@@ -235,12 +246,15 @@ function(gdal_generate_config)
     endif()
     set(CONFIG_DATA "${CONFIG_PREFIX}/${GDAL_RESOURCE_PATH}")
     set(CONFIG_CFLAGS "-I${CONFIG_PREFIX}/${GDAL_INSTALL_INCLUDEDIR}")
+    gdal_join_and_quote(CONFIG_DATA)
+    gdal_join_and_quote(CONFIG_CFLAGS)
 
     get_property(target_lib_name TARGET "${arg_TARGET}" PROPERTY OUTPUT_NAME)
     set(CONFIG_LIBS "${CMAKE_LINK_LIBRARY_FLAG}${target_lib_name}")
     if(NOT CONFIG_PREFIX IN_LIST CMAKE_C_IMPLICIT_LINK_LIBRARIES)
-        set(CONFIG_LIBS "${CMAKE_LIBRARY_PATH_FLAG}${CONFIG_PREFIX}/${CMAKE_INSTALL_LIBDIR} ${CONFIG_LIBS}")
+        list(INSERT CONFIG_LIBS 0 "${CMAKE_LIBRARY_PATH_FLAG}${CONFIG_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
     endif()
+    gdal_join_and_quote(CONFIG_LIBS)
 
     get_property(libs GLOBAL PROPERTY "${arg_GLOBAL_PROPERTY}")
     if(NOT MSVC AND CMAKE_THREAD_LIBS_INIT)
@@ -251,11 +265,14 @@ function(gdal_generate_config)
         list(REMOVE_ITEM libs ${CMAKE_C_IMPLICIT_LINK_LIBRARIES})
     endif()
     gdal_get_lflags(CONFIG_DEP_LIBS ${libs})
+    gdal_join_and_quote(CONFIG_DEP_LIBS)
     if(NOT BUILD_SHARED_LIBS)
         # Make `--libs` simply work, even for static builds.
         string(APPEND CONFIG_LIBS " ${CONFIG_DEP_LIBS}")
         set(CONFIG_DEP_LIBS "")
     endif()
+
+    gdal_join_and_quote(CONFIG_PREFIX)
 
     configure_file("${GDAL_CMAKE_TEMPLATE_PATH}/gdal-config.in" "${arg_GDAL_CONFIG}" @ONLY)
     configure_file("${GDAL_CMAKE_TEMPLATE_PATH}/gdal.pc.in" "${arg_PKG_CONFIG}" @ONLY)
