@@ -22,13 +22,20 @@ ERRORS=0
 NTESTS=0
 
 UNAME=$(uname)
-case $UNAME in
+case "$UNAME,$2" in
   Darwin*)
     alias ldd="otool -L"
     export DYLD_LIBRARY_PATH=$prefix/lib
     ;;
   Linux*)
     export LD_LIBRARY_PATH=$prefix/lib
+    ;;
+  MINGW*,)
+    alias ldd="sh -c 'objdump -x \$1.exe' --"
+    LDD_SUBSTR="DLL Name: libgdal.dll"
+    export PATH="$prefix/bin:$PATH"
+    ;;
+  *,--static)
     ;;
   *)
     echo "no ldd equivalent found for UNAME=$UNAME"
@@ -39,7 +46,7 @@ check_ldd(){
   printf "Testing expected ldd output ... "
   NTESTS=$(($NTESTS + 1))
   LDD_OUTPUT=$(ldd ./$1 | grep libgdal)
-  LDD_SUBSTR=$LD_LIBRARY_PATH/libgdal.
+  LDD_SUBSTR=${LDD_SUBSTR:-$LD_LIBRARY_PATH/libgdal.}
   case "$LDD_OUTPUT" in
     *$LDD_SUBSTR*)
       echo "passed" ;;
