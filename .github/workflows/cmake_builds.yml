@@ -134,6 +134,7 @@ jobs:
     runs-on: windows-2022
     env:
       generator: MinGW Makefiles
+      cache-name: cmake-mingw64
     defaults:
       run:
         shell: msys2 {0}
@@ -157,6 +158,22 @@ jobs:
           git config --global core.autocrlf false
       - name: Checkout GDAL
         uses: actions/checkout@v2
+      - name: Setup cache
+        uses: actions/cache@v2
+        id: cache
+        with:
+          path: ${{ github.workspace }}\.ccache
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ github.base_ref }}${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-${{ env.cache-name }}-${{ github.base_ref }}
+            ${{ runner.os }}-${{ env.cache-name }}
+      - name: Configure ccache
+        run: |
+          echo CCACHE_BASEDIR=$PWD >> ${GITHUB_ENV}
+          echo CCACHE_DIR=$PWD/.ccache >> ${GITHUB_ENV}
+          echo CCACHE_MAXSIZE=250M >> ${GITHUB_ENV}
+          ccache -z
+        working-directory: ${{ github.workspace }}
       - name: populate JAVA_HOME
         run: |
           echo "JAVA_HOME=$JAVA_HOME_11_X64" >> ${GITHUB_ENV}
@@ -197,6 +214,8 @@ jobs:
       #  working-directory: ${{ github.workspace }}
       #  env:
       #    PROJ_LIB: "C:\\tools\\msys64\\mingw64\\share\\proj"
+      - name: ccache statistics
+        run: ccache -s
 
   build-windows-conda:
     runs-on: windows-2022
