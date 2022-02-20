@@ -45,13 +45,15 @@ class CADAttrib;
 class Matrix
 {
 public:
-              Matrix();
+              Matrix() = default;
     void      translate( const CADVector& vector );
     void      rotate( double rotation );
     void      scale( const CADVector& vector );
     CADVector multiply( const CADVector& vector ) const;
 protected:
-    std::array<double, 9> matrix;
+    std::array<double, 9> matrix = {{1.0, 0.0, 0.0,
+                                     0.0, 1.0, 0.0,
+                                     0.0, 0.0, 1.0}};
 };
 
 /**
