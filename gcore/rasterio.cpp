@@ -557,7 +557,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                 eDataType, nBandDataSize, nXSpan );
                     }
 
-                    iSrcOffset += nBlockXSize * nBandDataSize;
+                    iSrcOffset += static_cast<GPtrDiff_t>(nBlockXSize) * nBandDataSize;
                 }
 
                 iBufOffset = CPLUnsanitizedAdd<GPtrDiff_t>(iBufOffset, nXSpanSize);
