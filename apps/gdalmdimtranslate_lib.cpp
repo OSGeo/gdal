@@ -1499,6 +1499,12 @@ static bool TranslateInternal(std::shared_ptr<GDALGroup>& poDstRootGroup,
     }
     else
     {
+        if( poSrcRootGroup == nullptr )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                 "No multidimensional source dataset");
+            return false;
+        }
         return CopyGroup(oDimRemapper,
                          poDstRootGroup,
                          poDstRootGroup,
