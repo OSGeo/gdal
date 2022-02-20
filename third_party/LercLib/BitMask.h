@@ -37,8 +37,8 @@ NAMESPACE_LERC_START
   class BitMask
   {
   public:
-    BitMask() : m_pBits(nullptr), m_nCols(0), m_nRows(0)  {}
-    BitMask(int nCols, int nRows) : m_pBits(nullptr), m_nCols(0), m_nRows(0) { SetSize(nCols, nRows); }
+    BitMask() = default;
+    BitMask(int nCols, int nRows) { SetSize(nCols, nRows); }
     BitMask(const BitMask& src);
     virtual ~BitMask()                        { Clear(); }
 
@@ -70,8 +70,8 @@ NAMESPACE_LERC_START
     void Clear();
 
   private:
-    Byte*  m_pBits;
-    int    m_nCols, m_nRows;
+    Byte*  m_pBits = nullptr;
+    int    m_nCols = 0, m_nRows = 0;
   };
 NAMESPACE_LERC_END
 
