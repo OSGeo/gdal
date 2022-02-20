@@ -760,4 +760,18 @@ set(GDAL_USE_EXTERNAL_LIBS_OLD_CACHED
     ${GDAL_USE_EXTERNAL_LIBS}
     CACHE INTERNAL "Previous value of GDAL_USE_EXTERNAL_LIBS")
 
+# Emit a warning if users do not define the build type for non-multi config and that we can't find -O in CMAKE_CXX_FLAGS
+# This is not super idiomatic to warn this way, but this will help users transitionning from autoconf where the default
+# settings result in a -O2 build.
+get_property(_isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+if (NOT _isMultiConfig
+    AND ("${CMAKE_BUILD_TYPE}" STREQUAL "")
+    AND (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    AND (NOT ("${CMAKE_C_FLAGS}" MATCHES "-O") OR NOT ("${CMAKE_CXX_FLAGS}" MATCHES "-O")))
+  message(
+    WARNING
+      "CMAKE_BUILD_TYPE is not defined and CMAKE_C_FLAGS='${CMAKE_C_FLAGS}' and/or CMAKE_CXX_FLAGS='${CMAKE_CXX_FLAGS}' do not contain optimizing flags. Do not use in production! Using -DCMAKE_BUILD_TYPE=Release is suggested."
+    )
+endif ()
+
 # vim: ts=4 sw=4 sts=4 et
