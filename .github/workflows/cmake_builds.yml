@@ -185,7 +185,6 @@ jobs:
       - name: Install python dependencies for autotest
         run: |
           python -m pip install pytest-env
-      #  libxml2 disabled because currently causes a 'Imported target "LibXml2::LibXml2" includes non-existent path "/mingw64/include/libxml2" in its INTERFACE_INCLUDE_DIRECTORIES'
       # Disable mySQL since C:/mysql/lib/mysqlclient.lib (unrelated to msys) is found, which causes linking issues
       # Disable Python bindings because of 'ValueError: filename D:/a/gdal/gdal/swig/python/osgeo/__init__.py does not start with the input_base_dir D:/a/gdal/gdal/swig/python/osgeo/\' when running lib2to3
       # Set explicitly CMAKE_C|CXX_COMPILER otherwise C:/ProgramData/chocolatey/bin/gcc.exe would be used
@@ -201,7 +200,6 @@ jobs:
             -DCMAKE_PREFIX_PATH=/mingw64 \
             -DCMAKE_INSTALL_PREFIX=$PWD/install-gdal \
             "-DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD}" \
-            -DLIBXML2_INCLUDE_DIR=/mingw64/include -DGDAL_USE_LIBXML2:BOOL=OFF \
             -DGDAL_USE_MYSQL:BOOL=OFF \
             -DBUILD_PYTHON_BINDINGS:BOOL=OFF \
             -DBUILD_CSHARP_BINDINGS=ON
