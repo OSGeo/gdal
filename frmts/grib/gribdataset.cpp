@@ -2276,6 +2276,7 @@ GDALDataset *GRIBDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
             // the first GRIB band.
             poDS->SetGribMetaData(metaData);
 
+            // coverity[tainted_data]
             GRIBRasterBand gribBand(poDS, bandNr, psInv);
             if( psInv->GribVersion == 2 )
                 gribBand.FindPDSTemplate();
