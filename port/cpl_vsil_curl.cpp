@@ -125,6 +125,8 @@ int VSICurlUninstallReadCbk( VSILFILE* /* fp */ )
 #define ENABLE_DEBUG 1
 #define ENABLE_DEBUG_VERBOSE 0
 
+#define unchecked_curl_easy_setopt(handle,opt,param) CPL_IGNORE_RET_VAL(curl_easy_setopt(handle,opt,param))
+
 /***********************************************************ù************/
 /*                    VSICurlAuthParametersChanged()                    */
 /************************************************************************/
@@ -856,9 +858,9 @@ static size_t VSICurlDummyWriteFunc( void *, size_t , size_t , void * )
 
 void VSICURLResetHeaderAndWriterFunctions(CURL* hCurlHandle)
 {
-    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
                      VSICurlDummyWriteFunc);
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                      VSICurlDummyWriteFunc);
 }
 
@@ -929,33 +931,33 @@ retry:
     }
     else
     {
-        curl_easy_setopt(hCurlHandle, CURLOPT_NOBODY, 1);
-        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPGET, 0);
-        curl_easy_setopt(hCurlHandle, CURLOPT_HEADER, 1);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_NOBODY, 1);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPGET, 0);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HEADER, 1);
         osVerb = "HEAD";
     }
 
     if( !AllowAutomaticRedirection() )
-        curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
 
-    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
-    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
                      VSICurlHandleWriteFunc);
 
     // Bug with older curl versions (<=7.16.4) and FTP.
     // See http://curl.haxx.se/mail/lib-2007-08/0312.html
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                      VSICurlHandleWriteFunc);
 
     char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
     szCurlErrBuf[0] = '\0';
-    curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
     headers = VSICurlMergeHeaders(headers, GetCurlHeaders(osVerb, headers));
-    curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-    curl_easy_setopt(hCurlHandle, CURLOPT_FILETIME, 1);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FILETIME, 1);
 
     MultiPerform(hCurlMultiHandle, hCurlHandle);
 
@@ -1424,18 +1426,18 @@ retry:
         VSICurlSetOptions(hCurlHandle, osURL, m_papszHTTPOptions);
 
     if( !AllowAutomaticRedirection() )
-        curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
 
     VSICURLInitWriteFuncStruct(&sWriteFuncData,
                                reinterpret_cast<VSILFILE *>(this),
                                pfnReadCbk, pReadCbkUserData);
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                      VSICurlHandleWriteFunc);
 
     VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, nullptr, nullptr, nullptr);
-    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
-    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
                      VSICurlHandleWriteFunc);
     sWriteFuncHeaderData.bIsHTTP = STARTS_WITH(m_pszURL, "http");
     sWriteFuncHeaderData.nStartOffset = startOffset;
@@ -1462,19 +1464,19 @@ retry:
         osHeaderRange.Printf("Range: bytes=%s", rangeStr);
         // So it gets included in Azure signature
         headers = curl_slist_append(headers, osHeaderRange.c_str());
-        curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, nullptr);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, nullptr);
     }
     else
-        curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, rangeStr);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, rangeStr);
 
     char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
     szCurlErrBuf[0] = '\0';
-    curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
     headers = VSICurlMergeHeaders(headers, GetCurlHeaders("GET", headers));
-    curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-    curl_easy_setopt(hCurlHandle, CURLOPT_FILETIME, 1);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FILETIME, 1);
 
     MultiPerform(hCurlMultiHandle, hCurlHandle);
 
@@ -2005,7 +2007,7 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
 
         // As the multi-range request is likely not the first one, we don't
         // need to wait as we already know if pipelining is possible
-        // curl_easy_setopt(hCurlHandle, CURLOPT_PIPEWAIT, 1);
+        // unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_PIPEWAIT, 1);
 
         struct curl_slist* headers =
             VSICurlSetOptions(hCurlHandle, osURL, m_papszHTTPOptions);
@@ -2013,16 +2015,16 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
         VSICURLInitWriteFuncStruct(&asWriteFuncData[iRequest],
                                 reinterpret_cast<VSILFILE *>(this),
                                 pfnReadCbk, pReadCbkUserData);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA,
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA,
                          &asWriteFuncData[iRequest]);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                         VSICurlHandleWriteFunc);
 
         VSICURLInitWriteFuncStruct(&asWriteFuncHeaderData[iRequest],
                                    nullptr, nullptr, nullptr);
-        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA,
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA,
                          &asWriteFuncHeaderData[iRequest]);
-        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
                          VSICurlHandleWriteFunc);
         asWriteFuncHeaderData[iRequest].bIsHTTP = STARTS_WITH(m_pszURL, "http");
         asWriteFuncHeaderData[iRequest].nStartOffset = panOffsets[i];
@@ -2047,20 +2049,20 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
             char* pszRange = CPLStrdup(osHeaderRange);
             apszRanges.push_back(pszRange);
             headers = curl_slist_append(headers, pszRange);
-            curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, nullptr);
+            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, nullptr);
         }
         else
         {
             apszRanges.push_back(nullptr);
-            curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, rangeStr);
+            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, rangeStr);
         }
 
         asCurlErrors[iRequest].szCurlErrBuf[0] = '\0';
-        curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER,
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER,
                          &asCurlErrors[iRequest].szCurlErrBuf[0] );
 
         headers = VSICurlMergeHeaders(headers, GetCurlHeaders("GET", headers));
-        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
         aHeaders.push_back(headers);
         curl_multi_add_handle(hMultiHandle, hCurlHandle);
 
@@ -2242,13 +2244,13 @@ int VSICurlHandle::ReadMultiRangeSingleGet(
     VSICURLInitWriteFuncStruct(&sWriteFuncData,
                                reinterpret_cast<VSILFILE *>(this),
                                pfnReadCbk, pReadCbkUserData);
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                      VSICurlHandleWriteFunc);
 
     VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, nullptr, nullptr, nullptr);
-    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
-    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
                      VSICurlHandleWriteFunc);
     sWriteFuncHeaderData.bIsHTTP = STARTS_WITH(m_pszURL, "http");
     sWriteFuncHeaderData.bMultiRange = nMergedRanges > 1;
@@ -2270,13 +2272,13 @@ int VSICurlHandle::ReadMultiRangeSingleGet(
                      static_cast<GUIntBig>(nTotalReqSize), m_pszURL);
     }
 
-    curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, osRanges.c_str());
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, osRanges.c_str());
 
     char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
-    curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
     headers = VSICurlMergeHeaders(headers, GetCurlHeaders("GET", headers));
-    curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
     MultiPerform(hCurlMultiHandle, hCurlHandle);
 
@@ -3855,18 +3857,18 @@ char** VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
             // work, then try again with CURLOPT_DIRLISTONLY set.
             if( iTry == 1 )
             {
-                curl_easy_setopt(hCurlHandle, CURLOPT_DIRLISTONLY, 1);
+                unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_DIRLISTONLY, 1);
             }
 
             VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
-            curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
-            curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
+            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
+            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                              VSICurlHandleWriteFunc);
 
             char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
-            curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
+            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
-            curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
             MultiPerform(hCurlMultiHandle, hCurlHandle);
 
@@ -4016,18 +4018,18 @@ char** VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
         struct curl_slist* headers =
             VSICurlSetOptions(hCurlHandle, osDirname.c_str(), nullptr);
 
-        curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, nullptr);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, nullptr);
 
         WriteFuncStruct sWriteFuncData;
         VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                          VSICurlHandleWriteFunc);
 
         char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
-        curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
-        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
         MultiPerform(hCurlMultiHandle, hCurlHandle);
 
@@ -4596,20 +4598,20 @@ long CurlRequestHelper::perform(CURL* hCurlHandle,
                 VSICurlFilesystemHandlerBase *poFS,
                 IVSIS3LikeHandleHelper *poS3HandleHelper)
 {
-    curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
     poS3HandleHelper->ResetQueryParameters();
 
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                         VSICurlHandleWriteFunc);
 
-    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
-    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
                         VSICurlHandleWriteFunc);
 
     szCurlErrBuf[0] = '\0';
-    curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
     MultiPerform(poFS->GetCurlMultiHandleFor(poS3HandleHelper->GetURL()),
                     hCurlHandle);
@@ -5008,11 +5010,11 @@ struct curl_slist* VSICurlSetOptions(
         CPLHTTPSetOptions(hCurlHandle, pszURL, papszOptions));
 
     long option = CURLFTPMETHOD_SINGLECWD;
-    curl_easy_setopt(hCurlHandle, CURLOPT_FTP_FILEMETHOD, option);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FTP_FILEMETHOD, option);
 
     // ftp://ftp2.cits.rncan.gc.ca/pub/cantopo/250k_tif/
     // doesn't like EPSV command,
-    curl_easy_setopt(hCurlHandle, CURLOPT_FTP_USE_EPSV, 0);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FTP_USE_EPSV, 0);
 
     return headers;
 }

@@ -58,6 +58,8 @@ void VSIInstallADLSFileHandler( void )
 
 #define ENABLE_DEBUG 0
 
+#define unchecked_curl_easy_setopt(handle,opt,param) CPL_IGNORE_RET_VAL(curl_easy_setopt(handle,opt,param))
+
 namespace cpl {
 
 /************************************************************************/
@@ -550,7 +552,7 @@ bool VSIDIRADLS::IssueListDir()
         VSICurlSetOptions(hCurlHandle, poHandleHelper->GetURL(), nullptr);
     headers = VSICurlMergeHeaders(headers,
                             poHandleHelper->GetCurlHeaders("GET", headers));
-    curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
     CurlRequestHelper requestHelper;
     const long response_code =
@@ -732,9 +734,9 @@ int VSIADLSFSHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
 
         headers = VSICurlMergeHeaders(headers,
                                 poHandleHelper->GetCurlHeaders("HEAD", headers));
-        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-        curl_easy_setopt(hCurlHandle, CURLOPT_NOBODY, 1);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_NOBODY, 1);
 
         CurlRequestHelper requestHelper;
         const long response_code =
@@ -828,9 +830,9 @@ char** VSIADLSFSHandler::GetFileMetadata( const char* pszFilename,
 
         headers = VSICurlMergeHeaders(headers,
                                 poHandleHelper->GetCurlHeaders("HEAD", headers));
-        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-        curl_easy_setopt(hCurlHandle, CURLOPT_NOBODY, 1);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_NOBODY, 1);
 
         CurlRequestHelper requestHelper;
         const long response_code =
@@ -952,7 +954,7 @@ bool VSIADLSFSHandler::SetFileMetadata( const char * pszFilename,
         {
             poHandleHelper->AddQueryParameter("mode", CPLString(pszMode).tolower());
         }
-        curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "PATCH");
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "PATCH");
 
         struct curl_slist* headers = static_cast<struct curl_slist*>(
             CPLHTTPSetOptions(hCurlHandle,
@@ -1005,7 +1007,7 @@ bool VSIADLSFSHandler::SetFileMetadata( const char * pszFilename,
 
         headers = VSICurlMergeHeaders(headers,
                                 poHandleHelper->GetCurlHeaders("PATCH", headers));
-        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
         NetworkStatisticsLogger::LogPUT(0);
 
@@ -1302,7 +1304,7 @@ int VSIADLSFSHandler::Rename( const char *oldpath, const char *newpath )
         bRetry = false;
 
         CURL* hCurlHandle = curl_easy_init();
-        curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "PUT");
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "PUT");
 
         poHandleHelper->ResetQueryParameters();
         if( !osContinuation.empty() )
@@ -1318,7 +1320,7 @@ int VSIADLSFSHandler::Rename( const char *oldpath, const char *newpath )
         headers = curl_slist_append(headers, osRenameSource.c_str());
         headers = VSICurlMergeHeaders(headers,
                         poHandleHelper->GetCurlHeaders("PUT", headers));
-        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
         CurlRequestHelper requestHelper;
         const long response_code =
@@ -1437,7 +1439,7 @@ int VSIADLSFSHandler::MkdirInternal( const char *pszDirname, long nMode, bool bD
     {
         bRetry = false;
         CURL* hCurlHandle = curl_easy_init();
-        curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "PUT");
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "PUT");
 
         poHandleHelper->ResetQueryParameters();
         poHandleHelper->AddQueryParameter("resource",
@@ -1462,7 +1464,7 @@ int VSIADLSFSHandler::MkdirInternal( const char *pszDirname, long nMode, bool bD
 
         headers = VSICurlMergeHeaders(headers,
                         poHandleHelper->GetCurlHeaders("PUT", headers));
-        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
         CurlRequestHelper requestHelper;
         const long response_code =
@@ -1588,7 +1590,7 @@ int VSIADLSFSHandler::RmdirInternal( const char * pszDirname, bool bRecursive )
     {
         bRetry = false;
         CURL* hCurlHandle = curl_easy_init();
-        curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "DELETE");
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "DELETE");
 
         poHandleHelper->ResetQueryParameters();
         if( bIsFileSystem )
@@ -1755,7 +1757,7 @@ int VSIADLSFSHandler::CopyObject( const char *oldpath, const char *newpath,
     {
         bRetry = false;
         CURL* hCurlHandle = curl_easy_init();
-        curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "PUT");
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "PUT");
 
         struct curl_slist* headers = static_cast<struct curl_slist*>(
             CPLHTTPSetOptions(hCurlHandle,
@@ -1766,7 +1768,7 @@ int VSIADLSFSHandler::CopyObject( const char *oldpath, const char *newpath,
         headers = VSICurlSetContentTypeFromExt(headers, newpath);
         headers = VSICurlMergeHeaders(headers,
                         poAzHandleHelper->GetCurlHeaders("PUT", headers));
-        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
         CurlRequestHelper requestHelper;
         const long response_code =
@@ -1876,14 +1878,14 @@ bool VSIADLSFSHandler::UploadFile(const CPLString& osFilename,
                 CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(nPosition)));
         }
 
-        curl_easy_setopt(hCurlHandle, CURLOPT_UPLOAD, 1L);
-        curl_easy_setopt(hCurlHandle, CURLOPT_READFUNCTION,
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_UPLOAD, 1L);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_READFUNCTION,
                          PutData::ReadCallBackBuffer);
         PutData putData;
         putData.pabyData = static_cast<const GByte*>(pabyBuffer);
         putData.nOff = 0;
         putData.nTotalSize = nBufferSize;
-        curl_easy_setopt(hCurlHandle, CURLOPT_READDATA, &putData);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_READDATA, &putData);
 
         struct curl_slist* headers = static_cast<struct curl_slist*>(
             CPLHTTPSetOptions(hCurlHandle,
@@ -1897,7 +1899,7 @@ bool VSIADLSFSHandler::UploadFile(const CPLString& osFilename,
 
         if( event == Event::APPEND_DATA )
         {
-            curl_easy_setopt(hCurlHandle, CURLOPT_INFILESIZE,
+            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_INFILESIZE,
                              static_cast<int>(nBufferSize));
             // Disable "Expect: 100-continue" which doesn't hurt, but is not
             // needed
@@ -1908,15 +1910,15 @@ bool VSIADLSFSHandler::UploadFile(const CPLString& osFilename,
         }
         else
         {
-            curl_easy_setopt(hCurlHandle, CURLOPT_INFILESIZE, 0);
+            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_INFILESIZE, 0);
             headers = curl_slist_append(headers, "Content-Length: 0");
         }
 
         const char* pszVerb = (event == Event::CREATE_FILE) ? "PUT" : "PATCH";
-        curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, pszVerb);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, pszVerb);
         headers = VSICurlMergeHeaders(headers,
                         poHandleHelper->GetCurlHeaders(pszVerb, headers));
-        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
         CurlRequestHelper requestHelper;
         const long response_code =

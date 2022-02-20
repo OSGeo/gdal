@@ -58,6 +58,8 @@ void VSIInstallSwiftFileHandler( void )
 
 #define ENABLE_DEBUG 0
 
+#define unchecked_curl_easy_setopt(handle,opt,param) CPL_IGNORE_RET_VAL(curl_easy_setopt(handle,opt,param))
+
 namespace cpl {
 
 /************************************************************************/
@@ -607,27 +609,27 @@ char** VSISwiftFSHandler::GetFileList( const char *pszDirname,
             struct curl_slist* headers =
                 VSICurlSetOptions(hCurlHandle, poS3HandleHelper->GetURL(), nullptr);
             // Disable automatic redirection
-            curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0 );
+            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0 );
 
-            curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, nullptr);
+            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, nullptr);
 
             VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
-            curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
-            curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
+            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
+            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                             VSICurlHandleWriteFunc);
 
             WriteFuncStruct sWriteFuncHeaderData;
             VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, nullptr, nullptr, nullptr);
-            curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
-            curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
+            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
+            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
                             VSICurlHandleWriteFunc);
 
             char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
-            curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
+            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
             headers = VSICurlMergeHeaders(headers,
                                 poS3HandleHelper->GetCurlHeaders("GET", headers));
-            curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
             MultiPerform(hCurlMultiHandle, hCurlHandle);
 
