@@ -3467,7 +3467,7 @@ void PDFDataset::AddLayer(const char* pszLayerName)
             osNewLayerList.AddNameValue(CPLSPrintf("LAYER_%03d_NAME", i),
                                         osLayerList[/*2 * */ i] + strlen("LAYER_00_NAME="));
         }
-        osLayerList = osNewLayerList;
+        osLayerList = std::move(osNewLayerList);
     }
 
     char szFormatName[64];
