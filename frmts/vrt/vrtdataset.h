@@ -771,12 +771,7 @@ class CPL_DLL VRTDerivedRasterBand CPL_NON_FINAL: public VRTSourcedRasterBand
     char *pszFuncName;
     GDALDataType eSourceTransferType;
 
-    using PixelFuncSignature = std::function<CPLErr(void**, int, void*, int, int, GDALDataType, GDALDataType, int, int, CSLConstList)>;
-    struct PixelFunc
-    {
-        PixelFuncSignature oFunction = {};
-        CPLString osMetadata = "";
-    };
+    using PixelFunc = std::function<CPLErr(void**, int, void*, int, int, GDALDataType, GDALDataType, int, int, CSLConstList)>;
 
     VRTDerivedRasterBand( GDALDataset *poDS, int nBand );
     VRTDerivedRasterBand( GDALDataset *poDS, int nBand,
@@ -799,7 +794,7 @@ class CPL_DLL VRTDerivedRasterBand CPL_NON_FINAL: public VRTSourcedRasterBand
                                     GDALDerivedPixelFuncWithArgs pfnPixelFunc,
                                     const char *pszMetadata);
 
-    static PixelFunc* GetPixelFunction( const char *pszFuncName );
+    static std::pair<PixelFunc, CPLString>* GetPixelFunction( const char *pszFuncName );
 
     void SetPixelFunctionName( const char *pszFuncName );
     void SetSourceTransferType( GDALDataType eDataType );

@@ -52,7 +52,7 @@ using namespace GDALPy;
 #define GDAL_VRT_ENABLE_PYTHON_DEFAULT "TRUSTED_MODULES"
 #endif
 
-static std::map<CPLString, VRTDerivedRasterBand::PixelFunc> osMapPixelFunction;
+static std::map<CPLString, std::pair<VRTDerivedRasterBand::PixelFunc, CPLString>> osMapPixelFunction;
 
 /* Flags for getting buffers */
 #define PyBUF_WRITABLE 0x0001
@@ -338,7 +338,7 @@ VRTDerivedRasterBand::AddPixelFunction(
  * @return A derived band pixel function, or NULL if none have been
  * registered for pszFuncName.
  */
-VRTDerivedRasterBand::PixelFunc*
+std::pair<VRTDerivedRasterBand::PixelFunc, CPLString>*
 VRTDerivedRasterBand::GetPixelFunction( const char *pszFuncName )
 {
     if( pszFuncName == nullptr || pszFuncName[0] == '\0' )
@@ -931,7 +931,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     }
 
     /* ---- Get pixel function for band ---- */
-    PixelFunc* poPixelFunc = nullptr;
+    std::pair<PixelFunc, CPLString> *poPixelFunc = nullptr;
     std::vector<std::pair<CPLString, CPLString>> oAdditionalArgs;
 
     if( EQUAL(m_poPrivate->m_osLanguage, "C") )
@@ -946,9 +946,9 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             return CE_Failure;
         }
 
-        if (poPixelFunc->osMetadata != nullptr)
+        if (poPixelFunc->second != "")
         {
-            if ((GetPixelFunctionArguments(poPixelFunc->osMetadata,
+            if ((GetPixelFunctionArguments(poPixelFunc->second,
                                         oAdditionalArgs)) != CE_None)
             {
                 return CE_Failure;
@@ -1295,7 +1295,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             papszArgs = CSLSetNameValue(papszArgs, pszKey, pszValue);
         }
 
-        eErr = (poPixelFunc->oFunction)(static_cast<void **>( pBuffers ), nSources,
+        eErr = (poPixelFunc->first)(static_cast<void **>( pBuffers ), nSources,
                               pData, nBufXSize, nBufYSize,
                               eSrcType, eBufType, static_cast<int>(nPixelSpace),
                               static_cast<int>(nLineSpace),
