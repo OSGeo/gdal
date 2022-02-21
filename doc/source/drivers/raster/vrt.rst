@@ -904,9 +904,11 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - sum 2 or more raster bands. If the optional ``k`` parameter is provided then it is added to each element of the result.
    * - **nan**
      - = 1
+     - -
      - convert incoming ``NoData`` values to IEEE 754 ``Nan``. Works only when writing IEEE 754 floating point data types.
    * - **scale**
      - = 1
+     - -
      - perform scaling according to the ``offset`` and ``scale`` values of the raster band.
 
 Writing Pixel Functions
