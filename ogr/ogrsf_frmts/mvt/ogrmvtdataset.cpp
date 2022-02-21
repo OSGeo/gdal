@@ -4707,6 +4707,8 @@ static std::vector<GUInt32> GetReducedPrecisionGeometry(
                     {
                         if( bIsPoly )
                         {
+                            CPLAssert( poInRing );
+                            CPLAssert( poOutRing );
                             poInRing->addPoint( nX, nY );
                             poOutRing->addPoint( nReducedX, nReducedY );
                         }

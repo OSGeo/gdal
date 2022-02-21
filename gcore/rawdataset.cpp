@@ -1052,7 +1052,7 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         {
             vsi_l_offset nOffset = nImgOffset;
             if( nLineOffset >= 0 )
-                nOffset += nYOff * nLineOffset;
+                nOffset += nYOff * static_cast<vsi_l_offset>(nLineOffset);
             else
                 nOffset -= nYOff * static_cast<vsi_l_offset>(-nLineOffset);
 
@@ -1220,11 +1220,11 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                       static_cast<vsi_l_offset>(iLine * dfSrcYInc);
                 vsi_l_offset nOffset = nImgOffset;
                 if( nLineOffset >= 0 )
-                    nOffset += nLine * nLineOffset;
+                    nOffset += nLine * static_cast<vsi_l_offset>(nLineOffset);
                 else
                     nOffset -= nLine * static_cast<vsi_l_offset>(-nLineOffset);
                 if( nPixelOffset >= 0 )
-                    nOffset += nXOff * nPixelOffset;
+                    nOffset += nXOff * static_cast<vsi_l_offset>(nPixelOffset);
                 else
                     nOffset -= nXOff * static_cast<vsi_l_offset>(-nPixelOffset);
 
