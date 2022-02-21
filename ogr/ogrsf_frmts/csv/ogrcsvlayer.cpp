@@ -485,7 +485,11 @@ void OGRCSVLayer::BuildFeatureDefn( const char *pszNfdcGeomField,
 
                 eGeometryFormat = OGR_CSV_GEOM_AS_WKT;
                 panGeomFieldIndex[iField] = poFeatureDefn->GetGeomFieldCount();
-                OGRGeomFieldDefn oGeomFieldDefn(oField.GetNameRef(),
+                std::string osGeomColName;
+                if( bKeepGeomColumns )
+                    osGeomColName += "geom_";
+                osGeomColName += oField.GetNameRef();
+                OGRGeomFieldDefn oGeomFieldDefn(osGeomColName.c_str(),
                                                 wkbUnknown);
                 poFeatureDefn->AddGeomFieldDefn(&oGeomFieldDefn);
                 continue;
