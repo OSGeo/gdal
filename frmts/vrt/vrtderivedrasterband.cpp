@@ -289,7 +289,7 @@ GDALAddDerivedBandPixelFuncWithArgs(const char *pszFuncName,
         return CE_None;
     }
 
-    osMapPixelFunction[pszFuncName] = { pfnNewFunction, pszMetadata };
+    osMapPixelFunction[pszFuncName] = { pfnNewFunction, pszMetadata != nullptr ? pszMetadata : "" };
 
     return CE_None;
 }
