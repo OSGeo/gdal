@@ -693,6 +693,84 @@ bool OGRSQLiteBaseDataSource::SetSynchronous()
 }
 
 /************************************************************************/
+/*                              LoadExtensions()                        */
+/************************************************************************/
+
+void OGRSQLiteBaseDataSource::LoadExtensions()
+{
+    const char* pszExtensions = CPLGetConfigOption("OGR_SQLITE_LOAD_EXTENSIONS", nullptr);
+    if (pszExtensions != nullptr)
+    {
+#ifdef OGR_SQLITE_ALLOW_LOAD_EXTENSIONS
+        // Allow sqlite3_load_extension() (C API only)
+#ifdef SQLITE_DBCONFIG_ENABLE_LOAD_EXTENSION
+        int oldMode = 0;
+        if( sqlite3_db_config(hDB, SQLITE_DBCONFIG_ENABLE_LOAD_EXTENSION, -1, &oldMode) != SQLITE_OK )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot get initial value for SQLITE_DBCONFIG_ENABLE_LOAD_EXTENSION");
+            return;
+        }
+        CPLDebugOnly("SQLite",
+                     "Initial mode for SQLITE_DBCONFIG_ENABLE_LOAD_EXTENSION = %d",
+                     oldMode);
+        int newMode = 0;
+        if( oldMode != 1 &&
+            (sqlite3_db_config(hDB, SQLITE_DBCONFIG_ENABLE_LOAD_EXTENSION, 1, &newMode) != SQLITE_OK ||
+             newMode != 1) )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "SQLITE_DBCONFIG_ENABLE_LOAD_EXTENSION failed");
+            return;
+        }
+#endif
+        const CPLStringList aosExtensions(CSLTokenizeString2( pszExtensions, ",", 0 ));
+        bool bRestoreOldMode = true;
+        for( int i = 0; i < aosExtensions.size(); i++ )
+        {
+            if( EQUAL(aosExtensions[i], "ENABLE_SQL_LOAD_EXTENSION") )
+            {
+                if( sqlite3_enable_load_extension(hDB, 1) == SQLITE_OK )
+                {
+                    bRestoreOldMode = false;
+                }
+                else
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "sqlite3_enable_load_extension() failed");
+                }
+            }
+            else
+            {
+                char* pszErrMsg = nullptr;
+                if( sqlite3_load_extension(hDB, aosExtensions[i], nullptr, &pszErrMsg) != SQLITE_OK )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Cannot load extension %s: %s",
+                             aosExtensions[i],
+                             pszErrMsg ? pszErrMsg : "unknown reason");
+                }
+                sqlite3_free(pszErrMsg);
+            }
+        }
+        CPL_IGNORE_RET_VAL(bRestoreOldMode);
+#ifdef SQLITE_DBCONFIG_ENABLE_LOAD_EXTENSION
+        if( bRestoreOldMode && oldMode != 1 )
+        {
+            CPL_IGNORE_RET_VAL(sqlite3_db_config(
+                hDB, SQLITE_DBCONFIG_ENABLE_LOAD_EXTENSION, oldMode, nullptr));
+        }
+#endif
+#else
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "The OGR_SQLITE_LOAD_EXTENSIONS was specified at run time, "
+                 "but GDAL has been built without OGR_SQLITE_ALLOW_LOAD_EXTENSIONS. "
+                 "So extensions won't be loaded");
+#endif
+    }
+}
+
+/************************************************************************/
 /*                              SetCacheSize()                          */
 /************************************************************************/
 
@@ -1095,6 +1173,7 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, bool bRegisterOGR2SQLit
 
     SetCacheSize();
     SetSynchronous();
+    LoadExtensions();
 
     return TRUE;
 }

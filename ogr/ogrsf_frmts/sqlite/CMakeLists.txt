@@ -28,6 +28,11 @@ target_compile_definitions(ogr_SQLite PRIVATE -DHAVE_SQLITE)
 gdal_target_link_libraries(ogr_SQLite PRIVATE SQLite::SQLite3)
 gdal_target_link_libraries(ogr_SQLite PRIVATE PROJ::proj)
 
+option(OGR_SQLITE_ALLOW_LOAD_EXTENSIONS "Whether SQLite extension loading is enabled through the OGR_SQLITE_LOAD_EXTENSIONS configuration option" ON)
+if (OGR_SQLITE_ALLOW_LOAD_EXTENSIONS)
+  target_compile_definitions(ogr_SQLite PRIVATE -DOGR_SQLITE_ALLOW_LOAD_EXTENSIONS)
+endif()
+
 if (GDAL_USE_PCRE2)
   target_compile_definitions(ogr_SQLite PRIVATE -DHAVE_PCRE2)
   gdal_target_link_libraries(ogr_SQLite PRIVATE PCRE2::PCRE2)
@@ -68,3 +73,15 @@ if (GDAL_USE_SPATIALITE)
     target_compile_definitions(test_load_virtual_ogr PRIVATE -DSPATIALITE_AMALGAMATION)
   endif ()
 endif ()
+
+# Test sqlite3 extension
+add_library(my_test_sqlite3_ext MODULE my_test_sqlite3_ext.c)
+gdal_standard_includes(my_test_sqlite3_ext)
+get_target_property(PLUGIN_OUTPUT_DIR ${GDAL_LIB_TARGET_NAME} PLUGIN_OUTPUT_DIR)
+set_target_properties(my_test_sqlite3_ext
+                      PROPERTIES
+                      PREFIX ""
+                      LIBRARY_OUTPUT_DIRECTORY ${PLUGIN_OUTPUT_DIR}
+                      SKIP_BUILD_RPATH YES
+                      )
+target_link_libraries(my_test_sqlite3_ext PRIVATE SQLite::SQLite3)
