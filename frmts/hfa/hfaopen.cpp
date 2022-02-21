@@ -3964,6 +3964,7 @@ static const char *const apszDatumMap[] = {
     "WGS 84", "WGS_1984",
     "WGS 1972", "WGS_1972",
     "GDA94", "Geocentric_Datum_of_Australia_1994",
+    "Pulkovo 1942", "Pulkovo_1942",
     nullptr, nullptr
 };
 
