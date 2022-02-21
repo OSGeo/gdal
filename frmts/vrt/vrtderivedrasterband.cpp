@@ -245,13 +245,16 @@ GDALAddDerivedBandPixelFunc( const char *pszFuncName,
       return CE_None;
     }
 
-    osMapPixelFunction[pszFuncName] = [pfnNewFunction](void **papoSources, int nSources, void *pData,
+    osMapPixelFunction[pszFuncName] = {
+        [pfnNewFunction](void **papoSources, int nSources, void *pData,
                                          int nBufXSize, int nBufYSize,
                                          GDALDataType eSrcType, GDALDataType eBufType,
                                          int nPixelSpace, int nLineSpace, CSLConstList papszFunctionArgs) {
-        (void) papszFunctionArgs;
-        return pfnNewFunction(papoSources, nSources, pData, nBufXSize, nBufYSize,
-                              eSrcType, eBufType, nPixelSpace, nLineSpace);
+            (void) papszFunctionArgs;
+            return pfnNewFunction(papoSources, nSources, pData, nBufXSize, nBufYSize,
+                                eSrcType, eBufType, nPixelSpace, nLineSpace);
+        },
+        ""
     };
 
     return CE_None;
@@ -286,9 +289,7 @@ GDALAddDerivedBandPixelFuncWithArgs(const char *pszFuncName,
         return CE_None;
     }
 
-    (void) pszMetadata;
-
-    osMapPixelFunction[pszFuncName] = pfnNewFunction;
+    osMapPixelFunction[pszFuncName] = { pfnNewFunction, pszMetadata };
 
     return CE_None;
 }
@@ -743,6 +744,73 @@ bool VRTDerivedRasterBand::InitializePython()
     return true;
 }
 
+CPLErr
+VRTDerivedRasterBand::GetPixelFunctionArguments(
+  const CPLString& osMetadata,
+  std::vector<std::pair<CPLString, CPLString>>& oAdditionalArgs)
+{
+
+    CPLXMLNode* oArgs = CPLParseXMLString(osMetadata);
+    if (oArgs != nullptr && oArgs->eType == CXT_Element &&
+        !strncmp(oArgs->pszValue,
+                 "PixelFunctionArgumentsList",
+                 strlen("PixelFunctionArgumentsList")))
+    {
+        for (CPLXMLNode* psIter = oArgs->psChild; psIter != nullptr;
+             psIter = psIter->psNext)
+        {
+            if (psIter->eType == CXT_Element &&
+                !strncmp(psIter->pszValue, "Argument", strlen("Argument")))
+            {
+                CPLString szName, szType, szValue;
+                auto pszName = CPLGetXMLValue(psIter, "name", nullptr);
+                if (pszName != nullptr)
+                    szName = pszName;
+                auto pszType = CPLGetXMLValue(psIter, "type", nullptr);
+                if (pszType != nullptr)
+                    szType = pszType;
+                auto pszValue = CPLGetXMLValue(psIter, "value", nullptr);
+                if (pszValue != nullptr)
+                    szValue = pszValue;
+                if (szType == "constant" && szValue != "" && szName != "")
+                    oAdditionalArgs.push_back(
+                      std::pair<CPLString, CPLString>(szName, szValue));
+                if (szType == "builtin")
+                {
+                    double dfVal;
+                    int success;
+                    if (szValue == "NoData")
+                        dfVal = this->GetNoDataValue(&success);
+                    else if (szValue == "scale")
+                        dfVal = this->GetScale(&success);
+                    else if (szValue == "offset")
+                        dfVal = this->GetOffset(&success);
+                    else
+                    {
+                        CPLError(CE_Failure,
+                                 CPLE_NotSupported,
+                                 "PixelFunction builtin %s not supported",
+                                 szValue.c_str());
+                        return CE_Failure;
+                    }
+                    // Should we signal the user that he is using a builtin
+                    // that depends on a value that is not set on the raster?
+                    // Maybe we should allow generalized use of scale/offset
+                    // even if they are left with their default 1/0 values
+                    oAdditionalArgs.push_back(std::pair<CPLString, CPLString>(
+                      szValue, CPLSPrintf("%lf", dfVal)));
+                    CPLDebug("VRT", "Added builtin pixel function argument %s = %s (%s)",
+                           szValue.c_str(),
+                           CPLSPrintf("%lf", dfVal),
+                           success ? "value set" : "value undefined");
+                }
+            }
+        }
+    }
+
+    return CE_None;
+}
+
 /************************************************************************/
 /*                             IRasterIO()                              */
 /************************************************************************/
@@ -864,6 +932,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
     /* ---- Get pixel function for band ---- */
     PixelFunc* poPixelFunc = nullptr;
+    std::vector<std::pair<CPLString, CPLString>> oAdditionalArgs;
 
     if( EQUAL(m_poPrivate->m_osLanguage, "C") )
     {
@@ -875,6 +944,15 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     "Derived band pixel function '%s' not registered.",
                     this->pszFuncName) ;
             return CE_Failure;
+        }
+
+        if (poPixelFunc->osMetadata != nullptr)
+        {
+            if ((GetPixelFunctionArguments(poPixelFunc->osMetadata,
+                                        oAdditionalArgs)) != CE_None)
+            {
+                return CE_Failure;
+            }
         }
     }
 
@@ -1208,13 +1286,16 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     {
         char **papszArgs = nullptr;
 
-        for (const auto &oArg : m_poPrivate->m_oFunctionArgs) {
+        oAdditionalArgs.insert(oAdditionalArgs.end(),
+            m_poPrivate->m_oFunctionArgs.begin(), m_poPrivate->m_oFunctionArgs.end());
+        for (const auto& oArg : oAdditionalArgs)
+        {
             const char *pszKey = oArg.first.c_str();
             const char *pszValue = oArg.second.c_str();
             papszArgs = CSLSetNameValue(papszArgs, pszKey, pszValue);
         }
 
-        eErr = (*poPixelFunc)(static_cast<void **>( pBuffers ), nSources,
+        eErr = (poPixelFunc->oFunction)(static_cast<void **>( pBuffers ), nSources,
                               pData, nBufXSize, nBufYSize,
                               eSrcType, eBufType, static_cast<int>(nPixelSpace),
                               static_cast<int>(nLineSpace),

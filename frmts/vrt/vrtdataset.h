@@ -761,6 +761,9 @@ class CPL_DLL VRTDerivedRasterBand CPL_NON_FINAL: public VRTSourcedRasterBand
 {
     VRTDerivedRasterBandPrivateData* m_poPrivate;
     bool InitializePython();
+    CPLErr GetPixelFunctionArguments(
+      const CPLString&,
+      std::vector<std::pair<CPLString, CPLString>> &);
 
     CPL_DISALLOW_COPY_ASSIGN(VRTDerivedRasterBand)
 
@@ -768,7 +771,12 @@ class CPL_DLL VRTDerivedRasterBand CPL_NON_FINAL: public VRTSourcedRasterBand
     char *pszFuncName;
     GDALDataType eSourceTransferType;
 
-    using PixelFunc = std::function<CPLErr(void**, int, void*, int, int, GDALDataType, GDALDataType, int, int, CSLConstList)>;
+    using PixelFuncSignature = std::function<CPLErr(void**, int, void*, int, int, GDALDataType, GDALDataType, int, int, CSLConstList)>;
+    struct PixelFunc
+    {
+        PixelFuncSignature oFunction = {};
+        CPLString osMetadata = "";
+    };
 
     VRTDerivedRasterBand( GDALDataset *poDS, int nBand );
     VRTDerivedRasterBand( GDALDataset *poDS, int nBand,
