@@ -58,6 +58,8 @@ void VSIInstallAzureFileHandler( void )
 
 #define ENABLE_DEBUG 0
 
+#define unchecked_curl_easy_setopt(handle,opt,param) CPL_IGNORE_RET_VAL(curl_easy_setopt(handle,opt,param))
+
 namespace cpl {
 
 const char GDAL_MARKER_FOR_DIR[] = ".gdal_marker_for_dir";
@@ -378,7 +380,7 @@ bool VSIDIRAz::IssueListDir()
 
     headers = VSICurlMergeHeaders(headers,
                             poHandleHelper->GetCurlHeaders("GET", headers));
-    curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
     CurlRequestHelper requestHelper;
     const long response_code =
@@ -697,7 +699,7 @@ char** VSIAzureFSHandler::GetFileMetadata( const char* pszFilename,
 
         headers = VSICurlMergeHeaders(headers,
                                 poHandleHelper->GetCurlHeaders("GET", headers));
-        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
         CurlRequestHelper requestHelper;
         const long response_code =
@@ -867,10 +869,10 @@ bool VSIAzureFSHandler::SetFileMetadata( const char * pszFilename,
         else
             poHandleHelper->AddQueryParameter("comp", "tags");
 
-        curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "PUT");
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "PUT");
         if( !osXML.empty() )
         {
-            curl_easy_setopt(hCurlHandle, CURLOPT_POSTFIELDS, osXML.c_str() );
+            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_POSTFIELDS, osXML.c_str() );
         }
 
         struct curl_slist* headers = static_cast<struct curl_slist*>(
@@ -912,7 +914,7 @@ bool VSIAzureFSHandler::SetFileMetadata( const char * pszFilename,
             headers = VSICurlMergeHeaders(headers,
                                     poHandleHelper->GetCurlHeaders("PUT", headers));
         }
-        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
         NetworkStatisticsLogger::LogPUT(osXML.size());
 
@@ -1111,9 +1113,9 @@ bool VSIAzureWriteHandle::SendInternal(bool bInitOnly, bool bIsLastBlock)
             m_poHandleHelper->AddQueryParameter("comp", "appendblock");
         }
 
-        curl_easy_setopt(hCurlHandle, CURLOPT_UPLOAD, 1L);
-        curl_easy_setopt(hCurlHandle, CURLOPT_READFUNCTION, ReadCallBackBuffer);
-        curl_easy_setopt(hCurlHandle, CURLOPT_READDATA,
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_UPLOAD, 1L);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_READFUNCTION, ReadCallBackBuffer);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_READDATA,
                          static_cast<VSIAppendWriteHandle*>(this));
 
         struct curl_slist* headers = static_cast<struct curl_slist*>(
@@ -1127,7 +1129,7 @@ bool VSIAzureWriteHandle::SendInternal(bool bInitOnly, bool bIsLastBlock)
         CPLString osContentLength; // leave it in this scope
         if( bSingleBlock )
         {
-            curl_easy_setopt(hCurlHandle, CURLOPT_INFILESIZE, m_nBufferOff);
+            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_INFILESIZE, m_nBufferOff);
             if( m_nBufferOff )
                 headers = curl_slist_append(headers, "Expect: 100-continue");
             osContentLength.Printf("Content-Length: %d", m_nBufferOff);
@@ -1136,13 +1138,13 @@ bool VSIAzureWriteHandle::SendInternal(bool bInitOnly, bool bIsLastBlock)
         }
         else if( bInitOnly )
         {
-            curl_easy_setopt(hCurlHandle, CURLOPT_INFILESIZE, 0);
+            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_INFILESIZE, 0);
             headers = curl_slist_append(headers, "Content-Length: 0");
             headers = curl_slist_append(headers, "x-ms-blob-type: AppendBlob");
         }
         else
         {
-            curl_easy_setopt(hCurlHandle, CURLOPT_INFILESIZE, m_nBufferOff);
+            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_INFILESIZE, m_nBufferOff);
             osContentLength.Printf("Content-Length: %d", m_nBufferOff);
             headers = curl_slist_append(headers, osContentLength.c_str());
             headers = curl_slist_append(headers, "x-ms-blob-type: AppendBlob");
@@ -1154,7 +1156,7 @@ bool VSIAzureWriteHandle::SendInternal(bool bInitOnly, bool bIsLastBlock)
 
         headers = VSICurlMergeHeaders(headers,
                         m_poHandleHelper->GetCurlHeaders("PUT", headers));
-        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
         CurlRequestHelper requestHelper;
         const long response_code =
@@ -1496,7 +1498,7 @@ int VSIAzureFSHandler::CopyObject( const char *oldpath, const char *newpath,
     {
         bRetry = false;
         CURL* hCurlHandle = curl_easy_init();
-        curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "PUT");
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "PUT");
 
         struct curl_slist* headers = static_cast<struct curl_slist*>(
             CPLHTTPSetOptions(hCurlHandle,
@@ -1507,7 +1509,7 @@ int VSIAzureFSHandler::CopyObject( const char *oldpath, const char *newpath,
         headers = curl_slist_append(headers, "Content-Length: 0");
         headers = VSICurlMergeHeaders(headers,
                         poS3HandleHelper->GetCurlHeaders("PUT", headers));
-        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
         CurlRequestHelper requestHelper;
         const long response_code =
@@ -1599,15 +1601,15 @@ CPLString VSIAzureFSHandler::PutBlock(const CPLString& osFilename,
         poS3HandleHelper->AddQueryParameter("blockid", osBlockId);
 
         CURL* hCurlHandle = curl_easy_init();
-        curl_easy_setopt(hCurlHandle, CURLOPT_UPLOAD, 1L);
-        curl_easy_setopt(hCurlHandle, CURLOPT_READFUNCTION,
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_UPLOAD, 1L);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_READFUNCTION,
                          PutData::ReadCallBackBuffer);
         PutData putData;
         putData.pabyData = static_cast<const GByte*>(pabyBuffer);
         putData.nOff = 0;
         putData.nTotalSize = nBufferSize;
-        curl_easy_setopt(hCurlHandle, CURLOPT_READDATA, &putData);
-        curl_easy_setopt(hCurlHandle, CURLOPT_INFILESIZE, nBufferSize);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_READDATA, &putData);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_INFILESIZE, nBufferSize);
 
         struct curl_slist* headers = static_cast<struct curl_slist*>(
             CPLHTTPSetOptions(hCurlHandle,
@@ -1723,13 +1725,13 @@ bool VSIAzureFSHandler::PutBlockList(const CPLString& osFilename,
         putData.nTotalSize = osXML.size();
 
         CURL* hCurlHandle = curl_easy_init();
-        curl_easy_setopt(hCurlHandle, CURLOPT_UPLOAD, 1L);
-        curl_easy_setopt(hCurlHandle, CURLOPT_READFUNCTION,
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_UPLOAD, 1L);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_READFUNCTION,
                          PutData::ReadCallBackBuffer);
-        curl_easy_setopt(hCurlHandle, CURLOPT_READDATA, &putData);
-        curl_easy_setopt(hCurlHandle, CURLOPT_INFILESIZE,
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_READDATA, &putData);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_INFILESIZE,
                         static_cast<int>(osXML.size()));
-        curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "PUT");
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "PUT");
 
         struct curl_slist* headers = static_cast<struct curl_slist*>(
             CPLHTTPSetOptions(hCurlHandle,

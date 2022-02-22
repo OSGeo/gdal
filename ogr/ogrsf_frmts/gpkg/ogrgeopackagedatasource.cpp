@@ -1717,6 +1717,8 @@ void GDALGeoPackageDataset::FixupWrongRTreeTrigger()
     auto oResult = SQLQuery(hDB,
         "SELECT name, sql FROM sqlite_master WHERE type = 'trigger' AND "
         "NAME LIKE 'rtree_%_update3' AND sql LIKE '% AFTER UPDATE OF % ON %'");
+    if( oResult == nullptr )
+        return;
     if( oResult->RowCount() > 0 )
     {
         CPLDebug("GPKG", "Fixing incorrect trigger(s) related to RTree");
@@ -1778,6 +1780,8 @@ void GDALGeoPackageDataset::FixupWrongMedataReferenceColumnNameUpdate()
         "SELECT sql FROM sqlite_master WHERE type = 'trigger' AND "
         "NAME ='gpkg_metadata_reference_column_name_update' AND "
         "sql LIKE '%column_nameIS%'");
+    if( oResult == nullptr )
+        return;
     if( oResult->RowCount() == 1 )
     {
         CPLDebug("GPKG", "Fixing incorrect trigger gpkg_metadata_reference_column_name_update");

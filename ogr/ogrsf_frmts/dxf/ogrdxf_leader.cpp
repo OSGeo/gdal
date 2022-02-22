@@ -302,11 +302,11 @@ struct DXFMLEADERVertex {
 };
 
 struct DXFMLEADERLeader {
-    double                   dfLandingX;
-    double                   dfLandingY;
-    double                   dfDoglegVectorX;
-    double                   dfDoglegVectorY;
-    double                   dfDoglegLength;
+    double                   dfLandingX = 0;
+    double                   dfLandingY = 0;
+    double                   dfDoglegVectorX = 0;
+    double                   dfDoglegVectorY = 0;
+    double                   dfDoglegLength = 0;
     std::vector<std::pair<DXFTriple, DXFTriple>> aoDoglegBreaks;
     std::vector<std::vector<DXFMLEADERVertex>> aaoLeaderLines;
 };
@@ -526,7 +526,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
             {
               case 303:
                 nSection = MLS_CONTEXT_DATA;
-                aoLeaders.push_back( oLeader );
+                aoLeaders.emplace_back( std::move(oLeader) );
                 oLeader = DXFMLEADERLeader();
                 break;
 
@@ -580,8 +580,8 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
             {
               case 305:
                 nSection = MLS_LEADER;
-                oLeader.aaoLeaderLines.push_back( oLeaderLine );
-                oLeaderLine.clear();
+                oLeader.aaoLeaderLines.emplace_back( std::move(oLeaderLine) );
+                oLeaderLine = std::vector<DXFMLEADERVertex>();
                 break;
 
               case 10:
@@ -843,7 +843,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
             poBlockFeature = InsertBlockReference( osBlockName,
                 oBlockTransformer, poBlockFeature );
 
-            if( !oBlockAttributes.empty() && 
+            if( !oBlockAttributes.empty() &&
                 poOverallFeature->GetFieldIndex( "BlockAttributes" ) != -1 )
             {
                 std::vector<char *> apszAttribs;

@@ -2235,27 +2235,11 @@ GDALDataset *GRIBDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
         }
         psInv->start += nOffsetFirstMessage;
 
-        bool bNewArray = false;
-        if( osElement.empty() )
-        {
-            bNewArray = true;
-        }
-        else
-        {
-            if( osElement != psInv->element ||
-                osShortFstLevel != psInv->shortFstLevel ||
-                !((dfRefTime == psInv->refTime && dfForecastTime != psInv->foreSec) ||
-                  (dfRefTime != psInv->refTime && dfForecastTime == psInv->foreSec)) )
-            {
-                bNewArray = true;
-            }
-            else
-            {
-                poArray->ExtendTimeDim(psInv->start, psInv->subgNum, psInv->validTime);
-            }
-        }
-
-        if (bNewArray)
+        if( poArray == nullptr ||
+            osElement != psInv->element ||
+            osShortFstLevel != psInv->shortFstLevel ||
+            !((dfRefTime == psInv->refTime && dfForecastTime != psInv->foreSec) ||
+              (dfRefTime != psInv->refTime && dfForecastTime == psInv->foreSec)) )
         {
             if( poArray)
             {
@@ -2292,6 +2276,7 @@ GDALDataset *GRIBDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
             // the first GRIB band.
             poDS->SetGribMetaData(metaData);
 
+            // coverity[tainted_data]
             GRIBRasterBand gribBand(poDS, bandNr, psInv);
             if( psInv->GribVersion == 2 )
                 gribBand.FindPDSTemplate();
@@ -2315,6 +2300,10 @@ GDALDataset *GRIBDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
 
             MetaFree(metaData);
             delete metaData;
+        }
+        else
+        {
+            poArray->ExtendTimeDim(psInv->start, psInv->subgNum, psInv->validTime);
         }
     }
 

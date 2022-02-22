@@ -1807,7 +1807,7 @@ int GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
             eErr = -1;
 
         panOffsets[iLine] +=
-            (nXOff + nYOffsetInBlock * nBlockXSize) * nSrcPixelSize;
+            (nXOff + static_cast<vsi_l_offset>(nYOffsetInBlock) * nBlockXSize) * nSrcPixelSize;
         panSizes[iLine] = nReqXSize * nSrcPixelSize;
     }
 
@@ -4046,7 +4046,7 @@ int GTiffDataset::DirectIO( GDALRWFlag eRWFlag,
             eErr = -1;
 
         panOffsets[iLine] +=
-            (nXOff + nYOffsetInBlock * m_nBlockXSize) * nSrcPixelSize;
+            (nXOff + static_cast<vsi_l_offset>(nYOffsetInBlock) * m_nBlockXSize) * nSrcPixelSize;
         panSizes[iLine] = nReqXSize * nSrcPixelSize;
     }
 
@@ -4816,7 +4816,7 @@ int GTiffRasterBand::IGetDataCoverageStatus( int nXOff, int nYOff,
                     (iY + 1) * nBlockYSize;
 
                 nPixelsData +=
-                    (std::min( nXBlockRight, nXOff + nXSize ) -
+                    (static_cast<GIntBig>(std::min( nXBlockRight, nXOff + nXSize )) -
                      std::max( iX * nBlockXSize, nXOff )) *
                     (std::min( nYBlockBottom, nYOff + nYSize ) -
                      std::max( iY * nBlockYSize, nYOff ));

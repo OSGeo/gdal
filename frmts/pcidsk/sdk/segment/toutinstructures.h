@@ -112,9 +112,8 @@ namespace PCIDSK
          * Copy constructor.
          * @param oSI the SRITInfo_t to copy
          */
-        SRITInfo_t(const SRITInfo_t& oSI)
+        SRITInfo_t(const SRITInfo_t& oSI): SRITInfo_t()
         {
-            OrbitPtr = nullptr;
             Copy(oSI);
         }
 

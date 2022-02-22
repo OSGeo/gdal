@@ -1088,16 +1088,6 @@ def nb_data_bands(dataset: gdal.Dataset) -> int:
         return dataset.RasterCount - 1
     return dataset.RasterCount
 
-__gdal_options_initialized__ = False
-
-def initialize_gdal_options(options):
-    # Needed to set cache_max and any other options not passed via environment.
-    # Do not call gdal.GetCacheMax before gdal.GeneralCmdLineProcessor below.
-    global __gdal_options_initialized__
-    if options.mpi and not __gdal_options_initialized__:
-        gdal.GeneralCmdLineProcessor(options.orig_argv)
-        __gdal_options_initialized__ = True
-
 def create_base_tile(tile_job_info: 'TileJobInfo', tile_detail: 'TileDetail') -> None:
 
     dataBandsCount = tile_job_info.nb_data_bands
@@ -1105,8 +1095,6 @@ def create_base_tile(tile_job_info: 'TileJobInfo', tile_detail: 'TileDetail') ->
     tileext = tile_job_info.tile_extension
     tile_size = tile_job_info.tile_size
     options = tile_job_info.options
-
-    initialize_gdal_options(options)
 
     tilebands = dataBandsCount + 1
 
@@ -1207,8 +1195,6 @@ def create_base_tile(tile_job_info: 'TileJobInfo', tile_detail: 'TileDetail') ->
 
 def create_overview_tile(base_tz: int, base_tiles: List[Tuple[int, int]], output_folder: str, tile_job_info: 'TileJobInfo', options: Options):
     """ Generating an overview tile from no more than 4 underlying tiles(base tiles) """
-
-    initialize_gdal_options(options)
 
     mem_driver = gdal.GetDriverByName('MEM')
     tile_driver = tile_job_info.tile_driver
@@ -3229,22 +3215,13 @@ def single_threaded_tiling(input_file: str, output_folder: str, options: Options
     shutil.rmtree(os.path.dirname(conf.src_file))
 
 
-def multi_threaded_tiling(input_file: str, output_folder: str, options: Options) -> None:
+def multi_threaded_tiling(input_file: str, output_folder: str, options: Options, pool) -> None:
     nb_processes = options.nb_processes or 1
 
     gdal_cache_max = gdal.GetCacheMax()
 
-    if options.mpi:
-        from mpi4py.futures import MPIPoolExecutor
-        from mpi4py import MPI
-        # No way to find number of ranks per host so
-        # must assume user has set cache max correctly.
-        # initialize_gdal_options must be called by tasks because
-        # passing initializer to MPIPoolExecutor requires mpi4py 3.1.0
-        # which was only released in August 2021 so too new to require.
-        nb_processes = MPI.COMM_WORLD.Get_size()
-        pool = MPIPoolExecutor(max_workers=nb_processes)
-        # copy interface of multiprocessing.Pool
+    if pool is not None:
+        # copy interface of multiprocessing.Pool to MPIPoolExecutor
         def pool_imap_unordered(self, func, data, **kwargs):
             return self.map(func, data, **kwargs, unordered=True)
         pool.imap_unordered = pool_imap_unordered.__get__(pool)
@@ -3315,22 +3292,31 @@ def main(argv: List[str]) -> int:
         if argv[i] == '--config' and i + 2 < len(argv):
             os.environ[argv[i+1]] = argv[i+2]
 
-    # save copy of args for MPI processes that are already launched
-    orig_argv = argv.copy()
+    if '--mpi' in argv:
+        from mpi4py import MPI
+        from mpi4py.futures import MPICommExecutor
+        with MPICommExecutor(MPI.COMM_WORLD, root=0) as pool:
+            if pool is None:
+                return 0
+            return submain(argv, pool, MPI.COMM_WORLD.Get_size())
+    else:
+        return submain(argv)
+
+
+def submain(argv: List[str], pool=None, pool_size=0) -> int:
 
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
         return 0
     input_file, output_folder, options = process_args(argv[1:])
+    if pool_size:
+        options.nb_processes = pool_size
     nb_processes = options.nb_processes or 1
-
-    if options.mpi:
-        options.orig_argv = orig_argv
 
     if nb_processes == 1 and not options.mpi:
         single_threaded_tiling(input_file, output_folder, options)
     else:
-        multi_threaded_tiling(input_file, output_folder, options)
+        multi_threaded_tiling(input_file, output_folder, options, pool)
 
     return 0
 

@@ -98,6 +98,8 @@ void VSICurlStreamingClearCache( void )
 
 #define BKGND_BUFFER_SIZE   (1024 * 1024)
 
+#define unchecked_curl_easy_setopt(handle,opt,param) CPL_IGNORE_RET_VAL(curl_easy_setopt(handle,opt,param))
+
 /************************************************************************/
 /*                               RingBuffer                             */
 /************************************************************************/
@@ -541,9 +543,9 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
     CPLString osVerb;
     if( strstr(m_pszURL, ".tiles.mapbox.com/") != nullptr )
     {
-        curl_easy_setopt(hLocalHandle, CURLOPT_HEADERDATA,
+        unchecked_curl_easy_setopt(hLocalHandle, CURLOPT_HEADERDATA,
                          &sWriteFuncHeaderData);
-        curl_easy_setopt(hLocalHandle, CURLOPT_HEADERFUNCTION,
+        unchecked_curl_easy_setopt(hLocalHandle, CURLOPT_HEADERFUNCTION,
                          VSICurlStreamingHandleWriteFuncForHeader);
 
         sWriteFuncHeaderData.bIsHTTP = STARTS_WITH(m_pszURL, "http");
@@ -552,28 +554,28 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
     }
     else
     {
-        curl_easy_setopt(hLocalHandle, CURLOPT_NOBODY, 1);
-        curl_easy_setopt(hLocalHandle, CURLOPT_HTTPGET, 0);
-        curl_easy_setopt(hLocalHandle, CURLOPT_HEADER, 1);
+        unchecked_curl_easy_setopt(hLocalHandle, CURLOPT_NOBODY, 1);
+        unchecked_curl_easy_setopt(hLocalHandle, CURLOPT_HTTPGET, 0);
+        unchecked_curl_easy_setopt(hLocalHandle, CURLOPT_HEADER, 1);
         osVerb = "HEAD";
     }
 
     headers = VSICurlMergeHeaders(headers, GetCurlHeaders(osVerb, headers));
-    curl_easy_setopt(hLocalHandle, CURLOPT_HTTPHEADER, headers);
+    unchecked_curl_easy_setopt(hLocalHandle, CURLOPT_HTTPHEADER, headers);
 
     // We need that otherwise OSGEO4W's libcurl issue a dummy range request
     // when doing a HEAD when recycling connections.
-    curl_easy_setopt(hLocalHandle, CURLOPT_RANGE, nullptr);
+    unchecked_curl_easy_setopt(hLocalHandle, CURLOPT_RANGE, nullptr);
 
     // Bug with older curl versions (<=7.16.4) and FTP.
     // See http://curl.haxx.se/mail/lib-2007-08/0312.html
     VSICURLStreamingInitWriteFuncStructStreaming(&sWriteFuncData);
-    curl_easy_setopt(hLocalHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
-    curl_easy_setopt(hLocalHandle, CURLOPT_WRITEFUNCTION,
+    unchecked_curl_easy_setopt(hLocalHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
+    unchecked_curl_easy_setopt(hLocalHandle, CURLOPT_WRITEFUNCTION,
                      VSICurlStreamingHandleWriteFuncForHeader);
 
     char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
-    curl_easy_setopt(hLocalHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
+    unchecked_curl_easy_setopt(hLocalHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
     void* old_handler = CPLHTTPIgnoreSigPipe();
     curl_easy_perform(hLocalHandle);
@@ -1000,7 +1002,7 @@ void VSICurlStreamingHandle::DownloadInThread()
     struct curl_slist* headers =
         VSICurlSetOptions(hCurlHandle, m_pszURL, m_papszHTTPOptions);
     headers = VSICurlMergeHeaders(headers, GetCurlHeaders("GET", headers));
-    curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
     static bool bHasCheckVersion = false;
     static bool bSupportGZip = false;
@@ -1012,7 +1014,7 @@ void VSICurlStreamingHandle::DownloadInThread()
     if( bSupportGZip &&
         CPLTestBool(CPLGetConfigOption("CPL_CURL_GZIP", "YES")) )
     {
-        curl_easy_setopt(hCurlHandle, CURLOPT_ENCODING, "gzip");
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_ENCODING, "gzip");
     }
 
     if( pabyHeaderData == nullptr )
@@ -1021,17 +1023,17 @@ void VSICurlStreamingHandle::DownloadInThread()
     nBodySize = 0;
     nHTTPCode = 0;
 
-    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, this);
-    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, this);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
                      VSICurlStreamingHandleReceivedBytesHeader);
 
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, this);
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, this);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                      VSICurlStreamingHandleReceivedBytes);
 
     char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
     szCurlErrBuf[0] = '\0';
-    curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
     void* old_handler = CPLHTTPIgnoreSigPipe();
     CURLcode eRet = curl_easy_perform(hCurlHandle);
@@ -1039,10 +1041,10 @@ void VSICurlStreamingHandle::DownloadInThread()
     if( headers != nullptr )
         curl_slist_free_all(headers);
 
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, nullptr);
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION, nullptr);
-    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, nullptr);
-    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, nullptr);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, nullptr);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION, nullptr);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, nullptr);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, nullptr);
 
     AcquireMutex();
     if( !bAskDownloadEnd && eRet == 0 && !bHasComputedFileSize )

@@ -57,6 +57,8 @@ void VSIInstallGSFileHandler( void )
 
 #define ENABLE_DEBUG 0
 
+#define unchecked_curl_easy_setopt(handle,opt,param) CPL_IGNORE_RET_VAL(curl_easy_setopt(handle,opt,param))
+
 namespace cpl {
 
 /************************************************************************/
@@ -464,8 +466,8 @@ bool VSIGSFSHandler::SetFileMetadata( const char * pszFilename,
         bRetry = false;
         CURL* hCurlHandle = curl_easy_init();
         poHandleHelper->AddQueryParameter("acl", "");
-        curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "PUT");
-        curl_easy_setopt(hCurlHandle, CURLOPT_POSTFIELDS, pszXML );
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "PUT");
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_POSTFIELDS, pszXML );
 
         struct curl_slist* headers = static_cast<struct curl_slist*>(
             CPLHTTPSetOptions(hCurlHandle,
@@ -646,8 +648,8 @@ int* VSIGSFSHandler::UnlinkBatch( CSLConstList papszFiles )
                 bRetry = false;
                 CURL* hCurlHandle = curl_easy_init();
 
-                curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "POST");
-                curl_easy_setopt(hCurlHandle, CURLOPT_POSTFIELDS, osPOSTContent.c_str() );
+                unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "POST");
+                unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_POSTFIELDS, osPOSTContent.c_str() );
 
                 struct curl_slist* headers = static_cast<struct curl_slist*>(
                     CPLHTTPSetOptions(hCurlHandle,

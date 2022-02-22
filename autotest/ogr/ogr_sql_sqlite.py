@@ -1911,3 +1911,25 @@ def test_ogr_sql_sqlite_field_names_same_case():
     assert f['id'] == 'foo'
     assert f['ID3'] == 'bar'
     assert f['ID2'] == 'baz'
+
+
+###############################################################################
+# Test attribute and geometry field name with same name
+
+
+def test_ogr_sql_sqlite_attribute_and_geom_field_name_same():
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbNone)
+    lyr.CreateField(ogr.FieldDefn('foo'))
+    lyr.CreateGeomField(ogr.GeomFieldDefn('foo'))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['foo'] = 'bar'
+    f.SetGeomFieldDirectly('foo', ogr.CreateGeometryFromWkt('POINT(0 0)'))
+    lyr.CreateFeature(f)
+
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM test', dialect='SQLite')
+    f = sql_lyr.GetNextFeature()
+    ds.ReleaseResultSet(sql_lyr)
+    assert f['foo'] == 'bar'
+    assert f.GetGeomFieldRef(0).ExportToWkt() == 'POINT (0 0)'

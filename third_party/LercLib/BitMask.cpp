@@ -29,7 +29,7 @@ USING_NAMESPACE_LERC
 
 // -------------------------------------------------------------------------- ;
 
-BitMask::BitMask(const BitMask& src) : m_pBits(nullptr)
+BitMask::BitMask(const BitMask& src)
 {
   SetSize(src.m_nCols, src.m_nRows);
   if (m_pBits && src.m_pBits)
