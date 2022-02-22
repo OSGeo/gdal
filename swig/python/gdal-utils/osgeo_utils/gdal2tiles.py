@@ -3198,11 +3198,13 @@ def single_threaded_tiling(input_file: str, output_folder: str, options: Options
         del threadLocal.cached_ds
 
     if not options.quiet:
-        print("Generating Overview Tiles:")
+        count = count_overview_tiles(conf)
+        if count:
+            print("Generating Overview Tiles:")
 
-        if not options.verbose:
-            overview_progress_bar = ProgressBar(count_overview_tiles(conf))
-            overview_progress_bar.start()
+            if not options.verbose:
+                overview_progress_bar = ProgressBar(count)
+                overview_progress_bar.start()
 
     for base_tz in range(conf.tmaxz, conf.tminz, -1):
         base_tile_groups = group_overview_base_tiles(base_tz, output_folder, conf)
@@ -3263,11 +3265,13 @@ def multi_threaded_tiling(input_file: str, output_folder: str, options: Options,
             base_progress_bar.log_progress()
 
     if not options.quiet:
-        print("Generating Overview Tiles:")
+        count = count_overview_tiles(conf)
+        if count:
+            print("Generating Overview Tiles:")
 
-        if not options.verbose:
-            overview_progress_bar = ProgressBar(count_overview_tiles(conf))
-            overview_progress_bar.start()
+            if not options.verbose:
+                overview_progress_bar = ProgressBar(count)
+                overview_progress_bar.start()
 
     for base_tz in range(conf.tmaxz, conf.tminz, -1):
         base_tile_groups = group_overview_base_tiles(base_tz, output_folder, conf)
