@@ -228,7 +228,7 @@ void VRTDerivedRasterBand::Cleanup()
  * that it will apply, and if a pixel function matching the name is not
  * found the IRasterIO() call will do nothing.
  *
- * @param pszFuncName Name used to access pixel function
+ * @param pszName Name used to access pixel function
  * @param pfnNewFunction Pixel function associated with name.  An
  *  existing pixel function registered with the same name will be
  *  replaced with the new one.
@@ -236,16 +236,16 @@ void VRTDerivedRasterBand::Cleanup()
  * @return CE_None, invalid (NULL) parameters are currently ignored.
  */
 CPLErr CPL_STDCALL
-GDALAddDerivedBandPixelFunc( const char *pszFuncName,
+GDALAddDerivedBandPixelFunc( const char *pszName,
                              GDALDerivedPixelFunc pfnNewFunction )
 {
-    if( pszFuncName == nullptr || pszFuncName[0] == '\0' ||
+    if( pszName == nullptr || pszName[0] == '\0' ||
         pfnNewFunction == nullptr )
     {
       return CE_None;
     }
 
-    osMapPixelFunction[pszFuncName] = {
+    osMapPixelFunction[pszName] = {
         [pfnNewFunction](void **papoSources, int nSources, void *pData,
                                          int nBufXSize, int nBufYSize,
                                          GDALDataType eSrcType, GDALDataType eBufType,
@@ -269,7 +269,7 @@ GDALAddDerivedBandPixelFunc( const char *pszFuncName,
  * that it will apply, and if a pixel function matching the name is not
  * found the IRasterIO() call will do nothing.
  *
- * @param pszFuncName Name used to access pixel function
+ * @param pszName Name used to access pixel function
  * @param pfnNewFunction Pixel function associated with name.  An
  *  existing pixel function registered with the same name will be
  *  replaced with the new one.
@@ -279,17 +279,17 @@ GDALAddDerivedBandPixelFunc( const char *pszFuncName,
  * @since GDAL 3.4
  */
 CPLErr CPL_STDCALL
-GDALAddDerivedBandPixelFuncWithArgs(const char *pszFuncName,
+GDALAddDerivedBandPixelFuncWithArgs(const char *pszName,
                                     GDALDerivedPixelFuncWithArgs pfnNewFunction,
                                     const char *pszMetadata)
 {
-    if( pszFuncName == nullptr || pszFuncName[0] == '\0' ||
+    if( pszName == nullptr || pszName[0] == '\0' ||
         pfnNewFunction == nullptr )
     {
         return CE_None;
     }
 
-    osMapPixelFunction[pszFuncName] = {
+    osMapPixelFunction[pszName] = {
         pfnNewFunction,
         pszMetadata != nullptr ? pszMetadata : ""
     };
@@ -305,7 +305,7 @@ GDALAddDerivedBandPixelFuncWithArgs(const char *pszFuncName,
  *
  * This is the same as the C function GDALAddDerivedBandPixelFunc()
  *
- * @param pszFuncName Name used to access pixel function
+ * @param pszFuncNameIn Name used to access pixel function
  * @param pfnNewFunction Pixel function associated with name.  An
  *  existing pixel function registered with the same name will be
  *  replaced with the new one.
@@ -314,18 +314,18 @@ GDALAddDerivedBandPixelFuncWithArgs(const char *pszFuncName,
  */
 CPLErr
 VRTDerivedRasterBand::AddPixelFunction(
-    const char *pszFuncName, GDALDerivedPixelFunc pfnNewFunction )
+    const char *pszFuncNameIn, GDALDerivedPixelFunc pfnNewFunction )
 {
-    return GDALAddDerivedBandPixelFunc(pszFuncName, pfnNewFunction);
+    return GDALAddDerivedBandPixelFunc(pszFuncNameIn, pfnNewFunction);
 }
 
 CPLErr
 VRTDerivedRasterBand::AddPixelFunction(
-        const char *pszFuncName,
+        const char *pszFuncNameIn,
         GDALDerivedPixelFuncWithArgs pfnNewFunction,
         const char *pszMetadata)
 {
-    return GDALAddDerivedBandPixelFuncWithArgs(pszFuncName, pfnNewFunction, pszMetadata);
+    return GDALAddDerivedBandPixelFuncWithArgs(pszFuncNameIn, pfnNewFunction, pszMetadata);
 }
 
 /************************************************************************/
@@ -336,20 +336,20 @@ VRTDerivedRasterBand::AddPixelFunction(
  * Get a pixel function previously registered using the global
  * AddPixelFunction.
  *
- * @param pszFuncName The name associated with the pixel function.
+ * @param pszFuncNameIn The name associated with the pixel function.
  *
  * @return A derived band pixel function, or NULL if none have been
  * registered for pszFuncName.
  */
 std::pair<VRTDerivedRasterBand::PixelFunc, CPLString>*
-VRTDerivedRasterBand::GetPixelFunction( const char *pszFuncName )
+VRTDerivedRasterBand::GetPixelFunction( const char *pszFuncNameIn )
 {
-    if( pszFuncName == nullptr || pszFuncName[0] == '\0' )
+    if( pszFuncNameIn == nullptr || pszFuncNameIn[0] == '\0' )
     {
         return nullptr;
     }
 
-    auto oIter = osMapPixelFunction.find(pszFuncName);
+    auto oIter = osMapPixelFunction.find(pszFuncNameIn);
 
     if( oIter == osMapPixelFunction.end())
         return nullptr;

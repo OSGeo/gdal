@@ -788,13 +788,13 @@ class CPL_DLL VRTDerivedRasterBand CPL_NON_FINAL: public VRTSourcedRasterBand
                                         int nMaskFlagStop,
                                         double* pdfDataPct) override;
 
-    static CPLErr AddPixelFunction( const char *pszFuncName,
+    static CPLErr AddPixelFunction( const char *pszFuncNameIn,
                                     GDALDerivedPixelFunc pfnPixelFunc );
-    static CPLErr AddPixelFunction( const char *pszFuncName,
+    static CPLErr AddPixelFunction( const char *pszFuncNameIn,
                                     GDALDerivedPixelFuncWithArgs pfnPixelFunc,
                                     const char *pszMetadata);
 
-    static std::pair<PixelFunc, CPLString>* GetPixelFunction( const char *pszFuncName );
+    static std::pair<PixelFunc, CPLString>* GetPixelFunction( const char *pszFuncNameIn );
 
     void SetPixelFunctionName( const char *pszFuncNameIn );
     void SetSourceTransferType( GDALDataType eDataType );
