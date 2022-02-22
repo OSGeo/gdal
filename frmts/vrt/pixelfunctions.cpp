@@ -433,8 +433,7 @@ static CPLErr ConjPixelFunc( void **papoSources, int nSources, void *pData,
 
 static const char pszSumPixelFuncMetadata[] =
 "<PixelFunctionArgumentsList>"
-"   <Argument name='k' description='Optional constant term' type='double' default='0.0'>"
-"   </Argument>"
+"   <Argument name='k' description='Optional constant term' type='double' default='0.0' />"
 "</PixelFunctionArgumentsList>";
 
 static CPLErr SumPixelFunc(void **papoSources, int nSources, void *pData,
@@ -564,8 +563,7 @@ static CPLErr DiffPixelFunc( void **papoSources, int nSources, void *pData,
 
 static const char pszMulPixelFuncMetadata[] =
 "<PixelFunctionArgumentsList>"
-"   <Argument name='k' description='Optional constant factor' type='double' default='1.0'>"
-"   </Argument>"
+"   <Argument name='k' description='Optional constant factor' type='double' default='1.0' />"
 "</PixelFunctionArgumentsList>";
 
 static CPLErr MulPixelFunc( void **papoSources, int nSources, void *pData,
@@ -773,8 +771,7 @@ static CPLErr CMulPixelFunc( void **papoSources, int nSources, void *pData,
 
 static const char pszInvPixelFuncMetadata[] =
 "<PixelFunctionArgumentsList>"
-"   <Argument name='k' description='Optional constant factor' type='double' default='1.0'>"
-"   </Argument>"
+"   <Argument name='k' description='Optional constant factor' type='double' default='1.0' />"
 "</PixelFunctionArgumentsList>";
 
 static CPLErr InvPixelFunc( void **papoSources, int nSources, void *pData,
@@ -1000,8 +997,7 @@ static CPLErr Log10PixelFunc( void **papoSources, int nSources, void *pData,
 
 static const char pszDBPixelFuncMetadata[] =
 "<PixelFunctionArgumentsList>"
-"   <Argument name='fact' description='Factor' type='double' default='20.0'>"
-"   </Argument>"
+"   <Argument name='fact' description='Factor' type='double' default='20.0' />"
 "</PixelFunctionArgumentsList>";
 
 static CPLErr DBPixelFunc( void **papoSources, int nSources, void *pData,
@@ -1050,10 +1046,8 @@ static CPLErr ExpPixelFuncHelper( void **papoSources, int nSources, void *pData,
 
 static const char pszExpPixelFuncMetadata[] =
 "<PixelFunctionArgumentsList>"
-"   <Argument name='base' description='Base' type='double' default='2.7182818284590452353602874713526624'>"
-"   </Argument>"
-"   <Argument name='fact' description='Factor' type='double' default='1'>"
-"   </Argument>"
+"   <Argument name='base' description='Base' type='double' default='2.7182818284590452353602874713526624' />"
+"   <Argument name='fact' description='Factor' type='double' default='1' />"
 "</PixelFunctionArgumentsList>";
 
 static CPLErr ExpPixelFunc( void **papoSources, int nSources, void *pData,
@@ -1098,8 +1092,7 @@ static CPLErr dB2PowPixelFunc( void **papoSources, int nSources, void *pData,
 
 static const char pszPowPixelFuncMetadata[] =
 "<PixelFunctionArgumentsList>"
-"   <Argument name='power' description='Exponent' type='double' mandatory='1'>"
-"   </Argument>"
+"   <Argument name='power' description='Exponent' type='double' mandatory='1' />"
 "</PixelFunctionArgumentsList>";
 
 static CPLErr PowPixelFunc( void **papoSources, int nSources, void *pData,
@@ -1162,12 +1155,9 @@ static double InterpolateExponential(double dfX0, double dfX1, double dfY0, doub
 
 static const char pszInterpolatePixelFuncMetadata[] =
 "<PixelFunctionArgumentsList>"
-"   <Argument name='t0' description='t0' type='double' mandatory='1'>"
-"   </Argument>"
-"   <Argument name='dt' description='dt' type='double' mandatory='1'>"
-"   </Argument>"
-"   <Argument name='t' description='t' type='double' mandatory='1'>"
-"   </Argument>"
+"   <Argument name='t0' description='t0' type='double' mandatory='1' />"
+"   <Argument name='dt' description='dt' type='double' mandatory='1' />"
+"   <Argument name='t' description='t' type='double' mandatory='1' />"
 "</PixelFunctionArgumentsList>";
 
 template<decltype(InterpolateLinear) InterpolationFunction>
@@ -1222,13 +1212,13 @@ CPLErr InterpolatePixelFunc( void **papoSources, int nSources, void *pData,
     return CE_None;
 }
 
-static const char pszNanPixelFuncMetadata[] =
+static const char pszReplaceNoDataPixelFuncMetadata[] =
 "<PixelFunctionArgumentsList>"
-"   <Argument type='builtin' value='NoData'>"
-"   </Argument>"
+"   <Argument type='builtin' value='NoData' />"
+"   <Argument name='to' type='double' description='New NoData value to be replaced' default='nan' />"
 "</PixelFunctionArgumentsList>";
 
-static CPLErr NanPixelFunc( void **papoSources, int nSources, void *pData,
+static CPLErr ReplaceNoDataPixelFunc( void **papoSources, int nSources, void *pData,
                                int nXSize, int nYSize,
                                GDALDataType eSrcType, GDALDataType eBufType,
                                int nPixelSpace, int nLineSpace, CSLConstList papszArgs ) {
@@ -1237,18 +1227,20 @@ static CPLErr NanPixelFunc( void **papoSources, int nSources, void *pData,
     if (GDALDataTypeIsComplex(eSrcType))
     {
         CPLError(
-          CE_Failure, CPLE_AppDefined, "nan cannot convert complex data types");
-        return CE_Failure;
-    }
-    if (!GDALDataTypeIsFloating(eBufType))
-    {
-        CPLError(
-          CE_Failure, CPLE_AppDefined, "nan requires a floating point type output buffer");
+          CE_Failure, CPLE_AppDefined, "replace_nodata cannot convert complex data types");
         return CE_Failure;
     }
 
-    double dfNoData;
-    if ( FetchDoubleArg(papszArgs, "NoData", &dfNoData) != CE_None ) return CE_Failure;
+    double dfOldNoData, dfNewNoData = NAN;
+    if ( FetchDoubleArg(papszArgs, "NoData", &dfOldNoData) != CE_None ) return CE_Failure;
+    if ( FetchDoubleArg(papszArgs, "to", &dfNewNoData, &dfNewNoData) != CE_None ) return CE_Failure;
+
+    if (!GDALDataTypeIsFloating(eBufType) && std::isnan(dfNewNoData))
+    {
+        CPLError(
+          CE_Failure, CPLE_AppDefined, "Using nan requires a floating point type output buffer");
+        return CE_Failure;
+    }
 
     /* ---- Set pixels ---- */
     size_t ii = 0;
@@ -1257,7 +1249,7 @@ static CPLErr NanPixelFunc( void **papoSources, int nSources, void *pData,
         for( int iCol = 0; iCol < nXSize; ++iCol, ++ii )
         {
             double dfPixVal = GetSrcVal(papoSources[0], eSrcType, ii);
-            if (dfPixVal == dfNoData) dfPixVal = NAN;
+            if (dfPixVal == dfOldNoData || std::isnan(dfPixVal)) dfPixVal = dfNewNoData;
 
             GDALCopyWords(
                     &dfPixVal, GDT_Float64, 0,
@@ -1272,10 +1264,8 @@ static CPLErr NanPixelFunc( void **papoSources, int nSources, void *pData,
 
 static const char pszScalePixelFuncMetadata[] =
 "<PixelFunctionArgumentsList>"
-"   <Argument type='builtin' value='offset'>"
-"   </Argument>"
-"   <Argument type='builtin' value='scale'>"
-"   </Argument>"
+"   <Argument type='builtin' value='offset' />"
+"   <Argument type='builtin' value='scale' />"
 "</PixelFunctionArgumentsList>";
 
 static CPLErr ScalePixelFunc( void **papoSources, int nSources, void *pData,
@@ -1408,7 +1398,8 @@ CPLErr GDALRegisterDefaultPixelFunc()
         InterpolatePixelFunc<InterpolateLinear>, pszInterpolatePixelFuncMetadata);
     GDALAddDerivedBandPixelFuncWithArgs("interpolate_exp",
         InterpolatePixelFunc<InterpolateExponential>, pszInterpolatePixelFuncMetadata);
-    GDALAddDerivedBandPixelFuncWithArgs("nan", NanPixelFunc, pszNanPixelFuncMetadata);
+    GDALAddDerivedBandPixelFuncWithArgs("replace_nodata",
+        ReplaceNoDataPixelFunc, pszReplaceNoDataPixelFuncMetadata);
     GDALAddDerivedBandPixelFuncWithArgs("scale", ScalePixelFunc, pszScalePixelFuncMetadata);
 
     return CE_None;

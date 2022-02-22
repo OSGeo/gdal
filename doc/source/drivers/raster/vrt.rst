@@ -884,7 +884,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - extract phase from a single raster band [-PI,PI] (0 or PI for non-complex)
    * - **polar**
      - 2
-     - ``amplitude_type`` (optinal)
+     - ``amplitude_type`` (optional)
      - make a complex band using input bands for amplitude and phase values ``b1 * exp( j * b2 )``. The optional (string) parameter ``amplitude_type`` can be ``AMPLITUDE`` (default) ``INTENSITY`` or ``dB``. Note: if ``amplitude_type`` is set to ``INTENSITY`` then negative values are clipped to zero.
    * - **pow**
      - 1
@@ -901,15 +901,15 @@ GDAL provides a set of default pixel functions that can be used without writing 
    * - **sum**
      - >= 2
      - ``k`` (optional)
-     - sum 2 or more raster bands. If the optional ``k`` parameter is provided then it is added to each element of the result.
-   * - **nan**
+     - sum 2 or more raster bands. If the optional ``k`` parameter is provided then it is added to each element of the result
+   * - **replace_nodata**
      - = 1
-     - -
-     - convert incoming ``NoData`` values to IEEE 754 ``Nan``. Works only when writing IEEE 754 floating point data types.
+     - ``to`` (optional)
+     - convert incoming ``NoData`` values to a new value, IEEE 754 `nan` by default
    * - **scale**
      - = 1
      - -
-     - perform scaling according to the ``offset`` and ``scale`` values of the raster band.
+     - perform scaling according to the ``offset`` and ``scale`` values of the raster band
 
 Writing Pixel Functions
 +++++++++++++++++++++++

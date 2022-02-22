@@ -755,45 +755,44 @@ VRTDerivedRasterBand::GetPixelFunctionArguments(
 
     CPLXMLNode* oArgs = CPLParseXMLString(osMetadata);
     if (oArgs != nullptr && oArgs->eType == CXT_Element &&
-        !strncmp(oArgs->pszValue,
-                 "PixelFunctionArgumentsList",
-                 strlen("PixelFunctionArgumentsList")))
+        !strcmp(oArgs->pszValue,
+                 "PixelFunctionArgumentsList"))
     {
         for (CPLXMLNode* psIter = oArgs->psChild; psIter != nullptr;
              psIter = psIter->psNext)
         {
             if (psIter->eType == CXT_Element &&
-                !strncmp(psIter->pszValue, "Argument", strlen("Argument")))
+                !strcmp(psIter->pszValue, "Argument"))
             {
-                CPLString szName, szType, szValue;
+                CPLString osName, osType, osValue;
                 auto pszName = CPLGetXMLValue(psIter, "name", nullptr);
                 if (pszName != nullptr)
-                    szName = pszName;
+                    osName = pszName;
                 auto pszType = CPLGetXMLValue(psIter, "type", nullptr);
                 if (pszType != nullptr)
-                    szType = pszType;
+                    osType = pszType;
                 auto pszValue = CPLGetXMLValue(psIter, "value", nullptr);
                 if (pszValue != nullptr)
-                    szValue = pszValue;
-                if (szType == "constant" && szValue != "" && szName != "")
+                    osValue = pszValue;
+                if (osType == "constant" && osValue != "" && osName != "")
                     oAdditionalArgs.push_back(
-                      std::pair<CPLString, CPLString>(szName, szValue));
-                if (szType == "builtin")
+                      std::pair<CPLString, CPLString>(osName, osValue));
+                if (osType == "builtin")
                 {
                     double dfVal;
                     int success;
-                    if (szValue == "NoData")
+                    if (osValue == "NoData")
                         dfVal = this->GetNoDataValue(&success);
-                    else if (szValue == "scale")
+                    else if (osValue == "scale")
                         dfVal = this->GetScale(&success);
-                    else if (szValue == "offset")
+                    else if (osValue == "offset")
                         dfVal = this->GetOffset(&success);
                     else
                     {
                         CPLError(CE_Failure,
                                  CPLE_NotSupported,
                                  "PixelFunction builtin %s not supported",
-                                 szValue.c_str());
+                                 osValue.c_str());
                         return CE_Failure;
                     }
                     // Should we signal the user that he is using a builtin
@@ -801,9 +800,9 @@ VRTDerivedRasterBand::GetPixelFunctionArguments(
                     // Maybe we should allow generalized use of scale/offset
                     // even if they are left with their default 1/0 values
                     oAdditionalArgs.push_back(std::pair<CPLString, CPLString>(
-                      szValue, CPLSPrintf("%lf", dfVal)));
+                      osValue, CPLSPrintf("%.18g", dfVal)));
                     CPLDebug("VRT", "Added builtin pixel function argument %s = %s (%s)",
-                           szValue.c_str(),
+                           osValue.c_str(),
                            CPLSPrintf("%lf", dfVal),
                            success ? "value set" : "value undefined");
                 }
@@ -951,8 +950,8 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
         if (poPixelFunc->second != "")
         {
-            if ((GetPixelFunctionArguments(poPixelFunc->second,
-                                        oAdditionalArgs)) != CE_None)
+            if (GetPixelFunctionArguments(poPixelFunc->second,
+                                        oAdditionalArgs) != CE_None)
             {
                 return CE_Failure;
             }

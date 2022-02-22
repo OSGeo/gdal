@@ -1086,7 +1086,7 @@ def test_pixfun_nan():
   <VRTRasterBand dataType="Float64" band="1" subClass="VRTDerivedRasterBand">
     <Description>Nan</Description>
     <NoDataValue>0.0</NoDataValue>
-    <PixelFunctionType>nan</PixelFunctionType>
+    <PixelFunctionType>replace_nodata</PixelFunctionType>
     <SourceTransferType>Float64</SourceTransferType>
     <SimpleSource>
       <SourceFilename relativeToVRT="0">data/test_nodatavalues.tif</SourceFilename>
@@ -1102,6 +1102,34 @@ def test_pixfun_nan():
         for j in range(data_src.shape[1]):
             if (data_src[i][j] == NoData):
                 assert math.isnan(data_vrt[i][j])
+            else:
+                assert data_vrt[i][j] == data_src[i][j]
+
+
+def test_pixfun_replacenodata():
+
+    src_ds = gdal.Open('data/test_nodatavalues.tif')
+    vrt_ds = gdal.Open("""<VRTDataset rasterXSize="50" rasterYSize="50">
+  <VRTRasterBand dataType="Float64" band="1" subClass="VRTDerivedRasterBand">
+    <Description>Nan</Description>
+    <NoDataValue>0.0</NoDataValue>
+    <PixelFunctionType>replace_nodata</PixelFunctionType>
+    <PixelFunctionArguments to="42" />
+    <SourceTransferType>Float64</SourceTransferType>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/test_nodatavalues.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>""")
+    data_src = src_ds.GetRasterBand(1).ReadAsArray(buf_type=gdal.GDT_Float32)
+    data_vrt = vrt_ds.GetRasterBand(1).ReadAsArray(buf_type=gdal.GDT_Float32)
+    NoData = src_ds.GetRasterBand(1).GetNoDataValue()
+
+    for i in range(data_src.shape[0]):
+        for j in range(data_src.shape[1]):
+            if (data_src[i][j] == NoData):
+                assert data_vrt[i][j] == 42
             else:
                 assert data_vrt[i][j] == data_src[i][j]
 
