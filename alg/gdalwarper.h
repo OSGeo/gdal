@@ -502,6 +502,8 @@ private:
     // if ComputeSourceWindow() must use a grid based sampling.
     std::vector<std::pair<double, double>> aDstXYSpecialPoints{};
 
+    bool m_bIsTranslationOnPixelBoundaries = false;
+
     void            WipeChunkList();
     CPLErr          CollectChunkListInternal( int nDstXOff, int nDstYOff,
                                       int nDstXSize, int nDstYSize );

@@ -1277,6 +1277,29 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS,
 }
 
 /************************************************************************/
+/*                    UseTEAndTSAndTRConsistently()                     */
+/************************************************************************/
+
+static bool UseTEAndTSAndTRConsistently(const GDALWarpAppOptions *psOptions)
+{
+    // We normally don't allow -te, -ts and -tr together, unless they are all
+    // consistent. The interest of this is to use the -tr values to produce
+    // exact pixel size, rather than infering it from -te and -ts
+
+    // Constant and logic to be kept in sync with cogdriver.cpp
+    constexpr double RELATIVE_ERROR_RES_SHARED_BY_COG_AND_GDALWARP = 1e-8;
+    return psOptions->nForcePixels != 0 &&
+            psOptions->nForceLines != 0 &&
+            psOptions->dfXRes != 0 &&
+            psOptions->dfYRes != 0 &&
+            !(psOptions->dfMinX == 0.0 && psOptions->dfMinY == 0.0 && psOptions->dfMaxX == 0.0 && psOptions->dfMaxY == 0.0) &&
+            fabs((psOptions->dfMaxX - psOptions->dfMinX) / psOptions->dfXRes - psOptions->nForcePixels) <=
+                 RELATIVE_ERROR_RES_SHARED_BY_COG_AND_GDALWARP &&
+            fabs((psOptions->dfMaxY - psOptions->dfMinY) / psOptions->dfYRes - psOptions->nForceLines) <=
+                 RELATIVE_ERROR_RES_SHARED_BY_COG_AND_GDALWARP;
+}
+
+/************************************************************************/
 /*                            CheckOptions()                            */
 /************************************************************************/
 
@@ -1326,7 +1349,8 @@ static bool CheckOptions(const char *pszDest,
 /* -------------------------------------------------------------------- */
 
     if ((psOptions->nForcePixels != 0 || psOptions->nForceLines != 0) &&
-        (psOptions->dfXRes != 0 && psOptions->dfYRes != 0))
+        (psOptions->dfXRes != 0 && psOptions->dfYRes != 0) &&
+        !UseTEAndTSAndTRConsistently(psOptions) )
     {
         CPLError(CE_Failure, CPLE_IllegalArg, "-tr and -ts options cannot be used at the same time.");
         if(pbUsageError)
@@ -3488,7 +3512,17 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
 /* -------------------------------------------------------------------- */
 /*      Did the user override some parameters?                          */
 /* -------------------------------------------------------------------- */
-    if( psOptions->dfXRes != 0.0 && psOptions->dfYRes != 0.0 )
+    if( UseTEAndTSAndTRConsistently(psOptions) )
+    {
+        adfDstGeoTransform[0] = psOptions->dfMinX;
+        adfDstGeoTransform[3] = psOptions->dfMaxY;
+        adfDstGeoTransform[1] = psOptions->dfXRes;
+        adfDstGeoTransform[5] = -psOptions->dfYRes;
+
+        nPixels = psOptions->nForcePixels;
+        nLines = psOptions->nForceLines;
+    }
+    else if( psOptions->dfXRes != 0.0 && psOptions->dfYRes != 0.0 )
     {
         if( psOptions->dfMinX == 0.0 && psOptions->dfMinY == 0.0 && psOptions->dfMaxX == 0.0 && psOptions->dfMaxY == 0.0 )
         {
