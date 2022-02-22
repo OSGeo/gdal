@@ -795,16 +795,20 @@ VRTDerivedRasterBand::GetPixelFunctionArguments(
                                  osValue.c_str());
                         return CE_Failure;
                     }
-                    // Should we signal the user that he is using a builtin
-                    // that depends on a value that is not set on the raster?
-                    // Maybe we should allow generalized use of scale/offset
-                    // even if they are left with their default 1/0 values
+                    if (!success)
+                    {
+                        CPLError(CE_Failure,
+                                 CPLE_AppDefined,
+                                 "Raster has no %s",
+                                 osValue.c_str());
+                        return CE_Failure;
+                    }
+
                     oAdditionalArgs.push_back(std::pair<CPLString, CPLString>(
                       osValue, CPLSPrintf("%.18g", dfVal)));
-                    CPLDebug("VRT", "Added builtin pixel function argument %s = %s (%s)",
+                    CPLDebug("VRT", "Added builtin pixel function argument %s = %s",
                            osValue.c_str(),
-                           CPLSPrintf("%lf", dfVal),
-                           success ? "value set" : "value undefined");
+                           CPLSPrintf("%.18g", dfVal));
                 }
             }
         }

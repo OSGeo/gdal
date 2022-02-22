@@ -1158,7 +1158,31 @@ def test_pixfun_scale():
     data_src = band_src.ReadAsArray(buf_type=gdal.GDT_Float32)
     data_vrt = band_vrt.ReadAsArray(buf_type=gdal.GDT_Float32)
 
-    print(data_src, data_vrt)
     assert numpy.allclose(data_src * 2 + 1, data_vrt)
+
+def test_pixfun_missing_builtin():
+    vrt_ds = gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
+  <VRTRasterBand dataType="Float64" band="1" subClass="VRTDerivedRasterBand">
+    <Description>Scaling</Description>
+    <PixelFunctionType>reaplace_nodata</PixelFunctionType>
+    <SourceTransferType>Float64</SourceTransferType>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/float32.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>""")
+
+    last_error = gdal.GetLastErrorMsg()
+    band_vrt = vrt_ds.GetRasterBand(1)
+    assert band_vrt.GetOffset() == 0
+    assert band_vrt.GetScale() == 1
+    assert band_vrt.GetNoDataValue() == None
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    data = band_vrt.ReadAsArray(buf_type=gdal.GDT_Float32)
+    gdal.PopErrorHandler()
+    assert data is None
+
 
 ###############################################################################
