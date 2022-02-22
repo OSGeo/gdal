@@ -52,6 +52,8 @@ endif ()
 #
 include(CheckCompilerMachineOption)
 include(CheckCompilerSIMDFeature)
+include(Ccache)
+
 #
 if ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(x86|AMD64)")
   check_compiler_machine_option(flag SSE)
