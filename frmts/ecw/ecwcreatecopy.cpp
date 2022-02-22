@@ -124,7 +124,9 @@ public:
     void             *pProgressData;
 
     GDALDataType eWorkDT;
-
+    int          m_nSwathLines;
+    UINT32       m_nSwathOffset;
+    GByte       *m_pabySwathBuf;
     JP2UserBox** papoJP2UserBox;
     int          nJP2UserBox;
 
@@ -143,7 +145,11 @@ private:
 /************************************************************************/
 
 GDALECWCompressor::GDALECWCompressor() :
-    m_OStream(std::make_shared<VSIIOStream>()), eWorkDT(GDT_Unknown)
+    m_OStream(std::make_shared<VSIIOStream>()),
+    eWorkDT(GDT_Unknown),
+    m_nSwathLines(0),
+    m_nSwathOffset(0),
+    m_pabySwathBuf(nullptr)
 {
     m_poSrcDS = nullptr;
     m_nPercentComplete = -1;
@@ -176,6 +182,7 @@ GDALECWCompressor::~GDALECWCompressor()
 #else
     NCSFreeFileInfoEx(&sFileInfo);
 #endif
+    CPLFree(m_pabySwathBuf);
 }
 
 /************************************************************************/
@@ -201,7 +208,6 @@ CNCSError GDALECWCompressor::WriteReadLine( UINT32 nNextLine,
 {
     int    iBand, *panBandMap;
     CPLErr eErr;
-    int nWordSize = GDALGetDataTypeSize( eWorkDT ) / 8;
 
 #ifdef DEBUG_VERBOSE
     CPLDebug("ECW", "nNextLine = %d", nNextLine);
@@ -211,24 +217,69 @@ CNCSError GDALECWCompressor::WriteReadLine( UINT32 nNextLine,
     for( iBand = 0; iBand < sFileInfo.nBands; iBand++ )
         panBandMap[iBand] = iBand+1;
 
-    GByte *pabyLineBuf =
-        (GByte *) CPLMalloc( sFileInfo.nSizeX * sFileInfo.nBands
-                             * nWordSize );
+    if( m_poSrcDS == nullptr || m_poSrcDS->GetRasterBand(1) == nullptr )
+    {
+        return GetCNCSError(NCS_FILEIO_ERROR);
+    }
+    if( m_nSwathLines <= 0 )
+    {
+        int nBlockX;
+        constexpr int MIN_SWATH_LINES = 256;
+        m_poSrcDS->GetRasterBand(1)->GetBlockSize( &nBlockX, &m_nSwathLines );
+        if(m_nSwathLines < MIN_SWATH_LINES)
+            m_nSwathLines = MIN_SWATH_LINES;
+    }
 
-    eErr = m_poSrcDS->RasterIO( GF_Read, 0, nNextLine, sFileInfo.nSizeX, 1,
-                                pabyLineBuf, sFileInfo.nSizeX, 1,
-                                eWorkDT,
-                                sFileInfo.nBands, panBandMap,
-                                nWordSize, 0, nWordSize * sFileInfo.nSizeX, nullptr );
+    GSpacing nPixelSpace = GDALGetDataTypeSize( eWorkDT ) / 8;
+    GSpacing nLineSpace = sFileInfo.nSizeX * nPixelSpace;
+    GSpacing nBandSpace = nLineSpace * m_nSwathLines;
+
+    if( m_pabySwathBuf == nullptr )
+    {
+        size_t nBufSize = static_cast<size_t>(nBandSpace * sFileInfo.nBands);
+        m_pabySwathBuf = (GByte *) VSI_MALLOC_VERBOSE(nBufSize);
+    }
+    if( m_pabySwathBuf == nullptr )
+    {
+        return GetCNCSError(NCS_FILE_NO_MEMORY);
+    }
+
+    if(nNextLine == 0 || nNextLine >= m_nSwathOffset + m_nSwathLines)
+    {
+        int nSwathLines = m_nSwathLines;
+        if(nNextLine + nSwathLines > sFileInfo.nSizeY)
+        {
+            nSwathLines = sFileInfo.nSizeY - nNextLine;
+        }
+        eErr = m_poSrcDS->RasterIO( GF_Read, 0, nNextLine, sFileInfo.nSizeX, nSwathLines,
+                                    m_pabySwathBuf, sFileInfo.nSizeX, nSwathLines,
+                                    eWorkDT, sFileInfo.nBands, panBandMap,
+                                    nPixelSpace, nLineSpace, nBandSpace, nullptr );
+        m_nSwathOffset = nNextLine;
+        UINT32 nNextSwathLine = nNextLine + nSwathLines;
+        if(nNextSwathLine < sFileInfo.nSizeY)
+        {
+            if(nNextSwathLine + nSwathLines > sFileInfo.nSizeY)
+            {
+                nSwathLines = sFileInfo.nSizeY - nNextSwathLine;
+            }
+            m_poSrcDS->AdviseRead( 0, nNextSwathLine, sFileInfo.nSizeX, nSwathLines,
+                                   sFileInfo.nSizeX, nSwathLines, eWorkDT,
+                                   sFileInfo.nBands, panBandMap, nullptr );
+        }
+    }
+    else
+    {
+        eErr = CE_None;
+    }
 
     for( iBand = 0; iBand < (int) sFileInfo.nBands; iBand++ )
     {
         memcpy( ppInputArray[iBand],
-                pabyLineBuf + nWordSize * sFileInfo.nSizeX * iBand,
-                nWordSize * sFileInfo.nSizeX );
+                m_pabySwathBuf + nLineSpace * (nNextLine - m_nSwathOffset) + nBandSpace * iBand,
+                static_cast<size_t>(nPixelSpace * sFileInfo.nSizeX) );
     }
 
-    CPLFree( pabyLineBuf );
     CPLFree( panBandMap );
 
     if( eErr == CE_None )
