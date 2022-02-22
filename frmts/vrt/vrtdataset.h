@@ -796,7 +796,7 @@ class CPL_DLL VRTDerivedRasterBand CPL_NON_FINAL: public VRTSourcedRasterBand
 
     static std::pair<PixelFunc, CPLString>* GetPixelFunction( const char *pszFuncName );
 
-    void SetPixelFunctionName( const char *pszFuncName );
+    void SetPixelFunctionName( const char *pszFuncNameIn );
     void SetSourceTransferType( GDALDataType eDataType );
     void SetPixelFunctionLanguage( const char* pszLanguage );
 
