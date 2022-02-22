@@ -3232,6 +3232,11 @@ def multi_threaded_tiling(input_file: str, output_folder: str, options: Options,
             self.shutdown()
         pool.join = pool_join.__get__(pool)
     else:
+        # Trick inspired from https://stackoverflow.com/questions/45720153/python-multiprocessing-error-attributeerror-module-main-has-no-attribute
+        # and https://bugs.python.org/issue42949
+        import __main__
+        if not hasattr(__main__, '__spec__'):
+            __main__.__spec__ = None
         from multiprocessing import Pool
         # Make sure that all processes do not consume more than `gdal.GetCacheMax()`
         gdal_cache_max_per_process = max(1024 * 1024, math.floor(gdal_cache_max / nb_processes))
