@@ -74,7 +74,8 @@ jobs:
         cmake --build $GITHUB_WORKSPACE/superbuild/build --target quicktest -- -j$(nproc)
     - name: test (with ctest)
       run: |
-        ctest --test-dir $GITHUB_WORKSPACE/superbuild/build -V
+        cd $GITHUB_WORKSPACE/superbuild/build
+        ctest -V
     - name: install
       run: |
         cmake --build $GITHUB_WORKSPACE/superbuild/build --target install -- -j$(nproc)
@@ -87,7 +88,7 @@ jobs:
         rm -rf swig/csharp
         cmake  ${CMAKE_OPTIONS} -DCSHARP_MONO=ON -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror ..
         cmake --build $GITHUB_WORKSPACE/superbuild/build --target install -- -j$(nproc)
-        ctest --test-dir $GITHUB_WORKSPACE/superbuild/build -V -R "^csharp.*"
+        ctest -V -R "^csharp.*"
     - name: Standalone Python bindings build
       run: |
         (cd $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python && python setup.py sdist)
