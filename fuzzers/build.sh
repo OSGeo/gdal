@@ -119,7 +119,11 @@ cmake .. \
   -DENABLE_QT5=OFF \
   -DENABLE_UTILS=OFF \
   -DWITH_Cairo=OFF \
-  -DWITH_NSS3=OFF
+  -DWITH_NSS3=OFF \
+  -DBUILD_CPP_TESTS=OFF \
+  -DBUILD_GTK_TESTS=OFF \
+  -DBUILD_MANUAL_TESTS=OFF \
+  -DBUILD_QT5_TESTS=OFF
 
 make clean -s
 make -j$(nproc) -s
