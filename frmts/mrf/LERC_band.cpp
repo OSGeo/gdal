@@ -302,7 +302,7 @@ template <typename T> static int MaskFill(BitMask &bitMask, T *src, const ILImag
     return count;
 }
 
-static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img, double precision)
+static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img, double precision, int l2ver)
 {
     int w = img.pagesize.x;
     int h = img.pagesize.y;
@@ -335,9 +335,11 @@ static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img, doub
 
     // Set bitmask if it has the ndv defined
     Lerc2 lerc2(stride, w, h, (ndv_count == 0) ? nullptr : bitMask.Bits());
-    // Default to LERC2 V2 for single band, otherwise go with the default, currently >= 4
-    if (stride == 1)
-        lerc2.SetEncoderToOldVersion(2);
+    // Set the specific version requested by user
+    if (0 != l2ver && !lerc2.SetEncoderToOldVersion(l2ver)) {
+        CPLError(CE_Failure, CPLE_AppDefined, "MRF: Failed to set LERC2 encoding version");
+        return CE_Failure;
+    }
 
     switch (img.dt) {
 
@@ -465,7 +467,7 @@ CPLErr LERC_Band::Decompress(buf_mgr &dst, buf_mgr &src)
 CPLErr LERC_Band::Compress(buf_mgr &dst, buf_mgr &src)
 {
     if (version == 2)
-        return CompressLERC2(dst, src, img, precision);
+        return CompressLERC2(dst, src, img, precision, l2ver);
     else
         return CompressLERC1(dst, src, img, precision);
 }
@@ -553,6 +555,10 @@ LERC_Band::LERC_Band(MRFDataset *pDS, const ILImage &image,
 
     // Encode in V2 by default.
     version = GetOptlist().FetchBoolean("V1", FALSE) ? 1 : 2;
+    // For LERC 2 there are multiple versions too, zero means use the library default
+    // Use v2.2 for single band encoding
+    l2ver = atoi(GetOptlist().FetchNameValueDef("L2_VER", (img.pagesize.c == 1) ? "2" : "0"));
+    // Can't easily check that the version chosen is valid
 
     if( image.pageSizeBytes > INT_MAX / 4 )
     {

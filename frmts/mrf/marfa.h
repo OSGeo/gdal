@@ -751,6 +751,7 @@ protected:
     virtual CPLErr Compress(buf_mgr &dst, buf_mgr &src) override;
     double precision;
     int version;
+    int l2ver;
     static bool IsLerc(CPLString &s) {
         return (STARTS_WITH(s, "Lerc2 ") || STARTS_WITH(s, "CntZImage "));
     }
