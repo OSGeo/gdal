@@ -1164,7 +1164,7 @@ def test_pixfun_missing_builtin():
     vrt_ds = gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
   <VRTRasterBand dataType="Float64" band="1" subClass="VRTDerivedRasterBand">
     <Description>Scaling</Description>
-    <PixelFunctionType>reaplace_nodata</PixelFunctionType>
+    <PixelFunctionType>replace_nodata</PixelFunctionType>
     <SourceTransferType>Float64</SourceTransferType>
     <SimpleSource>
       <SourceFilename relativeToVRT="0">data/float32.tif</SourceFilename>
