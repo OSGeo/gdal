@@ -4587,3 +4587,46 @@ void GDALGetTransformerDstGeoTransform( void *pTransformArg,
                 sizeof(double) * 6 );
     }
 }
+
+/************************************************************************/
+/*            GDALTransformIsTranslationOnPixelBoundaries()             */
+/************************************************************************/
+
+bool GDALTransformIsTranslationOnPixelBoundaries(
+                                GDALTransformerFunc pfnTransformer,
+                                void                *pTransformerArg)
+{
+    if( pfnTransformer == GDALApproxTransform )
+    {
+        const auto* pApproxInfo = static_cast<const ApproxTransformInfo*>(pTransformerArg);
+        pfnTransformer = pApproxInfo->pfnBaseTransformer;
+        pTransformerArg = pApproxInfo->pBaseCBData;
+    }
+    if( pfnTransformer == GDALGenImgProjTransform )
+    {
+        const auto* pGenImgpProjInfo = static_cast<GDALGenImgProjTransformInfo*>(pTransformerArg);
+        const auto IsCloseToInteger = [](double dfVal) {
+            return std::fabs(dfVal - std::round(dfVal)) <= 1e-6;
+        };
+        return pGenImgpProjInfo->pSrcTransformArg == nullptr &&
+               pGenImgpProjInfo->pDstTransformer == nullptr &&
+               pGenImgpProjInfo->pReproject == nullptr &&
+               pGenImgpProjInfo->adfSrcGeoTransform[1] == pGenImgpProjInfo->adfDstGeoTransform[1] &&
+               pGenImgpProjInfo->adfSrcGeoTransform[5] == pGenImgpProjInfo->adfDstGeoTransform[5] &&
+               pGenImgpProjInfo->adfSrcGeoTransform[2] == pGenImgpProjInfo->adfDstGeoTransform[2] &&
+               pGenImgpProjInfo->adfSrcGeoTransform[4] == pGenImgpProjInfo->adfDstGeoTransform[4] &&
+               // Check that the georeferenced origin of the destination geotransform is close
+               // to be an integer value when transformed to source image coordinates
+               IsCloseToInteger(pGenImgpProjInfo->adfSrcInvGeoTransform[0] +
+                        pGenImgpProjInfo->adfDstGeoTransform[0] *
+                        pGenImgpProjInfo->adfSrcInvGeoTransform[1]  +
+                        pGenImgpProjInfo->adfDstGeoTransform[3] *
+                        pGenImgpProjInfo->adfSrcInvGeoTransform[2]) &&
+               IsCloseToInteger(pGenImgpProjInfo->adfSrcInvGeoTransform[3] +
+                        pGenImgpProjInfo->adfDstGeoTransform[0] *
+                        pGenImgpProjInfo->adfSrcInvGeoTransform[4]  +
+                        pGenImgpProjInfo->adfDstGeoTransform[3] *
+                        pGenImgpProjInfo->adfSrcInvGeoTransform[5]);
+    }
+    return false;
+}

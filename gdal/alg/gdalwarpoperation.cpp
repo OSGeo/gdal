@@ -655,6 +655,16 @@ CPLErr GDALWarpOperation::Initialize( const GDALWarpOptions *psNewOptions )
                 aDstXYSpecialPoints.emplace_back(std::pair<double, double>(dfX, dfY));
             }
         }
+
+        m_bIsTranslationOnPixelBoundaries =
+            GDALTransformIsTranslationOnPixelBoundaries(
+                              psOptions->pfnTransformer,
+                              psOptions->pTransformerArg) &&
+            CPLTestBool(CPLGetConfigOption("GDAL_WARP_USE_TRANSLATION_OPTIM", "YES"));
+        if( m_bIsTranslationOnPixelBoundaries )
+        {
+            CPLDebug("WARP", "Using translation-on-pixel-boundaries optimization");
+        }
     }
 
     return eErr;
@@ -1820,7 +1830,8 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
 /* -------------------------------------------------------------------- */
     GDALWarpKernel oWK;
 
-    oWK.eResample = psOptions->eResampleAlg;
+    oWK.eResample = m_bIsTranslationOnPixelBoundaries ? GRA_NearestNeighbour :
+                                                        psOptions->eResampleAlg;
     oWK.nBands = psOptions->nBandCount;
     oWK.eWorkingDataType = psOptions->eWorkingDataType;
 
@@ -2923,6 +2934,31 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
         return CE_None;
     }
 
+    // For scenarios where warping is used as a "decoration", try to clamp
+    // source pixel coordinates to integer when very close.
+    const auto roundIfCloseEnough = [](double dfVal)
+    {
+        const double dfRounded = std::round(dfVal);
+        if( std::fabs(dfRounded - dfVal) < 1e-6 )
+            return dfRounded;
+        return dfVal;
+    };
+
+    dfMinXOut = roundIfCloseEnough(dfMinXOut);
+    dfMinYOut = roundIfCloseEnough(dfMinYOut);
+    dfMaxXOut = roundIfCloseEnough(dfMaxXOut);
+    dfMaxYOut = roundIfCloseEnough(dfMaxYOut);
+
+    if( m_bIsTranslationOnPixelBoundaries )
+    {
+        CPLAssert( dfMinXOut == std::round(dfMinXOut) );
+        CPLAssert( dfMinYOut == std::round(dfMinYOut) );
+        CPLAssert( dfMaxXOut == std::round(dfMaxXOut) );
+        CPLAssert( dfMaxYOut == std::round(dfMaxYOut) );
+        CPLAssert( std::round(dfMaxXOut - dfMinXOut) == nDstXSize );
+        CPLAssert( std::round(dfMaxYOut - dfMinYOut) == nDstYSize );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      How much of a window around our source pixel might we need      */
 /*      to collect data from based on the resampling kernel?  Even      */
@@ -2930,7 +2966,8 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
 /*      we may need to collect data if some portion of the              */
 /*      resampling kernel could be on-image.                            */
 /* -------------------------------------------------------------------- */
-    const int nResWinSize = GWKGetFilterRadius(psOptions->eResampleAlg);
+    const int nResWinSize = m_bIsTranslationOnPixelBoundaries ? 0 :
+                                GWKGetFilterRadius(psOptions->eResampleAlg);
 
     // Take scaling into account.
     // Avoid ridiculous small scaling factors to avoid potential further integer
@@ -2970,7 +3007,7 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
 #if DEBUG_VERBOSE
     CPLDebug(
         "WARP",
-        "dst=(%d,%d,%d,%d) raw src=(minx=%.8g,miny=%.8g,maxx=%.8g,maxy=%.8g)",
+        "dst=(%d,%d,%d,%d) raw src=(minx=%.18g,miny=%.18g,maxx=%.18g,maxy=%.18g)",
         nDstXOff, nDstYOff, nDstXSize, nDstYSize,
         dfMinXOut, dfMinYOut, dfMaxXOut, dfMaxYOut);
 #endif
