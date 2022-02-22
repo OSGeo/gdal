@@ -106,7 +106,7 @@ CPLErr CustomPixelFuncWithMetadata( void **papoSources, int nSources, void *pDat
     {
         for( int iCol = 0; iCol < nXSize; ++iCol, ++ii )
         {
-            const double dfPixVal = GetSrcVal(papoSources[0], eSrcType, ii);
+            const double dfPixVal = GetSrcVal(papoSources[0], eSrcType, ii) * 2;
             GDALCopyWords(
                     &dfPixVal, GDT_Float64, 0,
                     static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
@@ -134,7 +134,7 @@ CPLErr CustomPixelFunc( void **papoSources, int nSources, void *pData,
     {
         for( int iCol = 0; iCol < nXSize; ++iCol, ++ii )
         {
-            const double dfPixVal = GetSrcVal(papoSources[0], eSrcType, ii);
+            const double dfPixVal = GetSrcVal(papoSources[0], eSrcType, ii) * 3;
             GDALCopyWords(
                     &dfPixVal, GDT_Float64, 0,
                     static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
@@ -160,7 +160,7 @@ CPLErr CustomPixelFuncNoArgs( void **papoSources, int nSources, void *pData,
     {
         for( int iCol = 0; iCol < nXSize; ++iCol, ++ii )
         {
-            const double dfPixVal = GetSrcVal(papoSources[0], eSrcType, ii);
+            const double dfPixVal = GetSrcVal(papoSources[0], eSrcType, ii) * 4;
             GDALCopyWords(
                     &dfPixVal, GDT_Float64, 0,
                     static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
@@ -204,7 +204,7 @@ namespace tut
         float buf[20 * 20];
         CPL_IGNORE_RET_VAL(GDALRasterIO(band, GF_Read, 0, 0, 20, 20, buf, 20, 20, GDT_Float32, 0, 0));
 
-        ensure_equals("Read wrong data", buf[0], 107);
+        ensure_equals("Read wrong data", buf[0], 107 * 2);
 
         GDALClose(ds);
     }
@@ -229,7 +229,7 @@ namespace tut
         CPL_IGNORE_RET_VAL(GDALRasterIO(
           band, GF_Read, 0, 0, 20, 20, buf, 20, 20, GDT_Float32, 0, 0));
 
-        ensure_equals("Read wrong data", buf[0], 107);
+        ensure_equals("Read wrong data", buf[0], 107 * 3);
 
         GDALClose(ds);
     }
@@ -254,7 +254,7 @@ namespace tut
         CPL_IGNORE_RET_VAL(GDALRasterIO(
           band, GF_Read, 0, 0, 20, 20, buf, 20, 20, GDT_Float32, 0, 0));
 
-        ensure_equals("Read wrong data", buf[0], 107);
+        ensure_equals("Read wrong data", buf[0], 107 * 4);
 
         GDALClose(ds);
     }
