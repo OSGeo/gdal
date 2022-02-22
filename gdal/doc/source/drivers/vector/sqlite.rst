@@ -182,7 +182,7 @@ From the sqlite3 console, a typical use case is :
 
    sqlite> SELECT load_extension('libgdal.so');
 
-   sqlite> SELECT load_extension('libspatialite.so');
+   sqlite> SELECT load_extension('mod_spatialite.so');
 
    sqlite> CREATE VIRTUAL TABLE poly USING VirtualOGR('poly.shp');
 
@@ -206,7 +206,7 @@ function to automatically load all the layers of a datasource.
 
    sqlite> SELECT load_extension('libgdal.so');
 
-   sqlite> SELECT load_extension('libspatialite.so');
+   sqlite> SELECT load_extension('mod_spatialite.so');
 
    sqlite> SELECT ogr_datasource_load_layers('poly.shp');
    1
