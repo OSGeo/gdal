@@ -1173,7 +1173,6 @@ def test_pixfun_missing_builtin():
   </VRTRasterBand>
 </VRTDataset>""")
 
-    last_error = gdal.GetLastErrorMsg()
     band_vrt = vrt_ds.GetRasterBand(1)
     assert band_vrt.GetOffset() == 0
     assert band_vrt.GetScale() == 1
