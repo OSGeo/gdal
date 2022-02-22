@@ -3412,7 +3412,6 @@ PythonBindingErrorHandler(CPLErr eclass, int code, const char *msg )
 
 static
 int GetUseExceptions() {
-  CPLErrorReset();
   return bUseExceptions;
 }
 
@@ -8359,9 +8358,10 @@ SWIGINTERN PyObject *_wrap_GetUseExceptions(PyObject *SWIGUNUSEDPARM(self), PyOb
   
   if (!PyArg_ParseTuple(args,(char *)":GetUseExceptions")) SWIG_fail;
   {
-    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-    result = (int)GetUseExceptions();
-    SWIG_PYTHON_THREAD_END_ALLOW;
+#ifdef SED_HACKS
+    if( bUseExceptions ) bLocalUseExceptionsCode = FALSE;
+#endif
+    result = GetUseExceptions();
   }
   resultobj = SWIG_From_int(static_cast< int >(result));
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
