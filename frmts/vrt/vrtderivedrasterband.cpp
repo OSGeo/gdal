@@ -753,12 +753,12 @@ VRTDerivedRasterBand::GetPixelFunctionArguments(
   std::vector<std::pair<CPLString, CPLString>>& oAdditionalArgs)
 {
 
-    CPLXMLNode* oArgs = CPLParseXMLString(osMetadata);
-    if (oArgs != nullptr && oArgs->eType == CXT_Element &&
-        !strcmp(oArgs->pszValue,
+    auto poArgs = CPLXMLTreeCloser(CPLParseXMLString(osMetadata));
+    if (poArgs != nullptr && poArgs->eType == CXT_Element &&
+        !strcmp(poArgs->pszValue,
                  "PixelFunctionArgumentsList"))
     {
-        for (CPLXMLNode* psIter = oArgs->psChild; psIter != nullptr;
+        for (CPLXMLNode* psIter = poArgs->psChild; psIter != nullptr;
              psIter = psIter->psNext)
         {
             if (psIter->eType == CXT_Element &&
