@@ -372,7 +372,7 @@ static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img, doub
     unsigned int sz = 0;
     auto status = lerc_encodeForVersion(reinterpret_cast<void*>(src.buffer), l2ver,
         static_cast<unsigned int>(GDTtoL2(img.dt)), stride, w, h, 1,
-        bm.empty() ? nullptr : bm.data(), precision,
+        bm.size() == nndv ? nullptr : bm.data(), precision,
         reinterpret_cast<Lerc1NS::Byte*>(dst.buffer), static_cast<unsigned int>(dst.size), &sz);
 
     if (L2NS::ErrCode::Ok != static_cast<L2NS::ErrCode>(status) || sz > dst.size) {
