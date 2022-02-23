@@ -387,39 +387,25 @@ static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img, doub
 // LERC1 splits of early, so this is mostly LERC2
 CPLErr LERC_Band::Decompress(buf_mgr& dst, buf_mgr& src)
 {
+    if (src.size >= Lerc1Image::computeNumBytesNeededToWriteVoidImage() && IsLerc1(src.buffer))
+        return DecompressLERC1(dst, src, img);
+
+    // Can only be LERC2 here, verify
+    if (src.size >= 7 && !IsLerc2(src.buffer)) {
+        CPLError(CE_Failure, CPLE_AppDefined, "MRF: Not a lerc tile");
+        return CE_Failure;
+    }
+
     auto w = static_cast<int>(img.pagesize.x);
     auto h = static_cast<int>(img.pagesize.y);
     auto stride = static_cast<int>(img.pagesize.c);
 
-#define INFOIDX(T) static_cast<size_t>(L2NS::InfoArrOrder::T)
-
-    //! Info returned in infoArray is { version, dataType, nDim, nCols, nRows, nBands, nValidPixels... }, see Lerc_types.h .
-    std::vector<unsigned int> info(INFOIDX(nValidPixels) + 1);
-
-    // we need to add the padding bytes so that out-of-buffer-access checksum
-    // don't false-positively trigger.  Is this still needed with Lerc2?
-    auto status = lerc_getBlobInfo(reinterpret_cast<Lerc1NS::Byte*>(src.buffer),
-        static_cast<unsigned int>(src.size + PADDING_BYTES),
-        info.data(), nullptr, static_cast<unsigned int>(info.size()), 0);
-    if (L2NS::ErrCode::Ok != static_cast<L2NS::ErrCode>(status))
-        return DecompressLERC1(dst, src, img);
-
-    // It was recognized as LERC, check that it matches expectations
-    if (static_cast<L2NS::DataType>(info[INFOIDX(dataType)]) != GDTtoL2(img.dt)
-        || info[INFOIDX(nDim)] != static_cast<unsigned int>(stride)
-        || info[INFOIDX(nCols)] != static_cast<unsigned int>(w)
-        || info[INFOIDX(nRows)] != static_cast<unsigned int>(h)
-        || info[INFOIDX(nBands)] != 1)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "MRF: Invalid Lerc tile");
-        return CE_Failure;
-    }
-
     std::vector<Lerc1NS::Byte> bm;
-    if (img.hasNoData && info[INFOIDX(nValidPixels)] != static_cast<size_t>(w) * static_cast<size_t>(h))
+    if (img.hasNoData)
         bm.resize(static_cast<size_t>(w) * static_cast<size_t>(h));
 
-    status = lerc_decode(reinterpret_cast<Lerc1NS::Byte*>(src.buffer), static_cast<unsigned int>(src.size),
+    // Decoding may fail for many different reasons, including input not matching tile expectations
+    auto status = lerc_decode(reinterpret_cast<Lerc1NS::Byte*>(src.buffer), static_cast<unsigned int>(src.size),
         bm.empty() ? nullptr : bm.data(), stride, w, h, 1, static_cast<unsigned int>(GDTtoL2(img.dt)), dst.buffer);
     if (L2NS::ErrCode::Ok != static_cast<L2NS::ErrCode>(status)) {
         CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error decoding Lerc");
@@ -456,20 +442,21 @@ CPLErr LERC_Band::Compress(buf_mgr &dst, buf_mgr &src)
 
 CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
 {
+    // Header of Lerc2 takes 58 bytes, an empty area 62 or more, depending on the subversion.
+    // Size of Lerc1 empty file is 67
+    // Anything under 50 bytes can't be lerc
     if (poOpenInfo->eAccess != GA_ReadOnly
         || poOpenInfo->pszFilename == nullptr
         || poOpenInfo->pabyHeader == nullptr
-        || strlen(poOpenInfo->pszFilename) < 1)
-        // Header of Lerc2 takes 58 bytes, an empty area 62 or more, depending on the subversion.
-        // Size of Lerc1 empty file is 67
-        // || poOpenInfo->nHeaderBytes < static_cast<int>(Lerc2::ComputeNumBytesHeader()))
+        || strlen(poOpenInfo->pszFilename) < 1
+        || poOpenInfo->nHeaderBytes < 50)
         return nullptr;
 
     // Check the header too
     char *psz = reinterpret_cast<char *>(poOpenInfo->pabyHeader);
     CPLString sHeader;
     sHeader.assign(psz, psz + poOpenInfo->nHeaderBytes);
-    if (!IsLerc(sHeader))
+    if (!(IsLerc1(sHeader) || IsLerc2(sHeader)))
         return nullptr;
 
     GDALDataType dt = GDT_Unknown; // Use this as a validity flag
@@ -477,32 +464,35 @@ CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
     // Use this structure to fetch width and height
     ILSize size(-1, -1, 1, 1, 1);
 
-    // Try lerc2
-    {
-        //! Info returned in infoArray is { version, dataType, nDim, nCols, nRows, nBands, nValidPixels... }, see Lerc_types.h .
-        std::vector<unsigned int> info(INFOIDX(nValidPixels) + 1);
-
-        // we need to add the padding bytes so that out-of-buffer-access checksum
-        // don't false-positively trigger.  Is this still needed with Lerc2?
-        auto status = lerc_getBlobInfo(reinterpret_cast<Lerc1NS::Byte*>(psz),
-            static_cast<unsigned int>(poOpenInfo->nHeaderBytes),
-            info.data(), nullptr, static_cast<int>(info.size()), 0);
-        if (L2NS::ErrCode::Ok == static_cast<L2NS::ErrCode>(status) && 1 == info[INFOIDX(nBands)]) {
-            size.x = info[INFOIDX(nCols)];
-            size.y = info[INFOIDX(nRows)];
-            if (info[INFOIDX(version)] > 3) // Single band before version 4
-                size.c = info[INFOIDX(nDim)];
-            dt = L2toGDT(static_cast<L2NS::DataType>(info[INFOIDX(dataType)]));
-        }
-    }
-
-    // Try Lerc1
-    if (size.x <= 0 && sHeader.size() >= Lerc1Image::computeNumBytesNeededToWriteVoidImage()) {
+    if (IsLerc1(sHeader) && sHeader.size() >= Lerc1Image::computeNumBytesNeededToWriteVoidImage()) {
         if (Lerc1Image::getwh(reinterpret_cast<Lerc1NS::Byte*>(psz), poOpenInfo->nHeaderBytes,
-            size.x, size.y)) {
-            // Get the desired type, if set by caller
+            size.x, size.y))
             dt = GDALGetDataTypeByName(
                 CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "DATATYPE", "Byte"));
+    }
+    else if (IsLerc2(sHeader)) {
+        // getBlobInfo will fail without the whole LERC blob
+        // Wasteful, but that's the only choice given by the LERC C API
+        // This will only work if the Lerc2 file is under the constant defined here
+        static const GIntBig MAX_L2SIZE(10 * 1024 * 1024); // 10MB
+        GByte* buffer = nullptr;
+        vsi_l_offset l2size;
+
+#define INFOIDX(T) static_cast<size_t>(L2NS::InfoArrOrder::T)
+
+        if (VSIIngestFile(nullptr, poOpenInfo->pszFilename, &buffer, &l2size, MAX_L2SIZE)) {
+            //! Info returned in infoArray is { version, dataType, nDim, nCols, nRows, nBands, nValidPixels... }, see Lerc_types.h .
+            std::vector<unsigned int> info(INFOIDX(nValidPixels) + 1);
+            auto status = lerc_getBlobInfo(reinterpret_cast<Lerc1NS::Byte*>(buffer), static_cast<unsigned int>(l2size),
+                info.data(), nullptr, static_cast<int>(info.size()), 0);
+            VSIFree(buffer);
+            if (L2NS::ErrCode::Ok == static_cast<L2NS::ErrCode>(status) && 1 == info[INFOIDX(nBands)]) {
+                size.x = info[INFOIDX(nCols)];
+                size.y = info[INFOIDX(nRows)];
+                if (info[INFOIDX(version)] > 3) // Single band before version 4
+                    size.c = info[INFOIDX(nDim)];
+                dt = L2toGDT(static_cast<L2NS::DataType>(info[INFOIDX(dataType)]));
+            }
         }
     }
 
