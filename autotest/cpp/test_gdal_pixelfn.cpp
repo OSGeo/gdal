@@ -32,7 +32,7 @@
 #include "gdal_alg.h"
 #include "gdal_priv.h"
 #include "gdal.h"
-#include "../frmts/vrt/vrtdataset.h"
+#include "../../frmts/vrt/vrtdataset.h"
 
 #include <sstream>
 #include <string>
@@ -50,42 +50,6 @@ CPLErr CustomPixelFuncNoArgs( void **papoSources, int nSources, void *pData,
                             int nXSize, int nYSize,
                             GDALDataType eSrcType, GDALDataType eBufType,
                             int nPixelSpace, int nLineSpace);
-
-template<typename T>
-inline double
-GetSrcVal(const void* pSource, GDALDataType eSrcType, T ii)
-{
-    switch (eSrcType)
-    {
-        case GDT_Unknown:
-            return 0;
-        case GDT_Byte:
-            return static_cast<const GByte*>(pSource)[ii];
-        case GDT_UInt16:
-            return static_cast<const GUInt16*>(pSource)[ii];
-        case GDT_Int16:
-            return static_cast<const GInt16*>(pSource)[ii];
-        case GDT_UInt32:
-            return static_cast<const GUInt32*>(pSource)[ii];
-        case GDT_Int32:
-            return static_cast<const GInt32*>(pSource)[ii];
-        case GDT_Float32:
-            return static_cast<const float*>(pSource)[ii];
-        case GDT_Float64:
-            return static_cast<const double*>(pSource)[ii];
-        case GDT_CInt16:
-            return static_cast<const GInt16*>(pSource)[2 * ii];
-        case GDT_CInt32:
-            return static_cast<const GInt32*>(pSource)[2 * ii];
-        case GDT_CFloat32:
-            return static_cast<const float*>(pSource)[2 * ii];
-        case GDT_CFloat64:
-            return static_cast<const double*>(pSource)[2 * ii];
-        case GDT_TypeCount:
-            break;
-    }
-    return 0;
-}
 
 CPLErr CustomPixelFuncWithMetadata( void **papoSources, int nSources, void *pData,
                             int nXSize, int nYSize,
@@ -106,7 +70,7 @@ CPLErr CustomPixelFuncWithMetadata( void **papoSources, int nSources, void *pDat
     {
         for( int iCol = 0; iCol < nXSize; ++iCol, ++ii )
         {
-            const double dfPixVal = GetSrcVal(papoSources[0], eSrcType, ii) * 2;
+            const double dfPixVal = SRCVAL(papoSources[0], eSrcType, ii) * 2;
             GDALCopyWords(
                     &dfPixVal, GDT_Float64, 0,
                     static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
@@ -134,7 +98,7 @@ CPLErr CustomPixelFunc( void **papoSources, int nSources, void *pData,
     {
         for( int iCol = 0; iCol < nXSize; ++iCol, ++ii )
         {
-            const double dfPixVal = GetSrcVal(papoSources[0], eSrcType, ii) * 3;
+            const double dfPixVal = SRCVAL(papoSources[0], eSrcType, ii) * 3;
             GDALCopyWords(
                     &dfPixVal, GDT_Float64, 0,
                     static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
@@ -160,7 +124,7 @@ CPLErr CustomPixelFuncNoArgs( void **papoSources, int nSources, void *pData,
     {
         for( int iCol = 0; iCol < nXSize; ++iCol, ++ii )
         {
-            const double dfPixVal = GetSrcVal(papoSources[0], eSrcType, ii) * 4;
+            const double dfPixVal = SRCVAL(papoSources[0], eSrcType, ii) * 4;
             GDALCopyWords(
                     &dfPixVal, GDT_Float64, 0,
                     static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
