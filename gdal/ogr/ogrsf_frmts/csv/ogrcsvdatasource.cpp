@@ -112,6 +112,8 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(
     if( m_poCSVLayer->GetGeometryFormat() == OGR_CSV_GEOM_AS_WKT )
         poCSVTmpLayer->SetWriteGeometry(wkbNone, OGR_CSV_GEOM_AS_WKT, nullptr);
 
+    const bool bKeepGeomColmuns = CPLFetchBool(m_papszOpenOptions, "KEEP_GEOM_COLUMNS", true);
+
     OGRErr eErr = OGRERR_NONE;
     OGRFeatureDefn *poEditableFDefn = poEditableLayer->GetLayerDefn();
     for( int i = 0; eErr == OGRERR_NONE && i < poEditableFDefn->GetFieldCount();
@@ -121,8 +123,9 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(
         int iGeomFieldIdx = 0;
         if( (EQUAL(oFieldDefn.GetNameRef(), "WKT") &&
              (iGeomFieldIdx = poEditableFDefn->GetGeomFieldIndex("")) >= 0) ||
-            (iGeomFieldIdx = poEditableFDefn->GetGeomFieldIndex(
-                 oFieldDefn.GetNameRef())) >= 0 )
+            (bKeepGeomColmuns &&
+             (iGeomFieldIdx = poEditableFDefn->GetGeomFieldIndex(
+                 (std::string("geom_") + oFieldDefn.GetNameRef()).c_str())) >= 0) )
         {
             OGRGeomFieldDefn oGeomFieldDefn(
                 poEditableFDefn->GetGeomFieldDefn(iGeomFieldIdx));
@@ -137,7 +140,7 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(
     const bool bHasXY = !m_poCSVLayer->GetXField().empty() &&
                         !m_poCSVLayer->GetYField().empty();
     const bool bHasZ = !m_poCSVLayer->GetZField().empty();
-    if( bHasXY && !CPLFetchBool(m_papszOpenOptions, "KEEP_GEOM_COLUMNS", true) )
+    if( bHasXY && !bKeepGeomColmuns )
     {
         if( poCSVTmpLayer->GetLayerDefn()->GetFieldIndex(
                 m_poCSVLayer->GetXField()) < 0 )

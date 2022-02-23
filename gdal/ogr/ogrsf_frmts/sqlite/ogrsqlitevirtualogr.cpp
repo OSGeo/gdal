@@ -354,21 +354,21 @@ typedef struct
 
 CPLString OGR2SQLITE_GetNameForGeometryColumn(OGRLayer* poLayer)
 {
-    if( poLayer->GetGeometryColumn() != nullptr &&
-        !EQUAL(poLayer->GetGeometryColumn(), "") )
+    const char* pszGeomColumn = poLayer->GetGeometryColumn();
+    if( pszGeomColumn != nullptr &&
+        !EQUAL(pszGeomColumn, "") )
     {
-        return poLayer->GetGeometryColumn();
+        if( poLayer->GetLayerDefn()->GetFieldIndex(pszGeomColumn) < 0 )
+            return pszGeomColumn;
     }
-    else
+
+    CPLString osGeomCol("GEOMETRY");
+    int bTry = 2;
+    while( poLayer->GetLayerDefn()->GetFieldIndex(osGeomCol) >= 0 )
     {
-        CPLString osGeomCol("GEOMETRY");
-        int bTry = 2;
-        while( poLayer->GetLayerDefn()->GetFieldIndex(osGeomCol) >= 0 )
-        {
-            osGeomCol.Printf("GEOMETRY%d", bTry++);
-        }
-        return osGeomCol;
+        osGeomCol.Printf("GEOMETRY%d", bTry++);
     }
+    return osGeomCol;
 }
 
 #ifdef VIRTUAL_OGR_DYNAMIC_EXTENSION_ENABLED
