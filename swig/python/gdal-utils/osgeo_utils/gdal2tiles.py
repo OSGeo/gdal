@@ -38,12 +38,14 @@
 
 from __future__ import print_function, division
 
+import contextlib
 import glob
 import json
 import math
 import optparse
 import os
 import shutil
+import stat
 import sys
 import tempfile
 import threading
@@ -72,6 +74,54 @@ resampling_list = (
     'average', 'near', 'bilinear', 'cubic', 'cubicspline', 'lanczos',
     'antialias', 'mode', 'max', 'min', 'med', 'q1', 'q3')
 webviewer_list = ('all', 'google', 'openlayers', 'leaflet', 'mapml', 'none')
+
+
+def makedirs(path):
+    """ Wrapper for os.makedirs() that can work with /vsi files too """
+    if path.startswith('/vsi'):
+        if gdal.MkdirRecursive(path, 0o755) != 0:
+            raise Exception(f'Cannot create {path}')
+    else:
+        os.makedirs(path, exist_ok=True)
+
+
+def isfile(path):
+    """ Wrapper for os.path.isfile() that can work with /vsi files too """
+    if path.startswith('/vsi'):
+        stat_res = gdal.VSIStatL(path)
+        if stat is None:
+            return False
+        return stat.S_ISREG(stat_res.mode)
+    else:
+        return os.path.isfile(path)
+
+
+class VSIFile:
+    """ Expose a simplistic file-like API for a /vsi file """
+    def __init__(self, filename, f):
+        self.filename = filename
+        self.f = f
+
+    def write(self, content):
+        if gdal.VSIFWriteL(content, 1, len(content), self.f) != len(content):
+            raise Exception('Error while writing into %s' % self.filename)
+
+
+@contextlib.contextmanager
+def my_open(filename, mode):
+    """ Wrapper for open() built-in method that can work with /vsi files too """
+    if filename.startswith('/vsi'):
+        f = gdal.VSIFOpenL(filename, mode)
+        if f is None:
+            raise Exception(f'Cannot open {filename} in {mode}')
+        try:
+            yield VSIFile(filename, f)
+        finally:
+            if gdal.VSIFCloseL(f) != 0:
+                raise Exception(f'Cannot close {filename}')
+    else:
+        yield open(filename, mode)
+
 
 class UnsupportedTileMatrixSet(Exception):
     pass
@@ -759,6 +809,9 @@ def scale_query_to_tile(dsquery, dstile, tiledriver, options, tilefilename=''):
 
     elif options.resampling == 'antialias' and numpy_available:
 
+        if tilefilename.startswith('/vsi'):
+            raise Exception('Outputing to /vsi file systems with antialias mode is not supported')
+
         # Scaling by PIL (Python Imaging Library) - improved Lanczos
         array = numpy.zeros((querysize, querysize, tilebands), numpy.uint8)
         for i in range(tilebands):
@@ -1186,8 +1239,8 @@ def create_base_tile(tile_job_info: 'TileJobInfo', tile_detail: 'TileDetail') ->
         swne = get_tile_swne(tile_job_info, options)
         if swne is not None:
             kmlfilename = os.path.join(output, str(tz), str(tx), '%d.kml' % GDAL2Tiles.getYTile(ty, tz, options))
-            if not options.resume or not os.path.exists(kmlfilename):
-                with open(kmlfilename, 'wb') as f:
+            if not options.resume or not isfile(kmlfilename):
+                with my_open(kmlfilename, 'wb') as f:
                     f.write(generate_kml(
                         tx, ty, tz, tile_job_info.tile_extension, tile_job_info.tile_size,
                         swne, tile_job_info.options
@@ -1217,7 +1270,7 @@ def create_overview_tile(base_tz: int, base_tiles: List[Tuple[int, int]], output
 
         base_tile_path = os.path.join(output_folder, str(base_tz), str(base_tx),
                                       "%s.%s" % (base_ty_real, tile_job_info.tile_extension))
-        if not os.path.isfile(base_tile_path):
+        if not isfile(base_tile_path):
             continue
 
         dsquerytile = gdal.Open(base_tile_path, gdal.GA_ReadOnly)
@@ -1257,7 +1310,7 @@ def create_overview_tile(base_tz: int, base_tiles: List[Tuple[int, int]], output
                                 "%s.%s" % (overview_ty_real, tile_job_info.tile_extension))
     if options.verbose:
         print(tilefilename)
-    if options.resume and os.path.exists(tilefilename):
+    if options.resume and isfile(tilefilename):
         if options.verbose:
             print("Tile generation skipped because of --resume")
         return
@@ -1277,7 +1330,7 @@ def create_overview_tile(base_tz: int, base_tiles: List[Tuple[int, int]], output
         if tile_job_info.kml:
             swne = get_tile_swne(tile_job_info, options)
             if swne is not None:
-                with open(os.path.join(
+                with my_open(os.path.join(
                     output_folder,
                     '%d/%d/%d.kml' % (overview_tz, overview_tx, overview_ty_real)
                 ), 'wb') as f:
@@ -1309,7 +1362,7 @@ def group_overview_base_tiles(base_tz: int, output_folder: str, tile_job_info: '
     for tx in range(tminx, tmaxx + 1):
         overview_tx = tx >> 1
         tiledirname = os.path.join(output_folder, str(overview_tz), str(overview_tx))
-        os.makedirs(tiledirname, exist_ok=True)
+        makedirs(tiledirname)
 
     return list(overview_to_bases.values())
 
@@ -1430,7 +1483,7 @@ def process_args(argv: List[str]) -> Tuple[str, str, Options]:
                         "files: gdal_vrtmerge.py -o merged.vrt %s" % " ".join(args))
 
     input_file = args[0]
-    if not os.path.isfile(input_file):
+    if not isfile(input_file):
         exit_with_error("The provided input file %s does not exist or is not a file" % input_file)
 
     if len(args) == 2:
@@ -1621,7 +1674,7 @@ class GDAL2Tiles(object):
         self.tiledriver = 'PNG'
         self.tileext = 'png'
         if options.mpi:
-            os.makedirs(output_folder, exist_ok=True)
+            makedirs(output_folder)
             self.tmp_dir = tempfile.mkdtemp(dir=output_folder)
         else:
             self.tmp_dir = tempfile.mkdtemp()
@@ -1996,7 +2049,7 @@ class GDAL2Tiles(object):
         tiles are generated during the tile processing).
         """
 
-        os.makedirs(self.output_folder, exist_ok=True)
+        makedirs(self.output_folder)
 
         if self.options.profile == 'mercator':
 
@@ -2009,15 +2062,15 @@ class GDAL2Tiles(object):
             # Generate googlemaps.html
             if self.options.webviewer in ('all', 'google') and self.options.profile == 'mercator':
                 if (not self.options.resume or not
-                        os.path.exists(os.path.join(self.output_folder, 'googlemaps.html'))):
-                    with open(os.path.join(self.output_folder, 'googlemaps.html'), 'wb') as f:
+                        isfile(os.path.join(self.output_folder, 'googlemaps.html'))):
+                    with my_open(os.path.join(self.output_folder, 'googlemaps.html'), 'wb') as f:
                         f.write(self.generate_googlemaps().encode('utf-8'))
 
             # Generate leaflet.html
             if self.options.webviewer in ('all', 'leaflet'):
                 if (not self.options.resume or not
-                        os.path.exists(os.path.join(self.output_folder, 'leaflet.html'))):
-                    with open(os.path.join(self.output_folder, 'leaflet.html'), 'wb') as f:
+                        isfile(os.path.join(self.output_folder, 'leaflet.html'))):
+                    with my_open(os.path.join(self.output_folder, 'leaflet.html'), 'wb') as f:
                         f.write(self.generate_leaflet().encode('utf-8'))
 
         elif self.options.profile == 'geodetic':
@@ -2041,13 +2094,13 @@ class GDAL2Tiles(object):
         # Generate openlayers.html
         if self.options.webviewer in ('all', 'openlayers'):
             if (not self.options.resume or not
-                    os.path.exists(os.path.join(self.output_folder, 'openlayers.html'))):
-                with open(os.path.join(self.output_folder, 'openlayers.html'), 'wb') as f:
+                    isfile(os.path.join(self.output_folder, 'openlayers.html'))):
+                with my_open(os.path.join(self.output_folder, 'openlayers.html'), 'wb') as f:
                     f.write(self.generate_openlayers().encode('utf-8'))
 
         # Generate tilemapresource.xml.
-        if not self.options.xyz and self.swne is not None and (not self.options.resume or not os.path.exists(os.path.join(self.output_folder, 'tilemapresource.xml'))):
-            with open(os.path.join(self.output_folder, 'tilemapresource.xml'), 'wb') as f:
+        if not self.options.xyz and self.swne is not None and (not self.options.resume or not isfile(os.path.join(self.output_folder, 'tilemapresource.xml'))):
+            with my_open(os.path.join(self.output_folder, 'tilemapresource.xml'), 'wb') as f:
                 f.write(self.generate_tilemapresource().encode('utf-8'))
 
         # Generate mapml file
@@ -2055,8 +2108,8 @@ class GDAL2Tiles(object):
            self.options.xyz and \
            self.options.profile != 'raster' and \
            (self.options.profile != 'geodetic' or self.options.tmscompatible) and \
-           (not self.options.resume or not os.path.exists(os.path.join(self.output_folder, 'mapml.mapml'))):
-            with open(os.path.join(self.output_folder, 'mapml.mapml'), 'wb') as f:
+           (not self.options.resume or not isfile(os.path.join(self.output_folder, 'mapml.mapml'))):
+            with my_open(os.path.join(self.output_folder, 'mapml.mapml'), 'wb') as f:
                 f.write(self.generate_mapml().encode('utf-8'))
 
 
@@ -2071,8 +2124,8 @@ class GDAL2Tiles(object):
             # Generate Root KML
             if self.kml:
                 if (not self.options.resume or not
-                        os.path.exists(os.path.join(self.output_folder, 'doc.kml'))):
-                    with open(os.path.join(self.output_folder, 'doc.kml'), 'wb') as f:
+                        isfile(os.path.join(self.output_folder, 'doc.kml'))):
+                    with my_open(os.path.join(self.output_folder, 'doc.kml'), 'wb') as f:
                         f.write(generate_kml(
                             None, None, None, self.tileext, self.tile_size, self.tileswne,
                             self.options, children
@@ -2113,7 +2166,7 @@ class GDAL2Tiles(object):
         # Create directories for the tiles
         for tx in range(tminx, tmaxx + 1):
             tiledirname = os.path.join(self.output_folder, str(tz), str(tx))
-            os.makedirs(tiledirname, exist_ok=True)
+            makedirs(tiledirname)
 
         for ty in range(tmaxy, tminy - 1, -1):
             for tx in range(tminx, tmaxx + 1):
@@ -2125,7 +2178,7 @@ class GDAL2Tiles(object):
                 if self.options.verbose:
                     print(ti, '/', tcount, tilefilename)
 
-                if self.options.resume and os.path.exists(tilefilename):
+                if self.options.resume and isfile(tilefilename):
                     if self.options.verbose:
                         print("Tile generation skipped because of --resume")
                     continue
@@ -3322,10 +3375,18 @@ def submain(argv: List[str], pool=None, pool_size=0) -> int:
         options.nb_processes = pool_size
     nb_processes = options.nb_processes or 1
 
-    if nb_processes == 1 and not options.mpi:
-        single_threaded_tiling(input_file, output_folder, options)
-    else:
-        multi_threaded_tiling(input_file, output_folder, options, pool)
+    old_used_exceptions = gdal.GetUseExceptions()
+    if not old_used_exceptions:
+        gdal.UseExceptions()
+
+    try:
+        if nb_processes == 1 and not options.mpi:
+            single_threaded_tiling(input_file, output_folder, options)
+        else:
+            multi_threaded_tiling(input_file, output_folder, options, pool)
+    finally:
+        if not old_used_exceptions:
+            gdal.DontUseExceptions()
 
     return 0
 
