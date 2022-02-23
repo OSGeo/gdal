@@ -37,11 +37,18 @@ PythonBindingErrorHandler(CPLErr eclass, int code, const char *msg )
 }
 %}
 
+%exception GetUseExceptions
+{
+%#ifdef SED_HACKS
+    if( bUseExceptions ) bLocalUseExceptionsCode = FALSE;
+%#endif
+    result = GetUseExceptions();
+}
+
 %inline %{
 
 static
 int GetUseExceptions() {
-  CPLErrorReset();
   return bUseExceptions;
 }
 
