@@ -323,7 +323,7 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char* pszGeomCol)
 /* -------------------------------------------------------------------- */
     bool bHasRowId = m_bIsTable;
 
-    // SELECT .. FROM ... LIMIT ... is broken with spatialite 5.0.1 and sqlite 3.38.0
+    // SELECT .. FROM ... LIMIT ... is broken on VirtualShape tables with spatialite 5.0.1 and sqlite 3.38.0
     const char *pszSQLConst =
         CPLSPrintf(m_bIsVirtualShape ?
                         "SELECT %s* FROM '%s'" :
