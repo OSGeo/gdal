@@ -1628,12 +1628,14 @@ def test_warp_53(typestr, option, alg_name, expected_cs):
 # Test Alpha on UInt16/Int16
 
 
-def test_warp_54():
+@pytest.mark.parametrize('use_optim', ['YES', 'NO'])
+def test_warp_54(use_optim):
 
     # UInt16
     src_ds = gdal.Translate('', '../gcore/data/stefan_full_rgba.tif',
                                 options='-of MEM -scale 0 255 0 65535 -ot UInt16 -a_ullr -162 150 0 0')
-    dst_ds = gdal.Warp('', src_ds, format='MEM')
+    with gdaltest.config_option('GDAL_WARP_USE_TRANSLATION_OPTIM', use_optim):
+        dst_ds = gdal.Warp('', src_ds, format='MEM')
     for i in range(4):
         expected_cs = src_ds.GetRasterBand(i + 1).Checksum()
         got_cs = dst_ds.GetRasterBand(i + 1).Checksum()
@@ -1642,7 +1644,8 @@ def test_warp_54():
     # Int16
     src_ds = gdal.Translate('', '../gcore/data/stefan_full_rgba.tif',
                                 options='-of MEM -scale 0 255 0 32767 -ot Int16 -a_ullr -162 150 0 0')
-    dst_ds = gdal.Warp('', src_ds, format='MEM')
+    with gdaltest.config_option('GDAL_WARP_USE_TRANSLATION_OPTIM', use_optim):
+        dst_ds = gdal.Warp('', src_ds, format='MEM')
     for i in range(4):
         expected_cs = src_ds.GetRasterBand(i + 1).Checksum()
         got_cs = dst_ds.GetRasterBand(i + 1).Checksum()
@@ -1653,7 +1656,8 @@ def test_warp_54():
                                 options='-of MEM -scale 0 255 0 32767 -ot UInt16 -a_ullr -162 150 0 0')
     for i in range(4):
         src_ds.GetRasterBand(i + 1).SetMetadataItem('NBITS', '15', 'IMAGE_STRUCTURE')
-    dst_ds = gdal.Warp('/vsimem/warp_54.tif', src_ds, options='-co NBITS=15')
+    with gdaltest.config_option('GDAL_WARP_USE_TRANSLATION_OPTIM', use_optim):
+        dst_ds = gdal.Warp('/vsimem/warp_54.tif', src_ds, options='-co NBITS=15')
     for i in range(4):
         expected_cs = src_ds.GetRasterBand(i + 1).Checksum()
         got_cs = dst_ds.GetRasterBand(i + 1).Checksum()
@@ -1679,7 +1683,8 @@ def test_warp_55():
 # same size). This test crops a single pixel out of a 3-by-3 image.
 
 
-def test_warp_56():
+@pytest.mark.parametrize('use_optim', ['YES', 'NO'])
+def test_warp_56(use_optim):
 
     numpy = pytest.importorskip('numpy')
 
@@ -1694,7 +1699,8 @@ def test_warp_56():
     for off in numpy.linspace(0, 2, 21):
         pix_ds.SetGeoTransform([off + 1, 1, 0,
                                 off + 1, 0, 1])
-        gdal.Warp(pix_ds, src_ds, resampleAlg='bilinear')
+        with gdaltest.config_option('GDAL_WARP_USE_TRANSLATION_OPTIM', use_optim):
+            gdal.Warp(pix_ds, src_ds, resampleAlg='bilinear')
 
         exp = 0 if off < 1 else 100 * (off - 1)**2
         warped = pix_ds.GetRasterBand(1).ReadAsArray()[0, 0]

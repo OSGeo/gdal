@@ -177,6 +177,9 @@ int GDALTransformLonLatToDestApproxTransformer(void* hTransformArg,
                                                     double* pdfX,
                                                     double* pdfY);
 
+bool GDALTransformIsTranslationOnPixelBoundaries(GDALTransformerFunc pfnTransformer,
+                                                 void                *pTransformerArg);
+
 typedef struct {
     GDALTransformerInfo sTI;
 
