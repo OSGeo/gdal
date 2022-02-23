@@ -263,42 +263,6 @@ static CPLErr DecompressLERC1(buf_mgr &dst, buf_mgr &src, const ILImage &img)
 }
 
 // Lerc2
-//// copied from Lerc_types.h, which might not be available
-//enum class L2_ErrCode : int
-//{
-//    Ok = 0,
-//    Failed,
-//    WrongParam,
-//    BufferTooSmall,
-//    NaN
-//};
-//
-//enum class L2_DataType : int
-//{
-//    dt_char = 0,
-//    dt_uchar,
-//    dt_short,
-//    dt_ushort,
-//    dt_int,
-//    dt_uint,
-//    dt_float,
-//    dt_double
-//};
-//
-//// This is valid from Lerc 2v4, previously the nDim was not there
-//// C functions signature changed then too
-//enum class L2_InfoArrOrder : int
-//{
-//    version = 0,
-//    dataType,
-//    nDim,
-//    nCols,
-//    nRows,
-//    nBands,
-//    nValidPixels,
-//    blobSize,
-//    size
-//};
 
 static GDALDataType L2toGDT(L2NS::DataType L2type) {
     GDALDataType dt;
@@ -384,7 +348,7 @@ static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img, doub
     auto h = static_cast<int>(img.pagesize.y);
     auto stride = static_cast<int>(img.pagesize.c);
 
-    // So we build a bitmask to pass a pointer to bytes, which gets converted to a bitmask?
+    // build a mask
     std::vector<Lerc1NS::Byte> bm;
     size_t nndv = 0;
     if (img.hasNoData) { // Only build a bitmask if no data value is defined
@@ -420,7 +384,7 @@ static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img, doub
     return CE_None;
 }
 
-// LERC1 splits of at the beginning, so this is mostly LERC2
+// LERC1 splits of early, so this is mostly LERC2
 CPLErr LERC_Band::Decompress(buf_mgr& dst, buf_mgr& src)
 {
     auto w = static_cast<int>(img.pagesize.x);
