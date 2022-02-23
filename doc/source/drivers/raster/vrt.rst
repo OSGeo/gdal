@@ -920,10 +920,20 @@ with derived bands that use this function), an application calls
 
 .. code-block:: cpp
 
-    GDALAddDerivedBandPixelFuncWithArgs("MyFirstFunction", TestFunction, nullptr);
+    static const char pszMetadata[] =
+    "<PixelFunctionArgumentsList>"
+    "   <Argument name='y' description='y' type='double' mandatory='1' />"
+    "   <Argument type='builtin' value='offset' />"
+    "   <Argument type='builtin' value='scale' />"
+    "   <Argument type='builtin' value='NoData' />"
+    "   <Argument name='customConstant' type='constant' value='42'>"
+    "</PixelFunctionArgumentsList>";
+    GDALAddDerivedBandPixelFuncWithArgs("MyFirstFunction", TestFunction, pszMetadata);
 
 A good time to do this is at the beginning of an application when the
-GDAL drivers are registered.
+GDAL drivers are registered. ``pszMetadata`` is optional and can be ``nullptr``.
+It can be used to declare the function signature to the user and to request additional
+parameters aside from the ones from the Dataset.
 
 A :cpp:type:`GDALDerivedPixelFuncWithArgs` is defined with a signature similar to :cpp:func:`GDALRasterBand::IRasterIO`:
 
@@ -987,6 +997,14 @@ The following is an implementation of the pixel function:
         const char *pszY = CSLFetchNameValue(papszArgs, "y");
         if (pszY == nullptr) return CE_Failure;
 
+        double NoData = NAN;
+        const char *pszNoData = CSLFetchNameValue(papszArgs, "NoData");
+        if (pszNoData != nullptr)
+        {
+            NoData = std::strtod(pszNoData, &end);
+            if (end == pszNoData) return CE_Failure; // Could not parse
+        }
+
         char *end = nullptr;
         double y = std::strtod(pszY, &end);
         if (end == pszY) return CE_Failure; // Could not parse
@@ -1003,7 +1021,10 @@ The following is an implementation of the pixel function:
                 x4 = SRCVAL(papoSources[2], eSrcType, ii);
                 x8 = SRCVAL(papoSources[3], eSrcType, ii);
 
-                pix_val = sqrt((x3*x3+x4*x4)/(x0*x8)) + y;
+                if (x0 == NoData || x3 == NoData || x4 == NoData || x8 == NoData)
+                    pix_val = NAN;
+                else
+                    pix_val = sqrt((x3*x3+x4*x4)/(x0*x8)) + y;
 
                 GDALCopyWords(&pix_val, GDT_Float64, 0,
                             ((GByte *)pData) + nLineSpace * iLine + iCol * nPixelSpace,
