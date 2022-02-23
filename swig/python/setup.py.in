@@ -47,11 +47,10 @@ is_standalone_build = not os.path.exists('@PROJECT_BINARY_DIR@/swig/python')
 if is_standalone_build:
     include_dirs = []
     library_dirs = []
-    libraries = []
 else:
     include_dirs = ['@PROJECT_BINARY_DIR@/port', '@PROJECT_SOURCE_DIR@/port', '@PROJECT_BINARY_DIR@/gcore', '@PROJECT_SOURCE_DIR@/gcore', '@PROJECT_SOURCE_DIR@/alg', '@PROJECT_SOURCE_DIR@/ogr/', '@PROJECT_SOURCE_DIR@/ogr/ogrsf_frmts', '@PROJECT_SOURCE_DIR@/gnm', '@PROJECT_SOURCE_DIR@/apps']
     library_dirs = [@GDAL_LIB_DIR@]
-    libraries = ['@GDAL_LIB_OUTPUT_NAME@']
+libraries = ['@GDAL_LIB_OUTPUT_NAME@']
 
 
 # ---------------------------------------------------------------------------
