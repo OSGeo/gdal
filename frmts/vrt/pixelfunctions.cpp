@@ -1340,14 +1340,14 @@ static CPLErr ScalePixelFunc( void **papoSources, int nSources, void *pData,
  *            band (real or complex): log10( abs( x ) )
  * - "dB": perform conversion to dB of the abs of a single raster
  *         band (real or complex): 20. * log10( abs( x ) ).
- *         Note: the optional fact paremeter can be set to 10. to get the
+ *         Note: the optional fact parameter can be set to 10. to get the
  *         alternative formula: 10. * log10( abs( x ) )
  * - "exp": computes the exponential of each element in the input band ``x``
  *          (of real values): ``e ^ x``.
  *          The function also accepts two optional parameters: ``base`` and ``fact``
  *          that allow to compute the generalized formula: ``base ^ ( fact * x)``.
  *          Note: this function is the recommended one to perform conversion
- *          form logaritmic scale (dB): `` 10. ^ (x / 20.)``, in this case
+ *          form logarithmic scale (dB): `` 10. ^ (x / 20.)``, in this case
  *          ``base = 10.`` and ``fact = 1./20``
  * - "dB2amp": perform scale conversion from logarithmic to linear
  *             (amplitude) (i.e. 10 ^ ( x / 20 ) ) of a single raster

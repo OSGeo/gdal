@@ -131,7 +131,7 @@ extern "C" {
  *    beyond the lifetime of the parent object.
  * - Detaching an object field or array index from its parent object
  *    (using `json_object_object_del()` or `json_object_array_del_idx()`)
- * - Sharing a json_object with multiple (not necesarily parallel) threads
+ * - Sharing a json_object with multiple (not necessarily parallel) threads
  *    of execution that all expect to free it (with `json_object_put()`) when
  *    they're done.
  *
@@ -265,7 +265,7 @@ JSON_EXPORT void json_object_set_userdata(json_object *jso, void *userdata,
  * If custom userdata is already set on this object, any existing user_delete
  * function is called before the new one is set.
  *
- * If to_string_func is NULL the default behaviour is reset (but the userdata
+ * If to_string_func is NULL the default behavior is reset (but the userdata
  * and user_delete fields are still set).
  *
  * The userdata parameter is optional and may be passed as NULL. It can be used
@@ -738,7 +738,7 @@ JSON_EXPORT int json_object_set_int(struct json_object *obj, int new_value);
  *
  * @param obj the json_object instance
  * @param val the value to add
- * @returns 1 if the increment succeded, 0 otherwise
+ * @returns 1 if the increment succeeded, 0 otherwise
  */
 JSON_EXPORT int json_object_int_inc(struct json_object *obj, int64_t val);
 
@@ -1055,7 +1055,7 @@ JSON_EXPORT json_c_shallow_copy_fn json_c_shallow_copy_default;
  *                     when custom serializers are in use.  See also
  *                     json_object set_serializer.
  *
- * @returns 0 if the copy went well, -1 if an error occured during copy
+ * @returns 0 if the copy went well, -1 if an error occurred during copy
  *          or if the destination pointer is non-NULL
  */
 

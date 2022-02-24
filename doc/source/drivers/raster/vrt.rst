@@ -825,7 +825,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
    * - **dB**
      - 1
      - ``fact`` (optional)
-     - perform conversion to dB of the abs of a single raster band (real or complex): ``20. * log10( abs( x ) )``. The optional ``fact`` paremeter can be set to ``10`` to get the alternative formula: ``10. * log10( abs( x ) )``
+     - perform conversion to dB of the abs of a single raster band (real or complex): ``20. * log10( abs( x ) )``. The optional ``fact`` parameter can be set to ``10`` to get the alternative formula: ``10. * log10( abs( x ) )``
    * - **dB2amp**
      - 1
      - -
@@ -845,7 +845,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
    * - **exp**
      - 1
      - ``base`` (optional), ``fact`` (optional)
-     - computes the exponential of each element in the input band ``x`` (of real values): ``e ^ x``. The function also accepts two optional parameters: ``base`` and ``fact`` that allow to compute the generalized formula: ``base ^ ( fact * x )``. Note: this function is the recommended one to perform conversion form logaritmic scale (dB): `` 10. ^ (x / 20.)``, in this case ``base = 10.`` and ``fact = 0.05`` i.e. ``1. / 20``
+     - computes the exponential of each element in the input band ``x`` (of real values): ``e ^ x``. The function also accepts two optional parameters: ``base`` and ``fact`` that allow to compute the generalized formula: ``base ^ ( fact * x )``. Note: this function is the recommended one to perform conversion form logarithmic scale (dB): `` 10. ^ (x / 20.)``, in this case ``base = 10.`` and ``fact = 0.05`` i.e. ``1. / 20``
    * - **imag**
      - 1
      - -

@@ -1284,7 +1284,7 @@ static bool UseTEAndTSAndTRConsistently(const GDALWarpAppOptions *psOptions)
 {
     // We normally don't allow -te, -ts and -tr together, unless they are all
     // consistent. The interest of this is to use the -tr values to produce
-    // exact pixel size, rather than infering it from -te and -ts
+    // exact pixel size, rather than inferring it from -te and -ts
 
     // Constant and logic to be kept in sync with cogdriver.cpp
     constexpr double RELATIVE_ERROR_RES_SHARED_BY_COG_AND_GDALWARP = 1e-8;

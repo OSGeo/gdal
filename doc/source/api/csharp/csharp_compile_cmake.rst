@@ -23,7 +23,7 @@ The build environment has the following dependencies:
 .NET Build Toolchain
 ++++++++++++++++++++
 
-The build scipts can use either .NET 5.0 and  :file:`dotnet.exe` or Mono and :file:`msc.exe` to compile the bindings.
+The build scripts can use either .NET 5.0 and  :file:`dotnet.exe` or Mono and :file:`msc.exe` to compile the bindings.
 
 .NET is used for preference if it found on all platforms but the use of Mono can be forced using a command line variable.
 
@@ -83,7 +83,7 @@ There are also the following NuGET packages:
 Using the .NET Bindings
 -----------------------
 
-The easiest way to use the bindings in developement would be use the NuGET packages created.
+The easiest way to use the bindings in development would be use the NuGET packages created.
 
 To do this you need to add a local repistory pointing to the GDAL install directory. `This is explained here <https://docs.microsoft.com/en-us/nuget/hosting-packages/local-feeds>`__ .
 

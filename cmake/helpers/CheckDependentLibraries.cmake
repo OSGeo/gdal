@@ -76,7 +76,7 @@ endfunction()
 # The RECOMMENDED option is used for the feature summary.
 # The VERSION, CONFIG, COMPONENTS and NAMES parameters are passed to find_package().
 # Using NAMES with find_package() implies config mode. However, gdal_check_package()
-# attemps another find_package() without NAMES if the config mode attempt was not
+# attempts another find_package() without NAMES if the config mode attempt was not
 # successful, allowing a fallback to Find modules.
 # The TARGETS parameter can define a list of candidate targets. If given, a
 # package will only be accepted if it defines one of the given targets. The matching
