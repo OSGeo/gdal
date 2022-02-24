@@ -70,6 +70,7 @@ for dirname in alg port gcore ogr frmts gnm apps fuzzers; do
         -D_TOOLKIT_IN_DLL_ \
         -UGDAL_NO_AUTOLOAD \
         -DHAVE_MITAB \
+        -DOGR_SQLITE_ALLOW_LOAD_EXTENSIONS \
         -Dva_copy=va_start \
         -D__cplusplus=201103 \
         -DVSIRealloc=realloc \

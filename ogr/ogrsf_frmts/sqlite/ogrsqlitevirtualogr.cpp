@@ -2594,6 +2594,23 @@ int sqlite3_extension_init (sqlite3 * hDB, char **pzErrMsg,
 
     *pzErrMsg = nullptr;
 
+    /* Check if we have been already loaded. */
+    /* This is to avoid 'ogrinfo :memory: --config OGR_SQLITE_LOAD_EXTENSIONS libgdal.so' to crash */
+    /* since it would run OGR2SQLITEModule::Setup() first with OGR2SQLITE_static_register() */
+    /* and then through here. */
+    int rc = sqlite3_exec(hDB, "SELECT ogr_version()", nullptr, nullptr, nullptr);
+
+    /* Reset error flag */
+    sqlite3_exec(hDB, "SELECT 1", nullptr, nullptr, nullptr);
+
+    if( rc == SQLITE_OK )
+    {
+
+        CPLDebug("OGR", "... OGR virtual OGR already loaded !");
+        *pzErrMsg = sqlite3_mprintf("Cannot load libgdal as an extension from a OGR SQLite datasource");
+        return SQLITE_ERROR;
+    }
+
     OGRRegisterAll();
 
     // Super hacky: this forces the malloc subsystem to be initialized.
