@@ -113,6 +113,9 @@
 
 CPL_CVSID("$Id$")
 
+#define STRINGIFY(x) #x
+#define XSTRINGIFY(x) STRINGIFY(x)
+
 static bool bGlobalInExternalOvr = false;
 
 static thread_local int gnThreadLocalLibtiffError = 0;
@@ -136,14 +139,13 @@ typedef enum
     GTIFFTAGTYPE_BYTE_STRING
 } GTIFFTagTypes;
 
-typedef struct
+static const struct
 {
     const char    *pszTagName;
     int            nTagVal;
     GTIFFTagTypes  eType;
-} GTIFFTags;
-
-static const GTIFFTags asTIFFTags[] =
+}
+asTIFFTags[] =
 {
     { "TIFFTAG_DOCUMENTNAME", TIFFTAG_DOCUMENTNAME, GTIFFTAGTYPE_STRING },
     { "TIFFTAG_IMAGEDESCRIPTION", TIFFTAG_IMAGEDESCRIPTION,
@@ -168,6 +170,53 @@ static const GTIFFTags asTIFFTags[] =
 const char szPROFILE_BASELINE[] = "BASELINE";
 const char szPROFILE_GeoTIFF[] = "GeoTIFF";
 const char szPROFILE_GDALGeoTIFF[] = "GDALGeoTIFF";
+
+
+#define COMPRESSION_ENTRY(x, bWriteSupported)  { COMPRESSION_ ## x , STRINGIFY(x) , bWriteSupported }
+
+static const struct
+{
+    int         nCode;
+    const char* pszText;
+    bool        bWriteSupported;
+}
+asCompressionNames[] =
+{
+    // Compression methods in read/write mode
+    COMPRESSION_ENTRY(NONE, true),
+    COMPRESSION_ENTRY(CCITTRLE, true),
+    COMPRESSION_ENTRY(CCITTFAX3, true),
+    { COMPRESSION_CCITTFAX3, "FAX3", true }, // alternate name for write side
+    COMPRESSION_ENTRY(CCITTFAX4, true),
+    { COMPRESSION_CCITTFAX4, "FAX4", true }, // alternate name for write side
+    COMPRESSION_ENTRY(LZW, true),
+    COMPRESSION_ENTRY(JPEG, true),
+    COMPRESSION_ENTRY(PACKBITS, true),
+    { COMPRESSION_ADOBE_DEFLATE, "DEFLATE", true }, // manual entry since we want the user friendly name to be DEFLATE
+    { COMPRESSION_ADOBE_DEFLATE, "ZIP", true }, // alternate name for write side
+    COMPRESSION_ENTRY(LZMA, true),
+    COMPRESSION_ENTRY(ZSTD, true),
+    COMPRESSION_ENTRY(LERC, true),
+    { COMPRESSION_LERC, "LERC_DEFLATE", true },
+    { COMPRESSION_LERC, "LERC_ZSTD", true },
+    COMPRESSION_ENTRY(WEBP, true),
+    COMPRESSION_ENTRY(JXL, true),
+
+    // Compression methods in read-only
+    COMPRESSION_ENTRY(OJPEG, false),
+    COMPRESSION_ENTRY(NEXT, false),
+    COMPRESSION_ENTRY(CCITTRLEW, false),
+    COMPRESSION_ENTRY(THUNDERSCAN, false),
+    COMPRESSION_ENTRY(PIXARFILM, false),
+    COMPRESSION_ENTRY(PIXARLOG, false),
+    COMPRESSION_ENTRY(DEFLATE, false), // COMPRESSION_DEFLATE is deprecated
+    COMPRESSION_ENTRY(DCS, false),
+    COMPRESSION_ENTRY(JBIG, false),
+    COMPRESSION_ENTRY(SGILOG, false),
+    COMPRESSION_ENTRY(SGILOG24, false),
+    COMPRESSION_ENTRY(JP2000, false),
+};
+
 
 /************************************************************************/
 /*                         GTIFFSupportsPredictor()                     */
@@ -1758,7 +1807,7 @@ int GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
             eErr = -1;
 
         panOffsets[iLine] +=
-            (nXOff + nYOffsetInBlock * nBlockXSize) * nSrcPixelSize;
+            (nXOff + static_cast<vsi_l_offset>(nYOffsetInBlock) * nBlockXSize) * nSrcPixelSize;
         panSizes[iLine] = nReqXSize * nSrcPixelSize;
     }
 
@@ -3997,7 +4046,7 @@ int GTiffDataset::DirectIO( GDALRWFlag eRWFlag,
             eErr = -1;
 
         panOffsets[iLine] +=
-            (nXOff + nYOffsetInBlock * m_nBlockXSize) * nSrcPixelSize;
+            (nXOff + static_cast<vsi_l_offset>(nYOffsetInBlock) * m_nBlockXSize) * nSrcPixelSize;
         panSizes[iLine] = nReqXSize * nSrcPixelSize;
     }
 
@@ -4767,7 +4816,7 @@ int GTiffRasterBand::IGetDataCoverageStatus( int nXOff, int nYOff,
                     (iY + 1) * nBlockYSize;
 
                 nPixelsData +=
-                    (std::min( nXBlockRight, nXOff + nXSize ) -
+                    (static_cast<GIntBig>(std::min( nXBlockRight, nXOff + nXSize )) -
                      std::max( iX * nBlockXSize, nXOff )) *
                     (std::min( nYBlockBottom, nYOff + nYSize ) -
                      std::max( iY * nBlockYSize, nYOff ));
@@ -14761,114 +14810,34 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         }
     }
 
-    if( m_nCompression == COMPRESSION_NONE )
-        /* no compression tag */;
-    else if( m_nCompression == COMPRESSION_CCITTRLE )
+    if( m_nCompression != COMPRESSION_NONE )
     {
-        m_oGTiffMDMD.SetMetadataItem( "COMPRESSION", "CCITTRLE",
-                                    "IMAGE_STRUCTURE" );
+        bool foundCompressionName = false;
+        for( const auto& entry: asCompressionNames )
+        {
+            if( entry.nCode == m_nCompression )
+            {
+                foundCompressionName = true;
+                m_oGTiffMDMD.SetMetadataItem( "COMPRESSION", entry.pszText,
+                                              "IMAGE_STRUCTURE" );
+                break;
+            }
+        }
+        if( !foundCompressionName )
+        {
+            CPLString oComp;
+            oComp.Printf( "%d", m_nCompression);
+            m_oGTiffMDMD.SetMetadataItem( "COMPRESSION", oComp.c_str());
+        }
     }
-    else if( m_nCompression == COMPRESSION_CCITTFAX3 )
+
+    if( m_nCompression == COMPRESSION_JPEG && m_nPhotometric == PHOTOMETRIC_YCBCR )
     {
-        m_oGTiffMDMD.SetMetadataItem( "COMPRESSION", "CCITTFAX3",
-                                    "IMAGE_STRUCTURE" );
-    }
-    else if( m_nCompression == COMPRESSION_CCITTFAX4 )
-    {
-        m_oGTiffMDMD.SetMetadataItem( "COMPRESSION", "CCITTFAX4",
-                                    "IMAGE_STRUCTURE" );
-    }
-    else if( m_nCompression == COMPRESSION_LZW )
-    {
-        m_oGTiffMDMD.SetMetadataItem( "COMPRESSION", "LZW", "IMAGE_STRUCTURE" );
-    }
-    else if( m_nCompression == COMPRESSION_OJPEG )
-    {
-        m_oGTiffMDMD.SetMetadataItem( "COMPRESSION", "OJPEG", "IMAGE_STRUCTURE" );
-    }
-    else if( m_nCompression == COMPRESSION_JPEG )
-    {
-        if( m_nPhotometric == PHOTOMETRIC_YCBCR )
-            m_oGTiffMDMD.SetMetadataItem( "COMPRESSION", "YCbCr JPEG",
-                                        "IMAGE_STRUCTURE" );
-        else
-            m_oGTiffMDMD.SetMetadataItem( "COMPRESSION", "JPEG",
-                                        "IMAGE_STRUCTURE" );
-    }
-    else if( m_nCompression == COMPRESSION_NEXT )
-    {
-        m_oGTiffMDMD.SetMetadataItem( "COMPRESSION", "NEXT", "IMAGE_STRUCTURE" );
-    }
-    else if( m_nCompression == COMPRESSION_CCITTRLEW )
-    {
-        m_oGTiffMDMD.SetMetadataItem( "COMPRESSION", "CCITTRLEW",
-                                    "IMAGE_STRUCTURE" );
-    }
-    else if( m_nCompression == COMPRESSION_PACKBITS )
-    {
-        m_oGTiffMDMD.SetMetadataItem( "COMPRESSION", "PACKBITS",
-                                    "IMAGE_STRUCTURE" );
-    }
-    else if( m_nCompression == COMPRESSION_THUNDERSCAN )
-    {
-        m_oGTiffMDMD.SetMetadataItem( "COMPRESSION", "THUNDERSCAN",
-                                    "IMAGE_STRUCTURE" );
-    }
-    else if( m_nCompression == COMPRESSION_PIXARFILM )
-    {
-        m_oGTiffMDMD.SetMetadataItem( "COMPRESSION", "PIXARFILM",
-                                    "IMAGE_STRUCTURE" );
-    }
-    else if( m_nCompression == COMPRESSION_PIXARLOG )
-    {
-        m_oGTiffMDMD.SetMetadataItem( "COMPRESSION", "PIXARLOG",
-                                    "IMAGE_STRUCTURE" );
-    }
-    else if( m_nCompression == COMPRESSION_DEFLATE )
-    {
-        m_oGTiffMDMD.SetMetadataItem( "COMPRESSION", "DEFLATE",
-                                    "IMAGE_STRUCTURE" );
-    }
-    else if( m_nCompression == COMPRESSION_ADOBE_DEFLATE )
-    {
-        m_oGTiffMDMD.SetMetadataItem( "COMPRESSION", "DEFLATE",
-                                    "IMAGE_STRUCTURE" );
-    }
-    else if( m_nCompression == COMPRESSION_DCS )
-    {
-        m_oGTiffMDMD.SetMetadataItem( "COMPRESSION", "DCS", "IMAGE_STRUCTURE" );
-    }
-    else if( m_nCompression == COMPRESSION_JBIG )
-    {
-        m_oGTiffMDMD.SetMetadataItem( "COMPRESSION", "JBIG", "IMAGE_STRUCTURE" );
-    }
-    else if( m_nCompression == COMPRESSION_SGILOG )
-    {
-        m_oGTiffMDMD.SetMetadataItem( "COMPRESSION", "SGILOG",
-                                    "IMAGE_STRUCTURE" );
-    }
-    else if( m_nCompression == COMPRESSION_SGILOG24 )
-    {
-        m_oGTiffMDMD.SetMetadataItem( "COMPRESSION", "SGILOG24",
-                                    "IMAGE_STRUCTURE" );
-    }
-    else if( m_nCompression == COMPRESSION_JP2000 )
-    {
-        m_oGTiffMDMD.SetMetadataItem( "COMPRESSION", "JP2000",
-                                    "IMAGE_STRUCTURE" );
-    }
-    else if( m_nCompression == COMPRESSION_LZMA )
-    {
-        m_oGTiffMDMD.SetMetadataItem( "COMPRESSION", "LZMA", "IMAGE_STRUCTURE" );
-    }
-    else if( m_nCompression == COMPRESSION_ZSTD )
-    {
-        m_oGTiffMDMD.SetMetadataItem( "COMPRESSION", "ZSTD", "IMAGE_STRUCTURE" );
+        m_oGTiffMDMD.SetMetadataItem( "COMPRESSION", "YCbCr JPEG",
+                                      "IMAGE_STRUCTURE" );
     }
     else if( m_nCompression == COMPRESSION_LERC )
     {
-        m_oGTiffMDMD.SetMetadataItem( "COMPRESSION", "LERC", "IMAGE_STRUCTURE" );
-
         uint32_t nLercParamCount = 0;
         uint32_t* panLercParams = nullptr;
         if( TIFFGetField( m_hTIFF, TIFFTAG_LERC_PARAMETERS, &nLercParamCount,
@@ -14908,20 +14877,6 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
                          "Unknown Lerc version: %d", nLercVersion);
             }
         }
-    }
-    else if( m_nCompression == COMPRESSION_WEBP )
-    {
-        m_oGTiffMDMD.SetMetadataItem( "COMPRESSION", "WEBP", "IMAGE_STRUCTURE" );
-    }
-    else if( m_nCompression == COMPRESSION_JXL )
-    {
-        m_oGTiffMDMD.SetMetadataItem( "COMPRESSION", "JXL", "IMAGE_STRUCTURE" );
-    }
-    else
-    {
-        CPLString oComp;
-        oComp.Printf( "%d", m_nCompression);
-        m_oGTiffMDMD.SetMetadataItem( "COMPRESSION", oComp.c_str());
     }
 
     if( m_nPlanarConfig == PLANARCONFIG_CONTIG && nBands != 1 )
@@ -19971,7 +19926,7 @@ const char *GTiffDataset::GetMetadataItem( const char *pszName,
             if( !TIFFGetField( m_hTIFF, TIFFTAG_GDAL_METADATA, &pszText ) )
                 return nullptr;
 
-            return CPLSPrintf("%s", pszText);
+            return pszText;
         }
         else if( EQUAL( pszName, "HAS_USED_READ_ENCODED_API") )
         {
@@ -20672,46 +20627,23 @@ void GDALDeregister_GTiff( GDALDriver * )
 int GTIFFGetCompressionMethod(const char* pszValue, const char* pszVariableName)
 {
     int nCompression = COMPRESSION_NONE;
-    if( EQUAL( pszValue, "NONE" ) )
-        nCompression = COMPRESSION_NONE;
-    else if( EQUAL( pszValue, "JPEG" ) )
-        nCompression = COMPRESSION_JPEG;
-    else if( EQUAL( pszValue, "LZW" ) )
-        nCompression = COMPRESSION_LZW;
-    else if( EQUAL( pszValue, "PACKBITS" ))
-        nCompression = COMPRESSION_PACKBITS;
-    else if( EQUAL( pszValue, "DEFLATE" ) || EQUAL( pszValue, "ZIP" ))
-        nCompression = COMPRESSION_ADOBE_DEFLATE;
-    else if( EQUAL( pszValue, "FAX3" )
-             || EQUAL( pszValue, "CCITTFAX3" ))
-        nCompression = COMPRESSION_CCITTFAX3;
-    else if( EQUAL( pszValue, "FAX4" )
-             || EQUAL( pszValue, "CCITTFAX4" ))
-        nCompression = COMPRESSION_CCITTFAX4;
-    else if( EQUAL( pszValue, "CCITTRLE" ) )
-        nCompression = COMPRESSION_CCITTRLE;
-    else if( EQUAL( pszValue, "LZMA" ) )
-        nCompression = COMPRESSION_LZMA;
-    else if( EQUAL( pszValue, "ZSTD" ) )
-        nCompression = COMPRESSION_ZSTD;
-    else if( EQUAL( pszValue, "LERC" ) ||
-             EQUAL( pszValue, "LERC_DEFLATE" ) ||
-             EQUAL( pszValue, "LERC_ZSTD" ) )
+    bool bFoundMatch = false;
+    for( const auto& entry: asCompressionNames )
     {
-        nCompression = COMPRESSION_LERC;
+        if( entry.bWriteSupported && EQUAL(entry.pszText, pszValue) )
+        {
+            bFoundMatch = true;
+            nCompression = entry.nCode;
+            break;
+        }
     }
-#ifdef HAVE_JXL
-    else if( EQUAL( pszValue, "JXL" ) )
+
+    if( !bFoundMatch )
     {
-        nCompression = COMPRESSION_JXL;
-    }
-#endif
-    else if( EQUAL( pszValue, "WEBP" ) )
-        nCompression = COMPRESSION_WEBP;
-    else
         CPLError( CE_Warning, CPLE_IllegalArg,
                   "%s=%s value not recognised, ignoring.",
                   pszVariableName,pszValue );
+    }
 
     if( nCompression != COMPRESSION_NONE &&
         !TIFFIsCODECConfigured(static_cast<uint16_t>(nCompression)) )
@@ -21028,8 +20960,6 @@ void GDALRegister_GTiff()
     poDriver->SetMetadataItem( "LIBTIFF", TIFFLIB_VERSION_STR );
 #endif
 
-#define STRINGIFY(x) #x
-#define XSTRINGIFY(x) STRINGIFY(x)
     poDriver->SetMetadataItem( "LIBGEOTIFF", XSTRINGIFY(LIBGEOTIFF_VERSION) );
 
     poDriver->SetMetadataItem( GDAL_DCAP_COORDINATE_EPOCH, "YES" );

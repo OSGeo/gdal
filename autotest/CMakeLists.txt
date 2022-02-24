@@ -136,7 +136,6 @@ int main(int argc, char **argv) {
 }")
     add_executable(pytest_runner ${CMAKE_CURRENT_BINARY_DIR}/pytest_runner.cpp)
     set_property(TARGET pytest_runner PROPERTY CXX_STANDARD 11)
-    target_link_libraries(pytest_runner PUBLIC ${GDAL_LIB_TARGET_NAME})
     target_include_directories(pytest_runner PRIVATE ${Python_INCLUDE_DIRS})
     target_link_libraries(pytest_runner PRIVATE ${Python_LIBRARIES})
     add_custom_target(

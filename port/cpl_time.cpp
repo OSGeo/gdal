@@ -121,7 +121,7 @@ struct tm * CPLUnixTimeToYMDHMS(GIntBig unixTime, struct tm* pRet)
         int newy = y + static_cast<int>( days / DAYSPERNYEAR );
         if( days < 0 )
             --newy;
-        days -= (newy - y) * DAYSPERNYEAR +
+        days -= static_cast<GIntBig>(newy - y) * DAYSPERNYEAR +
             LEAPS_THROUGH_END_OF(newy - 1) -
             LEAPS_THROUGH_END_OF(y - 1);
         y = newy;

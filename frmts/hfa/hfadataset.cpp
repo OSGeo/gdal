@@ -3238,6 +3238,8 @@ CPLErr HFADataset::WriteProjection()
             sDatum.datumname = const_cast<char *>("NAD83");
         if( nGCS == 4283 )
             sDatum.datumname = const_cast<char *>("GDA94");
+        if( nGCS == 6284 )
+            sDatum.datumname = const_cast<char *>("Pulkovo 1942");
 
         if( poGeogSRS->GetTOWGS84(sDatum.params) == OGRERR_NONE )
         {

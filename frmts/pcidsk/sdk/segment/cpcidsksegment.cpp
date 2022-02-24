@@ -323,6 +323,7 @@ void CPCIDSKSegment::PushHistory( const std::string &app,
 
     std::vector<std::string> history_entries = GetHistoryEntries();
 
+    // coverity[string_null]
     history_entries.insert( history_entries.begin(), history );
     history_entries.resize(8);
 

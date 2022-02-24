@@ -3070,7 +3070,12 @@ TIFFWriteDirectoryTagData(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir, uint16_t
 			TIFFErrorExt(tif->tif_clientdata,module,"IO error writing tag data");
 			return(0);
 		}
-		assert(datalength<0x80000000UL);
+		if (datalength >= 0x80000000UL)
+		{
+			TIFFErrorExt(tif->tif_clientdata,module,
+			             "libtiff does not allow writing more than 2147483647 bytes in a tag");
+			return(0);
+		}
 		if (!WriteOK(tif,data,(tmsize_t)datalength))
 		{
 			TIFFErrorExt(tif->tif_clientdata,module,"IO error writing tag data");

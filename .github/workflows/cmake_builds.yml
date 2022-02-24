@@ -18,10 +18,20 @@ jobs:
   build-linux-ubuntu-focal:
     runs-on: ubuntu-20.04
     env:
-      CMAKE_OPTIONS: -DPython_LOOKUP_VERSION=3.8 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache
+      CMAKE_OPTIONS: -DPython_LOOKUP_VERSION=3.8 -DUSE_CCACHE=ON
+      cache-name: cmake-ubuntu-focal
     steps:
     - name: Checkout GDAL
       uses: actions/checkout@v2
+    - name: Setup cache
+      uses: actions/cache@v2
+      id: cache
+      with:
+          path: ${{ github.workspace }}/.ccache
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ github.base_ref }}${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-${{ env.cache-name }}-${{ github.base_ref }}
+            ${{ runner.os }}-${{ env.cache-name }}
     - name: Install CMake 3.10.2
       run: |
         cd ${GITHUB_WORKSPACE}
@@ -55,6 +65,13 @@ jobs:
         #
         python3 -m pip install -U pip wheel setuptools numpy
         python3 -m pip install -r $GITHUB_WORKSPACE/autotest/requirements.txt
+    - name: Configure ccache
+      run: |
+          echo CCACHE_BASEDIR=$PWD >> ${GITHUB_ENV}
+          echo CCACHE_DIR=$PWD/.ccache >> ${GITHUB_ENV}
+          echo CCACHE_MAXSIZE=250M >> ${GITHUB_ENV}
+          ccache -z
+      working-directory: ${{ github.workspace }}
     - name: Configure
       run: |
         mkdir -p $GITHUB_WORKSPACE/superbuild
@@ -74,7 +91,8 @@ jobs:
         cmake --build $GITHUB_WORKSPACE/superbuild/build --target quicktest -- -j$(nproc)
     - name: test (with ctest)
       run: |
-        ctest --test-dir $GITHUB_WORKSPACE/superbuild/build -V
+        cd $GITHUB_WORKSPACE/superbuild/build
+        ctest -V
     - name: install
       run: |
         cmake --build $GITHUB_WORKSPACE/superbuild/build --target install -- -j$(nproc)
@@ -87,14 +105,28 @@ jobs:
         rm -rf swig/csharp
         cmake  ${CMAKE_OPTIONS} -DCSHARP_MONO=ON -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror ..
         cmake --build $GITHUB_WORKSPACE/superbuild/build --target install -- -j$(nproc)
-        ctest --test-dir $GITHUB_WORKSPACE/superbuild/build -V -R "^csharp.*"
-    - name: Standalone Python bindings build
+        ctest -V -R "^csharp.*"
+    - name: Standalone Python bindings build and gdal-utils package
       run: |
         (cd $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python && python setup.py sdist)
+        (cd $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python/gdal-utils && python setup.py bdist_wheel)
         mv $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python/dist/GDAL-*.tar.gz gdal-python.tar.gz
+        mv $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python/gdal-utils/dist/*.whl gdal_utils-X.Y.Z.T-py3-none-any.whl
         rm -rf $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python
+        python3 -m venv myvenv
+        source myvenv/bin/activate
         # Set PATH so that gdal-config is found
-        PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH pip install --user gdal-python.tar.gz
+        PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH pip install gdal-python.tar.gz
+        which gdal_edit.py
+        cp $GITHUB_WORKSPACE/autotest/gcore/data/byte.tif .
+        LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib ldd myvenv/lib/python3.8/site-packages/osgeo/_gdal.cpython-38-x86_64-linux-gnu.so
+        LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib gdal_edit.py byte.tif -mo FOO=BAR
+        rm -f myvenv/bin/gdal_edit.py
+        PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH pip install gdal_utils-X.Y.Z.T-py3-none-any.whl
+        which gdal_edit.py
+        cp $GITHUB_WORKSPACE/autotest/gcore/data/byte.tif .
+        LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib gdal_edit.py byte.tif -mo FOO=BAR
+        rm -f myvenv/bin/gdal_edit.py
     - name: Test post-install usage (with pkg-config)
       run: |
         ./autotest/postinstall/test_pkg-config.sh $GITHUB_WORKSPACE/install-gdal
@@ -129,13 +161,30 @@ jobs:
         else
           echo 'Expected fail'
         fi
+    - name: ccache statistics
+      run: ccache -s
 
   build-windows-msys2-mingw:
-    if: ${{ false }}  # disable for now. See https://github.com/OSGeo/gdal/issues/5317
     runs-on: windows-2022
     env:
       generator: MinGW Makefiles
+      cache-name: cmake-mingw64
+    defaults:
+      run:
+        shell: msys2 {0}
     steps:
+      - name: Install development packages
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: |
+            base-devel git mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-ccache
+            mingw-w64-x86_64-crypto++ mingw-w64-x86_64-pcre mingw-w64-x86_64-xerces-c mingw-w64-x86_64-zstd
+            mingw-w64-x86_64-geos mingw-w64-x86_64-libspatialite mingw-w64-x86_64-proj
+            mingw-w64-x86_64-cgal mingw-w64-x86_64-libfreexl mingw-w64-x86_64-hdf5 mingw-w64-x86_64-netcdf mingw-w64-x86_64-poppler mingw-w64-x86_64-postgresql
+            mingw-w64-x86_64-libgeotiff mingw-w64-x86_64-jasper mingw-w64-x86_64-libpng mingw-w64-x86_64-libtiff mingw-w64-x86_64-openjpeg
+            mingw-w64-x86_64-python-pip mingw-w64-x86_64-python-numpy mingw-w64-x86_64-python-pytest mingw-w64-x86_64-python-setuptools
       # To avoid git clone to mess with the line endings of GDAL autotest data
       # files that look like text, but should be handled as binary content
       - name: Set git core.autocrlf to false
@@ -143,40 +192,51 @@ jobs:
           git config --global core.autocrlf false
       - name: Checkout GDAL
         uses: actions/checkout@v2
+      - name: Setup cache
+        uses: actions/cache@v2
+        id: cache
+        with:
+          path: ${{ github.workspace }}\.ccache
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ github.base_ref }}${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-${{ env.cache-name }}-${{ github.base_ref }}
+            ${{ runner.os }}-${{ env.cache-name }}
+      - name: Configure ccache
+        run: |
+          echo CCACHE_BASEDIR=$PWD >> ${GITHUB_ENV}
+          echo CCACHE_DIR=$PWD/.ccache >> ${GITHUB_ENV}
+          echo CCACHE_MAXSIZE=250M >> ${GITHUB_ENV}
+          ccache -z
+        working-directory: ${{ github.workspace }}
       - name: populate JAVA_HOME
-        shell: pwsh
         run: |
-            echo "JAVA_HOME=$env:JAVA_HOME_11_X64" >> %GITHUB_ENV%
-      - name: Install MSYS2
-        run: choco install --yes msys2
-      - name: Install development packages
+          echo "JAVA_HOME=$JAVA_HOME_11_X64" >> ${GITHUB_ENV}
+      - name: Install PROJ data
         run: |
-          $script = @'
-          pacman -S --noconfirm base-devel
-          pacman -S --noconfirm mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-ccache
-          pacman -S --noconfirm mingw-w64-x86_64-proj mingw-w64-x86_64-geos mingw-w64-x86_64-hdf5 mingw-w64-x86_64-netcdf mingw-w64-x86_64-openjpeg mingw-w64-x86_64-poppler mingw-w64-x86_64-libtiff mingw-w64-x86_64-libpng mingw-w64-x86_64-xerces-c mingw-w64-x86_64-libfreexl mingw-w64-x86_64-libgeotiff mingw-w64-x86_64-libspatialite mingw-w64-x86_64-libtiff mingw-w64-x86_64-pcre mingw-w64-x86_64-postgresql mingw-w64-x86_64-zstd mingw-w64-x86_64-crypto++ mingw-w64-x86_64-cgal mingw-w64-x86_64-jasper mingw-w64-x86_64-python-numpy mingw-w64-x86_64-python-pytest mingw-w64-x86_64-python-setuptools
-          cd /C/tools/msys64/mingw64/share/proj
+          cd /mingw64/share/proj
           wget http://download.osgeo.org/proj/proj-datumgrid-1.8.tar.gz
           tar xvzf proj-datumgrid-1.8.tar.gz
-          '@
-          & c:\tools\msys64\usr\bin\bash.exe -lc $script
-        env:
-          MSYSTEM: MSYS
       - name: Install python dependencies for autotest
         run: |
-          $script = @'
-          python -m ensurepip --upgrade
-          python -m pip install -U wheel setuptools numpy
-          python -m pip install pytest pytest-env
-          '@
-          & c:\tools\msys64\usr\bin\bash.exe -lc $script
-        env:
-          MSYSTEM: MINGW64
-      #  libxml2 disabled because currently causes a 'Imported target "LibXml2::LibXml2" includes non-existent path "/mingw64/include/libxml2" in its INTERFACE_INCLUDE_DIRECTORIES'
+          python -m pip install pytest-env
       # Disable mySQL since C:/mysql/lib/mysqlclient.lib (unrelated to msys) is found, which causes linking issues
       # Disable Python bindings because of 'ValueError: filename D:/a/gdal/gdal/swig/python/osgeo/__init__.py does not start with the input_base_dir D:/a/gdal/gdal/swig/python/osgeo/\' when running lib2to3
+      # Set explicitly CMAKE_C|CXX_COMPILER otherwise C:/ProgramData/chocolatey/bin/gcc.exe would be used
       - name: Configure
-        run: cmake -DCMAKE_BUILD_TYPE=release -G "${env:generator}" -Werror=dev "-DCMAKE_C_COMPILER_LAUNCHER=c:\tools\msys64\mingw64\bin\ccache.exe" "-DCMAKE_CXX_COMPILER_LAUNCHER=c:\tools\msys64\mingw64\bin\ccache.exe" "-DCMAKE_PREFIX_PATH=C:\tools\msys64\mingw64" "-DCMAKE_UNITY_BUILD=${env:CMAKE_UNITY_BUILD}" -S . -B "build" -DLIBXML2_INCLUDE_DIR=C:/tools/msys64/mingw64/include -DGDAL_USE_LIBXML2:BOOL=OFF -DGDAL_USE_MYSQL:BOOL=OFF -DBUILD_PYTHON_BINDINGS:BOOL=OFF -DBUILD_CSHARP_BINDINGS=ON -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror -DWERROR_DEV_FLAG="-Werror=dev"
+        run: |
+          cmake -S . -B build -G "${generator}" -Werror=dev \
+            -DCMAKE_BUILD_TYPE=release \
+            -DCMAKE_C_FLAGS=-Werror \
+            -DCMAKE_CXX_FLAGS=-Werror \
+            -DWERROR_DEV_FLAG=-Werror=dev \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_PREFIX_PATH=/mingw64 \
+            -DCMAKE_INSTALL_PREFIX=$PWD/install-gdal \
+            "-DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD}" \
+            -DGDAL_USE_MYSQL:BOOL=OFF \
+            -DBUILD_PYTHON_BINDINGS:BOOL=OFF \
+            -DBUILD_CSHARP_BINDINGS=ON
         working-directory: ${{ github.workspace }}
       - name: Build
         run: cmake --build build -j 3
@@ -187,12 +247,22 @@ jobs:
       #  working-directory: ${{ github.workspace }}
       #  env:
       #    PROJ_LIB: "C:\\tools\\msys64\\mingw64\\share\\proj"
+      - name: Install
+        run: cmake --build build --target install -j 3
+        working-directory: ${{ github.workspace }}
+      - name: Test post-install usage (with pkg-config)
+        run: ./autotest/postinstall/test_pkg-config.sh $PWD/install-gdal
+        working-directory: ${{ github.workspace }}
+      - name: ccache statistics
+        run: ccache -s
 
   build-windows-conda:
     runs-on: windows-2022
     env:
         architecture: x64
-        generator: Visual Studio 17 2022
+        #generator: Visual Studio 17 2022
+        generator: Ninja
+        cache-name: cmake-msvc
     steps:
     # To avoid git clone to mess with the line endings of GDAL autotest data
     # files that look like text, but should be handled as binary content
@@ -201,6 +271,7 @@ jobs:
         git config --global core.autocrlf false
     - name: Checkout GDAL
       uses: actions/checkout@v2
+    - uses: ilammy/msvc-dev-cmd@v1
     - name: populate JAVA_HOME
       shell: pwsh
       run: |
@@ -220,11 +291,33 @@ jobs:
             libnetcdf openjpeg poppler libtiff libpng xerces-c expat libxml2 kealib json-c \
             cfitsio freexl geotiff jpeg libpq libspatialite libwebp-base pcre pcre2 postgresql \
             sqlite tiledb zstd charls cryptopp cgal jasper doxygen librttopo libkml openssl xz \
-            openjdk ant qhull armadillo blas blas-devel libblas libcblas liblapack liblapacke
+            openjdk ant qhull armadillo blas blas-devel libblas libcblas liblapack liblapacke blosc
         cd $CONDA_PREFIX/Library/share/proj
         curl http://download.osgeo.org/proj/proj-datumgrid-1.8.tar.gz > proj-datumgrid-1.8.tar.gz
         tar xvzf proj-datumgrid-1.8.tar.gz
         cd $OLDPWD
+    - name: Setup cache
+      uses: actions/cache@v2
+      id: cache
+      with:
+          path: ${{ github.workspace }}\.clcache
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ github.base_ref }}${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-${{ env.cache-name }}-${{ github.base_ref }}
+            ${{ runner.os }}-${{ env.cache-name }}
+    - name: Configure ccache (Part 1)
+      shell: cmd
+      run: |
+          set CLCACHE_DIR=%CD%\.clcache
+          echo CLCACHE_DIR=%CLCACHE_DIR%>> %GITHUB_ENV%
+    - name: Configure ccache (Part 2)
+      shell: bash -l {0}
+      run: |
+          ${CONDA_PREFIX}/Scripts/clcache -z
+          ${CONDA_PREFIX}/Scripts/clcache -M 250000000
+          ${CONDA_PREFIX}/Scripts/clcache -s
+          # Otherwise cmake can find link.exe from Conda instead of MSVC
+          rm /usr/bin/link
     - name: Configure
       shell: bash -l {0}
       # FIXME: Jasper manually disabled because of linking errors: lacks jp2_box_destroy
@@ -235,7 +328,7 @@ jobs:
       # BUILD_JAVA_BINDINGS=OFF because we get "Error occurred during initialization of VM.   Corrupted ZIP library: C:\Miniconda\envs\gdalenv\Library\bin\zip.dll" when running java. Not reproducible on a standard VM
       run: |
         mkdir -p $GITHUB_WORKSPACE/build
-        cmake -A ${architecture} -G "${generator}" -Werror=dev "-DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal" "-DCMAKE_C_COMPILER_LAUNCHER=clcache" "-DCMAKE_CXX_COMPILER_LAUNCHER=clcache" "-DCMAKE_PREFIX_PATH=${CONDA_PREFIX}" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DJASPER_LIBRARY_RELEASE:FILEPATH= -DLIBKML_BASE_LIBRARY:FILEPATH= -DGDAL_ENABLE_PLUGINS:BOOL=ON -DGDAL_ENABLE_PLUGINS_NO_DEPS:BOOL=ON -DGDAL_USE_PUBLICDECOMPWT:BOOL=ON -DPUBLICDECOMPWT_URL=https://github.com/rouault/PublicDecompWT -DBUILD_JAVA_BINDINGS=OFF -DBUILD_CSHARP_BINDINGS=ON -DGDAL_USE_MYSQL:BOOL=OFF -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX" -DWERROR_DEV_FLAG="-Werror=dev"
+        cmake -G "${generator}" -Werror=dev "-DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal" "-DUSE_CCACHE=ON" "-DCMAKE_PREFIX_PATH=${CONDA_PREFIX}" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DJASPER_LIBRARY_RELEASE:FILEPATH= -DLIBKML_BASE_LIBRARY:FILEPATH= -DGDAL_ENABLE_PLUGINS:BOOL=ON -DGDAL_ENABLE_PLUGINS_NO_DEPS:BOOL=ON -DGDAL_USE_PUBLICDECOMPWT:BOOL=ON -DPUBLICDECOMPWT_URL=https://github.com/rouault/PublicDecompWT -DBUILD_JAVA_BINDINGS=OFF -DBUILD_CSHARP_BINDINGS=ON -DGDAL_USE_MYSQL:BOOL=OFF -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX" -DWERROR_DEV_FLAG="-Werror=dev" -DCMAKE_BUILD_TYPE=Release
     - name: Build
       shell: bash -l {0}
       run: cmake --build $GITHUB_WORKSPACE/build --config Release -j 2
@@ -261,6 +354,10 @@ jobs:
         gdalinfo --version
         python -VV
         PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/site-packages python -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
+    - name: clcache statistics
+      shell: bash -l {0}
+      run:
+        ${CONDA_PREFIX}/Scripts/clcache -s
 
   build-windows-minimum:
     runs-on: windows-2022
@@ -301,6 +398,7 @@ jobs:
     runs-on: macOS-latest
     env:
       CMAKE_OPTIONS: -DGDAL_USE_GIFLIB_INTERNAL=YES -DCFITSIO_ROOT=/usr/local/opt/cfitsio  -DPoppler_ROOT=/usr/local/opt/poppler -DPROJ_ROOT=/usr/local/opt/proj -DLibXml2_ROOT=/usr/local/opt/libxml2 -DSPATIALITE_ROOT=/usr/local/opt/libspatialite -DPostgreSQL_ROOT=/usr/local/opt/libpq -DEXPAT_ROOT=/usr/local/opt/expat -DXercesC_ROOT=/usr/local/opt/xerces-c -DSQLite3_ROOT=/usr/local/opt/sqlite -DOpenSSL_ROOT=/usr/local/opt/openssl -DPNG_ROOT=/usr/local/opt/libpng -DJPEG_ROOT=/usr/local/opt/jpeg -DOpenJPEG_ROOT=/usr/local/opt/openjpeg -DCURL_ROOT=/usr/local/opt/curl -DGDAL_USE_DAP=OFF -DGDAL_USE_JASPER=OFF
+      cache-name: cmake-macos
     steps:
     - name: Setup xcode
       uses: maxim-lobanov/setup-xcode@v1
@@ -308,6 +406,15 @@ jobs:
         xcode-version: 12.4
     - name: Checkout GDAL
       uses: actions/checkout@v2
+    - name: Setup cache
+      uses: actions/cache@v2
+      id: cache
+      with:
+          path: ${{ github.workspace }}/.ccache
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ github.base_ref }}${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-${{ env.cache-name }}-${{ github.base_ref }}
+            ${{ runner.os }}-${{ env.cache-name }}
     - run: |
         cmake --version
     - name: Install dependency
@@ -324,10 +431,17 @@ jobs:
         tar xvzf proj-datumgrid-1.8.tar.gz
         cd $OLDPWD
         python3 -m pip install -r $GITHUB_WORKSPACE/autotest/requirements.txt
+    - name: Configure ccache
+      run: |
+          echo CCACHE_BASEDIR=$PWD >> ${GITHUB_ENV}
+          echo CCACHE_DIR=$PWD/.ccache >> ${GITHUB_ENV}
+          echo CCACHE_MAXSIZE=250M >> ${GITHUB_ENV}
+          ccache -z
+      working-directory: ${{ github.workspace }}
     - name: Configure
       run: |
         mkdir -p $GITHUB_WORKSPACE/build
-        cmake -Werror=dev -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal ${CMAKE_OPTIONS} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror "-DCMAKE_C_COMPILER_LAUNCHER=ccache" "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DWERROR_DEV_FLAG="-Werror=dev"
+        cmake -Werror=dev -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal ${CMAKE_OPTIONS} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror -DUSE_CCACHE=ON -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DWERROR_DEV_FLAG="-Werror=dev"
     - name: Build
       run: |
         cmake --build $GITHUB_WORKSPACE/build -j 3
@@ -350,6 +464,8 @@ jobs:
     - name: Test post-install usage (with CMake)
       run: |
         ./autotest/postinstall/test_cmake.sh $GITHUB_WORKSPACE/install-gdal
+    - name: ccache statistics
+      run: ccache -s
 
   # Disabled for now since bindings in master use GDALDatasetGetFieldDomainNames
   # but libgdal from Conda has not it yet.

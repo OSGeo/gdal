@@ -237,7 +237,7 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
         char* pszSQL = sqlite3_mprintf("PRAGMA table_info('%q')", pszLayerName);
         auto oResultTable = SQLQuery(m_poDS->GetDB(), pszSQL);
         sqlite3_free(pszSQL);
-        if( oResultTable->ColCount() == 6 )
+        if( oResultTable && oResultTable->ColCount() == 6 )
         {
             for ( int iRecord = 0; iRecord < oResultTable->RowCount(); iRecord++ )
             {
@@ -373,7 +373,7 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
             {
                 oField.SetType(OFTStringList);
             }
-            else if (EQUAL(pszDeclType, "BIGINT") || EQUAL(pszDeclType, "INT8") || 
+            else if (EQUAL(pszDeclType, "BIGINT") || EQUAL(pszDeclType, "INT8") ||
                      EQUAL(pszDeclType, "UNSIGNED BIG INT"))
             {
                 oField.SetType(OFTInteger64);
@@ -448,12 +448,12 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
                 }
             }
             else if (EQUAL(pszDeclType, "TEXT") ||
-                     STARTS_WITH_CI(pszDeclType, "VARCHAR") || 
-                     STARTS_WITH_CI(pszDeclType, "CHARACTER") || 
-                     STARTS_WITH_CI(pszDeclType, "VARYING CHARACTER") || 
-                     STARTS_WITH_CI(pszDeclType, "NCHAR") || 
-                     STARTS_WITH_CI(pszDeclType, "NATIVE CHARACTER") || 
-                     STARTS_WITH_CI(pszDeclType, "NVARCHAR") || 
+                     STARTS_WITH_CI(pszDeclType, "VARCHAR") ||
+                     STARTS_WITH_CI(pszDeclType, "CHARACTER") ||
+                     STARTS_WITH_CI(pszDeclType, "VARYING CHARACTER") ||
+                     STARTS_WITH_CI(pszDeclType, "NCHAR") ||
+                     STARTS_WITH_CI(pszDeclType, "NATIVE CHARACTER") ||
+                     STARTS_WITH_CI(pszDeclType, "NVARCHAR") ||
                      EQUAL(pszDeclType, "CLOB"))
             {
                 oField.SetType( OFTString );

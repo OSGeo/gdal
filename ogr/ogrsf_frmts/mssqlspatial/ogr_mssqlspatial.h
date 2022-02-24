@@ -38,7 +38,7 @@
 #include <sqlncli.h>
 #endif
 #ifdef MSODBCSQL_VERSION
-#include <msodbcsql.h>
+#include "include_msodbcsql.h"
 #endif
 
 class OGRMSSQLSpatialDataSource;

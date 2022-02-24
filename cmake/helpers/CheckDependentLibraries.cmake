@@ -21,6 +21,31 @@ option(
 
 set(GDAL_IMPORT_DEPENDENCIES "")
 
+# Check that the configuration has a valid value for INTERFACE_INCLUDE_DIRECTORIES. This aimed at avoiding issues like
+# https://github.com/OSGeo/gdal/issues/5324
+function (gdal_check_target_is_valid target res_var)
+  get_target_property(_interface_include_directories ${target} "INTERFACE_INCLUDE_DIRECTORIES")
+  if(_interface_include_directories)
+    foreach(_dir IN LISTS _interface_include_directories)
+      if(NOT EXISTS "${_dir}")
+        message(WARNING "Target ${target} references ${_dir} as a INTERFACE_INCLUDE_DIRECTORIES, but it does not exist. Ignoring that target.")
+        set(${res_var} FALSE PARENT_SCOPE)
+        return()
+      endif()
+    endforeach()
+  elseif("${target}" STREQUAL "geotiff_library" AND DEFINED GeoTIFF_INCLUDE_DIRS)
+    # geotiff-config.cmake of GeoTIFF 1.7.0 doesn't define a INTERFACE_INCLUDE_DIRECTORIES
+    # property, but a GeoTIFF_INCLUDE_DIRS variable.
+    set_target_properties(${target} PROPERTIES
+                          INTERFACE_INCLUDE_DIRECTORIES ${GeoTIFF_INCLUDE_DIRS})
+  else()
+     message(WARNING "Target ${target} has no INTERFACE_INCLUDE_DIRECTORIES property. Ignoring that target.")
+     set(${res_var} FALSE PARENT_SCOPE)
+     return()
+  endif()
+  set(${res_var} TRUE PARENT_SCOPE)
+endfunction()
+
 # Package acceptance based on a candidate target list.
 # If a matching target is found, sets ${name}_FOUND to TRUE,
 # ${name}_INCLUDE_DIRS to "" and ${name}_LIBRARIES to the target name.
@@ -32,10 +57,13 @@ function(gdal_check_package_target name)
   endif()
   foreach(target IN LISTS ARGN)
     if(TARGET ${target})
-      set(${name}_INCLUDE_DIRS "" PARENT_SCOPE)
-      set(${name}_LIBRARIES "${target}" PARENT_SCOPE)
-      set(${name}_FOUND TRUE PARENT_SCOPE)
-      return()
+      gdal_check_target_is_valid(${target} _is_valid)
+      if (_is_valid)
+        set(${name}_INCLUDE_DIRS "" PARENT_SCOPE)
+        set(${name}_LIBRARIES "${target}" PARENT_SCOPE)
+        set(${name}_FOUND TRUE PARENT_SCOPE)
+        return()
+      endif()
     endif()
   endforeach()
 endfunction()

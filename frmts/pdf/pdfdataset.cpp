@@ -3467,7 +3467,7 @@ void PDFDataset::AddLayer(const char* pszLayerName)
             osNewLayerList.AddNameValue(CPLSPrintf("LAYER_%03d_NAME", i),
                                         osLayerList[/*2 * */ i] + strlen("LAYER_00_NAME="));
         }
-        osLayerList = osNewLayerList;
+        osLayerList = std::move(osNewLayerList);
     }
 
     char szFormatName[64];
@@ -4209,9 +4209,7 @@ PDFDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     GDALPDFObject* poPageObj = nullptr;
 #ifdef HAVE_POPPLER
     PDFDoc* poDocPoppler = nullptr;
-#if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 58
-    Object oObj;
-#else
+#if !(POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 58)
     ObjectAutoFree oObj;
 #endif
     Page* poPagePoppler = nullptr;
@@ -4241,8 +4239,6 @@ PDFDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
 #ifdef HAVE_POPPLER
   if(bUseLib.test(PDFLIB_POPPLER))
   {
-    GooString* poUserPwd = nullptr;
-
     static bool globalParamsCreatedByGDAL = false;
     {
         CPLMutexHolderD(&hGlobalParamsMutex);
@@ -4306,26 +4302,33 @@ PDFDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     fp = (VSILFILE*)VSICreateBufferedReaderHandle((VSIVirtualHandle*)fp);
     fpKeeper.reset(fp);
-
     while( true )
     {
         VSIFSeekL(fp, 0, SEEK_SET);
-        if (pszUserPwd)
-            poUserPwd = new GooString(pszUserPwd);
-
         g_nPopplerErrors = 0;
         if( globalParamsCreatedByGDAL )
             registerErrorCallback();
 #if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 58
+        Object oObj;
         auto poStream = new VSIPDFFileStream(fp, pszFilename, std::move(oObj));
 #else
         oObj.getObj()->initNull();
         auto poStream = new VSIPDFFileStream(fp, pszFilename, oObj.getObj());
 #endif
+#if POPPLER_MAJOR_VERSION > 22 || (POPPLER_MAJOR_VERSION == 22 && POPPLER_MINOR_VERSION > 2)
+        std::optional<GooString> osUserPwd;
+        if (pszUserPwd)
+            osUserPwd = std::optional<GooString>(pszUserPwd);
+        poDocPoppler = new PDFDoc(poStream, std::optional<GooString>(), osUserPwd);
+#else
+        GooString* poUserPwd = nullptr;
+        if (pszUserPwd)
+            poUserPwd = new GooString(pszUserPwd);
         poDocPoppler = new PDFDoc(poStream, nullptr, poUserPwd);
+        delete poUserPwd;
+#endif
         if( globalParamsCreatedByGDAL )
             registerErrorCallback();
-        delete poUserPwd;
         if( g_nPopplerErrors >= MAX_POPPLER_ERRORS )
         {
             PDFFreeDoc(poDocPoppler);

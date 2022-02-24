@@ -2035,9 +2035,9 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                         if( colorEntries[idx].c4 )
                         {
                             const int nWeight = panLineWeight[i];
-                            nTotalR += colorEntries[idx].c1 * nWeight;
-                            nTotalG += colorEntries[idx].c2 * nWeight;
-                            nTotalB += colorEntries[idx].c3 * nWeight;
+                            nTotalR += static_cast<GInt64>(colorEntries[idx].c1 * nWeight);
+                            nTotalG += static_cast<GInt64>(colorEntries[idx].c2 * nWeight);
+                            nTotalB += static_cast<GInt64>(colorEntries[idx].c3 * nWeight);
                             nTotalWeight += nWeight;
                         }
                     }

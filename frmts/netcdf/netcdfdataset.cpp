@@ -32,6 +32,7 @@
 
 #include "cpl_port.h"
 
+#include <cassert>
 #include <cctype>
 #include <cerrno>
 #include <climits>
@@ -2144,6 +2145,7 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                     else
                     {
                         CPLAssert(nChunkY == nLastChunkBlock);
+                        assert(secondChunk);
                         memcpy(pabyImage + nChunkLineSize * (iLine - ystart),
                                secondChunk.get()->data() +
                                     (nLineFromBottom - nLastChunkBlockLine) * nChunkLineSize,

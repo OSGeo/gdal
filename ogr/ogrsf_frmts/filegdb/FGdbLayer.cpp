@@ -125,7 +125,7 @@ OGRFeature* FGdbBaseLayer::GetNextFeature()
         if (!OGRFeatureFromGdbRow(&row,  &pOGRFeature))
         {
             int32 oid = -1;
-            row.GetOID(oid);
+            CPL_IGNORE_RET_VAL(row.GetOID(oid));
 
             GDBErr(hr, CPLSPrintf("Failed translating FGDB row [%d] to OGR Feature", oid));
 

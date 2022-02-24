@@ -1080,13 +1080,14 @@ char *GDALMultiDimInfo( GDALDatasetH hDataset,
                 psOptions->osArrayName.c_str(), "/", 0));
             for( int i = 0; i < aosTokens.size() - 1; i++ )
             {
-                curGroup = curGroup->OpenGroup(aosTokens[i]);
-                if( !curGroup )
+                auto curGroupNew = curGroup->OpenGroup(aosTokens[i]);
+                if( !curGroupNew )
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Cannot find group %s", aosTokens[i]);
                     return nullptr;
                 }
+                curGroup = curGroupNew;
             }
             const char* pszArrayName = aosTokens[aosTokens.size()-1];
             auto array(curGroup->OpenMDArray(pszArrayName));

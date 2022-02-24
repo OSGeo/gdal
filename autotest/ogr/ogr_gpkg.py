@@ -1062,6 +1062,24 @@ def test_ogr_gpkg_15():
     feat = None
     gpkg_ds.ReleaseResultSet(sql_lyr)
 
+    if ogr.GetGEOSVersionMajor() * 10000 + ogr.GetGEOSVersionMinor() * 100 + ogr.GetGEOSVersionMicro() >= 30800:
+        sql_lyr = gpkg_ds.ExecuteSQL("SELECT ST_MakeValid(NULL)")
+        feat = sql_lyr.GetNextFeature()
+        assert feat.GetGeometryRef() is None
+        gpkg_ds.ReleaseResultSet(sql_lyr)
+
+        sql_lyr = gpkg_ds.ExecuteSQL("SELECT ST_MakeValid('invalid')")
+        feat = sql_lyr.GetNextFeature()
+        assert feat.GetGeometryRef() is None
+        gpkg_ds.ReleaseResultSet(sql_lyr)
+
+        sql_lyr = gpkg_ds.ExecuteSQL("SELECT ST_MakeValid(geom) FROM tbl_linestring_renamed")
+        feat = sql_lyr.GetNextFeature()
+        if feat.GetGeometryRef().ExportToWkt() != 'LINESTRING (5 5,10 5,10 10,5 10)':
+            feat.DumpReadable()
+            pytest.fail()
+        gpkg_ds.ReleaseResultSet(sql_lyr)
+
     if _has_spatialite_4_3_or_later(gpkg_ds):
         sql_lyr = gpkg_ds.ExecuteSQL(
             "SELECT ST_Buffer(geom, 1e-10) FROM tbl_linestring_renamed")

@@ -1370,6 +1370,7 @@ int FileGDBIndexIteratorBase::LoadNextFeaturePage()
             int key;
             m_oCacheFeaturePage.getOldestEntry(key, cachedPage);
             m_oCacheFeaturePage.remove(key);
+            CPLAssert(cachedPage);
             cachedPage->clear();
         }
         else
@@ -2190,6 +2191,7 @@ bool FileGDBSpatialIndexIteratorImpl::FindPages(int iLevel, int nPage)
             int key;
             m_oCachePage[iLevel].getOldestEntry(key, cachedPage);
             m_oCachePage[iLevel].remove(key);
+            CPLAssert(cachedPage);
             cachedPage->clear();
         }
         else

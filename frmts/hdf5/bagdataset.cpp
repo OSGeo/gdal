@@ -774,7 +774,7 @@ CPLErr BAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     if( nRasterYSize - (nBlockYOff + 1) * nBlockYSize < 0 )
     {
-        count[0] += (nRasterYSize - (nBlockYOff + 1) * nBlockYSize);
+        count[0] += (nRasterYSize - static_cast<hsize_t>(nBlockYOff + 1) * nBlockYSize);
     }
 
     // Select block from file space.
@@ -861,7 +861,7 @@ CPLErr BAGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 
     if( nRasterYSize - (nBlockYOff + 1) * nBlockYSize < 0 )
     {
-        count[0] += (nRasterYSize - (nBlockYOff + 1) * nBlockYSize);
+        count[0] += (nRasterYSize - static_cast<hsize_t>(nBlockYOff + 1) * nBlockYSize);
     }
 
     // Select block from file space.

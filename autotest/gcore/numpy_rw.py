@@ -829,3 +829,25 @@ def test_numpy_rw_band_read_as_array_error_cases():
     # 3D of wrong size in first dimension
     with pytest.raises(Exception, match='expected size of first dimension should be 0'):
         band.ReadAsArray(buf_obj = numpy.empty((2, 3,2), dtype=numpy.uint8))
+
+
+###############################################################################
+# Test that we can get an error (#5374)
+
+def test_numpy_rw_band_read_as_array_getlasterrormsg():
+
+    ds = gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
+  <VRTRasterBand dataType="Float64" band="1" subClass="VRTDerivedRasterBand">
+    <Description>Scaling</Description>
+    <PixelFunctionType>invalid</PixelFunctionType>
+    <SourceTransferType>Float64</SourceTransferType>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">notexisting</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>""")
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        assert ds.GetRasterBand(1).ReadAsArray() is None
+    assert gdal.GetLastErrorMsg() != ''

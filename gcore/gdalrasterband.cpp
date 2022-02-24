@@ -3948,6 +3948,9 @@ class GDALUInt128
 /*                    ComputeStatisticsInternal()                       */
 /************************************************************************/
 
+// Just to make coverity scan happy w.r.t overflow_before_widen, but otherwise not needed.
+#define static_cast_for_coverity_scan static_cast
+
 // The rationale for below optimizations is detailed in statistics.txt
 
 // Use with T = GByte or GUInt16 only !
@@ -3984,7 +3987,7 @@ static void ComputeStatisticsInternalGeneric( int nXCheck,
                 if( nValue > nMax )
                     nMax = nValue;
                 nSum += nValue;
-                nSumSquare += nValue * nValue;
+                nSumSquare += static_cast_for_coverity_scan<GUIntBig>(nValue) * nValue;
             }
         }
         nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
@@ -4000,10 +4003,10 @@ static void ComputeStatisticsInternalGeneric( int nXCheck,
             for( iX = 0; iX + 3 < nXCheck; iX+=4 )
             {
                 const GPtrDiff_t iOffset = iX + static_cast<GPtrDiff_t>(iY) * nBlockXSize;
-                const GUInt32 nValue = pData[iOffset];
-                const GUInt32 nValue2 = pData[iOffset+1];
-                const GUInt32 nValue3 = pData[iOffset+2];
-                const GUInt32 nValue4 = pData[iOffset+3];
+                const GUIntBig nValue = pData[iOffset];
+                const GUIntBig nValue2 = pData[iOffset+1];
+                const GUIntBig nValue3 = pData[iOffset+2];
+                const GUIntBig nValue4 = pData[iOffset+3];
                 nSum += nValue;
                 nSumSquare += nValue * nValue;
                 nSum += nValue2;
@@ -4016,7 +4019,7 @@ static void ComputeStatisticsInternalGeneric( int nXCheck,
             for( ; iX < nXCheck; ++iX )
             {
                 const GPtrDiff_t iOffset = iX + static_cast<GPtrDiff_t>(iY) * nBlockXSize;
-                const GUInt32 nValue = pData[iOffset];
+                const GUIntBig nValue = pData[iOffset];
                 nSum += nValue;
                 nSumSquare += nValue * nValue;
             }
@@ -4049,9 +4052,9 @@ static void ComputeStatisticsInternalGeneric( int nXCheck,
                         nMax = nValue;
                 }
                 nSum += nValue;
-                nSumSquare += nValue * nValue;
+                nSumSquare += static_cast_for_coverity_scan<GUIntBig>(nValue) * nValue;
                 nSum += nValue2;
-                nSumSquare += nValue2 * nValue2;
+                nSumSquare += static_cast_for_coverity_scan<GUIntBig>(nValue2) * nValue2;
             }
             if( iX < nXCheck )
             {
@@ -4062,7 +4065,7 @@ static void ComputeStatisticsInternalGeneric( int nXCheck,
                 if( nValue > nMax )
                     nMax = nValue;
                 nSum += nValue;
-                nSumSquare += nValue * nValue;
+                nSumSquare += static_cast_for_coverity_scan<GUIntBig>(nValue) * nValue;
             }
         }
         nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
@@ -4166,7 +4169,7 @@ void ComputeStatisticsInternalGeneric<GByte>( int nXCheck,
             for( ; iX < nXCheck; ++iX )
             {
                 const GPtrDiff_t iOffset = iX + static_cast<GPtrDiff_t>(iY) * nBlockXSize;
-                const GUInt32 nValue = pData[iOffset];
+                const GUIntBig nValue = pData[iOffset];
                 nSum += nValue;
                 nSumSquare += nValue * nValue;
             }
@@ -4222,7 +4225,7 @@ void ComputeStatisticsInternalGeneric<GByte>( int nXCheck,
                 if( nValue > nMax )
                     nMax = nValue;
                 nSum += nValue;
-                nSumSquare += nValue * nValue;
+                nSumSquare += static_cast_for_coverity_scan<GUIntBig>(nValue) * nValue;
             }
         }
         nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
@@ -4376,7 +4379,7 @@ static void ComputeStatisticsByteNoNodata( GPtrDiff_t nBlockPixels,
                 nMax = nValue;
         }
         nSum += nValue;
-        nSumSquare += nValue * nValue;
+        nSumSquare += static_cast_for_coverity_scan<GUIntBig>(nValue) * nValue;
     }
 
     nSampleCount += static_cast<GUIntBig>(nBlockPixels);
@@ -4547,7 +4550,7 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
             if( nValue > nMax )
                 nMax = nValue;
             nSum += nValue;
-            nSumSquare += nValue * nValue;
+            nSumSquare += static_cast_for_coverity_scan<GUIntBig>(nValue) * nValue;
         }
     }
     else if( !bHasNoData && nXCheck == nBlockXSize && nBlockPixels >= 32 )
@@ -4721,7 +4724,7 @@ void ComputeStatisticsInternal<GUInt16>( int nXCheck,
             if( nValue > nMax )
                 nMax = nValue;
             nSum += nValue;
-            nSumSquare += nValue * nValue;
+            nSumSquare += static_cast_for_coverity_scan<GUIntBig>(nValue) * nValue;
         }
 
         nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;

@@ -287,8 +287,10 @@ void OGRCSVLayer::BuildFeatureDefn( const char *pszNfdcGeomField,
     if( !bNew )
         ResetReading();
 
-    const int nMaxFieldCount = atoi(
+    int nMaxFieldCount = atoi(
         CPLGetConfigOption("OGR_CSV_MAX_FIELD_COUNT", "2000"));
+    if( nMaxFieldCount > 100000 )
+        nMaxFieldCount = 100000; // to please coverity
     if( nFieldCount > nMaxFieldCount )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
@@ -483,7 +485,11 @@ void OGRCSVLayer::BuildFeatureDefn( const char *pszNfdcGeomField,
 
                 eGeometryFormat = OGR_CSV_GEOM_AS_WKT;
                 panGeomFieldIndex[iField] = poFeatureDefn->GetGeomFieldCount();
-                OGRGeomFieldDefn oGeomFieldDefn(oField.GetNameRef(),
+                std::string osGeomColName;
+                if( bKeepGeomColumns )
+                    osGeomColName += "geom_";
+                osGeomColName += oField.GetNameRef();
+                OGRGeomFieldDefn oGeomFieldDefn(osGeomColName.c_str(),
                                                 wkbUnknown);
                 poFeatureDefn->AddGeomFieldDefn(&oGeomFieldDefn);
                 continue;
