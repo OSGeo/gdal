@@ -761,6 +761,9 @@ class CPL_DLL VRTDerivedRasterBand CPL_NON_FINAL: public VRTSourcedRasterBand
 {
     VRTDerivedRasterBandPrivateData* m_poPrivate;
     bool InitializePython();
+    CPLErr GetPixelFunctionArguments(
+      const CPLString&,
+      std::vector<std::pair<CPLString, CPLString>> &);
 
     CPL_DISALLOW_COPY_ASSIGN(VRTDerivedRasterBand)
 
@@ -785,15 +788,15 @@ class CPL_DLL VRTDerivedRasterBand CPL_NON_FINAL: public VRTSourcedRasterBand
                                         int nMaskFlagStop,
                                         double* pdfDataPct) override;
 
-    static CPLErr AddPixelFunction( const char *pszFuncName,
+    static CPLErr AddPixelFunction( const char *pszFuncNameIn,
                                     GDALDerivedPixelFunc pfnPixelFunc );
-    static CPLErr AddPixelFunction( const char *pszFuncName,
+    static CPLErr AddPixelFunction( const char *pszFuncNameIn,
                                     GDALDerivedPixelFuncWithArgs pfnPixelFunc,
                                     const char *pszMetadata);
 
-    static PixelFunc* GetPixelFunction( const char *pszFuncName );
+    static std::pair<PixelFunc, CPLString>* GetPixelFunction( const char *pszFuncNameIn );
 
-    void SetPixelFunctionName( const char *pszFuncName );
+    void SetPixelFunctionName( const char *pszFuncNameIn );
     void SetSourceTransferType( GDALDataType eDataType );
     void SetPixelFunctionLanguage( const char* pszLanguage );
 

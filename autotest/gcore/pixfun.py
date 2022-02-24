@@ -1078,4 +1078,110 @@ def test_pixfun_interpolate_linear():
     interpolated = ds.GetRasterBand(1).ReadAsArray()
     assert np.allclose(interpolated, layers[0]*np.exp(np.log(layers[1]/layers[0])/1 * (-22.7 - -10)))
 
+
+def test_pixfun_nan():
+
+    src_ds = gdal.Open('data/test_nodatavalues.tif')
+    vrt_ds = gdal.Open("""<VRTDataset rasterXSize="50" rasterYSize="50">
+  <VRTRasterBand dataType="Float64" band="1" subClass="VRTDerivedRasterBand">
+    <Description>Nan</Description>
+    <NoDataValue>0.0</NoDataValue>
+    <PixelFunctionType>replace_nodata</PixelFunctionType>
+    <SourceTransferType>Float64</SourceTransferType>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/test_nodatavalues.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>""")
+    data_src = src_ds.GetRasterBand(1).ReadAsArray(buf_type=gdal.GDT_Float32)
+    data_vrt = vrt_ds.GetRasterBand(1).ReadAsArray(buf_type=gdal.GDT_Float32)
+    NoData = src_ds.GetRasterBand(1).GetNoDataValue()
+
+    for i in range(data_src.shape[0]):
+        for j in range(data_src.shape[1]):
+            if (data_src[i][j] == NoData):
+                assert math.isnan(data_vrt[i][j])
+            else:
+                assert data_vrt[i][j] == data_src[i][j]
+
+
+def test_pixfun_replacenodata():
+
+    src_ds = gdal.Open('data/test_nodatavalues.tif')
+    vrt_ds = gdal.Open("""<VRTDataset rasterXSize="50" rasterYSize="50">
+  <VRTRasterBand dataType="Float64" band="1" subClass="VRTDerivedRasterBand">
+    <Description>Nan</Description>
+    <NoDataValue>0.0</NoDataValue>
+    <PixelFunctionType>replace_nodata</PixelFunctionType>
+    <PixelFunctionArguments to="42" />
+    <SourceTransferType>Float64</SourceTransferType>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/test_nodatavalues.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>""")
+    data_src = src_ds.GetRasterBand(1).ReadAsArray(buf_type=gdal.GDT_Float32)
+    data_vrt = vrt_ds.GetRasterBand(1).ReadAsArray(buf_type=gdal.GDT_Float32)
+    NoData = src_ds.GetRasterBand(1).GetNoDataValue()
+
+    for i in range(data_src.shape[0]):
+        for j in range(data_src.shape[1]):
+            if (data_src[i][j] == NoData):
+                assert data_vrt[i][j] == 42
+            else:
+                assert data_vrt[i][j] == data_src[i][j]
+
+
+def test_pixfun_scale():
+    src_ds = gdal.Open('data/float32.tif')
+    vrt_ds = gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
+  <VRTRasterBand dataType="Float64" band="1" subClass="VRTDerivedRasterBand">
+    <Description>Scaling</Description>
+    <PixelFunctionType>scale</PixelFunctionType>
+    <SourceTransferType>Float64</SourceTransferType>
+    <Scale>2.0</Scale>
+    <Offset>1.0</Offset>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/float32.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>""")
+
+    band_src = src_ds.GetRasterBand(1)
+    band_vrt = vrt_ds.GetRasterBand(1)
+    assert band_vrt.GetOffset() == 1
+    assert band_vrt.GetScale() == 2
+
+    data_src = band_src.ReadAsArray(buf_type=gdal.GDT_Float32)
+    data_vrt = band_vrt.ReadAsArray(buf_type=gdal.GDT_Float32)
+
+    assert numpy.allclose(data_src * 2 + 1, data_vrt)
+
+def test_pixfun_missing_builtin():
+    vrt_ds = gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
+  <VRTRasterBand dataType="Float64" band="1" subClass="VRTDerivedRasterBand">
+    <Description>Scaling</Description>
+    <PixelFunctionType>replace_nodata</PixelFunctionType>
+    <SourceTransferType>Float64</SourceTransferType>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/float32.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>""")
+
+    band_vrt = vrt_ds.GetRasterBand(1)
+    assert band_vrt.GetOffset() == 0
+    assert band_vrt.GetScale() == 1
+    assert band_vrt.GetNoDataValue() == None
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    data = band_vrt.ReadAsArray(buf_type=gdal.GDT_Float32)
+    gdal.PopErrorHandler()
+    assert data is None
+
+
 ###############################################################################

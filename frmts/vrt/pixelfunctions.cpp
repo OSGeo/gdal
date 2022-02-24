@@ -193,6 +193,15 @@ typedef enum {
     GAT_dB
 } PolarAmplitudeType;
 
+static const char pszPolarPixelFuncMetadata[] =
+"<PixelFunctionArgumentsList>"
+"   <Argument name='amplitude_type' description='Amplitude Type' type='string-select' default='AMPLITUDE'>"
+"       <Value>INTENSITY</Value>"
+"       <Value>dB</Value>"
+"       <Value>AMPLITUDE</Value>"
+"   </Argument>"
+"</PixelFunctionArgumentsList>";
+
 static CPLErr PolarPixelFunc( void **papoSources, int nSources, void *pData,
                               int nXSize, int nYSize,
                               GDALDataType eSrcType, GDALDataType eBufType,
@@ -422,6 +431,11 @@ static CPLErr ConjPixelFunc( void **papoSources, int nSources, void *pData,
     return CE_None;
 }  // ConjPixelFunc
 
+static const char pszSumPixelFuncMetadata[] =
+"<PixelFunctionArgumentsList>"
+"   <Argument name='k' description='Optional constant term' type='double' default='0.0' />"
+"</PixelFunctionArgumentsList>";
+
 static CPLErr SumPixelFunc(void **papoSources, int nSources, void *pData,
                     int nXSize, int nYSize,
                     GDALDataType eSrcType, GDALDataType eBufType,
@@ -546,6 +560,11 @@ static CPLErr DiffPixelFunc( void **papoSources, int nSources, void *pData,
     /* ---- Return success ---- */
     return CE_None;
 }  // DiffPixelFunc
+
+static const char pszMulPixelFuncMetadata[] =
+"<PixelFunctionArgumentsList>"
+"   <Argument name='k' description='Optional constant factor' type='double' default='1.0' />"
+"</PixelFunctionArgumentsList>";
 
 static CPLErr MulPixelFunc( void **papoSources, int nSources, void *pData,
                             int nXSize, int nYSize,
@@ -749,6 +768,11 @@ static CPLErr CMulPixelFunc( void **papoSources, int nSources, void *pData,
     /* ---- Return success ---- */
     return CE_None;
 }  // CMulPixelFunc
+
+static const char pszInvPixelFuncMetadata[] =
+"<PixelFunctionArgumentsList>"
+"   <Argument name='k' description='Optional constant factor' type='double' default='1.0' />"
+"</PixelFunctionArgumentsList>";
 
 static CPLErr InvPixelFunc( void **papoSources, int nSources, void *pData,
                             int nXSize, int nYSize,
@@ -971,6 +995,11 @@ static CPLErr Log10PixelFunc( void **papoSources, int nSources, void *pData,
                                 nPixelSpace, nLineSpace, 1.0);
 } // Log10PixelFunc
 
+static const char pszDBPixelFuncMetadata[] =
+"<PixelFunctionArgumentsList>"
+"   <Argument name='fact' description='Factor' type='double' default='20.0' />"
+"</PixelFunctionArgumentsList>";
+
 static CPLErr DBPixelFunc( void **papoSources, int nSources, void *pData,
                            int nXSize, int nYSize,
                            GDALDataType eSrcType, GDALDataType eBufType,
@@ -1015,6 +1044,12 @@ static CPLErr ExpPixelFuncHelper( void **papoSources, int nSources, void *pData,
     return CE_None;
 }  // ExpPixelFuncHelper
 
+static const char pszExpPixelFuncMetadata[] =
+"<PixelFunctionArgumentsList>"
+"   <Argument name='base' description='Base' type='double' default='2.7182818284590452353602874713526624' />"
+"   <Argument name='fact' description='Factor' type='double' default='1' />"
+"</PixelFunctionArgumentsList>";
+
 static CPLErr ExpPixelFunc( void **papoSources, int nSources, void *pData,
                             int nXSize, int nYSize,
                             GDALDataType eSrcType, GDALDataType eBufType,
@@ -1054,6 +1089,11 @@ static CPLErr dB2PowPixelFunc( void **papoSources, int nSources, void *pData,
                               nXSize, nYSize, eSrcType, eBufType,
                               nPixelSpace, nLineSpace, 10.0, 1./10);
 }  // dB2PowPixelFunc
+
+static const char pszPowPixelFuncMetadata[] =
+"<PixelFunctionArgumentsList>"
+"   <Argument name='power' description='Exponent' type='double' mandatory='1' />"
+"</PixelFunctionArgumentsList>";
 
 static CPLErr PowPixelFunc( void **papoSources, int nSources, void *pData,
                                int nXSize, int nYSize,
@@ -1113,6 +1153,13 @@ static double InterpolateExponential(double dfX0, double dfX1, double dfY0, doub
     return dfY0*std::exp(r * (dfX - dfX0));
 }
 
+static const char pszInterpolatePixelFuncMetadata[] =
+"<PixelFunctionArgumentsList>"
+"   <Argument name='t0' description='t0' type='double' mandatory='1' />"
+"   <Argument name='dt' description='dt' type='double' mandatory='1' />"
+"   <Argument name='t' description='t' type='double' mandatory='1' />"
+"</PixelFunctionArgumentsList>";
+
 template<decltype(InterpolateLinear) InterpolationFunction>
 CPLErr InterpolatePixelFunc( void **papoSources, int nSources, void *pData,
                              int nXSize, int nYSize,
@@ -1164,6 +1211,99 @@ CPLErr InterpolatePixelFunc( void **papoSources, int nSources, void *pData,
     /* ---- Return success ---- */
     return CE_None;
 }
+
+static const char pszReplaceNoDataPixelFuncMetadata[] =
+"<PixelFunctionArgumentsList>"
+"   <Argument type='builtin' value='NoData' />"
+"   <Argument name='to' type='double' description='New NoData value to be replaced' default='nan' />"
+"</PixelFunctionArgumentsList>";
+
+static CPLErr ReplaceNoDataPixelFunc( void **papoSources, int nSources, void *pData,
+                               int nXSize, int nYSize,
+                               GDALDataType eSrcType, GDALDataType eBufType,
+                               int nPixelSpace, int nLineSpace, CSLConstList papszArgs ) {
+    /* ---- Init ---- */
+    if( nSources != 1 ) return CE_Failure;
+    if (GDALDataTypeIsComplex(eSrcType))
+    {
+        CPLError(
+          CE_Failure, CPLE_AppDefined, "replace_nodata cannot convert complex data types");
+        return CE_Failure;
+    }
+
+    double dfOldNoData, dfNewNoData = NAN;
+    if ( FetchDoubleArg(papszArgs, "NoData", &dfOldNoData) != CE_None ) return CE_Failure;
+    if ( FetchDoubleArg(papszArgs, "to", &dfNewNoData, &dfNewNoData) != CE_None ) return CE_Failure;
+
+    if (!GDALDataTypeIsFloating(eBufType) && std::isnan(dfNewNoData))
+    {
+        CPLError(
+          CE_Failure, CPLE_AppDefined, "Using nan requires a floating point type output buffer");
+        return CE_Failure;
+    }
+
+    /* ---- Set pixels ---- */
+    size_t ii = 0;
+    for( int iLine = 0; iLine < nYSize; ++iLine )
+    {
+        for( int iCol = 0; iCol < nXSize; ++iCol, ++ii )
+        {
+            double dfPixVal = GetSrcVal(papoSources[0], eSrcType, ii);
+            if (dfPixVal == dfOldNoData || std::isnan(dfPixVal)) dfPixVal = dfNewNoData;
+
+            GDALCopyWords(
+                    &dfPixVal, GDT_Float64, 0,
+                    static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
+                    iCol * nPixelSpace, eBufType, nPixelSpace, 1);
+        }
+    }
+
+    /* ---- Return success ---- */
+    return CE_None;
+}
+
+static const char pszScalePixelFuncMetadata[] =
+"<PixelFunctionArgumentsList>"
+"   <Argument type='builtin' value='offset' />"
+"   <Argument type='builtin' value='scale' />"
+"</PixelFunctionArgumentsList>";
+
+static CPLErr ScalePixelFunc( void **papoSources, int nSources, void *pData,
+                               int nXSize, int nYSize,
+                               GDALDataType eSrcType, GDALDataType eBufType,
+                               int nPixelSpace, int nLineSpace, CSLConstList papszArgs ) {
+    /* ---- Init ---- */
+    if( nSources != 1 ) return CE_Failure;
+    if (GDALDataTypeIsComplex(eSrcType))
+    {
+        CPLError(
+          CE_Failure, CPLE_AppDefined, "scale cannot by applied to complex data types");
+        return CE_Failure;
+    }
+
+    double dfScale, dfOffset;
+    if ( FetchDoubleArg(papszArgs, "scale", &dfScale) != CE_None ) return CE_Failure;
+    if ( FetchDoubleArg(papszArgs, "offset", &dfOffset) != CE_None ) return CE_Failure;
+
+    /* ---- Set pixels ---- */
+    size_t ii = 0;
+    for( int iLine = 0; iLine < nYSize; ++iLine )
+    {
+        for( int iCol = 0; iCol < nXSize; ++iCol, ++ii )
+        {
+            const double dfPixVal = GetSrcVal(papoSources[0], eSrcType, ii) * dfScale + dfOffset;
+
+            GDALCopyWords(
+                    &dfPixVal, GDT_Float64, 0,
+                    static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
+                    iCol * nPixelSpace, eBufType, nPixelSpace, 1);
+        }
+    }
+
+    /* ---- Return success ---- */
+    return CE_None;
+}
+
 
 /************************************************************************/
 /*                     GDALRegisterDefaultPixelFunc()                   */
@@ -1224,6 +1364,8 @@ CPLErr InterpolatePixelFunc( void **papoSources, int nSources, void *pData,
  *                         using linear interpolation
  * - "interpolate_exp": interpolate values between two raster bands using
  *                      exponential interpolation
+ * - "scale": Apply the RasterBand metadata values of "offset" and "scale"
+ * - "nan": Convert incoming NoData values to IEEE 754 nan
  *
  * @see GDALAddDerivedBandPixelFunc
  *
@@ -1234,26 +1376,31 @@ CPLErr GDALRegisterDefaultPixelFunc()
     GDALAddDerivedBandPixelFunc("real", RealPixelFunc);
     GDALAddDerivedBandPixelFunc("imag", ImagPixelFunc);
     GDALAddDerivedBandPixelFunc("complex", ComplexPixelFunc);
-    GDALAddDerivedBandPixelFuncWithArgs("polar", PolarPixelFunc, nullptr);
+    GDALAddDerivedBandPixelFuncWithArgs("polar", PolarPixelFunc, pszPolarPixelFuncMetadata);
     GDALAddDerivedBandPixelFunc("mod", ModulePixelFunc);
     GDALAddDerivedBandPixelFunc("phase", PhasePixelFunc);
     GDALAddDerivedBandPixelFunc("conj", ConjPixelFunc);
-    GDALAddDerivedBandPixelFuncWithArgs("sum", SumPixelFunc, nullptr);
+    GDALAddDerivedBandPixelFuncWithArgs("sum", SumPixelFunc, pszSumPixelFuncMetadata);
     GDALAddDerivedBandPixelFunc("diff", DiffPixelFunc);
-    GDALAddDerivedBandPixelFuncWithArgs("mul", MulPixelFunc, nullptr);
+    GDALAddDerivedBandPixelFuncWithArgs("mul", MulPixelFunc, pszMulPixelFuncMetadata);
     GDALAddDerivedBandPixelFunc("div", DivPixelFunc);
     GDALAddDerivedBandPixelFunc("cmul", CMulPixelFunc);
-    GDALAddDerivedBandPixelFuncWithArgs("inv", InvPixelFunc, nullptr);
+    GDALAddDerivedBandPixelFuncWithArgs("inv", InvPixelFunc, pszInvPixelFuncMetadata);
     GDALAddDerivedBandPixelFunc("intensity", IntensityPixelFunc);
     GDALAddDerivedBandPixelFunc("sqrt", SqrtPixelFunc);
     GDALAddDerivedBandPixelFunc("log10", Log10PixelFunc);
-    GDALAddDerivedBandPixelFuncWithArgs("dB", DBPixelFunc, nullptr);
-    GDALAddDerivedBandPixelFuncWithArgs("exp", ExpPixelFunc, nullptr);
+    GDALAddDerivedBandPixelFuncWithArgs("dB", DBPixelFunc, pszDBPixelFuncMetadata);
+    GDALAddDerivedBandPixelFuncWithArgs("exp", ExpPixelFunc, pszExpPixelFuncMetadata);
     GDALAddDerivedBandPixelFunc("dB2amp", dB2AmpPixelFunc);  // deprecated in v3.5
     GDALAddDerivedBandPixelFunc("dB2pow", dB2PowPixelFunc);  // deprecated in v3.5
-    GDALAddDerivedBandPixelFuncWithArgs("pow", PowPixelFunc, nullptr);
-    GDALAddDerivedBandPixelFuncWithArgs("interpolate_linear", InterpolatePixelFunc<InterpolateLinear>, nullptr);
-    GDALAddDerivedBandPixelFuncWithArgs("interpolate_exp", InterpolatePixelFunc<InterpolateExponential>, nullptr);
+    GDALAddDerivedBandPixelFuncWithArgs("pow", PowPixelFunc, pszPowPixelFuncMetadata);
+    GDALAddDerivedBandPixelFuncWithArgs("interpolate_linear",
+        InterpolatePixelFunc<InterpolateLinear>, pszInterpolatePixelFuncMetadata);
+    GDALAddDerivedBandPixelFuncWithArgs("interpolate_exp",
+        InterpolatePixelFunc<InterpolateExponential>, pszInterpolatePixelFuncMetadata);
+    GDALAddDerivedBandPixelFuncWithArgs("replace_nodata",
+        ReplaceNoDataPixelFunc, pszReplaceNoDataPixelFuncMetadata);
+    GDALAddDerivedBandPixelFuncWithArgs("scale", ScalePixelFunc, pszScalePixelFuncMetadata);
 
     return CE_None;
 }
