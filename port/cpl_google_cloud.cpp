@@ -726,8 +726,9 @@ VSIGSHandleHelper* VSIGSHandleHelper::BuildFromURI( const char* pszURI,
 {
     // pszURI == bucket/object
     const CPLString osBucketObject( pszURI );
-    const CPLString osEndpoint( CPLGetConfigOption("CPL_GS_ENDPOINT",
-                                    "https://storage.googleapis.com/") );
+    CPLString osEndpoint( CPLGetConfigOption("CPL_GS_ENDPOINT", "") );
+    if( osEndpoint.empty() )
+        osEndpoint = "https://storage.googleapis.com/";
 
     CPLString osSecretAccessKey;
     CPLString osAccessKeyId;
