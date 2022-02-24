@@ -28,6 +28,10 @@ Authors:  Lucian Plesea
 #include <Lerc_c_api.h>
 #include <Lerc_types.h>
 
+#ifndef LERC_AT_LEAST_VERSION
+#define LERC_AT_LEAST_VERSION(maj,min,patch) 0
+#endif
+
 // name of internal or external libLerc namespace
 #if defined(USING_NAMESPACE_LERC)
 #define L2NS GDAL_LercNS
@@ -370,9 +374,16 @@ static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img, doub
     }
 
     unsigned int sz = 0;
-    auto status = lerc_encodeForVersion(reinterpret_cast<void*>(src.buffer), l2ver,
+    auto pbm = bm.data();
+    if (bm.empty())
+        pbm = nullptr;
+    auto status = lerc_encodeForVersion(
+        reinterpret_cast<void*>(src.buffer), l2ver,
         static_cast<unsigned int>(GDTtoL2(img.dt)), stride, w, h, 1,
-        bm.size() == nndv ? nullptr : bm.data(), precision,
+#if LERC_AT_LEAST_VERSION(3,0,0)
+        pbm ? 1 : 0,
+#endif
+        pbm, precision,
         reinterpret_cast<Lerc1NS::Byte*>(dst.buffer), static_cast<unsigned int>(dst.size), &sz);
 
     if (L2NS::ErrCode::Ok != static_cast<L2NS::ErrCode>(status) || sz > dst.size) {
@@ -403,10 +414,17 @@ CPLErr LERC_Band::Decompress(buf_mgr& dst, buf_mgr& src)
     std::vector<Lerc1NS::Byte> bm;
     if (img.hasNoData)
         bm.resize(static_cast<size_t>(w) * static_cast<size_t>(h));
+    auto pbm = bm.data();
+    if (bm.empty())
+        pbm = nullptr;
 
     // Decoding may fail for many different reasons, including input not matching tile expectations
-    auto status = lerc_decode(reinterpret_cast<Lerc1NS::Byte*>(src.buffer), static_cast<unsigned int>(src.size),
-        bm.empty() ? nullptr : bm.data(), stride, w, h, 1, static_cast<unsigned int>(GDTtoL2(img.dt)), dst.buffer);
+    auto status = lerc_decode(reinterpret_cast<Lerc1NS::Byte*>(src.buffer),
+        static_cast<unsigned int>(src.size),
+#if LERC_AT_LEAST_VERSION(3,0,0)
+        pbm ? 1 : 0,
+#endif
+        pbm, stride, w, h, 1, static_cast<unsigned int>(GDTtoL2(img.dt)), dst.buffer);
     if (L2NS::ErrCode::Ok != static_cast<L2NS::ErrCode>(status)) {
         CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error decoding Lerc");
         return CE_Failure;
