@@ -35,9 +35,7 @@ if (GDAL_USE_ZLIB_INTERNAL)
   gdal_add_vendored_lib(gdal_MRF libz)
 endif ()
 
-# MRF Lerc support only possible for internal LercLib since it requires Lerc2.h
-if ((GDAL_USE_LERC_INTERNAL) AND GDAL_USE_LERCV1_INTERNAL)
-  # if ((GDAL_USE_LERC_INTERNAL OR GDAL_USE_LERC) AND GDAL_USE_LERCV1_INTERNAL)
+if ((GDAL_USE_LERC_INTERNAL OR GDAL_USE_LERC) AND GDAL_USE_LERCV1_INTERNAL)
   target_sources(gdal_MRF PRIVATE LERC_band.cpp)
   gdal_add_vendored_lib(gdal_MRF PRIVATE liblercv1)
   target_compile_definitions(gdal_MRF PRIVATE -DLERC)
@@ -63,8 +61,9 @@ if (NOT GDAL_USE_ZLIB_INTERNAL)
   gdal_target_link_libraries(gdal_MRF PRIVATE ZLIB::ZLIB)
 endif ()
 
-# if (NOT GDAL_USE_LERC_INTERNAL AND GDAL_USE_LERC AND GDAL_USE_LERCV1_INTERNAL) gdal_target_link_libraries(TARGET
-# gdal_MRF LIBRARIES LERC::LERC) endif ()
+if (NOT GDAL_USE_LERC_INTERNAL AND GDAL_USE_LERC AND GDAL_USE_LERCV1_INTERNAL)
+  gdal_target_link_libraries(gdal_MRF PRIVATE LERC::LERC)
+endif ()
 
 if (GDAL_USE_ZSTD)
   target_compile_definitions(gdal_MRF PRIVATE -DZSTD_SUPPORT)
