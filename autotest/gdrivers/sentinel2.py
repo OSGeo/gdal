@@ -458,8 +458,8 @@ def test_sentinel2_l1c_5():
 def test_sentinel2_l1c_6():
 
     filename_xml = 'data/sentinel2/fake_l1c/S2A_OPER_PRD_MSIL1C.SAFE/S2A_OPER_MTD_SAFL1C.xml'
-    filename_xml = filename_xml.replace('/', '\\')
     filename_xml = '\\\\?\\' + os.getcwd() + '\\' + filename_xml
+    filename_xml = filename_xml.replace('/', '\\')
     gdal.ErrorReset()
     ds = gdal.Open(filename_xml)
     assert ds is not None and gdal.GetLastErrorMsg() == ''

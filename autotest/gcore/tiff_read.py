@@ -632,6 +632,7 @@ def test_tiff_GTModelTypeGeoKey_only():
 # Test reading a 12bit jpeg compressed geotiff.
 
 
+@pytest.mark.skipif('SKIP_TIFF_JPEG12' in os.environ, reason='Crashes on build-windows-msys2-mingw')
 def test_tiff_12bitjpeg():
 
     old_accum = gdal.GetConfigOption('CPL_ACCUM_ERROR_MSG', 'OFF')
