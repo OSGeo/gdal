@@ -1278,7 +1278,7 @@ def test_netcdf_39():
     shutil.copy('data/netcdf/two_vars_scale_offset.nc', 'tmp')
     src_ds = gdal.Open('NETCDF:tmp/two_vars_scale_offset.nc:z')
     out_ds = gdal.GetDriverByName('VRT').CreateCopy('tmp/netcdf_39.vrt', src_ds)
-    out_ds = None
+    del out_ds
     src_ds = None
 
     ds = gdal.Open('tmp/netcdf_39.vrt')
@@ -1292,7 +1292,7 @@ def test_netcdf_39():
     shutil.copy('data/netcdf/two_vars_scale_offset.nc', 'tmp')
     src_ds = gdal.Open('NETCDF:"tmp/two_vars_scale_offset.nc":z')
     out_ds = gdal.GetDriverByName('VRT').CreateCopy('tmp/netcdf_39.vrt', src_ds)
-    out_ds = None
+    del out_ds
     src_ds = None
 
     ds = gdal.Open('tmp/netcdf_39.vrt')
@@ -1303,10 +1303,17 @@ def test_netcdf_39():
     gdal.Unlink('tmp/netcdf_39.vrt')
     assert cs == 65463
 
+
+def test_netcdf_39_absolute():
+
+    if gdal.Open("%s/data/netcdf/two_vars_scale_offset.nc" % os.getcwd()) is None and \
+       gdal.Open("data/netcdf/two_vars_scale_offset.nc") is not None:
+        pytest.skip("netcdf library can't handle absolute paths. Known to happen with some versions of msys mingw-w64-x86_64-netcdf package")
+
     shutil.copy('data/netcdf/two_vars_scale_offset.nc', 'tmp')
     src_ds = gdal.Open('NETCDF:"%s/tmp/two_vars_scale_offset.nc":z' % os.getcwd())
     out_ds = gdal.GetDriverByName('VRT').CreateCopy('%s/tmp/netcdf_39.vrt' % os.getcwd(), src_ds)
-    out_ds = None
+    del out_ds
     src_ds = None
 
     ds = gdal.Open('tmp/netcdf_39.vrt')
