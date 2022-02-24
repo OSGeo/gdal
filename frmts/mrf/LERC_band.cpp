@@ -375,7 +375,7 @@ static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img, doub
 
     unsigned int sz = 0;
     auto pbm = bm.data();
-    if (bm.empty())
+    if (!bm.empty() && nndv != bm.size())
         pbm = nullptr;
     auto status = lerc_encodeForVersion(
         reinterpret_cast<void*>(src.buffer), l2ver,
