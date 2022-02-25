@@ -155,10 +155,18 @@ class CPL_DLL OGREnvelope
     /** Return whether the current rectangle is equal to the other rectangle */
     bool operator== (const OGREnvelope& other) const
     {
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+#endif
         return MinX == other.MinX &&
                MinY == other.MinY &&
                MaxX == other.MaxX &&
                MaxY == other.MaxY;
+
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic pop
+#endif
     }
 
     /** Return whether the current rectangle is not equal to the other rectangle */
