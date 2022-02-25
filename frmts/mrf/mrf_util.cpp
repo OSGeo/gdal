@@ -537,6 +537,8 @@ void GDALRegister_mrf() {
 #if defined(LERC)
         "       LERC_PREC - numeric, set LERC precision, defaults to 0.5 for int and 0.001 for float\n"
         "       V1 - boolean, enable LERC V1 (older) format\n"
+        "       L2_VER - numeric, 2+, encode Lerc for a specific version, defaults to library default\n"
+        "                for single band or INTERLEAVE=BAND, LERC2_VER defaults to 2"
 #endif
         "       OPTIMIZE - boolean, for JPEG, enables Huffman table optimization\n"
 #if defined(BRUNSLI)
