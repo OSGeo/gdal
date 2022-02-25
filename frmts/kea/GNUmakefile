@@ -3,7 +3,7 @@ include ../../GDALmake.opt
 
 OBJ	=	keaband.o keacopy.o keadataset.o keadriver.o keamaskband.o keaoverview.o kearat.o
 
-CPPFLAGS	:=	 $(KEA_INC) $(CPPFLAGS) -DDO_NOT_USE_DEBUG_BOOL
+CPPFLAGS	:=	 $(KEA_INC) $(CPPFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

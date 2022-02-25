@@ -1395,7 +1395,7 @@ static void GWKOverlayDensity( const GDALWarpKernel *poWK, GPtrDiff_t iDstOffset
 /*                          GWKRoundValueT()                            */
 /************************************************************************/
 
-template<class T, EMULATED_BOOL is_signed> struct sGWKRoundValueT
+template<class T, bool is_signed> struct sGWKRoundValueT
 {
     static T eval(double);
 };
