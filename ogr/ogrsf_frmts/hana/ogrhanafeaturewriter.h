@@ -52,7 +52,7 @@ public:
     void SetFieldValue(int fieldIndex, const char16_t* value);
     void SetFieldValue(int fieldIndex, const void* value, std::size_t size);
 
-    template<typename ElementT>
+    template<typename InputT, typename ResultT>
     void SetFieldValueAsArray(int fieldIndex, const odbc::Binary& value);
     void SetFieldValueAsStringArray(int fieldIndex, const odbc::Binary& value);
 
@@ -70,38 +70,45 @@ void OGRHanaFeatureWriter::SetFieldValue(
         feature_.SetField(fieldIndex, *value);
 }
 
-template<typename ElementT>
+template<typename InputT, typename ResultT>
 void OGRHanaFeatureWriter::SetFieldValueAsArray(
     int fieldIndex, const odbc::Binary& value)
 {
-    const uint8_t* ptr = reinterpret_cast<const uint8_t*>(value->data());
-    uint32_t numElements = *(reinterpret_cast<const uint32_t*>(ptr));
-
-    if (numElements == 0)
+    if ( value.isNull() || value->size() == 0 )
     {
         feature_.SetFieldNull(fieldIndex);
         return;
     }
 
-    std::vector<ElementT> values;
-    values.resize(numElements);
+    const uint8_t* ptr = reinterpret_cast<const uint8_t*>(value->data());
+    const uint32_t numElements = *reinterpret_cast<const uint32_t*>(ptr);
+    ptr += sizeof(uint32_t);
+
+    std::vector<ResultT> values;
+    values.reserve(numElements);
+
+    bool elemHasLength = numElements * sizeof(InputT) != (value->size() - sizeof(uint32_t));
 
     for (uint32_t i = 0; i < numElements; ++i)
     {
-        uint8_t len = *ptr;
-        ++ptr;
-        if (len > 0)
+        if (elemHasLength)
         {
-            values.push_back(
-                *reinterpret_cast<ElementT*>(const_cast<uint8_t*>(ptr)));
-            ptr += sizeof(ElementT);
+            uint8_t len = *ptr;
+            ++ptr;
+
+            if (len > 0)
+                values.push_back(*reinterpret_cast<const InputT*>(ptr));
+            else
+                values.push_back(ResultT());
         }
         else
-            values.push_back(ElementT());
+            values.push_back(*reinterpret_cast<const InputT*>(ptr));
+
+        ptr += sizeof(InputT);
     }
 
     feature_.SetField(
-        fieldIndex, static_cast<int>(values.size()), values.data());
+        fieldIndex, static_cast<int32_t>(values.size()), values.data());
 }
 
 #endif // OGRHANAFEATUREWRITER_H_INCLUDED

@@ -31,6 +31,15 @@
 
 CPL_CVSID("$Id$")
 
+enum DataLengthIndicator
+{
+    MAX_ONE_BYTE = 245,
+    TWO_BYTE = 246,
+    FOUR_BYTE = 247,
+    DEFAULT_VALUE = 254,
+    NULL_VALUE = 255
+};
+
 OGRHanaFeatureWriter::OGRHanaFeatureWriter(OGRFeature& feature)
     : feature_(feature)
 {
@@ -164,23 +173,38 @@ void OGRHanaFeatureWriter::SetFieldValue(
 void OGRHanaFeatureWriter::SetFieldValueAsStringArray(
     int fieldIndex, const odbc::Binary& value)
 {
-    const char* data = value->data();
-    const uint8_t* ptr = reinterpret_cast<const uint8_t*>(data);
-    uint32_t numElements = *(reinterpret_cast<const uint32_t*>(ptr));
-    data += sizeof(uint32_t);
-
-    if (numElements == 0)
+    if ( value.isNull() || value->size() == 0 )
     {
         feature_.SetFieldNull(fieldIndex);
         return;
     }
 
+    const char* ptr = value->data();
+    const uint32_t numElements = *reinterpret_cast<const uint32_t*>(ptr);
+    ptr += sizeof(uint32_t);
+
     char** values = nullptr;
 
     for (uint32_t i = 0; i < numElements; ++i)
     {
-        uint8_t len = *ptr;
+        uint8_t indicator = *ptr;
         ++ptr;
+
+        int32_t len = 0;
+        if (indicator <= DataLengthIndicator::MAX_ONE_BYTE)
+        {
+            len = indicator;
+        }
+        else if (indicator == DataLengthIndicator::TWO_BYTE)
+        {
+            len = *reinterpret_cast<const int16_t*>(ptr);
+            ptr += sizeof(int16_t);
+        }
+        else
+        {
+            len = *reinterpret_cast<const int32_t*>(ptr);
+            ptr += sizeof(int32_t);
+        }
 
         if (len == 0)
         {
@@ -190,18 +214,19 @@ void OGRHanaFeatureWriter::SetFieldValueAsStringArray(
         {
             if (ptr[0] == '\0')
             {
-                values = CSLAddString(values, data);
+                values = CSLAddString(values, ptr);
             }
             else
             {
                 char* val = static_cast<char*>(CPLMalloc(len + 1));
-                memcpy(val, data, len);
+                memcpy(val, ptr, len);
                 val[len] = '\0';
                 values = CSLAddString(values, val);
                 CPLFree(val);
             }
         }
-        data += len;
+
+        ptr += len;
     }
 
     feature_.SetField(fieldIndex, values);

@@ -105,6 +105,12 @@ CPLString BuildSpatialFilter(uint dbVersion, const OGRGeometry& geom, const CPLS
                             clmName.c_str(), minX, minY, srid, maxX, maxY, srid);
 }
 
+bool IsArrayFieldType(OGRFieldType fieldType)
+{
+    return fieldType == OFTIntegerList || fieldType == OFTInteger64List || fieldType == OFTRealList ||
+           fieldType == OFTStringList || fieldType == OFTWideStringList;
+}
+
 OGRFieldDefn* CreateFieldDefn(const AttributeColumnDescription& columnDesc)
 {
     bool setFieldSize = false;
@@ -117,7 +123,7 @@ OGRFieldDefn* CreateFieldDefn(const AttributeColumnDescription& columnDesc)
     {
     case odbc::SQLDataTypes::Bit:
     case odbc::SQLDataTypes::Boolean:
-        ogrFieldType = OFTInteger;
+        ogrFieldType = columnDesc.isArray ? OFTIntegerList : OFTInteger;
         ogrFieldSubType = OGRFieldSubType::OFSTBoolean;
         break;
     case odbc::SQLDataTypes::TinyInt:
@@ -146,13 +152,10 @@ OGRFieldDefn* CreateFieldDefn(const AttributeColumnDescription& columnDesc)
     case odbc::SQLDataTypes::Char:
     case odbc::SQLDataTypes::VarChar:
     case odbc::SQLDataTypes::LongVarChar:
-        ogrFieldType = columnDesc.isArray ? OFTStringList : OFTString;
-        setFieldSize = true;
-        break;
     case odbc::SQLDataTypes::WChar:
     case odbc::SQLDataTypes::WVarChar:
     case odbc::SQLDataTypes::WLongVarChar:
-        // OFTWideString deprecated
+        // Note: OFTWideString is deprecated
         ogrFieldType = columnDesc.isArray ? OFTStringList : OFTString;
         setFieldSize = true;
         break;
@@ -177,6 +180,11 @@ OGRFieldDefn* CreateFieldDefn(const AttributeColumnDescription& columnDesc)
     default:
         break;
     }
+
+    if (columnDesc.isArray && !IsArrayFieldType(ogrFieldType))
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Array of type %s in column %s is not supported",
+                 columnDesc.typeName.c_str(), columnDesc.name.c_str());
 
     OGRFieldDefn* field =
         new OGRFieldDefn(columnDesc.name.c_str(), ogrFieldType);
@@ -477,7 +485,7 @@ OGRFeature* OGRHanaLayer::ReadFeature()
         if (clmDesc.isArray)
         {
             odbc::Binary val = resultSet_->getBinary(paramIndex);
-            if (val.isNull() || val->size() == 0)
+            if (val.isNull())
             {
                 feature->SetFieldNull(fieldIndex);
                 continue;
@@ -485,20 +493,34 @@ OGRFeature* OGRHanaLayer::ReadFeature()
 
             switch (clmDesc.type)
             {
+            case odbc::SQLDataTypes::Boolean:
+                featWriter.SetFieldValueAsArray<uint8_t, int32_t>(fieldIndex, val);
+                break;
+            case odbc::SQLDataTypes::TinyInt:
+                featWriter.SetFieldValueAsArray<uint8_t, int32_t>(fieldIndex, val);
+                break;
+            case odbc::SQLDataTypes::SmallInt:
+                featWriter.SetFieldValueAsArray<int16_t, int32_t>(fieldIndex, val);
+                break;
             case odbc::SQLDataTypes::Integer:
-                featWriter.SetFieldValueAsArray<int>(fieldIndex, val);
+                featWriter.SetFieldValueAsArray<int32_t, int32_t>(fieldIndex, val);
                 break;
             case odbc::SQLDataTypes::BigInt:
-                featWriter.SetFieldValueAsArray<GIntBig>(fieldIndex, val);
+                featWriter.SetFieldValueAsArray<GIntBig, GIntBig>(fieldIndex, val);
                 break;
             case odbc::SQLDataTypes::Float:
             case odbc::SQLDataTypes::Real:
-                featWriter.SetFieldValueAsArray<float>(fieldIndex, val);
+                featWriter.SetFieldValueAsArray<float, double>(fieldIndex, val);
                 break;
             case odbc::SQLDataTypes::Double:
-                featWriter.SetFieldValueAsArray<double>(fieldIndex, val);
+                featWriter.SetFieldValueAsArray<double, double>(fieldIndex, val);
                 break;
+            case odbc::SQLDataTypes::Char:
+            case odbc::SQLDataTypes::VarChar:
+            case odbc::SQLDataTypes::LongVarChar:
+            case odbc::SQLDataTypes::WChar:
             case odbc::SQLDataTypes::WVarChar:
+            case odbc::SQLDataTypes::WLongVarChar:
                 featWriter.SetFieldValueAsStringArray(fieldIndex, val);
                 break;
             }

@@ -679,6 +679,51 @@ def test_ogr_hana_26():
 
 
 ###############################################################################
+# Test array types
+
+def test_ogr_hana_27():
+    conn = create_connection()
+
+    def get_str(s):
+        if s is None:
+            return "NULL"
+        if isinstance(s, str):
+            return "'{}'".format(s)
+        return str(s)
+
+    def test_array_type(arr_type, arr_values, expected_type, expected_sub_type = ogr.OFSTNone):
+        layer_name = get_test_name()
+        table_name = f'"{gdaltest.hana_schema_name}"."{layer_name}"'
+        execute_sql(conn, f'CREATE COLUMN TABLE {table_name} ( COL1 INT PRIMARY KEY, COL2 {arr_type} ARRAY )')
+        str_values = ', '.join(get_str(e) for e in arr_values)
+        execute_sql(conn, f"INSERT INTO {table_name} VALUES ( 1, ARRAY ( {str_values} ) )")
+
+        ds = open_datasource(0)
+        layer = ds.GetLayerByName(layer_name)
+        layer_defn = layer.GetLayerDefn()
+        field_defn = layer_defn.GetFieldDefn(layer_defn.GetFieldIndex('COL2'))
+        assert field_defn.GetType() == expected_type
+        if field_defn.GetSubType() != ogr.OFSTNone:
+            assert field_defn.GetSubType() == expected_sub_type
+
+        feat = layer.GetNextFeature()
+        values = feat['COL2']
+        assert len(values) == len(arr_values)
+        for i in range(0, len(arr_values)):
+            assert values[i] == arr_values[i]
+
+        execute_sql(conn, f'DROP TABLE {table_name}')
+
+    test_array_type('BOOLEAN', [True, False], ogr.OFTIntegerList, ogr.OFSTBoolean)
+    test_array_type('SMALLINT', [-1, 7982], ogr.OFTIntegerList, ogr.OFSTInt16)
+    test_array_type('INT', [-1, 0, 1, 2, 2147483647, 4], ogr.OFTIntegerList)
+    test_array_type('BIGINT', [-1, 0, 9223372036854775807], ogr.OFTInteger64List)
+    test_array_type('DOUBLE', [-1.0002, 0.0, 4.6828734], ogr.OFTRealList)
+    test_array_type('NVARCHAR(300)', ['str1', '', 'str2'], ogr.OFTStringList)
+    test_array_type('VARCHAR(100)', ['str1', '', 'str2'], ogr.OFTStringList)
+
+
+###############################################################################
 #  Create a table from data/poly.shp
 
 def create_tpoly_table(ds, layer_name='TPOLY'):
