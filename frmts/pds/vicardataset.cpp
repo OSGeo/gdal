@@ -34,14 +34,6 @@ constexpr double NULL3 = -32768.0;
 
 #include "cpl_port.h"
 
-#ifdef HAVE_STRINGS_H
-#undef HAVE_STRINGS_H
-#endif
-
-#ifdef HAVE_STRING_H
-#undef HAVE_STRING_H
-#endif
-
 #include "cpl_safemaths.hpp"
 #include "cpl_vax.h"
 #include "cpl_vsi_error.h"

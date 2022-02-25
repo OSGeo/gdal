@@ -68,11 +68,11 @@
 #define HAVE_STRERROR 1
 #endif
 
+#if !defined(_WIN32)
 /* Define to 1 if you have the <strings.h> header file. */
-#undef HAVE_STRINGS_H
-
-/* Define to 1 if you have the <string.h> header file. */
-#define HAVE_STRING_H 1
+#define HAVE_STRINGS_H
+#  include <strings.h>
+#endif
 
 /* Define to 1 if you have the <syslog.h> header file. */
 #undef HAVE_SYSLOG_H
@@ -99,10 +99,7 @@
 #define HAVE_UNISTD_H 1
 #endif
 
-/* Define to 1 if you have the `vprintf' function. */
-#ifdef _MSC_VER
-#undef HAVE_VPRINTF
-#endif
+#define HAVE_SNPRINTF 1
 
 /* Define to 1 if you have the `vasprintf' function. */
 #define HAVE_VASPRINTF 1
