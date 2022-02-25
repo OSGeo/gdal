@@ -754,6 +754,9 @@ protected:
     int version;
     // L2 version
     int l2ver;
+    // Build a MRF header for a single LERC tile
+    static CPLXMLNode *GetMRFConfig(GDALOpenInfo *poOpenInfo);
+private:
     static bool IsLerc1(const char* s) {
         static const char L1sig[] = "CntZImage ";
         return !strncmp(s, L1sig, sizeof(L1sig) - 1);
@@ -762,8 +765,6 @@ protected:
         static const char L2sig[] = "Lerc2 ";
         return !strncmp(s, L2sig, sizeof(L2sig) - 1);
     }
-    // Build a MRF header for a single LERC tile
-    static CPLXMLNode *GetMRFConfig(GDALOpenInfo *poOpenInfo);
 };
 #endif
 

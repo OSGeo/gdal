@@ -402,7 +402,7 @@ CPLErr LERC_Band::Decompress(buf_mgr& dst, buf_mgr& src)
         return DecompressLERC1(dst, src, img);
 
     // Can only be LERC2 here, verify
-    if (src.size >= 7 && !IsLerc2(src.buffer)) {
+    if (src.size < 50 || !IsLerc2(src.buffer)) {
         CPLError(CE_Failure, CPLE_AppDefined, "MRF: Not a lerc tile");
         return CE_Failure;
     }
