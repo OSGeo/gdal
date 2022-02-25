@@ -1653,6 +1653,18 @@ def GetThreadLocalConfigOption(*args):
     r"""GetThreadLocalConfigOption(char const * pszKey, char const * pszDefault=None) -> char const *"""
     return _gdal.GetThreadLocalConfigOption(*args)
 
+def SetCredential(*args):
+    r"""SetCredential(char const * pszPathPrefix, char const * pszKey, char const * pszValue)"""
+    return _gdal.SetCredential(*args)
+
+def GetCredential(*args):
+    r"""GetCredential(char const * pszPathPrefix, char const * pszKey, char const * pszDefault=None) -> char const *"""
+    return _gdal.GetCredential(*args)
+
+def ClearCredentials(*args):
+    r"""ClearCredentials(char const * pszPathPrefix=None)"""
+    return _gdal.ClearCredentials(*args)
+
 def CPLBinaryToHex(*args):
     r"""CPLBinaryToHex(int nBytes) -> retStringAndCPLFree *"""
     return _gdal.CPLBinaryToHex(*args)

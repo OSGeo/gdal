@@ -145,6 +145,18 @@ A generic :ref:`/vsicurl/ <vsicurl>` file system handler exists for online resou
 
 When reading of entire files in a streaming way is possible, prefer using the :ref:`/vsicurl_streaming/ <vsicurl_streaming>`, and its variants for the above cloud storage services, for more efficiency.
 
+How to set credentials ?
+++++++++++++++++++++++++
+
+Cloud storage services require setting credentials. For some of them, they can
+be provided through configuration files (~/.aws/config, ~/.boto, ..) or through
+environment variables / configuration options.
+
+Starting with GDAL 3.5, :cpp:func:`VSISetCredential` can also be used to set configuration
+options with a granularity at the level of a file path, which makes it easier if using
+the same virtual file system but with different credentials (e.g. different
+credentials for bucket "/vsis3/foo" and "/vsis3/bar")
+
 .. _vsicurl:
 
 /vsicurl/ (http/https/ftp files: random access)

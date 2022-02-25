@@ -192,7 +192,9 @@ def test_vsigs_no_sign_request(gs_test_config):
 ###############################################################################
 # Test with a fake Google Cloud Storage server
 
-def test_vsigs_2(gs_test_config, webserver_port):
+
+@pytest.mark.parametrize("use_config_options", [True, False])
+def test_vsigs_2(gs_test_config, webserver_port, use_config_options):
 
     gdal.VSICurlClearCache()
 
@@ -216,10 +218,10 @@ def test_vsigs_2(gs_test_config, webserver_port):
             assert len(data) == 1
     gdal.Unlink('/vsimem/my_headers.txt')
 
-    with gdaltest.config_options(
-        { 'GS_SECRET_ACCESS_KEY': 'GS_SECRET_ACCESS_KEY',
+    options = { 'GS_SECRET_ACCESS_KEY': 'GS_SECRET_ACCESS_KEY',
           'GS_ACCESS_KEY_ID': 'GS_ACCESS_KEY_ID',
-          'CPL_GS_TIMESTAMP': 'my_timestamp'}):
+          'CPL_GS_TIMESTAMP': 'my_timestamp'}
+    with gdaltest.config_options(options) if use_config_options else gdaltest.credentials('/vsigs/', options):
 
         signed_url = gdal.GetSignedURL('/vsigs/gs_fake_bucket/resource',
                                        ['START_DATE=20180212T123456Z'])
