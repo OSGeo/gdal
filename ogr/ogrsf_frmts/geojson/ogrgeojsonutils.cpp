@@ -772,43 +772,106 @@ OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject,
     else if( json_type_array == type )
     {
         if( bArrayAsString )
+        {
+            eSubType = OFSTJSON;
             return OFTString;
+        }
         const auto nSize = json_object_array_length(poObject);
         if( nSize == 0 )
-            // We don't know, so let's assume it is a string list.
-            return OFTStringList;
+        {
+            eSubType = OFSTJSON;
+            return OFTString;
+        }
         OGRFieldType eType = OFTIntegerList;
-        bool bOnlyBoolean = true;
         for( auto i = decltype(nSize){0}; i < nSize; i++ )
         {
             json_object* poRow = json_object_array_get_idx(poObject, i);
             if( poRow != nullptr )
             {
                 type = json_object_get_type( poRow );
-                bOnlyBoolean &= type == json_type_boolean;
                 if( type == json_type_string )
-                    return OFTStringList;
-                else if( type == json_type_double )
-                    eType = OFTRealList;
-                else if( eType == OFTIntegerList &&
-                         type == json_type_int )
                 {
-                    GIntBig nVal = json_object_get_int64(poRow);
-                    if( !CPL_INT64_FITS_ON_INT32(nVal) )
-                        eType = OFTInteger64List;
+                    if( i == 0 || eType == OFTStringList )
+                    {
+                        eType = OFTStringList;
+                    }
+                    else
+                    {
+                        eSubType = OFSTJSON;
+                        return OFTString;
+                    }
                 }
-                else if( type != json_type_int &&
-                         type != json_type_boolean )
+                else if( type == json_type_double )
+                {
+                    if( eSubType == OFSTNone &&
+                        (i == 0 ||
+                        eType == OFTRealList ||
+                        eType == OFTIntegerList ||
+                        eType == OFTInteger64List) )
+                    {
+                        eType = OFTRealList;
+                    }
+                    else
+                    {
+                        eSubType = OFSTJSON;
+                        return OFTString;
+                    }
+                }
+                else if( type == json_type_int )
+                {
+                    if( eSubType == OFSTNone &&
+                        eType == OFTIntegerList )
+                    {
+                        GIntBig nVal = json_object_get_int64(poRow);
+                        if( !CPL_INT64_FITS_ON_INT32(nVal) )
+                            eType = OFTInteger64List;
+                    }
+                    else if( eSubType == OFSTNone &&
+                             (eType == OFTInteger64List ||
+                              eType == OFTRealList) )
+                    {
+                        // ok
+                    }
+                    else
+                    {
+                        eSubType = OFSTJSON;
+                        return OFTString;
+                    }
+                }
+                else if( type == json_type_boolean )
+                {
+                    if( i == 0 || (eType == OFTIntegerList && eSubType == OFSTBoolean) )
+                    {
+                        eSubType = OFSTBoolean;
+                    }
+                    else
+                    {
+                        eSubType = OFSTJSON;
+                        return OFTString;
+                    }
+                }
+                else
+                {
+                    eSubType = OFSTJSON;
                     return OFTString;
+                }
+            }
+            else
+            {
+                eSubType = OFSTJSON;
+                return OFTString;
             }
         }
-        if( bOnlyBoolean )
-            eSubType = OFSTBoolean;
 
         return eType;
     }
+    else if( json_type_object == type )
+    {
+        eSubType = OFSTJSON;
+        return OFTString;
+    }
 
-    return OFTString; // null, object
+    return OFTString; // null
 }
 
 /************************************************************************/

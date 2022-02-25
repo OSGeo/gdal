@@ -1,8 +1,554 @@
 {
-"type": "FeatureCollection",
-"name": "test_type_promotion",
-"features": [
-{ "type": "Feature", "properties": { "bool_then_bool": true, "bool_then_int": 1, "bool_then_int64": 1, "bool_then_real": 1.0, "bool_then_string": "true", "bool_then_boollist": [ true ], "bool_then_intlist": [ 1 ], "bool_then_int64list": [ 1 ], "bool_then_reallist": [ 1.0 ], "bool_then_stringlist": [ "true" ], "int_then_bool": 1, "int_then_int": 1, "int_then_int64": 1, "int_then_real": 1.0, "int_then_string": "1", "int_then_boollist": [ 1 ], "int_then_intlist": [ 1 ], "int_then_int64list": [ 1 ], "int_then_reallist": [ 1.0 ], "int_then_stringlist": [ "1" ], "int64_then_bool": 1234567890123, "int64_then_int": 1234567890123, "int64_then_int64": 1234567890123, "int64_then_real": 1234567890123.0, "int64_then_string": "1234567890123", "int64_then_boollist": [ 1234567890123 ], "int64_then_intlist": [ 1234567890123 ], "int64_then_int64list": [ 1234567890123 ], "int64_then_reallist": [ 1234567890123.0 ], "int64_then_stringlist": [ "1234567890123" ], "real_then_bool": 0.015625, "real_then_int": 0.015625, "real_then_int64": 0.015625, "real_then_real": 0.015625, "real_then_string": "0.015625", "real_then_boollist": [ 0.015625 ], "real_then_intlist": [ 0.015625 ], "real_then_int64list": [ 0.015625 ], "real_then_reallist": [ 0.015625 ], "real_then_stringlist": [ "0.015625" ], "string_then_bool": "x", "string_then_int": "x", "string_then_int64": "x", "string_then_real": "x", "string_then_string": "x", "string_then_boollist": "x", "string_then_intlist": "x", "string_then_int64list": "x", "string_then_reallist": "x", "string_then_stringlist": [ "x" ], "string_then_datetime": "x", "datetime_then_string": "1970-01-01T00:00:00", "datetime_then_datetime": "1970\/01\/01 00:00:00", "boollist_then_bool": [ true ], "boollist_then_int": [ 1 ], "boollist_then_int64": [ 1 ], "boollist_then_real": [ 1.0 ], "boollist_then_string": [ true ], "boollist_then_boollist": [ true ], "boollist_then_intlist": [ 1 ], "boollist_then_int64list": [ 1 ], "boollist_then_reallist": [ 1.0 ], "boollist_then_stringlist": [ "true" ], "intlist_then_bool": [ 1 ], "intlist_then_int": [ 1 ], "intlist_then_int64": [ 1 ], "intlist_then_real": [ 1.0 ], "intlist_then_string": [ 1 ], "intlist_then_boollist": [ 1 ], "intlist_then_intlist": [ 1 ], "intlist_then_int64list": [ 1 ], "intlist_then_reallist": [ 1.0 ], "intlist_then_stringlist": [ "1" ], "int64list_then_bool": [ 1234567890123 ], "int64list_then_int": [ 1234567890123 ], "int64list_then_int64": [ 1234567890123 ], "int64list_then_real": [ 1234567890123.0 ], "int64list_then_string": [ 1234567890123 ], "int64list_then_boollist": [ 1234567890123 ], "int64list_then_intlist": [ 1234567890123 ], "int64list_then_int64list": [ 1234567890123 ], "int64list_then_reallist": [ 1234567890123.0 ], "int64list_then_stringlist": [ "1234567890123" ], "reallist_then_bool": [ 0.015625 ], "reallist_then_int": [ 0.015625 ], "reallist_then_int64": [ 0.015625 ], "reallist_then_real": [ 0.015625 ], "reallist_then_string": [ 0.015625 ], "reallist_then_boollist": [ 0.015625 ], "reallist_then_intlist": [ 0.015625 ], "reallist_then_int64list": [ 0.015625 ], "reallist_then_reallist": [ 0.015625 ], "reallist_then_stringlist": [ "0.015625" ], "stringlist_then_bool": [ "x" ], "stringlist_then_int": [ "x" ], "stringlist_then_int64": [ "x" ], "stringlist_then_real": [ "x" ], "stringlist_then_string": [ "x" ], "stringlist_then_boollist": [ "x" ], "stringlist_then_intlist": [ "x" ], "stringlist_then_int64list": [ "x" ], "stringlist_then_reallist": [ "x" ], "stringlist_then_stringlist": [ "x" ] }, "geometry": null },
-{ "type": "Feature", "properties": { "bool_then_bool": true, "bool_then_int": 1, "bool_then_int64": 1234567890123, "bool_then_real": 0.015625, "bool_then_string": "x", "bool_then_boollist": [ true ], "bool_then_intlist": [ 1 ], "bool_then_int64list": [ 1234567890123 ], "bool_then_reallist": [ 0.015625 ], "bool_then_stringlist": [ "x" ], "int_then_bool": 1, "int_then_int": 1, "int_then_int64": 1234567890123, "int_then_real": 0.015625, "int_then_string": "x", "int_then_boollist": [ 1 ], "int_then_intlist": [ 1 ], "int_then_int64list": [ 1234567890123 ], "int_then_reallist": [ 0.015625 ], "int_then_stringlist": [ "x" ], "int64_then_bool": 1, "int64_then_int": 1, "int64_then_int64": 1234567890123, "int64_then_real": 0.015625, "int64_then_string": "x", "int64_then_boollist": [ 1 ], "int64_then_intlist": [ 1 ], "int64_then_int64list": [ 1234567890123 ], "int64_then_reallist": [ 0.015625 ], "int64_then_stringlist": [ "x" ], "real_then_bool": 1.0, "real_then_int": 1.0, "real_then_int64": 1234567890123.0, "real_then_real": 0.015625, "real_then_string": "x", "real_then_boollist": [ 1.0 ], "real_then_intlist": [ 1.0 ], "real_then_int64list": [ 1234567890123.0 ], "real_then_reallist": [ 0.015625 ], "real_then_stringlist": [ "x" ], "string_then_bool": "true", "string_then_int": "1", "string_then_int64": "1234567890123", "string_then_real": "0.015625", "string_then_string": "x", "string_then_boollist": [ true ], "string_then_intlist": [ 1 ], "string_then_int64list": [ 1234567890123 ], "string_then_reallist": [ 0.015625 ], "string_then_stringlist": [ "x" ], "string_then_datetime": "1970-01-01T00:00:00", "datetime_then_string": "x", "datetime_then_datetime": "1970\/01\/01 00:00:00", "boollist_then_bool": [ true ], "boollist_then_int": [ 1 ], "boollist_then_int64": [ 1234567890123 ], "boollist_then_real": [ 0.015625 ], "boollist_then_string": "x", "boollist_then_boollist": [ true ], "boollist_then_intlist": [ 1 ], "boollist_then_int64list": [ 1234567890123 ], "boollist_then_reallist": [ 0.015625 ], "boollist_then_stringlist": [ "x" ], "intlist_then_bool": [ 1 ], "intlist_then_int": [ 1 ], "intlist_then_int64": [ 1234567890123 ], "intlist_then_real": [ 0.015625 ], "intlist_then_string": "x", "intlist_then_boollist": [ 1 ], "intlist_then_intlist": [ 1 ], "intlist_then_int64list": [ 1234567890123 ], "intlist_then_reallist": [ 0.015625 ], "intlist_then_stringlist": [ "x" ], "int64list_then_bool": [ 1 ], "int64list_then_int": [ 1 ], "int64list_then_int64": [ 1234567890123 ], "int64list_then_real": [ 0.015625 ], "int64list_then_string": "x", "int64list_then_boollist": [ 1 ], "int64list_then_intlist": [ 1 ], "int64list_then_int64list": [ 1234567890123 ], "int64list_then_reallist": [ 0.015625 ], "int64list_then_stringlist": [ "x" ], "reallist_then_bool": [ 1.0 ], "reallist_then_int": [ 1.0 ], "reallist_then_int64": [ 1234567890123.0 ], "reallist_then_real": [ 0.015625 ], "reallist_then_string": "x", "reallist_then_boollist": [ 1.0 ], "reallist_then_intlist": [ 1.0 ], "reallist_then_int64list": [ 1234567890123.0 ], "reallist_then_reallist": [ 0.015625 ], "reallist_then_stringlist": [ "x" ], "stringlist_then_bool": [ "true" ], "stringlist_then_int": [ "1" ], "stringlist_then_int64": [ "1234567890123" ], "stringlist_then_real": [ "0.015625" ], "stringlist_then_string": [ "x" ], "stringlist_then_boollist": [ "true" ], "stringlist_then_intlist": [ "1" ], "stringlist_then_int64list": [ "1234567890123" ], "stringlist_then_reallist": [ "0.015625" ], "stringlist_then_stringlist": [ "x" ] }, "geometry": null }
-]
+  "type": "FeatureCollection",
+  "name": "test_type_promotion",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "bool_then_bool": true,
+        "bool_then_int": 1,
+        "bool_then_int64": 1,
+        "bool_then_real": 1,
+        "bool_then_string": "true",
+        "bool_then_boollist": [
+          true
+        ],
+        "bool_then_intlist": [
+          1
+        ],
+        "bool_then_int64list": [
+          1
+        ],
+        "bool_then_reallist": [
+          1
+        ],
+        "bool_then_stringlist": [
+          "true"
+        ],
+        "bool_then_empty_array": "true",
+        "bool_then_obj": "true",
+        "int_then_bool": 1,
+        "int_then_int": 1,
+        "int_then_int64": 1,
+        "int_then_real": 1,
+        "int_then_string": "1",
+        "int_then_boollist": [
+          1
+        ],
+        "int_then_intlist": [
+          1
+        ],
+        "int_then_int64list": [
+          1
+        ],
+        "int_then_reallist": [
+          1
+        ],
+        "int_then_stringlist": [
+          "1"
+        ],
+        "int_then_obj": "1",
+        "int64_then_bool": 1234567890123,
+        "int64_then_int": 1234567890123,
+        "int64_then_int64": 1234567890123,
+        "int64_then_real": 1234567890123,
+        "int64_then_string": "1234567890123",
+        "int64_then_boollist": [
+          1234567890123
+        ],
+        "int64_then_intlist": [
+          1234567890123
+        ],
+        "int64_then_int64list": [
+          1234567890123
+        ],
+        "int64_then_reallist": [
+          1234567890123
+        ],
+        "int64_then_stringlist": [
+          "1234567890123"
+        ],
+        "int64_then_obj": "1234567890123",
+        "real_then_bool": 0.015625,
+        "real_then_int": 0.015625,
+        "real_then_int64": 0.015625,
+        "real_then_real": 0.015625,
+        "real_then_string": "0.015625",
+        "real_then_boollist": [
+          0.015625
+        ],
+        "real_then_intlist": [
+          0.015625
+        ],
+        "real_then_int64list": [
+          0.015625
+        ],
+        "real_then_reallist": [
+          0.015625
+        ],
+        "real_then_stringlist": [
+          "0.015625"
+        ],
+        "real_then_obj": "0.015625",
+        "string_then_bool": "x",
+        "string_then_int": "x",
+        "string_then_int64": "x",
+        "string_then_real": "x",
+        "string_then_string": "x",
+        "string_then_boollist": "x",
+        "string_then_intlist": "x",
+        "string_then_int64list": "x",
+        "string_then_reallist": "x",
+        "string_then_stringlist": [
+          "x"
+        ],
+        "string_then_datetime": "x",
+        "string_then_obj": "x",
+        "datetime_then_string": "1970-01-01T00:00:00",
+        "datetime_then_datetime": "1970/01/01 00:00:00",
+        "datetime_then_obj": "1970-01-01T00:00:00",
+        "boollist_then_bool": [
+          true
+        ],
+        "boollist_then_int": [
+          1
+        ],
+        "boollist_then_int64": [
+          1
+        ],
+        "boollist_then_real": [
+          1
+        ],
+        "boollist_then_string": [
+          true
+        ],
+        "boollist_then_boollist": [
+          true
+        ],
+        "boollist_then_intlist": [
+          1
+        ],
+        "boollist_then_int64list": [
+          1
+        ],
+        "boollist_then_reallist": [
+          1
+        ],
+        "boollist_then_stringlist": [
+          "true"
+        ],
+        "boollist_then_obj": "[ true ]",
+        "intlist_then_bool": [
+          1
+        ],
+        "intlist_then_int": [
+          1
+        ],
+        "intlist_then_int64": [
+          1
+        ],
+        "intlist_then_real": [
+          1
+        ],
+        "intlist_then_string": [
+          1
+        ],
+        "intlist_then_boollist": [
+          1
+        ],
+        "intlist_then_intlist": [
+          1
+        ],
+        "intlist_then_int64list": [
+          1
+        ],
+        "intlist_then_reallist": [
+          1
+        ],
+        "intlist_then_stringlist": [
+          "1"
+        ],
+        "intlist_then_obj": "[ 1 ]",
+        "int64list_then_bool": [
+          1234567890123
+        ],
+        "int64list_then_int": [
+          1234567890123
+        ],
+        "int64list_then_int64": [
+          1234567890123
+        ],
+        "int64list_then_real": [
+          1234567890123
+        ],
+        "int64list_then_string": [
+          1234567890123
+        ],
+        "int64list_then_boollist": [
+          1234567890123
+        ],
+        "int64list_then_intlist": [
+          1234567890123
+        ],
+        "int64list_then_int64list": [
+          1234567890123
+        ],
+        "int64list_then_reallist": [
+          1234567890123
+        ],
+        "int64list_then_stringlist": [
+          "1234567890123"
+        ],
+        "int64list_then_obj": "[ 1234567890123 ]",
+        "reallist_then_bool": [
+          0.015625
+        ],
+        "reallist_then_int": [
+          0.015625
+        ],
+        "reallist_then_int64": [
+          0.015625
+        ],
+        "reallist_then_real": [
+          0.015625
+        ],
+        "reallist_then_string": [
+          0.015625
+        ],
+        "reallist_then_boollist": [
+          0.015625
+        ],
+        "reallist_then_intlist": [
+          0.015625
+        ],
+        "reallist_then_int64list": [
+          0.015625
+        ],
+        "reallist_then_reallist": [
+          0.015625
+        ],
+        "reallist_then_stringlist": [
+          "0.015625"
+        ],
+        "reallist_then_obj": "[ 0.015625 ]",
+        "stringlist_then_bool": [
+          "x"
+        ],
+        "stringlist_then_int": [
+          "x"
+        ],
+        "stringlist_then_int64": [
+          "x"
+        ],
+        "stringlist_then_real": [
+          "x"
+        ],
+        "stringlist_then_string": [
+          "x"
+        ],
+        "stringlist_then_boollist": [
+          "x"
+        ],
+        "stringlist_then_intlist": [
+          "x"
+        ],
+        "stringlist_then_int64list": [
+          "x"
+        ],
+        "stringlist_then_reallist": [
+          "x"
+        ],
+        "stringlist_then_stringlist": [
+          "x"
+        ],
+        "stringlist_then_obj": "[ \"x\" ]",
+        "obj": "{ }",
+
+        "mixed_array_str_int": "[ \"1\", 2 ]",
+        "mixed_array_int_str": "[ 1, \"2\" ]",
+        "mixed_array_int_array": "[ 1, [ ] ]",
+        "mixed_array_int_obj": "[ 1, { } ]",
+        "mixed_array_real_str": "[ 1.5, \"2\" ]",
+        "mixed_array_int_bool": "[ 1, true ]",
+        "mixed_array_bool_int": "[ true, 1 ]",
+        "mixed_array_int64_str": "[ 1234567890123, \"1\" ]",
+        "array_bool_bool": [ true, false ],
+        "array_int_int": [ 1, 2 ],
+        "array_int_int64": [ 1, 1234567890123 ],
+        "array_int_double": [ 1, 2.5 ],
+        "array_int64_int": [ 1234567890123, 1 ],
+        "array_int64_int64": [ 1234567890123, 1234567890123 ],
+        "array_int64_double": [ 1234567890123, 2.5 ],
+        "array_double_int": [ 1.5, 2 ],
+        "array_double_int64": [ 1.5, 1234567890123 ],
+        "array_double_double": [ 1.5, 2.5 ],
+        "array_string" : [ "a", "b" ]
+      },
+      "geometry": null
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "bool_then_bool": true,
+        "bool_then_int": 1,
+        "bool_then_int64": 1234567890123,
+        "bool_then_real": 0.015625,
+        "bool_then_string": "x",
+        "bool_then_boollist": [
+          true
+        ],
+        "bool_then_intlist": [
+          1
+        ],
+        "bool_then_int64list": [
+          1234567890123
+        ],
+        "bool_then_reallist": [
+          0.015625
+        ],
+        "bool_then_stringlist": [
+          "x"
+        ],
+        "bool_then_empty_array": "[ ]",
+        "bool_then_obj": "{ }",
+        "int_then_bool": 1,
+        "int_then_int": 1,
+        "int_then_int64": 1234567890123,
+        "int_then_real": 0.015625,
+        "int_then_string": "x",
+        "int_then_boollist": [
+          1
+        ],
+        "int_then_intlist": [
+          1
+        ],
+        "int_then_int64list": [
+          1234567890123
+        ],
+        "int_then_reallist": [
+          0.015625
+        ],
+        "int_then_stringlist": [
+          "x"
+        ],
+        "int_then_obj": "{ }",
+        "int64_then_bool": 1,
+        "int64_then_int": 1,
+        "int64_then_int64": 1234567890123,
+        "int64_then_real": 0.015625,
+        "int64_then_string": "x",
+        "int64_then_boollist": [
+          1
+        ],
+        "int64_then_intlist": [
+          1
+        ],
+        "int64_then_int64list": [
+          1234567890123
+        ],
+        "int64_then_reallist": [
+          0.015625
+        ],
+        "int64_then_stringlist": [
+          "x"
+        ],
+        "int64_then_obj": "{ }",
+        "real_then_bool": 1,
+        "real_then_int": 1,
+        "real_then_int64": 1234567890123,
+        "real_then_real": 0.015625,
+        "real_then_string": "x",
+        "real_then_boollist": [
+          1
+        ],
+        "real_then_intlist": [
+          1
+        ],
+        "real_then_int64list": [
+          1234567890123
+        ],
+        "real_then_reallist": [
+          0.015625
+        ],
+        "real_then_stringlist": [
+          "x"
+        ],
+        "real_then_obj": "{ }",
+        "string_then_bool": "true",
+        "string_then_int": "1",
+        "string_then_int64": "1234567890123",
+        "string_then_real": "0.015625",
+        "string_then_string": "x",
+        "string_then_boollist": [
+          true
+        ],
+        "string_then_intlist": [
+          1
+        ],
+        "string_then_int64list": [
+          1234567890123
+        ],
+        "string_then_reallist": [
+          0.015625
+        ],
+        "string_then_stringlist": [
+          "x"
+        ],
+        "string_then_datetime": "1970-01-01T00:00:00",
+        "string_then_obj": "{ }",
+        "datetime_then_string": "x",
+        "datetime_then_datetime": "1970/01/01 00:00:00",
+        "datetime_then_obj": "{ }",
+        "boollist_then_bool": [
+          true
+        ],
+        "boollist_then_int": [
+          1
+        ],
+        "boollist_then_int64": [
+          1234567890123
+        ],
+        "boollist_then_real": [
+          0.015625
+        ],
+        "boollist_then_string": "x",
+        "boollist_then_boollist": [
+          true
+        ],
+        "boollist_then_intlist": [
+          1
+        ],
+        "boollist_then_int64list": [
+          1234567890123
+        ],
+        "boollist_then_reallist": [
+          0.015625
+        ],
+        "boollist_then_stringlist": [
+          "x"
+        ],
+        "boollist_then_obj": "{ }",
+        "intlist_then_bool": [
+          1
+        ],
+        "intlist_then_int": [
+          1
+        ],
+        "intlist_then_int64": [
+          1234567890123
+        ],
+        "intlist_then_real": [
+          0.015625
+        ],
+        "intlist_then_string": "x",
+        "intlist_then_boollist": [
+          1
+        ],
+        "intlist_then_intlist": [
+          1
+        ],
+        "intlist_then_int64list": [
+          1234567890123
+        ],
+        "intlist_then_reallist": [
+          0.015625
+        ],
+        "intlist_then_stringlist": [
+          "x"
+        ],
+        "intlist_then_obj": "{ }",
+        "int64list_then_bool": [
+          1
+        ],
+        "int64list_then_int": [
+          1
+        ],
+        "int64list_then_int64": [
+          1234567890123
+        ],
+        "int64list_then_real": [
+          0.015625
+        ],
+        "int64list_then_string": "x",
+        "int64list_then_boollist": [
+          1
+        ],
+        "int64list_then_intlist": [
+          1
+        ],
+        "int64list_then_int64list": [
+          1234567890123
+        ],
+        "int64list_then_reallist": [
+          0.015625
+        ],
+        "int64list_then_stringlist": [
+          "x"
+        ],
+        "int64list_then_obj": "{ }",
+        "reallist_then_bool": [
+          1
+        ],
+        "reallist_then_int": [
+          1
+        ],
+        "reallist_then_int64": [
+          1234567890123
+        ],
+        "reallist_then_real": [
+          0.015625
+        ],
+        "reallist_then_string": "x",
+        "reallist_then_boollist": [
+          1
+        ],
+        "reallist_then_intlist": [
+          1
+        ],
+        "reallist_then_int64list": [
+          1234567890123
+        ],
+        "reallist_then_reallist": [
+          0.015625
+        ],
+        "reallist_then_stringlist": [
+          "x"
+        ],
+        "reallist_then_obj": "{ }",
+        "stringlist_then_bool": [
+          "true"
+        ],
+        "stringlist_then_int": [
+          "1"
+        ],
+        "stringlist_then_int64": [
+          "1234567890123"
+        ],
+        "stringlist_then_real": [
+          "0.015625"
+        ],
+        "stringlist_then_string": [
+          "x"
+        ],
+        "stringlist_then_boollist": [
+          "true"
+        ],
+        "stringlist_then_intlist": [
+          "1"
+        ],
+        "stringlist_then_int64list": [
+          "1234567890123"
+        ],
+        "stringlist_then_reallist": [
+          "0.015625"
+        ],
+        "stringlist_then_stringlist": [
+          "x"
+        ],
+        "stringlist_then_obj": "{ }",
+        "obj": "{ \"foo\": 5 }"
+      },
+      "geometry": null
+    }
+  ]
 }
