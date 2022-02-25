@@ -181,7 +181,7 @@ function(gdal_generate_config)
     get_property(target_lib_name TARGET "${arg_TARGET}" PROPERTY OUTPUT_NAME)
     set(CONFIG_LIBS "${CMAKE_LINK_LIBRARY_FLAG}${target_lib_name}")
     if(NOT CONFIG_PREFIX IN_LIST CMAKE_C_IMPLICIT_LINK_LIBRARIES)
-        string(PREPEND CONFIG_LIBS "${CMAKE_LIBRARY_PATH_FLAG}${CONFIG_PREFIX}/${CMAKE_INSTALL_LIBDIR} ")
+        set(CONFIG_LIBS "${CMAKE_LIBRARY_PATH_FLAG}${CONFIG_PREFIX}/${CMAKE_INSTALL_LIBDIR} ${CONFIG_LIBS}")
     endif()
 
     get_property(libs GLOBAL PROPERTY "${arg_GLOBAL_PROPERTY}")
