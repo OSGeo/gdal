@@ -2,7 +2,7 @@
 include ../../GDALmake.opt
 
 ifeq ($(GIF_SETTING),internal)
-XTRA_OPT =	-Igiflib
+XTRA_OPT =	-Igiflib -DHAVE_STDINT_H -DHAVE_INTTYPES_H
 OBJ	=	egif_lib.o dgif_lib.o gifalloc.o gif_err.o gif_hash.o \
 		\
 		gifdataset.o biggifdataset.o gifabstractdataset.o
