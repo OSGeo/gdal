@@ -1,0 +1,9 @@
+# Also see https://www.gitpod.io/docs/config-gitpod-file
+
+# Enable only one image
+image:
+  # Default osgeo image (same as ubuntu-full-latest)
+  file: docker/gitpod/osgeo-geo.Dockerfile
+  
+  # Ubuntu small
+  #f1ile: docker/gitpod/ubuntu-small-latest.Dockerfile
