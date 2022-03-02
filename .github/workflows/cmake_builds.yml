@@ -173,25 +173,27 @@ jobs:
       run:
         shell: msys2 {0}
     steps:
+      # To avoid git clone to mess with the line endings of GDAL autotest data
+      # files that look like text, but should be handled as binary content
+      - name: Set git core.autocrlf to false
+        shell: bash -l {0}
+        run: |
+          git config --global core.autocrlf false
+      - name: Checkout GDAL
+        uses: actions/checkout@v2
       - name: Install development packages
         uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW64
           update: true
+          # Disable mingw-w64-x86_64-crypto++ as it crashes at runtime on eedai_3 test. Likely a build issue with crypto++ itself
           install: |
             base-devel git mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-ccache
-            mingw-w64-x86_64-crypto++ mingw-w64-x86_64-pcre mingw-w64-x86_64-xerces-c mingw-w64-x86_64-zstd
+            mingw-w64-x86_64-pcre mingw-w64-x86_64-xerces-c mingw-w64-x86_64-zstd
             mingw-w64-x86_64-geos mingw-w64-x86_64-libspatialite mingw-w64-x86_64-proj
             mingw-w64-x86_64-cgal mingw-w64-x86_64-libfreexl mingw-w64-x86_64-hdf5 mingw-w64-x86_64-netcdf mingw-w64-x86_64-poppler mingw-w64-x86_64-postgresql
-            mingw-w64-x86_64-libgeotiff mingw-w64-x86_64-jasper mingw-w64-x86_64-libpng mingw-w64-x86_64-libtiff mingw-w64-x86_64-openjpeg
-            mingw-w64-x86_64-python-pip mingw-w64-x86_64-python-numpy mingw-w64-x86_64-python-pytest mingw-w64-x86_64-python-setuptools
-      # To avoid git clone to mess with the line endings of GDAL autotest data
-      # files that look like text, but should be handled as binary content
-      - name: Set git core.autocrlf to false
-        run: |
-          git config --global core.autocrlf false
-      - name: Checkout GDAL
-        uses: actions/checkout@v2
+            mingw-w64-x86_64-libgeotiff mingw-w64-x86_64-libpng mingw-w64-x86_64-libtiff mingw-w64-x86_64-openjpeg
+            mingw-w64-x86_64-python-pip mingw-w64-x86_64-python-numpy mingw-w64-x86_64-python-pytest mingw-w64-x86_64-python-setuptools mingw-w64-x86_64-python-lxml
       - name: Setup cache
         uses: actions/cache@v2
         id: cache
@@ -220,7 +222,6 @@ jobs:
         run: |
           python -m pip install pytest-env
       # Disable mySQL since C:/mysql/lib/mysqlclient.lib (unrelated to msys) is found, which causes linking issues
-      # Disable Python bindings because of 'ValueError: filename D:/a/gdal/gdal/swig/python/osgeo/__init__.py does not start with the input_base_dir D:/a/gdal/gdal/swig/python/osgeo/\' when running lib2to3
       # Set explicitly CMAKE_C|CXX_COMPILER otherwise C:/ProgramData/chocolatey/bin/gcc.exe would be used
       - name: Configure
         run: |
@@ -235,18 +236,22 @@ jobs:
             -DCMAKE_INSTALL_PREFIX=$PWD/install-gdal \
             "-DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD}" \
             -DGDAL_USE_MYSQL:BOOL=OFF \
-            -DBUILD_PYTHON_BINDINGS:BOOL=OFF \
             -DBUILD_CSHARP_BINDINGS=ON
         working-directory: ${{ github.workspace }}
       - name: Build
         run: cmake --build build -j 3
         working-directory: ${{ github.workspace }}
-      # FIXME: enable some tests
-      #- name: test
-      #  run: cmake --build build --target quicktest
-      #  working-directory: ${{ github.workspace }}
-      #  env:
-      #    PROJ_LIB: "C:\\tools\\msys64\\mingw64\\share\\proj"
+      - name: test
+        run: cmake --build build --target quicktest
+        working-directory: ${{ github.workspace }}
+      - name: test (with ctest)
+        run: |
+          ctest --test-dir $GITHUB_WORKSPACE/build -C Release -V -j 3
+        env:
+          SKIP_OGR_GMLAS_HUGE_PROCESSING_TIME: YES
+          SKIP_OGR_GMLAS_HTTP_RELATED: YES
+          SKIP_TIFF_JPEG12: YES
+        working-directory: ${{ github.workspace }}
       - name: Install
         run: cmake --build build --target install -j 3
         working-directory: ${{ github.workspace }}

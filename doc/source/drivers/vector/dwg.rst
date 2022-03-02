@@ -67,7 +67,7 @@ DWG_ATTRIBUTES
 
 If option is set to TRUE value, then block attributes are treated as
 feature attributes, one feature attribute for each tag. This option allow
-convertion to rows and columns data such as database tables
+conversion to rows and columns data such as database tables
 
 DWG_ALL_ATTRIBUTES
 ------------------

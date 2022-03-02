@@ -144,9 +144,7 @@
 
 #include <time.h>
 
-#if defined(HAVE_ERRNO_H)
-#  include <errno.h>
-#endif
+#include <errno.h>
 
 #ifdef HAVE_LOCALE_H
 #  include <locale.h>
@@ -227,8 +225,6 @@ typedef int             GBool;
 /*      64bit support                                                   */
 /* -------------------------------------------------------------------- */
 
-#if HAVE_LONG_LONG
-
 /** Large signed integer type (generally 64-bit integer type).
  *  Use GInt64 when exactly 64 bit is needed */
 typedef long long        GIntBig;
@@ -261,11 +257,6 @@ typedef GUIntBig         GUInt64;
 /** Minimum GUInt64 value */
 #define GUINT64_MAX     GUINTBIG_MAX
 
-#else
-
-#error "64bit integer support required"
-
-#endif
 
 #if SIZEOF_VOIDP == 8
 /** Integer type large enough to hold the difference between 2 addresses */
@@ -276,26 +267,17 @@ typedef int              GPtrDiff_t;
 #endif
 
 #ifdef GDAL_COMPILATION
-#if HAVE_UINTPTR_T
 #include <stdint.h>
 typedef uintptr_t GUIntptr_t;
-#elif SIZEOF_VOIDP == 8
-typedef GUIntBig GUIntptr_t;
-#else
-typedef unsigned int  GUIntptr_t;
-#endif
-
 #define CPL_IS_ALIGNED(ptr, quant) ((CPL_REINTERPRET_CAST(GUIntptr_t, CPL_STATIC_CAST(const void*, ptr)) % (quant)) == 0)
 
 #endif
 
 #if (defined(__MSVCRT__) && !(defined(__MINGW64__) && __GNUC__ >= 10)) || (defined(WIN32) && defined(_MSC_VER))
   #define CPL_FRMT_GB_WITHOUT_PREFIX     "I64"
-#elif HAVE_LONG_LONG
+#else
 /** Printf formatting suffix for GIntBig */
   #define CPL_FRMT_GB_WITHOUT_PREFIX     "ll"
-#else
-  #define CPL_FRMT_GB_WITHOUT_PREFIX     "l"
 #endif
 
 /** Printf formatting for GIntBig */

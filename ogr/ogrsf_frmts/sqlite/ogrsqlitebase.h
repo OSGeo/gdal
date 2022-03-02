@@ -135,6 +135,7 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL: public GDALPamDataset
     int                 OpenOrCreateDB(int flags, bool bRegisterOGR2SQLiteExtensions);
     bool                SetSynchronous();
     bool                SetCacheSize();
+    void                LoadExtensions();
 
     void                CloseDB();
 

@@ -350,11 +350,33 @@ Layer Creation Options
    String, DateTime, Date and Time. The COMPRESS_COLUMNS option is ignored in
    strict mode.
 
-Other Configuration Options
----------------------------
+Configuration Options
+---------------------
 
-See other configure options
-`here <http://trac.osgeo.org/gdal/wiki/ConfigOptions#SQLITE_LIST_ALL_TABLES>`__.
+- **SQLITE_LIST_ALL_TABLES** =YES/NO: Set to "YES" to list all tables
+  (not just the tables listed in the geometry_columns table). This can also
+  be done using the LIST_ALL_TABLES open option. Default is NO.
+
+- **OGR_SQLITE_LIST_VIRTUAL_OGR** =YES/NO* Set to "YES" to list VirtualOGR layers.
+  Defaults to "NO" as there might be some security implications if a user is
+  provided with a file and doesn't know that there are virtual OGR tables in it.
+
+- **OGR_SQLITE_CACHE**: see Performance hints
+
+- **OGR_SQLITE_SYNCHRONOUS**: see Performance hints
+
+- **OGR_SQLITE_LOAD_EXTENSIONS** =extension1,...,extensionN,ENABLE_SQL_LOAD_EXTENSION:
+  (GDAL >= 3.5.0). Comma separated list of names of shared libraries containing
+  extensions to load at database opening.
+  If a file cannot be loaded directly, attempts are made to load with various
+  operating-system specific extensions added. So
+  for example, if "samplelib" cannot be loaded, then names like "samplelib.so"
+  or "samplelib.dylib" or "samplelib.dll" might be tried also.
+  The special value ``ENABLE_SQL_LOAD_EXTENSION`` can be used to enable the use of
+  the SQL ``load_extension()`` function, which is normally disabled in standard
+  builds of sqlite3.
+  Loading extensions as a potential security impact if they are untrusted.
+
 
 Performance hints
 -----------------
@@ -379,12 +401,12 @@ related to a corresponding Spatial Index. Explicitly setting a much more
 generously dimensioned internal Page Cache may often help to get a
 noticeably better performance. You can
 explicitly set the internal Page Cache size using the configuration
-option **OGR_SQLITE_CACHE** *value* [*value* being measured in MB]; if
+option :decl_configoption:`OGR_SQLITE_CACHE` *value* [*value* being measured in MB]; if
 your HW has enough available RAM, defining a Cache size as big as 512MB
 (or even 1024MB) may sometimes help a lot in order to get better
 performance.
 
-Setting the **OGR_SQLITE_SYNCHRONOUS** configuration option to *OFF*
+Setting the :decl_configoption:`OGR_SQLITE_SYNCHRONOUS` configuration option to *OFF*
 might also increase performance when creating SQLite databases (although
 at the expense of integrity in case of interruption/crash ).
 

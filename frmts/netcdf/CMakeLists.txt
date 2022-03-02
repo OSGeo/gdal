@@ -13,7 +13,7 @@ set(_SOURCES
 add_gdal_driver(TARGET gdal_netCDF SOURCES ${_SOURCES} PLUGIN_CAPABLE)
 unset(_SOURCES)
 
-# We unconditionaly enable the GMT driver when enabling the netCDF one
+# We unconditionally enable the GMT driver when enabling the netCDF one
 target_compile_definitions(gdal_netCDF PRIVATE -DNETCDF_PLUGIN)
 
 gdal_standard_includes(gdal_netCDF)

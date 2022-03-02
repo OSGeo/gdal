@@ -1091,7 +1091,7 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 else
                     nOffset -= nLine * static_cast<vsi_l_offset>(-nLineOffset);
                 if( nPixelOffset >= 0 )
-                    nOffset += nXOff * nPixelOffset;
+                    nOffset += nXOff * static_cast<vsi_l_offset>(nPixelOffset);
                 else
                     nOffset -= nXOff * static_cast<vsi_l_offset>(-nPixelOffset);
                 if ( AccessBlock(nOffset,
@@ -1164,7 +1164,7 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             // Seek to the correct block.
             vsi_l_offset nOffset = nImgOffset;
             if( nLineOffset >= 0 )
-                nOffset += nYOff * nLineOffset;
+                nOffset += nYOff * static_cast<vsi_l_offset>(nLineOffset);
             else
                 nOffset -= nYOff * static_cast<vsi_l_offset>(-nLineOffset);
 

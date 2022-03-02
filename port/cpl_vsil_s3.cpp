@@ -3824,7 +3824,7 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
                                 std::max(nMinSizeChunk,
                                             atoi(pszChunkSize)))): 0;
 
-    // Filter x-amz- options when outputing to /vsis3/
+    // Filter x-amz- options when outputting to /vsis3/
     CPLStringList aosObjectCreationOptions;
     if( poTargetFSHandler != nullptr && papszOptions != nullptr )
     {

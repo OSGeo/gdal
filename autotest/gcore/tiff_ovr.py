@@ -1341,6 +1341,7 @@ def test_tiff_ovr_42(both_endian):
 # jpeg-in-tiff (#3539)
 
 
+@pytest.mark.skipif('SKIP_TIFF_JPEG12' in os.environ, reason='Crashes on build-windows-msys2-mingw')
 def test_tiff_ovr_43(both_endian):
 
     md = gdaltest.tiff_drv.GetMetadata()

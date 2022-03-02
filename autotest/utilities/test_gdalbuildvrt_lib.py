@@ -395,7 +395,7 @@ def test_gdalbuildvrt_lib_warnings_and_custom_error_handler():
             elif err_level == gdal.CE_Warning:
                 self.got_warning = True
 
-    # Heterogenous band numbers should result in a warning from BuildVRT()
+    # Heterogeneous band numbers should result in a warning from BuildVRT()
     ds_one_band = gdal.Open('../gcore/data/byte.tif')
     ds_two_band = gdal.Translate('', ds_one_band, bandList = [1, 1], format = 'VRT')
 

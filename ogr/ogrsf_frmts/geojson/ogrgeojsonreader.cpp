@@ -1714,8 +1714,9 @@ void OGRGeoJSONReaderAddOrUpdateField(
     bool bDateAsString,
     std::set<int>& aoSetUndeterminedTypeFields )
 {
+    const auto jType = json_object_get_type(poVal);
     if( bFlattenNestedAttributes &&
-        poVal != nullptr && json_object_get_type(poVal) == json_type_object )
+        poVal != nullptr && jType == json_type_object )
     {
         json_object_iter it;
         it.key = nullptr;
@@ -1783,34 +1784,34 @@ void OGRGeoJSONReaderAddOrUpdateField(
         // If there is a null value: do not update field definition.
         OGRFieldDefn* poFDefn = apoFieldDefn[nIndex].get();
         const OGRFieldType eType = poFDefn->GetType();
+        const OGRFieldSubType eSubType = poFDefn->GetSubType();
+        OGRFieldSubType eNewSubType;
+        OGRFieldType eNewType =
+            GeoJSONPropertyToFieldType( poVal, eNewSubType, bArrayAsString );
+        const bool bNewIsEmptyArray = (
+            jType == json_type_array &&
+            json_object_array_length(poVal) == 0);
         if( aoSetUndeterminedTypeFields.find(nIndex) !=
             aoSetUndeterminedTypeFields.end() )
         {
-            OGRFieldSubType eSubType;
-            const OGRFieldType eNewType =
-                GeoJSONPropertyToFieldType( poVal, eSubType, bArrayAsString );
             poFDefn->SetSubType(OFSTNone);
             poFDefn->SetType(eNewType);
             if( poFDefn->GetType() == OFTString && !bDateAsString )
             {
                 poFDefn->SetType(GeoJSONStringPropertyToFieldType( poVal ));
             }
-            poFDefn->SetSubType(eSubType);
+            poFDefn->SetSubType(eNewSubType);
             aoSetUndeterminedTypeFields.erase(nIndex);
         }
         else if( eType == OFTInteger )
         {
-            OGRFieldSubType eSubType;
-            const OGRFieldType eNewType =
-                GeoJSONPropertyToFieldType( poVal, eSubType, bArrayAsString );
             if( eNewType == OFTInteger &&
-                poFDefn->GetSubType() == OFSTBoolean &&
-                eSubType != OFSTBoolean )
+                eSubType == OFSTBoolean &&
+                eNewSubType != OFSTBoolean )
             {
                 poFDefn->SetSubType(OFSTNone);
             }
             else if( eNewType == OFTInteger64 || eNewType == OFTReal ||
-                     eNewType == OFTString ||
                      eNewType == OFTInteger64List || eNewType == OFTRealList ||
                      eNewType == OFTStringList )
             {
@@ -1819,8 +1820,8 @@ void OGRGeoJSONReaderAddOrUpdateField(
             }
             else if( eNewType == OFTIntegerList )
             {
-                if( poFDefn->GetSubType() == OFSTBoolean &&
-                    eSubType != OFSTBoolean )
+                if( eSubType == OFSTBoolean &&
+                    eNewSubType != OFSTBoolean )
                 {
                     poFDefn->SetSubType(OFSTNone);
                 }
@@ -1830,14 +1831,12 @@ void OGRGeoJSONReaderAddOrUpdateField(
             {
                 poFDefn->SetSubType(OFSTNone);
                 poFDefn->SetType(OFTString);
+                poFDefn->SetSubType(OFSTJSON);
             }
         }
         else if( eType == OFTInteger64 )
         {
-            OGRFieldSubType eSubType;
-            const OGRFieldType eNewType =
-                GeoJSONPropertyToFieldType( poVal, eSubType, bArrayAsString );
-            if( eNewType == OFTReal || eNewType == OFTString )
+            if( eNewType == OFTReal )
             {
                 poFDefn->SetSubType(OFSTNone);
                 poFDefn->SetType(eNewType);
@@ -1857,13 +1856,11 @@ void OGRGeoJSONReaderAddOrUpdateField(
             {
                 poFDefn->SetSubType(OFSTNone);
                 poFDefn->SetType(OFTString);
+                poFDefn->SetSubType(OFSTJSON);
             }
         }
         else if( eType == OFTReal )
         {
-            OGRFieldSubType eSubType;
-            const OGRFieldType eNewType =
-                GeoJSONPropertyToFieldType( poVal, eSubType, bArrayAsString );
             if(  eNewType == OFTIntegerList ||
                  eNewType == OFTInteger64List || eNewType == OFTRealList )
             {
@@ -1880,22 +1877,29 @@ void OGRGeoJSONReaderAddOrUpdateField(
             {
                 poFDefn->SetSubType(OFSTNone);
                 poFDefn->SetType(OFTString);
+                poFDefn->SetSubType(OFSTJSON);
             }
         }
         else if( eType == OFTString )
         {
-            OGRFieldSubType eSubType;
-            const OGRFieldType eNewType =
-                GeoJSONPropertyToFieldType( poVal, eSubType, bArrayAsString );
-            if( eNewType == OFTStringList )
-                poFDefn->SetType(OFTStringList);
+            if( eSubType == OFSTNone )
+            {
+                if( eNewType == OFTStringList )
+                    poFDefn->SetType(OFTStringList);
+            }
         }
         else if( eType == OFTIntegerList )
         {
-            OGRFieldSubType eSubType;
-            OGRFieldType eNewType =
-                GeoJSONPropertyToFieldType( poVal, eSubType, bArrayAsString );
-            if( eNewType == OFTInteger64List || eNewType == OFTRealList ||
+            if ( eNewType == OFTString )
+            {
+                if( !bNewIsEmptyArray )
+                {
+                    poFDefn->SetSubType(OFSTNone);
+                    poFDefn->SetType(eNewType);
+                    poFDefn->SetSubType(OFSTJSON);
+                }
+            }
+            else if( eNewType == OFTInteger64List || eNewType == OFTRealList ||
                 eNewType == OFTStringList )
             {
                 poFDefn->SetSubType(OFSTNone);
@@ -1913,8 +1917,8 @@ void OGRGeoJSONReaderAddOrUpdateField(
             }
             else if( eNewType == OFTInteger || eNewType == OFTIntegerList )
             {
-                if( poFDefn->GetSubType() == OFSTBoolean &&
-                    eSubType != OFSTBoolean )
+                if( eSubType == OFSTBoolean &&
+                    eNewSubType != OFSTBoolean )
                 {
                     poFDefn->SetSubType(OFSTNone);
                 }
@@ -1923,14 +1927,21 @@ void OGRGeoJSONReaderAddOrUpdateField(
             {
                 poFDefn->SetSubType(OFSTNone);
                 poFDefn->SetType(OFTString);
+                poFDefn->SetSubType(OFSTJSON);
             }
         }
         else if( eType == OFTInteger64List )
         {
-            OGRFieldSubType eSubType;
-            OGRFieldType eNewType =
-                GeoJSONPropertyToFieldType( poVal, eSubType, bArrayAsString );
-            if( eNewType == OFTInteger64List || eNewType == OFTRealList ||
+            if ( eNewType == OFTString )
+            {
+                if( !bNewIsEmptyArray )
+                {
+                    poFDefn->SetSubType(OFSTNone);
+                    poFDefn->SetType(eNewType);
+                    poFDefn->SetSubType(OFSTJSON);
+                }
+            }
+            else if( eNewType == OFTInteger64List || eNewType == OFTRealList ||
                 eNewType == OFTStringList )
             {
                 poFDefn->SetSubType(OFSTNone);
@@ -1946,14 +1957,21 @@ void OGRGeoJSONReaderAddOrUpdateField(
             {
                 poFDefn->SetSubType(OFSTNone);
                 poFDefn->SetType(OFTString);
+                poFDefn->SetSubType(OFSTJSON);
             }
         }
         else if( eType == OFTRealList )
         {
-            OGRFieldSubType eSubType;
-            const OGRFieldType eNewType =
-                GeoJSONPropertyToFieldType( poVal, eSubType, bArrayAsString );
-            if( eNewType == OFTStringList )
+            if ( eNewType == OFTString )
+            {
+                if( !bNewIsEmptyArray )
+                {
+                    poFDefn->SetSubType(OFSTNone);
+                    poFDefn->SetType(eNewType);
+                    poFDefn->SetSubType(OFSTJSON);
+                }
+            }
+            else if( eNewType == OFTStringList )
             {
                 poFDefn->SetSubType(OFSTNone);
                 poFDefn->SetType(eNewType);
@@ -1964,25 +1982,41 @@ void OGRGeoJSONReaderAddOrUpdateField(
             {
                 poFDefn->SetSubType(OFSTNone);
                 poFDefn->SetType(OFTString);
+                poFDefn->SetSubType(OFSTJSON);
+            }
+        }
+        else if( eType == OFTStringList )
+        {
+            if ( eNewType == OFTString && eNewSubType == OFSTJSON )
+            {
+                if( !bNewIsEmptyArray )
+                {
+                    poFDefn->SetSubType(OFSTNone);
+                    poFDefn->SetType(eNewType);
+                    poFDefn->SetSubType(OFSTJSON);
+                }
             }
         }
         else if( eType == OFTDate || eType == OFTTime || eType == OFTDateTime )
         {
-            OGRFieldSubType eSubType;
-            OGRFieldType eNewType =
-                GeoJSONPropertyToFieldType( poVal, eSubType, bArrayAsString );
-            if( eNewType == OFTString && !bDateAsString )
+            if( eNewType == OFTString && !bDateAsString && eNewSubType == OFSTNone )
                 eNewType = GeoJSONStringPropertyToFieldType( poVal );
             if( eType != eNewType )
             {
                 poFDefn->SetSubType(OFSTNone);
-                if( eType == OFTDate && eNewType == OFTDateTime )
+                if ( eNewType == OFTString )
+                {
+                    poFDefn->SetType(eNewType);
+                    poFDefn->SetSubType(eNewSubType);
+                }
+                else if( eType == OFTDate && eNewType == OFTDateTime )
                 {
                     poFDefn->SetType(OFTDateTime);
                 }
                 else if( !(eType == OFTDateTime && eNewType == OFTDate) )
                 {
                     poFDefn->SetType(OFTString);
+                    poFDefn->SetSubType(OFSTJSON);
                 }
             }
         }

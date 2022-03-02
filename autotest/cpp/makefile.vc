@@ -51,6 +51,7 @@ OBJ = \
     test_gdal_aaigrid.obj \
     test_gdal_dted.obj \
     test_gdal_gtiff.obj \
+    test_gdal_pixelfn.obj \
     test_triangulation.obj \
     test_ogr.obj \
 	  test_ogr_geometry_stealing.obj \

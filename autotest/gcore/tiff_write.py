@@ -2293,6 +2293,7 @@ def test_tiff_write_73():
 # Verify we can write 12bit jpeg encoded tiff.
 
 
+@pytest.mark.skipif('SKIP_TIFF_JPEG12' in os.environ, reason='Crashes on build-windows-msys2-mingw')
 def test_tiff_write_74():
 
     md = gdaltest.tiff_drv.GetMetadata()

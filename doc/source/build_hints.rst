@@ -174,7 +174,7 @@ Armadillo
 The `Armadillo <http://arma.sourceforge.net/>`_ C++ library is used to speed up computations related to the
 Thin Plate Spline transformer. See https://cmake.org/cmake/help/latest/module/FindArmadillo.html
 for details.
-On Windows builds using Conda-Forge depedencies, the following packages may also
+On Windows builds using Conda-Forge dependencies, the following packages may also
 need to be installed: ``blas blas-devel libblas libcblas liblapack liblapacke``
 
 .. option:: GDAL_USE_ARMADILLO=ON/OFF

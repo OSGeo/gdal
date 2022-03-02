@@ -4210,7 +4210,7 @@ def test_ogr_gpkg_nolock():
     ds2 = None
     ds = None
 
-    # Lockless mode should NOT be honored by GDAL in upate mode
+    # Lockless mode should NOT be honored by GDAL in update mode
     ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE, open_options=['NOLOCK=YES'])
     assert ds
     assert not get_nolock(ds)
