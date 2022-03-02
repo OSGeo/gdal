@@ -1314,7 +1314,7 @@ void OGRHanaDataSource::CreateParseArrayFunctions(const char* schemaName)
     // clang-format off
     const CPLString parseStringArrayFunc =
         "CREATE OR REPLACE FUNCTION {SCHEMA}.OGR_PARSE_STRING_ARRAY(IN str NCLOB, IN delimiter NVARCHAR(10))\n"
-3          "RETURNS TABLE(VALUE NVARCHAR(512))\n"
+          "RETURNS TABLE(VALUE NVARCHAR(512))\n"
           "LANGUAGE SQLSCRIPT\n"
           "SQL SECURITY INVOKER AS\n"
         "BEGIN\n"
