@@ -32,8 +32,7 @@
 
 CPL_CVSID("$Id$")
 
-namespace OGRHANA
-{
+namespace OGRHANA {
 
 const char* SkipLeadingSpaces(const char* value)
 {
@@ -129,6 +128,13 @@ CPLString Literal(const CPLString& value)
 CPLString QuotedIdentifier(const CPLString& value)
 {
     return "\"" + value + "\"";
+}
+
+bool IsArrayField(OGRFieldType fieldType)
+{
+    return (
+        fieldType == OFTIntegerList || fieldType == OFTInteger64List
+        || fieldType == OFTRealList || fieldType == OFTStringList  || fieldType == OFTWideStringList);
 }
 
 bool IsGeometryTypeSupported(OGRwkbGeometryType wkbType)

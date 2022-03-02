@@ -38,8 +38,8 @@
 
 CPL_CVSID("$Id$")
 
-namespace OGRHANA
-{
+namespace OGRHANA {
+namespace {
 
 template<typename T>
 odbc::String CreateStringFromValues(
@@ -72,6 +72,8 @@ T strToInt(const char* value)
 {
     return castInt<T>(std::stoi(value));
 }
+
+} // anonymous namespace
 
 OGRHanaFeatureReader::OGRHanaFeatureReader(OGRFeature& feature)
     : feature_(feature)

@@ -31,8 +31,8 @@
 
 CPL_CVSID("$Id$")
 
-namespace OGRHANA
-{
+namespace OGRHANA {
+namespace {
 
 enum DataLengthIndicator
 {
@@ -42,6 +42,8 @@ enum DataLengthIndicator
     DEFAULT_VALUE = 254,
     NULL_VALUE = 255
 };
+
+} // anonymous namespace
 
 OGRHanaFeatureWriter::OGRHanaFeatureWriter(OGRFeature& feature)
     : feature_(feature)

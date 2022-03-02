@@ -41,8 +41,7 @@
 
 class OGRHanaDataSource;
 
-namespace OGRHANA
-{
+namespace OGRHANA {
 
 /************************************************************************/
 /*                          Internal struct definitions                 */

@@ -35,8 +35,7 @@
 
 CPL_CVSID("$Id$")
 
-namespace OGRHANA
-{
+namespace OGRHANA {
 
 /************************************************************************/
 /*                              OGRHanaResultLayer()                    */

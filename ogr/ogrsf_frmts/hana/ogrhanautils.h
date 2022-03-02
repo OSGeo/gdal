@@ -37,8 +37,7 @@
 #include <limits>
 #include <vector>
 
-namespace OGRHANA
-{
+namespace OGRHANA {
 
 constexpr const char* ARRAY_VALUES_DELIMITER = "^%^";
 
@@ -68,6 +67,7 @@ CPLString LaunderName(const char* name);
 CPLString Literal(const CPLString& value);
 CPLString QuotedIdentifier(const CPLString& value);
 
+bool IsArrayField(OGRFieldType fieldType);
 bool IsGeometryTypeSupported(OGRwkbGeometryType wkbType);
 OGRwkbGeometryType ToWkbType(const char* type, bool hasZ, bool hasM);
 int ToPlanarSRID(int srid);

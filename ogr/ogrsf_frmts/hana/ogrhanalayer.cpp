@@ -42,9 +42,8 @@
 
 CPL_CVSID("$Id$")
 
-namespace OGRHANA
-{
-
+namespace OGRHANA {
+namespace {
 /************************************************************************/
 /*                          Helper methods                              */
 /************************************************************************/
@@ -103,12 +102,6 @@ CPLString BuildSpatialFilter(uint dbVersion, const OGRGeometry& geom, const CPLS
     else
         return CPLString().Printf("\"%s\".ST_IntersectsRectPlanar(ST_GeomFromText('POINT(%.18g %.18g)', %d), ST_GeomFromText('POINT(%.18g %.18g)', %d)) = 1",
                             clmName.c_str(), minX, minY, srid, maxX, maxY, srid);
-}
-
-bool IsArrayFieldType(OGRFieldType fieldType)
-{
-    return fieldType == OFTIntegerList || fieldType == OFTInteger64List || fieldType == OFTRealList ||
-           fieldType == OFTStringList || fieldType == OFTWideStringList;
 }
 
 OGRFieldDefn* CreateFieldDefn(const AttributeColumnDescription& columnDesc)
@@ -181,7 +174,7 @@ OGRFieldDefn* CreateFieldDefn(const AttributeColumnDescription& columnDesc)
         break;
     }
 
-    if (columnDesc.isArray && !IsArrayFieldType(ogrFieldType))
+    if (columnDesc.isArray && !IsArrayField(ogrFieldType))
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Array of type %s in column %s is not supported",
                  columnDesc.typeName.c_str(), columnDesc.name.c_str());
@@ -242,6 +235,8 @@ OGRGeometry* CreateGeometryFromWkb(const void* data, std::size_t size)
         return nullptr;
     }
 }
+
+} // anonymous namespace
 
 /************************************************************************/
 /*                           OGRHanaLayer()                             */

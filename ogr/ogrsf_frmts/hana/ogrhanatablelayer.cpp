@@ -43,18 +43,11 @@
 
 CPL_CVSID("$Id$")
 
-namespace OGRHANA
-{
+namespace OGRHANA {
+namespace {
 
 constexpr const char* UNSUPPORTED_OP_READ_ONLY =
     "%s : unsupported operation on a read-only datasource.";
-
-bool IsArrayField(OGRFieldType fieldType)
-{
-    return (
-        fieldType == OFTIntegerList || fieldType == OFTInteger64List
-        || fieldType == OFTRealList || fieldType == OFTStringList);
-}
 
 const char* GetColumnDefaultValue(const OGRFieldDefn& field)
 {
@@ -381,6 +374,8 @@ void SetFieldDefn(OGRFieldDefn& field, const ColumnTypeInfo& typeInfo)
     field.SetWidth(typeInfo.width);
     field.SetPrecision(typeInfo.precision);
 }
+
+} // anonymous namespace
 
 /************************************************************************/
 /*                         OGRHanaTableLayer()                          */

@@ -33,8 +33,7 @@
 #include "gdal_priv.h"
 #include "odbc/Types.h"
 
-namespace OGRHANA
-{
+namespace OGRHANA {
 
 class OGRHanaFeatureReader
 {
