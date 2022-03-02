@@ -618,7 +618,8 @@ OGRErr OGRHanaTableLayer::SetStatementParameters(
                     statement.setInt(paramIndex, odbc::Int());
                 else
                 {
-                    if (!CanCastIntBigTo<std ::int32_t>(feature->GetFID()))
+                    if (std::numeric_limits<std::int32_t>::min() > feature->GetFID() ||
+                        std::numeric_limits<std::int32_t>::max() < feature->GetFID())
                     {
                         CPLError(
                             CE_Failure, CPLE_AppDefined,
@@ -638,21 +639,9 @@ OGRErr OGRHanaTableLayer::SetStatementParameters(
                 if (feature->GetFID() == OGRNullFID)
                     statement.setLong(paramIndex, odbc::Long());
                 else
-                {
-                    if (!CanCastIntBigTo<std::int64_t>(feature->GetFID()))
-                    {
-                        CPLError(
-                            CE_Failure, CPLE_AppDefined,
-                            "%s: Feature id with value %s cannot "
-                            "be stored in a column of type BIGINT",
-                            functionName,
-                            std::to_string(feature->GetFID()).c_str());
-                        return OGRERR_FAILURE;
-                    }
                     statement.setLong(
                         paramIndex,
                         odbc::Long(static_cast<std::int64_t>(feature->GetFID())));
-                }
                 break;
             default:
                 CPLError(
@@ -797,15 +786,6 @@ OGRErr OGRHanaTableLayer::SetStatementParameters(
     if (!newFeature)
     {
         ++paramIndex;
-        if (!CanCastIntBigTo<std::int64_t>(feature->GetFID()))
-        {
-            CPLError(
-                CE_Failure, CPLE_AppDefined,
-                "%s: Feature id with value %s cannot "
-                "be stored in a column of type INTEGER",
-                functionName, std::to_string(feature->GetFID()).c_str());
-            return OGRERR_FAILURE;
-        }
 
         statement.setLong(
             paramIndex,

@@ -41,13 +41,6 @@ namespace OGRHANA {
 
 constexpr const char* ARRAY_VALUES_DELIMITER = "^%^";
 
-template<typename Type>
-bool CanCastIntBigTo(GIntBig value)
-{
-    return static_cast<GIntBig>(std::numeric_limits<Type>::min()) <= value
-           && value <= static_cast<GIntBig>(std::numeric_limits<Type>::max());
-}
-
 const char* SkipLeadingSpaces(const char* value);
 CPLString JoinStrings(
     const std::vector<CPLString>& strs,
