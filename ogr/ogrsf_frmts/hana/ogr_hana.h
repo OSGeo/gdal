@@ -39,6 +39,11 @@
 
 #include "odbc/Forwards.h"
 
+class OGRHanaDataSource;
+
+namespace OGRHANA
+{
+
 /************************************************************************/
 /*                          Internal struct definitions                 */
 /************************************************************************/
@@ -105,107 +110,6 @@ struct Binary
 {
     GByte* data;
     std::size_t size;
-};
-
-/************************************************************************/
-/*                          OGRHanaDataSource                          */
-/************************************************************************/
-
-class OGRHanaDataSource final : public GDALDataset
-{
-private:
-    friend class OGRHanaLayer;
-    friend class OGRHanaTableLayer;
-    friend class OGRHanaResultLayer;
-
-    using SrsCache = std::unordered_map<int, OGRSpatialReference*>;
-
-    CPLString schemaName_;
-    bool updateMode_;
-    bool isTransactionStarted_ = false;
-    std::vector<std::unique_ptr<OGRLayer>> layers_;
-    SrsCache srsCache_;
-    odbc::EnvironmentRef connEnv_;
-    odbc::ConnectionRef conn_;
-    uint majorVersion_ = 0;
-
-private:
-    void CreateTable(
-        const CPLString& tableName,
-        const CPLString& fidName,
-        const CPLString& fidType,
-        const CPLString& geomColumnName,
-        OGRwkbGeometryType geomType,
-        bool geomColumnNullable,
-        const CPLString& geomColumnIndexType,
-        int geomSrid);
-
-protected:
-    std::pair<CPLString, CPLString> FindSchemaAndTableNames(const char* query);
-    int FindLayerByName(const char* name);
-    CPLString FindSchemaName(const char* objectName);
-
-    odbc::StatementRef CreateStatement();
-    odbc::PreparedStatementRef PrepareStatement(const char* sql);
-    void Commit();
-    void ExecuteSQL(const char* sql);
-
-    OGRSpatialReference* GetSrsById(int srid);
-    int GetSrsId(OGRSpatialReference* srs);
-    bool IsSrsRoundEarth(int srid);
-    bool HasSrsPlanarEquivalent(int srid);
-    OGRErr GetQueryColumns(
-        const CPLString& schemaName,
-        const CPLString& query,
-        std::vector<ColumnDescription>& columDescriptions);
-    std::vector<CPLString> GetTablePrimaryKeys(
-        const char* schemaName, const char* tableName);
-
-    void InitializeLayers(const char* schemaName, const char* tableNames);
-    void CreateSpatialReferenceSystem(
-        const OGRSpatialReference& srs,
-        const char* authorityName,
-        int authorityCode,
-        const char* wkt,
-        const char* proj4);
-
-    bool IsTransactionStarted() const { return isTransactionStarted_; }
-
-    void CreateParseArrayFunctions(const char* schemaName);
-    bool ParseArrayFunctionsExist(const char* schemaName);
-
-public:
-    static const char* GetPrefix();
-    static const char* GetLayerCreationOptions();
-    static const char* GetOpenOptions();
-    static const char* GetSupportedDataTypes();
-
-public:
-    OGRHanaDataSource();
-    ~OGRHanaDataSource() override;
-
-    int Open(const char* newName, char** options, int update);
-
-    uint GetMajorVersion() const { return majorVersion_; }
-    OGRErr DeleteLayer(int index) override;
-    int GetLayerCount() override { return static_cast<int>(layers_.size()); }
-    OGRLayer* GetLayer(int index) override;
-    OGRLayer* GetLayerByName(const char*) override;
-    OGRLayer* ICreateLayer(
-        const char* layerName,
-        OGRSpatialReference* srs = nullptr,
-        OGRwkbGeometryType geomType = wkbUnknown,
-        char** options = nullptr) override;
-    int TestCapability(const char* capabilities) override;
-
-    OGRLayer* ExecuteSQL(
-        const char* sqlCommand,
-        OGRGeometry* spatialFilter,
-        const char* dialect) override;
-
-    OGRErr StartTransaction(int bForce = FALSE) override;
-    OGRErr CommitTransaction() override;
-    OGRErr RollbackTransaction() override;
 };
 
 /************************************************************************/
@@ -277,8 +181,6 @@ public:
 class OGRHanaTableLayer final : public OGRHanaLayer
 {
 private:
-    friend class OGRHanaDataSource;
-
     CPLString schemaName_;
     CPLString tableName_;
     bool updateMode_;
@@ -311,7 +213,6 @@ private:
         bool withFID,
         const char* functionName);
 
-    OGRErr DropTable();
     void FlushPendingFeatures();
     bool HasPendingFeatures() const;
     ColumnTypeInfo GetColumnTypeInfo(const OGRFieldDefn& field) const;
@@ -323,6 +224,8 @@ public:
     ~OGRHanaTableLayer() override;
 
     OGRErr Initialize(const char* schemaName, const char* tableName);
+
+    OGRErr DropTable();
 
     void ResetReading() override;
     const char* GetName() override { return tableName_.c_str(); }
@@ -362,6 +265,109 @@ public:
     OGRErr Initialize(const char* query, OGRGeometry* spatialFilter);
 
     int TestCapability(const char* capabilities) override;
+};
+
+} /* end of OGRHANA namespace */
+
+/************************************************************************/
+/*                          OGRHanaDataSource                          */
+/************************************************************************/
+
+class OGRHanaDataSource final : public GDALDataset
+{
+private:
+    friend class OGRHANA::OGRHanaLayer;
+    friend class OGRHANA::OGRHanaTableLayer;
+    friend class OGRHANA::OGRHanaResultLayer;
+
+    using SrsCache = std::unordered_map<int, OGRSpatialReference*>;
+
+    CPLString schemaName_;
+    bool updateMode_;
+    bool isTransactionStarted_ = false;
+    std::vector<std::unique_ptr<OGRLayer>> layers_;
+    SrsCache srsCache_;
+    odbc::EnvironmentRef connEnv_;
+    odbc::ConnectionRef conn_;
+    uint majorVersion_ = 0;
+
+private:
+    void CreateTable(
+        const CPLString& tableName,
+        const CPLString& fidName,
+        const CPLString& fidType,
+        const CPLString& geomColumnName,
+        OGRwkbGeometryType geomType,
+        bool geomColumnNullable,
+        const CPLString& geomColumnIndexType,
+        int geomSrid);
+
+protected:
+    std::pair<CPLString, CPLString> FindSchemaAndTableNames(const char* query);
+    int FindLayerByName(const char* name);
+    CPLString FindSchemaName(const char* objectName);
+
+    odbc::StatementRef CreateStatement();
+    odbc::PreparedStatementRef PrepareStatement(const char* sql);
+    void Commit();
+    void ExecuteSQL(const char* sql);
+
+    OGRSpatialReference* GetSrsById(int srid);
+    int GetSrsId(OGRSpatialReference* srs);
+    bool IsSrsRoundEarth(int srid);
+    bool HasSrsPlanarEquivalent(int srid);
+    OGRErr GetQueryColumns(
+        const CPLString& schemaName,
+        const CPLString& query,
+        std::vector<OGRHANA::ColumnDescription>& columDescriptions);
+    std::vector<CPLString> GetTablePrimaryKeys(
+        const char* schemaName, const char* tableName);
+
+    void InitializeLayers(const char* schemaName, const char* tableNames);
+    void CreateSpatialReferenceSystem(
+        const OGRSpatialReference& srs,
+        const char* authorityName,
+        int authorityCode,
+        const char* wkt,
+        const char* proj4);
+
+    bool IsTransactionStarted() const { return isTransactionStarted_; }
+
+    void CreateParseArrayFunctions(const char* schemaName);
+    bool ParseArrayFunctionsExist(const char* schemaName);
+
+public:
+    static const char* GetPrefix();
+    static const char* GetLayerCreationOptions();
+    static const char* GetOpenOptions();
+    static const char* GetSupportedDataTypes();
+
+public:
+    OGRHanaDataSource();
+    ~OGRHanaDataSource() override;
+
+    int Open(const char* newName, char** options, int update);
+
+    uint GetMajorVersion() const { return majorVersion_; }
+    OGRErr DeleteLayer(int index) override;
+    int GetLayerCount() override { return static_cast<int>(layers_.size()); }
+    OGRLayer* GetLayer(int index) override;
+    OGRLayer* GetLayerByName(const char*) override;
+    OGRLayer* ICreateLayer(
+        const char* layerName,
+        OGRSpatialReference* srs = nullptr,
+        OGRwkbGeometryType geomType = wkbUnknown,
+        char** options = nullptr) override;
+    int TestCapability(const char* capabilities) override;
+
+    OGRLayer* ExecuteSQL(
+        const char* sqlCommand,
+        OGRGeometry* spatialFilter,
+        const char* dialect) override;
+
+    OGRErr StartTransaction(int bForce = FALSE) override;
+    OGRErr CommitTransaction() override;
+    OGRErr RollbackTransaction() override;
 };
 
 #endif /* ndef OGR_HANA_H_INCLUDED */

@@ -42,9 +42,9 @@
 
 CPL_CVSID("$Id$")
 
-using namespace hana_utils;
+namespace OGRHANA
+{
 
-namespace {
 /************************************************************************/
 /*                          Helper methods                              */
 /************************************************************************/
@@ -242,8 +242,6 @@ OGRGeometry* CreateGeometryFromWkb(const void* data, std::size_t size)
         return nullptr;
     }
 }
-
-} // namespace
 
 /************************************************************************/
 /*                           OGRHanaLayer()                             */
@@ -972,3 +970,5 @@ void OGRHanaLayer::SetSpatialFilter(int iGeomField, OGRGeometry* poGeom)
     BuildWhereClause();
     ResetReading();
 }
+
+} /* end of OGRHANA namespace */

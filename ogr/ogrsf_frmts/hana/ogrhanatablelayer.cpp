@@ -43,9 +43,8 @@
 
 CPL_CVSID("$Id$")
 
-using namespace hana_utils;
-
-namespace {
+namespace OGRHANA
+{
 
 constexpr const char* UNSUPPORTED_OP_READ_ONLY =
     "%s : unsupported operation on a read-only datasource.";
@@ -382,8 +381,6 @@ void SetFieldDefn(OGRFieldDefn& field, const ColumnTypeInfo& typeInfo)
     field.SetWidth(typeInfo.width);
     field.SetPrecision(typeInfo.precision);
 }
-
-} // namespace
 
 /************************************************************************/
 /*                         OGRHanaTableLayer()                          */
@@ -1760,3 +1757,5 @@ OGRErr OGRHanaTableLayer::RollbackTransaction()
     ClearBatches();
     return dataSource_->RollbackTransaction();
 }
+
+} /* end of OGRHANA namespace */

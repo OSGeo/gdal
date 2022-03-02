@@ -31,6 +31,9 @@
 
 CPL_CVSID("$Id$")
 
+namespace OGRHANA
+{
+
 enum DataLengthIndicator
 {
     MAX_ONE_BYTE = 245,
@@ -232,3 +235,5 @@ void OGRHanaFeatureWriter::SetFieldValueAsStringArray(
     feature_.SetField(fieldIndex, values);
     CSLDestroy(values);
 }
+
+} /* end of OGRHANA namespace */

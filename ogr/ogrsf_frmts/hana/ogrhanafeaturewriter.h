@@ -32,6 +32,9 @@
 #include "gdal_priv.h"
 #include "odbc/Types.h"
 
+namespace OGRHANA
+{
+
 class OGRHanaFeatureWriter
 {
 public:
@@ -110,5 +113,7 @@ void OGRHanaFeatureWriter::SetFieldValueAsArray(
     feature_.SetField(
         fieldIndex, static_cast<int32_t>(values.size()), values.data());
 }
+
+} /* end of OGRHANA namespace */
 
 #endif // OGRHANAFEATUREWRITER_H_INCLUDED

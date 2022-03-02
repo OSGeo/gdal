@@ -33,6 +33,9 @@
 #include "gdal_priv.h"
 #include "odbc/Types.h"
 
+namespace OGRHANA
+{
+
 class OGRHanaFeatureReader
 {
 public:
@@ -65,5 +68,7 @@ private:
 private:
     const OGRFeature& feature_;
 };
+
+} /* end of OGRHANA namespace */
 
 #endif // OGRHANAFEATUREREADER_H_INCLUDED

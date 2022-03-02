@@ -37,7 +37,8 @@
 #include <limits>
 #include <vector>
 
-namespace hana_utils {
+namespace OGRHANA
+{
 
 constexpr const char* ARRAY_VALUES_DELIMITER = "^%^";
 
@@ -71,6 +72,6 @@ bool IsGeometryTypeSupported(OGRwkbGeometryType wkbType);
 OGRwkbGeometryType ToWkbType(const char* type, bool hasZ, bool hasM);
 int ToPlanarSRID(int srid);
 
-} // namespace hana_utils
+} /* end of OGRHANA namespace */
 
 #endif /* ndef OGRHANAUTILS_H_INCLUDED */

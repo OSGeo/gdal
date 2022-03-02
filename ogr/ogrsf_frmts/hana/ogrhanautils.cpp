@@ -32,7 +32,8 @@
 
 CPL_CVSID("$Id$")
 
-namespace hana_utils {
+namespace OGRHANA
+{
 
 const char* SkipLeadingSpaces(const char* value)
 {

@@ -38,9 +38,8 @@
 
 CPL_CVSID("$Id$")
 
-using namespace hana_utils;
-
-namespace {
+namespace OGRHANA
+{
 
 template<typename T>
 odbc::String CreateStringFromValues(
@@ -73,8 +72,6 @@ T strToInt(const char* value)
 {
     return castInt<T>(std::stoi(value));
 }
-
-} // namespace
 
 OGRHanaFeatureReader::OGRHanaFeatureReader(OGRFeature& feature)
     : feature_(feature)
@@ -510,3 +507,5 @@ bool OGRHanaFeatureReader::IsFieldSet(int fieldIndex) const
 {
     return feature_.IsFieldSet(fieldIndex) && !feature_.IsFieldNull(fieldIndex);
 }
+
+} /* end of OGRHANA namespace */

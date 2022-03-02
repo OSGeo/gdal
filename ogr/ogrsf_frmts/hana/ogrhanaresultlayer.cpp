@@ -35,6 +35,9 @@
 
 CPL_CVSID("$Id$")
 
+namespace OGRHANA
+{
+
 /************************************************************************/
 /*                              OGRHanaResultLayer()                    */
 /************************************************************************/
@@ -82,3 +85,5 @@ int OGRHanaResultLayer::TestCapability(const char* capabilities)
 
     return FALSE;
 }
+
+} /* end of OGRHANA namespace */
