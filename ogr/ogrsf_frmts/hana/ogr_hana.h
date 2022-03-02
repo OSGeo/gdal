@@ -111,7 +111,7 @@ struct Binary
 /*                          OGRHanaDataSource                          */
 /************************************************************************/
 
-class OGRHanaDataSource : public GDALDataset
+class OGRHanaDataSource final : public GDALDataset
 {
 private:
     friend class OGRHanaLayer;
@@ -274,7 +274,7 @@ public:
 /*                             OGRHanaTableLayer                        */
 /************************************************************************/
 
-class OGRHanaTableLayer : public OGRHanaLayer
+class OGRHanaTableLayer final : public OGRHanaLayer
 {
 private:
     friend class OGRHanaDataSource;
@@ -354,7 +354,7 @@ public:
 /*                              OGRHanaResultLayer                      */
 /************************************************************************/
 
-class OGRHanaResultLayer : public OGRHanaLayer
+class OGRHanaResultLayer final : public OGRHanaLayer
 {
 public:
     explicit OGRHanaResultLayer(OGRHanaDataSource* datasource);
