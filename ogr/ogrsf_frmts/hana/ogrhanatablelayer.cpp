@@ -1,4 +1,4 @@
-﻿/******************************************************************************
+﻿/****9**************************************************************************
  *
  * Project:  SAP HANA Spatial Driver
  * Purpose:  OGRHanaTableLayer class implementation
@@ -384,11 +384,6 @@ void SetFieldDefn(OGRFieldDefn& field, const ColumnTypeInfo& typeInfo)
 OGRHanaTableLayer::OGRHanaTableLayer(OGRHanaDataSource* datasource, int update)
     : OGRHanaLayer(datasource)
     , updateMode_(update)
-    , batchSize_(4 * 1024 * 1024)
-    , defaultStringSize_(256)
-    , launderColumnNames_(true)
-    , preservePrecision_(true)
-    , parseFunctionsChecked_(false)
 {
 }
 

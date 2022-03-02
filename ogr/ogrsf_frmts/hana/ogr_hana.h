@@ -56,30 +56,16 @@ struct ColumnDefinition
 struct AttributeColumnDescription
 {
     CPLString name;
-    short type;
+    short type = -1;
     CPLString typeName;
-    int length; // the same type as in OGRFieldDefn.GetWidth
-    unsigned short precision;
-    unsigned short scale;
-    bool isFeatureID;
-    bool isArray;
-    bool isAutoIncrement;
-    bool isNullable;
+    int length = 0; // the same type as in OGRFieldDefn.GetWidth
+    unsigned short precision = 0;
+    unsigned short scale = 0;
+    bool isFeatureID = false;
+    bool isArray = false;
+    bool isAutoIncrement = false;
+    bool isNullable = false;
     CPLString defaultValue;
-
-    AttributeColumnDescription()
-        : name("")
-        , type(-1)
-        , typeName("")
-        , length(0)
-        , precision(0)
-        , scale(0)
-        , isFeatureID(false)
-        , isArray(false)
-        , isAutoIncrement(false)
-        , isNullable(false)
-    {
-    }
 };
 
 struct GeometryColumnDescription
@@ -118,21 +104,21 @@ struct Binary
 class OGRHanaLayer : public OGRLayer
 {
 protected:
-    OGRHanaDataSource* dataSource_;
-    OGRFeatureDefn* featureDefn_;
-    GIntBig nextFeatureId_;
+    OGRHanaDataSource* dataSource_ = nullptr;
+    OGRFeatureDefn* featureDefn_ = nullptr;
+    GIntBig nextFeatureId_ = 0;
     std::vector<AttributeColumnDescription> attrColumns_;
     std::vector<GeometryColumnDescription> geomColumns_;
-    int fidFieldIndex_;
+    int fidFieldIndex_ = OGRNullFID;
     CPLString rawQuery_;
     CPLString queryStatement_;
     CPLString whereClause_;
     CPLString attrFilter_;
-    bool rebuildQueryStatement_;
+    bool rebuildQueryStatement_ = true;
     odbc::ResultSetRef resultSet_;
     std::vector<char> dataBuffer_;
-    int srid_;
-    OGRSpatialReference* srs_;
+    int srid_ = -1;
+    OGRSpatialReference* srs_ = nullptr;
 
     void BuildQueryStatement();
     void BuildWhereClause();
@@ -182,7 +168,7 @@ class OGRHanaTableLayer final : public OGRHanaLayer
 private:
     CPLString schemaName_;
     CPLString tableName_;
-    bool updateMode_;
+    bool updateMode_ = false;
 
     odbc::PreparedStatementRef currentIdentityValueStmt_;
     odbc::PreparedStatementRef insertFeatureStmtWithFID_;
@@ -190,12 +176,12 @@ private:
     odbc::PreparedStatementRef deleteFeatureStmt_;
     odbc::PreparedStatementRef updateFeatureStmt_;
 
-    std::size_t batchSize_;
-    std::size_t defaultStringSize_;
-    bool launderColumnNames_;
-    bool preservePrecision_;
+    std::size_t batchSize_ = 4 * 1024 * 1024;
+    std::size_t defaultStringSize_ = 256;
+    bool launderColumnNames_ = true;
+    bool preservePrecision_ = true;
     std::vector<ColumnDefinition> customColumnDefs_;
-    bool parseFunctionsChecked_;
+    bool parseFunctionsChecked_ = false;
 
     OGRErr ReadTableDefinition();
 
@@ -288,7 +274,7 @@ private:
     SrsCache srsCache_;
     odbc::EnvironmentRef connEnv_;
     odbc::ConnectionRef conn_;
-    uint majorVersion_ = 0;
+    int majorVersion_ = 0;
 
 private:
     void CreateTable(

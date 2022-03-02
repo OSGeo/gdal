@@ -244,15 +244,9 @@ OGRGeometry* CreateGeometryFromWkb(const void* data, std::size_t size)
 
 OGRHanaLayer::OGRHanaLayer(OGRHanaDataSource* datasource)
     : dataSource_(datasource)
-    , featureDefn_(nullptr)
-    , nextFeatureId_(0)
-    , fidFieldIndex_(OGRNullFID)
     , rawQuery_("")
     , queryStatement_("")
     , whereClause_("")
-    , rebuildQueryStatement_(true)
-    , srid_(-1)
-    , srs_(nullptr)
 {
 }
 
