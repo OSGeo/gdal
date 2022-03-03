@@ -756,7 +756,7 @@ std::pair<CPLString, CPLString> OGRHanaDataSource::FindSchemaAndTableNames(
     // Note, getTableName returns correct table name also in the case
     // when the original sql query uses a view
     CPLString tableName = rsmd->getTableName(1);
-    if (tableName == "M_DATABASE_") // TODO: seems to be a bug
+    if (tableName == "M_DATABASE_")
         tableName = "M_DATABASE";
     CPLString schemaName = rsmd->getSchemaName(1);
     if (schemaName.empty() && !tableName.empty())
