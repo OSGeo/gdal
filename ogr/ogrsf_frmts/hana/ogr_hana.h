@@ -43,6 +43,8 @@ class OGRHanaDataSource;
 
 namespace OGRHANA {
 
+static constexpr int UNDETERMINED_SRID = -1;
+
 /************************************************************************/
 /*                          Internal struct definitions                 */
 /************************************************************************/
@@ -117,7 +119,7 @@ protected:
     bool rebuildQueryStatement_ = true;
     odbc::ResultSetRef resultSet_;
     std::vector<char> dataBuffer_;
-    int srid_ = -1;
+    int srid_ = UNDETERMINED_SRID;
     OGRSpatialReference* srs_ = nullptr;
 
     void BuildQueryStatement();

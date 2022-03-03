@@ -896,7 +896,7 @@ OGRSpatialReference* OGRHanaLayer::GetSpatialRef()
             if (srs_ != nullptr)
                 srs_->Reference();
             else
-                srid_ = -1;
+                srid_ = UNDETERMINED_SRID;
         }
     }
     return srs_;

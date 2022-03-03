@@ -215,7 +215,7 @@ CPLString BuildConnectionString(char** openOptions)
 
 int GetSrid(odbc::ResultSet& resultSet)
 {
-    int srid = -1;
+    int srid = UNDETERMINED_SRID;
     while (resultSet.next())
     {
         odbc::Int val = resultSet.getInt(1);
@@ -263,7 +263,7 @@ int GetSridWithFilter(odbc::Connection& conn, const CPLString& whereCondition)
 {
     CPLAssert(whereCondition != nullptr);
 
-    int ret = -1;
+    int ret = UNDETERMINED_SRID;
 
     odbc::StatementRef stmt = conn.createStatement();
     CPLString sql = CPLString().Printf(
@@ -864,6 +864,10 @@ void OGRHanaDataSource::ExecuteSQL(const char* sql)
 
 /************************************************************************/
 /*                            GetSrsById()                              */
+/*                                                                      */
+/*      Return a SRS corresponding to a particular id.  Note that       */
+/*      reference counting should be honoured on the returned           */
+/*      OGRSpatialReference, as handles may be cached.                  */
 /************************************************************************/
 
 OGRSpatialReference* OGRHanaDataSource::GetSrsById(int srid)
@@ -1534,7 +1538,7 @@ OGRLayer* OGRHanaDataSource::ICreateLayer(
         "HANA", "FID Column Name %s, Type %s.", fidName.c_str(),
         fidType.c_str());
 
-    int srid = -1;
+    int srid = UNDETERMINED_SRID;
     const char* paramSrid = CSLFetchNameValue(options, LayerCreationOptionsConstants::SRID);
     if (paramSrid != nullptr)
         srid = atoi(paramSrid);
