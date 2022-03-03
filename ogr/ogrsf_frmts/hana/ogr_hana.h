@@ -268,7 +268,7 @@ private:
     using SrsCache = std::unordered_map<int, OGRSpatialReference*>;
 
     CPLString schemaName_;
-    bool updateMode_;
+    bool updateMode_ = false;
     bool isTransactionStarted_ = false;
     std::vector<std::unique_ptr<OGRLayer>> layers_;
     SrsCache srsCache_;
