@@ -1508,9 +1508,28 @@ OGRErr OGRHanaTableLayer::AlterFieldDefn(
     }
 
     OGRFieldDefn* fieldDefn = featureDefn_->GetFieldDefn(field);
+
+    int64_t columnDescIdx = -1;
+    for (size_t i = 0; i < attrColumns_.size(); ++i)
+    {
+        if (EQUAL(attrColumns_[i].name.c_str(), fieldDefn->GetNameRef()))
+        {
+            columnDescIdx = i;
+            break;
+        }
+    }
+
+    if (columnDescIdx < 0)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Column description cannot be found");
+        return OGRERR_FAILURE;
+    }
+
     CPLString clmName = launderColumnNames_
                             ? LaunderName(newFieldDefn->GetNameRef())
                             : CPLString(newFieldDefn->GetNameRef());
+
+    ColumnTypeInfo columnTypeInfo = GetColumnTypeInfo(*newFieldDefn);
 
     try
     {
@@ -1532,7 +1551,6 @@ OGRErr OGRHanaTableLayer::AlterFieldDefn(
             || (flagsIn & ALTER_NULLABLE_FLAG)
             || (flagsIn & ALTER_DEFAULT_FLAG))
         {
-            ColumnTypeInfo columnTypeInfo = GetColumnTypeInfo(*newFieldDefn);
             CPLString fieldTypeDef = GetColumnDefinition(columnTypeInfo);
             if ((flagsIn & ALTER_NULLABLE_FLAG)
                 && fieldDefn->IsNullable() != newFieldDefn->IsNullable())
@@ -1578,29 +1596,46 @@ OGRErr OGRHanaTableLayer::AlterFieldDefn(
         return OGRERR_FAILURE;
     }
 
-    // TODO change an entry in attrColumns_;
-    // Update field definition
+    // Update field definition and column description
+
+    AttributeColumnDescription& attrClmDesc = attrColumns_[columnDescIdx];
+
     if (flagsIn & ALTER_NAME_FLAG)
-        fieldDefn->SetName(newFieldDefn->GetNameRef());
+    {
+        fieldDefn->SetName(clmName.c_str());
+        attrClmDesc.name.assign(clmName.c_str());
+    }
 
     if (flagsIn & ALTER_TYPE_FLAG)
     {
         fieldDefn->SetSubType(OFSTNone);
         fieldDefn->SetType(newFieldDefn->GetType());
         fieldDefn->SetSubType(newFieldDefn->GetSubType());
+        attrClmDesc.isArray = IsArrayField(newFieldDefn->GetType());
+        attrClmDesc.type = columnTypeInfo.type;
+        attrClmDesc.typeName = columnTypeInfo.name;
     }
 
     if (flagsIn & ALTER_WIDTH_PRECISION_FLAG)
     {
         fieldDefn->SetWidth(newFieldDefn->GetWidth());
         fieldDefn->SetPrecision(newFieldDefn->GetPrecision());
+        attrClmDesc.length = newFieldDefn->GetWidth();
+        attrClmDesc.scale = newFieldDefn->GetWidth();
+        attrClmDesc.precision = newFieldDefn->GetPrecision();
     }
 
     if (flagsIn & ALTER_NULLABLE_FLAG)
+    {
         fieldDefn->SetNullable(newFieldDefn->IsNullable());
+        attrClmDesc.isNullable = newFieldDefn->IsNullable();
+    }
 
     if (flagsIn & ALTER_DEFAULT_FLAG)
+    {
         fieldDefn->SetDefault(newFieldDefn->GetDefault());
+        attrClmDesc.name.assign(newFieldDefn->GetDefault());
+    }
 
     rebuildQueryStatement_ = true;
     ResetReading();
