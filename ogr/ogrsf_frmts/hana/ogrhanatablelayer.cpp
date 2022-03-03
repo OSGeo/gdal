@@ -1044,6 +1044,8 @@ int OGRHanaTableLayer::TestCapability(const char* capabilities)
         return updateMode_;
     if (EQUAL(capabilities, OLCTransactions))
         return updateMode_;
+    if (EQUAL(capabilities, OLCStringsAsUTF8))
+        return TRUE;
 
     return FALSE;
 }
