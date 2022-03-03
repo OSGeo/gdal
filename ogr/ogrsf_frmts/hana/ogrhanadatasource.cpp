@@ -148,6 +148,8 @@ public:
     // clang-format on
 };
 
+static constexpr int UNDETERMINED_SRID = -1;
+
 CPLString BuildConnectionString(char** openOptions)
 {
     std::vector<CPLString> params;

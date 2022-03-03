@@ -43,8 +43,6 @@ class OGRHanaDataSource;
 
 namespace OGRHANA {
 
-static constexpr int UNDETERMINED_SRID = -1;
-
 /************************************************************************/
 /*                          Internal struct definitions                 */
 /************************************************************************/

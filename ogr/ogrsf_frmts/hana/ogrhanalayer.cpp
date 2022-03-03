@@ -847,7 +847,7 @@ OGRErr OGRHanaLayer::GetExtent(int iGeomField, OGREnvelope* extent, int force)
 
 GIntBig OGRHanaLayer::GetFeatureCount(CPL_UNUSED int force)
 {
-    GIntBig ret = FALSE;
+    GIntBig ret = 0;
     CPLString sql = CPLString().Printf(
         "SELECT COUNT(*) FROM (%s) AS tmp", queryStatement_.c_str());
     odbc::StatementRef stmt = dataSource_->CreateStatement();
