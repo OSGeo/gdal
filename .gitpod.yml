@@ -3,7 +3,10 @@
 # Enable only one image
 image:
   # Default osgeo image (same as ubuntu-full-latest)
-  file: docker/gitpod/osgeo-geo.Dockerfile
-  
+  #file: docker/gitpod/osgeo-geo.Dockerfile
+
   # Ubuntu small
   #f1ile: docker/gitpod/ubuntu-small-latest.Dockerfile
+
+  # Gitpod's default full workspace
+  file: docker/gitpod/gitpod-workspace-full.Dockerfile
