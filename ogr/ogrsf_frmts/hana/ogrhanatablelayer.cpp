@@ -1213,14 +1213,6 @@ OGRErr OGRHanaTableLayer::ISetFeature(OGRFeature* feature)
         return OGRERR_FAILURE;
     }
 
-    if (nullptr == feature)
-    {
-        CPLError(
-            CE_Failure, CPLE_AppDefined,
-            "NULL pointer to OGRFeature passed to SetFeature().");
-        return OGRERR_FAILURE;
-    }
-
     if (OGRNullFID == fidFieldIndex_)
     {
         CPLError(
