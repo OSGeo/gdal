@@ -119,8 +119,6 @@ protected:
     bool rebuildQueryStatement_ = true;
     odbc::ResultSetRef resultSet_;
     std::vector<char> dataBuffer_;
-    int srid_ = UNDETERMINED_SRID;
-    OGRSpatialReference* srs_ = nullptr;
 
     void BuildQueryStatement();
     void BuildWhereClause();
@@ -149,7 +147,6 @@ public:
     GIntBig GetFeatureCount(int force) override;
     OGRFeature* GetNextFeature() override;
     OGRFeatureDefn* GetLayerDefn() override { return featureDefn_; }
-    OGRSpatialReference* GetSpatialRef() override;
     const char* GetFIDColumn() override;
 
     OGRErr SetAttributeFilter( const char *pszQuery ) override;

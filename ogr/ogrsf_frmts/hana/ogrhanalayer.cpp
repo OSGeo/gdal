@@ -258,8 +258,6 @@ OGRHanaLayer::~OGRHanaLayer()
 {
     if (featureDefn_)
         featureDefn_->Release();
-    if (srs_)
-        srs_->Release();
 }
 
 /************************************************************************/
@@ -879,27 +877,6 @@ OGRFeature* OGRHanaLayer::GetNextFeature()
 
         delete feature;
     }
-}
-
-/************************************************************************/
-/*                           GetSpatialRef()                            */
-/************************************************************************/
-
-OGRSpatialReference* OGRHanaLayer::GetSpatialRef()
-{
-    if (srs_ == nullptr && srid_ < 0)
-    {
-        srid_ = GetGeometryColumnSrid(0);
-        if (srid_ >= 0)
-        {
-            srs_ = dataSource_->GetSrsById(srid_);
-            if (srs_ != nullptr)
-                srs_->Reference();
-            else
-                srid_ = UNDETERMINED_SRID;
-        }
-    }
-    return srs_;
 }
 
 /************************************************************************/
