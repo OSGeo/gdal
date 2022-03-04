@@ -161,12 +161,12 @@ NONE resampling method ('-r none' as gdaladdo switch).
 
 When converting a subdataset to another format like tiled GeoTIFF, if
 using the JP2OpenJPEG driver, the recommended minimum value for the
-GDAL_CACHEMAX configuration option is (subdataset_width \* 2048 \* 2 ) /
+:decl_configoption:`GDAL_CACHEMAX` configuration option is (subdataset_width \* 2048 \* 2 ) /
 10000000 if generating a INTERLEAVE=BAND GeoTIFF, or that value
 multiplied by the number of bands for the default INTERLEAVE=PIXEL
 configuration. The current versions of the OpenJPEG libraries can also
 consume a lot of memory to decode a JPEG2000 tile (up to 600MB), so you
-might want to specify the GDAL_NUM_THREADS configuration option to a
+might want to specify the :decl_configoption:`GDAL_NUM_THREADS` configuration option to a
 reasonable number of threads if you are short of memory (the default
 value is the total number of virtual CPUs).
 

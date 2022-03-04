@@ -57,7 +57,7 @@ potential manual editing of it and :program:`ogr2ogr` can be done.
 
 .. program:: ogrmerge.py
 
-.. option:: -o <out_dsname
+.. option:: -o <out_dsname>
 
     Output dataset name. Required.
 
