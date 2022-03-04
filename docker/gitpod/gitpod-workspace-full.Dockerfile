@@ -1,8 +1,17 @@
-FROM gitpod/gitpod/workspace-full
+FROM gitpod/workspace-full
 RUN uname -a && cat /etc/os-release
 
-RUN sudo bash .github/workflows/ubuntu_20.04/build-deps.sh  # install deps
-RUN bash .github/workflows/ubuntu_20.04/build.sh. # build
+# Get gdal sources, limit to 50 most recent commits, with branches, and checkout master
+RUN git clone --depth=50 https://github.com/osgeo/gdal.git \
+    && cd gdal \
+    && git remote set-branches origin "*" \
+    && git fetch -v --depth=50 \
+    && git checkout master
+
+# install gdal dependencies
+RUN sudo bash gdal/.github/workflows/ubuntu_20.04/build-deps.sh
+# build gdal
+RUN bash /workspace/gdal/.github/workflows/ubuntu_20.04/build.sh
 
 
 
