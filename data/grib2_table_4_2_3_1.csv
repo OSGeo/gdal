@@ -6,7 +6,7 @@
 0,"ESTP","Estimated precipitation","kg/(m^2)","UC_NONE"
 1,"IRRATE","Instantaneous rain rate","kg/(m^2*s)","UC_NONE"
 2,"CTOPH","Cloud top height","kg/(m^2*s)","UC_NONE"
-3,"CTOPHQI","Cloud top height quality indicator","0=Nominal cloud top height quality; 1=Fog in segment; 2=Poor quality height estimation; 3=Fog in segment and poor quality height estimation","UC_NONE"
+3,"CTOPHQI","Cloud top height quality indicator","0=Nominal cloud top height quality; 1=Fog in segment; 2=Poor quality height estimation; 3=Fog in segment and poor quality height estimation; 4-191=Reserved; 192-254=Reserved for local use; 255=Missing","UC_NONE"
 4,"ESTUGRD","Estimated u component of wind","m/s","UC_NONE"
 5,"ESTVGRD","Estimated v component of wind","m/s","UC_NONE"
 6,"NPIXU","Number of pixels used","Numeric","UC_NONE"

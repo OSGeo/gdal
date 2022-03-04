@@ -23,7 +23,7 @@
 17,"GRDRN","Gradient Richardson Number","-","UC_NONE"
 18,"FLXRN","Flux Richardson Number","-","UC_NONE"
 19,"CONAPES","Convective Available Potential Energy Shear","m^2/s^2","UC_NONE"
-20,"","Thunderstorm intensity index","(Code table 4.246)","UC_NONE"
+20,"","Thunderstorm intensity index","0=No thunderstorm occurence; 1=Weak thunderstorm; 2=Moderate thunderstorm; 3=Severe thunderstorm; 4-254=Reserved; 255=Missing","UC_NONE"
 21,"-","Reserved","-","UC_NONE"
 22,"-","Reserved","-","UC_NONE"
 23,"-","Reserved","-","UC_NONE"
