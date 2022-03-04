@@ -70,6 +70,7 @@ char CPL_DLL **CSVScanFile( const char *, int, const char *,
                             CSVCompareCriteria );
 char CPL_DLL **CSVScanFileByName( const char *, const char *, const char *,
                                   CSVCompareCriteria );
+void CPL_DLL CSVRewind( const char * );
 char CPL_DLL **CSVGetNextLine( const char * );
 int CPL_DLL CSVGetFieldId( FILE *, const char * );
 int CPL_DLL CSVGetFieldIdL( VSILFILE *, const char * );
