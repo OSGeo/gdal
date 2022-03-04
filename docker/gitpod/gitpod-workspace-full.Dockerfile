@@ -11,7 +11,7 @@ RUN git clone --depth=50 https://github.com/osgeo/gdal.git \
 # install gdal dependencies
 RUN sudo bash gdal/.github/workflows/ubuntu_20.04/build-deps.sh
 # build gdal
-RUN bash /workspace/gdal/.github/workflows/ubuntu_20.04/build.sh
+RUN bash gdal/.github/workflows/ubuntu_20.04/build.sh
 
 
 
