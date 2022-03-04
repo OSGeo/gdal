@@ -1,0 +1,10 @@
+subcat,short_name,name,unit,unit_conv
+0,"NLWRS","Net long wave radiation flux (surface)","W/(m^2)",UC_NONE
+1,"NLWRT","Net long wave radiation flux (top of atmosphere)","W/(m^2)",UC_NONE
+2,"LWAVR","Long wave radiation flux","W/(m^2)",UC_NONE
+3,"DLWRF","Downward long-wave radiation flux","W/(m^2)",UC_NONE
+4,"ULWRF","Upward long-wave radiation flux","W/(m^2)",UC_NONE
+5,"NLWRF","Net long wave radiation flux","W/(m^2)",UC_NONE
+6,"NLWRCS","Net long-wave radiation flux; clear sky","W/(m^2)",UC_NONE
+7,"BRTEMP","Brightness Temperature","K",UC_K2F
+8,"DLWRFCS","Downward Long-Wave Radiation Flux, Clear Sky","W/(m^2)",UC_NONE

@@ -1,0 +1,33 @@
+subcat,short_name,name,unit,unit_conv
+0,"PRES","Pressure","Pa",UC_NONE
+1,"PRMSL","Pressure reduced to MSL","Pa",UC_NONE
+2,"PTEND","Pressure tendency","Pa/s",UC_NONE
+3,"ICAHT","ICAO Standard Atmosphere Reference Height","m",UC_NONE
+4,"GP","Geopotential","(m^2)/(s^2)",UC_NONE
+5,"HGT","Geopotential height","gpm",UC_NONE
+6,"DIST","Geometric height","m",UC_M2Feet
+7,"HSTDV","Standard deviation of height","m",UC_NONE
+8,"PRESA","Pressure anomaly","Pa",UC_NONE
+9,"GPA","Geopotential height anomaly","gpm",UC_NONE
+10,"DEN","Density","kg/(m^3)",UC_NONE
+11,"ALTS","Altimeter setting","Pa",UC_NONE
+12,"THICK","Thickness","m",UC_NONE
+13,"PRESALT","Pressure altitude","m",UC_NONE
+14,"DENALT","Density altitude","m",UC_NONE
+15,"5WAVH","5-wave geopotential height","gpm",UC_NONE
+16,"U-GWD","Zonal flux of gravity wave stress","N/(m^2)",UC_NONE
+17,"V-GWD","Meridional flux of gravity wave stress","N/(m^2)",UC_NONE
+18,"HPBL","Planetary boundary layer height","m",UC_NONE
+19,"5WAVA","5-wave geopotential height anomaly","gpm",UC_NONE
+20,"SDSGSO","Standard deviation of sub-grid scale orography","m",UC_NONE
+21,"AOSGSO","Angle of sub-gridscale orography","rad",UC_NONE
+22,"SSGSO","Slope of sub-gridscale orography","Numeric",UC_NONE
+23,"GSGSO","Gravity wave dissipation","W/m^2",UC_NONE
+24,"ASGSO","Anisotrophy of sub-gridscale orography","Numeric",UC_NONE
+25,"NLPRES","Natural Logarithm of Pressure in Pa","Numeric",UC_NONE
+26,"EXPRES","Exner Pressure","Numeric",UC_NONE
+27,"UMFLX","Updraught Mass Flux","kg/(m^2*s)",UC_NONE
+28,"DMFLX","Downdraught Mass Flux","kg/(m^2*s)",UC_NONE
+29,"UDRATE","Updraught Detrainment Rate","kg/(m^3*s)",UC_NONE
+30,"DDRATE","Downdraught Detrainment Rate","kg/(m^3*s)",UC_NONE
+31,"UCLSPRS","Unbalanced Component of Logarithm of Surface Pressure","",UC_NONE

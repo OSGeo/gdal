@@ -1,0 +1,5 @@
+subcat,short_name,name,unit,unit_conv
+0,"TSEC","Seconds prior to initial reference time (defined in Section 1)","s",UC_NONE
+1,"MOSF","Meridonal Overturning Stream Function","m^3/s",UC_NONE
+2,"","Reserved","-",UC_NONE
+3,"DSLOBS","Days Since Last Observation","d",UC_NONE

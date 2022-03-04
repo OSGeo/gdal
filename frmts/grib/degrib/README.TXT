@@ -27,8 +27,13 @@ GRIB2 tables
 Starting with GDAL 3.5, GRIB2 tables 4.2 (Parameter Number by Product discipline
 and Parameter category) and 4.5 (Fixed surface types and units) are available as
 CSV files in the "data" resource directory of GDAL.
-They have been initialized with the extract_tables.py script run on the degrib
-metaname.cpp file (before extracting the tables from it).
+
+They result from a merge between tables that used to be hardcoded in degrib
+metaname.cpp file (those files have been extracted with the extract_tables.py
+script run on metaname.cpp file, before removing the tables from it), and which
+are located in frmts/grib/degrib/data, with CSV tables originating from WMO
+(https://github.com/wmo-im/GRIB2). The merge is done with the merge_degrib_and_wmo_tables.py
+script.
 
 When adding a new table, it must be referenced in the GDAL_DATA_FILES variable
 of the gdal.cmake file, to be installed.

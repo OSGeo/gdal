@@ -1,0 +1,17 @@
+subcat,short_name,name,unit,unit_conv
+0,"MTHD","Main thermocline depth","m",UC_NONE
+1,"MTHA","Main thermocline anomaly","m",UC_NONE
+2,"TTHDP","Transient thermocline depth","m",UC_NONE
+3,"SALTY","Salinity","kg/kg",UC_NONE
+4,"OVHD","Ocean Vertical Heat Diffusivity","m^2/s",UC_NONE
+5,"OVSD","Ocean Vertical Salt Diffusivity","m^2/s",UC_NONE
+6,"OVMD","Ocean Vertical Momentum Diffusivity","m^2/s",UC_NONE
+7,"BATHY","Bathymetry","m",UC_NONE
+8,"","Reserved","-",UC_NONE
+9,"","Reserved","-",UC_NONE
+10,"","Reserved","-",UC_NONE
+11,"SFSALP","Shape Factor With Respect To Salinity Profile","",UC_NONE
+12,"SFTMPP","Shape Factor With Respect To Temperature Profile In Thermocline","",UC_NONE
+13,"ACWSRD","Attenuation Coefficient Of Water With Respect to Solar Radiation","1/m",UC_NONE
+14,"WDEPTH","Water Depth","m",UC_NONE
+15,"WTMPSS","Water Temperature","K",UC_NONE

@@ -1,0 +1,3 @@
+subcat,short_name,name,unit,unit_conv
+0,"LTNGSD","Lightning Strike Density","m^2/s",UC_NONE
+1,"LTPINX","Lightning Potential Index (LPI) (see Note)","J/kg",UC_NONE

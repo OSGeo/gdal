@@ -203,7 +203,14 @@ static int GetGrib2Table4_2_Record (int prodType, int cat, int subcat,
         if( atoi(papszFields[iSubcat]) == subcat )
         {
             if( shortName )
-                *shortName = papszFields[iShortName];
+            {
+                // Short name is unavailable from WMO-only entries, so
+                // use longer name
+                if( papszFields[iShortName][0] == 0 )
+                    *shortName = papszFields[iName];
+                else
+                    *shortName = papszFields[iShortName];
+            }
             if( name )
                 *name = papszFields[iName];
             if( unit )
@@ -579,17 +586,21 @@ static void ElemNameProb (uChar mstrVersion, uShort2 center, uShort2 subcenter, 
    }
 
    /* Only look at Generic tables if mstrVersion is not 255. */
-   int gotRecord = FALSE;
+   int gotRecordGeneric = FALSE;
    const char* pszShortName = nullptr;
    const char* pszName = nullptr;
    const char* pszUnit = nullptr;
    if (mstrVersion != 255) {
-       gotRecord = GetGrib2Table4_2_Record (prodType, cat, subcat,
+       gotRecordGeneric = GetGrib2Table4_2_Record (prodType, cat, subcat,
                                             &pszShortName, &pszName, &pszUnit,
                                             nullptr);
    }
 
-   if (gotRecord) {
+   if (gotRecordGeneric && strcmp(pszName, "Reserved for local use") == 0) {
+       gotRecordGeneric = false;
+   }
+
+   if (gotRecordGeneric) {
          /* Check for NDFD over-rides. */
          /* The NDFD over-rides for probability templates have already been
           * handled. */
@@ -694,11 +705,11 @@ static void ElemNameProb (uChar mstrVersion, uShort2 center, uShort2 subcenter, 
    }
 
    /* Local use tables. */
-   gotRecord = GetGrib2LocalTable4_2_Record (center, subcenter,
-                                             prodType, cat, subcat,
-                                             &pszShortName, &pszName, &pszUnit,
-                                             nullptr);
-   if (gotRecord) {
+   int gotRecordLocal = GetGrib2LocalTable4_2_Record (center, subcenter,
+                                                 prodType, cat, subcat,
+                                                 &pszShortName, &pszName, &pszUnit,
+                                                 nullptr);
+   if (gotRecordLocal) {
             /* Ignore adding Prob prefix and "Probability of" to NDFD SPC prob
              * products. */
             if (lenTime > 0) {
@@ -758,18 +769,22 @@ static void ElemNamePerc (uChar mstrVersion, uShort2 center, uShort2 subcenter, 
                           char **unit, int *convert)
 {
    /* Only look at Generic tables if mstrVersion is not 255. */
-   int gotRecord = FALSE;
+   int gotRecordGeneric = FALSE;
    const char* pszShortName = nullptr;
    const char* pszName = nullptr;
    const char* pszUnit = nullptr;
    unit_convert unitConvert = UC_NONE;
    if (mstrVersion != 255) {
-       gotRecord = GetGrib2Table4_2_Record (prodType, cat, subcat,
+       gotRecordGeneric = GetGrib2Table4_2_Record (prodType, cat, subcat,
                                             &pszShortName, &pszName, &pszUnit,
                                             &unitConvert);
    }
 
-   if (gotRecord) {
+   if (gotRecordGeneric && strcmp(pszName, "Reserved for local use") == 0) {
+       gotRecordGeneric = false;
+   }
+
+   if (gotRecordGeneric) {
          /* Check for NDFD over-rides. */
          if (IsData_NDFD (center, subcenter) ||
              IsData_MOS (center, subcenter)) {
@@ -843,11 +858,11 @@ static void ElemNamePerc (uChar mstrVersion, uShort2 center, uShort2 subcenter, 
    }
 
    /* Local use tables. */
-   gotRecord = GetGrib2LocalTable4_2_Record (center, subcenter,
+   int gotRecordLocal = GetGrib2LocalTable4_2_Record (center, subcenter,
                                              prodType, cat, subcat,
                                              &pszShortName, &pszName, &pszUnit,
-                                             nullptr);
-   if (gotRecord) {
+                                             &unitConvert);
+   if (gotRecordLocal) {
 /* If last two characters in name are numbers, then the name contains
  * the percentile (or exceedance value) so don't tack on percentile here.*/
             size_t len = strlen(pszShortName);
@@ -993,18 +1008,22 @@ static void ElemNameNorm (uChar mstrVersion, uShort2 center, uShort2 subcenter, 
    }
 
    /* Only look at Generic tables if mstrVersion is not 255. */
-   int gotRecord = FALSE;
+   int gotRecordGeneric = FALSE;
    const char* pszShortName = nullptr;
    const char* pszName = nullptr;
    const char* pszUnit = nullptr;
    unit_convert unitConvert = UC_NONE;
    if (mstrVersion != 255) {
-       gotRecord = GetGrib2Table4_2_Record (prodType, cat, subcat,
+       gotRecordGeneric = GetGrib2Table4_2_Record (prodType, cat, subcat,
                                             &pszShortName, &pszName, &pszUnit,
                                             &unitConvert);
    }
 
-   if (gotRecord) {
+   if (gotRecordGeneric && strcmp(pszName, "Reserved for local use") == 0) {
+       gotRecordGeneric = false;
+   }
+
+   if (gotRecordGeneric) {
          /* Check for NDFD over-rides. */
          if (IsData_MOS (center, subcenter)) {
             if (strcmp (pszShortName, "APCP") == 0) {
@@ -1104,11 +1123,11 @@ static void ElemNameNorm (uChar mstrVersion, uShort2 center, uShort2 subcenter, 
    }
 
    /* Local use tables. */
-   gotRecord = GetGrib2LocalTable4_2_Record (center, subcenter,
+   int gotRecordLocal = GetGrib2LocalTable4_2_Record (center, subcenter,
                                              prodType, cat, subcat,
                                              &pszShortName, &pszName, &pszUnit,
-                                             nullptr);
-   if (gotRecord) {
+                                             &unitConvert);
+   if (gotRecordLocal) {
             /* Allow specific products with non-zero lenTime to reflect that.
              */
 #ifdef deadcode
@@ -1729,26 +1748,22 @@ int  Table45Lookup (int code,
     {
         if( atoi(papszFields[iCode]) == code )
         {
+            const char* pszShortName = papszFields[iShortName];
+            if( code > 191 && code < 255 &&
+                strcmp(papszFields[iName], "Reserved for local use") == 0 )
+            {
+                pszShortName = "RESERVED";
+                *f_reserved = 1;
+            }
+
             if( shortName )
-                *shortName = papszFields[iShortName];
+                *shortName = pszShortName;
             if( name )
                 *name = papszFields[iName];
             if( unit )
                 *unit = papszFields[iUnit];
             return TRUE;
         }
-    }
-
-    if( code > 191 && code < 255 )
-    {
-        *f_reserved = 1;
-        if( shortName )
-            *shortName = "RESERVED";
-        if( name )
-            *name = "Reserved Local use";
-        if( unit )
-            *unit = "-";
-        return TRUE;
     }
 
     return FALSE;

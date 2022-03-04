@@ -1,0 +1,14 @@
+subcat,short_name,name,unit,unit_conv
+0,"ICEC","Ice cover","Proportion",UC_NONE
+1,"ICETK","Ice thinkness","m",UC_NONE
+2,"DICED","Direction of ice drift","Degree true",UC_NONE
+3,"SICED","Speed of ice drift","m/s",UC_NONE
+4,"UICE","u-component of ice drift","m/s",UC_NONE
+5,"VICE","v-component of ice drift","m/s",UC_NONE
+6,"ICEG","Ice growth rate","m/s",UC_NONE
+7,"ICED","Ice divergence","1/s",UC_NONE
+8,"ICET","Ice temperature","K",UC_NONE
+9,"ICEPRS","Module of Ice Internal Pressure","Pa*m",UC_NONE
+10,"ZVCICEP","Zonal Vector Component of Vertically Integrated Ice Internal Pressure","Pa*m",UC_NONE
+11,"MVCICEP","Meridional Vector Component of Vertically Integrated Ice Internal Pressure","Pa*m",UC_NONE
+12,"CICES","Compressive Ice Strength","N/m",UC_NONE

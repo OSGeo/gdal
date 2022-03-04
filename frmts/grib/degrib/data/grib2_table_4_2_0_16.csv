@@ -1,0 +1,7 @@
+subcat,short_name,name,unit,unit_conv
+0,"REFZR","Equivalent radar reflectivity for rain","mm^6/m^3",UC_NONE
+1,"REFZI","Equivalent radar reflectivity for snow","mm^6/m^3",UC_NONE
+2,"REFZC","Equivalent radar reflectivity for parameterized convection","mm^6/m^3",UC_NONE
+3,"RETOP","Echo Top","m",UC_NONE
+4,"REFD","Reflectivity","dB",UC_NONE
+5,"REFC","Composity reflectivity","dB",UC_NONE
