@@ -129,6 +129,7 @@ public:
     GByte       *m_pabySwathBuf;
     JP2UserBox** papoJP2UserBox;
     int          nJP2UserBox;
+    std::vector<int> m_anBandMap{};
 
 private:
     NCSFileViewFileInfoEx sFileInfo;
@@ -163,6 +164,9 @@ GDALECWCompressor::GDALECWCompressor() :
 #else
     NCSInitFileInfoEx(&sFileInfo);
 #endif
+    m_anBandMap.resize(sFileInfo.nBands);
+    for( int iBand = 0; iBand < sFileInfo.nBands; iBand++ )
+        m_anBandMap[iBand] = iBand+1;
 }
 
 /************************************************************************/
@@ -206,16 +210,11 @@ CNCSError GDALECWCompressor::WriteReadLine( UINT32 nNextLine,
                                             void **ppInputArray )
 
 {
-    int    iBand, *panBandMap;
     CPLErr eErr;
 
 #ifdef DEBUG_VERBOSE
     CPLDebug("ECW", "nNextLine = %d", nNextLine);
 #endif
-
-    panBandMap = (int *) CPLMalloc(sizeof(int) * sFileInfo.nBands);
-    for( iBand = 0; iBand < sFileInfo.nBands; iBand++ )
-        panBandMap[iBand] = iBand+1;
 
     if( m_poSrcDS == nullptr || m_poSrcDS->GetRasterBand(1) == nullptr )
     {
@@ -253,7 +252,7 @@ CNCSError GDALECWCompressor::WriteReadLine( UINT32 nNextLine,
         }
         eErr = m_poSrcDS->RasterIO( GF_Read, 0, nNextLine, sFileInfo.nSizeX, nSwathLines,
                                     m_pabySwathBuf, sFileInfo.nSizeX, nSwathLines,
-                                    eWorkDT, sFileInfo.nBands, panBandMap,
+                                    eWorkDT, sFileInfo.nBands, &m_anBandMap[0],
                                     nPixelSpace, nLineSpace, nBandSpace, nullptr );
         m_nSwathOffset = nNextLine;
         UINT32 nNextSwathLine = nNextLine + nSwathLines;
@@ -265,7 +264,7 @@ CNCSError GDALECWCompressor::WriteReadLine( UINT32 nNextLine,
             }
             m_poSrcDS->AdviseRead( 0, nNextSwathLine, sFileInfo.nSizeX, nSwathLines,
                                    sFileInfo.nSizeX, nSwathLines, eWorkDT,
-                                   sFileInfo.nBands, panBandMap, nullptr );
+                                   sFileInfo.nBands, &m_anBandMap[0], nullptr );
         }
     }
     else
@@ -273,14 +272,12 @@ CNCSError GDALECWCompressor::WriteReadLine( UINT32 nNextLine,
         eErr = CE_None;
     }
 
-    for( iBand = 0; iBand < (int) sFileInfo.nBands; iBand++ )
+    for( int iBand = 0; iBand < (int) sFileInfo.nBands; iBand++ )
     {
         memcpy( ppInputArray[iBand],
                 m_pabySwathBuf + nLineSpace * (nNextLine - m_nSwathOffset) + nBandSpace * iBand,
                 static_cast<size_t>(nPixelSpace * sFileInfo.nSizeX) );
     }
-
-    CPLFree( panBandMap );
 
     if( eErr == CE_None )
         return GetCNCSError(NCS_SUCCESS);
