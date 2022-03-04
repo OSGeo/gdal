@@ -1511,7 +1511,7 @@ def test_grib_grib2_sidecar():
 
     ds_no_idx = gdal.OpenEx('data/grib/gfs.t06z.pgrb2.10p0.f010.grib2', gdal.GA_ReadOnly, open_options=['USE_IDX=NO'])
     assert ds_no_idx.RasterCount == ds_idx.RasterCount
-    assert ds_no_idx.GetRasterBand(6).GetDescription() == '0[-] RESERVED(220) (Reserved)', 'Description does not match, sidecar index is probably loaded'
+    assert ds_no_idx.GetRasterBand(6).GetDescription() == '0[-] RESERVED(220) (Reserved Local use)', 'Description does not match, sidecar index is probably loaded'
     for i in range(1, ds_no_idx.RasterCount):
         assert ds_no_idx.GetRasterBand(i).Checksum() == ds_idx.GetRasterBand(i).Checksum()
         assert ds_no_idx.GetRasterBand(i).GetMetadata().keys() == ds_idx.GetRasterBand(i).GetMetadata().keys()
@@ -1533,7 +1533,7 @@ def test_grib_grib1_2_mix_sidecar():
 
     ds_no_idx = gdal.OpenEx('data/grib/broken_combined_grib2_grib1.grb2', gdal.GA_ReadOnly, open_options=['USE_IDX=NO'])
     assert ds_no_idx.RasterCount == ds_idx.RasterCount
-    assert ds_no_idx.GetRasterBand(6).GetDescription() == '0[-] RESERVED(220) (Reserved)', 'Description does not match, sidecar index is probably loaded'
+    assert ds_no_idx.GetRasterBand(6).GetDescription() == '0[-] RESERVED(220) (Reserved Local use)', 'Description does not match, sidecar index is probably loaded'
     assert ds_no_idx.GetRasterBand(18).GetDescription() == '1[-] SFC (Ground or water surface)', 'Description does not match, sidecar index is probably ignored'
     for i in range(1, ds_no_idx.RasterCount):
         assert ds_no_idx.GetRasterBand(i).Checksum() == ds_idx.GetRasterBand(i).Checksum()

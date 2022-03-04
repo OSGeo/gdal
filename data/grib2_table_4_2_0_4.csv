@@ -1,0 +1,55 @@
+subcat,short_name,name,unit,unit_conv
+0,"NSWRS","Net short-wave radiation flux (surface)","W/(m^2)",UC_NONE
+1,"NSWRT","Net short-wave radiation flux (top of atmosphere)","W/(m^2)",UC_NONE
+2,"SWAVR","Short wave radiation flux","W/(m^2)",UC_NONE
+3,"GRAD","Global radiation flux","W/(m^2)",UC_NONE
+4,"BRTMP","Brightness temperature","K",UC_NONE
+5,"LWRAD","Radiance (with respect to wave number)","W/(m sr)",UC_NONE
+6,"SWRAD","Radiance (with respect to wave length)","W/(m^3 sr)",UC_NONE
+7,"DSWRF","Downward short-wave radiation flux","W/(m^2)",UC_NONE
+8,"USWRF","Upward short-wave radiation flux","W/(m^2)",UC_NONE
+9,"NSWRF","Net short wave radiation flux","W/(m^2)",UC_NONE
+10,"PHOTAR","Photosynthetically active radiation","W/(m^2)",UC_NONE
+11,"NSWRFCS","Net short-wave radiation flux; clear sky","W/(m^2)",UC_NONE
+12,"DWUVR","Downward UV radiation","W/(m^2)",UC_NONE
+13,"DSWRFLX","Direct Short Wave Radiation Flux","W/(m^2)",UC_NONE
+14,"DIFSWRF","Diffuse Short Wave Radiation Flux","W/(m^2)",UC_NONE
+15,"","Reserved","-",UC_NONE
+16,"","Reserved","-",UC_NONE
+17,"","Reserved","-",UC_NONE
+18,"","Reserved","-",UC_NONE
+19,"","Reserved","-",UC_NONE
+20,"","Reserved","-",UC_NONE
+21,"","Reserved","-",UC_NONE
+22,"","Reserved","-",UC_NONE
+23,"","Reserved","-",UC_NONE
+24,"","Reserved","-",UC_NONE
+25,"","Reserved","-",UC_NONE
+26,"","Reserved","-",UC_NONE
+27,"","Reserved","-",UC_NONE
+28,"","Reserved","-",UC_NONE
+29,"","Reserved","-",UC_NONE
+30,"","Reserved","-",UC_NONE
+31,"","Reserved","-",UC_NONE
+32,"","Reserved","-",UC_NONE
+33,"","Reserved","-",UC_NONE
+34,"","Reserved","-",UC_NONE
+35,"","Reserved","-",UC_NONE
+36,"","Reserved","-",UC_NONE
+37,"","Reserved","-",UC_NONE
+38,"","Reserved","-",UC_NONE
+39,"","Reserved","-",UC_NONE
+40,"","Reserved","-",UC_NONE
+41,"","Reserved","-",UC_NONE
+42,"","Reserved","-",UC_NONE
+43,"","Reserved","-",UC_NONE
+44,"","Reserved","-",UC_NONE
+45,"","Reserved","-",UC_NONE
+46,"","Reserved","-",UC_NONE
+47,"","Reserved","-",UC_NONE
+48,"","Reserved","-",UC_NONE
+49,"","Reserved","-",UC_NONE
+50,"UVIUCS","UV index (under clear sky)","Numeric",UC_NONE
+51,"UVI","UV index","W/(m^2)",UC_UVIndex
+52,"DSWRFCS","Downward Short-Wave Radiation Flux, Clear Sky","W/(m^2)",UC_NONE
+53,"USWRFCS","Upward Short-Wave Radiation Flux, Clear Sky","W/(m^2)",UC_NONE
