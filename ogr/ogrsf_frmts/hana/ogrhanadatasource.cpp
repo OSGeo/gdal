@@ -177,10 +177,8 @@ CPLString BuildConnectionString(char** openOptions)
         CSLFetchNameValueDef(openOptions, OpenOptionsConstants::PASSWORD, "");
     const char* paramSchema =
         CSLFetchNameValueDef(openOptions, OpenOptionsConstants::SCHEMA, "");
-    const char* paramEncrypt =
-        CSLFetchNameValueDef(openOptions, OpenOptionsConstants::ENCRYPT, "NO");
 
-    if (EQUAL(paramEncrypt, "YES"))
+    if (CPLFetchBool(openOptions, OpenOptionsConstants::ENCRYPT, "NO"))
     {
         params.push_back("encrypt=true");
         addParameter(
@@ -213,6 +211,15 @@ CPLString BuildConnectionString(char** openOptions)
             "PWD={%s};CURRENTSCHEMA=\"%s\";CHAR_AS_UTF8=1;%s",
             paramDriver, paramHost, paramPort, paramDatabase, paramUser,
             paramPassword, paramSchema, JoinStrings(params, ";").c_str());
+}
+
+int CPLFetchInt(CSLConstList papszStrList, const char *pszKey, int defaultValue)
+{
+    const char * const pszValue =
+        CSLFetchNameValue( papszStrList, pszKey );
+    if( pszValue == nullptr )
+        return defaultValue;
+    return atoi( pszValue );
 }
 
 int GetSrid(odbc::ResultSet& resultSet)
@@ -585,7 +592,6 @@ const char* OGRHanaDataSource::GetSupportedDataTypes()
 /************************************************************************/
 
 OGRHanaDataSource::OGRHanaDataSource()
-    : updateMode_(false), isTransactionStarted_(false)
 {
 }
 
@@ -796,7 +802,7 @@ CPLString OGRHanaDataSource::FindSchemaName(const char* objectName)
             // return empty string if there is more than one schema.
             if (!ret.empty())
             {
-                ret = "";
+                ret.clear();
                 break;
             }
             ret = *rsEntries->getString(1);
@@ -1465,13 +1471,8 @@ OGRLayer* OGRHanaDataSource::ICreateLayer(
     int layerIndex = FindLayerByName(layerName.c_str());
     if (layerIndex >= 0)
     {
-        const char* paramOverwrite = CSLFetchNameValue(
-            options, LayerCreationOptionsConstants::OVERWRITE);
-        if (paramOverwrite != nullptr && !EQUAL(paramOverwrite, "NO"))
-        {
-            DeleteLayer(layerIndex);
-        }
-        else
+        bool overwriteLayer = CPLFetchBool(options, LayerCreationOptionsConstants::OVERWRITE, false);
+        if (!overwriteLayer)
         {
             CPLError(
                 CE_Failure, CPLE_AppDefined,
@@ -1481,71 +1482,49 @@ OGRLayer* OGRHanaDataSource::ICreateLayer(
                 layerName.c_str());
             return nullptr;
         }
+
+        DeleteLayer(layerIndex);
     }
 
-    int batchSize = 0;
-    const char* paramBatchSize =
-        CSLFetchNameValue(options, LayerCreationOptionsConstants::BATCH_SIZE);
-    if (paramBatchSize != nullptr)
+    int batchSize = CPLFetchInt(options, LayerCreationOptionsConstants::BATCH_SIZE,
+                                DEFAULT_BATCH_SIZE);
+    if (batchSize <= 0)
     {
-        batchSize = atoi(paramBatchSize);
-        if (batchSize <= 0)
-        {
-            CPLError(
-                CE_Failure, CPLE_AppDefined,
-                "Unable to create layer %s. The value of %s parameter must be "
-                "greater than 0.\n",
-                layerName.c_str(), LayerCreationOptionsConstants::BATCH_SIZE);
-            return nullptr;
-        }
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "Unable to create layer %s. The value of %s parameter must be "
+            "greater than 0.",
+            layerName.c_str(), LayerCreationOptionsConstants::BATCH_SIZE);
+        return nullptr;
     }
 
-    int defaultStringSize = 0;
-    const char* paramDefaultStringSize = CSLFetchNameValue(
-        options, LayerCreationOptionsConstants::DEFAULT_STRING_SIZE);
-    if (paramDefaultStringSize != nullptr)
+    int defaultStringSize = CPLFetchInt(options, LayerCreationOptionsConstants::DEFAULT_STRING_SIZE,
+                                        DEFAULT_STRING_SIZE);
+    if (defaultStringSize <= 0)
     {
-        defaultStringSize = atoi(paramDefaultStringSize);
-        if (defaultStringSize <= 0)
-        {
-            CPLError(
-                CE_Failure, CPLE_AppDefined,
-                "Unable to create layer %s. The value of %s parameter must be "
-                "greater than 0.\n",
-                layerName.c_str(),
-                LayerCreationOptionsConstants::DEFAULT_STRING_SIZE);
-            return nullptr;
-        }
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "Unable to create layer %s. The value of %s parameter must be "
+            "greater than 0.",
+            layerName.c_str(),
+            LayerCreationOptionsConstants::DEFAULT_STRING_SIZE);
+        return nullptr;
     }
 
-    const char* paramGeomName = CSLFetchNameValue(options, LayerCreationOptionsConstants::GEOMETRY_NAME);
-    CPLString geomColumnName = paramGeomName != nullptr ? paramGeomName : "OGR_GEOMETRY";
+    CPLString geomColumnName(CSLFetchNameValueDef(options, LayerCreationOptionsConstants::GEOMETRY_NAME, "OGR_GEOMETRY"));
     const bool geomColumnNullable = CPLFetchBool(options, LayerCreationOptionsConstants::GEOMETRY_NULLABLE, true);
-    const char* paramGeomIndex = CSLFetchNameValue(options, LayerCreationOptionsConstants::GEOMETRY_INDEX);
-    CPLString geomColumnIndexType = paramGeomIndex != nullptr ? paramGeomIndex : "DEFAULT";
+    CPLString geomColumnIndexType(CSLFetchNameValueDef(options, LayerCreationOptionsConstants::GEOMETRY_INDEX, "DEFAULT"));
 
-    const char* paramFidName = CSLFetchNameValue(options, LayerCreationOptionsConstants::FID);
-    CPLString fidName(
-        paramFidName != nullptr
-            ? (launderNames ? LaunderName(paramFidName).c_str() : paramFidName)
-            : "");
-    if (fidName.empty())
-        fidName = "OGR_FID";
-
-    const bool isFid64 = CPLFetchBool(options, LayerCreationOptionsConstants::FID64, false);
-    CPLString fidType = isFid64 ? "BIGINT" : "INTEGER";
+    const char* paramFidName = CSLFetchNameValueDef(options, LayerCreationOptionsConstants::FID, "OGR_FID");
+    CPLString fidName(launderNames ? LaunderName(paramFidName).c_str() : paramFidName);
+    CPLString fidType = CPLFetchBool(options, LayerCreationOptionsConstants::FID64, false) ? "BIGINT" : "INTEGER";
 
     CPLDebug("HANA", "Geometry Column Name %s.", geomColumnName.c_str());
-    CPLDebug(
-        "HANA", "FID Column Name %s, Type %s.", fidName.c_str(),
-        fidType.c_str());
+    CPLDebug("HANA", "FID Column Name %s, Type %s.", fidName.c_str(),
+             fidType.c_str());
 
-    int srid = UNDETERMINED_SRID;
-    const char* paramSrid = CSLFetchNameValue(options, LayerCreationOptionsConstants::SRID);
-    if (paramSrid != nullptr)
-        srid = atoi(paramSrid);
-
-    if (srid <= 0 && srs != nullptr)
+    int srid = CPLFetchInt(options, LayerCreationOptionsConstants::SRID, UNDETERMINED_SRID);
+    if (srid < 0 && srs != nullptr)
         srid = GetSrsId(srs);
 
     try

@@ -43,6 +43,9 @@ class OGRHanaDataSource;
 
 namespace OGRHANA {
 
+constexpr static int DEFAULT_BATCH_SIZE = 4 * 1024 * 1024;
+constexpr static int DEFAULT_STRING_SIZE = 256;
+
 /************************************************************************/
 /*                          Internal struct definitions                 */
 /************************************************************************/
@@ -173,8 +176,8 @@ private:
     odbc::PreparedStatementRef deleteFeatureStmt_;
     odbc::PreparedStatementRef updateFeatureStmt_;
 
-    std::size_t batchSize_ = 4 * 1024 * 1024;
-    std::size_t defaultStringSize_ = 256;
+    std::size_t batchSize_ = DEFAULT_BATCH_SIZE;
+    std::size_t defaultStringSize_ = DEFAULT_STRING_SIZE;
     bool launderColumnNames_ = true;
     bool preservePrecision_ = true;
     std::vector<ColumnDefinition> customColumnDefs_;
