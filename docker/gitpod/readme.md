@@ -19,13 +19,17 @@ Generally what the files do is:
 
 `./docker/gitpod/ubuntu-small-latest.Dockerfile` - as above but using the slim downed ubuntu image
 
+`./docler/gitpod/gitpod-workspace-full`  - loads the default workspace in Gitpod with all bells and whistles, then checks out current gdal sources and builds them. This takes a long time. *And is currently broken.*
+
 `test-$IMAGE-NAME.sh` - run this from a default gitpod image to test the associated .Dockerfile contents without having to commit every change to repo first (see [Trying out changes to your Dockerfile](https://www.gitpod.io/docs/config-docker#trying-out-changes-to-your-dockerfile)).
 
 ## Developing
 
 - Fire up gitpod or other docker enabled machine
 - Edit .Dockerfile as desired
-- Test the docker file validity with `docker build -f osgeo-geo.Dockerfile -t test-osgeo-gdal .`
+- Test the docker file validity with
+  `docker build -f osgeo-geo.Dockerfile -t test-osgeo-gdal .`
+  `docker run -it test-gitpod-workspace-full bash`
 - Commit changes
 - Run `https://gitpod.io/#URL_OF_YOUR_FORK`, e.g.
   https://gitpod.io/#https://github.com/maphew/gdal/tree/gitpod/
