@@ -5509,6 +5509,7 @@ dnl ---------------------------------------------------------------------------
 AC_ARG_WITH(tiledb,[  --with-tiledb[=ARG]    Include TileDB support (ARG=no, yes or tiledb install root path)],,)
 
 TILEDB_SETTING=no
+TILEDB_CFLAGS=
 
 if test "$with_tiledb" = "yes" -o "$with_tiledb" = "" ; then
 
@@ -5526,18 +5527,51 @@ elif test "$with_tiledb" != "no" -a "$with_tiledb" != ""; then
 
   if test "$TILEDB_SETTING" = "yes" ; then
     LIBS="-L$with_tiledb/lib -ltiledb $LIBS"
-    EXTRA_INCLUDES="-I$with_tiledb/include $EXTRA_INCLUDES"
+    TILEDB_CFLAGS="-I$with_tiledb/include"
   else
     echo "libtiledb not found - TileDB support disabled"
   fi
+fi
 
+if test "$TILEDB_SETTING" != "no" ; then
+
+  AC_LANG_PUSH([C++])
+  SAVED_CXXFLAGS=$CXXFLAGS
+  CXXFLAGS="$CXXFLAGS $TILEDB_CFLAGS"
+  AC_MSG_CHECKING([if tiledb/tiledb can be included without additional flags])
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+    [[#include "tiledb/tiledb"]])],
+    [TILEDB_CAN_BE_INCLUDED="yes"]
+    [AC_MSG_RESULT([yes])],
+    [TILEDB_CAN_BE_INCLUDED="no"]
+    [AC_MSG_RESULT([no])])
+  CXXFLAGS=$SAVED_CXXFLAGS
+  AC_LANG_POP([C++])
+
+  if test "$TILEDB_CAN_BE_INCLUDED" = "no"; then
+    AC_LANG_PUSH([C++])
+    SAVED_CXXFLAGS=$CXXFLAGS
+    CXXFLAGS="$CXXFLAGS $TILEDB_CFLAGS -std=c++17"
+    AC_MSG_CHECKING([if tiledb/tiledb can be included with -std=c++17])
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+      [[#include "tiledb/tiledb"]])],
+      [TILEDB_CAN_BE_INCLUDED="yes"]
+      [AC_MSG_RESULT([yes])],
+      [TILEDB_CAN_BE_INCLUDED="no"]
+      [AC_MSG_RESULT([no])])
+    CXXFLAGS=$SAVED_CXXFLAGS
+    AC_LANG_POP([C++])
+
+    if test "$TILEDB_CAN_BE_INCLUDED" = "yes"; then
+      TILEDB_CFLAGS="$TILEDB_CFLAGS -std=c++17"
+    fi
+  fi
+
+  OPT_GDAL_FORMATS="tiledb $OPT_GDAL_FORMATS"
 fi
 
 AC_SUBST(TILEDB_SETTING,$TILEDB_SETTING)
-
-if test "$TILEDB_SETTING" != "no" ; then
-  OPT_GDAL_FORMATS="tiledb $OPT_GDAL_FORMATS"
-fi
+AC_SUBST(TILEDB_CFLAGS,$TILEDB_CFLAGS)
 
 dnl ---------------------------------------------------------------------------
 dnl MDB driver
