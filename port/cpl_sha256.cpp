@@ -31,10 +31,6 @@
  *  Allan Saddi
  */
 
-#ifdef HAVE_CRYPTOPP
-#define DO_NOT_USE_DEBUG_BOOL
-#endif
-
 #include <string.h>
 #include "cpl_conv.h"
 #include "cpl_error.h"

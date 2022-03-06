@@ -92,7 +92,7 @@ struct CurveSegment
         {
             double dfX;
             double dfY;
-            EMULATED_BOOL bIsCCW;
+            bool bIsCCW;
         } ArcByCenterPoint;
 
         struct
@@ -110,8 +110,8 @@ struct CurveSegment
             double dfRotationDeg;
             double dfSemiMajor;
             double dfRatioSemiMinor;
-            EMULATED_BOOL bIsMinor;
-            EMULATED_BOOL bIsComplete;
+            bool bIsMinor;
+            bool bIsComplete;
         } EllipseByCenter;
     } u;
 };

@@ -31,10 +31,6 @@
 #ifndef OGR_FGDB_H_INCLUDED
 #define OGR_FGDB_H_INCLUDED
 
-#ifdef DEBUG_BOOL
-#define DO_NOT_USE_DEBUG_BOOL
-#endif
-
 #include <vector>
 #include <set>
 #include "ogrsf_frmts.h"

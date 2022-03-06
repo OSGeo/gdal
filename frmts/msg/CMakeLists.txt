@@ -14,7 +14,6 @@ add_gdal_driver(
           xritheaderparser.h
           PLUGIN_CAPABLE)
 gdal_standard_includes(gdal_MSG)
-target_compile_definitions(gdal_MSG PRIVATE -DDO_NOT_USE_DEBUG_BOOL)
 
 set(PUBLICDECOMPWT_URL
     "https://gitlab.eumetsat.int/open-source/PublicDecompWT.git"

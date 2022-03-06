@@ -1643,7 +1643,7 @@ public:
         return true;
     }
 
-    static const EMULATED_BOOL bMinimizeIO = true;
+    static const bool bMinimizeIO = true;
 };
 
 /************************************************************************/
@@ -2415,7 +2415,7 @@ public:
         return true;
     }
 
-    static const EMULATED_BOOL bMinimizeIO = false;
+    static const bool bMinimizeIO = false;
 };
 
 /************************************************************************/

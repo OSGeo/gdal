@@ -30,8 +30,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#define DO_NOT_USE_DEBUG_BOOL  // See TODO for bGCPUseOK.
-
 #include "cpl_port.h"
 #include "gdal_alg.h"
 #include "gdal_alg_priv.h"
@@ -1697,7 +1695,6 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     const int nOrder = pszValue ? atoi(pszValue) : 0;
 
     pszValue = CSLFetchNameValue( papszOptions, "GCPS_OK" );
-    // TODO(schwehr): Why does this upset DEBUG_BOOL?
     const bool bGCPUseOK = pszValue ? CPLTestBool(pszValue) : true;
 
     pszValue = CSLFetchNameValue( papszOptions, "REFINE_MINIMUM_GCPS" );
