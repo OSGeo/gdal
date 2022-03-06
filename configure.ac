@@ -5946,7 +5946,7 @@ dnl Whether to include LERC in the build
 dnl ---------------------------------------------------------------------------
 
 AC_ARG_WITH(lerc,
-    [  --with-lerc[=ARG]         Include libLerc support(ARG=yes/no/internal/path). Internal liblerc is required for MRF Lerc support. Internal or external libLerc may be used for internal libtiff Lerc support.],,,)
+    [  --with-lerc[=ARG]         Include libLerc support(ARG=yes/no/internal/path). Used by internal libtiff and MRF.],,,)
 
 HAVE_LERC=no
 AC_MSG_CHECKING([for LERC])
