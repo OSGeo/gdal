@@ -1642,6 +1642,26 @@ def config_options(options):
             gdal.SetConfigOption(key, oldvals[key])
 
 ###############################################################################
+# Temporarily define VSI credentials
+
+credential_keys = set()
+
+@contextlib.contextmanager
+def credentials(prefix, options):
+    global credential_keys
+    # Special processing for nested with credentials() call on the same key
+    clear_credentials = prefix not in credential_keys
+    credential_keys.add(prefix)
+    for key in options:
+        gdal.SetCredential(prefix, key, options[key])
+    try:
+        yield
+    finally:
+        if clear_credentials:
+            credential_keys.remove(prefix)
+            gdal.ClearCredentials(prefix)
+
+###############################################################################
 # Temporarily create a file
 
 
