@@ -509,6 +509,7 @@ def test_vrtmisc_write_srs():
     tmpfile = '/vsimem/test_vrtmisc_write_srs.vrt'
     ds = gdal.Translate(tmpfile, 'data/byte.tif', format='VRT')
     sr = osr.SpatialReference()
+    sr.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
     sr.ImportFromEPSG(4326)
     ds.SetSpatialRef(sr)
     ds = None

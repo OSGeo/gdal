@@ -858,9 +858,11 @@ def user_srs_to_wkt(user_text):
 
 def equal_srs_from_wkt(expected_wkt, got_wkt, verbose=True):
     expected_srs = osr.SpatialReference()
+    expected_srs.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
     expected_srs.ImportFromWkt(expected_wkt)
 
     got_srs = osr.SpatialReference()
+    got_srs.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
     got_srs.ImportFromWkt(got_wkt)
 
     if got_srs.IsSame(expected_srs):
