@@ -830,6 +830,7 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 
 # Uncomment for TileDB support
 #TILEDB_ENABLED = YES
+# For TileDB >= 2.7, add "/std:c++17" to TILEDB_CFLAGS
 #TILEDB_CFLAGS = -IC:/install-tiledb/dist/include
 #TILEDB_LIBS = C:/install-tiledb/dist/lib/libtiledb.lib
 
