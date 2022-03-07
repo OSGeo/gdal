@@ -176,10 +176,10 @@ int OGRDXFReader::ReadValueRaw( char *pszValueBuf, int nValueBufSize )
         iEOL++;
 
     bool bLongLine = false;
-    while( achSrcBuffer[iEOL] == '\0' )
+    while( achSrcBuffer[iEOL] == '\0' || (achSrcBuffer[iEOL] == '\r' && achSrcBuffer[iEOL+1] == '\0') )
     {
-        // The line is longer than the buffer. Let's copy what we have so
-        // far into our string, and read more
+        // The line is longer than the buffer (or the line ending is split at end of buffer).
+        // Let's copy what we have so far into our string, and read more
         const auto nValueLength = osValue.length();
 
         if( nValueLength + iEOL - iSrcBufferOffset > 1048576 )
