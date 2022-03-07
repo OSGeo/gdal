@@ -1,3 +1,147 @@
+# GDAL/OGR 3.4.2 Release Notes
+
+## Build
+
+* Fix build against Poppler > 21 (#5071)
+* Fix build against libhdf5 1.13.0 (#5061)
+* Fix build with tiledb >= 2.7 (#5409)
+
+## GDAL 3.4.2 - Overview of Changes
+
+### Port
+
+* Google cloud - Support type=authorized_user JSON file for authentication
+* /vsigs/: fix upload of files > 4 MB in HTTP 1.1 (#5267)
+* /vsitar/: fix reading .tar.gz files when the size of the uncompressed  .tar file is a multiple of 65536 bytes (#5225)
+* VSICurl: Print response code for failed range requests
+
+### Core
+
+* Pleiades metadata reader: fix to handle RPC for Pleiades Neo (#5090)
+* Driver manager: make sure oMapNameToDrivers.size() == nDrivers when querying a non existing driver
+* Overview generation: fix Cubic resampling on boundaries between valid and nodata areas.
+
+### Algorithms
+
+* Rasterization of polygons: avoid underflow/overflow of output data type
+* warper: better guess output bounds when warping from a rotated pole projection that include poles
+
+### Utilities
+
+* gdal_calc.py: raise error when overwriting behavior is apparently wished but not specified (#5270)
+* gdalbuildvrt: change logic to check homogenous number of bands (#5136)
+  - if no explicit band list is specified, all source datasets must have
+    the same number of bands (previously we checked that the second,
+    third, etc. datasets had at least a number of bands greater or equal
+    than the first one, which made things order dependent).
+  - if an explicit band list is specified, we tolerate a different number of bands, provided that datasets have at least all requested bands.
+* gdalbuildvrt: add a -strict/-non_strict flag, and in strict mode consider non-existing datasets as a failure (#4755)
+* gdalsrsinfo: emit message when replacement of deprecated CRS occurs
+* gdalsrsinfo: return a non-zero exit code when specifed SRS fails to load (#5201)
+* gdal2tiles: remove/fix broken links in generated HTML files
+* gdal2tiles: fix issue with multiprocessing and the gdal2tiles launcher script on Windows and Python >= 3.8 (#4951)
+* gdal2tiles: detect write error when creating tiles, and allow outputing to /vsi filesystems (#3382, #5370)
+
+### Raster drivers
+
+BAG driver:
+ * fix 'too many refinement grids' error (#3759)
+
+BSB driver:
+ * Add missing kap file extension in driver metadata
+
+BYN driver:
+ * remove validation of nTideSys and nPtType fields
+
+COG driver:
+ * output exactly square pixels when using -co TILING_SCHEME (#5343)
+ * and emit warning messages when using RES or EXTENT options in that mode.
+
+ECW driver:
+ * fix non-nearest upsampling on multi-band datasets (#5288)
+
+ESRIC driver:
+ * Fix bundle file name
+
+FileGDB driver:
+ * workaround a crash involving binary field and CDF datasets
+
+GTiff driver:
+ * fix DISCARD_LSB with nodata value (#5097)
+ * Updates for IJG libjpeg-9e
+ * GTIFWktFromMemBufEx / GTIFMemBufFromSRS: use OSRSetPROJSearchPaths() (#5187). Affects GeoJP2 encoding/decoding
+ * fix exposing WEBP_LOSSLESS option
+
+GRIB driver:
+ * fix write heap-buffer-overflow when using 'split and swap column' mode when the split column is not equal to width / 2 (#5290)
+
+HFA driver:
+ * Fix "Pulkovo 1942" datum write to IMG files
+
+MRF driver:
+ * Fix padding space logic (#5096)
+ * Adjust PNG limits (#5347)
+
+netCDF driver:
+ * add a IGNORE_XY_AXIS_NAME_CHECKS=YES open option (refs qgis/QGIS#47158)
+ * recognize x/y axis from GMT generated files as geospatial axis (#5291, qgis/QGIS#47158, qgis/QGIS#45704)
+
+PNG driver:
+ * Internal libpng: fix memleak on corrupted file.
+
+TGA driver:
+ * fix reading images with runs crossing scanlines (#5168)
+
+WMTS driver:
+ * disable clipping with TileMatrixSetLimits by default
+
+## OGR 3.4.2 - Overview of Changes
+
+### OGRSpatialReference
+
+* OGRSpatialReference::SetFromUserInput(): make it work with 'IAU:XXXX'
+
+### Vector drivers
+
+CSV driver:
+ * Fix issues with attribute and geometry fields of same name
+
+FlatGeobuf driver:
+ * If CRS WKT detected to be non UTF-8, force it to ASCII (#5062)
+
+GPKG:
+ * deal explicitly with CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE=YES for /vsi network file systems (#5031)
+ * use ALTER TABLE ... RENAME/DROP COLUMN when possible
+ * when adding a 'epoch' column to gpkg_spatial_ref_sys, one must use the 'gpkg_crs_wkt_1_1' extension instead of 'gpkg_crs_wkt'
+ * add a NOLOCK=YES option to open a file without any lock (for read-only access) (helps fixing qgis/qgis#23991, but requires QGIS changes as well)
+
+MapInfo driver:
+ * .tab writing: correctly detect datum when creating a layer from a WKT2 CRS string (#5217)
+
+PG driver:
+ * ogr2ogr/PG: propagate errors in CommitTransaction() (#5054)
+ * support other geographic SRS than EPSG:4326 for geographic type (#5075)
+
+Shapefile driver:
+ * writer: fix speed issue when writing multilinestring with lots of parts (#5321)
+ * writer: fixes for slightly overlapping parts in a multipolygon, and non-horizontal multipolygon Z (#5315)
+
+SQLite:
+ * deal explicitly with CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE=YES for /vsi network file systems (#5031)
+ * use ALTER TABLE ... RENAME/DROP COLUMN when possible
+ * SQLite SQL dialect: Fix issues with attribute and geometry fields of same name
+ * fix crash when doing select load_extension('libgdal.so') from a statically linked sqlite3 console application
+ * fix VirtualShape support with spatialite 5.0.1 or older and sqlite 3.38.0
+
+## SWIG bindings
+
+CSharp bindings:
+ * Switch default platform target to AnyCPU (#1368)
+
+Python bindings:
+ * utilities-as-lib: propagate warnings to custom error handler when UseExceptions is on (#5136)
+ * make sure GetUseExceptions() doesn't clear the error state (#5374)
+
 # GDAL/OGR 3.4.1 Release Notes
 
 ## Build
