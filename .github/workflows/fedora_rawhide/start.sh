@@ -54,8 +54,8 @@ cd gdal
 ./autogen.sh
 CC='ccache clang' CXX='ccache clang++' LDFLAGS='-lstdc++' ./configure --prefix=/usr --without-libtool --with-python=/usr/bin/python3 --with-poppler --with-spatialite --with-liblzma --with-webp --with-hdf4 --with-hdf5 --with-armadillo
 
-make USER_DEFS=-j$(nproc)
-(cd apps && make USER_DEFS=-j$(nproc) test_ogrsf)
+make -j$(nproc)
+(cd apps && make -j$(nproc) test_ogrsf)
 make install
 ldconfig
 cd "$CURRENT_DIR"
