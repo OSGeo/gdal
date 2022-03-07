@@ -597,14 +597,12 @@ you can modify the above code to open the new dataset with an empty filename and
 metadata domain.
 
 .. code-block:: cpp
-  // ...
+
   // no filename
   poVRTDS = poDriver->CreateCopy( "", poSrcDS, FALSE, NULL, NULL, NULL );
 
   // obtain the actual XML text that a VRT file would contain
   char *xmlvrt poVRTDS->GetMetadata("xml:VRT")[0];
-
-  // ...
 
 To create a virtual copy of a dataset with some attributes added or changed
 such as metadata or coordinate system that are often hard to change on other
