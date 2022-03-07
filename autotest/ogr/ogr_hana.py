@@ -724,6 +724,20 @@ def test_ogr_hana_27():
 
 
 ###############################################################################
+# Test DETECT_GEOMETRY_TYPE open options
+
+def test_ogr_hana_28():
+    ds_with_gt = open_datasource(0, 'DETECT_GEOMETRY_TYPE=YES')
+    layer = ds_with_gt.GetLayerByName('TPOLY')
+    assert layer.GetLayerDefn().GetGeomFieldDefn(0).GetType() == ogr.wkbPolygon, \
+        'Returned wrong geometry type'
+    ds_without_gt = open_datasource(0, 'DETECT_GEOMETRY_TYPE=NO')
+    layer = ds_without_gt.GetLayerByName('TPOLY')
+    assert layer.GetLayerDefn().GetGeomFieldDefn(0).GetType() == ogr.wkbUnknown, \
+        'Returned wrong geometry type'
+
+
+###############################################################################
 #  Create a table from data/poly.shp
 
 def create_tpoly_table(ds, layer_name='TPOLY'):
@@ -836,8 +850,8 @@ def execute_sql_scalar(conn, sql):
     return res
 
 
-def open_datasource(update=0):
-    return ogr.Open('HANA:' + get_connection_str() + ';SCHEMA=' + gdaltest.hana_schema_name, update=update)
+def open_datasource(update=0, open_opts=''):
+    return ogr.Open('HANA:' + get_connection_str() + ';SCHEMA=' + gdaltest.hana_schema_name + ';' + open_opts, update=update)
 
 
 def check_bboxes(actual, expected, max_error=0.001):

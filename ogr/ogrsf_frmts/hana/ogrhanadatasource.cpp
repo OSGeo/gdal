@@ -121,6 +121,8 @@ public:
     static constexpr const char* PACKET_SIZE = "PACKET_SIZE";
     static constexpr const char* SPLIT_BATCH_COMMANDS = "SPLIT_BATCH_COMMANDS";
 
+    static constexpr const char* DETECT_GEOMETRY_TYPE = "DETECT_GEOMETRY_TYPE";
+
     // clang-format off
     static const char* GetList()
     {
@@ -143,6 +145,7 @@ public:
                "  <Option name='CONNECTION_TIMEOUT' type='int' description='Connection timeout measured in milliseconds. Setting this option to 0 disables the timeout'/>"
                "  <Option name='PACKET_SIZE' type='int' description='Sets the maximum size of a request packet sent from the client to the server, in bytes. The minimum is 1 MB.'/>"
                "  <Option name='SPLIT_BATCH_COMMANDS' type='boolean' description='Allows split and parallel execution of batch commands on partitioned tables' default='YES'/>"
+               "  <Option name='DETECT_GEOMETRY_TYPE' type='boolean' description='Specifies whether to detect the type of geometry columns. Note, the detection may take a significant amount of time for large tables' default='YES'/>"
                "</OpenOptionList>";
     }
     // clang-format on
@@ -317,7 +320,9 @@ CPLString GetSrsWktById(odbc::Connection& conn, int srid)
 }
 
 OGRwkbGeometryType GetGeometryType(
-    odbc::Connection& conn, const CPLString& query, const CPLString& columnName)
+    odbc::Connection& conn,
+    const CPLString& query,
+    const CPLString& columnName)
 {
     CPLString clmName = QuotedIdentifier(columnName);
 
@@ -360,17 +365,22 @@ GeometryColumnDescription GetGeometryColumnDescription(
     odbc::Connection& conn,
     const CPLString& schemaName,
     const CPLString& tableName,
-    const CPLString& columnName)
+    const CPLString& columnName,
+    bool detectGeometryType)
 {
-    OGRwkbGeometryType type = GetGeometryType(
-        conn, GetFullTableNameQuoted(schemaName, tableName), columnName);
+    OGRwkbGeometryType type = detectGeometryType ?
+        GetGeometryType(conn, GetFullTableNameQuoted(schemaName, tableName), columnName) :
+        OGRwkbGeometryType::wkbUnknown;
     int srid = GetColumnSrid(conn, schemaName, tableName, columnName);
 
     return {columnName, type, srid, false};
 }
 
 GeometryColumnDescription GetGeometryColumnDescription(
-    odbc::Connection& conn, const CPLString& query, const CPLString& columnName)
+    odbc::Connection& conn,
+    const CPLString& query,
+    const CPLString& columnName,
+    bool detectGeometryType)
 {
     // For some queries like this SELECT ST_GeomFROMWKT('POINT(0 0)') FROM DUMMY
     // we need to have a proper column name.
@@ -406,8 +416,9 @@ GeometryColumnDescription GetGeometryColumnDescription(
         }
     }
 
-    OGRwkbGeometryType type =
-        GetGeometryType(conn, "(" + preparedQuery + ")", clmName);
+    OGRwkbGeometryType type = detectGeometryType ?
+        GetGeometryType(conn, "(" + preparedQuery + ")", clmName) :
+        OGRwkbGeometryType::wkbUnknown;
     int srid = GetColumnSrid(conn, preparedQuery, clmName);
 
     return {columnName, type, srid, false};
@@ -639,6 +650,9 @@ int OGRHanaDataSource::Open(const char* newName, char** options, int update)
     else
         openOptions =
             CSLTokenizeStringComplex(newName + prefixLength, ";", TRUE, FALSE);
+
+    detectGeometryType_ =
+        CPLFetchBool(openOptions, OpenOptionsConstants::DETECT_GEOMETRY_TYPE, "YES");
 
     connEnv_ = odbc::Environment::create();
     conn_ = connEnv_->createConnection();
@@ -1151,10 +1165,10 @@ OGRErr OGRHanaDataSource::GetQueryColumns(
             GeometryColumnDescription geometryColumnDesc;
             if (schemaName.empty() || tableName.empty())
                 geometryColumnDesc =
-                    GetGeometryColumnDescription(*conn_, query, columnName);
+                    GetGeometryColumnDescription(*conn_, query, columnName, detectGeometryType_);
             else
                 geometryColumnDesc = GetGeometryColumnDescription(
-                    *conn_, schemaName, tableName, columnName);
+                    *conn_, schemaName, tableName, columnName, detectGeometryType_);
             geometryColumnDesc.isNullable = rsmd->isNullable(clmIndex);
 
             columDescriptions.push_back(

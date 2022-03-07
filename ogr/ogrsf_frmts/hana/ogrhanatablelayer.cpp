@@ -979,7 +979,7 @@ OGRErr OGRHanaTableLayer::GetGeometryWkb(
 }
 
 /* -------------------------------------------------------------------- */
-/*                            Initialize()                               */
+/*                            Initialize()                              */
 /* -------------------------------------------------------------------- */
 
 OGRErr OGRHanaTableLayer::Initialize(

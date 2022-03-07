@@ -269,6 +269,7 @@ private:
 
     CPLString schemaName_;
     bool updateMode_ = false;
+    bool detectGeometryType_ = true;
     bool isTransactionStarted_ = false;
     std::vector<std::unique_ptr<OGRLayer>> layers_;
     SrsCache srsCache_;
@@ -308,7 +309,9 @@ protected:
     std::vector<CPLString> GetTablePrimaryKeys(
         const char* schemaName, const char* tableName);
 
-    void InitializeLayers(const char* schemaName, const char* tableNames);
+    void InitializeLayers(
+        const char* schemaName,
+        const char* tableNames);
     void CreateSpatialReferenceSystem(
         const OGRSpatialReference& srs,
         const char* authorityName,

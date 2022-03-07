@@ -78,6 +78,9 @@ Dataset Open options
 -  **CONNECTION_TIMEOUT**\ =integer: Connection timeout measured in milliseconds. Setting this option to 0 disables the timeout.
 -  **PACKET_SIZE**\ =integer: Sets the maximum size of a request packet sent from the client to the server, in bytes. The minimum is 1 MB.
 -  **SPLIT_BATCH_COMMANDS**\ =boolean: Allows split and parallel execution of batch commands on partitioned tables.
+-  **DETECT_GEOMETRY_TYPE**\ =boolean: Specifies whether to detect the type of geometry columns. Note, the detection may take a significant amount of time for large tables. The
+default value is "YES".
+
 
 Dataset Creation Options
 ~~~~~~~~~~~~~~~~~~~~~~~~
