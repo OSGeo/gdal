@@ -1588,11 +1588,14 @@ int DIMAPDataset::ReadImageInformation2()
                         if( EQUAL(psTag->pszValue, "BAND_ID") )
                         {
                             // BAND_ID is: B0, B1, .... P
-                            if( !EQUAL(psTag->psChild->pszValue, "P") )
+                            if( strlen(psTag->psChild->pszValue) == 2 && 
+                                psTag->psChild->pszValue[0]=='B')
                             {
-                                if( strlen(psTag->psChild->pszValue) < 2)
+                                nBandIndex =
+                                    atoi(&psTag->psChild->pszValue[1]);
+                                if( nBandIndex < 0 ||
+                                    nBandIndex >= poImageDS->GetRasterCount() )
                                 {
-                                    // Should not happen.
                                     CPLError(
                                         CE_Warning, CPLE_AppDefined,
                                         "Bad BAND_INDEX value : %s",
@@ -1601,21 +1604,7 @@ int DIMAPDataset::ReadImageInformation2()
                                 }
                                 else
                                 {
-                                    nBandIndex =
-                                        atoi(&psTag->psChild->pszValue[1]);
-                                    if( nBandIndex < 0 ||
-                                        nBandIndex >= poImageDS->GetRasterCount() )
-                                    {
-                                        CPLError(
-                                            CE_Warning, CPLE_AppDefined,
-                                            "Bad BAND_INDEX value : %s",
-                                            psTag->psChild->pszValue);
-                                        nBandIndex = 0;
-                                    }
-                                    else
-                                    {
-                                        nBandIndex++;
-                                    }
+                                    nBandIndex++;
                                 }
                             }
                         }
