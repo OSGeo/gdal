@@ -459,7 +459,7 @@ int MRFDataset::Identify(GDALOpenInfo* poOpenInfo)
         return TRUE;
 
 #if defined(LERC) // Could be single LERC tile
-    if (LERC_Band::IsLerc(fn))
+    if (LERC_Band::IsLerc1(fn) || LERC_Band::IsLerc2(fn))
         return TRUE;
 #endif
 
