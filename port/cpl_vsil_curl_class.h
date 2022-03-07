@@ -389,7 +389,7 @@ class VSICurlHandle : public VSIVirtualHandle
     virtual bool IsDirectoryFromExists( const char* /*pszVerb*/, int /*response_code*/ ) { return false; }
     virtual void ProcessGetFileSizeResult(const char* /* pszContent */ ) {}
     void SetURL(const char* pszURL);
-    virtual bool Authenticate() { return false; }
+    virtual bool Authenticate(const char* /* pszFilename */) { return false; }
 
   public:
 

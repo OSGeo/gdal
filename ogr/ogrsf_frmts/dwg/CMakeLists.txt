@@ -23,7 +23,6 @@ else ()
 endif ()
 
 gdal_standard_includes(ogr_DWG_DGNV8)
-target_compile_definitions(ogr_DWG_DGNV8 PRIVATE -DDO_NOT_USE_DEBUG_BOOL)
 target_include_directories(ogr_DWG_DGNV8 PRIVATE $<TARGET_PROPERTY:ogr_DXF,SOURCE_DIR>)
 gdal_target_link_libraries(ogr_DWG_DGNV8 PRIVATE TEIGHA::TEIGHA)
 if (Threads_FOUND)

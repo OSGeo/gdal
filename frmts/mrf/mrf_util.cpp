@@ -536,7 +536,9 @@ void GDALRegister_mrf() {
         "       Z_STRATEGY - Z_HUFFMAN_ONLY | Z_FILTERED | Z_RLE | Z_FIXED: restricts DEFLATE and PNG strategy\n"
 #if defined(LERC)
         "       LERC_PREC - numeric, set LERC precision, defaults to 0.5 for int and 0.001 for float\n"
-        "       V1 - boolean, enable LERC V1 (older) format\n"
+        "       V1 - boolean, use LERC V1 (older) format\n"
+        "       L2_VER - numeric, encode specific version of Lerc, default is library default\n"
+        "                except for single band or INTERLEAVE=BAND, when it defaults to 2\n"
 #endif
         "       OPTIMIZE - boolean, for JPEG, enables Huffman table optimization\n"
 #if defined(BRUNSLI)

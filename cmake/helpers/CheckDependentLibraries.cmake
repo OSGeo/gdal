@@ -372,10 +372,8 @@ gdal_internal_library(QHULL)
 # driver with internal libcsf (if set to ON, has precedence over GDAL_USE_LIBCSF)") endif ()
 set(GDAL_USE_LIBCSF_INTERNAL ON)
 
-option(GDAL_USE_LERCV1_INTERNAL "Set ON to build mrf driver with internal libLERC V1" ON)
-
-# DISABLED_BY_DEFAULT since it prevents MRF Lerc support (see frmts/mrf/CMakeLists.txt)
-gdal_check_package(LERC "Enable LERC (external)" CAN_DISABLE DISABLED_BY_DEFAULT)
+# Compression used by GTiff and MRF
+gdal_check_package(LERC "Enable LERC (external)" CAN_DISABLE)
 gdal_internal_library(LERC)
 
 # Disable by default the use of external shapelib, as currently the SAOffset member that holds file offsets in it is a

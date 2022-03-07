@@ -92,7 +92,7 @@ mkdir mrsid \
 
 # Install FileGDB API SDK
 wget -q https://github.com/Esri/file-geodatabase-api/raw/master/FileGDB_API_1.5.1/FileGDB_API_1_5_1-64gcc51.tar.gz \
-  && tar -xzf FileGDB_API_1_5_1-64gcc51.tar.gz \
+  && tar -xzf FileGDB_API_1_5_1-64gcc51.tar.gz --no-same-owner \
   && chown -R root:root FileGDB_API-64gcc51 \
   && mv FileGDB_API-64gcc51 /usr/local/FileGDB_API \
   && rm -rf /usr/local/FileGDB_API/lib/libstdc++* \

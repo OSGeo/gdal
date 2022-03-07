@@ -48,11 +48,17 @@ ifeq ($(LIBZ_SETTING),internal)
 XTRA_OPT        :=      $(XTRA_OPT) -I../zlib
 endif
 
-# MRF Lerc support only possible for internal LercLib since it requires Lerc2.h
 ifeq ($(HAVE_LERC),internal)
 LERCV1	= LERCV1
 OBJ	:=	$(OBJ) LERC_band.o
-XTRA_OPT	:=	$(XTRA_OPT) -DLERC -I../../third_party/LercLib
+XTRA_OPT	:= -DLERC -I../../third_party/LercLib $(XTRA_OPT)
+SUBLIBS := lib-LERCV1
+endif
+
+ifeq ($(HAVE_LERC),external)
+LERCV1	= LERCV1
+OBJ	:=	$(OBJ) LERC_band.o
+XTRA_OPT	:= -DLERC $(LERC_INCLUDE) $(XTRA_OPT)
 SUBLIBS := lib-LERCV1
 endif
 

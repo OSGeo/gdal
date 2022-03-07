@@ -35,7 +35,7 @@ This program creates regular grid (raster) from the scattered data read from
 the OGR datasource. Input data will be interpolated to fill grid nodes with
 values, you can choose from various interpolation methods.
 
-It is possible to set the ``GDAL_NUM_THREADS``
+It is possible to set the :decl_configoption:`GDAL_NUM_THREADS`
 configuration option to parallelize the processing. The value to specify is
 the number of worker threads, or ``ALL_CPUS`` to use all the cores/CPUs of the
 computer.

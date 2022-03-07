@@ -180,9 +180,11 @@ namespace tut
     void object::test<4>()
     {
         OGRSpatialReference oSRSSource;
+        oSRSSource.SetAxisMappingStrategy(OAMS_AUTHORITY_COMPLIANT);
         oSRSSource.importFromEPSG(4267);
 
         OGRSpatialReference oSRSTarget;
+        oSRSTarget.SetAxisMappingStrategy(OAMS_AUTHORITY_COMPLIANT);
         oSRSTarget.importFromEPSG(4269);
 
         auto poCT = std::unique_ptr<OGRCoordinateTransformation>(

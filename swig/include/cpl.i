@@ -186,6 +186,9 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
 %rename (GetConfigOption) wrapper_CPLGetConfigOption;
 %rename (SetThreadLocalConfigOption) CPLSetThreadLocalConfigOption;
 %rename (GetThreadLocalConfigOption) wrapper_CPLGetThreadLocalConfigOption;
+%rename (SetCredential) VSISetCredential;
+%rename (GetCredential) wrapper_VSIGetCredential;
+%rename (ClearCredentials) wrapper_VSIClearCredentials;
 %rename (CPLBinaryToHex) CPLBinaryToHex;
 %rename (CPLHexToBinary) CPLHexToBinary;
 %rename (FileFromMemBuffer) wrapper_VSIFileFromMemBuffer;
@@ -487,7 +490,27 @@ const char *wrapper_CPLGetThreadLocalConfigOption( const char * pszKey, const ch
     return CPLGetThreadLocalConfigOption( pszKey, pszDefault );
 }
 }
+
+%apply Pointer NONNULL {const char * pszPathPrefix};
+void VSISetCredential( const char* pszPathPrefix, const char * pszKey, const char * pszValue );
+
+%inline {
+const char *wrapper_VSIGetCredential( const char* pszPathPrefix, const char * pszKey, const char * pszDefault = NULL )
+{
+    return VSIGetCredential( pszPathPrefix, pszKey, pszDefault );
+}
+}
+
+%clear const char * pszPathPrefix;
 %clear const char * pszKey;
+
+
+%inline {
+void wrapper_VSIClearCredentials(const char * pszPathPrefix = NULL)
+{
+    VSIClearCredentials( pszPathPrefix );
+}
+}
 
 /* Provide hooks to hex encoding methods */
 #if defined(SWIGJAVA) || defined(SWIGPERL)

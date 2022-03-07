@@ -28,8 +28,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#define DO_NOT_USE_DEBUG_BOOL
-
 #include <string>
 #include <sstream>
 #include <algorithm>
