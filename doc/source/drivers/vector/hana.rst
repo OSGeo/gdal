@@ -61,26 +61,39 @@ Dataset Open options
 ~~~~~~~~~~~~~~~~~~~~
 
 -  **DSN**\ =string: Data source name.
--  **DRIVER**\ =string:  Name or a path to a driver. For example, DRIVER={HDBODBC} (Windows) or DRIVER=/usr/sap/hdbclient/libodbcHDB.so (Linux/MacOS).
+-  **DRIVER**\ =string:  Name or a path to a driver. For example,
+   DRIVER={HDBODBC} (Windows) or DRIVER=/usr/sap/hdbclient/libodbcHDB.so
+   (Linux/MacOS).
 -  **HOST**\ =string: Server host name. 
 -  **PORT**\ =integer: Port number.
 -  **USER**\ =string: User name.
 -  **PASSWORD**\ =string: User password.
 -  **DATABASE**\ =string: Database name.
--  **SCHEMA**\ =string: Specifies schema used for tables listed in TABLES option.
+-  **SCHEMA**\ =string: Specifies schema used for tables listed in TABLES
+   option.
 -  **TABLES**\ =string: Restricted set of tables to list (comma separated).
--  **ENCRYPT**\ =boolean: Enables or disables TLS/SSL encryption.
--  **SSL_CRYPTO_PROVIDER**\ =string: Cryptographic library provider used for SSL communication (commoncrypto| sapcrypto | openssl).
--  **SSL_KEY_STORE**\ =string: Path to the keystore file that contains the server's private key.
--  **SSL_TRUST_STORE**\ =string: Path to trust store file that contains the server's public certificate(s) (OpenSSL only).
--  **SSL_VALIDATE_CERTIFICATE**\ =string: If set to true, the server's certificate is validated.
--  **SSL_HOST_NAME_IN_CERTIFICATE**\ =string: Host name used to verify server's identity validated.
--  **CONNECTION_TIMEOUT**\ =integer: Connection timeout measured in milliseconds. Setting this option to 0 disables the timeout.
--  **PACKET_SIZE**\ =integer: Sets the maximum size of a request packet sent from the client to the server, in bytes. The minimum is 1 MB.
--  **SPLIT_BATCH_COMMANDS**\ =boolean: Allows split and parallel execution of batch commands on partitioned tables.
--  **DETECT_GEOMETRY_TYPE**\ =boolean: Specifies whether to detect the type of geometry columns. Note, the detection may take a significant amount of time for large tables. The
-default value is "YES".
-
+-  **ENCRYPT**\ =boolean: Enables or disables TLS/SSL encryption. The default
+   value is "NO".
+-  **SSL_CRYPTO_PROVIDER**\ =string: Cryptographic library provider used for
+   SSL communication (commoncrypto| sapcrypto | openssl).
+-  **SSL_KEY_STORE**\ =string: Path to the keystore file that contains the
+   server's private key.
+-  **SSL_TRUST_STORE**\ =string: Path to trust store file that contains the
+   server's public certificate(s) (OpenSSL only).
+-  **SSL_VALIDATE_CERTIFICATE**\ =string: If set to true, the server's
+   certificate is validated. The default value is "YES".
+-  **SSL_HOST_NAME_IN_CERTIFICATE**\ =string: Host name used to verify server's
+   identity validated.
+-  **CONNECTION_TIMEOUT**\ =integer: Connection timeout measured in
+   milliseconds. The default value is 0 (disabled).
+-  **PACKET_SIZE**\ =integer: Sets the maximum size of a request packet sent
+   from the client to the server, in bytes. The minimum is 1 MB. The default
+   value is 1 MB.
+-  **SPLIT_BATCH_COMMANDS**\ =boolean: Allows split and parallel execution of
+   batch commands on partitioned tables. The default value is "YES".
+-  **DETECT_GEOMETRY_TYPE**\ =boolean: Specifies whether to detect the type of
+   geometry columns. Note, the detection may take a significant amount of time
+   for large tables. The default value is "YES".
 
 Dataset Creation Options
 ~~~~~~~~~~~~~~~~~~~~~~~~
