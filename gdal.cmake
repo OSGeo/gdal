@@ -314,9 +314,10 @@ if (GDAL_ENABLE_MACOSX_FRAMEWORK)
       "Library/Frameworks"
       CACHE STRING "Framework destination sub-directory")
   set(FRAMEWORK_SUBDIR "${FRAMEWORK_DESTINATION}/gdal.framework/Versions/${FRAMEWORK_VERSION}")
-  set(INSTALL_PLUGIN_DIR
+  set(INSTALL_PLUGIN_DIR_BASE
       "${FRAMEWORK_SUBDIR}/PlugIns"
       CACHE PATH "Installation sub-directory for plugins")
+  set(INSTALL_PLUGIN_DIR ${INSTALL_PLUGIN_DIR_BASE})
   set(CMAKE_INSTALL_BINDIR
       "bin"
       CACHE STRING "Installation sub-directory for executables")
@@ -345,13 +346,16 @@ if (GDAL_ENABLE_MACOSX_FRAMEWORK)
     )
 else ()
   include(GNUInstallDirs)
+  set(INSTALL_PLUGIN_DIR_BASE
+      "lib/gdalplugins"
+      CACHE PATH "Sub-directory where plugins are looked for, as well as in INSTALL_PLUGIN_DIR_BASE")
   set(INSTALL_PLUGIN_DIR
-      "lib/gdalplugins/${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}"
+      "${INSTALL_PLUGIN_DIR_BASE}/${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}"
       CACHE PATH "Installation sub-directory for plugins")
   set(GDAL_RESOURCE_PATH ${CMAKE_INSTALL_DATADIR}/gdal)
 endif ()
 
-set(INSTALL_PLUGIN_FULL_DIR "${CMAKE_INSTALL_PREFIX}/${INSTALL_PLUGIN_DIR}")
+set(INSTALL_PLUGIN_DIR_BASE_FULL "${CMAKE_INSTALL_PREFIX}/${INSTALL_PLUGIN_DIR_BASE}")
 
 # Configure internal libraries
 if (GDAL_USE_ZLIB_INTERNAL)
