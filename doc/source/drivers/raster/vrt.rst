@@ -592,7 +592,7 @@ words, in the previous example, you could also invert the 2 last lines, whereas
 if you open the source dataset with :cpp:func:`GDALOpen`, you'd need to close the VRT dataset
 before closing the source dataset.
 
-To obtain the resulting VRT XML of "wrk.vrt" without having to read the text from an actual file,
+To obtain the resulting VRT XML of :file:`wrk.vrt` without having to read the text from an actual file,
 you can modify the above code to open the new dataset with an empty filename and use the "xml:VRT"
 metadata domain.
 
