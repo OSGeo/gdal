@@ -4,7 +4,11 @@
 option(ENABLE_GNM "Build GNM (Geography Network Model) component" ON)
 option(ENABLE_PAM "Set ON to enable Persistent Auxiliary Metadata (.aux.xml)" ON)
 option(BUILD_APPS "Build command line utilities" ON)
-option(BUILD_DOCS "Build documentation" ON)
+if (NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
+  # In-tree builds do not support Doc building because Sphinx requires (at least
+  # at first sight) a Makefile file which conflicts with the CMake generated one
+  option(BUILD_DOCS "Build documentation" ON)
+endif()
 
 # This option is to build drivers as plugins, for drivers that have external dependencies, that are not parf of GDAL
 # core dependencies Examples are netCDF, HDF4, Oracle, PDF, etc. This global setting can be overridden at the driver
@@ -775,5 +779,9 @@ if (NOT _isMultiConfig
       "CMAKE_BUILD_TYPE is not defined and CMAKE_C_FLAGS='${CMAKE_C_FLAGS}' and/or CMAKE_CXX_FLAGS='${CMAKE_CXX_FLAGS}' do not contain optimizing flags. Do not use in production! Using -DCMAKE_BUILD_TYPE=Release is suggested."
     )
 endif ()
+
+if ("${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
+  message(WARNING "In-tree builds, that is running cmake from the top of the source tree are not recommended. You are advised instead to 'mkdir build; cd build; cmake ..'. Using 'make' with the Makefile generator will not work, as it will try the GNUmakefile of autoconf builds. Use 'make -f Makefile' instead.")
+endif()
 
 # vim: ts=4 sw=4 sts=4 et
