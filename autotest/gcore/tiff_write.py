@@ -1255,55 +1255,24 @@ def test_tiff_write_34():
     gdaltest.tiff_drv.Delete('tmp/tw_34.tif')
 
 ###############################################################################
-# Test fallback from internal storage of Geotiff metadata to PAM storage
-# when metadata is too big to fit into the GDALGeotiff tag
+# Test big metadata (that was used to consider too big to fit into the GDALGeotiff tag
+# before GDAL 3.4.2)
 
 
 def test_tiff_write_35():
 
-    # I've no idea why this works, and why this rolled in a
-    # loop doesn't work... Python gurus please fix that !
-    big_string = 'a'
-    big_string = big_string + big_string
-    big_string = big_string + big_string
-    big_string = big_string + big_string
-    big_string = big_string + big_string
-    big_string = big_string + big_string
-    big_string = big_string + big_string
-    big_string = big_string + big_string
-    big_string = big_string + big_string
-    big_string = big_string + big_string
-    big_string = big_string + big_string
-    big_string = big_string + big_string
-    big_string = big_string + big_string
-    big_string = big_string + big_string
-    big_string = big_string + big_string
-    big_string = big_string + big_string
-
+    big_string = 'a' * 12345678
     ds = gdaltest.tiff_drv.Create('tmp/tw_35.tif', 1, 1, gdal.GDT_Byte)
 
     md = {}
     md['test'] = big_string
     ds.SetMetadata(md)
-
-    md = ds.GetMetadata()
-
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = None
-    gdal.PopErrorHandler()
 
-    try:
-        os.stat('tmp/tw_35.tif.aux.xml')
-    except OSError:
-        pytest.fail('No .aux.xml file.')
+    assert not os.path.exists('tmp/tw_35.tif.aux.xml')
 
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = gdal.Open('tmp/tw_35.tif')
-    gdal.PopErrorHandler()
-
-    md = ds.GetMetadata()
-    assert 'test' in md and len(md['test']) == 32768, 'Did not get expected metadata.'
-
+    assert ds.GetMetadataItem('test') == big_string
     ds = None
 
     gdaltest.tiff_drv.Delete('tmp/tw_35.tif')
