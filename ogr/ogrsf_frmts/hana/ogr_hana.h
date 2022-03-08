@@ -314,10 +314,11 @@ protected:
         const char* tableNames);
     void CreateSpatialReferenceSystem(
         const OGRSpatialReference& srs,
+        int srid,
         const char* authorityName,
         int authorityCode,
-        const char* wkt,
-        const char* proj4);
+        const CPLString& wkt,
+        const CPLString& proj4);
 
     bool IsTransactionStarted() const { return isTransactionStarted_; }
 

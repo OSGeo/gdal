@@ -897,9 +897,7 @@ OGRSpatialReference* OGRHanaDataSource::GetSrsById(int srid)
     if (srid < 0)
         return nullptr;
 
-    SrsCache::const_iterator it = find_if(
-        srsCache_.begin(), srsCache_.end(),
-        [&](const SrsCache::value_type& kv) { return kv.first == srid; });
+    auto it = srsCache_.find(srid);
     if (it != srsCache_.end())
         return it->second;
 
@@ -910,9 +908,6 @@ OGRSpatialReference* OGRHanaDataSource::GetSrsById(int srid)
     {
         srs = cpl::make_unique<OGRSpatialReference>();
         OGRErr err = srs->importFromWkt(wkt.c_str());
-        if (OGRERR_NONE != err)
-            err = srs->importFromEPSG(srid);
-
         if (OGRERR_NONE != err)
             srs.reset(nullptr);
     }
@@ -929,7 +924,7 @@ OGRSpatialReference* OGRHanaDataSource::GetSrsById(int srid)
 int OGRHanaDataSource::GetSrsId(OGRSpatialReference* srs)
 {
     if (srs == nullptr)
-        return -1;
+        return UNDETERMINED_SRID;
 
     /* -------------------------------------------------------------------- */
     /*      Try to find srs id using authority name and code (EPSG:3857).   */
@@ -953,15 +948,18 @@ int OGRHanaDataSource::GetSrsId(OGRSpatialReference* srs)
     }
 
     int authorityCode = 0;
-    if (authorityName != nullptr && EQUAL(authorityName, "EPSG"))
+    if (authorityName != nullptr)
     {
         authorityCode = atoi(srsLocal.GetAuthorityCode(nullptr));
-        int ret = GetSridWithFilter(
-            *conn_, CPLString().Printf(
-                        "SRS_ID = %d AND ORGANIZATION = '%s'", authorityCode,
-                        authorityName));
-        if (ret != -1)
-            return ret;
+        if (authorityCode > 0)
+        {
+            int ret = GetSridWithFilter(
+                *conn_, CPLString().Printf(
+                            "SRS_ID = %d AND ORGANIZATION = '%s'", authorityCode,
+                            authorityName));
+            if (ret != UNDETERMINED_SRID)
+                return ret;
+        }
     }
 
     /* -------------------------------------------------------------------- */
@@ -974,12 +972,12 @@ int OGRHanaDataSource::GetSrsId(OGRSpatialReference* srs)
     CPLFree(wkt);
 
     if (OGRERR_NONE != err)
-        return -1;
+        return UNDETERMINED_SRID;
 
-    int ret = GetSridWithFilter(
+    int srid = GetSridWithFilter(
         *conn_, CPLString().Printf("DEFINITION = '%s'", strWkt.c_str()));
-    if (ret != -1)
-        return ret;
+    if (srid != UNDETERMINED_SRID)
+        return srid;
 
     /* -------------------------------------------------------------------- */
     /*      Try to add a new spatial reference system to the database       */
@@ -991,14 +989,32 @@ int OGRHanaDataSource::GetSrsId(OGRSpatialReference* srs)
     CPLFree(proj4);
 
     if (OGRERR_NONE != err)
-        return -1;
+        return srid;
+
+    if (authorityName != nullptr && authorityCode > 0)
+    {
+        srid = authorityCode;
+    }
+    else
+    {
+        odbc::StatementRef stmt = conn_->createStatement();
+        const char* sql = "SELECT MAX(SRS_ID) FROM SYS.ST_SPATIAL_REFERENCE_SYSTEMS WHERE SRS_ID >= 10000000 AND SRS_ID < 20000000";
+        odbc::ResultSetRef rsSrid = stmt->executeQuery(sql);
+        while (rsSrid->next())
+        {
+            odbc::Int val = rsSrid->getInt(1);
+            srid = val.isNull() ? 10000000 : *val + 1;
+        }
+        rsSrid->close();
+    }
 
     try
     {
         CreateSpatialReferenceSystem(
-            srsLocal, authorityName, authorityCode, strWkt.c_str(),
-            strProj4.c_str());
-        return authorityCode;
+            srsLocal, srid,
+            authorityName, authorityCode,
+            strWkt, strProj4);
+        return srid;
     }
     catch (const odbc::Exception& ex)
     {
@@ -1007,7 +1023,7 @@ int OGRHanaDataSource::GetSrsId(OGRSpatialReference* srs)
             "Unable to create an SRS in the database: %s.\n", ex.what());
     }
 
-    return -1;
+    return UNDETERMINED_SRID;
 }
 
 /************************************************************************/
@@ -1290,16 +1306,17 @@ void OGRHanaDataSource::InitializeLayers(
 
 void OGRHanaDataSource::CreateSpatialReferenceSystem(
     const OGRSpatialReference& srs,
+    int srid,
     const char* authorityName,
     int authorityCode,
-    const char* wkt,
-    const char* proj4)
+    const CPLString& wkt,
+    const CPLString& proj4)
 {
     CPLString refName(
         (srs.IsProjected()) ? srs.GetAttrValue("PROJCS")
                             : srs.GetAttrValue("GEOGCS"));
-    if (refName.empty())
-        refName = "OGR_PROJECTION_" + std::to_string(authorityCode);
+    if (refName.empty() || EQUAL(refName.c_str(), "UNKNOWN"))
+        refName = "OGR_PROJECTION_" + std::to_string(srid);
 
     OGRErr err = OGRERR_NONE;
     CPLString ellipsoidParams;
@@ -1314,15 +1331,65 @@ void OGRHanaDataSource::CreateSpatialReferenceSystem(
     else
         ellipsoidParams += " SEMI MINOR AXIS " + std::to_string(semiMinor);
 
-    CPLString sqlCmd =
-        "CREATE SPATIAL REFERENCE SYSTEM " + QuotedIdentifier(refName)
-        + " IDENTIFIED BY " + std::to_string(authorityCode) + " TYPE "
-        + (srs.IsGeographic() ? "ROUND EARTH" : "PLANAR")
-        + (ellipsoidParams.empty() ? "" : " ELLIPSOID" + ellipsoidParams)
-        + " ORGANIZATION " + authorityName + " IDENTIFIED BY "
-        + std::to_string(authorityCode) + " DEFINITION " + Literal(wkt)
-        + " TRANSFORM DEFINITION " + Literal(proj4);
-    ExecuteSQL(sqlCmd.c_str());
+    const char *linearUnits = nullptr;
+    srs.GetLinearUnits(&linearUnits);
+    const char *angularUnits = nullptr;
+    srs.GetAngularUnits(&angularUnits);
+
+    CPLString xRange, yRange;
+    double dfWestLongitudeDeg, dfSouthLatitudeDeg,
+            dfEastLongitudeDeg, dfNorthLatitudeDeg;
+    if (srs.GetAreaOfUse(&dfWestLongitudeDeg, &dfSouthLatitudeDeg,
+            &dfEastLongitudeDeg, &dfNorthLatitudeDeg, nullptr))
+    {
+        xRange = CPLString().Printf("%s BETWEEN %f AND %f",
+            srs.IsGeographic() ? "LONGITUDE" : "X",
+            dfWestLongitudeDeg, dfEastLongitudeDeg);
+        yRange = CPLString().Printf("%s BETWEEN %f AND %f",
+            srs.IsGeographic() ? "LATITUDE" : "Y",
+            dfSouthLatitudeDeg, dfNorthLatitudeDeg);
+    }
+    else
+    {
+        xRange = CPLString().Printf("%s UNBOUNDED",
+            srs.IsGeographic() ? "LONGITUDE" : "X");
+        yRange = CPLString().Printf("%s UNBOUNDED ",
+            srs.IsGeographic() ? "LATITUDE" : "Y");
+    }
+
+    CPLString organization;
+    if (authorityName != nullptr && authorityCode > 0)
+    {
+        organization = CPLString().Printf(
+            "ORGANIZATION %s IDENTIFIED BY %d",
+            QuotedIdentifier(authorityName).c_str(),
+            authorityCode);
+    }
+
+    CPLString sql = CPLString().Printf(
+        "CREATE SPATIAL REFERENCE SYSTEM %s "
+        "IDENTIFIED BY %d "
+        "TYPE %s "
+        "LINEAR UNIT OF MEASURE %s "
+        "ANGULAR UNIT OF MEASURE %s "
+        "%s " // ELLIPSOID
+        "COORDINATE %s "
+        "COORDINATE %s "
+        "%s " // ORGANIZATION
+        "DEFINITION %s "
+        "TRANSFORM DEFINITION %s",
+        QuotedIdentifier(refName).c_str(),
+        srid,
+        srs.IsGeographic() ? "ROUND EARTH" : "PLANAR",
+        QuotedIdentifier((linearUnits == nullptr || EQUAL(linearUnits, "unknown")) ? "metre" : linearUnits).tolower().c_str(),
+        QuotedIdentifier((angularUnits == nullptr || EQUAL(angularUnits, "unknown")) ? "degree" : angularUnits).tolower().c_str(),
+        (ellipsoidParams.empty() ? "" : ("ELLIPSOID" + ellipsoidParams).c_str()),
+        xRange.c_str(), yRange.c_str(),
+        organization.c_str(),
+        Literal(wkt).c_str(),
+        Literal(proj4).c_str());
+
+    ExecuteSQL(sql.c_str());
 }
 
 /************************************************************************/
