@@ -57,6 +57,9 @@ COG driver:
  * output exactly square pixels when using -co TILING_SCHEME (#5343)
  * and emit warning messages when using RES or EXTENT options in that mode.
 
+DIMAP driver:
+ * register metadata on all 6 PNEO bands (#5420)
+
 ECW driver:
  * fix non-nearest upsampling on multi-band datasets (#5288)
 
@@ -71,6 +74,7 @@ GTiff driver:
  * Updates for IJG libjpeg-9e
  * GTIFWktFromMemBufEx / GTIFMemBufFromSRS: use OSRSetPROJSearchPaths() (#5187). Affects GeoJP2 encoding/decoding
  * fix exposing WEBP_LOSSLESS option
+ * remove limitation to 32,000 bytes when writing the GDAL metadata tag (#4116)
 
 GRIB driver:
  * fix write heap-buffer-overflow when using 'split and swap column' mode when the split column is not equal to width / 2 (#5290)
