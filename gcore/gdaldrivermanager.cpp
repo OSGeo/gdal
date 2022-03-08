@@ -716,9 +716,9 @@ char** GDALDriverManager::GetSearchPaths(const char* pszGDAL_DRIVER_PATH)
     }
     else
     {
-#ifdef INSTALL_PLUGIN_DIR_BASE_FULL
+#ifdef INSTALL_PLUGIN_FULL_DIR
         // CMake way
-        papszSearchPaths = CSLAddString( papszSearchPaths, INSTALL_PLUGIN_DIR_BASE_FULL);
+        papszSearchPaths = CSLAddString( papszSearchPaths, INSTALL_PLUGIN_FULL_DIR);
 #elif defined(GDAL_PREFIX)
         papszSearchPaths = CSLAddString( papszSearchPaths,
     #ifdef MACOSX_FRAMEWORK
