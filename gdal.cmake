@@ -197,13 +197,14 @@ endif ()
 
 set(_CMAKE_C_FLAGS_backup ${CMAKE_C_FLAGS})
 set(_CMAKE_CXX_FLAGS_backup ${CMAKE_CXX_FLAGS})
+
 if (CMAKE_C_FLAGS)
-  string(REPLACE "-Werror" " " CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
-  string(REPLACE "/WX" " " CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
+  string(REPLACE "-Werror " " " CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ")
+  string(REPLACE "/WX " " " CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ")
 endif ()
 if (CMAKE_CXX_FLAGS)
-  string(REPLACE "-Werror" " " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-  string(REPLACE "/WX" " " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+  string(REPLACE "-Werror " " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ")
+  string(REPLACE "/WX " " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ")
 endif ()
 include(configure)
 
