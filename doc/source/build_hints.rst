@@ -1969,3 +1969,10 @@ From a Conda enabled console
         cd c:\dev\GDAL
         cd _build.vs2019
         ctest -V --build-config Release
+
+Cross-compiling for Android
++++++++++++++++++++++++++++
+
+First refer to https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html#cross-compiling-for-android
+and to https://github.com/OSGeo/gdal/blob/master/.github/workflows/android_cmake/start.sh for
+an example of a build script to cross-compile from Ubuntu.
