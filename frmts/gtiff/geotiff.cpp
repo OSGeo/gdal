@@ -12285,37 +12285,7 @@ bool GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *l_hTIFF,
         if( eProfile == GTiffProfile::GDALGEOTIFF )
         {
             char *pszXML_MD = CPLSerializeXMLTree( psRoot );
-            if( strlen(pszXML_MD) > 32000 )
-            {
-                if( bSrcIsGeoTIFF )
-                {
-                    if( cpl::down_cast<GTiffDataset *>(
-                           poSrcDS)->GetPamFlags() & GPF_DISABLED )
-                    {
-                        ReportError(
-                            pszTIFFFilename, CE_Warning, CPLE_AppDefined,
-                            "Metadata exceeding 32000 bytes cannot be written "
-                            "into GeoTIFF." );
-                    }
-                    else
-                    {
-                        cpl::down_cast<GTiffDataset *>(poSrcDS)->
-                            PushMetadataToPam();
-                        ReportError(
-                            pszTIFFFilename, CE_Warning, CPLE_AppDefined,
-                            "Metadata exceeding 32000 bytes cannot be written "
-                            "into GeoTIFF. Transferred to PAM instead." );
-                    }
-                }
-                else
-                {
-                    bRet = false;
-                }
-            }
-            else
-            {
-                TIFFSetField( l_hTIFF, TIFFTAG_GDAL_METADATA, pszXML_MD );
-            }
+            TIFFSetField( l_hTIFF, TIFFTAG_GDAL_METADATA, pszXML_MD );
             CPLFree( pszXML_MD );
         }
         else
