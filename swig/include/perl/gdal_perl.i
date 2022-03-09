@@ -481,6 +481,9 @@ sub DataTypeValueRange {
     return (-2147483648,2147483647) if $t =~/Int32/;
     return (-4294967295.0,4294967295.0) if $t =~/Float32/;
     return (-4294967295.0,4294967295.0) if $t =~/Float64/;
+    return (-4294967295.0,4294967295.0) if $t =~/Float32/;
+    return (-9223372036854775808,9223372036854775807) if $t =~/Int64/;
+    return (0,18446744073709551615) if $t =~/UInt64/;
 }
 
 sub DataTypeIsComplex {

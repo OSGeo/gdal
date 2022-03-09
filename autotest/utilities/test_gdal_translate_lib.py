@@ -207,6 +207,36 @@ def test_gdal_translate_lib_9():
     ds = None
 
 ###############################################################################
+# Test nodata option
+
+
+def test_gdal_translate_lib_nodata_uint64():
+
+    ds = gdal.Open('../gcore/data/byte.tif')
+    noData = (1 << 64) - 1
+    ds = gdal.Translate('', ds, format = 'MEM', outputType = gdal.GDT_UInt64, noData=noData)
+    assert ds is not None
+
+    assert ds.GetRasterBand(1).GetNoDataValue() == noData, 'Bad nodata value'
+
+    ds = None
+
+###############################################################################
+# Test nodata option
+
+
+def test_gdal_translate_lib_nodata_int64():
+
+    ds = gdal.Open('../gcore/data/byte.tif')
+    noData = -(1 << 63)
+    ds = gdal.Translate('', ds, format = 'MEM', outputType = gdal.GDT_Int64, noData=noData)
+    assert ds is not None
+
+    assert ds.GetRasterBand(1).GetNoDataValue() == noData, 'Bad nodata value'
+
+    ds = None
+
+###############################################################################
 # Test srcWin option
 
 

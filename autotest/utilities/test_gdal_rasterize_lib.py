@@ -402,3 +402,26 @@ def test_gdal_rasterize_lib_inverse():
                 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
                 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,)
     assert struct.unpack('B'* 121, target_ds.ReadRaster()) == expected
+
+
+###############################################################################
+# Test rasterization of a 64 bit integer attribute
+
+
+def test_gdal_rasterize_lib_int64_attribute():
+
+    # Try rasterizing a multipolygon
+    vector_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
+    layer = vector_ds.CreateLayer('')
+    layer.CreateField(ogr.FieldDefn('val', ogr.OFTInteger64))
+
+    feature = ogr.Feature(layer.GetLayerDefn())
+    feature.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POLYGON ((0 0,0 1,1 1,1 0,0 0))'))
+    val = (1 << 63) - 1 # not exactly representable as a double
+    feature['val'] = val
+    layer.CreateFeature(feature)
+
+    target_ds = gdal.Rasterize('', vector_ds, format='MEM', attribute='val', width=2, height=2)
+    assert target_ds is not None
+    assert target_ds.GetRasterBand(1).DataType == gdal.GDT_Int64
+    assert struct.unpack('Q'* 4, target_ds.ReadRaster())[0] == val

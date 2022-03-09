@@ -199,8 +199,8 @@ def test_netcdf_multidim_var_alldatatypes():
                       ('short_var', gdal.GDT_Int16, (-32768, -32767)),
                       ('uint_var', gdal.GDT_UInt32, (4294967294, 4294967293)),
                       ('int_var', gdal.GDT_Int32, (-2147483648, -2147483647)),
-                      ('uint64_var', gdal.GDT_Float64, (1.8446744073709552e+19, 1.8446744073709552e+19)),
-                      ('int64_var', gdal.GDT_Float64, (-9.223372036854776e+18, -9.223372036854776e+18)),
+                      ('uint64_var', gdal.GDT_UInt64, (18446744073709551613, 18446744073709551612)),
+                      ('int64_var', gdal.GDT_Int64, (-9223372036854775808, -9223372036854775807)),
                       ('float_var', gdal.GDT_Float32, (1.25, 2.25)),
                       ('double_var', gdal.GDT_Float64, (1.25125, 2.25125)),
                       ('complex_int16_var', gdal.GDT_CInt16, (-32768, -32767, -32766, -32765)),
@@ -223,6 +223,10 @@ def test_netcdf_multidim_var_alldatatypes():
             assert struct.unpack('I' * len(val), var.Read()) == val
         if dt == gdal.GDT_Int32:
             assert struct.unpack('i' * len(val), var.Read()) == val
+        if dt == gdal.GDT_UInt64:
+            assert struct.unpack('Q' * len(val), var.Read()) == val
+        if dt == gdal.GDT_Int64:
+            assert struct.unpack('q' * len(val), var.Read()) == val
         if dt == gdal.GDT_Float32:
             assert struct.unpack('f' * len(val), var.Read()) == val
         if dt == gdal.GDT_Float64:
@@ -799,8 +803,11 @@ def test_netcdf_multidim_create_nc4():
 
         dims_from_non_netcdf(rg)
 
-        for dt in (gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
-                   gdal.GDT_Int32, gdal.GDT_UInt32, gdal.GDT_Float32,
+        for dt in (gdal.GDT_Byte,
+                   gdal.GDT_Int16, gdal.GDT_UInt16,
+                   gdal.GDT_Int32, gdal.GDT_UInt32,
+                   gdal.GDT_Int64, gdal.GDT_UInt64,
+                   gdal.GDT_Float32,
                    gdal.GDT_Float64, gdal.GDT_CInt16, gdal.GDT_CInt32,
                    gdal.GDT_CFloat32, gdal.GDT_CFloat64):
 
@@ -839,15 +846,15 @@ def test_netcdf_multidim_create_nc4():
 
         var = rg.CreateMDArray('var_as_nc_int64', [],
                 gdal.ExtendedDataType.Create(gdal.GDT_Float64), ['NC_TYPE=NC_INT64'])
-        assert var.GetDataType().GetNumericDataType() == gdal.GDT_Float64
-        assert var.Write(struct.pack('d', -1234567890123)) == gdal.CE_None
-        assert struct.unpack('d', var.Read()) == (-1234567890123, )
+        assert var.GetDataType().GetNumericDataType() == gdal.GDT_Int64
+        assert var.Write(struct.pack('q', -1234567890123)) == gdal.CE_None
+        assert struct.unpack('q', var.Read()) == (-1234567890123, )
 
         var = rg.CreateMDArray('var_as_nc_uint64', [],
                 gdal.ExtendedDataType.Create(gdal.GDT_Float64), ['NC_TYPE=NC_UINT64'])
-        assert var.GetDataType().GetNumericDataType() == gdal.GDT_Float64
-        assert var.Write(struct.pack('d', 1234567890123)) == gdal.CE_None
-        assert struct.unpack('d', var.Read()) == (1234567890123, )
+        assert var.GetDataType().GetNumericDataType() == gdal.GDT_UInt64
+        assert var.Write(struct.pack('Q', 1234567890123)) == gdal.CE_None
+        assert struct.unpack('Q', var.Read()) == (1234567890123, )
 
         # Test creation of compound data type
         comp0 = gdal.EDTComponent.Create('x', 0, gdal.ExtendedDataType.Create(gdal.GDT_Int16))

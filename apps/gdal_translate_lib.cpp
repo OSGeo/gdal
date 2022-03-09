@@ -212,7 +212,7 @@ struct GDALTranslateOptions
         specified SRS. */
     double adfULLR[4];
 
-    /*! set a nodata value specified in GDALTranslateOptions::dfNoDataReal to the output bands */
+    /*! set a nodata value specified in GDALTranslateOptions::szNoData to the output bands */
     bool bSetNoData;
 
     /*! avoid setting a nodata value to the output file if one exists for the source file */
@@ -221,7 +221,7 @@ struct GDALTranslateOptions
     /*! Assign a specified nodata value to output bands ( GDALTranslateOptions::bSetNoData option
         should be set). Note that if the input dataset has a nodata value, this does not cause
         pixel values that are equal to that nodata value to be changed to the value specified. */
-    double dfNoDataReal;
+    char szNoData[32];
 
     /*! to expose a dataset with 1 band with a color table as a dataset with
         3 (RGB) or 4 (RGBA) bands. Useful for output drivers such as JPEG,
@@ -1783,39 +1783,53 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
                                 !GDALDataTypeIsComplex(eBandType));
                 if( bSrcIsInteger && bDstIsInteger )
                 {
-                    GInt32 nDstMin = 0;
-                    GUInt32 nDstMax = 0;
+                    std::int64_t nDstMin = 0;
+                    std::uint64_t nDstMax = 0;
                     switch( eBandType )
                     {
                         case GDT_Byte:
-                            nDstMin = 0;
-                            nDstMax = 255;
+                            nDstMin = std::numeric_limits<std::uint8_t>::min();
+                            nDstMax = std::numeric_limits<std::uint8_t>::max();
                             break;
                         case GDT_UInt16:
-                            nDstMin = 0;
-                            nDstMax = 65535;
+                            nDstMin = std::numeric_limits<std::uint16_t>::min();
+                            nDstMax = std::numeric_limits<std::uint16_t>::max();
                             break;
                         case GDT_Int16:
-                            nDstMin = -32768;
-                            nDstMax = 32767;
+                            nDstMin = std::numeric_limits<std::int16_t>::min();
+                            nDstMax = std::numeric_limits<std::int16_t>::max();
                             break;
                         case GDT_UInt32:
-                            nDstMin = 0;
-                            nDstMax = 0xFFFFFFFFU;
+                            nDstMin = std::numeric_limits<std::uint32_t>::min();
+                            nDstMax = std::numeric_limits<std::uint32_t>::max();
                             break;
                         case GDT_Int32:
-                            nDstMin = 0x80000000;
-                            nDstMax = 0x7FFFFFFF;
+                            nDstMin = std::numeric_limits<std::int32_t>::min();
+                            nDstMax = std::numeric_limits<std::int32_t>::max();
+                            break;
+                        case GDT_UInt64:
+                            nDstMin = std::numeric_limits<std::uint64_t>::min();
+                            nDstMax = std::numeric_limits<std::uint64_t>::max();
+                            break;
+                        case GDT_Int64:
+                            nDstMin = std::numeric_limits<std::int64_t>::min();
+                            nDstMax = std::numeric_limits<std::int64_t>::max();
                             break;
                         default:
                             CPLAssert(false);
                             break;
                     }
 
-                    GInt32 nMin = atoi(pszMin);
-                    GUInt32 nMax = static_cast<GUInt32>(strtoul(pszMax, nullptr, 10));
-                    if( nMin < nDstMin || nMax > nDstMax )
-                        bFilterOutStatsMetadata = true;
+                    try
+                    {
+                        const auto nMin = std::stoll(pszMin);
+                        const auto nMax = std::stoull(pszMax);
+                        if( nMin < nDstMin || nMax > nDstMax )
+                            bFilterOutStatsMetadata = true;
+                    }
+                    catch( const std::exception& )
+                    {
+                    }
                 }
                 // Float64 is large enough to hold all integer <= 32 bit or float32 values
                 // there might be other OK cases, but ere on safe side for now
@@ -2071,9 +2085,84 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 /* -------------------------------------------------------------------- */
         if( psOptions->bSetNoData )
         {
-            const double dfVal = AdjustNoDataValue(
-                psOptions->dfNoDataReal, poVRTBand, psOptions);
-            poVRTBand->SetNoDataValue( dfVal );
+            if( poVRTBand->GetRasterDataType() == GDT_Int64 )
+            {
+                if( strchr(psOptions->szNoData, '.') ||
+                    CPLGetValueType(psOptions->szNoData) == CPL_VALUE_STRING )
+                {
+                    const double dfNoData = CPLAtof(psOptions->szNoData);
+                    if( dfNoData >= static_cast<double>(std::numeric_limits<int64_t>::min()) &&
+                        dfNoData <= static_cast<double>(std::numeric_limits<int64_t>::max()) &&
+                        dfNoData == static_cast<double>(static_cast<int64_t>(dfNoData)) )
+                    {
+                        poVRTBand->SetNoDataValueAsInt64(
+                            static_cast<int64_t>(dfNoData));
+                    }
+                    else
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Cannot set nodata value %s on a Int64 band",
+                                 psOptions->szNoData);
+                    }
+                }
+                else
+                {
+                    errno = 0;
+                    const auto val = std::strtoll(psOptions->szNoData, nullptr, 10);
+                    if( errno == 0 )
+                    {
+                        poVRTBand->SetNoDataValueAsInt64(static_cast<int64_t>(val));
+                    }
+                    else
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Cannot set nodata value %s on a Int64 band",
+                                 psOptions->szNoData);
+                    }
+                }
+            }
+            else if( poVRTBand->GetRasterDataType() == GDT_UInt64 )
+            {
+                if( strchr(psOptions->szNoData, '.') ||
+                    CPLGetValueType(psOptions->szNoData) == CPL_VALUE_STRING )
+                {
+                    const double dfNoData = CPLAtof(psOptions->szNoData);
+                    if( dfNoData >= static_cast<double>(std::numeric_limits<uint64_t>::min()) &&
+                        dfNoData <= static_cast<double>(std::numeric_limits<uint64_t>::max()) &&
+                        dfNoData == static_cast<double>(static_cast<uint64_t>(dfNoData)) )
+                    {
+                        poVRTBand->SetNoDataValueAsUInt64(
+                            static_cast<uint64_t>(dfNoData));
+                    }
+                    else
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Cannot set nodata value %s on a UInt64 band",
+                                 psOptions->szNoData);
+                    }
+                }
+                else
+                {
+                    errno = 0;
+                    const auto val = std::strtoull(psOptions->szNoData, nullptr, 10);
+                    if( errno == 0 )
+                    {
+                        poVRTBand->SetNoDataValueAsUInt64(static_cast<uint64_t>(val));
+                    }
+                    else
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Cannot set nodata value %s on a UInt64 band",
+                                 psOptions->szNoData);
+                    }
+                }
+            }
+            else
+            {
+                const double dfVal = AdjustNoDataValue(
+                    CPLAtof(psOptions->szNoData), poVRTBand, psOptions);
+                poVRTBand->SetNoDataValue( dfVal );
+            }
         }
 
         if( psOptions->bSetScale )
@@ -2256,13 +2345,23 @@ static void CopyBandInfo( GDALRasterBand * poSrcBand, GDALRasterBand * poDstBand
 
     if (bCopyNoData)
     {
-        int bSuccess = FALSE;
-        double dfNoData = poSrcBand->GetNoDataValue(&bSuccess);
-        if( bSuccess )
+        if( poSrcBand->GetRasterDataType() != GDT_Int64 &&
+            poSrcBand->GetRasterDataType() != GDT_UInt64 &&
+            poDstBand->GetRasterDataType() != GDT_Int64 &&
+            poDstBand->GetRasterDataType() != GDT_UInt64 )
         {
-            const double dfVal = AdjustNoDataValue(
-                dfNoData, poDstBand, psOptions);
-            poDstBand->SetNoDataValue( dfVal );
+            int bSuccess = FALSE;
+            double dfNoData = poSrcBand->GetNoDataValue(&bSuccess);
+            if( bSuccess )
+            {
+                const double dfVal = AdjustNoDataValue(
+                    dfNoData, poDstBand, psOptions);
+                poDstBand->SetNoDataValue( dfVal );
+            }
+        }
+        else
+        {
+            GDALCopyNoDataValue(poDstBand, poSrcBand);
         }
     }
 
@@ -2377,7 +2476,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
     psOptions->adfULLR[3] = 0;
     psOptions->bSetNoData = false;
     psOptions->bUnsetNoData = false;
-    psOptions->dfNoDataReal = 0.0;
+    psOptions->szNoData[0] = 0;
     psOptions->nRGBExpand = 0;
     psOptions->nMaskBand = 0;
     psOptions->bStats = false;
@@ -2560,7 +2659,8 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
             else
             {
                 psOptions->bSetNoData = true;
-                psOptions->dfNoDataReal = CPLAtofM(papszArgv[i+1]);
+                snprintf(psOptions->szNoData, sizeof(psOptions->szNoData),
+                         "%s", papszArgv[i+1]);
             }
             i += 1;
         }

@@ -378,6 +378,16 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
             nBandFormat = SAMPLEFORMAT_INT;
             break;
 
+          case GDT_UInt64:
+            nBandBits = 64;
+            nBandFormat = SAMPLEFORMAT_UINT;
+            break;
+
+          case GDT_Int64:
+            nBandBits = 64;
+            nBandFormat = SAMPLEFORMAT_INT;
+            break;
+
           case GDT_Float32:
             nBandBits = 32;
             nBandFormat = SAMPLEFORMAT_IEEEFP;
