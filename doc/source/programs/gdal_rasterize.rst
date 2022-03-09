@@ -151,6 +151,7 @@ raster data is only supported since GDAL 2.1.0.
     (target aligned pixels) Align
     the coordinates of the extent of the output file to the values of the :option:`-tr`,
     such that the aligned extent includes the minimum extent.
+    Alignment means that xmin / resx, ymin / resy, xmax / resx and ymax / resy are integer values.
 
 .. option:: -ts <width> <height>
 
