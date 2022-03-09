@@ -96,8 +96,6 @@ if (GDAL_JAVA_GENERATE_JAVADOC)
       "-DGDAL_VERSION=${GDAL_VERSION}" -P "${CMAKE_CURRENT_SOURCE_DIR}/build_java_doc.cmake"
     VERBATIM
     DEPENDS ${GDALALLJNI_SOURCES} add_javadoc)
-else ()
-  file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/java")
 endif ()
 
 # Build gdal.jar, test programs and Maven artifacts
@@ -132,7 +130,8 @@ else ()
 endif ()
 
 add_custom_command(
-  OUTPUT ${MAVEN_ARTIFACTS}
+  OUTPUT ${JAR_OUTPUT} ${MAVEN_ARTIFACTS}
+  COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/java"
   COMMAND
     ${ANT} ${ANT_TARGET} -f ${CMAKE_CURRENT_SOURCE_DIR}/build.xml ${GPG_KEY_PROPERTY} ${GPG_PASS_PROPERTY}
     -Dskip_make_doc=true -Dbuild_dir=${CMAKE_CURRENT_BINARY_DIR} -Dversion_filename=${PROJECT_SOURCE_DIR}/VERSION
