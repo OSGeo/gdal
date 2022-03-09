@@ -6363,6 +6363,9 @@ SWIGINTERN int GDALRasterBandShadow_GetMaskFlags(GDALRasterBandShadow *self){
 SWIGINTERN CPLErr GDALRasterBandShadow_CreateMaskBand(GDALRasterBandShadow *self,int nFlags){
       return GDALCreateMaskBand( self, nFlags );
   }
+SWIGINTERN bool GDALRasterBandShadow_IsMaskBand(GDALRasterBandShadow *self){
+      return GDALIsMaskBand( self );
+  }
 SWIGINTERN CPLErr GDALRasterBandShadow_GetHistogram(GDALRasterBandShadow *self,double min=-0.5,double max=255.5,int buckets=256,GUIntBig *panHistogram=NULL,int include_out_of_range=0,int approx_ok=1,GDALProgressFunc callback=NULL,void *callback_data=NULL){
     CPLErrorReset();
     CPLErr err = GDALGetRasterHistogramEx( self, min, max, buckets, panHistogram,
@@ -32361,6 +32364,47 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_Band_IsMaskBand(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[1] ;
+  bool result;
+  
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Band_IsMaskBand" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRasterBandShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (bool)GDALRasterBandShadow_IsMaskBand(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_bool(static_cast< bool >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_Band_GetHistogram(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
@@ -44858,6 +44902,7 @@ static PyMethodDef SwigMethods[] = {
 	 { "Band_GetMaskBand", _wrap_Band_GetMaskBand, METH_O, "Band_GetMaskBand(Band self) -> Band"},
 	 { "Band_GetMaskFlags", _wrap_Band_GetMaskFlags, METH_O, "Band_GetMaskFlags(Band self) -> int"},
 	 { "Band_CreateMaskBand", _wrap_Band_CreateMaskBand, METH_VARARGS, "Band_CreateMaskBand(Band self, int nFlags) -> CPLErr"},
+	 { "Band_IsMaskBand", _wrap_Band_IsMaskBand, METH_O, "Band_IsMaskBand(Band self) -> bool"},
 	 { "Band_GetHistogram", (PyCFunction)(void(*)(void))_wrap_Band_GetHistogram, METH_VARARGS|METH_KEYWORDS, "Band_GetHistogram(Band self, double min=-0.5, double max=255.5, int buckets=256, int include_out_of_range=0, int approx_ok=1, GDALProgressFunc callback=0, void * callback_data=None) -> CPLErr"},
 	 { "Band_GetDefaultHistogram", (PyCFunction)(void(*)(void))_wrap_Band_GetDefaultHistogram, METH_VARARGS|METH_KEYWORDS, "Band_GetDefaultHistogram(Band self, double * min_ret=None, double * max_ret=None, int * buckets_ret=None, GUIntBig ** ppanHistogram=None, int force=1, GDALProgressFunc callback=0, void * callback_data=None) -> CPLErr"},
 	 { "Band_SetDefaultHistogram", _wrap_Band_SetDefaultHistogram, METH_VARARGS, "Band_SetDefaultHistogram(Band self, double min, double max, int buckets_in) -> CPLErr"},

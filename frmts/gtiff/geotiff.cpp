@@ -1379,6 +1379,8 @@ public:
     virtual GDALRasterBand *GetMaskBand() override final;
     virtual int             GetMaskFlags() override final;
     virtual CPLErr          CreateMaskBand( int nFlags )  override final;
+    virtual bool            IsMaskBand() const override final;
+    virtual GDALMaskValueRange GetMaskValueRange() const override final;
 
     virtual CPLVirtualMem  *GetVirtualMemAuto( GDALRWFlag eRWFlag,
                                                int *pnPixelSpace,
@@ -11785,9 +11787,6 @@ CPLErr GTiffDataset::IBuildOverviews(
             }
         }
 
-        CPLConfigOptionSetter oSetterRegeneratedBandIsMask(
-            "GDAL_REGENERATED_BAND_IS_MASK", "YES", true);
-
         eErr = GDALRegenerateOverviews(
             m_poMaskDS->GetRasterBand(1),
             nMaskOverviews,
@@ -20832,6 +20831,31 @@ CPLErr GTiffRasterBand::CreateMaskBand( int nFlagsIn )
     }
 
     return GDALPamRasterBand::CreateMaskBand(nFlagsIn);
+}
+
+/************************************************************************/
+/*                            IsMaskBand()                              */
+/************************************************************************/
+
+bool GTiffRasterBand::IsMaskBand() const
+{
+    return (m_poGDS->m_poImageryDS != nullptr &&
+            m_poGDS->m_poImageryDS->m_poMaskDS == m_poGDS) ||
+           m_eBandInterp == GCI_AlphaBand ||
+           m_poGDS->GetMetadataItem("INTERNAL_MASK_FLAGS_1") != nullptr;
+}
+
+/************************************************************************/
+/*                         GetMaskValueRange()                          */
+/************************************************************************/
+
+GDALMaskValueRange GTiffRasterBand::GetMaskValueRange() const
+{
+    if( !IsMaskBand() )
+        return GMVR_UNKNOWN;
+    if (m_poGDS->m_nBitsPerSample == 1 )
+        return m_poGDS->m_bPromoteTo8Bits ? GMVR_0_AND_255_ONLY : GMVR_0_AND_1_ONLY;
+    return GMVR_UNKNOWN;
 }
 
 /************************************************************************/

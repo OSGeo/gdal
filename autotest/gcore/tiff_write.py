@@ -8381,6 +8381,19 @@ def test_tiff_write_int64_nodata():
 
 
 ###############################################################################
+# Check IsMaskBand() on an alpha band
+
+
+def test_tiff_write_alpha_ismaskband():
+
+    filename = '/vsimem/out.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(filename, 1, 1, 2)
+    ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
+    assert not ds.GetRasterBand(1).IsMaskBand()
+    assert ds.GetRasterBand(2).IsMaskBand()
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete(filename)
 
 
 def test_tiff_write_cleanup():

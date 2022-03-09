@@ -1136,6 +1136,15 @@ GDALAbstractBandBlockCache* GDALHashSetBandBlockCacheCreate(GDALRasterBand* poBa
 
 class GDALMDArray;
 
+/** Range of values found in a mask band */
+typedef enum
+{
+    GMVR_UNKNOWN,           /*! Unknown (can also be used for any values between 0 and 255 for a Byte band) */
+    GMVR_0_AND_1_ONLY,      /*! Only 0 and 1 */
+    GMVR_0_AND_255_ONLY,    /*! Only 0 and 255 */
+} GDALMaskValueRange;
+
+
 /** A single raster band (or channel). */
 
 class CPL_DLL GDALRasterBand : public GDALMajorObject
@@ -1337,6 +1346,8 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     virtual GDALRasterBand *GetMaskBand();
     virtual int             GetMaskFlags();
     virtual CPLErr          CreateMaskBand( int nFlagsIn );
+    virtual bool            IsMaskBand() const;
+    virtual GDALMaskValueRange GetMaskValueRange() const;
 
     virtual CPLVirtualMem  *GetVirtualMemAuto( GDALRWFlag eRWFlag,
                                                int *pnPixelSpace,
@@ -1389,6 +1400,9 @@ class CPL_DLL GDALAllValidMaskBand : public GDALRasterBand
     GDALRasterBand *GetMaskBand() override;
     int             GetMaskFlags() override;
 
+    bool            IsMaskBand() const override { return true; }
+    GDALMaskValueRange GetMaskValueRange() const override { return GMVR_0_AND_255_ONLY; }
+
     CPLErr ComputeStatistics( int bApproxOK,
                             double *pdfMin, double *pdfMax,
                             double *pdfMean, double *pdfStdDev,
@@ -1419,6 +1433,9 @@ class CPL_DLL GDALNoDataMaskBand : public GDALRasterBand
     explicit GDALNoDataMaskBand( GDALRasterBand * );
     ~GDALNoDataMaskBand() override;
 
+    bool            IsMaskBand() const override { return true; }
+    GDALMaskValueRange GetMaskValueRange() const override { return GMVR_0_AND_255_ONLY; }
+
     static bool IsNoDataInRange(double dfNoDataValue,
                                 GDALDataType eDataType);
 };
@@ -1439,6 +1456,9 @@ class CPL_DLL GDALNoDataValuesMaskBand : public GDALRasterBand
   public:
     explicit     GDALNoDataValuesMaskBand( GDALDataset * );
     ~GDALNoDataValuesMaskBand() override;
+
+    bool            IsMaskBand() const override { return true; }
+    GDALMaskValueRange GetMaskValueRange() const override { return GMVR_0_AND_255_ONLY; }
 };
 
 /* ******************************************************************** */
@@ -1462,6 +1482,8 @@ class GDALRescaledAlphaBand : public GDALRasterBand
   public:
     explicit GDALRescaledAlphaBand( GDALRasterBand * );
     ~GDALRescaledAlphaBand() override;
+
+    bool            IsMaskBand() const override { return true; }
 };
 //! @endcond
 

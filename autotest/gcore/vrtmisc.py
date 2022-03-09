@@ -532,6 +532,9 @@ def test_vrtmisc_mask_implicit_overviews():
     gdal.Translate('/vsimem/cog.vrt', '/vsimem/cog.tif')
     ds = gdal.Open('/vsimem/cog.vrt')
     assert ds.GetRasterBand(1).GetOverview(0).GetMaskFlags() == gdal.GMF_PER_DATASET
+    assert ds.GetRasterBand(1).GetMaskBand().IsMaskBand()
+    assert ds.GetRasterBand(1).GetOverview(0).GetMaskBand().IsMaskBand()
+
     ds = None
     gdal.Translate('/vsimem/out.tif', '/vsimem/cog.vrt', options = '-b mask -outsize 10% 0')
     gdal.GetDriverByName('GTiff').Delete('/vsimem/cog.tif')
@@ -700,3 +703,16 @@ def test_vrtmisc_nodata_uint64():
     ds = None
 
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Check IsMaskBand() on an alpha band
+
+
+def test_vrtmisc_alpha_ismaskband():
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 2)
+    src_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
+    ds = gdal.GetDriverByName('VRT').CreateCopy('', src_ds)
+    assert not ds.GetRasterBand(1).IsMaskBand()
+    assert ds.GetRasterBand(2).IsMaskBand()
