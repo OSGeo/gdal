@@ -1300,7 +1300,7 @@ Regular Expressions support. It is used for the REGEXP operator in drivers using
 PDFIUM
 ******
 
-The `PDFium <https://github.com/rouault/pdfium_build_gdal_3_4>`_ library is one
+The `PDFium <https://github.com/rouault/pdfium_build_gdal_3_5>`_ library is one
 of the possible backends for the :ref:`raster.pdf` driver.
 
 .. option:: PDFIUM_INCLUDE_DIR
