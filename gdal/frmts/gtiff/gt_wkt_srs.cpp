@@ -799,12 +799,45 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
                     psDefn->UOMAngleInDegrees * CPLAtof(SRS_UA_DEGREE_CONV) );
 
     bool bGeog3DCRS = false;
-    bool bSetDatumEllipsoid = true;
+    bool bSetDatumEllipsoidCode = true;
+    bool bHasWarnedInconsistentGeogCRSEPSG = false;
     {
         int nGCS = psDefn->GCS;
-        if( nGCS != KvUserDefined && nGCS > 0 )
+        if( nGCS != KvUserDefined && nGCS > 0 && psDefn->Model != ModelTypeGeocentric )
         {
-            oSRS.SetAuthority( "GEOGCS", "EPSG", nGCS );
+            OGRSpatialReference oSRSTmp;
+            const bool bGCSCodeValid = oSRSTmp.importFromEPSG(nGCS) == OGRERR_NONE;
+            const std::string osGTiffSRSSource = CPLGetConfigOption("GTIFF_SRS_SOURCE", "");
+            if( !oSRSTmp.IsSameGeogCS(&oSRS) && EQUAL(osGTiffSRSSource.c_str(), "") )
+            {
+                // See https://github.com/OSGeo/gdal/issues/5399
+                // where a file has inconsistent GeogSemiMinorAxisGeoKey / GeogInvFlatteningGeoKey
+                // values, which cause its datum to be considered as non-equivalent
+                // to the EPSG one.
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "The definition of geographic CRS EPSG:%d got from GeoTIFF keys "
+                         "is not the same as the one from the EPSG registry, "
+                         "which may cause issues during reprojection operations. "
+                         "Set GTIFF_SRS_SOURCE configuration option to EPSG to "
+                         "use official parameters (overriding the ones from GeoTIFF keys), "
+                         "or to GEOKEYS to use custom values from GeoTIFF keys "
+                         "and drop the EPSG code.",
+                         nGCS);
+                bHasWarnedInconsistentGeogCRSEPSG = true;
+            }
+            if( EQUAL(osGTiffSRSSource.c_str(), "EPSG") )
+            {
+                oSRS.CopyGeogCSFrom(&oSRSTmp);
+            }
+            else if( bGCSCodeValid && EQUAL(osGTiffSRSSource.c_str(), "") )
+            {
+                oSRS.SetAuthority( "GEOGCS", "EPSG", nGCS );
+            }
+            else
+            {
+                bSetDatumEllipsoidCode = false;
+            }
+
 
             int nVertSRSCode = verticalCSType;
             if( verticalDatum == 6030 && nGCS == 4326 ) // DatumE_WGS84
@@ -832,14 +865,14 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
                         verticalDatum = 0;
                         verticalUnits = 0;
                         oSRS.CopyGeogCSFrom(&oTmpVertSRS);
-                        bSetDatumEllipsoid = false;
+                        bSetDatumEllipsoidCode = false;
                         bGeog3DCRS = true;
                     }
                 }
             }
         }
     }
-    if( bSetDatumEllipsoid )
+    if( bSetDatumEllipsoidCode )
     {
         if( psDefn->Datum != KvUserDefined )
             oSRS.SetAuthority( "DATUM", "EPSG", psDefn->Datum );
@@ -1223,7 +1256,37 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
     if( psDefn->Model == ModelTypeProjected && psDefn->PCS != KvUserDefined &&
         !bGotFromEPSG )
     {
-        oSRS.SetAuthority( nullptr, "EPSG", psDefn->PCS );
+        OGRSpatialReference oSRSTmp;
+        const bool bPCSCodeValid = oSRSTmp.importFromEPSG(psDefn->PCS) == OGRERR_NONE;
+        oSRSTmp.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        const std::string osGTiffSRSSource = CPLGetConfigOption("GTIFF_SRS_SOURCE", "");
+        const char* const apszOptions[] = { "IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES", nullptr };
+        if( !bHasWarnedInconsistentGeogCRSEPSG &&
+            !oSRSTmp.IsSame(&oSRS, apszOptions) &&
+            EQUAL(osGTiffSRSSource.c_str(), "") )
+        {
+            // See https://github.com/OSGeo/gdal/issues/5399
+            // where a file has inconsistent GeogSemiMinorAxisGeoKey / GeogInvFlatteningGeoKey
+            // values, which cause its datum to be considered as non-equivalent
+            // to the EPSG one.
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "The definition of projected CRS EPSG:%d got from GeoTIFF keys "
+                     "is not the same as the one from the EPSG registry, "
+                     "which may cause issues during reprojection operations. "
+                     "Set GTIFF_SRS_SOURCE configuration option to EPSG to "
+                     "use official parameters (overriding the ones from GeoTIFF keys), "
+                     "or to GEOKEYS to use custom values from GeoTIFF keys "
+                     "and drop the EPSG code.",
+                     psDefn->PCS);
+        }
+        if( EQUAL(osGTiffSRSSource.c_str(), "EPSG") )
+        {
+            oSRS = oSRSTmp;
+        }
+        else if( bPCSCodeValid && EQUAL(osGTiffSRSSource.c_str(), "") )
+        {
+            oSRS.SetAuthority( nullptr, "EPSG", psDefn->PCS );
+        }
     }
 
     if( oSRS.IsProjected() && oSRS.GetAxesCount() == 2 )
