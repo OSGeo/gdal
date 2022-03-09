@@ -2138,7 +2138,8 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
                    sizeof(GDALGridNearestNeighborOptions));
 
             pfnGDALGridMethod = GDALGridNearestNeighbor;
-            bCreateQuadTree = (nPoints > 100 && dfAngle == 0 && 
+            bCreateQuadTree = (nPoints > 100 &&
+                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfAngle == 0 &&
                 static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius1 ==
                 static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius2);
             break;
@@ -2149,7 +2150,8 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
 
             pfnGDALGridMethod = GDALGridDataMetricMinimum;
-            bCreateQuadTree = (nPoints > 100 && dfAngle == 0 && 
+            bCreateQuadTree = (nPoints > 100 &&
+                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfAngle == 0 &&
                 static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius1 ==
                 static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius2);
             break;
@@ -2160,7 +2162,8 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
 
             pfnGDALGridMethod = GDALGridDataMetricMaximum;
-            bCreateQuadTree = (nPoints > 100 && dfAngle == 0 && 
+            bCreateQuadTree = (nPoints > 100 &&
+                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfAngle == 0 &&
                 static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius1 ==
                 static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius2);
             break;
@@ -2171,7 +2174,8 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
 
             pfnGDALGridMethod = GDALGridDataMetricRange;
-            bCreateQuadTree = (nPoints > 100 && dfAngle == 0 && 
+            bCreateQuadTree = (nPoints > 100 &&
+                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfAngle == 0 &&
                 static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius1 ==
                 static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius2);
             break;
@@ -2182,7 +2186,8 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
 
             pfnGDALGridMethod = GDALGridDataMetricCount;
-            bCreateQuadTree = (nPoints > 100 && dfAngle == 0 && 
+            bCreateQuadTree = (nPoints > 100 &&
+                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfAngle == 0 &&
                 static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius1 ==
                 static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius2);
             break;
@@ -2193,7 +2198,8 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
 
             pfnGDALGridMethod = GDALGridDataMetricAverageDistance;
-            bCreateQuadTree = (nPoints > 100 && dfAngle == 0 && 
+            bCreateQuadTree = (nPoints > 100 &&
+                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfAngle == 0 &&
                 static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius1 ==
                 static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius2);
             break;
@@ -2204,7 +2210,8 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
 
             pfnGDALGridMethod = GDALGridDataMetricAverageDistancePts;
-            bCreateQuadTree = (nPoints > 100 && dfAngle == 0 && 
+            bCreateQuadTree = (nPoints > 100 &&
+                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfAngle == 0 &&
                 static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius1 ==
                 static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius2);
             break;
