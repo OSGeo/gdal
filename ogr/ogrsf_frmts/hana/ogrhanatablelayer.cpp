@@ -59,6 +59,22 @@ const char* GetColumnDefaultValue(const OGRFieldDefn& field)
     return defaultValue;
 }
 
+CPLString FindGeomFieldName(const OGRFeatureDefn& featureDefn)
+{
+    if (featureDefn.GetGeomFieldCount() == 0)
+        return "OGR_GEOMETRY";
+
+    int numGeomFields = featureDefn.GetGeomFieldCount();
+    for (int i = 1; i <= 2 * numGeomFields; ++i)
+    {
+        CPLString name = CPLSPrintf("OGR_GEOMETRY_%d", i);
+        if (featureDefn.GetGeomFieldIndex(name) < 0)
+            return name;
+    }
+
+    return "OGR_GEOMETRY";
+}
+
 CPLString GetParameterValue(short type, const CPLString& typeName, bool isArray)
 {
     if (isArray)
@@ -1388,26 +1404,44 @@ OGRErr OGRHanaTableLayer::CreateGeomField(OGRGeomFieldDefn* geomField, int)
         return OGRERR_FAILURE;
     }
 
-    if (EQUALN(geomField->GetNameRef(), "OGR_GEOMETRY", strlen("OGR_GEOMETRY")))
-        return OGRERR_NONE;
+    if (!IsGeometryTypeSupported(geomField->GetType()))
+    {
+        CPLError(
+            CE_Failure, CPLE_NotSupported,
+            "Geometry field '%s' in layer '%s' has unsupported type %s",
+            geomField->GetNameRef(), tableName_.c_str(),
+            OGRGeometryTypeToName(geomField->GetType()));
+        return OGRERR_FAILURE;
+    }
 
-    CPLString clmName = (launderColumnNames_)
-                            ? LaunderName(geomField->GetNameRef())
-                            : CPLString(geomField->GetNameRef());
+    if (featureDefn_->GetGeomFieldIndex(geomField->GetNameRef()) >= 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "CreateGeomField() called with an already existing field name: %s",
+                  geomField->GetNameRef());
+        return OGRERR_FAILURE;
+    }
+
     int srid = dataSource_->GetSrsId(geomField->GetSpatialRef());
+    if (srid == UNDETERMINED_SRID)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Unable to determine the srs-id for field name: %s",
+                  geomField->GetNameRef());
+        return OGRERR_FAILURE;
+    }
+
+    CPLString clmName(launderColumnNames_
+                      ? LaunderName(geomField->GetNameRef()).c_str()
+                      : geomField->GetNameRef());
+
+    if (clmName.empty())
+        clmName = FindGeomFieldName(*featureDefn_);
+
     CPLString sql = CPLString().Printf(
         "ALTER TABLE %s ADD(%s ST_GEOMETRY(%d))",
         GetFullTableNameQuoted(schemaName_, tableName_).c_str(),
         QuotedIdentifier(clmName).c_str(), srid);
-
-    if (!IsGeometryTypeSupported(geomField->GetType()))
-    {
-        CPLError(
-            CE_Warning, CPLE_NotSupported,
-            "Geometry field '%s' in layer '%s' has unsupported type %s",
-            clmName.c_str(), tableName_.c_str(),
-            OGRGeometryTypeToName(geomField->GetType()));
-    }
 
     try
     {
@@ -1417,18 +1451,19 @@ OGRErr OGRHanaTableLayer::CreateGeomField(OGRGeomFieldDefn* geomField, int)
     {
         CPLError(
             CE_Failure, CPLE_AppDefined,
-            "Failed to execute create geometry field %s: %s",
+            "Failed to execute CreateGeomField() with field name '%s': %s",
             geomField->GetNameRef(), ex.what());
         return OGRERR_FAILURE;
     }
 
     auto newGeomField = cpl::make_unique<OGRGeomFieldDefn>(
-                clmName.c_str(), geomField->GetType());
+        clmName.c_str(), geomField->GetType());
     newGeomField->SetNullable(geomField->IsNullable());
     newGeomField->SetSpatialRef(geomField->GetSpatialRef());
-    featureDefn_->AddGeomFieldDefn(std::move(newGeomField));
     geomColumns_.push_back(
-        {clmName, geomField->GetType(), srid, geomField->IsNullable() != 0});
+        {newGeomField->GetNameRef(), newGeomField->GetType(),
+         srid, newGeomField->IsNullable() == TRUE});
+    featureDefn_->AddGeomFieldDefn(std::move(newGeomField));
 
     ResetPreparedStatements();
 

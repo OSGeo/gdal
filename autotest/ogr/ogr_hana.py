@@ -738,6 +738,39 @@ def test_ogr_hana_28():
 
 
 ###############################################################################
+# Test CreateGeomField
+
+def test_ogr_hana_29():
+    ds_ro = open_datasource(0)
+    layer = ds_ro.GetLayerByName('TPOLY')
+    with gdaltest.error_handler():
+        assert layer.CreateGeomField(ogr.GeomFieldDefn('GEOM_FIELD', ogr.wkbPoint)) == ogr.OGRERR_FAILURE
+
+    layer_name = get_test_name()
+    ds_rw = open_datasource(1)
+    create_tpoly_table(ds_rw, layer_name)
+
+    layer = ds_rw.GetLayerByName(layer_name)
+    with gdaltest.error_handler():
+        # unsupported geometry type
+        assert layer.CreateGeomField(ogr.GeomFieldDefn('GEOM_FIELD', ogr.wkbCompoundCurve)) == ogr.OGRERR_FAILURE
+        # duplicate field name
+        assert layer.CreateGeomField(ogr.GeomFieldDefn('OGR_GEOMETRY', ogr.wkbPoint)) == ogr.OGRERR_FAILURE
+        # undefined srs
+        assert layer.CreateGeomField(ogr.GeomFieldDefn('GEOM_FIELD', ogr.wkbPoint)) == ogr.OGRERR_FAILURE
+
+    gfld_defn = ogr.GeomFieldDefn('', ogr.wkbPolygon)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    gfld_defn.SetSpatialRef(srs)
+    assert layer.CreateGeomField(gfld_defn) == ogr.OGRERR_NONE
+    layer_defn = layer.GetLayerDefn()
+    assert layer_defn.GetGeomFieldCount() == 2
+    assert layer_defn.GetGeomFieldDefn(1).GetType() == ogr.wkbPolygon, 'Returned wrong geometry type'
+    assert layer_defn.GetGeomFieldDefn(1).GetName() == 'OGR_GEOMETRY_1', 'Returned wrong geometry field name'
+
+
+###############################################################################
 #  Create a table from data/poly.shp
 
 def create_tpoly_table(ds, layer_name='TPOLY'):

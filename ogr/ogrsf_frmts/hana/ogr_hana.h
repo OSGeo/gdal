@@ -46,6 +46,8 @@ namespace OGRHANA {
 constexpr static int DEFAULT_BATCH_SIZE = 4 * 1024 * 1024;
 constexpr static int DEFAULT_STRING_SIZE = 256;
 
+constexpr static int UNDETERMINED_SRID = -1;
+
 /************************************************************************/
 /*                          Internal struct definitions                 */
 /************************************************************************/
