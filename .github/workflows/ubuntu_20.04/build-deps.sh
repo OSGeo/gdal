@@ -115,12 +115,12 @@ mkdir geos \
     && rm -rf geos
 
 # Install pdfium
-wget -q https://github.com/rouault/pdfium_build_gdal_3_4/releases/download/v2_pdfium_4627/install-ubuntu2004-rev4627.tar.gz \
-  && tar -xzf install-ubuntu2004-rev4627.tar.gz \
+wget -q https://github.com/rouault/pdfium_build_gdal_3_5/releases/download/v1_pdfium_4933/install-ubuntu2004-rev4933.tar.gz \
+  && tar -xzf install-ubuntu2004-rev4933.tar.gz \
   && chown -R root:root install \
   && mv install/lib/* /usr/lib/ \
   && mv install/include/* /usr/include/ \
-  && rm -rf install-ubuntu2004-rev4627.tar.gz install \
+  && rm -rf install-ubuntu2004-rev4933.tar.gz install \
   && apt-get update -y \
   && apt-get install -y --fix-missing --no-install-recommends liblcms2-dev \
   && rm -rf /var/lib/apt/lists/*

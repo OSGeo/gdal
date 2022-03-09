@@ -65,6 +65,16 @@ jobs:
         #
         python3 -m pip install -U pip wheel setuptools numpy
         python3 -m pip install -r $GITHUB_WORKSPACE/autotest/requirements.txt
+    - name: Install pdfium
+      run: |
+        wget -q https://github.com/rouault/pdfium_build_gdal_3_5/releases/download/v1_pdfium_4933/install-ubuntu2004-rev4933.tar.gz \
+          && tar -xzf install-ubuntu2004-rev4933.tar.gz \
+          && sudo chown -R root:root install \
+          && sudo mv install/lib/* /usr/lib/ \
+          && sudo mv install/include/* /usr/include/ \
+          && sudo rm -rf install-ubuntu2004-rev4933.tar.gz install \
+          && sudo apt-get update -y \
+          && sudo apt-get install -y --fix-missing --no-install-recommends liblcms2-dev
     - name: Configure ccache
       run: |
           echo CCACHE_BASEDIR=$PWD >> ${GITHUB_ENV}
