@@ -2138,7 +2138,7 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
                    sizeof(GDALGridNearestNeighborOptions));
 
             pfnGDALGridMethod = GDALGridNearestNeighbor;
-            bCreateQuadTree = (nPoints > 100 &&
+            bCreateQuadTree = (nPoints > 100 && dfAngle == 0 && 
                 static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius1 ==
                 static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius2);
             break;
@@ -2149,7 +2149,7 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
 
             pfnGDALGridMethod = GDALGridDataMetricMinimum;
-            bCreateQuadTree = (nPoints > 100 &&
+            bCreateQuadTree = (nPoints > 100 && dfAngle == 0 && 
                 static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius1 ==
                 static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius2);
             break;
@@ -2160,7 +2160,7 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
 
             pfnGDALGridMethod = GDALGridDataMetricMaximum;
-            bCreateQuadTree = (nPoints > 100 &&
+            bCreateQuadTree = (nPoints > 100 && dfAngle == 0 && 
                 static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius1 ==
                 static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius2);
             break;
@@ -2171,7 +2171,7 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
 
             pfnGDALGridMethod = GDALGridDataMetricRange;
-            bCreateQuadTree = (nPoints > 100 &&
+            bCreateQuadTree = (nPoints > 100 && dfAngle == 0 && 
                 static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius1 ==
                 static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius2);
             break;
@@ -2182,7 +2182,7 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
 
             pfnGDALGridMethod = GDALGridDataMetricCount;
-            bCreateQuadTree = (nPoints > 100 &&
+            bCreateQuadTree = (nPoints > 100 && dfAngle == 0 && 
                 static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius1 ==
                 static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius2);
             break;
@@ -2193,7 +2193,7 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
 
             pfnGDALGridMethod = GDALGridDataMetricAverageDistance;
-            bCreateQuadTree = (nPoints > 100 &&
+            bCreateQuadTree = (nPoints > 100 && dfAngle == 0 && 
                 static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius1 ==
                 static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius2);
             break;
@@ -2204,7 +2204,7 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
 
             pfnGDALGridMethod = GDALGridDataMetricAverageDistancePts;
-            bCreateQuadTree = (nPoints > 100 &&
+            bCreateQuadTree = (nPoints > 100 && dfAngle == 0 && 
                 static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius1 ==
                 static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius2);
             break;
@@ -2912,134 +2912,10 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
             break;
         }
         case GGA_MetricMinimum:
-        {
-            *ppOptions =
-                CPLMalloc( sizeof(GDALGridDataMetricsOptions) );
-
-            GDALGridDataMetricsOptions * const poMetricsOptions =
-                static_cast<GDALGridDataMetricsOptions *>(*ppOptions);
-
-            const char *pszValue = CSLFetchNameValue( papszParams, "radius1" );
-            poMetricsOptions->dfRadius1 = pszValue ? CPLAtofM(pszValue) : 0.0;
-
-            pszValue = CSLFetchNameValue( papszParams, "radius2" );
-            poMetricsOptions->dfRadius2 = pszValue ? CPLAtofM(pszValue) : 0.0;
-
-            pszValue = CSLFetchNameValue( papszParams, "angle" );
-            poMetricsOptions->dfAngle = pszValue ? CPLAtofM(pszValue) : 0.0;
-
-            pszValue = CSLFetchNameValue( papszParams, "min_points" );
-            poMetricsOptions->nMinPoints = static_cast<GUInt32>(
-                pszValue ? CPLAtofM(pszValue) : 0);
-
-
-            pszValue = CSLFetchNameValue( papszParams, "nodata" );
-            poMetricsOptions->dfNoDataValue = pszValue ? CPLAtofM(pszValue) : 0.0;
-            break;
-        }
         case GGA_MetricMaximum:
-        {
-            *ppOptions =
-                CPLMalloc( sizeof(GDALGridDataMetricsOptions) );
-
-            GDALGridDataMetricsOptions * const poMetricsOptions =
-                static_cast<GDALGridDataMetricsOptions *>(*ppOptions);
-
-            const char *pszValue = CSLFetchNameValue( papszParams, "radius1" );
-            poMetricsOptions->dfRadius1 = pszValue ? CPLAtofM(pszValue) : 0.0;
-
-            pszValue = CSLFetchNameValue( papszParams, "radius2" );
-            poMetricsOptions->dfRadius2 = pszValue ? CPLAtofM(pszValue) : 0.0;
-
-            pszValue = CSLFetchNameValue( papszParams, "angle" );
-            poMetricsOptions->dfAngle = pszValue ? CPLAtofM(pszValue) : 0.0;
-
-            pszValue = CSLFetchNameValue( papszParams, "min_points" );
-            poMetricsOptions->nMinPoints = static_cast<GUInt32>(
-                pszValue ? CPLAtofM(pszValue) : 0);
-
-
-            pszValue = CSLFetchNameValue( papszParams, "nodata" );
-            poMetricsOptions->dfNoDataValue = pszValue ? CPLAtofM(pszValue) : 0.0;
-            break;
-        }
         case GGA_MetricRange:
-        {
-            *ppOptions =
-                CPLMalloc( sizeof(GDALGridDataMetricsOptions) );
-
-            GDALGridDataMetricsOptions * const poMetricsOptions =
-                static_cast<GDALGridDataMetricsOptions *>(*ppOptions);
-
-            const char *pszValue = CSLFetchNameValue( papszParams, "radius1" );
-            poMetricsOptions->dfRadius1 = pszValue ? CPLAtofM(pszValue) : 0.0;
-
-            pszValue = CSLFetchNameValue( papszParams, "radius2" );
-            poMetricsOptions->dfRadius2 = pszValue ? CPLAtofM(pszValue) : 0.0;
-
-            pszValue = CSLFetchNameValue( papszParams, "angle" );
-            poMetricsOptions->dfAngle = pszValue ? CPLAtofM(pszValue) : 0.0;
-
-            pszValue = CSLFetchNameValue( papszParams, "min_points" );
-            poMetricsOptions->nMinPoints = static_cast<GUInt32>(
-                pszValue ? CPLAtofM(pszValue) : 0);
-
-            pszValue = CSLFetchNameValue( papszParams, "nodata" );
-            poMetricsOptions->dfNoDataValue = pszValue ? CPLAtofM(pszValue) : 0.0;
-            break;
-        }
         case GGA_MetricCount:
-        {
-            *ppOptions =
-                CPLMalloc( sizeof(GDALGridDataMetricsOptions) );
-
-            GDALGridDataMetricsOptions * const poMetricsOptions =
-                static_cast<GDALGridDataMetricsOptions *>(*ppOptions);
-
-            const char *pszValue = CSLFetchNameValue( papszParams, "radius1" );
-            poMetricsOptions->dfRadius1 = pszValue ? CPLAtofM(pszValue) : 0.0;
-
-            pszValue = CSLFetchNameValue( papszParams, "radius2" );
-            poMetricsOptions->dfRadius2 = pszValue ? CPLAtofM(pszValue) : 0.0;
-
-            pszValue = CSLFetchNameValue( papszParams, "angle" );
-            poMetricsOptions->dfAngle = pszValue ? CPLAtofM(pszValue) : 0.0;
-
-            pszValue = CSLFetchNameValue( papszParams, "min_points" );
-            poMetricsOptions->nMinPoints = static_cast<GUInt32>(
-                pszValue ? CPLAtofM(pszValue) : 0);
-
-
-            pszValue = CSLFetchNameValue( papszParams, "nodata" );
-            poMetricsOptions->dfNoDataValue = pszValue ? CPLAtofM(pszValue) : 0.0;
-            break;
-        }
         case GGA_MetricAverageDistance:
-        {
-            *ppOptions =
-                CPLMalloc( sizeof(GDALGridDataMetricsOptions) );
-
-            GDALGridDataMetricsOptions * const poMetricsOptions =
-                static_cast<GDALGridDataMetricsOptions *>(*ppOptions);
-
-            const char *pszValue = CSLFetchNameValue( papszParams, "radius1" );
-            poMetricsOptions->dfRadius1 = pszValue ? CPLAtofM(pszValue) : 0.0;
-
-            pszValue = CSLFetchNameValue( papszParams, "radius2" );
-            poMetricsOptions->dfRadius2 = pszValue ? CPLAtofM(pszValue) : 0.0;
-
-            pszValue = CSLFetchNameValue( papszParams, "angle" );
-            poMetricsOptions->dfAngle = pszValue ? CPLAtofM(pszValue) : 0.0;
-
-            pszValue = CSLFetchNameValue( papszParams, "min_points" );
-            poMetricsOptions->nMinPoints = static_cast<GUInt32>(
-                pszValue ? CPLAtofM(pszValue) : 0);
-
-
-            pszValue = CSLFetchNameValue( papszParams, "nodata" );
-            poMetricsOptions->dfNoDataValue = pszValue ? CPLAtofM(pszValue) : 0.0;
-            break;
-        }
         case GGA_MetricAverageDistancePts:
         {
             *ppOptions =
