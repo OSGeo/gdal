@@ -485,6 +485,22 @@ endif ()
 get_property(_plugins GLOBAL PROPERTY PLUGIN_MODULES)
 add_custom_target(gdal_plugins DEPENDS ${_plugins})
 
+# Install drivers.ini along with plugins
+# We request the TARGET_FILE_DIR of one of the plugins, since the PLUGIN_OUTPUT_DIR will not contain the \Release suffix
+# with MSVC generator
+list(LENGTH _plugins PLUGIN_MODULES_LENGTH)
+if (PLUGIN_MODULES_LENGTH GREATER_EQUAL 1)
+  list(GET _plugins 0 FIRST_TARGET)
+  set(PLUGIN_OUTPUT_DIR "$<TARGET_FILE_DIR:${FIRST_TARGET}>")
+  file(READ ${CMAKE_CURRENT_SOURCE_DIR}/frmts/drivers.ini DRIVERS_INI_CONTENT)
+  file(
+    GENERATE
+    OUTPUT ${PLUGIN_OUTPUT_DIR}/drivers.ini
+    CONTENT ${DRIVERS_INI_CONTENT})
+endif ()
+
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/frmts/drivers.ini DESTINATION ${INSTALL_PLUGIN_DIR})
+
 # ######################################################################################################################
 
 # Note: this file is generated but not used.
