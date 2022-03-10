@@ -229,6 +229,11 @@ STDCALL=YES
 VERSION =	303
 !ENDIF
 
+# Set HAVE_ATLBASE_H=NO if atlbase.h header is not available
+!IFNDEF HAVE_ATLBASE_H
+HAVE_ATLBASE_H=YES
+!ENDIF
+
 # Comment the following out if you want PAM supported disabled
 # by default.
 !IFNDEF PAM_SETTING
