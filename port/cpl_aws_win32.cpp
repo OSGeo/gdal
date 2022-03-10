@@ -28,7 +28,7 @@
 
 #include "cpl_port.h"
 
-#if defined(WIN32) && defined(_MSC_VER)
+#if defined(WIN32) && defined(_MSC_VER) && HAVE_ATLBASE_H
 
 #define _WIN32_DCOM
 #include <iostream>
