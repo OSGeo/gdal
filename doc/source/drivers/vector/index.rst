@@ -27,6 +27,7 @@ Vector drivers
    :maxdepth: 1
 
    amigocloud
+   arrow
    avcbin
    avce00
    cad
@@ -81,6 +82,7 @@ Vector drivers
    ogdi
    openfilegdb
    osm
+   parquet
    pdf
    pds
    pgdump
