@@ -1230,9 +1230,6 @@ std::vector<CPLString> OGRHanaDataSource::GetTablePrimaryKeys(
     }
     rsPrimaryKeys->close();
 
-    if (std::find(ret.begin(), ret.end(), "OGR_FID") == ret.end())
-        ret.insert(ret.begin(), "OGR_FID");
-
     return ret;
 }
 
