@@ -23,8 +23,24 @@ Dependencies
 Installation
 ------------
 
+Conda
+~~~~~
+
+GDAL can be quite complex to build and install, particularly on Windows and MacOS.
+Pre built binaries are provided for the conda system:
+
+https://docs.conda.io/en/latest/
+
+By the conda-forge project:
+
+https://conda-forge.org/
+
+Once you have Anaconda ot Miniconda installed, you should be able to install GDAL with:
+
+``conda install -c conda-forge gdal``
+
 Unix
-~~~~~~~~~~~~~
+~~~~
 
 The GDAL Python bindings support both distutils and setuptools, with a
 preference for using setuptools.  If setuptools can be imported, setup will
@@ -32,15 +48,15 @@ use that to build an egg by default.  If setuptools cannot be imported, a
 simple distutils root install of the GDAL package (and no dependency
 chaining for numpy) will be made.
 
-easy_install
-~~~~~~~~~~~~
+pip
+~~~
 
-GDAL can be installed from the Python CheeseShop::
+GDAL can be installed from the Python Package Index:
 
-  $ sudo easy_install GDAL
+  $ pip install GDAL
 
-It may be necessary to have libgdal and its development headers installed
-if easy_install is expected to do a source build because no egg is available
+It will be necessary to have libgdal and its development headers installed
+if pip is expected to do a source build because no wheel is available
 for your specified platform and Python version.
 
 setup.py
@@ -87,7 +103,7 @@ the HAVE_SETUPTOOLS variable is ultimately set to False and proceed with a
 typical 'python setup.py install' command.
 
 Windows
-~~~~~~~~~~~~
+~~~~~~~
 
 You will need the following items to complete an install of the GDAL Python
 bindings on Windows:
@@ -179,7 +195,7 @@ enough to get you going.  Docstrings for GDAL and OSR are planned for a future
 release.
 
 Numpy
--------
+-----
 
 One advanced feature of the GDAL Python bindings not found in the other
 language bindings (C#, Perl) is integration with the Python numerical array
@@ -202,7 +218,7 @@ data, this approach is expected to be prohibitively memory intensive.
 .. _GDAL API Tutorial: https://gdal.org/tutorials/
 .. _GDAL Windows Binaries: http://gisinternals.com/sdk/
 .. _Microsoft Knowledge Base doc: http://support.microsoft.com/kb/310519
-.. _Python Cheeseshop: http://pypi.python.org/pypi/GDAL/
+.. _Python Package Index: https://pypi.org/project/GDAL/
 .. _val_repl.py: http://trac.osgeo.org/gdal/browser/trunk/gdal/swig/python/gdal-utils/osgeo_utils/samples/val_repl.py
 .. _GDAL: http://www.gdal.org
 .. _SWIG: http://www.swig.org
