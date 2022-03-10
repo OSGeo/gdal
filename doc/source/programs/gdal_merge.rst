@@ -56,6 +56,7 @@ target pixel in the resulting raster nor will it overwrite a valid pixel value.
     (target aligned pixels) align
     the coordinates of the extent of the output file to the values of the -tr,
     such that the aligned extent includes the minimum extent.
+    Alignment means that xmin / resx, ymin / resy, xmax / resx and ymax / resy are integer values.
 
 .. option:: -ul_lr <ulx> <uly> <lrx> <lry>
 
