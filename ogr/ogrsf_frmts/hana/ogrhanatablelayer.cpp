@@ -1245,20 +1245,29 @@ OGRErr OGRHanaTableLayer::ISetFeature(OGRFeature* feature)
             return OGRERR_FAILURE;
     }
 
-    OGRErr err = SetStatementParameters(
-        *updateFeatureStmt_, feature, false, false, "SetFeature");
+    try
+    {
+        OGRErr err = SetStatementParameters(
+            *updateFeatureStmt_, feature, false, false, "SetFeature");
 
-    if (OGRERR_NONE != err)
-        return err;
+        if (OGRERR_NONE != err)
+            return err;
 
-    bool withBatch = dataSource_->IsTransactionStarted();
-    if (withBatch)
-        updateFeatureStmt_->addBatch();
+        bool withBatch = dataSource_->IsTransactionStarted();
+        if (withBatch)
+            updateFeatureStmt_->addBatch();
 
-    auto ret = ExecuteUpdate(*updateFeatureStmt_, withBatch, "SetFeature");
-    return (OGRERR_NONE == ret.first && ret.second != 1)
-               ? OGRERR_NON_EXISTING_FEATURE
-               : ret.first;
+        auto ret = ExecuteUpdate(*updateFeatureStmt_, withBatch, "SetFeature");
+        return (OGRERR_NONE == ret.first && ret.second != 1)
+                   ? OGRERR_NON_EXISTING_FEATURE
+                   : ret.first;
+    }
+    catch (const std::exception& ex)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                  "Unable to create feature: %s", ex.what());
+        return OGRERR_FAILURE;
+    }
 }
 
 /************************************************************************/

@@ -29,6 +29,8 @@
 #include "ogrhanafeaturereader.h"
 #include "ogrhanautils.h"
 
+#include "cpl_time.h"
+
 #include <algorithm>
 #include <cstring>
 #include <ctime>
@@ -63,7 +65,7 @@ T castInt(int value)
 {
     if (!(std::numeric_limits<T>::min() >= value
           || value <= std::numeric_limits<T>::max()))
-        throw "Integer value lies outside of the range";
+        throw std::overflow_error("Integer value lies outside of the range");
     return static_cast<T>(value);
 }
 
@@ -130,8 +132,7 @@ odbc::Int OGRHanaFeatureReader::GetFieldAsInt(int fieldIndex) const
 odbc::Long OGRHanaFeatureReader::GetFieldAsLong(int fieldIndex) const
 {
     if (IsFieldSet(fieldIndex))
-        return odbc::Long(
-            static_cast<long>(feature_.GetFieldAsInteger64(fieldIndex)));
+        return odbc::Long(feature_.GetFieldAsInteger64(fieldIndex));
 
     const char* defaultValue = GetDefaultValue(fieldIndex);
     if (defaultValue == nullptr)
@@ -208,39 +209,31 @@ odbc::String OGRHanaFeatureReader::GetFieldAsNString(
         if (maxCharLength <= 0)
             return odbc::String(std::string(str));
 
-        int len = 0;
-        int numChars = 0;
-        const unsigned char* ptr = reinterpret_cast<const unsigned char*>(str);
-        while (*ptr != '\0')
+        int nSrcLen = static_cast<int>(std::strlen(str));
+        int nSrcLenUTF = CPLStrlenUTF8(str);
+
+        if (maxCharLength > 0 && nSrcLenUTF > maxCharLength)
         {
-            int seqLength = 0;
-            if ((*ptr & 0x80) == 0)
-                seqLength = 1;
-            else if ((*ptr & 0xE0) == 0xC0)
-                seqLength = 2;
-            else if ((*ptr & 0xF0) == 0xE0)
-                seqLength = 3;
-            else if ((*ptr & 0xF8) == 0xF0)
-                seqLength = 4;
-            else
-                throw "GetFieldAsNString: Invalid UTF-8";
+            CPLDebug("HANA",
+                     "Truncated field value '%s' at index %d to %d characters.",
+                     str, fieldIndex, maxCharLength);
 
-            int n = (seqLength <= 2) ? 1 : 2;
-            if (maxCharLength > 0 && numChars + n > maxCharLength)
+            int iUTF8Char = 0;
+            for (int iChar = 0; iChar < nSrcLen; ++iChar)
             {
-                CPLDebug(
-                    "HANA",
-                    "Truncated field value '%s' at index %d to %d characters.",
-                    str, fieldIndex, maxCharLength);
-
-                break;
+                if ((str[iChar] & 0xc0) != 0x80)
+                {
+                    if (iUTF8Char == maxCharLength)
+                    {
+                        nSrcLen = iChar;
+                        break;
+                    }
+                    ++iUTF8Char;
+                }
             }
-            numChars += n;
-            ptr += seqLength;
-            len += seqLength;
         }
 
-        return odbc::String(std::string(str, static_cast<std::size_t>(len)));
+        return odbc::String(std::string(str, static_cast<std::size_t>(nSrcLen)));
     };
 
     if (IsFieldSet(fieldIndex))
@@ -273,11 +266,11 @@ odbc::Date OGRHanaFeatureReader::GetFieldAsDate(int fieldIndex) const
         int day = 0;
         int hour = 0;
         int minute = 0;
-        int timeZone = 0;
+        int timeZoneFlag = 0;
         float second = 0.0f;
         feature_.GetFieldAsDateTime(
             fieldIndex, &year, &month, &day, &hour, &minute, &second,
-            &timeZone);
+            &timeZoneFlag);
 
         return odbc::makeNullable<odbc::date>(year, month, day);
     }
@@ -291,7 +284,7 @@ odbc::Date OGRHanaFeatureReader::GetFieldAsDate(int fieldIndex) const
         std::time_t t = std::time(nullptr);
         tm* now = std::localtime(&t);
         if (now == nullptr)
-            throw "Unable to retrieve local time";
+            return odbc::Date();
         return odbc::makeNullable<odbc::date>(
             now->tm_year + 1900, now->tm_mon + 1, now->tm_mday);
     }
@@ -311,11 +304,11 @@ odbc::Time OGRHanaFeatureReader::GetFieldAsTime(int fieldIndex) const
         int day = 0;
         int hour = 0;
         int minute = 0;
-        int timeZone = 0;
+        int timeZoneFlag = 0;
         float second = 0.0f;
         feature_.GetFieldAsDateTime(
             fieldIndex, &year, &month, &day, &hour, &minute, &second,
-            &timeZone);
+            &timeZoneFlag);
         return odbc::makeNullable<odbc::time>(
             hour, minute, static_cast<int>(round(second)));
     }
@@ -329,7 +322,7 @@ odbc::Time OGRHanaFeatureReader::GetFieldAsTime(int fieldIndex) const
         std::time_t t = std::time(nullptr);
         tm* now = std::localtime(&t);
         if (now == nullptr)
-            throw "Unable to retrieve local time";
+            return odbc::Time();
         return odbc::makeNullable<odbc::time>(
             now->tm_hour, now->tm_min, now->tm_sec);
     }
@@ -350,15 +343,37 @@ odbc::Timestamp OGRHanaFeatureReader::GetFieldAsTimestamp(int fieldIndex) const
         int day = 0;
         int hour = 0;
         int minute = 0;
-        int timeZone = 0;
         float secondWithMillisecond = 0.0f;
+        int timeZoneFlag = 0;
         feature_.GetFieldAsDateTime(
             fieldIndex, &year, &month, &day, &hour, &minute,
-            &secondWithMillisecond, &timeZone);
+            &secondWithMillisecond, &timeZoneFlag);
         double seconds = 0.0;
-        double milliseconds = modf(static_cast<double>(secondWithMillisecond), &seconds);
-        int second = static_cast<int>(nearbyint(seconds));
-        int millisecond = static_cast<int>(nearbyint(milliseconds * 1000));
+        double milliseconds = std::modf(static_cast<double>(secondWithMillisecond), &seconds);
+        int second = static_cast<int>(std::floor(seconds));
+        int millisecond = static_cast<int>(std::floor(milliseconds * 1000));
+
+        if (!(timeZoneFlag == 0 || timeZoneFlag == 100 || timeZoneFlag == 1))
+        {
+            struct tm time;
+            time.tm_year = year - 1900;
+            time.tm_mon = month - 1;
+            time.tm_mday = day;
+            time.tm_hour = hour;
+            time.tm_min = minute;
+            time.tm_sec = second;
+            GIntBig dt = CPLYMDHMSToUnixTime(&time);
+            const int tzoffset = std::abs(timeZoneFlag - 100) * 15;
+            dt -= tzoffset * 60;
+            CPLUnixTimeToYMDHMS(dt, &time);
+            year = time.tm_year + 1900;
+            month = time.tm_mon + 1;
+            day = time.tm_mday;
+            hour = time.tm_hour;
+            minute = time.tm_min;
+            second = time.tm_sec;
+        }
+
         return odbc::makeNullable<odbc::timestamp>(
             year, month, day, hour, minute, second, millisecond);
     }
@@ -372,7 +387,7 @@ odbc::Timestamp OGRHanaFeatureReader::GetFieldAsTimestamp(int fieldIndex) const
         time_t t = std::time(nullptr);
         tm* now = std::localtime(&t);
         if (now == nullptr)
-            throw "Unable to retrieve local time";
+            return odbc::Timestamp();
         return odbc::makeNullable<odbc::timestamp>(
             now->tm_year + 1900, now->tm_mon + 1, now->tm_mday, now->tm_hour,
             now->tm_min, now->tm_sec, 0);
@@ -385,9 +400,16 @@ odbc::Timestamp OGRHanaFeatureReader::GetFieldAsTimestamp(int fieldIndex) const
     int minute = 0;
     int second = 0;
     int millisecond = 0;
-    sscanf(
-        defaultValue, "'%04d/%02d/%02d %02d:%02d:%02d.%03d'", &year, &month,
-        &day, &hour, &minute, &second, &millisecond);
+
+    if (strchr(defaultValue, '.') == nullptr)
+        sscanf(
+            defaultValue, "'%04d/%02d/%02d %02d:%02d:%02d'", &year, &month,
+            &day, &hour, &minute, &second);
+    else
+        sscanf(
+            defaultValue, "'%04d/%02d/%02d %02d:%02d:%02d.%03d'", &year, &month,
+            &day, &hour, &minute, &second, &millisecond);
+
     return odbc::makeNullable<odbc::timestamp>(
         year, month, day, hour, minute, second, millisecond);
 }

@@ -771,6 +771,27 @@ def test_ogr_hana_29():
 
 
 ###############################################################################
+# Test DateTime time zones
+
+def test_ogr_hana_30():
+    ds = open_datasource(1)
+
+    layer_name = get_test_name()
+    layer = ds.CreateLayer(layer_name)
+    layer.CreateField(ogr.FieldDefn('DT', ogr.OFTDateTime))
+    for val in ['2020/01/01 01:34:56', '2020/01/01 01:34:56+00', '2020/01/01 01:34:56.789+02']:
+        feat = ogr.Feature(layer.GetLayerDefn())
+        feat.SetField('DT', val)
+        layer.CreateFeature(feat)
+
+    ds = open_datasource(0)
+    layer = ds.GetLayerByName(layer_name)
+    for val in ['2020/01/01 01:34:56', '2020/01/01 01:34:56', '2019/12/31 23:34:56.789']:
+        feat = layer.GetNextFeature()
+        assert feat.GetField('DT') == val
+
+
+###############################################################################
 #  Create a table from data/poly.shp
 
 def create_tpoly_table(ds, layer_name='TPOLY'):
