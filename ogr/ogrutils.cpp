@@ -236,9 +236,9 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal,
 std::string OGRFormatDouble(double val, const OGRWktOptions& opts)
 {
     // So to have identical cross platform representation.
-    if( CPLIsInf(val) )
+    if( std::isinf(val) )
         return (val > 0) ? "inf" : "-inf";
-    if( CPLIsNan(val) )
+    if( std::isnan(val) )
         return "nan";
 
     std::ostringstream oss;
@@ -1775,6 +1775,12 @@ OGRErr OGRReadWKBGeometryType( const unsigned char * pabyData,
 int  OGRFormatFloat(char *pszBuffer, int nBufferLen,
                     float fVal, int nPrecision, char chConversionSpecifier)
 {
+    // So to have identical cross platform representation.
+    if( std::isinf(fVal) )
+        return CPLsnprintf(pszBuffer, nBufferLen, (fVal > 0) ? "inf" : "-inf");
+    if( std::isnan(fVal) )
+        return CPLsnprintf(pszBuffer, nBufferLen, "nan");
+
     int nSize = 0;
     char szFormatting[32] = {};
     constexpr int MAX_SIGNIFICANT_DIGITS_FLOAT32 = 8;

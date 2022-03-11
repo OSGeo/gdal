@@ -27,6 +27,7 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
+import math
 import os
 import struct
 
@@ -347,7 +348,7 @@ def test_ogr_basic_7():
         feat_almost_clone.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 # Issue several RegisterAll() to check that OGR drivers are good citizens
 
@@ -387,7 +388,7 @@ def test_ogr_basic_9():
     for geom_type_tuple in geom_type_tuples:
         assert ogr.GeometryTypeToName(geom_type_tuple[0]) == geom_type_tuple[1]
 
-    
+
 ###############################################################################
 # Run test_ogrsf -all_drivers
 
@@ -420,7 +421,7 @@ def test_ogr_basic_11():
     if used_exceptions_before == 0:
         ogr.DontUseExceptions()
 
-    
+
 ###############################################################################
 # Test OFSTBoolean, OFSTInt16 and OFSTFloat32
 
@@ -577,7 +578,7 @@ def test_ogr_basic_13():
         f.SetField('date', val)
         assert f.GetField('date') == expected_ret, val
 
-    
+
 ###############################################################################
 # Test ogr.Open(.) in an empty directory
 
@@ -655,7 +656,7 @@ def test_ogr_basic_invalid_unicode():
     except:
         pass
 
-    
+
 
 def test_ogr_basic_dataset_slice():
 
@@ -733,8 +734,8 @@ def test_ogr_basic_float32_formatting():
     feat_defn.AddFieldDefn(fldn_defn)
 
     f = ogr.Feature(feat_defn)
-    f['float32_list'] = [ cast_as_float(0.35) ]
-    assert f.GetFieldAsString('float32_list') == '(1:0.35)'
+    f['float32_list'] = [ cast_as_float(0.35), math.nan, math.inf, -math.inf ]
+    assert f.GetFieldAsString('float32_list') == '(4:0.35,nan,inf,-inf)'
 
 ###############################################################################
 # cleanup
