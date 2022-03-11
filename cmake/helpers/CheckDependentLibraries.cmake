@@ -314,10 +314,16 @@ set_package_properties(
   TYPE RECOMMENDED)
 gdal_internal_library(TIFF REQUIRED)
 
-gdal_check_package(ZSTD "ZSTD compression library" CAN_DISABLE
-  NAMES zstd
-  TARGETS zstd::libzstd_shared zstd::libzstd_static ZSTD::zstd
-)
+if (DEFINED ENV{CONDA_PREFIX} AND UNIX)
+    # Currently on Unix, the Zstd cmake config file is buggy. It declares a
+    # libzstd_static target but the corresponding libzstd.a file is missing,
+    # which cause CMake to error out.
+    set(ZSTD_NAMES_AND_TARGETS)
+else()
+    set(ZSTD_NAMES_AND_TARGETS NAMES zstd TARGETS zstd::libzstd_shared zstd::libzstd_static ZSTD::zstd)
+endif()
+gdal_check_package(ZSTD "ZSTD compression library" CAN_DISABLE ${ZSTD_NAMES_AND_TARGETS})
+
 gdal_check_package(SFCGAL "gdal core supports ISO 19107:2013 and OGC Simple Features Access 1.2 for 3D operations"
                    CAN_DISABLE)
 
