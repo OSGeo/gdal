@@ -162,7 +162,7 @@ The allowed subelements for VRTRasterBand are :
 
   <ColorInterp>Gray</ColorInterp>:
 
-- **NoDataValue**: If this element exists a raster band has a nodata value associated with, of the value given as data in the element. This must not be confused with the NODATA element of a VRTComplexSource element.
+- **NoDataValue**: If the input datasets to be composed have a nodata value for this raster band, set this element's value to that nodata value for it to be reflected in the VRT. This must not be confused with the NODATA element of a VRTComplexSource element.
 
 .. code-block:: xml
 
