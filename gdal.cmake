@@ -148,6 +148,7 @@ else ()
   detect_and_set_cxx_warning_flag(unused-private-field)
   detect_and_set_cxx_warning_flag(non-virtual-dtor)
   detect_and_set_cxx_warning_flag(overloaded-virtual)
+  detect_and_set_cxx_warning_flag(suggest-override)
 
   check_cxx_compiler_flag(-fno-operator-names HAVE_FLAG_NO_OPERATOR_NAMES)
   if (HAVE_FLAG_NO_OPERATOR_NAMES)
