@@ -204,6 +204,8 @@ def test_ogr_basic_7():
     feat_defn.AddFieldDefn(field_defn)
     field_defn = ogr.FieldDefn('field11', ogr.OFTInteger64)
     feat_defn.AddFieldDefn(field_defn)
+    field_defn = ogr.FieldDefn('field12', ogr.OFTReal)
+    feat_defn.AddFieldDefn(field_defn)
 
     feat = ogr.Feature(feat_defn)
     feat.SetFID(100)
@@ -211,13 +213,14 @@ def test_ogr_basic_7():
     feat.SetField(1, 1.2)
     feat.SetField(2, "A")
     feat.SetFieldIntegerList(3, [1, 2])
-    feat.SetFieldDoubleList(4, [1.2, 3.4])
+    feat.SetFieldDoubleList(4, [1.2, 3.4, math.nan])
     feat.SetFieldStringList(5, ["A", "B"])
     feat.SetField(6, 2010, 1, 8, 22, 48, 15, 4)
     feat.SetField(7, 2010, 1, 8, 22, 48, 15, 4)
     feat.SetField(8, 2010, 1, 8, 22, 48, 15, 4)
     feat.SetFieldBinaryFromHexString(9, '012345678ABCDEF')
     feat.SetField(10, 1234567890123)
+    feat.SetField(11, math.nan)
 
     feat_clone = feat.Clone()
     if not feat.Equal(feat_clone):
@@ -227,7 +230,7 @@ def test_ogr_basic_7():
     feat_almost_clone = feat.Clone()
     geom = ogr.CreateGeometryFromWkt('POINT(0 1)')
     feat_almost_clone.SetGeometry(geom)
-    if feat.Equal(feat_almost_clone):
+    if feat.Equal(feat_almost_clone) or feat_almost_clone.Equal(feat):
         feat.DumpReadable()
         feat_almost_clone.DumpReadable()
         pytest.fail()
@@ -235,7 +238,7 @@ def test_ogr_basic_7():
     feat_almost_clone = feat.Clone()
     geom = ogr.CreateGeometryFromWkt('POINT(0 1)')
     feat.SetGeometry(geom)
-    if feat.Equal(feat_almost_clone):
+    if feat.Equal(feat_almost_clone) or feat_almost_clone.Equal(feat):
         feat.DumpReadable()
         feat_almost_clone.DumpReadable()
         pytest.fail()
@@ -248,70 +251,77 @@ def test_ogr_basic_7():
 
     feat_almost_clone = feat.Clone()
     feat_almost_clone.SetFID(99)
-    if feat.Equal(feat_almost_clone):
+    if feat.Equal(feat_almost_clone) or feat_almost_clone.Equal(feat):
         feat.DumpReadable()
         feat_almost_clone.DumpReadable()
         pytest.fail()
 
     feat_almost_clone = feat.Clone()
     feat_almost_clone.SetField(0, 2)
-    if feat.Equal(feat_almost_clone):
+    if feat.Equal(feat_almost_clone) or feat_almost_clone.Equal(feat):
         feat.DumpReadable()
         feat_almost_clone.DumpReadable()
         pytest.fail()
 
     feat_almost_clone = feat.Clone()
     feat_almost_clone.SetField(1, 2.2)
-    if feat.Equal(feat_almost_clone):
+    if feat.Equal(feat_almost_clone) or feat_almost_clone.Equal(feat):
         feat.DumpReadable()
         feat_almost_clone.DumpReadable()
         pytest.fail()
 
     feat_almost_clone = feat.Clone()
     feat_almost_clone.SetField(2, "B")
-    if feat.Equal(feat_almost_clone):
+    if feat.Equal(feat_almost_clone) or feat_almost_clone.Equal(feat):
         feat.DumpReadable()
         feat_almost_clone.DumpReadable()
         pytest.fail()
 
     feat_almost_clone = feat.Clone()
     feat_almost_clone.SetFieldIntegerList(3, [1, 2, 3])
-    if feat.Equal(feat_almost_clone):
+    if feat.Equal(feat_almost_clone) or feat_almost_clone.Equal(feat):
         feat.DumpReadable()
         feat_almost_clone.DumpReadable()
         pytest.fail()
 
     feat_almost_clone = feat.Clone()
     feat_almost_clone.SetFieldIntegerList(3, [1, 3])
-    if feat.Equal(feat_almost_clone):
+    if feat.Equal(feat_almost_clone) or feat_almost_clone.Equal(feat):
         feat.DumpReadable()
         feat_almost_clone.DumpReadable()
         pytest.fail()
 
     feat_almost_clone = feat.Clone()
-    feat_almost_clone.SetFieldDoubleList(4, [1.2, 3.4, 5.6])
-    if feat.Equal(feat_almost_clone):
+    feat_almost_clone.SetFieldDoubleList(4, [1.2, 3.4])
+    if feat.Equal(feat_almost_clone) or feat_almost_clone.Equal(feat):
         feat.DumpReadable()
         feat_almost_clone.DumpReadable()
         pytest.fail()
 
     feat_almost_clone = feat.Clone()
-    feat_almost_clone.SetFieldDoubleList(4, [1.2, 3.5])
-    if feat.Equal(feat_almost_clone):
+    feat_almost_clone.SetFieldDoubleList(4, [1.2, 3.5, math.nan])
+    if feat.Equal(feat_almost_clone) or feat_almost_clone.Equal(feat):
+        feat.DumpReadable()
+        feat_almost_clone.DumpReadable()
+        pytest.fail()
+
+    feat_almost_clone = feat.Clone()
+    feat_almost_clone.SetFieldDoubleList(4, [1.2, 3.4, 0])
+    if feat.Equal(feat_almost_clone) or feat_almost_clone.Equal(feat):
         feat.DumpReadable()
         feat_almost_clone.DumpReadable()
         pytest.fail()
 
     feat_almost_clone = feat.Clone()
     feat_almost_clone.SetFieldStringList(5, ["A", "B", "C"])
-    if feat.Equal(feat_almost_clone):
+    if feat.Equal(feat_almost_clone) or feat_almost_clone.Equal(feat):
         feat.DumpReadable()
         feat_almost_clone.DumpReadable()
         pytest.fail()
 
     feat_almost_clone = feat.Clone()
     feat_almost_clone.SetFieldStringList(5, ["A", "D"])
-    if feat.Equal(feat_almost_clone):
+    if feat.Equal(feat_almost_clone) or feat_almost_clone.Equal(feat):
         feat.DumpReadable()
         feat_almost_clone.DumpReadable()
         pytest.fail()
@@ -322,28 +332,35 @@ def test_ogr_basic_7():
             feat_almost_clone.SetField(num_field, 2010 + (i == 0), 1 + (i == 1),
                                        8 + (i == 2), 22 + (i == 3), 48 + (i == 4),
                                        15 + (i == 5), 4 + (i == 6))
-            if feat.Equal(feat_almost_clone):
+            if feat.Equal(feat_almost_clone) or feat_almost_clone.Equal(feat):
                 feat.DumpReadable()
                 feat_almost_clone.DumpReadable()
                 pytest.fail()
 
     feat_almost_clone = feat.Clone()
     feat_almost_clone.SetFieldBinaryFromHexString(9, '00')
-    if feat.Equal(feat_almost_clone):
+    if feat.Equal(feat_almost_clone) or feat_almost_clone.Equal(feat):
         feat.DumpReadable()
         feat_almost_clone.DumpReadable()
         pytest.fail()
 
     feat_almost_clone = feat.Clone()
     feat_almost_clone.SetField(10, 2)
-    if feat.Equal(feat_almost_clone):
+    if feat.Equal(feat_almost_clone) or feat_almost_clone.Equal(feat):
         feat.DumpReadable()
         feat_almost_clone.DumpReadable()
         pytest.fail()
 
     feat_almost_clone = feat.Clone()
     feat_almost_clone.SetField(10, 2)
-    if feat.Equal(feat_almost_clone):
+    if feat.Equal(feat_almost_clone) or feat_almost_clone.Equal(feat):
+        feat.DumpReadable()
+        feat_almost_clone.DumpReadable()
+        pytest.fail()
+
+    feat_almost_clone = feat.Clone()
+    feat_almost_clone.SetField(11, 0)
+    if feat.Equal(feat_almost_clone) or feat_almost_clone.Equal(feat):
         feat.DumpReadable()
         feat_almost_clone.DumpReadable()
         pytest.fail()
