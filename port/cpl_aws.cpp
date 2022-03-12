@@ -43,7 +43,7 @@ CPL_CVSID("$Id$")
 // #define DEBUG_VERBOSE 1
 
 #ifdef WIN32
-#if defined(_MSC_VER)
+#if defined(HAVE_ATLBASE_H)
 bool CPLFetchWindowsProductUUID(CPLString &osStr); // defined in cpl_aws_win32.cpp
 #endif
 const char* CPLGetWineVersion(); // defined in cpl_vsil_win32.cpp
@@ -701,7 +701,7 @@ static bool IsMachinePotentiallyEC2Instance()
     }
     else
     {
-#if defined(_MSC_VER)
+#if defined(HAVE_ATLBASE_H)
         CPLString osMachineUUID;
         if( CPLFetchWindowsProductUUID(osMachineUUID) )
         {
