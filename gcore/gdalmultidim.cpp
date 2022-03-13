@@ -2184,6 +2184,7 @@ double GDALMDArray::GetNoDataValueAsDouble(bool* pbHasNoData) const
 {
     const void* pNoData = GetRawNoDataValue();
     double dfNoData = 0.0;
+    // coverity[alloc_arg]
     bool ok = pNoData != nullptr &&
         GDALExtendedDataType::CopyValue(pNoData,
                     GetDataType(),
@@ -2213,6 +2214,7 @@ int64_t GDALMDArray::GetNoDataValueAsInt64(bool* pbHasNoData) const
 {
     const void* pNoData = GetRawNoDataValue();
     int64_t nNoData = GDAL_PAM_DEFAULT_NODATA_VALUE_INT64;
+    // coverity[alloc_arg]
     bool ok = pNoData != nullptr &&
               GDALExtendedDataType::CopyValue(pNoData,
                             GetDataType(),
@@ -2242,6 +2244,7 @@ uint64_t GDALMDArray::GetNoDataValueAsUInt64(bool* pbHasNoData) const
 {
     const void* pNoData = GetRawNoDataValue();
     uint64_t nNoData = GDAL_PAM_DEFAULT_NODATA_VALUE_UINT64;
+    // coverity[alloc_arg]
     bool ok = pNoData != nullptr &&
               GDALExtendedDataType::CopyValue(pNoData,
                             GetDataType(),
