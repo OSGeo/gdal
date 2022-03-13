@@ -694,8 +694,8 @@ netCDFRasterBand::netCDFRasterBand( const netCDFRasterBand::CONSTRUCTOR_OPEN&,
             }
         }
         else
-        {
 #endif
+        {
 #ifdef NCDF_DEBUG
             CPLDebug("GDAL_netCDF", "SetNoDataValue(%f) read", dfNoData);
 #endif
@@ -1542,8 +1542,8 @@ CPLErr netCDFRasterBand::SetNoDataValueAsInt64( int64_t nNoData )
             status = nc_put_att_longlong (cdfid, nZId, _FillValue,
                                           nc_datatype, 1, &tmp);
         }
-#endif
         else
+#endif
         {
             double dfNoData = static_cast<double>(nNoData);
             status = nc_put_att_double(cdfid, nZId, _FillValue,
@@ -1626,8 +1626,8 @@ CPLErr netCDFRasterBand::SetNoDataValueAsUInt64( uint64_t nNoData )
             status = nc_put_att_ulonglong (cdfid, nZId, _FillValue,
                                            nc_datatype, 1, &tmp);
         }
-#endif
         else
+#endif
         {
             double dfNoData = static_cast<double>(nNoData);
             status = nc_put_att_double(cdfid, nZId, _FillValue,
