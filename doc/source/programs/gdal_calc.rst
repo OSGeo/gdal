@@ -90,7 +90,7 @@ but no projection checking is performed (unless projectionCheck option is used).
 
     GDAL format for output file.
 
-.. option:: color-table=<filename>
+.. option:: --color-table=<filename>
 
     Allows specifying a filename of a color table (or a ColorTable object) (with Palette Index interpretation) to be used for the output raster.
     Supported formats: txt (i.e. like gdaldem, but color names are not supported), qlr, qml (i.e. exported from QGIS)
