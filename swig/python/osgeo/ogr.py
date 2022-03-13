@@ -5773,7 +5773,7 @@ class Geometry(object):
 
     def ExportToWkb(self, *args, **kwargs):
         r"""
-        ExportToWkb(Geometry self, OGRwkbByteOrder byte_order=wkbXDR) -> OGRErr
+        ExportToWkb(Geometry self, OGRwkbByteOrder byte_order=wkbNDR) -> OGRErr
         OGRErr
         OGR_G_ExportToWkb(OGRGeometryH hGeom, OGRwkbByteOrder eOrder, unsigned
         char *pabyDstBuffer)
@@ -5809,7 +5809,7 @@ class Geometry(object):
 
     def ExportToIsoWkb(self, *args, **kwargs):
         r"""
-        ExportToIsoWkb(Geometry self, OGRwkbByteOrder byte_order=wkbXDR) -> OGRErr
+        ExportToIsoWkb(Geometry self, OGRwkbByteOrder byte_order=wkbNDR) -> OGRErr
         OGRErr
         OGR_G_ExportToIsoWkb(OGRGeometryH hGeom, OGRwkbByteOrder eOrder,
         unsigned char *pabyDstBuffer)

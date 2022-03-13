@@ -2758,7 +2758,7 @@ public:
 #ifndef SWIGCSHARP
 #if defined(SWIGJAVA)
 %apply (GByte* outBytes) {GByte*};
-  GByte* ExportToWkb( size_t *nLen, char **pBuf, OGRwkbByteOrder byte_order=wkbXDR ) {
+  GByte* ExportToWkb( size_t *nLen, char **pBuf, OGRwkbByteOrder byte_order=wkbNDR ) {
     *nLen = OGR_G_WkbSizeEx( self );
     *pBuf = (char *) VSI_MALLOC_VERBOSE( *nLen );
     if( *pBuf == NULL )
@@ -2767,7 +2767,7 @@ public:
     return (GByte*)*pBuf;
   }
 
-  GByte* ExportToIsoWkb( size_t *nLen, char **pBuf, OGRwkbByteOrder byte_order=wkbXDR ) {
+  GByte* ExportToIsoWkb( size_t *nLen, char **pBuf, OGRwkbByteOrder byte_order=wkbNDR ) {
     *nLen = OGR_G_WkbSizeEx( self );
     *pBuf = (char *) VSI_MALLOC_VERBOSE( *nLen );
     if( *pBuf == NULL )
@@ -2778,7 +2778,7 @@ public:
 %clear GByte*;
 #elif defined(SWIGPYTHON)
   %feature("kwargs") ExportToWkb;
-  OGRErr ExportToWkb( size_t *nLen, char **pBuf, OGRwkbByteOrder byte_order=wkbXDR ) {
+  OGRErr ExportToWkb( size_t *nLen, char **pBuf, OGRwkbByteOrder byte_order=wkbNDR ) {
     *nLen = OGR_G_WkbSizeEx( self );
     *pBuf = (char *) VSI_MALLOC_VERBOSE( *nLen );
     if( *pBuf == NULL )
@@ -2787,7 +2787,7 @@ public:
   }
 
   %feature("kwargs") ExportToIsoWkb;
-  OGRErr ExportToIsoWkb( size_t *nLen, char **pBuf, OGRwkbByteOrder byte_order=wkbXDR ) {
+  OGRErr ExportToIsoWkb( size_t *nLen, char **pBuf, OGRwkbByteOrder byte_order=wkbNDR ) {
     *nLen = OGR_G_WkbSizeEx( self );
     *pBuf = (char *) VSI_MALLOC_VERBOSE( *nLen );
     if( *pBuf == NULL )
@@ -2796,7 +2796,7 @@ public:
   }
 #else
   %feature("kwargs") ExportToWkb;
-  OGRErr ExportToWkb( int *nLen, char **pBuf, OGRwkbByteOrder byte_order=wkbXDR ) {
+  OGRErr ExportToWkb( int *nLen, char **pBuf, OGRwkbByteOrder byte_order=wkbNDR ) {
     *nLen = OGR_G_WkbSize( self );
     *pBuf = (char *) VSI_MALLOC_VERBOSE( *nLen );
     if( *pBuf == NULL )
@@ -2805,7 +2805,7 @@ public:
   }
 
   %feature("kwargs") ExportToIsoWkb;
-  OGRErr ExportToIsoWkb( int *nLen, char **pBuf, OGRwkbByteOrder byte_order=wkbXDR ) {
+  OGRErr ExportToIsoWkb( int *nLen, char **pBuf, OGRwkbByteOrder byte_order=wkbNDR ) {
     *nLen = OGR_G_WkbSize( self );
     *pBuf = (char *) VSI_MALLOC_VERBOSE( *nLen );
     if( *pBuf == NULL )
