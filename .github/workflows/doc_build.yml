@@ -36,7 +36,7 @@ jobs:
     - name: HTML
       shell: bash -l {0}
       run: |
-        make html
+        make html O="-D enable_redirects=1"
       working-directory: ./doc
     - name: PDF
       shell: bash -l {0}
