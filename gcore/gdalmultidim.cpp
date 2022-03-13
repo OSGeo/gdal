@@ -1396,14 +1396,12 @@ bool GDALExtendedDataType::CopyValue(const void* pSrc,
         memcpy(&srcStrPtr, pSrc, sizeof(const char*));
         if( dstType.GetNumericDataType() == GDT_Int64 )
         {
-            *(static_cast<int64_t*>(pDst)) = static_cast<int64_t>(CPLAtoGIntBig(srcStrPtr));
+            *(static_cast<int64_t*>(pDst)) = srcStrPtr == nullptr ? 0 : static_cast<int64_t>(atoll(srcStrPtr));
         }
-#if HAVE_STRTOULL
         else if( dstType.GetNumericDataType() == GDT_UInt64 )
         {
-            *(static_cast<uint64_t*>(pDst)) = static_cast<uint64_t>(strtoull(srcStrPtr, nullptr, 10));
+            *(static_cast<uint64_t*>(pDst)) = srcStrPtr == nullptr ? 0 : static_cast<uint64_t>(strtoull(srcStrPtr, nullptr, 10));
         }
-#endif
         else
         {
             // FIXME GDT_UInt64
