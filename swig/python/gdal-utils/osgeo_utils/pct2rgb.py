@@ -171,7 +171,7 @@ class PCT2RGB(GDALScript):
                             help="Band to convert to RGB, defaults to 1.")
 
         parser.add_argument("-pct", dest='pct_filename', type=str,
-                            help="Extract the color table from <palette_file> instead of computing it. "
+                            help="Extract the color table from <palette_file> instead of getting it from <source_file>. "
                                  "Can be used to have a consistent color table for multiple files. "
                                  "The palette file must be either a raster file in a GDAL supported format with a "
                                  "palette or a color file in a supported format (txt, qml, qlr).")
