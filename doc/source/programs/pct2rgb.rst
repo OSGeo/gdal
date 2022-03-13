@@ -41,7 +41,7 @@ RGB file of the desired format.
 
 .. option:: -pct <palette_file>
 
-    Extract the color table from <palette_file> instead of getting it from <source_file>
+    Extract the color table from <palette_file> instead of getting it from <source_file>.
     Can be used to have a consistent color table for multiple files.
     The <palette_file> must be either a raster file in a GDAL supported format with a palette
     or a color file in a supported format (txt, qml, qlr).
