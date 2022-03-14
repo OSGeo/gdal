@@ -575,7 +575,9 @@ define_find_package2(KEA libkea/KEACommon.h kea)
 gdal_check_package(KEA "Enable KEA driver" CAN_DISABLE)
 
 gdal_check_package(ECW "Enable ECW driver" CAN_DISABLE)
-gdal_check_package(NetCDF "Enable netCDF driver" CAN_DISABLE)
+gdal_check_package(NetCDF "Enable netCDF driver" CAN_DISABLE
+  # NAMES netCDF # Cf. https://github.com/OSGeo/gdal/pull/5453
+  TARGETS netCDF::netcdf NETCDF::netCDF)
 gdal_check_package(OGDI "Enable ogr_OGDI driver" CAN_DISABLE)
 # OpenCL warping gives different results than the ones expected by autotest, so disable it by default even if found.
 gdal_check_package(OpenCL "Enable OpenCL (may be used for warping)" DISABLED_BY_DEFAULT)
