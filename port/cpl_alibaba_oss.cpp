@@ -236,7 +236,8 @@ VSIOSSHandleHelper* VSIOSSHandleHelper::BuildFromURI( const char* pszURI,
                                                       CSLConstList papszOptions )
 {
     std::string osPathForOption("/vsioss/");
-    osPathForOption += pszURI;
+    if( pszURI )
+        osPathForOption += pszURI;
 
     CPLString osSecretAccessKey;
     CPLString osAccessKeyId;

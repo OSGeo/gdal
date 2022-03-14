@@ -729,6 +729,81 @@ namespace tut
 
     template<> template<> void object::test<18>()
     {
+        // non-null string to string
+        {
+            const char* srcPtr = "foo";
+            char* dstPtr = nullptr;
+            GDALExtendedDataType::CopyValue(
+                &srcPtr, GDALExtendedDataType::CreateString(),
+                &dstPtr, GDALExtendedDataType::CreateString());
+            ensure(dstPtr != nullptr);
+            ensure(strcmp(dstPtr, srcPtr) == 0);
+            CPLFree(dstPtr);
+        }
+        // null string to string
+        {
+            const char* srcPtr = nullptr;
+            char* dstPtr = nullptr;
+            GDALExtendedDataType::CopyValue(
+                &srcPtr, GDALExtendedDataType::CreateString(),
+                &dstPtr, GDALExtendedDataType::CreateString());
+            ensure(dstPtr == nullptr);
+        }
+        // non-null string to Int32
+        {
+            const char* srcPtr = "2";
+            int32_t nVal = 1;
+            GDALExtendedDataType::CopyValue(
+                &srcPtr, GDALExtendedDataType::CreateString(),
+                &nVal, GDALExtendedDataType::Create(GDT_Int32));
+            ensure_equals(nVal, 2);
+        }
+        // null string to Int32
+        {
+            const char* srcPtr = nullptr;
+            int32_t nVal = 1;
+            GDALExtendedDataType::CopyValue(
+                &srcPtr, GDALExtendedDataType::CreateString(),
+                &nVal, GDALExtendedDataType::Create(GDT_Int32));
+            ensure_equals(nVal, 0);
+        }
+        // non-null string to Int64
+        {
+            const char* srcPtr = "2";
+            int64_t nVal = 1;
+            GDALExtendedDataType::CopyValue(
+                &srcPtr, GDALExtendedDataType::CreateString(),
+                &nVal, GDALExtendedDataType::Create(GDT_Int64));
+            ensure_equals(nVal, 2);
+        }
+        // null string to Int64
+        {
+            const char* srcPtr = nullptr;
+            int64_t nVal = 1;
+            GDALExtendedDataType::CopyValue(
+                &srcPtr, GDALExtendedDataType::CreateString(),
+                &nVal, GDALExtendedDataType::Create(GDT_Int64));
+            ensure_equals(nVal, 0);
+        }
+        // non-null string to UInt64
+        {
+            char* srcPtr = nullptr;
+            uint64_t nVal = 1;
+            GDALExtendedDataType::CopyValue(
+                &srcPtr, GDALExtendedDataType::CreateString(),
+                &nVal, GDALExtendedDataType::Create(GDT_UInt64));
+            ensure_equals(nVal, 0);
+        }
+        // non-null string to Int64
+        {
+            const char* srcPtr = "2";
+            uint64_t nVal = 1;
+            GDALExtendedDataType::CopyValue(
+                &srcPtr, GDALExtendedDataType::CreateString(),
+                &nVal, GDALExtendedDataType::Create(GDT_UInt64));
+            ensure_equals(nVal, 2);
+        }
+
         class myArray: public GDALMDArray
         {
                 GDALExtendedDataType m_dt;

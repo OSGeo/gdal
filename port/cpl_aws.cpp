@@ -1487,7 +1487,8 @@ VSIS3HandleHelper* VSIS3HandleHelper::BuildFromURI( const char* pszURI,
                                                     CSLConstList papszOptions )
 {
     std::string osPathForOption("/vsis3/");
-    osPathForOption += pszURI;
+    if( pszURI )
+        osPathForOption += pszURI;
 
     CPLString osSecretAccessKey;
     CPLString osAccessKeyId;
