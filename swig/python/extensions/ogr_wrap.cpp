@@ -4764,10 +4764,10 @@ SWIGINTERN void OGRGeomFieldDefnShadow_SetNullable(OGRGeomFieldDefnShadow *self,
   OGRGeometryShadow* CreateGeometryFromWkb( size_t len, char *bin_string,
                                             OSRSpatialReferenceShadow *reference=NULL ) {
     OGRGeometryH geom = NULL;
-    OGRErr err = OGR_G_CreateFromWkb( (unsigned char *) bin_string,
-                                      reference,
-                                      &geom,
-                                      len );
+    OGRErr err = OGR_G_CreateFromWkbEx( (unsigned char *) bin_string,
+                                        reference,
+                                        &geom,
+                                        len );
     if (err != 0 ) {
        CPLError(CE_Failure, err, "%s", OGRErrMessages(err));
        return NULL;
