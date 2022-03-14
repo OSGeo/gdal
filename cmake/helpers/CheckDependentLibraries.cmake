@@ -242,7 +242,6 @@ gdal_check_package(MySQL "MySQL" CAN_DISABLE)
 gdal_check_package(CURL "Enable drivers to use web API" CAN_DISABLE)
 
 gdal_check_package(Iconv "Character set recoding (used in GDAL portability library)" CAN_DISABLE)
-
 if (Iconv_FOUND)
   set(CMAKE_REQUIRED_INCLUDES ${Iconv_INCLUDE_DIR})
   set(CMAKE_REQUIRED_LIBRARIES ${Iconv_LIBRARY})
@@ -276,6 +275,10 @@ if (Iconv_FOUND)
   unset(CMAKE_REQUIRED_LIBRARIES)
   unset(CMAKE_REQUIRED_FLAGS)
 endif ()
+
+if (HAVE_ICONV AND DEFINED GDAL_USE_ICONV AND NOT GDAL_USE_ICONV)
+  set(HAVE_ICONV 0)
+endif()
 
 gdal_check_package(LibXml2 "Read and write XML formats" CAN_DISABLE)
 
