@@ -19,7 +19,10 @@ option(
   "Whether detected external libraries should be used by default. This should be set before CMakeCache.txt is created."
   ON)
 
-set(GDAL_IMPORT_DEPENDENCIES "")
+set(GDAL_IMPORT_DEPENDENCIES [[
+include(CMakeFindDependencyMacro)
+include("${CMAKE_CURRENT_LIST_DIR}/GdalFindModulePath.cmake")
+]])
 
 # Check that the configuration has a valid value for INTERFACE_INCLUDE_DIRECTORIES. This aimed at avoiding issues like
 # https://github.com/OSGeo/gdal/issues/5324
