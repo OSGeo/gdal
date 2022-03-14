@@ -298,8 +298,11 @@ if (GDAL_USE_CRYPTOPP)
   option(CRYPTOPP_USE_ONLY_CRYPTODLL_ALG "Use Only cryptoDLL alg. only work on dynamic DLL" OFF)
 endif ()
 
-# First check with CMake config files, and then fallback to the FindPROJ module.
-find_package(PROJ 8.0 CONFIG)
+# First check with CMake config files (starting at version 8, due to issues with earlier ones), and then fallback to the FindPROJ module.
+find_package(PROJ 9 CONFIG QUIET)
+if (NOT PROJ_FOUND)
+  find_package(PROJ 8 CONFIG QUIET)
+endif()
 if (NOT PROJ_FOUND)
   find_package(PROJ 6.0 REQUIRED)
 endif ()
@@ -312,10 +315,16 @@ set_package_properties(
   TYPE RECOMMENDED)
 gdal_internal_library(TIFF REQUIRED)
 
-gdal_check_package(ZSTD "ZSTD compression library" CAN_DISABLE
-  NAMES zstd
-  TARGETS zstd::libzstd_shared zstd::libzstd_static ZSTD::zstd
-)
+if (DEFINED ENV{CONDA_PREFIX} AND UNIX)
+    # Currently on Unix, the Zstd cmake config file is buggy. It declares a
+    # libzstd_static target but the corresponding libzstd.a file is missing,
+    # which cause CMake to error out.
+    set(ZSTD_NAMES_AND_TARGETS)
+else()
+    set(ZSTD_NAMES_AND_TARGETS NAMES zstd TARGETS zstd::libzstd_shared zstd::libzstd_static ZSTD::zstd)
+endif()
+gdal_check_package(ZSTD "ZSTD compression library" CAN_DISABLE ${ZSTD_NAMES_AND_TARGETS})
+
 gdal_check_package(SFCGAL "gdal core supports ISO 19107:2013 and OGC Simple Features Access 1.2 for 3D operations"
                    CAN_DISABLE)
 
@@ -627,8 +636,8 @@ gdal_check_package(HDFS "Enable Hadoop File System through native library" CAN_D
 # PDF library: one of them enables PDF driver
 gdal_check_package(Poppler "Enable PDF driver with Poppler (read side)" CAN_DISABLE)
 
-define_find_package2(PDFium public/fpdfview.h pdfium FIND_PATH_SUFFIX pdfium)
-gdal_check_package(PDFium "Enable PDF driver with Pdfium (read side)" CAN_DISABLE)
+define_find_package2(PDFIUM public/fpdfview.h pdfium FIND_PATH_SUFFIX pdfium)
+gdal_check_package(PDFIUM "Enable PDF driver with Pdfium (read side)" CAN_DISABLE)
 
 gdal_check_package(Podofo "Enable PDF driver with Podofo (read side)" CAN_DISABLE)
 if (GDAL_USE_POPPLER

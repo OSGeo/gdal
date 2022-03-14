@@ -212,13 +212,13 @@ void CPLJSonStreamingWriter::Add(const char* pszStr)
     Print(FormatString(pszStr));
 }
 
-void CPLJSonStreamingWriter::Add(GIntBig nVal)
+void CPLJSonStreamingWriter::Add(std::int64_t nVal)
 {
     EmitCommaIfNeeded();
-    Print(CPLSPrintf(CPL_FRMT_GIB, nVal));
+    Print(CPLSPrintf(CPL_FRMT_GIB, static_cast<GIntBig>(nVal)));
 }
 
-void CPLJSonStreamingWriter::Add(GUInt64 nVal)
+void CPLJSonStreamingWriter::Add(std::uint64_t nVal)
 {
     EmitCommaIfNeeded();
     Print(CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(nVal)));

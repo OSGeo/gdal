@@ -196,7 +196,10 @@ A raster band is represented in GDAL with the :cpp:class:`GDALRasterBand` class.
 A raster band has the following properties:
 
 - A width and height in pixels and lines. This is the same as that defined for the dataset, if this is a full resolution band.
-- A datatype (GDALDataType). One of Byte, UInt16, Int16, UInt32, Int32, Float32, Float64, and the complex types CInt16, CInt32, CFloat32, and CFloat64.
+- A datatype (GDALDataType). One of Byte, UInt16, Int16, UInt32, Int32, UInt64, Int64, Float32, Float64, and the complex types CInt16, CInt32, CFloat32, and CFloat64.
+
+  UInt64 and Int64 data types have been added in GDAL 3.5. Beyond reading and write pixel values, their support is limited.  Some algorithms might use 64-bit floating-point internally (warping), as well as some methods returning only double values (GetMinimum(), GetMaximum(), etc.), or even 32-bit floating point (overview, RasterIO resampling). Hence the range where exact values are preserved can be [0, 2^53] (or less if 32-bit floating-point is used).
+
 - A block size. This is a preferred (efficient) access chunk size. For tiled images this will be one tile. For scanline oriented images this will normally be one scanline.
 - A list of name/value pair metadata in the same format as the dataset, but of information that is potentially specific to this band.
 - An optional description string.

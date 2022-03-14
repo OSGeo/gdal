@@ -1136,6 +1136,15 @@ GDALAbstractBandBlockCache* GDALHashSetBandBlockCacheCreate(GDALRasterBand* poBa
 
 class GDALMDArray;
 
+/** Range of values found in a mask band */
+typedef enum
+{
+    GMVR_UNKNOWN,           /*! Unknown (can also be used for any values between 0 and 255 for a Byte band) */
+    GMVR_0_AND_1_ONLY,      /*! Only 0 and 1 */
+    GMVR_0_AND_255_ONLY,    /*! Only 0 and 255 */
+} GDALMaskValueRange;
+
+
 /** A single raster band (or channel). */
 
 class CPL_DLL GDALRasterBand : public GDALMajorObject
@@ -1263,6 +1272,8 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     virtual CPLErr FlushCache(bool bAtClosing = false);
     virtual char **GetCategoryNames();
     virtual double GetNoDataValue( int *pbSuccess = nullptr );
+    virtual int64_t GetNoDataValueAsInt64( int *pbSuccess = nullptr );
+    virtual uint64_t GetNoDataValueAsUInt64( int *pbSuccess = nullptr );
     virtual double GetMinimum( int *pbSuccess = nullptr );
     virtual double GetMaximum(int *pbSuccess = nullptr );
     virtual double GetOffset( int *pbSuccess = nullptr );
@@ -1274,6 +1285,8 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     virtual CPLErr SetCategoryNames( char ** papszNames );
     virtual CPLErr SetNoDataValue( double dfNoData );
+    virtual CPLErr SetNoDataValueAsInt64( int64_t nNoData );
+    virtual CPLErr SetNoDataValueAsUInt64( uint64_t nNoData );
     virtual CPLErr DeleteNoDataValue();
     virtual CPLErr SetColorTable( GDALColorTable * poCT );
     virtual CPLErr SetColorInterpretation( GDALColorInterp eColorInterp );
@@ -1333,6 +1346,8 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     virtual GDALRasterBand *GetMaskBand();
     virtual int             GetMaskFlags();
     virtual CPLErr          CreateMaskBand( int nFlagsIn );
+    virtual bool            IsMaskBand() const;
+    virtual GDALMaskValueRange GetMaskValueRange() const;
 
     virtual CPLVirtualMem  *GetVirtualMemAuto( GDALRWFlag eRWFlag,
                                                int *pnPixelSpace,
@@ -1385,6 +1400,9 @@ class CPL_DLL GDALAllValidMaskBand : public GDALRasterBand
     GDALRasterBand *GetMaskBand() override;
     int             GetMaskFlags() override;
 
+    bool            IsMaskBand() const override { return true; }
+    GDALMaskValueRange GetMaskValueRange() const override { return GMVR_0_AND_255_ONLY; }
+
     CPLErr ComputeStatistics( int bApproxOK,
                             double *pdfMin, double *pdfMax,
                             double *pdfMean, double *pdfStdDev,
@@ -1398,7 +1416,9 @@ class CPL_DLL GDALAllValidMaskBand : public GDALRasterBand
 
 class CPL_DLL GDALNoDataMaskBand : public GDALRasterBand
 {
-    double          dfNoDataValue;
+    double          dfNoDataValue = 0;
+    int64_t         nNoDataValueInt64 = 0;
+    uint64_t        nNoDataValueUInt64 = 0;
     GDALRasterBand *poParent;
 
     CPL_DISALLOW_COPY_ASSIGN(GDALNoDataMaskBand)
@@ -1412,6 +1432,9 @@ class CPL_DLL GDALNoDataMaskBand : public GDALRasterBand
   public:
     explicit GDALNoDataMaskBand( GDALRasterBand * );
     ~GDALNoDataMaskBand() override;
+
+    bool            IsMaskBand() const override { return true; }
+    GDALMaskValueRange GetMaskValueRange() const override { return GMVR_0_AND_255_ONLY; }
 
     static bool IsNoDataInRange(double dfNoDataValue,
                                 GDALDataType eDataType);
@@ -1433,6 +1456,9 @@ class CPL_DLL GDALNoDataValuesMaskBand : public GDALRasterBand
   public:
     explicit     GDALNoDataValuesMaskBand( GDALDataset * );
     ~GDALNoDataValuesMaskBand() override;
+
+    bool            IsMaskBand() const override { return true; }
+    GDALMaskValueRange GetMaskValueRange() const override { return GMVR_0_AND_255_ONLY; }
 };
 
 /* ******************************************************************** */
@@ -1456,6 +1482,8 @@ class GDALRescaledAlphaBand : public GDALRasterBand
   public:
     explicit GDALRescaledAlphaBand( GDALRasterBand * );
     ~GDALRescaledAlphaBand() override;
+
+    bool            IsMaskBand() const override { return true; }
 };
 //! @endcond
 
@@ -2466,9 +2494,21 @@ public:
 
     double GetNoDataValueAsDouble(bool* pbHasNoData = nullptr) const;
 
+    int64_t GetNoDataValueAsInt64(bool* pbHasNoData = nullptr) const;
+
+    uint64_t GetNoDataValueAsUInt64(bool* pbHasNoData = nullptr) const;
+
     virtual bool SetRawNoDataValue(const void* pRawNoData);
 
+//! @cond Doxygen_Suppress
+    bool SetNoDataValue(int nNoData) { return SetNoDataValue(static_cast<int64_t>(nNoData)); }
+//! @endcond
+
     bool SetNoDataValue(double dfNoData);
+
+    bool SetNoDataValue(int64_t nNoData);
+
+    bool SetNoDataValue(uint64_t nNoData);
 
     virtual double GetOffset(bool* pbHasOffset = nullptr, GDALDataType* peStorageType = nullptr) const;
 
@@ -2954,6 +2994,12 @@ bool CPL_DLL GDALBufferHasOnlyNoData(const void* pBuffer,
                                      size_t nComponents,
                                      int nBitsPerSample,
                                      GDALBufferSampleFormat nSampleFormat);
+
+void CPL_DLL GDALCopyNoDataValue(GDALRasterBand* poDstBand,
+                                 GDALRasterBand* poSrcBand);
+
+double CPL_DLL GDALGetNoDataValueCastToDouble(int64_t nVal);
+double CPL_DLL GDALGetNoDataValueCastToDouble(uint64_t nVal);
 
 //! @endcond
 

@@ -1587,36 +1587,34 @@ int DIMAPDataset::ReadImageInformation2()
                     {
                         if( EQUAL(psTag->pszValue, "BAND_ID") )
                         {
-                            // BAND_ID is: B0, B1, .... P
-                            if( !EQUAL(psTag->psChild->pszValue, "P") )
+                            nBandIndex = 0;
+                            if (EQUAL(psTag->psChild->pszValue, "P") ||
+                                EQUAL(psTag->psChild->pszValue, "PAN") ||
+                                EQUAL(psTag->psChild->pszValue, "B0") ||
+                                EQUAL(psTag->psChild->pszValue, "R"))
+                                nBandIndex = 1;
+                            else if (EQUAL(psTag->psChild->pszValue, "B1") ||
+                                EQUAL(psTag->psChild->pszValue, "G"))
+                                nBandIndex = 2;
+                            else if (EQUAL(psTag->psChild->pszValue, "B2") ||
+                                EQUAL(psTag->psChild->pszValue, "B"))
+                                nBandIndex = 3;
+                            else if (EQUAL(psTag->psChild->pszValue, "B3") ||
+                                EQUAL(psTag->psChild->pszValue, "NIR"))
+                                nBandIndex = 4;
+                            else if (EQUAL(psTag->psChild->pszValue, "RE"))
+                                nBandIndex = 5;
+                            else if (EQUAL(psTag->psChild->pszValue, "DB"))
+                                nBandIndex = 6;
+                            
+                            if (nBandIndex <= 0 ||
+                                nBandIndex > GetRasterCount())
                             {
-                                if( strlen(psTag->psChild->pszValue) < 2)
-                                {
-                                    // Should not happen.
-                                    CPLError(
-                                        CE_Warning, CPLE_AppDefined,
-                                        "Bad BAND_INDEX value : %s",
-                                        psTag->psChild->pszValue);
-                                    nBandIndex = 0;
-                                }
-                                else
-                                {
-                                    nBandIndex =
-                                        atoi(&psTag->psChild->pszValue[1]);
-                                    if( nBandIndex < 0 ||
-                                        nBandIndex >= poImageDS->GetRasterCount() )
-                                    {
-                                        CPLError(
-                                            CE_Warning, CPLE_AppDefined,
-                                            "Bad BAND_INDEX value : %s",
-                                            psTag->psChild->pszValue);
-                                        nBandIndex = 0;
-                                    }
-                                    else
-                                    {
-                                        nBandIndex++;
-                                    }
-                                }
+                                CPLError(
+                                    CE_Warning, CPLE_AppDefined,
+                                    "Bad BAND_ID value : %s",
+                                    psTag->psChild->pszValue);
+                                nBandIndex = 0;
                             }
                         }
                         else if( nBandIndex >= 1 )

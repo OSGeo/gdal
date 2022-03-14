@@ -42,7 +42,7 @@ endif ()
 if (GDAL_USE_PDFIUM)
   target_compile_features(gdal_PDF PRIVATE cxx_std_14)
   target_compile_definitions(gdal_PDF PRIVATE -DHAVE_PDFIUM)
-  gdal_target_link_libraries(gdal_PDF PRIVATE PDFIUM::PDFium)
+  gdal_target_link_libraries(gdal_PDF PRIVATE PDFIUM::PDFIUM)
   if (UNIX)
     # Rather hacky... Related how we build pdfium in https://github.com/rouault/pdfium_build_gdal_3_4
     gdal_target_link_libraries(

@@ -37,6 +37,7 @@ jobs:
         cd ${GITHUB_WORKSPACE}
         wget https://github.com/Kitware/CMake/releases/download/v3.9.1/cmake-3.9.1-Linux-x86_64.tar.gz
         tar xzf cmake-3.9.1-Linux-x86_64.tar.gz
+        echo "CMAKE_DIR=$GITHUB_WORKSPACE/cmake-3.9.1-Linux-x86_64/bin" >> $GITHUB_ENV
         echo "$GITHUB_WORKSPACE/cmake-3.9.1-Linux-x86_64/bin" >> $GITHUB_PATH
     - run: |
         cmake --version
@@ -65,6 +66,16 @@ jobs:
         #
         python3 -m pip install -U pip wheel setuptools numpy
         python3 -m pip install -r $GITHUB_WORKSPACE/autotest/requirements.txt
+    - name: Install pdfium
+      run: |
+        wget -q https://github.com/rouault/pdfium_build_gdal_3_5/releases/download/v1_pdfium_4933/install-ubuntu2004-rev4933.tar.gz \
+          && tar -xzf install-ubuntu2004-rev4933.tar.gz \
+          && sudo chown -R root:root install \
+          && sudo mv install/lib/* /usr/lib/ \
+          && sudo mv install/include/* /usr/include/ \
+          && sudo rm -rf install-ubuntu2004-rev4933.tar.gz install \
+          && sudo apt-get update -y \
+          && sudo apt-get install -y --fix-missing --no-install-recommends liblcms2-dev
     - name: Configure ccache
       run: |
           echo CCACHE_BASEDIR=$PWD >> ${GITHUB_ENV}
@@ -74,6 +85,7 @@ jobs:
       working-directory: ${{ github.workspace }}
     - name: Configure
       run: |
+        export PATH=$CMAKE_DIR:/usr/local/bin:/usr/bin:/bin # Avoid CMake config from brew etc.
         mkdir -p $GITHUB_WORKSPACE/superbuild
         cd $GITHUB_WORKSPACE/superbuild
         printf "cmake_minimum_required(VERSION 3.9)\nproject(test)\nenable_testing()\nadd_subdirectory(gdal)" > CMakeLists.txt
@@ -101,6 +113,7 @@ jobs:
         PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/python3/dist-packages python3 -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
     - name: Rerun using Mono
       run: |
+        export PATH=$CMAKE_DIR:/usr/local/bin:/usr/bin:/bin # Avoid CMake config from brew etc.
         cd $GITHUB_WORKSPACE/superbuild/build
         rm -rf swig/csharp
         cmake  ${CMAKE_OPTIONS} -DCSHARP_MONO=ON -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror ..
@@ -138,6 +151,7 @@ jobs:
         ./autotest/postinstall/test_cmake.sh $GITHUB_WORKSPACE/install-gdal
     - name: Rerun with static linkage
       run: |
+        export PATH=$CMAKE_DIR:/usr/local/bin:/usr/bin:/bin # Avoid CMake config from brew etc.
         cd $GITHUB_WORKSPACE/superbuild/build
         cmake  ${CMAKE_OPTIONS} .. \
           -DBUILD_SHARED_LIBS=OFF \
@@ -363,6 +377,9 @@ jobs:
       shell: bash -l {0}
       run:
         ${CONDA_PREFIX}/Scripts/clcache -s
+    - name: Show gdal.pc
+      shell: bash -l {0}
+      run: cat $GITHUB_WORKSPACE/build/gdal.pc
 
   build-windows-minimum:
     runs-on: windows-2022
@@ -398,6 +415,9 @@ jobs:
     - name: Build
       shell: bash -l {0}
       run: cmake --build $GITHUB_WORKSPACE/build --config Release -j 2
+    - name: Show gdal.pc
+      shell: bash -l {0}
+      run: cat $GITHUB_WORKSPACE/build/gdal.pc
 
   build-mac:
     runs-on: macOS-latest

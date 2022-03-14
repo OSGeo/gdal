@@ -1614,6 +1614,10 @@ GDALSetRasterCategoryNames( GDALRasterBandH hBand, CSLConstList papszNames )
  * The no data value returned is 'raw', meaning that it has no offset and
  * scale applied.
  *
+ * For rasters of type GDT_Int64 or GDT_UInt64, using this method might be
+ * lossy if the nodata value cannot exactly been represented by a double.
+ * Use GetNoDataValueAsInt64() or GetNoDataValueAsUInt64() instead.
+ *
  * This method is the same as the C function GDALGetRasterNoDataValue().
  *
  * @param pbSuccess pointer to a boolean to use to indicate if a value
@@ -1652,6 +1656,128 @@ GDALGetRasterNoDataValue( GDALRasterBandH hBand, int *pbSuccess )
 }
 
 /************************************************************************/
+/*                       GetNoDataValueAsInt64()                        */
+/************************************************************************/
+
+/**
+ * \brief Fetch the no data value for this band.
+ *
+ * This method should ONLY be called on rasters whose data type is GDT_Int64.
+ *
+ * If there is no out of data value, an out of range value will generally
+ * be returned.  The no data value for a band is generally a special marker
+ * value used to mark pixels that are not valid data.  Such pixels should
+ * generally not be displayed, nor contribute to analysis operations.
+ *
+ * The no data value returned is 'raw', meaning that it has no offset and
+ * scale applied.
+ *
+ * This method is the same as the C function GDALGetRasterNoDataValueAsInt64().
+ *
+ * @param pbSuccess pointer to a boolean to use to indicate if a value
+ * is actually associated with this layer.  May be NULL (default).
+ *
+ * @return the nodata value for this band.
+ *
+ * @since GDAL 3.5
+ */
+
+int64_t GDALRasterBand::GetNoDataValueAsInt64( int *pbSuccess )
+
+{
+    if( pbSuccess != nullptr )
+        *pbSuccess = FALSE;
+
+    return std::numeric_limits<int64_t>::min();
+}
+
+/************************************************************************/
+/*                   GDALGetRasterNoDataValueAsInt64()                  */
+/************************************************************************/
+
+/**
+ * \brief Fetch the no data value for this band.
+ *
+ * This function should ONLY be called on rasters whose data type is GDT_Int64.
+ *
+ * @see GDALRasterBand::GetNoDataValueAsInt64()
+ *
+ * @since GDAL 3.5
+ */
+
+int64_t CPL_STDCALL
+GDALGetRasterNoDataValueAsInt64( GDALRasterBandH hBand, int *pbSuccess )
+
+{
+    VALIDATE_POINTER1( hBand, "GDALGetRasterNoDataValueAsInt64",
+                       std::numeric_limits<int64_t>::min());
+
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
+    return poBand->GetNoDataValueAsInt64( pbSuccess );
+}
+
+/************************************************************************/
+/*                       GetNoDataValueAsUInt64()                        */
+/************************************************************************/
+
+/**
+ * \brief Fetch the no data value for this band.
+ *
+ * This method should ONLY be called on rasters whose data type is GDT_UInt64.
+ *
+ * If there is no out of data value, an out of range value will generally
+ * be returned.  The no data value for a band is generally a special marker
+ * value used to mark pixels that are not valid data.  Such pixels should
+ * generally not be displayed, nor contribute to analysis operations.
+ *
+ * The no data value returned is 'raw', meaning that it has no offset and
+ * scale applied.
+ *
+ * This method is the same as the C function GDALGetRasterNoDataValueAsUInt64().
+ *
+ * @param pbSuccess pointer to a boolean to use to indicate if a value
+ * is actually associated with this layer.  May be NULL (default).
+ *
+ * @return the nodata value for this band.
+ *
+ * @since GDAL 3.5
+ */
+
+uint64_t GDALRasterBand::GetNoDataValueAsUInt64( int *pbSuccess )
+
+{
+    if( pbSuccess != nullptr )
+        *pbSuccess = FALSE;
+
+    return std::numeric_limits<uint64_t>::max();
+}
+
+/************************************************************************/
+/*                   GDALGetRasterNoDataValueAsUInt64()                  */
+/************************************************************************/
+
+/**
+ * \brief Fetch the no data value for this band.
+ *
+ * This function should ONLY be called on rasters whose data type is GDT_UInt64.
+ *
+ * @see GDALRasterBand::GetNoDataValueAsUInt64()
+ *
+ * @since GDAL 3.5
+ */
+
+uint64_t CPL_STDCALL
+GDALGetRasterNoDataValueAsUInt64( GDALRasterBandH hBand, int *pbSuccess )
+
+{
+    VALIDATE_POINTER1( hBand, "GDALGetRasterNoDataValueAsUInt64",
+                       std::numeric_limits<uint64_t>::max());
+
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
+    return poBand->GetNoDataValueAsUInt64( pbSuccess );
+}
+
+/************************************************************************/
 /*                           SetNoDataValue()                           */
 /************************************************************************/
 
@@ -1663,9 +1789,13 @@ GDALGetRasterNoDataValue( GDALRasterBandH hBand, int *pbSuccess )
  * effect on the pixel values of a raster that has just been created. It is
  * thus advised to explicitly called Fill() if the intent is to initialize
  * the raster to the nodata value.
- * In ay case, changing an existing no data value, when one already exists and
+ * In any case, changing an existing no data value, when one already exists and
  * the dataset exists or has been initialized, has no effect on the pixel whose
  * value matched the previous nodata value.
+ *
+ * For rasters of type GDT_Int64 or GDT_UInt64, whose nodata value cannot always
+ * be represented by a double, use SetNoDataValueAsInt64() or
+ * SetNoDataValueAsUInt64() instead.
  *
  * To clear the nodata value, use DeleteNoDataValue().
  *
@@ -1702,9 +1832,13 @@ CPLErr GDALRasterBand::SetNoDataValue( double /*dfNoData*/ )
  * effect on the pixel values of a raster that has just been created. It is
  * thus advised to explicitly called Fill() if the intent is to initialize
  * the raster to the nodata value.
- * In ay case, changing an existing no data value, when one already exists and
+ * In any case, changing an existing no data value, when one already exists and
  * the dataset exists or has been initialized, has no effect on the pixel whose
  * value matched the previous nodata value.
+ *
+ * For rasters of type GDT_Int64 or GDT_UInt64, whose nodata value cannot always
+ * be represented by a double, use GDALSetRasterNoDataValueAsInt64() or
+ * GDALSetRasterNoDataValueAsUInt64() instead.
  *
  * @see GDALRasterBand::SetNoDataValue()
  */
@@ -1717,6 +1851,150 @@ GDALSetRasterNoDataValue( GDALRasterBandH hBand, double dfValue )
 
     GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->SetNoDataValue( dfValue );
+}
+
+/************************************************************************/
+/*                       SetNoDataValueAsInt64()                        */
+/************************************************************************/
+
+/**
+ * \brief Set the no data value for this band.
+ *
+ * This method should ONLY be called on rasters whose data type is GDT_Int64.
+ *
+ * Depending on drivers, changing the no data value may or may not have an
+ * effect on the pixel values of a raster that has just been created. It is
+ * thus advised to explicitly called Fill() if the intent is to initialize
+ * the raster to the nodata value.
+ * In ay case, changing an existing no data value, when one already exists and
+ * the dataset exists or has been initialized, has no effect on the pixel whose
+ * value matched the previous nodata value.
+ *
+ * To clear the nodata value, use DeleteNoDataValue().
+ *
+ * This method is the same as the C function GDALSetRasterNoDataValueAsInt64().
+ *
+ * @param nNoDataValue the value to set.
+ *
+ * @return CE_None on success, or CE_Failure on failure.  If unsupported
+ * by the driver, CE_Failure is returned by no error message will have
+ * been emitted.
+ *
+ * @since GDAL 3.5
+ */
+
+CPLErr GDALRasterBand::SetNoDataValueAsInt64( CPL_UNUSED int64_t nNoDataValue )
+
+{
+    if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
+        ReportError( CE_Failure, CPLE_NotSupported,
+                     "SetNoDataValueAsInt64() not supported for this dataset." );
+
+    return CE_Failure;
+}
+
+/************************************************************************/
+/*                 GDALSetRasterNoDataValueAsInt64()                    */
+/************************************************************************/
+
+/**
+ * \brief Set the no data value for this band.
+ *
+ * This function should ONLY be called on rasters whose data type is GDT_Int64.
+ *
+ * Depending on drivers, changing the no data value may or may not have an
+ * effect on the pixel values of a raster that has just been created. It is
+ * thus advised to explicitly called Fill() if the intent is to initialize
+ * the raster to the nodata value.
+ * In ay case, changing an existing no data value, when one already exists and
+ * the dataset exists or has been initialized, has no effect on the pixel whose
+ * value matched the previous nodata value.
+ *
+ * @see GDALRasterBand::SetNoDataValueAsInt64()
+ *
+ * @since GDAL 3.5
+ */
+
+CPLErr CPL_STDCALL
+GDALSetRasterNoDataValueAsInt64( GDALRasterBandH hBand, int64_t nValue )
+
+{
+    VALIDATE_POINTER1( hBand, "GDALSetRasterNoDataValueAsInt64", CE_Failure );
+
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
+    return poBand->SetNoDataValueAsInt64( nValue );
+}
+
+/************************************************************************/
+/*                       SetNoDataValueAsUInt64()                       */
+/************************************************************************/
+
+/**
+ * \brief Set the no data value for this band.
+ *
+ * This method should ONLY be called on rasters whose data type is GDT_UInt64.
+ *
+ * Depending on drivers, changing the no data value may or may not have an
+ * effect on the pixel values of a raster that has just been created. It is
+ * thus advised to explicitly called Fill() if the intent is to initialize
+ * the raster to the nodata value.
+ * In ay case, changing an existing no data value, when one already exists and
+ * the dataset exists or has been initialized, has no effect on the pixel whose
+ * value matched the previous nodata value.
+ *
+ * To clear the nodata value, use DeleteNoDataValue().
+ *
+ * This method is the same as the C function GDALSetRasterNoDataValueAsUInt64().
+ *
+ * @param nNoDataValue the value to set.
+ *
+ * @return CE_None on success, or CE_Failure on failure.  If unsupported
+ * by the driver, CE_Failure is returned by no error message will have
+ * been emitted.
+ *
+ * @since GDAL 3.5
+ */
+
+CPLErr GDALRasterBand::SetNoDataValueAsUInt64( CPL_UNUSED uint64_t nNoDataValue )
+
+{
+    if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
+        ReportError( CE_Failure, CPLE_NotSupported,
+                     "SetNoDataValueAsUInt64() not supported for this dataset." );
+
+    return CE_Failure;
+}
+
+/************************************************************************/
+/*                 GDALSetRasterNoDataValueAsUInt64()                    */
+/************************************************************************/
+
+/**
+ * \brief Set the no data value for this band.
+ *
+ * This function should ONLY be called on rasters whose data type is GDT_UInt64.
+ *
+ * Depending on drivers, changing the no data value may or may not have an
+ * effect on the pixel values of a raster that has just been created. It is
+ * thus advised to explicitly called Fill() if the intent is to initialize
+ * the raster to the nodata value.
+ * In ay case, changing an existing no data value, when one already exists and
+ * the dataset exists or has been initialized, has no effect on the pixel whose
+ * value matched the previous nodata value.
+ *
+ * @see GDALRasterBand::SetNoDataValueAsUInt64()
+ *
+ * @since GDAL 3.5
+ */
+
+CPLErr CPL_STDCALL
+GDALSetRasterNoDataValueAsUInt64( GDALRasterBandH hBand, uint64_t nValue )
+
+{
+    VALIDATE_POINTER1( hBand, "GDALSetRasterNoDataValueAsUInt64", CE_Failure );
+
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
+    return poBand->SetNoDataValueAsUInt64( nValue );
 }
 
 /************************************************************************/
@@ -4784,6 +5062,12 @@ inline double GetPixelValue( GDALDataType eDataType,
         case GDT_Int32:
             dfValue = static_cast<const GInt32 *>(pData)[iOffset];
             break;
+        case GDT_UInt64:
+            dfValue = static_cast<double>(static_cast<const std::uint64_t *>(pData)[iOffset]);
+            break;
+        case GDT_Int64:
+            dfValue = static_cast<double>(static_cast<const std::int64_t *>(pData)[iOffset]);
+            break;
         case GDT_Float32:
         {
             const float fValue = static_cast<const float *>(pData)[iOffset];
@@ -6045,11 +6329,28 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
 /* -------------------------------------------------------------------- */
 /*      Check for nodata case.                                          */
 /* -------------------------------------------------------------------- */
-    int bHaveNoData = FALSE;
-    const double dfNoDataValue = GetNoDataValue( &bHaveNoData );
-
-    if( bHaveNoData &&
-        GDALNoDataMaskBand::IsNoDataInRange(dfNoDataValue, eDataType) )
+    int bHaveNoDataRaw = FALSE;
+    bool bHaveNoData = false;
+    if( eDataType == GDT_Int64 )
+    {
+        CPL_IGNORE_RET_VAL(GetNoDataValueAsInt64(&bHaveNoDataRaw));
+        bHaveNoData = CPL_TO_BOOL(bHaveNoDataRaw);
+    }
+    else if( eDataType == GDT_UInt64 )
+    {
+        CPL_IGNORE_RET_VAL(GetNoDataValueAsUInt64(&bHaveNoDataRaw));
+        bHaveNoData = CPL_TO_BOOL(bHaveNoDataRaw);
+    }
+    else
+    {
+        const double dfNoDataValue = GetNoDataValue( &bHaveNoDataRaw );
+        if( bHaveNoDataRaw &&
+            GDALNoDataMaskBand::IsNoDataInRange(dfNoDataValue, eDataType) )
+        {
+            bHaveNoData = true;
+        }
+    }
+    if( bHaveNoData )
     {
         nMaskFlags = GMF_NODATA;
         try
@@ -6341,6 +6642,83 @@ CPLErr CPL_STDCALL GDALCreateMaskBand( GDALRasterBandH hBand, int nFlags )
     GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->CreateMaskBand( nFlags );
 }
+
+/************************************************************************/
+/*                            IsMaskBand()                              */
+/************************************************************************/
+
+/**
+ * \brief Returns whether a band is a mask band.
+ *
+ * Mask band must be understood in the broad term: it can be a per-dataset
+ * mask band, an alpha band, or an implicit mask band.
+ * Typically the return of GetMaskBand()->IsMaskBand() should be true.
+ *
+ * This method is the same as the C function GDALIsMaskBand().
+ *
+ * @return true if the band is a mask band.
+ *
+ * @see GDALDataset::CreateMaskBand()
+ *
+ * @since GDAL 3.5.0
+ *
+ */
+
+bool GDALRasterBand::IsMaskBand() const
+{
+    // The GeoTIFF driver, among others, override this method to
+    // also handle external .msk bands.
+    return const_cast<GDALRasterBand*>(this)->GetColorInterpretation() == GCI_AlphaBand;
+}
+
+/************************************************************************/
+/*                            GDALIsMaskBand()                          */
+/************************************************************************/
+
+/**
+ * \brief Returns whether a band is a mask band.
+ *
+ * Mask band must be understood in the broad term: it can be a per-dataset
+ * mask band, an alpha band, or an implicit mask band.
+ * Typically the return of GetMaskBand()->IsMaskBand() should be true.
+ *
+ * This function is the same as the C++ method GDALRasterBand::IsMaskBand()
+ *
+ * @return true if the band is a mask band.
+ *
+ * @see GDALRasterBand::IsMaskBand()
+ *
+ * @since GDAL 3.5.0
+ *
+ */
+
+bool GDALIsMaskBand( GDALRasterBandH hBand )
+
+{
+    VALIDATE_POINTER1( hBand, "GDALIsMaskBand", false );
+
+    const GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
+    return poBand->IsMaskBand();
+}
+
+/************************************************************************/
+/*                         GetMaskValueRange()                          */
+/************************************************************************/
+
+/**
+ * \brief Returns the range of values that a mask band can take.
+ *
+ * @return the range of values that a mask band can take.
+ *
+ * @since GDAL 3.5.0
+ *
+ */
+
+GDALMaskValueRange GDALRasterBand::GetMaskValueRange() const
+{
+    return GMVR_UNKNOWN;
+}
+
 
 /************************************************************************/
 /*                    GetIndexColorTranslationTo()                      */
@@ -7136,13 +7514,38 @@ protected:
         m_poDS->Reference();
 
         int bHasNoData = false;
-        double dfNoData = m_poBand->GetNoDataValue(&bHasNoData);
-        if( bHasNoData )
+        if( m_poBand->GetRasterDataType() == GDT_Int64 )
         {
-            m_pabyNoData.resize(m_dt.GetSize());
-            GDALCopyWords(&dfNoData, GDT_Float64, 0,
-                          &m_pabyNoData[0], m_dt.GetNumericDataType(), 0,
-                          1);
+            const auto nNoData = m_poBand->GetNoDataValueAsInt64(&bHasNoData);
+            if( bHasNoData )
+            {
+                m_pabyNoData.resize(m_dt.GetSize());
+                GDALCopyWords(&nNoData, GDT_Int64, 0,
+                              &m_pabyNoData[0], m_dt.GetNumericDataType(), 0,
+                              1);
+            }
+        }
+        else if( m_poBand->GetRasterDataType() == GDT_UInt64 )
+        {
+            const auto nNoData = m_poBand->GetNoDataValueAsUInt64(&bHasNoData);
+            if( bHasNoData )
+            {
+                m_pabyNoData.resize(m_dt.GetSize());
+                GDALCopyWords(&nNoData, GDT_UInt64, 0,
+                              &m_pabyNoData[0], m_dt.GetNumericDataType(), 0,
+                              1);
+            }
+        }
+        else
+        {
+            const auto dfNoData = m_poBand->GetNoDataValue(&bHasNoData);
+            if( bHasNoData )
+            {
+                m_pabyNoData.resize(m_dt.GetSize());
+                GDALCopyWords(&dfNoData, GDT_Float64, 0,
+                              &m_pabyNoData[0], m_dt.GetNumericDataType(), 0,
+                              1);
+            }
         }
 
         const int nXSize = poBand->GetXSize();

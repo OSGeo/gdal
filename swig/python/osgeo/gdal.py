@@ -293,7 +293,7 @@ def MultiDimInfo(ds, **kwargs):
 
 
 def _strHighPrec(x):
-    return x if isinstance(x, str) else '%.18g' % x
+    return ('%.18g' % x) if isinstance(x, float) else str(x)
 
 mapGRIORAMethodToString = {
     gdalconst.GRIORA_NearestNeighbour: 'near',
@@ -2776,6 +2776,14 @@ class MDArray(object):
         r"""GetNoDataValueAsDouble(MDArray self)"""
         return _gdal.MDArray_GetNoDataValueAsDouble(self, *args)
 
+    def GetNoDataValueAsInt64(self, *args):
+        r"""GetNoDataValueAsInt64(MDArray self)"""
+        return _gdal.MDArray_GetNoDataValueAsInt64(self, *args)
+
+    def GetNoDataValueAsUInt64(self, *args):
+        r"""GetNoDataValueAsUInt64(MDArray self)"""
+        return _gdal.MDArray_GetNoDataValueAsUInt64(self, *args)
+
     def GetNoDataValueAsString(self, *args):
         r"""GetNoDataValueAsString(MDArray self) -> retStringAndCPLFree *"""
         return _gdal.MDArray_GetNoDataValueAsString(self, *args)
@@ -2783,6 +2791,14 @@ class MDArray(object):
     def SetNoDataValueDouble(self, *args):
         r"""SetNoDataValueDouble(MDArray self, double d) -> CPLErr"""
         return _gdal.MDArray_SetNoDataValueDouble(self, *args)
+
+    def SetNoDataValueInt64(self, *args):
+        r"""SetNoDataValueInt64(MDArray self, GIntBig v) -> CPLErr"""
+        return _gdal.MDArray_SetNoDataValueInt64(self, *args)
+
+    def SetNoDataValueUInt64(self, *args):
+        r"""SetNoDataValueUInt64(MDArray self, GUIntBig v) -> CPLErr"""
+        return _gdal.MDArray_SetNoDataValueUInt64(self, *args)
 
     def SetNoDataValueString(self, *args):
         r"""SetNoDataValueString(MDArray self, char const * nodata) -> CPLErr"""
@@ -3061,6 +3077,31 @@ class MDArray(object):
       return shp
 
     shape = property(fget=GetShape, doc='Returns the shape of the array.')
+
+    def GetNoDataValue(self):
+      """GetNoDataValue(MDArray self) -> value """
+
+      dt = self.GetDataType()
+      if dt.GetClass() == GEDTC_NUMERIC and dt.GetNumericDataType() == gdalconst.GDT_Int64:
+          return _gdal.MDArray_GetNoDataValueAsInt64(self)
+
+      if dt.GetClass() == GEDTC_NUMERIC and dt.GetNumericDataType() == gdalconst.GDT_UInt64:
+          return _gdal.MDArray_GetNoDataValueAsUInt64(self)
+
+      return _gdal.MDArray_GetNoDataValueAsDouble(self)
+
+
+    def SetNoDataValue(self, value):
+      """SetNoDataValue(MDArray self, value) -> CPLErr"""
+
+      dt = self.GetDataType()
+      if dt.GetClass() == GEDTC_NUMERIC and dt.GetNumericDataType() == gdalconst.GDT_Int64:
+          return _gdal.MDArray_SetNoDataValueInt64(self, value)
+
+      if dt.GetClass() == GEDTC_NUMERIC and dt.GetNumericDataType() == gdalconst.GDT_UInt64:
+          return _gdal.MDArray_SetNoDataValueUInt64(self, value)
+
+      return _gdal.MDArray_SetNoDataValueDouble(self, value)
 
 
 
@@ -3425,9 +3466,25 @@ class Band(MajorObject):
         r"""GetNoDataValue(Band self)"""
         return _gdal.Band_GetNoDataValue(self, *args)
 
+    def GetNoDataValueAsInt64(self, *args):
+        r"""GetNoDataValueAsInt64(Band self)"""
+        return _gdal.Band_GetNoDataValueAsInt64(self, *args)
+
+    def GetNoDataValueAsUInt64(self, *args):
+        r"""GetNoDataValueAsUInt64(Band self)"""
+        return _gdal.Band_GetNoDataValueAsUInt64(self, *args)
+
     def SetNoDataValue(self, *args):
         r"""SetNoDataValue(Band self, double d) -> CPLErr"""
         return _gdal.Band_SetNoDataValue(self, *args)
+
+    def SetNoDataValueAsInt64(self, *args):
+        r"""SetNoDataValueAsInt64(Band self, GIntBig v) -> CPLErr"""
+        return _gdal.Band_SetNoDataValueAsInt64(self, *args)
+
+    def SetNoDataValueAsUInt64(self, *args):
+        r"""SetNoDataValueAsUInt64(Band self, GUIntBig v) -> CPLErr"""
+        return _gdal.Band_SetNoDataValueAsUInt64(self, *args)
 
     def DeleteNoDataValue(self, *args):
         r"""DeleteNoDataValue(Band self) -> CPLErr"""
@@ -3552,6 +3609,10 @@ class Band(MajorObject):
     def CreateMaskBand(self, *args):
         r"""CreateMaskBand(Band self, int nFlags) -> CPLErr"""
         return _gdal.Band_CreateMaskBand(self, *args)
+
+    def IsMaskBand(self, *args):
+        r"""IsMaskBand(Band self) -> bool"""
+        return _gdal.Band_IsMaskBand(self, *args)
 
     def GetHistogram(self, *args, **kwargs):
         r"""GetHistogram(Band self, double min=-0.5, double max=255.5, int buckets=256, int include_out_of_range=0, int approx_ok=1, GDALProgressFunc callback=0, void * callback_data=None) -> CPLErr"""
@@ -3761,6 +3822,30 @@ class Band(MajorObject):
           else:
               virtualmem = self.GetTiledVirtualMem(eAccess,xoff,yoff,xsize,ysize,tilexsize,tileysize,datatype,cache_size,options)
           return gdal_array.VirtualMemGetArray( virtualmem )
+
+    def GetNoDataValue(self):
+      """GetNoDataValue(Band self) -> value """
+
+      if self.DataType == gdalconst.GDT_Int64:
+          return _gdal.Band_GetNoDataValueAsInt64(self)
+
+      if self.DataType == gdalconst.GDT_UInt64:
+          return _gdal.Band_GetNoDataValueAsUInt64(self)
+
+      return _gdal.Band_GetNoDataValue(self)
+
+
+    def SetNoDataValue(self, value):
+      """SetNoDataValue(Band self, value) -> CPLErr"""
+
+      if self.DataType == gdalconst.GDT_Int64:
+          return _gdal.Band_SetNoDataValueAsInt64(self, value)
+
+      if self.DataType == gdalconst.GDT_UInt64:
+          return _gdal.Band_SetNoDataValueAsUInt64(self, value)
+
+      return _gdal.Band_SetNoDataValue(self, value)
+
 
 
 # Register Band in _gdal:

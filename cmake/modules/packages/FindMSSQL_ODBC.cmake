@@ -32,6 +32,10 @@ This module defines the following variables:
 
 #]=======================================================================]
 
+if(NOT DEFINED MSSQL_ODBC_ROOT AND DEFINED CMAKE_FIND_USE_CMAKE_SYSTEM_PATH AND NOT CMAKE_FIND_USE_CMAKE_SYSTEM_PATH)
+    return()
+endif()
+
 if(WIN32)
     if(NOT DEFINED MSSQL_ODBC_VERSION)
         set(MSSQL_ODBC_VERSION_CANDIDATES 17 13)

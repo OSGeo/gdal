@@ -162,7 +162,7 @@ The allowed subelements for VRTRasterBand are :
 
   <ColorInterp>Gray</ColorInterp>:
 
-- **NoDataValue**: If this element exists a raster band has a nodata value associated with, of the value given as data in the element. This must not be confused with the NODATA element of a VRTComplexSource element.
+- **NoDataValue**: If the input datasets to be composed have a nodata value for this raster band, set this element's value to that nodata value for it to be reflected in the VRT. This must not be confused with the NODATA element of a VRTComplexSource element.
 
 .. code-block:: xml
 
@@ -591,6 +591,18 @@ the explicit reference to it before closing the VRT dataset itself. In other
 words, in the previous example, you could also invert the 2 last lines, whereas
 if you open the source dataset with :cpp:func:`GDALOpen`, you'd need to close the VRT dataset
 before closing the source dataset.
+
+To obtain the resulting VRT XML of :file:`wrk.vrt` without having to read the text from an actual file,
+you can modify the above code to open the new dataset with an empty filename and use the "xml:VRT"
+metadata domain.
+
+.. code-block:: cpp
+
+  // no filename
+  poVRTDS = poDriver->CreateCopy( "", poSrcDS, FALSE, NULL, NULL, NULL );
+
+  // obtain the actual XML text that a VRT file would contain
+  const char *xmlvrt = poVRTDS->GetMetadata("xml:VRT")[0];
 
 To create a virtual copy of a dataset with some attributes added or changed
 such as metadata or coordinate system that are often hard to change on other

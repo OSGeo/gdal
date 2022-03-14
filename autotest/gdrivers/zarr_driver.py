@@ -47,20 +47,22 @@ import pytest
                           ["!i1", 'b', gdal.GDT_Int16, None, None],
                           ["!i1", 'b', gdal.GDT_Int16, -1, -1],
                           ["!u1", 'B', gdal.GDT_Byte, None, None],
-                          ["!u1", 'B', gdal.GDT_Byte, "1", 1],
+                          ["!u1", 'B', gdal.GDT_Byte, "1", 1], # not really legit to have the fill_value as a str
                           ["<i2", 'h', gdal.GDT_Int16, None, None],
                           [">i2", 'h', gdal.GDT_Int16, None, None],
                           ["<i4", 'i', gdal.GDT_Int32, None, None],
                           [">i4", 'i', gdal.GDT_Int32, None, None],
-                          ["<i8", 'q', gdal.GDT_Float64, None, None],
-                          [">i8", 'q', gdal.GDT_Float64, None, None],
+                          ["<i8", 'q', gdal.GDT_Int64, None, None],
+                          ["<i8", 'q', gdal.GDT_Int64, -(1<<63), -(1<<63)],
+                          ["<i8", 'q', gdal.GDT_Int64, str(-(1<<63)), -(1<<63)], # not really legit to have the fill_value as a str
+                          [">i8", 'q', gdal.GDT_Int64, None, None],
                           ["<u2", 'H', gdal.GDT_UInt16, None, None],
                           [">u2", 'H', gdal.GDT_UInt16, None, None],
                           ["<u4", 'I', gdal.GDT_UInt32, None, None],
                           [">u4", 'I', gdal.GDT_UInt32, None, None],
                           ["<u4", 'I', gdal.GDT_UInt32, 4000000000, 4000000000],
-                          ["<u8", 'Q', gdal.GDT_Float64, 4000000000, 4000000000],
-                          [">u8", 'Q', gdal.GDT_Float64, None, None],
+                          ["<u8", 'Q', gdal.GDT_UInt64, str((1<<64)-1), (1<<64)-1], # not really legit to have the fill_value as a str, but libjson-c can't support numeric values in int64::max(), uint64::max() range.
+                          [">u8", 'Q', gdal.GDT_UInt64, None, None],
                           ["<f4", 'f', gdal.GDT_Float32, None, None],
                           [">f4", 'f', gdal.GDT_Float32, None, None],
                           ["<f4", 'f', gdal.GDT_Float32, 1.5, 1.5],
@@ -127,9 +129,9 @@ def test_zarr_basic(dtype, structtype, gdaltype, fill_value, nodata_value, use_o
         assert [ar.GetDimensions()[i].GetSize() for i in range(2)] == [5, 4]
         assert ar.GetBlockSize() == [2, 3]
         if nodata_value is not None and math.isnan(nodata_value):
-            assert math.isnan(ar.GetNoDataValueAsDouble())
+            assert math.isnan(ar.GetNoDataValue())
         else:
-            assert ar.GetNoDataValueAsDouble() == nodata_value
+            assert ar.GetNoDataValue() == nodata_value
 
         assert ar.GetOffset() is None
         assert ar.GetScale() is None
@@ -141,8 +143,6 @@ def test_zarr_basic(dtype, structtype, gdaltype, fill_value, nodata_value, use_o
 
         if structtype == 'b':
             structtype_read = 'h'
-        elif structtype in ('q', 'Q'):
-            structtype_read = 'd'
         else:
             structtype_read = structtype
 

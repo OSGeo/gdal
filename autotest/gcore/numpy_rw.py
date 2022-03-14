@@ -248,6 +248,8 @@ def test_numpy_rw_11():
                    ('int16', gdal.GDT_Int16, numpy.int16, -32767),
                    ('uint32', gdal.GDT_UInt32, numpy.uint32, 4294967295),
                    ('int32', gdal.GDT_Int32, numpy.int32, -2147483648),
+                   ('uint64', gdal.GDT_UInt64, numpy.uint64, 4294967295 * 1000),
+                   ('int64', gdal.GDT_Int64, numpy.int64, -2147483648 * 1000),
                    ('float32', gdal.GDT_Float32, numpy.float32, 1.23),
                    ('float64', gdal.GDT_Float64, numpy.float64, 1.23456789),
                    ('cint16', gdal.GDT_CInt16, numpy.complex64, -32768 + 32767j),
@@ -277,6 +279,7 @@ def test_numpy_rw_11():
         ds = None
 
         ds = gdal.Open('/vsimem/' + type_tuple[0])
+        assert ds.GetRasterBand(1).DataType == type_tuple[1]
         ar2 = ds.ReadAsArray()
         ar3 = numpy.empty_like(ar2)
         ds.GetRasterBand(1).ReadAsArray(buf_obj=ar3)
@@ -331,7 +334,7 @@ def test_numpy_rw_13():
     ds.GetRasterBand(1).WriteArray(ar)
 
     # Try reading into unsupported array type
-    ar = numpy.empty([1, 2], dtype=numpy.int64)
+    ar = numpy.empty([1, 2], dtype=numpy.bool_)
     with pytest.raises(Exception, match='array does not have '
                              'corresponding GDAL data type'):
         ds.GetRasterBand(1).ReadAsArray(buf_obj=ar)
@@ -403,7 +406,7 @@ def test_numpy_rw_13():
     for i in range(3):
         ds.GetRasterBand(i + 1).WriteArray(ar[i])
 
-    ar = numpy.empty([3, 1, 2], dtype=numpy.int64)
+    ar = numpy.empty([3, 1, 2], dtype=numpy.bool_)
     with pytest.raises(Exception, match='array does not have '
                              'corresponding GDAL data type'):
         ds.ReadAsArray(buf_obj=ar)
