@@ -3529,7 +3529,7 @@ public:
       if( eType == OFTInteger )
           return psVal->Integer;
       if( eType == OFTInteger64 )
-          return psVal->Integer64;
+          return (double)psVal->Integer64;
       if( eType == OFTReal )
           return psVal->Real;
       return CPLAtof("-inf");
@@ -3549,7 +3549,7 @@ public:
       if( eType == OFTInteger )
           return psVal->Integer;
       if( eType == OFTInteger64 )
-          return psVal->Integer64;
+          return (double)psVal->Integer64;
       if( eType == OFTReal )
           return psVal->Real;
       return CPLAtof("inf");

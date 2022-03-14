@@ -5460,7 +5460,7 @@ SWIGINTERN double OGRFieldDomainShadow_GetMinAsDouble(OGRFieldDomainShadow *self
       if( eType == OFTInteger )
           return psVal->Integer;
       if( eType == OFTInteger64 )
-          return psVal->Integer64;
+          return (double)psVal->Integer64;
       if( eType == OFTReal )
           return psVal->Real;
       return CPLAtof("-inf");
@@ -5478,7 +5478,7 @@ SWIGINTERN double OGRFieldDomainShadow_GetMaxAsDouble(OGRFieldDomainShadow *self
       if( eType == OFTInteger )
           return psVal->Integer;
       if( eType == OFTInteger64 )
-          return psVal->Integer64;
+          return (double)psVal->Integer64;
       if( eType == OFTReal )
           return psVal->Real;
       return CPLAtof("inf");
