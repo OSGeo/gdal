@@ -443,15 +443,17 @@ jobs:
     - run: |
         cmake --version
     - name: Install dependency
+      # libgeotiff 1.7.1 at time of writing links to proj@7, and not proj (9.0.0)
+      # so in order to avoid issue at runtime install proj@7 and not proj
       run: |
         brew update
         brew outdated
         brew install postgresql || brew link postgresql
-        brew install freexl libxml2 libspatialite geos proj openjpeg giflib szip postgis poppler doxygen unixodbc
+        brew install freexl libxml2 libspatialite geos proj@7 libgeotiff openjpeg giflib szip postgis poppler doxygen unixodbc
         brew install ccache swig
         # gdal is automatically installed as a dependency for postgis
         brew uninstall --ignore-dependencies gdal
-        cd /usr/local/share/proj
+        cd /usr/local/opt/proj@7/share/proj
         curl http://download.osgeo.org/proj/proj-datumgrid-1.8.tar.gz > proj-datumgrid-1.8.tar.gz
         tar xvzf proj-datumgrid-1.8.tar.gz
         cd $OLDPWD
@@ -466,7 +468,7 @@ jobs:
     - name: Configure
       run: |
         mkdir -p $GITHUB_WORKSPACE/build
-        cmake -Werror=dev -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal ${CMAKE_OPTIONS} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror -DUSE_CCACHE=ON -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DWERROR_DEV_FLAG="-Werror=dev"
+        cmake -Werror=dev -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal ${CMAKE_OPTIONS} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror -DUSE_CCACHE=ON -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DWERROR_DEV_FLAG="-Werror=dev" -DPROJ_ROOT=/usr/local/opt/proj@7
     - name: Build
       run: |
         cmake --build $GITHUB_WORKSPACE/build -j 3
