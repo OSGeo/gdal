@@ -1194,7 +1194,7 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location,
     return error_report
 
 
-def main(argv):
+def main(argv=sys.argv):
     i = 1
     filename = None
     oidoc = None

@@ -122,7 +122,7 @@ def gdal_rm(argv, progress=None):
     return ret
 
 
-def main(argv):
+def main(argv=sys.argv):
     return gdal_rm(argv)
 
 

@@ -594,7 +594,7 @@ def ogrmerge(
     return ret
 
 
-def main(argv):
+def main(argv=sys.argv):
     argv = ogr.GeneralCmdLineProcessor(argv)
     if argv is None:
         return 1

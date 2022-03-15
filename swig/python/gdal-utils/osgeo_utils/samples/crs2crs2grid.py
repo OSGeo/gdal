@@ -246,7 +246,7 @@ CRS Ids
 # Main
 
 
-def main(argv):
+def main(argv=sys.argv):
     # Default GDAL argument parsing.
 
     argv = gdal.GeneralCmdLineProcessor(argv)

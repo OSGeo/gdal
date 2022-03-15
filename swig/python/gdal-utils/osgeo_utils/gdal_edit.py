@@ -292,12 +292,12 @@ def gdal_edit(argv):
 
     if scale:
         if len(scale) == 1:
-            scale = scale * ds.RasterCount 
+            scale = scale * ds.RasterCount
         elif len(scale) != ds.RasterCount:
             print('If more than one scale value is provided, their number must match the number of bands.')
             print('')
             return Usage()
-    
+
     if offset:
         if len(offset) == 1:
             offset = offset * ds.RasterCount
@@ -305,7 +305,7 @@ def gdal_edit(argv):
             print('If more than one offset value is provided, their number must match the number of bands.')
             print('')
             return Usage()
-    
+
     wkt = None
     if srs == '' or srs == 'None':
         ds.SetProjection('')
@@ -420,7 +420,7 @@ def gdal_edit(argv):
     return 0
 
 
-def main(argv):
+def main(argv=sys.argv):
     return gdal_edit(argv)
 
 

@@ -49,7 +49,7 @@ gdal_proximity.py srcfile dstfile [-srcband n] [-dstband n]
     return 1
 
 
-def main(argv):
+def main(argv=sys.argv):
     driver_name = None
     creation_options = []
     alg_options = []

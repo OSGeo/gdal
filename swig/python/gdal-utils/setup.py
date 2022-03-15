@@ -51,7 +51,7 @@ def define_entry_points(scripts, entry_points=None):
     console_scripts = []
     for f in scripts:
         name = Path(f).stem # 'gdal_edit' from 'gdal_edit.py'
-        console_scripts.append([f'{name} = scripts.{name}:main'])
+        console_scripts.append([f'{name} = osgeo_utils.{name}:main'])
     entry_points = {'console_scripts': console_scripts}
     return entry_points
 

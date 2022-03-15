@@ -385,11 +385,10 @@ def ogr_dispatch(argv, progress=None, progress_arg=None):
     return 0
 
 
-def main(argv):
+def main(argv=sys.argv):
     argv = ogr.GeneralCmdLineProcessor(argv)
     return ogr_dispatch(argv[1:])
 
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv))
-

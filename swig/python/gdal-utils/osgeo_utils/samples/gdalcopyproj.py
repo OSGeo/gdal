@@ -38,7 +38,7 @@ import sys
 from osgeo import gdal
 
 
-def main(argv):
+def main(argv=sys.argv):
     if len(argv) < 3:
         print("Usage: gdalcopyproj.py source_file dest_file")
         return 1
@@ -80,4 +80,3 @@ def main(argv):
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv))
-

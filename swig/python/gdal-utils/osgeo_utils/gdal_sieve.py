@@ -45,7 +45,7 @@ def Usage():
     return 1
 
 
-def main(argv):
+def main(argv=sys.argv):
     threshold = 2
     connectedness = 4
     quiet = False
