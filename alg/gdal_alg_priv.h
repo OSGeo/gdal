@@ -34,6 +34,8 @@
 
 #ifndef DOXYGEN_SKIP
 
+#include <cstdint>
+
 #include "gdal_alg.h"
 #include "ogr_spatialref.h"
 
@@ -60,7 +62,12 @@ typedef struct {
     int nPixelSpace;
     GSpacing nLineSpace;
     GSpacing nBandSpace;
-    const double *padfBurnValue;
+    GDALDataType eBurnValueType;
+    union
+    {
+        const std::int64_t* int64_values;
+        const double *double_values;
+    } burnValues;
     GDALBurnValueSrc eBurnValueSource;
     GDALRasterMergeAlg eMergeAlg;
 } GDALRasterizeInfo;
@@ -146,10 +153,10 @@ public:
 
 struct IntEqualityTest
 {
-    bool operator()(GInt32 a, GInt32 b) const { return a == b; }
+    bool operator()(std::int64_t a, std::int64_t b) const { return a == b; }
 };
 
-typedef GDALRasterPolygonEnumeratorT<GInt32, IntEqualityTest> GDALRasterPolygonEnumerator;
+typedef GDALRasterPolygonEnumeratorT<std::int64_t, IntEqualityTest> GDALRasterPolygonEnumerator;
 
 typedef void* (*GDALTransformDeserializeFunc)( CPLXMLNode *psTree );
 
@@ -176,6 +183,9 @@ int GDALTransformLonLatToDestGenImgProjTransformer(void* hTransformArg,
 int GDALTransformLonLatToDestApproxTransformer(void* hTransformArg,
                                                     double* pdfX,
                                                     double* pdfY);
+
+bool GDALTransformIsTranslationOnPixelBoundaries(GDALTransformerFunc pfnTransformer,
+                                                 void                *pTransformerArg);
 
 typedef struct {
     GDALTransformerInfo sTI;

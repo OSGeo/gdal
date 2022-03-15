@@ -46,19 +46,22 @@
 
 %typemap(in) GIntBig
 {
-    PY_LONG_LONG val;
-    if ( !PyArg_Parse($input,"L",&val) ) {
-        PyErr_SetString(PyExc_TypeError, "not an integer");
-        SWIG_fail;
-    }
-    $1 = (GIntBig)val;
+    $1 = (GIntBig)PyLong_AsLongLong($input);
 }
 
 %typemap(out) GIntBig
 {
-    char szTmp[32];
-    sprintf(szTmp, CPL_FRMT_GIB, $1);
-    $result = PyLong_FromString(szTmp, NULL, 10);
+    $result = PyLong_FromLongLong($1);
+}
+
+%typemap(in) GUIntBig
+{
+    $1 = (GIntBig)PyLong_AsUnsignedLongLong($input);
+}
+
+%typemap(out) GUIntBig
+{
+    $result = PyLong_FromUnsignedLongLong($1);
 }
 
 /*
@@ -68,13 +71,13 @@
  * is not set in the raster band) then Py_None is returned.  If it is != 0, then
  * the value is coerced into a long and returned.
  */
-%typemap(in,numinputs=0) (double *val, int*hasval) ( double tmpval, int tmphasval ) {
-  /* %typemap(python,in,numinputs=0) (double *val, int*hasval) */
+%typemap(in,numinputs=0) (double *val, int *hasval) ( double tmpval, int tmphasval ) {
+  /* %typemap(python,in,numinputs=0) (double *val, int *hasval) */
   $1 = &tmpval;
   $2 = &tmphasval;
 }
-%typemap(argout) (double *val, int*hasval) {
-  /* %typemap(python,argout) (double *val, int*hasval) */
+%typemap(argout) (double *val, int *hasval) {
+  /* %typemap(python,argout) (double *val, int *hasval) */
   PyObject *r;
   if ( !*$2 ) {
     Py_INCREF(Py_None);
@@ -86,6 +89,47 @@
     $result = t_output_helper($result,r);
   }
 }
+
+
+%typemap(in,numinputs=0) (GIntBig *val, int *hasval) ( GIntBig tmpval, int tmphasval ) {
+  /* %typemap(python,in,numinputs=0) (GIntBig *val, int *hasval) */
+  $1 = &tmpval;
+  $2 = &tmphasval;
+}
+%typemap(argout) (GIntBig *val, int *hasval) {
+  /* %typemap(python,argout) (GIntBig *val, int *hasval) */
+  PyObject *r;
+  if ( !*$2 ) {
+    Py_INCREF(Py_None);
+    r = Py_None;
+    $result = t_output_helper($result,r);
+  }
+  else {
+    r = PyLong_FromLongLong( *$1 );
+    $result = t_output_helper($result,r);
+  }
+}
+
+
+%typemap(in,numinputs=0) (GUIntBig *val, int *hasval) ( GUIntBig tmpval, int tmphasval ) {
+  /* %typemap(python,in,numinputs=0) (GUIntBig *val, int *hasval) */
+  $1 = &tmpval;
+  $2 = &tmphasval;
+}
+%typemap(argout) (GUIntBig *val, int *hasval) {
+  /* %typemap(python,argout) (GUIntBig *val, int *hasval) */
+  PyObject *r;
+  if ( !*$2 ) {
+    Py_INCREF(Py_None);
+    r = Py_None;
+    $result = t_output_helper($result,r);
+  }
+  else {
+    r = PyLong_FromUnsignedLongLong( *$1 );
+    $result = t_output_helper($result,r);
+  }
+}
+
 
 
 %typemap(in,numinputs=0) (double argout[6], int* isvalid) ( double argout[6], int isvalid )

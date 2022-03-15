@@ -28,14 +28,6 @@
 
 #include "cpl_port.h"
 
-#ifdef HAVE_STRINGS_H
-#undef HAVE_STRINGS_H
-#endif
-
-#ifdef HAVE_STRING_H
-#undef HAVE_STRING_H
-#endif
-
 #include "gdal_priv.h"
 #include "gtiff.h"
 #include "gt_overview.h"
@@ -137,6 +129,7 @@ bool COGGetWarpingCharacteristics(GDALDataset* poSrcDS,
                                   double& dfMinY,
                                   double& dfMaxX,
                                   double& dfMaxY,
+                                  double& dfRes,
                                   std::unique_ptr<gdal::TileMatrixSet>& poTM,
                                   int& nZoomLevel,
                                   int& nAlignedLevels)
@@ -147,8 +140,8 @@ bool COGGetWarpingCharacteristics(GDALDataset* poSrcDS,
     if( EQUAL(osTargetSRS, "") && EQUAL(osTilingScheme, "CUSTOM") )
         return false;
 
-    CPLString osExtent(CSLFetchNameValueDef(papszOptions, "EXTENT", ""));
-    CPLString osRes(CSLFetchNameValueDef(papszOptions, "RES", ""));
+    const CPLString osExtent(CSLFetchNameValueDef(papszOptions, "EXTENT", ""));
+    const CPLString osRes(CSLFetchNameValueDef(papszOptions, "RES", ""));
     if( !EQUAL(osTilingScheme, "CUSTOM") )
     {
         poTM = gdal::TileMatrixSet::parse(osTilingScheme);
@@ -171,6 +164,10 @@ bool COGGetWarpingCharacteristics(GDALDataset* poSrcDS,
             CPLError(CE_Failure, CPLE_NotSupported,
                     "Unsupported tiling scheme: some levels have variable matrix width");
             return false;
+        }
+        if( !osTargetSRS.empty() )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined, "Ignoring TARGET_SRS option");
         }
         osTargetSRS = poTM->crs();
 
@@ -285,10 +282,18 @@ bool COGGetWarpingCharacteristics(GDALDataset* poSrcDS,
     dfMinY = adfExtent[1];
     dfMaxX = adfExtent[2];
     dfMaxY = adfExtent[3];
-    double dfRes = adfGeoTransform[1];
+    dfRes = adfGeoTransform[1];
 
     if( poTM )
     {
+        if( !osExtent.empty() )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined, "Ignoring EXTENT option");
+        }
+        if( !osRes.empty() )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined, "Ignoring RES option");
+        }
         const bool bInvertAxis =
             oTargetSRS.EPSGTreatsAsLatLong() != FALSE ||
             oTargetSRS.EPSGTreatsAsNorthingEasting() != FALSE;
@@ -428,8 +433,6 @@ bool COGGetWarpingCharacteristics(GDALDataset* poSrcDS,
         dfMinY = dfOriY - nBRTileY * dfTileExtent;
         dfMaxX = dfOriX + nBRTileX * dfTileExtent;
         dfMaxY = dfOriY - nTLTileY * dfTileExtent;
-        nXSize = static_cast<int>(std::round((dfMaxX - dfMinX) / dfRes));
-        nYSize = static_cast<int>(std::round((dfMaxY - dfMinY) / dfRes));
     }
     else if( !osExtent.empty() || !osRes.empty() )
     {
@@ -474,12 +477,13 @@ bool COGGetWarpingCharacteristics(GDALDataset* poSrcDS,
     std::unique_ptr<gdal::TileMatrixSet> poTM;
     int nZoomLevel = 0;
     int nAlignedLevels = 0;
+    double dfRes;
     return COGGetWarpingCharacteristics(poSrcDS,
                                         papszOptions,
                                         osResampling,
                                         osTargetSRS,
                                         nXSize, nYSize,
-                                        dfMinX, dfMinY, dfMaxX, dfMaxY,
+                                        dfMinX, dfMinY, dfMaxX, dfMaxY, dfRes,
                                         poTM, nZoomLevel, nAlignedLevels);
 }
 
@@ -524,6 +528,7 @@ static std::unique_ptr<GDALDataset> CreateReprojectedDS(
                                 const double dfMinY,
                                 const double dfMaxX,
                                 const double dfMaxY,
+                                const double dfRes,
                                 GDALProgressFunc pfnProgress,
                                 void * pProgressData,
                                 double& dfCurPixels,
@@ -550,13 +555,30 @@ static std::unique_ptr<GDALDataset> CreateReprojectedDS(
     papszArg = CSLAddString(papszArg, "-t_srs");
     papszArg = CSLAddString(papszArg, osTargetSRS);
     papszArg = CSLAddString(papszArg, "-te");
-    papszArg = CSLAddString(papszArg, CPLSPrintf("%.18g,", dfMinX));
-    papszArg = CSLAddString(papszArg, CPLSPrintf("%.18g,", dfMinY));
-    papszArg = CSLAddString(papszArg, CPLSPrintf("%.18g,", dfMaxX));
-    papszArg = CSLAddString(papszArg, CPLSPrintf("%.18g,", dfMaxY));
+    papszArg = CSLAddString(papszArg, CPLSPrintf("%.18g", dfMinX));
+    papszArg = CSLAddString(papszArg, CPLSPrintf("%.18g", dfMinY));
+    papszArg = CSLAddString(papszArg, CPLSPrintf("%.18g", dfMaxX));
+    papszArg = CSLAddString(papszArg, CPLSPrintf("%.18g", dfMaxY));
     papszArg = CSLAddString(papszArg, "-ts");
     papszArg = CSLAddString(papszArg, CPLSPrintf("%d", nXSize));
     papszArg = CSLAddString(papszArg, CPLSPrintf("%d", nYSize));
+
+    // to be kept in sync with gdalwarp_lib.cpp
+    constexpr double RELATIVE_ERROR_RES_SHARED_BY_COG_AND_GDALWARP = 1e-8;
+    if (fabs((dfMaxX - dfMinX) / dfRes - nXSize) <= RELATIVE_ERROR_RES_SHARED_BY_COG_AND_GDALWARP &&
+        fabs((dfMaxY - dfMinY) / dfRes - nYSize) <= RELATIVE_ERROR_RES_SHARED_BY_COG_AND_GDALWARP )
+    {
+        // Try to produce exactly square pixels
+        papszArg = CSLAddString(papszArg, "-tr");
+        papszArg = CSLAddString(papszArg, CPLSPrintf("%.18g", dfRes));
+        papszArg = CSLAddString(papszArg, CPLSPrintf("%.18g", dfRes));
+    }
+    else
+    {
+        CPLDebug("COG", "Cannot pass -tr option to GDALWarp() due to extent, "
+                 "size and resolution not consistent enough");
+    }
+
     int bHasNoData = FALSE;
     poSrcDS->GetRasterBand(1)->GetNoDataValue(&bHasNoData);
     if( !bHasNoData && CPLTestBool(CSLFetchNameValueDef(
@@ -702,12 +724,14 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
         double dfTargetMinY = 0;
         double dfTargetMaxX = 0;
         double dfTargetMaxY = 0;
+        double dfRes = 0;
         if( !COGGetWarpingCharacteristics(poCurDS, papszOptions,
                                           osTargetResampling,
                                           osTargetSRS,
                                           nTargetXSize, nTargetYSize,
                                           dfTargetMinX, dfTargetMinY,
                                           dfTargetMaxX, dfTargetMaxY,
+                                          dfRes,
                                           poTM, nZoomLevel, nAlignedLevels) )
         {
             return nullptr;
@@ -764,6 +788,7 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
                                     nTargetXSize, nTargetYSize,
                                     dfTargetMinX, dfTargetMinY,
                                     dfTargetMaxX, dfTargetMaxY,
+                                    dfRes,
                                     pfnProgress, pProgressData,
                                     dfCurPixels, dfTotalPixelsToProcess);
             if( !m_poReprojectedDS )
@@ -917,10 +942,6 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
                 dfNextPixels / dfTotalPixelsToProcess,
                 pfnProgress, pProgressData );
         dfCurPixels = dfNextPixels;
-
-        // Used by GDALRegenerateOverviews() and GDALRegenerateOverviewsMultiBand()
-        CPLConfigOptionSetter oSetterRegeneratedBandIsMask(
-            "GDAL_REGENERATED_BAND_IS_MASK", "YES", true);
 
         CPLErr eErr = GTIFFBuildOverviewsEx(
             m_osTmpMskOverviewFilename,
@@ -1333,7 +1354,7 @@ void GDALRegister_COG()
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/cog.html" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-                               "Byte UInt16 Int16 UInt32 Int32 Float32 "
+                               "Byte UInt16 Int16 UInt32 Int32 UInt64 Int64 Float32 "
                                "Float64 CInt16 CInt32 CFloat32 CFloat64" );
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

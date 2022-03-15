@@ -857,7 +857,7 @@ public:
     int GetOverviewCount() override;
 
 protected:
-    GDALRasterBand* RefUnderlyingRasterBand() override { return m_poUnderlyingBand; }
+    GDALRasterBand* RefUnderlyingRasterBand() const override { return m_poUnderlyingBand; }
 
 private:
     GDALRasterBand* m_poUnderlyingBand;

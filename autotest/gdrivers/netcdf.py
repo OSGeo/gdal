@@ -1278,7 +1278,7 @@ def test_netcdf_39():
     shutil.copy('data/netcdf/two_vars_scale_offset.nc', 'tmp')
     src_ds = gdal.Open('NETCDF:tmp/two_vars_scale_offset.nc:z')
     out_ds = gdal.GetDriverByName('VRT').CreateCopy('tmp/netcdf_39.vrt', src_ds)
-    out_ds = None
+    del out_ds
     src_ds = None
 
     ds = gdal.Open('tmp/netcdf_39.vrt')
@@ -1292,7 +1292,7 @@ def test_netcdf_39():
     shutil.copy('data/netcdf/two_vars_scale_offset.nc', 'tmp')
     src_ds = gdal.Open('NETCDF:"tmp/two_vars_scale_offset.nc":z')
     out_ds = gdal.GetDriverByName('VRT').CreateCopy('tmp/netcdf_39.vrt', src_ds)
-    out_ds = None
+    del out_ds
     src_ds = None
 
     ds = gdal.Open('tmp/netcdf_39.vrt')
@@ -1303,10 +1303,17 @@ def test_netcdf_39():
     gdal.Unlink('tmp/netcdf_39.vrt')
     assert cs == 65463
 
+
+def test_netcdf_39_absolute():
+
+    if gdal.Open("%s/data/netcdf/two_vars_scale_offset.nc" % os.getcwd()) is None and \
+       gdal.Open("data/netcdf/two_vars_scale_offset.nc") is not None:
+        pytest.skip("netcdf library can't handle absolute paths. Known to happen with some versions of msys mingw-w64-x86_64-netcdf package")
+
     shutil.copy('data/netcdf/two_vars_scale_offset.nc', 'tmp')
     src_ds = gdal.Open('NETCDF:"%s/tmp/two_vars_scale_offset.nc":z' % os.getcwd())
     out_ds = gdal.GetDriverByName('VRT').CreateCopy('%s/tmp/netcdf_39.vrt' % os.getcwd(), src_ds)
-    out_ds = None
+    del out_ds
     src_ds = None
 
     ds = gdal.Open('tmp/netcdf_39.vrt')
@@ -4775,9 +4782,6 @@ def test_netcdf_open_coords_no_georef_indexing_variables():
 
 def test_netcdf_metadata_sentinel5():
 
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip()
-
     ds = gdal.Open('data/netcdf/fake_ISO_METADATA.nc')
     assert ds is not None
     assert "json:ISO_METADATA" in ds.GetMetadataDomainList()
@@ -5008,6 +5012,124 @@ def test_netcdf_read_gmt_file():
     ds = gdal.Open('data/netcdf/gmt_file.nc')
     gt = ds.GetGeoTransform()
     assert gt == pytest.approx((-34.6671666666667, 0.001, 0.0, 35.58483333333329, 0.0, -0.001)), gt
+
+
+###############################################################################
+
+def test_netcdf_read_int64():
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    ds = gdal.Open('data/netcdf/int64.nc')
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Int64
+    assert struct.unpack('q' * 4, ds.ReadRaster()) == (10000000001, 1,
+                                                       -10000000000, 10000000000)
+
+
+###############################################################################
+
+
+def test_netcdf_write_int64():
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    src_ds = gdal.Open('data/netcdf/int64.nc')
+    gdaltest.netcdf_drv.CreateCopy('tmp/int64.nc', src_ds)
+    ds = gdal.Open('tmp/int64.nc')
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Int64
+    assert struct.unpack('q' * 4, ds.ReadRaster()) == (10000000001, 1,
+                                                       -10000000000, 10000000000)
+    ds = None
+    os.unlink('tmp/int64.nc')
+
+###############################################################################
+
+
+def test_netcdf_read_uint64():
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    ds = gdal.Open('data/netcdf/uint64.nc')
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt64
+    assert struct.unpack('Q' * 4, ds.ReadRaster()) == (10000000001, 1,
+                                                       0, 10000000000)
+
+
+###############################################################################
+
+
+def test_netcdf_write_uint64():
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    src_ds = gdal.Open('data/netcdf/uint64.nc')
+    gdaltest.netcdf_drv.CreateCopy('tmp/uint64.nc', src_ds)
+    ds = gdal.Open('tmp/uint64.nc')
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt64
+    assert struct.unpack('Q' * 4, ds.ReadRaster()) == (10000000001, 1,
+                                                       0, 10000000000)
+    ds = None
+    os.unlink('tmp/uint64.nc')
+
+
+###############################################################################
+
+
+def test_netcdf_write_uint64_nodata():
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    filename = 'tmp/test_tiff_write_uint64_nodata.nc'
+    ds = gdal.GetDriverByName('netCDF').Create(filename, 1, 1, 1, gdal.GDT_UInt64)
+    val = (1 << 64)-1
+    assert ds.GetRasterBand(1).SetNoDataValue(val) == gdal.CE_None
+    ds = None
+
+    filename_copy = 'tmp/test_tiff_write_uint64_nodata_filename_copy.nc'
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetNoDataValue() == val
+    ds = gdal.GetDriverByName('netCDF').CreateCopy(filename_copy, ds)
+    ds = None
+
+    ds = gdal.Open(filename_copy)
+    assert ds.GetRasterBand(1).GetNoDataValue() == val
+    ds = None
+
+    gdal.GetDriverByName('netCDF').Delete(filename)
+    gdal.GetDriverByName('netCDF').Delete(filename_copy)
+
+
+###############################################################################
+
+
+def test_netcdf_write_int64_nodata():
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    filename = 'tmp/test_tiff_write_int64_nodata.nc'
+    ds = gdal.GetDriverByName('netCDF').Create(filename, 1, 1, 1, gdal.GDT_Int64)
+    val = -(1 << 63)
+    assert ds.GetRasterBand(1).SetNoDataValue(val) == gdal.CE_None
+    ds = None
+
+    filename_copy = 'tmp/test_tiff_write_int64_nodata_filename_copy.nc'
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetNoDataValue() == val
+    ds = gdal.GetDriverByName('netCDF').CreateCopy(filename_copy, ds)
+    ds = None
+
+    ds = gdal.Open(filename_copy)
+    assert ds.GetRasterBand(1).GetNoDataValue() == val
+    ds = None
+
+    gdal.GetDriverByName('netCDF').Delete(filename)
+    gdal.GetDriverByName('netCDF').Delete(filename_copy)
 
 
 def test_clean_tmp():

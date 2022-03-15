@@ -103,6 +103,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
         export GDAL_VERSION=$(curl -Ls https://api.github.com/repos/${GDAL_REPOSITORY}/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha"); \
         export GDAL_RELEASE_DATE=$(date "+%Y%m%d"); \
     fi \
+    && apk add --no-cache cmake \
     && if test "x${GDAL_BUILD_IS_RELEASE}" = "x"; then \
         export GDAL_SHA1SUM=${GDAL_VERSION}; \
     fi \
@@ -119,15 +120,16 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && wget -q https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz -O - \
         | tar xz -C gdal --strip-components=1 \
     && cd gdal \
-    && ./autogen.sh \
-    && ./configure --prefix=/usr --sysconfdir=/etc --without-libtool \
-    --with-hide-internal-symbols \
-    --with-proj=/usr \
-    --with-libtiff=internal --with-rename-internal-libtiff-symbols \
-    --with-geotiff=internal --with-rename-internal-libgeotiff-symbols \
-    --enable-lto \
+    && mkdir build \
+    && cd build \
+    && cmake .. \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DGDAL_USE_TIFF_INTERNAL=ON \
+        -DGDAL_USE_GEOTIFF_INTERNAL=ON \
     && make -j$(nproc) \
     && make install DESTDIR="/build" \
+    && cd .. \
     && if test "${RSYNC_REMOTE}" != ""; then \
         ccache -s; \
         echo "Uploading cache..."; \
@@ -157,7 +159,8 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
             /build/usr/share/gdal/gmlas* \
             # netCDF driver
             /build/usr/share/gdal/netcdf_config.xsd \
-       ;do rm $i; done)
+       ;do rm $i; done)\
+    && apk del cmake
 
 # Build final image
 FROM alpine:${ALPINE_VERSION} as runner

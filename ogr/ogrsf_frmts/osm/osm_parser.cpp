@@ -2107,16 +2107,7 @@ static const char* OSM_AddString(OSMContext* psCtxt, const char* pszStr)
 
 static GIntBig OSM_Atoi64( const char *pszString )
 {
-
-#if defined(__MSVCRT__) || (defined(WIN32) && defined(_MSC_VER))
-    const GIntBig iValue = (GIntBig)_atoi64( pszString );
-# elif HAVE_ATOLL
-    const GIntBig iValue = atoll( pszString );
-#else
-    const GIntBig iValue = atol( pszString );
-#endif
-
-    return iValue;
+    return atoll( pszString );
 }
 
 /************************************************************************/

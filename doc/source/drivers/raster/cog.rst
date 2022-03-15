@@ -242,7 +242,7 @@ Reprojection related creation options
   added to the left and top sides of the target raster, when needed, so that
   a GeoTIFF tile matches with a tile of the tiling scheme.
   Only taken into account if TILING_SCHEME is different from CUSTOM.
-  Effect of this option is only visible when settting it at 2 or more, since the
+  Effect of this option is only visible when setting it at 2 or more, since the
   full resolution level is by default aligned with the tiling scheme.
   For a tiling scheme whose consecutive zoom level resolutions differ by a
   factor of 2, care must be taken in setting this value to a high number of

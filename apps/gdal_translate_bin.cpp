@@ -46,7 +46,7 @@ static void Usage(const char* pszErrorMsg, int bShort)
 
 {
     printf( "Usage: gdal_translate [--help-general] [--long-usage]\n"
-            "       [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/\n"
+            "       [-ot {Byte/Int16/UInt16/UInt32/Int32/UInt64/Int64/Float32/Float64/\n"
             "             CInt16/CInt32/CFloat32/CFloat64}] [-strict]\n"
             "       [-if format]* [-of format]\n"
             "       [-b band] [-mask band] [-expand {gray|rgb|rgba}]\n"

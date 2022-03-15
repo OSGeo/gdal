@@ -819,7 +819,9 @@ bool GDALGroup::CopyFrom( const std::shared_ptr<GDALGroup>& poDstRootGroup,
                                 eAutoScaleType != GDT_UInt16 &&
                                 eAutoScaleType != GDT_Int16 &&
                                 eAutoScaleType != GDT_UInt32 &&
-                                eAutoScaleType != GDT_Int32 )
+                                eAutoScaleType != GDT_Int32 &&
+                                eAutoScaleType != GDT_UInt64 &&
+                                eAutoScaleType != GDT_Int64 )
                             {
                                 CPLError(CE_Failure, CPLE_NotSupported,
                                          "Unsupported value for AUTOSCALE_DATA_TYPE");
@@ -869,7 +871,8 @@ bool GDALGroup::CopyFrom( const std::shared_ptr<GDALGroup>& poDstRootGroup,
                 double dfDTMin = 0;
                 double dfDTMax = 0;
 #define setDTMinMax(ctype) do \
-    { dfDTMin = std::numeric_limits<ctype>::min(); dfDTMax = std::numeric_limits<ctype>::max(); } while(0)
+    { dfDTMin = static_cast<double>(std::numeric_limits<ctype>::min()); \
+      dfDTMax = static_cast<double>(std::numeric_limits<ctype>::max()); } while(0)
 
                 switch( eAutoScaleType )
                 {
@@ -878,6 +881,8 @@ bool GDALGroup::CopyFrom( const std::shared_ptr<GDALGroup>& poDstRootGroup,
                     case GDT_Int16:  setDTMinMax(GInt16); break;
                     case GDT_UInt32: setDTMinMax(GUInt32); break;
                     case GDT_Int32:  setDTMinMax(GInt32); break;
+                    case GDT_UInt64: setDTMinMax(std::uint64_t); break;
+                    case GDT_Int64:  setDTMinMax(std::int64_t); break;
                     default:
                         CPLAssert(false);
                 }
@@ -1340,6 +1345,12 @@ bool GDALExtendedDataType::CopyValue(const void* pSrc,
             case GDT_Int32:
                 str = CPLSPrintf("%d", *static_cast<const GInt32*>(pSrc));
                 break;
+            case GDT_UInt64:
+                str = CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(*static_cast<const std::uint64_t*>(pSrc)));
+                break;
+            case GDT_Int64:
+                str = CPLSPrintf(CPL_FRMT_GIB, static_cast<GIntBig>(*static_cast<const std::int64_t*>(pSrc)));
+                break;
             case GDT_Float32:
                 str = CPLSPrintf("%.9g", *static_cast<const float*>(pSrc));
                 break;
@@ -1383,10 +1394,22 @@ bool GDALExtendedDataType::CopyValue(const void* pSrc,
     {
         const char* srcStrPtr;
         memcpy(&srcStrPtr, pSrc, sizeof(const char*));
-        const double dfVal = srcStrPtr == nullptr ? 0 : CPLAtof(srcStrPtr);
-        GDALCopyWords( &dfVal, GDT_Float64, 0,
-                       pDst, dstType.GetNumericDataType(), 0,
-                       1 );
+        if( dstType.GetNumericDataType() == GDT_Int64 )
+        {
+            *(static_cast<int64_t*>(pDst)) = srcStrPtr == nullptr ? 0 : static_cast<int64_t>(atoll(srcStrPtr));
+        }
+        else if( dstType.GetNumericDataType() == GDT_UInt64 )
+        {
+            *(static_cast<uint64_t*>(pDst)) = srcStrPtr == nullptr ? 0 : static_cast<uint64_t>(strtoull(srcStrPtr, nullptr, 10));
+        }
+        else
+        {
+            // FIXME GDT_UInt64
+            const double dfVal = srcStrPtr == nullptr ? 0 : CPLAtof(srcStrPtr);
+            GDALCopyWords( &dfVal, GDT_Float64, 0,
+                           pDst, dstType.GetNumericDataType(), 0,
+                           1 );
+        }
         return true;
     }
     if( srcType.GetClass() == GEDTC_COMPOUND &&
@@ -2148,10 +2171,6 @@ const void* GDALMDArray::GetRawNoDataValue() const
 
 /** Return the nodata value as a double.
  *
- * The value returned might be nullptr in case of no nodata value. When
- * a nodata value is registered, a non-nullptr will be returned whose size in
- * bytes is GetDataType().GetSize().
- *
  * This is the same as the C function GDALMDArrayGetNoDataValueAsDouble().
  *
  * @param pbHasNoData Pointer to a output boolean that will be set to true if
@@ -2164,25 +2183,76 @@ const void* GDALMDArray::GetRawNoDataValue() const
 double GDALMDArray::GetNoDataValueAsDouble(bool* pbHasNoData) const
 {
     const void* pNoData = GetRawNoDataValue();
-    if( !pNoData )
-    {
-        if( pbHasNoData )
-            *pbHasNoData = false;
-        return 0.0;
-    }
     double dfNoData = 0.0;
-    if( !GDALExtendedDataType::CopyValue(pNoData,
+    // coverity[alloc_arg]
+    bool ok = pNoData != nullptr &&
+        GDALExtendedDataType::CopyValue(pNoData,
                     GetDataType(),
                     &dfNoData,
-                    GDALExtendedDataType::Create(GDT_Float64)) )
-    {
-        if( pbHasNoData )
-            *pbHasNoData = false;
-        return 0.0;
-    }
+                    GDALExtendedDataType::Create(GDT_Float64));
     if( pbHasNoData )
-        *pbHasNoData = true;
+        *pbHasNoData = ok;
     return dfNoData;
+}
+
+/************************************************************************/
+/*                        GetNoDataValueAsInt64()                       */
+/************************************************************************/
+
+/** Return the nodata value as a Int64.
+ *
+ * @param pbHasNoData Pointer to a output boolean that will be set to true if
+ * a nodata value exists and can be converted to Int64. Might be nullptr.
+ *
+ * This is the same as the C function GDALMDArrayGetNoDataValueAsInt64().
+ *
+ * @return the nodata value as a Int64
+ *
+ * @since GDAL 3.5
+ */
+int64_t GDALMDArray::GetNoDataValueAsInt64(bool* pbHasNoData) const
+{
+    const void* pNoData = GetRawNoDataValue();
+    int64_t nNoData = GDAL_PAM_DEFAULT_NODATA_VALUE_INT64;
+    // coverity[alloc_arg]
+    bool ok = pNoData != nullptr &&
+              GDALExtendedDataType::CopyValue(pNoData,
+                            GetDataType(),
+                            &nNoData,
+                            GDALExtendedDataType::Create(GDT_Int64));
+    if( pbHasNoData )
+        *pbHasNoData = ok;
+    return nNoData;
+}
+
+/************************************************************************/
+/*                       GetNoDataValueAsUInt64()                       */
+/************************************************************************/
+
+/** Return the nodata value as a UInt64.
+ *
+ * This is the same as the C function GDALMDArrayGetNoDataValueAsUInt64().
+
+ * @param pbHasNoData Pointer to a output boolean that will be set to true if
+ * a nodata value exists and can be converted to UInt64. Might be nullptr.
+ *
+ * @return the nodata value as a UInt64
+ *
+ * @since GDAL 3.5
+ */
+uint64_t GDALMDArray::GetNoDataValueAsUInt64(bool* pbHasNoData) const
+{
+    const void* pNoData = GetRawNoDataValue();
+    uint64_t nNoData = GDAL_PAM_DEFAULT_NODATA_VALUE_UINT64;
+    // coverity[alloc_arg]
+    bool ok = pNoData != nullptr &&
+              GDALExtendedDataType::CopyValue(pNoData,
+                            GetDataType(),
+                            &nNoData,
+                            GDALExtendedDataType::Create(GDT_UInt64));
+    if( pbHasNoData )
+        *pbHasNoData = ok;
+    return nNoData;
 }
 
 /************************************************************************/
@@ -2227,6 +2297,64 @@ bool GDALMDArray::SetNoDataValue(double dfNoData)
     bool bRet = false;
     if( GDALExtendedDataType::CopyValue(
                     &dfNoData, GDALExtendedDataType::Create(GDT_Float64),
+                    pRawNoData, GetDataType()) )
+    {
+        bRet = SetRawNoDataValue(pRawNoData);
+    }
+    CPLFree(pRawNoData);
+    return bRet;
+}
+
+/************************************************************************/
+/*                           SetNoDataValue()                           */
+/************************************************************************/
+
+/** Set the nodata value as a Int64.
+ *
+ * If the natural data type of the attribute/array is not Int64, type conversion
+ * will occur to the type returned by GetDataType().
+ *
+ * This is the same as the C function GDALMDArraySetNoDataValueAsInt64().
+ *
+ * @return true in case of success.
+ *
+ * @since GDAL 3.5
+ */
+bool GDALMDArray::SetNoDataValue(int64_t nNoData)
+{
+    void* pRawNoData = CPLMalloc(GetDataType().GetSize());
+    bool bRet = false;
+    if( GDALExtendedDataType::CopyValue(
+                    &nNoData, GDALExtendedDataType::Create(GDT_Int64),
+                    pRawNoData, GetDataType()) )
+    {
+        bRet = SetRawNoDataValue(pRawNoData);
+    }
+    CPLFree(pRawNoData);
+    return bRet;
+}
+
+/************************************************************************/
+/*                           SetNoDataValue()                           */
+/************************************************************************/
+
+/** Set the nodata value as a Int64.
+ *
+ * If the natural data type of the attribute/array is not Int64, type conversion
+ * will occur to the type returned by GetDataType().
+ *
+ * This is the same as the C function GDALMDArraySetNoDataValueAsUInt64().
+ *
+ * @return true in case of success.
+ *
+ * @since GDAL 3.5
+ */
+bool GDALMDArray::SetNoDataValue(uint64_t nNoData)
+{
+    void* pRawNoData = CPLMalloc(GetDataType().GetSize());
+    bool bRet = false;
+    if( GDALExtendedDataType::CopyValue(
+                    &nNoData, GDALExtendedDataType::Create(GDT_UInt64),
                     pRawNoData, GetDataType()) )
     {
         bRet = SetRawNoDataValue(pRawNoData);
@@ -5610,6 +5738,24 @@ lbl_return_to_caller:
                                 bHasValidMax, dfValidMax);
             break;
 
+        case GDT_UInt64:
+            ReadInternal<std::uint64_t>(count, bufferStride, bufferDataType, pDstBuffer,
+                                pTempBuffer, oTmpBufferDT, tmpBufferStrideVector,
+                                bHasMissingValue, dfMissingValue,
+                                bHasFillValue, dfFillValue,
+                                bHasValidMin, dfValidMin,
+                                bHasValidMax, dfValidMax);
+            break;
+
+        case GDT_Int64:
+            ReadInternal<std::int64_t>(count, bufferStride, bufferDataType, pDstBuffer,
+                                pTempBuffer, oTmpBufferDT, tmpBufferStrideVector,
+                                bHasMissingValue, dfMissingValue,
+                                bHasFillValue, dfFillValue,
+                                bHasValidMin, dfValidMin,
+                                bHasValidMax, dfValidMax);
+            break;
+
         case GDT_Float32:
             ReadInternal<float>(count, bufferStride, bufferDataType, pDstBuffer,
                                 pTempBuffer, oTmpBufferDT, tmpBufferStrideVector,
@@ -6845,6 +6991,8 @@ public:
                                      const std::vector<GUInt64>& anOtherDimCoord);
 
     double GetNoDataValue(int* pbHasNoData) override;
+    int64_t GetNoDataValueAsInt64(int* pbHasNoData) override;
+    uint64_t GetNoDataValueAsUInt64(int* pbHasNoData) override;
     double GetOffset(int* pbHasOffset) override;
     double GetScale(int* pbHasScale) override;
     const char* GetUnitType() override;
@@ -7080,10 +7228,40 @@ double GDALRasterBandFromArray::GetNoDataValue(int* pbHasNoData)
     auto l_poDS(cpl::down_cast<GDALDatasetFromArray*>(poDS));
     const auto& poArray(l_poDS->m_poArray);
     bool bHasNodata = false;
-    double dfRes = poArray->GetNoDataValueAsDouble(&bHasNodata);
+    const auto res = poArray->GetNoDataValueAsDouble(&bHasNodata);
     if( pbHasNoData )
         *pbHasNoData = bHasNodata;
-    return dfRes;
+    return res;
+}
+
+/************************************************************************/
+/*                       GetNoDataValueAsInt64()                        */
+/************************************************************************/
+
+int64_t GDALRasterBandFromArray::GetNoDataValueAsInt64(int* pbHasNoData)
+{
+    auto l_poDS(cpl::down_cast<GDALDatasetFromArray*>(poDS));
+    const auto& poArray(l_poDS->m_poArray);
+    bool bHasNodata = false;
+    const auto nodata = poArray->GetNoDataValueAsInt64(&bHasNodata);
+    if( pbHasNoData )
+        *pbHasNoData = bHasNodata;
+    return nodata;
+}
+
+/************************************************************************/
+/*                      GetNoDataValueAsUInt64()                        */
+/************************************************************************/
+
+uint64_t GDALRasterBandFromArray::GetNoDataValueAsUInt64(int* pbHasNoData)
+{
+    auto l_poDS(cpl::down_cast<GDALDatasetFromArray*>(poDS));
+    const auto& poArray(l_poDS->m_poArray);
+    bool bHasNodata = false;
+    const auto nodata = poArray->GetNoDataValueAsUInt64(&bHasNodata);
+    if( pbHasNoData )
+        *pbHasNoData = bHasNodata;
+    return nodata;
 }
 
 /************************************************************************/
@@ -9371,14 +9549,62 @@ double GDALMDArrayGetNoDataValueAsDouble(GDALMDArrayH hArray,
 }
 
 /************************************************************************/
+/*                      GDALMDArrayGetNoDataValueAsInt64()              */
+/************************************************************************/
+
+/** Return the nodata value as a Int64.
+ *
+ * This is the same as the C++ method GDALMDArray::GetNoDataValueAsInt64().
+ *
+ * @param hArray Array handle.
+ * @param pbHasNoDataValue Pointer to a output boolean that will be set to true if
+ * a nodata value exists and can be converted to Int64. Might be nullptr.
+ *
+ * @return the nodata value as a Int64.
+ * @since GDAL 3.5
+ */
+int64_t GDALMDArrayGetNoDataValueAsInt64(GDALMDArrayH hArray,
+                                         int* pbHasNoDataValue)
+{
+    VALIDATE_POINTER1( hArray, __func__, 0 );
+    bool bHasNodataValue = false;
+    const auto ret = hArray->m_poImpl->GetNoDataValueAsInt64(&bHasNodataValue);
+    if( pbHasNoDataValue )
+        *pbHasNoDataValue = bHasNodataValue;
+    return ret;
+}
+
+/************************************************************************/
+/*                      GDALMDArrayGetNoDataValueAsUInt64()              */
+/************************************************************************/
+
+/** Return the nodata value as a UInt64.
+ *
+ * This is the same as the C++ method GDALMDArray::GetNoDataValueAsInt64().
+ *
+ * @param hArray Array handle.
+ * @param pbHasNoDataValue Pointer to a output boolean that will be set to true if
+ * a nodata value exists and can be converted to UInt64. Might be nullptr.
+ *
+ * @return the nodata value as a UInt64.
+ * @since GDAL 3.5
+ */
+uint64_t GDALMDArrayGetNoDataValueAsUInt64(GDALMDArrayH hArray,
+                                         int* pbHasNoDataValue)
+{
+    VALIDATE_POINTER1( hArray, __func__, 0 );
+    bool bHasNodataValue = false;
+    const auto ret = hArray->m_poImpl->GetNoDataValueAsUInt64(&bHasNodataValue);
+    if( pbHasNoDataValue )
+        *pbHasNoDataValue = bHasNodataValue;
+    return ret;
+}
+
+/************************************************************************/
 /*                     GDALMDArraySetRawNoDataValue()                   */
 /************************************************************************/
 
 /** Set the nodata value as a "raw" value.
- *
- * The value passed might be nullptr in case of no nodata value. When
- * a nodata value is registered, a non-nullptr whose size in
- * bytes is GetDataType().GetSize() must be passed.
  *
  * This is the same as the C++ method GDALMDArray::SetRawNoDataValue(const void*).
  *
@@ -9408,6 +9634,48 @@ int GDALMDArraySetNoDataValueAsDouble(GDALMDArrayH hArray,
 {
     VALIDATE_POINTER1( hArray, __func__, FALSE );
     return hArray->m_poImpl->SetNoDataValue(dfNoDataValue);
+}
+
+/************************************************************************/
+/*                   GDALMDArraySetNoDataValueAsInt64()                 */
+/************************************************************************/
+
+/** Set the nodata value as a Int64.
+ *
+ * If the natural data type of the attribute/array is not Int64, type conversion
+ * will occur to the type returned by GetDataType().
+ *
+ * This is the same as the C++ method GDALMDArray::SetNoDataValue(int64_t).
+ *
+ * @return TRUE in case of success.
+ * @since GDAL 3.5
+ */
+int GDALMDArraySetNoDataValueAsInt64(GDALMDArrayH hArray,
+                                     int64_t nNoDataValue)
+{
+    VALIDATE_POINTER1( hArray, __func__, FALSE );
+    return hArray->m_poImpl->SetNoDataValue(nNoDataValue);
+}
+
+/************************************************************************/
+/*                   GDALMDArraySetNoDataValueAsUInt64()                */
+/************************************************************************/
+
+/** Set the nodata value as a UInt64.
+ *
+ * If the natural data type of the attribute/array is not UInt64, type conversion
+ * will occur to the type returned by GetDataType().
+ *
+ * This is the same as the C++ method GDALMDArray::SetNoDataValue(uint64_t).
+ *
+ * @return TRUE in case of success.
+ * @since GDAL 3.5
+ */
+int GDALMDArraySetNoDataValueAsUInt64(GDALMDArrayH hArray,
+                                      uint64_t nNoDataValue)
+{
+    VALIDATE_POINTER1( hArray, __func__, FALSE );
+    return hArray->m_poImpl->SetNoDataValue(nNoDataValue);
 }
 
 /************************************************************************/

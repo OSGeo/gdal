@@ -708,6 +708,8 @@ static int CreateOrGetType(int gid, const GDALExtendedDataType& oType)
             case GDT_Int16: nTypeId = NC_SHORT; break;
             case GDT_UInt32: nTypeId = NC_UINT; break;
             case GDT_Int32: nTypeId = NC_INT; break;
+            case GDT_UInt64: nTypeId = NC_UINT64; break;
+            case GDT_Int64: nTypeId = NC_INT64; break;
             case GDT_Float32: nTypeId = NC_FLOAT; break;
             case GDT_Float64: nTypeId = NC_DOUBLE; break;
             case GDT_CInt16:
@@ -1915,9 +1917,15 @@ static bool BuildDataType(int gid, int varid, int nVarType,
             eDataType = GDT_UInt32;
         }
         else if( nVarType == NC_INT64 )
-            eDataType = GDT_Float64; // approximation
+        {
+            bPerfectDataTypeMatch = true;
+            eDataType = GDT_Int64;
+        }
         else if( nVarType == NC_UINT64 )
-            eDataType = GDT_Float64; // approximation
+        {
+            bPerfectDataTypeMatch = true;
+            eDataType = GDT_UInt64;
+        }
         else
         {
             CPLError(CE_Failure, CPLE_NotSupported,

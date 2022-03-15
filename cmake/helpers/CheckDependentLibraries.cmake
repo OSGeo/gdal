@@ -19,7 +19,10 @@ option(
   "Whether detected external libraries should be used by default. This should be set before CMakeCache.txt is created."
   ON)
 
-set(GDAL_IMPORT_DEPENDENCIES "")
+set(GDAL_IMPORT_DEPENDENCIES [[
+include(CMakeFindDependencyMacro)
+include("${CMAKE_CURRENT_LIST_DIR}/GdalFindModulePath.cmake")
+]])
 
 # Check that the configuration has a valid value for INTERFACE_INCLUDE_DIRECTORIES. This aimed at avoiding issues like
 # https://github.com/OSGeo/gdal/issues/5324
@@ -76,7 +79,7 @@ endfunction()
 # The RECOMMENDED option is used for the feature summary.
 # The VERSION, CONFIG, COMPONENTS and NAMES parameters are passed to find_package().
 # Using NAMES with find_package() implies config mode. However, gdal_check_package()
-# attemps another find_package() without NAMES if the config mode attempt was not
+# attempts another find_package() without NAMES if the config mode attempt was not
 # successful, allowing a fallback to Find modules.
 # The TARGETS parameter can define a list of candidate targets. If given, a
 # package will only be accepted if it defines one of the given targets. The matching
@@ -118,7 +121,7 @@ macro (gdal_check_package name purpose)
       gdal_check_package_target(${name} ${GDAL_CHECK_PACKAGE_${name}_TARGETS} REQUIRED)
       if (${name}_FOUND)
         get_filename_component(_find_dependency_args "${${name}_CONFIG}" NAME)
-        string(REPLACE ";" " " _find_dependency_args "${name} CONFIGS ${_find_dependency_args} ${_find_package_args}")
+        string(REPLACE ";" " " _find_dependency_args "${name} NAMES ${GDAL_CHECK_PACKAGE_${name}_NAMES} CONFIGS ${_find_dependency_args} ${_find_package_args}")
       endif ()
     endif ()
     if (NOT ${name}_FOUND)
@@ -130,7 +133,7 @@ macro (gdal_check_package name purpose)
         set(${name}_FOUND "${key}_FOUND")
       endif ()
       if (${name}_FOUND)
-        set(REPLACE ";" " " _find_dependency_args "${name} ${_find_package_args}")
+        string(REPLACE ";" " " _find_dependency_args "${name} ${_find_package_args}")
       endif()
     endif ()
   endif ()
@@ -164,12 +167,14 @@ macro (gdal_check_package name purpose)
         message(STATUS
           "${key} has been found, but is disabled due to GDAL_USE_EXTERNAL_LIBS=OFF. Enable it by setting GDAL_USE_${key}=ON"
           )
+        set(_find_dependency_args "")
       endif ()
     endif ()
     if (_gcpp_status AND _GCP_DISABLED_BY_DEFAULT)
       set(_gcpp_status OFF)
       if (HAVE_${key} AND NOT GDAL_USE_${key})
         message(STATUS "${key} has been found, but is disabled by default. Enable it by setting GDAL_USE_${key}=ON")
+        set(_find_dependency_args "")
       endif ()
     endif ()
     cmake_dependent_option(GDAL_USE_${key} "Set ON to use ${key}" ${_gcpp_status} "HAVE_${key}" OFF)
@@ -242,7 +247,6 @@ gdal_check_package(MySQL "MySQL" CAN_DISABLE)
 gdal_check_package(CURL "Enable drivers to use web API" CAN_DISABLE)
 
 gdal_check_package(Iconv "Character set recoding (used in GDAL portability library)" CAN_DISABLE)
-
 if (Iconv_FOUND)
   set(CMAKE_REQUIRED_INCLUDES ${Iconv_INCLUDE_DIR})
   set(CMAKE_REQUIRED_LIBRARIES ${Iconv_LIBRARY})
@@ -277,6 +281,10 @@ if (Iconv_FOUND)
   unset(CMAKE_REQUIRED_FLAGS)
 endif ()
 
+if (HAVE_ICONV AND DEFINED GDAL_USE_ICONV AND NOT GDAL_USE_ICONV)
+  set(HAVE_ICONV 0)
+endif()
+
 gdal_check_package(LibXml2 "Read and write XML formats" CAN_DISABLE)
 
 gdal_check_package(EXPAT "Read and write XML formats" RECOMMENDED CAN_DISABLE
@@ -297,8 +305,11 @@ if (GDAL_USE_CRYPTOPP)
   option(CRYPTOPP_USE_ONLY_CRYPTODLL_ALG "Use Only cryptoDLL alg. only work on dynamic DLL" OFF)
 endif ()
 
-# First check with CMake config files, and then fallback to the FindPROJ module.
-find_package(PROJ 8.0 CONFIG)
+# First check with CMake config files (starting at version 8, due to issues with earlier ones), and then fallback to the FindPROJ module.
+find_package(PROJ 9 CONFIG QUIET)
+if (NOT PROJ_FOUND)
+  find_package(PROJ 8 CONFIG QUIET)
+endif()
 if (NOT PROJ_FOUND)
   find_package(PROJ 6.0 REQUIRED)
 endif ()
@@ -311,10 +322,16 @@ set_package_properties(
   TYPE RECOMMENDED)
 gdal_internal_library(TIFF REQUIRED)
 
-gdal_check_package(ZSTD "ZSTD compression library" CAN_DISABLE
-  NAMES zstd
-  TARGETS zstd::libzstd_shared zstd::libzstd_static ZSTD::zstd
-)
+if (DEFINED ENV{CONDA_PREFIX} AND UNIX)
+    # Currently on Unix, the Zstd cmake config file is buggy. It declares a
+    # libzstd_static target but the corresponding libzstd.a file is missing,
+    # which cause CMake to error out.
+    set(ZSTD_NAMES_AND_TARGETS)
+else()
+    set(ZSTD_NAMES_AND_TARGETS NAMES zstd TARGETS zstd::libzstd_shared zstd::libzstd_static ZSTD::zstd)
+endif()
+gdal_check_package(ZSTD "ZSTD compression library" CAN_DISABLE ${ZSTD_NAMES_AND_TARGETS})
+
 gdal_check_package(SFCGAL "gdal core supports ISO 19107:2013 and OGC Simple Features Access 1.2 for 3D operations"
                    CAN_DISABLE)
 
@@ -371,10 +388,8 @@ gdal_internal_library(QHULL)
 # driver with internal libcsf (if set to ON, has precedence over GDAL_USE_LIBCSF)") endif ()
 set(GDAL_USE_LIBCSF_INTERNAL ON)
 
-option(GDAL_USE_LERCV1_INTERNAL "Set ON to build mrf driver with internal libLERC V1" ON)
-
-# DISABLED_BY_DEFAULT since it prevents MRF Lerc support (see frmts/mrf/CMakeLists.txt)
-gdal_check_package(LERC "Enable LERC (external)" CAN_DISABLE DISABLED_BY_DEFAULT)
+# Compression used by GTiff and MRF
+gdal_check_package(LERC "Enable LERC (external)" CAN_DISABLE)
 gdal_internal_library(LERC)
 
 # Disable by default the use of external shapelib, as currently the SAOffset member that holds file offsets in it is a
@@ -454,6 +469,9 @@ if (GDAL_USE_LIBKML)
   endif ()
 endif ()
 cmake_dependent_option(GDAL_USE_LIBKML "Set ON to use LibKML" ON LibKML_FOUND OFF)
+if (GDAL_USE_LIBKML)
+  string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(LibKML COMPONENTS DOM ENGINE)\n")
+endif ()
 
 gdal_check_package(Jasper "Enable JPEG2000 support" CAN_DISABLE)
 if (HAVE_JASPER)
@@ -560,11 +578,42 @@ define_find_package2(KEA libkea/KEACommon.h kea)
 gdal_check_package(KEA "Enable KEA driver" CAN_DISABLE)
 
 gdal_check_package(ECW "Enable ECW driver" CAN_DISABLE)
-gdal_check_package(NetCDF "Enable netCDF driver" CAN_DISABLE)
+gdal_check_package(NetCDF "Enable netCDF driver" CAN_DISABLE
+  # NAMES netCDF # Cf. https://github.com/OSGeo/gdal/pull/5453
+  TARGETS netCDF::netcdf NETCDF::netCDF)
 gdal_check_package(OGDI "Enable ogr_OGDI driver" CAN_DISABLE)
 # OpenCL warping gives different results than the ones expected by autotest, so disable it by default even if found.
 gdal_check_package(OpenCL "Enable OpenCL (may be used for warping)" DISABLED_BY_DEFAULT)
+
+# FindPostgreSQL.cmake requires the server includes to be present, but we
+# don't need them. So if after a first detection PostgreSQL_INCLUDE_DIR
+# is set to a sensible value, then restart detection by setting
+# PostgreSQL_TYPE_INCLUDE_DIR (the variable for server includes) to
+# PostgreSQL_INCLUDE_DIR
+if (GDAL_USE_POSTGRESQL)
+     set(postgresq_requested TRUE)
+     if(PostgreSQL_INCLUDE_DIR AND NOT (PostgreSQL_INCLUDE_DIR MATCHES "NOTFOUND") AND (PostgreSQL_TYPE_INCLUDE_DIR MATCHES "NOTFOUND"))
+        unset(GDAL_USE_POSTGRESQL)
+        unset(GDAL_USE_POSTGRESQL CACHE)
+     endif()
+endif()
 gdal_check_package(PostgreSQL "" CAN_DISABLE)
+if( NOT PostgreSQL_FOUND AND NOT (PostgreSQL_INCLUDE_DIR MATCHES "NOTFOUND") AND (PostgreSQL_TYPE_INCLUDE_DIR MATCHES "NOTFOUND"))
+    message(STATUS "PostgreSQL_INCLUDE_DIR found, but not PostgreSQL_TYPE_INCLUDE_DIR. Retrying")
+    set(PostgreSQL_TYPE_INCLUDE_DIR "${PostgreSQL_INCLUDE_DIR}")
+    unset(PostgreSQL_FOUND)
+    unset(POSTGRESQL_FOUND)
+    unset(GDAL_USE_POSTGRESQL)
+    unset(GDAL_USE_POSTGRESQL CACHE)
+    gdal_check_package(PostgreSQL "" CAN_DISABLE)
+    if (PostgreSQL_FOUND)
+        message(STATUS "PostgreSQL found")
+    elseif (postgresq_requested)
+        set(GDAL_USE_POSTGRESQL "Set ON to use POSTGRESQL" ON CACHE FORCE)
+        message(FATAL_ERROR "Configured to use POSTGRESQL, but not found")
+    endif ()
+endif()
+
 gdal_check_package(FYBA "enable ogr_SOSI driver" CAN_DISABLE)
 gdal_check_package(LibLZMA "LZMA compression" CAN_DISABLE)
 gdal_check_package(LZ4 "LZ4 compression" CAN_DISABLE)
@@ -595,6 +644,9 @@ if (GDAL_USE_OPENJPEG)
   endif ()
 endif ()
 cmake_dependent_option(GDAL_USE_OPENJPEG "Set ON to use openjpeg" ON OPENJPEG_FOUND OFF)
+if (GDAL_USE_OPENJPEG)
+  string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(OpenJPEG MODULE)\n")
+endif ()
 
 # Only GRASS 7 is currently supported but we keep dual version support in cmake for possible future switch to GRASS 8.
 set(TMP_GRASS OFF)
@@ -628,8 +680,8 @@ gdal_check_package(HDFS "Enable Hadoop File System through native library" CAN_D
 # PDF library: one of them enables PDF driver
 gdal_check_package(Poppler "Enable PDF driver with Poppler (read side)" CAN_DISABLE)
 
-define_find_package2(PDFium public/fpdfview.h pdfium FIND_PATH_SUFFIX pdfium)
-gdal_check_package(PDFium "Enable PDF driver with Pdfium (read side)" CAN_DISABLE)
+define_find_package2(PDFIUM public/fpdfview.h pdfium FIND_PATH_SUFFIX pdfium)
+gdal_check_package(PDFIUM "Enable PDF driver with Pdfium (read side)" CAN_DISABLE)
 
 gdal_check_package(Podofo "Enable PDF driver with Podofo (read side)" CAN_DISABLE)
 if (GDAL_USE_POPPLER

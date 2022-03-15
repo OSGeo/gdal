@@ -294,7 +294,7 @@ case "${host_os}" in
 esac
 
 dnl Checks for header files.
-AC_CHECK_HEADERS(assert.h fcntl.h unistd.h dlfcn.h stdint.h limits.h locale.h values.h float.h errno.h direct.h)
+AC_CHECK_HEADERS(fcntl.h unistd.h dlfcn.h locale.h direct.h)
 
 dnl Check for userfaultfd support
 AC_CHECK_HEADERS([linux/userfaultfd.h], [ENABLE_UFFD="yes"], [ENABLE_UFFD="no"], [])
@@ -313,38 +313,15 @@ esac
 AC_C_BIGENDIAN
 
 dnl Check for 64 bit file API
-AC_CHECK_TYPES([long long])
 AC_UNIX_STDIO_64
 
 AC_CHECK_SIZEOF(int)
 AC_CHECK_SIZEOF(unsigned long)
 AC_CHECK_SIZEOF(void*)
-dnl Some compilers (IBM VisualAge) has these types defined, so check it here.
-dnl These types are used in internal libtiff.
-AC_CHECK_TYPES([int8, int16, int32],,,
-[
-#if HAVE_INTTYPES_H
-# include <inttypes.h>
-#endif
-])
-AC_CHECK_TYPES(uintptr_t)
-
-dnl We need the following lines for libtiff too.
-HAVE_IEEEFP=1
-AC_DEFINE_UNQUOTED(HAVE_IEEEFP, $HAVE_IEEEFP, [Define as 0 or 1 according to the floating point format supported by the machine])
 
 dnl Checks for library functions.
-AC_FUNC_VPRINTF
-AC_CHECK_FUNCS(snprintf vsnprintf)
-AC_CHECK_FUNCS(atoll)
-AC_CHECK_FUNCS(strtoll)
-AC_CHECK_FUNCS(strtoull)
-AC_CHECK_FUNCS(strtof)
+AC_CHECK_FUNCS(vsnprintf)
 AC_CHECK_FUNCS(getcwd)
-
-dnl Check for declarations
-AC_CHECK_DECLS(strtof)
-
 AC_CHECK_FUNCS(readlink)
 AC_CHECK_FUNCS(lstat)
 AC_CHECK_FUNCS(posix_spawnp)
@@ -5506,6 +5483,7 @@ dnl ---------------------------------------------------------------------------
 AC_ARG_WITH(tiledb,[  --with-tiledb[=ARG]    Include TileDB support (ARG=no, yes or tiledb install root path)],,)
 
 TILEDB_SETTING=no
+TILEDB_CFLAGS=
 
 if test "$with_tiledb" = "yes" -o "$with_tiledb" = "" ; then
 
@@ -5523,18 +5501,51 @@ elif test "$with_tiledb" != "no" -a "$with_tiledb" != ""; then
 
   if test "$TILEDB_SETTING" = "yes" ; then
     LIBS="-L$with_tiledb/lib -ltiledb $LIBS"
-    EXTRA_INCLUDES="-I$with_tiledb/include $EXTRA_INCLUDES"
+    TILEDB_CFLAGS="-I$with_tiledb/include"
   else
     echo "libtiledb not found - TileDB support disabled"
   fi
+fi
 
+if test "$TILEDB_SETTING" != "no" ; then
+
+  AC_LANG_PUSH([C++])
+  SAVED_CXXFLAGS=$CXXFLAGS
+  CXXFLAGS="$CXXFLAGS $TILEDB_CFLAGS"
+  AC_MSG_CHECKING([if tiledb/tiledb can be included without additional flags])
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+    [[#include "tiledb/tiledb"]])],
+    [TILEDB_CAN_BE_INCLUDED="yes"]
+    [AC_MSG_RESULT([yes])],
+    [TILEDB_CAN_BE_INCLUDED="no"]
+    [AC_MSG_RESULT([no])])
+  CXXFLAGS=$SAVED_CXXFLAGS
+  AC_LANG_POP([C++])
+
+  if test "$TILEDB_CAN_BE_INCLUDED" = "no"; then
+    AC_LANG_PUSH([C++])
+    SAVED_CXXFLAGS=$CXXFLAGS
+    CXXFLAGS="$CXXFLAGS $TILEDB_CFLAGS -std=c++17"
+    AC_MSG_CHECKING([if tiledb/tiledb can be included with -std=c++17])
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+      [[#include "tiledb/tiledb"]])],
+      [TILEDB_CAN_BE_INCLUDED="yes"]
+      [AC_MSG_RESULT([yes])],
+      [TILEDB_CAN_BE_INCLUDED="no"]
+      [AC_MSG_RESULT([no])])
+    CXXFLAGS=$SAVED_CXXFLAGS
+    AC_LANG_POP([C++])
+
+    if test "$TILEDB_CAN_BE_INCLUDED" = "yes"; then
+      TILEDB_CFLAGS="$TILEDB_CFLAGS -std=c++17"
+    fi
+  fi
+
+  OPT_GDAL_FORMATS="tiledb $OPT_GDAL_FORMATS"
 fi
 
 AC_SUBST(TILEDB_SETTING,$TILEDB_SETTING)
-
-if test "$TILEDB_SETTING" != "no" ; then
-  OPT_GDAL_FORMATS="tiledb $OPT_GDAL_FORMATS"
-fi
+AC_SUBST(TILEDB_CFLAGS,$TILEDB_CFLAGS)
 
 dnl ---------------------------------------------------------------------------
 dnl MDB driver
@@ -5969,7 +5980,7 @@ dnl Whether to include LERC in the build
 dnl ---------------------------------------------------------------------------
 
 AC_ARG_WITH(lerc,
-    [  --with-lerc[=ARG]         Include libLerc support(ARG=yes/no/internal/path). Internal liblerc is required for MRF Lerc support. Internal or external libLerc may be used for internal libtiff Lerc support.],,,)
+    [  --with-lerc[=ARG]         Include libLerc support(ARG=yes/no/internal/path). Used by internal libtiff and MRF.],,,)
 
 HAVE_LERC=no
 AC_MSG_CHECKING([for LERC])

@@ -1549,7 +1549,7 @@ retry:
         CPLFree(sWriteFuncHeaderData.pBuffer);
         curl_easy_cleanup(hCurlHandle);
         nRetryCount++;
-        if( Authenticate() )
+        if( Authenticate(m_osFilename.c_str()) )
             goto retry;
         return std::string();
     }

@@ -41,9 +41,7 @@
 #  include <cassert>
 #endif
 #include <cerrno>
-#ifndef DEBUG_BOOL
 #include <cmath>
-#endif
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>

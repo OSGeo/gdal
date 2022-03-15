@@ -174,7 +174,7 @@ Armadillo
 The `Armadillo <http://arma.sourceforge.net/>`_ C++ library is used to speed up computations related to the
 Thin Plate Spline transformer. See https://cmake.org/cmake/help/latest/module/FindArmadillo.html
 for details.
-On Windows builds using Conda-Forge depedencies, the following packages may also
+On Windows builds using Conda-Forge dependencies, the following packages may also
 need to be installed: ``blas blas-devel libblas libcblas liblapack liblapacke``
 
 .. option:: GDAL_USE_ARMADILLO=ON/OFF
@@ -858,18 +858,10 @@ driver. The HDF5 CXX library is also required.
 LERC
 ****
 
-`LERC <https://github.com/esri/lerc>`_ (V2) is an open-source image or raster format
+`LERC <https://github.com/esri/lerc>`_ is an open-source image or raster format
 which supports rapid encoding and decoding for any pixel type (not just RGB or Byte).
 Users set the maximum compression error per pixel while encoding, so the precision
 of the original input image is preserved (within user defined error bounds).
-
-.. warning::
-
-    Use of the external LERC library is not recommended, as it cannot be used
-    by the :ref:`raster.marfa` driver currently (that one requires the internal
-    LERC copy). The external LERC Library can only be used by the internal libtiff,
-    which can also use the internal LERC copy.
-
 
 .. option:: LERC_INCLUDE_DIR
 
@@ -881,23 +873,13 @@ of the original input image is preserved (within user defined error bounds).
 
 .. option:: GDAL_USE_LERC=ON/OFF
 
-    Control whether to use LERC (V2). Defaults to *OFF* when LERC (V2) is found.
+    Control whether to use LERC. Defaults to *OFF* when LERC is found.
 
 .. option:: GDAL_USE_LERC_INTERNAL=ON/OFF
 
-    Control whether to use the LERC (V2) internal library. Defaults to ON,
+    Control whether to use the LERC internal library. Defaults to ON,
     unless GDAL_USE_LERC is set to ON.
 
-
-LERCV1
-******
-
-This is an internal library used by the :ref:`raster.marfa` driver. It offers the
-LERC v1 compression.
-
-.. option:: GDAL_USE_LERCV1_INTERNAL=ON/OFF
-
-    Control whether to use the Lerc V1 internal library. Defaults to ON.
 
 LibKML
 ******
@@ -1315,23 +1297,23 @@ Regular Expressions support. It is used for the REGEXP operator in drivers using
     Control whether to use PCRE2. Defaults to ON when PCRE2 is found.
 
 
-PDFium
+PDFIUM
 ******
 
-The `PDFium <https://github.com/rouault/pdfium_build_gdal_3_4>`_ library is one
+The `PDFium <https://github.com/rouault/pdfium_build_gdal_3_5>`_ library is one
 of the possible backends for the :ref:`raster.pdf` driver.
 
-.. option:: PDFium_INCLUDE_DIR
+.. option:: PDFIUM_INCLUDE_DIR
 
     Path to an include directory with the ``public/fpdfview.h`` header file.
 
-.. option:: PDFium_LIBRARY
+.. option:: PDFIUM_LIBRARY
 
     Path to a shared or static library file.
 
 .. option:: GDAL_USE_PDFIUM=ON/OFF
 
-    Control whether to use PDFium. Defaults to ON when PDFium is found.
+    Control whether to use PDFIUM. Defaults to ON when PDFIUM is found.
 
 
 PNG
@@ -1987,3 +1969,10 @@ From a Conda enabled console
         cd c:\dev\GDAL
         cd _build.vs2019
         ctest -V --build-config Release
+
+Cross-compiling for Android
++++++++++++++++++++++++++++
+
+First refer to https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html#cross-compiling-for-android
+and to https://github.com/OSGeo/gdal/blob/master/.github/workflows/android_cmake/start.sh for
+an example of a build script to cross-compile from Ubuntu.

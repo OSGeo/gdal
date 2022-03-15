@@ -933,7 +933,6 @@ PREDEFINED             = HAVE_DLFCN_H \
                          isinf \
                          HAVE_LIBXML2 \
                          HAVE_RECENT_LIBXML2 \
-                         HAVE_LONG_LONG=1 \
                          HAVE_SC_PHYS_PAGES=1 \
                          final=
 

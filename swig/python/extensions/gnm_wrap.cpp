@@ -2898,7 +2898,6 @@ PythonBindingErrorHandler(CPLErr eclass, int code, const char *msg )
 
 static
 int GetUseExceptions() {
-  CPLErrorReset();
   return bUseExceptions;
 }
 
@@ -3715,9 +3714,10 @@ SWIGINTERN PyObject *_wrap_GetUseExceptions(PyObject *SWIGUNUSEDPARM(self), PyOb
   
   if (!SWIG_Python_UnpackTuple(args, "GetUseExceptions", 0, 0, 0)) SWIG_fail;
   {
-    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-    result = (int)GetUseExceptions();
-    SWIG_PYTHON_THREAD_END_ALLOW;
+#ifdef SED_HACKS
+    if( bUseExceptions ) bLocalUseExceptionsCode = FALSE;
+#endif
+    result = GetUseExceptions();
   }
   resultobj = SWIG_From_int(static_cast< int >(result));
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
@@ -4026,12 +4026,7 @@ SWIGINTERN PyObject *_wrap_Network_GetFeatureByGlobalFID(PyObject *SWIGUNUSEDPAR
   }
   arg1 = reinterpret_cast< GNMNetworkShadow * >(argp1);
   {
-    PY_LONG_LONG val;
-    if ( !PyArg_Parse(swig_obj[1],"L",&val) ) {
-      PyErr_SetString(PyExc_TypeError, "not an integer");
-      SWIG_fail;
-    }
-    arg2 = (GIntBig)val;
+    arg2 = (GIntBig)PyLong_AsLongLong(swig_obj[1]);
   }
   {
     if ( bUseExceptions ) {
@@ -4087,20 +4082,10 @@ SWIGINTERN PyObject *_wrap_Network_GetPath(PyObject *SWIGUNUSEDPARM(self), PyObj
   }
   arg1 = reinterpret_cast< GNMNetworkShadow * >(argp1);
   {
-    PY_LONG_LONG val;
-    if ( !PyArg_Parse(obj1,"L",&val) ) {
-      PyErr_SetString(PyExc_TypeError, "not an integer");
-      SWIG_fail;
-    }
-    arg2 = (GIntBig)val;
+    arg2 = (GIntBig)PyLong_AsLongLong(obj1);
   }
   {
-    PY_LONG_LONG val;
-    if ( !PyArg_Parse(obj2,"L",&val) ) {
-      PyErr_SetString(PyExc_TypeError, "not an integer");
-      SWIG_fail;
-    }
-    arg3 = (GIntBig)val;
+    arg3 = (GIntBig)PyLong_AsLongLong(obj2);
   }
   ecode4 = SWIG_AsVal_int(obj3, &val4);
   if (!SWIG_IsOK(ecode4)) {
@@ -5040,28 +5025,13 @@ SWIGINTERN PyObject *_wrap_GenericNetwork_ConnectFeatures(PyObject *SWIGUNUSEDPA
   }
   arg1 = reinterpret_cast< GNMGenericNetworkShadow * >(argp1);
   {
-    PY_LONG_LONG val;
-    if ( !PyArg_Parse(swig_obj[1],"L",&val) ) {
-      PyErr_SetString(PyExc_TypeError, "not an integer");
-      SWIG_fail;
-    }
-    arg2 = (GIntBig)val;
+    arg2 = (GIntBig)PyLong_AsLongLong(swig_obj[1]);
   }
   {
-    PY_LONG_LONG val;
-    if ( !PyArg_Parse(swig_obj[2],"L",&val) ) {
-      PyErr_SetString(PyExc_TypeError, "not an integer");
-      SWIG_fail;
-    }
-    arg3 = (GIntBig)val;
+    arg3 = (GIntBig)PyLong_AsLongLong(swig_obj[2]);
   }
   {
-    PY_LONG_LONG val;
-    if ( !PyArg_Parse(swig_obj[3],"L",&val) ) {
-      PyErr_SetString(PyExc_TypeError, "not an integer");
-      SWIG_fail;
-    }
-    arg4 = (GIntBig)val;
+    arg4 = (GIntBig)PyLong_AsLongLong(swig_obj[3]);
   }
   ecode5 = SWIG_AsVal_double(swig_obj[4], &val5);
   if (!SWIG_IsOK(ecode5)) {
@@ -5122,28 +5092,13 @@ SWIGINTERN PyObject *_wrap_GenericNetwork_DisconnectFeatures(PyObject *SWIGUNUSE
   }
   arg1 = reinterpret_cast< GNMGenericNetworkShadow * >(argp1);
   {
-    PY_LONG_LONG val;
-    if ( !PyArg_Parse(swig_obj[1],"L",&val) ) {
-      PyErr_SetString(PyExc_TypeError, "not an integer");
-      SWIG_fail;
-    }
-    arg2 = (GIntBig)val;
+    arg2 = (GIntBig)PyLong_AsLongLong(swig_obj[1]);
   }
   {
-    PY_LONG_LONG val;
-    if ( !PyArg_Parse(swig_obj[2],"L",&val) ) {
-      PyErr_SetString(PyExc_TypeError, "not an integer");
-      SWIG_fail;
-    }
-    arg3 = (GIntBig)val;
+    arg3 = (GIntBig)PyLong_AsLongLong(swig_obj[2]);
   }
   {
-    PY_LONG_LONG val;
-    if ( !PyArg_Parse(swig_obj[3],"L",&val) ) {
-      PyErr_SetString(PyExc_TypeError, "not an integer");
-      SWIG_fail;
-    }
-    arg4 = (GIntBig)val;
+    arg4 = (GIntBig)PyLong_AsLongLong(swig_obj[3]);
   }
   {
     if ( bUseExceptions ) {
@@ -5187,12 +5142,7 @@ SWIGINTERN PyObject *_wrap_GenericNetwork_DisconnectFeaturesWithId(PyObject *SWI
   }
   arg1 = reinterpret_cast< GNMGenericNetworkShadow * >(argp1);
   {
-    PY_LONG_LONG val;
-    if ( !PyArg_Parse(swig_obj[1],"L",&val) ) {
-      PyErr_SetString(PyExc_TypeError, "not an integer");
-      SWIG_fail;
-    }
-    arg2 = (GIntBig)val;
+    arg2 = (GIntBig)PyLong_AsLongLong(swig_obj[1]);
   }
   {
     if ( bUseExceptions ) {
@@ -5247,28 +5197,13 @@ SWIGINTERN PyObject *_wrap_GenericNetwork_ReconnectFeatures(PyObject *SWIGUNUSED
   }
   arg1 = reinterpret_cast< GNMGenericNetworkShadow * >(argp1);
   {
-    PY_LONG_LONG val;
-    if ( !PyArg_Parse(swig_obj[1],"L",&val) ) {
-      PyErr_SetString(PyExc_TypeError, "not an integer");
-      SWIG_fail;
-    }
-    arg2 = (GIntBig)val;
+    arg2 = (GIntBig)PyLong_AsLongLong(swig_obj[1]);
   }
   {
-    PY_LONG_LONG val;
-    if ( !PyArg_Parse(swig_obj[2],"L",&val) ) {
-      PyErr_SetString(PyExc_TypeError, "not an integer");
-      SWIG_fail;
-    }
-    arg3 = (GIntBig)val;
+    arg3 = (GIntBig)PyLong_AsLongLong(swig_obj[2]);
   }
   {
-    PY_LONG_LONG val;
-    if ( !PyArg_Parse(swig_obj[3],"L",&val) ) {
-      PyErr_SetString(PyExc_TypeError, "not an integer");
-      SWIG_fail;
-    }
-    arg4 = (GIntBig)val;
+    arg4 = (GIntBig)PyLong_AsLongLong(swig_obj[3]);
   }
   ecode5 = SWIG_AsVal_double(swig_obj[4], &val5);
   if (!SWIG_IsOK(ecode5)) {
@@ -5638,12 +5573,7 @@ SWIGINTERN PyObject *_wrap_GenericNetwork_ChangeBlockState(PyObject *SWIGUNUSEDP
   }
   arg1 = reinterpret_cast< GNMGenericNetworkShadow * >(argp1);
   {
-    PY_LONG_LONG val;
-    if ( !PyArg_Parse(swig_obj[1],"L",&val) ) {
-      PyErr_SetString(PyExc_TypeError, "not an integer");
-      SWIG_fail;
-    }
-    arg2 = (GIntBig)val;
+    arg2 = (GIntBig)PyLong_AsLongLong(swig_obj[1]);
   }
   ecode3 = SWIG_AsVal_bool(swig_obj[2], &val3);
   if (!SWIG_IsOK(ecode3)) {

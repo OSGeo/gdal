@@ -942,7 +942,8 @@ def test_ogr_geojson_37():
     assert feat_defn.GetFieldDefn(feat_defn.GetFieldIndex('not_bool')).GetSubType() == ogr.OFSTNone
     assert (feat_defn.GetFieldDefn(feat_defn.GetFieldIndex('bool_list')).GetType() == ogr.OFTIntegerList and \
        feat_defn.GetFieldDefn(feat_defn.GetFieldIndex('bool_list')).GetSubType() == ogr.OFSTBoolean)
-    assert feat_defn.GetFieldDefn(feat_defn.GetFieldIndex('notbool_list')).GetSubType() == ogr.OFSTNone
+    assert feat_defn.GetFieldDefn(feat_defn.GetFieldIndex('notbool_list')).GetType() == ogr.OFTString and \
+           feat_defn.GetFieldDefn(feat_defn.GetFieldIndex('notbool_list')).GetSubType() == ogr.OFSTJSON
     f = lyr.GetNextFeature()
     if f.GetField('bool') != 0 or f.GetField('bool_list') != [0, 1]:
         f.DumpReadable()
@@ -963,7 +964,7 @@ def test_ogr_geojson_37():
 
     gdal.Unlink('/vsimem/ogr_geojson_37.json')
 
-    assert '"bool": false, "not_bool": 0, "bool_list": [ false, true ], "notbool_list": [ 0, 3 ]' in data
+    assert '"bool": false, "not_bool": 0, "bool_list": [ false, true ], "notbool_list": [ false, 3 ]' in data
 
 ###############################################################################
 # Test datetime/date/time type support
@@ -3125,6 +3126,7 @@ def test_ogr_geojson_export_geometry_axis_order():
     # EPSG:4326 and lat,long data order
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
+    sr.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
     g = ogr.CreateGeometryFromWkt('POINT (49 2)')
     g.AssignSpatialReference(sr)
     before_wkt = g.ExportToWkt()
@@ -3156,6 +3158,7 @@ def test_ogr_geojson_export_geometry_axis_order():
     # Projected CRS with northing, easting order
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(2393)
+    sr.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
     g = ogr.CreateGeometryFromWkt('POINT (49 2)')
     g.AssignSpatialReference(sr)
     assert json.loads(g.ExportToJson()) == { "type": "Point", "coordinates": [ 2.0, 49.0 ] }

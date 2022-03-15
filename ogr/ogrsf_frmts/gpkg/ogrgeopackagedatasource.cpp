@@ -5988,13 +5988,13 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
                  EQUAL(papszTokens[4], "COLUMN") )
         {
             const char* pszTableName = papszTokens[2];
-            const char* pszColumName = papszTokens[5];
+            const char* pszColumnName = papszTokens[5];
             OGRGeoPackageTableLayer* poLayer =
                 dynamic_cast<OGRGeoPackageTableLayer*>(GetLayerByName(
                         SQLUnescape(pszTableName)));
             if( poLayer )
             {
-                int nFieldIdx = poLayer->GetLayerDefn()->GetFieldIndex(SQLUnescape(pszColumName));
+                int nFieldIdx = poLayer->GetLayerDefn()->GetFieldIndex(SQLUnescape(pszColumnName));
                 if( nFieldIdx >= 0 )
                 {
                     poLayer->DeleteField(nFieldIdx);

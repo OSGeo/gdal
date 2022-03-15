@@ -574,6 +574,7 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 			uint32_t value_count;
 			int mem_alloc = 0;
 			void *raw_data = NULL;
+			uint16_t dotrange[2]; /* must be kept in that scope and not moved in the below TIFFTAG_DOTRANGE specific case */
 
 			fip = TIFFFieldWithTag(tif, tag);
 			if(fip == NULL)
@@ -607,7 +608,6 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 					   handled this way ... likely best if we move it into
 					   the directory structure with an explicit field in 
 					   libtiff 4.1 and assign it a FIELD_ value */
-					static uint16_t dotrange[2];
 					raw_data = dotrange;
 					TIFFGetField(tif, tag, dotrange+0, dotrange+1);
 				} else if (fip->field_type == TIFF_ASCII

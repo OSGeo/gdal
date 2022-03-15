@@ -6,7 +6,7 @@ An example of setting up a development environment for *gdal-utils* using Anacon
 In Windows CMD shell::
     pushd path\to\my\code-workspaces
 
-    :: Create dev enironment and install gdal & python
+    :: Create dev environment and install gdal & python
     conda create -n gdal
     conda activate gdal]
 

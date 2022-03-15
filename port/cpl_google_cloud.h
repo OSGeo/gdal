@@ -54,7 +54,8 @@ class VSIGSHandleHelper final: public IVSIS3LikeHandleHelper
         GOA2Manager m_oManager;
         std::string m_osUserProject{};
 
-        static bool     GetConfiguration(CSLConstList papszOptions,
+        static bool     GetConfiguration(const std::string& osPathForOption,
+                                         CSLConstList papszOptions,
                                          CPLString& osSecretAccessKey,
                                          CPLString& osAccessKeyId,
                                          CPLString& osHeaderFile,

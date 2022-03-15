@@ -62,28 +62,9 @@ CPL_CVSID("$Id$")
 /*                           VRTRasterBand()                            */
 /************************************************************************/
 
-VRTRasterBand::VRTRasterBand() :
-    m_bIsMaskBand(FALSE),
-    m_bNoDataValueSet(FALSE),
-    m_bHideNoDataValue(FALSE),
-    m_dfNoDataValue(-10000.0),
-    m_eColorInterp(GCI_Undefined),
-    m_pszUnitType(nullptr),
-    m_papszCategoryNames(nullptr),
-    m_dfOffset(0.0),
-    m_dfScale(1.0),
-    m_psSavedHistograms(nullptr),
-    m_poMaskBand(nullptr)
+VRTRasterBand::VRTRasterBand()
 {
-    // Initialize( 0, 0 );
-    poDS = nullptr;
-    nBand = 0;
-    eAccess = GA_ReadOnly;
-    eDataType = GDT_Byte;
-    nRasterXSize = 0;
-    nRasterYSize = 0;
-    nBlockXSize = 0;
-    nBlockYSize = 0;
+    VRTRasterBand::Initialize( 0, 0 );
 }
 
 /************************************************************************/
@@ -103,23 +84,6 @@ void VRTRasterBand::Initialize( int nXSize, int nYSize )
 
     nBlockXSize = std::min( 128, nXSize );
     nBlockYSize = std::min( 128, nYSize );
-
-    m_bIsMaskBand = FALSE;
-    m_bNoDataValueSet = FALSE;
-    m_bHideNoDataValue = FALSE;
-    m_dfNoDataValue = -10000.0;
-    m_poColorTable.reset();
-    m_eColorInterp = GCI_Undefined;
-    m_poRAT.reset();
-
-    m_pszUnitType = nullptr;
-    m_papszCategoryNames = nullptr;
-    m_dfOffset = 0.0;
-    m_dfScale = 1.0;
-
-    m_psSavedHistograms = nullptr;
-
-    m_poMaskBand = nullptr;
 }
 
 /************************************************************************/
@@ -158,12 +122,7 @@ CPLErr VRTRasterBand::CopyCommonInfoFrom( GDALRasterBand * poSrcBand )
     if( strlen(poSrcBand->GetDescription()) > 0 )
         SetDescription( poSrcBand->GetDescription() );
 
-    int bSuccess;
-    double dfNoData;
-    dfNoData = poSrcBand->GetNoDataValue( &bSuccess );
-    if( bSuccess )
-        SetNoDataValue( dfNoData );
-
+    GDALCopyNoDataValue(this, poSrcBand);
     SetOffset( poSrcBand->GetOffset() );
     SetScale( poSrcBand->GetScale() );
     SetCategoryNames( poSrcBand->GetCategoryNames() );
@@ -400,8 +359,24 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
 /* -------------------------------------------------------------------- */
     SetDescription( CPLGetXMLValue( psTree, "Description", "" ) );
 
-    if( CPLGetXMLValue( psTree, "NoDataValue", nullptr ) != nullptr )
-        SetNoDataValue( CPLAtofM(CPLGetXMLValue( psTree, "NoDataValue", "0" )) );
+    const char* pszNoDataValue = CPLGetXMLValue( psTree, "NoDataValue", nullptr );
+    if( pszNoDataValue != nullptr )
+    {
+        if( eDataType == GDT_Int64 )
+        {
+            SetNoDataValueAsInt64(
+                static_cast<int64_t>(std::strtoll(pszNoDataValue, nullptr, 10)));
+        }
+        else if( eDataType == GDT_UInt64 )
+        {
+            SetNoDataValueAsUInt64(
+                static_cast<uint64_t>(std::strtoull(pszNoDataValue, nullptr, 10)));
+        }
+        else
+        {
+            SetNoDataValue( CPLAtofM(pszNoDataValue) );
+        }
+    }
 
     if( CPLGetXMLValue( psTree, "HideNoDataValue", nullptr ) != nullptr )
         m_bHideNoDataValue = CPLTestBool( CPLGetXMLValue( psTree, "HideNoDataValue", "0" ) );
@@ -682,6 +657,16 @@ CPLXMLNode *VRTRasterBand::SerializeToXML( const char *pszVRTPath )
         CPLSetXMLValue( psTree, "NoDataValue",
             VRTSerializeNoData(m_dfNoDataValue, eDataType, 16).c_str());
     }
+    else if( m_bNoDataSetAsInt64 )
+    {
+        CPLSetXMLValue( psTree, "NoDataValue",
+            CPLSPrintf( CPL_FRMT_GIB, static_cast<GIntBig>(m_nNoDataValueInt64)) );
+    }
+    else if( m_bNoDataSetAsUInt64 )
+    {
+        CPLSetXMLValue( psTree, "NoDataValue",
+            CPLSPrintf( CPL_FRMT_GUIB, static_cast<GUIntBig>(m_nNoDataValueUInt64)) );
+    }
 
     if( m_bHideNoDataValue )
         CPLSetXMLValue( psTree, "HideNoDataValue",
@@ -826,6 +811,22 @@ CPLXMLNode *VRTRasterBand::SerializeToXML( const char *pszVRTPath )
 }
 
 /************************************************************************/
+/*                         ResetNoDataValues()                          */
+/************************************************************************/
+
+void VRTRasterBand::ResetNoDataValues()
+{
+    m_bNoDataValueSet = FALSE;
+    m_dfNoDataValue = VRT_DEFAULT_NODATA_VALUE;
+
+    m_bNoDataSetAsInt64 = false;
+    m_nNoDataValueInt64 = GDAL_PAM_DEFAULT_NODATA_VALUE_INT64;
+
+    m_bNoDataSetAsUInt64 = false;
+    m_nNoDataValueUInt64 = GDAL_PAM_DEFAULT_NODATA_VALUE_UINT64;
+}
+
+/************************************************************************/
 /*                           SetNoDataValue()                           */
 /************************************************************************/
 
@@ -837,8 +838,44 @@ CPLErr VRTRasterBand::SetNoDataValue( double dfNewValue )
         dfNewValue = GDALAdjustNoDataCloseToFloatMax(dfNewValue);
     }
 
+    ResetNoDataValues();
+
     m_bNoDataValueSet = TRUE;
     m_dfNoDataValue = dfNewValue;
+
+    static_cast<VRTDataset *>( poDS )->SetNeedsFlush();
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                       SetNoDataValueAsInt64()                        */
+/************************************************************************/
+
+CPLErr VRTRasterBand::SetNoDataValueAsInt64( int64_t nNewValue )
+
+{
+    ResetNoDataValues();
+
+    m_bNoDataSetAsInt64 = true;
+    m_nNoDataValueInt64 = nNewValue;
+
+    static_cast<VRTDataset *>( poDS )->SetNeedsFlush();
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                      SetNoDataValueAsUInt64()                        */
+/************************************************************************/
+
+CPLErr VRTRasterBand::SetNoDataValueAsUInt64( uint64_t nNewValue )
+
+{
+    ResetNoDataValues();
+
+    m_bNoDataSetAsUInt64 = true;
+    m_nNoDataValueUInt64 = nNewValue;
 
     static_cast<VRTDataset *>( poDS )->SetNeedsFlush();
 
@@ -851,8 +888,7 @@ CPLErr VRTRasterBand::SetNoDataValue( double dfNewValue )
 
 CPLErr VRTRasterBand::DeleteNoDataValue()
 {
-    m_bNoDataValueSet = FALSE;
-    m_dfNoDataValue = -10000.0;
+    ResetNoDataValues();
 
     static_cast<VRTDataset *>( poDS )->SetNeedsFlush();
 
@@ -874,11 +910,86 @@ CPLErr VRTRasterBand::UnsetNoDataValue()
 double VRTRasterBand::GetNoDataValue( int *pbSuccess )
 
 {
+    if( m_bNoDataSetAsInt64 )
+    {
+        if( pbSuccess )
+            *pbSuccess = !m_bHideNoDataValue;
+        return GDALGetNoDataValueCastToDouble(m_nNoDataValueInt64);
+    }
+
+    if( m_bNoDataSetAsUInt64 )
+    {
+        if( pbSuccess )
+            *pbSuccess = !m_bHideNoDataValue;
+        return GDALGetNoDataValueCastToDouble(m_nNoDataValueUInt64);
+    }
+
     if( pbSuccess )
         *pbSuccess = m_bNoDataValueSet && !m_bHideNoDataValue;
 
     return m_dfNoDataValue;
 }
+
+/************************************************************************/
+/*                        GetNoDataValueAsInt64()                       */
+/************************************************************************/
+
+int64_t VRTRasterBand::GetNoDataValueAsInt64( int *pbSuccess )
+
+{
+    if( eDataType == GDT_UInt64 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "GetNoDataValueAsUInt64() should be called instead");
+        if( pbSuccess )
+            *pbSuccess = FALSE;
+        return GDAL_PAM_DEFAULT_NODATA_VALUE_INT64;
+    }
+    if( eDataType != GDT_Int64 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "GetNoDataValue() should be called instead");
+        if( pbSuccess )
+            *pbSuccess = FALSE;
+        return GDAL_PAM_DEFAULT_NODATA_VALUE_INT64;
+    }
+
+    if( pbSuccess )
+        *pbSuccess = m_bNoDataSetAsInt64 && !m_bHideNoDataValue;
+
+    return m_nNoDataValueInt64;
+}
+
+/************************************************************************/
+/*                       GetNoDataValueAsUInt64()                       */
+/************************************************************************/
+
+uint64_t VRTRasterBand::GetNoDataValueAsUInt64( int *pbSuccess )
+
+{
+    if( eDataType == GDT_Int64 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "GetNoDataValueAsInt64() should be called instead");
+        if( pbSuccess )
+            *pbSuccess = FALSE;
+        return GDAL_PAM_DEFAULT_NODATA_VALUE_UINT64;
+    }
+    if( eDataType != GDT_UInt64 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "GetNoDataValue() should be called instead");
+        if( pbSuccess )
+            *pbSuccess = FALSE;
+        return GDAL_PAM_DEFAULT_NODATA_VALUE_UINT64;
+    }
+
+    if( pbSuccess )
+        *pbSuccess = m_bNoDataSetAsUInt64 && !m_bHideNoDataValue;
+
+    return m_nNoDataValueUInt64;
+}
+
 
 /************************************************************************/
 /*                           SetColorTable()                            */
@@ -1357,6 +1468,16 @@ void VRTRasterBand::SetIsMaskBand()
 {
     nBand = 0;
     m_bIsMaskBand = TRUE;
+}
+
+/************************************************************************/
+/*                            IsMaskBand()                              */
+/************************************************************************/
+
+bool VRTRasterBand::IsMaskBand() const
+{
+    return m_bIsMaskBand ||
+           m_eColorInterp == GCI_AlphaBand;
 }
 
 /************************************************************************/

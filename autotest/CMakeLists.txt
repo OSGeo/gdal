@@ -41,8 +41,12 @@ if (Python_Interpreter_FOUND)
   string(REPLACE ";" "\n   " TEST_ENV "${_TEST_ENV}")
 
   set(AUTOTEST_LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/autotest.log")
-  configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/pytest.ini.in ${CMAKE_CURRENT_BINARY_DIR}/pytest.ini @ONLY)
-  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/conftest.py DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+  if ("${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}" AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/pytest.ini)
+    # FIXME: remove this branch if we remove pytest.ini from source tree
+  else()
+    configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/pytest.ini.in ${CMAKE_CURRENT_BINARY_DIR}/pytest.ini @ONLY)
+    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/conftest.py DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+  endif()
 
   function (symlink_or_copy source destination)
 
@@ -67,12 +71,14 @@ if (Python_Interpreter_FOUND)
   endfunction ()
 
   # Needed for a autotest/osr test
-  symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/cpp/data ${CMAKE_CURRENT_BINARY_DIR}/cpp/data)
-  if (SKIP_COPYING_AUTOTEST_SUBDIRS)
-    message(STATUS "Skipping copying ${CMAKE_CURRENT_SOURCE_DIR}/pymod")
-  else ()
-    symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/pymod ${CMAKE_CURRENT_BINARY_DIR}/pymod)
-  endif ()
+  if (NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
+      symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/cpp/data ${CMAKE_CURRENT_BINARY_DIR}/cpp/data)
+      if (SKIP_COPYING_AUTOTEST_SUBDIRS)
+        message(STATUS "Skipping copying ${CMAKE_CURRENT_SOURCE_DIR}/pymod")
+      else ()
+        symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/pymod ${CMAKE_CURRENT_BINARY_DIR}/pymod)
+      endif ()
+  endif()
 
   foreach (
     tgt IN
@@ -84,11 +90,13 @@ if (Python_Interpreter_FOUND)
           gnm
           pyscripts
           utilities)
-    if (SKIP_COPYING_AUTOTEST_SUBDIRS)
-      message(STATUS "Skipping copying ${CMAKE_CURRENT_SOURCE_DIR}/${tgt}")
-    else ()
-      symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/${tgt} ${CMAKE_CURRENT_BINARY_DIR}/${tgt})
-    endif ()
+    if (NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
+        if (SKIP_COPYING_AUTOTEST_SUBDIRS)
+          message(STATUS "Skipping copying ${CMAKE_CURRENT_SOURCE_DIR}/${tgt}")
+        else ()
+          symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/${tgt} ${CMAKE_CURRENT_BINARY_DIR}/${tgt})
+        endif ()
+    endif()
     add_custom_target(
       autotest_${tgt}
       COMMAND ${CMAKE_COMMAND} -E env ${PYTHON_RUN_ENV} ${Python_EXECUTABLE} -m pytest -c
@@ -136,7 +144,6 @@ int main(int argc, char **argv) {
 }")
     add_executable(pytest_runner ${CMAKE_CURRENT_BINARY_DIR}/pytest_runner.cpp)
     set_property(TARGET pytest_runner PROPERTY CXX_STANDARD 11)
-    target_link_libraries(pytest_runner PUBLIC ${GDAL_LIB_TARGET_NAME})
     target_include_directories(pytest_runner PRIVATE ${Python_INCLUDE_DIRS})
     target_link_libraries(pytest_runner PRIVATE ${Python_LIBRARIES})
     add_custom_target(

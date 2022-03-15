@@ -28,7 +28,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-// Must be first for DEBUG_BOOL case
 #include "xercesc_headers.h"
 
 // Hack to avoid bool, possibly redefined to pedantic bool class, being later used

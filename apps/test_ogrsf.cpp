@@ -1502,7 +1502,14 @@ static int TestOGRLayerRandomRead( OGRLayer *poLayer )
 /*      Test feature 5.                                                 */
 /* -------------------------------------------------------------------- */
     poFeature = LOG_ACTION(poLayer->GetFeature(papoFeatures[4]->GetFID()));
-    if( poFeature == nullptr || !poFeature->Equal(papoFeatures[4]) )
+    if (poFeature == nullptr)
+    {
+        printf("ERROR: Cannot fetch feature " CPL_FRMT_GIB ".\n",
+               papoFeatures[4]->GetFID());
+        goto end;
+    }
+
+    if(!poFeature->Equal(papoFeatures[4]) )
     {
         bRet = FALSE;
         printf("ERROR: Attempt to randomly read feature " CPL_FRMT_GIB
@@ -1510,6 +1517,8 @@ static int TestOGRLayerRandomRead( OGRLayer *poLayer )
                "       have returned a different feature than sequential\n"
                "       reading indicates should have happened.\n",
                papoFeatures[4]->GetFID());
+        poFeature->DumpReadable(stdout);
+        papoFeatures[4]->DumpReadable(stdout);
 
         goto end;
     }
@@ -1520,14 +1529,23 @@ static int TestOGRLayerRandomRead( OGRLayer *poLayer )
 /*      Test feature 2 again                                            */
 /* -------------------------------------------------------------------- */
     poFeature = LOG_ACTION(poLayer->GetFeature(papoFeatures[2]->GetFID()));
-    if( poFeature == nullptr || !poFeature->Equal(papoFeatures[2]) )
+    if (poFeature == nullptr)
+    {
+        printf("ERROR: Cannot fetch feature " CPL_FRMT_GIB ".\n",
+               papoFeatures[2]->GetFID());
+        goto end;
+    }
+
+    if( !poFeature->Equal(papoFeatures[2]) )
     {
         bRet = FALSE;
         printf("ERROR: Attempt to randomly read feature " CPL_FRMT_GIB
                " appears to\n"
                "       have returned a different feature than sequential\n"
                "       reading indicates should have happened.\n",
-               papoFeatures[4]->GetFID());
+               papoFeatures[2]->GetFID());
+        poFeature->DumpReadable(stdout);
+        papoFeatures[2]->DumpReadable(stdout);
 
         goto end;
     }

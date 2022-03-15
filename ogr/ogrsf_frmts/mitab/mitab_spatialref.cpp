@@ -1573,7 +1573,7 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
 
         // When the CRS is built from WKT2 CRS string, the DATUM code will
         // typically be absent from the CRS string.
-        // Try to get the AUTHORITY:CODE from the CRS to instanciate
+        // Try to get the AUTHORITY:CODE from the CRS to instantiate
         // a temporary CRS and get its DATUM code.
         nDatumEPSGCode = GetDatumCodeFromCRSIndirect(poSpatialRef, nullptr);
         if( nDatumEPSGCode < 0 && !poSpatialRef->IsGeographic() )

@@ -909,3 +909,33 @@ def test_tiff_srs_read_invalid_GeogAngularUnitSizeGeoKey():
         ds.GetSpatialRef()
     assert gdal.GetLastErrorMsg() != ''
 
+
+def test_tiff_srs_read_inconsistent_invflattening():
+    # That file has GeogSemiMinorAxisGeoKey / GeogInvFlatteningGeoKey values
+    # which are inconsistent with the ones from the ellipsoid of the datum
+    ds = gdal.Open('data/gtiff/inconsistent_invflattening.tif')
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        srs = ds.GetSpatialRef()
+    assert gdal.GetLastErrorMsg() != ''
+    assert srs.GetAuthorityCode(None) == '28992'
+    assert srs.GetAuthorityCode('GEOGCS') == '4289'
+    assert srs.GetInvFlattening() == pytest.approx(299.1528131, abs=1e-7) #  wrong value w.r.t Bessel 1841 official definition
+
+    ds = gdal.Open('data/gtiff/inconsistent_invflattening.tif')
+    gdal.ErrorReset()
+    with gdaltest.config_option('GTIFF_SRS_SOURCE', 'GEOKEYS'):
+        srs = ds.GetSpatialRef()
+    assert gdal.GetLastErrorMsg() == ''
+    assert srs.GetAuthorityCode(None) is None
+    assert srs.GetAuthorityCode('GEOGCS') is None
+    assert srs.GetInvFlattening() == pytest.approx(299.1528131, abs=1e-7) #  wrong value w.r.t Bessel 1841 official definition
+
+    ds = gdal.Open('data/gtiff/inconsistent_invflattening.tif')
+    gdal.ErrorReset()
+    with gdaltest.config_option('GTIFF_SRS_SOURCE', 'EPSG'):
+        srs = ds.GetSpatialRef()
+    assert gdal.GetLastErrorMsg() == ''
+    assert srs.GetAuthorityCode(None) == '28992'
+    assert srs.GetAuthorityCode('GEOGCS') == '4289'
+    assert srs.GetInvFlattening() == pytest.approx(299.1528128, abs=1e-7) #  Bessel 1841 official definition

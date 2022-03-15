@@ -13,18 +13,19 @@ set(_SOURCES
 add_gdal_driver(TARGET gdal_netCDF SOURCES ${_SOURCES} PLUGIN_CAPABLE)
 unset(_SOURCES)
 
-# We unconditionaly enable the GMT driver when enabling the netCDF one
+# We unconditionally enable the GMT driver when enabling the netCDF one
 target_compile_definitions(gdal_netCDF PRIVATE -DNETCDF_PLUGIN)
 
 gdal_standard_includes(gdal_netCDF)
-gdal_target_link_libraries(gdal_netCDF PRIVATE NETCDF::netCDF)
-if (NETCDF_HAS_NC4)
+gdal_target_link_libraries(gdal_netCDF PRIVATE ${NetCDF_LIBRARIES})
+# NETCDF prefix is from Find module, netCDF prefix is from Config
+if (NETCDF_HAS_NC4 OR netCDF_HAS_NC4)
   target_compile_definitions(gdal_netCDF PRIVATE -DNETCDF_HAS_NC4)
 endif ()
-if (NETCDF_HAS_HDF4)
+if (NETCDF_HAS_HDF4 OR netCDF_HAS_HDF4)
   target_compile_definitions(gdal_netCDF PRIVATE -DNETCDF_HAS_HDF4)
 endif ()
-if (NETCDF_HAS_MEM)
+if (NETCDF_HAS_MEM OR netCDF_HAS_DISKLESS)
   target_compile_definitions(gdal_netCDF PRIVATE -DHAVE_NETCDF_MEM)
   if (HAVE_USERFAULTFD_H)
     target_compile_definitions(gdal_netCDF PRIVATE -DENABLE_UFFD)

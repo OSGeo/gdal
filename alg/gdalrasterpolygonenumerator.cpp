@@ -299,7 +299,7 @@ void GDALRasterPolygonEnumeratorT<DataType, EqualityTest>::ProcessLine(
     }
 }
 
-template class GDALRasterPolygonEnumeratorT<GInt32, IntEqualityTest>;
+template class GDALRasterPolygonEnumeratorT<std::int64_t, IntEqualityTest>;
 
 template class GDALRasterPolygonEnumeratorT<float, FloatEqualityTest>;
 

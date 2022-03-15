@@ -36,6 +36,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <cmath>
 #include <ctime>
 
 #include <limits>
@@ -549,7 +550,7 @@ OGRGeometry *OGRFeature::StealGeometry( int iGeomField )
  * Sort of an inverse to OGR_FSetGeometryDirectly().
  *
  * After this call the OGRFeature will have a NULL geometry.
- * 
+ *
  * @param hFeat feature from which to steal the first geometry.
  * @return the pointer to the stolen geometry.
  */
@@ -577,7 +578,7 @@ OGRGeometryH OGR_F_StealGeometry( OGRFeatureH hFeat )
  *
  * After this call the OGRFeature will have a NULL geometry for the
  * geometry field of index iGeomField.
- * 
+ *
  * @param hFeat feature from which to steal a geometry.
  * @param iGeomField index of the geometry field to steal.
  * @return the pointer to the stolen geometry.
@@ -5539,10 +5540,25 @@ OGRBoolean OGRFeature::Equal( const OGRFeature * poFeature ) const
                 break;
 
             case OFTReal:
-                if( GetFieldAsDouble(i) !=
-                       poFeature->GetFieldAsDouble(i) )
+            {
+                const double dfVal1 = GetFieldAsDouble(i);
+                const double dfVal2 = poFeature->GetFieldAsDouble(i);
+                if( std::isnan(dfVal1) )
+                {
+                    if( !std::isnan(dfVal2) )
+                        return FALSE;
+                }
+                else if( std::isnan(dfVal2) )
+                {
+                    if( !std::isnan(dfVal1) )
+                        return FALSE;
+                }
+                else if ( dfVal1 != dfVal2 )
+                {
                     return FALSE;
+                }
                 break;
+            }
 
             case OFTString:
                 if( strcmp(GetFieldAsString(i),
@@ -5595,8 +5611,22 @@ OGRBoolean OGRFeature::Equal( const OGRFeature * poFeature ) const
                     return FALSE;
                 for( int j = 0; j < nCount1; j++ )
                 {
-                    if( padfList1[j] != padfList2[j] )
+                    const double dfVal1 = padfList1[j];
+                    const double dfVal2 = padfList2[j];
+                    if( std::isnan(dfVal1) )
+                    {
+                        if( !std::isnan(dfVal2) )
+                            return FALSE;
+                    }
+                    else if( std::isnan(dfVal2) )
+                    {
+                        if( !std::isnan(dfVal1) )
+                            return FALSE;
+                    }
+                    else if ( dfVal1 != dfVal2 )
+                    {
                         return FALSE;
+                    }
                 }
                 break;
             }

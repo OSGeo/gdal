@@ -306,7 +306,7 @@ members are:
         to compute the minimum during aggegation.
 
       * ``max`` (optional): array with the paths to index properties on which
-        to compute the maxium  during aggegation.
+        to compute the maximum  during aggegation.
 
       * ``avg`` (optional): array with the paths to index properties on which
         to compute the average during aggegation.

@@ -72,7 +72,7 @@ def test_kea_2():
         tst = gdaltest.GDALTest('KEA', src_file, 1, 4672)
         tst.testCreateCopy(check_minmax=1)
 
-    
+
 ###############################################################################
 # Test Create() for various data types
 
@@ -93,7 +93,7 @@ def test_kea_3():
         tst = gdaltest.GDALTest('KEA', src_file, 1, 4672)
         tst.testCreate(out_bands=1, check_minmax=1)
 
-    
+
 ###############################################################################
 # Test Create()/CreateCopy() error cases or limit cases
 
@@ -341,7 +341,7 @@ def test_kea_8():
         gdaltest.kea_driver.Delete('tmp/out.kea')
         gdaltest.kea_driver.Delete('tmp/out2.kea')
 
-    
+
 ###############################################################################
 # Test color interpretation
 
@@ -423,7 +423,7 @@ def test_kea_10():
         gdaltest.kea_driver.Delete('tmp/out.kea')
         gdaltest.kea_driver.Delete('tmp/out2.kea')
 
-    
+
 ###############################################################################
 # Test AddBand
 
@@ -594,6 +594,7 @@ def test_kea_14():
     assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 3
     ds.GetRasterBand(1).CreateMaskBand(0)
     assert ds.GetRasterBand(1).GetMaskFlags() == 0
+    assert ds.GetRasterBand(1).GetMaskBand().IsMaskBand()
     assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 3
     ds.GetRasterBand(1).GetMaskBand().Fill(0)
     assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 0

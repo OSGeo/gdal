@@ -890,7 +890,8 @@ json_object* OGRGeoJSONWriteAttributes( OGRFeature* poFeature,
             const char* pszStr = poFeature->GetFieldAsString(nField);
             const size_t nLen = strlen(pszStr);
             poObjProp = nullptr;
-            if( (pszStr[0] == '{' && pszStr[nLen-1] == '}') ||
+            if( eSubType == OFSTJSON ||
+                (pszStr[0] == '{' && pszStr[nLen-1] == '}') ||
                 (pszStr[0] == '[' && pszStr[nLen-1] == ']') )
             {
                 OGRJSonParse(pszStr, &poObjProp, false);

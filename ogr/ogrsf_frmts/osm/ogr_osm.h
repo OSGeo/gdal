@@ -270,8 +270,8 @@ typedef struct
     IndexedKVP*         pasTags; /*  point to a sub-array of OGROSMDataSource.pasAccumulatedTags */
     OSMInfo             sInfo;
     OGRFeature         *poFeature;
-    EMULATED_BOOL       bIsArea : 1;
-    EMULATED_BOOL       bAttrFilterAlreadyEvaluated : 1;
+    bool       bIsArea : 1;
+    bool       bAttrFilterAlreadyEvaluated : 1;
 } WayFeaturePair;
 
 #ifdef ENABLE_NODE_LOOKUP_BY_HASHING

@@ -1003,24 +1003,78 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
         }
 
         int bGotNodata = FALSE;
-        const double dfNoData = GDALGetRasterNoDataValue( hBand, &bGotNodata );
-        if( bGotNodata )
+        if( GDALGetRasterDataType(hBand) == GDT_Int64 )
         {
-            if( bJson )
+            const auto nNoData = GDALGetRasterNoDataValueAsInt64( hBand, &bGotNodata );
+            if( bGotNodata )
             {
-                json_object *poNoDataValue = gdal_json_object_new_double_or_str_for_non_finite(dfNoData, 18);
-                json_object_object_add(poBand, "noDataValue",
-                                        poNoDataValue);
+                if( bJson )
+                {
+                    json_object *poNoDataValue = json_object_new_int64(nNoData);
+                    json_object_object_add(poBand, "noDataValue",
+                                           poNoDataValue);
+                }
+                else
+                {
+                    Concat(osStr, psOptions->bStdoutOutput,
+                           "  NoData Value=" CPL_FRMT_GIB "\n",
+                           static_cast<GIntBig>(nNoData) );
+                }
             }
-            else if( CPLIsNan(dfNoData) )
+        }
+        else if( GDALGetRasterDataType(hBand) == GDT_UInt64 )
+        {
+            const auto nNoData = GDALGetRasterNoDataValueAsUInt64( hBand, &bGotNodata );
+            if( bGotNodata )
             {
-                Concat(osStr, psOptions->bStdoutOutput,
-                        "  NoData Value=nan\n" );
+                if( bJson )
+                {
+                    if( nNoData < static_cast<uint64_t>(std::numeric_limits<int64_t>::max()) )
+                    {
+                        json_object *poNoDataValue = json_object_new_int64(
+                                                    static_cast<int64_t>(nNoData));
+                        json_object_object_add(poBand, "noDataValue",
+                                               poNoDataValue);
+                    }
+                    else
+                    {
+                        // not pretty to serialize as a string but there's no
+                        // way to serialize a uint64_t with libjson-c
+                        json_object *poNoDataValue = json_object_new_string(
+                            CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(nNoData)));
+                        json_object_object_add(poBand, "noDataValue",
+                                               poNoDataValue);
+                    }
+                }
+                else
+                {
+                    Concat(osStr, psOptions->bStdoutOutput,
+                           "  NoData Value=" CPL_FRMT_GUIB "\n",
+                           static_cast<GUIntBig>(nNoData) );
+                }
             }
-            else
+        }
+        else
+        {
+            const double dfNoData = GDALGetRasterNoDataValue( hBand, &bGotNodata );
+            if( bGotNodata )
             {
-                Concat(osStr, psOptions->bStdoutOutput,
-                        "  NoData Value=%.18g\n", dfNoData );
+                if( bJson )
+                {
+                    json_object *poNoDataValue = gdal_json_object_new_double_or_str_for_non_finite(dfNoData, 18);
+                    json_object_object_add(poBand, "noDataValue",
+                                            poNoDataValue);
+                }
+                else if( CPLIsNan(dfNoData) )
+                {
+                    Concat(osStr, psOptions->bStdoutOutput,
+                            "  NoData Value=nan\n" );
+                }
+                else
+                {
+                    Concat(osStr, psOptions->bStdoutOutput,
+                            "  NoData Value=%.18g\n", dfNoData );
+                }
             }
         }
 

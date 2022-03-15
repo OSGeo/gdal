@@ -47,29 +47,39 @@ def open_for_read(uri):
     return gdal.VSIFOpenExL(uri, 'rb', 1)
 
 
+general_s3_options = {
+    # To avoid user AWS credentials in ~/.aws/credentials
+    # and ~/.aws/config to mess up our tests
+    'CPL_AWS_CREDENTIALS_FILE': '',
+    'AWS_CONFIG_FILE': '',
+    'CPL_AWS_EC2_API_ROOT_URL': '',
+    'AWS_NO_SIGN_REQUEST': 'NO',
+    'AWS_SECRET_ACCESS_KEY': 'AWS_SECRET_ACCESS_KEY',
+    'AWS_ACCESS_KEY_ID': 'AWS_ACCESS_KEY_ID',
+    'AWS_TIMESTAMP': '20150101T000000Z',
+    'AWS_HTTPS': 'NO',
+    'AWS_VIRTUAL_HOSTING': 'NO',
+    'AWS_REQUEST_PAYER': '',
+    'AWS_DEFAULT_REGION': 'us-east-1',
+    'AWS_DEFAULT_PROFILE': '',
+    'AWS_PROFILE': 'default'
+}
+
+
+@pytest.fixture(params = [True, False])
+def aws_test_config_as_config_options_or_credentials(request):
+    options = general_s3_options
+
+    with gdaltest.config_options(options) if request.param else gdaltest.credentials("/vsis3/", options):
+        yield request.param
+
+
 @pytest.fixture()
 def aws_test_config():
-    options = {
-        # To avoid user AWS credentials in ~/.aws/credentials
-        # and ~/.aws/config to mess up our tests
-        'CPL_AWS_CREDENTIALS_FILE': '',
-        'AWS_CONFIG_FILE': '',
-        'CPL_AWS_EC2_API_ROOT_URL': '',
-        'AWS_NO_SIGN_REQUEST': 'NO',
-        'AWS_SECRET_ACCESS_KEY': 'AWS_SECRET_ACCESS_KEY',
-        'AWS_ACCESS_KEY_ID': 'AWS_ACCESS_KEY_ID',
-        'AWS_TIMESTAMP': '20150101T000000Z',
-        'AWS_HTTPS': 'NO',
-        'AWS_VIRTUAL_HOSTING': 'NO',
-        'AWS_REQUEST_PAYER': '',
-        'AWS_DEFAULT_REGION': 'us-east-1',
-        'AWS_DEFAULT_PROFILE': '',
-        'AWS_PROFILE': 'default'
-    }
+    options = general_s3_options
 
     with gdaltest.config_options(options):
         yield
-
 
 @pytest.fixture(scope="module")
 def webserver_port():
@@ -107,7 +117,7 @@ def test_vsis3_init(aws_test_config):
 # Test AWS_NO_SIGN_REQUEST=YES
 
 
-def test_vsis3_no_sign_request(aws_test_config):
+def test_vsis3_no_sign_request(aws_test_config_as_config_options_or_credentials):
 
     if not gdaltest.built_against_curl():
         pytest.skip()
@@ -119,7 +129,7 @@ def test_vsis3_no_sign_request(aws_test_config):
         'AWS_VIRTUAL_HOSTING': 'TRUE'
     }
 
-    with gdaltest.config_options(options):
+    with gdaltest.config_options(options) if aws_test_config_as_config_options_or_credentials else gdaltest.credentials('/vsis3/landsat-pds', options):
         actual_url = gdal.GetActualURL(
             '/vsis3/landsat-pds/L8/001/002/'
             'LC80010022016230LGN00/LC80010022016230LGN00_B1.TIF'
@@ -156,7 +166,7 @@ def test_vsis3_no_sign_request(aws_test_config):
 # Test Sync() and multithreaded download
 
 
-def test_vsis3_sync_multithreaded_download(aws_test_config):
+def test_vsis3_sync_multithreaded_download(aws_test_config_as_config_options_or_credentials):
 
     if not gdaltest.built_against_curl():
         pytest.skip()
@@ -173,7 +183,7 @@ def test_vsis3_sync_multithreaded_download(aws_test_config):
         'AWS_VIRTUAL_HOSTING': 'FALSE'
     }
     # Use a public bucket with /test_dummy/foo and /test_dummy/bar files
-    with gdaltest.config_options(options):
+    with gdaltest.config_options(options) if aws_test_config_as_config_options_or_credentials else gdaltest.credentials('/vsis3/cdn.proj.org', options):
         assert gdal.Sync('/vsis3/cdn.proj.org/test_dummy',
                          '/vsimem/test_vsis3_no_sign_request_sync',
                          options=['NUM_THREADS=2'],
@@ -324,7 +334,7 @@ def get_s3_fake_bucket_resource_method(request):
 # Test with a fake AWS server
 
 
-def test_vsis3_2(aws_test_config, webserver_port):
+def test_vsis3_2(aws_test_config_as_config_options_or_credentials, webserver_port):
     signed_url = gdal.GetSignedURL('/vsis3/s3_fake_bucket/resource')
     expected_url_8080 = (
         'http://127.0.0.1:8080/s3_fake_bucket/resource'
@@ -347,6 +357,8 @@ def test_vsis3_2(aws_test_config, webserver_port):
         '&X-Amz-SignedHeaders=host'
     )
     assert signed_url in (expected_url_8080, expected_url_8081)
+
+    gdal.VSICurlClearCache()
 
     handler = webserver.SequentialHandler()
     handler.add(
@@ -422,7 +434,9 @@ def test_vsis3_2(aws_test_config, webserver_port):
     )
 
     # Test with temporary credentials
-    with gdaltest.config_option('AWS_SESSION_TOKEN', 'AWS_SESSION_TOKEN'):
+    with gdaltest.config_option('AWS_SESSION_TOKEN', 'AWS_SESSION_TOKEN') \
+        if aws_test_config_as_config_options_or_credentials else \
+        gdaltest.credentials('/vsis3/s3_fake_bucket_with_session_token', {'AWS_SESSION_TOKEN': 'AWS_SESSION_TOKEN'}):
         with webserver.install_http_handler(handler):
             f = open_for_read(
                 '/vsis3/s3_fake_bucket_with_session_token/resource'
@@ -764,7 +778,9 @@ def test_vsis3_2(aws_test_config, webserver_port):
         custom_method=method
     )
 
-    with gdaltest.config_option('AWS_REQUEST_PAYER', 'requester'):
+    with gdaltest.config_option('AWS_REQUEST_PAYER', 'requester') \
+        if aws_test_config_as_config_options_or_credentials else \
+        gdaltest.credentials('/vsis3/s3_fake_bucket_with_requester_pays', {'AWS_REQUEST_PAYER': 'requester'}):
         with webserver.install_http_handler(handler):
             with gdaltest.error_handler():
                 f = open_for_read(

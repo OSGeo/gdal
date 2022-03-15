@@ -162,7 +162,7 @@ The allowed subelements for VRTRasterBand are :
 
   <ColorInterp>Gray</ColorInterp>:
 
-- **NoDataValue**: If this element exists a raster band has a nodata value associated with, of the value given as data in the element. This must not be confused with the NODATA element of a VRTComplexSource element.
+- **NoDataValue**: If the input datasets to be composed have a nodata value for this raster band, set this element's value to that nodata value for it to be reflected in the VRT. This must not be confused with the NODATA element of a VRTComplexSource element.
 
 .. code-block:: xml
 
@@ -592,6 +592,18 @@ words, in the previous example, you could also invert the 2 last lines, whereas
 if you open the source dataset with :cpp:func:`GDALOpen`, you'd need to close the VRT dataset
 before closing the source dataset.
 
+To obtain the resulting VRT XML of :file:`wrk.vrt` without having to read the text from an actual file,
+you can modify the above code to open the new dataset with an empty filename and use the "xml:VRT"
+metadata domain.
+
+.. code-block:: cpp
+
+  // no filename
+  poVRTDS = poDriver->CreateCopy( "", poSrcDS, FALSE, NULL, NULL, NULL );
+
+  // obtain the actual XML text that a VRT file would contain
+  const char *xmlvrt = poVRTDS->GetMetadata("xml:VRT")[0];
+
 To create a virtual copy of a dataset with some attributes added or changed
 such as metadata or coordinate system that are often hard to change on other
 formats, you might do the following.  In this case, the virtual dataset is
@@ -825,7 +837,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
    * - **dB**
      - 1
      - ``fact`` (optional)
-     - perform conversion to dB of the abs of a single raster band (real or complex): ``20. * log10( abs( x ) )``. The optional ``fact`` paremeter can be set to ``10`` to get the alternative formula: ``10. * log10( abs( x ) )``
+     - perform conversion to dB of the abs of a single raster band (real or complex): ``20. * log10( abs( x ) )``. The optional ``fact`` parameter can be set to ``10`` to get the alternative formula: ``10. * log10( abs( x ) )``
    * - **dB2amp**
      - 1
      - -
@@ -845,7 +857,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
    * - **exp**
      - 1
      - ``base`` (optional), ``fact`` (optional)
-     - computes the exponential of each element in the input band ``x`` (of real values): ``e ^ x``. The function also accepts two optional parameters: ``base`` and ``fact`` that allow to compute the generalized formula: ``base ^ ( fact * x )``. Note: this function is the recommended one to perform conversion form logaritmic scale (dB): `` 10. ^ (x / 20.)``, in this case ``base = 10.`` and ``fact = 0.05`` i.e. ``1. / 20``
+     - computes the exponential of each element in the input band ``x`` (of real values): ``e ^ x``. The function also accepts two optional parameters: ``base`` and ``fact`` that allow to compute the generalized formula: ``base ^ ( fact * x )``. Note: this function is the recommended one to perform conversion form logarithmic scale (dB): `` 10. ^ (x / 20.)``, in this case ``base = 10.`` and ``fact = 0.05`` i.e. ``1. / 20``
    * - **imag**
      - 1
      - -
@@ -884,7 +896,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - extract phase from a single raster band [-PI,PI] (0 or PI for non-complex)
    * - **polar**
      - 2
-     - ``amplitude_type`` (optinal)
+     - ``amplitude_type`` (optional)
      - make a complex band using input bands for amplitude and phase values ``b1 * exp( j * b2 )``. The optional (string) parameter ``amplitude_type`` can be ``AMPLITUDE`` (default) ``INTENSITY`` or ``dB``. Note: if ``amplitude_type`` is set to ``INTENSITY`` then negative values are clipped to zero.
    * - **pow**
      - 1
@@ -901,7 +913,15 @@ GDAL provides a set of default pixel functions that can be used without writing 
    * - **sum**
      - >= 2
      - ``k`` (optional)
-     - sum 2 or more raster bands. If the optional ``k`` parameter is provided then it is added to each element of the result.
+     - sum 2 or more raster bands. If the optional ``k`` parameter is provided then it is added to each element of the result
+   * - **replace_nodata**
+     - = 1
+     - ``to`` (optional)
+     - convert incoming ``NoData`` values to a new value, IEEE 754 `nan` by default
+   * - **scale**
+     - = 1
+     - -
+     - perform scaling according to the ``offset`` and ``scale`` values of the raster band
 
 Writing Pixel Functions
 +++++++++++++++++++++++
@@ -912,10 +932,20 @@ with derived bands that use this function), an application calls
 
 .. code-block:: cpp
 
-    GDALAddDerivedBandPixelFuncWithArgs("MyFirstFunction", TestFunction, nullptr);
+    static const char pszMetadata[] =
+    "<PixelFunctionArgumentsList>"
+    "   <Argument name='y' description='y' type='double' mandatory='1' />"
+    "   <Argument type='builtin' value='offset' />"
+    "   <Argument type='builtin' value='scale' />"
+    "   <Argument type='builtin' value='NoData' />"
+    "   <Argument name='customConstant' type='constant' value='42'>"
+    "</PixelFunctionArgumentsList>";
+    GDALAddDerivedBandPixelFuncWithArgs("MyFirstFunction", TestFunction, pszMetadata);
 
 A good time to do this is at the beginning of an application when the
-GDAL drivers are registered.
+GDAL drivers are registered. ``pszMetadata`` is optional and can be ``nullptr``.
+It can be used to declare the function signature to the user and to request additional
+parameters aside from the ones from the Dataset.
 
 A :cpp:type:`GDALDerivedPixelFuncWithArgs` is defined with a signature similar to :cpp:func:`GDALRasterBand::IRasterIO`:
 
@@ -979,6 +1009,14 @@ The following is an implementation of the pixel function:
         const char *pszY = CSLFetchNameValue(papszArgs, "y");
         if (pszY == nullptr) return CE_Failure;
 
+        double NoData = NAN;
+        const char *pszNoData = CSLFetchNameValue(papszArgs, "NoData");
+        if (pszNoData != nullptr)
+        {
+            NoData = std::strtod(pszNoData, &end);
+            if (end == pszNoData) return CE_Failure; // Could not parse
+        }
+
         char *end = nullptr;
         double y = std::strtod(pszY, &end);
         if (end == pszY) return CE_Failure; // Could not parse
@@ -995,7 +1033,10 @@ The following is an implementation of the pixel function:
                 x4 = SRCVAL(papoSources[2], eSrcType, ii);
                 x8 = SRCVAL(papoSources[3], eSrcType, ii);
 
-                pix_val = sqrt((x3*x3+x4*x4)/(x0*x8)) + y;
+                if (x0 == NoData || x3 == NoData || x4 == NoData || x8 == NoData)
+                    pix_val = NAN;
+                else
+                    pix_val = sqrt((x3*x3+x4*x4)/(x0*x8)) + y;
 
                 GDALCopyWords(&pix_val, GDT_Float64, 0,
                             ((GByte *)pData) + nLineSpace * iLine + iCol * nPixelSpace,

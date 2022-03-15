@@ -28,54 +28,42 @@ if (CMAKE_GENERATOR_TOOLSET MATCHES "v([0-9]+)_xp")
 endif ()
 
 check_function_exists(vsnprintf HAVE_VSNPRINTF)
-check_function_exists(snprintf HAVE_SNPRINTF)
 check_function_exists(getcwd HAVE_GETCWD)
 
-check_include_file("assert.h" HAVE_ASSERT_H)
 check_include_file("fcntl.h" HAVE_FCNTL_H)
 check_include_file("unistd.h" HAVE_UNISTD_H)
-check_include_file("stdint.h" HAVE_STDINT_H)
 check_include_file("sys/types.h" HAVE_SYS_TYPES_H)
 check_include_file("locale.h" HAVE_LOCALE_H)
 check_include_file("xlocale.h" GDAL_HAVE_XLOCALE_H)
-check_include_file("errno.h" HAVE_ERRNO_H)
 check_include_file("direct.h" HAVE_DIRECT_H)
 check_include_file("dlfcn.h" HAVE_DLFCN_H)
 
 check_type_size("int" SIZEOF_INT)
 check_type_size("unsigned long" SIZEOF_UNSIGNED_LONG)
 check_type_size("void*" SIZEOF_VOIDP)
-set(HAVE_LONG_LONG 1)
-
-set(HAVE_IEEEFP TRUE)
-
-check_function_exists("atoll" HAVE_ATOLL)
-check_function_exists("strtof" HAVE_DECL_STRTOF)
 
 if (MSVC)
-  set(HAVE_DOPRNT 0)
-  set(HAVE_VPRINTF 1)
   set(HAVE_VSNPRINTF 1)
-  set(HAVE_SNPRINTF 1)
 
-  set(HAVE_ASSERT_H 1)
   set(HAVE_FCNTL_H 1)
   set(HAVE_UNISTD_H 0)
-  set(HAVE_STDINT_H 0)
   set(HAVE_SYS_TYPES_H 1)
-  set(HAVE_LIBDL 0)
   set(HAVE_LOCALE_H 1)
-  set(HAVE_FLOAT_H 1)
-  set(HAVE_ERRNO_H 1)
   set(HAVE_SEARCH_H 1)
   set(HAVE_DIRECT_H 1)
 
   set(HAVE_LOCALTIME_R 0)
   set(HAVE_DLFCN_H 1)
-  set(HOST_FILLORDER FILLORDER_LSB2MSB)
 
   set(VSI_STAT64 _stat64)
   set(VSI_STAT64_T __stat64)
+
+  # Condition compilation of port/cpl_aws_win32.cpp
+  check_include_file_cxx("atlbase.h" HAVE_ATLBASE_H)
+  if (NOT HAVE_ATLBASE_H)
+    message(WARNING "Missing atlbase.h header: cpl_aws_win32.cpp (detection of AWS EC2 Windows hosts) will be missing")
+  endif()
+
 else ()
   # linux, mac and mingw/windows
   test_big_endian(WORDS_BIGENDIAN)
@@ -127,15 +115,6 @@ else ()
         int main() { return (mremap(0,0,0,0,0)); }
         "
     HAVE_5ARGS_MREMAP)
-
-  check_include_file("inttypes.h" HAVE_INTTYPES_H)
-
-  check_include_file("strings.h" HAVE_STRINGS_H)
-  check_include_file("string.h" HAVE_STRING_H)
-
-  check_function_exists(strtof HAVE_STRTOF)
-  check_function_exists(strtoll HAVE_STRTOLL)
-  check_function_exists(strtoull HAVE_STRTOULL)
 
   check_include_file("sys/stat.h" HAVE_SYS_STAT_H)
   if (${CMAKE_SYSTEM} MATCHES "Linux")
@@ -255,7 +234,6 @@ else ()
   endif ()
 
   set(UNIX_STDIO_64 TRUE)
-  set(VSI_LARGE_API_SUPPORTED TRUE)
 
   set(INCLUDE_XLOCALE_H)
   if(GDAL_HAVE_XLOCALE_H)
@@ -300,15 +278,6 @@ else ()
 
   check_c_source_compiles(
     "
-        #include <sys/types.h>
-        #include <sys/socket.h>
-        #include <netdb.h>
-        int main() { getaddrinfo(0,0,0,0); return 0; }
-    "
-    HAVE_GETADDRINFO)
-
-  check_c_source_compiles(
-    "
         #include <unistd.h>
         int main () { return (sysconf(_SC_PHYS_PAGES)); return 0; }
     "
@@ -326,10 +295,6 @@ else ()
     endif ()
   endif ()
 
-  if (HAVE_STDDEF_H AND HAVE_STDINT_H)
-    set(STDC_HEADERS TRUE)
-  endif (HAVE_STDDEF_H AND HAVE_STDINT_H)
-
   message(STATUS "checking if sprintf can be overloaded for GDAL compilation")
   check_cxx_source_compiles(
     "#define _XOPEN_SOURCE\n#include <vector>\n#include <stdio.h>\nextern \"C\"\n {int sprintf(char *str, const char* fmt, ...);}"
@@ -340,12 +305,6 @@ else ()
   endif ()
 
   check_include_file("linux/userfaultfd.h" HAVE_USERFAULTFD_H)
-endif ()
-
-if (WORDS_BIGENDIAN)
-  set(HOST_FILLORDER FILLORDER_MSB2LSB)
-else ()
-  set(HOST_FILLORDER FILLORDER_LSB2MSB)
 endif ()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")

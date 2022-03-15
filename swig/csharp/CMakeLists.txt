@@ -7,8 +7,8 @@ else ()
 endif ()
 
 if (CMAKE_CXX_FLAGS)
-  string(REPLACE "-Werror" " " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-  string(REPLACE "/WX" " " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+  string(REPLACE "-Werror " " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ")
+  string(REPLACE "/WX " " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ")
 endif ()
 
 set(GDAL_CSHARP_INSTALL_DIR
@@ -20,10 +20,10 @@ set(CSHARP_LIBRARY_VERSION
     CACHE STRING ".NET version to be used for libraries")
 set(CSHARP_APPLICATION_VERSION
     "net5.0"
-    CACHE STRING ".NET version to be used for the sample Applicatons")
+    CACHE STRING ".NET version to be used for the sample Applications")
 set(CSHARP_CONFIG
     "RELEASE"
-    CACHE STRING "Config to be used to compile the C# artefacts > RELEASE|CONFIG")
+    CACHE STRING "Config to be used to compile the C# artifacts > RELEASE|CONFIG")
 
 set(_VERSION_STRING ${GDAL_VERSION_NO_DEV_SUFFIX})
 if (GDAL_DEV_SUFFIX)
@@ -42,7 +42,7 @@ elseif ("${CMAKE_GENERATOR_PLATFORM}" STREQUAL "Win32")
   set(CSHARP_RID "win-32")
 endif ()
 
-# needed because of differnces in the packages
+# needed because of differences in the packages
 if (DOTNET_FOUND)
   set(CSHARP_DRAWING "System.Drawing.Common")
 else ()
@@ -87,7 +87,7 @@ function (gdal_csharp_wrap)
 
   # Run the SWIG interface build
   add_custom_command(
-    # create the sub folde
+    # create the sub folder
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_WRAPPER}.cpp
     COMMAND ${CMAKE_COMMAND} -E make_directory ${_CSHARP_WORKING_DIRECTORY}
     # SWIG command
@@ -646,7 +646,7 @@ gdal_build_csharp_sample(
 # Custom Target to make the C# wrap Libraries and use SWIG to build the .cs files
 add_custom_target(csharp_interface DEPENDS gdalconst_wrap osr_wrap ogr_wrap gdal_wrap)
 
-# Custom Target to make the c# bindings - will be run as part of ALL but can also be built seperately
+# Custom Target to make the c# bindings - will be run as part of ALL but can also be built separately
 add_custom_target(csharp_binding ALL DEPENDS csharp_interface OSGeo.GDAL.CONST OSGeo.GDAL OSGeo.OGR OSGeo.OSR)
 
 # Custom Target to build the C# bindings and the sample binaries
@@ -753,7 +753,7 @@ add_test(
   COMMAND ${CSHARP_INTERPRETER} OgrInfo/OgrInfo${_ex} Data/intersectionresult.shp)
 set_property(TEST csharp_ogrlayeralgresult PROPERTY ENVIRONMENT "${TEST_ENV}")
 set_property(TEST csharp_ogrlayeralgresult PROPERTY DEPENDS csharp_ogrlayeralg)
-# GDALWarp test disabled until updated and the dependency on autotest is reomved dur to possible clash with a standalone
+# GDALWarp test disabled until updated and the dependency on autotest is removed dur to possible clash with a standalone
 # build add_test( NAME csharp_gdalwarp WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} COMMAND ${CSHARP_INTERPRETER}
 # GDALWarp/GDALWarp Data/testwarp.tif "-of GTiff -t_srs EPSG:32645 -overwrite" "../../autotest/gcore/data/byte.tif")
 # set_property(TEST csharp_gdalwarp PROPERTY ENVIRONMENT "${TEST_ENV}") set_property(TEST csharp_gdalwarp PROPERTY

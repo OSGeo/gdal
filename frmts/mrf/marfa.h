@@ -750,13 +750,21 @@ protected:
     virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
     virtual CPLErr Compress(buf_mgr &dst, buf_mgr &src) override;
     double precision;
+    // L1 or L2
     int version;
-    static bool IsLerc(CPLString &s) {
-        return (STARTS_WITH(s, "Lerc2 ") || STARTS_WITH(s, "CntZImage "));
-    }
-
+    // L2 version
+    int l2ver;
     // Build a MRF header for a single LERC tile
     static CPLXMLNode *GetMRFConfig(GDALOpenInfo *poOpenInfo);
+private:
+    static bool IsLerc1(const char* s) {
+        static const char L1sig[] = "CntZImage ";
+        return !strncmp(s, L1sig, sizeof(L1sig) - 1);
+    }
+    static bool IsLerc2(const char* s) {
+        static const char L2sig[] = "Lerc2 ";
+        return !strncmp(s, L2sig, sizeof(L2sig) - 1);
+    }
 };
 #endif
 

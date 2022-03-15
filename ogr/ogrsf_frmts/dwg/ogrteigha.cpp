@@ -40,7 +40,7 @@ static bool bInitSuccess = false;
 
 // We used to define the 2 below objects as static in the global scope
 // However with ODA 2022 on Linux, when OGRTEIGHADeinitialize() is not called,
-// on unloading of the ODA libraries, a crash occured when freeing a singleton
+// on unloading of the ODA libraries, a crash occurred when freeing a singleton
 // inside one of the ODA libraries. It turns out that if the 2 below objects
 // are kept alive, the crash doesn't occur.
 struct OGRODAServicesWrapper

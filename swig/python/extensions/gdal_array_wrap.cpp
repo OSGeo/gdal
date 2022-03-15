@@ -3546,18 +3546,22 @@ static GDALDataType NumpyTypeToGDALType(PyArrayObject *psArray)
       case NPY_FLOAT:
         return GDT_Float32;
 
-      case NPY_INT:
-      case NPY_LONG:
+      case NPY_INT32:
         return GDT_Int32;
 
-      case NPY_UINT:
-      case NPY_ULONG:
+      case NPY_UINT32:
         return GDT_UInt32;
 
-      case NPY_SHORT:
+      case NPY_INT64:
+        return GDT_Int64;
+
+      case NPY_UINT64:
+        return GDT_UInt64;
+
+      case NPY_INT16:
         return GDT_Int16;
 
-      case NPY_USHORT:
+      case NPY_UINT16:
         return GDT_UInt16;
 
       case NPY_BYTE:
@@ -5619,6 +5623,8 @@ SWIGINTERN PyObject *_wrap_VirtualMemGetArray(PyObject *SWIGUNUSEDPARM(self), Py
       case GDT_UInt16: numpytype = NPY_UINT16; break;
       case GDT_Int32: numpytype = NPY_INT32; break;
       case GDT_UInt32: numpytype = NPY_UINT32; break;
+      case GDT_Int64: numpytype = NPY_INT64; break;
+      case GDT_UInt64: numpytype = NPY_UINT64; break;
       case GDT_Float32: numpytype = NPY_FLOAT32; break;
       case GDT_Float64: numpytype = NPY_FLOAT64; break;
       //case GDT_CInt16: numpytype = NPY_INT16; break;

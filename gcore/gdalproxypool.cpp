@@ -1210,7 +1210,7 @@ void GDALProxyPoolRasterBand::AddSrcMaskBandDescription( GDALDataType eDataTypeI
 /*                  RefUnderlyingRasterBand()                           */
 /************************************************************************/
 
-GDALRasterBand* GDALProxyPoolRasterBand::RefUnderlyingRasterBand(bool bForceOpen)
+GDALRasterBand* GDALProxyPoolRasterBand::RefUnderlyingRasterBand(bool bForceOpen) const
 {
     GDALDataset* poUnderlyingDataset =
         (cpl::down_cast<GDALProxyPoolDataset*>(poDS))->
@@ -1231,14 +1231,14 @@ GDALRasterBand* GDALProxyPoolRasterBand::RefUnderlyingRasterBand(bool bForceOpen
         // nBlockXSize/nBlockYSize before RefUnderlyingRasterBand() is called
         int nSrcBlockXSize, nSrcBlockYSize;
         poBand->GetBlockSize(&nSrcBlockXSize, &nSrcBlockYSize);
-        nBlockXSize = nSrcBlockXSize;
-        nBlockYSize = nSrcBlockYSize;
+        const_cast<GDALProxyPoolRasterBand*>(this)->nBlockXSize = nSrcBlockXSize;
+        const_cast<GDALProxyPoolRasterBand*>(this)->nBlockYSize = nSrcBlockYSize;
     }
 
     return poBand;
 }
 
-GDALRasterBand* GDALProxyPoolRasterBand::RefUnderlyingRasterBand()
+GDALRasterBand* GDALProxyPoolRasterBand::RefUnderlyingRasterBand() const
 {
     return RefUnderlyingRasterBand(true);
 }
@@ -1247,7 +1247,7 @@ GDALRasterBand* GDALProxyPoolRasterBand::RefUnderlyingRasterBand()
 /*                  UnrefUnderlyingRasterBand()                       */
 /************************************************************************/
 
-void GDALProxyPoolRasterBand::UnrefUnderlyingRasterBand(GDALRasterBand* poUnderlyingRasterBand)
+void GDALProxyPoolRasterBand::UnrefUnderlyingRasterBand(GDALRasterBand* poUnderlyingRasterBand) const
 {
     if (poUnderlyingRasterBand)
         (cpl::down_cast<GDALProxyPoolDataset*>(poDS))->
@@ -1504,7 +1504,7 @@ GDALProxyPoolOverviewRasterBand::~GDALProxyPoolOverviewRasterBand()
 /*                    RefUnderlyingRasterBand()                         */
 /* ******************************************************************** */
 
-GDALRasterBand* GDALProxyPoolOverviewRasterBand::RefUnderlyingRasterBand()
+GDALRasterBand* GDALProxyPoolOverviewRasterBand::RefUnderlyingRasterBand() const
 {
     poUnderlyingMainRasterBand = poMainBand->RefUnderlyingRasterBand();
     if (poUnderlyingMainRasterBand == nullptr)
@@ -1519,7 +1519,7 @@ GDALRasterBand* GDALProxyPoolOverviewRasterBand::RefUnderlyingRasterBand()
 /* ******************************************************************** */
 
 void GDALProxyPoolOverviewRasterBand::UnrefUnderlyingRasterBand(
-    GDALRasterBand* /* poUnderlyingRasterBand */ )
+    GDALRasterBand* /* poUnderlyingRasterBand */ ) const
 {
     poMainBand->UnrefUnderlyingRasterBand(poUnderlyingMainRasterBand);
     nRefCountUnderlyingMainRasterBand --;
@@ -1566,7 +1566,7 @@ GDALProxyPoolMaskBand::~GDALProxyPoolMaskBand()
 /*                    RefUnderlyingRasterBand()                         */
 /* ******************************************************************** */
 
-GDALRasterBand* GDALProxyPoolMaskBand::RefUnderlyingRasterBand()
+GDALRasterBand* GDALProxyPoolMaskBand::RefUnderlyingRasterBand() const
 {
     poUnderlyingMainRasterBand = poMainBand->RefUnderlyingRasterBand();
     if (poUnderlyingMainRasterBand == nullptr)
@@ -1581,7 +1581,7 @@ GDALRasterBand* GDALProxyPoolMaskBand::RefUnderlyingRasterBand()
 /* ******************************************************************** */
 
 void GDALProxyPoolMaskBand::UnrefUnderlyingRasterBand(
-    GDALRasterBand* /* poUnderlyingRasterBand */ )
+    GDALRasterBand* /* poUnderlyingRasterBand */ ) const
 {
     poMainBand->UnrefUnderlyingRasterBand(poUnderlyingMainRasterBand);
     nRefCountUnderlyingMainRasterBand --;

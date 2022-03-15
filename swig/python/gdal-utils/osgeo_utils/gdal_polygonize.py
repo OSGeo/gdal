@@ -128,7 +128,11 @@ def gdal_polygonize(src_filename: Optional[str] = None, band_number: Union[int, 
         if dst_fieldname is None:
             dst_fieldname = 'DN'
 
-        fd = ogr.FieldDefn(dst_fieldname, ogr.OFTInteger)
+        data_type = ogr.OFTInteger
+        if srcband.DataType == gdal.GDT_Int64 or srcband.DataType == gdal.GDT_UInt64:
+            data_type = ogr.OFTInteger64
+
+        fd = ogr.FieldDefn(dst_fieldname, data_type)
         dst_layer.CreateField(fd)
         dst_field = 0
     else:

@@ -42,7 +42,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <stdio.h>
 #include <vector>
-#include "cpl_port.h" // in case of -DDEBUG_BOOL
+#include "cpl_port.h"
 
 CPL_CVSID("$Id$")
 
@@ -339,7 +339,7 @@ void rbspline2( int npts,int k,int p1,double b[],double h[],
                   b[1] contains the x-component of the vertex
                   b[2] contains the y-component of the vertex
                   b[3] contains the z-component of the vertex
-    h[]         = array containing the homogeneous weighting factors 
+    h[]         = array containing the homogeneous weighting factors
     k           = order of the B-spline basis function
     nbasis      = array containing the basis functions for a single value of t
     nplusc      = number of knot values
@@ -379,7 +379,7 @@ void rbspline(int npts,int k,int p1,double b[],double h[], double p[])
                   b[1] contains the x-component of the vertex
                   b[2] contains the y-component of the vertex
                   b[3] contains the z-component of the vertex
-    h[]         = array containing the homogeneous weighting factors 
+    h[]         = array containing the homogeneous weighting factors
     k           = order of the B-spline basis function
     nbasis      = array containing the basis functions for a single value of t
     nplusc      = number of knot values

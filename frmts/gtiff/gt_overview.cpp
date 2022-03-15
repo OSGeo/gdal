@@ -30,14 +30,6 @@
 
 #include "cpl_port.h"
 
-#ifdef HAVE_STRINGS_H
-#undef HAVE_STRINGS_H
-#endif
-
-#ifdef HAVE_STRING_H
-#undef HAVE_STRING_H
-#endif
-
 #include "gt_overview.h"
 
 #include <cstdlib>
@@ -383,6 +375,16 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
 
           case GDT_Int32:
             nBandBits = 32;
+            nBandFormat = SAMPLEFORMAT_INT;
+            break;
+
+          case GDT_UInt64:
+            nBandBits = 64;
+            nBandFormat = SAMPLEFORMAT_UINT;
+            break;
+
+          case GDT_Int64:
+            nBandBits = 64;
             nBandFormat = SAMPLEFORMAT_INT;
             break;
 

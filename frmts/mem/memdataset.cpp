@@ -96,13 +96,7 @@ MEMRasterBand::MEMRasterBand( GByte *pabyDataIn, GDALDataType eTypeIn,
     pabyData(pabyDataIn),
     nPixelOffset(GDALGetDataTypeSizeBytes(eTypeIn)),
     nLineOffset(0),
-    bOwnData(true),
-    bNoDataSet(FALSE),
-    dfNoData(0.0),
-    eColorInterp(GCI_Undefined),
-    dfOffset(0.0),
-    dfScale(1.0),
-    psSavedHistograms(nullptr)
+    bOwnData(true)
 {
     eAccess = GA_Update;
     eDataType = eTypeIn;
@@ -111,6 +105,8 @@ MEMRasterBand::MEMRasterBand( GByte *pabyDataIn, GDALDataType eTypeIn,
     nBlockXSize = nXSizeIn;
     nBlockYSize = 1;
     nLineOffset = nPixelOffset * static_cast<size_t>(nBlockXSize);
+
+    PamInitializeNoParent();
 }
 
 /************************************************************************/
@@ -125,13 +121,7 @@ MEMRasterBand::MEMRasterBand( GDALDataset *poDSIn, int nBandIn,
     pabyData(pabyDataIn),
     nPixelOffset(nPixelOffsetIn),
     nLineOffset(nLineOffsetIn),
-    bOwnData(bAssumeOwnership),
-    bNoDataSet(FALSE),
-    dfNoData(0.0),
-    eColorInterp(GCI_Undefined),
-    dfOffset(0.0),
-    dfScale(1.0),
-    psSavedHistograms(nullptr)
+    bOwnData(bAssumeOwnership)
 {
     poDS = poDSIn;
     nBand = nBandIn;
@@ -151,6 +141,8 @@ MEMRasterBand::MEMRasterBand( GDALDataset *poDSIn, int nBandIn,
 
     if( pszPixelType && EQUAL(pszPixelType,"SIGNEDBYTE") )
         SetMetadataItem( "PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE" );
+
+    PamInitializeNoParent();
 }
 
 /************************************************************************/
@@ -164,9 +156,6 @@ MEMRasterBand::~MEMRasterBand()
     {
         VSIFree( pabyData );
     }
-
-    if (psSavedHistograms != nullptr)
-        CPLDestroyXMLNode(psSavedHistograms);
 }
 
 /************************************************************************/
@@ -406,290 +395,6 @@ CPLErr MEMDataset::IRasterIO( GDALRWFlag eRWFlag,
 }
 
 /************************************************************************/
-/*                            GetNoDataValue()                          */
-/************************************************************************/
-double MEMRasterBand::GetNoDataValue( int *pbSuccess )
-
-{
-    if( pbSuccess )
-        *pbSuccess = bNoDataSet;
-
-    if( bNoDataSet )
-        return dfNoData;
-
-    return 0.0;
-}
-
-/************************************************************************/
-/*                            SetNoDataValue()                          */
-/************************************************************************/
-CPLErr MEMRasterBand::SetNoDataValue( double dfNewValue )
-{
-    dfNoData = dfNewValue;
-    bNoDataSet = TRUE;
-
-    return CE_None;
-}
-
-/************************************************************************/
-/*                         DeleteNoDataValue()                          */
-/************************************************************************/
-
-CPLErr MEMRasterBand::DeleteNoDataValue()
-{
-    dfNoData = 0.0;
-    bNoDataSet = FALSE;
-
-    return CE_None;
-}
-
-/************************************************************************/
-/*                       GetColorInterpretation()                       */
-/************************************************************************/
-
-GDALColorInterp MEMRasterBand::GetColorInterpretation()
-
-{
-    if( m_poColorTable != nullptr )
-        return GCI_PaletteIndex;
-
-    return eColorInterp;
-}
-
-/************************************************************************/
-/*                       SetColorInterpretation()                       */
-/************************************************************************/
-
-CPLErr MEMRasterBand::SetColorInterpretation( GDALColorInterp eGCI )
-
-{
-    eColorInterp = eGCI;
-
-    return CE_None;
-}
-
-/************************************************************************/
-/*                           GetColorTable()                            */
-/************************************************************************/
-
-GDALColorTable *MEMRasterBand::GetColorTable()
-
-{
-    return m_poColorTable.get();
-}
-
-/************************************************************************/
-/*                           SetColorTable()                            */
-/************************************************************************/
-
-CPLErr MEMRasterBand::SetColorTable( GDALColorTable *poCT )
-
-{
-    if( poCT == nullptr )
-        m_poColorTable.reset();
-    else
-        m_poColorTable.reset(poCT->Clone());
-
-    return CE_None;
-}
-/************************************************************************/
-/*                           GetDefaultRAT()                            */
-/************************************************************************/
-
-GDALRasterAttributeTable* MEMRasterBand::GetDefaultRAT()
-{
-    return m_poRAT.get();
-}
-
-/************************************************************************/
-/*                            SetDefaultRAT()                           */
-/************************************************************************/
-
-CPLErr MEMRasterBand::SetDefaultRAT( const GDALRasterAttributeTable * poRAT )
-{
-    if( poRAT == nullptr )
-        m_poRAT.reset();
-    else
-        m_poRAT.reset(poRAT->Clone());
-
-    return CE_None;
-}
-
-/************************************************************************/
-/*                            GetUnitType()                             */
-/************************************************************************/
-
-const char *MEMRasterBand::GetUnitType()
-
-{
-    return m_osUnitType.c_str();
-}
-
-/************************************************************************/
-/*                            SetUnitType()                             */
-/************************************************************************/
-
-CPLErr MEMRasterBand::SetUnitType( const char *pszNewValue )
-
-{
-    m_osUnitType = pszNewValue ? pszNewValue : "";
-
-    return CE_None;
-}
-
-/************************************************************************/
-/*                             GetOffset()                              */
-/************************************************************************/
-
-double MEMRasterBand::GetOffset( int *pbSuccess )
-
-{
-    if( pbSuccess != nullptr )
-        *pbSuccess = TRUE;
-
-    return dfOffset;
-}
-
-/************************************************************************/
-/*                             SetOffset()                              */
-/************************************************************************/
-
-CPLErr MEMRasterBand::SetOffset( double dfNewOffset )
-
-{
-    dfOffset = dfNewOffset;
-    return CE_None;
-}
-
-/************************************************************************/
-/*                              GetScale()                              */
-/************************************************************************/
-
-double MEMRasterBand::GetScale( int *pbSuccess )
-
-{
-    if( pbSuccess != nullptr )
-        *pbSuccess = TRUE;
-
-    return dfScale;
-}
-
-/************************************************************************/
-/*                              SetScale()                              */
-/************************************************************************/
-
-CPLErr MEMRasterBand::SetScale( double dfNewScale )
-
-{
-    dfScale = dfNewScale;
-    return CE_None;
-}
-
-/************************************************************************/
-/*                          GetCategoryNames()                          */
-/************************************************************************/
-
-char **MEMRasterBand::GetCategoryNames()
-
-{
-    return m_aosCategoryNames.List();
-}
-
-/************************************************************************/
-/*                          SetCategoryNames()                          */
-/************************************************************************/
-
-CPLErr MEMRasterBand::SetCategoryNames( char ** papszNewNames )
-
-{
-    m_aosCategoryNames = CSLDuplicate(papszNewNames);
-
-    return CE_None;
-}
-
-/************************************************************************/
-/*                        SetDefaultHistogram()                         */
-/************************************************************************/
-
-CPLErr MEMRasterBand::SetDefaultHistogram( double dfMin, double dfMax,
-                                           int nBuckets, GUIntBig *panHistogram)
-
-{
-/* -------------------------------------------------------------------- */
-/*      Do we have a matching histogram we should replace?              */
-/* -------------------------------------------------------------------- */
-    CPLXMLNode *psNode = PamFindMatchingHistogram( psSavedHistograms,
-                                                   dfMin, dfMax, nBuckets,
-                                                   TRUE, TRUE );
-    if( psNode != nullptr )
-    {
-        /* blow this one away */
-        CPLRemoveXMLChild( psSavedHistograms, psNode );
-        CPLDestroyXMLNode( psNode );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Translate into a histogram XML tree.                            */
-/* -------------------------------------------------------------------- */
-    CPLXMLNode *psHistItem = PamHistogramToXMLTree( dfMin, dfMax, nBuckets,
-                                                    panHistogram, TRUE, FALSE );
-    if( psHistItem == nullptr )
-        return CE_Failure;
-
-/* -------------------------------------------------------------------- */
-/*      Insert our new default histogram at the front of the            */
-/*      histogram list so that it will be the default histogram.        */
-/* -------------------------------------------------------------------- */
-
-    if( psSavedHistograms == nullptr )
-        psSavedHistograms = CPLCreateXMLNode( nullptr, CXT_Element,
-                                              "Histograms" );
-
-    psHistItem->psNext = psSavedHistograms->psChild;
-    psSavedHistograms->psChild = psHistItem;
-
-    return CE_None;
-}
-
-/************************************************************************/
-/*                        GetDefaultHistogram()                         */
-/************************************************************************/
-
-CPLErr
-MEMRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
-                                    int *pnBuckets, GUIntBig **ppanHistogram,
-                                    int bForce,
-                                    GDALProgressFunc pfnProgress,
-                                    void *pProgressData )
-
-{
-    if( psSavedHistograms != nullptr )
-    {
-        for( CPLXMLNode *psXMLHist = psSavedHistograms->psChild;
-             psXMLHist != nullptr;
-             psXMLHist = psXMLHist->psNext )
-        {
-            if( psXMLHist->eType != CXT_Element
-                || !EQUAL(psXMLHist->pszValue,"HistItem") )
-                continue;
-
-            int bApprox = FALSE;
-            int bIncludeOutOfRange = FALSE;
-            if( PamParseHistogram( psXMLHist, pdfMin, pdfMax, pnBuckets,
-                                   ppanHistogram, &bIncludeOutOfRange,
-                                   &bApprox ) )
-                return CE_None;
-
-            return CE_Failure;
-        }
-    }
-
-    return GDALRasterBand::GetDefaultHistogram( pdfMin, pdfMax, pnBuckets,
-                                                ppanHistogram, bForce,
-                                                pfnProgress,pProgressData);
-}
-
-/************************************************************************/
 /*                          GetOverviewCount()                          */
 /************************************************************************/
 
@@ -740,8 +445,10 @@ CPLErr MEMRasterBand::CreateMaskBand( int nFlagsIn )
 
     nMaskFlags = nFlagsIn;
     bOwnMask = true;
-    poMask = new MEMRasterBand( pabyMaskData, GDT_Byte,
+    auto poMemMaskBand = new MEMRasterBand( pabyMaskData, GDT_Byte,
                                 nRasterXSize, nRasterYSize );
+    poMask = poMemMaskBand;
+    poMemMaskBand->m_bIsMask = true;
     if( (nFlagsIn & GMF_PER_DATASET) != 0 && nBand == 1 && poMemDS != nullptr )
     {
         for( int i = 2; i <= poMemDS->GetRasterCount(); ++i )
@@ -755,6 +462,15 @@ CPLErr MEMRasterBand::CreateMaskBand( int nFlagsIn )
         }
     }
     return CE_None;
+}
+
+/************************************************************************/
+/*                            IsMaskBand()                              */
+/************************************************************************/
+
+bool MEMRasterBand::IsMaskBand() const
+{
+    return m_bIsMask || GDALPamRasterBand::IsMaskBand();
 }
 
 /************************************************************************/
@@ -2471,7 +2187,7 @@ void GDALRegister_MEM()
     poDriver->SetMetadataItem( GDAL_DCAP_MULTIDIM_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "In Memory Raster" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-                               "Byte Int16 UInt16 Int32 UInt32 Float32 Float64 "
+                               "Byte Int16 UInt16 Int32 UInt32 Int64 UInt64 Float32 Float64 "
                                "CInt16 CInt32 CFloat32 CFloat64" );
     poDriver->SetMetadataItem( GDAL_DCAP_COORDINATE_EPOCH, "YES" );
 

@@ -79,6 +79,7 @@ def test_osr_ozi_2():
 def test_osr_ozi_3():
 
     srs = osr.SpatialReference()
+    srs.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
     srs.ImportFromOzi(["OziExplorer Map Data File Version 2.2",
                        "Test_Map",
                        "Test_Map.png",

@@ -232,9 +232,29 @@ public:
     *val = GDALGetRasterNoDataValue( self, hasval );
   }
 
+#ifdef SWIGPYTHON
+  void GetNoDataValueAsInt64( GIntBig *val, int *hasval ) {
+    *val = GDALGetRasterNoDataValueAsInt64( self, hasval );
+  }
+
+  void GetNoDataValueAsUInt64( GUIntBig *val, int *hasval ) {
+    *val = GDALGetRasterNoDataValueAsUInt64( self, hasval );
+  }
+#endif
+
   CPLErr SetNoDataValue( double d) {
     return GDALSetRasterNoDataValue( self, d );
   }
+
+#ifdef SWIGPYTHON
+  CPLErr SetNoDataValueAsInt64( GIntBig v ) {
+    return GDALSetRasterNoDataValueAsInt64( self, v );
+  }
+
+  CPLErr SetNoDataValueAsUInt64( GUIntBig v ) {
+    return GDALSetRasterNoDataValueAsUInt64( self, v );
+  }
+#endif
 
   CPLErr DeleteNoDataValue() {
     return GDALDeleteRasterNoDataValue(self);
@@ -462,6 +482,10 @@ public:
 
   CPLErr CreateMaskBand( int nFlags ) {
       return GDALCreateMaskBand( self, nFlags );
+  }
+
+  bool IsMaskBand() {
+      return GDALIsMaskBand( self );
   }
 
 #if defined(SWIGPYTHON) || defined(SWIGPERL)

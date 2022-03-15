@@ -22,6 +22,7 @@ add_executable(
   test_gdal_aaigrid.cpp
   test_gdal_dted.cpp
   test_gdal_gtiff.cpp
+  test_gdal_pixelfn.cpp
   test_ogr.cpp
   test_ogr_geometry_stealing.cpp
   test_ogr_lgpl.cpp
@@ -165,7 +166,7 @@ register_test(
   GDAL_RB_LOCK_TYPE
   SPIN)
 
-if ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(x86_64|AMD64)" AND CMAKE_SIZEOF_VOID_P EQUAL 8)
+if ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(x86_64|AMD64)" AND CMAKE_SIZEOF_VOID_P EQUAL 8 AND HAVE_SSE_AT_COMPILE_TIME)
   gdal_test_target(testsse2 testsse.cpp)
   gdal_test_target(testsse2_emulation testsse.cpp)
   target_compile_definitions(testsse2_emulation PRIVATE -DUSE_SSE2_EMULATION -DNO_WARN_USE_SSE2_EMULATION)

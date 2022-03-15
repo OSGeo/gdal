@@ -51,6 +51,7 @@
 #endif
 
 #include <stdbool.h>
+#include <stdint.h>
 
 /* -------------------------------------------------------------------- */
 /*      Significant constants.                                          */
@@ -66,8 +67,8 @@ typedef enum {
     /*! Sixteen bit signed integer */           GDT_Int16 = 3,
     /*! Thirty two bit unsigned integer */      GDT_UInt32 = 4,
     /*! Thirty two bit signed integer */        GDT_Int32 = 5,
-    /* TODO?(#6879): GDT_UInt64 */
-    /* TODO?(#6879): GDT_Int64 */
+    /*! 64 bit unsigned integer (GDAL >= 3.5)*/ GDT_UInt64 = 12,
+    /*! 64 bit signed integer  (GDAL >= 3.5)*/  GDT_Int64 = 13,
     /*! Thirty two bit floating point */        GDT_Float32 = 6,
     /*! Sixty four bit floating point */        GDT_Float64 = 7,
     /*! Complex Int16 */                        GDT_CInt16 = 8,
@@ -75,7 +76,7 @@ typedef enum {
     /* TODO?(#6879): GDT_CInt64 */
     /*! Complex Float32 */                      GDT_CFloat32 = 10,
     /*! Complex Float64 */                      GDT_CFloat64 = 11,
-    GDT_TypeCount = 12          /* maximum type # + 1 */
+    GDT_TypeCount = 14          /* maximum type # + 1 */
 } GDALDataType;
 
 int CPL_DLL CPL_STDCALL GDALGetDataTypeSize( GDALDataType );  // Deprecated.
@@ -1007,7 +1008,11 @@ int CPL_DLL CPL_STDCALL GDALHasArbitraryOverviews( GDALRasterBandH );
 int CPL_DLL CPL_STDCALL GDALGetOverviewCount( GDALRasterBandH );
 GDALRasterBandH CPL_DLL CPL_STDCALL GDALGetOverview( GDALRasterBandH, int );
 double CPL_DLL CPL_STDCALL GDALGetRasterNoDataValue( GDALRasterBandH, int * );
+int64_t CPL_DLL CPL_STDCALL GDALGetRasterNoDataValueAsInt64( GDALRasterBandH, int * );
+uint64_t CPL_DLL CPL_STDCALL GDALGetRasterNoDataValueAsUInt64( GDALRasterBandH, int * );
 CPLErr CPL_DLL CPL_STDCALL GDALSetRasterNoDataValue( GDALRasterBandH, double );
+CPLErr CPL_DLL CPL_STDCALL GDALSetRasterNoDataValueAsInt64( GDALRasterBandH, int64_t );
+CPLErr CPL_DLL CPL_STDCALL GDALSetRasterNoDataValueAsUInt64( GDALRasterBandH, uint64_t );
 CPLErr CPL_DLL CPL_STDCALL GDALDeleteRasterNoDataValue( GDALRasterBandH );
 char CPL_DLL ** CPL_STDCALL GDALGetRasterCategoryNames( GDALRasterBandH );
 CPLErr CPL_DLL CPL_STDCALL GDALSetRasterCategoryNames( GDALRasterBandH, CSLConstList );
@@ -1111,6 +1116,7 @@ GDALRasterBandH CPL_DLL CPL_STDCALL GDALGetMaskBand( GDALRasterBandH hBand );
 int CPL_DLL CPL_STDCALL GDALGetMaskFlags( GDALRasterBandH hBand );
 CPLErr CPL_DLL CPL_STDCALL
                        GDALCreateMaskBand( GDALRasterBandH hBand, int nFlags );
+bool CPL_DLL GDALIsMaskBand( GDALRasterBandH hBand );
 
 /** Flag returned by GDALGetMaskFlags() to indicate that all pixels are valid */
 #define GMF_ALL_VALID     0x01
@@ -1664,9 +1670,17 @@ GDALAttributeH CPL_DLL GDALMDArrayCreateAttribute(GDALMDArrayH hArray,
 const void CPL_DLL *GDALMDArrayGetRawNoDataValue(GDALMDArrayH hArray);
 double CPL_DLL GDALMDArrayGetNoDataValueAsDouble(GDALMDArrayH hArray,
                                                  int* pbHasNoDataValue);
+int64_t CPL_DLL GDALMDArrayGetNoDataValueAsInt64(GDALMDArrayH hArray,
+                                                 int* pbHasNoDataValue);
+uint64_t CPL_DLL GDALMDArrayGetNoDataValueAsUInt64(GDALMDArrayH hArray,
+                                                  int* pbHasNoDataValue);
 int CPL_DLL GDALMDArraySetRawNoDataValue(GDALMDArrayH hArray, const void*);
 int CPL_DLL GDALMDArraySetNoDataValueAsDouble(GDALMDArrayH hArray,
                                               double dfNoDataValue);
+int CPL_DLL GDALMDArraySetNoDataValueAsInt64(GDALMDArrayH hArray,
+                                             int64_t nNoDataValue);
+int CPL_DLL GDALMDArraySetNoDataValueAsUInt64(GDALMDArrayH hArray,
+                                              uint64_t nNoDataValue);
 int CPL_DLL GDALMDArraySetScale(GDALMDArrayH hArray, double dfScale);
 int CPL_DLL GDALMDArraySetScaleEx(GDALMDArrayH hArray, double dfScale, GDALDataType eStorageType);
 double CPL_DLL GDALMDArrayGetScale(GDALMDArrayH hArray, int *pbHasValue);
