@@ -4,7 +4,7 @@ python setup.py bdist_wheel
 
 python -m venv test-wheel
 cd test-wheel
-. ./bin/activate
+source ./bin/activate
 python3 -m pip install -U pip wheel setuptools numpy
 pip install ../dist/gdal_utils-*.whl
 
