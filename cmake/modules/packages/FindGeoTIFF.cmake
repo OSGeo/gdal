@@ -74,27 +74,28 @@ find_package_handle_standard_args(GeoTIFF
 if(GEOTIFF_FOUND)
     set(GEOTIFF_LIBRARIES ${GEOTIFF_LIBRARY})
     set(GEOTIFF_INCLUDE_DIRS ${GEOTIFF_INCLUDE_DIR})
-    if(NOT TARGET GEOTIFF::GEOTIFF)
-        add_library(GEOTIFF::GEOTIFF UNKNOWN IMPORTED)
-        set_target_properties(GEOTIFF::GEOTIFF PROPERTIES
+    set(GeoTIFF_TARGET GEOTIFF::GEOTIFF)
+    if(NOT TARGET ${GeoTIFF_TARGET})
+        add_library(${GeoTIFF_TARGET} UNKNOWN IMPORTED)
+        set_target_properties(${GeoTIFF_TARGET} PROPERTIES
                               INTERFACE_INCLUDE_DIRECTORIES ${GEOTIFF_INCLUDE_DIR}
                               IMPORTED_LINK_INTERFACE_LANGUAGES C)
         if(EXISTS "${GEOTIFF_LIBRARY}")
-          set_target_properties(GEOTIFF::GEOTIFF PROPERTIES
+          set_target_properties(${GeoTIFF_TARGET} PROPERTIES
             IMPORTED_LINK_INTERFACE_LANGUAGES "C"
             IMPORTED_LOCATION "${GEOTIFF_LIBRARY}")
         endif()
         if(EXISTS "${GEOTIFF_LIBRARY_RELEASE}")
-          set_property(TARGET GEOTIFF::GEOTIFF APPEND PROPERTY
+          set_property(TARGET ${GeoTIFF_TARGET} APPEND PROPERTY
             IMPORTED_CONFIGURATIONS RELEASE)
-          set_target_properties(GEOTIFF::GEOTIFF PROPERTIES
+          set_target_properties(${GeoTIFF_TARGET} PROPERTIES
             IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "C"
             IMPORTED_LOCATION_RELEASE "${GEOTIFF_LIBRARY_RELEASE}")
         endif()
         if(EXISTS "${GEOTIFF_LIBRARY_DEBUG}")
-          set_property(TARGET GEOTIFF::GEOTIFF APPEND PROPERTY
+          set_property(TARGET ${GeoTIFF_TARGET} APPEND PROPERTY
             IMPORTED_CONFIGURATIONS DEBUG)
-          set_target_properties(GEOTIFF::GEOTIFF PROPERTIES
+          set_target_properties(${GeoTIFF_TARGET} PROPERTIES
             IMPORTED_LINK_INTERFACE_LANGUAGES_DEBUG "C"
             IMPORTED_LOCATION_DEBUG "${GEOTIFF_LIBRARY_DEBUG}")
         endif()

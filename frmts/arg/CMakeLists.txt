@@ -5,5 +5,5 @@ target_include_directories(gdal_ARG PRIVATE $<TARGET_PROPERTY:gdal_raw,SOURCE_DI
 if (GDAL_USE_JSONC_INTERNAL)
   gdal_add_vendored_lib(gdal_ARG libjson)
 else ()
-  gdal_target_link_libraries(gdal_ARG PRIVATE ${JSONC_LIBRARIES})
+  gdal_target_link_libraries(gdal_ARG PRIVATE ${JSONC_TARGET})
 endif ()

@@ -156,7 +156,7 @@ endif ()
 
 # Now external libraries
 if (NOT GDAL_USE_JSONC_INTERNAL)
-  gdal_target_link_libraries(cpl PRIVATE ${JSONC_LIBRARIES})
+  gdal_target_link_libraries(cpl PRIVATE ${JSONC_TARGET})
 endif ()
 
 if (NOT GDAL_USE_ZLIB_INTERNAL)
@@ -257,7 +257,7 @@ endif ()
 
 if (GDAL_USE_ZSTD)
   target_compile_definitions(cpl PRIVATE -DHAVE_ZSTD)
-  gdal_target_link_libraries(cpl PRIVATE ${ZSTD_LIBRARIES})
+  gdal_target_link_libraries(cpl PRIVATE ${ZSTD_TARGET})
 endif ()
 
 if (GDAL_USE_LIBLZMA)
