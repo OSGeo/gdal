@@ -694,6 +694,17 @@ if (NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
     NAMESPACE GDAL::
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gdal/
     EXPORT_LINK_INTERFACE_LIBRARIES)
+  if (NOT BUILD_SHARED_LIBS)
+    install(
+      FILES "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/GdalFindModulePath.cmake"
+      DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/gdal/")
+    foreach(dir IN ITEMS packages thirdparty 3.16 3.14 3.13 3.12)
+      install(
+        DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/${dir}"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/gdal")
+    endforeach()
+  endif ()
+
   include(CMakePackageConfigHelpers)
   write_basic_package_version_file(
     GDALConfigVersion.cmake

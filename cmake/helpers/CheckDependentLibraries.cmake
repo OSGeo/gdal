@@ -19,7 +19,10 @@ option(
   "Whether detected external libraries should be used by default. This should be set before CMakeCache.txt is created."
   ON)
 
-set(GDAL_IMPORT_DEPENDENCIES "")
+set(GDAL_IMPORT_DEPENDENCIES [[
+include(CMakeFindDependencyMacro)
+include("${CMAKE_CURRENT_LIST_DIR}/GdalFindModulePath.cmake")
+]])
 
 # Check that the configuration has a valid value for INTERFACE_INCLUDE_DIRECTORIES. This aimed at avoiding issues like
 # https://github.com/OSGeo/gdal/issues/5324
@@ -118,7 +121,7 @@ macro (gdal_check_package name purpose)
       gdal_check_package_target(${name} ${GDAL_CHECK_PACKAGE_${name}_TARGETS} REQUIRED)
       if (${name}_FOUND)
         get_filename_component(_find_dependency_args "${${name}_CONFIG}" NAME)
-        string(REPLACE ";" " " _find_dependency_args "${name} CONFIGS ${_find_dependency_args} ${_find_package_args}")
+        string(REPLACE ";" " " _find_dependency_args "${name} NAMES ${GDAL_CHECK_PACKAGE_${name}_NAMES} CONFIGS ${_find_dependency_args} ${_find_package_args}")
       endif ()
     endif ()
     if (NOT ${name}_FOUND)
@@ -130,7 +133,7 @@ macro (gdal_check_package name purpose)
         set(${name}_FOUND "${key}_FOUND")
       endif ()
       if (${name}_FOUND)
-        set(REPLACE ";" " " _find_dependency_args "${name} ${_find_package_args}")
+        string(REPLACE ";" " " _find_dependency_args "${name} ${_find_package_args}")
       endif()
     endif ()
   endif ()
@@ -164,12 +167,14 @@ macro (gdal_check_package name purpose)
         message(STATUS
           "${key} has been found, but is disabled due to GDAL_USE_EXTERNAL_LIBS=OFF. Enable it by setting GDAL_USE_${key}=ON"
           )
+        set(_find_dependency_args "")
       endif ()
     endif ()
     if (_gcpp_status AND _GCP_DISABLED_BY_DEFAULT)
       set(_gcpp_status OFF)
       if (HAVE_${key} AND NOT GDAL_USE_${key})
         message(STATUS "${key} has been found, but is disabled by default. Enable it by setting GDAL_USE_${key}=ON")
+        set(_find_dependency_args "")
       endif ()
     endif ()
     cmake_dependent_option(GDAL_USE_${key} "Set ON to use ${key}" ${_gcpp_status} "HAVE_${key}" OFF)
@@ -464,6 +469,9 @@ if (GDAL_USE_LIBKML)
   endif ()
 endif ()
 cmake_dependent_option(GDAL_USE_LIBKML "Set ON to use LibKML" ON LibKML_FOUND OFF)
+if (GDAL_USE_LIBKML)
+  string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(LibKML COMPONENTS DOM ENGINE)\n")
+endif ()
 
 gdal_check_package(Jasper "Enable JPEG2000 support" CAN_DISABLE)
 if (HAVE_JASPER)
@@ -570,7 +578,9 @@ define_find_package2(KEA libkea/KEACommon.h kea)
 gdal_check_package(KEA "Enable KEA driver" CAN_DISABLE)
 
 gdal_check_package(ECW "Enable ECW driver" CAN_DISABLE)
-gdal_check_package(NetCDF "Enable netCDF driver" CAN_DISABLE)
+gdal_check_package(NetCDF "Enable netCDF driver" CAN_DISABLE
+  # NAMES netCDF # Cf. https://github.com/OSGeo/gdal/pull/5453
+  TARGETS netCDF::netcdf NETCDF::netCDF)
 gdal_check_package(OGDI "Enable ogr_OGDI driver" CAN_DISABLE)
 # OpenCL warping gives different results than the ones expected by autotest, so disable it by default even if found.
 gdal_check_package(OpenCL "Enable OpenCL (may be used for warping)" DISABLED_BY_DEFAULT)
@@ -634,6 +644,9 @@ if (GDAL_USE_OPENJPEG)
   endif ()
 endif ()
 cmake_dependent_option(GDAL_USE_OPENJPEG "Set ON to use openjpeg" ON OPENJPEG_FOUND OFF)
+if (GDAL_USE_OPENJPEG)
+  string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(OpenJPEG MODULE)\n")
+endif ()
 
 # Only GRASS 7 is currently supported but we keep dual version support in cmake for possible future switch to GRASS 8.
 set(TMP_GRASS OFF)
