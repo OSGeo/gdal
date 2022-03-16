@@ -126,7 +126,7 @@ jobs:
         mv $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python/dist/GDAL-*.tar.gz gdal-python.tar.gz
         #mv $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python/gdal-utils/dist/*.whl gdal_utils-X.Y.Z.T-py3-none-any.whl
         #rm -rf $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python
-        mv $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python /tmp/superbuild/build/gdal/swig/python
+        mv $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python gdal-swig-python
         python3 -m venv myvenv
         source myvenv/bin/activate
         # Set PATH so that gdal-config is found
@@ -143,7 +143,7 @@ jobs:
         #rm -f myvenv/bin/gdal_edit.py
     - name: Standalone gdal-utils package from wheel
       run: |
-        mv /tmp/superbuild/build/gdal/swig/python $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python
+        mv gdal-swig-python $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python
         (cd $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python/gdal-utils && python setup.py bdist_wheel)
         mv $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python/gdal-utils/dist/*.whl gdal_utils-X.Y.Z.T-py3-none-any.whl
         rm -rf $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python
