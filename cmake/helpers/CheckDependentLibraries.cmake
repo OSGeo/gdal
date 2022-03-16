@@ -23,6 +23,9 @@ set(GDAL_IMPORT_DEPENDENCIES [[
 include(CMakeFindDependencyMacro)
 include("${CMAKE_CURRENT_LIST_DIR}/GdalFindModulePath.cmake")
 ]])
+if(TARGET Threads::Threads)
+  string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(Threads)\n")
+endif()
 
 # Check that the configuration has a valid value for INTERFACE_INCLUDE_DIRECTORIES. This aimed at avoiding issues like
 # https://github.com/OSGeo/gdal/issues/5324
@@ -313,8 +316,11 @@ find_package(PROJ 9 CONFIG QUIET)
 if (NOT PROJ_FOUND)
   find_package(PROJ 8 CONFIG QUIET)
 endif()
-if (NOT PROJ_FOUND)
+if (PROJ_FOUND)
+  string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(PROJ ${PROJ_VERSION_MAJOR} CONFIG})\n")
+else()
   find_package(PROJ 6.0 REQUIRED)
+  string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(PROJ 6.0)\n")
 endif ()
 
 gdal_check_package(TIFF "Support for the Tag Image File Format (TIFF)." VERSION 4.0 CAN_DISABLE)
