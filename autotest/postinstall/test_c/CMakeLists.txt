@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
-project(test_c C)
+project(test_c C CXX) # CXX for properly linking GDAL
 
 find_package(GDAL CONFIG REQUIRED)
 
