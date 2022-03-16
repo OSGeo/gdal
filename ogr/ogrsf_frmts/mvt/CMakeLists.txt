@@ -6,7 +6,7 @@ gdal_standard_includes(ogr_MVT)
 target_include_directories(ogr_MVT PRIVATE ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/osm)
 if (GDAL_USE_GEOS)
   target_compile_definitions(ogr_MVT PRIVATE -DHAVE_GEOS=1)
-  gdal_target_link_libraries(ogr_MVT PRIVATE ${GEOS_LIBRARIES})
+  gdal_target_link_libraries(ogr_MVT PRIVATE ${GEOS_TARGET})
 endif ()
 
 if (GDAL_USE_SQLITE3)

@@ -36,9 +36,10 @@ find_package_handle_standard_args(JSONC DEFAULT_MSG JSONC_LIBRARY JSONC_INCLUDE_
 if(JSONC_FOUND)
   set(JSONC_INCLUDE_DIRS ${JSONC_INCLUDE_DIR})
   set(JSONC_LIBRARIES ${JSONC_LIBRARY})
-  if(NOT TARGET JSONC::JSONC)
-      add_library(JSONC::JSONC UNKNOWN IMPORTED)
-      set_target_properties(JSONC::JSONC PROPERTIES
+  set(JSONC_TARGET JSONC::JSONC)
+  if(NOT TARGET ${JSONC_TARGET})
+      add_library(${JSONC_TARGET} UNKNOWN IMPORTED)
+      set_target_properties(${JSONC_TARGET} PROPERTIES
                             INTERFACE_INCLUDE_DIRECTORIES "${JSONC_INCLUDE_DIRS}"
                             IMPORTED_LINK_INTERFACE_LANGUAGES "C"
                             IMPORTED_LOCATION "${JSONC_LIBRARY}")

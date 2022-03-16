@@ -62,8 +62,7 @@ function(gdal_check_package_target name)
     if(TARGET ${target})
       gdal_check_target_is_valid(${target} _is_valid)
       if (_is_valid)
-        set(${name}_INCLUDE_DIRS "" PARENT_SCOPE)
-        set(${name}_LIBRARIES "${target}" PARENT_SCOPE)
+        set(${name}_TARGET "${target}" PARENT_SCOPE)
         set(${name}_FOUND TRUE PARENT_SCOPE)
         return()
       endif()
@@ -83,7 +82,7 @@ endfunction()
 # successful, allowing a fallback to Find modules.
 # The TARGETS parameter can define a list of candidate targets. If given, a
 # package will only be accepted if it defines one of the given targets. The matching
-# target will be saved in ${name}_LIBRARIES.
+# target name will be saved in ${name}_TARGET.
 # The NAMES and TARGETS map to GDAL_CHECK_PACKAGE_${name}_NAMES and
 # GDAL_CHECK_PACKAGE_${name}_TARGETS cache variables which can be used to
 # overwrite the default config and targets names.
@@ -291,6 +290,10 @@ gdal_check_package(EXPAT "Read and write XML formats" RECOMMENDED CAN_DISABLE
   NAMES expat
   TARGETS expat::expat EXPAT::EXPAT
 )
+if(EXPAT_FOUND AND NOT DEFINED EXPAT_TARGET)
+    set(EXPAT_TARGET EXPAT::EXPAT)
+endif()
+
 gdal_check_package(XercesC "Read and write XML formats (needed for GMLAS and ILI drivers)" CAN_DISABLE)
 
 gdal_check_package(ZLIB "zlib (external)" CAN_DISABLE)

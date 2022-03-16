@@ -4,5 +4,5 @@ gdal_standard_includes(ogr_GPX)
 
 if (GDAL_USE_EXPAT)
   target_compile_definitions(ogr_GPX PRIVATE -DHAVE_EXPAT=1)
-  gdal_target_link_libraries(ogr_GPX PRIVATE ${EXPAT_LIBRARIES})
+  gdal_target_link_libraries(ogr_GPX PRIVATE ${EXPAT_TARGET})
 endif ()
