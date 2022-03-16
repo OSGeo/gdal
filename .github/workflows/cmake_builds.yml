@@ -140,6 +140,19 @@ jobs:
         cp $GITHUB_WORKSPACE/autotest/gcore/data/byte.tif .
         LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib gdal_edit.py byte.tif -mo FOO=BAR
         rm -f myvenv/bin/gdal_edit.py
+    - name: Standalone gdal-utils package from wheel
+      run: |
+        (cd $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python/gdal-utils && python setup.py bdist_wheel)
+        mv $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python/gdal-utils/dist/*.whl gdal_utils-X.Y.Z.T-py3-none-any.whl
+        rm -rf $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python
+        python3 -m venv myvenv
+        source myvenv/bin/activate
+        # Set PATH so that gdal-config is found
+        PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH pip install gdal_utils-X.Y.Z.T-py3-none-any.whl
+        which gdal_edit
+        cp $GITHUB_WORKSPACE/autotest/gcore/data/byte.tif .
+        LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib gdal_edit byte.tif -mo FOO=BAR
+        pip uninstall -y gdal-utils
     - name: Test post-install usage (with pkg-config)
       run: |
         ./autotest/postinstall/test_pkg-config.sh $GITHUB_WORKSPACE/install-gdal
