@@ -3393,12 +3393,6 @@ def submain(argv: List[str], pool=None, pool_size=0) -> int:
 
 # vim: set tabstop=4 shiftwidth=4 expandtab:
 
-# if __name__ == '__main__':
-#     sys.exit(main(sys.argv))
-
-## PR #5296 - Test if moving this into osgeo/gdal2tiles.py solves:
-#   https://github.com/OSGeo/gdal/pull/5296#issuecomment-1037141210
-#
 # Running main() must be protected that way due to use of multiprocessing on Windows:
 # https://docs.python.org/3/library/multiprocessing.html#the-spawn-and-forkserver-start-methods
 if __name__ == '__main__':
