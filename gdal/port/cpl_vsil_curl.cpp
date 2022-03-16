@@ -5060,7 +5060,7 @@ void VSICurlClearCache( void )
     // FIXME ? Currently we have different filesystem instances for
     // vsicurl/, /vsis3/, /vsigs/ . So each one has its own cache of regions,
     // file size, etc.
-    CSLConstList papszPrefix = VSIFileManager::GetPrefixes();
+    char** papszPrefix = VSIFileManager::GetPrefixes();
     for( size_t i = 0; papszPrefix && papszPrefix[i]; ++i )
     {
         auto poFSHandler =
@@ -5070,6 +5070,7 @@ void VSICurlClearCache( void )
         if( poFSHandler )
             poFSHandler->ClearCache();
     }
+    CSLDestroy(papszPrefix);
 
     VSICurlStreamingClearCache();
 }
