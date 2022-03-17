@@ -29,7 +29,7 @@ endif ()
 
 # External libs then
 if (NOT GDAL_USE_JSONC_INTERNAL)
-  gdal_target_link_libraries(ogr_GMLAS PRIVATE ${JSONC_LIBRARIES})
+  gdal_target_link_libraries(ogr_GMLAS PRIVATE ${JSONC_TARGET})
 endif ()
 
 target_compile_definitions(ogr_GMLAS PRIVATE -DHAVE_XERCES=1)

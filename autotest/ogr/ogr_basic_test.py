@@ -461,7 +461,8 @@ def test_ogr_basic_12():
     f.SetField('fld', 2)
     gdal.PopErrorHandler()
     assert gdal.GetLastErrorMsg() != ''
-    assert f.GetField('fld') == 1
+    assert isinstance(f.GetField('fld'), bool)
+    assert f.GetField('fld') == True
 
     f.SetField('fld', '0')
     f.SetField('fld', '1')
@@ -470,7 +471,7 @@ def test_ogr_basic_12():
     f.SetField('fld', '2')
     gdal.PopErrorHandler()
     assert gdal.GetLastErrorMsg() != ''
-    assert f.GetField('fld') == 1
+    assert f.GetField('fld') == True
 
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -488,13 +489,15 @@ def test_ogr_basic_12():
     feat_def.AddFieldDefn(field_def)
 
     f = ogr.Feature(feat_def)
-    f.SetFieldIntegerList(0, [0, 1])
+    f.SetFieldIntegerList(0, [False, True])
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     f.SetFieldIntegerList(0, [0, 1, 2, 1])
     gdal.PopErrorHandler()
     assert gdal.GetLastErrorMsg() != ''
-    assert f.GetField('fld') == [0, 1, 1, 1]
+    for x in f.GetField('fld'):
+        assert isinstance(x, bool)
+    assert f.GetField('fld') == [False, True, True, True]
 
     # int16 integer
     feat_def = ogr.FeatureDefn()

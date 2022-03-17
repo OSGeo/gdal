@@ -694,6 +694,17 @@ if (NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
     NAMESPACE GDAL::
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gdal/
     EXPORT_LINK_INTERFACE_LIBRARIES)
+  if (NOT BUILD_SHARED_LIBS)
+    install(
+      FILES "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/GdalFindModulePath.cmake"
+      DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/gdal/")
+    foreach(dir IN ITEMS packages thirdparty 3.16 3.14 3.13 3.12)
+      install(
+        DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/${dir}"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/gdal")
+    endforeach()
+  endif ()
+
   include(CMakePackageConfigHelpers)
   write_basic_package_version_file(
     GDALConfigVersion.cmake
@@ -759,7 +770,13 @@ get_property(_packages_found GLOBAL PROPERTY PACKAGES_FOUND)
 foreach (_package IN LISTS _packages_found)
   string(TOUPPER ${_package} key)
   if (DEFINED GDAL_USE_${key} AND NOT GDAL_USE_${key})
-    string(APPEND disabled_packages " *${key} component has been detected, but is disabled with GDAL_USE_${key}=${GDAL_USE_${key}}\n")
+    if (DEFINED GDAL_USE_${key}_INTERNAL)
+      if (NOT GDAL_USE_${key}_INTERNAL)
+        string(APPEND disabled_packages " *${key} component has been detected, but is disabled with GDAL_USE_${key}=${GDAL_USE_${key}}, and the internal library is also disabled with GDAL_USE_${key}_INTERNAL=${GDAL_USE_${key}_INTERNAL}\n")
+      endif()
+    else ()
+      string(APPEND disabled_packages " *${key} component has been detected, but is disabled with GDAL_USE_${key}=${GDAL_USE_${key}}\n")
+    endif()
   endif ()
 endforeach ()
 if (disabled_packages)

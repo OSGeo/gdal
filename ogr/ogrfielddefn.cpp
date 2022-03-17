@@ -789,9 +789,12 @@ const char * OGRFieldDefn::GetFieldTypeName( OGRFieldType eType )
       case OFTDateTime:
         return "DateTime";
 
-      default:
-        return "(unknown)";
+      case OFTWideString:
+      case OFTWideStringList:
+        break;
     }
+
+    return "(unknown)";
 }
 
 /************************************************************************/
@@ -836,7 +839,7 @@ const char * OGRFieldDefn::GetFieldSubTypeName( OGRFieldSubType eSubType )
     switch( eSubType )
     {
       case OFSTNone:
-        return "None";
+        break;
 
       case OFSTBoolean:
         return "Boolean";
@@ -852,10 +855,8 @@ const char * OGRFieldDefn::GetFieldSubTypeName( OGRFieldSubType eSubType )
 
       case OFSTUUID:
         return "UUID";
-
-      default:
-        return "(unknown)";
     }
+    return "None";
 }
 
 /************************************************************************/

@@ -4764,10 +4764,10 @@ SWIGINTERN void OGRGeomFieldDefnShadow_SetNullable(OGRGeomFieldDefnShadow *self,
   OGRGeometryShadow* CreateGeometryFromWkb( size_t len, char *bin_string,
                                             OSRSpatialReferenceShadow *reference=NULL ) {
     OGRGeometryH geom = NULL;
-    OGRErr err = OGR_G_CreateFromWkb( (unsigned char *) bin_string,
-                                      reference,
-                                      &geom,
-                                      len );
+    OGRErr err = OGR_G_CreateFromWkbEx( (unsigned char *) bin_string,
+                                        reference,
+                                        &geom,
+                                        len );
     if (err != 0 ) {
        CPLError(CE_Failure, err, "%s", OGRErrMessages(err));
        return NULL;
@@ -5034,14 +5034,14 @@ SWIGINTERN OGRErr OGRGeometryShadow_ExportToWkt(OGRGeometryShadow *self,char **a
 SWIGINTERN OGRErr OGRGeometryShadow_ExportToIsoWkt(OGRGeometryShadow *self,char **argout){
     return OGR_G_ExportToIsoWkt(self, argout);
   }
-SWIGINTERN OGRErr OGRGeometryShadow_ExportToWkb(OGRGeometryShadow *self,size_t *nLen,char **pBuf,OGRwkbByteOrder byte_order=wkbXDR){
+SWIGINTERN OGRErr OGRGeometryShadow_ExportToWkb(OGRGeometryShadow *self,size_t *nLen,char **pBuf,OGRwkbByteOrder byte_order=wkbNDR){
     *nLen = OGR_G_WkbSizeEx( self );
     *pBuf = (char *) VSI_MALLOC_VERBOSE( *nLen );
     if( *pBuf == NULL )
         return 6;
     return OGR_G_ExportToWkb(self, byte_order, (unsigned char*) *pBuf );
   }
-SWIGINTERN OGRErr OGRGeometryShadow_ExportToIsoWkb(OGRGeometryShadow *self,size_t *nLen,char **pBuf,OGRwkbByteOrder byte_order=wkbXDR){
+SWIGINTERN OGRErr OGRGeometryShadow_ExportToIsoWkb(OGRGeometryShadow *self,size_t *nLen,char **pBuf,OGRwkbByteOrder byte_order=wkbNDR){
     *nLen = OGR_G_WkbSizeEx( self );
     *pBuf = (char *) VSI_MALLOC_VERBOSE( *nLen );
     if( *pBuf == NULL )
@@ -5460,7 +5460,7 @@ SWIGINTERN double OGRFieldDomainShadow_GetMinAsDouble(OGRFieldDomainShadow *self
       if( eType == OFTInteger )
           return psVal->Integer;
       if( eType == OFTInteger64 )
-          return psVal->Integer64;
+          return (double)psVal->Integer64;
       if( eType == OFTReal )
           return psVal->Real;
       return CPLAtof("-inf");
@@ -5478,7 +5478,7 @@ SWIGINTERN double OGRFieldDomainShadow_GetMaxAsDouble(OGRFieldDomainShadow *self
       if( eType == OFTInteger )
           return psVal->Integer;
       if( eType == OFTInteger64 )
-          return psVal->Integer64;
+          return (double)psVal->Integer64;
       if( eType == OFTReal )
           return psVal->Real;
       return CPLAtof("inf");
@@ -22376,7 +22376,7 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToWkb(PyObject *SWIGUNUSEDPARM(self), 
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   size_t *arg2 = (size_t *) 0 ;
   char **arg3 = (char **) 0 ;
-  OGRwkbByteOrder arg4 = (OGRwkbByteOrder) wkbXDR ;
+  OGRwkbByteOrder arg4 = (OGRwkbByteOrder) wkbNDR ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   size_t nLen2 = 0 ;
@@ -22478,7 +22478,7 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToIsoWkb(PyObject *SWIGUNUSEDPARM(self
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   size_t *arg2 = (size_t *) 0 ;
   char **arg3 = (char **) 0 ;
-  OGRwkbByteOrder arg4 = (OGRwkbByteOrder) wkbXDR ;
+  OGRwkbByteOrder arg4 = (OGRwkbByteOrder) wkbNDR ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   size_t nLen2 = 0 ;
@@ -34362,7 +34362,7 @@ static PyMethodDef SwigMethods[] = {
 		"GDAL 2.0 \n"
 		""},
 	 { "Geometry_ExportToWkb", (PyCFunction)(void(*)(void))_wrap_Geometry_ExportToWkb, METH_VARARGS|METH_KEYWORDS, "\n"
-		"Geometry_ExportToWkb(Geometry self, OGRwkbByteOrder byte_order=wkbXDR) -> OGRErr\n"
+		"Geometry_ExportToWkb(Geometry self, OGRwkbByteOrder byte_order=wkbNDR) -> OGRErr\n"
 		"OGRErr\n"
 		"OGR_G_ExportToWkb(OGRGeometryH hGeom, OGRwkbByteOrder eOrder, unsigned\n"
 		"char *pabyDstBuffer)\n"
@@ -34395,7 +34395,7 @@ static PyMethodDef SwigMethods[] = {
 		"Currently OGRERR_NONE is always returned. \n"
 		""},
 	 { "Geometry_ExportToIsoWkb", (PyCFunction)(void(*)(void))_wrap_Geometry_ExportToIsoWkb, METH_VARARGS|METH_KEYWORDS, "\n"
-		"Geometry_ExportToIsoWkb(Geometry self, OGRwkbByteOrder byte_order=wkbXDR) -> OGRErr\n"
+		"Geometry_ExportToIsoWkb(Geometry self, OGRwkbByteOrder byte_order=wkbNDR) -> OGRErr\n"
 		"OGRErr\n"
 		"OGR_G_ExportToIsoWkb(OGRGeometryH hGeom, OGRwkbByteOrder eOrder,\n"
 		"unsigned char *pabyDstBuffer)\n"

@@ -19,5 +19,5 @@ target_include_directories(ogr_geojson PRIVATE $<TARGET_PROPERTY:appslib,SOURCE_
 if (GDAL_USE_JSONC_INTERNAL)
   gdal_add_vendored_lib(ogr_geojson libjson)
 else ()
-  gdal_target_link_libraries(ogr_geojson PRIVATE ${JSONC_LIBRARIES})
+  gdal_target_link_libraries(ogr_geojson PRIVATE ${JSONC_TARGET})
 endif ()

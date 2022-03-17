@@ -562,8 +562,8 @@ int* VSIGSFSHandler::UnlinkBatch( CSLConstList papszFiles )
                                    CPLSPrintf("%d",CPL_HTTP_MAX_RETRY)));
 
     // For debug / testing only
-    const int nBatchSize = std::min(100,
-        atoi(CPLGetConfigOption("CPL_VSIGS_UNLINK_BATCH_SIZE", "100")));
+    const int nBatchSize = std::max(1, std::min(100,
+        atoi(CPLGetConfigOption("CPL_VSIGS_UNLINK_BATCH_SIZE", "100"))));
     CPLString osPOSTContent;
     for( int i = 0; papszFiles && papszFiles[i]; i++ )
     {

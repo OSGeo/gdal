@@ -1396,14 +1396,12 @@ bool GDALExtendedDataType::CopyValue(const void* pSrc,
         memcpy(&srcStrPtr, pSrc, sizeof(const char*));
         if( dstType.GetNumericDataType() == GDT_Int64 )
         {
-            *(static_cast<int64_t*>(pDst)) = static_cast<int64_t>(CPLAtoGIntBig(srcStrPtr));
+            *(static_cast<int64_t*>(pDst)) = srcStrPtr == nullptr ? 0 : static_cast<int64_t>(atoll(srcStrPtr));
         }
-#if HAVE_STRTOULL
         else if( dstType.GetNumericDataType() == GDT_UInt64 )
         {
-            *(static_cast<uint64_t*>(pDst)) = static_cast<uint64_t>(strtoull(srcStrPtr, nullptr, 10));
+            *(static_cast<uint64_t*>(pDst)) = srcStrPtr == nullptr ? 0 : static_cast<uint64_t>(strtoull(srcStrPtr, nullptr, 10));
         }
-#endif
         else
         {
             // FIXME GDT_UInt64
@@ -2186,6 +2184,7 @@ double GDALMDArray::GetNoDataValueAsDouble(bool* pbHasNoData) const
 {
     const void* pNoData = GetRawNoDataValue();
     double dfNoData = 0.0;
+    // coverity[alloc_arg]
     bool ok = pNoData != nullptr &&
         GDALExtendedDataType::CopyValue(pNoData,
                     GetDataType(),
@@ -2215,6 +2214,7 @@ int64_t GDALMDArray::GetNoDataValueAsInt64(bool* pbHasNoData) const
 {
     const void* pNoData = GetRawNoDataValue();
     int64_t nNoData = GDAL_PAM_DEFAULT_NODATA_VALUE_INT64;
+    // coverity[alloc_arg]
     bool ok = pNoData != nullptr &&
               GDALExtendedDataType::CopyValue(pNoData,
                             GetDataType(),
@@ -2244,6 +2244,7 @@ uint64_t GDALMDArray::GetNoDataValueAsUInt64(bool* pbHasNoData) const
 {
     const void* pNoData = GetRawNoDataValue();
     uint64_t nNoData = GDAL_PAM_DEFAULT_NODATA_VALUE_UINT64;
+    // coverity[alloc_arg]
     bool ok = pNoData != nullptr &&
               GDALExtendedDataType::CopyValue(pNoData,
                             GetDataType(),

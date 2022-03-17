@@ -66,5 +66,5 @@ endif ()
 
 if (GDAL_USE_ZSTD)
   target_compile_definitions(gdal_MRF PRIVATE -DZSTD_SUPPORT)
-  gdal_target_link_libraries(gdal_MRF PRIVATE ${ZSTD_LIBRARIES})
+  gdal_target_link_libraries(gdal_MRF PRIVATE ${ZSTD_TARGET})
 endif ()

@@ -166,7 +166,7 @@ register_test(
   GDAL_RB_LOCK_TYPE
   SPIN)
 
-if ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(x86_64|AMD64)" AND CMAKE_SIZEOF_VOID_P EQUAL 8)
+if ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(x86_64|AMD64)" AND CMAKE_SIZEOF_VOID_P EQUAL 8 AND HAVE_SSE_AT_COMPILE_TIME)
   gdal_test_target(testsse2 testsse.cpp)
   gdal_test_target(testsse2_emulation testsse.cpp)
   target_compile_definitions(testsse2_emulation PRIVATE -DUSE_SSE2_EMULATION -DNO_WARN_USE_SSE2_EMULATION)

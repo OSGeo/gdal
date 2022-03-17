@@ -4324,6 +4324,8 @@ class Feature(object):
             return None
         fld_type = self.GetFieldType(fld_index)
         if fld_type == OFTInteger:
+            if self.GetFieldDefnRef(fld_index).GetSubType() == OFSTBoolean:
+                return bool(self.GetFieldAsInteger(fld_index))
             return self.GetFieldAsInteger(fld_index)
         if fld_type == OFTInteger64:
             return self.GetFieldAsInteger64(fld_index)
@@ -4332,7 +4334,10 @@ class Feature(object):
         if fld_type == OFTStringList:
             return self.GetFieldAsStringList(fld_index)
         if fld_type == OFTIntegerList:
-            return self.GetFieldAsIntegerList(fld_index)
+            ret = self.GetFieldAsIntegerList(fld_index)
+            if self.GetFieldDefnRef(fld_index).GetSubType() == OFSTBoolean:
+                 ret = [bool(x) for x in ret]
+            return ret
         if fld_type == OFTInteger64List:
             return self.GetFieldAsInteger64List(fld_index)
         if fld_type == OFTRealList:
@@ -5773,7 +5778,7 @@ class Geometry(object):
 
     def ExportToWkb(self, *args, **kwargs):
         r"""
-        ExportToWkb(Geometry self, OGRwkbByteOrder byte_order=wkbXDR) -> OGRErr
+        ExportToWkb(Geometry self, OGRwkbByteOrder byte_order=wkbNDR) -> OGRErr
         OGRErr
         OGR_G_ExportToWkb(OGRGeometryH hGeom, OGRwkbByteOrder eOrder, unsigned
         char *pabyDstBuffer)
@@ -5809,7 +5814,7 @@ class Geometry(object):
 
     def ExportToIsoWkb(self, *args, **kwargs):
         r"""
-        ExportToIsoWkb(Geometry self, OGRwkbByteOrder byte_order=wkbXDR) -> OGRErr
+        ExportToIsoWkb(Geometry self, OGRwkbByteOrder byte_order=wkbNDR) -> OGRErr
         OGRErr
         OGR_G_ExportToIsoWkb(OGRGeometryH hGeom, OGRwkbByteOrder eOrder,
         unsigned char *pabyDstBuffer)

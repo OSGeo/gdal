@@ -2081,7 +2081,8 @@ static int TestSpatialFilter( OGRLayer *poLayer, int iGeomField )
     int nCountInf = 0;
     for( auto&& poFeatureIter: poLayer )
     {
-        if( poFeatureIter->GetGeomFieldRef(iGeomField) != nullptr )
+        auto poGeomIter = poFeatureIter->GetGeomFieldRef(iGeomField);
+        if( poGeomIter != nullptr )
             nCountInf ++;
     }
 
@@ -2104,7 +2105,8 @@ static int TestSpatialFilter( OGRLayer *poLayer, int iGeomField )
     int nCountHuge = 0;
     for( auto&& poFeatureIter: poLayer )
     {
-        if( poFeatureIter->GetGeomFieldRef(iGeomField) != nullptr )
+        auto poGeomIter = poFeatureIter->GetGeomFieldRef(iGeomField);
+        if( poGeomIter != nullptr )
             nCountHuge ++;
     }
 
@@ -2116,7 +2118,8 @@ static int TestSpatialFilter( OGRLayer *poLayer, int iGeomField )
     int nExpected = 0;
     for( auto&& poFeatureIter: poLayer )
     {
-        if( poFeatureIter->GetGeomFieldRef(iGeomField) != nullptr )
+        auto poGeomIter = poFeatureIter->GetGeomFieldRef(iGeomField);
+        if( poGeomIter != nullptr && !poGeomIter->IsEmpty() )
             nExpected ++;
     }
     LOG_ACTION(poLayer->ResetReading());

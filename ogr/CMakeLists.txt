@@ -94,7 +94,7 @@ gdal_target_link_libraries(ogr PRIVATE PROJ::proj)
 # External libs then
 if (GDAL_USE_GEOS)
   target_compile_definitions(ogr PRIVATE -DHAVE_GEOS=1)
-  gdal_target_link_libraries(ogr PRIVATE ${GEOS_LIBRARIES})
+  gdal_target_link_libraries(ogr PRIVATE ${GEOS_TARGET})
 endif ()
 
 if (GDAL_USE_SFCGAL)
@@ -123,7 +123,7 @@ endif ()
 
 if (GDAL_USE_EXPAT)
   target_compile_definitions(ogr PRIVATE -DHAVE_EXPAT)
-  gdal_target_link_libraries(ogr PRIVATE ${EXPAT_LIBRARIES})
+  gdal_target_link_libraries(ogr PRIVATE ${EXPAT_TARGET})
 endif ()
 
 if (GDAL_USE_XERCESC)
@@ -133,7 +133,7 @@ if (GDAL_USE_XERCESC)
 endif ()
 
 if (NOT GDAL_USE_JSONC_INTERNAL)
-  gdal_target_link_libraries(ogr PRIVATE ${JSONC_LIBRARIES})
+  gdal_target_link_libraries(ogr PRIVATE ${JSONC_TARGET})
 endif ()
 
 include(TargetPublicHeader)
