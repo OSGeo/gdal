@@ -124,6 +124,13 @@ if ((EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/cpl_config.h") AND NOT ("${CMAKE_CURREN
     )
 endif ()
 
+file(TO_CMAKE_PATH "${CMAKE_INSTALL_PREFIX}/${GDAL_RESOURCE_PATH}" INST_DATA_PATH)
+target_compile_definitions(cpl PRIVATE INST_DATA="${INST_DATA_PATH}")
+
+if(CMAKE_INSTALL_FULL_SYSCONFDIR)
+    target_compile_definitions(cpl PRIVATE SYSCONFDIR="${CMAKE_INSTALL_FULL_SYSCONFDIR}")
+endif()
+
 if (WIN32)
   target_sources(cpl PRIVATE cpl_vsil_win32.cpp)
 else ()
