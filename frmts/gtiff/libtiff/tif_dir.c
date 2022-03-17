@@ -333,13 +333,13 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 		break;
 	case TIFFTAG_XRESOLUTION:
         dblval = va_arg(ap, double);
-        if( dblval < 0 )
+        if( dblval != dblval || dblval < 0 )
             goto badvaluedouble;
 		td->td_xresolution = _TIFFClampDoubleToFloat( dblval );
 		break;
 	case TIFFTAG_YRESOLUTION:
         dblval = va_arg(ap, double);
-        if( dblval < 0 )
+        if( dblval != dblval || dblval < 0 )
             goto badvaluedouble;
 		td->td_yresolution = _TIFFClampDoubleToFloat( dblval );
 		break;
