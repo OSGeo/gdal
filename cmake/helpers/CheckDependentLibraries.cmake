@@ -599,36 +599,7 @@ gdal_check_package(NetCDF "Enable netCDF driver" CAN_DISABLE
 gdal_check_package(OGDI "Enable ogr_OGDI driver" CAN_DISABLE)
 # OpenCL warping gives different results than the ones expected by autotest, so disable it by default even if found.
 gdal_check_package(OpenCL "Enable OpenCL (may be used for warping)" DISABLED_BY_DEFAULT)
-
-# FindPostgreSQL.cmake requires the server includes to be present, but we
-# don't need them. So if after a first detection PostgreSQL_INCLUDE_DIR
-# is set to a sensible value, then restart detection by setting
-# PostgreSQL_TYPE_INCLUDE_DIR (the variable for server includes) to
-# PostgreSQL_INCLUDE_DIR
-if (GDAL_USE_POSTGRESQL)
-     set(postgresq_requested TRUE)
-     if(PostgreSQL_INCLUDE_DIR AND NOT (PostgreSQL_INCLUDE_DIR MATCHES "NOTFOUND") AND (PostgreSQL_TYPE_INCLUDE_DIR MATCHES "NOTFOUND"))
-        unset(GDAL_USE_POSTGRESQL)
-        unset(GDAL_USE_POSTGRESQL CACHE)
-     endif()
-endif()
 gdal_check_package(PostgreSQL "" CAN_DISABLE)
-if( NOT PostgreSQL_FOUND AND NOT (PostgreSQL_INCLUDE_DIR MATCHES "NOTFOUND") AND (PostgreSQL_TYPE_INCLUDE_DIR MATCHES "NOTFOUND"))
-    message(STATUS "PostgreSQL_INCLUDE_DIR found, but not PostgreSQL_TYPE_INCLUDE_DIR. Retrying")
-    set(PostgreSQL_TYPE_INCLUDE_DIR "${PostgreSQL_INCLUDE_DIR}")
-    unset(PostgreSQL_FOUND)
-    unset(POSTGRESQL_FOUND)
-    unset(GDAL_USE_POSTGRESQL)
-    unset(GDAL_USE_POSTGRESQL CACHE)
-    gdal_check_package(PostgreSQL "" CAN_DISABLE)
-    if (PostgreSQL_FOUND)
-        message(STATUS "PostgreSQL found")
-    elseif (postgresq_requested)
-        set(GDAL_USE_POSTGRESQL "Set ON to use POSTGRESQL" ON CACHE FORCE)
-        message(FATAL_ERROR "Configured to use POSTGRESQL, but not found")
-    endif ()
-endif()
-
 gdal_check_package(FYBA "enable ogr_SOSI driver" CAN_DISABLE)
 gdal_check_package(LibLZMA "LZMA compression" CAN_DISABLE)
 gdal_check_package(LZ4 "LZ4 compression" CAN_DISABLE)
