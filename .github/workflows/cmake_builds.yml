@@ -10,6 +10,10 @@ on:
         paths-ignore:
             - 'doc/**'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
 env:
   CMAKE_UNITY_BUILD: OFF
 
