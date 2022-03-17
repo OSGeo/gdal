@@ -453,7 +453,7 @@ jobs:
         brew update
         brew outdated
         brew install postgresql || brew link postgresql
-        brew install freexl libxml2 libspatialite geos proj@7 libgeotiff openjpeg giflib szip postgis poppler doxygen unixodbc
+        brew install freexl libxml2 libspatialite geos proj@7 libgeotiff openjpeg giflib libaec postgis poppler doxygen unixodbc
         brew install ccache swig
         # gdal is automatically installed as a dependency for postgis
         brew uninstall --ignore-dependencies gdal
