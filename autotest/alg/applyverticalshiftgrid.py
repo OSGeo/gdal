@@ -295,7 +295,8 @@ def test_applyverticalshiftgrid_6():
     grid_ds = None
 
     ds = gdal.Warp('', '../gcore/data/byte.tif', format='MEM',
-                   dstSRS='+proj=utm +zone=11 +datum=NAD27 +geoidgrids=./tmp/applyverticalshiftgrid_6.gtx +vunits=m +no_defs')
+                   srcSRS='EPSG:32611',
+                   dstSRS='+proj=utm +zone=11 +datum=WGS84 +geoidgrids=./tmp/applyverticalshiftgrid_6.gtx +vunits=m +no_defs')
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 4783
 
@@ -314,7 +315,8 @@ def test_applyverticalshiftgrid_7():
     grid_ds = None
 
     ds = gdal.Warp('', '../gcore/data/byte.tif', format='MEM',
-                   dstSRS='+proj=utm +zone=11 +datum=NAD27 +geoidgrids=./tmp/applyverticalshiftgrid_7.gtx +vunits=m +no_defs')
+                   srcSRS='EPSG:32611',
+                   dstSRS='+proj=utm +zone=11 +datum=WGS84 +geoidgrids=./tmp/applyverticalshiftgrid_7.gtx +vunits=m +no_defs')
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 4783
 
