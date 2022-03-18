@@ -21,13 +21,6 @@
 #     Points to the CryptoPP libraries that should be passed to
 #     target_link_libararies.
 #
-include(CMakePushCheckState)
-if(CMAKE_CXX_COMPILER_LOADED)
-    include(CheckCXXSourceCompiles)
-else()
-    # This look for Crypto++ C++ library. without C++ Compiler it is nonsense.
-    return()
-endif()
 
 if(CMAKE_VERSION VERSION_LESS 3.12)
     if(CRYPTOPP_ROOT)
@@ -56,7 +49,12 @@ if(CRYPTOPP_INCLUDE_DIR)
     endif()
 endif()
 
-if(CRYPTOPP_INCLUDE_DIR AND CRYPTOPP_LIBRARY AND NOT DEFINED CRYPTOPP_TEST_KNOWNBUG)
+if(NOT CMAKE_CXX_COMPILER_LOADED)
+    message(AUTHOR_WARNING "CXX language not enabled: Skipping detection of issue with clang++.")
+    set(CRYPTOPP_TEST_KNOWNBUG TRUE)
+elseif(CRYPTOPP_INCLUDE_DIR AND CRYPTOPP_LIBRARY)
+    include(CMakePushCheckState)
+    include(CheckCXXSourceCompiles)
     cmake_push_check_state(RESET)
     set(CMAKE_REQUIRED_LIBRARIES ${CRYPTOPP_LIBRARY})
     set(CMAKE_REQUIRED_INCLUDES ${CRYPTOPP_INCLUDE_DIR})
@@ -80,7 +78,7 @@ if(CRYPTOPP_FOUND)
         add_library(CRYPTOPP::CRYPTOPP UNKNOWN IMPORTED)
         set_target_properties(CRYPTOPP::CRYPTOPP PROPERTIES
                               INTERFACE_INCLUDE_DIRECTORIES ${CRYPTOPP_INCLUDE_DIR}
-                              IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+                              IMPORTED_LINK_INTERFACE_LANGUAGES "CXX"
                               IMPORTED_LOCATION ${CRYPTOPP_LIBRARY})
    endif()
 endif()

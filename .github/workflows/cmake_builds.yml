@@ -173,12 +173,7 @@ jobs:
         ./autotest/postinstall/test_gdal-config.sh $GITHUB_WORKSPACE/install-gdal-static --static
     - name: Test post-install usage (static, with CMake)
       run: |
-        if ./autotest/postinstall/test_cmake.sh $GITHUB_WORKSPACE/install-gdal-static --static; then
-          echo 'Unexpected pass' >&2
-          exit 1
-        else
-          echo 'Expected fail'
-        fi
+        ./autotest/postinstall/test_cmake.sh $GITHUB_WORKSPACE/install-gdal-static --static
     - name: ccache statistics
       run: ccache -s
 

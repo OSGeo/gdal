@@ -118,7 +118,13 @@ if(SQLite3_INCLUDE_DIR AND SQLite3_LIBRARY)
          int main(){
           return sqlite3_auto_extension ((void (*)(void)) 0);
          }")
-    check_cxx_source_compiles("${SQLITE3_AUTO_EXTENSION_CHECK}" SQLite3_HAS_NON_DEPRECATED_AUTO_EXTENSION)
+    if(CMAKE_C_COMPILER_LOADED)
+        check_c_source_compiles("${SQLITE3_AUTO_EXTENSION_CHECK}" SQLite3_HAS_NON_DEPRECATED_AUTO_EXTENSION)
+    elseif(CMAKE_CXX_COMPILER_LOADED)
+        check_cxx_source_compiles("${SQLITE3_AUTO_EXTENSION_CHECK}" SQLite3_HAS_NON_DEPRECATED_AUTO_EXTENSION)
+    else()
+        message(AUTHOR_WARNING "C and CXX languages not enabled: Skipping detection of sqlite3_auto_extension.")
+    endif()
     cmake_pop_check_state()
 endif()
 mark_as_advanced(SQLite3_LIBRARY SQLite3_INCLUDE_DIR SQLite3_HAS_COLUMN_METADATA SQLite3_HAS_RTREE)
@@ -136,7 +142,7 @@ if(SQLite3_FOUND)
     add_library(SQLite::SQLite3 UNKNOWN IMPORTED)
     set_target_properties(SQLite::SQLite3 PROPERTIES
                           INTERFACE_INCLUDE_DIRECTORIES "${SQLite3_INCLUDE_DIRS}"
-                          IMPORTED_LINK_INTERFACE_LANGUAGES "CXX"
+                          IMPORTED_LINK_INTERFACE_LANGUAGES "C"
                           IMPORTED_LOCATION "${SQLite3_LIBRARY}")
     if(SQLite3_HAS_COLUMN_METADATA)
         set_property(TARGET SQLite::SQLite3 APPEND PROPERTY

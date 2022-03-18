@@ -21,8 +21,12 @@ option(
 
 set(GDAL_IMPORT_DEPENDENCIES [[
 include(CMakeFindDependencyMacro)
+include("${CMAKE_CURRENT_LIST_DIR}/DefineFindPackage2.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/GdalFindModulePath.cmake")
 ]])
+if(TARGET Threads::Threads)
+  string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(Threads)\n")
+endif()
 
 # Check that the configuration has a valid value for INTERFACE_INCLUDE_DIRECTORIES. This aimed at avoiding issues like
 # https://github.com/OSGeo/gdal/issues/5324
@@ -94,8 +98,9 @@ macro (gdal_check_package name purpose)
   set(_multiValueArgs COMPONENTS TARGETS)
   cmake_parse_arguments(_GCP "${_options}" "${_oneValueArgs}" "${_multiValueArgs}" ${ARGN})
   string(TOUPPER ${name} key)
+  set(_find_dependency "")
   set(_find_dependency_args "")
-  find_package2(${name} QUIET)
+  find_package2(${name} QUIET OUT_DEPENDENCY _find_dependency)
   if (NOT DEFINED ${key}_FOUND)
     set(_find_package_args)
     if (_GCP_VERSION)
@@ -181,11 +186,15 @@ macro (gdal_check_package name purpose)
     message(FATAL_ERROR "Programming error: missing CAN_DISABLE or DISABLED_BY_DEFAULT option for component ${name}")
   endif ()
 
-  if(NOT BUILD_SHARED_LIBS AND GDAL_USE_${key} AND _find_dependency_args)
+  if(_find_dependency_args)
     string(REPLACE "\"" "\\\"" _find_dependency_args "${_find_dependency_args}")
-    string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(${_find_dependency_args})\n")
+    set(_find_dependency "find_dependency(${_find_dependency_args})\n")
+  endif()
+  if(NOT BUILD_SHARED_LIBS AND GDAL_USE_${key} AND _find_dependency)
+    string(APPEND GDAL_IMPORT_DEPENDENCIES "${_find_dependency}")
   endif()
   unset(_find_dependency_args)
+  unset(_find_dependency)
 endmacro ()
 
 function (split_libpath _lib)
@@ -313,8 +322,11 @@ find_package(PROJ 9 CONFIG QUIET)
 if (NOT PROJ_FOUND)
   find_package(PROJ 8 CONFIG QUIET)
 endif()
-if (NOT PROJ_FOUND)
+if (PROJ_FOUND)
+  string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(PROJ ${PROJ_VERSION_MAJOR} CONFIG})\n")
+else()
   find_package(PROJ 6.0 REQUIRED)
+  string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(PROJ 6.0)\n")
 endif ()
 
 gdal_check_package(TIFF "Support for the Tag Image File Format (TIFF)." VERSION 4.0 CAN_DISABLE)
@@ -587,36 +599,7 @@ gdal_check_package(NetCDF "Enable netCDF driver" CAN_DISABLE
 gdal_check_package(OGDI "Enable ogr_OGDI driver" CAN_DISABLE)
 # OpenCL warping gives different results than the ones expected by autotest, so disable it by default even if found.
 gdal_check_package(OpenCL "Enable OpenCL (may be used for warping)" DISABLED_BY_DEFAULT)
-
-# FindPostgreSQL.cmake requires the server includes to be present, but we
-# don't need them. So if after a first detection PostgreSQL_INCLUDE_DIR
-# is set to a sensible value, then restart detection by setting
-# PostgreSQL_TYPE_INCLUDE_DIR (the variable for server includes) to
-# PostgreSQL_INCLUDE_DIR
-if (GDAL_USE_POSTGRESQL)
-     set(postgresq_requested TRUE)
-     if(PostgreSQL_INCLUDE_DIR AND NOT (PostgreSQL_INCLUDE_DIR MATCHES "NOTFOUND") AND (PostgreSQL_TYPE_INCLUDE_DIR MATCHES "NOTFOUND"))
-        unset(GDAL_USE_POSTGRESQL)
-        unset(GDAL_USE_POSTGRESQL CACHE)
-     endif()
-endif()
 gdal_check_package(PostgreSQL "" CAN_DISABLE)
-if( NOT PostgreSQL_FOUND AND NOT (PostgreSQL_INCLUDE_DIR MATCHES "NOTFOUND") AND (PostgreSQL_TYPE_INCLUDE_DIR MATCHES "NOTFOUND"))
-    message(STATUS "PostgreSQL_INCLUDE_DIR found, but not PostgreSQL_TYPE_INCLUDE_DIR. Retrying")
-    set(PostgreSQL_TYPE_INCLUDE_DIR "${PostgreSQL_INCLUDE_DIR}")
-    unset(PostgreSQL_FOUND)
-    unset(POSTGRESQL_FOUND)
-    unset(GDAL_USE_POSTGRESQL)
-    unset(GDAL_USE_POSTGRESQL CACHE)
-    gdal_check_package(PostgreSQL "" CAN_DISABLE)
-    if (PostgreSQL_FOUND)
-        message(STATUS "PostgreSQL found")
-    elseif (postgresq_requested)
-        set(GDAL_USE_POSTGRESQL "Set ON to use POSTGRESQL" ON CACHE FORCE)
-        message(FATAL_ERROR "Configured to use POSTGRESQL, but not found")
-    endif ()
-endif()
-
 gdal_check_package(FYBA "enable ogr_SOSI driver" CAN_DISABLE)
 gdal_check_package(LibLZMA "LZMA compression" CAN_DISABLE)
 gdal_check_package(LZ4 "LZ4 compression" CAN_DISABLE)

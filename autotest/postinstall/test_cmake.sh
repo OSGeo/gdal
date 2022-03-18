@@ -16,6 +16,7 @@ if [ -z "$prefix" ]; then
 fi
 
 export PKG_CONFIG_PATH=$prefix/lib/pkgconfig
+export VERBOSE=1
 
 # Run tests from shell, count any errors
 ERRORS=0
