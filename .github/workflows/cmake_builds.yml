@@ -122,10 +122,7 @@ jobs:
     - name: Standalone Python bindings build <s>and gdal-utils package</s>
       run: |
         (cd $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python && python setup.py sdist)
-        #(cd $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python/gdal-utils && python setup.py bdist_wheel)
         mv $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python/dist/GDAL-*.tar.gz gdal-python.tar.gz
-        #mv $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python/gdal-utils/dist/*.whl gdal_utils-X.Y.Z.T-py3-none-any.whl
-        #rm -rf $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python
         mv $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python gdal-swig-python
         python3 -m venv myvenv
         source myvenv/bin/activate
@@ -136,11 +133,6 @@ jobs:
         LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib ldd myvenv/lib/python3.8/site-packages/osgeo/_gdal.cpython-38-x86_64-linux-gnu.so
         LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib gdal_edit.py byte.tif -mo FOO=BAR
         rm -f myvenv/bin/gdal_edit.py
-        #PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH pip install gdal_utils-X.Y.Z.T-py3-none-any.whl
-        #which gdal_edit.py
-        #cp $GITHUB_WORKSPACE/autotest/gcore/data/byte.tif .
-        #LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib gdal_edit.py byte.tif -mo FOO=BAR
-        #rm -f myvenv/bin/gdal_edit.py
     - name: Standalone gdal-utils package from wheel
       run: |
         mv gdal-swig-python $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python
