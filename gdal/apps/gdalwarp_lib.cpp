@@ -559,27 +559,16 @@ GDALWarpAppOptions* GDALWarpAppOptionsClone(const GDALWarpAppOptions *psOptionsI
 
 #ifdef USE_PROJ_BASED_VERTICAL_SHIFT_METHOD
 
-/************************************************************************/
-/*                      ApplyVerticalShift()                            */
-/************************************************************************/
-
-static bool ApplyVerticalShift( GDALDatasetH hWrkSrcDS,
-                                const GDALWarpAppOptions* psOptions,
-                                GDALWarpOptions *psWO )
+static bool MustApplyVerticalShift( GDALDatasetH hWrkSrcDS,
+                                    const GDALWarpAppOptions* psOptions,
+                                    OGRSpatialReference& oSRSSrc,
+                                    OGRSpatialReference& oSRSDst,
+                                    bool& bSrcHasVertAxis,
+                                    bool& bDstHasVertAxis )
 {
-    bool bApplyVShift = false;
-
-    if( psOptions->bVShift )
-    {
-        bApplyVShift = true;
-        psWO->papszWarpOptions = CSLSetNameValue(psWO->papszWarpOptions,
-                                                 "APPLY_VERTICAL_SHIFT",
-                                                 "YES");
-    }
+    bool bApplyVShift = psOptions->bVShift;
 
     // Check if we must do vertical shift grid transform
-    OGRSpatialReference oSRSSrc;
-    OGRSpatialReference oSRSDst;
     const char* pszSrcWKT = CSLFetchNameValue(psOptions->papszTO, "SRC_SRS");
     if( pszSrcWKT )
         oSRSSrc.SetFromUserInput( pszSrcWKT );
@@ -594,13 +583,45 @@ static bool ApplyVerticalShift( GDALDatasetH hWrkSrcDS,
     if( pszDstWKT )
         oSRSDst.SetFromUserInput( pszDstWKT );
 
-    const bool bSrcHasVertAxis =
+    bSrcHasVertAxis =
         oSRSSrc.IsCompound() ||
         ((oSRSSrc.IsProjected() || oSRSSrc.IsGeographic()) && oSRSSrc.GetAxesCount() == 3);
 
-    const bool bDstHasVertAxis =
+    bDstHasVertAxis =
         oSRSDst.IsCompound() ||
         ((oSRSDst.IsProjected() || oSRSDst.IsGeographic()) && oSRSDst.GetAxesCount() == 3);
+
+    if( (GDALGetRasterCount(hWrkSrcDS) == 1 || psOptions->bVShift) &&
+        (bSrcHasVertAxis || bDstHasVertAxis) )
+    {
+        bApplyVShift = true;
+    }
+    return bApplyVShift;
+}
+
+/************************************************************************/
+/*                      ApplyVerticalShift()                            */
+/************************************************************************/
+
+static bool ApplyVerticalShift( GDALDatasetH hWrkSrcDS,
+                                const GDALWarpAppOptions* psOptions,
+                                GDALWarpOptions *psWO )
+{
+    if( psOptions->bVShift )
+    {
+        psWO->papszWarpOptions = CSLSetNameValue(psWO->papszWarpOptions,
+                                                 "APPLY_VERTICAL_SHIFT",
+                                                 "YES");
+    }
+
+    OGRSpatialReference oSRSSrc;
+    OGRSpatialReference oSRSDst;
+    bool bSrcHasVertAxis = false;
+    bool bDstHasVertAxis = false;
+    bool bApplyVShift = MustApplyVerticalShift( hWrkSrcDS, psOptions,
+                                                oSRSSrc, oSRSDst,
+                                                bSrcHasVertAxis,
+                                                bDstHasVertAxis );
 
     if( (GDALGetRasterCount(hWrkSrcDS) == 1 || psOptions->bVShift) &&
         (bSrcHasVertAxis || bDstHasVertAxis) )
@@ -2228,6 +2249,22 @@ GDALDatasetH GDALWarpDirect( const char *pszDest, GDALDatasetH hDstDS,
         psOptions->papszTO = CSLSetNameValue(psOptions->papszTO,
                                              "STRIP_VERT_CS", "YES");
     }
+    else if( nSrcCount > 0 )
+    {
+        bool bSrcHasVertAxis = false;
+        bool bDstHasVertAxis = false;
+        OGRSpatialReference oSRSSrc;
+        OGRSpatialReference oSRSDst;
+        bool bApplyVShift = MustApplyVerticalShift( pahSrcDS[0], psOptions,
+                                                    oSRSSrc, oSRSDst,
+                                                    bSrcHasVertAxis,
+                                                    bDstHasVertAxis );
+        if( bApplyVShift )
+        {
+            psOptions->papszTO = CSLSetNameValue(psOptions->papszTO,
+                                                 "PROMOTE_TO_3D", "YES");
+        }
+    }
 #else
     psOptions->papszTO = CSLSetNameValue(psOptions->papszTO,
                                          "STRIP_VERT_CS", "YES");
@@ -2715,7 +2752,7 @@ GDALDatasetH GDALWarpDirect( const char *pszDest, GDALDatasetH hDstDS,
 #ifdef USE_PROJ_BASED_VERTICAL_SHIFT_METHOD
         if( !psOptions->bNoVShift )
         {
-            // Can modify both psWO->papszWarpOptions
+            // Can modify psWO->papszWarpOptions
             if( ApplyVerticalShift( hWrkSrcDS, psOptions, psWO ) )
             {
                 bUseApproxTransformer = false;

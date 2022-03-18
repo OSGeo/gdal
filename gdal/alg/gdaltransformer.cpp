@@ -2151,6 +2151,12 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
             InsertCenterLong( hSrcDS, &oSrcSRS, aosOptions );
         }
 
+        if( CPLFetchBool(papszOptions, "PROMOTE_TO_3D", false) )
+        {
+            oSrcSRS.PromoteTo3D(nullptr);
+            oDstSRS.PromoteTo3D(nullptr);
+        }
+
         if( !(dfWestLongitudeDeg == 0.0 && dfSouthLatitudeDeg == 0.0 &&
               dfEastLongitudeDeg == 0.0 && dfNorthLatitudeDeg == 0.0) )
         {
