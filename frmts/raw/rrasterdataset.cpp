@@ -569,6 +569,13 @@ void RRASTERDataset::RewriteHeader()
             VSIFPrintfL(fp, "projection=%s\n", pszProj4);
             VSIFree(pszProj4);
         }
+        char* pszWKT = nullptr;
+        oSRS.exportToWkt(&pszWKT);
+        if( pszWKT )
+        {
+            VSIFPrintfL(fp, "wkt=%s\n", pszWKT);
+            VSIFree(pszWKT);
+        }
     }
 
     VSIFPrintfL(fp, "[data]\n");
@@ -1055,6 +1062,7 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLString osDataType;
     CPLString osBandOrder;
     CPLString osProjection;
+    CPLString osWkt;
     CPLString osByteOrder;
     CPLString osNoDataValue("NA");
     CPLString osMinValue;
@@ -1102,6 +1110,8 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
                 dfYMax = CPLAtof(pszValue);
             else if( EQUAL(pszKey, "projection") )
                 osProjection = pszValue;
+            else if( EQUAL(pszKey, "wkt") )
+                osWkt = pszValue;
             else if( EQUAL(pszKey, "nbands") )
                 l_nBands = atoi(pszValue);
             else if( EQUAL(pszKey, "bandorder") )
@@ -1249,10 +1259,25 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->m_osBandOrder = osBandOrder;
     poDS->m_osLegend = osLegend;
 
-    if( !osProjection.empty() )
+    if( osWkt.empty() )
+    {
+        if( !osProjection.empty() )
+        {
+            OGRSpatialReference oSRS;
+            if( oSRS.importFromProj4( osProjection.c_str() ) == OGRERR_NONE )
+            {
+                char* pszWKT = nullptr;
+                oSRS.exportToWkt( &pszWKT );
+                if( pszWKT )
+                    poDS->m_osProjection = pszWKT;
+                CPLFree( pszWKT );
+            }
+        }
+    } 
+    else
     {
         OGRSpatialReference oSRS;
-        if( oSRS.importFromProj4( osProjection.c_str() ) == OGRERR_NONE )
+        if( oSRS.importFromWkt( osWkt.c_str() ) == OGRERR_NONE )
         {
             char* pszWKT = nullptr;
             oSRS.exportToWkt( &pszWKT );
