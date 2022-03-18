@@ -480,7 +480,7 @@ code_below_256:
             free_entp->firstchar = oldcodep->firstchar;
             free_entp->length = oldcodep->length+1;
             free_entp->value = (uint8_t)code;
-            free_entp->repeated = (bool)(oldcodep->repeated & !(oldcodep->value - code));
+            free_entp->repeated = (bool)(oldcodep->repeated & (oldcodep->value == code));
             if (++free_entp > maxcodep) {
                 if (++nbits > BITS_MAX)		/* should not happen for a conformant encoder */
                     nbits = BITS_MAX;
@@ -519,7 +519,7 @@ code_above_or_equal_to_258:
             {
                 free_entp->value = codep->firstchar;
             }
-            free_entp->repeated = (bool)(oldcodep->repeated & !(oldcodep->value - free_entp->value));
+            free_entp->repeated = (bool)(oldcodep->repeated & (oldcodep->value == free_entp->value));
             free_entp->next = oldcodep;
 
             free_entp->firstchar = oldcodep->firstchar;
