@@ -947,7 +947,10 @@ size_t VSIGZipHandle::Read( void * const buf, size_t const nSize,
             in += nRead;
             out += nRead;
             if( nRead < len )
+            {
                 z_eof = 1;
+                in = 0;
+            }
 #ifdef ENABLE_DEBUG
             CPLDebug("GZIP", "Read return %d", static_cast<int>(nRead / nSize));
 #endif
