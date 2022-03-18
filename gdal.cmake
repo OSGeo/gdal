@@ -700,7 +700,7 @@ if (NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/GdalFindModulePath.cmake"
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/DefineFindPackage2.cmake"
       DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/gdal/")
-    foreach(dir IN ITEMS packages thirdparty 3.16 3.14 3.13 3.12)
+    foreach(dir IN ITEMS packages thirdparty 3.20 3.16 3.14 3.13 3.12)
       install(
         DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/${dir}"
         DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/gdal")
