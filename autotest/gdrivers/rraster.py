@@ -49,7 +49,8 @@ def test_rraster_1(filename='data/rraster/byte_rraster.grd', check_prj=None):
     tst.testOpen(check_prj=check_prj,
                        check_gt=ref_ds.GetGeoTransform(),
                        check_min=74,
-                       check_max=255)
+#                       check_max=255)
+                       check_max=247)
 
     ds = gdal.Open(filename)
     md = ds.GetMetadata()
