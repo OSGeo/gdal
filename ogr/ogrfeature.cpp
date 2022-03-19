@@ -6096,49 +6096,80 @@ OGRErr OGRFeature::SetFieldsFrom( const OGRFeature * poSrcFeature,
                                   int bForgiving )
 
 {
-    for( int iField = 0; iField < poSrcFeature->GetFieldCount(); iField++ )
+    const int nSrcFieldCount = poSrcFeature->poDefn->GetFieldCountUnsafe();
+    const int nFieldCount = poDefn->GetFieldCountUnsafe();
+    for( int iField = 0; iField < nSrcFieldCount; iField++ )
     {
         const int iDstField = panMap[iField];
 
         if( iDstField < 0 )
             continue;
 
-        if( GetFieldCount() <= iDstField )
+        if( nFieldCount <= iDstField )
             return OGRERR_FAILURE;
 
-        if( !poSrcFeature->IsFieldSet(iField) )
+        if( !poSrcFeature->IsFieldSetUnsafe(iField) )
         {
             UnsetField( iDstField );
             continue;
         }
 
-        if( poSrcFeature->IsFieldNull(iField) )
+        if( poSrcFeature->IsFieldNullUnsafe(iField) )
         {
             SetFieldNull( iDstField );
             continue;
         }
 
-        switch( poSrcFeature->GetFieldDefnRef(iField)->GetType() )
+        const auto eSrcType = poSrcFeature->poDefn->GetFieldDefnUnsafe(iField)->GetType();
+        const auto eDstType = poDefn->GetFieldDefnUnsafe(iDstField)->GetType();
+        if( eSrcType == eDstType )
+        {
+            if( eSrcType == OFTInteger )
+            {
+                SetFieldSameTypeUnsafe( iDstField, poSrcFeature->GetFieldAsIntegerUnsafe( iField ) );
+                continue;
+            }
+            if( eSrcType == OFTInteger64 )
+            {
+                SetFieldSameTypeUnsafe( iDstField, poSrcFeature->GetFieldAsInteger64Unsafe( iField ) );
+                continue;
+            }
+            if( eSrcType == OFTReal )
+            {
+                SetFieldSameTypeUnsafe( iDstField, poSrcFeature->GetFieldAsDoubleUnsafe( iField ) );
+                continue;
+            }
+            if( eSrcType == OFTString )
+            {
+                if( IsFieldSetAndNotNullUnsafe(iDstField) )
+                    CPLFree( pauFields[iDstField].String );
+
+                SetFieldSameTypeUnsafe( iDstField, VSI_STRDUP_VERBOSE(poSrcFeature->GetFieldAsStringUnsafe( iField )) );
+                continue;
+            }
+        }
+
+        switch( eSrcType )
         {
           case OFTInteger:
-            SetField( iDstField, poSrcFeature->GetFieldAsInteger( iField ) );
+            SetField( iDstField, poSrcFeature->GetFieldAsIntegerUnsafe( iField ) );
             break;
 
           case OFTInteger64:
-            SetField( iDstField, poSrcFeature->GetFieldAsInteger64( iField ) );
+            SetField( iDstField, poSrcFeature->GetFieldAsInteger64Unsafe( iField ) );
             break;
 
           case OFTReal:
-            SetField( iDstField, poSrcFeature->GetFieldAsDouble( iField ) );
+            SetField( iDstField, poSrcFeature->GetFieldAsDoubleUnsafe( iField ) );
             break;
 
           case OFTString:
-            SetField( iDstField, poSrcFeature->GetFieldAsString( iField ) );
+            SetField( iDstField, poSrcFeature->GetFieldAsStringUnsafe( iField ) );
             break;
 
           case OFTIntegerList:
           {
-              if( GetFieldDefnRef(iDstField)->GetType() == OFTString )
+              if( eDstType == OFTString )
               {
                   SetField( iDstField, poSrcFeature->GetFieldAsString(iField) );
               }
@@ -6147,14 +6178,14 @@ OGRErr OGRFeature::SetFieldsFrom( const OGRFeature * poSrcFeature,
                   int nCount = 0;
                   const int *panValues =
                       poSrcFeature->GetFieldAsIntegerList( iField, &nCount);
-                  SetField(iDstField, nCount, const_cast<int *>(panValues));
+                  SetField(iDstField, nCount, panValues);
               }
           }
           break;
 
           case OFTInteger64List:
           {
-              if( GetFieldDefnRef(iDstField)->GetType() == OFTString )
+              if( eDstType == OFTString )
               {
                   SetField( iDstField, poSrcFeature->GetFieldAsString(iField) );
               }
@@ -6170,7 +6201,7 @@ OGRErr OGRFeature::SetFieldsFrom( const OGRFeature * poSrcFeature,
 
           case OFTRealList:
           {
-              if( GetFieldDefnRef(iDstField)->GetType() == OFTString )
+              if( eDstType == OFTString )
               {
                   SetField( iDstField, poSrcFeature->GetFieldAsString(iField) );
               }
@@ -6179,7 +6210,7 @@ OGRErr OGRFeature::SetFieldsFrom( const OGRFeature * poSrcFeature,
                   int nCount = 0;
                   const double *padfValues =
                       poSrcFeature->GetFieldAsDoubleList( iField, &nCount);
-                  SetField(iDstField, nCount, const_cast<double *>(padfValues));
+                  SetField(iDstField, nCount, padfValues);
               }
           }
           break;
@@ -6188,16 +6219,15 @@ OGRErr OGRFeature::SetFieldsFrom( const OGRFeature * poSrcFeature,
           case OFTDateTime:
           case OFTTime:
           {
-            OGRFieldType eDstFieldType = GetFieldDefnRef(iDstField)->GetType();
-            if( eDstFieldType == OFTDate ||
-                eDstFieldType == OFTTime ||
-                eDstFieldType == OFTDateTime )
+            if( eDstType == OFTDate ||
+                eDstType == OFTTime ||
+                eDstType == OFTDateTime )
             {
                 SetField( iDstField, const_cast<OGRField*>(
                     poSrcFeature->GetRawFieldRef( iField )) );
             }
-            else if( eDstFieldType == OFTString ||
-                     eDstFieldType == OFTStringList )
+            else if( eDstType == OFTString ||
+                     eDstType == OFTStringList )
             {
                 SetField( iDstField, poSrcFeature->GetFieldAsString( iField ) );
             }
@@ -6208,15 +6238,13 @@ OGRErr OGRFeature::SetFieldsFrom( const OGRFeature * poSrcFeature,
 
           default:
           {
-            OGRFieldType eDstFieldType = GetFieldDefnRef(iDstField)->GetType();
-            if( poSrcFeature->GetFieldDefnRef(iField)->GetType()
-                == eDstFieldType )
+            if( eSrcType == eDstType )
             {
                 SetField( iDstField, const_cast<OGRField*>(
                     poSrcFeature->GetRawFieldRef( iField )) );
             }
-            else if( eDstFieldType == OFTString ||
-                     eDstFieldType == OFTStringList )
+            else if( eDstType == OFTString ||
+                     eDstType == OFTStringList )
             {
                 SetField( iDstField, poSrcFeature->GetFieldAsString( iField ) );
             }

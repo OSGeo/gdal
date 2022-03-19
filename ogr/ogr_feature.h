@@ -670,12 +670,13 @@ class CPL_DLL OGRFeature
     char               *GetFieldAsSerializedJSon( int i ) const;
 
 //! @cond Doxygen_Suppress
-    bool                IsFieldSetAndNotNullUnsafe( int i ) const { return( !(pauFields[i].Set.nMarker1 == OGRUnsetMarker &&
-                                                                              pauFields[i].Set.nMarker2 == OGRUnsetMarker &&
-                                                                              pauFields[i].Set.nMarker3 == OGRUnsetMarker) &&
-                                                                            !(pauFields[i].Set.nMarker1 == OGRNullMarker &&
-                                                                              pauFields[i].Set.nMarker2 == OGRNullMarker &&
-                                                                              pauFields[i].Set.nMarker3 == OGRNullMarker) ); }
+    bool                IsFieldSetUnsafe( int i ) const { return !(pauFields[i].Set.nMarker1 == OGRUnsetMarker &&
+                                                                   pauFields[i].Set.nMarker2 == OGRUnsetMarker &&
+                                                                   pauFields[i].Set.nMarker3 == OGRUnsetMarker); }
+    bool                IsFieldNullUnsafe( int i ) const { return (pauFields[i].Set.nMarker1 == OGRNullMarker &&
+                                                                   pauFields[i].Set.nMarker2 == OGRNullMarker &&
+                                                                   pauFields[i].Set.nMarker3 == OGRNullMarker); }
+    bool                IsFieldSetAndNotNullUnsafe( int i ) const { return IsFieldSetUnsafe(i) && !IsFieldNullUnsafe(i); }
     // Those methods should only be called on a field that is of the type
     // consistent with the value, and that is set.
     int                 GetFieldAsIntegerUnsafe( int i ) const { return pauFields[i].Integer; }
