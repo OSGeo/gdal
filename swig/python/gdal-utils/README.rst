@@ -1,16 +1,14 @@
 gdal-utils
 =============
 
-This gdal-utils Python package includes modules and functions that use and
-extend the GDAL_ Geospatial Data Abstraction Library.
+This gdal-utils Python package is a sub-set of the GDAL Osgeo Python package.
 
-The GDAL project maintains SWIG generated Python bindings for GDAL and OGR,
-which are included in the gdal package.
+If you've installed the GDAL package you have these utils. However you
+may wish to get a newer version of the utilities without changing GDAL,
+that's what this package is for.
 
-Please also refer to the osgeo documentation and to the `GDAL API Tutorial`_.
-
-Currently, The the gdal package also includes the utils package,
-but in the future they might be available only in this gdal-utils package.
+For using and developing the utils please refer to the osgeo documentation
+and to the `GDAL API Tutorial`_.
 
 We don't systematically test the utils against a different versions of gdal.
 Versioning of GDAL and gdal-utils are independent from each other, today's
