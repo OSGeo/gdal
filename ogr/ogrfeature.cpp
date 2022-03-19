@@ -152,7 +152,7 @@ OGRFeature::~OGRFeature()
         {
             OGRFieldDefn *poFDefn = poDefn->GetFieldDefn(i);
 
-            if( !IsFieldSetAndNotNull(i) )
+            if( !IsFieldSetAndNotNullUnsafe(i) )
                 continue;
 
             switch( poFDefn->GetType() )
@@ -1625,8 +1625,7 @@ bool OGRFeature::IsFieldSetAndNotNull( int iField ) const
     }
     else
     {
-        return !OGR_RawField_IsUnset(&pauFields[iField]) &&
-               !OGR_RawField_IsNull(&pauFields[iField]);
+        return IsFieldSetAndNotNullUnsafe(iField);
     }
 }
 
@@ -1931,7 +1930,7 @@ int OGRFeature::GetFieldAsInteger( int iField ) const
     if( poFDefn == nullptr )
         return 0;
 
-    if( !IsFieldSetAndNotNull(iField) )
+    if( !IsFieldSetAndNotNullUnsafe(iField) )
         return 0;
 
     const OGRFieldType eType = poFDefn->GetType();
@@ -2058,7 +2057,7 @@ GIntBig OGRFeature::GetFieldAsInteger64( int iField ) const
     if( poFDefn == nullptr )
         return 0;
 
-    if( !IsFieldSetAndNotNull(iField) )
+    if( !IsFieldSetAndNotNullUnsafe(iField) )
         return 0;
 
     OGRFieldType eType = poFDefn->GetType();
@@ -2176,7 +2175,7 @@ double OGRFeature::GetFieldAsDouble( int iField ) const
     if( poFDefn == nullptr )
         return 0.0;
 
-    if( !IsFieldSetAndNotNull(iField) )
+    if( !IsFieldSetAndNotNullUnsafe(iField) )
         return 0.0;
 
     const OGRFieldType eType = poFDefn->GetType();
@@ -2397,7 +2396,7 @@ const char *OGRFeature::GetFieldAsString( int iField ) const
     if( poFDefn == nullptr )
         return "";
 
-    if( !IsFieldSetAndNotNull(iField) )
+    if( !IsFieldSetAndNotNullUnsafe(iField) )
         return "";
 
     OGRFieldType eType = poFDefn->GetType();
@@ -2701,7 +2700,7 @@ const int *OGRFeature::GetFieldAsIntegerList( int iField, int *pnCount ) const
 {
     OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
 
-    if( poFDefn != nullptr && IsFieldSetAndNotNull(iField) &&
+    if( poFDefn != nullptr && IsFieldSetAndNotNullUnsafe(iField) &&
         poFDefn->GetType() == OFTIntegerList )
     {
         if( pnCount != nullptr )
@@ -2786,7 +2785,7 @@ const GIntBig *OGRFeature::GetFieldAsInteger64List( int iField, int *pnCount ) c
 {
     OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
 
-    if( poFDefn != nullptr && IsFieldSetAndNotNull(iField) &&
+    if( poFDefn != nullptr && IsFieldSetAndNotNullUnsafe(iField) &&
         poFDefn->GetType() == OFTInteger64List )
     {
         if( pnCount != nullptr )
@@ -2870,7 +2869,7 @@ const double *OGRFeature::GetFieldAsDoubleList( int iField, int *pnCount ) const
 {
     OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
 
-    if( poFDefn != nullptr && IsFieldSetAndNotNull(iField) &&
+    if( poFDefn != nullptr && IsFieldSetAndNotNullUnsafe(iField) &&
         poFDefn->GetType() == OFTRealList )
     {
         if( pnCount != nullptr )
@@ -2958,7 +2957,7 @@ char **OGRFeature::GetFieldAsStringList( int iField ) const
     if( poFDefn == nullptr )
         return nullptr;
 
-    if( !IsFieldSetAndNotNull(iField) )
+    if( !IsFieldSetAndNotNullUnsafe(iField) )
         return nullptr;
 
     if( poFDefn->GetType() == OFTStringList )
@@ -3027,7 +3026,7 @@ GByte *OGRFeature::GetFieldAsBinary( int iField, int *pnBytes ) const
     if( poFDefn == nullptr )
         return nullptr;
 
-    if( !IsFieldSetAndNotNull(iField) )
+    if( !IsFieldSetAndNotNullUnsafe(iField) )
         return nullptr;
 
     if( poFDefn->GetType() == OFTBinary )
@@ -3108,7 +3107,7 @@ int OGRFeature::GetFieldAsDateTime( int iField,
     if( poFDefn == nullptr )
         return FALSE;
 
-    if( !IsFieldSetAndNotNull(iField) )
+    if( !IsFieldSetAndNotNullUnsafe(iField) )
         return FALSE;
 
     if( poFDefn->GetType() == OFTDate
@@ -3317,7 +3316,7 @@ char* OGRFeature::GetFieldAsSerializedJSon( int iField ) const
     if( poFDefn == nullptr )
         return nullptr;
 
-    if( !IsFieldSetAndNotNull(iField) )
+    if( !IsFieldSetAndNotNullUnsafe(iField) )
         return nullptr;
 
     char* pszRet = nullptr;
@@ -3468,7 +3467,7 @@ void OGRFeature::SetField( int iField, int nValue )
 
         snprintf( szTempBuffer, sizeof(szTempBuffer), "%d", nValue );
 
-        if( IsFieldSetAndNotNull(iField) )
+        if( IsFieldSetAndNotNullUnsafe(iField) )
             CPLFree( pauFields[iField].String );
 
         pauFields[iField].String = VSI_STRDUP_VERBOSE( szTempBuffer );
@@ -3624,7 +3623,7 @@ void OGRFeature::SetField( int iField, GIntBig nValue )
 
         CPLsnprintf( szTempBuffer, sizeof(szTempBuffer), CPL_FRMT_GIB, nValue );
 
-        if( IsFieldSetAndNotNull(iField) )
+        if( IsFieldSetAndNotNullUnsafe(iField) )
             CPLFree( pauFields[iField].String );
 
         pauFields[iField].String = VSI_STRDUP_VERBOSE( szTempBuffer );
@@ -3778,7 +3777,7 @@ void OGRFeature::SetField( int iField, double dfValue )
 
         CPLsnprintf( szTempBuffer, sizeof(szTempBuffer), "%.16g", dfValue );
 
-        if( IsFieldSetAndNotNull(iField) )
+        if( IsFieldSetAndNotNullUnsafe(iField) )
             CPLFree( pauFields[iField].String );
 
         pauFields[iField].String = VSI_STRDUP_VERBOSE( szTempBuffer );
@@ -3891,7 +3890,7 @@ void OGRFeature::SetField( int iField, const char * pszValue )
     OGRFieldType eType = poFDefn->GetType();
     if( eType == OFTString )
     {
-        if( IsFieldSetAndNotNull(iField) )
+        if( IsFieldSetAndNotNullUnsafe(iField) )
             CPLFree( pauFields[iField].String );
 
         pauFields[iField].String = VSI_STRDUP_VERBOSE(pszValue ? pszValue : "");
@@ -4629,7 +4628,7 @@ void OGRFeature::SetField( int iField, const char * const * papszValues )
     OGRFieldType eType = poFDefn->GetType();
     if( eType == OFTStringList )
     {
-        if( !IsFieldSetAndNotNull(iField) ||
+        if( !IsFieldSetAndNotNullUnsafe(iField) ||
             papszValues != pauFields[iField].StringList.paList )
         {
             OGRField uField;
@@ -5066,7 +5065,7 @@ bool OGRFeature::SetFieldInternal( int iField, const OGRField * puValue )
     }
     else if( poFDefn->GetType() == OFTString )
     {
-        if( IsFieldSetAndNotNull(iField) )
+        if( IsFieldSetAndNotNullUnsafe(iField) )
             CPLFree( pauFields[iField].String );
 
         if( puValue->String == nullptr )
@@ -5094,7 +5093,7 @@ bool OGRFeature::SetFieldInternal( int iField, const OGRField * puValue )
     {
         const int nCount = puValue->IntegerList.nCount;
 
-        if( IsFieldSetAndNotNull(iField) )
+        if( IsFieldSetAndNotNullUnsafe(iField) )
             CPLFree( pauFields[iField].IntegerList.paList );
 
         if( OGR_RawField_IsUnset(puValue) ||
@@ -5121,7 +5120,7 @@ bool OGRFeature::SetFieldInternal( int iField, const OGRField * puValue )
     {
         const int nCount = puValue->Integer64List.nCount;
 
-        if( IsFieldSetAndNotNull(iField) )
+        if( IsFieldSetAndNotNullUnsafe(iField) )
             CPLFree( pauFields[iField].Integer64List.paList );
 
         if( OGR_RawField_IsUnset(puValue) ||
@@ -5148,7 +5147,7 @@ bool OGRFeature::SetFieldInternal( int iField, const OGRField * puValue )
     {
         const int nCount = puValue->RealList.nCount;
 
-        if( IsFieldSetAndNotNull(iField) )
+        if( IsFieldSetAndNotNullUnsafe(iField) )
             CPLFree( pauFields[iField].RealList.paList );
 
         if( OGR_RawField_IsUnset(puValue) ||
@@ -5173,7 +5172,7 @@ bool OGRFeature::SetFieldInternal( int iField, const OGRField * puValue )
     }
     else if( poFDefn->GetType() == OFTStringList )
     {
-        if( IsFieldSetAndNotNull(iField) )
+        if( IsFieldSetAndNotNullUnsafe(iField) )
             CSLDestroy( pauFields[iField].StringList.paList );
 
         if( OGR_RawField_IsUnset(puValue) ||
@@ -5206,7 +5205,7 @@ bool OGRFeature::SetFieldInternal( int iField, const OGRField * puValue )
     }
     else if( poFDefn->GetType() == OFTBinary )
     {
-        if( IsFieldSetAndNotNull(iField) )
+        if( IsFieldSetAndNotNullUnsafe(iField) )
             CPLFree( pauFields[iField].Binary.paData );
 
         if( OGR_RawField_IsUnset(puValue) ||
@@ -5525,7 +5524,7 @@ OGRBoolean OGRFeature::Equal( const OGRFeature * poFeature ) const
             return FALSE;
         if( IsFieldNull(i) != poFeature->IsFieldNull(i) )
             return FALSE;
-        if( !IsFieldSetAndNotNull(i) )
+        if( !IsFieldSetAndNotNullUnsafe(i) )
             continue;
 
         switch( GetDefnRef()->GetFieldDefn(i)->GetType() )
