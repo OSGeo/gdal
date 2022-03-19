@@ -388,6 +388,7 @@ struct TargetLayerInfo
     int          m_iRequestedSrcGeomField = -1;
     bool         m_bPreserveFID = false;
     const char  *m_pszCTPipeline = nullptr;
+    bool         m_bCanAvoidSetFrom = false;
 };
 
 struct AssociatedLayers
@@ -4400,6 +4401,48 @@ std::unique_ptr<TargetLayerInfo> SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         psInfo->m_oMapDomainToKV[poDomain] = std::move(oMapCodeValue);
     }
 
+    // Detect if we can directly passed the source feature to the CreateFeature()
+    // method of the target layer, without doing any copying of field content.
+    psInfo->m_bCanAvoidSetFrom = false;
+    if( !m_bExplodeCollections && iSrcZField == -1 )
+    {
+        psInfo->m_bCanAvoidSetFrom = true;
+        const int nDstGeomFieldCount = poDstFDefn->GetGeomFieldCount();
+        if( nSrcFieldCount != poDstFDefn->GetFieldCount() ||
+            nSrcGeomFieldCount != nDstGeomFieldCount )
+        {
+            psInfo->m_bCanAvoidSetFrom = false;
+        }
+        else
+        {
+            for( int i = 0; i < nSrcFieldCount; ++i )
+            {
+                auto poSrcFieldDefn = poSrcFDefn->GetFieldDefn(i);
+                auto poDstFieldDefn = poDstFDefn->GetFieldDefn(i);
+                if( poSrcFieldDefn->GetType() != poDstFieldDefn->GetType() ||
+                    psInfo->m_anMap[i] != i )
+                {
+                    psInfo->m_bCanAvoidSetFrom = false;
+                    break;
+                }
+            }
+            if( !psInfo->m_bCanAvoidSetFrom && nSrcGeomFieldCount > 1 )
+            {
+                for( int i = 0; i < nSrcGeomFieldCount; ++i )
+                {
+                    auto poSrcGeomFieldDefn = poSrcFDefn->GetGeomFieldDefn(i);
+                    auto poDstGeomFieldDefn = poDstFDefn->GetGeomFieldDefn(i);
+                    if( !EQUAL(poSrcGeomFieldDefn->GetNameRef(),
+                               poDstGeomFieldDefn->GetNameRef()) )
+                    {
+                        psInfo->m_bCanAvoidSetFrom = false;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
     return psInfo;
 }
 
@@ -4621,8 +4664,10 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
     const int* const panMap = psInfo->m_anMap.data();
     const int iSrcZField = psInfo->m_iSrcZField;
     const bool bPreserveFID = psInfo->m_bPreserveFID;
-    const int nSrcGeomFieldCount = poSrcLayer->GetLayerDefn()->GetGeomFieldCount();
-    const int nDstGeomFieldCount = poDstLayer->GetLayerDefn()->GetGeomFieldCount();
+    const auto poSrcFDefn = poSrcLayer->GetLayerDefn();
+    const auto poDstFDefn = poDstLayer->GetLayerDefn();
+    const int nSrcGeomFieldCount = poSrcFDefn->GetGeomFieldCount();
+    const int nDstGeomFieldCount = poDstFDefn->GetGeomFieldCount();
     const bool bExplodeCollections = m_bExplodeCollections && nDstGeomFieldCount <= 1;
     const int iRequestedSrcGeomField = psInfo->m_iRequestedSrcGeomField;
 
@@ -4647,11 +4692,15 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
         if( psOptions->nLayerTransaction )
         {
             if( poDstLayer->StartTransaction() == OGRERR_FAILURE )
+            {
+                delete poFeatureIn;
                 return false;
+            }
         }
     }
 
-    OGRFeature *poFeature = nullptr;
+    std::unique_ptr<OGRFeature> poFeature;
+    std::unique_ptr<OGRFeature> poDstFeature(new OGRFeature(poDstFDefn));
     int         nFeaturesInTransaction = 0;
     GIntBig      nCount = 0; /* written + failed */
     GIntBig      nFeaturesWritten = 0;
@@ -4666,11 +4715,11 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
         }
 
         if( poFeatureIn != nullptr )
-            poFeature = poFeatureIn;
+            poFeature.reset(poFeatureIn);
         else if( psOptions->nFIDToFetch != OGRNullFID )
-            poFeature = poSrcLayer->GetFeature(psOptions->nFIDToFetch);
+            poFeature.reset(poSrcLayer->GetFeature(psOptions->nFIDToFetch));
         else
-            poFeature = poSrcLayer->GetNextFeature();
+            poFeature.reset(poSrcLayer->GetNextFeature());
 
         if( poFeature == nullptr )
         {
@@ -4685,9 +4734,8 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
         {
             if( !SetupCT( psInfo, poSrcLayer, m_bTransform, m_bWrapDateline,
                           m_osDateLineOffset, m_poUserSourceSRS,
-                          poFeature, poOutputSRS, m_poGCPCoordTrans) )
+                          poFeature.get(), poOutputSRS, m_poGCPCoordTrans) )
             {
-                OGRFeature::DestroyFeature( poFeature );
                 return false;
             }
         }
@@ -4720,7 +4768,14 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
             }
         }
 
-        OGRFeature *poDstFeature = nullptr;
+        const GIntBig nSrcFID = poFeature->GetFID();
+        GIntBig nDesiredFID = OGRNullFID;
+        if( bPreserveFID )
+            nDesiredFID = nSrcFID;
+        else if( psInfo->m_iSrcFIDField >= 0 &&
+                 poFeature->IsFieldSetAndNotNull(psInfo->m_iSrcFIDField))
+            nDesiredFID = poFeature->GetFieldAsInteger64(psInfo->m_iSrcFIDField);
+
         for(int iPart = 0; iPart < nIters; iPart++)
         {
             if( psOptions->nLayerTransaction &&
@@ -4729,7 +4784,6 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
                 if( poDstLayer->CommitTransaction() == OGRERR_FAILURE ||
                     poDstLayer->StartTransaction() == OGRERR_FAILURE )
                 {
-                    OGRFeature::DestroyFeature( poFeature );
                     return false;
                 }
                 nFeaturesInTransaction = 0;
@@ -4741,68 +4795,101 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
                 if( m_poODS->CommitTransaction() == OGRERR_FAILURE ||
                         m_poODS->StartTransaction(psOptions->bForceTransaction) == OGRERR_FAILURE )
                 {
-                    OGRFeature::DestroyFeature( poFeature );
                     return false;
                 }
                 nTotalEventsDone = 0;
             }
 
             CPLErrorReset();
-            poDstFeature = OGRFeature::CreateFeature( poDstLayer->GetLayerDefn() );
-
-            /* Optimization to avoid duplicating the source geometry in the */
-            /* target feature : we steal it from the source feature for now... */
-            OGRGeometry* poStolenGeometry = nullptr;
-            if( !bExplodeCollections && nSrcGeomFieldCount == 1 &&
-                (nDstGeomFieldCount == 1 ||
-                 (nDstGeomFieldCount == 0 && m_poClipSrc)) )
+            if( psInfo->m_bCanAvoidSetFrom )
             {
-                poStolenGeometry = poFeature->StealGeometry();
+                poDstFeature = std::move(poFeature);
+                // From now on, poFeature is null !
+                poDstFeature->SetFDefnUnsafe(poDstFDefn);
+                poDstFeature->SetFID(nDesiredFID);
             }
-            else if( !bExplodeCollections &&
-                     iRequestedSrcGeomField >= 0 )
+            else
             {
-                poStolenGeometry = poFeature->StealGeometry(
-                    iRequestedSrcGeomField);
-            }
-
-            if( nDstGeomFieldCount == 0 && poStolenGeometry && m_poClipSrc )
-            {
-                OGRGeometry* poClipped = poStolenGeometry->Intersection(m_poClipSrc);
-                delete poStolenGeometry;
-                poStolenGeometry = nullptr;
-                if (poClipped == nullptr || poClipped->IsEmpty())
+                /* Optimization to avoid duplicating the source geometry in the */
+                /* target feature : we steal it from the source feature for now... */
+                OGRGeometry* poStolenGeometry = nullptr;
+                if( !bExplodeCollections && nSrcGeomFieldCount == 1 &&
+                    (nDstGeomFieldCount == 1 ||
+                     (nDstGeomFieldCount == 0 && m_poClipSrc)) )
                 {
-                    delete poClipped;
-                    goto end_loop;
+                    poStolenGeometry = poFeature->StealGeometry();
                 }
-                delete poClipped;
-            }
-
-            if( poDstFeature->SetFrom( poFeature, panMap, TRUE ) != OGRERR_NONE )
-            {
-                if( psOptions->nGroupTransactions )
+                else if( !bExplodeCollections &&
+                         iRequestedSrcGeomField >= 0 )
                 {
-                    if( psOptions->nLayerTransaction )
+                    poStolenGeometry = poFeature->StealGeometry(
+                        iRequestedSrcGeomField);
+                }
+
+                if( nDstGeomFieldCount == 0 && poStolenGeometry && m_poClipSrc )
+                {
+                    OGRGeometry* poClipped = poStolenGeometry->Intersection(m_poClipSrc);
+                    delete poStolenGeometry;
+                    poStolenGeometry = nullptr;
+                    if (poClipped == nullptr || poClipped->IsEmpty())
                     {
-                        if( poDstLayer->CommitTransaction() != OGRERR_NONE )
+                        delete poClipped;
+                        goto end_loop;
+                    }
+                    delete poClipped;
+                }
+
+                poDstFeature->Reset();
+                if( poDstFeature->SetFrom( poFeature.get(), panMap, TRUE ) != OGRERR_NONE )
+                {
+                    if( psOptions->nGroupTransactions )
+                    {
+                        if( psOptions->nLayerTransaction )
                         {
-                            OGRFeature::DestroyFeature( poFeature );
-                            OGRFeature::DestroyFeature( poDstFeature );
-                            OGRGeometryFactory::destroyGeometry( poStolenGeometry );
-                            return false;
+                            if( poDstLayer->CommitTransaction() != OGRERR_NONE )
+                            {
+                                OGRGeometryFactory::destroyGeometry( poStolenGeometry );
+                                return false;
+                            }
+                        }
+                    }
+
+                    CPLError( CE_Failure, CPLE_AppDefined,
+                            "Unable to translate feature " CPL_FRMT_GIB " from layer %s.",
+                            nSrcFID, poSrcLayer->GetName() );
+
+                    OGRGeometryFactory::destroyGeometry( poStolenGeometry );
+                    return false;
+                }
+
+                /* ... and now we can attach the stolen geometry */
+                if( poStolenGeometry )
+                {
+                    poDstFeature->SetGeometryDirectly(poStolenGeometry);
+                }
+
+                if( !psInfo->m_oMapResolved.empty() )
+                {
+                    for( const auto& kv: psInfo->m_oMapResolved )
+                    {
+                        const int nDstField = kv.first;
+                        const int nSrcField = kv.second.nSrcField;
+                        if( poFeature->IsFieldSetAndNotNull(nSrcField) )
+                        {
+                            const auto poDomain = kv.second.poDomain;
+                            const auto& oMapKV = psInfo->m_oMapDomainToKV[poDomain];
+                            const auto iter = oMapKV.find(
+                                poFeature->GetFieldAsString(nSrcField));
+                            if( iter != oMapKV.end() )
+                            {
+                                poDstFeature->SetField(nDstField, iter->second.c_str());
+                            }
                         }
                     }
                 }
 
-                CPLError( CE_Failure, CPLE_AppDefined,
-                        "Unable to translate feature " CPL_FRMT_GIB " from layer %s.",
-                        poFeature->GetFID(), poSrcLayer->GetName() );
-
-                OGRFeature::DestroyFeature( poFeature );
-                OGRFeature::DestroyFeature( poDstFeature );
-                OGRGeometryFactory::destroyGeometry( poStolenGeometry );
-                return false;
+                if( nDesiredFID != OGRNullFID )
+                    poDstFeature->SetFID( nDesiredFID );
             }
 
             if (psOptions->bEmptyStrAsNull) {
@@ -4818,18 +4905,6 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
                         poDstFeature->SetFieldNull(i);
                 }
             }
-
-            /* ... and now we can attach the stolen geometry */
-            if( poStolenGeometry )
-            {
-                poDstFeature->SetGeometryDirectly(poStolenGeometry);
-            }
-
-            if( bPreserveFID )
-                poDstFeature->SetFID( poFeature->GetFID() );
-            else if( psInfo->m_iSrcFIDField >= 0 &&
-                     poFeature->IsFieldSetAndNotNull(psInfo->m_iSrcFIDField))
-                poDstFeature->SetFID( poFeature->GetFieldAsInteger64(psInfo->m_iSrcFIDField) );
 
             /* Erase native data if asked explicitly */
             if( !m_bNativeData )
@@ -4856,7 +4931,7 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
                         continue;
                 }
 
-                if (iSrcZField != -1)
+                if (iSrcZField != -1 && poFeature != nullptr)
                 {
                     SetZ(poDstGeometry, poFeature->GetFieldAsDouble(iSrcZField));
                     /* This will correct the coordinate dimension to 3 */
@@ -4934,8 +5009,6 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
                                 if( poDstLayer->CommitTransaction() != OGRERR_NONE &&
                                     !psOptions->bSkipFailures )
                                 {
-                                    OGRFeature::DestroyFeature( poFeature );
-                                    OGRFeature::DestroyFeature( poDstFeature );
                                     delete poDstGeometry;
                                     return false;
                                 }
@@ -4943,11 +5016,9 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
                         }
 
                         CPLError( CE_Failure, CPLE_AppDefined, "Failed to reproject feature " CPL_FRMT_GIB " (geometry probably out of source or destination SRS).",
-                                  poFeature->GetFID() );
+                                  nSrcFID );
                         if( !psOptions->bSkipFailures )
                         {
-                            OGRFeature::DestroyFeature( poFeature );
-                            OGRFeature::DestroyFeature( poDstFeature );
                             delete poDstGeometry;
                             return false;
                         }
@@ -5008,33 +5079,11 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
                 poDstFeature->SetGeomFieldDirectly(iGeom, poDstGeometry);
             }
 
-            if( !psInfo->m_oMapResolved.empty() )
-            {
-                for( const auto& kv: psInfo->m_oMapResolved )
-                {
-                    const int nDstField = kv.first;
-                    const int nSrcField = kv.second.nSrcField;
-                    if( poFeature->IsFieldSetAndNotNull(nSrcField) )
-                    {
-                        const auto poDomain = kv.second.poDomain;
-                        const auto& oMapKV = psInfo->m_oMapDomainToKV[poDomain];
-                        const auto iter = oMapKV.find(
-                            poFeature->GetFieldAsString(nSrcField));
-                        if( iter != oMapKV.end() )
-                        {
-                            poDstFeature->SetField(nDstField, iter->second.c_str());
-                        }
-                    }
-                }
-            }
-
             CPLErrorReset();
-            if( poDstLayer->CreateFeature( poDstFeature ) == OGRERR_NONE )
+            if( poDstLayer->CreateFeature( poDstFeature.get() ) == OGRERR_NONE )
             {
                 nFeaturesWritten ++;
-                if( (bPreserveFID && poDstFeature->GetFID() != poFeature->GetFID()) ||
-                    (!bPreserveFID && psInfo->m_iSrcFIDField >= 0 && poFeature->IsFieldSetAndNotNull(psInfo->m_iSrcFIDField) &&
-                     poDstFeature->GetFID() != poFeature->GetFieldAsInteger64(psInfo->m_iSrcFIDField)) )
+                if( nDesiredFID != OGRNullFID  && poDstFeature->GetFID() != nDesiredFID )
                 {
                     CPLError( CE_Warning, CPLE_AppDefined,
                               "Feature id not preserved");
@@ -5050,16 +5099,14 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
 
                 CPLError( CE_Failure, CPLE_AppDefined,
                         "Unable to write feature " CPL_FRMT_GIB " from layer %s.",
-                        poFeature->GetFID(), poSrcLayer->GetName() );
+                        nSrcFID, poSrcLayer->GetName() );
 
-                OGRFeature::DestroyFeature( poFeature );
-                OGRFeature::DestroyFeature( poDstFeature );
                 return false;
             }
             else
             {
                 CPLDebug( "GDALVectorTranslate", "Unable to write feature " CPL_FRMT_GIB " into layer %s.",
-                           poFeature->GetFID(), poSrcLayer->GetName() );
+                           nSrcFID, poSrcLayer->GetName() );
                 if( psOptions->nGroupTransactions )
                 {
                     if( psOptions->nLayerTransaction )
@@ -5076,10 +5123,8 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
             }
 
 end_loop:
-            OGRFeature::DestroyFeature( poDstFeature );
+            ; // nothing
         }
-
-        OGRFeature::DestroyFeature( poFeature );
 
         /* Report progress */
         nCount ++;

@@ -378,6 +378,19 @@ void OGRFeature::Reset()
 }
 
 /************************************************************************/
+/*                        SetFDefnUnsafe()                              */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+void OGRFeature::SetFDefnUnsafe( OGRFeatureDefn* poNewFDefn )
+{
+    poNewFDefn->Reference();
+    poDefn->Release();
+    poDefn = poNewFDefn;
+}
+//! @endcond
+
+/************************************************************************/
 /*                             GetDefnRef()                             */
 /************************************************************************/
 
