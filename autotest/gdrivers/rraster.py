@@ -52,8 +52,6 @@ def test_rraster_1(filename='data/rraster/byte_rraster1.grd', check_prj=None):
                        check_max=255)
 
     ds = gdal.Open(filename)
-#    md = ds.GetMetadata()
-#    assert md == {'CREATOR': "R package 'raster'", 'CREATED': '2016-06-25 17:32:47'}
     assert ds.GetRasterBand(1).GetDescription() == 'byte'
 
 ###############################################################################
