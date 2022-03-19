@@ -40,7 +40,7 @@ import gdaltest
 # Perform simple read test.
 
 
-def test_rraster_1(filename='data/rraster/byte_rraster.grd', check_prj=None):
+def test_rraster_1(filename='data/rraster/byte_rraster1.grd', check_prj=None):
 
     tst = gdaltest.GDALTest('RRASTER', filename, 1, 4672, filename_absolute=True)
     ref_ds = gdal.Open('data/byte.tif')
@@ -49,8 +49,7 @@ def test_rraster_1(filename='data/rraster/byte_rraster.grd', check_prj=None):
     tst.testOpen(check_prj=check_prj,
                        check_gt=ref_ds.GetGeoTransform(),
                        check_min=74,
-#                       check_max=255)
-                       check_max=247)
+                       check_max=255)
 
     ds = gdal.Open(filename)
 #    md = ds.GetMetadata()
