@@ -119,7 +119,7 @@ jobs:
         cmake  ${CMAKE_OPTIONS} -DCSHARP_MONO=ON -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror ..
         cmake --build $GITHUB_WORKSPACE/superbuild/build --target install -- -j$(nproc)
         ctest -V -R "^csharp.*"
-    - name: Standalone Python bindings build <s>and gdal-utils package</s>
+    - name: Standalone Python bindings build from source
       run: |
         (cd $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python && python setup.py sdist)
         mv $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python/dist/GDAL-*.tar.gz gdal-python.tar.gz
