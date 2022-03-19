@@ -570,7 +570,8 @@ void RRASTERDataset::RewriteHeader()
             VSIFree(pszProj4);
         }
         char* pszWKT = nullptr;
-        oSRS.exportToWkt(&pszWKT);
+        const char* const apszOptions[] = { "FORMAT=WKT2_2019", nullptr };
+        oSRS.exportToWkt(&pszWKT, apszOptions);
         if( pszWKT )
         {
             VSIFPrintfL(fp, "wkt=%s\n", pszWKT);
