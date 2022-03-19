@@ -619,6 +619,8 @@ class CPL_DLL OGRFeature
     OGRErr              SetGeomFieldDirectly( int iField, OGRGeometry * );
     OGRErr              SetGeomField( int iField, const OGRGeometry * );
 
+    void                Reset();
+
     OGRFeature         *Clone() const CPL_WARN_UNUSED_RESULT;
     virtual OGRBoolean  Equal( const OGRFeature * poFeature ) const;
 
