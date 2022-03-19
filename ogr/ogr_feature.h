@@ -302,6 +302,15 @@ class CPL_DLL OGRFeatureDefn
     virtual int         GetFieldIndex( const char * ) const;
     int                 GetFieldIndexCaseSensitive( const char * ) const;
 
+//! @cond Doxygen_Suppress
+    // That method should only be called if there's a guarantee that GetFieldCount() has been called before
+    int                 GetFieldCountUnsafe() const { return static_cast<int>(apoFieldDefn.size()); }
+
+    // Those methods don't check i is n range.
+    OGRFieldDefn       *GetFieldDefnUnsafe( int i ) { if( apoFieldDefn.empty() ) GetFieldDefn(i); return apoFieldDefn[i].get(); }
+    const OGRFieldDefn *GetFieldDefnUnsafe( int i ) const { if( apoFieldDefn.empty() ) GetFieldDefn(i); return apoFieldDefn[i].get(); }
+//! @endcond
+
     virtual void        AddFieldDefn( const OGRFieldDefn * );
     virtual OGRErr      DeleteFieldDefn( int iField );
     virtual OGRErr      ReorderFieldDefns( const int* panMap );
@@ -658,6 +667,21 @@ class CPL_DLL OGRFeature
                                             int *pnTZFlag ) const;
     char               *GetFieldAsSerializedJSon( int i ) const;
 
+//! @cond Doxygen_Suppress
+    bool                IsFieldSetAndNotNullUnsafe( int i ) const { return( !(pauFields[i].Set.nMarker1 == OGRUnsetMarker &&
+                                                                              pauFields[i].Set.nMarker2 == OGRUnsetMarker &&
+                                                                              pauFields[i].Set.nMarker3 == OGRUnsetMarker) &&
+                                                                            !(pauFields[i].Set.nMarker1 == OGRNullMarker &&
+                                                                              pauFields[i].Set.nMarker2 == OGRNullMarker &&
+                                                                              pauFields[i].Set.nMarker3 == OGRNullMarker) ); }
+    // Those methods should only be called on a field that is of the type
+    // consistent with the value, and that is set.
+    int                 GetFieldAsIntegerUnsafe( int i ) const { return pauFields[i].Integer; }
+    GIntBig             GetFieldAsInteger64Unsafe( int i ) const { return pauFields[i].Integer64; }
+    double              GetFieldAsDoubleUnsafe( int i ) const { return pauFields[i].Real; }
+    const char*         GetFieldAsStringUnsafe( int i) const { return pauFields[i].String; }
+//! @endcond
+
     int                 GetFieldAsInteger( const char *pszFName )  const
                       { return GetFieldAsInteger( GetFieldIndex(pszFName) ); }
     GIntBig             GetFieldAsInteger64( const char *pszFName )  const
@@ -695,6 +719,16 @@ class CPL_DLL OGRFeature
     void                SetField( int i, int nYear, int nMonth, int nDay,
                                   int nHour=0, int nMinute=0, float fSecond=0.f,
                                   int nTZFlag = 0 );
+
+//! @cond Doxygen_Suppress
+    // Those methods should only be called on a field that is of the type
+    // consistent with the value, and in a unset state.
+    void                SetFieldSameTypeUnsafe( int i, int nValue ) {
+                            pauFields[i].Integer = nValue; pauFields[i].Set.nMarker2 = 0; pauFields[i].Set.nMarker3 = 0; }
+    void                SetFieldSameTypeUnsafe( int i, GIntBig nValue ) { pauFields[i].Integer64 = nValue; }
+    void                SetFieldSameTypeUnsafe( int i, double dfValue ) { pauFields[i].Real = dfValue; }
+    void                SetFieldSameTypeUnsafe( int i, char* pszValueTransfered ) { pauFields[i].String = pszValueTransfered; }
+//! @endcond
 
     void                SetField( const char *pszFName, int nValue )
                            { SetField( GetFieldIndex(pszFName), nValue ); }

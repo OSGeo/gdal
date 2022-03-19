@@ -90,8 +90,9 @@ OGRFeature::OGRFeature( OGRFeatureDefn * poDefnIn ) :
 {
     poDefnIn->Reference();
 
+    const int nFieldCount = poDefn->GetFieldCount();
     pauFields = static_cast<OGRField *>(
-        VSI_MALLOC_VERBOSE(poDefn->GetFieldCount() * sizeof(OGRField)));
+        VSI_MALLOC_VERBOSE(nFieldCount * sizeof(OGRField)));
 
     papoGeometries = static_cast<OGRGeometry **>(
         VSI_CALLOC_VERBOSE(poDefn->GetGeomFieldCount(),
@@ -100,9 +101,11 @@ OGRFeature::OGRFeature( OGRFeatureDefn * poDefnIn ) :
     // Initialize array to the unset special value.
     if( pauFields != nullptr )
     {
-        for( int i = 0; i < poDefn->GetFieldCount(); i++ )
+        for( int i = 0; i < nFieldCount; i++ )
         {
-            OGR_RawField_SetUnset(&pauFields[i]);
+            pauFields[i].Set.nMarker1 = OGRUnsetMarker;
+            pauFields[i].Set.nMarker2 = OGRUnsetMarker;
+            pauFields[i].Set.nMarker3 = OGRUnsetMarker;
         }
     }
 }
