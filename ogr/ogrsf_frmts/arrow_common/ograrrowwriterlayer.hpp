@@ -826,7 +826,7 @@ OGRErr OGRArrowWriterLayer::ICreateFeature( OGRFeature* poFeature )
     for( int i = 0; i < nFieldCount; ++i )
     {
         const auto poFieldDefn = m_poFeatureDefn->GetFieldDefn(i);
-        if( !poFieldDefn->IsNullable() && !poFeature->IsFieldSetAndNotNull(i) )
+        if( !poFieldDefn->IsNullable() && !poFeature->IsFieldSetAndNotNullUnsafe(i) )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Null value found in non-nullable field %s",
@@ -867,7 +867,7 @@ OGRErr OGRArrowWriterLayer::ICreateFeature( OGRFeature* poFeature )
     for( int i = 0; i < nFieldCount; ++i, ++nArrowIdx )
     {
         auto poBuilder = m_apoBuilders[nArrowIdx].get();
-        if( !poFeature->IsFieldSetAndNotNull(i) )
+        if( !poFeature->IsFieldSetAndNotNullUnsafe(i) )
         {
             poBuilder->AppendNull();
             continue;
@@ -881,24 +881,24 @@ OGRErr OGRArrowWriterLayer::ICreateFeature( OGRFeature* poFeature )
             case OFTInteger:
                 if( eSubDT == OFSTBoolean )
                     static_cast<arrow::BooleanBuilder*>(poBuilder)->Append(
-                        poFeature->GetFieldAsInteger(i) != 0);
+                        poFeature->GetFieldAsIntegerUnsafe(i) != 0);
                 else if( eSubDT == OFSTInt16 )
                     static_cast<arrow::Int16Builder*>(poBuilder)->Append(
-                        static_cast<int16_t>(poFeature->GetFieldAsInteger(i)));
+                        static_cast<int16_t>(poFeature->GetFieldAsIntegerUnsafe(i)));
                 else
                     static_cast<arrow::Int32Builder*>(poBuilder)->Append(
-                        poFeature->GetFieldAsInteger(i));
+                        poFeature->GetFieldAsIntegerUnsafe(i));
                 break;
 
             case OFTInteger64:
                 static_cast<arrow::Int64Builder*>(poBuilder)->Append(
-                    static_cast<int64_t>(poFeature->GetFieldAsInteger64(i)));
+                    static_cast<int64_t>(poFeature->GetFieldAsInteger64Unsafe(i)));
                 break;
 
             case OFTReal:
             {
                 const auto arrowType = m_poSchema->fields()[nArrowIdx]->type();
-                const double dfVal = poFeature->GetFieldAsDouble(i);
+                const double dfVal = poFeature->GetFieldAsDoubleUnsafe(i);
                 if( arrowType->id() == arrow::Type::DECIMAL128 )
                 {
                     auto res = arrow::Decimal128::FromReal(
@@ -950,7 +950,7 @@ OGRErr OGRArrowWriterLayer::ICreateFeature( OGRFeature* poFeature )
             case OFTString:
             case OFTWideString:
                 static_cast<arrow::StringBuilder*>(poBuilder)->Append(
-                    poFeature->GetFieldAsString(i));
+                    poFeature->GetFieldAsStringUnsafe(i));
                 break;
 
             case OFTBinary:

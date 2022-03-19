@@ -1316,79 +1316,84 @@ OGRFeature* OGRArrowLayer::ReadFeature(
             case arrow::Type::BOOL:
             {
                 const auto castArray = static_cast<const arrow::BooleanArray*>(array);
-                poFeature->SetField(i, castArray->Value(nIdxInBatch));
+                poFeature->SetFieldSameTypeUnsafe(i, castArray->Value(nIdxInBatch));
                 break;
             }
             case arrow::Type::UINT8:
             {
                 const auto castArray = static_cast<const arrow::UInt8Array*>(array);
-                poFeature->SetField(i, castArray->Value(nIdxInBatch));
+                poFeature->SetFieldSameTypeUnsafe(i, castArray->Value(nIdxInBatch));
                 break;
             }
             case arrow::Type::INT8:
             {
                 const auto castArray = static_cast<const arrow::Int8Array*>(array);
-                poFeature->SetField(i, castArray->Value(nIdxInBatch));
+                poFeature->SetFieldSameTypeUnsafe(i, castArray->Value(nIdxInBatch));
                 break;
             }
             case arrow::Type::UINT16:
             {
                 const auto castArray = static_cast<const arrow::UInt16Array*>(array);
-                poFeature->SetField(i, castArray->Value(nIdxInBatch));
+                poFeature->SetFieldSameTypeUnsafe(i, castArray->Value(nIdxInBatch));
                 break;
             }
             case arrow::Type::INT16:
             {
                 const auto castArray = static_cast<const arrow::Int16Array*>(array);
-                poFeature->SetField(i, castArray->Value(nIdxInBatch));
+                poFeature->SetFieldSameTypeUnsafe(i, castArray->Value(nIdxInBatch));
                 break;
             }
             case arrow::Type::UINT32:
             {
                 const auto castArray = static_cast<const arrow::UInt32Array*>(array);
-                poFeature->SetField(i, static_cast<GIntBig>(castArray->Value(nIdxInBatch)));
+                poFeature->SetFieldSameTypeUnsafe(i, static_cast<GIntBig>(castArray->Value(nIdxInBatch)));
                 break;
             }
             case arrow::Type::INT32:
             {
                 const auto castArray = static_cast<const arrow::Int32Array*>(array);
-                poFeature->SetField(i, castArray->Value(nIdxInBatch));
+                poFeature->SetFieldSameTypeUnsafe(i, castArray->Value(nIdxInBatch));
                 break;
             }
             case arrow::Type::UINT64:
             {
                 const auto castArray = static_cast<const arrow::UInt64Array*>(array);
-                poFeature->SetField(i, static_cast<double>(castArray->Value(nIdxInBatch)));
+                poFeature->SetFieldSameTypeUnsafe(i, static_cast<double>(castArray->Value(nIdxInBatch)));
                 break;
             }
             case arrow::Type::INT64:
             {
                 const auto castArray = static_cast<const arrow::Int64Array*>(array);
-                poFeature->SetField(i, static_cast<GIntBig>(castArray->Value(nIdxInBatch)));
+                poFeature->SetFieldSameTypeUnsafe(i, static_cast<GIntBig>(castArray->Value(nIdxInBatch)));
                 break;
             }
             case arrow::Type::HALF_FLOAT:
             {
                 const auto castArray = static_cast<const arrow::HalfFloatArray*>(array);
-                poFeature->SetField(i, castArray->Value(nIdxInBatch));
+                poFeature->SetFieldSameTypeUnsafe(i, castArray->Value(nIdxInBatch));
                 break;
             }
             case arrow::Type::FLOAT:
             {
                 const auto castArray = static_cast<const arrow::FloatArray*>(array);
-                poFeature->SetField(i, castArray->Value(nIdxInBatch));
+                poFeature->SetFieldSameTypeUnsafe(i, castArray->Value(nIdxInBatch));
                 break;
             }
             case arrow::Type::DOUBLE:
             {
                 const auto castArray = static_cast<const arrow::DoubleArray*>(array);
-                poFeature->SetField(i, castArray->Value(nIdxInBatch));
+                poFeature->SetFieldSameTypeUnsafe(i, castArray->Value(nIdxInBatch));
                 break;
             }
             case arrow::Type::STRING:
             {
                 const auto castArray = static_cast<const arrow::StringArray*>(array);
-                poFeature->SetField(i, castArray->GetString(nIdxInBatch).c_str());
+                int out_length = 0;
+                const uint8_t* data = castArray->GetValue(nIdxInBatch, &out_length);
+                char* pszString = static_cast<char*>(CPLMalloc(out_length + 1));
+                memcpy(pszString, data, out_length);
+                pszString[out_length] = 0;
+                poFeature->SetFieldSameTypeUnsafe(i, pszString);
                 break;
             }
             case arrow::Type::BINARY:
