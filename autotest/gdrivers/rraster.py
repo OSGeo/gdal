@@ -63,7 +63,7 @@ def test_rraster_1_copy():
     gdal.Translate(filename, 'data/rraster/byte_rraster1.grd', format='RRASTER')
 #    assert not gdal.VSIStatL(filename + '.aux.xml'), 'did not expect .aux.xml'
     sr = osr.SpatialReference()
-    sr.SetFromUserInput('EPSG:26711')
+    sr.ImportFromEPSG(26711)
     test_rraster_1(filename, check_prj=sr.ExportToWkt())
     gdal.GetDriverByName('RRASTER').Delete(filename)
 
@@ -353,7 +353,7 @@ def test_rraster_nodata_and_metadata():
     ds.SetMetadataItem('CREATED', 'Today')
     ds = None
     ds = gdal.Open(filename)
-#    assert ds.GetMetadata() == {'CREATOR': 'GDAL', 'CREATED': 'Today'}
+    assert ds.GetMetadata() == {'CREATOR': 'GDAL', 'CREATED': 'Today'}
     assert ds.GetRasterBand(1).GetNoDataValue() == 1
     ds = None
 

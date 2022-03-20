@@ -570,8 +570,9 @@ void RRASTERDataset::RewriteHeader()
             VSIFree(pszProj4);
         }
         char* pszWKT = nullptr;
-        const char* const apszOptions[] = { "FORMAT=WKT2_2019", nullptr };
-        oSRS.exportToWkt(&pszWKT, apszOptions);
+//        const char* const apszOptions[] = { "FORMAT=WKT2_2019", nullptr };
+//        oSRS.exportToWkt(&pszWKT, apszOptions);
+        oSRS.exportToWkt(&pszWKT);
         if( pszWKT )
         {
             VSIFPrintfL(fp, "wkt=%s\n", pszWKT);
@@ -1268,7 +1269,9 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
             if( oSRS.importFromProj4( osProjection.c_str() ) == OGRERR_NONE )
             {
                 char* pszWKT = nullptr;
-                oSRS.exportToWkt( &pszWKT );
+                const char* const apszOptions[] = { "FORMAT=WKT2_2019", nullptr };
+                oSRS.exportToWkt(&pszWKT, apszOptions);
+//                oSRS.exportToWkt( &pszWKT );
                 if( pszWKT )
                     poDS->m_osProjection = pszWKT;
                 CPLFree( pszWKT );
@@ -1281,7 +1284,9 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
         if( oSRS.importFromWkt( osWkt.c_str() ) == OGRERR_NONE )
         {
             char* pszWKT = nullptr;
-            oSRS.exportToWkt( &pszWKT );
+            const char* const apszOptions[] = { "FORMAT=WKT2_2019", nullptr };
+            oSRS.exportToWkt(&pszWKT, apszOptions);
+//            oSRS.exportToWkt( &pszWKT );
             if( pszWKT )
                 poDS->m_osProjection = pszWKT;
             CPLFree( pszWKT );
