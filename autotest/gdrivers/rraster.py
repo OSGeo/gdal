@@ -61,7 +61,7 @@ def test_rraster_1_copy():
 
     filename = '/vsimem/rraster/byte_rraster.grd'
     gdal.Translate(filename, 'data/rraster/byte_rraster1.grd', format='RRASTER')
-#    assert not gdal.VSIStatL(filename + '.aux.xml'), 'did not expect .aux.xml'
+    assert not gdal.VSIStatL(filename + '.aux.xml'), 'did not expect .aux.xml'
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(26711)
     test_rraster_1(filename, check_prj=sr.ExportToWkt())
@@ -149,7 +149,7 @@ def test_rraster_rgba_copy():
         test_rraster_rgba(filename)
         gdal.GetDriverByName('RRASTER').Delete(filename)
 
-    
+
 ###############################################################################
 
 
