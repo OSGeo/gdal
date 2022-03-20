@@ -43,9 +43,9 @@ def define_entry_points(scripts, entry_points=None):
     Return a dict defining scripts that get installed to PYTHONHOME/Scripts.
 
         console_scripts : [
-            # CLI_command = dirname.filename.py
-            'gdal_edit = scripts.gdal_edit',
-            'gdal_merge = scripts.gdal_merge',
+            # CLI_command = dirname.filename
+            'gdal_edit = osgeo_utils.gdal_edit',
+            'gdal_merge = osgeo_utils.gdal_merge',
             ... ]
     """
     console_scripts = []
