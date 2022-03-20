@@ -35,7 +35,7 @@ By the conda-forge project:
 
 https://conda-forge.org/
 
-Once you have Anaconda ot Miniconda installed, you should be able to install GDAL with:
+Once you have Anaconda or Miniconda installed, you should be able to install GDAL with:
 
 ``conda install -c conda-forge gdal``
 

@@ -3958,14 +3958,14 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
             case GDT_Float32:
                 return DFNT_FLOAT32;
             case GDT_UInt64:
-                // SDCreate() doens't like it
+                // SDCreate() doesn't like it
                 return DFNT_UINT64;
             case GDT_UInt32:
                 return DFNT_UINT32;
             case GDT_UInt16:
                 return DFNT_UINT16;
             case GDT_Int64:
-                // SDCreate() doens't like it
+                // SDCreate() doesn't like it
                 return DFNT_INT64;
             case GDT_Int32:
                 return DFNT_INT32;

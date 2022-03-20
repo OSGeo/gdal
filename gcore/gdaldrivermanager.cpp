@@ -781,7 +781,7 @@ char** GDALDriverManager::GetSearchPaths(const char* pszGDAL_DRIVER_PATH)
  * config option to "disable".
  * 
  * Starting with gdal 3.5, the default search path $(prefix)/lib/gdalplugins
- * can be overriden at compile time by passing -DINSTALL_PLUGIN_DIR=/another/path
+ * can be overridden at compile time by passing -DINSTALL_PLUGIN_DIR=/another/path
  * to cmake.
  */
 
