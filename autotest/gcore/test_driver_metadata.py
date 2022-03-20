@@ -522,7 +522,7 @@ def test_metadata_creation_field_datatypes(driver_name):
 def test_metadata_creation_sub_field_datatypes(driver_name):
     """ Test if DMD_CREATIONFIELDDATASUBTYPES metadataitem returns valid data subtypes """
 
-    valid_datatypes = {'Boolean', 'Float32', 'Int16'}
+    valid_datatypes = {'Boolean', 'Float32', 'Int16', 'JSON', 'UUID'}
 
     driver = gdal.GetDriverByName(driver_name)
     datatypes_str = driver.GetMetadataItem('DMD_CREATIONFIELDDATASUBTYPES')

@@ -413,7 +413,7 @@ jobs:
         cmake -A ${architecture} -G "${generator}" -Werror=dev "-DCMAKE_C_COMPILER_LAUNCHER=clcache" "-DCMAKE_CXX_COMPILER_LAUNCHER=clcache" "-DPROJ_INCLUDE_DIR=${CONDA_PREFIX_BACKUP}/Library/include" "-DPROJ_LIBRARY=${CONDA_PREFIX_BACKUP}/Library/lib/proj.lib" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX" -DGDAL_USE_EXTERNAL_LIBS:BOOL=OFF -DWERROR_DEV_FLAG="-Werror=dev"
     - name: Build
       shell: bash -l {0}
-      run: cmake --build $GITHUB_WORKSPACE/build --config Release -j 2
+      run: cmake --build $GITHUB_WORKSPACE/build --config RelWithDebInfo -j 2
     - name: Show gdal.pc
       shell: bash -l {0}
       run: cat $GITHUB_WORKSPACE/build/gdal.pc
