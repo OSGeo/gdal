@@ -683,7 +683,7 @@ netCDFRasterBand::netCDFRasterBand( const netCDFRasterBand::CONSTRUCTOR_OPEN&,
             {
                 SetNoDataValueNoUpdate(nNoDataAsUInt64);
             }
-            else if (eDataType == GDT_UInt64 &&
+            else if (eDataType == GDT_Int64 &&
                      nNoDataAsUInt64 <= static_cast<uint64_t>(std::numeric_limits<int64_t>::max()) )
             {
                 SetNoDataValueNoUpdate(static_cast<int64_t>(nNoDataAsUInt64));
