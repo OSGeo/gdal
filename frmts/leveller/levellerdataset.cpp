@@ -298,7 +298,7 @@ public:
     static GDALDataset* Open( GDALOpenInfo* );
     static int Identify( GDALOpenInfo* );
     static GDALDataset* Create( const char* pszFilename,
-                                int nXSize, int nYSize, int nBands,
+                                int nXSize, int nYSize, int nBandsIn,
                                 GDALDataType eType, char** papszOptions );
 
     virtual CPLErr      GetGeoTransform( double* ) override;
@@ -863,11 +863,11 @@ CPLErr LevellerDataset::_SetProjection( const char * pszNewProjection )
 GDALDataset* LevellerDataset::Create
 (
     const char* pszFilename,
-    int nXSize, int nYSize, int nBands,
+    int nXSize, int nYSize, int nBandsIn,
     GDALDataType eType, char** papszOptions
 )
 {
-    if(nBands != 1)
+    if(nBandsIn != 1)
     {
         CPLError( CE_Failure, CPLE_IllegalArg, "Band count must be 1" );
         return nullptr;

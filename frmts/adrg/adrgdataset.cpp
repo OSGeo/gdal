@@ -98,7 +98,7 @@ class ADRGDataset final: public GDALPamDataset
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create(const char* pszFilename, int nXSize, int nYSize,
-                               int nBands, GDALDataType eType, char **papszOptions);
+                               int nBandsIn, GDALDataType eType, char **papszOptions);
 
     static double GetLongitudeFromString(const char* str);
     static double GetLatitudeFromString(const char* str);
@@ -1648,7 +1648,7 @@ GDALDataset *ADRGDataset::Open( GDALOpenInfo * poOpenInfo )
 GDALDataset *ADRGDataset::Create( const char* pszFilename,
                                   int nXSize,
                                   int nYSize,
-                                  int nBands,
+                                  int nBandsIn,
                                   GDALDataType eType,
                                   CPL_UNUSED char **papszOptions )
 {
@@ -1662,12 +1662,12 @@ GDALDataset *ADRGDataset::Create( const char* pszFilename,
         return nullptr;
     }
 
-    if( nBands != 3 )
+    if( nBandsIn != 3 )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "ADRG driver doesn't support %d bands. "
                   "Must be 3 (rgb) bands.",
-                  nBands );
+                  nBandsIn );
         return nullptr;
     }
 

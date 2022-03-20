@@ -174,7 +174,7 @@ class TerragenDataset final: public GDALPamDataset
 
     static GDALDataset* Open( GDALOpenInfo* );
     static GDALDataset* Create( const char* pszFilename,
-                                int nXSize, int nYSize, int nBands,
+                                int nXSize, int nYSize, int nBandsIn,
                                 GDALDataType eType, char** papszOptions );
 
     virtual CPLErr      GetGeoTransform( double* ) override;
@@ -924,7 +924,7 @@ CPLErr TerragenDataset::GetGeoTransform(double* padfTransform)
 GDALDataset* TerragenDataset::Create
 (
     const char* pszFilename,
-    int nXSize, int nYSize, int nBands,
+    int nXSize, int nYSize, int nBandsIn,
     GDALDataType eType, char** papszOptions
 )
 {
@@ -965,11 +965,11 @@ GDALDataset* TerragenDataset::Create
         return nullptr;
     }
 
-    if( nBands != 1 )
+    if( nBandsIn != 1 )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Terragen driver doesn't support %d bands. Must be 1.\n",
-                  nBands );
+                  nBandsIn );
 
         delete poDS;
         return nullptr;

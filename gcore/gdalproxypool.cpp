@@ -688,14 +688,14 @@ GDALProxyPoolDataset::GDALProxyPoolDataset( const char* pszSourceDatasetDescript
  * Its bands are also instantiated.
  */
 GDALProxyPoolDataset* GDALProxyPoolDataset::Create( const char* pszSourceDatasetDescription,
-                                                    CSLConstList papszOpenOptions,
-                                                    GDALAccess eAccess,
-                                                    int bShared,
+                                                    CSLConstList papszOpenOptionsIn,
+                                                    GDALAccess eAccessIn,
+                                                    int bSharedIn,
                                                     const char* pszOwner )
 {
     std::unique_ptr<GDALProxyPoolDataset> poSelf(
-        new GDALProxyPoolDataset(pszSourceDatasetDescription, eAccess, bShared, pszOwner));
-    poSelf->SetOpenOptions(papszOpenOptions);
+        new GDALProxyPoolDataset(pszSourceDatasetDescription, eAccessIn, bSharedIn, pszOwner));
+    poSelf->SetOpenOptions(papszOpenOptionsIn);
     GDALDataset* poUnderlyingDS = poSelf->RefUnderlyingDataset();
     if( !poUnderlyingDS )
         return nullptr;

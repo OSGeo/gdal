@@ -214,7 +214,7 @@ public:
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
-                                int nXSize, int nYSize, int nBands,
+                                int nXSize, int nYSize, int nBandsIn,
                                 GDALDataType eType, char ** papszOptions );
     static GDALDataset* CreateCopy( const char *pszFilename,
                                        GDALDataset *poSrcDS,
@@ -3987,7 +3987,7 @@ void ISIS3Dataset::SerializeAsPDL( VSILFILE* fp, const CPLJSONObject &oObj,
 /************************************************************************/
 
 GDALDataset *ISIS3Dataset::Create(const char* pszFilename,
-                                  int nXSize, int nYSize, int nBands,
+                                  int nXSize, int nYSize, int nBandsIn,
                                   GDALDataType eType,
                                   char** papszOptions)
 {
@@ -3997,7 +3997,7 @@ GDALDataset *ISIS3Dataset::Create(const char* pszFilename,
         CPLError(CE_Failure, CPLE_NotSupported, "Unsupported data type");
         return nullptr;
     }
-    if( nBands == 0 || nBands > 32767 )
+    if( nBandsIn == 0 || nBandsIn > 32767 )
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Unsupported band count");
         return nullptr;
@@ -4100,7 +4100,7 @@ GDALDataset *ISIS3Dataset::Create(const char* pszFilename,
             // away but indeed well written
             papszGTiffOptions = CSLSetNameValue(papszGTiffOptions,
                                     "@WRITE_EMPTY_TILES_SYNCHRONOUSLY", "YES");
-            if( !bIsTiled && nBands > 1 )
+            if( !bIsTiled && nBandsIn > 1 )
             {
                 papszGTiffOptions = CSLSetNameValue(papszGTiffOptions,
                                                     "BLOCKYSIZE", "1");
@@ -4108,7 +4108,7 @@ GDALDataset *ISIS3Dataset::Create(const char* pszFilename,
         }
 
         poExternalDS = poDrv->Create( osExternalFilename, nXSize, nYSize,
-                                      nBands,
+                                      nBandsIn,
                                       eType, papszGTiffOptions );
         CSLDestroy(papszGTiffOptions);
         if( poExternalDS == nullptr )
@@ -4166,7 +4166,7 @@ GDALDataset *ISIS3Dataset::Create(const char* pszFilename,
                             (eType == GDT_Int16)   ? NULL2:
                             /*(eType == GDT_Float32) ?*/ NULL4;
 
-    for( int i = 0; i < nBands; i++ )
+    for( int i = 0; i < nBandsIn; i++ )
     {
         GDALRasterBand *poBand = nullptr;
 
