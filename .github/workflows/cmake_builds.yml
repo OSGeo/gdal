@@ -109,6 +109,11 @@ jobs:
       run: |
         cd $GITHUB_WORKSPACE/superbuild/build
         ctest -V
+    - name: install and uninstall
+      run: |
+        cmake --build $GITHUB_WORKSPACE/superbuild/build --target install -- -j$(nproc)
+        cmake --build $GITHUB_WORKSPACE/superbuild/build --target uninstall
+        find $GITHUB_WORKSPACE/install-gdal || /bin/true
     - name: install
       run: |
         cmake --build $GITHUB_WORKSPACE/superbuild/build --target install -- -j$(nproc)

@@ -33,6 +33,10 @@ option(BUILD_SHARED_LIBS "Set ON to build shared library" ON)
 # Option to set preferred C# compiler
 option(CSHARP_MONO "Whether to force the C# compiler to be Mono" OFF)
 
+# This line must be kept early in the CMake instructions. At time of writing,
+# this file is populated only be scripts/install_bash_completions.cmake.in
+install(CODE "file(REMOVE \"${PROJECT_BINARY_DIR}/install_manifest_extra.txt\")")
+
 # ######################################################################################################################
 # Detect available warning flags
 
