@@ -16364,8 +16364,12 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Compute the uncompressed size.                                  */
 /* -------------------------------------------------------------------- */
+    const unsigned nTileXCount = bTiled ? DIV_ROUND_UP(nXSize, l_nBlockXSize) : 0;
+    const unsigned nTileYCount = bTiled ? DIV_ROUND_UP(nYSize, l_nBlockYSize) : 0;
     const double dfUncompressedImageSize =
-        nXSize * static_cast<double>(nYSize) * l_nBands *
+        (bTiled ? (static_cast<double>(nTileXCount) * nTileYCount * l_nBlockXSize * l_nBlockYSize) :
+                  (nXSize * static_cast<double>(nYSize))) *
+        l_nBands *
         GDALGetDataTypeSizeBytes(eType)
         + dfExtraSpaceForOverviews;
 
@@ -16410,8 +16414,6 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     if( bTiled )
     {
-        unsigned nTileXCount = DIV_ROUND_UP(nXSize, l_nBlockXSize);
-        unsigned nTileYCount = DIV_ROUND_UP(nYSize, l_nBlockYSize);
         // libtiff implementation limitation
         if( nTileXCount > 0x80000000U / (bCreateBigTIFF ? 8 : 4) / nTileYCount )
         {
