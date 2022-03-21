@@ -355,6 +355,21 @@ else ()
       "lib/gdalplugins"
       CACHE PATH "Installation sub-directory for plugins")
   set(GDAL_RESOURCE_PATH ${CMAKE_INSTALL_DATADIR}/gdal)
+
+  option(GDAL_SET_INSTALL_RELATIVE_RPATH "Whether the rpath of installed binaries should be written as a relative path to the library" OFF)
+  if(GDAL_SET_INSTALL_RELATIVE_RPATH)
+      if(APPLE)
+        set(base @loader_path)
+      else()
+        set(base $ORIGIN)
+      endif()
+
+      file(RELATIVE_PATH relDir
+        ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}
+        ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}
+      )
+      set(CMAKE_INSTALL_RPATH ${base} ${base}/${relDir})
+  endif()
 endif ()
 
 set(INSTALL_PLUGIN_FULL_DIR "${CMAKE_INSTALL_PREFIX}/${INSTALL_PLUGIN_DIR}")
