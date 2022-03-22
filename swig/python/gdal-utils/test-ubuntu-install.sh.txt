@@ -29,4 +29,4 @@ pip install -r requirements.txt
 pytest pyscripts/
 
 # Todo: verify the console_scripts also work
-echo. NOTE: Not tested: PYTHONHOME/Scripts
+echo NOTE: Not tested: PYTHONHOME/Scripts
