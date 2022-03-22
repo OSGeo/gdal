@@ -26,6 +26,7 @@ add_gdal_driver(
           loslasdataset.cpp
           mffdataset.cpp
           ndfdataset.cpp
+          nsidcdataset.cpp
           ntv2dataset.cpp
           pauxdataset.cpp
           pnmdataset.cpp

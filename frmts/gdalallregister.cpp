@@ -443,6 +443,7 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_ROIPAC();
     GDALRegister_RRASTER();
     GDALRegister_BYN();
+    GDALRegister_NSIDCbin();
 #endif
 
 #ifdef FRMT_arg
@@ -587,6 +588,8 @@ void CPL_STDCALL GDALAllRegister()
 #ifdef FRMT_stacit
     GDALRegister_STACIT();
 #endif
+
+
 
     // NOTE: you need to generally insert your own driver before that line.
 
