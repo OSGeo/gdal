@@ -4144,10 +4144,10 @@ int PDS4Dataset::TestCapability( const char * pszCap )
 /************************************************************************/
 
 GDALDataset *PDS4Dataset::Create(const char *pszFilename,
-                                 int nXSize, int nYSize, int nBands,
+                                 int nXSize, int nYSize, int nBandsIn,
                                  GDALDataType eType, char **papszOptions)
 {
-    return CreateInternal(pszFilename, nullptr, nXSize, nYSize, nBands,
+    return CreateInternal(pszFilename, nullptr, nXSize, nYSize, nBandsIn,
                           eType, papszOptions);
 }
 
@@ -4157,13 +4157,13 @@ GDALDataset *PDS4Dataset::Create(const char *pszFilename,
 
 PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
                                          GDALDataset* poSrcDS,
-                                         int nXSize, int nYSize, int nBands,
+                                         int nXSize, int nYSize, int nBandsIn,
                                          GDALDataType eType,
                                          const char * const * papszOptionsIn)
 {
     CPLStringList aosOptions(papszOptionsIn);
 
-    if( nXSize == 0 && nYSize == 0 && nBands == 0 && eType == GDT_Unknown )
+    if( nXSize == 0 && nYSize == 0 && nBandsIn == 0 && eType == GDT_Unknown )
     {
         // Vector file creation
         PDS4Dataset* poDS = new PDS4Dataset();
@@ -4193,7 +4193,7 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
         return nullptr;
     }
 
-    if( nBands == 0 )
+    if( nBandsIn == 0 )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Invalid number of bands");
@@ -4203,7 +4203,7 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
     const char* pszArrayType = aosOptions.FetchNameValueDef(
                                     "ARRAY_TYPE", "Array_3D_Image");
     const bool bIsArray2D = STARTS_WITH(pszArrayType, "Array_2D");
-    if( nBands > 1 && bIsArray2D )
+    if( nBandsIn > 1 && bIsArray2D )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "ARRAY_TYPE=%s is not supported for a multi-band raster",
@@ -4224,8 +4224,8 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
 
     if( EQUAL(pszInterleave,"BIP") )
     {
-        nPixelOffset = nItemSize * nBands;
-        if( nPixelOffset > INT_MAX / nBands )
+        nPixelOffset = nItemSize * nBandsIn;
+        if( nPixelOffset > INT_MAX / nBandsIn )
         {
             return nullptr;
         }
@@ -4245,12 +4245,12 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
     else if( EQUAL(pszInterleave, "BIL") )
     {
         nPixelOffset = nItemSize;
-        if( nPixelOffset > INT_MAX / nBands ||
-            nPixelOffset * nBands > INT_MAX / nXSize )
+        if( nPixelOffset > INT_MAX / nBandsIn ||
+            nPixelOffset * nBandsIn > INT_MAX / nXSize )
         {
             return nullptr;
         }
-        nLineOffset = nItemSize * nBands * nXSize;
+        nLineOffset = nItemSize * nBandsIn * nXSize;
         nBandOffset = static_cast<vsi_l_offset>(nItemSize) * nXSize;
     }
     else
@@ -4311,8 +4311,8 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
                      "Source dataset is not compatible of a raw binary format");
             return nullptr;
         }
-        if( (nBands > 1 && sLayout.eInterleaving == RawBinaryLayout::Interleaving::UNKNOWN) ||
-            (nBands == 1 && !(sLayout.nPixelOffset == nItemSize &&
+        if( (nBandsIn > 1 && sLayout.eInterleaving == RawBinaryLayout::Interleaving::UNKNOWN) ||
+            (nBandsIn == 1 && !(sLayout.nPixelOffset == nItemSize &&
                               sLayout.nLineOffset == sLayout.nPixelOffset * nXSize)) )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -4327,7 +4327,7 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
             return nullptr;
         }
         osImageFilename = sLayout.osRawFilename;
-        if( nBands == 1 || sLayout.eInterleaving == RawBinaryLayout::Interleaving::BIP )
+        if( nBandsIn == 1 || sLayout.eInterleaving == RawBinaryLayout::Interleaving::BIP )
             pszInterleave = "BIP";
         else if( sLayout.eInterleaving == RawBinaryLayout::Interleaving::BIL )
             pszInterleave = "BIL";
@@ -4427,7 +4427,7 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
         // away but indeed well written
         papszGTiffOptions = CSLSetNameValue(papszGTiffOptions,
                                 "@WRITE_EMPTY_TILES_SYNCHRONOUSLY", "YES");
-        if( nBands > 1 && EQUAL(pszInterleave, "BSQ") )
+        if( nBandsIn > 1 && EQUAL(pszInterleave, "BSQ") )
         {
             papszGTiffOptions = CSLSetNameValue(papszGTiffOptions,
                                                 "BLOCKYSIZE", "1");
@@ -4440,7 +4440,7 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
         }
 
         poExternalDS = poDrv->Create( osImageFilename, nXSize, nYSize,
-                                      nBands,
+                                      nBandsIn,
                                       eType, papszGTiffOptions );
         CSLDestroy(papszGTiffOptions);
         if( poExternalDS == nullptr )
@@ -4497,7 +4497,7 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
                                            "IMAGE_STRUCTURE");
     }
 
-    for( int i = 0; i < nBands; i++ )
+    for( int i = 0; i < nBandsIn; i++ )
     {
         if( poDS->m_poExternalDS != nullptr )
         {

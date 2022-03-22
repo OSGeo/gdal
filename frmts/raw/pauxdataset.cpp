@@ -88,7 +88,7 @@ class PAuxDataset final: public RawDataset
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
-                                int nXSize, int nYSize, int nBands,
+                                int nXSize, int nYSize, int nBandsIn,
                                 GDALDataType eType, char ** papszParamList );
 };
 
@@ -888,7 +888,7 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
 /************************************************************************/
 
 GDALDataset *PAuxDataset::Create( const char * pszFilename,
-                                  int nXSize, int nYSize, int nBands,
+                                  int nXSize, int nYSize, int nBandsIn,
                                   GDALDataType eType,
                                   char **papszOptions )
 
@@ -916,7 +916,7 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     int nPixelSizeSum = 0;
 
-    for( int iBand = 0; iBand < nBands; iBand++ )
+    for( int iBand = 0; iBand < nBandsIn; iBand++ )
         nPixelSizeSum += GDALGetDataTypeSizeBytes(eType);
 
 /* -------------------------------------------------------------------- */
@@ -984,7 +984,7 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
 /*      Write out the raw definition for the dataset as a whole.        */
 /* -------------------------------------------------------------------- */
     CPL_IGNORE_RET_VAL(VSIFPrintfL( fp, "RawDefinition: %d %d %d\n",
-                nXSize, nYSize, nBands ));
+                nXSize, nYSize, nBandsIn ));
 
 /* -------------------------------------------------------------------- */
 /*      Write out a definition for each band.  We always write band     */
@@ -993,7 +993,7 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     vsi_l_offset nImgOffset = 0;
 
-    for( int iBand = 0; iBand < nBands; iBand++ )
+    for( int iBand = 0; iBand < nBandsIn; iBand++ )
     {
         int nPixelOffset = 0;
         int nLineOffset = 0;

@@ -123,6 +123,7 @@ else ()
   detect_and_set_c_and_cxx_warning_flag(shorten-64-to-32)
   detect_and_set_c_and_cxx_warning_flag(logical-op)
   detect_and_set_c_and_cxx_warning_flag(shadow)
+  detect_and_set_cxx_warning_flag(shadow-field) # CLang only for now
   detect_and_set_c_and_cxx_warning_flag(missing-include-dirs)
   check_c_compiler_flag("-Wformat -Werror=format-security -Wno-format-nonliteral" HAVE_WFLAG_FORMAT_SECURITY)
   if (HAVE_WFLAG_FORMAT_SECURITY)

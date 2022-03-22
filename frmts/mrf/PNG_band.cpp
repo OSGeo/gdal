@@ -363,7 +363,7 @@ PNG_Band::PNG_Band( MRFDataset *pDS, const ILImage &image,
     }
     // PNGs can be larger than the source, especially for small page size
     // If PPNG is used, the palette can take up to 2100 bytes
-    poDS->SetPBufferSize(static_cast<unsigned int>(1.1 * image.pageSizeBytes + 4000));
+    poMRFDS->SetPBufferSize(static_cast<unsigned int>(1.1 * image.pageSizeBytes + 4000));
 }
 
 NAMESPACE_MRF_END
