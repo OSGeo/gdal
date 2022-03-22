@@ -33,6 +33,10 @@ option(BUILD_SHARED_LIBS "Set ON to build shared library" ON)
 # Option to set preferred C# compiler
 option(CSHARP_MONO "Whether to force the C# compiler to be Mono" OFF)
 
+# This line must be kept early in the CMake instructions. At time of writing,
+# this file is populated only be scripts/install_bash_completions.cmake.in
+install(CODE "file(REMOVE \"${PROJECT_BINARY_DIR}/install_manifest_extra.txt\")")
+
 # ######################################################################################################################
 # Detect available warning flags
 
@@ -123,6 +127,7 @@ else ()
   detect_and_set_c_and_cxx_warning_flag(shorten-64-to-32)
   detect_and_set_c_and_cxx_warning_flag(logical-op)
   detect_and_set_c_and_cxx_warning_flag(shadow)
+  detect_and_set_cxx_warning_flag(shadow-field) # CLang only for now
   detect_and_set_c_and_cxx_warning_flag(missing-include-dirs)
   check_c_compiler_flag("-Wformat -Werror=format-security -Wno-format-nonliteral" HAVE_WFLAG_FORMAT_SECURITY)
   if (HAVE_WFLAG_FORMAT_SECURITY)

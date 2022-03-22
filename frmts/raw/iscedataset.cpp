@@ -97,7 +97,7 @@ class ISCEDataset final: public RawDataset
     static GDALDataset *Open( GDALOpenInfo *poOpenInfo );
     static GDALDataset *Open( GDALOpenInfo *poOpenInfo, bool bFileSizeCheck );
     static GDALDataset *Create( const char *pszFilename,
-                                int nXSize, int nYSize, int nBands,
+                                int nXSize, int nYSize, int nBandsIn,
                                 GDALDataType eType, char **papszOptions );
 };
 
@@ -831,7 +831,7 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo, bool bFileSizeCheck )
 /************************************************************************/
 
 GDALDataset *ISCEDataset::Create( const char *pszFilename,
-                                  int nXSize, int nYSize, int nBands,
+                                  int nXSize, int nYSize, int nBandsIn,
                                   GDALDataType eType,
                                   char **papszOptions )
 {
@@ -878,7 +878,7 @@ GDALDataset *ISCEDataset::Create( const char *pszFilename,
 
     psTmpNode = CPLCreateXMLNode( psDocNode, CXT_Element, "property" );
     CPLAddXMLAttributeAndValue( psTmpNode, "name", "NUMBER_BANDS" );
-    CPLsnprintf(sBuf, sizeof(sBuf), "%d", nBands);
+    CPLsnprintf(sBuf, sizeof(sBuf), "%d", nBandsIn);
     CPLCreateXMLElementAndValue( psTmpNode, "value", sBuf );
 
     psTmpNode = CPLCreateXMLNode( psDocNode, CXT_Element, "property" );

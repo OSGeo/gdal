@@ -127,9 +127,9 @@ static GDALDataType GetWorkDataType(GDALDataType eDataType)
 /************************************************************************/
 
 bool GDALNoDataMaskBand::IsNoDataInRange(double dfNoDataValue,
-                                         GDALDataType eDataType)
+                                         GDALDataType eDataTypeIn)
 {
-    GDALDataType eWrkDT = GetWorkDataType( eDataType );
+    GDALDataType eWrkDT = GetWorkDataType( eDataTypeIn );
     switch( eWrkDT )
     {
       case GDT_Byte:

@@ -1179,7 +1179,7 @@ GDALDataset *MEMDataset::Open( GDALOpenInfo * poOpenInfo )
 GDALDataset *MEMDataset::Create( const char * /* pszFilename */,
                                  int nXSize,
                                  int nYSize,
-                                 int nBands,
+                                 int nBandsIn,
                                  GDALDataType eType,
                                  char **papszOptions )
 {
@@ -1200,15 +1200,15 @@ GDALDataset *MEMDataset::Create( const char * /* pszFilename */,
 /*      memory.                                                         */
 /* -------------------------------------------------------------------- */
     const int nWordSize = GDALGetDataTypeSize(eType) / 8;
-    if( nBands > 0 && nWordSize > 0 && (nBands > INT_MAX / nWordSize ||
-        (GIntBig)nXSize * nYSize > GINTBIG_MAX / (nWordSize * nBands)) )
+    if( nBandsIn > 0 && nWordSize > 0 && (nBandsIn > INT_MAX / nWordSize ||
+        (GIntBig)nXSize * nYSize > GINTBIG_MAX / (nWordSize * nBandsIn)) )
     {
         CPLError( CE_Failure, CPLE_OutOfMemory, "Multiplication overflow");
         return nullptr;
     }
 
     const GUIntBig nGlobalBigSize
-        = static_cast<GUIntBig>(nWordSize) * nBands * nXSize * nYSize;
+        = static_cast<GUIntBig>(nWordSize) * nBandsIn * nXSize * nYSize;
     const size_t nGlobalSize = static_cast<size_t>(nGlobalBigSize);
 #if SIZEOF_VOIDP == 4
     if( static_cast<GUIntBig>(nGlobalSize) != nGlobalBigSize )
@@ -1232,13 +1232,13 @@ GDALDataset *MEMDataset::Create( const char * /* pszFilename */,
             bAllocOK = FALSE;
         else
         {
-            for( int iBand = 1; iBand < nBands; iBand++ )
+            for( int iBand = 1; iBand < nBandsIn; iBand++ )
                 apbyBandData.push_back( apbyBandData[0] + iBand * nWordSize );
         }
     }
     else
     {
-        for( int iBand = 0; iBand < nBands; iBand++ )
+        for( int iBand = 0; iBand < nBandsIn; iBand++ )
         {
             apbyBandData.push_back(
                 reinterpret_cast<GByte *>(
@@ -1284,13 +1284,13 @@ GDALDataset *MEMDataset::Create( const char * /* pszFilename */,
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    for( int iBand = 0; iBand < nBands; iBand++ )
+    for( int iBand = 0; iBand < nBandsIn; iBand++ )
     {
         MEMRasterBand *poNewBand = nullptr;
 
         if( bPixelInterleaved )
             poNewBand = new MEMRasterBand( poDS, iBand+1, apbyBandData[iBand],
-                                           eType, nWordSize * nBands, 0,
+                                           eType, nWordSize * nBandsIn, 0,
                                            iBand == 0 );
         else
             poNewBand = new MEMRasterBand( poDS, iBand+1, apbyBandData[iBand],

@@ -52,8 +52,8 @@ class KRODataset final: public RawDataset
                    ~KRODataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
-    static GDALDataset *Create( const char * pszFilename,
-                                int nXSize, int nYSize, int nBands,
+    static GDALDataset *Create(const char * pszFilename,
+                                int nXSize, int nYSize, int nBandsIn,
                                 GDALDataType eType, char ** papszOptions );
     static int          Identify( GDALOpenInfo * );
 };
@@ -240,7 +240,7 @@ GDALDataset *KRODataset::Open( GDALOpenInfo * poOpenInfo )
 GDALDataset *KRODataset::Create( const char * pszFilename,
                                  int nXSize,
                                  int nYSize,
-                                 int nBands,
+                                 int nBandsIn,
                                  GDALDataType eType,
                                  char ** /* papszOptions */ )
 {
@@ -251,7 +251,7 @@ GDALDataset *KRODataset::Create( const char * pszFilename,
                   GDALGetDataTypeName( eType ) );
         return nullptr;
     }
-    if( nXSize == 0 || nYSize == 0 || nBands == 0 )
+    if( nXSize == 0 || nYSize == 0 || nBandsIn == 0 )
     {
         return nullptr;
     }
@@ -285,7 +285,7 @@ GDALDataset *KRODataset::Create( const char * pszFilename,
     CPL_MSBPTR32(&nTmp);
     nRet += VSIFWriteL(&nTmp, 4, 1, fp);
 
-    nTmp = nBands;
+    nTmp = nBandsIn;
     CPL_MSBPTR32(&nTmp);
     nRet += VSIFWriteL(&nTmp, 4, 1, fp);
 
@@ -296,7 +296,7 @@ GDALDataset *KRODataset::Create( const char * pszFilename,
     CPL_IGNORE_RET_VAL(
         VSIFSeekL( fp,
                    static_cast<vsi_l_offset>(nXSize) * nYSize *
-                   GDALGetDataTypeSizeBytes(eType) * nBands - 1,
+                   GDALGetDataTypeSizeBytes(eType) * nBandsIn - 1,
               SEEK_CUR));
     GByte byNul = 0;
     nRet += VSIFWriteL(&byNul, 1, 1, fp);

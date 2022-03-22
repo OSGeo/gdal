@@ -91,14 +91,14 @@ int ZarrDataset::Identify( GDALOpenInfo *poOpenInfo )
 
 GDALDataset* ZarrDataset::OpenMultidim(const char* pszFilename,
                                        bool bUpdateMode,
-                                       CSLConstList papszOpenOptions)
+                                       CSLConstList papszOpenOptionsIn)
 {
     CPLString osFilename(pszFilename);
     if( osFilename.back() == '/' )
         osFilename.resize(osFilename.size() - 1);
 
     auto poSharedResource = std::make_shared<ZarrSharedResource>(osFilename);
-    poSharedResource->SetOpenOptions(papszOpenOptions);
+    poSharedResource->SetOpenOptions(papszOpenOptionsIn);
 
     auto poRG = ZarrGroupV2::Create(poSharedResource, std::string(), "/");
     poRG->SetUpdatable(bUpdateMode);
@@ -141,7 +141,7 @@ GDALDataset* ZarrDataset::OpenMultidim(const char* pszFilename,
     const std::string osZmetadataFilename(
             CPLFormFilename(pszFilename, ".zmetadata", nullptr));
     if( CPLTestBool(CSLFetchNameValueDef(
-                papszOpenOptions, "USE_ZMETADATA", "YES")) &&
+                papszOpenOptionsIn, "USE_ZMETADATA", "YES")) &&
         VSIStatL( osZmetadataFilename.c_str(), &sStat ) == 0 )
     {
         CPLJSONDocument oDoc;
@@ -781,11 +781,11 @@ GDALDataset * ZarrDataset::CreateMultiDimensional( const char * pszFilename,
 /************************************************************************/
 
 GDALDataset * ZarrDataset::Create( const char * pszName,
-                                   int nXSize, int nYSize, int nBands,
+                                   int nXSize, int nYSize, int nBandsIn,
                                    GDALDataType eType,
                                    char ** papszOptions )
 {
-    if( nBands <= 0 || nXSize <= 0 || nYSize <= 0 )
+    if( nBandsIn <= 0 || nXSize <= 0 || nYSize <= 0 )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "nBands, nXSize, nYSize should be > 0");
@@ -881,12 +881,12 @@ GDALDataset * ZarrDataset::Create( const char * pszName,
     const auto aoDims = std::vector<std::shared_ptr<GDALDimension>>{
         poDS->m_poDimY, poDS->m_poDimX};
 
-    for( int i = 0; i < nBands; i++ )
+    for( int i = 0; i < nBandsIn; i++ )
     {
         auto poArray = poRG->CreateMDArray(
             pszArrayName ?
-                (nBands == 1 ? pszArrayName : CPLSPrintf("%s_band%d", pszArrayName, i+1)):
-                (nBands == 1 ? CPLGetBasename(pszName) : CPLSPrintf("Band%d", i+1)),
+                (nBandsIn == 1 ? pszArrayName : CPLSPrintf("%s_band%d", pszArrayName, i+1)):
+                (nBandsIn == 1 ? CPLGetBasename(pszName) : CPLSPrintf("Band%d", i+1)),
             aoDims,
             GDALExtendedDataType::Create(eType),
             papszOptions);

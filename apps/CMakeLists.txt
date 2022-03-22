@@ -97,8 +97,6 @@ if (BUILD_APPS)
       gdallocationinfo
       ogrinfo
       ogr2ogr
-      ogrlineref
-      nearblack
       gdalmdiminfo
       gdalmdimtranslate)
   if (ENABLE_GNM)

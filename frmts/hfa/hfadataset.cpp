@@ -4740,7 +4740,7 @@ char **HFADataset::GetFileList()
 /************************************************************************/
 
 GDALDataset *HFADataset::Create( const char * pszFilenameIn,
-                                 int nXSize, int nYSize, int nBands,
+                                 int nXSize, int nYSize, int nBandsIn,
                                  GDALDataType eType,
                                  char ** papszParamList )
 
@@ -4812,7 +4812,7 @@ GDALDataset *HFADataset::Create( const char * pszFilenameIn,
     }
 
     // Create the new file.
-    HFAHandle hHFA = HFACreate(pszFilenameIn, nXSize, nYSize, nBands,
+    HFAHandle hHFA = HFACreate(pszFilenameIn, nXSize, nYSize, nBandsIn,
                                 eHfaDataType, papszParamList);
     if( hHFA == nullptr )
         return nullptr;

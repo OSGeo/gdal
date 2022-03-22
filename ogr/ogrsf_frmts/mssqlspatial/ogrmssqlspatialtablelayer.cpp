@@ -1388,7 +1388,7 @@ int OGRMSSQLSpatialTableLayer::InitBCP(const char* pszDSN)
 
 {
     /* Create a different connection for BCP upload */
-    if( Failed( SQLAllocHandle( SQL_HANDLE_ENV, NULL, &hEnvBCP ) ) )
+    if( Failed( SQLAllocHandle( SQL_HANDLE_ENV, nullptr, &hEnvBCP ) ) )
     return FALSE;
 
     /* Notify ODBC that this is an ODBC 3.0 app. */
@@ -1417,7 +1417,7 @@ int OGRMSSQLSpatialTableLayer::InitBCP(const char* pszDSN)
     SQLSMALLINT nOutConnStringLen = 0;
 
     if ( Failed(
-        SQLDriverConnect( hDBCBCP, NULL,
+        SQLDriverConnect( hDBCBCP, nullptr,
                             (SQLCHAR *) pszDSN, (SQLSMALLINT)strlen(pszDSN),
                             szOutConnString, sizeof(szOutConnString),
                             &nOutConnStringLen, SQL_DRIVER_NOPROMPT ) ))
@@ -1447,7 +1447,7 @@ void OGRMSSQLSpatialTableLayer::CloseBCP()
         for( iCol = 0; iCol < nRawColumns; iCol++ )
             CPLFree(papstBindBuffer[iCol]);
         CPLFree(papstBindBuffer);
-        papstBindBuffer = NULL;
+        papstBindBuffer = nullptr;
 
         if( bIdentityInsert )
         {
@@ -1455,18 +1455,18 @@ void OGRMSSQLSpatialTableLayer::CloseBCP()
         }
     }
 
-    if( hDBCBCP!=NULL )
+    if( hDBCBCP!=nullptr )
     {
         CPLDebug( "ODBC", "SQLDisconnect()" );
         SQLDisconnect( hDBCBCP );
         SQLFreeHandle( SQL_HANDLE_DBC, hDBCBCP );
-        hDBCBCP = NULL;
+        hDBCBCP = nullptr;
     }
 
-    if( hEnvBCP!=NULL )
+    if( hEnvBCP!=nullptr )
     {
         SQLFreeHandle( SQL_HANDLE_ENV, hEnvBCP );
-        hEnvBCP = NULL;
+        hEnvBCP = nullptr;
     }
 }
 
@@ -1480,7 +1480,7 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
     int iCol;
     int iField = 0;
 
-    if ( hDBCBCP == NULL )
+    if ( hDBCBCP == nullptr )
     {
         nBCPCount = 0;
 
@@ -1497,13 +1497,13 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
         {
             /* need to re-create layer defn */
             poFeatureDefn->Release();
-            poFeatureDefn = NULL;
+            poFeatureDefn = nullptr;
         }
         GetLayerDefn();
         if (!poFeatureDefn)
             return OGRERR_FAILURE;
 
-        if( poFeature->GetFID() != OGRNullFID && pszFIDColumn != NULL && bIsIdentityFid )
+        if( poFeature->GetFID() != OGRNullFID && pszFIDColumn != nullptr && bIsIdentityFid )
         {
             bIdentityInsert = TRUE;
         }
@@ -1512,7 +1512,7 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
             return OGRERR_FAILURE;
 
         /* Initialize the bulk copy */
-        if (Failed2( bcp_init(hDBCBCP, CPLSPrintf("[%s].[%s]", pszSchemaName, pszTableName), NULL, NULL, DB_IN) ))
+        if (Failed2( bcp_init(hDBCBCP, CPLSPrintf("[%s].[%s]", pszSchemaName, pszTableName), nullptr, nullptr, DB_IN) ))
         {
             CloseBCP();
             return OGRERR_FAILURE;
@@ -1533,13 +1533,13 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
 
         for( iCol = 0; iCol < nRawColumns; iCol++ )
         {
-            papstBindBuffer[iCol] = NULL;
+            papstBindBuffer[iCol] = nullptr;
 
             if (iCol == nGeomColumnIndex)
             {
                 papstBindBuffer[iCol] = (BCPData*)CPLMalloc(sizeof(BCPData));
-                if (Failed2( bcp_bind(hDBCBCP, NULL /* data is provided later */,
-                    0, 0/*or any value < 8000*/, NULL, 0, SQLUDT, iCol + 1) ))
+                if (Failed2( bcp_bind(hDBCBCP, nullptr /* data is provided later */,
+                    0, 0/*or any value < 8000*/, nullptr, 0, SQLUDT, iCol + 1) ))
                     return OGRERR_FAILURE;
             }
             else if (iCol == nFIDColumnIndex)
@@ -1581,7 +1581,7 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
 
                     if (Failed2( bcp_bind(hDBCBCP, (LPCBYTE)papstBindBuffer[iCol],
                         sizeof(papstBindBuffer[iCol]->Integer.iIndicator), sizeof(papstBindBuffer[iCol]->Integer.Value),
-                            NULL, 0, SQLINT4, iCol + 1) ))
+                            nullptr, 0, SQLINT4, iCol + 1) ))
                         return OGRERR_FAILURE;
                 }
                 else if( poFDefn->GetType() == OFTInteger64 )
@@ -1614,15 +1614,15 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
                     papstBindBuffer[iCol]->VarChar.nSize = poFDefn->GetWidth();
                     if (poFDefn->GetWidth() == 0)
                     {
-                        if (Failed2( bcp_bind(hDBCBCP, NULL /* data is provided later */,
-                            0, 0/*or any value < 8000*/, NULL, 0, 0, iCol + 1) ))
+                        if (Failed2( bcp_bind(hDBCBCP, nullptr /* data is provided later */,
+                            0, 0/*or any value < 8000*/, nullptr, 0, 0, iCol + 1) ))
                             return OGRERR_FAILURE;
                     }
                     else
                     {
                         if (Failed2( bcp_bind(hDBCBCP, (LPCBYTE)papstBindBuffer[iCol],
                             sizeof(papstBindBuffer[iCol]->VarChar.nSize), poFDefn->GetWidth(),
-                                NULL, 0, SQLNVARCHAR, iCol + 1) ))
+                                nullptr, 0, SQLNVARCHAR, iCol + 1) ))
                             return OGRERR_FAILURE;
                     }
                 }
@@ -1663,8 +1663,8 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
                 {
                     /* image */
                     papstBindBuffer[iCol] = (BCPData*)CPLMalloc(sizeof(BCPData));
-                    if (Failed2( bcp_bind(hDBCBCP, NULL /* data is provided later */,
-                        0, 0/*or any value < 8000*/, NULL, 0, 0, iCol + 1) ))
+                    if (Failed2( bcp_bind(hDBCBCP, nullptr /* data is provided later */,
+                        0, 0/*or any value < 8000*/, nullptr, 0, 0, iCol + 1) ))
                         return OGRERR_FAILURE;
                 }
                 else
@@ -1760,7 +1760,7 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
         {
             OGRFieldDefn* poFDefn = poFeatureDefn->GetFieldDefn(iField);
 
-            if (papstBindBuffer[iCol] == NULL)
+            if (papstBindBuffer[iCol] == nullptr)
             {
                 ++iField;
                 continue; /* column requires no data */
@@ -1989,14 +1989,14 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
 
                 }
                 CPLFree(papstBindBuffer[iCol]->RawData.pData);
-                if (Failed2( bcp_moretext( hDBCBCP, 0, NULL) ))
+                if (Failed2( bcp_moretext( hDBCBCP, 0, nullptr) ))
                 {
 
                 }
             }
             else
             {
-                if (Failed2( bcp_moretext( hDBCBCP, SQL_NULL_DATA, NULL) ))
+                if (Failed2( bcp_moretext( hDBCBCP, SQL_NULL_DATA, nullptr) ))
                 {
 
                 }
@@ -2040,14 +2040,14 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
                             CPLFree(buffer);
                         }
 
-                        if (Failed2( bcp_moretext( hDBCBCP, 0, NULL) ))
+                        if (Failed2( bcp_moretext( hDBCBCP, 0, nullptr) ))
                         {
 
                         }
                     }
                     else
                     {
-                        if (Failed2( bcp_moretext( hDBCBCP, SQL_NULL_DATA, NULL) ))
+                        if (Failed2( bcp_moretext( hDBCBCP, SQL_NULL_DATA, nullptr) ))
                         {
 
                         }
@@ -2067,14 +2067,14 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
 
                         }
                     }
-                    if (Failed2( bcp_moretext( hDBCBCP, 0, NULL) ))
+                    if (Failed2( bcp_moretext( hDBCBCP, 0, nullptr) ))
                     {
 
                     }
                 }
                 else
                 {
-                    if (Failed2( bcp_moretext( hDBCBCP, SQL_NULL_DATA, NULL) ))
+                    if (Failed2( bcp_moretext( hDBCBCP, SQL_NULL_DATA, nullptr) ))
                     {
 
                     }

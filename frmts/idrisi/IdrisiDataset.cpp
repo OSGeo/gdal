@@ -982,7 +982,7 @@ GDALDataset *IdrisiDataset::Open( GDALOpenInfo *poOpenInfo )
 GDALDataset *IdrisiDataset::Create( const char *pszFilename,
                                     int nXSize,
                                     int nYSize,
-                                    int nBands,
+                                    int nBandsIn,
                                     GDALDataType eType,
                                     char ** /* papszOptions */ )
 {
@@ -990,20 +990,20 @@ GDALDataset *IdrisiDataset::Create( const char *pszFilename,
     //      Check input options
     // --------------------------------------------------------------------
 
-    if( nBands != 1 && nBands != 3)
+    if( nBandsIn != 1 && nBandsIn != 3)
     {
       CPLError( CE_Failure, CPLE_AppDefined,
                 "Attempt to create IDRISI dataset with an illegal number of bands(%d)."
-                " Try again by selecting a specific band if possible. \n", nBands);
+                " Try again by selecting a specific band if possible. \n", nBandsIn);
                 return nullptr;
     }
 
-    if( nBands == 3 && eType != GDT_Byte )
+    if( nBandsIn == 3 && eType != GDT_Byte )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Attempt to create IDRISI dataset with an unsupported combination "
                   "of the number of bands(%d) and data type(%s). \n",
-                  nBands, GDALGetDataTypeName( eType ) );
+                  nBandsIn, GDALGetDataTypeName( eType ) );
         return nullptr;
     }
 
@@ -1016,7 +1016,7 @@ GDALDataset *IdrisiDataset::Create( const char *pszFilename,
     switch( eType )
     {
     case GDT_Byte:
-        if( nBands == 1 )
+        if( nBandsIn == 1 )
             pszLDataType = rstBYTE;
         else
             pszLDataType = rstRGB24;

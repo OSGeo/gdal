@@ -94,7 +94,7 @@ class MFFDataset final : public RawDataset
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
-                                int nXSize, int nYSize, int nBands,
+                                int nXSize, int nYSize, int nBandsIn,
                                 GDALDataType eType, char ** papszParamList );
     static GDALDataset *CreateCopy( const char * pszFilename,
                                     GDALDataset *poSrcDS,
@@ -1105,7 +1105,7 @@ int GetMFFProjectionType(const char *pszNewProjection)
 /************************************************************************/
 
 GDALDataset *MFFDataset::Create( const char * pszFilenameIn,
-                                 int nXSize, int nYSize, int nBands,
+                                 int nXSize, int nYSize, int nBandsIn,
                                  GDALDataType eType,
                                  char ** papszParamList )
 
@@ -1113,10 +1113,10 @@ GDALDataset *MFFDataset::Create( const char * pszFilenameIn,
 /* -------------------------------------------------------------------- */
 /*      Verify input options.                                           */
 /* -------------------------------------------------------------------- */
-    if( nBands <= 0 )
+    if( nBandsIn <= 0 )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "MFF driver does not support %d bands.", nBands );
+                  "MFF driver does not support %d bands.", nBandsIn );
         return nullptr;
     }
 
@@ -1183,7 +1183,7 @@ GDALDataset *MFFDataset::Create( const char * pszFilenameIn,
 /* -------------------------------------------------------------------- */
 /*      Create the data files, but don't bother writing any data to them.*/
 /* -------------------------------------------------------------------- */
-    for( int iBand = 0; bOK && iBand < nBands; iBand++ )
+    for( int iBand = 0; bOK && iBand < nBandsIn; iBand++ )
     {
         char szExtension[4] = { '\0' };
 
