@@ -215,7 +215,9 @@ void CADLayer::addHandle( long handle, CADObject::ObjectType type, long cadinser
                         }
                         else
                         {
-                            assert( 0 );
+                            // shouldn't happen on a valid file, but can happen
+                            // on broken ones
+                            break;
                         }
                     }
 
@@ -241,7 +243,9 @@ void CADLayer::addHandle( long handle, CADObject::ObjectType type, long cadinser
                     }
                     else
                     {
-                        assert ( 0 );
+                        // shouldn't happen on a valid file, but can happen
+                        // on broken ones
+                        break;
                     }
                 }
             }
