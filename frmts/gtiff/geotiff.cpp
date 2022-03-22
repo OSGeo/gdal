@@ -13955,6 +13955,8 @@ void GTiffDataset::LookForProjection()
 void GTiffDataset::ApplyPamInfo()
 
 {
+    bool bGotGTFromPAM = false;
+
     if( m_nPAMGeorefSrcIndex >= 0 &&
         ((m_bGeoTransformValid &&
           m_nPAMGeorefSrcIndex < m_nGeoTransformGeorefSrcIndex) ||
@@ -13970,6 +13972,7 @@ void GTiffDataset::ApplyPamInfo()
             }
             memcpy(m_adfGeoTransform, adfPamGeoTransform, sizeof(double) * 6);
             m_bGeoTransformValid = true;
+            bGotGTFromPAM = true;
         }
     }
 
@@ -14021,6 +14024,13 @@ void GTiffDataset::ApplyPamInfo()
 
         m_nGCPCount = nPamGCPCount;
         m_pasGCPList = GDALDuplicateGCPs(m_nGCPCount, GDALPamDataset::GetGCPs());
+
+        // Invalidate Geotransorm got from less prioritary sources
+        if( m_nGCPCount > 0 && m_bGeoTransformValid && !bGotGTFromPAM &&
+            m_nPAMGeorefSrcIndex == 0 )
+        {
+            m_bGeoTransformValid = false;
+        }
 
         // m_nProjectionGeorefSrcIndex = m_nPAMGeorefSrcIndex;
 
@@ -14090,6 +14100,7 @@ void GTiffDataset::ApplyPamInfo()
                         m_pasGCPList = nullptr;
                         m_nGCPCount = 0;
                     }
+
                     m_nGCPCount = static_cast<int>(
                                             adfSourceGCPs.size() / 2);
                     m_pasGCPList = static_cast<GDAL_GCP *>(
@@ -14107,6 +14118,14 @@ void GTiffDataset::ApplyPamInfo()
                         m_pasGCPList[i].dfGCPX = adfTargetGCPs[2*i];
                         m_pasGCPList[i].dfGCPY = adfTargetGCPs[2*i+1];
                     }
+
+                    // Invalidate Geotransorm got from less prioritary sources
+                    if( m_nGCPCount > 0 && m_bGeoTransformValid && !bGotGTFromPAM &&
+                        m_nPAMGeorefSrcIndex == 0 )
+                    {
+                        m_bGeoTransformValid = false;
+                    }
+
                 }
             }
         }
