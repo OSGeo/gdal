@@ -66,7 +66,6 @@ if not installed.returncode == 0:
         "stderr": "",
     })
 ])
-
 def test_program(input, want):
     completed_process = run_program(input)
     got = {
@@ -75,6 +74,7 @@ def test_program(input, want):
         "stderr": completed_process.stderr,
     }
     assert got == want
+
 
 def run_program(program, args=None):
     return subprocess.run(
