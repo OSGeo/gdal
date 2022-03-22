@@ -25,6 +25,7 @@ add_gdal_driver(
           mffdataset.cpp
           ndfdataset.cpp
           noaabdataset.cpp
+          nsidcdataset.cpp
           ntv2dataset.cpp
           pauxdataset.cpp
           pnmdataset.cpp
