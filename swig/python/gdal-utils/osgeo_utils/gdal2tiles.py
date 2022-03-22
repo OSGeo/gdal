@@ -3343,7 +3343,7 @@ def multi_threaded_tiling(input_file: str, output_folder: str, options: Options,
     shutil.rmtree(os.path.dirname(conf.src_file))
 
 
-def main(argv: List[str]) -> int:
+def main(argv: List[str] = sys.argv) -> int:
     # TODO: gbataille - use mkdtemp to work in a temp directory
     # TODO: gbataille - debug intermediate tiles.vrt not produced anymore?
     # TODO: gbataille - Refactor generate overview tiles to not depend on self variables
