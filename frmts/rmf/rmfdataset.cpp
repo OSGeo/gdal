@@ -1815,29 +1815,29 @@ do {                                                                    \
 /*                               Create()                               */
 /************************************************************************/
 GDALDataset *RMFDataset::Create( const char * pszFilename,
-                                 int nXSize, int nYSize, int nBands,
+                                 int nXSize, int nYSize, int nBandsIn,
                                  GDALDataType eType, char **papszParamList )
 {
-    return Create( pszFilename, nXSize, nYSize, nBands,
+    return Create( pszFilename, nXSize, nYSize, nBandsIn,
                    eType, papszParamList, nullptr, 1.0 );
 }
 
 GDALDataset *RMFDataset::Create( const char * pszFilename,
-                                 int nXSize, int nYSize, int nBands,
+                                 int nXSize, int nYSize, int nBandsIn,
                                  GDALDataType eType, char **papszParamList,
                                  RMFDataset* poParentDS, double dfOvFactor )
 
 {
-    if( nBands != 1 && nBands != 3 )
+    if( nBandsIn != 1 && nBandsIn != 3 )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "RMF driver doesn't support %d bands. Must be 1 or 3.",
-                  nBands );
+                  nBandsIn );
 
         return nullptr;
     }
 
-    if( nBands == 1
+    if( nBandsIn == 1
         && eType != GDT_Byte
         && eType != GDT_Int16
         && eType != GDT_Int32
@@ -1853,7 +1853,7 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
         return nullptr;
     }
 
-    if( nBands == 3 && eType != GDT_Byte )
+    if( nBandsIn == 3 && eType != GDT_Byte )
     {
          CPLError(
              CE_Failure, CPLE_AppDefined,
@@ -1915,7 +1915,7 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
             const double dfImageSize =
                 static_cast<double>(nXSize) *
                 static_cast<double>(nYSize) *
-                static_cast<double>(nBands) *
+                static_cast<double>(nBandsIn) *
                 static_cast<double>(GDALGetDataTypeSizeBytes(eType));
             if( dfImageSize > 3.0*1024.0*1024.0*1024.0 )
             {
@@ -1978,7 +1978,7 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
 
     poDS->sHeader.iUserID = 0x00;
     memset( poDS->sHeader.byName, 0, sizeof(poDS->sHeader.byName) );
-    poDS->sHeader.nBitDepth = GDALGetDataTypeSizeBits( eType ) * nBands;
+    poDS->sHeader.nBitDepth = GDALGetDataTypeSizeBits( eType ) * nBandsIn;
     poDS->sHeader.nHeight = nYSize;
     poDS->sHeader.nWidth = nXSize;
     poDS->sHeader.nTileWidth = nBlockXSize;
@@ -2006,7 +2006,7 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
     nCurPtr += poDS->sHeader.nExtHdrSize;
 
     // Color table
-    if( poDS->eRMFType == RMFT_RSW && nBands == 1 )
+    if( poDS->eRMFType == RMFT_RSW && nBandsIn == 1 )
     {
         if( poDS->sHeader.nBitDepth > 8 )
         {
@@ -2083,7 +2083,7 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
     poDS->nRasterXSize = nXSize;
     poDS->nRasterYSize = nYSize;
     poDS->eAccess = GA_Update;
-    poDS->nBands = nBands;
+    poDS->nBands = nBandsIn;
 
     if(poParentDS == nullptr)
     {
@@ -2140,7 +2140,7 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
         poDS->poCompressData = poParentDS->poCompressData;
     }
 
-    if(nBands > 1)
+    if(nBandsIn > 1)
     {
         poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
     }

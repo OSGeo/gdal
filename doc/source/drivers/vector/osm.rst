@@ -98,7 +98,7 @@ limiting factor (typically the case of rotational disk), and will be
 mostly efficient for country-sized OSM extracts where compression rate
 can go up to a factor of 3 or 4, and help keep the node DB to a size
 that fit in the OS I/O caches. For whole planet file, the effect of this
-option will be less efficient. This option consumes addionnal 60 MB of
+option will be less efficient. This option consumes additional 60 MB of
 RAM.
 
 Interleaved reading

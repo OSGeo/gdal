@@ -1883,10 +1883,10 @@ void MRFDataset::ProcessCreateOptions(char** papszOptions)
 
 GDALDataset*
 MRFDataset::Create(const char* pszName,
-    int nXSize, int nYSize, int nBands,
+    int nXSize, int nYSize, int nBandsIn,
     GDALDataType eType, char** papszOptions)
 {
-    if (nBands == 0) {
+    if (nBandsIn == 0) {
         CPLError(CE_Failure, CPLE_NotSupported, "No bands defined");
         return nullptr;
     }
@@ -1894,7 +1894,7 @@ MRFDataset::Create(const char* pszName,
     MRFDataset* poDS = new MRFDataset();
     CPLErr err = CE_None;
     poDS->fname = pszName;
-    poDS->nBands = nBands;
+    poDS->nBands = nBandsIn;
 
     // Don't know what to do with these in this call
     //int level = -1;
@@ -1927,9 +1927,9 @@ MRFDataset::Create(const char* pszName,
 
     // Use the full, set some initial parameters
     ILImage& img = poDS->full;
-    img.size = ILSize(nXSize, nYSize, 1, nBands);
+    img.size = ILSize(nXSize, nYSize, 1, nBandsIn);
     img.comp = IL_PNG;
-    img.order = (nBands < 5) ? IL_Interleaved : IL_Separate;
+    img.order = (nBandsIn < 5) ? IL_Interleaved : IL_Separate;
     img.pagesize = ILSize(512, 512, 1, 1);
     img.quality = 85;
     img.dt = eType;

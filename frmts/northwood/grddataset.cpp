@@ -91,7 +91,7 @@ public:
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
     static GDALDataset *Create(const char * pszFilename, int nXSize, int nYSize,
-            int nBands, GDALDataType eType, char ** papszParamList);
+            int nBandsIn, GDALDataType eType, char ** papszParamList);
     static GDALDataset *CreateCopy(const char * pszFilename,
             GDALDataset * poSrcDS, int bStrict, char **papszOptions,
             GDALProgressFunc pfnProgress, void * pProgressData);
@@ -817,8 +817,8 @@ int NWT_GRDDataset::WriteTab() {
 /*                                Create()                              */
 /************************************************************************/
 GDALDataset *NWT_GRDDataset::Create(const char * pszFilename, int nXSize,
-        int nYSize, int nBands, GDALDataType eType, char ** papszParamList) {
-    if (nBands != 1) {
+        int nYSize, int nBandsIn, GDALDataType eType, char ** papszParamList) {
+    if (nBandsIn != 1) {
         CPLError(CE_Failure, CPLE_FileIO,
                 "Only single band datasets are supported for writing");
         return nullptr;

@@ -155,5 +155,4 @@ target_public_header(
   gdal_rat.h
   rawdataset.h
   gdalgeorefpamdataset.h
-  gdal_mdreader.h
-  gdal_pam.h)
+  gdal_mdreader.h)

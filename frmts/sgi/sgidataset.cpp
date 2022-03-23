@@ -236,7 +236,7 @@ public:
     virtual CPLErr GetGeoTransform(double*) override;
     static GDALDataset* Open(GDALOpenInfo*);
     static GDALDataset *Create( const char * pszFilename,
-                                int nXSize, int nYSize, int nBands,
+                                int nXSize, int nYSize, int nBandsIn,
                                 GDALDataType eType, char **papszOptions );
 };
 
@@ -706,7 +706,7 @@ GDALDataset* SGIDataset::Open(GDALOpenInfo* poOpenInfo)
 GDALDataset *SGIDataset::Create( const char * pszFilename,
                                  int nXSize,
                                  int nYSize,
-                                 int nBands,
+                                 int nBandsIn,
                                  GDALDataType eType,
                                  CPL_UNUSED char **papszOptions )
 {
@@ -745,7 +745,7 @@ GDALDataset *SGIDataset::Create( const char * pszFilename,
     abyHeader[3] = 1;  // 8bit
 
     GInt16 nShortValue;
-    if( nBands == 1 )
+    if( nBandsIn == 1 )
         nShortValue = CPL_MSBWORD16(2);
     else
         nShortValue = CPL_MSBWORD16(3);
@@ -757,7 +757,7 @@ GDALDataset *SGIDataset::Create( const char * pszFilename,
     nShortValue = CPL_MSBWORD16(nYSize);
     memcpy( abyHeader + 8, &nShortValue, 2 );
 
-    nShortValue = CPL_MSBWORD16(nBands);
+    nShortValue = CPL_MSBWORD16(nBandsIn);
     memcpy( abyHeader + 10, &nShortValue, 2 );
 
     GInt32 nIntValue = CPL_MSBWORD32(0);
@@ -790,7 +790,7 @@ GDALDataset *SGIDataset::Create( const char * pszFilename,
 /*      Prepare and write RLE offset/size tables with everything        */
 /*      zeroed indicating dummy lines.                                  */
 /* -------------------------------------------------------------------- */
-    const int nTableLen = nYSize * nBands;
+    const int nTableLen = nYSize * nBandsIn;
     GInt32 nDummyRLEOffset = 512 + 4 * nTableLen * 2;
 
     CPL_MSBPTR32( &nRLEBytes );

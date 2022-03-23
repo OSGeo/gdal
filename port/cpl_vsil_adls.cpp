@@ -1140,6 +1140,9 @@ bool VSIADLSWriteHandle::Send(bool bIsLastBlock)
     // If we are the last block, send the flush event
     if( bIsLastBlock && !SendInternal(VSIADLSFSHandler::Event::FLUSH, nullptr) )
         return false;
+
+    InvalidateParentDirectory();
+
     return true;
 }
 

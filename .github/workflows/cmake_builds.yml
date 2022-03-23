@@ -10,6 +10,10 @@ on:
         paths-ignore:
             - 'doc/**'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
 env:
   CMAKE_UNITY_BUILD: OFF
 
@@ -105,6 +109,11 @@ jobs:
       run: |
         cd $GITHUB_WORKSPACE/superbuild/build
         ctest -V
+    - name: install and uninstall
+      run: |
+        cmake --build $GITHUB_WORKSPACE/superbuild/build --target install -- -j$(nproc)
+        cmake --build $GITHUB_WORKSPACE/superbuild/build --target uninstall
+        find $GITHUB_WORKSPACE/install-gdal || /bin/true
     - name: install
       run: |
         cmake --build $GITHUB_WORKSPACE/superbuild/build --target install -- -j$(nproc)
@@ -169,12 +178,7 @@ jobs:
         ./autotest/postinstall/test_gdal-config.sh $GITHUB_WORKSPACE/install-gdal-static --static
     - name: Test post-install usage (static, with CMake)
       run: |
-        if ./autotest/postinstall/test_cmake.sh $GITHUB_WORKSPACE/install-gdal-static --static; then
-          echo 'Unexpected pass' >&2
-          exit 1
-        else
-          echo 'Expected fail'
-        fi
+        ./autotest/postinstall/test_cmake.sh $GITHUB_WORKSPACE/install-gdal-static --static
     - name: ccache statistics
       run: ccache -s
 
@@ -414,7 +418,7 @@ jobs:
         cmake -A ${architecture} -G "${generator}" -Werror=dev "-DCMAKE_C_COMPILER_LAUNCHER=clcache" "-DCMAKE_CXX_COMPILER_LAUNCHER=clcache" "-DPROJ_INCLUDE_DIR=${CONDA_PREFIX_BACKUP}/Library/include" "-DPROJ_LIBRARY=${CONDA_PREFIX_BACKUP}/Library/lib/proj.lib" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX" -DGDAL_USE_EXTERNAL_LIBS:BOOL=OFF -DWERROR_DEV_FLAG="-Werror=dev"
     - name: Build
       shell: bash -l {0}
-      run: cmake --build $GITHUB_WORKSPACE/build --config Release -j 2
+      run: cmake --build $GITHUB_WORKSPACE/build --config RelWithDebInfo -j 2
     - name: Show gdal.pc
       shell: bash -l {0}
       run: cat $GITHUB_WORKSPACE/build/gdal.pc
@@ -449,7 +453,7 @@ jobs:
         brew update
         brew outdated
         brew install postgresql || brew link postgresql
-        brew install freexl libxml2 libspatialite geos proj@7 libgeotiff openjpeg giflib szip postgis poppler doxygen unixodbc
+        brew install freexl libxml2 libspatialite geos proj@7 libgeotiff openjpeg giflib libaec postgis poppler doxygen unixodbc
         brew install ccache swig
         # gdal is automatically installed as a dependency for postgis
         brew uninstall --ignore-dependencies gdal

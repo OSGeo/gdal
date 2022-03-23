@@ -220,7 +220,7 @@ public:
                         int bStrict, char ** papszOptions,
                         GDALProgressFunc pfnProgress, void *pProgressData );
     static GDALDataset* Create( const char * pszFilename,
-                                int nXSize, int nYSize, int nBands,
+                                int nXSize, int nYSize, int nBandsIn,
                                 GDALDataType eType, char ** papszOptions );
 
     OGRErr ParseWKTFromXML( const char *pszISOXML );
@@ -5187,17 +5187,17 @@ BAGDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
 /************************************************************************/
 
 GDALDataset* BAGDataset::Create( const char * pszFilename,
-                                 int nXSize, int nYSize, int nBands,
+                                 int nXSize, int nYSize, int nBandsIn,
                                  GDALDataType eType, char ** papszOptions )
 {
-    if( !BAGCreator().Create(pszFilename, nBands, eType, papszOptions) )
+    if( !BAGCreator().Create(pszFilename, nBandsIn, eType, papszOptions) )
     {
         return nullptr;
     }
 
     GDALOpenInfo oOpenInfo(pszFilename, GA_Update);
     oOpenInfo.nOpenFlags = GDAL_OF_RASTER;
-    return OpenForCreate(&oOpenInfo, nXSize, nYSize, nBands, papszOptions);
+    return OpenForCreate(&oOpenInfo, nXSize, nYSize, nBandsIn, papszOptions);
 }
 
 /************************************************************************/

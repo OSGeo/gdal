@@ -161,7 +161,7 @@ class HDF4ImageDataset final: public HDF4Dataset
 
     static GDALDataset  *Open( GDALOpenInfo * );
     static GDALDataset  *Create( const char * pszFilename,
-                                 int nXSize, int nYSize, int nBands,
+                                 int nXSize, int nYSize, int nBandsIn,
                                  GDALDataType eType, char ** papszParamList );
     virtual void        FlushCache( bool bAtClosing ) override;
     CPLErr              GetGeoTransform( double * padfTransform ) override;
@@ -3890,7 +3890,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /************************************************************************/
 
 GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
-                                       int nXSize, int nYSize, int nBands,
+                                       int nXSize, int nYSize, int nBandsIn,
                                        GDALDataType eType,
                                        char **papszOptions )
 
@@ -3898,7 +3898,7 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Create the dataset.                                             */
 /* -------------------------------------------------------------------- */
-    if( nBands == 0 )
+    if( nBandsIn == 0 )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Unable to export files with zero bands." );
@@ -3947,7 +3947,7 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
     int32 aiDimSizes[H4_MAX_VAR_DIMS] = {};
     aiDimSizes[poDS->iXDim] = nXSize;
     aiDimSizes[poDS->iYDim] = nYSize;
-    aiDimSizes[poDS->iBandDim] = nBands;
+    aiDimSizes[poDS->iBandDim] = nBandsIn;
 
     const auto GetHDFType = [](GDALDataType eTypeIn)
     {
@@ -3958,14 +3958,14 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
             case GDT_Float32:
                 return DFNT_FLOAT32;
             case GDT_UInt64:
-                // SDCreate() doens't like it
+                // SDCreate() doesn't like it
                 return DFNT_UINT64;
             case GDT_UInt32:
                 return DFNT_UINT32;
             case GDT_UInt16:
                 return DFNT_UINT16;
             case GDT_Int64:
-                // SDCreate() doens't like it
+                // SDCreate() doesn't like it
                 return DFNT_INT64;
             case GDT_Int32:
                 return DFNT_INT32;
@@ -3986,7 +3986,7 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
 
     if( poDS->iRank == 2 )
     {
-        for( int iBand = 0; iBand < nBands; iBand++ )
+        for( int iBand = 0; iBand < nBandsIn; iBand++ )
         {
             pszSDSName = CPLSPrintf( "Band%d", iBand );
             iSDS = SDcreate( poDS->hSD, pszSDSName, GetHDFType(eType),
@@ -4030,12 +4030,12 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
     poDS->eAccess = GA_Update;
     poDS->iDatasetType = HDF4_SDS;
     poDS->iSubdatasetType = H4ST_GDAL;
-    poDS->nBands = nBands;
+    poDS->nBands = nBandsIn;
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    for( int iBand = 1; iBand <= nBands; iBand++ )
+    for( int iBand = 1; iBand <= nBandsIn; iBand++ )
         poDS->SetBand( iBand, new HDF4ImageRasterBand( poDS, iBand, eType ) );
 
     SDsetattr( poDS->hSD, "Signature", DFNT_CHAR8,

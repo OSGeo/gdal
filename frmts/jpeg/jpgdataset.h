@@ -180,11 +180,11 @@ class JPGDatasetCommon CPL_NON_FINAL: public GDALPamDataset
     int    nGCPCount;
     GDAL_GCP *pasGCPList;
 
-    VSILFILE   *fpImage;
+    VSILFILE   *m_fpImage;
     GUIntBig nSubfileOffset;
 
     int    nLoadedScanline;
-    GByte  *pabyScanline;
+    GByte  *m_pabyScanline;
 
     bool   bHasReadEXIFMetadata;
     bool   bHasReadXMPMetadata;

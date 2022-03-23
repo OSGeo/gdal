@@ -33,6 +33,10 @@ option(BUILD_SHARED_LIBS "Set ON to build shared library" ON)
 # Option to set preferred C# compiler
 option(CSHARP_MONO "Whether to force the C# compiler to be Mono" OFF)
 
+# This line must be kept early in the CMake instructions. At time of writing,
+# this file is populated only be scripts/install_bash_completions.cmake.in
+install(CODE "file(REMOVE \"${PROJECT_BINARY_DIR}/install_manifest_extra.txt\")")
+
 # ######################################################################################################################
 # Detect available warning flags
 
@@ -123,6 +127,7 @@ else ()
   detect_and_set_c_and_cxx_warning_flag(shorten-64-to-32)
   detect_and_set_c_and_cxx_warning_flag(logical-op)
   detect_and_set_c_and_cxx_warning_flag(shadow)
+  detect_and_set_cxx_warning_flag(shadow-field) # CLang only for now
   detect_and_set_c_and_cxx_warning_flag(missing-include-dirs)
   check_c_compiler_flag("-Wformat -Werror=format-security -Wno-format-nonliteral" HAVE_WFLAG_FORMAT_SECURITY)
   if (HAVE_WFLAG_FORMAT_SECURITY)
@@ -696,9 +701,11 @@ if (NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
     EXPORT_LINK_INTERFACE_LIBRARIES)
   if (NOT BUILD_SHARED_LIBS)
     install(
-      FILES "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/GdalFindModulePath.cmake"
+      FILES
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/GdalFindModulePath.cmake"
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/DefineFindPackage2.cmake"
       DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/gdal/")
-    foreach(dir IN ITEMS packages thirdparty 3.16 3.14 3.13 3.12)
+    foreach(dir IN ITEMS packages thirdparty 3.20 3.16 3.14 3.13 3.12)
       install(
         DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/${dir}"
         DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/gdal")
@@ -741,9 +748,19 @@ endif ()
 configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/uninstall.cmake.in ${PROJECT_BINARY_DIR}/cmake_uninstall.cmake @ONLY)
 add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 
+################################################################
+# Final reports and warnings
+################################################################
+
+if($ENV{GDAL_CMAKE_QUIET})
+  set(GDAL_CMAKE_QUIET ON)
+endif()
+
 # Print summary
 include(SystemSummary)
-system_summary(DESCRIPTION "GDAL is now configured on;")
+if(NOT GDAL_CMAKE_QUIET)
+  system_summary(DESCRIPTION "GDAL is now configured on;")
+endif()
 
 # Do not warn about Shapelib being an optional package not found, as we don't recommend using it. Same for external
 # LERC. Mono/DotNetFrameworkSdk is also an internal detail of CSharp that we don't want to report
@@ -762,7 +779,9 @@ endforeach ()
 
 include(FeatureSummary)
 set_property(GLOBAL PROPERTY PACKAGES_NOT_FOUND ${_new_packages_not_found})
-feature_summary(DESCRIPTION "Enabled drivers and features and found dependency packages" WHAT ALL)
+if(NOT GDAL_CMAKE_QUIET)
+  feature_summary(DESCRIPTION "Enabled drivers and features and found dependency packages" WHAT ALL)
+endif()
 set_property(GLOBAL PROPERTY PACKAGES_NOT_FOUND ${_packages_not_found})
 
 set(disabled_packages "")
@@ -779,11 +798,12 @@ foreach (_package IN LISTS _packages_found)
     endif()
   endif ()
 endforeach ()
-if (disabled_packages)
+if (NOT GDAL_CMAKE_QUIET AND disabled_packages)
   message(STATUS "Disabled components:\n\n${disabled_packages}\n")
 endif ()
 
-if (DEFINED GDAL_USE_EXTERNAL_LIBS_OLD_CACHED)
+if (NOT GDAL_CMAKE_QUIET AND
+    DEFINED GDAL_USE_EXTERNAL_LIBS_OLD_CACHED)
   if (GDAL_USE_EXTERNAL_LIBS_OLD_CACHED AND NOT GDAL_USE_EXTERNAL_LIBS)
     message(
       WARNING
@@ -799,7 +819,8 @@ set(GDAL_USE_EXTERNAL_LIBS_OLD_CACHED
 # This is not super idiomatic to warn this way, but this will help users transitionning from autoconf where the default
 # settings result in a -O2 build.
 get_property(_isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
-if (NOT _isMultiConfig
+if (NOT GDAL_CMAKE_QUIET
+    AND NOT _isMultiConfig
     AND ("${CMAKE_BUILD_TYPE}" STREQUAL "")
     AND (((CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
           AND (NOT ("${CMAKE_C_FLAGS}" MATCHES "-O") OR NOT ("${CMAKE_CXX_FLAGS}" MATCHES "-O"))) OR
@@ -811,8 +832,17 @@ if (NOT _isMultiConfig
     )
 endif ()
 
-if ("${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
+if (NOT GDAL_CMAKE_QUIET AND
+    "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
   message(WARNING "In-tree builds, that is running cmake from the top of the source tree are not recommended. You are advised instead to 'mkdir build; cd build; cmake ..'. Using 'make' with the Makefile generator will not work, as it will try the GNUmakefile of autoconf builds. Use 'make -f Makefile' instead.")
 endif()
+
+if (NOT GDAL_CMAKE_QUIET
+    AND UNIX # On Windows, Conda seems to be automatically used
+    AND DEFINED ENV{CONDA_PREFIX}
+    AND NOT "${CMAKE_PREFIX_PATH}" MATCHES "$ENV{CONDA_PREFIX}")
+  message(WARNING "Environment variable CONDA_PREFIX=$ENV{CONDA_PREFIX} found, its value is not included in the content of the CMake variable CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}. You likely want to run \"${CMAKE_COMMAND} ${PROJECT_SOURCE_DIR} -DCMAKE_PREFIX_PATH=$ENV{CONDA_PREFIX}\"")
+endif()
+
 
 # vim: ts=4 sw=4 sts=4 et

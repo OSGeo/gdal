@@ -221,7 +221,7 @@ OGRODSDataSource::OGRODSDataSource() :
     nLayers(0),
     papoLayers(nullptr),
     fpSettings(nullptr),
-    nFlags(0),
+    nVerticalSplitFlags(0),
     fpContent(nullptr),
     bFirstLineIsHeaders(false),
     bAutodetectTypes(
@@ -1331,7 +1331,7 @@ void OGRODSDataSource::startElementStylesCbk( const char *pszNameIn,
         if (pszTableName)
         {
             osCurrentConfigTableName = pszTableName;
-            nFlags = 0;
+            nVerticalSplitFlags = 0;
             stateStack[++nStackDepth].nBeginDepth = nDepth;
         }
     }
@@ -1371,15 +1371,15 @@ void OGRODSDataSource::endElementStylesCbk(const char * /*pszName*/)
     {
         if (nStackDepth == 2)
         {
-            if (nFlags == (1 | 2))
+            if (nVerticalSplitFlags == (1 | 2))
                 osSetLayerHasSplitter.insert(osCurrentConfigTableName);
         }
         if (nStackDepth == 3)
         {
             if (osConfigName == "VerticalSplitMode" && osValue == "2")
-                nFlags |= 1;
+                nVerticalSplitFlags |= 1;
             else if (osConfigName == "VerticalSplitPosition" && osValue == "1")
-                nFlags |= 2;
+                nVerticalSplitFlags |= 2;
         }
         nStackDepth --;
     }

@@ -1620,7 +1620,7 @@ bool GDALComputeAreaOfInterest(OGRSpatialReference* poSRS,
  * to georef transformation on the source dataset. NO_GEOTRANSFORM can be
  * used to specify the identity geotransform (ungeoreference image)
  * <li> DST_METHOD: may have a value which is one of GEOTRANSFORM,
- * GCP_POLYNOMIAL, GCP_TPS, GEOLOC_ARRAY, RPC to force only one geolocation
+ * GCP_POLYNOMIAL, GCP_TPS, GEOLOC_ARRAY (added in 3.5), RPC to force only one geolocation
  * method to be considered on the target dataset.  Will be used for pixel/line
  * to georef transformation on the destination dataset. NO_GEOTRANSFORM can be
  * used to specify the identity geotransform (ungeoreference image)
@@ -2077,7 +2077,28 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
             oDstSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         }
     }
+    else if( (pszDstMethod == nullptr || EQUAL(pszDstMethod, "GEOLOC_ARRAY"))
+             && (papszMD = GDALGetMetadata( hDstDS, "GEOLOCATION" )) != nullptr )
+    {
+        psInfo->pDstTransformArg =
+            GDALCreateGeoLocTransformer( hDstDS, papszMD, FALSE );
 
+        if( psInfo->pDstTransformArg == nullptr )
+        {
+            GDALDestroyGenImgProjTransformer( psInfo );
+            return nullptr;
+        }
+        psInfo->pDstTransformer = GDALGeoLocTransform;
+        if( pszDstSRS == nullptr )
+        {
+            pszDstSRS = CSLFetchNameValue( papszMD, "SRS" );
+            if( pszDstSRS )
+            {
+                oDstSRS.SetFromUserInput(pszDstSRS);
+                oDstSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            }
+        }
+    }
     else
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -2147,6 +2168,12 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
         if( bMayInsertCenterLong )
         {
             InsertCenterLong( hSrcDS, &oSrcSRS, aosOptions );
+        }
+
+        if( CPLFetchBool(papszOptions, "PROMOTE_TO_3D", false) )
+        {
+            oSrcSRS.PromoteTo3D(nullptr);
+            oDstSRS.PromoteTo3D(nullptr);
         }
 
         if( !(dfWestLongitudeDeg == 0.0 && dfSouthLatitudeDeg == 0.0 &&
