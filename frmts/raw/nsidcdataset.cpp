@@ -170,16 +170,13 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
   /*      First we check to see if the file has the expected header       */
   /*      bytes.                                                          */
   /* -------------------------------------------------------------------- */
-  std::cout << "here we are0\n";
 
   if( poOpenInfo->nHeaderBytes < 300 || poOpenInfo->fpL == nullptr )
     return nullptr;
-  std::cout << "here we are1\n";
 
   // if( CPL_LSBWORD32(*( reinterpret_cast<GInt32 *>( poOpenInfo->pabyHeader + 0 )))
   //     != 300 )
   //     return nullptr;
-  // std::cout << "here we are2\n";
 
   //
   //     if( CPL_LSBWORD32(*( reinterpret_cast<GInt32 *>( poOpenInfo->pabyHeader + 28 )))
@@ -212,15 +209,8 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
   /*      Extract information of interest from the header.                */
   /* -------------------------------------------------------------------- */
 
-  // how to convert columns/rows char to int?
-  if (EQUAL(poDS->sHeader.columns + 2, "316")) {
-    poDS->nRasterXSize = 316;
-    poDS->nRasterYSize= 332;
-  }
-  if (EQUAL(poDS->sHeader.columns + 2, "304")) {
-    poDS->nRasterXSize = 304;
-    poDS->nRasterYSize= 448;
-  }
+  poDS->nRasterXSize = atoi(poDS->sHeader.columns);
+  poDS->nRasterYSize= atoi(poDS->sHeader.rows);
 
 
   // north is 304x448, south is 316x332
