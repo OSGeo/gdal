@@ -140,13 +140,20 @@ void OGRHanaFeatureWriter::SetFieldValue(
         SetFieldValue(fieldIndex, value->data(), value->size());
 }
 
+void OGRHanaFeatureWriter::SetFieldValue(int fieldIndex, const char* value)
+{
+    char* utf8 = CPLRecode(value, CPL_ENC_UCS2, CPL_ENC_UTF8);
+    feature_.SetField(fieldIndex, utf8);
+    CPLFree(utf8);
+}
+
 void OGRHanaFeatureWriter::SetFieldValue(int fieldIndex, const char16_t* value)
 {
     char* utf8;
     if (sizeof(wchar_t) == sizeof(char16_t))
     {
         utf8 = CPLRecodeFromWChar(
-            reinterpret_cast<const wchar_t*>(value), CPL_ENC_UTF16,
+            reinterpret_cast<const wchar_t*>(value), CPL_ENC_UCS2,
             CPL_ENC_UTF8);
     }
     else
@@ -155,7 +162,7 @@ void OGRHanaFeatureWriter::SetFieldValue(int fieldIndex, const char16_t* value)
         std::wstring str(len, 0);
         for (std::size_t i = 0; i < len; ++i)
             str[i] = value[i];
-        utf8 = CPLRecodeFromWChar(str.c_str(), CPL_ENC_UTF16, CPL_ENC_UTF8);
+        utf8 = CPLRecodeFromWChar(str.c_str(), CPL_ENC_UCS2, CPL_ENC_UTF8);
     }
     feature_.SetField(fieldIndex, utf8);
     CPLFree(utf8);

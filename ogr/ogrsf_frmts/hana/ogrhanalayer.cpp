@@ -104,7 +104,7 @@ CPLString BuildSpatialFilter(uint dbVersion, const OGRGeometry& geom, const CPLS
                             clmName.c_str(), minX, minY, srid, maxX, maxY, srid);
 }
 
-OGRFieldDefn* CreateFieldDefn(const AttributeColumnDescription& columnDesc)
+std::unique_ptr<OGRFieldDefn> CreateFieldDefn(const AttributeColumnDescription& columnDesc)
 {
     bool setFieldSize = false;
     bool setFieldPrecision = false;
@@ -179,8 +179,7 @@ OGRFieldDefn* CreateFieldDefn(const AttributeColumnDescription& columnDesc)
                  "Array of type %s in column %s is not supported",
                  columnDesc.typeName.c_str(), columnDesc.name.c_str());
 
-    OGRFieldDefn* field =
-        new OGRFieldDefn(columnDesc.name.c_str(), ogrFieldType);
+    auto field = cpl::make_unique<OGRFieldDefn>(columnDesc.name.c_str(), ogrFieldType);
     field->SetSubType(ogrFieldSubType);
     field->SetNullable(columnDesc.isNullable);
     if (!columnDesc.isArray)
@@ -572,7 +571,7 @@ OGRFeature* OGRHanaLayer::ReadFeature()
                 resultSet_->getStringData(
                     paramIndex, dataBuffer_.data(), len + sizeof(char));
                 featWriter.SetFieldValue(
-                    fieldIndex, dataBuffer_.data(), dataBuffer_.size());
+                    fieldIndex, dataBuffer_.data());
             }
             else
             {
@@ -662,6 +661,7 @@ OGRErr OGRHanaLayer::ReadFeatureDefinition(
     const CPLString& query,
     const char* featureDefName)
 {
+    attrColumns_.clear();
     auto featureDef = cpl::make_unique<OGRFeatureDefn>(featureDefName);
     featureDef->Reference();
 
@@ -702,7 +702,7 @@ OGRErr OGRHanaLayer::ReadFeatureDefinition(
 
         AttributeColumnDescription attributeColumnDesc =
             clmDesc.attributeDescription;
-        auto field = cpl::make_unique<OGRFieldDefn>(CreateFieldDefn(attributeColumnDesc));
+        auto field = CreateFieldDefn(attributeColumnDesc);
 
         if ((field->GetType() == OFTInteger || field->GetType() == OFTInteger64)
             && (fidFieldIndex_ == OGRNullFID && primKeys.size() > 0))

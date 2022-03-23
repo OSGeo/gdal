@@ -51,6 +51,7 @@ public:
     void SetFieldValue(int fieldIndex, const odbc::Time& value);
     void SetFieldValue(int fieldIndex, const odbc::Timestamp& value);
     void SetFieldValue(int fieldIndex, const odbc::Binary& value);
+    void SetFieldValue(int fieldIndex, const char* value);
     void SetFieldValue(int fieldIndex, const char16_t* value);
     void SetFieldValue(int fieldIndex, const void* value, std::size_t size);
 

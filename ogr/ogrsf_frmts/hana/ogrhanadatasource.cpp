@@ -1070,6 +1070,8 @@ OGRErr OGRHanaDataSource::GetQueryColumns(
     const CPLString& query,
     std::vector<ColumnDescription>& columDescriptions)
 {
+    columDescriptions.clear();
+
     odbc::PreparedStatementRef stmtQuery;
 
     try
@@ -1085,10 +1087,11 @@ OGRErr OGRHanaDataSource::GetQueryColumns(
     }
 
     odbc::ResultSetMetaDataRef rsmd = stmtQuery->getMetaData();
-
     std::size_t numColumns = rsmd->getColumnCount();
     if (numColumns == 0)
         return OGRERR_NONE;
+
+    columDescriptions.reserve(numColumns);
 
     CPLString tableName = rsmd->getTableName(1);
     odbc::DatabaseMetaDataRef dmd = conn_->getDatabaseMetaData();
