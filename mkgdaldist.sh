@@ -6,8 +6,16 @@
 
 set -eu
 
+if [ "$MAKE" = "" ]; then
+    MAKE="make"
+fi
+
+if [ "$PYTHON" = "" ]; then
+    PYTHON="python3"
+fi
+
 # Doxygen 1.7.1 has a bug related to man pages. See https://trac.osgeo.org/gdal/ticket/6048
-doxygen --version | xargs python -c "import sys; v = sys.argv[1].split('.'); v=int(v[0])*10000+int(v[1])*100+int(v[2]); sys.exit(v < 10704)"
+doxygen --version | xargs ${PYTHON} -c "import sys; v = sys.argv[1].split('.'); v=int(v[0])*10000+int(v[1])*100+int(v[2]); sys.exit(v < 10704)"
 rc=$?
 if test $rc != 0; then
     echo "Wrong Doxygen version. 1.7.4 or later required"
@@ -191,7 +199,7 @@ CWD=${PWD}
 
 rm -f swig/perl/*wrap*
 touch GDALmake.opt
-(cd swig/perl && make generate)
+(cd swig/perl && ${MAKE} generate)
 rm GDALmake.opt
 
 #
@@ -220,7 +228,7 @@ zip -qr "../gdalautotest-${GDAL_VERSION}${RC}.zip" "gdalautotest-${GDAL_VERSION}
 cd "gdal-${GDAL_VERSION}"
 echo "GDAL_VER=${GDAL_VERSION}" > GDALmake.opt
 cd frmts/grass
-make dist
+${MAKE} dist
 mv ./*.tar.gz ../../../..
 cd ../../..
 
