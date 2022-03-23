@@ -135,6 +135,15 @@ All cached entries can be viewed using ``cmake -LAH`` from a build directory.
     <https://en.wikipedia.org/wiki/Interprocedural_optimization>`_
     (IPO), if available, default OFF.
 
+.. option:: GDAL_SET_INSTALL_RELATIVE_RPATH=OFF
+
+    Set to ON so that the rpath of installed binaries is written as a relative
+    path to the library. This option overrides the
+    `CMAKE_INSTALL_RPATH <https://cmake.org/cmake/help/latest/variable/CMAKE_INSTALL_RPATH.html>`__
+    variable, and assumes that the
+    `CMAKE_SKIP_INSTALL_RPATH <https://cmake.org/cmake/help/latest/variable/CMAKE_SKIP_INSTALL_RPATH.html>`__
+    variable is not set.
+
 CMake package dependent options
 +++++++++++++++++++++++++++++++
 
