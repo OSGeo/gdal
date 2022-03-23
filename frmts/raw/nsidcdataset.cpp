@@ -41,37 +41,64 @@ using std::fill;
 
 CPL_CVSID("$Id$")
 
-/************************************************************************/
-/* ==================================================================== */
-/*                              NSIDCbinDataset                            */
-/* ==================================================================== */
-/************************************************************************/
+  /************************************************************************/
+  /* ==================================================================== */
+  /*                              NSIDCbinDataset                            */
+  /* ==================================================================== */
+  /************************************************************************/
 
-class NSIDCbinDataset final: public GDALPamDataset
-{
+  class NSIDCbinDataset final: public GDALPamDataset
+  {
     struct NSIDCbinHeader{
       // derived from DIPEx
-        // GInt32      NBIH = {0};   /* bytes in header, normally 1024 */
-        // GInt32      NBPR = {0};   /* bytes per data record (all bands of scanline) */
-        // GInt32      IL = {0};     /* initial line - normally 1 */
-        // GInt32      LL = {0};     /* last line */
-        // GInt32      IE = {0};     /* initial element (pixel), normally 1 */
-        // GInt32      LE = {0};     /* last element (pixel) */
-        // GInt32      NC = {0};     /* number of channels (bands) */
-        // GInt32      H4322 = {0};  /* header record identifier - always 4322. */
-        char        unused1[300] = {0};
-        // GByte       IH19[4] = {0};/* data type, and size flags */
-        // GInt32      IH20 = {0};   /* number of secondary headers */
-        // GInt32      SRID = {0};
-        // char        unused2[12] = {0};
-        // double      YOffset = {0};
-        // double      XOffset = {0};
-        // double      YPixSize = {0};
-        // double      XPixSize = {0};
-        // double      Matrix[4] = {0};
-        // char        unused3[344] = {0};
-        // GUInt16     ColorTable[256] = {0};  /* RGB packed with 4 bits each */
-        // char        unused4[32] = {0};
+      // GInt32      NBIH = {0};   /* bytes in header, normally 1024 */
+      // GInt32      NBPR = {0};   /* bytes per data record (all bands of scanline) */
+      // GInt32      IL = {0};     /* initial line - normally 1 */
+      // GInt32      LL = {0};     /* last line */
+      // GInt32      IE = {0};     /* initial element (pixel), normally 1 */
+      // GInt32      LE = {0};     /* last element (pixel) */
+      // GInt32      NC = {0};     /* number of channels (bands) */
+      // GInt32      H4322 = {0};  /* header record identifier - always 4322. */
+      //char        unused1[40] = {0};
+      // GByte       IH19[4] = {0};/* data type, and size flags */
+      // GInt32      IH20 = {0};   /* number of secondary headers */
+      // GInt32      SRID = {0};
+      // char        unused2[12] = {0};
+      // double      YOffset = {0};
+      // double      XOffset = {0};
+      // double      YPixSize = {0};
+      // double      XPixSize = {0};
+      // double      Matrix[4] = {0};
+      // char        unused3[344] = {0};
+      // GUInt16     ColorTable[256] = {0};  /* RGB packed with 4 bits each */
+      // char        unused4[32] = {0};
+
+      char missing_int[6] = {0};
+      char columns[6] = {0};
+      char rows[6] = {0};
+      char internal1[6] = {0};
+      char latitude[6] = {0};
+      char greenwich[6] = {0};
+      char internal2[6] = {0};
+      char jpole[6] = {0};
+      char ipole[6] = {0};
+      char instrument[6] = {0};
+      char descriptor[6] = {0};
+      char julian_start[6] = {0};
+      char hour_start[6] = {0};
+      char minute_start[6] = {0};
+      char julian_end[6] = {0};
+      char hour_end[6] = {0};
+      char minute_end[6] = {0};
+      char year[6] = {0};
+      char julian[6] = {0};
+      char channel[6] = {0};
+      char scaling[6] = {0};
+
+
+      char filename[24] = {0};
+      char opt_imagetitle[80] = {0};
+      char information[70] = {0};
     };
 
     VSILFILE    *fp;
@@ -93,10 +120,10 @@ class NSIDCbinDataset final: public GDALPamDataset
 
     const char *_GetProjectionRef( void ) override;
     const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
+      return GetSpatialRefFromOldGetProjectionRef();
     }
     static GDALDataset *Open( GDALOpenInfo * );
-};
+  };
 
 /************************************************************************/
 /* ==================================================================== */
@@ -109,15 +136,15 @@ class NSIDCbinDataset final: public GDALPamDataset
 /************************************************************************/
 
 NSIDCbinDataset::NSIDCbinDataset() :
-    fp(nullptr),
-    eRasterDataType(GDT_Unknown)
+  fp(nullptr),
+  eRasterDataType(GDT_Unknown)
 {
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
+  adfGeoTransform[0] = 0.0;
+  adfGeoTransform[1] = 1.0;
+  adfGeoTransform[2] = 0.0;
+  adfGeoTransform[3] = 0.0;
+  adfGeoTransform[4] = 0.0;
+  adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -127,9 +154,9 @@ NSIDCbinDataset::NSIDCbinDataset() :
 NSIDCbinDataset::~NSIDCbinDataset()
 
 {
-    if( fp )
-        CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
-    fp = nullptr;
+  if( fp )
+    CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
+  fp = nullptr;
 }
 
 /************************************************************************/
@@ -139,203 +166,184 @@ NSIDCbinDataset::~NSIDCbinDataset()
 GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-/* -------------------------------------------------------------------- */
-/*      First we check to see if the file has the expected header       */
-/*      bytes.                                                          */
-/* -------------------------------------------------------------------- */
-std::cout << "here we are0\n"; 
-  
-    if( poOpenInfo->nHeaderBytes < 256 || poOpenInfo->fpL == nullptr )
-        return nullptr;
-    std::cout << "here we are1\n"; 
-    
-    // if( CPL_LSBWORD32(*( reinterpret_cast<GInt32 *>( poOpenInfo->pabyHeader + 0 )))
-    //     != 300 )
-    //     return nullptr;
-    // std::cout << "here we are2\n"; 
-    
-// 
-//     if( CPL_LSBWORD32(*( reinterpret_cast<GInt32 *>( poOpenInfo->pabyHeader + 28 )))
-//         != 4322 )
-//         return nullptr;
+  /* -------------------------------------------------------------------- */
+  /*      First we check to see if the file has the expected header       */
+  /*      bytes.                                                          */
+  /* -------------------------------------------------------------------- */
+  std::cout << "here we are0\n";
 
-/* -------------------------------------------------------------------- */
-/*      Create a corresponding GDALDataset.                             */
-/* -------------------------------------------------------------------- */
-    NSIDCbinDataset *poDS = new NSIDCbinDataset();
+  if( poOpenInfo->nHeaderBytes < 300 || poOpenInfo->fpL == nullptr )
+    return nullptr;
+  std::cout << "here we are1\n";
 
-    poDS->eAccess = poOpenInfo->eAccess;
-    poDS->fp = poOpenInfo->fpL;
-    poOpenInfo->fpL = nullptr;
+  // if( CPL_LSBWORD32(*( reinterpret_cast<GInt32 *>( poOpenInfo->pabyHeader + 0 )))
+  //     != 300 )
+  //     return nullptr;
+  // std::cout << "here we are2\n";
 
-/* -------------------------------------------------------------------- */
-/*      Read the header information.                                    */
-/* -------------------------------------------------------------------- */
-    if( VSIFReadL( &(poDS->sHeader), 300, 1, poDS->fp ) != 1 )
+  //
+  //     if( CPL_LSBWORD32(*( reinterpret_cast<GInt32 *>( poOpenInfo->pabyHeader + 28 )))
+  //         != 4322 )
+  //         return nullptr;
+
+  /* -------------------------------------------------------------------- */
+  /*      Create a corresponding GDALDataset.                             */
+  /* -------------------------------------------------------------------- */
+  NSIDCbinDataset *poDS = new NSIDCbinDataset();
+
+  poDS->eAccess = poOpenInfo->eAccess;
+  poDS->fp = poOpenInfo->fpL;
+  poOpenInfo->fpL = nullptr;
+
+  /* -------------------------------------------------------------------- */
+  /*      Read the header information.                                    */
+  /* -------------------------------------------------------------------- */
+  if( VSIFReadL( &(poDS->sHeader), 300, 1, poDS->fp ) != 1 )
+  {
+    CPLError( CE_Failure, CPLE_FileIO,
+              "Attempt to read 300 byte header filed on file %s\n",
+              poOpenInfo->pszFilename );
+    delete poDS;
+    return nullptr;
+  }
+
+
+  /* -------------------------------------------------------------------- */
+  /*      Extract information of interest from the header.                */
+  /* -------------------------------------------------------------------- */
+
+  // how to convert columns/rows char to int?
+  if (EQUAL(poDS->sHeader.columns + 2, "316")) {
+    poDS->nRasterXSize = 316;
+    poDS->nRasterYSize= 332;
+  }
+  if (EQUAL(poDS->sHeader.columns + 2, "304")) {
+    poDS->nRasterXSize = 304;
+    poDS->nRasterYSize= 448;
+  }
+
+
+  // north is 304x448, south is 316x332
+  if (!((poDS->nRasterXSize == 316) || (poDS->nRasterXSize == 304) )) {
+
+    delete poDS;
+    return nullptr;
+  }
+  if (!((poDS->nRasterYSize == 332) || (poDS->nRasterYSize == 448) )) {
+    delete poDS;
+    return nullptr;
+  }
+  bool south = poDS->nRasterXSize == 316;
+
+  const int nBands = 1; //CPL_LSBWORD32( poDS->sHeader.NC );
+
+
+  if( !GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
+      !GDALCheckBandCount(nBands, FALSE) )
+  {
+    delete poDS;
+    return nullptr;
+  }
+
+  const int nNSIDCbinDataType = 0; //(poDS->sHeader.IH19[1] & 0x7e) >> 2;
+  const int nBytesPerSample = 1; //poDS->sHeader.IH19[0];
+
+  if( nNSIDCbinDataType == 0 && nBytesPerSample == 1 )
+    poDS->eRasterDataType = GDT_Byte;
+  else if( nNSIDCbinDataType == 1 && nBytesPerSample == 1 )
+    poDS->eRasterDataType = GDT_Byte;
+  else if( nNSIDCbinDataType == 16 && nBytesPerSample == 4 )
+    poDS->eRasterDataType = GDT_Float32;
+  else if( nNSIDCbinDataType == 17 && nBytesPerSample == 8 )
+    poDS->eRasterDataType = GDT_Float64;
+  else
+  {
+    delete poDS;
+    CPLError( CE_Failure, CPLE_AppDefined,
+              "Unrecognized image data type %d, with BytesPerSample=%d.",
+              nNSIDCbinDataType, nBytesPerSample );
+    return nullptr;
+  }
+
+  // if( nLineOffset <= 0 || nLineOffset > INT_MAX / nBands )
+  // {
+  //     delete poDS;
+  //     CPLError( CE_Failure, CPLE_AppDefined,
+  //               "Invalid values: nLineOffset = %d, nBands = %d.",
+  //               nLineOffset, nBands );
+  //     return nullptr;
+  // }
+
+  /* -------------------------------------------------------------------- */
+  /*      Create band information objects.                                */
+  /* -------------------------------------------------------------------- */
+  CPLErrorReset();
+  for( int iBand = 0; iBand < nBands; iBand++ )
+  {
+    poDS->SetBand( iBand+1,
+                   new RawRasterBand( poDS, iBand+1, poDS->fp,
+                                      300 + iBand * poDS->nRasterXSize,
+                                      nBytesPerSample,
+                                      poDS->nRasterXSize * nBands,
+                                      poDS->eRasterDataType,
+                                      CPL_IS_LSB,
+                                      RawRasterBand::OwnFP::NO ) );
+    if( CPLGetLastErrorType() != CE_None )
     {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Attempt to read 300 byte header filed on file %s\n",
-                  poOpenInfo->pszFilename );
-        delete poDS;
-        return nullptr;
+      delete poDS;
+      return nullptr;
     }
+  }
 
-    // To avoid cppcheck warnings about unused members
-    // CPL_IGNORE_RET_VAL(poDS->sHeader.NBIH);
-    // CPL_IGNORE_RET_VAL(poDS->sHeader.H4322);
-    // CPL_IGNORE_RET_VAL(poDS->sHeader.unused1);
-    // CPL_IGNORE_RET_VAL(poDS->sHeader.IH20);
-    // CPL_IGNORE_RET_VAL(poDS->sHeader.unused2);
-    // CPL_IGNORE_RET_VAL(poDS->sHeader.Matrix);
-    // CPL_IGNORE_RET_VAL(poDS->sHeader.unused3);
-    // CPL_IGNORE_RET_VAL(poDS->sHeader.ColorTable);
-    // CPL_IGNORE_RET_VAL(poDS->sHeader.unused4);
 
-/* -------------------------------------------------------------------- */
-/*      Extract information of interest from the header.                */
-/* -------------------------------------------------------------------- */
-    const int nLineOffset = 316; //CPL_LSBWORD32( poDS->sHeader.NBPR );
+  if( south )
+  {
+    poDS->adfGeoTransform[0] = -3950000.0;
+    poDS->adfGeoTransform[1] = 25000;
+    poDS->adfGeoTransform[2] = 0.0;
+    poDS->adfGeoTransform[3] = 4350000.0;
+    poDS->adfGeoTransform[4] = 0.0;
+    poDS->adfGeoTransform[5] = -25000;
+  }
+  else
+  {
+    poDS->adfGeoTransform[0] = -3837500;
+    poDS->adfGeoTransform[1] = 25000;
+    poDS->adfGeoTransform[2] = 0.0;
+    poDS->adfGeoTransform[3] = 5837500;
+    poDS->adfGeoTransform[4] = 0.0;
+    poDS->adfGeoTransform[5] = -25000;
+  }
 
-    // int nStart = CPL_LSBWORD32( poDS->sHeader.IL );
-    // int nEnd = CPL_LSBWORD32( poDS->sHeader.LL );
-    // GIntBig nDiff = static_cast<GIntBig>(nEnd) - nStart + 1;
-    // if( nDiff <= 0 || nDiff > INT_MAX )
-    // {
-    //     delete poDS;
-    //     return nullptr;
-    // }
-    poDS->nRasterYSize = 332; //static_cast<int>(nDiff);
 
-    // nStart = CPL_LSBWORD32( poDS->sHeader.IE );
-    // nEnd = CPL_LSBWORD32( poDS->sHeader.LE );
-    // nDiff = static_cast<GIntBig>(nEnd) - nStart + 1;
-    // if( nDiff <= 0 || nDiff > INT_MAX )
-    // {
-    //     delete poDS;
-    //     return nullptr;
-    // }
-    poDS->nRasterXSize = 316; //static_cast<int>(nDiff);
+  // south or north
+  OGRSpatialReference oSR;
+  int epsg = -1;
+  if (south) {
+    epsg = 3976;
+  } else {
+    epsg = 3413;
+  }
+  if( oSR.importFromEPSG( epsg ) == OGRERR_NONE ) {
+    char *pszWKT = nullptr;
+    oSR.exportToWkt( &pszWKT );
+    poDS->osSRS = pszWKT;
+    CPLFree( pszWKT );
+  }
 
-    const int nBands = 1; //CPL_LSBWORD32( poDS->sHeader.NC );
+  /* -------------------------------------------------------------------- */
+  /*      Initialize any PAM information.                                 */
+  /* -------------------------------------------------------------------- */
+  poDS->SetDescription( poOpenInfo->pszFilename );
+  poDS->TryLoadXML();
 
-    if( !GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
-        !GDALCheckBandCount(nBands, FALSE) )
-    {
-        delete poDS;
-        return nullptr;
-    }
+  // /* -------------------------------------------------------------------- */
+  // /*      Check for external overviews.                                   */
+  // /* -------------------------------------------------------------------- */
+  //     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename,
+  //                                  poOpenInfo->GetSiblingFiles() );
 
-    const int nNSIDCbinDataType = 0; //(poDS->sHeader.IH19[1] & 0x7e) >> 2;
-    const int nBytesPerSample = 1; //poDS->sHeader.IH19[0];
-
-    if( nNSIDCbinDataType == 0 && nBytesPerSample == 1 )
-        poDS->eRasterDataType = GDT_Byte;
-    else if( nNSIDCbinDataType == 1 && nBytesPerSample == 1 )
-        poDS->eRasterDataType = GDT_Byte;
-    else if( nNSIDCbinDataType == 16 && nBytesPerSample == 4 )
-        poDS->eRasterDataType = GDT_Float32;
-    else if( nNSIDCbinDataType == 17 && nBytesPerSample == 8 )
-        poDS->eRasterDataType = GDT_Float64;
-    else
-    {
-        delete poDS;
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unrecognized image data type %d, with BytesPerSample=%d.",
-                  nNSIDCbinDataType, nBytesPerSample );
-        return nullptr;
-    }
-
-    // if( nLineOffset <= 0 || nLineOffset > INT_MAX / nBands )
-    // {
-    //     delete poDS;
-    //     CPLError( CE_Failure, CPLE_AppDefined,
-    //               "Invalid values: nLineOffset = %d, nBands = %d.",
-    //               nLineOffset, nBands );
-    //     return nullptr;
-    // }
-
-/* -------------------------------------------------------------------- */
-/*      Create band information objects.                                */
-/* -------------------------------------------------------------------- */
-    CPLErrorReset();
-    for( int iBand = 0; iBand < nBands; iBand++ )
-    {
-        poDS->SetBand( iBand+1,
-                       new RawRasterBand( poDS, iBand+1, poDS->fp,
-                                          300 + iBand * nLineOffset,
-                                          nBytesPerSample,
-                                          nLineOffset * nBands,
-                                          poDS->eRasterDataType,
-                                          CPL_IS_LSB,
-                                          RawRasterBand::OwnFP::NO ) );
-        if( CPLGetLastErrorType() != CE_None )
-        {
-            delete poDS;
-            return nullptr;
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Extract the projection coordinates, if present.                 */
-/* -------------------------------------------------------------------- */
-    // CPL_LSBPTR64(&(poDS->sHeader.XPixSize));
-    // CPL_LSBPTR64(&(poDS->sHeader.YPixSize));
-    // CPL_LSBPTR64(&(poDS->sHeader.XOffset));
-    // CPL_LSBPTR64(&(poDS->sHeader.YOffset));
-    // 
-    // if( poDS->sHeader.XOffset != 0 )
-    // {
-    //     poDS->adfGeoTransform[0] = poDS->sHeader.XOffset;
-    //     poDS->adfGeoTransform[1] = poDS->sHeader.XPixSize;
-    //     poDS->adfGeoTransform[2] = 0.0;
-    //     poDS->adfGeoTransform[3] = poDS->sHeader.YOffset;
-    //     poDS->adfGeoTransform[4] = 0.0;
-    //     poDS->adfGeoTransform[5] = -1.0 * std::abs(poDS->sHeader.YPixSize);
-    // 
-    //     poDS->adfGeoTransform[0] -= poDS->adfGeoTransform[1] * 0.5;
-    //     poDS->adfGeoTransform[3] -= poDS->adfGeoTransform[5] * 0.5;
-    // }
-    // else
-    // {
-    //     poDS->adfGeoTransform[0] = 0.0;
-    //     poDS->adfGeoTransform[1] = 1.0;
-    //     poDS->adfGeoTransform[2] = 0.0;
-    //     poDS->adfGeoTransform[3] = 0.0;
-    //     poDS->adfGeoTransform[4] = 0.0;
-    //     poDS->adfGeoTransform[5] = 1.0;
-    // }
-
-/* -------------------------------------------------------------------- */
-/*      Look for SRID.                                                  */
-/* -------------------------------------------------------------------- */
-    // CPL_LSBPTR32( &(poDS->sHeader.SRID) );
-    // 
-    // if( poDS->sHeader.SRID > 0 && poDS->sHeader.SRID < 33000 )
-    // {
-    //     OGRSpatialReference oSR;
-    // 
-    //     if( oSR.importFromEPSG( poDS->sHeader.SRID ) == OGRERR_NONE )
-    //     {
-    //         char *pszWKT = nullptr;
-    //         oSR.exportToWkt( &pszWKT );
-    //         poDS->osSRS = pszWKT;
-    //         CPLFree( pszWKT );
-    //     }
-    // }
-
-/* -------------------------------------------------------------------- */
-/*      Initialize any PAM information.                                 */
-/* -------------------------------------------------------------------- */
-    poDS->SetDescription( poOpenInfo->pszFilename );
-    poDS->TryLoadXML();
-
-// /* -------------------------------------------------------------------- */
-// /*      Check for external overviews.                                   */
-// /* -------------------------------------------------------------------- */
-//     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename,
-//                                  poOpenInfo->GetSiblingFiles() );
-
-    return poDS;
+  return poDS;
 }
 
 /************************************************************************/
@@ -345,7 +353,7 @@ std::cout << "here we are0\n";
 const char *NSIDCbinDataset::_GetProjectionRef()
 
 {
-    return osSRS.c_str();
+  return osSRS.c_str();
 }
 
 /************************************************************************/
@@ -355,9 +363,9 @@ const char *NSIDCbinDataset::_GetProjectionRef()
 CPLErr NSIDCbinDataset::GetGeoTransform( double * padfTransform )
 
 {
-    memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
+  memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
 
-    return CE_None;
+  return CE_None;
 }
 
 /************************************************************************/
@@ -367,17 +375,17 @@ CPLErr NSIDCbinDataset::GetGeoTransform( double * padfTransform )
 void GDALRegister_NSIDCbin()
 
 {
-    if( GDALGetDriverByName( "NSIDCbin" ) != nullptr )
-        return;
+  if( GDALGetDriverByName( "NSIDCbin" ) != nullptr )
+    return;
 
-    GDALDriver *poDriver = new GDALDriver();
+  GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription( "NSIDCbin" );
-    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "NSIDCbin" );
-    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+  poDriver->SetDescription( "NSIDCbin" );
+  poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+  poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "NSIDCbin" );
+  poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-    poDriver->pfnOpen = NSIDCbinDataset::Open;
+  poDriver->pfnOpen = NSIDCbinDataset::Open;
 
-    GetGDALDriverManager()->RegisterDriver( poDriver );
+  GetGDALDriverManager()->RegisterDriver( poDriver );
 }
