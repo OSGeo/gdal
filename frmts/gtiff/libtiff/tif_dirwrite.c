@@ -300,6 +300,12 @@ TIFFRewriteDirectory( TIFF *tif )
 				return (0);
 			}
 		}
+		else if( tif->tif_diroff > 0xFFFFFFFFU )
+		{
+			TIFFErrorExt(tif->tif_clientdata, module,
+			     "tif->tif_diroff exceeds 32 bit range allowed for Classic TIFF");
+			return (0);
+		}
 		else
 		{
 			uint32_t nextdir;

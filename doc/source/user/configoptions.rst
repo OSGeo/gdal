@@ -66,6 +66,8 @@ For boolean options, the values YES, TRUE or ON can be used to turn the option o
 NO, FALSE or OFF to turn it off.
 
 
+.. _gdal_configuration_file:
+
 GDAL configuration file
 -----------------------
 

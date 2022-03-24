@@ -496,7 +496,7 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
 GDALDataset *IntergraphDataset::Create( const char *pszFilename,
                                         int nXSize,
                                         int nYSize,
-                                        int nBands,
+                                        int nBandsIn,
                                         GDALDataType eType,
                                         char **papszOptions )
 {
@@ -595,7 +595,7 @@ GDALDataset *IntergraphDataset::Create( const char *pszFilename,
     // --------------------------------------------------------------------
 
     if( eType  == GDT_Byte  &&
-        nBands == 3 )
+        nBandsIn == 3 )
     {
         hHdr1.DataTypeCode = Uncompressed24bit;
     }

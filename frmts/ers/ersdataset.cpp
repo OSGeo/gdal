@@ -124,7 +124,7 @@ class ERSDataset final: public RawDataset
     static GDALDataset *Open( GDALOpenInfo * );
     static int Identify( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
-                                int nXSize, int nYSize, int nBands,
+                                int nXSize, int nYSize, int nBandsIn,
                                 GDALDataType eType, char ** papszParamList );
 };
 
@@ -1334,17 +1334,17 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
 /************************************************************************/
 
 GDALDataset *ERSDataset::Create( const char * pszFilename,
-                                 int nXSize, int nYSize, int nBands,
+                                 int nXSize, int nYSize, int nBandsIn,
                                  GDALDataType eType, char ** papszOptions )
 
 {
 /* -------------------------------------------------------------------- */
 /*      Verify settings.                                                */
 /* -------------------------------------------------------------------- */
-    if (nBands <= 0)
+    if (nBandsIn <= 0)
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "ERS driver does not support %d bands.\n", nBands);
+                  "ERS driver does not support %d bands.\n", nBandsIn);
         return nullptr;
     }
 
@@ -1422,7 +1422,7 @@ GDALDataset *ERSDataset::Create( const char * pszFilename,
     }
 
     GUIntBig nSize = nXSize * (GUIntBig) nYSize
-        * nBands * (GDALGetDataTypeSize(eType) / 8);
+        * nBandsIn * (GDALGetDataTypeSize(eType) / 8);
     GByte byZero = 0;
     if( VSIFSeekL( fpBin, nSize-1, SEEK_SET ) != 0
         || VSIFWriteL( &byZero, 1, 1, fpBin ) != 1 )
@@ -1464,7 +1464,7 @@ GDALDataset *ERSDataset::Create( const char * pszFilename,
     VSIFPrintfL( fpERS, "\t\tCellType\t= %s\n", pszCellType );
     VSIFPrintfL( fpERS, "\t\tNrOfLines\t= %d\n", nYSize );
     VSIFPrintfL( fpERS, "\t\tNrOfCellsPerLine\t= %d\n", nXSize );
-    VSIFPrintfL( fpERS, "\t\tNrOfBands\t= %d\n", nBands );
+    VSIFPrintfL( fpERS, "\t\tNrOfBands\t= %d\n", nBandsIn );
     VSIFPrintfL( fpERS, "\tRasterInfo End\n" );
     if( VSIFPrintfL( fpERS, "DatasetHeader End\n" ) < 17 )
     {

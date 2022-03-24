@@ -683,7 +683,7 @@ netCDFRasterBand::netCDFRasterBand( const netCDFRasterBand::CONSTRUCTOR_OPEN&,
             {
                 SetNoDataValueNoUpdate(nNoDataAsUInt64);
             }
-            else if (eDataType == GDT_UInt64 &&
+            else if (eDataType == GDT_Int64 &&
                      nNoDataAsUInt64 <= static_cast<uint64_t>(std::numeric_limits<int64_t>::max()) )
             {
                 SetNoDataValueNoUpdate(static_cast<int64_t>(nNoDataAsUInt64));
@@ -9184,11 +9184,11 @@ static void CopyMetadata( GDALDataset* poSrcDS,
 
 netCDFDataset *
 netCDFDataset::CreateLL( const char *pszFilename,
-                         int nXSize, int nYSize, int nBands,
+                         int nXSize, int nYSize, int nBandsIn,
                          char **papszOptions )
 {
-    if( !((nXSize == 0 && nYSize == 0 && nBands == 0) ||
-          (nXSize > 0 && nYSize > 0 && nBands > 0)) )
+    if( !((nXSize == 0 && nYSize == 0 && nBandsIn == 0) ||
+          (nXSize > 0 && nYSize > 0 && nBandsIn > 0)) )
     {
         return nullptr;
     }
@@ -9303,7 +9303,7 @@ netCDFDataset::CreateLL( const char *pszFilename,
 
 GDALDataset *
 netCDFDataset::Create( const char *pszFilename,
-                       int nXSize, int nYSize, int nBands,
+                       int nXSize, int nYSize, int nBandsIn,
                        GDALDataType eType,
                        char **papszOptions )
 {
@@ -9318,7 +9318,7 @@ netCDFDataset::Create( const char *pszFilename,
 
     bool legacyCreateMode = false;
 
-    if (nXSize != 0 || nYSize != 0 || nBands != 0 )
+    if (nXSize != 0 || nYSize != 0 || nBandsIn != 0 )
     {
         legacyCreateMode = true;
     }
@@ -9351,7 +9351,7 @@ netCDFDataset::Create( const char *pszFilename,
     }
 #endif
     netCDFDataset *poDS = netCDFDataset::CreateLL(pszFilename,
-                                                  nXSize, nYSize, nBands,
+                                                  nXSize, nYSize, nBandsIn,
                                                   aosOptions.List());
 
     if( !poDS )
@@ -9387,12 +9387,12 @@ netCDFDataset::Create( const char *pszFilename,
                            poDS->bWriteGDALVersion,
                            poDS->bWriteGDALHistory,
                            "", "Create",
-                           (nBands == 0) ? CF_Vector_Conv
+                           (nBandsIn == 0) ? CF_Vector_Conv
                                          : GDAL_DEFAULT_NCDF_CONVENTIONS);
     }
 
     // Define bands.
-    for( int iBand = 1; iBand <= nBands; iBand++ )
+    for( int iBand = 1; iBand <= nBandsIn; iBand++ )
     {
         poDS->SetBand(
             iBand, new netCDFRasterBand(netCDFRasterBand::CONSTRUCTOR_CREATE(),

@@ -1843,7 +1843,7 @@ GDALDataset *PCIDSK2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
 GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename,
                                      PCIDSK::PCIDSKFile *poFile,
-                                     GDALAccess eAccess,
+                                     GDALAccess eAccessIn,
                                      char** papszSiblingFiles )
 
 {
@@ -1852,7 +1852,7 @@ GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename,
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
     poDS->poFile = poFile;
-    poDS->eAccess = eAccess;
+    poDS->eAccess = eAccessIn;
     poDS->nRasterXSize = poFile->GetWidth();
     poDS->nRasterYSize = poFile->GetHeight();
 
@@ -1947,7 +1947,7 @@ GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename,
         {
             PCIDSK::PCIDSKVectorSegment* poVecSeg = dynamic_cast<PCIDSK::PCIDSKVectorSegment*>( segobj );
             if( poVecSeg )
-                poDS->apoLayers.push_back( new OGRPCIDSKLayer( segobj, poVecSeg, eAccess == GA_Update ) );
+                poDS->apoLayers.push_back( new OGRPCIDSKLayer( segobj, poVecSeg, eAccessIn == GA_Update ) );
         }
 
 /* -------------------------------------------------------------------- */
@@ -1996,7 +1996,7 @@ GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename,
 /************************************************************************/
 
 GDALDataset *PCIDSK2Dataset::Create( const char * pszFilename,
-                                     int nXSize, int nYSize, int nBands,
+                                     int nXSize, int nYSize, int nBandsIn,
                                      GDALDataType eType,
                                      char **papszParamList )
 
@@ -2007,17 +2007,17 @@ GDALDataset *PCIDSK2Dataset::Create( const char * pszFilename,
     std::vector<eChanType> aeChanTypes;
 
     if( eType == GDT_Float32 )
-      aeChanTypes.resize( std::max(1, nBands), CHN_32R );
+      aeChanTypes.resize( std::max(1, nBandsIn), CHN_32R );
     else if( eType == GDT_Int16 )
-        aeChanTypes.resize( std::max(1, nBands), CHN_16S );
+        aeChanTypes.resize( std::max(1, nBandsIn), CHN_16S );
     else if( eType == GDT_UInt16 )
-        aeChanTypes.resize( std::max(1, nBands), CHN_16U );
+        aeChanTypes.resize( std::max(1, nBandsIn), CHN_16U );
     else if( eType == GDT_CInt16 )
-        aeChanTypes.resize( std::max(1, nBands), CHN_C16S );
+        aeChanTypes.resize( std::max(1, nBandsIn), CHN_C16S );
     else if( eType == GDT_CFloat32 )
-        aeChanTypes.resize( std::max(1, nBands), CHN_C32R );
+        aeChanTypes.resize( std::max(1, nBandsIn), CHN_C32R );
     else
-        aeChanTypes.resize( std::max(1, nBands), CHN_8U );
+        aeChanTypes.resize( std::max(1, nBandsIn), CHN_8U );
 
 /* -------------------------------------------------------------------- */
 /*      Reformat options.  Currently no support for jpeg compression    */
@@ -2056,12 +2056,12 @@ GDALDataset *PCIDSK2Dataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 
     try {
-        if( nBands == 0 )
+        if( nBandsIn == 0 )
         {
             nXSize = 512;
             nYSize = 512;
         }
-        PCIDSKFile *poFile = PCIDSK::Create( pszFilename, nXSize, nYSize, nBands,
+        PCIDSKFile *poFile = PCIDSK::Create( pszFilename, nXSize, nYSize, nBandsIn,
                                              &(aeChanTypes[0]), osOptions,
                                              PCIDSK2GetInterfaces() );
 
@@ -2076,7 +2076,7 @@ GDALDataset *PCIDSK2Dataset::Create( const char * pszFilename,
             {
                 int nBand = atoi(papszParamList[i] + 8 );
                 const char *pszDescription = strstr(papszParamList[i],"=");
-                if( pszDescription && nBand > 0 && nBand <= nBands )
+                if( pszDescription && nBand > 0 && nBand <= nBandsIn )
                 {
                     poFile->GetChannel(nBand)->SetDescription( pszDescription+1 );
                 }

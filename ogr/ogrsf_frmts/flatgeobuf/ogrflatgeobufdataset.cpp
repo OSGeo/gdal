@@ -269,7 +269,7 @@ bool OGRFlatGeobufDataset::OpenFile(const char* pszFilename, VSILFILE* fp, bool 
 }
 
 GDALDataset *OGRFlatGeobufDataset::Create( const char *pszName,
-                                        CPL_UNUSED int nBands,
+                                        int /* nBands */,
                                         CPL_UNUSED int nXSize,
                                         CPL_UNUSED int nYSize,
                                         CPL_UNUSED GDALDataType eDT,

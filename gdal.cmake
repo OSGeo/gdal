@@ -33,6 +33,10 @@ option(BUILD_SHARED_LIBS "Set ON to build shared library" ON)
 # Option to set preferred C# compiler
 option(CSHARP_MONO "Whether to force the C# compiler to be Mono" OFF)
 
+# This line must be kept early in the CMake instructions. At time of writing,
+# this file is populated only be scripts/install_bash_completions.cmake.in
+install(CODE "file(REMOVE \"${PROJECT_BINARY_DIR}/install_manifest_extra.txt\")")
+
 # ######################################################################################################################
 # Detect available warning flags
 
@@ -123,6 +127,7 @@ else ()
   detect_and_set_c_and_cxx_warning_flag(shorten-64-to-32)
   detect_and_set_c_and_cxx_warning_flag(logical-op)
   detect_and_set_c_and_cxx_warning_flag(shadow)
+  detect_and_set_cxx_warning_flag(shadow-field) # CLang only for now
   detect_and_set_c_and_cxx_warning_flag(missing-include-dirs)
   check_c_compiler_flag("-Wformat -Werror=format-security -Wno-format-nonliteral" HAVE_WFLAG_FORMAT_SECURITY)
   if (HAVE_WFLAG_FORMAT_SECURITY)
@@ -355,6 +360,21 @@ else ()
       "lib/gdalplugins"
       CACHE PATH "Installation sub-directory for plugins")
   set(GDAL_RESOURCE_PATH ${CMAKE_INSTALL_DATADIR}/gdal)
+
+  option(GDAL_SET_INSTALL_RELATIVE_RPATH "Whether the rpath of installed binaries should be written as a relative path to the library" OFF)
+  if(GDAL_SET_INSTALL_RELATIVE_RPATH)
+      if(APPLE)
+        set(base @loader_path)
+      else()
+        set(base $ORIGIN)
+      endif()
+
+      file(RELATIVE_PATH relDir
+        ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}
+        ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}
+      )
+      set(CMAKE_INSTALL_RPATH ${base} ${base}/${relDir})
+  endif()
 endif ()
 
 set(INSTALL_PLUGIN_FULL_DIR "${CMAKE_INSTALL_PREFIX}/${INSTALL_PLUGIN_DIR}")

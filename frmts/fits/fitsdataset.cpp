@@ -103,7 +103,7 @@ public:
   static GDALDataset* Open( GDALOpenInfo* );
   static int          Identify( GDALOpenInfo* );
   static GDALDataset* Create( const char* pszFilename,
-                              int nXSize, int nYSize, int nBands,
+                              int nXSize, int nYSize, int nBandsIn,
                               GDALDataType eType,
                               char** papszParamList );
   static CPLErr Delete( const char * pszFilename );
@@ -2657,12 +2657,12 @@ GDALDataset* FITSDataset::Open(GDALOpenInfo* poOpenInfo) {
 
 GDALDataset *FITSDataset::Create( const char* pszFilename,
                                   int nXSize, int nYSize,
-                                  int nBands, GDALDataType eType,
+                                  int nBandsIn, GDALDataType eType,
                                   CPL_UNUSED char** papszParamList )
 {
   int status = 0;
 
-  if( nXSize == 0 && nYSize == 0 && nBands == 0 && eType == GDT_Unknown )
+  if( nXSize == 0 && nYSize == 0 && nBandsIn == 0 && eType == GDT_Unknown )
   {
       // Create the file - to force creation, we prepend the name with '!'
       CPLString extFilename("!");
@@ -2690,12 +2690,12 @@ GDALDataset *FITSDataset::Create( const char* pszFilename,
   // 2018 - BZERO BSCALE keywords are now set using SetScale() and
   // SetOffset() functions
 
-  if( nXSize < 1 || nYSize < 1 || nBands < 1 )  {
+  if( nXSize < 1 || nYSize < 1 || nBandsIn < 1 )  {
         CPLError(
             CE_Failure, CPLE_AppDefined,
             "Attempt to create %dx%dx%d raster FITS file, but width, height and bands"
             " must be positive.",
-            nXSize, nYSize, nBands );
+            nXSize, nYSize, nBandsIn );
 
         return nullptr;
   }
@@ -2734,8 +2734,8 @@ GDALDataset *FITSDataset::Create( const char* pszFilename,
   }
 
   // Now create an image of appropriate size and type
-  long naxes[3] = {nXSize, nYSize, nBands};
-  int naxis = (nBands == 1) ? 2 : 3;
+  long naxes[3] = {nXSize, nYSize, nBandsIn};
+  int naxis = (nBandsIn == 1) ? 2 : 3;
   fits_create_img(hFITS, bitpix, naxis, naxes, &status);
 
   // Check the status

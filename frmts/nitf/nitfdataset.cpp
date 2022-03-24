@@ -4018,7 +4018,7 @@ static char** NITFExtractTEXTAndCGMCreationOption( GDALDataset* poSrcDS,
 /************************************************************************/
 
 GDALDataset *
-NITFDataset::NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize, int nBands,
+NITFDataset::NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize, int nBandsIn,
                                 GDALDataType eType, char **papszOptions )
 
 {
@@ -4111,7 +4111,7 @@ NITFDataset::NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize,
     int nImageCount = 0;
     vsi_l_offset nImageOffset = 0;
     vsi_l_offset nICOffset = 0;
-    if( !NITFCreateEx( pszFilename, nXSize, nYSize, nBands,
+    if( !NITFCreateEx( pszFilename, nXSize, nYSize, nBandsIn,
                        GDALGetDataTypeSize( eType ), pszPVType,
                        papszFullOptions,
                        &nIMIndex, &nImageCount, &nImageOffset, &nICOffset ) )
@@ -4135,7 +4135,7 @@ NITFDataset::NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize,
 
         char** papszJP2Options = NITFJP2ECWOptions(papszFullOptions);
         poWritableJ2KDataset =
-            poJ2KDriver->Create( osDSName, nXSize, nYSize, nBands, eType,
+            poJ2KDriver->Create( osDSName, nXSize, nYSize, nBandsIn, eType,
                                  papszJP2Options );
         CSLDestroy(papszJP2Options);
 

@@ -990,7 +990,7 @@ GDALDataset *IDADataset::Open( GDALOpenInfo * poOpenInfo )
 /************************************************************************/
 
 GDALDataset *IDADataset::Create( const char * pszFilename,
-                                 int nXSize, int nYSize, int nBands,
+                                 int nXSize, int nYSize, int nBandsIn,
                                  GDALDataType eType,
                                  char ** /* papszParamList */ )
 
@@ -1001,7 +1001,7 @@ GDALDataset *IDADataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Verify input options.                                           */
 /* -------------------------------------------------------------------- */
-    if( eType != GDT_Byte || nBands != 1 )
+    if( eType != GDT_Byte || nBandsIn != 1 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Only 1 band, Byte datasets supported for IDA format." );
