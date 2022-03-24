@@ -314,13 +314,13 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
         }
         case L_PUNKT: {  /* point */
             oGType = wkbPoint;
-            OGRPoint *poPoint = poParent->papoBuiltGeometries[oNextSerial.lNr]->toPoint();
-            if (poPoint == nullptr) {
-                // This should not happen under normal operation but may occur with invalid geometries.
+            if (poParent->papoBuiltGeometries[oNextSerial.lNr] == nullptr) {
+                // This should not happen under normal operation.
                 CPLError( CE_Warning, CPLE_AppDefined, "Point %li may have a broken geometry", oNextSerial.lNr);
                 //return NULL;
                 break;
             }
+            OGRPoint *poPoint = poParent->papoBuiltGeometries[oNextSerial.lNr]->toPoint();
             poGeom = poPoint->clone();
             break;
         }
