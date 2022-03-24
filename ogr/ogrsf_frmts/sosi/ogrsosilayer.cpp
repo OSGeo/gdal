@@ -297,7 +297,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
         case L_BUEP:  {  /* curve, interpolated from circular arc */
             oGType = wkbLineString;
             if (poParent->papoBuiltGeometries[oNextSerial.lNr] == nullptr ||
-                poParent->papoBuiltGeometries[oNextSerial.lNr]->getGeometryType() != wkbLineString )) {
+                poParent->papoBuiltGeometries[oNextSerial.lNr]->getGeometryType() != wkbLineString ) {
                 // This should not happen under normal operation.
                 CPLError( CE_Warning, CPLE_AppDefined, "Curve or line %li may have a broken geometry", oNextSerial.lNr);
                 //return NULL;
