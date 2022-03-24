@@ -195,7 +195,7 @@ std::unique_ptr<OGRFieldDefn> CreateFieldDefn(const AttributeColumnDescription& 
     if (columnDesc.defaultValue.empty())
         field->SetDefault(nullptr);
     else
-        field->SetDefault(columnDesc.defaultValue);
+        field->SetDefault(columnDesc.defaultValue.c_str());
     return field;
 }
 
@@ -559,7 +559,12 @@ OGRFeature* OGRHanaLayer::ReadFeature()
         break;
         case odbc::SQLDataTypes::Char:
         case odbc::SQLDataTypes::VarChar:
-        case odbc::SQLDataTypes::LongVarChar: {
+        case odbc::SQLDataTypes::LongVarChar:
+        // Note: NVARCHAR data type is converted to UTF-8 on the HANA side
+        // when using a connection setting CHAR_AS_UTF8=1.
+        case odbc::SQLDataTypes::WChar:
+        case odbc::SQLDataTypes::WVarChar:
+        case odbc::SQLDataTypes::WLongVarChar: {
             std::size_t len = resultSet_->getStringLength(paramIndex);
             if (len == odbc::ResultSet::NULL_DATA)
                 feature->SetFieldNull(fieldIndex);
@@ -567,39 +572,15 @@ OGRFeature* OGRHanaLayer::ReadFeature()
                 feature->SetField(fieldIndex, "");
             else if (len != odbc::ResultSet::UNKNOWN_LENGTH)
             {
-                EnsureBufferCapacity(len + sizeof(char));
+                EnsureBufferCapacity(len + 1);
                 resultSet_->getStringData(
-                    paramIndex, dataBuffer_.data(), len + sizeof(char));
+                    paramIndex, dataBuffer_.data(), len + 1);
                 featWriter.SetFieldValue(
                     fieldIndex, dataBuffer_.data());
             }
             else
             {
                 odbc::String data = resultSet_->getString(paramIndex);
-                featWriter.SetFieldValue(fieldIndex, data);
-            }
-        }
-        break;
-        case odbc::SQLDataTypes::WChar:
-        case odbc::SQLDataTypes::WVarChar:
-        case odbc::SQLDataTypes::WLongVarChar: {
-            std::size_t len = resultSet_->getNStringLength(paramIndex);
-            if (len == odbc::ResultSet::NULL_DATA)
-                feature->SetFieldNull(fieldIndex);
-            else if (len == 0)
-                feature->SetField(fieldIndex, "");
-            else if (len != odbc::ResultSet::UNKNOWN_LENGTH)
-            {
-                EnsureBufferCapacity(len * sizeof(char16_t) + sizeof(char16_t));
-                resultSet_->getNStringData(
-                    paramIndex, dataBuffer_.data(), len + sizeof(char16_t));
-                featWriter.SetFieldValue(
-                    fieldIndex,
-                    reinterpret_cast<char16_t*>(dataBuffer_.data()));
-            }
-            else
-            {
-                odbc::NString data = resultSet_->getNString(paramIndex);
                 featWriter.SetFieldValue(fieldIndex, data);
             }
         }
@@ -662,6 +643,8 @@ OGRErr OGRHanaLayer::ReadFeatureDefinition(
     const char* featureDefName)
 {
     attrColumns_.clear();
+    fidFieldIndex_ = OGRNullFID;
+    fidFieldName_.clear();
     auto featureDef = cpl::make_unique<OGRFeatureDefn>(featureDefName);
     featureDef->Reference();
 
@@ -673,7 +656,6 @@ OGRErr OGRHanaLayer::ReadFeatureDefinition(
 
     std::vector<CPLString> primKeys =
         dataSource_->GetTablePrimaryKeys(schemaName, tableName);
-    fidFieldIndex_ = OGRNullFID;
 
     if (featureDef->GetGeomFieldCount() == 1)
         featureDef->DeleteGeomFieldDefn(0);
@@ -712,6 +694,7 @@ OGRErr OGRHanaLayer::ReadFeatureDefinition(
                 if (key.compare(attributeColumnDesc.name) == 0)
                 {
                     fidFieldIndex_ = static_cast<int>(attrColumns_.size());
+                    fidFieldName_ = field->GetNameRef();
                     attributeColumnDesc.isFeatureID = true;
                     break;
                 }
@@ -885,12 +868,8 @@ OGRFeature* OGRHanaLayer::GetNextFeature()
 
 const char* OGRHanaLayer::GetFIDColumn()
 {
-    return (fidFieldIndex_ == OGRNullFID)
-               ? ""
-               : attrColumns_[static_cast<std::size_t>(fidFieldIndex_)]
-                     .name.c_str();
+    return fidFieldName_.c_str();
 }
-
 
 /************************************************************************/
 /*                         SetAttributeFilter()                         */

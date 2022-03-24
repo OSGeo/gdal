@@ -87,15 +87,6 @@ void OGRHanaFeatureWriter::SetFieldValue(
 }
 
 void OGRHanaFeatureWriter::SetFieldValue(
-    int fieldIndex, const odbc::NString& value)
-{
-    if (value.isNull())
-        feature_.SetFieldNull(fieldIndex);
-    else
-        SetFieldValue(fieldIndex, value->data());
-}
-
-void OGRHanaFeatureWriter::SetFieldValue(
     int fieldIndex, const odbc::Date& value)
 {
     if (value.isNull())
@@ -142,30 +133,10 @@ void OGRHanaFeatureWriter::SetFieldValue(
 
 void OGRHanaFeatureWriter::SetFieldValue(int fieldIndex, const char* value)
 {
-    char* utf8 = CPLRecode(value, CPL_ENC_UCS2, CPL_ENC_UTF8);
-    feature_.SetField(fieldIndex, utf8);
-    CPLFree(utf8);
-}
-
-void OGRHanaFeatureWriter::SetFieldValue(int fieldIndex, const char16_t* value)
-{
-    char* utf8;
-    if (sizeof(wchar_t) == sizeof(char16_t))
-    {
-        utf8 = CPLRecodeFromWChar(
-            reinterpret_cast<const wchar_t*>(value), CPL_ENC_UCS2,
-            CPL_ENC_UTF8);
-    }
+    if (value == nullptr)
+        feature_.SetFieldNull(fieldIndex);
     else
-    {
-        std::size_t len = std::char_traits<char16_t>::length(value);
-        std::wstring str(len, 0);
-        for (std::size_t i = 0; i < len; ++i)
-            str[i] = value[i];
-        utf8 = CPLRecodeFromWChar(str.c_str(), CPL_ENC_UCS2, CPL_ENC_UTF8);
-    }
-    feature_.SetField(fieldIndex, utf8);
-    CPLFree(utf8);
+        feature_.SetField(fieldIndex, value);
 }
 
 void OGRHanaFeatureWriter::SetFieldValue(
@@ -179,7 +150,10 @@ void OGRHanaFeatureWriter::SetFieldValue(
         return;
     }
 
-    feature_.SetField(fieldIndex, static_cast<int>(size), value);
+    if (value == nullptr)
+        feature_.SetFieldNull(fieldIndex);
+    else
+        feature_.SetField(fieldIndex, static_cast<int>(size), value);
 }
 
 void OGRHanaFeatureWriter::SetFieldValueAsStringArray(

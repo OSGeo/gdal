@@ -115,6 +115,7 @@ protected:
     std::vector<AttributeColumnDescription> attrColumns_;
     std::vector<GeometryColumnDescription> geomColumns_;
     int fidFieldIndex_ = OGRNullFID;
+    CPLString fidFieldName_;
     CPLString rawQuery_;
     CPLString queryStatement_;
     CPLString whereClause_;

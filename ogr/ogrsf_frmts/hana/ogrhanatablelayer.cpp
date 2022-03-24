@@ -426,7 +426,7 @@ OGRErr OGRHanaTableLayer::ReadTableDefinition()
     if (fidFieldIndex_ != OGRNullFID)
         CPLDebug(
             "HANA", "table %s has FID column %s.", tableName_.c_str(),
-            attrColumns_[static_cast<size_t>(fidFieldIndex_)].name.c_str());
+            fidFieldName_.c_str());
     else
         CPLDebug(
             "HANA", "table %s has no FID column, FIDs will not be reliable!",
@@ -1287,7 +1287,10 @@ OGRErr OGRHanaTableLayer::CreateField(OGRFieldDefn* srsField, int approxOK)
     OGRFieldDefn dstField(srsField);
 
     if (launderColumnNames_)
-        dstField.SetName(LaunderName(dstField.GetNameRef()).c_str());
+    {
+        CPLString launderName = LaunderName(dstField.GetNameRef());
+        dstField.SetName(launderName.c_str());
+    }
 
     if (fidFieldIndex_ != OGRNullFID
         && EQUAL(dstField.GetNameRef(), GetFIDColumn())
@@ -1389,8 +1392,8 @@ OGRErr OGRHanaTableLayer::CreateField(OGRFieldDefn* srsField, int approxOK)
     if (dstField.GetDefault() != nullptr)
         clmDesc.defaultValue = dstField.GetDefault();
 
-    featureDefn_->AddFieldDefn(&dstField);
     attrColumns_.push_back(clmDesc);
+    featureDefn_->AddFieldDefn(&dstField);
 
     rebuildQueryStatement_ = true;
     ResetPreparedStatements();

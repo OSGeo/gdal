@@ -46,13 +46,11 @@ public:
     void SetFieldValue(int fieldIndex, const odbc::Float& value);
     void SetFieldValue(int fieldIndex, const odbc::Decimal& value);
     void SetFieldValue(int fieldIndex, const odbc::String& value);
-    void SetFieldValue(int fieldIndex, const odbc::NString& value);
     void SetFieldValue(int fieldIndex, const odbc::Date& value);
     void SetFieldValue(int fieldIndex, const odbc::Time& value);
     void SetFieldValue(int fieldIndex, const odbc::Timestamp& value);
     void SetFieldValue(int fieldIndex, const odbc::Binary& value);
     void SetFieldValue(int fieldIndex, const char* value);
-    void SetFieldValue(int fieldIndex, const char16_t* value);
     void SetFieldValue(int fieldIndex, const void* value, std::size_t size);
 
     template<typename InputT, typename ResultT>
