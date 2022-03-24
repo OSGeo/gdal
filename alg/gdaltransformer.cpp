@@ -1098,7 +1098,8 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
 /*      Recompute some bounds so that all return values are consistent  */
 /* -------------------------------------------------------------------- */
     double dfMaxXOutNew = dfMinXOut + (*pnPixels) * dfPixelSizeX;
-    if( bIsGeographicCoords && dfMaxXOut <= 180 && dfMaxXOutNew > 180 )
+    if( bIsGeographicCoords &&
+        ((dfMaxXOut <= 180 && dfMaxXOutNew > 180) || dfMaxXOut == 180) )
     {
         dfMaxXOut = 180;
         dfPixelSizeX = (dfMaxXOut - dfMinXOut) / *pnPixels;
@@ -1655,6 +1656,9 @@ bool GDALComputeAreaOfInterest(OGRSpatialReference* poSRS,
  * (GDAL &gt;= 3.0) Area of interest, used to compute the best coordinate operation
  * between the source and target SRS. If not specified, the bounding box of the
  * source raster will be used.
+ * <li> GEOLOC_BACKMAP_OVERSAMPLE_FACTOR=]0.1,2]. (GDAL &gt;= 3.5) Oversample factor
+ * used to derive the size of the "backmap" used for geolocation array transformers.
+ * Default value is 1.3.
  * </ul>
  *
  * The use case for the *_APPROX_ERROR_* options is when defining an approximate
@@ -1895,7 +1899,7 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
              && (papszMD = GDALGetMetadata( hSrcDS, "GEOLOCATION" )) != nullptr )
     {
         psInfo->pSrcTransformArg =
-            GDALCreateGeoLocTransformer( hSrcDS, papszMD, FALSE );
+            GDALCreateGeoLocTransformerEx( hSrcDS, papszMD, FALSE, nullptr, papszOptions );
 
         if( psInfo->pSrcTransformArg == nullptr )
         {
@@ -2081,7 +2085,7 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
              && (papszMD = GDALGetMetadata( hDstDS, "GEOLOCATION" )) != nullptr )
     {
         psInfo->pDstTransformArg =
-            GDALCreateGeoLocTransformer( hDstDS, papszMD, FALSE );
+            GDALCreateGeoLocTransformerEx( hDstDS, papszMD, FALSE, nullptr, papszOptions );
 
         if( psInfo->pDstTransformArg == nullptr )
         {

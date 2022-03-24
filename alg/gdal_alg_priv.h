@@ -187,10 +187,13 @@ int GDALTransformLonLatToDestApproxTransformer(void* hTransformArg,
 bool GDALTransformIsTranslationOnPixelBoundaries(GDALTransformerFunc pfnTransformer,
                                                  void                *pTransformerArg);
 
+typedef struct _CPLQuadTree CPLQuadTree;
+
 typedef struct {
     GDALTransformerInfo sTI;
 
     bool        bReversed;
+    double      dfOversampleFactor;
 
     // Map from target georef coordinates back to geolocation array
     // pixel line coordinates.  Built only if needed.
@@ -229,6 +232,10 @@ typedef struct {
     double           dfPIXEL_STEP;
     double           dfLINE_OFFSET;
     double           dfLINE_STEP;
+
+    bool             bOriginIsTopLeftCorner;
+    bool             bGeographicSRSWithMinus180Plus180LongRange;
+    CPLQuadTree     *hQuadTree;
 
     char **          papszGeolocationInfo;
 
@@ -311,6 +318,11 @@ bool GDALComputeAreaOfInterest(OGRSpatialReference* poSRS,
                                double& dfEastLongitudeDeg,
                                double& dfNorthLatitudeDeg );
 
+void *GDALCreateGeoLocTransformerEx( GDALDatasetH hBaseDS,
+                                     char **papszGeolocationInfo,
+                                     int bReversed,
+                                     const char* pszSourceDataset,
+                                     CSLConstList papszTransformOptions );
 
 #endif /* #ifndef DOXYGEN_SKIP */
 
