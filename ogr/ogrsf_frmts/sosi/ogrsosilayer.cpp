@@ -310,7 +310,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
         case L_TEKST: {  /* text */
             oGType = wkbMultiPoint;
             if (poParent->papoBuiltGeometries[oNextSerial.lNr] == nullptr ||
-                poParent->papoBuiltGeometries[oNextSerial.lNr]->getGeometryType() != wkbMultiPoint )) {
+                poParent->papoBuiltGeometries[oNextSerial.lNr]->getGeometryType() != wkbMultiPoint ) {
                 // This should not happen under normal operation.
                 CPLError( CE_Warning, CPLE_AppDefined, "Text point %li may have a broken geometry", oNextSerial.lNr);
                 //return NULL;
