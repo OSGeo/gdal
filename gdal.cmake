@@ -357,7 +357,7 @@ if (GDAL_ENABLE_MACOSX_FRAMEWORK)
 else ()
   include(GNUInstallDirs)
   set(INSTALL_PLUGIN_DIR
-      "lib/gdalplugins"
+      "${CMAKE_INSTALL_LIBDIR}/gdalplugins"
       CACHE PATH "Installation sub-directory for plugins")
   set(GDAL_RESOURCE_PATH ${CMAKE_INSTALL_DATADIR}/gdal)
 
