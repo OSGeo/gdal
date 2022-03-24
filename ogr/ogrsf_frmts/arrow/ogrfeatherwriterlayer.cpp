@@ -221,6 +221,10 @@ void OGRFeatherWriterLayer::CreateSchema()
                 if( pszWKT )
                     oColumn.Add("crs", pszWKT);
                 CPLFree(pszWKT);
+
+                const double dfCoordEpoch = poSRS->GetCoordinateEpoch();
+                if( dfCoordEpoch > 0 )
+                    oColumn.Add("epoch", dfCoordEpoch);
             }
 
 #if 0
@@ -375,6 +379,10 @@ void OGRFeatherWriterLayer::DoSomethingBeforeFinalFlushGroup()
                 if( pszWKT )
                     oColumn.Add("crs", pszWKT);
                 CPLFree(pszWKT);
+
+                const double dfCoordEpoch = poSRS->GetCoordinateEpoch();
+                if( dfCoordEpoch > 0 )
+                    oColumn.Add("epoch", dfCoordEpoch);
             }
 
             if( m_aoEnvelopes[i].IsInit() )

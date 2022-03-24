@@ -594,3 +594,30 @@ def test_ogr_parquet_write_compression(compression):
     ds = None
 
     gdal.Unlink(outfilename)
+
+
+###############################################################################
+# Test coordinate epoch support
+
+
+def test_ogr_parquet_coordinate_epoch():
+
+    outfilename = '/vsimem/out.parquet'
+    ds = gdal.GetDriverByName('Parquet').Create(outfilename, 0, 0, 0, gdal.GDT_Unknown)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    srs.SetCoordinateEpoch(2022.3)
+    ds.CreateLayer('out', geom_type=ogr.wkbPoint, srs=srs)
+    ds = None
+
+    ds = ogr.Open(outfilename)
+    assert ds is not None
+    lyr = ds.GetLayer(0)
+    assert lyr is not None
+    srs = lyr.GetSpatialRef()
+    assert srs is not None
+    assert srs.GetCoordinateEpoch() == 2022.3
+    lyr = None
+    ds = None
+
+    gdal.Unlink(outfilename)

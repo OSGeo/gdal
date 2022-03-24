@@ -212,6 +212,10 @@ void OGRParquetWriterLayer::DoSomethingBeforeFinalFlushGroup()
                 if( pszWKT )
                     oColumn.Add("crs", pszWKT);
                 CPLFree(pszWKT);
+
+                const double dfCoordEpoch = poSRS->GetCoordinateEpoch();
+                if( dfCoordEpoch > 0 )
+                    oColumn.Add("epoch", dfCoordEpoch);
             }
 
             if( m_aoEnvelopes[i].IsInit() &&

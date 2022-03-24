@@ -196,8 +196,15 @@ void OGRParquetLayer::EstablishFeatureDefn()
                 {
                     OGRSpatialReference* poSRS = new OGRSpatialReference();
                     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
                     if( poSRS->importFromWkt(osWKT.c_str()) == OGRERR_NONE )
+                    {
+                        const double dfCoordEpoch = oJSONDef.GetDouble("epoch");
+                        if( dfCoordEpoch > 0 )
+                            poSRS->SetCoordinateEpoch(dfCoordEpoch);
+
                         oField.SetSpatialRef(poSRS);
+                    }
                     poSRS->Release();
                 }
 

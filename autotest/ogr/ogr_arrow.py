@@ -31,7 +31,7 @@
 
 import json
 import math
-from osgeo import gdal, ogr
+from osgeo import gdal, ogr, osr
 
 import gdaltest
 import pytest
@@ -338,3 +338,32 @@ def test_ogr_arrow_invalid_arrows():
 
     with gdaltest.error_handler():
         ogr.Open('ARROW_IPC_STREAM:/vsimem/i_dont_exist.bin') is None
+
+
+###############################################################################
+# Test coordinate epoch support
+
+
+@pytest.mark.parametrize("write_gdal_footer", [True,False])
+def test_ogr_arrow_coordinate_epoch(write_gdal_footer):
+
+    outfilename = '/vsimem/out.feather'
+    with gdaltest.config_option('OGR_ARROW_WRITE_GDAL_FOOTER', str(write_gdal_footer)):
+        ds = gdal.GetDriverByName('Arrow').Create(outfilename, 0, 0, 0, gdal.GDT_Unknown)
+        srs = osr.SpatialReference()
+        srs.ImportFromEPSG(4326)
+        srs.SetCoordinateEpoch(2022.3)
+        ds.CreateLayer('out', geom_type=ogr.wkbPoint, srs=srs)
+        ds = None
+
+    ds = ogr.Open(outfilename)
+    assert ds is not None
+    lyr = ds.GetLayer(0)
+    assert lyr is not None
+    srs = lyr.GetSpatialRef()
+    assert srs is not None
+    assert srs.GetCoordinateEpoch() == 2022.3
+    lyr = None
+    ds = None
+
+    gdal.Unlink(outfilename)
