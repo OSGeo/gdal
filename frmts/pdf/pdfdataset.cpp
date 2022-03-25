@@ -6256,7 +6256,11 @@ int PDFDataset::ParseVP(GDALPDFObject* poVP, double dfMediaBoxWidth, double dfMe
 /* -------------------------------------------------------------------- */
 /*      Find the largest BBox                                           */
 /* -------------------------------------------------------------------- */
+    const char* pszNeatlineToSelect =
+        GetOption(papszOpenOptions, "NEATLINE", "Map Layers");
+
     int iLargest = 0;
+    int iRequestedVP = -1;
     double dfLargestArea = 0;
 
     for(i=0;i<nLength;i++)
@@ -6290,6 +6294,16 @@ int PDFDataset::ParseVP(GDALPDFObject* poVP, double dfMediaBoxWidth, double dfMe
         if( !EQUAL(poSubtype->GetName(), "GEO") )
         {
             continue;
+        }
+
+        GDALPDFObject* poName = poVPEltDict->Get("Name");
+        if( poName != nullptr &&
+            poName->GetType() == PDFObjectType_String )
+        {
+            CPLDebug("PDF", "Name = %s", poName->GetString().c_str());
+            if( EQUAL(poName->GetString().c_str(), pszNeatlineToSelect) ) {
+                iRequestedVP = i;
+            }
         }
 
         GDALPDFObject* poBBox = poVPEltDict->Get("BBox");
@@ -6327,7 +6341,15 @@ int PDFDataset::ParseVP(GDALPDFObject* poVP, double dfMediaBoxWidth, double dfMe
         CPLDebug("PDF", "Largest BBox in VP array is element %d", iLargest);
     }
 
-    GDALPDFObject* poVPElt = poVPArray->Get(iLargest);
+    GDALPDFObject* poVPElt = nullptr;
+
+    if (iRequestedVP > -1) {
+        CPLDebug("PDF", "Requested NEATLINE BBox in VP array is element %d", iRequestedVP);
+        poVPElt = poVPArray->Get(iRequestedVP);
+    } else {
+        poVPElt = poVPArray->Get(iLargest);
+    }
+
     if (poVPElt == nullptr || poVPElt->GetType() != PDFObjectType_Dictionary)
     {
         return FALSE;
