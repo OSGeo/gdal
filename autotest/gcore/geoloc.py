@@ -206,3 +206,6 @@ def test_geoloc_error_cases():
     with gdaltest.error_handler():
         transformer = gdal.Transformer(None, ds, [])
     assert transformer is None
+
+    gdal.Unlink('/vsimem/lon.tif')
+    gdal.Unlink('/vsimem/lat.tif')
