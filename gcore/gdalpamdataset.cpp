@@ -67,7 +67,7 @@ CPL_CVSID("$Id$")
  * GDAL_PAM_ENABLED configuration option (via CPLSetConfigOption(), or the
  * environment) to the value of YES (resp. NO). Note: The default value is
  * build dependent and defaults to YES in Windows and Unix builds. Warning:
- * Setting this option to OFF may have unwanted side-effects on drivers
+ * For GDAL < 3.5, setting this option to OFF may have unwanted side-effects on drivers
  * that rely on PAM functionality.
  *
  * <h3>PAM Proxy Files</h3>
