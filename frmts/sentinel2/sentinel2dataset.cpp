@@ -399,7 +399,9 @@ int SENTINEL2Dataset::Identify( GDALOpenInfo *poOpenInfo )
     if( EQUAL( pszJustFilename, "MTD_TL.xml") )
         return FALSE;
 
-    /* Accept directly .zip as provided by https://scihub.esa.int/ */
+    /* Accept directly .zip as provided by https://scihub.esa.int/
+     * First we check just by file name as it is faster than looking
+     * inside to detect content. */
     if( (STARTS_WITH_CI(pszJustFilename, "S2A_MSIL1C_") ||
          STARTS_WITH_CI(pszJustFilename, "S2B_MSIL1C_") ||
          STARTS_WITH_CI(pszJustFilename, "S2A_MSIL2A_") ||
@@ -437,6 +439,33 @@ int SENTINEL2Dataset::Identify( GDALOpenInfo *poOpenInfo )
     if( strstr(pszHeader,  "<n1:Level-2A_User_Product" ) != nullptr &&
         strstr(pszHeader, "User_Product_Level-2A" ) != nullptr )
         return TRUE;
+
+    /* Last effort – look inside of a zip file for metadata file with
+     * matching name. */
+    if ( EQUAL(CPLGetExtension(pszJustFilename), "zip") )
+    {
+        CPLString osFilename(poOpenInfo->pszFilename);
+        if( strncmp(osFilename, "/vsizip/", strlen("/vsizip/")) != 0 )
+            osFilename = "/vsizip/" + osFilename;
+
+        auto psDir = VSIOpenDir(osFilename.c_str(), 1, nullptr);
+        while ( const VSIDIREntry* psEntry = VSIGetNextDirEntry(psDir) )
+        {
+            const char* pszInsideFilename = CPLGetFilename(psEntry->pszName);
+            if ( VSI_ISREG(psEntry->nMode) && (
+                STARTS_WITH_CI(pszInsideFilename, "MTD_MSIL1C") ||
+                STARTS_WITH_CI(pszInsideFilename, "MTD_MSIL2A") ||
+                STARTS_WITH_CI(pszInsideFilename, "S2A_OPER_MTD_SAFL1B") ||
+                STARTS_WITH_CI(pszInsideFilename, "S2B_OPER_MTD_SAFL1B") ||
+                STARTS_WITH_CI(pszInsideFilename, "S2A_OPER_MTD_SAFL1C") ||
+                STARTS_WITH_CI(pszInsideFilename, "S2B_OPER_MTD_SAFL1C") ||
+                STARTS_WITH_CI(pszInsideFilename, "S2A_USER_MTD_SAFL2A") ||
+                STARTS_WITH_CI(pszInsideFilename, "S2B_USER_MTD_SAFL2A")
+            )) {
+                return TRUE;
+            }
+        }
+    }
 
     return FALSE;
 }
@@ -592,6 +621,36 @@ GDALDataset *SENTINEL2Dataset::Open( GDALOpenInfo * poOpenInfo )
     {
         CPLDebug("SENTINEL2", "Trying OpenL1C_L2A");
         return OpenL1C_L2A(poOpenInfo->pszFilename, SENTINEL2_L2A);
+    }
+
+    /* Last effort – look inside of a zip file for metadata file with
+     * matching name. */
+    if ( EQUAL(CPLGetExtension(pszJustFilename), "zip") )
+    {
+        CPLString osFilename(poOpenInfo->pszFilename);
+        if( strncmp(osFilename, "/vsizip/", strlen("/vsizip/")) != 0 )
+            osFilename = "/vsizip/" + osFilename;
+
+        auto psDir = VSIOpenDir(osFilename.c_str(), 1, nullptr);
+        while ( const VSIDIREntry* psEntry = VSIGetNextDirEntry(psDir) )
+        {
+            const char* pszInsideFilename = CPLGetFilename(psEntry->pszName);
+            if ( VSI_ISREG(psEntry->nMode) && (
+                    STARTS_WITH_CI(pszInsideFilename, "MTD_MSIL2A") ||
+                    STARTS_WITH_CI(pszInsideFilename, "MTD_MSIL1C") ||
+                    STARTS_WITH_CI(pszInsideFilename, "S2A_OPER_MTD_SAFL1B") ||
+                    STARTS_WITH_CI(pszInsideFilename, "S2B_OPER_MTD_SAFL1B") ||
+                    STARTS_WITH_CI(pszInsideFilename, "S2A_OPER_MTD_SAFL1C") ||
+                    STARTS_WITH_CI(pszInsideFilename, "S2B_OPER_MTD_SAFL1C") ||
+                    STARTS_WITH_CI(pszInsideFilename, "S2A_USER_MTD_SAFL2A") ||
+                    STARTS_WITH_CI(pszInsideFilename, "S2B_USER_MTD_SAFL2A")
+            )) {
+                osFilename = osFilename + "/" + psEntry->pszName;
+                CPLDebug("SENTINEL2", "Trying %s", osFilename.c_str());
+                GDALOpenInfo oOpenInfo(osFilename, GA_ReadOnly);
+                return Open(&oOpenInfo);
+            }
+        }
     }
 
     return nullptr;
