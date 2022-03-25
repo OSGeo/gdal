@@ -377,7 +377,7 @@ if HAVE_NUMPY:
 
 packages = ["osgeo", "osgeo.utils"]
 
-readme = str(open('README.rst', 'rb').read())
+readme = open('README.rst', 'rb').read().decode('utf-8')
 
 name = 'GDAL'
 version = gdal_version
