@@ -288,12 +288,18 @@ The list of fields should match the types and length from the schema
 
 //! Iterator over shapeids in a vector segment.
 
-    class ShapeIterator : public std::iterator<std::input_iterator_tag, ShapeId>
+    class ShapeIterator
     {
         ShapeId id;
         PCIDSKVectorSegment *seg;
 
     public:
+        using iterator_category = std::input_iterator_tag;
+        using value_type = ShapeId;
+        using difference_type = std::ptrdiff_t;
+        using pointer = ShapeId*;
+        using reference = ShapeId&;
+
         ShapeIterator(PCIDSKVectorSegment *seg_in)
                 : seg(seg_in)  { id = seg->FindFirst(); }
         ShapeIterator(PCIDSKVectorSegment *seg_in, ShapeId id_in )
