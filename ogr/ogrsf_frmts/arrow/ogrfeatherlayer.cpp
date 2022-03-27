@@ -165,7 +165,7 @@ void OGRFeatherLayer::EstablishFeatureDefn()
         std::string osExtensionName;
         if( field_kv_metadata )
         {
-            auto extension_name = kv_metadata->Get("ARROW:extension:name");
+            auto extension_name = field_kv_metadata->Get("ARROW:extension:name");
             if( extension_name.ok() )
             {
                 osExtensionName = *extension_name;
@@ -191,7 +191,7 @@ void OGRFeatherLayer::EstablishFeatureDefn()
         bool bRegularField = true;
         auto oIter = m_oMapGeometryColumns.find(fieldName);
         if( oIter != m_oMapGeometryColumns.end() ||
-            STARTS_WITH(osExtensionName.c_str(), "geoarrow.") )
+            !osExtensionName.empty() )
         {
             CPLJSONObject oJSONDef;
             if( oIter != m_oMapGeometryColumns.end() )
@@ -598,7 +598,7 @@ void OGRFeatherLayer::TryToCacheFirstTwoBatches()
             auto poBatchIdx0 = m_poBatch;
             if( ReadNextBatchStream() )
             {
-                CPLAssert(m_nIdxInBatch == 2);
+                CPLAssert(m_iRecordBatch == 1);
                 m_poBatchIdx0 = poBatchIdx0;
                 m_poBatchIdx1 = m_poBatch;
                 m_poBatch = poBatchIdx0;
