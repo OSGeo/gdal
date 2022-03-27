@@ -28,9 +28,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 '''
-*** STUB *** Test that command line gdal-utils are in PATH and run. We only
-test script starts and returns expected defaults. We do not test if script
-functions properly.
+Test that command line gdal-utils are in PATH and run. We only test script
+starts and returns expected defaults. We do not test if script functions
+properly.
 
 Tested:
     gdalcompare <no args>
@@ -60,12 +60,13 @@ if not installed.returncode == 0:
     pytest.skip("The 'gdal-utils' package is not installed.", allow_module_level=True)
 
 utils = ['gdal2tiles', 'gdal2xyz', 'gdal_calc', 'gdal_edit', 'gdal_fillnodata',
-    'gdal_merge', 'gdal_pansharpen', 'gdal_polygonize', 'gdal_proximity',
-    'gdal_retile', 'gdal_sieve', 'gdalattachpct', 'gdalcompare', 'gdalmove',
-    'ogrmerge', 'pct2rgb', 'rgb2pct']
+         'gdal_merge', 'gdal_pansharpen', 'gdal_polygonize', 'gdal_proximity',
+         'gdal_retile', 'gdal_sieve', 'gdalattachpct', 'gdalcompare', 'gdalmove',
+         'ogrmerge', 'pct2rgb', 'rgb2pct']
 
 here = Path(__file__).parent.absolute()
 outputs_dir = Path.joinpath(here, "cli_outs")
+
 
 def get_utils_responses():
     '''Return dict of "utility_name: [stdout_msg, stderr_msg]"
@@ -88,38 +89,32 @@ def get_utils_responses():
     '''
     responses = {}
     for prog in utils:
-        data_out = Path.joinpath(outputs_dir, f"{prog}.stdout") # .../cli_outs/pctrgb.stdout
-        data_err = Path.joinpath(outputs_dir, f"{prog}.stderr") # .../cli_outs/pctrgb.stderr
+        data_out = Path.joinpath(outputs_dir, f"{prog}.stdout")  # .../cli_outs/pctrgb.stdout
+        data_err = Path.joinpath(outputs_dir, f"{prog}.stderr")  # .../cli_outs/pctrgb.stderr
         with open(data_out) as f:
             responses[prog] = [f.read()]
         with open(data_err) as f:
             responses[prog] = [responses[prog][0], f.read()]
     return responses
 
+
 responses = get_utils_responses()
-
-## FIXME: how to use pytest parametrize with a FOR loop? this fails with syntax err
-# for x in utils:
-#     @pytest.mark.parametrize("input,want", [
-#         pytest.param(x, {
-#             # "returncode": 1,
-#             "stdout": responses[x][0],
-#             "stderr": responses[x][1],
-#         })
-#     ])
-
-x = utils[1]
 
 # 'returncode' not used because the utils are not consistent in what they
 # return for "no parameters supplied"
-@pytest.mark.parametrize("input,want", [
-    pytest.param(x, {
+# Correct for-loop with pytest courtesy of @niccodemus
+# https://github.com/pytest-dev/pytest/discussions/9822#discussioncomment-2446025
+params = [
+    pytest.param(util, {
         # "returncode": 1,
-        "stdout": responses[x][0],
-        "stderr": responses[x][1],
+        "stdout": responses[util][0],
+        "stderr": responses[util][1],
     })
-])
+    for util in utils
+]
 
+
+@pytest.mark.parametrize("input,want", params)
 def test_program(input, want):
     completed_process = run_program(input)
     got = {
@@ -129,6 +124,7 @@ def test_program(input, want):
     }
     assert got == want
 
+
 def run_program(program, args=None):
     return subprocess.run(
         [program],
@@ -137,4 +133,3 @@ def run_program(program, args=None):
         shell=True,
         text=True,
     )
-
