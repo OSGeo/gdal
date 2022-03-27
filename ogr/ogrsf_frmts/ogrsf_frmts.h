@@ -55,6 +55,9 @@
 class OGRLayerAttrIndex;
 class OGRSFDriver;
 
+struct ArrowSchema;
+struct ArrowArray;
+
 /************************************************************************/
 /*                               OGRLayer                               */
 /************************************************************************/
@@ -112,6 +115,8 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     virtual OGRErr      ISetFeature( OGRFeature *poFeature ) CPL_WARN_UNUSED_RESULT;
     virtual OGRErr      ICreateFeature( OGRFeature *poFeature )  CPL_WARN_UNUSED_RESULT;
 
+    static void ReleaseArray(struct ArrowArray* array);
+
   public:
     OGRLayer();
     virtual     ~OGRLayer();
@@ -147,6 +152,13 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     virtual OGRFeature *GetNextFeature() CPL_WARN_UNUSED_RESULT = 0;
     virtual OGRErr      SetNextByIndex( GIntBig nIndex );
     virtual OGRFeature *GetFeature( GIntBig nFID )  CPL_WARN_UNUSED_RESULT;
+
+    virtual GDALDataset* GetDataset();
+    virtual bool        GetRecordBatchSchema(struct ArrowSchema* out_schema,
+                                             CSLConstList papszOptions = nullptr);
+    virtual bool        GetNextRecordBatch(struct ArrowArray* out_array,
+                                           struct ArrowSchema* out_schema = nullptr,
+                                           CSLConstList papszOptions = nullptr);
 
     OGRErr      SetFeature( OGRFeature *poFeature )  CPL_WARN_UNUSED_RESULT;
     OGRErr      CreateFeature( OGRFeature *poFeature ) CPL_WARN_UNUSED_RESULT;
