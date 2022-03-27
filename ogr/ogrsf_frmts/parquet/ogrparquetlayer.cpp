@@ -55,6 +55,15 @@ OGRParquetLayerBase::OGRParquetLayerBase(OGRParquetDataset* poDS,
 }
 
 /************************************************************************/
+/*                           GetDataset()                               */
+/************************************************************************/
+
+GDALDataset* OGRParquetLayer::GetDataset()
+{
+    return m_poDS;
+}
+
+/************************************************************************/
 /*                          LoadGeoMetadata()                           */
 /************************************************************************/
 
@@ -1146,4 +1155,26 @@ char** OGRParquetLayer::GetMetadata( const char* pszDomain )
         return m_aosFeatherMetadata.List();
     }
     return OGRLayer::GetMetadata(pszDomain);
+}
+
+/************************************************************************/
+/*                      GetNextRecordBatch()                            */
+/************************************************************************/
+
+bool OGRParquetLayer::GetNextRecordBatch(struct ArrowArray* out_array,
+                                         struct ArrowSchema* out_schema,
+                                         CSLConstList papszOptions)
+{
+    const char* pszMaxFeaturesInBatch = CSLFetchNameValue(
+        papszOptions, "MAX_FEATURES_IN_BATCH");
+    if( pszMaxFeaturesInBatch )
+    {
+        int nMaxBatchSize = atoi(pszMaxFeaturesInBatch);
+        if( nMaxBatchSize <= 0 )
+            nMaxBatchSize = 1;
+        if( nMaxBatchSize > INT_MAX - 1 )
+            nMaxBatchSize = INT_MAX - 1;
+        m_poArrowReader->set_batch_size(nMaxBatchSize);
+    }
+    return OGRArrowLayer::GetNextRecordBatch(out_array, out_schema, papszOptions);
 }

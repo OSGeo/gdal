@@ -33,6 +33,10 @@
 #include "ogr_attrind.h"
 #include "ogr_swq.h"
 #include "ograpispy.h"
+#include "ogr_recordbatch.h"
+
+#include "cpl_time.h"
+#include <limits>
 
 CPL_CVSID("$Id$")
 
@@ -4456,4 +4460,1704 @@ OGRLayer::FeatureIterator OGRLayer::begin()
 OGRLayer::FeatureIterator OGRLayer::end()
 {
     return {this, false};
+}
+
+/************************************************************************/
+/*                      OGRLayerReleaseSchema()                         */
+/************************************************************************/
+
+static void OGRLayerReleaseSchema(struct ArrowSchema* schema)
+{
+    CPLAssert(schema->release != nullptr);
+    if( STARTS_WITH(schema->format, "w:") )
+        CPLFree(const_cast<char*>(schema->format));
+    CPLFree(const_cast<char*>(schema->name));
+    CPLFree(const_cast<char*>(schema->metadata));
+    for(int i = 0; i < static_cast<int>(schema->n_children); ++i )
+    {
+        if(schema->children[i]->release)
+        {
+            schema->children[i]->release(schema->children[i]);
+            CPLFree(schema->children[i]);
+        }
+    }
+    CPLFree(schema->children);
+    if( schema->dictionary )
+    {
+        if(schema->dictionary->release)
+        {
+            schema->dictionary->release(schema->dictionary);
+            CPLFree(schema->dictionary);
+        }
+    }
+    schema->release = nullptr;
+}
+
+/************************************************************************/
+/*                        AddDictToSchema()                             */
+/************************************************************************/
+
+static void AddDictToSchema(struct ArrowSchema* psChild,
+                            const OGRCodedFieldDomain* poCodedDomain)
+{
+    const OGRCodedValue* psIter = poCodedDomain->GetEnumeration();
+    int nLastCode = -1;
+    int nCountNull = 0;
+    uint32_t nCountChars = 0;
+    for(; psIter->pszCode; ++psIter )
+    {
+        if( CPLGetValueType(psIter->pszCode) != CPL_VALUE_INTEGER )
+        {
+            return;
+        }
+        int nCode = atoi(psIter->pszCode);
+        if( nCode <= nLastCode || nCode - nLastCode > 100 )
+        {
+            return;
+        }
+        for( int i = nLastCode + 1; i < nCode; ++i )
+        {
+            nCountNull ++;
+        }
+        if( psIter->pszValue != nullptr )
+        {
+            const size_t nLen = strlen(psIter->pszValue);
+            if( nLen > std::numeric_limits<uint32_t>::max() - nCountChars )
+                return;
+            nCountChars += static_cast<uint32_t>(nLen);
+        }
+        else
+            nCountNull ++;
+        nLastCode = nCode;
+    }
+
+    auto psChildDict = static_cast<struct ArrowSchema*>(
+        CPLCalloc(1, sizeof(struct ArrowSchema)));
+    psChild->dictionary = psChildDict;
+    psChildDict->release = OGRLayerReleaseSchema;
+    psChildDict->name = CPLStrdup(poCodedDomain->GetName().c_str());
+    psChildDict->format = "u";
+    if( nCountNull )
+        psChildDict->flags = ARROW_FLAG_NULLABLE;
+}
+
+/************************************************************************/
+/*                      GetRecordBatchSchema()                          */
+/************************************************************************/
+
+/** Get record batch schema, as a Arrow Schema.
+ *
+ * Include ogr_recordbatch.h.
+ *
+ * On successful return, and when the schema is no longer needed, it must must
+ * be freed with out_schema->release(out_schema).
+ *
+ * @param out_schema Output schema Must *not* be NULL. The content of the
+ *                   structure does not need to be initialized.
+ * @param papszOptions NULL terminated list of key=value options.
+ * @return true in case of success.
+ * @since GDAL 3.6
+ */
+bool OGRLayer::GetRecordBatchSchema(struct ArrowSchema* out_schema,
+                                    CSLConstList papszOptions)
+{
+    const bool bIncludeFID = CPLTestBool(
+        CSLFetchNameValueDef(papszOptions, "INCLUDE_FID", "YES"));
+    memset(out_schema, 0, sizeof(*out_schema));
+    out_schema->format = "+s";
+    out_schema->name = CPLStrdup("");
+    out_schema->metadata = nullptr;
+    auto poLayerDefn = GetLayerDefn();
+    const int nFieldCount = poLayerDefn->GetFieldCount();
+    const int nGeomFieldCount = poLayerDefn->GetGeomFieldCount();
+    const int nChildren = 1 + nFieldCount + nGeomFieldCount;
+
+    out_schema->children = static_cast<struct ArrowSchema**>(CPLCalloc(nChildren, sizeof(struct ArrowSchema*)));
+    int iSchemaChild = 0;
+    if( bIncludeFID )
+    {
+        out_schema->children[iSchemaChild] = static_cast<struct ArrowSchema*>(
+            CPLCalloc(1, sizeof(struct ArrowSchema)));
+        auto psChild = out_schema->children[iSchemaChild];
+        ++iSchemaChild;
+        psChild->release = OGRLayerReleaseSchema;
+        const char* pszFIDName = GetFIDColumn();
+        psChild->name = CPLStrdup((pszFIDName && pszFIDName[0]) ? pszFIDName : "OGC_FID");
+        psChild->format = "l";
+    }
+    for( int i = 0; i < nFieldCount; ++i )
+    {
+        const auto poFieldDefn = poLayerDefn->GetFieldDefn(i);
+        if( poFieldDefn->IsIgnored() )
+        {
+            continue;
+        }
+
+        out_schema->children[iSchemaChild] = static_cast<struct ArrowSchema*>(
+            CPLCalloc(1, sizeof(struct ArrowSchema)));
+        auto psChild = out_schema->children[iSchemaChild];
+        ++iSchemaChild;
+        psChild->release = OGRLayerReleaseSchema;
+        psChild->name = CPLStrdup(poFieldDefn->GetNameRef());
+        if( poFieldDefn->IsNullable() )
+            psChild->flags = ARROW_FLAG_NULLABLE;
+        const auto eSubType = poFieldDefn->GetSubType();
+        const char* item_format = nullptr;
+        switch( poFieldDefn->GetType() )
+        {
+            case OFTInteger:
+            {
+                if( eSubType == OFSTBoolean )
+                    psChild->format = "b";
+                else if( eSubType == OFSTInt16 )
+                    psChild->format = "s";
+                else
+                    psChild->format = "i";
+
+                const auto& osDomainName = poFieldDefn->GetDomainName();
+                if( !osDomainName.empty() )
+                {
+                    auto poDS = GetDataset();
+                    if( poDS )
+                    {
+                        const auto poFieldDomain = poDS->GetFieldDomain(osDomainName);
+                        if( poFieldDomain && poFieldDomain->GetDomainType() == OFDT_CODED )
+                        {
+                            const OGRCodedFieldDomain* poCodedDomain = static_cast<
+                                const OGRCodedFieldDomain*>(poFieldDomain);
+                            AddDictToSchema(psChild, poCodedDomain);
+                        }
+                    }
+                }
+
+                break;
+            }
+
+            case OFTInteger64:
+                psChild->format = "l";
+                break;
+
+            case OFTReal:
+            {
+                if( eSubType == OFSTFloat32 )
+                    psChild->format = "f";
+                else
+                    psChild->format = "g";
+                break;
+            }
+
+            case OFTString:
+            case OFTWideString:
+                psChild->format = "u";
+                break;
+
+            case OFTBinary:
+            {
+                if( poFieldDefn->GetWidth() > 0 )
+                    psChild->format = CPLStrdup(CPLSPrintf("w:%d", poFieldDefn->GetWidth()));
+                else
+                    psChild->format = "z";
+                break;
+            }
+
+            case OFTIntegerList:
+            {
+                if( eSubType == OFSTBoolean )
+                    item_format = "b";
+                else if( eSubType == OFSTInt16 )
+                    item_format = "s";
+                else
+                    item_format = "i";
+                break;
+            }
+
+            case OFTInteger64List:
+                item_format = "l";
+                break;
+
+            case OFTRealList:
+            {
+                if( eSubType == OFSTFloat32 )
+                    item_format = "f";
+                else
+                    item_format = "g";
+                break;
+            }
+
+            case OFTStringList:
+            case OFTWideStringList:
+                item_format = "u";
+                break;
+
+            case OFTDate:
+                psChild->format = "tdD";
+                break;
+
+            case OFTTime:
+                psChild->format = "ttm";
+                break;
+
+            case OFTDateTime:
+                psChild->format = "tsm:";
+                break;
+        }
+
+        if( item_format )
+        {
+            psChild->format = "+l";
+            psChild->n_children = 1;
+            psChild->children = static_cast<struct ArrowSchema**>(
+                CPLCalloc(1, sizeof(struct ArrowSchema*)));
+            psChild->children[0] = static_cast<struct ArrowSchema*>(
+                CPLCalloc(1, sizeof(struct ArrowSchema)));
+            psChild->children[0]->release = OGRLayerReleaseSchema;
+            psChild->children[0]->name = CPLStrdup("item");
+            psChild->children[0]->format = item_format;
+        }
+    }
+    for( int i = 0; i < nGeomFieldCount; ++i )
+    {
+        const auto poFieldDefn = poLayerDefn->GetGeomFieldDefn(i);
+        if( poFieldDefn->IsIgnored() )
+        {
+            continue;
+        }
+
+        out_schema->children[iSchemaChild] = static_cast<struct ArrowSchema*>(
+            CPLCalloc(1, sizeof(struct ArrowSchema)));
+        auto psChild = out_schema->children[iSchemaChild];
+        ++iSchemaChild;
+        psChild->release = OGRLayerReleaseSchema;
+        const char* pszGeomFieldName = poFieldDefn->GetNameRef();
+        if( pszGeomFieldName[0] == '\0' )
+            pszGeomFieldName = "wkb_geometry";
+        psChild->name = CPLStrdup(pszGeomFieldName);
+        if( poFieldDefn->IsNullable() )
+            psChild->flags = ARROW_FLAG_NULLABLE;
+        psChild->format = "z";
+        char* pszMetadata = static_cast<char*>(CPLMalloc(
+            sizeof(int32_t) +
+            sizeof(int32_t) +
+            strlen("ARROW:extension:name") +
+            sizeof(int32_t) +
+            strlen("WKB")));
+        psChild->metadata = pszMetadata;
+        int offsetMD = 0;
+        *reinterpret_cast<int32_t*>(pszMetadata + offsetMD) = 1;
+        offsetMD += sizeof(int32_t);
+        *reinterpret_cast<int32_t*>(pszMetadata + offsetMD) =
+            static_cast<int32_t>(strlen("ARROW:extension:name"));
+        offsetMD += sizeof(int32_t);
+        memcpy(pszMetadata + offsetMD,
+               "ARROW:extension:name",
+               strlen("ARROW:extension:name"));
+        offsetMD += static_cast<int>(strlen("ARROW:extension:name"));
+        *reinterpret_cast<int32_t*>(pszMetadata + offsetMD) =
+            static_cast<int32_t>(strlen("WKB"));
+        offsetMD += sizeof(int32_t);
+        memcpy(pszMetadata+ offsetMD,
+               "WKB",
+               strlen("WKB"));
+    }
+
+    out_schema->n_children = iSchemaChild;
+    out_schema->release = OGRLayerReleaseSchema;
+    return true;
+}
+
+/************************************************************************/
+/*                      OGRLayerReleaseArray()                          */
+/************************************************************************/
+
+static void OGRLayerReleaseArray(struct ArrowArray* array)
+{
+    for(int i = 0; i < static_cast<int>(array->n_buffers); ++i )
+        VSIFreeAligned(const_cast<void*>(array->buffers[i]));
+    CPLFree(array->buffers);
+    for(int i = 0; i < static_cast<int>(array->n_children); ++i )
+    {
+        if(array->children[i] && array->children[i]->release)
+        {
+            array->children[i]->release(array->children[i]);
+            CPLFree(array->children[i]);
+        }
+    }
+    CPLFree(array->children);
+    if( array->dictionary )
+    {
+        if(array->dictionary->release)
+        {
+            array->dictionary->release(array->dictionary);
+            CPLFree(array->dictionary);
+        }
+    }
+    array->release = nullptr;
+}
+
+/************************************************************************/
+/*                             ReleaseArray()                           */
+/************************************************************************/
+
+/** Release a ArrowArray.
+ *
+ * To be used by driver implementations that override GetNextRecordBatch()
+ *
+ * @param array Arrow array to release.
+ * @since GDAL 3.6
+ */
+void OGRLayer::ReleaseArray(struct ArrowArray* array)
+{
+    OGRLayerReleaseArray(array);
+}
+
+/************************************************************************/
+/*                          IsValidField()                              */
+/************************************************************************/
+
+static inline bool IsValidField(const OGRField* psRawField)
+{
+    return( !(psRawField->Set.nMarker1 == OGRUnsetMarker &&
+              psRawField->Set.nMarker2 == OGRUnsetMarker &&
+              psRawField->Set.nMarker3 == OGRUnsetMarker) &&
+            !(psRawField->Set.nMarker1 == OGRNullMarker &&
+              psRawField->Set.nMarker2 == OGRNullMarker &&
+              psRawField->Set.nMarker3 == OGRNullMarker) );
+}
+
+/************************************************************************/
+/*                           FillArray()                                */
+/************************************************************************/
+
+template<class T, typename TMember>
+static bool FillArray(struct ArrowArray* psChild,
+                      std::vector<std::unique_ptr<OGRFeature>>& apoFeatures,
+                      const bool bIsNullable,
+                      TMember member,
+                      const int i)
+{
+    psChild->n_buffers = 2;
+    psChild->buffers = static_cast<const void**>(CPLCalloc(2, sizeof(void*)));
+    uint8_t* pabyNull = nullptr;
+    T* panValues = static_cast<T*>(
+        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(T) * apoFeatures.size()));
+    if( panValues == nullptr )
+        return false;
+    psChild->buffers[1] = panValues;
+    for( size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat )
+    {
+        auto& poFeature = apoFeatures[iFeat];
+        const auto psRawField = poFeature->GetRawFieldRef(i);
+        if( IsValidField(psRawField) )
+        {
+            panValues[iFeat] = static_cast<T>((*psRawField).*member);
+        }
+        else if( bIsNullable )
+        {
+            panValues[iFeat] = 0;
+            ++psChild->null_count;
+            if( pabyNull == nullptr )
+            {
+                pabyNull = static_cast<uint8_t*>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE((apoFeatures.size() + 7) / 8));
+                if( pabyNull == nullptr )
+                    return false;
+                memset(pabyNull, 0xFF, (apoFeatures.size() + 7) / 8);
+                psChild->buffers[0] = pabyNull;
+            }
+            pabyNull[iFeat / 8] &= static_cast<uint8_t>(~(1 << (iFeat % 8)));
+        }
+        else
+        {
+            panValues[iFeat] = 0;
+        }
+    }
+    return true;
+}
+
+/************************************************************************/
+/*                         FillBoolArray()                              */
+/************************************************************************/
+
+template<typename TMember>
+static bool FillBoolArray(struct ArrowArray* psChild,
+                      std::vector<std::unique_ptr<OGRFeature>>& apoFeatures,
+                      const bool bIsNullable,
+                      TMember member,
+                      const int i)
+{
+    psChild->n_buffers = 2;
+    psChild->buffers = static_cast<const void**>(CPLCalloc(2, sizeof(void*)));
+    uint8_t* pabyNull = nullptr;
+    uint8_t* panValues = static_cast<uint8_t*>(
+        VSI_MALLOC_ALIGNED_AUTO_VERBOSE((apoFeatures.size() + 7) / 8));
+    if( panValues == nullptr )
+        return false;
+    memset(panValues, 0, (apoFeatures.size() + 7) / 8);
+    psChild->buffers[1] = panValues;
+    for( size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat )
+    {
+        auto& poFeature = apoFeatures[iFeat];
+        const auto psRawField = poFeature->GetRawFieldRef(i);
+        if( IsValidField(psRawField) )
+        {
+            if( (*psRawField).*member )
+                panValues[iFeat / 8] |= static_cast<uint8_t>(1 << (iFeat % 8));
+        }
+        else if( bIsNullable )
+        {
+            panValues[iFeat] = 0;
+            ++psChild->null_count;
+            if( pabyNull == nullptr )
+            {
+                pabyNull = static_cast<uint8_t*>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE((apoFeatures.size() + 7) / 8));
+                if( pabyNull == nullptr )
+                    return false;
+                memset(pabyNull, 0xFF, (apoFeatures.size() + 7) / 8);
+                psChild->buffers[0] = pabyNull;
+            }
+            pabyNull[iFeat / 8] &= static_cast<uint8_t>(~(1 << (iFeat % 8)));
+        }
+    }
+    return true;
+}
+
+/************************************************************************/
+/*                        FillListArray()                               */
+/************************************************************************/
+
+struct GetFromIntegerList
+{
+    static inline int getCount(const OGRField* psRawField)
+    {
+        return psRawField->IntegerList.nCount;
+    }
+
+    static inline const int* getValues(const OGRField* psRawField)
+    {
+        return psRawField->IntegerList.paList;
+    }
+};
+
+struct GetFromInteger64List
+{
+    static inline int getCount(const OGRField* psRawField)
+    {
+        return psRawField->Integer64List.nCount;
+    }
+
+    static inline const GIntBig* getValues(const OGRField* psRawField)
+    {
+        return psRawField->Integer64List.paList;
+    }
+};
+
+struct GetFromRealList
+{
+    static inline int getCount(const OGRField* psRawField)
+    {
+        return psRawField->RealList.nCount;
+    }
+
+    static inline const double* getValues(const OGRField* psRawField)
+    {
+        return psRawField->RealList.paList;
+    }
+};
+
+template<class OffsetType, class T, class GetFromList>
+static bool FillListArray(struct ArrowArray* psChild,
+                      std::vector<std::unique_ptr<OGRFeature>>& apoFeatures,
+                      const bool bIsNullable,
+                      const int i)
+{
+    psChild->n_buffers = 2;
+    psChild->buffers = static_cast<const void**>(CPLCalloc(2, sizeof(void*)));
+    uint8_t* pabyNull = nullptr;
+    OffsetType* panOffsets = static_cast<OffsetType*>(
+        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(OffsetType) * (1 + apoFeatures.size())));
+    if( panOffsets == nullptr )
+        return false;
+    psChild->buffers[1] = panOffsets;
+
+    OffsetType nOffset = 0;
+    for( size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat )
+    {
+        panOffsets[iFeat] = nOffset;
+        auto& poFeature = apoFeatures[iFeat];
+        const auto psRawField = poFeature->GetRawFieldRef(i);
+        if( IsValidField(psRawField) )
+        {
+            const unsigned nCount = GetFromList::getCount(psRawField);
+            if( nCount > static_cast<size_t>(std::numeric_limits<OffsetType>::max() - nOffset) )
+                return false;
+            nOffset += static_cast<OffsetType>(nCount);
+        }
+        else if( bIsNullable )
+        {
+            ++psChild->null_count;
+            if( pabyNull == nullptr )
+            {
+                pabyNull = static_cast<uint8_t*>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE((apoFeatures.size() + 7) / 8));
+                if( pabyNull == nullptr )
+                    return false;
+                memset(pabyNull, 0xFF, (apoFeatures.size() + 7) / 8);
+                psChild->buffers[0] = pabyNull;
+            }
+            pabyNull[iFeat / 8] &= static_cast<uint8_t>(~(1 << (iFeat % 8)));
+        }
+    }
+    panOffsets[apoFeatures.size()] = nOffset;
+
+    psChild->n_children = 1;
+    psChild->children = static_cast<struct ArrowArray**>(CPLCalloc(1, sizeof(struct ArrowArray*)));
+    psChild->children[0] = static_cast<struct ArrowArray*>(CPLCalloc(1, sizeof(struct ArrowArray)));
+    auto psValueChild = psChild->children[0];
+
+    psValueChild->release = OGRLayerReleaseArray;
+    psValueChild->n_buffers = 2;
+    psValueChild->buffers = static_cast<const void**>(CPLCalloc(2, sizeof(void*)));
+    psValueChild->length = nOffset;
+    T* panValues = static_cast<T*>(
+        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(T) * nOffset));
+    if( panValues == nullptr )
+        return false;
+    psValueChild->buffers[1] = panValues;
+
+    nOffset = 0;
+    for( size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat )
+    {
+        auto& poFeature = apoFeatures[iFeat];
+        const auto psRawField = poFeature->GetRawFieldRef(i);
+        if( IsValidField(psRawField) )
+        {
+            const int nCount = GetFromList::getCount(psRawField);
+            const auto paList = GetFromList::getValues(psRawField);
+            if( sizeof(*paList) == sizeof(T) )
+                memcpy(panValues + nOffset, paList, nCount * sizeof(T));
+            else
+            {
+                for( int j = 0; j < nCount; ++j )
+                {
+                    panValues[nOffset + j] = static_cast<T>(paList[j]);
+                }
+            }
+            nOffset += static_cast<OffsetType>(nCount);
+        }
+    }
+
+    return true;
+}
+
+template<class OffsetType, class GetFromList>
+static bool FillListArrayBool(struct ArrowArray* psChild,
+                      std::vector<std::unique_ptr<OGRFeature>>& apoFeatures,
+                      const bool bIsNullable,
+                      const int i)
+{
+    psChild->n_buffers = 2;
+    psChild->buffers = static_cast<const void**>(CPLCalloc(2, sizeof(void*)));
+    uint8_t* pabyNull = nullptr;
+    OffsetType* panOffsets = static_cast<OffsetType*>(
+        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(OffsetType) * (1 + apoFeatures.size())));
+    if( panOffsets == nullptr )
+        return false;
+    psChild->buffers[1] = panOffsets;
+
+    OffsetType nOffset = 0;
+    for( size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat )
+    {
+        panOffsets[iFeat] = nOffset;
+        auto& poFeature = apoFeatures[iFeat];
+        const auto psRawField = poFeature->GetRawFieldRef(i);
+        if( IsValidField(psRawField) )
+        {
+            const unsigned nCount = GetFromList::getCount(psRawField);
+            if( nCount > static_cast<size_t>(std::numeric_limits<OffsetType>::max() - nOffset) )
+                return false;
+            nOffset += static_cast<OffsetType>(nCount);
+        }
+        else if( bIsNullable )
+        {
+            ++psChild->null_count;
+            if( pabyNull == nullptr )
+            {
+                pabyNull = static_cast<uint8_t*>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE((apoFeatures.size() + 7) / 8));
+                if( pabyNull == nullptr )
+                    return false;
+                memset(pabyNull, 0xFF, (apoFeatures.size() + 7) / 8);
+                psChild->buffers[0] = pabyNull;
+            }
+            pabyNull[iFeat / 8] &= static_cast<uint8_t>(~(1 << (iFeat % 8)));
+        }
+    }
+    panOffsets[apoFeatures.size()] = nOffset;
+
+    psChild->n_children = 1;
+    psChild->children = static_cast<struct ArrowArray**>(CPLCalloc(1, sizeof(struct ArrowArray*)));
+    psChild->children[0] = static_cast<struct ArrowArray*>(CPLCalloc(1, sizeof(struct ArrowArray)));
+    auto psValueChild = psChild->children[0];
+
+    psValueChild->release = OGRLayerReleaseArray;
+    psValueChild->n_buffers = 2;
+    psValueChild->buffers = static_cast<const void**>(CPLCalloc(2, sizeof(void*)));
+    psValueChild->length = nOffset;
+    uint8_t* panValues = static_cast<uint8_t*>(
+        VSI_MALLOC_ALIGNED_AUTO_VERBOSE((nOffset + 7) / 8));
+    if( panValues == nullptr )
+        return false;
+    memset(panValues, 0, (nOffset + 7) / 8);
+    psValueChild->buffers[1] = panValues;
+
+    nOffset = 0;
+    for( size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat )
+    {
+        auto& poFeature = apoFeatures[iFeat];
+        const auto psRawField = poFeature->GetRawFieldRef(i);
+        if( IsValidField(psRawField) )
+        {
+            const int nCount = GetFromList::getCount(psRawField);
+            const auto paList = GetFromList::getValues(psRawField);
+
+            for( int j = 0; j < nCount; ++j )
+            {
+                if( paList[j] )
+                    panValues[(nOffset + j) / 8] |= static_cast<uint8_t>(1 << ((nOffset + j) % 8));
+            }
+            nOffset += static_cast<OffsetType>(nCount);
+        }
+    }
+
+    return true;
+}
+
+/************************************************************************/
+/*                        FillStringArray()                             */
+/************************************************************************/
+
+template<class T>
+static bool FillStringArray(struct ArrowArray* psChild,
+                            std::vector<std::unique_ptr<OGRFeature>>& apoFeatures,
+                            const bool bIsNullable,
+                            const int i)
+{
+    psChild->n_buffers = 3;
+    psChild->buffers = static_cast<const void**>(CPLCalloc(3, sizeof(void*)));
+    uint8_t* pabyNull = nullptr;
+    T* panOffsets = static_cast<T*>(
+        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(T) * (1 + apoFeatures.size())));
+    if( panOffsets == nullptr )
+        return false;
+    psChild->buffers[1] = panOffsets;
+
+    size_t nOffset = 0;
+    for( size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat )
+    {
+        panOffsets[iFeat] = static_cast<T>(nOffset);
+        const auto psRawField = apoFeatures[iFeat]->GetRawFieldRef(i);
+        if( IsValidField(psRawField) )
+        {
+            const size_t nLen = strlen(psRawField->String);
+            if( nLen > static_cast<size_t>(std::numeric_limits<T>::max()) - nOffset )
+                return false;
+            nOffset += static_cast<T>(nLen);
+        }
+        else if( bIsNullable )
+        {
+            ++psChild->null_count;
+            if( pabyNull == nullptr )
+            {
+                pabyNull = static_cast<uint8_t*>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE((apoFeatures.size() + 7) / 8));
+                if( pabyNull == nullptr )
+                    return false;
+                memset(pabyNull, 0xFF, (apoFeatures.size() + 7) / 8);
+                psChild->buffers[0] = pabyNull;
+            }
+            pabyNull[iFeat / 8] &= static_cast<uint8_t>(~(1 << (iFeat % 8)));
+        }
+    }
+    panOffsets[apoFeatures.size()] = static_cast<T>(nOffset);
+
+    char* pachValues = static_cast<char*>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nOffset));
+    if( pachValues == nullptr )
+        return false;
+    psChild->buffers[2] = pachValues;
+
+    nOffset = 0;
+    for( size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat )
+    {
+        const size_t nLen = static_cast<size_t>(panOffsets[iFeat+1] - panOffsets[iFeat]);
+        if( nLen )
+        {
+            const auto psRawField = apoFeatures[iFeat]->GetRawFieldRef(i);
+            memcpy(pachValues + nOffset, psRawField->String, nLen);
+            nOffset += nLen;
+        }
+    }
+
+    return true;
+}
+
+/************************************************************************/
+/*                             FillDict()                               */
+/************************************************************************/
+
+static bool FillDict(struct ArrowArray* psChild,
+                     const OGRCodedFieldDomain* poCodedDomain)
+{
+    int nLastCode = -1;
+    uint32_t nCountChars = 0;
+    int nCountNull = 0;
+    for(const OGRCodedValue* psIter = poCodedDomain->GetEnumeration();
+            psIter->pszCode; ++psIter )
+    {
+        if( CPLGetValueType(psIter->pszCode) != CPL_VALUE_INTEGER )
+        {
+            return false;
+        }
+        int nCode = atoi(psIter->pszCode);
+        if( nCode <= nLastCode || nCode - nLastCode > 100 )
+        {
+            return false;
+        }
+        for( int i = nLastCode + 1; i < nCode; ++i )
+        {
+            nCountNull ++;
+        }
+        if( psIter->pszValue )
+        {
+            const size_t nLen = strlen(psIter->pszValue);
+            if( nLen > std::numeric_limits<uint32_t>::max() - nCountChars )
+                return false;
+            nCountChars += static_cast<uint32_t>(nLen);
+        }
+        else
+        {
+            nCountNull ++;
+        }
+        nLastCode = nCode;
+    }
+    const int nLength = 1 + nLastCode;
+
+    auto psDict = static_cast<struct ArrowArray*>(CPLCalloc(1, sizeof(struct ArrowArray)));
+    psChild->dictionary = psDict;
+
+    psDict->release = OGRLayerReleaseArray;
+    psDict->length = nLength;
+    psDict->n_buffers = 3;
+    psDict->buffers = static_cast<const void**>(CPLCalloc(3, sizeof(void*)));
+    psDict->null_count = nCountNull;
+    uint8_t* pabyNull = nullptr;
+    if( nCountNull )
+    {
+        pabyNull = static_cast<uint8_t*>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE((nLength + 7) / 8));
+        if( pabyNull == nullptr )
+            return false;
+        memset(pabyNull, 0xFF, (nLength + 7) / 8);
+        psDict->buffers[0] = pabyNull;
+    }
+
+    uint32_t* panOffsets = static_cast<uint32_t*>(
+        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(uint32_t) * (1 + nLength)));
+    if( panOffsets == nullptr )
+        return false;
+    psDict->buffers[1] = panOffsets;
+
+    char* pachValues = static_cast<char*>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nCountChars));
+    if( pachValues == nullptr )
+        return false;
+    psDict->buffers[2] = pachValues;
+
+    nLastCode = -1;
+    uint32_t nOffset = 0;
+    for(const OGRCodedValue* psIter = poCodedDomain->GetEnumeration();
+            psIter->pszCode; ++psIter )
+    {
+        if( CPLGetValueType(psIter->pszCode) != CPL_VALUE_INTEGER )
+        {
+            return false;
+        }
+        int nCode = atoi(psIter->pszCode);
+        if( nCode <= nLastCode || nCode - nLastCode > 100 )
+        {
+            return false;
+        }
+        for( int i = nLastCode + 1; i < nCode; ++i )
+        {
+            panOffsets[i] = nOffset;
+            if( pabyNull )
+                pabyNull[i / 8] &= static_cast<uint8_t>(~(1 << (i % 8)));
+        }
+        panOffsets[nCode] = nOffset;
+        if( psIter->pszValue )
+        {
+            const size_t nLen = strlen(psIter->pszValue);
+            memcpy(pachValues + nOffset, psIter->pszValue, nLen);
+            nOffset += static_cast<uint32_t>(nLen);
+        }
+        else if( pabyNull )
+        {
+            pabyNull[nCode / 8] &= static_cast<uint8_t>(~(1 << (nCode % 8)));
+        }
+        nLastCode = nCode;
+    }
+    panOffsets[nLength] = nOffset;
+
+    return true;
+}
+
+/************************************************************************/
+/*                        FillStringListArray()                         */
+/************************************************************************/
+
+template<class OffsetType>
+static bool FillStringListArray(struct ArrowArray* psChild,
+                      std::vector<std::unique_ptr<OGRFeature>>& apoFeatures,
+                      const bool bIsNullable,
+                      const int i)
+{
+    psChild->n_buffers = 2;
+    psChild->buffers = static_cast<const void**>(CPLCalloc(2, sizeof(void*)));
+    uint8_t* pabyNull = nullptr;
+    OffsetType* panOffsets = static_cast<OffsetType*>(
+        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(OffsetType) * (1 + apoFeatures.size())));
+    if( panOffsets == nullptr )
+        return false;
+    psChild->buffers[1] = panOffsets;
+
+    OffsetType nStrings = 0;
+    OffsetType nCountChars = 0;
+    for( size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat )
+    {
+        panOffsets[iFeat] = nStrings;
+        auto& poFeature = apoFeatures[iFeat];
+        const auto psRawField = poFeature->GetRawFieldRef(i);
+        if( IsValidField(psRawField) )
+        {
+            const int nCount = psRawField->StringList.nCount;
+            if( static_cast<size_t>(nCount) > static_cast<size_t>(std::numeric_limits<OffsetType>::max() - nStrings) )
+                return false;
+            for( int j = 0; j < nCount; ++j )
+            {
+                const size_t nLen = strlen(psRawField->StringList.paList[j]);
+                if( nLen > static_cast<size_t>(std::numeric_limits<OffsetType>::max() - nCountChars) )
+                    return false;
+                nCountChars += static_cast<OffsetType>(nLen);
+            }
+            nStrings += static_cast<OffsetType>(nCount);
+        }
+        else if( bIsNullable )
+        {
+            ++psChild->null_count;
+            if( pabyNull == nullptr )
+            {
+                pabyNull = static_cast<uint8_t*>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE((apoFeatures.size() + 7) / 8));
+                if( pabyNull == nullptr )
+                    return false;
+                memset(pabyNull, 0xFF, (apoFeatures.size() + 7) / 8);
+                psChild->buffers[0] = pabyNull;
+            }
+            pabyNull[iFeat / 8] &= static_cast<uint8_t>(~(1 << (iFeat % 8)));
+        }
+    }
+    panOffsets[apoFeatures.size()] = nStrings;
+
+    psChild->n_children = 1;
+    psChild->children = static_cast<struct ArrowArray**>(CPLCalloc(1, sizeof(struct ArrowArray*)));
+    psChild->children[0] = static_cast<struct ArrowArray*>(CPLCalloc(1, sizeof(struct ArrowArray)));
+    auto psValueChild = psChild->children[0];
+
+    psValueChild->release = OGRLayerReleaseArray;
+    psValueChild->length = nStrings;
+    psValueChild->n_buffers = 3;
+    psValueChild->buffers = static_cast<const void**>(CPLCalloc(3, sizeof(void*)));
+
+    OffsetType* panChildOffsets = static_cast<OffsetType*>(
+        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(OffsetType) * (1 + nStrings)));
+    if( panChildOffsets == nullptr )
+        return false;
+    psValueChild->buffers[1] = panChildOffsets;
+
+    char* pachValues = static_cast<char*>(
+        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nCountChars));
+    if( pachValues == nullptr )
+        return false;
+    psValueChild->buffers[2] = pachValues;
+
+    nStrings = 0;
+    nCountChars = 0;
+    for( size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat )
+    {
+        auto& poFeature = apoFeatures[iFeat];
+        const auto psRawField = poFeature->GetRawFieldRef(i);
+        if( IsValidField(psRawField) )
+        {
+            const int nCount = psRawField->StringList.nCount;
+            for( int j = 0; j < nCount; ++j )
+            {
+                panChildOffsets[nStrings] = nCountChars;
+                ++nStrings;
+                const size_t nLen = strlen(psRawField->StringList.paList[j]);
+                memcpy(pachValues + nCountChars,
+                       psRawField->StringList.paList[j], nLen);
+                nCountChars += static_cast<OffsetType>(nLen);
+            }
+        }
+    }
+    panChildOffsets[nStrings] = nCountChars;
+
+    return true;
+}
+
+/************************************************************************/
+/*                        FillBinaryArray()                             */
+/************************************************************************/
+
+template<class T>
+static bool FillBinaryArray(struct ArrowArray* psChild,
+                            std::vector<std::unique_ptr<OGRFeature>>& apoFeatures,
+                            const bool bIsNullable,
+                            const int i)
+{
+    psChild->n_buffers = 3;
+    psChild->buffers = static_cast<const void**>(CPLCalloc(3, sizeof(void*)));
+    uint8_t* pabyNull = nullptr;
+    T* panOffsets = static_cast<T*>(
+        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(T) * (1 + apoFeatures.size())));
+    if( panOffsets == nullptr )
+        return false;
+    psChild->buffers[1] = panOffsets;
+
+    T nOffset = 0;
+    for( size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat )
+    {
+        panOffsets[iFeat] = nOffset;
+        const auto psRawField = apoFeatures[iFeat]->GetRawFieldRef(i);
+        if( IsValidField(psRawField) )
+        {
+            const size_t nLen = psRawField->Binary.nCount;
+            if( nLen > static_cast<size_t>(std::numeric_limits<T>::max() - nOffset) )
+                return false;
+            nOffset += static_cast<T>(nLen);
+        }
+        else if( bIsNullable )
+        {
+            ++psChild->null_count;
+            if( pabyNull == nullptr )
+            {
+                pabyNull = static_cast<uint8_t*>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE((apoFeatures.size() + 7) / 8));
+                if( pabyNull == nullptr )
+                    return false;
+                memset(pabyNull, 0xFF, (apoFeatures.size() + 7) / 8);
+                psChild->buffers[0] = pabyNull;
+            }
+            pabyNull[iFeat / 8] &= static_cast<uint8_t>(~(1 << (iFeat % 8)));
+        }
+    }
+    panOffsets[apoFeatures.size()] = nOffset;
+
+    GByte* pabyValues = static_cast<GByte*>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nOffset));
+    if( pabyValues == nullptr )
+        return false;
+    psChild->buffers[2] = pabyValues;
+
+    nOffset = 0;
+    for( size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat )
+    {
+        const size_t nLen = static_cast<size_t>(panOffsets[iFeat+1] - panOffsets[iFeat]);
+        if( nLen )
+        {
+            const auto psRawField = apoFeatures[iFeat]->GetRawFieldRef(i);
+            memcpy(pabyValues + nOffset, psRawField->Binary.paData, nLen);
+            nOffset += static_cast<T>(nLen);
+        }
+    }
+
+    return true;
+}
+
+/************************************************************************/
+/*                     FillFixedWidthBinaryArray()                      */
+/************************************************************************/
+
+static bool FillFixedWidthBinaryArray(struct ArrowArray* psChild,
+                            std::vector<std::unique_ptr<OGRFeature>>& apoFeatures,
+                            const bool bIsNullable,
+                            const int nWidth,
+                            const int i)
+{
+    psChild->n_buffers = 2;
+    psChild->buffers = static_cast<const void**>(CPLCalloc(3, sizeof(void*)));
+    uint8_t* pabyNull = nullptr;
+
+    if( apoFeatures.size() > std::numeric_limits<size_t>::max() / nWidth )
+        return false;
+    GByte* pabyValues = static_cast<GByte*>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE(apoFeatures.size() * nWidth));
+    if( pabyValues == nullptr )
+        return false;
+    psChild->buffers[1] = pabyValues;
+
+    for( size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat )
+    {
+        const auto psRawField = apoFeatures[iFeat]->GetRawFieldRef(i);
+        if( IsValidField(psRawField) )
+        {
+            const auto nLen = psRawField->Binary.nCount;
+            if( nLen < nWidth )
+            {
+                memcpy(pabyValues + iFeat * nWidth,
+                       psRawField->Binary.paData,
+                       nLen);
+                memset(pabyValues + iFeat * nWidth + nLen,
+                       0,
+                       nWidth - nLen);
+            }
+            else
+            {
+                memcpy(pabyValues + iFeat * nWidth,
+                       psRawField->Binary.paData,
+                       nWidth);
+            }
+        }
+        else
+        {
+            memset(pabyValues + iFeat * nWidth, 0, nWidth);
+            if( bIsNullable )
+            {
+                ++psChild->null_count;
+                if( pabyNull == nullptr )
+                {
+                    pabyNull = static_cast<uint8_t*>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE((apoFeatures.size() + 7) / 8));
+                    if( pabyNull == nullptr )
+                        return false;
+                    memset(pabyNull, 0xFF, (apoFeatures.size() + 7) / 8);
+                    psChild->buffers[0] = pabyNull;
+                }
+                pabyNull[iFeat / 8] &= static_cast<uint8_t>(~(1 << (iFeat % 8)));
+            }
+        }
+    }
+
+    return true;
+}
+
+/************************************************************************/
+/*                      FillWKBGeometryArray()                          */
+/************************************************************************/
+
+template<class T>
+static bool FillWKBGeometryArray(struct ArrowArray* psChild,
+                                 std::vector<std::unique_ptr<OGRFeature>>& apoFeatures,
+                                 const OGRGeomFieldDefn* poFieldDefn,
+                                 const int i)
+{
+    const bool bIsNullable = poFieldDefn->IsNullable();
+    psChild->n_buffers = 3;
+    psChild->buffers = static_cast<const void**>(CPLCalloc(3, sizeof(void*)));
+    uint8_t* pabyNull = nullptr;
+    T* panOffsets = static_cast<T*>(
+        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(T) * (1 + apoFeatures.size())));
+    if( panOffsets == nullptr )
+        return false;
+    psChild->buffers[1] = panOffsets;
+    const auto eGeomType = poFieldDefn->GetType();
+    auto poEmptyGeom = std::unique_ptr<OGRGeometry>(
+        OGRGeometryFactory::createGeometry(
+            (eGeomType == wkbNone || wkbFlatten(eGeomType) == wkbUnknown) ? wkbGeometryCollection : eGeomType));
+
+    size_t nOffset = 0;
+    for( size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat )
+    {
+        panOffsets[iFeat] = static_cast<T>(nOffset);
+        const auto poGeom = apoFeatures[iFeat]->GetGeomFieldRef(i);
+        if( poGeom != nullptr )
+        {
+            const size_t nLen = poGeom->WkbSize();
+            if( nLen > static_cast<size_t>(std::numeric_limits<T>::max()) - nOffset )
+                return false;
+            nOffset += static_cast<T>(nLen);
+        }
+        else if( bIsNullable )
+        {
+            ++psChild->null_count;
+            if( pabyNull == nullptr )
+            {
+                pabyNull = static_cast<uint8_t*>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE((apoFeatures.size() + 7) / 8));
+                if( pabyNull == nullptr )
+                    return false;
+                memset(pabyNull, 0xFF, (apoFeatures.size() + 7) / 8);
+                psChild->buffers[0] = pabyNull;
+            }
+            pabyNull[iFeat / 8] &= static_cast<uint8_t>(~(1 << (iFeat % 8)));
+        }
+        else if( poEmptyGeom )
+        {
+            const size_t nLen = poEmptyGeom->WkbSize();
+            if( nLen > static_cast<size_t>(std::numeric_limits<T>::max()) - nOffset )
+                return false;
+            nOffset += static_cast<T>(nLen);
+        }
+    }
+    panOffsets[apoFeatures.size()] = static_cast<T>(nOffset);
+
+    GByte* pabyValues = static_cast<GByte*>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nOffset));
+    if( pabyValues == nullptr )
+        return false;
+    psChild->buffers[2] = pabyValues;
+
+    nOffset = 0;
+    for( size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat )
+    {
+        const size_t nLen = static_cast<size_t>(panOffsets[iFeat+1] - panOffsets[iFeat]);
+        if( nLen )
+        {
+            const auto poGeom = apoFeatures[iFeat]->GetGeomFieldRef(i);
+            poGeom->exportToWkb( wkbNDR, pabyValues + nOffset, wkbVariantIso);
+            nOffset += nLen;
+        }
+        else if( !bIsNullable && poEmptyGeom )
+        {
+            poEmptyGeom->exportToWkb( wkbNDR, pabyValues + nOffset, wkbVariantIso);
+            nOffset += nLen;
+        }
+    }
+
+    return true;
+}
+
+/************************************************************************/
+/*                        FillDateArray()                               */
+/************************************************************************/
+
+static bool FillDateArray(struct ArrowArray* psChild,
+                      std::vector<std::unique_ptr<OGRFeature>>& apoFeatures,
+                      const bool bIsNullable,
+                      const int i)
+{
+    psChild->n_buffers = 2;
+    psChild->buffers = static_cast<const void**>(CPLCalloc(2, sizeof(void*)));
+    uint8_t* pabyNull = nullptr;
+    int32_t* panValues = static_cast<int32_t*>(
+        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(int32_t) * apoFeatures.size()));
+    if( panValues == nullptr )
+        return false;
+    psChild->buffers[1] = panValues;
+    for( size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat )
+    {
+        auto& poFeature = apoFeatures[iFeat];
+        const auto psRawField = poFeature->GetRawFieldRef(i);
+        if( IsValidField(psRawField) )
+        {
+            struct tm brokenDown;
+            memset(&brokenDown, 0, sizeof(brokenDown));
+            brokenDown.tm_year = psRawField->Date.Year - 1900;
+            brokenDown.tm_mon = psRawField->Date.Month - 1;
+            brokenDown.tm_mday = psRawField->Date.Day;
+            panValues[iFeat] = static_cast<int>((CPLYMDHMSToUnixTime(&brokenDown) + 36200) / 86400);
+        }
+        else if( bIsNullable )
+        {
+            panValues[iFeat] = 0;
+            ++psChild->null_count;
+            if( pabyNull == nullptr )
+            {
+                pabyNull = static_cast<uint8_t*>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE((apoFeatures.size() + 7) / 8));
+                if( pabyNull == nullptr )
+                    return false;
+                memset(pabyNull, 0xFF, (apoFeatures.size() + 7) / 8);
+                psChild->buffers[0] = pabyNull;
+            }
+            pabyNull[iFeat / 8] &= static_cast<uint8_t>(~(1 << (iFeat % 8)));
+        }
+        else
+        {
+            panValues[iFeat] = 0;
+        }
+    }
+    return true;
+}
+
+/************************************************************************/
+/*                        FillDateArray()                               */
+/************************************************************************/
+
+static bool FillTimeArray(struct ArrowArray* psChild,
+                      std::vector<std::unique_ptr<OGRFeature>>& apoFeatures,
+                      const bool bIsNullable,
+                      const int i)
+{
+    psChild->n_buffers = 2;
+    psChild->buffers = static_cast<const void**>(CPLCalloc(2, sizeof(void*)));
+    uint8_t* pabyNull = nullptr;
+    int32_t* panValues = static_cast<int32_t*>(
+        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(int32_t) * apoFeatures.size()));
+    if( panValues == nullptr )
+        return false;
+    psChild->buffers[1] = panValues;
+    for( size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat )
+    {
+        auto& poFeature = apoFeatures[iFeat];
+        const auto psRawField = poFeature->GetRawFieldRef(i);
+        if( IsValidField(psRawField) )
+        {
+            panValues[iFeat] =
+                psRawField->Date.Hour * 3600000 +
+                psRawField->Date.Minute * 60000 +
+                static_cast<int>(psRawField->Date.Second * 1000 + 0.5);
+        }
+        else if( bIsNullable )
+        {
+            panValues[iFeat] = 0;
+            ++psChild->null_count;
+            if( pabyNull == nullptr )
+            {
+                pabyNull = static_cast<uint8_t*>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE((apoFeatures.size() + 7) / 8));
+                if( pabyNull == nullptr )
+                    return false;
+                memset(pabyNull, 0xFF, (apoFeatures.size() + 7) / 8);
+                psChild->buffers[0] = pabyNull;
+            }
+            pabyNull[iFeat / 8] &= static_cast<uint8_t>(~(1 << (iFeat % 8)));
+        }
+        else
+        {
+            panValues[iFeat] = 0;
+        }
+    }
+    return true;
+}
+
+/************************************************************************/
+/*                       FillDateTimeArray()                            */
+/************************************************************************/
+
+static bool FillDateTimeArray(struct ArrowArray* psChild,
+                              std::vector<std::unique_ptr<OGRFeature>>& apoFeatures,
+                              const bool bIsNullable,
+                              const int i)
+{
+    psChild->n_buffers = 2;
+    psChild->buffers = static_cast<const void**>(CPLCalloc(2, sizeof(void*)));
+    uint8_t* pabyNull = nullptr;
+    int64_t* panValues = static_cast<int64_t*>(
+        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(int64_t) * apoFeatures.size()));
+    if( panValues == nullptr )
+        return false;
+    psChild->buffers[1] = panValues;
+    struct tm brokenDown;
+    memset(&brokenDown, 0, sizeof(brokenDown));
+    for( size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat )
+    {
+        auto& poFeature = apoFeatures[iFeat];
+        const auto psRawField = poFeature->GetRawFieldRef(i);
+        if( IsValidField(psRawField) )
+        {
+            brokenDown.tm_year = psRawField->Date.Year - 1900;
+            brokenDown.tm_mon = psRawField->Date.Month - 1;
+            brokenDown.tm_mday = psRawField->Date.Day;
+            brokenDown.tm_hour = psRawField->Date.Hour;
+            brokenDown.tm_min = psRawField->Date.Minute;
+            brokenDown.tm_sec = static_cast<int>(psRawField->Date.Second);
+            panValues[iFeat] = CPLYMDHMSToUnixTime(&brokenDown) * 1000 +
+                               (static_cast<int>(psRawField->Date.Second * 1000 + 0.5) % 1000);
+        }
+        else if( bIsNullable )
+        {
+            panValues[iFeat] = 0;
+            ++psChild->null_count;
+            if( pabyNull == nullptr )
+            {
+                pabyNull = static_cast<uint8_t*>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE((apoFeatures.size() + 7) / 8));
+                if( pabyNull == nullptr )
+                    return false;
+                memset(pabyNull, 0xFF, (apoFeatures.size() + 7) / 8);
+                psChild->buffers[0] = pabyNull;
+            }
+            pabyNull[iFeat / 8] &= static_cast<uint8_t>(~(1 << (iFeat % 8)));
+        }
+        else
+        {
+            panValues[iFeat] = 0;
+        }
+    }
+    return true;
+}
+
+/************************************************************************/
+/*                      GetNextRecordBatch()                            */
+/************************************************************************/
+
+/** Get next record batch, as a Arrow Array (of type Struct).
+ *
+ * On successful return, and when the array is no longer needed, it must must
+ * be freed with out_array->release(out_array). If out_schema was not NULL, it
+ * must must be freed with out_schema->release(out_schema).
+ *
+ * @param out_array Output array. Must *not* be NULL. The content of the
+ *                  structure does not need to be initialized.
+ * @param out_schema Output schema, or NULL if not needed. If passed not null,
+ *                   the content of the structure does not need to be initialized.
+ * @param papszOptions NULL terminated list of key=value options.
+ * @return true in case of success, or false when no more record batch are available.
+ * @since GDAL 3.6
+ */
+bool OGRLayer::GetNextRecordBatch(struct ArrowArray* out_array,
+                                  struct ArrowSchema* out_schema,
+                                  CSLConstList papszOptions)
+{
+    const bool bIncludeFID = CPLTestBool(
+        CSLFetchNameValueDef(papszOptions, "INCLUDE_FID", "YES"));
+    int nMaxBatchSize = atoi(
+        CSLFetchNameValueDef(papszOptions, "MAX_FEATURES_IN_BATCH", "65536"));
+    if( nMaxBatchSize <= 0 )
+        nMaxBatchSize = 1;
+    if( nMaxBatchSize > INT_MAX - 1 )
+        nMaxBatchSize = INT_MAX - 1;
+
+    std::vector<std::unique_ptr<OGRFeature>> apoFeatures;
+    try
+    {
+        apoFeatures.reserve(nMaxBatchSize);
+    }
+    catch( const std::exception& e )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
+        return false;
+    }
+
+    memset(out_array, 0, sizeof(*out_array));
+    if( out_schema )
+    {
+        if( !GetRecordBatchSchema(out_schema, papszOptions) )
+            return false;
+    }
+    auto poLayerDefn = GetLayerDefn();
+    const int nFieldCount = poLayerDefn->GetFieldCount();
+    const int nGeomFieldCount = poLayerDefn->GetGeomFieldCount();
+    const int nMaxChildren = (bIncludeFID ? 1 : 0) + nFieldCount + nGeomFieldCount;
+    int iSchemaChild = 0;
+
+    out_array->release = OGRLayerReleaseArray;
+
+    for( int i = 0; i < nMaxBatchSize; i++ )
+    {
+        auto poFeature = std::unique_ptr<OGRFeature>(GetNextFeature());
+        if( !poFeature )
+            break;
+        apoFeatures.emplace_back(std::move(poFeature));
+    }
+    if( apoFeatures.empty() )
+        goto error;
+
+    out_array->length = apoFeatures.size();
+    out_array->null_count = -1;
+
+    out_array->n_children = nMaxChildren;
+    out_array->children = static_cast<struct ArrowArray**>(
+                        CPLCalloc(nMaxChildren, sizeof(struct ArrowArray*)));
+    out_array->release = OGRLayerReleaseArray;
+    out_array->n_buffers = 1;
+    out_array->buffers = static_cast<const void**>(CPLCalloc(1, sizeof(void*)));
+
+    if( bIncludeFID )
+    {
+        out_array->children[iSchemaChild]= static_cast<struct ArrowArray*>(
+            CPLCalloc(1, sizeof(struct ArrowArray)));
+        auto psChild = out_array->children[iSchemaChild];
+        ++iSchemaChild;
+        psChild->release = OGRLayerReleaseArray;
+        psChild->length = apoFeatures.size();
+        psChild->n_buffers = 2;
+        psChild->buffers = static_cast<const void**>(CPLCalloc(2, sizeof(void*)));
+        int64_t* panValues = static_cast<int64_t*>(
+            VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(int64_t) * apoFeatures.size()));
+        if( panValues == nullptr )
+            goto error;
+        psChild->buffers[1] = panValues;
+        for( size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat )
+        {
+            panValues[iFeat] = apoFeatures[iFeat]->GetFID();
+        }
+    }
+
+    for( int i = 0; i < nFieldCount; ++i )
+    {
+        const auto poFieldDefn = poLayerDefn->GetFieldDefn(i);
+        if( poFieldDefn->IsIgnored() )
+        {
+            continue;
+        }
+
+        out_array->children[iSchemaChild]= static_cast<struct ArrowArray*>(
+            CPLCalloc(1, sizeof(struct ArrowArray)));
+        auto psChild = out_array->children[iSchemaChild];
+        ++iSchemaChild;
+        psChild->release = OGRLayerReleaseArray;
+        psChild->length = apoFeatures.size();
+        const bool bIsNullable = poFieldDefn->IsNullable();
+        const auto eSubType = poFieldDefn->GetSubType();
+        switch( poFieldDefn->GetType() )
+        {
+            case OFTInteger:
+            {
+                if( eSubType == OFSTBoolean )
+                {
+                    if( !FillBoolArray(psChild, apoFeatures, bIsNullable, &OGRField::Integer, i) )
+                        goto error;
+                }
+                else if( eSubType == OFSTInt16 )
+                {
+                    if( !FillArray<int16_t>(psChild, apoFeatures, bIsNullable, &OGRField::Integer, i) )
+                        goto error;
+                }
+                else
+                {
+                    if( !FillArray<int32_t>(psChild, apoFeatures, bIsNullable, &OGRField::Integer, i) )
+                        goto error;
+                }
+
+                const auto& osDomainName = poFieldDefn->GetDomainName();
+                if( !osDomainName.empty() )
+                {
+                    auto poDS = GetDataset();
+                    if( poDS )
+                    {
+                        const auto poFieldDomain = poDS->GetFieldDomain(osDomainName);
+                        if( poFieldDomain && poFieldDomain->GetDomainType() == OFDT_CODED )
+                        {
+                            const OGRCodedFieldDomain* poCodedDomain = static_cast<
+                                const OGRCodedFieldDomain*>(poFieldDomain);
+                            FillDict(psChild, poCodedDomain);
+                        }
+                    }
+                }
+
+                break;
+            }
+
+            case OFTInteger64:
+            {
+                if( !FillArray<int64_t>(psChild, apoFeatures, bIsNullable, &OGRField::Integer64, i) )
+                    goto error;
+                break;
+            }
+
+            case OFTReal:
+            {
+                if( eSubType == OFSTFloat32 )
+                {
+                    if( !FillArray<float>(psChild, apoFeatures, bIsNullable, &OGRField::Real, i) )
+                        goto error;
+                }
+                else
+                {
+                    if( !FillArray<double>(psChild, apoFeatures, bIsNullable, &OGRField::Real, i) )
+                        goto error;
+                }
+                break;
+            }
+
+            case OFTString:
+            case OFTWideString:
+            {
+                if( !FillStringArray<int32_t>(psChild, apoFeatures, bIsNullable, i) )
+                    goto error;
+                break;
+            }
+
+            case OFTBinary:
+            {
+                const int nWidth = poFieldDefn->GetWidth();
+                if( nWidth > 0 )
+                {
+                    if( !FillFixedWidthBinaryArray(psChild, apoFeatures, bIsNullable, nWidth, i) )
+                        goto error;
+                }
+                else if( !FillBinaryArray<int32_t>(psChild, apoFeatures, bIsNullable, i) )
+                    goto error;
+                break;
+            }
+
+            case OFTIntegerList:
+            {
+                if( eSubType == OFSTBoolean )
+                {
+                    if( !FillListArrayBool<int32_t, GetFromIntegerList>(psChild, apoFeatures, bIsNullable, i) )
+                        goto error;
+                }
+                else if( eSubType == OFSTInt16 )
+                {
+                    if( !FillListArray<int32_t, int16_t, GetFromIntegerList>(psChild, apoFeatures, bIsNullable, i) )
+                        goto error;
+                }
+                else
+                {
+                    if( !FillListArray<int32_t, int32_t, GetFromIntegerList>(psChild, apoFeatures, bIsNullable, i) )
+                        goto error;
+                }
+                break;
+            }
+
+            case OFTInteger64List:
+            {
+                if( !FillListArray<int32_t, int64_t, GetFromInteger64List>(psChild, apoFeatures, bIsNullable, i) )
+                    goto error;
+                break;
+            }
+
+            case OFTRealList:
+            {
+                if( eSubType == OFSTFloat32 )
+                {
+                    if( !FillListArray<int32_t, float, GetFromRealList>(psChild, apoFeatures, bIsNullable, i) )
+                        goto error;
+                }
+                else
+                {
+                    if( !FillListArray<int32_t, double, GetFromRealList>(psChild, apoFeatures, bIsNullable, i) )
+                        goto error;
+                }
+                break;
+            }
+
+            case OFTStringList:
+            case OFTWideStringList:
+            {
+                if( !FillStringListArray<int32_t>(psChild, apoFeatures, bIsNullable, i) )
+                    goto error;
+                break;
+            }
+
+            case OFTDate:
+            {
+                if( !FillDateArray(psChild, apoFeatures, bIsNullable, i) )
+                    goto error;
+                break;
+            }
+
+            case OFTTime:
+            {
+                if( !FillTimeArray(psChild, apoFeatures, bIsNullable, i) )
+                    goto error;
+                break;
+            }
+
+            case OFTDateTime:
+            {
+                if( !FillDateTimeArray(psChild, apoFeatures, bIsNullable, i) )
+                    goto error;
+                break;
+            }
+
+        }
+    }
+    for( int i = 0; i < nGeomFieldCount; ++i )
+    {
+        const auto poFieldDefn = poLayerDefn->GetGeomFieldDefn(i);
+        if( poFieldDefn->IsIgnored() )
+        {
+            continue;
+        }
+
+        out_array->children[iSchemaChild]= static_cast<struct ArrowArray*>(
+            CPLCalloc(1, sizeof(struct ArrowArray)));
+        auto psChild = out_array->children[iSchemaChild];
+        ++iSchemaChild;
+        psChild->release = OGRLayerReleaseArray;
+        psChild->length = apoFeatures.size();
+        if( !FillWKBGeometryArray<int32_t>(psChild, apoFeatures, poFieldDefn, i) )
+            goto error;
+    }
+
+    out_array->n_children = iSchemaChild;
+
+    return true;
+
+error:
+    if( out_schema )
+    {
+        out_schema->release(out_schema);
+        memset(out_schema, 0, sizeof(*out_schema));
+    }
+    out_array->release(out_array);
+    memset(out_array, 0, sizeof(*out_array));
+    return false;
+}
+
+/************************************************************************/
+/*                          GetDataset()                                */
+/************************************************************************/
+
+/** Return the dataset associated with this layer.
+ *
+ * NOTE: that method is implemented in very few drivers, and cannot generally
+ * be relied on. It is currently only used by the GetRecordBatchSchema()
+ * method to retrieve the field domain associated with a field, to fill the
+ * dictionary field of a struct ArrowSchema.
+ *
+ * @return dataset, or nullptr when unknown.
+ * @since GDAL 3.6
+ */
+GDALDataset* OGRLayer::GetDataset()
+{
+    return nullptr;
+}
+
+/************************************************************************/
+/*                     OGR_L_GetRecordBatchSchema()                     */
+/************************************************************************/
+
+/** Get record batch schema, as a Arrow Schema.
+ *
+ * Include ogr_recordbatch.h.
+ *
+ * On successful return, and when the schema is no longer needed, it must must
+ * be freed with out_schema->release(out_schema).
+ *
+ * @param hLayer Layer
+ * @param out_schema Output schema Must *not* be NULL. The content of the
+ *                   structure does not need to be initialized.
+ * @param papszOptions NULL terminated list of key=value options.
+ * @return true in case of success.
+ * @since GDAL 3.6
+ */
+bool OGR_L_GetRecordBatchSchema(OGRLayerH hLayer,
+                                struct ArrowSchema* out_schema,
+                                char** papszOptions)
+{
+    VALIDATE_POINTER1( hLayer, "OGR_L_GetRecordBatchSchema", false );
+    VALIDATE_POINTER1( out_schema, "OGR_L_GetRecordBatchSchema", false );
+
+    return OGRLayer::FromHandle(hLayer)->GetRecordBatchSchema(out_schema,
+                                                              papszOptions);
+}
+
+/************************************************************************/
+/*                     OGR_L_GetNextRecordBatch()                       */
+/************************************************************************/
+
+/** Get next record batch, as a Arrow Array (of type Struct).
+ *
+ * On successful return, and when the array is no longer needed, it must must
+ * be freed with out_array->release(out_array). If out_schema was not NULL, it
+ * must must be freed with out_schema->release(out_schema).
+ *
+ * @param hLayer Layer
+ * @param out_array Output array. Must *not* be NULL. The content of the
+ *                  structure does not need to be initialized.
+ * @param out_schema Output schema, or NULL if not needed. If passed not null,
+ *                   the content of the structure does not need to be initialized.
+ * @param papszOptions NULL terminated list of key=value options.
+ * @return true in case of success, or false when no more record batch are available.
+ * @since GDAL 3.6
+ */
+bool OGR_L_GetNextRecordBatch(OGRLayerH hLayer,
+                              struct ArrowArray* out_array,
+                              struct ArrowSchema* out_schema,
+                              char** papszOptions)
+{
+    VALIDATE_POINTER1( hLayer, "OGR_L_GetNextRecordBatch", false );
+    VALIDATE_POINTER1( out_array, "OGR_L_GetRecordBatchSchema", false );
+
+    return OGRLayer::FromHandle(hLayer)->GetNextRecordBatch(out_array,
+                                                            out_schema,
+                                                            papszOptions);
 }
