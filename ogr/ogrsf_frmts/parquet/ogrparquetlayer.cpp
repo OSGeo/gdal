@@ -694,7 +694,7 @@ bool OGRParquetLayer::ReadNextBatch()
             m_poBatch.reset();
         return false;
     }
-    m_poBatch = std::move(poNextBatch);
+    SetBatch(poNextBatch);
 
 #ifdef DEBUG
     const auto& poColumns = m_poBatch->columns();

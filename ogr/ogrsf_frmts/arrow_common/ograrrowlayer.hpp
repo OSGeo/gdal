@@ -2014,6 +2014,7 @@ void OGRArrowLayer::ResetReading()
     {
         m_iRecordBatch = -1;
         m_poBatch.reset();
+        m_poBatchColumns.clear();
     }
 }
 
@@ -2050,7 +2051,7 @@ OGRFeature* OGRArrowLayer::GetNextRawFeature()
         if( iCol >= 0 &&
             m_aeGeomEncoding[m_iGeomFieldFilter] == OGRArrowGeomEncoding::WKB )
         {
-            auto array = m_poBatch->columns()[iCol];
+            auto array = m_poBatchColumns[iCol];
             CPLAssert( array->type_id() == arrow::Type::BINARY );
             auto castArray = std::static_pointer_cast<arrow::BinaryArray>(array);
             OGREnvelope sEnvelope;
@@ -2083,7 +2084,7 @@ OGRFeature* OGRArrowLayer::GetNextRawFeature()
                     m_bEOF = !ReadNextBatch();
                     if( m_bEOF )
                         return nullptr;
-                    array = m_poBatch->columns()[iCol];
+                    array = m_poBatchColumns[iCol];
                     CPLAssert( array->type_id() == arrow::Type::BINARY );
                     castArray = std::static_pointer_cast<arrow::BinaryArray>(array);
                 }
@@ -2099,7 +2100,7 @@ OGRFeature* OGRArrowLayer::GetNextRawFeature()
             const int nDim = 2 + (bHasZ ? 1 : 0) + (bHasM ? 1 : 0);
 
 begin_multipolygon:
-            auto array = m_poBatch->columns()[iCol].get();
+            auto array = m_poBatchColumns[iCol].get();
             CPLAssert( array->type_id() == arrow::Type::LIST );
             auto listOfPartsArray = static_cast<const arrow::ListArray*>(array);
             CPLAssert( listOfPartsArray->values()->type_id() == arrow::Type::LIST );
@@ -2157,7 +2158,7 @@ begin_multipolygon:
         }
         else if( iCol >= 0 )
         {
-            auto array = m_poBatch->columns()[iCol].get();
+            auto array = m_poBatchColumns[iCol].get();
             OGREnvelope sEnvelope;
             while( true )
             {
@@ -2189,13 +2190,13 @@ begin_multipolygon:
                     m_bEOF = !ReadNextBatch();
                     if( m_bEOF )
                         return nullptr;
-                    array = m_poBatch->columns()[iCol].get();
+                    array = m_poBatchColumns[iCol].get();
                 }
             }
         }
     }
 
-    auto poFeature = ReadFeature(m_nIdxInBatch, m_poBatch->columns());
+    auto poFeature = ReadFeature(m_nIdxInBatch, m_poBatchColumns);
 
     if( m_iFIDArrowColumn < 0 )
         poFeature->SetFID(m_nFeatureIdx);
@@ -2281,7 +2282,7 @@ OGRErr OGRArrowLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
         }
         *psExtent = OGREnvelope();
 
-        auto array = m_poBatch->columns()[iCol];
+        auto array = m_poBatchColumns[iCol];
         CPLAssert( array->type_id() == arrow::Type::BINARY );
         auto castArray = std::static_pointer_cast<arrow::BinaryArray>(array);
         OGREnvelope sEnvelope;
@@ -2307,7 +2308,7 @@ OGRErr OGRArrowLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
                     ResetReading();
                     return psExtent->IsInit() ? OGRERR_NONE : OGRERR_FAILURE;
                 }
-                array = m_poBatch->columns()[iCol];
+                array = m_poBatchColumns[iCol];
                 CPLAssert( array->type_id() == arrow::Type::BINARY );
                 castArray = std::static_pointer_cast<arrow::BinaryArray>(array);
             }
@@ -2331,7 +2332,7 @@ OGRErr OGRArrowLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
         const int nDim = 2 + (bHasZ ? 1 : 0) + (bHasM ? 1 : 0);
 
 begin_multipolygon:
-        auto array = m_poBatch->columns()[iCol].get();
+        auto array = m_poBatchColumns[iCol].get();
         CPLAssert( array->type_id() == arrow::Type::LIST );
         auto listOfPartsArray = static_cast<const arrow::ListArray*>(array);
         CPLAssert( listOfPartsArray->values()->type_id() == arrow::Type::LIST );

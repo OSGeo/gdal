@@ -503,7 +503,7 @@ bool OGRFeatherLayer::ReadNextBatchFile()
         m_poBatch.reset();
         return false;
     }
-    m_poBatch = *result;
+    SetBatch(*result);
 
     return true;
 }
@@ -518,14 +518,14 @@ bool OGRFeatherLayer::ReadNextBatchStream()
 
     if( m_iRecordBatch == 0 && m_poBatchIdx0 )
     {
-        m_poBatch = m_poBatchIdx0;
+        SetBatch(m_poBatchIdx0);
         m_iRecordBatch = 1;
         return true;
     }
 
     if( m_iRecordBatch == 1 && m_poBatchIdx1 )
     {
-        m_poBatch = m_poBatchIdx1;
+        SetBatch(m_poBatchIdx1);
         m_iRecordBatch = 2;
         return true;
     }
@@ -571,10 +571,13 @@ bool OGRFeatherLayer::ReadNextBatchStream()
             m_bSingleBatch = true;
         }
         else
+        {
             m_poBatch.reset();
+            m_poBatchColumns.clear();
+        }
         return false;
     }
-    m_poBatch = std::move(poNextBatch);
+    SetBatch(poNextBatch);
 
     return true;
 }
@@ -601,7 +604,7 @@ void OGRFeatherLayer::TryToCacheFirstTwoBatches()
                 CPLAssert(m_iRecordBatch == 1);
                 m_poBatchIdx0 = poBatchIdx0;
                 m_poBatchIdx1 = m_poBatch;
-                m_poBatch = poBatchIdx0;
+                SetBatch(poBatchIdx0);
                 ResetReading();
             }
             ResetReading();

@@ -82,6 +82,8 @@ protected:
         std::map<std::string, CPLJSONObject>        m_oMapGeometryColumns{};
         int                                         m_iRecordBatch = -1;
         std::shared_ptr<arrow::RecordBatch>         m_poBatch{};
+        // m_poBatch->columns() is a relatively costly operation, so cache its result
+        std::vector<std::shared_ptr<arrow::Array>>  m_poBatchColumns{}; // must always be == m_poBatch->columns()
         mutable std::shared_ptr<arrow::Array>       m_poReadFeatureTmpArray{};
 
         std::map<std::string, std::unique_ptr<OGRFieldDefn>> LoadGDALMetadata(const arrow::KeyValueMetadata* kv_metadata);
@@ -120,6 +122,8 @@ protected:
         OGRFeature*        GetNextRawFeature();
 
         virtual bool       CanRunNonForcedGetExtent() { return true; }
+
+        void               SetBatch(const std::shared_ptr<arrow::RecordBatch>& poBatch) { m_poBatch = poBatch; m_poBatchColumns = m_poBatch->columns(); }
 
 public:
         virtual ~OGRArrowLayer() override;
