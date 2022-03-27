@@ -42,7 +42,7 @@ Layer creation options
   Defaults to SNAPPY when available, otherwise NONE.
 
 - **GEOMETRY_ENCODING=WKB/WKT/GEOARROW**: Geometry encoding. Defaults to WKB.
-  Other encodings (WKB and WKT) are *not* allowed by the GeoParquet
+  Other encodings (WKT and GEOARROW) are *not* allowed by the GeoParquet
   specification, but are handled as an extension, for symmetry with the Arrow
   driver.
 
