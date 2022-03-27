@@ -48,6 +48,7 @@ Resources used:
  - https://www.digitalocean.com/community/tutorials/how-to-use-subprocess-to-run-external-programs-in-python-3
  - https://stackoverflow.com/questions/13493288/python-cli-program-unit-testing
 '''
+from pathlib import Path
 import sys
 import subprocess
 import pytest
@@ -58,23 +59,75 @@ installed = subprocess.run([sys.executable, '-m', 'pip', 'show', 'gdal-utils'])
 if not installed.returncode == 0:
     pytest.skip("The 'gdal-utils' package is not installed.", allow_module_level=True)
 
+utils = ['gdal2tiles', 'gdal2xyz', 'gdal_calc', 'gdal_edit', 'gdal_fillnodata',
+    'gdal_merge', 'gdal_pansharpen', 'gdal_polygonize', 'gdal_proximity',
+    'gdal_retile', 'gdal_sieve', 'gdalattachpct', 'gdalcompare', 'gdalmove',
+    'ogrmerge', 'pct2rgb', 'rgb2pct']
 
+here = Path(__file__).parent.absolute()
+outputs_dir = Path.joinpath(here, "cli_outs")
+
+def get_utils_responses():
+    '''Return dict of "utility_name: [stdout_msg, stderr_msg]"
+
+    pct2rgb:
+        ''
+        'usage: pct2rgb [-h] [-of gdal_format] [-rgba] [-b band] ...\n'
+
+   The messages are what we expect the program name to report to console
+   when called with no parameters.
+
+    The expected results must be in pre-generated in files named:
+
+        cli_outs/scriptname.stdout  # normal
+        cli_outs/scriptname.stderr  # errors
+
+    These output files can be generated with:
+
+        gdalcompare 1>gdalcompare.stdout 2>gdalcompare.stderr
+    '''
+    responses = {}
+    for prog in utils:
+        data_out = Path.joinpath(outputs_dir, f"{prog}.stdout") # .../cli_outs/pctrgb.stdout
+        data_err = Path.joinpath(outputs_dir, f"{prog}.stderr") # .../cli_outs/pctrgb.stderr
+        with open(data_out) as f:
+            responses[prog] = [f.read()]
+        with open(data_err) as f:
+            responses[prog] = [responses[prog][0], f.read()]
+    return responses
+
+responses = get_utils_responses()
+
+## FIXME: how to use pytest parametrize with a FOR loop? this fails with syntax err
+# for x in utils:
+#     @pytest.mark.parametrize("input,want", [
+#         pytest.param(x, {
+#             # "returncode": 1,
+#             "stdout": responses[x][0],
+#             "stderr": responses[x][1],
+#         })
+#     ])
+
+x = utils[1]
+
+# 'returncode' not used because the utils are not consistent in what they
+# return for "no parameters supplied"
 @pytest.mark.parametrize("input,want", [
-    pytest.param("gdalcompare", {
-        "returncode": 1,
-        "stdout": "Usage: gdalcompare.py [-sds] <golden_file> <new_file>\n",
-        "stderr": "",
+    pytest.param(x, {
+        # "returncode": 1,
+        "stdout": responses[x][0],
+        "stderr": responses[x][1],
     })
 ])
+
 def test_program(input, want):
     completed_process = run_program(input)
     got = {
-        "returncode": completed_process.returncode,
+        # "returncode": completed_process.returncode,
         "stdout": completed_process.stdout,
         "stderr": completed_process.stderr,
     }
     assert got == want
-
 
 def run_program(program, args=None):
     return subprocess.run(
@@ -84,3 +137,4 @@ def run_program(program, args=None):
         shell=True,
         text=True,
     )
+

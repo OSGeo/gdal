@@ -1,0 +1,3 @@
+usage: pct2rgb [-h] [-of gdal_format] [-rgba] [-b band] [-pct PCT_FILENAME]
+               src_filename dst_filename
+pct2rgb: error: the following arguments are required: src_filename, dst_filename

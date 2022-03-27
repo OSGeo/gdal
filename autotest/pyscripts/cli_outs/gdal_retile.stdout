@@ -1,0 +1,13 @@
+No input files selected.
+Usage: gdal_retile.py 
+        [-v] [-q] [-co NAME=VALUE]* [-of out_format]
+        [-ps pixelWidth pixelHeight]
+        [-overlap val_in_pixel]
+        [-ot  {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/
+               CInt16/CInt32/CFloat32/CFloat64}]
+        [ -tileIndex tileIndexName [-tileIndexField fieldName]]
+        [ -csv fileName [-csvDelim delimiter]]
+        [-s_srs srs_def]  [-pyramidOnly] -levels numberoflevels
+        [-r {near/bilinear/cubic/cubicspline/lanczos}]
+        [-useDirForEachRow] [-resume]
+        -targetDir TileDirectory input_files

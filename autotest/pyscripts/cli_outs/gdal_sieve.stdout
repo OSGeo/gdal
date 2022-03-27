@@ -1,0 +1,2 @@
+gdal_sieve [-q] [-st threshold] [-4] [-8] [-o name=value]
+           srcfile [-nomask] [-mask filename] [-of format] [dstfile]

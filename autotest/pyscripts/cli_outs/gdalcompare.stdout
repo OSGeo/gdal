@@ -1,0 +1,1 @@
+Usage: gdalcompare.py [-sds] <golden_file> <new_file>

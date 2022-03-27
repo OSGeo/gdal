@@ -1,0 +1,21 @@
+ogrmerge.py -o out_dsname src_dsname [src_dsname]*
+            [-f format] [-single] [-nln layer_name_template]
+            [-update | -overwrite_ds] [-append | -overwrite_layer]
+            [-src_geom_type geom_type_name[,geom_type_name]*]
+            [-dsco NAME=VALUE]* [-lco NAME=VALUE]*
+            [-s_srs srs_def] [-t_srs srs_def | -a_srs srs_def]
+            [-progress] [-skipfailures] [--help-general]
+
+Options specific to -single:
+            [-field_strategy FirstLayer|Union|Intersection]
+            [-src_layer_field_name name]
+            [-src_layer_field_content layer_name_template]
+
+* layer_name_template can contain the following substituable variables:
+     {AUTO_NAME}  : {DS_BASENAME}_{LAYER_NAME} if they are different
+                    or {LAYER_NAME} if they are identical
+     {DS_NAME}    : name of the source dataset
+     {DS_BASENAME}: base name of the source dataset
+     {DS_INDEX}   : index of the source dataset
+     {LAYER_NAME} : name of the source layer
+     {LAYER_INDEX}: index of the source layer
