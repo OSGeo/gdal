@@ -428,7 +428,7 @@ jobs:
   build-mac:
     runs-on: macOS-latest
     env:
-      CMAKE_OPTIONS: -DGDAL_USE_GIFLIB_INTERNAL=YES -DCFITSIO_ROOT=/usr/local/opt/cfitsio  -DPoppler_ROOT=/usr/local/opt/poppler -DPROJ_ROOT=/usr/local/opt/proj -DLibXml2_ROOT=/usr/local/opt/libxml2 -DSPATIALITE_ROOT=/usr/local/opt/libspatialite -DPostgreSQL_ROOT=/usr/local/opt/libpq -DEXPAT_ROOT=/usr/local/opt/expat -DXercesC_ROOT=/usr/local/opt/xerces-c -DSQLite3_ROOT=/usr/local/opt/sqlite -DOpenSSL_ROOT=/usr/local/opt/openssl -DPNG_ROOT=/usr/local/opt/libpng -DJPEG_ROOT=/usr/local/opt/jpeg -DOpenJPEG_ROOT=/usr/local/opt/openjpeg -DCURL_ROOT=/usr/local/opt/curl -DGDAL_USE_DAP=OFF -DGDAL_USE_JASPER=OFF
+      CMAKE_OPTIONS: -DCFITSIO_ROOT=/usr/local/opt/cfitsio  -DPoppler_ROOT=/usr/local/opt/poppler -DPROJ_ROOT=/usr/local/opt/proj -DLibXml2_ROOT=/usr/local/opt/libxml2 -DSPATIALITE_ROOT=/usr/local/opt/libspatialite -DPostgreSQL_ROOT=/usr/local/opt/libpq -DEXPAT_ROOT=/usr/local/opt/expat -DXercesC_ROOT=/usr/local/opt/xerces-c -DSQLite3_ROOT=/usr/local/opt/sqlite -DOpenSSL_ROOT=/usr/local/opt/openssl -DPNG_ROOT=/usr/local/opt/libpng -DJPEG_ROOT=/usr/local/opt/jpeg -DOpenJPEG_ROOT=/usr/local/opt/openjpeg -DCURL_ROOT=/usr/local/opt/curl -DGDAL_USE_DAP=OFF -DGDAL_USE_JASPER=OFF
       cache-name: cmake-macos
     steps:
     - name: Setup xcode
@@ -449,17 +449,15 @@ jobs:
     - run: |
         cmake --version
     - name: Install dependency
-      # libgeotiff 1.7.1 at time of writing links to proj@7, and not proj (9.0.0)
-      # so in order to avoid issue at runtime install proj@7 and not proj
       run: |
         brew update
         brew outdated
         brew install postgresql || brew link postgresql
-        brew install freexl libxml2 libspatialite geos proj@7 libgeotiff openjpeg giflib libaec postgis poppler doxygen unixodbc
+        brew install freexl libxml2 libspatialite geos proj libgeotiff openjpeg giflib libaec postgis poppler doxygen unixodbc
         brew install ccache swig
         # gdal is automatically installed as a dependency for postgis
         brew uninstall --ignore-dependencies gdal
-        cd /usr/local/opt/proj@7/share/proj
+        cd /usr/local/opt/proj/share/proj
         curl http://download.osgeo.org/proj/proj-datumgrid-1.8.tar.gz > proj-datumgrid-1.8.tar.gz
         tar xvzf proj-datumgrid-1.8.tar.gz
         cd $OLDPWD
@@ -474,7 +472,7 @@ jobs:
     - name: Configure
       run: |
         mkdir -p $GITHUB_WORKSPACE/build
-        cmake -Werror=dev -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal ${CMAKE_OPTIONS} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror -DUSE_CCACHE=ON -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DWERROR_DEV_FLAG="-Werror=dev" -DPROJ_ROOT=/usr/local/opt/proj@7
+        cmake -Werror=dev -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal ${CMAKE_OPTIONS} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror -DUSE_CCACHE=ON -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DWERROR_DEV_FLAG="-Werror=dev"
     - name: Build
       run: |
         cmake --build $GITHUB_WORKSPACE/build -j 3
