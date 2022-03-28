@@ -298,7 +298,7 @@ def Usage():
     return 1
 
 
-def main(argv=None):
+def gdal_merge(argv=None):
     verbose = 0
     quiet = 0
     names = []
@@ -540,6 +540,8 @@ def main(argv=None):
     # Force file to be closed.
     t_fh = None
 
+def main(argv=sys.argv):
+    return gdal_merge(argv)
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv))

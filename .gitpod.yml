@@ -1,0 +1,37 @@
+# Also see https://www.gitpod.io/docs/config-gitpod-file
+
+# Use default Gitpod workspace image and build functioning GDAL in it
+# https://github.com/OSGeo/gdal/issues/5442
+# https://github.com/OSGeo/gdal/pull/5393
+tasks:
+  - name: Dependencies
+    init: |
+      sudo bash .github/workflows/ubuntu_20.04/build-deps.sh  # install deps
+
+      # adapt to gitpod's default workspace
+      sed "s/cd \/build/cd \/workspace\/gdal/1" -i .github/workflows/ubuntu_20.04/build.sh
+
+      #bash .github/workflows/ubuntu_20.04/build.sh. # build
+      # let's try cmake build instead
+      # adapted from CONTRIBUTING.md#setting-development-environment-cmake-experimental
+
+      # Make numpy available, avoids cmake "missing: Python_NumPy_INCLUDE_DIRS NumPy"
+      # from https://github.com/maphew/gdal/blob/gitpod-for-gdal/.github/workflows/cmake_builds.yml#L66
+      python3 -m pip install -U pip wheel setuptools numpy
+
+      mkdir build
+      cd build
+      cmake .. -DCMAKE_BUILD_TYPE=Release
+
+      # Install, from .github/workflows/cmake_builds.yml#L98
+      cmake --build . --target install -- -j8
+
+      make -j8 -s
+        # currently failing with:
+        # ...
+        # [ 58%] Linking CXX executable pytest_runner ...snip...
+        # /tmp/python-build.20220223010626.232/Python-3.8.12/./Modules/timemodule.c:309: undefined reference to `pthread_getcpuclockid'
+        # collect2: error: ld returned 1 exit status
+        # make[2]: *** [autotest/CMakeFiles/pytest_runner.dir/build.make:98: autotest/pytest_runner] Error 1
+        # make[1]: *** [CMakeFiles/Makefile2:14108: autotest/CMakeFiles/pytest_runner.dir/all] Error 2
+        # ...snip...
