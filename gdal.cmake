@@ -477,6 +477,7 @@ target_link_libraries(${GDAL_LIB_TARGET_NAME} PRIVATE ${GDAL_PRIVATE_LINK_LIBRAR
 if (BUILD_DOCS)
   add_subdirectory(doc)
 endif ()
+add_subdirectory(man)
 
 # GDAL 4.0 ? Install headers in ${CMAKE_INSTALL_INCLUDEDIR}/gdal ?
 set(GDAL_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR})
