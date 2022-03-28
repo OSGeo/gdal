@@ -328,6 +328,13 @@ static bool ParseGMLCoordinates( const CPLXMLNode *psGeomNode,
             return true;
         }
 
+        // Skip leading whitespace. See https://github.com/OSGeo/gdal/issues/5494
+        while( *pszCoordString != '\0' &&
+               isspace(static_cast<unsigned char>(*pszCoordString)) )
+        {
+            pszCoordString++;
+        }
+
         int iCoord = 0;
         const OGRwkbGeometryType eType = wkbFlatten(poGeometry->getGeometryType());
         OGRSimpleCurve *poCurve =
