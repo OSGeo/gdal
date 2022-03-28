@@ -84,16 +84,9 @@ utils = [
 params = [pytest.param(util) for util in utils]
 
 
-# 'returncode' not used because the utils are not consistent in what they
-# return for "no parameters supplied"
 @pytest.mark.parametrize("input", params)
 def test_program(input):
     completed_process = run_program(input)
-    got = {
-        # "returncode": completed_process.returncode,
-        "stdout": completed_process.stdout,
-        "stderr": completed_process.stderr,
-    }
     assert (
         "usage:" in completed_process.stderr.lower()
         or "usage:" in completed_process.stdout.lower()
