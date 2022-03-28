@@ -116,7 +116,12 @@ jobs:
         find $GITHUB_WORKSPACE/install-gdal || /bin/true
     - name: install
       run: |
+        touch $GITHUB_WORKSPACE/man/man1/gdalinfo.1
+        touch $GITHUB_WORKSPACE/man/man1/gdaladdo.1
+        (cd $GITHUB_WORKSPACE/superbuild/build; cmake ..)
         cmake --build $GITHUB_WORKSPACE/superbuild/build --target install -- -j$(nproc)
+        test -f $GITHUB_WORKSPACE/install-gdal/share/man/man1/gdalinfo.1
+        test -f $GITHUB_WORKSPACE/install-gdal/share/man/man1/gdaladdo.1
         export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib
         $GITHUB_WORKSPACE/install-gdal/bin/gdalinfo --version
         PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/python3/dist-packages python3 -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
