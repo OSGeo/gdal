@@ -128,9 +128,10 @@ if test "$forcedate" != "no" ; then
   mv gcore/gdal_new.h gcore/gdal.h
 fi
 
-echo "* Cleaning .git and .gitignore under $PWD..."
+echo "* Cleaning .git, .github .gitignore under $PWD..."
 rm -rf .git
 rm -f .gitignore
+rm -rf .github
 
 CWD=${PWD}
 
@@ -166,6 +167,10 @@ if test ! -d "man"; then
 fi
 
 cd "$CWD"
+
+echo "* Cleaning doc/ and perftests/ under $CWD..."
+rm -rf doc
+rm -rf perftests
 
 # They currently require SWIG 1.3.X, which is not convenient as we need
 # newer SWIG for newer Python versions
