@@ -5132,6 +5132,19 @@ def test_netcdf_write_int64_nodata():
     gdal.GetDriverByName('netCDF').Delete(filename_copy)
 
 
+###############################################################################
+
+
+def test_netcdf_read_geogcrs_component_names():
+
+    ds = gdal.Open('data/netcdf/geogcrs_component_names.nc')
+    srs = ds.GetSpatialRef()
+    assert srs.GetAttrValue('GEOGCS') == 'WGS 84'
+    assert srs.GetAttrValue('GEOGCS|DATUM') == 'WGS_1984'
+    assert srs.GetAttrValue('GEOGCS|DATUM|SPHEROID') == 'WGS 84'
+    assert srs.GetAttrValue('GEOGCS|PRIMEM') == 'Greenwich'
+
+
 def test_clean_tmp():
     # [KEEP THIS AS THE LAST TEST]
     # i.e. please do not add any tests after this one. Put new ones above.
