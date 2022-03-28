@@ -132,17 +132,6 @@ echo "* Cleaning .git and .gitignore under $PWD..."
 rm -rf .git
 rm -f .gitignore
 
-echo "* Substituting \$Id\$..."
-find . -name "*.h" -o -name "*.c" -o -name "*.cpp" -o -name "*.dox" \
-     -o -name "*.py" -o -name "*.i" -o -name "*.sh" -o -name "*.cs" \
-     -o -name "*.java" -o -name "*.m4" -o -name "*.xml" \
-     -o -name "*.xsd" | while read -r i ; do
-    ID=$(basename "$i")
-    ID="$ID $(git log -1 --format='%H %ai %aN' "$i" | sed 's/ +0000/Z/')"
-    sed -i "s/\\\$Id\\\$/\\\$Id: ${ID} \\\$/" "$i"
-done
-
-
 CWD=${PWD}
 
 #
