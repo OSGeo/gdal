@@ -146,9 +146,6 @@ rm -rf autom4te.cache
 # Generate man pages
 #
 echo "* Generating man pages..."
-if test -d "man"; then
-    rm -rf man
-fi
 
 if test -f "doc/Makefile"; then
     (cd doc; make man)
