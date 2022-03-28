@@ -425,12 +425,6 @@ zip -r $OUT/ods_fuzzer_seed_corpus.zip ods_*.tar >/dev/null
 rm ods_*.tar
 
 
-echo "Building rec_fuzzer_seed_corpus.zip"
-cd $(dirname $0)/../autotest/ogr/data/rec
-rm -f $OUT/rec_fuzzer_seed_corpus.zip
-zip -r $OUT/rec_fuzzer_seed_corpus.zip ./*.rec >/dev/null
-cd $OLDPWD
-
 echo "Building shape_fuzzer_seed_corpus.zip"
 {
     printf "FUZZER_FRIENDLY_ARCHIVE\\n" > poly_shp.tar

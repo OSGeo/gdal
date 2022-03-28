@@ -53,7 +53,6 @@ add_library(
   gml2ogrgeometry.cpp
   ogr_expat.cpp
   ogrpgeogeometry.cpp
-  ogrgeomediageometry.cpp
   ogr_geocoding.cpp
   ogrgeomfielddefn.cpp
   ograpispy.cpp

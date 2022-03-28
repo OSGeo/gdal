@@ -35,20 +35,12 @@ ifeq ($(HAVE_MYSQL),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DMYSQL_ENABLED
 endif
 
-ifeq ($(HAVE_INGRES),yes)
-CXXFLAGS :=	$(CXXFLAGS) -DINGRES_ENABLED
-endif
-
 ifeq ($(PCIDSK_SETTING),internal)
 CXXFLAGS :=	$(CXXFLAGS) -DPCIDSK_ENABLED
 endif
 
 ifeq ($(PCIDSK_SETTING),external)
 CXXFLAGS :=	$(CXXFLAGS) -DPCIDSK_ENABLED
-endif
-
-ifeq ($(HAVE_FME),yes)
-CXXFLAGS :=	$(CXXFLAGS) -DFME_ENABLED
 endif
 
 ifeq ($(HAVE_DODS),yes)
@@ -79,16 +71,8 @@ ifeq ($(HAVE_SOSI),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DSOSI_ENABLED
 endif
 
-ifeq ($(MDB_ENABLED),yes)
-CXXFLAGS :=	$(CXXFLAGS) -DMDB_ENABLED
-endif
-
 ifeq ($(HAVE_FREEXL),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DXLS_ENABLED
-endif
-
-ifeq ($(HAVE_MONGODB),yes)
-CXXFLAGS :=	$(CXXFLAGS) -DMONGODB_ENABLED
 endif
 
 ifeq ($(HAVE_MONGOCXXV3),yes)
