@@ -67,9 +67,6 @@ jobs:
       - name: Run C++ tests
         run: docker run -e GITHUB_WORKFLOW --rm gdal sh -c "cd /build/autotest/cpp && make quick_test && make testsse2 && (if (g++ -march=native -dM -E -x c++ - < /dev/null | grep AVX2 >/dev/null); then make testavx2; else /bin/true; fi)"
 
-      - name: Run SWIG Perl tests
-        run: docker run --rm gdal sh -c "cd /build/swig/perl && make test"
-
       - name: Run SWIG Java tests
         run: docker run --rm gdal sh -c "cd /build/swig/java && make test"
 
