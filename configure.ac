@@ -4951,22 +4951,6 @@ export GDAL_PREFIX
 AC_DEFINE_UNQUOTED(GDAL_PREFIX,["]$GDAL_PREFIX["], [--prefix directory for GDAL install])
 
 dnl ---------------------------------------------------------------------------
-dnl Perl bindings.
-dnl ---------------------------------------------------------------------------
-
-BINDINGS=
-
-AC_ARG_WITH(perl,[  --with-perl           Enable perl bindings],,)
-
-AC_MSG_CHECKING([for perl bindings])
-if test "$with_perl" = "yes" ; then
-  BINDINGS="perl $BINDINGS"
-  AC_MSG_RESULT([enabled])
-else
-  AC_MSG_RESULT([disabled])
-fi
-
-dnl ---------------------------------------------------------------------------
 dnl NG Python bindings.
 dnl ---------------------------------------------------------------------------
 
