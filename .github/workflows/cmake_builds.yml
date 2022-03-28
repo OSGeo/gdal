@@ -313,12 +313,10 @@ jobs:
         cmake --version
     - name: Install dependency
       shell: bash -l {0}
-      # We pin poppler to 21.03.0, as the 22.01.0 update breaks GDAL
-      # cf https://github.com/OSGeo/gdal/issues/5513
       run: |
         conda install --yes --quiet --name gdalenv curl libiconv icu python=3.9 swig numpy pytest pytest-env zlib clcache lxml
         conda install --yes --quiet --name gdalenv -c conda-forge proj geos hdf4 hdf5 kealib \
-            libnetcdf openjpeg poppler==21.03.0 libtiff libpng xerces-c expat libxml2 kealib json-c \
+            libnetcdf openjpeg poppler libtiff libpng xerces-c expat libxml2 kealib json-c \
             cfitsio freexl geotiff jpeg libpq libspatialite libwebp-base pcre pcre2 postgresql \
             sqlite tiledb zstd cryptopp cgal doxygen librttopo libkml openssl xz \
             openjdk ant qhull armadillo blas blas-devel libblas libcblas liblapack liblapacke blosc
