@@ -1,3 +1,14 @@
+// -----------------------------------------------------------------------------
+// TODO
+// - implement Identify() RRASTER a good example
+// - implement GetScale() see the tute https://gdal.org/tutorials/raster_driver_tut.html#rawdataset-rawrasterband-helper-classes
+// - save all header metadata and file name info
+// - apply Scaling and control
+// - implement other related binary formats (AMSR etc)
+// - worry about old NSDIC grid vs new (the different EPSG, Hughes etc.)
+// - allow zero or missing for ice
+// -----------------------------------------------------------------------------
+
 /******************************************************************************
  *
  * Project:  GDAL
@@ -41,6 +52,9 @@ using std::fill;
 
 CPL_CVSID("$Id$")
 
+
+// these should be in .h
+
   /************************************************************************/
   /* ==================================================================== */
   /*                              NSIDCbinDataset                            */
@@ -49,29 +63,9 @@ CPL_CVSID("$Id$")
 
   class NSIDCbinDataset final: public GDALPamDataset
   {
+    friend class NSIDCbinRasterBand;
     struct NSIDCbinHeader{
       // derived from DIPEx
-      // GInt32      NBIH = {0};   /* bytes in header, normally 1024 */
-      // GInt32      NBPR = {0};   /* bytes per data record (all bands of scanline) */
-      // GInt32      IL = {0};     /* initial line - normally 1 */
-      // GInt32      LL = {0};     /* last line */
-      // GInt32      IE = {0};     /* initial element (pixel), normally 1 */
-      // GInt32      LE = {0};     /* last element (pixel) */
-      // GInt32      NC = {0};     /* number of channels (bands) */
-      // GInt32      H4322 = {0};  /* header record identifier - always 4322. */
-      //char        unused1[40] = {0};
-      // GByte       IH19[4] = {0};/* data type, and size flags */
-      // GInt32      IH20 = {0};   /* number of secondary headers */
-      // GInt32      SRID = {0};
-      // char        unused2[12] = {0};
-      // double      YOffset = {0};
-      // double      XOffset = {0};
-      // double      YPixSize = {0};
-      // double      XPixSize = {0};
-      // double      Matrix[4] = {0};
-      // char        unused3[344] = {0};
-      // GUInt16     ColorTable[256] = {0};  /* RGB packed with 4 bits each */
-      // char        unused4[32] = {0};
 
       char missing_int[6] = {0};
       char columns[6] = {0};
@@ -124,6 +118,74 @@ CPL_CVSID("$Id$")
     }
     static GDALDataset *Open( GDALOpenInfo * );
   };
+
+
+
+/************************************************************************/
+/* ==================================================================== */
+/*                           NSIDCbinRasterBand                              */
+/* ==================================================================== */
+/************************************************************************/
+
+class NSIDCbinRasterBand final: public RawRasterBand
+{
+  friend class NSIDCbinDataset;
+
+  CPL_DISALLOW_COPY_ASSIGN(NSIDCbinRasterBand)
+
+public:
+  NSIDCbinRasterBand( GDALDataset *poDS, int nBand, VSILFILE * fpRaw,
+                 vsi_l_offset nImgOffset, int nPixelOffset,
+                 int nLineOffset,
+                 GDALDataType eDataType, int bNativeOrder );
+  ~NSIDCbinRasterBand() override;
+
+  //double GetNoDataValue( int *pbSuccess = nullptr ) override;
+  double GetScale( int *pbSuccess = nullptr ) override;
+  //CPLErr SetScale( double dfNewValue ) override;
+};
+
+
+/************************************************************************/
+/*                         NSIDCbinRasterBand()                           */
+/************************************************************************/
+
+NSIDCbinRasterBand::NSIDCbinRasterBand( GDALDataset *poDSIn,
+                                        int nBandIn,
+                                        VSILFILE *fpRawIn,
+                                        vsi_l_offset nImgOffsetIn,
+                                        int nPixelOffsetIn,
+                                        int nLineOffsetIn,
+                                        GDALDataType eDataTypeIn,
+                                        int bNativeOrderIn ) :
+  RawRasterBand(poDSIn, nBandIn, fpRawIn, nImgOffsetIn, nPixelOffsetIn,
+                nLineOffsetIn, eDataTypeIn, bNativeOrderIn,
+                RawRasterBand::OwnFP::NO)
+{}
+
+
+/************************************************************************/
+/*                           ~NSIDCbinRasterBand()                           */
+/************************************************************************/
+
+NSIDCbinRasterBand::~NSIDCbinRasterBand()
+{
+}
+
+
+/************************************************************************/
+/*                              GetScale()                              */
+/************************************************************************/
+
+double NSIDCbinRasterBand::GetScale( int *pbSuccess )
+{
+  if( pbSuccess != nullptr )
+    *pbSuccess = TRUE;
+  const double dfFactor =
+  atof(reinterpret_cast<NSIDCbinDataset*>(poDS)->sHeader.scaling)/100;
+  return (dfFactor != 0.0) ? 1.0 / dfFactor : 0.0;
+}
+
 
 /************************************************************************/
 /* ==================================================================== */
@@ -204,6 +266,10 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
     return nullptr;
   }
 
+  // std::cout << poDS->sHeader.scaling << "\n";
+  // std::cout << poDS->sHeader.jpole << "\n";
+  // std::cout << poDS->sHeader.ipole << "\n";
+
 
   /* -------------------------------------------------------------------- */
   /*      Extract information of interest from the header.                */
@@ -270,14 +336,15 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
   CPLErrorReset();
   for( int iBand = 0; iBand < nBands; iBand++ )
   {
+    NSIDCbinRasterBand  *poBand = new NSIDCbinRasterBand( poDS, iBand+1, poDS->fp,
+                                                        300 + iBand * poDS->nRasterXSize,
+                                                        nBytesPerSample,
+                                                        poDS->nRasterXSize * nBands,
+                                                        poDS->eRasterDataType,
+                                                        CPL_IS_LSB);
     poDS->SetBand( iBand+1,
-                   new RawRasterBand( poDS, iBand+1, poDS->fp,
-                                      300 + iBand * poDS->nRasterXSize,
-                                      nBytesPerSample,
-                                      poDS->nRasterXSize * nBands,
-                                      poDS->eRasterDataType,
-                                      CPL_IS_LSB,
-                                      RawRasterBand::OwnFP::NO ) );
+                   poBand);
+
     if( CPLGetLastErrorType() != CE_None )
     {
       delete poDS;
@@ -285,6 +352,8 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
     }
   }
 
+
+  //std::cout << poDS->GetBanGetScale() << "\n";
 
   if( south )
   {
@@ -335,6 +404,8 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
 
   return poDS;
 }
+
+
 
 /************************************************************************/
 /*                          GetProjectionRef()                          */
