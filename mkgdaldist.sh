@@ -6,11 +6,11 @@
 
 set -eu
 
-if [ "$MAKE" = "" ]; then
+if [ -z ${MAKE+x} ]; then
     MAKE="make"
 fi
 
-if [ "$PYTHON" = "" ]; then
+if [ -z ${PYTHON+x} ]; then
     PYTHON="python3"
 fi
 
