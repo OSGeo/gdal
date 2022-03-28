@@ -1,5 +1,0 @@
-usage: gdal_polygonize [-h] [-q] [-8] [-o [name=value ...]] [-mask filename]
-                       [-nomask] [-b band] [-of ogr_format]
-                       src_filename dst_filename [dst_layername]
-                       [dst_fieldname]
-gdal_polygonize: error: the following arguments are required: src_filename, dst_filename

@@ -205,7 +205,7 @@ def move(filename: str, t_srs: str, s_srs: Optional[str] = None, pixel_threshold
 
 
 def Usage():
-    print("""gdalmove.py [-s_srs <srs_defn>] -t_srs <srs_defn>
+    print("""Usage: gdalmove.py [-s_srs <srs_defn>] -t_srs <srs_defn>
             [-et <max_pixel_err>] target_file""")
     return 1
 

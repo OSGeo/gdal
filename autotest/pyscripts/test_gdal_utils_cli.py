@@ -27,15 +27,15 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-'''
+"""
 Test that command line gdal-utils are in PATH and run. We only test script
-starts and returns expected defaults. We do not test if script functions
-properly.
+returns 'Usage:' in it's output messages. We do not test for proper script
+functioning.
 
 Tested:
     gdalcompare <no args>
 Returns:
-    Usage: gdalcompare.py [-sds] <golden_file> <new_file>
+    Usage: ...
 
 Not tested:
     gdalcompare file1.tif file2.tif
@@ -47,82 +47,57 @@ Resources used:
  - https://stackoverflow.com/questions/30528099/unittesting-python-code-which-uses-subprocess-popen
  - https://www.digitalocean.com/community/tutorials/how-to-use-subprocess-to-run-external-programs-in-python-3
  - https://stackoverflow.com/questions/13493288/python-cli-program-unit-testing
-'''
-from pathlib import Path
+"""
+
 import sys
 import subprocess
 import pytest
 
 # Skip if gdal-utils is not known to pip (and therefore not registered in
 # python 'site-packages' and 'Scripts')
-installed = subprocess.run([sys.executable, '-m', 'pip', 'show', 'gdal-utils'])
-if not installed.returncode == 0:
+installed = subprocess.run([sys.executable, "-m", "pip", "show", "gdal-utils"])
+if installed.returncode != 0:
     pytest.skip("The 'gdal-utils' package is not installed.", allow_module_level=True)
 
-utils = ['gdal2tiles', 'gdal2xyz', 'gdal_calc', 'gdal_edit', 'gdal_fillnodata',
-         'gdal_merge', 'gdal_pansharpen', 'gdal_polygonize', 'gdal_proximity',
-         'gdal_retile', 'gdal_sieve', 'gdalattachpct', 'gdalcompare', 'gdalmove',
-         'ogrmerge', 'pct2rgb', 'rgb2pct']
+utils = [
+    "gdal2tiles",
+    "gdal2xyz",
+    "gdal_calc",
+    "gdal_edit",
+    "gdal_fillnodata",
+    "gdal_merge",
+    "gdal_pansharpen",
+    "gdal_polygonize",
+    "gdal_proximity",
+    "gdal_retile",
+    "gdal_sieve",
+    "gdalattachpct",
+    "gdalcompare",
+    "gdalmove",
+    "ogrmerge",
+    "pct2rgb",
+    "rgb2pct",
+]
 
-here = Path(__file__).parent.absolute()
-outputs_dir = Path.joinpath(here, "cli_outs")
+# Correct for-loop with pytest courtesy of @niccodemus
+# https://github.com/pytest-dev/pytest/discussions/9822#discussioncomment-2446025
+params = [pytest.param(util) for util in utils]
 
-
-def get_utils_responses():
-    '''Return dict of "utility_name: [stdout_msg, stderr_msg]"
-
-    pct2rgb:
-        ''
-        'usage: pct2rgb [-h] [-of gdal_format] [-rgba] [-b band] ...\n'
-
-   The messages are what we expect the program name to report to console
-   when called with no parameters.
-
-    The expected results must be in pre-generated in files named:
-
-        cli_outs/scriptname.stdout  # normal
-        cli_outs/scriptname.stderr  # errors
-
-    These output files can be generated with:
-
-        gdalcompare 1>gdalcompare.stdout 2>gdalcompare.stderr
-    '''
-    responses = {}
-    for prog in utils:
-        data_out = Path.joinpath(outputs_dir, f"{prog}.stdout")  # .../cli_outs/pctrgb.stdout
-        data_err = Path.joinpath(outputs_dir, f"{prog}.stderr")  # .../cli_outs/pctrgb.stderr
-        with open(data_out) as f:
-            responses[prog] = [f.read()]
-        with open(data_err) as f:
-            responses[prog] = [responses[prog][0], f.read()]
-    return responses
-
-
-responses = get_utils_responses()
 
 # 'returncode' not used because the utils are not consistent in what they
 # return for "no parameters supplied"
-# Correct for-loop with pytest courtesy of @niccodemus
-# https://github.com/pytest-dev/pytest/discussions/9822#discussioncomment-2446025
-params = [
-    pytest.param(util, {
-        # "returncode": 1,
-        "stdout": responses[util][0],
-        "stderr": responses[util][1],
-    })
-    for util in utils
-]
-
-
-@pytest.mark.parametrize("input,want", params)
-def test_program(input, want):
+@pytest.mark.parametrize("input", params)
+def test_program(input):
     completed_process = run_program(input)
     got = {
         # "returncode": completed_process.returncode,
         "stdout": completed_process.stdout,
         "stderr": completed_process.stderr,
     }
-    assert got == want
+    assert (
+        "usage:" in completed_process.stderr.lower()
+        or "usage:" in completed_process.stdout.lower()
+    )
 
 
 def run_program(program, args=None):

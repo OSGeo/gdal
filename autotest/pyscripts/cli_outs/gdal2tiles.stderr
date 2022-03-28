@@ -1,3 +1,0 @@
-Usage: gdal2tiles.py [options] input_file [output]
-
-gdal2tiles.py: error: You need to specify at least an input file as argument to the script

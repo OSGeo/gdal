@@ -1,2 +1,0 @@
-gdalmove.py [-s_srs <srs_defn>] -t_srs <srs_defn>
-            [-et <max_pixel_err>] target_file

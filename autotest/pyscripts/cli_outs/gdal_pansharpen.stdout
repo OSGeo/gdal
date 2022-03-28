@@ -1,8 +1,0 @@
-Usage: gdal_pansharpen [--help-general] pan_dataset {spectral_dataset[,band=num]}+ out_dataset
-                       [-of format] [-b band]* [-w weight]*
-                       [-r {nearest,bilinear,cubic,cubicspline,lanczos,average}]
-                       [-threads {ALL_CPUS|number}] [-bitdepth val] [-nodata val]
-                       [-spat_adjust {union,intersection,none,nonewithoutwarning}]
-                       [-verbose_vrt] [-co NAME=VALUE]* [-q]
-
-Create a dataset resulting from a pansharpening operation.

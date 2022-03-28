@@ -1,3 +1,0 @@
-usage: rgb2pct [-h] [-of gdal_format] [-n color | -pct PCT_FILENAME]
-               src_filename dst_filename
-rgb2pct: error: the following arguments are required: src_filename, dst_filename

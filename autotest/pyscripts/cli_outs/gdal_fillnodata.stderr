@@ -1,5 +1,0 @@
-usage: gdal_fillnodata [-h] [-q] [-md max_distance] [-si smoothing_iterations]
-                       [-o [name=value ...]] [-mask filename] [-b band]
-                       [-of gdal_format] [-co [name=value ...]]
-                       src_filename dst_filename
-gdal_fillnodata: error: the following arguments are required: src_filename, dst_filename

@@ -1,5 +1,0 @@
-usage: gdal2xyz [-h] [-skip] [-srcwin xoff yoff xsize ysize]
-                [-b band [band ...]] [-allbands] [-csv] [-skipnodata]
-                [-srcnodata [SRC_NODATA ...]] [-dstnodata [DST_NODATA ...]]
-                src_dataset dst_dataset
-gdal2xyz: error: the following arguments are required: src_dataset, dst_dataset
