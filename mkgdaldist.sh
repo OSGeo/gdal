@@ -128,10 +128,11 @@ if test "$forcedate" != "no" ; then
   mv gcore/gdal_new.h gcore/gdal.h
 fi
 
-echo "* Cleaning .git, .github .gitignore under $PWD..."
+echo "* Cleaning .git, .github .gitignore, ci under $PWD..."
 rm -rf .git
 rm -f .gitignore
 rm -rf .github
+rm -rf ci
 
 CWD=${PWD}
 
