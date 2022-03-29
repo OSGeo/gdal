@@ -47,7 +47,7 @@ static void Usage(const char* pszErrorMsg)
             "Usage: gdalbuildvrt [-tileindex field_name]\n"
             "                    [-resolution {highest|lowest|average|user}]\n"
             "                    [-te xmin ymin xmax ymax] [-tr xres yres] [-tap]\n"
-            "                    [-separate] [-b band] [-sd subdataset]\n"
+            "                    [-separate] [-b band]* [-sd subdataset]\n"
             "                    [-allow_projection_difference] [-q]\n"
             "                    [-addalpha] [-hidenodata]\n"
             "                    [-srcnodata \"value [value...]\"] [-vrtnodata \"value [value...]\"] \n"
