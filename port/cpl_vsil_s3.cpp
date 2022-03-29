@@ -74,12 +74,11 @@ namespace cpl {
 /*                             VSIDIRS3                                 */
 /************************************************************************/
 
-struct VSIDIRS3: public VSIDIR
+struct VSIDIRS3: public VSIDIRWithMissingDirSynthesis
 {
     int nRecurseDepth = 0;
 
     CPLString osNextMarker{};
-    std::vector<std::unique_ptr<VSIDIREntry>> aoEntries{};
     int nPos = 0;
 
     CPLString osBucket{};
@@ -91,7 +90,6 @@ struct VSIDIRS3: public VSIDIR
     bool bCacheEntries = true;
     bool m_bSynthetizeMissingDirectories = false;
     std::string m_osFilterPrefix{};
-    std::vector<std::string> m_aosSubpathsStack{};
 
     explicit VSIDIRS3(IVSIS3LikeFSHandler *poFSIn): poFS(poFSIn), poS3FS(poFSIn) {}
     explicit VSIDIRS3(VSICurlFilesystemHandlerBase *poFSIn): poFS(poFSIn) {}
@@ -111,8 +109,6 @@ struct VSIDIRS3: public VSIDIR
                             const std::set<std::string>& oSetIgnoredStorageClasses,
                             bool& bIsTruncated );
     void clear();
-    void SynthetizeMissingDirectories(const std::string& osCurSubdir,
-                                      bool bAddEntryForThisSubdir);
 };
 
 /************************************************************************/
@@ -130,7 +126,7 @@ void VSIDIRS3::clear()
 /*                      SynthetizeMissingDirectories()                  */
 /************************************************************************/
 
-void VSIDIRS3::SynthetizeMissingDirectories(const std::string& osCurSubdir,
+void VSIDIRWithMissingDirSynthesis::SynthetizeMissingDirectories(const std::string& osCurSubdir,
                                             bool bAddEntryForThisSubdir)
 {
     const auto nLastSlashPos = osCurSubdir.rfind('/');
