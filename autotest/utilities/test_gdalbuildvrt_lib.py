@@ -347,7 +347,7 @@ def test_gdalbuildvrt_lib_bandList():
     src_ds.GetRasterBand(1).Fill(255)
     src_ds.GetRasterBand(2).Fill(0)
 
-    vrt_ds = gdal.BuildVRT('', [src_ds], bandList = [2, 1, 2])
+    vrt_ds = gdal.BuildVRT('', [src_ds], bandList = [2, 1] * 100)
     assert vrt_ds.GetRasterBand(1).Checksum() == 0
     assert vrt_ds.GetRasterBand(2).Checksum() != 0
     assert vrt_ds.GetRasterBand(3).Checksum() == 0
