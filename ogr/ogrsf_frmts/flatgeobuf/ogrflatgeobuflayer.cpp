@@ -608,19 +608,25 @@ OGRFlatGeobufLayer::~OGRFlatGeobufLayer()
 }
 
 OGRErr OGRFlatGeobufLayer::readFeatureOffset(uint64_t index, uint64_t &featureOffset) {
-    const auto treeSize = PackedRTree::size(m_featuresCount, m_indexNodeSize);
-    const auto levelBounds = PackedRTree::generateLevelBounds(m_featuresCount, m_indexNodeSize);
-    const auto bottomLevelOffset = m_offset - treeSize + (levelBounds.front().first * sizeof(NodeItem));
-    const auto nodeItemOffset = bottomLevelOffset + (index * sizeof(NodeItem));
-    const auto featureOffsetOffset = nodeItemOffset + (sizeof(double) * 4);
-    if (VSIFSeekL(m_poFp, featureOffsetOffset, SEEK_SET) == -1)
-        return CPLErrorIO("seeking feature offset");
-    if (VSIFReadL(&featureOffset, sizeof(uint64_t), 1, m_poFp) != 1)
-        return CPLErrorIO("reading feature offset");
-    #if !CPL_IS_LSB
-        CPL_LSBPTR64(&featureOffset);
-    #endif
-    return OGRERR_NONE;
+    try
+    {
+        const auto treeSize = PackedRTree::size(m_featuresCount, m_indexNodeSize);
+        const auto levelBounds = PackedRTree::generateLevelBounds(m_featuresCount, m_indexNodeSize);
+        const auto bottomLevelOffset = m_offset - treeSize + (levelBounds.front().first * sizeof(NodeItem));
+        const auto nodeItemOffset = bottomLevelOffset + (index * sizeof(NodeItem));
+        const auto featureOffsetOffset = nodeItemOffset + (sizeof(double) * 4);
+        if (VSIFSeekL(m_poFp, featureOffsetOffset, SEEK_SET) == -1)
+            return CPLErrorIO("seeking feature offset");
+        if (VSIFReadL(&featureOffset, sizeof(uint64_t), 1, m_poFp) != 1)
+            return CPLErrorIO("reading feature offset");
+        #if !CPL_IS_LSB
+            CPL_LSBPTR64(&featureOffset);
+        #endif
+        return OGRERR_NONE;
+    } catch (const std::exception& e) {
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to calculate tree size: %s", e.what());
+        return OGRERR_FAILURE;
+    }
 }
 
 OGRFeature *OGRFlatGeobufLayer::GetFeature(GIntBig nFeatureId)
