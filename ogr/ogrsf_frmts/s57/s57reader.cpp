@@ -2686,8 +2686,8 @@ bool S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
     if( poRVER_SFD == nullptr )
         return false;
 
-    unsigned char *pnRVER
-        = (unsigned char *) poKey->GetSubfieldData( poRVER_SFD, nullptr, 0 );
+    unsigned int *pnRVER
+        = (unsigned int *) poKey->GetSubfieldData( poRVER_SFD, nullptr, 0 );
 
     *pnRVER += 1;
 
