@@ -789,7 +789,7 @@ std::string VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psData
             for(int j=0;j<nSelectedBands;j++)
             {
                 const int nSelBand = panSelectedBandList[j];
-                CPLAssert(nSelBand >= 0 && nSelBand <= _nBands);
+                CPLAssert(nSelBand >= 1 && nSelBand <= _nBands);
                 GDALRasterBand* poBand = poDS->GetRasterBand(nSelBand);
                 if (asBandProperties[j].colorInterpretation !=
                             poBand->GetColorInterpretation())
@@ -1166,17 +1166,18 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
         {
             VRTSourcedRasterBandH hVRTBand =
                     static_cast<VRTSourcedRasterBandH>(poVRTDS->GetRasterBand(j + 1));
+            const int nSelBand = panSelectedBandList[j];
 
             /* Place the raster band at the right position in the VRT */
             VRTSourcedRasterBand* poVRTBand = static_cast<VRTSourcedRasterBand*>(hVRTBand);
 
             VRTSimpleSource* poSimpleSource;
-            if (bAllowSrcNoData && psDatasetProperties->abHasNoData[j])
+            if (bAllowSrcNoData && psDatasetProperties->abHasNoData[nSelBand - 1])
             {
                 poSimpleSource = new VRTComplexSource();
-                poSimpleSource->SetNoDataValue( psDatasetProperties->adfNoDataValues[j] );
+                poSimpleSource->SetNoDataValue( psDatasetProperties->adfNoDataValues[nSelBand - 1] );
             }
-            else if( bUseSrcMaskBand && psDatasetProperties->abHasMaskBand[j] )
+            else if( bUseSrcMaskBand && psDatasetProperties->abHasMaskBand[nSelBand - 1] )
             {
                 auto poSource = new VRTComplexSource();
                 poSource->SetUseMaskBand(true);
@@ -1187,7 +1188,7 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
             if( pszResampling )
                 poSimpleSource->SetResampling(pszResampling);
             auto poSrcBand = GDALRasterBand::FromHandle(
-                GDALGetRasterBand(hSourceDS, panSelectedBandList[j]));
+                GDALGetRasterBand(hSourceDS, nSelBand));
             poVRTBand->ConfigureSource( poSimpleSource,
                                         poSrcBand,
                                         FALSE,
