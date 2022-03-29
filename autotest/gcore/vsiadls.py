@@ -53,12 +53,14 @@ def startup_and_cleanup():
     # Unset all env vars that could influence the tests
     az_vars = {}
     for var in ('AZURE_STORAGE_CONNECTION_STRING', 'AZURE_STORAGE_ACCOUNT',
-                'AZURE_STORAGE_ACCESS_KEY', 'AZURE_SAS', 'AZURE_NO_SIGN_REQUEST'):
+                'AZURE_STORAGE_ACCESS_KEY', 'AZURE_SAS', 'AZURE_NO_SIGN_REQUEST',
+                'CPL_AZURE_VM_API_ROOT_URL'):
         az_vars[var] = gdal.GetConfigOption(var)
         if az_vars[var] is not None:
             gdal.SetConfigOption(var, "")
 
-    assert gdal.GetSignedURL('/vsiadls/foo/bar') is None
+    with gdaltest.config_option('CPL_AZURE_VM_API_ROOT_URL', 'disabled'):
+        assert gdal.GetSignedURL('/vsiadls/foo/bar') is None
 
     gdaltest.webserver_process = None
     gdaltest.webserver_port = 0
