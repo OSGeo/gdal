@@ -230,27 +230,6 @@ It can be detected with pkg-config.
     Control whether to use CFITSIO. Defaults to ON when CFITSIO is found.
 
 
-CharLS
-******
-
-`CharLS <https://github.com/team-charls/charls>`_ is a C++ implementation of the
-JPEG-LS standard for lossless and near-lossless image compression and decompression.
-It is used by the :ref:`raster.jpegls` driver.
-with pkg-config.
-
-.. option:: CHARLS_INCLUDE_DIR
-
-    Path to an include directory with the ``charls/charls.h`` header file.
-
-.. option:: CHARLS_LIBRARY
-
-    Path to a shared or static library file.
-
-.. option:: GDAL_USE_CHARLS=ON/OFF
-
-    Control whether to use CharLS. Defaults to ON when CharLS is found.
-
-
 Crnlib
 ******
 
@@ -1151,7 +1130,7 @@ ODBC
 ****
 
 ODBC is required for various drivers: :ref:`vector.odbc`, :ref:`vector.pgeo`,
-:ref:`vector.walk`, :ref:`vector.hana` and :ref:`vector.mssqlspatial`.
+:ref:`vector.hana` and :ref:`vector.mssqlspatial`.
 It is normally automatically found in system directories on Unix and Windows.
 
 .. option:: ODBC_INCLUDE_DIR
@@ -1957,7 +1936,7 @@ Start a Conda enabled console and assuming there is a c:\\dev directory
         cmake proj geos hdf4 hdf5 \
         libnetcdf openjpeg poppler libtiff libpng xerces-c expat libxml2 kealib json-c \
         cfitsio freexl geotiff jpeg libpq libspatialite libwebp-base pcre postgresql \
-        sqlite tiledb zstd charls cryptopp cgal jasper librttopo libkml openssl xz
+        sqlite tiledb zstd charls cryptopp cgal librttopo libkml openssl xz
 
 .. note::
 

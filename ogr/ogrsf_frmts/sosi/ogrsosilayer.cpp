@@ -296,14 +296,26 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
         case L_LINJE:    /* curve, not simplifyable */
         case L_BUEP:  {  /* curve, interpolated from circular arc */
             oGType = wkbLineString;
-
+            if (poParent->papoBuiltGeometries[oNextSerial.lNr] == nullptr ||
+                poParent->papoBuiltGeometries[oNextSerial.lNr]->getGeometryType() != wkbLineString ) {
+                // This should not happen under normal operation.
+                CPLError( CE_Warning, CPLE_AppDefined, "Curve or line %li may have a broken geometry", oNextSerial.lNr);
+                //return NULL;
+                break;
+            }
             OGRLineString *poCurve = poParent->papoBuiltGeometries[oNextSerial.lNr]->toLineString();
             poGeom = poCurve->clone();
             break;
         }
         case L_TEKST: {  /* text */
             oGType = wkbMultiPoint;
-
+            if (poParent->papoBuiltGeometries[oNextSerial.lNr] == nullptr ||
+                poParent->papoBuiltGeometries[oNextSerial.lNr]->getGeometryType() != wkbMultiPoint ) {
+                // This should not happen under normal operation.
+                CPLError( CE_Warning, CPLE_AppDefined, "Text point %li may have a broken geometry", oNextSerial.lNr);
+                //return NULL;
+                break;
+            }
             OGRMultiPoint *poMP = poParent->papoBuiltGeometries[oNextSerial.lNr]->toMultiPoint();
             poGeom = poMP->clone();
             break;
@@ -314,6 +326,13 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
         }
         case L_PUNKT: {  /* point */
             oGType = wkbPoint;
+            if (poParent->papoBuiltGeometries[oNextSerial.lNr] == nullptr ||
+                poParent->papoBuiltGeometries[oNextSerial.lNr]->getGeometryType() != wkbPoint ) {
+                // This should not happen under normal operation.
+                CPLError( CE_Warning, CPLE_AppDefined, "Point or symbol %li may have a broken geometry", oNextSerial.lNr);
+                //return NULL;
+                break;
+            }
             OGRPoint *poPoint = poParent->papoBuiltGeometries[oNextSerial.lNr]->toPoint();
             poGeom = poPoint->clone();
             break;

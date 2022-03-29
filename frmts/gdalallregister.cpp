@@ -230,7 +230,6 @@ void CPL_STDCALL GDALAllRegister()
 #endif
 
 #ifdef FRMT_netcdf
-    GDALRegister_GMT();
     GDALRegister_netCDF();
 #endif
 
@@ -296,17 +295,6 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_MrSID();
 #endif
 
-#ifdef FRMT_jpeg2000
-    // JPEG2000 support using JasPer toolkit
-    // This one should always be placed after other JasPer supported formats,
-    // such as BMP or PNM. In other case we will get bad side effects.
-    GDALRegister_JPEG2000();
-#endif
-
-#ifdef FRMT_mrsid_lidar
-    GDALRegister_MG4Lidar();
-#endif
-
 #ifdef FRMT_rmf
     GDALRegister_RMF();
 #endif
@@ -329,10 +317,6 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_idrisi
     GDALRegister_IDRISI();
-#endif
-
-#ifdef FRMT_ingr
-    GDALRegister_INGR();
 #endif
 
 #ifdef FRMT_gsg
@@ -422,13 +406,11 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_PAux();
     GDALRegister_MFF();
     GDALRegister_HKV();
-    GDALRegister_FujiBAS();
     GDALRegister_GSC();
     GDALRegister_FAST();
     GDALRegister_BT();
     GDALRegister_LAN();
     GDALRegister_CPG();
-    GDALRegister_IDA();
     GDALRegister_NDF();
     GDALRegister_EIR();
     GDALRegister_DIPEx();
@@ -517,10 +499,6 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_hf2
     GDALRegister_HF2();
-#endif
-
-#ifdef FRMT_jpegls
-    GDALRegister_JPEGLS();
 #endif
 
 #ifdef FRMT_ozi

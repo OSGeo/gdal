@@ -3339,10 +3339,11 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
             const double dfLonPrimeMeridian = poDS->FetchCopyParam(
                 pszGridMappingValue, CF_PP_LONG_PRIME_MERIDIAN, 0.0);
 
-            const char *pszPMName = nullptr;
+            const char *pszPMName = FetchAttr(pszGridMappingValue,
+                                              CF_PRIME_MERIDIAN_NAME);
 
             // Should try to find PM name from its value if not Greenwich.
-            if( !CPLIsEqual(dfLonPrimeMeridian, 0.0) )
+            if( pszPMName == nullptr && !CPLIsEqual(dfLonPrimeMeridian, 0.0) )
                 pszPMName = "unknown";
 
             double dfInverseFlattening = poDS->FetchCopyParam(
@@ -3363,6 +3364,17 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                 dfEarthRadius = poDS->FetchCopyParam(
                     pszGridMappingValue, CF_PP_EARTH_RADIUS_OLD, -1.0);
 
+            const char* pszEllipsoidName = FetchAttr(pszGridMappingValue,
+                                                     CF_REFERENCE_ELLIPSOID_NAME);
+
+            const char* pszDatumName = FetchAttr(pszGridMappingValue,
+                                                 CF_HORIZONTAL_DATUM_NAME);
+
+            const char* pszGeogName = FetchAttr(pszGridMappingValue,
+                                                CF_GEOGRAPHIC_CRS_NAME);
+            if( pszGeogName == nullptr )
+                pszGeogName = "unknown";
+
             // Has radius value.
             if( dfEarthRadius > 0.0 )
             {
@@ -3373,9 +3385,9 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                     if( dfSemiMinorAxis < 0.0 )
                     {
                         // No way to get inv_flat, use sphere.
-                        oSRS.SetGeogCS("unknown",
-                                        nullptr,
-                                        "Sphere",
+                        oSRS.SetGeogCS(pszGeogName,
+                                        pszDatumName,
+                                        pszEllipsoidName ? pszEllipsoidName : "Sphere",
                                         dfEarthRadius, 0.0,
                                         pszPMName, dfLonPrimeMeridian);
                         bGotGeogCS = true;
@@ -3387,9 +3399,9 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                         //set inv_flat using semi_minor/major
                         dfInverseFlattening = OSRCalcInvFlattening(dfSemiMajorAxis, dfSemiMinorAxis);
 
-                        oSRS.SetGeogCS("unknown",
-                                        nullptr,
-                                        "Spheroid",
+                        oSRS.SetGeogCS(pszGeogName,
+                                        pszDatumName,
+                                        pszEllipsoidName ? pszEllipsoidName : "Spheroid",
                                         dfEarthRadius, dfInverseFlattening,
                                         pszPMName, dfLonPrimeMeridian);
                         bGotGeogCS = true;
@@ -3397,11 +3409,11 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                 }
                 else
                 {
-                    oSRS.SetGeogCS("unknown",
-                                    nullptr,
-                                    "Spheroid",
+                    oSRS.SetGeogCS(pszGeogName,
+                                    pszDatumName,
+                                    pszEllipsoidName ? pszEllipsoidName : "Spheroid",
                                     dfEarthRadius, dfInverseFlattening,
-                                        pszPMName, dfLonPrimeMeridian);
+                                    pszPMName, dfLonPrimeMeridian);
                     bGotGeogCS = true;
                 }
 
@@ -3913,6 +3925,14 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                                                            dfGridNorthPoleLong,
                                                            dfNorthPoleGridLong);
                 bRotatedPole = true;
+            }
+
+            if( oSRS.IsProjected() )
+            {
+                const char* pszProjectedCRSName = FetchAttr(pszGridMappingValue,
+                                                            CF_PROJECTED_CRS_NAME);
+                if( pszProjectedCRSName )
+                    oSRS.SetProjCS(pszProjectedCRSName);
             }
 
         // Is this Latitude/Longitude Grid, default?
@@ -10364,10 +10384,6 @@ void GDALRegister_netCDF()
     poDriver->pfnUnloadDriver = NCDFUnloadDriver;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
-
-#ifdef NETCDF_PLUGIN
-    GDALRegister_GMT();
-#endif
 }
 
 /************************************************************************/
