@@ -950,19 +950,34 @@ void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
 
         GDALAddBand(hVRTDS, psDatasetProperties->firstBandType, nullptr);
 
-        GDALProxyPoolDatasetH hProxyDS =
-            GDALProxyPoolDatasetCreate(dsFileName,
-                                        psDatasetProperties->nRasterXSize,
-                                        psDatasetProperties->nRasterYSize,
-                                        GA_ReadOnly, TRUE, pszProjectionRef,
-                                        psDatasetProperties->adfGeoTransform);
-        reinterpret_cast<GDALProxyPoolDataset*>(hProxyDS)->
-                                        SetOpenOptions( papszOpenOptions );
 
-        GDALProxyPoolDatasetAddSrcBandDescription(hProxyDS,
-                                            psDatasetProperties->firstBandType,
-                                            psDatasetProperties->nBlockXSize,
-                                            psDatasetProperties->nBlockYSize);
+        GDALDatasetH hSourceDS;
+        bool bDropRef = false;
+        if( nSrcDSCount == nInputFiles &&
+            GDALGetDatasetDriver(pahSrcDS[i]) != nullptr &&
+            ( dsFileName[0] == '\0' || // could be a unnamed VRT file
+              EQUAL(GDALGetDescription(GDALGetDatasetDriver(pahSrcDS[i])), "MEM")) )
+        {
+            hSourceDS = pahSrcDS[i];
+        }
+        else
+        {
+            bDropRef = true;
+            GDALProxyPoolDatasetH hProxyDS =
+                GDALProxyPoolDatasetCreate(dsFileName,
+                                            psDatasetProperties->nRasterXSize,
+                                            psDatasetProperties->nRasterYSize,
+                                            GA_ReadOnly, TRUE, pszProjectionRef,
+                                            psDatasetProperties->adfGeoTransform);
+            hSourceDS = static_cast<GDALDatasetH>(hProxyDS);
+            reinterpret_cast<GDALProxyPoolDataset*>(hProxyDS)->
+                                            SetOpenOptions( papszOpenOptions );
+
+            GDALProxyPoolDatasetAddSrcBandDescription(hProxyDS,
+                                                psDatasetProperties->firstBandType,
+                                                psDatasetProperties->nBlockXSize,
+                                                psDatasetProperties->nBlockYSize);
+        }
 
         VRTSourcedRasterBandH hVRTBand =
                 static_cast<VRTSourcedRasterBandH>(GDALGetRasterBand(hVRTDS, iBand));
@@ -1015,7 +1030,7 @@ void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
         if( pszResampling )
             poSimpleSource->SetResampling(pszResampling);
         poVRTBand->ConfigureSource( poSimpleSource,
-                                    static_cast<GDALRasterBand*>(GDALGetRasterBand(static_cast<GDALDatasetH>(hProxyDS), 1)),
+                                    static_cast<GDALRasterBand*>(GDALGetRasterBand(hSourceDS, 1)),
                                     FALSE,
                                     dfSrcXOff, dfSrcYOff,
                                     dfSrcXSize, dfSrcYSize,
@@ -1030,7 +1045,10 @@ void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
 
         poVRTBand->AddSource( poSimpleSource );
 
-        GDALDereferenceDataset(hProxyDS);
+        if( bDropRef )
+        {
+            GDALDereferenceDataset(hSourceDS);
+        }
 
         iBand ++;
     }
