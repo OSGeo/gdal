@@ -33,9 +33,7 @@
 
 %include constraints.i
 
-#ifdef PERL_CPAN_NAMESPACE
-%module "Geo::OSR"
-#elif defined(SWIGCSHARP)
+#if defined(SWIGCSHARP)
 %module Osr
 #elif defined(SWIGPYTHON)
 %module (package="osgeo") osr
@@ -169,8 +167,6 @@ typedef int OGRErr;
 %include osr_csharp.i
 #elif defined(SWIGJAVA)
 %include osr_java.i
-#elif defined(SWIGPERL)
-%include osr_perl.i
 #else
 %include gdal_typemaps.i
 #endif
@@ -328,10 +324,6 @@ public:
     OSRExportToPrettyWkt( self, &buf, 0 );
     return buf;
   }
-/* Adding __str__ to Perl bindings makes Swig to use overloading,
-   which is undesirable since it is not used elsewhere in these
-   bindings, and causes side effects. */
-#elif defined(SWIGPERL)
 #else
 %newobject __str__;
   char *__str__() {

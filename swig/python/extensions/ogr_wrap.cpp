@@ -2849,10 +2849,8 @@ typedef void GDALMajorObjectShadow;
 
 #ifdef DEBUG
 typedef struct OGRSpatialReferenceHS OSRSpatialReferenceShadow;
-#ifndef SWIGPERL
 typedef struct OGRDriverHS OGRDriverShadow;
 typedef struct OGRDataSourceHS OGRDataSourceShadow;
-#endif
 typedef struct OGRLayerHS OGRLayerShadow;
 typedef struct OGRFeatureHS OGRFeatureShadow;
 typedef struct OGRFeatureDefnHS OGRFeatureDefnShadow;
@@ -2861,10 +2859,8 @@ typedef struct OGRCoordinateTransformationHS OSRCoordinateTransformationShadow;
 typedef struct OGRFieldDefnHS OGRFieldDefnShadow;
 #else
 typedef void OSRSpatialReferenceShadow;
-#ifndef SWIGPERL
 typedef void OGRDriverShadow;
 typedef void OGRDataSourceShadow;
-#endif
 typedef void OGRLayerShadow;
 typedef void OGRFeatureShadow;
 typedef void OGRFeatureDefnShadow;
