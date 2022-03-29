@@ -8,7 +8,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-rec
     git make cmake wget zip unzip libtool automake \
     zlib1g-dev libsqlite3-dev pkg-config libcurl4-gnutls-dev \
     libproj-dev libtiff5-dev \
-    libcharls-dev libopenjp2-7-dev libcairo2-dev \
+    libopenjp2-7-dev libcairo2-dev \
     python3-dev python3-numpy python3-pip \
     libpng-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev \
     curl libxml2-dev libexpat-dev libxerces-c-dev \

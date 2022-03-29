@@ -137,7 +137,6 @@ fuzzers/tests/test_ogr_fuzzer
 fuzzers/tests/test_osr_set_from_user_input_fuzzer
 fuzzers/tests/test_wkb_import_fuzzer
 fuzzers/tests/test_wkt_import_fuzzer
-man/
 html/
 nmake.local*
 *~

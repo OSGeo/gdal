@@ -1735,16 +1735,16 @@ OGRFORMATS_ENABLED=
 OGRFORMATS_ENABLED_CFLAGS=
 OGRFORMATS_DISABLED=
 
-AC_DEFUN([INTERNAL_FORMATS],[aaigrid adrg aigrid airsar arg blx bmp bsb cals ceos ceos2 coasp cosar ctg dimap dted elas envisat ers esric fit gff gsg gxf hf2 idrisi ilwis ingr iris iso8211 jaxapalsar jdem kmlsuperoverlay l1b leveller map mrf msgn ngsgeoid nitf northwood pds prf r raw rmf rs2 safe saga sdts sentinel2 sgi sigdem srtmhgt stacit stacta terragen tga til tsx usgsdem xpm xyz zarr zmap])
+AC_DEFUN([INTERNAL_FORMATS],[aaigrid adrg aigrid airsar arg blx bmp bsb cals ceos ceos2 coasp cosar ctg dimap dted elas envisat ers esric fit gff gsg gxf hf2 idrisi ilwis iris iso8211 jaxapalsar jdem kmlsuperoverlay l1b leveller map mrf msgn ngsgeoid nitf northwood pds prf r raw rmf rs2 safe saga sdts sentinel2 sgi sigdem srtmhgt stacit stacta terragen tga til tsx usgsdem xpm xyz zarr zmap])
 AC_DEFUN([INTERNAL_OPT_FORMATS],[grib ozi pdf rik])
-AC_DEFUN([INTERNAL_DRIVERS],[arcgen avc cad csv dgn dxf edigeo flatgeobuf geoconcept georss gml gmt gpsbabel gpx gtm jml mapml mvt ntf openfilegdb pgdump rec s57 selafin shape svg sxf tiger vdv wasp])dnl
+AC_DEFUN([INTERNAL_DRIVERS],[avc cad csv dgn dxf edigeo flatgeobuf geoconcept georss gml gmt gpsbabel gpx jml mapml mvt ntf openfilegdb pgdump s57 selafin shape svg sxf tiger vdv wasp])dnl
 AC_DEFUN([CURL_FORMATS],[eeda plmosaic wcs wms wmts daas ogcapi])dnl
-AC_DEFUN([CURL_DRIVERS],[amigocloud carto cloudant couchdb csw elastic ngw plscenes wfs])dnl
+AC_DEFUN([CURL_DRIVERS],[amigocloud carto csw elastic ngw plscenes wfs])dnl
 AC_DEFUN([SQLITE_FORMATS],[rasterlite mbtiles])dnl
 AC_DEFUN([SQLITE_DRIVERS],[gpkg vfk osm])dnl
 AC_DEFUN([EXPAT_DRIVERS],[ods xlsx lvbag])dnl
 AC_DEFUN([XERCES_DRIVERS],[nas ili gmlas])dnl
-AC_DEFUN([ODBC_DRIVERS],[odbc pgeo mssqlspatial geomedia walk])dnl
+AC_DEFUN([ODBC_DRIVERS],[odbc pgeo mssqlspatial])dnl
 
 AC_ARG_ENABLE(all-optional-drivers, AS_HELP_STRING([--disable-all-optional-drivers], [disable all non-mandatory internal drivers. Individual drivers can be added with --enable-driver-XXX]))
 if test "x$enable_all_optional_drivers" = "xno"; then :
@@ -2444,64 +2444,6 @@ fi
 AC_SUBST(GEOTIFF_SETTING,$GEOTIFF_SETTING)
 AC_SUBST(GEOTIFF_INCLUDE,$GEOTIFF_INCLUDE)
 
-
-dnl ---------------------------------------------------------------------------
-dnl Check for CharLS
-dnl ---------------------------------------------------------------------------
-
-AC_ARG_WITH(charls,
-            AS_HELP_STRING([--with-charls],[Include JPEG-Lossless support]),,)
-
-HAVE_CHARLS=no
-CHARLS_INC=
-
-if test "$with_charls" = "yes" -o "$with_charls" = "" ; then
-  dnl CharLS 2.1
-  AC_CHECK_HEADERS([charls/version.h])
-  if test "$ac_cv_header_charls_version_h" = "yes"; then
-    AC_LANG_PUSH([C++])
-    AC_CHECK_LIB(charls,JpegLsDecode,HAVE_CHARLS=yes)
-    AC_LANG_POP([C++])
-    if test "$HAVE_CHARLS" = "yes"; then
-        LIBS="-lcharls $LIBS"
-        CHARLS_INC="-DCHARLS_2_1"
-    else
-        AC_LANG_PUSH([C++])
-        AC_CHECK_LIB(CharLS,JpegLsDecode,HAVE_CHARLS=yes)
-        AC_LANG_POP([C++])
-        if test "$HAVE_CHARLS" = "yes"; then
-            LIBS="-lCharLS $LIBS"
-            CHARLS_INC="-DCHARLS_2_1"
-        fi
-    fi
-  else
-    dnl CharLS 1.x
-    AC_CHECK_HEADERS([CharLS/interface.h])
-    if test "$ac_cv_header_CharLS_interface_h" = "yes"; then
-      AC_CHECK_LIB(CharLS,JpegLsDecode,HAVE_CHARLS=yes)
-      if test "$HAVE_CHARLS" = "yes"; then
-          LIBS="-lCharLS $LIBS"
-          CHARLS_INC="-DCHARLS_INTERFACE_H"
-      fi
-    else
-      dnl CharLS 2.0
-      AC_CHECK_HEADERS([CharLS/charls.h])
-      if test "$ac_cv_header_CharLS_charls_h" = "yes"; then
-        AC_LANG_PUSH([C++])
-        AC_CHECK_LIB(CharLS,JpegLsDecode,HAVE_CHARLS=yes)
-        AC_LANG_POP([C++])
-        if test "$HAVE_CHARLS" = "yes"; then
-            LIBS="-lCharLS $LIBS"
-            CHARLS_INC="-DCHARLS_2"
-        fi
-      fi
-    fi
-  fi
-fi
-
-AC_SUBST(HAVE_CHARLS,$HAVE_CHARLS)
-AC_SUBST(CHARLS_INC,$CHARLS_INC)
-
 dnl ---------------------------------------------------------------------------
 dnl Check for JPEG 12 bit
 dnl ---------------------------------------------------------------------------
@@ -2668,56 +2610,6 @@ AC_SUBST(HAVE_OGDI,$HAVE_OGDI)
 AC_SUBST(OGDI_INCLUDE,$OGDI_INCLUDE)
 
 dnl ---------------------------------------------------------------------------
-dnl Select FME_HOME or disable FME support.
-dnl ---------------------------------------------------------------------------
-
-X_FME_HOME=
-export X_FME_HOME
-
-AC_ARG_WITH(fme,[  --with-fme[=ARG]        Include FMEObjects support (ARG=FME_HOME path)],,)
-
-AC_MSG_CHECKING([for FMEObjects])
-
-if test "$with_fme" = "no" ; then
-
-  AC_MSG_RESULT([disabled by user])
-
-elif test "$with_fme" = "yes" ; then
-
-  if test "$FME_HOME" = "" ; then
-    AC_MSG_ERROR([no, FME_HOME not defined!])
-  elif test -f $FME_HOME/fmeobjects/cpp/isession.h ; then
-    AC_MSG_RESULT([yes])
-    X_FME_HOME=$FME_HOME
-  else
-    AC_MSG_ERROR([FME_HOME defined, but $FME_HOME/fmeobjects/cpp/issesion.h not found.])
-  fi
-
-elif test "$with_fme" = "" ; then
-
-  if test "$FME_HOME" = "" ; then
-    AC_MSG_RESULT([no])
-  elif test -f $FME_HOME/fmeobjects/cpp/isession.h ; then
-    AC_MSG_RESULT([yes])
-    X_FME_HOME=$FME_HOME
-  else
-    AC_MSG_RESULT([no, FME_HOME defined, but $FME_HOME/fmeobjects/cpp/issesion.h not found.])
-  fi
-
-else
-
-  if test -f $with_fme/fmeobjects/cpp/isession.h ; then
-    AC_MSG_RESULT([yes])
-    X_FME_HOME=$with_fme
-  else
-    AC_MSG_ERROR([$with_fme/fmeobjects/cpp/issesion.h not found!])
-  fi
-
-fi
-
-AC_SUBST(X_FME_HOME,$X_FME_HOME)
-
-dnl ---------------------------------------------------------------------------
 dnl Select a SOSI lib to use, or disable driver.
 dnl ---------------------------------------------------------------------------
 
@@ -2790,79 +2682,6 @@ fi
 AC_SUBST(SOSI_ENABLED, $SOSI_ENABLED)
 AC_SUBST(SOSI_LIB, $SOSI_LIB)
 AC_SUBST(SOSI_INC, $SOSI_INC)
-
-dnl ---------------------------------------------------------------------------
-dnl MongoCXX driver
-dnl ---------------------------------------------------------------------------
-
-AC_ARG_WITH(mongocxx,[  --with-mongocxx[=ARG]        Include MongoCXX support (ARG=Path, yes or no)],,)
-
-MONGODB_ENABLED=no
-
-if test "$with_mongocxx" = "no" ; then
-
-  echo "MONGODB support disabled."
-
-elif test "$with_mongocxx" = "yes" -o "$with_mongocxx" = "" ; then
-
-    AC_MSG_CHECKING([for MongoCXX])
-
-    rm -f testmongocxx.*
-    rm -f testmongocxx
-    echo "#include <mongo/client/dbclient.h>" > testmongocxx.cpp
-    echo "using namespace mongo;" >> testmongocxx.cpp
-    echo "int main() { client::initialize(client::Options()); return 0; }" >> testmongocxx.cpp
-    if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testmongocxx.cpp -lmongoclient -lboost_system -lboost_thread -lboost_regex -o testmongocxx 2>&1`" ; then
-        AC_MSG_RESULT([MongoCXX found])
-        MONGODB_ENABLED="yes"
-        MONGODB_LIB=" -lmongoclient -lboost_system -lboost_thread -lboost_regex"
-    else
-        if test "$with_mongocxx" = "yes"; then
-            AC_MSG_ERROR([MongoCXX not found.])
-        else
-            AC_MSG_RESULT([MongoCXX not found.])
-        fi
-    fi
-    rm -f testmongocxx.*
-    rm -f testmongocxx
-
-else
-
-  AC_ARG_WITH(boost-lib-path,
-          [  --with-boost-lib-path=ARG   Path to boost libraries for mongocxx client],,,)
-
-  AC_MSG_CHECKING([for libmongoclient.so in in $with_mongocxx/lib])
-  MONGODB_ENABLED=yes
-  if test -r $with_mongocxx/lib/libmongoclient.so; then
-    AC_MSG_RESULT([found.])
-    MONGODB_LIB="-L$with_mongocxx/lib -lmongoclient"
-  elif test -r $with_mongocxx/lib/libmongoclient.dylib; then
-    AC_MSG_RESULT([found.])
-    MONGODB_LIB="-L$with_mongocxx/lib -lmongoclient"
-  else
-    AC_MSG_ERROR([not found.])
-  fi
-
-  if test "$with_boost_lib_path" = "" ; then
-    MONGODB_LIB="$MONGODB_LIB -lboost_system -lboost_thread -lboost_regex"
-  else
-    MONGODB_LIB="$MONGODB_LIB -L$with_boost_lib_path -lboost_system -lboost_thread -lboost_regex"
-  fi
-
-  AC_MSG_CHECKING([for mongo/client/dbclient.h in $with_mongocxx/include])
-  if test -r $with_mongocxx/include/mongo/client/dbclient.h ; then
-    AC_MSG_RESULT([found.])
-    MONGODB_INC="-I$with_mongocxx/include"
-  else
-    AC_MSG_ERROR([not found.])
-  fi
-
-fi
-
-AC_SUBST(MONGODB_ENABLED, $MONGODB_ENABLED)
-AC_SUBST(MONGODB_LIB, $MONGODB_LIB)
-AC_SUBST(MONGODB_INC, $MONGODB_INC)
-
 
 dnl ---------------------------------------------------------------------------
 dnl MongoCXXv3 driver
@@ -3339,56 +3158,6 @@ if test "$NETCDF_SETTING" != "no" ; then
 
 fi
 
-
-dnl ---------------------------------------------------------------------------
-dnl Select a JasPer Library to use, or disable driver.
-dnl ---------------------------------------------------------------------------
-
-AC_ARG_WITH(jasper,[  --with-jasper[=ARG]     Include JPEG-2000 support via JasPer library (ARG=path)],,)
-
-if test "$with_jasper" = "no" ; then
-
-  HAVE_JASPER=no
-
-  AC_MSG_NOTICE([JasPer (JPEG2000) support disabled.])
-
-elif test "$with_jasper" = "yes" -o "$with_jasper" = "" ; then
-
-  AC_CHECK_LIB(jasper,jpc_decode,HAVE_JASPER=yes,HAVE_JASPER=no,)
-  AC_CHECK_LIB(jasper,jp2_decode,HAVE_JASPER=yes,HAVE_JASPER=no,)
-  AC_CHECK_LIB(jasper,pgx_decode,HAVE_JASPER=yes,HAVE_JASPER=no,)
-
-  if test "$HAVE_JASPER" = "yes" ; then
-    LIBS="-ljasper $LIBS"
-  fi
-else
-
-  HAVE_JASPER=yes
-  LIBS="-L$with_jasper -L$with_jasper/lib -ljasper $LIBS"
-  EXTRA_INCLUDES="-I$with_jasper -I$with_jasper/include $EXTRA_INCLUDES"
-
-  AC_MSG_NOTICE([using JasPer library from $with_jasper.])
-fi
-
-if test "$HAVE_JASPER" != "no" ; then
-  OPT_GDAL_FORMATS="jpeg2000 $OPT_GDAL_FORMATS"
-
-  dnl Test whether we have UUID JasPer hack
-
-  AC_CHECK_LIB(jasper,jp2_encode_uuid,HAVE_JASPER_UUID=yes,HAVE_JASPER_UUID=no,)
-
-  if test "$HAVE_JASPER_UUID" = "yes" ; then
-    AC_MSG_NOTICE([hacked JasPer version found (JasPer UUID), GeoJP2 enabled.])
-    JASPER_FLAGS=-DHAVE_JASPER_UUID
-  else
-    AC_MSG_NOTICE([hacked JasPer version not found, GeoJP2 disabled.])
-  fi
-fi
-
-AC_SUBST([HAVE_JASPER],$HAVE_JASPER)
-AC_SUBST([JASPER_FLAGS],$JASPER_FLAGS)
-
-
 dnl ---------------------------------------------------------------------------
 dnl Select a OpenJPEG Library to use, or disable driver.
 dnl ---------------------------------------------------------------------------
@@ -3820,49 +3589,6 @@ if test "$HAVE_MRSID" != "no" ; then
 fi
 
 dnl ---------------------------------------------------------------------------
-dnl Select MrSID/MG4 Lidar library or disable driver.
-dnl ---------------------------------------------------------------------------
-
-MRSID_LIDAR_FLAGS=
-HAVE_MRSID_LIDAR=no
-
-AC_ARG_WITH(mrsid_lidar,[  --with-mrsid_lidar[=ARG]      Include MrSID/MG4 LiDAR support (ARG=path to LizardTech LiDAR SDK or no)],,)
-
-if test "x$with_mrsid_lidar" = "xno"  -o "x$with_mrsid_lidar" = "x" ; then
-  HAVE_MRSID_LIDAR=no
-  AC_MSG_NOTICE([MrSID/MG4 Lidar support disabled.])
-else
-  MRSID_LIDAR_BASE="$with_mrsid_lidar"
-
-  if test -r "$MRSID_LIDAR_BASE/include/lidar/Version.h" ; then
-    AC_MSG_RESULT([found LizardTech LiDAR SDK 1.1 or newer.])
-    HAVE_MRSID_LIDAR=yes
-  else
-    HAVE_MRSID_LIDAR=no
-    AC_MSG_RESULT([not found.])
-    AC_MSG_ERROR([  MrSID/MG4 Lidar requested, but components not found.])
-  fi
-
-  if test $HAVE_MRSID_LIDAR = yes ; then
-    if test -e "$MRSID_LIDAR_BASE/lib/liblti_lidar_dsdk.so" \
-         -o -e "$MRSID_LIDAR_BASE/lib/liblti_lidar_dsdk.dylib"; then
-      MRSID_LIDAR_LIBS="-L$MRSID_LIDAR_BASE/lib -llti_lidar_dsdk"
-      MRSID_LIDAR_INCLUDE="-I$MRSID_LIDAR_BASE/include"
-    else
-      MRSID_LIDAR_LIBS="-L$MRSID_LIDAR_BASE/lib/Release -llti_lidar_dsdk"
-      MRSID_LIDAR_INCLUDE="-I$MRSID_LIDAR_BASE/include"
-    fi
-  fi
-fi
-
-AC_SUBST(MRSID_LIDAR_INCLUDE,$MRSID_LIDAR_INCLUDE)
-AC_SUBST(MRSID_LIDAR_LIBS,$MRSID_LIDAR_LIBS)
-
-if test "$HAVE_MRSID_LIDAR" != "no" ; then
-  OPT_GDAL_FORMATS="mrsid_lidar $OPT_GDAL_FORMATS"
-fi
-
-dnl ---------------------------------------------------------------------------
 dnl Check if LuraTech library is available.
 dnl ---------------------------------------------------------------------------
 
@@ -4033,35 +3759,6 @@ fi
 AC_SUBST(HAVE_MYSQL,$HAVE_MYSQL)
 AC_SUBST(MYSQL_INC,$MYSQL_INC)
 AC_SUBST(MYSQL_LIB,$MYSQL_LIB)
-
-dnl ---------------------------------------------------------------------------
-dnl INGRES support.
-dnl ---------------------------------------------------------------------------
-
-AC_ARG_WITH(ingres,[  --with-ingres=ARG     Include Ingres (ARG=$II_SYSTEM)],,)
-
-AC_MSG_CHECKING([for Ingres])
-
-if test "$with_ingres" = "no" -o "x$with_ingres" = "x" ; then
-  HAVE_INGRES=no
-  II_SYSTEM=
-  INGRES_LIB=
-  INGRES_INC=
-  AC_MSG_RESULT([no])
-elif test "$with_ingres" = "yes" ; then
-  AC_MSG_ERROR([--with-ingres requires a path argument ($II_SYSTEM)])
-else
-  HAVE_INGRES=yes
-  II_SYSTEM=$with_ingres
-  INGRES_LIB="-L$II_SYSTEM/ingres/lib \
-	-liiapi.1 -lcompat.1 -lq.1 -lframe.1"
-  INGRES_INC=-I$II_SYSTEM/ingres/files
-fi
-
-AC_SUBST(HAVE_INGRES,$HAVE_INGRES)
-AC_SUBST(II_SYSTEM,$II_SYSTEM)
-AC_SUBST(INGRES_LIB,$INGRES_LIB)
-AC_SUBST(INGRES_INC,$INGRES_INC)
 
 dnl ---------------------------------------------------------------------------
 dnl Check for Xerces C++ Parser support.
@@ -5548,135 +5245,6 @@ AC_SUBST(TILEDB_SETTING,$TILEDB_SETTING)
 AC_SUBST(TILEDB_CFLAGS,$TILEDB_CFLAGS)
 
 dnl ---------------------------------------------------------------------------
-dnl MDB driver
-dnl ---------------------------------------------------------------------------
-
-AC_ARG_WITH(mdb,[  --with-mdb       Include MDB driver],,)
-
-AC_MSG_CHECKING([whether we should include MDB support])
-
-MDB_ENABLED=no
-JVM_LIB=""
-
-if test "$with_mdb" = "yes" ; then
-    if test "x$JAVA_INC" = "x"; then
-        AC_MSG_ERROR("--with-java must be specified.")
-    fi
-
-    AC_ARG_WITH(jvm-lib,          [  --with-jvm-lib=[ARG]        ARG is dlopen or points to Java libjvm path],,)
-
-    AC_ARG_WITH(jvm-lib-add-rpath,[  --with-jvm-lib-add-rpath    Add the libjvm path to the RPATH (no by default)],,)
-
-    if test "x$with_jvm_lib" = "xdlopen"; then
-        AC_DEFINE_UNQUOTED(JVM_LIB_DLOPEN, 1, [Define to 1 if libjvm.so should be dlopen'd])
-        JVM_LIB="-ldl"
-    elif test "x$with_jvm_lib" != "x"; then
-        if test -d "$with_jvm_lib"; then
-            saved_LDFLAGS="$LDFLAGS"
-            LDFLAGS="$LDFLAGS -L$with_jvm_lib"
-            if test "x$mac_java_fw" != "x"; then
-                AC_CHECK_FW_FUNC($mac_java_fw,JNI_CreateJavaVM,HAS_LIB_JVM=yes,HAS_LIB_JVM=no,)
-            else
-                AC_CHECK_LIB(jvm,JNI_CreateJavaVM,HAS_LIB_JVM=yes,HAS_LIB_JVM=no,)
-            fi
-            LDFLAGS="$saved_LDFLAGS"
-            if test "$HAS_LIB_JVM" = "yes"; then
-                JVM_LIB="-L$with_jvm_lib -ljvm"
-                if test "x$mac_java_fw" != "x"; then
-                    JVM_LIB="-framework $mac_java_fw"
-                fi
-                if test "x$with_jvm_lib_add_rpath" = "xyes"; then
-                    case "${host_os}" in
-                      darwin*)
-                          if test "x$mac_java_fw" = "x"; then
-                              JVM_LIB="-Wl,-rpath,$with_jvm_lib -L$with_jvm_lib -lazy-ljvm"
-                          fi
-                          ;;
-                      *)
-                          JVM_LIB="-Wl,-rpath=$with_jvm_lib $JVM_LIB"
-                          ;;
-                    esac
-                fi
-            else
-                AC_MSG_ERROR("--with-jvm-lib must point to a directory with a libjvm.")
-            fi
-        else
-            AC_MSG_ERROR("--with-jvm-lib must point to a directory.")
-        fi
-    elif test "x$JAVA_HOME" != "x"; then
-        TEST_DIR="$JAVA_HOME/jre/lib/amd64/server"
-        if test -d "$JAVA_HOME/jre/lib/server"; then
-            # Oracle Java install on Mac
-            TEST_DIR="$JAVA_HOME/jre/lib/server"
-        fi
-        if test "x$mac_java_fw" != "x"; then
-            # Mac default 1.6.0_x framework, TEST_DIR not used
-            TEST_DIR="$with_java"
-        fi
-        if test "x$JVM_LIB" = "x" -a -d "$TEST_DIR"; then
-            unset ac_cv_lib_jvm_JNI_CreateJavaVM
-            saved_LDFLAGS="$LDFLAGS"
-            LDFLAGS="$LDFLAGS -L$TEST_DIR"
-            if test "x$mac_java_fw" != "x"; then
-                AC_CHECK_FW_FUNC($mac_java_fw,JNI_CreateJavaVM,HAS_LIB_JVM=yes,HAS_LIB_JVM=no,)
-            else
-                AC_CHECK_LIB(jvm,JNI_CreateJavaVM,HAS_LIB_JVM=yes,HAS_LIB_JVM=no,)
-            fi
-            LDFLAGS="$saved_LDFLAGS"
-            if test "$HAS_LIB_JVM" = "yes"; then
-                JVM_LIB="-L$TEST_DIR -ljvm"
-                if test "x$mac_java_fw" != "x"; then
-                    JVM_LIB="-framework $mac_java_fw"
-                fi
-                if test "x$with_jvm_lib_add_rpath" = "xyes"; then
-                    case "${host_os}" in
-                      darwin*)
-                          if test "x$mac_java_fw" = "x"; then
-                              JVM_LIB="-Wl,-rpath,$TEST_DIR -L$TEST_DIR -lazy-ljvm"
-                          fi
-                          ;;
-                      *)
-                          JVM_LIB="-Wl,-rpath=$TEST_DIR $JVM_LIB"
-                          ;;
-                    esac
-                fi
-            fi
-        fi
-
-        TEST_DIR="$JAVA_HOME/jre/lib/i386/server"
-        if test "x$JVM_LIB" = "x" -a -d "$TEST_DIR"; then
-            unset ac_cv_lib_jvm_JNI_CreateJavaVM
-            saved_LDFLAGS="$LDFLAGS"
-            LDFLAGS="$LDFLAGS -L$TEST_DIR"
-            AC_CHECK_LIB(jvm,JNI_CreateJavaVM,HAS_LIB_JVM=yes,HAS_LIB_JVM=no,)
-            LDFLAGS="$saved_LDFLAGS"
-            if test "$HAS_LIB_JVM" = "yes"; then
-                JVM_LIB="-L$TEST_DIR -ljvm"
-                if test "x$with_jvm_lib_add_rpath" = "xyes"; then
-                    JVM_LIB="-Wl,-rpath=$TEST_DIR $JVM_LIB"
-                fi
-            fi
-        fi
-
-        if test "x$JVM_LIB" = "x"; then
-            AC_MSG_ERROR("--with-jvm-lib must be specified.")
-        fi
-    else
-        AC_MSG_ERROR("--with-jvm-lib must be specified.")
-    fi
-
-    MDB_ENABLED=yes
-    AC_MSG_RESULT([yes])
-
-else
-    AC_MSG_RESULT([no])
-fi
-
-AC_SUBST(MDB_ENABLED,$MDB_ENABLED)
-AC_SUBST(JVM_LIB,$JVM_LIB)
-
-
-dnl ---------------------------------------------------------------------------
 dnl Select Rasdaman or disable driver.
 dnl ---------------------------------------------------------------------------
 
@@ -6270,16 +5838,9 @@ LOC_MSG([  JXL support:               ${HAVE_JXL}])
 LOC_MSG([  HDFS support:              ${HDFS_ENABLED}])
 LOC_MSG([  HEIF support:              ${HAVE_HEIF}])
 LOC_MSG([  INFORMIX DataBlade support:${HAVE_IDB}])
-LOC_MSG([  Ingres support:            ${HAVE_INGRES}])
 LOC_MSG([  JP2Lura support:           ${HAVE_JP2LURA}])
 LOC_MSG([  JPEG 12 bit:               ${JPEG12_ENABLED}])
 LOC_MSG([  JPEG-in-TIFF 12 bit:       ${TIFF_JPEG12_ENABLED}])
-if test "x$HAVE_JASPER_UUID" != "x" ; then
-  LOC_MSG([  JPEG JasPer support:       ${HAVE_JASPER} (GeoJP2=${HAVE_JASPER_UUID})])
-else
-  LOC_MSG([  JPEG JasPer support:       ${HAVE_JASPER}])
-fi
-LOC_MSG([  JPEG-Lossless/CharLS:      ${HAVE_CHARLS}])
 LOC_MSG([  Kakadu support:            ${HAVE_KAKADU}])
 LOC_MSG([  Kea support:               ${HAVE_KEA}])
 LOC_MSG([  LERC support:              ${HAVE_LERC}])
@@ -6294,10 +5855,7 @@ LOC_MSG([  LIBTIFF support:           ${TIFF_SETTING} (BigTIFF=${HAVE_BIGTIFF})]
 LOC_MSG([  libxml2 support:           ${HAVE_LIBXML2}])
 LOC_MSG([  LIBZ support:              ${LIBZ_SETTING}])
 LOC_MSG([  LZ4 support:               ${HAVE_LZ4}])
-LOC_MSG([  MDB support:               ${MDB_ENABLED}])
 LOC_MSG([  MongoCXX v3 support:       ${MONGOCXXV3_ENABLED}])
-LOC_MSG([  MongoDB support:           ${MONGODB_ENABLED}])
-LOC_MSG([  MrSID/MG4 Lidar support:   ${HAVE_MRSID_LIDAR}])
 LOC_MSG([  MrSID support:             ${HAVE_MRSID}])
 LOC_MSG([  MSG support:               ${HAVE_MSG}])
 LOC_MSG([  MySQL support:             ${HAVE_MYSQL}])

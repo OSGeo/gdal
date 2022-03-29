@@ -239,7 +239,6 @@ endfunction ()
 
 define_find_package2(Crnlib crunch/crnlib.h crunch)
 define_find_package2(RASDAMAN rasdaman.hh raslib)
-define_find_package2(FME fmeobjects/cpp/issesion.h fme)
 
 if (WIN32)
   gdal_check_package(ODBC "Enable DB support through ODBC" CAN_DISABLE)
@@ -488,28 +487,6 @@ if (GDAL_USE_LIBKML)
   string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(LibKML COMPONENTS DOM ENGINE)\n")
 endif ()
 
-gdal_check_package(Jasper "Enable JPEG2000 support" CAN_DISABLE)
-if (HAVE_JASPER)
-  # Detect GeoJP2 UUID hack
-  include(CheckCSourceCompiles)
-  set(CMAKE_REQUIRED_QUIET "yes")
-  set(CMAKE_REQUIRED_LIBRARIES jasper)
-  check_c_source_compiles(
-    "#ifdef __cplusplus\nextern \"C\"\n#endif\n char jp2_encode_uuid ();int main () {return jp2_encode_uuid ();;return 0;}"
-    HAVE_JASPER_UUID)
-  unset(CMAKE_REQUIRED_QUIET)
-  unset(CMAKE_REQUIRED_LIBRARIES)
-  if (HAVE_JASPER_UUID)
-    message(STATUS "Jasper GeoJP2 UUID hack detected.")
-    if (TARGET JASPER::Jasper)
-      set_property(
-        TARGET JASPER::Jasper
-        APPEND
-        PROPERTY INTERFACE_COMPILE_DEFINITIONS "HAVE_JASPER_UUID")
-    endif ()
-  endif ()
-endif ()
-
 # CXX is only needed for KEA driver
 gdal_check_package(HDF5 "Enable HDF5" COMPONENTS "C" "CXX" CAN_DISABLE)
 
@@ -612,7 +589,6 @@ gdal_check_package(Blosc "Blosc compression" CAN_DISABLE)
 define_find_package2(JXL jxl/decode.h jxl PKGCONFIG_NAME libjxl)
 gdal_check_package(JXL "JPEG-XL compression (when used with internal libtiff)" CAN_DISABLE)
 
-gdal_check_package(CharLS "enable gdal_JPEGLS jpeg loss-less driver" CAN_DISABLE)
 # unused for now gdal_check_package(OpenMP "")
 gdal_check_package(Crnlib "enable gdal_DDS driver" CAN_DISABLE)
 gdal_check_package(IDB "enable ogr_IDB driver" CAN_DISABLE)
@@ -638,6 +614,13 @@ if (GDAL_USE_OPENJPEG)
   string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(OpenJPEG MODULE)\n")
 endif ()
 
+# FIXME: we should probably ultimately move the GRASS driver to an
+# external repository, due to GRASS depending on GDAL, hence the GRASS driver
+# can only be built as a plugin. Or at the very least we should only allow building
+# it as a plugin, and have a GDAL_USE_GRASS variable to control if libgrass should
+# be used (and change frmts/CMakeLists.txt and ogr/ogrsf_frmts/CMakeLists.txt
+# to use it instead of HAVE_GRASS)
+if( ALLOW_GRASS_DRIVER )
 # Only GRASS 7 is currently supported but we keep dual version support in cmake for possible future switch to GRASS 8.
 set(TMP_GRASS OFF)
 foreach (GRASS_SEARCH_VERSION 7)
@@ -664,6 +647,7 @@ else ()
       CACHE INTERNAL "HAVE_GRASS")
 endif ()
 unset(TMP_GRASS)
+endif ()
 
 gdal_check_package(HDFS "Enable Hadoop File System through native library" CAN_DISABLE)
 
@@ -693,7 +677,6 @@ option(GDAL_USE_PUBLICDECOMPWT
 # proprietary libraries KAKADU
 gdal_check_package(KDU "Enable KAKADU" CAN_DISABLE)
 gdal_check_package(LURATECH "Enable JP2Lura driver" CAN_DISABLE)
-# gdal_check_package(FME "FME")
 
 # bindings
 gdal_check_package(SWIG "Enable language bindings" ALWAYS_ON_WHEN_FOUND)

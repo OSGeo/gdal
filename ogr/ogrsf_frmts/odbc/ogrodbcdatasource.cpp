@@ -173,14 +173,12 @@ int OGRODBCDataSource::OpenMDB( GDALOpenInfo* poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Check if it is a PGeo, Geomedia or Walk MDB.                    */
+/*      Check if it is a PGeo MDB.                    */
 /* -------------------------------------------------------------------- */
     for ( const CPLString &osTableName : aosTableNames )
     {
         const CPLString osLCTableName(CPLString(osTableName).tolower());
-        if ( osLCTableName == "gdb_geomcolumns" // PGeo
-             || osLCTableName == "galiastable" // Geomedia
-             || osLCTableName == "walklayers" ) // Walk
+        if ( osLCTableName == "gdb_geomcolumns" /* PGeo */ )
             return FALSE;
     }
 
