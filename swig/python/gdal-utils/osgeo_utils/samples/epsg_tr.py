@@ -216,7 +216,7 @@ class EPSG_Table(GDALScript):
         return epsg_tr(**kwargs)
 
 
-def main(argv):
+def main(argv=sys.argv):
     return EPSG_Table().main(argv)
 
 

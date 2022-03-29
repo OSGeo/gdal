@@ -50,7 +50,7 @@ def doit(src_filename, dst_magnitude, dst_phase):
     return 0
 
 
-def main(argv):
+def main(argv=sys.argv):
     src_filename = 'complex.tif'
     dst_magnitude = 'magnitude.tif'
     dst_phase = 'phase.tif'

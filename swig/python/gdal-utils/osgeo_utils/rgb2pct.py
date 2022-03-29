@@ -169,7 +169,7 @@ class RGB2PCT(GDALScript):
         return rgb2pct(**kwargs)
 
 
-def main(argv):
+def main(argv=sys.argv):
     return RGB2PCT().main(argv)
 
 

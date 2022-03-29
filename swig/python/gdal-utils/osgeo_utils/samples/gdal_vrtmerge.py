@@ -187,7 +187,7 @@ def Usage():
     print('           | input_files]')
 
 
-def main(argv):
+def main(argv=sys.argv):
     names = []
     out_file = 'out.vrt'
 
