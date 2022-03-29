@@ -1761,9 +1761,6 @@ OGRErr OGRHanaTableLayer::StartTransaction()
 
 OGRErr OGRHanaTableLayer::CommitTransaction()
 {
-    if (!HasPendingFeatures())
-        return OGRERR_NONE;
-
     try
     {
         if (!deleteFeatureStmt_.isNull()
