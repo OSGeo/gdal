@@ -816,6 +816,50 @@ def test_vsiaz_fake_mkdir_rmdir():
     assert ret != 0
 
 ###############################################################################
+# Test Mkdir() / Rmdir() on a container
+
+
+def test_vsiaz_fake_mkdir_rmdir_container():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/azure/blob/myaccount/?comp=list', 200, {'Content-type': 'application/xml'},
+    """<?xml version="1.0" encoding="UTF-8"?>
+        <EnumerationResults ServiceEndpoint="https://myaccount.blob.core.windows.net">
+            <Containers/>
+        </EnumerationResults>
+        """)
+    handler.add('HEAD', "/azure/blob/myaccount/new_container", 400)
+    handler.add('PUT', "/azure/blob/myaccount/new_container?restype=container", 201)
+    with webserver.install_http_handler(handler):
+        ret = gdal.Mkdir('/vsiaz/new_container', 0o755)
+    assert ret == 0
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/azure/blob/myaccount/?comp=list', 200, {'Content-type': 'application/xml'},
+    """<?xml version="1.0" encoding="UTF-8"?>
+        <EnumerationResults ServiceEndpoint="https://myaccount.blob.core.windows.net">
+            <Containers><Container><Name>new_container</Name></Container></Containers>
+        </EnumerationResults>
+        """)
+    handler.add('GET', '/azure/blob/myaccount/new_container?comp=list&delimiter=%2F&maxresults=1&restype=container', 200, {'Content-type': 'application/xml'},
+    """"<?xml version="1.0" encoding="UTF-8"?>
+        <EnumerationResults>
+            <Prefix></Prefix>
+            <Blobs>
+            </Blobs>
+        </EnumerationResults>
+        """)
+    handler.add('DELETE', "/azure/blob/myaccount/new_container?restype=container", 202)
+    with webserver.install_http_handler(handler):
+        ret = gdal.Rmdir('/vsiaz/new_container')
+    assert ret == 0
+
+###############################################################################
 
 
 def test_vsiaz_fake_test_BlobEndpointInConnectionString():
@@ -1067,7 +1111,7 @@ def test_vsiaz_fake_sync_multithreaded_upload_chunk_size():
                 {'Content-type': 'application/xml'},
                 """<?xml version="1.0" encoding="UTF-8"?>
                     <EnumerationResults>
-                        <Prefix></Prefix>
+                        <Prefix>test/</Prefix>
                         <Blobs/>
                     </EnumerationResults>
                 """)
@@ -1077,6 +1121,14 @@ def test_vsiaz_fake_sync_multithreaded_upload_chunk_size():
                 """<?xml version="1.0" encoding="UTF-8"?>
                     <EnumerationResults>
                         <Prefix>test/</Prefix>
+                        <Blobs/>
+                    </EnumerationResults>
+                """)
+    handler.add('GET', '/azure/blob/myaccount/?comp=list', 200,
+                {'Content-type': 'application/xml'},
+                """<?xml version="1.0" encoding="UTF-8"?>
+                    <EnumerationResults>
+                        <Prefix></Prefix>
                         <Blobs/>
                     </EnumerationResults>
                 """)
@@ -1178,19 +1230,18 @@ def test_vsiaz_fake_sync_multithreaded_upload_single_file():
     gdal.FileFromMemBuffer('/vsimem/test/foo', 'foo\n')
 
     handler = webserver.SequentialHandler()
-    handler.add('HEAD', '/azure/blob/myaccount/test_bucket', 404)
-    handler.add('GET', '/azure/blob/myaccount/test_bucket?comp=list&delimiter=%2F&maxresults=1&restype=container', 200,
-            {'Content-type': 'application/xml'},
-            """<?xml version="1.0" encoding="UTF-8"?>
-                <EnumerationResults>
-                    <Prefix></Prefix>
-                    <Blobs>
-                        <BlobPrefix>
-                            <Name>something</Name>
-                        </BlobPrefix>
-                    </Blobs>
-                </EnumerationResults>
-            """)
+    handler.add('GET', '/azure/blob/myaccount/?comp=list', 200,
+                {'Content-type': 'application/xml'},
+                """<?xml version="1.0" encoding="UTF-8"?>
+                    <EnumerationResults>
+                        <Prefix></Prefix>
+                        <Containers>
+                            <Container>
+                                <Name>test_bucket</Name>
+                            </Container>
+                        </Containers>
+                    </EnumerationResults>
+                """)
     handler.add('HEAD', '/azure/blob/myaccount/test_bucket/foo', 404)
     handler.add('GET', '/azure/blob/myaccount/test_bucket?comp=list&delimiter=%2F&maxresults=1&prefix=foo%2F&restype=container', 200)
 
