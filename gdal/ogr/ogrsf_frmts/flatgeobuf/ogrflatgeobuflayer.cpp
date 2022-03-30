@@ -631,7 +631,7 @@ OGRErr OGRFlatGeobufLayer::readFeatureOffset(uint64_t index, uint64_t &featureOf
 
 OGRFeature *OGRFlatGeobufLayer::GetFeature(GIntBig nFeatureId)
 {
-    if (m_featuresCount == 0) {
+    if (m_indexNodeSize == 0) {
         return OGRLayer::GetFeature(nFeatureId);
     } else {
         if (static_cast<uint64_t>(nFeatureId) >= m_featuresCount) {
