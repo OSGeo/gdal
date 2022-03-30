@@ -3669,4 +3669,27 @@ namespace tut
         VSIUnlink("/vsimem/credentials.txt");
     }
 
+    // Test CPLRecodeFromWCharIconv() with 2 bytes/char source encoding
+    template<>
+    template<>
+    void object::test<55>()
+    {
+#ifdef CPL_RECODE_ICONV
+        int N = 2048;
+        wchar_t* pszIn = static_cast<wchar_t*>(CPLMalloc((N+1)*sizeof(wchar_t)));
+        for(int i=0;i<N;i++)
+            pszIn[i] = L'A';
+        pszIn[N] = L'\0';
+        char* pszExpected = static_cast<char*>(CPLMalloc(N+1));
+        for(int i=0;i<N;i++)
+            pszExpected[i] = 'A';
+        pszExpected[N] = '\0';
+        char* pszRet = CPLRecodeFromWChar(pszIn, CPL_ENC_UTF16, CPL_ENC_UTF8);
+        ensure_equals( memcmp(pszExpected, pszRet, N+1), 0 );
+        CPLFree(pszIn);
+        CPLFree(pszRet);
+        CPLFree(pszExpected);
+#endif
+    }
+
 } // namespace tut
