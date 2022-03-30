@@ -57,6 +57,10 @@ static void CPL_STDCALL myErrorHandler(CPLErr, CPLErrorNum, const char*)
     gbGotError = true;
 }
 
+// The tut framework has a default maximum number of tests per group of 50
+// Increase it as we're over that.
+#define MAX_NUMBER_OF_TESTS 100
+
 namespace tut
 {
 
@@ -73,7 +77,7 @@ namespace tut
     };
 
     // Register test group
-    typedef test_group<test_cpl_data> group;
+    typedef test_group<test_cpl_data, MAX_NUMBER_OF_TESTS> group;
     typedef group::object object;
     group test_cpl_group("CPL");
 
@@ -3525,4 +3529,49 @@ namespace tut
         CPLFree(pRawData);
         VSIFCloseL(fp);
     }
+    // Test bUnlinkAndSize on VSIGetMemFileBuffer
+    template<>
+    template<>
+    void object::test<51>()
+    {
+        VSILFILE *fp = VSIFOpenL("/vsimem/test_unlink_and_seize.tif", "wb");
+        VSIFWriteL("test", 5, 1, fp);
+        GByte *pRawData = VSIGetMemFileBuffer("/vsimem/test_unlink_and_seize.tif", nullptr, true);
+        ensure(EQUAL(reinterpret_cast<const char *>(pRawData), "test"));
+        ensure(VSIGetMemFileBuffer("/vsimem/test_unlink_and_seize.tif", nullptr, false) == nullptr);
+        ensure(VSIFOpenL("/vsimem/test_unlink_and_seize.tif", "r") == nullptr);
+        ensure(VSIFReadL(pRawData, 5, 1, fp) == 0);
+        ensure(VSIFWriteL(pRawData, 5, 1, fp) == 0);
+        ensure(VSIFSeekL(fp, 0, SEEK_END) == 0);
+        CPLFree(pRawData);
+        VSIFCloseL(fp);
+    }
+
+    // Test CPLRecodeFromWCharIconv() with 2 bytes/char source encoding
+    template<>
+    template<>
+    void object::test<55>()
+    {
+#ifdef CPL_RECODE_ICONV
+        int N = 2048;
+        wchar_t* pszIn = static_cast<wchar_t*>(CPLMalloc((N+1)*sizeof(wchar_t)));
+        for(int i=0;i<N;i++)
+            pszIn[i] = L'A';
+        pszIn[N] = L'\0';
+        char* pszExpected = static_cast<char*>(CPLMalloc(N+1));
+        for(int i=0;i<N;i++)
+            pszExpected[i] = 'A';
+        pszExpected[N] = '\0';
+        char* pszRet = CPLRecodeFromWChar(pszIn, CPL_ENC_UTF16, CPL_ENC_UTF8);
+        ensure_equals( memcmp(pszExpected, pszRet, N+1), 0 );
+        CPLFree(pszIn);
+        CPLFree(pszRet);
+        CPLFree(pszExpected);
+#endif
+    }
+
+    // WARNING: keep that line at bottom and read carefully:
+    // If the number of tests reaches 100, increase the MAX_NUMBER_OF_TESTS
+    // define at top of this file (and update this comment!)
+
 } // namespace tut
