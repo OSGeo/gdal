@@ -2178,10 +2178,10 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
 
             pfnGDALGridMethod = GDALGridNearestNeighbor;
             bCreateQuadTree = (nPoints > 100 &&
-                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfAngle == 0.0 &&
-                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius1 ==
-                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius2 &&
-                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius1 != 0.0);
+                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfAngle == 0.0 &&
+                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius1 ==
+                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius2 &&
+                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius1 != 0.0);
             break;
         }
         case GGA_MetricMinimum:
