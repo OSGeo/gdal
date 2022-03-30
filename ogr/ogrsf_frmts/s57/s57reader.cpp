@@ -2685,11 +2685,28 @@ bool S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
         = poKey->GetFieldDefn()->FindSubfieldDefn( "RVER" );
     if( poRVER_SFD == nullptr )
         return false;
+    if( !EQUAL(poRVER_SFD->GetFormat(),"b12") )
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "Subfield RVER of record %s has format=%s, instead of expected b12",
+                 pszKey, poRVER_SFD->GetFormat());
+        return false;
+    }
 
-    unsigned char *pnRVER
-        = (unsigned char *) poKey->GetSubfieldData( poRVER_SFD, nullptr, 0 );
 
-    *pnRVER += 1;
+/* -------------------------------------------------------------------- */
+/*      Update target RVER                                              */
+/* -------------------------------------------------------------------- */
+    unsigned short nRVER;
+    int nBytesRemaining = 0;
+    unsigned char *pachRVER = reinterpret_cast<unsigned char *>(
+            const_cast<char *>(poKey->GetSubfieldData( poRVER_SFD, &nBytesRemaining, 0 )));
+    CPLAssert( nBytesRemaining >= static_cast<int>(sizeof(nRVER)) );
+    memcpy(&nRVER, pachRVER, sizeof(nRVER));
+    CPL_LSBPTR16(&nRVER);
+    nRVER += 1;
+    CPL_LSBPTR16(&nRVER);
+    memcpy(pachRVER, &nRVER, sizeof(nRVER));
 
 /* -------------------------------------------------------------------- */
 /*      Check for, and apply record record to spatial record pointer    */
