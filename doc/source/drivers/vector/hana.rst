@@ -127,7 +127,7 @@ Layer Creation Options
 -  **FID**: Specifies the name of the FID column to create. The default
    value is 'OGR_FID'.
 -  **FID64**: Specifies whether to create the FID column with BIGINT
-   type to handle 64bit wide ids. The default value is 'OGR_FID'.
+   type to handle 64bit wide ids. The default value is NO.
 -  **COLUMN_TYPES**: Specifies a comma-separated list of strings in 
    the format field_name=hana_field_type that define column types.
 -  **BATCH_SIZE**: Specifies the number of bytes to be written per one
