@@ -552,8 +552,12 @@ GDALGridMovingAverage( const void *poOptionsIn, GUInt32 nPoints,
         static_cast<const GDALGridMovingAverageOptions *>(poOptionsIn);
     // Pre-compute search ellipse parameters.
     const double dfRadius1 = poOptions->dfRadius1 * poOptions->dfRadius1;
+    double dfSearchRadius = poOptions->dfRadius1;
     const double dfRadius2 = poOptions->dfRadius2 * poOptions->dfRadius2;
     const double dfR12 = dfRadius1 * dfRadius2;
+
+    GDALGridExtraParameters* psExtraParams = static_cast<GDALGridExtraParameters *>(hExtraParamsIn);
+    CPLQuadTree* phQuadTree = psExtraParams->hQuadTree;
 
     // Compute coefficients for coordinate system rotation.
     const double dfAngle = TO_RADIANS * poOptions->dfAngle;
@@ -565,28 +569,58 @@ GDALGridMovingAverage( const void *poOptionsIn, GUInt32 nPoints,
     double dfAccumulator = 0.0;
 
     GUInt32 n = 0;  // Used after for.
-
-    for( GUInt32 i = 0; i < nPoints; i++ )
+    if( phQuadTree != nullptr)
     {
-        double dfRX = padfX[i] - dfXPoint;
-        double dfRY = padfY[i] - dfYPoint;
-
-        if( bRotated )
+        CPLRectObj sAoi;
+        sAoi.minx = dfXPoint - dfSearchRadius;
+        sAoi.miny = dfYPoint - dfSearchRadius;
+        sAoi.maxx = dfXPoint + dfSearchRadius;
+        sAoi.maxy = dfYPoint + dfSearchRadius;
+        int nFeatureCount = 0;
+        GDALGridPoint** papsPoints = reinterpret_cast<GDALGridPoint **>(
+                CPLQuadTreeSearch(phQuadTree, &sAoi, &nFeatureCount) );
+        if( nFeatureCount != 0 )
         {
-            const double dfRXRotated = dfRX * dfCoeff1 + dfRY * dfCoeff2;
-            const double dfRYRotated = dfRY * dfCoeff1 - dfRX * dfCoeff2;
+            for( int k = 0; k < nFeatureCount; k++ )
+            {
+                const int i = papsPoints[k]->i;
+                const double dfRX = padfX[i] - dfXPoint;
+                const double dfRY = padfY[i] - dfYPoint;
 
-            dfRX = dfRXRotated;
-            dfRY = dfRYRotated;
+                if( dfRadius2 * dfRX * dfRX + dfRadius1 * dfRY * dfRY <= dfR12 )
+                {
+                    dfAccumulator += padfZ[i];
+                    n++;
+                }
+            }
         }
-
-        // Is this point located inside the search ellipse?
-        if( dfRadius2 * dfRX * dfRX + dfRadius1 * dfRY * dfRY <= dfR12 )
+        CPLFree(papsPoints);
+    }
+    else{
+        for( GUInt32 i = 0; i < nPoints; i++ )
         {
-            dfAccumulator += padfZ[i];
-            n++;
+            double dfRX = padfX[i] - dfXPoint;
+            double dfRY = padfY[i] - dfYPoint;
+
+            if( bRotated )
+            {
+                const double dfRXRotated = dfRX * dfCoeff1 + dfRY * dfCoeff2;
+                const double dfRYRotated = dfRY * dfCoeff1 - dfRX * dfCoeff2;
+
+                dfRX = dfRXRotated;
+                dfRY = dfRYRotated;
+            }
+
+            // Is this point located inside the search ellipse?
+            if( dfRadius2 * dfRX * dfRX + dfRadius1 * dfRY * dfRY <= dfR12 )
+            {
+                dfAccumulator += padfZ[i];
+                n++;
+            }
         }
     }
+
+    
 
     if( n < poOptions->nMinPoints || n == 0 )
     {
