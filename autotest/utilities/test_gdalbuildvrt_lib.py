@@ -422,6 +422,61 @@ def test_gdalbuildvrt_lib_bandList():
 
 
 ###############################################################################
+
+
+def test_gdalbuildvrt_lib_bandList_subset_of_bands_from_multiple_band_source():
+
+    src_ds = gdal.GetDriverByName('MEM').Create('src', 1, 1, 3)
+    src_ds.SetGeoTransform([2,0.001,0,49,0,-0.001])
+    src_ds.GetRasterBand(1).Fill(10)
+    src_ds.GetRasterBand(2).Fill(20)
+    src_ds.GetRasterBand(3).Fill(30)
+
+    vrt_ds = gdal.BuildVRT('', [src_ds], bandList = [1])
+    assert struct.unpack('B', vrt_ds.GetRasterBand(1).ReadRaster())[0] == 10
+
+    vrt_ds = gdal.BuildVRT('', [src_ds], bandList = [2])
+    assert struct.unpack('B', vrt_ds.GetRasterBand(1).ReadRaster())[0] == 20
+
+    vrt_ds = gdal.BuildVRT('', [src_ds], bandList = [3])
+    assert struct.unpack('B', vrt_ds.GetRasterBand(1).ReadRaster())[0] == 30
+
+    vrt_ds = gdal.BuildVRT('', [src_ds], bandList = [1, 2])
+    assert struct.unpack('B', vrt_ds.GetRasterBand(1).ReadRaster())[0] == 10
+    assert struct.unpack('B', vrt_ds.GetRasterBand(2).ReadRaster())[0] == 20
+
+    vrt_ds = gdal.BuildVRT('', [src_ds], bandList = [1, 3])
+    assert struct.unpack('B', vrt_ds.GetRasterBand(1).ReadRaster())[0] == 10
+    assert struct.unpack('B', vrt_ds.GetRasterBand(2).ReadRaster())[0] == 30
+
+    vrt_ds = gdal.BuildVRT('', [src_ds], bandList = [1, 2, 3])
+    assert struct.unpack('B', vrt_ds.GetRasterBand(1).ReadRaster())[0] == 10
+    assert struct.unpack('B', vrt_ds.GetRasterBand(2).ReadRaster())[0] == 20
+    assert struct.unpack('B', vrt_ds.GetRasterBand(3).ReadRaster())[0] == 30
+
+    vrt_ds = gdal.BuildVRT('', [src_ds], bandList = [1, 3, 2])
+    assert struct.unpack('B', vrt_ds.GetRasterBand(1).ReadRaster())[0] == 10
+    assert struct.unpack('B', vrt_ds.GetRasterBand(2).ReadRaster())[0] == 30
+    assert struct.unpack('B', vrt_ds.GetRasterBand(3).ReadRaster())[0] == 20
+
+    vrt_ds = gdal.BuildVRT('', [src_ds], bandList = [2, 1])
+    assert struct.unpack('B', vrt_ds.GetRasterBand(1).ReadRaster())[0] == 20
+    assert struct.unpack('B', vrt_ds.GetRasterBand(2).ReadRaster())[0] == 10
+
+    vrt_ds = gdal.BuildVRT('', [src_ds], bandList = [2, 3])
+    assert struct.unpack('B', vrt_ds.GetRasterBand(1).ReadRaster())[0] == 20
+    assert struct.unpack('B', vrt_ds.GetRasterBand(2).ReadRaster())[0] == 30
+
+    vrt_ds = gdal.BuildVRT('', [src_ds], bandList = [3, 1])
+    assert struct.unpack('B', vrt_ds.GetRasterBand(1).ReadRaster())[0] == 30
+    assert struct.unpack('B', vrt_ds.GetRasterBand(2).ReadRaster())[0] == 10
+
+    vrt_ds = gdal.BuildVRT('', [src_ds], bandList = [3, 2])
+    assert struct.unpack('B', vrt_ds.GetRasterBand(1).ReadRaster())[0] == 30
+    assert struct.unpack('B', vrt_ds.GetRasterBand(2).ReadRaster())[0] == 20
+
+
+###############################################################################
 def test_gdalbuildvrt_lib_warnings_and_custom_error_handler():
 
     class GdalErrorHandler(object):
