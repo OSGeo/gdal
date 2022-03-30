@@ -1,10 +1,35 @@
 # CMake4GDAL project is distributed under MIT license. See accompanying file LICENSE.txt.
+# Modified by Mi Zhang, LuoJiaNET Development and Research Group, Wuhan University, 2022
+
 cmake_minimum_required(VERSION 3.9...3.23)
 
 project(gdal LANGUAGES C CXX)
 include(CTest)
 
 set(GDAL_LIB_TARGET_NAME GDAL)
+
+###############################################################################
+# Generate setup.cfg
+###############################################################################
+if (WIN32)
+    set(GDAL_COMPILER mingw32)
+elseif(UNIX OR APPLE)
+    set(GDAL_COMPILER unix)
+else ()
+    message(FATAL_ERROR
+            "Python build_ext compiler inference is only supported on Win, Unix or Apple.")
+endif()
+message("Python build_ext compiler is inferred as '${GDAL_COMPILER}'.")
+
+if(NOT EXISTS ${CMAKE_SOURCE_DIR}/swig/python/setup.cfg)
+	configure_file(${CMAKE_SOURCE_DIR}/swig/python/setup.cfg.in
+			${CMAKE_SOURCE_DIR}/swig/python/setup.cfg)
+endif()
+
+if(NOT EXISTS ${CMAKE_BINARY_DIR}/swig/python/setup.cfg)
+	configure_file(${CMAKE_SOURCE_DIR}/swig/python/setup.cfg.in
+			${CMAKE_BINARY_DIR}/swig/python/setup.cfg)
+endif()
 
 #
 # setup cmake modules paths

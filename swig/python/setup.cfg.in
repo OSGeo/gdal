@@ -1,0 +1,9 @@
+[flake8]
+max-line-length=100
+
+[build_ext]
+gdal_config=../../apps/gdal-config
+compiler = ${GDAL_COMPILER}
+
+[build]
+compiler = ${GDAL_COMPILER}

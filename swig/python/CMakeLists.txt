@@ -3,7 +3,7 @@
 # SWIG generates wrapper sources
 option(SWIG_REGENERATE_PYTHON "Generate python source with SWIG." OFF)
 
-file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/osgeo/")
+file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/osgeo")
 set(GDAL_PYTHON_CSOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/extensions/")
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/extensions/")
 set(GDAL_PYTHON_CSOURCES
@@ -80,9 +80,14 @@ else ()
       ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gnm.py
       ${CMAKE_CURRENT_BINARY_DIR}/osgeo/ogr.py
       ${CMAKE_CURRENT_BINARY_DIR}/osgeo/osr.py)
-  file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/osgeo/" OSGEO_BINARY_DIR)
-  file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/osgeo/" OSGEO_SOURCE_DIR)
-  if (Python_NumPy_FOUND)
+  if(WIN32)
+    file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}\\osgeo\\" OSGEO_BINARY_DIR)
+    file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}\\osgeo\\" OSGEO_SOURCE_DIR)
+  else()
+    file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}\\osgeo\\" OSGEO_BINARY_DIR)
+    file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}\\osgeo\\" OSGEO_SOURCE_DIR)
+  endif()
+    if (Python_NumPy_FOUND)
     list(APPEND GDAL_PYTHON_CSOURCES "${GDAL_PYTHON_CSOURCE_DIR}/gdal_array_wrap.cpp")
     list(APPEND GDAL_PYTHON_CSOURCES_SRC "${CMAKE_CURRENT_SOURCE_DIR}/extensions/gdal_array_wrap.cpp")
     list(APPEND GDAL_PYTHON_PYSOURCES "${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdal_array.py")
@@ -117,6 +122,7 @@ endif ()
 
 function (symlink_or_copy source destination)
 
+  message(STATUS "Copying content of ${source} to ${destination}")
   if (CMAKE_VERSION VERSION_GREATER 3.14)
     file(
       CREATE_LINK ${source} ${destination}
@@ -140,6 +146,7 @@ endfunction ()
 if (NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
     symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/gdal-utils ${CMAKE_CURRENT_BINARY_DIR}/gdal-utils)
 endif()
+# message(FATAL_ERROR "CMAKE_CURRENT_BINARY_DIR: ${CMAKE_CURRENT_BINARY_DIR}")
 symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/gdal-utils/osgeo_utils ${CMAKE_CURRENT_BINARY_DIR}/osgeo_utils)
 
 get_property(_isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
@@ -262,13 +269,23 @@ if (Python_Interpreter_FOUND)
   if (DEFINED GDAL_PYTHON_INSTALL_PREFIX)
     file(TO_NATIVE_PATH "${GDAL_PYTHON_INSTALL_PREFIX}" NATIVE_GDAL_PYTHON_INSTALL_PREFIX)
     if (WIN32)
-      string(REPLACE "\\" "\\\\" NATIVE_GDAL_PYTHON_INSTALL_PREFIX "${NATIVE_GDAL_PYTHON_INSTALL_PREFIX}")
+	  if(NOT MINGW)
+		  string(REPLACE "\\" "\\\\" NATIVE_GDAL_PYTHON_INSTALL_PREFIX "${NATIVE_GDAL_PYTHON_INSTALL_PREFIX}")
+	  else()
+	      string(REPLACE "\/" "\\" NATIVE_GDAL_PYTHON_INSTALL_PREFIX "${NATIVE_GDAL_PYTHON_INSTALL_PREFIX}")
+	  endif()
+	  # message(FATAL_ERROR "NATIVE_GDAL_PYTHON_INSTALL_PREFIX: ${NATIVE_GDAL_PYTHON_INSTALL_PREFIX}")
     endif ()
     set(INSTALL_ARGS "${INSTALL_ARGS} \"--prefix=${NATIVE_GDAL_PYTHON_INSTALL_PREFIX}\"")
   elseif (CMAKE_INSTALL_PREFIX)
     file(TO_NATIVE_PATH "${CMAKE_INSTALL_PREFIX}" NATIVE_CMAKE_INSTALL_PREFIX)
     if (WIN32)
-      string(REPLACE "\\" "\\\\" NATIVE_CMAKE_INSTALL_PREFIX "${NATIVE_CMAKE_INSTALL_PREFIX}")
+	  if(NOT MINGW)
+		  string(REPLACE "\\" "\\\\" NATIVE_CMAKE_INSTALL_PREFIX "${NATIVE_CMAKE_INSTALL_PREFIX}")
+	  else()
+	      string(REPLACE "\/" "\\" NATIVE_CMAKE_INSTALL_PREFIX "${NATIVE_CMAKE_INSTALL_PREFIX}")
+	  endif()
+	  # message(FATAL_ERROR "NATIVE_CMAKE_INSTALL_PREFIX: ${NATIVE_CMAKE_INSTALL_PREFIX}")
     endif ()
     if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
       file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/is_std_unix_layout.py
@@ -284,9 +301,12 @@ if (Python_Interpreter_FOUND)
       endif ()
     else ()
       set(INSTALL_ARGS "${INSTALL_ARGS} \"--prefix=${NATIVE_CMAKE_INSTALL_PREFIX}\"")
+	  # message(FATAL_ERROR "if (DEFINED NATIVE_CMAKE_INSTALL_PREFIX): ${NATIVE_CMAKE_INSTALL_PREFIX}")
     endif ()
   endif ()
-
+  
+  # message(FATAL_ERROR "INSTALL_ARGS: ${INSTALL_ARGS}")
+  
   # setuptools 60.0 defaults to SETUPTOOLS_USE_DISTUTILS=local, and thus Debian's specific --install-layout distutils
   # option cannot be used
   if (DEFINED GDAL_PYTHON_INSTALL_LAYOUT)
