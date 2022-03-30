@@ -1975,7 +1975,7 @@ def Usage():
     return 1
 
 
-def main(argv):
+def main(argv=sys.argv):
     filename = None
     log_msg = False
     warning_msg = True

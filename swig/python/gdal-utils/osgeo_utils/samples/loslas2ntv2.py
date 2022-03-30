@@ -156,7 +156,7 @@ def auto_noaa(options, loslas_list):
     return 0
 
 
-def main(argv):
+def main(argv=sys.argv):
     ntv2_filename = None
     loslas_list = []
     auto_flag = 0
@@ -271,4 +271,3 @@ def main(argv):
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv))
-

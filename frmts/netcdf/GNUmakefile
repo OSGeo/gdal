@@ -4,7 +4,6 @@ include ../../GDALmake.opt
 OBJ	=	netcdfdataset.o \
 		netcdflayer.o \
 		netcdfwriterconfig.o \
-		gmtdataset.o \
 		netcdfsg.o \
 		netcdflayersg.o \
 		netcdfsgwriterutil.o \

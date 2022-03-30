@@ -2849,10 +2849,8 @@ typedef void GDALMajorObjectShadow;
 
 #ifdef DEBUG
 typedef struct OGRSpatialReferenceHS OSRSpatialReferenceShadow;
-#ifndef SWIGPERL
 typedef struct OGRDriverHS OGRDriverShadow;
 typedef struct OGRDataSourceHS OGRDataSourceShadow;
-#endif
 typedef struct OGRLayerHS OGRLayerShadow;
 typedef struct OGRFeatureHS OGRFeatureShadow;
 typedef struct OGRFeatureDefnHS OGRFeatureDefnShadow;
@@ -2861,10 +2859,8 @@ typedef struct OGRCoordinateTransformationHS OSRCoordinateTransformationShadow;
 typedef struct OGRFieldDefnHS OGRFieldDefnShadow;
 #else
 typedef void OSRSpatialReferenceShadow;
-#ifndef SWIGPERL
 typedef void OGRDriverShadow;
 typedef void OGRDataSourceShadow;
-#endif
 typedef void OGRLayerShadow;
 typedef void OGRFeatureShadow;
 typedef void OGRFeatureDefnShadow;
@@ -4764,10 +4760,10 @@ SWIGINTERN void OGRGeomFieldDefnShadow_SetNullable(OGRGeomFieldDefnShadow *self,
   OGRGeometryShadow* CreateGeometryFromWkb( size_t len, char *bin_string,
                                             OSRSpatialReferenceShadow *reference=NULL ) {
     OGRGeometryH geom = NULL;
-    OGRErr err = OGR_G_CreateFromWkb( (unsigned char *) bin_string,
-                                      reference,
-                                      &geom,
-                                      len );
+    OGRErr err = OGR_G_CreateFromWkbEx( (unsigned char *) bin_string,
+                                        reference,
+                                        &geom,
+                                        len );
     if (err != 0 ) {
        CPLError(CE_Failure, err, "%s", OGRErrMessages(err));
        return NULL;
@@ -5034,14 +5030,14 @@ SWIGINTERN OGRErr OGRGeometryShadow_ExportToWkt(OGRGeometryShadow *self,char **a
 SWIGINTERN OGRErr OGRGeometryShadow_ExportToIsoWkt(OGRGeometryShadow *self,char **argout){
     return OGR_G_ExportToIsoWkt(self, argout);
   }
-SWIGINTERN OGRErr OGRGeometryShadow_ExportToWkb(OGRGeometryShadow *self,size_t *nLen,char **pBuf,OGRwkbByteOrder byte_order=wkbXDR){
+SWIGINTERN OGRErr OGRGeometryShadow_ExportToWkb(OGRGeometryShadow *self,size_t *nLen,char **pBuf,OGRwkbByteOrder byte_order=wkbNDR){
     *nLen = OGR_G_WkbSizeEx( self );
     *pBuf = (char *) VSI_MALLOC_VERBOSE( *nLen );
     if( *pBuf == NULL )
         return 6;
     return OGR_G_ExportToWkb(self, byte_order, (unsigned char*) *pBuf );
   }
-SWIGINTERN OGRErr OGRGeometryShadow_ExportToIsoWkb(OGRGeometryShadow *self,size_t *nLen,char **pBuf,OGRwkbByteOrder byte_order=wkbXDR){
+SWIGINTERN OGRErr OGRGeometryShadow_ExportToIsoWkb(OGRGeometryShadow *self,size_t *nLen,char **pBuf,OGRwkbByteOrder byte_order=wkbNDR){
     *nLen = OGR_G_WkbSizeEx( self );
     *pBuf = (char *) VSI_MALLOC_VERBOSE( *nLen );
     if( *pBuf == NULL )
@@ -5460,7 +5456,7 @@ SWIGINTERN double OGRFieldDomainShadow_GetMinAsDouble(OGRFieldDomainShadow *self
       if( eType == OFTInteger )
           return psVal->Integer;
       if( eType == OFTInteger64 )
-          return psVal->Integer64;
+          return (double)psVal->Integer64;
       if( eType == OFTReal )
           return psVal->Real;
       return CPLAtof("-inf");
@@ -5478,7 +5474,7 @@ SWIGINTERN double OGRFieldDomainShadow_GetMaxAsDouble(OGRFieldDomainShadow *self
       if( eType == OFTInteger )
           return psVal->Integer;
       if( eType == OFTInteger64 )
-          return psVal->Integer64;
+          return (double)psVal->Integer64;
       if( eType == OFTReal )
           return psVal->Real;
       return CPLAtof("inf");
@@ -9531,12 +9527,7 @@ SWIGINTERN PyObject *_wrap_Layer_GetFeature(PyObject *SWIGUNUSEDPARM(self), PyOb
   }
   arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
   {
-    PY_LONG_LONG val;
-    if ( !PyArg_Parse(swig_obj[1],"L",&val) ) {
-      PyErr_SetString(PyExc_TypeError, "not an integer");
-      SWIG_fail;
-    }
-    arg2 = (GIntBig)val;
+    arg2 = (GIntBig)PyLong_AsLongLong(swig_obj[1]);
   }
   {
     if ( bUseExceptions ) {
@@ -9621,12 +9612,7 @@ SWIGINTERN PyObject *_wrap_Layer_SetNextByIndex(PyObject *SWIGUNUSEDPARM(self), 
   }
   arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
   {
-    PY_LONG_LONG val;
-    if ( !PyArg_Parse(swig_obj[1],"L",&val) ) {
-      PyErr_SetString(PyExc_TypeError, "not an integer");
-      SWIG_fail;
-    }
-    arg2 = (GIntBig)val;
+    arg2 = (GIntBig)PyLong_AsLongLong(swig_obj[1]);
   }
   {
     if ( bUseExceptions ) {
@@ -9824,12 +9810,7 @@ SWIGINTERN PyObject *_wrap_Layer_DeleteFeature(PyObject *SWIGUNUSEDPARM(self), P
   }
   arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
   {
-    PY_LONG_LONG val;
-    if ( !PyArg_Parse(swig_obj[1],"L",&val) ) {
-      PyErr_SetString(PyExc_TypeError, "not an integer");
-      SWIG_fail;
-    }
-    arg2 = (GIntBig)val;
+    arg2 = (GIntBig)PyLong_AsLongLong(swig_obj[1]);
   }
   {
     if ( bUseExceptions ) {
@@ -10018,9 +9999,7 @@ SWIGINTERN PyObject *_wrap_Layer_GetFeatureCount(PyObject *SWIGUNUSEDPARM(self),
 #endif
   }
   {
-    char szTmp[32];
-    sprintf(szTmp, CPL_FRMT_GIB, result);
-    resultobj = PyLong_FromString(szTmp, NULL, 10);
+    resultobj = PyLong_FromLongLong(result);
   }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
@@ -10948,9 +10927,7 @@ SWIGINTERN PyObject *_wrap_Layer_GetFeaturesRead(PyObject *SWIGUNUSEDPARM(self),
 #endif
   }
   {
-    char szTmp[32];
-    sprintf(szTmp, CPL_FRMT_GIB, result);
-    resultobj = PyLong_FromString(szTmp, NULL, 10);
+    resultobj = PyLong_FromLongLong(result);
   }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
@@ -13964,9 +13941,7 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsInteger64__SWIG_0(PyObject *SWIGUNU
 #endif
   }
   {
-    char szTmp[32];
-    sprintf(szTmp, CPL_FRMT_GIB, result);
-    resultobj = PyLong_FromString(szTmp, NULL, 10);
+    resultobj = PyLong_FromLongLong(result);
   }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
@@ -14018,9 +13993,7 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsInteger64__SWIG_1(PyObject *SWIGUNU
 #endif
   }
   {
-    char szTmp[32];
-    sprintf(szTmp, CPL_FRMT_GIB, result);
-    resultobj = PyLong_FromString(szTmp, NULL, 10);
+    resultobj = PyLong_FromLongLong(result);
   }
   {
     /* %typemap(freearg) (const char *utf8_path) */
@@ -15869,9 +15842,7 @@ SWIGINTERN PyObject *_wrap_Feature_GetFID(PyObject *SWIGUNUSEDPARM(self), PyObje
 #endif
   }
   {
-    char szTmp[32];
-    sprintf(szTmp, CPL_FRMT_GIB, result);
-    resultobj = PyLong_FromString(szTmp, NULL, 10);
+    resultobj = PyLong_FromLongLong(result);
   }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
@@ -15896,12 +15867,7 @@ SWIGINTERN PyObject *_wrap_Feature_SetFID(PyObject *SWIGUNUSEDPARM(self), PyObje
   }
   arg1 = reinterpret_cast< OGRFeatureShadow * >(argp1);
   {
-    PY_LONG_LONG val;
-    if ( !PyArg_Parse(swig_obj[1],"L",&val) ) {
-      PyErr_SetString(PyExc_TypeError, "not an integer");
-      SWIG_fail;
-    }
-    arg2 = (GIntBig)val;
+    arg2 = (GIntBig)PyLong_AsLongLong(swig_obj[1]);
   }
   {
     if ( bUseExceptions ) {
@@ -16467,12 +16433,7 @@ SWIGINTERN PyObject *_wrap_Feature_SetFieldInteger64(PyObject *SWIGUNUSEDPARM(se
   } 
   arg2 = static_cast< int >(val2);
   {
-    PY_LONG_LONG val;
-    if ( !PyArg_Parse(swig_obj[2],"L",&val) ) {
-      PyErr_SetString(PyExc_TypeError, "not an integer");
-      SWIG_fail;
-    }
-    arg3 = (GIntBig)val;
+    arg3 = (GIntBig)PyLong_AsLongLong(swig_obj[2]);
   }
   {
     if ( bUseExceptions ) {
@@ -22411,7 +22372,7 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToWkb(PyObject *SWIGUNUSEDPARM(self), 
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   size_t *arg2 = (size_t *) 0 ;
   char **arg3 = (char **) 0 ;
-  OGRwkbByteOrder arg4 = (OGRwkbByteOrder) wkbXDR ;
+  OGRwkbByteOrder arg4 = (OGRwkbByteOrder) wkbNDR ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   size_t nLen2 = 0 ;
@@ -22513,7 +22474,7 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToIsoWkb(PyObject *SWIGUNUSEDPARM(self
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   size_t *arg2 = (size_t *) 0 ;
   char **arg3 = (char **) 0 ;
-  OGRwkbByteOrder arg4 = (OGRwkbByteOrder) wkbXDR ;
+  OGRwkbByteOrder arg4 = (OGRwkbByteOrder) wkbNDR ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   size_t nLen2 = 0 ;
@@ -34397,7 +34358,7 @@ static PyMethodDef SwigMethods[] = {
 		"GDAL 2.0 \n"
 		""},
 	 { "Geometry_ExportToWkb", (PyCFunction)(void(*)(void))_wrap_Geometry_ExportToWkb, METH_VARARGS|METH_KEYWORDS, "\n"
-		"Geometry_ExportToWkb(Geometry self, OGRwkbByteOrder byte_order=wkbXDR) -> OGRErr\n"
+		"Geometry_ExportToWkb(Geometry self, OGRwkbByteOrder byte_order=wkbNDR) -> OGRErr\n"
 		"OGRErr\n"
 		"OGR_G_ExportToWkb(OGRGeometryH hGeom, OGRwkbByteOrder eOrder, unsigned\n"
 		"char *pabyDstBuffer)\n"
@@ -34430,7 +34391,7 @@ static PyMethodDef SwigMethods[] = {
 		"Currently OGRERR_NONE is always returned. \n"
 		""},
 	 { "Geometry_ExportToIsoWkb", (PyCFunction)(void(*)(void))_wrap_Geometry_ExportToIsoWkb, METH_VARARGS|METH_KEYWORDS, "\n"
-		"Geometry_ExportToIsoWkb(Geometry self, OGRwkbByteOrder byte_order=wkbXDR) -> OGRErr\n"
+		"Geometry_ExportToIsoWkb(Geometry self, OGRwkbByteOrder byte_order=wkbNDR) -> OGRErr\n"
 		"OGRErr\n"
 		"OGR_G_ExportToIsoWkb(OGRGeometryH hGeom, OGRwkbByteOrder eOrder,\n"
 		"unsigned char *pabyDstBuffer)\n"

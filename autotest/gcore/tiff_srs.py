@@ -88,7 +88,9 @@ def test_srs_write_compd_cs():
 
     gdal.SetConfigOption('GTIFF_REPORT_COMPD_CS', 'YES')
     ds = gdal.Open('/vsimem/tiff_srs_compd_cs.tif')
+    gdal.ErrorReset()
     wkt = ds.GetProjectionRef()
+    assert gdal.GetLastErrorMsg() == ''
     gdal.SetConfigOption('GTIFF_REPORT_COMPD_CS', None)
     sr2 = osr.SpatialReference()
     sr2.SetFromUserInput(wkt)
@@ -909,3 +911,88 @@ def test_tiff_srs_read_invalid_GeogAngularUnitSizeGeoKey():
         ds.GetSpatialRef()
     assert gdal.GetLastErrorMsg() != ''
 
+
+def test_tiff_srs_read_inconsistent_invflattening():
+    # That file has GeogSemiMinorAxisGeoKey / GeogInvFlatteningGeoKey values
+    # which are inconsistent with the ones from the ellipsoid of the datum
+    ds = gdal.Open('data/gtiff/inconsistent_invflattening.tif')
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        srs = ds.GetSpatialRef()
+    assert gdal.GetLastErrorMsg() != ''
+    assert srs.GetAuthorityCode(None) == '28992'
+    assert srs.GetAuthorityCode('GEOGCS') == '4289'
+    assert srs.GetInvFlattening() == pytest.approx(299.1528131, abs=1e-7) #  wrong value w.r.t Bessel 1841 official definition
+
+    ds = gdal.Open('data/gtiff/inconsistent_invflattening.tif')
+    gdal.ErrorReset()
+    with gdaltest.config_option('GTIFF_SRS_SOURCE', 'GEOKEYS'):
+        srs = ds.GetSpatialRef()
+    assert gdal.GetLastErrorMsg() == ''
+    assert srs.GetAuthorityCode(None) is None
+    assert srs.GetAuthorityCode('GEOGCS') is None
+    assert srs.GetInvFlattening() == pytest.approx(299.1528131, abs=1e-7) #  wrong value w.r.t Bessel 1841 official definition
+
+    ds = gdal.Open('data/gtiff/inconsistent_invflattening.tif')
+    gdal.ErrorReset()
+    with gdaltest.config_option('GTIFF_SRS_SOURCE', 'EPSG'):
+        srs = ds.GetSpatialRef()
+    assert gdal.GetLastErrorMsg() == ''
+    assert srs.GetAuthorityCode(None) == '28992'
+    assert srs.GetAuthorityCode('GEOGCS') == '4289'
+    assert srs.GetInvFlattening() == pytest.approx(299.1528128, abs=1e-7) #  Bessel 1841 official definition
+
+
+def test_tiff_srs_dynamic_geodetic_crs():
+
+    if osr.GetPROJVersionMajor() < 8:
+        pytest.skip()
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(8999) # ITRF2008
+    ds = gdal.GetDriverByName('GTiff').Create(
+        '/vsimem/test_tiff_srs_dynamic_geodetic_crs.tif', 1, 1)
+    ds.SetSpatialRef(srs)
+    ds = None
+    ds = gdal.Open('/vsimem/test_tiff_srs_dynamic_geodetic_crs.tif')
+    gdal.ErrorReset()
+    srs = ds.GetSpatialRef()
+    assert gdal.GetLastErrorMsg() == '', srs.ExportToWkt(['FORMAT=WKT2_2019'])
+    assert srs.GetAuthorityCode(None) == '8999'
+    ds = None
+    gdal.Unlink('/vsimem/test_tiff_srs_dynamic_geodetic_crs.tif')
+
+
+@pytest.mark.parametrize('geotiff_version', ['1.0', '1.1'])
+def test_tiff_srs_geographic_crs_3D(geotiff_version):
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4959) # NZGD2000 3D
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/test_tiff_srs_geographic_crs_3D.tif', 1, 1,
+        options = ['GEOTIFF_VERSION=' + geotiff_version])
+    ds.SetSpatialRef(srs)
+    ds = None
+    ds = gdal.Open('/vsimem/test_tiff_srs_geographic_crs_3D.tif')
+    gdal.ErrorReset()
+    srs = ds.GetSpatialRef()
+    assert gdal.GetLastErrorMsg() == '', srs.ExportToWkt(['FORMAT=WKT2_2019'])
+    if geotiff_version == '1.1':
+        assert srs.GetAuthorityCode(None) == '4959'
+    ds = None
+    gdal.Unlink('/vsimem/test_tiff_srs_geographic_crs_3D.tif')
+
+
+def test_tiff_srs_datum_name_with_space():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4312) # MGI with datum name = 'Militar-Geographische Institut""
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/test_tiff_srs_datum_name_with_space.tif', 1, 1)
+    ds.SetSpatialRef(srs)
+    ds = None
+    ds = gdal.Open('/vsimem/test_tiff_srs_datum_name_with_space.tif')
+    gdal.ErrorReset()
+    srs = ds.GetSpatialRef()
+    assert gdal.GetLastErrorMsg() == '', srs.ExportToWkt(['FORMAT=WKT2_2019'])
+    assert srs.GetAuthorityCode(None) == '4312'
+    ds = None
+    gdal.Unlink('/vsimem/test_tiff_srs_datum_name_with_space.tif')

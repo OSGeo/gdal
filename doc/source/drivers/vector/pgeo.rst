@@ -76,10 +76,6 @@ Coded and range field domains are supported.
 How to use PGeo driver with unixODBC and MDB Tools (on Unix and Linux)
 ----------------------------------------------------------------------
 
-The :ref:`MDB <vector.mdb>` driver is an
-alternate way of reading ESRI Personal GeoDatabase .mdb files without
-requiring unixODBC and MDB Tools
-
 This article gives step-by-step explanation of how to use OGR with
 unixODBC package and how to access Personal Geodatabase with PGeo
 driver. See also `GDAL wiki for other
@@ -93,10 +89,10 @@ Prerequisites
 #. Install `unixODBC <http://www.unixodbc.org>`__ >= 2.2.11
 #. Install MDB Tools. The official upstream of MDB Tools is maintained
    at `https://github.com/mdbtools/mdbtools <https://github.com/mdbtools/mdbtools>`__
-   Version 0.9.4 or later is recommended for best compatibility with the PGeo driver. 
-   With the latest version no additional configuration (the followings) is required on Debian Linux and 
+   Version 0.9.4 or later is recommended for best compatibility with the PGeo driver.
+   With the latest version no additional configuration (the followings) is required on Debian Linux and
    :bash:`ogrinfo sample.mdb` works fine.
-   
+
 
 (On Ubuntu : sudo apt-get install unixodbc libmdbodbc)
 
@@ -243,8 +239,3 @@ Resources
 -  `About ESRI
    Geodatabase <http://www.esri.com/software/arcgis/geodatabase/index.html>`__
 -  `MDB Tools project home <https://github.com/mdbtools/mdbtools>`__
-
-See also
---------
-
--  :ref:`MDB <vector.mdb>` driver page

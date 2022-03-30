@@ -52,7 +52,7 @@ def Usage():
     return -1
 
 
-def main(argv):
+def main(argv=sys.argv):
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
         return -1

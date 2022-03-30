@@ -155,6 +155,46 @@ def test_gdalbuildvrt_lib_mem_sources():
     scenario_1()
     scenario_2()
 
+
+###############################################################################
+# Test BuildVRT() with sources that can't be opened by name, in separate mode
+
+def test_gdalbuildvrt_lib_mem_sources_separate():
+
+    def create_sources():
+        src1_ds = gdal.GetDriverByName('MEM').Create('i_have_a_name_but_nobody_can_open_me_through_it', 1, 1)
+        src1_ds.SetGeoTransform([2,1,0,49,0,-1])
+        src1_ds.GetRasterBand(1).Fill(100)
+
+        src2_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+        src2_ds.SetGeoTransform([2,1,0,49,0,-1])
+        src2_ds.GetRasterBand(1).Fill(200)
+
+        return src1_ds, src2_ds
+
+    def scenario_1():
+        src1_ds, src2_ds = create_sources()
+        vrt_ds = gdal.BuildVRT('', [src1_ds, src2_ds], options = '-separate')
+        vals = struct.unpack('B' * 2, vrt_ds.ReadRaster())
+        assert vals == (100, 200)
+
+        vrt_of_vrt_ds = gdal.BuildVRT('', [vrt_ds])
+        vals = struct.unpack('B' * 2, vrt_of_vrt_ds.ReadRaster())
+        assert vals == (100, 200)
+
+    # Alternate scenario where the Python objects of sources and intermediate
+    # VRT are no longer alive when the VRT of VRT is accessed
+    def scenario_2():
+        def get_vrt_of_vrt():
+            src1_ds, src2_ds = create_sources()
+            return gdal.BuildVRT('', [ gdal.BuildVRT('', [src1_ds, src2_ds], options = '-separate') ])
+        vrt_of_vrt_ds = get_vrt_of_vrt()
+        vals = struct.unpack('B' * 2, vrt_of_vrt_ds.ReadRaster())
+        assert vals == (100, 200)
+
+    scenario_1()
+    scenario_2()
+
 ###############################################################################
 # Test BuildVRT() with virtual overviews
 
@@ -347,7 +387,7 @@ def test_gdalbuildvrt_lib_bandList():
     src_ds.GetRasterBand(1).Fill(255)
     src_ds.GetRasterBand(2).Fill(0)
 
-    vrt_ds = gdal.BuildVRT('', [src_ds], bandList = [2, 1, 2])
+    vrt_ds = gdal.BuildVRT('', [src_ds], bandList = [2, 1] * 100)
     assert vrt_ds.GetRasterBand(1).Checksum() == 0
     assert vrt_ds.GetRasterBand(2).Checksum() != 0
     assert vrt_ds.GetRasterBand(3).Checksum() == 0

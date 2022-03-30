@@ -316,7 +316,7 @@ def gdal_cp(argv, progress=None):
     return gdal_cp_single(srcfile, targetfile, progress)
 
 
-def main(argv):
+def main(argv=sys.argv):
     version_num = int(gdal.VersionInfo('VERSION_NUM'))
     if version_num < 1800:
         print('ERROR: Python bindings of GDAL 1.8.0 or later required')

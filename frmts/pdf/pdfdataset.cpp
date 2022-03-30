@@ -1306,7 +1306,7 @@ int UnloadPdfiumDocumentPage(TPdfiumDocumentStruct** doc, TPdfiumPageStruct** pa
 /*                             GetOption()                              */
 /************************************************************************/
 
-const char* PDFDataset::GetOption(char** papszOpenOptions,
+const char* PDFDataset::GetOption(char** papszOpenOptionsIn,
                                   const char* pszOptionName,
                                   const char* pszDefaultVal)
 {
@@ -1321,7 +1321,7 @@ const char* PDFDataset::GetOption(char** papszOpenOptions,
     {
         if( EQUAL(CPLGetXMLValue( psIter, "name", "" ), pszOptionName) )
         {
-            const char* pszVal = CSLFetchNameValue(papszOpenOptions, pszOptionName);
+            const char* pszVal = CSLFetchNameValue(papszOpenOptionsIn, pszOptionName);
             if( pszVal != nullptr )
             {
                 CPLDestroyXMLNode(psNode);
@@ -1410,26 +1410,25 @@ public:
 
     virtual void SetBaseClip(const FX_RECT& rect) override { m_poParent->SetBaseClip(rect); }
 
-    virtual bool SetClip_PathFill(const CFX_Path* pPath,
+    virtual bool SetClip_PathFill(const CFX_Path& path,
                                 const CFX_Matrix* pObject2Device,
                                 const CFX_FillRenderOptions& fill_options) override
     {
         if( !bEnableVector && !bTemporaryEnableVectorForTextStroking )
             return true;
-        return m_poParent->SetClip_PathFill(pPath, pObject2Device, fill_options);
+        return m_poParent->SetClip_PathFill(path, pObject2Device, fill_options);
     }
 
-    virtual bool     SetClip_PathStroke(const CFX_Path* pPath,
+    virtual bool     SetClip_PathStroke(const CFX_Path& path,
                                   const CFX_Matrix* pObject2Device,
-                                  const CFX_GraphStateData* pGraphState
-                                      ) override
+                                  const CFX_GraphStateData* pGraphState) override
     {
         if( !bEnableVector && !bTemporaryEnableVectorForTextStroking )
             return true;
-        return m_poParent->SetClip_PathStroke(pPath, pObject2Device, pGraphState);
+        return m_poParent->SetClip_PathStroke(path, pObject2Device, pGraphState);
     }
 
-    virtual bool DrawPath(const CFX_Path* pPath,
+    virtual bool DrawPath(const CFX_Path& path,
                         const CFX_Matrix* pObject2Device,
                         const CFX_GraphStateData* pGraphState,
                         uint32_t fill_color,
@@ -1439,7 +1438,7 @@ public:
     {
         if( !bEnableVector && !bTemporaryEnableVectorForTextStroking )
             return true;
-        return m_poParent->DrawPath(pPath, pObject2Device, pGraphState ,
+        return m_poParent->DrawPath(path, pObject2Device, pGraphState ,
                                     fill_color, stroke_color, fill_options,
                                     blend_type);
     }
@@ -1528,8 +1527,7 @@ public:
         return m_poParent->ContinueDIBits(handle, pPause);
     }
 
-    virtual bool DrawDeviceText(int nChars,
-                              const TextCharPos* pCharPos,
+    virtual bool DrawDeviceText(pdfium::span<const TextCharPos> pCharPos,
                               CFX_Font* pFont,
                               const CFX_Matrix& mtObject2Device,
                               float font_size,
@@ -1544,7 +1542,7 @@ public:
             if( bTemporaryEnableVectorForTextStroking )
                 return FALSE; // this is the default behavior of the parent
             bTemporaryEnableVectorForTextStroking = true;
-            bool bRet = m_pDevice->DrawNormalText(nChars, pCharPos,
+            bool bRet = m_pDevice->DrawNormalText(pCharPos,
                                                      pFont,
                                                      font_size, mtObject2Device,
                                                      color, options);
@@ -1676,9 +1674,12 @@ void myRenderPageImpl(PDFDataset* poDS,
     pContext->m_pAnnots = std::move(pOwnedList);
     bool bPrinting =
         pContext->m_pDevice->GetDeviceType() != DeviceType::kDisplay;
+
+    // TODO(https://crbug.com/pdfium/993) - maybe pass true here.
+    const bool bShowWidget = false;
     pList->DisplayAnnots(pPage, pContext->m_pDevice.get(),
                          pContext->m_pContext.get(), bPrinting, matrix,
-                         false, nullptr);
+                         bShowWidget);
   }
 
   pContext->m_pRenderer = std::make_unique<CPDF_ProgressiveRenderer>(
@@ -2306,7 +2307,6 @@ PDFDataset::PDFDataset( PDFDataset* poParentDSIn, int nXSize, int nYSize ) :
 #endif
     poCatalogObject(nullptr),
     bUseOCG(FALSE),
-    papszOpenOptions(nullptr),
     bHasLoadedLayers(FALSE),
     nLayers(0),
     papoLayers(nullptr),
@@ -2561,7 +2561,6 @@ PDFDataset::~PDFDataset()
     }
     CPLFree(pszWKT);
     pszWKT = nullptr;
-    CSLDestroy(papszOpenOptions);
 
     CleanupIntermediateResources();
 
@@ -3602,7 +3601,7 @@ void PDFDataset::FindLayersPoppler()
         }
     }
 
-    oMDMD.SetMetadata(osLayerList.List(), "LAYERS");
+    oMDMD_PDF.SetMetadata(osLayerList.List(), "LAYERS");
 }
 
 /************************************************************************/
@@ -3866,7 +3865,7 @@ void PDFDataset::FindLayersPdfium()
     }
 #endif
 
-    oMDMD.SetMetadata(osLayerList.List(), "LAYERS");
+    oMDMD_PDF.SetMetadata(osLayerList.List(), "LAYERS");
 }
 
 /************************************************************************/
@@ -6257,7 +6256,11 @@ int PDFDataset::ParseVP(GDALPDFObject* poVP, double dfMediaBoxWidth, double dfMe
 /* -------------------------------------------------------------------- */
 /*      Find the largest BBox                                           */
 /* -------------------------------------------------------------------- */
+    const char* pszNeatlineToSelect =
+        GetOption(papszOpenOptions, "NEATLINE", "Map Layers");
+
     int iLargest = 0;
+    int iRequestedVP = -1;
     double dfLargestArea = 0;
 
     for(i=0;i<nLength;i++)
@@ -6291,6 +6294,16 @@ int PDFDataset::ParseVP(GDALPDFObject* poVP, double dfMediaBoxWidth, double dfMe
         if( !EQUAL(poSubtype->GetName(), "GEO") )
         {
             continue;
+        }
+
+        GDALPDFObject* poName = poVPEltDict->Get("Name");
+        if( poName != nullptr &&
+            poName->GetType() == PDFObjectType_String )
+        {
+            CPLDebug("PDF", "Name = %s", poName->GetString().c_str());
+            if( EQUAL(poName->GetString().c_str(), pszNeatlineToSelect) ) {
+                iRequestedVP = i;
+            }
         }
 
         GDALPDFObject* poBBox = poVPEltDict->Get("BBox");
@@ -6328,7 +6341,15 @@ int PDFDataset::ParseVP(GDALPDFObject* poVP, double dfMediaBoxWidth, double dfMe
         CPLDebug("PDF", "Largest BBox in VP array is element %d", iLargest);
     }
 
-    GDALPDFObject* poVPElt = poVPArray->Get(iLargest);
+    GDALPDFObject* poVPElt = nullptr;
+
+    if (iRequestedVP > -1) {
+        CPLDebug("PDF", "Requested NEATLINE BBox in VP array is element %d", iRequestedVP);
+        poVPElt = poVPArray->Get(iRequestedVP);
+    } else {
+        poVPElt = poVPArray->Get(iLargest);
+    }
+
     if (poVPElt == nullptr || poVPElt->GetType() != PDFObjectType_Dictionary)
     {
         return FALSE;
@@ -6830,7 +6851,7 @@ char      **PDFDataset::GetMetadata( const char * pszDomain )
 {
     if( pszDomain != nullptr && EQUAL(pszDomain, "EMBEDDED_METADATA") )
     {
-        char** papszRet = oMDMD.GetMetadata(pszDomain);
+        char** papszRet = oMDMD_PDF.GetMetadata(pszDomain);
         if( papszRet )
             return papszRet;
 
@@ -6851,9 +6872,9 @@ char      **PDFDataset::GetMetadata( const char * pszDomain )
 
         char* apszMetadata[2] = { nullptr, nullptr };
         apszMetadata[0] = poStream->GetBytes();
-        oMDMD.SetMetadata(apszMetadata, pszDomain);
+        oMDMD_PDF.SetMetadata(apszMetadata, pszDomain);
         VSIFree(apszMetadata[0]);
-        return oMDMD.GetMetadata(pszDomain);
+        return oMDMD_PDF.GetMetadata(pszDomain);
     }
     if( pszDomain == nullptr || EQUAL(pszDomain, "") )
     {
@@ -6866,18 +6887,18 @@ char      **PDFDataset::GetMetadata( const char * pszDomain )
             const char* pszValue = CPLParseNameValue(*papszIter, &pszKey);
             if( pszKey && pszValue )
             {
-                if( oMDMD.GetMetadataItem( pszKey, pszDomain ) == nullptr )
-                    oMDMD.SetMetadataItem( pszKey, pszValue, pszDomain );
+                if( oMDMD_PDF.GetMetadataItem( pszKey, pszDomain ) == nullptr )
+                    oMDMD_PDF.SetMetadataItem( pszKey, pszValue, pszDomain );
             }
             CPLFree(pszKey);
         }
-        return oMDMD.GetMetadata(pszDomain);
+        return oMDMD_PDF.GetMetadata(pszDomain);
     }
     if( EQUAL(pszDomain, "LAYERS") ||
         EQUAL(pszDomain, "xml:XMP") ||
         EQUAL(pszDomain, "SUBDATASETS") )
     {
-        return oMDMD.GetMetadata(pszDomain);
+        return oMDMD_PDF.GetMetadata(pszDomain);
     }
     return GDALPamDataset::GetMetadata(pszDomain);
 }
@@ -6892,7 +6913,7 @@ CPLErr      PDFDataset::SetMetadata( char ** papszMetadata,
     if (pszDomain == nullptr || EQUAL(pszDomain, ""))
     {
         char** papszMetadataDup = CSLDuplicate(papszMetadata);
-        oMDMD.SetMetadata(nullptr, pszDomain);
+        oMDMD_PDF.SetMetadata(nullptr, pszDomain);
 
         for(char** papszIter = papszMetadataDup;
             papszIter && *papszIter;
@@ -6912,11 +6933,11 @@ CPLErr      PDFDataset::SetMetadata( char ** papszMetadata,
     else if (EQUAL(pszDomain, "xml:XMP"))
     {
         bXMPDirty = TRUE;
-        return oMDMD.SetMetadata(papszMetadata, pszDomain);
+        return oMDMD_PDF.SetMetadata(papszMetadata, pszDomain);
     }
     else if (EQUAL(pszDomain, "SUBDATASETS") )
     {
-        return oMDMD.SetMetadata(papszMetadata, pszDomain);
+        return oMDMD_PDF.SetMetadata(papszMetadata, pszDomain);
     }
     else
     {
@@ -6956,7 +6977,7 @@ CPLErr      PDFDataset::SetMetadataItem( const char * pszName,
     {
         if (EQUAL(pszName, "NEATLINE"))
         {
-            const char* pszOldValue = oMDMD.GetMetadataItem(pszName, pszDomain);
+            const char* pszOldValue = oMDMD_PDF.GetMetadataItem(pszName, pszDomain);
             if( (pszValue == nullptr && pszOldValue != nullptr) ||
                 (pszValue != nullptr && pszOldValue == nullptr) ||
                 (pszValue != nullptr && pszOldValue != nullptr &&
@@ -6965,7 +6986,7 @@ CPLErr      PDFDataset::SetMetadataItem( const char * pszName,
                 bProjDirty = TRUE;
                 bNeatLineDirty = TRUE;
             }
-            return oMDMD.SetMetadataItem(pszName, pszValue, pszDomain);
+            return oMDMD_PDF.SetMetadataItem(pszName, pszValue, pszDomain);
         }
         else
         {
@@ -6979,21 +7000,21 @@ CPLErr      PDFDataset::SetMetadataItem( const char * pszName,
             {
                 if (pszValue == nullptr)
                     pszValue = "";
-                const char* pszOldValue = oMDMD.GetMetadataItem(pszName, pszDomain);
+                const char* pszOldValue = oMDMD_PDF.GetMetadataItem(pszName, pszDomain);
                 if( pszOldValue == nullptr ||
                     strcmp(pszValue, pszOldValue) != 0 )
                 {
                     bInfoDirty = TRUE;
                 }
-                return oMDMD.SetMetadataItem(pszName, pszValue, pszDomain);
+                return oMDMD_PDF.SetMetadataItem(pszName, pszValue, pszDomain);
             }
             else if( EQUAL(pszName, "DPI") )
             {
-                return oMDMD.SetMetadataItem(pszName, pszValue, pszDomain);
+                return oMDMD_PDF.SetMetadataItem(pszName, pszValue, pszDomain);
             }
             else
             {
-                oMDMD.SetMetadataItem(pszName, pszValue, pszDomain);
+                oMDMD_PDF.SetMetadataItem(pszName, pszValue, pszDomain);
                 return GDALPamDataset::SetMetadataItem(pszName, pszValue, pszDomain);
             }
         }
@@ -7001,11 +7022,11 @@ CPLErr      PDFDataset::SetMetadataItem( const char * pszName,
     else if (EQUAL(pszDomain, "xml:XMP"))
     {
         bXMPDirty = TRUE;
-        return oMDMD.SetMetadataItem(pszName, pszValue, pszDomain);
+        return oMDMD_PDF.SetMetadataItem(pszName, pszValue, pszDomain);
     }
     else if (EQUAL(pszDomain, "SUBDATASETS"))
     {
-        return oMDMD.SetMetadataItem(pszName, pszValue, pszDomain);
+        return oMDMD_PDF.SetMetadataItem(pszName, pszValue, pszDomain);
     }
     else
     {

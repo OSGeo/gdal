@@ -380,7 +380,7 @@ def GetLength(geometry):
     return cumulative
 
 
-def main(argv):
+def main(argv=sys.argv):
     import optparse
 
     options = []

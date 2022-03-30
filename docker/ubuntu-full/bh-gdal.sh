@@ -21,8 +21,6 @@ wget -q "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz" \
 (
     cd gdal
 
-    ./autogen.sh
-
     if test "${RSYNC_REMOTE:-}" != ""; then
         echo "Downloading cache..."
         rsync -ra "${RSYNC_REMOTE}/gdal/${GCC_ARCH}/" "$HOME/"
@@ -39,61 +37,27 @@ wget -q "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz" \
         ccache -M 1G
     fi
 
-    GDAL_CONFIG_OPTS=""
+    export CFLAGS="-DPROJ_RENAME_SYMBOLS -O2 -g"
+    export CXXFLAGS="-DPROJ_RENAME_SYMBOLS -DPROJ_INTERNAL_CPP_NAMESPACE -O2 -g"
 
-    if echo "$WITH_FILEGDB" | grep -Eiq "^(y(es)?|1|true)$" ; then
-      GDAL_CONFIG_OPTS="$GDAL_CONFIG_OPTS  --with-fgdb=/usr/local/FileGDB_API "
-      export LD_LIBRARY_PATH=/usr/local/FileGDB_API/lib
+    mkdir build
+    cd build
+    # GDAL_USE_TIFF_INTERNAL=ON to use JXL
+    export GDAL_CMAKE_EXTRA_OPTS=""
+    if test "${GCC_ARCH}" != "x86_64"; then
+        export GDAL_CMAKE_EXTRA_OPTS="${GDAL_CMAKE_EXTRA_OPTS} -DPDFIUM_INCLUDE_DIR="
     fi
-
-    if echo "$WITH_PDFIUM" | grep -Eiq "^(y(es)?|1|true)$" ; then
-      if test "${GCC_ARCH}" = "x86_64"; then
-        GDAL_CONFIG_OPTS="$GDAL_CONFIG_OPTS  --with-pdfium=/usr "
-      fi
-    fi
-
-    if test "${GCC_ARCH}" = "x86_64"; then
-      JAVA_ARCH=amd64;
-    elif test "${GCC_ARCH}" = "aarch64"; then
-      JAVA_ARCH=arm64;
-    else
-      echo "Unknown arch. FIXME!"
-    fi
-
-    if test "${WITH_HOST}" = ""; then
-      GDAL_CONFIG_OPTS="$GDAL_CONFIG_OPTS --with-dods-root=/usr "
-    fi
-
-    LDFLAGS="-L/build${PROJ_INSTALL_PREFIX-/usr/local}/lib -linternalproj" \
-    ./configure --prefix=/usr --sysconfdir=/etc "${WITH_HOST}" \
-    --without-libtool \
-    --with-hide-internal-symbols \
-    --with-jpeg12 \
-    --with-python \
-    --with-jxl \
-    --with-spatialite \
-    --with-mysql \
-    --with-liblzma \
-    --with-webp \
-    --with-proj="/build${PROJ_INSTALL_PREFIX-/usr/local}" \
-    --with-poppler \
-    --with-hdf5 \
-    --with-sosi \
-    --with-libtiff=internal --with-rename-internal-libtiff-symbols \
-    --with-geotiff=internal --with-rename-internal-libgeotiff-symbols \
-    --with-kea=/usr/bin/kea-config \
-    --with-mongocxxv3 \
-    --with-crypto \
-    --with-java=/usr/lib/jvm/java-"$JAVA_VERSION"-openjdk-"$JAVA_ARCH" --with-jvm-lib=/usr/lib/jvm/java-"$JAVA_VERSION"-openjdk-"$JAVA_ARCH"/lib/server --with-jvm-lib-add-rpath \
-    --with-mdb $GDAL_CONFIG_OPTS
+    cmake .. \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DPROJ_INCLUDE_DIR="/build${PROJ_INSTALL_PREFIX-/usr/local}/include" \
+        -DPROJ_LIBRARY="/build${PROJ_INSTALL_PREFIX-/usr/local}/lib/libinternalproj.so" \
+        -DGDAL_USE_TIFF_INTERNAL=ON \
+        -DGDAL_USE_GEOTIFF_INTERNAL=ON ${GDAL_CMAKE_EXTRA_OPTS}
 
     make "-j$(nproc)"
     make install DESTDIR="/build"
 
-    cd swig/java
-    make "-j$(nproc)"
-    make install DESTDIR="/build"
-    cd ../../
+    cd ..
 
     if [ -n "${RSYNC_REMOTE:-}" ]; then
         ccache -s

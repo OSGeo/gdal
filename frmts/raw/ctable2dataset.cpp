@@ -335,7 +335,7 @@ const char *CTable2Dataset::_GetProjectionRef()
 GDALDataset *CTable2Dataset::Create( const char * pszFilename,
                                      int nXSize,
                                      int nYSize,
-                                     CPL_UNUSED int nBands,
+                                     int /* nBandsIn */,
                                      GDALDataType eType,
                                      char ** papszOptions )
 {

@@ -5,7 +5,7 @@ include ../../../GDALmake.opt
 OBJ	=	ogrdodsdriver.o ogrdodsdatasource.o ogrdodslayer.o \
 		ogrdodssequencelayer.o ogrdodsfielddefn.o ogrdodsgrid.o
 
-CPPFLAGS	:=	-iquote ..  $(CPPFLAGS) $(DODS_INC) $(LIBXML2_INC) -DDO_NOT_USE_DEBUG_BOOL
+CPPFLAGS	:=	-iquote ..  $(CPPFLAGS) $(DODS_INC) $(LIBXML2_INC)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 

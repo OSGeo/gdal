@@ -94,9 +94,6 @@ ldconfig
   mv java.opt.bak java.opt
 )
 
-# Perl bindings
-(cd swig/perl && make generate && make)
-
 ccache -s
 
 #wget https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/mdb-sqlite/mdb-sqlite-1.0.2.tar.bz2

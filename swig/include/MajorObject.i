@@ -32,9 +32,7 @@
 /* We should probably define a new module for MajorObject, or merge gdal and ogr */
 /* modules */
 #ifndef FROM_PYTHON_OGR_I
-#ifdef PERL_CPAN_NAMESPACE
-%module "Geo::GDAL"
-#elif defined(SWIGCSHARP)
+#if defined(SWIGCSHARP)
 %module Gdal
 #elif defined(SWIGPYTHON)
 %module (package="osgeo") gdal

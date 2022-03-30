@@ -1,5 +1,5 @@
 # CMake4GDAL project is distributed under MIT license. See accompanying file LICENSE.txt.
-cmake_minimum_required(VERSION 3.10...3.23)
+cmake_minimum_required(VERSION 3.9...3.23)
 
 project(gdal LANGUAGES C CXX)
 include(CTest)
@@ -9,9 +9,7 @@ set(GDAL_LIB_TARGET_NAME GDAL)
 #
 # setup cmake modules paths
 include(cmake/modules/init.cmake)
-set(CMAKE_CONFIGURATION_TYPES
-    "Debug;Release"
-    CACHE STRING "Configs" FORCE)
+
 #
 # template files path
 set(GDAL_CMAKE_TEMPLATE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/template)
@@ -179,6 +177,10 @@ if (NOT Python_FOUND AND ${CMAKE_VERSION} VERSION_LESS "3.12.0")
   # use the deprecated method (since CMake 3.12), which works out of the box in that situation.
   find_package(PythonInterp)
   find_package(PythonLibs)
+  if (PYTHONINTERP_FOUND AND "${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}" VERSION_LESS "3.6")
+    set(PYTHONINTERP_FOUND FALSE)
+    set(PYTHONLIBS_FOUND FALSE)
+  endif()
   if (PYTHONINTERP_FOUND)
     set(Python_Interpreter_FOUND TRUE)
     set(Python_EXECUTABLE ${PYTHON_EXECUTABLE})

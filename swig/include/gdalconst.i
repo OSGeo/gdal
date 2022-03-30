@@ -32,9 +32,7 @@
 %nothread;
 #endif
 
-#ifdef PERL_CPAN_NAMESPACE
-%module "Geo::GDAL::Const"
-#elif defined(SWIGCSHARP)
+#if defined(SWIGCSHARP)
 %module GdalConst
 #else
 %module gdalconst
@@ -58,6 +56,8 @@
 %constant GDT_Int16     = GDT_Int16;
 %constant GDT_UInt32    = GDT_UInt32;
 %constant GDT_Int32     = GDT_Int32;
+%constant GDT_UInt64    = GDT_UInt64;
+%constant GDT_Int64     = GDT_Int64;
 %constant GDT_Float32   = GDT_Float32;
 %constant GDT_Float64   = GDT_Float64;
 %constant GDT_CInt16    = GDT_CInt16;

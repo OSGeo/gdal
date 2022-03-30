@@ -2,8 +2,14 @@ name: Lint CMakeLists.txt
 
 on: [push, pull_request]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   cmake-lint:
+    # Disabled because of https://github.com/OSGeo/gdal/pull/5326#issuecomment-1042617407
+    if: false
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -16,6 +22,5 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install cmake-format pyyaml
-    # Disabled because of https://github.com/OSGeo/gdal/pull/5326#issuecomment-1042617407
-    #- name: Check cmakelist
-    #  run: find . -name CMakeLists.txt |xargs cmake-format --check
+    - name: Check cmakelist
+      run: find . -name CMakeLists.txt |xargs cmake-format --check

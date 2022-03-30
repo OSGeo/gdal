@@ -122,7 +122,7 @@ endif ()
 
 if (GDAL_USE_ZSTD)
   target_compile_definitions(libtiff PRIVATE -DZSTD_SUPPORT)
-  gdal_target_link_libraries(libtiff PRIVATE ${ZSTD_LIBRARIES})
+  gdal_target_link_libraries(libtiff PRIVATE ${ZSTD_TARGET})
 endif ()
 
 if (GDAL_USE_WEBP)

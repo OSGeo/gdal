@@ -31,7 +31,6 @@
 #ifndef CPL_NASREADERP_H_INCLUDED
 #define CPL_NASREADERP_H_INCLUDED
 
-// Must be first for DEBUG_BOOL case
 #include "xercesc_headers.h"
 #include "ogr_xerces.h"
 

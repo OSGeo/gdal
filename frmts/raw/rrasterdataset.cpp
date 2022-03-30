@@ -85,7 +85,7 @@ class RRASTERDataset final: public RawDataset
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Create( const char *pszFilename,
-                                int nXSize, int nYSize, int nBands,
+                                int nXSize, int nYSize, int nBandsIn,
                                 GDALDataType eType, char **papszOptions );
     static GDALDataset *CreateCopy( const char * pszFilename,
                                       GDALDataset * poSrcDS,
@@ -1424,16 +1424,16 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
 /************************************************************************/
 
 GDALDataset *RRASTERDataset::Create( const char * pszFilename,
-                                  int nXSize, int nYSize, int nBands,
+                                  int nXSize, int nYSize, int nBandsIn,
                                   GDALDataType eType,
                                   char **papszOptions )
 
 {
     // Verify input options.
-    if (nBands <= 0)
+    if (nBandsIn <= 0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "RRASTER driver does not support %d bands.", nBands);
+                 "RRASTER driver does not support %d bands.", nBandsIn);
         return nullptr;
     }
 
@@ -1462,7 +1462,7 @@ GDALDataset *RRASTERDataset::Create( const char * pszFilename,
     CPLString osBandOrder(
         CSLFetchNameValueDef(papszOptions, "INTERLEAVE", "BIL"));
     if( !ComputeSpacings(osBandOrder,
-                         nXSize, nYSize, nBands, eType,
+                         nXSize, nYSize, nBandsIn, eType,
                          nPixelOffset, nLineOffset, nBandOffset) )
     {
         return nullptr;
@@ -1497,7 +1497,7 @@ GDALDataset *RRASTERDataset::Create( const char * pszFilename,
     const bool bByteSigned = (eType == GDT_Byte && pszPixelType &&
                         EQUAL(pszPixelType, "SIGNEDBYTE"));
 
-    for( int i=1; i<=nBands; i++ )
+    for( int i=1; i<=nBandsIn; i++ )
     {
         RRASTERRasterBand* poBand = new RRASTERRasterBand(
                                   poDS, i, fpImage, nBandOffset * (i-1),

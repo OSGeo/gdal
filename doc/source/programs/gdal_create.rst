@@ -23,7 +23,7 @@ Synopsis
        [-outsize xsize ysize]
        [-bands count]
        [-burn value]*
-       [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/
+       [-ot {Byte/Int16/UInt16/UInt32/Int32/UInt64/Int64/Float32/Float64/
              CInt16/CInt32/CFloat32/CFloat64}] [-strict]
        [-a_srs srs_def] [-a_ullr ulx uly lrx lry] [-a_nodata value]
        [-mo "META-TAG=VALUE"]* [-q]

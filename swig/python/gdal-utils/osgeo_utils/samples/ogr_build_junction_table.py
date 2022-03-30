@@ -148,7 +148,7 @@ def process_layer(ds, lyr_name, bAppend, bOverwrite):
     return ret
 
 
-def main(argv):
+def main(argv=sys.argv):
     argv = ogr.GeneralCmdLineProcessor(argv)
 
     ds_name = None
@@ -206,4 +206,3 @@ def main(argv):
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv))
-

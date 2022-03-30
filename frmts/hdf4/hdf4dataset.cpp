@@ -205,9 +205,9 @@ GDALDataType HDF4Dataset::GetDataType( int32 iNumType )
         case DFNT_UINT32:
             return GDT_UInt32;
         case DFNT_INT64:
-            return GDT_Unknown;
+            return GDT_Int64;
         case DFNT_UINT64:
-            return GDT_Unknown;
+            return GDT_UInt64;
         case DFNT_FLOAT32:
             return GDT_Float32;
         case DFNT_FLOAT64:

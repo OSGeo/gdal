@@ -33,6 +33,7 @@
 #include "commonutils.h"
 #include "ogr_spatialref.h"
 
+#include <cstdlib>
 #include <memory>
 #include <vector>
 
@@ -46,7 +47,7 @@ static void Usage()
             "       [-outsize xsize ysize]\n"
             "       [-bands count]\n"
             "       [-burn value]*\n"
-            "       [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/\n"
+            "       [-ot {Byte/Int16/UInt16/UInt32/Int32/UInt64/Int64/Float32/Float64/\n"
             "             CInt16/CInt32/CFloat32/CFloat64}] [-strict]\n"
             "       [-a_srs srs_def] [-a_ullr ulx uly lrx lry] [-a_nodata value]\n"
             "       [-mo \"META-TAG=VALUE\"]* [-q]\n"
@@ -108,7 +109,7 @@ MAIN_START(argc, argv)
     std::vector<double> adfBurnValues;
     bool bQuiet = false;
     int bSetNoData = false;
-    double dfNoDataValue = 0;
+    std::string osNoData;
     const char* pszInputFile = nullptr;
     for( int i = 1; argv != nullptr && argv[i] != nullptr; i++ )
     {
@@ -193,7 +194,7 @@ MAIN_START(argc, argv)
             bSetNoData = true;
             ++i;
             // coverity[tainted_data]
-            dfNoDataValue = CPLAtofM(argv[i]);
+            osNoData = argv[i];
         }
 
         else if( i < argc-1 && EQUAL(argv[i],"-burn") )
@@ -299,7 +300,24 @@ MAIN_START(argc, argv)
         }
         if( !bSetNoData && poInputDS->GetRasterCount() > 0 )
         {
-            dfNoDataValue = poInputDS->GetRasterBand(1)->GetNoDataValue(&bSetNoData);
+            if( eDT == GDT_Int64 )
+            {
+                const auto nNoDataValue = poInputDS->GetRasterBand(1)->GetNoDataValueAsInt64(&bSetNoData);
+                if( bSetNoData )
+                    osNoData = CPLSPrintf(CPL_FRMT_GIB, static_cast<GIntBig>(nNoDataValue));
+            }
+            else if( eDT == GDT_UInt64 )
+            {
+                const auto nNoDataValue = poInputDS->GetRasterBand(1)->GetNoDataValueAsUInt64(&bSetNoData);
+                if( bSetNoData )
+                    osNoData = CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(nNoDataValue));
+            }
+            else
+            {
+                const double dfNoDataValue = poInputDS->GetRasterBand(1)->GetNoDataValue(&bSetNoData);
+                if( bSetNoData )
+                    osNoData = CPLSPrintf("%.18g", dfNoDataValue);
+            }
         }
     }
 
@@ -404,8 +422,22 @@ MAIN_START(argc, argv)
     {
         for( int i = 0; i < nBands; i++ )
         {
-            GDALSetRasterNoDataValue(GDALGetRasterBand(hDS, i+1),
-                                     dfNoDataValue);
+            auto hBand = GDALGetRasterBand(hDS, i+1);
+            if( eDT == GDT_Int64 )
+            {
+                GDALSetRasterNoDataValueAsInt64(hBand,
+                    static_cast<int64_t>(std::strtoll(osNoData.c_str(), nullptr, 10)));
+            }
+            else if( eDT == GDT_UInt64 )
+            {
+                GDALSetRasterNoDataValueAsUInt64(hBand,
+                    static_cast<uint64_t>(std::strtoull(osNoData.c_str(), nullptr, 10)));
+            }
+            else
+            {
+                GDALSetRasterNoDataValue(hBand,
+                                         CPLAtofM(osNoData.c_str()));
+            }
         }
     }
     if( !adfBurnValues.empty() )

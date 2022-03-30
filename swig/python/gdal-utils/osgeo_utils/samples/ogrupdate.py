@@ -460,7 +460,7 @@ def ogrupdate_process(src_layer, dst_layer, matchfieldname=None, update_mode=DEF
     return ret
 
 
-def main(argv):
+def main(argv=sys.argv):
     argv = ogr.GeneralCmdLineProcessor(argv)
     return ogrupdate_analyse_args(argv[1:])
 

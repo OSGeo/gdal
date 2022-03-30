@@ -811,6 +811,16 @@ public:
     *val = GDALMDArrayGetNoDataValueAsDouble( self, hasval );
   }
 
+#ifdef SWIGPYTHON
+  void GetNoDataValueAsInt64( GIntBig *val, int *hasval ) {
+    *val = GDALMDArrayGetNoDataValueAsInt64( self, hasval );
+  }
+
+  void GetNoDataValueAsUInt64( GUIntBig *val, int *hasval ) {
+    *val = GDALMDArrayGetNoDataValueAsUInt64( self, hasval );
+  }
+#endif
+
   retStringAndCPLFree* GetNoDataValueAsString() {
     GDALExtendedDataTypeHS* selfType = GDALMDArrayGetDataType(self);
     const size_t typeClass = GDALExtendedDataTypeGetClass(selfType);
@@ -835,6 +845,16 @@ public:
   CPLErr SetNoDataValueDouble( double d ) {
     return GDALMDArraySetNoDataValueAsDouble( self, d ) ? CE_None : CE_Failure;
   }
+
+#ifdef SWIGPYTHON
+  CPLErr SetNoDataValueInt64( GIntBig v ) {
+    return GDALMDArraySetNoDataValueAsInt64( self, v ) ? CE_None : CE_Failure;
+  }
+
+  CPLErr SetNoDataValueUInt64( GUIntBig v ) {
+    return GDALMDArraySetNoDataValueAsUInt64( self, v ) ? CE_None : CE_Failure;
+  }
+#endif
 
   CPLErr SetNoDataValueString( const char* nodata ) {
     GDALExtendedDataTypeHS* selfType = GDALMDArrayGetDataType(self);

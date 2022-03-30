@@ -24,7 +24,7 @@ sudo apt-get install -y --allow-unauthenticated python-numpy libpng-dev libjpeg-
 # libpodofo-dev : FIXME incompatibilities at runtime with that version
 sudo apt-get install -y doxygen texlive-latex-base make python-dev g++
 #sudo apt-get install -y --allow-unauthenticated libsfcgal-dev
-sudo apt-get install -y --allow-unauthenticated fossil libgeotiff-dev libcharls-dev libopenjp2-7-dev libcairo2-dev
+sudo apt-get install -y --allow-unauthenticated fossil libgeotiff-dev libopenjp2-7-dev libcairo2-dev
 
 # MSSQL: client side
 curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -

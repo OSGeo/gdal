@@ -3809,7 +3809,8 @@ std::unique_ptr<TargetLayerInfo> SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
             poSrcLayer->GetFIDColumn() != nullptr &&
             !EQUAL(poSrcLayer->GetFIDColumn(), "") &&
             papszDestCreationOptions != nullptr &&
-            strstr(papszDestCreationOptions, "='FID'") != nullptr &&
+            (strstr(papszDestCreationOptions, "='FID'") != nullptr ||
+             strstr(papszDestCreationOptions, "=\"FID\"") != nullptr) &&
             CSLFetchNameValue(m_papszLCO, "FID") == nullptr )
         {
             papszLCOTemp = CSLSetNameValue(papszLCOTemp, "FID", poSrcLayer->GetFIDColumn());

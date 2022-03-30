@@ -102,6 +102,9 @@ function(add_gdal_driver)
     if (_DRIVER_PLUGIN_CAPABLE_IF)
         set(_COND ${_DRIVER_PLUGIN_CAPABLE_IF})
     endif()
+
+    get_target_property(PLUGIN_OUTPUT_DIR ${GDAL_LIB_TARGET_NAME} PLUGIN_OUTPUT_DIR)
+
     if (_DRIVER_PLUGIN_CAPABLE OR _DRIVER_PLUGIN_CAPABLE_IF)
         set(_INITIAL_VALUE OFF)
         if( GDAL_ENABLE_PLUGINS AND NOT _DRIVER_NO_DEPS )
@@ -113,27 +116,51 @@ function(add_gdal_driver)
             string(TOUPPER ${_DRIVER_DRIVER_NAME_OPTION} _KEY)
         endif()
         if( IS_OGR EQUAL -1) # raster
-            set(_enable_plugin_var GDAL_ENABLE_DRIVER_${_KEY})
-            if( NOT DEFINED ${_enable_plugin_var} )
-                message(FATAL_ERROR "Option ${_enable_plugin_var} does not exist")
-            endif()
-            cmake_dependent_option(${_enable_plugin_var}_PLUGIN "Set ON to build GDAL ${_KEY} driver as plugin"
-                                   ${_INITIAL_VALUE}
-                                   "${_enable_plugin_var};${_COND}" OFF)
-            if( ${_enable_plugin_var}_PLUGIN )
-                set(_DRIVER_PLUGIN_BUILD ON)
-            endif()
+            set(_plugin_var_prefix GDAL)
         else()
-            set(_enable_plugin_var OGR_ENABLE_DRIVER_${_KEY})
-            if( NOT DEFINED ${_enable_plugin_var} )
-                message(FATAL_ERROR "Option ${_enable_plugin_var} does not exist")
-            endif()
-            cmake_dependent_option(${_enable_plugin_var}_PLUGIN "Set ON to build OGR ${_KEY} driver as plugin"
-                                   ${_INITIAL_VALUE}
-                                   "${_enable_plugin_var};${_COND}" OFF)
-            if( ${_enable_plugin_var}_PLUGIN )
-                set(_DRIVER_PLUGIN_BUILD ON)
-            endif()
+            set(_plugin_var_prefix OGR)
+        endif()
+
+        set(_enable_plugin_var ${_plugin_var_prefix}_ENABLE_DRIVER_${_KEY})
+        if( NOT DEFINED ${_enable_plugin_var} )
+            message(FATAL_ERROR "Option ${_enable_plugin_var} does not exist")
+        endif()
+        cmake_dependent_option(${_enable_plugin_var}_PLUGIN "Set ON to build ${_plugin_var_prefix} ${_KEY} driver as plugin"
+                               ${_INITIAL_VALUE}
+                               "${_enable_plugin_var};${_COND}" OFF)
+
+        if( ${_enable_plugin_var}_PLUGIN )
+            set(_DRIVER_PLUGIN_BUILD ON)
+        endif()
+
+        # If the GDAL/OGR_ENABLE_DRIVER_xxx_PLUGIN value has changed from its previous
+        # value, and is now to OFF, make sure to clean stale plugins.
+        if( ${_enable_plugin_var}_PLUGIN_OLD_VAL AND
+            NOT ${_enable_plugin_var}_PLUGIN )
+            foreach (_build_type IN ITEMS "" "Release/" "Debug/")
+                set(_plugin_filename "${PLUGIN_OUTPUT_DIR}/${_build_type}${_DRIVER_TARGET}${CMAKE_SHARED_LIBRARY_SUFFIX}")
+                if( EXISTS "${_plugin_filename}" )
+                    message(STATUS "**Removing stale plugin**: ${_plugin_filename}")
+                    file(REMOVE "${_plugin_filename}")
+                endif()
+            endforeach()
+        endif()
+
+        # Save new value of GDAL/OGR_ENABLE_DRIVER_xxx_PLUGIN
+        set(${_enable_plugin_var}_PLUGIN_OLD_VAL ${${_enable_plugin_var}_PLUGIN} CACHE INTERNAL
+            "Old value of option ${_enable_plugin_var}_PLUGIN")
+
+        # If a driver is built in core libgdal, at install time, remove
+        # potentiall corresponding stale installed plugin.
+        if(NOT _DRIVER_PLUGIN_BUILD)
+            install(CODE
+                "
+                set(_tmp \"\$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/${INSTALL_PLUGIN_DIR}/${_DRIVER_TARGET}${CMAKE_SHARED_LIBRARY_SUFFIX}\")
+                if( EXISTS \"\${_tmp}\")
+                    message(STATUS \"**Removing stale plugin**: \${_tmp}\")
+                    file(REMOVE \"\${_tmp}\")
+                endif()
+                ")
         endif()
     endif()
 
@@ -141,7 +168,6 @@ function(add_gdal_driver)
     if (_DRIVER_PLUGIN_BUILD)
         # target become *.so *.dll or *.dylib
         add_library(${_DRIVER_TARGET} MODULE ${_DRIVER_SOURCES})
-        get_target_property(PLUGIN_OUTPUT_DIR ${GDAL_LIB_TARGET_NAME} PLUGIN_OUTPUT_DIR)
         set_target_properties(${_DRIVER_TARGET}
                               PROPERTIES
                               PREFIX ""

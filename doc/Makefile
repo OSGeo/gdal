@@ -2,8 +2,9 @@
 #
 
 # You can set these variables from the command line.
+PYTHON        ?= python3
 SPHINXOPTS    ?= --keep-going -j auto -W
-SPHINXBUILD   = sphinx-build
+SPHINXBUILD   ?= sphinx-build
 SOURCEDIR     = source
 BUILDDIR      = build
 
@@ -26,9 +27,9 @@ help:
 	touch .doxygen_up_to_date
 
 generated_rst_files: .doxygen_up_to_date
-	python3 "$(SOURCEDIR)/build_driver_summary.py" "$(SOURCEDIR)/drivers/raster" raster_driver_summary "$(SOURCEDIR)/drivers/raster/driver_summary.rst"
-	python3 "$(SOURCEDIR)/build_driver_summary.py" "$(SOURCEDIR)/drivers/vector" vector_driver_summary "$(SOURCEDIR)/drivers/vector/driver_summary.rst"
-	python3 "$(SOURCEDIR)/build_configoptions_index.py"  "$(SOURCEDIR)" "$(SOURCEDIR)/user/configoptions_index_generated.rst"
+	$(PYTHON) "$(SOURCEDIR)/build_driver_summary.py" "$(SOURCEDIR)/drivers/raster" raster_driver_summary "$(SOURCEDIR)/drivers/raster/driver_summary.rst"
+	$(PYTHON) "$(SOURCEDIR)/build_driver_summary.py" "$(SOURCEDIR)/drivers/vector" vector_driver_summary "$(SOURCEDIR)/drivers/vector/driver_summary.rst"
+	$(PYTHON) "$(SOURCEDIR)/build_configoptions_index.py"  "$(SOURCEDIR)" "$(SOURCEDIR)/user/configoptions_index_generated.rst"
 
 .PHONY: html latexpdf
 html: generated_rst_files

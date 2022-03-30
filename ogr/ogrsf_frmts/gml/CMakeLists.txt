@@ -26,7 +26,7 @@ add_gdal_driver(
 gdal_standard_includes(ogr_GML)
 if (GDAL_USE_EXPAT)
   target_compile_definitions(ogr_GML PRIVATE -DHAVE_EXPAT)
-  gdal_target_link_libraries(ogr_GML PRIVATE ${EXPAT_LIBRARIES})
+  gdal_target_link_libraries(ogr_GML PRIVATE ${EXPAT_TARGET})
 endif ()
 if (GDAL_USE_XERCESC)
   target_include_directories(ogr_GML PRIVATE ${XercesC_INCLUDE_DIRS}/xercesc)

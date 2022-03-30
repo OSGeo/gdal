@@ -179,9 +179,9 @@ static void InvertGeometries( GDALDatasetH hDstDS,
 
 static CPLErr ProcessLayer(
     OGRLayerH hSrcLayer, bool bSRSIsSet,
-    GDALDatasetH hDstDS, std::vector<int> anBandList,
+    GDALDatasetH hDstDS, const std::vector<int>& anBandList,
     const std::vector<double> &adfBurnValues, bool b3D, bool bInverse,
-    const char *pszBurnAttribute, char **papszRasterizeOptions,
+    const char *pszBurnAttribute, CSLConstList papszRasterizeOptions,
     char** papszTO,
     GDALProgressFunc pfnProgress, void* pProgressData )
 
@@ -241,10 +241,11 @@ static CPLErr ProcessLayer(
 /*      Get field index, and check.                                     */
 /* -------------------------------------------------------------------- */
     int iBurnField = -1;
-
+    bool bUseInt64 = false;
     if( pszBurnAttribute )
     {
-        iBurnField = OGR_FD_GetFieldIndex( OGR_L_GetLayerDefn( hSrcLayer ),
+        OGRFeatureDefnH hLayerDefn = OGR_L_GetLayerDefn( hSrcLayer );
+        iBurnField = OGR_FD_GetFieldIndex( hLayerDefn,
                                            pszBurnAttribute );
         if( iBurnField == -1 )
         {
@@ -255,6 +256,14 @@ static CPLErr ProcessLayer(
                 OCTDestroyCoordinateTransformation(hCT);
             return CE_Failure;
         }
+        if( OGR_Fld_GetType( OGR_FD_GetFieldDefn(hLayerDefn, iBurnField) ) == OFTInteger64 )
+        {
+            GDALRasterBandH hBand = GDALGetRasterBand( hDstDS, anBandList[0] );
+            if( hBand && GDALGetRasterDataType(hBand) == GDT_Int64 )
+            {
+                bUseInt64 = true;
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -264,6 +273,7 @@ static CPLErr ProcessLayer(
     OGRFeatureH hFeat = nullptr;
     std::vector<OGRGeometryH> ahGeometries;
     std::vector<double> adfFullBurnValues;
+    std::vector<int64_t> anFullBurnValues;
 
     OGR_L_ResetReading( hSrcLayer );
 
@@ -297,7 +307,10 @@ static CPLErr ProcessLayer(
                                      adfBurnValues.size()) - 1)] );
             else if( pszBurnAttribute )
             {
-                adfFullBurnValues.push_back( OGR_F_GetFieldAsDouble( hFeat, iBurnField ) );
+                if( bUseInt64 )
+                    anFullBurnValues.push_back( OGR_F_GetFieldAsInteger64( hFeat, iBurnField ) );
+                else
+                    adfFullBurnValues.push_back( OGR_F_GetFieldAsDouble( hFeat, iBurnField ) );
             }
             else if( b3D )
             {
@@ -331,7 +344,10 @@ static CPLErr ProcessLayer(
                                      static_cast<unsigned int>(
                                         adfBurnValues.size()) - 1)] );
                 else /* FIXME? Not sure what to do exactly in the else case, but we must insert a value */
+                {
                     adfFullBurnValues.push_back( 0.0 );
+                    anFullBurnValues.push_back( 0 );
+                }
             }
         }
 
@@ -380,14 +396,28 @@ static CPLErr ProcessLayer(
 /* -------------------------------------------------------------------- */
     if( eErr == CE_None )
     {
-        eErr = GDALRasterizeGeometries(
-            hDstDS,
-            static_cast<int>(anBandList.size()), &(anBandList[0]),
-            static_cast<int>(ahGeometries.size()), &(ahGeometries[0]),
-            pfnTransformer, pTransformArg,
-            &(adfFullBurnValues[0]),
-            papszRasterizeOptions,
-            pfnProgress, pProgressData );
+        if( bUseInt64 )
+        {
+            eErr = GDALRasterizeGeometriesInt64(
+                hDstDS,
+                static_cast<int>(anBandList.size()), anBandList.data(),
+                static_cast<int>(ahGeometries.size()), ahGeometries.data(),
+                pfnTransformer, pTransformArg,
+                anFullBurnValues.data(),
+                papszRasterizeOptions,
+                pfnProgress, pProgressData );
+        }
+        else
+        {
+            eErr = GDALRasterizeGeometries(
+                hDstDS,
+                static_cast<int>(anBandList.size()), anBandList.data(),
+                static_cast<int>(ahGeometries.size()), ahGeometries.data(),
+                pfnTransformer, pTransformArg,
+                adfFullBurnValues.data(),
+                papszRasterizeOptions,
+                pfnProgress, pProgressData );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -726,12 +756,29 @@ GDALDatasetH GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
                 std::vector<OGRLayerH> ahLayers;
                 ahLayers.push_back(hLayer);
 
+                GDALDataType eOutputType = psOptions->eOutputType;
+                if( eOutputType == GDT_Unknown && psOptions->pszBurnAttribute != nullptr )
+                {
+                    OGRFeatureDefnH hLayerDefn = OGR_L_GetLayerDefn( hLayer );
+                    int iBurnField = OGR_FD_GetFieldIndex( hLayerDefn,
+                                                           psOptions->pszBurnAttribute );
+                    if( iBurnField >= 0 && OGR_Fld_GetType(
+                        OGR_FD_GetFieldDefn(hLayerDefn, iBurnField) ) == OFTInteger64 )
+                    {
+                        eOutputType = GDT_Int64;
+                    }
+                }
+                if( eOutputType == GDT_Unknown )
+                {
+                    eOutputType = GDT_Float64;
+                }
+
                 hDstDS = CreateOutputDataset(ahLayers, psOptions->hSRS,
                                  psOptions->bGotBounds, psOptions->sEnvelop,
                                  hDriver, pszDest,
                                  psOptions->nXSize, psOptions->nYSize, psOptions->dfXRes, psOptions->dfYRes,
                                  psOptions->bTargetAlignedPixels,
-                                 static_cast<int>(psOptions->anBandList.size()), psOptions->eOutputType,
+                                 static_cast<int>(psOptions->anBandList.size()), eOutputType,
                                  psOptions->papszCreationOptions, psOptions->adfInitVals,
                                  psOptions->bNoDataSet, psOptions->dfNoData);
                 if( hDstDS == nullptr )
@@ -764,6 +811,8 @@ GDALDatasetH GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
     {
         std::vector<OGRLayerH> ahLayers;
 
+        GDALDataType eOutputType = psOptions->eOutputType;
+
         for( int i = 0; i < nLayerCount; i++ )
         {
             OGRLayerH hLayer;
@@ -775,7 +824,24 @@ GDALDatasetH GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
             {
                 continue;
             }
+            if( eOutputType == GDT_Unknown && psOptions->pszBurnAttribute != nullptr )
+            {
+                OGRFeatureDefnH hLayerDefn = OGR_L_GetLayerDefn( hLayer );
+                int iBurnField = OGR_FD_GetFieldIndex( hLayerDefn,
+                                                           psOptions->pszBurnAttribute );
+                if( iBurnField >= 0 && OGR_Fld_GetType(
+                    OGR_FD_GetFieldDefn(hLayerDefn, iBurnField) ) == OFTInteger64 )
+                {
+                    eOutputType = GDT_Int64;
+                }
+            }
+
             ahLayers.push_back(hLayer);
+        }
+
+        if( eOutputType == GDT_Unknown )
+        {
+            eOutputType = GDT_Float64;
         }
 
         hDstDS = CreateOutputDataset(ahLayers, psOptions->hSRS,
@@ -783,7 +849,7 @@ GDALDatasetH GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
                                 hDriver, pszDest,
                                 psOptions->nXSize, psOptions->nYSize, psOptions->dfXRes, psOptions->dfYRes,
                                 psOptions->bTargetAlignedPixels,
-                                static_cast<int>(psOptions->anBandList.size()), psOptions->eOutputType,
+                                static_cast<int>(psOptions->anBandList.size()), eOutputType,
                                 psOptions->papszCreationOptions, psOptions->adfInitVals,
                                 psOptions->bNoDataSet, psOptions->dfNoData);
         if( hDstDS == nullptr )
@@ -884,7 +950,7 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
     psOptions->papszTO = nullptr;
     psOptions->dfXRes = 0;
     psOptions->dfYRes = 0;
-    psOptions->eOutputType = GDT_Float64;
+    psOptions->eOutputType = GDT_Unknown;
     psOptions->bNoDataSet = FALSE;
     psOptions->dfNoData = 0;
     psOptions->bGotBounds = false;

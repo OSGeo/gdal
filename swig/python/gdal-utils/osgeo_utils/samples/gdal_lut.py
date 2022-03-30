@@ -82,7 +82,7 @@ supported as well as luts of more than 256 input values.
     return 1
 
 
-def main(argv):
+def main(argv=sys.argv):
     driver_name = 'GTiff'
     src_filename = None
     dst_filename = None
@@ -227,4 +227,3 @@ def main(argv):
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv))
-

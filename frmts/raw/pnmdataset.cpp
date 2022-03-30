@@ -58,7 +58,7 @@ class PNMDataset final: public RawDataset
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
-                                int nXSize, int nYSize, int nBands,
+                                int nXSize, int nYSize, int nBandsIn,
                                 GDALDataType eType, char ** papszOptions );
 };
 
@@ -310,7 +310,7 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
 /************************************************************************/
 
 GDALDataset *PNMDataset::Create( const char * pszFilename,
-                                 int nXSize, int nYSize, int nBands,
+                                 int nXSize, int nYSize, int nBandsIn,
                                  GDALDataType eType,
                                  char ** papszOptions )
 
@@ -328,17 +328,17 @@ GDALDataset *PNMDataset::Create( const char * pszFilename,
         return nullptr;
     }
 
-    if( nBands != 1 && nBands != 3 )
+    if( nBandsIn != 1 && nBandsIn != 3 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Attempt to create PNM dataset with an illegal number"
                   "of bands (%d).  Must be 1 (greyscale) or 3 (RGB).",
-                  nBands );
+                  nBandsIn );
 
         return nullptr;
     }
     const CPLString osExt( CPLGetExtension(pszFilename) );
-    if( nBands == 1 )
+    if( nBandsIn == 1 )
     {
         if( !EQUAL(osExt, "PGM") )
         {
@@ -391,7 +391,7 @@ GDALDataset *PNMDataset::Create( const char * pszFilename,
 
     char szHeader[500] = { '\0' };
 
-    if( nBands == 3 )
+    if( nBandsIn == 3 )
         snprintf( szHeader, sizeof(szHeader),
                   "P6\n%d %d\n%d\n", nXSize, nYSize, nMaxValue );
     else

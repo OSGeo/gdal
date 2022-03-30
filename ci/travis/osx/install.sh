@@ -18,7 +18,6 @@ find ${CONDA_PREFIX}/lib -name '*.la' -delete
     --with-geotiff=internal \
     --with-png=internal \
     --without-pg \
-    --without-jasper \
     --without-webp \
     --with-expat=${CONDA_PREFIX} \
     --with-sqlite3=${CONDA_PREFIX} \

@@ -121,7 +121,7 @@ where src_color is a RGB or RGBA dataset,
     return 1
 
 
-def main(argv):
+def main(argv=sys.argv):
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
         return 0
@@ -240,4 +240,3 @@ def main(argv):
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv))
-

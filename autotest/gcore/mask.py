@@ -47,8 +47,10 @@ def test_mask_1():
     assert ds is not None, 'Failed to open test dataset.'
 
     band = ds.GetRasterBand(1)
+    assert not band.IsMaskBand()
 
     assert band.GetMaskFlags() == gdal.GMF_ALL_VALID, 'Did not get expected mask.'
+    assert band.GetMaskBand().IsMaskBand()
 
     cs = band.GetMaskBand().Checksum()
     assert cs == 4873, 'Got wrong mask checksum'
@@ -67,8 +69,10 @@ def test_mask_2():
     assert ds is not None, 'Failed to open test dataset.'
 
     band = ds.GetRasterBand(1)
+    assert not band.IsMaskBand()
 
     assert band.GetMaskFlags() == gdal.GMF_NODATA, 'Did not get expected mask.'
+    assert band.GetMaskBand().IsMaskBand()
 
     cs = band.GetMaskBand().Checksum()
     assert cs == 4209, 'Got wrong mask checksum'
@@ -89,6 +93,7 @@ def test_mask_3():
 
     assert band.GetMaskFlags() == gdal.GMF_ALPHA + gdal.GMF_PER_DATASET, \
         'Did not get expected mask.'
+    assert band.GetMaskBand().IsMaskBand()
 
     cs = band.GetMaskBand().Checksum()
     assert cs == 10807, 'Got wrong mask checksum'
@@ -133,6 +138,8 @@ def test_mask_4():
         'did not get expected mask flags'
 
     msk = ds.GetRasterBand(1).GetMaskBand()
+    assert msk.IsMaskBand()
+
     cs = msk.Checksum()
     expected_cs = 770
 
@@ -168,6 +175,7 @@ def test_mask_5():
     assert ovr.GetMaskFlags() == gdal.GMF_PER_DATASET, 'did not get expected mask flags'
 
     msk = ovr.GetMaskBand()
+    assert msk.IsMaskBand()
     cs = msk.Checksum()
     expected_cs = 20505
 
@@ -185,6 +193,7 @@ def test_mask_5():
     assert ovr.GetMaskFlags() == gdal.GMF_PER_DATASET, 'did not get expected mask flags'
 
     msk = ovr.GetMaskBand()
+    assert msk.IsMaskBand()
     cs = msk.Checksum()
     expected_cs = 20505
 
@@ -210,6 +219,7 @@ def test_mask_6():
     band = ds.GetRasterBand(1)
 
     assert band.GetMaskFlags() == gdal.GMF_PER_DATASET, 'Did not get expected mask.'
+    assert band.GetMaskBand().IsMaskBand()
 
     cs = band.GetMaskBand().Checksum()
     assert cs == 100, 'Got wrong mask checksum'
@@ -229,6 +239,7 @@ def test_mask_7():
         band = ds.GetRasterBand(i)
 
         assert band.GetMaskFlags() == gdal.GMF_PER_DATASET, 'Did not get expected mask.'
+        assert band.GetMaskBand().IsMaskBand()
 
         cs = band.GetMaskBand().Checksum()
         assert cs == 100, 'Got wrong mask checksum'
@@ -247,6 +258,7 @@ def test_mask_8():
     band = ds.GetRasterBand(1)
 
     assert band.GetMaskFlags() == gdal.GMF_PER_DATASET, 'Did not get expected mask.'
+    assert band.GetMaskBand().IsMaskBand()
 
     cs = band.GetMaskBand().Checksum()
     assert cs == 1222, 'Got wrong mask checksum'
@@ -266,11 +278,12 @@ def test_mask_9():
         band = ds.GetRasterBand(i)
 
         assert band.GetMaskFlags() == 0, 'Did not get expected mask.'
+        assert band.GetMaskBand().IsMaskBand()
 
         cs = band.GetMaskBand().Checksum()
         assert cs == 100, 'Got wrong mask checksum'
 
-    
+
 ###############################################################################
 # Test a TIFF file with 3 bands with an embedded mask of 8 bit with 3 bands.
 # Note : The TIFF6 specification, page 37, only allows 1 BitsPerSample && 1 SamplesPerPixel,
@@ -286,11 +299,12 @@ def test_mask_10():
         band = ds.GetRasterBand(i)
 
         assert band.GetMaskFlags() == 0, 'Did not get expected mask.'
+        assert band.GetMaskBand().IsMaskBand()
 
         cs = band.GetMaskBand().Checksum()
         assert cs == 1222, 'Got wrong mask checksum'
 
-    
+
 ###############################################################################
 # Test a TIFF file with an overview, an embedded mask of 1 bit, and an embedded
 # mask for the overview
@@ -304,9 +318,11 @@ def test_mask_11():
     assert ds is not None, 'Failed to open test dataset.'
 
     band = ds.GetRasterBand(1)
+    assert not band.IsMaskBand()
 
     # Let's fetch the mask
     assert band.GetMaskFlags() == gdal.GMF_PER_DATASET, 'Did not get expected mask.'
+    assert band.GetMaskBand().IsMaskBand()
 
     cs = band.GetMaskBand().Checksum()
     assert cs == 100, 'Got wrong mask checksum'
@@ -379,6 +395,7 @@ def test_mask_13():
     src_ds = None
 
     ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+    assert ds.GetRasterBand(1).GetMaskBand().IsMaskBand()
 
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
     assert cs == 0, 'Got wrong checksum for the mask'
@@ -433,6 +450,7 @@ def test_mask_14():
     with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK', 'YES'):
         ret = ds.CreateMaskBand(gdal.GMF_PER_DATASET)
     assert ret == 0, 'Creation failed'
+    assert ds.GetRasterBand(1).GetMaskBand().IsMaskBand()
 
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
     assert cs == 0, 'Got wrong checksum for the mask (1)'
@@ -636,7 +654,7 @@ def test_mask_20():
         ds = None
         drv.Delete('tmp/mask20.tif')
 
-    
+
 ###############################################################################
 # Extensive test of NODATA_VALUES mask for all data types
 
@@ -670,7 +688,7 @@ def test_mask_21():
         ds = None
         drv.Delete('tmp/mask21.tif')
 
-    
+
 ###############################################################################
 # Test creation of external TIFF mask band just after Create()
 
@@ -710,7 +728,7 @@ def test_mask_22():
 
     assert not os.path.exists('tmp/mask_22.tif.msk')
 
-    
+
 ###############################################################################
 # Test CreateCopy() of a dataset with a mask into a JPEG-compressed TIFF with
 # internal mask (#3800)
@@ -835,7 +853,7 @@ def test_mask_25():
         ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
         ds.CreateMaskBand(0)
 
-    
+
 ###############################################################################
 # Test on a GDT_UInt16 1band data
 
@@ -890,7 +908,7 @@ def test_mask_27():
         ds = None
         drv.Delete('tmp/mask27.tif')
 
-    
+
 ###############################################################################
 # Extensive test of real NODATA_VALUES mask for all complex types
 

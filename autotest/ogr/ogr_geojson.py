@@ -3126,6 +3126,7 @@ def test_ogr_geojson_export_geometry_axis_order():
     # EPSG:4326 and lat,long data order
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
+    sr.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
     g = ogr.CreateGeometryFromWkt('POINT (49 2)')
     g.AssignSpatialReference(sr)
     before_wkt = g.ExportToWkt()
@@ -3157,6 +3158,7 @@ def test_ogr_geojson_export_geometry_axis_order():
     # Projected CRS with northing, easting order
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(2393)
+    sr.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
     g = ogr.CreateGeometryFromWkt('POINT (49 2)')
     g.AssignSpatialReference(sr)
     assert json.loads(g.ExportToJson()) == { "type": "Point", "coordinates": [ 2.0, 49.0 ] }

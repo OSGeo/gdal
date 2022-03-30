@@ -13,5 +13,5 @@ target_include_directories(gdal_EEDA PRIVATE $<TARGET_PROPERTY:ogr_geojson,SOURC
 if (GDAL_USE_JSONC_INTERNAL)
   gdal_add_vendored_lib(gdal_EEDA libjson)
 else ()
-  gdal_target_link_libraries(gdal_EEDA PRIVATE ${JSONC_LIBRARIES})
+  gdal_target_link_libraries(gdal_EEDA PRIVATE ${JSONC_TARGET})
 endif ()

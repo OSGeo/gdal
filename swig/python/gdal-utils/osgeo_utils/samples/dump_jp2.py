@@ -154,7 +154,7 @@ def extract_all_xml_boxes(filename, prefix):
     return 0
 
 
-def main(argv):
+def main(argv=sys.argv):
     i = 1
     out_gmljp2 = None
     out_crsdictionary = None

@@ -112,6 +112,8 @@ static bool bGlobalInExternalOvr = false;
 
 static thread_local int gnThreadLocalLibtiffError = 0;
 
+constexpr double DEFAULT_NODATA_VALUE = -9999.0;
+
 // Only libtiff 4.0.4 can handle between 32768 and 65535 directories.
 #if TIFFLIB_VERSION >= 20120922
 #define SUPPORTS_MORE_THAN_32768_DIRECTORIES
@@ -388,7 +390,9 @@ private:
     float       m_fJXLDistance = 1.0f;
     uint32_t    m_nJXLEffort = 5;
 #endif
-    double      m_dfNoDataValue = -9999.0;
+    double      m_dfNoDataValue = DEFAULT_NODATA_VALUE;
+    int64_t     m_nNoDataValueInt64 = GDAL_PAM_DEFAULT_NODATA_VALUE_INT64;
+    uint64_t    m_nNoDataValueUInt64 = GDAL_PAM_DEFAULT_NODATA_VALUE_UINT64;
 
     toff_t      m_nDirOffset = 0;
 
@@ -468,6 +472,8 @@ private:
     bool        m_bForceUnsetProjection:1;
     bool        m_bNoDataChanged:1;
     bool        m_bNoDataSet:1;
+    bool        m_bNoDataSetAsInt64:1;
+    bool        m_bNoDataSetAsUInt64:1;
     bool        m_bMetadataChanged:1;
     bool        m_bColorProfileMetadataChanged:1;
     bool        m_bForceUnsetRPC:1;
@@ -696,6 +702,8 @@ private:
                                    const char *, char **,
                                    bool bExcludeRPBandIMGFileWriting = false );
     static void     WriteNoDataValue( TIFF *, double );
+    static void     WriteNoDataValue( TIFF *, int64_t );
+    static void     WriteNoDataValue( TIFF *, uint64_t );
     static void     UnsetNoDataValue( TIFF * );
 
     static TIFF *   CreateLL( const char * pszFilename,
@@ -1299,14 +1307,22 @@ protected:
     GTiffDataset       *m_poGDS = nullptr;
     GDALMultiDomainMetadata m_oGTiffMDMD{};
 
-    double             m_dfNoDataValue = -9999.0;
-    bool               m_bNoDataSet = false;
+    double      m_dfNoDataValue = DEFAULT_NODATA_VALUE;
+    bool        m_bNoDataSet = false;
+
+    int64_t     m_nNoDataValueInt64 = GDAL_PAM_DEFAULT_NODATA_VALUE_INT64;
+    bool        m_bNoDataSetAsInt64 = false;
+
+    uint64_t    m_nNoDataValueUInt64 = GDAL_PAM_DEFAULT_NODATA_VALUE_UINT64;
+    bool        m_bNoDataSetAsUInt64 = false;
 
     void NullBlock( void *pData );
     CPLErr FillCacheForOtherBands( int nBlockXOff, int nBlockYOff );
 #ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
     void CacheMaskForBlock( int nBlockXOff, int nBlockYOff );
 #endif
+
+    void        ResetNoDataValues(bool bResetDatasetToo);
 
 public:
              GTiffRasterBand( GTiffDataset *, int );
@@ -1333,9 +1349,14 @@ public:
     virtual GDALColorInterp GetColorInterpretation() override /*final*/;
     virtual GDALColorTable *GetColorTable() override /*final*/;
     virtual CPLErr          SetColorTable( GDALColorTable * ) override final;
-    virtual double          GetNoDataValue( int * ) override final;
-    virtual CPLErr          SetNoDataValue( double ) override final;
-    virtual CPLErr DeleteNoDataValue() override final;
+
+    CPLErr SetNoDataValue( double ) override final;
+    CPLErr SetNoDataValueAsInt64( int64_t nNoData ) override final;
+    CPLErr SetNoDataValueAsUInt64( uint64_t nNoData ) override final;
+    double GetNoDataValue( int *pbSuccess = nullptr ) override final;
+    int64_t GetNoDataValueAsInt64( int *pbSuccess = nullptr ) override final;
+    uint64_t GetNoDataValueAsUInt64( int *pbSuccess = nullptr ) override final;
+    CPLErr DeleteNoDataValue() override final;
 
     virtual double GetOffset( int *pbSuccess = nullptr ) override final;
     virtual CPLErr SetOffset( double dfNewValue ) override final;
@@ -1358,6 +1379,8 @@ public:
     virtual GDALRasterBand *GetMaskBand() override final;
     virtual int             GetMaskFlags() override final;
     virtual CPLErr          CreateMaskBand( int nFlags )  override final;
+    virtual bool            IsMaskBand() const override final;
+    virtual GDALMaskValueRange GetMaskValueRange() const override final;
 
     virtual CPLVirtualMem  *GetVirtualMemAuto( GDALRWFlag eRWFlag,
                                                int *pnPixelSpace,
@@ -1431,6 +1454,10 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDSIn, int nBandIn ):
             eDataType = GDT_CFloat32;
         else if( nSampleFormat == SAMPLEFORMAT_COMPLEXINT )
             eDataType = GDT_CInt32;
+        else if( nSampleFormat == SAMPLEFORMAT_INT )
+            eDataType = GDT_Int64;
+        else
+            eDataType = GDT_UInt64;
     }
     else if( nBitsPerSample == 128 )
     {
@@ -1643,7 +1670,7 @@ public:
         return true;
     }
 
-    static const EMULATED_BOOL bMinimizeIO = true;
+    static const bool bMinimizeIO = true;
 };
 
 /************************************************************************/
@@ -2415,7 +2442,7 @@ public:
         return true;
     }
 
-    static const EMULATED_BOOL bMinimizeIO = false;
+    static const bool bMinimizeIO = false;
 };
 
 /************************************************************************/
@@ -4780,7 +4807,10 @@ int GTiffRasterBand::IGetDataCoverageStatus( int nXOff, int nYOff,
             {
                 if( m_poGDS->m_nCompression == COMPRESSION_NONE &&
                     m_poGDS->eAccess == GA_ReadOnly &&
-                    (!m_bNoDataSet || m_dfNoDataValue == 0.0) )
+                    ((!m_bNoDataSet && !m_bNoDataSetAsInt64 && !m_bNoDataSetAsUInt64) ||
+                     (m_bNoDataSet && m_dfNoDataValue == 0.0) ||
+                     (m_bNoDataSetAsInt64 && m_nNoDataValueInt64 == 0) ||
+                     (m_bNoDataSetAsUInt64 && m_nNoDataValueUInt64 == 0)) )
                 {
                     VSIRangeStatus eStatus =
                           VSIFGetRangeStatusL( fp, nOffset, nLength );
@@ -6000,9 +6030,155 @@ double GTiffRasterBand::GetNoDataValue( int * pbSuccess )
         return m_poGDS->m_dfNoDataValue;
     }
 
+    if( m_bNoDataSetAsInt64 )
+    {
+        if( pbSuccess )
+            *pbSuccess = TRUE;
+
+        return GDALGetNoDataValueCastToDouble(m_nNoDataValueInt64);
+    }
+
+    if( m_poGDS->m_bNoDataSetAsInt64 )
+    {
+        if( pbSuccess )
+            *pbSuccess = TRUE;
+
+        return GDALGetNoDataValueCastToDouble(m_poGDS->m_nNoDataValueInt64);
+    }
+
+    if( m_bNoDataSetAsUInt64 )
+    {
+        if( pbSuccess )
+            *pbSuccess = TRUE;
+
+        return GDALGetNoDataValueCastToDouble(m_nNoDataValueUInt64);
+    }
+
+    if( m_poGDS->m_bNoDataSetAsUInt64 )
+    {
+        if( pbSuccess )
+            *pbSuccess = TRUE;
+
+        return GDALGetNoDataValueCastToDouble(m_poGDS->m_nNoDataValueUInt64);
+    }
+
     if( pbSuccess )
         *pbSuccess = FALSE;
     return dfNoDataValue;
+}
+
+/************************************************************************/
+/*                       GetNoDataValueAsInt64()                        */
+/************************************************************************/
+
+int64_t GTiffRasterBand::GetNoDataValueAsInt64( int * pbSuccess )
+
+{
+    m_poGDS->LoadGeoreferencingAndPamIfNeeded();
+
+    if( eDataType == GDT_UInt64 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "GetNoDataValueAsUInt64() should be called instead");
+        if( pbSuccess )
+            *pbSuccess = FALSE;
+        return GDAL_PAM_DEFAULT_NODATA_VALUE_INT64;
+    }
+    if( eDataType != GDT_Int64 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "GetNoDataValue() should be called instead");
+        if( pbSuccess )
+            *pbSuccess = FALSE;
+        return GDAL_PAM_DEFAULT_NODATA_VALUE_INT64;
+    }
+
+    int bSuccess = FALSE;
+    const auto nNoDataValue = GDALPamRasterBand::GetNoDataValueAsInt64( &bSuccess );
+    if( bSuccess )
+    {
+        if( pbSuccess )
+            *pbSuccess = TRUE;
+
+        return nNoDataValue;
+    }
+
+    if( m_bNoDataSetAsInt64 )
+    {
+        if( pbSuccess )
+            *pbSuccess = TRUE;
+
+        return m_nNoDataValueInt64;
+    }
+
+    if( m_poGDS->m_bNoDataSetAsInt64 )
+    {
+        if( pbSuccess )
+            *pbSuccess = TRUE;
+
+        return m_poGDS->m_nNoDataValueInt64;
+    }
+
+    if( pbSuccess )
+        *pbSuccess = FALSE;
+    return nNoDataValue;
+}
+
+/************************************************************************/
+/*                      GetNoDataValueAsUInt64()                        */
+/************************************************************************/
+
+uint64_t GTiffRasterBand::GetNoDataValueAsUInt64( int * pbSuccess )
+
+{
+    m_poGDS->LoadGeoreferencingAndPamIfNeeded();
+
+    if( eDataType == GDT_Int64 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "GetNoDataValueAsInt64() should be called instead");
+        if( pbSuccess )
+            *pbSuccess = FALSE;
+        return GDAL_PAM_DEFAULT_NODATA_VALUE_UINT64;
+    }
+    if( eDataType != GDT_UInt64 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "GetNoDataValue() should be called instead");
+        if( pbSuccess )
+            *pbSuccess = FALSE;
+        return GDAL_PAM_DEFAULT_NODATA_VALUE_UINT64;
+    }
+
+    int bSuccess = FALSE;
+    const auto nNoDataValue = GDALPamRasterBand::GetNoDataValueAsUInt64( &bSuccess );
+    if( bSuccess )
+    {
+        if( pbSuccess )
+            *pbSuccess = TRUE;
+
+        return nNoDataValue;
+    }
+
+    if( m_bNoDataSetAsUInt64 )
+    {
+        if( pbSuccess )
+            *pbSuccess = TRUE;
+
+        return m_nNoDataValueUInt64;
+    }
+
+    if( m_poGDS->m_bNoDataSetAsUInt64 )
+    {
+        if( pbSuccess )
+            *pbSuccess = TRUE;
+
+        return m_poGDS->m_nNoDataValueUInt64;
+    }
+
+    if( pbSuccess )
+        *pbSuccess = FALSE;
+    return nNoDataValue;
 }
 
 /************************************************************************/
@@ -6018,8 +6194,11 @@ CPLErr GTiffRasterBand::SetNoDataValue( double dfNoData )
         (m_poGDS->m_dfNoDataValue == dfNoData ||
          (std::isnan(m_poGDS->m_dfNoDataValue) && std::isnan(dfNoData))) )
     {
+        ResetNoDataValues(false);
+
         m_bNoDataSet = true;
         m_dfNoDataValue = dfNoData;
+
         return CE_None;
     }
 
@@ -6068,6 +6247,8 @@ CPLErr GTiffRasterBand::SetNoDataValue( double dfNoData )
 
     if( eErr == CE_None )
     {
+        ResetNoDataValues(true);
+
         m_poGDS->m_bNoDataSet = true;
         m_poGDS->m_dfNoDataValue = dfNoData;
 
@@ -6076,6 +6257,195 @@ CPLErr GTiffRasterBand::SetNoDataValue( double dfNoData )
     }
 
     return eErr;
+}
+
+/************************************************************************/
+/*                       SetNoDataValueAsInt64()                        */
+/************************************************************************/
+
+CPLErr GTiffRasterBand::SetNoDataValueAsInt64( int64_t nNoData )
+
+{
+    m_poGDS->LoadGeoreferencingAndPamIfNeeded();
+
+    if( m_poGDS->m_bNoDataSetAsInt64 &&
+        m_poGDS->m_nNoDataValueInt64 == nNoData )
+    {
+        ResetNoDataValues(false);
+
+        m_bNoDataSetAsInt64 = true;
+        m_nNoDataValueInt64 = nNoData;
+
+        return CE_None;
+    }
+
+    if( m_poGDS->nBands > 1 && m_poGDS->m_eProfile == GTiffProfile::GDALGEOTIFF )
+    {
+        int bOtherBandHasNoData = FALSE;
+        const int nOtherBand = nBand > 1 ? 1 : 2;
+        const auto nOtherNoData = m_poGDS->GetRasterBand(nOtherBand)->
+                                    GetNoDataValueAsInt64(&bOtherBandHasNoData);
+        if( bOtherBandHasNoData && nOtherNoData != nNoData )
+        {
+            ReportError(CE_Warning, CPLE_AppDefined,
+                 "Setting nodata to " CPL_FRMT_GIB " on band %d, but band %d has nodata "
+                 "at " CPL_FRMT_GIB ". The TIFFTAG_GDAL_NODATA only support one value "
+                 "per dataset. This value of " CPL_FRMT_GIB " will be used for all bands "
+                 "on re-opening",
+                 static_cast<GIntBig>(nNoData), nBand,
+                 nOtherBand, static_cast<GIntBig>(nOtherNoData),
+                 static_cast<GIntBig>(nNoData));
+        }
+    }
+
+    if( m_poGDS->m_bStreamingOut && m_poGDS->m_bCrystalized )
+    {
+        ReportError(
+            CE_Failure, CPLE_NotSupported,
+            "Cannot modify nodata at that point in a streamed output file" );
+        return CE_Failure;
+    }
+
+    CPLErr eErr = CE_None;
+    if( eAccess == GA_Update )
+    {
+        m_poGDS->m_bNoDataChanged = true;
+        int bSuccess = FALSE;
+        CPL_IGNORE_RET_VAL(GDALPamRasterBand::GetNoDataValueAsInt64( &bSuccess ));
+        if( bSuccess )
+        {
+            // Cancel any existing nodata from PAM file.
+            eErr = GDALPamRasterBand::DeleteNoDataValue();
+        }
+    }
+    else
+    {
+        CPLDebug( "GTIFF", "SetNoDataValue() goes to PAM instead of TIFF tags");
+        eErr = GDALPamRasterBand::SetNoDataValueAsInt64(nNoData);
+    }
+
+    if( eErr == CE_None )
+    {
+        ResetNoDataValues(true);
+
+        m_poGDS->m_bNoDataSetAsInt64 = true;
+        m_poGDS->m_nNoDataValueInt64 = nNoData;
+    }
+
+    return eErr;
+}
+
+/************************************************************************/
+/*                      SetNoDataValueAsUInt64()                        */
+/************************************************************************/
+
+CPLErr GTiffRasterBand::SetNoDataValueAsUInt64( uint64_t nNoData )
+
+{
+    m_poGDS->LoadGeoreferencingAndPamIfNeeded();
+
+    if( m_poGDS->m_bNoDataSetAsUInt64 &&
+        m_poGDS->m_nNoDataValueUInt64 == nNoData )
+    {
+        ResetNoDataValues(false);
+
+        m_bNoDataSetAsUInt64 = true;
+        m_nNoDataValueUInt64 = nNoData;
+
+        return CE_None;
+    }
+
+    if( m_poGDS->nBands > 1 && m_poGDS->m_eProfile == GTiffProfile::GDALGEOTIFF )
+    {
+        int bOtherBandHasNoData = FALSE;
+        const int nOtherBand = nBand > 1 ? 1 : 2;
+        const auto nOtherNoData = m_poGDS->GetRasterBand(nOtherBand)->
+                                    GetNoDataValueAsUInt64(&bOtherBandHasNoData);
+        if( bOtherBandHasNoData && nOtherNoData != nNoData )
+        {
+            ReportError(CE_Warning, CPLE_AppDefined,
+                 "Setting nodata to " CPL_FRMT_GUIB " on band %d, but band %d has nodata "
+                 "at " CPL_FRMT_GUIB ". The TIFFTAG_GDAL_NODATA only support one value "
+                 "per dataset. This value of " CPL_FRMT_GUIB " will be used for all bands "
+                 "on re-opening",
+                 static_cast<GUIntBig>(nNoData), nBand,
+                 nOtherBand, static_cast<GUIntBig>(nOtherNoData),
+                 static_cast<GUIntBig>(nNoData));
+        }
+    }
+
+    if( m_poGDS->m_bStreamingOut && m_poGDS->m_bCrystalized )
+    {
+        ReportError(
+            CE_Failure, CPLE_NotSupported,
+            "Cannot modify nodata at that point in a streamed output file" );
+        return CE_Failure;
+    }
+
+    CPLErr eErr = CE_None;
+    if( eAccess == GA_Update )
+    {
+        m_poGDS->m_bNoDataChanged = true;
+        int bSuccess = FALSE;
+        CPL_IGNORE_RET_VAL(GDALPamRasterBand::GetNoDataValueAsUInt64( &bSuccess ));
+        if( bSuccess )
+        {
+            // Cancel any existing nodata from PAM file.
+            eErr = GDALPamRasterBand::DeleteNoDataValue();
+        }
+    }
+    else
+    {
+        CPLDebug( "GTIFF", "SetNoDataValue() goes to PAM instead of TIFF tags");
+        eErr = GDALPamRasterBand::SetNoDataValueAsUInt64(nNoData);
+    }
+
+    if( eErr == CE_None )
+    {
+        ResetNoDataValues(true);
+
+        m_poGDS->m_bNoDataSetAsUInt64 = true;
+        m_poGDS->m_nNoDataValueUInt64 = nNoData;
+
+        m_bNoDataSetAsUInt64 = true;
+        m_nNoDataValueUInt64 = nNoData;
+    }
+
+    return eErr;
+}
+
+/************************************************************************/
+/*                        ResetNoDataValues()                           */
+/************************************************************************/
+
+void GTiffRasterBand::ResetNoDataValues(bool bResetDatasetToo)
+{
+    if( bResetDatasetToo )
+    {
+        m_poGDS->m_bNoDataSet = false;
+        m_poGDS->m_dfNoDataValue = DEFAULT_NODATA_VALUE;
+    }
+
+    m_bNoDataSet = false;
+    m_dfNoDataValue = DEFAULT_NODATA_VALUE;
+
+    if( bResetDatasetToo )
+    {
+        m_poGDS->m_bNoDataSetAsInt64 = false;
+        m_poGDS->m_nNoDataValueInt64 = GDAL_PAM_DEFAULT_NODATA_VALUE_INT64;
+    }
+
+    m_bNoDataSetAsInt64 = false;
+    m_nNoDataValueInt64 = GDAL_PAM_DEFAULT_NODATA_VALUE_INT64;
+
+    if( bResetDatasetToo )
+    {
+        m_poGDS->m_bNoDataSetAsUInt64 = false;
+        m_poGDS->m_nNoDataValueUInt64 = GDAL_PAM_DEFAULT_NODATA_VALUE_UINT64;
+    }
+
+    m_bNoDataSetAsUInt64 = false;
+    m_nNoDataValueUInt64 = GDAL_PAM_DEFAULT_NODATA_VALUE_UINT64;
 }
 
 /************************************************************************/
@@ -6108,11 +6478,7 @@ CPLErr GTiffRasterBand::DeleteNoDataValue()
     CPLErr eErr = GDALPamRasterBand::DeleteNoDataValue();
     if( eErr == CE_None )
     {
-        m_poGDS->m_bNoDataSet = false;
-        m_poGDS->m_dfNoDataValue = -9999.0;
-
-        m_bNoDataSet = false;
-        m_dfNoDataValue = -9999.0;
+        ResetNoDataValues(true);
     }
 
     return eErr;
@@ -6131,35 +6497,64 @@ void GTiffRasterBand::NullBlock( void *pData )
     const GPtrDiff_t nWords = static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize;
     const int nChunkSize = std::max(1, GDALGetDataTypeSizeBytes(eDataType));
 
-    int bNoDataSetIn = FALSE;
-    double dfNoData = GetNoDataValue( &bNoDataSetIn );
-    if( !bNoDataSetIn )
+    int l_bNoDataSet = FALSE;
+    if( eDataType == GDT_Int64 )
     {
-#ifdef ESRI_BUILD
-        if( m_poGDS->m_nBitsPerSample >= 2 )
+        const auto nVal = GetNoDataValueAsInt64(&l_bNoDataSet);
+        if( !l_bNoDataSet )
+        {
             memset( pData, 0, nWords * nChunkSize );
+        }
         else
-            memset( pData, 1, nWords * nChunkSize );
-#else
-        memset( pData, 0, nWords * nChunkSize );
-#endif
+        {
+            GDALCopyWords64( &nVal, GDT_Int64, 0,
+                             pData, eDataType, nChunkSize, nWords);
+        }
+    }
+    else if ( eDataType == GDT_UInt64 )
+    {
+        const auto nVal = GetNoDataValueAsUInt64(&l_bNoDataSet);
+        if( !l_bNoDataSet )
+        {
+            memset( pData, 0, nWords * nChunkSize );
+        }
+        else
+        {
+            GDALCopyWords64( &nVal, GDT_UInt64, 0,
+                             pData, eDataType, nChunkSize, nWords);
+        }
     }
     else
     {
-        // Hack for Signed Int8 case. As the data type is GDT_Byte (unsigned),
-        // we have to convert a negative nodata value in the range [-128,-1] in
-        // [128, 255]
-        if( m_poGDS->m_nBitsPerSample == 8 &&
-            m_poGDS->m_nSampleFormat == SAMPLEFORMAT_INT &&
-            dfNoData < 0 && dfNoData >= -128 &&
-            static_cast<int>(dfNoData) == dfNoData )
+        double dfNoData = GetNoDataValue( &l_bNoDataSet );
+        if( !l_bNoDataSet )
         {
-            dfNoData = 256 + dfNoData;
+#ifdef ESRI_BUILD
+            if( m_poGDS->m_nBitsPerSample >= 2 )
+                memset( pData, 0, nWords * nChunkSize );
+            else
+                memset( pData, 1, nWords * nChunkSize );
+#else
+            memset( pData, 0, nWords * nChunkSize );
+#endif
         }
+        else
+        {
+            // Hack for Signed Int8 case. As the data type is GDT_Byte (unsigned),
+            // we have to convert a negative nodata value in the range [-128,-1] in
+            // [128, 255]
+            if( m_poGDS->m_nBitsPerSample == 8 &&
+                m_poGDS->m_nSampleFormat == SAMPLEFORMAT_INT &&
+                dfNoData < 0 && dfNoData >= -128 &&
+                static_cast<int>(dfNoData) == dfNoData )
+            {
+                dfNoData = 256 + dfNoData;
+            }
 
-        // Will convert nodata value to the right type and copy efficiently.
-        GDALCopyWords64( &dfNoData, GDT_Float64, 0,
-                       pData, eDataType, nChunkSize, nWords);
+            // Will convert nodata value to the right type and copy efficiently.
+            GDALCopyWords64( &dfNoData, GDT_Float64, 0,
+                           pData, eDataType, nChunkSize, nWords);
+        }
     }
 }
 
@@ -7825,6 +8220,8 @@ GTiffDataset::GTiffDataset():
     m_bForceUnsetProjection(false),
     m_bNoDataChanged(false),
     m_bNoDataSet(false),
+    m_bNoDataSetAsInt64(false),
+    m_bNoDataSetAsUInt64(false),
     m_bMetadataChanged(false),
     m_bColorProfileMetadataChanged(false),
     m_bForceUnsetRPC(false),
@@ -8247,30 +8644,49 @@ void GTiffDataset::FillEmptyTiles()
 /* -------------------------------------------------------------------- */
 /*      If set, fill data buffer with no data value.                    */
 /* -------------------------------------------------------------------- */
-    if( m_bNoDataSet && m_dfNoDataValue != 0.0 )
+    if( (m_bNoDataSet && m_dfNoDataValue != 0.0) ||
+        (m_bNoDataSetAsInt64 && m_nNoDataValueInt64 != 0) ||
+        (m_bNoDataSetAsUInt64 && m_nNoDataValueUInt64 != 0) )
     {
         const GDALDataType eDataType = GetRasterBand( 1 )->GetRasterDataType();
         const int nDataTypeSize = GDALGetDataTypeSizeBytes( eDataType );
         if( nDataTypeSize &&
             nDataTypeSize * 8 == static_cast<int>(m_nBitsPerSample) )
         {
-            double dfNoData = m_dfNoDataValue;
-
-            // Hack for Signed Int8 case. As the data type is GDT_Byte (unsigned),
-            // we have to convert a negative nodata value in the range [-128,-1] in
-            // [128, 255]
-            if( m_nBitsPerSample == 8 &&
-                m_nSampleFormat == SAMPLEFORMAT_INT &&
-                dfNoData < 0 && dfNoData >= -128 &&
-                static_cast<int>(dfNoData) == dfNoData )
+            if( m_bNoDataSetAsInt64 )
             {
-                dfNoData = 256 + dfNoData;
-            }
-
-            GDALCopyWords64( &dfNoData, GDT_Float64, 0,
+                GDALCopyWords64( &m_nNoDataValueInt64, GDT_Int64, 0,
                            pabyData, eDataType,
                            nDataTypeSize,
                            nBlockBytes / nDataTypeSize );
+            }
+            else if( m_bNoDataSetAsUInt64 )
+            {
+                GDALCopyWords64( &m_nNoDataValueUInt64, GDT_UInt64, 0,
+                           pabyData, eDataType,
+                           nDataTypeSize,
+                           nBlockBytes / nDataTypeSize );
+            }
+            else
+            {
+                double dfNoData = m_dfNoDataValue;
+
+                // Hack for Signed Int8 case. As the data type is GDT_Byte (unsigned),
+                // we have to convert a negative nodata value in the range [-128,-1] in
+                // [128, 255]
+                if( m_nBitsPerSample == 8 &&
+                    m_nSampleFormat == SAMPLEFORMAT_INT &&
+                    dfNoData < 0 && dfNoData >= -128 &&
+                    static_cast<int>(dfNoData) == dfNoData )
+                {
+                    dfNoData = 256 + dfNoData;
+                }
+
+                GDALCopyWords64( &dfNoData, GDT_Float64, 0,
+                               pabyData, eDataType,
+                               nDataTypeSize,
+                               nBlockBytes / nDataTypeSize );
+            }
         }
         else if( nDataTypeSize )
         {
@@ -8284,10 +8700,27 @@ void GTiffDataset::FillEmptyTiles()
                 VSI_MALLOC3_VERBOSE(m_nBlockXSize, m_nBlockYSize, nDataTypeSize) );
             if( pabyData == nullptr )
                 return;
-            GDALCopyWords64( &m_dfNoDataValue, GDT_Float64, 0,
-                           pabyData, eDataType,
-                           nDataTypeSize,
-                           static_cast<GPtrDiff_t>(m_nBlockXSize) * m_nBlockYSize );
+            if( m_bNoDataSetAsInt64 )
+            {
+                GDALCopyWords64( &m_nNoDataValueInt64, GDT_Int64, 0,
+                               pabyData, eDataType,
+                               nDataTypeSize,
+                               static_cast<GPtrDiff_t>(m_nBlockXSize) * m_nBlockYSize );
+            }
+            else if( m_bNoDataSetAsUInt64 )
+            {
+                GDALCopyWords64( &m_nNoDataValueUInt64, GDT_UInt64, 0,
+                               pabyData, eDataType,
+                               nDataTypeSize,
+                               static_cast<GPtrDiff_t>(m_nBlockXSize) * m_nBlockYSize );
+            }
+            else
+            {
+                GDALCopyWords64( &m_dfNoDataValue, GDT_Float64, 0,
+                               pabyData, eDataType,
+                               nDataTypeSize,
+                               static_cast<GPtrDiff_t>(m_nBlockXSize) * m_nBlockYSize );
+            }
             const int nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, m_nBlockYSize);
             for( int iBlock = 0; iBlock < nBlockCount; ++iBlock )
             {
@@ -8470,6 +8903,8 @@ bool GTiffDataset::HasOnlyNoData( const void* pBuffer, int nWidth, int nHeight,
     if( m_nSampleFormat == SAMPLEFORMAT_COMPLEXINT ||
         m_nSampleFormat == SAMPLEFORMAT_COMPLEXIEEEFP )
         return false;
+    if( m_bNoDataSetAsInt64 || m_bNoDataSetAsUInt64 )
+        return false; // FIXME: over pessimistic
     return GDALBufferHasOnlyNoData( pBuffer,
                                     m_bNoDataSet ? m_dfNoDataValue : 0.0,
                                     nWidth, nHeight,
@@ -8491,6 +8926,8 @@ inline bool GTiffDataset::IsFirstPixelEqualToNoData( const void* pBuffer )
 {
     const GDALDataType eDT = GetRasterBand(1)->GetRasterDataType();
     const double dfEffectiveNoData = (m_bNoDataSet) ? m_dfNoDataValue : 0.0;
+    if( m_bNoDataSetAsInt64 || m_bNoDataSetAsUInt64 )
+        return true; // FIXME: over pessimistic
     if( m_nBitsPerSample == 8 || (m_nBitsPerSample < 8 && dfEffectiveNoData == 0) )
     {
         if( m_nSampleFormat == SAMPLEFORMAT_INT )
@@ -8526,6 +8963,18 @@ inline bool GTiffDataset::IsFirstPixelEqualToNoData( const void* pBuffer )
         return GDALIsValueInRange<GInt32>(dfEffectiveNoData) &&
                *(static_cast<const GInt32*>(pBuffer)) ==
                         static_cast<GInt32>(dfEffectiveNoData);
+    }
+    if( m_nBitsPerSample == 64 && eDT == GDT_UInt64 )
+    {
+        return GDALIsValueInRange<std::uint64_t>(dfEffectiveNoData) &&
+               *(static_cast<const std::uint64_t*>(pBuffer)) ==
+                        static_cast<std::uint64_t>(dfEffectiveNoData);
+    }
+    if( m_nBitsPerSample == 64 && eDT == GDT_Int64 )
+    {
+        return GDALIsValueInRange<std::int64_t>(dfEffectiveNoData) &&
+               *(static_cast<const std::int64_t*>(pBuffer)) ==
+                        static_cast<std::int64_t>(dfEffectiveNoData);
     }
     if( m_nBitsPerSample == 32 && eDT == GDT_Float32 )
     {
@@ -9434,6 +9883,16 @@ template<> uint32_t AdjustValue<uint32_t>(uint32_t value, uint64_t nRoundUpBitTe
     return AdjustValueInt(value, nRoundUpBitTest);
 }
 
+template<> int64_t AdjustValue<int64_t>(int64_t value, uint64_t nRoundUpBitTest)
+{
+    return AdjustValueInt(value, nRoundUpBitTest);
+}
+
+template<> uint64_t AdjustValue<uint64_t>(uint64_t value, uint64_t nRoundUpBitTest)
+{
+    return AdjustValueInt(value, nRoundUpBitTest);
+}
+
 template<> float AdjustValue<float>(float value, uint64_t)
 {
     return std::nextafter(value, std::numeric_limits<float>::max());
@@ -9490,6 +9949,12 @@ template<> uint32_t RoundValueDiscardLsb<uint32_t, uint32_t>(const void* ptr,
     return RoundValueDiscardLsbUnsigned<uint32_t>(ptr, nMask, nRoundUpBitTest);
 }
 
+template<> uint64_t RoundValueDiscardLsb<uint64_t, uint64_t>(const void* ptr,
+                                                             uint64_t nMask,
+                                                             uint64_t nRoundUpBitTest)
+{
+    return RoundValueDiscardLsbUnsigned<uint64_t>(ptr, nMask, nRoundUpBitTest);
+}
 template<> int8_t RoundValueDiscardLsb<int8_t, int8_t>(const void* ptr,
                                                           uint64_t nMask,
                                                           uint64_t nRoundUpBitTest)
@@ -9509,6 +9974,13 @@ template<> int32_t RoundValueDiscardLsb<int32_t, int32_t>(const void* ptr,
                                                              uint64_t nRoundUpBitTest)
 {
     return RoundValueDiscardLsbSigned<int32_t>(ptr, nMask, nRoundUpBitTest);
+}
+
+template<> int64_t RoundValueDiscardLsb<int64_t, int64_t>(const void* ptr,
+                                                             uint64_t nMask,
+                                                             uint64_t nRoundUpBitTest)
+{
+    return RoundValueDiscardLsbSigned<int64_t>(ptr, nMask, nRoundUpBitTest);
 }
 
 template<> uint32_t RoundValueDiscardLsb<float, uint32_t>(const void* ptr,
@@ -9781,6 +10253,44 @@ static void DiscardLsb( GByte* pabyBuffer, GPtrDiff_t nBytes, int iBand,
             bHasNoData = false;
         }
         DiscardLsbT<uint32_t, uint32_t>(
+            pabyBuffer, nBytes, iBand, nBands, nPlanarConfig,
+            panMaskOffsetLsb, bHasNoData, nNoDataValue);
+    }
+    else if( nBitsPerSample == 64 && nSampleFormat == SAMPLEFORMAT_INT )
+    {
+        // FIXME: we should not rely on dfNoDataValue when we support native data type for nodata
+        int64_t nNoDataValue = 0;
+        if( bHasNoData &&
+            dfNoDataValue >= static_cast<double>(std::numeric_limits<int64_t>::min()) &&
+            dfNoDataValue <= static_cast<double>(std::numeric_limits<int64_t>::max()) &&
+            dfNoDataValue == static_cast<double>(static_cast<int64_t>(dfNoDataValue)) )
+        {
+            nNoDataValue = static_cast<int64_t>(dfNoDataValue);
+        }
+        else
+        {
+            bHasNoData = false;
+        }
+        DiscardLsbT<int64_t, int64_t>(
+            pabyBuffer, nBytes, iBand, nBands, nPlanarConfig,
+            panMaskOffsetLsb, bHasNoData, nNoDataValue);
+    }
+    else if( nBitsPerSample == 64 && nSampleFormat == SAMPLEFORMAT_UINT )
+    {
+        // FIXME: we should not rely on dfNoDataValue when we support native data type for nodata
+        uint64_t nNoDataValue = 0;
+        if( bHasNoData &&
+            dfNoDataValue >= static_cast<double>(std::numeric_limits<uint64_t>::min()) &&
+            dfNoDataValue <= static_cast<double>(std::numeric_limits<uint64_t>::max()) &&
+            dfNoDataValue == static_cast<double>(static_cast<uint64_t>(dfNoDataValue)) )
+        {
+            nNoDataValue = static_cast<uint64_t>(dfNoDataValue);
+        }
+        else
+        {
+            bHasNoData = false;
+        }
+        DiscardLsbT<uint64_t, uint64_t>(
             pabyBuffer, nBytes, iBand, nBands, nPlanarConfig,
             panMaskOffsetLsb, bHasNoData, nNoDataValue);
     }
@@ -10070,6 +10580,10 @@ void GTiffDataset::Crystalize()
     WriteGeoTIFFInfo();
     if( m_bNoDataSet )
         WriteNoDataValue( m_hTIFF, m_dfNoDataValue );
+    else if( m_bNoDataSetAsInt64 )
+        WriteNoDataValue( m_hTIFF, m_nNoDataValueInt64 );
+    else if( m_bNoDataSetAsUInt64 )
+        WriteNoDataValue( m_hTIFF, m_nNoDataValueUInt64 );
 
     m_bMetadataChanged = false;
     m_bGeoTIFFInfoChanged = false;
@@ -10348,6 +10862,14 @@ void GTiffDataset::FlushDirectory()
             if( m_bNoDataSet )
             {
                 WriteNoDataValue( m_hTIFF, m_dfNoDataValue );
+            }
+            else if( m_bNoDataSetAsInt64 )
+            {
+                WriteNoDataValue( m_hTIFF, m_nNoDataValueInt64 );
+            }
+            else if( m_bNoDataSetAsUInt64 )
+            {
+                WriteNoDataValue( m_hTIFF, m_nNoDataValueUInt64 );
             }
             else
             {
@@ -11265,9 +11787,6 @@ CPLErr GTiffDataset::IBuildOverviews(
             }
         }
 
-        CPLConfigOptionSetter oSetterRegeneratedBandIsMask(
-            "GDAL_REGENERATED_BAND_IS_MASK", "YES", true);
-
         eErr = GDALRegenerateOverviews(
             m_poMaskDS->GetRasterBand(1),
             nMaskOverviews,
@@ -11337,11 +11856,7 @@ CPLErr GTiffDataset::IBuildOverviews(
                                                      poOverview->GetYSize(),
                                                      poBand->GetYSize());
 
-                    int bHasNoData = FALSE;
-                    double noDataValue = poBand->GetNoDataValue(&bHasNoData);
-
-                    if( bHasNoData )
-                        poOverview->SetNoDataValue(noDataValue);
+                    GDALCopyNoDataValue(poOverview, poBand);
 
                     if( nOvFactor == panOverviewList[i]
                         || nOvFactor == GDALOvLevelAdjust2(
@@ -11408,11 +11923,7 @@ CPLErr GTiffDataset::IBuildOverviews(
 
                     GDALRasterBand * poOverview = poBand->GetOverview( j );
 
-                    int bHasNoData = FALSE;
-                    double noDataValue = poBand->GetNoDataValue(&bHasNoData);
-
-                    if( bHasNoData )
-                        poOverview->SetNoDataValue(noDataValue);
+                    GDALCopyNoDataValue(poOverview, poBand);
 
                     const int nOvFactor =
                         GDALComputeOvFactor(poOverview->GetXSize(),
@@ -12285,37 +12796,7 @@ bool GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *l_hTIFF,
         if( eProfile == GTiffProfile::GDALGEOTIFF )
         {
             char *pszXML_MD = CPLSerializeXMLTree( psRoot );
-            if( strlen(pszXML_MD) > 32000 )
-            {
-                if( bSrcIsGeoTIFF )
-                {
-                    if( cpl::down_cast<GTiffDataset *>(
-                           poSrcDS)->GetPamFlags() & GPF_DISABLED )
-                    {
-                        ReportError(
-                            pszTIFFFilename, CE_Warning, CPLE_AppDefined,
-                            "Metadata exceeding 32000 bytes cannot be written "
-                            "into GeoTIFF." );
-                    }
-                    else
-                    {
-                        cpl::down_cast<GTiffDataset *>(poSrcDS)->
-                            PushMetadataToPam();
-                        ReportError(
-                            pszTIFFFilename, CE_Warning, CPLE_AppDefined,
-                            "Metadata exceeding 32000 bytes cannot be written "
-                            "into GeoTIFF. Transferred to PAM instead." );
-                    }
-                }
-                else
-                {
-                    bRet = false;
-                }
-            }
-            else
-            {
-                TIFFSetField( l_hTIFF, TIFFTAG_GDAL_METADATA, pszXML_MD );
-            }
+            TIFFSetField( l_hTIFF, TIFFTAG_GDAL_METADATA, pszXML_MD );
             CPLFree( pszXML_MD );
         }
         else
@@ -12582,6 +13063,20 @@ void GTiffDataset::WriteNoDataValue( TIFF *hTIFF, double dfNoData )
 {
     CPLString osVal( GTiffFormatGDALNoDataTagValue(dfNoData) );
     TIFFSetField( hTIFF, TIFFTAG_GDAL_NODATA, osVal.c_str() );
+}
+
+void GTiffDataset::WriteNoDataValue( TIFF *hTIFF, int64_t nNoData )
+
+{
+    TIFFSetField( hTIFF, TIFFTAG_GDAL_NODATA,
+                  CPLSPrintf(CPL_FRMT_GIB, static_cast<GIntBig>(nNoData)) );
+}
+
+void GTiffDataset::WriteNoDataValue( TIFF *hTIFF, uint64_t nNoData )
+
+{
+    TIFFSetField( hTIFF, TIFFTAG_GDAL_NODATA,
+                  CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(nNoData)) );
 }
 
 /************************************************************************/
@@ -13460,6 +13955,8 @@ void GTiffDataset::LookForProjection()
 void GTiffDataset::ApplyPamInfo()
 
 {
+    bool bGotGTFromPAM = false;
+
     if( m_nPAMGeorefSrcIndex >= 0 &&
         ((m_bGeoTransformValid &&
           m_nPAMGeorefSrcIndex < m_nGeoTransformGeorefSrcIndex) ||
@@ -13475,6 +13972,7 @@ void GTiffDataset::ApplyPamInfo()
             }
             memcpy(m_adfGeoTransform, adfPamGeoTransform, sizeof(double) * 6);
             m_bGeoTransformValid = true;
+            bGotGTFromPAM = true;
         }
     }
 
@@ -13526,6 +14024,13 @@ void GTiffDataset::ApplyPamInfo()
 
         m_nGCPCount = nPamGCPCount;
         m_pasGCPList = GDALDuplicateGCPs(m_nGCPCount, GDALPamDataset::GetGCPs());
+
+        // Invalidate Geotransorm got from less prioritary sources
+        if( m_nGCPCount > 0 && m_bGeoTransformValid && !bGotGTFromPAM &&
+            m_nPAMGeorefSrcIndex == 0 )
+        {
+            m_bGeoTransformValid = false;
+        }
 
         // m_nProjectionGeorefSrcIndex = m_nPAMGeorefSrcIndex;
 
@@ -13595,6 +14100,7 @@ void GTiffDataset::ApplyPamInfo()
                         m_pasGCPList = nullptr;
                         m_nGCPCount = 0;
                     }
+
                     m_nGCPCount = static_cast<int>(
                                             adfSourceGCPs.size() / 2);
                     m_pasGCPList = static_cast<GDAL_GCP *>(
@@ -13612,6 +14118,14 @@ void GTiffDataset::ApplyPamInfo()
                         m_pasGCPList[i].dfGCPX = adfTargetGCPs[2*i];
                         m_pasGCPList[i].dfGCPY = adfTargetGCPs[2*i+1];
                     }
+
+                    // Invalidate Geotransorm got from less prioritary sources
+                    if( m_nGCPCount > 0 && m_bGeoTransformValid && !bGotGTFromPAM &&
+                        m_nPAMGeorefSrcIndex == 0 )
+                    {
+                        m_bGeoTransformValid = false;
+                    }
+
                 }
             }
         }
@@ -14588,12 +15102,27 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     if( TIFFGetField( m_hTIFF, TIFFTAG_GDAL_NODATA, &pszText ) &&
         !EQUAL(pszText, "") )
     {
-        m_bNoDataSet = true;
-        m_dfNoDataValue = CPLAtofM( pszText );
-        if( m_nBitsPerSample == 32 && m_nSampleFormat == SAMPLEFORMAT_IEEEFP )
+        if( m_nBitsPerSample > 32 && m_nBitsPerSample <= 64 &&
+            m_nSampleFormat == SAMPLEFORMAT_INT )
         {
-            m_dfNoDataValue = GDALAdjustNoDataCloseToFloatMax(m_dfNoDataValue);
-            m_dfNoDataValue = static_cast<float>(m_dfNoDataValue);
+            m_bNoDataSetAsInt64 = true;
+            m_nNoDataValueInt64 = static_cast<int64_t>(std::strtoll(pszText, nullptr, 10));
+        }
+        else if( m_nBitsPerSample > 32 && m_nBitsPerSample <= 64 &&
+                 m_nSampleFormat == SAMPLEFORMAT_UINT )
+        {
+            m_bNoDataSetAsUInt64 = true;
+            m_nNoDataValueUInt64 = static_cast<uint64_t>(std::strtoull(pszText, nullptr, 10));
+        }
+        else
+        {
+            m_bNoDataSet = true;
+            m_dfNoDataValue = CPLAtofM( pszText );
+            if( m_nBitsPerSample == 32 && m_nSampleFormat == SAMPLEFORMAT_IEEEFP )
+            {
+                m_dfNoDataValue = GDALAdjustNoDataCloseToFloatMax(m_dfNoDataValue);
+                m_dfNoDataValue = static_cast<float>(m_dfNoDataValue);
+            }
         }
     }
 
@@ -16398,8 +16927,12 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Compute the uncompressed size.                                  */
 /* -------------------------------------------------------------------- */
+    const unsigned nTileXCount = bTiled ? DIV_ROUND_UP(nXSize, l_nBlockXSize) : 0;
+    const unsigned nTileYCount = bTiled ? DIV_ROUND_UP(nYSize, l_nBlockYSize) : 0;
     const double dfUncompressedImageSize =
-        nXSize * static_cast<double>(nYSize) * l_nBands *
+        (bTiled ? (static_cast<double>(nTileXCount) * nTileYCount * l_nBlockXSize * l_nBlockYSize) :
+                  (nXSize * static_cast<double>(nYSize))) *
+        l_nBands *
         GDALGetDataTypeSizeBytes(eType)
         + dfExtraSpaceForOverviews;
 
@@ -16444,8 +16977,6 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     if( bTiled )
     {
-        unsigned nTileXCount = DIV_ROUND_UP(nXSize, l_nBlockXSize);
-        unsigned nTileYCount = DIV_ROUND_UP(nYSize, l_nBlockYSize);
         // libtiff implementation limitation
         if( nTileXCount > 0x80000000U / (bCreateBigTIFF ? 8 : 4) / nTileYCount )
         {
@@ -16575,7 +17106,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 
     uint16_t l_nSampleFormat = 0;
     if( (eType == GDT_Byte && EQUAL(pszPixelType,"SIGNEDBYTE"))
-        || eType == GDT_Int16 || eType == GDT_Int32 )
+        || eType == GDT_Int16 || eType == GDT_Int32 || eType == GDT_Int64 )
         l_nSampleFormat = SAMPLEFORMAT_INT;
     else if( eType == GDT_CInt16 || eType == GDT_CInt32 )
         l_nSampleFormat = SAMPLEFORMAT_COMPLEXINT;
@@ -18292,10 +18823,28 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if( eProfile == GTiffProfile::GDALGEOTIFF )
     {
         int bSuccess = FALSE;
-        const double dfNoData =
-            poSrcDS->GetRasterBand(1)->GetNoDataValue( &bSuccess );
-        if( bSuccess )
-            GTiffDataset::WriteNoDataValue( l_hTIFF, dfNoData );
+        GDALRasterBand* poFirstBand = poSrcDS->GetRasterBand(1);
+        if( poFirstBand->GetRasterDataType() == GDT_Int64 )
+        {
+            const auto nNoData =
+                poFirstBand->GetNoDataValueAsInt64( &bSuccess );
+            if( bSuccess )
+                GTiffDataset::WriteNoDataValue( l_hTIFF, nNoData );
+        }
+        else if( poFirstBand->GetRasterDataType() == GDT_UInt64 )
+        {
+            const auto nNoData =
+                poFirstBand->GetNoDataValueAsUInt64( &bSuccess );
+            if( bSuccess )
+                GTiffDataset::WriteNoDataValue( l_hTIFF, nNoData );
+        }
+        else
+        {
+            const auto dfNoData =
+                poFirstBand->GetNoDataValue( &bSuccess );
+            if( bSuccess )
+                GTiffDataset::WriteNoDataValue( l_hTIFF, dfNoData );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -20303,6 +20852,31 @@ CPLErr GTiffRasterBand::CreateMaskBand( int nFlagsIn )
     }
 
     return GDALPamRasterBand::CreateMaskBand(nFlagsIn);
+}
+
+/************************************************************************/
+/*                            IsMaskBand()                              */
+/************************************************************************/
+
+bool GTiffRasterBand::IsMaskBand() const
+{
+    return (m_poGDS->m_poImageryDS != nullptr &&
+            m_poGDS->m_poImageryDS->m_poMaskDS == m_poGDS) ||
+           m_eBandInterp == GCI_AlphaBand ||
+           m_poGDS->GetMetadataItem("INTERNAL_MASK_FLAGS_1") != nullptr;
+}
+
+/************************************************************************/
+/*                         GetMaskValueRange()                          */
+/************************************************************************/
+
+GDALMaskValueRange GTiffRasterBand::GetMaskValueRange() const
+{
+    if( !IsMaskBand() )
+        return GMVR_UNKNOWN;
+    if (m_poGDS->m_nBitsPerSample == 1 )
+        return m_poGDS->m_bPromoteTo8Bits ? GMVR_0_AND_255_ONLY : GMVR_0_AND_1_ONLY;
+    return GMVR_UNKNOWN;
 }
 
 /************************************************************************/

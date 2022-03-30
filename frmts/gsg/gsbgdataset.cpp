@@ -823,7 +823,7 @@ CPLErr GSBGDataset::WriteHeader( VSILFILE *fp, GInt16 nXSize, GInt16 nYSize,
 GDALDataset *GSBGDataset::Create( const char * pszFilename,
                                   int nXSize,
                                   int nYSize,
-                                  CPL_UNUSED int nBands,
+                                  int /* nBands */,
                                   GDALDataType eType,
                                   CPL_UNUSED char **papszParamList )
 {

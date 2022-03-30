@@ -313,6 +313,7 @@ public:
     CPLErr      CreateMaskBand( int nFlags ) override;
     GDALRasterBand *GetMaskBand() override;
     int GetMaskFlags() override;
+    bool            IsMaskBand() const override { return nOverviewLevel == DEFAULT_BMP_MASK; }
 };
 
 //  ---------------------------------------------------------------------------

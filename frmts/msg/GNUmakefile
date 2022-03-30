@@ -2,7 +2,7 @@ include ../../GDALmake.opt
 
 OBJ	=	msgdataset.o xritheaderparser.o prologue.o msgcommand.o reflectancecalculator.o PublicDecompWT_all.o
 
-CPPFLAGS	:=	 -DDO_NOT_USE_DEBUG_BOOL -I PublicDecompWT/DISE -I PublicDecompWT/COMP/WT/Inc -I PublicDecompWT/COMP/Inc -iquote . $(CPPFLAGS)
+CPPFLAGS	:=	 -I PublicDecompWT/DISE -I PublicDecompWT/COMP/WT/Inc -I PublicDecompWT/COMP/Inc -iquote . $(CPPFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

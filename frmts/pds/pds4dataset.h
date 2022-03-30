@@ -490,7 +490,7 @@ class PDS4WrapperRasterBand final: public GDALProxyRasterBand
         double    m_dfNoData;
 
   protected:
-    virtual GDALRasterBand* RefUnderlyingRasterBand() override
+    virtual GDALRasterBand* RefUnderlyingRasterBand() const override
                                                     { return m_poBaseBand; }
 
   public:

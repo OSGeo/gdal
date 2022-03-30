@@ -1433,7 +1433,9 @@ def test_grib_grib2_read_subgrids_reuse_bitmap():
         # This one should have only the longitudes translation
         { 'file': 'data/grib/gfs.t06z.pgrb2.1p0.partial_east_of_am.grib2', 'geo': (-60.125, 10.0, 0.0, 90.125, 0.0, -10.0), 'band1csum': 698 },
         # This one should be identical with and without the translation
-        { 'file': 'data/grib/gfs.t06z.pgrb2.1p0.partial_west_of_am.grib2', 'geo': (24.875, 10.0, 0.0, 90.125, 0.0, -10.0), 'band1csum': 601 }
+        { 'file': 'data/grib/gfs.t06z.pgrb2.1p0.partial_west_of_am.grib2', 'geo': (24.875, 10.0, 0.0, 90.125, 0.0, -10.0), 'band1csum': 601 },
+        # This one should have split&swap enabled even if the longitude range slightly exceeds 360°
+        { 'file': 'data/grib/gfswave-11.t00z.global.0p25.f000.grib2', 'geo': (-180.125, 0.25, 0.0, 90.125, 0.0, -0.25), 'band1csum': 52492 }
 ], ids=lambda x: x['file'])
 def test_grib_grib2_split_and_swap(test):
     tmpfilename = '/vsimem/out.grb2'

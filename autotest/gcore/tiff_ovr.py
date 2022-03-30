@@ -2184,6 +2184,47 @@ def test_tiff_ovr_fallback_to_multiband_overview_generate():
 
     gdal.GetDriverByName('GTiff').Delete(filename)
 
+
+###############################################################################
+
+
+def test_tiff_ovr_int64():
+
+    temp_path = '/vsimem/test.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(temp_path, 2, 1, 1, gdal.GDT_Int64)
+    ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1,
+                                    struct.pack('q' * 2, -10000000000, -10000000000))
+    del ds
+    ds = gdal.OpenEx(temp_path, gdal.GA_ReadOnly)
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Int64
+    assert ds.BuildOverviews('nearest', overviewlist=[2]) == 0
+    del ds
+    ds = gdal.OpenEx(temp_path, gdal.GA_ReadOnly)
+    assert struct.unpack('q', ds.GetRasterBand(1).GetOverview(0).ReadRaster()) == (-10000000000,)
+    del ds
+    gdal.GetDriverByName('GTiff').Delete(temp_path)
+
+
+###############################################################################
+
+
+def test_tiff_ovr_uint64():
+
+    temp_path = '/vsimem/test.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(temp_path, 2, 1, 1, gdal.GDT_UInt64)
+    ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1,
+                                    struct.pack('Q' * 2, 10000000000, 10000000000))
+    del ds
+    ds = gdal.OpenEx(temp_path, gdal.GA_ReadOnly)
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt64
+    assert ds.BuildOverviews('nearest', overviewlist=[2]) == 0
+    del ds
+    ds = gdal.OpenEx(temp_path, gdal.GA_ReadOnly)
+    assert struct.unpack('Q', ds.GetRasterBand(1).GetOverview(0).ReadRaster()) == (10000000000,)
+    del ds
+    gdal.GetDriverByName('GTiff').Delete(temp_path)
+
+
 ###############################################################################
 # Cleanup
 

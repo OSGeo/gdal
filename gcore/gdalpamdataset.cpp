@@ -66,7 +66,9 @@ CPL_CVSID("$Id$")
  * PAM support can be enabled (resp. disabled) in GDAL by setting the
  * GDAL_PAM_ENABLED configuration option (via CPLSetConfigOption(), or the
  * environment) to the value of YES (resp. NO). Note: The default value is
- * build dependent and defaults to YES in Windows and Unix builds.
+ * build dependent and defaults to YES in Windows and Unix builds. Warning:
+ * For GDAL < 3.5, setting this option to OFF may have unwanted side-effects on drivers
+ * that rely on PAM functionality.
  *
  * <h3>PAM Proxy Files</h3>
  *
@@ -338,14 +340,14 @@ void GDALPamDataset::PamInitialize()
     const char * const pszPamDefault = "NO";
 #endif
 
-    if( psPam || (nPamFlags & GPF_DISABLED) )
+    if( psPam )
         return;
 
     if( !CPLTestBool( CPLGetConfigOption( "GDAL_PAM_ENABLED",
                                              pszPamDefault ) ) )
     {
+        CPLDebug("GDAL", "PAM is disabled");
         nPamFlags |= GPF_DISABLED;
-        return;
     }
 
     /* ERO 2011/04/13 : GPF_AUXMODE seems to be unimplemented */
@@ -773,6 +775,9 @@ CPLErr GDALPamDataset::TryLoadXML(char **papszSiblingFiles)
 {
     PamInitialize();
 
+    if( psPam == nullptr || (nPamFlags & GPF_DISABLED) != 0 )
+        return CE_None;
+
 /* -------------------------------------------------------------------- */
 /*      Clear dirty flag.  Generally when we get to this point is       */
 /*      from a call at the end of the Open() method, and some calls     */
@@ -891,7 +896,7 @@ CPLErr GDALPamDataset::TrySaveXML()
 {
     nPamFlags &= ~GPF_DIRTY;
 
-    if( psPam == nullptr || (nPamFlags & GPF_NOSAVE) )
+    if( psPam == nullptr || (nPamFlags & GPF_NOSAVE) != 0 || (nPamFlags & GPF_DISABLED) != 0 )
         return CE_None;
 
 /* -------------------------------------------------------------------- */
@@ -1537,7 +1542,8 @@ CPLErr GDALPamDataset::TryLoadAux(char **papszSiblingFiles)
 /*      Initialize PAM.                                                 */
 /* -------------------------------------------------------------------- */
     PamInitialize();
-    if( psPam == nullptr )
+
+    if( psPam == nullptr || (nPamFlags & GPF_DISABLED) != 0 )
         return CE_None;
 
 /* -------------------------------------------------------------------- */

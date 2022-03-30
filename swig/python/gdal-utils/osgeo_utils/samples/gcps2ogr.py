@@ -41,7 +41,7 @@ def Usage():
     return 1
 
 
-def main(argv):
+def main(argv=sys.argv):
     out_format = 'ESRI Shapefile'
     in_dataset = None
     out_dataset = None
