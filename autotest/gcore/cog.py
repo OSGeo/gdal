@@ -981,6 +981,32 @@ def test_cog_zoom_level_strategy(zoom_level_strategy,expected_gt):
 
 
 ###############################################################################
+# Test ZOOM_LEVEL option
+
+def test_cog_zoom_level():
+
+    filename = '/vsimem/test_cog_zoom_level.tif'
+    src_ds = gdal.Open('data/byte.tif')
+
+    with gdaltest.error_handler():
+        assert gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+                        options = ['TILING_SCHEME=GoogleMapsCompatible',
+                                   'ZOOM_LEVEL=-1']) is None
+        assert gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+                        options = ['TILING_SCHEME=GoogleMapsCompatible',
+                                   'ZOOM_LEVEL=25']) is None
+
+    ds = gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+        options = ['TILING_SCHEME=GoogleMapsCompatible',
+                   'ZOOM_LEVEL=12'])
+    gt = ds.GetGeoTransform()
+    expected_gt = (-13100695.151852928, 38.21851414258813, 0.0, 4021199.1840265524, 0.0, -38.21851414258813)
+    assert gt == pytest.approx(expected_gt, rel=1e-10)
+    ds = None
+    gdal.Unlink(filename)
+
+
+###############################################################################
 
 def test_cog_resampling_options():
 
