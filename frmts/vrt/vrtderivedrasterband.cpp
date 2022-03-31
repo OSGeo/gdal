@@ -370,6 +370,7 @@ VRTDerivedRasterBand::GetPixelFunction( const char *pszFuncNameIn )
  */
 void VRTDerivedRasterBand::SetPixelFunctionName( const char *pszFuncNameIn )
 {
+    CPLFree(pszFuncName);
     pszFuncName = CPLStrdup( pszFuncNameIn );
 }
 
