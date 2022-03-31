@@ -1,0 +1,75 @@
+#!/bin/sh
+CONFIG_LIBS="@CONFIG_LIBS@"
+CONFIG_DEP_LIBS="@LIBS@"
+CONFIG_PREFIX="@CMAKE_SOURCE_DIR@"
+CONFIG_CFLAGS="-I@CMAKE_SOURCE_DIR@/core/port -I@CMAKE_SOURCE_DIR@/core/gcore -I@CMAKE_SOURCE_DIR@/core/alg -I@CMAKE_SOURCE_DIR@/core/ogr -I@CMAKE_SOURCE_DIR@/core/ogr/ogrsf_frmts -I@CMAKE_SOURCE_DIR@/core/frmts/vrt -I@CMAKE_SOURCE_DIR@/apps"
+CONFIG_DATA="@CMAKE_SOURCE_DIR@/data"
+CONFIG_VERSION="@VERSION@"
+CONFIG_OGR_ENABLED=@GDAL_ENABLE_OGR_YESNO@
+CONFIG_GNM_ENABLED=@GDAL_ENABLE_GNM_YESNO@
+CONFIG_FORMATS="@GDAL_FORMATS@"
+usage()
+{
+	cat <<EOF
+Usage: gdal-config [OPTIONS]
+Options:
+	[--prefix[=DIR]]
+	[--libs]
+	[--dep-libs]
+	[--cflags]
+	[--datadir]
+	[--version]
+	[--ogr-enabled]
+	[--gnm-enabled]
+	[--formats]
+EOF
+	exit $1
+}
+
+if test $# -eq 0; then
+	usage 1 1>&2
+fi
+
+case $1 in
+  --libs)
+    echo $CONFIG_LIBS
+    ;;
+
+  --dep-libs)
+    echo $CONFIG_DEP_LIBS
+    ;;
+
+  --cflags)
+    echo $CONFIG_CFLAGS
+    ;;
+
+  --datadir)
+    echo $CONFIG_DATA
+    ;;
+
+  --prefix)
+    echo $CONFIG_PREFIX
+    ;;
+
+  --version)
+    echo $CONFIG_VERSION
+    ;;
+
+  --ogr-enabled)
+    echo $CONFIG_OGR_ENABLED
+    ;;
+
+  --gnm-enabled)
+    echo $CONFIG_GNM_ENABLED
+    ;;
+
+  --formats)
+    echo $CONFIG_FORMATS
+    ;;
+
+  *)
+    usage 1 1>&2
+    ;;
+
+esac
+

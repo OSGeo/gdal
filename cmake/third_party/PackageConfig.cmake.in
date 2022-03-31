@@ -1,0 +1,16 @@
+# - Config file for the @PACKAGE_UPPER_NAME@ package
+# It defines the following variables
+#  @PACKAGE_UPPER_NAME@_INCLUDE_DIRS - include directories for @PACKAGE_NAME@
+#  @PACKAGE_UPPER_NAME@_LIBRARIES    - libraries to link against
+#  @PACKAGE_UPPER_NAME@_VERSION      - @PACKAGE_NAME@ version
+
+# Our library dependencies (contains definitions for IMPORTED targets)
+if(NOT TARGET @PACKAGE_NAME@ AND NOT @PACKAGE_UPPER_NAME@_BINARY_DIR)
+  include("${CMAKE_CURRENT_LIST_DIR}/@PACKAGE_UPPER_NAME@Targets.cmake")
+endif()
+get_property(@PACKAGE_UPPER_NAME@_INCLUDE_DIRS TARGET @PACKAGE_NAME@ PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
+
+# These are IMPORTED targets created by @PACKAGE_UPPER_NAME@Targets.cmake
+set(@PACKAGE_UPPER_NAME@_LIBRARIES @PACKAGE_NAME@)
+set(@PACKAGE_UPPER_NAME@_VERSION "@VERSION@")
+set(@PACKAGE_UPPER_NAME@_FOUND TRUE)

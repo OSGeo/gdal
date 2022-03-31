@@ -1,0 +1,13 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}/@INSTALL_BIN_DIR@
+libdir=${prefix}/@INSTALL_LIB_DIR@
+includedir=${prefix}/@INSTALL_INC_DIR@
+datadir=${prefix}/@INSTALL_SHARE_DIR@
+
+Name: lib@PROJECT_NANE@
+Description: Geospatial Data Abstraction Library
+Version: @VERSION@
+
+Requires:
+Libs: -L${libdir} -L${sharedlibdir} -llibgdal_i
+Cflags: -I${includedir}	
