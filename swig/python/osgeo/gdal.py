@@ -3,6 +3,8 @@
 #
 # Do not make changes to this file unless you know what you are doing--modify
 # the SWIG interface file instead.
+# Modified by Mi Zhang, LuoJiaNET Development and Research Group, Wuhan University, 2022
+# Contact: zhangmi1989@163.com
 
 from sys import version_info as _swig_python_version_info
 if _swig_python_version_info < (2, 7, 0):
@@ -1750,9 +1752,9 @@ VSI_STAT_NATURE_FLAG = _gdal.VSI_STAT_NATURE_FLAG
 
 VSI_STAT_SIZE_FLAG = _gdal.VSI_STAT_SIZE_FLAG
 
-VSI_STAT_SET_ERROR_FLAG = _gdal.VSI_STAT_SET_ERROR_FLAG
+# VSI_STAT_SET_ERROR_FLAG = _gdal.VSI_STAT_SET_ERROR_FLAG
 
-VSI_STAT_CACHE_ONLY = _gdal.VSI_STAT_CACHE_ONLY
+# VSI_STAT_CACHE_ONLY = _gdal.VSI_STAT_CACHE_ONLY
 
 class StatBuf(object):
     r"""Proxy of C++ StatBuf class."""
@@ -2578,9 +2580,9 @@ class Dataset(MajorObject):
 # Register Dataset in _gdal:
 _gdal.Dataset_swigregister(Dataset)
 
-GEDTST_NONE = _gdal.GEDTST_NONE
+# GEDTST_NONE = _gdal.GEDTST_NONE
 
-GEDTST_JSON = _gdal.GEDTST_JSON
+# GEDTST_JSON = _gdal.GEDTST_JSON
 
 class Group(object):
     r"""Proxy of C++ GDALGroupHS class."""
