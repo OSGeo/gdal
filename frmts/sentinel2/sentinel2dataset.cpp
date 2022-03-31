@@ -462,9 +462,11 @@ int SENTINEL2Dataset::Identify( GDALOpenInfo *poOpenInfo )
                 STARTS_WITH_CI(pszInsideFilename, "S2A_USER_MTD_SAFL2A") ||
                 STARTS_WITH_CI(pszInsideFilename, "S2B_USER_MTD_SAFL2A")
             )) {
+                VSICloseDir(psDir);
                 return TRUE;
             }
         }
+        VSICloseDir(psDir);
     }
 
     return FALSE;
@@ -648,9 +650,11 @@ GDALDataset *SENTINEL2Dataset::Open( GDALOpenInfo * poOpenInfo )
                 osFilename = osFilename + "/" + psEntry->pszName;
                 CPLDebug("SENTINEL2", "Trying %s", osFilename.c_str());
                 GDALOpenInfo oOpenInfo(osFilename, GA_ReadOnly);
+                VSICloseDir(psDir);
                 return Open(&oOpenInfo);
             }
         }
+        VSICloseDir(psDir);
     }
 
     return nullptr;
