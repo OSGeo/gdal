@@ -143,6 +143,7 @@ static const SENTINEL2_L2A_BandDescription asL2ABandDesc[] =
 
 #define NB_L2A_BANDS (sizeof(asL2ABandDesc)/sizeof(asL2ABandDesc[0]))
 
+bool SENTINEL2isMetadataFile(const char* pszInsideFilename);
 static
 const char* SENTINEL2GetOption( GDALOpenInfo* poOpenInfo,
                                 const char* pszName,
@@ -452,16 +453,8 @@ int SENTINEL2Dataset::Identify( GDALOpenInfo *poOpenInfo )
         while ( const VSIDIREntry* psEntry = VSIGetNextDirEntry(psDir) )
         {
             const char* pszInsideFilename = CPLGetFilename(psEntry->pszName);
-            if ( VSI_ISREG(psEntry->nMode) && (
-                STARTS_WITH_CI(pszInsideFilename, "MTD_MSIL1C") ||
-                STARTS_WITH_CI(pszInsideFilename, "MTD_MSIL2A") ||
-                STARTS_WITH_CI(pszInsideFilename, "S2A_OPER_MTD_SAFL1B") ||
-                STARTS_WITH_CI(pszInsideFilename, "S2B_OPER_MTD_SAFL1B") ||
-                STARTS_WITH_CI(pszInsideFilename, "S2A_OPER_MTD_SAFL1C") ||
-                STARTS_WITH_CI(pszInsideFilename, "S2B_OPER_MTD_SAFL1C") ||
-                STARTS_WITH_CI(pszInsideFilename, "S2A_USER_MTD_SAFL2A") ||
-                STARTS_WITH_CI(pszInsideFilename, "S2B_USER_MTD_SAFL2A")
-            )) {
+            if ( VSI_ISREG(psEntry->nMode) && SENTINEL2isMetadataFile(pszInsideFilename) )
+            {
                 VSICloseDir(psDir);
                 return TRUE;
             }
@@ -637,16 +630,8 @@ GDALDataset *SENTINEL2Dataset::Open( GDALOpenInfo * poOpenInfo )
         while ( const VSIDIREntry* psEntry = VSIGetNextDirEntry(psDir) )
         {
             const char* pszInsideFilename = CPLGetFilename(psEntry->pszName);
-            if ( VSI_ISREG(psEntry->nMode) && (
-                    STARTS_WITH_CI(pszInsideFilename, "MTD_MSIL2A") ||
-                    STARTS_WITH_CI(pszInsideFilename, "MTD_MSIL1C") ||
-                    STARTS_WITH_CI(pszInsideFilename, "S2A_OPER_MTD_SAFL1B") ||
-                    STARTS_WITH_CI(pszInsideFilename, "S2B_OPER_MTD_SAFL1B") ||
-                    STARTS_WITH_CI(pszInsideFilename, "S2A_OPER_MTD_SAFL1C") ||
-                    STARTS_WITH_CI(pszInsideFilename, "S2B_OPER_MTD_SAFL1C") ||
-                    STARTS_WITH_CI(pszInsideFilename, "S2A_USER_MTD_SAFL2A") ||
-                    STARTS_WITH_CI(pszInsideFilename, "S2B_USER_MTD_SAFL2A")
-            )) {
+            if ( VSI_ISREG(psEntry->nMode) && SENTINEL2isMetadataFile(pszInsideFilename) )
+            {
                 osFilename = osFilename + "/" + psEntry->pszName;
                 CPLDebug("SENTINEL2", "Trying %s", osFilename.c_str());
                 GDALOpenInfo oOpenInfo(osFilename, GA_ReadOnly);
@@ -658,6 +643,24 @@ GDALDataset *SENTINEL2Dataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     return nullptr;
+}
+
+/************************************************************************/
+/*                        SENTINEL2isMetadataFile()                     */
+/************************************************************************/
+
+bool SENTINEL2isMetadataFile(const char* pszInsideFilename)
+{
+    return (
+        STARTS_WITH_CI(pszInsideFilename, "MTD_MSIL2A") ||
+        STARTS_WITH_CI(pszInsideFilename, "MTD_MSIL1C") ||
+        STARTS_WITH_CI(pszInsideFilename, "S2A_OPER_MTD_SAFL1B") ||
+        STARTS_WITH_CI(pszInsideFilename, "S2B_OPER_MTD_SAFL1B") ||
+        STARTS_WITH_CI(pszInsideFilename, "S2A_OPER_MTD_SAFL1C") ||
+        STARTS_WITH_CI(pszInsideFilename, "S2B_OPER_MTD_SAFL1C") ||
+        STARTS_WITH_CI(pszInsideFilename, "S2A_USER_MTD_SAFL2A") ||
+        STARTS_WITH_CI(pszInsideFilename, "S2B_USER_MTD_SAFL2A")
+    );
 }
 
 /************************************************************************/
