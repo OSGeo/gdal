@@ -2417,57 +2417,52 @@ def test_sentinel2_l1c_safe_compact_3():
 
 def test_sentinel2_zipped():
     # S2 L1C
-    if not sys.platform.startswith("win"):
-        zipname = str(uuid.uuid4()) + ".zip"
-        with tempfile.TemporaryDirectory() as tmpdir:
-            zipwpath = os.path.join(tmpdir, zipname)
-            _zip_a_dir(zipwpath, "data/sentinel2/fake_l1c/S2A_OPER_PRD_MSIL1C.SAFE/")
-            assert os.path.exists(zipwpath)
-            ds = gdal.Open(zipwpath)
-            assert ds is not None
+    zipname = str(uuid.uuid4()) + ".zip"
+    with tempfile.TemporaryDirectory() as tmpdir:
+        zipwpath = os.path.join(tmpdir, zipname)
+        _zip_a_dir(zipwpath, "data/sentinel2/fake_l1c/S2A_OPER_PRD_MSIL1C.SAFE/")
+        assert os.path.exists(zipwpath)
+        ds = gdal.Open(zipwpath)
+        assert ds is not None
 
    # S2 L1B
-    if not sys.platform.startswith("win"):
-        zipname = str(uuid.uuid4()) + ".zip"
-        with tempfile.TemporaryDirectory() as tmpdir:
-            zipwpath = os.path.join(tmpdir, zipname)
-            _zip_a_dir(zipwpath, "data/sentinel2/fake_l1b/S2B_OPER_PRD_MSIL1B.SAFE/")
-            assert os.path.exists(zipwpath)
-            ds = gdal.Open(zipwpath)
-            assert ds is not None
+    zipname = str(uuid.uuid4()) + ".zip"
+    with tempfile.TemporaryDirectory() as tmpdir:
+        zipwpath = os.path.join(tmpdir, zipname)
+        _zip_a_dir(zipwpath, "data/sentinel2/fake_l1b/S2B_OPER_PRD_MSIL1B.SAFE/")
+        assert os.path.exists(zipwpath)
+        ds = gdal.Open(zipwpath)
+        assert ds is not None
 
     # S2 L1A
-    if not sys.platform.startswith("win"):
-        zipname = str(uuid.uuid4()) + ".zip"
-        with tempfile.TemporaryDirectory() as tmpdir:
-            zipwpath = os.path.join(tmpdir, zipname)
-            _zip_a_dir(zipwpath, "data/sentinel2/fake_l2a/S2A_USER_PRD_MSIL2A.SAFE/")
-            assert os.path.exists(zipwpath)
-            ds = gdal.Open(zipwpath)
-            assert ds is not None
+    zipname = str(uuid.uuid4()) + ".zip"
+    with tempfile.TemporaryDirectory() as tmpdir:
+        zipwpath = os.path.join(tmpdir, zipname)
+        _zip_a_dir(zipwpath, "data/sentinel2/fake_l2a/S2A_USER_PRD_MSIL2A.SAFE/")
+        assert os.path.exists(zipwpath)
+        ds = gdal.Open(zipwpath)
+        assert ds is not None
 
     # S2 L2A
-    if not sys.platform.startswith("win"):
-        zipname = str(uuid.uuid4()) + ".zip"
-        with tempfile.TemporaryDirectory() as tmpdir:
-            zipwpath = os.path.join(tmpdir, zipname)
-            _zip_a_dir(
-                zipwpath,
-                "data/sentinel2/fake_l2a_MSIL2A/S2A_MSIL2A_20180818T094031_N0208_R036_T34VFJ_20180818T120345.SAFE/",
-            )
-            assert os.path.exists(zipwpath)
-            ds = gdal.Open(zipwpath)
-            assert ds is not None
+    zipname = str(uuid.uuid4()) + ".zip"
+    with tempfile.TemporaryDirectory() as tmpdir:
+        zipwpath = os.path.join(tmpdir, zipname)
+        _zip_a_dir(
+            zipwpath,
+            "data/sentinel2/fake_l2a_MSIL2A/S2A_MSIL2A_20180818T094031_N0208_R036_T34VFJ_20180818T120345.SAFE/",
+        )
+        assert os.path.exists(zipwpath)
+        ds = gdal.Open(zipwpath)
+        assert ds is not None
 
    # S2 L1c SAFE compact
-    if not sys.platform.startswith("win"):
-        zipname = str(uuid.uuid4()) + ".zip"
-        with tempfile.TemporaryDirectory() as tmpdir:
-            zipwpath = os.path.join(tmpdir, zipname)
-            _zip_a_dir(
-                zipwpath, "data/sentinel2/fake_l1c_safecompact/S2A_MSIL1C_test.SAFE/"
-            )
-            assert os.path.exists(zipwpath)
-            ds = gdal.Open(zipwpath)
-            assert ds is not None
+    zipname = str(uuid.uuid4()) + ".zip"
+    with tempfile.TemporaryDirectory() as tmpdir:
+        zipwpath = os.path.join(tmpdir, zipname)
+        _zip_a_dir(
+            zipwpath, "data/sentinel2/fake_l1c_safecompact/S2A_MSIL1C_test.SAFE/"
+        )
+        assert os.path.exists(zipwpath)
+        ds = gdal.Open(zipwpath)
+        assert ds is not None
 
