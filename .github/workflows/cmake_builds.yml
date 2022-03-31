@@ -77,7 +77,7 @@ jobs:
         git clone https://github.com/SAP/odbc-cpp-wrapper.git \
           && mkdir odbc-cpp-wrapper/build \
           && cd odbc-cpp-wrapper/build \
-          && cmake .. \
+          && /usr/bin/cmake .. \
           && make -j 2 \
           && sudo make install
         sudo ldconfig
