@@ -2163,6 +2163,11 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
                    sizeof(GDALGridMovingAverageOptions));
 
             pfnGDALGridMethod = GDALGridMovingAverage;
+            bCreateQuadTree = (nPoints > 100 &&
+                static_cast<const GDALGridMovingAverageOptions *>(poOptions)->dfAngle == 0.0 &&
+                static_cast<const GDALGridMovingAverageOptions *>(poOptions)->dfRadius1 ==
+                static_cast<const GDALGridMovingAverageOptions *>(poOptions)->dfRadius2 &&
+                static_cast<const GDALGridMovingAverageOptions *>(poOptions)->dfRadius1 != 0.0);
             break;
         }
         case GGA_NearestNeighbor:
@@ -2186,10 +2191,10 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
 
             pfnGDALGridMethod = GDALGridDataMetricMinimum;
             bCreateQuadTree = (nPoints > 100 &&
-                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfAngle == 0.0 &&
-                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius1 ==
-                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius2 &&
-                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius1 != 0.0);
+                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfAngle == 0.0 &&
+                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius1 ==
+                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius2 &&
+                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius1 != 0.0);
             break;
         }
         case GGA_MetricMaximum:
@@ -2199,10 +2204,10 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
 
             pfnGDALGridMethod = GDALGridDataMetricMaximum;
             bCreateQuadTree = (nPoints > 100 &&
-                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfAngle == 0.0 &&
-                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius1 ==
-                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius2 &&
-                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius1 != 0.0);
+                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfAngle == 0.0 &&
+                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius1 ==
+                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius2 &&
+                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius1 != 0.0);
             break;
         }
         case GGA_MetricRange:
@@ -2212,10 +2217,10 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
 
             pfnGDALGridMethod = GDALGridDataMetricRange;
             bCreateQuadTree = (nPoints > 100 &&
-                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfAngle == 0.0 &&
-                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius1 ==
-                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius2 &&
-                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius1 != 0.0);
+                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfAngle == 0.0 &&
+                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius1 ==
+                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius2 &&
+                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius1 != 0.0);
             break;
         }
         case GGA_MetricCount:
@@ -2225,10 +2230,10 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
 
             pfnGDALGridMethod = GDALGridDataMetricCount;
             bCreateQuadTree = (nPoints > 100 &&
-                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfAngle == 0.0 &&
-                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius1 ==
-                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius2 &&
-                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius1 != 0.0);
+                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfAngle == 0.0 &&
+                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius1 ==
+                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius2 &&
+                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius1 != 0.0);
             break;
         }
         case GGA_MetricAverageDistance:
@@ -2238,10 +2243,10 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
 
             pfnGDALGridMethod = GDALGridDataMetricAverageDistance;
             bCreateQuadTree = (nPoints > 100 &&
-                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfAngle == 0.0 &&
-                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius1 ==
-                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius2 &&
-                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius1 != 0.0);
+                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfAngle == 0.0 &&
+                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius1 ==
+                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius2 &&
+                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius1 != 0.0);
             break;
         }
         case GGA_MetricAverageDistancePts:
@@ -2251,10 +2256,10 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
 
             pfnGDALGridMethod = GDALGridDataMetricAverageDistancePts;
             bCreateQuadTree = (nPoints > 100 &&
-                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfAngle == 0.0 &&
-                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius1 ==
-                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius2 &&
-                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius1 != 0.0);
+                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfAngle == 0.0 &&
+                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius1 ==
+                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius2 &&
+                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius1 != 0.0);
             break;
         }
         case GGA_Linear:
