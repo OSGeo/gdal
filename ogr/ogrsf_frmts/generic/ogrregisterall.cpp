@@ -253,6 +253,9 @@ void OGRRegisterAllInternal()
 #ifdef MAPML_ENABLED
     RegisterOGRMapML();
 #endif
+#ifdef HANA_ENABLED
+    RegisterOGRHANA();
+#endif
 
     // NOTE: you need to generally insert your own driver before that line.
 
