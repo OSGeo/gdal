@@ -3176,3 +3176,27 @@ def test_ogr_geojson_sparse_fields():
     lyr_defn = lyr.GetLayerDefn()
     field_names = [ lyr_defn.GetFieldDefn(i).GetName() for i in range(lyr_defn.GetFieldCount()) ]
     assert field_names == [ 'C', 'B', 'A', 'D', 'E_prev', 'E', 'E_next', 'F', 'X']
+
+###############################################################################
+
+
+@pytest.mark.parametrize('filename', ['point.geojson', 'featurecollection_point.json'])
+def test_ogr_geojson_crs_4326(filename):
+
+    ds = ogr.Open('data/geojson/' + filename)
+    lyr = ds.GetLayer(0)
+    srs = lyr.GetSpatialRef()
+    assert srs.GetAuthorityCode(None) == '4326'
+    assert srs.GetDataAxisToSRSAxisMapping() == [2, 1]
+
+###############################################################################
+
+
+@pytest.mark.parametrize('filename', ['pointz.json', 'featurecollection_pointz.json'])
+def test_ogr_geojson_crs_4979(filename):
+
+    ds = ogr.Open('data/geojson/' + filename)
+    lyr = ds.GetLayer(0)
+    srs = lyr.GetSpatialRef()
+    assert srs.GetAuthorityCode(None) == '4979'
+    assert srs.GetDataAxisToSRSAxisMapping() == [2, 1, 3]
