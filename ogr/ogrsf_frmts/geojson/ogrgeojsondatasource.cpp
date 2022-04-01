@@ -377,6 +377,25 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
             CPLError(CE_Warning, CPLE_AppDefined,
                      "No SRS set on layer. Assuming it is long/lat on WGS84 ellipsoid");
         }
+        else if( poSRS->GetAxesCount() == 3 )
+        {
+            OGRSpatialReference oSRS_EPSG_4979;
+            oSRS_EPSG_4979.importFromEPSG(4979);
+            oSRS_EPSG_4979.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            if( !poSRS->IsSame(&oSRS_EPSG_4979) )
+            {
+                poCT = OGRCreateCoordinateTransformation( poSRS, &oSRS_EPSG_4979 );
+                if( poCT == nullptr )
+                {
+                    CPLError(
+                        CE_Warning, CPLE_AppDefined,
+                        "Failed to create coordinate transformation between the "
+                        "input coordinate system and WGS84." );
+
+                    return nullptr;
+                }
+            }
+        }
         else
         {
             OGRSpatialReference oSRSWGS84;

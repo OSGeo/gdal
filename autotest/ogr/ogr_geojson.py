@@ -3200,3 +3200,38 @@ def test_ogr_geojson_crs_4979(filename):
     srs = lyr.GetSpatialRef()
     assert srs.GetAuthorityCode(None) == '4979'
     assert srs.GetDataAxisToSRSAxisMapping() == [2, 1, 3]
+
+
+###############################################################################
+
+
+def test_ogr_geojson_write_rfc7946_from_3D_crs():
+
+    srs_4979 = osr.SpatialReference()
+    srs_4979.ImportFromEPSG(4979)
+    srs_4979.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
+    srs_4326_5773 = osr.SpatialReference()
+    srs_4326_5773.SetFromUserInput("EPSG:4326+5773")
+    srs_4326_5773.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
+    ct = osr.CoordinateTransformation(srs_4979, srs_4326_5773)
+    ellipsoidal_height = 100
+    lon, lat, z = ct.TransformPoint(2, 49, ellipsoidal_height)
+    # If we have the egm96 grid, then z should be different from 100
+
+    filename = '/vsimem/out.geojson'
+    ds = ogr.GetDriverByName('GeoJSON').CreateDataSource(filename)
+    lyr = ds.CreateLayer('out', srs=srs_4326_5773, options = ['RFC7946=YES'])
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(%.18g %.18g %.18g)' % (lon, lat, z)))
+    lyr.CreateFeature(f)
+    ds = None
+
+    fp = gdal.VSIFOpenL(filename, 'rb')
+    data = gdal.VSIFReadL(1, 10000, fp).decode('ascii')
+    gdal.VSIFCloseL(fp)
+    gdal.Unlink(filename)
+
+    # Check that we get back the ellipsoidal height
+    assert '"coordinates": [ 2.0, 49.0, 100.0' in data
