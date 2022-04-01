@@ -143,7 +143,7 @@ static const SENTINEL2_L2A_BandDescription asL2ABandDesc[] =
 
 #define NB_L2A_BANDS (sizeof(asL2ABandDesc)/sizeof(asL2ABandDesc[0]))
 
-bool SENTINEL2isZipped(const char* pszHeader);
+static bool SENTINEL2isZipped(const char* pszHeader);
 static
 const char* SENTINEL2GetOption( GDALOpenInfo* poOpenInfo,
                                 const char* pszName,
@@ -642,7 +642,7 @@ GDALDataset *SENTINEL2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*                        SENTINEL2isZipped()                           */
 /************************************************************************/
 
-bool SENTINEL2isZipped(const char* pszHeader)
+static bool SENTINEL2isZipped(const char* pszHeader)
 {
     /* According to Sentinel-2 Products Specification Document,
      * all files are located inside a folder with a specific name pattern
