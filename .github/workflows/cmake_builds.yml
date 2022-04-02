@@ -235,11 +235,12 @@ jobs:
           msystem: MINGW64
           update: true
           # Disable mingw-w64-x86_64-crypto++ as it crashes at runtime on eedai_3 test. Likely a build issue with crypto++ itself
+          # Disable mingw-w64-x86_64-netcdf, because 4.8.1-3 is broken. See https://github.com/msys2/MINGW-packages/pull/11156
           install: |
             base-devel git mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-ccache
             mingw-w64-x86_64-pcre mingw-w64-x86_64-xerces-c mingw-w64-x86_64-zstd
             mingw-w64-x86_64-geos mingw-w64-x86_64-libspatialite mingw-w64-x86_64-proj
-            mingw-w64-x86_64-cgal mingw-w64-x86_64-libfreexl mingw-w64-x86_64-hdf5 mingw-w64-x86_64-netcdf mingw-w64-x86_64-poppler mingw-w64-x86_64-postgresql
+            mingw-w64-x86_64-cgal mingw-w64-x86_64-libfreexl mingw-w64-x86_64-hdf5 mingw-w64-x86_64-poppler mingw-w64-x86_64-postgresql
             mingw-w64-x86_64-libgeotiff mingw-w64-x86_64-libpng mingw-w64-x86_64-libtiff mingw-w64-x86_64-openjpeg
             mingw-w64-x86_64-python-pip mingw-w64-x86_64-python-numpy mingw-w64-x86_64-python-pytest mingw-w64-x86_64-python-setuptools mingw-w64-x86_64-python-lxml
       - name: Setup cache
