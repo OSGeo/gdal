@@ -106,8 +106,8 @@ static volatile char **g_papszConfigOptions = nullptr;
 
 // Used by CPLOpenShared() and friends.
 static CPLMutex *hSharedFileMutex = nullptr;
-static volatile int nSharedFileCount = 0;
-static volatile CPLSharedFileInfo *pasSharedFileList = nullptr;
+static int nSharedFileCount = 0;
+static CPLSharedFileInfo *pasSharedFileList = nullptr;
 
 // Used by CPLsetlocale().
 static CPLMutex *hSetLocaleMutex = nullptr;
