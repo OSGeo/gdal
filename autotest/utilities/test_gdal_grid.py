@@ -435,7 +435,7 @@ def test_gdal_grid_5():
     ds = None
 
     #################
-    outfiles.append('tmp/grid_average_190_190.tif')
+    outfiles.append('tmp/grid_average_300_100_40.tif')
     try:
         os.remove(outfiles[-1])
     except OSError:
@@ -454,13 +454,6 @@ def test_gdal_grid_5():
         gdaltest.compare_ds(ds, ds_ref, verbose=1)
         pytest.fail('Image too different from the reference')
     ds = None
-
-    #################
-    outfiles.append('tmp/grid_average_90_90_8p.tif')
-    try:
-        os.remove(outfiles[-1])
-    except OSError:
-        pass
 
 @pytest.mark.parametrize("use_quadtree", [True, False])
 def test_gdal_grid_6(use_quadtree):
@@ -593,7 +586,7 @@ def test_gdal_grid_8(use_quadtree):
 
         # Create a GDAL dataset from the values of "grid.csv".
         # Search ellipse smaller than the raster cell.
-        gdaltest.runexternal(gdal_grid + ' -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Byte -l grid -a minimum:radius1=20.0:radius2=20.0:angle=120.0:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+        gdaltest.runexternal(gdal_grid + ' -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Byte -l grid -a minimum:radius1=20.0:radius2=20.0:angle=0.0:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
 
         # We should get the same values as in "ref_data/grid_minimum_20_20.tif"
         ds = gdal.Open(outfiles[-1])
@@ -902,7 +895,7 @@ def test_gdal_grid_17(use_quadtree):
         pytest.skip()
 
     #################
-    outfiles.append('tmp/grid_avdist_180_180.tif')
+    outfiles.append('tmp/grid_avdist_150_150.tif')
     try:
         os.remove(outfiles[-1])
     except OSError:
@@ -912,11 +905,11 @@ def test_gdal_grid_17(use_quadtree):
         # Create a GDAL dataset from the values of "grid.csv".
         # We are using all the points from input dataset to average, so
         # the result is a raster filled with the same value in each node.
-        gdaltest.runexternal(gdal_grid + ' -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Float64 -l grid -a average_distance_pts:radius1=180.0:radius2=180.0:angle=0.0:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+        gdaltest.runexternal(gdal_grid + ' -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Float64 -l grid -a average_distance_pts:radius1=150.0:radius2=150.0:angle=0.0:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
 
-        # We should get the same values as in "ref_data/grid_avdist_180_180.tif"
+        # We should get the same values as in "ref_data/grid_avdist_150_150.tif"
         ds = gdal.Open(outfiles[-1])
-        ds_ref = gdal.Open('ref_data/grid_avdist_180_180.tif')
+        ds_ref = gdal.Open('ref_data/grid_avdist_150_150.tif')
         maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose=0)
         ds_ref = None
         if maxdiff > 1:
