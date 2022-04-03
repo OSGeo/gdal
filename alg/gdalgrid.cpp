@@ -2024,7 +2024,7 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
     CPLAssert( padfZ );
     bool bCreateQuadTree = false;
 
-    const unsigned int nPointCountTreshold = strtoul(CPLGetConfigOption("GDAL_GRID_POINT_COUNT_THRESHOLD", "100"), NULL, 10);
+    const unsigned int nPointCountTreshold = atoi(CPLGetConfigOption("GDAL_GRID_POINT_COUNT_THRESHOLD", "100"));
  
     // Starting address aligned on 32-byte boundary for AVX.
     float* pafXAligned = nullptr;
