@@ -534,6 +534,18 @@ bool S57Reader::Ingest()
             if( !bSuccess && CPLGetLastErrorType() == CE_Failure )
                 break;
 
+            const char* pszEDTN = poRecord->GetStringSubfield( "DSID", 0, "EDTN", 0 );
+            if( pszEDTN )
+                m_osEDTNUpdate = pszEDTN;
+
+            const char* pszUPDN = poRecord->GetStringSubfield( "DSID", 0, "UPDN", 0 );
+            if( pszUPDN )
+                m_osUPDNUpdate = pszUPDN;
+
+            const char* pszISDT = poRecord->GetStringSubfield( "DSID", 0, "ISDT", 0 );
+            if( pszISDT )
+                m_osISDTUpdate = pszISDT;
+
             if( nOptionFlags & S57M_RETURN_DSID )
             {
                 if( poDSIDRecord != nullptr )
@@ -2685,11 +2697,28 @@ bool S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
         = poKey->GetFieldDefn()->FindSubfieldDefn( "RVER" );
     if( poRVER_SFD == nullptr )
         return false;
+    if( !EQUAL(poRVER_SFD->GetFormat(),"b12") )
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "Subfield RVER of record %s has format=%s, instead of expected b12",
+                 pszKey, poRVER_SFD->GetFormat());
+        return false;
+    }
 
-    unsigned char *pnRVER
-        = (unsigned char *) poKey->GetSubfieldData( poRVER_SFD, nullptr, 0 );
 
-    *pnRVER += 1;
+/* -------------------------------------------------------------------- */
+/*      Update target RVER                                              */
+/* -------------------------------------------------------------------- */
+    unsigned short nRVER;
+    int nBytesRemaining = 0;
+    unsigned char *pachRVER = reinterpret_cast<unsigned char *>(
+            const_cast<char *>(poKey->GetSubfieldData( poRVER_SFD, &nBytesRemaining, 0 )));
+    CPLAssert( nBytesRemaining >= static_cast<int>(sizeof(nRVER)) );
+    memcpy(&nRVER, pachRVER, sizeof(nRVER));
+    CPL_LSBPTR16(&nRVER);
+    nRVER += 1;
+    CPL_LSBPTR16(&nRVER);
+    memcpy(pachRVER, &nRVER, sizeof(nRVER));
 
 /* -------------------------------------------------------------------- */
 /*      Check for, and apply record record to spatial record pointer    */
@@ -3281,21 +3310,45 @@ bool S57Reader::ApplyUpdates( DDFModule *poUpdateModule )
 
         else if( EQUAL(pszKey,"DSID") )
         {
-            if( poDSIDRecord != nullptr )
+            const char* pszEDTN
+                = poRecord->GetStringSubfield( "DSID", 0, "EDTN", 0 );
+            if( pszEDTN != nullptr )
             {
-                const char* pszEDTN
-                    = poRecord->GetStringSubfield( "DSID", 0, "EDTN", 0 );
-                if( pszEDTN != nullptr )
-                    m_osEDTNUpdate = pszEDTN;
-                const char* pszUPDN
-                    = poRecord->GetStringSubfield( "DSID", 0, "UPDN", 0 );
-                if( pszUPDN != nullptr )
-                    m_osUPDNUpdate = pszUPDN;
-                const char* pszISDT
-                    = poRecord->GetStringSubfield( "DSID", 0, "ISDT", 0 );
-                if( pszISDT != nullptr)
-                    m_osISDTUpdate = pszISDT;
+                if( !m_osEDTNUpdate.empty() )
+                {
+                    if( !EQUAL(pszEDTN, "0") && // cancel
+                        !EQUAL(pszEDTN, m_osEDTNUpdate.c_str()) )
+                    {
+                        CPLDebug( "S57",
+                                  "Skipping update as EDTN=%s in update does not match expected %s.",
+                                  pszEDTN, m_osEDTNUpdate.c_str());
+                        return false;
+                    }
+                }
+                m_osEDTNUpdate = pszEDTN;
             }
+
+            const char* pszUPDN
+                = poRecord->GetStringSubfield( "DSID", 0, "UPDN", 0 );
+            if( pszUPDN != nullptr )
+            {
+                if( !m_osUPDNUpdate.empty() )
+                {
+                    if( atoi(m_osUPDNUpdate.c_str()) + 1 != atoi(pszUPDN) )
+                    {
+                        CPLDebug( "S57",
+                                  "Skipping update as UPDN=%s in update does not match expected %d.",
+                                  pszUPDN, atoi(m_osUPDNUpdate.c_str()) + 1);
+                        return false;
+                    }
+                }
+                m_osUPDNUpdate = pszUPDN;
+            }
+
+            const char* pszISDT
+                = poRecord->GetStringSubfield( "DSID", 0, "ISDT", 0 );
+            if( pszISDT != nullptr)
+                m_osISDTUpdate = pszISDT;
         }
 
         else

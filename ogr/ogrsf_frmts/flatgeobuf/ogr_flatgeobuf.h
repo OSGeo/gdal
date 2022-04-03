@@ -103,6 +103,7 @@ class OGRFlatGeobufLayer final : public OGRLayer, public OGRFlatGeobufBaseLayerI
         bool m_bCanCreate = true;
         VSILFILE *m_poFpWrite = nullptr;
         uint64_t m_writeOffset = 0; // current write offset
+        uint64_t m_offsetAfterHeader = 0; // offset after dummy header writing (when creating a file without spatial index)
         uint16_t m_indexNodeSize = 0;
         std::string m_osTempFile; // holds generated temp file name for two pass writing
         uint32_t m_maxFeatureSize  = 0;

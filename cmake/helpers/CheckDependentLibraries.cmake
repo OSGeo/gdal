@@ -245,6 +245,7 @@ if (WIN32)
 else ()
   gdal_check_package(ODBC "Enable DB support through ODBC" COMPONENTS ODBCINST CAN_DISABLE)
 endif ()
+gdal_check_package(ODBCCPP "odbc-cpp library (external)" CAN_DISABLE)
 gdal_check_package(MSSQL_NCLI "MSSQL Native Client to enable bulk copy" CAN_DISABLE)
 gdal_check_package(MSSQL_ODBC "MSSQL ODBC driver to enable bulk copy" CAN_DISABLE)
 
