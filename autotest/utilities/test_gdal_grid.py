@@ -527,7 +527,7 @@ def test_gdal_grid_7():
     ds_ref = gdal.Open('ref_data/grid_minimum.tif')
     assert ds.GetRasterBand(1).Checksum() == ds_ref.GetRasterBand(1).Checksum(), \
         ('bad checksum : got %d, expected %d' %
-              (ds.GetRasterBand(1).Checksum(), ds_ref.GetRasterBand(1).checksum_ref))
+              (ds.GetRasterBand(1).Checksum(), ds_ref.GetRasterBand(1).Checksum()))
     ds_ref = None
     ds = None
 
@@ -547,7 +547,7 @@ def test_gdal_grid_7():
     ds_ref = gdal.Open('ref_data/grid_minimum_400_100_120.tif')
     assert ds.GetRasterBand(1).Checksum() == ds_ref.GetRasterBand(1).Checksum(), \
         ('bad checksum : got %d, expected %d' %
-              (ds.GetRasterBand(1).Checksum(), ds_ref.GetRasterBand(1).checksum_ref))
+              (ds.GetRasterBand(1).Checksum(), ds_ref.GetRasterBand(1).Checksum()))
     ds_ref = None
     ds = None
 
@@ -573,7 +573,7 @@ def test_gdal_grid_8(use_quadtree):
         ds_ref = gdal.Open('ref_data/grid_minimum_180_180.tif')
         assert ds.GetRasterBand(1).Checksum() == ds_ref.GetRasterBand(1).Checksum(), \
             ('bad checksum : got %d, expected %d' %
-                (ds.GetRasterBand(1).Checksum(), ds_ref.GetRasterBand(1).checksum_ref))
+                (ds.GetRasterBand(1).Checksum(), ds_ref.GetRasterBand(1).Checksum()))
         ds_ref = None
         ds = None
 
@@ -593,7 +593,7 @@ def test_gdal_grid_8(use_quadtree):
         ds_ref = gdal.Open('ref_data/grid_minimum_20_20.tif')
         assert ds.GetRasterBand(1).Checksum() == ds_ref.GetRasterBand(1).Checksum(), \
             ('bad checksum : got %d, expected %d' %
-                (ds.GetRasterBand(1).Checksum(), ds_ref.GetRasterBand(1).checksum_ref))
+                (ds.GetRasterBand(1).Checksum(), ds_ref.GetRasterBand(1).Checksum()))
         ds_ref = None
         ds = None
 
@@ -621,7 +621,7 @@ def test_gdal_grid_9():
     ds_ref = gdal.Open('ref_data/grid_maximum.tif')
     assert ds.GetRasterBand(1).Checksum() == ds_ref.GetRasterBand(1).Checksum(), \
         ('bad checksum : got %d, expected %d' %
-              (ds.GetRasterBand(1).Checksum(), ds_ref.GetRasterBand(1).checksum_ref))
+              (ds.GetRasterBand(1).Checksum(), ds_ref.GetRasterBand(1).Checksum()))
     ds_ref = None
     ds = None
 
@@ -641,7 +641,7 @@ def test_gdal_grid_9():
     ds_ref = gdal.Open('ref_data/grid_maximum_100_100.tif')
     assert ds.GetRasterBand(1).Checksum() == ds_ref.GetRasterBand(1).Checksum(), \
         ('bad checksum : got %d, expected %d' %
-              (ds.GetRasterBand(1).Checksum(), ds_ref.GetRasterBand(1).checksum_ref))
+              (ds.GetRasterBand(1).Checksum(), ds_ref.GetRasterBand(1).Checksum()))
     ds_ref = None
     ds = None
 
@@ -667,7 +667,7 @@ def test_gdal_grid_10(use_quadtree):
         ds_ref = gdal.Open('ref_data/grid_maximum_180_180.tif')
         assert ds.GetRasterBand(1).Checksum() == ds_ref.GetRasterBand(1).Checksum(), \
             ('bad checksum : got %d, expected %d' %
-                (ds.GetRasterBand(1).Checksum(), ds_ref.GetRasterBand(1).checksum_ref))
+                (ds.GetRasterBand(1).Checksum(), ds_ref.GetRasterBand(1).Checksum()))
         ds_ref = None
         ds = None
 
@@ -687,7 +687,7 @@ def test_gdal_grid_10(use_quadtree):
         ds_ref = gdal.Open('ref_data/grid_maximum_20_20.tif')
         assert ds.GetRasterBand(1).Checksum() == ds_ref.GetRasterBand(1).Checksum(), \
             ('bad checksum : got %d, expected %d' %
-                (ds.GetRasterBand(1).Checksum(), ds_ref.GetRasterBand(1).checksum_ref))
+                (ds.GetRasterBand(1).Checksum(), ds_ref.GetRasterBand(1).Checksum()))
         ds_ref = None
         ds = None
 
@@ -715,7 +715,7 @@ def test_gdal_grid_11():
     ds_ref = gdal.Open('ref_data/grid_range.tif')
     assert ds.GetRasterBand(1).Checksum() == ds_ref.GetRasterBand(1).Checksum(), \
         ('bad checksum : got %d, expected %d' %
-              (ds.GetRasterBand(1).Checksum(), ds_ref.GetRasterBand(1).checksum_ref))
+              (ds.GetRasterBand(1).Checksum(), ds_ref.GetRasterBand(1).Checksum()))
     ds_ref = None
     ds = None  
 
@@ -742,7 +742,7 @@ def test_gdal_grid_12(use_quadtree):
         ds_ref = gdal.Open('ref_data/grid_range_90_90_8p.tif')
         assert ds.GetRasterBand(1).Checksum() == ds_ref.GetRasterBand(1).Checksum(), \
             ('bad checksum : got %d, expected %d' %
-                (ds.GetRasterBand(1).Checksum(), ds_ref.GetRasterBand(1).checksum_ref))
+                (ds.GetRasterBand(1).Checksum(), ds_ref.GetRasterBand(1).Checksum()))
         ds_ref = None
         ds = None
 
@@ -771,7 +771,7 @@ def test_gdal_grid_13(use_quadtree):
         ds_ref = gdal.Open('ref_data/grid_count_70_70.tif')
         assert ds.GetRasterBand(1).Checksum() == ds_ref.GetRasterBand(1).Checksum(), \
             ('bad checksum : got %d, expected %d' %
-                (ds.GetRasterBand(1).Checksum(), ds_ref.GetRasterBand(1).checksum_ref))
+                (ds.GetRasterBand(1).Checksum(), ds_ref.GetRasterBand(1).Checksum()))
         ds_ref = None
         ds = None
 
@@ -790,7 +790,7 @@ def test_gdal_grid_13(use_quadtree):
         ds_ref = gdal.Open('ref_data/grid_count_300_300.tif')
         assert ds.GetRasterBand(1).Checksum() == ds_ref.GetRasterBand(1).Checksum(), \
             ('bad checksum : got %d, expected %d' %
-                (ds.GetRasterBand(1).Checksum(), ds_ref.GetRasterBand(1).checksum_ref))
+                (ds.GetRasterBand(1).Checksum(), ds_ref.GetRasterBand(1).Checksum()))
         ds_ref = None
         ds = None
 
@@ -818,18 +818,12 @@ def test_gdal_grid_14():
     ds = gdal.Open(outfiles[-1])
     ds_ref = gdal.Open('ref_data/grid_avdist.tif')
     maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose=0)
-    ds_ref = None
     if maxdiff > 1:
         gdaltest.compare_ds(ds, ds_ref, verbose=1)
         pytest.fail('Image too different from the reference')
     ds = None
+    ds_ref = None
 
-    #################
-    outfiles.append('tmp/grid_avdist_150_150.tif')
-    try:
-        os.remove(outfiles[-1])
-    except OSError:
-        pass
 
 @pytest.mark.parametrize("use_quadtree", [True, False])
 def test_gdal_grid_15(use_quadtree):
@@ -853,11 +847,12 @@ def test_gdal_grid_15(use_quadtree):
         ds = gdal.Open(outfiles[-1])
         ds_ref = gdal.Open('ref_data/grid_avdist_150_150.tif')
         maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose=0)
-        ds_ref = None
         if maxdiff > 1:
             gdaltest.compare_ds(ds, ds_ref, verbose=1)
             pytest.fail('Image too different from the reference')
         ds = None
+        ds_ref = None
+
 
 ###############################################################################
 # Test Average Distance Between Points data metric
@@ -868,7 +863,7 @@ def test_gdal_grid_16():
         pytest.skip()
 
     #################
-    outfiles.append('tmp/grid_avdist_150_50_-15.tif')
+    outfiles.append('tmp/grid_avdistpts_150_50_-15.tif')
     try:
         os.remove(outfiles[-1])
     except OSError:
@@ -879,15 +874,16 @@ def test_gdal_grid_16():
     # the result is a raster filled with the same value in each node.
     gdaltest.runexternal(gdal_grid + ' -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Float64 -l grid -a average_distance_pts:radius1=150.0:radius2=50.0:angle=-15.0:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
 
-    # We should get the same values as in "ref_data/grid_avdist_150_50_-15.tif"
+    # We should get the same values as in "ref_data/grid_avdistpts_150_50_-15.tif"
     ds = gdal.Open(outfiles[-1])
-    ds_ref = gdal.Open('ref_data/grid_avdist_150_50_-15.tif')
+    ds_ref = gdal.Open('ref_data/grid_avdistpts_150_50_-15.tif')
     maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose=0)
-    ds_ref = None
     if maxdiff > 1:
         gdaltest.compare_ds(ds, ds_ref, verbose=1)
         pytest.fail('Image too different from the reference')
     ds = None
+    ds_ref = None
+
 
 @pytest.mark.parametrize("use_quadtree", [True, False])
 def test_gdal_grid_17(use_quadtree):
@@ -895,7 +891,7 @@ def test_gdal_grid_17(use_quadtree):
         pytest.skip()
 
     #################
-    outfiles.append('tmp/grid_avdist_150_150.tif')
+    outfiles.append('tmp/grid_avdistpts_150_150.tif')
     try:
         os.remove(outfiles[-1])
     except OSError:
@@ -907,15 +903,16 @@ def test_gdal_grid_17(use_quadtree):
         # the result is a raster filled with the same value in each node.
         gdaltest.runexternal(gdal_grid + ' -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Float64 -l grid -a average_distance_pts:radius1=150.0:radius2=150.0:angle=0.0:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
 
-        # We should get the same values as in "ref_data/grid_avdist_150_150.tif"
+        # We should get the same values as in "ref_data/grid_avdistpts_150_150.tif"
         ds = gdal.Open(outfiles[-1])
-        ds_ref = gdal.Open('ref_data/grid_avdist_150_150.tif')
+        ds_ref = gdal.Open('ref_data/grid_avdistpts_150_150.tif')
         maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose=0)
-        ds_ref = None
         if maxdiff > 1:
             gdaltest.compare_ds(ds, ds_ref, verbose=1)
             pytest.fail('Image too different from the reference')
         ds = None
+        ds_ref = None
+
 
 ###############################################################################
 # Test linear
@@ -1067,7 +1064,7 @@ def test_gdal_grid_tr():
     ds_ref = gdal.Open('ref_data/grid_count_70_70.tif')
     assert ds.GetRasterBand(1).Checksum() == ds_ref.GetRasterBand(1).Checksum(), \
         ('bad checksum : got %d, expected %d' %
-              (ds.GetRasterBand(1).Checksum(), ds_ref.GetRasterBand(1).checksum_ref))
+              (ds.GetRasterBand(1).Checksum(), ds_ref.GetRasterBand(1).Checksum()))
     ds_ref = None
     ds = None
 
