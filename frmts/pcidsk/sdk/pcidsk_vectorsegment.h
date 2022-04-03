@@ -307,10 +307,13 @@ The list of fields should match the types and length from the schema
         ShapeIterator(const ShapeIterator& mit) : id(mit.id), seg(mit.seg) {}
         ShapeIterator& operator++() { id=seg->FindNext(id); return *this;}
         ShapeIterator& operator++(int) { id=seg->FindNext(id); return *this;}
-        bool operator==(const ShapeIterator& rhs) {return id == rhs.id;}
-        bool operator!=(const ShapeIterator& rhs) {return id != rhs.id;}
+        friend bool operator==(const ShapeIterator& lhs, const ShapeIterator& rhs);
+        friend bool operator!=(const ShapeIterator& lhs, const ShapeIterator& rhs);
         ShapeId& operator*() {return id;}
     };
+
+    inline bool operator==(const ShapeIterator& lhs, const ShapeIterator& rhs) {return lhs.id == rhs.id;}
+    inline bool operator!=(const ShapeIterator& lhs, const ShapeIterator& rhs) {return lhs.id != rhs.id;}
 
 } // end namespace PCIDSK
 
