@@ -60,7 +60,7 @@ static char GifVersionPrefix[GIF_STAMP_LEN + 1] = GIF87_STAMP;
 #define WRITE(_gif,_buf,_len)   \
   (((GifFilePrivateType*)_gif->Private)->Write ?    \
    ((GifFilePrivateType*)_gif->Private)->Write(_gif,_buf,(int)(_len)) :    \
-   fwrite(_buf, 1, _len, ((GifFilePrivateType*)_gif->Private)->File))
+   (int)fwrite(_buf, 1, _len, ((GifFilePrivateType*)_gif->Private)->File))
 
 static int EGifPutWord(int Word, GifFileType * GifFile);
 static int EGifSetupCompress(GifFileType * GifFile);
@@ -251,7 +251,7 @@ EGifPutScreenDesc(GifFileType * GifFile,
 /* First write the version prefix into the file. */
 #ifndef DEBUG_NO_PREFIX
     if (WRITE(GifFile, (unsigned char *)GifVersionPrefix,
-              (int)strlen(GifVersionPrefix)) != strlen(GifVersionPrefix)) {
+              (int)strlen(GifVersionPrefix)) != (int)strlen(GifVersionPrefix)) {
         _GifError = E_GIF_ERR_WRITE_FAILED;
         return GIF_ERROR;
     }
@@ -475,7 +475,7 @@ EGifPutPixel(GifFileType * GifFile,
 int
 EGifPutComment(GifFileType * GifFile,
                const char *Comment) {
-  
+
     unsigned int length;
     char *buf;
 
@@ -656,7 +656,7 @@ EGifPutCode(GifFileType * GifFile,
     }
 
     /* No need to dump code size as Compression set up does any for us: */
-    /* 
+    /*
      * Buf = CodeSize;
      * if (WRITE(GifFile, &Buf, 1) != 1) {
      *      _GifError = E_GIF_ERR_WRITE_FAILED;
@@ -681,7 +681,7 @@ EGifPutCodeNext(GifFileType * GifFile,
 
     if (CodeBlock != NULL) {
         if (WRITE(GifFile, CodeBlock, CodeBlock[0] + 1)
-               != (unsigned)(CodeBlock[0] + 1)) {
+               != (int)(CodeBlock[0] + 1)) {
             _GifError = E_GIF_ERR_WRITE_FAILED;
             return GIF_ERROR;
         }
@@ -840,7 +840,7 @@ EGifCompressLine(GifFileType * GifFile,
 
     while (i < LineLen) {   /* Decode LineLen items. */
         Pixel = Line[i++];  /* Get next pixel from stream. */
-        /* Form a new unique key to search hash table for the code combines 
+        /* Form a new unique key to search hash table for the code combines
          * CrntCode as Prefix string with Pixel as postfix char.
          */
         NewKey = (((UINT32) CrntCode) << 8) + Pixel;
@@ -965,7 +965,7 @@ EGifBufferedOutput(GifFileType * GifFile,
     if (c == FLUSH_OUTPUT) {
         /* Flush everything out. */
         if (Buf[0] != 0
-            && WRITE(GifFile, Buf, Buf[0] + 1) != (unsigned)(Buf[0] + 1)) {
+            && WRITE(GifFile, Buf, Buf[0] + 1) != (int)(Buf[0] + 1)) {
             _GifError = E_GIF_ERR_WRITE_FAILED;
             return GIF_ERROR;
         }
@@ -978,7 +978,7 @@ EGifBufferedOutput(GifFileType * GifFile,
     } else {
         if (Buf[0] == 255) {
             /* Dump out this buffer - it is full: */
-            if (WRITE(GifFile, Buf, Buf[0] + 1) != (unsigned)(Buf[0] + 1)) {
+            if (WRITE(GifFile, Buf, Buf[0] + 1) != (int)(Buf[0] + 1)) {
                 _GifError = E_GIF_ERR_WRITE_FAILED;
                 return GIF_ERROR;
             }
