@@ -1129,8 +1129,8 @@ The ``nc-config`` program can be used to detect it.
 ODBC
 ****
 
-ODBC is required for various drivers: :ref:`vector.odbc`, :ref:`vector.pgeo`
-and :ref:`vector.mssqlspatial`.
+ODBC is required for various drivers: :ref:`vector.odbc`, :ref:`vector.pgeo`,
+:ref:`vector.hana` and :ref:`vector.mssqlspatial`.
 It is normally automatically found in system directories on Unix and Windows.
 
 .. option:: ODBC_INCLUDE_DIR
@@ -1144,6 +1144,25 @@ It is normally automatically found in system directories on Unix and Windows.
 .. option:: GDAL_USE_ODBC=ON/OFF
 
     Control whether to use ODBC. Defaults to ON when ODBC is found.
+
+
+ODBC-CPP
+********
+
+The `odbc-cpp-wrapper library <https://github.com/SAP/odbc-cpp-wrapper>`_ is required for
+the :ref:`vector.hana` driver.
+
+.. option:: ODBCCPP_INCLUDE_DIR
+
+    Path to an include directory with the ``odbc/Environment.h`` header file.
+
+.. option:: ODBCCPP_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_ODBCCPP=ON/OFF
+
+    Control whether to use ODBC-CPP. Defaults to ON when ODBC-CPP is found.
 
 
 OGDI

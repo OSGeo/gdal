@@ -110,6 +110,7 @@ ogr_dependent_driver(idb "IDB" "GDAL_USE_IDB")
 ogr_dependent_driver(ods ODS "GDAL_USE_EXPAT")
 ogr_dependent_driver(ogdi "OGDI" "GDAL_USE_OGDI")
 ogr_dependent_driver(lvbag "LVBAG" "GDAL_USE_EXPAT")
+ogr_dependent_driver(hana "SAP HANA" "GDAL_USE_ODBCCPP;GDAL_USE_ODBC")
 
 # Add generic in last line
 add_subdirectory(generic)

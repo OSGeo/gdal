@@ -3897,6 +3897,62 @@ fi
 AC_SUBST(ODBC_SETTING,$ODBC_SETTING)
 
 dnl ---------------------------------------------------------------------------
+dnl Check for SAP HANA support.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(hana, AS_HELP_STRING([--with-hana[=ARG]] Include SAP HANA (ARG=no(default), yes or path to odbc-cpp-wrapper)),,)
+
+AC_MSG_CHECKING([for SAP HANA])
+
+if test "x$with_hana" = "xno" -o "x$with_hana" = "x" ; then
+  HAVE_HANA=no
+  ODBCCPP_LIB=
+  ODBCCPP_INC=
+  AC_MSG_RESULT([no])
+else
+  if test "$ODBC_SETTING" = "no" ; then
+      AC_MSG_ERROR([SAP HANA driver requires odbc driver to be installed.])
+  fi
+
+  if test "$with_hana" = "yes" ; then
+      ODBCCPP_PATH=/usr/local
+  else
+      ODBCCPP_PATH=$with_hana
+  fi
+
+  if test -d ${ODBCCPP_PATH} ; then
+     AC_LANG_PUSH(C++)
+     LIBS="-lodbccpp $LIBS"
+     AC_CHECK_HEADER(odbc/PreparedStatement.h)
+     AC_LINK_IFELSE(
+       [AC_LANG_PROGRAM(
+           [#include <odbc/Environment.h>],
+           [
+              odbc::EnvironmentRef env = odbc::Environment::create();
+           ]
+         )],
+       [HAVE_HANA="yes"],
+       [AC_MSG_WARN([Cannot find odbccpp.])])
+     AC_LANG_POP(C++)
+
+     if test "${HAVE_HANA}" = "yes" ; then
+         ODBCCPP_LIB=-L"$ODBCCPP_PATH/lib"
+         ODBCCPP_INC=-I"$ODBCCPP_PATH/include"
+         AC_MSG_RESULT([yes])
+     else
+         AC_MSG_ERROR([--with-hana argument points to a directory which does not contain the odbc-cpp-wrapper library.])
+     fi
+  else
+      AC_MSG_RESULT([no])
+      AC_MSG_ERROR([--with-hana argument is not a directory. It should be the path to the odbc-cpp-wrapper library, often somewhere like /usr/local.])
+  fi
+fi
+
+AC_SUBST(HAVE_HANA,$HAVE_HANA)
+AC_SUBST(ODBCCPP_INC,$ODBCCPP_INC)
+AC_SUBST(ODBCCPP_LIB,$ODBCCPP_LIB)
+
+dnl ---------------------------------------------------------------------------
 dnl Check for OCI support.
 dnl ---------------------------------------------------------------------------
 
@@ -5864,6 +5920,7 @@ LOC_MSG([  QHull support:             ${QHULL_SETTING}])
 LOC_MSG([  Rasdaman support:          ${RASDAMAN_ENABLED}])
 LOC_MSG([  RasterLite2 support:       ${HAVE_RASTERLITE2}])
 LOC_MSG([  RDB support:               ${RDB_SETTING}])
+LOC_MSG([  SAP HANA support:          ${HAVE_HANA}])
 LOC_MSG([  SFCGAL support:            ${HAVE_SFCGAL}])
 LOC_MSG([  SOSI support:              ${SOSI_ENABLED}])
 LOC_MSG([  SpatiaLite support:        ${HAVE_SPATIALITE}])

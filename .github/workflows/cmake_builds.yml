@@ -64,6 +64,24 @@ jobs:
         curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
         sudo apt-get update
         sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17 unixodbc-dev
+        # HANA: client side
+        # Install hdbsql tool
+        curl -v -j -k -s -L -H "Cookie: eula_3_1_agreed=tools.hana.ondemand.com/developer-license-3_1.txt" https://tools.hana.ondemand.com/additional/hanaclient-latest-linux-x64.tar.gz --output hanaclient-latest-linux-x64.tar.gz \
+          && tar -xvf hanaclient-latest-linux-x64.tar.gz \
+          && sudo mkdir /usr/sap \
+          && sudo ./client/hdbinst -a client --sapmnt=/usr/sap \
+          && rm -rf client \
+          && rm hanaclient*
+        export PATH=/usr/sap/hdbclient:$PATH
+        # Download and compile odbc-cpp-wrapper
+        sudo apt-get install -y -q cmake
+        git clone https://github.com/SAP/odbc-cpp-wrapper.git \
+          && mkdir odbc-cpp-wrapper/build \
+          && cd odbc-cpp-wrapper/build \
+          && /usr/bin/cmake .. \
+          && make -j 2 \
+          && sudo make install
+        sudo ldconfig
         #
         # Workaround bug in ogdi packaging
         sudo ln -s /usr/lib/ogdi/libvrf.so /usr/lib

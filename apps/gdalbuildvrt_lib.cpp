@@ -1162,7 +1162,7 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
             reinterpret_cast<GDALProxyPoolDataset*>(hProxyDS)->
                                             SetOpenOptions( papszOpenOptions );
 
-            for(int j=0;j<nSelectedBands;j++)
+            for(int j=0;j<nMaxSelectedBandNo;j++)
             {
                 GDALProxyPoolDatasetAddSrcBandDescription(hProxyDS,
                                                 asBandProperties[j].dataType,
