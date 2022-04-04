@@ -310,8 +310,10 @@ def test_nitf_12():
 
 def test_nitf_13():
     drv = gdal.GetDriverByName('NITF')
+    gdal.ErrorReset()
     ds = drv.Create('tmp/test_13.ntf', 200, 100, 1, gdal.GDT_Byte,
                     ['ICORDS=S'])
+    assert gdal.GetLastErrorMsg() == ''
     ds.SetGeoTransform((400000, 10, 0.0, 6000000, 0.0, -10))
     ds.SetProjection('PROJCS["UTM Zone 11, Southern Hemisphere",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AUTHORITY["EPSG","4326"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",10000000],UNIT["Meter",1]]')
 

@@ -904,12 +904,17 @@ NITFDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
     }
     else if( psImage->chICORDS == 'S' || psImage->chICORDS == 'N' )
     {
-        CPLFree( poDS->pszProjection );
-        poDS->pszProjection = nullptr;
+        // in open-for-create mode, we don't have a valid UTM zone, which
+        // would make PROJ unhappy
+        if( !bOpenForCreate )
+        {
+            CPLFree( poDS->pszProjection );
+            poDS->pszProjection = nullptr;
 
-        oSRSWork.SetUTM( psImage->nZone, psImage->chICORDS == 'N' );
-        oSRSWork.SetWellKnownGeogCS( "WGS84" );
-        oSRSWork.exportToWkt( &(poDS->pszProjection) );
+            oSRSWork.SetUTM( psImage->nZone, psImage->chICORDS == 'N' );
+            oSRSWork.SetWellKnownGeogCS( "WGS84" );
+            oSRSWork.exportToWkt( &(poDS->pszProjection) );
+        }
     }
     else if( psImage->chICORDS == 'U' && psImage->nZone != 0 )
     {
