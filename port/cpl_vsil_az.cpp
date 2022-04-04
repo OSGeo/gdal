@@ -68,13 +68,12 @@ const char GDAL_MARKER_FOR_DIR[] = ".gdal_marker_for_dir";
 /*                             VSIDIRAz                                 */
 /************************************************************************/
 
-struct VSIDIRAz: public VSIDIR
+struct VSIDIRAz: public VSIDIRWithMissingDirSynthesis
 {
     CPLString osRootPath{};
     int nRecurseDepth = 0;
 
     CPLString osNextMarker{};
-    std::vector<std::unique_ptr<VSIDIREntry>> aoEntries{};
     int nPos = 0;
 
     CPLString osBucket{};
@@ -83,6 +82,7 @@ struct VSIDIRAz: public VSIDIR
     std::unique_ptr<IVSIS3LikeHandleHelper> poHandleHelper{};
     int nMaxFiles = 0;
     bool bCacheEntries = true;
+    bool m_bSynthetizeMissingDirectories = false;
     std::string m_osFilterPrefix{};
 
     explicit VSIDIRAz(IVSIS3LikeFSHandler *poFSIn): poFS(poFSIn) {}
@@ -208,10 +208,25 @@ bool VSIDIRAz::AnalyseAzureFileList(
                 }
                 else if( pszKey && strlen(pszKey) > osPrefix.size() )
                 {
+                    const std::string osKeySuffix = pszKey + osPrefix.size();
+                    if( m_bSynthetizeMissingDirectories)
+                    {
+                        const auto nLastSlashPos = osKeySuffix.rfind('/');
+                        if( nLastSlashPos != std::string::npos &&
+                            (m_aosSubpathsStack.empty() ||
+                             osKeySuffix.compare(0, nLastSlashPos, m_aosSubpathsStack.back()) != 0) )
+                        {
+                            const bool bAddEntryForThisSubdir =
+                                nLastSlashPos != osKeySuffix.size() - 1;
+                            SynthetizeMissingDirectories(osKeySuffix.substr(0, nLastSlashPos),
+                                                         bAddEntryForThisSubdir);
+                        }
+                    }
+
                     aoEntries.push_back(
                         std::unique_ptr<VSIDIREntry>(new VSIDIREntry()));
                     auto& entry = aoEntries.back();
-                    entry->pszName = CPLStrdup(pszKey + osPrefix.size());
+                    entry->pszName = CPLStrdup(osKeySuffix.c_str());
                     entry->nSize = static_cast<GUIntBig>(
                         CPLAtoGIntBig(CPLGetXMLValue(psIter, "Properties.Content-Length", "0")));
                     entry->bSizeKnown = true;
@@ -1939,6 +1954,8 @@ VSIDIR* VSIAzureFSHandler::OpenDir( const char *pszPath,
     dir->bCacheEntries = CPLTestBool(
         CSLFetchNameValueDef(papszOptions, "CACHE_ENTRIES", "YES"));
     dir->m_osFilterPrefix = CSLFetchNameValueDef(papszOptions, "PREFIX", "");
+    dir->m_bSynthetizeMissingDirectories = CPLTestBool(
+        CSLFetchNameValueDef(papszOptions, "SYNTHETIZE_MISSING_DIRECTORIES", "NO"));
     if( !dir->IssueListDir() )
     {
         delete dir;
