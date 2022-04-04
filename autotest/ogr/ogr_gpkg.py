@@ -4168,13 +4168,19 @@ def test_ogr_gpkg_nolock():
         return res
 
     # needs to be a real file
-    filename = 'tmp/test_ogr_gpkg_nolock.gpkg'
+    filename = 'tmp/test_ogr_gpkg_#_nolock.gpkg'
 
     ds = gdaltest.gpkg_dr.CreateDataSource(filename)
     lyr = ds.CreateLayer('foo')
     f = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(f)
     f = None
+    ds = None
+
+    # Special case on Windows for files that start with drive letters
+    full_filename = os.path.join(os.getcwd(), 'tmp', 'test_ogr_gpkg_#_nolock.gpkg')
+    ds = gdal.OpenEx(full_filename, gdal.OF_VECTOR, open_options=['NOLOCK=YES'])
+    assert ds
     ds = None
 
     ds = gdal.OpenEx(filename, gdal.OF_VECTOR, open_options=['NOLOCK=YES'])
