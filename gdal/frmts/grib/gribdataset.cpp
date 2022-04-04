@@ -2181,7 +2181,8 @@ GDALDataset *GRIBDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
     VSIFSeekL(poShared->m_fp, 0, SEEK_SET);
 
     // Contains an GRIB2 message inventory of the file.
-    auto pInventories = Inventory(poShared->m_fp, poOpenInfo);
+    // We can't use the potential .idx file
+    auto pInventories = cpl::make_unique<InventoryWrapperGrib>(poShared->m_fp);
 
     if( pInventories->result() <= 0 )
     {
