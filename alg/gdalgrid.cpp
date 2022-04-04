@@ -1537,7 +1537,7 @@ struct _GDALGridJob
     int               (*pfnProgress)(GDALGridJob* psJob);
     GDALDataType        eType;
 
-    volatile int   *pnCounter;
+    int   *pnCounter;
     volatile int   *pbStop;
     CPLCond        *hCond;
     CPLMutex       *hCondMutex;
@@ -2265,7 +2265,7 @@ CPLErr GDALGridContextProcess(
         }
     }
 
-    volatile int nCounter = 0;
+    int nCounter = 0;
     volatile int bStop = FALSE;
     GDALGridJob sJob;
     sJob.nYStart = 0;
@@ -2328,11 +2328,11 @@ CPLErr GDALGridContextProcess(
 /* -------------------------------------------------------------------- */
 /*      Report progress.                                                */
 /* -------------------------------------------------------------------- */
-        while( nCounter < static_cast<int>(nYSize) && !bStop )
+        while( *(sJob.pnCounter) < static_cast<int>(nYSize) && !bStop )
         {
             CPLCondWait(sJob.hCond, sJob.hCondMutex);
 
-            int nLocalCounter = nCounter;
+            int nLocalCounter = *(sJob.pnCounter);
             CPLReleaseMutex(sJob.hCondMutex);
 
             if( pfnProgress != nullptr &&
