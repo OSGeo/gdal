@@ -792,7 +792,7 @@ namespace tut
             GDALExtendedDataType::CopyValue(
                 &srcPtr, GDALExtendedDataType::CreateString(),
                 &nVal, GDALExtendedDataType::Create(GDT_UInt64));
-            ensure_equals(nVal, 0);
+            ensure_equals(nVal, 0U);
         }
         // non-null string to Int64
         {
@@ -801,7 +801,7 @@ namespace tut
             GDALExtendedDataType::CopyValue(
                 &srcPtr, GDALExtendedDataType::CreateString(),
                 &nVal, GDALExtendedDataType::Create(GDT_UInt64));
-            ensure_equals(nVal, 2);
+            ensure_equals(nVal, 2U);
         }
 
         class myArray: public GDALMDArray
