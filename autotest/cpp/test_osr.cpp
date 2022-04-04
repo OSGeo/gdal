@@ -438,4 +438,38 @@ namespace tut
         ensure_equals(oSRS.GetEPSGGeogCS(), 4326);
     }
 
+    // Test GetOGCURN
+    template<>
+    template<>
+    void object::test<10>()
+    {
+        {
+            OGRSpatialReference oSRS;
+            ensure(oSRS.GetOGCURN() == nullptr);
+        }
+        {
+            OGRSpatialReference oSRS;
+            oSRS.SetFromUserInput("+proj=longlat");
+            ensure(oSRS.GetOGCURN() == nullptr);
+        }
+
+        {
+            OGRSpatialReference oSRS;
+            oSRS.importFromEPSG(32631);
+            char* pszRet = oSRS.GetOGCURN();
+            ensure(pszRet != nullptr);
+            ensure(strcmp(pszRet, "urn:ogc:def:crs:EPSG::32631") == 0);
+            CPLFree(pszRet);
+        }
+
+        {
+            OGRSpatialReference oSRS;
+            oSRS.SetFromUserInput("EPSG:32631+5773");
+            char* pszRet = oSRS.GetOGCURN();
+            ensure(pszRet != nullptr);
+            ensure(strcmp(pszRet, "urn:ogc:def:crs,crs:EPSG::32631,crs:EPSG::5773") == 0);
+            CPLFree(pszRet);
+        }
+    }
+
 } // namespace tut

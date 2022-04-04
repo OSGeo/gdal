@@ -1022,17 +1022,20 @@ bool OGRGeoJSONReader::FirstPassReadLayer( OGRGeoJSONDataSource* poDS,
 
         OGRSpatialReference* poSRS =
                         OGRGeoJSONReadSpatialReference( poRootObj );
-        if( poSRS == nullptr )
+        const auto eGeomType = poLayer->GetLayerDefn()->GetGeomType();
+        if( eGeomType != wkbNone && poSRS == nullptr )
         {
-            // If there is none defined, we use 4326.
+            // If there is none defined, we use 4326 / 4979.
             poSRS = new OGRSpatialReference();
-            poSRS->SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
+            if( OGR_GT_HasZ(eGeomType) )
+                poSRS->importFromEPSG(4979);
+            else
+                poSRS->SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
             poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         }
         CPLErrorReset();
 
-        if( poLayer->GetLayerDefn()->GetGeomType() != wkbNone &&
-            poSRS != nullptr )
+        if( eGeomType != wkbNone && poSRS != nullptr )
         {
             poLayer->GetLayerDefn()->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
             poSRS->Release();
@@ -1344,15 +1347,6 @@ void OGRGeoJSONReader::ReadLayer( OGRGeoJSONDataSource* poDS,
         return;
     }
 
-    OGRSpatialReference* poSRS = OGRGeoJSONReadSpatialReference( poObj );
-    if( poSRS == nullptr )
-    {
-        // If there is none defined, we use 4326.
-        poSRS = new OGRSpatialReference();
-        poSRS->SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
-        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    }
-
     CPLErrorReset();
 
     // Figure out layer name
@@ -1381,11 +1375,19 @@ void OGRGeoJSONReader::ReadLayer( OGRGeoJSONDataSource* poDS,
     }
 
     OGRGeoJSONLayer* poLayer =
-      new OGRGeoJSONLayer( pszName, poSRS,
+      new OGRGeoJSONLayer( pszName, nullptr,
                            OGRGeoJSONLayer::DefaultGeometryType,
                            poDS, nullptr );
-    if( poSRS != nullptr )
-        poSRS->Release();
+
+    OGRSpatialReference* poSRS = OGRGeoJSONReadSpatialReference( poObj );
+    bool bDefaultSRS = false;
+    if( poSRS == nullptr )
+    {
+        // If there is none defined, we use 4326 / 4979.
+        poSRS = new OGRSpatialReference();
+        bDefaultSRS = true;
+    }
+    poLayer->GetLayerDefn()->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
     if( !GenerateLayerDefn(poLayer, poObj) )
     {
@@ -1393,6 +1395,7 @@ void OGRGeoJSONReader::ReadLayer( OGRGeoJSONDataSource* poDS,
                   "Layer schema generation failed." );
 
         delete poLayer;
+        poSRS->Release();
         return;
     }
 
@@ -1425,6 +1428,7 @@ void OGRGeoJSONReader::ReadLayer( OGRGeoJSONDataSource* poDS,
         {
             CPLDebug( "GeoJSON", "Translation of single geometry failed." );
             delete poLayer;
+            poSRS->Release();
             return;
         }
     }
@@ -1448,6 +1452,17 @@ void OGRGeoJSONReader::ReadLayer( OGRGeoJSONDataSource* poDS,
         CPLErrorReset();
 
     poLayer->DetectGeometryType();
+
+    if( bDefaultSRS && poLayer->GetGeomType() != wkbNone )
+    {
+        if( OGR_GT_HasZ(poLayer->GetGeomType()) )
+            poSRS->importFromEPSG(4979);
+        else
+            poSRS->SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    }
+    poSRS->Release();
+
     poDS->AddLayer(poLayer);
 }
 

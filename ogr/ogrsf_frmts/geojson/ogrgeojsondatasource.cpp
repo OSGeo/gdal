@@ -377,6 +377,25 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
             CPLError(CE_Warning, CPLE_AppDefined,
                      "No SRS set on layer. Assuming it is long/lat on WGS84 ellipsoid");
         }
+        else if( poSRS->GetAxesCount() == 3 )
+        {
+            OGRSpatialReference oSRS_EPSG_4979;
+            oSRS_EPSG_4979.importFromEPSG(4979);
+            oSRS_EPSG_4979.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            if( !poSRS->IsSame(&oSRS_EPSG_4979) )
+            {
+                poCT = OGRCreateCoordinateTransformation( poSRS, &oSRS_EPSG_4979 );
+                if( poCT == nullptr )
+                {
+                    CPLError(
+                        CE_Warning, CPLE_AppDefined,
+                        "Failed to create coordinate transformation between the "
+                        "input coordinate system and WGS84." );
+
+                    return nullptr;
+                }
+            }
+        }
         else
         {
             OGRSpatialReference oSRSWGS84;
@@ -399,11 +418,9 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
     }
     else if( poSRS )
     {
-        const char* pszAuthority = poSRS->GetAuthorityName(nullptr);
-        const char* pszAuthorityCode = poSRS->GetAuthorityCode(nullptr);
-        if( pszAuthority != nullptr && pszAuthorityCode != nullptr &&
-            EQUAL(pszAuthority, "EPSG") &&
-            (bWriteCRSIfWGS84 || !EQUAL(pszAuthorityCode, "4326")) )
+        char* pszOGCURN = poSRS->GetOGCURN();
+        if( pszOGCURN != nullptr &&
+            (bWriteCRSIfWGS84 || !EQUAL(pszOGCURN, "urn:ogc:def:crs:EPSG::4326")) )
         {
             json_object* poObjCRS = json_object_new_object();
             json_object_object_add(poObjCRS, "type",
@@ -411,7 +428,7 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
             json_object* poObjProperties = json_object_new_object();
             json_object_object_add(poObjCRS, "properties", poObjProperties);
 
-            if( strcmp(pszAuthorityCode, "4326") == 0 )
+            if( EQUAL(pszOGCURN, "urn:ogc:def:crs:EPSG::4326") )
             {
                 json_object_object_add(
                     poObjProperties, "name",
@@ -421,9 +438,7 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
             {
                 json_object_object_add(
                     poObjProperties, "name",
-                    json_object_new_string(
-                        CPLSPrintf("urn:ogc:def:crs:EPSG::%s",
-                                   pszAuthorityCode)));
+                    json_object_new_string(pszOGCURN));
             }
 
             const char* pszCRS = json_object_to_json_string( poObjCRS );
@@ -431,6 +446,7 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
 
             json_object_put(poObjCRS);
         }
+        CPLFree(pszOGCURN);
     }
 
     if( bFpOutputIsSeekable_ && bWriteFC_BBOX )
