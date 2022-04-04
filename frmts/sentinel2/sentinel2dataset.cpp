@@ -143,7 +143,7 @@ static const SENTINEL2_L2A_BandDescription asL2ABandDesc[] =
 
 #define NB_L2A_BANDS (sizeof(asL2ABandDesc)/sizeof(asL2ABandDesc[0]))
 
-static bool SENTINEL2isZipped(const char* pszHeader);
+static bool SENTINEL2isZipped(const char* pszHeader, int nHeaderBytes);
 static
 const char* SENTINEL2GetOption( GDALOpenInfo* poOpenInfo,
                                 const char* pszName,
@@ -441,7 +441,7 @@ int SENTINEL2Dataset::Identify( GDALOpenInfo *poOpenInfo )
         strstr(pszHeader, "User_Product_Level-2A" ) != nullptr )
         return TRUE;
 
-    if( SENTINEL2isZipped(pszHeader) )
+    if( SENTINEL2isZipped(pszHeader, poOpenInfo->nHeaderBytes) )
         return TRUE;
 
     return FALSE;
@@ -600,7 +600,7 @@ GDALDataset *SENTINEL2Dataset::Open( GDALOpenInfo * poOpenInfo )
         return OpenL1C_L2A(poOpenInfo->pszFilename, SENTINEL2_L2A);
     }
 
-    if( SENTINEL2isZipped(pszHeader) )
+    if( SENTINEL2isZipped(pszHeader, poOpenInfo->nHeaderBytes) )
     {
         CPLString osFilename(poOpenInfo->pszFilename);
         if( strncmp(osFilename, "/vsizip/", strlen("/vsizip/")) != 0 )
@@ -642,8 +642,11 @@ GDALDataset *SENTINEL2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*                        SENTINEL2isZipped()                           */
 /************************************************************************/
 
-static bool SENTINEL2isZipped(const char* pszHeader)
+static bool SENTINEL2isZipped(const char* pszHeader, int nHeaderBytes)
 {
+    if( nHeaderBytes < 50 )
+        return FALSE;
+
     /* According to Sentinel-2 Products Specification Document,
      * all files are located inside a folder with a specific name pattern
      * Ref: S2-PDGS-TAS-DI-PSD Issue: 14.6.

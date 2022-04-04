@@ -2425,7 +2425,7 @@ def test_sentinel2_zipped():
         ds = gdal.Open(zipwpath)
         assert ds is not None
 
-   # S2 L1B
+    # S2 L1B
     zipname = str(uuid.uuid4()) + ".zip"
     with tempfile.TemporaryDirectory() as tmpdir:
         zipwpath = os.path.join(tmpdir, zipname)
@@ -2455,7 +2455,7 @@ def test_sentinel2_zipped():
         ds = gdal.Open(zipwpath)
         assert ds is not None
 
-   # S2 L1c SAFE compact
+    # S2 L1c SAFE compact
     zipname = str(uuid.uuid4()) + ".zip"
     with tempfile.TemporaryDirectory() as tmpdir:
         zipwpath = os.path.join(tmpdir, zipname)
