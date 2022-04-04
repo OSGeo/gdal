@@ -75,7 +75,7 @@
 #define ESRI_LAYERGEOMTYPE_POLYGON       4
 #define ESRI_LAYERGEOMTYPE_MULTIPATCH    9
 
-OGRGeometry* OGRCreateFromMultiPatch( int nParts,
+OGRGeometry CPL_DLL* OGRCreateFromMultiPatch( int nParts,
                                       const GInt32* panPartStart,
                                       const GInt32* panPartType,
                                       int nPoints,
