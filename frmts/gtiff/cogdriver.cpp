@@ -315,48 +315,63 @@ bool COGGetWarpingCharacteristics(GDALDataset* poSrcDS,
         const auto& tmList = poTM->tileMatrixList();
         const int nBlockSize = atoi(CSLFetchNameValueDef(
             papszOptions, "BLOCKSIZE", CPLSPrintf("%d", tmList[0].mTileWidth)));
+        dfRes = 0.0;
+
+        const char* pszZoomLevel = CSLFetchNameValue(papszOptions, "ZOOM_LEVEL");
+        if( pszZoomLevel )
+        {
+            nZoomLevel = atoi(pszZoomLevel);
+            if( nZoomLevel < 0 || nZoomLevel >= static_cast<int>(tmList.size()) )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Invalid zoom level: should be in [0,%d]",
+                         static_cast<int>(tmList.size())-1);
+                return false;
+            }
+        }
+        else
+        {
+            double dfComputedRes = adfGeoTransform[1];
+            double dfPrevRes = 0.0;
+            for( ; nZoomLevel < static_cast<int>(tmList.size()); nZoomLevel++ )
+            {
+                dfRes = tmList[nZoomLevel].mResX * tmList[0].mTileWidth / nBlockSize;
+                if( dfComputedRes > dfRes || fabs( dfComputedRes - dfRes ) / dfRes <= 1e-8 )
+                    break;
+                dfPrevRes = dfRes;
+            }
+            if( nZoomLevel == static_cast<int>(tmList.size()) )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "Could not find an appropriate zoom level");
+                return false;
+            }
+
+            if( nZoomLevel > 0 && fabs( dfComputedRes - dfRes ) / dfRes > 1e-8 )
+            {
+                const char* pszZoomLevelStrategy = CSLFetchNameValueDef(papszOptions,
+                                                                        "ZOOM_LEVEL_STRATEGY",
+                                                                        "AUTO");
+                if( EQUAL(pszZoomLevelStrategy, "LOWER") )
+                {
+                    nZoomLevel --;
+                }
+                else if( EQUAL(pszZoomLevelStrategy, "UPPER") )
+                {
+                    /* do nothing */
+                }
+                else
+                {
+                    if( dfPrevRes / dfComputedRes < dfComputedRes / dfRes )
+                        nZoomLevel --;
+                }
+            }
+        }
+        CPLDebug("COG", "Using ZOOM_LEVEL %d", nZoomLevel);
+        dfRes = tmList[nZoomLevel].mResX * tmList[0].mTileWidth / nBlockSize;
+
         const double dfOriX = bInvertAxis ? tmList[0].mTopLeftY : tmList[0].mTopLeftX;
         const double dfOriY = bInvertAxis ? tmList[0].mTopLeftX : tmList[0].mTopLeftY;
-        double dfComputedRes = adfGeoTransform[1];
-        double dfPrevRes = 0.0;
-        dfRes = 0.0;
-        for( ; nZoomLevel < static_cast<int>(tmList.size()); nZoomLevel++ )
-        {
-            dfRes = tmList[nZoomLevel].mResX * tmList[0].mTileWidth / nBlockSize;
-            if( dfComputedRes > dfRes || fabs( dfComputedRes - dfRes ) / dfRes <= 1e-8 )
-                break;
-            dfPrevRes = dfRes;
-        }
-        if( nZoomLevel == static_cast<int>(tmList.size()) )
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                    "Could not find an appropriate zoom level");
-            return false;
-        }
-
-        if( nZoomLevel > 0 && fabs( dfComputedRes - dfRes ) / dfRes > 1e-8 )
-        {
-            const char* pszZoomLevelStrategy = CSLFetchNameValueDef(papszOptions,
-                                                                    "ZOOM_LEVEL_STRATEGY",
-                                                                    "AUTO");
-            if( EQUAL(pszZoomLevelStrategy, "LOWER") )
-            {
-                nZoomLevel --;
-            }
-            else if( EQUAL(pszZoomLevelStrategy, "UPPER") )
-            {
-                /* do nothing */
-            }
-            else
-            {
-                if( dfPrevRes / dfComputedRes < dfComputedRes / dfRes )
-                    nZoomLevel --;
-            }
-            dfRes = tmList[nZoomLevel].mResX * tmList[0].mTileWidth / nBlockSize;
-        }
-
-        CPLDebug("COG", "Using ZOOM_LEVEL %d", nZoomLevel);
-
         const double dfTileExtent = dfRes * nBlockSize;
         int nTLTileX = static_cast<int>(std::floor((dfMinX - dfOriX) / dfTileExtent + 1e-10));
         int nTLTileY = static_cast<int>(std::floor((dfOriY - dfMaxY) / dfTileExtent + 1e-10));
@@ -1310,6 +1325,8 @@ void GDALCOGDriver::InitializeCreationOptionList()
 
     osOptions +=
 "  </Option>"
+"  <Option name='ZOOM_LEVEL' type='int' description='Target zoom level. "
+        "Only used for TILING_SCHEME != CUSTOM'/>"
 "  <Option name='ZOOM_LEVEL_STRATEGY' type='string-select' "
         "description='Strategy to determine zoom level. "
         "Only used for TILING_SCHEME != CUSTOM' default='AUTO'>"
