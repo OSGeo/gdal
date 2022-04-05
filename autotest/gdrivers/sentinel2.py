@@ -31,11 +31,26 @@
 
 import os
 import sys
+import tempfile
+import uuid
+import zipfile
 from osgeo import gdal
 
 
 import gdaltest
 import pytest
+
+
+def _zip_a_dir(tfile, sdir):
+    zf = zipfile.ZipFile(tfile, "w", zipfile.ZIP_DEFLATED)
+    for root, dirs, files in os.walk(sdir):
+        for file in files:
+            zf.write(
+                os.path.join(root, file),
+                os.path.relpath(os.path.join(root, file), os.path.join(sdir, "..")),
+            )
+    zf.close()
+
 
 ###############################################################################
 # Test opening a L1C product
@@ -95,14 +110,6 @@ def test_sentinel2_l1c_1():
         import pprint
         pprint.pprint(got_md)
         pytest.fail()
-
-    # Try opening a zip file as distributed from https://scihub.esa.int/
-    if not sys.platform.startswith('win'):
-        os.system('sh -c "cd data/sentinel2/fake_l1c && zip -r ../../tmp/S2A_OPER_PRD_MSIL1C.zip S2A_OPER_PRD_MSIL1C.SAFE >/dev/null" && cd ../..')
-        if os.path.exists('tmp/S2A_OPER_PRD_MSIL1C.zip'):
-            ds = gdal.Open('tmp/S2A_OPER_PRD_MSIL1C.zip')
-            assert ds is not None
-            os.unlink('tmp/S2A_OPER_PRD_MSIL1C.zip')
 
     # Try opening the 4 subdatasets
     for i in range(4):
@@ -2276,14 +2283,6 @@ def test_sentinel2_l1c_safe_compact_1():
             ds = gdal.Open(name)
         assert ds is None, name
 
-    # Try opening a zip file as distributed from https://scihub.esa.int/
-    if not sys.platform.startswith('win'):
-        os.system('sh -c "cd data/sentinel2/fake_l1c_safecompact && zip -r ../../tmp/S2A_MSIL1C_test.zip S2A_OPER_PRD_MSIL1C.SAFE >/dev/null" && cd ../..')
-        if os.path.exists('tmp/S2A_MSIL1C_test.zip'):
-            ds = gdal.Open('tmp/S2A_MSIL1C_test.zip')
-            assert ds is not None
-            os.unlink('tmp/S2A_MSIL1C_test.zip')
-
 
 ###############################################################################
 # Test opening a L1C Safe Compact subdataset on the 10m bands
@@ -2413,4 +2412,57 @@ def test_sentinel2_l1c_safe_compact_3():
     assert band.DataType == gdal.GDT_Byte
 
 
+###############################################################################
+# Test opening zipped versions of S2 datasets
+
+def test_sentinel2_zipped():
+    # S2 L1C
+    zipname = str(uuid.uuid4()) + ".zip"
+    with tempfile.TemporaryDirectory() as tmpdir:
+        zipwpath = os.path.join(tmpdir, zipname)
+        _zip_a_dir(zipwpath, "data/sentinel2/fake_l1c/S2A_OPER_PRD_MSIL1C.SAFE/")
+        assert os.path.exists(zipwpath)
+        ds = gdal.Open(zipwpath)
+        assert ds is not None
+
+    # S2 L1B
+    zipname = str(uuid.uuid4()) + ".zip"
+    with tempfile.TemporaryDirectory() as tmpdir:
+        zipwpath = os.path.join(tmpdir, zipname)
+        _zip_a_dir(zipwpath, "data/sentinel2/fake_l1b/S2B_OPER_PRD_MSIL1B.SAFE/")
+        assert os.path.exists(zipwpath)
+        ds = gdal.Open(zipwpath)
+        assert ds is not None
+
+    # S2 L1A
+    zipname = str(uuid.uuid4()) + ".zip"
+    with tempfile.TemporaryDirectory() as tmpdir:
+        zipwpath = os.path.join(tmpdir, zipname)
+        _zip_a_dir(zipwpath, "data/sentinel2/fake_l2a/S2A_USER_PRD_MSIL2A.SAFE/")
+        assert os.path.exists(zipwpath)
+        ds = gdal.Open(zipwpath)
+        assert ds is not None
+
+    # S2 L2A
+    zipname = str(uuid.uuid4()) + ".zip"
+    with tempfile.TemporaryDirectory() as tmpdir:
+        zipwpath = os.path.join(tmpdir, zipname)
+        _zip_a_dir(
+            zipwpath,
+            "data/sentinel2/fake_l2a_MSIL2A/S2A_MSIL2A_20180818T094031_N0208_R036_T34VFJ_20180818T120345.SAFE/",
+        )
+        assert os.path.exists(zipwpath)
+        ds = gdal.Open(zipwpath)
+        assert ds is not None
+
+    # S2 L1c SAFE compact
+    zipname = str(uuid.uuid4()) + ".zip"
+    with tempfile.TemporaryDirectory() as tmpdir:
+        zipwpath = os.path.join(tmpdir, zipname)
+        _zip_a_dir(
+            zipwpath, "data/sentinel2/fake_l1c_safecompact/S2A_MSIL1C_test.SAFE/"
+        )
+        assert os.path.exists(zipwpath)
+        ds = gdal.Open(zipwpath)
+        assert ds is not None
 
