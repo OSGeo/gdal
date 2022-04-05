@@ -54,9 +54,9 @@ OGRErr OGRHanaResultLayer::Initialize(const char* query, OGRGeometry* spatialFil
 {
     rawQuery_ = (query == nullptr) ? "" : query;
 
-    auto names = dataSource_->FindSchemaAndTableNames(query);
+    auto names = dataSource_->FindSchemaAndTableNames(rawQuery_.c_str());
     OGRErr err = ReadFeatureDefinition(
-        names.first, names.second, query, "sql_statement");
+        names.first, names.second, rawQuery_.c_str(), "sql_statement");
     if (err != OGRERR_NONE)
         return err;
 

@@ -904,8 +904,12 @@ def execute_sql_scalar(conn, sql):
     return res
 
 
-def open_datasource(update=0, open_opts=''):
-    return ogr.Open('HANA:' + get_connection_str() + ';SCHEMA=' + gdaltest.hana_schema_name + ';' + open_opts, update=update)
+def open_datasource(update=0, open_opts=None):
+    conn_str = 'HANA:' + get_connection_str() + ';SCHEMA=' + gdaltest.hana_schema_name
+    if open_opts is None:
+        return ogr.Open(conn_str, update=update)
+    else:
+        return gdal.OpenEx(conn_str, update, open_options=[open_opts])
 
 
 def check_bboxes(actual, expected, max_error=0.001):
