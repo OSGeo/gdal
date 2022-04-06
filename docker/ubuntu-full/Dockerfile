@@ -278,6 +278,9 @@ USER root
 RUN date
 ARG JAVA_VERSION=11
 
+# Update distro
+RUN apt-get update -y && apt-get upgrade -y
+
 RUN apt-get update \
 # PROJ dependencies
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
