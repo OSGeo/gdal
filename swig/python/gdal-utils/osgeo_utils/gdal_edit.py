@@ -46,7 +46,7 @@ def Usage():
     print('                 [-unsetmd] [-oo NAME=VALUE]* [-mo "META-TAG=VALUE"]*  datasetname')
     print('')
     print('Edit in place various information of an existing GDAL dataset.')
-    return -1
+    return 1
 
 
 def ArgIsNumeric(s):

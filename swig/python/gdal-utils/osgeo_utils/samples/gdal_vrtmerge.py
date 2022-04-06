@@ -185,6 +185,7 @@ def Usage():
     print('Usage: gdal_vrtmerge.py [-o out_filename] [-separate] [-pct]')
     print('           [-ul_lr ulx uly lrx lry] [-ot datatype] [-i input_file_list')
     print('           | input_files]')
+    return 1
 
 
 def main(argv=sys.argv):
