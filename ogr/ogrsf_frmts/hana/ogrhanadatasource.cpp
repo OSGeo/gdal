@@ -179,7 +179,7 @@ CPLString BuildConnectionString(char** openOptions)
     const char* paramSchema =
         CSLFetchNameValueDef(openOptions, OpenOptionsConstants::SCHEMA, "");
 
-    if (CPLFetchBool(openOptions, OpenOptionsConstants::ENCRYPT, "NO"))
+    if (CPLFetchBool(openOptions, OpenOptionsConstants::ENCRYPT, false))
     {
         params.push_back("encrypt=true");
         addParameter(
@@ -625,7 +625,7 @@ OGRHanaDataSource::~OGRHanaDataSource()
 /*                                 Open()                               */
 /************************************************************************/
 
-int OGRHanaDataSource::Open(const char* newName, char** options, int update)
+int OGRHanaDataSource::Open(const char* newName, char** openOptions, int update)
 {
     CPLAssert(layers_.size() == 0);
 
@@ -640,64 +640,62 @@ int OGRHanaDataSource::Open(const char* newName, char** options, int update)
     }
 
     updateMode_ = update;
-
-    std::size_t prefixLength = strlen(GetPrefix());
-    char** openOptions;
-    if (newName[prefixLength] == '\0')
-        openOptions = options;
-    else
-        openOptions =
-            CSLTokenizeStringComplex(newName + prefixLength, ";", TRUE, FALSE);
-
     detectGeometryType_ =
         CPLFetchBool(openOptions, OpenOptionsConstants::DETECT_GEOMETRY_TYPE, "YES");
 
-    connEnv_ = odbc::Environment::create();
-    conn_ = connEnv_->createConnection();
-    conn_->setAutoCommit(false);
-
-    const char* paramConnTimeout = CSLFetchNameValueDef(
-        openOptions, OpenOptionsConstants::CONNECTION_TIMEOUT, nullptr);
-    if (paramConnTimeout != nullptr)
-        conn_->setConnectionTimeout(
-            static_cast<unsigned long>(atoi(paramConnTimeout)));
-
-    try
-    {
-        CPLString connectionStr = BuildConnectionString(openOptions);
-        conn_->connect(connectionStr.c_str());
-    }
-    catch (const odbc::Exception& ex)
-    {
-        CPLError(
-            CE_Failure, CPLE_AppDefined, "HANA connection failed: %s\n",
-            ex.what());
-    }
+    std::size_t prefixLength = strlen(GetPrefix());
+    char** connOptions = CSLTokenizeStringComplex(newName + prefixLength, ";", TRUE, FALSE);
 
     int ret = FALSE;
 
-    if (conn_->connected())
+    const char* paramSchema = CSLFetchNameValueDef(
+        connOptions, OpenOptionsConstants::SCHEMA, nullptr);
+    if (paramSchema == nullptr)
     {
-        const char* paramSchema = CSLFetchNameValueDef(
-            openOptions, OpenOptionsConstants::SCHEMA, nullptr);
-        if (paramSchema == nullptr)
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "HANA parameter '%s' is missing:\n", "SCHEMA");
+    }
+    else
+    {
+        schemaName_ = paramSchema;
+
+        connEnv_ = odbc::Environment::create();
+        conn_ = connEnv_->createConnection();
+        conn_->setAutoCommit(false);
+
+        const char* paramConnTimeout = CSLFetchNameValueDef(
+            connOptions, OpenOptionsConstants::CONNECTION_TIMEOUT, nullptr);
+        if (paramConnTimeout != nullptr)
+            conn_->setConnectionTimeout(
+                static_cast<unsigned long>(atoi(paramConnTimeout)));
+
+        try
+        {
+            CPLString connectionStr = BuildConnectionString(connOptions);
+            conn_->connect(connectionStr.c_str());
+        }
+        catch (const odbc::Exception& ex)
+        {
             CPLError(
-                CE_Failure, CPLE_AppDefined,
-                "HANA parameter '%s' is missing:\n", "SCHEMA");
-        schemaName_.assign(paramSchema);
+                CE_Failure, CPLE_AppDefined, "HANA connection failed: %s\n",
+                ex.what());
+        }
 
-        odbc::DatabaseMetaDataRef dbmd = conn_->getDatabaseMetaData();
-        CPLString dbVersion(dbmd->getDBMSVersion());
-        majorVersion_ = atoi(dbVersion.substr(0u, dbVersion.find('.')).c_str());
+        if (conn_->connected())
+        {
+            odbc::DatabaseMetaDataRef dbmd = conn_->getDatabaseMetaData();
+            CPLString dbVersion(dbmd->getDBMSVersion());
+            majorVersion_ = atoi(dbVersion.substr(0u, dbVersion.find('.')).c_str());
 
-        const char* paramTables =
-            CSLFetchNameValueDef(openOptions, OpenOptionsConstants::TABLES, "");
-        InitializeLayers(paramSchema, paramTables);
-        ret = TRUE;
+            const char* paramTables =
+                CSLFetchNameValueDef(connOptions, OpenOptionsConstants::TABLES, "");
+            InitializeLayers(paramSchema, paramTables);
+            ret = TRUE;
+        }
     }
 
-    if (openOptions != options)
-        CSLDestroy(openOptions);
+    CSLDestroy(connOptions);
 
     return ret;
 }
@@ -1490,8 +1488,7 @@ bool OGRHanaDataSource::ParseArrayFunctionsExist(const char* schemaName)
     odbc::PreparedStatementRef stmt = conn_->prepareStatement(sql);
     stmt->setString(1, odbc::String(schemaName));
     odbc::ResultSetRef rsFunctions = stmt->executeQuery();
-    rsFunctions->next();
-    auto numFunctions = *rsFunctions->getLong(1);
+    auto numFunctions = rsFunctions->next() ? *rsFunctions->getLong(1) : 0;
     rsFunctions->close();
     return (
         static_cast<std::size_t>(numFunctions)
