@@ -36,10 +36,6 @@
 %import typemaps_python.i
 #endif
 
-#ifdef SWIGPERL
-%import typemaps_perl.i
-#endif
-
 #ifdef SWIGJAVA
 %import typemaps_java.i
 #endif

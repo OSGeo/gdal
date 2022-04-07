@@ -33,7 +33,6 @@
 #include <vector>
 #include <unordered_set>
 #include "filegdb_fielddomain.h"
-#include "ogr_openfilegdb.h"
 
 #ifdef __linux
 #include <sys/types.h>
@@ -388,6 +387,72 @@ bool OGRPGeoDataSource::IsLayerPrivate(int iLayer) const
 }
 
 /************************************************************************/
+/*                      OGRPGeoSingleFeatureLayer                       */
+/************************************************************************/
+
+class OGRPGeoSingleFeatureLayer final: public OGRLayer
+{
+  private:
+    char               *pszVal;
+    OGRFeatureDefn     *poFeatureDefn;
+    int                 iNextShapeId;
+
+  public:
+                        OGRPGeoSingleFeatureLayer( const char* pszLayerName,
+                                                          const char *pszVal );
+               virtual ~OGRPGeoSingleFeatureLayer();
+
+    virtual void        ResetReading() override { iNextShapeId = 0; }
+    virtual OGRFeature *GetNextFeature() override;
+    virtual OGRFeatureDefn *GetLayerDefn() override { return poFeatureDefn; }
+    virtual int         TestCapability( const char * ) override { return FALSE; }
+};
+
+/************************************************************************/
+/*                       OGRPGeoSingleFeatureLayer()                    */
+/************************************************************************/
+
+OGRPGeoSingleFeatureLayer::OGRPGeoSingleFeatureLayer(
+    const char* pszLayerName,
+    const char *pszValIn ) :
+    pszVal(pszValIn ? CPLStrdup(pszValIn) : nullptr),
+    poFeatureDefn(new OGRFeatureDefn( pszLayerName )),
+    iNextShapeId(0)
+{
+    SetDescription( poFeatureDefn->GetName() );
+    poFeatureDefn->Reference();
+    OGRFieldDefn oField( "FIELD_1", OFTString );
+    poFeatureDefn->AddFieldDefn( &oField );
+}
+
+/************************************************************************/
+/*                      ~OGRPGeoSingleFeatureLayer()                    */
+/************************************************************************/
+
+OGRPGeoSingleFeatureLayer::~OGRPGeoSingleFeatureLayer()
+{
+    if( poFeatureDefn != nullptr )
+        poFeatureDefn->Release();
+    CPLFree(pszVal);
+}
+
+/************************************************************************/
+/*                           GetNextFeature()                           */
+/************************************************************************/
+
+OGRFeature * OGRPGeoSingleFeatureLayer::GetNextFeature()
+{
+    if (iNextShapeId != 0)
+        return nullptr;
+
+    OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
+    if (pszVal)
+        poFeature->SetField(0, pszVal);
+    poFeature->SetFID(iNextShapeId ++);
+    return poFeature;
+}
+
+/************************************************************************/
 /*                             ExecuteSQL()                             */
 /************************************************************************/
 
@@ -406,7 +471,7 @@ OGRLayer * OGRPGeoDataSource::ExecuteSQL( const char *pszSQLCommand,
             GetLayerByName(pszSQLCommand + strlen("GetLayerDefinition ")) );
         if (poLayer)
         {
-            OGRLayer* poRet = new OGROpenFileGDBSingleFeatureLayer(
+            OGRLayer* poRet = new OGRPGeoSingleFeatureLayer(
                 "LayerDefinition", poLayer->GetXMLDefinition().c_str() );
             return poRet;
         }
@@ -423,7 +488,7 @@ OGRLayer * OGRPGeoDataSource::ExecuteSQL( const char *pszSQLCommand,
             GetLayerByName(pszSQLCommand + strlen("GetLayerMetadata ")) );
         if (poLayer)
         {
-            OGRLayer* poRet = new OGROpenFileGDBSingleFeatureLayer(
+            OGRLayer* poRet = new OGRPGeoSingleFeatureLayer(
                 "LayerMetadata", poLayer->GetXMLDocumentation().c_str() );
             return poRet;
         }

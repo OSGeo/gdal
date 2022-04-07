@@ -721,7 +721,7 @@ class GDALCalc(GDALScript):
         return kwargs
 
 
-def main(argv):
+def main(argv=sys.argv):
     return GDALCalc().main(argv)
 
 

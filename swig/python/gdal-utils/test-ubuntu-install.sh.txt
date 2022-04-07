@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+## Recipe for installing and testing GDAL-Utilities python package on Ubuntu
+
+# Install gdal binaries
+# adapted from https://mothergeo-py.readthedocs.io/en/latest/development/how-to/gdal-ubuntu-pkg.html
+sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
+sudo apt-get update
+sudo apt-get install gdal-bin libgdal-dev
+export CPLUS_INCLUDE_PATH=/usr/include/gdal
+export C_INCLUDE_PATH=/usr/include/gdal
+
+# Install python GDAL bindings
+pip install gdal
+# note: this could be `sudo apt-get install python3-gdal` instead but
+# pip method is prefered, better tested
+
+# install gdal-utilities from source
+# (assumes git clone etc. are already done)
+cd swig/python/gdal-utils
+python setup.py bdist_wheel
+pip install dist/gdal_utils-*.whl
+
+# ensure gdal source code tree installed gdal binaries are the same version
+git checkout v`gdal-config --version`
+
+# Test the scripts using autotest suite
+cd ../../../autotest/
+pip install -r requirements.txt
+pytest pyscripts/
+
+# Todo: verify the console_scripts also work
+echo NOTE: Not tested: PYTHONHOME/Scripts

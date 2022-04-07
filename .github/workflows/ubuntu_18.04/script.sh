@@ -17,6 +17,11 @@ pip3 install -U -r autotest/requirements.txt
 (cd autotest/ogr && $PYTEST ogr_fgdb.py)
 rm autotest/ogr/ogr_fgdb.py
 
+# Test /vsiaz/ against the Azurite simulator
+export AZURITE_STORAGE_CONNECTION_STRING="DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://${IP}:10000/devstoreaccount1;"
+AZURE_STORAGE_CONNECTION_STRING=${AZURITE_STORAGE_CONNECTION_STRING} python3 -c "from osgeo import gdal; import sys; sys.exit(gdal.Mkdir('/vsiaz/mycontainer', 0o755))"
+(cd autotest/gcore && AZURE_STORAGE_CONNECTION_STRING=${AZURITE_STORAGE_CONNECTION_STRING} AZ_RESOURCE=mycontainer $PYTEST vsiaz_real_instance_manual.py)
+
 # MySQL 8
 (cd autotest/ogr && OGR_MYSQL_CONNECTION_STRING=mysql:test,user=root,password=passwd,port=33060,host=$IP $PYTEST ogr_mysql.py)
 # MariaDB 10.3.9

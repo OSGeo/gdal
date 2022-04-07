@@ -34,9 +34,7 @@
 #endif
 %include constraints.i
 
-#ifdef PERL_CPAN_NAMESPACE
-%module "Geo::GNM"
-#elif defined(SWIGCSHARP)
+#if defined(SWIGCSHARP)
 %module Gnm
 #elif defined(SWIGPYTHON)
 %module (package="osgeo") gnm
@@ -46,10 +44,6 @@
 
 #ifdef SWIGCSHARP
 %include swig_csharp_extensions.i
-#endif
-
-#ifdef SWIGPERL
-%include confess.i
 #endif
 
 #ifndef SWIGJAVA
@@ -76,10 +70,8 @@ typedef void GNMGenericNetworkShadow;
 
 #ifdef DEBUG
 typedef struct OGRSpatialReferenceHS OSRSpatialReferenceShadow;
-#ifndef SWIGPERL
 typedef struct OGRDriverHS OGRDriverShadow;
 typedef struct OGRDataSourceHS OGRDataSourceShadow;
-#endif
 typedef struct OGRLayerHS OGRLayerShadow;
 typedef struct OGRFeatureHS OGRFeatureShadow;
 typedef struct OGRFeatureDefnHS OGRFeatureDefnShadow;
@@ -89,10 +81,8 @@ typedef struct OGRCoordinateTransformationHS OGRCoordinateTransformationShadow;
 typedef struct OGRFieldDefnHS OGRFieldDefnShadow;
 #else
 typedef void OSRSpatialReferenceShadow;
-#ifndef SWIGPERL
 typedef void OGRDriverShadow;
 typedef void OGRDataSourceShadow;
-#endif
 typedef void OGRLayerShadow;
 typedef void OGRFeatureShadow;
 typedef void OGRFeatureDefnShadow;
@@ -110,9 +100,6 @@ typedef struct OGRGeomFieldDefnHS OGRGeomFieldDefnShadow;
 //%include gnm_csharp.i
 #elif defined(SWIGJAVA)
 %include gnm_java.i
-#elif defined(SWIGPERL)
-//%include gnm_perl.i
-%import typemaps_perl.i
 #else
 %include gdal_typemaps.i
 #endif

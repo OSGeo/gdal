@@ -286,7 +286,7 @@ class GDAL2XYZ(GDALScript):
         return gdal2xyz(**kwargs)
 
 
-def main(argv):
+def main(argv=sys.argv):
     return GDAL2XYZ().main(argv)
 
 

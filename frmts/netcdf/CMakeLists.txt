@@ -3,7 +3,6 @@ set(_SOURCES
     netcdfdataset.cpp
     netcdflayer.cpp
     netcdfwriterconfig.cpp
-    gmtdataset.cpp
     netcdfsg.cpp
     netcdflayersg.cpp
     netcdfsgwriterutil.cpp

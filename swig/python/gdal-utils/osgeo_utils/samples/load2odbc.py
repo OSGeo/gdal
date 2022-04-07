@@ -43,7 +43,7 @@ def Usage():
     return 1
 
 
-def main(argv):
+def main(argv=sys.argv):
     extents_flag = 1
     infile = None
     odbc_dsn = None

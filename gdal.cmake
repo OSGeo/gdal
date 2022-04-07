@@ -4,7 +4,7 @@
 option(ENABLE_GNM "Build GNM (Geography Network Model) component" ON)
 option(ENABLE_PAM "Set ON to enable Persistent Auxiliary Metadata (.aux.xml)" ON)
 option(BUILD_APPS "Build command line utilities" ON)
-if (NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/doc" AND NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
   # In-tree builds do not support Doc building because Sphinx requires (at least
   # at first sight) a Makefile file which conflicts with the CMake generated one
   option(BUILD_DOCS "Build documentation" ON)
@@ -142,7 +142,6 @@ else ()
   detect_and_set_c_and_cxx_warning_flag(null-dereference)
   detect_and_set_c_and_cxx_warning_flag(duplicate-cond)
   detect_and_set_cxx_warning_flag(extra-semi)
-  detect_and_set_c_and_cxx_warning_flag(no-sign-compare)
   detect_and_set_c_and_cxx_warning_flag(comma)
   detect_and_set_c_and_cxx_warning_flag(float-conversion)
   check_c_compiler_flag("-Wdocumentation -Wno-documentation-deprecated-sync" HAVE_WFLAG_DOCUMENTATION_AND_NO_DEPRECATED)
@@ -236,7 +235,7 @@ endif ()
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   include(CheckLinkerFlag)
   check_linker_flag(C "-Wl,--no-undefined" HAS_NO_UNDEFINED)
-  if (HAS_NO_UNDEFINED)
+  if (HAS_NO_UNDEFINED AND NOT CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
     string(APPEND CMAKE_SHARED_LINKER_FLAGS " -Wl,--no-undefined")
     string(APPEND CMAKE_MODULE_LINKER_FLAGS " -Wl,--no-undefined")
   endif ()
@@ -357,7 +356,7 @@ if (GDAL_ENABLE_MACOSX_FRAMEWORK)
 else ()
   include(GNUInstallDirs)
   set(INSTALL_PLUGIN_DIR
-      "lib/gdalplugins"
+      "${CMAKE_INSTALL_LIBDIR}/gdalplugins"
       CACHE PATH "Installation sub-directory for plugins")
   set(GDAL_RESOURCE_PATH ${CMAKE_INSTALL_DATADIR}/gdal)
 
@@ -474,9 +473,10 @@ get_property(GDAL_PRIVATE_LINK_LIBRARIES GLOBAL PROPERTY gdal_private_link_libra
 target_link_libraries(${GDAL_LIB_TARGET_NAME} PRIVATE ${GDAL_PRIVATE_LINK_LIBRARIES})
 
 # Document/Manuals
-if (BUILD_DOCS)
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/doc" AND BUILD_DOCS)
   add_subdirectory(doc)
 endif ()
+add_subdirectory(man)
 
 # GDAL 4.0 ? Install headers in ${CMAKE_INSTALL_INCLUDEDIR}/gdal ?
 set(GDAL_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR})

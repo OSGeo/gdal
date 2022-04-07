@@ -246,11 +246,10 @@ def jpeg_in_tiff_extract(argv):
         return 0
 
 
-def main(argv):
+def main(argv=sys.argv):
     gdal.GeneralCmdLineProcessor(argv)
     return jpeg_in_tiff_extract(argv[1:])
 
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv))
-

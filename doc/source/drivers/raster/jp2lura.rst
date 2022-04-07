@@ -280,9 +280,6 @@ Other JPEG2000 GDAL drivers :
 -  :ref:`JP2OpenJPEG: based on Openjpeg library (open
    source) <raster.jp2openjpeg>`
 
--  :ref:`JPEG2000: based on Jasper library (open
-   source) <raster.jpeg2000>`
-
 -  :ref:`JP2ECW: based on Erdas ECW library
    (proprietary) <raster.jp2ecw>`
 

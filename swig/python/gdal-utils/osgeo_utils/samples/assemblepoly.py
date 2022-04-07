@@ -116,7 +116,7 @@ def doit(name):
         feat = poly_layer.GetNextFeature()
 
 
-def main(argv):
+def main(argv=sys.argv):
     name = 'PG:dbname=test'
     if len(argv) > 1:
         name = argv[1]

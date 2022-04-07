@@ -94,7 +94,6 @@ build_ogr_specialized_fuzzer gml RegisterOGRGML "/vsimem/test.tar" "/vsitar//vsi
 build_ogr_specialized_fuzzer gmlas RegisterOGRGMLAS "/vsimem/test.tar" "GMLAS:/vsitar//vsimem/test.tar/test.gml"
 build_ogr_specialized_fuzzer fgb RegisterOGRFlatGeobuf "/vsimem/test.fgb" "/vsimem/test.fgb"
 build_fuzzer cad_fuzzer $(dirname $0)/ogr_fuzzer.cpp -DREGISTER_FUNC=RegisterOGRCAD
-build_fuzzer rec_fuzzer $(dirname $0)/ogr_fuzzer.cpp -DREGISTER_FUNC=RegisterOGRREC -DUSE_FILESYSTEM -DEXTENSION="\"rec\""
 
 formats="GTiff HFA"
 for format in $formats; do

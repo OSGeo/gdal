@@ -223,7 +223,7 @@ def gdal_ls(argv, fout=sys.stdout):
     return 0
 
 
-def main(argv):
+def main(argv=sys.argv):
     return gdal_ls(argv)
 
 

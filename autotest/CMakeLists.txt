@@ -28,12 +28,12 @@ if (Python_Interpreter_FOUND)
   if (GDAL_DOWNLOAD_TEST_DATA)
     list(APPEND _TEST_ENV GDAL_DOWNLOAD_TEST_DATA=YES)
   else ()
-    list(APPEND _TEST_ENV GDAL_DOWNLOAD_TEST_DATA=NO)
+    list(APPEND _TEST_ENV "#GDAL_DOWNLOAD_TEST_DATA=YES")
   endif ()
   if (GDAL_SLOW_TESTS)
     list(APPEND _TEST_ENV GDAL_RUN_SLOW_TESTS=YES)
   else ()
-    list(APPEND _TEST_ENV GDAL_RUN_SLOW_TESTS=NO)
+    list(APPEND _TEST_ENV "#GDAL_RUN_SLOW_TESTS=YES")
   endif ()
   # Conda enable PROJ_NETWORK but this does interfere with some of our tests due to some unexpected grid being used
   list(APPEND _TEST_ENV PROJ_NETWORK=OFF)
@@ -143,7 +143,6 @@ int main(int argc, char **argv) {
     return 0;
 }")
     add_executable(pytest_runner ${CMAKE_CURRENT_BINARY_DIR}/pytest_runner.cpp)
-    set_property(TARGET pytest_runner PROPERTY CXX_STANDARD 11)
     target_include_directories(pytest_runner PRIVATE ${Python_INCLUDE_DIRS})
     target_link_libraries(pytest_runner PRIVATE ${Python_LIBRARIES})
     add_custom_target(

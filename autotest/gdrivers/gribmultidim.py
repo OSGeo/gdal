@@ -146,3 +146,14 @@ def test_grib_multidim_different_sizes_messages():
         'Y3', 'X3', 'HTSGW_1-SFC', 'WVPER_1-SFC', 'WVDIR_1-SFC', 'PERPW_1-SFC', 'DIRPW_1-SFC', 'PERSW_1-SFC', 'DIRSW_1-SFC']
     dims = rg.GetDimensions()
     assert len(dims) == 6
+
+###############################################################################
+# Test reading file with .idx sidecar file (that we don't use in the multidim API)
+
+
+def test_grib_multidim_grib2_sidecar():
+
+    ds = gdal.OpenEx('data/grib/gfs.t06z.pgrb2.10p0.f010.grib2', gdal.OF_MULTIDIM_RASTER)
+    assert ds
+    rg = ds.GetRootGroup()
+    assert rg

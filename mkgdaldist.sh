@@ -6,11 +6,11 @@
 
 set -eu
 
-if [ "$MAKE" = "" ]; then
+if [ -z ${MAKE+x} ]; then
     MAKE="make"
 fi
 
-if [ "$PYTHON" = "" ]; then
+if [ -z ${PYTHON+x} ]; then
     PYTHON="python3"
 fi
 
@@ -128,20 +128,11 @@ if test "$forcedate" != "no" ; then
   mv gcore/gdal_new.h gcore/gdal.h
 fi
 
-echo "* Cleaning .git and .gitignore under $PWD..."
+echo "* Cleaning .git, .github .gitignore, ci under $PWD..."
 rm -rf .git
 rm -f .gitignore
-
-echo "* Substituting \$Id\$..."
-find . -name "*.h" -o -name "*.c" -o -name "*.cpp" -o -name "*.dox" \
-     -o -name "*.py" -o -name "*.i" -o -name "*.sh" -o -name "*.cs" \
-     -o -name "*.java" -o -name "*.m4" -o -name "*.xml" \
-     -o -name "*.xsd" | while read -r i ; do
-    ID=$(basename "$i")
-    ID="$ID $(git log -1 --format='%H %ai %aN' "$i" | sed 's/ +0000/Z/')"
-    sed -i "s/\\\$Id\\\$/\\\$Id: ${ID} \\\$/" "$i"
-done
-
+rm -rf .github
+rm -rf ci
 
 CWD=${PWD}
 
@@ -156,9 +147,6 @@ rm -rf autom4te.cache
 # Generate man pages
 #
 echo "* Generating man pages..."
-if test -d "man"; then
-    rm -rf man
-fi
 
 if test -f "doc/Makefile"; then
     (cd doc; make man)
@@ -178,6 +166,10 @@ fi
 
 cd "$CWD"
 
+echo "* Cleaning doc/ and perftests/ under $CWD..."
+rm -rf doc
+rm -rf perftests
+
 # They currently require SWIG 1.3.X, which is not convenient as we need
 # newer SWIG for newer Python versions
 echo "SWIG C# interfaces *NOT* generated !"
@@ -190,17 +182,6 @@ echo "SWIG C# interfaces *NOT* generated !"
 #cd swig/csharp
 #./mkinterface.sh
 #cd ${CWD}
-
-#
-# Generate SWIG interface for Perl
-#
-echo "* Generating SWIG Perl interfaces..."
-CWD=${PWD}
-
-rm -f swig/perl/*wrap*
-touch GDALmake.opt
-(cd swig/perl && ${MAKE} generate)
-rm GDALmake.opt
 
 #
 # Make distribution packages

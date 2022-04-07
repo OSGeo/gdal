@@ -3510,7 +3510,9 @@ static void CollectPointsOnAntimeridian(OGRGeometry* poGeom,
                 poCT->Transform(1, &dfX2Trans, &dfY2Trans);
                 // Are we crossing the antimeridian ? (detecting by inversion of
                 // sign of X)
-                if( (dfX2 - dfX) * (dfX2Trans - dfXTrans) < 0 )
+                if( (dfX2 - dfX) * (dfX2Trans - dfXTrans) < 0 ||
+                    (dfX == dfX2 && dfX2Trans * dfXTrans < 0 &&
+                     fabs(fabs(dfXTrans)-180) < 10 && fabs(fabs(dfX2Trans)-180) < 10) )
                 {
                     double dfXStart = dfX;
                     double dfYStart = dfY;
@@ -3534,7 +3536,8 @@ static void CollectPointsOnAntimeridian(OGRGeometry* poGeom,
                         double dfYMidTrans = dfYMid;
                         poCT->Transform(1, &dfXMidTrans, &dfYMidTrans);
                         if( (dfXMid - dfXStart) *
-                                        (dfXMidTrans - dfXStartTrans) < 0 )
+                                        (dfXMidTrans - dfXStartTrans) < 0 ||
+                            (dfXMid == dfXStart && dfXMidTrans * dfXStartTrans < 0) )
                         {
                             dfXEnd = dfXMid;
                             dfYEnd = dfYMid;

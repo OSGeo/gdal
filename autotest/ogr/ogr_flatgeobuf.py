@@ -435,6 +435,10 @@ def test_ogr_flatgeobuf_mixed():
     destDS = ogr.Open('/vsimem/test.fgb')
     srcLyr = srcDS.GetLayer(0)
     destLyr = destDS.GetLayer(0)
+    assert destLyr.TestCapability(ogr.OLCFastFeatureCount)
+    assert destLyr.TestCapability(ogr.OLCFastGetExtent)
+    assert destLyr.GetFeatureCount(force=0) == srcLyr.GetFeatureCount()
+    assert destLyr.GetExtent(force=0) == srcLyr.GetExtent()
     ogrtest.compare_layers(srcLyr, destLyr)
 
     ogr.GetDriverByName('FlatGeobuf').DeleteDataSource('/vsimem/test.fgb')

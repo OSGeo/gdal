@@ -542,6 +542,56 @@ def test_ogr2ogr_18():
     assert ok, got_wkt
 
 ###############################################################################
+# Test automatic polygon splitting, and also antimeridian being intersected
+# at line of constant easting.
+
+
+def test_ogr2ogr_polygon_splitting():
+
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        pytest.skip()
+
+    if not ogrtest.have_geos():
+        pytest.skip()
+
+    try:
+        os.stat('tmp/wrapdateline_src.shp')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/wrapdateline_src.shp')
+    except (OSError, AttributeError):
+        pass
+
+    try:
+        os.stat('tmp/wrapdateline_dst.shp')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/wrapdateline_dst.shp')
+    except (OSError, AttributeError):
+        pass
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/wrapdateline_src.shp')
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32601)
+    lyr = ds.CreateLayer('wrapdateline_src', srs=srs)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    geom = ogr.CreateGeometryFromWkt('POLYGON((377120 7577600,418080 7577600,418080 7618560,377120 7618560,377120 7577600))')
+    feat.SetGeometryDirectly(geom)
+    lyr.CreateFeature(feat)
+    feat.Destroy()
+    ds.Destroy()
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -t_srs EPSG:4326 tmp/wrapdateline_dst.shp tmp/wrapdateline_src.shp')
+
+    ds = ogr.Open('tmp/wrapdateline_dst.shp')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    assert geom.GetGeometryType() == ogr.wkbMultiPolygon
+    assert geom.GetGeometryCount() == 2
+    ds = None
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/wrapdateline_src.shp')
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/wrapdateline_dst.shp')
+
+
+###############################################################################
 # Test -clipsrc
 
 
@@ -647,28 +697,15 @@ def test_ogr2ogr_21():
         pytest.skip()
 
     try:
-        os.remove('tmp/testogr2ogr21.gtm')
+        os.remove('tmp/testogr2ogr21.gpx')
     except OSError:
         pass
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() +
-                         ' -f GPSTrackMaker tmp/testogr2ogr21.gtm data/dataforogr2ogr21.csv ' +
-                         '-sql "SELECT comment, name FROM dataforogr2ogr21" -nlt POINT')
-    ds = ogr.Open('tmp/testogr2ogr21.gtm')
-
-    assert ds is not None
-    ds.GetLayer(0).GetLayerDefn()
-    lyr = ds.GetLayer(0)
-    feat = lyr.GetNextFeature()
-    if feat.GetFieldAsString('name') != 'NAME' or \
-       feat.GetFieldAsString('comment') != 'COMMENT':
-        print(feat.GetFieldAsString('comment'))
-        ds.Destroy()
-        os.remove('tmp/testogr2ogr21.gtm')
-        pytest.fail(feat.GetFieldAsString('name'))
-
-    ds.Destroy()
-    os.remove('tmp/testogr2ogr21.gtm')
+                         ' -f GPX tmp/testogr2ogr21.gpx data/dataforogr2ogr21.csv ' +
+                         '-sql "SELECT name AS route_name, 0 as route_fid FROM dataforogr2ogr21" -nlt POINT -nln route_points')
+    assert '<name>NAME</name>' in open('tmp/testogr2ogr21.gpx', 'rt').read()
+    os.remove('tmp/testogr2ogr21.gpx')
 
 
 ###############################################################################

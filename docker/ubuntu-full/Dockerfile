@@ -50,7 +50,7 @@ ARG JAVA_VERSION=11
 RUN . /buildscripts/bh-set-envvars.sh \
     && apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-recommends \
-       libcharls-dev${APT_ARCH_SUFFIX} libopenjp2-7-dev${APT_ARCH_SUFFIX} libcairo2-dev${APT_ARCH_SUFFIX} \
+       libopenjp2-7-dev${APT_ARCH_SUFFIX} libcairo2-dev${APT_ARCH_SUFFIX} \
        python3-dev${APT_ARCH_SUFFIX} python3-numpy${APT_ARCH_SUFFIX} python3-setuptools${APT_ARCH_SUFFIX} \
        libpng-dev${APT_ARCH_SUFFIX} libjpeg-dev${APT_ARCH_SUFFIX} libgif-dev${APT_ARCH_SUFFIX} liblzma-dev${APT_ARCH_SUFFIX} libgeos-dev${APT_ARCH_SUFFIX} \
        curl libxml2-dev${APT_ARCH_SUFFIX} libexpat-dev${APT_ARCH_SUFFIX} libxerces-c-dev${APT_ARCH_SUFFIX} \
@@ -278,6 +278,9 @@ USER root
 RUN date
 ARG JAVA_VERSION=11
 
+# Update distro
+RUN apt-get update -y && apt-get upgrade -y
+
 RUN apt-get update \
 # PROJ dependencies
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -285,7 +288,7 @@ RUN apt-get update \
         wget curl unzip ca-certificates \
 # GDAL dependencies
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-        libcharls2 libopenjp2-7 libcairo2 python3-numpy \
+        libopenjp2-7 libcairo2 python3-numpy \
         libpng16-16 libjpeg-turbo8 libgif7 liblzma5 libgeos-3.8.0 libgeos-c1v5 \
         libxml2 libexpat1 \
         libxerces-c3.2 libnetcdf-c++4 netcdf-bin libpoppler97 libspatialite7 gpsbabel \

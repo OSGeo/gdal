@@ -36,11 +36,6 @@ void VeryQuietErrorHandler(CPLErr eclass, int code, const char *msg ) {
   /* If the error class is CE_Fatal, we want to have a message issued
      because the CPL support code does an abort() before any exception
      can be generated */
-#if defined(SWIGPERL)
-    AV* error_stack = get_av("Geo::GDAL::error", 0);
-    SV *error = newSVpv(msg, 0);
-    av_push(error_stack, error);
-#endif
   if (eclass == CE_Fatal ) {
     CPLDefaultErrorHandler(eclass, code, msg );
   }
@@ -64,23 +59,10 @@ void DontUseExceptions() {
     $action
     CPLErr eclass = CPLGetLastErrorType();
     if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-#if defined(SWIGPERL)
-      do_confess( CPLGetLastErrorMsg(), 0 );
-#elif defined(SWIGCSHARP)
+#if defined(SWIGCSHARP)
       SWIG_CSharpException(SWIG_RuntimeError, CPLGetLastErrorMsg());
 #else
       SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
 #endif
     }
-
-#if defined(SWIGPERL)
-    /*
-    Make warnings regular Perl warnings. This duplicates the warning
-    message if DontUseExceptions() is in effect (it is not by default).
-    */
-    if ( eclass == CE_Warning ) {
-      warn( CPLGetLastErrorMsg(), "%s" );
-    }
-#endif
-
 }

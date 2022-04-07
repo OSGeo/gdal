@@ -40,7 +40,7 @@ from osgeo_utils.auxiliary.util import GetOutputDriverFor
 
 def Usage():
     print("""
-gdal_proximity.py srcfile dstfile [-srcband n] [-dstband n]
+Usage: gdal_proximity.py srcfile dstfile [-srcband n] [-dstband n]
                   [-of format] [-co name=value]*
                   [-ot Byte/UInt16/UInt32/Float32/etc]
                   [-values n,n,n] [-distunits PIXEL/GEO]
@@ -49,7 +49,7 @@ gdal_proximity.py srcfile dstfile [-srcband n] [-dstband n]
     return 1
 
 
-def main(argv):
+def main(argv=sys.argv):
     driver_name = None
     creation_options = []
     alg_options = []

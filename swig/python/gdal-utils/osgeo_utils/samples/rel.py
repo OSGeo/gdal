@@ -88,7 +88,7 @@ def ParseType(typ):
     return gdal.GDT_Byte
 
 
-def main(argv):
+def main(argv=sys.argv):
     infile = None
     outfile = None
     iBand = 1	    # The first band will be converted by default
@@ -236,4 +236,3 @@ def main(argv):
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv))
-

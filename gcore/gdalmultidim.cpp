@@ -2184,12 +2184,14 @@ double GDALMDArray::GetNoDataValueAsDouble(bool* pbHasNoData) const
 {
     const void* pNoData = GetRawNoDataValue();
     double dfNoData = 0.0;
-    // coverity[alloc_arg]
-    bool ok = pNoData != nullptr &&
-        GDALExtendedDataType::CopyValue(pNoData,
-                    GetDataType(),
-                    &dfNoData,
-                    GDALExtendedDataType::Create(GDT_Float64));
+    const auto& eDT = GetDataType();
+    const bool ok = pNoData != nullptr && eDT.GetClass() == GEDTC_NUMERIC;
+    if( ok )
+    {
+        GDALCopyWords( pNoData, eDT.GetNumericDataType(), 0,
+                       &dfNoData, GDT_Float64, 0,
+                       1 );
+    }
     if( pbHasNoData )
         *pbHasNoData = ok;
     return dfNoData;
@@ -2214,12 +2216,14 @@ int64_t GDALMDArray::GetNoDataValueAsInt64(bool* pbHasNoData) const
 {
     const void* pNoData = GetRawNoDataValue();
     int64_t nNoData = GDAL_PAM_DEFAULT_NODATA_VALUE_INT64;
-    // coverity[alloc_arg]
-    bool ok = pNoData != nullptr &&
-              GDALExtendedDataType::CopyValue(pNoData,
-                            GetDataType(),
-                            &nNoData,
-                            GDALExtendedDataType::Create(GDT_Int64));
+    const auto& eDT = GetDataType();
+    const bool ok = pNoData != nullptr && eDT.GetClass() == GEDTC_NUMERIC;
+    if( ok )
+    {
+        GDALCopyWords( pNoData, eDT.GetNumericDataType(), 0,
+                       &nNoData, GDT_Int64, 0,
+                       1 );
+    }
     if( pbHasNoData )
         *pbHasNoData = ok;
     return nNoData;
@@ -2244,12 +2248,14 @@ uint64_t GDALMDArray::GetNoDataValueAsUInt64(bool* pbHasNoData) const
 {
     const void* pNoData = GetRawNoDataValue();
     uint64_t nNoData = GDAL_PAM_DEFAULT_NODATA_VALUE_UINT64;
-    // coverity[alloc_arg]
-    bool ok = pNoData != nullptr &&
-              GDALExtendedDataType::CopyValue(pNoData,
-                            GetDataType(),
-                            &nNoData,
-                            GDALExtendedDataType::Create(GDT_UInt64));
+    const auto& eDT = GetDataType();
+    const bool ok = pNoData != nullptr && eDT.GetClass() == GEDTC_NUMERIC;
+    if( ok )
+    {
+        GDALCopyWords( pNoData, eDT.GetNumericDataType(), 0,
+                       &nNoData, GDT_UInt64, 0,
+                       1 );
+    }
     if( pbHasNoData )
         *pbHasNoData = ok;
     return nNoData;

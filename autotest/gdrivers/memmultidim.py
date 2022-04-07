@@ -232,6 +232,8 @@ def test_mem_md_array_single_dim():
     assert myarray.GetNoDataValueAsDouble() is None
     assert myarray.SetNoDataValueDouble(1) == gdal.CE_None
     assert myarray.GetNoDataValueAsDouble() == 1
+    assert myarray.GetNoDataValueAsInt64() == 1
+    assert myarray.GetNoDataValueAsUInt64() == 1
     assert myarray.SetNoDataValue(1) == gdal.CE_None
     assert myarray.GetNoDataValue() == 1
     assert myarray.SetNoDataValueRaw(struct.pack('B', 127)) == gdal.CE_None

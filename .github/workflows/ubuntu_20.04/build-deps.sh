@@ -8,7 +8,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-rec
     git make cmake wget zip unzip libtool automake \
     zlib1g-dev libsqlite3-dev pkg-config libcurl4-gnutls-dev \
     libproj-dev libtiff5-dev \
-    libcharls-dev libopenjp2-7-dev libcairo2-dev \
+    libopenjp2-7-dev libcairo2-dev \
     python3-dev python3-numpy python3-pip \
     libpng-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev \
     curl libxml2-dev libexpat-dev libxerces-c-dev \
@@ -23,7 +23,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-rec
     libopenexr-dev libheif-dev \
     libdeflate-dev libblosc-dev liblz4-dev \
     mono-mcs libmono-system-drawing4.0-cil ccache \
-    perl ant \
+    ant \
     libbrotli-dev \
     opencl-c-headers ocl-icd-opencl-dev
 
@@ -124,5 +124,23 @@ wget -q https://github.com/rouault/pdfium_build_gdal_3_5/releases/download/v1_pd
   && apt-get update -y \
   && apt-get install -y --fix-missing --no-install-recommends liblcms2-dev \
   && rm -rf /var/lib/apt/lists/*
+
+# HANA: client side
+# Install hdbsql tool
+curl -v -j -k -s -L -H "Cookie: eula_3_1_agreed=tools.hana.ondemand.com/developer-license-3_1.txt" https://tools.hana.ondemand.com/additional/hanaclient-latest-linux-x64.tar.gz --output hanaclient-latest-linux-x64.tar.gz \
+  && tar -xvf hanaclient-latest-linux-x64.tar.gz \
+  && mkdir /usr/sap \
+  && ./client/hdbinst -a client --sapmnt=/usr/sap \
+  && rm -rf client \
+  && rm hanaclient*
+export PATH=/usr/sap/hdbclient:$PATH
+
+# Download and compile odbc-cpp-wrapper
+git clone https://github.com/SAP/odbc-cpp-wrapper.git \
+  && mkdir odbc-cpp-wrapper/build \
+  && cd odbc-cpp-wrapper/build \
+  && cmake .. \
+  && make -j 2 \
+  && make install
 
 ldconfig
