@@ -386,12 +386,12 @@ static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img, doub
         pbm, precision,
         reinterpret_cast<Lerc1NS::Byte*>(dst.buffer), static_cast<unsigned int>(dst.size), &sz);
 
-    if (L2NS::ErrCode::Ok != static_cast<L2NS::ErrCode>(status) || sz > dst.size) {
+    if (L2NS::ErrCode::Ok != static_cast<L2NS::ErrCode>(status) || sz > (dst.size - PADDING_BYTES)) {
         CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error during LERC2 compression");
         return CE_Failure;
     }
 
-    dst.size = static_cast<size_t>(sz);
+    dst.size = static_cast<size_t>(sz) + PADDING_BYTES;
     return CE_None;
 }
 
