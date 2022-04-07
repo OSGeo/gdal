@@ -35,19 +35,16 @@ from osgeo import gdal
 
 def Usage():
     print('Usage: gdal_create_pdf composition.xml out.pdf')
-    return 99
+    return 1
 
 
 def gdal_create_pdf(argv):
     srcfile = None
     targetfile = None
 
-    print(f"argv before gdal.Gen...Processor: {argv}")
     argv = gdal.GeneralCmdLineProcessor(argv)
-    print(f"argv after gdal.Gen...Processor: {argv}")
     if argv is None:
-        print('argv is None')
-        return -88
+        return -1
 
     for i in range(1, len(argv)):
         if argv[i][0] == '-':

@@ -9,7 +9,7 @@ from pathlib import Path
 here = Path(__file__).parent.absolute()
 print(here)
 
-scripts = list(Path(here).glob("osgeo_utils/**/*pdf.py" ))
+scripts = list(Path(here).glob("osgeo_utils/**/*.py" ))
 
 i = '.' # progress meter step
 results = {}
@@ -27,7 +27,6 @@ for s in scripts:
             )
 
         results[file.relative_to(here)] = r.returncode
-        print(r)
     i = i+'.'
 
 # sort by return code value and display results
