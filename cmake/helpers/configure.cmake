@@ -34,7 +34,7 @@ check_include_file("fcntl.h" HAVE_FCNTL_H)
 check_include_file("unistd.h" HAVE_UNISTD_H)
 check_include_file("sys/types.h" HAVE_SYS_TYPES_H)
 check_include_file("locale.h" HAVE_LOCALE_H)
-check_include_file("xlocale.h" GDAL_HAVE_XLOCALE_H)
+check_include_file("xlocale.h" HAVE_XLOCALE_H)
 check_include_file("direct.h" HAVE_DIRECT_H)
 check_include_file("dlfcn.h" HAVE_DLFCN_H)
 
@@ -236,7 +236,7 @@ else ()
   set(UNIX_STDIO_64 TRUE)
 
   set(INCLUDE_XLOCALE_H)
-  if(GDAL_HAVE_XLOCALE_H)
+  if(HAVE_XLOCALE_H)
     set(INCLUDE_XLOCALE_H "#include <xlocale.h>")
   endif()
   check_c_source_compiles(
