@@ -22,7 +22,7 @@ set(GDAL_SWIG_COMMON_INTERFACE_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/include/XMLNode.i
     ${CMAKE_CURRENT_SOURCE_DIR}/include/MultiDimensional.i)
 
-option(BUILD_PYTHON_BINDINGS "Build Python bindings" ON)
+# BUILD_PYTHON_BINDINGS is already defined in ../CMakeLists.txt
 option(BUILD_JAVA_BINDINGS "Build Java bindings" ON)
 option(BUILD_CSHARP_BINDINGS "Build CSharp bindings" ON)
 
