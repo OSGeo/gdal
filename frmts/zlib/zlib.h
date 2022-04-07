@@ -1807,19 +1807,26 @@ ZEXTERN int ZEXPORT inflateBackInit_ OF((z_streamp strm, int windowBits,
           inflateBackInit_((strm), (windowBits), (window), \
                            ZLIB_VERSION, (int)sizeof(z_stream))
 #else
+
+#ifdef __cplusplus
+#define STATIC_CAST(type,val) static_cast<type>(val)
+#else
+#define STATIC_CAST(type,val) (type)(val)
+#endif
+
 #  define deflateInit(strm, level) \
-          deflateInit_((strm), (level), ZLIB_VERSION, (int)sizeof(z_stream))
+          deflateInit_((strm), (level), ZLIB_VERSION, STATIC_CAST(int, sizeof(z_stream)))
 #  define inflateInit(strm) \
-          inflateInit_((strm), ZLIB_VERSION, (int)sizeof(z_stream))
+          inflateInit_((strm), ZLIB_VERSION, STATIC_CAST(int, sizeof(z_stream)))
 #  define deflateInit2(strm, level, method, windowBits, memLevel, strategy) \
           deflateInit2_((strm),(level),(method),(windowBits),(memLevel),\
-                        (strategy), ZLIB_VERSION, (int)sizeof(z_stream))
+                        (strategy), ZLIB_VERSION, STATIC_CAST(int, sizeof(z_stream)))
 #  define inflateInit2(strm, windowBits) \
           inflateInit2_((strm), (windowBits), ZLIB_VERSION, \
-                        (int)sizeof(z_stream))
+                        STATIC_CAST(int, sizeof(z_stream)))
 #  define inflateBackInit(strm, windowBits, window) \
           inflateBackInit_((strm), (windowBits), (window), \
-                           ZLIB_VERSION, (int)sizeof(z_stream))
+                           ZLIB_VERSION, STATIC_CAST(int, sizeof(z_stream)))
 #endif
 
 #ifndef Z_SOLO
@@ -1857,10 +1864,10 @@ ZEXTERN int ZEXPORT gzgetc_ OF((gzFile file));  /* backward compatibility */
    ZEXTERN z_off64_t ZEXPORT gzseek64 OF((gzFile, z_off64_t, int));
    ZEXTERN z_off64_t ZEXPORT gztell64 OF((gzFile));
    ZEXTERN z_off64_t ZEXPORT gzoffset64 OF((gzFile));
-   ZEXTERN uLong ZEXPORT adler32_combine64 OF((uLong, uLong, z_off64_t));
-   ZEXTERN uLong ZEXPORT crc32_combine64 OF((uLong, uLong, z_off64_t));
 #endif
 
+ZEXTERN uLong adler32_combine64 OF((uLong, uLong, z_off64_t));
+ZEXTERN uLong ZEXPORT crc32_combine64 OF((uLong, uLong, z_off64_t));
 ZEXTERN uLong ZEXPORT crc32_combine_gen64 OF((z_off64_t));
 
 #if !defined(ZLIB_INTERNAL) && defined(Z_WANT64)

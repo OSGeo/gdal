@@ -8,6 +8,10 @@
 #ifndef ZCONF_H
 #define ZCONF_H
 
+#if defined(__GNUC__)
+#pragma GCC system_header
+#endif
+
 /*
  * If you *really* need a unique prefix for all types and library functions,
  * compile with -DZ_PREFIX. The "standard" zlib should be compiled without it.
