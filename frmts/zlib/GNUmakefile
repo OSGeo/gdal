@@ -9,7 +9,6 @@ OBJ = \
 	compress.o \
 	crc32.o \
 	deflate.o \
-	gzio.o \
 	infback.o \
 	inffast.o \
 	inflate.o \
