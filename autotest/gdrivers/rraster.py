@@ -40,7 +40,7 @@ import gdaltest
 # Perform simple read test.
 
 
-def test_rraster_1(filename='data/rraster/byte_rraster.grd', check_prj=None):
+def test_rraster_1(filename='data/rraster/byte_rraster1.grd', check_prj=None):
 
     tst = gdaltest.GDALTest('RRASTER', filename, 1, 4672, filename_absolute=True)
     ref_ds = gdal.Open('data/byte.tif')
@@ -52,8 +52,6 @@ def test_rraster_1(filename='data/rraster/byte_rraster.grd', check_prj=None):
                        check_max=255)
 
     ds = gdal.Open(filename)
-    md = ds.GetMetadata()
-    assert md == {'CREATOR': "R package 'raster'", 'CREATED': '2016-06-25 17:32:47'}
     assert ds.GetRasterBand(1).GetDescription() == 'byte'
 
 ###############################################################################
@@ -62,10 +60,10 @@ def test_rraster_1(filename='data/rraster/byte_rraster.grd', check_prj=None):
 def test_rraster_1_copy():
 
     filename = '/vsimem/rraster/byte_rraster.grd'
-    gdal.Translate(filename, 'data/rraster/byte_rraster.grd', format='RRASTER')
+    gdal.Translate(filename, 'data/rraster/byte_rraster1.grd', format='RRASTER')
     assert not gdal.VSIStatL(filename + '.aux.xml'), 'did not expect .aux.xml'
     sr = osr.SpatialReference()
-    sr.SetFromUserInput('+proj=utm +zone=11 +ellps=clrk66 +nadgrids=@conus,@alaska,@ntv2_0.gsb,@ntv1_can.dat +units=m +no_defs')
+    sr.ImportFromEPSG(26711)
     test_rraster_1(filename, check_prj=sr.ExportToWkt())
     gdal.GetDriverByName('RRASTER').Delete(filename)
 
@@ -151,7 +149,7 @@ def test_rraster_rgba_copy():
         test_rraster_rgba(filename)
         gdal.GetDriverByName('RRASTER').Delete(filename)
 
-    
+
 ###############################################################################
 
 
