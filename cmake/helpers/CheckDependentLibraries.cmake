@@ -19,6 +19,15 @@ option(
   "Whether detected external libraries should be used by default. This should be set before CMakeCache.txt is created."
   ON)
 
+set(GDAL_USE_INTERNAL_LIBS_ALLOWED_VALUES ON OFF WHEN_NO_EXTERNAL)
+set(
+  GDAL_USE_INTERNAL_LIBS WHEN_NO_EXTERNAL
+  CACHE STRING "Control how internal libraries should be used by default. This should be set before CMakeCache.txt is created.")
+set_property(CACHE GDAL_USE_INTERNAL_LIBS PROPERTY STRINGS ${GDAL_USE_INTERNAL_LIBS_ALLOWED_VALUES})
+if(NOT GDAL_USE_INTERNAL_LIBS IN_LIST GDAL_USE_INTERNAL_LIBS_ALLOWED_VALUES)
+    message(FATAL_ERROR "GDAL_USE_INTERNAL_LIBS must be one of ${GDAL_USE_INTERNAL_LIBS_ALLOWED_VALUES}")
+endif()
+
 set(GDAL_IMPORT_DEPENDENCIES [[
 include(CMakeFindDependencyMacro)
 include("${CMAKE_CURRENT_LIST_DIR}/DefineFindPackage2.cmake")
@@ -207,26 +216,22 @@ function (split_libpath _lib)
   endif ()
 endfunction ()
 
-function (invert_on_off arg out)
-  if (${arg})
-    set(${out}
-        OFF
-        PARENT_SCOPE)
-  else ()
-    set(${out}
-        ON
-        PARENT_SCOPE)
-  endif ()
-endfunction ()
-
 function (gdal_internal_library libname)
   set(_options REQUIRED)
   set(_oneValueArgs)
   set(_multiValueArgs)
   cmake_parse_arguments(_GIL "${_options}" "${_oneValueArgs}" "${_multiValueArgs}" ${ARGN})
-  invert_on_off(GDAL_USE_${libname} NOT_GDAL_USE_${libname})
+  if ("${GDAL_USE_INTERNAL_LIBS}" STREQUAL "ON")
+      set(_default_value ON)
+  elseif ("${GDAL_USE_INTERNAL_LIBS}" STREQUAL "OFF")
+      set(_default_value OFF)
+  elseif( GDAL_USE_${libname} )
+      set(_default_value OFF)
+  else()
+      set(_default_value ON)
+  endif()
   set(GDAL_USE_${libname}_INTERNAL
-      ${NOT_GDAL_USE_${libname}}
+      ${_default_value}
       CACHE BOOL "Use internal ${libname} copy (if set to ON, has precedence over GDAL_USE_${libname})")
   if (_GIL_REQUIRED
       AND (NOT GDAL_USE_${libname})
@@ -350,16 +355,16 @@ gdal_check_package(ZSTD "ZSTD compression library" CAN_DISABLE ${ZSTD_NAMES_AND_
 gdal_check_package(SFCGAL "gdal core supports ISO 19107:2013 and OGC Simple Features Access 1.2 for 3D operations"
                    CAN_DISABLE)
 
-gdal_check_package(GeoTIFF "libgeotiff library (external)" CAN_DISABLE
+gdal_check_package(GeoTIFF "libgeotiff library (external)" CAN_DISABLE RECOMMENDED
   NAMES GeoTIFF
   TARGETS geotiff_library GEOTIFF::GEOTIFF
 )
 gdal_internal_library(GEOTIFF REQUIRED)
 
-gdal_check_package(PNG "PNG compression library (external)" CAN_DISABLE)
+gdal_check_package(PNG "PNG compression library (external)" CAN_DISABLE RECOMMENDED)
 gdal_internal_library(PNG)
 
-gdal_check_package(JPEG "JPEG compression library (external)" CAN_DISABLE)
+gdal_check_package(JPEG "JPEG compression library (external)" CAN_DISABLE RECOMMENDED)
 if (GDAL_USE_JPEG AND (JPEG_LIBRARY MATCHES ".*turbojpeg\.(so|lib)"))
   message(
     FATAL_ERROR
@@ -389,7 +394,7 @@ endif()
 gdal_check_package(OpenCAD "libopencad (external, used by OpenCAD driver)" CAN_DISABLE)
 gdal_internal_library(OPENCAD)
 
-gdal_check_package(QHULL "Enable QHULL (external)" CAN_DISABLE)
+gdal_check_package(QHULL "Enable QHULL (external)" CAN_DISABLE RECOMMENDED)
 gdal_internal_library(QHULL)
 
 # libcsf upstream is now at https://github.com/pcraster/rasterformat, but the library name has been changed to
@@ -404,7 +409,7 @@ gdal_internal_library(QHULL)
 set(GDAL_USE_LIBCSF_INTERNAL ON)
 
 # Compression used by GTiff and MRF
-gdal_check_package(LERC "Enable LERC (external)" CAN_DISABLE)
+gdal_check_package(LERC "Enable LERC (external)" CAN_DISABLE RECOMMENDED)
 gdal_internal_library(LERC)
 
 # Disable by default the use of external shapelib, as currently the SAOffset member that holds file offsets in it is a
