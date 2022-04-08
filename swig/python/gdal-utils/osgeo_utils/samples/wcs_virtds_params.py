@@ -41,7 +41,7 @@ from osgeo import osr
 
 def Usage():
     print('Usage: wcs_virtds_params.py [-lyr_name name] [-tileindex field_name] [-t_srs srsdef] -src_srs_name field_name ogr_ds_tileindex')
-    return 1
+    return 2
 
 
 def main(argv=sys.argv):

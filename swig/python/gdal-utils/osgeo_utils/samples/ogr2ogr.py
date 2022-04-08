@@ -212,7 +212,7 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
 #      Processing command line arguments.
 # --------------------------------------------------------------------
     if args is None:
-        return 1
+        return 2
 
     nArgc = len(args)
 

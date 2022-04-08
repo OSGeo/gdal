@@ -47,7 +47,7 @@ def Usage():
     print('')
     print('Usage: tolatlong.py pixel line infile')
     print('')
-    return 1
+    return 2
 
 
 def main(argv=sys.argv):

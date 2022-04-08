@@ -38,7 +38,7 @@ from osgeo import ogr
 def Usage():
     print('Usage: vec_tr_spat.py [-spat xmin ymin xmax ymax] infile outfile [layer]')
     print('')
-    return 1
+    return 2
 
 
 def main(argv=sys.argv):

@@ -118,7 +118,7 @@ where src_color is a RGB or RGBA dataset,
       dst_color will be a RGB or RGBA dataset using the greyscale as the
       intensity for the color dataset.
 """)
-    return 1
+    return 2
 
 
 def main(argv=sys.argv):

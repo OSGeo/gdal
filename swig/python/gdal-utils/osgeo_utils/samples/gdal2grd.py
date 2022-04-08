@@ -48,7 +48,7 @@ def Usage():
     print('  infile	    Name of the input GDAL supported file')
     print('  outfile	    Name of the output GRD file')
     print('')
-    return 1
+    return 2
 
 
 def main(argv=sys.argv):

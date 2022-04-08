@@ -68,7 +68,7 @@ def Usage():
     print('   with -update_only.')
     print('')
 
-    return 1
+    return 2
 
 ###############################################################
 # ogrupdate_analyse_args()

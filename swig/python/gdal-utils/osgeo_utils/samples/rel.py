@@ -59,7 +59,7 @@ def Usage():
     print('  infile	       Name of the input file')
     print('  outfile	       Name of the output file')
     print('')
-    return 1
+    return 2
 
 
 def ParseType(typ):

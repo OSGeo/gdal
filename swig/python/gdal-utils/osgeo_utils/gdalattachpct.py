@@ -43,7 +43,7 @@ from osgeo_utils.auxiliary.color_table import get_color_table, ColorTableLike
 
 def Usage():
     print('Usage: gdalattachpct.py <pctfile> <infile> <outfile>')
-    return 1
+    return 2
 
 
 def main(argv=sys.argv):

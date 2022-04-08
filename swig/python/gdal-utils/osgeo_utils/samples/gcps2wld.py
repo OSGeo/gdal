@@ -39,7 +39,7 @@ from osgeo import gdal
 def main(argv=sys.argv):
     if len(argv) < 2:
         print("Usage: gcps2wld.py source_file")
-        return 1
+        return 2
 
     filename = argv[1]
     dataset = gdal.Open(filename)

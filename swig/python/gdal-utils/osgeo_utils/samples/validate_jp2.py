@@ -46,7 +46,7 @@ def Usage():
     print('                               Only used by -inspire_tg')
     print('-oidoc: XML document conforming with Inspire Orthoimagery GML application schema.')
     print('-ogc_schemas_location: Path to directory with OGC schemas. Needed for GMLJP2 validation.')
-    return 1
+    return 2
 
 
 XML_TYPE_IDX = 0

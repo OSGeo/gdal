@@ -48,7 +48,7 @@ class Module(object):
 def Usage():
     print('Usage: tigerpoly.py infile [outfile].shp')
     print('')
-    return 1
+    return 2
 
 
 def main(argv=sys.argv):

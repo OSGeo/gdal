@@ -79,7 +79,7 @@ Values not mapped by the lut file (for instance values 6-255 in the above
 case) will be left unaltered.  Sixteen bit (UInt16) output values are
 supported as well as luts of more than 256 input values.
 """)
-    return 1
+    return 2
 
 
 def main(argv=sys.argv):

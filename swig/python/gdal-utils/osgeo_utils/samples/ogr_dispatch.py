@@ -68,7 +68,7 @@ def Usage():
     print('  ogr_dispatch.py -src in.dxf -dst out -field Layer -field OGR_GEOMETRY')
     print('')
 
-    return 1
+    return 2
 
 ###############################################################################
 

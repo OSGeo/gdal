@@ -41,7 +41,7 @@ def Usage():
     print('Options:')
     print('-q: quiet mode')
     print('--full-check=yes/no/auto: check tile/strip leader/trailer bytes. auto=yes for local files, and no for remote files')
-    return 1
+    return 2
 
 
 class ValidateCloudOptimizedGeoTIFFException(Exception):

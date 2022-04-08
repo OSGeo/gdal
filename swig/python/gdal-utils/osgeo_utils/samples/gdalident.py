@@ -38,7 +38,7 @@ from osgeo import gdal
 
 def Usage():
     print('Usage: gdalident.py [-r] file(s)')
-    return 1
+    return 2
 
 
 def ProcessTarget(target, recursive, report_failure, filelist=None):
