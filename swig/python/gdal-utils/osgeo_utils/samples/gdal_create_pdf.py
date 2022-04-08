@@ -68,7 +68,7 @@ def gdal_create_pdf(argv):
 
 
 def main(argv=sys.argv):
-    gdal_create_pdf(argv)
+    return gdal_create_pdf(argv)
 
 
 if __name__ == '__main__':
