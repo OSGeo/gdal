@@ -3179,7 +3179,7 @@ VSIVirtualHandle* VSICurlFilesystemHandlerBase::Open( const char *pszFilename,
         !AllowCachedDataFor(pszFilename);
 
     CPLString osFilename(pszFilename);
-    bool bGotFileList = true;
+    bool bGotFileList = !bSkipReadDir;
     bool bForceExistsCheck = false;
     FileProp cachedFileProp;
     if( !(GetCachedFileProp(osFilename + strlen(GetFSPrefix()), cachedFileProp) &&
