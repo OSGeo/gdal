@@ -81,9 +81,9 @@ def main(argv=sys.argv):
         i = i + 1
 
     if infile is None:
-        Usage()
+        return Usage()
     if outfile is None:
-        Usage()
+        return Usage()
 
     indataset = gdal.Open(infile, gdal.GA_ReadOnly)
     if infile is None:

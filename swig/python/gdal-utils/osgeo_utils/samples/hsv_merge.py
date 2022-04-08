@@ -153,12 +153,12 @@ def main(argv=sys.argv):
         elif dst_color_filename is None:
             dst_color_filename = argv[i]
         else:
-            Usage()
+            return Usage()
 
         i = i + 1
 
     if dst_color_filename is None:
-        Usage()
+        return Usage()
 
     datatype = gdal.GDT_Byte
 

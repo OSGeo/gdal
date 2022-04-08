@@ -91,12 +91,12 @@ def main(argv=sys.argv):
             dstfile = argv[i]
 
         else:
-            Usage()
+            return Usage()
 
         i = i + 1
 
     if dstfile is None:
-        Usage()
+        return Usage()
 
     if out_format is None and dstfile[-4:].lower() == '.vrt':
         out_format = 'VRT'

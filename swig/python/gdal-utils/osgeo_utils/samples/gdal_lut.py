@@ -128,12 +128,12 @@ def main(argv=sys.argv):
             dst_filename = argv[i]
 
         else:
-            Usage()
+            return Usage()
 
         i = i + 1
 
     if src_filename is None or lut_filename is None:
-        Usage()
+        return Usage()
 
     # ----------------------------------------------------------------------------
     # Load the LUT file.
