@@ -9,6 +9,7 @@ from pathlib import Path
 here = Path(__file__).parent.absolute()
 print(here)
 
+debug = False
 scripts = list(Path(here).glob("osgeo_utils/**/*.py" ))
 
 i = '.' # progress meter step
@@ -25,7 +26,8 @@ for s in scripts:
             capture_output=True,
             text=True,
             )
-
+        if debug:
+            print(r)
         results[file.relative_to(here)] = r.returncode
     i = i+'.'
 
