@@ -659,6 +659,14 @@ VSIAzureBlobHandleHelper* VSIAzureBlobHandleHelper::BuildFromURI( const char* ps
         return nullptr;
     }
 
+    if( CPLTestBool(VSIGetCredential(
+            osPathForOption.c_str(), "AZURE_NO_SIGN_REQUEST", "NO")) )
+    {
+        osStorageKey.clear();
+        osSAS.clear();
+        osAccessToken.clear();
+    }
+
     // pszURI == bucket/object
     const CPLString osBucketObject( pszURI );
     CPLString osBucket(osBucketObject);
