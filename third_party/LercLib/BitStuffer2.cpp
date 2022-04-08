@@ -363,12 +363,8 @@ bool BitStuffer2::BitUnStuff_Before_Lerc2v3(const Byte** ppByte, size_t& nBytesR
   unsigned long long numUIntsLL = ((unsigned long long)numElements * numBits + 31) / 32;
   unsigned long long numBytesLL = numUIntsLL * sizeof(unsigned int);
   size_t numBytes = (size_t)numBytesLL; // could theoretically overflow on 32 bit system
-  if (numBytes != numBytesLL)
-    return false;
   size_t numUInts = (size_t)numUIntsLL;
-
   unsigned int ntbnn = NumTailBytesNotNeeded(numElements, numBits);
-
   if (numBytes != numBytesLL || nBytesRemaining + ntbnn < numBytes)
     return false;
 
