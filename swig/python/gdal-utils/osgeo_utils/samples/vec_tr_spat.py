@@ -67,12 +67,12 @@ def main(argv=sys.argv):
             layer_name = arg
 
         else:
-            Usage()
+            return Usage()
 
         i = i + 1
 
     if outfile is None:
-        Usage()
+        return Usage()
 
     #############################################################################
     # Open the datasource to operate on.
