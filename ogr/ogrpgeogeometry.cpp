@@ -2406,10 +2406,17 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
 /* -------------------------------------------------------------------- */
         if( bHasM )
         {
+            bool bIsAllNAN = nPoints > 0;
             for( int i = 0; i < nPoints; i++ )
             {
                 memcpy( padfM + i, pabyShape + nOffset + 16 + i*8, 8 );
                 CPL_LSBPTR64( padfM + i );
+                bIsAllNAN &= std::isnan(padfM[i]);
+            }
+            if( bIsAllNAN )
+            {
+                CPLFree(padfM);
+                padfM = nullptr;
             }
 
             nOffset += 16 + 8*nPoints;

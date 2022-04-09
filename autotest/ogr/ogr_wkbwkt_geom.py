@@ -226,7 +226,7 @@ def test_ogr_wkbwkt_test_broken_geom():
                    'MULTIPOINT Z(A)',
                    'MULTIPOINT Z(0 1',
                    'MULTIPOINT Z((0 1)',
-                   'MULTIPOINT Z(0 1,2 3)',
+                   # 'MULTIPOINT Z(0 1,2 3)',  # Not SF compliant (and rejected by PostGIS), but we accept it
 
                    'MULTILINESTRING',
                    'MULTILINESTRING UNKNOWN',
@@ -618,6 +618,16 @@ def test_ogr_wkt_multiline():
     LINESTRING (3 3, 4 4))
     """)
     assert g is not None
+
+###############################################################################
+# Test multipoint Z WKT non bracketed (like what PostGIS outputs)
+
+
+def test_ogr_wkt_multipoint_postgis():
+    g = ogr.CreateGeometryFromWkt('MULTIPOINT Z (1 2 3,4 5 6)')
+    assert g is not None
+    assert g.ExportToIsoWkt() == 'MULTIPOINT Z ((1 2 3),(4 5 6))'
+
 
 ###############################################################################
 # When imported build a list of units based on the files available.

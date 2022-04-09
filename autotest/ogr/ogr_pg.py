@@ -189,6 +189,7 @@ def test_ogr_pg_2():
     gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer('tpoly',
                                                  options=['DIM=3'])
 
+
     ######################################################
     # Check capabilities
 
@@ -335,9 +336,11 @@ def test_ogr_pg_3():
 
     for i in range(len(gdaltest.poly_feat)):
         orig_feat = gdaltest.poly_feat[i]
+        orig_geom = orig_feat.GetGeometryRef().Clone()
+        orig_geom = ogr.ForceTo(orig_geom, ogr.wkbPolygon25D)
         read_feat = gdaltest.pg_lyr.GetNextFeature()
 
-        assert (ogrtest.check_feature_geometry(read_feat, orig_feat.GetGeometryRef(),
+        assert (ogrtest.check_feature_geometry(read_feat, orig_geom,
                                           max_error=0.001) == 0)
 
         for fld in range(3):
@@ -430,7 +433,9 @@ def test_ogr_pg_6():
     if tr:
         sql_lyr.ResetReading()
         feat_read = sql_lyr.GetNextFeature()
-        if ogrtest.check_feature_geometry(feat_read, 'MULTILINESTRING ((5.00121349 2.99853132,5.00121349 1.99853133),(5.00121349 1.99853133,5.00121349 0.99853133),(3.00121351 1.99853127,5.00121349 1.99853133),(5.00121349 1.99853133,6.00121348 1.99853135))') != 0:
+        geom = feat_read.GetGeometryRef()
+        geom = ogr.ForceTo(geom, ogr.wkbMultiLineString)
+        if ogrtest.check_feature_geometry(geom, 'MULTILINESTRING ((5.00121349 2.99853132,5.00121349 1.99853133),(5.00121349 1.99853133,5.00121349 0.99853133),(3.00121351 1.99853127,5.00121349 1.99853133),(5.00121349 1.99853133,6.00121348 1.99853135))') != 0:
             tr = 0
         feat_read.Destroy()
 
@@ -669,9 +674,12 @@ def test_ogr_pg_12():
 
     for i in range(len(gdaltest.poly_feat)):
         orig_feat = gdaltest.poly_feat[i]
+        orig_geom = orig_feat.GetGeometryRef().Clone()
+        if gdaltest.pg_has_postgis:
+            orig_geom = ogr.ForceTo(orig_geom, ogr.wkbPolygon25D)
         read_feat = gdaltest.pgc_lyr.GetNextFeature()
 
-        assert (ogrtest.check_feature_geometry(read_feat, orig_feat.GetGeometryRef(),
+        assert (ogrtest.check_feature_geometry(read_feat, orig_geom,
                                           max_error=0.001) == 0)
 
         for fld in range(3):
