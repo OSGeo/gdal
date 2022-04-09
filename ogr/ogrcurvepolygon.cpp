@@ -425,6 +425,8 @@ OGRErr OGRCurvePolygon::addRingDirectlyInternal( OGRCurve* poNewRing,
     if( !checkRing(poNewRing) )
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
 
+    HomogenizeDimensionalityWith(poNewRing);
+
     return oCC.addCurveDirectly(this, poNewRing, bNeedRealloc);
 }
 
