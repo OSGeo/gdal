@@ -479,6 +479,12 @@ VSIAzureBlobHandleHelper* VSIAzureBlobHandleHelper::BuildFromURI( const char* ps
         return nullptr;
     }
 
+    if( CPLTestBool(CPLGetConfigOption("AZURE_NO_SIGN_REQUEST", "NO")) )
+    {
+        osStorageKey.clear();
+        osSAS.clear();
+    }
+
     // pszURI == bucket/object
     const CPLString osBucketObject( pszURI );
     CPLString osBucket(osBucketObject);
@@ -633,7 +639,7 @@ CPLString VSIAzureBlobHandleHelper::GetSignedURL(CSLConstList papszOptions)
 
     CPLString osVerb(CSLFetchNameValueDef(papszOptions, "VERB", "GET"));
     CPLString osSignedPermissions(CSLFetchNameValueDef(papszOptions,
-        "SIGNEDPERMISSIONS", 
+        "SIGNEDPERMISSIONS",
         (EQUAL(osVerb, "GET") || EQUAL(osVerb, "HEAD")) ? "r" : "w"  ));
 
     CPLString osSignedIdentifier(CSLFetchNameValueDef(papszOptions,
