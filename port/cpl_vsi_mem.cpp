@@ -269,7 +269,7 @@ bool VSIMemFile::SetLength( vsi_l_offset nNewLength )
     }
     else if( nNewLength < nLength )
     {
-        memset(pabyData + nNewLength, 0, nLength - nNewLength);
+        memset(pabyData + nNewLength, 0, static_cast<size_t>(nLength - nNewLength));
     }
 
     nLength = nNewLength;
