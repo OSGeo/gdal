@@ -4552,19 +4552,45 @@ OGRGeometry * OGRGeometryFactory::forceTo( OGRGeometry* poGeom,
     if( poGeom == nullptr )
         return poGeom;
 
-    eTargetType = wkbFlatten(eTargetType);
-    OGRwkbGeometryType eType = wkbFlatten(poGeom->getGeometryType());
-    if( eType == eTargetType || eTargetType == wkbUnknown )
-        return poGeom;
-
     if( poGeom->IsEmpty() )
     {
         OGRGeometry* poRet = createGeometry(eTargetType);
         if( poRet )
+        {
             poRet->assignSpatialReference(poGeom->getSpatialReference());
+            poRet->set3D( OGR_GT_HasZ(eTargetType) );
+            poRet->setMeasured( OGR_GT_HasM(eTargetType) );
+        }
         delete poGeom;
         return poRet;
     }
+
+    const OGRwkbGeometryType eTargetTypeFlat = wkbFlatten(eTargetType);
+    if( eTargetTypeFlat == wkbUnknown )
+        return poGeom;
+
+    OGRwkbGeometryType eType = poGeom->getGeometryType();
+    OGRwkbGeometryType eTypeFlat = wkbFlatten(eType);
+
+    if( eTargetTypeFlat != eTargetType && (eType == eTypeFlat) )
+    {
+        poGeom = forceTo(poGeom, eTargetTypeFlat, papszOptions);
+        if( poGeom )
+        {
+            poGeom->set3D( OGR_GT_HasZ(eTargetType) );
+            poGeom->setMeasured( OGR_GT_HasM(eTargetType) );
+        }
+        return poGeom;
+    }
+
+    if( eTypeFlat == eTargetTypeFlat )
+    {
+        poGeom->set3D( OGR_GT_HasZ(eTargetType) );
+        poGeom->setMeasured( OGR_GT_HasM(eTargetType) );
+        return poGeom;
+    }
+
+    eType = eTypeFlat;
 
     if( OGR_GT_IsSubClassOf(eType, wkbPolyhedralSurface) &&
         (eTargetType == wkbMultiSurface ||
