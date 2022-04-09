@@ -1567,6 +1567,29 @@ def test_ogr_fgdb_20(openfilegdb_drv, fgdb_drv):
     openfilegdb_drv.Register()
     fgdb_drv.Register()
 
+
+    lyr = ds.CreateLayer('test_2147483647', geom_type=ogr.wkbNone)
+    lyr.CreateField(ogr.FieldDefn('int', ogr.OFTInteger))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    fid = 2147483647
+    f.SetFID(fid)
+    f.SetField(0, fid)
+    lyr.CreateFeature(f)
+    ds = None
+
+    ds = openfilegdb_drv.Open('tmp/test.gdb')
+    lyr = ds.GetLayerByName('test_2147483647')
+    f = lyr.GetNextFeature()
+    assert f
+    assert f.GetFID() == 2147483647
+    ds = None
+
+    ds = ogr.Open('tmp/test.gdb', update=1)
+    lyr = ds.GetLayerByName('test_2147483647')
+    # GetNextFeature() is excruciatingly slow on such huge FID with the SDK driver
+    f = lyr.GetFeature(2147483647)
+    assert f
+
     lyr = ds.CreateLayer('ogr_fgdb_20', geom_type=ogr.wkbNone)
     lyr.CreateField(ogr.FieldDefn('id', ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn('str', ogr.OFTString))

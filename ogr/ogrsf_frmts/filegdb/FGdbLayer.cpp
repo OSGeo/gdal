@@ -700,8 +700,11 @@ int  FGdbLayer::EditGDBTablX( const CPLString& osGDBTablX,
     int nCountBlocksBeforeIBlockValue = 0;
 
     int bRet = TRUE;
-    for(int i=1; i<=nOutMaxFID;i++, nOffsetInPage += nRecordSize)
+    int i = 0;
+    for(unsigned iUnsigned=1; iUnsigned <= static_cast<unsigned>(nOutMaxFID);
+                    iUnsigned = static_cast<unsigned>(i) + 1, nOffsetInPage += nRecordSize)
     {
+        i = static_cast<int>(iUnsigned);
         if( nOffsetInPage == 1024 * nRecordSize )
         {
             if( nLastWrittenOffset > 0 || bDisableSparsePages )
