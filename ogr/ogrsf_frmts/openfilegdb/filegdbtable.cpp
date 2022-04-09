@@ -2971,7 +2971,9 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
             {
                 poMLS = new OGRMultiLineString();
                 if( bHasZ )
-                    poMLS->setCoordinateDimension(3);
+                    poMLS->set3D(TRUE);
+                if( bHasM )
+                    poMLS->setMeasured(TRUE);
             }
 
             dx = dy = dz = 0;
