@@ -243,13 +243,8 @@ OGRErr OGRMultiPoint::importFromWkt( const char ** ppszInput )
         return importFromWkt_Bracketed( ppszInput, bHasM, bHasZ );
     }
 
-    if( bHasZ || bHasM )
-    {
-        return OGRERR_CORRUPT_DATA;
-    }
-
 /* -------------------------------------------------------------------- */
-/*      Read the point list which should consist of exactly one point.  */
+/*      Read the point list.                                            */
 /* -------------------------------------------------------------------- */
     OGRRawPoint *paoPoints = nullptr;
     double *padfZ = nullptr;

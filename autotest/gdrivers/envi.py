@@ -321,7 +321,7 @@ def test_envi_truncated():
     gdal.GetDriverByName('ENVI').CreateCopy('/vsimem/envi_truncated.dat',
                                             gdal.Open('data/byte.tif'))
 
-    f = gdal.VSIFOpenL('/vsimem/envi_truncated.dat', 'wb+')
+    f = gdal.VSIFOpenL('/vsimem/envi_truncated.dat', 'rb+')
     gdal.VSIFTruncateL(f, int(20 * 20 / 2))
     gdal.VSIFCloseL(f)
 

@@ -885,8 +885,7 @@ OGRGeometry* OGRESRIJSONReadPolygon( json_object* poObj)
         }
 
         OGRPolygon* poPoly = new OGRPolygon();
-        OGRLinearRing* poLine = new OGRLinearRing();
-        poPoly->addRingDirectly(poLine);
+        auto poLine = cpl::make_unique<OGRLinearRing>();
         papoGeoms[iRing] = poPoly;
 
         const auto nPoints = json_object_array_length( poObjRing );
@@ -925,6 +924,7 @@ OGRGeometry* OGRESRIJSONReadPolygon( json_object* poObj)
                 poLine->addPoint( dfX, dfY );
             }
         }
+        poPoly->addRingDirectly(poLine.release());
     }
 
     OGRGeometry* poRet = OGRGeometryFactory::organizePolygons( papoGeoms,

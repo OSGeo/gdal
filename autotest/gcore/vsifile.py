@@ -1052,3 +1052,21 @@ def test_vsifile_vsizip_stored():
     assert gdal.VSIFReadL(1, 5, f) == b'foo\n'
     assert gdal.VSIFEofL(f)
     gdal.VSIFCloseL(f)
+
+
+###############################################################################
+# Test that VSIFTruncateL() zeroize beyond the truncated area
+
+
+def test_vsifile_vsimem_truncate_zeroize():
+
+    filename = '/vsimem/test.bin'
+    f = gdal.VSIFOpenL(filename, 'wb+')
+    data = b'\xFF' * 10000
+    gdal.VSIFWriteL(data, 1, len(data), f)
+    gdal.VSIFTruncateL(f, 0)
+    gdal.VSIFSeekL(f, 10000, 0)
+    gdal.VSIFWriteL(b'\x00', 1, 1, f)
+    gdal.VSIFSeekL(f, 0, 0)
+    assert gdal.VSIFReadL(1, 1, f) == b'\x00'
+    gdal.VSIFCloseL(f)
