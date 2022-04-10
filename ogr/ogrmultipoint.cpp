@@ -231,7 +231,6 @@ OGRErr OGRMultiPoint::importFromWkt( const char ** ppszInput )
 
     char szToken[OGR_WKT_TOKEN_MAX] = {};
     const char *pszInput = *ppszInput;
-    eErr = OGRERR_NONE;
 
     const char* pszPreScan = OGRWktReadToken( pszInput, szToken );
     OGRWktReadToken( pszPreScan, szToken );
@@ -277,7 +276,7 @@ OGRErr OGRMultiPoint::importFromWkt( const char ** ppszInput )
 /* -------------------------------------------------------------------- */
 /*      Transform raw points into point objects.                        */
 /* -------------------------------------------------------------------- */
-    for( int iGeom = 0; iGeom < nPointCount && eErr == OGRERR_NONE; iGeom++ )
+    for( int iGeom = 0; iGeom < nPointCount; iGeom++ )
     {
         OGRPoint *poPoint =
             new OGRPoint(paoPoints[iGeom].x, paoPoints[iGeom].y);
@@ -310,9 +309,6 @@ OGRErr OGRMultiPoint::importFromWkt( const char ** ppszInput )
     CPLFree( paoPoints );
     CPLFree( padfZ );
     CPLFree( padfM );
-
-    if( eErr != OGRERR_NONE )
-        return eErr;
 
     *ppszInput = pszInput;
 
