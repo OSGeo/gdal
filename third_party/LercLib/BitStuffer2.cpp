@@ -355,7 +355,7 @@ void BitStuffer2::BitStuff_Before_Lerc2v3(Byte** ppByte, const vector<unsigned i
 
 // -------------------------------------------------------------------------- ;
 
-bool BitStuffer2::BitUnStuff_Before_Lerc2v3(const Byte** ppByte, size_t& nBytesRemaining, 
+bool BitStuffer2::BitUnStuff_Before_Lerc2v3(const Byte** ppByte, size_t& nBytesRemaining,
     vector<unsigned int>& dataVec, unsigned int numElements, int numBits) const
 {
   if (numElements == 0 || numBits >= 32)
@@ -384,8 +384,11 @@ bool BitStuffer2::BitUnStuff_Before_Lerc2v3(const Byte** ppByte, size_t& nBytesR
   memcpy(&m_tmpBitStuffVec[0], *ppByte, nBytesToCopy);
 
   unsigned int* pLastULong = &m_tmpBitStuffVec[numUInts - 1];
-  while (ntbnn--)
+  while (ntbnn)
+  {
+    -- ntbnn;
     *pLastULong <<= 8;
+  }
 
   unsigned int* srcPtr = &m_tmpBitStuffVec[0];
   unsigned int* dstPtr = &dataVec[0];
