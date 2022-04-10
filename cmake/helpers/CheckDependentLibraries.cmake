@@ -582,7 +582,10 @@ gdal_check_package(NetCDF "Enable netCDF driver" CAN_DISABLE
 gdal_check_package(OGDI "Enable ogr_OGDI driver" CAN_DISABLE)
 # OpenCL warping gives different results than the ones expected by autotest, so disable it by default even if found.
 gdal_check_package(OpenCL "Enable OpenCL (may be used for warping)" DISABLED_BY_DEFAULT)
+
+set(PostgreSQL_ADDITIONAL_VERSIONS "14" CACHE STRING "Additional PostgreSQL versions to check")
 gdal_check_package(PostgreSQL "" CAN_DISABLE)
+
 gdal_check_package(FYBA "enable ogr_SOSI driver" CAN_DISABLE)
 # Assume liblzma from xzutils, skip expensive checks.
 set(LIBLZMA_HAS_AUTO_DECODER 1)
