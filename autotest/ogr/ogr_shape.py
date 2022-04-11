@@ -856,7 +856,7 @@ def test_ogr_shape_23():
     read_lyr = gdaltest.shape_ds.GetLayerByName(layer_name)
     feat_read = read_lyr.GetNextFeature()
 
-    assert (ogrtest.check_feature_geometry(feat_read, ogr.CreateGeometryFromWkt('MULTIPOLYGON(((0 0 0,0 10,10 10,0 0),(0.25 0.5,1 1,0.5 1,0.25 0.5)),((100 0,100 10,110 10,100 0),(100.25 0.5,100.5 1,100 1,100.25 0.5)))'),
+    assert (ogrtest.check_feature_geometry(feat_read, ogr.CreateGeometryFromWkt('MULTIPOLYGON (((0 0,0 10,10 10,0 0),(0.25 0.5,1 1,0.5 1.0,0.25 0.5)),((100 0,100 10,110 10,100 0),(100.25 0.5,100.5 1.0,100 1,100.25 0.5)))'),
                                       max_error=0.000000001) == 0), \
         feat_read.GetGeometryRef().ExportToWkt()
 

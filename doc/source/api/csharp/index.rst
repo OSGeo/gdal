@@ -10,7 +10,7 @@ Generally speaking the classes and methods mostly match those of the GDAL and OG
 
 The C# bindings are also usable from other .NET languages, such as VB.Net.
 
-The C# interface has been built upon the same libraries as the other SWIG generated wrappers (like Perl, Python, Java, PHP and Ruby). Therefore, the class names,
+The C# interface has been built upon the same libraries as the other SWIG generated wrappers (like Python, Java). Therefore, the class names,
 class member names, and the method signatures are driven by the GDAL+SWIG conventions and might not follow the conventional .NET naming guidelines.
 However, one can easily identify the matching members in the GDAL/OGR API documentation.
 
@@ -22,7 +22,7 @@ Supported platforms
 
 Currently the interface is compilable on and supports:
 
-* the various Win32 and Win64 platforms targeting the Microsoft.NET and the MONO frameworks, 
+* the various Win32 and Win64 platforms targeting the Microsoft.NET and the MONO frameworks,
 * GNU Linux/OSX systems using the MONO framework, and
 * Unity systems on Windows, OSX and Linux (currently only the MONO framework and not IL2CPP).
 
@@ -57,9 +57,9 @@ Useful Links
 
 * A variety of example programs in CSharp are available at the `/swig/csharp/apps <https://github.com/OSGeo/gdal/tree/master/swig/csharp/apps>`__ folder of the GDAL project tree.
 
-* The Conda Feedstock 
+* The Conda Feedstock
 
-* A simple (as is) build engine of GDAL 3.2 library for .NET Core. `MaxRev-Dev/gdal.netcore <https://github.com/MaxRev-Dev/gdal.netcore>`__ 
+* A simple (as is) build engine of GDAL 3.2 library for .NET Core. `MaxRev-Dev/gdal.netcore <https://github.com/MaxRev-Dev/gdal.netcore>`__
 
 * The `ViRGiS project <https://www.virgis.org/>`__ makes extensive use of GDAL in c# in a Unity environment.
 

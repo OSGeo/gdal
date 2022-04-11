@@ -72,11 +72,11 @@ You can follow GDAL official news on Twitter: https://twitter.com/GdalOrg
 Conference
 ----------
 
-.. image::   ../../images/foss4g2021.png
-   :alt:     FOSS4G 2021
-   :target:  https://2021.foss4g.org/
+.. image::   ../../images/foss4g2022.png
+   :alt:     FOSS4G 2022
+   :target:  https://2022.foss4g.org/
 
-`FOSS4G 2021 <https://2021.foss4g.org/>`_ is the leading annual conference for free and open source geospatial software. It will include presentations related to GDAL/OGR, and some of the GDAL/OGR development community will be attending. It is the event for those interested in GDAL/OGR, other FOSS geospatial technologies and the community around them. The conference will be held ONLINE from September 27th to October 2nd 2021.
+`FOSS4G 2022 <https://2022.foss4g.org/>`_ is the leading annual conference for free and open source geospatial software. It will include presentations related to GDAL/OGR, and some of the GDAL/OGR development community will be attending. It is the event for those interested in GDAL/OGR, other FOSS geospatial technologies and the community around them. The conference will be held at Firenze, Italy from August 22th to August 28th 2022.
 
 Governance and Community Participation
 --------------------------------------

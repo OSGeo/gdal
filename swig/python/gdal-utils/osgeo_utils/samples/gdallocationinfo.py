@@ -425,7 +425,7 @@ class GDALLocationInfo(GDALScript):
             return gdallocationinfo_util(**kwargs)
 
 
-def main(argv):
+def main(argv=sys.argv):
     return GDALLocationInfo().main(argv)
 
 

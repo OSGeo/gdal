@@ -271,14 +271,6 @@ void EscapeBinary(int len, char *bin_string, size_t *pnLenOut, char** pOut, int 
 %clear (int len, char *bin_string);
 %clean  (size_t *pnLenOut, char* pOut);
 
-#elif defined(SWIGPERL)
-%apply (int nLen, char *pBuf ) { (int len, char *bin_string)};
-%inline %{
-retStringAndCPLFree* EscapeString(int len, char *bin_string , int scheme=CPLES_SQL) {
-    return CPLEscapeString(bin_string, len, scheme);
-}
-%}
-%clear (int len, char *bin_string);
 #else
 %apply (int nLen, char *pBuf ) { (int len, char *bin_string)};
 %inline %{
@@ -513,7 +505,7 @@ void wrapper_VSIClearCredentials(const char * pszPathPrefix = NULL)
 }
 
 /* Provide hooks to hex encoding methods */
-#if defined(SWIGJAVA) || defined(SWIGPERL)
+#if defined(SWIGJAVA)
 %apply (int nLen, unsigned char *pBuf ) {( int nBytes, const GByte *pabyData )};
 retStringAndCPLFree* CPLBinaryToHex( int nBytes, const GByte *pabyData );
 %clear ( int nBytes, const GByte *pabyData );
@@ -682,10 +674,7 @@ class VSILFILE
 };
 #endif
 
-#if defined(SWIGPERL)
-VSI_RETVAL VSIStatL( const char * utf8_path, VSIStatBufL *psStatBuf );
-
-#elif defined(SWIGPYTHON)
+#if defined(SWIGPYTHON)
 
 %{
 typedef struct
@@ -822,26 +811,11 @@ int wrapper_VSIFWriteL( int nLen, char *pBuf, int size, int memb, VSILFILE* fp)
     return static_cast<int>(VSIFWriteL(pBuf, size, memb, fp));
 }
 }
-#elif defined(SWIGPERL)
-size_t VSIFWriteL(const void *pBuffer, size_t nSize, size_t nCount, VSILFILE *fp);
 #else
 int     VSIFWriteL( const char *, int, int, VSILFILE *fp );
 #endif
 
-#if defined(SWIGPERL)
-size_t VSIFReadL(void *pBuffer, size_t nSize, size_t nCount, VSILFILE *fp);
-#endif
 /* VSIFReadL() handled specially in python/gdal_python.i */
-
-#if defined(SWIGPERL)
-void VSIStdoutSetRedirection( VSIWriteFunction pFct, FILE* stream );
-%inline {
-void VSIStdoutUnsetRedirection()
-{
-    VSIStdoutSetRedirection( fwrite, stdout );
-}
-}
-#endif
 
 void VSICurlClearCache();
 void VSICurlPartialClearCache( const char* utf8_path );

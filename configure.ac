@@ -109,8 +109,6 @@ AC_LANG_PUSH([C++])
 AX_CHECK_COMPILE_FLAG([-Wextra-semi], [CXX_WFLAGS="$CXX_WFLAGS -Wextra-semi"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 AC_LANG_POP([C++])
 
-AX_CHECK_COMPILE_FLAG([-Wno-sign-compare], [NO_SIGN_COMPARE="-Wno-sign-compare"],,[$ERROR_ON_UNKNOWN_OPTIONS])
-
 dnl clang >= 3.9
 AX_CHECK_COMPILE_FLAG([-Wcomma], [C_WFLAGS="$C_WFLAGS -Wcomma" CXX_WFLAGS="$CXX_WFLAGS -Wcomma"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 
@@ -356,9 +354,9 @@ AC_CHECK_FUNC_CUSTOM(gmtime_r,[#include <time.h>],[time_t t; struct tm ltime; t 
 AC_CHECK_FUNC_CUSTOM(localtime_r,[#include <time.h>],[time_t t; struct tm ltime; t = time(0); localtime_r( &t, &ltime );])
 AC_LANG_POP(C++)
 
-AC_CHECK_HEADERS([xlocale.h],[GDAL_HAVE_XLOCALE_H=1])
-if test "$GDAL_HAVE_XLOCALE_H" = "1"; then
-  AC_DEFINE_UNQUOTED(GDAL_HAVE_XLOCALE_H, 1,
+AC_CHECK_HEADERS([xlocale.h],[HAVE_XLOCALE_H=1])
+if test "$HAVE_XLOCALE_H" = "1"; then
+  AC_DEFINE_UNQUOTED(HAVE_XLOCALE_H, 1,
             [Define if you have the <xlocale.h> header file.])
 fi
 
@@ -3897,6 +3895,62 @@ fi
 AC_SUBST(ODBC_SETTING,$ODBC_SETTING)
 
 dnl ---------------------------------------------------------------------------
+dnl Check for SAP HANA support.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(hana, AS_HELP_STRING([--with-hana[=ARG]] Include SAP HANA (ARG=no(default), yes or path to odbc-cpp-wrapper)),,)
+
+AC_MSG_CHECKING([for SAP HANA])
+
+if test "x$with_hana" = "xno" -o "x$with_hana" = "x" ; then
+  HAVE_HANA=no
+  ODBCCPP_LIB=
+  ODBCCPP_INC=
+  AC_MSG_RESULT([no])
+else
+  if test "$ODBC_SETTING" = "no" ; then
+      AC_MSG_ERROR([SAP HANA driver requires odbc driver to be installed.])
+  fi
+
+  if test "$with_hana" = "yes" ; then
+      ODBCCPP_PATH=/usr/local
+  else
+      ODBCCPP_PATH=$with_hana
+  fi
+
+  if test -d ${ODBCCPP_PATH} ; then
+     AC_LANG_PUSH(C++)
+     LIBS="-lodbccpp $LIBS"
+     AC_CHECK_HEADER(odbc/PreparedStatement.h)
+     AC_LINK_IFELSE(
+       [AC_LANG_PROGRAM(
+           [#include <odbc/Environment.h>],
+           [
+              odbc::EnvironmentRef env = odbc::Environment::create();
+           ]
+         )],
+       [HAVE_HANA="yes"],
+       [AC_MSG_WARN([Cannot find odbccpp.])])
+     AC_LANG_POP(C++)
+
+     if test "${HAVE_HANA}" = "yes" ; then
+         ODBCCPP_LIB=-L"$ODBCCPP_PATH/lib"
+         ODBCCPP_INC=-I"$ODBCCPP_PATH/include"
+         AC_MSG_RESULT([yes])
+     else
+         AC_MSG_ERROR([--with-hana argument points to a directory which does not contain the odbc-cpp-wrapper library.])
+     fi
+  else
+      AC_MSG_RESULT([no])
+      AC_MSG_ERROR([--with-hana argument is not a directory. It should be the path to the odbc-cpp-wrapper library, often somewhere like /usr/local.])
+  fi
+fi
+
+AC_SUBST(HAVE_HANA,$HAVE_HANA)
+AC_SUBST(ODBCCPP_INC,$ODBCCPP_INC)
+AC_SUBST(ODBCCPP_LIB,$ODBCCPP_LIB)
+
+dnl ---------------------------------------------------------------------------
 dnl Check for OCI support.
 dnl ---------------------------------------------------------------------------
 
@@ -4951,22 +5005,6 @@ export GDAL_PREFIX
 AC_DEFINE_UNQUOTED(GDAL_PREFIX,["]$GDAL_PREFIX["], [--prefix directory for GDAL install])
 
 dnl ---------------------------------------------------------------------------
-dnl Perl bindings.
-dnl ---------------------------------------------------------------------------
-
-BINDINGS=
-
-AC_ARG_WITH(perl,[  --with-perl           Enable perl bindings],,)
-
-AC_MSG_CHECKING([for perl bindings])
-if test "$with_perl" = "yes" ; then
-  BINDINGS="perl $BINDINGS"
-  AC_MSG_RESULT([enabled])
-else
-  AC_MSG_RESULT([disabled])
-fi
-
-dnl ---------------------------------------------------------------------------
 dnl NG Python bindings.
 dnl ---------------------------------------------------------------------------
 
@@ -5880,6 +5918,7 @@ LOC_MSG([  QHull support:             ${QHULL_SETTING}])
 LOC_MSG([  Rasdaman support:          ${RASDAMAN_ENABLED}])
 LOC_MSG([  RasterLite2 support:       ${HAVE_RASTERLITE2}])
 LOC_MSG([  RDB support:               ${RDB_SETTING}])
+LOC_MSG([  SAP HANA support:          ${HAVE_HANA}])
 LOC_MSG([  SFCGAL support:            ${HAVE_SFCGAL}])
 LOC_MSG([  SOSI support:              ${SOSI_ENABLED}])
 LOC_MSG([  SpatiaLite support:        ${HAVE_SPATIALITE}])

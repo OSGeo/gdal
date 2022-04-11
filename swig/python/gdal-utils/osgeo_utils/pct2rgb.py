@@ -186,7 +186,7 @@ class PCT2RGB(GDALScript):
         return pct2rgb(**kwargs)
 
 
-def main(argv):
+def main(argv=sys.argv):
     return PCT2RGB().main(argv)
 
 

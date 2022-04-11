@@ -1248,6 +1248,7 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
 
             handler = webserver.SequentialHandler()
             handler.add('GET', '/s3_non_cached/test.txt', 200, {}, 'foo')
+            handler.add('GET', '/s3_non_cached/test.txt', 200, {}, 'foo')
 
             with webserver.install_http_handler(handler):
                 f = open_for_read('/vsis3/s3_non_cached/test.txt')
@@ -1273,6 +1274,7 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
                     pytest.fail(data)
 
             handler = webserver.SequentialHandler()
+            handler.add('GET', '/s3_non_cached/test.txt', 200, {}, 'bar2')
             handler.add('GET', '/s3_non_cached/test.txt', 200, {}, 'bar2')
 
             with webserver.install_http_handler(handler):
@@ -1723,6 +1725,110 @@ def test_vsis3_opendir(aws_test_config, webserver_port):
             | gdal.VSI_STAT_CACHE_ONLY
         )
     ) is None
+
+###############################################################################
+# Test OpenDir(['SYNTHETIZE_MISSING_DIRECTORIES=YES']) with a fake AWS server
+
+
+def test_vsis3_opendir_synthetize_missing_directory(aws_test_config, webserver_port):
+    # Unlimited depth
+    handler = webserver.SequentialHandler()
+    handler.add(
+        'GET',
+        '/vsis3_opendir/?prefix=maindir%2F',
+        200,
+        {'Content-type': 'application/xml'},
+        """<?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+                <Prefix>maindir/</Prefix>
+                <Marker/>
+                <Contents>
+                    <Key>maindir/test.txt</Key>
+                    <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                    <Size>40</Size>
+                </Contents>
+                <Contents>
+                    <Key>maindir/explicit_subdir/</Key>
+                    <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                    <Size>0</Size>
+                </Contents>
+                <Contents>
+                    <Key>maindir/explicit_subdir/test.txt</Key>
+                    <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                    <Size>5</Size>
+                </Contents>
+                <Contents>
+                    <Key>maindir/explicit_subdir/implicit_subdir/test.txt</Key>
+                    <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                    <Size>5</Size>
+                </Contents>
+                <Contents>
+                    <Key>maindir/explicit_subdir/implicit_subdir/test2.txt</Key>
+                    <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                    <Size>5</Size>
+                </Contents>
+                <Contents>
+                    <Key>maindir/explicit_subdir/implicit_subdir2/test.txt</Key>
+                    <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                    <Size>5</Size>
+                </Contents>
+                <Contents>
+                    <Key>maindir/implicit_subdir/implicit_subdir2/test.txt</Key>
+                    <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                    <Size>5</Size>
+                </Contents>
+            </ListBucketResult>
+        """
+    )
+    with webserver.install_http_handler(handler):
+        d = gdal.OpenDir('/vsis3/vsis3_opendir/maindir', -1, ['SYNTHETIZE_MISSING_DIRECTORIES=YES'])
+    assert d is not None
+
+    entry = gdal.GetNextDirEntry(d)
+    assert entry.name == 'test.txt'
+    assert entry.size == 40
+    assert entry.mode == 32768
+    assert entry.mtime == 1
+
+    entry = gdal.GetNextDirEntry(d)
+    assert entry.name == 'explicit_subdir'
+    assert entry.mode == 16384
+
+    entry = gdal.GetNextDirEntry(d)
+    assert entry.name == 'explicit_subdir/test.txt'
+
+    entry = gdal.GetNextDirEntry(d)
+    assert entry.name == 'explicit_subdir/implicit_subdir'
+    assert entry.mode == 16384
+
+    entry = gdal.GetNextDirEntry(d)
+    assert entry.name == 'explicit_subdir/implicit_subdir/test.txt'
+
+    entry = gdal.GetNextDirEntry(d)
+    assert entry.name == 'explicit_subdir/implicit_subdir/test2.txt'
+
+    entry = gdal.GetNextDirEntry(d)
+    assert entry.name == 'explicit_subdir/implicit_subdir2'
+    assert entry.mode == 16384
+
+    entry = gdal.GetNextDirEntry(d)
+    assert entry.name == 'explicit_subdir/implicit_subdir2/test.txt'
+
+    entry = gdal.GetNextDirEntry(d)
+    assert entry.name == 'implicit_subdir'
+    assert entry.mode == 16384
+
+    entry = gdal.GetNextDirEntry(d)
+    assert entry.name == 'implicit_subdir/implicit_subdir2'
+    assert entry.mode == 16384
+
+    entry = gdal.GetNextDirEntry(d)
+    assert entry.name == 'implicit_subdir/implicit_subdir2/test.txt'
+
+    entry = gdal.GetNextDirEntry(d)
+    assert entry is None
+
+    gdal.CloseDir(d)
 
 ###############################################################################
 # Test simple PUT support with a fake AWS server
@@ -3484,6 +3590,61 @@ def test_vsis3_sync_overwrite(aws_test_config, webserver_port):
     gdal.Unlink('/vsimem/testsync.txt')
 
 ###############################################################################
+# Test vsisync() with source in /vsis3 with implicit directories
+
+
+def test_vsis3_sync_implicit_directories(aws_test_config, webserver_port):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        'GET',
+        '/mybucket/?prefix=subdir%2F',
+        200,
+        {},
+        """<?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+                <Prefix>subdir/</Prefix>
+                <Marker/>
+                <IsTruncated>false</IsTruncated>
+                <Contents>
+                    <Key>subdir/implicit_subdir/testsync.txt</Key>
+                    <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                    <Size>3</Size>
+                    <ETag>"acbd18db4cc2f85cedef654fccc4a4d8"</ETag>
+                </Contents>
+            </ListBucketResult>
+        """
+    )
+    handler.add('GET', '/mybucket/subdir', 404)
+    handler.add('GET', '/mybucket/?delimiter=%2F&max-keys=100&prefix=subdir%2F', 200, {},
+        """<?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+                <Prefix>subdir/</Prefix>
+                <Marker/>
+                <IsTruncated>false</IsTruncated>
+                <Contents>
+                    <Key>subdir/implicit_subdir/testsync.txt</Key>
+                    <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                    <Size>3</Size>
+                    <ETag>"acbd18db4cc2f85cedef654fccc4a4d8"</ETag>
+                </Contents>
+            </ListBucketResult>
+        """)
+    handler.add('GET', '/mybucket/subdir/implicit_subdir/testsync.txt', 200, {}, b'abc')
+    tmpdirname = 'tmp/test_vsis3_sync_implicit_directories'
+    gdal.Mkdir(tmpdirname, 0o755)
+    try:
+        with webserver.install_http_handler(handler):
+            assert gdal.Sync('/vsis3/mybucket/subdir/', tmpdirname + '/')
+        assert os.path.exists(tmpdirname + '/implicit_subdir')
+        assert os.path.exists(tmpdirname + '/implicit_subdir/testsync.txt')
+    finally:
+        gdal.RmdirRecursive(tmpdirname)
+
+
+###############################################################################
 # Test vsisync() with source and target in /vsis3
 
 
@@ -4881,6 +5042,27 @@ role_session_name = my_role_session_name
 
     gdal.Unlink('/vsimem/aws_credentials')
     gdal.Unlink('/vsimem/aws_config')
+
+
+
+###############################################################################
+
+
+def test_vsis3_non_existing_file_GDAL_DISABLE_READDIR_ON_OPEN(
+        aws_test_config,
+        webserver_port):
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/test_bucket/non_existing.tif', 404)
+    handler.add('GET', '/test_bucket/?delimiter=%2F&max-keys=100&prefix=non_existing.tif%2F', 200)
+    gdal.ErrorReset()
+    with gdaltest.config_option('GDAL_DISABLE_READDIR_ON_OPEN', 'YES'):
+        with webserver.install_http_handler(handler):
+            with gdaltest.error_handler():
+                gdal.Open('/vsis3/test_bucket/non_existing.tif')
+    assert gdal.GetLastErrorMsg() == 'HTTP response code: 404'
+
 
 ###############################################################################
 # Nominal cases (require valid credentials)

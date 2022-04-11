@@ -705,7 +705,7 @@ Non-OGR SQL
 
 All OGR drivers for database systems: :ref:`vector.mysql`, :ref:`vector.pg`,
 :ref:`vector.oci`, :ref:`vector.sqlite`, :ref:`vector.odbc`, :ref:`vector.pgeo`,
-and :ref:`vector.mssqlspatial`,
+:ref:`vector.hana` and :ref:`vector.mssqlspatial`,
 override the :cpp:func:`GDALDataset::ExecuteSQL` function with dedicated implementation
 and, by default, pass the SQL statements directly to the underlying RDBMS.
 In these cases the SQL syntax varies in some particulars from OGR SQL.

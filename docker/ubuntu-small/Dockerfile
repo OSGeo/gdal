@@ -205,6 +205,9 @@ FROM $TARGET_BASE_IMAGE as runner
 USER root
 RUN date
 
+# Update distro
+RUN apt-get update -y && apt-get upgrade -y
+
 # PROJ dependencies
 RUN apt-get update; \
     DEBIAN_FRONTEND=noninteractive apt-get install -y  --no-install-recommends \

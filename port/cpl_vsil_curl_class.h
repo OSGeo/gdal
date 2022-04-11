@@ -656,6 +656,21 @@ class VSIAppendWriteHandle : public VSIVirtualHandle
 };
 
 /************************************************************************/
+/*                     VSIDIRWithMissingDirSynthesis                    */
+/************************************************************************/
+
+struct VSIDIRWithMissingDirSynthesis: public VSIDIR
+{
+    std::vector<std::unique_ptr<VSIDIREntry>> aoEntries{};
+
+protected:
+    std::vector<std::string> m_aosSubpathsStack{};
+
+    void SynthetizeMissingDirectories(const std::string& osCurSubdir,
+                                      bool bAddEntryForThisSubdir);
+};
+
+/************************************************************************/
 /*                         CurlRequestHelper                            */
 /************************************************************************/
 

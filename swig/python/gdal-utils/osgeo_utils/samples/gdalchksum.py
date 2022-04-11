@@ -38,7 +38,7 @@ def Usage():
     return 1
 
 
-def main(argv):
+def main(argv=sys.argv):
     srcwin = None
     bands = []
 

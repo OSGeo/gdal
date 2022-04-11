@@ -41,7 +41,7 @@ def Usage():
     return 1
 
 
-def main(argv):
+def main(argv=sys.argv):
     src_filename = None
     dst_filename = None
     driver_name = 'GML'

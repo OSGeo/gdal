@@ -37,11 +37,16 @@ define_property(
   FULL_DOCS "Plugin modules build directories")
 #
 # check compiler and set preferences.
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+if (NOT CMAKE_CXX_STANDARD)
+    set(CMAKE_CXX_STANDARD 11)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+endif()
 
-set(CMAKE_C_STANDARD 99)
-set(CMAKE_C_STANDARD_REQUIRED ON)
+if (NOT CMAKE_C_STANDARD)
+    set(CMAKE_C_STANDARD 99)
+    set(CMAKE_C_STANDARD_REQUIRED ON)
+endif()
+
 #
 if (MSVC)
   add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE)
@@ -160,12 +165,15 @@ endif ()
 # ~~~
 #
 include(FeatureSummary)
-if (Python_LOOKUP_VERSION)
-  set(Python_FIND_STRATEGY VERSION)
-  find_package(Python ${Python_LOOKUP_VERSION} EXACT COMPONENTS Interpreter Development NumPy)
-else ()
-  set(Python_FIND_STRATEGY LOCATION)
-  find_package(Python 3.6 COMPONENTS Interpreter Development NumPy)
+option(BUILD_PYTHON_BINDINGS "Build Python bindings" ON)
+if (BUILD_PYTHON_BINDINGS)
+  if (Python_LOOKUP_VERSION)
+    set(Python_FIND_STRATEGY VERSION)
+    find_package(Python ${Python_LOOKUP_VERSION} EXACT COMPONENTS Interpreter Development NumPy)
+  else ()
+    set(Python_FIND_STRATEGY LOCATION)
+    find_package(Python 3.6 COMPONENTS Interpreter Development NumPy)
+  endif ()
 endif ()
 set_package_properties(Python PROPERTIES PURPOSE "SWIG_PYTHON: Python binding")
 

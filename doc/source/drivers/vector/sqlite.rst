@@ -44,7 +44,7 @@ engine. It's also possible to request the driver to handle SQL commands
 with :ref:`OGR SQL <ogr_sql_dialect>` engine, by passing **"OGRSQL"** string
 to the ExecuteSQL() method, as name of the SQL dialect.
 
-The OGR_SQLITE_SYNCHRONOUS configuration option
+The :decl_configoption:`OGR_SQLITE_SYNCHRONOUS` configuration option
 has been added. When set to OFF, this issues a 'PRAGMA synchronous =
 OFF' command to the SQLite database. This has the advantage of
 speeding-up some write operations (e.g. on EXT4 filesystems), but at the
@@ -54,8 +54,8 @@ documentation <http://www.sqlite.org/pragma.html#pragma_synchronous>`__.
 
 Any SQLite
 `pragma <http://www.sqlite.org/pragma.html>`__ can be specified with the
-OGR_SQLITE_PRAGMA configuration option. The syntax is OGR_SQLITE_PRAGMA
-= "pragma_name=pragma_value[,pragma_name2=pragma_value2]*".
+:decl_configoption:`OGR_SQLITE_PRAGMA` configuration option. The syntax is
+OGR_SQLITE_PRAGMA = "pragma_name=pragma_value[,pragma_name2=pragma_value2]*".
 
 Driver capabilities
 -------------------

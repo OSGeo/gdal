@@ -62,6 +62,10 @@ static void CPL_STDCALL myErrorHandler(CPLErr, CPLErrorNum, const char*)
     gbGotError = true;
 }
 
+// The tut framework has a default maximum number of tests per group of 50
+// Increase it as we're over that.
+#define MAX_NUMBER_OF_TESTS 100
+
 namespace tut
 {
 
@@ -78,7 +82,7 @@ namespace tut
     };
 
     // Register test group
-    typedef test_group<test_cpl_data> group;
+    typedef test_group<test_cpl_data, MAX_NUMBER_OF_TESTS> group;
     typedef group::object object;
     group test_cpl_group("CPL");
 
@@ -3582,7 +3586,7 @@ namespace tut
             ensure_equals(std::string(pszVal), std::string("BAR"));
         }
 
-        VSIClearCredentials("/vsi_test");
+        VSIClearCredentials("/vsi_test/bar/baz");
         CPLSetConfigOption("configoptions_FOO", nullptr);
 
         {
@@ -3621,7 +3625,7 @@ namespace tut
     {
         VSILFILE* fp = VSIFOpenL("/vsimem/credentials.txt", "wb");
         VSIFPrintfL(fp, "[credentials]\n");
-        VSIFPrintfL(fp, "[.subsection]");
+        VSIFPrintfL(fp, "[.subsection]\n");
         VSIFPrintfL(fp, "FOO=BAR\n"); // first key is not 'path'
         VSIFCloseL(fp);
 
@@ -3642,7 +3646,7 @@ namespace tut
     {
         VSILFILE* fp = VSIFOpenL("/vsimem/credentials.txt", "wb");
         VSIFPrintfL(fp, "[credentials]\n");
-        VSIFPrintfL(fp, "[.subsection]");
+        VSIFPrintfL(fp, "[.subsection]\n");
         VSIFPrintfL(fp, "path=/vsi_test/foo\n");
         VSIFPrintfL(fp, "path=/vsi_test/bar\n"); // duplicated path
         VSIFPrintfL(fp, "FOO=BAR\n"); // first key is not 'path'
@@ -3668,5 +3672,43 @@ namespace tut
 
         VSIUnlink("/vsimem/credentials.txt");
     }
+
+    // Test CPLRecodeFromWCharIconv() with 2 bytes/char source encoding
+    template<>
+    template<>
+    void object::test<55>()
+    {
+#ifdef CPL_RECODE_ICONV
+        int N = 2048;
+        wchar_t* pszIn = static_cast<wchar_t*>(CPLMalloc((N+1)*sizeof(wchar_t)));
+        for(int i=0;i<N;i++)
+            pszIn[i] = L'A';
+        pszIn[N] = L'\0';
+        char* pszExpected = static_cast<char*>(CPLMalloc(N+1));
+        for(int i=0;i<N;i++)
+            pszExpected[i] = 'A';
+        pszExpected[N] = '\0';
+        char* pszRet = CPLRecodeFromWChar(pszIn, CPL_ENC_UTF16, CPL_ENC_UTF8);
+        const bool bOK = memcmp(pszExpected, pszRet, N+1) == 0;
+        // FIXME Some tests fail on Mac. Not sure why, but do not error out just for that
+        if( !bOK && (strstr(CPLGetConfigOption("TRAVIS_OS_NAME", ""), "osx") != nullptr ||
+                     strstr(CPLGetConfigOption("BUILD_NAME", ""), "osx") != nullptr ||
+                     getenv("DO_NOT_FAIL_ON_RECODE_ERRORS") != nullptr))
+        {
+            fprintf(stderr, "Recode from CPL_ENC_UTF16 to CPL_ENC_UTF8 failed\n");
+        }
+        else
+        {
+            ensure( bOK );
+        }
+        CPLFree(pszIn);
+        CPLFree(pszRet);
+        CPLFree(pszExpected);
+#endif
+    }
+
+    // WARNING: keep that line at bottom and read carefully:
+    // If the number of tests reaches 100, increase the MAX_NUMBER_OF_TESTS
+    // define at top of this file (and update this comment!)
 
 } // namespace tut

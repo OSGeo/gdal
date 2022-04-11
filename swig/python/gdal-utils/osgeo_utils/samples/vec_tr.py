@@ -76,7 +76,7 @@ def Usage():
     return 1
 
 
-def main(argv):
+def main(argv=sys.argv):
     infile = None
     outfile = None
     layer_name = None

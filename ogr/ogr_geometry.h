@@ -1881,7 +1881,7 @@ class CPL_DLL OGRCompoundCurve : public OGRCurve
 
     virtual void    assignSpatialReference( OGRSpatialReference * poSR ) override;
 
-    OGRErr         addCurve( OGRCurve*, double dfToleranceEps = 1e-14  );
+    OGRErr         addCurve( const OGRCurve*, double dfToleranceEps = 1e-14  );
     OGRErr         addCurveDirectly( OGRCurve*, double dfToleranceEps = 1e-14 );
     OGRCurve      *stealCurve( int );
     virtual OGRPointIterator* getPointIterator() const override;

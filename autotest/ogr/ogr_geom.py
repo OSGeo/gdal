@@ -2027,9 +2027,9 @@ def test_ogr_geom_curvepolygon():
 
     # Error case: non closed ring
     in_wkt = 'CURVEPOLYGON ((0 0,0 1,1 1,1 0))'
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
-    g = ogr.CreateGeometryFromWkt(in_wkt)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        with gdaltest.config_option('OGR_GEOMETRY_ACCEPT_UNCLOSED_RING', 'NO'):
+            g = ogr.CreateGeometryFromWkt(in_wkt)
     assert g is None
 
     # Area

@@ -224,7 +224,7 @@ class GDALPolygonize(GDALScript):
         return gdal_polygonize(**kwargs)
 
 
-def main(argv):
+def main(argv=sys.argv):
     return GDALPolygonize().main(argv)
 
 

@@ -789,7 +789,7 @@ std::string VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psData
             for(int j=0;j<nSelectedBands;j++)
             {
                 const int nSelBand = panSelectedBandList[j];
-                CPLAssert(nSelBand >= 0 && nSelBand <= _nBands);
+                CPLAssert(nSelBand >= 1 && nSelBand <= _nBands);
                 GDALRasterBand* poBand = poDS->GetRasterBand(nSelBand);
                 if (asBandProperties[j].colorInterpretation !=
                             poBand->GetColorInterpretation())
@@ -950,19 +950,34 @@ void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
 
         GDALAddBand(hVRTDS, psDatasetProperties->firstBandType, nullptr);
 
-        GDALProxyPoolDatasetH hProxyDS =
-            GDALProxyPoolDatasetCreate(dsFileName,
-                                        psDatasetProperties->nRasterXSize,
-                                        psDatasetProperties->nRasterYSize,
-                                        GA_ReadOnly, TRUE, pszProjectionRef,
-                                        psDatasetProperties->adfGeoTransform);
-        reinterpret_cast<GDALProxyPoolDataset*>(hProxyDS)->
-                                        SetOpenOptions( papszOpenOptions );
 
-        GDALProxyPoolDatasetAddSrcBandDescription(hProxyDS,
-                                            psDatasetProperties->firstBandType,
-                                            psDatasetProperties->nBlockXSize,
-                                            psDatasetProperties->nBlockYSize);
+        GDALDatasetH hSourceDS;
+        bool bDropRef = false;
+        if( nSrcDSCount == nInputFiles &&
+            GDALGetDatasetDriver(pahSrcDS[i]) != nullptr &&
+            ( dsFileName[0] == '\0' || // could be a unnamed VRT file
+              EQUAL(GDALGetDescription(GDALGetDatasetDriver(pahSrcDS[i])), "MEM")) )
+        {
+            hSourceDS = pahSrcDS[i];
+        }
+        else
+        {
+            bDropRef = true;
+            GDALProxyPoolDatasetH hProxyDS =
+                GDALProxyPoolDatasetCreate(dsFileName,
+                                            psDatasetProperties->nRasterXSize,
+                                            psDatasetProperties->nRasterYSize,
+                                            GA_ReadOnly, TRUE, pszProjectionRef,
+                                            psDatasetProperties->adfGeoTransform);
+            hSourceDS = static_cast<GDALDatasetH>(hProxyDS);
+            reinterpret_cast<GDALProxyPoolDataset*>(hProxyDS)->
+                                            SetOpenOptions( papszOpenOptions );
+
+            GDALProxyPoolDatasetAddSrcBandDescription(hProxyDS,
+                                                psDatasetProperties->firstBandType,
+                                                psDatasetProperties->nBlockXSize,
+                                                psDatasetProperties->nBlockYSize);
+        }
 
         VRTSourcedRasterBandH hVRTBand =
                 static_cast<VRTSourcedRasterBandH>(GDALGetRasterBand(hVRTDS, iBand));
@@ -1015,7 +1030,7 @@ void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
         if( pszResampling )
             poSimpleSource->SetResampling(pszResampling);
         poVRTBand->ConfigureSource( poSimpleSource,
-                                    static_cast<GDALRasterBand*>(GDALGetRasterBand(static_cast<GDALDatasetH>(hProxyDS), 1)),
+                                    static_cast<GDALRasterBand*>(GDALGetRasterBand(hSourceDS, 1)),
                                     FALSE,
                                     dfSrcXOff, dfSrcYOff,
                                     dfSrcXSize, dfSrcYSize,
@@ -1030,7 +1045,10 @@ void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
 
         poVRTBand->AddSource( poSimpleSource );
 
-        GDALDereferenceDataset(hProxyDS);
+        if( bDropRef )
+        {
+            GDALDereferenceDataset(hSourceDS);
+        }
 
         iBand ++;
     }
@@ -1144,7 +1162,7 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
             reinterpret_cast<GDALProxyPoolDataset*>(hProxyDS)->
                                             SetOpenOptions( papszOpenOptions );
 
-            for(int j=0;j<nSelectedBands;j++)
+            for(int j=0;j<nMaxSelectedBandNo;j++)
             {
                 GDALProxyPoolDatasetAddSrcBandDescription(hProxyDS,
                                                 asBandProperties[j].dataType,
@@ -1166,17 +1184,18 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
         {
             VRTSourcedRasterBandH hVRTBand =
                     static_cast<VRTSourcedRasterBandH>(poVRTDS->GetRasterBand(j + 1));
+            const int nSelBand = panSelectedBandList[j];
 
             /* Place the raster band at the right position in the VRT */
             VRTSourcedRasterBand* poVRTBand = static_cast<VRTSourcedRasterBand*>(hVRTBand);
 
             VRTSimpleSource* poSimpleSource;
-            if (bAllowSrcNoData && psDatasetProperties->abHasNoData[j])
+            if (bAllowSrcNoData && psDatasetProperties->abHasNoData[nSelBand - 1])
             {
                 poSimpleSource = new VRTComplexSource();
-                poSimpleSource->SetNoDataValue( psDatasetProperties->adfNoDataValues[j] );
+                poSimpleSource->SetNoDataValue( psDatasetProperties->adfNoDataValues[nSelBand - 1] );
             }
-            else if( bUseSrcMaskBand && psDatasetProperties->abHasMaskBand[j] )
+            else if( bUseSrcMaskBand && psDatasetProperties->abHasMaskBand[nSelBand - 1] )
             {
                 auto poSource = new VRTComplexSource();
                 poSource->SetUseMaskBand(true);
@@ -1187,7 +1206,7 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
             if( pszResampling )
                 poSimpleSource->SetResampling(pszResampling);
             auto poSrcBand = GDALRasterBand::FromHandle(
-                GDALGetRasterBand(hSourceDS, panSelectedBandList[j]));
+                GDALGetRasterBand(hSourceDS, nSelBand));
             poVRTBand->ConfigureSource( poSimpleSource,
                                         poSrcBand,
                                         FALSE,

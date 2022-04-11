@@ -76,7 +76,7 @@ def batch_creator_by_modules(script_names: Sequence[str] = None, root: Optional[
     return batch_creator(scripts)
 
 
-def main(argv):
+def main(argv=sys.argv):
     scripts_list = None if len(argv) <= 1 else argv[1:]
     return batch_creator_by_modules(scripts_list)
 

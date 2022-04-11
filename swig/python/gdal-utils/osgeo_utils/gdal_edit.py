@@ -423,7 +423,7 @@ def gdal_edit(argv):
     return 0
 
 
-def main(argv):
+def main(argv=sys.argv):
     return gdal_edit(argv)
 
 

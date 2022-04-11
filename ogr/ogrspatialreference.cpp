@@ -8304,6 +8304,53 @@ const char *OSRGetAuthorityName( OGRSpatialReferenceH hSRS,
 }
 
 /************************************************************************/
+/*                          GetOGCURN()                                 */
+/************************************************************************/
+
+/**
+ * \brief Get a OGC URN string describing the CRS, when possible
+ *
+ * This method assumes that the CRS has a top-level identifier, or is
+ * a compound CRS whose horizontal and vertical parts have a top-level identifier.
+ *
+ * @return a string to free with CPLFree(), or nulptr when no result can be generated
+ *
+ * @since GDAL 3.5
+ */
+
+char * OGRSpatialReference::GetOGCURN() const
+
+{
+    const char* pszAuthName = GetAuthorityName(nullptr);
+    const char* pszAuthCode = GetAuthorityCode(nullptr);
+    if( pszAuthName && pszAuthCode )
+        return CPLStrdup(CPLSPrintf("urn:ogc:def:crs:%s::%s", pszAuthName, pszAuthCode));
+    if( d->m_pjType != PJ_TYPE_COMPOUND_CRS )
+        return nullptr;
+    auto horizCRS =
+        proj_crs_get_sub_crs(d->getPROJContext(), d->m_pj_crs, 0);
+    auto vertCRS =
+        proj_crs_get_sub_crs(d->getPROJContext(), d->m_pj_crs, 1);
+    char* pszRet = nullptr;
+    if( horizCRS && vertCRS )
+    {
+        auto horizAuthName = proj_get_id_auth_name(horizCRS, 0);
+        auto horizAuthCode = proj_get_id_code(horizCRS, 0);
+        auto vertAuthName = proj_get_id_auth_name(vertCRS, 0);
+        auto vertAuthCode = proj_get_id_code(vertCRS, 0);
+        if( horizAuthName && horizAuthCode && vertAuthName && vertAuthCode )
+        {
+            pszRet = CPLStrdup(CPLSPrintf("urn:ogc:def:crs,crs:%s::%s,crs:%s::%s",
+                                          horizAuthName, horizAuthCode,
+                                          vertAuthName, vertAuthCode));
+        }
+    }
+    proj_destroy(horizCRS);
+    proj_destroy(vertCRS);
+    return pszRet;
+}
+
+/************************************************************************/
 /*                           StripVertical()                            */
 /************************************************************************/
 

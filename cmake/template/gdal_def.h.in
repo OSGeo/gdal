@@ -12,6 +12,9 @@
 /* Define if gdal used odbc */
 #cmakedefine GDAL_USE_ODBC
 
+/* Define if gdal used odbc-cpp */
+#cmakedefine GDAL_USE_ODBCCPP
+
 /* Define if pam enable in gdal */
 #cmakedefine ENABLE_PAM
 

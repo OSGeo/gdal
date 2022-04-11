@@ -90,55 +90,7 @@ GIntBig ComputeBandRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize,
 }
 %}
 
-#if defined(SWIGPERL)
-%{
-static
-CPLErr ReadRaster_internal( GDALRasterBandShadow *obj,
-                            int xoff, int yoff, int xsize, int ysize,
-                            int buf_xsize, int buf_ysize,
-                            GDALDataType buf_type,
-                            GIntBig *buf_size, char **buf,
-                            GIntBig pixel_space, GIntBig line_space,
-                            GDALRasterIOExtraArg* psExtraArg )
-{
-  CPLErr result;
-
-  *buf_size = ComputeBandRasterIOSize( buf_xsize, buf_ysize, GDALGetDataTypeSize( buf_type ) / 8,
-                                       pixel_space, line_space, FALSE );
-
-  if ( *buf_size == 0 )
-  {
-      *buf = 0;
-      return CE_Failure;
-  }
-
-  *buf = (char*) malloc( *buf_size );
-  if ( *buf )
-  {
-    result =  GDALRasterIOEx( obj, GF_Read, xoff, yoff, xsize, ysize,
-                                    (void *) *buf, buf_xsize, buf_ysize,
-                                    buf_type, pixel_space, line_space, psExtraArg );
-    if ( result != CE_None )
-    {
-        free( *buf );
-        *buf = 0;
-        *buf_size = 0;
-    }
-  }
-  else
-  {
-    CPLError(CE_Failure, CPLE_OutOfMemory, "Not enough memory to allocate " CPL_FRMT_GIB " bytes", *buf_size);
-    result = CE_Failure;
-    *buf = 0;
-    *buf_size = 0;
-  }
-
-  return result;
-}
-%}
-#endif
-
-#if defined(SWIGPYTHON) || defined(SWIGPERL)
+#if defined(SWIGPYTHON)
 %{
 static
 CPLErr WriteRaster_internal( GDALRasterBandShadow *obj,
@@ -370,44 +322,7 @@ public:
     return GDALFillRaster( self, real_fill, imag_fill );
   }
 
-#if defined(SWIGPERL)
-%apply (GIntBig *nLen, char **pBuf) { (GIntBig *buf_len, char **buf) };
-%apply (GIntBig *optional_GIntBig) { (GIntBig*) };
-%apply ( int *optional_int ) {(int*)};
-%feature( "kwargs" ) ReadRaster;
-  CPLErr ReadRaster( int xoff, int yoff, int xsize, int ysize,
-                     GIntBig *buf_len, char **buf,
-                     int *buf_xsize = 0,
-                     int *buf_ysize = 0,
-                     int *buf_type = 0,
-                     GIntBig *buf_pixel_space = 0,
-                     GIntBig *buf_line_space = 0,
-                     GDALRIOResampleAlg resample_alg = GRIORA_NearestNeighbour,
-                     GDALProgressFunc callback = NULL,
-                     void* callback_data=NULL ) {
-    int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
-    int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
-    GDALDataType ntype  = (buf_type==0) ? GDALGetRasterDataType(self)
-                                        : (GDALDataType)*buf_type;
-    GIntBig pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
-    GIntBig line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
-
-    GDALRasterIOExtraArg sExtraArg;
-    INIT_RASTERIO_EXTRA_ARG(sExtraArg);
-    sExtraArg.eResampleAlg = resample_alg;
-    sExtraArg.pfnProgress = callback;
-    sExtraArg.pProgressData = callback_data;
-
-    return ReadRaster_internal( self, xoff, yoff, xsize, ysize,
-                                nxsize, nysize, ntype, buf_len, buf, pixel_space, line_space,
-                                &sExtraArg );
-  }
-%clear (GIntBig *buf_len, char **buf );
-%clear (int*);
-%clear (GIntBig*);
-#endif
-
-#if defined(SWIGPYTHON) || defined(SWIGPERL)
+#if defined(SWIGPYTHON)
 %apply (GIntBig nLen, char *pBuf) { (GIntBig buf_len, char *buf_string) };
 %apply (GIntBig *optional_GIntBig) { (GIntBig*) };
 %apply ( int *optional_int ) {(int*)};
@@ -488,11 +403,7 @@ public:
       return GDALIsMaskBand( self );
   }
 
-#if defined(SWIGPYTHON) || defined(SWIGPERL)
-#if defined(SWIGPERL)
-%apply (int len, GUIntBig *output) {(int buckets, GUIntBig *panHistogram)};
-%apply (IF_ERROR_RETURN_NONE) { (CPLErr) };
-#endif
+#if defined(SWIGPYTHON)
 %feature( "kwargs" ) GetHistogram;
   CPLErr GetHistogram( double min=-0.5,
                      double max=255.5,
@@ -508,10 +419,6 @@ public:
                                          callback, callback_data );
     return err;
   }
-#if defined(SWIGPERL)
-%clear (int buckets, int *panHistogram);
-%clear (CPLErr);
-#endif
 #else
 #ifndef SWIGJAVA
 #if defined(SWIGCSHARP)
@@ -538,12 +445,7 @@ public:
 #endif
 #endif
 
-#if defined(SWIGPYTHON) || defined(SWIGPERL)
-#if defined(SWIGPERL)
-%apply (double *OUTPUT){double *min_ret, double *max_ret}
-%apply (int *nLen, const GUIntBig **pList) {(int *buckets_ret, GUIntBig **ppanHistogram)};
-%apply (IF_ERROR_RETURN_NONE) { (CPLErr) };
-#endif
+#if defined(SWIGPYTHON)
 %feature ("kwargs") GetDefaultHistogram;
 CPLErr GetDefaultHistogram( double *min_ret=NULL, double *max_ret=NULL, int *buckets_ret = NULL,
                             GUIntBig **ppanHistogram = NULL, int force = 1,
@@ -553,11 +455,6 @@ CPLErr GetDefaultHistogram( double *min_ret=NULL, double *max_ret=NULL, int *buc
                                     ppanHistogram, force,
                                     callback, callback_data );
 }
-#if defined(SWIGPERL)
-%clear (double *min_ret, double *max_ret);
-%clear (int *buckets_ret, int **ppanHistogram);
-%clear (CPLErr);
-#endif
 #else
 #ifndef SWIGJAVA
 %feature ("kwargs") GetDefaultHistogram;
@@ -572,7 +469,7 @@ CPLErr GetDefaultHistogram( double *min_ret=NULL, double *max_ret=NULL, int *buc
 #endif
 #endif
 
-#if defined(SWIGPYTHON) || defined(SWIGPERL)
+#if defined(SWIGPYTHON)
 %apply (int nList, GUIntBig* pList) {(int buckets_in, GUIntBig *panHistogram_in)}
 CPLErr SetDefaultHistogram( double min, double max,
                             int buckets_in, GUIntBig *panHistogram_in ) {

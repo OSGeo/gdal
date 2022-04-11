@@ -99,6 +99,12 @@ SQL commands with the :ref:`OGR SQL <ogr_sql_dialect>` engine, by
 passing **"OGRSQL"** string to the ExecuteSQL() method, as the name of
 the SQL dialect.
 
+Note that the PG driver uses PostgreSQL cursors to browse through the result
+set of a ExecuteSQL() request, and that, at time of writing, PostgreSQL default
+settings aren't optimized when the result set is small enough to fit in one
+result page. If you experiment bad performance, specifying the
+``PRELUDE_STATEMENTS=SET cursor_tuple_fraction = 1.0;`` open option might help.
+
 The PostgreSQL driver in OGR supports the
 OGRDataSource::StartTransaction(), OGRDataSource::CommitTransaction()
 and OGRDataSource::RollbackTransaction() calls in the normal SQL sense.

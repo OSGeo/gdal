@@ -48,7 +48,7 @@ public:
     CADVector( double dx, double dy );
     CADVector( double dx, double dy, double dz );
     CADVector( const CADVector& other );
-    bool      operator==( const CADVector& second );
+    friend bool operator==( const CADVector& first, const CADVector& second );
     CADVector& operator=( const CADVector& second );
     double getX() const;
     void   setX( double value );

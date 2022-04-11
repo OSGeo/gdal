@@ -163,6 +163,14 @@ namespace tut
         testSpatialReferenceLeakOnCopy<OGRTriangulatedSurface>(poSRS);
 
         delete poSRS;
+
+        // Check that assignSpatialReference() works when passed the SRS
+        // object it already owns and whose has a single reference.
+        poSRS = new OGRSpatialReference();
+        OGRPoint oPoint;
+        oPoint.assignSpatialReference(poSRS);
+        poSRS->Release();
+        oPoint.assignSpatialReference(oPoint.getSpatialReference());
     }
 
     template<class T>

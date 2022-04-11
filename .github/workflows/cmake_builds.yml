@@ -64,6 +64,24 @@ jobs:
         curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
         sudo apt-get update
         sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17 unixodbc-dev
+        # HANA: client side
+        # Install hdbsql tool
+        curl -v -j -k -s -L -H "Cookie: eula_3_1_agreed=tools.hana.ondemand.com/developer-license-3_1.txt" https://tools.hana.ondemand.com/additional/hanaclient-latest-linux-x64.tar.gz --output hanaclient-latest-linux-x64.tar.gz \
+          && tar -xvf hanaclient-latest-linux-x64.tar.gz \
+          && sudo mkdir /usr/sap \
+          && sudo ./client/hdbinst -a client --sapmnt=/usr/sap \
+          && rm -rf client \
+          && rm hanaclient*
+        export PATH=/usr/sap/hdbclient:$PATH
+        # Download and compile odbc-cpp-wrapper
+        sudo apt-get install -y -q cmake
+        git clone https://github.com/SAP/odbc-cpp-wrapper.git \
+          && mkdir odbc-cpp-wrapper/build \
+          && cd odbc-cpp-wrapper/build \
+          && /usr/bin/cmake .. \
+          && make -j 2 \
+          && sudo make install
+        sudo ldconfig
         #
         # Workaround bug in ogdi packaging
         sudo ln -s /usr/lib/ogdi/libvrf.so /usr/lib
@@ -133,13 +151,11 @@ jobs:
         cmake  ${CMAKE_OPTIONS} -DCSHARP_MONO=ON -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror ..
         cmake --build $GITHUB_WORKSPACE/superbuild/build --target install -- -j$(nproc)
         ctest -V -R "^csharp.*"
-    - name: Standalone Python bindings build and gdal-utils package
+    - name: Standalone Python bindings build from source
       run: |
         (cd $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python && python setup.py sdist)
-        (cd $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python/gdal-utils && python setup.py bdist_wheel)
         mv $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python/dist/GDAL-*.tar.gz gdal-python.tar.gz
-        mv $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python/gdal-utils/dist/*.whl gdal_utils-X.Y.Z.T-py3-none-any.whl
-        rm -rf $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python
+        mv $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python gdal-swig-python
         python3 -m venv myvenv
         source myvenv/bin/activate
         # Set PATH so that gdal-config is found
@@ -149,11 +165,20 @@ jobs:
         LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib ldd myvenv/lib/python3.8/site-packages/osgeo/_gdal.cpython-38-x86_64-linux-gnu.so
         LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib gdal_edit.py byte.tif -mo FOO=BAR
         rm -f myvenv/bin/gdal_edit.py
+    - name: Standalone gdal-utils package from wheel
+      run: |
+        mv gdal-swig-python $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python
+        (cd $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python/gdal-utils && python setup.py bdist_wheel)
+        mv $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python/gdal-utils/dist/*.whl gdal_utils-X.Y.Z.T-py3-none-any.whl
+        rm -rf $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python
+        python3 -m venv myvenv
+        source myvenv/bin/activate
+        # Set PATH so that gdal-config is found
         PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH pip install gdal_utils-X.Y.Z.T-py3-none-any.whl
-        which gdal_edit.py
+        which gdal_edit
         cp $GITHUB_WORKSPACE/autotest/gcore/data/byte.tif .
-        LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib gdal_edit.py byte.tif -mo FOO=BAR
-        rm -f myvenv/bin/gdal_edit.py
+        LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib gdal_edit byte.tif -mo FOO=BAR
+        pip uninstall -y gdal-utils
     - name: Test post-install usage (with pkg-config)
       run: |
         ./autotest/postinstall/test_pkg-config.sh $GITHUB_WORKSPACE/install-gdal

@@ -74,12 +74,11 @@ namespace cpl {
 /*                             VSIDIRS3                                 */
 /************************************************************************/
 
-struct VSIDIRS3: public VSIDIR
+struct VSIDIRS3: public VSIDIRWithMissingDirSynthesis
 {
     int nRecurseDepth = 0;
 
     CPLString osNextMarker{};
-    std::vector<std::unique_ptr<VSIDIREntry>> aoEntries{};
     int nPos = 0;
 
     CPLString osBucket{};
@@ -89,6 +88,7 @@ struct VSIDIRS3: public VSIDIR
     IVSIS3LikeHandleHelper* poS3HandleHelper = nullptr;
     int nMaxFiles = 0;
     bool bCacheEntries = true;
+    bool m_bSynthetizeMissingDirectories = false;
     std::string m_osFilterPrefix{};
 
     explicit VSIDIRS3(IVSIS3LikeFSHandler *poFSIn): poFS(poFSIn), poS3FS(poFSIn) {}
@@ -121,6 +121,61 @@ void VSIDIRS3::clear()
     nPos = 0;
     aoEntries.clear();
 }
+
+/************************************************************************/
+/*                      SynthetizeMissingDirectories()                  */
+/************************************************************************/
+
+void VSIDIRWithMissingDirSynthesis::SynthetizeMissingDirectories(const std::string& osCurSubdir,
+                                            bool bAddEntryForThisSubdir)
+{
+    const auto nLastSlashPos = osCurSubdir.rfind('/');
+    if( nLastSlashPos == std::string::npos )
+    {
+        m_aosSubpathsStack = { osCurSubdir };
+    }
+    else if ( m_aosSubpathsStack.empty() )
+    {
+        SynthetizeMissingDirectories(osCurSubdir.substr(0, nLastSlashPos), true);
+
+        m_aosSubpathsStack.emplace_back(osCurSubdir);
+    }
+    else if( osCurSubdir.compare(0, nLastSlashPos, m_aosSubpathsStack.back()) == 0 )
+    {
+        m_aosSubpathsStack.emplace_back(osCurSubdir);
+    }
+    else
+    {
+        size_t depth = 1;
+        for( char c: osCurSubdir )
+        {
+            if( c == '/' )
+                depth ++;
+        }
+
+        while( depth <= m_aosSubpathsStack.size() )
+            m_aosSubpathsStack.resize(m_aosSubpathsStack.size() - 1);
+
+        if( !m_aosSubpathsStack.empty() &&
+            osCurSubdir.compare(0, nLastSlashPos, m_aosSubpathsStack.back()) != 0)
+        {
+            SynthetizeMissingDirectories(osCurSubdir.substr(0, nLastSlashPos), true);
+        }
+
+        m_aosSubpathsStack.emplace_back(osCurSubdir);
+    }
+
+    if( bAddEntryForThisSubdir )
+    {
+        aoEntries.push_back(
+            std::unique_ptr<VSIDIREntry>(new VSIDIREntry()));
+        auto& entry = aoEntries.back();
+        entry->pszName = CPLStrdup(osCurSubdir.c_str());
+        entry->nMode = S_IFDIR;
+        entry->bModeKnown = true;
+    }
+}
+
 
 /************************************************************************/
 /*                        AnalyseS3FileList()                           */
@@ -221,10 +276,25 @@ bool VSIDIRS3::AnalyseS3FileList(
                         continue;
                     }
 
+                    const std::string osKeySuffix = pszKey + osPrefix.size();
+                    if( m_bSynthetizeMissingDirectories)
+                    {
+                        const auto nLastSlashPos = osKeySuffix.rfind('/');
+                        if( nLastSlashPos != std::string::npos &&
+                            (m_aosSubpathsStack.empty() ||
+                             osKeySuffix.compare(0, nLastSlashPos, m_aosSubpathsStack.back()) != 0) )
+                        {
+                            const bool bAddEntryForThisSubdir =
+                                nLastSlashPos != osKeySuffix.size() - 1;
+                            SynthetizeMissingDirectories(osKeySuffix.substr(0, nLastSlashPos),
+                                                         bAddEntryForThisSubdir);
+                        }
+                    }
+
                     aoEntries.push_back(
                         std::unique_ptr<VSIDIREntry>(new VSIDIREntry()));
                     auto& entry = aoEntries.back();
-                    entry->pszName = CPLStrdup(pszKey + osPrefix.size());
+                    entry->pszName = CPLStrdup(osKeySuffix.c_str());
                     entry->nSize = static_cast<GUIntBig>(
                         CPLAtoGIntBig(CPLGetXMLValue(psIter, "Size", "0")));
                     entry->bSizeKnown = true;
@@ -3397,6 +3467,8 @@ VSIDIR* IVSIS3LikeFSHandler::OpenDir( const char *pszPath,
     dir->bCacheEntries = CPLTestBool(
         CSLFetchNameValueDef(papszOptions, "CACHE_ENTRIES", "TRUE"));
     dir->m_osFilterPrefix = CSLFetchNameValueDef(papszOptions, "PREFIX", "");
+    dir->m_bSynthetizeMissingDirectories = CPLTestBool(
+        CSLFetchNameValueDef(papszOptions, "SYNTHETIZE_MISSING_DIRECTORIES", "NO"));
     if( !dir->IssueListDir() )
     {
         delete dir;
@@ -3680,9 +3752,10 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
     std::unique_ptr<VSIDIR> poSourceDir;
     if( STARTS_WITH(pszSource, GetFSPrefix()) && osSource.back() == '/' )
     {
+        const char* const apszOptions[] = { "SYNTHETIZE_MISSING_DIRECTORIES=YES", nullptr };
         poSourceDir.reset(VSIOpenDir(osSourceWithoutSlash,
                             bRecursive ? -1 : 0,
-                            nullptr));
+                            apszOptions));
     }
 
     VSIStatBufL sSource;
@@ -3911,10 +3984,11 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
 
         if( !poSourceDir )
         {
+            const char* const apszOptions[] = { "SYNTHETIZE_MISSING_DIRECTORIES=YES", nullptr };
             poSourceDir.reset(
                 VSIOpenDir(osSourceWithoutSlash,
                     bRecursive ? -1 : 0,
-                    nullptr));
+                    apszOptions));
             if( !poSourceDir )
                 return false;
         }

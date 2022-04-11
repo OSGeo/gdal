@@ -101,55 +101,6 @@ GIntBig ComputeDatasetRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize
 }
 %}
 
-#if defined(SWIGPERL)
-%{
-static
-CPLErr DSReadRaster_internal( GDALDatasetShadow *obj,
-                            int xoff, int yoff, int xsize, int ysize,
-                            int buf_xsize, int buf_ysize,
-                            GDALDataType buf_type,
-                            GIntBig *buf_size, char **buf,
-                            int band_list, int *pband_list,
-                            GIntBig pixel_space, GIntBig line_space, GIntBig band_space,
-                            GDALRasterIOExtraArg* psExtraArg)
-{
-  CPLErr result;
-
-  *buf_size = ComputeDatasetRasterIOSize (buf_xsize, buf_ysize, GDALGetDataTypeSize( buf_type ) / 8,
-                                          band_list ? band_list : GDALGetRasterCount(obj), pband_list, band_list,
-                                          pixel_space, line_space, band_space, FALSE);
-  if (*buf_size == 0)
-  {
-      *buf = 0;
-      return CE_Failure;
-  }
-
-  *buf = (char*) malloc( *buf_size );
-  if (*buf)
-  {
-    result = GDALDatasetRasterIOEx(obj, GF_Read, xoff, yoff, xsize, ysize,
-                                    (void*) *buf, buf_xsize, buf_ysize, buf_type,
-                                    band_list, pband_list, pixel_space, line_space, band_space,
-                                    psExtraArg );
-    if ( result != CE_None ) {
-        free( *buf );
-        *buf = 0;
-        *buf_size = 0;
-    }
-  }
-  else
-  {
-    CPLError(CE_Failure, CPLE_OutOfMemory, "Not enough memory to allocate " CPL_FRMT_GIB " bytes", *buf_size);
-    result = CE_Failure;
-    *buf = 0;
-    *buf_size = 0;
-  }
-  return result;
-}
-%}
-
-#endif
-
 #if !defined(SWIGJAVA)
 
 //************************************************************************/
@@ -508,7 +459,7 @@ public:
   }
 %clear char **;
 
-#if defined(SWIGPYTHON) || defined(SWIGPERL)
+#if defined(SWIGPYTHON)
 %feature("kwargs") WriteRaster;
 %apply (GIntBig nLen, char *pBuf) { (GIntBig buf_len, char *buf_string) };
 %apply (GIntBig *optional_GIntBig) { (GIntBig*) };
@@ -568,62 +519,6 @@ public:
 %clear (int*);
 %clear (GIntBig*);
 %clear (GIntBig buf_len, char *buf_string);
-#endif
-
-#if defined(SWIGPERL)
-%feature("kwargs") ReadRaster;
-%apply (int *optional_int) { (GDALDataType *buf_type) };
-%apply (int nList, int *pList ) { (int band_list, int *pband_list ) };
-%apply (GIntBig *nLen, char **pBuf) { (GIntBig *buf_len, char **buf) };
-%apply ( int *optional_int ) {(int*)};
-%apply ( GIntBig *optional_GIntBig ) {(GIntBig*)};
-CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
-	              GIntBig *buf_len, char **buf,
-                      int *buf_xsize = 0, int *buf_ysize = 0,
-                      GDALDataType *buf_type = 0,
-                      int band_list = 0, int *pband_list = 0,
-                      GIntBig* buf_pixel_space = 0, GIntBig* buf_line_space = 0, GIntBig* buf_band_space = 0,
-                      GDALRIOResampleAlg resample_alg = GRIORA_NearestNeighbour,
-                      GDALProgressFunc callback = NULL,
-                      void* callback_data=NULL )
-{
-    CPLErr eErr;
-    int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
-    int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
-    GDALDataType ntype;
-    if ( buf_type != 0 ) {
-      ntype = (GDALDataType) *buf_type;
-    } else {
-      int lastband = GDALGetRasterCount( self );
-      if (lastband <= 0)
-        return CE_Failure;
-      ntype = GDALGetRasterDataType( GDALGetRasterBand( self, lastband ) );
-    }
-
-    GDALRasterIOExtraArg sExtraArg;
-    INIT_RASTERIO_EXTRA_ARG(sExtraArg);
-    sExtraArg.eResampleAlg = resample_alg;
-    sExtraArg.pfnProgress = callback;
-    sExtraArg.pProgressData = callback_data;
-
-    GIntBig pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
-    GIntBig line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
-    GIntBig band_space = (buf_band_space == 0) ? 0 : *buf_band_space;
-
-    eErr = DSReadRaster_internal( self, xoff, yoff, xsize, ysize,
-                                nxsize, nysize, ntype,
-                                buf_len, buf,
-                                band_list, pband_list,
-                                pixel_space, line_space, band_space, &sExtraArg);
-
-    return eErr;
-}
-
-%clear (GDALDataType *buf_type);
-%clear (int band_list, int *pband_list );
-%clear (int *buf_len, char **buf );
-%clear (int*);
-%clear (GIntBig*);
 #endif
 
 %apply (int *optional_int) { (GDALDataType *buf_type) };
@@ -863,7 +758,7 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
 
 #endif /* PYTHON */
 
-#if defined(SWIGPYTHON) || defined(SWIGJAVA) || defined(SWIGPERL)
+#if defined(SWIGPYTHON) || defined(SWIGJAVA)
 
   /* Note that datasources own their layers */
 #ifndef SWIGJAVA
@@ -981,7 +876,7 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
         GDALDatasetSetStyleTable(self, (OGRStyleTableH) table);
   }
 
-#endif /* defined(SWIGPYTHON) || defined(SWIGJAVA) || defined(SWIGPERL) */
+#endif /* defined(SWIGPYTHON) || defined(SWIGJAVA) */
 
 
 OGRErr AbortSQL() {

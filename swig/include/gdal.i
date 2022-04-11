@@ -30,9 +30,7 @@
 
 %include constraints.i
 
-#ifdef PERL_CPAN_NAMESPACE
-%module "Geo::GDAL"
-#elif defined(SWIGCSHARP)
+#if defined(SWIGCSHARP)
 %module Gdal
 #elif defined(SWIGPYTHON)
 %module (package="osgeo") gdal
@@ -91,7 +89,7 @@ typedef GDALDimensionHS GDALDimensionHS;
 
 %}
 
-#if defined(SWIGPYTHON) || defined(SWIGJAVA) || defined(SWIGPERL) || defined(SWIGCSHARP)
+#if defined(SWIGPYTHON) || defined(SWIGJAVA) || defined(SWIGCSHARP)
 %{
 #ifdef DEBUG
 typedef struct OGRSpatialReferenceHS OSRSpatialReferenceShadow;
@@ -257,8 +255,6 @@ typedef enum {
 %include "gdal_python.i"
 #elif defined(SWIGCSHARP)
 %include "gdal_csharp.i"
-#elif defined(SWIGPERL)
-%include "gdal_perl.i"
 #elif defined(SWIGJAVA)
 %include "gdal_java.i"
 #else
@@ -311,7 +307,7 @@ $1;
 %include "Driver.i"
 
 
-#if defined(SWIGPYTHON) || defined(SWIGJAVA) || defined(SWIGPERL)
+#if defined(SWIGPYTHON) || defined(SWIGJAVA)
 /*
  * We need to import ogr.i and osr.i for OGRLayer and OSRSpatialRefrerence
  */
@@ -350,17 +346,12 @@ $1;
 %rename (SerializeXMLTree) CPLSerializeXMLTree;
 %rename (GetJPEG2000Structure) GDALGetJPEG2000Structure;
 
-#ifdef SWIGPERL
-%include "gdal_perl_rename.i"
-#endif
-
-
 //************************************************************************
 //
 // GDALColorEntry
 //
 //************************************************************************
-#if !defined(SWIGPERL) && !defined(SWIGJAVA)
+#if !defined(SWIGJAVA)
 %rename (ColorEntry) GDALColorEntry;
 #ifdef SWIGPYTHON
 %nodefaultctor GDALColorEntry;
@@ -631,7 +622,7 @@ void GDALAllRegister();
 
 void GDALDestroyDriverManager();
 
-#if defined(SWIGPYTHON) || defined(SWIGPERL)
+#if defined(SWIGPYTHON)
 %inline {
 GIntBig wrapper_GDALGetCacheMax()
 {
@@ -715,7 +706,7 @@ double GDALDecToPackedDMS( double dfDec );
 #endif
 CPLXMLNode *CPLParseXMLString( char * pszXMLString );
 
-#if defined(SWIGJAVA) || defined(SWIGCSHARP) || defined(SWIGPYTHON) || defined(SWIGPERL)
+#if defined(SWIGJAVA) || defined(SWIGCSHARP) || defined(SWIGPYTHON)
 retStringAndCPLFree *CPLSerializeXMLTree( CPLXMLNode *xmlnode );
 #else
 char *CPLSerializeXMLTree( CPLXMLNode *xmlnode );
@@ -762,13 +753,6 @@ GDALDriverShadow* GetDriverByName( char const *name ) {
 }
 %}
 
-#ifdef SWIGPERL
-%inline %{
-GDALDriverShadow* GetDriver( char const *name ) {
-  return (GDALDriverShadow*) GDALGetDriverByName( name );
-}
-%}
-#endif
 %inline %{
 GDALDriverShadow* GetDriver( int i ) {
   return (GDALDriverShadow*) GDALGetDriver( i );
