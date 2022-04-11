@@ -397,10 +397,19 @@ void SetFieldDefn(OGRFieldDefn& field, const ColumnTypeInfo& typeInfo)
 /*                         OGRHanaTableLayer()                          */
 /************************************************************************/
 
-OGRHanaTableLayer::OGRHanaTableLayer(OGRHanaDataSource* datasource, int update)
+OGRHanaTableLayer::OGRHanaTableLayer(
+    OGRHanaDataSource* datasource,
+    const char* schemaName,
+    const char* tableName,
+    int update)
     : OGRHanaLayer(datasource)
+    , schemaName_(schemaName)
+    , tableName_(tableName)
     , updateMode_(update)
 {
+    rawQuery_ =
+        "SELECT * FROM " + GetFullTableNameQuoted(schemaName_, tableName_);
+    SetDescription(tableName_.c_str());
 }
 
 /************************************************************************/
@@ -412,14 +421,17 @@ OGRHanaTableLayer::~OGRHanaTableLayer()
     FlushPendingFeatures();
 }
 
-/************************************************************************/
-/*                        ReadTableDefinition()                         */
-/************************************************************************/
+/* -------------------------------------------------------------------- */
+/*                             Initialize()                             */
+/* -------------------------------------------------------------------- */
 
-OGRErr OGRHanaTableLayer::ReadTableDefinition()
+OGRErr OGRHanaTableLayer::Initialize()
 {
-    OGRErr err = ReadFeatureDefinition(
-        schemaName_, tableName_, rawQuery_, tableName_.c_str());
+    if (initialized_)
+        return OGRERR_NONE;
+
+    OGRErr err = InitFeatureDefinition(
+        schemaName_, tableName_, rawQuery_, tableName_);
     if (err != OGRERR_NONE)
         return err;
 
@@ -994,28 +1006,6 @@ OGRErr OGRHanaTableLayer::GetGeometryWkb(
     return err;
 }
 
-/* -------------------------------------------------------------------- */
-/*                            Initialize()                              */
-/* -------------------------------------------------------------------- */
-
-OGRErr OGRHanaTableLayer::Initialize(
-    const char* schemaName, const char* tableName)
-{
-    schemaName_ = schemaName;
-    tableName_ = tableName;
-    rawQuery_ =
-        "SELECT * FROM " + GetFullTableNameQuoted(schemaName, tableName);
-
-    OGRErr err = ReadTableDefinition();
-    if (err != OGRERR_NONE)
-        return err;
-
-    SetDescription(featureDefn_->GetName());
-
-    ResetReading();
-    return OGRERR_NONE;
-}
-
 /************************************************************************/
 /*                              ResetReading()                          */
 /************************************************************************/
@@ -1034,13 +1024,22 @@ void OGRHanaTableLayer::ResetReading()
 int OGRHanaTableLayer::TestCapability(const char* capabilities)
 {
     if (EQUAL(capabilities, OLCRandomRead))
+    {
+        EnsureInitialized();
         return fidFieldIndex_ != OGRNullFID;
+    }
     if (EQUAL(capabilities, OLCFastFeatureCount))
         return TRUE;
     if (EQUAL(capabilities, OLCFastSpatialFilter))
+    {
+        EnsureInitialized();
         return !geomColumns_.empty();
+    }
     if (EQUAL(capabilities, OLCFastGetExtent))
+    {
+        EnsureInitialized();
         return !geomColumns_.empty();
+    }
     if (EQUAL(capabilities, OLCCreateField))
         return updateMode_;
     if (EQUAL(capabilities, OLCCreateGeomField)
@@ -1049,7 +1048,10 @@ int OGRHanaTableLayer::TestCapability(const char* capabilities)
     if (EQUAL(capabilities, OLCDeleteField))
         return updateMode_;
     if (EQUAL(capabilities, OLCDeleteFeature))
+    {
+        EnsureInitialized();
         return updateMode_ && fidFieldIndex_ != OGRNullFID;
+    }
     if (EQUAL(capabilities, OLCAlterFieldDefn))
         return updateMode_;
     if (EQUAL(capabilities, OLCRandomWrite))
@@ -1086,6 +1088,8 @@ OGRErr OGRHanaTableLayer::ICreateFeature(OGRFeature* feature)
                   "NULL pointer to OGRFeature passed to CreateFeature()." );
         return OGRERR_FAILURE;
     }
+
+    EnsureInitialized();
 
     GIntBig nFID = feature->GetFID();
     bool withFID = nFID != OGRNullFID;
@@ -1182,6 +1186,8 @@ OGRErr OGRHanaTableLayer::DeleteFeature(GIntBig nFID)
         return OGRERR_FAILURE;
     }
 
+    EnsureInitialized();
+
     if (deleteFeatureStmt_.isNull())
     {
         deleteFeatureStmt_ = CreateDeleteFeatureStatement();
@@ -1238,6 +1244,8 @@ OGRErr OGRHanaTableLayer::ISetFeature(OGRFeature* feature)
         return OGRERR_FAILURE;
     }
 
+    EnsureInitialized();
+
     if (updateFeatureStmt_.isNull())
     {
         updateFeatureStmt_ = CreateUpdateFeatureStatement();
@@ -1283,6 +1291,8 @@ OGRErr OGRHanaTableLayer::CreateField(OGRFieldDefn* srsField, int approxOK)
             "CreateField");
         return OGRERR_FAILURE;
     }
+
+    EnsureInitialized();
 
     OGRFieldDefn dstField(srsField);
 
@@ -1395,9 +1405,7 @@ OGRErr OGRHanaTableLayer::CreateField(OGRFieldDefn* srsField, int approxOK)
     attrColumns_.push_back(clmDesc);
     featureDefn_->AddFieldDefn(&dstField);
 
-    rebuildQueryStatement_ = true;
-    ResetPreparedStatements();
-    ResetReading();
+    ClearQueryStatement();
 
     return OGRERR_NONE;
 }
@@ -1426,6 +1434,8 @@ OGRErr OGRHanaTableLayer::CreateGeomField(OGRGeomFieldDefn* geomField, int)
         return OGRERR_FAILURE;
     }
 
+    EnsureInitialized();
+
     if (featureDefn_->GetGeomFieldIndex(geomField->GetNameRef()) >= 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -1442,6 +1452,7 @@ OGRErr OGRHanaTableLayer::CreateGeomField(OGRGeomFieldDefn* geomField, int)
                   geomField->GetNameRef());
         return OGRERR_FAILURE;
     }
+
 
     CPLString clmName(launderColumnNames_
                       ? LaunderName(geomField->GetNameRef()).c_str()
@@ -1502,6 +1513,8 @@ OGRErr OGRHanaTableLayer::DeleteField(int field)
         return OGRERR_FAILURE;
     }
 
+    EnsureInitialized();
+
     CPLString clmName = featureDefn_->GetFieldDefn(field)->GetNameRef();
     CPLString sql = CPLString().Printf(
         "ALTER TABLE %s DROP (%s)",
@@ -1547,6 +1560,8 @@ OGRErr OGRHanaTableLayer::AlterFieldDefn(
             "AlterFieldDefn");
         return OGRERR_FAILURE;
     }
+
+    EnsureInitialized();
 
     if (field < 0 || field >= featureDefn_->GetFieldCount())
     {
@@ -1684,7 +1699,7 @@ OGRErr OGRHanaTableLayer::AlterFieldDefn(
         attrClmDesc.name.assign(newFieldDefn->GetDefault());
     }
 
-    rebuildQueryStatement_ = true;
+    ClearQueryStatement();
     ResetReading();
     ResetPreparedStatements();
 
