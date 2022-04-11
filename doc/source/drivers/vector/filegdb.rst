@@ -65,7 +65,7 @@ Field domains
 
 .. versionadded:: 3.3
 
-Coded and range field domains are supported.
+Retrieving coded and range field domains are supported. Writing is not supported.
 
 Hiearchical organization
 ------------------------
