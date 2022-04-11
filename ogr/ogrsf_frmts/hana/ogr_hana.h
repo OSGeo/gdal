@@ -120,21 +120,25 @@ protected:
     CPLString queryStatement_;
     CPLString whereClause_;
     CPLString attrFilter_;
-    bool rebuildQueryStatement_ = true;
     odbc::ResultSetRef resultSet_;
     std::vector<char> dataBuffer_;
+    bool initialized_ = false;
 
-    void BuildQueryStatement();
+    void EnsureInitialized();
+    virtual OGRErr Initialize() = 0;
+
+    void ClearQueryStatement();
+    const CPLString& GetQueryStatement();
     void BuildWhereClause();
     void EnsureBufferCapacity(std::size_t size);
     virtual OGRFeature* GetNextFeatureInternal();
     int GetGeometryColumnSrid(int columnIndex) const;
     virtual OGRFeature* ReadFeature();
-    OGRErr ReadFeatureDefinition(
+    OGRErr InitFeatureDefinition(
         const CPLString& schemaName,
         const CPLString& tableName,
         const CPLString& query,
-        const char* featureDefName);
+        const CPLString& featureDefName);
     void ReadGeometryExtent(int geomField, OGREnvelope* extent);
 
 public:
@@ -150,8 +154,9 @@ public:
     OGRErr GetExtent(int geomField, OGREnvelope* extent, int force) override;
     GIntBig GetFeatureCount(int force) override;
     OGRFeature* GetNextFeature() override;
-    OGRFeatureDefn* GetLayerDefn() override { return featureDefn_; }
     const char* GetFIDColumn() override;
+    OGRFeatureDefn* GetLayerDefn() override;
+    const char* GetName() override;
 
     OGRErr SetAttributeFilter( const char *pszQuery ) override;
 
@@ -186,8 +191,7 @@ private:
     std::vector<ColumnDefinition> customColumnDefs_;
     bool parseFunctionsChecked_ = false;
 
-    OGRErr ReadTableDefinition();
-
+    OGRErr Initialize() override;
     std::pair<OGRErr, std::size_t> ExecuteUpdate(
         odbc::PreparedStatement& statement, bool withBatch, const char* functionName);
     odbc::PreparedStatementRef CreateDeleteFeatureStatement();
@@ -208,10 +212,12 @@ private:
     void ClearBatches();
 
 public:
-    OGRHanaTableLayer(OGRHanaDataSource* datasource, int update);
+    OGRHanaTableLayer(
+        OGRHanaDataSource* datasource,
+        const char* schemaName,
+        const char* tableName,
+        int update);
     ~OGRHanaTableLayer() override;
-
-    OGRErr Initialize(const char* schemaName, const char* tableName);
 
     OGRErr DropTable();
 
@@ -247,10 +253,10 @@ public:
 
 class OGRHanaResultLayer final : public OGRHanaLayer
 {
-public:
-    explicit OGRHanaResultLayer(OGRHanaDataSource* datasource);
+    OGRErr Initialize() override;
 
-    OGRErr Initialize(const char* query, OGRGeometry* spatialFilter);
+public:
+    explicit OGRHanaResultLayer(OGRHanaDataSource* datasource, const char* query);
 
     int TestCapability(const char* capabilities) override;
 };
