@@ -1,9 +1,15 @@
 // -----------------------------------------------------------------------------
-// TODO
-// - implement Identify() RRASTER a good example
+// DONE
+//
+// - implement Identify()
 // - implement GetScale() see the tute https://gdal.org/tutorials/raster_driver_tut.html#rawdataset-rawrasterband-helper-classes
 // - save all header metadata and file name info
 // - apply Scaling and control
+// - implement daily, monthly, south, north
+// - documentation
+// TODO
+// - tests
+// - scan drive impl tutorial for more
 // - implement other related binary formats (AMSR etc)
 // - worry about old NSDIC grid vs new (the different EPSG, Hughes etc.)
 // - allow zero or missing for ice
@@ -16,8 +22,7 @@
  * Author:   Michael Sumner, mdsumner@gmail.com
  *
  ******************************************************************************
- * Copyright (c) 2006, Frank Warmerdam
- * Copyright (c) 2008-2011, Even Rouault <even dot rouault at spatialys.com>
+ * Copyright (c) 2022, Michael Sumner
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -37,8 +42,6 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-
-#include <iostream>  // for cout testing
 
 #include "cpl_string.h"
 #include "gdal_frmts.h"
@@ -65,34 +68,55 @@ CPL_CVSID("$Id$")
   {
     friend class NSIDCbinRasterBand;
     struct NSIDCbinHeader{
-      // derived from DIPEx
 
-      char missing_int[6] = {0};
-      char columns[6] = {0};
-      char rows[6] = {0};
-      char internal1[6] = {0};
-      char latitude[6] = {0};
-      char greenwich[6] = {0};
-      char internal2[6] = {0};
-      char jpole[6] = {0};
-      char ipole[6] = {0};
-      char instrument[6] = {0};
-      char descriptor[6] = {0};
-      char julian_start[6] = {0};
-      char hour_start[6] = {0};
-      char minute_start[6] = {0};
-      char julian_end[6] = {0};
-      char hour_end[6] = {0};
-      char minute_end[6] = {0};
-      char year[6] = {0};
-      char julian[6] = {0};
-      char channel[6] = {0};
-      char scaling[6] = {0};
+      // page 7, User Guide https://nsidc.org/data/nsidc-0051
+      // 1.3.2 File Contents
+      // The file format consists of a 300-byte descriptive header followed by a two-dimensional array of
+      // one-byte values containing the data. The file header is composed of:
+      // • a 21-element array of 6-byte character strings that contain information such as polar
+      // stereographic grid characteristics
+      // • a 24-byte character string containing the file name
+      // • a 80-character string containing an optional image title
+      // • a 70-byte character string containing ancillary information such as data origin, data set
+      // creation date, etc.
+      // For compatibility with ANSI C, IDL, and other languages, character strings are terminated with a
+      // NULL byte.
+      //
+
+      // /rdsi/PUBLIC/raad/data/sidads.colorado.edu/pub/DATASETS/nsidc0051_gsfc_nasateam_seaice/final-gsfc/south/daily/2010/nt_20100918_f17_v1.1_s.bin
+
+      char missing_int[6] = {0};      // "00255"
+      char columns[6] = {0};          // "  316"
+      char rows[6] = {0};             // "  332"
+      char internal1[6] = {0};        // "1.799"
+      char latitude[6] = {0};         // "-51.3"
+      char greenwich[6] = {0};        // "270.0"
+      char internal2[6] = {0};        // "558.4"
+      char jpole[6] = {0};            // "158.0"
+      char ipole[6] = {0};            // "174.0"
+      char instrument[6] = {0};       // "SSMIS"
+      char data_descriptors[6] = {0};       // "17 cn"
+      char julian_start[6] = {0};     // "  261"
+      char hour_start[6] = {0};       // "-9999"
+      char minute_start[6] = {0};     // "-9999"
+      char julian_end[6] = {0};       // "  261"
+      char hour_end[6] = {0};         // "-9999"
+      char minute_end[6] = {0};       // "-9999"
+      char year[6] = {0};             // " 2010"
+      char julian[6] = {0};           // "  261"
+      char channel[6] = {0};          // "  000"
+      char scaling[6] = {0};          // "00250"
 
 
-      char filename[24] = {0};
-      char opt_imagetitle[80] = {0};
-      char information[70] = {0};
+      // 121-126 Integer scaling factor
+      // 127-150 24-character file name (without file-name extension)
+      // 151-230 80-character image title
+      // 231-300 70-character data information (creation date, data source, etc.)
+      //
+      char filename[24] = {0};        // "  nt_20100918_f17_v1.1_s"
+      char imagetitle[80] = {0};  // "ANTARCTIC  SMMR  TOTAL ICE CONCENTRATION       NIMBUSN07     DAY 299 10/26/1978"
+      char data_information[70] = {0};    // "ANTARCTIC  SMMR ONSSMIGRID CON Coast253Pole251Land254      06/27/1996"
+
     };
 
     VSILFILE    *fp;
@@ -117,9 +141,23 @@ CPL_CVSID("$Id$")
       return GetSpatialRefFromOldGetProjectionRef();
     }
     static GDALDataset *Open( GDALOpenInfo * );
+    static int          Identify( GDALOpenInfo * );
   };
 
 
+static const char* stripLeadingZeros_nsidc(const char* buf)
+{
+  const char* ptr = buf;
+
+  /* Go until we run out of characters  or hit something non-zero */
+
+  while( *ptr == ' ' && *(ptr+1) != '\0' )
+  {
+    ptr++;
+  }
+
+  return ptr;
+}
 
 /************************************************************************/
 /* ==================================================================== */
@@ -140,7 +178,7 @@ public:
                  GDALDataType eDataType, int bNativeOrder );
   ~NSIDCbinRasterBand() override;
 
-  //double GetNoDataValue( int *pbSuccess = nullptr ) override;
+  double GetNoDataValue( int *pbSuccess = nullptr ) override;
   double GetScale( int *pbSuccess = nullptr ) override;
   //CPLErr SetScale( double dfNewValue ) override;
 };
@@ -174,6 +212,32 @@ NSIDCbinRasterBand::~NSIDCbinRasterBand()
 
 
 /************************************************************************/
+/*                           GetNoDataValue()                           */
+/************************************************************************/
+
+double NSIDCbinRasterBand::GetNoDataValue( int *pbSuccess )
+
+{
+
+  if (!pbSuccess) {
+    //nothing
+  }
+  // NSIDCbinDataset *poPDS = reinterpret_cast<NSIDCbinDataset *>( poDS );
+  // const char  *pszLine = poPDS->sHeader.missing_int;
+  //
+  // if( pbSuccess != nullptr )
+  //    *pbSuccess = EQUALN(pszLine,  " 0255", 5);
+  //
+  // if (pbSuccess != nullptr) return -999.0;
+
+  // I don't understand this business yet, potentially better to always
+  // unscale to 0_250 = 0,100% with Float32
+  // and have an GDAL_UNSCALE_NSIDCBIN = no or something to return raw Byte
+  return 255.0; //CPLAtof(pszLine);
+}
+
+
+/************************************************************************/
 /*                              GetScale()                              */
 /************************************************************************/
 
@@ -181,9 +245,9 @@ double NSIDCbinRasterBand::GetScale( int *pbSuccess )
 {
   if( pbSuccess != nullptr )
     *pbSuccess = TRUE;
-  const double dfFactor =
-  atof(reinterpret_cast<NSIDCbinDataset*>(poDS)->sHeader.scaling)/100;
-  return (dfFactor != 0.0) ? 1.0 / dfFactor : 0.0;
+  // const double dfFactor =
+  // atof(reinterpret_cast<NSIDCbinDataset*>(poDS)->sHeader.scaling)/100;
+  return 2.5;
 }
 
 
@@ -228,22 +292,29 @@ NSIDCbinDataset::~NSIDCbinDataset()
 GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-  /* -------------------------------------------------------------------- */
-  /*      First we check to see if the file has the expected header       */
-  /*      bytes.                                                          */
-  /* -------------------------------------------------------------------- */
 
-  if( poOpenInfo->nHeaderBytes < 300 || poOpenInfo->fpL == nullptr )
-    return nullptr;
 
-  // if( CPL_LSBWORD32(*( reinterpret_cast<GInt32 *>( poOpenInfo->pabyHeader + 0 )))
-  //     != 300 )
-  //     return nullptr;
+  // Confirm that the header is compatible with a NSIDC dataset.
+  if( !Identify(poOpenInfo) )
+    return NULL;
 
-  //
-  //     if( CPL_LSBWORD32(*( reinterpret_cast<GInt32 *>( poOpenInfo->pabyHeader + 28 )))
-  //         != 4322 )
-  //         return nullptr;
+
+
+
+  // Confirm the requested access is supported.
+  if( poOpenInfo->eAccess == GA_Update )
+  {
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "The NSIDCbin driver does not support update access to existing "
+             "datasets.");
+    return NULL;
+  }
+
+  // Check that the file pointer from GDALOpenInfo* is available
+  if( poOpenInfo->fpL == NULL )
+  {
+    return NULL;
+  }
 
   /* -------------------------------------------------------------------- */
   /*      Create a corresponding GDALDataset.                             */
@@ -266,10 +337,6 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
     return nullptr;
   }
 
-  // std::cout << poDS->sHeader.scaling << "\n";
-  // std::cout << poDS->sHeader.jpole << "\n";
-  // std::cout << poDS->sHeader.ipole << "\n";
-
 
   /* -------------------------------------------------------------------- */
   /*      Extract information of interest from the header.                */
@@ -279,19 +346,12 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
   poDS->nRasterYSize= atoi(poDS->sHeader.rows);
 
 
-  // north is 304x448, south is 316x332
-  if (!((poDS->nRasterXSize == 316) || (poDS->nRasterXSize == 304) )) {
 
-    delete poDS;
-    return nullptr;
-  }
-  if (!((poDS->nRasterYSize == 332) || (poDS->nRasterYSize == 448) )) {
-    delete poDS;
-    return nullptr;
-  }
-  bool south = poDS->nRasterXSize == 316;
+  // north is 304x448, south is 316x332 (but are there 12.5km binary files)
+  const char *psHeader = reinterpret_cast<char *>(poOpenInfo->pabyHeader);
+  bool south = STARTS_WITH(psHeader + 230, "ANTARCTIC");
 
-  const int nBands = 1; //CPL_LSBWORD32( poDS->sHeader.NC );
+  const int nBands = 1;
 
 
   if( !GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
@@ -301,34 +361,21 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
     return nullptr;
   }
 
-  const int nNSIDCbinDataType = 0; //(poDS->sHeader.IH19[1] & 0x7e) >> 2;
-  const int nBytesPerSample = 1; //poDS->sHeader.IH19[0];
+  int nBytesPerSample = 1;
+  poDS->eRasterDataType = GDT_Byte;
 
-  if( nNSIDCbinDataType == 0 && nBytesPerSample == 1 )
-    poDS->eRasterDataType = GDT_Byte;
-  else if( nNSIDCbinDataType == 1 && nBytesPerSample == 1 )
-    poDS->eRasterDataType = GDT_Byte;
-  else if( nNSIDCbinDataType == 16 && nBytesPerSample == 4 )
-    poDS->eRasterDataType = GDT_Float32;
-  else if( nNSIDCbinDataType == 17 && nBytesPerSample == 8 )
-    poDS->eRasterDataType = GDT_Float64;
-  else
-  {
-    delete poDS;
-    CPLError( CE_Failure, CPLE_AppDefined,
-              "Unrecognized image data type %d, with BytesPerSample=%d.",
-              nNSIDCbinDataType, nBytesPerSample );
-    return nullptr;
-  }
+// metadata
+  poDS->SetMetadataItem("INSTRUMENT", poDS->sHeader.instrument);
+  poDS->SetMetadataItem("YEAR", stripLeadingZeros_nsidc(poDS->sHeader.year));
+  poDS->SetMetadataItem("JULIAN_DAY", stripLeadingZeros_nsidc(poDS->sHeader.julian));
+  poDS->SetMetadataItem("DATA_DESCRIPTORS", stripLeadingZeros_nsidc(poDS->sHeader.data_descriptors));
+  poDS->SetMetadataItem("IMAGE_TITLE", poDS->sHeader.imagetitle);
+  poDS->SetMetadataItem("FILENAME", stripLeadingZeros_nsidc(poDS->sHeader.filename));
+  poDS->SetMetadataItem("DATA_INFORMATION", poDS->sHeader.data_information);
 
-  // if( nLineOffset <= 0 || nLineOffset > INT_MAX / nBands )
-  // {
-  //     delete poDS;
-  //     CPLError( CE_Failure, CPLE_AppDefined,
-  //               "Invalid values: nLineOffset = %d, nBands = %d.",
-  //               nLineOffset, nBands );
-  //     return nullptr;
-  // }
+
+
+
 
   /* -------------------------------------------------------------------- */
   /*      Create band information objects.                                */
@@ -353,8 +400,6 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
   }
 
 
-  //std::cout << poDS->GetBanGetScale() << "\n";
-
   if( south )
   {
     poDS->adfGeoTransform[0] = -3950000.0;
@@ -376,6 +421,9 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
 
 
   // south or north
+  // this is not technically enough, because the old stuff is Hughes 1980
+  // FIXME: Mike to find a way to get the old or new epsg codes based on header info, or julday/year
+
   OGRSpatialReference oSR;
   int epsg = -1;
   if (south) {
@@ -406,6 +454,44 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
 }
 
 
+/************************************************************************/
+/*                              Identify()                              */
+/************************************************************************/
+int NSIDCbinDataset::Identify( GDALOpenInfo * poOpenInfo )
+{
+
+  // works for daily and monthly, north and south NSIDC binary files
+  // north and south are different dimensions, different extents
+  // but both are 25000m resolution
+
+  /* -------------------------------------------------------------------- */
+  /*      First we check to see if the file has the expected header       */
+  /*      bytes.                                                          */
+  /* -------------------------------------------------------------------- */
+
+  if( poOpenInfo->nHeaderBytes < 300 || poOpenInfo->fpL == nullptr )
+    return FALSE;
+
+
+  // Check if century values seem reasonable.
+  const char *psHeader = reinterpret_cast<char *>(poOpenInfo->pabyHeader);
+  if( (!EQUALN(psHeader + 103, "20", 2) &&
+      !EQUALN(psHeader + 103, "19", 2)))
+  {
+    return FALSE;
+  }
+
+  // Check if descriptors reasonable.
+  if( (!STARTS_WITH(psHeader + 230, "ANTARCTIC") &&
+       !STARTS_WITH(psHeader + 230, "ARCTIC")))
+  {
+    return FALSE;
+  }
+
+
+
+  return TRUE;
+}
 
 /************************************************************************/
 /*                          GetProjectionRef()                          */
