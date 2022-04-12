@@ -715,7 +715,7 @@ class CPL_DLL OGRFeature
                          {SetField(GetFieldIndex(pszFName),nCount,padfValues); }
     void                SetField( const char *pszFName, const char * const * papszValues )
                            { SetField( GetFieldIndex(pszFName), papszValues); }
-    void                SetField( const char *pszFName, OGRField * puValue )
+    void                SetField( const char *pszFName, const OGRField * puValue )
                            { SetField( GetFieldIndex(pszFName), puValue ); }
     void                SetField( const char *pszFName,
                                   int nYear, int nMonth, int nDay,
