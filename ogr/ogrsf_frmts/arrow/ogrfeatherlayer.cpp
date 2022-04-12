@@ -523,14 +523,14 @@ bool OGRFeatherLayer::ReadNextBatchStream()
         return true;
     }
 
-    if( m_iRecordBatch == 1 && m_poBatchIdx1 )
+    else if( m_iRecordBatch == 1 && m_poBatchIdx1 )
     {
         SetBatch(m_poBatchIdx1);
         m_iRecordBatch = 2;
         return true;
     }
 
-    if( m_bSingleBatch )
+    else if( m_bSingleBatch )
     {
         CPLAssert( m_iRecordBatch == 0);
         CPLAssert( m_poBatch != nullptr);
@@ -756,7 +756,7 @@ const char* OGRFeatherLayer::GetMetadataItem( const char* pszName,
         }
         return nullptr;
     }
-    if( pszDomain != nullptr && EQUAL(pszDomain, "_ARROW_METADATA_") )
+    else if( pszDomain != nullptr && EQUAL(pszDomain, "_ARROW_METADATA_") )
     {
         const auto kv_metadata = (m_poRecordBatchFileReader ?
             m_poRecordBatchFileReader->schema() : m_poRecordBatchReader->schema())->metadata();
@@ -770,8 +770,8 @@ const char* OGRFeatherLayer::GetMetadataItem( const char* pszName,
         }
         return nullptr;
     }
-    if( m_poRecordBatchFileReader != nullptr &&
-        pszDomain != nullptr && EQUAL(pszDomain, "_ARROW_FOOTER_METADATA_") )
+    else if( m_poRecordBatchFileReader != nullptr &&
+             pszDomain != nullptr && EQUAL(pszDomain, "_ARROW_FOOTER_METADATA_") )
     {
         const auto kv_metadata = m_poRecordBatchFileReader->metadata();
         if( kv_metadata && kv_metadata->Contains(pszName) )

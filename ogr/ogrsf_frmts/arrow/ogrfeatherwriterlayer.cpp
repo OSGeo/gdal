@@ -349,9 +349,9 @@ void OGRFeatherWriterLayer::CreateWriter()
 /*               DoSomethingBeforeFinalFlushGroup()                     */
 /************************************************************************/
 
+// Add a gdal:geo extension metadata for now, which embeds a bbox
 void OGRFeatherWriterLayer::DoSomethingBeforeFinalFlushGroup()
 {
-    // gdal:geo extension for now. Embeds a bbox
     if( m_poFooterKeyValueMetadata &&
         m_poFeatureDefn->GetGeomFieldCount() != 0 &&
         CPLTestBool(CPLGetConfigOption("OGR_ARROW_WRITE_GDAL_FOOTER", "YES")) )
