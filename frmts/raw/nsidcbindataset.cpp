@@ -9,7 +9,7 @@
 // - documentation
 // - tests
 // TODO
-// - scan drive impl tutorial for more
+// - scan driver impl tutorial for more
 // - implement other related binary formats (AMSR etc)
 // - worry about old NSDIC grid vs new (the different EPSG, Hughes etc.)
 // - allow zero or missing for ice
@@ -52,6 +52,7 @@
 #include <algorithm>
 
 CPL_CVSID("$Id$")
+
 
 /***********************************************************************/
 /* ====================================================================*/
@@ -145,7 +146,7 @@ static const char* stripLeadingZeros_nsidc(const char* buf)
 
 /************************************************************************/
 /* ==================================================================== */
-/*                           NSIDCbinRasterBand                              */
+/*                           NSIDCbinRasterBand                         */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -437,18 +438,22 @@ int NSIDCbinDataset::Identify( GDALOpenInfo * poOpenInfo )
     return FALSE;
 
 
-  // Check if century values seem reasonable.
   const char *psHeader = reinterpret_cast<char *>(poOpenInfo->pabyHeader);
-  if( (!EQUALN(psHeader + 103, "20", 2) &&
-      !EQUALN(psHeader + 103, "19", 2)))
+  // Check if century values seem reasonable.
+  if( !( EQUALN(psHeader + 103, "20", 2) ||
+         EQUALN(psHeader + 103, "19", 2) ||
+         // the first files 1978 don't have a space at the start
+         EQUALN(psHeader + 102, "20", 2) ||
+         EQUALN(psHeader + 102, "19", 2)))
   {
     return FALSE;
   }
 
   // Check if descriptors reasonable.
-  if( (!STARTS_WITH(psHeader + 230, "ANTARCTIC") &&
-       !STARTS_WITH(psHeader + 230, "ARCTIC")))
+  if( !(STARTS_WITH(psHeader + 230, "ANTARCTIC") ||
+        STARTS_WITH(psHeader + 230, "ARCTIC")))
   {
+
     return FALSE;
   }
 
