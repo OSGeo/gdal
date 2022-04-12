@@ -7,8 +7,8 @@
 // - apply Scaling and control
 // - implement daily, monthly, south, north
 // - documentation
-// TODO
 // - tests
+// TODO
 // - scan drive impl tutorial for more
 // - implement other related binary formats (AMSR etc)
 // - worry about old NSDIC grid vs new (the different EPSG, Hughes etc.)
@@ -51,111 +51,95 @@
 #include <cmath>
 #include <algorithm>
 
-using std::fill;
-
 CPL_CVSID("$Id$")
 
+/***********************************************************************/
+/* ====================================================================*/
+/*                              NSIDCbinDataset                        */
+/* ====================================================================*/
+/***********************************************************************/
 
-// these should be in .h
+class NSIDCbinDataset final: public GDALPamDataset
+{
+  friend class NSIDCbinRasterBand;
+  struct NSIDCbinHeader{
 
-  /************************************************************************/
-  /* ==================================================================== */
-  /*                              NSIDCbinDataset                            */
-  /* ==================================================================== */
-  /************************************************************************/
+    // page 7, User Guide https://nsidc.org/data/nsidc-0051
+    // 1.3.2 File Contents
+    // The file format consists of a 300-byte descriptive header followed by a two-dimensional array of
+    // one-byte values containing the data. The file header is composed of:
+    // - a 21-element array of 6-byte character strings that contain information such as polar
+    // stereographic grid characteristics
+    // - a 24-byte character string containing the file name
+    // - a 80-character string containing an optional image title
+    // - a 70-byte character string containing ancillary information such as data origin, data set
+    // creation date, etc.
+    // For compatibility with ANSI C, IDL, and other languages, character strings are terminated with a
+    // NULL byte.
+    // Example file:
+    // ftp://sidads.colorado.edu/pub/DATASETS/nsidc0051_gsfc_nasateam_seaice/final-gsfc/south/daily/2010/nt_20100918_f17_v1.1_s.bin
 
-  class NSIDCbinDataset final: public GDALPamDataset
-  {
-    friend class NSIDCbinRasterBand;
-    struct NSIDCbinHeader{
+    char missing_int[6] = {0};      // "00255"
+    char columns[6] = {0};          // "  316"
+    char rows[6] = {0};             // "  332"
+    char internal1[6] = {0};        // "1.799"
+    char latitude[6] = {0};         // "-51.3"
+    char greenwich[6] = {0};        // "270.0"
+    char internal2[6] = {0};        // "558.4"
+    char jpole[6] = {0};            // "158.0"
+    char ipole[6] = {0};            // "174.0"
+    char instrument[6] = {0};       // "SSMIS"
+    char data_descriptors[6] = {0};       // "17 cn"
+    char julian_start[6] = {0};     // "  261"
+    char hour_start[6] = {0};       // "-9999"
+    char minute_start[6] = {0};     // "-9999"
+    char julian_end[6] = {0};       // "  261"
+    char hour_end[6] = {0};         // "-9999"
+    char minute_end[6] = {0};       // "-9999"
+    char year[6] = {0};             // " 2010"
+    char julian[6] = {0};           // "  261"
+    char channel[6] = {0};          // "  000"
+    char scaling[6] = {0};          // "00250"
 
-      // page 7, User Guide https://nsidc.org/data/nsidc-0051
-      // 1.3.2 File Contents
-      // The file format consists of a 300-byte descriptive header followed by a two-dimensional array of
-      // one-byte values containing the data. The file header is composed of:
-      // • a 21-element array of 6-byte character strings that contain information such as polar
-      // stereographic grid characteristics
-      // • a 24-byte character string containing the file name
-      // • a 80-character string containing an optional image title
-      // • a 70-byte character string containing ancillary information such as data origin, data set
-      // creation date, etc.
-      // For compatibility with ANSI C, IDL, and other languages, character strings are terminated with a
-      // NULL byte.
-      //
-
-      // /rdsi/PUBLIC/raad/data/sidads.colorado.edu/pub/DATASETS/nsidc0051_gsfc_nasateam_seaice/final-gsfc/south/daily/2010/nt_20100918_f17_v1.1_s.bin
-
-      char missing_int[6] = {0};      // "00255"
-      char columns[6] = {0};          // "  316"
-      char rows[6] = {0};             // "  332"
-      char internal1[6] = {0};        // "1.799"
-      char latitude[6] = {0};         // "-51.3"
-      char greenwich[6] = {0};        // "270.0"
-      char internal2[6] = {0};        // "558.4"
-      char jpole[6] = {0};            // "158.0"
-      char ipole[6] = {0};            // "174.0"
-      char instrument[6] = {0};       // "SSMIS"
-      char data_descriptors[6] = {0};       // "17 cn"
-      char julian_start[6] = {0};     // "  261"
-      char hour_start[6] = {0};       // "-9999"
-      char minute_start[6] = {0};     // "-9999"
-      char julian_end[6] = {0};       // "  261"
-      char hour_end[6] = {0};         // "-9999"
-      char minute_end[6] = {0};       // "-9999"
-      char year[6] = {0};             // " 2010"
-      char julian[6] = {0};           // "  261"
-      char channel[6] = {0};          // "  000"
-      char scaling[6] = {0};          // "00250"
-
-
-      // 121-126 Integer scaling factor
-      // 127-150 24-character file name (without file-name extension)
-      // 151-230 80-character image title
-      // 231-300 70-character data information (creation date, data source, etc.)
-      //
-      char filename[24] = {0};        // "  nt_20100918_f17_v1.1_s"
-      char imagetitle[80] = {0};  // "ANTARCTIC  SMMR  TOTAL ICE CONCENTRATION       NIMBUSN07     DAY 299 10/26/1978"
-      char data_information[70] = {0};    // "ANTARCTIC  SMMR ONSSMIGRID CON Coast253Pole251Land254      06/27/1996"
+    // 121-126 Integer scaling factor
+    // 127-150 24-character file name (without file-name extension)
+    // 151-230 80-character image title
+    // 231-300 70-character data information (creation date, data source, etc.)
+    char filename[24] = {0};        // "  nt_20100918_f17_v1.1_s"
+    char imagetitle[80] = {0};  // "ANTARCTIC  SMMR  TOTAL ICE CONCENTRATION       NIMBUSN07     DAY 299 10/26/1978"
+    char data_information[70] = {0};    // "ANTARCTIC  SMMR ONSSMIGRID CON Coast253Pole251Land254      06/27/1996"
 
     };
 
     VSILFILE    *fp;
     CPLString    osSRS{};
-
     NSIDCbinHeader  sHeader{};
-
     GDALDataType eRasterDataType;
-
     double      adfGeoTransform[6];
-
     CPL_DISALLOW_COPY_ASSIGN(NSIDCbinDataset)
 
   public:
     NSIDCbinDataset();
     ~NSIDCbinDataset() override;
-
     CPLErr GetGeoTransform( double * ) override;
 
     const char *_GetProjectionRef( void ) override;
     const OGRSpatialReference* GetSpatialRef() const override {
       return GetSpatialRefFromOldGetProjectionRef();
     }
-    static GDALDataset *Open( GDALOpenInfo * );
-    static int          Identify( GDALOpenInfo * );
-  };
+  static GDALDataset *Open( GDALOpenInfo * );
+  static int          Identify( GDALOpenInfo * );
+};
 
 
 static const char* stripLeadingZeros_nsidc(const char* buf)
 {
   const char* ptr = buf;
-
   /* Go until we run out of characters  or hit something non-zero */
-
   while( *ptr == ' ' && *(ptr+1) != '\0' )
   {
     ptr++;
   }
-
   return ptr;
 }
 
@@ -171,21 +155,20 @@ class NSIDCbinRasterBand final: public RawRasterBand
 
   CPL_DISALLOW_COPY_ASSIGN(NSIDCbinRasterBand)
 
-public:
-  NSIDCbinRasterBand( GDALDataset *poDS, int nBand, VSILFILE * fpRaw,
+  public:
+    NSIDCbinRasterBand( GDALDataset *poDS, int nBand, VSILFILE * fpRaw,
                  vsi_l_offset nImgOffset, int nPixelOffset,
                  int nLineOffset,
                  GDALDataType eDataType, int bNativeOrder );
-  ~NSIDCbinRasterBand() override;
+    ~NSIDCbinRasterBand() override;
 
   double GetNoDataValue( int *pbSuccess = nullptr ) override;
   double GetScale( int *pbSuccess = nullptr ) override;
-  //CPLErr SetScale( double dfNewValue ) override;
 };
 
 
 /************************************************************************/
-/*                         NSIDCbinRasterBand()                           */
+/*                         NSIDCbinRasterBand()                         */
 /************************************************************************/
 
 NSIDCbinRasterBand::NSIDCbinRasterBand( GDALDataset *poDSIn,
@@ -247,18 +230,12 @@ double NSIDCbinRasterBand::GetScale( int *pbSuccess )
     *pbSuccess = TRUE;
   // const double dfFactor =
   // atof(reinterpret_cast<NSIDCbinDataset*>(poDS)->sHeader.scaling)/100;
-  return 2.5;
+  return 0.4;
 }
 
 
 /************************************************************************/
-/* ==================================================================== */
-/*                             NSIDCbinDataset                              */
-/* ==================================================================== */
-/************************************************************************/
-
-/************************************************************************/
-/*                            NSIDCbinDataset()                             */
+/*                            NSIDCbinDataset()                         */
 /************************************************************************/
 
 NSIDCbinDataset::NSIDCbinDataset() :
@@ -274,7 +251,7 @@ NSIDCbinDataset::NSIDCbinDataset() :
 }
 
 /************************************************************************/
-/*                            ~NSIDCbinDataset()                            */
+/*                            ~NSIDCbinDataset()                        */
 /************************************************************************/
 
 NSIDCbinDataset::~NSIDCbinDataset()
@@ -293,13 +270,9 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
 
-
   // Confirm that the header is compatible with a NSIDC dataset.
   if( !Identify(poOpenInfo) )
     return NULL;
-
-
-
 
   // Confirm the requested access is supported.
   if( poOpenInfo->eAccess == GA_Update )
@@ -337,7 +310,6 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
     return nullptr;
   }
 
-
   /* -------------------------------------------------------------------- */
   /*      Extract information of interest from the header.                */
   /* -------------------------------------------------------------------- */
@@ -345,14 +317,10 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
   poDS->nRasterXSize = atoi(poDS->sHeader.columns);
   poDS->nRasterYSize= atoi(poDS->sHeader.rows);
 
-
-
-  // north is 304x448, south is 316x332 (but are there 12.5km binary files)
   const char *psHeader = reinterpret_cast<char *>(poOpenInfo->pabyHeader);
   bool south = STARTS_WITH(psHeader + 230, "ANTARCTIC");
 
   const int nBands = 1;
-
 
   if( !GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
       !GDALCheckBandCount(nBands, FALSE) )
@@ -361,10 +329,11 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
     return nullptr;
   }
 
-  int nBytesPerSample = 1;
-  poDS->eRasterDataType = GDT_Byte;
 
-// metadata
+  /* -------------------------------------------------------------------- */
+  /*      Extract metadata from the header.                               */
+  /* -------------------------------------------------------------------- */
+
   poDS->SetMetadataItem("INSTRUMENT", poDS->sHeader.instrument);
   poDS->SetMetadataItem("YEAR", stripLeadingZeros_nsidc(poDS->sHeader.year));
   poDS->SetMetadataItem("JULIAN_DAY", stripLeadingZeros_nsidc(poDS->sHeader.julian));
@@ -373,13 +342,12 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
   poDS->SetMetadataItem("FILENAME", stripLeadingZeros_nsidc(poDS->sHeader.filename));
   poDS->SetMetadataItem("DATA_INFORMATION", poDS->sHeader.data_information);
 
-
-
-
-
   /* -------------------------------------------------------------------- */
   /*      Create band information objects.                                */
   /* -------------------------------------------------------------------- */
+  int nBytesPerSample = 1;
+  poDS->eRasterDataType = GDT_Byte;
+
   CPLErrorReset();
   for( int iBand = 0; iBand < nBands; iBand++ )
   {
@@ -399,7 +367,17 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
     }
   }
 
+  /* -------------------------------------------------------------------- */
+  /*      Geotransform, we simply know this from the documentation.       */
+  /*       If we have similar binary files (at 12.5km for example) then   */
+  /*        need more nuanced handling                                    */
+  /*      Projection,  this is not technically enough, because the old    */
+  /*       stuff is Hughes 1980.                                          */
+  /*      FIXME: old or new epsg codes based on header info, or jul/year  */
+  /* -------------------------------------------------------------------- */
 
+  OGRSpatialReference oSR;
+  int epsg = -1;
   if( south )
   {
     poDS->adfGeoTransform[0] = -3950000.0;
@@ -408,6 +386,8 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->adfGeoTransform[3] = 4350000.0;
     poDS->adfGeoTransform[4] = 0.0;
     poDS->adfGeoTransform[5] = -25000;
+
+    epsg = 3976;
   }
   else
   {
@@ -417,20 +397,10 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->adfGeoTransform[3] = 5837500;
     poDS->adfGeoTransform[4] = 0.0;
     poDS->adfGeoTransform[5] = -25000;
-  }
 
-
-  // south or north
-  // this is not technically enough, because the old stuff is Hughes 1980
-  // FIXME: Mike to find a way to get the old or new epsg codes based on header info, or julday/year
-
-  OGRSpatialReference oSR;
-  int epsg = -1;
-  if (south) {
-    epsg = 3976;
-  } else {
     epsg = 3413;
   }
+
   if( oSR.importFromEPSG( epsg ) == OGRERR_NONE ) {
     char *pszWKT = nullptr;
     oSR.exportToWkt( &pszWKT );
@@ -441,14 +411,8 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
   /* -------------------------------------------------------------------- */
   /*      Initialize any PAM information.                                 */
   /* -------------------------------------------------------------------- */
-  poDS->SetDescription( poOpenInfo->pszFilename );
-  poDS->TryLoadXML();
-
-  // /* -------------------------------------------------------------------- */
-  // /*      Check for external overviews.                                   */
-  // /* -------------------------------------------------------------------- */
-  //     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename,
-  //                                  poOpenInfo->GetSiblingFiles() );
+  //poDS->SetDescription( poOpenInfo->pszFilename );
+  //poDS->TryLoadXML();
 
   return poDS;
 }
@@ -460,11 +424,11 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
 int NSIDCbinDataset::Identify( GDALOpenInfo * poOpenInfo )
 {
 
-  // works for daily and monthly, north and south NSIDC binary files
-  // north and south are different dimensions, different extents
-  // but both are 25000m resolution
-
   /* -------------------------------------------------------------------- */
+  /*      Works for daily and monthly, north and south NSIDC binary files */
+  /*      north and south are different dimensions, different extents but */
+  /*      both are 25000m resolution.
+  /*
   /*      First we check to see if the file has the expected header       */
   /*      bytes.                                                          */
   /* -------------------------------------------------------------------- */
@@ -487,8 +451,6 @@ int NSIDCbinDataset::Identify( GDALOpenInfo * poOpenInfo )
   {
     return FALSE;
   }
-
-
 
   return TRUE;
 }
@@ -529,8 +491,10 @@ void GDALRegister_NSIDCbin()
 
   poDriver->SetDescription( "NSIDCbin" );
   poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-  poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "NSIDCbin" );
+  poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "NSIDC Sea Ice Concentrations binary (.bin)");
+  poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/nsidcbin.html");
   poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+  poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "bin");
 
   poDriver->pfnOpen = NSIDCbinDataset::Open;
 
