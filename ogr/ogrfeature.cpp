@@ -5000,7 +5000,7 @@ void OGR_F_SetFieldDateTimeEx( OGRFeatureH hFeat, int iField,
 /************************************************************************/
 
 /**
- * \fn OGRFeature::SetField( const char* pszFName, OGRField * puValue )
+ * \fn OGRFeature::SetField( const char* pszFName, const OGRField * puValue )
  * \brief Set field.
  *
  * The passed value OGRField must be of exactly the same type as the
@@ -5036,13 +5036,13 @@ void OGR_F_SetFieldDateTimeEx( OGRFeatureH hFeat, int iField,
  * @param puValue the value to assign.
  */
 
-void OGRFeature::SetField( int iField, OGRField * puValue )
+void OGRFeature::SetField( int iField, const OGRField * puValue )
 
 {
     SetFieldInternal( iField, puValue );
 }
 
-bool OGRFeature::SetFieldInternal( int iField, OGRField * puValue )
+bool OGRFeature::SetFieldInternal( int iField, const OGRField * puValue )
 
 {
     OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
@@ -5257,7 +5257,7 @@ bool OGRFeature::SetFieldInternal( int iField, OGRField * puValue )
  * @param psValue handle on the value to assign.
  */
 
-void OGR_F_SetFieldRaw( OGRFeatureH hFeat, int iField, OGRField *psValue )
+void OGR_F_SetFieldRaw( OGRFeatureH hFeat, int iField, const OGRField *psValue )
 
 {
     VALIDATE_POINTER0( hFeat, "OGR_F_SetFieldRaw" );
