@@ -483,20 +483,20 @@ The Elasticsearch writer supports the following deeprecated configuration
 options. Starting with GDAL 2.1, layer creation options are also available 
 and should be preferred (see above):
 
--  :decl_configoption:`ES_WRITEMAP`\ =/path/to/mapfile.txt. Creates a mapping file that
+-  :decl_configoption:`ES_WRITEMAP` =/path/to/mapfile.txt. Creates a mapping file that
    can be modified by the user prior to insert in to the index. No
    feature will be written. Note that this will properly work only if
    only one single layer is created. Starting with GDAL 2.1, the
    **WRITE_MAPPING** layer creation option should rather be used.
--  :decl_configoption:`ES_META`\ =/path/to/mapfile.txt. Tells the driver to the
+-  :decl_configoption:`ES_META` =/path/to/mapfile.txt. Tells the driver to the
    user-defined field mappings. Starting with GDAL 2.1, the **MAPPING**
    layer creation option should rather be used.
--  :decl_configoption:`ES_BULK`\ =5000000. Identifies the maximum size in bytes of the
+-  :decl_configoption:`ES_BULK` =5000000. Identifies the maximum size in bytes of the
    buffer to store documents to be inserted at a time. Lower record
    counts help with memory consumption within Elasticsearch but take
    longer to insert. Starting with GDAL 2.1, the **BULK_SIZE** layer
    creation option should rather be used.
--  :decl_configoption:`ES_OVERWRITE`\ =1. Overwrites the current index by deleting an
+-  :decl_configoption:`ES_OVERWRITE` =1. Overwrites the current index by deleting an
    existing one. Starting with GDAL 2.1, the **OVERWRITE** layer
    creation option should rather be used.
 
