@@ -175,7 +175,7 @@ The following open options are available:
    https://www.sqlite.org/uri.html
 
 Note: open options are typically specified with "-oo name=value" syntax
-in most OGR utilities, or with the GDALOpenEx() API call.
+in most OGR utilities, or with the ``GDALOpenEx()`` API call.
 
 Note: configuration option :decl_configoption:`OGR_SQLITE_JOURNAL` can
 be used to set the journal mode of the GeoPackage (and thus SQLite)
@@ -265,6 +265,40 @@ Layer Creation Options
    gpkg_extensions table. Starting with GDAL 3.3, OGR_ASPATIAL is no longer
    available on creation.
 
+Configuration options
+---------------------
+
+- :decl_configoption:`OGR_SQLITE_JOURNAL` can be used to set the journal mode 
+  of the GeoPackage (and thus SQLite) file, see also 
+  https://www.sqlite.org/pragma.html#pragma_journal_mode.
+
+- :decl_configoption:`OGR_SQLITE_CACHE`: see Performance hints.
+
+- :decl_configoption:`OGR_SQLITE_SYNCHRONOUS`: see Performance hints.
+
+- :decl_configoption:`OGR_SQLITE_LOAD_EXTENSIONS` =extension1,...,extensionN,ENABLE_SQL_LOAD_EXTENSION:
+  (GDAL >= 3.5.0). Comma separated list of names of shared libraries containing
+  extensions to load at database opening.
+  If a file cannot be loaded directly, attempts are made to load with various
+  operating-system specific extensions added. So
+  for example, if "samplelib" cannot be loaded, then names like "samplelib.so"
+  or "samplelib.dylib" or "samplelib.dll" might be tried also.
+  The special value ``ENABLE_SQL_LOAD_EXTENSION`` can be used to enable the use of
+  the SQL ``load_extension()`` function, which is normally disabled in standard
+  builds of sqlite3.
+  Loading extensions as a potential security impact if they are untrusted.
+
+- :decl_configoption:`OGR_SQLITE_PRAGMA` can be useed to specify any SQLite
+  `pragma <http://www.sqlite.org/pragma.html>`__ . The syntax is
+  ``OGR_SQLITE_PRAGMA = "pragma_name=pragma_value[,pragma_name2=pragma_value2]*"``.
+
+- :decl_configoption:`OGR_CURRENT_DATE`: the driver updates the GeoPackage 
+  ``last_change`` timestamp when the file is created or modified. If consistent 
+  binary output is required for reproducibility, the timestamp can be forced to 
+  a specific value by setting this global configuration option.
+  When setting the option, take care to meet the specific time format
+  requirement of the GeoPackage standard,
+  e.g. `for version 1.2 <https://www.geopackage.org/spec120/#r15>`__.
 
 Metadata
 --------
@@ -384,6 +418,12 @@ Level of support of GeoPackage Extensions
    * - :ref:`vector.geopackage_aspatial`
      - No
      - Yes. Deprecated in GDAL 2.2 for the *attributes* official data_type
+
+Performance hints
+-----------------
+
+The same performance hints apply as those mentioned for the 
+:ref:`SQLite driver <vector.sqlite>`
 
 Examples
 --------
