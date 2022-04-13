@@ -114,7 +114,7 @@ Starting with GDAL 2.2, applications should use the
 they are produced.
 
 For earlier versions, for large files, applications should set the
-:decl_configoption:`OGR_INTERLEAVED_READING`=YES configuration option to turn on a special
+:decl_configoption:`OGR_INTERLEAVED_READING` =YES configuration option to turn on a special
 reading mode where the following reading pattern must be used:
 
 ::
