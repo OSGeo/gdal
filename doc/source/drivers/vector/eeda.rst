@@ -60,23 +60,23 @@ Configuration options
 
 The following configuration options are available:
 
--  :decl_configoption:`EEDA_BEARER`\ =value: Authentication Bearer value to pass to the
+-  :decl_configoption:`EEDA_BEARER` =value: Authentication Bearer value to pass to the
    API. This option is only useful when the token is computed by
    external code. The bearer validity is typically one hour from the
    time where it as been requested.
--  :decl_configoption:`EEDA_BEARER_FILE`\ =filename: Similar to EEDA_BEARER option,
+-  :decl_configoption:`EEDA_BEARER_FILE` =filename: Similar to EEDA_BEARER option,
    except than instead of passing the value directly, it is the filename
    where the value should be read.
--  :decl_configoption:`GOOGLE_APPLICATION_CREDENTIALS`\ =file.json: Service account
+-  :decl_configoption:`GOOGLE_APPLICATION_CREDENTIALS` =file.json: Service account
    private key file that contains a private key and client email
--  :decl_configoption:`EEDA_PRIVATE_KEY`\ =string: RSA private key encoded as a PKCS#8
+-  :decl_configoption:`EEDA_PRIVATE_KEY` =string: RSA private key encoded as a PKCS#8
    PEM file, with its header and footer. Used together with
    :decl_configoption:`EEDA_CLIENT_EMAIL` to use OAuth2 Service Account authentication.
    Requires GDAL to be built against libcrypto++ or libssl.
--  :decl_configoption:`EEDA_PRIVATE_KEY_FILE`\ =filename: Similar to 
+-  :decl_configoption:`EEDA_PRIVATE_KEY_FILE` =filename: Similar to 
    :decl_configoption:`EEDA_PRIVATE_KEY` option, except than instead of passing the 
    value directly, it is the filename where the key should be read.
--  :decl_configoption:`EEDA_CLIENT_EMAIL`\ =string: email to be specified together with
+-  :decl_configoption:`EEDA_CLIENT_EMAIL` =string: email to be specified together with
    EEDA_PRIVATE_KEY/EEDA_PRIVATE_KEY_FILE to use OAuth2 Service Account
    authentication.
 -  :decl_configoption:`EEDA_PAGE_SIZE`: Features are retrieved from the server by chunks 
