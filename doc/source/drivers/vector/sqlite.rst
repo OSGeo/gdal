@@ -55,7 +55,7 @@ documentation <http://www.sqlite.org/pragma.html#pragma_synchronous>`__.
 Any SQLite
 `pragma <http://www.sqlite.org/pragma.html>`__ can be specified with the
 :decl_configoption:`OGR_SQLITE_PRAGMA` configuration option. The syntax is
-OGR_SQLITE_PRAGMA = "pragma_name=pragma_value[,pragma_name2=pragma_value2]*".
+``OGR_SQLITE_PRAGMA = "pragma_name=pragma_value[,pragma_name2=pragma_value2]*"``.
 
 Driver capabilities
 -------------------
@@ -312,8 +312,9 @@ Layer Creation Options
    used to control if the compressed format for geometries (LINESTRINGs,
    POLYGONs) must be used. This format is understood by Spatialite v2.4
    (or any subsequent version). Default to NO. Note: when updating an
-   existing Spatialite DB, the COMPRESS_GEOM configuration option can be
-   set to produce similar results for appended/overwritten features.
+   existing Spatialite DB, the :decl_configoption:`COMPRESS_GEOM` 
+   configuration option can be set to produce similar results for 
+   appended/overwritten features.
 
 -  **SRID=srid**: Used to force the SRID
    number of the SRS associated with the layer. When this option isn't
@@ -353,20 +354,24 @@ Layer Creation Options
 Configuration Options
 ---------------------
 
-- :decl_configoption:**SQLITE_LIST_ALL_TABLES** =YES/NO: Set to "YES" to list 
+- :decl_configoption:`SQLITE_LIST_ALL_TABLES` =YES/NO: Set to "YES" to list 
   all tables (not just the tables listed in the geometry_columns table). This 
   can also be done using the LIST_ALL_TABLES open option. Default is NO.
 
-- :decl_configoption:**OGR_SQLITE_LIST_VIRTUAL_OGR** =YES/NO* Set to "YES" to 
+- :decl_configoption:`OGR_SQLITE_LIST_VIRTUAL_OGR` =YES/NO* Set to "YES" to 
   list VirtualOGR layers. Defaults to "NO" as there might be some security 
   implications if a user is provided with a file and doesn't know that there 
   are virtual OGR tables in it.
 
-- :decl_configoption:**OGR_SQLITE_CACHE**: see Performance hints
+- :decl_configoption:`OGR_SQLITE_JOURNAL` can be used to set the journal mode 
+  of the SQLite file, see also 
+  https://www.sqlite.org/pragma.html#pragma_journal_mode.
 
-- :decl_configoption:**OGR_SQLITE_SYNCHRONOUS**: see Performance hints
+- :decl_configoption:`OGR_SQLITE_CACHE`: see Performance hints.
 
-- :decl_configoption:**OGR_SQLITE_LOAD_EXTENSIONS** =extension1,...,extensionN,ENABLE_SQL_LOAD_EXTENSION:
+- :decl_configoption:`OGR_SQLITE_SYNCHRONOUS`: see Performance hints.
+
+- :decl_configoption:`OGR_SQLITE_LOAD_EXTENSIONS` =extension1,...,extensionN,ENABLE_SQL_LOAD_EXTENSION:
   (GDAL >= 3.5.0). Comma separated list of names of shared libraries containing
   extensions to load at database opening.
   If a file cannot be loaded directly, attempts are made to load with various
@@ -378,9 +383,9 @@ Configuration Options
   builds of sqlite3.
   Loading extensions as a potential security impact if they are untrusted.
 
-- :decl_configoption:**OGR_SQLITE_PRAGMA**: with this option any SQLite
+- :decl_configoption:`OGR_SQLITE_PRAGMA`: with this option any SQLite
   `pragma <http://www.sqlite.org/pragma.html>`__ can be specified. The syntax is
-  `OGR_SQLITE_PRAGMA = "pragma_name=pragma_value[,pragma_name2=pragma_value2]*"`.
+  ``OGR_SQLITE_PRAGMA = "pragma_name=pragma_value[,pragma_name2=pragma_value2]*"``.
 
 Performance hints
 -----------------
