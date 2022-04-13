@@ -122,7 +122,8 @@ Creation Issues
 -  DGN files can only have one layer. Attempts to create more than one
    layer in a DGN file will fail.
 
-The dataset creation supports the following options:
+Dataset creation options
+------------------------
 
 -  **3D=**\ *YES* or *NO*: Determine whether 2D (seed_2d.dgn) or 3D
    (seed_3d.dgn) seed file should be used. This option is ignored if the
