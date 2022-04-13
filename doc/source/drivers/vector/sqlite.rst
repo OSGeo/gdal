@@ -353,19 +353,20 @@ Layer Creation Options
 Configuration Options
 ---------------------
 
-- **SQLITE_LIST_ALL_TABLES** =YES/NO: Set to "YES" to list all tables
-  (not just the tables listed in the geometry_columns table). This can also
-  be done using the LIST_ALL_TABLES open option. Default is NO.
+- :decl_configoption:**SQLITE_LIST_ALL_TABLES** =YES/NO: Set to "YES" to list 
+  all tables (not just the tables listed in the geometry_columns table). This 
+  can also be done using the LIST_ALL_TABLES open option. Default is NO.
 
-- **OGR_SQLITE_LIST_VIRTUAL_OGR** =YES/NO* Set to "YES" to list VirtualOGR layers.
-  Defaults to "NO" as there might be some security implications if a user is
-  provided with a file and doesn't know that there are virtual OGR tables in it.
+- :decl_configoption:**OGR_SQLITE_LIST_VIRTUAL_OGR** =YES/NO* Set to "YES" to 
+  list VirtualOGR layers. Defaults to "NO" as there might be some security 
+  implications if a user is provided with a file and doesn't know that there 
+  are virtual OGR tables in it.
 
-- **OGR_SQLITE_CACHE**: see Performance hints
+- :decl_configoption:**OGR_SQLITE_CACHE**: see Performance hints
 
-- **OGR_SQLITE_SYNCHRONOUS**: see Performance hints
+- :decl_configoption:**OGR_SQLITE_SYNCHRONOUS**: see Performance hints
 
-- **OGR_SQLITE_LOAD_EXTENSIONS** =extension1,...,extensionN,ENABLE_SQL_LOAD_EXTENSION:
+- :decl_configoption:**OGR_SQLITE_LOAD_EXTENSIONS** =extension1,...,extensionN,ENABLE_SQL_LOAD_EXTENSION:
   (GDAL >= 3.5.0). Comma separated list of names of shared libraries containing
   extensions to load at database opening.
   If a file cannot be loaded directly, attempts are made to load with various
@@ -377,6 +378,9 @@ Configuration Options
   builds of sqlite3.
   Loading extensions as a potential security impact if they are untrusted.
 
+- :decl_configoption:**OGR_SQLITE_PRAGMA**: with this option any SQLite
+  `pragma <http://www.sqlite.org/pragma.html>`__ can be specified. The syntax is
+  `OGR_SQLITE_PRAGMA = "pragma_name=pragma_value[,pragma_name2=pragma_value2]*"`.
 
 Performance hints
 -----------------
@@ -401,14 +405,15 @@ related to a corresponding Spatial Index. Explicitly setting a much more
 generously dimensioned internal Page Cache may often help to get a
 noticeably better performance. You can
 explicitly set the internal Page Cache size using the configuration
-option :decl_configoption:`OGR_SQLITE_CACHE` *value* [*value* being measured in MB]; if
-your HW has enough available RAM, defining a Cache size as big as 512MB
-(or even 1024MB) may sometimes help a lot in order to get better
-performance.
+option :decl_configoption:`OGR_SQLITE_CACHE` *value* [*value* being 
+measured in MB]; if your HW has enough available RAM, defining a Cache 
+size as big as 512MB (or even 1024MB) may sometimes help a lot in order 
+to get better performance.
 
-Setting the :decl_configoption:`OGR_SQLITE_SYNCHRONOUS` configuration option to *OFF*
-might also increase performance when creating SQLite databases (although
-at the expense of integrity in case of interruption/crash ).
+Setting the :decl_configoption:`OGR_SQLITE_SYNCHRONOUS` configuration 
+option to *OFF* might also increase performance when creating SQLite 
+databases (although at the expense of integrity in case of 
+interruption/crash ).
 
 If many source files will be collected into the same Spatialite table,
 it can be much faster to initialize the table without a spatial index by
