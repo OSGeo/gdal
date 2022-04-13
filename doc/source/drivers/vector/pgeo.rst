@@ -19,8 +19,9 @@ Personal Geodatabases are accessed by passing the file name of the .mdb
 file to be accessed as the data source name.
 
 In order to facilitate compatibility with different configurations, the
-PGEO_DRIVER_TEMPLATE Config Option was added to provide a way to
-programmatically set the DSN programmatically with the filename as an
+:decl_configoption:`PGEO_DRIVER_TEMPLATE` config Option was added to 
+provide a way to programmatically set the DSN programmatically with the 
+filename as an
 argument. In cases where the driver name is known, this allows for the
 construction of the DSN based on that information in a manner similar to
 the default (used for Windows access to the Microsoft Access Driver).
