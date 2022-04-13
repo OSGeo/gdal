@@ -84,7 +84,7 @@ Configuration options
 
 The following configuration options are available :
 
--  :decl_configoption:`PL_API_KEY`=value: To specify the Planet API KEY.
+-  :decl_configoption:`PL_API_KEY` =value: To specify the Planet API KEY.
 
 Attributes
 ----------
