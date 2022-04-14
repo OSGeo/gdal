@@ -387,6 +387,8 @@ Configuration Options
   `pragma <http://www.sqlite.org/pragma.html>`__ can be specified. The syntax is
   ``OGR_SQLITE_PRAGMA = "pragma_name=pragma_value[,pragma_name2=pragma_value2]*"``.
 
+.. _target_drivers_vector_sqlite_performance_hints:
+
 Performance hints
 -----------------
 
