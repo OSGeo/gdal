@@ -270,7 +270,7 @@ The following layer creation options are available:
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <user.configoptions>` are available:
+The following :ref:`configuration options <..user.configoptions>` are available:
 
 - :decl_configoption:`OGR_SQLITE_JOURNAL` can be used to set the journal mode 
   of the GeoPackage (and thus SQLite) file, see also 
@@ -427,7 +427,7 @@ Performance hints
 -----------------
 
 The same performance hints apply as those mentioned for the 
-:ref:`SQLite driver <vector.sqlite:Performance-hints>`.
+:ref:`SQLite driver <vector.sqlite:Performance hints>`.
 
 Examples
 --------
