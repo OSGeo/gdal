@@ -26,11 +26,11 @@ must be run by a user with read/write access to the files it is working
 with.
 
 The driver also supports reading and writing the
-following non-linear geometry types :CIRCULARSTRING, COMPOUNDCURVE,
+following non-linear geometry types: CIRCULARSTRING, COMPOUNDCURVE,
 CURVEPOLYGON, MULTICURVE and MULTISURFACE
 
-GeoPackage raster/tiles are supported. See
-:ref:`GeoPackage raster <raster.gpkg>` documentation page
+GeoPackage raster/tiles are supported. See the 
+:ref:`GeoPackage raster <raster.gpkg>` documentation page.
 
 Driver capabilities
 -------------------
@@ -91,32 +91,32 @@ that this will result in a full rewrite of the file.
 SQL functions
 ~~~~~~~~~~~~~
 
-The following SQL functions, from the GeoPackage specification, are available :
+The following SQL functions, from the GeoPackage specification, are available:
 
--  ST_MinX(geom *Geometry*) : returns the minimum X coordinate of the
+-  ST_MinX(geom *Geometry*): returns the minimum X coordinate of the
    geometry
--  ST_MinY(geom *Geometry*) : returns the minimum Y coordinate of the
+-  ST_MinY(geom *Geometry*): returns the minimum Y coordinate of the
    geometry
--  ST_MaxX(geom *Geometry*) : returns the maximum X coordinate of the
+-  ST_MaxX(geom *Geometry*): returns the maximum X coordinate of the
    geometry
--  ST_MaxY(geom *Geometry*) : returns the maximum Y coordinate of the
+-  ST_MaxY(geom *Geometry*): returns the maximum Y coordinate of the
    geometry
--  ST_IsEmpty(geom *Geometry*) : returns 1 if the geometry is empty (but
+-  ST_IsEmpty(geom *Geometry*): returns 1 if the geometry is empty (but
    not null), e.g. a POINT EMPTY geometry
--  ST_GeometryType(geom *Geometry*) : returns the geometry type :
+-  ST_GeometryType(geom *Geometry*): returns the geometry type:
    'POINT', 'LINESTRING', 'POLYGON', 'MULTIPOLYGON', 'MULTILINESTRING',
    'MULTIPOINT', 'GEOMETRYCOLLECTION'
--  ST_SRID(geom *Geometry*) : returns the SRID of the geometry
+-  ST_SRID(geom *Geometry*): returns the SRID of the geometry
 -  GPKG_IsAssignable(expected_geom_type *String*, actual_geom_type
    *String*) : mainly, needed for the 'Geometry Type Triggers Extension'
 
 The following functions, with identical syntax and semantics as in
 Spatialite, are also available :
 
--  CreateSpatialIndex(table_name *String*, geom_column_name *String*) :
+-  CreateSpatialIndex(table_name *String*, geom_column_name *String*):
    creates a spatial index (RTree) on the specified table/geometry
    column
--  DisableSpatialIndex(table_name *String*, geom_column_name *String*) :
+-  DisableSpatialIndex(table_name *String*, geom_column_name *String*):
    drops an existing spatial index (RTree) on the specified
    table/geometry column
 -  ST_Transform(geom *Geometry*, target_srs_id *Integer*): reproject the geometry
@@ -143,8 +143,8 @@ Transaction support
 
 The driver implements transactions at the database level, per :ref:`rfc-54`
 
-Opening options
----------------
+Dataset open options
+--------------------
 
 The following open options are available:
 
@@ -218,10 +218,12 @@ raster) are available:
    When using UTC format, with a unspecified timezone, UTC will be assumed.
 
 Other options are available for raster. See the :ref:`GeoPackage raster <raster.gpkg>`
-documentation page
+documentation page.
 
 Layer Creation Options
 ~~~~~~~~~~~~~~~~~~~~~~
+
+The following layer creation options are available:
 
 -  **GEOMETRY_NAME**: Column to use for the geometry column. Default to
    "geom". Note: This option was called GEOMETRY_COLUMN in releases before
@@ -267,6 +269,8 @@ Layer Creation Options
 
 Configuration options
 ---------------------
+
+The following :ref:`configuration options <user/configoptions>` are available:
 
 - :decl_configoption:`OGR_SQLITE_JOURNAL` can be used to set the journal mode 
   of the GeoPackage (and thus SQLite) file, see also 
@@ -343,7 +347,7 @@ spatial tables that are not registered through the gdal_aspatial
 extension, and support the GeoPackage 1.2 "attributes" data type as
 well. Starting with GDAL 2.2, non spatial tables are by default created
 following the GeoPackage 1.2 "attributes" data type (can be controlled
-with the ASPATIAL_VARIANT layer creation option)
+with the ASPATIAL_VARIANT layer creation option).
 
 Spatial views
 -------------
@@ -372,7 +376,7 @@ This requires GDAL to be compiled with the SQLITE_HAS_COLUMN_METADATA
 option and SQLite3 with the SQLITE_ENABLE_COLUMN_METADATA option.
 Starting with GDAL 2.3, this can be easily verified if the
 SQLITE_HAS_COLUMN_METADATA=YES driver metadata item is declared (for
-example with "ogrinfo --format GPKG")
+example with "ogrinfo --format GPKG").
 
 Coordinate Reference Systems
 ----------------------------
@@ -423,7 +427,7 @@ Performance hints
 -----------------
 
 The same performance hints apply as those mentioned for the 
-:ref:`SQLite driver <vector.sqlite>`
+:ref:`SQLite driver <vector.sqlite:performance-hints>`.
 
 Examples
 --------
