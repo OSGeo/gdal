@@ -20,7 +20,7 @@ Driver capabilities
 Dataset name syntax
 -------------------
 
-The minimal syntax to open a datasource is :
+The minimal syntax to open a datasource is:
 
 ::
 
@@ -32,7 +32,7 @@ projects/earthengine-public/assets/COPERNICUS/S2.
 Open options
 ------------
 
-The following open options are available :
+The following open options are available:
 
 -  **COLLECTION**\ =string: To specify the collection if not specified
    in the connection string.
@@ -43,22 +43,25 @@ Authentication methods
 The following authentication methods can be used:
 
 -  Authentication Bearer header passed through the EEDA_BEARER or
-   EEDA_BEARER_FILE configuration options.
+   :decl_configoption:`EEDA_BEARER_FILE` configuration options.
 -  Service account private key file, through the
-   GOOGLE_APPLICATION_CREDENTIALS configuration option.
--  OAuth2 Service Account authentication through the EEDA_PRIVATE_KEY/
-   EEDA_PRIVATE_KEY_FILE + EEDA_CLIENT_EMAIL configuration options.
+   :decl_configoption:`GOOGLE_APPLICATION_CREDENTIALS` configuration option.
+-  OAuth2 Service Account authentication through the 
+   :decl_configoption:`EEDA_PRIVATE_KEY`/
+   :decl_configoption:`EEDA_PRIVATE_KEY_FILE` + 
+   :decl_configoption:`EEDA_CLIENT_EMAIL` configuration options.
 -  Finally if none of the above method succeeds, the code will check if
    the current machine is a Google Compute Engine instance, and if so
    will use the permissions associated to it (using the default service
    account associated with the VM). To force a machine to be detected as
    a GCE instance (for example for code running in a container with no
-   access to the boot logs), you can set CPL_MACHINE_IS_GCE to YES.
+   access to the boot logs), you can set 
+   :decl_configoption:`CPL_MACHINE_IS_GCE` to YES.
 
 Configuration options
 ---------------------
 
-The following configuration options are available:
+The following :ref:`configuration options <user/configoptions>` are available:
 
 -  :decl_configoption:`EEDA_BEARER` =value: Authentication Bearer value to pass to the
    API. This option is only useful when the token is computed by
