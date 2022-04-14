@@ -147,9 +147,8 @@ Layer Creation Options
 Configuration options
 ---------------------
 
-There are a variety of `Configuration
-Options <http://trac.osgeo.org/gdal/wiki/ConfigOptions>`__ which help
-control the behavior of this driver.
+The following :doc:`configuration options <../../user/configoptions>` are 
+available:
 
 -  :decl_configoption:`MSSQLSPATIAL_USE_BCP`: (From GDAL 2.1.0) Enable bulk insert when
    adding features. This option requires to to compile GDAL against a

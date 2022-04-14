@@ -479,8 +479,8 @@ options:
 Configuration options
 ---------------------
 
-The Elasticsearch writer supports the following deeprecated configuration
-options. Starting with GDAL 2.1, layer creation options are also available 
+The following (deprecated) :doc:`configuration options <../../user/configoptions>` are 
+available. Starting with GDAL 2.1, layer creation options are also available 
 and should be preferred (see above):
 
 -  :decl_configoption:`ES_WRITEMAP` =/path/to/mapfile.txt. Creates a mapping file that

@@ -42,7 +42,8 @@ Starting with GDAL 2.3, the following open options can be specified
 Configuration options
 ~~~~~~~~~~~~~~~~~~~~~
 
-(set with ``--config key value`` on GDAL command line utilities)
+Several :doc:`configuration options <../../user/configoptions>` are 
+available.
 
 The driver uses SQLite as a backend database
 when reading VFK data. By default, SQLite database is created in a

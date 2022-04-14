@@ -115,7 +115,8 @@ The following layer creation options are available:
 Configuration options
 ---------------------
 
-The following configuration options are available:
+The following :doc:`configuration options <../../user/configoptions>` are 
+available:
 
 -  :decl_configoption:`AMIGOCLOUD_API_URL`: defaults to 
    https://www.amigocloud.com/api/v1. Can be used to point to another server.

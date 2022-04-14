@@ -82,7 +82,8 @@ The following open options are available :
 Configuration options
 ---------------------
 
-The following configuration options are available :
+The following :doc:`configuration options <../../user/configoptions>` are 
+available:
 
 -  :decl_configoption:`PL_API_KEY` =value: To specify the Planet API KEY.
 

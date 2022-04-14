@@ -22,6 +22,9 @@ Driver capabilities
 Configuration options
 ---------------------
 
+The following :doc:`configuration options <../../user/configoptions>` are 
+available:
+
 -  :decl_configoption:`WASP_FIELDS`: a comma separated list of fields. 
    For elevation, the name of the height field. For roughness, the 
    name of the left and right roughness fields resp.

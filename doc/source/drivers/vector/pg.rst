@@ -252,9 +252,8 @@ Layer Creation Options
 Configuration Options
 ~~~~~~~~~~~~~~~~~~~~~
 
-There are a variety of `Configuration
-Options <http://trac.osgeo.org/gdal/wiki/ConfigOptions>`__ which help
-control the behavior of this driver.
+The following :doc:`configuration options <../../user/configoptions>` are 
+available:
 
 -  :decl_configoption:`PG_USE_COPY`: This may be "YES" for using COPY for inserting data
    to Postgresql. COPY is significantly faster than INSERT. COPY is used by

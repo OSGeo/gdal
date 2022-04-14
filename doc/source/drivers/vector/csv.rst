@@ -369,7 +369,9 @@ Layer Creation options
 
 Configuration options
 ---------------------
-They can be set with ``--config key value`` on command line utilities.
+
+The following :doc:`configuration options <../../user/configoptions>` are 
+available:
 
 -  :decl_configoption:`OGR_WKT_PRECISION` =int: Number of decimals for coordinate
    values. Default to 15. A heuristics is used to remove insignificant

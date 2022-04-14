@@ -61,7 +61,8 @@ The following authentication methods can be used:
 Configuration options
 ---------------------
 
-The following configuration options are available:
+The following :doc:`configuration options <../../user/configoptions>` are 
+available:
 
 -  :decl_configoption:`EEDA_BEARER` =value: Authentication Bearer value to pass to the
    API. This option is only useful when the token is computed by

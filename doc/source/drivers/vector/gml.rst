@@ -127,8 +127,11 @@ The :decl_configoption:`GML_ATTRIBUTES_TO_OGR_FIELDS`
 configuration option can be set to **YES** so that attributes of GML
 elements are also taken into account to create OGR fields.
 
-Configuration options can be set via the CPLSetConfigOption() function
-or as environment variables.
+The following :doc:`configuration options <../../user/configoptions>` are 
+available:
+
+:doc:`Configuration options <../../user/configoptions>` can e.g. be set via 
+the CPLSetConfigOption() function or as environment variables.
 
 You can use :decl_configoption:`GML_GFS_TEMPLATE` configuration option 
 (or **GFS_TEMPLATE** open option) set to a **path_to_template.gfs** in 

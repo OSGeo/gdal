@@ -69,6 +69,9 @@ Open options
 Configuration options
 ---------------------
 
+The following :doc:`configuration options <../../user/configoptions>` are 
+available:
+
 -  :decl_configoption:`GML_INVERT_AXIS_ORDER_IF_LAT_LONG=NO`: Some servers 
    do not respect EPSG axis order, in particular latitude,
    longitude order for WGS 84 geodetic coordinates, so it might be needed

@@ -147,11 +147,14 @@ the :decl_configoption:`GEOMETRY_AS_COLLECTION` configuration option to YES
 Configuration options
 ---------------------
 
--  :decl_configoption:`GEOMETRY_AS_COLLECTION` - used to control translation of
-   geometries: YES - wrap geometries with OGRGeometryCollection type
+The following :doc:`configuration options <../../user/configoptions>` are 
+available:
+
+-  :decl_configoption:`GEOMETRY_AS_COLLECTION`: used to control translation of
+   geometries: YES: wrap geometries with OGRGeometryCollection type
 -  :decl_configoption:`ATTRIBUTES_SKIP` - controls translation of attributes:
    YES - skip all attributes
--  :decl_configoption:`OGR_GEOJSON_MAX_OBJ_SIZE` - (GDAL >= 3.0.2) size in
+-  :decl_configoption:`OGR_GEOJSON_MAX_OBJ_SIZE` (GDAL >= 3.0.2): size in
    MBytes of the maximum accepted single feature, default value is 200MB
 
 Open options

@@ -246,7 +246,7 @@ Dataset open options
         The other database must be of a type recognized by this driver, so
         its geometry blobs are properly recognized (so typically not a GeoPackage one)
 
-Database Creation Options
+Database creation options
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -  **METADATA=YES/NO**: This can be used to avoid creating the
@@ -280,7 +280,7 @@ Database Creation Options
      (*self-initialization*). Starting with libspatialite 4.0,
      INIT_WITH_EPSG defaults to YES, but can be set to NO.
 
-Layer Creation Options
+Layer creation options
 ~~~~~~~~~~~~~~~~~~~~~~
 
 -  **FORMAT=WKB/WKT/SPATIALITE**: Controls the format used for the
@@ -351,8 +351,11 @@ Layer Creation Options
    String, DateTime, Date and Time. The COMPRESS_COLUMNS option is ignored in
    strict mode.
 
-Configuration Options
+Configuration options
 ---------------------
+
+The following :doc:`configuration options <../../user/configoptions>` are 
+available:
 
 - :decl_configoption:`SQLITE_LIST_ALL_TABLES` =YES/NO: Set to "YES" to list 
   all tables (not just the tables listed in the geometry_columns table). This 
@@ -367,9 +370,11 @@ Configuration Options
   of the SQLite file, see also 
   https://www.sqlite.org/pragma.html#pragma_journal_mode.
 
-- :decl_configoption:`OGR_SQLITE_CACHE`: see Performance hints.
+- :decl_configoption:`OGR_SQLITE_CACHE`: see 
+  :ref:`Performance hints <target_drivers_vector_sqlite_performance_hints>`.
 
-- :decl_configoption:`OGR_SQLITE_SYNCHRONOUS`: see Performance hints.
+- :decl_configoption:`OGR_SQLITE_SYNCHRONOUS`: see 
+  :ref:`Performance hints <target_drivers_vector_sqlite_performance_hints>`.
 
 - :decl_configoption:`OGR_SQLITE_LOAD_EXTENSIONS` =extension1,...,extensionN,ENABLE_SQL_LOAD_EXTENSION:
   (GDAL >= 3.5.0). Comma separated list of names of shared libraries containing

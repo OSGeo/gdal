@@ -152,7 +152,8 @@ The following layer creation options are available:
 Configuration options
 ---------------------
 
-The following configuration options are available :
+The following :doc:`configuration options <../../user/configoptions>` are 
+available:
 
 -  :decl_configoption:`CARTO_API_URL`: defaults to https://[account_name].carto.com/api/v2/sql.
    Can be used to point to another server.

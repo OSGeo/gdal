@@ -34,6 +34,9 @@ styles or complex line style attributes.
 Configuration options
 ---------------------
 
+The following :doc:`configuration options <../../user/configoptions>` are 
+available:
+
 - :decl_configoption:`OGR_ARC_STEPSIZE`: The approximation of arcs, 
   ellipses, circles and rounded polylines as linestrings is done by 
   splitting the arcs into subarcs of no more than a threshold angle. 

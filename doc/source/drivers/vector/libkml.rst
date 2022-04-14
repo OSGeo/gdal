@@ -422,8 +422,8 @@ Note: it is also possible to export fields as
 `<Data> <https://developers.google.com/kml/documentation/kmlreference#data>`__
 elements if the :decl_configoption:`LIBKML_USE_SCHEMADATA` configuration option is set to NO.
 
-A rich set of configuration options are available to define how fields
-in input and output, map to a KML
+A rich set of :doc:`configuration options <../../user/configoptions>` are 
+available to define how fields in input and output, map to a KML
 `<Placemark> <https://developers.google.com/kml/documentation/kmlreference#placemark>`__.
 For example, if you want a field called 'Cities' to map to the
 `<name> <https://developers.google.com/kml/documentation/kmlreference#name>`__;

@@ -181,7 +181,7 @@ Note: configuration option :decl_configoption:`OGR_SQLITE_JOURNAL` can
 be used to set the journal mode of the GeoPackage (and thus SQLite)
 file, see also https://www.sqlite.org/pragma.html#pragma_journal_mode.
 
-Creation Issues
+Creation issues
 ---------------
 
 When creating a new GeoPackage file, the driver will attempt to force
@@ -197,7 +197,7 @@ When setting the option, take care to meet the specific time format
 requirement of the GeoPackage standard,
 e.g. `for version 1.2 <https://www.geopackage.org/spec120/#r15>`__.
 
-Dataset Creation Options
+Dataset creation options
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 The following creation options (specific to vector, or common with
@@ -220,7 +220,7 @@ raster) are available:
 Other options are available for raster. See the :ref:`GeoPackage raster <raster.gpkg>`
 documentation page.
 
-Layer Creation Options
+Layer creation options
 ~~~~~~~~~~~~~~~~~~~~~~
 
 The following layer creation options are available:
@@ -270,15 +270,18 @@ The following layer creation options are available:
 Configuration options
 ---------------------
 
-The following :doc:`configuration options <../../user/configoptions>` are available:
+The following :doc:`configuration options <../../user/configoptions>` are 
+available:
 
 - :decl_configoption:`OGR_SQLITE_JOURNAL` can be used to set the journal mode 
   of the GeoPackage (and thus SQLite) file, see also 
   https://www.sqlite.org/pragma.html#pragma_journal_mode.
 
-- :decl_configoption:`OGR_SQLITE_CACHE`: see Performance hints.
-
-- :decl_configoption:`OGR_SQLITE_SYNCHRONOUS`: see Performance hints.
+- :decl_configoption:`OGR_SQLITE_CACHE`: see 
+  :ref:`Performance hints <target_drivers_vector_gpkg_performance_hints>`.
+  
+- :decl_configoption:`OGR_SQLITE_SYNCHRONOUS`: see 
+  :ref:`Performance hints <target_drivers_vector_gpkg_performance_hints>`.
 
 - :decl_configoption:`OGR_SQLITE_LOAD_EXTENSIONS` =extension1,...,extensionN,ENABLE_SQL_LOAD_EXTENSION:
   (GDAL >= 3.5.0). Comma separated list of names of shared libraries containing
@@ -292,7 +295,7 @@ The following :doc:`configuration options <../../user/configoptions>` are availa
   builds of sqlite3.
   Loading extensions as a potential security impact if they are untrusted.
 
-- :decl_configoption:`OGR_SQLITE_PRAGMA` can be useed to specify any SQLite
+- :decl_configoption:`OGR_SQLITE_PRAGMA` can be used to specify any SQLite
   `pragma <http://www.sqlite.org/pragma.html>`__ . The syntax is
   ``OGR_SQLITE_PRAGMA = "pragma_name=pragma_value[,pragma_name2=pragma_value2]*"``.
 
@@ -422,6 +425,8 @@ Level of support of GeoPackage Extensions
    * - :ref:`vector.geopackage_aspatial`
      - No
      - Yes. Deprecated in GDAL 2.2 for the *attributes* official data_type
+
+.. _target_drivers_vector_gpkg_performance_hints:
 
 Performance hints
 -----------------

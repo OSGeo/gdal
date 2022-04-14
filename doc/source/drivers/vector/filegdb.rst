@@ -173,6 +173,9 @@ Layer Creation Options
 Configuration options
 ---------------------
 
+The following :doc:`configuration options <../../user/configoptions>` are 
+available:
+
 - :decl_configoption:`FGDB_BULK_LOAD` can be set to YES to speed-up
   feature insertion (or sometimes solve problems when inserting a lot of
   features (see http://trac.osgeo.org/gdal/ticket/4420). The effect of
