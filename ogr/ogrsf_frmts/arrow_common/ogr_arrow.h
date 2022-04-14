@@ -218,7 +218,7 @@ protected:
         void                    CreateSchemaCommon();
         void                    FinalizeSchema();
         virtual void            CreateSchema() = 0;
-        virtual void            DoSomethingBeforeFinalFlushGroup() {}
+        virtual void            PerformStepsBeforeFinalFlushGroup() {}
 
         void                    CreateArrayBuilders();
         virtual bool            FlushGroup() = 0;

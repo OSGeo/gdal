@@ -290,6 +290,7 @@ inline bool OGRArrowLayer::MapArrowTypeToOGR(const std::shared_ptr<arrow::DataTy
             if( mapType->key_type()->id() == arrow::Type::STRING &&
                 (itemTypeId == arrow::Type::BOOL ||
                  IsIntegerArrowType(itemTypeId) ||
+                 itemTypeId == arrow::Type::HALF_FLOAT ||
                  itemTypeId == arrow::Type::FLOAT ||
                  itemTypeId == arrow::Type::DOUBLE ||
                  itemTypeId == arrow::Type::STRING) )

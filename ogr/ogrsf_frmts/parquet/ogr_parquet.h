@@ -126,7 +126,7 @@ class OGRParquetWriterLayer final: public OGRArrowWriterLayer
         virtual void            CloseFileWriter() override;
 
         virtual void            CreateSchema() override;
-        virtual void            DoSomethingBeforeFinalFlushGroup() override;
+        virtual void            PerformStepsBeforeFinalFlushGroup() override;
 
         virtual bool            FlushGroup() override;
 

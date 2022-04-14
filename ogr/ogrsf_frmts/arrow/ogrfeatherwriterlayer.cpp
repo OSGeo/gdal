@@ -346,11 +346,11 @@ void OGRFeatherWriterLayer::CreateWriter()
 }
 
 /************************************************************************/
-/*               DoSomethingBeforeFinalFlushGroup()                     */
+/*               PerformStepsBeforeFinalFlushGroup()                    */
 /************************************************************************/
 
 // Add a gdal:geo extension metadata for now, which embeds a bbox
-void OGRFeatherWriterLayer::DoSomethingBeforeFinalFlushGroup()
+void OGRFeatherWriterLayer::PerformStepsBeforeFinalFlushGroup()
 {
     if( m_poFooterKeyValueMetadata &&
         m_poFeatureDefn->GetGeomFieldCount() != 0 &&

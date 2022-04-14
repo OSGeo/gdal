@@ -179,10 +179,10 @@ void OGRParquetWriterLayer::CloseFileWriter()
 }
 
 /************************************************************************/
-/*               DoSomethingBeforeFinalFlushGroup()                     */
+/*               PerformStepsBeforeFinalFlushGroup()                    */
 /************************************************************************/
 
-void OGRParquetWriterLayer::DoSomethingBeforeFinalFlushGroup()
+void OGRParquetWriterLayer::PerformStepsBeforeFinalFlushGroup()
 {
     if( m_poKeyValueMetadata &&
         m_poFeatureDefn->GetGeomFieldCount() != 0 &&

@@ -83,7 +83,7 @@ void OGRArrowWriterLayer::FinalizeWriting()
     }
     if( IsFileWriterCreated() )
     {
-        DoSomethingBeforeFinalFlushGroup();
+        PerformStepsBeforeFinalFlushGroup();
 
         if( !m_apoBuilders.empty() )
             FlushGroup();
