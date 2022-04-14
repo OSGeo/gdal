@@ -270,7 +270,7 @@ The following layer creation options are available:
 Configuration options
 ---------------------
 
-The following configuration options are available:
+The following :doc:`configuration options <../../user/configoptions>` are available:
 
 - :decl_configoption:`OGR_SQLITE_JOURNAL` can be used to set the journal mode 
   of the GeoPackage (and thus SQLite) file, see also 
