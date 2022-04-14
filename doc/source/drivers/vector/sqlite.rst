@@ -392,6 +392,12 @@ available:
   `pragma <http://www.sqlite.org/pragma.html>`__ can be specified. The syntax is
   ``OGR_SQLITE_PRAGMA = "pragma_name=pragma_value[,pragma_name2=pragma_value2]*"``.
 
+- :decl_configoption:`SQLITE_USE_OGR_VFS` =YES enables extra buffering/caching 
+  by the GDAL/OGR I/O layer and can speed up I/O. More information 
+  :ref:`here <target_user_virtual_file_systems_file_caching>`.
+  Be aware that no file locking will occur if this option is activated, so 
+  concurrent edits may lead to database corruption.
+
 .. _target_drivers_vector_sqlite_performance_hints:
 
 Performance hints

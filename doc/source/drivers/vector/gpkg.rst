@@ -307,6 +307,12 @@ available:
   requirement of the GeoPackage standard,
   e.g. `for version 1.2 <https://www.geopackage.org/spec120/#r15>`__.
 
+- :decl_configoption:`SQLITE_USE_OGR_VFS` =YES enables extra buffering/caching 
+  by the GDAL/OGR I/O layer and can speed up I/O. More information 
+  :ref:`here <target_user_virtual_file_systems_file_caching>`.
+  Be aware that no file locking will occur if this option is activated, so 
+  concurrent edits may lead to database corruption.
+
 Metadata
 --------
 
