@@ -10,7 +10,7 @@ XYZ -- ASCII Gridded XYZ
 
 GDAL supports reading and writing ASCII **gridded** XYZ raster datasets
 (i.e. ungridded XYZ, LIDAR XYZ etc. must be opened by other means. See
-the documentation of the `gdal_grid <gdal_grid.html>`__ utility).
+the documentation of the :ref:`gdal_grid` utility).
 
 Those datasets are ASCII files with (at least) 3 columns, each line
 containing the X and Y coordinates of the center of the cell and the
