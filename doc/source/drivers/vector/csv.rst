@@ -370,7 +370,7 @@ Layer Creation options
 Configuration options
 ---------------------
 
-The following :doc:`configuration options <../../user/configoptions>` are 
+The following :ref:`configuration options <configoptions>` are 
 available:
 
 -  :decl_configoption:`OGR_WKT_PRECISION` =int: Number of decimals for coordinate

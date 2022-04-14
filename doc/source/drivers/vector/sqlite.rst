@@ -354,7 +354,7 @@ Layer creation options
 Configuration options
 ---------------------
 
-The following :doc:`configuration options <../../user/configoptions>` are 
+The following :ref:`configuration options <configoptions>` are 
 available:
 
 - :decl_configoption:`SQLITE_LIST_ALL_TABLES` =YES/NO: Set to "YES" to list 

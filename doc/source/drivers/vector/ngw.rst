@@ -64,7 +64,7 @@ if identifier is resource group. In other case this will be a separate layer.
 Configuration options
 ---------------------
 
-The following :doc:`configuration options <../../user/configoptions>` are 
+The following :ref:`configuration options <configoptions>` are 
 available:
 
 -  :decl_configoption:`NGW_USERPWD`: User name and password separated with colon.

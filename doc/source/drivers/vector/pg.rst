@@ -252,7 +252,7 @@ Layer Creation Options
 Configuration Options
 ~~~~~~~~~~~~~~~~~~~~~
 
-The following :doc:`configuration options <../../user/configoptions>` are 
+The following :ref:`configuration options <configoptions>` are 
 available:
 
 -  :decl_configoption:`PG_USE_COPY`: This may be "YES" for using COPY for inserting data

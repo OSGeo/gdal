@@ -479,7 +479,7 @@ options:
 Configuration options
 ---------------------
 
-The following (deprecated) :doc:`configuration options <../../user/configoptions>` are 
+The following (deprecated) :ref:`configuration options <configoptions>` are 
 available. Starting with GDAL 2.1, layer creation options are also available 
 and should be preferred (see above):
 

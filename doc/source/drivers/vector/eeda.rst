@@ -61,7 +61,7 @@ The following authentication methods can be used:
 Configuration options
 ---------------------
 
-The following :doc:`configuration options <../../user/configoptions>` are 
+The following :ref:`configuration options <configoptions>` are 
 available:
 
 -  :decl_configoption:`EEDA_BEARER` =value: Authentication Bearer value to pass to the

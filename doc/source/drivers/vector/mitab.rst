@@ -135,7 +135,7 @@ Layer Creation Options
 Configuration options
 ~~~~~~~~~~~~~~~~~~~~~
 
-The following :doc:`configuration options <../../user/configoptions>` are 
+The following :ref:`configuration options <configoptions>` are 
 available:
 
 -  :decl_configoption:`MITAB_SET_TOWGS84_ON_KNOWN_DATUM` =YES/NO:

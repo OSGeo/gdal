@@ -147,7 +147,7 @@ the :decl_configoption:`GEOMETRY_AS_COLLECTION` configuration option to YES
 Configuration options
 ---------------------
 
-The following :doc:`configuration options <../../user/configoptions>` are 
+The following :ref:`configuration options <configoptions>` are 
 available:
 
 -  :decl_configoption:`GEOMETRY_AS_COLLECTION`: used to control translation of

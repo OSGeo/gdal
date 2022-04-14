@@ -270,7 +270,7 @@ The following layer creation options are available:
 Configuration options
 ---------------------
 
-The following :doc:`configuration options <../../user/configoptions>` are 
+The following :ref:`configuration options <configoptions>` are 
 available:
 
 - :decl_configoption:`OGR_SQLITE_JOURNAL` can be used to set the journal mode 

@@ -34,7 +34,7 @@ Driver capabilities
 Configuration options
 ---------------------
 
-The following :doc:`configuration options <../../user/configoptions>` are 
+The following :ref:`configuration options <configoptions>` are 
 available:
 
 -  :decl_configoption:`OGR_ODS_HEADERS` = FORCE / DISABLE / AUTO : By default, the driver

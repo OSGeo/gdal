@@ -173,7 +173,7 @@ Layer Creation Options
 Configuration options
 ---------------------
 
-The following :doc:`configuration options <../../user/configoptions>` are 
+The following :ref:`configuration options <configoptions>` are 
 available:
 
 - :decl_configoption:`FGDB_BULK_LOAD` can be set to YES to speed-up

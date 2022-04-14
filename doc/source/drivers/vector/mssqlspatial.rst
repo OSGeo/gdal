@@ -147,7 +147,7 @@ Layer Creation Options
 Configuration options
 ---------------------
 
-The following :doc:`configuration options <../../user/configoptions>` are 
+The following :ref:`configuration options <configoptions>` are 
 available:
 
 -  :decl_configoption:`MSSQLSPATIAL_USE_BCP`: (From GDAL 2.1.0) Enable bulk insert when

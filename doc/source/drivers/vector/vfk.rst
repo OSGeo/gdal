@@ -42,7 +42,7 @@ Starting with GDAL 2.3, the following open options can be specified
 Configuration options
 ~~~~~~~~~~~~~~~~~~~~~
 
-Several :doc:`configuration options <../../user/configoptions>` are 
+Several :ref:`configuration options <configoptions>` are 
 available.
 
 The driver uses SQLite as a backend database

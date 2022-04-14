@@ -19,7 +19,7 @@ directly (but you may use the OGR VRT capabilities for that).
 Configuration options
 ---------------------
 
-The following :doc:`configuration options <../../user/configoptions>` are 
+The following :ref:`configuration options <configoptions>` are 
 available:
 
 -  :decl_configoption:`OGR_XLS_HEADERS` = FORCE / DISABLE / AUTO : By default, the driver

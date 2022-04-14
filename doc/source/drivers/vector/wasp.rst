@@ -22,7 +22,7 @@ Driver capabilities
 Configuration options
 ---------------------
 
-The following :doc:`configuration options <../../user/configoptions>` are 
+The following :ref:`configuration options <configoptions>` are 
 available:
 
 -  :decl_configoption:`WASP_FIELDS`: a comma separated list of fields. 

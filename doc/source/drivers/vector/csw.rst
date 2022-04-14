@@ -69,7 +69,7 @@ Open options
 Configuration options
 ---------------------
 
-The following :doc:`configuration options <../../user/configoptions>` are 
+The following :ref:`configuration options <configoptions>` are 
 available:
 
 -  :decl_configoption:`GML_INVERT_AXIS_ORDER_IF_LAT_LONG=NO`: Some servers 
