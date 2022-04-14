@@ -115,7 +115,7 @@ The following layer creation options are available:
 Configuration options
 ---------------------
 
-The following :doc:`configuration options <../../user/configoptions>` are 
+The following :ref:`configuration options <configoptions>` are 
 available:
 
 -  :decl_configoption:`AMIGOCLOUD_API_URL`: defaults to 
