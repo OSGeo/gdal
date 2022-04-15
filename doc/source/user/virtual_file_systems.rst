@@ -672,6 +672,8 @@ The file referenced by /vsisparse/ should be an XML control file formatted somet
 
 Hopefully the values and semantics are fairly obvious.
 
+.. _target_user_virtual_file_systems_file_caching:
+
 File caching
 ------------
 

@@ -39,17 +39,6 @@ Currently the following one is supported:
 
 If several parameters are specified, they must be separated by a space.
 
-Configuration options
----------------------
-
-The following configuration options are available :
-
--  CARTO_API_URL: defaults to https://[account_name].carto.com/api/v2/sql.
-   Can be used to point to another server.
--  CARTO_HTTPS: can be set to NO to use http:// protocol instead of
-   https:// (only if CARTO_API_URL is not defined).
--  CARTO_API_KEY: see following paragraph.
-
 Authentication
 --------------
 
@@ -78,7 +67,7 @@ Paging
 ------
 
 Features are retrieved from the server by chunks of 500 by default. This
-number can be altered with the CARTO_PAGE_SIZE configuration option.
+number can be altered with the :decl_configoption:`CARTO_PAGE_SIZE` configuration option.
 
 Write support
 -------------
@@ -160,6 +149,20 @@ The following layer creation options are available:
    are preserved. The default value is "YES". If enabled the table
    (layer) name will also be laundered.
 
+Configuration options
+---------------------
+
+The following :ref:`configuration options <configoptions>` are 
+available:
+
+-  :decl_configoption:`CARTO_API_URL`: defaults to https://[account_name].carto.com/api/v2/sql.
+   Can be used to point to another server.
+-  :decl_configoption:`CARTO_HTTPS`: can be set to NO to use http:// protocol instead of
+   https:// (only if CARTO_API_URL is not defined).
+-  :decl_configoption:`CARTO_API_KEY`: see following paragraph.
+-  :decl_configoption:`CARTO_PAGE_SIZE`: features are retrieved from the server by chunks 
+   of 500 by default. This number can be altered with the configuration option.
+   
 Examples
 --------
 
