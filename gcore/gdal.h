@@ -519,6 +519,12 @@ typedef struct GDALDimensionHS* GDALDimensionH;
  */
 #define GDAL_DCAP_FIELD_DOMAINS "DCAP_FIELD_DOMAINS"
 
+/** Capability set by drivers for formats which support renaming vector layers.
+ *
+ * @since GDAL 3.5
+ */
+#define GDAL_DCAP_RENAME_LAYERS "DCAP_RENAME_LAYERS"
+
 /** List of (space separated) field domain types support by the AddFieldDomain() API.
  *
  * Supported values are Coded, Range and Glob, corresponding to the OGRFieldDomainType::OFDT_CODED,

@@ -1862,7 +1862,8 @@ OGRErr OGR_L_SetIgnoredFields( OGRLayerH hLayer, const char **papszFields )
 
 /** Rename layer.
  *
- * This operation is implemented only by layers that expose the OLCRename capability.
+ * This operation is implemented only by layers that expose the OLCRename capability,
+ * and drivers that expose the GDAL_DCAP_RENAME_LAYERS capability
  *
  * This operation will fail if a layer with the new name already exists.
  *
@@ -1890,7 +1891,8 @@ OGRErr OGRLayer::Rename( CPL_UNUSED const char* pszNewName )
 
 /** Rename layer.
  *
- * This operation is implemented only by layers that expose the OLCRename capability.
+ * This operation is implemented only by layers that expose the OLCRename capability,
+ * and drivers that expose the GDAL_DCAP_RENAME_LAYERS capability
  *
  * This operation will fail if a layer with the new name already exists.
  *
