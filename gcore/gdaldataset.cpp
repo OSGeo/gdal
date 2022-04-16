@@ -6352,6 +6352,19 @@ GDALDataset::ExecuteSQL( const char *pszStatement,
             CSLDestroy(papszTokens);
             return nullptr;
         }
+        else if( nTokens == 6 && EQUAL(papszTokens[3], "RENAME") &&
+                 EQUAL(papszTokens[4], "TO") )
+        {
+            const char* pszSrcTableName = papszTokens[2];
+            const char* pszDstTableName = papszTokens[5];
+            auto poSrcLayer = GetLayerByName(pszSrcTableName);
+            if( poSrcLayer )
+            {
+                CPL_IGNORE_RET_VAL( poSrcLayer->Rename( pszDstTableName ) );
+                CSLDestroy(papszTokens);
+                return nullptr;
+            }
+        }
         else if( nTokens >= 4 && EQUAL(papszTokens[3], "RENAME") )
         {
             ProcessSQLAlterTableRenameColumn(pszStatement);
