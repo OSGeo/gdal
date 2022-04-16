@@ -284,6 +284,12 @@ CPLErr      OGRMutexedLayer::SetMetadataItem( const char * pszName,
     return OGRLayerDecorator::SetMetadataItem(pszName, pszValue, pszDomain);
 }
 
+OGRErr OGRMutexedLayer::Rename(const char* pszNewName)
+{
+    CPLMutexHolderOptionalLockD(m_hMutex);
+    return OGRLayerDecorator::Rename(pszNewName);
+}
+
 #if defined(WIN32) && defined(_MSC_VER)
 // Horrible hack: for some reason MSVC doesn't export the class
 // if it is not referenced from the DLL itself

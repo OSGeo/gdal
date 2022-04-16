@@ -167,6 +167,8 @@ class CPL_DLL OGRLayer : public GDALMajorObject
 
     virtual int         TestCapability( const char * ) = 0;
 
+    virtual OGRErr      Rename( const char* pszNewName ) CPL_WARN_UNUSED_RESULT;
+
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
     virtual OGRErr      DeleteField( int iField );
