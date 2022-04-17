@@ -314,6 +314,15 @@ public:
   const OGRFieldDomain* GetFieldDomain(const std::string& name) const override;
   std::vector<std::string> GetFieldDomainNames(CSLConstList papszOptions = nullptr) const override;
 
+  bool        AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,
+                             std::string& failureReason) override;
+
+  bool        DeleteFieldDomain(const std::string& name,
+                                std::string& failureReason) override;
+
+  bool        UpdateFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,
+                                std::string& failureReason) override;
+
   std::shared_ptr<GDALGroup> GetRootGroup() const override { return m_poRootGroup; }
 
   Geodatabase* GetGDB() { return m_pGeodatabase; }

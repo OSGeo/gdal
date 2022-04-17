@@ -65,7 +65,8 @@ Field domains
 
 .. versionadded:: 3.3
 
-Retrieving coded and range field domains are supported. Writing is not supported.
+Retrieving coded and range field domains are supported.
+Writing support has been added in GDAL 3.5.
 
 Hiearchical organization
 ------------------------
@@ -173,7 +174,7 @@ Layer Creation Options
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are 
+The following :ref:`configuration options <configoptions>` are
 available:
 
 - :decl_configoption:`FGDB_BULK_LOAD` can be set to YES to speed-up
@@ -181,7 +182,7 @@ available:
   features (see http://trac.osgeo.org/gdal/ticket/4420). The effect of
   this configuration option is to cause a write lock to be taken and a
   temporary disabling of the indexes. Those are restored when the
-  datasource is closed or when a read operation is done. Bulk load is 
+  datasource is closed or when a read operation is done. Bulk load is
   enabled by default for newly created layers (unless otherwise specified).
 
 Examples
