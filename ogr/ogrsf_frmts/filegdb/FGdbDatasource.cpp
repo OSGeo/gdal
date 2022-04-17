@@ -752,6 +752,21 @@ OGRLayer * FGdbDataSource::ExecuteSQL( const char *pszSQLCommand,
             return nullptr;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Special case REPACK                                             */
+/* -------------------------------------------------------------------- */
+    if (EQUAL(pszSQLCommand, "REPACK"))
+    {
+        auto hr = m_pGeodatabase->CompactDatabase();
+        if (FAILED(hr))
+        {
+            GDBErr(hr, "CompactDatabase failed");
+            return new OGRFGdbSingleFeatureLayer( "result", "false" );
+        }
+        return new OGRFGdbSingleFeatureLayer( "result", "true" );
+    }
+
+
     /* TODO: remove that workaround when the SDK has finally a decent */
     /* SQL support ! */
     if( STARTS_WITH_CI(pszSQLCommand, "SELECT ") && pszDialect == nullptr )

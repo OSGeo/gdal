@@ -308,6 +308,12 @@ def test_ogr_fgdb_DeleteField():
     assert lyr.DeleteFeature(-10) == ogr.OGRERR_NON_EXISTING_FEATURE, \
         'Expected failure of DeleteFeature().'
 
+    sql_lyr = ds.ExecuteSQL("REPACK")
+    assert sql_lyr
+    f = sql_lyr.GetNextFeature()
+    assert f[0] == 'true'
+    ds.ReleaseResultSet(sql_lyr)
+
     feat = None
     ds = None
 

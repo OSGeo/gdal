@@ -60,6 +60,9 @@ Special SQL requests
 can be used as special SQL requests to get respectively the definition
 and metadata of a FileGDB table as XML content.
 
+Starting with GDAL 3.5, the "REPACK" special SQL request can be issued to
+ask for database compaction.
+
 Field domains
 -------------
 
