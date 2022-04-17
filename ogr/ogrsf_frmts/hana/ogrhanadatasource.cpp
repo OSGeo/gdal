@@ -641,7 +641,7 @@ int OGRHanaDataSource::Open(const char* newName, char** openOptions, int update)
 
     updateMode_ = update;
     detectGeometryType_ =
-        CPLFetchBool(openOptions, OpenOptionsConstants::DETECT_GEOMETRY_TYPE, "YES");
+        CPLFetchBool(openOptions, OpenOptionsConstants::DETECT_GEOMETRY_TYPE, true);
 
     std::size_t prefixLength = strlen(GetPrefix());
     char** connOptions = CSLTokenizeStringComplex(newName + prefixLength, ";", TRUE, FALSE);
