@@ -548,5 +548,18 @@ def test_ogr_factory_8():
             pytest.fail(dst_geom.ExportToIsoWkt())
 
 
+###############################################################################
+# Test forceTo()
 
 
+def test_ogr_factory_failed_forceTo():
+
+    tests = [('MULTICURVE ZM ((0.0 0.0,0 0,0 0,0 0,0.0 0.0))', ogr.wkbTINM, 'MULTICURVE ZM ((0.0 0.0,0 0,0 0,0 0,0.0 0.0))'),]
+    for (src_wkt, target_type, exp_wkt) in tests:
+        src_geom = ogr.CreateGeometryFromWkt(src_wkt)
+        dst_geom = ogr.ForceTo(src_geom, target_type)
+
+        if ogrtest.check_feature_geometry(dst_geom, exp_wkt):
+            print(src_wkt)
+            print(target_type)
+            pytest.fail(dst_geom.ExportToIsoWkt())
