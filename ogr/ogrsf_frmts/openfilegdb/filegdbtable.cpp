@@ -815,6 +815,7 @@ int FileGDBTable::Open(const char* pszFilename,
         eTableGeomType = (FileGDBTableGeometryType) byTableGeomType;
     else
         CPLDebug("OpenFileGDB", "Unknown table geometry type: %d", byTableGeomType);
+    m_bStringsAreUTF8 = (abyHeader[9] & 0x1) != 0;
     const GByte byTableGeomTypeFlags = abyHeader[11];
     m_bGeomTypeHasM = (byTableGeomTypeFlags & (1 << 6)) != 0;
     m_bGeomTypeHasZ = (byTableGeomTypeFlags & (1 << 7)) != 0;
@@ -920,9 +921,17 @@ int FileGDBTable::Open(const char* pszFilename,
                 {
                     if( eType == FGFT_STRING )
                     {
-                        sDefault.String = (char*)CPLMalloc(defaultValueLength+1);
-                        memcpy(sDefault.String, pabyIter, defaultValueLength);
-                        sDefault.String[defaultValueLength] = 0;
+                        if( m_bStringsAreUTF8 )
+                        {
+                            sDefault.String = (char*)CPLMalloc(defaultValueLength+1);
+                            memcpy(sDefault.String, pabyIter, defaultValueLength);
+                            sDefault.String[defaultValueLength] = 0;
+                        }
+                        else
+                        {
+                            m_osTempString = ReadUTF16String(pabyIter, defaultValueLength/2);
+                            sDefault.String = CPLStrdup(m_osTempString.c_str());
+                        }
                     }
                     else if( eType == FGFT_INT16 && defaultValueLength == 2 )
                     {
@@ -1565,14 +1574,23 @@ OGRField* FileGDBTable::GetFieldValue(int iCol)
                 returnError();
             }
 
-            /* eCurFieldType = OFTString; */
-            sCurField.String = (char*) pabyIterVals;
-            pabyIterVals += nLength;
+            if( m_bStringsAreUTF8 )
+            {
+                /* eCurFieldType = OFTString; */
+                sCurField.String = (char*) pabyIterVals;
+                pabyIterVals += nLength;
 
-            /* This is a trick to avoid a alloc()+copy(). We null-terminate */
-            /* after the string, and save the pointer and value to restore */
-            nChSaved = *pabyIterVals;
-            *pabyIterVals = '\0';
+                /* This is a trick to avoid a alloc()+copy(). We null-terminate */
+                /* after the string, and save the pointer and value to restore */
+                nChSaved = *pabyIterVals;
+                *pabyIterVals = '\0';
+            }
+            else
+            {
+                m_osTempString = ReadUTF16String(pabyIterVals, nLength / 2);
+                sCurField.String = &m_osTempString[0];
+                pabyIterVals += nLength;
+            }
 
             /* CPLDebug("OpenFileGDB", "Field %d, row %d: %s", iCol, nCurRow, sCurField.String); */
 
