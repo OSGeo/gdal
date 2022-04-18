@@ -39,7 +39,7 @@ default, it also builds on the fly a in-memory spatial index during
 the first sequential read of a layer. Following spatial filtering
 operations on that layer will then benefit from that spatial index. The
 building of this in-memory spatial index can be disabled by setting the
-OPENFILEGDB_IN_MEMORY_SPI configuration option to NO.
+:decl_configoption:`OPENFILEGDB_IN_MEMORY_SPI` configuration option to NO.
 
 SQL support
 -----------

@@ -308,6 +308,12 @@ def test_ogr_fgdb_DeleteField():
     assert lyr.DeleteFeature(-10) == ogr.OGRERR_NON_EXISTING_FEATURE, \
         'Expected failure of DeleteFeature().'
 
+    sql_lyr = ds.ExecuteSQL("REPACK")
+    assert sql_lyr
+    f = sql_lyr.GetNextFeature()
+    assert f[0] == 'true'
+    ds.ReleaseResultSet(sql_lyr)
+
     feat = None
     ds = None
 
@@ -2200,13 +2206,12 @@ def test_ogr_fgdb_alias(fgdb_drv):
     except OSError:
         pass
 
+
 ###############################################################################
 # Test reading field domains
 
+def _check_domains(ds):
 
-def test_ogr_fgdb_read_domains():
-
-    ds = gdal.OpenEx('data/filegdb/Domains.gdb', gdal.OF_VECTOR)
     assert set(ds.GetFieldDomainNames()) == {'MedianType', 'RoadSurfaceType', 'SpeedLimit'}
 
     with gdaltest.error_handler():
@@ -2239,6 +2244,56 @@ def test_ogr_fgdb_read_domains():
     assert domain.GetFieldSubType() == fld_defn.GetSubType()
     assert domain.GetEnumeration() == {'0': 'None', '1': 'Cement'}
 
+
+def test_ogr_fgdb_read_domains():
+
+    ds = gdal.OpenEx('data/filegdb/Domains.gdb', gdal.OF_VECTOR)
+    _check_domains(ds)
+
+
+###############################################################################
+# Test writing field domains
+
+
+def test_ogr_fgdb_write_domains(fgdb_drv):
+
+    out_dir = "tmp/test_ogr_fgdb_write_domains.gdb"
+    try:
+        shutil.rmtree(out_dir)
+    except OSError:
+        pass
+
+    ds = gdal.VectorTranslate(out_dir, 'data/filegdb/Domains.gdb',
+                              options = '-f FileGDB')
+    _check_domains(ds)
+
+    assert ds.TestCapability(ogr.ODsCAddFieldDomain) == 1
+    assert ds.TestCapability(ogr.ODsCDeleteFieldDomain) == 1
+    assert ds.TestCapability(ogr.ODsCUpdateFieldDomain) == 1
+
+    with gdaltest.error_handler():
+        assert not ds.DeleteFieldDomain('not_existing')
+
+    domain = ogr.CreateCodedFieldDomain('unused_domain', 'desc', ogr.OFTInteger, ogr.OFSTNone, {1: "one", "2": None})
+    assert ds.AddFieldDomain(domain)
+    assert ds.DeleteFieldDomain('unused_domain')
+    domain = ds.GetFieldDomain('unused_domain')
+    assert domain is None
+
+    domain = ogr.CreateRangeFieldDomain('SpeedLimit', 'desc', ogr.OFTInteger, ogr.OFSTNone, 1, True, 2, True)
+    assert ds.UpdateFieldDomain(domain)
+
+    ds = None
+
+    ds = gdal.OpenEx(out_dir, allowed_drivers = ['FileGDB'])
+    domain = ds.GetFieldDomain('SpeedLimit')
+    assert domain.GetDescription() == 'desc'
+    ds = None
+
+    try:
+        shutil.rmtree(out_dir)
+    except OSError:
+        pass
 
 
 ###############################################################################

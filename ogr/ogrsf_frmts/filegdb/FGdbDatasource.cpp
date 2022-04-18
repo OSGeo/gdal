@@ -569,6 +569,10 @@ int FGdbDataSource::TestCapability( const char * pszCap )
         return m_bUpdate;
     else if( EQUAL(pszCap,ODsCRandomLayerWrite) )
         return m_bUpdate;
+    else if( EQUAL(pszCap, ODsCAddFieldDomain) ||
+             EQUAL(pszCap, ODsCDeleteFieldDomain) ||
+             EQUAL(pszCap, ODsCUpdateFieldDomain) )
+        return m_bUpdate;
 
     return FALSE;
 }
@@ -748,6 +752,21 @@ OGRLayer * FGdbDataSource::ExecuteSQL( const char *pszSQLCommand,
             return nullptr;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Special case REPACK                                             */
+/* -------------------------------------------------------------------- */
+    if (EQUAL(pszSQLCommand, "REPACK"))
+    {
+        auto hr = m_pGeodatabase->CompactDatabase();
+        if (FAILED(hr))
+        {
+            GDBErr(hr, "CompactDatabase failed");
+            return new OGRFGdbSingleFeatureLayer( "result", "false" );
+        }
+        return new OGRFGdbSingleFeatureLayer( "result", "true" );
+    }
+
+
     /* TODO: remove that workaround when the SDK has finally a decent */
     /* SQL support ! */
     if( STARTS_WITH_CI(pszSQLCommand, "SELECT ") && pszDialect == nullptr )
@@ -861,7 +880,7 @@ const OGRFieldDomain* FGdbDataSource::GetFieldDomain(const std::string& name) co
     const auto hr = m_pGeodatabase->GetDomainDefinition(StringToWString(name), domainDef);
     if (FAILED(hr))
     {
-        GDBErr(hr, "Failed in GetDomainDefinition()");
+        // GDBErr(hr, "Failed in GetDomainDefinition()");
         return nullptr;
     }
 
@@ -895,4 +914,110 @@ std::vector<std::string> FGdbDataSource::GetFieldDomainNames(CSLConstList) const
         oDomainNamesList.emplace_back(WStringToString(osNameW));
     }
     return oDomainNamesList;
+}
+
+/************************************************************************/
+/*                          AddFieldDomain()                            */
+/************************************************************************/
+
+bool FGdbDataSource::AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,
+                                    std::string& failureReason)
+{
+    const auto domainName = domain->GetName();
+    if( !m_bUpdate )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "AddFieldDomain() not supported on read-only dataset");
+        return false;
+    }
+
+    if( GetFieldDomain(domainName) != nullptr )
+    {
+        failureReason = "A domain of identical name already exists";
+        return false;
+    }
+
+    std::string osXML = BuildXMLFieldDomainDef(domain.get(), true, failureReason);
+    if( osXML.empty() )
+    {
+        return false;
+    }
+
+    const auto hr = m_pGeodatabase->CreateDomain(osXML);
+    if (FAILED(hr))
+    {
+        GDBErr(hr, "Failed in CreateDomain()");
+        CPLDebug("FileGDB", "XML of domain: %s", osXML.c_str());
+        return false;
+    }
+
+    m_oMapFieldDomains[domainName] = std::move(domain);
+
+    return true;
+}
+
+/************************************************************************/
+/*                         DeleteFieldDomain()                          */
+/************************************************************************/
+
+bool FGdbDataSource::DeleteFieldDomain(const std::string& name,
+                                       std::string& /*failureReason*/)
+{
+    if( !m_bUpdate )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "DeleteFieldDomain() not supported on read-only dataset");
+        return false;
+    }
+
+    const auto hr = m_pGeodatabase->DeleteDomain(StringToWString(name));
+    if (FAILED(hr))
+    {
+        GDBErr(hr, "Failed in DeleteDomain()");
+        return false;
+    }
+
+    m_oMapFieldDomains.erase(name);
+
+    return true;
+}
+
+/************************************************************************/
+/*                        UpdateFieldDomain()                           */
+/************************************************************************/
+
+bool FGdbDataSource::UpdateFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,
+                                       std::string& failureReason)
+{
+    const auto domainName = domain->GetName();
+    if( !m_bUpdate )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "AddFieldDomain() not supported on read-only dataset");
+        return false;
+    }
+
+    if( GetFieldDomain(domainName) == nullptr )
+    {
+        failureReason = "The domain should already exist to be updated";
+        return false;
+    }
+
+    std::string osXML = BuildXMLFieldDomainDef(domain.get(), true, failureReason);
+    if( osXML.empty() )
+    {
+        return false;
+    }
+
+    const auto hr = m_pGeodatabase->AlterDomain(osXML);
+    if (FAILED(hr))
+    {
+        GDBErr(hr, "Failed in AlterDomain()");
+        CPLDebug("FileGDB", "XML of domain: %s", osXML.c_str());
+        return false;
+    }
+
+    m_oMapFieldDomains[domainName] = std::move(domain);
+
+    return true;
 }

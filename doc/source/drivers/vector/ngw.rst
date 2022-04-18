@@ -64,21 +64,22 @@ if identifier is resource group. In other case this will be a separate layer.
 Configuration options
 ---------------------
 
-The following configuration options are available:
+The following :ref:`configuration options <configoptions>` are 
+available:
 
--  **NGW_USERPWD**: User name and password separated with colon.
+-  :decl_configoption:`NGW_USERPWD`: User name and password separated with colon.
    Optional and can be set using open options.
--  **NGW_BATCH_SIZE**: Size of feature insert and update operations
+-  :decl_configoption:`NGW_BATCH_SIZE`: Size of feature insert and update operations
    cache before send to server. If batch size is -1 batch mode is
    disabled. Delete operation will execute immediately.
--  **NGW_PAGE_SIZE**: If supported by server, fetch features from remote
+-  :decl_configoption:`NGW_PAGE_SIZE`: If supported by server, fetch features from remote
    server will use paging. The -1 value disables paging even it
    supported by server.
--  **NGW_NATIVE_DATA**: Whether to store the json *extensions* key in
+-  :decl_configoption:`NGW_NATIVE_DATA`: Whether to store the json *extensions* key in
    feature native data.
--  **NGW_JSON_DEPTH**: The depth of json response that can be parsed. If
+-  :decl_configoption:`NGW_JSON_DEPTH`: The depth of json response that can be parsed. If
    depth is greater than this value, parse error occurs.
--  **NGW_EXTENSIONS**: Comma separated extensions list. Available values are 
+-  :decl_configoption:`NGW_EXTENSIONS`: Comma separated extensions list. Available values are 
    `description` and `attachment`. This needed to fill native data.
 
 Authentication
@@ -136,7 +137,8 @@ Paging
 
 Features can retrieved from NextGIS Web by chunks if supported by server
 (available since NextGIS Web 3.1). The chunk size can be altered with
-the NGW_PAGE_SIZE configuration option or PAGE_SIZE open option.
+the :decl_configoption:`NGW_PAGE_SIZE` configuration option or PAGE_SIZE 
+open option.
 
 Write support
 -------------

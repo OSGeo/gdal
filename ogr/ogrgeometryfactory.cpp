@@ -4845,17 +4845,21 @@ OGRGeometry * OGRGeometryFactory::forceTo( OGRGeometry* poGeom,
         {
             OGRGeometry* poSubGeom = poGC->getGeometryRef(0);
             if( poSubGeom )
+            {
                 poSubGeom->assignSpatialReference(
                     poGeom->getSpatialReference());
-            poGC->removeGeometry(0, FALSE);
-            OGRGeometry* poRet = forceTo(poSubGeom, eTargetType, papszOptions);
-            if( OGR_GT_IsSubClassOf(wkbFlatten(poRet->getGeometryType()),
-                                    eTargetType) )
-            {
-                delete poGC;
-                return poRet;
+                poGC->removeGeometry(0, FALSE);
+                OGRGeometry* poRet = forceTo(poSubGeom->clone(), eTargetType, papszOptions);
+                if( OGR_GT_IsSubClassOf(wkbFlatten(poRet->getGeometryType()),
+                                        eTargetType) )
+                {
+                    delete poGC;
+                    delete poSubGeom;
+                    return poRet;
+                }
+                poGC->addGeometryDirectly(poSubGeom);
+                delete poRet;
             }
-            poGC->addGeometryDirectly(poSubGeom);
         }
     }
     else if( OGR_GT_IsSubClassOf(eType, wkbCurvePolygon) &&

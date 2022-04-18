@@ -240,6 +240,16 @@ AS float))) FROM test GROUP BY way_id"* will return :
      way_id (String) = 2
      LINESTRING (-2 49,-3 50)
 
+VSI Virtual File System API support
+-----------------------------------
+
+The driver supports reading and writing to files managed by VSI Virtual
+File System API, which include "regular" files, as well as files in the
+/vsizip/ (read-write) , /vsigzip/ (read-only) , /vsicurl/ (read-only)
+domains.
+
+Writing to /dev/stdout or /vsistdout/ is also supported.
+
 Open options
 ------------
 
@@ -322,7 +332,8 @@ deleting or replacing existing features, or adding/modifying/deleting
 fields is supported, provided the modifications done are small enough to
 be stored in RAM temporarily before flushing to disk.
 
-Layer Creation options:
+Layer Creation options
+----------------------
 
 -  **LINEFORMAT**: By default when creating new .csv files they are
    created with the line termination conventions of the local platform
@@ -356,26 +367,19 @@ Layer Creation options:
    IF_NEEDED). Defaults to IF_AMBIGUOUS (behavior in older versions was
    IF_NEEDED)
 
-Configuration options (set with ``--config key value`` on command line
-utilities):
+Configuration options
+---------------------
 
--  **OGR_WKT_PRECISION**\ =int: Number of decimals for coordinate
+The following :ref:`configuration options <configoptions>` are 
+available:
+
+-  :decl_configoption:`OGR_WKT_PRECISION` =int: Number of decimals for coordinate
    values. Default to 15. A heuristics is used to remove insignificant
    trailing 00000x or 99999x that can appear when formatting decimal
    numbers.
--  **OGR_WKT_ROUND**\ =YES/NO: (GDAL >= 2.3) Whether to enable the above
+-  :decl_configoption:`OGR_WKT_ROUND` =YES/NO: (GDAL >= 2.3) Whether to enable the above
    mentioned heuristics to remove insignificant trailing 00000x or
    99999x. Default to YES.
-
-VSI Virtual File System API support
------------------------------------
-
-The driver supports reading and writing to files managed by VSI Virtual
-File System API, which include "regular" files, as well as files in the
-/vsizip/ (read-write) , /vsigzip/ (read-only) , /vsicurl/ (read-only)
-domains.
-
-Writing to /dev/stdout or /vsistdout/ is also supported.
 
 Examples
 ~~~~~~~~
