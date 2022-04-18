@@ -1574,7 +1574,7 @@ OGRField* FileGDBTable::GetFieldValue(int iCol)
                 returnError();
             }
 
-            if( m_bStringsAreUTF8 )
+            if( m_bStringsAreUTF8 || apoFields[iCol]->eType != FGFT_STRING )
             {
                 /* eCurFieldType = OFTString; */
                 sCurField.String = (char*) pabyIterVals;
