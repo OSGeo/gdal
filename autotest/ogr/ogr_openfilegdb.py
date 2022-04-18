@@ -1650,6 +1650,22 @@ def test_ogr_openfilegdb_non_spatial_table_outside_gdb_items():
         assert name not in private_layers
 
 
+
+###############################################################################
+# Test reading .gdb with strings encoded as UTF16 instead of UTF8
+# (e.g. using -lco CONFIGURATION_KEYWORD=TEXT_UTF16 of FileGDB driver)
+
+
+def test_ogr_openfilegdb_strings_utf16():
+    ds = ogr.Open('data/filegdb/test_utf16.gdb.zip')
+    assert ds is not None
+    lyr = ds.GetLayer(0)
+    fld_defn = lyr.GetLayerDefn().GetFieldDefn(0)
+    assert fld_defn.GetDefault() == "'éven'"
+    f = lyr.GetNextFeature()
+    assert f['str'] == 'évenéven'
+
+
 ###############################################################################
 # Cleanup
 
