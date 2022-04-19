@@ -303,6 +303,7 @@ class JPGDataset final: public JPGDatasetCommon
     struct jpeg_progress_mgr sJProgress;
 
     virtual CPLErr LoadScanline(int, GByte* outBuffer) override;
+    CPLErr         StartDecompress();
     virtual void   StopDecompress() override;
     virtual CPLErr Restart() override;
     virtual int GetDataPrecision() override { return sDInfo.data_precision; }
