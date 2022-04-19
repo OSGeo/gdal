@@ -5,5 +5,5 @@ target_include_directories(
                    $<TARGET_PROPERTY:gdal_MEM,SOURCE_DIR>)
 if (GDAL_USE_EXPAT)
   target_compile_definitions(ogr_XLSX PRIVATE -DHAVE_EXPAT)
-  gdal_target_link_libraries(ogr_XLSX PRIVATE ${EXPAT_LIBRARIES})
+  gdal_target_link_libraries(ogr_XLSX PRIVATE ${EXPAT_TARGET})
 endif ()

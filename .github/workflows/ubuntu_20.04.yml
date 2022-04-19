@@ -8,12 +8,17 @@ on:
         paths-ignore:
             - 'doc/**'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
 
 jobs:
 
   ubuntu_20_04_build:
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
+    env:
+        HANA_CONNECTION_STR: "DRIVER=/usr/sap/hdbclient/libodbcHDB.so;HOST=917df316-4e01-4a10-be54-eac1b6ab15fb.hana.prod-us10.hanacloud.ondemand.com;PORT=443;USER=GDALCI;PASSWORD=Z2!.S-bN]vh62\\G"
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -64,9 +69,6 @@ jobs:
       - name: Run C++ tests
         run: docker run -e GITHUB_WORKFLOW --rm gdal sh -c "cd /build/autotest/cpp && make quick_test && make testsse2 && (if (g++ -march=native -dM -E -x c++ - < /dev/null | grep AVX2 >/dev/null); then make testavx2; else /bin/true; fi)"
 
-      - name: Run SWIG Perl tests
-        run: docker run --rm gdal sh -c "cd /build/swig/perl && make test"
-
       - name: Run SWIG Java tests
         run: docker run --rm gdal sh -c "cd /build/swig/java && make test"
 
@@ -81,7 +83,7 @@ jobs:
 
       - name: Run pytest
         # --security-opt seccomp=unconfined, so that the userfaulfd syscall is available
-        run: docker run -e CI -e TRAVIS=yes -e TRAVIS_BRANCH=ubuntu_2004 -e GITHUB_WORKFLOW --security-opt seccomp=unconfined --rm gdal sh -c "cd /build/autotest && pip3 install -U -r requirements.txt && pytest"
+        run: docker run -e CI -e TRAVIS=yes -e TRAVIS_BRANCH=ubuntu_2004 -e GITHUB_WORKFLOW -e OGR_HANA_CONNECTION_STRING=${HANA_CONNECTION_STR} --security-opt seccomp=unconfined --rm gdal sh -c "cd /build/autotest && pip3 install -U -r requirements.txt && pip3 install -U hdbcli && pytest"
 
       - name: Build fake ossfuzz fuzzers
         run: docker run --rm gdal sh -c "cd /build/fuzzers && make dummyfuzzers_dynamic"

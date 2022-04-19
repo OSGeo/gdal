@@ -2181,7 +2181,8 @@ GDALDataset *GRIBDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
     VSIFSeekL(poShared->m_fp, 0, SEEK_SET);
 
     // Contains an GRIB2 message inventory of the file.
-    auto pInventories = Inventory(poShared->m_fp, poOpenInfo);
+    // We can't use the potential .idx file
+    auto pInventories = cpl::make_unique<InventoryWrapperGrib>(poShared->m_fp);
 
     if( pInventories->result() <= 0 )
     {
@@ -2580,7 +2581,7 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
         if ((rMinX + rPixelSizeX >= 180 || rMaxX - rPixelSizeX >= 180) &&
             CPLTestBool(CPLGetConfigOption("GRIB_ADJUST_LONGITUDE_RANGE", "YES")) )
         {
-            if (rPixelSizeX * nRasterXSize > 360)
+            if (rPixelSizeX * nRasterXSize > 360 + rPixelSizeX/4)
                 CPLDebug("GRIB",
                     "Cannot properly handle GRIB2 files with overlaps and 0-360 longitudes");
             else if (fabs(360 - rPixelSizeX * nRasterXSize) < rPixelSizeX/4 &&

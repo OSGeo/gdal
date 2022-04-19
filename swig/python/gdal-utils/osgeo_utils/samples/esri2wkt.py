@@ -81,7 +81,7 @@ class ESRI2WKT(GDALScript):
         return esri2wkt_multi(**kwargs)
 
 
-def main(argv):
+def main(argv=sys.argv):
     return ESRI2WKT().main(argv)
 
 

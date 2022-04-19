@@ -77,7 +77,7 @@ class GS7BGDataset final: public GDALPamDataset
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
-                    int nXSize, int nYSize, int nBands,
+                    int nXSize, int nYSize, int nBandsIn,
                     GDALDataType eType,
                     char **papszParamList );
     static GDALDataset *CreateCopy( const char *pszFilename,
@@ -1069,7 +1069,7 @@ CPLErr GS7BGDataset::WriteHeader( VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
 GDALDataset *GS7BGDataset::Create( const char * pszFilename,
                                    int nXSize,
                                    int nYSize,
-                                   int nBands,
+                                   int nBandsIn,
                                    GDALDataType eType,
                                    CPL_UNUSED char **papszParamList )
 
@@ -1094,7 +1094,7 @@ GDALDataset *GS7BGDataset::Create( const char * pszFilename,
         return nullptr;
     }
 
-    if (nBands > 1)
+    if (nBandsIn > 1)
     {
         CPLError( CE_Failure, CPLE_NotSupported,
             "Unable to create copy, "

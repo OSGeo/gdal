@@ -166,6 +166,12 @@ static void DumpValue(CPLJSonStreamingWriter& serializer,
         case GDT_UInt32:
             DumpValue<GUInt32>(serializer, bytes);
             break;
+        case GDT_Int64:
+            DumpValue<std::int64_t>(serializer, bytes);
+            break;
+        case GDT_UInt64:
+            DumpValue<std::uint64_t>(serializer, bytes);
+            break;
         case GDT_Float32:
             DumpValue<float>(serializer, bytes);
             break;
@@ -305,7 +311,7 @@ static void SerializeJSON(const CPLJSONObject& obj,
 
         case CPLJSONObject::Type::Long:
         {
-            serializer.Add( obj.ToLong() );
+            serializer.Add( static_cast<int64_t>(obj.ToLong()) );
             break;
         }
 
@@ -650,7 +656,7 @@ static void DumpDimensions(const std::vector<std::shared_ptr<GDALDimension>>& di
         serializer.Add(osFullname);
 
         serializer.AddObjKey("size");
-        serializer.Add(dim->GetSize());
+        serializer.Add(static_cast<std::uint64_t>(dim->GetSize()));
 
         const auto& type(dim->GetType());
         if( !type.empty() )
@@ -736,7 +742,7 @@ static void DumpArray(std::shared_ptr<GDALMDArray> array,
         auto arrayContext(serializer.MakeArrayContext());
         for( const auto& poDim: dims )
         {
-            serializer.Add(poDim->GetSize());
+            serializer.Add(static_cast<uint64_t>(poDim->GetSize()));
         }
     }
 
@@ -757,7 +763,7 @@ static void DumpArray(std::shared_ptr<GDALMDArray> array,
         auto arrayContext(serializer.MakeArrayContext());
         for( auto v: blockSize )
         {
-            serializer.Add(v);
+            serializer.Add(static_cast<uint64_t>(v));
         }
     }
 
@@ -880,7 +886,7 @@ static void DumpArray(std::shared_ptr<GDALMDArray> array,
             }
 
             serializer.AddObjKey("valid_sample_count");
-            serializer.Add(nValidCount);
+            serializer.Add(static_cast<std::uint64_t>(nValidCount));
         }
     }
 }

@@ -20,7 +20,7 @@ gdal_standard_includes(gdal_vrt)
 target_include_directories(gdal_vrt PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/raw)
 
 if (GDAL_USE_GEOS)
-  gdal_target_link_libraries(gdal_vrt PRIVATE ${GEOS_LIBRARIES})
+  gdal_target_link_libraries(gdal_vrt PRIVATE ${GEOS_TARGET})
   target_compile_definitions(gdal_vrt PRIVATE -DHAVE_GEOS=1)
 endif ()
 

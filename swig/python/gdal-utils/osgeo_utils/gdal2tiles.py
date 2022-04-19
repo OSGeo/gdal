@@ -3343,7 +3343,7 @@ def multi_threaded_tiling(input_file: str, output_folder: str, options: Options,
     shutil.rmtree(os.path.dirname(conf.src_file))
 
 
-def main(argv: List[str]) -> int:
+def main(argv: List[str] = sys.argv) -> int:
     # TODO: gbataille - use mkdtemp to work in a temp directory
     # TODO: gbataille - debug intermediate tiles.vrt not produced anymore?
     # TODO: gbataille - Refactor generate overview tiles to not depend on self variables
@@ -3393,5 +3393,7 @@ def submain(argv: List[str], pool=None, pool_size=0) -> int:
 
 # vim: set tabstop=4 shiftwidth=4 expandtab:
 
+# Running main() must be protected that way due to use of multiprocessing on Windows:
+# https://docs.python.org/3/library/multiprocessing.html#the-spawn-and-forkserver-start-methods
 if __name__ == '__main__':
     sys.exit(main(sys.argv))

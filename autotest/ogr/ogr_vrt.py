@@ -81,8 +81,8 @@ def test_ogr_vrt_2():
     assert feat.GetFID() == 0, 'Unexpected fid'
 
     feat = lyr.GetNextFeature()
-    assert (ogrtest.check_feature_geometry(feat, 'POINT(100 200)',
-                                      max_error=0.000000001) == 0)
+    assert (ogrtest.check_feature_geometry(feat, 'POINT Z (100 200 0)',
+                                      max_error=0.000000001) == 0), feat.GetGeometryRef().ExportToIsoWkt()
 
     assert feat.GetFID() == 1, 'Unexpected fid'
 
@@ -112,8 +112,8 @@ def test_ogr_vrt_3():
     assert feat.GetFID() == 1, 'Unexpected fid'
 
     feat = lyr.GetNextFeature()
-    assert (ogrtest.check_feature_geometry(feat, 'POINT(100 200)',
-                                      max_error=0.000000001) == 0)
+    assert (ogrtest.check_feature_geometry(feat, 'POINT(100 200 0)',
+                                      max_error=0.000000001) == 0), feat.GetGeometryRef().ExportToIsoWkt()
 
     assert feat.GetFID() == 2, 'Unexpected fid'
 
@@ -138,8 +138,8 @@ def test_ogr_vrt_4():
     lyr.ResetReading()
 
     feat = lyr.GetNextFeature()
-    assert (ogrtest.check_feature_geometry(feat, 'POINT(100 200)',
-                                      max_error=0.000000001) == 0)
+    assert (ogrtest.check_feature_geometry(feat, 'POINT(100 200 0)',
+                                      max_error=0.000000001) == 0), feat.GetGeometryRef().ExportToIsoWkt()
 
     lyr.SetSpatialFilter(None)
 
@@ -207,8 +207,8 @@ def test_ogr_vrt_7():
     assert feat.GetFID() == 1, 'Unexpected fid'
 
     feat = lyr.GetNextFeature()
-    assert (ogrtest.check_feature_geometry(feat, 'POINT(100 200)',
-                                      max_error=0.000000001) == 0)
+    assert (ogrtest.check_feature_geometry(feat, 'POINT(100 200 0)',
+                                      max_error=0.000000001) == 0), feat.GetGeometryRef().ExportToIsoWkt()
 
     assert feat.GetFID() == 2, 'Unexpected fid'
 
@@ -240,8 +240,8 @@ def test_ogr_vrt_8():
     assert feat.GetFID() == 1, 'Unexpected fid'
 
     feat = lyr.GetNextFeature()
-    assert (ogrtest.check_feature_geometry(feat, 'POINT(100 200)',
-                                      max_error=0.000000001) == 0)
+    assert (ogrtest.check_feature_geometry(feat, 'POINT(100 200 0)',
+                                      max_error=0.000000001) == 0), feat.GetGeometryRef().ExportToIsoWkt()
 
     assert feat.GetFID() == 2, 'Unexpected fid'
 

@@ -31,7 +31,6 @@
 #ifndef OGR_GMLAS_INCLUDED
 #define OGR_GMLAS_INCLUDED
 
-// Must be first for DEBUG_BOOL case
 #include "xercesc_headers.h"
 #include "ogr_xerces.h"
 

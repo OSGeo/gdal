@@ -29,10 +29,6 @@
 
 // $Id$
 
-#ifdef DEBUG_BOOL
-#define DO_NOT_USE_DEBUG_BOOL
-#endif
-
 #include <cstring>
 #include <algorithm>
 #include <cmath>

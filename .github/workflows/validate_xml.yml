@@ -2,12 +2,15 @@ name: Validate XML
 
 on:
     push:
-        paths-ignore:
-            - 'doc/**'
+        paths:
+            - 'data/**'
     pull_request:
-        paths-ignore:
-            - 'doc/**'
+        paths:
+            - 'data/**'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   validate_xml:

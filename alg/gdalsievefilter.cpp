@@ -77,7 +77,7 @@ CPL_CVSID("$Id$")
 static CPLErr
 GPMaskImageData( GDALRasterBandH hMaskBand, GByte *pabyMaskLine,
                  int iY, int nXSize,
-                 GInt32 *panImageLine )
+                 std::int64_t *panImageLine )
 
 {
     const CPLErr eErr =
@@ -113,7 +113,7 @@ GPMaskImageData( GDALRasterBandH hMaskBand, GByte *pabyMaskLine,
 
 static inline void CompareNeighbour( int nPolyId1, int nPolyId2,
                                      int *panPolyIdMap,
-                                     int * /* panPolyValue */,
+                                     std::int64_t * /* panPolyValue */,
                                      std::vector<int> &anPolySizes,
                                      std::vector<int> &anBigNeighbour )
 
@@ -215,16 +215,16 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
 /* -------------------------------------------------------------------- */
     int nXSize = GDALGetRasterBandXSize( hSrcBand );
     int nYSize = GDALGetRasterBandYSize( hSrcBand );
-    GInt32 *panLastLineVal = static_cast<GInt32 *>(
+    auto *panLastLineVal = static_cast<std::int64_t *>(
+        VSI_MALLOC2_VERBOSE(sizeof(std::int64_t), nXSize));
+    auto *panThisLineVal = static_cast<std::int64_t *>(
+        VSI_MALLOC2_VERBOSE(sizeof(std::int64_t), nXSize));
+    auto *panLastLineId = static_cast<GInt32 *>(
         VSI_MALLOC2_VERBOSE(sizeof(GInt32), nXSize));
-    GInt32 *panThisLineVal = static_cast<GInt32 *>(
+    auto *panThisLineId = static_cast<GInt32 *>(
         VSI_MALLOC2_VERBOSE(sizeof(GInt32), nXSize));
-    GInt32 *panLastLineId = static_cast<GInt32 *>(
-        VSI_MALLOC2_VERBOSE(sizeof(GInt32), nXSize));
-    GInt32 *panThisLineId = static_cast<GInt32 *>(
-        VSI_MALLOC2_VERBOSE(sizeof(GInt32), nXSize));
-    GInt32 *panThisLineWriteVal = static_cast<GInt32 *>(
-        VSI_MALLOC2_VERBOSE(sizeof(GInt32), nXSize));
+    auto *panThisLineWriteVal = static_cast<std::int64_t *>(
+        VSI_MALLOC2_VERBOSE(sizeof(std::int64_t), nXSize));
     GByte *pabyMaskLine =
         hMaskBand != nullptr
         ? static_cast<GByte *>(VSI_MALLOC_VERBOSE(nXSize))
@@ -257,7 +257,7 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
         eErr = GDALRasterIO(
             hSrcBand,
             GF_Read, 0, iY, nXSize, 1,
-            panThisLineVal, nXSize, 1, GDT_Int32, 0, 0 );
+            panThisLineVal, nXSize, 1, GDT_Int64, 0, 0 );
 
         if( eErr == CE_None && hMaskBand != nullptr )
             eErr = GPMaskImageData(hMaskBand, pabyMaskLine, iY, nXSize,
@@ -355,7 +355,7 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
 /*      Read the image data.                                            */
 /* -------------------------------------------------------------------- */
         eErr = GDALRasterIO( hSrcBand, GF_Read, 0, iY, nXSize, 1,
-                             panThisLineVal, nXSize, 1, GDT_Int32, 0, 0 );
+                             panThisLineVal, nXSize, 1, GDT_Int64, 0, 0 );
 
         if( eErr == CE_None && hMaskBand != nullptr )
             eErr = GPMaskImageData( hMaskBand, pabyMaskLine, iY, nXSize,
@@ -532,9 +532,9 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
 /*      Read the image data.                                            */
 /* -------------------------------------------------------------------- */
         eErr = GDALRasterIO( hSrcBand, GF_Read, 0, iY, nXSize, 1,
-                             panThisLineVal, nXSize, 1, GDT_Int32, 0, 0 );
+                             panThisLineVal, nXSize, 1, GDT_Int64, 0, 0 );
 
-        memcpy( panThisLineWriteVal, panThisLineVal, 4 * nXSize );
+        memcpy( panThisLineWriteVal, panThisLineVal, sizeof(panThisLineVal[0]) * nXSize );
 
         if( eErr == CE_None && hMaskBand != nullptr )
             eErr = GPMaskImageData( hMaskBand, pabyMaskLine, iY, nXSize,
@@ -580,7 +580,7 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
 /*      Write the update data out.                                      */
 /* -------------------------------------------------------------------- */
         eErr = GDALRasterIO( hDstBand, GF_Write, 0, iY, nXSize, 1,
-                             panThisLineWriteVal, nXSize, 1, GDT_Int32, 0, 0 );
+                             panThisLineWriteVal, nXSize, 1, GDT_Int64, 0, 0 );
 
 /* -------------------------------------------------------------------- */
 /*      Swap pixel value, and polygon id lines to be ready for the      */

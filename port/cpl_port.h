@@ -1005,86 +1005,6 @@ inline static bool CPL_TO_BOOL(int x) { return x != 0; }
 #endif
 
 /*! @cond Doxygen_Suppress */
-// Define DEBUG_BOOL to compile in "MSVC mode", ie error out when
-// a integer is assigned to a bool
-// WARNING: use only at compilation time, since it is know to not work
-//  at runtime for unknown reasons (crash in MongoDB driver for example)
-#if defined(__cplusplus) && defined(DEBUG_BOOL) && !defined(DO_NOT_USE_DEBUG_BOOL) && !defined(CPL_SUPRESS_CPLUSPLUS)
-extern "C++" {
-class MSVCPedanticBool
-{
-
-        friend bool operator== (const bool& one, const MSVCPedanticBool& other);
-        friend bool operator!= (const bool& one, const MSVCPedanticBool& other);
-
-        bool b;
-        MSVCPedanticBool(int bIn);
-
-    public:
-        /* b not initialized on purpose in default ctor to flag use. */
-        /* cppcheck-suppress uninitMemberVar */
-        MSVCPedanticBool() {}
-        MSVCPedanticBool(bool bIn) : b(bIn) {}
-        MSVCPedanticBool(const MSVCPedanticBool& other) : b(other.b) {}
-
-        MSVCPedanticBool& operator= (const MSVCPedanticBool& other) { b = other.b; return *this; }
-        MSVCPedanticBool& operator&= (const MSVCPedanticBool& other) { b &= other.b; return *this; }
-        MSVCPedanticBool& operator|= (const MSVCPedanticBool& other) { b |= other.b; return *this; }
-
-        bool operator== (const bool& other) const { return b == other; }
-        bool operator!= (const bool& other) const { return b != other; }
-        bool operator< (const bool& other) const { return b < other; }
-        bool operator== (const MSVCPedanticBool& other) const { return b == other.b; }
-        bool operator!= (const MSVCPedanticBool& other) const { return b != other.b; }
-        bool operator< (const MSVCPedanticBool& other) const { return b < other.b; }
-
-        bool operator! () const { return !b; }
-        operator bool() const { return b; }
-        operator int() const { return b; }
-        operator GIntBig() const { return b; }
-};
-
-inline bool operator== (const bool& one, const MSVCPedanticBool& other) { return one == other.b; }
-inline bool operator!= (const bool& one, const MSVCPedanticBool& other) { return one != other.b; }
-
-/* We must include all C++ stuff before to avoid issues with templates that use bool */
-#include <vector>
-#include <map>
-#include <set>
-#include <string>
-#include <cstddef>
-#include <limits>
-#include <sstream>
-#include <fstream>
-#include <algorithm>
-#include <functional>
-#include <memory>
-#include <queue>
-#include <mutex>
-#include <unordered_map>
-#include <thread>
-#include <unordered_set>
-#include <complex>
-#include <iomanip>
-
-} /* extern C++ */
-
-#undef FALSE
-#define FALSE false
-#undef TRUE
-#define TRUE true
-
-/* In the very few cases we really need a "simple" type, fallback to bool */
-#define EMULATED_BOOL int
-
-/* Use our class instead of bool */
-#define bool MSVCPedanticBool
-
-/* "volatile bool" with the below substitution doesn't really work. */
-/* Just for the sake of the debug, we don't really need volatile */
-#define VOLATILE_BOOL bool
-
-#else /* defined(__cplusplus) && defined(DEBUG_BOOL) */
 
 #ifndef FALSE
 #  define FALSE 0
@@ -1093,11 +1013,6 @@ inline bool operator!= (const bool& one, const MSVCPedanticBool& other) { return
 #ifndef TRUE
 #  define TRUE 1
 #endif
-
-#define EMULATED_BOOL bool
-#define VOLATILE_BOOL volatile bool
-
-#endif /* defined(__cplusplus) && defined(DEBUG_BOOL) */
 
 #if __clang_major__ >= 4 || (__clang_major__ == 3 && __clang_minor__ >= 8)
 #define CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW __attribute__((no_sanitize("unsigned-integer-overflow")))
@@ -1116,9 +1031,6 @@ inline C CPLUnsanitizedAdd(A a, B b)
 }
 #endif
 
-/*! @endcond */
-
-/*! @cond Doxygen_Suppress */
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 #define CPL_NULLPTR nullptr
 #else

@@ -919,7 +919,24 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, bool bRegisterOGR2SQLit
           CPLTestBool(CSLFetchNameValueDef(papszOpenOptions, "NOLOCK", "NO")) )
     {
         m_osFilenameForSQLiteOpen = "file:";
-        m_osFilenameForSQLiteOpen += m_pszFilename;
+
+        // Apply rules from "3.1. The URI Path" of https://www.sqlite.org/uri.html
+        CPLString osFilenameForURI(m_pszFilename);
+        osFilenameForURI.replaceAll('?', "%3f");
+        osFilenameForURI.replaceAll('#', "%23");
+#ifdef _WIN32
+        osFilenameForURI.replaceAll('\\', '/');
+#endif
+        osFilenameForURI.replaceAll("//", '/');
+#ifdef _WIN32
+        if( osFilenameForURI.size() > 3 && osFilenameForURI[1] == ':' &&
+            osFilenameForURI[2] == '/' )
+        {
+            osFilenameForURI = '/' + osFilenameForURI;
+        }
+#endif
+
+        m_osFilenameForSQLiteOpen += osFilenameForURI;
         m_osFilenameForSQLiteOpen += "?nolock=1";
     }
 #endif

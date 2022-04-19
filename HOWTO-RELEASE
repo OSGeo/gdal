@@ -92,17 +92,41 @@ Perl module maintainer to make a CPAN release.
 
 8) Prepare archives
 
+8.0) Ensure you have the following prerequisites (beyond normal build deps):
+
+   If make is not GNU make, e.g., export MAKE=gmake
+
+   doxygen
+
+   python available as "python", or e.g. export PYTHON=python3.9
+
+   python3 available as "python3" in path (export PYTHON=python3.9
+   partially works, but some scripts under doc have hardcoded python3)
+
+   sphinx-build in path, or e.g. export SPHINXBUILD=sphinx-build-3.9
+
+   breathe extension for sphinx
+
+   swig 4 in path as "swig"
+
+   md5sum (GNU version) in path (not a POSIX requirement)
+
 8.1) Create the source distributions using the mkgdaldist.sh script.
    The argument should be the version number (i.e. 1.4.2). As our process involves
    doing betas or RCs, use the -rc option so that the filenames include this
    information (after promotion to official release, filename renaming will have
    to be done)
 
-   % mkgdaldist.sh 3.1.0 -tag v3.1.0RC1 -rc rc1
+   % ./mkgdaldist.sh 3.1.0 -tag v3.1.0RC1 -rc rc1
 
    For a beta version:
 
-   % mkgdaldist.sh 3.1.0beta1 -tag v3.1.0beta1
+   % ./mkgdaldist.sh 3.1.0beta1 -tag v3.1.0beta1
+
+   For a version intended for testing packaging (and not for
+   distribution):
+
+   % ./mkgdaldist.sh 3.4.80 -tag master
 
    It might be useful to compare the content of the generated tarball, with
    a previous release (diff -Nur gdal-3.0.1 gdal-3.0.2).

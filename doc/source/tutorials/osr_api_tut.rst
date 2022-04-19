@@ -41,7 +41,7 @@ The first is geographic (positions are measured in long/lat) and the second
 is projected (such as UTM - positions are measured in meters or feet).
 
 A Geographic CRS contains information on the datum (which implies
-an spheroid described by a semi-major axis, and inverse flattening), prime
+a spheroid described by a semi-major axis, and inverse flattening), prime
 meridian (normally Greenwich), and an angular units type which is normally
 degrees.  The following code initializes a geographic CRS
 on supplying all this information along with a user visible name for the
@@ -372,7 +372,7 @@ points between CRS.
 
 There are a couple of points at which transformations can
 fail.  First, OGRCreateCoordinateTransformation() may fail,
-generally because the internals recognise that no transformation
+generally because the internals recognize that no transformation
 between the indicated systems can be established, and will
 return a NULL pointer.
 

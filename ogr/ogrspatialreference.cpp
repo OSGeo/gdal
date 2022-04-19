@@ -166,9 +166,34 @@ struct OGRSpatialReference::Private
     void                refreshAxisMapping();
 };
 
+static OSRAxisMappingStrategy GetDefaultAxisMappingStrategy()
+{
+    const char* pszDefaultAMS = CPLGetConfigOption(
+        "OSR_DEFAULT_AXIS_MAPPING_STRATEGY", nullptr);
+    if( pszDefaultAMS )
+    {
+        if( EQUAL(pszDefaultAMS, "AUTHORITY_COMPLIANT") )
+            return OAMS_AUTHORITY_COMPLIANT;
+        else if( EQUAL(pszDefaultAMS, "TRADITIONAL_GIS_ORDER") )
+            return OAMS_TRADITIONAL_GIS_ORDER;
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Illegal value for OSR_DEFAULT_AXIS_MAPPING_STRATEGY = %s",
+                     pszDefaultAMS);
+        }
+    }
+    return OAMS_AUTHORITY_COMPLIANT;
+}
+
 OGRSpatialReference::Private::Private():
     m_poListener(std::shared_ptr<Listener>(new Listener(this)))
 {
+    // Get the default value for m_axisMappingStrategy from the
+    // OSR_DEFAULT_AXIS_MAPPING_STRATEGY configuration option, if set.
+    static const OSRAxisMappingStrategy defaultAxisMappingStrategy = GetDefaultAxisMappingStrategy();
+
+    m_axisMappingStrategy = defaultAxisMappingStrategy;
 }
 
 OGRSpatialReference::Private::~Private()
@@ -708,6 +733,18 @@ void OGRsnPrintDouble( char * pszStrBuf, size_t size, double dfValue )
  *
  * Note that newly created objects are given a reference count of one.
  *
+ * Starting with GDAL 3.0, coordinates associated with a OGRSpatialReference
+ * object are assumed to be in the order of the axis of the CRS definition (which
+ * for example means latitude first, longitude second for geographic CRS belonging
+ * to the EPSG authority). It is possible to define a data axis to CRS axis
+ * mapping strategy with the SetAxisMappingStrategy() method.
+ *
+ * Starting with GDAL 3.5, the OSR_DEFAULT_AXIS_MAPPING_STRATEGY configuration
+ * option can be set to "TRADITIONAL_GIS_ORDER" / "AUTHORITY_COMPLIANT" (the later
+ * being the default value when the option is not set) to control the value of the
+ * data axis to CRS axis mapping strategy when a OSRSpatialReference object is
+ * created. Calling SetAxisMappingStrategy() will override this default value.
+
  * The C function OSRNewSpatialReference() does the same thing as this
  * constructor.
  *
@@ -728,6 +765,18 @@ OGRSpatialReference::OGRSpatialReference( const char * pszWKT ) :
 
 /**
  * \brief Constructor.
+ *
+ * Starting with GDAL 3.0, coordinates associated with a OGRSpatialReference
+ * object are assumed to be in the order of the axis of the CRS definition (which
+ * for example means latitude first, longitude second for geographic CRS belonging
+ * to the EPSG authority). It is possible to define a data axis to CRS axis
+ * mapping strategy with the SetAxisMappingStrategy() method.
+ *
+ * Starting with GDAL 3.5, the OSR_DEFAULT_AXIS_MAPPING_STRATEGY configuration
+ * option can be set to "TRADITIONAL_GIS_ORDER" / "AUTHORITY_COMPLIANT" (the later
+ * being the default value when the option is not set) to control the value of the
+ * data axis to CRS axis mapping strategy when a OSRSpatialReference object is
+ * created. Calling SetAxisMappingStrategy() will override this default value.
  *
  * This function is the same as OGRSpatialReference::OGRSpatialReference()
  */
@@ -8255,6 +8304,53 @@ const char *OSRGetAuthorityName( OGRSpatialReferenceH hSRS,
 }
 
 /************************************************************************/
+/*                          GetOGCURN()                                 */
+/************************************************************************/
+
+/**
+ * \brief Get a OGC URN string describing the CRS, when possible
+ *
+ * This method assumes that the CRS has a top-level identifier, or is
+ * a compound CRS whose horizontal and vertical parts have a top-level identifier.
+ *
+ * @return a string to free with CPLFree(), or nulptr when no result can be generated
+ *
+ * @since GDAL 3.5
+ */
+
+char * OGRSpatialReference::GetOGCURN() const
+
+{
+    const char* pszAuthName = GetAuthorityName(nullptr);
+    const char* pszAuthCode = GetAuthorityCode(nullptr);
+    if( pszAuthName && pszAuthCode )
+        return CPLStrdup(CPLSPrintf("urn:ogc:def:crs:%s::%s", pszAuthName, pszAuthCode));
+    if( d->m_pjType != PJ_TYPE_COMPOUND_CRS )
+        return nullptr;
+    auto horizCRS =
+        proj_crs_get_sub_crs(d->getPROJContext(), d->m_pj_crs, 0);
+    auto vertCRS =
+        proj_crs_get_sub_crs(d->getPROJContext(), d->m_pj_crs, 1);
+    char* pszRet = nullptr;
+    if( horizCRS && vertCRS )
+    {
+        auto horizAuthName = proj_get_id_auth_name(horizCRS, 0);
+        auto horizAuthCode = proj_get_id_code(horizCRS, 0);
+        auto vertAuthName = proj_get_id_auth_name(vertCRS, 0);
+        auto vertAuthCode = proj_get_id_code(vertCRS, 0);
+        if( horizAuthName && horizAuthCode && vertAuthName && vertAuthCode )
+        {
+            pszRet = CPLStrdup(CPLSPrintf("urn:ogc:def:crs,crs:%s::%s,crs:%s::%s",
+                                          horizAuthName, horizAuthCode,
+                                          vertAuthName, vertAuthCode));
+        }
+    }
+    proj_destroy(horizCRS);
+    proj_destroy(vertCRS);
+    return pszRet;
+}
+
+/************************************************************************/
 /*                           StripVertical()                            */
 /************************************************************************/
 
@@ -11628,6 +11724,12 @@ OSRAxisMappingStrategy OSRGetAxisMappingStrategy( OGRSpatialReferenceH hSRS )
 /************************************************************************/
 
 /** \brief Set the data axis to CRS axis mapping strategy.
+ *
+ * Starting with GDAL 3.5, the OSR_DEFAULT_AXIS_MAPPING_STRATEGY configuration
+ * option can be set to "TRADITIONAL_GIS_ORDER" / "AUTHORITY_COMPLIANT" (the later
+ * being the default value when the option is not set) to control the value of the
+ * data axis to CRS axis mapping strategy when a OSRSpatialReference object is
+ * created. Calling SetAxisMappingStrategy() will override this default value.
  *
  * See OGRSpatialReference::GetAxisMappingStrategy()
  * @since GDAL 3.0

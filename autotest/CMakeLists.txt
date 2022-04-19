@@ -28,12 +28,12 @@ if (Python_Interpreter_FOUND)
   if (GDAL_DOWNLOAD_TEST_DATA)
     list(APPEND _TEST_ENV GDAL_DOWNLOAD_TEST_DATA=YES)
   else ()
-    list(APPEND _TEST_ENV GDAL_DOWNLOAD_TEST_DATA=NO)
+    list(APPEND _TEST_ENV "#GDAL_DOWNLOAD_TEST_DATA=YES")
   endif ()
   if (GDAL_SLOW_TESTS)
     list(APPEND _TEST_ENV GDAL_RUN_SLOW_TESTS=YES)
   else ()
-    list(APPEND _TEST_ENV GDAL_RUN_SLOW_TESTS=NO)
+    list(APPEND _TEST_ENV "#GDAL_RUN_SLOW_TESTS=YES")
   endif ()
   # Conda enable PROJ_NETWORK but this does interfere with some of our tests due to some unexpected grid being used
   list(APPEND _TEST_ENV PROJ_NETWORK=OFF)
@@ -41,8 +41,12 @@ if (Python_Interpreter_FOUND)
   string(REPLACE ";" "\n   " TEST_ENV "${_TEST_ENV}")
 
   set(AUTOTEST_LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/autotest.log")
-  configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/pytest.ini.in ${CMAKE_CURRENT_BINARY_DIR}/pytest.ini @ONLY)
-  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/conftest.py DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+  if ("${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}" AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/pytest.ini)
+    # FIXME: remove this branch if we remove pytest.ini from source tree
+  else()
+    configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/pytest.ini.in ${CMAKE_CURRENT_BINARY_DIR}/pytest.ini @ONLY)
+    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/conftest.py DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+  endif()
 
   function (symlink_or_copy source destination)
 
@@ -67,12 +71,14 @@ if (Python_Interpreter_FOUND)
   endfunction ()
 
   # Needed for a autotest/osr test
-  symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/cpp/data ${CMAKE_CURRENT_BINARY_DIR}/cpp/data)
-  if (SKIP_COPYING_AUTOTEST_SUBDIRS)
-    message(STATUS "Skipping copying ${CMAKE_CURRENT_SOURCE_DIR}/pymod")
-  else ()
-    symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/pymod ${CMAKE_CURRENT_BINARY_DIR}/pymod)
-  endif ()
+  if (NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
+      symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/cpp/data ${CMAKE_CURRENT_BINARY_DIR}/cpp/data)
+      if (SKIP_COPYING_AUTOTEST_SUBDIRS)
+        message(STATUS "Skipping copying ${CMAKE_CURRENT_SOURCE_DIR}/pymod")
+      else ()
+        symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/pymod ${CMAKE_CURRENT_BINARY_DIR}/pymod)
+      endif ()
+  endif()
 
   foreach (
     tgt IN
@@ -84,11 +90,13 @@ if (Python_Interpreter_FOUND)
           gnm
           pyscripts
           utilities)
-    if (SKIP_COPYING_AUTOTEST_SUBDIRS)
-      message(STATUS "Skipping copying ${CMAKE_CURRENT_SOURCE_DIR}/${tgt}")
-    else ()
-      symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/${tgt} ${CMAKE_CURRENT_BINARY_DIR}/${tgt})
-    endif ()
+    if (NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
+        if (SKIP_COPYING_AUTOTEST_SUBDIRS)
+          message(STATUS "Skipping copying ${CMAKE_CURRENT_SOURCE_DIR}/${tgt}")
+        else ()
+          symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/${tgt} ${CMAKE_CURRENT_BINARY_DIR}/${tgt})
+        endif ()
+    endif()
     add_custom_target(
       autotest_${tgt}
       COMMAND ${CMAKE_COMMAND} -E env ${PYTHON_RUN_ENV} ${Python_EXECUTABLE} -m pytest -c
@@ -135,7 +143,6 @@ int main(int argc, char **argv) {
     return 0;
 }")
     add_executable(pytest_runner ${CMAKE_CURRENT_BINARY_DIR}/pytest_runner.cpp)
-    set_property(TARGET pytest_runner PROPERTY CXX_STANDARD 11)
     target_include_directories(pytest_runner PRIVATE ${Python_INCLUDE_DIRS})
     target_link_libraries(pytest_runner PRIVATE ${Python_LIBRARIES})
     add_custom_target(

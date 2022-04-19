@@ -429,6 +429,7 @@ def test_visoss_3():
 
             handler = webserver.SequentialHandler()
             handler.add('GET', '/oss_non_cached/test.txt', 200, {}, 'foo')
+            handler.add('GET', '/oss_non_cached/test.txt', 200, {}, 'foo')
 
             with webserver.install_http_handler(handler):
                 f = open_for_read('/vsioss/oss_non_cached/test.txt')
@@ -454,6 +455,7 @@ def test_visoss_3():
                     pytest.fail(data)
 
             handler = webserver.SequentialHandler()
+            handler.add('GET', '/oss_non_cached/test.txt', 200, {}, 'bar2')
             handler.add('GET', '/oss_non_cached/test.txt', 200, {}, 'bar2')
 
             with webserver.install_http_handler(handler):
@@ -875,7 +877,7 @@ def test_visoss_6():
                 gdal.VSIFCloseL(f)
             assert gdal.GetLastErrorMsg() != '', filename
 
-    
+
 ###############################################################################
 # Test Mkdir() / Rmdir()
 
@@ -971,7 +973,7 @@ def test_visoss_8():
     with webserver.install_http_handler(handler):
         assert stat.S_ISDIR(gdal.VSIStatL('/vsioss/visoss_8/test/').mode)
 
-    
+
 ###############################################################################
 
 

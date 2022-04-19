@@ -31,10 +31,15 @@ fi
 
 
 sudo apt-get update
-sudo apt-get install -y --allow-unauthenticated libpng-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat1-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libpoppler-private-dev libsqlite3-dev gpsbabel swig libhdf4-alt-dev libhdf5-dev libpodofo-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev libepsilon-dev liblcms2-2 libpcre3-dev libcrypto++-dev libdap-dev libfyba-dev libmysqlclient-dev libogdi-dev libcfitsio-dev openjdk-8-jdk libzstd-dev ccache curl autoconf automake sqlite3 libspatialite-dev make g++ libssl-dev libsfcgal-dev libgeotiff-dev libcharls-dev libopenjp2-7-dev libcairo2-dev python3-dev python3-setuptools python3-numpy python3-pip clang
+sudo apt-get install -y --allow-unauthenticated libpng-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat1-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libpoppler-private-dev libsqlite3-dev gpsbabel swig libhdf4-alt-dev libhdf5-dev libpodofo-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev libepsilon-dev liblcms2-2 libpcre3-dev libcrypto++-dev libdap-dev libfyba-dev libmysqlclient-dev libogdi-dev libcfitsio-dev openjdk-8-jdk libzstd-dev ccache curl autoconf automake sqlite3 libspatialite-dev make g++ libssl-dev libsfcgal-dev libgeotiff-dev libopenjp2-7-dev libcairo2-dev python3-dev python3-setuptools python3-numpy python3-pip clang git
 
 # Workaround bug in ogdi packaging
 sudo ln -s /usr/lib/ogdi/libvrf.so /usr/lib
+
+# Build odbc-cpp library for HANA
+(wget https://github.com/Kitware/CMake/releases/download/v3.12.4/cmake-3.12.4-Linux-x86_64.sh -O cmake.sh)
+(sudo sh cmake.sh --prefix=/usr/local/ --exclude-subdir)
+(git clone https://github.com/SAP/odbc-cpp-wrapper.git && mkdir odbc-cpp-wrapper/build && cd odbc-cpp-wrapper/build && cmake .. && make -j 2 && make install)
 
 wget https://github.com/Esri/file-geodatabase-api/raw/master/FileGDB_API_1.5/FileGDB_API_1_5_64gcc51.tar.gz
 tar xzf FileGDB_API_1_5_64gcc51.tar.gz
@@ -66,7 +71,7 @@ ccache -s
 
 ./autogen.sh
 SANITIZE_FLAGS="-DMAKE_SANITIZE_HAPPY -fsanitize=undefined -fsanitize=address -fsanitize=unsigned-integer-overflow"
-CFLAGS=$SANITIZE_FLAGS CXXFLAGS=$SANITIZE_FLAGS LDFLAGS="-fsanitize=undefined -fsanitize=address -lstdc++" ./configure --prefix=/usr --without-libtool --enable-debug --with-jpeg12 --with-poppler --without-podofo --with-spatialite --with-mysql --with-liblzma --with-webp --with-epsilon --with-libtiff=internal --with-rename-internal-libtiff-symbols --with-hide-internal-symbols --with-gnm --with-fgdb=$PWD/FileGDB_API-64gcc51
+CFLAGS=$SANITIZE_FLAGS CXXFLAGS=$SANITIZE_FLAGS LDFLAGS="-fsanitize=undefined -fsanitize=address -lstdc++" ./configure --prefix=/usr --without-libtool --enable-debug --with-jpeg12 --with-poppler --without-podofo --with-spatialite --with-mysql --with-liblzma --with-webp --with-epsilon --with-libtiff=internal --with-rename-internal-libtiff-symbols --with-hide-internal-symbols --with-gnm --with-fgdb=$PWD/FileGDB_API-64gcc51 --with-hana
 sed -i "s/-fsanitize=address/-fsanitize=address -shared-libasan/g" GDALmake.opt
 sed -i "s/-fsanitize=unsigned-integer-overflow/-fsanitize=unsigned-integer-overflow -fno-sanitize-recover=unsigned-integer-overflow/g" GDALmake.opt
 make USER_DEFS="-Werror" -j$NPROC
@@ -101,6 +106,7 @@ rm -f ogr/ogr_fgdb.py ogr/ogr_pgeo.py
 
 # install test dependencies
 sudo python3 -m pip install -U -r ./requirements.txt
+sudo python3 -m pip install -U hdbcli
 
 # Run each module in its own pytest process.
 # This makes sure the output from the address sanitizer is relevant

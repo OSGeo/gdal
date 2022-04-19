@@ -44,36 +44,50 @@ def open_for_read(uri):
     """
     return gdal.VSIFOpenExL(uri, 'rb', 1)
 
+
+@pytest.fixture()
+def gs_test_config():
+    # To avoid user credentials in ~/.boto
+    # to mess up our tests
+    options = {
+        'CPL_GS_CREDENTIALS_FILE': '',
+        'GS_OAUTH2_REFRESH_TOKEN': '',
+        'GS_OAUTH2_CLIENT_EMAIL': '',
+        'GS_OAUTH2_CLIENT_SECRET': '',
+        'GS_OAUTH2_CLIENT_ID': '',
+        'GOOGLE_APPLICATION_CREDENTIALS': '',
+        'GS_USER_PROJECT': ''
+    }
+
+    with gdaltest.config_options(options):
+        yield
+
+@pytest.fixture(scope="module")
+def webserver_port():
+    if not gdaltest.built_against_curl():
+        pytest.skip()
+
+    webserver_process, webserver_port = webserver.launch(
+        handler=webserver.DispatcherHttpHandler
+    )
+    try:
+        if webserver_port == 0:
+            pytest.skip()
+        with gdaltest.config_options(
+                {'CPL_GS_ENDPOINT': 'http://127.0.0.1:%d/' % webserver_port}):
+            yield webserver_port
+    finally:
+        gdal.VSICurlClearCache()
+
+        webserver.server_stop(webserver_process, webserver_port)
+
 ###############################################################################
 
 
-def test_vsigs_init():
+def test_vsigs_init(gs_test_config):
 
-    gdaltest.gs_vars = {}
-    for var in ('GS_SECRET_ACCESS_KEY', 'GS_ACCESS_KEY_ID',
-                'GOOGLE_APPLICATION_CREDENTIALS',
-                'CPL_GS_TIMESTAMP', 'CPL_GS_ENDPOINT',
-                'GDAL_HTTP_HEADER_FILE',
-                'CPL_GS_CREDENTIALS_FILE',
-                'GS_OAUTH2_REFRESH_TOKEN',
-                'GS_OAUTH2_CLIENT_EMAIL',
-                'GS_OAUTH2_CLIENT_ID',
-                'GS_USER_PROJECT'):
-        gdaltest.gs_vars[var] = gdal.GetConfigOption(var)
-        if gdaltest.gs_vars[var] is not None:
-            gdal.SetConfigOption(var, "")
-
-    # To avoid user credentials in ~/.boto
-    # to mess up our tests
-    gdal.SetConfigOption('CPL_GS_CREDENTIALS_FILE', '')
-    gdal.SetConfigOption('GS_OAUTH2_REFRESH_TOKEN', '')
-    gdal.SetConfigOption('GS_OAUTH2_CLIENT_EMAIL', '')
-    gdal.SetConfigOption('GS_OAUTH2_CLIENT_SECRET', '')
-    gdal.SetConfigOption('GS_OAUTH2_CLIENT_ID', '')
-    gdal.SetConfigOption('GOOGLE_APPLICATION_CREDENTIALS', '')
-    gdal.SetConfigOption('GS_USER_PROJECT', '')
-
-    with gdaltest.config_option('CPL_GCE_SKIP', 'YES'):
+    with gdaltest.config_options({'CPL_GCE_SKIP': 'YES',
+                                  'CPL_GS_ENDPOINT': ''}):
         assert gdal.GetSignedURL('/vsigs/foo/bar') is None
 
 
@@ -81,125 +95,108 @@ def test_vsigs_init():
 # Error cases
 
 
-def test_vsigs_1():
+def test_vsigs_1(gs_test_config):
 
     if not gdaltest.built_against_curl():
         pytest.skip()
 
-    # Invalid header filename
-    gdal.ErrorReset()
-    with gdaltest.config_option('GDAL_HTTP_HEADER_FILE', '/i_dont/exist.py'):
-        with gdaltest.config_option('CPL_GCE_SKIP', 'YES'):
+    gdal.VSICurlClearCache()
+
+    with gdaltest.config_options({'CPL_GCE_SKIP': 'YES',
+                                  'CPL_GS_ENDPOINT': ''}):
+        # Invalid header filename
+        gdal.ErrorReset()
+        with gdaltest.config_option('GDAL_HTTP_HEADER_FILE', '/i_dont/exist.py'):
             with gdaltest.error_handler():
                 f = open_for_read('/vsigs/foo/bar')
-    if f is not None:
-        gdal.VSIFCloseL(f)
-        pytest.fail()
-    last_err = gdal.GetLastErrorMsg()
-    assert 'Cannot read' in last_err
-
-    # Invalid content for header file
-    with gdaltest.config_option('GDAL_HTTP_HEADER_FILE', 'vsigs.py'):
-        with gdaltest.config_option('CPL_GCE_SKIP', 'YES'):
-            f = open_for_read('/vsigs/foo/bar')
-    if f is not None:
-        gdal.VSIFCloseL(f)
-        pytest.fail()
-
-    # Missing GS_SECRET_ACCESS_KEY
-    gdal.ErrorReset()
-    with gdaltest.config_option('CPL_GCE_SKIP', 'YES'):
-        with gdaltest.error_handler():
-            f = open_for_read('/vsigs/foo/bar')
-    assert f is None and gdal.VSIGetLastErrorMsg().find('GS_SECRET_ACCESS_KEY') >= 0
-
-    gdal.ErrorReset()
-    with gdaltest.config_option('CPL_GCE_SKIP', 'YES'):
-        with gdaltest.error_handler():
-            f = open_for_read('/vsigs_streaming/foo/bar')
-    assert f is None and gdal.VSIGetLastErrorMsg().find('GS_SECRET_ACCESS_KEY') >= 0
-
-    gdal.SetConfigOption('GS_SECRET_ACCESS_KEY', 'GS_SECRET_ACCESS_KEY')
-
-    # Missing GS_ACCESS_KEY_ID
-    gdal.ErrorReset()
-    with gdaltest.error_handler():
-        f = open_for_read('/vsigs/foo/bar')
-    assert f is None and gdal.VSIGetLastErrorMsg().find('GS_ACCESS_KEY_ID') >= 0
-
-    gdal.SetConfigOption('GS_ACCESS_KEY_ID', 'GS_ACCESS_KEY_ID')
-
-    # ERROR 1: The User Id you provided does not exist in our records.
-    gdal.ErrorReset()
-    with gdaltest.error_handler():
-        f = open_for_read('/vsigs/foo/bar.baz')
-    if f is not None or gdal.VSIGetLastErrorMsg() == '':
         if f is not None:
             gdal.VSIFCloseL(f)
-        if gdal.GetConfigOption('APPVEYOR') is not None:
-            return
-        pytest.fail(gdal.VSIGetLastErrorMsg())
+            pytest.fail()
+        last_err = gdal.GetLastErrorMsg()
+        assert 'Cannot read' in last_err
 
-    gdal.ErrorReset()
-    with gdaltest.error_handler():
-        f = open_for_read('/vsigs_streaming/foo/bar.baz')
-    assert f is None and gdal.VSIGetLastErrorMsg() != ''
+        # Invalid content for header file
+        with gdaltest.config_option('GDAL_HTTP_HEADER_FILE', 'vsigs.py'):
+            f = open_for_read('/vsigs/foo/bar')
+        if f is not None:
+            gdal.VSIFCloseL(f)
+            pytest.fail()
+
+        # Missing GS_SECRET_ACCESS_KEY
+        gdal.ErrorReset()
+        with gdaltest.error_handler():
+            f = open_for_read('/vsigs/foo/bar')
+        assert f is None and gdal.VSIGetLastErrorMsg().find('GS_SECRET_ACCESS_KEY') >= 0
+
+        gdal.ErrorReset()
+        with gdaltest.error_handler():
+            f = open_for_read('/vsigs_streaming/foo/bar')
+        assert f is None and gdal.VSIGetLastErrorMsg().find('GS_SECRET_ACCESS_KEY') >= 0
+
+        with gdaltest.config_option('GS_SECRET_ACCESS_KEY', 'GS_SECRET_ACCESS_KEY'):
+
+            # Missing GS_ACCESS_KEY_ID
+            gdal.ErrorReset()
+            with gdaltest.error_handler():
+                f = open_for_read('/vsigs/foo/bar')
+            assert f is None and gdal.VSIGetLastErrorMsg().find('GS_ACCESS_KEY_ID') >= 0
+
+            with gdaltest.config_option('GS_ACCESS_KEY_ID', 'GS_ACCESS_KEY_ID'):
+
+                # ERROR 1: The User Id you provided does not exist in our records.
+                gdal.ErrorReset()
+                with gdaltest.error_handler():
+                    f = open_for_read('/vsigs/foo/bar.baz')
+                if f is not None or gdal.VSIGetLastErrorMsg() == '':
+                    if f is not None:
+                        gdal.VSIFCloseL(f)
+                    if gdal.GetConfigOption('APPVEYOR') is not None:
+                        return
+                    pytest.fail(gdal.VSIGetLastErrorMsg())
+
+                gdal.ErrorReset()
+                with gdaltest.error_handler():
+                    f = open_for_read('/vsigs_streaming/foo/bar.baz')
+                assert f is None and gdal.VSIGetLastErrorMsg() != ''
 
 ###############################################################################
 # Test GS_NO_SIGN_REQUEST=YES
 
 
-def test_vsigs_no_sign_request():
+def test_vsigs_no_sign_request(gs_test_config):
 
     if not gdaltest.built_against_curl():
         pytest.skip()
 
-    object_key = 'gcp-public-data-landsat/LC08/01/044/034/LC08_L1GT_044034_20130330_20170310_01_T2/LC08_L1GT_044034_20130330_20170310_01_T2_B1.TIF'
-    expected_url = 'https://storage.googleapis.com/' + object_key
+    with gdaltest.config_options({'CPL_GS_ENDPOINT': ''}):
 
-    with gdaltest.config_option('GS_NO_SIGN_REQUEST', 'YES'):
-        actual_url = gdal.GetActualURL('/vsigs/' + object_key)
-        assert actual_url == expected_url
+        object_key = 'gcp-public-data-landsat/LC08/01/044/034/LC08_L1GT_044034_20130330_20170310_01_T2/LC08_L1GT_044034_20130330_20170310_01_T2_B1.TIF'
+        expected_url = 'https://storage.googleapis.com/' + object_key
 
-        actual_url = gdal.GetActualURL('/vsigs_streaming/' + object_key)
-        assert actual_url == expected_url
+        with gdaltest.config_option('GS_NO_SIGN_REQUEST', 'YES'):
+            actual_url = gdal.GetActualURL('/vsigs/' + object_key)
+            assert actual_url == expected_url
 
-        f = open_for_read('/vsigs/' + object_key)
+            actual_url = gdal.GetActualURL('/vsigs_streaming/' + object_key)
+            assert actual_url == expected_url
 
-    if f is None:
-        if gdaltest.gdalurlopen(expected_url) is None:
-            pytest.skip('cannot open URL')
-        pytest.fail()
-    gdal.VSIFCloseL(f)
+            f = open_for_read('/vsigs/' + object_key)
 
+        if f is None:
+            if gdaltest.gdalurlopen(expected_url) is None:
+                pytest.skip('cannot open URL')
+            pytest.fail()
+        gdal.VSIFCloseL(f)
 
-###############################################################################
-
-
-def test_vsigs_start_webserver():
-
-    gdaltest.webserver_process = None
-    gdaltest.webserver_port = 0
-
-    if not gdaltest.built_against_curl():
-        pytest.skip()
-
-    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
-
-    gdal.SetConfigOption('CPL_GS_ENDPOINT', 'http://127.0.0.1:%d/' % gdaltest.webserver_port)
-    gdal.SetConfigOption('GS_SECRET_ACCESS_KEY', 'GS_SECRET_ACCESS_KEY')
-    gdal.SetConfigOption('GS_ACCESS_KEY_ID', 'GS_ACCESS_KEY_ID')
 
 ###############################################################################
 # Test with a fake Google Cloud Storage server
 
 
-def test_vsigs_2():
+@pytest.mark.parametrize("use_config_options", [True, False])
+def test_vsigs_2(gs_test_config, webserver_port, use_config_options):
 
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
+    gdal.VSICurlClearCache()
 
     # header file
     gdal.FileFromMemBuffer('/vsimem/my_headers.txt', 'foo: bar')
@@ -209,7 +206,11 @@ def test_vsigs_2():
                 {'Content-type': 'text/plain'}, 'Y',
                 expected_headers={'foo': 'bar'})
     with webserver.install_http_handler(handler):
-        with gdaltest.config_option('GDAL_HTTP_HEADER_FILE', '/vsimem/my_headers.txt'):
+
+        with gdaltest.config_options(
+            { 'GS_SECRET_ACCESS_KEY': 'GS_SECRET_ACCESS_KEY',
+              'GS_ACCESS_KEY_ID': 'GS_ACCESS_KEY_ID',
+              'GDAL_HTTP_HEADER_FILE': '/vsimem/my_headers.txt'}):
             f = open_for_read('/vsigs/gs_fake_bucket_http_header_file/resource')
             assert f is not None
             data = gdal.VSIFReadL(1, 1, f)
@@ -217,486 +218,466 @@ def test_vsigs_2():
             assert len(data) == 1
     gdal.Unlink('/vsimem/my_headers.txt')
 
-    gdal.SetConfigOption('GS_SECRET_ACCESS_KEY', 'GS_SECRET_ACCESS_KEY')
-    gdal.SetConfigOption('GS_ACCESS_KEY_ID', 'GS_ACCESS_KEY_ID')
-    gdal.SetConfigOption('CPL_GS_TIMESTAMP', 'my_timestamp')
+    options = { 'GS_SECRET_ACCESS_KEY': 'GS_SECRET_ACCESS_KEY',
+          'GS_ACCESS_KEY_ID': 'GS_ACCESS_KEY_ID',
+          'CPL_GS_TIMESTAMP': 'my_timestamp'}
+    with gdaltest.config_options(options) if use_config_options else gdaltest.credentials('/vsigs/', options):
 
-    signed_url = gdal.GetSignedURL('/vsigs/gs_fake_bucket/resource',
-                                   ['START_DATE=20180212T123456Z'])
-    assert (signed_url in ('http://127.0.0.1:8080/gs_fake_bucket/resource?Expires=1518442496&GoogleAccessId=GS_ACCESS_KEY_ID&Signature=xTphUyMqtKA6UmAX3PEr5VL3EOg%3D',
-                          'http://127.0.0.1:8081/gs_fake_bucket/resource?Expires=1518442496&GoogleAccessId=GS_ACCESS_KEY_ID&Signature=xTphUyMqtKA6UmAX3PEr5VL3EOg%3D'))
+        signed_url = gdal.GetSignedURL('/vsigs/gs_fake_bucket/resource',
+                                       ['START_DATE=20180212T123456Z'])
+        assert (signed_url in ('http://127.0.0.1:8080/gs_fake_bucket/resource?Expires=1518442496&GoogleAccessId=GS_ACCESS_KEY_ID&Signature=xTphUyMqtKA6UmAX3PEr5VL3EOg%3D',
+                              'http://127.0.0.1:8081/gs_fake_bucket/resource?Expires=1518442496&GoogleAccessId=GS_ACCESS_KEY_ID&Signature=xTphUyMqtKA6UmAX3PEr5VL3EOg%3D'))
 
-    handler = webserver.SequentialHandler()
-    handler.add('GET', '/gs_fake_bucket/resource', 200,
-                {'Content-type': 'text/plain'}, 'foo',
-                expected_headers={'Authorization': 'GOOG1 GS_ACCESS_KEY_ID:8tndu9//BfmN+Kg4AFLdUMZMBDQ='})
-    with webserver.install_http_handler(handler):
-        f = open_for_read('/vsigs/gs_fake_bucket/resource')
-        assert f is not None
-        data = gdal.VSIFReadL(1, 4, f).decode('ascii')
-        gdal.VSIFCloseL(f)
-
-    assert data == 'foo'
-
-    handler = webserver.SequentialHandler()
-    handler.add('GET', '/gs_fake_bucket/resource', 200,
-                {'Content-type': 'text/plain'}, 'foo',
-                expected_headers={'Authorization': 'GOOG1 GS_ACCESS_KEY_ID:8tndu9//BfmN+Kg4AFLdUMZMBDQ='})
-    with webserver.install_http_handler(handler):
-        f = open_for_read('/vsigs_streaming/gs_fake_bucket/resource')
-        assert f is not None
-        data = gdal.VSIFReadL(1, 4, f).decode('ascii')
-        gdal.VSIFCloseL(f)
+        handler = webserver.SequentialHandler()
+        handler.add('GET', '/gs_fake_bucket/resource', 200,
+                    {'Content-type': 'text/plain'}, 'foo',
+                    expected_headers={'Authorization': 'GOOG1 GS_ACCESS_KEY_ID:8tndu9//BfmN+Kg4AFLdUMZMBDQ='})
+        with webserver.install_http_handler(handler):
+            f = open_for_read('/vsigs/gs_fake_bucket/resource')
+            assert f is not None
+            data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+            gdal.VSIFCloseL(f)
 
         assert data == 'foo'
 
-    handler = webserver.SequentialHandler()
-    handler.add('GET', '/gs_fake_bucket/resource2.bin', 206,
-                {'Content-Range': 'bytes 0-0/1000000'}, 'x')
-    with webserver.install_http_handler(handler):
-        stat_res = gdal.VSIStatL('/vsigs/gs_fake_bucket/resource2.bin')
-        if stat_res is None or stat_res.size != 1000000:
-            if stat_res is not None:
-                print(stat_res.size)
-            else:
-                print(stat_res)
-            pytest.fail()
-
-    handler = webserver.SequentialHandler()
-    handler.add('HEAD', '/gs_fake_bucket/resource2.bin', 200,
-                {'Content-Length': 1000000})
-    with webserver.install_http_handler(handler):
-        stat_res = gdal.VSIStatL('/vsigs_streaming/gs_fake_bucket/resource2.bin')
-        if stat_res is None or stat_res.size != 1000000:
-            if stat_res is not None:
-                print(stat_res.size)
-            else:
-                print(stat_res)
-            pytest.fail()
-
-    # Test GS_USER_PROJECT
-    handler = webserver.SequentialHandler()
-    handler.add('GET', '/gs_fake_bucket/resource_under_requester_pays', 200,
-                {'Content-type': 'text/plain'}, 'foo',
-                expected_headers={
-                    'Authorization': 'GOOG1 GS_ACCESS_KEY_ID:q7i3g4lJD1c4OwiFtn/N/ePxxS0=',
-                    'x-goog-user-project': 'my_project_id'})
-    with webserver.install_http_handler(handler):
-        with gdaltest.config_option('GS_USER_PROJECT', 'my_project_id'):
-            f = open_for_read('/vsigs_streaming/gs_fake_bucket/resource_under_requester_pays')
+        handler = webserver.SequentialHandler()
+        handler.add('GET', '/gs_fake_bucket/resource', 200,
+                    {'Content-type': 'text/plain'}, 'foo',
+                    expected_headers={'Authorization': 'GOOG1 GS_ACCESS_KEY_ID:8tndu9//BfmN+Kg4AFLdUMZMBDQ='})
+        with webserver.install_http_handler(handler):
+            f = open_for_read('/vsigs_streaming/gs_fake_bucket/resource')
             assert f is not None
             data = gdal.VSIFReadL(1, 4, f).decode('ascii')
             gdal.VSIFCloseL(f)
 
             assert data == 'foo'
+
+        handler = webserver.SequentialHandler()
+        handler.add('GET', '/gs_fake_bucket/resource2.bin', 206,
+                    {'Content-Range': 'bytes 0-0/1000000'}, 'x')
+        with webserver.install_http_handler(handler):
+            stat_res = gdal.VSIStatL('/vsigs/gs_fake_bucket/resource2.bin')
+            if stat_res is None or stat_res.size != 1000000:
+                if stat_res is not None:
+                    print(stat_res.size)
+                else:
+                    print(stat_res)
+                pytest.fail()
+
+        handler = webserver.SequentialHandler()
+        handler.add('HEAD', '/gs_fake_bucket/resource2.bin', 200,
+                    {'Content-Length': 1000000})
+        with webserver.install_http_handler(handler):
+            stat_res = gdal.VSIStatL('/vsigs_streaming/gs_fake_bucket/resource2.bin')
+            if stat_res is None or stat_res.size != 1000000:
+                if stat_res is not None:
+                    print(stat_res.size)
+                else:
+                    print(stat_res)
+                pytest.fail()
+
+        # Test GS_USER_PROJECT
+        handler = webserver.SequentialHandler()
+        handler.add('GET', '/gs_fake_bucket/resource_under_requester_pays', 200,
+                    {'Content-type': 'text/plain'}, 'foo',
+                    expected_headers={
+                        'Authorization': 'GOOG1 GS_ACCESS_KEY_ID:q7i3g4lJD1c4OwiFtn/N/ePxxS0=',
+                        'x-goog-user-project': 'my_project_id'})
+        with webserver.install_http_handler(handler):
+            with gdaltest.config_option('GS_USER_PROJECT', 'my_project_id'):
+                f = open_for_read('/vsigs_streaming/gs_fake_bucket/resource_under_requester_pays')
+                assert f is not None
+                data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+                gdal.VSIFCloseL(f)
+
+                assert data == 'foo'
 
 ###############################################################################
 # Test ReadDir() with a fake Google Cloud Storage server
 
 
-def test_vsigs_readdir():
+def test_vsigs_readdir(gs_test_config, webserver_port):
 
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
+    with gdaltest.config_options(
+        { 'GS_SECRET_ACCESS_KEY': 'GS_SECRET_ACCESS_KEY',
+          'GS_ACCESS_KEY_ID': 'GS_ACCESS_KEY_ID' }):
 
-    handler = webserver.SequentialHandler()
-    handler.add('GET', '/gs_fake_bucket2/?delimiter=%2F&prefix=a_dir%2F', 200,
-                {'Content-type': 'application/xml'},
-                """<?xml version="1.0" encoding="UTF-8"?>
-                    <ListBucketResult>
-                        <Prefix>a_dir/</Prefix>
-                        <NextMarker>bla</NextMarker>
-                        <Contents>
-                            <Key>a_dir/resource3.bin</Key>
-                            <LastModified>1970-01-01T00:00:01.000Z</LastModified>
-                            <Size>123456</Size>
-                        </Contents>
-                    </ListBucketResult>
-                """)
-    handler.add('GET', '/gs_fake_bucket2/?delimiter=%2F&marker=bla&prefix=a_dir%2F', 200,
-                {'Content-type': 'application/xml'},
-                """<?xml version="1.0" encoding="UTF-8"?>
-                    <ListBucketResult>
-                        <Prefix>a_dir/</Prefix>
-                        <Contents>
-                            <Key>a_dir/resource4.bin</Key>
-                            <LastModified>2015-10-16T12:34:56.000Z</LastModified>
-                            <Size>456789</Size>
-                        </Contents>
-                        <CommonPrefixes>
-                            <Prefix>a_dir/subdir/</Prefix>
-                        </CommonPrefixes>
-                    </ListBucketResult>
-                """)
+        handler = webserver.SequentialHandler()
+        handler.add('GET', '/gs_fake_bucket2/?delimiter=%2F&prefix=a_dir%2F', 200,
+                    {'Content-type': 'application/xml'},
+                    """<?xml version="1.0" encoding="UTF-8"?>
+                        <ListBucketResult>
+                            <Prefix>a_dir/</Prefix>
+                            <NextMarker>bla</NextMarker>
+                            <Contents>
+                                <Key>a_dir/resource3.bin</Key>
+                                <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                                <Size>123456</Size>
+                            </Contents>
+                        </ListBucketResult>
+                    """)
+        handler.add('GET', '/gs_fake_bucket2/?delimiter=%2F&marker=bla&prefix=a_dir%2F', 200,
+                    {'Content-type': 'application/xml'},
+                    """<?xml version="1.0" encoding="UTF-8"?>
+                        <ListBucketResult>
+                            <Prefix>a_dir/</Prefix>
+                            <Contents>
+                                <Key>a_dir/resource4.bin</Key>
+                                <LastModified>2015-10-16T12:34:56.000Z</LastModified>
+                                <Size>456789</Size>
+                            </Contents>
+                            <CommonPrefixes>
+                                <Prefix>a_dir/subdir/</Prefix>
+                            </CommonPrefixes>
+                        </ListBucketResult>
+                    """)
 
-    with webserver.install_http_handler(handler):
-        f = open_for_read('/vsigs/gs_fake_bucket2/a_dir/resource3.bin')
-    if f is None:
+        with webserver.install_http_handler(handler):
+            f = open_for_read('/vsigs/gs_fake_bucket2/a_dir/resource3.bin')
+        if f is None:
 
-        if gdaltest.is_travis_branch('trusty'):
-            pytest.skip('Skipped on trusty branch, but should be investigated')
+            if gdaltest.is_travis_branch('trusty'):
+                pytest.skip('Skipped on trusty branch, but should be investigated')
 
-        pytest.fail()
-    gdal.VSIFCloseL(f)
+            pytest.fail()
+        gdal.VSIFCloseL(f)
 
-    dir_contents = gdal.ReadDir('/vsigs/gs_fake_bucket2/a_dir')
-    assert dir_contents == ['resource3.bin', 'resource4.bin', 'subdir']
-    assert gdal.VSIStatL('/vsigs/gs_fake_bucket2/a_dir/resource3.bin').size == 123456
-    assert gdal.VSIStatL('/vsigs/gs_fake_bucket2/a_dir/resource3.bin').mtime == 1
+        dir_contents = gdal.ReadDir('/vsigs/gs_fake_bucket2/a_dir')
+        assert dir_contents == ['resource3.bin', 'resource4.bin', 'subdir']
+        assert gdal.VSIStatL('/vsigs/gs_fake_bucket2/a_dir/resource3.bin').size == 123456
+        assert gdal.VSIStatL('/vsigs/gs_fake_bucket2/a_dir/resource3.bin').mtime == 1
 
-    # ReadDir on something known to be a file shouldn't cause network access
-    dir_contents = gdal.ReadDir('/vsigs/gs_fake_bucket2/a_dir/resource3.bin')
-    assert dir_contents is None
+        # ReadDir on something known to be a file shouldn't cause network access
+        dir_contents = gdal.ReadDir('/vsigs/gs_fake_bucket2/a_dir/resource3.bin')
+        assert dir_contents is None
 
-    # List buckets
-    handler = webserver.SequentialHandler()
-    handler.add('GET', '/', 200, {'Content-type': 'application/xml'},
-                """<?xml version="1.0" encoding="UTF-8"?>
-        <ListAllMyBucketsResult>
-        <Buckets>
-            <Bucket>
-                <Name>mybucket</Name>
-            </Bucket>
-        </Buckets>
-        </ListAllMyBucketsResult>
-        """)
-    with webserver.install_http_handler(handler):
-        dir_contents = gdal.ReadDir('/vsigs/')
-    assert dir_contents == ['mybucket']
+        # List buckets
+        handler = webserver.SequentialHandler()
+        handler.add('GET', '/', 200, {'Content-type': 'application/xml'},
+                    """<?xml version="1.0" encoding="UTF-8"?>
+            <ListAllMyBucketsResult>
+            <Buckets>
+                <Bucket>
+                    <Name>mybucket</Name>
+                </Bucket>
+            </Buckets>
+            </ListAllMyBucketsResult>
+            """)
+        with webserver.install_http_handler(handler):
+            dir_contents = gdal.ReadDir('/vsigs/')
+        assert dir_contents == ['mybucket']
 
 ###############################################################################
 # Test write
 
 
-def test_vsigs_write():
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
+def test_vsigs_write(gs_test_config, webserver_port):
 
     gdal.VSICurlClearCache()
-    with webserver.install_http_handler(webserver.SequentialHandler()):
-        f = gdal.VSIFOpenExL('/vsigs/gs_fake_bucket3/another_file.bin', 'wb', 0,
-                             ['Content-Type=foo', 'Content-Encoding=bar', 'x-goog-storage-class=NEARLINE'])
-        assert f is not None
-        assert gdal.VSIFSeekL(f, gdal.VSIFTellL(f), 0) == 0
-        assert gdal.VSIFSeekL(f, 0, 1) == 0
-        assert gdal.VSIFSeekL(f, 0, 2) == 0
-        assert gdal.VSIFWriteL('foo', 1, 3, f) == 3
-        assert gdal.VSIFSeekL(f, gdal.VSIFTellL(f), 0) == 0
-        assert gdal.VSIFWriteL('bar', 1, 3, f) == 3
 
-    handler = webserver.SequentialHandler()
+    with gdaltest.config_options(
+        { 'GS_SECRET_ACCESS_KEY': 'GS_SECRET_ACCESS_KEY',
+          'GS_ACCESS_KEY_ID': 'GS_ACCESS_KEY_ID' }):
 
-    def method(request):
-        if request.headers['Content-Length'] != '6' or \
-           request.headers['Content-Type'] != 'foo' or \
-           request.headers['Content-Encoding'] != 'bar' or \
-           request.headers['x-goog-storage-class'] != 'NEARLINE':
-            sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
-            request.send_response(400)
+        with webserver.install_http_handler(webserver.SequentialHandler()):
+            f = gdal.VSIFOpenExL('/vsigs/gs_fake_bucket3/another_file.bin', 'wb', 0,
+                                 ['Content-Type=foo', 'Content-Encoding=bar', 'x-goog-storage-class=NEARLINE'])
+            assert f is not None
+            assert gdal.VSIFSeekL(f, gdal.VSIFTellL(f), 0) == 0
+            assert gdal.VSIFSeekL(f, 0, 1) == 0
+            assert gdal.VSIFSeekL(f, 0, 2) == 0
+            assert gdal.VSIFWriteL('foo', 1, 3, f) == 3
+            assert gdal.VSIFSeekL(f, gdal.VSIFTellL(f), 0) == 0
+            assert gdal.VSIFWriteL('bar', 1, 3, f) == 3
+
+        handler = webserver.SequentialHandler()
+
+        def method(request):
+            if request.headers['Content-Length'] != '6' or \
+               request.headers['Content-Type'] != 'foo' or \
+               request.headers['Content-Encoding'] != 'bar' or \
+               request.headers['x-goog-storage-class'] != 'NEARLINE':
+                sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
+                request.send_response(400)
+                request.send_header('Content-Length', 0)
+                request.end_headers()
+                return
+
+            request.wfile.write('HTTP/1.1 100 Continue\r\n\r\n'.encode('ascii'))
+
+            content = request.rfile.read(6).decode('ascii')
+            if content != 'foobar':
+                sys.stderr.write('Did not get expected content: %s\n' % content)
+                request.send_response(400)
+                request.send_header('Content-Length', 0)
+                request.end_headers()
+                return
+
+            request.send_response(200)
             request.send_header('Content-Length', 0)
             request.end_headers()
-            return
 
-        request.wfile.write('HTTP/1.1 100 Continue\r\n\r\n'.encode('ascii'))
+        handler.add('PUT', '/gs_fake_bucket3/another_file.bin', custom_method=method)
 
-        content = request.rfile.read(6).decode('ascii')
-        if content != 'foobar':
-            sys.stderr.write('Did not get expected content: %s\n' % content)
-            request.send_response(400)
-            request.send_header('Content-Length', 0)
-            request.end_headers()
-            return
-
-        request.send_response(200)
-        request.send_header('Content-Length', 0)
-        request.end_headers()
-
-    handler.add('PUT', '/gs_fake_bucket3/another_file.bin', custom_method=method)
-
-    gdal.ErrorReset()
-    with webserver.install_http_handler(handler):
-        gdal.VSIFCloseL(f)
-    assert gdal.GetLastErrorMsg() == ''
+        gdal.ErrorReset()
+        with webserver.install_http_handler(handler):
+            gdal.VSIFCloseL(f)
+        assert gdal.GetLastErrorMsg() == ''
 
 ###############################################################################
 # Test rename
 
-def test_vsigs_fake_rename():
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
+def test_vsigs_fake_rename(gs_test_config, webserver_port):
 
     gdal.VSICurlClearCache()
-    handler = webserver.SequentialHandler()
-    handler.add('GET', '/test/source.txt', 206,
-                { 'Content-Length' : '3',
-                  'Content-Range': 'bytes 0-2/3' }, "foo")
-    handler.add('GET', '/test/target.txt', 404)
-    handler.add('GET', '/test/?delimiter=%2F&max-keys=100&prefix=target.txt%2F', 200)
 
-    def method(request):
-        if request.headers['Content-Length'] != '0':
-            sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
-            request.send_response(400)
-            return
-        if request.headers['x-goog-copy-source'] != '/test/source.txt':
-            sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
-            request.send_response(400)
-            return
+    with gdaltest.config_options(
+        { 'GS_SECRET_ACCESS_KEY': 'GS_SECRET_ACCESS_KEY',
+          'GS_ACCESS_KEY_ID': 'GS_ACCESS_KEY_ID' }):
 
-        request.send_response(200)
-        request.send_header('Content-Length', 0)
-        request.end_headers()
+        handler = webserver.SequentialHandler()
+        handler.add('GET', '/test/source.txt', 206,
+                    { 'Content-Length' : '3',
+                      'Content-Range': 'bytes 0-2/3' }, "foo")
+        handler.add('GET', '/test/target.txt', 404)
+        handler.add('GET', '/test/?delimiter=%2F&max-keys=100&prefix=target.txt%2F', 200)
 
-    handler.add('PUT', '/test/target.txt', custom_method=method)
-    handler.add('DELETE', '/test/source.txt', 204)
+        def method(request):
+            if request.headers['Content-Length'] != '0':
+                sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
+                request.send_response(400)
+                return
+            if request.headers['x-goog-copy-source'] != '/test/source.txt':
+                sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
+                request.send_response(400)
+                return
 
-    with webserver.install_http_handler(handler):
-        assert gdal.Rename( '/vsigs/test/source.txt', '/vsigs/test/target.txt') == 0
+            request.send_response(200)
+            request.send_header('Content-Length', 0)
+            request.end_headers()
+
+        handler.add('PUT', '/test/target.txt', custom_method=method)
+        handler.add('DELETE', '/test/source.txt', 204)
+
+        with webserver.install_http_handler(handler):
+            assert gdal.Rename( '/vsigs/test/source.txt', '/vsigs/test/target.txt') == 0
 
 ###############################################################################
 # Test reading/writing ACL
 
 
-def test_vsigs_acl():
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
+def test_vsigs_acl(gs_test_config, webserver_port):
 
     gdal.VSICurlClearCache()
 
-    handler = webserver.SequentialHandler()
-    handler.add('GET', '/test_metadata/foo.txt?acl', 200, {}, "<foo/>")
-    with webserver.install_http_handler(handler):
-        md = gdal.GetFileMetadata('/vsigs/test_metadata/foo.txt', 'ACL')
-    assert 'XML' in md and md['XML'] == '<foo/>'
+    with gdaltest.config_options(
+        { 'GS_SECRET_ACCESS_KEY': 'GS_SECRET_ACCESS_KEY',
+          'GS_ACCESS_KEY_ID': 'GS_ACCESS_KEY_ID' }):
 
-    # Error cases
-    with gdaltest.error_handler():
-        assert gdal.GetFileMetadata('/vsigs/test_metadata/foo.txt', 'UNSUPPORTED') == {}
+        handler = webserver.SequentialHandler()
+        handler.add('GET', '/test_metadata/foo.txt?acl', 200, {}, "<foo/>")
+        with webserver.install_http_handler(handler):
+            md = gdal.GetFileMetadata('/vsigs/test_metadata/foo.txt', 'ACL')
+        assert 'XML' in md and md['XML'] == '<foo/>'
 
-    handler = webserver.SequentialHandler()
-    handler.add('GET', '/test_metadata/foo.txt?acl', 400)
-    with webserver.install_http_handler(handler):
+        # Error cases
         with gdaltest.error_handler():
-            assert not gdal.GetFileMetadata('/vsigs/test_metadata/foo.txt', 'ACL')
+            assert gdal.GetFileMetadata('/vsigs/test_metadata/foo.txt', 'UNSUPPORTED') == {}
 
-    handler = webserver.SequentialHandler()
-    handler.add('PUT', '/test_metadata/foo.txt?acl', 200, expected_body=b'<foo/>')
-    with webserver.install_http_handler(handler):
-        assert gdal.SetFileMetadata('/vsigs/test_metadata/foo.txt', {'XML': '<foo/>'}, 'ACL')
+        handler = webserver.SequentialHandler()
+        handler.add('GET', '/test_metadata/foo.txt?acl', 400)
+        with webserver.install_http_handler(handler):
+            with gdaltest.error_handler():
+                assert not gdal.GetFileMetadata('/vsigs/test_metadata/foo.txt', 'ACL')
 
-    # Error cases
-    with gdaltest.error_handler():
-        assert not gdal.SetFileMetadata('/vsigs/test_metadata/foo.txt', {}, 'UNSUPPORTED')
-        assert not gdal.SetFileMetadata('/vsigs/test_metadata/foo.txt', {}, 'ACL')
+        handler = webserver.SequentialHandler()
+        handler.add('PUT', '/test_metadata/foo.txt?acl', 200, expected_body=b'<foo/>')
+        with webserver.install_http_handler(handler):
+            assert gdal.SetFileMetadata('/vsigs/test_metadata/foo.txt', {'XML': '<foo/>'}, 'ACL')
 
-    handler = webserver.SequentialHandler()
-    handler.add('PUT', '/test_metadata/foo.txt?acl', 400)
-    with webserver.install_http_handler(handler):
+        # Error cases
         with gdaltest.error_handler():
-            assert not gdal.SetFileMetadata('/vsigs/test_metadata/foo.txt', {'XML': '<foo/>'}, 'ACL')
+            assert not gdal.SetFileMetadata('/vsigs/test_metadata/foo.txt', {}, 'UNSUPPORTED')
+            assert not gdal.SetFileMetadata('/vsigs/test_metadata/foo.txt', {}, 'ACL')
+
+        handler = webserver.SequentialHandler()
+        handler.add('PUT', '/test_metadata/foo.txt?acl', 400)
+        with webserver.install_http_handler(handler):
+            with gdaltest.error_handler():
+                assert not gdal.SetFileMetadata('/vsigs/test_metadata/foo.txt', {'XML': '<foo/>'}, 'ACL')
 
 ###############################################################################
 # Test reading/writing HEADERS
 
 
-def test_vsigs_headers():
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
+def test_vsigs_headers(gs_test_config, webserver_port):
 
     gdal.VSICurlClearCache()
 
-    handler = webserver.SequentialHandler()
-    handler.add('GET', '/test_metadata/foo.txt', 200, {'x-goog-meta-foo': 'bar'})
-    with webserver.install_http_handler(handler):
-        md = gdal.GetFileMetadata('/vsigs/test_metadata/foo.txt', 'HEADERS')
-    assert 'x-goog-meta-foo' in md and md['x-goog-meta-foo'] == 'bar'
+    with gdaltest.config_options(
+        { 'GS_SECRET_ACCESS_KEY': 'GS_SECRET_ACCESS_KEY',
+          'GS_ACCESS_KEY_ID': 'GS_ACCESS_KEY_ID' }):
 
-    # Write HEADERS domain
-    handler = webserver.SequentialHandler()
-    handler.add('PUT', '/test_metadata/foo.txt', 200, {},
-                expected_headers = {'x-goog-meta-foo': 'bar',
-                                    'x-goog-metadata-directive': 'REPLACE',
-                                    'x-goog-copy-source': '/test_metadata/foo.txt'})
-    with webserver.install_http_handler(handler):
-        assert gdal.SetFileMetadata('/vsigs/test_metadata/foo.txt', {'x-goog-meta-foo': 'bar'}, 'HEADERS')
+        handler = webserver.SequentialHandler()
+        handler.add('GET', '/test_metadata/foo.txt', 200, {'x-goog-meta-foo': 'bar'})
+        with webserver.install_http_handler(handler):
+            md = gdal.GetFileMetadata('/vsigs/test_metadata/foo.txt', 'HEADERS')
+        assert 'x-goog-meta-foo' in md and md['x-goog-meta-foo'] == 'bar'
+
+        # Write HEADERS domain
+        handler = webserver.SequentialHandler()
+        handler.add('PUT', '/test_metadata/foo.txt', 200, {},
+                    expected_headers = {'x-goog-meta-foo': 'bar',
+                                        'x-goog-metadata-directive': 'REPLACE',
+                                        'x-goog-copy-source': '/test_metadata/foo.txt'})
+        with webserver.install_http_handler(handler):
+            assert gdal.SetFileMetadata('/vsigs/test_metadata/foo.txt', {'x-goog-meta-foo': 'bar'}, 'HEADERS')
 
 
 ###############################################################################
 # Read credentials with OAuth2 refresh_token
 
 
-def test_vsigs_read_credentials_refresh_token_default_gdal_app():
+def test_vsigs_read_credentials_refresh_token_default_gdal_app(gs_test_config, webserver_port):
 
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
+    with gdaltest.config_options(
+        { 'GOA2_AUTH_URL_TOKEN': 'http://localhost:%d/accounts.google.com/o/oauth2/token' % webserver_port,
+          'GS_OAUTH2_REFRESH_TOKEN': 'REFRESH_TOKEN'}):
 
-    gdal.SetConfigOption('GS_SECRET_ACCESS_KEY', '')
-    gdal.SetConfigOption('GS_ACCESS_KEY_ID', '')
+        with gdaltest.error_handler():
+            assert gdal.GetSignedURL('/vsigs/foo/bar') is None
 
-    gdal.SetConfigOption('GOA2_AUTH_URL_TOKEN',
-                         'http://localhost:%d/accounts.google.com/o/oauth2/token' % gdaltest.webserver_port)
+        gdal.VSICurlClearCache()
 
-    gdal.SetConfigOption('GS_OAUTH2_REFRESH_TOKEN', 'REFRESH_TOKEN')
+        handler = webserver.SequentialHandler()
 
-    with gdaltest.error_handler():
-        assert gdal.GetSignedURL('/vsigs/foo/bar') is None
+        def method(request):
+            content = request.rfile.read(int(request.headers['Content-Length'])).decode('ascii')
+            if content != 'refresh_token=REFRESH_TOKEN&client_id=265656308688.apps.googleusercontent.com&client_secret=0IbTUDOYzaL6vnIdWTuQnvLz&grant_type=refresh_token':
+                sys.stderr.write('Bad POST content: %s\n' % content)
+                request.send_response(403)
+                return
 
-    gdal.VSICurlClearCache()
+            request.send_response(200)
+            request.send_header('Content-type', 'text/plain')
+            content = """{
+                    "access_token" : "ACCESS_TOKEN",
+                    "token_type" : "Bearer",
+                    "expires_in" : 3600,
+                    }"""
+            request.send_header('Content-Length', len(content))
+            request.end_headers()
+            request.wfile.write(content.encode('ascii'))
 
-    handler = webserver.SequentialHandler()
+        handler.add('POST', '/accounts.google.com/o/oauth2/token', custom_method=method)
 
-    def method(request):
-        content = request.rfile.read(int(request.headers['Content-Length'])).decode('ascii')
-        if content != 'refresh_token=REFRESH_TOKEN&client_id=265656308688.apps.googleusercontent.com&client_secret=0IbTUDOYzaL6vnIdWTuQnvLz&grant_type=refresh_token':
-            sys.stderr.write('Bad POST content: %s\n' % content)
-            request.send_response(403)
-            return
+        def method(request):
+            if 'Authorization' not in request.headers:
+                sys.stderr.write('Bad headers: %s\n' % str(request.headers))
+                request.send_response(403)
+                return
+            expected_authorization = 'Bearer ACCESS_TOKEN'
+            if request.headers['Authorization'] != expected_authorization:
+                sys.stderr.write("Bad Authorization: '%s'\n" % str(request.headers['Authorization']))
+                request.send_response(403)
+                return
 
-        request.send_response(200)
-        request.send_header('Content-type', 'text/plain')
-        content = """{
-                "access_token" : "ACCESS_TOKEN",
-                "token_type" : "Bearer",
-                "expires_in" : 3600,
-                }"""
-        request.send_header('Content-Length', len(content))
-        request.end_headers()
-        request.wfile.write(content.encode('ascii'))
+            request.send_response(200)
+            request.send_header('Content-type', 'text/plain')
+            request.send_header('Content-Length', 3)
+            request.end_headers()
+            request.wfile.write("""foo""".encode('ascii'))
 
-    handler.add('POST', '/accounts.google.com/o/oauth2/token', custom_method=method)
-
-    def method(request):
-        if 'Authorization' not in request.headers:
-            sys.stderr.write('Bad headers: %s\n' % str(request.headers))
-            request.send_response(403)
-            return
-        expected_authorization = 'Bearer ACCESS_TOKEN'
-        if request.headers['Authorization'] != expected_authorization:
-            sys.stderr.write("Bad Authorization: '%s'\n" % str(request.headers['Authorization']))
-            request.send_response(403)
-            return
-
-        request.send_response(200)
-        request.send_header('Content-type', 'text/plain')
-        request.send_header('Content-Length', 3)
-        request.end_headers()
-        request.wfile.write("""foo""".encode('ascii'))
-
-    handler.add('GET', '/gs_fake_bucket/resource', custom_method=method)
-    with webserver.install_http_handler(handler):
-        f = open_for_read('/vsigs/gs_fake_bucket/resource')
-        assert f is not None
-        data = gdal.VSIFReadL(1, 4, f).decode('ascii')
-        gdal.VSIFCloseL(f)
-
-    assert data == 'foo'
-
-    # Test GS_USER_PROJECT
-    handler = webserver.SequentialHandler()
-    handler.add('GET', '/gs_fake_bucket/resource_under_requester_pays', 200,
-                {'Content-type': 'text/plain'}, 'foo',
-                expected_headers={'x-goog-user-project': 'my_project_id'})
-    with webserver.install_http_handler(handler):
-        with gdaltest.config_option('GS_USER_PROJECT', 'my_project_id'):
-            f = open_for_read('/vsigs_streaming/gs_fake_bucket/resource_under_requester_pays')
+        handler.add('GET', '/gs_fake_bucket/resource', custom_method=method)
+        with webserver.install_http_handler(handler):
+            f = open_for_read('/vsigs/gs_fake_bucket/resource')
             assert f is not None
             data = gdal.VSIFReadL(1, 4, f).decode('ascii')
             gdal.VSIFCloseL(f)
 
-            assert data == 'foo'
+        assert data == 'foo'
 
-    gdal.SetConfigOption('GOA2_AUTH_URL_TOKEN', None)
-    gdal.SetConfigOption('GS_OAUTH2_REFRESH_TOKEN', '')
+        # Test GS_USER_PROJECT
+        handler = webserver.SequentialHandler()
+        handler.add('GET', '/gs_fake_bucket/resource_under_requester_pays', 200,
+                    {'Content-type': 'text/plain'}, 'foo',
+                    expected_headers={'x-goog-user-project': 'my_project_id'})
+        with webserver.install_http_handler(handler):
+            with gdaltest.config_option('GS_USER_PROJECT', 'my_project_id'):
+                f = open_for_read('/vsigs_streaming/gs_fake_bucket/resource_under_requester_pays')
+                assert f is not None
+                data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+                gdal.VSIFCloseL(f)
+
+                assert data == 'foo'
 
 ###############################################################################
 # Read credentials with OAuth2 refresh_token
 
 
-def test_vsigs_read_credentials_refresh_token_custom_app():
+def test_vsigs_read_credentials_refresh_token_custom_app(gs_test_config, webserver_port):
 
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
+    with gdaltest.config_options(
+        { 'GOA2_AUTH_URL_TOKEN': 'http://localhost:%d/accounts.google.com/o/oauth2/token' % webserver_port,
+          'GS_OAUTH2_REFRESH_TOKEN': 'REFRESH_TOKEN',
+          'GS_OAUTH2_CLIENT_ID': 'CLIENT_ID',
+          'GS_OAUTH2_CLIENT_SECRET': 'CLIENT_SECRET' }):
 
-    gdal.SetConfigOption('GS_SECRET_ACCESS_KEY', '')
-    gdal.SetConfigOption('GS_ACCESS_KEY_ID', '')
+        gdal.VSICurlClearCache()
 
-    gdal.SetConfigOption('GOA2_AUTH_URL_TOKEN',
-                         'http://localhost:%d/accounts.google.com/o/oauth2/token' % gdaltest.webserver_port)
+        handler = webserver.SequentialHandler()
 
-    gdal.SetConfigOption('GS_OAUTH2_REFRESH_TOKEN', 'REFRESH_TOKEN')
-    gdal.SetConfigOption('GS_OAUTH2_CLIENT_ID', 'CLIENT_ID')
-    gdal.SetConfigOption('GS_OAUTH2_CLIENT_SECRET', 'CLIENT_SECRET')
+        def method(request):
+            content = request.rfile.read(int(request.headers['Content-Length'])).decode('ascii')
+            if content != 'refresh_token=REFRESH_TOKEN&client_id=CLIENT_ID&client_secret=CLIENT_SECRET&grant_type=refresh_token':
+                sys.stderr.write('Bad POST content: %s\n' % content)
+                request.send_response(403)
+                return
 
-    gdal.VSICurlClearCache()
+            request.send_response(200)
+            request.send_header('Content-type', 'text/plain')
+            content = """{
+                    "access_token" : "ACCESS_TOKEN",
+                    "token_type" : "Bearer",
+                    "expires_in" : 3600,
+                    }"""
+            request.send_header('Content-Length', len(content))
+            request.end_headers()
+            request.wfile.write(content.encode('ascii'))
 
-    handler = webserver.SequentialHandler()
+        handler.add('POST', '/accounts.google.com/o/oauth2/token', custom_method=method)
 
-    def method(request):
-        content = request.rfile.read(int(request.headers['Content-Length'])).decode('ascii')
-        if content != 'refresh_token=REFRESH_TOKEN&client_id=CLIENT_ID&client_secret=CLIENT_SECRET&grant_type=refresh_token':
-            sys.stderr.write('Bad POST content: %s\n' % content)
-            request.send_response(403)
-            return
+        def method(request):
+            if 'Authorization' not in request.headers:
+                sys.stderr.write('Bad headers: %s\n' % str(request.headers))
+                request.send_response(403)
+                return
+            expected_authorization = 'Bearer ACCESS_TOKEN'
+            if request.headers['Authorization'] != expected_authorization:
+                sys.stderr.write("Bad Authorization: '%s'\n" % str(request.headers['Authorization']))
+                request.send_response(403)
+                return
 
-        request.send_response(200)
-        request.send_header('Content-type', 'text/plain')
-        content = """{
-                "access_token" : "ACCESS_TOKEN",
-                "token_type" : "Bearer",
-                "expires_in" : 3600,
-                }"""
-        request.send_header('Content-Length', len(content))
-        request.end_headers()
-        request.wfile.write(content.encode('ascii'))
+            request.send_response(200)
+            request.send_header('Content-type', 'text/plain')
+            request.send_header('Content-Length', 3)
+            request.end_headers()
+            request.wfile.write("""foo""".encode('ascii'))
 
-    handler.add('POST', '/accounts.google.com/o/oauth2/token', custom_method=method)
+        handler.add('GET', '/gs_fake_bucket/resource', custom_method=method)
+        with webserver.install_http_handler(handler):
+            f = open_for_read('/vsigs/gs_fake_bucket/resource')
+            assert f is not None
+            data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+            gdal.VSIFCloseL(f)
 
-    def method(request):
-        if 'Authorization' not in request.headers:
-            sys.stderr.write('Bad headers: %s\n' % str(request.headers))
-            request.send_response(403)
-            return
-        expected_authorization = 'Bearer ACCESS_TOKEN'
-        if request.headers['Authorization'] != expected_authorization:
-            sys.stderr.write("Bad Authorization: '%s'\n" % str(request.headers['Authorization']))
-            request.send_response(403)
-            return
-
-        request.send_response(200)
-        request.send_header('Content-type', 'text/plain')
-        request.send_header('Content-Length', 3)
-        request.end_headers()
-        request.wfile.write("""foo""".encode('ascii'))
-
-    handler.add('GET', '/gs_fake_bucket/resource', custom_method=method)
-    with webserver.install_http_handler(handler):
-        f = open_for_read('/vsigs/gs_fake_bucket/resource')
-        assert f is not None
-        data = gdal.VSIFReadL(1, 4, f).decode('ascii')
-        gdal.VSIFCloseL(f)
-
-    assert data == 'foo'
-
-    gdal.SetConfigOption('GOA2_AUTH_URL_TOKEN', None)
-    gdal.SetConfigOption('GS_OAUTH2_REFRESH_TOKEN', '')
-    gdal.SetConfigOption('GS_OAUTH2_CLIENT_ID', '')
-    gdal.SetConfigOption('GS_OAUTH2_CLIENT_SECRET', '')
+        assert data == 'foo'
 
 ###############################################################################
 # Read credentials with OAuth2 service account
 
 
-def test_vsigs_read_credentials_oauth2_service_account():
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
-
-    gdal.SetConfigOption('GS_SECRET_ACCESS_KEY', '')
-    gdal.SetConfigOption('GS_ACCESS_KEY_ID', '')
+def test_vsigs_read_credentials_oauth2_service_account(gs_test_config, webserver_port):
 
     # Generated with 'openssl genrsa -out rsa-openssl.pem 1024' and
     # 'openssl pkcs8 -nocrypt -in rsa-openssl.pem -inform PEM -topk8 -outform PEM -out rsa-openssl.pkcs8.pem'
@@ -718,20 +699,91 @@ yzpSgEiyx8O3EK1iTidvnLXbtWabvjZFfIE/0OhfBmN225MtKG3YLV2HoUvpajLq
 gwE6fxOLyJDxuWRf
 -----END PRIVATE KEY-----
 """
+    gdal.FileFromMemBuffer('/vsimem/pkey', key)
 
-    for i in range(2):
+    with gdaltest.config_options(
+        { 'GO2A_AUD': 'http://localhost:%d/oauth2/v4/token' % webserver_port,
+          'GOA2_NOW': '123456',
+          'GS_OAUTH2_CLIENT_EMAIL': 'CLIENT_EMAIL' }):
 
-        gdal.SetConfigOption('GO2A_AUD',
-                             'http://localhost:%d/oauth2/v4/token' % gdaltest.webserver_port)
-        gdal.SetConfigOption('GOA2_NOW', '123456')
+        for i in range(2):
 
-        if i == 0:
-            gdal.SetConfigOption('GS_OAUTH2_PRIVATE_KEY', key)
-        else:
-            gdal.FileFromMemBuffer('/vsimem/pkey', key)
-            gdal.SetConfigOption('GS_OAUTH2_PRIVATE_KEY_FILE', '/vsimem/pkey')
+            with gdaltest.config_options({'GS_OAUTH2_PRIVATE_KEY': key} if i == 0 else {'GS_OAUTH2_PRIVATE_KEY_FILE': '/vsimem/pkey'}):
 
-        gdal.SetConfigOption('GS_OAUTH2_CLIENT_EMAIL', 'CLIENT_EMAIL')
+                gdal.VSICurlClearCache()
+
+                handler = webserver.SequentialHandler()
+
+                def method(request):
+                    content = request.rfile.read(int(request.headers['Content-Length'])).decode('ascii')
+                    content_8080 = 'grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiAiQ0xJRU5UX0VNQUlMIiwgInNjb3BlIjogImh0dHBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL2F1dGgvZGV2c3RvcmFnZS5yZWFkX3dyaXRlIiwgImF1ZCI6ICJodHRwOi8vbG9jYWxob3N0OjgwODAvb2F1dGgyL3Y0L3Rva2VuIiwgImlhdCI6IDEyMzQ1NiwgImV4cCI6IDEyNzA1Nn0%3D.DAhqWtBgKpObxZ%2BGiXqwF%2Fa4SS%2FNWQRhLCI7DYZCuOTuf2w7dL8j4CdpiwwzQg1diIus7dyViRfzpsFmuZKAXwL%2B84iBoVVqnJJZ4TgwH49NdfMAnc4Rgm%2Bo2a2nEcMjX%2FbQ3jRY%2B9WNVl96hzULGvLrVeyego2f06wivqmvxHA%3D'
+                    content_8081 = 'grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiAiQ0xJRU5UX0VNQUlMIiwgInNjb3BlIjogImh0dHBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL2F1dGgvZGV2c3RvcmFnZS5yZWFkX3dyaXRlIiwgImF1ZCI6ICJodHRwOi8vbG9jYWxob3N0OjgwODEvb2F1dGgyL3Y0L3Rva2VuIiwgImlhdCI6IDEyMzQ1NiwgImV4cCI6IDEyNzA1Nn0%3D.0abOEg4%2FRApWTSeAs6YTHaNzdwOgZLm8DTMO2MKlOA%2Fiagyb4cBJxDpkD5gECPvi7qhkg7LsyFuj0a%2BK48Bsuj%2FgLHOU4MpB0dHwYnDO2UXzH%2FUPdgFCVak1P1V%2ByiDA%2B%2Ft4aDI5fD9qefKQiu3wsMDHzP71MNLzayrjqaqKKS4%3D'
+                    if content not in [content_8080, content_8081]:
+                        sys.stderr.write('Bad POST content: %s\n' % content)
+                        request.send_response(403)
+                        return
+
+                    request.send_response(200)
+                    request.send_header('Content-type', 'text/plain')
+                    content = """{
+                            "access_token" : "ACCESS_TOKEN",
+                            "token_type" : "Bearer",
+                            "expires_in" : 3600,
+                            }"""
+                    request.send_header('Content-Length', len(content))
+                    request.end_headers()
+                    request.wfile.write(content.encode('ascii'))
+
+                handler.add('POST', '/oauth2/v4/token', custom_method=method)
+
+                def method(request):
+                    if 'Authorization' not in request.headers:
+                        sys.stderr.write('Bad headers: %s\n' % str(request.headers))
+                        request.send_response(403)
+                        return
+                    expected_authorization = 'Bearer ACCESS_TOKEN'
+                    if request.headers['Authorization'] != expected_authorization:
+                        sys.stderr.write("Bad Authorization: '%s'\n" % str(request.headers['Authorization']))
+                        request.send_response(403)
+                        return
+
+                    request.send_response(200)
+                    request.send_header('Content-type', 'text/plain')
+                    request.send_header('Content-Length', 3)
+                    request.end_headers()
+                    request.wfile.write("""foo""".encode('ascii'))
+
+                handler.add('GET', '/gs_fake_bucket/resource', custom_method=method)
+                try:
+                    with webserver.install_http_handler(handler):
+                        f = open_for_read('/vsigs/gs_fake_bucket/resource')
+                        assert f is not None
+                        data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+                        gdal.VSIFCloseL(f)
+                except:
+                    if gdal.GetLastErrorMsg().find('CPLRSASHA256Sign() not implemented') >= 0:
+                        pytest.skip()
+
+                assert data == 'foo'
+
+    gdal.Unlink('/vsimem/pkey')
+
+###############################################################################
+# Read credentials with OAuth2 service account through a json configuration file
+
+
+def test_vsigs_read_credentials_oauth2_service_account_json_file(gs_test_config, webserver_port):
+
+    gdal.FileFromMemBuffer('/vsimem/service_account.json', """{
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIICeAIBADANBgkqhkiG9w0BAQEFAASCAmIwggJeAgEAAoGBAOlwJQLLDG1HeLrk\nVNcFR5Qptto/rJE5emRuy0YmkVINT4uHb1be7OOo44C2Ev8QPVtNHHS2XwCY5gTm\ni2RfIBLv+VDMoVQPqqE0LHb0WeqGmM5V1tHbmVnIkCcKMn3HpK30grccuBc472LQ\nDVkkGqIiGu0qLAQ89JP/r0LWWySRAgMBAAECgYAWjsS00WRBByAOh1P/dz4kfidy\nTabiXbiLDf3MqJtwX2Lpa8wBjAc+NKrPXEjXpv0W3ou6Z4kkqKHJpXGg4GRb4N5I\n2FA+7T1lA0FCXa7dT2jvgJLgpBepJu5b//tqFqORb4A4gMZw0CiPN3sUsWsSw5Hd\nDrRXwp6sarzG77kvZQJBAPgysAmmXIIp9j1hrFSkctk4GPkOzZ3bxKt2Nl4GFrb+\nbpKSon6OIhP1edrxTz1SMD1k5FiAAVUrMDKSarbh5osCQQDwxq4Tvf/HiYz79JBg\nWz5D51ySkbg01dOVgFW3eaYAdB6ta/o4vpHhnbrfl6VO9oUb3QR4hcrruwnDHsw3\n4mDTAkEA9FPZjbZSTOSH/cbgAXbdhE4/7zWOXj7Q7UVyob52r+/p46osAk9i5qj5\nKvnv2lrFGDrwutpP9YqNaMtP9/aLnwJBALLWf9n+GAv3qRZD0zEe1KLPKD1dqvrj\nj+LNjd1Xp+tSVK7vMs4PDoAMDg+hrZF3HetSQM3cYpqxNFEPgRRJOy0CQQDQlZHI\nyzpSgEiyx8O3EK1iTidvnLXbtWabvjZFfIE/0OhfBmN225MtKG3YLV2HoUvpajLq\ngwE6fxOLyJDxuWRf\n-----END PRIVATE KEY-----\n",
+  "client_email": "CLIENT_EMAIL",
+  "type": "service_account"
+                           }""")
+
+    with gdaltest.config_options(
+        { 'GOOGLE_APPLICATION_CREDENTIALS': '/vsimem/service_account.json',
+          'GO2A_AUD': 'http://localhost:%d/oauth2/v4/token' % webserver_port,
+          'GOA2_NOW': '123456' }):
 
         gdal.VSICurlClearCache()
 
@@ -780,130 +832,32 @@ gwE6fxOLyJDxuWRf
         try:
             with webserver.install_http_handler(handler):
                 f = open_for_read('/vsigs/gs_fake_bucket/resource')
-                assert f is not None
+                if f is None:
+                    gdal.Unlink('/vsimem/service_account.json')
+                    pytest.fail()
                 data = gdal.VSIFReadL(1, 4, f).decode('ascii')
                 gdal.VSIFCloseL(f)
+
+                signed_url = gdal.GetSignedURL('/vsigs/gs_fake_bucket/resource',
+                                               ['START_DATE=20180212T123456Z'])
+                if signed_url not in ('http://127.0.0.1:8080/gs_fake_bucket/resource?Expires=1518442496&GoogleAccessId=CLIENT_EMAIL&Signature=b19I62KdqV51DpWGxhxGXLGJIA8MHvSJofwOygoeQuIxkM6PmmQFvJYTNWRt9zUVTUoVC0UHVB7ee5Z35NqDC8K4i0quu1hb8Js2B4h0W6OAupvyF3nSQ5D0OJmiSbomGMq0Ehyro5cqJ%2FU%2Fd8oAaKrGKVQScKfXoFrSJBbWkNs%3D',
+                                      'http://127.0.0.1:8081/gs_fake_bucket/resource?Expires=1518442496&GoogleAccessId=CLIENT_EMAIL&Signature=b19I62KdqV51DpWGxhxGXLGJIA8MHvSJofwOygoeQuIxkM6PmmQFvJYTNWRt9zUVTUoVC0UHVB7ee5Z35NqDC8K4i0quu1hb8Js2B4h0W6OAupvyF3nSQ5D0OJmiSbomGMq0Ehyro5cqJ%2FU%2Fd8oAaKrGKVQScKfXoFrSJBbWkNs%3D'):
+                    gdal.Unlink('/vsimem/service_account.json')
+                    pytest.fail(signed_url)
+
         except:
             if gdal.GetLastErrorMsg().find('CPLRSASHA256Sign() not implemented') >= 0:
                 pytest.skip()
-        finally:
-            gdal.SetConfigOption('GO2A_AUD', None)
-            gdal.SetConfigOption('GO2A_NOW', None)
-            gdal.SetConfigOption('GS_OAUTH2_PRIVATE_KEY', '')
-            gdal.SetConfigOption('GS_OAUTH2_PRIVATE_KEY_FILE', '')
-            gdal.SetConfigOption('GS_OAUTH2_CLIENT_EMAIL', '')
+
+        gdal.Unlink('/vsimem/service_account.json')
 
         assert data == 'foo'
-
-    gdal.Unlink('/vsimem/pkey')
-
-###############################################################################
-# Read credentials with OAuth2 service account through a json configuration file
-
-
-def test_vsigs_read_credentials_oauth2_service_account_json_file():
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
-
-    gdal.SetConfigOption('GS_SECRET_ACCESS_KEY', '')
-    gdal.SetConfigOption('GS_ACCESS_KEY_ID', '')
-
-    gdal.FileFromMemBuffer('/vsimem/service_account.json', """{
-  "private_key": "-----BEGIN PRIVATE KEY-----\nMIICeAIBADANBgkqhkiG9w0BAQEFAASCAmIwggJeAgEAAoGBAOlwJQLLDG1HeLrk\nVNcFR5Qptto/rJE5emRuy0YmkVINT4uHb1be7OOo44C2Ev8QPVtNHHS2XwCY5gTm\ni2RfIBLv+VDMoVQPqqE0LHb0WeqGmM5V1tHbmVnIkCcKMn3HpK30grccuBc472LQ\nDVkkGqIiGu0qLAQ89JP/r0LWWySRAgMBAAECgYAWjsS00WRBByAOh1P/dz4kfidy\nTabiXbiLDf3MqJtwX2Lpa8wBjAc+NKrPXEjXpv0W3ou6Z4kkqKHJpXGg4GRb4N5I\n2FA+7T1lA0FCXa7dT2jvgJLgpBepJu5b//tqFqORb4A4gMZw0CiPN3sUsWsSw5Hd\nDrRXwp6sarzG77kvZQJBAPgysAmmXIIp9j1hrFSkctk4GPkOzZ3bxKt2Nl4GFrb+\nbpKSon6OIhP1edrxTz1SMD1k5FiAAVUrMDKSarbh5osCQQDwxq4Tvf/HiYz79JBg\nWz5D51ySkbg01dOVgFW3eaYAdB6ta/o4vpHhnbrfl6VO9oUb3QR4hcrruwnDHsw3\n4mDTAkEA9FPZjbZSTOSH/cbgAXbdhE4/7zWOXj7Q7UVyob52r+/p46osAk9i5qj5\nKvnv2lrFGDrwutpP9YqNaMtP9/aLnwJBALLWf9n+GAv3qRZD0zEe1KLPKD1dqvrj\nj+LNjd1Xp+tSVK7vMs4PDoAMDg+hrZF3HetSQM3cYpqxNFEPgRRJOy0CQQDQlZHI\nyzpSgEiyx8O3EK1iTidvnLXbtWabvjZFfIE/0OhfBmN225MtKG3YLV2HoUvpajLq\ngwE6fxOLyJDxuWRf\n-----END PRIVATE KEY-----\n",
-  "client_email": "CLIENT_EMAIL",
-  "type": "service_account"
-                           }""")
-
-    gdal.SetConfigOption('GOOGLE_APPLICATION_CREDENTIALS', '/vsimem/service_account.json')
-
-    gdal.SetConfigOption('GO2A_AUD',
-                         'http://localhost:%d/oauth2/v4/token' % gdaltest.webserver_port)
-    gdal.SetConfigOption('GOA2_NOW', '123456')
-
-    gdal.VSICurlClearCache()
-
-    handler = webserver.SequentialHandler()
-
-    def method(request):
-        content = request.rfile.read(int(request.headers['Content-Length'])).decode('ascii')
-        content_8080 = 'grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiAiQ0xJRU5UX0VNQUlMIiwgInNjb3BlIjogImh0dHBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL2F1dGgvZGV2c3RvcmFnZS5yZWFkX3dyaXRlIiwgImF1ZCI6ICJodHRwOi8vbG9jYWxob3N0OjgwODAvb2F1dGgyL3Y0L3Rva2VuIiwgImlhdCI6IDEyMzQ1NiwgImV4cCI6IDEyNzA1Nn0%3D.DAhqWtBgKpObxZ%2BGiXqwF%2Fa4SS%2FNWQRhLCI7DYZCuOTuf2w7dL8j4CdpiwwzQg1diIus7dyViRfzpsFmuZKAXwL%2B84iBoVVqnJJZ4TgwH49NdfMAnc4Rgm%2Bo2a2nEcMjX%2FbQ3jRY%2B9WNVl96hzULGvLrVeyego2f06wivqmvxHA%3D'
-        content_8081 = 'grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiAiQ0xJRU5UX0VNQUlMIiwgInNjb3BlIjogImh0dHBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL2F1dGgvZGV2c3RvcmFnZS5yZWFkX3dyaXRlIiwgImF1ZCI6ICJodHRwOi8vbG9jYWxob3N0OjgwODEvb2F1dGgyL3Y0L3Rva2VuIiwgImlhdCI6IDEyMzQ1NiwgImV4cCI6IDEyNzA1Nn0%3D.0abOEg4%2FRApWTSeAs6YTHaNzdwOgZLm8DTMO2MKlOA%2Fiagyb4cBJxDpkD5gECPvi7qhkg7LsyFuj0a%2BK48Bsuj%2FgLHOU4MpB0dHwYnDO2UXzH%2FUPdgFCVak1P1V%2ByiDA%2B%2Ft4aDI5fD9qefKQiu3wsMDHzP71MNLzayrjqaqKKS4%3D'
-        if content not in [content_8080, content_8081]:
-            sys.stderr.write('Bad POST content: %s\n' % content)
-            request.send_response(403)
-            return
-
-        request.send_response(200)
-        request.send_header('Content-type', 'text/plain')
-        content = """{
-                "access_token" : "ACCESS_TOKEN",
-                "token_type" : "Bearer",
-                "expires_in" : 3600,
-                }"""
-        request.send_header('Content-Length', len(content))
-        request.end_headers()
-        request.wfile.write(content.encode('ascii'))
-
-    handler.add('POST', '/oauth2/v4/token', custom_method=method)
-
-    def method(request):
-        if 'Authorization' not in request.headers:
-            sys.stderr.write('Bad headers: %s\n' % str(request.headers))
-            request.send_response(403)
-            return
-        expected_authorization = 'Bearer ACCESS_TOKEN'
-        if request.headers['Authorization'] != expected_authorization:
-            sys.stderr.write("Bad Authorization: '%s'\n" % str(request.headers['Authorization']))
-            request.send_response(403)
-            return
-
-        request.send_response(200)
-        request.send_header('Content-type', 'text/plain')
-        request.send_header('Content-Length', 3)
-        request.end_headers()
-        request.wfile.write("""foo""".encode('ascii'))
-
-    handler.add('GET', '/gs_fake_bucket/resource', custom_method=method)
-    try:
-        with webserver.install_http_handler(handler):
-            f = open_for_read('/vsigs/gs_fake_bucket/resource')
-            if f is None:
-                gdal.Unlink('/vsimem/service_account.json')
-                pytest.fail()
-            data = gdal.VSIFReadL(1, 4, f).decode('ascii')
-            gdal.VSIFCloseL(f)
-
-            signed_url = gdal.GetSignedURL('/vsigs/gs_fake_bucket/resource',
-                                           ['START_DATE=20180212T123456Z'])
-            if signed_url not in ('http://127.0.0.1:8080/gs_fake_bucket/resource?Expires=1518442496&GoogleAccessId=CLIENT_EMAIL&Signature=b19I62KdqV51DpWGxhxGXLGJIA8MHvSJofwOygoeQuIxkM6PmmQFvJYTNWRt9zUVTUoVC0UHVB7ee5Z35NqDC8K4i0quu1hb8Js2B4h0W6OAupvyF3nSQ5D0OJmiSbomGMq0Ehyro5cqJ%2FU%2Fd8oAaKrGKVQScKfXoFrSJBbWkNs%3D',
-                                  'http://127.0.0.1:8081/gs_fake_bucket/resource?Expires=1518442496&GoogleAccessId=CLIENT_EMAIL&Signature=b19I62KdqV51DpWGxhxGXLGJIA8MHvSJofwOygoeQuIxkM6PmmQFvJYTNWRt9zUVTUoVC0UHVB7ee5Z35NqDC8K4i0quu1hb8Js2B4h0W6OAupvyF3nSQ5D0OJmiSbomGMq0Ehyro5cqJ%2FU%2Fd8oAaKrGKVQScKfXoFrSJBbWkNs%3D'):
-                gdal.Unlink('/vsimem/service_account.json')
-                pytest.fail(signed_url)
-
-    except:
-        if gdal.GetLastErrorMsg().find('CPLRSASHA256Sign() not implemented') >= 0:
-            pytest.skip()
-    finally:
-        gdal.SetConfigOption('GO2A_AUD', None)
-        gdal.SetConfigOption('GO2A_NOW', None)
-        gdal.SetConfigOption('GOOGLE_APPLICATION_CREDENTIALS', '')
-
-    gdal.Unlink('/vsimem/service_account.json')
-
-    assert data == 'foo'
 
 ###############################################################################
 # Read credentials with OAuth2 authorized user through a json configuration file
 
 
-def test_vsigs_read_credentials_oauth2_authorized_user_json_file():
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
-
-    gdal.SetConfigOption('GS_SECRET_ACCESS_KEY', '')
-    gdal.SetConfigOption('GS_ACCESS_KEY_ID', '')
+def test_vsigs_read_credentials_oauth2_authorized_user_json_file(gs_test_config, webserver_port):
 
     gdal.FileFromMemBuffer('/vsimem/authorized_user.json', """{
       "client_id": "CLIENT_ID",
@@ -912,78 +866,67 @@ def test_vsigs_read_credentials_oauth2_authorized_user_json_file():
       "type": "authorized_user"
     }""")
 
-    gdal.SetConfigOption('GOOGLE_APPLICATION_CREDENTIALS', '/vsimem/authorized_user.json')
+    with gdaltest.config_options(
+        { 'GOOGLE_APPLICATION_CREDENTIALS': '/vsimem/authorized_user.json',
+          'GOA2_AUTH_URL_TOKEN': 'http://localhost:%d/accounts.google.com/o/oauth2/token' % webserver_port }):
 
-    gdal.SetConfigOption('GOA2_AUTH_URL_TOKEN',
-                         'http://localhost:%d/accounts.google.com/o/oauth2/token' % gdaltest.webserver_port)
+        gdal.VSICurlClearCache()
 
-    gdal.VSICurlClearCache()
+        handler = webserver.SequentialHandler()
 
-    handler = webserver.SequentialHandler()
+        def method(request):
+            content = request.rfile.read(int(request.headers['Content-Length'])).decode('ascii')
+            if content != 'refresh_token=REFRESH_TOKEN&client_id=CLIENT_ID&client_secret=CLIENT_SECRET&grant_type=refresh_token':
+                sys.stderr.write('Bad POST content: %s\n' % content)
+                request.send_response(403)
+                return
 
-    def method(request):
-        content = request.rfile.read(int(request.headers['Content-Length'])).decode('ascii')
-        if content != 'refresh_token=REFRESH_TOKEN&client_id=CLIENT_ID&client_secret=CLIENT_SECRET&grant_type=refresh_token':
-            sys.stderr.write('Bad POST content: %s\n' % content)
-            request.send_response(403)
-            return
+            request.send_response(200)
+            request.send_header('Content-type', 'text/plain')
+            content = """{
+                    "access_token" : "ACCESS_TOKEN",
+                    "token_type" : "Bearer",
+                    "expires_in" : 3600,
+                    }"""
+            request.send_header('Content-Length', len(content))
+            request.end_headers()
+            request.wfile.write(content.encode('ascii'))
 
-        request.send_response(200)
-        request.send_header('Content-type', 'text/plain')
-        content = """{
-                "access_token" : "ACCESS_TOKEN",
-                "token_type" : "Bearer",
-                "expires_in" : 3600,
-                }"""
-        request.send_header('Content-Length', len(content))
-        request.end_headers()
-        request.wfile.write(content.encode('ascii'))
+        handler.add('POST', '/accounts.google.com/o/oauth2/token', custom_method=method)
 
-    handler.add('POST', '/accounts.google.com/o/oauth2/token', custom_method=method)
+        def method(request):
+            if 'Authorization' not in request.headers:
+                sys.stderr.write('Bad headers: %s\n' % str(request.headers))
+                request.send_response(403)
+                return
+            expected_authorization = 'Bearer ACCESS_TOKEN'
+            if request.headers['Authorization'] != expected_authorization:
+                sys.stderr.write("Bad Authorization: '%s'\n" % str(request.headers['Authorization']))
+                request.send_response(403)
+                return
 
-    def method(request):
-        if 'Authorization' not in request.headers:
-            sys.stderr.write('Bad headers: %s\n' % str(request.headers))
-            request.send_response(403)
-            return
-        expected_authorization = 'Bearer ACCESS_TOKEN'
-        if request.headers['Authorization'] != expected_authorization:
-            sys.stderr.write("Bad Authorization: '%s'\n" % str(request.headers['Authorization']))
-            request.send_response(403)
-            return
+            request.send_response(200)
+            request.send_header('Content-type', 'text/plain')
+            request.send_header('Content-Length', 3)
+            request.end_headers()
+            request.wfile.write("""foo""".encode('ascii'))
 
-        request.send_response(200)
-        request.send_header('Content-type', 'text/plain')
-        request.send_header('Content-Length', 3)
-        request.end_headers()
-        request.wfile.write("""foo""".encode('ascii'))
+        handler.add('GET', '/gs_fake_bucket/resource', custom_method=method)
+        with webserver.install_http_handler(handler):
+            f = open_for_read('/vsigs/gs_fake_bucket/resource')
+            assert f is not None
+            data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+            gdal.VSIFCloseL(f)
 
-    handler.add('GET', '/gs_fake_bucket/resource', custom_method=method)
-    with webserver.install_http_handler(handler):
-        f = open_for_read('/vsigs/gs_fake_bucket/resource')
-        assert f is not None
-        data = gdal.VSIFReadL(1, 4, f).decode('ascii')
-        gdal.VSIFCloseL(f)
+        assert data == 'foo'
 
-    assert data == 'foo'
-
-    gdal.SetConfigOption('GOA2_AUTH_URL_TOKEN', None)
-    gdal.SetConfigOption('GOOGLE_APPLICATION_CREDENTIALS', '')
-    gdal.Unlink('/vsimem/service_account.json')
+        gdal.Unlink('/vsimem/service_account.json')
 
 ###############################################################################
 # Read credentials from simulated ~/.boto
 
 
-def test_vsigs_read_credentials_file():
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
-
-    gdal.SetConfigOption('GS_SECRET_ACCESS_KEY', '')
-    gdal.SetConfigOption('GS_ACCESS_KEY_ID', '')
-
-    gdal.SetConfigOption('CPL_GS_CREDENTIALS_FILE', '/vsimem/.boto')
+def test_vsigs_read_credentials_file(gs_test_config, webserver_port):
 
     gdal.VSICurlClearCache()
 
@@ -999,51 +942,44 @@ gs_access_key_id = foo
 gs_secret_access_key = bar
 """)
 
-    def method(request):
-        if 'Authorization' not in request.headers:
-            sys.stderr.write('Bad headers: %s\n' % str(request.headers))
-            request.send_response(403)
-            return
-        expected_authorization = 'GOOG1 GS_ACCESS_KEY_ID:8tndu9//BfmN+Kg4AFLdUMZMBDQ='
-        if request.headers['Authorization'] != expected_authorization:
-            sys.stderr.write("Bad Authorization: '%s'\n" % str(request.headers['Authorization']))
-            request.send_response(403)
-            return
+    with gdaltest.config_options(
+        { 'CPL_GS_TIMESTAMP': 'my_timestamp',
+          'CPL_GS_CREDENTIALS_FILE': '/vsimem/.boto'}):
 
-        request.send_response(200)
-        request.send_header('Content-type', 'text/plain')
-        request.send_header('Content-Length', 3)
-        request.end_headers()
-        request.wfile.write("""foo""".encode('ascii'))
+        def method(request):
+            if 'Authorization' not in request.headers:
+                sys.stderr.write('Bad headers: %s\n' % str(request.headers))
+                request.send_response(403)
+                return
+            expected_authorization = 'GOOG1 GS_ACCESS_KEY_ID:8tndu9//BfmN+Kg4AFLdUMZMBDQ='
+            if request.headers['Authorization'] != expected_authorization:
+                sys.stderr.write("Bad Authorization: '%s'\n" % str(request.headers['Authorization']))
+                request.send_response(403)
+                return
 
-    handler = webserver.SequentialHandler()
-    handler.add('GET', '/gs_fake_bucket/resource', custom_method=method)
-    with webserver.install_http_handler(handler):
-        f = open_for_read('/vsigs/gs_fake_bucket/resource')
-        assert f is not None
-        data = gdal.VSIFReadL(1, 4, f).decode('ascii')
-        gdal.VSIFCloseL(f)
+            request.send_response(200)
+            request.send_header('Content-type', 'text/plain')
+            request.send_header('Content-Length', 3)
+            request.end_headers()
+            request.wfile.write("""foo""".encode('ascii'))
 
-    assert data == 'foo'
+        handler = webserver.SequentialHandler()
+        handler.add('GET', '/gs_fake_bucket/resource', custom_method=method)
+        with webserver.install_http_handler(handler):
+            f = open_for_read('/vsigs/gs_fake_bucket/resource')
+            assert f is not None
+            data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+            gdal.VSIFCloseL(f)
 
-    gdal.SetConfigOption('CPL_GS_CREDENTIALS_FILE', '')
+        assert data == 'foo'
+
     gdal.Unlink('/vsimem/.boto')
 
 ###############################################################################
 # Read credentials from simulated ~/.boto
 
 
-def test_vsigs_read_credentials_file_refresh_token():
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
-
-    gdal.SetConfigOption('GS_SECRET_ACCESS_KEY', '')
-    gdal.SetConfigOption('GS_ACCESS_KEY_ID', '')
-
-    gdal.SetConfigOption('CPL_GS_CREDENTIALS_FILE', '/vsimem/.boto')
-    gdal.SetConfigOption('GOA2_AUTH_URL_TOKEN',
-                         'http://localhost:%d/accounts.google.com/o/oauth2/token' % gdaltest.webserver_port)
+def test_vsigs_read_credentials_file_refresh_token(gs_test_config, webserver_port):
 
     gdal.VSICurlClearCache()
 
@@ -1055,59 +991,64 @@ client_id = CLIENT_ID
 client_secret = CLIENT_SECRET
 """)
 
-    handler = webserver.SequentialHandler()
+    with gdaltest.config_options(
+            { 'CPL_GS_CREDENTIALS_FILE': '/vsimem/.boto',
+              'GOA2_AUTH_URL_TOKEN':
+                             'http://localhost:%d/accounts.google.com/o/oauth2/token' % webserver_port }):
 
-    def method(request):
-        content = request.rfile.read(int(request.headers['Content-Length'])).decode('ascii')
-        if content != 'refresh_token=REFRESH_TOKEN&client_id=CLIENT_ID&client_secret=CLIENT_SECRET&grant_type=refresh_token':
-            sys.stderr.write('Bad POST content: %s\n' % content)
-            request.send_response(403)
-            return
+        handler = webserver.SequentialHandler()
 
-        request.send_response(200)
-        request.send_header('Content-type', 'text/plain')
-        content = """{
-                "access_token" : "ACCESS_TOKEN",
-                "token_type" : "Bearer",
-                "expires_in" : 3600,
-                }"""
-        request.send_header('Content-Length', len(content))
-        request.end_headers()
-        request.wfile.write(content.encode('ascii'))
+        def method(request):
+            content = request.rfile.read(int(request.headers['Content-Length'])).decode('ascii')
+            if content != 'refresh_token=REFRESH_TOKEN&client_id=CLIENT_ID&client_secret=CLIENT_SECRET&grant_type=refresh_token':
+                sys.stderr.write('Bad POST content: %s\n' % content)
+                request.send_response(403)
+                return
 
-    handler.add('POST', '/accounts.google.com/o/oauth2/token', custom_method=method)
+            request.send_response(200)
+            request.send_header('Content-type', 'text/plain')
+            content = """{
+                    "access_token" : "ACCESS_TOKEN",
+                    "token_type" : "Bearer",
+                    "expires_in" : 3600,
+                    }"""
+            request.send_header('Content-Length', len(content))
+            request.end_headers()
+            request.wfile.write(content.encode('ascii'))
 
-    def method(request):
-        if 'Authorization' not in request.headers:
-            sys.stderr.write('Bad headers: %s\n' % str(request.headers))
-            request.send_response(403)
-            return
-        expected_authorization = 'Bearer ACCESS_TOKEN'
-        if request.headers['Authorization'] != expected_authorization:
-            sys.stderr.write("Bad Authorization: '%s'\n" % str(request.headers['Authorization']))
-            request.send_response(403)
-            return
+        handler.add('POST', '/accounts.google.com/o/oauth2/token', custom_method=method)
 
-        request.send_response(200)
-        request.send_header('Content-type', 'text/plain')
-        request.send_header('Content-Length', 3)
-        request.end_headers()
-        request.wfile.write("""foo""".encode('ascii'))
+        def method(request):
+            if 'Authorization' not in request.headers:
+                sys.stderr.write('Bad headers: %s\n' % str(request.headers))
+                request.send_response(403)
+                return
+            expected_authorization = 'Bearer ACCESS_TOKEN'
+            if request.headers['Authorization'] != expected_authorization:
+                sys.stderr.write("Bad Authorization: '%s'\n" % str(request.headers['Authorization']))
+                request.send_response(403)
+                return
 
-    handler.add('GET', '/gs_fake_bucket/resource', custom_method=method)
-    with webserver.install_http_handler(handler):
-        f = open_for_read('/vsigs/gs_fake_bucket/resource')
-        assert f is not None
-        data = gdal.VSIFReadL(1, 4, f).decode('ascii')
-        gdal.VSIFCloseL(f)
+            request.send_response(200)
+            request.send_header('Content-type', 'text/plain')
+            request.send_header('Content-Length', 3)
+            request.end_headers()
+            request.wfile.write("""foo""".encode('ascii'))
 
-    assert data == 'foo'
+        handler.add('GET', '/gs_fake_bucket/resource', custom_method=method)
+        with webserver.install_http_handler(handler):
+            f = open_for_read('/vsigs/gs_fake_bucket/resource')
+            assert f is not None
+            data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+            gdal.VSIFCloseL(f)
 
-    # Test UnlinkBatch()
-    handler = webserver.SequentialHandler()
-    handler.add('POST', '/batch/storage/v1', 200,
-                {'content-type': 'multipart/mixed; boundary=batch_nWfTDwb9aAhYucqUtdLRWUX93qsJaf3T'},
-                """--batch_phVs0DE8tHbyfvlYTZEeI5_snlh9XJR5
+        assert data == 'foo'
+
+        # Test UnlinkBatch()
+        handler = webserver.SequentialHandler()
+        handler.add('POST', '/batch/storage/v1', 200,
+                    {'content-type': 'multipart/mixed; boundary=batch_nWfTDwb9aAhYucqUtdLRWUX93qsJaf3T'},
+                    """--batch_phVs0DE8tHbyfvlYTZEeI5_snlh9XJR5
 Content-Type: application/http
 Content-ID: <response-1>
 
@@ -1125,10 +1066,10 @@ Content-Length: 0
 
 --batch_phVs0DE8tHbyfvlYTZEeI5_snlh9XJR5--
 """,
-                expected_body = b'--===============7330845974216740156==\r\nContent-Type: application/http\r\nContent-ID: <1>\r\n\r\n\r\nDELETE /storage/v1/b/unlink_batch/o/foo HTTP/1.1\r\n\r\n\r\n--===============7330845974216740156==\r\nContent-Type: application/http\r\nContent-ID: <2>\r\n\r\n\r\nDELETE /storage/v1/b/unlink_batch/o/bar%2Fbaz HTTP/1.1\r\n\r\n\r\n--===============7330845974216740156==--\r\n')
-    handler.add('POST', '/batch/storage/v1', 200,
-                {'content-type': 'multipart/mixed; boundary=batch_nWfTDwb9aAhYucqUtdLRWUX93qsJaf3T'},
-                """--batch_phVs0DE8tHbyfvlYTZEeI5_snlh9XJR5
+                    expected_body = b'--===============7330845974216740156==\r\nContent-Type: application/http\r\nContent-ID: <1>\r\n\r\n\r\nDELETE /storage/v1/b/unlink_batch/o/foo HTTP/1.1\r\n\r\n\r\n--===============7330845974216740156==\r\nContent-Type: application/http\r\nContent-ID: <2>\r\n\r\n\r\nDELETE /storage/v1/b/unlink_batch/o/bar%2Fbaz HTTP/1.1\r\n\r\n\r\n--===============7330845974216740156==--\r\n')
+        handler.add('POST', '/batch/storage/v1', 200,
+                    {'content-type': 'multipart/mixed; boundary=batch_nWfTDwb9aAhYucqUtdLRWUX93qsJaf3T'},
+                    """--batch_phVs0DE8tHbyfvlYTZEeI5_snlh9XJR5
 Content-Type: application/http
 Content-ID: <response-3>
 
@@ -1138,175 +1079,134 @@ Content-Length: 0
 
 --batch_phVs0DE8tHbyfvlYTZEeI5_snlh9XJR5--
 """,
-                expected_body = b'--===============7330845974216740156==\r\nContent-Type: application/http\r\nContent-ID: <3>\r\n\r\n\r\nDELETE /storage/v1/b/unlink_batch/o/baw HTTP/1.1\r\n\r\n\r\n--===============7330845974216740156==--\r\n')
-    with gdaltest.config_option('CPL_VSIGS_UNLINK_BATCH_SIZE', '2'):
-        with webserver.install_http_handler(handler):
-            ret = gdal.UnlinkBatch(['/vsigs/unlink_batch/foo', '/vsigs/unlink_batch/bar/baz', '/vsigs/unlink_batch/baw'])
-    assert ret
+                    expected_body = b'--===============7330845974216740156==\r\nContent-Type: application/http\r\nContent-ID: <3>\r\n\r\n\r\nDELETE /storage/v1/b/unlink_batch/o/baw HTTP/1.1\r\n\r\n\r\n--===============7330845974216740156==--\r\n')
+        with gdaltest.config_option('CPL_VSIGS_UNLINK_BATCH_SIZE', '2'):
+            with webserver.install_http_handler(handler):
+                ret = gdal.UnlinkBatch(['/vsigs/unlink_batch/foo', '/vsigs/unlink_batch/bar/baz', '/vsigs/unlink_batch/baw'])
+        assert ret
 
-
-    gdal.SetConfigOption('CPL_GS_CREDENTIALS_FILE', '')
-    gdal.SetConfigOption('GOA2_AUTH_URL_TOKEN', None)
     gdal.Unlink('/vsimem/.boto')
 
 
 ###############################################################################
 # Read credentials from simulated GCE instance
 @pytest.mark.skipif(sys.platform not in ('linux', 'win32'), reason='Incorrect platform')
-def test_vsigs_read_credentials_gce():
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
-
-    gdal.SetConfigOption('CPL_GS_CREDENTIALS_FILE', '')
-    gdal.SetConfigOption('GS_SECRET_ACCESS_KEY', '')
-    gdal.SetConfigOption('GS_ACCESS_KEY_ID', '')
-
-    gdal.SetConfigOption('CPL_GCE_CREDENTIALS_URL',
-                         'http://localhost:%d/computeMetadata/v1/instance/service-accounts/default/token' % gdaltest.webserver_port)
-    # Disable hypervisor related check to test if we are really on EC2
-    gdal.SetConfigOption('CPL_GCE_CHECK_LOCAL_FILES', 'NO')
+def test_vsigs_read_credentials_gce(gs_test_config, webserver_port):
 
     gdal.VSICurlClearCache()
 
-    def method(request):
-        if 'Authorization' not in request.headers:
-            sys.stderr.write('Bad headers: %s\n' % str(request.headers))
-            request.send_response(403)
-            return
-        expected_authorization = 'Bearer ACCESS_TOKEN'
-        if request.headers['Authorization'] != expected_authorization:
-            sys.stderr.write("Bad Authorization: '%s'\n" % str(request.headers['Authorization']))
-            request.send_response(403)
-            return
+    with gdaltest.config_options(
+            { 'CPL_GS_CREDENTIALS_FILE': '',
+              'CPL_GCE_CREDENTIALS_URL':
+                             'http://localhost:%d/computeMetadata/v1/instance/service-accounts/default/token' % webserver_port,
+              # Disable hypervisor related check to test if we are really on EC2
+              'CPL_GCE_CHECK_LOCAL_FILES': 'NO'}):
 
-        request.send_response(200)
-        request.send_header('Content-type', 'text/plain')
-        request.send_header('Content-Length', 3)
-        request.end_headers()
-        request.wfile.write("""foo""".encode('ascii'))
+        def method(request):
+            if 'Authorization' not in request.headers:
+                sys.stderr.write('Bad headers: %s\n' % str(request.headers))
+                request.send_response(403)
+                return
+            expected_authorization = 'Bearer ACCESS_TOKEN'
+            if request.headers['Authorization'] != expected_authorization:
+                sys.stderr.write("Bad Authorization: '%s'\n" % str(request.headers['Authorization']))
+                request.send_response(403)
+                return
 
-    handler = webserver.SequentialHandler()
-    handler.add('GET', '/computeMetadata/v1/instance/service-accounts/default/token', 200, {},
-                """{
-                "access_token" : "ACCESS_TOKEN",
-                "token_type" : "Bearer",
-                "expires_in" : 3600,
-                }""")
-    handler.add('GET', '/gs_fake_bucket/resource', custom_method=method)
-    with webserver.install_http_handler(handler):
-        f = open_for_read('/vsigs/gs_fake_bucket/resource')
-        assert f is not None
-        data = gdal.VSIFReadL(1, 4, f).decode('ascii')
-        gdal.VSIFCloseL(f)
+            request.send_response(200)
+            request.send_header('Content-type', 'text/plain')
+            request.send_header('Content-Length', 3)
+            request.end_headers()
+            request.wfile.write("""foo""".encode('ascii'))
 
-    assert data == 'foo'
+        handler = webserver.SequentialHandler()
+        handler.add('GET', '/computeMetadata/v1/instance/service-accounts/default/token', 200, {},
+                    """{
+                    "access_token" : "ACCESS_TOKEN",
+                    "token_type" : "Bearer",
+                    "expires_in" : 3600,
+                    }""")
+        handler.add('GET', '/gs_fake_bucket/resource', custom_method=method)
+        with webserver.install_http_handler(handler):
+            f = open_for_read('/vsigs/gs_fake_bucket/resource')
+            assert f is not None
+            data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+            gdal.VSIFCloseL(f)
 
-    # Set a fake URL to check that credentials re-use works
-    gdal.SetConfigOption('CPL_GCE_CREDENTIALS_URL', '')
+        assert data == 'foo'
 
-    handler = webserver.SequentialHandler()
-    handler.add('GET', '/gs_fake_bucket/bar', 200, {}, 'bar')
-    with webserver.install_http_handler(handler):
-        f = open_for_read('/vsigs/gs_fake_bucket/bar')
-        assert f is not None
-        data = gdal.VSIFReadL(1, 4, f).decode('ascii')
-        gdal.VSIFCloseL(f)
+        # Set a fake URL to check that credentials re-use works
+        with gdaltest.config_option('CPL_GCE_CREDENTIALS_URL', ''):
 
-    assert data == 'bar'
+            handler = webserver.SequentialHandler()
+            handler.add('GET', '/gs_fake_bucket/bar', 200, {}, 'bar')
+            with webserver.install_http_handler(handler):
+                f = open_for_read('/vsigs/gs_fake_bucket/bar')
+                assert f is not None
+                data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+                gdal.VSIFCloseL(f)
 
-    with gdaltest.error_handler():
-        assert gdal.GetSignedURL('/vsigs/foo/bar') is None
+            assert data == 'bar'
 
-    gdal.SetConfigOption('CPL_GCE_CREDENTIALS_URL', '')
-    gdal.SetConfigOption('CPL_GCE_CHECK_LOCAL_FILES', None)
+            with gdaltest.error_handler():
+                assert gdal.GetSignedURL('/vsigs/foo/bar') is None
 
 
 ###############################################################################
 # Read credentials from simulated GCE instance with expiration of the
 # cached credentials
 @pytest.mark.skipif(sys.platform not in ('linux', 'win32'), reason='Incorrect platform')
-def test_vsigs_read_credentials_gce_expiration():
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
-
-    gdal.SetConfigOption('CPL_GS_CREDENTIALS_FILE', '')
-    gdal.SetConfigOption('GS_SECRET_ACCESS_KEY', '')
-    gdal.SetConfigOption('GS_ACCESS_KEY_ID', '')
-
-    gdal.SetConfigOption('CPL_GCE_CREDENTIALS_URL',
-                         'http://localhost:%d/computeMetadata/v1/instance/service-accounts/default/token' % gdaltest.webserver_port)
-    # Disable hypervisor related check to test if we are really on EC2
-    gdal.SetConfigOption('CPL_GCE_CHECK_LOCAL_FILES', 'NO')
+def test_vsigs_read_credentials_gce_expiration(gs_test_config, webserver_port):
 
     gdal.VSICurlClearCache()
 
-    def method(request):
-        if 'Authorization' not in request.headers:
-            sys.stderr.write('Bad headers: %s\n' % str(request.headers))
-            request.send_response(403)
-            return
-        expected_authorization = 'Bearer ACCESS_TOKEN'
-        if request.headers['Authorization'] != expected_authorization:
-            sys.stderr.write("Bad Authorization: '%s'\n" % str(request.headers['Authorization']))
-            request.send_response(403)
-            return
+    with gdaltest.config_options(
+            { 'CPL_GS_CREDENTIALS_FILE': '',
+              'CPL_GCE_CREDENTIALS_URL':
+                             'http://localhost:%d/computeMetadata/v1/instance/service-accounts/default/token' % webserver_port,
+              # Disable hypervisor related check to test if we are really on EC2
+              'CPL_GCE_CHECK_LOCAL_FILES': 'NO'}):
 
-        request.send_response(200)
-        request.send_header('Content-type', 'text/plain')
-        request.send_header('Content-Length', 3)
-        request.end_headers()
-        request.wfile.write("""foo""".encode('ascii'))
+        def method(request):
+            if 'Authorization' not in request.headers:
+                sys.stderr.write('Bad headers: %s\n' % str(request.headers))
+                request.send_response(403)
+                return
+            expected_authorization = 'Bearer ACCESS_TOKEN'
+            if request.headers['Authorization'] != expected_authorization:
+                sys.stderr.write("Bad Authorization: '%s'\n" % str(request.headers['Authorization']))
+                request.send_response(403)
+                return
 
-    handler = webserver.SequentialHandler()
-    # First time is used when trying to establish if GCE authentication is available
-    handler.add('GET', '/computeMetadata/v1/instance/service-accounts/default/token', 200, {},
-                """{
-                "access_token" : "ACCESS_TOKEN",
-                "token_type" : "Bearer",
-                "expires_in" : 0,
-                }""")
-    # Second time is needed because f the access to th file
-    handler.add('GET', '/computeMetadata/v1/instance/service-accounts/default/token', 200, {},
-                """{
-                "access_token" : "ACCESS_TOKEN",
-                "token_type" : "Bearer",
-                "expires_in" : 0,
-                }""")
-    handler.add('GET', '/gs_fake_bucket/resource', custom_method=method)
-    with webserver.install_http_handler(handler):
-        f = open_for_read('/vsigs/gs_fake_bucket/resource')
-        assert f is not None
-        data = gdal.VSIFReadL(1, 4, f).decode('ascii')
-        gdal.VSIFCloseL(f)
+            request.send_response(200)
+            request.send_header('Content-type', 'text/plain')
+            request.send_header('Content-Length', 3)
+            request.end_headers()
+            request.wfile.write("""foo""".encode('ascii'))
 
-    assert data == 'foo'
+        handler = webserver.SequentialHandler()
+        # First time is used when trying to establish if GCE authentication is available
+        handler.add('GET', '/computeMetadata/v1/instance/service-accounts/default/token', 200, {},
+                    """{
+                    "access_token" : "ACCESS_TOKEN",
+                    "token_type" : "Bearer",
+                    "expires_in" : 0,
+                    }""")
+        # Second time is needed because f the access to th file
+        handler.add('GET', '/computeMetadata/v1/instance/service-accounts/default/token', 200, {},
+                    """{
+                    "access_token" : "ACCESS_TOKEN",
+                    "token_type" : "Bearer",
+                    "expires_in" : 0,
+                    }""")
+        handler.add('GET', '/gs_fake_bucket/resource', custom_method=method)
+        with webserver.install_http_handler(handler):
+            f = open_for_read('/vsigs/gs_fake_bucket/resource')
+            assert f is not None
+            data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+            gdal.VSIFCloseL(f)
 
-    gdal.SetConfigOption('CPL_GCE_CREDENTIALS_URL', '')
-    gdal.SetConfigOption('CPL_GCE_CHECK_LOCAL_FILES', None)
-
-###############################################################################
-
-
-def test_vsigs_stop_webserver():
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
-
-    # Clearcache needed to close all connections, since the Python server
-    # can only handle one connection at a time
-    gdal.VSICurlClearCache()
-
-    webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
-
-###############################################################################
-
-
-def test_vsigs_cleanup():
-
-    for var in gdaltest.gs_vars:
-        gdal.SetConfigOption(var, gdaltest.gs_vars[var])
+        assert data == 'foo'
 
 ###############################################################################
 # Nominal cases (require valid credentials)

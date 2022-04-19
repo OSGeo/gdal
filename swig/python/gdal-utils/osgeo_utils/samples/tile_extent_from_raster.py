@@ -39,7 +39,7 @@ def Usage():
     return 1
 
 
-def main(argv):
+def main(argv=sys.argv):
     i = 1
     output_format = None
     in_filename = None

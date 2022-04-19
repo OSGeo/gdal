@@ -110,8 +110,8 @@ def test_hdf5_multidim_var_alldatatypes():
                       ('short_var', gdal.GDT_Int16, (-32768, -32767)),
                       ('uint_var', gdal.GDT_UInt32, (4294967294, 4294967293)),
                       ('int_var', gdal.GDT_Int32, (-2147483648, -2147483647)),
-                      ('uint64_var', gdal.GDT_Float64, (1.8446744073709552e+19, 1.8446744073709552e+19)),
-                      ('int64_var', gdal.GDT_Float64, (-9.223372036854776e+18, -9.223372036854776e+18)),
+                      ('uint64_var', gdal.GDT_UInt64, (18446744073709551613, 18446744073709551612)),
+                      ('int64_var', gdal.GDT_Int64, (-9223372036854775808, -9223372036854775807)),
                       ('float_var', gdal.GDT_Float32, (1.25, 2.25)),
                       ('double_var', gdal.GDT_Float64, (1.25125, 2.25125)),
                       ('complex_int16_var', gdal.GDT_CInt16, (-32768, -32767, -32766, -32765)),
@@ -134,6 +134,10 @@ def test_hdf5_multidim_var_alldatatypes():
             assert struct.unpack('I' * len(val), var.Read()) == val
         if dt == gdal.GDT_Int32:
             assert struct.unpack('i' * len(val), var.Read()) == val
+        if dt == gdal.GDT_UInt64:
+            assert struct.unpack('Q' * len(val), var.Read()) == val
+        if dt == gdal.GDT_Int64:
+            assert struct.unpack('q' * len(val), var.Read()) == val
         if dt == gdal.GDT_Float32:
             assert struct.unpack('f' * len(val), var.Read()) == val
         if dt == gdal.GDT_Float64:

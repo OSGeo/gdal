@@ -27,8 +27,6 @@ endif ()
 gdal_format(hfa "Erdas Imagine .img")
 gdal_optional_format(sdts "SDTS translator")
 gdal_optional_format(nitf "National Imagery Transmission Format")
-gdal_optional_format(ingr "Intergraph Raster Format")
-set_package_properties(TIFF PROPERTIES PURPOSE "gdal_INGR: Intergraph Raster Format")
 gdal_optional_format(gxf "GXF")
 gdal_optional_format(aaigrid "Arc/Info ASCII Grid Format.")
 gdal_optional_format(ceos "CEOS translator")
@@ -130,9 +128,6 @@ gdal_dependent_format(dds "DirectDraw Surface" "GDAL_USE_CRNLIB")
 gdal_dependent_format(kea "Kea" "GDAL_USE_KEA;GDAL_USE_HDF5")
 gdal_dependent_format(openjpeg "JPEG2000 driver based on OpenJPEG library" "GDAL_USE_OPENJPEG" DRIVER_NAME_OPTION
                       "JP2OpenJPEG")
-gdal_dependent_format(jpegls "JPEG LS" "GDAL_USE_CHARLS")
-gdal_dependent_format(jpeg2000 "JPEG2000 --- Implementation of the JPEG-2000 part 1 (ISO/IEC 15444-1) standard"
-                      "GDAL_USE_JASPER")
 gdal_dependent_format(tiledb "TileDB tiledb.io" "GDAL_USE_TILEDB")
 gdal_dependent_format(exr "EXR support via OpenEXR library" "GDAL_USE_OPENEXR")
 gdal_dependent_format(pcraster "PCRaster CSF 2.0 raster file driver" "GDAL_USE_LIBCSF OR GDAL_USE_LIBCSF_INTERNAL")
@@ -159,7 +154,6 @@ gdal_dependent_format(jp2lura "JPEG-2000 (based on Luratech)" "GDAL_USE_LURATECH
 gdal_dependent_format(sde "ESRI ArcSDE Raster" "HAVE_SDE")
 # LizardTech's decoding software development kit (DSDK)
 gdal_dependent_format(mrsid "Multi-resolution Seamless Image Database" "GDAL_USE_MRSID")
-# gdal_dependent_format(mrsid_lidar "Multi-resolution Seamless Image Database - LiDAR support" "HAVE_MRSID")
 gdal_dependent_format(georaster "Oracle Spatial GeoRaster" "GDAL_USE_ORACLE" DRIVER_NAME_OPTION GEOR)
 gdal_dependent_format(ecw "ERDAS JPEG2000 (.jp2)" "GDAL_USE_ECW")
 
@@ -181,21 +175,3 @@ set_property(TARGET gdal_frmts PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED
 if (GDAL_ENABLE_DRIVER_HTTP AND NOT GDAL_ENABLE_DRIVER_HTTP_PLUGIN)
   target_compile_definitions(gdal_frmts PRIVATE -DFRMT_http)
 endif ()
-
-# Install drivers.ini along with plugins
-
-# We request the TARGET_FILE_DIR of one of the plugins, since the PLUGIN_OUTPUT_DIR will not contain the \Release suffix
-# with MSVC generator
-get_property(PLUGIN_MODULES GLOBAL PROPERTY PLUGIN_MODULES)
-list(LENGTH PLUGIN_MODULES PLUGIN_MODULES_LENGTH)
-if (PLUGIN_MODULES_LENGTH GREATER_EQUAL 1)
-  list(GET PLUGIN_MODULES 0 FIRST_TARGET)
-  set(PLUGIN_OUTPUT_DIR "$<TARGET_FILE_DIR:${FIRST_TARGET}>")
-  file(READ ${CMAKE_CURRENT_SOURCE_DIR}/drivers.ini DRIVERS_INI_CONTENT)
-  file(
-    GENERATE
-    OUTPUT ${PLUGIN_OUTPUT_DIR}/drivers.ini
-    CONTENT ${DRIVERS_INI_CONTENT})
-endif ()
-
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/drivers.ini DESTINATION ${INSTALL_PLUGIN_DIR})

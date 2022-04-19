@@ -80,7 +80,7 @@ class SAGADataset final: public GDALPamDataset
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
-                                int nXSize, int nYSize, int nBands,
+                                int nXSize, int nYSize, int nBandsIn,
                                 GDALDataType eType,
                                 char **papszParamList );
     static GDALDataset *CreateCopy( const char *pszFilename,
@@ -875,7 +875,7 @@ CPLErr SAGADataset::WriteHeader( CPLString osHDRFilename, GDALDataType eType,
 /************************************************************************/
 
 GDALDataset *SAGADataset::Create( const char * pszFilename,
-                                  int nXSize, int nYSize, int nBands,
+                                  int nXSize, int nYSize, int nBandsIn,
                                   GDALDataType eType,
                                   char **papszParamList )
 
@@ -889,7 +889,7 @@ GDALDataset *SAGADataset::Create( const char * pszFilename,
         return nullptr;
     }
 
-    if( nBands != 1 )
+    if( nBandsIn != 1 )
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "SAGA Binary Grid only supports 1 band" );

@@ -36,6 +36,7 @@ cd /build
     --with-poppler \
     --with-spatialite \
     --with-mysql \
+    --with-hana \
     --with-liblzma \
     --with-webp \
     --with-epsilon \
@@ -93,9 +94,6 @@ ldconfig
   make
   mv java.opt.bak java.opt
 )
-
-# Perl bindings
-(cd swig/perl && make generate && make)
 
 ccache -s
 

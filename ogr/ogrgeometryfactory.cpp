@@ -3510,7 +3510,9 @@ static void CollectPointsOnAntimeridian(OGRGeometry* poGeom,
                 poCT->Transform(1, &dfX2Trans, &dfY2Trans);
                 // Are we crossing the antimeridian ? (detecting by inversion of
                 // sign of X)
-                if( (dfX2 - dfX) * (dfX2Trans - dfXTrans) < 0 )
+                if( (dfX2 - dfX) * (dfX2Trans - dfXTrans) < 0 ||
+                    (dfX == dfX2 && dfX2Trans * dfXTrans < 0 &&
+                     fabs(fabs(dfXTrans)-180) < 10 && fabs(fabs(dfX2Trans)-180) < 10) )
                 {
                     double dfXStart = dfX;
                     double dfYStart = dfY;
@@ -3534,7 +3536,8 @@ static void CollectPointsOnAntimeridian(OGRGeometry* poGeom,
                         double dfYMidTrans = dfYMid;
                         poCT->Transform(1, &dfXMidTrans, &dfYMidTrans);
                         if( (dfXMid - dfXStart) *
-                                        (dfXMidTrans - dfXStartTrans) < 0 )
+                                        (dfXMidTrans - dfXStartTrans) < 0 ||
+                            (dfXMid == dfXStart && dfXMidTrans * dfXStartTrans < 0) )
                         {
                             dfXEnd = dfXMid;
                             dfYEnd = dfYMid;
@@ -4549,19 +4552,45 @@ OGRGeometry * OGRGeometryFactory::forceTo( OGRGeometry* poGeom,
     if( poGeom == nullptr )
         return poGeom;
 
-    eTargetType = wkbFlatten(eTargetType);
-    OGRwkbGeometryType eType = wkbFlatten(poGeom->getGeometryType());
-    if( eType == eTargetType || eTargetType == wkbUnknown )
-        return poGeom;
-
     if( poGeom->IsEmpty() )
     {
         OGRGeometry* poRet = createGeometry(eTargetType);
         if( poRet )
+        {
             poRet->assignSpatialReference(poGeom->getSpatialReference());
+            poRet->set3D( OGR_GT_HasZ(eTargetType) );
+            poRet->setMeasured( OGR_GT_HasM(eTargetType) );
+        }
         delete poGeom;
         return poRet;
     }
+
+    const OGRwkbGeometryType eTargetTypeFlat = wkbFlatten(eTargetType);
+    if( eTargetTypeFlat == wkbUnknown )
+        return poGeom;
+
+    OGRwkbGeometryType eType = poGeom->getGeometryType();
+    OGRwkbGeometryType eTypeFlat = wkbFlatten(eType);
+
+    if( eTargetTypeFlat != eTargetType && (eType == eTypeFlat) )
+    {
+        poGeom = forceTo(poGeom, eTargetTypeFlat, papszOptions);
+        if( poGeom )
+        {
+            poGeom->set3D( OGR_GT_HasZ(eTargetType) );
+            poGeom->setMeasured( OGR_GT_HasM(eTargetType) );
+        }
+        return poGeom;
+    }
+
+    if( eTypeFlat == eTargetTypeFlat )
+    {
+        poGeom->set3D( OGR_GT_HasZ(eTargetType) );
+        poGeom->setMeasured( OGR_GT_HasM(eTargetType) );
+        return poGeom;
+    }
+
+    eType = eTypeFlat;
 
     if( OGR_GT_IsSubClassOf(eType, wkbPolyhedralSurface) &&
         (eTargetType == wkbMultiSurface ||
@@ -4816,17 +4845,21 @@ OGRGeometry * OGRGeometryFactory::forceTo( OGRGeometry* poGeom,
         {
             OGRGeometry* poSubGeom = poGC->getGeometryRef(0);
             if( poSubGeom )
+            {
                 poSubGeom->assignSpatialReference(
                     poGeom->getSpatialReference());
-            poGC->removeGeometry(0, FALSE);
-            OGRGeometry* poRet = forceTo(poSubGeom, eTargetType, papszOptions);
-            if( OGR_GT_IsSubClassOf(wkbFlatten(poRet->getGeometryType()),
-                                    eTargetType) )
-            {
-                delete poGC;
-                return poRet;
+                poGC->removeGeometry(0, FALSE);
+                OGRGeometry* poRet = forceTo(poSubGeom->clone(), eTargetType, papszOptions);
+                if( OGR_GT_IsSubClassOf(wkbFlatten(poRet->getGeometryType()),
+                                        eTargetType) )
+                {
+                    delete poGC;
+                    delete poSubGeom;
+                    return poRet;
+                }
+                poGC->addGeometryDirectly(poSubGeom);
+                delete poRet;
             }
-            poGC->addGeometryDirectly(poSubGeom);
         }
     }
     else if( OGR_GT_IsSubClassOf(eType, wkbCurvePolygon) &&

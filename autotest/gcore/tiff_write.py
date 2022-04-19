@@ -1257,55 +1257,24 @@ def test_tiff_write_34():
     gdaltest.tiff_drv.Delete('tmp/tw_34.tif')
 
 ###############################################################################
-# Test fallback from internal storage of Geotiff metadata to PAM storage
-# when metadata is too big to fit into the GDALGeotiff tag
+# Test big metadata (that was used to consider too big to fit into the GDALGeotiff tag
+# before GDAL 3.4.2)
 
 
 def test_tiff_write_35():
 
-    # I've no idea why this works, and why this rolled in a
-    # loop doesn't work... Python gurus please fix that !
-    big_string = 'a'
-    big_string = big_string + big_string
-    big_string = big_string + big_string
-    big_string = big_string + big_string
-    big_string = big_string + big_string
-    big_string = big_string + big_string
-    big_string = big_string + big_string
-    big_string = big_string + big_string
-    big_string = big_string + big_string
-    big_string = big_string + big_string
-    big_string = big_string + big_string
-    big_string = big_string + big_string
-    big_string = big_string + big_string
-    big_string = big_string + big_string
-    big_string = big_string + big_string
-    big_string = big_string + big_string
-
+    big_string = 'a' * 12345678
     ds = gdaltest.tiff_drv.Create('tmp/tw_35.tif', 1, 1, gdal.GDT_Byte)
 
     md = {}
     md['test'] = big_string
     ds.SetMetadata(md)
-
-    md = ds.GetMetadata()
-
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = None
-    gdal.PopErrorHandler()
 
-    try:
-        os.stat('tmp/tw_35.tif.aux.xml')
-    except OSError:
-        pytest.fail('No .aux.xml file.')
+    assert not os.path.exists('tmp/tw_35.tif.aux.xml')
 
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = gdal.Open('tmp/tw_35.tif')
-    gdal.PopErrorHandler()
-
-    md = ds.GetMetadata()
-    assert 'test' in md and len(md['test']) == 32768, 'Did not get expected metadata.'
-
+    assert ds.GetMetadataItem('test') == big_string
     ds = None
 
     gdaltest.tiff_drv.Delete('tmp/tw_35.tif')
@@ -8342,6 +8311,107 @@ def test_tiff_write_predictor_2_float64():
     assert ds.ReadRaster() == data
     ds = None
     gdal.Unlink(filename)
+
+###############################################################################
+
+
+def test_tiff_write_uint64():
+
+    ut = gdaltest.GDALTest('GTiff', 'gtiff/uint64.tif', 1, 1)
+    return ut.testCreateCopy()
+
+
+###############################################################################
+
+
+def test_tiff_write_uint64_nodata():
+
+    filename = '/vsimem/test_tiff_write_uint64_nodata.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(filename, 1, 1, 1, gdal.GDT_UInt64)
+    val = (1 << 64)-1
+    assert ds.GetRasterBand(1).SetNoDataValue(val) == gdal.CE_None
+    ds = None
+
+    filename_copy = '/vsimem/test_tiff_write_uint64_nodata_filename_copy.tif'
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetNoDataValue() == val
+    ds = gdal.GetDriverByName('GTiff').CreateCopy(filename_copy, ds)
+    ds = None
+
+    ds = gdal.Open(filename_copy)
+    assert ds.GetRasterBand(1).GetNoDataValue() == val
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete(filename)
+    gdal.GetDriverByName('GTiff').Delete(filename_copy)
+
+
+###############################################################################
+
+
+def test_tiff_write_int64():
+
+    ut = gdaltest.GDALTest('GTiff', 'gtiff/int64.tif', 1, 65535)
+    return ut.testCreateCopy()
+
+
+###############################################################################
+
+
+def test_tiff_write_int64_nodata():
+
+    filename = '/vsimem/test_tiff_write_int64_nodata.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(filename, 1, 1, 1, gdal.GDT_Int64)
+    val = -(1 << 63)
+    assert ds.GetRasterBand(1).SetNoDataValue(val) == gdal.CE_None
+    ds = None
+
+    filename_copy = '/vsimem/test_tiff_write_int64_nodata_filename_copy.tif'
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetNoDataValue() == val
+    ds = gdal.GetDriverByName('GTiff').CreateCopy(filename_copy, ds)
+    ds = None
+
+    ds = gdal.Open(filename_copy)
+    assert ds.GetRasterBand(1).GetNoDataValue() == val
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete(filename)
+    gdal.GetDriverByName('GTiff').Delete(filename_copy)
+
+
+###############################################################################
+# Check IsMaskBand() on an alpha band
+
+
+def test_tiff_write_alpha_ismaskband():
+
+    filename = '/vsimem/out.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(filename, 1, 1, 2)
+    ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
+    assert not ds.GetRasterBand(1).IsMaskBand()
+    assert ds.GetRasterBand(2).IsMaskBand()
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete(filename)
+
+
+
+###############################################################################
+# Test scenario of https://github.com/OSGeo/gdal/issues/5580
+
+
+def test_tiff_write_overview_building_and_approx_stats():
+
+    filename = '/vsimem/out.tif'
+    gdal.GetDriverByName('GTiff').Create(filename, 512, 512)
+    ds = gdal.Open(filename)
+    ds.BuildOverviews("NEAREST", [2, 4, 8])
+    ds.GetRasterBand(1).ComputeStatistics(1)
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete(filename)
+
 
 
 def test_tiff_write_cleanup():

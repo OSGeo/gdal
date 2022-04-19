@@ -44,7 +44,7 @@ engine. It's also possible to request the driver to handle SQL commands
 with :ref:`OGR SQL <ogr_sql_dialect>` engine, by passing **"OGRSQL"** string
 to the ExecuteSQL() method, as name of the SQL dialect.
 
-The OGR_SQLITE_SYNCHRONOUS configuration option
+The :decl_configoption:`OGR_SQLITE_SYNCHRONOUS` configuration option
 has been added. When set to OFF, this issues a 'PRAGMA synchronous =
 OFF' command to the SQLite database. This has the advantage of
 speeding-up some write operations (e.g. on EXT4 filesystems), but at the
@@ -54,8 +54,8 @@ documentation <http://www.sqlite.org/pragma.html#pragma_synchronous>`__.
 
 Any SQLite
 `pragma <http://www.sqlite.org/pragma.html>`__ can be specified with the
-OGR_SQLITE_PRAGMA configuration option. The syntax is OGR_SQLITE_PRAGMA
-= "pragma_name=pragma_value[,pragma_name2=pragma_value2]*".
+:decl_configoption:`OGR_SQLITE_PRAGMA` configuration option. The syntax is
+``OGR_SQLITE_PRAGMA = "pragma_name=pragma_value[,pragma_name2=pragma_value2]*"``.
 
 Driver capabilities
 -------------------
@@ -246,7 +246,7 @@ Dataset open options
         The other database must be of a type recognized by this driver, so
         its geometry blobs are properly recognized (so typically not a GeoPackage one)
 
-Database Creation Options
+Database creation options
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -  **METADATA=YES/NO**: This can be used to avoid creating the
@@ -280,7 +280,7 @@ Database Creation Options
      (*self-initialization*). Starting with libspatialite 4.0,
      INIT_WITH_EPSG defaults to YES, but can be set to NO.
 
-Layer Creation Options
+Layer creation options
 ~~~~~~~~~~~~~~~~~~~~~~
 
 -  **FORMAT=WKB/WKT/SPATIALITE**: Controls the format used for the
@@ -312,8 +312,9 @@ Layer Creation Options
    used to control if the compressed format for geometries (LINESTRINGs,
    POLYGONs) must be used. This format is understood by Spatialite v2.4
    (or any subsequent version). Default to NO. Note: when updating an
-   existing Spatialite DB, the COMPRESS_GEOM configuration option can be
-   set to produce similar results for appended/overwritten features.
+   existing Spatialite DB, the :decl_configoption:`COMPRESS_GEOM` 
+   configuration option can be set to produce similar results for 
+   appended/overwritten features.
 
 -  **SRID=srid**: Used to force the SRID
    number of the SRS associated with the layer. When this option isn't
@@ -350,22 +351,32 @@ Layer Creation Options
    String, DateTime, Date and Time. The COMPRESS_COLUMNS option is ignored in
    strict mode.
 
-Configuration Options
+Configuration options
 ---------------------
 
-- **SQLITE_LIST_ALL_TABLES** =YES/NO: Set to "YES" to list all tables
-  (not just the tables listed in the geometry_columns table). This can also
-  be done using the LIST_ALL_TABLES open option. Default is NO.
+The following :ref:`configuration options <configoptions>` are 
+available:
 
-- **OGR_SQLITE_LIST_VIRTUAL_OGR** =YES/NO* Set to "YES" to list VirtualOGR layers.
-  Defaults to "NO" as there might be some security implications if a user is
-  provided with a file and doesn't know that there are virtual OGR tables in it.
+- :decl_configoption:`SQLITE_LIST_ALL_TABLES` =YES/NO: Set to "YES" to list 
+  all tables (not just the tables listed in the geometry_columns table). This 
+  can also be done using the LIST_ALL_TABLES open option. Default is NO.
 
-- **OGR_SQLITE_CACHE**: see Performance hints
+- :decl_configoption:`OGR_SQLITE_LIST_VIRTUAL_OGR` =YES/NO* Set to "YES" to 
+  list VirtualOGR layers. Defaults to "NO" as there might be some security 
+  implications if a user is provided with a file and doesn't know that there 
+  are virtual OGR tables in it.
 
-- **OGR_SQLITE_SYNCHRONOUS**: see Performance hints
+- :decl_configoption:`OGR_SQLITE_JOURNAL` can be used to set the journal mode 
+  of the SQLite file, see also 
+  https://www.sqlite.org/pragma.html#pragma_journal_mode.
 
-- **OGR_SQLITE_LOAD_EXTENSIONS** =extension1,...,extensionN,ENABLE_SQL_LOAD_EXTENSION:
+- :decl_configoption:`OGR_SQLITE_CACHE`: see 
+  :ref:`Performance hints <target_drivers_vector_sqlite_performance_hints>`.
+
+- :decl_configoption:`OGR_SQLITE_SYNCHRONOUS`: see 
+  :ref:`Performance hints <target_drivers_vector_sqlite_performance_hints>`.
+
+- :decl_configoption:`OGR_SQLITE_LOAD_EXTENSIONS` =extension1,...,extensionN,ENABLE_SQL_LOAD_EXTENSION:
   (GDAL >= 3.5.0). Comma separated list of names of shared libraries containing
   extensions to load at database opening.
   If a file cannot be loaded directly, attempts are made to load with various
@@ -377,6 +388,17 @@ Configuration Options
   builds of sqlite3.
   Loading extensions as a potential security impact if they are untrusted.
 
+- :decl_configoption:`OGR_SQLITE_PRAGMA`: with this option any SQLite
+  `pragma <http://www.sqlite.org/pragma.html>`__ can be specified. The syntax is
+  ``OGR_SQLITE_PRAGMA = "pragma_name=pragma_value[,pragma_name2=pragma_value2]*"``.
+
+- :decl_configoption:`SQLITE_USE_OGR_VFS` =YES enables extra buffering/caching 
+  by the GDAL/OGR I/O layer and can speed up I/O. More information 
+  :ref:`here <target_user_virtual_file_systems_file_caching>`.
+  Be aware that no file locking will occur if this option is activated, so 
+  concurrent edits may lead to database corruption.
+
+.. _target_drivers_vector_sqlite_performance_hints:
 
 Performance hints
 -----------------
@@ -401,14 +423,15 @@ related to a corresponding Spatial Index. Explicitly setting a much more
 generously dimensioned internal Page Cache may often help to get a
 noticeably better performance. You can
 explicitly set the internal Page Cache size using the configuration
-option :decl_configoption:`OGR_SQLITE_CACHE` *value* [*value* being measured in MB]; if
-your HW has enough available RAM, defining a Cache size as big as 512MB
-(or even 1024MB) may sometimes help a lot in order to get better
-performance.
+option :decl_configoption:`OGR_SQLITE_CACHE` *value* [*value* being 
+measured in MB]; if your HW has enough available RAM, defining a Cache 
+size as big as 512MB (or even 1024MB) may sometimes help a lot in order 
+to get better performance.
 
-Setting the :decl_configoption:`OGR_SQLITE_SYNCHRONOUS` configuration option to *OFF*
-might also increase performance when creating SQLite databases (although
-at the expense of integrity in case of interruption/crash ).
+Setting the :decl_configoption:`OGR_SQLITE_SYNCHRONOUS` configuration 
+option to *OFF* might also increase performance when creating SQLite 
+databases (although at the expense of integrity in case of 
+interruption/crash ).
 
 If many source files will be collected into the same Spatialite table,
 it can be much faster to initialize the table without a spatial index by

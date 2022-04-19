@@ -39,7 +39,7 @@ def progress_cb(complete, message, cb_data):
     print('%s %d' % (cb_data, complete))
 
 
-def main(argv):
+def main(argv=sys.argv):
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
         return 0

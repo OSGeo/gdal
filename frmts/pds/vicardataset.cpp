@@ -2381,10 +2381,13 @@ void VICARDataset::ReadProjectionFromGeoTIFFGroup()
                 CPLString(pszValue).replaceAll('(',"").replaceAll(')', "").
                   replaceAll(',', ' ').c_str(),
                 " ", 0));
-            std::vector<double> adfValues;
-            for( int i = 0; i < aosTokens.size(); ++i )
-                adfValues.push_back(CPLAtof(aosTokens[i]));
-            TIFFSetField(hTIFF, kv.second, aosTokens.size(), &adfValues[0]);
+            if( !aosTokens.empty() )
+            {
+                std::vector<double> adfValues;
+                for( int i = 0; i < aosTokens.size(); ++i )
+                    adfValues.push_back(CPLAtof(aosTokens[i]));
+                TIFFSetField(hTIFF, kv.second, aosTokens.size(), &adfValues[0]);
+            }
         }
     }
 
@@ -3025,16 +3028,16 @@ bool VICARDataset::GetSpacings(const VICARKeywordHandler& keywords,
 /************************************************************************/
 
 GDALDataset *VICARDataset::Create(const char* pszFilename,
-                                  int nXSize, int nYSize, int nBands,
+                                  int nXSize, int nYSize, int nBandsIn,
                                   GDALDataType eType,
                                   char** papszOptions)
 {
-    return CreateInternal(pszFilename, nXSize, nYSize, nBands, eType,
+    return CreateInternal(pszFilename, nXSize, nYSize, nBandsIn, eType,
                           papszOptions);
 }
 
 VICARDataset *VICARDataset::CreateInternal(const char* pszFilename,
-                                  int nXSize, int nYSize, int nBands,
+                                  int nXSize, int nYSize, int nBandsIn,
                                   GDALDataType eType,
                                   char** papszOptions)
 {
@@ -3053,7 +3056,7 @@ VICARDataset *VICARDataset::CreateInternal(const char* pszFilename,
     }
     const int nLineOffset = nXSize * nPixelOffset;
 
-    if( nBands == 0 || nBands > 32767 )
+    if( nBandsIn == 0 || nBandsIn > 32767 )
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Unsupported band count");
         return nullptr;
@@ -3079,7 +3082,7 @@ VICARDataset *VICARDataset::CreateInternal(const char* pszFilename,
         return nullptr;
     }
     if( eCompress != COMPRESS_NONE &&
-        (!GDALDataTypeIsInteger(eType) || nBands != 1) )
+        (!GDALDataTypeIsInteger(eType) || nBandsIn != 1) )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "BASIC/BASIC2 compression only supports one-band integer datasets");
@@ -3182,7 +3185,7 @@ VICARDataset *VICARDataset::CreateInternal(const char* pszFilename,
 /* -------------------------------------------------------------------- */
     const vsi_l_offset nBandOffset =
         static_cast<vsi_l_offset>(nLineOffset) * nYSize;
-    for( int i = 0; i < nBands; i++ )
+    for( int i = 0; i < nBandsIn; i++ )
     {
         GDALRasterBand *poBand;
         if( eCompress != COMPRESS_NONE )

@@ -124,6 +124,13 @@ if ((EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/cpl_config.h") AND NOT ("${CMAKE_CURREN
     )
 endif ()
 
+file(TO_CMAKE_PATH "${CMAKE_INSTALL_PREFIX}/${GDAL_RESOURCE_PATH}" INST_DATA_PATH)
+target_compile_definitions(cpl PRIVATE INST_DATA="${INST_DATA_PATH}")
+
+if(CMAKE_INSTALL_FULL_SYSCONFDIR)
+    target_compile_definitions(cpl PRIVATE SYSCONFDIR="${CMAKE_INSTALL_FULL_SYSCONFDIR}")
+endif()
+
 if (WIN32)
   target_sources(cpl PRIVATE cpl_vsil_win32.cpp)
 else ()
@@ -156,7 +163,7 @@ endif ()
 
 # Now external libraries
 if (NOT GDAL_USE_JSONC_INTERNAL)
-  gdal_target_link_libraries(cpl PRIVATE ${JSONC_LIBRARIES})
+  gdal_target_link_libraries(cpl PRIVATE ${JSONC_TARGET})
 endif ()
 
 if (NOT GDAL_USE_ZLIB_INTERNAL)
@@ -257,7 +264,7 @@ endif ()
 
 if (GDAL_USE_ZSTD)
   target_compile_definitions(cpl PRIVATE -DHAVE_ZSTD)
-  gdal_target_link_libraries(cpl PRIVATE ${ZSTD_LIBRARIES})
+  gdal_target_link_libraries(cpl PRIVATE ${ZSTD_TARGET})
 endif ()
 
 if (GDAL_USE_LIBLZMA)

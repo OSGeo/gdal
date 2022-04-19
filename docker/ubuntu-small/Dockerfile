@@ -151,7 +151,6 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && wget -q https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz -O - \
         | tar xz -C gdal --strip-components=1 \
     && cd gdal \
-    && ./autogen.sh \
     && if test "${RSYNC_REMOTE:-}" != ""; then \
         echo "Downloading cache..."; \
         rsync -ra ${RSYNC_REMOTE}/gdal/${GCC_ARCH}/ $HOME/; \
@@ -165,16 +164,18 @@ RUN . /buildscripts/bh-set-envvars.sh \
         export CXX=$PWD/ccache_g++.sh; \
         ccache -M 1G; \
     fi \
-    && LDFLAGS="-L/build${PROJ_INSTALL_PREFIX}/lib -linternalproj" \
-    ./configure --prefix=/usr --sysconfdir=/etc "${WITH_HOST}" --without-libtool \
-    --with-hide-internal-symbols \
-    --with-jpeg12 \
-    --with-python \
-    --with-webp --with-proj=/build${PROJ_INSTALL_PREFIX} \
-    --with-libtiff=internal --with-rename-internal-libtiff-symbols \
-    --with-geotiff=internal --with-rename-internal-libgeotiff-symbols \
+    && mkdir build \
+    && cd build \
+    && CFLAGS='-DPROJ_RENAME_SYMBOLS -O2' CXXFLAGS='-DPROJ_RENAME_SYMBOLS -DPROJ_INTERNAL_CPP_NAMESPACE -O2' \
+       cmake .. \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DPROJ_INCLUDE_DIR="/build${PROJ_INSTALL_PREFIX-/usr/local}/include" \
+        -DPROJ_LIBRARY="/build${PROJ_INSTALL_PREFIX-/usr/local}/lib/libinternalproj.so" \
+        -DGDAL_USE_TIFF_INTERNAL=ON \
+        -DGDAL_USE_GEOTIFF_INTERNAL=ON \
     && make -j$(nproc) \
     && make install DESTDIR="/build" \
+    && cd .. \
     && if test "${RSYNC_REMOTE:-}" != ""; then \
         ccache -s; \
         echo "Uploading cache..."; \
@@ -203,6 +204,9 @@ FROM $TARGET_BASE_IMAGE as runner
 
 USER root
 RUN date
+
+# Update distro
+RUN apt-get update -y && apt-get upgrade -y
 
 # PROJ dependencies
 RUN apt-get update; \

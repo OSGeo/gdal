@@ -36,7 +36,7 @@ endif ()
 if (GDAL_USE_JSONC_INTERNAL)
   gdal_add_vendored_lib(appslib libjson)
 else ()
-  gdal_target_link_libraries(appslib PRIVATE ${JSONC_LIBRARIES})
+  gdal_target_link_libraries(appslib PRIVATE ${JSONC_TARGET})
 endif ()
 
 include(TargetPublicHeader)
@@ -97,8 +97,6 @@ if (BUILD_APPS)
       gdallocationinfo
       ogrinfo
       ogr2ogr
-      ogrlineref
-      nearblack
       gdalmdiminfo
       gdalmdimtranslate)
   if (ENABLE_GNM)

@@ -104,7 +104,7 @@ add_subdirectory(mdreader)
 
 # External libs now
 if (NOT GDAL_USE_JSONC_INTERNAL)
-  gdal_target_link_libraries(gcore PRIVATE ${JSONC_LIBRARIES})
+  gdal_target_link_libraries(gcore PRIVATE ${JSONC_TARGET})
 endif ()
 
 if (NOT DEFINED OGR_ENABLE_DRIVER_SQLITE)
@@ -128,7 +128,7 @@ if (GDAL_USE_LIBXML2)
 endif ()
 if (GDAL_USE_GEOS)
   target_compile_definitions(gcore PRIVATE -DHAVE_GEOS)
-  gdal_target_link_libraries(gcore PRIVATE ${GEOS_LIBRARIES})
+  gdal_target_link_libraries(gcore PRIVATE ${GEOS_TARGET})
 endif ()
 
 gdal_target_link_libraries(gcore PRIVATE PROJ::proj)
@@ -155,5 +155,4 @@ target_public_header(
   gdal_rat.h
   rawdataset.h
   gdalgeorefpamdataset.h
-  gdal_mdreader.h
-  gdal_pam.h)
+  gdal_mdreader.h)

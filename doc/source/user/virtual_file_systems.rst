@@ -145,6 +145,41 @@ A generic :ref:`/vsicurl/ <vsicurl>` file system handler exists for online resou
 
 When reading of entire files in a streaming way is possible, prefer using the :ref:`/vsicurl_streaming/ <vsicurl_streaming>`, and its variants for the above cloud storage services, for more efficiency.
 
+How to set credentials ?
+++++++++++++++++++++++++
+
+Cloud storage services require setting credentials. For some of them, they can
+be provided through configuration files (~/.aws/config, ~/.boto, ..) or through
+environment variables / configuration options.
+
+Starting with GDAL 3.5, :cpp:func:`VSISetCredential` can be used to set configuration
+options with a granularity at the level of a file path, which makes it easier if using
+the same virtual file system but with different credentials (e.g. different
+credentials for bucket "/vsis3/foo" and "/vsis3/bar")
+
+Starting with GDAL 3.5, credentials can be specified in a
+:ref:`GDAL configuration file <gdal_configuration_file>`, either in a specific one
+explicitly loaded with :cpp:func:`CPLLoadConfigOptionsFromFile`, or
+one of the default automatically loaded by :cpp:func:`CPLLoadConfigOptionsFromPredefinedFiles`.
+
+They should be put under a ``[credentials]`` section, and for each path prefix,
+under a relative subsection whose name starts with ``[.`` (e.g. ``[.some_arbitrary_name]``),
+and whose first key is ``path``.
+`
+.. code-block::
+
+    [credentials]
+
+    [.private_bucket]
+    path=/vsis3/my_private_bucket
+    AWS_SECRET_ACCESS_KEY=...
+    AWS_ACCESS_KEY_ID=...
+
+    [.sentinel_s2_l1c]
+    path=/vsis3/sentinel-s2-l1c
+    AWS_REQUEST_PAYER=requester
+
+
 .. _vsicurl:
 
 /vsicurl/ (http/https/ftp files: random access)
@@ -636,6 +671,8 @@ The file referenced by /vsisparse/ should be an XML control file formatted somet
     </VSISparseFile>
 
 Hopefully the values and semantics are fairly obvious.
+
+.. _target_user_virtual_file_systems_file_caching:
 
 File caching
 ------------

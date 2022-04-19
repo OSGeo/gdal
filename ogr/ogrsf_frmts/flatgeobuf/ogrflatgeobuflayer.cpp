@@ -393,10 +393,38 @@ void OGRFlatGeobufLayer::writeHeader(VSILFILE *poFp, uint64_t featuresCount, std
     m_writeOffset += c;
 }
 
+static bool SupportsSeekWhileWriting(const std::string& osFilename)
+{
+    return (!STARTS_WITH(osFilename.c_str(), "/vsi")) ||
+           STARTS_WITH(osFilename.c_str(), "/vsimem/");
+}
+
 void OGRFlatGeobufLayer::Create() {
-    // no spatial index requested, we are done
+    // no spatial index requested, we are (almost) done
     if (!m_bCreateSpatialIndexAtClose)
+    {
+        if( m_poFpWrite == nullptr ||
+            m_featuresCount == 0 ||
+            !SupportsSeekWhileWriting(m_osFilename) )
+        {
+            return;
+        }
+
+        // Rewrite header
+        VSIFSeekL(m_poFpWrite, 0, SEEK_SET);
+        m_writeOffset = 0;
+        std::vector<double> extentVector;
+        extentVector.push_back(m_sExtent.MinX);
+        extentVector.push_back(m_sExtent.MinY);
+        extentVector.push_back(m_sExtent.MaxX);
+        extentVector.push_back(m_sExtent.MaxY);
+        writeHeader(m_poFpWrite, m_featuresCount, &extentVector);
+        // Sanity check to verify that the dummy header and the real header
+        // have the same size.
+        CPLAssert(m_writeOffset == m_offsetAfterHeader);
+        CPL_IGNORE_RET_VAL(m_writeOffset); // otherwise checkers might tell the member is not used
         return;
+    }
 
     m_poFp = VSIFOpenL(m_osFilename.c_str(), "wb");
     if (m_poFp == nullptr) {
@@ -608,24 +636,30 @@ OGRFlatGeobufLayer::~OGRFlatGeobufLayer()
 }
 
 OGRErr OGRFlatGeobufLayer::readFeatureOffset(uint64_t index, uint64_t &featureOffset) {
-    const auto treeSize = PackedRTree::size(m_featuresCount, m_indexNodeSize);
-    const auto levelBounds = PackedRTree::generateLevelBounds(m_featuresCount, m_indexNodeSize);
-    const auto bottomLevelOffset = m_offset - treeSize + (levelBounds.front().first * sizeof(NodeItem));
-    const auto nodeItemOffset = bottomLevelOffset + (index * sizeof(NodeItem));
-    const auto featureOffsetOffset = nodeItemOffset + (sizeof(double) * 4);
-    if (VSIFSeekL(m_poFp, featureOffsetOffset, SEEK_SET) == -1)
-        return CPLErrorIO("seeking feature offset");
-    if (VSIFReadL(&featureOffset, sizeof(uint64_t), 1, m_poFp) != 1)
-        return CPLErrorIO("reading feature offset");
-    #if !CPL_IS_LSB
-        CPL_LSBPTR64(&featureOffset);
-    #endif
-    return OGRERR_NONE;
+    try
+    {
+        const auto treeSize = PackedRTree::size(m_featuresCount, m_indexNodeSize);
+        const auto levelBounds = PackedRTree::generateLevelBounds(m_featuresCount, m_indexNodeSize);
+        const auto bottomLevelOffset = m_offset - treeSize + (levelBounds.front().first * sizeof(NodeItem));
+        const auto nodeItemOffset = bottomLevelOffset + (index * sizeof(NodeItem));
+        const auto featureOffsetOffset = nodeItemOffset + (sizeof(double) * 4);
+        if (VSIFSeekL(m_poFp, featureOffsetOffset, SEEK_SET) == -1)
+            return CPLErrorIO("seeking feature offset");
+        if (VSIFReadL(&featureOffset, sizeof(uint64_t), 1, m_poFp) != 1)
+            return CPLErrorIO("reading feature offset");
+        #if !CPL_IS_LSB
+            CPL_LSBPTR64(&featureOffset);
+        #endif
+        return OGRERR_NONE;
+    } catch (const std::exception& e) {
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to calculate tree size: %s", e.what());
+        return OGRERR_FAILURE;
+    }
 }
 
 OGRFeature *OGRFlatGeobufLayer::GetFeature(GIntBig nFeatureId)
 {
-    if (m_featuresCount == 0) {
+    if (m_indexNodeSize == 0) {
         return OGRLayer::GetFeature(nFeatureId);
     } else {
         if (static_cast<uint64_t>(nFeatureId) >= m_featuresCount) {
@@ -1315,7 +1349,17 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
                 CPLErrorInvalidPointer("output file handler");
                 return OGRERR_FAILURE;
             }
-            writeHeader(m_poFpWrite, 0, nullptr);
+            if( !SupportsSeekWhileWriting(m_osFilename) )
+            {
+                writeHeader(m_poFpWrite, 0, nullptr);
+            }
+            else
+            {
+                std::vector<double> dummyExtent(4, std::numeric_limits<double>::quiet_NaN());
+                const uint64_t dummyFeatureCount = 0xDEADBEEF;  // write non-zero value, otherwise the reserved size is not OK
+                writeHeader(m_poFpWrite, dummyFeatureCount, &dummyExtent); // we will update it later
+                m_offsetAfterHeader = m_writeOffset;
+            }
             CPLDebugOnly("FlatGeobuf", "Writing first feature at offset: %lu", static_cast<long unsigned int>(m_writeOffset));
         }
 
@@ -1419,13 +1463,13 @@ std::string OGRFlatGeobufLayer::GetTempFilePath(const CPLString &fileName, CSLCo
     return osTempFile;
 }
 
-VSILFILE *OGRFlatGeobufLayer::CreateOutputFile(const CPLString &pszFilename, CSLConstList papszOptions, bool isTemp) {
+VSILFILE *OGRFlatGeobufLayer::CreateOutputFile(const CPLString &osFilename, CSLConstList papszOptions, bool isTemp) {
     std::string osTempFile;
     VSILFILE *poFpWrite;
     int savedErrno;
     if (isTemp) {
         CPLDebug("FlatGeobuf", "Spatial index requested will write to temp file and do second pass on close");
-        osTempFile = GetTempFilePath(pszFilename, papszOptions);
+        osTempFile = GetTempFilePath(osFilename, papszOptions);
         poFpWrite = VSIFOpenL(osTempFile.c_str(), "w+b");
         savedErrno = errno;
         // Unlink it now to avoid stale temporary file if killing the process
@@ -1433,13 +1477,16 @@ VSILFILE *OGRFlatGeobufLayer::CreateOutputFile(const CPLString &pszFilename, CSL
         VSIUnlink(osTempFile.c_str());
     } else {
         CPLDebug("FlatGeobuf", "No spatial index will write directly to output");
-        poFpWrite = VSIFOpenL(pszFilename, "wb");
+        if( !SupportsSeekWhileWriting(osFilename) )
+            poFpWrite = VSIFOpenL(osFilename, "wb");
+        else
+            poFpWrite = VSIFOpenL(osFilename, "w+b");
         savedErrno = errno;
     }
     if (poFpWrite == nullptr) {
         CPLError(CE_Failure, CPLE_OpenFailed,
                     "Failed to create %s:\n%s",
-                    pszFilename.c_str(), VSIStrerror(savedErrno));
+                    osFilename.c_str(), VSIStrerror(savedErrno));
         return nullptr;
     }
     return poFpWrite;

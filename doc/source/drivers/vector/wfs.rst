@@ -75,8 +75,9 @@ optionally set.
    is enabled (0 or 1). See "Request paging" section.
 -  **COOKIE**: HTTP cookies that are passed in HTTP requests, formatted
    as COOKIE1=VALUE1; COOKIE2=VALUE2... Starting with GDAL 2.3, additional
-   HTTP headers can be sent by setting the GDAL_HTTP_HEADER_FILE configuration
-   option to point to a filename of a text file with “key: value” HTTP headers.
+   HTTP headers can be sent by setting the 
+   :decl_configoption:`GDAL_HTTP_HEADER_FILE` configuration option to 
+   point to a filename of a text file with “key: value” HTTP headers.
 
 Request paging
 --------------
@@ -84,13 +85,14 @@ Request paging
 The WFS driver will read the GML content as a
 stream instead as a whole file, which will improve interactivity and
 help when the content cannot fit into memory. This can be turned off by
-setting the OGR_WFS_USE_STREAMING configuration option to NO if this is
+setting the :decl_configoption:`OGR_WFS_USE_STREAMING` configuration 
+option to NO if this is
 not desirable (for example, when iterating several times on a layer that
 can fit into memory). When streaming is enabled, GZip compression is
 also requested. It has been observed that some WFS servers, that cannot
 do on-the-fly compression, will cache on their side the whole content to
 be sent before sending the first bytes on the wire. To avoid this, you
-can set the CPL_CURL_GZIP configuration option to NO.
+can set the :decl_configoption:`CPL_CURL_GZIP` configuration option to NO.
 
 Paging with WFS 2.0
 +++++++++++++++++++
@@ -98,12 +100,13 @@ Paging with WFS 2.0
 The WFS driver will automatically detect if server supports paging, when
 requesting a WFS 2.0 server. The page size (number of features fetched in a
 single request) is limited to 100 by default when not declared by the server.
-It can be changed by setting the OGR_WFS_PAGE_SIZE configuration option, or by
+It can be changed by setting the :decl_configoption:`OGR_WFS_PAGE_SIZE` 
+configuration option, or by
 specifying COUNT as a query parameter in the URL of the connection string.
 
 If only the N first features must be downloaded and paging through the whole
-layer is not desirable, the OGR_WFS_PAGING_ALLOWED configuration option should
-be set to OFF.
+layer is not desirable, the :decl_configoption:`OGR_WFS_PAGING_ALLOWED` 
+configuration option should be set to OFF.
 
 Paging with WFS 1.0 or 1.1
 ++++++++++++++++++++++++++
@@ -113,26 +116,30 @@ that allows doing the requests per "page", and thus to avoid
 downloading the whole content of the layer in a single request. Paging
 was introduced in WFS 2.0.0 but servers may support it as an vendor
 specific option also with WFS 1.0.0 and 1.1.0. The OGR WFS client will
-use paging when the OGR_WFS_PAGING_ALLOWED configuration option is explicitly set
-to ON. The page size (number of features fetched in a single request)
+use paging when the :decl_configoption:`OGR_WFS_PAGING_ALLOWED` 
+configuration option is explicitly set to ON. 
+The page size (number of features fetched in a single request)
 is limited to 100 by default when not declared by the server.
-It can be changed by setting the OGR_WFS_PAGE_SIZE configuration option.
+It can be changed by setting the :decl_configoption:`OGR_WFS_PAGE_SIZE` 
+configuration option.
 
 WFS 2.0.2 specification has clarified that the first feature in paging
 is at index 0. But some server implementations of WFS paging have
 considered that it was at index 1 (including MapServer <= 6.2).
 The default base start index is 0, as mandated
-by the specification. The OGR_WFS_BASE_START_INDEX configuration
-option can however be set to 1 to be compatible with the server
-implementations that considered the first feature to be at index 1.
+by the specification. The :decl_configoption:`OGR_WFS_BASE_START_INDEX` 
+configuration option can however be set to 1 to be compatible with the 
+server implementations that considered the first feature to be at 
+index 1.
 
 Paging options
 ++++++++++++++
 
-Those 3 options (OGR_WFS_PAGING_ALLOWED, OGR_WFS_PAGE_SIZE,
-OGR_WFS_BASE_START_INDEX) can also be set in a WFS XML description
-file with the elements of similar names (PagingAllowed, PageSize,
-BaseStartIndex).
+Those 3 options (:decl_configoption:`OGR_WFS_PAGING_ALLOWED`, 
+:decl_configoption:`OGR_WFS_PAGE_SIZE`, 
+:decl_configoption:`OGR_WFS_BASE_START_INDEX`) can also be set in 
+a WFS XML description file with the elements of similar names 
+(PagingAllowed, PageSize, BaseStartIndex).
 
 Filtering
 ---------

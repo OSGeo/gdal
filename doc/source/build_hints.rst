@@ -135,6 +135,15 @@ All cached entries can be viewed using ``cmake -LAH`` from a build directory.
     <https://en.wikipedia.org/wiki/Interprocedural_optimization>`_
     (IPO), if available, default OFF.
 
+.. option:: GDAL_SET_INSTALL_RELATIVE_RPATH=OFF
+
+    Set to ON so that the rpath of installed binaries is written as a relative
+    path to the library. This option overrides the
+    `CMAKE_INSTALL_RPATH <https://cmake.org/cmake/help/latest/variable/CMAKE_INSTALL_RPATH.html>`__
+    variable, and assumes that the
+    `CMAKE_SKIP_INSTALL_RPATH <https://cmake.org/cmake/help/latest/variable/CMAKE_SKIP_INSTALL_RPATH.html>`__
+    variable is not set.
+
 CMake package dependent options
 +++++++++++++++++++++++++++++++
 
@@ -164,9 +173,29 @@ GDAL_USE_<Packagename_in_upper_case>:BOOL=ON.
 
 .. option:: GDAL_USE_EXTERNAL_LIBS:BOOL=ON/OFF
 
+     Defaults to ON. When set to OFF, all external dependencies (but mandatory
+     ones) will be disabled, unless individually enabled with
+     GDAL_USE_<Packagename_in_upper_case>:BOOL=ON.
      This option should be set before CMakeCache.txt is created. If it is set
      to OFF after CMakeCache.txt is created, then cmake should be reinvoked with
      "-UGDAL_USE_*" to cancel the activation of previously detected libraries.
+
+Some of the GDAL dependencies (GEOTIFF, GIF, JPEG, JSONC, LERC, OPENCAD, PNG, QHULL, TIFF, ZLIB)
+have a copy of their source code inside the GDAL source code tree. It is possible
+to enable this internal copy by setting the GDAL_USE_<Packagename_in_upper_case>_INTERNAL:BOOL=ON
+variable. When set, this has precedence over the external library that may be
+detected. The behavior can also be globally controlled with the following variable:
+
+.. option:: GDAL_USE_INTERNAL_LIBS=ON/OFF/WHEN_NO_EXTERNAL
+
+     Control how internal libraries should be used.
+     If set to ON, they will always be used.
+     If set to OFF, they will never be used (unless individually enabled with
+     GDAL_USE_<Packagename_in_upper_case>_INTERNAL:BOOL=ON)
+     If set to WHEN_NO_EXTERNAL (default value), they will be used only if no
+     corresponding external library is found and enabled.
+     This option should be set before CMakeCache.txt is created.
+
 
 Armadillo
 *********
@@ -180,6 +209,18 @@ need to be installed: ``blas blas-devel libblas libcblas liblapack liblapacke``
 .. option:: GDAL_USE_ARMADILLO=ON/OFF
 
     Control whether to use Armadillo. Defaults to ON when Armadillo is found.
+
+
+Arrow
+*****
+
+The `Apache Arrow C++ <https://github.com/apache/arrow/tree/master/cpp>` library
+is required for the :ref:`vector.arrow` and :ref:`vector.parquet` drivers.
+Specify install prefix in the ``CMAKE_PREFIX_PATH`` variable.
+
+.. option:: GDAL_USE_ARROW=ON/OFF
+
+    Control whether to use Arrow. Defaults to ON when Arrow is found.
 
 
 Blosc
@@ -219,27 +260,6 @@ It can be detected with pkg-config.
 .. option:: GDAL_USE_CFITSIO=ON/OFF
 
     Control whether to use CFITSIO. Defaults to ON when CFITSIO is found.
-
-
-CharLS
-******
-
-`CharLS <https://github.com/team-charls/charls>`_ is a C++ implementation of the
-JPEG-LS standard for lossless and near-lossless image compression and decompression.
-It is used by the :ref:`raster.jpegls` driver.
-with pkg-config.
-
-.. option:: CHARLS_INCLUDE_DIR
-
-    Path to an include directory with the ``charls/charls.h`` header file.
-
-.. option:: CHARLS_LIBRARY
-
-    Path to a shared or static library file.
-
-.. option:: GDAL_USE_CHARLS=ON/OFF
-
-    Control whether to use CharLS. Defaults to ON when CharLS is found.
 
 
 Crnlib
@@ -469,7 +489,7 @@ GEOTIFF
 *******
 
 It is required for the :ref:`raster.gtiff` drivers, and a few other drivers.
-If not found, an internal copy of libgeotiff will be used.
+If not found, an internal copy of libgeotiff can be used.
 
 .. option:: GEOTIFF_INCLUDE_DIR
 
@@ -488,8 +508,8 @@ If not found, an internal copy of libgeotiff will be used.
 
 .. option:: GDAL_USE_GEOTIFF_INTERNAL=ON/OFF
 
-    Control whether to use internal libgeotiff copy. Defaults to ON when external
-    libgeotiff is not found.
+    Control whether to use internal libgeotiff copy. Defaults depends on GDAL_USE_INTERNAL_LIBS. When set
+    to ON, has precedence over GDAL_USE_GEOTIFF=ON
 
 
 GEOS
@@ -517,7 +537,7 @@ GIF
 ***
 
 `giflib <http://giflib.sourceforge.net/>`_ is required for the :ref:`raster.gif` driver.
-If not found, an internal copy will be used.
+If not found, an internal copy can be used.
 
 .. option:: GIF_INCLUDE_DIR
 
@@ -533,8 +553,8 @@ If not found, an internal copy will be used.
 
 .. option:: GDAL_USE_GIF_INTERNAL=ON/OFF
 
-    Control whether to use internal giflib copy. Defaults to ON when external
-    giflib is not found.
+    Control whether to use internal giflib copy. Defaults depends on GDAL_USE_INTERNAL_LIBS. When set
+    to ON, has precedence over GDAL_USE_GIF=ON
 
 
 GTA
@@ -714,7 +734,7 @@ JPEG
 
 libjpeg is required for the :ref:`raster.jpeg` driver, and may be used by a few
 other drivers (:ref:`raster.gpkg`, :ref:`raster.marfa`, internal libtiff, etc.)
-If not found, an internal copy of libjpeg (6b) will be used.
+If not found, an internal copy of libjpeg (6b) can be used.
 Using `libjpeg-turbo <https://github.com/libjpeg-turbo/libjpeg-turbo>`_ is highly
 recommended to get best performance.
 See https://cmake.org/cmake/help/latest/module/FindJPEG.html for more details
@@ -742,8 +762,8 @@ on how the library is detected.
 
 .. option:: GDAL_USE_JPEG_INTERNAL=ON/OFF
 
-    Control whether to use internal libjpeg copy. Defaults to ON when external
-    libjpeg is not found.
+    Control whether to use internal libjpeg copy. Defaults depends on GDAL_USE_INTERNAL_LIBS. When set
+    to ON, has precedence over GDAL_USE_JPEG=ON
 
 
 JPEG12
@@ -766,7 +786,7 @@ JSON-C
 The `json-c <https://github.com/json-c/json-c>`_ library is required to read and
 write JSON content.
 It can be detected with pkg-config.
-If not found, an internal copy of json-c will be used.
+If not found, an internal copy of json-c can be used.
 
 .. option:: JSONC_INCLUDE_DIR
 
@@ -782,8 +802,8 @@ If not found, an internal copy of json-c will be used.
 
 .. option:: GDAL_USE_JSONC_INTERNAL=ON/OFF
 
-    Control whether to use internal JSON-C copy. Defaults to ON when external
-    JSON-C is not found.
+    Control whether to use internal JSON-C copy. Defaults depends on GDAL_USE_INTERNAL_LIBS. When set
+    to ON, has precedence over GDAL_USE_JSONC=ON
 
 
 JXL
@@ -858,18 +878,10 @@ driver. The HDF5 CXX library is also required.
 LERC
 ****
 
-`LERC <https://github.com/esri/lerc>`_ (V2) is an open-source image or raster format
+`LERC <https://github.com/esri/lerc>`_ is an open-source image or raster format
 which supports rapid encoding and decoding for any pixel type (not just RGB or Byte).
 Users set the maximum compression error per pixel while encoding, so the precision
 of the original input image is preserved (within user defined error bounds).
-
-.. warning::
-
-    Use of the external LERC library is not recommended, as it cannot be used
-    by the :ref:`raster.marfa` driver currently (that one requires the internal
-    LERC copy). The external LERC Library can only be used by the internal libtiff,
-    which can also use the internal LERC copy.
-
 
 .. option:: LERC_INCLUDE_DIR
 
@@ -881,23 +893,13 @@ of the original input image is preserved (within user defined error bounds).
 
 .. option:: GDAL_USE_LERC=ON/OFF
 
-    Control whether to use LERC (V2). Defaults to *OFF* when LERC (V2) is found.
+    Control whether to use LERC. Defaults to ON when LERC is found.
 
 .. option:: GDAL_USE_LERC_INTERNAL=ON/OFF
 
-    Control whether to use the LERC (V2) internal library. Defaults to ON,
-    unless GDAL_USE_LERC is set to ON.
+    Control whether to use the LERC internal library. Defaults depends on GDAL_USE_INTERNAL_LIBS. When set
+    to ON, has precedence over GDAL_USE_LERC=ON
 
-
-LERCV1
-******
-
-This is an internal library used by the :ref:`raster.marfa` driver. It offers the
-LERC v1 compression.
-
-.. option:: GDAL_USE_LERCV1_INTERNAL=ON/OFF
-
-    Control whether to use the Lerc V1 internal library. Defaults to ON.
 
 LibKML
 ******
@@ -1160,7 +1162,7 @@ ODBC
 ****
 
 ODBC is required for various drivers: :ref:`vector.odbc`, :ref:`vector.pgeo`,
-:ref:`vector.walk` and :ref:`vector.mssqlspatial`.
+:ref:`vector.hana` and :ref:`vector.mssqlspatial`.
 It is normally automatically found in system directories on Unix and Windows.
 
 .. option:: ODBC_INCLUDE_DIR
@@ -1174,6 +1176,25 @@ It is normally automatically found in system directories on Unix and Windows.
 .. option:: GDAL_USE_ODBC=ON/OFF
 
     Control whether to use ODBC. Defaults to ON when ODBC is found.
+
+
+ODBC-CPP
+********
+
+The `odbc-cpp-wrapper library <https://github.com/SAP/odbc-cpp-wrapper>`_ is required for
+the :ref:`vector.hana` driver.
+
+.. option:: ODBCCPP_INCLUDE_DIR
+
+    Path to an include directory with the ``odbc/Environment.h`` header file.
+
+.. option:: ODBCCPP_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_ODBCCPP=ON/OFF
+
+    Control whether to use ODBC-CPP. Defaults to ON when ODBC-CPP is found.
 
 
 OGDI
@@ -1193,6 +1214,31 @@ driver. It can be detected with pkg-config.
 .. option:: GDAL_USE_OGDI=ON/OFF
 
     Control whether to use OGDI. Defaults to ON when OGDI is found.
+
+
+OpenCAD
+*******
+
+`libopencad <https://github.com/nextgis-borsch/lib_opencad>`_ is required for the :ref:`vector.cad`
+driver. If not found, an internal copy can be used.
+
+.. option:: OPENCAD_INCLUDE_DIR
+
+    Path to an include directory with the ``opencad.h`` header file.
+
+.. option:: OPENCAD_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_OPENCAD=ON/OFF
+
+    Control whether to use external libopencad. Defaults to ON when external libopencad is found.
+
+.. option:: GDAL_USE_OPENCAD_INTERNAL=ON/OFF
+
+    Control whether to use internal libopencad copy. Defaults depends on GDAL_USE_INTERNAL_LIBS. When set
+    to ON, has precedence over GDAL_USE_OPENCAD=ON
+
 
 
 OpenCL
@@ -1296,6 +1342,18 @@ The Oracle Instant Client SDK (closed source/proprietary) is required for the
     Control whether to use Oracle. Defaults to ON when Oracle is found.
 
 
+Parquet
+*******
+
+The Parquet component of the `Apache Arrow C++ <https://github.com/apache/arrow/tree/master/cpp>`
+library is required for the :ref:`vector.parquet` driver.
+Specify install prefix in the ``CMAKE_PREFIX_PATH`` variable.
+
+.. option:: GDAL_USE_PARQUET=ON/OFF
+
+    Control whether to use Parquet. Defaults to ON when Parquet is found.
+
+
 PCRE2
 *****
 
@@ -1315,23 +1373,23 @@ Regular Expressions support. It is used for the REGEXP operator in drivers using
     Control whether to use PCRE2. Defaults to ON when PCRE2 is found.
 
 
-PDFium
+PDFIUM
 ******
 
-The `PDFium <https://github.com/rouault/pdfium_build_gdal_3_4>`_ library is one
+The `PDFium <https://github.com/rouault/pdfium_build_gdal_3_5>`_ library is one
 of the possible backends for the :ref:`raster.pdf` driver.
 
-.. option:: PDFium_INCLUDE_DIR
+.. option:: PDFIUM_INCLUDE_DIR
 
     Path to an include directory with the ``public/fpdfview.h`` header file.
 
-.. option:: PDFium_LIBRARY
+.. option:: PDFIUM_LIBRARY
 
     Path to a shared or static library file.
 
 .. option:: GDAL_USE_PDFIUM=ON/OFF
 
-    Control whether to use PDFium. Defaults to ON when PDFium is found.
+    Control whether to use PDFIUM. Defaults to ON when PDFIUM is found.
 
 
 PNG
@@ -1339,7 +1397,7 @@ PNG
 
 `libpng <https://github.com/glennrp/libpng>`_ is required for the :ref:`raster.png`
 driver, and may be used by a few other drivers (:ref:`raster.grib`, :ref:`raster.gpkg`, etc.)
-If not found, an internal copy of libpng will be used.
+If not found, an internal copy of libpng can be used.
 See https://cmake.org/cmake/help/latest/module/FindPNG.html for more details
 on how the library is detected.
 
@@ -1359,8 +1417,8 @@ on how the library is detected.
 
 .. option:: GDAL_USE_PNG_INTERNAL=ON/OFF
 
-    Control whether to use internal libpng copy. Defaults to ON when external
-    libpng is not found.
+    Control whether to use internal libpng copy. Defaults depends on GDAL_USE_INTERNAL_LIBS. When set
+    to ON, has precedence over GDAL_USE_PNG=ON
 
 
 Poppler
@@ -1424,7 +1482,7 @@ QHULL
 *****
 
 The `QHULL <https://github.com/qhull/qhull>`_ library is used for the linear
-interpolation of gdal_grid. If not found, an internal copy is used.
+interpolation of gdal_grid. If not found, an internal copy can be used.
 
 .. option:: QHULL_PACKAGE_NAME
 
@@ -1444,8 +1502,8 @@ interpolation of gdal_grid. If not found, an internal copy is used.
 
 .. option:: GDAL_USE_QHULL_INTERNAL=ON/OFF
 
-    Control whether to use internal QHULL copy. Defaults to ON when external
-    QHULL is not found.
+    Control whether to use internal QHULL copy. Defaults depends on GDAL_USE_INTERNAL_LIBS. When set
+    to ON, has precedence over GDAL_USE_QHULL=ON
 
 
 RASTERLITE2
@@ -1587,7 +1645,7 @@ TIFF
 
 `libtiff <https://gitlab.com/libtiff/libtiff/>`_ is required for the
 :ref:`raster.gtiff` drivers, and a few other drivers.
-If not found, an internal copy of libtiff will be used.
+If not found, an internal copy of libtiff can be used.
 
 .. option:: TIFF_INCLUDE_DIR
 
@@ -1606,8 +1664,8 @@ If not found, an internal copy of libtiff will be used.
 
 .. option:: GDAL_USE_TIFF_INTERNAL=ON/OFF
 
-    Control whether to use internal libtiff copy. Defaults to ON when external
-    libtiff is not found.
+    Control whether to use internal libtiff copy. Defaults depends on GDAL_USE_INTERNAL_LIBS. When set
+    to ON, has precedence over GDAL_USE_TIFF=ON
 
 
 TileDB
@@ -1684,8 +1742,8 @@ the lossless Deflate/Zip compression algorithm.
 
 .. option:: GDAL_USE_ZLIB_INTERNAL=ON/OFF
 
-    Control whether to use internal zlib copy. Defaults to ON when external
-    zlib is not found.
+    Control whether to use internal zlib copy. Defaults depends on GDAL_USE_INTERNAL_LIBS. When set
+    to ON, has precedence over GDAL_USE_ZLIB=ON
 
 
 ZSTD
@@ -1947,7 +2005,7 @@ Start a Conda enabled console and assuming there is a c:\\dev directory
         cmake proj geos hdf4 hdf5 \
         libnetcdf openjpeg poppler libtiff libpng xerces-c expat libxml2 kealib json-c \
         cfitsio freexl geotiff jpeg libpq libspatialite libwebp-base pcre postgresql \
-        sqlite tiledb zstd charls cryptopp cgal jasper librttopo libkml openssl xz
+        sqlite tiledb zstd charls cryptopp cgal librttopo libkml openssl xz
 
 .. note::
 
@@ -1987,3 +2045,10 @@ From a Conda enabled console
         cd c:\dev\GDAL
         cd _build.vs2019
         ctest -V --build-config Release
+
+Cross-compiling for Android
++++++++++++++++++++++++++++
+
+First refer to https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html#cross-compiling-for-android
+and to https://github.com/OSGeo/gdal/blob/master/.github/workflows/android_cmake/start.sh for
+an example of a build script to cross-compile from Ubuntu.

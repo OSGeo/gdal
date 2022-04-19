@@ -274,3 +274,33 @@ def test_gdalmdiminfo_lib_arrayoption():
     ret = gdal.MultiDimInfo('../gdrivers/data/netcdf/with_bounds.nc',
                             arrayoptions = ['SHOW_BOUNDS=NO'])
     assert len(ret['arrays']) == 1
+
+
+###############################################################################
+
+def test_gdalmdiminfo_lib_int64():
+
+    drv = gdal.GetDriverByName('MEM')
+    ds = drv.CreateMultiDimensional('')
+    rg = ds.GetRootGroup()
+    dim0 = rg.CreateDimension("dim0", "my_type", "my_direction", 1)
+    ar = rg.CreateMDArray("ar", [ dim0 ], gdal.ExtendedDataType.Create(gdal.GDT_Int64))
+    assert ar.Write(struct.pack('q', -10000000000)) == gdal.CE_None
+
+    ret = gdal.MultiDimInfo(ds, detailed = True)
+    assert ret['arrays']['ar']['values'] == [-10000000000]
+
+
+###############################################################################
+
+def test_gdalmdiminfo_lib_uint64():
+
+    drv = gdal.GetDriverByName('MEM')
+    ds = drv.CreateMultiDimensional('')
+    rg = ds.GetRootGroup()
+    dim0 = rg.CreateDimension("dim0", "my_type", "my_direction", 1)
+    ar = rg.CreateMDArray("ar", [ dim0 ], gdal.ExtendedDataType.Create(gdal.GDT_UInt64))
+    assert ar.Write(struct.pack('Q', 10000000000)) == gdal.CE_None
+
+    ret = gdal.MultiDimInfo(ds, detailed = True)
+    assert ret['arrays']['ar']['values'] == [10000000000]

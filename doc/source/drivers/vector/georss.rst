@@ -143,7 +143,8 @@ Supported geometries :
 
 Other type of geometries are not supported and will be silently ignored.
 
-The GeoRSS writer supports the following *dataset* creation options:
+Dataset creation options
+------------------------
 
 -  **FORMAT**\ =RSS|ATOM: whether the document must be in RSS 2.0 or
    Atom 1.0 format. Default value : RSS

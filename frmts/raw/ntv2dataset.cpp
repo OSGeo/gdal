@@ -127,7 +127,7 @@ class NTv2Dataset final: public RawDataset
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
-                                int nXSize, int nYSize, int nBands,
+                                int nXSize, int nYSize, int nBandsIn,
                                 GDALDataType eType, char ** papszOptions );
 };
 
@@ -800,7 +800,7 @@ const char *NTv2Dataset::_GetProjectionRef()
 
 GDALDataset *NTv2Dataset::Create( const char * pszFilename,
                                   int nXSize, int nYSize,
-                                  int nBands,
+                                  int nBandsIn,
                                   GDALDataType eType,
                                   char ** papszOptions )
 {
@@ -811,12 +811,12 @@ GDALDataset *NTv2Dataset::Create( const char * pszFilename,
                   GDALGetDataTypeName( eType ) );
         return nullptr;
     }
-    if( nBands != 4 )
+    if( nBandsIn != 4 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Attempt to create NTv2 file with unsupported "
                   "band number '%d'.",
-                  nBands);
+                  nBandsIn);
         return nullptr;
     }
 

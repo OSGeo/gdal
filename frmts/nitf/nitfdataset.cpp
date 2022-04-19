@@ -617,7 +617,7 @@ NITFDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
             // to be opened by a random driver.
             static const char * const apszDrivers[] = {
                 "JP2KAK", "JP2ECW", "JP2MRSID",
-                "JPEG2000", "JP2OPENJPEG", nullptr };
+                "JP2OPENJPEG", nullptr };
             poDS->poJ2KDataset = reinterpret_cast<GDALDataset*>(
                 GDALOpenEx( osDSName, GDAL_OF_RASTER, apszDrivers, nullptr, nullptr) );
 
@@ -904,12 +904,17 @@ NITFDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
     }
     else if( psImage->chICORDS == 'S' || psImage->chICORDS == 'N' )
     {
-        CPLFree( poDS->pszProjection );
-        poDS->pszProjection = nullptr;
+        // in open-for-create mode, we don't have a valid UTM zone, which
+        // would make PROJ unhappy
+        if( !bOpenForCreate )
+        {
+            CPLFree( poDS->pszProjection );
+            poDS->pszProjection = nullptr;
 
-        oSRSWork.SetUTM( psImage->nZone, psImage->chICORDS == 'N' );
-        oSRSWork.SetWellKnownGeogCS( "WGS84" );
-        oSRSWork.exportToWkt( &(poDS->pszProjection) );
+            oSRSWork.SetUTM( psImage->nZone, psImage->chICORDS == 'N' );
+            oSRSWork.SetWellKnownGeogCS( "WGS84" );
+            oSRSWork.exportToWkt( &(poDS->pszProjection) );
+        }
     }
     else if( psImage->chICORDS == 'U' && psImage->nZone != 0 )
     {
@@ -4018,7 +4023,7 @@ static char** NITFExtractTEXTAndCGMCreationOption( GDALDataset* poSrcDS,
 /************************************************************************/
 
 GDALDataset *
-NITFDataset::NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize, int nBands,
+NITFDataset::NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize, int nBandsIn,
                                 GDALDataType eType, char **papszOptions )
 
 {
@@ -4111,7 +4116,7 @@ NITFDataset::NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize,
     int nImageCount = 0;
     vsi_l_offset nImageOffset = 0;
     vsi_l_offset nICOffset = 0;
-    if( !NITFCreateEx( pszFilename, nXSize, nYSize, nBands,
+    if( !NITFCreateEx( pszFilename, nXSize, nYSize, nBandsIn,
                        GDALGetDataTypeSize( eType ), pszPVType,
                        papszFullOptions,
                        &nIMIndex, &nImageCount, &nImageOffset, &nICOffset ) )
@@ -4135,7 +4140,7 @@ NITFDataset::NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize,
 
         char** papszJP2Options = NITFJP2ECWOptions(papszFullOptions);
         poWritableJ2KDataset =
-            poJ2KDriver->Create( osDSName, nXSize, nYSize, nBands, eType,
+            poJ2KDriver->Create( osDSName, nXSize, nYSize, nBandsIn, eType,
                                  papszJP2Options );
         CSLDestroy(papszJP2Options);
 
@@ -4231,12 +4236,6 @@ NITFDataset::NITFCreateCopy(
                     /* Try with JP2OPENJPEG as an alternate driver */
                     poJ2KDriver =
                         GetGDALDriverManager()->GetDriverByName( "JP2OPENJPEG" );
-                }
-                if( poJ2KDriver == nullptr )
-                {
-                    /* Try with Jasper as an alternate driver */
-                    poJ2KDriver =
-                        GetGDALDriverManager()->GetDriverByName( "JPEG2000" );
                 }
             }
             if( poJ2KDriver == nullptr )

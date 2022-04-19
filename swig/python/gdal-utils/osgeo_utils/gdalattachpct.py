@@ -46,7 +46,7 @@ def Usage():
     return 1
 
 
-def main(argv):
+def main(argv=sys.argv):
     if len(argv) < 3:
         return Usage()
     pct_filename = None

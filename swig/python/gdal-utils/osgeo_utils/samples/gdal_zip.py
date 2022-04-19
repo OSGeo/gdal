@@ -123,7 +123,7 @@ def gdal_zip(argv, progress=None):
     return ret
 
 
-def main(argv):
+def main(argv=sys.argv):
     return gdal_zip(argv)
 
 

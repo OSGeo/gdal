@@ -798,9 +798,7 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
         if( bSuccess && dfValue != 1.0 )
             poDstBand->SetScale( dfValue );
 
-        dfValue = poSrcBand->GetNoDataValue( &bSuccess );
-        if( bSuccess )
-            poDstBand->SetNoDataValue( dfValue );
+        GDALCopyNoDataValue(poDstBand, poSrcBand);
 
         if( poSrcBand->GetColorInterpretation() != GCI_Undefined
             && poSrcBand->GetColorInterpretation()

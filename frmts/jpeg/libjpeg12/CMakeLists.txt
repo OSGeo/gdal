@@ -71,8 +71,7 @@ foreach (_src IN LISTS HEADERS)
   file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/../libjpeg/${_src}" DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 endforeach ()
 
-file(COPY jmorecfg.h.12 DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-file(RENAME ${CMAKE_CURRENT_BINARY_DIR}/jmorecfg.h.12 ${CMAKE_CURRENT_BINARY_DIR}/jmorecfg.h)
+configure_file(jmorecfg.h.12 ${CMAKE_CURRENT_BINARY_DIR}/jmorecfg.h COPYONLY)
 
 add_library(libjpeg12 OBJECT ${SOURCES_12})
 target_include_directories(libjpeg12 PRIVATE ${CMAKE_CURRENT_BINARY_DIR} $<TARGET_PROPERTY:cpl,SOURCE_DIR>

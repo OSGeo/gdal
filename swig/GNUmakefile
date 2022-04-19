@@ -6,7 +6,7 @@ include ../GDALmake.opt
 
 # The ALL_BINDINGS variable defines all the possible bindings.  It's used
 # in the dist and clean definitions.
-ALL_BINDINGS = python csharp perl java
+ALL_BINDINGS = python csharp java
 
 default: generate
 

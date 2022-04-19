@@ -33,7 +33,7 @@ import os
 import sys
 
 
-def main(argv):
+def main(argv=sys.argv):
     fout = open(argv[1], "wb")
     fout.write('FUZZER_FRIENDLY_ARCHIVE\n'.encode('ascii'))
     for filename in argv[2:]:

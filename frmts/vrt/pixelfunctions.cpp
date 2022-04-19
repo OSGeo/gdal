@@ -45,6 +45,9 @@ template<typename T> inline double GetSrcVal(const void* pSource, GDALDataType e
         case GDT_Int16: return static_cast<const GInt16*>(pSource)[ii];
         case GDT_UInt32: return static_cast<const GUInt32*>(pSource)[ii];
         case GDT_Int32: return static_cast<const GInt32*>(pSource)[ii];
+        // Precision loss currently for int64/uint64
+        case GDT_UInt64: return static_cast<double>(static_cast<const uint64_t*>(pSource)[ii]);
+        case GDT_Int64: return static_cast<double>(static_cast<const int64_t*>(pSource)[ii]);
         case GDT_Float32: return static_cast<const float*>(pSource)[ii];
         case GDT_Float64: return static_cast<const double*>(pSource)[ii];
         case GDT_CInt16: return static_cast<const GInt16*>(pSource)[2 * ii];

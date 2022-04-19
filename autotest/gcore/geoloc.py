@@ -30,7 +30,7 @@
 ###############################################################################
 
 import array
-from osgeo import gdal
+from osgeo import gdal, osr
 
 import gdaltest
 import pytest
@@ -106,3 +106,106 @@ def test_geoloc_fill_line():
     warped_ds = gdal.Warp('', ds, format='MEM')
     assert warped_ds
     assert warped_ds.GetRasterBand(1).Checksum() == 25798
+
+
+
+###############################################################################
+# Test warping from rectified to referenced-by-geoloc
+
+
+def test_geoloc_warp_to_geoloc():
+
+    lon_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/lon.tif', 10, 1, 1, gdal.GDT_Float32)
+    lon_ds.WriteRaster(0, 0, 10, 1, array.array('f', [-79.5 + 1 * x for x in range(10)]))
+    lon_ds = None
+
+    lat_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/lat.tif', 10, 1, 1, gdal.GDT_Float32)
+    lat_ds.WriteRaster(0, 0, 10, 1, array.array('f', [49.5 - 1 * x for x in range(10)]))
+    lat_ds = None
+
+    ds = gdal.GetDriverByName('MEM').Create('', 10, 10)
+    md = {
+        'LINE_OFFSET': '0',
+        'LINE_STEP': '1',
+        'PIXEL_OFFSET': '0',
+        'PIXEL_STEP': '1',
+        'X_DATASET': '/vsimem/lon.tif',
+        'X_BAND' : '1',
+        'Y_DATASET': '/vsimem/lat.tif',
+        'Y_BAND' : '1',
+        'SRS': 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]'
+    }
+    ds.SetMetadata(md, 'GEOLOCATION')
+
+    input_ds = gdal.GetDriverByName('MEM').Create('', 10, 10)
+    input_ds.SetGeoTransform([-80, 1, 0, 50, 0, -1])
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    input_ds.SetSpatialRef(srs)
+    input_ds.GetRasterBand(1).Fill(255)
+
+    transformer = gdal.Transformer(input_ds, ds, [])
+
+    success, pnt = transformer.TransformPoint(0, 0.5, 0.5)
+    assert success
+    assert pnt == pytest.approx((0.5, 0.5, 0))
+
+    ds.GetRasterBand(1).Fill(0)
+    assert gdal.Warp(ds, input_ds)
+
+    assert ds.GetRasterBand(1).ComputeRasterMinMax() == (255, 255), ds.ReadAsArray()
+
+    # Try with projected coordinates
+    input_ds = gdal.GetDriverByName('MEM').Create('', 10, 10)
+    input_ds.SetGeoTransform([-8905559.26346189, (-7792364.35552915 - -8905559.26346189)/10, 0, 6446275.84101716, 0, -(6446275.84101716-4865942.27950318)/10])
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(3857)
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    input_ds.SetSpatialRef(srs)
+    input_ds.GetRasterBand(1).Fill(255)
+
+    transformer = gdal.Transformer(input_ds, ds, [])
+
+    success, pnt = transformer.TransformPoint(0, 0.5, 0.5)
+    assert success
+    assert pnt == pytest.approx((0.5, 0.5, 0), abs=0.1)
+
+    ds.GetRasterBand(1).Fill(0)
+    assert gdal.Warp(ds, input_ds)
+
+    assert ds.GetRasterBand(1).ComputeRasterMinMax() == (255, 255), ds.ReadAsArray()
+
+
+    gdal.Unlink('/vsimem/lon.tif')
+    gdal.Unlink('/vsimem/lat.tif')
+
+
+
+###############################################################################
+# Test error cases
+
+
+def test_geoloc_error_cases():
+
+    lon_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/lon.tif', 10, 1, 1, gdal.GDT_Float32)
+    lon_ds.WriteRaster(0, 0, 10, 1, array.array('f', [-179.5 + 1 * x for x in range(10)]))
+    lon_ds = None
+
+    lat_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/lat.tif', 10, 1, 1, gdal.GDT_Float32)
+    lat_ds.WriteRaster(0, 0, 10, 1, array.array('f', [89.5 - 1 * x for x in range(10)]))
+    lat_ds = None
+
+    ds = gdal.GetDriverByName('MEM').Create('', 10, 10)
+    ds.SetMetadata({'invalid': 'content'}, 'GEOLOCATION')
+
+    with gdaltest.error_handler():
+        transformer = gdal.Transformer(ds, None, [])
+    assert transformer is None
+
+    with gdaltest.error_handler():
+        transformer = gdal.Transformer(None, ds, [])
+    assert transformer is None
+
+    gdal.Unlink('/vsimem/lon.tif')
+    gdal.Unlink('/vsimem/lat.tif')

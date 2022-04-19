@@ -252,6 +252,9 @@ def test_osr_compd_6():
         AXIS["Gravity-related height",UP]]]"""
 
     wkt = srs.ExportToPrettyWkt()
+    # PROJ >= 9.0.1 returns 'Unknown based on GRS80 ellipsoid using towgs84=0,0,0,0,0,0,0'
+    wkt = wkt.replace('Unknown based on GRS80 ellipsoid using towgs84=0,0,0,0,0,0,0', 'Unknown_based_on_GRS80_ellipsoid')
+    wkt = wkt.replace('unknown using geoidgrids=g2003conus.gtx,g2003alaska.gtx,g2003h01.gtx,g2003p01.gtx', 'unknown')
 
     if gdaltest.equal_srs_from_wkt(exp_wkt, wkt) == 0:
         pytest.fail()

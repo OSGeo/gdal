@@ -256,7 +256,7 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
         reinterpret_cast<char*>(pszIconvSrcBuf));
 
     /* iconv expects a number of bytes, not characters */
-    nSrcLen *= sizeof(wchar_t);
+    nSrcLen *= nTargetCharWidth;
 
 /* -------------------------------------------------------------------- */
 /*      Allocate destination buffer.                                    */
@@ -277,8 +277,8 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
             if( errno == EILSEQ )
             {
                 // Skip the invalid sequence in the input string.
-                nSrcLen--;
-                pszSrcBuf += sizeof(wchar_t);
+                nSrcLen -= nTargetCharWidth;
+                pszSrcBuf += nTargetCharWidth;
                 if( !bHaveWarned2 )
                 {
                     bHaveWarned2 = true;
@@ -309,6 +309,13 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
         }
     }
 
+    if (nDstLen == 0)
+    {
+        ++nDstCurLen;
+        pszDestination =
+            static_cast<char *>(CPLRealloc(pszDestination, nDstCurLen));
+        ++nDstLen;
+    }
     pszDestination[nDstCurLen - nDstLen] = '\0';
 
     iconv_close( sConv );

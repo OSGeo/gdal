@@ -96,7 +96,7 @@ copied to target language and then CPLFree'd
 
 -------------------
 
-Optional checks against nullness. Some language bindings (e.g. Perl's)
+Optional checks against nullness. Some language bindings
 map undefined variables into NULLs, which cause core dumps if allowed to
 go the C API.
 

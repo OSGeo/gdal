@@ -231,7 +231,7 @@ def test_ogr_libkml_point_read():
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
 
-    wkt = 'POINT(-122.0822035425683 37.42228990140251)'
+    wkt = 'POINT(-122.0822035425683 37.42228990140251 0)'
 
     assert not ogrtest.check_feature_geometry(feat, wkt)
 

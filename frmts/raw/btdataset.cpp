@@ -81,7 +81,7 @@ class BTDataset final: public GDALPamDataset
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
-                                int nXSize, int nYSize, int nBands,
+                                int nXSize, int nYSize, int nBandsIn,
                                 GDALDataType eType, char ** papszOptions );
 };
 
@@ -834,7 +834,7 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
 GDALDataset *BTDataset::Create( const char * pszFilename,
                                 int nXSize,
                                 int nYSize,
-                                int nBands,
+                                int nBandsIn,
                                 GDALDataType eType,
                                 CPL_UNUSED char ** papszOptions )
 {
@@ -852,12 +852,12 @@ GDALDataset *BTDataset::Create( const char * pszFilename,
         return nullptr;
     }
 
-    if( nBands != 1 )
+    if( nBandsIn != 1 )
     {
         CPLError(
             CE_Failure, CPLE_AppDefined,
             "Attempt to create .bt dataset with %d bands, only 1 supported",
-            nBands );
+            nBandsIn );
 
         return nullptr;
     }

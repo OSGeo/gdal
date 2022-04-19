@@ -1040,3 +1040,33 @@ def test_vsifile_vsitar_gz_with_tar_multiple_of_65536_bytes():
     gdal.VSIFCloseL(f)
     assert read_bytes == b'\x00' * 65024
     gdal.Unlink('data/tar_of_65536_bytes.tar.gz.properties')
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/5468
+
+
+def test_vsifile_vsizip_stored():
+
+    f = gdal.VSIFOpenL('/vsizip/data/stored.zip/foo.txt', 'rb')
+    assert f
+    assert gdal.VSIFReadL(1, 5, f) == b'foo\n'
+    assert gdal.VSIFEofL(f)
+    gdal.VSIFCloseL(f)
+
+
+###############################################################################
+# Test that VSIFTruncateL() zeroize beyond the truncated area
+
+
+def test_vsifile_vsimem_truncate_zeroize():
+
+    filename = '/vsimem/test.bin'
+    f = gdal.VSIFOpenL(filename, 'wb+')
+    data = b'\xFF' * 10000
+    gdal.VSIFWriteL(data, 1, len(data), f)
+    gdal.VSIFTruncateL(f, 0)
+    gdal.VSIFSeekL(f, 10000, 0)
+    gdal.VSIFWriteL(b'\x00', 1, 1, f)
+    gdal.VSIFSeekL(f, 0, 0)
+    assert gdal.VSIFReadL(1, 1, f) == b'\x00'
+    gdal.VSIFCloseL(f)

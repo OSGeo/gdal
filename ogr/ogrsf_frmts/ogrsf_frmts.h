@@ -307,6 +307,9 @@ using OGRLayerUniquePtr = std::unique_ptr<OGRLayer>;
  */
 template<class BaseLayer> class OGRGetNextFeatureThroughRaw
 {
+protected:
+    ~OGRGetNextFeatureThroughRaw() = default;
+
 public:
 
     /** Implement OGRLayer::GetNextFeature(), relying on BaseLayer::GetNextRawFeature() */
@@ -476,9 +479,7 @@ void OGRRegisterAllInternal();
 
 void CPL_DLL RegisterOGRFileGDB();
 void CPL_DLL RegisterOGRShape();
-void CPL_DLL RegisterOGRDB2();
 void CPL_DLL RegisterOGRNTF();
-void CPL_DLL RegisterOGRFME();
 void CPL_DLL RegisterOGRSDTS();
 void CPL_DLL RegisterOGRTiger();
 void CPL_DLL RegisterOGRS57();
@@ -502,7 +503,6 @@ void CPL_DLL RegisterOGRESRIJSON();
 void CPL_DLL RegisterOGRTopoJSON();
 void CPL_DLL RegisterOGRAVCBin();
 void CPL_DLL RegisterOGRAVCE00();
-void CPL_DLL RegisterOGRREC();
 void CPL_DLL RegisterOGRMEM();
 void CPL_DLL RegisterOGRVRT();
 void CPL_DLL RegisterOGRDODS();
@@ -520,10 +520,8 @@ void CPL_DLL RegisterOGRIDB();
 void CPL_DLL RegisterOGRGMT();
 void CPL_DLL RegisterOGRGPX();
 void CPL_DLL RegisterOGRGeoconcept();
-void CPL_DLL RegisterOGRIngres();
 void CPL_DLL RegisterOGRNAS();
 void CPL_DLL RegisterOGRGeoRSS();
-void CPL_DLL RegisterOGRGTM();
 void CPL_DLL RegisterOGRVFK();
 void CPL_DLL RegisterOGRPGDump();
 void CPL_DLL RegisterOGROSM();
@@ -532,20 +530,14 @@ void CPL_DLL RegisterOGRPDS();
 void CPL_DLL RegisterOGRWFS();
 void CPL_DLL RegisterOGROAPIF();
 void CPL_DLL RegisterOGRSOSI();
-void CPL_DLL RegisterOGRGeomedia();
-void CPL_DLL RegisterOGRMDB();
 void CPL_DLL RegisterOGREDIGEO();
 void CPL_DLL RegisterOGRSVG();
-void CPL_DLL RegisterOGRCouchDB();
-void CPL_DLL RegisterOGRCloudant();
 void CPL_DLL RegisterOGRIdrisi();
-void CPL_DLL RegisterOGRARCGEN();
 void CPL_DLL RegisterOGRXLS();
 void CPL_DLL RegisterOGRODS();
 void CPL_DLL RegisterOGRXLSX();
 void CPL_DLL RegisterOGRElastic();
 void CPL_DLL RegisterOGRGeoPackage();
-void CPL_DLL RegisterOGRWalk();
 void CPL_DLL RegisterOGRCarto();
 void CPL_DLL RegisterOGRAmigoCloud();
 void CPL_DLL RegisterOGRSXF();
@@ -555,13 +547,15 @@ void CPL_DLL RegisterOGRJML();
 void CPL_DLL RegisterOGRPLSCENES();
 void CPL_DLL RegisterOGRCSW();
 void CPL_DLL RegisterOGRMongoDBv3();
-void CPL_DLL RegisterOGRMongoDB();
 void CPL_DLL RegisterOGRVDV();
 void CPL_DLL RegisterOGRGMLAS();
 void CPL_DLL RegisterOGRMVT();
 void CPL_DLL RegisterOGRNGW();
 void CPL_DLL RegisterOGRMapML();
 void CPL_DLL RegisterOGRLVBAG();
+void CPL_DLL RegisterOGRHANA();
+void CPL_DLL RegisterOGRParquet();
+void CPL_DLL RegisterOGRArrow();
 // @endcond
 
 CPL_C_END

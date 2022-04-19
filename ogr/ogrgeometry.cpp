@@ -434,12 +434,13 @@ void OGR_G_DumpReadable( OGRGeometryH hGeom, FILE *fp, const char *pszPrefix )
 void OGRGeometry::assignSpatialReference( OGRSpatialReference * poSR )
 
 {
+    // Do in that order to properly handle poSR == poSRS
+    if( poSR != nullptr )
+        poSR->Reference();
     if( poSRS != nullptr )
         poSRS->Release();
 
     poSRS = poSR;
-    if( poSRS != nullptr )
-        poSRS->Reference();
 }
 
 /************************************************************************/

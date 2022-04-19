@@ -4,7 +4,11 @@
 option(ENABLE_GNM "Build GNM (Geography Network Model) component" ON)
 option(ENABLE_PAM "Set ON to enable Persistent Auxiliary Metadata (.aux.xml)" ON)
 option(BUILD_APPS "Build command line utilities" ON)
-option(BUILD_DOCS "Build documentation" ON)
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/doc" AND NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
+  # In-tree builds do not support Doc building because Sphinx requires (at least
+  # at first sight) a Makefile file which conflicts with the CMake generated one
+  option(BUILD_DOCS "Build documentation" ON)
+endif()
 
 # This option is to build drivers as plugins, for drivers that have external dependencies, that are not parf of GDAL
 # core dependencies Examples are netCDF, HDF4, Oracle, PDF, etc. This global setting can be overridden at the driver
@@ -28,6 +32,10 @@ option(BUILD_SHARED_LIBS "Set ON to build shared library" ON)
 
 # Option to set preferred C# compiler
 option(CSHARP_MONO "Whether to force the C# compiler to be Mono" OFF)
+
+# This line must be kept early in the CMake instructions. At time of writing,
+# this file is populated only be scripts/install_bash_completions.cmake.in
+install(CODE "file(REMOVE \"${PROJECT_BINARY_DIR}/install_manifest_extra.txt\")")
 
 # ######################################################################################################################
 # Detect available warning flags
@@ -119,6 +127,7 @@ else ()
   detect_and_set_c_and_cxx_warning_flag(shorten-64-to-32)
   detect_and_set_c_and_cxx_warning_flag(logical-op)
   detect_and_set_c_and_cxx_warning_flag(shadow)
+  detect_and_set_cxx_warning_flag(shadow-field) # CLang only for now
   detect_and_set_c_and_cxx_warning_flag(missing-include-dirs)
   check_c_compiler_flag("-Wformat -Werror=format-security -Wno-format-nonliteral" HAVE_WFLAG_FORMAT_SECURITY)
   if (HAVE_WFLAG_FORMAT_SECURITY)
@@ -133,7 +142,6 @@ else ()
   detect_and_set_c_and_cxx_warning_flag(null-dereference)
   detect_and_set_c_and_cxx_warning_flag(duplicate-cond)
   detect_and_set_cxx_warning_flag(extra-semi)
-  detect_and_set_c_and_cxx_warning_flag(no-sign-compare)
   detect_and_set_c_and_cxx_warning_flag(comma)
   detect_and_set_c_and_cxx_warning_flag(float-conversion)
   check_c_compiler_flag("-Wdocumentation -Wno-documentation-deprecated-sync" HAVE_WFLAG_DOCUMENTATION_AND_NO_DEPRECATED)
@@ -144,6 +152,7 @@ else ()
   detect_and_set_cxx_warning_flag(unused-private-field)
   detect_and_set_cxx_warning_flag(non-virtual-dtor)
   detect_and_set_cxx_warning_flag(overloaded-virtual)
+  detect_and_set_cxx_warning_flag(suggest-override)
 
   check_cxx_compiler_flag(-fno-operator-names HAVE_FLAG_NO_OPERATOR_NAMES)
   if (HAVE_FLAG_NO_OPERATOR_NAMES)
@@ -193,13 +202,14 @@ endif ()
 
 set(_CMAKE_C_FLAGS_backup ${CMAKE_C_FLAGS})
 set(_CMAKE_CXX_FLAGS_backup ${CMAKE_CXX_FLAGS})
+
 if (CMAKE_C_FLAGS)
-  string(REPLACE "-Werror" " " CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
-  string(REPLACE "/WX" " " CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
+  string(REPLACE "-Werror " " " CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ")
+  string(REPLACE "/WX " " " CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ")
 endif ()
 if (CMAKE_CXX_FLAGS)
-  string(REPLACE "-Werror" " " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-  string(REPLACE "/WX" " " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+  string(REPLACE "-Werror " " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ")
+  string(REPLACE "/WX " " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ")
 endif ()
 include(configure)
 
@@ -225,7 +235,7 @@ endif ()
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   include(CheckLinkerFlag)
   check_linker_flag(C "-Wl,--no-undefined" HAS_NO_UNDEFINED)
-  if (HAS_NO_UNDEFINED)
+  if (HAS_NO_UNDEFINED AND NOT CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
     string(APPEND CMAKE_SHARED_LINKER_FLAGS " -Wl,--no-undefined")
     string(APPEND CMAKE_MODULE_LINKER_FLAGS " -Wl,--no-undefined")
   endif ()
@@ -346,9 +356,24 @@ if (GDAL_ENABLE_MACOSX_FRAMEWORK)
 else ()
   include(GNUInstallDirs)
   set(INSTALL_PLUGIN_DIR
-      "lib/gdalplugins/${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}"
+      "${CMAKE_INSTALL_LIBDIR}/gdalplugins"
       CACHE PATH "Installation sub-directory for plugins")
   set(GDAL_RESOURCE_PATH ${CMAKE_INSTALL_DATADIR}/gdal)
+
+  option(GDAL_SET_INSTALL_RELATIVE_RPATH "Whether the rpath of installed binaries should be written as a relative path to the library" OFF)
+  if(GDAL_SET_INSTALL_RELATIVE_RPATH)
+      if(APPLE)
+        set(base @loader_path)
+      else()
+        set(base $ORIGIN)
+      endif()
+
+      file(RELATIVE_PATH relDir
+        ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}
+        ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}
+      )
+      set(CMAKE_INSTALL_RPATH ${base} ${base}/${relDir})
+  endif()
 endif ()
 
 set(INSTALL_PLUGIN_FULL_DIR "${CMAKE_INSTALL_PREFIX}/${INSTALL_PLUGIN_DIR}")
@@ -448,9 +473,10 @@ get_property(GDAL_PRIVATE_LINK_LIBRARIES GLOBAL PROPERTY gdal_private_link_libra
 target_link_libraries(${GDAL_LIB_TARGET_NAME} PRIVATE ${GDAL_PRIVATE_LINK_LIBRARIES})
 
 # Document/Manuals
-if (BUILD_DOCS)
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/doc" AND BUILD_DOCS)
   add_subdirectory(doc)
 endif ()
+add_subdirectory(man)
 
 # GDAL 4.0 ? Install headers in ${CMAKE_INSTALL_INCLUDEDIR}/gdal ?
 set(GDAL_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR})
@@ -479,6 +505,22 @@ endif ()
 
 get_property(_plugins GLOBAL PROPERTY PLUGIN_MODULES)
 add_custom_target(gdal_plugins DEPENDS ${_plugins})
+
+# Install drivers.ini along with plugins
+# We request the TARGET_FILE_DIR of one of the plugins, since the PLUGIN_OUTPUT_DIR will not contain the \Release suffix
+# with MSVC generator
+list(LENGTH _plugins PLUGIN_MODULES_LENGTH)
+if (PLUGIN_MODULES_LENGTH GREATER_EQUAL 1)
+  list(GET _plugins 0 FIRST_TARGET)
+  set(PLUGIN_OUTPUT_DIR "$<TARGET_FILE_DIR:${FIRST_TARGET}>")
+  file(READ ${CMAKE_CURRENT_SOURCE_DIR}/frmts/drivers.ini DRIVERS_INI_CONTENT)
+  file(
+    GENERATE
+    OUTPUT ${PLUGIN_OUTPUT_DIR}/drivers.ini
+    CONTENT ${DRIVERS_INI_CONTENT})
+endif ()
+
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/frmts/drivers.ini DESTINATION ${INSTALL_PLUGIN_DIR})
 
 # ######################################################################################################################
 
@@ -672,13 +714,32 @@ if (NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
     NAMESPACE GDAL::
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gdal/
     EXPORT_LINK_INTERFACE_LIBRARIES)
+  if (NOT BUILD_SHARED_LIBS)
+    install(
+      FILES
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/GdalFindModulePath.cmake"
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/DefineFindPackage2.cmake"
+      DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/gdal/")
+    include(GdalFindModulePath)
+    foreach(dir IN LISTS GDAL_VENDORED_FIND_MODULES_CMAKE_VERSIONS ITEMS packages thirdparty)
+      install(
+        DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/${dir}"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/gdal")
+    endforeach()
+  endif ()
+
   include(CMakePackageConfigHelpers)
+  if(CMAKE_VERSION VERSION_LESS 3.10.1)
+      set(comptatibility_check ExactVersion)
+  else()
+      # SameMinorVersion compatibility are supported CMake > 3.10.1
+      # Our C++ ABI remains stable only among major.minor.XXX patch releases
+      set(comptatibility_check SameMinorVersion)
+  endif()
   write_basic_package_version_file(
     GDALConfigVersion.cmake
     VERSION ${GDAL_VERSION}
-    # SameMinorVersion compatibility are supported CMake > 3.10.1 so use ExactVersion instead. COMPATIBILITY
-    # SameMinorVersion)
-    COMPATIBILITY ExactVersion)
+    COMPATIBILITY ${comptatibility_check})
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/GDALConfigVersion.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gdal/)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/template/GDALConfig.cmake.in
                  ${CMAKE_CURRENT_BINARY_DIR}/GDALConfig.cmake @ONLY)
@@ -708,18 +769,26 @@ endif ()
 configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/uninstall.cmake.in ${PROJECT_BINARY_DIR}/cmake_uninstall.cmake @ONLY)
 add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 
+################################################################
+# Final reports and warnings
+################################################################
+
+if($ENV{GDAL_CMAKE_QUIET})
+  set(GDAL_CMAKE_QUIET ON)
+endif()
+
 # Print summary
 include(SystemSummary)
-system_summary(DESCRIPTION "GDAL is now configured on;")
+if(NOT GDAL_CMAKE_QUIET)
+  system_summary(DESCRIPTION "GDAL is now configured on;")
+endif()
 
-# Do not warn about Shapelib being an optional package not found, as we don't recommend using it. Same for external
-# LERC. Mono/DotNetFrameworkSdk is also an internal detail of CSharp that we don't want to report
+# Do not warn about Shapelib being an optional package not found, as we don't recommend using it.
+# Mono/DotNetFrameworkSdk is also an internal detail of CSharp that we don't want to report
 get_property(_packages_not_found GLOBAL PROPERTY PACKAGES_NOT_FOUND)
 set(_new_packages_not_found)
 foreach (_package IN LISTS _packages_not_found)
   if (NOT ${_package} STREQUAL "Shapelib"
-      AND NOT ${_package} STREQUAL "LERC"
-      AND NOT ${_package} STREQUAL "OpenCAD"
       AND NOT ${_package} STREQUAL "Podofo"
       AND NOT ${_package} STREQUAL "Mono"
       AND NOT ${_package} STREQUAL "DotNetFrameworkSdk")
@@ -729,7 +798,9 @@ endforeach ()
 
 include(FeatureSummary)
 set_property(GLOBAL PROPERTY PACKAGES_NOT_FOUND ${_new_packages_not_found})
-feature_summary(DESCRIPTION "Enabled drivers and features and found dependency packages" WHAT ALL)
+if(NOT GDAL_CMAKE_QUIET)
+  feature_summary(DESCRIPTION "Enabled drivers and features and found dependency packages" WHAT ALL)
+endif()
 set_property(GLOBAL PROPERTY PACKAGES_NOT_FOUND ${_packages_not_found})
 
 set(disabled_packages "")
@@ -737,14 +808,32 @@ get_property(_packages_found GLOBAL PROPERTY PACKAGES_FOUND)
 foreach (_package IN LISTS _packages_found)
   string(TOUPPER ${_package} key)
   if (DEFINED GDAL_USE_${key} AND NOT GDAL_USE_${key})
-    string(APPEND disabled_packages " *${key} component has been detected, but is disabled with GDAL_USE_${key}=${GDAL_USE_${key}}\n")
+    if (DEFINED GDAL_USE_${key}_INTERNAL)
+      if (NOT GDAL_USE_${key}_INTERNAL)
+        string(APPEND disabled_packages " * ${key} component has been detected, but is disabled with GDAL_USE_${key}=${GDAL_USE_${key}}, and the internal library is also disabled with GDAL_USE_${key}_INTERNAL=${GDAL_USE_${key}_INTERNAL}\n")
+      endif()
+    else ()
+      string(APPEND disabled_packages " * ${key} component has been detected, but is disabled with GDAL_USE_${key}=${GDAL_USE_${key}}\n")
+    endif()
   endif ()
 endforeach ()
-if (disabled_packages)
+if (NOT GDAL_CMAKE_QUIET AND disabled_packages)
   message(STATUS "Disabled components:\n\n${disabled_packages}\n")
 endif ()
 
-if (DEFINED GDAL_USE_EXTERNAL_LIBS_OLD_CACHED)
+set(internal_libs_used "")
+foreach (_package IN LISTS _packages_found _new_packages_not_found)
+  string(TOUPPER ${_package} key)
+  if( GDAL_USE_${key}_INTERNAL )
+      string(APPEND internal_libs_used " * ${key} internal library enabled\n")
+  endif()
+endforeach()
+if (NOT GDAL_CMAKE_QUIET AND internal_libs_used)
+  message(STATUS "Internal libraries enabled:\n\n${internal_libs_used}\n")
+endif ()
+
+if (NOT GDAL_CMAKE_QUIET AND
+    DEFINED GDAL_USE_EXTERNAL_LIBS_OLD_CACHED)
   if (GDAL_USE_EXTERNAL_LIBS_OLD_CACHED AND NOT GDAL_USE_EXTERNAL_LIBS)
     message(
       WARNING
@@ -760,7 +849,8 @@ set(GDAL_USE_EXTERNAL_LIBS_OLD_CACHED
 # This is not super idiomatic to warn this way, but this will help users transitionning from autoconf where the default
 # settings result in a -O2 build.
 get_property(_isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
-if (NOT _isMultiConfig
+if (NOT GDAL_CMAKE_QUIET
+    AND NOT _isMultiConfig
     AND ("${CMAKE_BUILD_TYPE}" STREQUAL "")
     AND (((CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
           AND (NOT ("${CMAKE_C_FLAGS}" MATCHES "-O") OR NOT ("${CMAKE_CXX_FLAGS}" MATCHES "-O"))) OR
@@ -771,5 +861,18 @@ if (NOT _isMultiConfig
       "CMAKE_BUILD_TYPE is not defined and CMAKE_C_FLAGS='${CMAKE_C_FLAGS}' and/or CMAKE_CXX_FLAGS='${CMAKE_CXX_FLAGS}' do not contain optimizing flags. Do not use in production! Using -DCMAKE_BUILD_TYPE=Release is suggested."
     )
 endif ()
+
+if (NOT GDAL_CMAKE_QUIET AND
+    "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
+  message(WARNING "In-tree builds, that is running cmake from the top of the source tree are not recommended. You are advised instead to 'mkdir build; cd build; cmake ..'. Using 'make' with the Makefile generator will not work, as it will try the GNUmakefile of autoconf builds. Use 'make -f Makefile' instead.")
+endif()
+
+if (NOT GDAL_CMAKE_QUIET
+    AND UNIX # On Windows, Conda seems to be automatically used
+    AND DEFINED ENV{CONDA_PREFIX}
+    AND NOT "${CMAKE_PREFIX_PATH}" MATCHES "$ENV{CONDA_PREFIX}")
+  message(WARNING "Environment variable CONDA_PREFIX=$ENV{CONDA_PREFIX} found, its value is not included in the content of the CMake variable CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}. You likely want to run \"${CMAKE_COMMAND} ${PROJECT_SOURCE_DIR} -DCMAKE_PREFIX_PATH=$ENV{CONDA_PREFIX}\"")
+endif()
+
 
 # vim: ts=4 sw=4 sts=4 et

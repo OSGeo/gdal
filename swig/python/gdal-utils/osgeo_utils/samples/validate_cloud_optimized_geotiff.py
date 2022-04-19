@@ -337,7 +337,7 @@ def validate(ds, check_tiled=True, full_check=False):
     return warnings, errors, details
 
 
-def main(argv):
+def main(argv=sys.argv):
     """Return 0 in case of success, 1 for failure."""
 
     i = 1

@@ -1130,7 +1130,7 @@ def test_ogr_dxf_24():
     assert not ogrtest.check_feature_geometry(feat, 'POLYGON ((0.0 0.0 0,-0.353553390593274 0.146446609406726 0,-0.5 0.5 0,-0.353553390593274 0.853553390593274 0,-0.0 1.0 0,0.146446609406726 1.353553390593274 0,0.5 1.5 0,0.853553390593274 1.353553390593274 0,1.0 1.0 0,1.353553390593274 0.853553390593274 0,1.5 0.5 0,1.353553390593274 0.146446609406727 0,1.0 0.0 0,0.853553390593274 -0.353553390593274 0,0.5 -0.5 0,0.146446609406726 -0.353553390593274 0,0.0 0.0 0))')
 
     feat = lyr.GetNextFeature()
-    assert not ogrtest.check_feature_geometry(feat, 'POLYGON ((-1 -1,-1 0,0 0,-1 -1))')
+    assert not ogrtest.check_feature_geometry(feat, 'POLYGON Z ((-1 -1 0,-1 0 0,0 0 0,-1 -1 0))')
     ds = None
 
 ###############################################################################
@@ -1341,9 +1341,9 @@ def test_ogr_dxf_31():
 
 # OGRFeature(entities):9
 #   EntityHandle (String) = 1FD
-#   POLYGON ((8 8,9 8,9 9,8 9,8 8))
+#   POLYGON Z ((8 8 0,9 8 0,9 9 0,8 9 0,8 8 0))
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat, 'POLYGON ((8 8,9 8,9 9,8 9,8 8))'):
+    if ogrtest.check_feature_geometry(feat, 'POLYGON Z ((8 8 0,9 8 0,9 9 0,8 9 0,8 8 0))'):
         feat.DumpReadable()
         pytest.fail()
 
@@ -1389,9 +1389,9 @@ def test_ogr_dxf_31():
 
 # OGRFeature(entities):15
 #   EntityHandle (String) = 205
-#   LINESTRING (-1 1,-2 1,-1 2,-1 1)
+#   LINESTRING Z (-1 1 -1E-16,-2 1 -2E-16,-1 2 -1E-16,-1 1 -1E-16)
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat, 'LINESTRING (-1 1,-2 1,-1 2,-1 1)'):
+    if ogrtest.check_feature_geometry(feat, 'LINESTRING Z (-1 1 -1E-16,-2 1 -2E-16,-1 2 -1E-16,-1 1 -1E-16)'):
         feat.DumpReadable()
         pytest.fail()
 
@@ -1442,17 +1442,17 @@ def test_ogr_dxf_31():
 
 # OGRFeature(entities):21
 #   EntityHandle (String) = 20F
-#   POLYGON ((-3 4,-4 4,-4 3,-3 3,-3 4))
+#   POLYGON Z ((-3 4 -3E-16,-4 4 -4E-16,-4 3 -4E-16,-3 3 -3E-16,-3 4 -3E-16))
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat, 'POLYGON ((-3 4,-4 4,-4 3,-3 3,-3 4))'):
+    if ogrtest.check_feature_geometry(feat, 'POLYGON Z ((-3 4 -3E-16,-4 4 -4E-16,-4 3 -4E-16,-3 3 -3E-16,-3 4 -3E-16))'):
         feat.DumpReadable()
         pytest.fail()
 
 # OGRFeature(entities):22
 #   EntityHandle (String) = 211
-#   POLYGON ((-8 8,-9 8,-9 9,-8 9,-8 8))
+#   POLYGON Z ((-8 8 -8E-16,-9 8 -9E-16,-9 9 -9E-16,-8 9 -8E-16,-8 8 -8E-16))
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat, 'POLYGON ((-8 8,-9 8,-9 9,-8 9,-8 8))'):
+    if ogrtest.check_feature_geometry(feat, 'POLYGON Z ((-8 8 -8E-16,-9 8 -9E-16,-9 9 -9E-16,-8 9 -8E-16,-8 8 -8E-16))'):
         feat.DumpReadable()
         pytest.fail()
 
@@ -1556,9 +1556,9 @@ def test_ogr_dxf_31():
 
 # OGRFeature(entities):35
 #   EntityHandle (String) = 223
-#   POLYGON ((-8 -8,-9 -8,-9 -9,-8 -9,-8 -8))
+#   POLYGON Z ((-8 -8 -1.6E-15,-9 -8 -1.7E-15,-9 -9 -1.8E-15,-8 -9 -1.7E-15,-8 -8 -1.6E-15))
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat, 'POLYGON ((-8 -8,-9 -8,-9 -9,-8 -9,-8 -8))'):
+    if ogrtest.check_feature_geometry(feat, 'POLYGON Z ((-8 -8 -1.6E-15,-9 -8 -1.7E-15,-9 -9 -1.8E-15,-8 -9 -1.7E-15,-8 -8 -1.6E-15))'):
         feat.DumpReadable()
         pytest.fail()
 
@@ -1604,9 +1604,9 @@ def test_ogr_dxf_31():
 
 # OGRFeature(entities):41
 #   EntityHandle (String) = 229
-#   LINESTRING (1 -1,2 -1,1 -2,1 -1)
+#   LINESTRING Z (1 -1 -1E-16,2 -1 -1E-16,1 -2 -2E-16,1 -1 -1E-16)
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat, 'LINESTRING (1 -1,2 -1,1 -2,1 -1)'):
+    if ogrtest.check_feature_geometry(feat, 'LINESTRING Z (1 -1 -1E-16,2 -1 -1E-16,1 -2 -2E-16,1 -1 -1E-16)'):
         feat.DumpReadable()
         pytest.fail()
 
@@ -1656,17 +1656,17 @@ def test_ogr_dxf_31():
 
 # OGRFeature(entities):47
 #   EntityHandle (String) = 233
-#   POLYGON ((3 -4,4 -4,4 -3,3 -3,3 -4))
+#   POLYGON Z ((3 -4 -4E-16,4 -4 -4E-16,4 -3 -3E-16,3 -3 -3E-16,3 -4 -4E-16))
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat, 'POLYGON ((3 -4,4 -4,4 -3,3 -3,3 -4))'):
+    if ogrtest.check_feature_geometry(feat, 'POLYGON Z ((3 -4 -4E-16,4 -4 -4E-16,4 -3 -3E-16,3 -3 -3E-16,3 -4 -4E-16))'):
         feat.DumpReadable()
         pytest.fail()
 
 # OGRFeature(entities):48
 #   EntityHandle (String) = 235
-#   POLYGON ((8 -8,9 -8,9 -9,8 -9,8 -8))
+#   POLYGON Z ((8 -8 -8E-16,9 -8 -8E-16,9 -9 -9E-16,8 -9 -9E-16,8 -8 -8E-16))
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat, 'POLYGON ((8 -8,9 -8,9 -9,8 -9,8 -8))'):
+    if ogrtest.check_feature_geometry(feat, 'POLYGON Z ((8 -8 -8E-16,9 -8 -8E-16,9 -9 -9E-16,8 -9 -9E-16,8 -8 -8E-16))'):
         feat.DumpReadable()
         pytest.fail()
 
@@ -1816,9 +1816,9 @@ def test_ogr_dxf_32():
 
 # OGRFeature(entities):13
 #   EntityHandle (String) = 1C3
-#   POLYGON ((8 8,9 8,9 9,8 9,8 8))
+#   POLYGON Z ((8 8 0,9 8 0,9 9 0,8 9 0,8 8 0))
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat, 'POLYGON ((8 8,9 8,9 9,8 9,8 8))'):
+    if ogrtest.check_feature_geometry(feat, 'POLYGON Z ((8 8 0,9 8 0,9 9 0,8 9 0,8 8 0))'):
         feat.DumpReadable()
         pytest.fail()
 
@@ -2876,7 +2876,7 @@ def test_ogr_dxf_44():
         pytest.fail()
 
     f = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(f, 'POLYGON ((21.0 41.5,30 40,21.0 38.5,21.0 41.5))') != 0:
+    if ogrtest.check_feature_geometry(f, 'POLYGON Z ((21.0 41.5 0,30 40 0,21.0 38.5 0,21.0 41.5 0))') != 0:
         f.DumpReadable()
         pytest.fail()
 

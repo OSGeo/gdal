@@ -46,6 +46,7 @@
 #include <cassert>
 #include <algorithm>
 #include <limits>
+#include <map>
 #include <utility>
 #include <set>
 
@@ -152,7 +153,7 @@ class BAGDataset final: public GDALPamDataset
     hid_t        m_hVarresMetadataDataType = -1;
     hid_t        m_hVarresMetadataDataspace = -1;
     hid_t        m_hVarresMetadataNative = -1;
-    std::vector<BAGRefinementGrid> m_aoRefinemendGrids;
+    std::map<int, BAGRefinementGrid> m_oMapRefinemendGrids;
 
     CPLStringList m_aosSubdatasets;
 
@@ -219,7 +220,7 @@ public:
                         int bStrict, char ** papszOptions,
                         GDALProgressFunc pfnProgress, void *pProgressData );
     static GDALDataset* Create( const char * pszFilename,
-                                int nXSize, int nYSize, int nBands,
+                                int nXSize, int nYSize, int nBandsIn,
                                 GDALDataType eType, char ** papszOptions );
 
     OGRErr ParseWKTFromXML( const char *pszISOXML );
@@ -1849,7 +1850,7 @@ void BAGDataset::InitOverviewDS(BAGDataset* poParentDS, int nOvrFactor)
     m_hVarresMetadataDataType = poParentDS->m_hVarresMetadataDataType;
     m_hVarresMetadataDataspace = poParentDS->m_hVarresMetadataDataspace;
     m_hVarresMetadataNative = poParentDS->m_hVarresMetadataNative;
-    //m_aoRefinemendGrids;
+    //m_oMapRefinemendGrids;
 
     //m_aosSubdatasets;
 
@@ -2659,10 +2660,8 @@ bool BAGDataset::OpenRaster(GDALOpenInfo* poOpenInfo,
     }
     else if( bOpenSuperGrid )
     {
-        if( m_aoRefinemendGrids.empty() ||
-            nX < 0 || nX >= m_nLowResWidth ||
-            nY < 0 || nY >= m_nLowResHeight ||
-            m_aoRefinemendGrids[nY * m_nLowResWidth + nX].nWidth == 0 )
+        auto oIter = m_oMapRefinemendGrids.find(nY * m_nLowResWidth + nX);
+        if( oIter == m_oMapRefinemendGrids.end() )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                     "Invalid subdataset");
@@ -2670,26 +2669,26 @@ bool BAGDataset::OpenRaster(GDALOpenInfo* poOpenInfo,
         }
 
         m_aosSubdatasets.Clear();
-        auto pSuperGrid = &m_aoRefinemendGrids[nY * m_nLowResWidth + nX];
-        nRasterXSize = static_cast<int>(pSuperGrid->nWidth);
-        nRasterYSize = static_cast<int>(pSuperGrid->nHeight);
+        const auto& pSuperGrid = oIter->second;
+        nRasterXSize = static_cast<int>(pSuperGrid.nWidth);
+        nRasterYSize = static_cast<int>(pSuperGrid.nHeight);
 
         // Convert from pixel-center convention to corner-pixel convention
         const double dfMinX =
             adfGeoTransform[0] + nX * adfGeoTransform[1] +
-            pSuperGrid->fSWX - pSuperGrid->fResX / 2;
+            pSuperGrid.fSWX - pSuperGrid.fResX / 2;
         const double dfMinY =
             adfGeoTransform[3] +
             m_nLowResHeight * adfGeoTransform[5] +
             nY * -adfGeoTransform[5] +
-            pSuperGrid->fSWY - pSuperGrid->fResY / 2;
-        const double dfMaxY = dfMinY + pSuperGrid->nHeight * pSuperGrid->fResY;
+            pSuperGrid.fSWY - pSuperGrid.fResY / 2;
+        const double dfMaxY = dfMinY + pSuperGrid.nHeight * pSuperGrid.fResY;
 
         adfGeoTransform[0] = dfMinX;
-        adfGeoTransform[1] = pSuperGrid->fResX;
+        adfGeoTransform[1] = pSuperGrid.fResX;
         adfGeoTransform[3] = dfMaxY;
-        adfGeoTransform[5] = -pSuperGrid->fResY;
-        m_nSuperGridRefinementStartIndex = pSuperGrid->nIndex;
+        adfGeoTransform[5] = -pSuperGrid.fResY;
+        m_nSuperGridRefinementStartIndex = pSuperGrid.nIndex;
 
         if( !osGeorefMetadataLayer.empty() )
         {
@@ -2767,7 +2766,7 @@ bool BAGDataset::OpenRaster(GDALOpenInfo* poOpenInfo,
 
         SetPhysicalFilename(osFilename);
 
-        m_aoRefinemendGrids.clear();
+        m_oMapRefinemendGrids.clear();
     }
 
     // Setup/check for pam .aux.xml.
@@ -3333,7 +3332,9 @@ bool BAGDataset::LookForRefinementGrids(CSLConstList l_papszOpenOptions,
         }
     }
 
-    if( m_nLowResWidth > 10 * 1000 * 1000 / m_nLowResHeight )
+    // We could potentially go beyond but we'd need to make sure that
+    // m_oMapRefinemendGrids is indexed by a int64_t
+    if( m_nLowResWidth > std::numeric_limits<int>::max() / m_nLowResHeight )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Too many refinement grids");
@@ -3439,8 +3440,6 @@ bool BAGDataset::LookForRefinementGrids(CSLConstList l_papszOpenOptions,
     {
         return true;
     }
-
-    m_aoRefinemendGrids.resize(m_nLowResWidth * m_nLowResHeight);
 
     const char* pszSUPERGRIDS = CSLFetchNameValue(l_papszOpenOptions,
                                                   "SUPERGRIDS_INDICES");
@@ -3619,6 +3618,7 @@ bool BAGDataset::LookForRefinementGrids(CSLConstList l_papszOpenOptions,
         }
     }
 
+    const int nMaxSizeMap = atoi(CPLGetConfigOption("GDAL_BAG_MAX_SIZE_VARRES_MAP", "50000000"));
     const int nChunkXSize = m_nChunkXSizeVarresMD;
     const int nChunkYSize = m_nChunkYSizeVarresMD;
     std::vector<BAGRefinementGrid> rgrids(nChunkXSize * nChunkYSize);
@@ -3667,10 +3667,9 @@ bool BAGDataset::LookForRefinementGrids(CSLConstList l_papszOpenOptions,
                         bOK && xInBlock <= std::min(nReqCountX - 1,
                                     nMaxX - blockX * nChunkXSize); xInBlock++ )
                 {
-                    int y = yInBlock + blockY * nChunkYSize;
-                    int x = xInBlock + blockX * nChunkXSize;
-                    auto& rgrid = rgrids[yInBlock * nReqCountX + xInBlock];
-                    m_aoRefinemendGrids[y * m_nLowResWidth + x] = rgrid;
+                    const int y = yInBlock + blockY * nChunkYSize;
+                    const int x = xInBlock + blockX * nChunkXSize;
+                    const auto& rgrid = rgrids[yInBlock * nReqCountX + xInBlock];
                     if( rgrid.nWidth > 0 )
                     {
                         if( rgrid.fResX <= 0 || rgrid.fResY <= 0 )
@@ -3714,6 +3713,29 @@ bool BAGDataset::LookForRefinementGrids(CSLConstList l_papszOpenOptions,
                         if( gridRes < dfResFilterMin || gridRes >= dfResFilterMax )
                         {
                             continue;
+                        }
+
+
+                        if( static_cast<int>(m_oMapRefinemendGrids.size()) == nMaxSizeMap )
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                     "Size of map of refinement grids has reached %d entries. "
+                                     "Set the GDAL_BAG_MAX_SIZE_VARRES_MAP configuration option "
+                                     "to an higher value if you want to allow more",
+                                     nMaxSizeMap);
+                            return false;
+                        }
+
+                        try
+                        {
+                            m_oMapRefinemendGrids[y * m_nLowResWidth + x] = rgrid;
+                        }
+                        catch( const std::exception& e )
+                        {
+                            CPLError(CE_Failure, CPLE_OutOfMemory,
+                                     "Out of memory adding entries to map of refinement "
+                                     "grids: %s", e.what());
+                            return false;
                         }
 
                         const double dfMinX =
@@ -3774,10 +3796,10 @@ bool BAGDataset::LookForRefinementGrids(CSLConstList l_papszOpenOptions,
         }
     }
 
-    if( !bOK )
+    if( !bOK || m_oMapRefinemendGrids.empty() )
     {
         m_aosSubdatasets.Clear();
-        m_aoRefinemendGrids.clear();
+        m_oMapRefinemendGrids.clear();
         return false;
     }
 
@@ -5165,17 +5187,17 @@ BAGDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
 /************************************************************************/
 
 GDALDataset* BAGDataset::Create( const char * pszFilename,
-                                 int nXSize, int nYSize, int nBands,
+                                 int nXSize, int nYSize, int nBandsIn,
                                  GDALDataType eType, char ** papszOptions )
 {
-    if( !BAGCreator().Create(pszFilename, nBands, eType, papszOptions) )
+    if( !BAGCreator().Create(pszFilename, nBandsIn, eType, papszOptions) )
     {
         return nullptr;
     }
 
     GDALOpenInfo oOpenInfo(pszFilename, GA_Update);
     oOpenInfo.nOpenFlags = GDAL_OF_RASTER;
-    return OpenForCreate(&oOpenInfo, nXSize, nYSize, nBands, papszOptions);
+    return OpenForCreate(&oOpenInfo, nXSize, nYSize, nBandsIn, papszOptions);
 }
 
 /************************************************************************/

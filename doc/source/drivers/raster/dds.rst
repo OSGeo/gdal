@@ -26,6 +26,7 @@ NORMAL (default), BETTER and UBER. You can set the compression quality
 using the creation option QUALITY.
 
 More information about `Crunch Lib <https://github.com/BinomialLLC/crunch>`__
+(see below for build instructions of a working fork of that repository)
 
 NOTE: Implemented as ``gdal/frmts/dds/ddsdataset.cpp``.
 

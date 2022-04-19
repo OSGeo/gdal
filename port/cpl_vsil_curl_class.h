@@ -389,7 +389,7 @@ class VSICurlHandle : public VSIVirtualHandle
     virtual bool IsDirectoryFromExists( const char* /*pszVerb*/, int /*response_code*/ ) { return false; }
     virtual void ProcessGetFileSizeResult(const char* /* pszContent */ ) {}
     void SetURL(const char* pszURL);
-    virtual bool Authenticate() { return false; }
+    virtual bool Authenticate(const char* /* pszFilename */) { return false; }
 
   public:
 
@@ -653,6 +653,21 @@ class VSIAppendWriteHandle : public VSIVirtualHandle
         int  Close() override;
 
         bool              IsOK() { return m_pabyBuffer != nullptr; }
+};
+
+/************************************************************************/
+/*                     VSIDIRWithMissingDirSynthesis                    */
+/************************************************************************/
+
+struct VSIDIRWithMissingDirSynthesis: public VSIDIR
+{
+    std::vector<std::unique_ptr<VSIDIREntry>> aoEntries{};
+
+protected:
+    std::vector<std::string> m_aosSubpathsStack{};
+
+    void SynthetizeMissingDirectories(const std::string& osCurSubdir,
+                                      bool bAddEntryForThisSubdir);
 };
 
 /************************************************************************/

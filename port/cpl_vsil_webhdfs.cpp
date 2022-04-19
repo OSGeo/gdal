@@ -168,10 +168,9 @@ static CPLString PatchWebHDFSUrl(const CPLString& osURLIn,
 /*                       GetWebHDFSDataNodeHost()                       */
 /************************************************************************/
 
-static CPLString GetWebHDFSDataNodeHost()
+static CPLString GetWebHDFSDataNodeHost(const char* pszFilename)
 {
-    CPLString osDataNodeHost = CPLGetConfigOption("WEBHDFS_DATANODE_HOST", "");
-    return osDataNodeHost;
+    return CPLString(VSIGetCredential(pszFilename, "WEBHDFS_DATANODE_HOST", ""));
 }
 
 /************************************************************************/
@@ -231,13 +230,13 @@ VSIWebHDFSWriteHandle::VSIWebHDFSWriteHandle( VSIWebHDFSFSHandler* poFS,
         VSIAppendWriteHandle(poFS, poFS->GetFSPrefix(), pszFilename,
                              GetWebHDFSBufferSize()),
         m_osURL( pszFilename + poFS->GetFSPrefix().size() ),
-        m_osDataNodeHost( GetWebHDFSDataNodeHost() )
+        m_osDataNodeHost( GetWebHDFSDataNodeHost(pszFilename) )
 {
     // cppcheck-suppress useInitializationList
-    m_osUsernameParam = CPLGetConfigOption("WEBHDFS_USERNAME", "");
+    m_osUsernameParam = VSIGetCredential(pszFilename, "WEBHDFS_USERNAME", "");
     if( !m_osUsernameParam.empty() )
         m_osUsernameParam = "&user.name=" + m_osUsernameParam;
-    m_osDelegationParam = CPLGetConfigOption("WEBHDFS_DELEGATION", "");
+    m_osDelegationParam = VSIGetCredential(pszFilename, "WEBHDFS_DELEGATION", "");
     if( !m_osDelegationParam.empty() )
         m_osDelegationParam = "&delegation=" + m_osDelegationParam;
 
@@ -303,11 +302,11 @@ bool VSIWebHDFSWriteHandle::CreateFile()
     CPLString osURL = m_osURL + "?op=CREATE&overwrite=true" +
         m_osUsernameParam + m_osDelegationParam;
 
-    CPLString osPermission = CPLGetConfigOption("WEBHDFS_PERMISSION", "");
+    CPLString osPermission = VSIGetCredential(m_osFilename.c_str(), "WEBHDFS_PERMISSION", "");
     if( !osPermission.empty() )
         osURL += "&permission=" + osPermission;
 
-    CPLString osReplication = CPLGetConfigOption("WEBHDFS_REPLICATION", "");
+    CPLString osReplication = VSIGetCredential(m_osFilename.c_str(), "WEBHDFS_REPLICATION", "");
     if( !osReplication.empty() )
         osURL += "&replication=" + osReplication;
 
@@ -616,10 +615,10 @@ char** VSIWebHDFSFSHandler::GetFileList( const char *pszDirname,
 
     CURLM* hCurlMultiHandle = GetCurlMultiHandleFor(osBaseURL);
 
-    CPLString osUsernameParam = CPLGetConfigOption("WEBHDFS_USERNAME", "");
+    CPLString osUsernameParam = VSIGetCredential(pszDirname, "WEBHDFS_USERNAME", "");
     if( !osUsernameParam.empty() )
         osUsernameParam = "&user.name=" + osUsernameParam;
-    CPLString osDelegationParam = CPLGetConfigOption("WEBHDFS_DELEGATION", "");
+    CPLString osDelegationParam = VSIGetCredential(pszDirname, "WEBHDFS_DELEGATION", "");
     if( !osDelegationParam.empty() )
         osDelegationParam = "&delegation=" + osDelegationParam;
     CPLString osURL = osBaseURL + "?op=LISTSTATUS" + osUsernameParam + osDelegationParam;
@@ -714,10 +713,10 @@ int VSIWebHDFSFSHandler::Unlink( const char *pszFilename )
 
     CURLM* hCurlMultiHandle = GetCurlMultiHandleFor(osBaseURL);
 
-    CPLString osUsernameParam = CPLGetConfigOption("WEBHDFS_USERNAME", "");
+    CPLString osUsernameParam = VSIGetCredential(pszFilename, "WEBHDFS_USERNAME", "");
     if( !osUsernameParam.empty() )
         osUsernameParam = "&user.name=" + osUsernameParam;
-    CPLString osDelegationParam = CPLGetConfigOption("WEBHDFS_DELEGATION", "");
+    CPLString osDelegationParam = VSIGetCredential(pszFilename, "WEBHDFS_DELEGATION", "");
     if( !osDelegationParam.empty() )
         osDelegationParam = "&delegation=" + osDelegationParam;
     CPLString osURL = osBaseURL + "?op=DELETE" + osUsernameParam + osDelegationParam;
@@ -829,10 +828,10 @@ int VSIWebHDFSFSHandler::Mkdir( const char *pszDirname, long nMode )
 
     CURLM* hCurlMultiHandle = GetCurlMultiHandleFor(osBaseURL);
 
-    CPLString osUsernameParam = CPLGetConfigOption("WEBHDFS_USERNAME", "");
+    CPLString osUsernameParam = VSIGetCredential(pszDirname, "WEBHDFS_USERNAME", "");
     if( !osUsernameParam.empty() )
         osUsernameParam = "&user.name=" + osUsernameParam;
-    CPLString osDelegationParam = CPLGetConfigOption("WEBHDFS_DELEGATION", "");
+    CPLString osDelegationParam = VSIGetCredential(pszDirname, "WEBHDFS_DELEGATION", "");
     if( !osDelegationParam.empty() )
         osDelegationParam = "&delegation=" + osDelegationParam;
     CPLString osURL = osBaseURL + "?op=MKDIRS" + osUsernameParam + osDelegationParam;
@@ -912,13 +911,13 @@ int VSIWebHDFSFSHandler::Mkdir( const char *pszDirname, long nMode )
 VSIWebHDFSHandle::VSIWebHDFSHandle( VSIWebHDFSFSHandler* poFSIn,
                           const char* pszFilename, const char* pszURL ) :
         VSICurlHandle(poFSIn, pszFilename, pszURL),
-        m_osDataNodeHost(GetWebHDFSDataNodeHost())
+        m_osDataNodeHost(GetWebHDFSDataNodeHost(pszFilename))
 {
     // cppcheck-suppress useInitializationList
-    m_osUsernameParam = CPLGetConfigOption("WEBHDFS_USERNAME", "");
+    m_osUsernameParam = VSIGetCredential(pszFilename, "WEBHDFS_USERNAME", "");
     if( !m_osUsernameParam.empty() )
         m_osUsernameParam = "&user.name=" + m_osUsernameParam;
-    m_osDelegationParam = CPLGetConfigOption("WEBHDFS_DELEGATION", "");
+    m_osDelegationParam = VSIGetCredential(pszFilename, "WEBHDFS_DELEGATION", "");
     if( !m_osDelegationParam.empty() )
         m_osDelegationParam = "&delegation=" + m_osDelegationParam;
 

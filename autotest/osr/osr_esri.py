@@ -917,6 +917,7 @@ def test_osr_esri_30():
            '']
 
     srs_prj = osr.SpatialReference()
+    srs_prj.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
     srs_prj.ImportFromESRI(prj)
 
     wkt = """GEOGCS["unknown",
@@ -926,6 +927,7 @@ def test_osr_esri_30():
     UNIT["degree",0.0174532925199433]]"""
 
     srs_wkt = osr.SpatialReference(wkt=wkt)
+    srs_wkt.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
 
     assert srs_prj.IsSame(srs_wkt)
 

@@ -65,7 +65,7 @@ def Usage():
     return 1
 
 
-def main(argv):
+def main(argv=sys.argv):
     # Argument processing.
     t_srs = None
     stepsize = 5.0

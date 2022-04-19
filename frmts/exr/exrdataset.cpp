@@ -92,7 +92,7 @@ class GDALEXRDataset final: public GDALPamDataset
         static int Identify(GDALOpenInfo* poOpenInfo);
         static GDALDataset* Open(GDALOpenInfo* poOpenInfo);
         static GDALDataset *Create( const char * pszFilename,
-                                    int nXSize, int nYSize, int nBands,
+                                    int nXSize, int nYSize, int nBandsIn,
                                     GDALDataType eType, char ** papszOptions );
         static GDALDataset *CreateCopy( const char * pszFilename,
                                     GDALDataset *poSrcDS,
@@ -1916,10 +1916,10 @@ CPLErr GDALEXRWritableRasterBand::IWriteBlock(int nBlockXOff,
 /************************************************************************/
 
 GDALDataset *GDALEXRDataset::Create( const char * pszFilename,
-                                     int nXSize, int nYSize, int nBands,
+                                     int nXSize, int nYSize, int nBandsIn,
                                      GDALDataType eType, char ** papszOptions )
 {
-    if( nBands == 0 )
+    if( nBandsIn == 0 )
         return nullptr;
     const PixelType pixelType = getPixelType(eType, papszOptions);
 
@@ -2014,12 +2014,12 @@ GDALDataset *GDALEXRDataset::Create( const char * pszFilename,
     poDS->m_bRescaleDiv255 =
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "AUTO_RESCALE", "YES"));
 
-    if( nBands > 1 )
+    if( nBandsIn > 1 )
     {
         poDS->GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
                                            "IMAGE_STRUCTURE");
     }
-    for(int i = 0; i < nBands; i++ )
+    for(int i = 0; i < nBandsIn; i++ )
     {
         poDS->SetBand(i+1, new GDALEXRWritableRasterBand(poDS.get(), i+1, eType));
     }

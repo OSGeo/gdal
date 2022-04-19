@@ -48,7 +48,8 @@ By default on directory and kmz datasources, an index file of all the
 layers will be read from or written to doc.kml. It contains a
 `<NetworkLink> <https://developers.google.com/kml/documentation/kmlreference#networklink>`__
 to each layer file in the datasource. This feature can be turned off by
-setting the environment variable LIBKML_USE_DOC.KML to "no"
+setting the configuration option :decl_configoption:`LIBKML_USE_DOC.KML` 
+to "no".
 
 StyleTable
 ~~~~~~~~~~
@@ -371,7 +372,7 @@ fields are defined.
 
 KML `<GroundOverlay> <https://developers.google.com/kml/documentation/kmlreference#groundoverlay>`__
 elements are supported for reading (unless the
-LIBKML_READ_GROUND_OVERLAY configuration option is set to FALSE). For
+:decl_configoption:`LIBKML_READ_GROUND_OVERLAY` configuration option is set to FALSE). For
 such elements, there are icon and drawOrder fields.
 
 .. _style-1:
@@ -386,22 +387,22 @@ or
 in each
 `<Placemark> <https://developers.google.com/kml/documentation/kmlreference#placemark>`__.
 
-When reading a kml feature and the environment variable
-LIBKML_RESOLVE_STYLE is set to yes, styleurls are looked up in the style
+When reading a kml feature and the configuration option
+:decl_configoption:`LIBKML_RESOLVE_STYLE` is set to yes, styleurls are looked up in the style
 tables and the features style string is set to the style from the table.
 This is to allow reading of shared styles by applications, like
 mapserver, that do not read style tables.
 
-When reading a kml feature and the environment variable
-LIBKML_EXTERNAL_STYLE is set to yes, a styleurl that is external to the
+When reading a kml feature and the configuration option
+:decl_configoption:`LIBKML_EXTERNAL_STYLE` is set to yes, a styleurl that is external to the
 datasource is read from disk or fetched from the server and parsed into
 the datasource style table. If the style kml can not be read or
 LIBKML_EXTERNAL_STYLE is set to no then the styleurl is copied to the
 style string.
 
 When reading a kml StyleMap the default mapping is set to normal. If you
-wish to use the highlighted styles set the environment variable
-LIBKML_STYLEMAP_KEY to "highlight"
+wish to use the highlighted styles set the configuration option
+:decl_configoption:`LIBKML_STYLEMAP_KEY` to "highlight"
 
 When writing a kml, if there exist 2 styles of the form
 "astylename_normal" and "astylename_highlight" (where astylename is any
@@ -419,272 +420,227 @@ except for some special fields as noted below.
 
 Note: it is also possible to export fields as
 `<Data> <https://developers.google.com/kml/documentation/kmlreference#data>`__
-elements if the LIBKML_USE_SCHEMADATA configuration option is set to NO.
+elements if the :decl_configoption:`LIBKML_USE_SCHEMADATA` configuration option is set to NO.
 
-A rich set of environment variables are available to define how fields
-in input and output, map to a KML
+A rich set of :ref:`configuration options <configoptions>` are 
+available to define how fields in input and output, map to a KML
 `<Placemark> <https://developers.google.com/kml/documentation/kmlreference#placemark>`__.
 For example, if you want a field called 'Cities' to map to the
 `<name> <https://developers.google.com/kml/documentation/kmlreference#name>`__;
-tag in KML, you can set an environment variable.
-
-Name
-   This String field maps to the kml tag
+tag in KML, you can set a configuration option.
+ 
+-  **name**: string field that maps to the kml tag
    `<name> <https://developers.google.com/kml/documentation/kmlreference#name>`__.
-   The name of the ogr field can be changed with the environment
-   variable LIBKML_NAME_FIELD .
-description
-   This String field maps to the kml tag
+   The name of the ogr field can be changed with the configuration option 
+   :decl_configoption:`LIBKML_NAME_FIELD` .
+-  **description**: string field that maps to the kml tag
    `<description> <https://developers.google.com/kml/documentation/kmlreference#description>`__.
-   The name of the ogr field can be changed with the environment
-   variable LIBKML_DESCRIPTION_FIELD .
-timestamp
-   This string or datetime or date and/or time field maps to the kml tag
+   The name of the ogr field can be changed with the configuration option
+   :decl_configoption:`LIBKML_DESCRIPTION_FIELD` .
+-  **timestamp**: string or datetime or date and/or time field that maps to the kml tag
    `<timestamp> <https://developers.google.com/kml/documentation/kmlreference#timestamp>`__.
-   The name of the ogr field can be changed with the environment
-   variable LIBKML_TIMESTAMP_FIELD .
-begin
-   This string or datetime or date and/or time field maps to the kml tag
+   The name of the ogr field can be changed with the configuration option
+   :decl_configoption:`LIBKML_TIMESTAMP_FIELD` .
+-  **begin**: string or datetime or date and/or time field that maps to the kml tag
    `<begin> <https://developers.google.com/kml/documentation/kmlreference#begin>`__.
-   The name of the ogr field can be changed with the environment
-   variable LIBKML_BEGIN_FIELD .
-end
-   This string or datetime or date and/or time field maps to the kml tag
+   The name of the ogr field can be changed with the configuration option
+   :decl_configoption:`LIBKML_BEGIN_FIELD` .
+-  **end**: string or datetime or date and/or time field that maps to the kml tag
    `<end> <https://developers.google.com/kml/documentation/kmlreference#end>`__.
-   The name of the ogr field can be changed with the environment
-   variable LIBKML_END_FIELD .
-altitudeMode
-   This string field maps to the kml tag
+   The name of the ogr field can be changed with the configuration option
+   :decl_configoption:`LIBKML_END_FIELD` .
+-  **altitudeMode**: string field that maps to the kml tag
    `<altitudeMode> <https://developers.google.com/kml/documentation/kmlreference#altitudemode>`__
    or
    `<gx:altitudeMode> <https://developers.google.com/kml/documentation/kmlreference#gxaltitudemode>`__.
-   The name of the ogr field can be changed with the environment
-   variable LIBKML_ALTITUDEMODE_FIELD .
-tessellate
-   This integer field maps to the kml tag
+   The name of the ogr field can be changed with the configuration option
+   :decl_configoption:`LIBKML_ALTITUDEMODE_FIELD` .
+-  **tessellate**: integer field that maps to the kml tag
    `<tessellate> <https://developers.google.com/kml/documentation/kmlreference#tessellate>`__.
-   The name of the ogr field can be changed with the environment
-   variable LIBKML_TESSELLATE_FIELD .
-extrude
-   This integer field maps to the kml tag
+   The name of the ogr field can be changed with the configuration option
+   :decl_configoption:`LIBKML_TESSELLATE_FIELD` .
+-  **extrude**: integer field that maps to the kml tag
    `<extrude> <https://developers.google.com/kml/documentation/kmlreference#extrude>`__.
-   The name of the ogr field can be changed with the environment
-   variable LIBKML_EXTRUDE_FIELD .
-visibility
-   This integer field maps to the kml tag
+   The name of the ogr field can be changed with the configuration option
+   :decl_configoption:`LIBKML_EXTRUDE_FIELD` .
+-  **visibility**: integer field that maps to the kml tag
    `<visibility> <https://developers.google.com/kml/documentation/kmlreference#visibility>`__.
-   The name of the ogr field can be changed with the environment
-   variable LIBKML_VISIBILITY_FIELD .
-icon
-   This string field maps to the kml tag
+   The name of the ogr field can be changed with the configuration option
+   :decl_configoption:`LIBKML_VISIBILITY_FIELD` .
+-  **icon**: string field that maps to the kml tag
    `<icon> <https://developers.google.com/kml/documentation/kmlreference#icon>`__.
-   The name of the ogr field can be changed with the environment
-   variable LIBKML_ICON_FIELD .
-drawOrder
-   This integer field maps to the kml tag
+   The name of the ogr field can be changed with the configuration option
+   :decl_configoption:`LIBKML_ICON_FIELD` .
+-  **drawOrder**: integer field that maps to the kml tag
    `<drawOrder> <https://developers.google.com/kml/documentation/kmlreference#draworder>`__.
-   The name of the ogr field can be changed with the environment
-   variable LIBKML_DRAWORDER_FIELD .
-snippet
-   This integer field maps to the kml tag
+   The name of the ogr field can be changed with the configuration option
+   :decl_configoption:`LIBKML_DRAWORDER_FIELD` .
+-  **snippet**: integer field that maps to the kml tag
    `<snippet> <https://developers.google.com/kml/documentation/kmlreference#snippet>`__.
-   The name of the ogr field can be changed with the environment
-   variable LIBKML_SNIPPET_FIELD .
-heading
-   This real field maps to the kml tag
+   The name of the ogr field can be changed with the configuration option
+   :decl_configoption:`LIBKML_SNIPPET_FIELD` .
+-  **heading**: real field that maps to the kml tag
    `<heading> <https://developers.google.com/kml/documentation/kmlreference#heading>`__.
-   The name of the ogr field can be changed with the environment
-   variable LIBKML_HEADING_FIELD. When reading, this field is present
+   The name of the ogr field can be changed with the configuration option
+   :decl_configoption:`LIBKML_HEADING_FIELD`. When reading, this field is present
    only if a Placemark has a Camera with a heading element.
-tilt
-   This real field maps to the kml tag
+-  **tilt**: real field that maps to the kml tag
    `<tilt> <https://developers.google.com/kml/documentation/kmlreference#tilt>`__.
-   The name of the ogr field can be changed with the environment
-   variable LIBKML_TILT_FIELD. When reading, this field is present only
+   The name of the ogr field can be changed with the configuration option
+   :decl_configoption:`LIBKML_TILT_FIELD`. When reading, this field is present only
    if a Placemark has a Camera with a tilt element.
-roll
-   This real field maps to the kml tag
+-  **roll**: real field that maps to the kml tag
    `<roll> <https://developers.google.com/kml/documentation/kmlreference#roll>`__.
-   The name of the ogr field can be changed with the environment
-   variable LIBKML_ROLL_FIELD. When reading, this field is present only
+   The name of the ogr field can be changed with the configuration option
+   :decl_configoption:`LIBKML_ROLL_FIELD`. When reading, this field is present only
    if a Placemark has a Camera with a roll element.
-model
-   This string field can be used to define the URL of a 3D
+-  **model**: string field that can be used to define the URL of a 3D
    `<model> <https://developers.google.com/kml/documentation/kmlreference#model>`__.
-   The name of the ogr field can be changed with the environment
-   variable LIBKML_MODEL_FIELD.
-scale_x
-   This real field maps to the x element of the kml tag
+   The name of the ogr field can be changed with the configuration option
+   :decl_configoption:`LIBKML_MODEL_FIELD`.
+-  **scale_x**: real field that maps to the x element of the kml tag
    `<scale> <https://developers.google.com/kml/documentation/kmlreference#scale>`__
    for a 3D model. The name of the ogr field can be changed with the
-   environment variable LIBKML_SCALE_X_FIELD.
-scale_y
-   This real field maps to the y element of the kml tag
+   configuration option :decl_configoption:`LIBKML_SCALE_X_FIELD`.
+-  **scale_y**: real field that maps to the y element of the kml tag
    `<scale> <https://developers.google.com/kml/documentation/kmlreference#scale>`__\ for
    a 3D model. The name of the ogr field can be changed with the
-   environment variable LIBKML_SCALE_Y_FIELD.
-scale_z
-   This real field maps to the z element of the kml tag
+   configuration option :decl_configoption:`LIBKML_SCALE_Y_FIELD`.
+-  **scale_z**: real field that maps to the z element of the kml tag
    `<scale> <https://developers.google.com/kml/documentation/kmlreference#scale>`__\ for
    a 3D model. The name of the ogr field can be changed with the
-   environment variable LIBKML_SCALE_Z_FIELD.
-networklink
-   This string field maps to the href element of the kml tag
+   configuration option :decl_configoption:`LIBKML_SCALE_Z_FIELD`.
+-  **networklink**: string field that maps to the href element of the kml tag
    `<href> <https://developers.google.com/kml/documentation/kmlreference#href>`__
    of a NetworkLink. The name of the ogr field can be changed with the
-   environment variable LIBKML_NETWORKLINK_FIELD.
-networklink_refreshvisibility
-   This integer field maps to kml tag
+   configuration option :decl_configoption:`LIBKML_NETWORKLINK_FIELD`.
+-  **networklink_refreshvisibility**: integer field that maps to kml tag
    `<refreshVisibility> <https://developers.google.com/kml/documentation/kmlreference#refreshvisibility>`__
    of a NetworkLink. The name of the ogr field can be changed with the
-   environment variable LIBKML_NETWORKLINK_REFRESHVISIBILITY_FIELD.
-networklink_flytoview
-   This integer field maps to kml tag
+   configuration option :decl_configoption:`LIBKML_NETWORKLINK_REFRESHVISIBILITY_FIELD`.
+-  **networklink_flytoview**: integer field that maps to kml tag
    `<flyToView> <https://developers.google.com/kml/documentation/kmlreference#flytoview>`__
    of a NetworkLink. The name of the ogr field can be changed with the
-   environment variable LIBKML_NETWORKLINK_FLYTOVIEW_FIELD.
-networklink_refreshmode
-   This string field maps to kml tag
+   configuration option :decl_configoption:`LIBKML_NETWORKLINK_FLYTOVIEW_FIELD`.
+-  **networklink_refreshmode**: string field that maps to kml tag
    `<refreshMode> <https://developers.google.com/kml/documentation/kmlreference#refreshmode>`__
    of a NetworkLink. The name of the ogr field can be changed with the
-   environment variable LIBKML_NETWORKLINK_REFRESHMODE_FIELD.
-networklink_refreshinterval
-   This real field maps to kml tag
+   configuration option :decl_configoption:`LIBKML_NETWORKLINK_REFRESHMODE_FIELD`.
+-  **networklink_refreshinterval**: real field that maps to kml tag
    `<refreshInterval> <https://developers.google.com/kml/documentation/kmlreference#refreshinterval>`__
    of a NetworkLink. The name of the ogr field can be changed with the
-   environment variable LIBKML_NETWORKLINK_REFRESHINTERVAL_FIELD.
-networklink_viewrefreshmode
-   This string field maps to kml tag
+   configuration option :decl_configoption:`LIBKML_NETWORKLINK_REFRESHINTERVAL_FIELD`.
+-  **networklink_viewrefreshmode**: string field that maps to kml tag
    `<viewRefreshMode> <https://developers.google.com/kml/documentation/kmlreference#viewrefreshmode>`__
    of a NetworkLink. The name of the ogr field can be changed with the
-   environment variable LIBKML_NETWORKLINK_VIEWREFRESHMODE_FIELD.
-networklink_viewrefreshtime
-   This real field maps to kml tag
+   configuration option :decl_configoption:`LIBKML_NETWORKLINK_VIEWREFRESHMODE_FIELD`.
+-  **networklink_viewrefreshtime**: real field that maps to kml tag
    `<viewRefreshTime> <https://developers.google.com/kml/documentation/kmlreference#viewrefreshtime>`__
    of a NetworkLink. The name of the ogr field can be changed with the
-   environment variable LIBKML_NETWORKLINK_VIEWREFRESHTIME_FIELD.
-networklink_viewboundscale
-   This real field maps to kml tag
+   configuration option :decl_configoption:`LIBKML_NETWORKLINK_VIEWREFRESHTIME_FIELD`.
+-  **networklink_viewboundscale**: real field that maps to kml tag
    `<viewBoundScale> <https://developers.google.com/kml/documentation/kmlreference#viewboundscale>`__
    of a NetworkLink. The name of the ogr field can be changed with the
-   environment variable LIBKML_NETWORKLINK_VIEWBOUNDSCALE_FIELD.
-networklink_viewformat
-   This string field maps to kml tag
+   configuration option :decl_configoption:`LIBKML_NETWORKLINK_VIEWBOUNDSCALE_FIELD`.
+-  **networklink_viewformat**: string field that maps to kml tag
    `<viewFormat> <https://developers.google.com/kml/documentation/kmlreference#viewformat>`__
    of a NetworkLink. The name of the ogr field can be changed with the
-   environment variable LIBKML_NETWORKLINK_VIEWFORMAT_FIELD.
-networklink_httpquery
-   This string field maps to kml tag
+   configuration option :decl_configoption:`LIBKML_NETWORKLINK_VIEWFORMAT_FIELD`.
+-  **networklink_httpquery**: string field that maps to kml tag
    `<httpQuery> <https://developers.google.com/kml/documentation/kmlreference#httpquery>`__
    of a NetworkLink. The name of the ogr field can be changed with the
-   environment variable LIBKML_NETWORKLINK_HTTPQUERY_FIELD.
-camera_longitude
-   This real field maps to kml tag
+   configuration option :decl_configoption:`LIBKML_NETWORKLINK_HTTPQUERY_FIELD`.
+-  **camera_longitude**: real field that maps to kml tag
    `<longitude> <https://developers.google.com/kml/documentation/kmlreference#longitude>`__
    of a
    `<Camera> <https://developers.google.com/kml/documentation/kmlreference#camera>`__.
-   The name of the ogr field can be changed with the environment
-   variable LIBKML_CACameraMERA_LONGITUDE_FIELD.
-camera_latitude
-   This real field maps to kml tag
+   The name of the ogr field can be changed with the 
+   configuration option :decl_configoption:`LIBKML_CAMERA_LONGITUDE_FIELD`.
+-  **camera_latitude**: real field that maps to kml tag
    `<latitude> <https://developers.google.com/kml/documentation/kmlreference#latitude>`__
    of a
    `<Camera> <https://developers.google.com/kml/documentation/kmlreference#camera>`__.
-   The name of the ogr field can be changed with the environment
-   variable LIBKML_CAMERA_LATITUDE_FIELD.
-camera_altitude
-   This real field maps to kml tag
+   The name of the ogr field can be changed with the configuration option
+   :decl_configoption:`LIBKML_CAMERA_LATITUDE_FIELD`.
+-  **camera_altitude**: real field that maps to kml tag
    `<altitude> <https://developers.google.com/kml/documentation/kmlreference#altitude>`__
    of a
    `<Camera> <https://developers.google.com/kml/documentation/kmlreference#camera>`__.
-   The name of the ogr field can be changed with the environment
-   variable LIBKML_CAMERA_ALTITUDE_FIELD.
-camera_altitudemode
-   This real field maps to kml tag
+   The name of the ogr field can be changed with the configuration option
+   :decl_configoption:`LIBKML_CAMERA_ALTITUDE_FIELD`.
+-  **camera_altitudemode**: real field that maps to kml tag
    `<altitudeMode> <https://developers.google.com/kml/documentation/kmlreference#altitudemode>`__
    of a
    `<Camera> <https://developers.google.com/kml/documentation/kmlreference#camera>`__.
-   The name of the ogr field can be changed with the environment
-   variable LIBKML_CAMERA_ALTITUDEMODE_FIELD.
-photooverlay
-   This string field maps to the href element of the kml tag
+   The name of the ogr field can be changed with the configuration option
+   :decl_configoption:`LIBKML_CAMERA_ALTITUDEMODE_FIELD`.
+-  **photooverlay**: string field that maps to the href element of the kml tag
    `<href> <https://developers.google.com/kml/documentation/kmlreference#href>`__
    of a
    `<PhotoOverlay> <https://developers.google.com/kml/documentation/kmlreference#photooverlay>`__.
-   The name of the ogr field can be changed with the environment
-   variable LIBKML_PHOTOOVERLAY_FIELD.
-leftfov
-   This real field maps to to kml tag
+   The name of the ogr field can be changed with the configuration option
+   :decl_configoption:`LIBKML_PHOTOOVERLAY_FIELD`.
+-  **leftfov**: real field that maps to to kml tag
    `<LeftFov> <https://developers.google.com/kml/documentation/kmlreference#leftfov>`__
    of a
    `<PhotoOverlay> <https://developers.google.com/kml/documentation/kmlreference#photooverlay>`__.
-   The name of the ogr field can be changed with the environment
-   variable LIBKML_LEFTFOV_FIELD.
-rightfov
-   This real field maps to to kml tag
+   The name of the ogr field can be changed with the configuration option
+   :decl_configoption:`LIBKML_LEFTFOV_FIELD`.
+-  **rightfov**: real field that maps to to kml tag
    `<RightFov> <https://developers.google.com/kml/documentation/kmlreference#rightfov>`__
    of a
    `<PhotoOverlay> <https://developers.google.com/kml/documentation/kmlreference#photooverlay>`__.
-   The name of the ogr field can be changed with the environment
-   variable LIBKML_RightFOV_FIELD.
-bottomfov
-   This real field maps to to kml tag
+   The name of the ogr field can be changed with the configuration option
+   :decl_configoption:`LIBKML_RIGHTFOV_FIELD`.
+-  **bottomfov**: real field that maps to to kml tag
    `<BottomFov> <https://developers.google.com/kml/documentation/kmlreference#bottomfov>`__
    of a
    `<PhotoOverlay> <https://developers.google.com/kml/documentation/kmlreference#photooverlay>`__.
-   The name of the ogr field can be changed with the environment
-   variable LIBKML_BOTTOMTFOV_FIELD.
-topfov
-   This real field maps to to kml tag
+   The name of the ogr field can be changed with the configuration option
+   :decl_configoption:`LIBKML_BOTTOMTFOV_FIELD`.
+-  **topfov**: real field that maps to to kml tag
    `<TopFov> <https://developers.google.com/kml/documentation/kmlreference#topfov>`__
    of a
    `<PhotoOverlay> <https://developers.google.com/kml/documentation/kmlreference#photooverlay>`__.
-   The name of the ogr field can be changed with the environment
-   variable LIBKML_TOPFOV_FIELD.
-near
-   This real field maps to to kml tag
+   The name of the ogr field can be changed with the configuration option
+   :decl_configoption:`LIBKML_TOPFOV_FIELD`.
+-  **near**: real field that maps to to kml tag
    `<Near> <https://developers.google.com/kml/documentation/kmlreference#leftfov>`__
    of a
    `<PhotoOverlay> <https://developers.google.com/kml/documentation/kmlreference#photooverlay>`__.
-   The name of the ogr field can be changed with the environment
-   variable LIBKML_NEAR_FIELD.
-shape
-   This string field maps to to kml tag
+   The name of the ogr field can be changed with the configuration option
+   :decl_configoption:`LIBKML_NEAR_FIELD`.
+-  **shape**: string field that maps to to kml tag
    `<shape> <https://developers.google.com/kml/documentation/kmlreference#shape>`__
    of a
    `<PhotoOverlay> <https://developers.google.com/kml/documentation/kmlreference#photooverlay>`__.
-   The name of the ogr field can be changed with the environment
-   variable LIBKML_SHAPE_FIELD.
-imagepyramid_tilesize
-   This integer field maps to to kml tag
+   The name of the ogr field can be changed with the configuration option
+   :decl_configoption:`LIBKML_SHAPE_FIELD`.
+-  **imagepyramid_tilesize**: integer field that maps to to kml tag
    `<tileSize> <https://developers.google.com/kml/documentation/kmlreference#tilesize>`__
    of a
    `<ImagePyramid> <https://developers.google.com/kml/documentation/kmlreference#imagepyramid>`__.
-   The name of the ogr field can be changed with the environment
-   variable LIBKML_IMAGEPYRAMID_TILESIZE.
-imagepyramid_maxwidth
-   This integer field maps to to kml tag
+   The name of the ogr field can be changed with the configuration option
+   :decl_configoption:`LIBKML_IMAGEPYRAMID_TILESIZE`.
+-  **imagepyramid_maxwidth**: integer field that maps to to kml tag
    `<maxWidth> <https://developers.google.com/kml/documentation/kmlreference#maxwidth>`__
    of a
    `<ImagePyramid> <https://developers.google.com/kml/documentation/kmlreference#imagepyramid>`__.
-   The name of the ogr field can be changed with the environment
-   variable LIBKML_IMAGEPYRAMID_MAXWIDTH.
-imagepyramid_maxheight
-   This integer field maps to to kml tag
+   The name of the ogr field can be changed with the configuration option
+   :decl_configoption:`LIBKML_IMAGEPYRAMID_MAXWIDTH`.
+-  **imagepyramid_maxheight**: integer field that maps to to kml tag
    `<maxHeight> <https://developers.google.com/kml/documentation/kmlreference#maxheight>`__
    of a
    `<ImagePyramid> <https://developers.google.com/kml/documentation/kmlreference#imagepyramid>`__.
-   The name of the ogr field can be changed with the environment
-   variable LIBKML_IMAGEPYRAMID_MAXHEIGHT.
-imagepyramid_gridorigin
-   This string field maps to to kml tag
+   The name of the ogr field can be changed with the configuration option
+   :decl_configoption:`LIBKML_IMAGEPYRAMID_MAXHEIGHT`.
+-  **imagepyramid_gridorigin**: string field that maps to to kml tag
    `<gridOrigin> <https://developers.google.com/kml/documentation/kmlreference#maxheight>`__
    of a
    `<ImagePyramid> <https://developers.google.com/kml/documentation/kmlreference#imagepyramid>`__.
-   The name of the ogr field can be changed with the environment
-   variable LIBKML_IMAGEPYRAMID_GRIDORIGIN.
-OGR_STYLE
-   This string field maps to a features style string, OGR reads this
+   The name of the ogr field can be changed with the configuration option
+   :decl_configoption:`LIBKML_IMAGEPYRAMID_GRIDORIGIN`.
+-  **OGR_STYLE**: string field that maps to a features style string, OGR reads this
    field if there is no style string set on the feature.
 
 Geometry
@@ -717,8 +673,8 @@ content.
 
 Sometimes kml geometry will span the dateline, In applications like qgis
 or mapserver this will create horizontal lines all the way around the
-globe. Setting the environment variable LIBKML_WRAPDATELINE to "yes"
-will cause the libkml driver to split the geometry at the dateline when
+globe. Setting the configuration option :decl_configoption:`LIBKML_WRAPDATELINE` 
+to "yes" will cause the libkml driver to split the geometry at the dateline when
 read.
 
 VSI Virtual File System API support

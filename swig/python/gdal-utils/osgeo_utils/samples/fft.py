@@ -70,7 +70,7 @@ def ParseType(typ):
     return gdal.GDT_Byte
 
 
-def main(argv):
+def main(argv=sys.argv):
     infile = None
     outfile = None
     driver_name = 'GTiff'

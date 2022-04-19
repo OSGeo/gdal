@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema targetNamespace="http://ogr.maptools.org/" xmlns:ogr="http://ogr.maptools.org/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:gml="http://fake_gml32" elementFormDefault="qualified" version="1.0">
+
+<xs:import namespace="http://fake_gml32" schemaLocation="gmlas_fake_gml32.xsd"/>
+
+<xs:element name="FeatureCollection" type="ogr:FeatureCollectionType" substitutionGroup="gml:AbstractFeature"/>
+<xs:complexType name="FeatureCollectionType">
+  <xs:complexContent>
+    <xs:extension base="gml:AbstractFeatureType">
+      <xs:sequence minOccurs="0" maxOccurs="unbounded">
+        <xs:element name="featureMember">
+          <xs:complexType>
+            <xs:complexContent>
+              <xs:extension base="gml:AbstractFeatureMemberType">
+                <xs:sequence>
+                  <xs:element ref="gml:AbstractFeature"/>
+                </xs:sequence>
+              </xs:extension>
+            </xs:complexContent>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:extension>
+  </xs:complexContent>
+</xs:complexType>
+<xs:element name="AffleurantEnveloppePCRS" type="ogr:AffleurantEnveloppePCRS_Type" substitutionGroup="gml:AbstractFeature"/>
+<xs:complexType name="AffleurantEnveloppePCRS_Type">
+  <xs:complexContent>
+    <xs:extension base="gml:AbstractFeatureType">
+      <xs:sequence>
+        <xs:element name="geometrie" type="gml:SurfacePropertyType" nillable="true" minOccurs="0" maxOccurs="1"/> <!-- restricted to Polygon -->
+      </xs:sequence>
+    </xs:extension>
+  </xs:complexContent>
+</xs:complexType>
+</xs:schema>

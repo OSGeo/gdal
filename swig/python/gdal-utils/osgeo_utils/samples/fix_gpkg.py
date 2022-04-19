@@ -65,7 +65,7 @@ def fix(filename, verbose = 1):
         print('  Nothing to change')
 
 
-def main(argv):
+def main(argv=sys.argv):
     if len(argv) != 2:
         print('Usage: fix_gpkg.py my.gpkg|*.gpkg')
         return 1
