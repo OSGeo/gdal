@@ -1121,7 +1121,7 @@ OGRErr OGRArrowWriterLayer::ICreateFeature( OGRFeature* poFeature )
     for( int i = 0; i < nGeomFieldCount; ++i, ++nArrowIdx )
     {
         auto poBuilder = m_apoBuilders[nArrowIdx].get();
-        const OGRGeometry* poGeom = poFeature->GetGeomFieldRef(i);
+        OGRGeometry* poGeom = poFeature->GetGeomFieldRef(i);
         const auto eGType = poGeom ? poGeom->getGeometryType() : wkbNone;
         const auto eColumnGType = m_poFeatureDefn->GetGeomFieldDefn(i)->GetType();
         const bool bIsEmpty = poGeom != nullptr && poGeom->IsEmpty();
@@ -1170,6 +1170,7 @@ OGRErr OGRArrowWriterLayer::ICreateFeature( OGRFeature* poFeature )
                 poGeomModified->setMeasured(false);
                 poGeom = poGeomModified.get();
             }
+            FixupGeometryBeforeWriting(poGeom);
             const auto nSize = poGeom->WkbSize();
             if( nSize < INT_MAX )
             {

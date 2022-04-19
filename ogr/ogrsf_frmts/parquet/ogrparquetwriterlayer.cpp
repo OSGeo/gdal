@@ -456,3 +456,35 @@ bool OGRParquetWriterLayer::FlushGroup()
     m_apoBuilders.clear();
     return ret;
 }
+
+/************************************************************************/
+/*                     FixupGeometryBeforeWriting()                     */
+/************************************************************************/
+
+void OGRParquetWriterLayer::FixupGeometryBeforeWriting(OGRGeometry* poGeom)
+{
+    const auto eFlattenType = wkbFlatten(poGeom->getGeometryType());
+    // Polygon rings MUST follow the right-hand rule for orientation
+    // (counterclockwise external rings, clockwise internal rings)
+    if( eFlattenType == wkbPolygon )
+    {
+        bool bFirstRing = true;
+        for( auto poRing: poGeom->toPolygon() )
+        {
+            if( (bFirstRing && poRing->isClockwise()) ||
+                (!bFirstRing && !poRing->isClockwise()) )
+            {
+                poRing->reverseWindingOrder();
+            }
+            bFirstRing = false;
+        }
+    }
+    else if( eFlattenType == wkbMultiPolygon ||
+             eFlattenType == wkbGeometryCollection )
+    {
+        for( auto poSubGeom: poGeom->toGeometryCollection() )
+        {
+            FixupGeometryBeforeWriting(poSubGeom);
+        }
+    }
+}

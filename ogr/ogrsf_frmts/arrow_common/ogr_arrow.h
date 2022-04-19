@@ -228,6 +228,8 @@ protected:
         bool                    WriteArrays(std::function<bool(const std::shared_ptr<arrow::Field>&,
                                                                const std::shared_ptr<arrow::Array>&)> postProcessArray);
 
+        virtual void            FixupGeometryBeforeWriting(OGRGeometry* /* poGeom */ ) {}
+
 public:
         OGRArrowWriterLayer( arrow::MemoryPool* poMemoryPool,
                                const std::shared_ptr<arrow::io::OutputStream>& poOutputStream,
