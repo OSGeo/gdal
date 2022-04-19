@@ -299,6 +299,7 @@ void OGRArrowWriterLayer::CreateSchemaCommon()
     }
 
     m_aoEnvelopes.resize(m_poFeatureDefn->GetGeomFieldCount());
+    m_oSetWrittenGeometryTypes.resize(m_poFeatureDefn->GetGeomFieldCount());
 
     m_poSchema = arrow::schema(fields);
     CPLAssert(m_poSchema);
@@ -554,28 +555,6 @@ const char* OGRArrowWriterLayer::GetGeomEncodingAsString(OGRArrowGeomEncoding eG
             return "geoarrow.multipolygon";
     }
     return nullptr;
-}
-
-/************************************************************************/
-/*                        IsSupportedGeometryTyp                        */
-/************************************************************************/
-
-inline
-bool OGRArrowWriterLayer::IsSupportedGeometryType(OGRwkbGeometryType eGType) const
-{
-    if( eGType != wkbFlatten(eGType) )
-    {
-        const auto osConfigOptionName = "OGR_" + GetDriverUCName() + "_ALLOW_ALL_DIMS";
-        if( !CPLTestBool(CPLGetConfigOption(osConfigOptionName.c_str(), "NO")) )
-        {
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "Only 2D geometry types are supported (unless the "
-                     "%s configuration option is set to YES)",
-                     osConfigOptionName.c_str());
-            return false;
-        }
-    }
-    return true;
 }
 
 /************************************************************************/
@@ -1142,7 +1121,7 @@ OGRErr OGRArrowWriterLayer::ICreateFeature( OGRFeature* poFeature )
     for( int i = 0; i < nGeomFieldCount; ++i, ++nArrowIdx )
     {
         auto poBuilder = m_apoBuilders[nArrowIdx].get();
-        const OGRGeometry* poGeom = poFeature->GetGeomFieldRef(i);
+        OGRGeometry* poGeom = poFeature->GetGeomFieldRef(i);
         const auto eGType = poGeom ? poGeom->getGeometryType() : wkbNone;
         const auto eColumnGType = m_poFeatureDefn->GetGeomFieldDefn(i)->GetType();
         const bool bIsEmpty = poGeom != nullptr && poGeom->IsEmpty();
@@ -1151,6 +1130,7 @@ OGRErr OGRArrowWriterLayer::ICreateFeature( OGRFeature* poFeature )
             OGREnvelope oEnvelope;
             poGeom->getEnvelope(&oEnvelope);
             m_aoEnvelopes[i].Merge(oEnvelope);
+            m_oSetWrittenGeometryTypes[i].insert(eGType);
         }
 
         if( poGeom == nullptr )
@@ -1176,21 +1156,21 @@ OGRErr OGRArrowWriterLayer::ICreateFeature( OGRFeature* poFeature )
         }
         else if( m_aeGeomEncoding[i] == OGRArrowGeomEncoding::WKB )
         {
-            std::unique_ptr<OGRGeometry> poGeom2D;
-            if( eGType != wkbFlatten(eGType) &&
-                eColumnGType == wkbFlatten(eColumnGType) )
+            std::unique_ptr<OGRGeometry> poGeomModified;
+            if( OGR_GT_HasM(eGType) && !OGR_GT_HasM(eColumnGType) )
             {
                 static bool bHasWarned = false;
                 if( !bHasWarned )
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
-                             "Flattening geometry to 2D");
+                             "Removing M component from geometry");
                     bHasWarned = true;
                 }
-                poGeom2D.reset(poGeom->clone());
-                poGeom2D->flattenTo2D();
-                poGeom = poGeom2D.get();
+                poGeomModified.reset(poGeom->clone());
+                poGeomModified->setMeasured(false);
+                poGeom = poGeomModified.get();
             }
+            FixupGeometryBeforeWriting(poGeom);
             const auto nSize = poGeom->WkbSize();
             if( nSize < INT_MAX )
             {

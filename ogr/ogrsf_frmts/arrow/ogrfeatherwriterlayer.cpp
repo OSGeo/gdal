@@ -54,6 +54,27 @@ OGRFeatherWriterLayer::~OGRFeatherWriterLayer()
 }
 
 /************************************************************************/
+/*                       IsSupportedGeometryType()                      */
+/************************************************************************/
+
+bool OGRFeatherWriterLayer::IsSupportedGeometryType(OGRwkbGeometryType eGType) const
+{
+    if( eGType != wkbFlatten(eGType) )
+    {
+        const auto osConfigOptionName = "OGR_" + GetDriverUCName() + "_ALLOW_ALL_DIMS";
+        if( !CPLTestBool(CPLGetConfigOption(osConfigOptionName.c_str(), "NO")) )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Only 2D geometry types are supported (unless the "
+                     "%s configuration option is set to YES)",
+                     osConfigOptionName.c_str());
+            return false;
+        }
+    }
+    return true;
+}
+
+/************************************************************************/
 /*                           SetOptions()                               */
 /************************************************************************/
 

@@ -718,7 +718,7 @@ OGRwkbGeometryType OGRArrowLayer::GetGeometryTypeFromString(const std::string& o
 {
     OGRwkbGeometryType eGeomType = wkbUnknown;
     OGRReadWKTGeometryType(osType.c_str(), &eGeomType);
-    if( eGeomType == wkbUnknown && !osType.empty() && osType != "mixed" )
+    if( eGeomType == wkbUnknown && !osType.empty() )
     {
         CPLDebug("ARROW", "Unknown geometry type: %s",
                  osType.c_str());
@@ -1709,15 +1709,19 @@ OGRFeature* OGRArrowLayer::ReadFeature(
         if( poGeometry )
         {
             const auto poGeomFieldDefn = m_poFeatureDefn->GetGeomFieldDefn(i);
-            if( poGeometry->getGeometryType() == wkbLineString &&
-                poGeomFieldDefn->GetType() == wkbMultiLineString )
+            if( wkbFlatten(poGeometry->getGeometryType()) == wkbLineString &&
+                wkbFlatten(poGeomFieldDefn->GetType()) == wkbMultiLineString )
             {
                 poGeometry = OGRGeometryFactory::forceToMultiLineString(poGeometry);
             }
-            else if( poGeometry->getGeometryType() == wkbPolygon &&
-                     poGeomFieldDefn->GetType() == wkbMultiPolygon )
+            else if( wkbFlatten(poGeometry->getGeometryType()) == wkbPolygon &&
+                     wkbFlatten(poGeomFieldDefn->GetType()) == wkbMultiPolygon )
             {
                 poGeometry = OGRGeometryFactory::forceToMultiPolygon(poGeometry);
+            }
+            if( OGR_GT_HasZ(poGeomFieldDefn->GetType()) && !poGeometry->Is3D() )
+            {
+                poGeometry->set3D(true);
             }
             poFeature->SetGeomFieldDirectly(i, poGeometry);
         }
