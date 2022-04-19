@@ -402,9 +402,9 @@ class CPL_DLL OGRGeometry
     virtual OGRGeometry* Normalize() const;
     virtual OGRBoolean  IsSimple() const;
     /*! Returns whether the geometry has a Z component. */
-    OGRBoolean  Is3D() const { return flags & OGR_G_3D; }
+    OGRBoolean  Is3D() const { return (flags & OGR_G_3D) != 0; }
     /*! Returns whether the geometry has a M component. */
-    OGRBoolean  IsMeasured() const { return flags & OGR_G_MEASURED; }
+    OGRBoolean  IsMeasured() const { return (flags & OGR_G_MEASURED) != 0; }
     virtual OGRBoolean  IsRing() const;
     virtual void        empty() = 0;
     virtual OGRGeometry *clone() const CPL_WARN_UNUSED_RESULT = 0;
