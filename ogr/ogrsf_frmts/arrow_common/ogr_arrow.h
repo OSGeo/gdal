@@ -33,6 +33,7 @@
 #include "ogrsf_frmts.h"
 
 #include <map>
+#include <set>
 
 #include "ogr_include_arrow.h"
 
@@ -201,13 +202,14 @@ protected:
 
         std::vector<int>                            m_anTZFlag{};    // size: GetFieldCount()
         std::vector<OGREnvelope>                    m_aoEnvelopes{}; // size: GetGeomFieldCount()
+        std::vector<std::set<OGRwkbGeometryType>>   m_oSetWrittenGeometryTypes{}; // size: GetGeomFieldCount()
 
         static OGRArrowGeomEncoding GetPreciseArrowGeomEncoding(
                                                     OGRwkbGeometryType eGType);
         static const char*      GetGeomEncodingAsString(
                                     OGRArrowGeomEncoding eGeomEncoding);
 
-        bool                    IsSupportedGeometryType(OGRwkbGeometryType eGType) const;
+        virtual bool            IsSupportedGeometryType(OGRwkbGeometryType eGType) const = 0;
 
         virtual std::string GetDriverUCName() const = 0;
 

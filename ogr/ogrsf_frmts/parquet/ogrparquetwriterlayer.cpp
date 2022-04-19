@@ -53,6 +53,31 @@ OGRParquetWriterLayer::~OGRParquetWriterLayer()
 }
 
 /************************************************************************/
+/*                       IsSupportedGeometryType()                      */
+/************************************************************************/
+
+bool OGRParquetWriterLayer::IsSupportedGeometryType(OGRwkbGeometryType eGType) const
+{
+    const auto eFlattenType = wkbFlatten(eGType);
+    if( !OGR_GT_HasM(eGType) && eFlattenType <= wkbGeometryCollection )
+    {
+        return true;
+    }
+
+    const auto osConfigOptionName = "OGR_" + GetDriverUCName() + "_ALLOW_ALL_DIMS";
+    if( CPLTestBool(CPLGetConfigOption(osConfigOptionName.c_str(), "NO")) )
+    {
+        return true;
+    }
+
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "Only 2D and Z geometry types are supported (unless the "
+             "%s configuration option is set to YES)",
+             osConfigOptionName.c_str());
+    return false;
+}
+
+/************************************************************************/
 /*                           SetOptions()                               */
 /************************************************************************/
 
@@ -230,29 +255,56 @@ void OGRParquetWriterLayer::PerformStepsBeforeFinalFlushGroup()
                 oColumn.Add("bbox", oBBOX);
             }
 
-            if( CPLTestBool(CPLGetConfigOption(
-                    "OGR_PARQUET_WRITE_GDAL_GEOMETRY_TYPE", "YES")) )
+            const auto GetStringGeometryType = [](OGRwkbGeometryType eType)
             {
-                // Geometry type, place under a temporary "gdal:geometry_type" property
-                // pending acceptance of proposal at
-                // https://github.com/opengeospatial/geoparquet/issues/41
+                const auto eFlattenType = wkbFlatten(eType);
+                std::string osType = "Unknown";
+                if( wkbPoint == eFlattenType )
+                    osType = "Point";
+                else if( wkbLineString == eFlattenType )
+                    osType = "LineString";
+                else if( wkbPolygon == eFlattenType )
+                    osType = "Polygon";
+                else if( wkbMultiPoint == eFlattenType )
+                    osType = "MultiPoint";
+                else if( wkbMultiLineString == eFlattenType )
+                    osType = "MultiLineString";
+                else if( wkbMultiPolygon == eFlattenType )
+                    osType = "MultiPolygon";
+                else if( wkbGeometryCollection == eFlattenType )
+                    osType = "GeometryCollection";
+                if( osType != "Unknown" )
+                {
+                    // M and ZM not supported officially currently, but it
+                    // doesn't hurt to anticipate
+                    if( OGR_GT_HasZ(eType) && OGR_GT_HasM(eType) )
+                        osType += " ZM";
+                    else if( OGR_GT_HasZ(eType) )
+                        osType += " Z";
+                    else if( OGR_GT_HasM(eType) )
+                        osType += " M";
+                }
+                return osType;
+            };
+
+            if( m_oSetWrittenGeometryTypes[i].empty() )
+            {
                 const auto eType = poGeomFieldDefn->GetType();
-                const char* pszType = "mixed";
-                if( wkbPoint == eType )
-                    pszType = "Point";
-                else if( wkbLineString == eType )
-                    pszType =  "LineString";
-                else if( wkbPolygon == eType )
-                    pszType =  "Polygon";
-                else if( wkbMultiPoint == eType )
-                    pszType =  "MultiPoint";
-                else if( wkbMultiLineString == eType )
-                    pszType =  "MultiLineString";
-                else if( wkbMultiPolygon == eType )
-                    pszType =  "MultiPolygon";
-                else if( wkbGeometryCollection == eType )
-                    pszType =  "GeometryCollection";
-                oColumn.Add("gdal:geometry_type", pszType);
+                oColumn.Add("geometry_type", GetStringGeometryType(eType));
+            }
+            else if( m_oSetWrittenGeometryTypes[i].size() == 1 )
+            {
+                const auto eType = *(m_oSetWrittenGeometryTypes[i].begin());
+                oColumn.Add("geometry_type", GetStringGeometryType(eType));
+            }
+            else
+            {
+                CPLJSONArray oArray;
+                for( const auto eType: m_oSetWrittenGeometryTypes[i] )
+                {
+                    oArray.Add(GetStringGeometryType(eType));
+                }
+                oColumn.Add("geometry_type", oArray);
             }
         }
 

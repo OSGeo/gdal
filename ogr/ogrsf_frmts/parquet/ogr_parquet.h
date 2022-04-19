@@ -132,6 +132,8 @@ class OGRParquetWriterLayer final: public OGRArrowWriterLayer
 
         virtual std::string GetDriverUCName() const override { return "PARQUET"; }
 
+        virtual bool            IsSupportedGeometryType(OGRwkbGeometryType eGType) const override;
+
 public:
         OGRParquetWriterLayer( arrow::MemoryPool* poMemoryPool,
                                const std::shared_ptr<arrow::io::OutputStream>& poOutputStream,

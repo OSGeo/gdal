@@ -512,7 +512,7 @@ def test_ogr_parquet_write_edge_cases():
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
     with gdaltest.error_handler():
-        assert ds.CreateLayer('out', srs=srs, geom_type=ogr.wkbPoint25D) is None
+        assert ds.CreateLayer('out', srs=srs, geom_type=ogr.wkbPointM) is None
         assert ds.CreateLayer('out', srs=srs, geom_type=ogr.wkbPoint, options=['COMPRESSION=invalid']) is None
     lyr = ds.CreateLayer('out', srs=srs, geom_type=ogr.wkbPoint)
     assert lyr is not None
@@ -619,5 +619,60 @@ def test_ogr_parquet_coordinate_epoch():
     assert srs.GetCoordinateEpoch() == 2022.3
     lyr = None
     ds = None
+
+    gdal.Unlink(outfilename)
+
+
+###############################################################################
+# Test geometry_type support
+
+
+@pytest.mark.parametrize("written_geom_type,written_wkt,expected_geom_type,expected_wkts", [
+    (ogr.wkbPoint, ["POINT (1 2)"], ogr.wkbPoint, None),
+    (ogr.wkbLineString, ["LINESTRING (1 2,3 4)"], ogr.wkbLineString, None),
+    (ogr.wkbPolygon, ["POLYGON ((0 0,0 1,1 1,1 0,0 0))"], ogr.wkbPolygon, None),
+    (ogr.wkbMultiPoint, ["MULTIPOINT ((1 2))"], ogr.wkbMultiPoint, None),
+    (ogr.wkbMultiLineString, ["MULTILINESTRING ((1 2,3 4))"], ogr.wkbMultiLineString, None),
+    (ogr.wkbMultiPolygon, ["MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)))"], ogr.wkbMultiPolygon, None),
+    (ogr.wkbGeometryCollection, ["GEOMETRYCOLLECTION (POINT (1 2))"], ogr.wkbGeometryCollection, None),
+    (ogr.wkbPoint25D, ["POINT Z (1 2 3)"], ogr.wkbPoint25D, None),
+    (ogr.wkbUnknown, ["POINT (1 2)"], ogr.wkbPoint, None),
+    (ogr.wkbUnknown, ["POINT Z (1 2 3)"], ogr.wkbPoint25D, None),
+    (ogr.wkbUnknown, ["POLYGON ((0 0,0 1,1 1,1 0,0 0))",
+                      "MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)))"],
+     ogr.wkbMultiPolygon, ["MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)))",
+                           "MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)))"]),
+    (ogr.wkbUnknown, ["LINESTRING (1 2,3 4)",
+                      "MULTILINESTRING ((10 2,3 4))"],
+     ogr.wkbMultiLineString, ["MULTILINESTRING ((1 2,3 4))",
+                              "MULTILINESTRING ((10 2,3 4))"]),
+    (ogr.wkbUnknown, ["LINESTRING Z (1 2 10,3 4 20)",
+                      "MULTILINESTRING Z ((1 2 10,3 4 20))"],
+     ogr.wkbMultiLineString25D, ["MULTILINESTRING Z ((1 2 10,3 4 20))",
+                                 "MULTILINESTRING Z ((1 2 10,3 4 20))"]),
+    (ogr.wkbUnknown, ["POINT (1 2)", "LINESTRING (1 2,3 4)"], ogr.wkbUnknown, None),
+])
+def test_ogr_parquet_geometry_type(written_geom_type,written_wkt,expected_geom_type,expected_wkts):
+
+    outfilename = '/vsimem/out.parquet'
+    ds = gdal.GetDriverByName('Parquet').Create(outfilename, 0, 0, 0, gdal.GDT_Unknown)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    lyr = ds.CreateLayer('out', geom_type=written_geom_type, srs=srs)
+    for wkt in written_wkt:
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt(wkt))
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    ds = None
+
+    ds = ogr.Open(outfilename)
+    assert ds is not None
+    lyr = ds.GetLayer(0)
+    assert lyr.GetGeomType() == expected_geom_type
+    if expected_wkts is None:
+        expected_wkts = written_wkt
+    for wkt in expected_wkts:
+        f = lyr.GetNextFeature()
+        assert f.GetGeometryRef().ExportToIsoWkt() == wkt
 
     gdal.Unlink(outfilename)

@@ -212,12 +212,48 @@ void OGRParquetLayer::EstablishFeatureDefn()
                 m_aeGeomEncoding.push_back(eGeomEncoding);
                 if( eGeomType == wkbUnknown )
                 {
-                    auto osType = oJSONDef.GetString("geometry_type");
-                    if( osType.empty() )
-                        osType = oJSONDef.GetString("gdal:geometry_type");
-                    if( osType.empty() && CPLTestBool(CPLGetConfigOption(
-                                "OGR_PARQUET_COMPUTE_GEOMETRY_TYPE", "YES")) )
+                    const auto oType = oJSONDef.GetObj("geometry_type");
+                    if( oType.GetType() == CPLJSONObject::Type::String )
                     {
+                        const auto osType = oType.ToString();
+                        if( osType != "Unknown" )
+                            eGeomType = GetGeometryTypeFromString(osType);
+                    }
+                    else if( oType.GetType() == CPLJSONObject::Type::Array )
+                    {
+                        const auto oTypeArray = oType.ToArray();
+                        if( oTypeArray.Size() == 2 )
+                        {
+                            const auto eGeom1 = GetGeometryTypeFromString(oTypeArray[0].ToString());
+                            const auto eGeom2 = GetGeometryTypeFromString(oTypeArray[1].ToString());
+                            if( OGR_GT_HasZ(eGeom1) == OGR_GT_HasZ(eGeom2) &&
+                                OGR_GT_HasM(eGeom1) == OGR_GT_HasM(eGeom2) )
+                            {
+                                const auto eMinFlatGeom = std::min(
+                                    wkbFlatten(eGeom1), wkbFlatten(eGeom2));
+                                const auto eMaxFlatGeom = std::max(
+                                    wkbFlatten(eGeom1), wkbFlatten(eGeom2));
+                                if( eMinFlatGeom == wkbPolygon &&
+                                    eMaxFlatGeom == wkbMultiPolygon )
+                                {
+                                    eGeomType = OGR_GT_SetModifier(wkbMultiPolygon,
+                                                                   OGR_GT_HasZ(eGeom1),
+                                                                   OGR_GT_HasM(eGeom1));
+                                }
+                                else if( eMinFlatGeom == wkbLineString &&
+                                         eMaxFlatGeom == wkbMultiLineString )
+                                {
+                                    eGeomType = OGR_GT_SetModifier(wkbMultiLineString,
+                                                                   OGR_GT_HasZ(eGeom1),
+                                                                   OGR_GT_HasM(eGeom1));
+                                }
+                            }
+                        }
+                    }
+                    else if( CPLTestBool(CPLGetConfigOption(
+                                    "OGR_PARQUET_COMPUTE_GEOMETRY_TYPE", "YES")) )
+                    {
+                        // only with GeoParquet < 0.2.0
                         if( bParquetColValid &&
                             poParquetSchema->Column(iParquetCol)->physical_type() == parquet::Type::BYTE_ARRAY )
                         {
@@ -225,8 +261,6 @@ void OGRParquetLayer::EstablishFeatureDefn()
                                 m_poFeatureDefn->GetGeomFieldCount(), iParquetCol);
                         }
                     }
-                    else
-                        eGeomType = GetGeometryTypeFromString(osType);
                 }
 
                 oField.SetType(eGeomType);
