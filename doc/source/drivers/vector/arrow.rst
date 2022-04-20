@@ -3,6 +3,8 @@
 (Geo)Arrow IPC File Format / Stream
 ===================================
 
+.. versionadded:: 3.5
+
 .. shortname:: Arrow
 
 .. build_dependencies:: Apache Arrow C++ library

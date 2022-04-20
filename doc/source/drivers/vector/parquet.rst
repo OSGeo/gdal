@@ -3,6 +3,8 @@
 (Geo)Parquet
 ============
 
+.. versionadded:: 3.5
+
 .. shortname:: Parquet
 
 .. build_dependencies:: Parquet component of the Apache Arrow C++ library
