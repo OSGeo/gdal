@@ -10,11 +10,15 @@ elif ! [ -x "$(command -v gdalinfo)" ]; then
   exit 1
 fi
 
-git checkout `gdalinfo --version | sed -s "s/GDAL.*-\(.*\), .*/\1/"`
-    # Equiv to:
-    #     $ gdalinfo --version
-    #     GDAL 3.4.0dev-d2f9067ffb15e593e9b826ca939dbd183636c780, released 2021/10/26
-    #     $ git checkout d2f9067ffb15e593e9b826ca939dbd183636c780
+
+# Equiv to:
+#     $ gdalinfo --version
+#     GDAL 3.4.0dev-d2f9067ffb15e593e9b826ca939dbd183636c780, released 2021/10/26
+#     $ git checkout d2f9067ffb15e593e9b826ca939dbd183636c780
+if ! [git checkout --force `gdalinfo --version | sed -s "s/GDAL.*-\(.*\), .*/\1/"`]; then
+  echo 'Error: failed checkout'
+  exit 1
+ fi
 
 pip install -r ./requirements.txt
 pytest
