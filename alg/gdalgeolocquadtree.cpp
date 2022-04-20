@@ -55,77 +55,22 @@ static bool GDALGeoLocQuadTreeGetFeatureCorners(const GDALGeoLocTransformInfo *p
 {
     const size_t nExtendedWidth = psTransform->nGeoLocXSize +
                         ( psTransform->bOriginIsTopLeftCorner ? 0 : 1 );
-    size_t nX = nIdx % nExtendedWidth;
-    size_t nY = nIdx / nExtendedWidth;
+    int nX = static_cast<int>(nIdx % nExtendedWidth);
+    int nY = static_cast<int>(nIdx / nExtendedWidth);
 
     if( !psTransform->bOriginIsTopLeftCorner )
     {
-        if( nX == 0 || nY == 0 )
-        {
-            return
-                GDALGeoLocPosPixelLineToXY(psTransform,
-                    static_cast<double>(nX) - 1.0,
-                    static_cast<double>(nY) - 1.0,
-                    x0, y0)  &&
-                GDALGeoLocPosPixelLineToXY(psTransform,
-                    static_cast<double>(nX),
-                    static_cast<double>(nY) - 1.0,
-                    x1, y1) &&
-                GDALGeoLocPosPixelLineToXY(psTransform,
-                    static_cast<double>(nX) - 1.0,
-                    static_cast<double>(nY),
-                    x2, y2) &&
-                GDALGeoLocPosPixelLineToXY(psTransform,
-                    static_cast<double>(nX),
-                    static_cast<double>(nY),
-                    x3, y3);
-        }
         nX --;
         nY --;
-        nIdx = nY * psTransform->nGeoLocXSize + nX;
     }
 
-    x0 = psTransform->padfGeoLocX[nIdx];
-    y0 = psTransform->padfGeoLocY[nIdx];
-    if( nX == psTransform->nGeoLocXSize - 1 ||
-        nY == psTransform->nGeoLocYSize - 1 )
-    {
-        if( (psTransform->bHasNoData &&
-              x0 == psTransform->dfNoDataX) ||
-            !GDALGeoLocPosPixelLineToXY(psTransform,
-                static_cast<double>(nX + 1),
-                static_cast<double>(nY),
-                x1, y1) ||
-            !GDALGeoLocPosPixelLineToXY(psTransform,
-                static_cast<double>(nX),
-                static_cast<double>(nY + 1),
-                x2, y2) ||
-            !GDALGeoLocPosPixelLineToXY(psTransform,
-                static_cast<double>(nX + 1),
-                static_cast<double>(nY + 1),
-                x3, y3) )
-        {
-            return false;
-        }
-    }
-    else
-    {
-        x1 = psTransform->padfGeoLocX[nIdx+1];
-        y1 = psTransform->padfGeoLocY[nIdx+1];
-        x2 = psTransform->padfGeoLocX[nIdx+psTransform->nGeoLocXSize];
-        y2 = psTransform->padfGeoLocY[nIdx+psTransform->nGeoLocXSize];
-        x3 = psTransform->padfGeoLocX[nIdx+psTransform->nGeoLocXSize+1];
-        y3 = psTransform->padfGeoLocY[nIdx+psTransform->nGeoLocXSize+1];
-        if( psTransform->bHasNoData &&
-            (x0 == psTransform->dfNoDataX ||
-             x1 == psTransform->dfNoDataX ||
-             x2 == psTransform->dfNoDataX ||
-             x3 == psTransform->dfNoDataX) )
-        {
-            return false;
-        }
-    }
-    return true;
+    return GDALGeoLocExtractSquare(psTransform,
+                                   static_cast<int>(nX),
+                                   static_cast<int>(nY),
+                                   x0, y0,
+                                   x1, y1,
+                                   x2, y2,
+                                   x3, y3);
 }
 
 /************************************************************************/
@@ -181,24 +126,24 @@ bool GDALGeoLocBuildQuadTree( GDALGeoLocTransformInfo *psTransform )
 {
     // For the pixel-center convention, insert a "virtual" row and column
     // at top and left of the geoloc array.
-    const size_t nExtraPixel = psTransform->bOriginIsTopLeftCorner ? 0 : 1;
+    const int nExtraPixel = psTransform->bOriginIsTopLeftCorner ? 0 : 1;
 
-    if( psTransform->nGeoLocXSize > static_cast<size_t>(INT_MAX) - nExtraPixel ||
-        psTransform->nGeoLocYSize > static_cast<size_t>(INT_MAX) - nExtraPixel ||
+    if( psTransform->nGeoLocXSize > INT_MAX - nExtraPixel ||
+        psTransform->nGeoLocYSize > INT_MAX - nExtraPixel ||
         // The >> 1 shift is because we need to reserve the most-significant-bit
         // for the second 'version' of anti-meridian crossing quadrilaterals.
         // See below
-        (psTransform->nGeoLocXSize + nExtraPixel) > (std::numeric_limits<size_t>::max() >> 1) /
-            (psTransform->nGeoLocYSize + nExtraPixel) )
+        static_cast<size_t>(psTransform->nGeoLocXSize + nExtraPixel) > (std::numeric_limits<size_t>::max() >> 1) /
+            static_cast<size_t>(psTransform->nGeoLocYSize + nExtraPixel) )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Too big geolocation array");
         return false;
     }
 
-    const size_t nExtendedWidth = psTransform->nGeoLocXSize + nExtraPixel;
-    const size_t nExtendedHeight = psTransform->nGeoLocYSize + nExtraPixel;
-    const size_t nExtendedXYCount = nExtendedWidth * nExtendedHeight;
+    const int nExtendedWidth = psTransform->nGeoLocXSize + nExtraPixel;
+    const int nExtendedHeight = psTransform->nGeoLocYSize + nExtraPixel;
+    const size_t nExtendedXYCount = static_cast<size_t>(nExtendedWidth) * nExtendedHeight;
 
     CPLDebug("GEOLOC", "Start quadtree construction");
 

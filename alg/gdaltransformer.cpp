@@ -1656,9 +1656,13 @@ bool GDALComputeAreaOfInterest(OGRSpatialReference* poSRS,
  * (GDAL &gt;= 3.0) Area of interest, used to compute the best coordinate operation
  * between the source and target SRS. If not specified, the bounding box of the
  * source raster will be used.
- * <li> GEOLOC_BACKMAP_OVERSAMPLE_FACTOR=]0.1,2]. (GDAL &gt;= 3.5) Oversample factor
+ * <li> GEOLOC_BACKMAP_OVERSAMPLE_FACTOR=[0.1,2]. (GDAL &gt;= 3.5) Oversample factor
  * used to derive the size of the "backmap" used for geolocation array transformers.
  * Default value is 1.3.
+ * <li> GEOLOC_USE_TEMP_DATASETS=YES/NO. (GDAL &gt;= 3.5) Whether temporary
+ * GeoTIFF datasets should be used to store the backmap. The default is NO, that
+ * is to use in-memory arrays, unless the number of pixels of the geolocation
+ * array is greater than 16 megapixels.
  * </ul>
  *
  * The use case for the *_APPROX_ERROR_* options is when defining an approximate

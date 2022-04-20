@@ -50,7 +50,8 @@ def test_geoloc_1():
 # Test that we take into account the min/max of the geoloc arrays
 
 
-def test_geoloc_bounds():
+@pytest.mark.parametrize("use_temp_datasets", ['YES', 'NO'])
+def test_geoloc_bounds(use_temp_datasets):
 
     lon_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/lon.tif', 360, 1, 1, gdal.GDT_Float32)
     lon_ds.WriteRaster(0, 0, 360, 1, array.array('f', [91 + 0.5 * x for x in range(178)] + [-179.9 + 0.5 * x for x in range(182)]))
@@ -72,8 +73,9 @@ def test_geoloc_bounds():
         'Y_BAND' : '1'
     }
     ds.SetMetadata(md, 'GEOLOCATION')
-    warped_ds = gdal.Warp('', ds, format='MEM')
-    assert warped_ds
+    with gdaltest.config_option('GDAL_GEOLOC_USE_TEMP_DATASETS', use_temp_datasets):
+        warped_ds = gdal.Warp('', ds, format='MEM')
+        assert warped_ds
 
     gdal.Unlink('/vsimem/lon.tif')
     gdal.Unlink('/vsimem/lat.tif')
@@ -86,7 +88,8 @@ def test_geoloc_bounds():
 # Test that the line filling logic works
 
 
-def test_geoloc_fill_line():
+@pytest.mark.parametrize("use_temp_datasets", ['YES', 'NO'])
+def test_geoloc_fill_line(use_temp_datasets):
 
 
     ds = gdal.GetDriverByName('MEM').Create('', 200, 372)
@@ -103,9 +106,10 @@ def test_geoloc_fill_line():
     }
     ds.SetMetadata(md, 'GEOLOCATION')
     ds.GetRasterBand(1).Fill(1)
-    warped_ds = gdal.Warp('', ds, format='MEM')
-    assert warped_ds
-    assert warped_ds.GetRasterBand(1).Checksum() == 22338
+    with gdaltest.config_option('GDAL_GEOLOC_USE_TEMP_DATASETS', use_temp_datasets):
+        warped_ds = gdal.Warp('', ds, format='MEM')
+        assert warped_ds
+        assert warped_ds.GetRasterBand(1).Checksum() == 22338
 
 
 

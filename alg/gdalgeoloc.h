@@ -31,13 +31,53 @@
 
 #include "gdal_alg_priv.h"
 
-bool GDALGeoLocPosPixelLineToXY(const GDALGeoLocTransformInfo *psTransform,
-                            const double dfGeoLocPixel,
-                            const double dfGeoLocLine,
-                            double& dfX,
-                            double& dfY);
+/************************************************************************/
+/*                           GDALGeoLoc                                 */
+/************************************************************************/
+
+/*! @cond Doxygen_Suppress */
+
+template<class Accessors> struct GDALGeoLoc
+{
+    static bool LoadGeolocFinish( GDALGeoLocTransformInfo *psTransform );
+
+    static bool GenerateBackMap( GDALGeoLocTransformInfo *psTransform );
+
+    static bool PixelLineToXY(const GDALGeoLocTransformInfo *psTransform,
+                                const int nGeoLocPixel,
+                                const int nGeoLocLine,
+                                double& dfX,
+                                double& dfY);
+
+    static bool PixelLineToXY(const GDALGeoLocTransformInfo *psTransform,
+                                const double dfGeoLocPixel,
+                                const double dfGeoLocLine,
+                                double& dfX,
+                                double& dfY);
+
+    static bool ExtractSquare(const GDALGeoLocTransformInfo *psTransform,
+                              int nX, int nY,
+                              double& dfX_0_0, double& dfY_0_0,
+                              double& dfX_1_0, double& dfY_1_0,
+                              double& dfX_0_1, double& dfY_0_1,
+                              double& dfX_1_1, double& dfY_1_1);
+
+    static int Transform( void *pTransformArg,
+                         int bDstToSrc,
+                         int nPointCount,
+                         double *padfX, double *padfY,
+                         double * /* padfZ */,
+                         int *panSuccess );
+};
+/*! @endcond */
 
 
+bool GDALGeoLocExtractSquare(const GDALGeoLocTransformInfo *psTransform,
+                             int nX, int nY,
+                             double& dfX_0_0, double& dfY_0_0,
+                             double& dfX_1_0, double& dfY_1_0,
+                             double& dfX_0_1, double& dfY_0_1,
+                             double& dfX_1_1, double& dfY_1_1);
 
 void GDALInverseBilinearInterpolation(const double x,
                                       const double y,

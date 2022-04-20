@@ -197,11 +197,12 @@ typedef struct {
 
     // Map from target georef coordinates back to geolocation array
     // pixel line coordinates.  Built only if needed.
-    size_t      nBackMapWidth;
-    size_t      nBackMapHeight;
+    int         nBackMapWidth;
+    int         nBackMapHeight;
     double      adfBackMapGeoTransform[6];  // Maps georef to pixel/line.
-    float       *pafBackMapX;
-    float       *pafBackMapY;
+
+    bool        bUseArray;
+    void       *pAccessors;
 
     // Geolocation bands.
     GDALDatasetH     hDS_X;
@@ -211,10 +212,8 @@ typedef struct {
     int              bSwapXY;
 
     // Located geolocation data.
-    size_t           nGeoLocXSize;
-    size_t           nGeoLocYSize;
-    double           *padfGeoLocX;
-    double           *padfGeoLocY;
+    int              nGeoLocXSize;
+    int              nGeoLocYSize;
     double           dfMinX;
     double           dfYAtMinX;
     double           dfMinY;
