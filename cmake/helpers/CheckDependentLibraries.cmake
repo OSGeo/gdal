@@ -415,6 +415,8 @@ set(GDAL_USE_LIBCSF_INTERNAL ON)
 gdal_check_package(LERC "Enable LERC (external)" CAN_DISABLE RECOMMENDED)
 gdal_internal_library(LERC)
 
+gdal_check_package(BRUNSLI "Enable BRUNSLI for JPEG packing in MRF" CAN_DISABLE RECOMMENDED)
+
 # Disable by default the use of external shapelib, as currently the SAOffset member that holds file offsets in it is a
 # 'unsigned long', hence 32 bit on 32 bit platforms, whereas we can handle DBFs file > 4 GB. Internal shapelib has not
 # this issue
