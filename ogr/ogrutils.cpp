@@ -1769,6 +1769,60 @@ OGRErr OGRReadWKBGeometryType( const unsigned char * pabyData,
 }
 
 /************************************************************************/
+/*                      OGRReadWKTGeometryType()                        */
+/************************************************************************/
+
+OGRErr OGRReadWKTGeometryType( const char* pszWKT,
+                               OGRwkbGeometryType *peGeometryType )
+{
+    if( !peGeometryType )
+        return OGRERR_FAILURE;
+
+    OGRwkbGeometryType eGeomType = wkbUnknown;
+    if( STARTS_WITH_CI(pszWKT, "POINT") )
+        eGeomType = wkbPoint;
+    else if( STARTS_WITH_CI(pszWKT, "LINESTRING") )
+        eGeomType = wkbLineString;
+    else if( STARTS_WITH_CI(pszWKT, "POLYGON") )
+        eGeomType = wkbPolygon;
+    else if( STARTS_WITH_CI(pszWKT, "MULTIPOINT") )
+        eGeomType = wkbMultiPoint;
+    else if( STARTS_WITH_CI(pszWKT, "MULTILINESTRING") )
+        eGeomType = wkbMultiLineString;
+    else if( STARTS_WITH_CI(pszWKT, "MULTIPOLYGON") )
+        eGeomType = wkbMultiPolygon;
+    else if( STARTS_WITH_CI(pszWKT, "GEOMETRYCOLLECTION") )
+        eGeomType = wkbGeometryCollection;
+    else if( STARTS_WITH_CI(pszWKT, "CIRCULARSTRING") )
+        eGeomType = wkbCircularString;
+    else if( STARTS_WITH_CI(pszWKT, "COMPOUNDCURVE") )
+        eGeomType = wkbCompoundCurve;
+    else if( STARTS_WITH_CI(pszWKT, "CURVEPOLYGON") )
+        eGeomType = wkbCurvePolygon;
+    else if( STARTS_WITH_CI(pszWKT, "MULTICURVE") )
+        eGeomType = wkbMultiCurve;
+    else if( STARTS_WITH_CI(pszWKT, "MULTISURFACE") )
+        eGeomType = wkbMultiSurface;
+    else if( STARTS_WITH_CI(pszWKT, "POLYHEDRALSURFACE") )
+        eGeomType = wkbPolyhedralSurface;
+    else if( STARTS_WITH_CI(pszWKT, "TIN") )
+        eGeomType = wkbTIN;
+    else
+        return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+
+    if( strstr(pszWKT, " ZM") )
+        eGeomType = OGR_GT_SetModifier(eGeomType, true, true);
+    else if( strstr(pszWKT, " Z") )
+        eGeomType = OGR_GT_SetModifier(eGeomType, true, false);
+    else if( strstr(pszWKT, " M") )
+        eGeomType = OGR_GT_SetModifier(eGeomType, false, true);
+
+    *peGeometryType = eGeomType;
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
 /*                        OGRFormatFloat()                              */
 /************************************************************************/
 

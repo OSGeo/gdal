@@ -83,6 +83,13 @@ jobs:
           && sudo make install
         sudo ldconfig
         #
+        # Install Arrow C++
+        sudo apt-get install -y -V ca-certificates lsb-release wget
+        wget https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb
+        sudo apt-get install -y -V ./apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb
+        sudo apt-get update
+        sudo apt-get install -y -V libarrow-dev libparquet-dev
+        #
         # Workaround bug in ogdi packaging
         sudo ln -s /usr/lib/ogdi/libvrf.so /usr/lib
         #
@@ -344,7 +351,8 @@ jobs:
             libnetcdf openjpeg poppler libtiff libpng xerces-c expat libxml2 kealib json-c \
             cfitsio freexl geotiff jpeg libpq libspatialite libwebp-base pcre pcre2 postgresql \
             sqlite tiledb zstd cryptopp cgal doxygen librttopo libkml openssl xz \
-            openjdk ant qhull armadillo blas blas-devel libblas libcblas liblapack liblapacke blosc
+            openjdk ant qhull armadillo blas blas-devel libblas libcblas liblapack liblapacke blosc \
+            "arrow-cpp>=7.0.0"
         cd $CONDA_PREFIX/Library/share/proj
         curl http://download.osgeo.org/proj/proj-datumgrid-1.8.tar.gz > proj-datumgrid-1.8.tar.gz
         tar xvzf proj-datumgrid-1.8.tar.gz

@@ -174,9 +174,16 @@ char CPL_DLL * OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId,
 /*                        WKB Type Handling encoding                    */
 /************************************************************************/
 
-OGRErr OGRReadWKBGeometryType( const unsigned char * pabyData,
+OGRErr CPL_DLL OGRReadWKBGeometryType( const unsigned char * pabyData,
                                OGRwkbVariant wkbVariant,
                                OGRwkbGeometryType *eGeometryType );
+
+/************************************************************************/
+/*                        WKT Type Handling encoding                    */
+/************************************************************************/
+
+OGRErr CPL_DLL OGRReadWKTGeometryType( const char* pszWKT,
+                                       OGRwkbGeometryType *peGeometryType );
 
 /************************************************************************/
 /*                            Other                                     */
