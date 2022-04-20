@@ -153,6 +153,7 @@ target_public_header(
   gdal_priv.h
   gdal_proxy.h
   gdal_rat.h
+  gdalcachedpixelaccessor.h
   rawdataset.h
   gdalgeorefpamdataset.h
   gdal_mdreader.h)
