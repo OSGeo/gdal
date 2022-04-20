@@ -26,11 +26,11 @@ must be run by a user with read/write access to the files it is working
 with.
 
 The driver also supports reading and writing the
-following non-linear geometry types :CIRCULARSTRING, COMPOUNDCURVE,
+following non-linear geometry types: CIRCULARSTRING, COMPOUNDCURVE,
 CURVEPOLYGON, MULTICURVE and MULTISURFACE
 
-GeoPackage raster/tiles are supported. See
-:ref:`GeoPackage raster <raster.gpkg>` documentation page
+GeoPackage raster/tiles are supported. See the 
+:ref:`GeoPackage raster <raster.gpkg>` documentation page.
 
 Driver capabilities
 -------------------
@@ -91,32 +91,32 @@ that this will result in a full rewrite of the file.
 SQL functions
 ~~~~~~~~~~~~~
 
-The following SQL functions, from the GeoPackage specification, are available :
+The following SQL functions, from the GeoPackage specification, are available:
 
--  ST_MinX(geom *Geometry*) : returns the minimum X coordinate of the
+-  ST_MinX(geom *Geometry*): returns the minimum X coordinate of the
    geometry
--  ST_MinY(geom *Geometry*) : returns the minimum Y coordinate of the
+-  ST_MinY(geom *Geometry*): returns the minimum Y coordinate of the
    geometry
--  ST_MaxX(geom *Geometry*) : returns the maximum X coordinate of the
+-  ST_MaxX(geom *Geometry*): returns the maximum X coordinate of the
    geometry
--  ST_MaxY(geom *Geometry*) : returns the maximum Y coordinate of the
+-  ST_MaxY(geom *Geometry*): returns the maximum Y coordinate of the
    geometry
--  ST_IsEmpty(geom *Geometry*) : returns 1 if the geometry is empty (but
+-  ST_IsEmpty(geom *Geometry*): returns 1 if the geometry is empty (but
    not null), e.g. a POINT EMPTY geometry
--  ST_GeometryType(geom *Geometry*) : returns the geometry type :
+-  ST_GeometryType(geom *Geometry*): returns the geometry type:
    'POINT', 'LINESTRING', 'POLYGON', 'MULTIPOLYGON', 'MULTILINESTRING',
    'MULTIPOINT', 'GEOMETRYCOLLECTION'
--  ST_SRID(geom *Geometry*) : returns the SRID of the geometry
+-  ST_SRID(geom *Geometry*): returns the SRID of the geometry
 -  GPKG_IsAssignable(expected_geom_type *String*, actual_geom_type
    *String*) : mainly, needed for the 'Geometry Type Triggers Extension'
 
 The following functions, with identical syntax and semantics as in
 Spatialite, are also available :
 
--  CreateSpatialIndex(table_name *String*, geom_column_name *String*) :
+-  CreateSpatialIndex(table_name *String*, geom_column_name *String*):
    creates a spatial index (RTree) on the specified table/geometry
    column
--  DisableSpatialIndex(table_name *String*, geom_column_name *String*) :
+-  DisableSpatialIndex(table_name *String*, geom_column_name *String*):
    drops an existing spatial index (RTree) on the specified
    table/geometry column
 -  ST_Transform(geom *Geometry*, target_srs_id *Integer*): reproject the geometry
@@ -143,8 +143,8 @@ Transaction support
 
 The driver implements transactions at the database level, per :ref:`rfc-54`
 
-Opening options
----------------
+Dataset open options
+--------------------
 
 The following open options are available:
 
@@ -175,13 +175,13 @@ The following open options are available:
    https://www.sqlite.org/uri.html
 
 Note: open options are typically specified with "-oo name=value" syntax
-in most OGR utilities, or with the GDALOpenEx() API call.
+in most OGR utilities, or with the ``GDALOpenEx()`` API call.
 
 Note: configuration option :decl_configoption:`OGR_SQLITE_JOURNAL` can
 be used to set the journal mode of the GeoPackage (and thus SQLite)
 file, see also https://www.sqlite.org/pragma.html#pragma_journal_mode.
 
-Creation Issues
+Creation issues
 ---------------
 
 When creating a new GeoPackage file, the driver will attempt to force
@@ -197,7 +197,7 @@ When setting the option, take care to meet the specific time format
 requirement of the GeoPackage standard,
 e.g. `for version 1.2 <https://www.geopackage.org/spec120/#r15>`__.
 
-Dataset Creation Options
+Dataset creation options
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 The following creation options (specific to vector, or common with
@@ -218,10 +218,12 @@ raster) are available:
    When using UTC format, with a unspecified timezone, UTC will be assumed.
 
 Other options are available for raster. See the :ref:`GeoPackage raster <raster.gpkg>`
-documentation page
+documentation page.
 
-Layer Creation Options
+Layer creation options
 ~~~~~~~~~~~~~~~~~~~~~~
+
+The following layer creation options are available:
 
 -  **GEOMETRY_NAME**: Column to use for the geometry column. Default to
    "geom". Note: This option was called GEOMETRY_COLUMN in releases before
@@ -265,6 +267,51 @@ Layer Creation Options
    gpkg_extensions table. Starting with GDAL 3.3, OGR_ASPATIAL is no longer
    available on creation.
 
+Configuration options
+---------------------
+
+The following :ref:`configuration options <configoptions>` are 
+available:
+
+- :decl_configoption:`OGR_SQLITE_JOURNAL` can be used to set the journal mode 
+  of the GeoPackage (and thus SQLite) file, see also 
+  https://www.sqlite.org/pragma.html#pragma_journal_mode.
+
+- :decl_configoption:`OGR_SQLITE_CACHE`: see 
+  :ref:`Performance hints <target_drivers_vector_gpkg_performance_hints>`.
+  
+- :decl_configoption:`OGR_SQLITE_SYNCHRONOUS`: see 
+  :ref:`Performance hints <target_drivers_vector_gpkg_performance_hints>`.
+
+- :decl_configoption:`OGR_SQLITE_LOAD_EXTENSIONS` =extension1,...,extensionN,ENABLE_SQL_LOAD_EXTENSION:
+  (GDAL >= 3.5.0). Comma separated list of names of shared libraries containing
+  extensions to load at database opening.
+  If a file cannot be loaded directly, attempts are made to load with various
+  operating-system specific extensions added. So
+  for example, if "samplelib" cannot be loaded, then names like "samplelib.so"
+  or "samplelib.dylib" or "samplelib.dll" might be tried also.
+  The special value ``ENABLE_SQL_LOAD_EXTENSION`` can be used to enable the use of
+  the SQL ``load_extension()`` function, which is normally disabled in standard
+  builds of sqlite3.
+  Loading extensions as a potential security impact if they are untrusted.
+
+- :decl_configoption:`OGR_SQLITE_PRAGMA` can be used to specify any SQLite
+  `pragma <http://www.sqlite.org/pragma.html>`__ . The syntax is
+  ``OGR_SQLITE_PRAGMA = "pragma_name=pragma_value[,pragma_name2=pragma_value2]*"``.
+
+- :decl_configoption:`OGR_CURRENT_DATE`: the driver updates the GeoPackage 
+  ``last_change`` timestamp when the file is created or modified. If consistent 
+  binary output is required for reproducibility, the timestamp can be forced to 
+  a specific value by setting this global configuration option.
+  When setting the option, take care to meet the specific time format
+  requirement of the GeoPackage standard,
+  e.g. `for version 1.2 <https://www.geopackage.org/spec120/#r15>`__.
+
+- :decl_configoption:`SQLITE_USE_OGR_VFS` =YES enables extra buffering/caching 
+  by the GDAL/OGR I/O layer and can speed up I/O. More information 
+  :ref:`here <target_user_virtual_file_systems_file_caching>`.
+  Be aware that no file locking will occur if this option is activated, so 
+  concurrent edits may lead to database corruption.
 
 Metadata
 --------
@@ -309,7 +356,7 @@ spatial tables that are not registered through the gdal_aspatial
 extension, and support the GeoPackage 1.2 "attributes" data type as
 well. Starting with GDAL 2.2, non spatial tables are by default created
 following the GeoPackage 1.2 "attributes" data type (can be controlled
-with the ASPATIAL_VARIANT layer creation option)
+with the ASPATIAL_VARIANT layer creation option).
 
 Spatial views
 -------------
@@ -338,7 +385,7 @@ This requires GDAL to be compiled with the SQLITE_HAS_COLUMN_METADATA
 option and SQLite3 with the SQLITE_ENABLE_COLUMN_METADATA option.
 Starting with GDAL 2.3, this can be easily verified if the
 SQLITE_HAS_COLUMN_METADATA=YES driver metadata item is declared (for
-example with "ogrinfo --format GPKG")
+example with "ogrinfo --format GPKG").
 
 Coordinate Reference Systems
 ----------------------------
@@ -384,6 +431,14 @@ Level of support of GeoPackage Extensions
    * - :ref:`vector.geopackage_aspatial`
      - No
      - Yes. Deprecated in GDAL 2.2 for the *attributes* official data_type
+
+.. _target_drivers_vector_gpkg_performance_hints:
+
+Performance hints
+-----------------
+
+The same performance hints apply as those mentioned for the 
+:ref:`SQLite driver <target_drivers_vector_sqlite_performance_hints>`.
 
 Examples
 --------

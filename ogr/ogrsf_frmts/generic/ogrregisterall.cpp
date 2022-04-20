@@ -256,6 +256,12 @@ void OGRRegisterAllInternal()
 #ifdef HANA_ENABLED
     RegisterOGRHANA();
 #endif
+#ifdef PARQUET_ENABLED
+    RegisterOGRParquet();
+#endif
+#ifdef ARROW_ENABLED
+    RegisterOGRArrow();
+#endif
 
     // NOTE: you need to generally insert your own driver before that line.
 

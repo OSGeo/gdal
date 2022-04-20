@@ -184,7 +184,7 @@ SetMetadataItem(), the later values will override the values built from
 the projection string.
 
 All those can for example be modified with the -a_ullr, -a_srs or -mo
-switches of the `gdal_edit.py <gdal_edit.html>`__ utility.
+switches of the :ref:`gdal_edit` utility.
 
 For example:
 

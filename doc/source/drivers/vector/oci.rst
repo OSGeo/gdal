@@ -69,9 +69,9 @@ Caveats
 -  If an attribute called OGR_FID exists in the schema for tables being
    read, it will be used as the FID. Random (FID based) reads on tables
    without an identified (and indexed) FID field can be very slow. To
-   force use of a particular field name the OCI_FID configuration
-   variable (i.e. environment variable) can be set to the target field
-   name.
+   force use of a particular field name the :decl_configoption:`OCI_FID` 
+   configuration option (e.g. environment variable) can be set to the 
+   target field name.
 -  Curved geometry types are converted to linestrings or linear rings in
    six degree segments when reading. The driver has no support for
    writing curved geometries.

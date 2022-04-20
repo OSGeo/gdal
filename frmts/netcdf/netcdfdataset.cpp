@@ -6547,10 +6547,7 @@ void netCDFDataset::CreateSubDatasetList( int nGroupId )
 /************************************************************************/
 
 NetCDFFormatEnum netCDFDataset::IdentifyFormat( GDALOpenInfo *poOpenInfo,
-#ifndef HAVE_HDF5
-CPL_UNUSED
-#endif
-                                   bool bCheckExt = true )
+                                                bool bCheckExt )
 {
     // Does this appear to be a netcdf file? If so, which format?
     // http://www.unidata.ucar.edu/software/netcdf/docs/faq.html#fv1_5
@@ -6619,7 +6616,9 @@ CPL_UNUSED
     {
         return NCDF_FORMAT_NC2;
     }
-    else if( STARTS_WITH_CI(pszHeader, achHDF5Signature) )
+    else if( STARTS_WITH_CI(pszHeader, achHDF5Signature) ||
+             (poOpenInfo->nHeaderBytes > 512 + 8 &&
+              memcmp(pszHeader + 512, achHDF5Signature, 8) == 0) )
     {
         // Requires netCDF-4/HDF5 support in libnetcdf (not just libnetcdf-v4).
         // If HDF5 is not supported in GDAL, this driver will try to open the
@@ -6683,7 +6682,8 @@ CPL_UNUSED
     // etc.
     const char *pszExtension = CPLGetExtension(poOpenInfo->pszFilename);
     if( poOpenInfo->fpL != nullptr &&
-        (EQUAL(pszExtension, "nc") || EQUAL(pszExtension, "cdf") ||
+        (!bCheckExt ||
+         EQUAL(pszExtension, "nc") || EQUAL(pszExtension, "cdf") ||
          EQUAL(pszExtension, "nc4")) )
     {
         vsi_l_offset nOffset = 512;
@@ -7440,7 +7440,8 @@ int netCDFDataset::Identify( GDALOpenInfo *poOpenInfo )
     {
         return TRUE;
     }
-    const NetCDFFormatEnum eTmpFormat = IdentifyFormat(poOpenInfo);
+    const NetCDFFormatEnum eTmpFormat = IdentifyFormat(poOpenInfo,
+                                                       /* bCheckExt = */ true);
     if( NCDF_FORMAT_NC == eTmpFormat ||
         NCDF_FORMAT_NC2 == eTmpFormat ||
         NCDF_FORMAT_NC4 == eTmpFormat ||
@@ -8154,7 +8155,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
     NetCDFFormatEnum eTmpFormat = NCDF_FORMAT_NONE;
     if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "NETCDF:") )
     {
-        eTmpFormat = IdentifyFormat(poOpenInfo);
+        eTmpFormat = IdentifyFormat(poOpenInfo, /* bCheckExt = */ true);
 #ifdef NCDF_DEBUG
         CPLDebug("GDAL_netCDF", "identified format %d", eTmpFormat);
 #endif
@@ -8287,7 +8288,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
             // Identify Format from real file, with bCheckExt=FALSE.
             GDALOpenInfo *poOpenInfo2 =
                 new GDALOpenInfo(poDS->osFilename.c_str(), GA_ReadOnly);
-            poDS->eFormat = IdentifyFormat(poOpenInfo2, FALSE);
+            poDS->eFormat = IdentifyFormat(poOpenInfo2, /* bCheckExt = */ false);
             delete poOpenInfo2;
             if( NCDF_FORMAT_NONE == poDS->eFormat ||
                 NCDF_FORMAT_UNKNOWN == poDS->eFormat )

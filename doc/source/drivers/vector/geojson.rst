@@ -111,9 +111,10 @@ Schema detection will recognized fields of type String, Integer, Real,
 StringList, IntegerList and RealList, Integer(Boolean), Date, Time and DateTime.
 
 It is possible to tell the driver to not to process attributes by
-setting environment variable **ATTRIBUTES_SKIP=YES**. Default behavior
-is to preserve all attributes (as an union, see previous paragraph),
-what is equal to setting **ATTRIBUTES_SKIP=NO**.
+setting configuration option :decl_configoption:`ATTRIBUTES_SKIP` =YES. 
+Default behavior is to preserve all attributes (as an union, see 
+previous paragraph), what is equal to setting 
+:decl_configoption:`ATTRIBUTES_SKIP` =NO.
 
 If the NATIVE_DATA open option is set to YES, the Feature JSon object
 will be stored as a serialized JSon object in the NativeData property of
@@ -143,14 +144,17 @@ as a common denominator. This behavior may be controlled by setting
 the :decl_configoption:`GEOMETRY_AS_COLLECTION` configuration option to YES
 (default is NO).
 
-configuration options
+Configuration options
 ---------------------
 
--  :decl_configoption:`GEOMETRY_AS_COLLECTION` - used to control translation of
-   geometries: YES - wrap geometries with OGRGeometryCollection type
+The following :ref:`configuration options <configoptions>` are 
+available:
+
+-  :decl_configoption:`GEOMETRY_AS_COLLECTION`: used to control translation of
+   geometries: YES: wrap geometries with OGRGeometryCollection type
 -  :decl_configoption:`ATTRIBUTES_SKIP` - controls translation of attributes:
    YES - skip all attributes
--  :decl_configoption:`OGR_GEOJSON_MAX_OBJ_SIZE` - (GDAL >= 3.0.2) size in
+-  :decl_configoption:`OGR_GEOJSON_MAX_OBJ_SIZE` (GDAL >= 3.0.2): size in
    MBytes of the maximum accepted single feature, default value is 200MB
 
 Open options

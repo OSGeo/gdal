@@ -52,8 +52,8 @@ format <https://github.com/OSGeo/gdal/blob/master/data/ogrvrt.xsd>`__ is
 available. When GDAL is configured with libXML2
 support, that schema will be used to validate the VRT documents.
 Non-conformities will be reported only as warnings. That validation can
-be disabled by setting the GDAL_XML_VALIDATION configuration option to
-NO.
+be disabled by setting the :decl_configoption:`GDAL_XML_VALIDATION` 
+configuration option to "NO".
 
 Metadata element
 ++++++++++++++++

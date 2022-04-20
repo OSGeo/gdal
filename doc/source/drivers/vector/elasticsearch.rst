@@ -34,7 +34,8 @@ a dataset:
 -  Using *ES:http://hostname:port* (where port is typically 9200)
 -  Using *ES:* with the open options to specify HOST and PORT
 
-The open options available are :
+Layer open options
+------------------
 
 -  **HOST**\ =hostname: Server hostname. Default to localhost.
 -  **PORT**\ =port. Server port. Default to 9200.
@@ -102,27 +103,6 @@ with text fields within Elasticsearch.
 ::
 
    ogr2ogr -progress --config ES_WRITEMAP /path/to/file/map.txt -f "Elasticsearch" http://localhost:9200 my_shapefile.shp
-
-The Elasticsearch writer supports the following Configuration Options.
-Starting with GDAL 2.1, layer creation options are also available and
-should be preferred:
-
--  **ES_WRITEMAP**\ =/path/to/mapfile.txt. Creates a mapping file that
-   can be modified by the user prior to insert in to the index. No
-   feature will be written. Note that this will properly work only if
-   only one single layer is created. Starting with GDAL 2.1, the
-   **WRITE_MAPPING** layer creation option should rather be used.
--  **ES_META**\ =/path/to/mapfile.txt. Tells the driver to the
-   user-defined field mappings. Starting with GDAL 2.1, the **MAPPING**
-   layer creation option should rather be used.
--  **ES_BULK**\ =5000000. Identifies the maximum size in bytes of the
-   buffer to store documents to be inserted at a time. Lower record
-   counts help with memory consumption within Elasticsearch but take
-   longer to insert. Starting with GDAL 2.1, the **BULK_SIZE** layer
-   creation option should rather be used.
--  **ES_OVERWRITE**\ =1. Overwrites the current index by deleting an
-   existing one. Starting with GDAL 2.1, the **OVERWRITE** layer
-   creation option should rather be used.
 
 Geometry types
 --------------
@@ -495,6 +475,30 @@ options:
    in field name as sub-document. Defaults to YES.
 -  **IGNORE_SOURCE_ID**\ =YES/NO. Whether to ignore \_id field in
    features passed to CreateFeature(). Defaults to NO.
+
+Configuration options
+---------------------
+
+The following (deprecated) :ref:`configuration options <configoptions>` are 
+available. Starting with GDAL 2.1, layer creation options are also available 
+and should be preferred (see above):
+
+-  :decl_configoption:`ES_WRITEMAP` =/path/to/mapfile.txt. Creates a mapping file that
+   can be modified by the user prior to insert in to the index. No
+   feature will be written. Note that this will properly work only if
+   only one single layer is created. Starting with GDAL 2.1, the
+   **WRITE_MAPPING** layer creation option should rather be used.
+-  :decl_configoption:`ES_META` =/path/to/mapfile.txt. Tells the driver to the
+   user-defined field mappings. Starting with GDAL 2.1, the **MAPPING**
+   layer creation option should rather be used.
+-  :decl_configoption:`ES_BULK` =5000000. Identifies the maximum size in bytes of the
+   buffer to store documents to be inserted at a time. Lower record
+   counts help with memory consumption within Elasticsearch but take
+   longer to insert. Starting with GDAL 2.1, the **BULK_SIZE** layer
+   creation option should rather be used.
+-  :decl_configoption:`ES_OVERWRITE` =1. Overwrites the current index by deleting an
+   existing one. Starting with GDAL 2.1, the **OVERWRITE** layer
+   creation option should rather be used.
 
 Examples
 --------
