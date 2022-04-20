@@ -761,7 +761,7 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
                 double z = 0.0;
                 int bSuccess = TRUE;
                 if( pfnTransformer( pTransformArg, FALSE, 1,
-                                     &x, &y, &z, &bSuccess ) || !bSuccess )
+                                     &x, &y, &z, &bSuccess ) && bSuccess )
                 {
                     if( bGotInitialPoint )
                     {
