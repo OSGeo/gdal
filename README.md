@@ -59,6 +59,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 See [docker/](docker/)
 
+### Gitpod workspace
+
+Spin up a cloud-based developer environment linux machine with gdal installed on [Gitpod](https://www.gitpod.io/) infrastructure:
+https://www.gitpod.io/#https://github.com/OSGeo/gdal
+
 ### Code of Conduct
 
 See [doc/source/community/code_of_conduct.rst](doc/source/community/code_of_conduct.rst)
