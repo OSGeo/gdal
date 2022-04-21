@@ -1,3 +1,34 @@
+# Distributed under the OSI-approved BSD 3-Clause License.  See accompanying file COPYING-CMAKE-SCRIPTS or
+# https://cmake.org/licensing for details.
+
+#[=======================================================================[.rst:
+FindBRUNSLI
+--------
+
+Find the BRUNSLI libraries
+
+Brunsli encode and decode libraries are built with CMake. 
+Unfortunately Brunsli does not export cmake config files yet, thus this find module
+
+IMPORTED targets
+^^^^^^^^^^^^^^^^
+
+This module defines the following 
+:prop_tgt:`IMPORTED` target: ``BRUNSLI::ENCODE``
+:prop_tgt:`IMPORTED` target: ``BRUNSLI::DECODE``
+
+Result variables
+^^^^^^^^^^^^^^^^
+
+This module will set the following variables if found:
+
+``BRUNSLI_INCLUDE_DIR`` - where to find encode.h, decode.h, etc.
+``BRUNSLI_ENC_LIB`` - the library to link against to encode Brunsli.
+``BRUNSLI_DEC_LIB`` - the library to link against to decode Brunsli.
+``BRUNSLI_FOUND`` - TRUE if found
+
+#]=======================================================================]
+
 set(BRUNSLI_NAME BRUNSLI)
 
 find_path(BRUNSLI_INCLUDE_DIR brunsli/encode.h
@@ -17,13 +48,11 @@ find_library(BRUNSLI_DEC_LIB
     PATH_SUFFIXES ${BRUNSLI_NAME}/lib lib
 )
 
-set(BRUNSLI_LIBRARIES ${BRUNSLI_ENC_LIB} ${BRUNSLI_DEC_LIB})
-
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(BRUNSLI
-    REQUIRED_VARS   BRUNSLI_LIBRARIES BRUNSLI_INCLUDE_DIR
+    REQUIRED_VARS   BRUNSLI_ENC_LIB BRUNSLI_DEC_LIB BRUNSLI_INCLUDE_DIR
 )
-mark_as_advanced(BRUNSLI_INCLUDE_DIR BRUNSLI_LIBRARIES)
+mark_as_advanced(BRUNSLI_INCLUDE_DIR BRUNSLI_ENC_LIB BRUNSLI_DEC_LIB)
 
 if(BRUNSLI_FOUND)
     if(NOT TARGET BRUNSLI::ENCODE)
