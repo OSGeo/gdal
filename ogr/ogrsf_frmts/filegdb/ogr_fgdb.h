@@ -218,6 +218,8 @@ public:
 
   virtual const char* GetMetadataItem(const char* pszName, const char* pszDomain) override;
 
+  virtual OGRErr      Rename(const char* pszNewName) override;
+
 protected:
 
   bool GDBToOGRFields(CPLXMLNode* psFields);

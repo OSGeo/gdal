@@ -3850,6 +3850,45 @@ OGRErr FGdbLayer::GetLayerMetadataXML (char **ppXml)
 }
 
 /************************************************************************/
+/*                           Rename()                                   */
+/************************************************************************/
+
+OGRErr FGdbLayer::Rename(const char* pszDstTableName)
+{
+    if( !TestCapability(OLCRename) )
+        return OGRERR_FAILURE;
+
+    if( m_pTable == nullptr )
+        return OGRERR_FAILURE;
+
+    if( m_pDS->GetLayerByName(pszDstTableName) != nullptr )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Layer %s already exists",
+                 pszDstTableName);
+        return OGRERR_FAILURE;
+    }
+
+    long hr = m_pDS->GetGDB()->Rename(
+        m_wstrTablePath, m_wstrType, StringToWString(pszDstTableName));
+
+    if ( FAILED(hr) )
+    {
+        GDBErr(hr, "Failed renaming layer");
+        return OGRERR_FAILURE;
+    }
+
+    m_strName = pszDstTableName;
+    auto strTablePath = WStringToString(m_wstrTablePath);
+    m_wstrTablePath = StringToWString(
+        strTablePath.substr(0, strTablePath.rfind('\\')) + "\\" + pszDstTableName);
+    SetDescription(pszDstTableName);
+    m_pFeatureDefn->SetName(pszDstTableName);
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
@@ -3893,6 +3932,9 @@ int FGdbLayer::TestCapability( const char* pszCap )
     else if (EQUAL(pszCap,OLCAlterFieldDefn)) /* AlterFieldDefn() */
         return m_pDS->GetUpdate();
 #endif
+
+    else if (EQUAL(pszCap,OLCRename)) /* Rename() */
+        return m_pDS->GetUpdate();
 
     else if (EQUAL(pszCap,OLCFastSetNextByIndex)) /* TBD FastSetNextByIndex() */
         return FALSE;

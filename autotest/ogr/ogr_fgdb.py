@@ -2349,6 +2349,66 @@ def test_ogr_fgdb_read_layer_hierarchy():
 
 
 ###############################################################################
+# Test renaming a layer
+
+
+@pytest.mark.parametrize("options", [ [], ['FEATURE_DATASET=fd1'] ])
+def test_ogr_fgdb_rename_layer(fgdb_drv, options):
+
+    try:
+        shutil.rmtree("tmp/rename.gdb")
+    except OSError:
+        pass
+
+    srs4326 = osr.SpatialReference()
+    srs4326.ImportFromEPSG(4326)
+
+    ds = fgdb_drv.CreateDataSource('tmp/rename.gdb')
+    ds.CreateLayer('other_layer', geom_type=ogr.wkbNone)
+    lyr = ds.CreateLayer('foo', geom_type=ogr.wkbPoint, srs=srs4326, options=options)
+    assert lyr.TestCapability(ogr.OLCRename) == 1
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (1 2)'))
+    lyr.CreateFeature(f)
+
+    assert lyr.Rename('bar') == ogr.OGRERR_NONE
+    assert lyr.GetDescription() == 'bar'
+    assert lyr.GetLayerDefn().GetName() == 'bar'
+
+    with gdaltest.error_handler():
+        assert lyr.Rename('bar') != ogr.OGRERR_NONE
+
+    with gdaltest.error_handler():
+        assert lyr.Rename('other_layer') != ogr.OGRERR_NONE
+
+    # Second renaming
+    assert lyr.Rename('baz') == ogr.OGRERR_NONE
+    assert lyr.GetDescription() == 'baz'
+    assert lyr.GetLayerDefn().GetName() == 'baz'
+
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef() is not None
+
+    ds = None
+
+    ds = ogr.Open('tmp/rename.gdb')
+    lyr = ds.GetLayerByName('baz')
+    assert lyr is not None, [ ds.GetLayer(i).GetName() for i in range(ds.GetLayerCount()) ]
+
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef() is not None
+
+    ds = None
+
+    try:
+        shutil.rmtree("tmp/rename.gdb")
+    except OSError:
+        pass
+
+
+###############################################################################
 # Test that non-spatial tables which are not present in GDB_Items are listed
 # see https://github.com/OSGeo/gdal/issues/4463
 

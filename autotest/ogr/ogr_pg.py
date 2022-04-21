@@ -2073,6 +2073,18 @@ def test_ogr_pg_44():
     assert feat.GetGeometryRef().ExportToWkt() == 'POINT (0.5 0.5 1)'
     ds.ReleaseResultSet(sql_lyr)
 
+    # Test layer renaming
+    assert layer.TestCapability(ogr.OLCRename) == 1
+    assert layer.Rename("from") == ogr.OGRERR_NONE
+    assert layer.GetDescription() == "from"
+    assert layer.GetLayerDefn().GetName() == "from"
+    layer.ResetReading()
+    feat = layer.GetNextFeature()
+    assert feat.GetGeometryRef().ExportToWkt() == 'POINT (0.5 0.5 1)'
+    with gdaltest.error_handler():
+        assert layer.Rename("from") != ogr.OGRERR_NONE
+    assert layer.Rename("select") == ogr.OGRERR_NONE
+
     ds.Destroy()
 
 ###############################################################################

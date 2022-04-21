@@ -144,7 +144,7 @@ public:
     virtual ~OGRNGWLayer();
 
     bool Delete();
-    bool Rename( const std::string &osNewName );
+    virtual OGRErr Rename( const char* pszNewName ) override;
     std::string GetResourceId() const;
 
     /* OGRLayer */

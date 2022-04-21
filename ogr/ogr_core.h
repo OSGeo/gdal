@@ -845,9 +845,11 @@ int CPL_DLL OGRParseDate( const char *pszInput, OGRField *psOutput,
 #define OLCCreateGeomField     "CreateGeomField"    /**< Layer capability for geometry field creation */
 #define OLCCurveGeometries     "CurveGeometries"    /**< Layer capability for curve geometries support */
 #define OLCMeasuredGeometries  "MeasuredGeometries" /**< Layer capability for measured geometries support */
+#define OLCRename              "Rename"             /**< Layer capability for a layer that supports Rename() */
 
 #define ODsCCreateLayer        "CreateLayer"        /**< Dataset capability for layer creation */
 #define ODsCDeleteLayer        "DeleteLayer"        /**< Dataset capability for layer deletion */
+/* Reserved:                   "RenameLayer" */
 #define ODsCCreateGeomFieldAfterCreateLayer   "CreateGeomFieldAfterCreateLayer" /**< Dataset capability for geometry field creation support */
 #define ODsCCurveGeometries    "CurveGeometries"    /**< Dataset capability for curve geometries support */
 #define ODsCTransactions       "Transactions"       /**< Dataset capability for dataset transcations */

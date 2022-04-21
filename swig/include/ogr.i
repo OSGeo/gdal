@@ -472,6 +472,7 @@ typedef void retGetPoints;
 %constant char *OLCCreateGeomField     = "CreateGeomField";
 %constant char *OLCCurveGeometries     = "CurveGeometries";
 %constant char *OLCMeasuredGeometries  = "MeasuredGeometries";
+%constant char *OLCRename              = "Rename";
 
 %constant char *ODsCCreateLayer        = "CreateLayer";
 %constant char *ODsCDeleteLayer        = "DeleteLayer";
@@ -517,7 +518,8 @@ typedef int OGRErr;
 #define OLCStringsAsUTF8       "StringsAsUTF8"
 #define OLCCreateGeomField     "CreateGeomField"
 #define OLCCurveGeometries     "CurveGeometries"
-#define OLCMeasuredGeometries  "MeasuredGeometries";
+#define OLCMeasuredGeometries  "MeasuredGeometries"
+#define OLCRename              "Rename"
 
 #define ODsCCreateLayer        "CreateLayer"
 #define ODsCDeleteLayer        "DeleteLayer"
@@ -987,6 +989,12 @@ class OGRLayerShadow : public GDALMajorObjectShadow {
   ~OGRLayerShadow();
 public:
 %extend {
+
+  %apply Pointer NONNULL {const char * new_name};
+  OGRErr Rename(const char* new_name) {
+    return OGR_L_Rename( self, new_name);
+  }
+  %clear const char* new_name;
 
   int GetRefCount() {
     return OGR_L_GetRefCount(self);

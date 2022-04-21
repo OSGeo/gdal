@@ -678,6 +678,8 @@ OGRErr CPL_DLL OGR_L_AlterFieldDefn( OGRLayerH, int iField, OGRFieldDefnH hNewFi
 OGRErr CPL_DLL OGR_L_StartTransaction( OGRLayerH )  CPL_WARN_UNUSED_RESULT;
 OGRErr CPL_DLL OGR_L_CommitTransaction( OGRLayerH )  CPL_WARN_UNUSED_RESULT;
 OGRErr CPL_DLL OGR_L_RollbackTransaction( OGRLayerH );
+OGRErr CPL_DLL OGR_L_Rename( OGRLayerH hLayer, const char* pszNewName );
+
 /*! @cond Doxygen_Suppress */
 int    CPL_DLL OGR_L_Reference( OGRLayerH );
 int    CPL_DLL OGR_L_Dereference( OGRLayerH );
