@@ -15,6 +15,8 @@ add_library(
   cadtables.cpp
   opencad.cpp)
 target_compile_definitions(libopencad PRIVATE "OCAD_EXTERN=")
+# Enable below line to debug ossfuzz issues
+# target_compile_definitions(libopencad PRIVATE "-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION")
 target_include_directories(
   libopencad PRIVATE $<TARGET_PROPERTY:cpl,SOURCE_DIR> $<TARGET_PROPERTY:cpl,BINARY_DIR>
                      $<TARGET_PROPERTY:ogr_CAD,SOURCE_DIR> ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/dwg)
