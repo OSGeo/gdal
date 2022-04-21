@@ -1402,7 +1402,8 @@ int OGRShapeLayer::GetFeatureCountWithSpatialFilterOnly()
                 if( psShape )
                 {
                     poGeometry = SHPReadOGRObject( hSHP, iShape, psShape );
-                    poGeometry->getEnvelope( &sGeomEnv );
+                    if( poGeometry )
+                        poGeometry->getEnvelope( &sGeomEnv );
                     psShape = nullptr;
                 }
             }
