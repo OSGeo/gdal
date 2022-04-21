@@ -111,12 +111,6 @@ bool OGRParquetWriterLayer::SetOptions(CSLConstList papszOptions,
             return false;
         }
 
-        if( poSpatialRef == nullptr )
-        {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "Geometry column should have an associated CRS");
-        }
-
         m_poFeatureDefn->SetGeomType(eGType);
         auto eGeomEncoding = m_eGeomEncoding;
         if( eGeomEncoding == OGRArrowGeomEncoding::GEOARROW_GENERIC )
@@ -214,7 +208,7 @@ void OGRParquetWriterLayer::PerformStepsBeforeFinalFlushGroup()
         CPLTestBool(CPLGetConfigOption("OGR_PARQUET_WRITE_GEO", "YES")) )
     {
         CPLJSONObject oRoot;
-        oRoot.Add("version", "0.1.0");
+        oRoot.Add("version", "0.2.0");
         oRoot.Add("primary_column",
                   m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef());
         CPLJSONObject oColumns;

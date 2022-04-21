@@ -659,9 +659,7 @@ def test_ogr_parquet_geometry_type(written_geom_type,written_wkt,expected_geom_t
 
     outfilename = '/vsimem/out.parquet'
     ds = gdal.GetDriverByName('Parquet').Create(outfilename, 0, 0, 0, gdal.GDT_Unknown)
-    srs = osr.SpatialReference()
-    srs.ImportFromEPSG(4326)
-    lyr = ds.CreateLayer('out', geom_type=written_geom_type, srs=srs)
+    lyr = ds.CreateLayer('out', geom_type=written_geom_type)
     for wkt in written_wkt:
         f = ogr.Feature(lyr.GetLayerDefn())
         f.SetGeometryDirectly(ogr.CreateGeometryFromWkt(wkt))
@@ -672,6 +670,7 @@ def test_ogr_parquet_geometry_type(written_geom_type,written_wkt,expected_geom_t
     assert ds is not None
     lyr = ds.GetLayer(0)
     assert lyr.GetGeomType() == expected_geom_type
+    assert lyr.GetSpatialRef().GetAuthorityCode(None) == '4326'
     if expected_wkts is None:
         expected_wkts = written_wkt
     for wkt in expected_wkts:

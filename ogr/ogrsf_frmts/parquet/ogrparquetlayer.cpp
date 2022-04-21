@@ -186,25 +186,34 @@ void OGRParquetLayer::EstablishFeatureDefn()
                 OGRGeomFieldDefn oField(field->name().c_str(), wkbUnknown);
 
                 const auto osWKT = oJSONDef.GetString("crs");
+                OGRSpatialReference* poSRS = nullptr;
                 if( !oJSONDef.GetObj("crs").IsValid() )
                 {
-                    CPLError(CE_Warning, CPLE_AppDefined,
-                             "Missing required 'crs' field for geometry column %s",
-                             field->name().c_str());
+                    // WGS 84 is implied if no crs member is found.
+                    poSRS = new OGRSpatialReference();
+                    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                    poSRS->importFromEPSG(4326);
                 }
                 else if( !osWKT.empty() )
                 {
-                    OGRSpatialReference* poSRS = new OGRSpatialReference();
+                    poSRS = new OGRSpatialReference();
                     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
-                    if( poSRS->importFromWkt(osWKT.c_str()) == OGRERR_NONE )
+                    if( poSRS->importFromWkt(osWKT.c_str()) != OGRERR_NONE )
                     {
-                        const double dfCoordEpoch = oJSONDef.GetDouble("epoch");
-                        if( dfCoordEpoch > 0 )
-                            poSRS->SetCoordinateEpoch(dfCoordEpoch);
-
-                        oField.SetSpatialRef(poSRS);
+                        poSRS->Release();
+                        poSRS = nullptr;
                     }
+                }
+
+                if( poSRS )
+                {
+                    const double dfCoordEpoch = oJSONDef.GetDouble("epoch");
+                    if( dfCoordEpoch > 0 )
+                        poSRS->SetCoordinateEpoch(dfCoordEpoch);
+
+                    oField.SetSpatialRef(poSRS);
+
                     poSRS->Release();
                 }
 
