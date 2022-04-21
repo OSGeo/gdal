@@ -2440,6 +2440,28 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
         }
     }
 
+    // Some syntaxic sugar to make "ogr2ogr [-f PostgreSQL] PG:dbname=.... source [srclayer] -lco OVERWRITE=YES"
+    // work like "ogr2ogr -overwrite PG:dbname=.... source [srclayer]"
+    // The former syntax used to work at GDAL 1.1.8 time when it was documented
+    // in the PG driver, but was broken starting with GDAL 1.3.2
+    // (https://github.com/OSGeo/gdal/commit/29c108a6c9f651dfebae6d1313ba0e707a77c1aa)
+    // This could probably be generalized to other drivers that support the
+    // OVERWRITE layer creation option, but we'd need to make sure that they
+    // just do a DeleteLayer() call. The CARTO driver is an exception regarding that.
+    if( EQUAL(poODS->GetDriver()->GetDescription(), "PostgreSQL") &&
+        CPLTestBool(CSLFetchNameValueDef(psOptions->papszLCO, "OVERWRITE", "NO")) )
+    {
+        if( bAppend )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "-append and -lco OVERWRITE=YES are mutually exclusive" );
+            GDALVectorTranslateOptionsFree(psOptions);
+            if( hDstDS == nullptr ) GDALClose( poODS );
+            return nullptr;
+        }
+        bOverwrite = true;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      For random reading                                              */
 /* -------------------------------------------------------------------- */
