@@ -42,6 +42,7 @@
 #include <algorithm>
 #include <array>
 #include <limits>
+#include <set>
 #include <vector>
 
 // Suppress deprecation warning for GDALOpenVerticalShiftGrid and GDALApplyVerticalShiftGrid
@@ -3188,6 +3189,28 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
 
     double dfResFromSourceAndTargetExtent = std::numeric_limits<double>::infinity();
 
+/* -------------------------------------------------------------------- */
+/*      Establish list of files of output dataset if it already exists. */
+/* -------------------------------------------------------------------- */
+    std::set<std::string> oSetExistingDestFiles;
+    {
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        const char* const apszAllowedDrivers[] = { pszFormat, nullptr };
+        auto poExistingOutputDS = std::unique_ptr<GDALDataset>(
+            GDALDataset::Open(pszFilename, GDAL_OF_RASTER, apszAllowedDrivers));
+        if( poExistingOutputDS )
+        {
+            char** papszFileList = poExistingOutputDS->GetFileList();
+            for( char** papszIter = papszFileList; papszIter && *papszIter; ++papszIter )
+            {
+                oSetExistingDestFiles.insert(CPLString(*papszIter).replaceAll('\\', '/'));
+            }
+            CSLDestroy(papszFileList);
+        }
+        CPLPopErrorHandler();
+    }
+    std::set<std::string> oSetExistingDestFilesFoundInSource;
+
     for( int iSrc = 0; iSrc < nSrcCount; iSrc++ )
     {
 /* -------------------------------------------------------------------- */
@@ -3200,6 +3223,36 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
             if( hCT != nullptr )
                 GDALDestroyColorTable( hCT );
             return nullptr;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Check if the source dataset shares some files with the dest one.*/
+/* -------------------------------------------------------------------- */
+        if( !oSetExistingDestFiles.empty() )
+        {
+            // We need to reopen in a temporary dataset for the particular
+            // case of overwriten a .tif.ovr file from a .tif
+            // If we probe the file list of the .tif, it will then open the
+            // .tif.ovr !
+            auto poSrcDS = GDALDataset::FromHandle(hSrcDS);
+            const char* const apszAllowedDrivers[] = {
+                poSrcDS->GetDriver() ? poSrcDS->GetDriver()->GetDescription() : nullptr, nullptr };
+            auto poSrcDSTmp = std::unique_ptr<GDALDataset>(
+                GDALDataset::Open(poSrcDS->GetDescription(), GDAL_OF_RASTER, apszAllowedDrivers));
+            if( poSrcDSTmp )
+            {
+                char** papszFileList = poSrcDSTmp->GetFileList();
+                for( char** papszIter = papszFileList; papszIter && *papszIter; ++papszIter )
+                {
+                    CPLString osFilename(*papszIter);
+                    osFilename.replaceAll('\\', '/');
+                    if( oSetExistingDestFiles.find(osFilename) != oSetExistingDestFiles.end() )
+                    {
+                        oSetExistingDestFilesFoundInSource.insert(osFilename);
+                    }
+                }
+                CSLDestroy(papszFileList);
+            }
         }
 
         if( eDT == GDT_Unknown )
@@ -3506,6 +3559,21 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
             GDALDestroyGenImgProjTransformer( hTransformArg );
         }
     }
+
+    // If the source file(s) and the dest one share some files in common,
+    // only remove the files that are *not* in common
+    if( !oSetExistingDestFilesFoundInSource.empty() )
+    {
+        for( const std::string& osFilename: oSetExistingDestFiles )
+        {
+            if( oSetExistingDestFilesFoundInSource.find(osFilename) ==
+                                    oSetExistingDestFilesFoundInSource.end() )
+            {
+                VSIUnlink(osFilename.c_str());
+            }
+        }
+    }
+
 
     if( std::isfinite(dfResFromSourceAndTargetExtent) )
     {

@@ -32,6 +32,7 @@
 
 import struct
 import os
+import shutil
 
 
 from osgeo import gdal, ogr, osr
@@ -2153,6 +2154,52 @@ def test_gdalwarp_lib_from_ob_tran_including_north_pole_to_geographic():
     assert gt[0] == -180
     assert gt[3] == 90
     assert gt[0] + gt[1] * out_ds.RasterXSize == pytest.approx(180, abs=0.1)
+
+
+###############################################################################
+# Test gdalwarp foo.tif foo.tif.ovr
+
+
+def test_gdalwarp_lib_generate_ovr():
+
+    gdal.FileFromMemBuffer('/vsimem/foo.tif',
+                           open('../gcore/data/byte.tif', 'rb').read())
+    gdal.GetDriverByName('GTiff').Create('/vsimem/foo.tif.ovr', 10, 10)
+    ds = gdal.Warp('/vsimem/foo.tif.ovr', '/vsimem/foo.tif',
+                   options = '-of GTiff -r average -ts 10 10 -overwrite')
+    assert ds
+    assert ds.GetRasterBand(1).Checksum() != 0, 'Bad checksum'
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/foo.tif')
+
+
+###############################################################################
+# Test not deleting auxiliary files shared by the source and a target being
+# overwritten (https://github.com/OSGeo/gdal/issues/5633)
+
+
+def test_gdalwarp_lib_not_delete_shared_auxiliary_files():
+
+    # Yes, we do intend to copy a .TIF as a fake .JP2
+    shutil.copy('../gdrivers/data/dimap2/bundle/IMG_foo_R1C1.TIF', 'tmp/IMG_foo_R1C1.JP2')
+    shutil.copy('../gdrivers/data/dimap2/bundle/DIM_foo.XML', 'tmp/DIM_foo.XML')
+
+    gdal.Warp('tmp/IMG_foo_R1C1.tif', 'tmp/IMG_foo_R1C1.JP2')
+
+    ds = gdal.Open('tmp/IMG_foo_R1C1.tif')
+    assert len(ds.GetFileList()) == 2
+    ds = None
+
+    gdal.Warp('tmp/IMG_foo_R1C1.tif', 'tmp/IMG_foo_R1C1.JP2', format = 'GTiff')
+
+    ds = gdal.Open('tmp/IMG_foo_R1C1.tif')
+    assert len(ds.GetFileList()) == 2
+    ds = None
+
+    os.unlink('tmp/IMG_foo_R1C1.JP2')
+    os.unlink('tmp/IMG_foo_R1C1.tif')
+    os.unlink('tmp/DIM_foo.XML')
 
 ###############################################################################
 # Cleanup
