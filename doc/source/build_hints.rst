@@ -242,6 +242,28 @@ It is used by the :ref:`raster.zarr` driver.
 
     Control whether to use Blosc. Defaults to ON when Blosc is found.
 
+BRUNSLI
+*******
+
+The `Brunsli <https://github.com/google/brunsli>` JPEG repacking library, used 
+by the :ref:`raster.marfa` driver.
+
+.. option:: BRUNSLI_INCLUDE_DIR
+
+    Path to an include directory with the ``brunsli/decode.h`` and ``brunsli\encode.h`` header files.
+
+.. option:: BRUNSLI_ENC_LIB
+
+    Path to the brunslienc-c library file.
+
+.. option:: BRUNSLI_DEC_LIB
+
+    Path to the brunslidec-c library file.
+
+.. option:: GDAL_USE_BRUNSLI=ON/OFF
+
+    Control whether to use BRUNSLI. Defaults to ON when Brunsli is found.
+
 
 CFITSIO
 *******
