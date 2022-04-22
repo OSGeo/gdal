@@ -563,6 +563,7 @@ static const char* const apszCharsets[][2] = {
     { "WindowsLatin2", "CP1250" },
     { "WindowsArabic", "CP1256" },
     { "WindowsCyrillic", "CP1251" },
+    { "WindowsBalticRim", "CP1257" },
     { "WindowsGreek", "CP1253" },
     { "WindowsHebrew", "CP1255" },
     { "WindowsTurkish", "CP1254" }, //Windows Eastern Europe
