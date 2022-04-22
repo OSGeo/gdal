@@ -1,3 +1,83 @@
+# GDAL/OGR 3.4.3 Release Notes
+
+## GDAL 3.4.3 - Overview of Changes
+
+### Port
+
+* /vsizip/: fix Eof() detection on stored (ie not compressed) files inside the zip (#5468)
+* /vsiaz/: do not sign request in AZURE_NO_SIGN_REQUEST mode even when we have credentials
+* /vsimem/: VSIFTruncateL(): make sure to zeroize beyond the truncated area
+* Fix memory leak in VSICurlClearCache() (#5457)
+* Fix out of bounds read in CPLRecodeFromWCharIconV() (#5542)
+
+### Core
+
+* GeoEye metadata reader: avoid potential write stack-buffer overflow on long basename files (#5506)
+
+### Utilities
+
+* gdalbuildvrt: fix potential out-of-bounds access when using -b option
+* gdalwarp: fix issue with vertical shift mode when only one of the CRS is 3D, with PROJ 9.1
+
+### Raster drivers
+
+FITS driver:
+ * fix crash at runtime with clang 14 -O2
+
+GRIB driver:
+ * consider longitudes that slightly exceed 360° as 360° for Split&Swap mode (#5499)
+ * multidim: fix crash when a .idx file is present (#5569)
+
+GTiff driver:
+ * SRS reading: add warning when CRS definition from geokeys is inconsistent with EPSG, and a GTIFF_SRS_SOURCE=EPSG/GEOKEYS configuration option to alter the SRS (#5399)
+ * avoid hang when trying to create a larger than 4GB classic TIFF, and switch to BigTIFF before that happens
+ * fix crash when building overviews and computing approx stats (#5580)
+
+MRF driver:
+ * Prevent LERC out of bounds access (#5598)
+
+NITF driver:
+ * avoid PROJ error to be emitted in Create() when ICORDS=N/S (#5563)
+
+VICAR driver:
+ * avoid undefined behaviour on empty container (ossfuzz #46650)
+
+## OGR 3.4.3 - Overview of Changes
+
+### Core
+
+* OGREnvelope: ignore fp warnings for operator== like IsInit()
+* GML geometry importer / GMLAS: be robust to leading spaces in <gml:coordinates> element (#5494)
+* Multipoint WKT import: accept MULTIPOINT Z in non-backeted mode, like what PostGIS outputs
+
+### Utilities
+
+* ogr2ogr: fix cutting of geometries in projected coordinates intersecting antimeridian, in some configurations
+
+### Vector drivers
+
+ESRIJSON driver:
+ * fix dimensionality of PolygonZ
+
+FlatGeoBuf driver:
+ * catch exception on GetFeature() on corrupted index
+ * fix GetFeature() when featuresCount != 0 and indexNodeSize == 0
+
+GPKG driver:
+ * fix opening files in NOLOCK=YES mode that contains '?' or '#' (fixes qgis/QGIS#48024)
+
+MITAB driver:
+ * add WindowsBalticRim / CP1257 charset mapping (#5608)
+
+OpenFileGDB:
+ * fix dimensionality of MULTILINESTRING M geometries
+
+S57 driver:
+ * fixes related to update files (#5461)
+
+SOSI driver:
+ * avoid segfault on invalid geometries (#5502)
+
 # GDAL/OGR 3.4.2 Release Notes
 
 ## Build
