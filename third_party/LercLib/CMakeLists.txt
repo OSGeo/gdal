@@ -16,6 +16,5 @@ add_library(
   Lerc_types.h
   RLE.cpp
   RLE.h)
-set_property(TARGET lerc PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:lerc>)
 target_compile_options(lerc PRIVATE ${GDAL_CXX_WARNING_FLAGS})
