@@ -1554,10 +1554,10 @@ GDALWarpResolveWorkingDataType( GDALWarpOptions *psOptions )
         psOptions->papszWarpOptions, "APPLY_VERTICAL_SHIFT", false);
     if( bApplyVerticalShift && GDALDataTypeIsInteger(psOptions->eWorkingDataType) )
     {
-        const double dfMultFactorVerticalShit = CPLAtof(
+        const double dfMultFactorVerticalShift = CPLAtof(
             CSLFetchNameValueDef(psOptions->papszWarpOptions,
                                  "MULT_FACTOR_VERTICAL_SHIFT", "1.0") );
-        if( dfMultFactorVerticalShit != 1 )
+        if( dfMultFactorVerticalShift != 1 )
         {
             psOptions->eWorkingDataType =
                 GDALDataTypeUnion( psOptions->eWorkingDataType, GDT_Float32 );
