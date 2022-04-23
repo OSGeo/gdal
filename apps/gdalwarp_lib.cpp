@@ -666,10 +666,10 @@ static bool ApplyVerticalShift( GDALDatasetH hWrkSrcDS,
 
             if( dfToMeterSrc > 0 && dfToMeterDst > 0 )
             {
-                const double dfMultFactorVerticalShit = dfToMeterSrc / dfToMeterDst;
+                const double dfMultFactorVerticalShift = dfToMeterSrc / dfToMeterDst;
                 psWO->papszWarpOptions = CSLSetNameValue(
                     psWO->papszWarpOptions, "MULT_FACTOR_VERTICAL_SHIFT",
-                    CPLSPrintf("%.18g", dfMultFactorVerticalShit));
+                    CPLSPrintf("%.18g", dfMultFactorVerticalShift));
             }
         }
     }
