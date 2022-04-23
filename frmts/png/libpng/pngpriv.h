@@ -45,6 +45,8 @@
 #  include <string.h>
 #endif
 
+#include <stdint.h>
+
 #define PNGLIB_BUILD /*libpng is being built, not used*/
 
 /* If HAVE_CONFIG_H is defined during the build then the build system must
@@ -603,7 +605,7 @@
 /* This implicitly assumes alignment is always to a power of 2. */
 #ifdef png_alignof
 #  define png_isaligned(ptr, type)\
-   (((type)((const char*)ptr-(const char*)0) & \
+   (((type)((uintptr_t)ptr) & \
    (type)(png_alignof(type)-1)) == 0)
 #else
 #  define png_isaligned(ptr, type) 0
