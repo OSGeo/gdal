@@ -678,3 +678,54 @@ def test_ogr_parquet_geometry_type(written_geom_type,written_wkt,expected_geom_t
         assert f.GetGeometryRef().ExportToIsoWkt() == wkt
 
     gdal.Unlink(outfilename)
+
+
+###############################################################################
+# Test POLYGON_ORIENTATION option
+
+
+@pytest.mark.parametrize("option_value,written_wkt,expected_wkt", [
+    (None,
+     "POLYGON ((0 0,0 1,1 1,1 0,0 0),(0.2 0.2,0.8 0.8,0.2 0.8,0.2 0.2))",
+     "POLYGON ((0 0,1 0,1 1,0 1,0 0),(0.2 0.2,0.2 0.8,0.8 0.8,0.2 0.2))"),
+    ("COUNTERCLOCKWISE",
+     "POLYGON ((0 0,0 1,1 1,1 0,0 0),(0.2 0.2,0.8 0.8,0.2 0.8,0.2 0.2))",
+     "POLYGON ((0 0,1 0,1 1,0 1,0 0),(0.2 0.2,0.2 0.8,0.8 0.8,0.2 0.2))"),
+    ("UNMODIFIED",
+     "POLYGON ((0 0,0 1,1 1,1 0,0 0),(0.2 0.2,0.8 0.8,0.2 0.8,0.2 0.2))",
+     "POLYGON ((0 0,0 1,1 1,1 0,0 0),(0.2 0.2,0.8 0.8,0.2 0.8,0.2 0.2))"),
+])
+def test_ogr_parquet_polygon_orientation(option_value,written_wkt,expected_wkt):
+
+    outfilename = '/vsimem/out.parquet'
+    ds = gdal.GetDriverByName('Parquet').Create(outfilename, 0, 0, 0, gdal.GDT_Unknown)
+    if option_value:
+        options = ['POLYGON_ORIENTATION=' + option_value]
+    else:
+        options = []
+    lyr = ds.CreateLayer('out', geom_type=ogr.wkbPolygon, options = options)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt(written_wkt))
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    ds = None
+
+    ds = ogr.Open(outfilename)
+    assert ds is not None
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().ExportToIsoWkt() == expected_wkt
+
+    geo = lyr.GetMetadataItem("geo", "_PARQUET_METADATA_")
+    assert geo is not None
+    j = json.loads(geo)
+    assert j is not None
+    assert 'columns' in j
+    assert 'geometry' in j['columns']
+    if option_value != 'UNMODIFIED':
+        assert 'orientation' in j['columns']['geometry']
+        assert j['columns']['geometry']['orientation'] == 'counterclockwise'
+    else:
+        assert 'orientation' not in j['columns']['geometry']
+
+    gdal.Unlink(outfilename)
+

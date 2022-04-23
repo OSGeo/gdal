@@ -59,6 +59,10 @@ Layer creation options
   layer creation option of the Parquet driver (unless ``-lco FID=`` is used to
   set an empty name)
 
+- **POLYGON_ORIENTATION=COUNTERCLOCKWISE/UNMODIFIED**: Whether exterior rings
+  of polygons should be counterclockwise oriented (and interior rings clockwise
+  oriented), or left to their original orientation. The default is COUNTERCLOCKWISE.
+
 Links
 -----
 
