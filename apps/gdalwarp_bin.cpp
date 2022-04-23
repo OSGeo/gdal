@@ -335,10 +335,10 @@ MAIN_START(argc, argv)
     if ( bCheckExistingDstFile )
     {
         CPLPushErrorHandler( CPLQuietErrorHandler );
-        hDstDS = GDALOpen( psOptionsForBinary->pszDstFilename, GA_Update );
+        hDstDS = GDALOpen( psOptionsForBinary->pszDstFilename, GA_ReadOnly );
         CPLPopErrorHandler();
 
-        if (hDstDS == nullptr)
+        if (hDstDS)
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                      "Output dataset %s exists, but cannot be opened in update mode\n",
