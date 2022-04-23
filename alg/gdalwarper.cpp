@@ -1246,6 +1246,12 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
  * window for a given request, and by default it is 1 to take care of rounding
  * error.  Setting this larger will increase the amount of data that needs to
  * be read, but can avoid missing source data.</li>
+ * <li>APPLY_VERTICAL_SHIFT=YES/NO: Force the use of vertical shift.
+ * This option is generally not necessary, except when using an explicit
+ * coordinate transformation (COORDINATE_OPERATION), and not specifying
+ * an explicit source and target SRS.</li>
+ * <li>MULT_FACTOR_VERTICAL_SHIFT: Multiplication factor for the vertical
+ * shift. Default 1.0</li>
  * </ul>
  */
 
