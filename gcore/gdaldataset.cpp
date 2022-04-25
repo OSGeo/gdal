@@ -6361,9 +6361,14 @@ GDALDataset::ExecuteSQL( const char *pszStatement,
             if( poSrcLayer )
             {
                 CPL_IGNORE_RET_VAL( poSrcLayer->Rename( pszDstTableName ) );
-                CSLDestroy(papszTokens);
-                return nullptr;
             }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Invalid layer name");
+            }
+            CSLDestroy(papszTokens);
+            return nullptr;
         }
         else if( nTokens >= 4 && EQUAL(papszTokens[3], "RENAME") )
         {
