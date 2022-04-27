@@ -32,7 +32,6 @@ option(BUILD_SHARED_LIBS "Set ON to build shared library" ON)
 
 # produce position independent code, default is on when building a shared library
 option(GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE "Set ON to produce -fPIC code" ${BUILD_SHARED_LIBS})
-set(CMAKE_POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
 
 # Option to set preferred C# compiler
 option(CSHARP_MONO "Whether to force the C# compiler to be Mono" OFF)
