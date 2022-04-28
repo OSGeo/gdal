@@ -425,14 +425,14 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
 int NSIDCbinDataset::Identify( GDALOpenInfo * poOpenInfo )
 {
 
-  /* -------------------------------------------------------------------- */
-  /*      Works for daily and monthly, north and south NSIDC binary files */
-  /*      north and south are different dimensions, different extents but */
-  /*      both are 25000m resolution.
-  /*
-  /*      First we check to see if the file has the expected header       */
-  /*      bytes.                                                          */
-  /* -------------------------------------------------------------------- */
+  // -------------------------------------------------------------------- /
+  //      Works for daily and monthly, north and south NSIDC binary files /
+  //      north and south are different dimensions, different extents but /
+  //      both are 25000m resolution.
+  //
+  //      First we check to see if the file has the expected header       /
+  //      bytes.                                                          /
+  // -------------------------------------------------------------------- /
 
   if( poOpenInfo->nHeaderBytes < 300 || poOpenInfo->fpL == nullptr )
     return FALSE;
