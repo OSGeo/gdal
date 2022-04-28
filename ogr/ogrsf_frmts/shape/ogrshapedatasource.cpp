@@ -1114,7 +1114,7 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
 {
     if( EQUAL(pszStatement, "UNCOMPRESS") )
     {
-        UncompressIfNeeded();
+        CPL_IGNORE_RET_VAL(UncompressIfNeeded());
         return nullptr;
     }
 

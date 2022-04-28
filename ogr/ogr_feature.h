@@ -378,7 +378,7 @@ class CPL_DLL OGRFeature
     char                *m_pszNativeData;
     char                *m_pszNativeMediaType;
 
-    bool                SetFieldInternal( int i, OGRField * puValue );
+    bool                SetFieldInternal( int i, const OGRField * puValue );
 
   protected:
 //! @cond Doxygen_Suppress
@@ -690,7 +690,7 @@ class CPL_DLL OGRFeature
                                   const GIntBig * panValues );
     void                SetField( int i, int nCount, const double * padfValues );
     void                SetField( int i, const char * const * papszValues );
-    void                SetField( int i, OGRField * puValue );
+    void                SetField( int i, const OGRField * puValue );
     void                SetField( int i, int nCount, const void * pabyBinary );
     void                SetField( int i, int nYear, int nMonth, int nDay,
                                   int nHour=0, int nMinute=0, float fSecond=0.f,
@@ -715,7 +715,7 @@ class CPL_DLL OGRFeature
                          {SetField(GetFieldIndex(pszFName),nCount,padfValues); }
     void                SetField( const char *pszFName, const char * const * papszValues )
                            { SetField( GetFieldIndex(pszFName), papszValues); }
-    void                SetField( const char *pszFName, OGRField * puValue )
+    void                SetField( const char *pszFName, const OGRField * puValue )
                            { SetField( GetFieldIndex(pszFName), puValue ); }
     void                SetField( const char *pszFName,
                                   int nYear, int nMonth, int nDay,

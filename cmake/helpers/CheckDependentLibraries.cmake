@@ -104,7 +104,7 @@ endfunction()
 macro (gdal_check_package name purpose)
   set(_options CONFIG CAN_DISABLE RECOMMENDED DISABLED_BY_DEFAULT ALWAYS_ON_WHEN_FOUND)
   set(_oneValueArgs VERSION NAMES)
-  set(_multiValueArgs COMPONENTS TARGETS)
+  set(_multiValueArgs COMPONENTS TARGETS PATHS)
   cmake_parse_arguments(_GCP "${_options}" "${_oneValueArgs}" "${_multiValueArgs}" ${ARGN})
   string(TOUPPER ${name} key)
   set(_find_dependency "")
@@ -120,6 +120,9 @@ macro (gdal_check_package name purpose)
     endif ()
     if (_GCP_COMPONENTS)
       list(APPEND _find_package_args COMPONENTS ${_GCP_COMPONENTS})
+    endif ()
+    if (_GCP_PATHS)
+      list(APPEND _find_package_args PATHS ${_GCP_PATHS})
     endif ()
     if (_GCP_NAMES)
       set(GDAL_CHECK_PACKAGE_${name}_NAMES "${_GCP_NAMES}" CACHE STRING "Config file name for ${name}")
@@ -412,6 +415,8 @@ set(GDAL_USE_LIBCSF_INTERNAL ON)
 gdal_check_package(LERC "Enable LERC (external)" CAN_DISABLE RECOMMENDED)
 gdal_internal_library(LERC)
 
+gdal_check_package(BRUNSLI "Enable BRUNSLI for JPEG packing in MRF" CAN_DISABLE RECOMMENDED)
+
 # Disable by default the use of external shapelib, as currently the SAOffset member that holds file offsets in it is a
 # 'unsigned long', hence 32 bit on 32 bit platforms, whereas we can handle DBFs file > 4 GB. Internal shapelib has not
 # this issue
@@ -686,6 +691,11 @@ option(GDAL_USE_PUBLICDECOMPWT
 # proprietary libraries KAKADU
 gdal_check_package(KDU "Enable KAKADU" CAN_DISABLE)
 gdal_check_package(LURATECH "Enable JP2Lura driver" CAN_DISABLE)
+
+gdal_check_package(Arrow "Apache Arrow C++ library" CONFIG CAN_DISABLE)
+if (Arrow_FOUND)
+    gdal_check_package(Parquet "Apache Parquet C++ library" CONFIG PATHS ${Arrow_DIR} CAN_DISABLE)
+endif()
 
 # bindings
 gdal_check_package(SWIG "Enable language bindings" ALWAYS_ON_WHEN_FOUND)

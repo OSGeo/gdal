@@ -401,7 +401,9 @@ int HDF5Dataset::Identify( GDALOpenInfo * poOpenInfo )
         return false;
     };
 
-    if( memcmp(poOpenInfo->pabyHeader, achSignature, 8) == 0 )
+    if( memcmp(poOpenInfo->pabyHeader, achSignature, 8) == 0 ||
+        (poOpenInfo->nHeaderBytes > 512 + 8 &&
+         memcmp(poOpenInfo->pabyHeader + 512, achSignature, 8) == 0) )
     {
         // The tests to avoid opening KEA and BAG drivers are not
         // necessary when drivers are built in the core lib, as they

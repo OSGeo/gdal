@@ -437,7 +437,8 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
         static_cast<double>(std::min(nInYSize, nInXSize)) / N_PIXELSTEP + 0.5);
     if( nSteps < 20 )
         nSteps = 20;
-    nSteps = std::min(nSteps, 100);
+    else if( nSteps > 100 )
+        nSteps = 100;
 
     // TODO(rouault): How is this goto retry supposed to work?  Added in r20537.
     // Does redoing the same malloc multiple times work?  If it is needed, can
@@ -445,7 +446,8 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
     // the point to try with the full requested steps.  Then, if there is not
     // enough memory, back off and try with just 20 steps?
  retry:
-    int nSampleMax = (nSteps + 1)*(nSteps + 1);
+    int nStepsPlusOne = nSteps + 1;
+    int nSampleMax = nStepsPlusOne*nStepsPlusOne;
 
     double dfStep = 1.0 / nSteps;
     double *padfY = nullptr;
@@ -454,11 +456,11 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
     double *padfZRevert = nullptr;
 
     int* pabSuccess = static_cast<int *>(
-        VSI_MALLOC3_VERBOSE(sizeof(int), nSteps + 1, nSteps + 1));
+        VSI_MALLOC3_VERBOSE(sizeof(int), nStepsPlusOne, nStepsPlusOne));
     double* padfX = static_cast<double *>(
-        VSI_MALLOC3_VERBOSE(sizeof(double) * 3, nSteps + 1, nSteps + 1));
+        VSI_MALLOC3_VERBOSE(sizeof(double) * 3, nStepsPlusOne, nStepsPlusOne));
     double* padfXRevert = static_cast<double *>(
-        VSI_MALLOC3_VERBOSE(sizeof(double) * 3, nSteps + 1, nSteps + 1));
+        VSI_MALLOC3_VERBOSE(sizeof(double) * 3, nStepsPlusOne, nStepsPlusOne));
     if( pabSuccess == nullptr || padfX == nullptr || padfXRevert == nullptr )
     {
         CPLFree( padfX );
@@ -481,37 +483,39 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
     for( int iStep = 0; iStep <= nSteps; iStep++ )
     {
         double dfRatio = (iStep == nSteps) ? 1.0 : iStep * dfStep;
+        int iStep2 = iStep;
 
         // Along top.
-        padfX[iStep] = dfRatio * nInXSize;
-        padfY[iStep] = 0.0;
-        padfZ[iStep] = 0.0;
+        padfX[iStep2] = dfRatio * nInXSize;
+        padfY[iStep2] = 0.0;
+        padfZ[iStep2] = 0.0;
 
         // Along bottom.
-        padfX[nSteps + 1 + iStep] = dfRatio * nInXSize;
-        padfY[nSteps + 1 + iStep] = nInYSize;
-        padfZ[nSteps + 1 + iStep] = 0.0;
+        iStep2 += nStepsPlusOne;
+        padfX[iStep2] = dfRatio * nInXSize;
+        padfY[iStep2] = nInYSize;
+        padfZ[iStep2] = 0.0;
 
         // Along left.
-        padfX[2 * (nSteps + 1) + iStep] = 0.0;
-        padfY[2 * (nSteps + 1) + iStep] = dfRatio * nInYSize;
-        padfZ[2 * (nSteps + 1) + iStep] = 0.0;
+        iStep2 += nStepsPlusOne;
+        padfX[iStep2] = 0.0;
+        padfY[iStep2] = dfRatio * nInYSize;
+        padfZ[iStep2] = 0.0;
 
         // Along right.
-        padfX[3 * (nSteps + 1) + iStep] = nInXSize;
-        padfY[3 * (nSteps + 1) + iStep] = dfRatio * nInYSize;
-        padfZ[3 * (nSteps + 1) + iStep] = 0.0;
+        iStep2 += nStepsPlusOne;
+        padfX[iStep2] = nInXSize;
+        padfY[iStep2] = dfRatio * nInYSize;
+        padfZ[iStep2] = 0.0;
     }
 
-    int nSamplePoints = 4 * (nSteps + 1);
+    int nSamplePoints = 4 * nStepsPlusOne;
 
     memset( pabSuccess, 1, sizeof(int) * nSampleMax );
 
 /* -------------------------------------------------------------------- */
 /*      Transform them to the output coordinate system.                 */
 /* -------------------------------------------------------------------- */
-    int nFailedCount = 0;
-
     if( !pfnTransformer( pTransformArg, FALSE, nSamplePoints,
                          padfX, padfY, padfZ, pabSuccess ) )
     {
@@ -527,11 +531,11 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
     constexpr int SIGN_FINAL_UNINIT = -2;
     constexpr int SIGN_FINAL_INVALID = 0;
     int iSignDiscontinuity = SIGN_FINAL_UNINIT;
+    int nFailedCount = 0;
+    const int iSignArray[2] = {-1, 1};
     for( int i = 0; i < nSamplePoints; i++ )
     {
-        if( !pabSuccess[i] )
-            nFailedCount++;
-        else
+        if( pabSuccess[i] )
         {
             // Fix for https://trac.osgeo.org/gdal/ticket/7243
             // where echo "-2050000.000 2050000.000" |
@@ -549,7 +553,7 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
             }
             else if( iSignDiscontinuity == SIGN_FINAL_UNINIT )
             {
-                for( int iSign = -1; iSign <= 1; iSign += 2 )
+                for( const auto& iSign : iSignArray )
                 {
                     if( (iSign * padfX[i] > 0 && iSign * padfX[i] <= 180.0) ||
                         (fabs(padfX[i] - iSign * -180.0) < 1e-8) )
@@ -563,6 +567,10 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
                     iSignDiscontinuity = SIGN_FINAL_INVALID;
                 }
             }
+        }
+        else
+        {
+            nFailedCount++;
         }
     }
 
@@ -595,17 +603,17 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
 /*      Check if the computed target coordinates are revertable.        */
 /*      If not, try the detailed grid sampling.                         */
 /* -------------------------------------------------------------------- */
-    if( nFailedCount == 0 )
+    if( nFailedCount )
+    {
+        CPLDebug("WARP", "At least one point failed after direct transform");
+    }
+    else
     {
         memcpy(padfXRevert, padfX, nSamplePoints * sizeof(double));
         memcpy(padfYRevert, padfY, nSamplePoints * sizeof(double));
         memcpy(padfZRevert, padfZ, nSamplePoints * sizeof(double));
-        if( !pfnTransformer(pTransformArg, TRUE, nSamplePoints,
+        if( pfnTransformer(pTransformArg, TRUE, nSamplePoints,
                             padfXRevert, padfYRevert, padfZRevert, pabSuccess) )
-        {
-            nFailedCount = 1;
-        }
-        else
         {
             for( int i = 0; nFailedCount == 0 && i < nSamplePoints; i++ )
             {
@@ -615,29 +623,29 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
                     break;
                 }
 
-                double dfRatio = (i % (nSteps + 1)) * dfStep;
+                double dfRatio = (i % nStepsPlusOne) * dfStep;
                 if( dfRatio > 0.99 )
                     dfRatio = 1.0;
 
                 double dfExpectedX = 0.0;
                 double dfExpectedY = 0.0;
-                if( i < nSteps + 1 )
+                if( i < nStepsPlusOne )
                 {
                     dfExpectedX = dfRatio * nInXSize;
                 }
-                else if( i < 2 * (nSteps + 1) )
+                else if( i < 2 * nStepsPlusOne )
                 {
                     dfExpectedX = dfRatio * nInXSize;
                     dfExpectedY = nInYSize;
                 }
-                else if( i < 3 * (nSteps + 1) )
+                else if( i < 3 * nStepsPlusOne )
                 {
-                    dfExpectedY   = dfRatio * nInYSize;
+                    dfExpectedY = dfRatio * nInYSize;
                 }
                 else
                 {
-                    dfExpectedX   = nInXSize;
-                    dfExpectedY   = dfRatio * nInYSize;
+                    dfExpectedX = nInXSize;
+                    dfExpectedY = dfRatio * nInYSize;
                 }
 
                 if( fabs(padfXRevert[i] - dfExpectedX) > nInXSize /
@@ -650,10 +658,10 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
                 CPLDebug("WARP",
                          "At least one point failed after revert transform");
         }
-    }
-    else
-    {
-        CPLDebug("WARP", "At least one point failed after direct transform");
+        else
+        {
+            nFailedCount = 1;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -661,7 +669,7 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
 /*      build a fairly detailed internal grid of points instead to      */
 /*      help identify the area that is transformable.                   */
 /* -------------------------------------------------------------------- */
-    if( nFailedCount > 0 )
+    if( nFailedCount )
     {
         nSamplePoints = 0;
 
@@ -717,18 +725,16 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
 
         if( nSamplePoints == nSampleMax )
         {
-            x_i = i % (nSteps + 1);
-            y_i = i / (nSteps + 1);
+            x_i = i % nStepsPlusOne;
+            y_i = i / nStepsPlusOne;
         }
         else
         {
-            if( i < 2 * (nSteps + 1 ) )
+            if( i < 2 * nStepsPlusOne )
             {
-                x_i = i % (nSteps + 1);
-                y_i = (i < nSteps + 1) ? 0 : nSteps;
+                x_i = i % nStepsPlusOne;
+                y_i = (i < nStepsPlusOne) ? 0 : nSteps;
             }
-            else
-                x_i = y_i = 0;
         }
 
         if( x_i > 0 && (pabSuccess[i-1] || pabSuccess[i]) )
@@ -740,39 +746,31 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
                 static_cast<double>(x_i - 1) * nInXSize / nSteps;
             double x_in_after =
                 static_cast<double>(x_i) * nInXSize / nSteps;
-            int valid_before = pabSuccess[i-1];
-            int valid_after = pabSuccess[i];
+            int invalid_before = !(pabSuccess[i-1]);
+            int invalid_after  = !(pabSuccess[i]);
 
             // Detect discontinuity in target coordinates when the target x
             // coordinates change sign. This may be a false positive when the
             // target tx is around 0 Dichotomic search to reduce the interval
             // to near the discontinuity and get a better out extent.
-            while( (!valid_before || !valid_after ||
+            while( (invalid_before || invalid_after ||
                     x_out_before * x_out_after < 0.0) && nIter < 16 )
             {
                 double x = (x_in_before + x_in_after) / 2.0;
                 double y = static_cast<double>(y_i) * nInYSize / nSteps;
                 double z = 0.0;
                 int bSuccess = TRUE;
-                if( !pfnTransformer( pTransformArg, FALSE, 1,
-                                     &x, &y, &z, &bSuccess ) || !bSuccess )
+                if( pfnTransformer( pTransformArg, FALSE, 1,
+                                     &x, &y, &z, &bSuccess ) && bSuccess )
                 {
-                    if( !valid_before )
+                    if( bGotInitialPoint )
                     {
-                        x_in_before = (x_in_before + x_in_after) / 2.0;
-                    }
-                    else if( !valid_after )
-                    {
-                        x_in_after = (x_in_before + x_in_after) / 2.0;
+                        dfMinXOut = std::min(dfMinXOut, x);
+                        dfMinYOut = std::min(dfMinYOut, y);
+                        dfMaxXOut = std::max(dfMaxXOut, x);
+                        dfMaxYOut = std::max(dfMaxYOut, y);
                     }
                     else
-                    {
-                        break;
-                    }
-                }
-                else
-                {
-                    if( !bGotInitialPoint )
                     {
                         bGotInitialPoint = true;
                         dfMinXOut = x;
@@ -780,25 +778,33 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
                         dfMinYOut = y;
                         dfMaxYOut = y;
                     }
-                    else
-                    {
-                        dfMinXOut = std::min(dfMinXOut, x);
-                        dfMinYOut = std::min(dfMinYOut, y);
-                        dfMaxXOut = std::max(dfMaxXOut, x);
-                        dfMaxYOut = std::max(dfMaxYOut, y);
-                    }
 
-                    if( !valid_before || x_out_before * x < 0 )
+                    if( invalid_before || x_out_before * x < 0 )
                     {
-                        valid_after = TRUE;
+                        invalid_after = FALSE;
                         x_in_after = (x_in_before + x_in_after) / 2.0;
                         x_out_after = x;
                     }
                     else
                     {
-                        valid_before = TRUE;
+                        invalid_before = FALSE;
                         x_out_before = x;
                         x_in_before = (x_in_before + x_in_after) / 2.0;
+                    }
+                }
+                else
+                {
+                    if( invalid_before )
+                    {
+                        x_in_before = (x_in_before + x_in_after) / 2.0;
+                    }
+                    else if( invalid_after )
+                    {
+                        x_in_after = (x_in_before + x_in_after) / 2.0;
+                    }
+                    else
+                    {
+                        break;
                     }
                 }
                 nIter++;
@@ -811,20 +817,20 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
             continue;
         }
 
-        if( !bGotInitialPoint )
+        if( bGotInitialPoint )
+        {
+            dfMinXOut = std::min(dfMinXOut, padfX[i]);
+            dfMinYOut = std::min(dfMinYOut, padfY[i]);
+            dfMaxXOut = std::max(dfMaxXOut, padfX[i]);
+            dfMaxYOut = std::max(dfMaxYOut, padfY[i]);
+        }
+        else
         {
             bGotInitialPoint = true;
             dfMinXOut = padfX[i];
             dfMaxXOut = padfX[i];
             dfMinYOut = padfY[i];
             dfMaxYOut = padfY[i];
-        }
-        else
-        {
-            dfMinXOut = std::min(dfMinXOut, padfX[i]);
-            dfMinYOut = std::min(dfMinYOut, padfY[i]);
-            dfMaxXOut = std::max(dfMaxXOut, padfX[i]);
-            dfMaxYOut = std::max(dfMaxYOut, padfY[i]);
         }
     }
 
@@ -842,7 +848,7 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
         return CE_Failure;
     }
 
-    if( nFailedCount > 0 )
+    if( nFailedCount )
         CPLDebug("GDAL",
                  "GDALSuggestedWarpOutput(): %d out of %d points failed to "
                  "transform.",
@@ -950,7 +956,7 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
                                                         pGIPTI->pReprojectArg);
                 }
 
-                for( int sign = -1; sign <= 1; sign += 2 )
+                for( const auto& sign : iSignArray )
                 {
                     double X = 0.0;
                     const double Yinit = 90.0 * sign;
@@ -1022,8 +1028,8 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
     const double dfPixels = (dfMaxXOut - dfMinXOut) / dfPixelSize;
     const double dfLines = (dfMaxYOut - dfMinYOut) / dfPixelSize;
 
-    const int knIntMax = std::numeric_limits<int>::max();
-    if( dfPixels > knIntMax - 1 || dfLines > knIntMax - 1 )
+    const int knIntMaxMinusOne = std::numeric_limits<int>::max() - 1;
+    if( dfPixels > knIntMaxMinusOne || dfLines > knIntMaxMinusOne )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Computed dimensions are too big : %.0f x %.0f",

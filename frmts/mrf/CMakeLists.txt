@@ -68,3 +68,8 @@ if (GDAL_USE_ZSTD)
   target_compile_definitions(gdal_MRF PRIVATE -DZSTD_SUPPORT)
   gdal_target_link_libraries(gdal_MRF PRIVATE ${ZSTD_TARGET})
 endif ()
+
+if (GDAL_USE_BRUNSLI)
+  target_compile_definitions(gdal_MRF PRIVATE -DBRUNSLI)
+  gdal_target_link_libraries(gdal_MRF PRIVATE BRUNSLI::ENCODE BRUNSLI::DECODE)
+endif ()

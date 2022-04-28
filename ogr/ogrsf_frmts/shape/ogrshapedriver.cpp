@@ -386,6 +386,7 @@ void RegisterOGRShape()
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
                                "Integer Integer64 Real String Date" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RENAME_LAYERS, "YES" );
 
     poDriver->pfnOpen = OGRShapeDriverOpen;
     poDriver->pfnIdentify = OGRShapeDriverIdentify;

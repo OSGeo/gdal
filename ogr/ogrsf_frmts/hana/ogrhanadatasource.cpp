@@ -736,7 +736,7 @@ void OGRHanaDataSource::CreateTable(
     int geomSrid)
 {
     CPLString sql;
-    if (wkbFlatten(geomType) == OGRwkbGeometryType::wkbNone || !(!geomColumnName.empty() && geomSrid >= 0))
+    if (geomType == OGRwkbGeometryType::wkbNone || !(!geomColumnName.empty() && geomSrid >= 0))
     {
         sql = "CREATE COLUMN TABLE "
               + GetFullTableNameQuoted(schemaName_, tableName) + " ("
@@ -1256,11 +1256,8 @@ void OGRHanaDataSource::InitializeLayers(
             if (pos != tables.end())
                 tables.erase(pos);
 
-            auto layer = cpl::make_unique<OGRHanaTableLayer>(this, updatable);
-            OGRErr err =
-                layer->Initialize(schemaName_.c_str(), tableName->c_str());
-            if (OGRERR_NONE == err)
-                layers_.push_back(std::move(layer));
+            auto layer = cpl::make_unique<OGRHanaTableLayer>(this, schemaName_.c_str(), tableName->c_str(), updatable);
+            layers_.push_back(std::move(layer));
         }
         rsTables->close();
     };
@@ -1525,6 +1522,9 @@ OGRLayer* OGRHanaDataSource::ICreateLayer(
     OGRwkbGeometryType geomType,
     char** options)
 {
+    if (layerNameIn == nullptr)
+        return nullptr;
+
     // Check if we are allowed to create new objects in the database
     odbc::DatabaseMetaDataRef dmd = conn_->getDatabaseMetaData();
     if (dmd->isReadOnly())
@@ -1619,11 +1619,7 @@ OGRLayer* OGRHanaDataSource::ICreateLayer(
     }
 
     // Create new layer object
-    auto layer = cpl::make_unique<OGRHanaTableLayer>(this, true);
-    OGRErr err = layer->Initialize(schemaName_.c_str(), layerName.c_str());
-    if (err == OGRERR_FAILURE)
-        return nullptr;
-
+    auto layer = cpl::make_unique<OGRHanaTableLayer>(this, schemaName_.c_str(), layerName.c_str(), true);
     if (geomType != wkbNone && layer->GetLayerDefn()->GetGeomFieldCount() > 0)
         layer->GetLayerDefn()->GetGeomFieldDefn(0)->SetNullable(FALSE);
     if (batchSize > 0)
@@ -1686,11 +1682,14 @@ OGRLayer* OGRHanaDataSource::ExecuteSQL(
     }
     if (STARTS_WITH_CI(sqlCommand, "SELECT"))
     {
-        auto layer = cpl::make_unique<OGRHanaResultLayer>(this);
-        OGRErr err = layer->Initialize(sqlCommand, spatialFilter);
-        if (OGRERR_NONE == err)
-            return layer.release();
-        return nullptr;
+        auto stmt = PrepareStatement(sqlCommand);
+        if (stmt.isNull())
+            return nullptr;
+
+        auto layer = cpl::make_unique<OGRHanaResultLayer>(this, sqlCommand);
+        if (spatialFilter != nullptr)
+            layer->SetSpatialFilter( spatialFilter );
+        return layer.release();
     }
 
     try
@@ -1701,7 +1700,7 @@ OGRLayer* OGRHanaDataSource::ExecuteSQL(
     {
         CPLError(
             CE_Failure, CPLE_AppDefined,
-            "Unable to execute SQL statement '%s': %s", sqlCommand, ex.what());
+            "Failed to execute SQL statement '%s': %s", sqlCommand, ex.what());
     }
 
     return nullptr;

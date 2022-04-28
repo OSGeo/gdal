@@ -729,12 +729,17 @@ if (NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
   endif ()
 
   include(CMakePackageConfigHelpers)
+  if(CMAKE_VERSION VERSION_LESS 3.10.1)
+      set(comptatibility_check ExactVersion)
+  else()
+      # SameMinorVersion compatibility are supported CMake > 3.10.1
+      # Our C++ ABI remains stable only among major.minor.XXX patch releases
+      set(comptatibility_check SameMinorVersion)
+  endif()
   write_basic_package_version_file(
     GDALConfigVersion.cmake
     VERSION ${GDAL_VERSION}
-    # SameMinorVersion compatibility are supported CMake > 3.10.1 so use ExactVersion instead. COMPATIBILITY
-    # SameMinorVersion)
-    COMPATIBILITY ExactVersion)
+    COMPATIBILITY ${comptatibility_check})
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/GDALConfigVersion.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gdal/)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/template/GDALConfig.cmake.in
                  ${CMAKE_CURRENT_BINARY_DIR}/GDALConfig.cmake @ONLY)

@@ -110,11 +110,11 @@ because too many features will accumulate in the layers before being
 consumed by the user application.
 
 Starting with GDAL 2.2, applications should use the
-GDALDataset::GetNextFeature() API to iterate over features in the order
+``GDALDataset::GetNextFeature()`` API to iterate over features in the order
 they are produced.
 
 For earlier versions, for large files, applications should set the
-OGR_INTERLEAVED_READING=YES configuration option to turn on a special
+:decl_configoption:`OGR_INTERLEAVED_READING` =YES configuration option to turn on a special
 reading mode where the following reading pattern must be used:
 
 ::
@@ -139,7 +139,8 @@ reading mode where the following reading pattern must be used:
        while( bHasLayersNonEmpty );
 
 Note : the ogr2ogr application has been modified to use that
-OGR_INTERLEAVED_READING mode without any particular user action.
+:decl_configoption:`OGR_INTERLEAVED_READING` mode without any 
+particular user action.
 
 Spatial filtering
 -----------------

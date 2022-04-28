@@ -2906,7 +2906,8 @@ int OGRGeoPackageTableLayer::TestCapability ( const char * pszCap )
     else if ( EQUAL(pszCap, OLCCreateField) ||
               EQUAL(pszCap, OLCDeleteField) ||
               EQUAL(pszCap, OLCAlterFieldDefn) ||
-              EQUAL(pszCap, OLCReorderFields) )
+              EQUAL(pszCap, OLCReorderFields) ||
+              EQUAL(pszCap, OLCRename) )
     {
         return m_poDS->GetUpdate() && m_bIsTable;
     }
@@ -3597,14 +3598,15 @@ CPLString OGRGeoPackageTableLayer::ReturnSQLDropSpatialIndexTriggers()
 }
 
 /************************************************************************/
-/*                          RenameTo()                                  */
+/*                           Rename()                                   */
 /************************************************************************/
 
-void OGRGeoPackageTableLayer::RenameTo(const char* pszDstTableName)
+OGRErr OGRGeoPackageTableLayer::Rename(const char* pszDstTableName)
 {
-
     if( !m_bFeatureDefnCompleted )
         GetLayerDefn();
+    if( !CheckUpdatableTable("Rename") )
+        return OGRERR_FAILURE;
 
     ResetReading();
     SyncToDisk();
@@ -3621,11 +3623,11 @@ void OGRGeoPackageTableLayer::RenameTo(const char* pszDstTableName)
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Table %s already exists",
                  pszDstTableName);
-        return;
+        return OGRERR_FAILURE;
     }
 
     if( m_poDS->SoftStartTransaction() != OGRERR_NONE )
-        return;
+        return OGRERR_FAILURE;
 
 #ifdef ENABLE_GPKG_OGR_CONTENTS
     DisableTriggers(false);
@@ -3766,6 +3768,14 @@ void OGRGeoPackageTableLayer::RenameTo(const char* pszDstTableName)
     {
         m_poDS->SoftRollbackTransaction();
     }
+
+    if( eErr == OGRERR_NONE)
+    {
+        SetDescription(pszDstTableName);
+        m_poFeatureDefn->SetName(pszDstTableName);
+    }
+
+    return eErr;
 }
 
 /************************************************************************/

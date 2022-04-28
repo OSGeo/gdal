@@ -5951,7 +5951,7 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
                         SQLUnescape(pszSrcTableName)));
             if( poSrcLayer )
             {
-                poSrcLayer->RenameTo( SQLUnescape(pszDstTableName) );
+                poSrcLayer->Rename( SQLUnescape(pszDstTableName) );
                 CSLDestroy(papszTokens);
                 return nullptr;
             }

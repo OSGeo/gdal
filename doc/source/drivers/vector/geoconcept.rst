@@ -81,76 +81,76 @@ The OGR GeoConcept driver does not support deleting features.
 Dataset Creation Options
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-**EXTENSION=TXT|GXT** : indicates the GeoConcept export file extension.
-``TXT`` was used by earlier releases of GeoConcept. ``GXT`` is currently
-used.
+-  **EXTENSION=TXT|GXT** : indicates the GeoConcept export file extension.
+   ``TXT`` was used by earlier releases of GeoConcept. ``GXT`` is currently
+   used.
 
-**CONFIG=path to the GCT** : the GCT file describe the GeoConcept types
-definitions : In this file, every line must start with ``//#`` followed
-by a keyword. Lines starting with ``//`` are comments.
+-  **CONFIG=path to the GCT** : the GCT file describe the GeoConcept types
+   definitions : In this file, every line must start with ``//#`` followed
+   by a keyword. Lines starting with ``//`` are comments.
 
-It is important to note that a GeoConcept export file can hold different
-types and associated sub-types.
+   It is important to note that a GeoConcept export file can hold different
+   types and associated sub-types.
 
--  configuration section : the GCT file starts with
-   ``//#SECTION CONFIG`` and ends with ``//#ENDSECTION CONFIG``. All the
-   configuration is enclosed within these marks.
--  map section : purely for documentation at the time of writing this
-   document. This section starts with ``//#SECTION MAP`` and ends with
-   ``//#ENDSECTION MAP``.
--  type section : this section defines a class of features. A type has a
-   name (keyword ``Name``) and an ID (keyword ``ID``). A type holds
-   sub-types and fields. This section starts with ``//#SECTION TYPE``
-   and ends with ``//#ENDSECTION TYPE``.
+   -  configuration section : the GCT file starts with
+      ``//#SECTION CONFIG`` and ends with ``//#ENDSECTION CONFIG``. All the
+      configuration is enclosed within these marks.
+   -  map section : purely for documentation at the time of writing this
+      document. This section starts with ``//#SECTION MAP`` and ends with
+      ``//#ENDSECTION MAP``.
+   -  type section : this section defines a class of features. A type has a
+      name (keyword ``Name``) and an ID (keyword ``ID``). A type holds
+      sub-types and fields. This section starts with ``//#SECTION TYPE``
+      and ends with ``//#ENDSECTION TYPE``.
 
-   -  sub-type section : this sub-section defines a kind og features
-      within a class. A sub-type has a name (keyword ``Name``), an ID
-      (keyword ``ID``), a type of geometry (keyword ``Kind``) and a
-      dimension. The following types of geometry are supported : POINT,
-      LINE, POLYGON. The current release of this driver does not support
-      the TEXT geometry. The dimension can be 2D, 3DM or 3D. A sub-type
-      holds fields. This section starts with ``//#SECTION SUBTYPE`` and
-      ends with ``//#ENDSECTION SUBTYPE``.
+      -  sub-type section : this sub-section defines a kind og features
+         within a class. A sub-type has a name (keyword ``Name``), an ID
+         (keyword ``ID``), a type of geometry (keyword ``Kind``) and a
+         dimension. The following types of geometry are supported : POINT,
+         LINE, POLYGON. The current release of this driver does not support
+         the TEXT geometry. The dimension can be 2D, 3DM or 3D. A sub-type
+         holds fields. This section starts with ``//#SECTION SUBTYPE`` and
+         ends with ``//#ENDSECTION SUBTYPE``.
 
-      -  fields section : defines user fields. A field has a name
-         (keyword ``Name``), an ID (keyword ``ID``), a type (keyword
-         ``Kind``). The following types of fields are supported : INT,
-         REAL, MEMO, CHOICE, DATE, TIME, LENGTH, AREA. This section
-         starts with ``//#SECTION FIELD`` and ends with
-         ``//#ENDSECTION FIELD``.
+         -  fields section : defines user fields. A field has a name
+            (keyword ``Name``), an ID (keyword ``ID``), a type (keyword
+            ``Kind``). The following types of fields are supported : INT,
+            REAL, MEMO, CHOICE, DATE, TIME, LENGTH, AREA. This section
+            starts with ``//#SECTION FIELD`` and ends with
+            ``//#ENDSECTION FIELD``.
 
-   -  field section : defines type fields. See above.
+      -  field section : defines type fields. See above.
 
--  field section : defines general fields. Out of these, the following
-   rules apply :
+   -  field section : defines general fields. Out of these, the following
+      rules apply :
+ 
+      -  private field names start with a '@' : the private fields are
+         ``Identifier``, ``Class``, ``Subclass``, ``Name``, ``NbFields``,
+         ``X``, ``Y``, ``XP``, ``YP``, ``Graphics``, ``Angle``.
+      -  some private field are mandatory (they must appear in the
+         configuration) : ``Identifier``, ``Class``, ``Subclass``,
+         ``Name``, ``X``, ``Y``.
+      -  If the sub-type is linear (LINE), then the following fields must
+         be declared ``XP``, ``YP``.
+      -  If the sub-type is linear or polygonal (LINE, POLY), then
+         ``Graphics`` must be declared.
+      -  If the sub-type is ponctual or textual (POINT, TEXT), the
+         ``Angle`` may be declared.
 
-   -  private field names start with a '@' : the private fields are
-      ``Identifier``, ``Class``, ``Subclass``, ``Name``, ``NbFields``,
-      ``X``, ``Y``, ``XP``, ``YP``, ``Graphics``, ``Angle``.
-   -  some private field are mandatory (they must appear in the
-      configuration) : ``Identifier``, ``Class``, ``Subclass``,
-      ``Name``, ``X``, ``Y``.
-   -  If the sub-type is linear (LINE), then the following fields must
-      be declared ``XP``, ``YP``.
-   -  If the sub-type is linear or polygonal (LINE, POLY), then
-      ``Graphics`` must be declared.
-   -  If the sub-type is ponctual or textual (POINT, TEXT), the
-      ``Angle`` may be declared.
-
-   When this option is not used, the driver manage types and sub-types
-   name based on either the layer name or on the use of ``-nln`` option.
+      When this option is not used, the driver manage types and sub-types
+      name based on either the layer name or on the use of ``-nln`` option.
 
 Layer Creation Options
 ~~~~~~~~~~~~~~~~~~~~~~
 
-**FEATURETYPE=TYPE.SUBTYPE** : defines the feature to be created. The
-``TYPE`` corresponds to one of the ``Name`` found in the GCT file for a
-type section. The ``SUBTYPE`` corresponds to one of the ``Name`` found
-in the GCT file for a sub-type section within the previous type section.
+-  **FEATURETYPE=TYPE.SUBTYPE** : defines the feature to be created. The
+   ``TYPE`` corresponds to one of the ``Name`` found in the GCT file for a
+   type section. The ``SUBTYPE`` corresponds to one of the ``Name`` found
+   in the GCT file for a sub-type section within the previous type section.
 
-At the present moment, coordinates are written with 2 decimals for
-Cartesian spatial reference systems (including height) or with 9
-decimals for geographical spatial reference systems.
+   At the present moment, coordinates are written with 2 decimals for
+   Cartesian spatial reference systems (including height) or with 9
+   decimals for geographical spatial reference systems.
 
 Examples
 ~~~~~~~~

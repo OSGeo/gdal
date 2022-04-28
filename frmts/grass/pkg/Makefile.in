@@ -34,10 +34,10 @@ distclean: clean
 
 
 $(GLIBNAME):	grass.o
-	$(LD_SHARED) $(LDFLAGS) grass.o $(LIBS) -o $(GLIBNAME)
+	$(LD_SHARED) $(LDFLAGS) grass.o $(LIBS) -o $(GLIBNAME) -Wl,-rpath,"@GRASS_GISBASE@/lib"
 
 $(OLIBNAME):	ogrgrassdriver.o ogrgrassdatasource.o ogrgrasslayer.o
-	$(LD_SHARED) $(LDFLAGS) ogrgrassdriver.o ogrgrassdatasource.o ogrgrasslayer.o $(LIBS) -o $(OLIBNAME)
+	$(LD_SHARED) $(LDFLAGS) ogrgrassdriver.o ogrgrassdatasource.o ogrgrasslayer.o $(LIBS) -o $(OLIBNAME) -Wl,-rpath,"@GRASS_GISBASE@/lib"
 
 %.o:	%.cpp
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<

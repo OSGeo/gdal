@@ -140,6 +140,7 @@ typedef struct {
 	code_t* dec_free_entp;		/* next free entry */
 	code_t* dec_maxcodep;		/* max available entry */
 	code_t* dec_codetab;		/* kept separate for small machines */
+	int     read_error;         /* whether a read error has occured, and which should cause further reads in the same strip/tile to be aborted */
 
 	/* Encoding specific data */
 	int     enc_oldcode;		/* last code encountered */
@@ -307,6 +308,7 @@ LZWPreDecode(TIFF* tif, uint16_t s)
 	 */
 	sp->dec_oldcodep = &sp->dec_codetab[0];
 	sp->dec_maxcodep = &sp->dec_codetab[sp->dec_nbitsmask-1];
+	sp->read_error = 0;
 	return (1);
 }
 
@@ -399,7 +401,11 @@ LZWDecode(TIFF* tif, uint8_t* op0, tmsize_t occ0, uint16_t s)
 
 	(void) s;
 	assert(sp != NULL);
-        assert(sp->dec_codetab != NULL);
+	assert(sp->dec_codetab != NULL);
+
+	if (sp->read_error) {
+		return 0;
+	}
 
 	/*
 	 * Restart interrupted output operation.
@@ -704,6 +710,7 @@ no_eoi:
                     tif->tif_curstrip);
     return 0;
 error_code:
+    sp->read_error = 1;
     TIFFErrorExt(tif->tif_clientdata, tif->tif_name, "Using code not yet in table");
     return 0;
 }

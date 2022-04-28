@@ -211,6 +211,18 @@ need to be installed: ``blas blas-devel libblas libcblas liblapack liblapacke``
     Control whether to use Armadillo. Defaults to ON when Armadillo is found.
 
 
+Arrow
+*****
+
+The `Apache Arrow C++ <https://github.com/apache/arrow/tree/master/cpp>` library
+is required for the :ref:`vector.arrow` and :ref:`vector.parquet` drivers.
+Specify install prefix in the ``CMAKE_PREFIX_PATH`` variable.
+
+.. option:: GDAL_USE_ARROW=ON/OFF
+
+    Control whether to use Arrow. Defaults to ON when Arrow is found.
+
+
 Blosc
 *****
 
@@ -229,6 +241,28 @@ It is used by the :ref:`raster.zarr` driver.
 .. option:: GDAL_USE_BLOSC=ON/OFF
 
     Control whether to use Blosc. Defaults to ON when Blosc is found.
+
+BRUNSLI
+*******
+
+The `Brunsli <https://github.com/google/brunsli>` JPEG repacking library, used 
+by the :ref:`raster.marfa` driver.
+
+.. option:: BRUNSLI_INCLUDE_DIR
+
+    Path to an include directory with the ``brunsli/decode.h`` and ``brunsli\encode.h`` header files.
+
+.. option:: BRUNSLI_ENC_LIB
+
+    Path to the brunslienc-c library file.
+
+.. option:: BRUNSLI_DEC_LIB
+
+    Path to the brunslidec-c library file.
+
+.. option:: GDAL_USE_BRUNSLI=ON/OFF
+
+    Control whether to use BRUNSLI. Defaults to ON when Brunsli is found.
 
 
 CFITSIO
@@ -1328,6 +1362,18 @@ The Oracle Instant Client SDK (closed source/proprietary) is required for the
 .. option:: GDAL_USE_ORACLE=ON/OFF
 
     Control whether to use Oracle. Defaults to ON when Oracle is found.
+
+
+Parquet
+*******
+
+The Parquet component of the `Apache Arrow C++ <https://github.com/apache/arrow/tree/master/cpp>`
+library is required for the :ref:`vector.parquet` driver.
+Specify install prefix in the ``CMAKE_PREFIX_PATH`` variable.
+
+.. option:: GDAL_USE_PARQUET=ON/OFF
+
+    Control whether to use Parquet. Defaults to ON when Parquet is found.
 
 
 PCRE2

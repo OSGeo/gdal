@@ -1402,7 +1402,8 @@ int OGRShapeLayer::GetFeatureCountWithSpatialFilterOnly()
                 if( psShape )
                 {
                     poGeometry = SHPReadOGRObject( hSHP, iShape, psShape );
-                    poGeometry->getEnvelope( &sGeomEnv );
+                    if( poGeometry )
+                        poGeometry->getEnvelope( &sGeomEnv );
                     psShape = nullptr;
                 }
             }
@@ -1662,6 +1663,9 @@ int OGRShapeLayer::TestCapability( const char * pszCap )
         return bUpdateAccess;
 
     if( EQUAL(pszCap,OLCAlterFieldDefn) )
+        return bUpdateAccess;
+
+    if( EQUAL(pszCap,OLCRename) )
         return bUpdateAccess;
 
     if( EQUAL(pszCap,OLCIgnoreFields) )
@@ -3513,9 +3517,97 @@ void OGRShapeLayer::UpdateFollowingDeOrRecompression()
     CPLString osDSDir = poDS->GetTemporaryUnzipDir();
     if( osDSDir.empty() )
         osDSDir = poDS->GetVSIZipPrefixeDir();
+
+    if( GetSpatialRef() != nullptr )
+    {
+        OGRShapeGeomFieldDefn* poGeomFieldDefn =
+            cpl::down_cast<OGRShapeGeomFieldDefn*>(GetLayerDefn()->GetGeomFieldDefn(0));
+        poGeomFieldDefn->SetPrjFilename(
+            CPLFormFilename(osDSDir.c_str(),
+                            CPLGetFilename(poGeomFieldDefn->GetPrjFilename().c_str()),
+                            nullptr));
+    }
+
     char* pszNewFullName = CPLStrdup(
         CPLFormFilename(osDSDir, CPLGetFilename(pszFullName), nullptr));
     CPLFree(pszFullName);
     pszFullName = pszNewFullName;
     CloseUnderlyingLayer();
+}
+
+/************************************************************************/
+/*                           Rename()                                   */
+/************************************************************************/
+
+OGRErr OGRShapeLayer::Rename(const char* pszNewName)
+{
+    if( !TestCapability(OLCRename) )
+        return OGRERR_FAILURE;
+
+    if( poDS->GetLayerByName(pszNewName) != nullptr )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Layer %s already exists",
+                 pszNewName);
+        return OGRERR_FAILURE;
+    }
+
+    if( !poDS->UncompressIfNeeded() )
+        return OGRERR_FAILURE;
+
+    CPLStringList oFileList;
+    AddToFileList(oFileList);
+
+    const std::string osDirname = CPLGetPath(pszFullName);
+    for( int i = 0; i < oFileList.size(); ++i )
+    {
+        const std::string osRenamedFile =
+            CPLFormFilename(osDirname.c_str(), pszNewName, CPLGetExtension(oFileList[i]));
+        VSIStatBufL sStat;
+        if( VSIStatL(osRenamedFile.c_str(), &sStat) == 0 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "File %s already exists",
+                     osRenamedFile.c_str());
+            return OGRERR_FAILURE;
+        }
+    }
+
+    CloseUnderlyingLayer();
+
+    for( int i = 0; i < oFileList.size(); ++i )
+    {
+        const std::string osRenamedFile =
+            CPLFormFilename(osDirname.c_str(), pszNewName, CPLGetExtension(oFileList[i]));
+        if( VSIRename( oFileList[i], osRenamedFile.c_str() ) != 0 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot rename %s to %s",
+                     oFileList[i],
+                     osRenamedFile.c_str());
+            return OGRERR_FAILURE;
+        }
+    }
+
+    if( GetSpatialRef() != nullptr )
+    {
+        OGRShapeGeomFieldDefn* poGeomFieldDefn =
+            cpl::down_cast<OGRShapeGeomFieldDefn*>(GetLayerDefn()->GetGeomFieldDefn(0));
+        poGeomFieldDefn->SetPrjFilename(
+            CPLFormFilename(osDirname.c_str(), pszNewName,
+                            CPLGetExtension(poGeomFieldDefn->GetPrjFilename().c_str())));
+    }
+
+    char* pszNewFullName = CPLStrdup(
+        CPLFormFilename(osDirname.c_str(), pszNewName, CPLGetExtension(pszFullName)));
+    CPLFree(pszFullName);
+    pszFullName = pszNewFullName;
+
+    if( !ReopenFileDescriptors() )
+        return OGRERR_FAILURE;
+
+    SetDescription(pszNewName);
+    poFeatureDefn->SetName(pszNewName);
+
+    return OGRERR_NONE;
 }

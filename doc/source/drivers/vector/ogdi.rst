@@ -27,7 +27,7 @@ layers has an OGR name based on the OGDI name plus an underscore and the
 family name. For instance a layer might be called
 **watrcrsl@hydro(*)_line** if coming out of the VRF driver.
 
-Setting the *OGR_OGDI_LAUNDER_LAYER_NAMES*
+Setting the :decl_configoption:`OGR_OGDI_LAUNDER_LAYER_NAMES`
 configuration option (or environment variable) to YES causes the layer
 names to be simplified. For example : *watrcrsl_hydro* instead of
 'watrcrsl@hydro(*)_line'

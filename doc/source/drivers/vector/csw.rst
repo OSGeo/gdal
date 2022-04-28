@@ -26,7 +26,28 @@ Dataset name syntax
 The minimal syntax to open a CSW datasource is : *CSW:* and the URL open
 option, or *CSW:http://path/to/CSW/endpoint*
 
-The following open options are available:
+Filtering
+---------
+
+The driver will forward any spatial filter set with SetSpatialFilter()
+to the server. It also makes its best effort to do the same for
+attribute filters set with SetAttributeFilter() when possible (turning
+OGR SQL language into OGC filter description).
+
+The *anytext* field can be queried to do a search in any text field.
+Note that we always return it as null content however in OGR side, to
+avoid duplicating information.
+
+Issues
+------
+
+Some servers do not respect EPSG axis order, in particular latitude,
+longitude order for WGS 84 geodetic coordinates, so it might be needed
+to specify the :decl_configoption:`GML_INVERT_AXIS_ORDER_IF_LAT_LONG=NO` 
+configuration option in those cases.
+
+Open options
+------------
 
 -  **URL**: URL to the CSW server endpoint (if not specified in the
    connection string already)
@@ -45,25 +66,16 @@ The following open options are available:
    single time. Defaults to 500. Servers might have a lower accepted
    value.
 
-Filtering
----------
+Configuration options
+---------------------
 
-The driver will forward any spatial filter set with SetSpatialFilter()
-to the server. It also makes its best effort to do the same for
-attribute filters set with SetAttributeFilter() when possible (turning
-OGR SQL language into OGC filter description).
+The following :ref:`configuration options <configoptions>` are 
+available:
 
-The *anytext* field can be queried to do a search in any text field.
-Note that we always return it as null content however in OGR side, to
-avoid duplicating information.
-
-Issues
-------
-
-Some servers do not respect EPSG axis order, in particular latitude,
-longitude order for WGS 84 geodetic coordinates, so it might be needed
-to specify the GML_INVERT_AXIS_ORDER_IF_LAT_LONG=NO configuration option
-in those cases.
+-  :decl_configoption:`GML_INVERT_AXIS_ORDER_IF_LAT_LONG=NO`: Some servers 
+   do not respect EPSG axis order, in particular latitude,
+   longitude order for WGS 84 geodetic coordinates, so it might be needed
+   to specify the  configuration option in those cases.
 
 Examples
 --------

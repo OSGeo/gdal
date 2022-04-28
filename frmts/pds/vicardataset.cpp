@@ -2381,10 +2381,13 @@ void VICARDataset::ReadProjectionFromGeoTIFFGroup()
                 CPLString(pszValue).replaceAll('(',"").replaceAll(')', "").
                   replaceAll(',', ' ').c_str(),
                 " ", 0));
-            std::vector<double> adfValues;
-            for( int i = 0; i < aosTokens.size(); ++i )
-                adfValues.push_back(CPLAtof(aosTokens[i]));
-            TIFFSetField(hTIFF, kv.second, aosTokens.size(), &adfValues[0]);
+            if( !aosTokens.empty() )
+            {
+                std::vector<double> adfValues;
+                for( int i = 0; i < aosTokens.size(); ++i )
+                    adfValues.push_back(CPLAtof(aosTokens[i]));
+                TIFFSetField(hTIFF, kv.second, aosTokens.size(), &adfValues[0]);
+            }
         }
     }
 
