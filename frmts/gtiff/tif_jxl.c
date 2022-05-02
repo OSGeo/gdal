@@ -475,11 +475,15 @@ JXLPostEncode(TIFF* tif)
         }
         JxlEncoderUseContainer(enc, JXL_FALSE);
 
+#ifdef HAVE_JxlEncoderFrameSettingsCreate
+        JxlEncoderOptions *opts = JxlEncoderFrameSettingsCreate(enc, NULL);
+#else
         JxlEncoderOptions *opts = JxlEncoderOptionsCreate(enc, NULL);
+#endif
         if( opts == NULL )
         {
             TIFFErrorExt(tif->tif_clientdata, module,
-                         "JxlEncoderOptionsCreate() failed");
+                         "JxlEncoderFrameSettingsCreate() failed");
             JxlEncoderDestroy(enc);
             return 0;
         }
@@ -489,6 +493,12 @@ JXLPostEncode(TIFF* tif)
         format.endianness = JXL_NATIVE_ENDIAN;
         format.align = 0;
 
+#ifdef HAVE_JxlEncoderSetCodestreamLevel
+        if( sp->lossless && td->td_bitspersample > 12 )
+        {
+            JxlEncoderSetCodestreamLevel(enc, 10);
+        }
+#endif
         JxlBasicInfo basic_info = {0};
         JxlEncoderInitBasicInfo(&basic_info);
         basic_info.xsize = sp->segment_width;
@@ -544,15 +554,23 @@ JXLPostEncode(TIFF* tif)
         if( sp->lossless )
         {
             JxlEncoderOptionsSetLossless(opts, TRUE);
+#ifdef HAVE_JxlEncoderSetFrameDistance
+            JxlEncoderSetFrameDistance(opts, 0);
+#else
             JxlEncoderOptionsSetDistance(opts, 0);
+#endif
             basic_info.uses_original_profile = JXL_TRUE;
         }
         else
         {
+#ifdef HAVE_JxlEncoderSetFrameDistance
+            if( JxlEncoderSetFrameDistance(opts, sp->distance) != JXL_ENC_SUCCESS )
+#else
             if( JxlEncoderOptionsSetDistance(opts, sp->distance) != JXL_ENC_SUCCESS )
+#endif
             {
                 TIFFErrorExt(tif->tif_clientdata, module,
-                            "JxlEncoderOptionsSetDistance() failed");
+                            "JxlEncoderSetFrameDistance() failed");
                 JxlEncoderDestroy(enc);
                 return 0;
             }
