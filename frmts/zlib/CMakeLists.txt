@@ -22,7 +22,7 @@ add_library(
   trees.c
   uncompr.c
   zutil.c)
-set_property(TARGET libz PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
+set_property(TARGET libz PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:libz>)
 target_compile_options(libz PRIVATE ${GDAL_C_WARNING_FLAGS})
 if (MSVC)
