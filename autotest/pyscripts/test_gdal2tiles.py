@@ -100,6 +100,9 @@ def test_gdal2tiles_py_zoom_option():
         expected_cs = [24063, 23632, 14707, 17849]
     )
 
+    assert not os.path.exists('tmp/out_gdal2tiles_smallworld/0/0/0.png.aux.xml')
+    assert not os.path.exists('tmp/out_gdal2tiles_smallworld/1/0/0.png.aux.xml')
+
     ds = gdal.Open('tmp/out_gdal2tiles_smallworld/doc.kml')
     assert ds is not None, 'did not get kml'
 
