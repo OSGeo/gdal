@@ -120,6 +120,7 @@ class OGRParquetWriterLayer final: public OGRArrowWriterLayer
 
         std::unique_ptr<parquet::arrow::FileWriter> m_poFileWriter{};
         std::shared_ptr<const arrow::KeyValueMetadata> m_poKeyValueMetadata{};
+        bool                                           m_bForceCounterClockwiseOrientation = false;
 
         virtual bool            IsFileWriterCreated() const override { return m_poFileWriter != nullptr; }
         virtual void            CreateWriter() override;
