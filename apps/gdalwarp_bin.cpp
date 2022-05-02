@@ -46,18 +46,18 @@ CPL_CVSID("$Id$")
 
 static int GDALExit( int nCode )
 {
-  const char  *pszDebug = CPLGetConfigOption("CPL_DEBUG",nullptr);
-  if( pszDebug && (EQUAL(pszDebug,"ON") || EQUAL(pszDebug,"") ) )
-  {
-    GDALDumpOpenDatasets( stderr );
-    CPLDumpSharedList( nullptr );
-  }
+    const char *pszDebug = CPLGetConfigOption("CPL_DEBUG", nullptr);
+    if( pszDebug && (EQUAL(pszDebug, "ON") || EQUAL(pszDebug, "") ) )
+    {
+        GDALDumpOpenDatasets( stderr );
+        CPLDumpSharedList( nullptr );
+    }
 
-  GDALDestroyDriverManager();
+    GDALDestroyDriverManager();
 
-  OGRCleanupAll();
+    OGRCleanupAll();
 
-  exit( nCode );
+    exit( nCode );
 }
 
 /************************************************************************/
@@ -100,7 +100,7 @@ static void Usage(const char* pszErrorMsg = nullptr)
 
 static GDALWarpAppOptionsForBinary *GDALWarpAppOptionsForBinaryNew(void)
 {
-    return static_cast<GDALWarpAppOptionsForBinary*>(CPLCalloc(  1, sizeof(GDALWarpAppOptionsForBinary) ));
+    return static_cast<GDALWarpAppOptionsForBinary*>(CPLCalloc( 1, sizeof(GDALWarpAppOptionsForBinary) ));
 }
 
 /************************************************************************/
@@ -153,9 +153,6 @@ static int CPL_STDCALL WarpTermProgress( double dfProgress,
 MAIN_START(argc, argv)
 
 {
-    GDALDatasetH *pahSrcDS = nullptr;
-    int nSrcCount = 0;
-
     EarlySetConfigOptions(argc, argv);
     CPLDebugOnly("GDAL", "Start");
 
@@ -177,7 +174,7 @@ MAIN_START(argc, argv)
             CSLDestroy( argv );
             return 0;
         }
-        else if( EQUAL(argv[i],"--help") )
+        else if( EQUAL(argv[i], "--help") )
         {
             Usage(nullptr);
         }
@@ -226,18 +223,34 @@ MAIN_START(argc, argv)
     }
 
 /* -------------------------------------------------------------------- */
-/*      Open Source files.                                              */
+/*      Open source files.                                              */
 /* -------------------------------------------------------------------- */
+    GDALDatasetH *pahSrcDS = nullptr;
+    int nSrcCount = 0;
     for(int i = 0; psOptionsForBinary->papszSrcFiles[i] != nullptr; i++)
     {
         nSrcCount++;
         pahSrcDS = static_cast<GDALDatasetH *>(CPLRealloc(pahSrcDS, sizeof(GDALDatasetH) * nSrcCount));
-        pahSrcDS[nSrcCount-1] = GDALOpenEx( psOptionsForBinary->papszSrcFiles[i], GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
+        pahSrcDS[i] = GDALOpenEx( psOptionsForBinary->papszSrcFiles[i],
+                                            GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
                                             psOptionsForBinary->papszAllowInputDrivers,
                                             psOptionsForBinary->papszOpenOptions, nullptr );
 
-        if( pahSrcDS[nSrcCount-1] == nullptr )
+        if( pahSrcDS[i] == nullptr )
+        {
+            CPLError( CE_Failure, CPLE_OpenFailed,
+                      "Failed to open source file %s\n",
+                      psOptionsForBinary->papszSrcFiles[i] );
+            while (nSrcCount--)
+            {
+                GDALClose(pahSrcDS[nSrcCount]);
+                pahSrcDS[nSrcCount] = nullptr;
+            }
+            CPLFree(pahSrcDS);
+            GDALWarpAppOptionsFree(psOptions);
+            GDALWarpAppOptionsForBinaryFree(psOptionsForBinary);
             GDALExit(2);
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -275,7 +288,8 @@ MAIN_START(argc, argv)
     {
         std::vector<CPLErrorHandlerAccumulatorStruct> aoErrors;
         CPLInstallErrorHandlerAccumulator(aoErrors);
-        hDstDS = GDALOpenEx( psOptionsForBinary->pszDstFilename, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR | GDAL_OF_UPDATE,
+        hDstDS = GDALOpenEx( psOptionsForBinary->pszDstFilename,
+                             GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR | GDAL_OF_UPDATE,
                              nullptr, psOptionsForBinary->papszDestOpenOptions, nullptr );
         CPLUninstallErrorHandlerAccumulator();
         if( hDstDS != nullptr )
@@ -343,7 +357,7 @@ MAIN_START(argc, argv)
 
     int bUsageError = FALSE;
     GDALDatasetH hOutDS = GDALWarp(psOptionsForBinary->pszDstFilename, hDstDS,
-                      nSrcCount, pahSrcDS, psOptions, &bUsageError);
+                                   nSrcCount, pahSrcDS, psOptions, &bUsageError);
     if( bUsageError )
         Usage();
     int nRetCode = (hOutDS) ? 0 : 1;
@@ -360,8 +374,6 @@ MAIN_START(argc, argv)
     CPLFree(pahSrcDS);
 
     GDALDumpOpenDatasets( stderr );
-
-    GDALDestroyDriverManager();
 
     OGRCleanupAll();
 

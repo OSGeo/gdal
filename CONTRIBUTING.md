@@ -78,7 +78,7 @@ Fork OSGeo/gdal from github UI, and then
 ```
 git clone https://github.com/OSGeo/gdal
 cd gdal
-git remote add my_user_name https://github.com/my_user_name/gdal.git
+git remote add my_user_name git@github.com:my_user_name/gdal.git
 ```
 
 Updating your local master against upstream master
