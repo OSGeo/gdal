@@ -528,8 +528,31 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
 
     strcat( szPen, ")" );
 
+    if ( CSLTestBoolean(CPLGetConfigOption("DGN_CELL_HEADER_ORIGIN", "FALSE")) && psElement->stype != DGNST_CELL_HEADER && psElement->complex ) 
+    {
+        return poFeature;
+    }
+
     switch( psElement->stype )
     {
+      case DGNST_CELL_HEADER:
+        if ( CSLTestBoolean(CPLGetConfigOption("DGN_CELL_HEADER_ORIGIN", "FALSE")) )
+        {
+            DGNElemCellHeader *psCell = reinterpret_cast<DGNElemCellHeader *>( psElement );
+            
+            // CPLDebug("DGNST_CELL_HEADER", "--stype: %d type: %d length: %d ----------------------", psElement->stype, psElement->type, psCell->totlength);
+
+            OGRPoint *poPoint = new OGRPoint();
+
+            poPoint->setX( psCell->origin.x );
+            poPoint->setY( psCell->origin.y );
+            poPoint->setZ( psCell->origin.z );
+            poFeature->SetGeometryDirectly( poPoint );
+
+            poFeature->SetField( "Text", psCell->name );
+        }
+        break;
+
       case DGNST_MULTIPOINT:
         if( psElement->type == DGNT_SHAPE )
         {

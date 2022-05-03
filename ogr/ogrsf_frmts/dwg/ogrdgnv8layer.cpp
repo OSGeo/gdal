@@ -923,8 +923,36 @@ std::vector<tPairFeatureHoleFlag> OGRDGNV8Layer::ProcessElement(
 
     osPen += ")";
 
-    if( EQUAL(pszEntityClassName, "OdDgCellHeader2d") ||
-        EQUAL(pszEntityClassName, "OdDgCellHeader3d") )
+    if( CSLTestBoolean(CPLGetConfigOption("DGN_CELL_HEADER_ORIGIN", "FALSE")) && EQUAL(pszEntityClassName, "OdDgCellHeader2d") )
+    {
+        // CPLDebug("DGNV8", "Handling class %s for %d", pszEntityClassName, poFeature->GetFID());
+
+        OdDgCellHeader2dPtr elementCell = OdDgCellHeader2d::cast( element );
+        CPLAssert( !elementCell.isNull() );
+
+        OdGePoint2d point = elementCell->getOrigin();
+        poFeature->SetGeometryDirectly( new OGRPoint(point.x, point.y) );
+
+        poFeature->SetField( "Text", ToUTF8(elementCell->getName()).c_str() );
+    }
+
+    if( CSLTestBoolean(CPLGetConfigOption("DGN_CELL_HEADER_ORIGIN", "FALSE")) && EQUAL(pszEntityClassName, "OdDgCellHeader3d") )
+    {
+        // CPLDebug("DGNV8", "Handling class %s for %d", pszEntityClassName, poFeature->GetFID());
+
+        OdDgCellHeader3dPtr elementCell = OdDgCellHeader3d::cast( element );
+        CPLAssert( !elementCell.isNull() );
+        
+        OdGePoint3d point = elementCell->getOrigin();
+        poFeature->SetGeometryDirectly( new OGRPoint(point.x, point.y, point.z) );
+
+        poFeature->SetField( "Text", ToUTF8(elementCell->getName()).c_str() );
+
+    }
+
+    if( (EQUAL(pszEntityClassName, "OdDgCellHeader2d") ||
+        EQUAL(pszEntityClassName, "OdDgCellHeader3d")) && 
+        !CSLTestBoolean(CPLGetConfigOption("DGN_CELL_HEADER_ORIGIN", "FALSE")) )
     {
         bool bDestroyFeature = true;
         OdDgElementIteratorPtr iterator;
