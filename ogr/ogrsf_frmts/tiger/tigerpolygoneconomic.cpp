@@ -37,39 +37,39 @@ static const char FILE_CODE[] = "E";
    it in the code in case I am missing something.
 
 static TigerFieldInfo rtE_fields[] = {
-  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
-  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
-  { "FILE",       'L', 'N', OFTInteger,    6,  10,   5,       1,   1,     1 },
-  { "CENID",      'L', 'A', OFTString,    11,  15,   5,       1,   1,     1 },
-  { "POLYID",     'R', 'N', OFTInteger,   16,  25,  10,       1,   1,     1 },
-  { "STATEEC",    'L', 'N', OFTInteger,   26,  27,   2,       1,   1,     1 },
-  { "COUNTYEC",   'L', 'N', OFTInteger,   28,  30,   3,       1,   1,     1 },
-  { "CONCITEC",   'L', 'N', OFTInteger,   31,  35,   5,       1,   1,     1 },
-  { "COUSUBEC",   'L', 'N', OFTInteger,   36,  40,   5,       1,   1,     1 },
-  { "PLACEEC",    'L', 'N', OFTInteger,   41,  45,   5,       1,   1,     1 },
-  { "AIANHHFPEC", 'L', 'N', OFTInteger,   46,  50,   5,       1,   1,     1 },
-  { "AIANHHEC",   'L', 'N', OFTInteger,   51,  54,   4,       1,   1,     1 },
-  { "AIAHHTLIEC", 'L', 'A', OFTString,    55,  55,   1,       1,   1,     1 },
-  { "RS_E1",      'L', 'A', OFTString,    56,  73,  18,       1,   1,     1 }
+  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet
+  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0 },
+  { "FILE",       'L', 'N', OFTInteger,    6,  10,   5,       1,   1 },
+  { "CENID",      'L', 'A', OFTString,    11,  15,   5,       1,   1 },
+  { "POLYID",     'R', 'N', OFTInteger,   16,  25,  10,       1,   1 },
+  { "STATEEC",    'L', 'N', OFTInteger,   26,  27,   2,       1,   1 },
+  { "COUNTYEC",   'L', 'N', OFTInteger,   28,  30,   3,       1,   1 },
+  { "CONCITEC",   'L', 'N', OFTInteger,   31,  35,   5,       1,   1 },
+  { "COUSUBEC",   'L', 'N', OFTInteger,   36,  40,   5,       1,   1 },
+  { "PLACEEC",    'L', 'N', OFTInteger,   41,  45,   5,       1,   1 },
+  { "AIANHHFPEC", 'L', 'N', OFTInteger,   46,  50,   5,       1,   1 },
+  { "AIANHHEC",   'L', 'N', OFTInteger,   51,  54,   4,       1,   1 },
+  { "AIAHHTLIEC", 'L', 'A', OFTString,    55,  55,   1,       1,   1 },
+  { "RS_E1",      'L', 'A', OFTString,    56,  73,  18,       1,   1 }
 };
 */
 
 static const TigerFieldInfo rtE_fields[] = {
-  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
-  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
-  { "FILE",       'L', 'N', OFTInteger,    6,  10,   5,       1,   1,     1 },
-  { "CENID",      'L', 'A', OFTString,    11,  15,   5,       1,   1,     1 },
-  { "POLYID",     'R', 'N', OFTInteger,   16,  25,  10,       1,   1,     1 },
-  { "STATEEC",    'L', 'N', OFTInteger,   26,  27,   2,       1,   1,     1 },
-  { "COUNTYEC",   'L', 'N', OFTInteger,   28,  30,   3,       1,   1,     1 },
-  { "RS_E1",      'L', 'A', OFTString,    31,  35,   5,       1,   1,     1 },
-  { "RS_E2",      'L', 'A', OFTString,    36,  40,   5,       1,   1,     1 },
-  { "PLACEEC",    'L', 'N', OFTInteger,   41,  45,   5,       1,   1,     1 },
-  { "RS-E3",      'L', 'A', OFTString,    46,  50,   5,       1,   1,     1 },
-  { "RS-E4",      'L', 'A', OFTString,    51,  54,   4,       1,   1,     1 },
-  { "RS-E5",      'L', 'A', OFTString,    55,  55,   1,       1,   1,     1 },
-  { "COMMREGEC",  'L', 'N', OFTInteger,   56,  56,   1,       1,   1,     1 },
-  { "RS_E6",      'L', 'A', OFTString,    57,  73,  17,       1,   1,     1 }
+  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet
+  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0 },
+  { "FILE",       'L', 'N', OFTInteger,    6,  10,   5,       1,   1 },
+  { "CENID",      'L', 'A', OFTString,    11,  15,   5,       1,   1 },
+  { "POLYID",     'R', 'N', OFTInteger,   16,  25,  10,       1,   1 },
+  { "STATEEC",    'L', 'N', OFTInteger,   26,  27,   2,       1,   1 },
+  { "COUNTYEC",   'L', 'N', OFTInteger,   28,  30,   3,       1,   1 },
+  { "RS_E1",      'L', 'A', OFTString,    31,  35,   5,       1,   1 },
+  { "RS_E2",      'L', 'A', OFTString,    36,  40,   5,       1,   1 },
+  { "PLACEEC",    'L', 'N', OFTInteger,   41,  45,   5,       1,   1 },
+  { "RS-E3",      'L', 'A', OFTString,    46,  50,   5,       1,   1 },
+  { "RS-E4",      'L', 'A', OFTString,    51,  54,   4,       1,   1 },
+  { "RS-E5",      'L', 'A', OFTString,    55,  55,   1,       1,   1 },
+  { "COMMREGEC",  'L', 'N', OFTInteger,   56,  56,   1,       1,   1 },
+  { "RS_E6",      'L', 'A', OFTString,    57,  73,  17,       1,   1 }
 };
 static const TigerRecordInfo rtE_info =
   {
