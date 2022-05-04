@@ -507,7 +507,6 @@ void CPL_DLL RegisterOGRAVCBin();
 void CPL_DLL RegisterOGRAVCE00();
 void CPL_DLL RegisterOGRMEM();
 void CPL_DLL RegisterOGRVRT();
-void CPL_DLL RegisterOGRDODS();
 void CPL_DLL RegisterOGRSQLite();
 void CPL_DLL RegisterOGRCSV();
 void CPL_DLL RegisterOGRILI1();

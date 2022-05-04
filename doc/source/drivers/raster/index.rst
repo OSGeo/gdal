@@ -51,7 +51,6 @@ Raster drivers
    derived
    dimap
    dipex
-   dods
    doq1
    doq2
    dted

@@ -109,9 +109,6 @@ void OGRRegisterAllInternal()
 #ifdef SQLITE_ENABLED
     RegisterOGRSQLite();
 #endif
-#ifdef DODS_ENABLED
-    RegisterOGRDODS();
-#endif
 #ifdef ODBC_ENABLED
     RegisterOGRODBC();
 #endif

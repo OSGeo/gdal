@@ -15,7 +15,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-rec
     libnetcdf-dev libpoppler-dev libpoppler-private-dev \
     libspatialite-dev swig libhdf4-alt-dev libhdf5-serial-dev \
     libfreexl-dev unixodbc-dev libwebp-dev libepsilon-dev \
-    liblcms2-2 libpcre2-dev libcrypto++-dev libdap-dev libfyba-dev \
+    liblcms2-2 libpcre2-dev libcrypto++-dev libfyba-dev \
     libkml-dev libmysqlclient-dev libogdi-dev \
     libcfitsio-dev openjdk-8-jdk libzstd-dev \
     libpq-dev libssl-dev libboost-dev \

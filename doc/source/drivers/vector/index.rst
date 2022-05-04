@@ -36,7 +36,6 @@ Vector drivers
    csw
    dgn
    dgnv8
-   dods
    dwg
    dxf
    eeda

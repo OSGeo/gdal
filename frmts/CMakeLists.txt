@@ -123,7 +123,6 @@ gdal_dependent_format(hdf4 "Hierarchical Data Format Release 4 (HDF4)" "GDAL_USE
 gdal_dependent_format(rasterlite "Rasterlite - Rasters in SQLite DB" "GDAL_USE_SQLITE3;OGR_ENABLE_DRIVER_SQLITE")
 gdal_dependent_format(mbtiles "MBTile" "GDAL_USE_SQLITE3;OGR_ENABLE_DRIVER_GPKG")
 gdal_dependent_format(postgisraster "PostGIS Raster driver" "GDAL_USE_POSTGRESQL")
-gdal_dependent_format(dods "OPeNDAP Grid Client" "GDAL_USE_DAP")
 gdal_dependent_format(dds "DirectDraw Surface" "GDAL_USE_CRNLIB")
 gdal_dependent_format(kea "Kea" "GDAL_USE_KEA;GDAL_USE_HDF5")
 gdal_dependent_format(openjpeg "JPEG2000 driver based on OpenJPEG library" "GDAL_USE_OPENJPEG" DRIVER_NAME_OPTION
