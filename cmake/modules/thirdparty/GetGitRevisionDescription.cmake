@@ -57,7 +57,13 @@ function(get_git_head_revision _refspecvar _hashvar _repo_dir)
         OUTPUT_STRIP_TRAILING_WHITESPACE)
 
     if(NOT res EQUAL 0)
-        return()
+        # git rev-parse can fail if run as root (e.g "sudo make install")
+        # on a git repo owned by another user
+        if(EXISTS ${_repo_dir}/.git/HEAD)
+            set(GIT_DIR ${_repo_dir}/.git)
+        else()
+            return()
+        endif()
     endif()
 
     get_filename_component(GIT_DIR "${GIT_DIR}" ABSOLUTE BASE_DIR "${_repo_dir}")
