@@ -2013,84 +2013,6 @@ AC_SUBST(PG_INC,$PG_INC)
 AC_SUBST(PG_LIB,$PG_LIB)
 
 dnl ---------------------------------------------------------------------------
-dnl Check if we should build with GRASS support.
-dnl ---------------------------------------------------------------------------
-
-GRASS_SETTING=no
-GRASS_INCLUDE=
-HAVE_GRASS=no
-export GRASS_INCLUDE GRASS_SETTING
-
-AC_ARG_WITH(grass,[  --with-grass[=ARG]      Include GRASS support (GRASS 5.7+, ARG=GRASS install tree dir)],,)
-
-AC_ARG_WITH(libgrass,[  --with-libgrass[=ARG]   Include GRASS support based on libgrass (GRASS 5.0+)],,)
-
-# default use of grass libraries off since we can't easily auto-find them.
-if test "$with_grass" = "" ; then
-  with_grass=no
-fi
-
-# Check for GRASS 5.7.0 or later library use.
-# TODO: separate libs for rasters and vectors
-if test "$with_grass" != "yes" -a "$with_grass" != "no" ; then
-
-  AC_CHECK_LIB(grass_gis,G_is_initialized,GRASS_SETTING=grass70+,GRASS_SETTING=no,-L$with_grass/lib -lgrass_datetime)
-  if test "$GRASS_SETTING" = "no" ; then
-    AC_CHECK_LIB(grass_gis,G_asprintf,GRASS_SETTING=grass57+,GRASS_SETTING=no,-L$with_grass/lib -lgrass_datetime)
-  fi
-
-  if test "$GRASS_SETTING" != "no" ; then
-    if test "$GRASS_SETTING" = "grass70+" ; then
-      G_RASTLIBS="-lgrass_raster -lgrass_imagery"
-      G_VECTLIBS="-lgrass_vector -lgrass_dig2 -lgrass_dgl -lgrass_rtree -lgrass_linkm -lgrass_dbmiclient -lgrass_dbmibase"
-      LIBS="-L$with_grass/lib $G_VECTLIBS $G_RASTLIBS -lgrass_gproj -lgrass_gmath -lgrass_gis -lgrass_datetime $LIBS"
-    else
-      G_RASTLIBS="-lgrass_I"
-      G_VECTLIBS="-lgrass_vect -lgrass_dig2 -lgrass_dgl -lgrass_rtree -lgrass_linkm -lgrass_dbmiclient -lgrass_dbmibase"
-      LIBS="-L$with_grass/lib $G_VECTLIBS $G_RASTLIBS -lgrass_gproj -lgrass_vask -lgrass_gmath -lgrass_gis -lgrass_datetime $LIBS"
-    fi
-    GRASS_INCLUDE="-I$with_grass/include"
-    GRASS_GISBASE="$with_grass"
-    HAVE_GRASS=yes
-  else
-    AC_MSG_ERROR([--with-grass=$with_grass requested, but libraries not found!])
-  fi
-
-# Check if libgrass is disabled.
-elif test "$with_libgrass" = "no" ; then
-
-  echo "GRASS support disabled."
-
-elif test "$with_libgrass" = "yes" -o "$with_libgrass" = "" ; then
-
-  AC_CHECK_LIB(grass5,G_gisinit_2,GRASS_SETTING=libgrass,GRASS_SETTING=no,)
-
-  if test "$GRASS_SETTING" = "libgrass" ; then
-    LIBS="-lgrass5 $LIBS"
-  fi
-
-else
-
-  AC_CHECK_LIB(grass5,G_gisinit_2,GRASS_SETTING=libgrass,GRASS_SETTING=no,-L$with_libgrass/lib)
-
-  if test "$GRASS_SETTING" = "libgrass" ; then
-    LIBS="-L$with_libgrass -L$with_libgrass/lib -lgrass5 $LIBS"
-    GRASS_INCLUDE="-I$with_libgrass -I$with_libgrass/include $EXTRA_INCLUDES"
-  else
-    AC_MSG_ERROR([--with-libgrass=$with_grass requested, but libgrass5 not found!])
-  fi
-fi
-
-AC_SUBST(GRASS_SETTING,$GRASS_SETTING)
-AC_SUBST(GRASS_INCLUDE,$GRASS_INCLUDE)
-AC_SUBST(GRASS_GISBASE,$GRASS_GISBASE)
-AC_SUBST(HAVE_GRASS)
-
-if test "$GRASS_SETTING" != "no" ; then
-  OPT_GDAL_FORMATS="grass $OPT_GDAL_FORMATS"
-fi
-
-dnl ---------------------------------------------------------------------------
 dnl Check if cfitsio library is available.
 dnl ---------------------------------------------------------------------------
 
@@ -5868,7 +5790,6 @@ LOC_MSG([  FreeXL support:            ${HAVE_FREEXL}])
 LOC_MSG([  GEORASTER support:         ${HAVE_GEORASTER}])
 LOC_MSG([  GEOS support:              ${HAVE_GEOS}])
 LOC_MSG([  Google libkml support:     ${HAVE_LIBKML}])
-LOC_MSG([  GRASS support:             ${GRASS_SETTING}])
 LOC_MSG([  GTA support:               ${GTA_SETTING}])
 LOC_MSG([  HDF4 support:              ${HAVE_HDF4}])
 LOC_MSG([  HDF5 support:              ${HAVE_HDF5}])

@@ -90,7 +90,7 @@ def test_gdal_ls_py_2():
 def test_gdal_ls_py_3():
     ret_str = run_gdal_ls(['', '-R', test_py_scripts.get_data_path('ogr')])
 
-    assert ret_str.find('PROJ_UNITS') != -1
+    assert 'topojson1.topojson' in ret_str
 
 
 ###############################################################################

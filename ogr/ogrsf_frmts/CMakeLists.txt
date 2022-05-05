@@ -88,16 +88,6 @@ ogr_dependent_driver(mssqlspatial MSSQLSPATIAL "GDAL_USE_ODBC")
 ogr_dependent_driver(odbc ODBC "GDAL_USE_ODBC")
 ogr_dependent_driver(pgeo "PGEO" "GDAL_USE_ODBC")
 
-# for dependency problem, grass is not always compiled in.
-ogr_dependent_driver(grass "GRASS Vector format" "HAVE_GRASS")
-if (OGR_ENABLE_DRIVER_GRASS)
-  if (HAVE_GRASS AND HAVE_POSTGRESQL)
-
-  else ()
-    message(FATAL_ERROR "Dependency error on GRASS driver")
-  endif ()
-endif ()
-
 ogr_dependent_driver(xlsx "Microsoft Office Excel(xlsx)" "GDAL_USE_EXPAT")
 ogr_dependent_driver(xls "Microsoft Office Excel(xls)" "GDAL_USE_FREEXL")
 ogr_dependent_driver(mongodbv3 "MongoDB V3" "GDAL_USE_MONGOCXX")

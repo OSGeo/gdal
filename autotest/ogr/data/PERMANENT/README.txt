@@ -1,1 +1,0 @@
-This is an extract from the demolocation/PERMANENT dataset from the GRASS repository.

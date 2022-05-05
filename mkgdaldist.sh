@@ -206,13 +206,6 @@ rm -f "../gdalautotest-${GDAL_VERSION}${RC}.zip"
 tar cf "../gdalautotest-${GDAL_VERSION}${RC}.tar.gz" "gdalautotest-${GDAL_VERSION}"
 zip -qr "../gdalautotest-${GDAL_VERSION}${RC}.zip" "gdalautotest-${GDAL_VERSION}"
 
-cd "gdal-${GDAL_VERSION}"
-echo "GDAL_VER=${GDAL_VERSION}" > GDALmake.opt
-cd frmts/grass
-${MAKE} dist
-mv ./*.tar.gz ../../../..
-cd ../../..
-
 echo "* Generating MD5 sums ..."
 
 MY_OSTYPE=$(uname -s)
