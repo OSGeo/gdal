@@ -79,32 +79,6 @@ static GDALDataset *OGRTigerDriverOpen( GDALOpenInfo* poOpenInfo )
 }
 
 /************************************************************************/
-/*                              Create()                                */
-/************************************************************************/
-
-static GDALDataset *OGRTigerDriverCreate( const char * pszName,
-                                          CPL_UNUSED int nBands,
-                                          CPL_UNUSED int nXSize,
-                                          CPL_UNUSED int nYSize,
-                                          CPL_UNUSED GDALDataType eDT,
-                                          char **papszOptions )
-{
-    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled(
-            "TIGER", "Note: only the writing side is planned for removal") )
-        return nullptr;
-
-    OGRTigerDataSource *poDS = new OGRTigerDataSource();
-
-    if( poDS->Create( pszName, papszOptions ) )
-        return poDS;
-    else
-    {
-        delete poDS;
-        return nullptr;
-    }
-}
-
-/************************************************************************/
 /*                           RegisterOGRTiger()                         */
 /************************************************************************/
 
@@ -123,7 +97,6 @@ void RegisterOGRTiger()
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = OGRTigerDriverOpen;
-    poDriver->pfnCreate = OGRTigerDriverCreate;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
