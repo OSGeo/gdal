@@ -4351,12 +4351,6 @@ def test_vsis3_random_write_gtiff_create_copy(
         404,
         {}
     )
-    handler.add(
-        'GET',
-        '/random_write/?delimiter=%2F',
-        404,
-        {}
-    )
 
     src_ds = gdal.Open('data/byte.tif')
 

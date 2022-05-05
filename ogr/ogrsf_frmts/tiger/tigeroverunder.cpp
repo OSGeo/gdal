@@ -34,17 +34,17 @@ CPL_CVSID("$Id$")
 static const char FILE_CODE[] = "U";
 
 static const TigerFieldInfo rtU_fields[] = {
-  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
-  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
-  { "FILE",       'L', 'N', OFTInteger,    6,  10,   5,       1,   1,     1 },
-  { "TZID",       'R', 'N', OFTInteger,   11,  20,  10,       1,   1,     1 },
-  { "RTSQ",       'R', 'N', OFTInteger,   21,  21,   1,       1,   1,     1 },
-  { "TLIDOV1",    'R', 'N', OFTInteger,   22,  31,  10,       1,   1,     1 },
-  { "TLIDOV2",    'R', 'N', OFTInteger,   32,  41,  10,       1,   1,     1 },
-  { "TLIDUN1",    'R', 'N', OFTInteger,   42,  51,  10,       1,   1,     1 },
-  { "TLIDUN2",    'R', 'N', OFTInteger,   52,  61,  10,       1,   1,     1 },
-  { "FRLONG",     'R', 'N', OFTInteger,   62,  71,  10,       1,   1,     1 },
-  { "FRLAT",      'R', 'N', OFTInteger,   72,  80,   9,       1,   1,     1 },
+  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet
+  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0 },
+  { "FILE",       'L', 'N', OFTInteger,    6,  10,   5,       1,   1 },
+  { "TZID",       'R', 'N', OFTInteger,   11,  20,  10,       1,   1 },
+  { "RTSQ",       'R', 'N', OFTInteger,   21,  21,   1,       1,   1 },
+  { "TLIDOV1",    'R', 'N', OFTInteger,   22,  31,  10,       1,   1 },
+  { "TLIDOV2",    'R', 'N', OFTInteger,   32,  41,  10,       1,   1 },
+  { "TLIDUN1",    'R', 'N', OFTInteger,   42,  51,  10,       1,   1 },
+  { "TLIDUN2",    'R', 'N', OFTInteger,   52,  61,  10,       1,   1 },
+  { "FRLONG",     'R', 'N', OFTInteger,   62,  71,  10,       1,   1 },
+  { "FRLAT",      'R', 'N', OFTInteger,   72,  80,   9,       1,   1 },
 };
 static const TigerRecordInfo rtU_info =
   {
@@ -59,7 +59,7 @@ static const TigerRecordInfo rtU_info =
 
 TigerOverUnder::TigerOverUnder( OGRTigerDataSource * poDSIn,
                                 CPL_UNUSED const char * pszPrototypeModule ) :
-    TigerPoint(TRUE, &rtU_info, FILE_CODE)
+    TigerPoint(&rtU_info, FILE_CODE)
 {
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "OverUnder" );
@@ -74,10 +74,4 @@ OGRFeature *TigerOverUnder::GetFeature( int nRecordId )
   return TigerPoint::GetFeature( nRecordId,
                                  62, 71,
                                  72, 80 );
-}
-
-OGRErr TigerOverUnder::CreateFeature( OGRFeature *poFeature )
-{
-  return TigerPoint::CreateFeature( poFeature,
-                                    62 );
 }

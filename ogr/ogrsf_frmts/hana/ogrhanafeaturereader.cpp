@@ -63,10 +63,16 @@ odbc::String CreateStringFromValues(
 template<typename T>
 T castInt(int value)
 {
-    if (!(std::numeric_limits<T>::min() >= value
-          || value <= std::numeric_limits<T>::max()))
+    if (value < std::numeric_limits<T>::min() ||
+        value > std::numeric_limits<T>::max())
         throw std::overflow_error("Integer value lies outside of the range");
     return static_cast<T>(value);
+}
+
+// Specialization to make Coverity Scan happy
+template<> int castInt(int value)
+{
+    return value;
 }
 
 template<typename T>

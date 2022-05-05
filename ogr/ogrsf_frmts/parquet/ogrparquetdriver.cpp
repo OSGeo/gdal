@@ -283,6 +283,16 @@ void OGRParquetDriver::InitMetadata()
         CPLAddXMLAttributeAndValue(psOption, "description", "Name of the FID column to create");
     }
 
+    {
+        auto psOption = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
+        CPLAddXMLAttributeAndValue(psOption, "name", "POLYGON_ORIENTATION");
+        CPLAddXMLAttributeAndValue(psOption, "type", "string-select");
+        CPLAddXMLAttributeAndValue(psOption, "description", "Which ring orientation to use for polygons");
+        CPLAddXMLAttributeAndValue(psOption, "default", "COUNTERCLOCKWISE");
+        CPLCreateXMLElementAndValue(psOption, "Value", "COUNTERCLOCKWISE");
+        CPLCreateXMLElementAndValue(psOption, "Value", "UNMODIFIED");
+    }
+
     char* pszXML = CPLSerializeXMLTree(oTree.get());
     GDALDriver::SetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST, pszXML);
     CPLFree(pszXML);

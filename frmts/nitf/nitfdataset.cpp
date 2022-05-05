@@ -1040,13 +1040,31 @@ NITFDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
     {
         /* To get a perfect rectangle in Azimuthal Equidistant projection, we must use */
         /* the sphere and not WGS84 ellipsoid. That's a bit strange... */
-        const char* pszNorthPolarProjection = "+proj=aeqd +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +a=6378137 +b=6378137 +units=m +no_defs";
-        const char* pszSouthPolarProjection = "+proj=aeqd +lat_0=-90 +lon_0=0 +x_0=0 +y_0=0 +a=6378137 +b=6378137 +units=m +no_defs";
+        const char* pszNorthPolarProjection = "PROJCS[\"ARC_System_Zone_09\",GEOGCS[\"GCS_Sphere\","
+            "DATUM[\"D_Sphere\",SPHEROID[\"Sphere\",6378137.0,0.0]],"
+            "PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]],"
+            "PROJECTION[\"Azimuthal_Equidistant\"],"
+            "PARAMETER[\"latitude_of_center\",90],"
+            "PARAMETER[\"longitude_of_center\",0],"
+            "PARAMETER[\"false_easting\",0],"
+            "PARAMETER[\"false_northing\",0],"
+            "UNIT[\"metre\",1]]";
+
+        const char* pszSouthPolarProjection = "PROJCS[\"ARC_System_Zone_18\",GEOGCS[\"GCS_Sphere\","
+            "DATUM[\"D_Sphere\",SPHEROID[\"Sphere\",6378137.0,0.0]],"
+            "PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]],"
+            "PROJECTION[\"Azimuthal_Equidistant\"],"
+            "PARAMETER[\"latitude_of_center\",-90],"
+            "PARAMETER[\"longitude_of_center\",0],"
+            "PARAMETER[\"false_easting\",0],"
+            "PARAMETER[\"false_northing\",0],"
+            "UNIT[\"metre\",1]]";
 
         OGRSpatialReference oSRS_AEQD, oSRS_WGS84;
 
         const char *pszPolarProjection = (psImage->dfULY > 0) ? pszNorthPolarProjection : pszSouthPolarProjection;
-        oSRS_AEQD.importFromProj4(pszPolarProjection);
+
+        oSRS_AEQD.importFromWkt(pszPolarProjection);
 
         oSRS_WGS84.SetWellKnownGeogCS( "WGS84" );
         oSRS_WGS84.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);

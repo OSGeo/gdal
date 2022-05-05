@@ -40,12 +40,12 @@ See [alpine-normal/Dockerfile](alpine-normal/Dockerfile)
 
 ## Small: `osgeo/gdal:ubuntu-small-latest`
 
-* Image size: ~ 280 MB
+* Image size: ~ 385 MB
 * Raster drivers: all built-in + JPEG + PNG + JP2OpenJPEG + WEBP +SQLite-based ones + network-based ones
 * Vector drivers: all built-in + XML based ones + SQLite-based ones + network-based ones + PostgreSQL
 * Using internal libtiff and libgeotiff
 * External libraries enabled: libsqlite3, libproj, libcurl, libjpeg, libpng, libwebp,
-  libzstd, libexpat, libxerces-c, libpq, libssl, libgeos
+  libzstd, libexpat, libxerces-c, libpq, libssl, libgeos, libspatialite
 * GDAL Python (Python 3.8)
 * Base PROJ grid package (http://download.osgeo.org/proj/proj-datumgrid-1.8.zip)
 * Overall licensing terms of the GDAL build: LGPL + permissive (MIT, BSD style, Apache, etc..)

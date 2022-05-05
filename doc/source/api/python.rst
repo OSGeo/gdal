@@ -19,7 +19,7 @@ Tutorials
 Chris Garrard has given courses at Utah State University on "Geoprocessing with Python using Open Source GIS" (`http://www.gis.usu.edu/~chrisg/python <http://www.gis.usu.edu/~chrisg/python>`__). There are many slides, examples, test data... and homework ;-) that can
 be greatly helpful for beginners with GDAL/OGR in Python.
 
-Greg Petrie has an OGR related tutorial available at `http://cosmicproject.org/OGR <http://cosmicproject.org/OGR>`__.
+
 
 A cookbook full of recipes for using the Python GDAL/OGR bindings : `http://pcjericks.github.io/py-gdalogr-cookbook/index.html <http://pcjericks.github.io/py-gdalogr-cookbook/index.html>`__
 

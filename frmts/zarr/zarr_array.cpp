@@ -1395,7 +1395,7 @@ bool ZarrArray::LoadTileData(const uint64_t* tileIndices,
         return false;
     }
 
-    if( m_bFortranOrder )
+    if( m_bFortranOrder && !m_aoDims.empty() )
     {
         BlockTranspose(abyRawTileData, abyTmpRawTileData, true);
         std::swap(abyRawTileData, abyTmpRawTileData);
@@ -2285,7 +2285,7 @@ bool ZarrArray::FlushDirtyTile() const
         }
     }
 
-    if( m_bFortranOrder )
+    if( m_bFortranOrder && !m_aoDims.empty() )
     {
         BlockTranspose(m_abyRawTileData, m_abyTmpRawTileData, false);
         std::swap(m_abyRawTileData, m_abyTmpRawTileData);
