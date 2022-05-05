@@ -34,10 +34,9 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 /*                             TigerPoint()                             */
 /************************************************************************/
-TigerPoint::TigerPoint( int bRequireGeomIn, const TigerRecordInfo *psRTInfoIn,
+TigerPoint::TigerPoint( const TigerRecordInfo *psRTInfoIn,
                         const char *m_pszFileCodeIn ) :
-    TigerFileBase(psRTInfoIn, m_pszFileCodeIn),
-    bRequireGeom(bRequireGeomIn)
+    TigerFileBase(psRTInfoIn, m_pszFileCodeIn)
 {}
 
 /************************************************************************/
@@ -99,36 +98,4 @@ OGRFeature *TigerPoint::GetFeature( int nRecordId,
     }
 
     return poFeature;
-}
-
-/************************************************************************/
-/*                           CreateFeature()                            */
-/************************************************************************/
-OGRErr TigerPoint::CreateFeature( OGRFeature *poFeature,
-                                  int pointIndex)
-
-{
-    char        szRecord[OGR_TIGER_RECBUF_LEN];
-    OGRPoint    *poPoint = poFeature->GetGeometryRef()->toPoint();
-
-    if( !SetWriteModule( m_pszFileCode, psRTInfo->nRecordLength+2, poFeature ) )
-        return OGRERR_FAILURE;
-
-    memset( szRecord, ' ', psRTInfo->nRecordLength );
-
-    WriteFields( psRTInfo, poFeature, szRecord );
-
-    if( poPoint != nullptr
-        && (poPoint->getGeometryType() == wkbPoint
-            || poPoint->getGeometryType() == wkbPoint25D) ) {
-        WritePoint( szRecord, pointIndex, poPoint->getX(), poPoint->getY() );
-    } else {
-        if (bRequireGeom) {
-            return OGRERR_FAILURE;
-        }
-    }
-
-    WriteRecord( szRecord, psRTInfo->nRecordLength, m_pszFileCode );
-
-    return OGRERR_NONE;
 }

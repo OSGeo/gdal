@@ -1322,6 +1322,10 @@ def create_overview_tile(base_tz: int, base_tiles: List[Tuple[int, int]], output
         if options.resampling != 'antialias':
             # Write a copy of tile to png/jpg
             out_driver.CreateCopy(tilefilename, dstile, strict=0)
+            # Remove useless side car file
+            aux_xml = tilefilename + '.aux.xml'
+            if gdal.VSIStatL(aux_xml) is not None:
+                gdal.Unlink(aux_xml)
 
         if options.verbose:
             print("\tbuild from zoom", base_tz, " tiles:", *base_tiles)

@@ -104,6 +104,10 @@ bool OGRParquetWriterLayer::SetOptions(CSLConstList papszOptions,
         }
     }
 
+    m_bForceCounterClockwiseOrientation =
+        EQUAL(CSLFetchNameValueDef(papszOptions, "POLYGON_ORIENTATION", "COUNTERCLOCKWISE"),
+              "COUNTERCLOCKWISE");
+
     if( eGType != wkbNone )
     {
         if( !IsSupportedGeometryType(eGType) )
@@ -208,7 +212,7 @@ void OGRParquetWriterLayer::PerformStepsBeforeFinalFlushGroup()
         CPLTestBool(CPLGetConfigOption("OGR_PARQUET_WRITE_GEO", "YES")) )
     {
         CPLJSONObject oRoot;
-        oRoot.Add("version", "0.2.0");
+        oRoot.Add("version", "0.3.0");
         oRoot.Add("primary_column",
                   m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef());
         CPLJSONObject oColumns;
@@ -280,6 +284,9 @@ void OGRParquetWriterLayer::PerformStepsBeforeFinalFlushGroup()
                 }
                 return osType;
             };
+
+            if( m_bForceCounterClockwiseOrientation )
+                oColumn.Add("orientation", "counterclockwise");
 
             if( m_oSetWrittenGeometryTypes[i].empty() )
             {
@@ -457,6 +464,9 @@ bool OGRParquetWriterLayer::FlushGroup()
 
 void OGRParquetWriterLayer::FixupGeometryBeforeWriting(OGRGeometry* poGeom)
 {
+    if( !m_bForceCounterClockwiseOrientation )
+        return;
+
     const auto eFlattenType = wkbFlatten(poGeom->getGeometryType());
     // Polygon rings MUST follow the right-hand rule for orientation
     // (counterclockwise external rings, clockwise internal rings)

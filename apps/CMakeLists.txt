@@ -27,7 +27,7 @@ target_include_directories(
 
 gdal_target_link_libraries(appslib PRIVATE PROJ::proj)
 
-set_property(TARGET appslib PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
+set_property(TARGET appslib PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
 if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
   set_property(SOURCE ogr2ogr_bin.cpp gdal_grid_lib.cpp gdal_translate_lib.cpp gdalbuildvrt_lib.cpp gdaldem_lib.cpp
                       gdal_rasterize_lib.cpp PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)

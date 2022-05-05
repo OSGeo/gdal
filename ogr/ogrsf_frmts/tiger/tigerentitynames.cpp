@@ -35,25 +35,25 @@ CPL_CVSID("$Id$")
 static const char FILE_CODE[] = "C";
 
 static const TigerFieldInfo rtC_2002_fields[] = {
-  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
-  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
-  { "STATE",      'L', 'N', OFTInteger,    6,   7,   2,       1,   1,     1 },
-  { "COUNTY",     'L', 'N', OFTInteger,    8,  10,   3,       1,   1,     1 },
-  { "DATAYR",     'L', 'A', OFTString,    11,  14,   4,       1,   1,     1 },
-  { "FIPS",       'L', 'N', OFTInteger,   15,  19,   5,       1,   1,     1 },
-  { "FIPSCC",     'L', 'A', OFTString,    20,  21,   2,       1,   1,     1 },
-  { "PLACEDC",    'L', 'A', OFTString,    22,  22,   1,       1,   1,     1 },
-  { "LSADC",      'L', 'A', OFTString,    23,  24,   2,       1,   1,     1 },
-  { "ENTITY",     'L', 'A', OFTString,    25,  25,   1,       1,   1,     1 },
-  { "MA",         'L', 'N', OFTInteger,   26,  29,   4,       1,   1,     1 },
-  { "SD",         'L', 'N', OFTInteger,   30,  34,   5,       1,   1,     1 },
-  { "AIANHH",     'L', 'N', OFTInteger,   35,  38,   4,       1,   1,     1 },
-  { "VTDTRACT",   'R', 'A', OFTString,    39,  44,   6,       1,   1,     1 },
-  { "UAUGA",      'L', 'N', OFTInteger,   45,  49,   5,       1,   1,     1 },
-  { "AITSCE",     'L', 'N', OFTInteger,   50,  52,   3,       1,   1,     1 },
-  { "RS_C1",      'L', 'N', OFTInteger,   53,  54,   2,       1,   1,     1 },
-  { "RS_C2",      'L', 'N', OFTInteger,   55,  62,   8,       1,   1,     1 },
-  { "NAME",       'L', 'A', OFTString,    63, 122,  60,       1,   1,     1 },
+  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet
+  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0},
+  { "STATE",      'L', 'N', OFTInteger,    6,   7,   2,       1,   1},
+  { "COUNTY",     'L', 'N', OFTInteger,    8,  10,   3,       1,   1},
+  { "DATAYR",     'L', 'A', OFTString,    11,  14,   4,       1,   1},
+  { "FIPS",       'L', 'N', OFTInteger,   15,  19,   5,       1,   1},
+  { "FIPSCC",     'L', 'A', OFTString,    20,  21,   2,       1,   1},
+  { "PLACEDC",    'L', 'A', OFTString,    22,  22,   1,       1,   1},
+  { "LSADC",      'L', 'A', OFTString,    23,  24,   2,       1,   1},
+  { "ENTITY",     'L', 'A', OFTString,    25,  25,   1,       1,   1},
+  { "MA",         'L', 'N', OFTInteger,   26,  29,   4,       1,   1},
+  { "SD",         'L', 'N', OFTInteger,   30,  34,   5,       1,   1},
+  { "AIANHH",     'L', 'N', OFTInteger,   35,  38,   4,       1,   1},
+  { "VTDTRACT",   'R', 'A', OFTString,    39,  44,   6,       1,   1},
+  { "UAUGA",      'L', 'N', OFTInteger,   45,  49,   5,       1,   1},
+  { "AITSCE",     'L', 'N', OFTInteger,   50,  52,   3,       1,   1},
+  { "RS_C1",      'L', 'N', OFTInteger,   53,  54,   2,       1,   1},
+  { "RS_C2",      'L', 'N', OFTInteger,   55,  62,   8,       1,   1},
+  { "NAME",       'L', 'A', OFTString,    63, 122,  60,       1,   1},
 };
 static const TigerRecordInfo rtC_2002_info =
   {
@@ -63,23 +63,23 @@ static const TigerRecordInfo rtC_2002_info =
   };
 
 static const TigerFieldInfo rtC_2000_Redistricting_fields[] = {
-  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
-  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
-  { "STATE",      'L', 'N', OFTInteger,    6,   7,   2,       1,   1,     1 },
-  { "COUNTY",     'L', 'N', OFTInteger,    8,  10,   3,       1,   1,     1 },
-  { "FIPSYR",     'L', 'N', OFTString,    11,  14,   4,       1,   1,     1 },
-  { "FIPS",       'L', 'N', OFTInteger,   15,  19,   5,       1,   1,     1 },
-  { "FIPSCC",     'L', 'A', OFTString,    20,  21,   2,       1,   1,     1 },
-  { "PDC",        'L', 'A', OFTString,    22,  22,   1,       1,   1,     1 },
-  { "LASAD",      'L', 'A', OFTString,    23,  24,   2,       1,   1,     1 },
-  { "ENTITY",     'L', 'A', OFTString,    25,  25,   1,       1,   1,     1 },
-  { "MA",         'L', 'N', OFTInteger,   26,  29,   4,       1,   1,     1 },
-  { "SD",         'L', 'N', OFTInteger,   30,  34,   5,       1,   1,     1 },
-  { "AIR",        'L', 'N', OFTInteger,   35,  38,   4,       1,   1,     1 },
-  { "VTD",        'R', 'A', OFTString,    39,  44,   6,       1,   1,     1 },
-  { "UA",         'L', 'N', OFTInteger,   45,  49,   5,       1,   1,     1 },
-  { "AITSCE",     'L', 'N', OFTInteger,   50,  52,   3,       1,   1,     1 },
-  { "NAME",       'L', 'A', OFTString,    53, 112,  66,       1,   1,     1 }
+  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet
+  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0},
+  { "STATE",      'L', 'N', OFTInteger,    6,   7,   2,       1,   1},
+  { "COUNTY",     'L', 'N', OFTInteger,    8,  10,   3,       1,   1},
+  { "FIPSYR",     'L', 'N', OFTString,    11,  14,   4,       1,   1},
+  { "FIPS",       'L', 'N', OFTInteger,   15,  19,   5,       1,   1},
+  { "FIPSCC",     'L', 'A', OFTString,    20,  21,   2,       1,   1},
+  { "PDC",        'L', 'A', OFTString,    22,  22,   1,       1,   1},
+  { "LASAD",      'L', 'A', OFTString,    23,  24,   2,       1,   1},
+  { "ENTITY",     'L', 'A', OFTString,    25,  25,   1,       1,   1},
+  { "MA",         'L', 'N', OFTInteger,   26,  29,   4,       1,   1},
+  { "SD",         'L', 'N', OFTInteger,   30,  34,   5,       1,   1},
+  { "AIR",        'L', 'N', OFTInteger,   35,  38,   4,       1,   1},
+  { "VTD",        'R', 'A', OFTString,    39,  44,   6,       1,   1},
+  { "UA",         'L', 'N', OFTInteger,   45,  49,   5,       1,   1},
+  { "AITSCE",     'L', 'N', OFTInteger,   50,  52,   3,       1,   1},
+  { "NAME",       'L', 'A', OFTString,    53, 112,  66,       1,   1}
 };
 static const TigerRecordInfo rtC_2000_Redistricting_info =
   {
@@ -89,22 +89,22 @@ static const TigerRecordInfo rtC_2000_Redistricting_info =
   };
 
 static const TigerFieldInfo rtC_fields[] = {
-  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
-  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
-  { "STATE",      'L', 'N', OFTInteger,    6,   7,   2,       1,   1,     1 },
-  { "COUNTY",     'L', 'N', OFTInteger,    8,  10,   3,       1,   1,     1 },
-  { "FIPSYR",     'L', 'N', OFTString,    11,  12,   4,       1,   1,     1 },
-  { "FIPS",       'L', 'N', OFTInteger,   13,  17,   5,       1,   1,     1 },
-  { "FIPSCC",     'L', 'A', OFTString,    18,  19,   2,       1,   1,     1 },
-  { "PDC",        'L', 'A', OFTString,    20,  20,   1,       1,   1,     1 },
-  { "LASAD",      'L', 'A', OFTString,    21,  22,   2,       1,   1,     1 },
-  { "ENTITY",     'L', 'A', OFTString,    23,  23,   1,       1,   1,     1 },
-  { "MA",         'L', 'N', OFTInteger,   24,  27,   4,       1,   1,     1 },
-  { "SD",         'L', 'N', OFTInteger,   28,  32,   5,       1,   1,     1 },
-  { "AIR",        'L', 'N', OFTInteger,   33,  36,   4,       1,   1,     1 },
-  { "VTD",        'R', 'A', OFTString,    37,  42,   6,       1,   1,     1 },
-  { "UA",         'L', 'N', OFTInteger,   43,  46,   4,       1,   1,     1 },
-  { "NAME",       'L', 'A', OFTString,    47, 112,  66,       1,   1,     1 }
+  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet
+  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0},
+  { "STATE",      'L', 'N', OFTInteger,    6,   7,   2,       1,   1},
+  { "COUNTY",     'L', 'N', OFTInteger,    8,  10,   3,       1,   1},
+  { "FIPSYR",     'L', 'N', OFTString,    11,  12,   4,       1,   1},
+  { "FIPS",       'L', 'N', OFTInteger,   13,  17,   5,       1,   1},
+  { "FIPSCC",     'L', 'A', OFTString,    18,  19,   2,       1,   1},
+  { "PDC",        'L', 'A', OFTString,    20,  20,   1,       1,   1},
+  { "LASAD",      'L', 'A', OFTString,    21,  22,   2,       1,   1},
+  { "ENTITY",     'L', 'A', OFTString,    23,  23,   1,       1,   1},
+  { "MA",         'L', 'N', OFTInteger,   24,  27,   4,       1,   1},
+  { "SD",         'L', 'N', OFTInteger,   28,  32,   5,       1,   1},
+  { "AIR",        'L', 'N', OFTInteger,   33,  36,   4,       1,   1},
+  { "VTD",        'R', 'A', OFTString,    37,  42,   6,       1,   1},
+  { "UA",         'L', 'N', OFTInteger,   43,  46,   4,       1,   1},
+  { "NAME",       'L', 'A', OFTString,    47, 112,  66,       1,   1}
 };
 static const TigerRecordInfo rtC_info =
   {

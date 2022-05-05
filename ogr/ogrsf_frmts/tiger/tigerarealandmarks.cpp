@@ -34,14 +34,14 @@ CPL_CVSID("$Id$")
 static const char FILE_CODE[] = "8";
 
 static const TigerFieldInfo rt8_fields[] = {
-  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
-  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
-  { "FILE",       'L', 'N', OFTString,     6,  10,   5,       1,   1,     1 },
-  { "STATE",      'L', 'N', OFTInteger,    6,   7,   2,       1,   1,     1 },
-  { "COUNTY",     'L', 'N', OFTInteger,    8,  10,   3,       1,   1,     1 },
-  { "CENID",      'L', 'A', OFTString,    11,  15,   5,       1,   1,     1 },
-  { "POLYID",     'R', 'N', OFTInteger,   16,  25,  10,       1,   1,     1 },
-  { "LAND",       'R', 'N', OFTInteger,   26,  35,  10,       1,   1,     1 }
+  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet
+  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0 },
+  { "FILE",       'L', 'N', OFTString,     6,  10,   5,       1,   1 },
+  { "STATE",      'L', 'N', OFTInteger,    6,   7,   2,       1,   1 },
+  { "COUNTY",     'L', 'N', OFTInteger,    8,  10,   3,       1,   1 },
+  { "CENID",      'L', 'A', OFTString,    11,  15,   5,       1,   1 },
+  { "POLYID",     'R', 'N', OFTInteger,   16,  25,  10,       1,   1 },
+  { "LAND",       'R', 'N', OFTInteger,   26,  35,  10,       1,   1 }
 };
 
 static const TigerRecordInfo rt8_info =

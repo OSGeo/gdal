@@ -1341,7 +1341,6 @@ char* OGRGetXMLDateTime(const OGRField* psField, bool bAlwaysMillisecond)
     const GByte TZFlag = psField->Date.TZFlag;
 
     char szTimeZone[7];
-    char* pszRet = nullptr;
 
     switch( TZFlag )
     {
@@ -1364,16 +1363,19 @@ char* OGRGetXMLDateTime(const OGRField* psField, bool bAlwaysMillisecond)
                      (TZFlag > 100) ? '+' : '-', TZHour, TZMinute);
     }
 
+    // sizeof() includes null terminator. +6 is to make -Wformat-truncation= happy
+    constexpr size_t nMaxSize = sizeof("YYYY-MM-DDThh:mm:ss.sss+hh:mm")+6;
+    char* pszRet = static_cast<char*>(CPLMalloc(nMaxSize));
     if( OGR_GET_MS(second) || bAlwaysMillisecond )
-        pszRet = CPLStrdup(CPLSPrintf(
+        snprintf(pszRet, nMaxSize,
                                "%04d-%02u-%02uT%02u:%02u:%06.3f%s",
                                year, month, day, hour, minute, second,
-                               szTimeZone));
+                               szTimeZone);
     else
-        pszRet = CPLStrdup(CPLSPrintf(
+        snprintf(pszRet, nMaxSize,
                                "%04d-%02u-%02uT%02u:%02u:%02u%s",
                                year, month, day, hour, minute,
-                               static_cast<GByte>(second), szTimeZone));
+                               static_cast<GByte>(second), szTimeZone);
 
     return pszRet;
 }

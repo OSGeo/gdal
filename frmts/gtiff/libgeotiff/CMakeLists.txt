@@ -44,7 +44,7 @@ if (RENAME_INTERNAL_GEOTIFF_SYMBOLS)
   target_compile_definitions(geotiff PUBLIC -DRENAME_INTERNAL_LIBGEOTIFF_SYMBOLS)
   target_sources(geotiff PRIVATE gdal_libgeotiff_symbol_rename.h)
 endif ()
-set_property(TARGET geotiff PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
+set_property(TARGET geotiff PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
 
 gdal_target_link_libraries(geotiff PRIVATE PROJ::proj)
 

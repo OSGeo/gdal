@@ -34,12 +34,12 @@ CPL_CVSID("$Id$")
 static const char FILE_CODE[] = "T";
 
 static const TigerFieldInfo rtT_fields[] = {
-  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
-  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
-  { "FILE",       'L', 'N', OFTInteger,    6,  10,   5,       1,   1,     1 },
-  { "TZID",       'R', 'N', OFTInteger,   11,  20,  10,       1,   1,     1 },
-  { "SOURCE",     'L', 'A', OFTString,    21,  30,  10,       1,   1,     1 },
-  { "FTRP",       'L', 'A', OFTString,    31,  47,  17,       1,   1,     1 }
+  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet
+  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0 },
+  { "FILE",       'L', 'N', OFTInteger,    6,  10,   5,       1,   1 },
+  { "TZID",       'R', 'N', OFTInteger,   11,  20,  10,       1,   1 },
+  { "SOURCE",     'L', 'A', OFTString,    21,  30,  10,       1,   1 },
+  { "FTRP",       'L', 'A', OFTString,    31,  47,  17,       1,   1 }
 };
 static const TigerRecordInfo rtT_info =
   {

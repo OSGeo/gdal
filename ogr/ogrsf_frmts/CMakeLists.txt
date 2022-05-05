@@ -7,7 +7,7 @@ gdal_standard_includes(ogrsf_frmts)
 target_include_directories(ogrsf_frmts PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
                                                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/generic>)
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:ogrsf_frmts>)
-set_property(TARGET ogrsf_frmts PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
+set_property(TARGET ogrsf_frmts PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
 add_dependencies(ogrsf_frmts generate_gdal_version_h)
 
 # Obligatory for building GDAL; always compile in.

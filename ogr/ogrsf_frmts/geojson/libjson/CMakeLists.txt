@@ -30,7 +30,7 @@ add_library(
 target_compile_definitions(libjson PRIVATE -D_XOPEN_SOURCE=700)
 target_include_directories(libjson PRIVATE $<TARGET_PROPERTY:cpl,SOURCE_DIR> $<TARGET_PROPERTY:cpl,BINARY_DIR>)
 set_target_properties(libjson PROPERTIES CXX_STANDARD 11)
-set_property(TARGET libjson PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
+set_property(TARGET libjson PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
 target_compile_options(libjson PRIVATE ${GDAL_C_WARNING_FLAGS})
 if (MSVC)
   target_compile_options(libjson PRIVATE ${GDAL_SOFTWARNFLAGS} /wd4306)

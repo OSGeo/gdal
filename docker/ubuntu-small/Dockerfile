@@ -55,6 +55,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
        libwebp-dev${APT_ARCH_SUFFIX} libpng-dev${APT_ARCH_SUFFIX} \
        libzstd-dev${APT_ARCH_SUFFIX} bash zip curl \
        libpq-dev${APT_ARCH_SUFFIX} libssl-dev${APT_ARCH_SUFFIX} libopenjp2-7-dev${APT_ARCH_SUFFIX} \
+       libspatialite-dev${APT_ARCH_SUFFIX} \
        autoconf automake sqlite3 bash-completion
 
 # Build openjpeg
@@ -222,7 +223,7 @@ RUN apt-get update -y; \
         libexpat1 \
         libxerces-c3.2 \
         libwebp6 libpng16-16 \
-        libzstd1 bash libpq5 libssl1.1 libopenjp2-7
+        libzstd1 bash libpq5 libssl1.1 libopenjp2-7 libspatialite7
 
 RUN apt-get update; \
     DEBIAN_FRONTEND=noninteractive apt-get install -y python-is-python3
