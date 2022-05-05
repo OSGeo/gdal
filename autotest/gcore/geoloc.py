@@ -30,6 +30,7 @@
 ###############################################################################
 
 import array
+import random
 from osgeo import gdal, osr
 
 import gdaltest
@@ -41,7 +42,7 @@ import pytest
 
 def test_geoloc_1():
 
-    tst = gdaltest.GDALTest('VRT', 'warpsst.vrt', 1, 61957)
+    tst = gdaltest.GDALTest('VRT', 'warpsst.vrt', 1, 63034)
     return tst.testOpen(check_filelist=False)
 
 
@@ -49,7 +50,8 @@ def test_geoloc_1():
 # Test that we take into account the min/max of the geoloc arrays
 
 
-def test_geoloc_bounds():
+@pytest.mark.parametrize("use_temp_datasets", ['YES', 'NO'])
+def test_geoloc_bounds(use_temp_datasets):
 
     lon_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/lon.tif', 360, 1, 1, gdal.GDT_Float32)
     lon_ds.WriteRaster(0, 0, 360, 1, array.array('f', [91 + 0.5 * x for x in range(178)] + [-179.9 + 0.5 * x for x in range(182)]))
@@ -68,12 +70,12 @@ def test_geoloc_bounds():
         'X_DATASET': '/vsimem/lon.tif',
         'X_BAND' : '1',
         'Y_DATASET': '/vsimem/lat.tif',
-        'Y_BAND' : '1',
-        'SRS': 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]'
+        'Y_BAND' : '1'
     }
     ds.SetMetadata(md, 'GEOLOCATION')
-    warped_ds = gdal.Warp('', ds, format='MEM')
-    assert warped_ds
+    with gdaltest.config_option('GDAL_GEOLOC_USE_TEMP_DATASETS', use_temp_datasets):
+        warped_ds = gdal.Warp('', ds, format='MEM')
+        assert warped_ds
 
     gdal.Unlink('/vsimem/lon.tif')
     gdal.Unlink('/vsimem/lat.tif')
@@ -86,7 +88,8 @@ def test_geoloc_bounds():
 # Test that the line filling logic works
 
 
-def test_geoloc_fill_line():
+@pytest.mark.parametrize("use_temp_datasets", ['YES', 'NO'])
+def test_geoloc_fill_line(use_temp_datasets):
 
 
     ds = gdal.GetDriverByName('MEM').Create('', 200, 372)
@@ -103,9 +106,10 @@ def test_geoloc_fill_line():
     }
     ds.SetMetadata(md, 'GEOLOCATION')
     ds.GetRasterBand(1).Fill(1)
-    warped_ds = gdal.Warp('', ds, format='MEM')
-    assert warped_ds
-    assert warped_ds.GetRasterBand(1).Checksum() == 25798
+    with gdaltest.config_option('GDAL_GEOLOC_USE_TEMP_DATASETS', use_temp_datasets):
+        warped_ds = gdal.Warp('', ds, format='MEM')
+        assert warped_ds
+        assert warped_ds.GetRasterBand(1).Checksum() == 22338
 
 
 
@@ -133,7 +137,8 @@ def test_geoloc_warp_to_geoloc():
         'X_BAND' : '1',
         'Y_DATASET': '/vsimem/lat.tif',
         'Y_BAND' : '1',
-        'SRS': 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]'
+        'SRS': 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]',
+        'GEOREFERENCING_CONVENTION': 'PIXEL_CENTER'
     }
     ds.SetMetadata(md, 'GEOLOCATION')
 
@@ -206,6 +211,118 @@ def test_geoloc_error_cases():
     with gdaltest.error_handler():
         transformer = gdal.Transformer(None, ds, [])
     assert transformer is None
+
+
+###############################################################################
+# Test geolocation array where the transformation is just an affine transformation
+
+
+@pytest.mark.parametrize("step", [1, 2])
+@pytest.mark.parametrize("convention", ['TOP_LEFT_CORNER', 'PIXEL_CENTER'])
+@pytest.mark.parametrize("inverse_method", ['BACKMAP', 'QUADTREE'])
+def test_geoloc_affine_transformation(step, convention, inverse_method):
+
+    shift = 0.5 if convention == 'PIXEL_CENTER' else 0
+    lon_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/lon.tif', 20 // step, 1, 1, gdal.GDT_Float32)
+    vals = array.array('f', [-80 + step * (x + shift) for x in range(20 // step)])
+    lon_ds.WriteRaster(0, 0, 20 // step, 1, vals)
+    lon_ds = None
+    lat_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/lat.tif', 20 // step, 1, 1, gdal.GDT_Float32)
+    vals = array.array('f', [50 - step * (x + shift) for x in range(20 // step)])
+    lat_ds.WriteRaster(0, 0, 20 // step, 1, vals)
+    lat_ds = None
+    ds = gdal.GetDriverByName('MEM').Create('', 20, 20)
+    md = {
+        'LINE_OFFSET': '0',
+        'LINE_STEP': str(step),
+        'PIXEL_OFFSET': '0',
+        'PIXEL_STEP': str(step),
+        'X_DATASET': '/vsimem/lon.tif',
+        'X_BAND' : '1',
+        'Y_DATASET': '/vsimem/lat.tif',
+        'Y_BAND' : '1',
+        'SRS': 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]',
+        'GEOREFERENCING_CONVENTION' : convention
+    }
+    ds.SetMetadata(md, 'GEOLOCATION')
+
+    with gdaltest.config_option('GDAL_GEOLOC_INVERSE_METHOD', inverse_method):
+        tr = gdal.Transformer(ds, None, [])
+
+        def check_point(x,y,X,Y):
+            success, pnt = tr.TransformPoint(False, x, y)
+            assert success
+            assert pnt == (X, Y, 0)
+
+            success, pnt = tr.TransformPoint(True, pnt[0], pnt[1])
+            assert success
+            assert pnt == pytest.approx((x, y, 0))
+
+        check_point(10, 10, -70.0, 40.0)
+        check_point(1.23, 2.34, -78.77, 47.66)
+        check_point(0,   0, -80.0, 50.0)
+        check_point(20,  0, -60.0, 50.0)
+        check_point(0,  20, -80.0, 30.0)
+        check_point(20, 20, -60.0, 30.0)
+
+    ds = None
+
+    gdal.Unlink('/vsimem/lon.tif')
+    gdal.Unlink('/vsimem/lat.tif')
+
+
+###############################################################################
+# Test geolocation array where the transformation is just an affine transformation
+
+
+@pytest.mark.parametrize("step", [1, 2])
+@pytest.mark.parametrize("convention", ['TOP_LEFT_CORNER', 'PIXEL_CENTER'])
+def test_geoloc_affine_transformation_with_noise(step, convention):
+
+    r = random.Random(0)
+
+    shift = 0.5 if convention == 'PIXEL_CENTER' else 0
+    lon_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/lon.tif', 20 // step, 20 // step, 1, gdal.GDT_Float32)
+    for y in range(lon_ds.RasterYSize):
+        vals = array.array('f', [-80 + step * (x + shift) + r.uniform(-0.25,0.25) for x in range(lon_ds.RasterXSize)])
+        lon_ds.WriteRaster(0, y, lon_ds.RasterXSize, 1, vals)
+    lon_ds = None
+    lat_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/lat.tif', 20 // step, 20 // step, 1, gdal.GDT_Float32)
+    for x in range(lat_ds.RasterXSize):
+        vals = array.array('f', [50 - step * (y + shift) + r.uniform(-0.25,0.25) for y in range(lat_ds.RasterYSize)])
+        lat_ds.WriteRaster(x, 0, 1, lat_ds.RasterYSize, vals)
+    lat_ds = None
+    ds = gdal.GetDriverByName('MEM').Create('', 20, 20)
+    md = {
+        'LINE_OFFSET': '0',
+        'LINE_STEP': str(step),
+        'PIXEL_OFFSET': '0',
+        'PIXEL_STEP': str(step),
+        'X_DATASET': '/vsimem/lon.tif',
+        'X_BAND' : '1',
+        'Y_DATASET': '/vsimem/lat.tif',
+        'Y_BAND' : '1',
+        'SRS': 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]',
+        'GEOREFERENCING_CONVENTION' : convention
+    }
+    ds.SetMetadata(md, 'GEOLOCATION')
+    tr = gdal.Transformer(ds, None, [])
+
+    def check_point(x,y):
+        success, pnt = tr.TransformPoint(False, x, y)
+        assert success
+        success, pnt = tr.TransformPoint(True, pnt[0], pnt[1])
+        assert success
+        assert pnt == pytest.approx((x, y, 0))
+
+    check_point(10, 10)
+    check_point(1.23, 2.34)
+    check_point(0, 0)
+    check_point(20, 0)
+    check_point(0, 20)
+    check_point(20, 20)
+
+    ds = None
 
     gdal.Unlink('/vsimem/lon.tif')
     gdal.Unlink('/vsimem/lat.tif')

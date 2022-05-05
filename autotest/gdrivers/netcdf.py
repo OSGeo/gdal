@@ -1391,7 +1391,8 @@ def test_netcdf_42():
         'X_BAND': '1',
         'LINE_STEP': '1',
         'Y_DATASET': 'NETCDF:"tmp/netcdf_42.nc":lat',
-            'Y_BAND': '1'})
+        'Y_BAND': '1',
+        'GEOREFERENCING_CONVENTION': 'PIXEL_CENTER'})
     wkt = ds.GetProjectionRef()
     assert ds.GetMetadataItem('transverse_mercator#spatial_ref') == wkt
     assert ds.GetMetadataItem('transverse_mercator#crs_wkt') == wkt
@@ -1421,7 +1422,8 @@ def test_netcdf_43():
         'X_BAND': '1',
         'LINE_STEP': '1',
         'Y_DATASET': 'NETCDF:"tmp/netcdf_43.nc":lat',
-            'Y_BAND': '1'})
+        'Y_BAND': '1',
+        'GEOREFERENCING_CONVENTION': 'PIXEL_CENTER'})
 
     tmp_ds = gdal.Warp('', 'tmp/netcdf_43.nc', options = '-f MEM -geoloc')
     gt = tmp_ds.GetGeoTransform()
@@ -2852,7 +2854,8 @@ def test_netcdf_swapped_x_y_dimension():
         'X_BAND': '1',
         'LINE_STEP': '1',
         'Y_DATASET': 'NETCDF:"data/netcdf/swapedxy.nc":Longitude',
-        'Y_BAND': '1'}, md
+        'Y_BAND': '1',
+        'GEOREFERENCING_CONVENTION': 'PIXEL_CENTER'}, md
 
     ds = gdal.Open(md['X_DATASET'])
     assert ds.RasterXSize == 4
@@ -2868,14 +2871,17 @@ def test_netcdf_swapped_x_y_dimension():
     data = struct.unpack('f' * 8, data)
     assert data == (-157.5, -112.5, -67.5, -22.5, 22.5, 67.5, 112.5, 157.5)
 
-    ds = gdal.Warp('', 'data/netcdf/swapedxy.nc', options = '-f MEM -geoloc')
+    ds = gdal.Warp('', 'data/netcdf/swapedxy.nc', options = '-f MEM -geoloc -ts 8 4')
     assert ds.RasterXSize == 8
     assert ds.RasterYSize == 4
-    assert ds.GetGeoTransform() == (-157.5, 38.3161193233344, 0.0, 67.5, 0.0, -38.3161193233344)
+    assert ds.GetGeoTransform() == pytest.approx((-180.0, 45.0, 0.0, 90, 0.0, -45.0)), ds.GetGeoTransform()
     data = ds.GetRasterBand(1).ReadRaster()
-    data = struct.unpack('h' * 4 * 8, data)
-    # not exactly the transposed array, but not so far
-    assert data == (4, 8, 8, 12, 16, 20, 20, 24, 5, 9, 9, 13, 17, 21, 21, 25, 6, 10, 10, 14, 18, 22, 22, 26, 7, 11, 11, 15, 19, 23, 23, 27)
+    data = struct.unpack('h' * 8 * 4, data)
+    # transposed array
+    assert data == (0, 4, 8, 12, 16, 20, 24, 28,
+                    1, 5, 9, 13, 17, 21, 25, 29,
+                    2, 6, 10, 14, 18, 22, 26, 30,
+                    3, 7, 11, 15, 19, 23, 27, 31)
 
 
 ###############################################################################

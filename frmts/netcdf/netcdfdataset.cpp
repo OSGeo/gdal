@@ -4774,6 +4774,8 @@ int netCDFDataset::ProcessCFGeolocation( int nGroupId, int nVarId )
 
                     GDALPamDataset::SetMetadataItem("LINE_OFFSET", "0", "GEOLOCATION");
                     GDALPamDataset::SetMetadataItem("LINE_STEP", "1", "GEOLOCATION");
+
+                    GDALPamDataset::SetMetadataItem("GEOREFERENCING_CONVENTION", "PIXEL_CENTER", "GEOLOCATION");
                 }
                 else
                 {
