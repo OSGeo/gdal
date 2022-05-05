@@ -705,7 +705,7 @@ int OGRFeatherLayer::TestCapability(const char* pszCap)
             }
             const auto& oJSONDef = oIter->second;
             const auto oBBox = oJSONDef.GetArray("bbox");
-            if( !(oBBox.IsValid() && oBBox.Size() == 4) )
+            if( !(oBBox.IsValid() && (oBBox.Size() == 4 || oBBox.Size() == 6)) )
             {
                 return false;
             }

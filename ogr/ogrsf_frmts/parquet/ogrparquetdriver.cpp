@@ -293,6 +293,16 @@ void OGRParquetDriver::InitMetadata()
         CPLCreateXMLElementAndValue(psOption, "Value", "UNMODIFIED");
     }
 
+    {
+        auto psOption = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
+        CPLAddXMLAttributeAndValue(psOption, "name", "EDGES");
+        CPLAddXMLAttributeAndValue(psOption, "type", "string-select");
+        CPLAddXMLAttributeAndValue(psOption, "description", "Name of the coordinate system for the edges");
+        CPLAddXMLAttributeAndValue(psOption, "default", "PLANAR");
+        CPLCreateXMLElementAndValue(psOption, "Value", "PLANAR");
+        CPLCreateXMLElementAndValue(psOption, "Value", "SPHERICAL");
+    }
+
     char* pszXML = CPLSerializeXMLTree(oTree.get());
     GDALDriver::SetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST, pszXML);
     CPLFree(pszXML);

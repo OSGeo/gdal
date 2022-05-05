@@ -185,17 +185,18 @@ void OGRParquetLayer::EstablishFeatureDefn()
                 bRegularField = false;
                 OGRGeomFieldDefn oField(field->name().c_str(), wkbUnknown);
 
-                const auto osWKT = oJSONDef.GetString("crs");
+                auto oCRS = oJSONDef["crs"];
                 OGRSpatialReference* poSRS = nullptr;
-                if( !oJSONDef.GetObj("crs").IsValid() )
+                if( !oCRS.IsValid() )
                 {
                     // WGS 84 is implied if no crs member is found.
                     poSRS = new OGRSpatialReference();
                     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                     poSRS->importFromEPSG(4326);
                 }
-                else if( !osWKT.empty() )
+                else if( oCRS.GetType() == CPLJSONObject::Type::String )
                 {
+                    const auto osWKT = oCRS.ToString();
                     poSRS = new OGRSpatialReference();
                     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
@@ -203,6 +204,26 @@ void OGRParquetLayer::EstablishFeatureDefn()
                     {
                         poSRS->Release();
                         poSRS = nullptr;
+                    }
+                }
+                else if( oCRS.GetType() == CPLJSONObject::Type::Object )
+                {
+                    // CRS encoded as PROJJSON (extension)
+                    const auto oType = oCRS["type"];
+                    if( oType.IsValid() && oType.GetType() == CPLJSONObject::Type::String )
+                    {
+                        const auto osType = oType.ToString();
+                        if( osType.find("CRS") != std::string::npos )
+                        {
+                            poSRS = new OGRSpatialReference();
+                            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
+                            if( poSRS->SetFromUserInput(oCRS.ToString().c_str()) != OGRERR_NONE )
+                            {
+                                poSRS->Release();
+                                poSRS = nullptr;
+                            }
+                        }
                     }
                 }
 
@@ -215,6 +236,11 @@ void OGRParquetLayer::EstablishFeatureDefn()
                     oField.SetSpatialRef(poSRS);
 
                     poSRS->Release();
+                }
+
+                if( oJSONDef.GetString("edges") == "spherical" )
+                {
+                    SetMetadataItem("EDGES", "SPHERICAL");
                 }
 
                 // m_aeGeomEncoding be filled before calling ComputeGeometryColumnType()
@@ -957,7 +983,7 @@ int OGRParquetLayer::TestCapability(const char* pszCap)
             }
             const auto& oJSONDef = oIter->second;
             const auto oBBox = oJSONDef.GetArray("bbox");
-            if( !(oBBox.IsValid() && oBBox.Size() == 4) )
+            if( !(oBBox.IsValid() && (oBBox.Size() == 4 || oBBox.Size() == 6)) )
             {
                 return false;
             }
