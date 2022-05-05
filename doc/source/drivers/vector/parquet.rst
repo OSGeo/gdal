@@ -63,6 +63,10 @@ Layer creation options
   of polygons should be counterclockwise oriented (and interior rings clockwise
   oriented), or left to their original orientation. The default is COUNTERCLOCKWISE.
 
+- **EDGES=PLANAR/SPHERICAL**: How to interpret the edges of the geometries: whether
+  the line between two points is a straight cartesian line (PLANAR) or the
+  shortest line on the sphere (geodesic line) (SPHERICAL). The default is PLANAR.
+
 Links
 -----
 

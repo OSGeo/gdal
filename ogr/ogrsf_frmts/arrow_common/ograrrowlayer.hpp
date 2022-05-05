@@ -2260,6 +2260,17 @@ OGRErr OGRArrowLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
             if( psExtent->MinX <= psExtent->MaxX )
                 return OGRERR_NONE;
         }
+        else if( oBBox.IsValid() && oBBox.Size() == 6 )
+        {
+            psExtent->MinX = oBBox[0].ToDouble();
+            psExtent->MinY = oBBox[1].ToDouble();
+            // MinZ skipped
+            psExtent->MaxX = oBBox[3].ToDouble();
+            psExtent->MaxY = oBBox[4].ToDouble();
+            // MaxZ skipped
+            if( psExtent->MinX <= psExtent->MaxX )
+                return OGRERR_NONE;
+        }
     }
 
     if( !bForce && !CanRunNonForcedGetExtent() )

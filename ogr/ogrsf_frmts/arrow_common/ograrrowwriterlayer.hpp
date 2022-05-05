@@ -1231,8 +1231,16 @@ OGRErr OGRArrowWriterLayer::ICreateFeature( OGRFeature* poFeature )
             auto poPointBuilder = static_cast<arrow::FixedSizeListBuilder*>(poBuilder);
             poPointBuilder->Append();
             auto poValueBuilder = static_cast<arrow::DoubleBuilder*>(poPointBuilder->value_builder());
-            poValueBuilder->Append(poPoint->getX());
-            poValueBuilder->Append(poPoint->getY());
+            if( bIsEmpty )
+            {
+                poValueBuilder->Append(std::numeric_limits<double>::quiet_NaN());
+                poValueBuilder->Append(std::numeric_limits<double>::quiet_NaN());
+            }
+            else
+            {
+                poValueBuilder->Append(poPoint->getX());
+                poValueBuilder->Append(poPoint->getY());
+            }
             if( OGR_GT_HasZ(eColumnGType) )
                 poValueBuilder->Append(poPoint->getZ());
             if( OGR_GT_HasM(eColumnGType) )
