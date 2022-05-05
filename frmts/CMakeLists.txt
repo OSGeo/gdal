@@ -133,17 +133,6 @@ gdal_dependent_format(exr "EXR support via OpenEXR library" "GDAL_USE_OPENEXR")
 gdal_dependent_format(pcraster "PCRaster CSF 2.0 raster file driver" "GDAL_USE_LIBCSF OR GDAL_USE_LIBCSF_INTERNAL")
 gdal_dependent_format(rdb "RIEGL RDB Map Pixel (.mpx) driver" "rdb_FOUND")
 
-# for circulate dependency, grass is NOT always compiled in.
-gdal_dependent_format(grass "GRASS" "HAVE_GRASS")
-add_feature_info(gdal_GRASS GDAL_ENABLE_DRIVER_GRASS "GRASS raster format")
-if (GDAL_ENABLE_DRIVER_GRASS)
-  if (HAVE_GRASS AND HAVE_POSTGRESQL)
-
-  else ()
-    message(FATAL_ERROR "Dependency error on GRASS driver")
-  endif ()
-endif ()
-
 # ######################################################################################################################
 # driver with proprietary libraries Kakadu software SDK
 gdal_dependent_format(jp2kak "JPEG-2000 (based on Kakadu)" "GDAL_USE_KDU")

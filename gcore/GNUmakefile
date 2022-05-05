@@ -81,6 +81,7 @@ INST_H_FILES = \
 	gdal_priv.h \
 	gdal_proxy.h \
 	gdal_rat.h \
+	gdalcachedpixelaccessor.h \
 	rawdataset.h
 
 install:

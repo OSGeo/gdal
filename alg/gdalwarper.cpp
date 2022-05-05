@@ -1956,6 +1956,12 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
 
     if( pszValue != nullptr )
     {
+        CPLXMLNode* psGeoLocNode = CPLSearchXMLNode(psTree, "GeoLocTransformer");
+        if( psGeoLocNode )
+        {
+            CPLCreateXMLElementAndValue(psGeoLocNode, "SourceDataset", pszValue);
+        }
+
         CPLConfigOptionSetter oSetter("CPL_ALLOW_VSISTDIN", "NO", true);
 
         char** papszOpenOptions = GDALDeserializeOpenOptionsFromXML(psTree);

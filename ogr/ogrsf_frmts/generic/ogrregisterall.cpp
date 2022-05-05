@@ -155,9 +155,6 @@ void OGRRegisterAllInternal()
 #ifdef CAD_ENABLED
     RegisterOGRCAD();
 #endif
-#ifdef GRASS_ENABLED
-    RegisterOGRGRASS();
-#endif
 #ifdef FLATGEOBUF_ENABLED
     RegisterOGRFlatGeobuf();
 #endif
