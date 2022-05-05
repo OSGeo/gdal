@@ -512,7 +512,6 @@ void CPL_DLL RegisterOGRSQLite();
 void CPL_DLL RegisterOGRCSV();
 void CPL_DLL RegisterOGRILI1();
 void CPL_DLL RegisterOGRILI2();
-void CPL_DLL RegisterOGRGRASS();
 void CPL_DLL RegisterOGRPGeo();
 void CPL_DLL RegisterOGRDXF();
 void CPL_DLL RegisterOGRCAD();
