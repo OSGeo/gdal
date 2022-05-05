@@ -508,7 +508,6 @@ define_find_package2(GTA gta/gta.h gta PKGCONFIG_NAME gta)
 gdal_check_package(GTA "Enable GTA driver" CAN_DISABLE)
 
 gdal_check_package(MRSID "MrSID raster SDK" CAN_DISABLE)
-gdal_check_package(DAP "Data Access Protocol library for server and client." CAN_DISABLE)
 gdal_check_package(Armadillo "C++ library for linear algebra (used for TPS transformation)" CAN_DISABLE)
 if (ARMADILLO_FOUND)
   # On Conda, the armadillo package has no dependency on lapack, but the later is required for successful linking. So

@@ -52,7 +52,7 @@ jobs:
         sudo apt-get install -y -q bison libjpeg-dev libgif-dev liblzma-dev libzstd-dev libgeos-dev git \
            libcurl4-gnutls-dev libproj-dev libxml2-dev  libxerces-c-dev libnetcdf-dev netcdf-bin \
            libpoppler-dev libpoppler-private-dev gpsbabel libhdf4-alt-dev libhdf5-serial-dev libpodofo-dev poppler-utils \
-           libfreexl-dev unixodbc-dev libwebp-dev libepsilon-dev liblcms2-2 libcrypto++-dev libdap-dev libkml-dev \
+           libfreexl-dev unixodbc-dev libwebp-dev libepsilon-dev liblcms2-2 libcrypto++-dev libkml-dev \
            libmysqlclient-dev libarmadillo-dev wget libfyba-dev libjsoncpp-dev libexpat1-dev \
            libclc-dev ocl-icd-opencl-dev libsqlite3-dev sqlite3-pcre libpcre3-dev libspatialite-dev libsfcgal-dev fossil libcairo2-dev libjson-c-dev libdeflate-dev liblz4-dev libblosc-dev \
            libqhull-dev libcfitsio-dev libogdi-dev libopenjp2-7-dev libheif-dev \
@@ -463,7 +463,7 @@ jobs:
   build-mac:
     runs-on: macOS-latest
     env:
-      CMAKE_OPTIONS: -DCFITSIO_ROOT=/usr/local/opt/cfitsio  -DPoppler_ROOT=/usr/local/opt/poppler -DPROJ_ROOT=/usr/local/opt/proj -DLibXml2_ROOT=/usr/local/opt/libxml2 -DSPATIALITE_ROOT=/usr/local/opt/libspatialite -DPostgreSQL_ROOT=/usr/local/opt/libpq -DEXPAT_ROOT=/usr/local/opt/expat -DXercesC_ROOT=/usr/local/opt/xerces-c -DSQLite3_ROOT=/usr/local/opt/sqlite -DOpenSSL_ROOT=/usr/local/opt/openssl -DPNG_ROOT=/usr/local/opt/libpng -DJPEG_ROOT=/usr/local/opt/jpeg -DOpenJPEG_ROOT=/usr/local/opt/openjpeg -DCURL_ROOT=/usr/local/opt/curl -DGDAL_USE_DAP=OFF
+      CMAKE_OPTIONS: -DCFITSIO_ROOT=/usr/local/opt/cfitsio  -DPoppler_ROOT=/usr/local/opt/poppler -DPROJ_ROOT=/usr/local/opt/proj -DLibXml2_ROOT=/usr/local/opt/libxml2 -DSPATIALITE_ROOT=/usr/local/opt/libspatialite -DPostgreSQL_ROOT=/usr/local/opt/libpq -DEXPAT_ROOT=/usr/local/opt/expat -DXercesC_ROOT=/usr/local/opt/xerces-c -DSQLite3_ROOT=/usr/local/opt/sqlite -DOpenSSL_ROOT=/usr/local/opt/openssl -DPNG_ROOT=/usr/local/opt/libpng -DJPEG_ROOT=/usr/local/opt/jpeg -DOpenJPEG_ROOT=/usr/local/opt/openjpeg -DCURL_ROOT=/usr/local/opt/curl
       cache-name: cmake-macos
     steps:
     - name: Setup xcode
