@@ -28,6 +28,19 @@ elseif (EXISTS ${SOURCE_DIR}/.git)
         set(GDAL_DEV_REVISION "dev-${REV}")
         if (GIT_LOCAL_CHG STREQUAL "DIRTY")
           set(GDAL_DEV_REVISION "${GDAL_DEV_REVISION}-dirty")
+        elseif (GIT_LOCAL_CHG STREQUAL "UNKNOWN" AND
+                EXISTS ${BINARY_DIR}/gcore/gdal_version.h AND
+                EXISTS ${BINARY_DIR}/gcore/gdal_version_full/gdal_version.h)
+          # Happens typically when running "sudo make install" after "make" as a regular user
+          file(READ ${BINARY_DIR}/gcore/gdal_version_full/gdal_version.h GDAL_FULL_VERSION_H_CONTENTS)
+          if( "${GDAL_FULL_VERSION_H_CONTENTS}" MATCHES "${REV}" )
+              # Assume the -dirty state has not been modified. This avoids
+              # rebuilding files
+              return()
+          endif()
+          # If we get here, the revision number has changed from the latest build
+          # but we are not able to determine if there are local changes.
+          # Assume none...
         endif()
 
         string(REPLACE "dev" "${GDAL_DEV_REVISION}"
