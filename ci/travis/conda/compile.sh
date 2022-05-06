@@ -18,8 +18,9 @@ fi
 
 
 export GDAL_ENABLE_DEPRECATED_DRIVER_DODS=YES
-conda build recipe --clobber-file recipe/recipe_clobber.yaml --output-folder packages -m ".ci_support/${CI_PLAT}_64_openssl3.yaml"
-conda create -y -n test -c ./packages python=3.8 libgdal gdal
+conda build recipe --clobber-file recipe/recipe_clobber.yaml --output-folder packages -m ".ci_support/${CI_PLAT}_64_openssl1.1.1.yaml"
+conda create -y -n test -c ./packages/$CI_PLAT-64 libgdal
+# used to install python gdal too
 conda deactivate
 conda activate test
 gdalinfo --version
