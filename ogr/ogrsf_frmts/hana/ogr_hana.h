@@ -314,7 +314,7 @@ protected:
     OGRErr GetQueryColumns(
         const CPLString& schemaName,
         const CPLString& query,
-        std::vector<OGRHANA::ColumnDescription>& columDescriptions);
+        std::vector<OGRHANA::ColumnDescription>& columnDescriptions);
     std::vector<CPLString> GetTablePrimaryKeys(
         const char* schemaName, const char* tableName);
 

@@ -661,14 +661,14 @@ static void CPLQuadTreeNodeAddFeatureAlg1( CPLQuadTree* hQuadTree,
         if( hQuadTree->bForceUseOfSubNodes )
         {
             bool overlaps[4];
-            bool overlapAlls = true;
+            bool overlapAll = true;
             for( int i = 0; i < psNode->nNumSubNodes; i++ )
             {
                 overlaps[i] = CPL_RectOverlap(pRect, &psNode->apSubNode[i]->rect);
                 if( !overlaps[i] )
-                    overlapAlls = false;
+                    overlapAll = false;
             }
-            if( !overlapAlls )
+            if( !overlapAll )
             {
                 for( int i = 0; i < psNode->nNumSubNodes; i++ )
                 {

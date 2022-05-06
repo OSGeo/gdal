@@ -734,7 +734,7 @@ class CPL_DLL OGRFeature
                             pauFields[i].Integer = nValue; pauFields[i].Set.nMarker2 = 0; pauFields[i].Set.nMarker3 = 0; }
     void                SetFieldSameTypeUnsafe( int i, GIntBig nValue ) { pauFields[i].Integer64 = nValue; }
     void                SetFieldSameTypeUnsafe( int i, double dfValue ) { pauFields[i].Real = dfValue; }
-    void                SetFieldSameTypeUnsafe( int i, char* pszValueTransfered ) { pauFields[i].String = pszValueTransfered; }
+    void                SetFieldSameTypeUnsafe( int i, char* pszValueTransferred ) { pauFields[i].String = pszValueTransferred; }
 //! @endcond
 
     void                SetField( const char *pszFName, int nValue )

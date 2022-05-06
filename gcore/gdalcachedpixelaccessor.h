@@ -194,7 +194,7 @@ Type GDALCachedPixelAccessor<Type, TILE_SIZE, CACHED_TILE_COUNT>::GetSlowPath(
 
 /** Set the value of a pixel.
  *
- * The actual modification of the underlying raster is defered until the tile
+ * The actual modification of the underlying raster is deferred until the tile
  * is implicit flushed while loading a new tile, or an explicit call to
  * FlushCache().
  *

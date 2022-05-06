@@ -106,7 +106,7 @@ static double ShiftGeoX(const GDALGeoLocTransformInfo *psTransform,
 {
     if( !psTransform->bGeographicSRSWithMinus180Plus180LongRange )
         return dfX;
-    // The threshold at 170 deg is a bit arbitary. A smarter approach
+    // The threshold at 170 deg is a bit arbitrary. A smarter approach
     // would try to guess the "average" longitude step between 2 grid values
     // and use 180 - average_step * some_factor as the threshold.
     if( dfXRef < -170 && dfX > 170 )
