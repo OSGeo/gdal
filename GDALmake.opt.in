@@ -127,7 +127,7 @@ GDAL_INCLUDE	=	-iquote $(GDAL_ROOT)/port -iquote $(GDAL_ROOT)/generated_headers 
 
 # libtool targets and help variables
 LIBGDAL	:=		libgdal.la
-LIBGDAL_CURRENT	:=	30
+LIBGDAL_CURRENT	:=	31
 LIBGDAL_REVISION	:=	0
 LIBGDAL_AGE	:=	0
 
