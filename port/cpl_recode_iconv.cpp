@@ -87,7 +87,7 @@ char *CPLRecodeIconv( const char *pszSource,
 
     sConv = iconv_open( pszDstEncoding, pszSrcEncoding );
 
-    if( sConv == reinterpret_cast<iconv_t>(-1) )
+    if( sConv == (iconv_t)(-1) )
     {
         CPLError( CE_Warning, CPLE_AppDefined,
                   "Recode from %s to %s failed with the error: \"%s\".",
@@ -236,7 +236,7 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
 
     sConv = iconv_open( pszDstEncoding, pszSrcEncoding );
 
-    if( sConv == reinterpret_cast<iconv_t>(-1) )
+    if( sConv == (iconv_t)(-1) )
     {
         CPLFree( pszIconvSrcBuf );
         CPLError( CE_Warning, CPLE_AppDefined,
