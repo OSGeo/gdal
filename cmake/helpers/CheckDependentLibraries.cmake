@@ -627,41 +627,6 @@ if (GDAL_USE_OPENJPEG)
   string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(OpenJPEG MODULE)\n")
 endif ()
 
-# FIXME: we should probably ultimately move the GRASS driver to an
-# external repository, due to GRASS depending on GDAL, hence the GRASS driver
-# can only be built as a plugin. Or at the very least we should only allow building
-# it as a plugin, and have a GDAL_USE_GRASS variable to control if libgrass should
-# be used (and change frmts/CMakeLists.txt and ogr/ogrsf_frmts/CMakeLists.txt
-# to use it instead of HAVE_GRASS)
-if( ALLOW_GRASS_DRIVER )
-# Only GRASS 7 is currently supported but we keep dual version support in cmake for possible future switch to GRASS 8.
-set(TMP_GRASS OFF)
-foreach (GRASS_SEARCH_VERSION 7)
-  # Cached variables: GRASS7_FOUND, GRASS_PREFIX7, GRASS_INCLUDE_DIR7 HAVE_GRASS: TRUE if at least one version of GRASS
-  # was found
-  set(GRASS_CACHE_VERSION ${GRASS_SEARCH_VERSION})
-  if (WITH_GRASS${GRASS_CACHE_VERSION})
-    find_package(GRASS ${GRASS_SEARCH_VERSION} MODULE)
-    if (${GRASS${GRASS_CACHE_VERSION}_FOUND})
-      set(GRASS_PREFIX${GRASS_CACHE_VERSION}
-          ${GRASS_PREFIX${GRASS_SEARCH_VERSION}}
-          CACHE PATH "Path to GRASS ${GRASS_SEARCH_VERSION} base directory")
-      set(TMP_GRASS ON)
-    endif ()
-  endif ()
-endforeach ()
-if (TMP_GRASS)
-  set(HAVE_GRASS
-      ON
-      CACHE INTERNAL "HAVE_GRASS")
-else ()
-  set(HAVE_GRASS
-      OFF
-      CACHE INTERNAL "HAVE_GRASS")
-endif ()
-unset(TMP_GRASS)
-endif ()
-
 gdal_check_package(HDFS "Enable Hadoop File System through native library" CAN_DISABLE)
 
 # PDF library: one of them enables PDF driver
