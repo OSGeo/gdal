@@ -220,7 +220,7 @@ list of changes is :
    OFTInteger64. Above they will be treated as OFTReal. In previous GDAL
    versions, Integer fields were created with a default with of 10, and
    thus will be now read as OFTInteger64. An open option,
-   DETECT_TYPE=YES, can be specified so as OGR does a full scan of the
+   ADJUST_TYPE=YES, can be specified so as OGR does a full scan of the
    DBF file to see if integer fields of size 10 or 11 hold 32 bit or 64
    bit values and adjust the type accordingly (and same for integer
    fields of size 19 or 20, in case of overflow of 64 bit integer,
