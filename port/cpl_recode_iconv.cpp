@@ -244,7 +244,6 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
 
     sConv = iconv_open( pszDstEncoding, pszSrcEncoding );
 
-```suggestion
 #ifdef __GNUC__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
