@@ -4426,7 +4426,7 @@ std::unique_ptr<TargetLayerInfo> SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
     // Detect if we can directly pass the source feature to the CreateFeature()
     // method of the target layer, without doing any copying of field content.
     psInfo->m_bCanAvoidSetFrom = false;
-    if( !m_bExplodeCollections && iSrcZField == -1 )
+    if( !m_bExplodeCollections && iSrcZField == -1 && poDstFDefn != nullptr )
     {
         psInfo->m_bCanAvoidSetFrom = true;
         const int nDstGeomFieldCount = poDstFDefn->GetGeomFieldCount();
