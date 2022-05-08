@@ -1404,6 +1404,100 @@ def test_netcdf_42():
     assert ds.GetRasterBand(1).Checksum() == 33501
 
 ###############################################################################
+# Test writing & reading GEOLOCATION array with no projected CRS
+
+
+@pytest.mark.parametrize('write_bottomup', [True, False])
+@pytest.mark.parametrize('read_bottomup', [True, False])
+def test_netcdf_geolocation_array_no_srs(write_bottomup, read_bottomup):
+
+    lon_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/test_netcdf_geolocation_array_no_srs_lon.tif', 3, 2, 1)
+    lon_ds.GetRasterBand(1).WriteRaster(0, 0, 3, 2, struct.pack('B' * 6,
+                                                                10, 11, 12,
+                                                                13, 14, 15))
+    lon_ds = None
+
+    lat_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/test_netcdf_geolocation_array_no_srs_lat.tif', 3, 2, 1)
+    lat_ds.GetRasterBand(1).WriteRaster(0, 0, 3, 2, struct.pack('B' * 6,
+                                                                20, 21, 22,
+                                                                23, 24, 25))
+    lat_ds = None
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 3, 2, 1)
+    src_ds.SetMetadata([
+        'LINE_OFFSET=0',
+        'LINE_STEP=1',
+        'PIXEL_OFFSET=0',
+        'PIXEL_STEP=1',
+        'SRS=GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AXIS["Lat",NORTH],AXIS["Long",EAST],AUTHORITY["EPSG","4326"]]',
+        'X_BAND=1',
+        'X_DATASET=/vsimem/test_netcdf_geolocation_array_no_srs_lon.tif',
+        'Y_BAND=1',
+        'Y_DATASET=/vsimem/test_netcdf_geolocation_array_no_srs_lat.tif'], 'GEOLOCATION')
+    src_ds.GetRasterBand(1).WriteRaster(0, 0, 3, 2, struct.pack('B' * 6,
+                                                                0, 1, 2,
+                                                                3, 4, 5))
+
+    options = ['WRITE_BOTTOMUP=' + ('YES' if write_bottomup else 'NO')]
+    gdaltest.netcdf_drv.CreateCopy('tmp/test_netcdf_geolocation_array_no_srs.nc', src_ds,
+                                   options = options)
+
+    ds = gdal.Open('tmp/test_netcdf_geolocation_array_no_srs.nc')
+    assert (ds.GetMetadata('GEOLOCATION') == {
+        'LINE_OFFSET': '0',
+        'X_DATASET': 'NETCDF:"tmp/test_netcdf_geolocation_array_no_srs.nc":lon',
+        'PIXEL_STEP': '1',
+        'SRS': 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]',
+        'PIXEL_OFFSET': '0',
+        'X_BAND': '1',
+        'LINE_STEP': '1',
+        'Y_DATASET': 'NETCDF:"tmp/test_netcdf_geolocation_array_no_srs.nc":lat',
+        'Y_BAND': '1',
+        'GEOREFERENCING_CONVENTION': 'PIXEL_CENTER'})
+    assert ds.GetGeoTransform(can_return_null = True) is None
+
+    with gdaltest.config_option('GDAL_NETCDF_BOTTOMUP', 'YES' if read_bottomup else 'NO'):
+        ds = gdal.Open('NETCDF:"tmp/test_netcdf_geolocation_array_no_srs.nc":Band1')
+        got_data = struct.unpack('B' * 6,
+                                 ds.GetRasterBand(1).ReadRaster(
+                                     0, 0, 3, 2, buf_type = gdal.GDT_Byte))
+        if (write_bottomup and not read_bottomup) or (not write_bottomup and read_bottomup):
+            assert got_data == (3, 4, 5,
+                                0, 1, 2)
+        else:
+            assert got_data == (0, 1, 2,
+                                3, 4, 5)
+        ds = None
+
+        ds = gdal.Open('NETCDF:"tmp/test_netcdf_geolocation_array_no_srs.nc":lon')
+        got_data = struct.unpack('B' * 6,
+                                 ds.GetRasterBand(1).ReadRaster(
+                                     0, 0, 3, 2, buf_type = gdal.GDT_Byte))
+        if (write_bottomup and not read_bottomup) or (not write_bottomup and read_bottomup):
+            assert got_data == (13, 14, 15,
+                                10, 11, 12)
+        else:
+            assert got_data == (10, 11, 12,
+                                13, 14, 15)
+        ds = None
+
+        ds = gdal.Open('NETCDF:"tmp/test_netcdf_geolocation_array_no_srs.nc":lat')
+        got_data = struct.unpack('B' * 6,
+                                 ds.GetRasterBand(1).ReadRaster(
+                                     0, 0, 3, 2, buf_type = gdal.GDT_Byte))
+        if (write_bottomup and not read_bottomup) or (not write_bottomup and read_bottomup):
+            assert got_data == (23, 24, 25,
+                                20, 21, 22)
+        else:
+            assert got_data == (20, 21, 22,
+                                23, 24, 25)
+        ds = None
+
+    gdal.Unlink('tmp/test_netcdf_geolocation_array_no_srs.nc')
+    gdal.Unlink('/vsimem/test_netcdf_geolocation_array_no_srs_lon.tif')
+    gdal.Unlink('/vsimem/test_netcdf_geolocation_array_no_srs_lat.tif')
+
+###############################################################################
 # Test reading GEOLOCATION array from geotransform (non default)
 
 
