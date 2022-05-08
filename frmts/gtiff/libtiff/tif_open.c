@@ -669,6 +669,15 @@ TIFFIsBigEndian(TIFF* tif)
 }
 
 /*
+ * Return nonzero if given file is BigTIFF style.
+ */
+int
+TIFFIsBigTIFF(TIFF *tif)
+{
+	return (tif->tif_header.common.tiff_version == TIFF_VERSION_BIG);
+}
+
+/*
  * Return pointer to file read method.
  */
 TIFFReadWriteProc
