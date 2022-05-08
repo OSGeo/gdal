@@ -58,7 +58,14 @@ The following element types are supported in reading:
 
 Generally speaking any concept of complex objects, and cells as
 associated components is lost. Each component of a complex object or
-cell is treated as a independent feature.
+cell is treated as a independent feature. The configuration option 
+:decl_configoption:`DGN_CELL_HEADER_ORIGIN` is the only available 
+support to treat cell headers differently. If this option is set to 
+YES, only one feature is generated for each cell header. 
+The origin of the cell header (2D or 3D point) is used to generate 
+the feature geometry. The name of the cell header is stored in the 
+`Text` attribute. Inner elements are not generated if this option is 
+set.
 
 User data linkage
 -----------------

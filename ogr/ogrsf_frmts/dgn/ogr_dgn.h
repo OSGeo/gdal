@@ -47,6 +47,8 @@ class OGRDGNLayer final: public OGRLayer
     int                 bUpdate;
 
     char               *pszLinkFormat;
+    
+    bool                cellHeaderConfigOption;
 
     OGRFeature         *ElementToFeature( DGNElemCore *, int nRecLevel );
 

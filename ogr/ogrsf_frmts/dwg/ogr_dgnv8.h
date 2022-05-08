@@ -70,6 +70,8 @@ class OGRDGNV8Layer final: public OGRLayer
     size_t                      m_nIdxInPendingFeatures;
     std::set<CPLString>         m_aoSetIgnoredFeatureClasses;
 
+    bool                        m_cellHeaderConfigOption;
+
     void                                 CleanPendingFeatures();
     std::vector<tPairFeatureHoleFlag>    CollectSubElements( OdDgElementIteratorPtr iterator,
                                                     int level );
