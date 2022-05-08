@@ -36,6 +36,7 @@
 #include <cstring>
 #include <cstdio>
 #include <algorithm>
+#include <limits>
 #include <set>
 
 using namespace PCIDSK;
