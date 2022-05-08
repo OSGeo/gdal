@@ -30,6 +30,7 @@
 #include "core/pcidsk_utils.h"
 #include "pcidsk_exception.h"
 #include <algorithm>
+#include <limits>
 
 using namespace PCIDSK;
 
