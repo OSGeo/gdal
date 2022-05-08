@@ -315,7 +315,7 @@ void GDALGeoLocInverseTransformQuadtree(
                     double dfX = static_cast<double>(nIdx % nExtendedWidth);
                     // store the result as int, and then cast to double, to
                     // avoid Coverity Scan warning about UNINTENDED_INTEGER_DIVISION
-                    const int nY = nIdx / nExtendedWidth;
+                    const size_t nY = nIdx / nExtendedWidth;
                     double dfY = static_cast<double>(nY);
                     if( !psTransform->bOriginIsTopLeftCorner )
                     {
