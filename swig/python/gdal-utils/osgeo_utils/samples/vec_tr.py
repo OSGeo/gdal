@@ -73,7 +73,7 @@ def WalkAndTransform(geom):
 def Usage():
     print('Usage: vec_tr.py infile outfile [layer]')
     print('')
-    return 1
+    return 2
 
 
 def main(argv=sys.argv):

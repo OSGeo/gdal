@@ -212,7 +212,7 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
 #      Processing command line arguments.
 # --------------------------------------------------------------------
     if args is None:
-        return 1
+        return 2
 
     nArgc = len(args)
 
@@ -1100,7 +1100,7 @@ def Usage():
           " or a well known definition (i.e. EPSG:4326) or a file with a WKT\n"
           " definition.")
 
-    return 1
+    return 2
 
 
 def CSLFindString(v, mystr):

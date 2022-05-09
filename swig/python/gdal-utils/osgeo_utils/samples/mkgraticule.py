@@ -63,7 +63,7 @@ def Usage():
     print('         [-t_srs srs] [-range xmin ymin xmax ymax] outfile')
     print('')
     print('Defaults to: not connected, step & substep of 5.0, no SRS, range -180,-90 180,90')
-    return 1
+    return 2
 
 
 def main(argv=sys.argv):

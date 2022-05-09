@@ -41,7 +41,7 @@ from osgeo import gdal
 def main(argv=sys.argv):
     if len(argv) < 3:
         print("Usage: gdalcopyproj.py source_file dest_file")
-        return 1
+        return 2
 
     inp = argv[1]
     dataset = gdal.Open(inp)

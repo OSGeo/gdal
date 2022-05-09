@@ -1972,7 +1972,7 @@ def Usage():
     print('-k: (try to) keep going when error is encountered')
     print('--extra: run extra checks, potentially going beyond strict requirements of specification')
     print('--warning-as-error: turn warnings as errors')
-    return 1
+    return 2
 
 
 def main(argv=sys.argv):

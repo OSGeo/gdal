@@ -666,7 +666,7 @@ def exit_with_error(message: str, details: str = "") -> NoReturn:
     if details:
         sys.stderr.write("\n\n%s\n" % details)
 
-    sys.exit(1)
+    sys.exit(2)
 
 
 def set_cache_max(cache_in_bytes: int) -> None:

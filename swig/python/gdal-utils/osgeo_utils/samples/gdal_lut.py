@@ -79,7 +79,7 @@ Values not mapped by the lut file (for instance values 6-255 in the above
 case) will be left unaltered.  Sixteen bit (UInt16) output values are
 supported as well as luts of more than 256 input values.
 """)
-    return 1
+    return 2
 
 
 def main(argv=sys.argv):
@@ -128,12 +128,12 @@ def main(argv=sys.argv):
             dst_filename = argv[i]
 
         else:
-            Usage()
+            return Usage()
 
         i = i + 1
 
     if src_filename is None or lut_filename is None:
-        Usage()
+        return Usage()
 
     # ----------------------------------------------------------------------------
     # Load the LUT file.

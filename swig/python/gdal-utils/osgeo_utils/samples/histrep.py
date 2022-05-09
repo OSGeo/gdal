@@ -42,7 +42,7 @@ def Usage():
     print('       histrep.py -req <min> <max> <buckets> [-force] [-approxok]')
     print('                  [-ioor] input_file')
     print('')
-    return 1
+    return 2
 
 
 def main(argv=sys.argv):
@@ -77,12 +77,12 @@ def main(argv=sys.argv):
             filename = arg
 
         else:
-            Usage()
+            return Usage()
 
         i = i + 1
 
     if filename is None:
-        Usage()
+        return Usage()
 
     # -----------------------------------------------------------------------
     ds = gdal.Open(filename)

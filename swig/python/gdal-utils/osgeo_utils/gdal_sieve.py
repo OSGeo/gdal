@@ -42,7 +42,7 @@ from osgeo_utils.auxiliary.util import GetOutputDriverFor
 def Usage():
     print("""Usage: gdal_sieve [-q] [-st threshold] [-4] [-8] [-o name=value]
            srcfile [-nomask] [-mask filename] [-of format] [dstfile]""")
-    return 1
+    return 2
 
 
 def main(argv=sys.argv):
