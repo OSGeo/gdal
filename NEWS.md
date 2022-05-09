@@ -46,6 +46,7 @@ Build(all):
  * Updates for IJG libjpeg-9e
  * Require using https://github.com/rouault/pdfium_build_gdal_3_5 for PDF PDFium support
  * cpl_config.h: remove lots of unused defines, and severely restrict what we export in non-GDAL compilation mode
+ * Fix build with uclibc w.r.t iconv (#5684)
 
 Build(autoconf/automake):
  * fix detection of OpenEXR >= 3 (#4766)
@@ -294,6 +295,7 @@ netCDF driver:
  * add a IGNORE_XY_AXIS_NAME_CHECKS=YES open option (qgis/QGIS#47158)
  * recognize x/y axis from GMT generated files as geospatial axis (#5291, qgis/QGIS#47158, qgis/QGIS#45704)
  * read CF attributes giving CRS component names (#5493)
+ * add support for writing/reading geolocation array without a grid_mapping variable
 
 NITF driver:
  * Add ISO-8859-1 decoding for file and image header metadata
