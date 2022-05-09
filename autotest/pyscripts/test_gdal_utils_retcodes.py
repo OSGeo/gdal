@@ -37,7 +37,7 @@ import sys
 import subprocess
 import pytest
 
-pytest.skip("THIS TEST IN DRAFT MDOE, SKIPPING", allow_module_level=True)
+pytest.skip("THIS TEST IN DRAFT MODE, SKIPPING", allow_module_level=True)
 
 from pathlib import Path
 
