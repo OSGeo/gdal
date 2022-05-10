@@ -81,7 +81,7 @@ _TIFFPrintField(FILE* fd, const TIFFField *fip,
     /* Print a user-friendly name for tags of relatively common use, but */
     /* which aren't registered by libtiff itself. */
     const char* field_name = fip->field_name;
-    if( fip->field_name != NULL && strncmp(fip->field_name, "Tag ", 4) == 0 ) {
+    if( TIFFFieldIsAnonymous(fip) ) {
         for( size_t i = 0; i < NTAGS; ++i ) {
             if( fip->field_tag == tagnames[i].tag ) {
                 field_name = tagnames[i].name;
@@ -149,7 +149,7 @@ _TIFFPrettyPrintField(TIFF* tif, const TIFFField *fip, FILE* fd, uint32_t tag,
         (void) tif;
 
 	/* do not try to pretty print auto-defined fields */
-	if (fip->field_name != NULL && strncmp(fip->field_name,"Tag ", 4) == 0) {
+	if ( TIFFFieldIsAnonymous(fip) ) {
 		return 0;
 	}
         

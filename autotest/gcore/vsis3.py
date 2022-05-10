@@ -1248,6 +1248,7 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
 
             handler = webserver.SequentialHandler()
             handler.add('GET', '/s3_non_cached/test.txt', 200, {}, 'foo')
+            handler.add('GET', '/s3_non_cached/test.txt', 200, {}, 'foo')
 
             with webserver.install_http_handler(handler):
                 f = open_for_read('/vsis3/s3_non_cached/test.txt')
@@ -1273,6 +1274,7 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
                     pytest.fail(data)
 
             handler = webserver.SequentialHandler()
+            handler.add('GET', '/s3_non_cached/test.txt', 200, {}, 'bar2')
             handler.add('GET', '/s3_non_cached/test.txt', 200, {}, 'bar2')
 
             with webserver.install_http_handler(handler):
@@ -4349,12 +4351,6 @@ def test_vsis3_random_write_gtiff_create_copy(
         404,
         {}
     )
-    handler.add(
-        'GET',
-        '/random_write/?delimiter=%2F',
-        404,
-        {}
-    )
 
     src_ds = gdal.Open('data/byte.tif')
 
@@ -5040,6 +5036,27 @@ role_session_name = my_role_session_name
 
     gdal.Unlink('/vsimem/aws_credentials')
     gdal.Unlink('/vsimem/aws_config')
+
+
+
+###############################################################################
+
+
+def test_vsis3_non_existing_file_GDAL_DISABLE_READDIR_ON_OPEN(
+        aws_test_config,
+        webserver_port):
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/test_bucket/non_existing.tif', 404)
+    handler.add('GET', '/test_bucket/?delimiter=%2F&max-keys=100&prefix=non_existing.tif%2F', 200)
+    gdal.ErrorReset()
+    with gdaltest.config_option('GDAL_DISABLE_READDIR_ON_OPEN', 'YES'):
+        with webserver.install_http_handler(handler):
+            with gdaltest.error_handler():
+                gdal.Open('/vsis3/test_bucket/non_existing.tif')
+    assert gdal.GetLastErrorMsg() == 'HTTP response code: 404'
+
 
 ###############################################################################
 # Nominal cases (require valid credentials)

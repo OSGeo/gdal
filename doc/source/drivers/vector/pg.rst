@@ -99,6 +99,12 @@ SQL commands with the :ref:`OGR SQL <ogr_sql_dialect>` engine, by
 passing **"OGRSQL"** string to the ExecuteSQL() method, as the name of
 the SQL dialect.
 
+Note that the PG driver uses PostgreSQL cursors to browse through the result
+set of a ExecuteSQL() request, and that, at time of writing, PostgreSQL default
+settings aren't optimized when the result set is small enough to fit in one
+result page. If you experiment bad performance, specifying the
+``PRELUDE_STATEMENTS=SET cursor_tuple_fraction = 1.0;`` open option might help.
+
 The PostgreSQL driver in OGR supports the
 OGRDataSource::StartTransaction(), OGRDataSource::CommitTransaction()
 and OGRDataSource::RollbackTransaction() calls in the normal SQL sense.
@@ -246,23 +252,22 @@ Layer Creation Options
 Configuration Options
 ~~~~~~~~~~~~~~~~~~~~~
 
-There are a variety of `Configuration
-Options <http://trac.osgeo.org/gdal/wiki/ConfigOptions>`__ which help
-control the behavior of this driver.
+The following :ref:`configuration options <configoptions>` are 
+available:
 
--  **PG_USE_COPY**: This may be "YES" for using COPY for inserting data
+-  :decl_configoption:`PG_USE_COPY`: This may be "YES" for using COPY for inserting data
    to Postgresql. COPY is significantly faster than INSERT. COPY is used by
    default when inserting from a table that has just been created.
--  **PGSQL_OGR_FID**: Set name of primary key instead of 'ogc_fid'. Only
+-  :decl_configoption:`PGSQL_OGR_FID`: Set name of primary key instead of 'ogc_fid'. Only
    used when opening a layer whose primary key cannot be autodetected.
    Ignored by CreateLayer() that uses the FID creation option.
--  **PG_USE_BASE64**: If set to "YES", geometries will
+-  :decl_configoption:`PG_USE_BASE64`: If set to "YES", geometries will
    be fetched as BASE64 encoded EWKB instead of canonical HEX encoded
    EWKB. This reduces the amount of data to be transferred from 2 N to
    1.333 N, where N is the size of EWKB data. However, it might be a bit
    slower than fetching in canonical form when the client and the server
    are on the same machine, so the default is NO.
--  **OGR_TRUNCATE**: If set to "YES", the content of the
+-  :decl_configoption:`OGR_TRUNCATE`: If set to "YES", the content of the
    table will be first erased with the SQL TRUNCATE command before
    inserting the first feature. This is an alternative to using the
    -overwrite flag of ogr2ogr, that avoids views based on the table to
@@ -370,8 +375,8 @@ FAQs
    have permissions to these tables. Permission issues on
    geometry_columns and/or spatial_ref_sys tables can be generally
    confirmed if you can see the tables by setting the configuration
-   option PG_LIST_ALL_TABLES to YES. (e.g. ogrinfo --config
-   PG_LIST_ALL_TABLES YES PG:xxxxx)
+   option :decl_configoption:`PG_LIST_ALL_TABLES` to YES. (e.g. ``ogrinfo --config
+   PG_LIST_ALL_TABLES YES PG:xxxxx``)
 
 See Also
 --------

@@ -27,7 +27,7 @@ gdal_standard_includes(gcore_mdreader)
 add_dependencies(gcore_mdreader generate_gdal_version_h)
 target_include_directories(gcore_mdreader PRIVATE $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:gcore_mdreader>)
-set_property(TARGET gcore_mdreader PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
+set_property(TARGET gcore_mdreader PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
 if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
   set_property(SOURCE reader_pleiades.cpp reader_digital_globe.cpp reader_alos.cpp PROPERTY SKIP_UNITY_BUILD_INCLUSION
                                                                                             ON)

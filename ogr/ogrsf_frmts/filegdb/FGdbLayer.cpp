@@ -37,6 +37,7 @@
 #include "FGdbUtils.h"
 #include "cpl_minixml.h" // the only way right now to extract schema information
 #include "filegdb_gdbtoogrfieldtype.h"
+#include "filegdb_fielddomain.h"
 
 // See https://github.com/Esri/file-geodatabase-api/issues/46
 // On certain FileGDB datasets with binary fields, iterating over a result set
@@ -700,8 +701,11 @@ int  FGdbLayer::EditGDBTablX( const CPLString& osGDBTablX,
     int nCountBlocksBeforeIBlockValue = 0;
 
     int bRet = TRUE;
-    for(int i=1; i<=nOutMaxFID;i++, nOffsetInPage += nRecordSize)
+    int i = 0;
+    for(unsigned iUnsigned=1; iUnsigned <= static_cast<unsigned>(nOutMaxFID);
+                    iUnsigned = static_cast<unsigned>(i) + 1, nOffsetInPage += nRecordSize)
     {
+        i = static_cast<int>(iUnsigned);
         if( nOffsetInPage == 1024 * nRecordSize )
         {
             if( nLastWrittenOffset > 0 || bDisableSparsePages )
@@ -1771,6 +1775,27 @@ char* FGdbLayer::CreateFieldDefn(OGRFieldDefn& oField,
         }*/
     }
     /* <DefaultValue xsi:type="xs:string">afternoon</DefaultValue> */
+
+    const auto& osDomainName = oField.GetDomainName();
+    if( !osDomainName.empty() )
+    {
+        const auto poDomain = m_pDS->GetFieldDomain(osDomainName);
+        if( poDomain )
+        {
+            std::string failureReason;
+            std::string osXML = BuildXMLFieldDomainDef(poDomain, true, failureReason);
+            if( !osXML.empty() )
+            {
+                auto psDomain = CPLParseXMLString(osXML.c_str());
+                if( psDomain )
+                {
+                    CPLFree(psDomain->pszValue);
+                    psDomain->pszValue = CPLStrdup("Domain");
+                    CPLAddXMLChild(defn_xml, psDomain);
+                }
+            }
+        }
+    }
 
     /* Convert our XML tree into a string for FGDB */
     char *defn_str = CPLSerializeXMLTree(defn_xml);
@@ -3825,6 +3850,45 @@ OGRErr FGdbLayer::GetLayerMetadataXML (char **ppXml)
 }
 
 /************************************************************************/
+/*                           Rename()                                   */
+/************************************************************************/
+
+OGRErr FGdbLayer::Rename(const char* pszDstTableName)
+{
+    if( !TestCapability(OLCRename) )
+        return OGRERR_FAILURE;
+
+    if( m_pTable == nullptr )
+        return OGRERR_FAILURE;
+
+    if( m_pDS->GetLayerByName(pszDstTableName) != nullptr )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Layer %s already exists",
+                 pszDstTableName);
+        return OGRERR_FAILURE;
+    }
+
+    long hr = m_pDS->GetGDB()->Rename(
+        m_wstrTablePath, m_wstrType, StringToWString(pszDstTableName));
+
+    if ( FAILED(hr) )
+    {
+        GDBErr(hr, "Failed renaming layer");
+        return OGRERR_FAILURE;
+    }
+
+    m_strName = pszDstTableName;
+    auto strTablePath = WStringToString(m_wstrTablePath);
+    m_wstrTablePath = StringToWString(
+        strTablePath.substr(0, strTablePath.rfind('\\')) + "\\" + pszDstTableName);
+    SetDescription(pszDstTableName);
+    m_pFeatureDefn->SetName(pszDstTableName);
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
@@ -3868,6 +3932,9 @@ int FGdbLayer::TestCapability( const char* pszCap )
     else if (EQUAL(pszCap,OLCAlterFieldDefn)) /* AlterFieldDefn() */
         return m_pDS->GetUpdate();
 #endif
+
+    else if (EQUAL(pszCap,OLCRename)) /* Rename() */
+        return m_pDS->GetUpdate();
 
     else if (EQUAL(pszCap,OLCFastSetNextByIndex)) /* TBD FastSetNextByIndex() */
         return FALSE;

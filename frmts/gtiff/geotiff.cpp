@@ -8376,12 +8376,16 @@ int GTiffDataset::Finalize()
 /* -------------------------------------------------------------------- */
     if( !m_poBaseDS )
     {
-        for( int i = 0; i < m_nOverviewCount; ++i )
+        // Nullify m_nOverviewCount before deleting overviews, otherwise
+        // GTiffDataset::FlushDirectory() might try to access an overview
+        // that is being deleted (#5580)
+        const int nOldOverviewCount = m_nOverviewCount;
+        m_nOverviewCount = 0;
+        for( int i = 0; i < nOldOverviewCount; ++i )
         {
             delete m_papoOverviewDS[i];
             bHasDroppedRef = true;
         }
-        m_nOverviewCount = 0;
 
         for( int i = 0; i < m_nJPEGOverviewCountOri; ++i )
         {
@@ -8404,8 +8408,12 @@ int GTiffDataset::Finalize()
     // we are not the base image.
     if( m_poMaskDS )
     {
-        delete m_poMaskDS;
+        // Nullify m_nOverviewCount before deleting overviews, otherwise
+        // GTiffDataset::FlushDirectory() might try to access it while being
+        // deleted. (#5580)
+        auto poMaskDS = m_poMaskDS;
         m_poMaskDS = nullptr;
+        delete poMaskDS;
         bHasDroppedRef = true;
     }
 

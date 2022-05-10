@@ -2,7 +2,8 @@
 
 set -e
 
-export PYTHONPATH=$PWD/swig/python/build/lib.macosx-10.9-x86_64-3.8
+PYTHONPATH=$(find $PWD/swig/python/build -name "lib.*")
+export PYTHONPATH
 export PYTEST="python3 -m pytest -vv -p no:sugar --color=no"
 export DYLD_LIBRARY_PATH=$HOME/install-gdal/lib
 export GDAL_DATA=$HOME/install-gdal/share/gdal

@@ -27,7 +27,7 @@ target_include_directories(
 
 gdal_target_link_libraries(appslib PRIVATE PROJ::proj)
 
-set_property(TARGET appslib PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
+set_property(TARGET appslib PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
 if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
   set_property(SOURCE ogr2ogr_bin.cpp gdal_grid_lib.cpp gdal_translate_lib.cpp gdalbuildvrt_lib.cpp gdaldem_lib.cpp
                       gdal_rasterize_lib.cpp PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
@@ -107,13 +107,6 @@ if (BUILD_APPS)
     target_include_directories(gnmmanage PRIVATE $<TARGET_PROPERTY:gnm,SOURCE_DIR>)
   endif ()
 
-  if (MINGW)
-    list(FIND CMAKE_EXE_LINKER_FLAGS "-municode" has_municode)
-    if (NOT has_unicode)
-      set(CMAKE_EXE_LINKER_FLAGS ${CMAKE_EXE_LINKER_FLAGS} "-municode")
-    endif ()
-  endif ()
-
   add_custom_target(gdalapps DEPENDS ${APPS_TARGETS})
   foreach (UTILCMD IN ITEMS ${APPS_TARGETS})
     # Add that include directory before all others so the gdal_version.h from it is included and not
@@ -127,6 +120,9 @@ if (BUILD_APPS)
                          $<TARGET_PROPERTY:ogr_geojson,SOURCE_DIR> $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR>)
     if (MSVC)
       set_target_properties(${UTILCMD} PROPERTIES LINK_FLAGS "wsetargv.obj")
+    endif ()
+    if (MINGW)
+      target_link_options(${UTILCMD} PRIVATE -municode)
     endif ()
     if (MSVC OR MINGW)
       target_compile_definitions(${UTILCMD} PRIVATE -DSUPPORTS_WMAIN)
@@ -165,6 +161,9 @@ if (BUILD_APPS)
     add_dependencies(${UTILCMD} generate_gdal_version_h)
     if (MSVC OR MINGW)
       target_compile_definitions(${UTILCMD} PRIVATE -DSUPPORTS_WMAIN)
+    endif ()
+    if (MINGW)
+      target_link_options(${UTILCMD} PRIVATE -municode)
     endif ()
     # Windows(Mingw/MSVC) link libraries
     if (CMAKE_SYSTEM_NAME MATCHES "Windows")

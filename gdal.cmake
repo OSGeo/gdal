@@ -30,6 +30,9 @@ option(OGR_BUILD_OPTIONAL_DRIVERS "Whether to build OGR optional drivers by defa
 # libgdal shared/satic library generation
 option(BUILD_SHARED_LIBS "Set ON to build shared library" ON)
 
+# produce position independent code, default is on when building a shared library
+option(GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE "Set ON to produce -fPIC code" ${BUILD_SHARED_LIBS})
+
 # Option to set preferred C# compiler
 option(CSHARP_MONO "Whether to force the C# compiler to be Mono" OFF)
 
@@ -470,7 +473,9 @@ add_subdirectory(scripts)
 
 # Add all library dependencies of target gdal
 get_property(GDAL_PRIVATE_LINK_LIBRARIES GLOBAL PROPERTY gdal_private_link_libraries)
-target_link_libraries(${GDAL_LIB_TARGET_NAME} PRIVATE ${GDAL_PRIVATE_LINK_LIBRARIES})
+# GDAL_EXTRA_LINK_LIBRARIES may be set by the user if the various FindXXXX modules
+# didn't capture all required dependencies (used for example by OSGeo4W)
+target_link_libraries(${GDAL_LIB_TARGET_NAME} PRIVATE ${GDAL_PRIVATE_LINK_LIBRARIES} ${GDAL_EXTRA_LINK_LIBRARIES})
 
 # Document/Manuals
 if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/doc" AND BUILD_DOCS)
@@ -720,7 +725,8 @@ if (NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/GdalFindModulePath.cmake"
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/DefineFindPackage2.cmake"
       DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/gdal/")
-    foreach(dir IN ITEMS packages thirdparty 3.20 3.16 3.14 3.13 3.12)
+    include(GdalFindModulePath)
+    foreach(dir IN LISTS GDAL_VENDORED_FIND_MODULES_CMAKE_VERSIONS ITEMS packages thirdparty)
       install(
         DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/${dir}"
         DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/gdal")
@@ -728,12 +734,17 @@ if (NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
   endif ()
 
   include(CMakePackageConfigHelpers)
+  if(CMAKE_VERSION VERSION_LESS 3.11)
+      set(comptatibility_check ExactVersion)
+  else()
+      # SameMinorVersion compatibility are supported CMake >= 3.11
+      # Our C++ ABI remains stable only among major.minor.XXX patch releases
+      set(comptatibility_check SameMinorVersion)
+  endif()
   write_basic_package_version_file(
     GDALConfigVersion.cmake
     VERSION ${GDAL_VERSION}
-    # SameMinorVersion compatibility are supported CMake > 3.10.1 so use ExactVersion instead. COMPATIBILITY
-    # SameMinorVersion)
-    COMPATIBILITY ExactVersion)
+    COMPATIBILITY ${comptatibility_check})
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/GDALConfigVersion.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gdal/)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/template/GDALConfig.cmake.in
                  ${CMAKE_CURRENT_BINARY_DIR}/GDALConfig.cmake @ONLY)
@@ -777,14 +788,12 @@ if(NOT GDAL_CMAKE_QUIET)
   system_summary(DESCRIPTION "GDAL is now configured on;")
 endif()
 
-# Do not warn about Shapelib being an optional package not found, as we don't recommend using it. Same for external
-# LERC. Mono/DotNetFrameworkSdk is also an internal detail of CSharp that we don't want to report
+# Do not warn about Shapelib being an optional package not found, as we don't recommend using it.
+# Mono/DotNetFrameworkSdk is also an internal detail of CSharp that we don't want to report
 get_property(_packages_not_found GLOBAL PROPERTY PACKAGES_NOT_FOUND)
 set(_new_packages_not_found)
 foreach (_package IN LISTS _packages_not_found)
   if (NOT ${_package} STREQUAL "Shapelib"
-      AND NOT ${_package} STREQUAL "LERC"
-      AND NOT ${_package} STREQUAL "OpenCAD"
       AND NOT ${_package} STREQUAL "Podofo"
       AND NOT ${_package} STREQUAL "Mono"
       AND NOT ${_package} STREQUAL "DotNetFrameworkSdk")
@@ -806,15 +815,26 @@ foreach (_package IN LISTS _packages_found)
   if (DEFINED GDAL_USE_${key} AND NOT GDAL_USE_${key})
     if (DEFINED GDAL_USE_${key}_INTERNAL)
       if (NOT GDAL_USE_${key}_INTERNAL)
-        string(APPEND disabled_packages " *${key} component has been detected, but is disabled with GDAL_USE_${key}=${GDAL_USE_${key}}, and the internal library is also disabled with GDAL_USE_${key}_INTERNAL=${GDAL_USE_${key}_INTERNAL}\n")
+        string(APPEND disabled_packages " * ${key} component has been detected, but is disabled with GDAL_USE_${key}=${GDAL_USE_${key}}, and the internal library is also disabled with GDAL_USE_${key}_INTERNAL=${GDAL_USE_${key}_INTERNAL}\n")
       endif()
     else ()
-      string(APPEND disabled_packages " *${key} component has been detected, but is disabled with GDAL_USE_${key}=${GDAL_USE_${key}}\n")
+      string(APPEND disabled_packages " * ${key} component has been detected, but is disabled with GDAL_USE_${key}=${GDAL_USE_${key}}\n")
     endif()
   endif ()
 endforeach ()
 if (NOT GDAL_CMAKE_QUIET AND disabled_packages)
   message(STATUS "Disabled components:\n\n${disabled_packages}\n")
+endif ()
+
+set(internal_libs_used "")
+foreach (_package IN LISTS _packages_found _new_packages_not_found)
+  string(TOUPPER ${_package} key)
+  if( GDAL_USE_${key}_INTERNAL )
+      string(APPEND internal_libs_used " * ${key} internal library enabled\n")
+  endif()
+endforeach()
+if (NOT GDAL_CMAKE_QUIET AND internal_libs_used)
+  message(STATUS "Internal libraries enabled:\n\n${internal_libs_used}\n")
 endif ()
 
 if (NOT GDAL_CMAKE_QUIET AND

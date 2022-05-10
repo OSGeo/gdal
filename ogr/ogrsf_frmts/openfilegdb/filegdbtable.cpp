@@ -52,6 +52,8 @@
 
 CPL_CVSID("$Id$")
 
+#define DIV_ROUND_UP(a, b) ( ((a) % (b)) == 0 ? ((a) / (b)) : (((a) / (b)) + 1) )
+
 #define TEST_BIT(ar, bit)                       (ar[(bit) / 8] & (1 << ((bit) % 8)))
 #define BIT_ARRAY_SIZE_IN_BYTES(bitsize)        (((bitsize)+7)/8)
 
@@ -640,7 +642,7 @@ int FileGDBTable::ReadTableXHeader()
         GUInt32 nMagic = GetUInt32(abyTrailer, 0);
 
         GUInt32 nBitsForBlockMap = GetUInt32(abyTrailer + 4, 0);
-        returnErrorIf(nBitsForBlockMap > INT_MAX / 1024);
+        returnErrorIf(nBitsForBlockMap > 1 + INT_MAX / 1024);
 
         GUInt32 n1024BlocksBis = GetUInt32(abyTrailer + 8, 0);
         returnErrorIf(n1024BlocksBis != n1024Blocks );
@@ -813,6 +815,7 @@ int FileGDBTable::Open(const char* pszFilename,
         eTableGeomType = (FileGDBTableGeometryType) byTableGeomType;
     else
         CPLDebug("OpenFileGDB", "Unknown table geometry type: %d", byTableGeomType);
+    m_bStringsAreUTF8 = (abyHeader[9] & 0x1) != 0;
     const GByte byTableGeomTypeFlags = abyHeader[11];
     m_bGeomTypeHasM = (byTableGeomTypeFlags & (1 << 6)) != 0;
     m_bGeomTypeHasZ = (byTableGeomTypeFlags & (1 << 7)) != 0;
@@ -918,9 +921,17 @@ int FileGDBTable::Open(const char* pszFilename,
                 {
                     if( eType == FGFT_STRING )
                     {
-                        sDefault.String = (char*)CPLMalloc(defaultValueLength+1);
-                        memcpy(sDefault.String, pabyIter, defaultValueLength);
-                        sDefault.String[defaultValueLength] = 0;
+                        if( m_bStringsAreUTF8 )
+                        {
+                            sDefault.String = (char*)CPLMalloc(defaultValueLength+1);
+                            memcpy(sDefault.String, pabyIter, defaultValueLength);
+                            sDefault.String[defaultValueLength] = 0;
+                        }
+                        else
+                        {
+                            m_osTempString = ReadUTF16String(pabyIter, defaultValueLength/2);
+                            sDefault.String = CPLStrdup(m_osTempString.c_str());
+                        }
                     }
                     else if( eType == FGFT_INT16 && defaultValueLength == 2 )
                     {
@@ -1307,7 +1318,7 @@ int FileGDBTable::GetAndSelectNextNonEmptyRow(int iRow)
             int iBlock = iRow / 1024;
             if( TEST_BIT(pabyTablXBlockMap, iBlock) == 0 )
             {
-                int nBlocks = (nTotalRecordCount+1023)/1024;
+                int nBlocks = DIV_ROUND_UP(nTotalRecordCount, 1024);
                 do
                 {
                     iBlock ++;
@@ -1563,14 +1574,23 @@ OGRField* FileGDBTable::GetFieldValue(int iCol)
                 returnError();
             }
 
-            /* eCurFieldType = OFTString; */
-            sCurField.String = (char*) pabyIterVals;
-            pabyIterVals += nLength;
+            if( m_bStringsAreUTF8 || apoFields[iCol]->eType != FGFT_STRING )
+            {
+                /* eCurFieldType = OFTString; */
+                sCurField.String = (char*) pabyIterVals;
+                pabyIterVals += nLength;
 
-            /* This is a trick to avoid a alloc()+copy(). We null-terminate */
-            /* after the string, and save the pointer and value to restore */
-            nChSaved = *pabyIterVals;
-            *pabyIterVals = '\0';
+                /* This is a trick to avoid a alloc()+copy(). We null-terminate */
+                /* after the string, and save the pointer and value to restore */
+                nChSaved = *pabyIterVals;
+                *pabyIterVals = '\0';
+            }
+            else
+            {
+                m_osTempString = ReadUTF16String(pabyIterVals, nLength / 2);
+                sCurField.String = &m_osTempString[0];
+                pabyIterVals += nLength;
+            }
 
             /* CPLDebug("OpenFileGDB", "Field %d, row %d: %s", iCol, nCurRow, sCurField.String); */
 
@@ -2969,7 +2989,9 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
             {
                 poMLS = new OGRMultiLineString();
                 if( bHasZ )
-                    poMLS->setCoordinateDimension(3);
+                    poMLS->set3D(TRUE);
+                if( bHasM )
+                    poMLS->setMeasured(TRUE);
             }
 
             dx = dy = dz = 0;

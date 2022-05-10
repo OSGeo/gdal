@@ -567,7 +567,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
                                             const char * pszValue,
                                             const char * pszDomain = "" ) override;
 
-    void                RenameTo(const char* pszDstTableName);
+    virtual OGRErr       Rename(const char* pszDstTableName) override;
 
     virtual bool         HasFastSpatialFilter(int iGeomCol) override;
     virtual CPLString    GetSpatialWhere(int iGeomCol,

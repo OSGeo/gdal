@@ -187,18 +187,22 @@ int GDALTransformLonLatToDestApproxTransformer(void* hTransformArg,
 bool GDALTransformIsTranslationOnPixelBoundaries(GDALTransformerFunc pfnTransformer,
                                                  void                *pTransformerArg);
 
+typedef struct _CPLQuadTree CPLQuadTree;
+
 typedef struct {
     GDALTransformerInfo sTI;
 
     bool        bReversed;
+    double      dfOversampleFactor;
 
     // Map from target georef coordinates back to geolocation array
     // pixel line coordinates.  Built only if needed.
-    size_t      nBackMapWidth;
-    size_t      nBackMapHeight;
+    int         nBackMapWidth;
+    int         nBackMapHeight;
     double      adfBackMapGeoTransform[6];  // Maps georef to pixel/line.
-    float       *pafBackMapX;
-    float       *pafBackMapY;
+
+    bool        bUseArray;
+    void       *pAccessors;
 
     // Geolocation bands.
     GDALDatasetH     hDS_X;
@@ -208,10 +212,8 @@ typedef struct {
     int              bSwapXY;
 
     // Located geolocation data.
-    size_t           nGeoLocXSize;
-    size_t           nGeoLocYSize;
-    double           *padfGeoLocX;
-    double           *padfGeoLocY;
+    int              nGeoLocXSize;
+    int              nGeoLocYSize;
     double           dfMinX;
     double           dfYAtMinX;
     double           dfMinY;
@@ -229,6 +231,10 @@ typedef struct {
     double           dfPIXEL_STEP;
     double           dfLINE_OFFSET;
     double           dfLINE_STEP;
+
+    bool             bOriginIsTopLeftCorner;
+    bool             bGeographicSRSWithMinus180Plus180LongRange;
+    CPLQuadTree     *hQuadTree;
 
     char **          papszGeolocationInfo;
 
@@ -311,6 +317,11 @@ bool GDALComputeAreaOfInterest(OGRSpatialReference* poSRS,
                                double& dfEastLongitudeDeg,
                                double& dfNorthLatitudeDeg );
 
+void *GDALCreateGeoLocTransformerEx( GDALDatasetH hBaseDS,
+                                     char **papszGeolocationInfo,
+                                     int bReversed,
+                                     const char* pszSourceDataset,
+                                     CSLConstList papszTransformOptions );
 
 #endif /* #ifndef DOXYGEN_SKIP */
 

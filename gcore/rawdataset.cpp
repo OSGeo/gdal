@@ -896,7 +896,6 @@ CPLErr RawRasterBand::AccessBlock(vsi_l_offset nBlockOff, size_t nBlockSize,
 
         memset(static_cast<GByte *>(pData) + nBytesActuallyRead,
                0, nBlockSize - nBytesActuallyRead);
-        return CE_None;
     }
 
     // Byte swap the interesting data, if required.

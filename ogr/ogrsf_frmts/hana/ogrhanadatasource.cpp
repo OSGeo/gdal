@@ -179,7 +179,7 @@ CPLString BuildConnectionString(char** openOptions)
     const char* paramSchema =
         CSLFetchNameValueDef(openOptions, OpenOptionsConstants::SCHEMA, "");
 
-    if (CPLFetchBool(openOptions, OpenOptionsConstants::ENCRYPT, "NO"))
+    if (CPLFetchBool(openOptions, OpenOptionsConstants::ENCRYPT, false))
     {
         params.push_back("encrypt=true");
         addParameter(
@@ -625,7 +625,7 @@ OGRHanaDataSource::~OGRHanaDataSource()
 /*                                 Open()                               */
 /************************************************************************/
 
-int OGRHanaDataSource::Open(const char* newName, char** options, int update)
+int OGRHanaDataSource::Open(const char* newName, char** openOptions, int update)
 {
     CPLAssert(layers_.size() == 0);
 
@@ -640,64 +640,62 @@ int OGRHanaDataSource::Open(const char* newName, char** options, int update)
     }
 
     updateMode_ = update;
+    detectGeometryType_ =
+        CPLFetchBool(openOptions, OpenOptionsConstants::DETECT_GEOMETRY_TYPE, true);
 
     std::size_t prefixLength = strlen(GetPrefix());
-    char** openOptions;
-    if (newName[prefixLength] == '\0')
-        openOptions = options;
-    else
-        openOptions =
-            CSLTokenizeStringComplex(newName + prefixLength, ";", TRUE, FALSE);
-
-    detectGeometryType_ =
-        CPLFetchBool(openOptions, OpenOptionsConstants::DETECT_GEOMETRY_TYPE, "YES");
-
-    connEnv_ = odbc::Environment::create();
-    conn_ = connEnv_->createConnection();
-    conn_->setAutoCommit(false);
-
-    const char* paramConnTimeout = CSLFetchNameValueDef(
-        openOptions, OpenOptionsConstants::CONNECTION_TIMEOUT, nullptr);
-    if (paramConnTimeout != nullptr)
-        conn_->setConnectionTimeout(
-            static_cast<unsigned long>(atoi(paramConnTimeout)));
-
-    try
-    {
-        CPLString connectionStr = BuildConnectionString(openOptions);
-        conn_->connect(connectionStr.c_str());
-    }
-    catch (const odbc::Exception& ex)
-    {
-        CPLError(
-            CE_Failure, CPLE_AppDefined, "HANA connection failed: %s\n",
-            ex.what());
-    }
+    char** connOptions = CSLTokenizeStringComplex(newName + prefixLength, ";", TRUE, FALSE);
 
     int ret = FALSE;
 
-    if (conn_->connected())
+    const char* paramSchema = CSLFetchNameValueDef(
+        connOptions, OpenOptionsConstants::SCHEMA, nullptr);
+    if (paramSchema == nullptr)
     {
-        const char* paramSchema = CSLFetchNameValueDef(
-            openOptions, OpenOptionsConstants::SCHEMA, nullptr);
-        if (paramSchema == nullptr)
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "HANA parameter '%s' is missing:\n", "SCHEMA");
+    }
+    else
+    {
+        schemaName_ = paramSchema;
+
+        connEnv_ = odbc::Environment::create();
+        conn_ = connEnv_->createConnection();
+        conn_->setAutoCommit(false);
+
+        const char* paramConnTimeout = CSLFetchNameValueDef(
+            connOptions, OpenOptionsConstants::CONNECTION_TIMEOUT, nullptr);
+        if (paramConnTimeout != nullptr)
+            conn_->setConnectionTimeout(
+                static_cast<unsigned long>(atoi(paramConnTimeout)));
+
+        try
+        {
+            CPLString connectionStr = BuildConnectionString(connOptions);
+            conn_->connect(connectionStr.c_str());
+        }
+        catch (const odbc::Exception& ex)
+        {
             CPLError(
-                CE_Failure, CPLE_AppDefined,
-                "HANA parameter '%s' is missing:\n", "SCHEMA");
-        schemaName_.assign(paramSchema);
+                CE_Failure, CPLE_AppDefined, "HANA connection failed: %s\n",
+                ex.what());
+        }
 
-        odbc::DatabaseMetaDataRef dbmd = conn_->getDatabaseMetaData();
-        CPLString dbVersion(dbmd->getDBMSVersion());
-        majorVersion_ = atoi(dbVersion.substr(0u, dbVersion.find('.')).c_str());
+        if (conn_->connected())
+        {
+            odbc::DatabaseMetaDataRef dbmd = conn_->getDatabaseMetaData();
+            CPLString dbVersion(dbmd->getDBMSVersion());
+            majorVersion_ = atoi(dbVersion.substr(0u, dbVersion.find('.')).c_str());
 
-        const char* paramTables =
-            CSLFetchNameValueDef(openOptions, OpenOptionsConstants::TABLES, "");
-        InitializeLayers(paramSchema, paramTables);
-        ret = TRUE;
+            const char* paramTables =
+                CSLFetchNameValueDef(connOptions, OpenOptionsConstants::TABLES, "");
+            InitializeLayers(paramSchema, paramTables);
+            ret = TRUE;
+        }
     }
 
-    if (openOptions != options)
-        CSLDestroy(openOptions);
+    CSLDestroy(connOptions);
 
     return ret;
 }
@@ -738,7 +736,7 @@ void OGRHanaDataSource::CreateTable(
     int geomSrid)
 {
     CPLString sql;
-    if (wkbFlatten(geomType) == OGRwkbGeometryType::wkbNone || !(!geomColumnName.empty() && geomSrid >= 0))
+    if (geomType == OGRwkbGeometryType::wkbNone || !(!geomColumnName.empty() && geomSrid >= 0))
     {
         sql = "CREATE COLUMN TABLE "
               + GetFullTableNameQuoted(schemaName_, tableName) + " ("
@@ -1068,9 +1066,9 @@ bool OGRHanaDataSource::HasSrsPlanarEquivalent(int srid)
 OGRErr OGRHanaDataSource::GetQueryColumns(
     const CPLString& schemaName,
     const CPLString& query,
-    std::vector<ColumnDescription>& columDescriptions)
+    std::vector<ColumnDescription>& columnDescriptions)
 {
-    columDescriptions.clear();
+    columnDescriptions.clear();
 
     odbc::PreparedStatementRef stmtQuery;
 
@@ -1091,7 +1089,7 @@ OGRErr OGRHanaDataSource::GetQueryColumns(
     if (numColumns == 0)
         return OGRERR_NONE;
 
-    columDescriptions.reserve(numColumns);
+    columnDescriptions.reserve(numColumns);
 
     CPLString tableName = rsmd->getTableName(1);
     odbc::DatabaseMetaDataRef dmd = conn_->getDatabaseMetaData();
@@ -1188,7 +1186,7 @@ OGRErr OGRHanaDataSource::GetQueryColumns(
                     *conn_, schemaName, tableName, columnName, detectGeometryType_);
             geometryColumnDesc.isNullable = rsmd->isNullable(clmIndex);
 
-            columDescriptions.push_back(
+            columnDescriptions.push_back(
                 {true, AttributeColumnDescription(), geometryColumnDesc});
         }
         else
@@ -1207,7 +1205,7 @@ OGRErr OGRHanaDataSource::GetQueryColumns(
             attributeColumnDesc.scale = rsmd->getScale(clmIndex);
             attributeColumnDesc.defaultValue = defaultValue;
 
-            columDescriptions.push_back(
+            columnDescriptions.push_back(
                 {false, attributeColumnDesc, GeometryColumnDescription()});
         }
     }
@@ -1258,11 +1256,8 @@ void OGRHanaDataSource::InitializeLayers(
             if (pos != tables.end())
                 tables.erase(pos);
 
-            auto layer = cpl::make_unique<OGRHanaTableLayer>(this, updatable);
-            OGRErr err =
-                layer->Initialize(schemaName_.c_str(), tableName->c_str());
-            if (OGRERR_NONE == err)
-                layers_.push_back(std::move(layer));
+            auto layer = cpl::make_unique<OGRHanaTableLayer>(this, schemaName_.c_str(), tableName->c_str(), updatable);
+            layers_.push_back(std::move(layer));
         }
         rsTables->close();
     };
@@ -1490,8 +1485,7 @@ bool OGRHanaDataSource::ParseArrayFunctionsExist(const char* schemaName)
     odbc::PreparedStatementRef stmt = conn_->prepareStatement(sql);
     stmt->setString(1, odbc::String(schemaName));
     odbc::ResultSetRef rsFunctions = stmt->executeQuery();
-    rsFunctions->next();
-    auto numFunctions = *rsFunctions->getLong(1);
+    auto numFunctions = rsFunctions->next() ? *rsFunctions->getLong(1) : 0;
     rsFunctions->close();
     return (
         static_cast<std::size_t>(numFunctions)
@@ -1528,6 +1522,9 @@ OGRLayer* OGRHanaDataSource::ICreateLayer(
     OGRwkbGeometryType geomType,
     char** options)
 {
+    if (layerNameIn == nullptr)
+        return nullptr;
+
     // Check if we are allowed to create new objects in the database
     odbc::DatabaseMetaDataRef dmd = conn_->getDatabaseMetaData();
     if (dmd->isReadOnly())
@@ -1622,11 +1619,7 @@ OGRLayer* OGRHanaDataSource::ICreateLayer(
     }
 
     // Create new layer object
-    auto layer = cpl::make_unique<OGRHanaTableLayer>(this, true);
-    OGRErr err = layer->Initialize(schemaName_.c_str(), layerName.c_str());
-    if (err == OGRERR_FAILURE)
-        return nullptr;
-
+    auto layer = cpl::make_unique<OGRHanaTableLayer>(this, schemaName_.c_str(), layerName.c_str(), true);
     if (geomType != wkbNone && layer->GetLayerDefn()->GetGeomFieldCount() > 0)
         layer->GetLayerDefn()->GetGeomFieldDefn(0)->SetNullable(FALSE);
     if (batchSize > 0)
@@ -1689,11 +1682,14 @@ OGRLayer* OGRHanaDataSource::ExecuteSQL(
     }
     if (STARTS_WITH_CI(sqlCommand, "SELECT"))
     {
-        auto layer = cpl::make_unique<OGRHanaResultLayer>(this);
-        OGRErr err = layer->Initialize(sqlCommand, spatialFilter);
-        if (OGRERR_NONE == err)
-            return layer.release();
-        return nullptr;
+        auto stmt = PrepareStatement(sqlCommand);
+        if (stmt.isNull())
+            return nullptr;
+
+        auto layer = cpl::make_unique<OGRHanaResultLayer>(this, sqlCommand);
+        if (spatialFilter != nullptr)
+            layer->SetSpatialFilter( spatialFilter );
+        return layer.release();
     }
 
     try
@@ -1704,7 +1700,7 @@ OGRLayer* OGRHanaDataSource::ExecuteSQL(
     {
         CPLError(
             CE_Failure, CPLE_AppDefined,
-            "Unable to execute SQL statement '%s': %s", sqlCommand, ex.what());
+            "Failed to execute SQL statement '%s': %s", sqlCommand, ex.what());
     }
 
     return nullptr;

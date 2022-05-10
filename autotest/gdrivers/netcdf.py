@@ -1391,7 +1391,8 @@ def test_netcdf_42():
         'X_BAND': '1',
         'LINE_STEP': '1',
         'Y_DATASET': 'NETCDF:"tmp/netcdf_42.nc":lat',
-            'Y_BAND': '1'})
+        'Y_BAND': '1',
+        'GEOREFERENCING_CONVENTION': 'PIXEL_CENTER'})
     wkt = ds.GetProjectionRef()
     assert ds.GetMetadataItem('transverse_mercator#spatial_ref') == wkt
     assert ds.GetMetadataItem('transverse_mercator#crs_wkt') == wkt
@@ -1401,6 +1402,100 @@ def test_netcdf_42():
 
     ds = gdal.Open('NETCDF:"tmp/netcdf_42.nc":lat')
     assert ds.GetRasterBand(1).Checksum() == 33501
+
+###############################################################################
+# Test writing & reading GEOLOCATION array with no projected CRS
+
+
+@pytest.mark.parametrize('write_bottomup', [True, False])
+@pytest.mark.parametrize('read_bottomup', [True, False])
+def test_netcdf_geolocation_array_no_srs(write_bottomup, read_bottomup):
+
+    lon_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/test_netcdf_geolocation_array_no_srs_lon.tif', 3, 2, 1)
+    lon_ds.GetRasterBand(1).WriteRaster(0, 0, 3, 2, struct.pack('B' * 6,
+                                                                10, 11, 12,
+                                                                13, 14, 15))
+    lon_ds = None
+
+    lat_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/test_netcdf_geolocation_array_no_srs_lat.tif', 3, 2, 1)
+    lat_ds.GetRasterBand(1).WriteRaster(0, 0, 3, 2, struct.pack('B' * 6,
+                                                                20, 21, 22,
+                                                                23, 24, 25))
+    lat_ds = None
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 3, 2, 1)
+    src_ds.SetMetadata([
+        'LINE_OFFSET=0',
+        'LINE_STEP=1',
+        'PIXEL_OFFSET=0',
+        'PIXEL_STEP=1',
+        'SRS=GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AXIS["Lat",NORTH],AXIS["Long",EAST],AUTHORITY["EPSG","4326"]]',
+        'X_BAND=1',
+        'X_DATASET=/vsimem/test_netcdf_geolocation_array_no_srs_lon.tif',
+        'Y_BAND=1',
+        'Y_DATASET=/vsimem/test_netcdf_geolocation_array_no_srs_lat.tif'], 'GEOLOCATION')
+    src_ds.GetRasterBand(1).WriteRaster(0, 0, 3, 2, struct.pack('B' * 6,
+                                                                0, 1, 2,
+                                                                3, 4, 5))
+
+    options = ['WRITE_BOTTOMUP=' + ('YES' if write_bottomup else 'NO')]
+    gdaltest.netcdf_drv.CreateCopy('tmp/test_netcdf_geolocation_array_no_srs.nc', src_ds,
+                                   options = options)
+
+    ds = gdal.Open('tmp/test_netcdf_geolocation_array_no_srs.nc')
+    assert (ds.GetMetadata('GEOLOCATION') == {
+        'LINE_OFFSET': '0',
+        'X_DATASET': 'NETCDF:"tmp/test_netcdf_geolocation_array_no_srs.nc":lon',
+        'PIXEL_STEP': '1',
+        'SRS': 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]',
+        'PIXEL_OFFSET': '0',
+        'X_BAND': '1',
+        'LINE_STEP': '1',
+        'Y_DATASET': 'NETCDF:"tmp/test_netcdf_geolocation_array_no_srs.nc":lat',
+        'Y_BAND': '1',
+        'GEOREFERENCING_CONVENTION': 'PIXEL_CENTER'})
+    assert ds.GetGeoTransform(can_return_null = True) is None
+
+    with gdaltest.config_option('GDAL_NETCDF_BOTTOMUP', 'YES' if read_bottomup else 'NO'):
+        ds = gdal.Open('NETCDF:"tmp/test_netcdf_geolocation_array_no_srs.nc":Band1')
+        got_data = struct.unpack('B' * 6,
+                                 ds.GetRasterBand(1).ReadRaster(
+                                     0, 0, 3, 2, buf_type = gdal.GDT_Byte))
+        if (write_bottomup and not read_bottomup) or (not write_bottomup and read_bottomup):
+            assert got_data == (3, 4, 5,
+                                0, 1, 2)
+        else:
+            assert got_data == (0, 1, 2,
+                                3, 4, 5)
+        ds = None
+
+        ds = gdal.Open('NETCDF:"tmp/test_netcdf_geolocation_array_no_srs.nc":lon')
+        got_data = struct.unpack('B' * 6,
+                                 ds.GetRasterBand(1).ReadRaster(
+                                     0, 0, 3, 2, buf_type = gdal.GDT_Byte))
+        if (write_bottomup and not read_bottomup) or (not write_bottomup and read_bottomup):
+            assert got_data == (13, 14, 15,
+                                10, 11, 12)
+        else:
+            assert got_data == (10, 11, 12,
+                                13, 14, 15)
+        ds = None
+
+        ds = gdal.Open('NETCDF:"tmp/test_netcdf_geolocation_array_no_srs.nc":lat')
+        got_data = struct.unpack('B' * 6,
+                                 ds.GetRasterBand(1).ReadRaster(
+                                     0, 0, 3, 2, buf_type = gdal.GDT_Byte))
+        if (write_bottomup and not read_bottomup) or (not write_bottomup and read_bottomup):
+            assert got_data == (23, 24, 25,
+                                20, 21, 22)
+        else:
+            assert got_data == (20, 21, 22,
+                                23, 24, 25)
+        ds = None
+
+    gdal.Unlink('tmp/test_netcdf_geolocation_array_no_srs.nc')
+    gdal.Unlink('/vsimem/test_netcdf_geolocation_array_no_srs_lon.tif')
+    gdal.Unlink('/vsimem/test_netcdf_geolocation_array_no_srs_lat.tif')
 
 ###############################################################################
 # Test reading GEOLOCATION array from geotransform (non default)
@@ -1421,7 +1516,8 @@ def test_netcdf_43():
         'X_BAND': '1',
         'LINE_STEP': '1',
         'Y_DATASET': 'NETCDF:"tmp/netcdf_43.nc":lat',
-            'Y_BAND': '1'})
+        'Y_BAND': '1',
+        'GEOREFERENCING_CONVENTION': 'PIXEL_CENTER'})
 
     tmp_ds = gdal.Warp('', 'tmp/netcdf_43.nc', options = '-f MEM -geoloc')
     gt = tmp_ds.GetGeoTransform()
@@ -2852,7 +2948,8 @@ def test_netcdf_swapped_x_y_dimension():
         'X_BAND': '1',
         'LINE_STEP': '1',
         'Y_DATASET': 'NETCDF:"data/netcdf/swapedxy.nc":Longitude',
-        'Y_BAND': '1'}, md
+        'Y_BAND': '1',
+        'GEOREFERENCING_CONVENTION': 'PIXEL_CENTER'}, md
 
     ds = gdal.Open(md['X_DATASET'])
     assert ds.RasterXSize == 4
@@ -2868,14 +2965,17 @@ def test_netcdf_swapped_x_y_dimension():
     data = struct.unpack('f' * 8, data)
     assert data == (-157.5, -112.5, -67.5, -22.5, 22.5, 67.5, 112.5, 157.5)
 
-    ds = gdal.Warp('', 'data/netcdf/swapedxy.nc', options = '-f MEM -geoloc')
+    ds = gdal.Warp('', 'data/netcdf/swapedxy.nc', options = '-f MEM -geoloc -ts 8 4')
     assert ds.RasterXSize == 8
     assert ds.RasterYSize == 4
-    assert ds.GetGeoTransform() == (-157.5, 38.3161193233344, 0.0, 67.5, 0.0, -38.3161193233344)
+    assert ds.GetGeoTransform() == pytest.approx((-180.0, 45.0, 0.0, 90, 0.0, -45.0)), ds.GetGeoTransform()
     data = ds.GetRasterBand(1).ReadRaster()
-    data = struct.unpack('h' * 4 * 8, data)
-    # not exactly the transposed array, but not so far
-    assert data == (4, 8, 8, 12, 16, 20, 20, 24, 5, 9, 9, 13, 17, 21, 21, 25, 6, 10, 10, 14, 18, 22, 22, 26, 7, 11, 11, 15, 19, 23, 23, 27)
+    data = struct.unpack('h' * 8 * 4, data)
+    # transposed array
+    assert data == (0, 4, 8, 12, 16, 20, 24, 28,
+                    1, 5, 9, 13, 17, 21, 25, 29,
+                    2, 6, 10, 14, 18, 22, 26, 30,
+                    3, 7, 11, 15, 19, 23, 27, 31)
 
 
 ###############################################################################

@@ -8396,5 +8396,23 @@ def test_tiff_write_alpha_ismaskband():
     gdal.GetDriverByName('GTiff').Delete(filename)
 
 
+
+###############################################################################
+# Test scenario of https://github.com/OSGeo/gdal/issues/5580
+
+
+def test_tiff_write_overview_building_and_approx_stats():
+
+    filename = '/vsimem/out.tif'
+    gdal.GetDriverByName('GTiff').Create(filename, 512, 512)
+    ds = gdal.Open(filename)
+    ds.BuildOverviews("NEAREST", [2, 4, 8])
+    ds.GetRasterBand(1).ComputeStatistics(1)
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete(filename)
+
+
+
 def test_tiff_write_cleanup():
     gdaltest.tiff_drv = None

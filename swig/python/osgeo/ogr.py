@@ -341,6 +341,8 @@ OLCCurveGeometries = _ogr.OLCCurveGeometries
 
 OLCMeasuredGeometries = _ogr.OLCMeasuredGeometries
 
+OLCRename = _ogr.OLCRename
+
 ODsCCreateLayer = _ogr.ODsCCreateLayer
 
 ODsCDeleteLayer = _ogr.ODsCDeleteLayer
@@ -1022,6 +1024,10 @@ class Layer(MajorObject):
     def __init__(self, *args, **kwargs):
         raise AttributeError("No constructor defined")
     __repr__ = _swig_repr
+
+    def Rename(self, *args):
+        r"""Rename(Layer self, char const * new_name) -> OGRErr"""
+        return _ogr.Layer_Rename(self, *args)
 
     def GetRefCount(self, *args):
         r"""

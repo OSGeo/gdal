@@ -260,15 +260,15 @@ TABFeature* IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
         if(poFeature->GetStyleString())
         {
             TABFeatureClass featureClass = ITABFeatureSymbol::GetSymbolFeatureClass(poFeature->GetStyleString());
-            if (featureClass == TABFCFontPoint) 
+            if (featureClass == TABFCFontPoint)
             {
                 poTABFeature = new TABFontPoint(poFeature->GetDefnRef());
             }
-            else if (featureClass == TABFCCustomPoint) 
+            else if (featureClass == TABFCCustomPoint)
             {
                 poTABFeature = new TABCustomPoint(poFeature->GetDefnRef());
             }
-            else 
+            else
             {
                 poTABFeature = new TABPoint(poFeature->GetDefnRef());
             }
@@ -276,10 +276,10 @@ TABFeature* IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
             poTABPointFeature->SetSymbolFromStyleString(
                 poFeature->GetStyleString());
         }
-        else 
+        else
         {
             poTABFeature = new TABPoint(poFeature->GetDefnRef());
-        }        
+        }
         break;
       /*-------------------------------------------------------------
        * REGION
@@ -563,6 +563,7 @@ static const char* const apszCharsets[][2] = {
     { "WindowsLatin2", "CP1250" },
     { "WindowsArabic", "CP1256" },
     { "WindowsCyrillic", "CP1251" },
+    { "WindowsBalticRim", "CP1257" },
     { "WindowsGreek", "CP1253" },
     { "WindowsHebrew", "CP1255" },
     { "WindowsTurkish", "CP1254" }, //Windows Eastern Europe

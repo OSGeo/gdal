@@ -1102,6 +1102,13 @@ int DIMAPDataset::ReadImageInformation2()
         atoi(CPLGetXMLValue( psImageAttributes, "NCOLS", "-1" ));
     nRasterYSize =
         atoi(CPLGetXMLValue( psImageAttributes, "NROWS", "-1" ));
+    if( nRasterXSize <= 0 || nRasterYSize <= 0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid NCOLS(=%d)/NROWS(=%d) value",
+                 nRasterXSize, nRasterYSize);
+        return FALSE;
+    }
     int nTileWidth = atoi( CPLGetXMLValue( psImageAttributes,
                            "Tile_Set.Regular_Tiling.NTILES_SIZE.ncols", "-1" ));
     int nTileHeight = atoi( CPLGetXMLValue( psImageAttributes,
@@ -1606,7 +1613,7 @@ int DIMAPDataset::ReadImageInformation2()
                                 nBandIndex = 5;
                             else if (EQUAL(psTag->psChild->pszValue, "DB"))
                                 nBandIndex = 6;
-                            
+
                             if (nBandIndex <= 0 ||
                                 nBandIndex > GetRasterCount())
                             {

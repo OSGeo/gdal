@@ -3,6 +3,7 @@ MIGRATION GUIDE FROM GDAL 3.4 to GDAL 3.5
 
 - GDAL drivers may now return raster bands with the new data types GDT_Int64 or
   GDT_UInt64.
+- Make GDALProxyRasterBand::RefUnderlyingRasterBand() / UnrefUnderlyingRasterBand() const. May affect out-of-tree drivers
 
 MIGRATION GUIDE FROM GDAL 3.3 to GDAL 3.4
 -----------------------------------------

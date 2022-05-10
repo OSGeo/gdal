@@ -42,6 +42,9 @@ Driver capabilities
 Configuration options
 ---------------------
 
+The following :ref:`configuration options <configoptions>` are 
+available:
+
 -  :decl_configoption:`OGR_XLSX_HEADERS` = FORCE / DISABLE / AUTO : By default, the driver
    will read the first lines of each sheet to detect if the first line
    might be the name of columns. If set to FORCE, the driver will

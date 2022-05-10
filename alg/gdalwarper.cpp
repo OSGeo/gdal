@@ -1246,6 +1246,12 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
  * window for a given request, and by default it is 1 to take care of rounding
  * error.  Setting this larger will increase the amount of data that needs to
  * be read, but can avoid missing source data.</li>
+ * <li>APPLY_VERTICAL_SHIFT=YES/NO: Force the use of vertical shift.
+ * This option is generally not necessary, except when using an explicit
+ * coordinate transformation (COORDINATE_OPERATION), and not specifying
+ * an explicit source and target SRS.</li>
+ * <li>MULT_FACTOR_VERTICAL_SHIFT: Multiplication factor for the vertical
+ * shift. Default 1.0</li>
  * </ul>
  */
 
@@ -1554,10 +1560,10 @@ GDALWarpResolveWorkingDataType( GDALWarpOptions *psOptions )
         psOptions->papszWarpOptions, "APPLY_VERTICAL_SHIFT", false);
     if( bApplyVerticalShift && GDALDataTypeIsInteger(psOptions->eWorkingDataType) )
     {
-        const double dfMultFactorVerticalShit = CPLAtof(
+        const double dfMultFactorVerticalShift = CPLAtof(
             CSLFetchNameValueDef(psOptions->papszWarpOptions,
                                  "MULT_FACTOR_VERTICAL_SHIFT", "1.0") );
-        if( dfMultFactorVerticalShit != 1 )
+        if( dfMultFactorVerticalShift != 1 )
         {
             psOptions->eWorkingDataType =
                 GDALDataTypeUnion( psOptions->eWorkingDataType, GDT_Float32 );
@@ -1950,6 +1956,12 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
 
     if( pszValue != nullptr )
     {
+        CPLXMLNode* psGeoLocNode = CPLSearchXMLNode(psTree, "GeoLocTransformer");
+        if( psGeoLocNode )
+        {
+            CPLCreateXMLElementAndValue(psGeoLocNode, "SourceDataset", pszValue);
+        }
+
         CPLConfigOptionSetter oSetter("CPL_ALLOW_VSISTDIN", "NO", true);
 
         char** papszOpenOptions = GDALDeserializeOpenOptionsFromXML(psTree);

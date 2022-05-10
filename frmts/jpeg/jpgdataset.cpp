@@ -98,6 +98,23 @@ constexpr int JPEG_EXIF_JPEGIFBYTECOUNT = 0x202;
 #  define JPEG_LIB_MK1_OR_12BIT 1
 #endif
 
+/************************************************************************/
+/*                     SetMaxMemoryToUse()                              */
+/************************************************************************/
+
+static void SetMaxMemoryToUse(struct jpeg_decompress_struct* psDInfo)
+{
+    // This is to address bug related in ticket #1795.
+    if( CPLGetConfigOption("JPEGMEM", nullptr) == nullptr )
+    {
+        // If the user doesn't provide a value for JPEGMEM, we want to be sure
+        // that at least 500 MB will be used before creating the temporary file.
+        const long nMinMemory = 500 * 1024 * 1024;
+        psDInfo->mem->max_memory_to_use =
+            std::max(psDInfo->mem->max_memory_to_use, nMinMemory);
+    }
+}
+
 
 #if !defined(JPGDataset)
 
@@ -1900,6 +1917,74 @@ bool JPGDataset::ErrorOutOnNonFatalError()
 }
 
 /************************************************************************/
+/*                          StartDecompress()                           */
+/************************************************************************/
+
+CPLErr JPGDataset::StartDecompress()
+{
+    /* In some cases, libjpeg needs to allocate a lot of memory */
+    /* http://www.libjpeg-turbo.org/pmwiki/uploads/About/TwoIssueswiththeJPEGStandard.pdf */
+    if( jpeg_has_multiple_scans(&(sDInfo)) )
+    {
+        /* In this case libjpeg will need to allocate memory or backing */
+        /* store for all coefficients */
+        /* See call to jinit_d_coef_controller() from master_selection() */
+        /* in libjpeg */
+
+        // 1 MB for regular libjpeg usage
+        vsi_l_offset nRequiredMemory = 1024 * 1024;
+
+        for (int ci = 0; ci < sDInfo.num_components; ci++) {
+            const jpeg_component_info *compptr = &(sDInfo.comp_info[ci]);
+            if( compptr->h_samp_factor <= 0 ||
+                compptr->v_samp_factor <= 0 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Invalid sampling factor(s)");
+                return CE_Failure;
+            }
+            nRequiredMemory += static_cast<vsi_l_offset>(
+                DIV_ROUND_UP(compptr->width_in_blocks, compptr->h_samp_factor)) *
+                DIV_ROUND_UP(compptr->height_in_blocks, compptr->v_samp_factor) *
+                sizeof(JBLOCK);
+        }
+
+        if( nRequiredMemory > 10 * 1024 * 1024 && ppoActiveDS && *ppoActiveDS != this )
+        {
+            // If another overview was active, stop it to limit memory consumption
+            if( *ppoActiveDS )
+                (*ppoActiveDS)->StopDecompress();
+            *ppoActiveDS = this;
+        }
+
+        if( sDInfo.mem->max_memory_to_use > 0 &&
+            nRequiredMemory > static_cast<vsi_l_offset>(sDInfo.mem->max_memory_to_use) &&
+            CPLGetConfigOption("GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC", nullptr) == nullptr )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                "Reading this image would require libjpeg to allocate "
+                "at least " CPL_FRMT_GUIB " bytes. "
+                "This is disabled since above the " CPL_FRMT_GUIB " threshold. "
+                "You may override this restriction by defining the "
+                "GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC environment variable, "
+                "or setting the JPEGMEM environment variable to a value greater "
+                "or equal to '" CPL_FRMT_GUIB "M'",
+                static_cast<GUIntBig>(nRequiredMemory),
+                static_cast<GUIntBig>(sDInfo.mem->max_memory_to_use),
+                static_cast<GUIntBig>((nRequiredMemory + 1000000 - 1) / 1000000));
+            return CE_Failure;
+        }
+    }
+
+    sDInfo.progress = &sJProgress;
+    sJProgress.progress_monitor = JPGDataset::ProgressMonitor;
+    jpeg_start_decompress(&sDInfo);
+    bHasDoneJpegStartDecompress = true;
+
+    return CE_None;
+}
+
+/************************************************************************/
 /*                            LoadScanline()                            */
 /************************************************************************/
 
@@ -1918,68 +2003,8 @@ CPLErr JPGDataset::LoadScanline( int iLine, GByte* outBuffer )
     if (setjmp(sUserData.setjmp_buffer))
         return CE_Failure;
 
-    if (!bHasDoneJpegStartDecompress)
-    {
-
-        /* In some cases, libjpeg needs to allocate a lot of memory */
-        /* http://www.libjpeg-turbo.org/pmwiki/uploads/About/TwoIssueswiththeJPEGStandard.pdf */
-        if( jpeg_has_multiple_scans(&(sDInfo)) )
-        {
-            /* In this case libjpeg will need to allocate memory or backing */
-            /* store for all coefficients */
-            /* See call to jinit_d_coef_controller() from master_selection() */
-            /* in libjpeg */
-
-            // 1 MB for regular libjpeg usage
-            vsi_l_offset nRequiredMemory = 1024 * 1024;
-
-            for (int ci = 0; ci < sDInfo.num_components; ci++) {
-                const jpeg_component_info *compptr = &(sDInfo.comp_info[ci]);
-                if( compptr->h_samp_factor <= 0 ||
-                    compptr->v_samp_factor <= 0 )
-                {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "Invalid sampling factor(s)");
-                    return CE_Failure;
-                }
-                nRequiredMemory += static_cast<vsi_l_offset>(
-                    DIV_ROUND_UP(compptr->width_in_blocks, compptr->h_samp_factor)) *
-                    DIV_ROUND_UP(compptr->height_in_blocks, compptr->v_samp_factor) *
-                    sizeof(JBLOCK);
-            }
-
-            if( nRequiredMemory > 10 * 1024 * 1024 && ppoActiveDS && *ppoActiveDS != this )
-            {
-                // If another overview was active, stop it to limit memory consumption
-                if( *ppoActiveDS )
-                    (*ppoActiveDS)->StopDecompress();
-                *ppoActiveDS = this;
-            }
-
-            if( sDInfo.mem->max_memory_to_use > 0 &&
-                nRequiredMemory > static_cast<vsi_l_offset>(sDInfo.mem->max_memory_to_use) &&
-                CPLGetConfigOption("GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC", nullptr) == nullptr )
-            {
-                CPLError(CE_Failure, CPLE_NotSupported,
-                    "Reading this image would require libjpeg to allocate "
-                    "at least " CPL_FRMT_GUIB " bytes. "
-                    "This is disabled since above the " CPL_FRMT_GUIB " threshold. "
-                    "You may override this restriction by defining the "
-                    "GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC environment variable, "
-                    "or setting the JPEGMEM environment variable to a value greater "
-                    "or equal to '" CPL_FRMT_GUIB "M'",
-                    static_cast<GUIntBig>(nRequiredMemory),
-                    static_cast<GUIntBig>(sDInfo.mem->max_memory_to_use),
-                    static_cast<GUIntBig>((nRequiredMemory + 1000000 - 1) / 1000000));
-                return CE_Failure;
-            }
-        }
-
-        sDInfo.progress = &sJProgress;
-        sJProgress.progress_monitor = JPGDataset::ProgressMonitor;
-        jpeg_start_decompress(&sDInfo);
-        bHasDoneJpegStartDecompress = true;
-    }
+    if (!bHasDoneJpegStartDecompress && StartDecompress() != CE_None )
+        return CE_Failure;
 
     if( outBuffer == nullptr && m_pabyScanline == nullptr )
     {
@@ -2241,6 +2266,8 @@ CPLErr JPGDataset::Restart()
     jpeg_create_decompress(&sDInfo);
     bHasDoneJpegCreateDecompress = true;
 
+    SetMaxMemoryToUse(&sDInfo);
+
 #if !defined(JPGDataset)
     LoadDefaultTables(0);
     LoadDefaultTables(1);
@@ -2287,10 +2314,8 @@ CPLErr JPGDataset::Restart()
     }
     else
     {
-        sDInfo.progress = &sJProgress;
-        sJProgress.progress_monitor = JPGDataset::ProgressMonitor;
-        jpeg_start_decompress(&sDInfo);
-        bHasDoneJpegStartDecompress = true;
+        if( StartDecompress() != CE_None )
+            return CE_Failure;
         if( ppoActiveDS )
             *ppoActiveDS = this;
     }
@@ -2862,15 +2887,7 @@ JPGDatasetCommon *JPGDataset::OpenStage2( JPGDatasetOpenArgs *psArgs,
     jpeg_create_decompress(&poDS->sDInfo);
     poDS->bHasDoneJpegCreateDecompress = true;
 
-    // This is to address bug related in ticket #1795.
-    if( CPLGetConfigOption("JPEGMEM", nullptr) == nullptr )
-    {
-        // If the user doesn't provide a value for JPEGMEM, we want to be sure
-        // that at least 500 MB will be used before creating the temporary file.
-        const long nMinMemory = 500 * 1024 * 1024;
-        poDS->sDInfo.mem->max_memory_to_use =
-            std::max(poDS->sDInfo.mem->max_memory_to_use, nMinMemory);
-    }
+    SetMaxMemoryToUse(&poDS->sDInfo);
 
 #if !defined(JPGDataset)
     // Preload default NITF JPEG quantization tables.

@@ -54,7 +54,7 @@ target_include_directories(
   PRIVATE $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR> $<TARGET_PROPERTY:ogr_geojson,SOURCE_DIR>
           $<TARGET_PROPERTY:gdal_GTIFF,SOURCE_DIR> $<TARGET_PROPERTY:gdal_MEM,SOURCE_DIR>
           $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR>)
-set_property(TARGET gcore PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
+set_property(TARGET gcore PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
 
 if (NOT DEFINED GDAL_RESOURCE_PATH)
   message(FATAL_ERROR "GDAL_RESOURCE_PATH not set")
@@ -153,6 +153,7 @@ target_public_header(
   gdal_priv.h
   gdal_proxy.h
   gdal_rat.h
+  gdalcachedpixelaccessor.h
   rawdataset.h
   gdalgeorefpamdataset.h
   gdal_mdreader.h)

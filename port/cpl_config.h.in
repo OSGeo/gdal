@@ -94,7 +94,7 @@
 #undef HAVE_UNISTD_H
 
 /* Define to 1 if you have the <xlocale.h> header file. */
-#undef GDAL_HAVE_XLOCALE_H
+#undef HAVE_XLOCALE_H
 
 /* Define to 1 if you have the `vsnprintf' function. */
 #undef HAVE_VSNPRINTF

@@ -123,7 +123,6 @@ gdal_dependent_format(hdf4 "Hierarchical Data Format Release 4 (HDF4)" "GDAL_USE
 gdal_dependent_format(rasterlite "Rasterlite - Rasters in SQLite DB" "GDAL_USE_SQLITE3;OGR_ENABLE_DRIVER_SQLITE")
 gdal_dependent_format(mbtiles "MBTile" "GDAL_USE_SQLITE3;OGR_ENABLE_DRIVER_GPKG")
 gdal_dependent_format(postgisraster "PostGIS Raster driver" "GDAL_USE_POSTGRESQL")
-gdal_dependent_format(dods "OPeNDAP Grid Client" "GDAL_USE_DAP")
 gdal_dependent_format(dds "DirectDraw Surface" "GDAL_USE_CRNLIB")
 gdal_dependent_format(kea "Kea" "GDAL_USE_KEA;GDAL_USE_HDF5")
 gdal_dependent_format(openjpeg "JPEG2000 driver based on OpenJPEG library" "GDAL_USE_OPENJPEG" DRIVER_NAME_OPTION
@@ -132,17 +131,6 @@ gdal_dependent_format(tiledb "TileDB tiledb.io" "GDAL_USE_TILEDB")
 gdal_dependent_format(exr "EXR support via OpenEXR library" "GDAL_USE_OPENEXR")
 gdal_dependent_format(pcraster "PCRaster CSF 2.0 raster file driver" "GDAL_USE_LIBCSF OR GDAL_USE_LIBCSF_INTERNAL")
 gdal_dependent_format(rdb "RIEGL RDB Map Pixel (.mpx) driver" "rdb_FOUND")
-
-# for circulate dependency, grass is NOT always compiled in.
-gdal_dependent_format(grass "GRASS" "HAVE_GRASS")
-add_feature_info(gdal_GRASS GDAL_ENABLE_DRIVER_GRASS "GRASS raster format")
-if (GDAL_ENABLE_DRIVER_GRASS)
-  if (HAVE_GRASS AND HAVE_POSTGRESQL)
-
-  else ()
-    message(FATAL_ERROR "Dependency error on GRASS driver")
-  endif ()
-endif ()
 
 # ######################################################################################################################
 # driver with proprietary libraries Kakadu software SDK
@@ -168,7 +156,7 @@ target_include_directories(
   gdal_frmts PRIVATE $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR> $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>
                      $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR>)
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:gdal_frmts>)
-set_property(TARGET gdal_frmts PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
+set_property(TARGET gdal_frmts PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
 
 # Special case for HTTP driver since it is included in the frmts/wcs/ directory We should ultimately make it a separate
 # frmts/http/ to clean up things.

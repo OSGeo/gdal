@@ -101,7 +101,6 @@ typedef struct TigerFieldInfo {
 
   int           bDefine:1;        // whether to add this field to the FeatureDefn
   int           bSet:1;           // whether to set this field in GetFeature()
-  int           bWrite:1;         // whether to write this field in CreateFeature()
 } TigerFieldInfo;
 
 typedef struct TigerRecordInfo {
@@ -162,7 +161,6 @@ public:
 
   virtual const char *GetShortModule() { return pszShortModule; }
   virtual const char *GetModule() { return pszModule; }
-  virtual bool        SetWriteModule( const char *, int, OGRFeature * );
 
   virtual int         GetFeatureCount() { return nFeatures; }
 
@@ -172,22 +170,10 @@ public:
   static void         SetField( OGRFeature *, const char *, const char *,
                                 int, int );
 
-  static bool                WriteField( OGRFeature *, const char *, char *,
-                                  int, int, char, char );
-  bool                WriteRecord( char *pachRecord, int nRecLen,
-                                   const char *pszType, VSILFILE *fp = nullptr );
-  static bool                WritePoint( char *pachRecord, int nStart,
-                                  double dfX, double dfY );
-
   virtual bool        SetModule( const char * pszModule );
   virtual OGRFeature *GetFeature( int nRecordId );
-  virtual OGRErr      CreateFeature( OGRFeature *poFeature );
 
  protected:
-  static void                WriteFields(const TigerRecordInfo *psRTInfo,
-                                  OGRFeature      *poFeature,
-                                  char            *szRecord);
-
   static void                AddFieldDefns(const TigerRecordInfo *psRTInfo,
                                     OGRFeatureDefn  *poFeatureDefn);
 
@@ -217,9 +203,7 @@ class TigerCompleteChain final: public TigerFileBase
 
   void                AddFieldDefnsPre2002();
   OGRFeature         *GetFeaturePre2002( int );
-  OGRErr              WriteRecordsPre2002( OGRFeature *, OGRLineString * );
 
-  OGRErr              WriteRecords2002( OGRFeature *, OGRLineString * );
   OGRFeature         *GetFeature2002( int );
   void                AddFieldDefns2002();
 
@@ -235,10 +219,6 @@ public:
   virtual bool        SetModule( const char * ) override;
 
   virtual OGRFeature *GetFeature( int ) override;
-
-  virtual OGRErr      CreateFeature( OGRFeature *poFeature ) override;
-
-  virtual bool        SetWriteModule( const char *, int, OGRFeature * ) override;
 };
 
 /************************************************************************/
@@ -252,8 +232,6 @@ class TigerAltName final: public TigerFileBase
                                     const char * );
 
   virtual OGRFeature *GetFeature( int ) override;
-
-  virtual OGRErr      CreateFeature( OGRFeature *poFeature ) override;
 };
 
 /************************************************************************/
@@ -288,28 +266,15 @@ public:
 class TigerPoint CPL_NON_FINAL: public TigerFileBase
 {
  protected:
-                      explicit TigerPoint(int bRequireGeom,
+                      explicit TigerPoint(
                                  const TigerRecordInfo *psRTInfoIn = nullptr,
                                  const char            *m_pszFileCodeIn = nullptr);
-
-                      // The boolean bRequireGeom indicates whether
-                      // the layer requires each feature to actual
-                      // have a geom.  It's used in CreateFeature() to
-                      // decide whether to report an error when a
-                      // missing geom is detected.
-
- private:
- int                  bRequireGeom;
 
  public:
   virtual OGRFeature *GetFeature( int nFID) override { return TigerFileBase::GetFeature(nFID); } /* to avoid -Woverloaded-virtual warnings */
   OGRFeature *GetFeature( int              nRecordId,
                                   int nX0, int nX1,
                                   int nY0, int nY1 );
-
-  virtual OGRErr CreateFeature( OGRFeature      *poFeature) override { return TigerFileBase::CreateFeature(poFeature); } /* to avoid -Woverloaded-virtual warnings */
-  OGRErr CreateFeature( OGRFeature      *poFeature,
-                                int nIndex );
 };
 
 /************************************************************************/
@@ -322,8 +287,6 @@ class TigerLandmarks final: public TigerPoint
                       TigerLandmarks( OGRTigerDataSource *, const char * );
 
   virtual OGRFeature *GetFeature( int ) override;
-
-  virtual OGRErr      CreateFeature( OGRFeature *poFeature ) override;
 };
 
 /************************************************************************/
@@ -367,9 +330,6 @@ public:
   virtual bool        SetModule( const char * ) override;
 
   virtual OGRFeature *GetFeature( int ) override;
-
-  virtual bool        SetWriteModule( const char *, int, OGRFeature * ) override;
-  virtual OGRErr      CreateFeature( OGRFeature *poFeature ) override;
 };
 
 /************************************************************************/
@@ -442,8 +402,6 @@ public:
                       TigerPIP( OGRTigerDataSource *, const char * );
 
   virtual OGRFeature *GetFeature( int ) override;
-
-  virtual OGRErr      CreateFeature( OGRFeature *poFeature ) override;
 };
 
 /************************************************************************/
@@ -476,8 +434,6 @@ public:
                       TigerOverUnder( OGRTigerDataSource *, const char * );
 
   virtual OGRFeature *GetFeature( int ) override;
-
-  virtual OGRErr      CreateFeature( OGRFeature *poFeature ) override;
 };
 
 /************************************************************************/
@@ -521,10 +477,6 @@ class OGRTigerLayer final: public OGRLayer
     GIntBig             GetFeatureCount( int ) override;
 
     int                 TestCapability( const char * ) override;
-
-    virtual OGRErr      ICreateFeature( OGRFeature *poFeature ) override;
-    virtual OGRErr      CreateField( OGRFieldDefn *poField,
-                                     int bApproxOK = TRUE ) override;
 };
 
 /************************************************************************/
@@ -550,8 +502,6 @@ class OGRTigerDataSource final: public OGRDataSource
     int                 nVersionCode;
     TigerVersion        nVersion;
 
-    bool                bWriteMode;
-
     TigerVersion        TigerCheckVersion( TigerVersion, const char * );
 
     CPL_DISALLOW_COPY_ASSIGN(OGRTigerDataSource)
@@ -560,18 +510,13 @@ class OGRTigerDataSource final: public OGRDataSource
                         OGRTigerDataSource();
                         virtual ~OGRTigerDataSource();
 
-    bool                GetWriteMode() const { return bWriteMode; }
-
     TigerVersion        GetVersion() const { return nVersion; }
     int                 GetVersionCode() const { return nVersionCode; }
 
-    void                SetOptionList( char ** );
     const char         *GetOption( const char * );
 
     int                 Open( const char * pszName, int bTestOpen = FALSE,
                               char ** papszFileList = nullptr );
-
-    int                 Create( const char *pszName, char **papszOptions );
 
     const char          *GetName() override { return pszName; }
     int                 GetLayerCount() override;
@@ -591,13 +536,6 @@ class OGRTigerDataSource final: public OGRDataSource
     const char         *GetModule( int );
     bool                CheckModule( const char *pszModule );
     void                AddModule( const char *pszModule );
-
-    void                DeleteModuleFiles( const char *pszModule );
-
-    virtual OGRLayer    *ICreateLayer( const char *,
-                                       OGRSpatialReference * = nullptr,
-                                       OGRwkbGeometryType = wkbUnknown,
-                                       char ** = nullptr ) override;
 };
 
 #endif /* ndef OGR_TIGER_H_INCLUDED */

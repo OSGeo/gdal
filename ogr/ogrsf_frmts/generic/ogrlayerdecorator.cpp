@@ -295,4 +295,15 @@ CPLErr      OGRLayerDecorator::SetMetadataItem( const char * pszName,
     return m_poDecoratedLayer->SetMetadataItem(pszName, pszValue, pszDomain);
 }
 
+OGRErr OGRLayerDecorator::Rename(const char* pszNewName)
+{
+    if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
+    OGRErr eErr = m_poDecoratedLayer->Rename(pszNewName);
+    if( eErr == OGRERR_NONE )
+    {
+        SetDescription( m_poDecoratedLayer->GetDescription() );
+    }
+    return eErr;
+}
+
 #endif /* #ifndef DOXYGEN_SKIP */

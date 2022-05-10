@@ -255,7 +255,7 @@ def test_ogr_factory_6():
             gdal.PopErrorHandler()
         # print(src_geom.ExportToWkt(), dst_geom1.ExportToWkt(), dst_geom2.ExportToWkt(), dst_geom3.ExportToWkt(), dst_geom4.ExportToWkt())
 
-    
+
 ###############################################################################
 # Test forceToLineString()
 
@@ -364,7 +364,26 @@ def test_ogr_factory_7():
 
 def test_ogr_factory_8():
 
-    tests = [('POINT(2 5)', 'MULTIPOINT (2 5)', ogr.wkbMultiPoint),
+    tests = [('POINT (2 5)', 'POINT ZM (2 5 0 0)', ogr.wkbPointZM),
+             ('POINT ZM (2 5 3 4)', 'POINT ZM (2 5 3 4)', ogr.wkbPointZM),
+             ('POINT ZM (2 5 3 4)', 'MULTIPOINT ZM ((2 5 3 4))', ogr.wkbMultiPointZM),
+
+             ('POINT EMPTY', 'POINT EMPTY', ogr.wkbPoint),
+             ('POINT EMPTY', 'POINT ZM EMPTY', ogr.wkbPointZM),
+             ('POINT EMPTY', 'MULTIPOINT EMPTY', ogr.wkbMultiPoint),
+             ('POINT EMPTY', 'MULTIPOINT ZM EMPTY', ogr.wkbMultiPointZM),
+
+             ('POINT ZM EMPTY', 'POINT EMPTY', ogr.wkbPoint),
+             ('POINT ZM EMPTY', 'POINT ZM EMPTY', ogr.wkbPointZM),
+             ('POINT ZM EMPTY', 'MULTIPOINT EMPTY', ogr.wkbMultiPoint),
+             ('POINT ZM EMPTY', 'MULTIPOINT ZM EMPTY', ogr.wkbMultiPointZM),
+
+             ('MULTIPOINT ZM EMPTY', 'POINT EMPTY', ogr.wkbPoint),
+             ('MULTIPOINT ZM EMPTY', 'POINT ZM EMPTY', ogr.wkbPointZM),
+             ('MULTIPOINT ZM EMPTY', 'MULTIPOINT EMPTY', ogr.wkbMultiPoint),
+             ('MULTIPOINT ZM EMPTY', 'MULTIPOINT ZM EMPTY', ogr.wkbMultiPointZM),
+
+             ('POINT(2 5)', 'MULTIPOINT (2 5)', ogr.wkbMultiPoint),
 
              ('LINESTRING(2 5,10 20)', 'LINESTRING(2 5,10 20)', ogr.wkbLineString),
              ('LINESTRING(2 5,10 20)', 'COMPOUNDCURVE ((2 5,10 20))', ogr.wkbCompoundCurve),
@@ -520,14 +539,27 @@ def test_ogr_factory_8():
             exp_wkt = src_wkt
         elif target_type != ogr.wkbUnknown and dst_geom.GetGeometryType() != target_type:
             print(target_type)
-            print(dst_geom.ExportToWkt())
-            pytest.fail(src_wkt)
+            print(dst_geom.ExportToIsoWkt())
+            assert False, (src_wkt, exp_wkt, target_type)
 
         if ogrtest.check_feature_geometry(dst_geom, exp_wkt):
             print(src_wkt)
             print(target_type)
-            pytest.fail(dst_geom.ExportToWkt())
-
-    
+            pytest.fail(dst_geom.ExportToIsoWkt())
 
 
+###############################################################################
+# Test forceTo()
+
+
+def test_ogr_factory_failed_forceTo():
+
+    tests = [('MULTICURVE ZM ((0.0 0.0,0 0,0 0,0 0,0.0 0.0))', ogr.wkbTINM, 'MULTICURVE ZM ((0.0 0.0,0 0,0 0,0 0,0.0 0.0))'),]
+    for (src_wkt, target_type, exp_wkt) in tests:
+        src_geom = ogr.CreateGeometryFromWkt(src_wkt)
+        dst_geom = ogr.ForceTo(src_geom, target_type)
+
+        if ogrtest.check_feature_geometry(dst_geom, exp_wkt):
+            print(src_wkt)
+            print(target_type)
+            pytest.fail(dst_geom.ExportToIsoWkt())

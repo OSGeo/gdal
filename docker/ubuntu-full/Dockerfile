@@ -57,7 +57,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
        libnetcdf-dev${APT_ARCH_SUFFIX} libpoppler-dev${APT_ARCH_SUFFIX} libpoppler-private-dev${APT_ARCH_SUFFIX} \
        libspatialite-dev${APT_ARCH_SUFFIX} swig ant libhdf4-alt-dev${APT_ARCH_SUFFIX} libhdf5-serial-dev${APT_ARCH_SUFFIX} \
        libfreexl-dev${APT_ARCH_SUFFIX} unixodbc-dev${APT_ARCH_SUFFIX} libwebp-dev${APT_ARCH_SUFFIX} libepsilon-dev${APT_ARCH_SUFFIX} \
-       liblcms2-2 libpcre3-dev${APT_ARCH_SUFFIX} libcrypto++-dev${APT_ARCH_SUFFIX} libdap-dev${APT_ARCH_SUFFIX} libfyba-dev${APT_ARCH_SUFFIX} \
+       liblcms2-2 libpcre3-dev${APT_ARCH_SUFFIX} libcrypto++-dev${APT_ARCH_SUFFIX} libfyba-dev${APT_ARCH_SUFFIX} \
        libkml-dev${APT_ARCH_SUFFIX} libmysqlclient-dev${APT_ARCH_SUFFIX} libogdi-dev${APT_ARCH_SUFFIX} \
        libcfitsio-dev${APT_ARCH_SUFFIX} openjdk-"$JAVA_VERSION"-jdk${APT_ARCH_SUFFIX} libzstd-dev${APT_ARCH_SUFFIX} \
        libpq-dev${APT_ARCH_SUFFIX} libssl-dev${APT_ARCH_SUFFIX} libboost-dev${APT_ARCH_SUFFIX} \
@@ -237,7 +237,18 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && make -j$(nproc) install \
     && make install DESTDIR="/build_thirdparty" \
     && cd ../.. \
-    && rm -rf libjxl
+    && rm -rf libjxl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Arrow C++
+RUN . /buildscripts/bh-set-envvars.sh \
+    && apt-get update -y \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V ca-certificates lsb-release wget \
+    && wget https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V ./apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
+    && apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow-dev${APT_ARCH_SUFFIX} libparquet-dev${APT_ARCH_SUFFIX} \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN apt-get update -y \
     && apt-get install -y --fix-missing --no-install-recommends rsync ccache \
@@ -278,6 +289,9 @@ USER root
 RUN date
 ARG JAVA_VERSION=11
 
+# Update distro
+RUN apt-get update -y && apt-get upgrade -y
+
 RUN apt-get update \
 # PROJ dependencies
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -290,7 +304,7 @@ RUN apt-get update \
         libxml2 libexpat1 \
         libxerces-c3.2 libnetcdf-c++4 netcdf-bin libpoppler97 libspatialite7 gpsbabel \
         libhdf4-0-alt libhdf5-103 libhdf5-cpp-103 poppler-utils libfreexl1 unixodbc libwebp6 \
-        libepsilon1 liblcms2-2 libpcre3 libcrypto++6 libdap25 libdapclient6v5 libfyba0 \
+        libepsilon1 liblcms2-2 libpcre3 libcrypto++6 libfyba0 \
         libkmlbase1 libkmlconvenience1 libkmldom1 libkmlengine1 libkmlregionator1 libkmlxsd1 \
         libmysqlclient21 libogdi4.1 libcfitsio8 openjdk-"$JAVA_VERSION"-jre \
         libzstd1 bash bash-completion libpq5 libssl1.1 \
@@ -300,6 +314,12 @@ RUN apt-get update \
         python-is-python3 \
     # Workaround bug in ogdi packaging
     && ln -s /usr/lib/ogdi/libvrf.so /usr/lib \
+    # Install Arrow C++
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V ca-certificates lsb-release wget \
+    && wget https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V ./apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
+    && apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow700 libparquet700 \
     && rm -rf /var/lib/apt/lists/*
 
 # Attempt to order layers starting with less frequently varying ones

@@ -41,32 +41,27 @@ namespace OGRHANA {
 /*                              OGRHanaResultLayer()                    */
 /************************************************************************/
 
-OGRHanaResultLayer::OGRHanaResultLayer(OGRHanaDataSource* datasource)
+OGRHanaResultLayer::OGRHanaResultLayer(
+    OGRHanaDataSource* datasource, const char* query)
     : OGRHanaLayer(datasource)
 {
+    rawQuery_ = (query == nullptr) ? "" : query;
+    SetDescription("sql_statement");
 }
 
 /************************************************************************/
 /*                                Initialize()                          */
 /************************************************************************/
 
-OGRErr OGRHanaResultLayer::Initialize(const char* query, OGRGeometry* spatialFilter)
+OGRErr OGRHanaResultLayer::Initialize()
 {
-    rawQuery_ = (query == nullptr) ? "" : query;
+    if (initialized_)
+        return OGRERR_NONE;
 
-    auto names = dataSource_->FindSchemaAndTableNames(query);
-    OGRErr err = ReadFeatureDefinition(
-        names.first, names.second, query, "sql_statement");
-    if (err != OGRERR_NONE)
-        return err;
-
-    SetDescription(featureDefn_->GetName());
-
-    if (spatialFilter != nullptr)
-        SetSpatialFilter(spatialFilter);
-    BuildQueryStatement();
-
-    return OGRERR_NONE;
+    auto names = dataSource_->FindSchemaAndTableNames(rawQuery_.c_str());
+    OGRErr err = InitFeatureDefinition(
+        names.first, names.second, rawQuery_, "sql_statement");
+    return err;
 }
 
 /************************************************************************/
@@ -78,7 +73,10 @@ int OGRHanaResultLayer::TestCapability(const char* capabilities)
     if (EQUAL(capabilities, OLCFastFeatureCount)
         || EQUAL(capabilities, OLCFastSpatialFilter)
         || EQUAL(capabilities, OLCFastGetExtent))
+    {
+        EnsureInitialized();
         return (geomColumns_.size() > 0);
+    }
     if (EQUAL(capabilities, OLCStringsAsUTF8))
         return TRUE;
 

@@ -109,9 +109,6 @@ void OGRRegisterAllInternal()
 #ifdef SQLITE_ENABLED
     RegisterOGRSQLite();
 #endif
-#ifdef DODS_ENABLED
-    RegisterOGRDODS();
-#endif
 #ifdef ODBC_ENABLED
     RegisterOGRODBC();
 #endif
@@ -154,9 +151,6 @@ void OGRRegisterAllInternal()
 #endif
 #ifdef CAD_ENABLED
     RegisterOGRCAD();
-#endif
-#ifdef GRASS_ENABLED
-    RegisterOGRGRASS();
 #endif
 #ifdef FLATGEOBUF_ENABLED
     RegisterOGRFlatGeobuf();
@@ -255,6 +249,12 @@ void OGRRegisterAllInternal()
 #endif
 #ifdef HANA_ENABLED
     RegisterOGRHANA();
+#endif
+#ifdef PARQUET_ENABLED
+    RegisterOGRParquet();
+#endif
+#ifdef ARROW_ENABLED
+    RegisterOGRArrow();
 #endif
 
     // NOTE: you need to generally insert your own driver before that line.

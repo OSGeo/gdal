@@ -259,14 +259,40 @@ OGRHanaLayer::~OGRHanaLayer()
         featureDefn_->Release();
 }
 
+void OGRHanaLayer::EnsureInitialized()
+{
+    if (initialized_)
+        return;
+
+    OGRErr err = Initialize();
+    if (OGRERR_NONE != err)
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "Failed to initialize layer: %s", GetName());
+    }
+    initialized_ = (OGRERR_NONE == err);
+}
+
 /************************************************************************/
-/*                         BuildQueryStatement()                        */
+/*                         ClearQueryStatement()                        */
 /************************************************************************/
 
-void OGRHanaLayer::BuildQueryStatement()
+void OGRHanaLayer::ClearQueryStatement()
 {
-    if (!rebuildQueryStatement_)
-        return;
+    queryStatement_.clear();
+}
+
+/************************************************************************/
+/*                          GetQueryStatement()                         */
+/************************************************************************/
+
+const CPLString& OGRHanaLayer::GetQueryStatement()
+{
+    if (!queryStatement_.empty())
+        return queryStatement_;
+
+    EnsureInitialized();
 
     if (!geomColumns_.empty())
     {
@@ -294,7 +320,7 @@ void OGRHanaLayer::BuildQueryStatement()
                 whereClause_.c_str());
     }
 
-    rebuildQueryStatement_ = false;
+    return queryStatement_;
 }
 
 /************************************************************************/
@@ -308,6 +334,8 @@ void OGRHanaLayer::BuildWhereClause()
     CPLString spatialFilter;
     if (m_poFilterGeom != nullptr)
     {
+        EnsureInitialized();
+
         OGRGeomFieldDefn* geomFieldDefn = nullptr;
         if( featureDefn_->GetGeomFieldCount() != 0 )
             geomFieldDefn = featureDefn_->GetGeomFieldDefn(m_iGeomFieldFilter);
@@ -348,17 +376,18 @@ OGRFeature* OGRHanaLayer::GetNextFeatureInternal()
 {
     if (nextFeatureId_ == 0)
     {
-        CPLAssert(!queryStatement_.empty());
+        const CPLString& queryStatement = GetQueryStatement();
+        CPLAssert(!queryStatement.empty());
 
         try
         {
             odbc::StatementRef stmt = dataSource_->CreateStatement();
-            resultSet_ = stmt->executeQuery(queryStatement_.c_str());
+            resultSet_ = stmt->executeQuery(queryStatement.c_str());
         }
         catch (const odbc::Exception& ex)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Fail to execute query : %s", ex.what());
+                     "Failed to execute query : %s", ex.what());
             return nullptr;
         }
     }
@@ -633,20 +662,21 @@ OGRFeature* OGRHanaLayer::ReadFeature()
 }
 
 /************************************************************************/
-/*                      ReadFeatureDefinition()                         */
+/*                      InitFeatureDefinition()                         */
 /************************************************************************/
 
-OGRErr OGRHanaLayer::ReadFeatureDefinition(
+OGRErr OGRHanaLayer::InitFeatureDefinition(
     const CPLString& schemaName,
     const CPLString& tableName,
     const CPLString& query,
-    const char* featureDefName)
+    const CPLString& featureDefName)
 {
     attrColumns_.clear();
+    geomColumns_.clear();
     fidFieldIndex_ = OGRNullFID;
     fidFieldName_.clear();
-    auto featureDef = cpl::make_unique<OGRFeatureDefn>(featureDefName);
-    featureDef->Reference();
+    featureDefn_ = new OGRFeatureDefn(featureDefName.c_str());
+    featureDefn_->Reference();
 
     std::vector<ColumnDescription> columnDescriptions;
     OGRErr err =
@@ -657,8 +687,8 @@ OGRErr OGRHanaLayer::ReadFeatureDefinition(
     std::vector<CPLString> primKeys =
         dataSource_->GetTablePrimaryKeys(schemaName, tableName);
 
-    if (featureDef->GetGeomFieldCount() == 1)
-        featureDef->DeleteGeomFieldDefn(0);
+    if (featureDefn_->GetGeomFieldCount() == 1)
+        featureDefn_->DeleteGeomFieldDefn(0);
 
     for (const ColumnDescription& clmDesc : columnDescriptions)
     {
@@ -678,7 +708,7 @@ OGRErr OGRHanaLayer::ReadFeatureDefinition(
                 geomFieldDefn->SetSpatialRef(srs);
             }
             geomColumns_.push_back(geometryColumnDesc);
-            featureDef->AddGeomFieldDefn(std::move(geomFieldDefn));
+            featureDefn_->AddGeomFieldDefn(std::move(geomFieldDefn));
             continue;
         }
 
@@ -702,11 +732,9 @@ OGRErr OGRHanaLayer::ReadFeatureDefinition(
         }
 
         if (!attributeColumnDesc.isFeatureID)
-            featureDef->AddFieldDefn(field.get());
+            featureDefn_->AddFieldDefn(field.get());
         attrColumns_.push_back(attributeColumnDesc);
     }
-
-    featureDefn_ = featureDef.release();
 
     return OGRERR_NONE;
 }
@@ -717,6 +745,8 @@ OGRErr OGRHanaLayer::ReadFeatureDefinition(
 
 void OGRHanaLayer::ReadGeometryExtent(int geomField, OGREnvelope* extent)
 {
+    EnsureInitialized();
+
     OGRGeomFieldDefn* geomFieldDef = featureDefn_->GetGeomFieldDefn(geomField);
     const char* clmName = geomFieldDef->GetNameRef();
     int srid = GetGeometryColumnSrid(geomField);
@@ -776,7 +806,6 @@ void OGRHanaLayer::ReadGeometryExtent(int geomField, OGREnvelope* extent)
 void OGRHanaLayer::ResetReading()
 {
     nextFeatureId_ = 0;
-    BuildQueryStatement();
 }
 
 /************************************************************************/
@@ -830,9 +859,11 @@ OGRErr OGRHanaLayer::GetExtent(int iGeomField, OGREnvelope* extent, int force)
 
 GIntBig OGRHanaLayer::GetFeatureCount(CPL_UNUSED int force)
 {
+    EnsureInitialized();
+
     GIntBig ret = 0;
     CPLString sql = CPLString().Printf(
-        "SELECT COUNT(*) FROM (%s) AS tmp", queryStatement_.c_str());
+        "SELECT COUNT(*) FROM (%s) AS tmp", GetQueryStatement().c_str());
     odbc::StatementRef stmt = dataSource_->CreateStatement();
     odbc::ResultSetRef rs = stmt->executeQuery(sql.c_str());
     if (rs->next())
@@ -842,11 +873,32 @@ GIntBig OGRHanaLayer::GetFeatureCount(CPL_UNUSED int force)
 }
 
 /************************************************************************/
+/*                           GetLayerDefn()                             */
+/************************************************************************/
+
+OGRFeatureDefn* OGRHanaLayer::GetLayerDefn()
+{
+    EnsureInitialized();
+    return featureDefn_;
+}
+
+/************************************************************************/
+/*                               GetName()                              */
+/************************************************************************/
+
+const char *OGRHanaLayer::GetName()
+{
+    return GetDescription();
+}
+
+/************************************************************************/
 /*                         GetNextFeature()                             */
 /************************************************************************/
 
 OGRFeature* OGRHanaLayer::GetNextFeature()
 {
+    EnsureInitialized();
+
     while (true)
     {
         OGRFeature* feature = GetNextFeatureInternal();
@@ -868,6 +920,7 @@ OGRFeature* OGRHanaLayer::GetNextFeature()
 
 const char* OGRHanaLayer::GetFIDColumn()
 {
+    EnsureInitialized();
     return fidFieldName_.c_str();
 }
 
@@ -885,7 +938,7 @@ OGRErr OGRHanaLayer::SetAttributeFilter(const char* pszQuery)
     else
         attrFilter_.assign(pszQuery, strlen(pszQuery));
 
-    rebuildQueryStatement_ = true;
+    ClearQueryStatement();
     BuildWhereClause();
     ResetReading();
 
@@ -911,7 +964,7 @@ void OGRHanaLayer::SetSpatialFilter(int iGeomField, OGRGeometry* poGeom)
     if (!InstallFilter(poGeom))
         return;
 
-    rebuildQueryStatement_ = true;
+    ClearQueryStatement();
     BuildWhereClause();
     ResetReading();
 }

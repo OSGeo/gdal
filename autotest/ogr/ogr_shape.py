@@ -856,7 +856,7 @@ def test_ogr_shape_23():
     read_lyr = gdaltest.shape_ds.GetLayerByName(layer_name)
     feat_read = read_lyr.GetNextFeature()
 
-    assert (ogrtest.check_feature_geometry(feat_read, ogr.CreateGeometryFromWkt('MULTIPOLYGON(((0 0 0,0 10,10 10,0 0),(0.25 0.5,1 1,0.5 1,0.25 0.5)),((100 0,100 10,110 10,100 0),(100.25 0.5,100.5 1,100 1,100.25 0.5)))'),
+    assert (ogrtest.check_feature_geometry(feat_read, ogr.CreateGeometryFromWkt('MULTIPOLYGON (((0 0,0 10,10 10,0 0),(0.25 0.5,1 1,0.5 1.0,0.25 0.5)),((100 0,100 10,110 10,100 0),(100.25 0.5,100.5 1.0,100 1,100.25 0.5)))'),
                                       max_error=0.000000001) == 0), \
         feat_read.GetGeometryRef().ExportToWkt()
 
@@ -4958,6 +4958,86 @@ def test_ogr_shape_write_multipolygon_parts_non_constant_z():
     geom = f.GetGeometryRef()
     assert geom.GetGeometryType() == ogr.wkbMultiPolygon25D
     assert geom.GetGeometryCount() == 7
+    ds = None
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(outfilename)
+
+###############################################################################
+# Test renaming a layer
+
+
+def test_ogr_shape_rename_layer():
+
+    outfilename = 'tmp/test_rename.shp'
+    gdal.VectorTranslate(outfilename, 'data/poly.shp')
+
+    ds = ogr.Open(outfilename, update = 1)
+    lyr = ds.GetLayer(0)
+    assert lyr.TestCapability(ogr.OLCRename) == 1
+
+    with gdaltest.error_handler():
+        assert lyr.Rename('test_rename') != ogr.OGRERR_NONE
+
+    f = gdal.VSIFOpenL('tmp/test_rename_foo.dbf', 'wb')
+    assert f
+    gdal.VSIFCloseL(f)
+
+    with gdaltest.error_handler():
+        assert lyr.Rename('test_rename_foo') != ogr.OGRERR_NONE
+
+    gdal.Unlink('tmp/test_rename_foo.dbf')
+
+    assert sum(1 for f in lyr) == 10
+
+    assert lyr.Rename('test_rename_foo') == ogr.OGRERR_NONE
+    assert gdal.VSIStatL('tmp/test_rename_foo.shp') is not None
+    assert gdal.VSIStatL('tmp/test_rename_foo.shx') is not None
+    assert gdal.VSIStatL('tmp/test_rename_foo.dbf') is not None
+    assert gdal.VSIStatL('tmp/test_rename_foo.prj') is not None
+    assert lyr.GetDescription() == 'test_rename_foo'
+    assert lyr.GetLayerDefn().GetName() == 'test_rename_foo'
+
+    assert sum(1 for f in lyr) == 10
+
+    ds.ExecuteSQL('ALTER TABLE test_rename_foo RENAME TO test_rename_bar')
+    assert gdal.VSIStatL('tmp/test_rename_bar.shp') is not None
+    assert gdal.VSIStatL('tmp/test_rename_bar.shx') is not None
+    assert gdal.VSIStatL('tmp/test_rename_bar.dbf') is not None
+    assert gdal.VSIStatL('tmp/test_rename_bar.prj') is not None
+    assert lyr.GetDescription() == 'test_rename_bar'
+    assert lyr.GetLayerDefn().GetName() == 'test_rename_bar'
+
+    assert sum(1 for f in lyr) == 10
+
+    ds = None
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_rename_bar.shp')
+
+###############################################################################
+# Test renaming a layer in a .shp.zip
+
+
+def test_ogr_shape_rename_layer_zip():
+
+    outfilename = 'tmp/test_rename.shp.zip'
+    gdal.VectorTranslate(outfilename, 'data/poly.shp')
+
+    ds = ogr.Open(outfilename, update = 1)
+    lyr = ds.GetLayer(0)
+    assert lyr.TestCapability(ogr.OLCRename) == 1
+
+    assert lyr.Rename('test_rename_foo') == ogr.OGRERR_NONE
+    assert lyr.GetDescription() == 'test_rename_foo'
+    assert lyr.GetLayerDefn().GetName() == 'test_rename_foo'
+
+    assert sum(1 for f in lyr) == 10
+
+    assert lyr.Rename('test_rename_bar') == ogr.OGRERR_NONE
+    assert lyr.GetDescription() == 'test_rename_bar'
+    assert lyr.GetLayerDefn().GetName() == 'test_rename_bar'
+
+    assert sum(1 for f in lyr) == 10
+
     ds = None
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(outfilename)

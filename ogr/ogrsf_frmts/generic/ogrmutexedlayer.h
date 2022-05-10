@@ -119,6 +119,7 @@ class CPL_DLL OGRMutexedLayer : public OGRLayerDecorator
     virtual CPLErr      SetMetadataItem( const char * pszName,
                                          const char * pszValue,
                                          const char * pszDomain = "" ) override;
+    virtual OGRErr      Rename(const char* pszNewName) override;
 };
 
 #endif /* #ifndef DOXYGEN_SKIP */

@@ -50,30 +50,27 @@ OGRTigerLayer::OGRTigerLayer( OGRTigerDataSource *poDSIn,
 /* -------------------------------------------------------------------- */
 /*      Setup module feature counts.                                    */
 /* -------------------------------------------------------------------- */
-    if( !poDS->GetWriteMode() )
+    panModuleFCount = (int *)
+        CPLCalloc(poDS->GetModuleCount(),sizeof(int));
+    panModuleOffset = (int *)
+        CPLCalloc(poDS->GetModuleCount()+1,sizeof(int));
+
+    nFeatureCount = 0;
+
+    for( int iModule = 0; iModule < poDS->GetModuleCount(); iModule++ )
     {
-        panModuleFCount = (int *)
-            CPLCalloc(poDS->GetModuleCount(),sizeof(int));
-        panModuleOffset = (int *)
-            CPLCalloc(poDS->GetModuleCount()+1,sizeof(int));
+        if( poReader->SetModule( poDS->GetModule(iModule) ) )
+            panModuleFCount[iModule] = poReader->GetFeatureCount();
+        else
+            panModuleFCount[iModule] = 0;
 
-        nFeatureCount = 0;
-
-        for( int iModule = 0; iModule < poDS->GetModuleCount(); iModule++ )
-        {
-            if( poReader->SetModule( poDS->GetModule(iModule) ) )
-                panModuleFCount[iModule] = poReader->GetFeatureCount();
-            else
-                panModuleFCount[iModule] = 0;
-
-            panModuleOffset[iModule] = nFeatureCount;
-            nFeatureCount += panModuleFCount[iModule];
-        }
-
-        // this entry is just to make range comparisons easy without worrying
-        // about falling off the end of the array.
-        panModuleOffset[poDS->GetModuleCount()] = nFeatureCount;
+        panModuleOffset[iModule] = nFeatureCount;
+        nFeatureCount += panModuleFCount[iModule];
     }
+
+    // this entry is just to make range comparisons easy without worrying
+    // about falling off the end of the array.
+    panModuleOffset[poDS->GetModuleCount()] = nFeatureCount;
 
     poReader->SetModule( nullptr );
 }
@@ -200,18 +197,8 @@ int OGRTigerLayer::TestCapability( const char * pszCap )
     if( EQUAL(pszCap,OLCRandomRead) )
         return TRUE;
 
-    else if( EQUAL(pszCap,OLCSequentialWrite)
-             || EQUAL(pszCap,OLCRandomWrite) )
-        return FALSE;
-
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
         return TRUE;
-
-    else if( EQUAL(pszCap,OLCFastSpatialFilter) )
-        return FALSE;
-
-    else if( EQUAL(pszCap,OLCSequentialWrite) )
-        return poDS->GetWriteMode();
 
     else
         return FALSE;
@@ -231,28 +218,6 @@ OGRFeatureDefn *OGRTigerLayer::GetLayerDefn()
             poFDefn->GetGeomFieldDefn(0)->SetSpatialRef(poDS->DSGetSpatialRef());
     }
     return poFDefn;
-}
-
-/************************************************************************/
-/*                            CreateField()                             */
-/************************************************************************/
-
-OGRErr OGRTigerLayer::CreateField( CPL_UNUSED OGRFieldDefn *poField,
-                                   CPL_UNUSED int bApproxOK )
-{
-    /* notdef/TODO: I should add some checking here eventually. */
-
-    return OGRERR_NONE;
-}
-
-/************************************************************************/
-/*                          ICreateFeature()                            */
-/************************************************************************/
-
-OGRErr OGRTigerLayer::ICreateFeature( OGRFeature *poFeature )
-
-{
-    return poReader->CreateFeature( poFeature );
 }
 
 /************************************************************************/

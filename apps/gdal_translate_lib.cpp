@@ -38,6 +38,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <set>
 
 #include "commonutils.h"
 #include "cpl_conv.h"
@@ -1061,6 +1062,74 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         if( !EQUAL(psOptions->pszFormat, "MEM") &&
             !EQUAL(psOptions->pszFormat, "Memory") )
         {
+/* -------------------------------------------------------------------- */
+/*      Establish list of files of output dataset if it already exists. */
+/* -------------------------------------------------------------------- */
+            std::set<std::string> oSetExistingDestFiles;
+            {
+                CPLPushErrorHandler(CPLQuietErrorHandler);
+                const char* const apszAllowedDrivers[] = { psOptions->pszFormat, nullptr };
+                auto poExistingOutputDS = std::unique_ptr<GDALDataset>(
+                    GDALDataset::Open(pszDest, GDAL_OF_RASTER, apszAllowedDrivers));
+                if( poExistingOutputDS )
+                {
+                    char** papszFileList = poExistingOutputDS->GetFileList();
+                    for( char** papszIter = papszFileList; papszIter && *papszIter; ++papszIter )
+                    {
+                        oSetExistingDestFiles.insert(CPLString(*papszIter).replaceAll('\\', '/'));
+                    }
+                    CSLDestroy(papszFileList);
+                }
+                CPLPopErrorHandler();
+            }
+
+/* -------------------------------------------------------------------- */
+/*      Check if the source dataset shares some files with the dest one.*/
+/* -------------------------------------------------------------------- */
+            std::set<std::string> oSetExistingDestFilesFoundInSource;
+            if( !oSetExistingDestFiles.empty() )
+            {
+                CPLPushErrorHandler(CPLQuietErrorHandler);
+                // We need to reopen in a temporary dataset for the particular
+                // case of overwritten a .tif.ovr file from a .tif
+                // If we probe the file list of the .tif, it will then open the
+                // .tif.ovr !
+                auto poSrcDS = GDALDataset::FromHandle(hSrcDataset);
+                const char* const apszAllowedDrivers[] = {
+                    poSrcDS->GetDriver() ? poSrcDS->GetDriver()->GetDescription() : nullptr, nullptr };
+                auto poSrcDSTmp = std::unique_ptr<GDALDataset>(
+                    GDALDataset::Open(poSrcDS->GetDescription(), GDAL_OF_RASTER, apszAllowedDrivers));
+                if( poSrcDSTmp )
+                {
+                    char** papszFileList = poSrcDSTmp->GetFileList();
+                    for( char** papszIter = papszFileList; papszIter && *papszIter; ++papszIter )
+                    {
+                        CPLString osFilename(*papszIter);
+                        osFilename.replaceAll('\\', '/');
+                        if( oSetExistingDestFiles.find(osFilename) != oSetExistingDestFiles.end() )
+                        {
+                            oSetExistingDestFilesFoundInSource.insert(osFilename);
+                        }
+                    }
+                    CSLDestroy(papszFileList);
+                }
+                CPLPopErrorHandler();
+            }
+
+            // If the source file(s) and the dest one share some files in common,
+            // only remove the files that are *not* in common
+            if( !oSetExistingDestFilesFoundInSource.empty() )
+            {
+                for( const std::string& osFilename: oSetExistingDestFiles )
+                {
+                    if( oSetExistingDestFilesFoundInSource.find(osFilename) ==
+                                            oSetExistingDestFilesFoundInSource.end() )
+                    {
+                        VSIUnlink(osFilename.c_str());
+                    }
+                }
+            }
+
             GDALDriver::FromHandle(hDriver)->QuietDelete( pszDest );
         }
         // Make sure to load early overviews, so that on the GTiff driver

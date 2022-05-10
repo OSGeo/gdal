@@ -181,6 +181,16 @@ def test_vsiaz_fake_basic():
                 print(stat_res)
             pytest.fail()
 
+    # Test that we don't emit a Authorization header in AZURE_NO_SIGN_REQUEST
+    # mode, even if we have credentials
+    with gdaltest.config_option('AZURE_NO_SIGN_REQUEST', 'YES'):
+        handler = webserver.SequentialHandler()
+        handler.add('HEAD', '/azure/blob/myaccount/az_fake_bucket/test_AZURE_NO_SIGN_REQUEST.bin', 200,
+                    {'Content-Length': 1000000}, unexpected_headers = ['Authorization'])
+        with webserver.install_http_handler(handler):
+            stat_res = gdal.VSIStatL('/vsiaz_streaming/az_fake_bucket/test_AZURE_NO_SIGN_REQUEST.bin')
+            assert stat_res is not None
+
 
 ###############################################################################
 # Test ReadDir() with a fake Azure Blob server

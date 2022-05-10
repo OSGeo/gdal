@@ -55,15 +55,6 @@ For example: **"AmigoCloud:1234 datasets"**
     | 5551      | points
     | 5552      | lines
 
-Configuration options
----------------------
-
-The following configuration options are available :
-
--  AMIGOCLOUD_API_URL: defaults to https://www.amigocloud.com/api/v1.
-   Can be used to point to another server.
--  AMIGOCLOUD_API_KEY: see following paragraph.
-
 Authentication
 --------------
 
@@ -120,6 +111,16 @@ The following layer creation options are available:
    the layer name to be created. Defaults to NO.
 -  **GEOMETRY_NULLABLE**\ =YES/NO: Whether the values of the geometry
    column can be NULL. Defaults to YES.
+
+Configuration options
+---------------------
+
+The following :ref:`configuration options <configoptions>` are 
+available:
+
+-  :decl_configoption:`AMIGOCLOUD_API_URL`: defaults to 
+   https://www.amigocloud.com/api/v1. Can be used to point to another server.
+-  :decl_configoption:`AMIGOCLOUD_API_KEY`: see following paragraph.
 
 Examples
 --------

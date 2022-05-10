@@ -273,6 +273,8 @@ class FileGDBTable
         FileGDBTableGeometryType    eTableGeomType;
         bool                        m_bGeomTypeHasZ = false;
         bool                        m_bGeomTypeHasM = false;
+        bool                        m_bStringsAreUTF8 = true; // if false, UTF16
+        std::string                 m_osTempString{}; // used as a temporary to store strings recoded from UTF16 to UTF8
         int                         nValidRecordCount;
         int                         nTotalRecordCount;
         int                         iGeomField;

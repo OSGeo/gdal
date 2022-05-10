@@ -3323,7 +3323,17 @@ def test_ogr_gpkg_42():
     assert fc == 5000
 
     # Test renaming
-    ds.ExecuteSQL('ALTER TABLE foo RENAME TO bar')
+    assert lyr.TestCapability(ogr.OLCRename) == 1
+    assert lyr.Rename('bar') == ogr.OGRERR_NONE
+    assert lyr.GetDescription() == 'bar'
+    assert lyr.GetLayerDefn().GetName() == 'bar'
+    with gdaltest.error_handler():
+        assert lyr.Rename("bar") != ogr.OGRERR_NONE
+    with gdaltest.error_handler():
+        assert lyr.Rename("gpkg_ogr_contents") != ogr.OGRERR_NONE
+    assert lyr.GetDescription() == 'bar'
+    assert lyr.GetLayerDefn().GetName() == 'bar'
+
     ds = None
     ds = ogr.Open('/vsimem/ogr_gpkg_42.gpkg', update=1)
     sql_lyr = ds.ExecuteSQL("SELECT feature_count FROM gpkg_ogr_contents WHERE table_name = 'bar'", dialect='DEBUG')

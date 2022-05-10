@@ -292,7 +292,7 @@ output coordinate system or even reprojecting the features during translation.
 
     Clip geometries to the specified bounding box (expressed in source SRS),
     WKT geometry (POLYGON or MULTIPOLYGON), from a datasource or to the spatial
-    extent of the -spa.. option if you use the spat_extent keyword. When
+    extent of the -spat option if you use the spat_extent keyword. When
     specifying a datasource, you will generally want to use it in combination
     of the -clipsrclayer, -clipsrcwhere or -clipsrcsql options
 
@@ -313,7 +313,7 @@ output coordinate system or even reprojecting the features during translation.
     Clip geometries after reprojection to the specified bounding box (expressed
     in dest SRS), WKT geometry (POLYGON or MULTIPOLYGON) or from a datasource.
     When specifying a datasource, you will generally want to use it in
-    combination of the -clipdstlayer, -clipdstwhere or -clipdstsq.. options
+    combination of the -clipdstlayer, -clipdstwhere or -clipdstsql options
 
 .. option:: -clipdstsql <sql_statement>
 

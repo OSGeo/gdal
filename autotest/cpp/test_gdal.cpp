@@ -34,6 +34,7 @@
 #include "gdal_priv_templates.hpp"
 #include "gdal.h"
 #include "tilematrixset.hpp"
+#include "gdalcachedpixelaccessor.h"
 
 #include <limits>
 #include <string>
@@ -2019,6 +2020,61 @@ namespace tut
             VSIStatBufL sStat;
             ensure(VSIStatL(CPLSPrintf("%s.aux.xml", pszFilename), &sStat) != 0);
         }
+    }
+
+    template<class T> void TestCachedPixelAccessor()
+    {
+        constexpr auto eType = GDALCachedPixelAccessorGetDataType<T>::DataType;
+        auto poDS = std::unique_ptr<GDALDataset>(
+            GDALDriver::FromHandle(GDALGetDriverByName("MEM"))->Create(
+                "", 11, 23, 1, eType, nullptr));
+        auto poBand = poDS->GetRasterBand(1);
+        GDALCachedPixelAccessor<T, 4> accessor(poBand);
+        for( int iY = 0; iY < poBand->GetYSize(); iY++ )
+        {
+            for( int iX = 0; iX < poBand->GetXSize(); iX++ )
+            {
+                accessor.Set(iX, iY, static_cast<T>(iY * poBand->GetXSize() + iX));
+            }
+        }
+        for( int iY = 0; iY < poBand->GetYSize(); iY++ )
+        {
+            for( int iX = 0; iX < poBand->GetXSize(); iX++ )
+            {
+                ensure_equals(accessor.Get(iX, iY), static_cast<T>(iY * poBand->GetXSize() + iX));
+            }
+        }
+
+        std::vector<T> values(poBand->GetYSize() * poBand->GetXSize());
+        accessor.FlushCache();
+        ensure_equals(poBand->RasterIO(GF_Read, 0, 0, poBand->GetXSize(), poBand->GetYSize(),
+                                       values.data(), poBand->GetXSize(), poBand->GetYSize(),
+                                       eType, 0, 0, nullptr), CE_None);
+        for( int iY = 0; iY < poBand->GetYSize(); iY++ )
+        {
+            for( int iX = 0; iX < poBand->GetXSize(); iX++ )
+            {
+                ensure_equals(values[iY * poBand->GetXSize() + iX],
+                              static_cast<T>(iY * poBand->GetXSize() + iX));
+            }
+        }
+
+    }
+
+    // Test GDALCachedPixelAccessor
+    template<> template<> void object::test<25>()
+    {
+        TestCachedPixelAccessor<GByte>();
+        TestCachedPixelAccessor<GUInt16>();
+        TestCachedPixelAccessor<GInt16>();
+        TestCachedPixelAccessor<GUInt32>();
+        TestCachedPixelAccessor<GInt32>();
+        TestCachedPixelAccessor<GUInt64>();
+        TestCachedPixelAccessor<GInt64>();
+        TestCachedPixelAccessor<uint64_t>();
+        TestCachedPixelAccessor<int64_t>();
+        TestCachedPixelAccessor<float>();
+        TestCachedPixelAccessor<double>();
     }
 
 } // namespace tut

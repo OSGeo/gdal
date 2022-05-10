@@ -19,6 +19,15 @@ option(
   "Whether detected external libraries should be used by default. This should be set before CMakeCache.txt is created."
   ON)
 
+set(GDAL_USE_INTERNAL_LIBS_ALLOWED_VALUES ON OFF WHEN_NO_EXTERNAL)
+set(
+  GDAL_USE_INTERNAL_LIBS WHEN_NO_EXTERNAL
+  CACHE STRING "Control how internal libraries should be used by default. This should be set before CMakeCache.txt is created.")
+set_property(CACHE GDAL_USE_INTERNAL_LIBS PROPERTY STRINGS ${GDAL_USE_INTERNAL_LIBS_ALLOWED_VALUES})
+if(NOT GDAL_USE_INTERNAL_LIBS IN_LIST GDAL_USE_INTERNAL_LIBS_ALLOWED_VALUES)
+    message(FATAL_ERROR "GDAL_USE_INTERNAL_LIBS must be one of ${GDAL_USE_INTERNAL_LIBS_ALLOWED_VALUES}")
+endif()
+
 set(GDAL_IMPORT_DEPENDENCIES [[
 include(CMakeFindDependencyMacro)
 include("${CMAKE_CURRENT_LIST_DIR}/DefineFindPackage2.cmake")
@@ -95,7 +104,7 @@ endfunction()
 macro (gdal_check_package name purpose)
   set(_options CONFIG CAN_DISABLE RECOMMENDED DISABLED_BY_DEFAULT ALWAYS_ON_WHEN_FOUND)
   set(_oneValueArgs VERSION NAMES)
-  set(_multiValueArgs COMPONENTS TARGETS)
+  set(_multiValueArgs COMPONENTS TARGETS PATHS)
   cmake_parse_arguments(_GCP "${_options}" "${_oneValueArgs}" "${_multiValueArgs}" ${ARGN})
   string(TOUPPER ${name} key)
   set(_find_dependency "")
@@ -111,6 +120,9 @@ macro (gdal_check_package name purpose)
     endif ()
     if (_GCP_COMPONENTS)
       list(APPEND _find_package_args COMPONENTS ${_GCP_COMPONENTS})
+    endif ()
+    if (_GCP_PATHS)
+      list(APPEND _find_package_args PATHS ${_GCP_PATHS})
     endif ()
     if (_GCP_NAMES)
       set(GDAL_CHECK_PACKAGE_${name}_NAMES "${_GCP_NAMES}" CACHE STRING "Config file name for ${name}")
@@ -207,26 +219,22 @@ function (split_libpath _lib)
   endif ()
 endfunction ()
 
-function (invert_on_off arg out)
-  if (${arg})
-    set(${out}
-        OFF
-        PARENT_SCOPE)
-  else ()
-    set(${out}
-        ON
-        PARENT_SCOPE)
-  endif ()
-endfunction ()
-
 function (gdal_internal_library libname)
   set(_options REQUIRED)
   set(_oneValueArgs)
   set(_multiValueArgs)
   cmake_parse_arguments(_GIL "${_options}" "${_oneValueArgs}" "${_multiValueArgs}" ${ARGN})
-  invert_on_off(GDAL_USE_${libname} NOT_GDAL_USE_${libname})
+  if ("${GDAL_USE_INTERNAL_LIBS}" STREQUAL "ON")
+      set(_default_value ON)
+  elseif ("${GDAL_USE_INTERNAL_LIBS}" STREQUAL "OFF")
+      set(_default_value OFF)
+  elseif( GDAL_USE_${libname} )
+      set(_default_value OFF)
+  else()
+      set(_default_value ON)
+  endif()
   set(GDAL_USE_${libname}_INTERNAL
-      ${NOT_GDAL_USE_${libname}}
+      ${_default_value}
       CACHE BOOL "Use internal ${libname} copy (if set to ON, has precedence over GDAL_USE_${libname})")
   if (_GIL_REQUIRED
       AND (NOT GDAL_USE_${libname})
@@ -350,16 +358,16 @@ gdal_check_package(ZSTD "ZSTD compression library" CAN_DISABLE ${ZSTD_NAMES_AND_
 gdal_check_package(SFCGAL "gdal core supports ISO 19107:2013 and OGC Simple Features Access 1.2 for 3D operations"
                    CAN_DISABLE)
 
-gdal_check_package(GeoTIFF "libgeotiff library (external)" CAN_DISABLE
+gdal_check_package(GeoTIFF "libgeotiff library (external)" CAN_DISABLE RECOMMENDED
   NAMES GeoTIFF
   TARGETS geotiff_library GEOTIFF::GEOTIFF
 )
 gdal_internal_library(GEOTIFF REQUIRED)
 
-gdal_check_package(PNG "PNG compression library (external)" CAN_DISABLE)
+gdal_check_package(PNG "PNG compression library (external)" CAN_DISABLE RECOMMENDED)
 gdal_internal_library(PNG)
 
-gdal_check_package(JPEG "JPEG compression library (external)" CAN_DISABLE)
+gdal_check_package(JPEG "JPEG compression library (external)" CAN_DISABLE RECOMMENDED)
 if (GDAL_USE_JPEG AND (JPEG_LIBRARY MATCHES ".*turbojpeg\.(so|lib)"))
   message(
     FATAL_ERROR
@@ -389,7 +397,7 @@ endif()
 gdal_check_package(OpenCAD "libopencad (external, used by OpenCAD driver)" CAN_DISABLE)
 gdal_internal_library(OPENCAD)
 
-gdal_check_package(QHULL "Enable QHULL (external)" CAN_DISABLE)
+gdal_check_package(QHULL "Enable QHULL (external)" CAN_DISABLE RECOMMENDED)
 gdal_internal_library(QHULL)
 
 # libcsf upstream is now at https://github.com/pcraster/rasterformat, but the library name has been changed to
@@ -404,8 +412,10 @@ gdal_internal_library(QHULL)
 set(GDAL_USE_LIBCSF_INTERNAL ON)
 
 # Compression used by GTiff and MRF
-gdal_check_package(LERC "Enable LERC (external)" CAN_DISABLE)
+gdal_check_package(LERC "Enable LERC (external)" CAN_DISABLE RECOMMENDED)
 gdal_internal_library(LERC)
+
+gdal_check_package(BRUNSLI "Enable BRUNSLI for JPEG packing in MRF" CAN_DISABLE RECOMMENDED)
 
 # Disable by default the use of external shapelib, as currently the SAOffset member that holds file offsets in it is a
 # 'unsigned long', hence 32 bit on 32 bit platforms, whereas we can handle DBFs file > 4 GB. Internal shapelib has not
@@ -498,7 +508,6 @@ define_find_package2(GTA gta/gta.h gta PKGCONFIG_NAME gta)
 gdal_check_package(GTA "Enable GTA driver" CAN_DISABLE)
 
 gdal_check_package(MRSID "MrSID raster SDK" CAN_DISABLE)
-gdal_check_package(DAP "Data Access Protocol library for server and client." CAN_DISABLE)
 gdal_check_package(Armadillo "C++ library for linear algebra (used for TPS transformation)" CAN_DISABLE)
 if (ARMADILLO_FOUND)
   # On Conda, the armadillo package has no dependency on lapack, but the later is required for successful linking. So
@@ -572,12 +581,15 @@ gdal_check_package(KEA "Enable KEA driver" CAN_DISABLE)
 
 gdal_check_package(ECW "Enable ECW driver" CAN_DISABLE)
 gdal_check_package(NetCDF "Enable netCDF driver" CAN_DISABLE
-  # NAMES netCDF # Cf. https://github.com/OSGeo/gdal/pull/5453
+  NAMES netCDF
   TARGETS netCDF::netcdf NETCDF::netCDF)
 gdal_check_package(OGDI "Enable ogr_OGDI driver" CAN_DISABLE)
 # OpenCL warping gives different results than the ones expected by autotest, so disable it by default even if found.
 gdal_check_package(OpenCL "Enable OpenCL (may be used for warping)" DISABLED_BY_DEFAULT)
+
+set(PostgreSQL_ADDITIONAL_VERSIONS "14" CACHE STRING "Additional PostgreSQL versions to check")
 gdal_check_package(PostgreSQL "" CAN_DISABLE)
+
 gdal_check_package(FYBA "enable ogr_SOSI driver" CAN_DISABLE)
 # Assume liblzma from xzutils, skip expensive checks.
 set(LIBLZMA_HAS_AUTO_DECODER 1)
@@ -615,41 +627,6 @@ if (GDAL_USE_OPENJPEG)
   string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(OpenJPEG MODULE)\n")
 endif ()
 
-# FIXME: we should probably ultimately move the GRASS driver to an
-# external repository, due to GRASS depending on GDAL, hence the GRASS driver
-# can only be built as a plugin. Or at the very least we should only allow building
-# it as a plugin, and have a GDAL_USE_GRASS variable to control if libgrass should
-# be used (and change frmts/CMakeLists.txt and ogr/ogrsf_frmts/CMakeLists.txt
-# to use it instead of HAVE_GRASS)
-if( ALLOW_GRASS_DRIVER )
-# Only GRASS 7 is currently supported but we keep dual version support in cmake for possible future switch to GRASS 8.
-set(TMP_GRASS OFF)
-foreach (GRASS_SEARCH_VERSION 7)
-  # Cached variables: GRASS7_FOUND, GRASS_PREFIX7, GRASS_INCLUDE_DIR7 HAVE_GRASS: TRUE if at least one version of GRASS
-  # was found
-  set(GRASS_CACHE_VERSION ${GRASS_SEARCH_VERSION})
-  if (WITH_GRASS${GRASS_CACHE_VERSION})
-    find_package(GRASS ${GRASS_SEARCH_VERSION} MODULE)
-    if (${GRASS${GRASS_CACHE_VERSION}_FOUND})
-      set(GRASS_PREFIX${GRASS_CACHE_VERSION}
-          ${GRASS_PREFIX${GRASS_SEARCH_VERSION}}
-          CACHE PATH "Path to GRASS ${GRASS_SEARCH_VERSION} base directory")
-      set(TMP_GRASS ON)
-    endif ()
-  endif ()
-endforeach ()
-if (TMP_GRASS)
-  set(HAVE_GRASS
-      ON
-      CACHE INTERNAL "HAVE_GRASS")
-else ()
-  set(HAVE_GRASS
-      OFF
-      CACHE INTERNAL "HAVE_GRASS")
-endif ()
-unset(TMP_GRASS)
-endif ()
-
 gdal_check_package(HDFS "Enable Hadoop File System through native library" CAN_DISABLE)
 
 # PDF library: one of them enables PDF driver
@@ -678,6 +655,11 @@ option(GDAL_USE_PUBLICDECOMPWT
 # proprietary libraries KAKADU
 gdal_check_package(KDU "Enable KAKADU" CAN_DISABLE)
 gdal_check_package(LURATECH "Enable JP2Lura driver" CAN_DISABLE)
+
+gdal_check_package(Arrow "Apache Arrow C++ library" CONFIG CAN_DISABLE)
+if (Arrow_FOUND)
+    gdal_check_package(Parquet "Apache Parquet C++ library" CONFIG PATHS ${Arrow_DIR} CAN_DISABLE)
+endif()
 
 # bindings
 gdal_check_package(SWIG "Enable language bindings" ALWAYS_ON_WHEN_FOUND)

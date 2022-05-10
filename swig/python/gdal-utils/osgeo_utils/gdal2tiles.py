@@ -1322,6 +1322,10 @@ def create_overview_tile(base_tz: int, base_tiles: List[Tuple[int, int]], output
         if options.resampling != 'antialias':
             # Write a copy of tile to png/jpg
             out_driver.CreateCopy(tilefilename, dstile, strict=0)
+            # Remove useless side car file
+            aux_xml = tilefilename + '.aux.xml'
+            if gdal.VSIStatL(aux_xml) is not None:
+                gdal.Unlink(aux_xml)
 
         if options.verbose:
             print("\tbuild from zoom", base_tz, " tiles:", *base_tiles)
@@ -3273,31 +3277,6 @@ def single_threaded_tiling(input_file: str, output_folder: str, options: Options
 def multi_threaded_tiling(input_file: str, output_folder: str, options: Options, pool) -> None:
     nb_processes = options.nb_processes or 1
 
-    gdal_cache_max = gdal.GetCacheMax()
-
-    if pool is not None:
-        # copy interface of multiprocessing.Pool to MPIPoolExecutor
-        def pool_imap_unordered(self, func, data, **kwargs):
-            return self.map(func, data, **kwargs, unordered=True)
-        pool.imap_unordered = pool_imap_unordered.__get__(pool)
-        def pool_close(self):
-            pass
-        pool.close = pool_close.__get__(pool)
-        def pool_join(self):
-            self.shutdown()
-        pool.join = pool_join.__get__(pool)
-    else:
-        # Trick inspired from https://stackoverflow.com/questions/45720153/python-multiprocessing-error-attributeerror-module-main-has-no-attribute
-        # and https://bugs.python.org/issue42949
-        import __main__
-        if not hasattr(__main__, '__spec__'):
-            __main__.__spec__ = None
-        from multiprocessing import Pool
-        # Make sure that all processes do not consume more than `gdal.GetCacheMax()`
-        gdal_cache_max_per_process = max(1024 * 1024, math.floor(gdal_cache_max / nb_processes))
-        set_cache_max(gdal_cache_max_per_process)
-        pool = Pool(processes=nb_processes)
-
     if options.verbose:
         print("Begin tiles details calc")
 
@@ -3334,13 +3313,32 @@ def multi_threaded_tiling(input_file: str, output_folder: str, options: Options,
             if not options.verbose and not options.quiet:
                 overview_progress_bar.log_progress()
 
-    pool.close()
-    pool.join()     # Jobs finished
-
-    # Set the maximum cache back to the original value
-    set_cache_max(gdal_cache_max)
 
     shutil.rmtree(os.path.dirname(conf.src_file))
+
+
+class UseExceptions(object):
+    def __enter__(self):
+        self.old_used_exceptions = gdal.GetUseExceptions()
+        if not self.old_used_exceptions:
+            gdal.UseExceptions()
+    def __exit__(self, type, value, tb):
+        if not self.old_used_exceptions:
+            gdal.DontUseExceptions()
+
+
+class DividedCache(object):
+    def __init__(self, nb_processes):
+        self.nb_processes = nb_processes
+    def __enter__(self):
+        self.gdal_cache_max = gdal.GetCacheMax()
+        # Make sure that all processes do not consume more than `gdal.GetCacheMax()`
+        gdal_cache_max_per_process = max(1024 * 1024,
+            math.floor(self.gdal_cache_max / self.nb_processes))
+        set_cache_max(gdal_cache_max_per_process)
+    def __exit__(self, type, value, tb):
+        # Set the maximum cache back to the original value
+        set_cache_max(self.gdal_cache_max)
 
 
 def main(argv: List[str] = sys.argv) -> int:
@@ -3357,9 +3355,11 @@ def main(argv: List[str] = sys.argv) -> int:
     if '--mpi' in argv:
         from mpi4py import MPI
         from mpi4py.futures import MPICommExecutor
-        with MPICommExecutor(MPI.COMM_WORLD, root=0) as pool:
+        with UseExceptions(), MPICommExecutor(MPI.COMM_WORLD, root=0) as pool:
             if pool is None:
                 return 0
+            # add interface of multiprocessing.Pool to MPICommExecutor
+            pool.imap_unordered = partial(pool.map, unordered=True)
             return submain(argv, pool, MPI.COMM_WORLD.Get_size())
     else:
         return submain(argv)
@@ -3375,18 +3375,20 @@ def submain(argv: List[str], pool=None, pool_size=0) -> int:
         options.nb_processes = pool_size
     nb_processes = options.nb_processes or 1
 
-    old_used_exceptions = gdal.GetUseExceptions()
-    if not old_used_exceptions:
-        gdal.UseExceptions()
-
-    try:
-        if nb_processes == 1 and not options.mpi:
+    with UseExceptions():
+        if pool is not None:  # MPI
+            multi_threaded_tiling(input_file, output_folder, options, pool)
+        elif nb_processes == 1:
             single_threaded_tiling(input_file, output_folder, options)
         else:
-            multi_threaded_tiling(input_file, output_folder, options, pool)
-    finally:
-        if not old_used_exceptions:
-            gdal.DontUseExceptions()
+            # Trick inspired from https://stackoverflow.com/questions/45720153/python-multiprocessing-error-attributeerror-module-main-has-no-attribute
+            # and https://bugs.python.org/issue42949
+            import __main__
+            if not hasattr(__main__, '__spec__'):
+                __main__.__spec__ = None
+            from multiprocessing import Pool
+            with DividedCache(nb_processes), Pool(processes=nb_processes) as pool:
+                multi_threaded_tiling(input_file, output_folder, options, pool)
 
     return 0
 

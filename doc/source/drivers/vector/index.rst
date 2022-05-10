@@ -27,6 +27,7 @@ Vector drivers
    :maxdepth: 1
 
    amigocloud
+   arrow
    avcbin
    avce00
    cad
@@ -35,7 +36,6 @@ Vector drivers
    csw
    dgn
    dgnv8
-   dods
    dwg
    dxf
    eeda
@@ -81,6 +81,7 @@ Vector drivers
    ogdi
    openfilegdb
    osm
+   parquet
    pdf
    pds
    pgdump
