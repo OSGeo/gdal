@@ -734,10 +734,10 @@ if (NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
   endif ()
 
   include(CMakePackageConfigHelpers)
-  if(CMAKE_VERSION VERSION_LESS 3.10.1)
+  if(CMAKE_VERSION VERSION_LESS 3.11)
       set(comptatibility_check ExactVersion)
   else()
-      # SameMinorVersion compatibility are supported CMake > 3.10.1
+      # SameMinorVersion compatibility are supported CMake >= 3.11
       # Our C++ ABI remains stable only among major.minor.XXX patch releases
       set(comptatibility_check SameMinorVersion)
   endif()
