@@ -59,7 +59,7 @@ add_custom_target(generate_gdal_version_h
                     -P "${PROJECT_SOURCE_DIR}/cmake/helpers/generate_gdal_version_h.cmake"
                   VERBATIM)
 
-if (WIN32)
+if (WIN32 AND NOT MINGW)
   set(GDAL_SOVERSION "")
   set(GDAL_ABI_FULL_VERSION "${GDAL_VERSION_MAJOR}${GDAL_VERSION_MINOR}")
 else()
