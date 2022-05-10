@@ -1547,7 +1547,7 @@ OGRFlatGeobufLayer *OGRFlatGeobufLayer::Open(const char* pszFilename, VSILFILE* 
         return nullptr;
     }
     if (bVerifyBuffers) {
-        Verifier v(buf.get(), headerSize);
+        Verifier v(buf.get(), headerSize, 64U, 1000000U, false);
         const auto ok = VerifyHeaderBuffer(v);
         if (!ok) {
             CPLError(CE_Failure, CPLE_AppDefined, "Header failed consistency verification");
