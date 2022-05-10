@@ -4451,6 +4451,18 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
             uint64_t nFileSize;
             double dfLastPct;
             JobQueue* queue;
+
+            static int CPL_STDCALL progressFunc(double pct, const char *, void *pProgressDataIn)
+            {
+                ProgressData* pProgress = static_cast<ProgressData*>(pProgressDataIn);
+                const auto nInc = static_cast<uint64_t>(
+                    (pct - pProgress->dfLastPct) * pProgress->nFileSize + 0.5);
+                pProgress->queue->sMutex.lock();
+                pProgress->queue->nTotalCopied += nInc;
+                pProgress->queue->sMutex.unlock();
+                pProgress->dfLastPct = pct;
+                return TRUE;
+            }
         };
 
         JobQueue* queue = static_cast<JobQueue*>(pDataIn);
@@ -4470,17 +4482,6 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
                 queue->osTargetDir.empty() ? queue->osTarget.c_str():
                 CPLFormFilename(queue->osTargetDir, chunk.osFilename, nullptr) );
 
-            const auto progressFunc = [](double pct, const char*, void* pProgressDataIn)
-            {
-                ProgressData* pProgress = static_cast<ProgressData*>(pProgressDataIn);
-                const auto nInc = static_cast<uint64_t>(
-                    (pct - pProgress->dfLastPct) * pProgress->nFileSize + 0.5);
-                pProgress->queue->sMutex.lock();
-                pProgress->queue->nTotalCopied += nInc;
-                pProgress->queue->sMutex.unlock();
-                pProgress->dfLastPct = pct;
-                return TRUE;
-            };
             ProgressData progressData;
             progressData.nFileSize = chunk.nSize;
             progressData.dfLastPct = 0;
@@ -4539,7 +4540,7 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
                 }
                 if( bSuccess )
                 {
-                    progressFunc(1.0, "", &progressData);
+                    ProgressData::progressFunc(1.0, "", &progressData);
                 }
                 else
                 {
@@ -4553,7 +4554,7 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
                 if( !queue->poFS->CopyFile(nullptr, chunk.nTotalSize,
                             osSubSource, osSubTarget,
                             queue->aosObjectCreationOptions.List(),
-                            progressFunc, &progressData) )
+                            ProgressData::progressFunc, &progressData) )
                 {
                     queue->ret = false;
                     queue->stop = true;
