@@ -49,12 +49,12 @@ check_ldd(){
   esac
 }
 
-GDAL_CONFIG_VERSION=$(${GDAL_CONFIG} --version)
+GDAL_CONFIG_VERSION=$(${GDAL_CONFIG} --version) | sed "s/-dev//"
 
 check_version(){
   printf "Testing expected version ... "
   NTESTS=$(($NTESTS + 1))
-  VERSION_OUTPUT=$(./$1)
+  VERSION_OUTPUT=$(./$1) | sed "s/-dev//"
   case "$VERSION_OUTPUT" in
     $GDAL_CONFIG_VERSION*)
       echo "passed" ;;
