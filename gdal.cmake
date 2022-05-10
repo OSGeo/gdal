@@ -301,6 +301,10 @@ if (MSVC)
       CACHE STRING "Postfix to add to the GDAL dll name for debug builds")
   set_target_properties(${GDAL_LIB_TARGET_NAME} PROPERTIES DEBUG_POSTFIX "${GDAL_DEBUG_POSTFIX}")
 endif ()
+if (MINGW AND BUILD_SHARED_LIBS)
+    set_target_properties(${GDAL_LIB_TARGET_NAME} PROPERTIES SUFFIX "-${GDAL_SOVERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}")
+endif ()
+
 
 if (MSVC AND NOT BUILD_SHARED_LIBS)
   target_compile_definitions(${GDAL_LIB_TARGET_NAME} PUBLIC CPL_DISABLE_DLL=)

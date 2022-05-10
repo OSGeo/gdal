@@ -32,7 +32,7 @@ case "$UNAME,$2" in
     ;;
   MINGW*,)
     alias ldd="sh -c 'objdump -x \$1.exe' --"
-    LDD_SUBSTR="DLL Name: libgdal.dll"
+    LDD_SUBSTR="DLL Name: libgdal"
     export PATH="$prefix/bin:$PATH"
     ;;
   *,--static)
