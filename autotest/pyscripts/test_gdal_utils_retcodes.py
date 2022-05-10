@@ -37,7 +37,7 @@ import sys
 import subprocess
 import pytest
 
-pytest.skip("THIS TEST IN DRAFT MODE, SKIPPING", allow_module_level=True)
+# pytest.skip("THIS TEST IN DRAFT MODE, SKIPPING", allow_module_level=True)
 
 from pathlib import Path
 
@@ -49,7 +49,8 @@ exclude_dirs = ['auxiliary']
 
 
 if not Path(script_path).exists():
-    pytest.skip("Can't find gdal-utils, skipping.", allow_module_level=True)
+    pytest.skip("Can't find gdal-utils dir, skipping.", allow_module_level=True)
+    print("Can't find gdal-utils, skipping.")
 else:
     scripts = list(Path(script_path).glob("*.py" ))
 
@@ -59,7 +60,7 @@ results = {}
 for s in scripts:
     file = Path(s)
     print(i, end='\r')
-    if not 'gdal_auth.py' in file.name:
+    if 'gdal_auth.py' not in file.name:
         # skip gdal_auth because it doesn't take inputs
 
         r = subprocess.run([sys.executable,
@@ -69,7 +70,8 @@ for s in scripts:
             text=True,
             )
 
-        results[file.relative_to(here)] = r.returncode
+        # (absolute / relative_path) join courtesy of Thierry at https://stackoverflow.com/a/52879083/14420
+        results[Path(here / file).resolve()] = r.returncode
     i = i+'.'
 
 # sort by return code value and display results
