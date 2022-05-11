@@ -358,8 +358,6 @@ int EnvisatFile_Open( EnvisatFile **self_ptr,
         return FAILURE;
     }
 
-    CPLFree( sph_data );
-
     /*
      * Parse the Dataset Definitions.
      */
@@ -368,6 +366,7 @@ int EnvisatFile_Open( EnvisatFile **self_ptr,
 
     if( num_dsd > 0 && ds_data == NULL )
     {
+        CPLFree( sph_data );
         SendError( "DSDs indicated in MPH, but not found in SPH." );
         EnvisatFile_Close( self );
         return FAILURE;
@@ -377,6 +376,7 @@ int EnvisatFile_Open( EnvisatFile **self_ptr,
         CPLCalloc(sizeof(EnvisatDatasetInfo*),num_dsd);
     if( self->ds_info == NULL )
     {
+        CPLFree( sph_data );
         EnvisatFile_Close( self );
         return FAILURE;
     }
@@ -397,6 +397,7 @@ int EnvisatFile_Open( EnvisatFile **self_ptr,
         if( S_NameValueList_Parse( dsd_data, 0,
                                    &dsdh_count, &dsdh_entries ) == FAILURE )
         {
+            CPLFree( sph_data );
             EnvisatFile_Close( self );
             return FAILURE;
         }
@@ -433,6 +434,8 @@ int EnvisatFile_Open( EnvisatFile **self_ptr,
         self->ds_info[i] = ds_info;
         self->ds_count++;
     }
+
+    CPLFree( sph_data );
 
     /*
      * Return successfully.
