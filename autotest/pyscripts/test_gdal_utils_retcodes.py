@@ -33,6 +33,7 @@ called without arguments.
 
 Spawned from https://github.com/OSGeo/gdal/issues/5561
 """
+import glob
 import sys
 import subprocess
 import pytest
@@ -46,14 +47,31 @@ from pathlib import Path
 here = Path(__file__).parent.absolute()
 script_path = Path(here / '../../swig/python/gdal-utils/osgeo_utils/').resolve()
 excludes = ['setup.py', '__init__.py']
-exclude_dirs = ['auxiliary'] # aux files are for importing, not running as scripts
+
+
+def get_scripts(script_path, excludes):
+    # Using glob instead of Path.glob because removing excludes from a list of
+    # strings is easier than with objects
+
+    # scripts = list(script_path.glob("**/.py" ))
+    s1 = glob.glob("*.py", root_dir=script_path)
+    s2 = glob.glob('xx-samples/*.py', root_dir=script_path)
+    scripts = s1 + s2
+    del s1, s2
+
+    for e in excludes:
+        for s in scripts:
+            if e in s:
+                scripts.remove(s)
+    return scripts
+
 
 if not Path(script_path).exists():
     pytest.skip("Can't find gdal-utils dir, skipping.", allow_module_level=True)
     print("Can't find gdal-utils, skipping.")
 else:
-    scripts = list(script_path.glob("*.py" ))
-    #todo: add samples dir, remove excludes
+    scripts = get_scripts(script_path, excludes)
+
 
 ##
 ## Standard gdal-utils we expect to be installed in PYTHONHOME\Scripts
@@ -127,31 +145,34 @@ def run_script(program, args=None):
         text=True,
     )
 
-##
-## Scripts
-##   FIXME: this isn't a pytest. It only works when run as
-##   `python test_gdal_utils_retcodes.py`
 
-i = '.' # progress meter step
-results = {}
-for s in scripts:
-    file = Path(s)
-    print(i, end='\r')
-    if 'gdal_auth.py' not in file.name:
-        # skip gdal_auth because it doesn't take inputs
 
-        r = subprocess.run([sys.executable,
-            file],
-            shell=True,
-            capture_output=True,
-            text=True,
-            )
 
-        # (absolute / relative_path) join courtesy of Thierry at https://stackoverflow.com/a/52879083/14420
-        results[Path(here / file).resolve()] = r.returncode
-    i = i+'.'
-
-# sort by return code value and display results
-results = sorted(results.items(), key=lambda x:x[1])
-print('\n')
-[print(x[1], str(x[0])) for x in results]
+# ##
+# ## Scripts
+# ##   FIXME: this isn't a pytest. It only works when run as
+# ##   `python test_gdal_utils_retcodes.py`
+#
+# i = '.' # progress meter step
+# results = {}
+# for s in scripts:
+#     file = Path(s)
+#     print(i, end='\r')
+#     if 'gdal_auth.py' not in file.name:
+#         # skip gdal_auth because it doesn't take inputs
+#
+#         r = subprocess.run([sys.executable,
+#             file],
+#             shell=True,
+#             capture_output=True,
+#             text=True,
+#             )
+#
+#         # (absolute / relative_path) join courtesy of Thierry at https://stackoverflow.com/a/52879083/14420
+#         results[Path(here / file).resolve()] = r.returncode
+#     i = i+'.'
+#
+# # sort by return code value and display results
+# results = sorted(results.items(), key=lambda x:x[1])
+# print('\n')
+# [print(x[1], str(x[0])) for x in results]
