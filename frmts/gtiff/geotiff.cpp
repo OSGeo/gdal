@@ -14797,6 +14797,11 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     uint32_t nYSize = 0;
     TIFFGetField( m_hTIFF, TIFFTAG_IMAGEWIDTH, &nXSize );
     TIFFGetField( m_hTIFF, TIFFTAG_IMAGELENGTH, &nYSize );
+
+    // Unlikely to occur, but could happen on a disk full situation.
+    if( nXSize == 0 || nYSize == 0 )
+        return CE_Failure;
+
     if( nXSize > INT_MAX || nYSize > INT_MAX )
     {
         // GDAL only supports signed 32bit dimensions.
