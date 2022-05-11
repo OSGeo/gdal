@@ -52,8 +52,9 @@ metadata in the COLOR_PROFILE domain:
 Creation Options
 ----------------
 
-Only 1 (greyscale), 2 band (greyscale + alpha), 3 band (RGB) or 4 band
-(RGBA) source images are supported.
+With libjxl 0.6.1, only 1 (greyscale), 2 band (greyscale + alpha), 3 band (RGB)
+or 4 band (RGBA) source images are supported. With later libjxl versions, any
+number of bands can be written.
 Supported data types are Byte, UInt16 and Float32.
 
 When copying from a (regular) JPEG file, and not specifying lossy compression

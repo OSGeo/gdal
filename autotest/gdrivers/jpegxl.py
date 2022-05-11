@@ -289,6 +289,44 @@ def test_jpegxl_lossless_copy_of_jpeg():
             assert gdal.GetDriverByName('JPEGXL').CreateCopy(outfilename, src_ds) is None
 
 
+def test_jpegxl_read_extra_channels():
+
+    src_ds = gdal.Open('data/rgbsmall.tif')
+    ds = gdal.Open('data/jpegxl/threeband_non_rgb.jxl')
+
+    assert [ds.GetRasterBand(i+1).Checksum() for i in range(src_ds.RasterCount)] == [src_ds.GetRasterBand(i+1).Checksum() for i in range(src_ds.RasterCount)]
+    assert ds.ReadRaster() == src_ds.ReadRaster()
+
+
+def test_jpegxl_write_extra_channels():
+
+    outfilename = '/vsimem/out.jxl'
+    src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
+    mem_ds = gdal.GetDriverByName('MEM').Create('', src_ds.RasterXSize, src_ds.RasterYSize, src_ds.RasterCount)
+    mem_ds.WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize,
+                       src_ds.ReadRaster())
+    mem_ds.GetRasterBand(3).SetDescription('third channel')
+    outfilename = '/vsimem/out.jxl'
+
+    drv = gdal.GetDriverByName('JPEGXL')
+    if drv.GetMetadataItem('JXL_ENCODER_SUPPORT_EXTRA_CHANNELS') is not None:
+        assert drv.CreateCopy(outfilename, mem_ds) is not None
+        assert gdal.VSIStatL(outfilename + '.aux.xml') is None
+        ds = gdal.Open(outfilename)
+        assert [ds.GetRasterBand(i+1).Checksum() for i in range(src_ds.RasterCount)] == [mem_ds.GetRasterBand(i+1).Checksum() for i in range(src_ds.RasterCount)]
+        assert ds.ReadRaster() == mem_ds.ReadRaster()
+        assert ds.GetRasterBand(1).GetDescription() == ''
+        assert ds.GetRasterBand(2).GetDescription() == '' # 'Band 2' encoded in .jxl file, but hidden when reading back
+        assert ds.GetRasterBand(3).GetDescription() == 'third channel'
+    else:
+        with gdaltest.error_handler():
+            assert drv.CreateCopy(outfilename, mem_ds) is None
+            assert gdal.GetLastErrorMsg() == 'This version of libjxl does not support creating non-alpha extra channels.'
+
+    ds = None
+    gdal.GetDriverByName('JPEGXL').Delete(outfilename)
+
+
 def test_jpegxl_createcopy_errors():
 
     outfilename = '/vsimem/out.jxl'
@@ -353,9 +391,3 @@ def test_jpegxl_createcopy_errors():
         assert gdal.GetDriverByName('JPEGXL').CreateCopy(outfilename, src_ds,
                                                          options=['EFFORT=-1']) is None
         assert gdal.GetLastErrorMsg() != ''
-
-    # 2 band but 2nd one is not alpha (may work in later libjxl versions)
-    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 2)
-    with gdaltest.error_handler():
-        gdal.GetDriverByName('JPEGXL').CreateCopy(outfilename, src_ds)
-        gdal.GetDriverByName('JPEGXL').Delete(outfilename)

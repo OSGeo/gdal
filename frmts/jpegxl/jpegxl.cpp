@@ -50,6 +50,8 @@ namespace
 
 class JPEGXLDataset final: public GDALJP2AbstractDataset
 {
+    friend class JPEGXLRasterBand;
+
     VSILFILE           *m_fp = nullptr;
     JxlDecoderPtr      m_decoder{};
 #ifdef HAVE_JXL_THREADS
@@ -57,8 +59,10 @@ class JPEGXLDataset final: public GDALJP2AbstractDataset
 #endif
     bool                m_bDecodingFailed = false;
     std::vector<GByte>  m_abyImage{};
+    std::vector<std::vector<GByte>> m_abyExtraChannels{};
     std::vector<GByte>  m_abyInputData{};
     int                 m_nBits = 0;
+    int                 m_nNonAlphaExtraChannels = 0;
 #ifdef HAVE_JXL_BOX_API
     std::string         m_osXMP{};
     char*               m_apszXMP[2] = {nullptr, nullptr};
@@ -163,15 +167,26 @@ CPLErr JPEGXLRasterBand::IReadBlock(int /*nBlockXOff*/, int nBlockYOff, void* pD
     }
 
     const auto nDataSize = GDALGetDataTypeSizeBytes(eDataType);
-    const int nBands = poGDS->GetRasterCount();
-    GDALCopyWords( abyDecodedImage.data() +
-                    ((nBand - 1) + static_cast<size_t>(nBlockYOff) * nRasterXSize * nBands) * nDataSize,
-                   eDataType,
-                   nDataSize * nBands,
-                   pData,
-                   eDataType,
-                   nDataSize,
-                   nRasterXSize );
+    if( nBand <= poGDS->nBands - poGDS->m_nNonAlphaExtraChannels )
+    {
+        const int nBands = poGDS->GetRasterCount();
+        GDALCopyWords( abyDecodedImage.data() +
+                        ((nBand - 1) + static_cast<size_t>(nBlockYOff) * nRasterXSize * nBands) * nDataSize,
+                       eDataType,
+                       nDataSize * nBands,
+                       pData,
+                       eDataType,
+                       nDataSize,
+                       nRasterXSize );
+    }
+    else
+    {
+        const uint32_t nIndex = nBand - 1 - (poGDS->nBands - poGDS->m_nNonAlphaExtraChannels);
+        memcpy(pData,
+               poGDS->m_abyExtraChannels[nIndex].data() +
+                   static_cast<size_t>(nBlockYOff) * nRasterXSize * nDataSize,
+               nRasterXSize * nDataSize);
+    }
 
     return CE_None;
 }
@@ -465,6 +480,16 @@ bool JPEGXLDataset::Open(GDALOpenInfo* poOpenInfo)
 
             l_nBands = static_cast<int>(info.num_color_channels) +
                        static_cast<int>(info.num_extra_channels);
+            if( info.num_extra_channels == 1 &&
+                (info.num_color_channels == 1 || info.num_color_channels == 3) &&
+                info.alpha_bits != 0 )
+            {
+                m_nNonAlphaExtraChannels = 0;
+            }
+            else
+            {
+                m_nNonAlphaExtraChannels = static_cast<int>(info.num_extra_channels);
+            }
         }
 #ifdef HAVE_JXL_BOX_API
         else if( status == JXL_DEC_BOX )
@@ -731,9 +756,59 @@ bool JPEGXLDataset::Open(GDALOpenInfo* poOpenInfo)
             else if( i == 4 && info.num_extra_channels == 1 && info.alpha_bits != 0 )
                 eInterp = GCI_AlphaBand;
         }
+        std::string osBandName;
 
-        SetBand(i, new JPEGXLRasterBand(
-            this, i, eDT, static_cast<int>(info.bits_per_sample), eInterp));
+        if( i - 1 >= l_nBands - m_nNonAlphaExtraChannels )
+        {
+            JxlExtraChannelInfo sExtraInfo;
+            memset(&sExtraInfo, 0, sizeof(sExtraInfo));
+            const size_t nIndex = static_cast<size_t>(i - 1 - (l_nBands - m_nNonAlphaExtraChannels));
+            if( JxlDecoderGetExtraChannelInfo(m_decoder.get(), nIndex, &sExtraInfo) == JXL_DEC_SUCCESS )
+            {
+                if( sExtraInfo.name_length > 0 )
+                {
+                    std::string osName;
+                    osName.resize(sExtraInfo.name_length);
+                    if( JxlDecoderGetExtraChannelName(
+                        m_decoder.get(), nIndex,
+                        &osName[0], osName.size() + 1) == JXL_DEC_SUCCESS &&
+                        osName != CPLSPrintf("Band %d", i) )
+                    {
+                        osBandName = osName;
+                    }
+                }
+                else
+                {
+                    switch( sExtraInfo.type )
+                    {
+                        case JXL_CHANNEL_ALPHA: eInterp = GCI_AlphaBand; break;
+                        case JXL_CHANNEL_DEPTH: osBandName = "Depth channel"; break;
+                        case JXL_CHANNEL_SPOT_COLOR: osBandName = "Spot color channel"; break;
+                        case JXL_CHANNEL_SELECTION_MASK: osBandName = "Selection mask channel"; break;
+                        case JXL_CHANNEL_BLACK: osBandName = "Black channel"; break;
+                        case JXL_CHANNEL_CFA: osBandName = "CFA channel"; break;
+                        case JXL_CHANNEL_THERMAL: osBandName = "Thermal channel"; break;
+                        case JXL_CHANNEL_RESERVED0:
+                        case JXL_CHANNEL_RESERVED1:
+                        case JXL_CHANNEL_RESERVED2:
+                        case JXL_CHANNEL_RESERVED3:
+                        case JXL_CHANNEL_RESERVED4:
+                        case JXL_CHANNEL_RESERVED5:
+                        case JXL_CHANNEL_RESERVED6:
+                        case JXL_CHANNEL_RESERVED7:
+                        case JXL_CHANNEL_UNKNOWN:
+                        case JXL_CHANNEL_OPTIONAL:
+                            break;
+                    }
+                }
+            }
+        }
+
+        auto poBand = new JPEGXLRasterBand(
+            this, i, eDT, static_cast<int>(info.bits_per_sample), eInterp);
+        SetBand(i, poBand);
+        if( !osBandName.empty() )
+            poBand->SetDescription(osBandName.c_str());
     }
 
     if( l_nBands > 1 )
@@ -763,7 +838,7 @@ const std::vector<GByte>& JPEGXLDataset::GetDecodedImage()
     const auto eDT = GetRasterBand(1)->GetRasterDataType();
     const auto nDataSize = GDALGetDataTypeSizeBytes(eDT);
     if( static_cast<size_t>(nRasterXSize) >
-            std::numeric_limits<size_t>::max() / nRasterYSize / nDataSize )
+            std::numeric_limits<size_t>::max() / nRasterYSize / nDataSize / nBands )
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
                  "Image too big for architecture");
@@ -781,6 +856,22 @@ const std::vector<GByte>& JPEGXLDataset::GetDecodedImage()
                  "Cannot allocate image buffer: %s", e.what());
         m_bDecodingFailed = true;
         return m_abyImage;
+    }
+
+    m_abyExtraChannels.resize( m_nNonAlphaExtraChannels );
+    for( int i = 0; i < m_nNonAlphaExtraChannels; ++i )
+    {
+        try
+        {
+            m_abyExtraChannels[i].resize(static_cast<size_t>(nRasterXSize) * nRasterYSize * nDataSize);
+        }
+        catch( const std::exception& e )
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Cannot allocate image buffer: %s", e.what());
+            m_bDecodingFailed = true;
+            return m_abyImage;
+        }
     }
 
     GetDecodedImage(m_abyImage.data(), m_abyImage.size());
@@ -936,6 +1027,39 @@ void JPEGXLDataset::GetDecodedImage(void* pabyOuputData, size_t nOutputDataSize)
                 m_bDecodingFailed = true;
                 break;
             }
+
+            format.num_channels = 1;
+            for( int i = 0; i < m_nNonAlphaExtraChannels; ++i )
+            {
+                if( JxlDecoderExtraChannelBufferSize(m_decoder.get(), &format, &buffer_size, i)
+                        != JXL_DEC_SUCCESS  )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "JxlDecoderExtraChannelBufferSize failed()");
+                    m_bDecodingFailed = true;
+                    break;
+                }
+                if( buffer_size != m_abyExtraChannels[i].size() )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "JxlDecoderExtraChannelBufferSize returned an unexpected buffer_size");
+                    m_bDecodingFailed = true;
+                    break;
+                }
+                if( JxlDecoderSetExtraChannelBuffer(
+                        m_decoder.get(), &format, m_abyExtraChannels[i].data(), m_abyExtraChannels[i].size(), i)
+                        != JXL_DEC_SUCCESS )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "JxlDecoderSetExtraChannelBuffer failed()");
+                    m_bDecodingFailed = true;
+                    break;
+                }
+            }
+            if( m_bDecodingFailed )
+            {
+                break;
+            }
         }
         else
         {
@@ -948,25 +1072,34 @@ void JPEGXLDataset::GetDecodedImage(void* pabyOuputData, size_t nOutputDataSize)
     // Rescale from 8-bits/16-bits
     if( m_nBits < GDALGetDataTypeSize(eDT) )
     {
-        const size_t nSamples = static_cast<size_t>(nRasterXSize) * nRasterYSize * nBands;
-        const int nMaxVal = (1 << m_nBits) - 1;
-        if( eDT == GDT_Byte )
+        const auto Rescale = [this, eDT](void* pBuffer, int nChannels)
         {
-            const int nHalfMaxWidth = 127;
-            GByte* panData = static_cast<GByte*>(pabyOuputData);
-            for( size_t i = 0; i < nSamples; ++i )
+            const size_t nSamples = static_cast<size_t>(nRasterXSize) * nRasterYSize * nChannels;
+            const int nMaxVal = (1 << m_nBits) - 1;
+            if( eDT == GDT_Byte )
             {
-                panData[i] = static_cast<GByte>((panData[i] * nMaxVal + nHalfMaxWidth) / 255);
+                const int nHalfMaxWidth = 127;
+                GByte* panData = static_cast<GByte*>(pBuffer);
+                for( size_t i = 0; i < nSamples; ++i )
+                {
+                    panData[i] = static_cast<GByte>((panData[i] * nMaxVal + nHalfMaxWidth) / 255);
+                }
             }
-        }
-        else if( eDT == GDT_UInt16 )
+            else if( eDT == GDT_UInt16 )
+            {
+                const int nHalfMaxWidth = 32767;
+                uint16_t* panData = static_cast<uint16_t*>(pBuffer);
+                for( size_t i = 0; i < nSamples; ++i )
+                {
+                    panData[i] = static_cast<uint16_t>((panData[i] * nMaxVal + nHalfMaxWidth) / 65535);
+                }
+            }
+        };
+
+        Rescale(pabyOuputData, nBands - m_nNonAlphaExtraChannels);
+        for( int i = 0; i < m_nNonAlphaExtraChannels; ++i )
         {
-            const int nHalfMaxWidth = 32767;
-            uint16_t* panData = static_cast<uint16_t*>(pabyOuputData);
-            for( size_t i = 0; i < nSamples; ++i )
-            {
-                panData[i] = static_cast<uint16_t>((panData[i] * nMaxVal + nHalfMaxWidth) / 65535);
-            }
+            Rescale(m_abyExtraChannels[i].data(), 1);
         }
     }
 
@@ -997,6 +1130,7 @@ CPLErr JPEGXLDataset::IRasterIO( GDALRWFlag eRWFlag,
 
     const auto nBufTypeSize = GDALGetDataTypeSizeBytes(eBufType);
     if( eRWFlag == GF_Read &&
+        m_nNonAlphaExtraChannels == 0 &&
         nXOff == 0 && nYOff == 0 && nXSize == nRasterXSize && nYSize == nRasterYSize &&
         nBufXSize == nXSize && nBufYSize == nYSize &&
         nBandCount == nBands &&
@@ -1123,33 +1257,36 @@ JPEGXLDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
         basic_info.exponent_bits_per_sample=8;
     }
 
-    format.num_channels = poSrcDS->GetRasterCount();
+    const int nSrcBands = poSrcDS->GetRasterCount();
 
-    if( format.num_channels == 1 )
+    bool bHasInterleavedAlphaBand = false;
+    if( nSrcBands == 1 )
     {
         basic_info.num_color_channels = 1;
     }
-    else if( format.num_channels == 2 )
+    else if( nSrcBands == 2 )
     {
         basic_info.num_color_channels = 1;
         basic_info.num_extra_channels = 1;
         if( poSrcDS->GetRasterBand(2)->GetColorInterpretation() == GCI_AlphaBand )
         {
+            bHasInterleavedAlphaBand = true;
             basic_info.alpha_bits = basic_info.bits_per_sample;
             basic_info.alpha_exponent_bits = basic_info.exponent_bits_per_sample;
         }
     }
-    else /* if( format.num_channels >= 3 ) */
+    else /* if( nSrcBands >= 3 ) */
     {
         if( poSrcDS->GetRasterBand(1)->GetColorInterpretation() == GCI_RedBand &&
             poSrcDS->GetRasterBand(2)->GetColorInterpretation() == GCI_GreenBand &&
             poSrcDS->GetRasterBand(3)->GetColorInterpretation() == GCI_BlueBand )
         {
             basic_info.num_color_channels = 3;
-            basic_info.num_extra_channels = format.num_channels - 3;
-            if( format.num_channels == 4 &&
+            basic_info.num_extra_channels = nSrcBands - 3;
+            if( nSrcBands >= 4 &&
                 poSrcDS->GetRasterBand(4)->GetColorInterpretation() == GCI_AlphaBand )
             {
+                bHasInterleavedAlphaBand = true;
                 basic_info.alpha_bits = basic_info.bits_per_sample;
                 basic_info.alpha_exponent_bits = basic_info.exponent_bits_per_sample;
             }
@@ -1157,9 +1294,23 @@ JPEGXLDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
         else
         {
             basic_info.num_color_channels = 1;
-            basic_info.num_extra_channels = format.num_channels - 1;
+            basic_info.num_extra_channels = nSrcBands - 1;
         }
     }
+
+    const int nBaseChannels = static_cast<int>(basic_info.num_color_channels +
+                                               (bHasInterleavedAlphaBand ? 1 : 0));
+    format.num_channels = nBaseChannels;
+
+#ifndef HAVE_JxlEncoderInitExtraChannelInfo
+    if( basic_info.num_extra_channels != (bHasInterleavedAlphaBand ? 1 : 0) )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "This version of libjxl does not support "
+                 "creating non-alpha extra channels.");
+        return nullptr;
+    }
+#endif
 
 #ifdef HAVE_JXL_THREADS
     auto parallelRunner = JxlResizableParallelRunnerMake(nullptr);
@@ -1444,18 +1595,36 @@ JPEGXLDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
     if( abyJPEG.empty() &&
         basic_info.num_extra_channels > 0 && basic_info.alpha_bits == 0 )
     {
+        if( basic_info.num_extra_channels >= 5 )
+            JxlEncoderSetCodestreamLevel(encoder.get(), 10);
+
         JxlExtraChannelInfo extra_channel_info;
-        JxlEncoderInitExtraChannelInfo(JXL_CHANNEL_UNKNOWN,
+        JxlEncoderInitExtraChannelInfo(JXL_CHANNEL_OPTIONAL,
                                        &extra_channel_info);
         extra_channel_info.bits_per_sample = basic_info.bits_per_sample;
         extra_channel_info.exponent_bits_per_sample = basic_info.exponent_bits_per_sample;
-        for( int i = 0; i < static_cast<int>(basic_info.num_extra_channels); ++i )
+        for( int i = (bHasInterleavedAlphaBand ? 1 : 0);
+                    i < static_cast<int>(basic_info.num_extra_channels); ++i )
         {
+            const uint32_t nIndex = static_cast<uint32_t>(i);
             if( JXL_ENC_SUCCESS != JxlEncoderSetExtraChannelInfo(
-                    encoder.get(), i, &extra_channel_info) )
+                    encoder.get(), nIndex, &extra_channel_info) )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "JxlEncoderSetExtraChannelInfo() failed");
+                return nullptr;
+            }
+            const int nBand = static_cast<int>(1 + basic_info.num_color_channels + i);
+            std::string osChannelName(CPLSPrintf("Band %d", nBand));
+            const char* pszDescription = poSrcDS->GetRasterBand(nBand)->GetDescription();
+            if( pszDescription && pszDescription[0] != '\0' )
+                osChannelName = pszDescription;
+            if( JXL_ENC_SUCCESS != JxlEncoderSetExtraChannelName(
+                    encoder.get(), nIndex,
+                    osChannelName.data(), osChannelName.size()) )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "JxlEncoderSetExtraChannelName() failed");
                 return nullptr;
             }
         }
@@ -1616,8 +1785,6 @@ JPEGXLDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
     else
     {
         const auto nDataSize = GDALGetDataTypeSizeBytes(eDT);
-        const int nBaseChannels = static_cast<int>(basic_info.num_color_channels +
-                                                   (basic_info.alpha_bits ? 1 : 0));
 
         if( static_cast<size_t>(poSrcDS->GetRasterXSize()) >
                 std::numeric_limits<size_t>::max() / poSrcDS->GetRasterYSize()
@@ -1657,51 +1824,48 @@ JPEGXLDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
             return nullptr;
         }
 
-        // Rescale to 8-bits/16-bits
-        if( nBits < GDALGetDataTypeSize(eDT) )
+        const auto Rescale = [eDT, nBits, poSrcDS](void* pBuffer, int nChannels)
         {
-            const size_t nSamples = static_cast<size_t>(poSrcDS->GetRasterXSize()) *
-                poSrcDS->GetRasterYSize() * nBaseChannels;
-            const int nMaxVal = (1 << nBits) - 1;
-            const int nMavValHalf = nMaxVal / 2;
-            if( eDT == GDT_Byte )
+            // Rescale to 8-bits/16-bits
+            if( nBits < GDALGetDataTypeSize(eDT) )
             {
-                for( size_t i = 0; i < nSamples; ++i )
+                const size_t nSamples = static_cast<size_t>(poSrcDS->GetRasterXSize()) *
+                    poSrcDS->GetRasterYSize() * nChannels;
+                const int nMaxVal = (1 << nBits) - 1;
+                const int nMavValHalf = nMaxVal / 2;
+                if( eDT == GDT_Byte )
                 {
-                    abyInputData[i] = static_cast<GByte>(
-                        (std::min(static_cast<int>(abyInputData[i]), nMaxVal) * 255 + nMavValHalf) / nMaxVal);
+                    uint8_t* panData = static_cast<uint8_t*>(pBuffer);
+                    for( size_t i = 0; i < nSamples; ++i )
+                    {
+                        panData[i] = static_cast<GByte>(
+                            (std::min(static_cast<int>(panData[i]), nMaxVal) * 255 + nMavValHalf) / nMaxVal);
+                    }
+                }
+                else if( eDT == GDT_UInt16 )
+                {
+                    uint16_t* panData = static_cast<uint16_t*>(pBuffer);
+                    for( size_t i = 0; i < nSamples; ++i )
+                    {
+                        panData[i] = static_cast<uint16_t>(
+                            (std::min(static_cast<int>(panData[i]), nMaxVal) * 65535 + nMavValHalf) / nMaxVal);
+                    }
                 }
             }
-            else if( eDT == GDT_UInt16 )
-            {
-                uint16_t* panData = reinterpret_cast<uint16_t*>(abyInputData.data());
-                for( size_t i = 0; i < nSamples; ++i )
-                {
-                    panData[i] = static_cast<uint16_t>(
-                        (std::min(static_cast<int>(panData[i]), nMaxVal) * 65535 + nMavValHalf) / nMaxVal);
-                }
-            }
-        }
+        };
+
+        Rescale(abyInputData.data(), nBaseChannels);
 
         if( JxlEncoderAddImageFrame(opts, &format, abyInputData.data(),
                                     abyInputData.size()) != JXL_ENC_SUCCESS )
         {
-            // To remove when libjxl supports non-alpha extra channel
-            if( basic_info.num_extra_channels > 0 && basic_info.alpha_bits == 0 )
-            {
-                CPLError(CE_Failure, CPLE_NotSupported,
-                         "libjxl doesn't support currently writing images "
-                         "with extra non-alpha channels");
-                return nullptr;
-            }
-
             CPLError(CE_Failure, CPLE_AppDefined,
                      "JxlEncoderAddImageFrame() failed");
             return nullptr;
         }
 
 #ifdef HAVE_JxlEncoderInitExtraChannelInfo
-        // Untested as unsupported by libjxl currently
+        format.num_channels = 1;
         for(int i = nBaseChannels; i < poSrcDS->GetRasterCount(); ++i )
         {
             if( poSrcDS->GetRasterBand(i+1)->RasterIO(
@@ -1711,12 +1875,15 @@ JPEGXLDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
             {
                 return nullptr;
             }
+
+            Rescale(abyInputData.data(), 1);
+
             if( JxlEncoderSetExtraChannelBuffer(
                     opts, &format, abyInputData.data(),
                     static_cast<size_t>(poSrcDS->GetRasterXSize()) *
                       poSrcDS->GetRasterYSize() *
                       nDataSize,
-                    i - nBaseChannels) != JXL_ENC_SUCCESS )
+                    i - nBaseChannels + (bHasInterleavedAlphaBand ? 1 : 0)) != JXL_ENC_SUCCESS )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "JxlEncoderSetExtraChannelBuffer() failed");
@@ -1838,6 +2005,10 @@ void GDALRegister_JPEGXL()
 "</CreationOptionList>\n");
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+
+#ifdef HAVE_JxlEncoderInitExtraChannelInfo
+    poDriver->SetMetadataItem("JXL_ENCODER_SUPPORT_EXTRA_CHANNELS", "YES");
+#endif
 
     poDriver->pfnIdentify = JPEGXLDataset::Identify;
     poDriver->pfnOpen = JPEGXLDataset::OpenStatic;
