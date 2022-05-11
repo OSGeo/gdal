@@ -51,6 +51,10 @@ NumFOCUS is 501(c)(3) non-profit charity in the United States; as such, donation
 NumFOCUS are tax-deductible as allowed by law. As with any donation, you should
 consult with your personal tax adviser or the IRS about your particular tax situation.
 
+### How to build
+
+See [BUILDING.md](BUILDING.md)
+
 ### How to contribute
 
 See [CONTRIBUTING.md](CONTRIBUTING.md)
