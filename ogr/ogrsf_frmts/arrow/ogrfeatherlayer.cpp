@@ -105,7 +105,7 @@ void OGRFeatherLayer::LoadGeoMetadata(const arrow::KeyValueMetadata* kv_metadata
                 auto oColumns = oRoot.GetObj("columns");
                 if( oColumns.IsValid() )
                 {
-                    for( const auto oColumn: oColumns.GetChildren() )
+                    for( const auto& oColumn: oColumns.GetChildren() )
                     {
                         m_oMapGeometryColumns[oColumn.GetName()] = oColumn;
                     }

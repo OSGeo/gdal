@@ -86,7 +86,7 @@ std::map<std::string, std::unique_ptr<OGRFieldDefn>> OGRArrowLayer::LoadGDALMeta
                 auto oColumns = oRoot.GetObj("columns");
                 if( oColumns.IsValid() )
                 {
-                    for( const auto oColumn: oColumns.GetChildren() )
+                    for( const auto& oColumn: oColumns.GetChildren() )
                     {
                         const auto osName = oColumn.GetName();
                         const auto osType = oColumn.GetString("type");

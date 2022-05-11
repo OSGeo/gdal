@@ -91,7 +91,7 @@ void OGRParquetLayer::LoadGeoMetadata()
                 auto oColumns = oRoot.GetObj("columns");
                 if( oColumns.IsValid() )
                 {
-                    for( const auto oColumn: oColumns.GetChildren() )
+                    for( const auto& oColumn: oColumns.GetChildren() )
                     {
                         m_oMapGeometryColumns[oColumn.GetName()] = oColumn;
                     }
