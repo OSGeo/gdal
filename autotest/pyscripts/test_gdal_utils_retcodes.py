@@ -41,45 +41,23 @@ import pytest
 
 from pathlib import Path
 
-# here = r"D:\code\public\gdal\swig\python\gdal-utils\osgeo_utils"
+# here = r"D:\code\public\gdal\autotest\pyscripts"
+# script_path = r"D:\code\public\gdal\swig\python\gdal-utils\osgeo_utils"
 here = Path(__file__).parent.absolute()
-script_path = '../../swig/python/gdal-utils/osgeo_utils/'
+script_path = Path(here / '../../swig/python/gdal-utils/osgeo_utils/').resolve()
 excludes = ['setup.py', '__init__.py']
-exclude_dirs = ['auxiliary']
-
+exclude_dirs = ['auxiliary'] # aux files are for importing, not running as scripts
 
 if not Path(script_path).exists():
     pytest.skip("Can't find gdal-utils dir, skipping.", allow_module_level=True)
     print("Can't find gdal-utils, skipping.")
 else:
-    scripts = list(Path(script_path).glob("*.py" ))
+    scripts = list(script_path.glob("*.py" ))
+    #todo: add samples dir, remove excludes
 
-
-i = '.' # progress meter step
-results = {}
-for s in scripts:
-    file = Path(s)
-    print(i, end='\r')
-    if 'gdal_auth.py' not in file.name:
-        # skip gdal_auth because it doesn't take inputs
-
-        r = subprocess.run([sys.executable,
-            file],
-            shell=True,
-            capture_output=True,
-            text=True,
-            )
-
-        # (absolute / relative_path) join courtesy of Thierry at https://stackoverflow.com/a/52879083/14420
-        results[Path(here / file).resolve()] = r.returncode
-    i = i+'.'
-
-# sort by return code value and display results
-results = sorted(results.items(), key=lambda x:x[1])
-print('\n')
-[print(x[1], str(x[0])) for x in results]
-
-
+##
+## Standard gdal-utils we expect to be installed in PYTHONHOME\Scripts
+##
 # Skip if gdal-utils is not known to pip (and therefore not registered in
 # python 'site-packages' and 'Scripts')
 installed = subprocess.run([sys.executable, "-m", "pip", "show", "gdal-utils"])
@@ -110,13 +88,24 @@ utils = [
 # https://github.com/pytest-dev/pytest/discussions/9822#discussioncomment-2446025
 params = [pytest.param(util) for util in utils]
 
-
 @pytest.mark.parametrize("input", params)
 def test_program(input):
     completed_process = run_program(input)
     assert (
         "usage:" in completed_process.stderr.lower()
         or "usage:" in completed_process.stdout.lower()
+        and completed_process.returncode == 2
+    )
+
+sparams = [pytest.param(script) for script in scripts]
+    # broken: runs `script.py` instead of `python script.py`
+@pytest.mark.parametrize("input", sparams)
+def test_script(input):
+    completed_process = run_script(input)
+    assert (
+        "usage:" in completed_process.stderr.lower()
+        or "usage:" in completed_process.stdout.lower()
+        and completed_process.returncode == 2
     )
 
 
@@ -128,3 +117,41 @@ def run_program(program, args=None):
         shell=True,
         text=True,
     )
+
+def run_script(program, args=None):
+    return subprocess.run(
+        ['python'],
+        input=args,
+        capture_output=True,
+        shell=True,
+        text=True,
+    )
+
+##
+## Scripts
+##   FIXME: this isn't a pytest. It only works when run as
+##   `python test_gdal_utils_retcodes.py`
+
+i = '.' # progress meter step
+results = {}
+for s in scripts:
+    file = Path(s)
+    print(i, end='\r')
+    if 'gdal_auth.py' not in file.name:
+        # skip gdal_auth because it doesn't take inputs
+
+        r = subprocess.run([sys.executable,
+            file],
+            shell=True,
+            capture_output=True,
+            text=True,
+            )
+
+        # (absolute / relative_path) join courtesy of Thierry at https://stackoverflow.com/a/52879083/14420
+        results[Path(here / file).resolve()] = r.returncode
+    i = i+'.'
+
+# sort by return code value and display results
+results = sorted(results.items(), key=lambda x:x[1])
+print('\n')
+[print(x[1], str(x[0])) for x in results]
