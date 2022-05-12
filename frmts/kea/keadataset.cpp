@@ -59,11 +59,17 @@ GDALDataType KEA_to_GDAL_Type( kealib::KEADataType ekeaType )
         case kealib::kea_32int:
             egdalType = GDT_Int32;
             break;
+        case kealib::kea_64int:
+            egdalType = GDT_Int64;
+            break;
         case kealib::kea_16uint:
             egdalType = GDT_UInt16;
             break;
         case kealib::kea_32uint:
             egdalType = GDT_UInt32;
+            break;
+        case kealib::kea_64uint:
+            egdalType = GDT_UInt64;
             break;
         case kealib::kea_32float:
             egdalType = GDT_Float32;
@@ -93,11 +99,17 @@ kealib::KEADataType GDAL_to_KEA_Type( GDALDataType egdalType )
         case GDT_Int32:
             ekeaType = kealib::kea_32int;
             break;
+        case GDT_Int64:
+            ekeaType = kealib::kea_64int;
+            break;
         case GDT_UInt16:
             ekeaType = kealib::kea_16uint;
             break;
         case GDT_UInt32:
             ekeaType = kealib::kea_32uint;
+            break;
+        case GDT_UInt64:
+            ekeaType = kealib::kea_64uint;
             break;
         case GDT_Float32:
             ekeaType = kealib::kea_32float;
