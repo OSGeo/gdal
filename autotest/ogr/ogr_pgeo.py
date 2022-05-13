@@ -666,6 +666,13 @@ def test_ogr_pgeo_z_m_handling():
 
 def test_ogr_pgeo_read_domains():
     ds = gdal.OpenEx('data/pgeo/domains.mdb', gdal.OF_VECTOR)
+    assert set(ds.GetFieldDomainNames()) == {'range_domain_merge_weighted_average',
+                                             'my coded domain',
+                                             'my integer domain',
+                                             'range_domain',
+                                             'range_domain_merge_sum',
+                                             'range_domain_spit_ratio',
+                                             'split_policy_duplicate'}
 
     with gdaltest.error_handler():
         assert ds.GetFieldDomain('i_dont_exist') is None
@@ -698,6 +705,9 @@ def test_ogr_pgeo_read_domains():
     assert domain.GetFieldSubType() == fld_defn.GetSubType()
     assert domain.GetMinAsDouble() == -5.0
     assert domain.GetMaxAsDouble() == 50.0
+
+    for domain_name in ds.GetFieldDomainNames():
+        assert ds.GetFieldDomain(domain_name) is not None
 
 
 ###############################################################################

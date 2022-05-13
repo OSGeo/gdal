@@ -43,6 +43,7 @@
 #include <limits>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <set>
 #include <string>
 #include <utility>
@@ -53,7 +54,12 @@
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
 #include "cpl_vsi_virtual.h"
+#include "cpl_vsil_curl_class.h"
 
+// To avoid aliasing to GetDiskFreeSpace to GetDiskFreeSpaceA on Windows
+#ifdef GetDiskFreeSpace
+#undef GetDiskFreeSpace
+#endif
 
 CPL_CVSID("$Id$")
 
@@ -564,6 +570,9 @@ int VSIRename( const char * oldpath, const char * newpath )
  *     Only used if NUM_THREADS > 1.
  *     For upload to /vsis3/, this chunk size must be set at least to 5 MB.
  *     The default is 8 MB since GDAL 3.3</li>
+ * <li>x-amz-KEY=value. (GDAL >= 3.5) MIME header to pass during creation of a /vsis3/ object.</li>
+ * <li>x-goog-KEY=value. (GDAL >= 3.5) MIME header to pass during creation of a /vsigs/ object.</li>
+ * <li>x-ms-KEY=value. (GDAL >= 3.5) MIME header to pass during creation of a /vsiaz/ or /vsiadls/ object.</li>
  * </ul>
  * @param pProgressFunc Progress callback, or NULL.
  * @param pProgressData User data of progress callback, or NULL.
@@ -2632,6 +2641,120 @@ const char* VSIGetFileSystemOptions( const char* pszFilename )
 }
 
 /************************************************************************/
+/*                          VSISetCredential()                          */
+/************************************************************************/
+
+static std::mutex oMutexCredentials;
+
+// key is a path prefix
+// value is a map of key, value pair
+static std::map<std::string, std::map<std::string, std::string>> oMapCredentials;
+
+/**
+ * \brief Set a credential (or more generally an option related to a
+ *        virtual file system) for a given path prefix.
+ *
+ * That option may also be set as a configuration option with CPLSetConfigOption(),
+ * but this function allows to specify them with a granularity at the level of a
+ * file path, which makes it easier if using the same virtual file system
+ * but with different credentials
+ * (e.g. different credentials for bucket "/vsis3/foo" and "/vsis3/bar")
+ *
+ * This is supported for the following virtual file systems:
+ * /vsis3/, /vsigs/, /vsiaz/, /vsioss/, /vsiwebhdfs, /vsiswift.
+ * Note: setting them for a path starting with /vsiXXX/ will also apply for
+ * /vsiXXX_streaming/ requests.
+ *
+ * Note that no particular care is taken to store them in RAM in a secure way.
+ * So they might accidentally hit persistent storage if swapping occurs, or someone
+ * with access to the memory allocated by the process may be able to read them.
+ *
+ * @param pszPathPrefix a path prefix of a virtual file system handler.
+ *                      Typically of the form "/vsiXXX/bucket". Must NOT be NULL.
+ * @param pszKey        Option name. Must NOT be NULL.
+ * @param pszValue      Option value. May be NULL to erase it.
+ *
+ * @since GDAL 3.5
+ */
+
+void VSISetCredential( const char* pszPathPrefix, const char* pszKey, const char* pszValue )
+{
+    std::lock_guard<std::mutex> oLock(oMutexCredentials);
+    auto oIter = oMapCredentials.find(pszPathPrefix);
+    CPLString osKey(pszKey);
+    osKey.toupper();
+    if( oIter == oMapCredentials.end() )
+    {
+        if( pszValue != nullptr )
+            oMapCredentials[pszPathPrefix][osKey] = pszValue;
+    }
+    else if( pszValue != nullptr )
+        oIter->second[osKey] = pszValue;
+    else
+        oIter->second.erase(osKey);
+}
+
+/************************************************************************/
+/*                         VSIClearCredentials()                        */
+/************************************************************************/
+
+/**
+ * \brief Clear credentials set with VSISetCredential()
+ *
+ * Note that no particular care is taken to remove them from RAM in a secure way.
+ *
+ * @param pszPathPrefix If set to NULL, all credentials are cleared.
+ *                      If set to not-NULL, only those set with
+ *                      VSISetCredential(pszPathPrefix, ...) will be cleared.
+ *
+ * @since GDAL 3.5
+ */
+void VSIClearCredentials(const char* pszPathPrefix)
+{
+    std::lock_guard<std::mutex> oLock(oMutexCredentials);
+    if( pszPathPrefix == nullptr )
+    {
+        oMapCredentials.clear();
+    }
+    else
+    {
+        oMapCredentials.erase(pszPathPrefix);
+    }
+}
+
+/************************************************************************/
+/*                           VSIGetCredential()                         */
+/************************************************************************/
+
+/**
+ * \brief Get a credential option for a given path.
+ *
+ * If no match occurs, CPLGetConfigOption(pszKey, pszDefault) is returned.
+ *
+ * Mostly to be use by virtual file system implementations.
+ *
+ * @since GDAL 3.5
+ * @see VSISetCredential()
+ */
+const char* VSIGetCredential( const char* pszPath, const char* pszKey,
+                              const char* pszDefault )
+{
+    {
+        std::lock_guard<std::mutex> oLock(oMutexCredentials);
+        for (auto it = oMapCredentials.rbegin(); it != oMapCredentials.rend(); ++it)
+        {
+            if( STARTS_WITH(pszPath, it->first.c_str()) )
+            {
+                auto oIter = it->second.find(CPLString(pszKey).toupper());
+                if( oIter != it->second.end() )
+                    return oIter->second.c_str();
+            }
+        }
+    }
+    return CPLGetConfigOption(pszKey, pszDefault);
+}
+
+/************************************************************************/
 /* ==================================================================== */
 /*                           VSIFileManager()                           */
 /* ==================================================================== */
@@ -2811,6 +2934,10 @@ void VSICleanupFileManager()
         CPLDestroyMutex(hVSIFileManagerMutex);
         hVSIFileManagerMutex = nullptr;
     }
+
+#ifdef HAVE_CURL
+    cpl::VSICURLDestroyCacheFileProp();
+#endif
 }
 
 /************************************************************************/

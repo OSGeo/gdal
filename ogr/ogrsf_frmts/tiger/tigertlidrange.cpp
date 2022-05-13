@@ -34,17 +34,17 @@ CPL_CVSID("$Id$")
 static const char FILE_CODE[] = "R";
 
 static const TigerFieldInfo rtR_2002_fields[] = {
-  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
-  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
-  { "FILE",       'L', 'N', OFTInteger,    6,  10,   5,       1,   1,     1 },
-  { "CENID",      'L', 'A', OFTString,    11,  15,   5,       1,   1,     1 },
-  { "TLMAXID",    'R', 'N', OFTInteger,   16,  25,  10,       1,   1,     1 },
-  { "TLMINID",    'R', 'N', OFTInteger,   26,  35,  10,       1,   1,     1 },
-  { "TLIGHID",    'R', 'N', OFTInteger,   36,  45,  10,       1,   1,     1 },
-  { "TZMAXID",    'R', 'N', OFTInteger,   46,  55,  10,       1,   1,     1 },
-  { "TZMINID",    'R', 'N', OFTInteger,   56,  65,  10,       1,   1,     1 },
-  { "TZHIGHID",   'R', 'N', OFTInteger,   66,  75,  10,       1,   1,     1 },
-  { "FILLER",     'L', 'A', OFTString,    76,  76,   1,       1,   1,     1 },
+  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet
+  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0 },
+  { "FILE",       'L', 'N', OFTInteger,    6,  10,   5,       1,   1 },
+  { "CENID",      'L', 'A', OFTString,    11,  15,   5,       1,   1 },
+  { "TLMAXID",    'R', 'N', OFTInteger,   16,  25,  10,       1,   1 },
+  { "TLMINID",    'R', 'N', OFTInteger,   26,  35,  10,       1,   1 },
+  { "TLIGHID",    'R', 'N', OFTInteger,   36,  45,  10,       1,   1 },
+  { "TZMAXID",    'R', 'N', OFTInteger,   46,  55,  10,       1,   1 },
+  { "TZMINID",    'R', 'N', OFTInteger,   56,  65,  10,       1,   1 },
+  { "TZHIGHID",   'R', 'N', OFTInteger,   66,  75,  10,       1,   1 },
+  { "FILLER",     'L', 'A', OFTString,    76,  76,   1,       1,   1 },
 };
 static const TigerRecordInfo rtR_2002_info =
   {
@@ -54,15 +54,15 @@ static const TigerRecordInfo rtR_2002_info =
   };
 
 static const TigerFieldInfo rtR_fields[] = {
-  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
-  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
-  { "FILE",       'L', 'N', OFTString,     6,  10,   5,       1,   1,     1 },
-  { "STATE",      'L', 'N', OFTInteger,    6,   7,   2,       1,   1,     1 },
-  { "COUNTY",     'L', 'N', OFTInteger,    8,  10,   3,       1,   1,     1 },
-  { "CENID",      'L', 'A', OFTString,    11,  15,   5,       1,   1,     1 },
-  { "MAXID",      'R', 'N', OFTInteger,   16,  25,  10,       1,   1,     1 },
-  { "MINID",      'R', 'N', OFTInteger,   26,  35,  10,       1,   1,     1 },
-  { "HIGHID",     'R', 'N', OFTInteger,   36,  45,  10,       1,   1,     1 }
+  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet
+  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0 },
+  { "FILE",       'L', 'N', OFTString,     6,  10,   5,       1,   1 },
+  { "STATE",      'L', 'N', OFTInteger,    6,   7,   2,       1,   1 },
+  { "COUNTY",     'L', 'N', OFTInteger,    8,  10,   3,       1,   1 },
+  { "CENID",      'L', 'A', OFTString,    11,  15,   5,       1,   1 },
+  { "MAXID",      'R', 'N', OFTInteger,   16,  25,  10,       1,   1 },
+  { "MINID",      'R', 'N', OFTInteger,   26,  35,  10,       1,   1 },
+  { "HIGHID",     'R', 'N', OFTInteger,   36,  45,  10,       1,   1 }
 };
 
 static const TigerRecordInfo rtR_info =

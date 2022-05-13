@@ -173,6 +173,7 @@ void RegisterOGRPG()
     poDriver->SetMetadataItem( GDAL_DCAP_UNIQUE_FIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RENAME_LAYERS, "YES" );
 
     poDriver->pfnOpen = OGRPGDriverOpen;
     poDriver->pfnIdentify = OGRPGDriverIdentify;

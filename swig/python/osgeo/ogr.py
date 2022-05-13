@@ -341,6 +341,8 @@ OLCCurveGeometries = _ogr.OLCCurveGeometries
 
 OLCMeasuredGeometries = _ogr.OLCMeasuredGeometries
 
+OLCRename = _ogr.OLCRename
+
 ODsCCreateLayer = _ogr.ODsCCreateLayer
 
 ODsCDeleteLayer = _ogr.ODsCDeleteLayer
@@ -360,6 +362,10 @@ ODsCRandomLayerRead = _ogr.ODsCRandomLayerRead
 ODsCRandomLayerWrite = _ogr.ODsCRandomLayerWrite
 
 ODsCAddFieldDomain = _ogr.ODsCAddFieldDomain
+
+ODsCDeleteFieldDomain = _ogr.ODsCDeleteFieldDomain
+
+ODsCUpdateFieldDomain = _ogr.ODsCUpdateFieldDomain
 
 ODrCCreateDataSource = _ogr.ODrCCreateDataSource
 
@@ -774,7 +780,7 @@ class DataSource(MajorObject):
         r"""
         GetLayerByName(DataSource self, char const * layer_name) -> Layer
         OGRLayerH
-        OGR_DS_GetLayerByName(OGRDataSourceH hDS, const char *pszName)
+        OGR_DS_GetLayerByName(OGRDataSourceH hDS, const char *pszLayerName)
 
         Fetch a layer by name.
 
@@ -799,7 +805,7 @@ class DataSource(MajorObject):
         r"""
         TestCapability(DataSource self, char const * cap) -> bool
         int
-        OGR_DS_TestCapability(OGRDataSourceH hDS, const char *pszCap)
+        OGR_DS_TestCapability(OGRDataSourceH hDS, const char *pszCapability)
 
         Test if capability is available.
 
@@ -854,7 +860,7 @@ class DataSource(MajorObject):
         review theOGR SQL document. Some drivers (i.e. Oracle and PostGIS)
         pass the SQL directly through to the underlying RDBMS.
 
-        Starting with OGR 1.10, theSQLITE dialect can also be used.
+        TheSQLITE dialect can also be used.
 
         Deprecated Use GDALDatasetExecuteSQL() in GDAL 2.0
 
@@ -863,7 +869,7 @@ class DataSource(MajorObject):
 
         hDS:  handle to the data source on which the SQL query is executed.
 
-        pszSQLCommand:  the SQL statement to execute.
+        pszStatement:  the SQL statement to execute.
 
         hSpatialFilter:  handle to a geometry which represents a spatial
         filter. Can be NULL.
@@ -871,11 +877,10 @@ class DataSource(MajorObject):
         pszDialect:  allows control of the statement dialect. If set to NULL,
         the OGR SQL engine will be used, except for RDBMS drivers that will
         use their dedicated SQL engine, unless OGRSQL is explicitly passed as
-        the dialect. Starting with OGR 1.10, the SQLITE dialect can also be
-        used.
+        the dialect. The SQLITE dialect can also be used.
 
-        a handle to a OGRLayer containing the results of the query.
-        Deallocate with OGR_DS_ReleaseResultSet(). 
+        a handle to a OGRLayer containing the results of the query. Deallocate
+        with OGR_DS_ReleaseResultSet(). 
         """
         return _ogr.DataSource_ExecuteSQL(self, *args, **kwargs)
 
@@ -1019,6 +1024,10 @@ class Layer(MajorObject):
     def __init__(self, *args, **kwargs):
         raise AttributeError("No constructor defined")
     __repr__ = _swig_repr
+
+    def Rename(self, *args):
+        r"""Rename(Layer self, char const * new_name) -> OGRErr"""
+        return _ogr.Layer_Rename(self, *args)
 
     def GetRefCount(self, *args):
         r"""
@@ -2170,6 +2179,8 @@ class Layer(MajorObject):
         Parameters:
         -----------
 
+        hLayer:  handle to the layer
+
         papszFields:  an array of field names terminated by NULL item. If NULL
         is passed, the ignored list is cleared.
 
@@ -2796,8 +2807,7 @@ class Feature(object):
 
         hFeat:  handle to the feature to get the feature definition from.
 
-        a handle to the feature definition object on which feature depends.
-
+        a handle to the feature definition object on which feature depends. 
         """
         return _ogr.Feature_GetDefnRef(self, *args)
 
@@ -3067,8 +3077,8 @@ class Feature(object):
 
         i:  the field to fetch, from 0 to GetFieldCount()-1.
 
-        a handle to the field definition (from the OGRFeatureDefn). This is
-        an internal reference, and should not be deleted or modified. 
+        a handle to the field definition (from the OGRFeatureDefn). This is an
+        internal reference, and should not be deleted or modified. 
         """
         return _ogr.Feature_GetFieldDefnRef(self, *args)
 
@@ -3114,8 +3124,8 @@ class Feature(object):
 
         i:  the field to fetch, from 0 to GetGeomFieldCount()-1.
 
-        a handle to the field definition (from the OGRFeatureDefn). This is
-        an internal reference, and should not be deleted or modified.
+        a handle to the field definition (from the OGRFeatureDefn). This is an
+        internal reference, and should not be deleted or modified.
 
         GDAL 1.11 
         """
@@ -4320,6 +4330,8 @@ class Feature(object):
             return None
         fld_type = self.GetFieldType(fld_index)
         if fld_type == OFTInteger:
+            if self.GetFieldDefnRef(fld_index).GetSubType() == OFSTBoolean:
+                return bool(self.GetFieldAsInteger(fld_index))
             return self.GetFieldAsInteger(fld_index)
         if fld_type == OFTInteger64:
             return self.GetFieldAsInteger64(fld_index)
@@ -4328,7 +4340,10 @@ class Feature(object):
         if fld_type == OFTStringList:
             return self.GetFieldAsStringList(fld_index)
         if fld_type == OFTIntegerList:
-            return self.GetFieldAsIntegerList(fld_index)
+            ret = self.GetFieldAsIntegerList(fld_index)
+            if self.GetFieldDefnRef(fld_index).GetSubType() == OFSTBoolean:
+                 ret = [bool(x) for x in ret]
+            return ret
         if fld_type == OFTInteger64List:
             return self.GetFieldAsInteger64List(fld_index)
         if fld_type == OFTRealList:
@@ -5329,7 +5344,7 @@ class FieldDefn(object):
 
         Even if this method returns FALSE (i.e not-nullable field), it doesn't
         mean that OGRFeature::IsFieldSet() will necessary return TRUE, as
-        fields can be temporary unset and null /not-null validation is usually
+        fields can be temporary unset and null/not-null validation is usually
         done when OGRLayer::CreateFeature()/SetFeature() is called.
 
         This method is the same as the C++ method OGRFieldDefn::IsNullable().
@@ -5513,11 +5528,54 @@ class FieldDefn(object):
         return _ogr.FieldDefn_IsDefaultDriverSpecific(self, *args)
 
     def GetDomainName(self, *args):
-        r"""GetDomainName(FieldDefn self) -> char const *"""
+        r"""
+        GetDomainName(FieldDefn self) -> char const *
+        const char*
+        OGR_Fld_GetDomainName(OGRFieldDefnH hDefn)
+
+        Return the name of the field domain for this field.
+
+        By default, none (empty string) is returned.
+
+        Field domains ( OGRFieldDomain class) are attached at the GDALDataset
+        level and should be retrieved with GDALDatasetGetFieldDomain().
+
+        This method is the same as the C++ method
+        OGRFieldDefn::GetDomainName().
+
+        Parameters:
+        -----------
+
+        hDefn:  handle to the field definition
+
+        the field domain name, or an empty string if there is none.
+
+        GDAL 3.3 
+        """
         return _ogr.FieldDefn_GetDomainName(self, *args)
 
     def SetDomainName(self, *args):
-        r"""SetDomainName(FieldDefn self, char const * name)"""
+        r"""
+        SetDomainName(FieldDefn self, char const * name)
+        void
+        OGR_Fld_SetDomainName(OGRFieldDefnH hDefn, const char *pszFieldName)
+
+        Set the name of the field domain for this field.
+
+        Field domains ( OGRFieldDomain) are attached at the GDALDataset level.
+
+        This method is the same as the C++ method
+        OGRFieldDefn::SetDomainName().
+
+        Parameters:
+        -----------
+
+        hDefn:  handle to the field definition
+
+        pszFieldName:  Field domain name.
+
+        GDAL 3.3 
+        """
         return _ogr.FieldDefn_SetDomainName(self, *args)
 
     width = property(GetWidth, SetWidth)
@@ -5726,7 +5784,7 @@ class Geometry(object):
 
     def ExportToWkb(self, *args, **kwargs):
         r"""
-        ExportToWkb(Geometry self, OGRwkbByteOrder byte_order=wkbXDR) -> OGRErr
+        ExportToWkb(Geometry self, OGRwkbByteOrder byte_order=wkbNDR) -> OGRErr
         OGRErr
         OGR_G_ExportToWkb(OGRGeometryH hGeom, OGRwkbByteOrder eOrder, unsigned
         char *pabyDstBuffer)
@@ -5762,7 +5820,7 @@ class Geometry(object):
 
     def ExportToIsoWkb(self, *args, **kwargs):
         r"""
-        ExportToIsoWkb(Geometry self, OGRwkbByteOrder byte_order=wkbXDR) -> OGRErr
+        ExportToIsoWkb(Geometry self, OGRwkbByteOrder byte_order=wkbNDR) -> OGRErr
         OGRErr
         OGR_G_ExportToIsoWkb(OGRGeometryH hGeom, OGRwkbByteOrder eOrder,
         unsigned char *pabyDstBuffer)
@@ -5853,8 +5911,8 @@ class Geometry(object):
 
         hGeom:  handle on the geometry to clone from.
 
-        a handle on the copy of the geometry with the spatial reference
-        system as the original. 
+        a handle on the copy of the geometry with the spatial reference system
+        as the original. 
         """
         return _ogr.Geometry_Clone(self, *args)
 
@@ -6217,7 +6275,30 @@ class Geometry(object):
         return _ogr.Geometry_MakeValid(self, *args)
 
     def Normalize(self, *args):
-        r"""Normalize(Geometry self) -> Geometry"""
+        r"""
+        Normalize(Geometry self) -> Geometry
+        OGRGeometryH
+        OGR_G_Normalize(OGRGeometryH hGeom)
+
+        Attempts to bring geometry into normalized/canonical form.
+
+        This function is the same as the C++ method OGRGeometry::Normalize().
+
+        This function is built on the GEOS library; check it for the
+        definition of the geometry operation. If OGR is built without the GEOS
+        library, this function will always fail, issuing a CPLE_NotSupported
+        error.
+
+        Parameters:
+        -----------
+
+        hGeom:  The Geometry to normalize.
+
+        a newly allocated geometry now owned by the caller, or NULL on
+        failure.
+
+        GDAL 3.3 
+        """
         return _ogr.Geometry_Normalize(self, *args)
 
     def RemoveLowerDimensionSubGeoms(self, *args):
@@ -7150,6 +7231,8 @@ class Geometry(object):
         This function relates to the SFCOM IWks::WkbSize() method.
 
         This function is the same as the CPP method OGRGeometry::WkbSize().
+
+        Use OGR_G_WkbSizeEx() if called on huge geometries (> 2 GB serialized)
 
         Parameters:
         -----------

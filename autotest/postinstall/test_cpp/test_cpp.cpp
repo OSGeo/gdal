@@ -4,7 +4,9 @@
 #include <gdal.h>
 
 /* C++ API */
-#include <cpl_odbc.h>
+#ifdef USE_ODBC
+#  include <cpl_odbc.h>
+#endif
 #include <cpl_vsi_virtual.h>
 #include <ogr_geometry.h>
 

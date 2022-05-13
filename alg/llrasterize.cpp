@@ -70,7 +70,7 @@ CPL_CVSID("$Id$")
  * http://www.boutell.com/gd/
  *
  * It was later adapted for direct inclusion in GDAL and relicensed under
- * the GDAL MIT/X license (pulled from the OpenEV distribution).
+ * the GDAL MIT license (pulled from the OpenEV distribution).
  */
 
 void GDALdllImageFilledPolygon(int nRasterXSize, int nRasterYSize,

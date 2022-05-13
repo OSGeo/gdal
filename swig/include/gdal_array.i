@@ -401,18 +401,22 @@ static GDALDataType NumpyTypeToGDALType(PyArrayObject *psArray)
       case NPY_FLOAT:
         return GDT_Float32;
 
-      case NPY_INT:
-      case NPY_LONG:
+      case NPY_INT32:
         return GDT_Int32;
 
-      case NPY_UINT:
-      case NPY_ULONG:
+      case NPY_UINT32:
         return GDT_UInt32;
 
-      case NPY_SHORT:
+      case NPY_INT64:
+        return GDT_Int64;
+
+      case NPY_UINT64:
+        return GDT_UInt64;
+
+      case NPY_INT16:
         return GDT_Int16;
 
-      case NPY_USHORT:
+      case NPY_UINT16:
         return GDT_UInt16;
 
       case NPY_BYTE:
@@ -1007,6 +1011,8 @@ static bool CheckNumericDataType(GDALExtendedDataTypeHS* dt)
         case GDT_UInt16: numpytype = NPY_UINT16; break;
         case GDT_Int32: numpytype = NPY_INT32; break;
         case GDT_UInt32: numpytype = NPY_UINT32; break;
+        case GDT_Int64: numpytype = NPY_INT64; break;
+        case GDT_UInt64: numpytype = NPY_UINT64; break;
         case GDT_Float32: numpytype = NPY_FLOAT32; break;
         case GDT_Float64: numpytype = NPY_FLOAT64; break;
         //case GDT_CInt16: numpytype = NPY_INT16; break;
@@ -1344,6 +1350,8 @@ codes = {gdalconst.GDT_Byte: numpy.uint8,
          gdalconst.GDT_Int16: numpy.int16,
          gdalconst.GDT_UInt32: numpy.uint32,
          gdalconst.GDT_Int32: numpy.int32,
+         gdalconst.GDT_UInt64: numpy.uint64,
+         gdalconst.GDT_Int64: numpy.int64,
          gdalconst.GDT_Float32: numpy.float32,
          gdalconst.GDT_Float64: numpy.float64,
          gdalconst.GDT_CInt16: numpy.complex64,

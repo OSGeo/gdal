@@ -16,59 +16,60 @@ GDAL_ROOT	=	..\..
 OBJ	=	Packer_RLE.obj Tif_band.obj PNG_band.obj JPEG_band.obj JPNG_band.obj\
     mrf_band.obj mrf_overview.obj mrf_util.obj marfa_dataset.obj
 
-PLUGIN_DLL =	gdal_mrf.dll
 
-EXTRAFLAGS = $(EXTRAFLAGS) $(ZSTD_CFLAGS)
+# Internal libraries
 
-# MRF Lerc support only possible for internal LercLib since it requires Lerc2.h
 !IF "$(HAVE_LERC)" == "internal"
 LERC1 = Lerc1Image.obj
-EXTRAFLAGS	= -DLERC -ILERCV1 -I../../third_party/LercLib $(EXTRAFLAGS)
 OBJ = $(LERC1) LERC_Band.obj $(OBJ)
+EXTRAFLAGS = -I../../third_party/LercLib -DLERC -ILERCV1 $(EXTRAFLAGS)
 !ENDIF
 
-!IFDEF ZSTD_CFLAGS
-EXTRAFLAGS = -DZSTD_SUPPORT $(EXTRAFLAGS) 
-!ENDIF
-
-# Brotli is needed for brunsli
-!IFDEF BRUNSLI_DIR
-!IFDEF BROTLI_DIR
-EXTRAFLAGS = $(EXTRAFLAGS) -DBRUNSLI -I$(BRUNSLI_INC)
-EXTRA_LINK_FLAGS = $(EXTRA_LINK_FLAGS) $(BRUNSLI_LIB)
-!ENDIF
-!ENDIF
-
-!IFDEF JPEG_EXTERNAL_LIB
-EXTRAFLAGS =	-I$(JPEGDIR) $(EXTRAFLAGS)
-!ELSE
-
-EXTRAFLAGS =	/wd4611 -I../jpeg/libjpeg $(JPEG12_FLAGS) $(EXTRAFLAGS)
-EXTRA_LINK_FLAGS =  $(EXTRA_LINK_FLAGS) ../jpeg/libjpeg/libjpeg.lib
-
-# Only consider 12bit JPEG when using internal JPEG
+!IF DEFINED(JPEG_SUPPORTED) && !DEFINED(JPEG_EXTERNAL_LIB)
+EXTRAFLAGS = /wd4611 -I../jpeg/libjpeg $(JPEG12_FLAGS) $(EXTRAFLAGS)
 !IFDEF JPEG12_SUPPORTED
 OBJ	=	$(OBJ) JPEG12_band.obj
 EXTRAFLAGS	= -DJPEG12_SUPPORTED $(EXTRAFLAGS)
-EXTRA_LINK_FLAGS =  $(EXTRA_LINK_FLAGS) ../jpeg/libjpeg12/libjpeg12.lib
+!ENDIF
 !ENDIF
 
+!IFNDEF ZLIB_EXTERNAL_LIB
+EXTRAFLAGS = -I../zlib $(EXTRAFLAGS)
+!ENDIF
+
+!IFNDEF PNG_EXTERNAL_LIB
+EXTRAFLAGS = /wd4611 -I../png/libpng -DINTERNAL_PNG $(EXTRAFLAGS)
+!ENDIF
+
+
+# External libraries
+
+!IF "$(HAVE_LERC)" == "external"
+LERC1 = Lerc1Image.obj
+OBJ = $(LERC1) LERC_Band.obj $(OBJ)
+EXTRAFLAGS = -DLERC -ILERCV1 $(EXTRAFLAGS) -I$(LERC_INCLUDE)
+!ENDIF
+
+!IFDEF JPEG_EXTERNAL_LIB
+EXTRAFLAGS = $(EXTRAFLAGS) -I$(JPEGDIR)
 !ENDIF
 
 !IFDEF ZLIB_EXTERNAL_LIB
-EXTRAFLAGS = $(ZLIB_INC) $(EXTRAFLAGS)
-EXTRA_LINK_FLAGS = $(EXTRA_LINK_FLAGS) $(ZLIB_LIB)
-!ELSE
-EXTRAFLAGS = -I../zlib $(EXTRAFLAGS)
-EXTRA_LINK_FLAGS = $(EXTRA_LINK_FLAGS) ../zlib/libz.lib
+EXTRAFLAGS = $(EXTRAFLAGS) $(ZLIB_INC)
 !ENDIF
 
 !IFDEF PNG_EXTERNAL_LIB
-EXTRAFLAGS = 	 -I$(PNGDIR) $(EXTRAFLAGS)
-!ELSE
-EXTRAFLAGS = 	/wd4611 -I../png/libpng -DINTERNAL_PNG $(EXTRAFLAGS)
+EXTRAFLAGS = $(EXTRAFLAGS) -I$(PNGDIR)
 !ENDIF
-EXTRA_LINK_FLAGS =  $(EXTRA_LINK_FLAGS) ../png/libpng/libpng.lib
+
+!IFDEF ZSTD_CFLAGS
+EXTRAFLAGS = $(EXTRAFLAGS) -DZSTD_SUPPORT $(ZSTD_CFLAGS)
+!ENDIF
+
+!IFDEF BRUNSLI_DIR
+EXTRAFLAGS = $(EXTRAFLAGS) -DBRUNSLI -I$(BRUNSLI_INC)
+!ENDIF
+
 
 default:	$(OBJ)
 	xcopy /D  /Y *.obj ..\o
@@ -94,27 +95,3 @@ clean:
 	nmake /f makefile.vc clean
 	cd ..
 !ENDIF
-
-#
-# Building the MRF as a windows plugin works only then the internal jpeg and png are used
-# It also requires these custom steps:
-#
-# - building static libraries:
-#	../jpeg/jpeglib/libjpeg.lib
-#	Optional ../jpeg/jpeglib12/libjpeg12.lib
-#	../zlib/libz.lib
-#	../png/libpng/libpng.lib
-#
-# - exporting the GDALRegenerateOverviewsMultiBand by marking it CPL_DLL in gdal_priv.h
-#
-#
-
-plugin:	$(PLUGIN_DLL)
-
-$(PLUGIN_DLL): $(OBJ)
-	link /dll $(LDEBUG) /out:$(PLUGIN_DLL) $(OBJ) $(GDALLIB) $(EXTRA_LINK_FLAGS)
-	if exist $(PLUGIN_DLL).manifest mt -manifest $(PLUGIN_DLL).manifest -outputresource:$(PLUGIN_DLL);2
-
-plugin-install:
-	-mkdir $(PLUGINDIR)
-	$(INSTALL) $(PLUGIN_DLL) $(PLUGINDIR)

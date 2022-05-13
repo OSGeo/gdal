@@ -11,7 +11,14 @@ and has been extensively tested for over 15 years.
 http://www.libpng.org
 
 
-GDAL changes (stored in libpng_gdal.patch)
+GDAL changes
 ------------
 
-* Make screwy MSPaint "zero chunks" only a warning, not error. See r18808 and #3416
+* Make screwy MSPaint "zero chunks" only a warning, not error. See r18808 and #3416 (stored in libpng_gdal.patch)
+* Modification of pnglibconf.h to allow rename symbols (sorted in pnglibconf.h.patch)
+
+Other changes
+-------------
+
+* Fix for https://bugs.launchpad.net/ubuntu/+source/libpng1.6/+bug/1960326 / https://github.com/glennrp/libpng/commit/eb6767273a4eb5d6f4ad528370d7262cf7aa220c: png_handle_eXIf_memleak_fix.patch
+

@@ -1531,7 +1531,7 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
 /************************************************************************/
 
 GDALDataset *HKVDataset::Create( const char * pszFilenameIn,
-                                 int nXSize, int nYSize, int nBands,
+                                 int nXSize, int nYSize, int nBandsIn,
                                  GDALDataType eType,
                                  char ** /* papszParamList */ )
 
@@ -1539,10 +1539,10 @@ GDALDataset *HKVDataset::Create( const char * pszFilenameIn,
 /* -------------------------------------------------------------------- */
 /*      Verify input options.                                           */
 /* -------------------------------------------------------------------- */
-    if (nBands <= 0)
+    if (nBandsIn <= 0)
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "HKV driver does not support %d bands.", nBands );
+                  "HKV driver does not support %d bands.", nBandsIn );
         return nullptr;
     }
 
@@ -1597,7 +1597,7 @@ GDALDataset *HKVDataset::Create( const char * pszFilenameIn,
 /* -------------------------------------------------------------------- */
     CPLErr CEHeaderCreated
         = SaveHKVAttribFile( pszFilenameIn, nXSize, nYSize,
-                             nBands, eType, FALSE, 0.0 );
+                             nBandsIn, eType, FALSE, 0.0 );
 
     if (CEHeaderCreated != CE_None )
         return nullptr;

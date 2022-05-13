@@ -347,21 +347,23 @@ def test_tiff_ovr_9(both_endian):
         ds.BuildOverviews('AVERAGE', overviewlist=[2])
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    exp_cs = 5562
+    exp_cs_list = (5562,
+                   5635,
+                   5601, # libjpeg 9e
+                  )
 
     ds = None
 
-    assert cs == exp_cs or cs == 5635, 'got wrong overview checksum.'
+    assert cs in exp_cs_list
 
     # Re-check after dataset reopening
     ds = gdal.Open('tmp/ovr9.tif', gdal.GA_ReadOnly)
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    exp_cs = 5562
 
     ds = None
 
-    assert cs == exp_cs or cs == 5635, 'got wrong overview checksum.'
+    assert cs in exp_cs_list
 
 ###############################################################################
 # Similar to tiff_ovr_9 but with internal overviews.
@@ -386,11 +388,13 @@ def test_tiff_ovr_10(both_endian):
     assert ds is not None, 'Failed to open copy of test dataset.'
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    exp_cs = 5562
 
     ds = None
 
-    assert cs == exp_cs or cs == 5635, 'got wrong overview checksum.'
+    assert cs in (5562,
+                  5635,
+                  5601, # libjpeg 9e
+                 )
 
 ###############################################################################
 # Overview on a dataset with NODATA_VALUES
@@ -1009,14 +1013,14 @@ def test_tiff_ovr_32(both_endian):
     ds.BuildOverviews('cubic', overviewlist=[2, 5])
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    expected_cs = 21656
-    assert cs == expected_cs, \
-        ('Checksum is %d. Expected checksum is %d for overview 0.' % (cs, expected_cs))
+    expected_cs_band1_overview0 = 21296
+    assert cs == expected_cs_band1_overview0, \
+        ('Checksum is %d. Expected checksum is %d for overview 0.' % (cs, expected_cs_band1_overview0))
 
     cs = ds.GetRasterBand(3).GetOverview(1).Checksum()
-    expected_cs = 2132
-    assert cs == expected_cs, \
-        ('Checksum is %d. Expected checksum is %d for overview 1.' % (cs, expected_cs))
+    expected_cs_band3_overview1 = 1994
+    assert cs == expected_cs_band3_overview1, \
+        ('Checksum is %d. Expected checksum is %d for overview 1.' % (cs, expected_cs_band3_overview1))
 
     ds = None
 
@@ -1055,14 +1059,12 @@ def test_tiff_ovr_32(both_endian):
     ds.BuildOverviews('cubic', overviewlist=[2, 5])
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    expected_cs = 21656
-    assert cs == expected_cs, \
-        ('Checksum is %d. Expected checksum is %d for overview 0.' % (cs, expected_cs))
+    assert cs == expected_cs_band1_overview0, \
+        ('Checksum is %d. Expected checksum is %d for overview 0.' % (cs, expected_cs_band1_overview0))
 
     cs = ds.GetRasterBand(3).GetOverview(1).Checksum()
-    expected_cs = 2132
-    assert cs == expected_cs, \
-        ('Checksum is %d. Expected checksum is %d for overview 1.' % (cs, expected_cs))
+    assert cs == expected_cs_band3_overview1, \
+        ('Checksum is %d. Expected checksum is %d for overview 1.' % (cs, expected_cs_band3_overview1))
 
     ds = None
 
@@ -1339,6 +1341,7 @@ def test_tiff_ovr_42(both_endian):
 # jpeg-in-tiff (#3539)
 
 
+@pytest.mark.skipif('SKIP_TIFF_JPEG12' in os.environ, reason='Crashes on build-windows-msys2-mingw')
 def test_tiff_ovr_43(both_endian):
 
     md = gdaltest.tiff_drv.GetMetadata()
@@ -2180,6 +2183,47 @@ def test_tiff_ovr_fallback_to_multiband_overview_generate():
     ds = None
 
     gdal.GetDriverByName('GTiff').Delete(filename)
+
+
+###############################################################################
+
+
+def test_tiff_ovr_int64():
+
+    temp_path = '/vsimem/test.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(temp_path, 2, 1, 1, gdal.GDT_Int64)
+    ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1,
+                                    struct.pack('q' * 2, -10000000000, -10000000000))
+    del ds
+    ds = gdal.OpenEx(temp_path, gdal.GA_ReadOnly)
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Int64
+    assert ds.BuildOverviews('nearest', overviewlist=[2]) == 0
+    del ds
+    ds = gdal.OpenEx(temp_path, gdal.GA_ReadOnly)
+    assert struct.unpack('q', ds.GetRasterBand(1).GetOverview(0).ReadRaster()) == (-10000000000,)
+    del ds
+    gdal.GetDriverByName('GTiff').Delete(temp_path)
+
+
+###############################################################################
+
+
+def test_tiff_ovr_uint64():
+
+    temp_path = '/vsimem/test.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(temp_path, 2, 1, 1, gdal.GDT_UInt64)
+    ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1,
+                                    struct.pack('Q' * 2, 10000000000, 10000000000))
+    del ds
+    ds = gdal.OpenEx(temp_path, gdal.GA_ReadOnly)
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt64
+    assert ds.BuildOverviews('nearest', overviewlist=[2]) == 0
+    del ds
+    ds = gdal.OpenEx(temp_path, gdal.GA_ReadOnly)
+    assert struct.unpack('Q', ds.GetRasterBand(1).GetOverview(0).ReadRaster()) == (10000000000,)
+    del ds
+    gdal.GetDriverByName('GTiff').Delete(temp_path)
+
 
 ###############################################################################
 # Cleanup

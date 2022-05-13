@@ -39,19 +39,13 @@ CPL_CVSID("$Id$")
 static int OGRPGeoDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
-    if (STARTS_WITH_CI(poOpenInfo->pszFilename, "WALK:")
-        || STARTS_WITH_CI(poOpenInfo->pszFilename, "GEOMEDIA:"))
-    {
-        return FALSE;
-    }
-
     if( STARTS_WITH_CI(poOpenInfo->pszFilename, "PGEO:") )
         return TRUE;
 
     if( !EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"mdb") )
         return FALSE;
 
-    // Could potentially be a PGeo, Walk, Geomedia or generic ODBC database
+    // Could potentially be a PGeo or generic ODBC database
     return -1;
 }
 
@@ -101,6 +95,7 @@ void RegisterOGRPGeo()
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "mdb" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/pgeo.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_FIELD_DOMAINS, "YES" );
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, "<OpenOptionList>"
 "  <Option name='LIST_ALL_TABLES' type='string-select' scope='vector' description='Whether all tables, including system and internal tables (such as GDB_* tables) should be listed' default='NO'>"

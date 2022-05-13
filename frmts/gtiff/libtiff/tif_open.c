@@ -482,8 +482,6 @@ TIFFClientOpen(
 			 * Setup initial directory.
 			 */
 			if (TIFFReadDirectory(tif)) {
-				tif->tif_rawcc = (tmsize_t)-1;
-				tif->tif_flags |= TIFF_BUFFERSETUP;
 				return (tif);
 			}
 			break;
@@ -668,6 +666,15 @@ int
 TIFFIsBigEndian(TIFF* tif)
 {
 	return (tif->tif_header.common.tiff_magic == TIFF_BIGENDIAN);
+}
+
+/*
+ * Return nonzero if given file is BigTIFF style.
+ */
+int
+TIFFIsBigTIFF(TIFF *tif)
+{
+	return (tif->tif_header.common.tiff_version == TIFF_VERSION_BIG);
 }
 
 /*

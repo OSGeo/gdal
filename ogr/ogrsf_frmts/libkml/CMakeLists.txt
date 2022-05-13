@@ -17,4 +17,4 @@ add_gdal_driver(
           ogrlibkmlfield.cpp
           PLUGIN_CAPABLE)
 gdal_standard_includes(ogr_LIBKML)
-gdal_target_link_libraries(TARGET ogr_LIBKML LIBRARIES LIBKML::LibKML LIBKML::DOM LIBKML::ENGINE)
+gdal_target_link_libraries(ogr_LIBKML PRIVATE LIBKML::LibKML LIBKML::DOM LIBKML::ENGINE)

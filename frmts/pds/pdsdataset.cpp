@@ -85,12 +85,12 @@ class PDSDataset final: public RawDataset
 
     void        ParseSRS();
     int         ParseCompressedImage();
-    int         ParseImage( CPLString osPrefix, CPLString osFilenamePrefix );
+    int         ParseImage( const CPLString& osPrefix, const CPLString& osFilenamePrefix );
     static void        CleanString( CPLString &osInput );
 
-    const char *GetKeyword( std::string osPath,
+    const char *GetKeyword( const std::string& osPath,
                             const char *pszDefault = "");
-    const char *GetKeywordSub( std::string osPath,
+    const char *GetKeywordSub( const std::string& osPath,
                                int iSubscript,
                                const char *pszDefault = "");
     const char *GetKeywordUnit( const char *pszPath,
@@ -733,7 +733,7 @@ static GUInt32 PDSConvertFromHex(const char* pszVal)
 /*                             ParseImage()                             */
 /************************************************************************/
 
-int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
+int PDSDataset::ParseImage( const CPLString& osPrefix, const CPLString& osFilenamePrefix )
 {
 /* ------------------------------------------------------------------- */
 /*      We assume the user is pointing to the label (i.e. .lbl) file.  */
@@ -1218,7 +1218,7 @@ class PDSWrapperRasterBand final: public GDALProxyRasterBand
   GDALRasterBand* poBaseBand;
 
   protected:
-    virtual GDALRasterBand* RefUnderlyingRasterBand() override { return poBaseBand; }
+    virtual GDALRasterBand* RefUnderlyingRasterBand() const override { return poBaseBand; }
 
   public:
     explicit PDSWrapperRasterBand( GDALRasterBand* poBaseBandIn )
@@ -1443,7 +1443,7 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*                             GetKeyword()                             */
 /************************************************************************/
 
-const char *PDSDataset::GetKeyword( std::string osPath,
+const char *PDSDataset::GetKeyword( const std::string& osPath,
                                     const char *pszDefault )
 
 {
@@ -1454,7 +1454,7 @@ const char *PDSDataset::GetKeyword( std::string osPath,
 /*                            GetKeywordSub()                           */
 /************************************************************************/
 
-const char *PDSDataset::GetKeywordSub( std::string osPath,
+const char *PDSDataset::GetKeywordSub( const std::string& osPath,
                                        int iSubscript,
                                        const char *pszDefault )
 

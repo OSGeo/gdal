@@ -981,7 +981,7 @@ CPLErr GRIBRasterBand::IReadBlock( int /* nBlockXOff */,
            (nCopyWords - nSplitAndSwapColumn) * sizeof(double));
 
     if (nSplitAndSwapColumn > 0)
-        memcpy(reinterpret_cast<void*>(reinterpret_cast<double*>(pImage) + nSplitAndSwapColumn),
+        memcpy(reinterpret_cast<void*>(reinterpret_cast<double*>(pImage) + nCopyWords - nSplitAndSwapColumn),
             m_Grib_Data + static_cast<size_t>(nGribDataXSize) * (nGribDataYSize - nBlockYOff - 1),
             nSplitAndSwapColumn * sizeof(double));
 
@@ -2181,7 +2181,8 @@ GDALDataset *GRIBDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
     VSIFSeekL(poShared->m_fp, 0, SEEK_SET);
 
     // Contains an GRIB2 message inventory of the file.
-    auto pInventories = Inventory(poShared->m_fp, poOpenInfo);
+    // We can't use the potential .idx file
+    auto pInventories = cpl::make_unique<InventoryWrapperGrib>(poShared->m_fp);
 
     if( pInventories->result() <= 0 )
     {
@@ -2235,27 +2236,11 @@ GDALDataset *GRIBDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
         }
         psInv->start += nOffsetFirstMessage;
 
-        bool bNewArray = false;
-        if( osElement.empty() )
-        {
-            bNewArray = true;
-        }
-        else
-        {
-            if( osElement != psInv->element ||
-                osShortFstLevel != psInv->shortFstLevel ||
-                !((dfRefTime == psInv->refTime && dfForecastTime != psInv->foreSec) ||
-                  (dfRefTime != psInv->refTime && dfForecastTime == psInv->foreSec)) )
-            {
-                bNewArray = true;
-            }
-            else
-            {
-                poArray->ExtendTimeDim(psInv->start, psInv->subgNum, psInv->validTime);
-            }
-        }
-
-        if (bNewArray)
+        if( poArray == nullptr ||
+            osElement != psInv->element ||
+            osShortFstLevel != psInv->shortFstLevel ||
+            !((dfRefTime == psInv->refTime && dfForecastTime != psInv->foreSec) ||
+              (dfRefTime != psInv->refTime && dfForecastTime == psInv->foreSec)) )
         {
             if( poArray)
             {
@@ -2292,6 +2277,7 @@ GDALDataset *GRIBDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
             // the first GRIB band.
             poDS->SetGribMetaData(metaData);
 
+            // coverity[tainted_data]
             GRIBRasterBand gribBand(poDS, bandNr, psInv);
             if( psInv->GribVersion == 2 )
                 gribBand.FindPDSTemplate();
@@ -2315,6 +2301,10 @@ GDALDataset *GRIBDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
 
             MetaFree(metaData);
             delete metaData;
+        }
+        else
+        {
+            poArray->ExtendTimeDim(psInv->start, psInv->subgNum, psInv->validTime);
         }
     }
 
@@ -2591,7 +2581,7 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
         if ((rMinX + rPixelSizeX >= 180 || rMaxX - rPixelSizeX >= 180) &&
             CPLTestBool(CPLGetConfigOption("GRIB_ADJUST_LONGITUDE_RANGE", "YES")) )
         {
-            if (rPixelSizeX * nRasterXSize > 360)
+            if (rPixelSizeX * nRasterXSize > 360 + rPixelSizeX/4)
                 CPLDebug("GRIB",
                     "Cannot properly handle GRIB2 files with overlaps and 0-360 longitudes");
             else if (fabs(360 - rPixelSizeX * nRasterXSize) < rPixelSizeX/4 &&

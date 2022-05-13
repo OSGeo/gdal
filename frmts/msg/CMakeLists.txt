@@ -14,13 +14,19 @@ add_gdal_driver(
           xritheaderparser.h
           PLUGIN_CAPABLE)
 gdal_standard_includes(gdal_MSG)
-target_compile_definitions(gdal_MSG PRIVATE -DDO_NOT_USE_DEBUG_BOOL)
+
+set(PUBLICDECOMPWT_URL
+    "https://gitlab.eumetsat.int/open-source/PublicDecompWT.git"
+    CACHE STRING "URL of EUMETSAT PublicDecompWT repository")
+set(PUBLICDECOMPWT_TAG
+    "ef59964488026c88734ff7337eaff365d0467e57"
+    CACHE STRING "Tag/hash of EUMETSAT PublicDecompWT repository")
 
 include(ExternalProject)
 ExternalProject_Add(
   PublicDecompWT
-  GIT_REPOSITORY "https://gitlab.eumetsat.int/open-source/PublicDecompWT.git"
-  GIT_TAG "ef59964488026c88734ff7337eaff365d0467e57"
+  GIT_REPOSITORY "${PUBLICDECOMPWT_URL}"
+  GIT_TAG "${PUBLICDECOMPWT_TAG}"
   SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/PublicDecompWT"
   CONFIGURE_COMMAND ${CMAKE_COMMAND} "-DBINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}" "-DIS_WIN32=${WIN32}" -P
                     "${CMAKE_CURRENT_SOURCE_DIR}/generate_PublicDecompWT_all.h.cmake"

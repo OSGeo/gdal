@@ -46,6 +46,7 @@ class OGRODBCLayer CPL_NON_FINAL: public OGRLayer
   protected:
     OGRFeatureDefn     *poFeatureDefn;
 
+    int                 m_nStatementFlags = 0;
     CPLODBCStatement   *poStmt;
 
     // Layer spatial reference system, and srid.
@@ -105,7 +106,7 @@ class OGRODBCTableLayer final: public OGRODBCLayer
     char               *pszSchemaName;
 
   public:
-    explicit            OGRODBCTableLayer( OGRODBCDataSource * );
+    explicit            OGRODBCTableLayer( OGRODBCDataSource *, int );
                         virtual ~OGRODBCTableLayer();
 
     CPLErr              Initialize( const char *pszTableName,
@@ -188,6 +189,8 @@ class OGRODBCDataSource final: public OGRDataSource
 
     // set of all lowercase table names. Note that this is only used when opening MDB datasources, not generic ODBC ones.
     std::unordered_set< std::string > m_aosAllLCTableNames;
+
+    int                 m_nStatementFlags = 0;
 
     int                 OpenMDB(GDALOpenInfo *poOpenInfo );
     static bool         IsPrivateLayerName( const CPLString& osName );

@@ -103,7 +103,7 @@ public:
   static GDALDataset* Open( GDALOpenInfo* );
   static int          Identify( GDALOpenInfo* );
   static GDALDataset* Create( const char* pszFilename,
-                              int nXSize, int nYSize, int nBands,
+                              int nXSize, int nYSize, int nBandsIn,
                               GDALDataType eType,
                               char** papszParamList );
   static CPLErr Delete( const char * pszFilename );
@@ -273,7 +273,7 @@ FITSLayer::FITSLayer(FITSDataset* poDS, int hduNum, const char* pszExtName):
 
     status = 0;
     fits_read_btblhdrll(m_poDS->m_hFITS, nCols, nullptr, nullptr,
-                        &apszNames[0],
+                        apszNames.data(),
                         nullptr,
                         nullptr, nullptr, nullptr, &status);
     if( status )
@@ -636,7 +636,7 @@ template<typename T_FITS, typename T_GDAL, int TYPECODE> struct ReadCol
         std::vector<T_FITS> x(nRepeat);
         fits_read_col(hFITS, TYPECODE,
                         colDesc.iCol, irow, 1, nRepeat, nullptr,
-                        &x[0], nullptr, &status);
+                        x.data(), nullptr, &status);
         if( nRepeat == 1 && colDesc.bHasNull &&
             x[0] == static_cast<T_FITS>(colDesc.nNullValue) )
         {
@@ -651,7 +651,7 @@ template<typename T_FITS, typename T_GDAL, int TYPECODE> struct ReadCol
                 scaled.push_back(static_cast<double>(x[i]) *
                                     colDesc.dfScale + colDesc.dfOffset);
             }
-            poFeature->SetField(iField, nRepeat, &scaled[0]);
+            poFeature->SetField(iField, nRepeat, scaled.data());
         }
         else if( nRepeat == 1 )
         {
@@ -663,7 +663,7 @@ template<typename T_FITS, typename T_GDAL, int TYPECODE> struct ReadCol
             xGDAL.reserve(nRepeat);
             for( int i = 0; i < nRepeat; i++ )
                 xGDAL.push_back(x[i]);
-            poFeature->SetField(iField, nRepeat, &xGDAL[0]);
+            poFeature->SetField(iField, nRepeat, xGDAL.data());
         }
     }
 };
@@ -707,7 +707,7 @@ OGRFeature* FITSLayer::GetFeature(GIntBig nFID)
             std::vector<char> x(nRepeat);
             fits_read_col(m_poDS->m_hFITS, TLOGICAL,
                           colDesc.iCol, nRow, 1, nRepeat, nullptr,
-                          &x[0], nullptr, &status);
+                          x.data(), nullptr, &status);
             if( nRepeat == 1 )
             {
                 poFeature->SetField(iField, x[0] == '1' ? 1 : 0);
@@ -720,7 +720,7 @@ OGRFeature* FITSLayer::GetFeature(GIntBig nFID)
                 {
                     intValues.push_back(x[i] == '1' ? 1 : 0);
                 }
-                poFeature->SetField(iField, nRepeat, &intValues[0]);
+                poFeature->SetField(iField, nRepeat, intValues.data());
             }
         }
         else if( typechar == 'X' )
@@ -789,21 +789,27 @@ OGRFeature* FITSLayer::GetFeature(GIntBig nFID)
                 for(int iItem = 1; iItem <= colDesc.nItems; iItem++ )
                 {
                     std::string osStr;
-                    osStr.resize(nRepeat);
-                    char* pszStr = &osStr[0];
-                    fits_read_col_str(m_poDS->m_hFITS, colDesc.iCol, nRow, iItem, 1,
-                                    nullptr, &pszStr, nullptr, &status);
-                    aosList.AddString(pszStr);
+                    if( nRepeat )
+                    {
+                        osStr.resize(nRepeat);
+                        char* pszStr = &osStr[0];
+                        fits_read_col_str(m_poDS->m_hFITS, colDesc.iCol, nRow, iItem, 1,
+                                        nullptr, &pszStr, nullptr, &status);
+                    }
+                    aosList.AddString(osStr.c_str());
                 }
                 poFeature->SetField(iField, aosList.List());
             }
             else
             {
                 std::string osStr;
-                osStr.resize(nRepeat);
-                char* pszStr = &osStr[0];
-                fits_read_col_str(m_poDS->m_hFITS, colDesc.iCol, nRow, 1, 1,
-                                nullptr, &pszStr, nullptr, &status);
+                if( nRepeat )
+                {
+                    osStr.resize(nRepeat);
+                    char* pszStr = &osStr[0];
+                    fits_read_col_str(m_poDS->m_hFITS, colDesc.iCol, nRow, 1, 1,
+                                    nullptr, &pszStr, nullptr, &status);
+                }
                 poFeature->SetField(iField, osStr.c_str());
             }
         }
@@ -817,18 +823,18 @@ OGRFeature* FITSLayer::GetFeature(GIntBig nFID)
             std::vector<double> x(nRepeat);
             fits_read_col(m_poDS->m_hFITS, TDOUBLE,
                             colDesc.iCol, nRow, 1, nRepeat, nullptr,
-                            &x[0], nullptr, &status);
+                            x.data(), nullptr, &status);
             if( nRepeat == 1 )
                 poFeature->SetField(iField, x[0]);
             else
-                poFeature->SetField(iField, nRepeat, &x[0]);
+                poFeature->SetField(iField, nRepeat, x.data());
         }
         else if( typechar == 'C' ) // IEEE754 32bit complex
         {
             std::vector<float> x(2 * nRepeat);
             fits_read_col(m_poDS->m_hFITS, TCOMPLEX,
                           colDesc.iCol, nRow, 1, nRepeat, nullptr,
-                          &x[0], nullptr, &status);
+                          x.data(), nullptr, &status);
             CPLStringList aosList;
             for( int i = 0; i < nRepeat; ++i )
                 aosList.AddString(CPLSPrintf("%.18g + %.18gj",
@@ -843,7 +849,7 @@ OGRFeature* FITSLayer::GetFeature(GIntBig nFID)
             std::vector<double> x(2 * nRepeat);
             fits_read_col(m_poDS->m_hFITS, TDBLCOMPLEX,
                           colDesc.iCol, nRow, 1, nRepeat, nullptr,
-                          &x[0], nullptr, &status);
+                          x.data(), nullptr, &status);
             CPLStringList aosList;
             for( int i = 0; i < nRepeat; ++i )
             {
@@ -1247,8 +1253,8 @@ void FITSLayer::RunDeferredFieldCreation(const OGRFeature* poFeature)
         {
             CPLString osKey;
             osKey.Printf("TUNIT%d", oCol.iCol);
-            fits_update_key_longstr(m_poDS->m_hFITS, &osKey[0],
-                                    &osUnit[0], nullptr, &status);
+            fits_update_key_longstr(m_poDS->m_hFITS, osKey.data(),
+                                    osUnit.data(), nullptr, &status);
         }
 
         m_aoColDescs.emplace_back(oCol);
@@ -1383,7 +1389,7 @@ template<typename T_FITS, typename T_GDAL, int TYPECODE,
                         (panList[i] - colDesc.dfOffset) / colDesc.dfScale));
                 }
                 fits_write_col(hFITS, TYPECODE,
-                               colDesc.iCol, irow, 1, nRepeat, &x[0], &status);
+                               colDesc.iCol, irow, 1, nRepeat, x.data(), &status);
             }
             else
             {
@@ -1392,7 +1398,7 @@ template<typename T_FITS, typename T_GDAL, int TYPECODE,
                     x.push_back(static_cast<T_FITS>(panList[i]));
                 }
                 fits_write_col(hFITS, TYPECODE,
-                               colDesc.iCol, irow, 1, nRepeat, &x[0], &status);
+                               colDesc.iCol, irow, 1, nRepeat, x.data(), &status);
             }
         }
         return status;
@@ -1436,7 +1442,7 @@ template<typename T, int TYPECODE> struct WriteComplex
                 x[2 * i + 1] = static_cast<T>(im);
             }
             fits_write_col(hFITS, TYPECODE, colDesc.iCol, irow,
-                           1, nRepeat, &x[0], &status);
+                           1, nRepeat, x.data(), &status);
         }
         else
         {
@@ -1448,7 +1454,7 @@ template<typename T, int TYPECODE> struct WriteComplex
             x[0] = static_cast<T>(re);
             x[1] = static_cast<T>(im);
             fits_write_col(hFITS, TYPECODE, colDesc.iCol, irow,
-                           1, 1, &x[0], &status);
+                           1, 1, x.data(), &status);
         }
         return status;
     }
@@ -1496,7 +1502,7 @@ bool FITSLayer::SetOrCreateFeature(const OGRFeature* poFeature, LONGLONG nRow)
                     x[i] = ToLogical(panVals[i]);
                 }
                 fits_write_col(m_poDS->m_hFITS, TLOGICAL,
-                               colDesc.iCol, nRow, 1, nRepeat, &x[0],
+                               colDesc.iCol, nRow, 1, nRepeat, x.data(),
                                &status);
             }
             else
@@ -2657,12 +2663,12 @@ GDALDataset* FITSDataset::Open(GDALOpenInfo* poOpenInfo) {
 
 GDALDataset *FITSDataset::Create( const char* pszFilename,
                                   int nXSize, int nYSize,
-                                  int nBands, GDALDataType eType,
+                                  int nBandsIn, GDALDataType eType,
                                   CPL_UNUSED char** papszParamList )
 {
   int status = 0;
 
-  if( nXSize == 0 && nYSize == 0 && nBands == 0 && eType == GDT_Unknown )
+  if( nXSize == 0 && nYSize == 0 && nBandsIn == 0 && eType == GDT_Unknown )
   {
       // Create the file - to force creation, we prepend the name with '!'
       CPLString extFilename("!");
@@ -2690,12 +2696,12 @@ GDALDataset *FITSDataset::Create( const char* pszFilename,
   // 2018 - BZERO BSCALE keywords are now set using SetScale() and
   // SetOffset() functions
 
-  if( nXSize < 1 || nYSize < 1 || nBands < 1 )  {
+  if( nXSize < 1 || nYSize < 1 || nBandsIn < 1 )  {
         CPLError(
             CE_Failure, CPLE_AppDefined,
             "Attempt to create %dx%dx%d raster FITS file, but width, height and bands"
             " must be positive.",
-            nXSize, nYSize, nBands );
+            nXSize, nYSize, nBandsIn );
 
         return nullptr;
   }
@@ -2734,8 +2740,8 @@ GDALDataset *FITSDataset::Create( const char* pszFilename,
   }
 
   // Now create an image of appropriate size and type
-  long naxes[3] = {nXSize, nYSize, nBands};
-  int naxis = (nBands == 1) ? 2 : 3;
+  long naxes[3] = {nXSize, nYSize, nBandsIn};
+  int naxis = (nBandsIn == 1) ? 2 : 3;
   fits_create_img(hFITS, bitpix, naxis, naxes, &status);
 
   // Check the status

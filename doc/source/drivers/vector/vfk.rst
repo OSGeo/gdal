@@ -42,23 +42,24 @@ Starting with GDAL 2.3, the following open options can be specified
 Configuration options
 ~~~~~~~~~~~~~~~~~~~~~
 
-(set with ``--config key value`` on GDAL command line utilities)
+Several :ref:`configuration options <configoptions>` are 
+available.
 
 The driver uses SQLite as a backend database
 when reading VFK data. By default, SQLite database is created in a
 directory of input VFK file (with file extension '.db').
-The user can define DB name with **OGR_VFK_DB_NAME** configuration
-option. If **OGR_VFK_DB_OVERWRITE=YES** configuration option is given,
-the driver overwrites existing SQLite database and stores data read from
-input VFK file into newly created DB. If
-**OGR_VFK_DB_DELETE=YES** configuration option is given, the driver
-deletes backend SQLite database when closing the datasource.
+The user can define DB name with :decl_configoption:`OGR_VFK_DB_NAME` 
+configuration option. If :decl_configoption:`OGR_VFK_DB_OVERWRITE` =YES 
+configuration option is given, the driver overwrites existing SQLite 
+database and stores data read from input VFK file into newly created DB. 
+If :decl_configoption:`OGR_VFK_DB_DELETE` =YES configuration option is 
+given, the driver deletes backend SQLite database when closing the datasource.
 
 Resolved geometries are stored also in backend
 SQLite database. It means that geometries are resolved only once when
 building SQLite database from VFK data. Geometries are stored in WKB
 format. Note that GDAL doesn't need to be built with SpatiaLite support.
-Geometries are not stored in DB when **OGR_VFK_DB_SPATIAL=NO**
+Geometries are not stored in DB when :decl_configoption:`OGR_VFK_DB_SPATIAL` =NO
 configuration option is given. In this case geometries are resolved when
 reading data from DB on the fly.
 
@@ -72,9 +73,9 @@ features by the driver.
 
 The driver reads by default all data blocks from VFK
 file when building backend SQLite database. When configuration option
-**OGR_VFK_DB_READ_ALL_BLOCKS=NO** is given, the driver reads only data
-blocks which are requested by the user. This can be useful when the user
-want to process only part of VFK data.
+:decl_configoption:`OGR_VFK_DB_READ_ALL_BLOCKS` =NO is given, the driver 
+reads only data blocks which are requested by the user. This can be 
+useful when the user want to process only part of VFK data.
 
 Datasource name
 ---------------
@@ -87,8 +88,8 @@ API, which include "regular" files, as well as files in the /vsizip/,
 
 Since GDAL 2.2 also a full path to the backend SQLite database can be
 used as an datasource. By default, such datasource is read by SQLite
-driver. If configuration option **OGR_VFK_DB_READ=YES** is given, such
-datasource is open by VFK driver instead.
+driver. If configuration option :decl_configoption:`OGR_VFK_DB_READ` =YES
+is given, such datasource is opened by VFK driver instead.
 
 Layer names
 -----------

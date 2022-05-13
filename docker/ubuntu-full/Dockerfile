@@ -3,7 +3,7 @@
 
 # This file is available at the option of the licensee under:
 # Public domain
-# or licensed under X/MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
+# or licensed under MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
 ARG BASE_IMAGE=ubuntu:20.04
 ARG TARGET_BASE_IMAGE=ubuntu:20.04
@@ -50,14 +50,14 @@ ARG JAVA_VERSION=11
 RUN . /buildscripts/bh-set-envvars.sh \
     && apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-recommends \
-       libcharls-dev${APT_ARCH_SUFFIX} libopenjp2-7-dev${APT_ARCH_SUFFIX} libcairo2-dev${APT_ARCH_SUFFIX} \
+       libopenjp2-7-dev${APT_ARCH_SUFFIX} libcairo2-dev${APT_ARCH_SUFFIX} \
        python3-dev${APT_ARCH_SUFFIX} python3-numpy${APT_ARCH_SUFFIX} python3-setuptools${APT_ARCH_SUFFIX} \
        libpng-dev${APT_ARCH_SUFFIX} libjpeg-dev${APT_ARCH_SUFFIX} libgif-dev${APT_ARCH_SUFFIX} liblzma-dev${APT_ARCH_SUFFIX} libgeos-dev${APT_ARCH_SUFFIX} \
        curl libxml2-dev${APT_ARCH_SUFFIX} libexpat-dev${APT_ARCH_SUFFIX} libxerces-c-dev${APT_ARCH_SUFFIX} \
        libnetcdf-dev${APT_ARCH_SUFFIX} libpoppler-dev${APT_ARCH_SUFFIX} libpoppler-private-dev${APT_ARCH_SUFFIX} \
        libspatialite-dev${APT_ARCH_SUFFIX} swig ant libhdf4-alt-dev${APT_ARCH_SUFFIX} libhdf5-serial-dev${APT_ARCH_SUFFIX} \
        libfreexl-dev${APT_ARCH_SUFFIX} unixodbc-dev${APT_ARCH_SUFFIX} libwebp-dev${APT_ARCH_SUFFIX} libepsilon-dev${APT_ARCH_SUFFIX} \
-       liblcms2-2 libpcre3-dev${APT_ARCH_SUFFIX} libcrypto++-dev${APT_ARCH_SUFFIX} libdap-dev${APT_ARCH_SUFFIX} libfyba-dev${APT_ARCH_SUFFIX} \
+       liblcms2-2 libpcre3-dev${APT_ARCH_SUFFIX} libcrypto++-dev${APT_ARCH_SUFFIX} libfyba-dev${APT_ARCH_SUFFIX} \
        libkml-dev${APT_ARCH_SUFFIX} libmysqlclient-dev${APT_ARCH_SUFFIX} libogdi-dev${APT_ARCH_SUFFIX} \
        libcfitsio-dev${APT_ARCH_SUFFIX} openjdk-"$JAVA_VERSION"-jdk${APT_ARCH_SUFFIX} libzstd-dev${APT_ARCH_SUFFIX} \
        libpq-dev${APT_ARCH_SUFFIX} libssl-dev${APT_ARCH_SUFFIX} libboost-dev${APT_ARCH_SUFFIX} \
@@ -213,12 +213,12 @@ RUN . /buildscripts/bh-set-envvars.sh \
 
 ARG WITH_PDFIUM=yes
 RUN if echo "$WITH_PDFIUM" | grep -Eiq "^(y(es)?|1|true)$"  ; then ( \
-  wget -q https://github.com/rouault/pdfium_build_gdal_3_4/releases/download/v2_pdfium_4627/install-ubuntu2004-rev4627.tar.gz \
-  && tar -xzf install-ubuntu2004-rev4627.tar.gz \
+  wget -q https://github.com/rouault/pdfium_build_gdal_3_5/releases/download/v1_pdfium_4933/install-ubuntu2004-rev4933.tar.gz \
+  && tar -xzf install-ubuntu2004-rev4933.tar.gz \
   && chown -R root:root install \
   && mv install/lib/* /usr/lib/ \
   && mv install/include/* /usr/include/ \
-  && rm -rf install-ubuntu2004-rev4627.tar.gz install \
+  && rm -rf install-ubuntu2004-rev4933.tar.gz install \
   && apt-get update -y \
   && apt-get install -y --fix-missing --no-install-recommends liblcms2-dev${APT_ARCH_SUFFIX} \
   && rm -rf /var/lib/apt/lists/* \
@@ -237,7 +237,18 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && make -j$(nproc) install \
     && make install DESTDIR="/build_thirdparty" \
     && cd ../.. \
-    && rm -rf libjxl
+    && rm -rf libjxl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Arrow C++
+RUN . /buildscripts/bh-set-envvars.sh \
+    && apt-get update -y \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V ca-certificates lsb-release wget \
+    && wget https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V ./apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
+    && apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow-dev${APT_ARCH_SUFFIX} libparquet-dev${APT_ARCH_SUFFIX} \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN apt-get update -y \
     && apt-get install -y --fix-missing --no-install-recommends rsync ccache \
@@ -278,6 +289,9 @@ USER root
 RUN date
 ARG JAVA_VERSION=11
 
+# Update distro
+RUN apt-get update -y && apt-get upgrade -y
+
 RUN apt-get update \
 # PROJ dependencies
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -285,12 +299,12 @@ RUN apt-get update \
         wget curl unzip ca-certificates \
 # GDAL dependencies
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-        libcharls2 libopenjp2-7 libcairo2 python3-numpy \
+        libopenjp2-7 libcairo2 python3-numpy \
         libpng16-16 libjpeg-turbo8 libgif7 liblzma5 libgeos-3.8.0 libgeos-c1v5 \
         libxml2 libexpat1 \
         libxerces-c3.2 libnetcdf-c++4 netcdf-bin libpoppler97 libspatialite7 gpsbabel \
         libhdf4-0-alt libhdf5-103 libhdf5-cpp-103 poppler-utils libfreexl1 unixodbc libwebp6 \
-        libepsilon1 liblcms2-2 libpcre3 libcrypto++6 libdap25 libdapclient6v5 libfyba0 \
+        libepsilon1 liblcms2-2 libpcre3 libcrypto++6 libfyba0 \
         libkmlbase1 libkmlconvenience1 libkmldom1 libkmlengine1 libkmlregionator1 libkmlxsd1 \
         libmysqlclient21 libogdi4.1 libcfitsio8 openjdk-"$JAVA_VERSION"-jre \
         libzstd1 bash bash-completion libpq5 libssl1.1 \
@@ -300,6 +314,12 @@ RUN apt-get update \
         python-is-python3 \
     # Workaround bug in ogdi packaging
     && ln -s /usr/lib/ogdi/libvrf.so /usr/lib \
+    # Install Arrow C++
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V ca-certificates lsb-release wget \
+    && wget https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V ./apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
+    && apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow700 libparquet700 \
     && rm -rf /var/lib/apt/lists/*
 
 # Attempt to order layers starting with less frequently varying ones

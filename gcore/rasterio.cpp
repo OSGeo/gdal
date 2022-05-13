@@ -557,7 +557,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                 eDataType, nBandDataSize, nXSpan );
                     }
 
-                    iSrcOffset += nBlockXSize * nBandDataSize;
+                    iSrcOffset += static_cast<GPtrDiff_t>(nBlockXSize) * nBandDataSize;
                 }
 
                 iBufOffset = CPLUnsanitizedAdd<GPtrDiff_t>(iBufOffset, nXSpanSize);
@@ -2857,6 +2857,16 @@ inline void GDALCopyWordsFromT( const T* const CPL_RESTRICT pSrcData,
                         static_cast<int*>(pDstData), nDstPixelStride,
                         nWordCount );
         break;
+    case GDT_UInt64:
+        GDALCopyWordsT( pSrcData, nSrcPixelStride,
+                        static_cast<std::uint64_t*>(pDstData), nDstPixelStride,
+                        nWordCount );
+        break;
+    case GDT_Int64:
+        GDALCopyWordsT( pSrcData, nSrcPixelStride,
+                        static_cast<std::int64_t*>(pDstData), nDstPixelStride,
+                        nWordCount );
+        break;
     case GDT_Float32:
         GDALCopyWordsT( pSrcData, nSrcPixelStride,
                         static_cast<float*>(pDstData), nDstPixelStride,
@@ -3037,6 +3047,8 @@ void GDALReplicateWord( const void * CPL_RESTRICT pSrcData,
         CASE_DUPLICATE_SIMPLE(GDT_Int16,  GInt16)
         CASE_DUPLICATE_SIMPLE(GDT_UInt32, GUInt32)
         CASE_DUPLICATE_SIMPLE(GDT_Int32,  GInt32)
+        CASE_DUPLICATE_SIMPLE(GDT_UInt64,  std::uint64_t)
+        CASE_DUPLICATE_SIMPLE(GDT_Int64,   std::int64_t)
         CASE_DUPLICATE_SIMPLE(GDT_Float32, float)
         CASE_DUPLICATE_SIMPLE(GDT_Float64, double)
 
@@ -3529,6 +3541,18 @@ GDALCopyWords64( const void * CPL_RESTRICT pSrcData,
     case GDT_Int32:
         GDALCopyWordsFromT<int>(
             static_cast<const int *>(pSrcData), nSrcPixelStride, false,
+            pDstData, eDstType, nDstPixelStride,
+            nWordCount );
+        break;
+    case GDT_UInt64:
+        GDALCopyWordsFromT<std::uint64_t>(
+            static_cast<const std::uint64_t *>(pSrcData), nSrcPixelStride, false,
+            pDstData, eDstType, nDstPixelStride,
+            nWordCount );
+        break;
+    case GDT_Int64:
+        GDALCopyWordsFromT<std::int64_t>(
+            static_cast<const std::int64_t *>(pSrcData), nSrcPixelStride, false,
             pDstData, eDstType, nDstPixelStride,
             nWordCount );
         break;
@@ -5311,6 +5335,23 @@ bool GDALBufferHasOnlyNoData( const void* pBuffer,
                HasOnlyNoDataT(static_cast<const uint32_t*>(pBuffer),
                               static_cast<uint32_t>(
                                   static_cast<int32_t>(dfNoDataValue)),
+                              nWidth, nHeight, nLineStride, nComponents);
+    }
+    if( nBitsPerSample == 64 && nSampleFormat == GSF_UNSIGNED_INT )
+    {
+        return GDALIsValueInRange<uint64_t>(dfNoDataValue) &&
+               HasOnlyNoDataT(static_cast<const uint64_t*>(pBuffer),
+                              static_cast<uint64_t>(dfNoDataValue),
+                              nWidth, nHeight, nLineStride, nComponents);
+    }
+    if( nBitsPerSample == 64 && nSampleFormat == GSF_SIGNED_INT )
+    {
+        // Use unsigned implementation by converting the nodatavalue to
+        // unsigned
+        return GDALIsValueInRange<int64_t>(dfNoDataValue) &&
+               HasOnlyNoDataT(static_cast<const uint64_t*>(pBuffer),
+                              static_cast<uint64_t>(
+                                  static_cast<int64_t>(dfNoDataValue)),
                               nWidth, nHeight, nLineStride, nComponents);
     }
     if( nBitsPerSample == 32 && nSampleFormat == GSF_FLOATING_POINT )

@@ -835,7 +835,7 @@ Version 1.0.1 - (2000-04-21)
 Version 1.0 - (2000-03-26)
 --------------------------
 
-- Changed to use same MIT/X-Consortium license as other CPL + OGR libs.
+- Changed to use same MIT-Consortium license as other CPL + OGR libs.
 
 - Fixed problem opening datasets with 0 features in them.
 

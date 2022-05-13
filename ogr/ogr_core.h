@@ -155,10 +155,18 @@ class CPL_DLL OGREnvelope
     /** Return whether the current rectangle is equal to the other rectangle */
     bool operator== (const OGREnvelope& other) const
     {
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+#endif
         return MinX == other.MinX &&
                MinY == other.MinY &&
                MaxX == other.MaxX &&
                MaxY == other.MaxY;
+
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic pop
+#endif
     }
 
     /** Return whether the current rectangle is not equal to the other rectangle */
@@ -837,9 +845,11 @@ int CPL_DLL OGRParseDate( const char *pszInput, OGRField *psOutput,
 #define OLCCreateGeomField     "CreateGeomField"    /**< Layer capability for geometry field creation */
 #define OLCCurveGeometries     "CurveGeometries"    /**< Layer capability for curve geometries support */
 #define OLCMeasuredGeometries  "MeasuredGeometries" /**< Layer capability for measured geometries support */
+#define OLCRename              "Rename"             /**< Layer capability for a layer that supports Rename() */
 
 #define ODsCCreateLayer        "CreateLayer"        /**< Dataset capability for layer creation */
 #define ODsCDeleteLayer        "DeleteLayer"        /**< Dataset capability for layer deletion */
+/* Reserved:                   "RenameLayer" */
 #define ODsCCreateGeomFieldAfterCreateLayer   "CreateGeomFieldAfterCreateLayer" /**< Dataset capability for geometry field creation support */
 #define ODsCCurveGeometries    "CurveGeometries"    /**< Dataset capability for curve geometries support */
 #define ODsCTransactions       "Transactions"       /**< Dataset capability for dataset transcations */
@@ -848,7 +858,9 @@ int CPL_DLL OGRParseDate( const char *pszInput, OGRField *psOutput,
 #define ODsCRandomLayerRead     "RandomLayerRead"   /**< Dataset capability for GetNextFeature() returning features from random layers */
 /* Note the unfortunate trailing space at the end of the string */
 #define ODsCRandomLayerWrite    "RandomLayerWrite " /**< Dataset capability for supporting CreateFeature on layer in random order */
-#define ODsCAddFieldDomain     "AddFieldDomain"    /**< Dataset capability for supporting AddFieldDomain() (at least partially) */
+#define ODsCAddFieldDomain     "AddFieldDomain"     /**< Dataset capability for supporting AddFieldDomain() (at least partially) */
+#define ODsCDeleteFieldDomain  "DeleteFieldDomain"  /**< Dataset capability for supporting DeleteFieldDomain()*/
+#define ODsCUpdateFieldDomain  "UpdateFieldDomain"  /**< Dataset capability for supporting UpdateFieldDomain()*/
 
 #define ODrCCreateDataSource   "CreateDataSource"   /**< Driver capability for datasource creation */
 #define ODrCDeleteDataSource   "DeleteDataSource"   /**< Driver capability for datasource deletion */

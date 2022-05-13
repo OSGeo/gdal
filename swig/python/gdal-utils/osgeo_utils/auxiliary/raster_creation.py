@@ -46,37 +46,42 @@ def create_flat_raster(filename: Optional[PathLikeOrStr],
                        origin: Optional[Sequence[int]] = (500_000, 0), pixel_size: MaybeSequence[int] = 10,
                        epsg: Optional[int] = 32636,
                        overview_alg: Optional[str] = 'NEAR', overview_list: Optional[Sequence[int]] = None) -> gdal.Dataset:
-    if filename is None:
-        filename = tempfile.mktemp()
-    elif not filename:
-        filename = ''
-    if driver_name is None:
-        driver_name = 'GTiff' if filename else 'MEM'
-    if not isinstance(size, Sequence):
-        size = (size, size)
+    tmp_fd = None
+    try:
+        if filename is None:
+            tmp_fd, filename = tempfile.mkstemp()
+        elif not filename:
+            filename = ''
+        if driver_name is None:
+            driver_name = 'GTiff' if filename else 'MEM'
+        if not isinstance(size, Sequence):
+            size = (size, size)
 
-    drv = gdal.GetDriverByName(driver_name)
-    dt = get_data_type(dt)
-    creation_options_list = get_creation_options(creation_options, driver_name=driver_name)
-    ds = drv.Create(os.fspath(filename), *size, band_count, dt, creation_options_list)
+        drv = gdal.GetDriverByName(driver_name)
+        dt = get_data_type(dt)
+        creation_options_list = get_creation_options(creation_options, driver_name=driver_name)
+        ds = drv.Create(os.fspath(filename), *size, band_count, dt, creation_options_list)
 
-    if pixel_size and origin:
-        if not isinstance(pixel_size, Sequence):
-            pixel_size = (pixel_size, -pixel_size)
-        ds.SetGeoTransform([origin[0], pixel_size[0], 0, origin[1], 0, pixel_size[1]])
-    if epsg is not None:
-        srs = osr.SpatialReference()
-        srs.ImportFromEPSG(epsg)
-        ds.SetSpatialRef(srs)
-    for bnd_idx in range(band_count):
-        bnd: gdal.Band = ds.GetRasterBand(bnd_idx+1)
-        if fill_value is not None:
-            bnd.Fill(fill_value)
-        if nodata_value is not None:
-            bnd.SetNoDataValue(nodata_value)
-    if overview_alg and overview_list:
-        ds.BuildOverviews(overview_alg, overviewlist=overview_list)
-    return ds
+        if pixel_size and origin:
+            if not isinstance(pixel_size, Sequence):
+                pixel_size = (pixel_size, -pixel_size)
+            ds.SetGeoTransform([origin[0], pixel_size[0], 0, origin[1], 0, pixel_size[1]])
+        if epsg is not None:
+            srs = osr.SpatialReference()
+            srs.ImportFromEPSG(epsg)
+            ds.SetSpatialRef(srs)
+        for bnd_idx in range(band_count):
+            bnd: gdal.Band = ds.GetRasterBand(bnd_idx+1)
+            if fill_value is not None:
+                bnd.Fill(fill_value)
+            if nodata_value is not None:
+                bnd.SetNoDataValue(nodata_value)
+        if overview_alg and overview_list:
+            ds.BuildOverviews(overview_alg, overviewlist=overview_list)
+        return ds
+    finally:
+        if tmp_fd:
+            os.close(tmp_fd)
 
 
 def get_creation_options(creation_options: CreationOptions = None,
@@ -131,7 +136,7 @@ def copy_raster_and_add_overviews(
     shutil.copy(filename_src, ds_base)
     files_list.append(ds_base)
 
-    ds = open_ds(ds_with_ovrs, gdal.GA_Update)
+    ds = open_ds(ds_with_ovrs, access_mode = gdal.OF_UPDATE | gdal.OF_RASTER)
     size = (ds.RasterXSize, ds.RasterYSize)
     ds.BuildOverviews(overview_alg, overviewlist=overview_list)
 

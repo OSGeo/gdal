@@ -44,7 +44,7 @@ from osgeo_utils.auxiliary.util import GetOutputDriverFor
 
 
 def Usage():
-    print('ogrmerge.py -o out_dsname src_dsname [src_dsname]*')
+    print('Usage: ogrmerge.py -o out_dsname src_dsname [src_dsname]*')
     print('            [-f format] [-single] [-nln layer_name_template]')
     print('            [-update | -overwrite_ds] [-append | -overwrite_layer]')
     print('            [-src_geom_type geom_type_name[,geom_type_name]*]')
@@ -594,7 +594,7 @@ def ogrmerge(
     return ret
 
 
-def main(argv):
+def main(argv=sys.argv):
     argv = ogr.GeneralCmdLineProcessor(argv)
     if argv is None:
         return 1

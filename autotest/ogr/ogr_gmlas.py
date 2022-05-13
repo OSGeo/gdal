@@ -837,7 +837,7 @@ class GMLASHTTPHandler(BaseHTTPRequestHandler):
 ###############################################################################
 # Test schema caching
 
-
+@pytest.mark.skipif('SKIP_OGR_GMLAS_HTTP_RELATED' in os.environ, reason='test skipped on CI due to timeout on Windows Conda builds with parallel ctest')
 def test_ogr_gmlas_cache():
 
     drv = gdal.GetDriverByName('HTTP')
@@ -1238,7 +1238,7 @@ def test_ogr_gmlas_remove_unused_layers_and_fields():
 ###############################################################################
 #  Test xlink resolution
 
-
+@pytest.mark.skipif('SKIP_OGR_GMLAS_HTTP_RELATED' in os.environ, reason='test skipped on CI due to timeout on Windows Conda builds with parallel ctest')
 def test_ogr_gmlas_xlink_resolver():
 
     drv = gdal.GetDriverByName('HTTP')
@@ -2533,6 +2533,18 @@ def test_ogr_gmlas_geometry_as_substitutiongroup():
     if f.GetGeometryRef() is None:
         f.DumpReadable()
         pytest.fail()
+    ds = None
+
+###############################################################################
+# Test importing a GML geometry whose coordinates elements has leading spaces
+
+
+def test_ogr_gmlas_coordinates_with_leading_space():
+
+    ds = gdal.OpenEx('GMLAS:data/gmlas/coordinates_with_leading_space.gml')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().ExportToIsoWkt() == "POLYGON Z ((1372074.89354568 6205942.4974615 40.4258117361937,1372074.55352024 6205942.4356387 40.4258117361937,1372074.50715313 6205942.69065778 40.4258117361937,1372074.84717857 6205942.75248059 40.4258117361937,1372074.89354568 6205942.4974615 40.4258117361937))"
     ds = None
 
 ###############################################################################

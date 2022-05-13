@@ -43,12 +43,16 @@ mark_as_advanced(HDF4_INCLUDE_DIR)
 if(HDF4_INCLUDE_DIR AND EXISTS "${HDF4_INCLUDE_DIR}/hfile.h")
     file(STRINGS "${HDF4_INCLUDE_DIR}/hfile.h" hdf4_version_string
          REGEX "^#define[\t ]+LIBVER.*")
-    string(REGEX MATCH "LIBVER_MAJOR[ \t]+([0-9]+)" "${hdf4_version_str}" HDF4_VERSION_MAJOR "${hdf4_version_string}")
-    string(REGEX MATCH "LIBVER_MINOR[ \t]+([0-9]+)" "${hdf4_version_str}" HDF4_VERSION_MINOR "${hdf4_version_string}")
-    string(REGEX MATCH "LIBVER_RELEASE[ \t]+([0-9]+)" "${hdf4_version_str}" HDF4_VERSION_RELEASE "${hdf4_version_string}")
-    string(REGEX MATCH "LIBVER_SUBRELEASE[ \t]+([0-9A-Za-z]+)" "${hdf4_version_str}" HDF4_VERSION_SUBRELEASE "${hdf4_version_string}")
+    string(REGEX MATCH "LIBVER_MAJOR[ \t]+([0-9]+)" HDF4_VERSION_MAJOR "${hdf4_version_string}")
+    string(REGEX MATCH "([0-9]+)" HDF4_VERSION_MAJOR ${HDF4_VERSION_MAJOR})
+    string(REGEX MATCH "LIBVER_MINOR[ \t]+([0-9]+)" HDF4_VERSION_MINOR "${hdf4_version_string}")
+    string(REGEX MATCH "([0-9]+)" HDF4_VERSION_MINOR ${HDF4_VERSION_MINOR})
+    string(REGEX MATCH "LIBVER_RELEASE[ \t]+([0-9]+)" HDF4_VERSION_RELEASE "${hdf4_version_string}")
+    string(REGEX MATCH "([0-9]+)" HDF4_VERSION_RELEASE ${HDF4_VERSION_RELEASE})
+    string(REGEX MATCH "LIBVER_SUBRELEASE[ \t]+([0-9A-Za-z]+)" HDF4_VERSION_SUBRELEASE "${hdf4_version_string}")
     unset(hdf4_version_string)
-    if(HDF4_VERSION_SUBRELEASE STREQUAL "")
+    if(NOT HDF4_VERSION_SUBRELEASE STREQUAL "")
+        string(REGEX MATCH "([0-9A-Za-z]+)" LIBVER_SUBRELEASE ${LIBVER_SUBRELEASE})
         set(HDF4_VERSION_STRING "${HDF4_VERSION_MAJOR}.${HDF4_VERSION_MINOR}.${HDF4_VERSION_RELEASE}_${HDF4_VERSION_SUBRELEASE}")
     else()
         set(HDF4_VERSION_STRING "${HDF4_VERSION_MAJOR}.${HDF4_VERSION_MINOR}.${HDF4_VERSION_RELEASE}")
@@ -89,7 +93,10 @@ if(HDF4_INCLUDE_DIR)
     endforeach()
 
     if(WIN32)
-        list(APPEND HDF4_LIBRARIES ws2_32.lib)
+        find_library(WS2_32_LIBRARY ws2_32)
+        if(WS2_32_LIBRARY)
+          list(APPEND HDF4_LIBRARIES ${WS2_32_LIBRARY})
+        endif()
     endif()
 endif()
 
@@ -97,7 +104,7 @@ include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(HDF4
                                   FOUND_VAR HDF4_FOUND
                                   REQUIRED_VARS HDF4_df_LIBRARY HDF4_mfhdf_LIBRARY HDF4_INCLUDE_DIR
-                                  VERSION_VAR HDF4_VERSION
+                                  VERSION_VAR HDF4_VERSION_STRING
                                   HANDLE_COMPONENTS
                                   )
 

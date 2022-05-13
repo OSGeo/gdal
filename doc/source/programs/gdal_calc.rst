@@ -44,7 +44,9 @@ but no projection checking is performed (unless projectionCheck option is used).
 
     Input gdal raster file, you can use any letter (a-z, A-Z).  (lower case supported since GDAL 3.3)
 
-    A letter may be repeated (GDAL >= 3.3). The effect will be to create a 3-dim numpy array.
+    A letter may be repeated, or several values (separated by space) can be provided (GDAL >= 3.3).
+    Since GDAL 3.5, wildcard exceptions (using ?, \*) are supported for all shells/platforms.
+    The effect will be to create a 3-dim numpy array.
     In such a case, the calculation formula must use this input as a 3-dim array and must return a 2D array (see examples below).
     In case the calculation does not return a 2D array an error would be generated.
 
@@ -88,7 +90,7 @@ but no projection checking is performed (unless projectionCheck option is used).
 
     GDAL format for output file.
 
-.. option:: color-table=<filename>
+.. option:: --color-table=<filename>
 
     Allows specifying a filename of a color table (or a ColorTable object) (with Palette Index interpretation) to be used for the output raster.
     Supported formats: txt (i.e. like gdaldem, but color names are not supported), qlr, qml (i.e. exported from QGIS)
@@ -97,19 +99,24 @@ but no projection checking is performed (unless projectionCheck option is used).
 
     .. versionadded:: 3.3
 
-    this option determines how to handle rasters with different extents.
-    this option is mutually exclusive with the `projwin` option, which is used for providing a custom extent.
-    for all the options below the pixel size (resolution) and SRS (Spatial Reference System) of all the input rasters must be the same.
+    This option determines how to handle rasters with different extents.
+    This option is mutually exclusive with the `projwin` option, which is used for providing a custom extent.
+    
+    For all the options below the pixel size (resolution) and SRS (Spatial Reference System) of all the input rasters must be the same.
+    
     ``ignore`` (default) - only the dimensions of the rasters are compared. if the dimensions do not agree the operation will fail.
+    
     ``fail`` - the dimensions and the extent (bounds) of the rasters must agree, otherwise the operation will fail.
+    
     ``union`` - the extent (bounds) of the output will be the minimal rectangle that contains all the input extents.
+    
     ``intersect`` - the extent (bounds) of the output will be the maximal rectangle that is contained in all the input extents.
 
 .. option:: --projwin <ulx> <uly> <lrx> <lry>
 
     .. versionadded:: 3.3
 
-    this option provides a custom extent for the output, it is mutually exclusive with the `extent` option.
+    This option provides a custom extent for the output, it is mutually exclusive with the `extent` option.
 
 .. option:: --projectionCheck
 
@@ -136,7 +143,10 @@ but no projection checking is performed (unless projectionCheck option is used).
 
 .. option:: --overwrite
 
-    Overwrite output file if it already exists.
+    Overwrite output file if it already exists. Overwriting must be understood
+    here as deleting and recreating the file from scratch. Note that if this option
+    is *not* specified and the output file already exists, it will be updated in
+    place.
 
 .. option:: --debug
 
@@ -213,7 +223,7 @@ Average of three layers (two options with the same result):
 
 .. code-block::
 
-    gdal_calc.py -A input1.tif -A input2.tif -A input3.tif --outfile=result.tif --calc="numpy.average(a,axis=0)".
+    gdal_calc.py -A input1.tif input2.tif input3.tif --outfile=result.tif --calc="numpy.average(a,axis=0)".
 
 Maximum of three layers  (two options with the same result):
 
@@ -225,7 +235,7 @@ Maximum of three layers  (two options with the same result):
 
 .. code-block::
 
-    gdal_calc.py -A input1.tif -A input2.tif -A input3.tif --outfile=result.tif --calc="numpy.max(A,axis=0)"
+    gdal_calc.py -A input1.tif input2.tif input3.tif --outfile=result.tif --calc="numpy.max(A,axis=0)"
 
 Set values of zero and below to null:
 

@@ -48,6 +48,8 @@ class OGRPGeoLayer CPL_NON_FINAL: public OGRLayer
   protected:
     OGRFeatureDefn     *poFeatureDefn;
 
+    int                 m_nStatementFlags = 0;
+
     CPLODBCStatement   *poStmt;
 
     // Layer spatial reference system, and srid.
@@ -108,7 +110,7 @@ class OGRPGeoTableLayer final: public OGRPGeoLayer
     std::string         m_osDocumentation;
 
   public:
-    explicit            OGRPGeoTableLayer( OGRPGeoDataSource * );
+    explicit            OGRPGeoTableLayer( OGRPGeoDataSource *,int );
                         virtual ~OGRPGeoTableLayer();
 
     CPLErr              Initialize( const char *pszTableName,
@@ -185,6 +187,9 @@ class OGRPGeoDataSource final: public OGRDataSource
     mutable bool        m_COUNT_STAR_state_known = false;
     mutable bool        m_COUNT_STAR_working = false;
 #endif
+
+    int                 m_nStatementFlags = 0;
+
     static bool         IsPrivateLayerName( const CPLString& osName );
   public:
                         OGRPGeoDataSource();

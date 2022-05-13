@@ -36,6 +36,8 @@
 #include "cpl_conv.h"
 #include "cpl_vsi.h"
 
+#include <stdbool.h>
+
 /**
  * \file cpl_string.h
  *
@@ -120,24 +122,9 @@ int CPL_DLL CSLTestBoolean( const char *pszValue );
 /* Do not use CPLTestBoolean in C++ code.  Use CPLTestBool. */
 int CPL_DLL CPLTestBoolean( const char *pszValue );
 
-#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
-#ifdef DO_NOT_USE_DEBUG_BOOL
-#define CPLTestBool(x) CPL_TO_BOOL(CPLTestBoolean(x))
-#define CPLFetchBool(list,key,default) \
-    CPL_TO_BOOL(CSLFetchBoolean(list,key,default))
-#else /* DO_NOT_USE_DEBUG_BOOL */
-/* Prefer these for C++ code. */
-#ifdef DEBUG_BOOL
-extern "C++" {
-#endif
 bool CPL_DLL CPLTestBool( const char *pszValue );
 bool CPL_DLL CPLFetchBool( CSLConstList papszStrList, const char *pszKey,
                            bool bDefault );
-#ifdef DEBUG_BOOL
-}
-#endif
-#endif
-#endif  /* __cplusplus */
 
 const char CPL_DLL *
       CPLParseNameValue( const char *pszNameValue, char **ppszKey );

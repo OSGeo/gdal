@@ -31,7 +31,7 @@
 
 import os
 from osgeo import gdal
-
+from osgeo import gdalconst
 
 import gdaltest
 
@@ -96,7 +96,7 @@ def test_saga_4():
             check_minmax = 1
         tst.testCreateCopy(new_filename='tmp/test4.sdat', check_minmax=check_minmax)
 
-    
+
 ###############################################################################
 # Test Create() for various data types
 
@@ -119,7 +119,7 @@ def test_saga_5():
             check_minmax = 1
         tst.testCreate(new_filename='tmp/test5.sdat', out_bands=1, check_minmax=check_minmax)
 
-    
+
 ###############################################################################
 # Test creating empty datasets and check that nodata values are properly written
 
@@ -161,7 +161,7 @@ def test_saga_6():
     except OSError:
         pass
 
-    
+
 ###############################################################################
 # Test /vsimem
 
@@ -191,5 +191,38 @@ def test_saga_8():
     PARAMETER["false_northing",0],
     UNIT["Meter",1]]""")
 
+##############################################################################
+# Test setnodata
+def test_saga_9():
 
+    gdal_type = gdal.GDT_Float64
+
+    ds = gdal.GetDriverByName('SAGA').Create('tmp/test9.sdat', 2, 2, 1, gdal_type)
+    ds = None
+
+    ds = gdal.Open('tmp/test9.sdat')
+    with gdaltest.error_handler():
+        ret = ds.GetRasterBand(1).SetNoDataValue(56)
+    assert ret == gdalconst.CE_Failure
+    # make sure nodata value is not changed
+    assert ds.GetRasterBand(1).GetNoDataValue() == -99999
+
+    ds = None
+    ds = gdal.Open('tmp/test9.sdat', gdal.GA_Update)
+
+    ret = ds.GetRasterBand(1).SetNoDataValue(56)
+    assert ret == gdalconst.CE_None
+    nd = ds.GetRasterBand(1).GetNoDataValue()
+    assert nd == 56
+
+    ds = None
+
+    with open('tmp/test9.sgrd', 'r') as f:
+        header_string = f.read()
+        assert "NODATA_VALUE\t= 56.000000" in header_string
+    try:
+        os.remove('tmp/test9.sgrd')
+        os.remove('tmp/test9.sdat')
+    except OSError:
+        pass
 

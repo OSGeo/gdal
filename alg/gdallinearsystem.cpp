@@ -33,10 +33,6 @@
 
 /*! @cond Doxygen_Suppress */
 
-#if defined(HAVE_ARMADILLO) && !defined(DO_NOT_USE_DEBUG_BOOL)
-#define DO_NOT_USE_DEBUG_BOOL
-#endif
-
 #include "cpl_port.h"
 #include "cpl_conv.h"
 #include "gdallinearsystem.h"

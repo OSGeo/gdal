@@ -289,7 +289,7 @@ static uint32_t hashlittle(const void *key, size_t length, uint32_t initval)
 		 * rest of the string.  Every machine with memory protection I've seen
 		 * does it on word boundaries, so is OK with this.  But VALGRIND will
 		 * still catch it and complain.  The masking trick does make the hash
-		 * noticably faster for short strings (like English words).
+		 * noticeably faster for short strings (like English words).
 		 * AddressSanitizer is similarly picky about overrunning
 		 * the buffer. (http://clang.llvm.org/docs/AddressSanitizer.html
 		 */
@@ -443,7 +443,7 @@ static uint32_t hashlittle(const void *key, size_t length, uint32_t initval)
 }
 /* clang-format on */
 
-/* a simple hash function similiar to what perl does for strings.
+/* a simple hash function similar to what perl does for strings.
  * for good results, the string should not be excessivly large.
  */
 static unsigned long lh_perllike_str_hash(const void *k)
@@ -469,7 +469,7 @@ static unsigned long lh_char_hash(const void *k)
 	if (random_seed == -1)
 	{
 		RANDOM_SEED_TYPE seed;
-		/* we can't use -1 as it is the unitialized sentinel */
+		/* we can't use -1 as it is the uninitialized sentinel */
 		while ((seed = json_c_get_random_seed()) == -1) {}
 #if SIZEOF_INT == 8 && defined __GCC_HAVE_SYNC_COMPARE_AND_SWAP_8
 #define USE_SYNC_COMPARE_AND_SWAP 1

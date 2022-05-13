@@ -26,7 +26,9 @@ Synopsis
                 [-a_srs srs_def]
                 [-r {nearest,bilinear,cubic,cubicspline,lanczos,average,mode}]
                 [-oo NAME=VALUE]*
-                [-input_file_list my_list.txt] [-overwrite] output.vrt [gdalfile]*
+                [-input_file_list my_list.txt] [-overwrite]
+                [-strict | -non_strict]
+                output.vrt [gdalfile]*
 
 Description
 -----------
@@ -77,7 +79,7 @@ changed in later versions.
 
     `user` must be used in combination with the :option:`-tr` option to specify the target resolution.
 
-.. option:: -tr <res> <yres>
+.. option:: -tr <xres> <yres>
 
     Set target resolution. The values must be expressed in georeferenced units.
     Both must be positive values. Specifying those values is of course incompatible with
@@ -89,6 +91,7 @@ changed in later versions.
     (target aligned pixels) align
     the coordinates of the extent of the output file to the values of the :option:`-tr`,
     such that the aligned extent includes the minimum extent.
+    Alignment means that xmin / resx, ymin / resy, xmax / resx and ymax / resy are integer values.
 
 .. option:: -te xmin ymin xmax ymax
 
@@ -193,6 +196,18 @@ changed in later versions.
 .. option:: -overwrite
 
     Overwrite the VRT if it already exists.
+
+.. option:: -strict
+
+    Turn warnings as failures. This is mutually exclusive with -non_strict, the latter which is the default.
+
+    .. versionadded:: 3.4.2
+
+.. option:: -non_strict
+
+    Skip source datasets that have issues with warnings, and continue processing. This is the default.
+
+    .. versionadded:: 3.4.2
 
 Examples
 --------

@@ -18,7 +18,7 @@ best of our knowledge and not guaranteed. Users should check by themselves.
 * External libraries enabled: ultrasmall + libexpat, libpq, libssl
 * No GDAL Python
 * Base PROJ grid package (http://download.osgeo.org/proj/proj-datumgrid-1.8.zip)
-* Overall licensing terms of the GDAL build: permissive (X/MIT, BSD style, Apache, etc..)
+* Overall licensing terms of the GDAL build: permissive (MIT, BSD style, Apache, etc..)
 
 See [alpine-small/Dockerfile](alpine-small/Dockerfile)
 
@@ -40,15 +40,15 @@ See [alpine-normal/Dockerfile](alpine-normal/Dockerfile)
 
 ## Small: `osgeo/gdal:ubuntu-small-latest`
 
-* Image size: ~ 280 MB
+* Image size: ~ 385 MB
 * Raster drivers: all built-in + JPEG + PNG + JP2OpenJPEG + WEBP +SQLite-based ones + network-based ones
 * Vector drivers: all built-in + XML based ones + SQLite-based ones + network-based ones + PostgreSQL
 * Using internal libtiff and libgeotiff
 * External libraries enabled: libsqlite3, libproj, libcurl, libjpeg, libpng, libwebp,
-  libzstd, libexpat, libxerces-c, libpq, libssl, libgeos
+  libzstd, libexpat, libxerces-c, libpq, libssl, libgeos, libspatialite
 * GDAL Python (Python 3.8)
 * Base PROJ grid package (http://download.osgeo.org/proj/proj-datumgrid-1.8.zip)
-* Overall licensing terms of the GDAL build: LGPL + permissive (X/MIT, BSD style, Apache, etc..)
+* Overall licensing terms of the GDAL build: LGPL + permissive (MIT, BSD style, Apache, etc..)
 
 See [ubuntu-small/Dockerfile](ubuntu-small/Dockerfile)
 
@@ -72,6 +72,8 @@ See [ubuntu-full/Dockerfile](ubuntu-full/Dockerfile)
 
 Pull the required image and then run passing the gdal program you want to execute as a [docker run](https://docs.docker.com/engine/reference/commandline/run/) command. Bind a volume from your local file system to the docker container to run gdal programs that accept a file argument. For example, binding `-v /home:/home` on Linux or `-v /Users:/Users` on Mac will allow you to reference files in your home directory by passing their full path. Use the docker `--rm` option to automatically remove the container when the run completes.
 
+Note: you should *not* try to install GDAL (directly or indirectly through other packages that depend on it) with the package managing system (apt/apk) of the Linux distributions. It will conflict with the custom GDAL version provided by the Docker image and will likely result in a broken container.
+
 ## Example:
 
 ```shell
@@ -81,12 +83,11 @@ docker run --rm -v /home:/home osgeo/gdal:alpine-small-latest gdalinfo $PWD/my.t
 
 # Images of releases
 
-Tagged images of recent past releases are available. The last ones (at time of writing) are for GDAL 3.3.1 and PROJ 8.1.0, for linux/amd64 and linux/arm64:
-* osgeo/gdal:alpine-ultrasmall-3.3.1
-* osgeo/gdal:alpine-small-3.3.1
-* osgeo/gdal:alpine-normal-3.3.1
-* osgeo/gdal:ubuntu-small-3.3.1
-* osgeo/gdal:ubuntu-full-3.3.1
+Tagged images of recent past releases are available. The last ones (at time of writing) are for GDAL 3.4.3 and PROJ 9.0.0, for linux/amd64 and linux/arm64:
+* osgeo/gdal:alpine-small-3.4.3
+* osgeo/gdal:alpine-normal-3.4.3
+* osgeo/gdal:ubuntu-small-3.4.3
+* osgeo/gdal:ubuntu-full-3.4.3
 
 ## Multi-arch Images
 

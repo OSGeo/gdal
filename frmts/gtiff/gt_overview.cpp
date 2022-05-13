@@ -30,14 +30,6 @@
 
 #include "cpl_port.h"
 
-#ifdef HAVE_STRINGS_H
-#undef HAVE_STRINGS_H
-#endif
-
-#ifdef HAVE_STRING_H
-#undef HAVE_STRING_H
-#endif
-
 #include "gt_overview.h"
 
 #include <cstdlib>
@@ -383,6 +375,16 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
 
           case GDT_Int32:
             nBandBits = 32;
+            nBandFormat = SAMPLEFORMAT_INT;
+            break;
+
+          case GDT_UInt64:
+            nBandBits = 64;
+            nBandFormat = SAMPLEFORMAT_UINT;
+            break;
+
+          case GDT_Int64:
+            nBandBits = 64;
             nBandFormat = SAMPLEFORMAT_INT;
             break;
 
@@ -1114,10 +1116,20 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
 
     CPLErr eErr = CE_None;
 
+    // If we have an alpha band, we want it to be generated before downsampling
+    // other bands
+    bool bHasAlphaBand = false;
+    for( int iBand = 0; iBand < nBands; iBand++ )
+    {
+        if( papoBandList[iBand]->GetColorInterpretation() == GCI_AlphaBand )
+            bHasAlphaBand = true;
+    }
+
     const auto poColorTable = papoBandList[0]->GetColorTable();
-    if(  ((bSourceIsPixelInterleaved && bSourceIsJPEG2000) ||
-          (nCompression != COMPRESSION_NONE)) &&
-         nPlanarConfig == PLANARCONFIG_CONTIG &&
+    if(  ((((bSourceIsPixelInterleaved && bSourceIsJPEG2000) ||
+            (nCompression != COMPRESSION_NONE)) &&
+           nPlanarConfig == PLANARCONFIG_CONTIG) ||
+          bHasAlphaBand) &&
          !GDALDataTypeIsComplex(papoBandList[0]->GetRasterDataType()) &&
           (poColorTable == nullptr ||
            STARTS_WITH_CI(pszResampling, "NEAR") ||

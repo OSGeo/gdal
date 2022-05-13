@@ -191,7 +191,12 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
     std::unique_ptr<RegionCacheType> m_poRegionCacheDoNotUseDirectly{}; // do not access directly. Use GetRegionCache();
     RegionCacheType* GetRegionCache();
 
-    lru11::Cache<std::string, FileProp>  oCacheFileProp;
+    // LRU cache that just keeps in memory if this file system handler is
+    // spposed to know the file properties of a file. The actual cache is a
+    // shared one among all network file systems.
+    // The aim of that design is that invalidating /vsis3/foo results in
+    // /vsis3_streaming/foo to be invalidated as well.
+    lru11::Cache<std::string, bool>  oCacheFileProp;
 
     int                                       nCachedFilesInDirList = 0;
     lru11::Cache<std::string, CachedDirList>  oCacheDirList;
@@ -215,7 +220,7 @@ protected:
                             const char* pszXML,
                             CPLStringList& osFileList,
                             int nMaxFiles,
-                            bool bIgnoreGlacierStorageClass,
+                            const std::set<std::string>& oSetIgnoredStorageClasses,
                             bool& bIsTruncated );
 
     void AnalyseSwiftFileList( const CPLString& osBaseURL,
@@ -300,6 +305,8 @@ public:
     virtual CPLString GetURLFromFilename( const CPLString& osFilename );
 
     std::string GetStreamingFilename(const std::string& osFilename) const override = 0;
+
+    static std::set<std::string> GetS3IgnoredStorageClasses();
 };
 
 
@@ -382,7 +389,7 @@ class VSICurlHandle : public VSIVirtualHandle
     virtual bool IsDirectoryFromExists( const char* /*pszVerb*/, int /*response_code*/ ) { return false; }
     virtual void ProcessGetFileSizeResult(const char* /* pszContent */ ) {}
     void SetURL(const char* pszURL);
-    virtual bool Authenticate() { return false; }
+    virtual bool Authenticate(const char* /* pszFilename */) { return false; }
 
   public:
 
@@ -431,6 +438,7 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandlerBase
                      vsi_l_offset nSourceSize,
                      const char* pszSource,
                      const char* pszTarget,
+                     CSLConstList papszOptions,
                      GDALProgressFunc pProgressFunc,
                      void *pProgressData);
     virtual int MkdirInternal( const char *pszDirname, long nMode, bool bDoStatCheck );
@@ -447,6 +455,8 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandlerBase
                                  CSLConstList papszMetadata );
 
     int RmdirRecursiveInternal( const char* pszDirname, int nBatchSize);
+
+    virtual bool IsAllowedHeaderForObjectCreation( const char* /* pszHeaderName */ ) { return false; }
 
     IVSIS3LikeFSHandler() = default;
 
@@ -489,7 +499,8 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandlerBase
                          size_t nBufferSize,
                          IVSIS3LikeHandleHelper *poS3HandleHelper,
                          int nMaxRetry,
-                         double dfRetryDelay);
+                         double dfRetryDelay,
+                         CSLConstList papszOptions);
     virtual bool CompleteMultipart(const CPLString& osFilename,
                            const CPLString& osUploadID,
                            const std::vector<CPLString>& aosEtags,
@@ -642,6 +653,21 @@ class VSIAppendWriteHandle : public VSIVirtualHandle
         int  Close() override;
 
         bool              IsOK() { return m_pabyBuffer != nullptr; }
+};
+
+/************************************************************************/
+/*                     VSIDIRWithMissingDirSynthesis                    */
+/************************************************************************/
+
+struct VSIDIRWithMissingDirSynthesis: public VSIDIR
+{
+    std::vector<std::unique_ptr<VSIDIREntry>> aoEntries{};
+
+protected:
+    std::vector<std::string> m_aosSubpathsStack{};
+
+    void SynthetizeMissingDirectories(const std::string& osCurSubdir,
+                                      bool bAddEntryForThisSubdir);
 };
 
 /************************************************************************/
@@ -819,6 +845,15 @@ void MultiPerform(CURLM* hCurlMultiHandle,
 void VSICURLResetHeaderAndWriterFunctions(CURL* hCurlHandle);
 
 int VSICurlParseUnixPermissions(const char* pszPermissions);
+
+// Cache of file properties (size, etc.)
+bool VSICURLGetCachedFileProp( const char* pszURL,
+                               FileProp& oFileProp );
+void VSICURLSetCachedFileProp( const char* pszURL,
+                               FileProp& oFileProp );
+void VSICURLInvalidateCachedFileProp( const char* pszURL );
+void VSICURLInvalidateCachedFilePropPrefix( const char* pszURL );
+void VSICURLDestroyCacheFileProp();
 
 } // namespace cpl
 

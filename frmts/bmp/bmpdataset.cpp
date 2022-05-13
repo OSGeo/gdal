@@ -253,7 +253,7 @@ class BMPDataset final: public GDALPamDataset
     static int Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
-                                int nXSize, int nYSize, int nBands,
+                                int nXSize, int nYSize, int nBandsIn,
                                 GDALDataType eType, char ** papszParamList );
 
     CPLErr GetGeoTransform( double * padfTransform ) override;
@@ -1412,7 +1412,7 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
 /************************************************************************/
 
 GDALDataset *BMPDataset::Create( const char * pszFilename,
-                                 int nXSize, int nYSize, int nBands,
+                                 int nXSize, int nYSize, int nBandsIn,
                                  GDALDataType eType, char **papszOptions )
 
 {
@@ -1426,11 +1426,11 @@ GDALDataset *BMPDataset::Create( const char * pszFilename,
         return nullptr;
     }
 
-    if( nBands != 1 && nBands != 3 )
+    if( nBandsIn != 1 && nBandsIn != 3 )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "BMP driver doesn't support %d bands. Must be 1 or 3.\n",
-                  nBands );
+                  nBandsIn );
 
         return nullptr;
     }
@@ -1459,7 +1459,7 @@ GDALDataset *BMPDataset::Create( const char * pszFilename,
     poDS->sInfoHeader.iWidth = nXSize;
     poDS->sInfoHeader.iHeight = nYSize;
     poDS->sInfoHeader.iPlanes = 1;
-    poDS->sInfoHeader.iBitCount = ( nBands == 3 )?24:8;
+    poDS->sInfoHeader.iBitCount = ( nBandsIn == 3 )?24:8;
     poDS->sInfoHeader.iCompression = BMPC_RGB;
 
     /* XXX: Avoid integer overflow. We can calculate size in one
@@ -1495,7 +1495,7 @@ GDALDataset *BMPDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Do we need colour table?                                        */
 /* -------------------------------------------------------------------- */
-    if ( nBands == 1 )
+    if ( nBandsIn == 1 )
     {
         poDS->sInfoHeader.iClrUsed = 1 << poDS->sInfoHeader.iBitCount;
         poDS->pabyColorTable =
@@ -1594,7 +1594,7 @@ GDALDataset *BMPDataset::Create( const char * pszFilename,
     poDS->nRasterXSize = nXSize;
     poDS->nRasterYSize = nYSize;
     poDS->eAccess = GA_Update;
-    poDS->nBands = nBands;
+    poDS->nBands = nBandsIn;
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */

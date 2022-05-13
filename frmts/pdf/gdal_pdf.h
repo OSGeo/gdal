@@ -205,7 +205,7 @@ class PDFDataset final: public GDALPamDataset
     int          bProjDirty;
     int          bNeatLineDirty;
 
-    GDALMultiDomainMetadata oMDMD;
+    GDALMultiDomainMetadata oMDMD_PDF;
     int          bInfoDirty;
     int          bXMPDirty;
 
@@ -315,7 +315,6 @@ private:
 
     int          bUseOCG;
 
-    char       **papszOpenOptions;
     static const char*  GetOption(char** papszOpenOptions,
                                   const char* pszOptionName,
                                   const char* pszDefaultVal);

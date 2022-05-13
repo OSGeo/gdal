@@ -186,6 +186,10 @@ void CADLayer::addHandle( long handle, CADObject::ObjectType type, long cadinser
                     assert( 0 );
                 }
 #endif //_DEBUG
+                if( pBlockHeader->hEntities.empty() )
+                {
+                    return;
+                }
                 auto dCurrentEntHandle = pBlockHeader->hEntities[0].getAsLong();
                 auto dLastEntHandle    = pBlockHeader->hEntities.back().getAsLong(); // FIXME: in 2000+ entities probably has no links to each other.
 
@@ -201,33 +205,35 @@ void CADLayer::addHandle( long handle, CADObject::ObjectType type, long cadinser
                     CADEntityObject* pEntity =
                             dynamic_cast<CADEntityObject *>( entity.get() );
 
-                    if( dCurrentEntHandle == dLastEntHandle )
+                    if( nullptr == pEntity )
                     {
-                        if( nullptr != pEntity )
-                        {
-                            addHandle( dCurrentEntHandle, pEntity->getType(), handle );
-                            Matrix mat;
-                            mat.translate( pInsert->vertInsertionPoint );
-                            mat.scale( pInsert->vertScales );
-                            mat.rotate( pInsert->dfRotation );
-                            transformations[dCurrentEntHandle] = mat;
-                            break;
-                        }
-                        else
-                        {
-                            assert( 0 );
-                        }
+                        // shouldn't happen on a valid file, but can happen
+                        // on broken ones
+                        break;
                     }
 
-                    if( nullptr != pEntity )
+                    if( dCurrentEntHandle == handle && type == pEntity->getType() )
                     {
-                        addHandle( dCurrentEntHandle, pEntity->getType(), handle );
-                        Matrix mat;
-                        mat.translate( pInsert->vertInsertionPoint );
-                        mat.scale( pInsert->vertScales );
-                        mat.rotate( pInsert->dfRotation );
-                        transformations[dCurrentEntHandle] = mat;
+                        // If the above condition is true, infinite recursion
+                        // would occur in the following addHandle() call.
+                        // Shouldn't happen on a valid file, but can happen
+                        // on broken ones, such as in https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=46887
+                        break;
+                    }
 
+                    addHandle( dCurrentEntHandle, pEntity->getType(), handle );
+                    Matrix mat;
+                    mat.translate( pInsert->vertInsertionPoint );
+                    mat.scale( pInsert->vertScales );
+                    mat.rotate( pInsert->dfRotation );
+                    transformations[dCurrentEntHandle] = mat;
+
+                    if( dCurrentEntHandle == dLastEntHandle )
+                    {
+                        break;
+                    }
+                    else
+                    {
                         if( pEntity->stCed.bNoLinks )
                         {
                             ++dCurrentEntHandle;
@@ -238,10 +244,6 @@ void CADLayer::addHandle( long handle, CADObject::ObjectType type, long cadinser
                                 pEntity->stChed.hNextEntity.getAsLong(
                                     pEntity->stCed.hObjectHandle );
                         }
-                    }
-                    else
-                    {
-                        assert ( 0 );
                     }
                 }
             }

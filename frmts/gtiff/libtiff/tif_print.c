@@ -81,7 +81,7 @@ _TIFFPrintField(FILE* fd, const TIFFField *fip,
     /* Print a user-friendly name for tags of relatively common use, but */
     /* which aren't registered by libtiff itself. */
     const char* field_name = fip->field_name;
-    if( fip->field_name != NULL && strncmp(fip->field_name, "Tag ", 4) == 0 ) {
+    if( TIFFFieldIsAnonymous(fip) ) {
         for( size_t i = 0; i < NTAGS; ++i ) {
             if( fip->field_tag == tagnames[i].tag ) {
                 field_name = tagnames[i].name;
@@ -149,7 +149,7 @@ _TIFFPrettyPrintField(TIFF* tif, const TIFFField *fip, FILE* fd, uint32_t tag,
         (void) tif;
 
 	/* do not try to pretty print auto-defined fields */
-	if (fip->field_name != NULL && strncmp(fip->field_name,"Tag ", 4) == 0) {
+	if ( TIFFFieldIsAnonymous(fip) ) {
 		return 0;
 	}
         
@@ -574,6 +574,7 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 			uint32_t value_count;
 			int mem_alloc = 0;
 			void *raw_data = NULL;
+			uint16_t dotrange[2]; /* must be kept in that scope and not moved in the below TIFFTAG_DOTRANGE specific case */
 
 			fip = TIFFFieldWithTag(tif, tag);
 			if(fip == NULL)
@@ -607,7 +608,6 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 					   handled this way ... likely best if we move it into
 					   the directory structure with an explicit field in 
 					   libtiff 4.1 and assign it a FIELD_ value */
-					static uint16_t dotrange[2];
 					raw_data = dotrange;
 					TIFFGetField(tif, tag, dotrange+0, dotrange+1);
 				} else if (fip->field_type == TIFF_ASCII

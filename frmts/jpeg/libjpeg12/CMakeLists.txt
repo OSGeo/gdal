@@ -71,8 +71,7 @@ foreach (_src IN LISTS HEADERS)
   file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/../libjpeg/${_src}" DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 endforeach ()
 
-file(COPY jmorecfg.h.12 DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-file(RENAME ${CMAKE_CURRENT_BINARY_DIR}/jmorecfg.h.12 ${CMAKE_CURRENT_BINARY_DIR}/jmorecfg.h)
+configure_file(jmorecfg.h.12 ${CMAKE_CURRENT_BINARY_DIR}/jmorecfg.h COPYONLY)
 
 add_library(libjpeg12 OBJECT ${SOURCES_12})
 target_include_directories(libjpeg12 PRIVATE ${CMAKE_CURRENT_BINARY_DIR} $<TARGET_PROPERTY:cpl,SOURCE_DIR>
@@ -81,5 +80,5 @@ target_compile_options(libjpeg12 PRIVATE ${GDAL_C_WARNING_FLAGS} ${GDAL_SOFTWARN
 target_compile_definitions(libjpeg12 PRIVATE -DJPEG_DUAL_MODE_8_12)
 
 target_compile_definitions(libjpeg12 PRIVATE -DDEFAULT_MAX_MEM=500000000L)
-set_property(TARGET libjpeg12 PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
+set_property(TARGET libjpeg12 PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:libjpeg12>)

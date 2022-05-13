@@ -197,19 +197,20 @@ void VSIOSSHandleHelper::RebuildURL()
 /*                        GetConfiguration()                            */
 /************************************************************************/
 
-bool VSIOSSHandleHelper::GetConfiguration(CSLConstList papszOptions,
+bool VSIOSSHandleHelper::GetConfiguration(const std::string& osPathForOption,
+                                          CSLConstList papszOptions,
                                           CPLString& osSecretAccessKey,
                                           CPLString& osAccessKeyId)
 {
     osSecretAccessKey = CSLFetchNameValueDef(papszOptions,
         "OSS_SECRET_ACCESS_KEY",
-        CPLGetConfigOption("OSS_SECRET_ACCESS_KEY", ""));
+        VSIGetCredential(osPathForOption.c_str(), "OSS_SECRET_ACCESS_KEY", ""));
 
     if( !osSecretAccessKey.empty() )
     {
         osAccessKeyId = CSLFetchNameValueDef(papszOptions,
             "OSS_ACCESS_KEY_ID",
-            CPLGetConfigOption("OSS_ACCESS_KEY_ID", ""));
+            VSIGetCredential(osPathForOption.c_str(), "OSS_ACCESS_KEY_ID", ""));
         if( osAccessKeyId.empty() )
         {
             VSIError(VSIE_AWSInvalidCredentials,
@@ -234,16 +235,20 @@ VSIOSSHandleHelper* VSIOSSHandleHelper::BuildFromURI( const char* pszURI,
                                                       bool bAllowNoObject,
                                                       CSLConstList papszOptions )
 {
+    std::string osPathForOption("/vsioss/");
+    if( pszURI )
+        osPathForOption += pszURI;
+
     CPLString osSecretAccessKey;
     CPLString osAccessKeyId;
-    if( !GetConfiguration(papszOptions, osSecretAccessKey, osAccessKeyId) )
+    if( !GetConfiguration(osPathForOption, papszOptions, osSecretAccessKey, osAccessKeyId) )
     {
         return nullptr;
     }
 
     const CPLString osEndpoint = CSLFetchNameValueDef(papszOptions,
         "OSS_ENDPOINT",
-        CPLGetConfigOption("OSS_ENDPOINT", "oss-us-east-1.aliyuncs.com"));
+        VSIGetCredential(osPathForOption.c_str(), "OSS_ENDPOINT", "oss-us-east-1.aliyuncs.com"));
     CPLString osBucket;
     CPLString osObjectKey;
     if( pszURI != nullptr && pszURI[0] != '\0' &&
@@ -252,11 +257,11 @@ VSIOSSHandleHelper* VSIOSSHandleHelper::BuildFromURI( const char* pszURI,
     {
         return nullptr;
     }
-    const bool bUseHTTPS = CPLTestBool(CPLGetConfigOption("OSS_HTTPS", "YES"));
+    const bool bUseHTTPS = CPLTestBool(VSIGetCredential(osPathForOption.c_str(), "OSS_HTTPS", "YES"));
     const bool bIsValidNameForVirtualHosting =
         osBucket.find('.') == std::string::npos;
     const bool bUseVirtualHosting = CPLTestBool(
-        CPLGetConfigOption("OSS_VIRTUAL_HOSTING",
+        VSIGetCredential(osPathForOption.c_str(), "OSS_VIRTUAL_HOSTING",
                            bIsValidNameForVirtualHosting ? "TRUE" : "FALSE"));
     return new VSIOSSHandleHelper(osSecretAccessKey, osAccessKeyId,
                                  osEndpoint,

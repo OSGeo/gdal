@@ -30,6 +30,9 @@
 ###############################################################################
 
 import gdaltest
+import os
+import shutil
+import sys
 from osgeo import gdal
 from osgeo import osr
 
@@ -506,6 +509,7 @@ def test_vrtmisc_write_srs():
     tmpfile = '/vsimem/test_vrtmisc_write_srs.vrt'
     ds = gdal.Translate(tmpfile, 'data/byte.tif', format='VRT')
     sr = osr.SpatialReference()
+    sr.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
     sr.ImportFromEPSG(4326)
     ds.SetSpatialRef(sr)
     ds = None
@@ -528,6 +532,9 @@ def test_vrtmisc_mask_implicit_overviews():
     gdal.Translate('/vsimem/cog.vrt', '/vsimem/cog.tif')
     ds = gdal.Open('/vsimem/cog.vrt')
     assert ds.GetRasterBand(1).GetOverview(0).GetMaskFlags() == gdal.GMF_PER_DATASET
+    assert ds.GetRasterBand(1).GetMaskBand().IsMaskBand()
+    assert ds.GetRasterBand(1).GetOverview(0).GetMaskBand().IsMaskBand()
+
     ds = None
     gdal.Translate('/vsimem/out.tif', '/vsimem/cog.vrt', options = '-b mask -outsize 10% 0')
     gdal.GetDriverByName('GTiff').Delete('/vsimem/cog.tif')
@@ -579,3 +586,133 @@ def test_vrtmisc_coordinate_epoch():
     ds = None
 
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Test the relativeToVRT attribute of SourceFilename
+
+def test_vrtmisc_sourcefilename_all_relatives():
+
+    shutil.copy('data/byte.tif', 'tmp')
+
+    try:
+        src_ds = gdal.Open(os.path.join('tmp', 'byte.tif'))
+        ds = gdal.GetDriverByName('VRT').CreateCopy('', src_ds)
+        ds.SetDescription(os.path.join('tmp', 'byte.vrt'))
+        ds = None
+        assert '<SourceFilename relativeToVRT="1">byte.tif<' in open('tmp/byte.vrt', 'rt').read()
+    finally:
+        gdal.Unlink('tmp/byte.tif')
+        gdal.Unlink('tmp/byte.vrt')
+
+
+###############################################################################
+# Test the relativeToVRT attribute of SourceFilename
+
+def test_vrtmisc_sourcefilename_source_relative_dest_absolute():
+
+    shutil.copy('data/byte.tif', 'tmp')
+
+    try:
+        src_ds = gdal.Open(os.path.join('tmp', 'byte.tif'))
+        ds = gdal.GetDriverByName('VRT').CreateCopy('', src_ds)
+        path = os.path.join(os.getcwd(), 'tmp', 'byte.vrt')
+        if sys.platform == 'win32':
+           path = path.replace('/', '\\')
+        ds.SetDescription(path)
+        ds = None
+        assert '<SourceFilename relativeToVRT="1">byte.tif<' in open('tmp/byte.vrt', 'rt').read()
+    finally:
+        gdal.Unlink('tmp/byte.tif')
+        gdal.Unlink('tmp/byte.vrt')
+
+
+###############################################################################
+# Test the relativeToVRT attribute of SourceFilename
+
+def test_vrtmisc_sourcefilename_source_absolute_dest_absolute():
+
+    shutil.copy('data/byte.tif', 'tmp')
+
+    try:
+        src_ds = gdal.Open(os.path.join(os.getcwd(), 'tmp', 'byte.tif'))
+        ds = gdal.GetDriverByName('VRT').CreateCopy('', src_ds)
+        ds.SetDescription(os.path.join(os.getcwd(), 'tmp', 'byte.vrt'))
+        ds = None
+        assert '<SourceFilename relativeToVRT="1">byte.tif<' in open('tmp/byte.vrt', 'rt').read()
+    finally:
+        gdal.Unlink('tmp/byte.tif')
+        gdal.Unlink('tmp/byte.vrt')
+
+
+###############################################################################
+# Test the relativeToVRT attribute of SourceFilename
+
+def test_vrtmisc_sourcefilename_source_absolute_dest_relative():
+
+    shutil.copy('data/byte.tif', 'tmp')
+
+    try:
+        path = os.path.join(os.getcwd(), 'tmp', 'byte.tif')
+        if sys.platform == 'win32':
+           path = path.replace('/', '\\')
+        src_ds = gdal.Open(path)
+        ds = gdal.GetDriverByName('VRT').CreateCopy('', src_ds)
+        ds.SetDescription(os.path.join('tmp', 'byte.vrt'))
+        ds = None
+        assert '<SourceFilename relativeToVRT="1">byte.tif<' in open('tmp/byte.vrt', 'rt').read()
+    finally:
+        gdal.Unlink('tmp/byte.tif')
+        gdal.Unlink('tmp/byte.vrt')
+
+###############################################################################
+# Test Int64 nodata
+
+
+def test_vrtmisc_nodata_int64():
+
+    filename = '/vsimem/temp.vrt'
+    ds = gdal.Translate(filename, 'data/byte.tif', format = 'VRT', outputType = gdal.GDT_Int64)
+    val = -(1 << 63)
+    assert ds.GetRasterBand(1).SetNoDataValue(val) == gdal.CE_None
+    assert ds.GetRasterBand(1).GetNoDataValue() == val
+    ds = None
+
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetNoDataValue() == val
+    ds = None
+
+    gdal.Unlink(filename)
+
+
+###############################################################################
+# Test UInt64 nodata
+
+
+def test_vrtmisc_nodata_uint64():
+
+    filename = '/vsimem/temp.vrt'
+    ds = gdal.Translate(filename, 'data/byte.tif', format = 'VRT', outputType = gdal.GDT_UInt64)
+    val = (1 << 64) - 1
+    assert ds.GetRasterBand(1).SetNoDataValue(val) == gdal.CE_None
+    assert ds.GetRasterBand(1).GetNoDataValue() == val
+    ds = None
+
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetNoDataValue() == val
+    ds = None
+
+    gdal.Unlink(filename)
+
+
+###############################################################################
+# Check IsMaskBand() on an alpha band
+
+
+def test_vrtmisc_alpha_ismaskband():
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 2)
+    src_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
+    ds = gdal.GetDriverByName('VRT').CreateCopy('', src_ds)
+    assert not ds.GetRasterBand(1).IsMaskBand()
+    assert ds.GetRasterBand(2).IsMaskBand()

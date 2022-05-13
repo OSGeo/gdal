@@ -117,7 +117,7 @@ OGRErr OGRPGeoSelectLayer::ResetStatement()
     iNextShapeId = 0;
 
     CPLDebug( "ODBC", "Recreating statement." );
-    poStmt = new CPLODBCStatement( poDS->GetSession() );
+    poStmt = new CPLODBCStatement( poDS->GetSession(), m_nStatementFlags );
     poStmt->Append( pszBaseStatement );
 
     if( poStmt->ExecuteSQL() )

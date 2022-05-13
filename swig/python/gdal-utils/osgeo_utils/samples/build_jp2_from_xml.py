@@ -437,7 +437,7 @@ def build_file(inname, outname):
     return ret
 
 
-def main(argv):
+def main(argv=sys.argv):
     i = 1
     inname = None
     outname = None

@@ -20,6 +20,11 @@
 extern "C" {
 #endif /* __cplusplus */
 
+/* GDAL specific */
+#ifdef RENAME_INTERNAL_GIF_SYMBOLS
+#include "gdal_giflib_symbol_rename.h"
+#endif
+
 #define GIF_LIB_VERSION " Version 4.1, "
 
 #define GIF_ERROR   0

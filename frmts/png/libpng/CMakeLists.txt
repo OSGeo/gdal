@@ -1,3 +1,5 @@
+include(GdalDriverHelper)
+
 add_library(
   libpng OBJECT
   png.c
@@ -16,10 +18,13 @@ add_library(
   pngwio.c
   pngwtran.c)
 if (GDAL_USE_ZLIB_INTERNAL)
-  target_include_directories(libpng PRIVATE $<TARGET_PROPERTY:libz,SOURCE_DIR>)
+  gdal_add_vendored_lib(libpng libz)
 else ()
-  target_include_directories(libpng PRIVATE ${ZLIB_INCLUDE_DIRS})
-  gdal_add_private_link_libraries(${ZLIB_LIBRARIES})
+  gdal_target_link_libraries(libpng PRIVATE ZLIB::ZLIB)
 endif ()
-set_property(TARGET libpng PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
+set_property(TARGET libpng PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:libpng>)
+target_compile_definitions(libpng PRIVATE -DPNG_ARM_NEON_IMPLEMENTATION=0 -DPNG_ARM_NEON_OPT=0)
+if (RENAME_INTERNAL_PNG_SYMBOLS)
+  target_compile_definitions(libpng PUBLIC -DRENAME_INTERNAL_PNG_SYMBOLS)
+endif ()

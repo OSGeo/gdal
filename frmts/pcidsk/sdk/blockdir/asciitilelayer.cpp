@@ -34,6 +34,7 @@
 #include <cstring>
 #include <cstdio>
 #include <algorithm>
+#include <limits>
 
 using namespace PCIDSK;
 

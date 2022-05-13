@@ -268,6 +268,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
                                          char **papszOptions ) override;
         int                 TestCapability( const char * ) override;
 
+        std::vector<std::string> GetFieldDomainNames(CSLConstList papszOptions = nullptr) const override;
         const OGRFieldDomain* GetFieldDomain(const std::string& name) const override;
         bool                AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,
                                            std::string& failureReason) override;
@@ -326,7 +327,6 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
 
     private:
 
-        OGRErr              PragmaCheck(const char * pszPragma, const char * pszExpected, int nRowsExpected);
         OGRErr              SetApplicationAndUserVersionId();
         bool                ReOpenDB();
         bool                OpenOrCreateDB( int flags );
@@ -567,7 +567,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
                                             const char * pszValue,
                                             const char * pszDomain = "" ) override;
 
-    void                RenameTo(const char* pszDstTableName);
+    virtual OGRErr       Rename(const char* pszDstTableName) override;
 
     virtual bool         HasFastSpatialFilter(int iGeomCol) override;
     virtual CPLString    GetSpatialWhere(int iGeomCol,

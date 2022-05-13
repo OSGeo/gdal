@@ -179,6 +179,7 @@ class OGRDWGDataSource final: public OGRDataSource
 
     int                 bInlineBlocks;
     int                 bAttributes;
+    int                 bAllAttributes;
 
     OGRDWGServices     *poServices;
     OdDbDatabasePtr     poDb;
@@ -203,6 +204,7 @@ class OGRDWGDataSource final: public OGRDataSource
 
     int                 InlineBlocks() { return bInlineBlocks; }
     int                 Attributes() { return bAttributes; }
+    int                 AllAttributes() { return bAllAttributes; }
     void                AddStandardFields( OGRFeatureDefn *poDef );
 
     // Implemented in ogrdxf_blockmap.cpp

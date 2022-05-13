@@ -15,7 +15,7 @@
     <PixelFunctionArguments scale="111120" z_factor="30" />
     <PixelFunctionCode>
       <![CDATA[
-# Licence: X/MIT
+# Licence: MIT
 # Copyright 2016, Even Rouault
 import math
 

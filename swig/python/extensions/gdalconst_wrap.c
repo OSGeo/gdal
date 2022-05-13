@@ -3523,6 +3523,8 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "GDT_Int16",SWIG_From_int((int)(GDT_Int16)));
   SWIG_Python_SetConstant(d, "GDT_UInt32",SWIG_From_int((int)(GDT_UInt32)));
   SWIG_Python_SetConstant(d, "GDT_Int32",SWIG_From_int((int)(GDT_Int32)));
+  SWIG_Python_SetConstant(d, "GDT_UInt64",SWIG_From_int((int)(GDT_UInt64)));
+  SWIG_Python_SetConstant(d, "GDT_Int64",SWIG_From_int((int)(GDT_Int64)));
   SWIG_Python_SetConstant(d, "GDT_Float32",SWIG_From_int((int)(GDT_Float32)));
   SWIG_Python_SetConstant(d, "GDT_Float64",SWIG_From_int((int)(GDT_Float64)));
   SWIG_Python_SetConstant(d, "GDT_CInt16",SWIG_From_int((int)(GDT_CInt16)));
@@ -3631,6 +3633,7 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "DMD_CREATIONFIELDDATATYPES",SWIG_FromCharPtr(GDAL_DMD_CREATIONFIELDDATATYPES));
   SWIG_Python_SetConstant(d, "DMD_CREATIONFIELDDATASUBTYPES",SWIG_FromCharPtr(GDAL_DMD_CREATIONFIELDDATASUBTYPES));
   SWIG_Python_SetConstant(d, "DMD_SUBDATASETS",SWIG_FromCharPtr(GDAL_DMD_SUBDATASETS));
+  SWIG_Python_SetConstant(d, "DMD_CREATION_FIELD_DOMAIN_TYPES",SWIG_FromCharPtr(GDAL_DMD_CREATION_FIELD_DOMAIN_TYPES));
   SWIG_Python_SetConstant(d, "DCAP_OPEN",SWIG_FromCharPtr(GDAL_DCAP_OPEN));
   SWIG_Python_SetConstant(d, "DCAP_CREATE",SWIG_FromCharPtr(GDAL_DCAP_CREATE));
   SWIG_Python_SetConstant(d, "DCAP_CREATE_MULTIDIMENSIONAL",SWIG_FromCharPtr(GDAL_DCAP_CREATE_MULTIDIMENSIONAL));
@@ -3650,6 +3653,8 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "DCAP_FEATURE_STYLES",SWIG_FromCharPtr(GDAL_DCAP_FEATURE_STYLES));
   SWIG_Python_SetConstant(d, "DCAP_COORDINATE_EPOCH",SWIG_FromCharPtr(GDAL_DCAP_COORDINATE_EPOCH));
   SWIG_Python_SetConstant(d, "DCAP_MULTIPLE_VECTOR_LAYERS",SWIG_FromCharPtr(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS));
+  SWIG_Python_SetConstant(d, "DCAP_FIELD_DOMAINS",SWIG_FromCharPtr(GDAL_DCAP_FIELD_DOMAINS));
+  SWIG_Python_SetConstant(d, "DCAP_RENAME_LAYERS",SWIG_FromCharPtr(GDAL_DCAP_RENAME_LAYERS));
   SWIG_Python_SetConstant(d, "DIM_TYPE_HORIZONTAL_X",SWIG_FromCharPtr(GDAL_DIM_TYPE_HORIZONTAL_X));
   SWIG_Python_SetConstant(d, "DIM_TYPE_HORIZONTAL_Y",SWIG_FromCharPtr(GDAL_DIM_TYPE_HORIZONTAL_Y));
   SWIG_Python_SetConstant(d, "DIM_TYPE_VERTICAL",SWIG_FromCharPtr(GDAL_DIM_TYPE_VERTICAL));

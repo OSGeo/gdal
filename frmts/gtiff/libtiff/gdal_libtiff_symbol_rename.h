@@ -58,9 +58,11 @@
 #define gtTileSeparate gdal_gtTileSeparate
 #define horAcc16 gdal_horAcc16
 #define horAcc32 gdal_horAcc32
+#define horAcc64 gdal_horAcc64
 #define horAcc8 gdal_horAcc8
 #define horDiff16 gdal_horDiff16
 #define horDiff32 gdal_horDiff32
+#define horDiff64 gdal_horDiff64
 #define horDiff8 gdal_horDiff8
 #define horizontalAccumulate11 gdal_horizontalAccumulate11
 #define horizontalAccumulate12 gdal_horizontalAccumulate12
@@ -301,8 +303,10 @@
 #define SetupUncompressedBuffer gdal_SetupUncompressedBuffer
 #define swabHorAcc16 gdal_swabHorAcc16
 #define swabHorAcc32 gdal_swabHorAcc32
+#define swabHorAcc64 gdal_swabHorAcc64
 #define swabHorDiff16 gdal_swabHorDiff16
 #define swabHorDiff32 gdal_swabHorDiff32
+#define swabHorDiff64 gdal_swabHorDiff64
 #define tagCompare gdal_tagCompare
 #define tagNameCompare gdal_tagNameCompare
 #define td_lfind gdal_td_lfind

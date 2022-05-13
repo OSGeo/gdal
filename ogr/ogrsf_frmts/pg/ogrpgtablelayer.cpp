@@ -2033,7 +2033,8 @@ int OGRPGTableLayer::TestCapability( const char * pszCap )
             EQUAL(pszCap,OLCCreateField) ||
             EQUAL(pszCap,OLCCreateGeomField) ||
             EQUAL(pszCap,OLCDeleteField) ||
-            EQUAL(pszCap,OLCAlterFieldDefn) )
+            EQUAL(pszCap,OLCAlterFieldDefn)||
+            EQUAL(pszCap,OLCRename) )
             return TRUE;
 
         else if( EQUAL(pszCap,OLCRandomWrite) ||
@@ -3227,6 +3228,53 @@ OGRErr OGRPGTableLayer::GetExtent( int iGeomField, OGREnvelope *psExtent, int bF
     }
 
     return OGRPGLayer::GetExtent( iGeomField, psExtent, bForce );
+}
+
+/************************************************************************/
+/*                           Rename()                                   */
+/************************************************************************/
+
+OGRErr OGRPGTableLayer::Rename(const char* pszNewName)
+{
+    if( !TestCapability(OLCRename) )
+        return OGRERR_FAILURE;
+
+    if( bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
+        return OGRERR_FAILURE;
+    poDS->EndCopy();
+    ResetReading();
+
+    char* pszNewSqlTableName = CPLStrdup(OGRPGEscapeColumnName(pszNewName));
+    PGconn *hPGConn = poDS->GetPGConn();
+    CPLString osCommand;
+    osCommand.Printf("ALTER TABLE %s RENAME TO %s",
+                     pszSqlTableName, pszNewSqlTableName);
+    PGresult *hResult = OGRPG_PQexec(hPGConn, osCommand);
+
+    OGRErr eRet = OGRERR_NONE;
+    if ( !hResult || PQresultStatus(hResult) != PGRES_COMMAND_OK )
+    {
+        eRet = OGRERR_FAILURE;
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s", PQerrorMessage(hPGConn) );
+
+        CPLFree(pszNewSqlTableName);
+    }
+    else
+    {
+        CPLFree(pszTableName);
+        pszTableName = CPLStrdup(pszNewName);
+
+        CPLFree(pszSqlTableName);
+        pszSqlTableName = pszNewSqlTableName;
+
+        SetDescription(pszNewName);
+        poFeatureDefn->SetName(pszNewName);
+    }
+
+    OGRPGClearResult( hResult );
+
+    return eRet;
 }
 
 /************************************************************************/

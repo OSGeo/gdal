@@ -184,6 +184,7 @@ const MapInfoDatumInfo asDatumInfoList[] =
 { 6124, 112, "Rikets_koordinatsystem_1990",10,498,  -36, 568,  0, 0, 0, 0, 0},
 { 0,    113, "Lisboa_DLX",                 4, -303, -62, 105,  0, 0, 0, 0, 0},
 { 0,    114, "Melrica_1973_D73",           4, -223, 110, 37,   0, 0, 0, 0, 0},
+{ 6258, 115, "European_Terrestrial_Reference_System_1989", 0, 0,    0,   0,    0, 0, 0, 0, 0},
 { 6258, 115, "Euref_89",                   0, 0,    0,   0,    0, 0, 0, 0, 0},
 { 6283, 116, "GDA94",                      0, 0,    0,   0,    0, 0, 0, 0, 0},
 { 6283, 116, "Geocentric_Datum_of_Australia_1994", 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -300,6 +301,7 @@ const MapInfoSpheroidInfo asSpheroidInfoList[] =
 {20,"Fischer 1968",                             6378150.0,      298.3},
 {21,"GRS 67",                                   6378160.0,      298.247167427},
 { 0,"GRS 80",                                   6378137.0,      298.257222101},
+{56,"GSK2011",                                  6378136.5,      298.2564151},
 { 5,"Hayford",                                  6378388.0,      297.0},
 {22,"Helmert 1906",                             6378200.0,      298.3},
 {23,"Hough",                                    6378270.0,      297.0},
@@ -316,6 +318,7 @@ const MapInfoSpheroidInfo asSpheroidInfoList[] =
 {45,"OSU91A",                                   6378136.3,      298.25722},
 {46,"Plessis 1817",                             6376523.0,      308.64},
 {52,"PZ90",                                     6378136.0,      298.257839303},
+{57,"PZ90.11",                                  6378136.0,      298.25784},
 {24,"South American",                           6378160.0,      298.25},
 {12,"Sphere",                                   6370997.0,      0.0},
 {47,"Struve 1860",                              6378297.0,      294.73},
@@ -1538,13 +1541,49 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
 
     // Get datum information
     const char *pszWKTDatum = poSpatialRef->GetAttrValue("DATUM");
-    int nDatumEPSGCode = -1;
-    const char *pszDatumAuthority = poSpatialRef->GetAuthorityName("DATUM");
-    const char *pszDatumCode = poSpatialRef->GetAuthorityCode("DATUM");
 
-    if (pszDatumCode && pszDatumAuthority && EQUAL(pszDatumAuthority, "EPSG"))
+    const auto GetDatumCode = [](const OGRSpatialReference* poSRS)
     {
-        nDatumEPSGCode = atoi(pszDatumCode);
+        const char *pszDatumAuthority = poSRS->GetAuthorityName("DATUM");
+        const char *pszDatumCode = poSRS->GetAuthorityCode("DATUM");
+        if (pszDatumCode && pszDatumAuthority && EQUAL(pszDatumAuthority, "EPSG"))
+        {
+            return atoi(pszDatumCode);
+        }
+        return -1;
+    };
+
+    int nDatumEPSGCode = GetDatumCode(poSpatialRef);
+    if( nDatumEPSGCode < 0 )
+    {
+        const auto GetDatumCodeFromCRSIndirect = [&GetDatumCode](
+                    const OGRSpatialReference* poSRS, const char* pszNode)
+        {
+            const char* pszAuthorityName = poSRS->GetAuthorityName(pszNode);
+            const char* pszAuthorityCode = poSRS->GetAuthorityCode(pszNode);
+            if( pszAuthorityName && pszAuthorityCode )
+            {
+                OGRSpatialReference oSRSTmp;
+                if( oSRSTmp.SetFromUserInput(
+                        CPLSPrintf("%s:%s", pszAuthorityName, pszAuthorityCode)) == OGRERR_NONE )
+                {
+                    return GetDatumCode(&oSRSTmp);
+                }
+            }
+            return -1;
+        };
+
+        // When the CRS is built from WKT2 CRS string, the DATUM code will
+        // typically be absent from the CRS string.
+        // Try to get the AUTHORITY:CODE from the CRS to instantiate
+        // a temporary CRS and get its DATUM code.
+        nDatumEPSGCode = GetDatumCodeFromCRSIndirect(poSpatialRef, nullptr);
+        if( nDatumEPSGCode < 0 && !poSpatialRef->IsGeographic() )
+        {
+            // If there's no AUTHORITY:CODE on the CRS, then retry with its
+            // geographic CRS
+            nDatumEPSGCode = GetDatumCodeFromCRSIndirect(poSpatialRef, "GEOGCS");
+        }
     }
 
     /*-----------------------------------------------------------------

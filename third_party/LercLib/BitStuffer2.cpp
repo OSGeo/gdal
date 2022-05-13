@@ -355,50 +355,42 @@ void BitStuffer2::BitStuff_Before_Lerc2v3(Byte** ppByte, const vector<unsigned i
 
 // -------------------------------------------------------------------------- ;
 
-bool BitStuffer2::BitUnStuff_Before_Lerc2v3(const Byte** ppByte, size_t& nBytesRemaining, 
-    vector<unsigned int>& dataVec, unsigned int numElements, int numBits)
+bool BitStuffer2::BitUnStuff_Before_Lerc2v3(const Byte** ppByte, size_t& nBytesRemaining,
+    vector<unsigned int>& dataVec, unsigned int numElements, int numBits) const
 {
   if (numElements == 0 || numBits >= 32)
     return false;
   unsigned long long numUIntsLL = ((unsigned long long)numElements * numBits + 31) / 32;
   unsigned long long numBytesLL = numUIntsLL * sizeof(unsigned int);
   size_t numBytes = (size_t)numBytesLL; // could theoretically overflow on 32 bit system
-  if (numBytes != numBytesLL)
-    return false;
   size_t numUInts = (size_t)numUIntsLL;
-
-  unsigned int* arr = (unsigned int*)(*ppByte);
-
-  if (nBytesRemaining < numBytes)
+  unsigned int ntbnn = NumTailBytesNotNeeded(numElements, numBits);
+  if (numBytes != numBytesLL || nBytesRemaining + ntbnn < numBytes)
     return false;
 
   try
   {
     dataVec.resize(numElements, 0);    // init with 0
+    m_tmpBitStuffVec.resize(numUInts);
   }
   catch( const std::exception& )
   {
     return false;
   }
 
-  unsigned int* srcPtr = arr;
-  srcPtr += numUInts;
+  m_tmpBitStuffVec[numUInts - 1] = 0;    // set last uint to 0
 
-  // needed to save the 0-3 bytes not used in the last UInt
-  srcPtr--;
-  unsigned int lastUInt = *srcPtr;
-  unsigned int numBytesNotNeeded = NumTailBytesNotNeeded(numElements, numBits);
+  unsigned int nBytesToCopy = (numElements * numBits + 7) / 8;
+  memcpy(&m_tmpBitStuffVec[0], *ppByte, nBytesToCopy);
 
-  for (unsigned int n = numBytesNotNeeded; n; n--)
+  unsigned int* pLastULong = &m_tmpBitStuffVec[numUInts - 1];
+  while (ntbnn)
   {
-    unsigned int val;
-    memcpy(&val, srcPtr, sizeof(unsigned int));
-    val <<= 8;
-    memcpy(srcPtr, &val, sizeof(unsigned int));
+    -- ntbnn;
+    *pLastULong <<= 8;
   }
 
-  // do the un-stuffing
-  srcPtr = arr;
+  unsigned int* srcPtr = &m_tmpBitStuffVec[0];
   unsigned int* dstPtr = &dataVec[0];
   int bitPos = 0;
 
@@ -431,11 +423,9 @@ bool BitStuffer2::BitUnStuff_Before_Lerc2v3(const Byte** ppByte, size_t& nBytesR
     }
   }
 
-  if (numBytesNotNeeded > 0)
-    memcpy(srcPtr, &lastUInt, sizeof(unsigned int));  // restore the last UInt
+  *ppByte += nBytesToCopy;
+  nBytesRemaining -= nBytesToCopy;
 
-  *ppByte += numBytes - numBytesNotNeeded;
-  nBytesRemaining -= numBytes - numBytesNotNeeded;
   return true;
 }
 

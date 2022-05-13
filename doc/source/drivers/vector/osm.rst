@@ -98,7 +98,7 @@ limiting factor (typically the case of rotational disk), and will be
 mostly efficient for country-sized OSM extracts where compression rate
 can go up to a factor of 3 or 4, and help keep the node DB to a size
 that fit in the OS I/O caches. For whole planet file, the effect of this
-option will be less efficient. This option consumes addionnal 60 MB of
+option will be less efficient. This option consumes additional 60 MB of
 RAM.
 
 Interleaved reading
@@ -110,11 +110,11 @@ because too many features will accumulate in the layers before being
 consumed by the user application.
 
 Starting with GDAL 2.2, applications should use the
-GDALDataset::GetNextFeature() API to iterate over features in the order
+``GDALDataset::GetNextFeature()`` API to iterate over features in the order
 they are produced.
 
 For earlier versions, for large files, applications should set the
-OGR_INTERLEAVED_READING=YES configuration option to turn on a special
+:decl_configoption:`OGR_INTERLEAVED_READING` =YES configuration option to turn on a special
 reading mode where the following reading pattern must be used:
 
 ::
@@ -139,7 +139,8 @@ reading mode where the following reading pattern must be used:
        while( bHasLayersNonEmpty );
 
 Note : the ogr2ogr application has been modified to use that
-OGR_INTERLEAVED_READING mode without any particular user action.
+:decl_configoption:`OGR_INTERLEAVED_READING` mode without any 
+particular user action.
 
 Spatial filtering
 -----------------

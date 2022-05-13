@@ -142,6 +142,10 @@ EXTRAFLAGS =	$(EXTRAFLAGS) $(LZ4_CFLAGS) -DHAVE_LZ4
 ODBC_OBJ =	cpl_odbc.obj
 !ENDIF
 
+!IF "$(HAVE_ATLBASE_H)" == "YES"
+EXTRAFLAGS = $(EXTRAFLAGS) -DHAVE_ATLBASE_H=1
+!ENDIF
+
 default:	prev_dllbuild cpl_config.h $(LIB)
 
 $(LIB):	$(OBJ)

@@ -57,6 +57,8 @@ void VSIInstallGSFileHandler( void )
 
 #define ENABLE_DEBUG 0
 
+#define unchecked_curl_easy_setopt(handle,opt,param) CPL_IGNORE_RET_VAL(curl_easy_setopt(handle,opt,param))
+
 namespace cpl {
 
 /************************************************************************/
@@ -78,6 +80,8 @@ class VSIGSFSHandler final : public IVSIS3LikeFSHandler
         const char* pszURI, bool bAllowNoObject) override;
 
     void ClearCache() override;
+
+    bool IsAllowedHeaderForObjectCreation( const char* pszHeaderName ) override { return STARTS_WITH(pszHeaderName, "x-goog-"); }
 
   public:
     VSIGSFSHandler() = default;
@@ -462,8 +466,8 @@ bool VSIGSFSHandler::SetFileMetadata( const char * pszFilename,
         bRetry = false;
         CURL* hCurlHandle = curl_easy_init();
         poHandleHelper->AddQueryParameter("acl", "");
-        curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "PUT");
-        curl_easy_setopt(hCurlHandle, CURLOPT_POSTFIELDS, pszXML );
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "PUT");
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_POSTFIELDS, pszXML );
 
         struct curl_slist* headers = static_cast<struct curl_slist*>(
             CPLHTTPSetOptions(hCurlHandle,
@@ -558,8 +562,8 @@ int* VSIGSFSHandler::UnlinkBatch( CSLConstList papszFiles )
                                    CPLSPrintf("%d",CPL_HTTP_MAX_RETRY)));
 
     // For debug / testing only
-    const int nBatchSize = std::min(100,
-        atoi(CPLGetConfigOption("CPL_VSIGS_UNLINK_BATCH_SIZE", "100")));
+    const int nBatchSize = std::max(1, std::min(100,
+        atoi(CPLGetConfigOption("CPL_VSIGS_UNLINK_BATCH_SIZE", "100"))));
     CPLString osPOSTContent;
     for( int i = 0; papszFiles && papszFiles[i]; i++ )
     {
@@ -644,8 +648,8 @@ int* VSIGSFSHandler::UnlinkBatch( CSLConstList papszFiles )
                 bRetry = false;
                 CURL* hCurlHandle = curl_easy_init();
 
-                curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "POST");
-                curl_easy_setopt(hCurlHandle, CURLOPT_POSTFIELDS, osPOSTContent.c_str() );
+                unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "POST");
+                unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_POSTFIELDS, osPOSTContent.c_str() );
 
                 struct curl_slist* headers = static_cast<struct curl_slist*>(
                     CPLHTTPSetOptions(hCurlHandle,

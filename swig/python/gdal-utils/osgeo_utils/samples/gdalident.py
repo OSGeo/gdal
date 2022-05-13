@@ -65,7 +65,7 @@ def ProcessTarget(target, recursive, report_failure, filelist=None):
                 ProcessTarget(subtarget, 1, report_failure, subfilelist)
 
 
-def main(argv):
+def main(argv=sys.argv):
     recursive = 0
     report_failure = 0
     files = []

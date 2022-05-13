@@ -186,7 +186,7 @@ def test_jp2kak_13():
     ov_band = jp2_band.GetOverview(0)
     assert ov_band.XSize == 250 and ov_band.YSize == 4, \
         'did not get expected overview size.'
-
+    #
     # Note, due to oddities of rounding related to identifying discard
     # levels the overview is actually generated with no discard levels
     # and in the debug output we see 500x7 -> 500x7 -> 250x4.
@@ -225,6 +225,7 @@ def test_jp2kak_14():
     jp2_ds = None
     gdaltest.jp2kak_drv.Delete('tmp/jp2kak_13.jp2')
 
+#
 ###############################################################################
 # Confirm we can read resolution information.
 #
@@ -506,3 +507,281 @@ def test_jp2kak_image_origin_not_zero():
     ds = gdal.Open('data/jpeg2000/byte_image_origin_not_zero.jp2')
     assert ds.GetRasterBand(1).Checksum() == 4672
     assert ds.GetRasterBand(1).ReadRaster(0,0,20,20,10,10) is not None
+
+###############################################################################
+# Test multiple RATE parameters
+
+def test_jp2openjpeg_test_multi_rate():
+    src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
+    gdaltest.jp2kak_drv.CreateCopy('/vsimem/jp2kak_22.jp2', src_ds, options=['RATE=1.5,2,3,4', 'LAYERS=4'])
+    node = gdal.GetJPEG2000Structure('/vsimem/jp2kak_22.jp2', ['ALL=YES'])
+
+    arr = []
+    find_elements_with_name(node, "Field", "COM", arr)
+
+    # Approximation of [4556, 6075, 9112, 12150] = floor(dfPixelsTotal * currentBitRate * 0.125F)
+    # dfPixelsTotal = 24300
+    # 4.6e+03 -> 4556 (24300 * 1.5 * 0.125F)
+    # 6.1e+03 -> 6075 (24300 * 2 * 0.125F)
+    # 9.1e+03 -> 9112 (24300 * 3 * 0.125F)
+    # 1.2e+04 -> 12150 (24300 * 4 * 0.125F)
+
+    split = arr[4][5][1].split(',')
+    # 4 layers + 2 blocs for extra information
+    assert len(split) == 6
+
+    assert split[2].split('\n')[0].strip() == '4.6e+03'
+    assert split[3].split('\n')[0].strip() == '6.1e+03'
+    assert split[4].split('\n')[0].strip() == '9.1e+03'
+    assert split[5].split('\n')[0].strip() == '1.2e+04'
+
+    gdal.Unlink('/vsimem/jp2kak_22.jp2')
+
+###############################################################################
+# Test multiple RATE parameters  using dash as first value
+
+def test_jp2openjpeg_test_multi_rate_dash():
+    src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
+    gdaltest.jp2kak_drv.CreateCopy('/vsimem/jp2kak_22.jp2', src_ds, options=['RATE=-,4', 'LAYERS=4'])
+    node = gdal.GetJPEG2000Structure('/vsimem/jp2kak_22.jp2', ['ALL=YES'])
+
+    arr = []
+    find_elements_with_name(node, "Field", "COM", arr)
+
+    # Approximation of [12150, 0, 0, 0] = floor(dfPixelsTotal * currentBitRate * 0.125F)
+    # dfPixelsTotal = 24300
+    # dfPixelsTotal = 24300
+    # 1.2e+04 -> 12150 (24300 * 4 * 0.125F)
+    # 0
+    # 0
+    # 0
+
+    split = arr[4][5][1].split(',')
+
+    # 4 layers + 2 blocs for extra information
+    assert len(split) == 6
+
+    assert split[2].split('\n')[0].strip() == '1.2e+04'
+
+    gdal.Unlink('/vsimem/jp2kak_22.jp2')
+
+###############################################################################
+# Test single RATE parameter
+
+def test_jp2openjpeg_test_single_rate():
+    src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
+    gdaltest.jp2kak_drv.CreateCopy('/vsimem/jp2kak_22.jp2', src_ds, options=['RATE=1.5', 'LAYERS=4'])
+    node = gdal.GetJPEG2000Structure('/vsimem/jp2kak_22.jp2', ['ALL=YES'])
+
+    arr = []
+    find_elements_with_name(node, "Field", "COM", arr)
+
+    # Approximation of [0,0,0,4556] = floor(dfPixelsTotal * currentBitRate * 0.125F)
+    # dfPixelsTotal = 24300
+    # First layers are 0; only the last one has a defined value
+    # 4.6e+03 -> 4556 (24300 * 1.5 * 0.125F)
+
+    split = arr[4][5][1].split(',')
+
+    # 4 layers + 2 blocs for extra information
+    assert len(split) == 6
+
+    assert split[5].split('\n')[0].strip() == '4.6e+03'
+
+    gdal.Unlink('/vsimem/jp2kak_22.jp2')
+
+###############################################################################
+# Test single RATE parameter with defined quality < 99.5
+
+def test_jp2openjpeg_test_multi_rate_quality_50():
+    src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
+    gdaltest.jp2kak_drv.CreateCopy('/vsimem/jp2kak_22.jp2', src_ds, options=['RATE=1.5', 'LAYERS=4', 'QUALITY=50'])
+    node = gdal.GetJPEG2000Structure('/vsimem/jp2kak_22.jp2', ['ALL=YES'])
+
+    arr = []
+    find_elements_with_name(node, "Field", "COM", arr)
+
+    # Approximation of [0,0,0,4556] = floor(dfPixelsTotal * currentBitRate * 0.125F)
+    # dfPixelsTotal = 24300
+    # First layers are 0; only the last one has a defined value
+    # 4.6e+03 -> 4556 (24300 * 1.5 * 0.125F)
+
+    split = arr[4][5][1].split(',')
+
+    # 4 layers + 2 blocs for extra information
+    assert len(split) == 6
+    assert split[5].split('\n')[0].strip() == '4.6e+03'
+
+    gdal.Unlink('/vsimem/jp2kak_22.jp2')
+
+###############################################################################
+# Test single RATE parameter with defined quality > 99.5
+
+def test_jp2openjpeg_test_multi_rate_quality_100():
+    src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
+    gdaltest.jp2kak_drv.CreateCopy('/vsimem/jp2kak_22.jp2', src_ds, options=['RATE=1.5', 'LAYERS=4', 'QUALITY=100'])
+    node = gdal.GetJPEG2000Structure('/vsimem/jp2kak_22.jp2', ['ALL=YES'])
+
+    arr = []
+    find_elements_with_name(node, "Field", "COM", arr)
+
+    # Approximation of [0,0,0,4556] = floor(dfPixelsTotal * currentBitRate * 0.125F)
+    # dfPixelsTotal = 24300
+    # First layers are 0; only the last one has a defined value
+    # 4.6e+03 -> 4556 (24300 * 1.5 * 0.125F)
+    split = arr[4][5][1].split(',')
+
+    # 4 layers + 2 blocs for extra information
+    assert len(split) == 6
+
+    assert split[5].split('\n')[0].strip() == '4.6e+03'
+
+    gdal.Unlink('/vsimem/jp2kak_22.jp2')
+
+###############################################################################
+# Test single RATE parameter with defined quality > 99.5 and the Creversible option
+
+def test_jp2openjpeg_test_multi_rate_quality_100_reversible():
+    src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
+    gdaltest.jp2kak_drv.CreateCopy('/vsimem/jp2kak_22.jp2', src_ds, options=['RATE=1.5', 'LAYERS=4', 'QUALITY=100',
+                                                                             'Creversible=yes'])
+    node = gdal.GetJPEG2000Structure('/vsimem/jp2kak_22.jp2', ['ALL=YES'])
+
+    arr = []
+    find_elements_with_name(node, "Field", "COM", arr)
+
+    # Approximation of [0,0,0,4556] = floor(dfPixelsTotal * currentBitRate * 0.125F)
+    # dfPixelsTotal = 24300
+    # First layers are 0; only the last one has a defined value
+    # 4.6e+03 -> 4556 (24300 * 1.5 * 0.125F)
+    split = arr[4][5][1].split(',')
+
+    # 4 layers + 2 blocs for extra information
+    assert len(split) == 6
+
+    assert split[5].split('\n')[0].strip() == '4.6e+03'
+
+    gdal.Unlink('/vsimem/jp2kak_22.jp2')
+
+###############################################################################
+# Test single RATE parameter with defined quality > 99.5 and the Creversible option
+
+def test_jp2openjpeg_test_multi_rate_quality_100_no_reversible():
+    src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
+    gdaltest.jp2kak_drv.CreateCopy('/vsimem/jp2kak_22.jp2', src_ds, options=['RATE=1.5', 'LAYERS=4', 'QUALITY=100',
+                                                                             'Creversible=no'])
+    node = gdal.GetJPEG2000Structure('/vsimem/jp2kak_22.jp2', ['ALL=YES'])
+
+    arr = []
+    find_elements_with_name(node, "Field", "COM", arr)
+
+    # Approximation of [0,0,0,4556] = floor(dfPixelsTotal * currentBitRate * 0.125F)
+    # dfPixelsTotal = 24300
+    # First layers are 0; only the last one has a defined value
+    # 4.6e+03 -> 4556 (24300 * 1.5 * 0.125F)
+    split = arr[4][5][1].split(',')
+
+    # 4 layers + 2 blocs for extra information
+    assert len(split) == 6
+
+    assert split[5].split('\n')[0].strip() == '4.6e+03'
+
+    gdal.Unlink('/vsimem/jp2kak_22.jp2')
+
+###############################################################################
+# Test quality > 99.5 and the Creversible option
+
+def test_jp2openjpeg_test_quality_100_no_reversible():
+    src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
+    gdaltest.jp2kak_drv.CreateCopy('/vsimem/jp2kak_22.jp2', src_ds, options=['QUALITY=100', 'Creversible=no'])
+    node = gdal.GetJPEG2000Structure('/vsimem/jp2kak_22.jp2', ['ALL=YES'])
+
+    arr = []
+    find_elements_with_name(node, "Field", "COM", arr)
+
+    split = arr[4][5][1].split(',')
+
+    # 12 layers + 2 blocs for extra information
+    assert len(split) == 14
+
+    gdal.Unlink('/vsimem/jp2kak_22.jp2')
+
+###############################################################################
+# Test quality > 99.5 and the Creversible option
+
+def test_jp2openjpeg_test_quality_100_reversible():
+    src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
+    gdaltest.jp2kak_drv.CreateCopy('/vsimem/jp2kak_22.jp2', src_ds, options=['QUALITY=100', 'Creversible=yes'])
+    node = gdal.GetJPEG2000Structure('/vsimem/jp2kak_22.jp2', ['ALL=YES'])
+
+    arr = []
+    find_elements_with_name(node, "Field", "COM", arr)
+
+    split = arr[4][5][1].split(',')
+
+    # 12 layers + 2 blocs for extra information
+    assert len(split) == 14
+    gdal.Unlink('/vsimem/jp2kak_22.jp2')
+    return False
+
+XML_TYPE_IDX = 0
+XML_VALUE_IDX = 1
+XML_FIRST_CHILD_IDX = 2
+
+def get_element_val(node):
+    if node is None:
+        return None
+    for child_idx in range(XML_FIRST_CHILD_IDX, len(node)):
+        child = node[child_idx]
+        if child[XML_TYPE_IDX] == gdal.CXT_Text:
+            return child[XML_VALUE_IDX]
+    return None
+
+def find_element_with_name(ar, element_name, name):
+    typ = ar[XML_TYPE_IDX]
+    value = ar[XML_VALUE_IDX]
+    if typ == gdal.CXT_Element and value == element_name and get_attribute_val(ar, 'name') == name:
+        return ar
+    for child_idx in range(XML_FIRST_CHILD_IDX, len(ar)):
+        child = ar[child_idx]
+        found = find_element_with_name(child, element_name, name)
+        if found:
+            return found
+    return None
+
+def find_elements_with_name(ar, element_name, name, arr):
+    typ = ar[XML_TYPE_IDX]
+    value = ar[XML_VALUE_IDX]
+    if typ == gdal.CXT_Element and value == element_name and get_attribute_val(ar, 'name') == name:
+        return ar
+    for child_idx in range(XML_FIRST_CHILD_IDX, len(ar)):
+        child = ar[child_idx]
+        found = find_element_with_name(child, element_name, name)
+        if found:
+            arr.append(found)
+
+        find_elements_with_name(child, element_name, name, arr)
+    return None
+
+def get_attribute_val(ar, attr_name):
+    node = find_xml_node(ar, attr_name, True)
+    if node is None or node[XML_TYPE_IDX] != gdal.CXT_Attribute:
+        return None
+    if len(ar) > XML_FIRST_CHILD_IDX and \
+            node[XML_FIRST_CHILD_IDX][XML_TYPE_IDX] == gdal.CXT_Text:
+        return node[XML_FIRST_CHILD_IDX][XML_VALUE_IDX]
+    return None
+
+def find_xml_node(ar, element_name, only_attributes=False):
+    # type = ar[XML_TYPE_IDX]
+    value = ar[XML_VALUE_IDX]
+    if value == element_name:
+        return ar
+    for child_idx in range(XML_FIRST_CHILD_IDX, len(ar)):
+        child = ar[child_idx]
+        if only_attributes and child[XML_TYPE_IDX] != gdal.CXT_Attribute:
+            continue
+        found = find_xml_node(child, element_name)
+        if found is not None:
+            return found
+    return None

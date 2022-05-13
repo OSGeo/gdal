@@ -67,6 +67,8 @@ class OGRLayerWithTransaction final: public OGRLayerDecorator
     virtual OGRFeature *GetFeature( GIntBig nFID ) override;
     virtual OGRErr      ISetFeature( OGRFeature *poFeature ) override;
     virtual OGRErr      ICreateFeature( OGRFeature *poFeature ) override;
+
+    virtual OGRErr      Rename(const char* pszNewName) override;
 };
 
 class OGRDataSourceWithTransaction final: public OGRDataSource
@@ -132,9 +134,14 @@ class OGRDataSourceWithTransaction final: public OGRDataSource
     virtual OGRErr      CommitTransaction() override;
     virtual OGRErr      RollbackTransaction() override;
 
+    virtual std::vector<std::string> GetFieldDomainNames(CSLConstList papszOptions = nullptr) const override;
     virtual const OGRFieldDomain* GetFieldDomain(const std::string& name) const override;
     virtual bool        AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,
                                        std::string& failureReason) override;
+    virtual bool        DeleteFieldDomain(const std::string& name,
+                                          std::string& failureReason) override;
+    virtual bool        UpdateFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,
+                                          std::string& failureReason) override;
 
     virtual std::shared_ptr<GDALGroup> GetRootGroup() const override;
 
@@ -438,6 +445,12 @@ OGRErr OGRDataSourceWithTransaction::RollbackTransaction()
     return eErr;
 }
 
+std::vector<std::string> OGRDataSourceWithTransaction::GetFieldDomainNames(CSLConstList papszOptions) const
+{
+    if( !m_poBaseDataSource ) return std::vector<std::string>();
+    return m_poBaseDataSource->GetFieldDomainNames(papszOptions);
+}
+
 const OGRFieldDomain* OGRDataSourceWithTransaction::GetFieldDomain(const std::string& name) const
 {
     if( !m_poBaseDataSource ) return nullptr;
@@ -448,6 +461,18 @@ bool OGRDataSourceWithTransaction::AddFieldDomain(std::unique_ptr<OGRFieldDomain
 {
     if( !m_poBaseDataSource ) return false;
     return m_poBaseDataSource->AddFieldDomain(std::move(domain), failureReason);
+}
+
+bool OGRDataSourceWithTransaction::DeleteFieldDomain(const std::string &name, std::string &failureReason)
+{
+    if( !m_poBaseDataSource ) return false;
+    return m_poBaseDataSource->DeleteFieldDomain(name, failureReason);
+}
+
+bool OGRDataSourceWithTransaction::UpdateFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain, std::string &failureReason)
+{
+    if( !m_poBaseDataSource ) return false;
+    return m_poBaseDataSource->UpdateFieldDomain(std::move(domain), failureReason);
 }
 
 std::shared_ptr<GDALGroup> OGRDataSourceWithTransaction::GetRootGroup() const
@@ -632,5 +657,18 @@ OGRErr       OGRLayerWithTransaction::ICreateFeature( OGRFeature *poFeature )
     OGRErr eErr = m_poDecoratedLayer->CreateFeature(poSrcFeature);
     poFeature->SetFID(poSrcFeature->GetFID());
     delete poSrcFeature;
+    return eErr;
+}
+
+OGRErr OGRLayerWithTransaction::Rename(const char* pszNewName)
+{
+    if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
+    OGRErr eErr = m_poDecoratedLayer->Rename(pszNewName);
+    if( eErr == OGRERR_NONE )
+    {
+        SetDescription( m_poDecoratedLayer->GetDescription() );
+        if( m_poFeatureDefn )
+            m_poFeatureDefn->SetName( m_poDecoratedLayer->GetLayerDefn()->GetName() );
+    }
     return eErr;
 }

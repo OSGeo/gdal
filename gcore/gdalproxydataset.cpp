@@ -429,6 +429,8 @@ RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetDefaultRAT,
 RB_PROXY_METHOD_WITH_RET(GDALRasterBand*, nullptr, GetMaskBand, (), ())
 RB_PROXY_METHOD_WITH_RET(int, 0, GetMaskFlags, (), ())
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, CreateMaskBand, ( int nFlagsIn ), (nFlagsIn))
+RB_PROXY_METHOD_WITH_RET(bool, false, IsMaskBand, () const, ())
+RB_PROXY_METHOD_WITH_RET(GDALMaskValueRange, GMVR_UNKNOWN, GetMaskValueRange, () const, ())
 
 RB_PROXY_METHOD_WITH_RET(CPLVirtualMem*, nullptr, GetVirtualMemAuto,
                          ( GDALRWFlag eRWFlag, int *pnPixelSpace, GIntBig *pnLineSpace, char **papszOptions ),
@@ -439,7 +441,7 @@ RB_PROXY_METHOD_WITH_RET(CPLVirtualMem*, nullptr, GetVirtualMemAuto,
 /************************************************************************/
 
 void GDALProxyRasterBand::UnrefUnderlyingRasterBand(
-    GDALRasterBand* /* poUnderlyingRasterBand */ )
+    GDALRasterBand* /* poUnderlyingRasterBand */ ) const
 {}
 
 /*! @endcond */

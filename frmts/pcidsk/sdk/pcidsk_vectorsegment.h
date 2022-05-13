@@ -288,12 +288,18 @@ The list of fields should match the types and length from the schema
 
 //! Iterator over shapeids in a vector segment.
 
-    class ShapeIterator : public std::iterator<std::input_iterator_tag, ShapeId>
+    class ShapeIterator
     {
         ShapeId id;
         PCIDSKVectorSegment *seg;
 
     public:
+        using iterator_category = std::input_iterator_tag;
+        using value_type = ShapeId;
+        using difference_type = std::ptrdiff_t;
+        using pointer = ShapeId*;
+        using reference = ShapeId&;
+
         ShapeIterator(PCIDSKVectorSegment *seg_in)
                 : seg(seg_in)  { id = seg->FindFirst(); }
         ShapeIterator(PCIDSKVectorSegment *seg_in, ShapeId id_in )
@@ -301,10 +307,13 @@ The list of fields should match the types and length from the schema
         ShapeIterator(const ShapeIterator& mit) : id(mit.id), seg(mit.seg) {}
         ShapeIterator& operator++() { id=seg->FindNext(id); return *this;}
         ShapeIterator& operator++(int) { id=seg->FindNext(id); return *this;}
-        bool operator==(const ShapeIterator& rhs) {return id == rhs.id;}
-        bool operator!=(const ShapeIterator& rhs) {return id != rhs.id;}
+        friend bool operator==(const ShapeIterator& lhs, const ShapeIterator& rhs);
+        friend bool operator!=(const ShapeIterator& lhs, const ShapeIterator& rhs);
         ShapeId& operator*() {return id;}
     };
+
+    inline bool operator==(const ShapeIterator& lhs, const ShapeIterator& rhs) {return lhs.id == rhs.id;}
+    inline bool operator!=(const ShapeIterator& lhs, const ShapeIterator& rhs) {return lhs.id != rhs.id;}
 
 } // end namespace PCIDSK
 

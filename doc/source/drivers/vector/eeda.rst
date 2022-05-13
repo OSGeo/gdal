@@ -20,7 +20,7 @@ Driver capabilities
 Dataset name syntax
 -------------------
 
-The minimal syntax to open a datasource is :
+The minimal syntax to open a datasource is:
 
 ::
 
@@ -32,7 +32,7 @@ projects/earthengine-public/assets/COPERNICUS/S2.
 Open options
 ------------
 
-The following open options are available :
+The following open options are available:
 
 -  **COLLECTION**\ =string: To specify the collection if not specified
    in the connection string.
@@ -43,42 +43,49 @@ Authentication methods
 The following authentication methods can be used:
 
 -  Authentication Bearer header passed through the EEDA_BEARER or
-   EEDA_BEARER_FILE configuration options.
+   :decl_configoption:`EEDA_BEARER_FILE` configuration options.
 -  Service account private key file, through the
-   GOOGLE_APPLICATION_CREDENTIALS configuration option.
--  OAuth2 Service Account authentication through the EEDA_PRIVATE_KEY/
-   EEDA_PRIVATE_KEY_FILE + EEDA_CLIENT_EMAIL configuration options.
+   :decl_configoption:`GOOGLE_APPLICATION_CREDENTIALS` configuration option.
+-  OAuth2 Service Account authentication through the 
+   :decl_configoption:`EEDA_PRIVATE_KEY`/
+   :decl_configoption:`EEDA_PRIVATE_KEY_FILE` + 
+   :decl_configoption:`EEDA_CLIENT_EMAIL` configuration options.
 -  Finally if none of the above method succeeds, the code will check if
    the current machine is a Google Compute Engine instance, and if so
    will use the permissions associated to it (using the default service
    account associated with the VM). To force a machine to be detected as
    a GCE instance (for example for code running in a container with no
-   access to the boot logs), you can set CPL_MACHINE_IS_GCE to YES.
+   access to the boot logs), you can set 
+   :decl_configoption:`CPL_MACHINE_IS_GCE` to YES.
 
 Configuration options
 ---------------------
 
-The following configuration options are available :
+The following :ref:`configuration options <configoptions>` are 
+available:
 
--  **EEDA_BEARER**\ =value: Authentication Bearer value to pass to the
+-  :decl_configoption:`EEDA_BEARER` =value: Authentication Bearer value to pass to the
    API. This option is only useful when the token is computed by
    external code. The bearer validity is typically one hour from the
    time where it as been requested.
--  **EEDA_BEARER_FILE**\ =filename: Similar to EEDA_BEARER option,
+-  :decl_configoption:`EEDA_BEARER_FILE` =filename: Similar to EEDA_BEARER option,
    except than instead of passing the value directly, it is the filename
    where the value should be read.
--  **GOOGLE_APPLICATION_CREDENTIALS**\ =file.json: Service account
+-  :decl_configoption:`GOOGLE_APPLICATION_CREDENTIALS` =file.json: Service account
    private key file that contains a private key and client email
--  **EEDA_PRIVATE_KEY**\ =string: RSA private key encoded as a PKCS#8
+-  :decl_configoption:`EEDA_PRIVATE_KEY` =string: RSA private key encoded as a PKCS#8
    PEM file, with its header and footer. Used together with
-   EEDA_CLIENT_EMAIL to use OAuth2 Service Account authentication.
+   :decl_configoption:`EEDA_CLIENT_EMAIL` to use OAuth2 Service Account authentication.
    Requires GDAL to be built against libcrypto++ or libssl.
--  **EEDA_PRIVATE_KEY_FILE**\ =filename: Similar to EEDA_PRIVATE_KEY
-   option, except than instead of passing the value directly, it is the
-   filename where the key should be read.
--  **EEDA_CLIENT_EMAIL**\ =string: email to be specified together with
+-  :decl_configoption:`EEDA_PRIVATE_KEY_FILE` =filename: Similar to 
+   :decl_configoption:`EEDA_PRIVATE_KEY` option, except than instead of passing the 
+   value directly, it is the filename where the key should be read.
+-  :decl_configoption:`EEDA_CLIENT_EMAIL` =string: email to be specified together with
    EEDA_PRIVATE_KEY/EEDA_PRIVATE_KEY_FILE to use OAuth2 Service Account
    authentication.
+-  :decl_configoption:`EEDA_PAGE_SIZE`: Features are retrieved from the server by chunks 
+   of 1000 by default (and this is the maximum value accepted by the server). This number 
+   can be altered with this configuration option.
 
 Attributes
 ----------
@@ -164,7 +171,7 @@ Paging
 
 Features are retrieved from the server by chunks of 1000 by default (and
 this is the maximum value accepted by the server). This number can be
-altered with the EEDA_PAGE_SIZE configuration option.
+altered with the :decl_configoption:`EEDA_PAGE_SIZE` configuration option.
 
 Extent and feature count
 ~~~~~~~~~~~~~~~~~~~~~~~~

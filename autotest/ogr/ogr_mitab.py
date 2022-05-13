@@ -2482,3 +2482,115 @@ def test_ogr_mitab_read_single_field_mid():
     assert f['foo'] == ''
     f = lyr.GetNextFeature()
     assert f['foo'] == '3'
+
+
+###############################################################################
+
+
+def _test_ogr_mitab_write_etrs89_from_crs_epsg_code(srs):
+
+    filename = '/vsimem/test_ogr_mitab_write_etrs89.tab'
+    ds = ogr.GetDriverByName('MapInfo File').CreateDataSource(filename)
+    lyr = ds.CreateLayer('test', srs = srs, geom_type = ogr.wkbPoint)
+    lyr.CreateField(ogr.FieldDefn('foo'))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 0)'))
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    ref_srs = osr.SpatialReference()
+    ref_srs.ImportFromEPSG(25832)
+    got_srs = lyr.GetSpatialRef()
+    assert got_srs.IsSame(ref_srs), got_srs.ExportToWkt()
+    ds = None
+
+    ogr.GetDriverByName('MapInfo File').DeleteDataSource(filename)
+
+###############################################################################
+
+
+def test_ogr_mitab_write_etrs89_from_crs_epsg_code():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(25832)
+    _test_ogr_mitab_write_etrs89_from_crs_epsg_code(srs)
+
+###############################################################################
+
+
+def test_ogr_mitab_write_etrs89_from_crs_wkt1():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(25832)
+    srs.ImportFromWkt(srs.ExportToWkt(['FORMAT=WKT1']))
+    _test_ogr_mitab_write_etrs89_from_crs_epsg_code(srs)
+
+###############################################################################
+
+
+def test_ogr_mitab_write_etrs89_from_crs_wkt2():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(25832)
+    srs.ImportFromWkt(srs.ExportToWkt(['FORMAT=WKT2']))
+    _test_ogr_mitab_write_etrs89_from_crs_epsg_code(srs)
+
+###############################################################################
+
+
+def test_ogr_mitab_write_etrs89_from_custom_wkt_geogcs_code():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromWkt("""PROJCS["ETRS89 / UTM zone 32N",
+        GEOGCS["ETRS89",
+            DATUM["European_Terrestrial_Reference_System_1989",
+                SPHEROID["GRS 1980",6378137,298.257222101,
+                    AUTHORITY["EPSG","7019"]]],
+            PRIMEM["Greenwich",0,
+                AUTHORITY["EPSG","8901"]],
+            UNIT["degree",0.0174532925199433,
+                AUTHORITY["EPSG","9122"]],
+            AUTHORITY["EPSG","4258"]],
+        PROJECTION["Transverse_Mercator"],
+        PARAMETER["latitude_of_origin",0],
+        PARAMETER["central_meridian",9],
+        PARAMETER["scale_factor",0.9996],
+        PARAMETER["false_easting",500000],
+        PARAMETER["false_northing",0],
+        UNIT["metre",1,
+            AUTHORITY["EPSG","9001"]],
+        AXIS["Easting",EAST],
+        AXIS["Northing",NORTH]]""")
+    _test_ogr_mitab_write_etrs89_from_crs_epsg_code(srs)
+
+
+###############################################################################
+
+
+def test_ogr_mitab_write_etrs89_from_custom_wkt_no_geogcs_code():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromWkt("""PROJCS["ETRS89 / UTM zone 32N",
+        GEOGCS["ETRS89",
+            DATUM["European_Terrestrial_Reference_System_1989",
+                SPHEROID["GRS 1980",6378137,298.257222101,
+                    AUTHORITY["EPSG","7019"]],
+                AUTHORITY["EPSG","6258"]],
+            PRIMEM["Greenwich",0,
+                AUTHORITY["EPSG","8901"]],
+            UNIT["degree",0.0174532925199433,
+                AUTHORITY["EPSG","9122"]]],
+        PROJECTION["Transverse_Mercator"],
+        PARAMETER["latitude_of_origin",0],
+        PARAMETER["central_meridian",9],
+        PARAMETER["scale_factor",0.9996],
+        PARAMETER["false_easting",500000],
+        PARAMETER["false_northing",0],
+        UNIT["metre",1,
+            AUTHORITY["EPSG","9001"]],
+        AXIS["Easting",EAST],
+        AXIS["Northing",NORTH]]""")
+    _test_ogr_mitab_write_etrs89_from_crs_epsg_code(srs)

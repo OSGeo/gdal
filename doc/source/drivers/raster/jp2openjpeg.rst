@@ -46,7 +46,7 @@ information is fetched in following order (first listed is the most
 prioritary): PAM, GeoJP2, GMLJP2, WORLDFILE.
 
 Starting with GDAL 2.2, the allowed sources and their priority order can
-be changed with the GDAL_GEOREF_SOURCES configuration option (or
+be changed with the :decl_configoption:`GDAL_GEOREF_SOURCES` configuration option (or
 GEOREF_SOURCES open option) whose value is a comma-separated list of the
 following keywords : PAM, GEOJP2, GMLJP2, INTERNAL (shortcut for
 GEOJP2,GMLJP2), WORLDFILE, NONE. First mentioned sources are the most
@@ -63,7 +63,7 @@ Thread support
 By default, if the JPEG2000 file has internal tiling, GDAL will try to
 decode several tiles in multiple threads if the RasterIO() request it
 receives intersect several tiles. This behavior can be controlled with
-the GDAL_NUM_THREADS configuration option that defaults to ALL_CPUS in
+the :decl_configoption:`GDAL_NUM_THREADS` configuration option that defaults to ALL_CPUS in
 that context. In case RAM is limited, it can be needed to set this
 configuration option to 1 to disable multi-threading
 
@@ -83,7 +83,12 @@ Both multi-threading mechanism can be combined together.
 Option Options
 --------------
 
-The following open option is available:
+The following open options are available:
+
+-  **STRICT=YES/NO**: (GDAL >= 3.5 and OpenJPEG >= 2.5) Whether strict/pedantic
+   decoding mode should be enabled.
+   This can be set to NO to allow decoding (some) broken files, typically
+   truncated single-tiled files . Default to YES (strict mode)
 
 -  **1BIT_ALPHA_PROMOTION=YES/NO**: Whether a 1-bit alpha channel should
    be promoted to 8-bit. Defaults to YES.
@@ -550,9 +555,6 @@ See Also
    Guidelines <http://inspire.ec.europa.eu/documents/Data_Specifications/INSPIRE_DataSpecification_OI_v3.0.pdf>`__
 
 Other JPEG2000 GDAL drivers :
-
--  :ref:`JPEG2000: based on Jasper library (open
-   source) <raster.jpeg2000>`
 
 -  :ref:`JP2ECW: based on Erdas ECW library
    (proprietary) <raster.jp2ecw>`

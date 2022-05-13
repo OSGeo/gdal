@@ -526,7 +526,7 @@ void OGRNTFDataSource::EnsureTileNameUnique( NTFFileReader *poNewReader )
 {
     int iSequenceNumber = -1;
     bool bIsUnique = false;
-    char szCandidateName[11] = {};
+    char szCandidateName[12] = {};
 
     do
     {

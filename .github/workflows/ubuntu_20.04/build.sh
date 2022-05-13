@@ -36,11 +36,11 @@ cd /build
     --with-poppler \
     --with-spatialite \
     --with-mysql \
+    --with-hana \
     --with-liblzma \
     --with-webp \
     --with-epsilon \
     --with-hdf5 \
-    --with-dods-root=/usr \
     --with-sosi \
     --with-libtiff=internal --with-rename-internal-libtiff-symbols \
     --with-geotiff=internal --with-rename-internal-libgeotiff-symbols \
@@ -93,9 +93,6 @@ ldconfig
   make
   mv java.opt.bak java.opt
 )
-
-# Perl bindings
-(cd swig/perl && make generate && make)
 
 ccache -s
 

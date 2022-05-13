@@ -39,19 +39,6 @@ using namespace std;
 // CADGeometry
 //------------------------------------------------------------------------------
 
-Matrix::Matrix()
-{
-    matrix[0] = 1.0;
-    matrix[1] = 0.0;
-    matrix[2] = 0.0;
-    matrix[3] = 0.0;
-    matrix[4] = 1.0;
-    matrix[5] = 0.0;
-    matrix[6] = 0.0;
-    matrix[7] = 0.0;
-    matrix[8] = 1.0;
-}
-
 void Matrix::translate( const CADVector& vector )
 {
     double a00 = matrix[0];

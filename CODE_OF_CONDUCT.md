@@ -1,4 +1,4 @@
 Code of Conduct
 ===============
 
-See [the standard OSGeo Code of Conduct](https://www.osgeo.org/resources/osgeo-code-of-conduct/).
+See [the GDAL Code of Conduct](https://gdal.org/community/code_of_conduct.html).

@@ -113,7 +113,8 @@ DGN files may be written with OGR with limitations:
 -  Geometries which fall outside the "design plane" of the seed file
    will be discarded, or corrupted in unpredictable ways.
 
-The dataset creation supports the following options:
+Dataset creation options
+------------------------
 
 -  **SEED=**\ *filename*: Specify the seed file to use.
 -  **COPY_SEED_FILE_COLOR_TABLE=**\ *YES/NO*: Indicates whether the
@@ -154,7 +155,8 @@ The dataset creation supports the following options:
 -  **COMPANY=**\ *string*: Set Company field in header. If not
    specified, from the seed file.
 
-The layer creation supports the following options:
+Layer creation options
+----------------------
 
 -  **DESCRIPTION=**\ *string*: Description associated with the layer. If
    not specified, from the seed file.

@@ -192,7 +192,7 @@ class GDALFillNoData(GDALScript):
         return gdal_fillnodata(**kwargs)
 
 
-def main(argv):
+def main(argv=sys.argv):
     return GDALFillNoData().main(argv)
 
 

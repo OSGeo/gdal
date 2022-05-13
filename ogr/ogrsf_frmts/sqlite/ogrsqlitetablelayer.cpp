@@ -323,8 +323,11 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char* pszGeomCol)
 /* -------------------------------------------------------------------- */
     bool bHasRowId = m_bIsTable;
 
+    // SELECT .. FROM ... LIMIT ... is broken on VirtualShape tables with spatialite 5.0.1 and sqlite 3.38.0
     const char *pszSQLConst =
-        CPLSPrintf("SELECT %s* FROM '%s' LIMIT 1",
+        CPLSPrintf(m_bIsVirtualShape ?
+                        "SELECT %s* FROM '%s'" :
+                        "SELECT %s* FROM '%s' LIMIT 1",
                    m_bIsTable ? "_rowid_, " : "",
                    m_pszEscapedTableName);
 
@@ -1978,6 +1981,19 @@ OGRErr OGRSQLiteTableLayer::DeleteField( int iFieldToDelete )
 
     ResetReading();
 
+    if( m_poDS->SoftStartTransaction() != OGRERR_NONE )
+        return OGRERR_FAILURE;
+
+    // ALTER TABLE ... DROP COLUMN ... was first implemented in 3.35.0 but
+    // there was bug fixes related to it until 3.35.5
+#if SQLITE_VERSION_NUMBER >= 3035005L
+    const char* pszFieldName =
+        m_poFeatureDefn->GetFieldDefn(iFieldToDelete)->GetNameRef();
+    OGRErr eErr = SQLCommand( m_poDS->GetDB(),
+                       CPLString().Printf("ALTER TABLE \"%s\" DROP COLUMN \"%s\"",
+                          SQLEscapeName(m_pszTableName).c_str(),
+                          SQLEscapeName(pszFieldName).c_str()).c_str() );
+#else
 /* -------------------------------------------------------------------- */
 /*      Build list of old fields, and the list of new fields.           */
 /* -------------------------------------------------------------------- */
@@ -2015,16 +2031,39 @@ OGRErr OGRSQLiteTableLayer::DeleteField( int iFieldToDelete )
 
     CPLFree( pszFieldListForSelect );
     CPLFree( pszNewFieldList );
+#endif
 
-    if (eErr != OGRERR_NONE)
-        return eErr;
+/* -------------------------------------------------------------------- */
+/*      Check foreign key integrity if enforcement of foreign keys      */
+/*      constraint is enabled.                                          */
+/* -------------------------------------------------------------------- */
+    if( eErr == OGRERR_NONE &&
+        SQLGetInteger(m_poDS->GetDB(), "PRAGMA foreign_keys", nullptr) )
+    {
+        CPLDebug("SQLite", "Running PRAGMA foreign_key_check");
+        eErr = m_poDS->PragmaCheck("foreign_key_check", "", 0);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Finish                                                          */
 /* -------------------------------------------------------------------- */
-    eErr = m_poFeatureDefn->DeleteFieldDefn( iFieldToDelete );
 
-    RecomputeOrdinals();
+    if( eErr == OGRERR_NONE)
+    {
+        eErr = m_poDS->SoftCommitTransaction();
+        if( eErr == OGRERR_NONE)
+        {
+            eErr = m_poFeatureDefn->DeleteFieldDefn( iFieldToDelete );
+
+            RecomputeOrdinals();
+
+            ResetReading();
+        }
+    }
+    else
+    {
+        m_poDS->SoftRollbackTransaction();
+    }
 
     return eErr;
 }
@@ -2057,104 +2096,171 @@ OGRErr OGRSQLiteTableLayer::AlterFieldDefn( int iFieldToAlter, OGRFieldDefn* poN
     ResetReading();
 
 /* -------------------------------------------------------------------- */
-/*      Build list of old fields, and the list of new fields.           */
+/*      Check that the new column name is not a duplicate.              */
 /* -------------------------------------------------------------------- */
-    char *pszNewFieldList = nullptr;
-    char *pszFieldListForSelect = nullptr;
-    size_t nBufLen = 0;
 
-    InitFieldListForRecrerate(pszNewFieldList, pszFieldListForSelect,
-                              nBufLen,
-                              static_cast<int>(strlen(poNewFieldDefn->GetNameRef())) +
-                              50 +
-                              (poNewFieldDefn->GetDefault() ? static_cast<int>(strlen(poNewFieldDefn->GetDefault())) : 0)
-                              );
+    OGRFieldDefn* poFieldDefnToAlter = m_poFeatureDefn->GetFieldDefn(iFieldToAlter);
+    const CPLString osOldColName( poFieldDefnToAlter->GetNameRef() );
+    const CPLString osNewColName( (nFlagsIn & ALTER_NAME_FLAG) ?
+                                  CPLString(poNewFieldDefn->GetNameRef()) :
+                                  osOldColName );
 
-    for( int iField = 0; iField < m_poFeatureDefn->GetFieldCount(); iField++ )
+    const bool bRenameCol = osOldColName != osNewColName;
+    if( bRenameCol )
     {
-        OGRFieldDefn *poFldDefn = m_poFeatureDefn->GetFieldDefn(iField);
-
-        snprintf( pszFieldListForSelect+strlen(pszFieldListForSelect),
-                 nBufLen-strlen(pszFieldListForSelect),
-                 ", \"%s\"", SQLEscapeName(poFldDefn->GetNameRef()).c_str() );
-
-        if (iField == iFieldToAlter)
+        if( (m_pszFIDColumn &&
+             strcmp(poNewFieldDefn->GetNameRef(), m_pszFIDColumn) == 0) ||
+            (GetGeomType() != wkbNone &&
+             strcmp(poNewFieldDefn->GetNameRef(),
+                    m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef()) == 0) ||
+            m_poFeatureDefn->GetFieldIndex(poNewFieldDefn->GetNameRef()) >= 0 )
         {
-            OGRFieldDefn oTmpFieldDefn(poFldDefn);
-            if( (nFlagsIn & ALTER_NAME_FLAG) )
-                oTmpFieldDefn.SetName(poNewFieldDefn->GetNameRef());
-            if( (nFlagsIn & ALTER_TYPE_FLAG) )
-            {
-                oTmpFieldDefn.SetSubType(OFSTNone);
-                oTmpFieldDefn.SetType(poNewFieldDefn->GetType());
-                oTmpFieldDefn.SetSubType(poNewFieldDefn->GetSubType());
-            }
-            if (nFlagsIn & ALTER_WIDTH_PRECISION_FLAG)
-            {
-                oTmpFieldDefn.SetWidth(poNewFieldDefn->GetWidth());
-                oTmpFieldDefn.SetPrecision(poNewFieldDefn->GetPrecision());
-            }
-            if( (nFlagsIn & ALTER_NULLABLE_FLAG) )
-            {
-                oTmpFieldDefn.SetNullable(poNewFieldDefn->IsNullable());
-            }
-            if( (nFlagsIn & ALTER_UNIQUE_FLAG) )
-            {
-                oTmpFieldDefn.SetUnique(poNewFieldDefn->IsUnique());
-            }
-            if( (nFlagsIn & ALTER_DEFAULT_FLAG) )
-            {
-                oTmpFieldDefn.SetDefault(poNewFieldDefn->GetDefault());
-            }
-
-            snprintf( pszNewFieldList+strlen(pszNewFieldList),
-                      nBufLen-strlen(pszNewFieldList),
-                    ", '%s' %s",
-                    SQLEscapeLiteral(oTmpFieldDefn.GetNameRef()).c_str(),
-                    FieldDefnToSQliteFieldDefn(&oTmpFieldDefn).c_str() );
-            if ( (nFlagsIn & ALTER_NAME_FLAG) &&
-                 oTmpFieldDefn.GetType() == OFTString &&
-                 CSLFindString(m_papszCompressedColumns, poFldDefn->GetNameRef()) >= 0 )
-            {
-                snprintf( pszNewFieldList+strlen(pszNewFieldList),
-                         nBufLen-strlen(pszNewFieldList), "_deflate");
-            }
-            if( !oTmpFieldDefn.IsNullable() )
-                snprintf( pszNewFieldList+strlen(pszNewFieldList),
-                          nBufLen-strlen(pszNewFieldList)," NOT NULL" );
-            if( oTmpFieldDefn.IsUnique() )
-                snprintf( pszNewFieldList+strlen(pszNewFieldList),
-                          nBufLen-strlen(pszNewFieldList)," UNIQUE" );
-            if( oTmpFieldDefn.GetDefault() )
-            {
-                snprintf( pszNewFieldList+strlen(pszNewFieldList),
-                         nBufLen-strlen(pszNewFieldList)," DEFAULT %s",
-                         oTmpFieldDefn.GetDefault());
-            }
-        }
-        else
-        {
-            AddColumnDef(pszNewFieldList, nBufLen, poFldDefn);
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Field name %s is already used for another field",
+                      poNewFieldDefn->GetNameRef());
+            return OGRERR_FAILURE;
         }
     }
 
 /* -------------------------------------------------------------------- */
+/*      Build the modified field definition from the flags.             */
+/* -------------------------------------------------------------------- */
+    OGRFieldDefn oTmpFieldDefn(poFieldDefnToAlter);
+    int nActualFlags = 0;
+    if( bRenameCol )
+    {
+        nActualFlags |= ALTER_NAME_FLAG;
+        oTmpFieldDefn.SetName(poNewFieldDefn->GetNameRef());
+    }
+    if( (nFlagsIn & ALTER_TYPE_FLAG) != 0 &&
+        (poFieldDefnToAlter->GetType() != poNewFieldDefn->GetType() ||
+         poFieldDefnToAlter->GetSubType() != poNewFieldDefn->GetSubType()) )
+    {
+        nActualFlags |= ALTER_TYPE_FLAG;
+        oTmpFieldDefn.SetSubType(OFSTNone);
+        oTmpFieldDefn.SetType(poNewFieldDefn->GetType());
+        oTmpFieldDefn.SetSubType(poNewFieldDefn->GetSubType());
+    }
+    if ( (nFlagsIn & ALTER_WIDTH_PRECISION_FLAG) != 0 &&
+         (poFieldDefnToAlter->GetWidth() != poNewFieldDefn->GetWidth() ||
+          poFieldDefnToAlter->GetPrecision() != poNewFieldDefn->GetPrecision()) )
+    {
+        nActualFlags |= ALTER_WIDTH_PRECISION_FLAG;
+        oTmpFieldDefn.SetWidth(poNewFieldDefn->GetWidth());
+        oTmpFieldDefn.SetPrecision(poNewFieldDefn->GetPrecision());
+    }
+    if( (nFlagsIn & ALTER_NULLABLE_FLAG) != 0 &&
+        poFieldDefnToAlter->IsNullable() != poNewFieldDefn->IsNullable() )
+    {
+        nActualFlags |= ALTER_NULLABLE_FLAG;
+        oTmpFieldDefn.SetNullable(poNewFieldDefn->IsNullable());
+    }
+    if( (nFlagsIn & ALTER_DEFAULT_FLAG) != 0 &&
+        !( (poFieldDefnToAlter->GetDefault() == nullptr && poNewFieldDefn->GetDefault() == nullptr) ||
+           (poFieldDefnToAlter->GetDefault() != nullptr && poNewFieldDefn->GetDefault() != nullptr &&
+            strcmp(poFieldDefnToAlter->GetDefault(), poNewFieldDefn->GetDefault()) == 0) ) )
+    {
+        nActualFlags |= ALTER_DEFAULT_FLAG;
+        oTmpFieldDefn.SetDefault(poNewFieldDefn->GetDefault());
+    }
+    if( (nFlagsIn & ALTER_UNIQUE_FLAG) != 0 &&
+        poFieldDefnToAlter->IsUnique() != poNewFieldDefn->IsUnique() )
+    {
+        nActualFlags |= ALTER_UNIQUE_FLAG;
+        oTmpFieldDefn.SetUnique( poNewFieldDefn->IsUnique());
+    }
+
+    // ALTER TABLE ... RENAME COLUMN ... was first implemented in 3.25.0 but
+    // 3.26.0 was required so that foreign key constraints are updated as well
+#if SQLITE_VERSION_NUMBER >= 3026000L
+    if( nActualFlags == ALTER_NAME_FLAG )
+    {
+        CPLDebug("SQLite", "Running ALTER TABLE RENAME COLUMN");
+        OGRErr eErr = SQLCommand( m_poDS->GetDB(),
+                   CPLString().Printf("ALTER TABLE \"%s\" RENAME COLUMN \"%s\" TO \"%s\"",
+                      SQLEscapeName(m_pszTableName).c_str(),
+                      SQLEscapeName(osOldColName).c_str(),
+                      SQLEscapeName(osNewColName).c_str()).c_str() );
+
+        if (eErr != OGRERR_NONE)
+            return eErr;
+    }
+    else
+#endif
+    {
+/* -------------------------------------------------------------------- */
+/*      Build list of old fields, and the list of new fields.           */
+/* -------------------------------------------------------------------- */
+        char *pszNewFieldList = nullptr;
+        char *pszFieldListForSelect = nullptr;
+        size_t nBufLen = 0;
+
+        InitFieldListForRecrerate(pszNewFieldList, pszFieldListForSelect,
+                                  nBufLen,
+                                  static_cast<int>(strlen(poNewFieldDefn->GetNameRef())) +
+                                  50 +
+                                  (poNewFieldDefn->GetDefault() ? static_cast<int>(strlen(poNewFieldDefn->GetDefault())) : 0)
+                                  );
+
+        for( int iField = 0; iField < m_poFeatureDefn->GetFieldCount(); iField++ )
+        {
+            OGRFieldDefn *poFldDefn = m_poFeatureDefn->GetFieldDefn(iField);
+
+            snprintf( pszFieldListForSelect+strlen(pszFieldListForSelect),
+                     nBufLen-strlen(pszFieldListForSelect),
+                     ", \"%s\"", SQLEscapeName(poFldDefn->GetNameRef()).c_str() );
+
+            if (iField == iFieldToAlter)
+            {
+                snprintf( pszNewFieldList+strlen(pszNewFieldList),
+                          nBufLen-strlen(pszNewFieldList),
+                        ", '%s' %s",
+                        SQLEscapeLiteral(oTmpFieldDefn.GetNameRef()).c_str(),
+                        FieldDefnToSQliteFieldDefn(&oTmpFieldDefn).c_str() );
+                if ( (nFlagsIn & ALTER_NAME_FLAG) &&
+                     oTmpFieldDefn.GetType() == OFTString &&
+                     CSLFindString(m_papszCompressedColumns, poFldDefn->GetNameRef()) >= 0 )
+                {
+                    snprintf( pszNewFieldList+strlen(pszNewFieldList),
+                             nBufLen-strlen(pszNewFieldList), "_deflate");
+                }
+                if( !oTmpFieldDefn.IsNullable() )
+                    snprintf( pszNewFieldList+strlen(pszNewFieldList),
+                              nBufLen-strlen(pszNewFieldList)," NOT NULL" );
+                if( oTmpFieldDefn.IsUnique() )
+                    snprintf( pszNewFieldList+strlen(pszNewFieldList),
+                              nBufLen-strlen(pszNewFieldList)," UNIQUE" );
+                if( oTmpFieldDefn.GetDefault() )
+                {
+                    snprintf( pszNewFieldList+strlen(pszNewFieldList),
+                             nBufLen-strlen(pszNewFieldList)," DEFAULT %s",
+                             oTmpFieldDefn.GetDefault());
+                }
+            }
+            else
+            {
+                AddColumnDef(pszNewFieldList, nBufLen, poFldDefn);
+            }
+        }
+
+/* -------------------------------------------------------------------- */
 /*      Recreate table.                                                 */
 /* -------------------------------------------------------------------- */
-    CPLString osErrorMsg;
-    osErrorMsg.Printf("Failed to alter field %s from table %s",
-                  m_poFeatureDefn->GetFieldDefn(iFieldToAlter)->GetNameRef(),
-                  m_poFeatureDefn->GetName());
+        CPLString osErrorMsg;
+        osErrorMsg.Printf("Failed to alter field %s from table %s",
+                      m_poFeatureDefn->GetFieldDefn(iFieldToAlter)->GetNameRef(),
+                      m_poFeatureDefn->GetName());
 
-    OGRErr eErr = RecreateTable(pszFieldListForSelect,
-                                pszNewFieldList,
-                                osErrorMsg.c_str());
+        OGRErr eErr = RecreateTable(pszFieldListForSelect,
+                                    pszNewFieldList,
+                                    osErrorMsg.c_str());
 
-    CPLFree( pszFieldListForSelect );
-    CPLFree( pszNewFieldList );
+        CPLFree( pszFieldListForSelect );
+        CPLFree( pszNewFieldList );
 
-    if (eErr != OGRERR_NONE)
-        return eErr;
+        if (eErr != OGRERR_NONE)
+            return eErr;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Finish                                                          */
@@ -2162,7 +2268,7 @@ OGRErr OGRSQLiteTableLayer::AlterFieldDefn( int iFieldToAlter, OGRFieldDefn* poN
 
     OGRFieldDefn* poFieldDefn = m_poFeatureDefn->GetFieldDefn(iFieldToAlter);
 
-    if (nFlagsIn & ALTER_TYPE_FLAG)
+    if (nActualFlags & ALTER_TYPE_FLAG)
     {
         int iIdx = 0;
         if( poNewFieldDefn->GetType() != OFTString &&
@@ -2176,7 +2282,7 @@ OGRErr OGRSQLiteTableLayer::AlterFieldDefn( int iFieldToAlter, OGRFieldDefn* poN
         poFieldDefn->SetType(poNewFieldDefn->GetType());
         poFieldDefn->SetSubType(poNewFieldDefn->GetSubType());
     }
-    if (nFlagsIn & ALTER_NAME_FLAG)
+    if (nActualFlags & ALTER_NAME_FLAG)
     {
         const int iIdx = CSLFindString(m_papszCompressedColumns,
                                        poFieldDefn->GetNameRef());
@@ -2188,14 +2294,14 @@ OGRErr OGRSQLiteTableLayer::AlterFieldDefn( int iFieldToAlter, OGRFieldDefn* poN
         }
         poFieldDefn->SetName(poNewFieldDefn->GetNameRef());
     }
-    if (nFlagsIn & ALTER_WIDTH_PRECISION_FLAG)
+    if (nActualFlags & ALTER_WIDTH_PRECISION_FLAG)
     {
         poFieldDefn->SetWidth(poNewFieldDefn->GetWidth());
         poFieldDefn->SetPrecision(poNewFieldDefn->GetPrecision());
     }
-    if (nFlagsIn & ALTER_NULLABLE_FLAG)
+    if (nActualFlags & ALTER_NULLABLE_FLAG)
         poFieldDefn->SetNullable(poNewFieldDefn->IsNullable());
-    if (nFlagsIn & ALTER_DEFAULT_FLAG)
+    if (nActualFlags & ALTER_DEFAULT_FLAG)
         poFieldDefn->SetDefault(poNewFieldDefn->GetDefault());
 
     return OGRERR_NONE;

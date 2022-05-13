@@ -25,7 +25,9 @@ endif()
 
 find_library(MYSQL_LIBRARY NAMES mysqlclient mysqlclient_r)
 
-if( MYSQL_INCLUDE_DIR AND MYSQL_LIBRARY )
+if( NOT CMAKE_C_COMPILER_LOADED )
+    message(AUTHOR_WARNING "C language not enabled: Skipping detection of extra link libraries.")
+elseif( MYSQL_INCLUDE_DIR AND MYSQL_LIBRARY )
     # On Conda, mysqlclient is a static lib that requires explicit linking to zlib and zstd
     function(check_mysql_test_program_links)
         include(CheckCSourceCompiles)

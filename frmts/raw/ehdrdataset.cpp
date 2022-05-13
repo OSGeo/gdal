@@ -1700,16 +1700,16 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo, bool bFileSizeCheck )
 /************************************************************************/
 
 GDALDataset *EHdrDataset::Create( const char * pszFilename,
-                                  int nXSize, int nYSize, int nBands,
+                                  int nXSize, int nYSize, int nBandsIn,
                                   GDALDataType eType,
                                   char **papszParamList )
 
 {
     // Verify input options.
-    if (nBands <= 0)
+    if (nBandsIn <= 0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "EHdr driver does not support %d bands.", nBands);
+                 "EHdr driver does not support %d bands.", nBandsIn);
         return nullptr;
     }
 
@@ -1778,10 +1778,10 @@ GDALDataset *EHdrDataset::Create( const char * pszFilename,
     bOK &= VSIFPrintfL(fp, "LAYOUT         BIL\n") >= 0;
     bOK &= VSIFPrintfL(fp, "NROWS          %d\n", nYSize) >= 0;
     bOK &= VSIFPrintfL(fp, "NCOLS          %d\n", nXSize) >= 0;
-    bOK &= VSIFPrintfL(fp, "NBANDS         %d\n", nBands) >= 0;
+    bOK &= VSIFPrintfL(fp, "NBANDS         %d\n", nBandsIn) >= 0;
     bOK &= VSIFPrintfL(fp, "NBITS          %d\n", nBits) >= 0;
     bOK &= VSIFPrintfL(fp, "BANDROWBYTES   %d\n", nRowBytes) >= 0;
-    bOK &= VSIFPrintfL(fp, "TOTALROWBYTES  %d\n", nRowBytes * nBands) >= 0;
+    bOK &= VSIFPrintfL(fp, "TOTALROWBYTES  %d\n", nRowBytes * nBandsIn) >= 0;
 
     if( eType == GDT_Float32 )
         bOK &= VSIFPrintfL(fp, "PIXELTYPE      FLOAT\n") >= 0;

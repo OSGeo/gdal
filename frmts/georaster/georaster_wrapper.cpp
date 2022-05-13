@@ -86,8 +86,13 @@ GeoRasterWrapper::GeoRasterWrapper() :
     nPyramidMaxLevel    = 0;
     nBlockCount         = 0L;
     nGDALBlockBytes     = 0L;
+#ifdef JPEG_SUPPORTED
     sDInfo.global_state = 0;
     sCInfo.global_state = 0;
+    memset(&sCInfo, 0, sizeof(sCInfo));
+    memset(&sDInfo, 0, sizeof(sDInfo));
+    memset(&sJErr, 0, sizeof(sJErr));
+#endif
     bHasBitmapMask      = false;
     nBlockBytes         = 0L;
     bFlushBlock         = false;
@@ -109,9 +114,6 @@ GeoRasterWrapper::GeoRasterWrapper() :
     pasGCPList          = nullptr;
     nGCPCount           = 0;
     bFlushGCP           = false;
-    memset(&sCInfo, 0, sizeof(sCInfo));
-    memset(&sDInfo, 0, sizeof(sDInfo));
-    memset(&sJErr, 0, sizeof(sJErr));
 }
 
 //  ---------------------------------------------------------------------------
@@ -159,7 +161,7 @@ GeoRasterWrapper::~GeoRasterWrapper()
     }
 
     CPLDestroyXMLNode( phMetadata );
-
+#ifdef JPEG_SUPPORTED
     if( sDInfo.global_state )
     {
         jpeg_destroy_decompress( &sDInfo );
@@ -169,7 +171,7 @@ GeoRasterWrapper::~GeoRasterWrapper()
     {
         jpeg_destroy_compress( &sCInfo );
     }
-
+#endif
     if( poConnection )
     {
         delete poConnection;
@@ -1155,8 +1157,10 @@ void GeoRasterWrapper::PrepareToOverwrite( void )
     bCreateObjectTable  = false;
     nPyramidMaxLevel    = 0;
     nBlockCount         = 0L;
+#ifdef JPEG_SUPPORTED
     sDInfo.global_state = 0;
     sCInfo.global_state = 0;
+#endif
     bHasBitmapMask      = false;
     bWriteOnly          = false;
     bBlocking           = true;
@@ -1975,7 +1979,13 @@ bool GeoRasterWrapper::GetDataBlock( int nBand,
 
         if( STARTS_WITH_CI(sCompressionType.c_str(), "JPEG") )
         {
+#ifdef JPEG_SUPPORTED
             UncompressJpeg( nBytesRead );
+#else
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "JPEG compression not supported in this build of the GeoRaster driver");
+            return false;
+#endif
         }
         else if ( EQUAL( sCompressionType.c_str(), "DEFLATE" ) )
         {
@@ -2116,7 +2126,13 @@ bool GeoRasterWrapper::SetDataBlock( int nBand,
 
             if( STARTS_WITH_CI(sCompressionType.c_str(), "JPEG") )
             {
+#ifdef JPEG_SUPPORTED
                 UncompressJpeg( nBytesRead );
+#else
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "JPEG compression not supported in this build of the GeoRaster driver");
+                return false;
+#endif
             }
             else if ( EQUAL( sCompressionType.c_str(), "DEFLATE" ) )
             {
@@ -2205,7 +2221,13 @@ bool GeoRasterWrapper::FlushBlock( long nCacheBlock )
     {
         if( STARTS_WITH_CI(sCompressionType.c_str(), "JPEG") )
         {
+#ifdef JPEG_SUPPORTED
             nFlushBlockSize = CompressJpeg();
+#else
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "JPEG compression not supported in this build of the GeoRaster driver");
+            return false;
+#endif
         }
         else if ( EQUAL( sCompressionType.c_str(), "DEFLATE" ) )
         {
@@ -3984,6 +4006,7 @@ void GeoRasterWrapper::PackNBits( GByte* pabyData ) const
     CPLFree( pabyBuffer );
 }
 
+#ifdef JPEG_SUPPORTED
 //  ---------------------------------------------------------------------------
 //                                                             UncompressJpeg()
 //  ---------------------------------------------------------------------------
@@ -4270,6 +4293,7 @@ unsigned long GeoRasterWrapper::CompressJpeg( void )
 
     return (unsigned long) nSize;
 }
+#endif
 
 //  ---------------------------------------------------------------------------
 //                                                          UncompressDeflate()

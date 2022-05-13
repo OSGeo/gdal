@@ -58,6 +58,8 @@ void VSIInstallADLSFileHandler( void )
 
 #define ENABLE_DEBUG 0
 
+#define unchecked_curl_easy_setopt(handle,opt,param) CPL_IGNORE_RET_VAL(curl_easy_setopt(handle,opt,param))
+
 namespace cpl {
 
 /************************************************************************/
@@ -171,6 +173,8 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
 
     void ClearCache() override;
 
+    bool IsAllowedHeaderForObjectCreation( const char* pszHeaderName ) override { return STARTS_WITH(pszHeaderName, "x-ms-"); }
+
   public:
     VSIADLSFSHandler() = default;
     ~VSIADLSFSHandler() override = default;
@@ -226,7 +230,8 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
                          size_t nBufferSize,
                          IVSIS3LikeHandleHelper *poS3HandleHelper,
                          int nMaxRetry,
-                         double dfRetryDelay);
+                         double dfRetryDelay,
+                         CSLConstList papszOptions);
 
     // Multipart upload (mapping of S3 interface)
     bool SupportsParallelMultipartUpload() const override { return true; }
@@ -236,9 +241,9 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
                                 IVSIS3LikeHandleHelper * poS3HandleHelper,
                                 int nMaxRetry,
                                 double dfRetryDelay,
-                                CSLConstList /* papszOptions */) override {
+                                CSLConstList papszOptions) override {
         return UploadFile(osFilename, Event::CREATE_FILE, 0, nullptr, 0,
-                          poS3HandleHelper, nMaxRetry, dfRetryDelay) ?
+                          poS3HandleHelper, nMaxRetry, dfRetryDelay, papszOptions) ?
             std::string("dummy") : std::string();
     }
 
@@ -250,11 +255,12 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
                          size_t nBufferSize,
                          IVSIS3LikeHandleHelper *poS3HandleHelper,
                          int nMaxRetry,
-                         double dfRetryDelay) override
+                         double dfRetryDelay,
+                         CSLConstList /* papszOptions */) override
     {
         return UploadFile(osFilename, Event::APPEND_DATA,
                           nPosition, pabyBuffer, nBufferSize,
-                          poS3HandleHelper, nMaxRetry, dfRetryDelay) ?
+                          poS3HandleHelper, nMaxRetry, dfRetryDelay, nullptr) ?
             std::string("dummy") : std::string();
     }
 
@@ -267,7 +273,7 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
                            double dfRetryDelay) override
     {
         return UploadFile(osFilename, Event::FLUSH, nTotalSize, nullptr, 0,
-                          poS3HandleHelper, nMaxRetry, dfRetryDelay);
+                          poS3HandleHelper, nMaxRetry, dfRetryDelay, nullptr);
     }
 
     bool AbortMultipart(const CPLString& /* osFilename */,
@@ -546,7 +552,7 @@ bool VSIDIRADLS::IssueListDir()
         VSICurlSetOptions(hCurlHandle, poHandleHelper->GetURL(), nullptr);
     headers = VSICurlMergeHeaders(headers,
                             poHandleHelper->GetCurlHeaders("GET", headers));
-    curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
     CurlRequestHelper requestHelper;
     const long response_code =
@@ -728,9 +734,9 @@ int VSIADLSFSHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
 
         headers = VSICurlMergeHeaders(headers,
                                 poHandleHelper->GetCurlHeaders("HEAD", headers));
-        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-        curl_easy_setopt(hCurlHandle, CURLOPT_NOBODY, 1);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_NOBODY, 1);
 
         CurlRequestHelper requestHelper;
         const long response_code =
@@ -824,9 +830,9 @@ char** VSIADLSFSHandler::GetFileMetadata( const char* pszFilename,
 
         headers = VSICurlMergeHeaders(headers,
                                 poHandleHelper->GetCurlHeaders("HEAD", headers));
-        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-        curl_easy_setopt(hCurlHandle, CURLOPT_NOBODY, 1);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_NOBODY, 1);
 
         CurlRequestHelper requestHelper;
         const long response_code =
@@ -948,7 +954,7 @@ bool VSIADLSFSHandler::SetFileMetadata( const char * pszFilename,
         {
             poHandleHelper->AddQueryParameter("mode", CPLString(pszMode).tolower());
         }
-        curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "PATCH");
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "PATCH");
 
         struct curl_slist* headers = static_cast<struct curl_slist*>(
             CPLHTTPSetOptions(hCurlHandle,
@@ -1001,7 +1007,7 @@ bool VSIADLSFSHandler::SetFileMetadata( const char * pszFilename,
 
         headers = VSICurlMergeHeaders(headers,
                                 poHandleHelper->GetCurlHeaders("PATCH", headers));
-        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
         NetworkStatisticsLogger::LogPUT(0);
 
@@ -1062,7 +1068,8 @@ class VSIADLSWriteHandle final : public VSIAppendWriteHandle
 
     bool                Send(bool bIsLastBlock) override;
 
-    bool                SendInternal(VSIADLSFSHandler::Event event);
+    bool                SendInternal(VSIADLSFSHandler::Event event,
+                                     CSLConstList papszOptions);
 
     void                InvalidateParentDirectory();
 
@@ -1072,7 +1079,7 @@ class VSIADLSWriteHandle final : public VSIAppendWriteHandle
                           VSIAzureBlobHandleHelper* poHandleHelper );
         virtual ~VSIADLSWriteHandle();
 
-        bool CreateFile();
+        bool CreateFile(CSLConstList papszOptions);
 };
 
 /************************************************************************/
@@ -1113,9 +1120,9 @@ void VSIADLSWriteHandle::InvalidateParentDirectory()
 /*                          CreateFile()                                */
 /************************************************************************/
 
-bool VSIADLSWriteHandle::CreateFile()
+bool VSIADLSWriteHandle::CreateFile(CSLConstList papszOptions)
 {
-    m_bCreated = SendInternal(VSIADLSFSHandler::Event::CREATE_FILE);
+    m_bCreated = SendInternal(VSIADLSFSHandler::Event::CREATE_FILE, papszOptions);
     return m_bCreated;
 }
 
@@ -1128,11 +1135,14 @@ bool VSIADLSWriteHandle::Send(bool bIsLastBlock)
     if( !m_bCreated )
         return false;
     // If we have a non-empty buffer, append it
-    if( m_nBufferOff != 0 && !SendInternal(VSIADLSFSHandler::Event::APPEND_DATA) )
+    if( m_nBufferOff != 0 && !SendInternal(VSIADLSFSHandler::Event::APPEND_DATA, nullptr) )
         return false;
     // If we are the last block, send the flush event
-    if( bIsLastBlock && !SendInternal(VSIADLSFSHandler::Event::FLUSH) )
+    if( bIsLastBlock && !SendInternal(VSIADLSFSHandler::Event::FLUSH, nullptr) )
         return false;
+
+    InvalidateParentDirectory();
+
     return true;
 }
 
@@ -1140,7 +1150,8 @@ bool VSIADLSWriteHandle::Send(bool bIsLastBlock)
 /*                          SendInternal()                              */
 /************************************************************************/
 
-bool VSIADLSWriteHandle::SendInternal(VSIADLSFSHandler::Event event)
+bool VSIADLSWriteHandle::SendInternal(VSIADLSFSHandler::Event event,
+                                      CSLConstList papszOptions)
 {
     // coverity[tainted_data]
     const int nMaxRetry = atoi(CPLGetConfigOption("GDAL_HTTP_MAX_RETRY",
@@ -1155,7 +1166,7 @@ bool VSIADLSWriteHandle::SendInternal(VSIADLSFSHandler::Event event)
         event == VSIADLSFSHandler::Event::APPEND_DATA ? m_nCurOffset - m_nBufferOff :
                                                         m_nCurOffset,
         m_pabyBuffer, m_nBufferOff, m_poHandleHelper.get(),
-        nMaxRetry, dfRetryDelay);
+        nMaxRetry, dfRetryDelay, papszOptions);
 }
 
 /************************************************************************/
@@ -1200,7 +1211,7 @@ VSIVirtualHandle* VSIADLSFSHandler::Open( const char *pszFilename,
             return nullptr;
         auto poHandle = std::unique_ptr<VSIADLSWriteHandle>(
             new VSIADLSWriteHandle(this, pszFilename, poHandleHelper));
-        if( !poHandle->CreateFile() )
+        if( !poHandle->CreateFile(papszOptions) )
         {
             return nullptr;
         }
@@ -1296,7 +1307,7 @@ int VSIADLSFSHandler::Rename( const char *oldpath, const char *newpath )
         bRetry = false;
 
         CURL* hCurlHandle = curl_easy_init();
-        curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "PUT");
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "PUT");
 
         poHandleHelper->ResetQueryParameters();
         if( !osContinuation.empty() )
@@ -1312,7 +1323,7 @@ int VSIADLSFSHandler::Rename( const char *oldpath, const char *newpath )
         headers = curl_slist_append(headers, osRenameSource.c_str());
         headers = VSICurlMergeHeaders(headers,
                         poHandleHelper->GetCurlHeaders("PUT", headers));
-        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
         CurlRequestHelper requestHelper;
         const long response_code =
@@ -1431,7 +1442,7 @@ int VSIADLSFSHandler::MkdirInternal( const char *pszDirname, long nMode, bool bD
     {
         bRetry = false;
         CURL* hCurlHandle = curl_easy_init();
-        curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "PUT");
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "PUT");
 
         poHandleHelper->ResetQueryParameters();
         poHandleHelper->AddQueryParameter("resource",
@@ -1456,7 +1467,7 @@ int VSIADLSFSHandler::MkdirInternal( const char *pszDirname, long nMode, bool bD
 
         headers = VSICurlMergeHeaders(headers,
                         poHandleHelper->GetCurlHeaders("PUT", headers));
-        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
         CurlRequestHelper requestHelper;
         const long response_code =
@@ -1582,7 +1593,7 @@ int VSIADLSFSHandler::RmdirInternal( const char * pszDirname, bool bRecursive )
     {
         bRetry = false;
         CURL* hCurlHandle = curl_easy_init();
-        curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "DELETE");
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "DELETE");
 
         poHandleHelper->ResetQueryParameters();
         if( bIsFileSystem )
@@ -1749,7 +1760,7 @@ int VSIADLSFSHandler::CopyObject( const char *oldpath, const char *newpath,
     {
         bRetry = false;
         CURL* hCurlHandle = curl_easy_init();
-        curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "PUT");
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "PUT");
 
         struct curl_slist* headers = static_cast<struct curl_slist*>(
             CPLHTTPSetOptions(hCurlHandle,
@@ -1760,7 +1771,7 @@ int VSIADLSFSHandler::CopyObject( const char *oldpath, const char *newpath,
         headers = VSICurlSetContentTypeFromExt(headers, newpath);
         headers = VSICurlMergeHeaders(headers,
                         poAzHandleHelper->GetCurlHeaders("PUT", headers));
-        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
         CurlRequestHelper requestHelper;
         const long response_code =
@@ -1829,7 +1840,8 @@ bool VSIADLSFSHandler::UploadFile(const CPLString& osFilename,
                                   size_t nBufferSize,
                                   IVSIS3LikeHandleHelper *poHandleHelper,
                                   int nMaxRetry,
-                                  double dfRetryDelay)
+                                  double dfRetryDelay,
+                                  CSLConstList papszOptions)
 {
     NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
     NetworkStatisticsFile oContextFile(osFilename);
@@ -1869,26 +1881,28 @@ bool VSIADLSFSHandler::UploadFile(const CPLString& osFilename,
                 CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(nPosition)));
         }
 
-        curl_easy_setopt(hCurlHandle, CURLOPT_UPLOAD, 1L);
-        curl_easy_setopt(hCurlHandle, CURLOPT_READFUNCTION,
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_UPLOAD, 1L);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_READFUNCTION,
                          PutData::ReadCallBackBuffer);
         PutData putData;
         putData.pabyData = static_cast<const GByte*>(pabyBuffer);
         putData.nOff = 0;
         putData.nTotalSize = nBufferSize;
-        curl_easy_setopt(hCurlHandle, CURLOPT_READDATA, &putData);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_READDATA, &putData);
 
         struct curl_slist* headers = static_cast<struct curl_slist*>(
             CPLHTTPSetOptions(hCurlHandle,
                               poHandleHelper->GetURL().c_str(),
                               nullptr));
-        headers = VSICurlSetContentTypeFromExt(headers, osFilename.c_str());
+        headers = VSICurlSetCreationHeadersFromOptions(headers,
+                                                       papszOptions,
+                                                       osFilename.c_str());
 
         CPLString osContentLength; // leave it in this scope
 
         if( event == Event::APPEND_DATA )
         {
-            curl_easy_setopt(hCurlHandle, CURLOPT_INFILESIZE,
+            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_INFILESIZE,
                              static_cast<int>(nBufferSize));
             // Disable "Expect: 100-continue" which doesn't hurt, but is not
             // needed
@@ -1899,15 +1913,15 @@ bool VSIADLSFSHandler::UploadFile(const CPLString& osFilename,
         }
         else
         {
-            curl_easy_setopt(hCurlHandle, CURLOPT_INFILESIZE, 0);
+            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_INFILESIZE, 0);
             headers = curl_slist_append(headers, "Content-Length: 0");
         }
 
         const char* pszVerb = (event == Event::CREATE_FILE) ? "PUT" : "PATCH";
-        curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, pszVerb);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, pszVerb);
         headers = VSICurlMergeHeaders(headers,
                         poHandleHelper->GetCurlHeaders(pszVerb, headers));
-        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
         CurlRequestHelper requestHelper;
         const long response_code =

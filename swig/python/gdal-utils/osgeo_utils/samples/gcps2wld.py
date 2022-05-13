@@ -36,7 +36,7 @@ import sys
 from osgeo import gdal
 
 
-def main(argv):
+def main(argv=sys.argv):
     if len(argv) < 2:
         print("Usage: gcps2wld.py source_file")
         return 1

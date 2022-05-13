@@ -7,7 +7,6 @@ OBJ = \
     compress.obj \
     crc32.obj \
     deflate.obj \
-    gzio.obj \
     infback.obj \
     inffast.obj \
     inflate.obj \

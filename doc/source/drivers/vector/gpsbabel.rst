@@ -56,6 +56,7 @@ Alternatively, for a few selected GPSBabel formats, just specifying the
 filename might be sufficient. The list includes for now :
 
 -  garmin_txt
+-  gtrnctr
 -  gdb
 -  magellan
 -  mapsend
@@ -65,7 +66,7 @@ filename might be sufficient. The list includes for now :
 -  ozi
 -  igc
 
-The USE_TEMPFILE=YES configuration option can be used to create an
+The :decl_configoption:`USE_TEMPFILE` =YES configuration option can be used to create an
 on-disk temporary GPX file instead of a in-memory one, when reading big
 amount of data.
 
@@ -95,7 +96,7 @@ Alternatively, you can just pass a filename as output datasource name
 and specify the dataset creation option
 GPSBABEL_DRIVER=gpsbabel_file_format[,gpsbabel_format_option]\*
 
-The USE_TEMPFILE=YES configuration option can be used to create an
+The :decl_configoption:`USE_TEMPFILE` =YES configuration option can be used to create an
 on-disk temporary GPX file instead of a in-memory one, when writing big
 amount of data.
 

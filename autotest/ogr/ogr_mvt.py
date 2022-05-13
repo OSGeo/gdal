@@ -1211,11 +1211,21 @@ def test_ogr_mvt_write_polygon_repaired():
     assert out_ds is not None
     out_lyr = out_ds.GetLayerByName('mylayer')
     out_f = out_lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(out_f, 'MULTIPOLYGON (((0 0,0.0 498980.920645632,498980.920645632 498980.920645632,498980.920645632 0.0,0 0)))') != 0:
+    # Second expected result is using the HAVE_MAKE_VALID code path with GEOS 3.8
+    # Third expected result is using the HAVE_MAKE_VALID code path with GEOS 3.10
+    if ogrtest.check_feature_geometry(out_f, 'MULTIPOLYGON (((0 0,0.0 498980.920645632,498980.920645632 498980.920645632,498980.920645632 0.0,0 0)))') != 0 and \
+       ogrtest.check_feature_geometry(out_f, 'MULTIPOLYGON (((97839.3962050267 498980.920645632,0.0 498980.920645632,0 0,498980.920645632 0.0,498980.920645632 498980.920645632,97839.3962050267 498980.920645632)))') != 0 and \
+       ogrtest.check_feature_geometry(out_f, 'MULTIPOLYGON (((0.0 498980.920645632,0 0,498980.920645632 0.0,498980.920645632 498980.920645632,97839.3962050267 498980.920645632,0.0 498980.920645632)))') != 0:
+
         out_f.DumpReadable()
         pytest.fail()
+
     out_f = out_lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(out_f, 'MULTIPOLYGON (((0 0,0.0 498980.920645632,498980.920645632 498980.920645632,498980.920645632 0.0,0 0)),((997961.84129126 0.0,997961.84129126 997961.84129126,1995923.68258252 997961.84129126,997961.84129126 0.0)))') != 0:
+    # Second expected result is using the HAVE_MAKE_VALID code path
+    # Third expected result is using the HAVE_MAKE_VALID code path with GEOS 3.10
+    if ogrtest.check_feature_geometry(out_f, 'MULTIPOLYGON (((0 0,0.0 498980.920645632,498980.920645632 498980.920645632,498980.920645632 0.0,0 0)),((997961.84129126 0.0,997961.84129126 997961.84129126,1995923.68258252 997961.84129126,997961.84129126 0.0)))') != 0 and \
+       ogrtest.check_feature_geometry(out_f, 'MULTIPOLYGON (((997961.84129126 0.0,1995923.68258252 997961.84129126,997961.84129126 997961.84129126,997961.84129126 0.0)),((97839.3962050267 498980.920645632,0.0 498980.920645632,0 0,498980.920645632 0.0,498980.920645632 498980.920645632,97839.3962050267 498980.920645632)))') != 0 and \
+       ogrtest.check_feature_geometry(out_f, 'MULTIPOLYGON (((997961.84129126 997961.84129126,997961.84129126 0.0,1995923.68258252 997961.84129126,997961.84129126 997961.84129126)),((0 0,498980.920645632 0.0,498980.920645632 498980.920645632,97839.3962050267 498980.920645632,0.0 498980.920645632,0 0)))') != 0:
         out_f.DumpReadable()
         pytest.fail()
     out_f = out_lyr.GetNextFeature()

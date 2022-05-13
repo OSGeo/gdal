@@ -361,21 +361,21 @@ typedef struct
 
 CPLString OGR2SQLITE_GetNameForGeometryColumn(OGRLayer* poLayer)
 {
-    if( poLayer->GetGeometryColumn() != nullptr &&
-        !EQUAL(poLayer->GetGeometryColumn(), "") )
+    const char* pszGeomColumn = poLayer->GetGeometryColumn();
+    if( pszGeomColumn != nullptr &&
+        !EQUAL(pszGeomColumn, "") )
     {
-        return poLayer->GetGeometryColumn();
+        if( poLayer->GetLayerDefn()->GetFieldIndex(pszGeomColumn) < 0 )
+            return pszGeomColumn;
     }
-    else
+
+    CPLString osGeomCol("GEOMETRY");
+    int bTry = 2;
+    while( poLayer->GetLayerDefn()->GetFieldIndex(osGeomCol) >= 0 )
     {
-        CPLString osGeomCol("GEOMETRY");
-        int bTry = 2;
-        while( poLayer->GetLayerDefn()->GetFieldIndex(osGeomCol) >= 0 )
-        {
-            osGeomCol.Printf("GEOMETRY%d", bTry++);
-        }
-        return osGeomCol;
+        osGeomCol.Printf("GEOMETRY%d", bTry++);
     }
+    return osGeomCol;
 }
 
 #ifdef VIRTUAL_OGR_DYNAMIC_EXTENSION_ENABLED
@@ -2594,7 +2594,39 @@ int sqlite3_extension_init (sqlite3 * hDB, char **pzErrMsg,
 
     *pzErrMsg = nullptr;
 
+    /* Check if we have been already loaded. */
+    /* This is to avoid 'ogrinfo :memory: --config OGR_SQLITE_LOAD_EXTENSIONS libgdal.so' to crash */
+    /* since it would run OGR2SQLITEModule::Setup() first with OGR2SQLITE_static_register() */
+    /* and then through here. */
+    int rc = sqlite3_exec(hDB, "SELECT ogr_version()", nullptr, nullptr, nullptr);
+
+    /* Reset error flag */
+    sqlite3_exec(hDB, "SELECT 1", nullptr, nullptr, nullptr);
+
+    if( rc == SQLITE_OK )
+    {
+
+        CPLDebug("OGR", "... OGR virtual OGR already loaded !");
+        *pzErrMsg = sqlite3_mprintf("Cannot load libgdal as an extension from a OGR SQLite datasource");
+        return SQLITE_ERROR;
+    }
+
     OGRRegisterAll();
+
+    // Super hacky: this forces the malloc subsystem to be initialized.
+    // Normally we would not need to do this, but libgdal.so links against libsqlite3.so
+    // If doing SELECT load_extension('libgdal.so') from the sqlite3 console binary
+    // which statically links sqlite3, we might get 2 copies of sqlite3 into memory:
+    // the static one from the sqlite3 binary, and the shared one linked by libgdal.so
+    // If the sqlite3_create_module_v2() function executed happens to be the one
+    // of the shared libsqlite3 and not the one of the sqlite3 binary, then the
+    // initialization of the malloc subsystem might not have been done.
+    // This demonstrates that our approach of having libgdal.so to link to libsqlite3
+    // and be a sqlite3 extension is very fragile.
+    // But there aren't many other alternatives...
+    // There's no problem for applications (including the sqlite3 binary) that
+    // are built against a shared libsqlite3, since only one copy gets loaded.
+    sqlite3_free(sqlite3_malloc(1));
 
     OGR2SQLITEModule* poModule = new OGR2SQLITEModule();
     if( poModule->Setup(hDB) )

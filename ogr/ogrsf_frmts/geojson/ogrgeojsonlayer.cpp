@@ -34,6 +34,7 @@
 #    pragma clang diagnostic push
 #    pragma clang diagnostic ignored "-Wunknown-pragmas"
 #    pragma clang diagnostic ignored "-Wdocumentation"
+#    pragma clang diagnostic ignored "-Wold-style-cast"
 #  endif
 #endif  // !DEBUG_VERBOSE
 

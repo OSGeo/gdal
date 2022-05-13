@@ -76,6 +76,12 @@
 /*      mapping & projection - see http://cf-pcmdi.llnl.gov/            */
 /* -------------------------------------------------------------------- */
 
+#define CF_PRIME_MERIDIAN_NAME       "prime_meridian_name"
+#define CF_REFERENCE_ELLIPSOID_NAME  "reference_ellipsoid_name"
+#define CF_HORIZONTAL_DATUM_NAME     "horizontal_datum_name"
+#define CF_GEOGRAPHIC_CRS_NAME       "geographic_crs_name"
+#define CF_PROJECTED_CRS_NAME        "projected_crs_name"
+
 /* projection types */
 #define CF_PT_AEA                    "albers_conical_equal_area"
 #define CF_PT_AE                     "azimuthal_equidistant"

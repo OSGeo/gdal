@@ -267,8 +267,7 @@ GDALPansharpenOperation::Initialize( const GDALPansharpenOptions* psOptionsIn )
     {
         if( psOptionsIn->nBitDepth < 0 || psOptionsIn->nBitDepth > 31 ||
             (eWorkDataType == GDT_Byte && psOptionsIn->nBitDepth > 8) ||
-            (eWorkDataType == GDT_UInt16 && psOptionsIn->nBitDepth > 16) ||
-            (eWorkDataType == GDT_UInt32 && psOptionsIn->nBitDepth > 32) )
+            (eWorkDataType == GDT_UInt16 && psOptionsIn->nBitDepth > 16) )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Invalid value nBitDepth = %d for type %s",
@@ -282,7 +281,7 @@ GDALPansharpenOperation::Initialize( const GDALPansharpenOptions* psOptionsIn )
         psOptions->nBitDepth = 0;
     if( psOptions->nBitDepth &&
         !(eWorkDataType == GDT_Byte || eWorkDataType == GDT_UInt16 ||
-          eWorkDataType == GDT_UInt32) )
+          eWorkDataType == GDT_UInt32 || eWorkDataType == GDT_UInt64) )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "Ignoring nBitDepth = %d for type %s",
@@ -920,6 +919,18 @@ template<class WorkDataType> CPLErr GDALPansharpenOperation::WeightedBrovey(
                            nValues, nBandValues, nMaxValue);
             break;
 
+        case GDT_UInt64:
+            WeightedBrovey(pPanBuffer, pUpsampledSpectralBuffer,
+                           static_cast<std::uint64_t *>(pDataBuf),
+                           nValues, nBandValues, nMaxValue);
+            break;
+
+        case GDT_Int64:
+            WeightedBrovey(pPanBuffer, pUpsampledSpectralBuffer,
+                           static_cast<std::int64_t *>(pDataBuf),
+                           nValues, nBandValues, nMaxValue);
+            break;
+
         case GDT_Float32:
             WeightedBrovey(pPanBuffer, pUpsampledSpectralBuffer,
                            static_cast<float *>(pDataBuf),
@@ -981,6 +992,18 @@ template<class WorkDataType> CPLErr GDALPansharpenOperation::WeightedBrovey(
             WeightedBrovey3<WorkDataType, GInt32, FALSE>(
                 pPanBuffer, pUpsampledSpectralBuffer,
                 static_cast<GInt32 *>(pDataBuf), nValues, nBandValues, 0);
+            break;
+
+        case GDT_UInt64:
+            WeightedBrovey3<WorkDataType, std::uint64_t, FALSE>(
+                pPanBuffer, pUpsampledSpectralBuffer,
+                static_cast<std::uint64_t *>(pDataBuf), nValues, nBandValues, 0);
+            break;
+
+        case GDT_Int64:
+            WeightedBrovey3<WorkDataType, std::int64_t, FALSE>(
+                pPanBuffer, pUpsampledSpectralBuffer,
+                static_cast<std::int64_t *>(pDataBuf), nValues, nBandValues, 0);
             break;
 
         case GDT_Float32:
@@ -1695,6 +1718,20 @@ GDALPansharpenOperation::PansharpenChunk( GDALDataType eWorkDataType,
         case GDT_Int32:
             eErr = WeightedBrovey(static_cast<const GInt32*>(pPanBuffer),
                                   static_cast<const GInt32*>(pUpsampledSpectralBuffer),
+                                  pDataBuf, eBufDataType,
+                                  nValues, nBandValues);
+            break;
+
+        case GDT_UInt64:
+            eErr = WeightedBrovey(static_cast<const std::uint64_t*>(pPanBuffer),
+                                  static_cast<const std::uint64_t*>(pUpsampledSpectralBuffer),
+                                  pDataBuf, eBufDataType,
+                                  nValues, nBandValues, nMaxValue);
+            break;
+
+        case GDT_Int64:
+            eErr = WeightedBrovey(static_cast<const std::int64_t*>(pPanBuffer),
+                                  static_cast<const std::int64_t*>(pUpsampledSpectralBuffer),
                                   pDataBuf, eBufDataType,
                                   nValues, nBandValues);
             break;

@@ -33,12 +33,7 @@
 CPL_CVSID("$Id$")
 
 /*! @cond Doxygen_Suppress */
-GNMRule::GNMRule()
-{
-    m_bValid = false;
-    m_bAllow = false;
-    m_bAny = false;
-}
+GNMRule::GNMRule() = default;
 
 GNMRule::GNMRule(const std::string &oRule) :
     m_soRuleString( oRule )

@@ -9,22 +9,25 @@
 // Copyright (c) 2008-2012, Even Rouault <even dot rouault at spatialys.com>
 // Copyright (c) 2017, Dmitry Baryshnikov <polimax@mail.ru>
 // Copyright (c) 2017, NextGIS <info@nextgis.com>
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Library General Public
-// License as published by the Free Software Foundation; either
-// version 2 of the License, or (at your option) any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Library General Public License for more details.
-//
-// You should have received a copy of the GNU Library General Public
-// License along with this library; if not, write to the
-// Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-// Boston, MA 02111-1307, USA.
-///////////////////////////////////////////////////////////////////////////////
+/*
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ****************************************************************************/
 
 #ifndef GDAL_COMPILATION
 #define GDAL_COMPILATION
@@ -59,6 +62,10 @@ static void CPL_STDCALL myErrorHandler(CPLErr, CPLErrorNum, const char*)
     gbGotError = true;
 }
 
+// The tut framework has a default maximum number of tests per group of 50
+// Increase it as we're over that.
+#define MAX_NUMBER_OF_TESTS 100
+
 namespace tut
 {
 
@@ -75,7 +82,7 @@ namespace tut
     };
 
     // Register test group
-    typedef test_group<test_cpl_data> group;
+    typedef test_group<test_cpl_data, MAX_NUMBER_OF_TESTS> group;
     typedef group::object object;
     group test_cpl_group("CPL");
 
@@ -2711,12 +2718,12 @@ namespace tut
         }
         {
             CPLJSonStreamingWriter x(nullptr, nullptr);
-            x.Add(static_cast<GIntBig>(-10000) * 1000000);
+            x.Add(static_cast<std::int64_t>(-10000) * 1000000);
             ensure_equals( x.GetString(), std::string("-10000000000") );
         }
         {
             CPLJSonStreamingWriter x(nullptr, nullptr);
-            x.Add(static_cast<GUInt64>(10000) * 1000000);
+            x.Add(static_cast<std::uint64_t>(10000) * 1000000);
             ensure_equals( x.GetString(), std::string("10000000000") );
         }
         {
@@ -3081,6 +3088,9 @@ namespace tut
         CPLLoadConfigOptionsFromFile("/i/do/not/exist", false);
 
         VSILFILE* fp = VSIFOpenL("/vsimem/.gdal/gdalrc", "wb");
+        VSIFPrintfL(fp, "# some comment\n");
+        VSIFPrintfL(fp, "\n"); // blank line
+        VSIFPrintfL(fp, "  \n"); // blank line
         VSIFPrintfL(fp, "[configoptions]\n");
         VSIFPrintfL(fp, "# some comment\n");
         VSIFPrintfL(fp, "FOO_CONFIGOPTION=BAR\n");
@@ -3527,4 +3537,178 @@ namespace tut
         CPLFree(pRawData);
         VSIFCloseL(fp);
     }
+
+    // Test CPLLoadConfigOptionsFromFile() for VSI credentials
+    template<>
+    template<>
+    void object::test<51>()
+    {
+        VSILFILE* fp = VSIFOpenL("/vsimem/credentials.txt", "wb");
+        VSIFPrintfL(fp, "[credentials]\n");
+        VSIFPrintfL(fp, "\n");
+        VSIFPrintfL(fp, "[.my_subsection]\n");
+        VSIFPrintfL(fp, "path=/vsi_test/foo/bar\n");
+        VSIFPrintfL(fp, "FOO=BAR\n");
+        VSIFPrintfL(fp, "FOO2=BAR2\n");
+        VSIFPrintfL(fp, "\n");
+        VSIFPrintfL(fp, "[.my_subsection2]\n");
+        VSIFPrintfL(fp, "path=/vsi_test/bar/baz\n");
+        VSIFPrintfL(fp, "BAR=BAZ\n");
+        VSIFPrintfL(fp, "[configoptions]\n");
+        VSIFPrintfL(fp, "configoptions_FOO=BAR\n");
+        VSIFCloseL(fp);
+
+        CPLErrorReset();
+        CPLLoadConfigOptionsFromFile("/vsimem/credentials.txt", false);
+        ensure_equals(CPLGetLastErrorType(), CE_None);
+
+        {
+            const char* pszVal = VSIGetCredential("/vsi_test/foo/bar", "FOO", nullptr);
+            ensure(pszVal != nullptr);
+            ensure_equals(std::string(pszVal), std::string("BAR"));
+        }
+
+        {
+            const char* pszVal = VSIGetCredential("/vsi_test/foo/bar", "FOO2", nullptr);
+            ensure(pszVal != nullptr);
+            ensure_equals(std::string(pszVal), std::string("BAR2"));
+        }
+
+        {
+            const char* pszVal = VSIGetCredential("/vsi_test/bar/baz", "BAR", nullptr);
+            ensure(pszVal != nullptr);
+            ensure_equals(std::string(pszVal), std::string("BAZ"));
+        }
+
+        {
+            const char* pszVal = CPLGetConfigOption("configoptions_FOO", nullptr);
+            ensure(pszVal != nullptr);
+            ensure_equals(std::string(pszVal), std::string("BAR"));
+        }
+
+        VSIClearCredentials("/vsi_test/bar/baz");
+        CPLSetConfigOption("configoptions_FOO", nullptr);
+
+        {
+            const char* pszVal = VSIGetCredential("/vsi_test/bar/baz", "BAR", nullptr);
+            ensure(pszVal == nullptr);
+        }
+
+        VSIUnlink("/vsimem/credentials.txt");
+    }
+
+    // Test CPLLoadConfigOptionsFromFile() for VSI credentials, warning case
+    template<>
+    template<>
+    void object::test<52>()
+    {
+        VSILFILE* fp = VSIFOpenL("/vsimem/credentials.txt", "wb");
+        VSIFPrintfL(fp, "[credentials]\n");
+        VSIFPrintfL(fp, "\n");
+        VSIFPrintfL(fp, "FOO=BAR\n"); // content outside of subsection
+        VSIFCloseL(fp);
+
+        CPLErrorReset();
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        CPLLoadConfigOptionsFromFile("/vsimem/credentials.txt", false);
+        CPLPopErrorHandler();
+        ensure_equals(CPLGetLastErrorType(), CE_Warning);
+
+
+        VSIUnlink("/vsimem/credentials.txt");
+    }
+
+    // Test CPLLoadConfigOptionsFromFile() for VSI credentials, warning case
+    template<>
+    template<>
+    void object::test<53>()
+    {
+        VSILFILE* fp = VSIFOpenL("/vsimem/credentials.txt", "wb");
+        VSIFPrintfL(fp, "[credentials]\n");
+        VSIFPrintfL(fp, "[.subsection]\n");
+        VSIFPrintfL(fp, "FOO=BAR\n"); // first key is not 'path'
+        VSIFCloseL(fp);
+
+        CPLErrorReset();
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        CPLLoadConfigOptionsFromFile("/vsimem/credentials.txt", false);
+        CPLPopErrorHandler();
+        ensure_equals(CPLGetLastErrorType(), CE_Warning);
+
+
+        VSIUnlink("/vsimem/credentials.txt");
+    }
+
+    // Test CPLLoadConfigOptionsFromFile() for VSI credentials, warning case
+    template<>
+    template<>
+    void object::test<54>()
+    {
+        VSILFILE* fp = VSIFOpenL("/vsimem/credentials.txt", "wb");
+        VSIFPrintfL(fp, "[credentials]\n");
+        VSIFPrintfL(fp, "[.subsection]\n");
+        VSIFPrintfL(fp, "path=/vsi_test/foo\n");
+        VSIFPrintfL(fp, "path=/vsi_test/bar\n"); // duplicated path
+        VSIFPrintfL(fp, "FOO=BAR\n"); // first key is not 'path'
+        VSIFPrintfL(fp, "[unrelated_section]");
+        VSIFPrintfL(fp, "BAR=BAZ\n"); // first key is not 'path'
+        VSIFCloseL(fp);
+
+        CPLErrorReset();
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        CPLLoadConfigOptionsFromFile("/vsimem/credentials.txt", false);
+        CPLPopErrorHandler();
+        ensure_equals(CPLGetLastErrorType(), CE_Warning);
+
+        {
+            const char* pszVal = VSIGetCredential("/vsi_test/foo", "FOO", nullptr);
+            ensure(pszVal != nullptr);
+        }
+
+        {
+            const char* pszVal = VSIGetCredential("/vsi_test/foo", "BAR", nullptr);
+            ensure(pszVal == nullptr);
+        }
+
+        VSIUnlink("/vsimem/credentials.txt");
+    }
+
+    // Test CPLRecodeFromWCharIconv() with 2 bytes/char source encoding
+    template<>
+    template<>
+    void object::test<55>()
+    {
+#ifdef CPL_RECODE_ICONV
+        int N = 2048;
+        wchar_t* pszIn = static_cast<wchar_t*>(CPLMalloc((N+1)*sizeof(wchar_t)));
+        for(int i=0;i<N;i++)
+            pszIn[i] = L'A';
+        pszIn[N] = L'\0';
+        char* pszExpected = static_cast<char*>(CPLMalloc(N+1));
+        for(int i=0;i<N;i++)
+            pszExpected[i] = 'A';
+        pszExpected[N] = '\0';
+        char* pszRet = CPLRecodeFromWChar(pszIn, CPL_ENC_UTF16, CPL_ENC_UTF8);
+        const bool bOK = memcmp(pszExpected, pszRet, N+1) == 0;
+        // FIXME Some tests fail on Mac. Not sure why, but do not error out just for that
+        if( !bOK && (strstr(CPLGetConfigOption("TRAVIS_OS_NAME", ""), "osx") != nullptr ||
+                     strstr(CPLGetConfigOption("BUILD_NAME", ""), "osx") != nullptr ||
+                     getenv("DO_NOT_FAIL_ON_RECODE_ERRORS") != nullptr))
+        {
+            fprintf(stderr, "Recode from CPL_ENC_UTF16 to CPL_ENC_UTF8 failed\n");
+        }
+        else
+        {
+            ensure( bOK );
+        }
+        CPLFree(pszIn);
+        CPLFree(pszRet);
+        CPLFree(pszExpected);
+#endif
+    }
+
+    // WARNING: keep that line at bottom and read carefully:
+    // If the number of tests reaches 100, increase the MAX_NUMBER_OF_TESTS
+    // define at top of this file (and update this comment!)
+
 } // namespace tut

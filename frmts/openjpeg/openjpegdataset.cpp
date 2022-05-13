@@ -97,7 +97,12 @@ static void JP2OpenJPEGDataset_WarningCallback(const char *pszMsg, CPL_UNUSED vo
         bWarningEmitted = TRUE;
     }
     if( strcmp(pszMsg, "JP2 box which are after the codestream will not be read by this function.\n") != 0 )
-        CPLError(CE_Warning, CPLE_AppDefined, "%s", pszMsg);
+    {
+        std::string osMsg(pszMsg);
+        if( !osMsg.empty() && osMsg.back() == '\n' )
+            osMsg.resize(osMsg.size() - 1);
+        CPLError(CE_Warning, CPLE_AppDefined, "%s", osMsg.c_str());
+    }
 }
 
 /************************************************************************/
@@ -106,17 +111,10 @@ static void JP2OpenJPEGDataset_WarningCallback(const char *pszMsg, CPL_UNUSED vo
 
 static void JP2OpenJPEGDataset_InfoCallback(const char *pszMsg, CPL_UNUSED void *unused)
 {
-    char* pszMsgTmp = VSIStrdup(pszMsg);
-    if( pszMsgTmp == nullptr )
-        return;
-    int nLen = (int)strlen(pszMsgTmp);
-    while( nLen > 0 && pszMsgTmp[nLen-1] == '\n' )
-    {
-        pszMsgTmp[nLen-1] = '\0';
-        nLen --;
-    }
-    CPLDebug("OPENJPEG", "info: %s", pszMsgTmp);
-    CPLFree(pszMsgTmp);
+    std::string osMsg(pszMsg);
+    if( !osMsg.empty() && osMsg.back() == '\n' )
+        osMsg.resize(osMsg.size() - 1);
+    CPLDebug("OPENJPEG", "info: %s", osMsg.c_str());
 }
 
 typedef struct
@@ -242,6 +240,10 @@ class JP2OpenJPEGDataset final: public GDALJP2AbstractDataset
     int         bEnoughMemoryToLoadOtherBands = TRUE;
     int         bRewrite = FALSE;
     int         bHasGeoreferencingAtOpening = FALSE;
+
+#if IS_OPENJPEG_OR_LATER(2,5,0)
+    bool        m_bStrict = true;
+#endif
 
   protected:
     virtual int         CloseDependentDatasets() override;
@@ -513,7 +515,7 @@ public:
     volatile int        nCurPair;
     int                 nBandCount;
     int                *panBandMap;
-    VOLATILE_BOOL       bSuccess;
+    volatile bool       bSuccess;
 };
 
 void JP2OpenJPEGDataset::JP2OpenJPEGReadBlockInThread(void* userdata)
@@ -866,6 +868,13 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fpIn,
             eErr = CE_Failure;
             goto end;
         }
+
+#if IS_OPENJPEG_OR_LATER(2,5,0)
+        if( !m_bStrict )
+        {
+            opj_decoder_set_strict_mode(pCodec, false);
+        }
+#endif
 
 #if IS_OPENJPEG_OR_LATER(2,3,0)
         if( m_psJP2OpenJPEGFile )
@@ -1897,6 +1906,15 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         poDS->bUseSetDecodeArea = false;
     }
+
+#if IS_OPENJPEG_OR_LATER(2,5,0)
+    if( !CPLTestBool(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "STRICT", "YES")) )
+    {
+        poDS->m_bStrict = false;
+        opj_decoder_set_strict_mode(pCodec, false);
+    }
+#endif
+
     /* Some Sentinel2 preview datasets are 343x343 large, but with 8x8 blocks */
     /* Using the tile API for that is super slow, so expose a single block */
     else if( poDS->nRasterXSize <= 1024 &&  poDS->nRasterYSize <= 1024 &&
@@ -2233,6 +2251,11 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         poODS->m_pnLastLevel = poDS->m_pnLastLevel;
 #endif
+
+#if IS_OPENJPEG_OR_LATER(2,5,0)
+        poODS->m_bStrict = poDS->m_bStrict;
+#endif
+
         poODS->m_nX0 = poDS->m_nX0;
         poODS->m_nY0 = poDS->m_nY0;
 
@@ -4258,6 +4281,9 @@ void GDALRegister_JP2OpenJPEG()
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
+#if IS_OPENJPEG_OR_LATER(2,5,0)
+"   <Option name='STRICT' type='boolean' description='Whether strict/pedantic decoding should be adopted. Set to NO to allow decoding broken files' default='YES'/>"
+#endif
 "   <Option name='1BIT_ALPHA_PROMOTION' type='boolean' description='Whether a 1-bit alpha channel should be promoted to 8-bit' default='YES'/>"
 "   <Option name='OPEN_REMOTE_GML' type='boolean' description='Whether to load remote vector layers referenced by a link in a GMLJP2 v2 box' default='NO'/>"
 "   <Option name='GEOREF_SOURCES' type='string' description='Comma separated list made with values INTERNAL/GMLJP2/GEOJP2/WORLDFILE/PAM/NONE that describe the priority order for georeferencing' default='PAM,GEOJP2,GMLJP2,WORLDFILE'/>"

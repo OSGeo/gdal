@@ -35,13 +35,17 @@
 static int horAcc8(TIFF* tif, uint8_t* cp0, tmsize_t cc);
 static int horAcc16(TIFF* tif, uint8_t* cp0, tmsize_t cc);
 static int horAcc32(TIFF* tif, uint8_t* cp0, tmsize_t cc);
+static int horAcc64(TIFF* tif, uint8_t* cp0, tmsize_t cc);
 static int swabHorAcc16(TIFF* tif, uint8_t* cp0, tmsize_t cc);
 static int swabHorAcc32(TIFF* tif, uint8_t* cp0, tmsize_t cc);
+static int swabHorAcc64(TIFF* tif, uint8_t* cp0, tmsize_t cc);
 static int horDiff8(TIFF* tif, uint8_t* cp0, tmsize_t cc);
 static int horDiff16(TIFF* tif, uint8_t* cp0, tmsize_t cc);
 static int horDiff32(TIFF* tif, uint8_t* cp0, tmsize_t cc);
+static int horDiff64(TIFF* tif, uint8_t* cp0, tmsize_t cc);
 static int swabHorDiff16(TIFF* tif, uint8_t* cp0, tmsize_t cc);
 static int swabHorDiff32(TIFF* tif, uint8_t* cp0, tmsize_t cc);
+static int swabHorDiff64(TIFF* tif, uint8_t* cp0, tmsize_t cc);
 static int fpAcc(TIFF* tif, uint8_t* cp0, tmsize_t cc);
 static int fpDiff(TIFF* tif, uint8_t* cp0, tmsize_t cc);
 static int PredictorDecodeRow(TIFF* tif, uint8_t* op0, tmsize_t occ0, uint16_t s);
@@ -64,7 +68,8 @@ PredictorSetup(TIFF* tif)
 		case PREDICTOR_HORIZONTAL:
 			if (td->td_bitspersample != 8
 			    && td->td_bitspersample != 16
-			    && td->td_bitspersample != 32) {
+			    && td->td_bitspersample != 32
+			    && td->td_bitspersample != 64) {
 				TIFFErrorExt(tif->tif_clientdata, module,
 				    "Horizontal differencing \"Predictor\" not supported with %"PRIu16"-bit samples",
 				    td->td_bitspersample);
@@ -126,6 +131,7 @@ PredictorSetupDecode(TIFF* tif)
 			case 8:  sp->decodepfunc = horAcc8; break;
 			case 16: sp->decodepfunc = horAcc16; break;
 			case 32: sp->decodepfunc = horAcc32; break;
+			case 64: sp->decodepfunc = horAcc64; break;
 		}
 		/*
 		 * Override default decoding method with one that does the
@@ -154,6 +160,9 @@ PredictorSetupDecode(TIFF* tif)
 				tif->tif_postdecode = _TIFFNoPostDecode;
             } else if (sp->decodepfunc == horAcc32) {
 				sp->decodepfunc = swabHorAcc32;
+				tif->tif_postdecode = _TIFFNoPostDecode;
+			} else if (sp->decodepfunc == horAcc64) {
+				sp->decodepfunc = swabHorAcc64;
 				tif->tif_postdecode = _TIFFNoPostDecode;
             }
 		}
@@ -205,6 +214,7 @@ PredictorSetupEncode(TIFF* tif)
 			case 8:  sp->encodepfunc = horDiff8; break;
 			case 16: sp->encodepfunc = horDiff16; break;
 			case 32: sp->encodepfunc = horDiff32; break;
+			case 64: sp->encodepfunc = horDiff64; break;
 		}
 		/*
 		 * Override default encoding method with one that does the
@@ -233,6 +243,9 @@ PredictorSetupEncode(TIFF* tif)
                             tif->tif_postdecode = _TIFFNoPostDecode;
                     } else if (sp->encodepfunc == horDiff32) {
                             sp->encodepfunc = swabHorDiff32;
+                            tif->tif_postdecode = _TIFFNoPostDecode;
+                    } else if (sp->encodepfunc == horDiff64) {
+                            sp->encodepfunc = swabHorDiff64;
                             tif->tif_postdecode = _TIFFNoPostDecode;
                     }
                 }
@@ -392,6 +405,41 @@ horAcc32(TIFF* tif, uint8_t* cp0, tmsize_t cc)
                      "%s", "cc%(4*stride))!=0");
         return 0;
     }
+
+	if (wc > stride) {
+		wc -= stride;
+		do {
+			REPEAT4(stride, wp[stride] += wp[0]; wp++)
+			wc -= stride;
+		} while (wc > 0);
+	}
+	return 1;
+}
+
+static int
+swabHorAcc64(TIFF* tif, uint8_t* cp0, tmsize_t cc)
+{
+	uint64_t* wp = (uint64_t*) cp0;
+	tmsize_t wc = cc / 8;
+
+	TIFFSwabArrayOfLong8(wp, wc);
+	return horAcc64(tif, cp0, cc);
+}
+
+TIFF_NOSANITIZE_UNSIGNED_INT_OVERFLOW
+static int
+horAcc64(TIFF* tif, uint8_t* cp0, tmsize_t cc)
+{
+	tmsize_t stride = PredictorState(tif)->stride;
+	uint64_t* wp = (uint64_t*) cp0;
+	tmsize_t wc = cc / 8;
+
+	if ((cc % (8 * stride)) != 0)
+	{
+		TIFFErrorExt(tif->tif_clientdata, "horAcc64",
+		             "%s", "cc%(8*stride))!=0");
+		return 0;
+	}
 
 	if (wc > stride) {
 		wc -= stride;
@@ -635,6 +683,46 @@ swabHorDiff32(TIFF* tif, uint8_t* cp0, tmsize_t cc)
         return 0;
 
     TIFFSwabArrayOfLong(wp, wc);
+    return 1;
+}
+
+TIFF_NOSANITIZE_UNSIGNED_INT_OVERFLOW
+static int
+horDiff64(TIFF* tif, uint8_t* cp0, tmsize_t cc)
+{
+	TIFFPredictorState* sp = PredictorState(tif);
+	tmsize_t stride = sp->stride;
+	uint64_t *wp = (uint64_t*) cp0;
+	tmsize_t wc = cc/8;
+
+	if ((cc % (8 * stride)) != 0)
+	{
+		TIFFErrorExt(tif->tif_clientdata, "horDiff64",
+		             "%s", "(cc%(8*stride))!=0");
+		return 0;
+	}
+
+	if (wc > stride) {
+		wc -= stride;
+		wp += wc - 1;
+		do {
+			REPEAT4(stride, wp[stride] -= wp[0]; wp--)
+			wc -= stride;
+		} while (wc > 0);
+	}
+	return 1;
+}
+
+static int
+swabHorDiff64(TIFF* tif, uint8_t* cp0, tmsize_t cc)
+{
+    uint64_t* wp = (uint64_t*) cp0;
+    tmsize_t wc = cc / 8;
+
+    if (!horDiff64(tif, cp0, cc))
+        return 0;
+
+    TIFFSwabArrayOfLong8(wp, wc);
     return 1;
 }
 

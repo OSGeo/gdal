@@ -118,12 +118,15 @@ def are_equal_color_table(color_table1: gdal.ColorTable, color_table2: gdal.Colo
 
 
 def write_color_table_to_file(color_table: gdal.ColorTable, color_filename: Optional[PathLikeOrStr]):
+    tmp_fd = None
     if color_filename is None:
-        color_filename = tempfile.mktemp(suffix='.txt')
+        tmp_fd, color_filename = tempfile.mkstemp(suffix='.txt')
     os.makedirs(os.path.dirname(color_filename), exist_ok=True)
     with open(color_filename, mode='w') as fp:
         for i in range(color_table.GetCount()):
             color_entry = color_table.GetColorEntry(i)
             color_entry = ' '.join(str(c) for c in color_entry)
             fp.write('{} {}\n'.format(i, color_entry))
+    if tmp_fd:
+        os.close(tmp_fd)
     return color_filename

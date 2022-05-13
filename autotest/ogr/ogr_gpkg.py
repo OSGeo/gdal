@@ -605,6 +605,7 @@ def test_ogr_gpkg_13():
     lyr = gpkg_ds.CreateLayer('non_spatial2', geom_type=ogr.wkbNone)
 
     gpkg_ds = None
+    gdal.ErrorReset()
     gpkg_ds = ogr.Open('tmp/gpkg_test.gpkg', update=1)
     assert gdal.GetLastErrorMsg() == '', 'fail : warning NOT expected'
     assert gpkg_ds.GetLayerCount() == 5
@@ -1062,6 +1063,24 @@ def test_ogr_gpkg_15():
     feat = None
     gpkg_ds.ReleaseResultSet(sql_lyr)
 
+    if ogr.GetGEOSVersionMajor() * 10000 + ogr.GetGEOSVersionMinor() * 100 + ogr.GetGEOSVersionMicro() >= 30800:
+        sql_lyr = gpkg_ds.ExecuteSQL("SELECT ST_MakeValid(NULL)")
+        feat = sql_lyr.GetNextFeature()
+        assert feat.GetGeometryRef() is None
+        gpkg_ds.ReleaseResultSet(sql_lyr)
+
+        sql_lyr = gpkg_ds.ExecuteSQL("SELECT ST_MakeValid('invalid')")
+        feat = sql_lyr.GetNextFeature()
+        assert feat.GetGeometryRef() is None
+        gpkg_ds.ReleaseResultSet(sql_lyr)
+
+        sql_lyr = gpkg_ds.ExecuteSQL("SELECT ST_MakeValid(geom) FROM tbl_linestring_renamed")
+        feat = sql_lyr.GetNextFeature()
+        if feat.GetGeometryRef().ExportToWkt() != 'LINESTRING (5 5,10 5,10 10,5 10)':
+            feat.DumpReadable()
+            pytest.fail()
+        gpkg_ds.ReleaseResultSet(sql_lyr)
+
     if _has_spatialite_4_3_or_later(gpkg_ds):
         sql_lyr = gpkg_ds.ExecuteSQL(
             "SELECT ST_Buffer(geom, 1e-10) FROM tbl_linestring_renamed")
@@ -1085,12 +1104,14 @@ def test_ogr_gpkg_16():
     ds = ogr.Open('/vsimem/ogr_gpk_16.gpkg')
     lyr = ds.GetLayer(0)
     lyr.GetLayerDefn()
+    gdal.ErrorReset()
     ds = None
     assert gdal.GetLastErrorMsg() == '', 'fail : warning NOT expected'
 
     # Warning since we open as read-write
     ds = ogr.Open('/vsimem/ogr_gpk_16.gpkg', update=1)
     lyr = ds.GetLayer(0)
+    gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     lyr.GetLayerDefn()
     gdal.PopErrorHandler()
@@ -1102,6 +1123,7 @@ def test_ogr_gpkg_16():
     # Warning since we open as read-only
     ds = ogr.Open('/vsimem/ogr_gpk_16.gpkg')
     lyr = ds.GetLayer(0)
+    gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     lyr.GetLayerDefn()
     gdal.PopErrorHandler()
@@ -1110,6 +1132,7 @@ def test_ogr_gpkg_16():
     # and also as read-write
     ds = ogr.Open('/vsimem/ogr_gpk_16.gpkg', update=1)
     lyr = ds.GetLayer(0)
+    gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     lyr.GetLayerDefn()
     gdal.PopErrorHandler()
@@ -1127,6 +1150,7 @@ def test_ogr_gpkg_16():
 
     ds = ogr.Open('/vsimem/ogr_gpk_16.gpkg')
     lyr = ds.GetLayer(0)
+    gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     lyr.GetLayerDefn()
     gdal.PopErrorHandler()
@@ -1144,10 +1168,12 @@ def test_ogr_gpkg_16():
     # No warning since we open as read-only
     ds = ogr.Open('/vsimem/ogr_gpk_16.gpkg')
     lyr = ds.GetLayer(0)
+    gdal.ErrorReset()
     lyr.GetLayerDefn()
     assert gdal.GetLastErrorMsg() == '', 'fail : warning NOT expected'
 
     # Warning since we open as read-write
+    gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = ogr.Open('/vsimem/ogr_gpk_16.gpkg', update=1)
     gdal.PopErrorHandler()
@@ -1157,12 +1183,14 @@ def test_ogr_gpkg_16():
     ds = None
 
     # Warning since we open as read-only
+    gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = ogr.Open('/vsimem/ogr_gpk_16.gpkg')
     gdal.PopErrorHandler()
     assert gdal.GetLastErrorMsg() != '', 'fail : warning expected'
 
     # and also as read-write
+    gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = ogr.Open('/vsimem/ogr_gpk_16.gpkg', update=1)
     gdal.PopErrorHandler()
@@ -1202,6 +1230,7 @@ def test_ogr_gpkg_18():
 
     assert validate('/vsimem/ogr_gpkg_18.gpkg'), 'validation failed'
 
+    gdal.ErrorReset()
     ds = ogr.Open('/vsimem/ogr_gpkg_18.gpkg')
     assert gdal.GetLastErrorMsg() == '', 'fail : warning NOT expected'
 
@@ -1232,6 +1261,7 @@ def test_ogr_gpkg_18():
 
     ds = None
 
+    gdal.ErrorReset()
     ds = ogr.Open('/vsimem/ogr_gpkg_18.gpkg')
     assert gdal.GetLastErrorMsg() == '', 'fail : warning NOT expected'
 
@@ -1246,6 +1276,7 @@ def test_ogr_gpkg_18():
     lyr = ds.GetLayer(0)
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt('CIRCULARSTRING(0 0,1 0,0 0)'))
+    gdal.ErrorReset()
     ret = lyr.CreateFeature(f)
     assert ret == 0 and gdal.GetLastErrorMsg() == ''
     f = None
@@ -1535,6 +1566,7 @@ def test_ogr_gpkg_srs_non_consistent_with_official_definition():
     DATUM["WGS_1984",
         SPHEROID["my spheroid",1000,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],
     AUTHORITY["EPSG","4267"]]""")
+    gdal.ErrorReset()
     with gdaltest.error_handler():
         lyr = ds.CreateLayer('test_fake_4267', srs=test_fake_4267)
     assert gdal.GetLastErrorMsg() == 'Passed SRS uses EPSG:4267 identification, but its definition is not compatible with the official definition of the object. Registering it as a non-EPSG entry into the database.'
@@ -1546,6 +1578,7 @@ def test_ogr_gpkg_srs_non_consistent_with_official_definition():
     DATUM["WGS_1984",
         SPHEROID["my spheroid",1000,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],
     AUTHORITY["EPSG","4326"]]""")
+    gdal.ErrorReset()
     with gdaltest.error_handler():
         lyr = ds.CreateLayer('test_fake_4326', srs=test_fake_4326)
     assert gdal.GetLastErrorMsg() == 'Passed SRS uses EPSG:4326 identification, but its definition is not compatible with the definition of that object already in the database. Registering it as a new entry into the database.'
@@ -1580,6 +1613,7 @@ def test_ogr_gpkg_srs_non_consistent_with_official_definition():
     fc_before = sql_lyr.GetFeatureCount()
     ds.ReleaseResultSet(sql_lyr)
 
+    gdal.ErrorReset()
     gdal.ErrorReset()
     lyr = ds.CreateLayer('test_fake_4267_bis', srs=test_fake_4267)
     assert gdal.GetLastErrorMsg() == ''
@@ -2427,12 +2461,14 @@ def test_ogr_gpkg_29():
 
 def test_ogr_gpkg_30():
 
+    gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_30.geopkg')
     assert ds is not None
     assert gdal.GetLastErrorMsg() != ''
     ds = None
 
+    gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = ogr.Open('/vsimem/ogr_gpkg_30.geopkg', update=1)
     assert ds is not None
@@ -2564,11 +2600,26 @@ def test_ogr_gpkg_34():
 
     ds = ogr.Open(dbname, update=1)
     new_layer_name = """weird2'layer"name"""
+    gdal.ErrorReset()
     with gdaltest.error_handler():
         ds.ExecuteSQL('ALTER TABLE "weird\'layer""name" RENAME TO gpkg_contents')
     assert gdal.GetLastErrorMsg() != ''
     gdal.ErrorReset()
     ds.ExecuteSQL('ALTER TABLE "weird\'layer""name" RENAME TO "weird2\'layer""name"')
+    ds = None
+
+    ds = ogr.Open(dbname, update=1)
+    gdal.ErrorReset()
+    ds.ExecuteSQL('ALTER TABLE "weird2\'layer""name" RENAME COLUMN "foo" TO "bar"')
+    assert gdal.GetLastErrorMsg() == ''
+    lyr = ds.GetLayerByName(new_layer_name)
+    assert lyr.GetLayerDefn().GetFieldIndex('bar') >= 0
+
+    gdal.ErrorReset()
+    ds.ExecuteSQL('ALTER TABLE "weird2\'layer""name" DROP COLUMN "bar"')
+    assert gdal.GetLastErrorMsg() == ''
+    assert lyr.GetLayerDefn().GetFieldIndex('bar') < 0
+
     ds.ExecuteSQL('VACUUM')
     ds = None
 
@@ -2581,6 +2632,7 @@ def test_ogr_gpkg_34():
     layer_name = new_layer_name
 
     ds = ogr.Open(dbname, update=1)
+    gdal.ErrorReset()
     with gdaltest.error_handler():
         ds.ExecuteSQL('DELLAYER:does_not_exist')
     assert gdal.GetLastErrorMsg() != ''
@@ -2610,6 +2662,7 @@ def test_ogr_gpkg_34():
     ds = None
 
     ds = ogr.Open(dbname, update=1)
+    gdal.ErrorReset()
     ds.ExecuteSQL('DROP TABLE "weird2\'layer""name"')
     assert gdal.GetLastErrorMsg() == ''
     ds.ExecuteSQL('DROP TABLE another_layer_name')
@@ -2832,7 +2885,25 @@ def test_ogr_gpkg_36():
 
     new_field_defn = ogr.FieldDefn('bar', ogr.OFTReal)
     new_field_defn.SetSubType(ogr.OFSTFloat32)
+    new_field_defn.SetWidth(10)
+    new_field_defn.SetDefault('5')
+
+    # Schema only change
     assert lyr.AlterFieldDefn(0, new_field_defn, ogr.ALTER_ALL_FLAG) == 0
+
+    # Full table rewrite
+    new_field_defn.SetNullable(False)
+    assert lyr.AlterFieldDefn(0, new_field_defn, ogr.ALTER_ALL_FLAG) == 0
+
+    # Full table rewrite
+    new_field_defn.SetUnique(True)
+    assert lyr.AlterFieldDefn(0, new_field_defn, ogr.ALTER_ALL_FLAG) == 0
+
+    # Violation of not-null constraint
+    new_field_defn = ogr.FieldDefn('baz', ogr.OFTString)
+    new_field_defn.SetNullable(False)
+    with gdaltest.error_handler():
+        assert lyr.AlterFieldDefn(1 , new_field_defn, ogr.ALTER_ALL_FLAG) != 0
 
     lyr.ResetReading()
     f = lyr.GetNextFeature()
@@ -2842,6 +2913,13 @@ def test_ogr_gpkg_36():
         pytest.fail()
     f = None
 
+    # Just change the name, and run it outside an existing transaction
+    lyr.StartTransaction()
+    new_field_defn = ogr.FieldDefn('baw2', ogr.OFTString)
+    assert lyr.AlterFieldDefn(0, new_field_defn, ogr.ALTER_ALL_FLAG) == 0
+    lyr.CommitTransaction()
+
+    # Just change the name, and run it under an existing transaction
     lyr.StartTransaction()
     new_field_defn = ogr.FieldDefn('baw', ogr.OFTString)
     assert lyr.AlterFieldDefn(0, new_field_defn, ogr.ALTER_ALL_FLAG) == 0
@@ -2902,7 +2980,9 @@ def test_ogr_gpkg_36():
     # Unlink before AlterFieldDefn
     gdal.Unlink(dbname)
     with gdaltest.error_handler():
-        ret = lyr.AlterFieldDefn(0, ogr.FieldDefn('bar'), ogr.ALTER_ALL_FLAG)
+        new_field_defn = ogr.FieldDefn('bar')
+        new_field_defn.SetNullable(False)
+        ret = lyr.AlterFieldDefn(0, new_field_defn, ogr.ALTER_ALL_FLAG)
     assert ret != 0
     with gdaltest.error_handler():
         ds = None
@@ -3243,7 +3323,17 @@ def test_ogr_gpkg_42():
     assert fc == 5000
 
     # Test renaming
-    ds.ExecuteSQL('ALTER TABLE foo RENAME TO bar')
+    assert lyr.TestCapability(ogr.OLCRename) == 1
+    assert lyr.Rename('bar') == ogr.OGRERR_NONE
+    assert lyr.GetDescription() == 'bar'
+    assert lyr.GetLayerDefn().GetName() == 'bar'
+    with gdaltest.error_handler():
+        assert lyr.Rename("bar") != ogr.OGRERR_NONE
+    with gdaltest.error_handler():
+        assert lyr.Rename("gpkg_ogr_contents") != ogr.OGRERR_NONE
+    assert lyr.GetDescription() == 'bar'
+    assert lyr.GetLayerDefn().GetName() == 'bar'
+
     ds = None
     ds = ogr.Open('/vsimem/ogr_gpkg_42.gpkg', update=1)
     sql_lyr = ds.ExecuteSQL("SELECT feature_count FROM gpkg_ogr_contents WHERE table_name = 'bar'", dialect='DEBUG')
@@ -3483,11 +3573,13 @@ def test_ogr_gpkg_47():
     gdal.VSIFWriteL(struct.pack('B' * 4, 0, 0, 0, 0), 4, 1, fp)
     gdal.VSIFCloseL(fp)
 
+    gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = ogr.Open('/vsimem/ogr_gpkg_47.gpkg', update=1)
     assert ds is not None
     assert gdal.GetLastErrorMsg() != ''
 
+    gdal.ErrorReset()
     gdal.SetConfigOption('GPKG_WARN_UNRECOGNIZED_APPLICATION_ID', 'NO')
     ogr.Open('/vsimem/ogr_gpkg_47.gpkg')
     gdal.SetConfigOption('GPKG_WARN_UNRECOGNIZED_APPLICATION_ID', None)
@@ -3500,12 +3592,14 @@ def test_ogr_gpkg_47():
     gdal.VSIFWriteL(struct.pack('B' * 4, 0, 0, 0, 0), 4, 1, fp)
     gdal.VSIFCloseL(fp)
 
+    gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = ogr.Open('/vsimem/ogr_gpkg_47.gpkg', update=1)
     assert ds is not None
     assert gdal.GetLastErrorMsg() != ''
     ds = None
 
+    gdal.ErrorReset()
     gdal.SetConfigOption('GPKG_WARN_UNRECOGNIZED_APPLICATION_ID', 'NO')
     ogr.Open('/vsimem/ogr_gpkg_47.gpkg')
     gdal.SetConfigOption('GPKG_WARN_UNRECOGNIZED_APPLICATION_ID', None)
@@ -3521,11 +3615,13 @@ def test_ogr_gpkg_47():
     gdal.VSIFWriteL(struct.pack('>I', 10201), 4, 1, fp)
     gdal.VSIFCloseL(fp)
 
+    gdal.ErrorReset()
     ds = ogr.Open('/vsimem/ogr_gpkg_47.gpkg', update=1)
     assert ds is not None
     assert gdal.GetLastErrorMsg() == ''
     ds = None
 
+    gdal.ErrorReset()
     gdal.SetConfigOption('GPKG_WARN_UNRECOGNIZED_APPLICATION_ID', 'NO')
     ogr.Open('/vsimem/ogr_gpkg_47.gpkg')
     gdal.SetConfigOption('GPKG_WARN_UNRECOGNIZED_APPLICATION_ID', None)
@@ -3539,11 +3635,13 @@ def test_ogr_gpkg_47():
     assert struct.unpack('>I', gdal.VSIFReadL(4, 1, fp))[0] == 10300
     gdal.VSIFCloseL(fp)
 
+    gdal.ErrorReset()
     ds = ogr.Open('/vsimem/ogr_gpkg_47.gpkg', update=1)
     assert ds is not None
     assert gdal.GetLastErrorMsg() == ''
     ds = None
 
+    gdal.ErrorReset()
     gdal.SetConfigOption('GPKG_WARN_UNRECOGNIZED_APPLICATION_ID', 'NO')
     ogr.Open('/vsimem/ogr_gpkg_47.gpkg')
     gdal.SetConfigOption('GPKG_WARN_UNRECOGNIZED_APPLICATION_ID', None)
@@ -3557,11 +3655,13 @@ def test_ogr_gpkg_47():
     gdal.VSIFWriteL(struct.pack('>I', 19900), 4, 1, fp)
     gdal.VSIFCloseL(fp)
 
+    gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = ogr.Open('/vsimem/ogr_gpkg_47.gpkg', update=1)
     assert ds is not None
     assert gdal.GetLastErrorMsg() != ''
 
+    gdal.ErrorReset()
     gdal.SetConfigOption('GPKG_WARN_UNRECOGNIZED_APPLICATION_ID', 'NO')
     ogr.Open('/vsimem/ogr_gpkg_47.gpkg')
     gdal.SetConfigOption('GPKG_WARN_UNRECOGNIZED_APPLICATION_ID', None)
@@ -3994,6 +4094,7 @@ INSERT INTO "gpkg_geometry_columns" VALUES('poly','geom','POLYGON',0,0,0);
 CREATE TABLE "poly"("fid" INTEGER PRIMARY KEY, "geom" POLYGON);
 """)
 
+    gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = ogr.Open(tmpfile)
     assert ds.GetLayerCount() == 1, 'bad layer count'
@@ -4115,6 +4216,70 @@ def test_ogr_gpkg_wal():
     gdal.Unlink(filename + '-wal')
     gdal.Unlink(filename + '-shm')
 
+###############################################################################
+# Test NOLOCK open option
+
+
+def test_ogr_gpkg_nolock():
+
+    def get_nolock(ds):
+        sql_lyr = ds.ExecuteSQL('SELECT nolock', dialect='DEBUG')
+        f = sql_lyr.GetNextFeature()
+        res = True if f[0] == 1 else False
+        ds.ReleaseResultSet(sql_lyr)
+        return res
+
+    # needs to be a real file
+    filename = 'tmp/test_ogr_gpkg_#_nolock.gpkg'
+
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+    lyr = ds.CreateLayer('foo')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    # Special case on Windows for files that start with drive letters
+    full_filename = os.path.join(os.getcwd(), 'tmp', 'test_ogr_gpkg_#_nolock.gpkg')
+    ds = gdal.OpenEx(full_filename, gdal.OF_VECTOR, open_options=['NOLOCK=YES'])
+    assert ds
+    ds = None
+
+    ds = gdal.OpenEx(filename, gdal.OF_VECTOR, open_options=['NOLOCK=YES'])
+    assert ds
+    assert get_nolock(ds)
+
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    ds2 = ogr.Open(filename, update = 1)
+    lyr2 = ds2.GetLayer(0)
+    f = ogr.Feature(lyr2.GetLayerDefn())
+    # Without lockless mode on ds, this would timeout and fail
+    assert lyr2.CreateFeature(f) == ogr.OGRERR_NONE
+    f = None
+    ds2 = None
+    ds = None
+
+    # Lockless mode should NOT be honored by GDAL in update mode
+    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE, open_options=['NOLOCK=YES'])
+    assert ds
+    assert not get_nolock(ds)
+    ds = None
+
+    # Now turn on WAL
+    ds = ogr.Open(filename, update = 1)
+    ds.ExecuteSQL('PRAGMA journal_mode = WAL')
+    ds = None
+
+    # Lockless mode should NOT be honored by GDAL on a WAL enabled file
+    ds = gdal.OpenEx(filename, gdal.OF_VECTOR, open_options=['NOLOCK=YES'])
+    assert ds
+    assert not get_nolock(ds)
+    ds = None
+
+    gdal.Unlink(filename)
+    gdal.Unlink(filename + '-wal')
+    gdal.Unlink(filename + '-shm')
 
 ###############################################################################
 # Run test_ogrsf
@@ -4692,10 +4857,15 @@ def test_ogr_gpkg_field_domains():
 
     assert ds.TestCapability(ogr.ODsCAddFieldDomain)
 
+    assert ds.GetFieldDomainNames() is None
+
     assert ds.GetFieldDomain('does_not_exist') is None
 
     assert ds.AddFieldDomain(ogr.CreateRangeFieldDomain('range_domain_int', 'my desc', ogr.OFTInteger, ogr.OFSTNone, 1, True, 2, False))
     assert ds.GetFieldDomain('range_domain_int') is not None
+
+    assert set(ds.GetFieldDomainNames()) == {'range_domain_int'}
+
     assert not ds.AddFieldDomain(ogr.CreateRangeFieldDomain('range_domain_int', 'my desc', ogr.OFTInteger, ogr.OFSTNone, 1, True, 2, True))
 
     assert ds.AddFieldDomain(ogr.CreateRangeFieldDomain('range_domain_int64', '', ogr.OFTInteger64, ogr.OFSTNone, -1234567890123, False, 1234567890123, True))
@@ -4722,6 +4892,23 @@ def test_ogr_gpkg_field_domains():
     assert ds.AddFieldDomain(ogr.CreateCodedFieldDomain('enum_domain_guess_real', '', ogr.OFTReal, ogr.OFSTNone, {1: "one", 1.5: "one dot five", 1234567890123: "1234567890123", 3: "three"}))
     assert ds.AddFieldDomain(ogr.CreateCodedFieldDomain('enum_domain_guess_string_single', '', ogr.OFTString, ogr.OFSTNone, {"three": "three"}))
     assert ds.AddFieldDomain(ogr.CreateCodedFieldDomain('enum_domain_guess_string', '', ogr.OFTString, ogr.OFSTNone, {1: "one", 1.5: "one dot five", "three": "three", 4: "four"}))
+
+    assert len(ds.GetFieldDomainNames()) == len(set(ds.GetFieldDomainNames()))
+    assert set(ds.GetFieldDomainNames()) == {'enum_domain',
+                                             'enum_domain_guess_int',
+                                             'enum_domain_guess_int64',
+                                             'enum_domain_guess_int64_single_1',
+                                             'enum_domain_guess_int64_single_2',
+                                             'enum_domain_guess_int_single',
+                                             'enum_domain_guess_real',
+                                             'enum_domain_guess_real_single',
+                                             'enum_domain_guess_string',
+                                             'enum_domain_guess_string_single',
+                                             'glob_domain',
+                                             'range_domain_int',
+                                             'range_domain_int64',
+                                             'range_domain_real',
+                                             'range_domain_real_inf'}
 
     lyr = ds.CreateLayer('test')
 
@@ -4758,6 +4945,22 @@ def test_ogr_gpkg_field_domains():
     sql_lyr = ds.ExecuteSQL('SELECT * FROM gpkg_data_column_constraints')
     assert sql_lyr is not None
     ds.ReleaseResultSet(sql_lyr)
+
+    assert set(ds.GetFieldDomainNames()) == {'enum_domain',
+                                             'enum_domain_guess_int',
+                                             'enum_domain_guess_int64',
+                                             'enum_domain_guess_int64_single_1',
+                                             'enum_domain_guess_int64_single_2',
+                                             'enum_domain_guess_int_single',
+                                             'enum_domain_guess_real',
+                                             'enum_domain_guess_real_single',
+                                             'enum_domain_guess_string',
+                                             'enum_domain_guess_string_single',
+                                             'glob_domain',
+                                             'range_domain_int',
+                                             'range_domain_int64',
+                                             'range_domain_real',
+                                             'range_domain_real_inf'}
 
     domain = ds.GetFieldDomain('range_domain_int')
     assert domain is not None
@@ -4909,6 +5112,22 @@ def test_ogr_gpkg_field_domains():
     idx = lyr_defn.GetFieldIndex('with_glob_domain')
     fld_defn = lyr_defn.GetFieldDefn(idx)
     assert fld_defn.GetDomainName() == 'glob_domain'
+
+    assert set(ds.GetFieldDomainNames()) == {'enum_domain',
+                                             'enum_domain_guess_int',
+                                             'enum_domain_guess_int64',
+                                             'enum_domain_guess_int64_single_1',
+                                             'enum_domain_guess_int64_single_2',
+                                             'enum_domain_guess_int_single',
+                                             'enum_domain_guess_real',
+                                             'enum_domain_guess_real_single',
+                                             'enum_domain_guess_string',
+                                             'enum_domain_guess_string_single',
+                                             'glob_domain',
+                                             'range_domain_int',
+                                             'range_domain_int64',
+                                             'range_domain_real',
+                                             'range_domain_real_inf'}
 
     ds = None
 
@@ -5208,3 +5427,4 @@ def test_ogr_gpkg_CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE():
     ds = None
     assert gdal.VSIStatL(filename) is not None
     assert gdal.ReadDir('/vsimem/temporary_location') is None
+    gdal.Unlink(filename)

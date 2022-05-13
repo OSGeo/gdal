@@ -91,14 +91,14 @@ int ZarrDataset::Identify( GDALOpenInfo *poOpenInfo )
 
 GDALDataset* ZarrDataset::OpenMultidim(const char* pszFilename,
                                        bool bUpdateMode,
-                                       CSLConstList papszOpenOptions)
+                                       CSLConstList papszOpenOptionsIn)
 {
     CPLString osFilename(pszFilename);
     if( osFilename.back() == '/' )
         osFilename.resize(osFilename.size() - 1);
 
     auto poSharedResource = std::make_shared<ZarrSharedResource>(osFilename);
-    poSharedResource->SetOpenOptions(papszOpenOptions);
+    poSharedResource->SetOpenOptions(papszOpenOptionsIn);
 
     auto poRG = ZarrGroupV2::Create(poSharedResource, std::string(), "/");
     poRG->SetUpdatable(bUpdateMode);
@@ -141,7 +141,7 @@ GDALDataset* ZarrDataset::OpenMultidim(const char* pszFilename,
     const std::string osZmetadataFilename(
             CPLFormFilename(pszFilename, ".zmetadata", nullptr));
     if( CPLTestBool(CSLFetchNameValueDef(
-                papszOpenOptions, "USE_ZMETADATA", "YES")) &&
+                papszOpenOptionsIn, "USE_ZMETADATA", "YES")) &&
         VSIStatL( osZmetadataFilename.c_str(), &sStat ) == 0 )
     {
         CPLJSONDocument oDoc;
@@ -294,6 +294,8 @@ GDALDataset* ZarrDataset::Open(GDALOpenInfo* poOpenInfo)
 
     auto poDS = cpl::make_unique<ZarrDataset>(nullptr);
     std::shared_ptr<GDALMDArray> poMainArray;
+    std::vector<std::string> aosArrays;
+    std::string osMainArray;
     if( !osArrayOfInterest.empty() )
     {
         poMainArray = osArrayOfInterest == "/" ? poRG->OpenMDArray("/") :
@@ -340,12 +342,10 @@ GDALDataset* ZarrDataset::Open(GDALOpenInfo* poOpenInfo)
     }
     else
     {
-        std::vector<std::string> aosArrays;
         ExploreGroup(poRG, aosArrays, 0);
         if( aosArrays.empty() )
             return nullptr;
 
-        std::string osMainArray;
         if( aosArrays.size() == 1 )
         {
             poMainArray = poRG->OpenMDArrayFromFullname(aosArrays[0]);
@@ -447,17 +447,14 @@ GDALDataset* ZarrDataset::Open(GDALOpenInfo* poOpenInfo)
         {
             for( size_t i = 0; i < aosArrays.size(); ++i )
             {
-                if( aosArrays[i] != osMainArray )
-                {
-                    poDS->m_aosSubdatasets.AddString(
-                        CPLSPrintf("SUBDATASET_%d_NAME=ZARR:\"%s\":%s",
-                                   iCountSubDS, osFilename.c_str(),
-                                   aosArrays[i].c_str()));
-                    poDS->m_aosSubdatasets.AddString(
-                        CPLSPrintf("SUBDATASET_%d_DESC=Array %s",
-                                   iCountSubDS, aosArrays[i].c_str()));
-                    ++iCountSubDS;
-                }
+                poDS->m_aosSubdatasets.AddString(
+                    CPLSPrintf("SUBDATASET_%d_NAME=ZARR:\"%s\":%s",
+                               iCountSubDS, osFilename.c_str(),
+                               aosArrays[i].c_str()));
+                poDS->m_aosSubdatasets.AddString(
+                    CPLSPrintf("SUBDATASET_%d_DESC=Array %s",
+                               iCountSubDS, aosArrays[i].c_str()));
+                ++iCountSubDS;
             }
         }
     }
@@ -466,12 +463,55 @@ GDALDataset* ZarrDataset::Open(GDALOpenInfo* poOpenInfo)
     {
         std::unique_ptr<GDALDataset> poNewDS;
         if( poMainArray->GetDimensionCount() == 2 )
+        {
             poNewDS.reset(poMainArray->AsClassicDataset(1, 0));
+
+            // If we have 3 arrays, check that the 2 ones that are not the main
+            // 2D array are indexing variables of its dimensions. If so, don't
+            // expose them as subdatasets
+            if( aosArrays.size() == 3 )
+            {
+                std::vector<std::string> aosOtherArrays;
+                for( size_t i = 0; i < aosArrays.size(); ++i )
+                {
+                    if( aosArrays[i] != osMainArray )
+                    {
+                        aosOtherArrays.emplace_back(aosArrays[i]);
+                    }
+                }
+                bool bMatchFound[] = { false, false };
+                for(int i = 0; i < 2; i++ )
+                {
+                    auto poIndexingVar =
+                        poMainArray->GetDimensions()[i]->GetIndexingVariable();
+                    if( poIndexingVar )
+                    {
+                        for( int j = 0; j < 2; j++ )
+                        {
+                            if( aosOtherArrays[j] == poIndexingVar->GetFullName() )
+                            {
+                                bMatchFound[i] = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if( bMatchFound[0] && bMatchFound[1] )
+                {
+                    poDS->m_aosSubdatasets.Clear();
+                }
+            }
+        }
         else
+        {
             poNewDS.reset(poMainArray->AsClassicDataset(0, 0));
+        }
         if( !poNewDS )
             return nullptr;
-        poNewDS->SetMetadata(poDS->m_aosSubdatasets.List(), "SUBDATASETS");
+        if( !poDS->m_aosSubdatasets.empty() )
+        {
+            poNewDS->SetMetadata(poDS->m_aosSubdatasets.List(), "SUBDATASETS");
+        }
         return poNewDS.release();
     }
 
@@ -781,11 +821,11 @@ GDALDataset * ZarrDataset::CreateMultiDimensional( const char * pszFilename,
 /************************************************************************/
 
 GDALDataset * ZarrDataset::Create( const char * pszName,
-                                   int nXSize, int nYSize, int nBands,
+                                   int nXSize, int nYSize, int nBandsIn,
                                    GDALDataType eType,
                                    char ** papszOptions )
 {
-    if( nBands <= 0 || nXSize <= 0 || nYSize <= 0 )
+    if( nBandsIn <= 0 || nXSize <= 0 || nYSize <= 0 )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "nBands, nXSize, nYSize should be > 0");
@@ -881,12 +921,12 @@ GDALDataset * ZarrDataset::Create( const char * pszName,
     const auto aoDims = std::vector<std::shared_ptr<GDALDimension>>{
         poDS->m_poDimY, poDS->m_poDimX};
 
-    for( int i = 0; i < nBands; i++ )
+    for( int i = 0; i < nBandsIn; i++ )
     {
         auto poArray = poRG->CreateMDArray(
             pszArrayName ?
-                (nBands == 1 ? pszArrayName : CPLSPrintf("%s_band%d", pszArrayName, i+1)):
-                (nBands == 1 ? CPLGetBasename(pszName) : CPLSPrintf("Band%d", i+1)),
+                (nBandsIn == 1 ? pszArrayName : CPLSPrintf("%s_band%d", pszArrayName, i+1)):
+                (nBandsIn == 1 ? CPLGetBasename(pszName) : CPLSPrintf("Band%d", i+1)),
             aoDims,
             GDALExtendedDataType::Create(eType),
             papszOptions);
@@ -1078,10 +1118,36 @@ ZarrRasterBand::ZarrRasterBand(const std::shared_ptr<GDALMDArray>& poArray):
 double ZarrRasterBand::GetNoDataValue(int* pbHasNoData)
 {
     bool bHasNodata = false;
-    double dfRes = m_poArray->GetNoDataValueAsDouble(&bHasNodata);
+    const auto res = m_poArray->GetNoDataValueAsDouble(&bHasNodata);
     if( pbHasNoData )
         *pbHasNoData = bHasNodata;
-    return dfRes;
+    return res;
+}
+
+/************************************************************************/
+/*                        GetNoDataValueAsInt64()                       */
+/************************************************************************/
+
+int64_t ZarrRasterBand::GetNoDataValueAsInt64(int* pbHasNoData)
+{
+    bool bHasNodata = false;
+    const auto res = m_poArray->GetNoDataValueAsInt64(&bHasNodata);
+    if( pbHasNoData )
+        *pbHasNoData = bHasNodata;
+    return res;
+}
+
+/************************************************************************/
+/*                       GetNoDataValueAsUInt64()                       */
+/************************************************************************/
+
+uint64_t ZarrRasterBand::GetNoDataValueAsUInt64(int* pbHasNoData)
+{
+    bool bHasNodata = false;
+    const auto res = m_poArray->GetNoDataValueAsUInt64(&bHasNodata);
+    if( pbHasNoData )
+        *pbHasNoData = bHasNodata;
+    return res;
 }
 
 /************************************************************************/
@@ -1091,6 +1157,24 @@ double ZarrRasterBand::GetNoDataValue(int* pbHasNoData)
 CPLErr ZarrRasterBand::SetNoDataValue(double dfNoData)
 {
     return m_poArray->SetNoDataValue(dfNoData) ? CE_None : CE_Failure;
+}
+
+/************************************************************************/
+/*                       SetNoDataValueAsInt64()                        */
+/************************************************************************/
+
+CPLErr ZarrRasterBand::SetNoDataValueAsInt64(int64_t nNoData)
+{
+    return m_poArray->SetNoDataValue(nNoData) ? CE_None : CE_Failure;
+}
+
+/************************************************************************/
+/*                       SetNoDataValueAsUInt64()                       */
+/************************************************************************/
+
+CPLErr ZarrRasterBand::SetNoDataValueAsUInt64(uint64_t nNoData)
+{
+    return m_poArray->SetNoDataValue(nNoData) ? CE_None : CE_Failure;
 }
 
 /************************************************************************/
@@ -1259,7 +1343,7 @@ void GDALRegister_Zarr()
     poDriver->SetMetadataItem( GDAL_DCAP_MULTIDIM_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Zarr" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-                               "Byte Int16 UInt16 Int32 UInt32 "
+                               "Byte Int16 UInt16 Int32 UInt32 Int64 UInt64 "
                                "Float32 Float64 CFloat32 CFloat64" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );

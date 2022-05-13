@@ -30,6 +30,7 @@
 ###############################################################################
 
 import os
+import shutil
 import struct
 
 
@@ -203,6 +204,36 @@ def test_gdal_translate_lib_9():
     assert ds is not None
 
     assert ds.GetRasterBand(1).GetNoDataValue() == 1, 'Bad nodata value'
+
+    ds = None
+
+###############################################################################
+# Test nodata option
+
+
+def test_gdal_translate_lib_nodata_uint64():
+
+    ds = gdal.Open('../gcore/data/byte.tif')
+    noData = (1 << 64) - 1
+    ds = gdal.Translate('', ds, format = 'MEM', outputType = gdal.GDT_UInt64, noData=noData)
+    assert ds is not None
+
+    assert ds.GetRasterBand(1).GetNoDataValue() == noData, 'Bad nodata value'
+
+    ds = None
+
+###############################################################################
+# Test nodata option
+
+
+def test_gdal_translate_lib_nodata_int64():
+
+    ds = gdal.Open('../gcore/data/byte.tif')
+    noData = -(1 << 63)
+    ds = gdal.Translate('', ds, format = 'MEM', outputType = gdal.GDT_Int64, noData=noData)
+    assert ds is not None
+
+    assert ds.GetRasterBand(1).GetNoDataValue() == noData, 'Bad nodata value'
 
     ds = None
 
@@ -634,6 +665,31 @@ def test_gdal_translate_lib_resampling_methods(resampleAlg, resampleAlgStr):
     assert option_list == ['-r', resampleAlgStr]
     assert gdal.Translate('', '../gcore/data/byte.tif',
                           format='MEM', width=2, height=2, resampleAlg=resampleAlg) is not None
+
+
+###############################################################################
+# Test not deleting auxiliary files shared by the source and a target being
+# overwritten (https://github.com/OSGeo/gdal/issues/5633)
+
+
+def test_gdal_translate_lib_not_delete_shared_auxiliary_files():
+
+    # Yes, we do intend to copy a .TIF as a fake .JP2
+    shutil.copy('../gdrivers/data/dimap2/bundle/IMG_foo_R1C1.TIF', 'tmp/IMG_foo_R1C1.JP2')
+    shutil.copy('../gdrivers/data/dimap2/bundle/DIM_foo.XML', 'tmp/DIM_foo.XML')
+
+    gdal.Translate('tmp/IMG_foo_R1C1.tif', 'tmp/IMG_foo_R1C1.JP2')
+
+    os.unlink('tmp/IMG_foo_R1C1.IMD')
+
+    gdal.Translate('tmp/IMG_foo_R1C1.tif', 'tmp/IMG_foo_R1C1.JP2')
+
+    assert os.path.exists('tmp/DIM_foo.XML')
+
+    os.unlink('tmp/IMG_foo_R1C1.JP2')
+    os.unlink('tmp/IMG_foo_R1C1.tif')
+    os.unlink('tmp/IMG_foo_R1C1.IMD')
+    os.unlink('tmp/DIM_foo.XML')
 
 ###############################################################################
 # Cleanup

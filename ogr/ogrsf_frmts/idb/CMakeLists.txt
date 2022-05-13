@@ -9,4 +9,4 @@ add_gdal_driver(
           PLUGIN_CAPABLE)
 gdal_standard_includes(ogr_IDB)
 target_compile_definitions(ogr_IDB PRIVATE -DIT_DLLIB -DIT_DO_NOT_SIMULATE_BOOL)
-gdal_target_link_libraries(TARGET ogr_IDB LIBRARIES IDB::IDB)
+gdal_target_link_libraries(ogr_IDB PRIVATE IDB::IDB)

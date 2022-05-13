@@ -63,6 +63,8 @@ void VSIInstallWebHdfsHandler( void )
 
 #define ENABLE_DEBUG 0
 
+#define unchecked_curl_easy_setopt(handle,opt,param) CPL_IGNORE_RET_VAL(curl_easy_setopt(handle,opt,param))
+
 namespace cpl {
 
 
@@ -166,10 +168,9 @@ static CPLString PatchWebHDFSUrl(const CPLString& osURLIn,
 /*                       GetWebHDFSDataNodeHost()                       */
 /************************************************************************/
 
-static CPLString GetWebHDFSDataNodeHost()
+static CPLString GetWebHDFSDataNodeHost(const char* pszFilename)
 {
-    CPLString osDataNodeHost = CPLGetConfigOption("WEBHDFS_DATANODE_HOST", "");
-    return osDataNodeHost;
+    return CPLString(VSIGetCredential(pszFilename, "WEBHDFS_DATANODE_HOST", ""));
 }
 
 /************************************************************************/
@@ -229,13 +230,13 @@ VSIWebHDFSWriteHandle::VSIWebHDFSWriteHandle( VSIWebHDFSFSHandler* poFS,
         VSIAppendWriteHandle(poFS, poFS->GetFSPrefix(), pszFilename,
                              GetWebHDFSBufferSize()),
         m_osURL( pszFilename + poFS->GetFSPrefix().size() ),
-        m_osDataNodeHost( GetWebHDFSDataNodeHost() )
+        m_osDataNodeHost( GetWebHDFSDataNodeHost(pszFilename) )
 {
     // cppcheck-suppress useInitializationList
-    m_osUsernameParam = CPLGetConfigOption("WEBHDFS_USERNAME", "");
+    m_osUsernameParam = VSIGetCredential(pszFilename, "WEBHDFS_USERNAME", "");
     if( !m_osUsernameParam.empty() )
         m_osUsernameParam = "&user.name=" + m_osUsernameParam;
-    m_osDelegationParam = CPLGetConfigOption("WEBHDFS_DELEGATION", "");
+    m_osDelegationParam = VSIGetCredential(pszFilename, "WEBHDFS_DELEGATION", "");
     if( !m_osDelegationParam.empty() )
         m_osDelegationParam = "&delegation=" + m_osDelegationParam;
 
@@ -301,11 +302,11 @@ bool VSIWebHDFSWriteHandle::CreateFile()
     CPLString osURL = m_osURL + "?op=CREATE&overwrite=true" +
         m_osUsernameParam + m_osDelegationParam;
 
-    CPLString osPermission = CPLGetConfigOption("WEBHDFS_PERMISSION", "");
+    CPLString osPermission = VSIGetCredential(m_osFilename.c_str(), "WEBHDFS_PERMISSION", "");
     if( !osPermission.empty() )
         osURL += "&permission=" + osPermission;
 
-    CPLString osReplication = CPLGetConfigOption("WEBHDFS_REPLICATION", "");
+    CPLString osReplication = VSIGetCredential(m_osFilename.c_str(), "WEBHDFS_REPLICATION", "");
     if( !osReplication.empty() )
         osURL += "&replication=" + osReplication;
 
@@ -317,20 +318,20 @@ retry:
     struct curl_slist* headers = static_cast<struct curl_slist*>(
         CPLHTTPSetOptions(hCurlHandle, osURL.c_str(), nullptr));
 
-    curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "PUT");
-    curl_easy_setopt(hCurlHandle, CURLOPT_INFILESIZE, 0);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "PUT");
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_INFILESIZE, 0);
 
     if( !m_osDataNodeHost.empty() )
     {
-        curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
     }
 
-    curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
     WriteFuncStruct sWriteFuncData;
     VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                         VSICurlHandleWriteFunc);
 
     MultiPerform(m_poFS->GetCurlMultiHandleFor(m_osURL), hCurlHandle);
@@ -405,14 +406,14 @@ bool VSIWebHDFSWriteHandle::Append()
     struct curl_slist* headers = static_cast<struct curl_slist*>(
         CPLHTTPSetOptions(hCurlHandle, osURL.c_str(), nullptr));
 
-    curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "POST");
-    curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
-    curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "POST");
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
     WriteFuncStruct sWriteFuncData;
     VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                         VSICurlHandleWriteFunc);
 
     MultiPerform(m_poFS->GetCurlMultiHandleFor(m_osURL), hCurlHandle);
@@ -467,14 +468,14 @@ bool VSIWebHDFSWriteHandle::Append()
         CPLHTTPSetOptions(hCurlHandle, osURL.c_str(), nullptr));
     headers = curl_slist_append(headers, "Content-Type: application/octet-stream");
 
-    curl_easy_setopt(hCurlHandle, CURLOPT_POSTFIELDS, m_pabyBuffer);
-    curl_easy_setopt(hCurlHandle, CURLOPT_POSTFIELDSIZE , m_nBufferOff);
-    curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
-    curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_POSTFIELDS, m_pabyBuffer);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_POSTFIELDSIZE , m_nBufferOff);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
     VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                         VSICurlHandleWriteFunc);
 
     MultiPerform(m_poFS->GetCurlMultiHandleFor(m_osURL), hCurlHandle);
@@ -614,10 +615,10 @@ char** VSIWebHDFSFSHandler::GetFileList( const char *pszDirname,
 
     CURLM* hCurlMultiHandle = GetCurlMultiHandleFor(osBaseURL);
 
-    CPLString osUsernameParam = CPLGetConfigOption("WEBHDFS_USERNAME", "");
+    CPLString osUsernameParam = VSIGetCredential(pszDirname, "WEBHDFS_USERNAME", "");
     if( !osUsernameParam.empty() )
         osUsernameParam = "&user.name=" + osUsernameParam;
-    CPLString osDelegationParam = CPLGetConfigOption("WEBHDFS_DELEGATION", "");
+    CPLString osDelegationParam = VSIGetCredential(pszDirname, "WEBHDFS_DELEGATION", "");
     if( !osDelegationParam.empty() )
         osDelegationParam = "&delegation=" + osDelegationParam;
     CPLString osURL = osBaseURL + "?op=LISTSTATUS" + osUsernameParam + osDelegationParam;
@@ -629,11 +630,11 @@ char** VSIWebHDFSFSHandler::GetFileList( const char *pszDirname,
 
     WriteFuncStruct sWriteFuncData;
     VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                      VSICurlHandleWriteFunc);
 
-    curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
     MultiPerform(hCurlMultiHandle, hCurlHandle);
 
@@ -712,28 +713,28 @@ int VSIWebHDFSFSHandler::Unlink( const char *pszFilename )
 
     CURLM* hCurlMultiHandle = GetCurlMultiHandleFor(osBaseURL);
 
-    CPLString osUsernameParam = CPLGetConfigOption("WEBHDFS_USERNAME", "");
+    CPLString osUsernameParam = VSIGetCredential(pszFilename, "WEBHDFS_USERNAME", "");
     if( !osUsernameParam.empty() )
         osUsernameParam = "&user.name=" + osUsernameParam;
-    CPLString osDelegationParam = CPLGetConfigOption("WEBHDFS_DELEGATION", "");
+    CPLString osDelegationParam = VSIGetCredential(pszFilename, "WEBHDFS_DELEGATION", "");
     if( !osDelegationParam.empty() )
         osDelegationParam = "&delegation=" + osDelegationParam;
     CPLString osURL = osBaseURL + "?op=DELETE" + osUsernameParam + osDelegationParam;
 
     CURL* hCurlHandle = curl_easy_init();
 
-    curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "DELETE");
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "DELETE");
 
     struct curl_slist* headers =
             VSICurlSetOptions(hCurlHandle, osURL, nullptr);
 
     WriteFuncStruct sWriteFuncData;
     VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                      VSICurlHandleWriteFunc);
 
-    curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
     MultiPerform(hCurlMultiHandle, hCurlHandle);
 
@@ -827,10 +828,10 @@ int VSIWebHDFSFSHandler::Mkdir( const char *pszDirname, long nMode )
 
     CURLM* hCurlMultiHandle = GetCurlMultiHandleFor(osBaseURL);
 
-    CPLString osUsernameParam = CPLGetConfigOption("WEBHDFS_USERNAME", "");
+    CPLString osUsernameParam = VSIGetCredential(pszDirname, "WEBHDFS_USERNAME", "");
     if( !osUsernameParam.empty() )
         osUsernameParam = "&user.name=" + osUsernameParam;
-    CPLString osDelegationParam = CPLGetConfigOption("WEBHDFS_DELEGATION", "");
+    CPLString osDelegationParam = VSIGetCredential(pszDirname, "WEBHDFS_DELEGATION", "");
     if( !osDelegationParam.empty() )
         osDelegationParam = "&delegation=" + osDelegationParam;
     CPLString osURL = osBaseURL + "?op=MKDIRS" + osUsernameParam + osDelegationParam;
@@ -842,18 +843,18 @@ int VSIWebHDFSFSHandler::Mkdir( const char *pszDirname, long nMode )
 
     CURL* hCurlHandle = curl_easy_init();
 
-    curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "PUT");
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "PUT");
 
     struct curl_slist* headers =
             VSICurlSetOptions(hCurlHandle, osURL, nullptr);
 
     WriteFuncStruct sWriteFuncData;
     VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                      VSICurlHandleWriteFunc);
 
-    curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
     MultiPerform(hCurlMultiHandle, hCurlHandle);
 
@@ -910,13 +911,13 @@ int VSIWebHDFSFSHandler::Mkdir( const char *pszDirname, long nMode )
 VSIWebHDFSHandle::VSIWebHDFSHandle( VSIWebHDFSFSHandler* poFSIn,
                           const char* pszFilename, const char* pszURL ) :
         VSICurlHandle(poFSIn, pszFilename, pszURL),
-        m_osDataNodeHost(GetWebHDFSDataNodeHost())
+        m_osDataNodeHost(GetWebHDFSDataNodeHost(pszFilename))
 {
     // cppcheck-suppress useInitializationList
-    m_osUsernameParam = CPLGetConfigOption("WEBHDFS_USERNAME", "");
+    m_osUsernameParam = VSIGetCredential(pszFilename, "WEBHDFS_USERNAME", "");
     if( !m_osUsernameParam.empty() )
         m_osUsernameParam = "&user.name=" + m_osUsernameParam;
-    m_osDelegationParam = CPLGetConfigOption("WEBHDFS_DELEGATION", "");
+    m_osDelegationParam = VSIGetCredential(pszFilename, "WEBHDFS_DELEGATION", "");
     if( !m_osDelegationParam.empty() )
         m_osDelegationParam = "&delegation=" + m_osDelegationParam;
 
@@ -959,15 +960,15 @@ vsi_l_offset VSIWebHDFSHandle::GetFileSize( bool bSetError )
 
     WriteFuncStruct sWriteFuncData;
     VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                      VSICurlHandleWriteFunc);
 
-    curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
     char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
     szCurlErrBuf[0] = '\0';
-    curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
     MultiPerform(hCurlMultiHandle, hCurlHandle);
 
@@ -1070,8 +1071,8 @@ retry:
     VSICURLInitWriteFuncStruct(&sWriteFuncData,
                                reinterpret_cast<VSILFILE *>(this),
                                pfnReadCbk, pReadCbkUserData);
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                      VSICurlHandleWriteFunc);
 
     if( !bInRedirect )
@@ -1088,7 +1089,7 @@ retry:
 
     if( !m_osDataNodeHost.empty() )
     {
-        curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
     }
 
     if( ENABLE_DEBUG )
@@ -1096,9 +1097,9 @@ retry:
 
     char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
     szCurlErrBuf[0] = '\0';
-    curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
-    curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
     MultiPerform(hCurlMultiHandle, hCurlHandle);
 

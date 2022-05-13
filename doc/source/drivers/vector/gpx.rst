@@ -118,7 +118,8 @@ will be interpreted in the OGR SF model as :
 | Note : the GPX driver will output content of the extensions element
   only if it is found in the first records of the GPX file. If
   extensions appear later, you can force an explicit parsing of the
-  whole file with the **GPX_USE_EXTENSIONS** environment variable.
+  whole file with the :decl_configoption:`GPX_USE_EXTENSIONS` configuration 
+  option.
 
 Creation Issues
 ---------------
@@ -157,7 +158,8 @@ the GPX file will be built from the sequence of points with the same
 value of the 'route_fid' field. The 'route_name' field can be set on the
 first track point to fill the <name> element of the route.
 
-The GPX writer supports the following *layer* creation options:
+Layer creation options
+----------------------
 
 -  **FORCE_GPX_TRACK**: By default when writing a layer whose features
    are of type wkbLineString, the GPX driver chooses to write them as
@@ -169,7 +171,8 @@ The GPX writer supports the following *layer* creation options:
    If FORCE_GPX_ROUTE=YES is specified, they will be written as routes,
    provided that the multilines are composed of only one single line.
 
-The GPX writer supports the following *dataset* creation options:
+Dataset creation options
+------------------------
 
 -  **GPX_USE_EXTENSIONS**: By default, the GPX driver will discard
    attribute fields that do not match the GPX XML definition (name, cmt,
@@ -205,7 +208,8 @@ Issues when translating to Shapefile
    characters in the .DBF file, thus leading to duplicate names.
 
    To avoid this, you can define the
-   GPX_SHORT_NAMES configuration option to TRUE to make them be reported
+   :decl_configoption:`GPX_SHORT_NAMES` configuration option to TRUE to 
+   make them be reported
    respectively as "trksegid" and "trksegptid", which will allow them to
    be unique once translated to DBF. The "route_point_id" field of
    *route_points* layer will also be renamed to "rteptid". But note that

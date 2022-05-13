@@ -47,6 +47,10 @@ relationship back to the original pixels and lines.
    pixels.
 -  LINE_STEP: each geolocation pixel represents this many geolocated
    lines.
+-  GEOREFERENCING_CONVENTION: (added in GDAL 3.5) either TOP_LEFT_CORNER
+   to indicate that the X/Y values refer to the top-left corner of the pixel,
+   or PIXEL_CENTER to indicate that they refer to the center of the pixel.
+   The default is TOP_LEFT_CORNER.
 
 In the common case where two of the bands of a dataset are actually
 latitude and longitude, and so the geolocation arrays are the same size
@@ -114,7 +118,7 @@ is the list of metadata from the GEOLOCATION metadata domain.
 
 ::
 
-    void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS, 
+    void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
                                        char **papszGeolocationInfo,
                                        int bReversed );
 

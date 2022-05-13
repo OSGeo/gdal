@@ -3238,6 +3238,8 @@ CPLErr HFADataset::WriteProjection()
             sDatum.datumname = const_cast<char *>("NAD83");
         if( nGCS == 4283 )
             sDatum.datumname = const_cast<char *>("GDA94");
+        if( nGCS == 6284 )
+            sDatum.datumname = const_cast<char *>("Pulkovo 1942");
 
         if( poGeogSRS->GetTOWGS84(sDatum.params) == OGRERR_NONE )
         {
@@ -4738,7 +4740,7 @@ char **HFADataset::GetFileList()
 /************************************************************************/
 
 GDALDataset *HFADataset::Create( const char * pszFilenameIn,
-                                 int nXSize, int nYSize, int nBands,
+                                 int nXSize, int nYSize, int nBandsIn,
                                  GDALDataType eType,
                                  char ** papszParamList )
 
@@ -4810,7 +4812,7 @@ GDALDataset *HFADataset::Create( const char * pszFilenameIn,
     }
 
     // Create the new file.
-    HFAHandle hHFA = HFACreate(pszFilenameIn, nXSize, nYSize, nBands,
+    HFAHandle hHFA = HFACreate(pszFilenameIn, nXSize, nYSize, nBandsIn,
                                 eHfaDataType, papszParamList);
     if( hHFA == nullptr )
         return nullptr;
