@@ -353,10 +353,13 @@ char** GDALMDReaderPleiades::LoadRPCXmlFile()
     {
         char** m_papszValidity = nullptr;
         m_papszValidity = ReadXMLToList(pValidityNode->psChild, m_papszValidity);
-
         if( m_papszValidity != nullptr )
         {
-            firstCol = CPLAtofM(CSLFetchNameValue(m_papszValidity, "FIRST_COL"));
+            const char* pszFirstCol = CSLFetchNameValue(m_papszValidity, "FIRST_COL");
+            if( pszFirstCol != nullptr )
+            {
+                firstCol = CPLAtofM(pszFirstCol);
+            }
         }
     }
 
