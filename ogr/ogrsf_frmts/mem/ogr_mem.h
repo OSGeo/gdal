@@ -146,6 +146,13 @@ class OGRMemDataSource CPL_NON_FINAL: public OGRDataSource
 
     bool                AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,
                                        std::string& failureReason) override;
+
+    bool                DeleteFieldDomain(const std::string& name,
+                                          std::string& failureReason) override;
+
+    bool                UpdateFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,
+                                          std::string& failureReason) override;
+
 };
 
 /************************************************************************/

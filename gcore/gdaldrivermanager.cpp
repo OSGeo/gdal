@@ -609,7 +609,7 @@ GDALDriver * GDALDriverManager::GetDriverByName( const char * pszName )
     if( EQUAL(pszName, "CartoDB") )
         pszName = "Carto";
 
-    return oMapNameToDrivers[CPLString(pszName).toupper()];
+    return GetDriverByName_unlocked(pszName);
 }
 
 /************************************************************************/
@@ -779,6 +779,10 @@ char** GDALDriverManager::GetSearchPaths(const char* pszGDAL_DRIVER_PATH)
  *
  * Auto loading can be completely disabled by setting the GDAL_DRIVER_PATH
  * config option to "disable".
+ * 
+ * Starting with gdal 3.5, the default search path $(prefix)/lib/gdalplugins
+ * can be overridden at compile time by passing -DINSTALL_PLUGIN_DIR=/another/path
+ * to cmake.
  */
 
 void GDALDriverManager::AutoLoadDrivers()
@@ -926,6 +930,8 @@ void GDALDriverManager::ReorderDrivers()
 
     CPLMutexHolderD( &hDMMutex );
 
+    CPLAssert(static_cast<int>(oMapNameToDrivers.size()) == nDrivers);
+
     VSILFILE* fp = VSIFOpenL(m_osDriversIniPath.c_str(), "rb");
     if( fp == nullptr )
         return;
@@ -953,7 +959,8 @@ void GDALDriverManager::ReorderDrivers()
         }
         else if( bInOrderSection )
         {
-            const auto osUCDriverName = CPLString(pszLine).toupper();
+            CPLString osUCDriverName(pszLine);
+            osUCDriverName.toupper();
             if( oSetOrderedDrivers.find(osUCDriverName) !=
                                                 oSetOrderedDrivers.end() )
             {

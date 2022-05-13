@@ -16,6 +16,27 @@ from setuptools import setup
 from setuptools import find_packages
 from setuptools import Extension
 
+# If CXX is defined in the environment, it will be used to link the .so
+# but setuptools will be confused if it is made of several words like 'ccache g++'
+# and it will try to use only the first word.
+# See https://lists.osgeo.org/pipermail/gdal-dev/2016-July/044686.html
+# Note: in general when doing "make", CXX will not be defined, unless it is defined as
+# an environment variable, but in that case it is the value of GDALmake.opt that
+# will be set, not the one from the environment that started "make" !
+# If no CXX environment variable is defined, then the value of the CXX variable
+# in GDALmake.opt will not be set as an environment variable
+if 'CXX' in os.environ and os.environ['CXX'].strip().find(' ') >= 0:
+    if os.environ['CXX'].strip().startswith('ccache ') and os.environ['CXX'].strip()[len('ccache '):].find(' ') < 0:
+        os.environ['CXX'] = os.environ['CXX'].strip()[len('ccache '):]
+    else:
+        print('WARNING: "CXX=%s" was defined in the environment and contains more than one word. Unsetting it since that is incompatible of setuptools' % os.environ['CXX'])
+        del os.environ['CXX']
+if 'CC' in os.environ and os.environ['CC'].strip().find(' ') >= 0:
+    if os.environ['CC'].strip().startswith('ccache ') and os.environ['CC'].strip()[len('ccache '):].find(' ') < 0:
+        os.environ['CC'] = os.environ['CC'].strip()[len('ccache '):]
+    else:
+        print('WARNING: "CC=%s" was defined in the environment and contains more than one word. Unsetting it since that is incompatible of setuptools' % os.environ['CC'])
+        del os.environ['CC']
 
 # ---------------------------------------------------------------------------
 # Switches
@@ -26,11 +47,10 @@ is_standalone_build = not os.path.exists('@PROJECT_BINARY_DIR@/swig/python')
 if is_standalone_build:
     include_dirs = []
     library_dirs = []
-    libraries = []
 else:
     include_dirs = ['@PROJECT_BINARY_DIR@/port', '@PROJECT_SOURCE_DIR@/port', '@PROJECT_BINARY_DIR@/gcore', '@PROJECT_SOURCE_DIR@/gcore', '@PROJECT_SOURCE_DIR@/alg', '@PROJECT_SOURCE_DIR@/ogr/', '@PROJECT_SOURCE_DIR@/ogr/ogrsf_frmts', '@PROJECT_SOURCE_DIR@/gnm', '@PROJECT_SOURCE_DIR@/apps']
     library_dirs = [@GDAL_LIB_DIR@]
-    libraries = ['gdal']
+libraries = ['@GDAL_LIB_OUTPUT_NAME@']
 
 
 # ---------------------------------------------------------------------------
@@ -108,12 +128,11 @@ int main () { return 0; }""")
 ###Based on: https://stackoverflow.com/questions/28641408/how-to-tell-which-compiler-will-be-invoked-for-a-python-c-extension-in-setuptool
 def has_flag(compiler, flagname):
     import tempfile
-    from distutils.errors import CompileError
     with tempfile.NamedTemporaryFile('w', suffix='.cpp') as f:
         f.write('int main (int argc, char **argv) { return 0; }')
         try:
             compiler.compile([f.name], extra_postargs=[flagname])
-        except CompileError:
+        except Exception:
             return False
     return True
 

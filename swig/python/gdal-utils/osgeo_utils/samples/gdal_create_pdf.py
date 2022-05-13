@@ -67,7 +67,7 @@ def gdal_create_pdf(argv):
     return 0 if out_ds else 1
 
 
-def main(argv):
+def main(argv=sys.argv):
     gdal_create_pdf(argv)
 
 

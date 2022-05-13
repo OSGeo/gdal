@@ -96,6 +96,11 @@
 #define SIZEOF_SIZE_T SIZEOF_VOIDP
 #endif
 
+#define HAVE_ASSERT_H
+
+/* we may lie, but there are so many other places where GDAL assumes IEEE fp */
+#define HAVE_IEEEFP 1
+
 #ifdef RENAME_INTERNAL_LIBTIFF_SYMBOLS
 #include "gdal_libtiff_symbol_rename.h"
 #endif

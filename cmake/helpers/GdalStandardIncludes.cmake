@@ -1,4 +1,4 @@
-# Distributed under the GDAL/OGR MIT/X style License.  See accompanying
+# Distributed under the GDAL/OGR MIT style License.  See accompanying
 # file LICENSE.TXT.
 
 #[=======================================================================[.rst:

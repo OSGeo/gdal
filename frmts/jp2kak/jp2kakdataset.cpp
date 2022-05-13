@@ -27,10 +27,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifdef DEBUG_BOOL
-#define DO_NOT_USE_DEBUG_BOOL
-#endif
-
 #include "cpl_port.h"
 #include "jp2kakdataset.h"
 
@@ -2215,25 +2211,123 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         return nullptr;
     }
 
+    const bool bReversible =
+            CSLFetchNameValue(papszOptions,"Creversible") != nullptr
+            ? CPLFetchBool( papszOptions, "Creversible", false )
+            : (dfQuality >= 99.5);
+
     std::vector<kdu_long> layer_bytes;
-    layer_bytes.resize(layer_count);
 
     const int nXSize = poSrcDS->GetRasterXSize();
     const int nYSize = poSrcDS->GetRasterYSize();
+    const double dfPixelsTotal = nXSize * static_cast<double>(nYSize);
 
-    bool bReversible = false;
+    // Override Quality parameter if RATE option is used
+    // TODO: highest quality that can
+    //       be achieved with a quality factor of QUALITY and
+    //       also introducing some visual weighting to the rate-distortion
+    //       optimization objective associated with all N quality layers.
+    //       That means: combines both QUALITY and RATE
+    const char* pszRate = CSLFetchNameValue(papszOptions,"RATE") ;
+    if( pszRate != nullptr ) {
+        // Use RATE option.
+        CPLStringList aosRate(CSLTokenizeStringComplex(
+                CSLFetchNameValue(papszOptions,"RATE"),",", FALSE, FALSE ));
 
-    if( dfQuality < 99.5 )
-    {
+        int rate_count = CSLCount( aosRate );
+        if(rate_count <= 0) {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "RATE argument must be followed by a string identifying one or more bit-rates, separated by commas.");
+            return nullptr;
+        } else  {
+            bool bValid = true;
+            // compare NUMBER of layers defined by LAYERS or CLayers and the number of layers defined by RATE
+            // and is not 1 or 2
+            //  1) the number of rates specified here is identical to the specified number of layers;
+            // E.g RATE=1,3 LAYERS=1 => not valid
+            // E.g RATE=1,3 LAYERS=2 => valid
+            // E.g RATE=1,3 LAYERS=6 => valid
+            // The number of layers must be 2 or more and intervening  layers will be assigned roughly logarithmically
+            // spaced bit-rates. When only one rate is specified, an internal heuristic determines  a lower bound and
+            // logarithmically spaces the layer rates over the rang
+            if((rate_count > layer_count) || layer_count == 0) {
+                bValid = false;
+            }
+
+            // E.g RATE=1,3,4,5 LAYERS=3 => not valid
+            if(rate_count > 2 && rate_count != layer_count) {
+                bValid = false;
+            }
+
+            if(!bValid) {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "The relationship between the number of bit-rates "
+                         "specified by the \"RATE\" argument and the number of quality layers "
+                         "explicitly specified via \"Layers\" does not conform to the rules "
+                         "supplied in the description of the \"RATE\" argument");
+                return nullptr;
+            }
+        }
+
+        layer_bytes.resize(layer_count);
+
+        int i, j = 0;
+        double currentBitRate;
+        bool bDash = false;
+
+        if (strcmp(aosRate[0], "-") == 0) {
+            bDash = true;
+            j = 1;
+            // shift array to the left and force last element to 0 to assign all remaining bits
+        }
+
+        const int nb_elements = rate_count-j;
+        CPLDebug("JP2KAK", "dfPixelTotal = %g\n",dfPixelsTotal);
+        for (i = 0; i < nb_elements; i++, j++) {
+            currentBitRate = CPLAtof(aosRate[j]);
+            if( currentBitRate < 0.0 || currentBitRate > 100.0 )
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "One of the bit-rate is not a legal value in the range 0.0-100.");
+                return nullptr;
+            }
+
+            layer_bytes[i] = static_cast<kdu_long>(floor(dfPixelsTotal * currentBitRate * 0.125F));
+        }
+
+        // re-arrange order
+        // e.g with f(x) = floor(dfPixelsTotal * x * 0.125F)
+        // RATE=1,3 CLAYERS=3 => r = f(1),0,f(3)
+        // RATE=1,3 CLAYERS=5 => r = f(1),0,0,0,f(3)
+        // RATE=1 CLAYERS=5 => r = 0,0,0,0,f(1)
+        if(rate_count == 1) {
+            // swap to end
+            layer_bytes[layer_count-1] = layer_bytes[0];
+            layer_bytes[0] = 0;
+        } else if(rate_count == 2 && layer_count > 2){
+            // 2 elements
+            layer_bytes[layer_count-1] = layer_bytes[rate_count-1];
+            layer_bytes[rate_count-1] = 0;
+        }
+
+        if(bDash) {
+            // force assign all remaining compressed bits
+            layer_bytes[layer_count-1] = 0;
+        }
+
+        for(uint32_t k = 0; k < layer_bytes.size();k++) {
+            CPLDebug("JP2KAK", "layer_bytes[%d] = %g\n", k, static_cast<double>(layer_bytes[k]));
+        }
+    } else if( !bReversible ) {
+        layer_bytes.resize(layer_count);
         double dfLayerBytes =
-            (nXSize * static_cast<double>(nYSize) * dfQuality / 100.0)
-            * GDALGetDataTypeSizeBytes(eType)
-            * GDALGetRasterCount(poSrcDS);
+                (nXSize * static_cast<double>(nYSize) * dfQuality / 100.0)
+                * GDALGetDataTypeSizeBytes(eType)
+                * GDALGetRasterCount(poSrcDS);
 
-        if( dfLayerBytes > 2000000000.0 && sizeof(kdu_long) == 4 )
-        {
+        if (dfLayerBytes > 2000000000.0 && sizeof(kdu_long) == 4) {
             CPLError(CE_Warning, CPLE_AppDefined,
-                     "Trimmming maximum size of file 2GB from %.1fGB\n"
+                     "Trimming maximum size of file 2GB from %.1fGB\n"
                      "to avoid overflow of kdu_long layer size.",
                      dfLayerBytes / 1000000000.0);
             dfLayerBytes = 2000000000.0;
@@ -2243,10 +2337,6 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
         CPLDebug("JP2KAK", "layer_bytes[] = %g\n",
                  static_cast<double>(layer_bytes[layer_count - 1]));
-    }
-    else
-    {
-        bReversible = true;
     }
 
     // Do we want to use more than one tile?
@@ -2724,7 +2814,6 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     // Create one big tile, and a compressing engine, and line
     // buffer for each component.
     double dfPixelsDone = 0.0;
-    const double dfPixelsTotal = nXSize * static_cast<double>(nYSize);
     const bool bFlushEnabled = CPLFetchBool(papszOptions, "FLUSH", true);
 
     for( int iTileYOff = 0; iTileYOff < nYSize; iTileYOff += nTileYSize )
@@ -2869,6 +2958,8 @@ void GDALRegister_JP2KAK()
 "   <Option name='FLUSH' type='boolean' />"
 "   <Option name='NBITS' type='int' description="
 "'BITS (precision) for sub-byte files (1-7), sub-uint16 (9-15)'/>"
+"   <Option name='RATE' type='string' description='bit-rates separated by commas'/>"
+"   <Option name='Creversible' type='boolean'/>"
 "   <Option name='Corder' type='string'/>"
 "   <Option name='Cprecincts' type='string'/>"
 "   <Option name='Cmodes' type='string'/>"

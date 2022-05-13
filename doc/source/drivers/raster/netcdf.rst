@@ -177,6 +177,51 @@ driver. This driver is intended only for importing remote sensing and
 geospatial datasets in form of raster images. If you want explore all
 data contained in NetCDF file you should use another tools.
 
+Starting with GDAL 3.5, the **VARIABLES_AS_BANDS=YES** open option can be
+used to indicate to the driver that if the netCDF file only contains
+2D variables of the same type and indexed by the same dimensions, then they
+should be reported as multiple bands of a same dataset.
+
+::
+
+    $ gdalinfo autotest/gdrivers/data/netcdf/two_vars_scale_offset.nc -oo VARIABLES_AS_BANDS=YES
+
+    Driver: netCDF/Network Common Data Format
+    Files: autotest/gdrivers/data/netcdf/two_vars_scale_offset.nc
+    Size is 21, 21
+    Metadata:
+      NC_GLOBAL#Conventions=COARDS/CF-1.0
+      x#actual_range={-10,10}
+      x#long_name=x
+      y#actual_range={-10,10}
+      y#long_name=y
+      z#add_offset=1.5
+      z#long_name=z
+      z#scale_factor=0.01
+    Corner Coordinates:
+    Upper Left  (    0.0,    0.0)
+    Lower Left  (    0.0,   21.0)
+    Upper Right (   21.0,    0.0)
+    Lower Right (   21.0,   21.0)
+    Center      (   10.5,   10.5)
+    Band 1 Block=21x1 Type=Float32, ColorInterp=Undefined
+      NoData Value=9.96920996838686905e+36
+      Offset: 1.5,   Scale:0.01
+      Metadata:
+        add_offset=1.5
+        long_name=z
+        NETCDF_VARNAME=z
+        scale_factor=0.01
+    Band 2 Block=21x1 Type=Float32, ColorInterp=Undefined
+      NoData Value=9.96920996838686905e+36
+      Offset: 2.5,   Scale:0.1
+      Metadata:
+        add_offset=2.5
+        long_name=q
+        NETCDF_VARNAME=q
+        scale_factor=0.1
+
+
 Dimension
 ---------
 
@@ -228,6 +273,16 @@ The following open options are available:
 -  **HONOUR_VALID_RANGE**\ =YES/NO: (GDAL > 2.2) Whether to set to
    nodata pixel values outside of the validity range indicated by
    valid_min, valid_max or valid_range attributes. Default is YES.
+
+-  **IGNORE_XY_AXIS_NAME_CHECKS**\ =YES/NO: (GDAL >= 3.4.2) Whether X/Y dimensions
+   should be always considered as geospatial axis, even if the lack
+   conventional attributes confirming it. Default is NO.
+
+-  **VARIABLES_AS_BANDS**\ =YES/NO: (GDAL >= 3.5) If set to YES, and if the
+   netCDF file only contains 2D variables of the same type and indexed by the
+   same dimensions, then they should be reported as multiple bands of a same dataset.
+   Default is NO (that is each variable will be reported as a separate
+   subdataset)
 
 Creation Issues
 ---------------
@@ -302,6 +357,11 @@ Variables attributes for: tos, lon, lat and time
      time#bounds=time_bnds
      time#original_units=seconds since 2001-1-1
 
+On writing, when using the CreateCopy() interface or gdal_translate, dataset
+level metadata that follows the naming convention NC_GLOBAL#key=value will be
+used to write the netCDF attributes. Metadata set at the band level using
+key=value will also be used to write variable attributes.
+
 Product specific behavior
 --------------------------
 
@@ -372,6 +432,14 @@ Creation Options
 -  **PIXELTYPE=[DEFAULT/SIGNEDBYTE]**: By setting this to SIGNEDBYTE, a
    new Byte file can be forced to be written as signed byte.
 
+-  **WRITE_GDAL_VERSION=[YES/NO]**: (GDAL >= 3.5.0)
+   Define if a "GDAL" text global attribute should be added on file creation
+   with the GDAL version. Defaults to YES
+
+-  **WRITE_GDAL_HISTORY=[YES/NO]**: (GDAL >= 3.5.0)
+   Define if the "history" global attribute should be prepended with a date/time
+   and GDAL information. Defaults to YES.
+
 Creation of multidimensional files with CreateCopy() 2D raster API
 ------------------------------------------------------------------
 
@@ -436,9 +504,9 @@ Configuration Options
    represent the latitude and longitude only by their attributes (STRICT)
    or also by guessing the name (YES), default is YES.
 
--  **GDAL_NETCDF_IGNORE_XY_AXIS_NAME_CHECKS=[YES/NO]** : When a dimension
-   has been identified as latitude or longitude by its attributes, check
-   if its name also matches the convention, default is NO.
+-  **GDAL_NETCDF_IGNORE_XY_AXIS_NAME_CHECKS=[YES/NO]** : Whether X/Y dimensions
+   should be always considered as geospatial axis, even if the lack
+   conventional attributes confirming it. Default is NO.
 
 VSI Virtual File System API support
 -----------------------------------

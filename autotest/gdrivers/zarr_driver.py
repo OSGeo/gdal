@@ -47,20 +47,22 @@ import pytest
                           ["!i1", 'b', gdal.GDT_Int16, None, None],
                           ["!i1", 'b', gdal.GDT_Int16, -1, -1],
                           ["!u1", 'B', gdal.GDT_Byte, None, None],
-                          ["!u1", 'B', gdal.GDT_Byte, "1", 1],
+                          ["!u1", 'B', gdal.GDT_Byte, "1", 1], # not really legit to have the fill_value as a str
                           ["<i2", 'h', gdal.GDT_Int16, None, None],
                           [">i2", 'h', gdal.GDT_Int16, None, None],
                           ["<i4", 'i', gdal.GDT_Int32, None, None],
                           [">i4", 'i', gdal.GDT_Int32, None, None],
-                          ["<i8", 'q', gdal.GDT_Float64, None, None],
-                          [">i8", 'q', gdal.GDT_Float64, None, None],
+                          ["<i8", 'q', gdal.GDT_Int64, None, None],
+                          ["<i8", 'q', gdal.GDT_Int64, -(1<<63), -(1<<63)],
+                          ["<i8", 'q', gdal.GDT_Int64, str(-(1<<63)), -(1<<63)], # not really legit to have the fill_value as a str
+                          [">i8", 'q', gdal.GDT_Int64, None, None],
                           ["<u2", 'H', gdal.GDT_UInt16, None, None],
                           [">u2", 'H', gdal.GDT_UInt16, None, None],
                           ["<u4", 'I', gdal.GDT_UInt32, None, None],
                           [">u4", 'I', gdal.GDT_UInt32, None, None],
                           ["<u4", 'I', gdal.GDT_UInt32, 4000000000, 4000000000],
-                          ["<u8", 'Q', gdal.GDT_Float64, 4000000000, 4000000000],
-                          [">u8", 'Q', gdal.GDT_Float64, None, None],
+                          ["<u8", 'Q', gdal.GDT_UInt64, str((1<<64)-1), (1<<64)-1], # not really legit to have the fill_value as a str, but libjson-c can't support numeric values in int64::max(), uint64::max() range.
+                          [">u8", 'Q', gdal.GDT_UInt64, None, None],
                           ["<f4", 'f', gdal.GDT_Float32, None, None],
                           [">f4", 'f', gdal.GDT_Float32, None, None],
                           ["<f4", 'f', gdal.GDT_Float32, 1.5, 1.5],
@@ -127,9 +129,9 @@ def test_zarr_basic(dtype, structtype, gdaltype, fill_value, nodata_value, use_o
         assert [ar.GetDimensions()[i].GetSize() for i in range(2)] == [5, 4]
         assert ar.GetBlockSize() == [2, 3]
         if nodata_value is not None and math.isnan(nodata_value):
-            assert math.isnan(ar.GetNoDataValueAsDouble())
+            assert math.isnan(ar.GetNoDataValue())
         else:
-            assert ar.GetNoDataValueAsDouble() == nodata_value
+            assert ar.GetNoDataValue() == nodata_value
 
         assert ar.GetOffset() is None
         assert ar.GetScale() is None
@@ -141,8 +143,6 @@ def test_zarr_basic(dtype, structtype, gdaltype, fill_value, nodata_value, use_o
 
         if structtype == 'b':
             structtype_read = 'h'
-        elif structtype in ('q', 'Q'):
-            structtype_read = 'd'
         else:
             structtype_read = structtype
 
@@ -923,13 +923,60 @@ def test_zarr_read_classic():
     ds = gdal.Open('data/zarr/v3/test.zr3')
     assert ds
     subds = ds.GetSubDatasets()
-    assert len(subds) == 2
-    ds = gdal.Open(subds[0][0])
+    assert set(subds) == set([('ZARR:"data/zarr/v3/test.zr3":/', 'Array /'),
+                              ('ZARR:"data/zarr/v3/test.zr3":/ar', 'Array /ar'),
+                              ('ZARR:"data/zarr/v3/test.zr3":/marvin/android', 'Array /marvin/android')])
+    ds = gdal.Open('ZARR:"data/zarr/v3/test.zr3":/')
     assert ds
     assert ds.ReadRaster() == array.array('i', [2] + ([1] * (10 * 5 - 1)))
-    ds = gdal.Open(subds[1][0])
+    ds = gdal.Open('ZARR:"data/zarr/v3/test.zr3":/ar')
     assert ds
     assert ds.ReadRaster() == array.array('b', [1, 2])
+
+
+def test_zarr_read_classic_2d():
+
+    try:
+        src_ds = gdal.Open('data/byte.tif')
+        gdal.GetDriverByName('ZARR').CreateCopy('/vsimem/test.zarr', src_ds, strict = False)
+        ds = gdal.Open('/vsimem/test.zarr')
+        assert ds is not None
+        assert len(ds.GetSubDatasets()) == 0
+        ds = None
+    finally:
+        gdal.RmdirRecursive('/vsimem/test.zarr')
+
+
+def test_zarr_read_classic_2d_with_unrelated_auxiliary_1D_arrays():
+
+    try:
+        def create():
+            ds = gdal.GetDriverByName(
+                'ZARR').CreateMultiDimensional('/vsimem/test.zarr')
+            assert ds is not None
+            rg = ds.GetRootGroup()
+            assert rg
+            assert rg.GetName() == '/'
+
+            dim0 = rg.CreateDimension("dim0", None, None, 2)
+            dim1 = rg.CreateDimension("dim1", None, None, 3)
+
+            dt = gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+            rg.CreateMDArray("main_array", [dim0, dim1], dt)
+            rg.CreateMDArray("x", [dim0], dt)
+            rg.CreateMDArray("y", [dim1], dt)
+
+        create()
+        ds = gdal.Open('/vsimem/test.zarr')
+        assert ds is not None
+        assert ds.RasterYSize == 2
+        assert ds.RasterXSize == 3
+        assert set(ds.GetSubDatasets()) == set([('ZARR:"/vsimem/test.zarr":/main_array', 'Array /main_array'),
+                                                ('ZARR:"/vsimem/test.zarr":/x', 'Array /x'),
+                                                ('ZARR:"/vsimem/test.zarr":/y', 'Array /y')])
+        ds = None
+    finally:
+        gdal.RmdirRecursive('/vsimem/test.zarr')
 
 
 def test_zarr_read_classic_too_many_samples_3d():

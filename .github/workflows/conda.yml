@@ -4,10 +4,14 @@ on:
     push:
         paths-ignore:
             - 'doc/**'
-    pull_request:
-        paths-ignore:
-            - 'doc/**'
+    # Disabled because of https://github.com/OSGeo/gdal/issues/5618
+    #pull_request:
+    #    paths-ignore:
+    #        - 'doc/**'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:

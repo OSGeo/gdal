@@ -161,7 +161,7 @@ class HDF4ImageDataset final: public HDF4Dataset
 
     static GDALDataset  *Open( GDALOpenInfo * );
     static GDALDataset  *Create( const char * pszFilename,
-                                 int nXSize, int nYSize, int nBands,
+                                 int nXSize, int nYSize, int nBandsIn,
                                  GDALDataType eType, char ** papszParamList );
     virtual void        FlushCache( bool bAtClosing ) override;
     CPLErr              GetGeoTransform( double * padfTransform ) override;
@@ -3890,7 +3890,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /************************************************************************/
 
 GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
-                                       int nXSize, int nYSize, int nBands,
+                                       int nXSize, int nYSize, int nBandsIn,
                                        GDALDataType eType,
                                        char **papszOptions )
 
@@ -3898,7 +3898,7 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Create the dataset.                                             */
 /* -------------------------------------------------------------------- */
-    if( nBands == 0 )
+    if( nBandsIn == 0 )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Unable to export files with zero bands." );
@@ -3947,48 +3947,52 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
     int32 aiDimSizes[H4_MAX_VAR_DIMS] = {};
     aiDimSizes[poDS->iXDim] = nXSize;
     aiDimSizes[poDS->iYDim] = nYSize;
-    aiDimSizes[poDS->iBandDim] = nBands;
+    aiDimSizes[poDS->iBandDim] = nBandsIn;
+
+    const auto GetHDFType = [](GDALDataType eTypeIn)
+    {
+        switch ( eTypeIn )
+        {
+            case GDT_Float64:
+                return DFNT_FLOAT64;
+            case GDT_Float32:
+                return DFNT_FLOAT32;
+            case GDT_UInt64:
+                // SDCreate() doesn't like it
+                return DFNT_UINT64;
+            case GDT_UInt32:
+                return DFNT_UINT32;
+            case GDT_UInt16:
+                return DFNT_UINT16;
+            case GDT_Int64:
+                // SDCreate() doesn't like it
+                return DFNT_INT64;
+            case GDT_Int32:
+                return DFNT_INT32;
+            case GDT_Int16:
+                return DFNT_INT16;
+            case GDT_Byte:
+                return DFNT_UINT8;
+            default:
+                CPLError(CE_Warning, CPLE_NotSupported,
+                         "Datatype %s not supported. Defauting to Byte",
+                         GDALGetDataTypeName(eTypeIn));
+                return DFNT_UINT8;
+        }
+    };
 
     const char *pszSDSName = nullptr;
     int32 iSDS = -1;
 
     if( poDS->iRank == 2 )
     {
-        for( int iBand = 0; iBand < nBands; iBand++ )
+        for( int iBand = 0; iBand < nBandsIn; iBand++ )
         {
             pszSDSName = CPLSPrintf( "Band%d", iBand );
-            switch ( eType )
-            {
-                case GDT_Float64:
-                    iSDS = SDcreate( poDS->hSD, pszSDSName, DFNT_FLOAT64,
-                                     poDS->iRank, aiDimSizes );
-                    break;
-                case GDT_Float32:
-                    iSDS = SDcreate( poDS-> hSD, pszSDSName, DFNT_FLOAT32,
-                                     poDS->iRank, aiDimSizes );
-                    break;
-                case GDT_UInt32:
-                    iSDS = SDcreate( poDS->hSD, pszSDSName, DFNT_UINT32,
-                                     poDS->iRank, aiDimSizes );
-                    break;
-                case GDT_UInt16:
-                    iSDS = SDcreate( poDS->hSD, pszSDSName, DFNT_UINT16,
-                                     poDS->iRank, aiDimSizes );
-                    break;
-                case GDT_Int32:
-                    iSDS = SDcreate( poDS->hSD, pszSDSName, DFNT_INT32,
-                                     poDS->iRank, aiDimSizes );
-                    break;
-                case GDT_Int16:
-                    iSDS = SDcreate( poDS->hSD, pszSDSName, DFNT_INT16,
-                                     poDS->iRank, aiDimSizes );
-                    break;
-                case GDT_Byte:
-                default:
-                    iSDS = SDcreate( poDS->hSD, pszSDSName, DFNT_UINT8,
-                                     poDS->iRank, aiDimSizes );
-                    break;
-            }
+            iSDS = SDcreate( poDS->hSD, pszSDSName, GetHDFType(eType),
+                             poDS->iRank, aiDimSizes );
+            if( iSDS < 0 )
+                break;
             SDendaccess( iSDS );
         }
     }
@@ -3996,38 +4000,8 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
     {
         pszSDSName = "3-dimensional Scientific Dataset";
         poDS->iDataset = 0;
-        switch ( eType )
-        {
-            case GDT_Float64:
-                iSDS = SDcreate( poDS->hSD, pszSDSName, DFNT_FLOAT64,
-                                 poDS->iRank, aiDimSizes );
-                break;
-            case GDT_Float32:
-                iSDS = SDcreate( poDS->hSD, pszSDSName, DFNT_FLOAT32,
-                                 poDS->iRank, aiDimSizes );
-                break;
-            case GDT_UInt32:
-                iSDS = SDcreate( poDS->hSD, pszSDSName, DFNT_UINT32,
-                                 poDS->iRank, aiDimSizes );
-                break;
-            case GDT_UInt16:
-                iSDS = SDcreate( poDS->hSD, pszSDSName, DFNT_UINT16,
-                                 poDS->iRank, aiDimSizes );
-                break;
-            case GDT_Int32:
-                iSDS = SDcreate( poDS->hSD, pszSDSName, DFNT_INT32,
-                                 poDS->iRank, aiDimSizes );
-                break;
-            case GDT_Int16:
-                iSDS = SDcreate( poDS->hSD, pszSDSName, DFNT_INT16,
-                                 poDS->iRank, aiDimSizes );
-                break;
-            case GDT_Byte:
-            default:
-                iSDS = SDcreate( poDS->hSD, pszSDSName, DFNT_UINT8,
-                                 poDS->iRank, aiDimSizes );
-                break;
-        }
+        iSDS = SDcreate( poDS->hSD, pszSDSName, GetHDFType(eType),
+                         poDS->iRank, aiDimSizes );
     }
     else
     {
@@ -4056,12 +4030,12 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
     poDS->eAccess = GA_Update;
     poDS->iDatasetType = HDF4_SDS;
     poDS->iSubdatasetType = H4ST_GDAL;
-    poDS->nBands = nBands;
+    poDS->nBands = nBandsIn;
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    for( int iBand = 1; iBand <= nBands; iBand++ )
+    for( int iBand = 1; iBand <= nBandsIn; iBand++ )
         poDS->SetBand( iBand, new HDF4ImageRasterBand( poDS, iBand, eType ) );
 
     SDsetattr( poDS->hSD, "Signature", DFNT_CHAR8,
@@ -4089,6 +4063,7 @@ void GDALRegister_HDF4Image()
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/hdf4.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte Int16 UInt16 Int32 UInt32 "
+                               // "Int64 UInt64 "
                                "Float32 Float64" );
     poDriver->SetMetadataItem(
         GDAL_DMD_CREATIONOPTIONLIST,

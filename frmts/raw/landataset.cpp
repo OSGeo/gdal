@@ -162,7 +162,7 @@ class LANDataset final: public RawDataset
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
-                                int nXSize, int nYSize, int nBands,
+                                int nXSize, int nYSize, int nBandsIn,
                                 GDALDataType eType, char ** papszOptions );
 };
 
@@ -893,7 +893,7 @@ void LANDataset::CheckForStatistics()
 GDALDataset *LANDataset::Create( const char * pszFilename,
                                  int nXSize,
                                  int nYSize,
-                                 int nBands,
+                                 int nBandsIn,
                                  GDALDataType eType,
                                  char ** /* papszOptions */ )
 {
@@ -935,7 +935,7 @@ GDALDataset *LANDataset::Create( const char * pszFilename,
     memcpy( abyHeader + 6, &n16Val, 2 );
 
     // Number of Bands.
-    n16Val = static_cast<GInt16>( nBands );
+    n16Val = static_cast<GInt16>( nBandsIn );
     memcpy( abyHeader + 8, &n16Val, 2 );
 
     // Unknown (6).

@@ -389,13 +389,17 @@ def test_cog_small_world_to_web_mercator():
     assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET
     assert ds.GetRasterBand(1).GetBlockSize() == [256, 256]
     gt = ds.GetGeoTransform()
+    assert gt[1] == -gt[5] # yes, checking for strict equality
     expected_gt = [-20037508.342789248, 156543.033928041, 0.0,
                    20037508.342789248, 0.0, -156543.033928041]
     for i in range(6):
         if gt[i] != pytest.approx(expected_gt[i], abs=1e-10 * abs(expected_gt[i])):
             assert False, gt
     got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(3)]
-    assert got_cs == [26293, 23439, 14955] or got_cs == [26228, 22085, 12992]
+    assert got_cs in ([26293, 23439, 14955],
+                      [26228, 22085, 12992],
+                      [25088, 23140, 13265], # libjpeg 9e
+                     )
     assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 17849
     assert ds.GetRasterBand(1).GetOverviewCount() == 0
     ds = None
@@ -439,12 +443,17 @@ def test_cog_byte_to_web_mercator():
     assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_ALPHA + gdal.GMF_PER_DATASET
     assert ds.GetRasterBand(1).GetBlockSize() == [256,256]
     gt = ds.GetGeoTransform()
+    assert gt[1] == -gt[5] # yes, checking for strict equality
     expected_gt = [-13149614.849955443, 76.43702828517598, 0.0,
                    4070118.8821290657, 0.0, -76.43702828517598]
     for i in range(6):
         if gt[i] != pytest.approx(expected_gt[i], abs=1e-10 * abs(expected_gt[i])):
             assert False, gt
-    assert ds.GetRasterBand(1).Checksum() in (4363, 4264, 4362) # 4264 on Mac , 4362 on Mac / Conda
+    assert ds.GetRasterBand(1).Checksum() in (4363,
+                                              4264, # got on Mac at some point
+                                              4362, # libjpeg 9d
+                                              4569, # libjpeg 9e
+                                             )
     assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 4356
     assert ds.GetRasterBand(1).GetOverviewCount() == 2
     ds = None
@@ -525,7 +534,11 @@ def test_cog_byte_to_web_mercator_manual():
     for i in range(6):
         if gt[i] != pytest.approx(expected_gt[i], abs=1e-10 * abs(expected_gt[i])):
             assert False, gt
-    assert ds.GetRasterBand(1).Checksum() in (4363, 4264, 4362) # 4264 on Mac , 4362 on Mac / Conda
+    assert ds.GetRasterBand(1).Checksum() in (4363,
+                                              4264, # got on Mac at some point
+                                              4362, # libjpeg 9d
+                                              4569, # libjpeg 9e
+                                             )
     assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 4356
     assert ds.GetRasterBand(1).GetOverviewCount() == 2
     ds = None
@@ -724,6 +737,8 @@ def test_cog_northing_easting_and_non_power_of_two_ratios():
     assert [(b.GetOverview(i).XSize, b.GetOverview(i).YSize) for i in range(b.GetOverviewCount())] == [(512, 512), (256, 256)]
 
     gt = ds.GetGeoTransform()
+    assert gt[1] == -gt[5] # yes, checking for strict equality
+
     res_zoom_level_14 = scale_denom_zoom_level_14 * 0.28e-3 # According to OGC Tile Matrix Set formula
     assert gt == pytest.approx((999872, res_zoom_level_14, 0, 5000320, 0, -res_zoom_level_14), abs=1e-8)
 
@@ -963,6 +978,32 @@ def test_cog_zoom_level_strategy(zoom_level_strategy,expected_gt):
     ds = None
     gdal.Unlink(filename)
 
+
+
+###############################################################################
+# Test ZOOM_LEVEL option
+
+def test_cog_zoom_level():
+
+    filename = '/vsimem/test_cog_zoom_level.tif'
+    src_ds = gdal.Open('data/byte.tif')
+
+    with gdaltest.error_handler():
+        assert gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+                        options = ['TILING_SCHEME=GoogleMapsCompatible',
+                                   'ZOOM_LEVEL=-1']) is None
+        assert gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+                        options = ['TILING_SCHEME=GoogleMapsCompatible',
+                                   'ZOOM_LEVEL=25']) is None
+
+    ds = gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+        options = ['TILING_SCHEME=GoogleMapsCompatible',
+                   'ZOOM_LEVEL=12'])
+    gt = ds.GetGeoTransform()
+    expected_gt = (-13100695.151852928, 38.21851414258813, 0.0, 4021199.1840265524, 0.0, -38.21851414258813)
+    assert gt == pytest.approx(expected_gt, rel=1e-10)
+    ds = None
+    gdal.Unlink(filename)
 
 
 ###############################################################################

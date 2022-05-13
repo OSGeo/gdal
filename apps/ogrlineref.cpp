@@ -35,7 +35,6 @@
 #include "gdal.h"
 #include "gdal_alg.h"
 #include "ogr_api.h"
-#include "ogr_geos.h"
 #include "ogr_p.h"
 #include "ogrsf_frmts.h"
 
@@ -46,17 +45,11 @@
 
 CPL_CVSID("$Id$")
 
-#if defined(HAVE_GEOS)
-#if GEOS_VERSION_MAJOR > 3 || (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 2)
-#define HAVE_GEOS_PROJECT
-#endif
-#endif
-
 #define FIELD_START "beg"
 #define FIELD_FINISH "end"
 #define FIELD_SCALE_FACTOR "scale"
 constexpr double DELTA = 0.00000001; // - delta
-#ifdef HAVE_GEOS_PROJECT
+#ifdef HAVE_GEOS
 constexpr double TOLERANCE_DEGREE = 0.00008983153;
 constexpr double TOLERANCE_METER = 10.0;
 #endif
@@ -574,7 +567,7 @@ static OGRErr CreateSubline( OGRLayer* const poPkLayer,
 //------------------------------------------------------------------------
 // Project
 //------------------------------------------------------------------------
-#ifdef HAVE_GEOS_PROJECT
+#ifdef HAVE_GEOS
 static double Project( OGRLineString* pLine, OGRPoint* pPoint )
 {
     if( nullptr == pLine || nullptr == pPoint )
@@ -594,7 +587,7 @@ static double Project( OGRLineString* pLine, OGRPoint* pPoint )
 //------------------------------------------------------------------------
 // CreatePartsFromLineString
 //------------------------------------------------------------------------
-#ifdef HAVE_GEOS_PROJECT
+#ifdef HAVE_GEOS
 static OGRErr CreatePartsFromLineString(
     OGRLineString* pPathGeom, OGRLayer* const poPkLayer, int nMValField,
     double dfStep, OGRLayer* const poOutLayer, int bDisplayProgress,
@@ -625,7 +618,6 @@ static OGRErr CreatePartsFromLineString(
     std::map<double, OGRPoint*> moRepers;
     poPkLayer->ResetReading();
     OGRFeature* pReperFeature = nullptr;
-    double dfTestDistance = 0.0;
     while( (pReperFeature = poPkLayer->GetNextFeature()) != nullptr )
     {
         const double dfReperPos = pReperFeature->GetFieldAsDouble(nMValField);
@@ -644,7 +636,7 @@ static OGRErr CreatePartsFromLineString(
                 }
             }
             // Check if reper is inside the path
-            dfTestDistance = Project(pPathGeom, pPt);
+            const double dfTestDistance = Project(pPathGeom, pPt);
             if( dfTestDistance < 0 )
             {
                 if( !bQuiet )
@@ -1031,7 +1023,7 @@ static OGRErr CreatePartsFromLineString(
 //------------------------------------------------------------------------
 // CreateParts
 //------------------------------------------------------------------------
-#ifdef HAVE_GEOS_PROJECT
+#ifdef HAVE_GEOS
 static OGRErr CreateParts(
     OGRLayer* const poLnLayer, OGRLayer* const poPkLayer, int nMValField,
     double dfStep, OGRLayer* const poOutLayer, int bDisplayProgress,
@@ -1110,7 +1102,7 @@ static OGRErr CreateParts(
 //------------------------------------------------------------------------
 // CreatePartsMultiple
 //------------------------------------------------------------------------
-#ifdef HAVE_GEOS_PROJECT
+#ifdef HAVE_GEOS
 static OGRErr CreatePartsMultiple(
     OGRLayer* const poLnLayer, const char* pszLineSepFieldName,
     OGRLayer* const poPkLayer, const char* pszPicketsSepFieldName,
@@ -1167,7 +1159,7 @@ static OGRErr CreatePartsMultiple(
 //------------------------------------------------------------------------
 // GetPosition
 //------------------------------------------------------------------------
-#ifdef HAVE_GEOS_PROJECT
+#ifdef HAVE_GEOS
 static OGRErr GetPosition( OGRLayer* const poPkLayer,
                            double dfX,
                            double dfY,
@@ -1305,13 +1297,13 @@ MAIN_START(nArgc, papszArgv)
     const char *pszPartsDataSource = nullptr;
     char *pszOutputLayerName = nullptr;
     const char *pszLineLayerName = nullptr;
-#ifdef HAVE_GEOS_PROJECT
+#ifdef HAVE_GEOS
     const char *pszPicketsLayerName = nullptr;
     const char *pszPicketsMField = nullptr;
 #endif
     const char *pszPartsLayerName = nullptr;
 
-#ifdef HAVE_GEOS_PROJECT
+#ifdef HAVE_GEOS
     const char *pszLineSepFieldName = nullptr;
     const char *pszPicketsSepFieldName = nullptr;
     const char *pszOutputSepFieldName = "uniq_uid";
@@ -1321,7 +1313,7 @@ MAIN_START(nArgc, papszArgv)
     char **papszLCO = nullptr;
 
     operation stOper = op_unknown;
-#ifdef HAVE_GEOS_PROJECT
+#ifdef HAVE_GEOS
     double dfX = -100000000.0;
     double dfY = -100000000.0;
 #endif
@@ -1331,7 +1323,7 @@ MAIN_START(nArgc, papszArgv)
 
     double dfPosBeg = -100000000.0;
     double dfPosEnd = -100000000.0;
-#ifdef HAVE_GEOS_PROJECT
+#ifdef HAVE_GEOS
     double dfStep = -100000000.0;
 #endif
 
@@ -1427,7 +1419,7 @@ MAIN_START(nArgc, papszArgv)
         else if( EQUAL(papszArgv[iArg], "-lf") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-#ifdef HAVE_GEOS_PROJECT
+#ifdef HAVE_GEOS
             // coverity[tainted_data]
             pszLineSepFieldName = papszArgv[++iArg];
 #else
@@ -1445,7 +1437,7 @@ MAIN_START(nArgc, papszArgv)
         else if( EQUAL(papszArgv[iArg], "-pn") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-#ifdef HAVE_GEOS_PROJECT
+#ifdef HAVE_GEOS
             // coverity[tainted_data]
             pszPicketsLayerName = papszArgv[++iArg];
 #else
@@ -1457,7 +1449,7 @@ MAIN_START(nArgc, papszArgv)
         else if( EQUAL(papszArgv[iArg], "-pm") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-#ifdef HAVE_GEOS_PROJECT
+#ifdef HAVE_GEOS
             // coverity[tainted_data]
             pszPicketsMField = papszArgv[++iArg];
 #else
@@ -1469,7 +1461,7 @@ MAIN_START(nArgc, papszArgv)
         else if( EQUAL(papszArgv[iArg], "-pf") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-#ifdef HAVE_GEOS_PROJECT
+#ifdef HAVE_GEOS
             // coverity[tainted_data]
             pszPicketsSepFieldName = papszArgv[++iArg];
 #else
@@ -1505,7 +1497,7 @@ MAIN_START(nArgc, papszArgv)
         else if( EQUAL(papszArgv[iArg], "-of") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-#ifdef HAVE_GEOS_PROJECT
+#ifdef HAVE_GEOS
             // coverity[tainted_data]
             pszOutputSepFieldName = papszArgv[++iArg];
 #else
@@ -1517,7 +1509,7 @@ MAIN_START(nArgc, papszArgv)
         else if( EQUAL(papszArgv[iArg], "-x") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-#ifdef HAVE_GEOS_PROJECT
+#ifdef HAVE_GEOS
             // coverity[tainted_data]
             dfX = CPLAtofM(papszArgv[++iArg]);
 #else
@@ -1529,7 +1521,7 @@ MAIN_START(nArgc, papszArgv)
         else if( EQUAL(papszArgv[iArg], "-y") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-#ifdef HAVE_GEOS_PROJECT
+#ifdef HAVE_GEOS
             // coverity[tainted_data]
             dfY = CPLAtofM(papszArgv[++iArg]);
 #else
@@ -1559,7 +1551,7 @@ MAIN_START(nArgc, papszArgv)
         else if( EQUAL(papszArgv[iArg], "-s") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-#ifdef HAVE_GEOS_PROJECT
+#ifdef HAVE_GEOS
             // coverity[tainted_data]
             dfStep = CPLAtofM(papszArgv[++iArg]);
 #else
@@ -1580,7 +1572,7 @@ MAIN_START(nArgc, papszArgv)
 
     if( stOper == op_create )
     {
-#ifdef HAVE_GEOS_PROJECT
+#ifdef HAVE_GEOS
         if( pszOutputDataSource == nullptr )
             Usage("no output datasource provided");
         else if( pszLineDataSource == nullptr )
@@ -1752,14 +1744,14 @@ MAIN_START(nArgc, papszArgv)
 
         if( nullptr != pszOutputLayerName )
             CPLFree(pszOutputLayerName);
-#else  // HAVE_GEOS_PROJECT
+#else  // HAVE_GEOS
         fprintf(stderr, "GEOS support not enabled or incompatible version.\n");
         exit(1);
-#endif  // HAVE_GEOS_PROJECT
+#endif  // HAVE_GEOS
     }
     else if(stOper == op_get_pos)
     {
-#ifdef HAVE_GEOS_PROJECT
+#ifdef HAVE_GEOS
         if( pszPartsDataSource == nullptr )
             Usage("no parts datasource provided");
         else if( dfX == -100000000.0 || dfY == -100000000.0 )
@@ -1804,10 +1796,10 @@ MAIN_START(nArgc, papszArgv)
 
         GDALClose(poPartsDS);
 
-#else  // HAVE_GEOS_PROJECT
+#else  // HAVE_GEOS
         fprintf(stderr, "GEOS support not enabled or incompatible version.\n");
         exit(1);
-#endif  // HAVE_GEOS_PROJECT
+#endif  // HAVE_GEOS
     }
     else if( stOper == op_get_coord )
     {

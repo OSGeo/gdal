@@ -422,8 +422,11 @@ _TIFFSetupFields(TIFF* tif, const TIFFFieldArray* fieldarray)
 			TIFFField *fld = tif->tif_fields[i];
 			if (fld->field_name != NULL) {
 				if (fld->field_bit == FIELD_CUSTOM &&
-					strncmp("Tag ", fld->field_name, 4) == 0) {
+					TIFFFieldIsAnonymous(fld)) {
 					_TIFFfree(fld->field_name);
+					/* caution: tif_fields[i] must not be the beginning of a fields-array. 
+					 *          Otherwise the following tags are also freed with the first free().
+					 */
 					_TIFFfree(fld);
 				}
 			}
@@ -791,6 +794,12 @@ TIFFFieldWriteCount(const TIFFField* fip)
 	return fip->field_writecount;
 }
 
+int
+TIFFFieldIsAnonymous(const TIFFField *fip)
+{
+	return fip->field_anonymous;
+}
+
 const TIFFField*
 _TIFFFindOrRegisterField(TIFF *tif, uint32_t tag, TIFFDataType dt)
 
@@ -822,7 +831,7 @@ _TIFFCreateAnonField(TIFF *tif, uint32_t tag, TIFFDataType field_type)
 	fld->field_readcount = TIFF_VARIABLE2;
 	fld->field_writecount = TIFF_VARIABLE2;
 	fld->field_type = field_type;
-	fld->reserved = 0;
+	fld->field_anonymous = 1;    /* indicate that this is an anonymous / unknown tag */
 	switch (field_type)
 	{
 		case TIFF_BYTE:
@@ -895,6 +904,8 @@ _TIFFCreateAnonField(TIFF *tif, uint32_t tag, TIFFDataType field_type)
 	/* 
 	 * note that this name is a special sign to TIFFClose() and
 	 * _TIFFSetupFields() to free the field
+	 * Update:
+	 *   This special sign is replaced by fld->field_anonymous  flag.
 	 */
 	(void) snprintf(fld->field_name, 32, "Tag %d", (int) tag);
 
@@ -1105,7 +1116,7 @@ TIFFMergeFieldInfo(TIFF* tif, const TIFFFieldInfo info[], uint32_t n)
 		tp->field_readcount = info[i].field_readcount;
 		tp->field_writecount = info[i].field_writecount;
 		tp->field_type = info[i].field_type;
-		tp->reserved = 0;
+		tp->field_anonymous = 0;
 		tp->set_field_type =
 		     _TIFFSetGetType(info[i].field_type,
 				info[i].field_readcount,

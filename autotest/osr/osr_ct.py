@@ -79,6 +79,7 @@ def test_osr_ct_2():
     utm_srs.SetWellKnownGeogCS('WGS84')
 
     ll_srs = osr.SpatialReference()
+    ll_srs.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
     ll_srs.SetWellKnownGeogCS('WGS84')
 
     ct = osr.CoordinateTransformation(ll_srs, utm_srs)
@@ -353,8 +354,10 @@ def test_osr_ct_options_area_of_interest():
 
     srs_nad27 = osr.SpatialReference()
     srs_nad27.SetFromUserInput("NAD27")
+    srs_nad27.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
     srs_wgs84 = osr.SpatialReference()
     srs_wgs84.SetFromUserInput("WGS84")
+    srs_wgs84.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
     options = osr.CoordinateTransformationOptions()
     assert not options.SetAreaOfInterest(-200,40,-99,41)
     assert not options.SetAreaOfInterest(-100,-100,-99,41)
@@ -543,8 +546,10 @@ def test_osr_ct_take_into_account_srs_coordinate_epoch():
 
     s = osr.SpatialReference()
     s.SetFromUserInput("EPSG:7844") # GDA2020
+    s.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
 
     t_2020 = osr.SpatialReference()
+    t_2020.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
     t_2020.SetFromUserInput("EPSG:9000") # ITRF2014
     t_2020.SetCoordinateEpoch(2020)
 
@@ -556,6 +561,7 @@ def test_osr_ct_take_into_account_srs_coordinate_epoch():
     assert y == pytest.approx(150, abs=1e-10)
 
     t_2030 = osr.SpatialReference()
+    t_2030.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
     t_2030.SetFromUserInput("EPSG:9000") # ITRF2014
     t_2030.SetCoordinateEpoch(2030)
 
@@ -595,6 +601,7 @@ def test_osr_ct_only_axis_order_different():
 
     t = osr.SpatialReference()
     t.ImportFromEPSG(4326)
+    t.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
 
     ct = osr.CoordinateTransformation(s_wrong_axis_order, t)
     x, y, _ = ct.TransformPoint(2, 49, 0)
@@ -624,6 +631,7 @@ def test_osr_ct_wkt_non_consistent_with_epsg_definition():
 
     t = osr.SpatialReference()
     t.ImportFromEPSG(4326)
+    t.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
 
     ct = osr.CoordinateTransformation(s_wrong_axis_order, t)
     x, y, _ = ct.TransformPoint(2, 49, 0)

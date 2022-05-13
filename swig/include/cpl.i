@@ -186,6 +186,9 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
 %rename (GetConfigOption) wrapper_CPLGetConfigOption;
 %rename (SetThreadLocalConfigOption) CPLSetThreadLocalConfigOption;
 %rename (GetThreadLocalConfigOption) wrapper_CPLGetThreadLocalConfigOption;
+%rename (SetCredential) VSISetCredential;
+%rename (GetCredential) wrapper_VSIGetCredential;
+%rename (ClearCredentials) wrapper_VSIClearCredentials;
 %rename (CPLBinaryToHex) CPLBinaryToHex;
 %rename (CPLHexToBinary) CPLHexToBinary;
 %rename (FileFromMemBuffer) wrapper_VSIFileFromMemBuffer;
@@ -268,14 +271,6 @@ void EscapeBinary(int len, char *bin_string, size_t *pnLenOut, char** pOut, int 
 %clear (int len, char *bin_string);
 %clean  (size_t *pnLenOut, char* pOut);
 
-#elif defined(SWIGPERL)
-%apply (int nLen, char *pBuf ) { (int len, char *bin_string)};
-%inline %{
-retStringAndCPLFree* EscapeString(int len, char *bin_string , int scheme=CPLES_SQL) {
-    return CPLEscapeString(bin_string, len, scheme);
-}
-%}
-%clear (int len, char *bin_string);
 #else
 %apply (int nLen, char *pBuf ) { (int len, char *bin_string)};
 %inline %{
@@ -487,10 +482,30 @@ const char *wrapper_CPLGetThreadLocalConfigOption( const char * pszKey, const ch
     return CPLGetThreadLocalConfigOption( pszKey, pszDefault );
 }
 }
+
+%apply Pointer NONNULL {const char * pszPathPrefix};
+void VSISetCredential( const char* pszPathPrefix, const char * pszKey, const char * pszValue );
+
+%inline {
+const char *wrapper_VSIGetCredential( const char* pszPathPrefix, const char * pszKey, const char * pszDefault = NULL )
+{
+    return VSIGetCredential( pszPathPrefix, pszKey, pszDefault );
+}
+}
+
+%clear const char * pszPathPrefix;
 %clear const char * pszKey;
 
+
+%inline {
+void wrapper_VSIClearCredentials(const char * pszPathPrefix = NULL)
+{
+    VSIClearCredentials( pszPathPrefix );
+}
+}
+
 /* Provide hooks to hex encoding methods */
-#if defined(SWIGJAVA) || defined(SWIGPERL)
+#if defined(SWIGJAVA)
 %apply (int nLen, unsigned char *pBuf ) {( int nBytes, const GByte *pabyData )};
 retStringAndCPLFree* CPLBinaryToHex( int nBytes, const GByte *pabyData );
 %clear ( int nBytes, const GByte *pabyData );
@@ -659,10 +674,7 @@ class VSILFILE
 };
 #endif
 
-#if defined(SWIGPERL)
-VSI_RETVAL VSIStatL( const char * utf8_path, VSIStatBufL *psStatBuf );
-
-#elif defined(SWIGPYTHON)
+#if defined(SWIGPYTHON)
 
 %{
 typedef struct
@@ -799,26 +811,11 @@ int wrapper_VSIFWriteL( int nLen, char *pBuf, int size, int memb, VSILFILE* fp)
     return static_cast<int>(VSIFWriteL(pBuf, size, memb, fp));
 }
 }
-#elif defined(SWIGPERL)
-size_t VSIFWriteL(const void *pBuffer, size_t nSize, size_t nCount, VSILFILE *fp);
 #else
 int     VSIFWriteL( const char *, int, int, VSILFILE *fp );
 #endif
 
-#if defined(SWIGPERL)
-size_t VSIFReadL(void *pBuffer, size_t nSize, size_t nCount, VSILFILE *fp);
-#endif
 /* VSIFReadL() handled specially in python/gdal_python.i */
-
-#if defined(SWIGPERL)
-void VSIStdoutSetRedirection( VSIWriteFunction pFct, FILE* stream );
-%inline {
-void VSIStdoutUnsetRedirection()
-{
-    VSIStdoutSetRedirection( fwrite, stdout );
-}
-}
-#endif
 
 void VSICurlClearCache();
 void VSICurlPartialClearCache( const char* utf8_path );

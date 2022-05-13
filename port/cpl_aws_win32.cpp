@@ -28,7 +28,7 @@
 
 #include "cpl_port.h"
 
-#if defined(WIN32) && defined(_MSC_VER)
+#if defined(HAVE_ATLBASE_H)
 
 #define _WIN32_DCOM
 #include <iostream>
@@ -140,4 +140,4 @@ bool CPLFetchWindowsProductUUID(CPLString &osStr)
     return !osWindowsProductUUID.empty();
 }
 
-#endif /* defined(WIN32) && defined(_MSC_VER) */
+#endif /* defined(HAVE_ATLBASE_H) */

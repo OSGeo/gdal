@@ -1709,6 +1709,26 @@ def test_ecw_46():
     cs = mem_ds.GetRasterBand(1).Checksum()
     assert cs == ref_cs
 
+
+###############################################################################
+# Test non nearest upsampling on multiband data
+
+
+def test_ecw_non_nearest_upsampling_multiband():
+
+    if gdaltest.jp2ecw_drv is None:
+        pytest.skip()
+
+    ds = gdal.Open('data/jpeg2000/stefan_full_rgba.jp2')
+    full_res_data = ds.ReadRaster(0, 0, 162, 150)
+    upsampled_data = ds.ReadRaster(0, 0, 162, 150, 162*2, 150*2, resample_alg=gdal.GRIORA_Cubic)
+
+    tmp_ds = gdal.GetDriverByName('MEM').Create('', 162, 150, ds.RasterCount)
+    tmp_ds.WriteRaster(0, 0, 162, 150, full_res_data)
+    ref_upsampled_data = tmp_ds.ReadRaster(0, 0, 162, 150, 162*2, 150*2, resample_alg=gdal.GRIORA_Cubic)
+
+    assert upsampled_data == ref_upsampled_data
+
 ###############################################################################
 # /vsi reading with ECW (#6482)
 

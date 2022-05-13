@@ -239,6 +239,12 @@ CPLErr      OGRMutexedDataSource::SetMetadataItem( const char * pszName,
     return m_poBaseDataSource->SetMetadataItem(pszName, pszValue, pszDomain);
 }
 
+std::vector<std::string> OGRMutexedDataSource::GetFieldDomainNames(CSLConstList papszOptions) const
+{
+    CPLMutexHolderOptionalLockD(m_hGlobalMutex);
+    return m_poBaseDataSource->GetFieldDomainNames(papszOptions);
+}
+
 const OGRFieldDomain* OGRMutexedDataSource::GetFieldDomain(const std::string& name) const
 {
     CPLMutexHolderOptionalLockD(m_hGlobalMutex);
@@ -250,6 +256,18 @@ bool OGRMutexedDataSource::AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& doma
 {
     CPLMutexHolderOptionalLockD(m_hGlobalMutex);
     return m_poBaseDataSource->AddFieldDomain(std::move(domain), failureReason);
+}
+
+bool OGRMutexedDataSource::DeleteFieldDomain(const std::string &name, std::string &failureReason)
+{
+    CPLMutexHolderOptionalLockD(m_hGlobalMutex);
+    return m_poBaseDataSource->DeleteFieldDomain(name, failureReason);
+}
+
+bool OGRMutexedDataSource::UpdateFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain, std::string &failureReason)
+{
+    CPLMutexHolderOptionalLockD(m_hGlobalMutex);
+    return m_poBaseDataSource->UpdateFieldDomain(std::move(domain), failureReason);
 }
 
 std::shared_ptr<GDALGroup> OGRMutexedDataSource::GetRootGroup() const

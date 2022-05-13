@@ -406,6 +406,32 @@ def test_ogr_s57_update_dsid():
 
 
 ###############################################################################
+# Test fix for https://github.com/OSGeo/gdal/issues/5461#issuecomment-1075393495
+
+
+def test_ogr_s57_more_than_255_updates_to_feature():
+
+    if not gdaltest.download_file('https://www.charts.noaa.gov/ENCs/US5ME51M.zip', 'US5ME51M.zip'):
+        pytest.skip()
+
+    try:
+        os.stat('tmp/cache/US5ME51M')
+    except OSError:
+        try:
+            gdaltest.unzip('tmp/cache/US5ME51M', 'tmp/cache/US5ME51M.zip')
+            try:
+                os.stat('tmp/cache/US5ME51M')
+            except OSError:
+                pytest.skip()
+        except:
+            pytest.skip()
+
+    gdal.ErrorReset()
+    ds = ogr.Open('tmp/cache/US5ME51M/ENC_ROOT/US5ME51M/US5ME51M.000')
+    assert ds is not None
+    assert gdal.GetLastErrorMsg() == ''
+
+###############################################################################
 #  Cleanup
 
 

@@ -17,6 +17,7 @@ if version_info >= (3, 8, 0) and platform == 'win32':
             if glob.glob(os.path.join(p, 'gdal*.dll')) or glob.glob(os.path.join(p, 'libgdal*.dll')):
                 try:
                     os.add_dll_directory(p)
+                    break
                 except (FileNotFoundError, OSError):
                     continue
 

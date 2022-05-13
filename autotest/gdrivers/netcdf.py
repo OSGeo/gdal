@@ -291,10 +291,10 @@ def test_netcdf_2():
     assert ds.GetRasterBand(1).GetNoDataValue() is None
     ds = None
 
-    # Test that in raster-only mode, update isn't supported (not sure what would be missing for that...)
-    with gdaltest.error_handler():
-        ds = gdal.Open('tmp/netcdf2.nc', gdal.GA_Update)
-    assert ds is None
+    # Test update mode
+    ds = gdal.Open('tmp/netcdf2.nc', gdal.GA_Update)
+    assert ds.GetRasterBand(1).GetNoDataValue() is None
+    ds = None
 
     gdaltest.clean_tmp()
 
@@ -525,7 +525,7 @@ def test_netcdf_13():
 # check for scale/offset for two variables
 
 
-def test_netcdf_14():
+def test_netcdf_two_vars_as_subdatasets():
 
     ds = gdal.Open('NETCDF:data/netcdf/two_vars_scale_offset.nc:z')
 
@@ -541,6 +541,29 @@ def test_netcdf_14():
 
     scale = ds.GetRasterBand(1).GetScale()
     offset = ds.GetRasterBand(1).GetOffset()
+
+    assert scale == 0.1 and offset == 2.5, \
+        ('Incorrect scale(%f) or offset(%f)' % (scale, offset))
+
+###############################################################################
+# check for opening similar variables as multiple bands of the
+# same dataset
+
+
+def test_netcdf_two_vars_as_multiple_bands():
+
+    ds = gdal.OpenEx('data/netcdf/two_vars_scale_offset.nc',
+                     open_options = ['VARIABLES_AS_BANDS=YES'])
+    assert ds.RasterCount == 2
+
+    scale = ds.GetRasterBand(1).GetScale()
+    offset = ds.GetRasterBand(1).GetOffset()
+
+    assert scale == 0.01 and offset == 1.5, \
+        ('Incorrect scale(%f) or offset(%f)' % (scale, offset))
+
+    scale = ds.GetRasterBand(2).GetScale()
+    offset = ds.GetRasterBand(2).GetOffset()
 
     assert scale == 0.1 and offset == 2.5, \
         ('Incorrect scale(%f) or offset(%f)' % (scale, offset))
@@ -1255,7 +1278,7 @@ def test_netcdf_39():
     shutil.copy('data/netcdf/two_vars_scale_offset.nc', 'tmp')
     src_ds = gdal.Open('NETCDF:tmp/two_vars_scale_offset.nc:z')
     out_ds = gdal.GetDriverByName('VRT').CreateCopy('tmp/netcdf_39.vrt', src_ds)
-    out_ds = None
+    del out_ds
     src_ds = None
 
     ds = gdal.Open('tmp/netcdf_39.vrt')
@@ -1269,7 +1292,7 @@ def test_netcdf_39():
     shutil.copy('data/netcdf/two_vars_scale_offset.nc', 'tmp')
     src_ds = gdal.Open('NETCDF:"tmp/two_vars_scale_offset.nc":z')
     out_ds = gdal.GetDriverByName('VRT').CreateCopy('tmp/netcdf_39.vrt', src_ds)
-    out_ds = None
+    del out_ds
     src_ds = None
 
     ds = gdal.Open('tmp/netcdf_39.vrt')
@@ -1280,10 +1303,17 @@ def test_netcdf_39():
     gdal.Unlink('tmp/netcdf_39.vrt')
     assert cs == 65463
 
+
+def test_netcdf_39_absolute():
+
+    if gdal.Open("%s/data/netcdf/two_vars_scale_offset.nc" % os.getcwd()) is None and \
+       gdal.Open("data/netcdf/two_vars_scale_offset.nc") is not None:
+        pytest.skip("netcdf library can't handle absolute paths. Known to happen with some versions of msys mingw-w64-x86_64-netcdf package")
+
     shutil.copy('data/netcdf/two_vars_scale_offset.nc', 'tmp')
     src_ds = gdal.Open('NETCDF:"%s/tmp/two_vars_scale_offset.nc":z' % os.getcwd())
     out_ds = gdal.GetDriverByName('VRT').CreateCopy('%s/tmp/netcdf_39.vrt' % os.getcwd(), src_ds)
-    out_ds = None
+    del out_ds
     src_ds = None
 
     ds = gdal.Open('tmp/netcdf_39.vrt')
@@ -1361,7 +1391,8 @@ def test_netcdf_42():
         'X_BAND': '1',
         'LINE_STEP': '1',
         'Y_DATASET': 'NETCDF:"tmp/netcdf_42.nc":lat',
-            'Y_BAND': '1'})
+        'Y_BAND': '1',
+        'GEOREFERENCING_CONVENTION': 'PIXEL_CENTER'})
     wkt = ds.GetProjectionRef()
     assert ds.GetMetadataItem('transverse_mercator#spatial_ref') == wkt
     assert ds.GetMetadataItem('transverse_mercator#crs_wkt') == wkt
@@ -1371,6 +1402,100 @@ def test_netcdf_42():
 
     ds = gdal.Open('NETCDF:"tmp/netcdf_42.nc":lat')
     assert ds.GetRasterBand(1).Checksum() == 33501
+
+###############################################################################
+# Test writing & reading GEOLOCATION array with no projected CRS
+
+
+@pytest.mark.parametrize('write_bottomup', [True, False])
+@pytest.mark.parametrize('read_bottomup', [True, False])
+def test_netcdf_geolocation_array_no_srs(write_bottomup, read_bottomup):
+
+    lon_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/test_netcdf_geolocation_array_no_srs_lon.tif', 3, 2, 1)
+    lon_ds.GetRasterBand(1).WriteRaster(0, 0, 3, 2, struct.pack('B' * 6,
+                                                                10, 11, 12,
+                                                                13, 14, 15))
+    lon_ds = None
+
+    lat_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/test_netcdf_geolocation_array_no_srs_lat.tif', 3, 2, 1)
+    lat_ds.GetRasterBand(1).WriteRaster(0, 0, 3, 2, struct.pack('B' * 6,
+                                                                20, 21, 22,
+                                                                23, 24, 25))
+    lat_ds = None
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 3, 2, 1)
+    src_ds.SetMetadata([
+        'LINE_OFFSET=0',
+        'LINE_STEP=1',
+        'PIXEL_OFFSET=0',
+        'PIXEL_STEP=1',
+        'SRS=GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AXIS["Lat",NORTH],AXIS["Long",EAST],AUTHORITY["EPSG","4326"]]',
+        'X_BAND=1',
+        'X_DATASET=/vsimem/test_netcdf_geolocation_array_no_srs_lon.tif',
+        'Y_BAND=1',
+        'Y_DATASET=/vsimem/test_netcdf_geolocation_array_no_srs_lat.tif'], 'GEOLOCATION')
+    src_ds.GetRasterBand(1).WriteRaster(0, 0, 3, 2, struct.pack('B' * 6,
+                                                                0, 1, 2,
+                                                                3, 4, 5))
+
+    options = ['WRITE_BOTTOMUP=' + ('YES' if write_bottomup else 'NO')]
+    gdaltest.netcdf_drv.CreateCopy('tmp/test_netcdf_geolocation_array_no_srs.nc', src_ds,
+                                   options = options)
+
+    ds = gdal.Open('tmp/test_netcdf_geolocation_array_no_srs.nc')
+    assert (ds.GetMetadata('GEOLOCATION') == {
+        'LINE_OFFSET': '0',
+        'X_DATASET': 'NETCDF:"tmp/test_netcdf_geolocation_array_no_srs.nc":lon',
+        'PIXEL_STEP': '1',
+        'SRS': 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]',
+        'PIXEL_OFFSET': '0',
+        'X_BAND': '1',
+        'LINE_STEP': '1',
+        'Y_DATASET': 'NETCDF:"tmp/test_netcdf_geolocation_array_no_srs.nc":lat',
+        'Y_BAND': '1',
+        'GEOREFERENCING_CONVENTION': 'PIXEL_CENTER'})
+    assert ds.GetGeoTransform(can_return_null = True) is None
+
+    with gdaltest.config_option('GDAL_NETCDF_BOTTOMUP', 'YES' if read_bottomup else 'NO'):
+        ds = gdal.Open('NETCDF:"tmp/test_netcdf_geolocation_array_no_srs.nc":Band1')
+        got_data = struct.unpack('B' * 6,
+                                 ds.GetRasterBand(1).ReadRaster(
+                                     0, 0, 3, 2, buf_type = gdal.GDT_Byte))
+        if (write_bottomup and not read_bottomup) or (not write_bottomup and read_bottomup):
+            assert got_data == (3, 4, 5,
+                                0, 1, 2)
+        else:
+            assert got_data == (0, 1, 2,
+                                3, 4, 5)
+        ds = None
+
+        ds = gdal.Open('NETCDF:"tmp/test_netcdf_geolocation_array_no_srs.nc":lon')
+        got_data = struct.unpack('B' * 6,
+                                 ds.GetRasterBand(1).ReadRaster(
+                                     0, 0, 3, 2, buf_type = gdal.GDT_Byte))
+        if (write_bottomup and not read_bottomup) or (not write_bottomup and read_bottomup):
+            assert got_data == (13, 14, 15,
+                                10, 11, 12)
+        else:
+            assert got_data == (10, 11, 12,
+                                13, 14, 15)
+        ds = None
+
+        ds = gdal.Open('NETCDF:"tmp/test_netcdf_geolocation_array_no_srs.nc":lat')
+        got_data = struct.unpack('B' * 6,
+                                 ds.GetRasterBand(1).ReadRaster(
+                                     0, 0, 3, 2, buf_type = gdal.GDT_Byte))
+        if (write_bottomup and not read_bottomup) or (not write_bottomup and read_bottomup):
+            assert got_data == (23, 24, 25,
+                                20, 21, 22)
+        else:
+            assert got_data == (20, 21, 22,
+                                23, 24, 25)
+        ds = None
+
+    gdal.Unlink('tmp/test_netcdf_geolocation_array_no_srs.nc')
+    gdal.Unlink('/vsimem/test_netcdf_geolocation_array_no_srs_lon.tif')
+    gdal.Unlink('/vsimem/test_netcdf_geolocation_array_no_srs_lat.tif')
 
 ###############################################################################
 # Test reading GEOLOCATION array from geotransform (non default)
@@ -1391,7 +1516,8 @@ def test_netcdf_43():
         'X_BAND': '1',
         'LINE_STEP': '1',
         'Y_DATASET': 'NETCDF:"tmp/netcdf_43.nc":lat',
-            'Y_BAND': '1'})
+        'Y_BAND': '1',
+        'GEOREFERENCING_CONVENTION': 'PIXEL_CENTER'})
 
     tmp_ds = gdal.Warp('', 'tmp/netcdf_43.nc', options = '-f MEM -geoloc')
     gt = tmp_ds.GetGeoTransform()
@@ -2822,7 +2948,8 @@ def test_netcdf_swapped_x_y_dimension():
         'X_BAND': '1',
         'LINE_STEP': '1',
         'Y_DATASET': 'NETCDF:"data/netcdf/swapedxy.nc":Longitude',
-        'Y_BAND': '1'}, md
+        'Y_BAND': '1',
+        'GEOREFERENCING_CONVENTION': 'PIXEL_CENTER'}, md
 
     ds = gdal.Open(md['X_DATASET'])
     assert ds.RasterXSize == 4
@@ -2838,14 +2965,17 @@ def test_netcdf_swapped_x_y_dimension():
     data = struct.unpack('f' * 8, data)
     assert data == (-157.5, -112.5, -67.5, -22.5, 22.5, 67.5, 112.5, 157.5)
 
-    ds = gdal.Warp('', 'data/netcdf/swapedxy.nc', options = '-f MEM -geoloc')
+    ds = gdal.Warp('', 'data/netcdf/swapedxy.nc', options = '-f MEM -geoloc -ts 8 4')
     assert ds.RasterXSize == 8
     assert ds.RasterYSize == 4
-    assert ds.GetGeoTransform() == (-157.5, 38.3161193233344, 0.0, 67.5, 0.0, -38.3161193233344)
+    assert ds.GetGeoTransform() == pytest.approx((-180.0, 45.0, 0.0, 90, 0.0, -45.0)), ds.GetGeoTransform()
     data = ds.GetRasterBand(1).ReadRaster()
-    data = struct.unpack('h' * 4 * 8, data)
-    # not exactly the transposed array, but not so far
-    assert data == (4, 8, 8, 12, 16, 20, 20, 24, 5, 9, 9, 13, 17, 21, 21, 25, 6, 10, 10, 14, 18, 22, 22, 26, 7, 11, 11, 15, 19, 23, 23, 27)
+    data = struct.unpack('h' * 8 * 4, data)
+    # transposed array
+    assert data == (0, 4, 8, 12, 16, 20, 24, 28,
+                    1, 5, 9, 13, 17, 21, 25, 29,
+                    2, 6, 10, 14, 18, 22, 26, 30,
+                    3, 7, 11, 15, 19, 23, 27, 31)
 
 
 ###############################################################################
@@ -4752,9 +4882,6 @@ def test_netcdf_open_coords_no_georef_indexing_variables():
 
 def test_netcdf_metadata_sentinel5():
 
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip()
-
     ds = gdal.Open('data/netcdf/fake_ISO_METADATA.nc')
     assert ds is not None
     assert "json:ISO_METADATA" in ds.GetMetadataDomainList()
@@ -4912,6 +5039,210 @@ def test_netcdf_write_4D():
 def test_netcdf__crs_wkt():
     ds = gdal.Open('data/netcdf/netcdf_crs_wkt.nc')
     assert ds.GetSpatialRef().IsGeographic()
+
+
+def test_netcdf_default_metadata():
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+
+    tmpfilename = 'tmp/test_netcdf_default_metadata.nc'
+    gdal.GetDriverByName('netCDF').CreateCopy(tmpfilename, src_ds)
+    ds = gdal.Open(tmpfilename)
+    assert ds.GetMetadataItem("NC_GLOBAL#GDAL") == gdal.VersionInfo("")
+    assert 'GDAL CreateCopy' in ds.GetMetadataItem("NC_GLOBAL#history")
+    assert ds.GetMetadataItem("NC_GLOBAL#conventions").startswith('CF')
+    ds = None
+    gdal.Unlink(tmpfilename)
+
+
+def test_netcdf_default_metadata_with_existing_history_and_conventions():
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+    src_ds.SetMetadataItem("NC_GLOBAL#history", "past history")
+    src_ds.SetMetadataItem("NC_GLOBAL#Conventions", "my conventions")
+
+    tmpfilename = 'tmp/test_netcdf_default_metadata_with_existing_history_and_conventions.nc'
+    gdal.GetDriverByName('netCDF').CreateCopy(tmpfilename, src_ds)
+    ds = gdal.Open(tmpfilename)
+    assert 'GDAL CreateCopy' in ds.GetMetadataItem("NC_GLOBAL#history")
+    assert 'past history' in ds.GetMetadataItem("NC_GLOBAL#history")
+    assert ds.GetMetadataItem("NC_GLOBAL#conventions") == "my conventions"
+    ds = None
+    gdal.Unlink(tmpfilename)
+
+
+def test_netcdf_default_metadata_disabled():
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+
+    tmpfilename = 'tmp/test_netcdf_default_metadata_disabled.nc'
+    gdal.GetDriverByName('netCDF').CreateCopy(tmpfilename, src_ds,
+                  options = ['WRITE_GDAL_VERSION=NO', 'WRITE_GDAL_HISTORY=NO'])
+    ds = gdal.Open(tmpfilename)
+    assert ds.GetMetadataItem("NC_GLOBAL#GDAL") is None
+    assert ds.GetMetadataItem("NC_GLOBAL#history") is None
+    ds = None
+    gdal.Unlink(tmpfilename)
+
+
+def test_netcdf_update_metadata():
+
+    tmpfilename = 'tmp/test_netcdf_update_metadata.nc'
+    ds = gdal.GetDriverByName('netCDF').Create(tmpfilename, 2, 2)
+    ds.GetRasterBand(1).SetMetadata({'foo': 'bar'})
+    ds.SetMetadata({'NC_GLOBAL#bar': 'baz',
+                    'another_item': 'some_value',
+                    'bla#ignored': 'ignored'})
+    ds = None
+
+    ds = gdal.Open(tmpfilename)
+    assert ds.GetRasterBand(1).GetMetadataItem('foo') == 'bar'
+    assert ds.GetMetadataItem('NC_GLOBAL#bar') == 'baz'
+    assert ds.GetMetadataItem('NC_GLOBAL#GDAL_another_item') == 'some_value'
+    assert ds.GetMetadataItem('bla#ignored') is None
+    ds = None
+
+    gdal.Unlink(tmpfilename)
+
+
+def test_netcdf_read_gmt_file():
+    """ Test reading a GMT generated file that doesn't completely follow
+        netCDF CF conventions regarding axis naming """
+
+    ds = gdal.Open('data/netcdf/gmt_file.nc')
+    gt = ds.GetGeoTransform()
+    assert gt == pytest.approx((-34.6671666666667, 0.001, 0.0, 35.58483333333329, 0.0, -0.001)), gt
+
+
+###############################################################################
+
+def test_netcdf_read_int64():
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    ds = gdal.Open('data/netcdf/int64.nc')
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Int64
+    assert struct.unpack('q' * 4, ds.ReadRaster()) == (10000000001, 1,
+                                                       -10000000000, 10000000000)
+
+
+###############################################################################
+
+
+def test_netcdf_write_int64():
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    src_ds = gdal.Open('data/netcdf/int64.nc')
+    gdaltest.netcdf_drv.CreateCopy('tmp/int64.nc', src_ds)
+    ds = gdal.Open('tmp/int64.nc')
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Int64
+    assert struct.unpack('q' * 4, ds.ReadRaster()) == (10000000001, 1,
+                                                       -10000000000, 10000000000)
+    ds = None
+    os.unlink('tmp/int64.nc')
+
+###############################################################################
+
+
+def test_netcdf_read_uint64():
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    ds = gdal.Open('data/netcdf/uint64.nc')
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt64
+    assert struct.unpack('Q' * 4, ds.ReadRaster()) == (10000000001, 1,
+                                                       0, 10000000000)
+
+
+###############################################################################
+
+
+def test_netcdf_write_uint64():
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    src_ds = gdal.Open('data/netcdf/uint64.nc')
+    gdaltest.netcdf_drv.CreateCopy('tmp/uint64.nc', src_ds)
+    ds = gdal.Open('tmp/uint64.nc')
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt64
+    assert struct.unpack('Q' * 4, ds.ReadRaster()) == (10000000001, 1,
+                                                       0, 10000000000)
+    ds = None
+    os.unlink('tmp/uint64.nc')
+
+
+###############################################################################
+
+
+def test_netcdf_write_uint64_nodata():
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    filename = 'tmp/test_tiff_write_uint64_nodata.nc'
+    ds = gdal.GetDriverByName('netCDF').Create(filename, 1, 1, 1, gdal.GDT_UInt64)
+    val = (1 << 64)-1
+    assert ds.GetRasterBand(1).SetNoDataValue(val) == gdal.CE_None
+    ds = None
+
+    filename_copy = 'tmp/test_tiff_write_uint64_nodata_filename_copy.nc'
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetNoDataValue() == val
+    ds = gdal.GetDriverByName('netCDF').CreateCopy(filename_copy, ds)
+    ds = None
+
+    ds = gdal.Open(filename_copy)
+    assert ds.GetRasterBand(1).GetNoDataValue() == val
+    ds = None
+
+    gdal.GetDriverByName('netCDF').Delete(filename)
+    gdal.GetDriverByName('netCDF').Delete(filename_copy)
+
+
+###############################################################################
+
+
+def test_netcdf_write_int64_nodata():
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    filename = 'tmp/test_tiff_write_int64_nodata.nc'
+    ds = gdal.GetDriverByName('netCDF').Create(filename, 1, 1, 1, gdal.GDT_Int64)
+    val = -(1 << 63)
+    assert ds.GetRasterBand(1).SetNoDataValue(val) == gdal.CE_None
+    ds = None
+
+    filename_copy = 'tmp/test_tiff_write_int64_nodata_filename_copy.nc'
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetNoDataValue() == val
+    ds = gdal.GetDriverByName('netCDF').CreateCopy(filename_copy, ds)
+    ds = None
+
+    ds = gdal.Open(filename_copy)
+    assert ds.GetRasterBand(1).GetNoDataValue() == val
+    ds = None
+
+    gdal.GetDriverByName('netCDF').Delete(filename)
+    gdal.GetDriverByName('netCDF').Delete(filename_copy)
+
+
+###############################################################################
+
+
+def test_netcdf_read_geogcrs_component_names():
+
+    ds = gdal.Open('data/netcdf/geogcrs_component_names.nc')
+    srs = ds.GetSpatialRef()
+    assert srs.GetAttrValue('GEOGCS') == 'WGS 84'
+    assert srs.GetAttrValue('GEOGCS|DATUM') == 'WGS_1984'
+    assert srs.GetAttrValue('GEOGCS|DATUM|SPHEROID') == 'WGS 84'
+    assert srs.GetAttrValue('GEOGCS|PRIMEM') == 'Greenwich'
 
 
 def test_clean_tmp():

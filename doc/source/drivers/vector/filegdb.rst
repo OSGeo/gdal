@@ -33,7 +33,7 @@ Curve in geometries are supported on reading with GDAL >= 2.2.
 Bulk feature loading
 --------------------
 
-The FGDB_BULK_LOAD configuration option can be set to YES to speed-up
+The :decl_configoption:`FGDB_BULK_LOAD` configuration option can be set to YES to speed-up
 feature insertion (or sometimes solve problems when inserting a lot of
 features (see http://trac.osgeo.org/gdal/ticket/4420). The effect of
 this configuration option is to cause a write lock to be taken and a
@@ -60,12 +60,16 @@ Special SQL requests
 can be used as special SQL requests to get respectively the definition
 and metadata of a FileGDB table as XML content.
 
+Starting with GDAL 3.5, the "REPACK" special SQL request can be issued to
+ask for database compaction.
+
 Field domains
 -------------
 
 .. versionadded:: 3.3
 
-Coded and range field domains are supported.
+Retrieving coded and range field domains are supported.
+Writing support has been added in GDAL 3.5.
 
 Hiearchical organization
 ------------------------
@@ -169,6 +173,20 @@ Layer Creation Options
 -  **CONFIGURATION_KEYWORD**\ =DEFAULTS/TEXT_UTF16/MAX_FILE_SIZE_4GB/MAX_FILE_SIZE_256TB/GEOMETRY_OUTOFLINE/BLOB_OUTOFLINE/GEOMETRY_AND_BLOB_OUTOFLINE
    : Customize how data is stored. By default text in
    UTF-8 and data up to 1TB
+
+Configuration options
+---------------------
+
+The following :ref:`configuration options <configoptions>` are
+available:
+
+- :decl_configoption:`FGDB_BULK_LOAD` can be set to YES to speed-up
+  feature insertion (or sometimes solve problems when inserting a lot of
+  features (see http://trac.osgeo.org/gdal/ticket/4420). The effect of
+  this configuration option is to cause a write lock to be taken and a
+  temporary disabling of the indexes. Those are restored when the
+  datasource is closed or when a read operation is done. Bulk load is
+  enabled by default for newly created layers (unless otherwise specified).
 
 Examples
 --------

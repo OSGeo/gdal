@@ -429,7 +429,7 @@ public:
 
     bool                bApplyVerticalShift = false;
 
-    double              dfMultFactorVerticalShit = 1.0;
+    double              dfMultFactorVerticalShift = 1.0;
 /*! @endcond */
 
                        GDALWarpKernel();
@@ -501,6 +501,8 @@ private:
     // Coordinates a few special points in target image space, to determine
     // if ComputeSourceWindow() must use a grid based sampling.
     std::vector<std::pair<double, double>> aDstXYSpecialPoints{};
+
+    bool m_bIsTranslationOnPixelBoundaries = false;
 
     void            WipeChunkList();
     CPLErr          CollectChunkListInternal( int nDstXOff, int nDstYOff,

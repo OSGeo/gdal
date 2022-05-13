@@ -1174,7 +1174,7 @@ CPLErr GDALWarpKernel::PerformWarp()
     nFiltInitY = ((anGWKFilterRadius[eResample] + 1) % 2) - nYRadius;
 
     bApplyVerticalShift = CPLFetchBool(papszWarpOptions, "APPLY_VERTICAL_SHIFT", false);
-    dfMultFactorVerticalShit = CPLAtof(
+    dfMultFactorVerticalShift = CPLAtof(
         CSLFetchNameValueDef(papszWarpOptions, "MULT_FACTOR_VERTICAL_SHIFT", "1.0") );
 
 /* -------------------------------------------------------------------- */
@@ -1395,7 +1395,7 @@ static void GWKOverlayDensity( const GDALWarpKernel *poWK, GPtrDiff_t iDstOffset
 /*                          GWKRoundValueT()                            */
 /************************************************************************/
 
-template<class T, EMULATED_BOOL is_signed> struct sGWKRoundValueT
+template<class T, bool is_signed> struct sGWKRoundValueT
 {
     static T eval(double);
 };
@@ -1591,6 +1591,16 @@ static bool GWKSetPixelValue( const GDALWarpKernel *poWK, int iBand,
             dfDstImag = 0.0;
             break;
 
+          case GDT_Int64:
+            dfDstReal = static_cast<double>(reinterpret_cast<std::int64_t*>(pabyDst)[iDstOffset]);
+            dfDstImag = 0.0;
+            break;
+
+          case GDT_UInt64:
+            dfDstReal = static_cast<double>(reinterpret_cast<std::uint64_t*>(pabyDst)[iDstOffset]);
+            dfDstImag = 0.0;
+            break;
+
           case GDT_Float32:
             dfDstReal = reinterpret_cast<float*>(pabyDst)[iDstOffset];
             dfDstImag = 0.0;
@@ -1688,6 +1698,14 @@ static bool GWKSetPixelValue( const GDALWarpKernel *poWK, int iBand,
 
       case GDT_Int32:
         CLAMP(GInt32);
+        break;
+
+      case GDT_UInt64:
+        CLAMP(std::uint64_t);
+        break;
+
+      case GDT_Int64:
+        CLAMP(std::int64_t);
         break;
 
       case GDT_Float32:
@@ -1810,6 +1828,14 @@ static bool GWKSetPixelValueReal( const GDALWarpKernel *poWK, int iBand,
             dfDstReal = reinterpret_cast<GUInt32*>(pabyDst)[iDstOffset];
             break;
 
+          case GDT_Int64:
+            dfDstReal = static_cast<double>(reinterpret_cast<std::int64_t*>(pabyDst)[iDstOffset]);
+            break;
+
+          case GDT_UInt64:
+            dfDstReal = static_cast<double>(reinterpret_cast<std::uint64_t*>(pabyDst)[iDstOffset]);
+            break;
+
           case GDT_Float32:
             dfDstReal = reinterpret_cast<float*>(pabyDst)[iDstOffset];
             break;
@@ -1859,6 +1885,14 @@ static bool GWKSetPixelValueReal( const GDALWarpKernel *poWK, int iBand,
 
       case GDT_Int32:
         CLAMP(GInt32);
+        break;
+
+      case GDT_UInt64:
+        CLAMP(std::uint64_t);
+        break;
+
+      case GDT_Int64:
+        CLAMP(std::int64_t);
         break;
 
       case GDT_Float32:
@@ -1923,6 +1957,16 @@ static bool GWKGetPixelValue( const GDALWarpKernel *poWK, int iBand,
 
       case GDT_UInt32:
         *pdfReal = reinterpret_cast<GUInt32*>(pabySrc)[iSrcOffset];
+        *pdfImag = 0.0;
+        break;
+
+      case GDT_Int64:
+        *pdfReal = static_cast<double>(reinterpret_cast<std::int64_t*>(pabySrc)[iSrcOffset]);
+        *pdfImag = 0.0;
+        break;
+
+      case GDT_UInt64:
+        *pdfReal = static_cast<double>(reinterpret_cast<std::uint64_t*>(pabySrc)[iSrcOffset]);
         *pdfImag = 0.0;
         break;
 
@@ -2009,6 +2053,14 @@ static bool GWKGetPixelValueReal( const GDALWarpKernel *poWK, int iBand,
 
       case GDT_UInt32:
         *pdfReal = reinterpret_cast<GUInt32*>(pabySrc)[iSrcOffset];
+        break;
+
+      case GDT_Int64:
+        *pdfReal = static_cast<double>(reinterpret_cast<std::int64_t*>(pabySrc)[iSrcOffset]);
+        break;
+
+      case GDT_UInt64:
+        *pdfReal = static_cast<double>(reinterpret_cast<std::uint64_t*>(pabySrc)[iSrcOffset]);
         break;
 
       case GDT_Float32:
@@ -2168,6 +2220,30 @@ static bool GWKGetPixelRow( const GDALWarpKernel *poWK, int iBand,
             {
                 adfReal[i] = pSrc[i];
                 adfReal[i+1] = pSrc[i+1];
+            }
+            break;
+        }
+
+        case GDT_Int64:
+        {
+            auto pSrc = reinterpret_cast<std::int64_t*>(poWK->papabySrcImage[iBand]);
+            pSrc += iSrcOffset;
+            for( int i = 0; i < nSrcLen; i += 2 )
+            {
+                adfReal[i] = static_cast<double>(pSrc[i]);
+                adfReal[i+1] = static_cast<double>(pSrc[i+1]);
+            }
+            break;
+        }
+
+        case GDT_UInt64:
+        {
+            auto pSrc = reinterpret_cast<std::uint64_t*>(poWK->papabySrcImage[iBand]);
+            pSrc += iSrcOffset;
+            for( int i = 0; i < nSrcLen; i += 2 )
+            {
+                adfReal[i] = static_cast<double>(pSrc[i]);
+                adfReal[i+1] = static_cast<double>(pSrc[i+1]);
             }
             break;
         }
@@ -4958,7 +5034,7 @@ static void GWKGeneralCaseThread( void* pData)
                     if( !std::isfinite(padfZ[iDstX]) )
                         continue;
                     // Subtract padfZ[] since the coordinate transformation is from target to source
-                    dfValueReal = dfValueReal * poWK->dfMultFactorVerticalShit - padfZ[iDstX];
+                    dfValueReal = dfValueReal * poWK->dfMultFactorVerticalShift - padfZ[iDstX];
                 }
 
                 bHasFoundDensity = true;
@@ -5226,7 +5302,7 @@ static void GWKRealCaseThread( void* pData)
                     if( !std::isfinite(padfZ[iDstX]) )
                         continue;
                     // Subtract padfZ[] since the coordinate transformation is from target to source
-                    dfValueReal = dfValueReal * poWK->dfMultFactorVerticalShit - padfZ[iDstX];
+                    dfValueReal = dfValueReal * poWK->dfMultFactorVerticalShift - padfZ[iDstX];
                 }
 
                 bHasFoundDensity = true;
@@ -5404,7 +5480,7 @@ static void GWKResampleNoMasksOrDstDensityOnlyThreadInternal( void* pData )
                     if( !std::isfinite(padfZ[iDstX]) )
                         continue;
                     // Subtract padfZ[] since the coordinate transformation is from target to source
-                    value = GWKClampValueT<T>(value * poWK->dfMultFactorVerticalShit - padfZ[iDstX]);
+                    value = GWKClampValueT<T>(value * poWK->dfMultFactorVerticalShift - padfZ[iDstX]);
                 }
 
                 if( poWK->pafDstDensity )
@@ -5632,7 +5708,7 @@ static void GWKNearestThread( void* pData )
                         if( !std::isfinite(padfZ[iDstX]) )
                             continue;
                         // Subtract padfZ[] since the coordinate transformation is from target to source
-                        value = GWKClampValueT<T>(value * poWK->dfMultFactorVerticalShit - padfZ[iDstX]);
+                        value = GWKClampValueT<T>(value * poWK->dfMultFactorVerticalShift - padfZ[iDstX]);
                     }
 
 
@@ -6131,7 +6207,7 @@ static void GWKAverageOrModeThread( void* pData)
                             if( !std::isfinite(padfZ[iDstX]) )
                                 continue;
                             // Subtract padfZ[] since the coordinate transformation is from target to source
-                            dfValueReal = dfValueReal * poWK->dfMultFactorVerticalShit - padfZ[iDstX];
+                            dfValueReal = dfValueReal * poWK->dfMultFactorVerticalShift - padfZ[iDstX];
                         }
 
                         if (bIsComplex)
@@ -6187,7 +6263,7 @@ static void GWKAverageOrModeThread( void* pData)
                             if( !std::isfinite(padfZ[iDstX]) )
                                 continue;
                             // Subtract padfZ[] since the coordinate transformation is from target to source
-                            dfValueReal = dfValueReal * poWK->dfMultFactorVerticalShit - padfZ[iDstX];
+                            dfValueReal = dfValueReal * poWK->dfMultFactorVerticalShift - padfZ[iDstX];
                         }
 
                         if (bIsComplex)
@@ -6243,7 +6319,7 @@ static void GWKAverageOrModeThread( void* pData)
                             if( !std::isfinite(padfZ[iDstX]) )
                                 continue;
                             // Subtract padfZ[] since the coordinate transformation is from target to source
-                            dfValueReal = dfValueReal * poWK->dfMultFactorVerticalShit - padfZ[iDstX];
+                            dfValueReal = dfValueReal * poWK->dfMultFactorVerticalShift - padfZ[iDstX];
                         }
 
                         if (bIsComplex)
@@ -6324,7 +6400,7 @@ static void GWKAverageOrModeThread( void* pData)
                                 if( !std::isfinite(padfZ[iDstX]) )
                                     continue;
                                 // Subtract padfZ[] since the coordinate transformation is from target to source
-                                dfValueReal = dfValueReal * poWK->dfMultFactorVerticalShit - padfZ[iDstX];
+                                dfValueReal = dfValueReal * poWK->dfMultFactorVerticalShift - padfZ[iDstX];
                             }
 
                             dfBandDensity = 1;
@@ -6379,7 +6455,7 @@ static void GWKAverageOrModeThread( void* pData)
                                 if( !std::isfinite(padfZ[iDstX]) )
                                     continue;
                                 // Subtract padfZ[] since the coordinate transformation is from target to source
-                                dfValueReal = dfValueReal * poWK->dfMultFactorVerticalShit - padfZ[iDstX];
+                                dfValueReal = dfValueReal * poWK->dfMultFactorVerticalShift - padfZ[iDstX];
                             }
 
                             dfBandDensity = 1;
@@ -6431,7 +6507,7 @@ static void GWKAverageOrModeThread( void* pData)
                             if( !std::isfinite(padfZ[iDstX]) )
                                 continue;
                             // Subtract padfZ[] since the coordinate transformation is from target to source
-                            dfValueReal = dfValueReal * poWK->dfMultFactorVerticalShit - padfZ[iDstX];
+                            dfValueReal = dfValueReal * poWK->dfMultFactorVerticalShift - padfZ[iDstX];
                         }
 
                         dfBandDensity = 1;
@@ -6482,7 +6558,7 @@ static void GWKAverageOrModeThread( void* pData)
                             if( !std::isfinite(padfZ[iDstX]) )
                                 continue;
                             // Subtract padfZ[] since the coordinate transformation is from target to source
-                            dfValueReal = dfValueReal * poWK->dfMultFactorVerticalShit - padfZ[iDstX];
+                            dfValueReal = dfValueReal * poWK->dfMultFactorVerticalShift - padfZ[iDstX];
                         }
 
                         dfBandDensity = 1;
@@ -6534,7 +6610,7 @@ static void GWKAverageOrModeThread( void* pData)
                             if( !std::isfinite(padfZ[iDstX]) )
                                 continue;
                             // Subtract padfZ[] since the coordinate transformation is from target to source
-                            dfValueReal = dfValueReal * poWK->dfMultFactorVerticalShit - padfZ[iDstX];
+                            dfValueReal = dfValueReal * poWK->dfMultFactorVerticalShift - padfZ[iDstX];
                         }
 
                         dfBandDensity = 1;

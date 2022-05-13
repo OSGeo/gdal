@@ -181,6 +181,7 @@ MAIN_START(argc, argv)
         CPLError( CE_Failure, CPLE_AppDefined,
                   "ERROR - failed to load SRS definition from %s",
                   pszInput );
+        exit(1);
     }
 
     else {

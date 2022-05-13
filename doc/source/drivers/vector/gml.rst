@@ -46,7 +46,7 @@ build time, the GML driver will preferentially select at runtime the
 Expat parser for cases where it is possible (GML file in a compatible
 encoding), and default back to Xerces parser in other cases. However,
 the choice of the parser can be overridden by specifying the
-**GML_PARSER** configuration option to **EXPAT** or **XERCES**.
+:decl_configoption:`GML_PARSER` configuration option to **EXPAT** or **XERCES**.
 
 CRS support
 -----------
@@ -63,21 +63,22 @@ driver will swap the coordinates so that they are in the (longitude,
 latitude) order and report a SRS without axis order specified. It is
 possible to get the original (latitude, longitude) order and SRS with
 axis order by setting the configuration option
-**GML_INVERT_AXIS_ORDER_IF_LAT_LONG** to **NO**.
+:decl_configoption:`GML_INVERT_AXIS_ORDER_IF_LAT_LONG` to **NO**.
 
 There also situations where the srsName is of the form "EPSG:XXXX"
 (whereas "urn:ogc:def:crs:EPSG::XXXX" would have been more explicit on
 the intent) and the coordinates in the file are in (latitude, longitude)
 order. By default, OGR will not consider the EPSG axis order and will
 report the coordinates in (latitude,longitude) order. However, if you
-set the configuration option **GML_CONSIDER_EPSG_AS_URN** to **YES**,
-the rules explained in the previous paragraph will be applied.
+set the configuration option :decl_configoption:`GML_CONSIDER_EPSG_AS_URN` 
+to **YES**, the rules explained in the previous paragraph will be applied.
 
 The above also applied for projected coordinate systems
 whose EPSG preferred axis order is (northing, easting).
 
 Starting with GDAL 2.1.2, the SWAP_COORDINATES open option (or
-GML_SWAP_COORDINATES configuration option) can be set to AUTO/YES/NO. It
+:decl_configoption:`GML_SWAP_COORDINATES` configuration option) can 
+be set to AUTO/YES/NO. It
 controls whether the order of the x/y or long/lat coordinates should be
 swapped. In AUTO mode, the driver will determine if swapping must be
 done from the srsName and value of other options like
@@ -120,23 +121,26 @@ When prescanning the GML file to determine the list of feature types,
 and fields, the contents of fields are scanned to try and determine the
 type of the field. In some applications it is easier if all fields are
 just treated as string fields. This can be accomplished by setting the
-configuration option **GML_FIELDTYPES** to the value **ALWAYS_STRING**.
+configuration option :decl_configoption:`GML_FIELDTYPES` to the value **ALWAYS_STRING**.
 
-The **GML_ATTRIBUTES_TO_OGR_FIELDS**
+The :decl_configoption:`GML_ATTRIBUTES_TO_OGR_FIELDS`
 configuration option can be set to **YES** so that attributes of GML
 elements are also taken into account to create OGR fields.
 
-Configuration options can be set via the CPLSetConfigOption() function
-or as environment variables.
+The following :ref:`configuration options <configoptions>` are 
+available:
 
-You can use **GML_GFS_TEMPLATE** configuration option (or **GFS_TEMPLATE**
-open option) set to a **path_to_template.gfs** in order
-to unconditionally use a predefined GFS file. This option is
+:ref:`configuration options <configoptions>` can e.g. be set via 
+the CPLSetConfigOption() function or as environment variables.
+
+You can use :decl_configoption:`GML_GFS_TEMPLATE` configuration option 
+(or **GFS_TEMPLATE** open option) set to a **path_to_template.gfs** in 
+order to unconditionally use a predefined GFS file. This option is
 really useful when you are planning to import many distinct GML
 files in subsequent steps [**-append**] and you absolutely want to
 preserve a fully consistent data layout for the whole GML set.
 Please, pay attention not to use the **-lco LAUNDER=yes** setting
-when using **GML_GFS_TEMPLATE**; this should break the correct
+when using :decl_configoption:`GML_GFS_TEMPLATE`; this should break the correct
 recognition of attribute names between subsequent GML import runs.
 
 Particular GML application schemas
@@ -198,8 +202,8 @@ interpreted as either of two types of geometries. The Edge elements in
 it contain curves and their corresponding nodes. By default only the
 curves, the main geometries, are reported as OGRMultiLineString. To
 retrieve the nodes, as OGRMultiPoint, the configuration option
-**GML_GET_SECONDARY_GEOM** should be set to the value **YES**. When this
-is set only the secondary geometries are reported.
+:decl_configoption:`GML_GET_SECONDARY_GEOM` should be set to the value 
+**YES**. When this is set only the secondary geometries are reported.
 
 Arc, ArcString, ArcByBulge, ArcByCenterPoint,
 Circle and CircleByCenterPoints will be returned as circular string OGR
@@ -219,12 +223,12 @@ gml:xlink resolving is supported. When the resolver finds
 an element containing the tag xlink:href, it tries to find the
 corresponding element with the gml:id in the same gml file, other gml
 file in the file system or on the web using cURL. Set the configuration
-option **GML_SKIP_RESOLVE_ELEMS** to **NONE** to enable resolution.
+option :decl_configoption:`GML_SKIP_RESOLVE_ELEMS` to **NONE** to enable resolution.
 
 By default the resolved file will be saved in the same directory as the
 original file with the extension ".resolved.gml", if it doesn't exist
 already. This behavior can be changed using the configuration option
-**GML_SAVE_RESOLVED_TO**. Set it to **SAME** to overwrite the original
+:decl_configoption:`GML_SAVE_RESOLVED_TO`. Set it to **SAME** to overwrite the original
 file. Set it to a **filename ending with .gml** to save it to that
 location. Any other values are ignored. If the resolver cannot write to
 the file for any reason, it will try to save it to a temporary file
@@ -238,14 +242,14 @@ CPLDebug() for every 256 links. It can be seen by setting the
 environment variable CPL_DEBUG. The resolution time can be reduced if
 you know any elements that will not be needed. Mention a comma separated
 list of names of such elements with the configuration option
-**GML_SKIP_RESOLVE_ELEMS**. Set it to **ALL** to skip resolving
-altogether (default action). Set it to **NONE** to resolve all the
-xlinks.
+:decl_configoption:`GML_SKIP_RESOLVE_ELEMS`. Set it to **ALL** to skip 
+resolving altogether (default action). Set it to **NONE** to resolve all 
+the xlinks.
 
 An alternative resolution method is available.
 This alternative method will be activated using the configuration option
-**GML_SKIP_RESOLVE_ELEMS HUGE**. In this case any gml:xlink will be
-resolved using a temporary SQLite DB so to identify any corresponding
+:decl_configoption:`GML_SKIP_RESOLVE_ELEMS HUGE`. In this case any 
+gml:xlink will be resolved using a temporary SQLite DB so to identify any corresponding
 gml:id relation. At the end of this SQL-based process, a resolved file
 will be generated exactly as in the **NONE** case but without their
 limits. The main advantages in using an external (temporary) DBMS so to
@@ -301,14 +305,14 @@ interpretation supported by OGR.
 **NOTE** : Using the newest interpretation requires GDAL/OGR to be built
 against the GEOS library.
 
-Using the **GML_FACE_HOLE_NEGATIVE** configuration option you can anyway
-select the actual interpretation to be applied when parsing GML 3
-Topologies:
+Using the :decl_configoption:`GML_FACE_HOLE_NEGATIVE` configuration option 
+you can anyway select the actual interpretation to be applied when 
+parsing GML 3 topologies:
 
--  setting **GML_FACE_HOLE_NEGATIVE NO** (*default* option) will
-   activate the newest interpretation rule
--  but explicitly setting **GML_FACE_HOLE_NEGATIVE YES** still enables
-   to activate the old interpretation rule
+-  setting :decl_configoption:`GML_FACE_HOLE_NEGATIVE` =NO (*default* 
+   option) will activate the newest interpretation rule
+-  but explicitly setting :decl_configoption:`GML_FACE_HOLE_NEGATIVE` =YES 
+   still enables to activate the old interpretation rule
 
 Encoding issues
 ---------------
@@ -351,8 +355,10 @@ attribute of the created feature.
 The driver autodetects the presence of a fid
 (GML2) (resp. gml:id (GML3)) attribute at the beginning of the file,
 and, if found, exposes it by default as a *fid* (resp. *gml_id*) field.
-The autodetection can be overridden by specifying the **GML_EXPOSE_FID**
-or **GML_EXPOSE_GML_ID** configuration option to **YES** or **NO**.
+The autodetection can be overridden by specifying the 
+:decl_configoption:`GML_EXPOSE_FID` or 
+:decl_configoption:`GML_EXPOSE_GML_ID` configuration option to 
+**YES** or **NO**.
 
 When creating a GML2 document, if a field is
 called *fid*, its content will also be used to write the content of the
@@ -366,7 +372,7 @@ layers. By default, the GML driver will restart reading from the
 beginning of the file, each time a layer is accessed for the first time,
 which can lead to poor performance with large GML files.
 
-The **GML_READ_MODE** configuration option can
+The :decl_configoption:`GML_READ_MODE` configuration option can
 be set to **SEQUENTIAL_LAYERS** if all features belonging to the same
 layer are written sequentially in the file. The reader will then avoid
 unnecessary resets when layers are read completely one after the other.
@@ -376,11 +382,11 @@ appear in the file.
 If no .xsd and .gfs files are found, the parser will detect the layout
 of layers when building the .gfs file. If the layers are found to be
 sequential, a *<SequentialLayers>true</SequentialLayers>* element will
-be written in the .gfs file, so that the GML_READ_MODE will be
-automatically initialized to SEQUENTIAL_LAYERS if not explicitly set by
-the user.
+be written in the .gfs file, so that the :decl_configoption:`GML_READ_MODE` 
+will be automatically initialized to SEQUENTIAL_LAYERS if not explicitly 
+set by the user.
 
-The GML_READ_MODE configuration option can be
+The :decl_configoption:`GML_READ_MODE` configuration option can be
 set to INTERLEAVED_LAYERS to be able to read a GML file whose features
 from different layers are interleaved. In the case, the semantics of the
 GetNextFeature() will be slightly altered, in a way where a NULL return
@@ -477,7 +483,8 @@ feature collection. Each layer's name is used as the element name for
 objects from that layer. Geometries are always written as the
 ogr:geometryProperty element on the feature.
 
-The GML writer supports the following dataset creation options:
+Dataset creation options
+------------------------
 
 -  **XSISCHEMAURI**: If provided, this URI will be inserted as the
    schema location. Note that the schema file isn't actually accessed by

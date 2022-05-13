@@ -610,7 +610,7 @@ void qh_init_qhull_command(qhT *qh, int argc, char *argv[]) {
 */
 void qh_initflags(qhT *qh, char *command) {
   int k, i, lastproject;
-  char *s= command, *t, *prev_s, *start, key, *lastwarning= NULL;
+  char *s= command, *t = NULL, *prev_s, *start, key, *lastwarning= NULL;
   boolT isgeom= False, wasproject;
   realT r;
 

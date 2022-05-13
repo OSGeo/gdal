@@ -844,9 +844,10 @@ static bool TranslateArray(DimensionRemapper& oDimRemapper,
         viewExpr += ']';
         if( bHasModifiedDim )
         {
-            tmpArray = tmpArray->GetView(viewExpr, false, viewSpecs);
-            if( !tmpArray )
+            auto tmpArrayNew = tmpArray->GetView(viewExpr, false, viewSpecs);
+            if( !tmpArrayNew )
                 return false;
+            tmpArray = tmpArrayNew;
             size_t j = 0;
             const auto& tmpArrayDims(tmpArray->GetDimensions());
             for( size_t i = 0; i < srcArrayDims.size(); ++i )
@@ -1209,13 +1210,14 @@ static std::shared_ptr<GDALGroup> GetGroup(const std::shared_ptr<GDALGroup>& poR
         fullName.c_str(), "/", 0));
     for( int i = 0; i < aosTokens.size(); i++ )
     {
-        poCurGroup = poCurGroup->OpenGroup(aosTokens[i], nullptr);
-        if( !poCurGroup )
+        auto poCurGroupNew = poCurGroup->OpenGroup(aosTokens[i], nullptr);
+        if( !poCurGroupNew )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                     "Cannot find group %s", aosTokens[i]);
             return nullptr;
         }
+        poCurGroup = poCurGroupNew;
     }
     return poCurGroup;
 }
@@ -1497,6 +1499,12 @@ static bool TranslateInternal(std::shared_ptr<GDALGroup>& poDstRootGroup,
     }
     else
     {
+        if( poSrcRootGroup == nullptr )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                 "No multidimensional source dataset");
+            return false;
+        }
         return CopyGroup(oDimRemapper,
                          poDstRootGroup,
                          poDstRootGroup,

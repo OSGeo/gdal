@@ -72,7 +72,7 @@
 #if HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#if GDAL_HAVE_XLOCALE_H
+#if HAVE_XLOCALE_H
 #include <xlocale.h> // for LC_NUMERIC_MASK on MacOS
 #endif
 
@@ -106,8 +106,8 @@ static volatile char **g_papszConfigOptions = nullptr;
 
 // Used by CPLOpenShared() and friends.
 static CPLMutex *hSharedFileMutex = nullptr;
-static volatile int nSharedFileCount = 0;
-static volatile CPLSharedFileInfo *pasSharedFileList = nullptr;
+static int nSharedFileCount = 0;
+static CPLSharedFileInfo *pasSharedFileList = nullptr;
 
 // Used by CPLsetlocale().
 static CPLMutex *hSetLocaleMutex = nullptr;
@@ -980,15 +980,7 @@ GUIntBig CPLScanUIntBig( const char *pszString, int nMaxLength )
 /* -------------------------------------------------------------------- */
 /*      Fetch out the result                                            */
 /* -------------------------------------------------------------------- */
-#if defined(__MSVCRT__) || (defined(WIN32) && defined(_MSC_VER))
-    return static_cast<GUIntBig>(_atoi64(osValue.c_str()));
-#elif HAVE_STRTOULL
     return strtoull(osValue.c_str(), nullptr, 10);
-#elif HAVE_ATOLL
-    return atoll(osValue.c_str());
-#else
-    return atol(osValue.c_str());
-#endif
 }
 
 /************************************************************************/
@@ -1005,13 +997,7 @@ GUIntBig CPLScanUIntBig( const char *pszString, int nMaxLength )
 
 GIntBig CPLAtoGIntBig( const char *pszString )
 {
-#if defined(__MSVCRT__) || (defined(WIN32) && defined(_MSC_VER))
-    return _atoi64(pszString);
-#elif HAVE_ATOLL
     return atoll(pszString);
-#else
-    return atol(pszString);
-#endif
 }
 
 #if defined(__MINGW32__) || defined(__sun__)
@@ -1058,15 +1044,7 @@ static int CPLAtoGIntBigExHasOverflow(const char* pszString, GIntBig nVal)
 GIntBig CPLAtoGIntBigEx( const char* pszString, int bWarn, int *pbOverflow )
 {
     errno = 0;
-#if defined(__MSVCRT__) || (defined(WIN32) && defined(_MSC_VER))
-    GIntBig nVal = _atoi64(pszString);
-#elif HAVE_STRTOLL
     GIntBig nVal = strtoll(pszString, nullptr, 10);
-#elif HAVE_ATOLL
-    GIntBig nVal = atoll(pszString);
-#else
-    GIntBig nVal = atol(pszString);
-#endif
     if( errno == ERANGE
 #if defined(__MINGW32__) || defined(__sun__)
         || CPLAtoGIntBigExHasOverflow(pszString, nVal)
@@ -1378,10 +1356,8 @@ int CPLPrintUIntBig( char *pszBuffer, GUIntBig iValue, int nMaxLen )
 #ifdef HAVE_GCC_DIAGNOSTIC_PUSH
 #pragma GCC diagnostic pop
 #endif
-#elif HAVE_LONG_LONG
-    snprintf(szTemp, sizeof(szTemp), "%*llu", nMaxLen, iValue);
 #else
-    snprintf(szTemp, sizeof(szTemp), "%*lu", nMaxLen, iValue);
+    snprintf(szTemp, sizeof(szTemp), "%*llu", nMaxLen, iValue);
 #endif
 
     return CPLPrintString(pszBuffer, szTemp, nMaxLen);
@@ -2019,24 +1995,45 @@ void CPL_STDCALL CPLFreeConfig()
 /************************************************************************/
 
 /** Load configuration from a given configuration file.
- *
- * A configuration file is a text file in a .ini style format, that lists
- * configuration options and their values.
- * Lines starting with # are comment lines.
- *
- * Example:
- * <pre>
- * [configoptions]
- * # set BAR as the value of configuration option FOO
- * FOO=BAR
- * </pre>
- *
- * This function is typically called by CPLLoadConfigOptionsFromPredefinedFiles()
- *
- * @param pszFilename File where to load configuration from.
- * @param bOverrideEnvVars Whether configuration options from the configuration
- *                         file should override environment variables.
- * @since GDAL 3.3
+
+A configuration file is a text file in a .ini style format, that lists
+configuration options and their values.
+Lines starting with # are comment lines.
+
+Example:
+\verbatim
+[configoptions]
+# set BAR as the value of configuration option FOO
+FOO=BAR
+\endverbatim
+
+Starting with GDAL 3.5, a configuration file can also contain credentials
+(or more generally options related to a virtual file system) for a given path prefix,
+that can also be set with VSISetCredential(). Credentials should be put under
+a [credentials] section, and for each path prefix, under a relative subsection
+whose name starts with "[." (e.g. "[.some_arbitrary_name]"), and whose first
+key is "path".
+
+Example:
+\verbatim
+[credentials]
+
+[.private_bucket]
+path=/vsis3/my_private_bucket
+AWS_SECRET_ACCESS_KEY=...
+AWS_ACCESS_KEY_ID=...
+
+[.sentinel_s2_l1c]
+path=/vsis3/sentinel-s2-l1c
+AWS_REQUEST_PAYER=requester
+\endverbatim
+
+This function is typically called by CPLLoadConfigOptionsFromPredefinedFiles()
+
+@param pszFilename File where to load configuration from.
+@param bOverrideEnvVars Whether configuration options from the configuration
+                        file should override environment variables.
+@since GDAL 3.3
  */
 void CPLLoadConfigOptionsFromFile(const char* pszFilename, int bOverrideEnvVars)
 {
@@ -2046,19 +2043,98 @@ void CPLLoadConfigOptionsFromFile(const char* pszFilename, int bOverrideEnvVars)
     CPLDebug("CPL", "Loading configuration from %s", pszFilename);
     const char* pszLine;
     bool bInConfigOptions = false;
+    bool bInCredentials = false;
+    bool bInSubsection = false;
+    std::string osPath;
+
+    const auto IsSpaceOnly = [](const char* pszStr)
+    {
+        for(; *pszStr; ++pszStr)
+        {
+            if( !isspace(*pszStr) )
+                return false;
+        }
+        return true;
+    };
+
     while( (pszLine = CPLReadLine2L(fp, -1, nullptr)) != nullptr )
     {
-        if( pszLine[0] == '#' )
+        if( IsSpaceOnly(pszLine) )
+        {
+            // Blank line
+        }
+        else if( pszLine[0] == '#' )
         {
             // Comment line
         }
         else if( strcmp(pszLine, "[configoptions]") == 0 )
         {
             bInConfigOptions = true;
+            bInCredentials = false;
+        }
+        else if( strcmp(pszLine, "[credentials]") == 0 )
+        {
+            bInConfigOptions = false;
+            bInCredentials = true;
+            bInSubsection = false;
+            osPath.clear();
+        }
+        else if( bInCredentials )
+        {
+            if( strncmp(pszLine, "[.", 2) == 0 )
+            {
+                bInSubsection = true;
+                osPath.clear();
+            }
+            else if( bInSubsection )
+            {
+                char* pszKey = nullptr;
+                const char* pszValue = CPLParseNameValue(pszLine, &pszKey);
+                if( pszKey && pszValue )
+                {
+                    if( strcmp(pszKey, "path") == 0 )
+                    {
+                        if( !osPath.empty() )
+                        {
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                     "Duplicated 'path' key in the same subsection. "
+                                     "Ignoring %s=%s",
+                                     pszKey, pszValue);
+                        }
+                        else
+                        {
+                            osPath = pszValue;
+                        }
+                    }
+                    else if( osPath.empty() )
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "First entry in a credentials subsection "
+                                 "should be 'path'.");
+                    }
+                    else
+                    {
+                        VSISetCredential(osPath.c_str(), pszKey, pszValue);
+                    }
+                }
+                CPLFree(pszKey);
+            }
+            else if( pszLine[0] == '[' )
+            {
+                bInConfigOptions = false;
+                bInCredentials = false;
+            }
+            else
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Ignoring content in [credential] section that is not "
+                         "in a [.xxxxx] subsection");
+            }
         }
         else if( pszLine[0] == '[' )
         {
             bInConfigOptions = false;
+            bInCredentials = false;
         }
         else if( bInConfigOptions )
         {

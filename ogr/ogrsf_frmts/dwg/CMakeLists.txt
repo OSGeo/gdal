@@ -11,9 +11,9 @@ set(SOURCE
     ogrdwglayer.cpp
     ogrteigha.cpp)
 add_gdal_driver(TARGET ogr_DWG_DGNV8 SOURCES ${SOURCE} DRIVER_NAME_OPTION DWG PLUGIN_CAPABLE)
-if (OGR_ENABLE_DWG_PLUGIN)
+if (OGR_ENABLE_DRIVER_DWG_PLUGIN)
   # a bit ugly but we need those symbols from the DXF driver Note: we need to use target_sources() to add them, and not
-  # edit the SOURCE variable, as the OGR_ENABLE_DWG_PLUGIN variable is automatically created only after
+  # edit the SOURCE variable, as the OGR_ENABLE_DRIVER_DWG_PLUGIN variable is automatically created only after
   # add_gdal_driver()
   target_sources(ogr_DWG_DGNV8 PRIVATE ../dxf/ogr_autocad_services.cpp ../dxf/ogrdxf_polyline_smooth.cpp
                                        ../dxf/intronurbs.cpp)
@@ -23,11 +23,10 @@ else ()
 endif ()
 
 gdal_standard_includes(ogr_DWG_DGNV8)
-target_compile_definitions(ogr_DWG_DGNV8 PRIVATE -DDO_NOT_USE_DEBUG_BOOL)
 target_include_directories(ogr_DWG_DGNV8 PRIVATE $<TARGET_PROPERTY:ogr_DXF,SOURCE_DIR>)
-gdal_target_link_libraries(TARGET ogr_DWG_DGNV8 LIBRARIES TEIGHA::TEIGHA)
+gdal_target_link_libraries(ogr_DWG_DGNV8 PRIVATE TEIGHA::TEIGHA)
 if (Threads_FOUND)
-  gdal_target_link_libraries(TARGET ogr_DWG_DGNV8 LIBRARIES Threads::Threads)
+  gdal_target_link_libraries(ogr_DWG_DGNV8 PRIVATE Threads::Threads)
 endif ()
 
 option(BUILD_CREATEDGNV8TESTFILE "Build test program createdgnv8testfile" ON)

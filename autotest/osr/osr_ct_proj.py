@@ -194,10 +194,12 @@ def test_proj(src_srs, src_xyz, src_error,
             pytest.skip(f'PROJ version < {proj_version_req}')
 
     src = osr.SpatialReference()
+    src.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
     assert src.SetFromUserInput(src_srs) == 0, \
         ('SetFromUserInput(%s) failed.' % src_srs)
 
     dst = osr.SpatialReference()
+    dst.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
     assert dst.SetFromUserInput(dst_srs) == 0, \
         ('SetFromUserInput(%s) failed.' % dst_srs)
 
@@ -261,6 +263,7 @@ def test_proj(src_srs, src_xyz, src_error,
 )
 def test_transform_bounds_densify(density, expected):
     src = osr.SpatialReference()
+    src.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
     assert src.ImportFromEPSG(4326) == 0
     dst = osr.SpatialReference()
     assert dst.ImportFromProj4(
@@ -316,6 +319,7 @@ def test_transform_bounds_densify_out_of_bounds__geographic_output():
        "+a=6370997 +b=6370997 +units=m +no_defs"
     ) == 0
     dst = osr.SpatialReference()
+    dst.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
     assert dst.ImportFromEPSG(4326) == 0
     ctr = osr.CoordinateTransformation(src, dst)
     assert ctr.TransformBounds(
@@ -325,8 +329,10 @@ def test_transform_bounds_densify_out_of_bounds__geographic_output():
 
 def test_transform_bounds_antimeridian():
     src = osr.SpatialReference()
+    src.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
     assert src.ImportFromEPSG(4167) == 0
     dst = osr.SpatialReference()
+    dst.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
     assert dst.ImportFromEPSG(3851) == 0
     ctr = osr.CoordinateTransformation(src, dst)
     assert ctr.TransformBounds(
@@ -423,8 +429,10 @@ def test_transform_bounds__noop_geographic():
 
 def test_transform_bounds__north_pole():
     src = osr.SpatialReference()
+    src.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
     assert src.ImportFromEPSG(32661) == 0
     dst = osr.SpatialReference()
+    dst.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
     assert dst.ImportFromEPSG(4326) == 0
     ctr = osr.CoordinateTransformation(src, dst)
     assert ctr.TransformBounds(
@@ -459,8 +467,10 @@ def test_transform_bounds__north_pole__xy():
 
 def test_transform_bounds__south_pole():
     src = osr.SpatialReference()
+    src.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
     assert src.ImportFromEPSG(32761) == 0
     dst = osr.SpatialReference()
+    dst.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
     assert dst.ImportFromEPSG(4326) == 0
     ctr = osr.CoordinateTransformation(src, dst)
     assert ctr.TransformBounds(

@@ -1,1 +1,0 @@
-This is a very small extract from the sample set http://grass.itc.it/sampledata/fire_grass6data.tar.gz

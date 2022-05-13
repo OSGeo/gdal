@@ -69,10 +69,8 @@ CPL_C_END
 #include "Packer_RLE.h"
 
 #if defined(BRUNSLI)
-#include <brunsli/brunsli_decode.h>
-#include <brunsli/jpeg_data_writer.h>
-#include <brunsli/brunsli_encode.h>
-#include <brunsli/jpeg_data_reader.h>
+#include <brunsli/encode.h>
+#include <brunsli/decode.h>
 #endif
 
 NAMESPACE_MRF_START
@@ -350,29 +348,8 @@ CPLErr JPEG_Codec::CompressJPEG(buf_mgr &dst, buf_mgr &src)
     CPLFree(rowp);
     CPLFree(buffer);     // Safe to call on null
 
-    size_t fullsize = dst.size;
     // Figure out the size of the JFIF
-    dst.size = fullsize - jmgr.free_in_buffer;
-
-#if defined(BRUNSLI)
-    if (!JFIF) {
-        brunsli::JPEGData bjpg;
-        if (!brunsli::ReadJpeg(reinterpret_cast<GByte *>(dst.buffer), dst.size, brunsli::JPEG_READ_ALL, &bjpg)) {
-            CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error parsing JPEG before conversion to JPEG-XL");
-            return CE_Failure;
-        }
-        std::vector<GByte> out;
-        out.resize(fullsize);
-        if (!brunsli::BrunsliEncodeJpeg(bjpg, out.data(), &fullsize)) {
-            CPLError(CE_Failure, CPLE_AppDefined, "MRF: JPEG-XL encoding error");
-            return CE_Failure;
-        }
-        // fullsize holds the JPEG XL output size
-        memcpy(dst.buffer, out.data(), fullsize);
-        dst.size = fullsize;
-    }
-#endif
-
+    dst.size -= jmgr.free_in_buffer;
     return CE_None;
 }
 
@@ -459,7 +436,8 @@ static boolean MaskProcessor(j_decompress_ptr pcinfo) {
     BitMask *mask = psJPEG->mask;
     // caller doesn't want a mask or wrong chunk, skip the chunk and return
     if (!mask || static_cast<size_t>(len) < CHUNK_NAME_SIZE
-        || !EQUALN(reinterpret_cast<const char *>(src->next_input_byte), CHUNK_NAME, CHUNK_NAME_SIZE)) {
+        || !EQUALN(reinterpret_cast<const char *>(src->next_input_byte), CHUNK_NAME, CHUNK_NAME_SIZE))
+    {
         src->bytes_in_buffer -= len;
         src->next_input_byte += len;
         return true;
@@ -659,15 +637,6 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr& dst, buf_mgr& isrc)
 char CHUNK_NAME[] = "Zen";
 size_t CHUNK_NAME_SIZE = strlen(CHUNK_NAME) + 1;
 
-#if defined(BRUNSLI)
-// Append to end of out vector
-static size_t out_callback(void* out, const GByte* data, size_t size) {
-    auto outv = static_cast<std::vector<GByte> *>(out);
-    outv->insert(outv->end(), data, data + size);
-    return size;
-}
-#endif // BRUNSLI
-
 const static GUInt32 JPEG_SIG = 0xe0ffd8ff; // JPEG 4CC code
 const static GUInt32 BRUN_SIG = 0xd242040a; // Brunsli 4CC code, native
 
@@ -690,41 +659,41 @@ bool JPEG_Codec::IsJPEG(const buf_mgr& src)
     return false;
 }
 
+#if defined(BRUNSLI)
+// Append to end of out vector
+static size_t brunsli_fun_callback(void* out, const GByte* data, size_t size) {
+    auto outv = static_cast<std::vector<GByte> *>(out);
+    outv->insert(outv->end(), data, data + size);
+    return size;
+}
+#endif
 
 // Type dependent dispachers
 CPLErr JPEG_Band::Decompress(buf_mgr &dst, buf_mgr &src) {
-    if (isbrunsli(src)) { // Need conversion to JPEG first
-#if !defined(BRUNSLI)
-        CPLError(CE_Failure, CPLE_NotSupported, "MRF: JPEG-XL content, yet this GDAL was not compiled with BRUNSLI support");
-        return CE_Failure;
-#else
-        std::vector<GByte> out;
-        brunsli::JPEGData bjpg;
-        // This call reads the all the input data internally and stores it in the bjpg structure
-        auto status = brunsli::BrunsliDecodeJpeg(reinterpret_cast<uint8_t*>(src.buffer), src.size, &bjpg);
-        if (status != brunsli::BRUNSLI_OK) {
-            CPLError(CE_Failure, CPLE_AppDefined, "MRF: JPEG-XL (brunsli) tile decode failed");
-            return CE_Failure;
-        }
-
-        brunsli::JPEGOutput writer(out_callback, &out);
-
-        if (!brunsli::WriteJpeg(bjpg, writer)) {
-            CPLError(CE_Failure, CPLE_AppDefined, "MRF: JPEG-XL (brunsli) to JPEG conversion failed");
-            return CE_Failure;
-        }
-
-        buf_mgr jfif_src;
-        jfif_src.buffer = reinterpret_cast<char *>(out.data());
-        jfif_src.size = out.size();
-        return Decompress(dst, jfif_src); // Call itself with JFIF JPEG source
-#endif // BRUNSLI
-    }
 #if defined(LIBJPEG_12_H)
     if (GDT_Byte != img.dt)
         return codec.DecompressJPEG12(dst, src);
 #endif
-    return codec.DecompressJPEG(dst, src);
+    if (!isbrunsli(src))
+        return codec.DecompressJPEG(dst, src);
+
+    // Need conversion to JFIF first
+#if !defined(BRUNSLI)
+    CPLError(CE_Failure, CPLE_NotSupported, "MRF: JPEG-XL content, yet this GDAL was not compiled with BRUNSLI support");
+    return CE_Failure;
+#else
+    std::vector<GByte> out;
+    // Returns 0 on failure
+    if (!DecodeBrunsli(src.size, reinterpret_cast<uint8_t*>(src.buffer), &out, brunsli_fun_callback)) {
+        CPLError(CE_Failure, CPLE_AppDefined, "MRF: JPEG-XL (brunsli) tile decode failed");
+        return CE_Failure;
+    }
+
+    buf_mgr jfif_src;
+    jfif_src.buffer = reinterpret_cast<char *>(out.data());
+    jfif_src.size = out.size();
+    return Decompress(dst, jfif_src); // Call itself with JFIF JPEG source
+#endif // BRUNSLI
 }
 
 CPLErr JPEG_Band::Compress(buf_mgr &dst, buf_mgr &src) {
@@ -732,7 +701,29 @@ CPLErr JPEG_Band::Compress(buf_mgr &dst, buf_mgr &src) {
     if (GDT_Byte != img.dt)
         return codec.CompressJPEG12(dst, src);
 #endif
+#if !defined(BRUNSLI)
     return codec.CompressJPEG(dst, src);
+#else
+    auto dst_size = dst.size; // Save the original size
+    auto err_code = codec.CompressJPEG(dst, src);
+    if (codec.JFIF || err_code != CE_None)
+        return err_code;
+
+    // The JFIF is in dst buffer
+    std::vector<GByte> out;
+    if (!EncodeBrunsli(dst.size, reinterpret_cast<uint8_t*>(dst.buffer), &out, brunsli_fun_callback)) {
+        CPLError(CE_Failure, CPLE_AppDefined, "MRF: JPEG-XL (brunsli) tile encode failed");
+        return CE_Failure;
+    }
+    // Copy the brunsli to the dst buffer
+    if (out.size() > dst_size) {
+        CPLError(CE_Failure, CPLE_AppDefined, "MRF: JPEG-XL (brunsli) encoded tile too large");
+        return CE_Failure;
+    }
+    memcpy(dst.buffer, out.data(), out.size());
+    dst.size = out.size();
+    return CE_None;
+#endif // BRUNSLI
 }
 
 // PHOTOMETRIC == MULTISPECTRAL turns off YCbCr conversion and downsampling

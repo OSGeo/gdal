@@ -139,7 +139,7 @@ class ELASDataset final: public GDALPamDataset
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
-                                int nXSize, int nYSize, int nBands,
+                                int nXSize, int nYSize, int nBandsIn,
                                 GDALDataType eType, char ** papszParamList );
 
     void FlushCache(bool bAtClosing) override;
@@ -504,7 +504,7 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
 /************************************************************************/
 
 GDALDataset *ELASDataset::Create( const char * pszFilename,
-                                  int nXSize, int nYSize, int nBands,
+                                  int nXSize, int nYSize, int nBandsIn,
                                   GDALDataType eType,
                                   char ** /* notdef: papszParamList */ )
 
@@ -512,10 +512,10 @@ GDALDataset *ELASDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Verify input options.                                           */
 /* -------------------------------------------------------------------- */
-    if (nBands <= 0)
+    if (nBandsIn <= 0)
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "ELAS driver does not support %d bands.\n", nBands);
+                  "ELAS driver does not support %d bands.\n", nBandsIn);
         return nullptr;
     }
 
@@ -562,7 +562,7 @@ GDALDataset *ELASDataset::Create( const char * pszFilename,
 
     sHeader.NBIH = CPL_MSBWORD32(1024);
 
-    sHeader.NBPR = CPL_MSBWORD32(nBands * nBandOffset);
+    sHeader.NBPR = CPL_MSBWORD32(nBandsIn * nBandOffset);
 
     sHeader.IL = CPL_MSBWORD32(1);
     sHeader.LL = CPL_MSBWORD32(nYSize);
@@ -570,7 +570,7 @@ GDALDataset *ELASDataset::Create( const char * pszFilename,
     sHeader.IE = CPL_MSBWORD32(1);
     sHeader.LE = CPL_MSBWORD32(nXSize);
 
-    sHeader.NC = CPL_MSBWORD32(nBands);
+    sHeader.NC = CPL_MSBWORD32(nBandsIn);
 
     sHeader.H4321 = CPL_MSBWORD32(4321);
 
@@ -594,7 +594,7 @@ GDALDataset *ELASDataset::Create( const char * pszFilename,
 /*      Now write out zero data for all the imagery.  This is           */
 /*      inefficient, but simplifies IReadBlock() / IWriteBlock() logic. */
 /* -------------------------------------------------------------------- */
-    GByte *pabyLine = (GByte *) CPLCalloc(nBandOffset,nBands);
+    GByte *pabyLine = (GByte *) CPLCalloc(nBandOffset,nBandsIn);
     for( int iLine = 0; iLine < nYSize; iLine++ )
     {
         if( VSIFWrite( pabyLine, 1, nBandOffset, fp ) != (size_t) nBandOffset )

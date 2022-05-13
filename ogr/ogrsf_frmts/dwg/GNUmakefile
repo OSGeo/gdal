@@ -20,7 +20,7 @@ OBJ	=	ogrdwgdriver.o ogrdwgdatasource.o ogrdwglayer.o \
 		ogrdgnv8driver.o ogrdgnv8datasource.o ogrdgnv8layer.o \
 		ogrteigha.o
 
-CPPFLAGS	:=	 -iquote ../dxf $(TDXXFLAGS) $(CPPFLAGS) $(TEIGHA_CPPFLAGS) -DDO_NOT_USE_DEBUG_BOOL
+CPPFLAGS	:=	 -iquote ../dxf $(TDXXFLAGS) $(CPPFLAGS) $(TEIGHA_CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 

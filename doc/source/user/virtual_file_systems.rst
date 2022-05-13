@@ -145,6 +145,41 @@ A generic :ref:`/vsicurl/ <vsicurl>` file system handler exists for online resou
 
 When reading of entire files in a streaming way is possible, prefer using the :ref:`/vsicurl_streaming/ <vsicurl_streaming>`, and its variants for the above cloud storage services, for more efficiency.
 
+How to set credentials ?
+++++++++++++++++++++++++
+
+Cloud storage services require setting credentials. For some of them, they can
+be provided through configuration files (~/.aws/config, ~/.boto, ..) or through
+environment variables / configuration options.
+
+Starting with GDAL 3.5, :cpp:func:`VSISetCredential` can be used to set configuration
+options with a granularity at the level of a file path, which makes it easier if using
+the same virtual file system but with different credentials (e.g. different
+credentials for bucket "/vsis3/foo" and "/vsis3/bar")
+
+Starting with GDAL 3.5, credentials can be specified in a
+:ref:`GDAL configuration file <gdal_configuration_file>`, either in a specific one
+explicitly loaded with :cpp:func:`CPLLoadConfigOptionsFromFile`, or
+one of the default automatically loaded by :cpp:func:`CPLLoadConfigOptionsFromPredefinedFiles`.
+
+They should be put under a ``[credentials]`` section, and for each path prefix,
+under a relative subsection whose name starts with ``[.`` (e.g. ``[.some_arbitrary_name]``),
+and whose first key is ``path``.
+`
+.. code-block::
+
+    [credentials]
+
+    [.private_bucket]
+    path=/vsis3/my_private_bucket
+    AWS_SECRET_ACCESS_KEY=...
+    AWS_ACCESS_KEY_ID=...
+
+    [.sentinel_s2_l1c]
+    path=/vsis3/sentinel-s2-l1c
+    AWS_REQUEST_PAYER=requester
+
+
 .. _vsicurl:
 
 /vsicurl/ (http/https/ftp files: random access)
@@ -248,6 +283,10 @@ The :decl_configoption:`AWS_VIRTUAL_HOSTING` configuration option defaults to ``
 On writing, the file is uploaded using the S3 multipart upload API. The size of chunks is set to 50 MB by default, allowing creating files up to 500 GB (10000 parts of 50 MB each). If larger files are needed, then increase the value of the :decl_configoption:`VSIS3_CHUNK_SIZE` config option to a larger value (expressed in MB). In case the process is killed and the file not properly closed, the multipart upload will remain open, causing Amazon to charge you for the parts storage. You'll have to abort yourself with other means such "ghost" uploads (e.g. with the s3cmd utility) For files smaller than the chunk size, a simple PUT request is used instead of the multipart upload API.
 
 Since GDAL 2.4, when listing a directory, files with GLACIER storage class are ignored unless the :decl_configoption:`CPL_VSIL_CURL_IGNORE_GLACIER_STORAGE` configuration option is set to ``NO``.
+This option has been superseded in GDAL 3.5 per the
+:decl_configoption:`CPL_VSIL_CURL_IGNORE_STORAGE_CLASSES` configuration option that
+accept a comma-separated list of storage class names and defaults to ``GLACIER,DEEP_ARCHIVE``
+(if set to empty, objects of all storage classes are retrieved).
 
 Since GDAL 3.1, the :cpp:func:`VSIRename` operation is supported (first doing a copy of the original file and then deleting it)
 
@@ -632,6 +671,8 @@ The file referenced by /vsisparse/ should be an XML control file formatted somet
     </VSISparseFile>
 
 Hopefully the values and semantics are fairly obvious.
+
+.. _target_user_virtual_file_systems_file_caching:
 
 File caching
 ------------

@@ -30,9 +30,7 @@
 
 %include constraints.i
 
-#ifdef PERL_CPAN_NAMESPACE
-%module "Geo::GDAL"
-#elif defined(SWIGCSHARP)
+#if defined(SWIGCSHARP)
 %module Gdal
 #elif defined(SWIGPYTHON)
 %module (package="osgeo") gdal
@@ -91,7 +89,7 @@ typedef GDALDimensionHS GDALDimensionHS;
 
 %}
 
-#if defined(SWIGPYTHON) || defined(SWIGJAVA) || defined(SWIGPERL) || defined(SWIGCSHARP)
+#if defined(SWIGPYTHON) || defined(SWIGJAVA) || defined(SWIGCSHARP)
 %{
 #ifdef DEBUG
 typedef struct OGRSpatialReferenceHS OSRSpatialReferenceShadow;
@@ -149,6 +147,8 @@ typedef enum {
     /*! Sixteen bit signed integer */           GDT_Int16 = 3,
     /*! Thirty two bit unsigned integer */      GDT_UInt32 = 4,
     /*! Thirty two bit signed integer */        GDT_Int32 = 5,
+    /*! 64 bit unsigned integer */              GDT_UInt64 = 12,
+    /*! 64 bit signed integer */                GDT_Int64 = 13,
     /*! Thirty two bit floating point */        GDT_Float32 = 6,
     /*! Sixty four bit floating point */        GDT_Float64 = 7,
     /*! Complex Int16 */                        GDT_CInt16 = 8,
@@ -231,7 +231,6 @@ typedef enum {
   /*! Cubic B-Spline Approximation (4x4 kernel) */     GRA_CubicSpline=3,
   /*! Lanczos windowed sinc interpolation (6x6 kernel) */ GRA_Lanczos=4,
   /*! Average (computes the average of all non-NODATA contributing pixels) */ GRA_Average=5,
-  /*! Root Mean Square (computes the RMS (Quadratic Mean) of all non-NODATA contributing pixels) */ GRA_RMS=14,
   /*! Mode (selects the value which appears most often of all the sampled points) */ GRA_Mode=6,
   /*  GRA_Gauss=7 reserved. */
   /*! Max (selects maximum of all non-NODATA contributing pixels) */ GRA_Max=8,
@@ -256,8 +255,6 @@ typedef enum {
 %include "gdal_python.i"
 #elif defined(SWIGCSHARP)
 %include "gdal_csharp.i"
-#elif defined(SWIGPERL)
-%include "gdal_perl.i"
 #elif defined(SWIGJAVA)
 %include "gdal_java.i"
 #else
@@ -310,7 +307,7 @@ $1;
 %include "Driver.i"
 
 
-#if defined(SWIGPYTHON) || defined(SWIGJAVA) || defined(SWIGPERL)
+#if defined(SWIGPYTHON) || defined(SWIGJAVA)
 /*
  * We need to import ogr.i and osr.i for OGRLayer and OSRSpatialRefrerence
  */
@@ -339,6 +336,7 @@ $1;
 %rename (DataTypeIsComplex) GDALDataTypeIsComplex;
 %rename (GetDataTypeName) GDALGetDataTypeName;
 %rename (GetDataTypeByName) GDALGetDataTypeByName;
+%rename (DataTypeUnion) GDALDataTypeUnion;
 %rename (GetColorInterpretationName) GDALGetColorInterpretationName;
 %rename (GetPaletteInterpretationName) GDALGetPaletteInterpretationName;
 %rename (DecToDMS) GDALDecToDMS;
@@ -348,17 +346,12 @@ $1;
 %rename (SerializeXMLTree) CPLSerializeXMLTree;
 %rename (GetJPEG2000Structure) GDALGetJPEG2000Structure;
 
-#ifdef SWIGPERL
-%include "gdal_perl_rename.i"
-#endif
-
-
 //************************************************************************
 //
 // GDALColorEntry
 //
 //************************************************************************
-#if !defined(SWIGPERL) && !defined(SWIGJAVA)
+#if !defined(SWIGJAVA)
 %rename (ColorEntry) GDALColorEntry;
 #ifdef SWIGPYTHON
 %nodefaultctor GDALColorEntry;
@@ -629,7 +622,7 @@ void GDALAllRegister();
 
 void GDALDestroyDriverManager();
 
-#if defined(SWIGPYTHON) || defined(SWIGPERL)
+#if defined(SWIGPYTHON)
 %inline {
 GIntBig wrapper_GDALGetCacheMax()
 {
@@ -682,6 +675,8 @@ const char *GDALGetDataTypeName( GDALDataType eDataType );
 
 GDALDataType GDALGetDataTypeByName( const char * pszDataTypeName );
 
+GDALDataType GDALDataTypeUnion( GDALDataType a, GDALDataType b );
+
 const char *GDALGetColorInterpretationName( GDALColorInterp eColorInterp );
 
 const char *GDALGetPaletteInterpretationName( GDALPaletteInterp ePaletteInterp );
@@ -711,7 +706,7 @@ double GDALDecToPackedDMS( double dfDec );
 #endif
 CPLXMLNode *CPLParseXMLString( char * pszXMLString );
 
-#if defined(SWIGJAVA) || defined(SWIGCSHARP) || defined(SWIGPYTHON) || defined(SWIGPERL)
+#if defined(SWIGJAVA) || defined(SWIGCSHARP) || defined(SWIGPYTHON)
 retStringAndCPLFree *CPLSerializeXMLTree( CPLXMLNode *xmlnode );
 #else
 char *CPLSerializeXMLTree( CPLXMLNode *xmlnode );
@@ -758,13 +753,6 @@ GDALDriverShadow* GetDriverByName( char const *name ) {
 }
 %}
 
-#ifdef SWIGPERL
-%inline %{
-GDALDriverShadow* GetDriver( char const *name ) {
-  return (GDALDriverShadow*) GDALGetDriverByName( name );
-}
-%}
-#endif
 %inline %{
 GDALDriverShadow* GetDriver( int i ) {
   return (GDALDriverShadow*) GDALGetDriver( i );
@@ -1053,28 +1041,31 @@ static void PopStackingErrorHandler(std::vector<ErrorStruct>* paoErrors, bool bS
     CPLPopErrorHandler();
 
     // If the operation was successful, do not emit regular CPLError()
-    // that would be caught by the PythonBindingErrorHandler and turned into
+    // of CE_Failure type that would be caught by the PythonBindingErrorHandler
+    // and turned into
     // Python exceptions. Just emit them with the previous error handler
-    if( bSuccess )
-    {
-        for( size_t iError = 0; iError < paoErrors->size(); ++iError )
-        {
-            pfnPreviousHandler( (*paoErrors)[iError].type,
-                    (*paoErrors)[iError].no,
-                    (*paoErrors)[iError].msg );
-        }
 
-        CPLErrorReset();
-    }
-    else
+    for( size_t iError = 0; iError < paoErrors->size(); ++iError )
     {
-        for( size_t iError = 0; iError < paoErrors->size(); ++iError )
+        CPLErr eErrClass = (*paoErrors)[iError].type;
+        if( bSuccess && eErrClass == CE_Failure )
         {
-            CPLError( (*paoErrors)[iError].type,
+            pfnPreviousHandler( eErrClass,
+                                (*paoErrors)[iError].no,
+                                (*paoErrors)[iError].msg );
+        }
+        else
+        {
+            CPLError( eErrClass,
                     (*paoErrors)[iError].no,
                     "%s",
                     (*paoErrors)[iError].msg );
         }
+    }
+
+    if( bSuccess )
+    {
+        CPLErrorReset();
     }
 }
 %}

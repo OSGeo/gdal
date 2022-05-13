@@ -40,7 +40,7 @@ def Usage():
     return 1
 
 
-def main(argv):
+def main(argv=sys.argv):
     # srcwin = None
     # bands = []
 
@@ -181,4 +181,3 @@ def main(argv):
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv))
-

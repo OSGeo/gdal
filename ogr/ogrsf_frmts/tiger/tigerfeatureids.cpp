@@ -34,14 +34,14 @@ CPL_CVSID("$Id$")
 static const char FILE_CODE[] = "5";
 
 static const TigerFieldInfo rt5_2002_fields[] = {
-  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
-  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
-  { "FILE",       'L', 'N', OFTInteger,    6,  10,   5,       1,   1,     1 },
-  { "FEAT",       'R', 'N', OFTInteger,   11,  18,   8,       1,   1,     1 },
-  { "FEDIRP",     'L', 'A', OFTString,    19,  20,   2,       1,   1,     1 },
-  { "FENAME",     'L', 'A', OFTString,    21,  50,  30,       1,   1,     1 },
-  { "FETYPE",     'L', 'A', OFTString,    51,  54,   4,       1,   1,     1 },
-  { "FEDIRS",     'L', 'A', OFTString,    55,  56,   2,       1,   1,     1 },
+  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet
+  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0 },
+  { "FILE",       'L', 'N', OFTInteger,    6,  10,   5,       1,   1 },
+  { "FEAT",       'R', 'N', OFTInteger,   11,  18,   8,       1,   1 },
+  { "FEDIRP",     'L', 'A', OFTString,    19,  20,   2,       1,   1 },
+  { "FENAME",     'L', 'A', OFTString,    21,  50,  30,       1,   1 },
+  { "FETYPE",     'L', 'A', OFTString,    51,  54,   4,       1,   1 },
+  { "FEDIRS",     'L', 'A', OFTString,    55,  56,   2,       1,   1 },
 };
 static const TigerRecordInfo rt5_2002_info =
   {
@@ -51,16 +51,16 @@ static const TigerRecordInfo rt5_2002_info =
   };
 
 static const TigerFieldInfo rt5_fields[] = {
-  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
-  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
-  { "FILE",       'L', 'N', OFTString,     2,   6,   5,       1,   1,     1 },
-  { "STATE",      'L', 'N', OFTInteger,    2,   3,   2,       1,   1,     1 },
-  { "COUNTY",     'L', 'N', OFTInteger,    4,   6,   3,       1,   1,     1 },
-  { "FEAT",       'R', 'N', OFTInteger,    7,  14,   8,       1,   1,     1 },
-  { "FEDIRP",     'L', 'A', OFTString,    15,  16,   2,       1,   1,     1 },
-  { "FENAME",     'L', 'A', OFTString,    17,  46,  30,       1,   1,     1 },
-  { "FETYPE",     'L', 'A', OFTString,    47,  50,   4,       1,   1,     1 },
-  { "FEDIRS",     'L', 'A', OFTString,    51,  52,   2,       1,   1,     1 }
+  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet
+  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0 },
+  { "FILE",       'L', 'N', OFTString,     2,   6,   5,       1,   1 },
+  { "STATE",      'L', 'N', OFTInteger,    2,   3,   2,       1,   1 },
+  { "COUNTY",     'L', 'N', OFTInteger,    4,   6,   3,       1,   1 },
+  { "FEAT",       'R', 'N', OFTInteger,    7,  14,   8,       1,   1 },
+  { "FEDIRP",     'L', 'A', OFTString,    15,  16,   2,       1,   1 },
+  { "FENAME",     'L', 'A', OFTString,    17,  46,  30,       1,   1 },
+  { "FETYPE",     'L', 'A', OFTString,    47,  50,   4,       1,   1 },
+  { "FEDIRS",     'L', 'A', OFTString,    51,  52,   2,       1,   1 }
 };
 
 static const TigerRecordInfo rt5_info =

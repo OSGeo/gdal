@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>${CSHARP_LIBRARY_VERSION}</TargetFramework>
+    <RuntimeIdentifier>${CSHARP_RID}</RuntimeIdentifier>
+    <AssemblyVersion>${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}.${GDAL_VERSION_REV}</AssemblyVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+      <Compile Include="${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALEmpty.cs"></Compile>
+  </ItemGroup>
+</Project>

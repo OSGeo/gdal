@@ -512,20 +512,31 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape,
         }
 
         const OGRMultiPoint   *poMP = poGeom->toMultiPoint();
+        const int nNumGeometries = poMP->getNumGeometries();
+        const bool bHasZ = (hSHP->nShapeType == SHPT_MULTIPOINTM ||
+                            hSHP->nShapeType == SHPT_MULTIPOINTZ);
+        const bool bHasM = wkbHasM(eLayerGeomType) && bHasZ;
+        const bool bIsGeomMeasured = CPL_TO_BOOL(poGeom->IsMeasured());
+
         std::vector<double> adfX;
         std::vector<double> adfY;
         std::vector<double> adfZ;
         std::vector<double> adfM;
-        const int nNumGeometries = poMP->getNumGeometries();
-        adfX.reserve(nNumGeometries);
-        adfY.reserve(nNumGeometries);
-        adfZ.reserve(nNumGeometries);
-        const bool bHasM = wkbHasM(eLayerGeomType) &&
-            (hSHP->nShapeType == SHPT_MULTIPOINTM ||
-             hSHP->nShapeType == SHPT_MULTIPOINTZ);
-        const bool bIsGeomMeasured = CPL_TO_BOOL(poGeom->IsMeasured());
-        if( bHasM )
-            adfM.reserve(nNumGeometries);
+        try
+        {
+            adfX.reserve(nNumGeometries);
+            adfY.reserve(nNumGeometries);
+            if( bHasZ )
+                adfZ.reserve(nNumGeometries);
+            if( bHasM )
+                adfM.reserve(nNumGeometries);
+        }
+        catch( const std::exception& e )
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory, "%s", e.what());
+            return OGRERR_FAILURE;
+        }
+
 
         for( const OGRPoint *poPoint: *poMP )
         {
@@ -534,7 +545,8 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape,
             {
                 adfX.push_back(poPoint->getX());
                 adfY.push_back(poPoint->getY());
-                adfZ.push_back(poPoint->getZ());
+                if( bHasZ )
+                    adfZ.push_back(poPoint->getZ());
                 if( bHasM )
                 {
                     if( bIsGeomMeasured )
@@ -562,7 +574,8 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape,
         SHPObject *psShape =
             SHPCreateObject( hSHP->nShapeType, -1, 0, nullptr, nullptr,
                              static_cast<int>(adfX.size()),
-                             adfX.data(), adfY.data(), adfZ.data(),
+                             adfX.data(), adfY.data(),
+                             bHasZ ? adfZ.data() : nullptr,
                              bHasM ? adfM.data() : nullptr );
         const int nReturnedShapeID = SHPWriteObject( hSHP, iShape, psShape );
         SHPDestroyObject( psShape );
@@ -581,25 +594,35 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape,
     {
         const OGRLineString *poArc = poGeom->toLineString();
         const int nNumPoints = poArc->getNumPoints();
+        const bool bHasZ = (hSHP->nShapeType == SHPT_ARCM ||
+                            hSHP->nShapeType == SHPT_ARCZ);
+        const bool bHasM = wkbHasM(eLayerGeomType) && bHasZ;
+        const bool bIsGeomMeasured = CPL_TO_BOOL(poGeom->IsMeasured());
         std::vector<double> adfX;
         std::vector<double> adfY;
         std::vector<double> adfZ;
         std::vector<double> adfM;
-        adfX.reserve(nNumPoints);
-        adfY.reserve(nNumPoints);
-        adfZ.reserve(nNumPoints);
-        const bool bHasM = wkbHasM(eLayerGeomType) &&
-            (hSHP->nShapeType == SHPT_ARCM ||
-             hSHP->nShapeType == SHPT_ARCZ);
-        const bool bIsGeomMeasured = CPL_TO_BOOL(poGeom->IsMeasured());
-        if( bHasM )
-            adfM.reserve(nNumPoints);
+        try
+        {
+            adfX.reserve(nNumPoints);
+            adfY.reserve(nNumPoints);
+            if( bHasZ )
+                adfZ.reserve(nNumPoints);
+            if( bHasM )
+                adfM.reserve(nNumPoints);
+        }
+        catch( const std::exception& e )
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory, "%s", e.what());
+            return OGRERR_FAILURE;
+        }
 
         for( int iPoint = 0; iPoint < nNumPoints; iPoint++ )
         {
             adfX.push_back(poArc->getX( iPoint ));
             adfY.push_back(poArc->getY( iPoint ));
-            adfZ.push_back(poArc->getZ( iPoint ));
+            if( bHasZ )
+                adfZ.push_back(poArc->getZ( iPoint ));
             if( bHasM )
             {
                 if( bIsGeomMeasured )
@@ -619,7 +642,8 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape,
         SHPObject *psShape =
             SHPCreateObject( hSHP->nShapeType, -1, 0, nullptr, nullptr,
                              static_cast<int>(adfX.size()),
-                             adfX.data(), adfY.data(), adfZ.data(),
+                             adfX.data(), adfY.data(),
+                             bHasZ ? adfZ.data() : nullptr,
                              bHasM ? adfM.data() : nullptr );
         const int nReturnedShapeID = SHPWriteObject( hSHP, iShape, psShape );
         SHPDestroyObject( psShape );
@@ -649,17 +673,48 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape,
         const OGRMultiLineString *poML = poForcedGeom->toMultiLineString();
         const int nNumGeometries = poML->getNumGeometries();
 
-        std::vector<int> anRingStart;
-        anRingStart.reserve(nNumGeometries);
+        int nTotalPoints = 0;
+        for( const auto poArc: poML )
+        {
+            const int nNumPoints = poArc->getNumPoints();
+            if( nTotalPoints > std::numeric_limits<int>::max() - nNumPoints )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, "Too big geometry");
+                return OGRERR_FAILURE;
+            }
+            nTotalPoints += nNumPoints;
+        }
 
+        std::vector<int> anRingStart;
         std::vector<double> adfX;
         std::vector<double> adfY;
         std::vector<double> adfZ;
         std::vector<double> adfM;
-        const bool bHasM =
-            wkbHasM(eLayerGeomType) && (hSHP->nShapeType == SHPT_ARCM ||
-                                            hSHP->nShapeType == SHPT_ARCZ);
+        const bool bHasZ = (hSHP->nShapeType == SHPT_ARCM ||
+                            hSHP->nShapeType == SHPT_ARCZ);
+        const bool bHasM = wkbHasM(eLayerGeomType) && bHasZ;
         const bool bIsGeomMeasured = CPL_TO_BOOL(poGeom->IsMeasured());
+
+        try
+        {
+            anRingStart.reserve(nNumGeometries);
+
+            adfX.reserve(nTotalPoints);
+            adfY.reserve(nTotalPoints);
+            if( bHasZ )
+            {
+                adfZ.reserve(nTotalPoints);
+            }
+            if( bHasM )
+            {
+                adfM.reserve(nTotalPoints);
+            }
+        }
+        catch( const std::exception& e )
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory, "%s", e.what());
+            return OGRERR_FAILURE;
+        }
 
         for( const auto poArc: poML )
         {
@@ -677,20 +732,14 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape,
 
             anRingStart.push_back(static_cast<int>(adfX.size()));
 
-            const int nNewReservation = static_cast<int>(adfX.size()) + nNumPoints;
-            adfX.reserve(nNewReservation);
-            adfY.reserve(nNewReservation);
-            adfZ.reserve(nNewReservation);
-            if( bHasM )
-            {
-                adfM.reserve(nNewReservation);
-            }
-
             for( int iPoint = 0; iPoint < nNumPoints; iPoint++ )
             {
                 adfX.push_back(poArc->getX( iPoint ));
                 adfY.push_back(poArc->getY( iPoint ));
-                adfZ.push_back(poArc->getZ( iPoint ));
+                if( bHasZ )
+                {
+                    adfZ.push_back(poArc->getZ( iPoint ));
+                }
                 if( bHasM )
                 {
                     if( bIsGeomMeasured )
@@ -713,7 +762,8 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape,
                              static_cast<int>(anRingStart.size()),
                              anRingStart.data(), nullptr,
                              static_cast<int>(adfX.size()),
-                             adfX.data(), adfY.data(), adfZ.data(),
+                             adfX.data(), adfY.data(),
+                             bHasZ ? adfZ.data() : nullptr,
                              bHasM ? adfM.data() : nullptr );
         const int nReturnedShapeID = SHPWriteObject( hSHP, iShape, psShape );
         SHPDestroyObject( psShape );
@@ -868,21 +918,31 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape,
         for( const auto& poRing: apoRings )
             nVertex += poRing->getNumPoints();
 
+        const bool bHasZ = (hSHP->nShapeType == SHPT_POLYGONM ||
+                            hSHP->nShapeType == SHPT_POLYGONZ);
+        const bool bHasM = wkbHasM(eLayerGeomType) && bHasZ;
+        const bool bIsGeomMeasured = CPL_TO_BOOL(poGeom->IsMeasured());
+
         std::vector<int> anRingStart;
-        anRingStart.reserve( apoRings.size() );
         std::vector<double> adfX;
         std::vector<double> adfY;
         std::vector<double> adfZ;
-        adfX.reserve( nVertex );
-        adfY.reserve( nVertex );
-        adfZ.reserve( nVertex );
-        const bool bHasM = wkbHasM(eLayerGeomType) &&
-            (hSHP->nShapeType == SHPT_POLYGONM ||
-             hSHP->nShapeType == SHPT_POLYGONZ);
         std::vector<double> adfM;
-        if( bHasM )
-            adfM.reserve( nVertex );
-        const bool bIsGeomMeasured = CPL_TO_BOOL(poGeom->IsMeasured());
+        try
+        {
+            anRingStart.reserve( apoRings.size() );
+            adfX.reserve( nVertex );
+            adfY.reserve( nVertex );
+            if( bHasZ )
+                adfZ.reserve( nVertex );
+            if( bHasM )
+                adfM.reserve( nVertex );
+        }
+        catch( const std::exception& e )
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory, "%s", e.what());
+            return OGRERR_FAILURE;
+        }
 
         // Collect vertices.
         for( const auto& poRing: apoRings )
@@ -890,20 +950,12 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape,
             anRingStart.push_back(static_cast<int>(adfX.size()));
 
             const int nNumPoints = poRing->getNumPoints();
-            const int nNewReservation = static_cast<int>(adfX.size()) + nNumPoints;
-            adfX.reserve(nNewReservation);
-            adfY.reserve(nNewReservation);
-            adfZ.reserve(nNewReservation);
-            if( bHasM )
-            {
-                adfM.reserve(nNewReservation);
-            }
-
             for( int iPoint = 0; iPoint < nNumPoints; iPoint++ )
             {
                 adfX.push_back(poRing->getX( iPoint ));
                 adfY.push_back(poRing->getY( iPoint ));
-                adfZ.push_back(poRing->getZ( iPoint ));
+                if( bHasZ )
+                    adfZ.push_back(poRing->getZ( iPoint ));
                 if( bHasM )
                 {
                     adfM.push_back(bIsGeomMeasured ?
@@ -925,7 +977,8 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape,
                              static_cast<int>(anRingStart.size()),
                              anRingStart.data(), nullptr,
                              static_cast<int>(adfX.size()),
-                             adfX.data(), adfY.data(), adfZ.data(),
+                             adfX.data(), adfY.data(),
+                             bHasZ ? adfZ.data() : nullptr,
                              bHasM ? adfM.data() : nullptr );
         if( bRewind )
             SHPRewindObject( hSHP, psShape );

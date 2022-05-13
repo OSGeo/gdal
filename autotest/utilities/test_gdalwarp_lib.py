@@ -32,6 +32,7 @@
 
 import struct
 import os
+import shutil
 
 
 from osgeo import gdal, ogr, osr
@@ -2131,6 +2132,74 @@ def test_gdalwarp_lib_src_points_outside_of_earth():
     with gdaltest.error_handler(my_error_handler.callback):
         gdal.Warp('', '../gdrivers/data/vrt/bug4997_intermediary.vrt', format='VRT')
     assert not my_error_handler.failure_raised
+
+###############################################################################
+# Test warping from a dataset in rotated pole projection, including the North
+# pole to geographic
+
+
+def test_gdalwarp_lib_from_ob_tran_including_north_pole_to_geographic():
+
+    # Not completely sure about the minimum version to have ob_tran working fine.
+    if osr.GetPROJVersionMajor() < 7:
+        pytest.skip('requires PROJ 7 or later')
+
+    ds = gdal.Warp('', '../gdrivers/data/small_world.tif',
+                   format='VRT',
+                   dstSRS = '+proj=ob_tran +o_proj=longlat +o_lon_p=189.477233886719 +o_lat_p=31.7581653594971 +lon_0=267.596992492676 +datum=WGS84 +no_defs',
+                   outputBounds = [32.4624074, -53.5375933, 327.538, 53.538],
+                   warpOptions = ['SAMPLE_GRID=YES', 'SOURCE_EXTRA=5'])
+    out_ds = gdal.Warp('', ds, format = 'VRT', dstSRS = 'EPSG:4326')
+    gt = out_ds.GetGeoTransform()
+    assert gt[0] == -180
+    assert gt[3] == 90
+    assert gt[0] + gt[1] * out_ds.RasterXSize == pytest.approx(180, abs=0.1)
+
+
+###############################################################################
+# Test gdalwarp foo.tif foo.tif.ovr
+
+
+def test_gdalwarp_lib_generate_ovr():
+
+    gdal.FileFromMemBuffer('/vsimem/foo.tif',
+                           open('../gcore/data/byte.tif', 'rb').read())
+    gdal.GetDriverByName('GTiff').Create('/vsimem/foo.tif.ovr', 10, 10)
+    ds = gdal.Warp('/vsimem/foo.tif.ovr', '/vsimem/foo.tif',
+                   options = '-of GTiff -r average -ts 10 10 -overwrite')
+    assert ds
+    assert ds.GetRasterBand(1).Checksum() != 0, 'Bad checksum'
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/foo.tif')
+
+
+###############################################################################
+# Test not deleting auxiliary files shared by the source and a target being
+# overwritten (https://github.com/OSGeo/gdal/issues/5633)
+
+
+def test_gdalwarp_lib_not_delete_shared_auxiliary_files():
+
+    # Yes, we do intend to copy a .TIF as a fake .JP2
+    shutil.copy('../gdrivers/data/dimap2/bundle/IMG_foo_R1C1.TIF', 'tmp/IMG_foo_R1C1.JP2')
+    shutil.copy('../gdrivers/data/dimap2/bundle/DIM_foo.XML', 'tmp/DIM_foo.XML')
+
+    gdal.Warp('tmp/IMG_foo_R1C1.tif', 'tmp/IMG_foo_R1C1.JP2')
+
+    ds = gdal.Open('tmp/IMG_foo_R1C1.tif')
+    assert len(ds.GetFileList()) == 2
+    ds = None
+
+    gdal.Warp('tmp/IMG_foo_R1C1.tif', 'tmp/IMG_foo_R1C1.JP2', format = 'GTiff')
+
+    ds = gdal.Open('tmp/IMG_foo_R1C1.tif')
+    assert len(ds.GetFileList()) == 2
+    ds = None
+
+    os.unlink('tmp/IMG_foo_R1C1.JP2')
+    os.unlink('tmp/IMG_foo_R1C1.tif')
+    os.unlink('tmp/DIM_foo.XML')
 
 ###############################################################################
 # Cleanup

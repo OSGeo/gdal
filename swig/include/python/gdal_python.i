@@ -31,6 +31,8 @@ static int getAlignment(GDALDataType ntype)
         case GDT_Float32:
             return 4;
         case GDT_Float64:
+        case GDT_Int64:
+        case GDT_UInt64:
             return 8;
         case GDT_CInt16:
             return 2;
@@ -644,6 +646,30 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
         else:
             virtualmem = self.GetTiledVirtualMem(eAccess,xoff,yoff,xsize,ysize,tilexsize,tileysize,datatype,cache_size,options)
         return gdal_array.VirtualMemGetArray( virtualmem )
+
+  def GetNoDataValue(self):
+    """GetNoDataValue(Band self) -> value """
+
+    if self.DataType == gdalconst.GDT_Int64:
+        return _gdal.Band_GetNoDataValueAsInt64(self)
+
+    if self.DataType == gdalconst.GDT_UInt64:
+        return _gdal.Band_GetNoDataValueAsUInt64(self)
+
+    return _gdal.Band_GetNoDataValue(self)
+
+
+  def SetNoDataValue(self, value):
+    """SetNoDataValue(Band self, value) -> CPLErr"""
+
+    if self.DataType == gdalconst.GDT_Int64:
+        return _gdal.Band_SetNoDataValueAsInt64(self, value)
+
+    if self.DataType == gdalconst.GDT_UInt64:
+        return _gdal.Band_SetNoDataValueAsUInt64(self, value)
+
+    return _gdal.Band_SetNoDataValue(self, value)
+
 %}
 }
 
@@ -1215,6 +1241,31 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
 
   shape = property(fget=GetShape, doc='Returns the shape of the array.')
 
+  def GetNoDataValue(self):
+    """GetNoDataValue(MDArray self) -> value """
+
+    dt = self.GetDataType()
+    if dt.GetClass() == GEDTC_NUMERIC and dt.GetNumericDataType() == gdalconst.GDT_Int64:
+        return _gdal.MDArray_GetNoDataValueAsInt64(self)
+
+    if dt.GetClass() == GEDTC_NUMERIC and dt.GetNumericDataType() == gdalconst.GDT_UInt64:
+        return _gdal.MDArray_GetNoDataValueAsUInt64(self)
+
+    return _gdal.MDArray_GetNoDataValueAsDouble(self)
+
+
+  def SetNoDataValue(self, value):
+    """SetNoDataValue(MDArray self, value) -> CPLErr"""
+
+    dt = self.GetDataType()
+    if dt.GetClass() == GEDTC_NUMERIC and dt.GetNumericDataType() == gdalconst.GDT_Int64:
+        return _gdal.MDArray_SetNoDataValueInt64(self, value)
+
+    if dt.GetClass() == GEDTC_NUMERIC and dt.GetNumericDataType() == gdalconst.GDT_UInt64:
+        return _gdal.MDArray_SetNoDataValueUInt64(self, value)
+
+    return _gdal.MDArray_SetNoDataValueDouble(self, value)
+
 %}
 }
 
@@ -1404,7 +1455,7 @@ def MultiDimInfo(ds, **kwargs):
 
 
 def _strHighPrec(x):
-    return x if isinstance(x, str) else '%.18g' % x
+    return ('%.18g' % x) if isinstance(x, float) else str(x)
 
 mapGRIORAMethodToString = {
     gdalconst.GRIORA_NearestNeighbour: 'near',
@@ -2379,6 +2430,7 @@ def BuildVRTOptions(options=None,
                     srcNodata=None,
                     VRTNodata=None,
                     hideNodata=None,
+                    strict=False,
                     callback=None, callback_data=None):
     """ Create a BuildVRTOptions() object that can be passed to gdal.BuildVRT()
         Keyword arguments are :
@@ -2396,6 +2448,7 @@ def BuildVRTOptions(options=None,
           srcNodata --- source nodata value(s).
           VRTNodata --- nodata values at the VRT band level.
           hideNodata --- whether to make the VRT band not report the NoData value.
+          strict --- set to True if warnings should be failures
           callback --- callback method.
           callback_data --- user data for callback.
     """
@@ -2441,6 +2494,8 @@ def BuildVRTOptions(options=None,
             new_options += ['-vrtnodata', str(VRTNodata)]
         if hideNodata:
             new_options += ['-hidenodata']
+        if strict:
+            new_options += ['-strict']
 
     if return_option_list:
         return new_options

@@ -54,6 +54,11 @@ You can unset existing cached variables, by using the -U switch of cmake, for ex
 
     cmake .. -UGDAL_USE_*
 
+You can assemble dependency settings in a file ``ConfigUser.cmake`` and use it with the -C option.
+The file contains set() commands that use the CACHE option. You can set for example a different name
+for the shared lib, *e.g.* ``set (GDAL_LIB_OUTPUT_NAME gdal_x64 CACHE STRING "" FORCE)``::
+
+    cmake .. -C ConfigUser.cmake
 
 .. warning::
 
@@ -130,6 +135,15 @@ All cached entries can be viewed using ``cmake -LAH`` from a build directory.
     <https://en.wikipedia.org/wiki/Interprocedural_optimization>`_
     (IPO), if available, default OFF.
 
+.. option:: GDAL_SET_INSTALL_RELATIVE_RPATH=OFF
+
+    Set to ON so that the rpath of installed binaries is written as a relative
+    path to the library. This option overrides the
+    `CMAKE_INSTALL_RPATH <https://cmake.org/cmake/help/latest/variable/CMAKE_INSTALL_RPATH.html>`__
+    variable, and assumes that the
+    `CMAKE_SKIP_INSTALL_RPATH <https://cmake.org/cmake/help/latest/variable/CMAKE_SKIP_INSTALL_RPATH.html>`__
+    variable is not set.
+
 CMake package dependent options
 +++++++++++++++++++++++++++++++
 
@@ -152,6 +166,36 @@ following option:
 
     Control whether a found dependency can be used for the GDAL build.
 
+It is also possible to ask GDAL to disable the use of any external dependency
+(besides the required one, PROJ) by default by setting the following option to
+OFF. Individual libraries shall then be enabled explicitly with
+GDAL_USE_<Packagename_in_upper_case>:BOOL=ON.
+
+.. option:: GDAL_USE_EXTERNAL_LIBS:BOOL=ON/OFF
+
+     Defaults to ON. When set to OFF, all external dependencies (but mandatory
+     ones) will be disabled, unless individually enabled with
+     GDAL_USE_<Packagename_in_upper_case>:BOOL=ON.
+     This option should be set before CMakeCache.txt is created. If it is set
+     to OFF after CMakeCache.txt is created, then cmake should be reinvoked with
+     "-UGDAL_USE_*" to cancel the activation of previously detected libraries.
+
+Some of the GDAL dependencies (GEOTIFF, GIF, JPEG, JSONC, LERC, OPENCAD, PNG, QHULL, TIFF, ZLIB)
+have a copy of their source code inside the GDAL source code tree. It is possible
+to enable this internal copy by setting the GDAL_USE_<Packagename_in_upper_case>_INTERNAL:BOOL=ON
+variable. When set, this has precedence over the external library that may be
+detected. The behavior can also be globally controlled with the following variable:
+
+.. option:: GDAL_USE_INTERNAL_LIBS=ON/OFF/WHEN_NO_EXTERNAL
+
+     Control how internal libraries should be used.
+     If set to ON, they will always be used.
+     If set to OFF, they will never be used (unless individually enabled with
+     GDAL_USE_<Packagename_in_upper_case>_INTERNAL:BOOL=ON)
+     If set to WHEN_NO_EXTERNAL (default value), they will be used only if no
+     corresponding external library is found and enabled.
+     This option should be set before CMakeCache.txt is created.
+
 
 Armadillo
 *********
@@ -159,8 +203,24 @@ Armadillo
 The `Armadillo <http://arma.sourceforge.net/>`_ C++ library is used to speed up computations related to the
 Thin Plate Spline transformer. See https://cmake.org/cmake/help/latest/module/FindArmadillo.html
 for details.
-On Windows builds using Conda-Forge depedencies, the following packages may also
+On Windows builds using Conda-Forge dependencies, the following packages may also
 need to be installed: ``blas blas-devel libblas libcblas liblapack liblapacke``
+
+.. option:: GDAL_USE_ARMADILLO=ON/OFF
+
+    Control whether to use Armadillo. Defaults to ON when Armadillo is found.
+
+
+Arrow
+*****
+
+The `Apache Arrow C++ <https://github.com/apache/arrow/tree/master/cpp>` library
+is required for the :ref:`vector.arrow` and :ref:`vector.parquet` drivers.
+Specify install prefix in the ``CMAKE_PREFIX_PATH`` variable.
+
+.. option:: GDAL_USE_ARROW=ON/OFF
+
+    Control whether to use Arrow. Defaults to ON when Arrow is found.
 
 
 Blosc
@@ -182,6 +242,28 @@ It is used by the :ref:`raster.zarr` driver.
 
     Control whether to use Blosc. Defaults to ON when Blosc is found.
 
+BRUNSLI
+*******
+
+The `Brunsli <https://github.com/google/brunsli>` JPEG repacking library, used 
+by the :ref:`raster.marfa` driver.
+
+.. option:: BRUNSLI_INCLUDE_DIR
+
+    Path to an include directory with the ``brunsli/decode.h`` and ``brunsli\encode.h`` header files.
+
+.. option:: BRUNSLI_ENC_LIB
+
+    Path to the brunslienc-c library file.
+
+.. option:: BRUNSLI_DEC_LIB
+
+    Path to the brunslidec-c library file.
+
+.. option:: GDAL_USE_BRUNSLI=ON/OFF
+
+    Control whether to use BRUNSLI. Defaults to ON when Brunsli is found.
+
 
 CFITSIO
 *******
@@ -202,27 +284,6 @@ It can be detected with pkg-config.
     Control whether to use CFITSIO. Defaults to ON when CFITSIO is found.
 
 
-CharLS
-******
-
-`CharLS <https://github.com/team-charls/charls>`_ is a C++ implementation of the
-JPEG-LS standard for lossless and near-lossless image compression and decompression.
-It is used by the :ref:`raster.jpegls` driver.
-with pkg-config.
-
-.. option:: CHARLS_INCLUDE_DIR
-
-    Path to an include directory with the ``charls/charls.h`` header file.
-
-.. option:: CHARLS_LIBRARY
-
-    Path to a shared or static library file.
-
-.. option:: GDAL_USE_CHARLS=ON/OFF
-
-    Control whether to use CharLS. Defaults to ON when CharLS is found.
-
-
 Crnlib
 ******
 
@@ -236,6 +297,10 @@ required for the :ref:`raster.dds` driver.
 .. option:: Crnlib_LIBRARY
 
   Path to Crnlib library to be linked.
+
+.. option:: GDAL_USE_CRNLIB=ON/OFF
+
+    Control whether to use Crnlib. Defaults to ON when Crnlib is found.
 
 
 CURL
@@ -340,6 +405,10 @@ ending with ERDAS-ECW_JPEG_2000_SDK-5.5.0/Desktop_Read-Only.
 
     Path to library file libNCSUtil (only needed for SDK 3.3)
 
+.. option:: GDAL_USE_ECW=ON/OFF
+
+    Control whether to use ECW. Defaults to ON when ECW is found.
+
 
 EXPAT
 *****
@@ -387,6 +456,10 @@ FileGDB_ROOT or CMAKE_PREFIX_PATH should point to the directory of the SDK.
 .. option:: FileGDB_LIBRARY_DEBUG
 
     Path to Debug library file (only used on Windows)
+
+.. option:: GDAL_USE_FILEGDB=ON/OFF
+
+    Control whether to use FileGDB. Defaults to ON when FileGDB is found.
 
 
 FreeXL
@@ -438,7 +511,7 @@ GEOTIFF
 *******
 
 It is required for the :ref:`raster.gtiff` drivers, and a few other drivers.
-If not found, an internal copy of libgeotiff will be used.
+If not found, an internal copy of libgeotiff can be used.
 
 .. option:: GEOTIFF_INCLUDE_DIR
 
@@ -455,10 +528,10 @@ If not found, an internal copy of libgeotiff will be used.
 
     Control whether to use external libgeotiff. Defaults to ON when external libgeotiff is found.
 
-.. option:: GDAL_USE_LIBGEOTIFF_INTERNAL=ON/OFF
+.. option:: GDAL_USE_GEOTIFF_INTERNAL=ON/OFF
 
-    Control whether to use internal libgeotiff copy. Defaults to ON when external
-    libgeotiff is not found.
+    Control whether to use internal libgeotiff copy. Defaults depends on GDAL_USE_INTERNAL_LIBS. When set
+    to ON, has precedence over GDAL_USE_GEOTIFF=ON
 
 
 GEOS
@@ -486,7 +559,7 @@ GIF
 ***
 
 `giflib <http://giflib.sourceforge.net/>`_ is required for the :ref:`raster.gif` driver.
-If not found, an internal copy will be used.
+If not found, an internal copy can be used.
 
 .. option:: GIF_INCLUDE_DIR
 
@@ -500,10 +573,10 @@ If not found, an internal copy will be used.
 
     Control whether to use external giflib. Defaults to ON when external giflib is found.
 
-.. option:: GDAL_USE_GIFLIB_INTERNAL=ON/OFF
+.. option:: GDAL_USE_GIF_INTERNAL=ON/OFF
 
-    Control whether to use internal giflib copy. Defaults to ON when external
-    giflib is not found.
+    Control whether to use internal giflib copy. Defaults depends on GDAL_USE_INTERNAL_LIBS. When set
+    to ON, has precedence over GDAL_USE_GIF=ON
 
 
 GTA
@@ -519,7 +592,7 @@ The `GTA <https://marlam.de/gta/>`_ library is required for the :ref:`raster.gta
 
     Path to a shared or static library file.
 
-.. option:: GDAL_USE_KEY=ON/OFF
+.. option:: GDAL_USE_GTA=ON/OFF
 
     Control whether to use GTA. Defaults to ON when GTA is found.
 
@@ -599,6 +672,10 @@ The HDF5 CXX library is needed for the :ref:`raster.kea` driver.
 The https://cmake.org/cmake/help/latest/module/FindHDF5.html module is used to
 detect the HDF5 library.
 
+.. option:: GDAL_USE_HDF5=ON/OFF
+
+    Control whether to use HDF5. Defaults to ON when HDF5 is found.
+
 
 HDFS
 ****
@@ -669,17 +746,27 @@ IDB_ROOT or CMAKE_PREFIX_PATH should point to the directory of the SDK.
 
     Path to a library file ``ifcli`` (typically in the ``lib/cli`` sub directory)
 
+.. option:: GDAL_USE_IDB=ON/OFF
+
+    Control whether to use IDB. Defaults to ON when IDB is found.
+
 
 JPEG
 ****
 
 libjpeg is required for the :ref:`raster.jpeg` driver, and may be used by a few
 other drivers (:ref:`raster.gpkg`, :ref:`raster.marfa`, internal libtiff, etc.)
-If not found, an internal copy of libjpeg (6b) will be used.
+If not found, an internal copy of libjpeg (6b) can be used.
 Using `libjpeg-turbo <https://github.com/libjpeg-turbo/libjpeg-turbo>`_ is highly
 recommended to get best performance.
 See https://cmake.org/cmake/help/latest/module/FindJPEG.html for more details
 on how the library is detected.
+
+.. note::
+
+    When using libjpeg-turbo, JPEG_LIBRARY[_RELEASE/_DEBUG] should point to a
+    library with libjpeg ABI, not TurboJPEG.
+    See https://libjpeg-turbo.org/About/TurboJPEG for the difference.
 
 .. option:: JPEG_INCLUDE_DIR
 
@@ -695,10 +782,24 @@ on how the library is detected.
 
     Control whether to use external libjpeg. Defaults to ON when external libjpeg is found.
 
-.. option:: GDAL_USE_LIBJPEG_INTERNAL=ON/OFF
+.. option:: GDAL_USE_JPEG_INTERNAL=ON/OFF
 
-    Control whether to use internal libjpeg copy. Defaults to ON when external
-    libjpeg is not found.
+    Control whether to use internal libjpeg copy. Defaults depends on GDAL_USE_INTERNAL_LIBS. When set
+    to ON, has precedence over GDAL_USE_JPEG=ON
+
+
+JPEG12
+******
+
+libjpeg-12 bit can be used by the :ref:`raster.jpeg`, :ref:`raster.gtiff` (when using internal libtiff),
+:ref:`raster.jpeg`, :ref:`raster.marfa` and :ref:`raster.nitf` drivers to handle
+JPEG images with a 12 bit depth. It is only supported with the internal libjpeg (6b).
+This can be used independently of if for regular 8 bit JPEG an external or internal
+libjpeg is used.
+
+.. option:: GDAL_USE_JPEG12_INTERNAL=ON/OFF
+
+    Control whether to use internal libjpeg-12 copy. Defaults to ON.
 
 
 JSON-C
@@ -707,7 +808,7 @@ JSON-C
 The `json-c <https://github.com/json-c/json-c>`_ library is required to read and
 write JSON content.
 It can be detected with pkg-config.
-If not found, an internal copy of json-c will be used.
+If not found, an internal copy of json-c can be used.
 
 .. option:: JSONC_INCLUDE_DIR
 
@@ -721,10 +822,10 @@ If not found, an internal copy of json-c will be used.
 
     Control whether to use JSON-C. Defaults to ON when JSON-C is found.
 
-.. option:: GDAL_USE_LIBJSONC_INTERNAL=ON/OFF
+.. option:: GDAL_USE_JSONC_INTERNAL=ON/OFF
 
-    Control whether to use internal JSON-C copy. Defaults to ON when external
-    JSON-C is not found.
+    Control whether to use internal JSON-C copy. Defaults depends on GDAL_USE_INTERNAL_LIBS. When set
+    to ON, has precedence over GDAL_USE_JSONC=ON
 
 
 JXL
@@ -741,6 +842,10 @@ It can be detected with pkg-config.
 .. option:: JXL_LIBRARY
 
     Path to a shared or static library file.
+
+.. option:: GDAL_USE_JXL=ON/OFF
+
+    Control whether to use JXL. Defaults to ON when JXL is found.
 
 
 KDU
@@ -769,6 +874,10 @@ and KDU_AUX_LIBRARY variable.
     Path to a shared library file whose name is like libkdu_aXYR.so on Unix
     or kdu_aXYR.lib on Windows, where X.Y is the Kakadu version.
 
+.. option:: GDAL_USE_KDU=ON/OFF
+
+    Control whether to use KDU. Defaults to ON when KDU is found.
+
 KEA
 ***
 
@@ -791,18 +900,10 @@ driver. The HDF5 CXX library is also required.
 LERC
 ****
 
-`LERC <https://github.com/esri/lerc>`_ (V2) is an open-source image or raster format
+`LERC <https://github.com/esri/lerc>`_ is an open-source image or raster format
 which supports rapid encoding and decoding for any pixel type (not just RGB or Byte).
 Users set the maximum compression error per pixel while encoding, so the precision
 of the original input image is preserved (within user defined error bounds).
-
-.. warning::
-
-    Use of the external LERC library is not recommended, as it cannot be used
-    by the :ref:`raster.marfa` driver currently (that one requires the internal
-    LERC copy). The external LERC Library can only be used by the internal libtiff,
-    which can also use the internal LERC copy.
-
 
 .. option:: LERC_INCLUDE_DIR
 
@@ -814,23 +915,13 @@ of the original input image is preserved (within user defined error bounds).
 
 .. option:: GDAL_USE_LERC=ON/OFF
 
-    Control whether to use LERC (V2). Defaults to *OFF* when LERC (V2) is found.
+    Control whether to use LERC. Defaults to ON when LERC is found.
 
-.. option:: GDAL_USE_LIBLERC_INTERNAL=ON/OFF
+.. option:: GDAL_USE_LERC_INTERNAL=ON/OFF
 
-    Control whether to use the LERC (V2) internal library. Defaults to ON,
-    unless GDAL_USE_LERC is set to ON.
+    Control whether to use the LERC internal library. Defaults depends on GDAL_USE_INTERNAL_LIBS. When set
+    to ON, has precedence over GDAL_USE_LERC=ON
 
-
-LERCV1
-******
-
-This is an internal library used by the :ref:`raster.marfa` driver. It offers the
-LERC v1 compression.
-
-.. option:: GDAL_USE_LIBLERCV1_INTERNAL=ON/OFF
-
-    Control whether to use the Lerc V1 internal library. Defaults to ON.
 
 LibKML
 ******
@@ -916,6 +1007,10 @@ LURATECH_ROOT or CMAKE_PREFIX_PATH should point to the directory of the SDK.
 
     Path to library file lib_lwf_jp2.a / lwf_jp2.lib
 
+.. option:: GDAL_USE_LURATECH=ON/OFF
+
+    Control whether to use LURATECH. Defaults to ON when LURATECH is found.
+
 
 LZ4
 ***
@@ -986,12 +1081,12 @@ be found.
 
     Path to library file libltidsdk
 
-.. option:: GDAL_ENABLE_FRMT_JP2MRSID
+.. option:: GDAL_ENABLE_DRIVER_JP2MRSID
 
     Whether to enable JPEG2000 support through the MrSID SDK. The default value
     of this option is OFF.
 
-.. option:: GDAL_USE_MRSDI=ON/OFF
+.. option:: GDAL_USE_MRSID=ON/OFF
 
     Control whether to use MRSID. Defaults to ON when MRSID is found.
 
@@ -1016,6 +1111,10 @@ The library is normally found if installed in standard location, and at version 
 
   Path to library to be linked.
 
+.. option:: GDAL_USE_MSSQL_NCLI=ON/OFF
+
+    Control whether to use MSSQL_NCLI. Defaults to ON when MSSQL_NCLI is found.
+
 
 MSSQL_ODBC
 **********
@@ -1036,6 +1135,10 @@ The library is normally found if installed in standard location, and at version 
 .. option:: MSSQL_ODBC_LIBRARY
 
   Path to library to be linked.
+
+.. option:: GDAL_USE_MSSQL_ODBC=ON/OFF
+
+    Control whether to use MSSQL_ODBC. Defaults to ON when MSSQL_ODBC is found.
 
 
 MYSQL
@@ -1081,7 +1184,7 @@ ODBC
 ****
 
 ODBC is required for various drivers: :ref:`vector.odbc`, :ref:`vector.pgeo`,
-:ref:`vector.walk` and :ref:`vector.mssqlspatial`.
+:ref:`vector.hana` and :ref:`vector.mssqlspatial`.
 It is normally automatically found in system directories on Unix and Windows.
 
 .. option:: ODBC_INCLUDE_DIR
@@ -1091,6 +1194,29 @@ It is normally automatically found in system directories on Unix and Windows.
 .. option:: ODBC_LIBRARY
 
   Path to ODBC library to be linked.
+
+.. option:: GDAL_USE_ODBC=ON/OFF
+
+    Control whether to use ODBC. Defaults to ON when ODBC is found.
+
+
+ODBC-CPP
+********
+
+The `odbc-cpp-wrapper library <https://github.com/SAP/odbc-cpp-wrapper>`_ is required for
+the :ref:`vector.hana` driver.
+
+.. option:: ODBCCPP_INCLUDE_DIR
+
+    Path to an include directory with the ``odbc/Environment.h`` header file.
+
+.. option:: ODBCCPP_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_ODBCCPP=ON/OFF
+
+    Control whether to use ODBC-CPP. Defaults to ON when ODBC-CPP is found.
 
 
 OGDI
@@ -1110,6 +1236,31 @@ driver. It can be detected with pkg-config.
 .. option:: GDAL_USE_OGDI=ON/OFF
 
     Control whether to use OGDI. Defaults to ON when OGDI is found.
+
+
+OpenCAD
+*******
+
+`libopencad <https://github.com/nextgis-borsch/lib_opencad>`_ is required for the :ref:`vector.cad`
+driver. If not found, an internal copy can be used.
+
+.. option:: OPENCAD_INCLUDE_DIR
+
+    Path to an include directory with the ``opencad.h`` header file.
+
+.. option:: OPENCAD_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_OPENCAD=ON/OFF
+
+    Control whether to use external libopencad. Defaults to ON when external libopencad is found.
+
+.. option:: GDAL_USE_OPENCAD_INTERNAL=ON/OFF
+
+    Control whether to use internal libopencad copy. Defaults depends on GDAL_USE_INTERNAL_LIBS. When set
+    to ON, has precedence over GDAL_USE_OPENCAD=ON
+
 
 
 OpenCL
@@ -1157,6 +1308,10 @@ Get real specific and set
 ``OpenEXR_HALF_LIBRARY``, ``OpenEXR_IEX_LIBRARY``
 explicitly
 
+.. option:: GDAL_USE_OPENEXR=ON/OFF
+
+    Control whether to use OpenEXR. Defaults to ON when OpenEXR is found.
+
 
 OpenJPEG
 ********
@@ -1175,7 +1330,7 @@ JPEG-2000 codec written in C language. It is required for the
 
 .. option:: GDAL_USE_OPENJPEG=ON/OFF
 
-    Control whether to use OpenJPEG. Defaults to *OFF* when OpenJPEG is found.
+    Control whether to use OpenJPEG. Defaults to ON when OpenJPEG is found.
 
 
 OpenSSL
@@ -1189,6 +1344,10 @@ images or use the :ref:`/vsigs/ <vsigs>` virtual file system.
 See https://cmake.org/cmake/help/latest/module/FindOpenSSL.html for details on
 how to configure the library
 
+.. option:: GDAL_USE_OPENSSL=ON/OFF
+
+    Control whether to use OpenSSL. Defaults to ON when OpenSSL is found.
+
 
 Oracle
 ******
@@ -1199,6 +1358,22 @@ The Oracle Instant Client SDK (closed source/proprietary) is required for the
 .. option:: Oracle_ROOT
 
     Path to the root directory of the Oracle Instant Client SDK
+
+.. option:: GDAL_USE_ORACLE=ON/OFF
+
+    Control whether to use Oracle. Defaults to ON when Oracle is found.
+
+
+Parquet
+*******
+
+The Parquet component of the `Apache Arrow C++ <https://github.com/apache/arrow/tree/master/cpp>`
+library is required for the :ref:`vector.parquet` driver.
+Specify install prefix in the ``CMAKE_PREFIX_PATH`` variable.
+
+.. option:: GDAL_USE_PARQUET=ON/OFF
+
+    Control whether to use Parquet. Defaults to ON when Parquet is found.
 
 
 PCRE2
@@ -1215,24 +1390,28 @@ Regular Expressions support. It is used for the REGEXP operator in drivers using
 
     Path to a shared or static library file with "pcre2-8" in its name
 
+.. option:: GDAL_USE_PCRE2=ON/OFF
 
-PDFium
+    Control whether to use PCRE2. Defaults to ON when PCRE2 is found.
+
+
+PDFIUM
 ******
 
-The `PDFium <https://github.com/rouault/pdfium_build_gdal_3_4>`_ library is one
+The `PDFium <https://github.com/rouault/pdfium_build_gdal_3_5>`_ library is one
 of the possible backends for the :ref:`raster.pdf` driver.
 
-.. option:: PDFium_INCLUDE_DIR
+.. option:: PDFIUM_INCLUDE_DIR
 
     Path to an include directory with the ``public/fpdfview.h`` header file.
 
-.. option:: PDFium_LIBRARY
+.. option:: PDFIUM_LIBRARY
 
     Path to a shared or static library file.
 
 .. option:: GDAL_USE_PDFIUM=ON/OFF
 
-    Control whether to use PDFium. Defaults to ON when PDFium is found.
+    Control whether to use PDFIUM. Defaults to ON when PDFIUM is found.
 
 
 PNG
@@ -1240,7 +1419,7 @@ PNG
 
 `libpng <https://github.com/glennrp/libpng>`_ is required for the :ref:`raster.png`
 driver, and may be used by a few other drivers (:ref:`raster.grib`, :ref:`raster.gpkg`, etc.)
-If not found, an internal copy of libpng will be used.
+If not found, an internal copy of libpng can be used.
 See https://cmake.org/cmake/help/latest/module/FindPNG.html for more details
 on how the library is detected.
 
@@ -1258,10 +1437,10 @@ on how the library is detected.
 
     Control whether to use external libpng. Defaults to ON when external libpng is found.
 
-.. option:: GDAL_USE_LIBPNG_INTERNAL=ON/OFF
+.. option:: GDAL_USE_PNG_INTERNAL=ON/OFF
 
-    Control whether to use internal libpng copy. Defaults to ON when external
-    libpng is not found.
+    Control whether to use internal libpng copy. Defaults depends on GDAL_USE_INTERNAL_LIBS. When set
+    to ON, has precedence over GDAL_USE_PNG=ON
 
 
 Poppler
@@ -1270,15 +1449,15 @@ Poppler
 The `Poppler <https://poppler.freedesktop.org/>`_ library is one
 of the possible backends for the :ref:`raster.pdf` driver.
 
-.. option:: POPPLER_INCLUDE_DIR
+.. option:: Poppler_INCLUDE_DIR
 
     Path to an include directory with the ``poppler-config.h`` header file.
 
-.. option:: POPPLER_LIBRARY
+.. option:: Poppler_LIBRARY
 
     Path to a shared or static library file.
 
-.. option:: GDAL_USE_PDFIUM=ON/OFF
+.. option:: GDAL_USE_POPPLER=ON/OFF
 
     Control whether to use Poppler. Defaults to ON when Poppler is found.
 
@@ -1325,7 +1504,7 @@ QHULL
 *****
 
 The `QHULL <https://github.com/qhull/qhull>`_ library is used for the linear
-interpolation of gdal_grid. If not found, an internal copy is used.
+interpolation of gdal_grid. If not found, an internal copy can be used.
 
 .. option:: QHULL_PACKAGE_NAME
 
@@ -1345,8 +1524,8 @@ interpolation of gdal_grid. If not found, an internal copy is used.
 
 .. option:: GDAL_USE_QHULL_INTERNAL=ON/OFF
 
-    Control whether to use internal QHULL copy. Defaults to ON when external
-    QHULL is not found.
+    Control whether to use internal QHULL copy. Defaults depends on GDAL_USE_INTERNAL_LIBS. When set
+    to ON, has precedence over GDAL_USE_QHULL=ON
 
 
 RASTERLITE2
@@ -1375,6 +1554,10 @@ rdb
 The `RDB <https://repository.riegl.com/software/libraries/rdblib>`
 (closed source/proprietary) library is required for the :ref:`raster.rdb` driver.
 Specify install prefix in the ``CMAKE_PREFIX_PATH`` variable.
+
+.. option:: GDAL_USE_RDB=ON/OFF
+
+    Control whether to use rdb. Defaults to ON when rdb is found.
 
 
 SPATIALITE
@@ -1474,13 +1657,17 @@ The TEIGHA_ROOT variable must be set.
     Otherwise this variable must be set for recent SDK versions (at least with
     2021 and later).
 
+.. option:: GDAL_USE_TEIGHA=ON/OFF
+
+    Control whether to use TEIGHA. Defaults to ON when TEIGHA is found.
+
 
 TIFF
 ****
 
 `libtiff <https://gitlab.com/libtiff/libtiff/>`_ is required for the
 :ref:`raster.gtiff` drivers, and a few other drivers.
-If not found, an internal copy of libtiff will be used.
+If not found, an internal copy of libtiff can be used.
 
 .. option:: TIFF_INCLUDE_DIR
 
@@ -1497,10 +1684,10 @@ If not found, an internal copy of libtiff will be used.
 
     Control whether to use external libtiff. Defaults to ON when external libtiff is found.
 
-.. option:: GDAL_USE_LIBTIFF_INTERNAL=ON/OFF
+.. option:: GDAL_USE_TIFF_INTERNAL=ON/OFF
 
-    Control whether to use internal libtiff copy. Defaults to ON when external
-    libtiff is not found.
+    Control whether to use internal libtiff copy. Defaults depends on GDAL_USE_INTERNAL_LIBS. When set
+    to ON, has precedence over GDAL_USE_TIFF=ON
 
 
 TileDB
@@ -1508,6 +1695,10 @@ TileDB
 
 The `TileDB <https://github.com/TileDB-Inc/TileDB>` library is required for the :ref:`raster.tiledb` driver.
 Specify install prefix in the ``CMAKE_PREFIX_PATH`` variable.
+
+.. option:: GDAL_USE_TILEDB=ON/OFF
+
+    Control whether to use TileDB. Defaults to ON when TileDB is found.
 
 
 WebP
@@ -1573,8 +1764,8 @@ the lossless Deflate/Zip compression algorithm.
 
 .. option:: GDAL_USE_ZLIB_INTERNAL=ON/OFF
 
-    Control whether to use internal zlib copy. Defaults to ON when external
-    zlib is not found.
+    Control whether to use internal zlib copy. Defaults depends on GDAL_USE_INTERNAL_LIBS. When set
+    to ON, has precedence over GDAL_USE_ZLIB=ON
 
 
 ZSTD
@@ -1605,9 +1796,9 @@ built-in in the GDAL core library.
 
 The following options are available to select a subset of drivers:
 
-.. option:: GDAL_ENABLE_FRMT_<driver_name>:BOOL=ON/OFF
+.. option:: GDAL_ENABLE_DRIVER_<driver_name>:BOOL=ON/OFF
 
-.. option:: OGR_ENABLE_<driver_name>:BOOL=ON/OFF
+.. option:: OGR_ENABLE_DRIVER_<driver_name>:BOOL=ON/OFF
 
     Independently of options that control global behavior, drivers can be individually
     enabled or disabled with those options.
@@ -1618,23 +1809,23 @@ The following options are available to select a subset of drivers:
 
     Globally enable/disable all GDAL/raster or OGR/vector drivers.
     More exactly, setting those variables to ON affect the default value of the
-    ``GDAL_ENABLE_FRMT_<driver_name>`` or ``OGR_ENABLE_<driver_name>`` variables
+    ``GDAL_ENABLE_DRIVER_<driver_name>`` or ``OGR_ENABLE_DRIVER_<driver_name>`` variables
     (when they are not yet set).
 
     This can be combined with individual activation of a subset of drivers by using
-    the ``GDAL_ENABLE_FRMT_<driver_name>:BOOL=ON`` or ``OGR_ENABLE_<driver_name>:BOOL=ON``
+    the ``GDAL_ENABLE_DRIVER_<driver_name>:BOOL=ON`` or ``OGR_ENABLE_DRIVER_<driver_name>:BOOL=ON``
     variables. Note that changing the value of GDAL_BUILD_OPTIONAL_DRIVERS/
     OGR_BUILD_OPTIONAL_DRIVERS after a first run of CMake does not change the
     activation of individual drivers. It might be needed to pass
-    ``-UGDAL_ENABLE_FRMT_* -UOGR_ENABLE_*`` to reset their state.
+    ``-UGDAL_ENABLE_DRIVER_* -UOGR_ENABLE_DRIVER_*`` to reset their state.
 
 
 Example of minimal build with the JP2OpenJPEG and SVG drivers enabled::
 
-    cmake .. -UGDAL_ENABLE_FRMT_* -UOGR_ENABLE_* \
+    cmake .. -UGDAL_ENABLE_DRIVER_* -UOGR_ENABLE_DRIVER_* \
              -DGDAL_BUILD_OPTIONAL_DRIVERS:BOOL=OFF -DOGR_BUILD_OPTIONAL_DRIVERS:BOOL=OFF \
-             -DGDAL_ENABLE_FRMT_JP2OPENPEG:BOOL=ON \
-             -DOGR_ENABLE_SVG:BOOL=ON
+             -DGDAL_ENABLE_DRIVER_JP2OPENPEG:BOOL=ON \
+             -DOGR_ENABLE_DRIVER_SVG:BOOL=ON
 
 Build drivers as plugins
 ++++++++++++++++++++++++
@@ -1652,36 +1843,36 @@ The list of drivers that can be built as plugins can be obtained with::
 The following options are available to select the plugin/builtin status of
 a driver:
 
-.. option:: GDAL_ENABLE_FRMT_<driver_name>_PLUGIN:BOOL=ON/OFF
+.. option:: GDAL_ENABLE_DRIVER_<driver_name>_PLUGIN:BOOL=ON/OFF
 
-.. option:: OGR_ENABLE_<driver_name>_PLUGIN:BOOL=ON/OFF
+.. option:: OGR_ENABLE_DRIVER_<driver_name>_PLUGIN:BOOL=ON/OFF
 
     Independently of options that control global behavior, drivers can be individually
     enabled or disabled with those options.
 
     Note that for the driver to be built, the corresponding base
-    ``GDAL_ENABLE_FRMT_{driver_name}:BOOL=ON`` or ``OGR_ENABLE_{driver_name}:BOOL=ON`` option must
+    ``GDAL_ENABLE_DRIVER_{driver_name}:BOOL=ON`` or ``OGR_ENABLE_DRIVER_{driver_name}:BOOL=ON`` option must
     be set.
 
 .. option:: GDAL_ENABLE_PLUGINS:BOOL=ON/OFF
 
     Globally enable/disable building all (plugin capable), GDAL and OGR, drivers as plugins.
     More exactly, setting that variable to ON affects the default value of the
-    ``GDAL_ENABLE_FRMT_<driver_name>_PLUGIN`` or ``OGR_ENABLE_<driver_name>_PLUGIN``
+    ``GDAL_ENABLE_DRIVER_<driver_name>_PLUGIN`` or ``OGR_ENABLE_DRIVER_<driver_name>_PLUGIN``
     variables (when they are not yet set).
 
     This can be combined with individual activation/deactivation of the plugin status with the
-    ``GDAL_ENABLE_FRMT_{driver_name}_PLUGIN:BOOL`` or ``OGR_ENABLE_{driver_name}_PLUGIN:BOOL`` variables.
+    ``GDAL_ENABLE_DRIVER_{driver_name}_PLUGIN:BOOL`` or ``OGR_ENABLE_DRIVER_{driver_name}_PLUGIN:BOOL`` variables.
     Note that changing the value of GDAL_ENABLE_PLUGINS after a first
     run of CMake does not change the activation of the plugin status of individual drivers.
-    It might be needed to pass ``-UGDAL_ENABLE_FRMT_* -UOGR_ENABLE_*`` to reset their state.
+    It might be needed to pass ``-UGDAL_ENABLE_DRIVER_* -UOGR_ENABLE_DRIVER_*`` to reset their state.
 
 
 Example of build with all potential drivers as plugins, except the JP2OpenJPEG one::
 
-    cmake .. -UGDAL_ENABLE_FRMT_* -UOGR_ENABLE_* \
+    cmake .. -UGDAL_ENABLE_DRIVER_* -UOGR_ENABLE_DRIVER_* \
              -DGDAL_ENABLE_PLUGINS:BOOL=ON \
-             -DGDAL_ENABLE_FRMT_JP2OPENPEG_PLUGIN:BOOL=OFF
+             -DGDAL_ENABLE_DRIVER_JP2OPENPEG_PLUGIN:BOOL=OFF
 
 There is a subtelty regarding ``GDAL_ENABLE_PLUGINS:BOOL=ON``. It only controls
 the plugin status of plugin-capable drivers that have external dependencies,
@@ -1836,7 +2027,7 @@ Start a Conda enabled console and assuming there is a c:\\dev directory
         cmake proj geos hdf4 hdf5 \
         libnetcdf openjpeg poppler libtiff libpng xerces-c expat libxml2 kealib json-c \
         cfitsio freexl geotiff jpeg libpq libspatialite libwebp-base pcre postgresql \
-        sqlite tiledb zstd charls cryptopp cgal jasper librttopo libkml openssl xz
+        sqlite tiledb zstd charls cryptopp cgal librttopo libkml openssl xz
 
 .. note::
 
@@ -1876,3 +2067,10 @@ From a Conda enabled console
         cd c:\dev\GDAL
         cd _build.vs2019
         ctest -V --build-config Release
+
+Cross-compiling for Android
++++++++++++++++++++++++++++
+
+First refer to https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html#cross-compiling-for-android
+and to https://github.com/OSGeo/gdal/blob/master/.github/workflows/android_cmake/start.sh for
+an example of a build script to cross-compile from Ubuntu.

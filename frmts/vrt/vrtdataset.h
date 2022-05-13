@@ -438,35 +438,47 @@ public:
 /*      no raster access.  That is handled by derived classes.          */
 /************************************************************************/
 
+constexpr double VRT_DEFAULT_NODATA_VALUE = -10000.0;
+
 class CPL_DLL VRTRasterBand CPL_NON_FINAL: public GDALRasterBand
 {
+  private:
+
+    void           ResetNoDataValues();
+
   protected:
     friend class VRTDataset;
 
-    int            m_bIsMaskBand;
+    int            m_bIsMaskBand = FALSE;
 
-    int            m_bNoDataValueSet;
+    int            m_bNoDataValueSet = FALSE;
     // If set to true, will not report the existence of nodata.
-    int            m_bHideNoDataValue;
-    double         m_dfNoDataValue;
+    int            m_bHideNoDataValue = FALSE;
+    double         m_dfNoDataValue = VRT_DEFAULT_NODATA_VALUE;
+
+    bool           m_bNoDataSetAsInt64 = false;
+    int64_t        m_nNoDataValueInt64 = GDAL_PAM_DEFAULT_NODATA_VALUE_INT64;
+
+    bool           m_bNoDataSetAsUInt64 = false;
+    uint64_t       m_nNoDataValueUInt64 = GDAL_PAM_DEFAULT_NODATA_VALUE_UINT64;
 
     std::unique_ptr<GDALColorTable> m_poColorTable{};
 
-    GDALColorInterp m_eColorInterp;
+    GDALColorInterp m_eColorInterp = GCI_Undefined;
 
-    char           *m_pszUnitType;
-    char           **m_papszCategoryNames;
+    char           *m_pszUnitType = nullptr;
+    char           **m_papszCategoryNames = nullptr;
 
-    double         m_dfOffset;
-    double         m_dfScale;
+    double         m_dfOffset = 0.0;
+    double         m_dfScale = 1.0;
 
-    CPLXMLNode    *m_psSavedHistograms;
+    CPLXMLNode    *m_psSavedHistograms = nullptr;
 
     void           Initialize( int nXSize, int nYSize );
 
     std::vector<VRTOverviewInfo> m_aoOverviewInfos{};
 
-    VRTRasterBand *m_poMaskBand;
+    VRTRasterBand *m_poMaskBand = nullptr;
 
     std::unique_ptr<GDALRasterAttributeTable> m_poRAT{};
 
@@ -481,9 +493,13 @@ class CPL_DLL VRTRasterBand CPL_NON_FINAL: public GDALRasterBand
                                     std::map<CPLString, GDALDataset*>& );
     virtual CPLXMLNode *   SerializeToXML( const char *pszVRTPath );
 
-    virtual CPLErr SetNoDataValue( double ) override;
-    virtual double GetNoDataValue( int *pbSuccess = nullptr ) override;
-    virtual CPLErr DeleteNoDataValue() override;
+    CPLErr SetNoDataValue( double ) override;
+    CPLErr SetNoDataValueAsInt64( int64_t nNoData ) override;
+    CPLErr SetNoDataValueAsUInt64( uint64_t nNoData ) override;
+    double GetNoDataValue( int *pbSuccess = nullptr ) override;
+    int64_t GetNoDataValueAsInt64( int *pbSuccess = nullptr ) override;
+    uint64_t GetNoDataValueAsUInt64( int *pbSuccess = nullptr ) override;
+    CPLErr DeleteNoDataValue() override;
 
     virtual CPLErr SetColorTable( GDALColorTable * ) override;
     virtual GDALColorTable *GetColorTable() override;
@@ -540,6 +556,8 @@ class CPL_DLL VRTRasterBand CPL_NON_FINAL: public GDALRasterBand
     void SetMaskBand(VRTRasterBand* poMaskBand);
 
     void SetIsMaskBand();
+
+    virtual bool            IsMaskBand() const override;
 
     CPLErr UnsetNoDataValue();
 
@@ -761,6 +779,9 @@ class CPL_DLL VRTDerivedRasterBand CPL_NON_FINAL: public VRTSourcedRasterBand
 {
     VRTDerivedRasterBandPrivateData* m_poPrivate;
     bool InitializePython();
+    CPLErr GetPixelFunctionArguments(
+      const CPLString&,
+      std::vector<std::pair<CPLString, CPLString>> &);
 
     CPL_DISALLOW_COPY_ASSIGN(VRTDerivedRasterBand)
 
@@ -785,15 +806,15 @@ class CPL_DLL VRTDerivedRasterBand CPL_NON_FINAL: public VRTSourcedRasterBand
                                         int nMaskFlagStop,
                                         double* pdfDataPct) override;
 
-    static CPLErr AddPixelFunction( const char *pszFuncName,
+    static CPLErr AddPixelFunction( const char *pszFuncNameIn,
                                     GDALDerivedPixelFunc pfnPixelFunc );
-    static CPLErr AddPixelFunction( const char *pszFuncName,
+    static CPLErr AddPixelFunction( const char *pszFuncNameIn,
                                     GDALDerivedPixelFuncWithArgs pfnPixelFunc,
                                     const char *pszMetadata);
 
-    static PixelFunc* GetPixelFunction( const char *pszFuncName );
+    static std::pair<PixelFunc, CPLString>* GetPixelFunction( const char *pszFuncNameIn );
 
-    void SetPixelFunctionName( const char *pszFuncName );
+    void SetPixelFunctionName( const char *pszFuncNameIn );
     void SetSourceTransferType( GDALDataType eDataType );
     void SetPixelFunctionLanguage( const char* pszLanguage );
 

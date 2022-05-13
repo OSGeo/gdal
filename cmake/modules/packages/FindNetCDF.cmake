@@ -119,9 +119,12 @@ if(NETCDF_INCLUDE_DIR AND NETCDF_LIBRARY)
         # Fragile...
         function(detect_NC4_create)
             include(CheckCSourceCompiles)
+            include(CMakePushCheckState)
+            cmake_push_check_state(RESET)
             set(CMAKE_REQUIRED_QUIET "yes")
             set(CMAKE_REQUIRED_LIBRARIES ${NETCDF_LIBRARY})
             check_c_source_compiles("int NC4_create ();int main () {return NC4_create ();}" HAVE_NC4_CREATE)
+            cmake_pop_check_state()
         endfunction()
 
         detect_NC4_create()

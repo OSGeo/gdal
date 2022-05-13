@@ -2,7 +2,7 @@ add_gdal_driver(TARGET gdal_RIK SOURCES rikdataset.cpp PLUGIN_CAPABLE_IF "NOT GD
 gdal_standard_includes(gdal_RIK)
 
 if (GDAL_USE_ZLIB_INTERNAL)
-  target_include_directories(gdal_RIK PRIVATE $<TARGET_PROPERTY:libz,SOURCE_DIR>)
+  gdal_add_vendored_lib(gdal_RIK libz)
 else ()
-  gdal_target_link_libraries(TARGET gdal_RIK LIBRARIES ZLIB::ZLIB)
+  gdal_target_link_libraries(gdal_RIK PRIVATE ZLIB::ZLIB)
 endif ()

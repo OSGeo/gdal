@@ -34,12 +34,15 @@ Driver capabilities
 Configuration options
 ---------------------
 
--  OGR_ODS_HEADERS = FORCE / DISABLE / AUTO : By default, the driver
+The following :ref:`configuration options <configoptions>` are 
+available:
+
+-  :decl_configoption:`OGR_ODS_HEADERS` = FORCE / DISABLE / AUTO : By default, the driver
    will read the first lines of each sheet to detect if the first line
    might be the name of columns. If set to FORCE, the driver will
    consider the first line will be taken as the header line. If set to
    DISABLE, it will be considered as the first feature. Otherwise
    auto-detection will occur.
--  OGR_ODS_FIELD_TYPES = STRING / AUTO : By default, the driver will try
+-  :decl_configoption:`OGR_ODS_FIELD_TYPES` = STRING / AUTO : By default, the driver will try
    to detect the data type of fields. If set to STRING, all fields will
    be of String type.

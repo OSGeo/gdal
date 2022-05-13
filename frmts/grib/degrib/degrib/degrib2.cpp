@@ -1074,14 +1074,22 @@ int ReadGrib2Record (VSILFILE *fp, sChar f_unit, double **Grib_Data,
          nrdat = nidat;
       }
       if (nidat > IS->nidat) {
-         IS->nidat = nidat;
          IS->idat = (sInt4 *) realloc ((void *) IS->idat,
-                                       IS->nidat * sizeof (sInt4));
+                                       nidat * sizeof (sInt4));
+         // Initialization needed to avoid use of uninitialized memory in
+         // ParseSect2_Unknown() on dataset of https://github.com/OSGeo/gdal/issues/5290
+         if( IS->nidat == 0 )
+             IS->idat[0] = 0;
+         IS->nidat = nidat;
       }
       if (nrdat > IS->nrdat) {
-         IS->nrdat = nrdat;
          IS->rdat = (float *) realloc ((void *) IS->rdat,
-                                       IS->nrdat * sizeof (float));
+                                       nrdat * sizeof (float));
+         // Initialization needed to avoid use of uninitialized memory in
+         // ParseSect2_Unknown() on dataset of https://github.com/OSGeo/gdal/issues/5290
+         if( IS->nrdat == 0 )
+             IS->rdat[0] = 0;
+         IS->nrdat = nrdat;
       }
       /* Make sure we have room for the GRID part of the output. */
       if (nd2x3 > IS->nd2x3) {

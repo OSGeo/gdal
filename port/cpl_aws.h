@@ -157,11 +157,13 @@ class VSIS3HandleHelper final: public IVSIS3LikeHandleHelper
 
         void RebuildURL() override;
 
-        static bool GetConfigurationFromEC2(CPLString& osSecretAccessKey,
+        static bool GetConfigurationFromEC2(const std::string& osPathForOption,
+                                            CPLString& osSecretAccessKey,
                                             CPLString& osAccessKeyId,
                                             CPLString& osSessionToken);
 
         static bool GetConfigurationFromAWSConfigFiles(
+                                     const std::string& osPathForOption,
                                      CPLString& osSecretAccessKey,
                                      CPLString& osAccessKeyId,
                                      CPLString& osSessionToken,
@@ -173,7 +175,8 @@ class VSIS3HandleHelper final: public IVSIS3LikeHandleHelper
                                      CPLString& osMFASerial,
                                      CPLString& osRoleSessionName);
 
-        static bool GetConfiguration(CSLConstList papszOptions,
+        static bool GetConfiguration(const std::string& osPathForOption,
+                                     CSLConstList papszOptions,
                                      CPLString& osSecretAccessKey,
                                      CPLString& osAccessKeyId,
                                      CPLString& osSessionToken,

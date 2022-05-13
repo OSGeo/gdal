@@ -28,6 +28,7 @@
 #  DEALINGS IN THE SOFTWARE.
 # ******************************************************************************
 import math
+import os
 import tempfile
 from numbers import Number
 from enum import Enum
@@ -116,8 +117,9 @@ def calc_geotransform_and_dimensions(geotransforms: Sequence[GeoTransform], dime
 
 def make_temp_vrt(ds, extent: GeoRectangle):
     options = gdal.BuildVRTOptions(outputBounds=(extent.min_x, extent.min_y, extent.max_x, extent.max_y))
-    vrt_filename = tempfile.mktemp(suffix='.vrt')
+    tmp_fd, vrt_filename = tempfile.mkstemp(suffix='.vrt')
     vrt_ds = gdal.BuildVRT(vrt_filename, ds, options=options)
+    os.close(tmp_fd)
     if vrt_ds is None:
         raise Exception("Error! cannot create vrt. Cannot proceed")
     return vrt_filename, vrt_ds

@@ -14,13 +14,15 @@ GDAL - Geospatial Data Abstraction Library
 [![Build Status](https://travis-ci.com/OSGeo/gdal.svg?branch=master)](https://travis-ci.com/OSGeo/gdal)
 [![Build status](https://ci.appveyor.com/api/projects/status/jtwx0pcr0y01i17p/branch/master?svg=true)](https://ci.appveyor.com/project/OSGeo/gdal)
 [![Build Status](https://scan.coverity.com/projects/749/badge.svg?flat=1)](https://scan.coverity.com/projects/gdal)
-[![Documentation build Status](https://dev.azure.com/osgeo/gdal/_apis/build/status/OSGeo.gdal.doc?branchName=master&jobName=Documentation)](https://dev.azure.com/osgeo/gdal/_build/latest?definitionId=2&branchName=master&jobName=Documentation)
+[![Documentation build Status](https://github.com/OSGeo/gdal/workflows/Docs/badge.svg)](https://github.com/osgeo/gdal/actions?query=workflow%3A%22Docs%22+branch%3Amaster)
 [![Fuzzing Status](https://oss-fuzz-build-logs.storage.googleapis.com/badges/gdal.svg)](https://bugs.chromium.org/p/oss-fuzz/issues/list?sort=-opened&can=1&q=proj:gdal)
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5884351.svg)](https://doi.org/10.5281/zenodo.5884351)
 
 [![Powered by NumFOCUS](https://img.shields.io/badge/powered%20by-NumFOCUS-orange.svg?style=flat&colorA=E1523D&colorB=007D8A )](http://numfocus.org)
 
 
-GDAL is an open source X/MIT licensed translator library for raster and vector geospatial data formats.
+GDAL is an open source MIT licensed translator library for raster and vector geospatial data formats.
 
 * Main site: https://gdal.org - Developer and user docs, links to other resources
 * GIT repository: https://github.com/OSGeo/gdal
@@ -48,6 +50,10 @@ pay for developer time, professional services, travel, workshops, and a variety 
 NumFOCUS is 501(c)(3) non-profit charity in the United States; as such, donations to
 NumFOCUS are tax-deductible as allowed by law. As with any donation, you should
 consult with your personal tax adviser or the IRS about your particular tax situation.
+
+### How to build
+
+See [BUILDING.md](BUILDING.md)
 
 ### How to contribute
 

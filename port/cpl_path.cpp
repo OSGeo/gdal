@@ -392,12 +392,24 @@ const char *CPLGetExtension( const char *pszFullFilename )
  * If HAVE_GETCWD macro is not defined, the function returns NULL.
  **/
 
-#ifdef HAVE_GETCWD
+#ifdef _WIN32
 char *CPLGetCurrentDir()
 {
-#ifdef _MAX_PATH
     const size_t nPathMax = _MAX_PATH;
-#elif PATH_MAX
+    wchar_t* pwszDirPath = static_cast<wchar_t *>( VSI_MALLOC_VERBOSE( nPathMax * sizeof(wchar_t) ) );
+    char* pszRet = nullptr;
+    if( pwszDirPath != nullptr &&
+        _wgetcwd(pwszDirPath, nPathMax) != nullptr )
+    {
+        pszRet = CPLRecodeFromWChar(pwszDirPath,CPL_ENC_UCS2,CPL_ENC_UTF8);
+    }
+    CPLFree(pwszDirPath);
+    return pszRet;
+}
+#elif defined(HAVE_GETCWD)
+char *CPLGetCurrentDir()
+{
+#if PATH_MAX
     const size_t nPathMax = PATH_MAX;
 #else
     const size_t nPathMax = 8192;

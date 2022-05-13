@@ -162,3 +162,16 @@ def test_tga_read_uncompressed_32bit_alpha():
     assert ds.GetRasterBand(3).Checksum() == 36064
     assert ds.GetRasterBand(4).GetColorInterpretation() == gdal.GCI_AlphaBand
     assert ds.GetRasterBand(4).Checksum() == 10807
+
+
+def test_tga_read_single_band_runs_crossing_scanlines():
+    ds = gdal.Open('data/tga/from_ffmpeg_samples/test1g.tga')
+    assert ds.GetRasterBand(1).Checksum() == 13077
+
+
+def test_tga_read_three_bands_runs_crossing_scanlines():
+    ds = gdal.Open('data/tga/from_ffmpeg_samples/TEST24rle.tga')
+    assert ds.GetRasterBand(1).Checksum() == 39607
+    assert ds.GetRasterBand(2).Checksum() == 6458
+    assert ds.GetRasterBand(3).Checksum() == 44534
+

@@ -131,16 +131,6 @@ static GDALExtendedDataType BuildDataType(hid_t hDataType, bool& bHasVLen, bool&
         bNonNativeDataType = true;
         return GDALExtendedDataType::Create(GDT_Int16);
     }
-    else if( H5Tequal(H5T_NATIVE_LLONG, hDataType) )
-    {
-        bNonNativeDataType = true;
-        return GDALExtendedDataType::Create(GDT_Float64);
-    }
-    else if( H5Tequal(H5T_NATIVE_ULLONG, hDataType) )
-    {
-        bNonNativeDataType = true;
-        return GDALExtendedDataType::Create(GDT_Float64);
-    }
     else if( eDT != GDT_Unknown )
         return GDALExtendedDataType::Create(eDT);
     else if (klass == H5T_STRING )
@@ -1433,6 +1423,8 @@ static hid_t GetHDF5DataTypeFromGDALDataType(const GDALExtendedDataType& dt,
         case GDT_Int16: hBufferType = H5Tcopy(H5T_NATIVE_SHORT); break;
         case GDT_UInt32: hBufferType = H5Tcopy(H5T_NATIVE_UINT); break;
         case GDT_Int32: hBufferType = H5Tcopy(H5T_NATIVE_INT); break;
+        case GDT_UInt64: hBufferType = H5Tcopy(H5T_NATIVE_UINT64); break;
+        case GDT_Int64: hBufferType = H5Tcopy(H5T_NATIVE_INT64); break;
         case GDT_Float32: hBufferType = H5Tcopy(H5T_NATIVE_FLOAT); break;
         case GDT_Float64: hBufferType = H5Tcopy(H5T_NATIVE_DOUBLE); break;
         case GDT_CInt16:
@@ -1592,22 +1584,6 @@ static void CopyValue(const GByte* pabySrcBuffer, hid_t hSrcDataType,
                 &nVal, GDALExtendedDataType::Create(GDT_Int16),
                 pabyDstBuffer, dstDataType);
         }
-        else if( H5Tequal(H5T_NATIVE_LLONG, hSrcDataType) )
-        {
-            const double dfVal = static_cast<double>(
-                *reinterpret_cast<const GInt64*>(pabySrcBuffer));
-            GDALExtendedDataType::CopyValue(
-                &dfVal, GDALExtendedDataType::Create(GDT_Float64),
-                pabyDstBuffer, dstDataType);
-        }
-        else if( H5Tequal(H5T_NATIVE_ULLONG, hSrcDataType) )
-        {
-            const double dfVal = static_cast<double>(
-                *reinterpret_cast<const GUInt64*>(pabySrcBuffer));
-            GDALExtendedDataType::CopyValue(
-                &dfVal, GDALExtendedDataType::Create(GDT_Float64),
-                pabyDstBuffer, dstDataType);
-        }
         else
         {
             GDALDataType eDT = ::HDF5Dataset::GetDataType(hSrcDataType);
@@ -1744,7 +1720,9 @@ bool HDF5Array::IRead(const GUInt64* arrayStartIdx,
                 H5Tequal(hParent, H5T_NATIVE_USHORT) ||
                 H5Tequal(hParent, H5T_NATIVE_SHORT) ||
                 H5Tequal(hParent, H5T_NATIVE_UINT) ||
-                H5Tequal(hParent, H5T_NATIVE_INT) )
+                H5Tequal(hParent, H5T_NATIVE_INT) ||
+                H5Tequal(hParent, H5T_NATIVE_UINT64) ||
+                H5Tequal(hParent, H5T_NATIVE_INT64) )
             {
                 hBufferType = H5Tcopy(m_hNativeDT);
                 if( m_dt != bufferDataType )
@@ -2025,7 +2003,9 @@ bool HDF5Attribute::IRead(const GUInt64* arrayStartIdx,
                 H5Tequal(hParent, H5T_NATIVE_USHORT) ||
                 H5Tequal(hParent, H5T_NATIVE_SHORT) ||
                 H5Tequal(hParent, H5T_NATIVE_UINT) ||
-                H5Tequal(hParent, H5T_NATIVE_INT) )
+                H5Tequal(hParent, H5T_NATIVE_INT) ||
+                H5Tequal(hParent, H5T_NATIVE_UINT64) ||
+                H5Tequal(hParent, H5T_NATIVE_INT64))
             {
                 hBufferType = H5Tcopy(m_hNativeDT);
             }

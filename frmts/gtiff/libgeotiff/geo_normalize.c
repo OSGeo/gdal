@@ -845,6 +845,7 @@ int GTIFGetDatumInfoEx( void* ctxIn,
     {
         char szCode[12];
         PJ* datum;
+        PJ_TYPE pjType;
 
         sprintf(szCode, "%d", nDatumCode);
         datum = proj_create_from_database(
@@ -854,7 +855,9 @@ int GTIFGetDatumInfoEx( void* ctxIn,
             return FALSE;
         }
 
-        if( proj_get_type(datum) != PJ_TYPE_GEODETIC_REFERENCE_FRAME )
+        pjType = proj_get_type(datum);
+        if( pjType != PJ_TYPE_GEODETIC_REFERENCE_FRAME &&
+            pjType != PJ_TYPE_DYNAMIC_GEODETIC_REFERENCE_FRAME )
         {
             proj_destroy(datum);
             return FALSE;
@@ -2990,8 +2993,11 @@ void GTIFPrintDefnEx( GTIF *psGTIF, GTIFDefn * psDefn, FILE * fp )
 void GTIFPrintDefn( GTIFDefn * psDefn, FILE * fp )
 {
     GTIF *psGTIF = GTIFNew(NULL);
-    GTIFPrintDefnEx(psGTIF, psDefn, fp);
-    GTIFFree(psGTIF);
+    if( psGTIF )
+    {
+        GTIFPrintDefnEx(psGTIF, psDefn, fp);
+        GTIFFree(psGTIF);
+    }
 }
 
 /************************************************************************/

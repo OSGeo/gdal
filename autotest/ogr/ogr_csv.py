@@ -1507,7 +1507,7 @@ def test_ogr_csv_38():
 
     ds = ogr.Open('/vsimem/ogr_csv_38.csv')
     lyr = ds.GetLayer(0)
-    assert lyr.GetLayerDefn().GetGeomFieldDefn(0).GetName() == 'mygeom'
+    assert lyr.GetLayerDefn().GetGeomFieldDefn(0).GetName() == 'geom_mygeom'
     assert lyr.GetLayerDefn().GetGeomFieldDefn(0).GetSpatialRef().ExportToWkt().find('4326') >= 0
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
@@ -1630,7 +1630,8 @@ def test_ogr_csv_42():
 
 def test_ogr_csv_43():
 
-    ds = ogr.GetDriverByName('CSV').CreateDataSource('/vsimem/ogr_csv_43.csv')
+    filename = '/vsimem/ogr_csv_43.csv'
+    ds = ogr.GetDriverByName('CSV').CreateDataSource(filename)
     lyr = ds.CreateLayer('ogr_csv_43', options=['GEOMETRY=AS_WKT', 'CREATE_CSVT=YES'])
     lyr.CreateField(ogr.FieldDefn('id', ogr.OFTInteger))
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -1689,7 +1690,7 @@ def test_ogr_csv_43():
 
     ds = None
 
-    ds = ogr.Open('/vsimem/ogr_csv_43.csv', update=1)
+    ds = ogr.Open(filename, update=1)
     lyr = ds.GetLayer(0)
     f = lyr.GetFeature(2)
     if f['id'] != 2 or f['foo'] != 'baz' or f.GetGeometryRef().ExportToWkt() != 'POINT (3 50)':
@@ -1724,7 +1725,7 @@ def test_ogr_csv_43():
     f = None
     ds = None
 
-    ds = ogr.Open('/vsimem/ogr_csv_43.csv', update=1)
+    ds = ogr.Open(filename, update=1)
     lyr = ds.GetLayer(0)
     f = lyr.GetFeature(2)
     if f['id'] != 3:
@@ -1790,7 +1791,7 @@ def test_ogr_csv_43():
     f = None
     ds = None
 
-    ds = ogr.Open('/vsimem/ogr_csv_43.csv', update=1)
+    ds = ogr.Open(filename, update=1)
     lyr = ds.GetLayer(0)
     f = lyr.GetFeature(2)
     if f['WKT'] != 'POINT (1 2)' or f['_WKT_2'] != 'POINT (3 4)':
@@ -1803,8 +1804,8 @@ def test_ogr_csv_43():
     assert lyr.DeleteFeature(2) == ogr.OGRERR_NON_EXISTING_FEATURE
     ds = None
 
-    gdal.Unlink('/vsimem/ogr_csv_43.csv')
-    gdal.Unlink('/vsimem/ogr_csv_43.csvt')
+    gdal.Unlink(filename)
+    gdal.Unlink(filename + 't')
 
 ###############################################################################
 # Test seeking back while creating

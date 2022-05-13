@@ -701,9 +701,9 @@ protected:
     CPLString m_soSrcLayerName;
     CPLString m_soTgtLayerName;
     CPLString m_soConnLayerName;
-    bool m_bAllow;
-    bool m_bValid;
-    bool m_bAny;
+    bool m_bAllow = false;
+    bool m_bValid = false;
+    bool m_bAny = false;
     CPLString m_soRuleString;
 //! @endcond
 };

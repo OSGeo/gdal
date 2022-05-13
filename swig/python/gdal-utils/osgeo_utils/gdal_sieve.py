@@ -40,12 +40,12 @@ from osgeo_utils.auxiliary.util import GetOutputDriverFor
 
 
 def Usage():
-    print("""gdal_sieve [-q] [-st threshold] [-4] [-8] [-o name=value]
+    print("""Usage: gdal_sieve [-q] [-st threshold] [-4] [-8] [-o name=value]
            srcfile [-nomask] [-mask filename] [-of format] [dstfile]""")
     return 1
 
 
-def main(argv):
+def main(argv=sys.argv):
     threshold = 2
     connectedness = 4
     quiet = False

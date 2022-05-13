@@ -33,6 +33,7 @@
 
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 
+#include <cstdint>
 #include <vector>
 #include <string>
 #include "cpl_port.h"
@@ -83,10 +84,10 @@ public:
     void Add(const std::string& str);
     void Add(const char* pszStr);
     void Add(bool bVal);
-    void Add(int nVal) { Add(static_cast<GIntBig>(nVal)); }
-    void Add(unsigned int nVal) { Add(static_cast<GIntBig>(nVal)); }
-    void Add(GIntBig nVal);
-    void Add(GUInt64 nVal);
+    void Add(int nVal) { Add(static_cast<std::int64_t>(nVal)); }
+    void Add(unsigned int nVal) { Add(static_cast<std::int64_t>(nVal)); }
+    void Add(std::int64_t nVal);
+    void Add(std::uint64_t nVal);
     void Add(float fVal, int nPrecision = 9);
     void Add(double dfVal, int nPrecision = 18);
     void AddNull();

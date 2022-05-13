@@ -64,6 +64,7 @@ Software using GDAL
 - `MicroImages TNT <http://www.microimages.com>`_  advanced software for geospatial analysis (Windows, Linux, Mac OS X and UNIX)
 - `Micromine  <http://www.micromine.com>`_  A mining software solution that uses GDAL for reading/writing various geospatial file formats.
 - `Mirone  <http://w3.ualg.pt/~jluis/mirone>`_  Matlab based package for geospatial, oceanographic and geophysical analysis of grids
+- `MultiSpec <https://engineering.purdue.edu/~biehl/MultiSpec/>`_ Application for interactively analyzing multispectral/hyperspectral image data.
 - `Mygeodata Converter  <http://mygeodata.eu/apps/converter/index_EN.html>`_  Online converter of GDAL raster and OGR vector formats
 - `NASA Ames Stereo Pipeline  <https://ti.arc.nasa.gov/tech/asr/groups/intelligent-robotics/ngt/stereo/>`_  Software for creating terrain models and ortho images from planetary stereo images.
 - `NASA WorldWind  <https://worldwind.arc.nasa.gov/>`_   Multiplatform virtual globe library to quickly and easily create interactive visualizations of 3D globes, map and geographical information.
@@ -104,6 +105,7 @@ Software using GDAL
 - `StarSpan  <https://github.com/Ecotrust/starspan>`_  raster/vector analysis.
 - `TacitView  <https://www.insitu.com/information-delivery/information-processing/tacitview>`_  An imagery visualization and exploitation package for military intelligence.
 - `TatukGIS  <http://www.tatukgis.com>`_  Desktop GIS mapping and data editing application.
+- `Team Awareness Kit <https://tak.gov>`_  Suite of georeferenced imagery and situational awareness tools developed for military planning and execution, now available for civilian use.
 - `TerraGo Technologies  <http://www.terragotech.com>`_  The GeoPDF file format is used to distribute and collaborate geospatial data and uses GDAL for data import/export.
 - `t-rex  <http://t-rex.tileserver.ch>`_  Vector tile server written in Rust.
 - `TerrainView  <http://www.viewtec.net>`_  Interactive real-time 3D GIS Software.

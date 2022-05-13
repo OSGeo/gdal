@@ -22,10 +22,7 @@ add_gdal_driver(
 gdal_standard_includes(ogr_AVC)
 
 if (GDAL_USE_SHAPELIB_INTERNAL)
-  target_include_directories(ogr_AVC PRIVATE $<TARGET_PROPERTY:ogr_Shape,SOURCE_DIR>)
-  if (RENAME_INTERNAL_SHAPELIB_SYMBOLS)
-    target_compile_definitions(ogr_AVC PRIVATE -DRENAME_INTERNAL_SHAPELIB_SYMBOLS -DSHPAPI_CALL=)
-  endif ()
+  gdal_add_vendored_lib(ogr_AVC shapelib)
 else ()
-  gdal_target_link_libraries(TARGET ogr_AVC LIBRARIES SHAPELIB::shp)
+  gdal_target_link_libraries(ogr_AVC PRIVATE SHAPELIB::shp)
 endif ()

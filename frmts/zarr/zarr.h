@@ -112,7 +112,11 @@ public:
     explicit ZarrRasterBand(const std::shared_ptr<GDALMDArray>& poArray);
 
     double GetNoDataValue(int* pbHasNoData) override;
+    int64_t GetNoDataValueAsInt64(int* pbHasNoData) override;
+    uint64_t GetNoDataValueAsUInt64(int* pbHasNoData) override;
     CPLErr SetNoDataValue(double dfNoData) override;
+    CPLErr SetNoDataValueAsInt64(int64_t nNoData) override;
+    CPLErr SetNoDataValueAsUInt64(uint64_t nNoData) override;
     double GetOffset( int *pbSuccess = nullptr ) override;
     CPLErr SetOffset( double dfNewOffset ) override;
     double GetScale( int *pbSuccess = nullptr ) override;
@@ -514,6 +518,8 @@ class ZarrArray final: public GDALPamMDArray
                                 std::vector<GByte>& abyDecodedTileData) const;
 
     bool AllocateWorkingBuffers() const;
+
+    void SerializeNumericNoData(CPLJSONObject& oRoot) const;
 
     void SerializeV2();
 

@@ -155,7 +155,7 @@ the project without it being clearly licensed under the project license.
 
 Generally speaking the key issues are that those providing code to be
 included in the repository understand that the code will be released
-under the MIT/X license, and that the person providing the code has the
+under the MIT license, and that the person providing the code has the
 right to contribute the code. For the committer themselves understanding
 about the license is hopefully clear. For other contributors, the
 committer should verify the understanding unless the committer is very
@@ -165,7 +165,7 @@ frequent contributors).
 If the contribution was developed on behalf of an employer (on work
 time, as part of a work project, etc) then it is important that an
 appropriate representative of the employer understand that the code will
-be contributed under the MIT/X license. The arrangement should be
+be contributed under the MIT license. The arrangement should be
 cleared with an authorized supervisor/manager, etc.
 
 The code should be developed by the contributor, or the code should be

@@ -840,8 +840,7 @@ char ** CSLTokenizeString2( const char * pszString,
                             int nCSLTFlags )
 {
     if( pszString == nullptr )
-        return static_cast<char **>(
-            CPLCalloc(sizeof(char *), 1));
+        return static_cast<char **>(CPLCalloc(sizeof(char *), 1));
 
     CPLStringList oRetList;
     const bool bHonourStrings = (nCSLTFlags & CSLT_HONOURSTRINGS) != 0;
@@ -850,13 +849,13 @@ char ** CSLTokenizeString2( const char * pszString,
     const bool bStripEndSpaces = (nCSLTFlags & CSLT_STRIPENDSPACES) != 0;
 
     char *pszToken = static_cast<char *>(CPLCalloc(10, 1));
-    int nTokenMax = 10;
+    size_t nTokenMax = 10;
 
     while( *pszString != '\0' )
     {
         bool bInString = false;
         bool bStartString = true;
-        int nTokenLen = 0;
+        size_t nTokenLen = 0;
 
         // Try to find the next delimiter, marking end of token.
         for( ; *pszString != '\0'; ++pszString )
@@ -864,9 +863,20 @@ char ** CSLTokenizeString2( const char * pszString,
             // Extend token buffer if we are running close to its end.
             if( nTokenLen >= nTokenMax-3 )
             {
-                nTokenMax = nTokenMax * 2 + 10;
-                pszToken = static_cast<char *>(
-                    CPLRealloc( pszToken, nTokenMax ));
+                if( nTokenMax > std::numeric_limits<size_t>::max() / 2 )
+                {
+                    CPLFree(pszToken);
+                    return static_cast<char **>(CPLCalloc(sizeof(char *), 1));
+                }
+                nTokenMax = nTokenMax * 2;
+                char* pszNewToken = static_cast<char *>(
+                    VSI_REALLOC_VERBOSE( pszToken, nTokenMax ));
+                if( pszNewToken == nullptr )
+                {
+                    CPLFree(pszToken);
+                    return static_cast<char **>(CPLCalloc(sizeof(char *), 1));
+                }
+                pszToken = pszNewToken;
             }
 
             // End if this is a delimiter skip it and break.

@@ -125,6 +125,22 @@ def test_gdal_calc_py_1():
     for i, checksum in zip(range(test_count), (input_checksum[0], input_checksum[1], input_checksum[1])):
         check_file(out[i], checksum, i+1)
 
+    # Test update
+    ds = gdal.Open(out[2], gdal.GA_Update)
+    ds.GetRasterBand(1).Fill(0)
+    ds = None
+    test_py_scripts.run_py_script(script_path, 'gdal_calc',
+                                  f'-Z {infile} --Z_band=2 --calc=Z --outfile {out[2]}')
+    check_file(out[2], input_checksum[1])
+
+    # Test un-intended updated
+    ds = gdal.Open(out[2], gdal.GA_Update)
+    ds.GetRasterBand(1).Fill(0)
+    zero_cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+    test_py_scripts.run_py_script(script_path, 'gdal_calc',
+                                  f'-Z {infile} --Z_band=2 --calc=Z --format GTiff --outfile {out[2]}')
+    check_file(out[2], zero_cs)
 
 def test_gdal_calc_py_2():
     """ test simple formulas """
@@ -417,6 +433,39 @@ def test_gdal_calc_py_9():
     check_file(gdal_calc.Calc(calc='my_neat_sum(a, out_dt)', type=gdal_dt, outfile=outfile[i], user_namespace={'my_neat_sum': my_sum, 'out_dt': gdal_dt}, **kwargs), checksum, i)
     i += 1
 
+
+def test_gdal_calc_py_multiple_inputs_same_alpha():
+    """ test multiple values for -A flag, including wildcards """
+
+    script_path = test_py_scripts.get_py_script('gdal_calc')
+    if script_path is None:
+        pytest.skip("gdal_calc script not found, skipping all tests", allow_module_level=True)
+
+    shutil.copy('../gcore/data/byte.tif', 'tmp/input_wildcard_1.tif')
+    shutil.copy('../gcore/data/byte.tif', 'tmp/input_wildcard_2.tif')
+
+    test_py_scripts.run_py_script(
+        script_path, 'gdal_calc',
+        '-A ../gcore/data/byte.tif ../gcore/data/byte.tif tmp/input_wildcard_*.tif --calc="sum(A.astype(numpy.float32),axis=0)" --overwrite --outfile tmp/test_gdal_calc_py_multiple_inputs_same_alpha.tif --type Float32 --overwrite')
+
+    test_py_scripts.run_py_script(
+        script_path, 'gdal_calc',
+        '-A ../gcore/data/byte.tif --calc="A.astype(numpy.float32)*4" --overwrite --outfile tmp/test_gdal_calc_py_multiple_inputs_same_alpha_ref.tif --type Float32 --overwrite')
+
+    ds = gdal.Open('tmp/test_gdal_calc_py_multiple_inputs_same_alpha.tif')
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    ds = gdal.Open('tmp/test_gdal_calc_py_multiple_inputs_same_alpha_ref.tif')
+    cs_ref = ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    gdal.Unlink('tmp/input_wildcard_1.tif')
+    gdal.Unlink('tmp/input_wildcard_2.tif')
+    gdal.Unlink('tmp/test_gdal_calc_py_multiple_inputs_same_alpha.tif')
+    gdal.Unlink('tmp/test_gdal_calc_py_multiple_inputs_same_alpha_ref.tif')
+
+    assert cs == cs_ref
 
 def test_gdal_calc_py_cleanup():
     """ cleanup all temporary files that were created in this pytest """

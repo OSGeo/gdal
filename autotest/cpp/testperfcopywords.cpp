@@ -44,9 +44,9 @@ int main(int /* argc */, char* /* argv */ [])
 
     clock_t start, end;
 
-    for(intype=GDT_Byte; intype<=GDT_CFloat64;intype++)
+    for(intype=GDT_Byte; intype<GDT_TypeCount;intype++)
     {
-        for(outtype=GDT_Byte;outtype<=GDT_CFloat64;outtype++)
+        for(outtype=GDT_Byte;outtype<GDT_TypeCount;outtype++)
         {
             start = clock();
 

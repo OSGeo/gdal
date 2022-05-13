@@ -188,7 +188,7 @@ General creation options
 
   .. note:: Write support for GeoTIFF 1.1 requires libgeotiff 1.6.0 or later.
 
-- **SPARSE_OK=TRUE/FALSE** ((GDAL >= 3.2): Should empty blocks be
+- **SPARSE_OK=TRUE/FALSE** (GDAL >= 3.2): Should empty blocks be
   omitted on disk? When this option is set, any attempt of writing a
   block whose all pixels are 0 or the nodata value will cause it not to
   be written at all (unless there is a corresponding block already
@@ -207,7 +207,9 @@ Reprojection related creation options
   If set to a value different than CUSTOM, the definition of the specified tiling
   scheme will be used to reproject the dataset to its CRS, select the resolution
   corresponding to the closest zoom level and align on tile boundaries at this
-  resolution. The tile size indicated in the tiling scheme definition (generally
+  resolution (the actual resolution can be controlled with the ZOOM_LEVEL or
+  ZOOM_LEVEL_STRATEGY options).
+  The tile size indicated in the tiling scheme definition (generally
   256 pixels) will be used, unless the user has specified a value with the
   BLOCKSIZE creation option, in which case the user specified one will be taken
   into account (that is if setting a higher value than 256, the original
@@ -219,6 +221,10 @@ Reprojection related creation options
   (e.g. ``FOO`` for a file named ``tms_FOO.json``) or the inline JSON definition.
 
 .. _`OGC Two Dimensional Tile Matrix Set standard`: http://docs.opengeospatial.org/is/17-083r2/17-083r2.html
+
+- **ZOOM_LEVEL**\ =integer. (GDAL >= 3.5) Zoom level number (starting at 0 for
+  coarsest zoom level). Only used for TILING_SCHEME different from CUSTOM.
+  If this option is specified, ZOOM_LEVEL_STRATEGY is ignored.
 
 - **ZOOM_LEVEL_STRATEGY**\ =AUTO/LOWER/UPPER. (GDAL >= 3.2) Strategy to determine
   zoom level. Only used for TILING_SCHEME different from CUSTOM.
@@ -237,11 +243,13 @@ Reprojection related creation options
 - **EXTENT=minx,miny,maxx,maxy**: Set the extent of the target raster, in the
   units of TARGET_SRS. Only taken into account if TARGET_SRS is specified.
 
-- **ALIGNED_LEVELS=INT**: Number of overview levels for which GeoTIFF tile and
+- **ALIGNED_LEVELS=INT**: Number of resolution levels for which GeoTIFF tile and
   tiles defined in the tiling scheme match. When specifying this option, padding tiles will be
   added to the left and top sides of the target raster, when needed, so that
   a GeoTIFF tile matches with a tile of the tiling scheme.
   Only taken into account if TILING_SCHEME is different from CUSTOM.
+  Effect of this option is only visible when setting it at 2 or more, since the
+  full resolution level is by default aligned with the tiling scheme.
   For a tiling scheme whose consecutive zoom level resolutions differ by a
   factor of 2, care must be taken in setting this value to a high number of
   levels, as up to 2^(ALIGNED_LEVELS-1) tiles can be added in each dimension.

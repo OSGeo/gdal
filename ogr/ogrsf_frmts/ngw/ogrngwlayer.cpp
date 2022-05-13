@@ -651,24 +651,24 @@ bool OGRNGWLayer::Delete()
 /*
  * Rename()
  */
-bool OGRNGWLayer::Rename( const std::string &osNewName)
+OGRErr OGRNGWLayer::Rename( const char* pszNewName)
 {
     bool bResult = true;
     if( osResourceId != "-1")
     {
         bResult = NGWAPI::RenameResource(poDS->GetUrl(), osResourceId,
-            osNewName, poDS->GetHeaders());
+            pszNewName, poDS->GetHeaders());
     }
     if( bResult )
     {
-        poFeatureDefn->SetName( osNewName.c_str() );
+        poFeatureDefn->SetName( pszNewName );
         SetDescription( poFeatureDefn->GetName() );
     }
     else
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Rename layer to %s failed", osNewName.c_str());
+        CPLError(CE_Failure, CPLE_AppDefined, "Rename layer to %s failed", pszNewName);
     }
-    return bResult;
+    return bResult ? OGRERR_NONE : OGRERR_FAILURE;
 }
 
 /*
@@ -757,7 +757,7 @@ OGRErr OGRNGWLayer::SetNextByIndex( GIntBig nIndex )
             if( poDS->HasFeaturePaging() )
             {
                 osUrl = NGWAPI::GetFeaturePage( poDS->GetUrl(), osResourceId, 0, 0,
-                    osFields, osWhere, osSpatialFilter, poDS->Extensions(), 
+                    osFields, osWhere, osSpatialFilter, poDS->Extensions(),
                     poFeatureDefn->IsGeometryIgnored() == TRUE);
             }
             else
@@ -797,7 +797,7 @@ OGRFeature *OGRNGWLayer::GetNextFeature()
 
             osUrl = NGWAPI::GetFeaturePage( poDS->GetUrl(), osResourceId,
                 nPageStart, poDS->GetPageSize(), osFields, osWhere,
-                osSpatialFilter, poDS->Extensions(), 
+                osSpatialFilter, poDS->Extensions(),
                 poFeatureDefn->IsGeometryIgnored() == TRUE);
             nPageStart += poDS->GetPageSize();
         }
@@ -948,6 +948,8 @@ int OGRNGWLayer::TestCapability( const char *pszCap )
         return poDS->HasFeaturePaging(); // Ignore fields, paging support and attribute/spatial filters were introduced in NGW v3.1
     else if( EQUAL(pszCap, OLCFastSpatialFilter) )
         return poDS->HasFeaturePaging();
+    else if( EQUAL(pszCap, OLCRename) )
+        return poDS->IsUpdateMode();
     return FALSE;
 }
 
@@ -1294,7 +1296,7 @@ std::string OGRNGWLayer::CreateNGWResourceJson()
                 oField.Add("display_name", pszFieldAlias);
             }
         }
-        else 
+        else
         {
             oField.Add("display_name", osFieldAliasName);
         }

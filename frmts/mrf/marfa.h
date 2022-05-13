@@ -525,7 +525,7 @@ public:
     // Check that the respective block has data, without reading it
     virtual bool TestBlock(int xblk, int yblk);
 
-    virtual GDALColorTable *GetColorTable() override { return poDS->poColorTable; }
+    virtual GDALColorTable *GetColorTable() override { return poMRFDS->poColorTable; }
 
     CPLErr SetColorInterpretation(GDALColorInterp ci) override { img.ci = ci; return CE_None; }
     virtual GDALColorInterp GetColorInterpretation() override { return img.ci; }
@@ -559,7 +559,7 @@ public:
 
 protected:
     // Pointer to the GDALMRFDataset
-    MRFDataset *poDS;
+    MRFDataset *poMRFDS;
     // Deflate page requested, named to avoid conflict with libz deflate()
     int dodeflate;
     int deflate_flags;
@@ -571,18 +571,18 @@ protected:
     ILImage img;
     std::vector<MRFRasterBand *> overviews;
 
-    VSILFILE *IdxFP() { return poDS->IdxFP(); }
-    GDALRWFlag IdxMode() { return poDS->IdxMode(); }
-    VSILFILE *DataFP() { return poDS->DataFP(); }
-    GDALRWFlag DataMode() { return poDS->DataMode(); }
+    VSILFILE *IdxFP() { return poMRFDS->IdxFP(); }
+    GDALRWFlag IdxMode() { return poMRFDS->IdxMode(); }
+    VSILFILE *DataFP() { return poMRFDS->DataFP(); }
+    GDALRWFlag DataMode() { return poMRFDS->DataMode(); }
 
     // How many bytes are in a band block (not a page, a single band block)
     // Easiest is to calculate it from the pageSizeBytes
     GUInt32 blockSizeBytes() {
-        return poDS->current.pageSizeBytes / poDS->current.pagesize.c;
+        return poMRFDS->current.pageSizeBytes / poMRFDS->current.pagesize.c;
     }
 
-    const CPLStringList & GetOptlist() const { return poDS->optlist; }
+    const CPLStringList & GetOptlist() const { return poMRFDS->optlist; }
 
     // Compression and decompression functions.  To be overwritten by specific implementations
     virtual CPLErr Compress(buf_mgr &dst, buf_mgr &src) = 0;
@@ -593,7 +593,7 @@ protected:
 
     GIntBig bandbit(int b) { return ((GIntBig)1) << b; }
     GIntBig bandbit() { return bandbit(nBand - 1); }
-    GIntBig AllBandMask() { return bandbit(poDS->nBands) - 1; }
+    GIntBig AllBandMask() { return bandbit(poMRFDS->nBands) - 1; }
 
     // Overview Support
     // Inherited from GDALRasterBand
@@ -750,13 +750,21 @@ protected:
     virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
     virtual CPLErr Compress(buf_mgr &dst, buf_mgr &src) override;
     double precision;
+    // L1 or L2
     int version;
-    static bool IsLerc(CPLString &s) {
-        return (STARTS_WITH(s, "Lerc2 ") || STARTS_WITH(s, "CntZImage "));
-    }
-
+    // L2 version
+    int l2ver;
     // Build a MRF header for a single LERC tile
     static CPLXMLNode *GetMRFConfig(GDALOpenInfo *poOpenInfo);
+private:
+    static bool IsLerc1(const char* s) {
+        static const char L1sig[] = "CntZImage ";
+        return !strncmp(s, L1sig, sizeof(L1sig) - 1);
+    }
+    static bool IsLerc2(const char* s) {
+        static const char L2sig[] = "Lerc2 ";
+        return !strncmp(s, L2sig, sizeof(L2sig) - 1);
+    }
 };
 #endif
 

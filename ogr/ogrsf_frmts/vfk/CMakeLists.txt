@@ -18,6 +18,6 @@ add_gdal_driver(
 gdal_standard_includes(ogr_VFK)
 if (GDAL_USE_SQLITE3)
   target_include_directories(ogr_VFK PRIVATE ${SQLite3_INCLUDE_DIR})
-  gdal_target_link_libraries(TARGET ogr_VFK LIBRARIES SQLite::SQLite3)
+  gdal_target_link_libraries(ogr_VFK PRIVATE SQLite::SQLite3)
   target_compile_definitions(ogr_VFK PRIVATE -DHAVE_SQLITE)
 endif ()

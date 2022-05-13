@@ -108,8 +108,8 @@ Open options
 ------------
 
 -  **USE_IDX=YES/NO**: (From GDAL 3.4) Enable automatic reading
-   of external wgrib2 external index files when available. GDAL
-   will look for a `<GRIB>.idx` in the same place as the dataset.
+   of external wgrib2 external index files when available. Default is YES.
+   GDAL will look for a `<GRIB>.idx` in the same place as the dataset.
    These files when combined with careful usage of the API or the
    CLI tools allow a GRIBv2 file to be opened without reading all
    the bands. In particular, this allows an orders of magnitude
@@ -119,7 +119,9 @@ Open options
    description of the bands should be accessed as accessing the
    metadata will require loading of the band header.
    gdal_translate is supported but gdalinfo is not.
-   Default is YES.
+   This option is ignored when using the multidimensional API (index is then
+   ignored)
+
 
 GRIB2 write support
 -------------------

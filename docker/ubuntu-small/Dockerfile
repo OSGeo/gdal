@@ -3,7 +3,7 @@
 
 # This file is available at the option of the licensee under:
 # Public domain
-# or licensed under X/MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
+# or licensed under MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
 ARG PROJ_INSTALL_PREFIX=/usr/local
 ARG BASE_IMAGE=ubuntu:20.04
@@ -55,6 +55,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
        libwebp-dev${APT_ARCH_SUFFIX} libpng-dev${APT_ARCH_SUFFIX} \
        libzstd-dev${APT_ARCH_SUFFIX} bash zip curl \
        libpq-dev${APT_ARCH_SUFFIX} libssl-dev${APT_ARCH_SUFFIX} libopenjp2-7-dev${APT_ARCH_SUFFIX} \
+       libspatialite-dev${APT_ARCH_SUFFIX} \
        autoconf automake sqlite3 bash-completion
 
 # Build openjpeg
@@ -151,7 +152,6 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && wget -q https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz -O - \
         | tar xz -C gdal --strip-components=1 \
     && cd gdal \
-    && ./autogen.sh \
     && if test "${RSYNC_REMOTE:-}" != ""; then \
         echo "Downloading cache..."; \
         rsync -ra ${RSYNC_REMOTE}/gdal/${GCC_ARCH}/ $HOME/; \
@@ -165,16 +165,18 @@ RUN . /buildscripts/bh-set-envvars.sh \
         export CXX=$PWD/ccache_g++.sh; \
         ccache -M 1G; \
     fi \
-    && LDFLAGS="-L/build${PROJ_INSTALL_PREFIX}/lib -linternalproj" \
-    ./configure --prefix=/usr --sysconfdir=/etc "${WITH_HOST}" --without-libtool \
-    --with-hide-internal-symbols \
-    --with-jpeg12 \
-    --with-python \
-    --with-webp --with-proj=/build${PROJ_INSTALL_PREFIX} \
-    --with-libtiff=internal --with-rename-internal-libtiff-symbols \
-    --with-geotiff=internal --with-rename-internal-libgeotiff-symbols \
+    && mkdir build \
+    && cd build \
+    && CFLAGS='-DPROJ_RENAME_SYMBOLS -O2' CXXFLAGS='-DPROJ_RENAME_SYMBOLS -DPROJ_INTERNAL_CPP_NAMESPACE -O2' \
+       cmake .. \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DPROJ_INCLUDE_DIR="/build${PROJ_INSTALL_PREFIX-/usr/local}/include" \
+        -DPROJ_LIBRARY="/build${PROJ_INSTALL_PREFIX-/usr/local}/lib/libinternalproj.so" \
+        -DGDAL_USE_TIFF_INTERNAL=ON \
+        -DGDAL_USE_GEOTIFF_INTERNAL=ON \
     && make -j$(nproc) \
     && make install DESTDIR="/build" \
+    && cd .. \
     && if test "${RSYNC_REMOTE:-}" != ""; then \
         ccache -s; \
         echo "Uploading cache..."; \
@@ -204,6 +206,9 @@ FROM $TARGET_BASE_IMAGE as runner
 USER root
 RUN date
 
+# Update distro
+RUN apt-get update -y && apt-get upgrade -y
+
 # PROJ dependencies
 RUN apt-get update; \
     DEBIAN_FRONTEND=noninteractive apt-get install -y  --no-install-recommends \
@@ -218,7 +223,7 @@ RUN apt-get update -y; \
         libexpat1 \
         libxerces-c3.2 \
         libwebp6 libpng16-16 \
-        libzstd1 bash libpq5 libssl1.1 libopenjp2-7
+        libzstd1 bash libpq5 libssl1.1 libopenjp2-7 libspatialite7
 
 RUN apt-get update; \
     DEBIAN_FRONTEND=noninteractive apt-get install -y python-is-python3

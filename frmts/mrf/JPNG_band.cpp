@@ -192,7 +192,7 @@ JPNG_Band::JPNG_Band( MRFDataset *pDS, const ILImage &image,
 
     // PNGs and JPGs can be larger than the source, especially for
     // small page size.
-    poDS->SetPBufferSize(image.pageSizeBytes + 100);
+    poMRFDS->SetPBufferSize(image.pageSizeBytes + 100);
 }
 
 JPNG_Band::~JPNG_Band() {}

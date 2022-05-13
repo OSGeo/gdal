@@ -48,7 +48,7 @@ CPL_CVSID("$Id$")
 static bool bCacheMaxInitialized = false;
 // Will later be overridden by the default 5% if GDAL_CACHEMAX not defined.
 static GIntBig nCacheMax = 40 * 1024 * 1024;
-static volatile GIntBig nCacheUsed = 0;
+static GIntBig nCacheUsed = 0;
 
 static GDALRasterBlock *poOldest = nullptr;  // Tail.
 static GDALRasterBlock *poNewest = nullptr;  // Head.

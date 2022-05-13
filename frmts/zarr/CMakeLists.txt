@@ -13,5 +13,5 @@ target_include_directories(gdal_Zarr PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/me
 
 if (GDAL_USE_BLOSC)
   target_compile_definitions(gdal_Zarr PRIVATE -DHAVE_BLOSC)
-  gdal_target_link_libraries(TARGET gdal_Zarr LIBRARIES Blosc::Blosc)
+  gdal_target_link_libraries(gdal_Zarr PRIVATE Blosc::Blosc)
 endif ()

@@ -101,11 +101,11 @@ Arc interpolation
 ~~~~~~~~~~~~~~~~~
 
 | Converting INTERLIS arc geometries to line segments can be forced by
-  setting the configuration variable OGR_STROKE_CURVE to TRUE.
+  setting the configuration variable :decl_configoption:`OGR_STROKE_CURVE` to TRUE.
 | The approximation of arcs as linestrings is done by splitting the arcs
   into subarcs of no more than a threshold angle. This angle is the
-  OGR_ARC_STEPSIZE. This defaults to one degree, but may be overridden
-  by setting the configuration variable OGR_ARC_STEPSIZE.
+  :decl_configoption:`OGR_ARC_STEPSIZE`. This defaults to one degree, but may be overridden
+  by setting the configuration variable :decl_configoption:`OGR_ARC_STEPSIZE`.
 
 Other Notes
 -----------

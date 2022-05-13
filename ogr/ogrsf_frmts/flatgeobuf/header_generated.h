@@ -6,6 +6,13 @@
 
 #include "flatbuffers/flatbuffers.h"
 
+// Ensure the included flatbuffers.h is the same version as when this file was
+// generated, otherwise it may not be compatible.
+static_assert(FLATBUFFERS_VERSION_MAJOR == 2 &&
+              FLATBUFFERS_VERSION_MINOR == 0 &&
+              FLATBUFFERS_VERSION_REVISION == 6,
+             "Non-compatible flatbuffers version included");
+
 namespace FlatGeobuf {
 
 struct Column;
@@ -216,17 +223,17 @@ struct Column FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     return VerifyTableStart(verifier) &&
            VerifyOffsetRequired(verifier, VT_NAME) &&
            verifier.VerifyString(name()) &&
-           VerifyField<uint8_t>(verifier, VT_TYPE) &&
+           VerifyField<uint8_t>(verifier, VT_TYPE, 1) &&
            VerifyOffset(verifier, VT_TITLE) &&
            verifier.VerifyString(title()) &&
            VerifyOffset(verifier, VT_DESCRIPTION) &&
            verifier.VerifyString(description()) &&
-           VerifyField<int32_t>(verifier, VT_WIDTH) &&
-           VerifyField<int32_t>(verifier, VT_PRECISION) &&
-           VerifyField<int32_t>(verifier, VT_SCALE) &&
-           VerifyField<uint8_t>(verifier, VT_NULLABLE) &&
-           VerifyField<uint8_t>(verifier, VT_UNIQUE) &&
-           VerifyField<uint8_t>(verifier, VT_PRIMARY_KEY) &&
+           VerifyField<int32_t>(verifier, VT_WIDTH, 4) &&
+           VerifyField<int32_t>(verifier, VT_PRECISION, 4) &&
+           VerifyField<int32_t>(verifier, VT_SCALE, 4) &&
+           VerifyField<uint8_t>(verifier, VT_NULLABLE, 1) &&
+           VerifyField<uint8_t>(verifier, VT_UNIQUE, 1) &&
+           VerifyField<uint8_t>(verifier, VT_PRIMARY_KEY, 1) &&
            VerifyOffset(verifier, VT_METADATA) &&
            verifier.VerifyString(metadata()) &&
            verifier.EndTable();
@@ -374,7 +381,7 @@ struct Crs FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_ORG) &&
            verifier.VerifyString(org()) &&
-           VerifyField<int32_t>(verifier, VT_CODE) &&
+           VerifyField<int32_t>(verifier, VT_CODE, 4) &&
            VerifyOffset(verifier, VT_NAME) &&
            verifier.VerifyString(name()) &&
            VerifyOffset(verifier, VT_DESCRIPTION) &&
@@ -527,16 +534,16 @@ struct Header FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            verifier.VerifyString(name()) &&
            VerifyOffset(verifier, VT_ENVELOPE) &&
            verifier.VerifyVector(envelope()) &&
-           VerifyField<uint8_t>(verifier, VT_GEOMETRY_TYPE) &&
-           VerifyField<uint8_t>(verifier, VT_HAS_Z) &&
-           VerifyField<uint8_t>(verifier, VT_HAS_M) &&
-           VerifyField<uint8_t>(verifier, VT_HAS_T) &&
-           VerifyField<uint8_t>(verifier, VT_HAS_TM) &&
+           VerifyField<uint8_t>(verifier, VT_GEOMETRY_TYPE, 1) &&
+           VerifyField<uint8_t>(verifier, VT_HAS_Z, 1) &&
+           VerifyField<uint8_t>(verifier, VT_HAS_M, 1) &&
+           VerifyField<uint8_t>(verifier, VT_HAS_T, 1) &&
+           VerifyField<uint8_t>(verifier, VT_HAS_TM, 1) &&
            VerifyOffset(verifier, VT_COLUMNS) &&
            verifier.VerifyVector(columns()) &&
            verifier.VerifyVectorOfTables(columns()) &&
-           VerifyField<uint64_t>(verifier, VT_FEATURES_COUNT) &&
-           VerifyField<uint16_t>(verifier, VT_INDEX_NODE_SIZE) &&
+           VerifyField<uint64_t>(verifier, VT_FEATURES_COUNT, 8) &&
+           VerifyField<uint16_t>(verifier, VT_INDEX_NODE_SIZE, 2) &&
            VerifyOffset(verifier, VT_CRS) &&
            verifier.VerifyTable(crs()) &&
            VerifyOffset(verifier, VT_TITLE) &&

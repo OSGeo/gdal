@@ -174,7 +174,8 @@ with control information.
 
     (target aligned pixels) align the coordinates of the extent of the output
     file to the values of the :option:`-tr`, such that the aligned extent
-    includes the minimum extent.
+    includes the minimum extent. Alignment means that xmin / resx, ymin / resy,
+    xmax / resx and ymax / resy are integer values.
 
 .. option:: -ts <width> <height>
 
@@ -223,7 +224,7 @@ with control information.
 
     ``rms`` root mean square / quadratic mean of all non-NODATA contributing pixels (GDAL >= 3.3)
 
-    ``mode``: mode resampling, selects the value which appears most often of all the sampled points.
+    ``mode``: mode resampling, selects the value which appears most often of all the sampled points. In the case of ties, the first value identified as the mode will be selected.
 
     ``max``: maximum resampling, selects the maximum value from all non-NODATA contributing pixels.
 
@@ -330,7 +331,10 @@ with control information.
 
 .. option:: -overwrite
 
-    Overwrite the target dataset if it already exists.
+    Overwrite the target dataset if it already exists. Overwriting must be understood
+    here as deleting and recreating the file from scratch. Note that if this option
+    is *not* specified and the output file already exists, it will be updated in
+    place.
 
 .. option:: -nomd
 

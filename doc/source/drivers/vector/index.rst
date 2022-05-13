@@ -27,20 +27,15 @@ Vector drivers
    :maxdepth: 1
 
    amigocloud
-   ao
-   arcgen
+   arrow
    avcbin
    avce00
    cad
    carto
-   cloudant
-   couchdb
    csv
    csw
-   db2
    dgn
    dgnv8
-   dods
    dwg
    dxf
    eeda
@@ -49,11 +44,9 @@ Vector drivers
    esrijson
    filegdb
    flatgeobuf
-   fme
    geoconcept
    geojson
    geojsonseq
-   geomedia
    georss
    gmlas
    gml
@@ -62,20 +55,17 @@ Vector drivers
    gpsbabel
    gpx
    grass
-   gtm
+   hana
    idb
    idrisi
    ili
-   ingres
    jml
    kml
    libkml
    lvbag
    mapml
-   mdb
    memory
    mitab
-   mongodb
    mongodbv3
    mssqlspatial
    mvt
@@ -91,6 +81,7 @@ Vector drivers
    ogdi
    openfilegdb
    osm
+   parquet
    pdf
    pds
    pgdump
@@ -110,7 +101,6 @@ Vector drivers
    vdv
    vfk
    vrt
-   walk
    wasp
    wfs
    xls

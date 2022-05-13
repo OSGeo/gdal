@@ -36,10 +36,11 @@ find_package_handle_standard_args(GEOS FOUND_VAR GEOS_FOUND
 if(GEOS_FOUND)
     set(GEOS_LIBRARIES ${GEOS_LIBRARY})
     set(GEOS_INCLUDE_DIRS ${GEOS_INCLUDE_DIR})
+    set(GEOS_TARGET GEOS::GEOS)
 
-    if(NOT TARGET GEOS::GEOS)
-        add_library(GEOS::GEOS UNKNOWN IMPORTED)
-        set_target_properties(GEOS::GEOS PROPERTIES
+    if(NOT TARGET ${GEOS_TARGET})
+        add_library(${GEOS_TARGET} UNKNOWN IMPORTED)
+        set_target_properties(${GEOS_TARGET} PROPERTIES
                               INTERFACE_INCLUDE_DIRECTORIES "${GEOS_INCLUDE_DIR}"
                               IMPORTED_LINK_INTERFACE_LANGUAGES "C"
                               IMPORTED_LOCATION "${GEOS_LIBRARY}")

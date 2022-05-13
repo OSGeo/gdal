@@ -896,7 +896,6 @@ CPLErr RawRasterBand::AccessBlock(vsi_l_offset nBlockOff, size_t nBlockSize,
 
         memset(static_cast<GByte *>(pData) + nBytesActuallyRead,
                0, nBlockSize - nBytesActuallyRead);
-        return CE_None;
     }
 
     // Byte swap the interesting data, if required.
@@ -1052,7 +1051,7 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         {
             vsi_l_offset nOffset = nImgOffset;
             if( nLineOffset >= 0 )
-                nOffset += nYOff * nLineOffset;
+                nOffset += nYOff * static_cast<vsi_l_offset>(nLineOffset);
             else
                 nOffset -= nYOff * static_cast<vsi_l_offset>(-nLineOffset);
 
@@ -1091,7 +1090,7 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 else
                     nOffset -= nLine * static_cast<vsi_l_offset>(-nLineOffset);
                 if( nPixelOffset >= 0 )
-                    nOffset += nXOff * nPixelOffset;
+                    nOffset += nXOff * static_cast<vsi_l_offset>(nPixelOffset);
                 else
                     nOffset -= nXOff * static_cast<vsi_l_offset>(-nPixelOffset);
                 if ( AccessBlock(nOffset,
@@ -1164,7 +1163,7 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             // Seek to the correct block.
             vsi_l_offset nOffset = nImgOffset;
             if( nLineOffset >= 0 )
-                nOffset += nYOff * nLineOffset;
+                nOffset += nYOff * static_cast<vsi_l_offset>(nLineOffset);
             else
                 nOffset -= nYOff * static_cast<vsi_l_offset>(-nLineOffset);
 
@@ -1220,11 +1219,11 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                       static_cast<vsi_l_offset>(iLine * dfSrcYInc);
                 vsi_l_offset nOffset = nImgOffset;
                 if( nLineOffset >= 0 )
-                    nOffset += nLine * nLineOffset;
+                    nOffset += nLine * static_cast<vsi_l_offset>(nLineOffset);
                 else
                     nOffset -= nLine * static_cast<vsi_l_offset>(-nLineOffset);
                 if( nPixelOffset >= 0 )
-                    nOffset += nXOff * nPixelOffset;
+                    nOffset += nXOff * static_cast<vsi_l_offset>(nPixelOffset);
                 else
                     nOffset -= nXOff * static_cast<vsi_l_offset>(-nPixelOffset);
 

@@ -32,6 +32,7 @@
 
 #include "cpl_port.h"
 
+#include <cstdint>
 #include <limits>
 
 /************************************************************************/
@@ -112,8 +113,8 @@ inline T GDALClampValue(const T tValue, const T tMax, const T tMin)
  */
 template <class T> inline bool GDALIsValueInRange(double dfValue)
 {
-    return dfValue >= std::numeric_limits<T>::min() &&
-           dfValue <= std::numeric_limits<T>::max();
+    return dfValue >= static_cast<double>(std::numeric_limits<T>::min()) &&
+           dfValue <= static_cast<double>(std::numeric_limits<T>::max());
 }
 
 template <> inline bool GDALIsValueInRange<double>(double dfValue)
@@ -154,7 +155,7 @@ template<class Tin> struct sGDALCopyWord<Tin, double>
 {
     static inline void f(const Tin tValueIn, double &dfValueOut)
     {
-        dfValueOut = tValueIn;
+        dfValueOut = static_cast<double>(tValueIn);
     }
 };
 
@@ -269,6 +270,24 @@ template<> struct sGDALCopyWord<double, int>
     }
 };
 
+template<> struct sGDALCopyWord<double, std::int64_t>
+{
+    static inline void f(const double dfValueIn, std::int64_t &nValueOut)
+    {
+        if( CPLIsNan(dfValueIn) )
+        {
+            nValueOut = 0;
+            return;
+        }
+        double dfMaxVal, dfMinVal;
+        GDALGetDataLimits<double, std::int64_t>(dfMaxVal, dfMinVal);
+        double dfValue = dfValueIn >= 0.0 ? dfValueIn + 0.5 :
+            dfValueIn - 0.5;
+        nValueOut = static_cast<std::int64_t>(
+            GDALClampValue(dfValue, dfMaxVal, dfMinVal));
+    }
+};
+
 template<> struct sGDALCopyWord<double, short>
 {
     static inline void f(const double dfValueIn, short &nValueOut)
@@ -326,6 +345,49 @@ template<> struct sGDALCopyWord<float, unsigned int>
         else
         {
             nValueOut = static_cast<unsigned int>(fValueIn + 0.5f);
+        }
+    }
+};
+
+// Roundoff occurs for Float32 -> std::int64_t for max/min. Overload GDALCopyWord
+// specifically for this case.
+template<> struct sGDALCopyWord<float, std::int64_t>
+{
+    static inline void f(const float fValueIn, std::int64_t &nValueOut)
+    {
+        if (fValueIn >= static_cast<float>(std::numeric_limits<std::int64_t>::max()))
+        {
+            nValueOut = std::numeric_limits<std::int64_t>::max();
+        }
+        else if (fValueIn <= static_cast<float>(std::numeric_limits<std::int64_t>::min()))
+        {
+            nValueOut = std::numeric_limits<std::int64_t>::min();
+        }
+        else
+        {
+            nValueOut = static_cast<std::int64_t>(fValueIn > 0.0f ?
+                fValueIn + 0.5f : fValueIn - 0.5f);
+        }
+    }
+};
+
+// Roundoff occurs for Float32 -> std::uint64_t for max. Overload GDALCopyWord
+// specifically for this case.
+template<> struct sGDALCopyWord<float, std::uint64_t>
+{
+    static inline void f(const float fValueIn, std::uint64_t &nValueOut)
+    {
+        if (fValueIn >= static_cast<float>(std::numeric_limits<std::uint64_t>::max()))
+        {
+            nValueOut = std::numeric_limits<std::uint64_t>::max();
+        }
+        else if (fValueIn <= static_cast<float>(std::numeric_limits<std::uint64_t>::min()))
+        {
+            nValueOut = std::numeric_limits<std::uint64_t>::min();
+        }
+        else
+        {
+            nValueOut = static_cast<std::uint64_t>(fValueIn + 0.5f);
         }
     }
 };

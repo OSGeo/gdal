@@ -62,7 +62,7 @@ def doit(src_filename, dst_filename):
     gdal_array.SaveArray(dst_image, dst_filename)
 
 
-def main(argv):
+def main(argv=sys.argv):
     src_filename = 'utm.tif'
     dst_filename = 'classes.tif'
     if len(argv) > 1:

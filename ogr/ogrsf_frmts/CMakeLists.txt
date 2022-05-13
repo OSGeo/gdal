@@ -7,7 +7,7 @@ gdal_standard_includes(ogrsf_frmts)
 target_include_directories(ogrsf_frmts PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
                                                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/generic>)
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:ogrsf_frmts>)
-set_property(TARGET ogrsf_frmts PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
+set_property(TARGET ogrsf_frmts PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
 add_dependencies(ogrsf_frmts generate_gdal_version_h)
 
 # Obligatory for building GDAL; always compile in.
@@ -31,17 +31,14 @@ ogr_optional_driver(csv CSV)
 ogr_optional_driver(dgn DGN)
 ogr_optional_driver(gmt GMT)
 ogr_optional_driver(ntf NTF)
-ogr_optional_driver(rec REC)
 ogr_optional_driver(s57 S57)
 ogr_optional_driver(tiger "U.S. Census TIGER/Line")
 ogr_optional_driver(geoconcept GEOCONCEPT)
 ogr_optional_driver(georss GEORSS)
-ogr_optional_driver(gtm "GPS TrackMaker")
 ogr_optional_driver(dxf DXF)
 ogr_optional_driver(pgdump PGDump)
 ogr_optional_driver(gpsbabel GPSBABEL)
 ogr_optional_driver(edigeo EDIGEO)
-ogr_optional_driver(arcgen ARCGEN)
 ogr_optional_driver(sxf SXF)
 ogr_optional_driver(openfilegdb OPENFILEGDB)
 ogr_optional_driver(wasp "WAsP .map format")
@@ -55,10 +52,9 @@ ogr_optional_driver(mapml MapML)
 #
 # XML drivers
 ogr_dependent_driver(gpx "GPX - GPS Exchange Format" "GDAL_USE_EXPAT")
-ogr_dependent_driver(gmlas GMLAS "GDAL_USE_XERCESC;OGR_ENABLE_PGDUMP")
+ogr_dependent_driver(gmlas GMLAS "GDAL_USE_XERCESC;OGR_ENABLE_DRIVER_PGDUMP")
 ogr_dependent_driver(svg "Scalable Vector Graphics" "GDAL_USE_EXPAT")
 ogr_dependent_driver(csw CSW "GDAL_USE_CURL")
-ogr_dependent_driver(dods DODS "GDAL_USE_DAP;GDAL_USE_LIBXML2")
 ogr_dependent_driver(dwg DWG "GDAL_USE_TEIGHA")
 ogr_dependent_driver(filegdb FileGDB "GDAL_USE_FILEGDB")
 ogr_dependent_driver(libkml LibKML "GDAL_USE_LIBKML")
@@ -71,56 +67,41 @@ ogr_dependent_driver(elastic "ElasticSearch" "GDAL_USE_CURL")
 
 ogr_optional_driver(idrisi IDRISI)
 
-ogr_dependent_driver(pds "Planetary Data Systems TABLE" "GDAL_ENABLE_FRMT_PDS")
+ogr_dependent_driver(pds "Planetary Data Systems TABLE" "GDAL_ENABLE_DRIVER_PDS")
 
 # Caution: if modifying SQLite declaration here, also modify it in gdal.cmake
 ogr_dependent_driver(sqlite "SQLite3 / Spatialite RDBMS" "GDAL_USE_SQLITE3")
 # Caution: if modifying GPKG declaration here, also modify it in gdal.cmake
-ogr_dependent_driver(gpkg "GeoPackage" "GDAL_USE_SQLITE3;OGR_ENABLE_SQLITE")
-ogr_dependent_driver(osm "OpenStreetMap XML and PBF" "GDAL_USE_SQLITE3;OGR_ENABLE_SQLITE")
+ogr_dependent_driver(gpkg "GeoPackage" "GDAL_USE_SQLITE3;OGR_ENABLE_DRIVER_SQLITE")
+ogr_dependent_driver(osm "OpenStreetMap XML and PBF" "GDAL_USE_SQLITE3;OGR_ENABLE_DRIVER_SQLITE")
 ogr_dependent_driver(vfk "Czech Cadastral Exchange Data Format" "GDAL_USE_SQLITE3")
-ogr_dependent_driver(mvt "MVT" "GDAL_USE_SQLITE3;OGR_ENABLE_OSM")
+ogr_dependent_driver(mvt "MVT" "GDAL_USE_SQLITE3;OGR_ENABLE_DRIVER_OSM")
 
-# ODBC/POSTGRES/MYSQL/INGRESS/COUCHDB
-ogr_dependent_driver(amigocloud AMIGOCLOUD "GDAL_USE_CURL;OGR_ENABLE_PGDUMP")
-ogr_dependent_driver(cloudant Cloudant "GDAL_USE_CURL")
-ogr_dependent_driver(couchdb CouchDB "GDAL_USE_CURL")
-ogr_dependent_driver(carto CARTO "OGR_ENABLE_PGDUMP")
-ogr_dependent_driver(ingress INGRESS "HAVE_INGRESS")
+# ODBC/POSTGRES/MYSQL
+ogr_dependent_driver(amigocloud AMIGOCLOUD "GDAL_USE_CURL;OGR_ENABLE_DRIVER_PGDUMP")
+ogr_dependent_driver(carto CARTO "OGR_ENABLE_DRIVER_PGDUMP")
 ogr_dependent_driver(ili ILI "GDAL_USE_XERCESC")
 ogr_dependent_driver(mysql MySQL "GDAL_USE_MYSQL")
-ogr_dependent_driver(pg PostGIS "GDAL_USE_POSTGRESQL;OGR_ENABLE_PGDUMP")
-ogr_dependent_driver(geomedia GEOMEDIA "GDAL_USE_ODBC")
+ogr_dependent_driver(pg PostGIS "GDAL_USE_POSTGRESQL;OGR_ENABLE_DRIVER_PGDUMP")
 ogr_dependent_driver(mssqlspatial MSSQLSPATIAL "GDAL_USE_ODBC")
 ogr_dependent_driver(odbc ODBC "GDAL_USE_ODBC")
-ogr_dependent_driver(walk "WALK Spatial data" "GDAL_USE_ODBC")
 ogr_dependent_driver(pgeo "PGEO" "GDAL_USE_ODBC")
-
-# for dependency problem, grass is not always compiled in.
-ogr_dependent_driver(grass "GRASS Vector format" "HAVE_GRASS")
-if (OGR_ENABLE_GRASS)
-  if (HAVE_GRASS AND HAVE_POSTGRESQL)
-
-  else ()
-    message(FATAL_ERROR "Dependency error on GRASS driver")
-  endif ()
-endif ()
 
 ogr_dependent_driver(xlsx "Microsoft Office Excel(xlsx)" "GDAL_USE_EXPAT")
 ogr_dependent_driver(xls "Microsoft Office Excel(xls)" "GDAL_USE_FREEXL")
 ogr_dependent_driver(mongodbv3 "MongoDB V3" "GDAL_USE_MONGOCXX")
 ogr_dependent_driver(cad "OpenCAD" "GDAL_USE_OPENCAD OR GDAL_USE_OPENCAD_INTERNAL")
+ogr_dependent_driver(parquet "Parquet" "GDAL_USE_PARQUET")
+ogr_dependent_driver(arrow "Arrow" "GDAL_USE_ARROW")
 
 # ######################################################################################################################
 # proprietary libraries
-ogr_dependent_driver(fme "FME" "HAVE_FME")
-ogr_dependent_driver(oci "Oracle OCI" "HAVE_ORACLE")
-# to be removed in GDAL 3.5 ogr_dependent_driver(db2 "IBM DB2" "GDAL_USE_ODBC")
-ogr_dependent_driver(idb "IDB" "HAVE_IDB")
-# to be removed in GDAL 3.5 ogr_dependent_driver(arcobjects ARCOBJECTS "ARCOBJECTS_FOUND")
+ogr_dependent_driver(oci "Oracle OCI" "GDAL_USE_ORACLE")
+ogr_dependent_driver(idb "IDB" "GDAL_USE_IDB")
 ogr_dependent_driver(ods ODS "GDAL_USE_EXPAT")
 ogr_dependent_driver(ogdi "OGDI" "GDAL_USE_OGDI")
 ogr_dependent_driver(lvbag "LVBAG" "GDAL_USE_EXPAT")
+ogr_dependent_driver(hana "SAP HANA" "GDAL_USE_ODBCCPP;GDAL_USE_ODBC")
 
 # Add generic in last line
 add_subdirectory(generic)

@@ -747,6 +747,7 @@ namespace nccfdriver
 
         while(!transactionQueue.empty())
         {
+            // coverity[var_deref_model]
             wl.push(MTPtr(transactionQueue.front().release()));
             this->transactionQueue.pop();
         }

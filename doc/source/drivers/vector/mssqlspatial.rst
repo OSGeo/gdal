@@ -147,11 +147,10 @@ Layer Creation Options
 Configuration options
 ---------------------
 
-There are a variety of `Configuration
-Options <http://trac.osgeo.org/gdal/wiki/ConfigOptions>`__ which help
-control the behavior of this driver.
+The following :ref:`configuration options <configoptions>` are 
+available:
 
--  **MSSQLSPATIAL_USE_BCP**: (From GDAL 2.1.0) Enable bulk insert when
+-  :decl_configoption:`MSSQLSPATIAL_USE_BCP`: (From GDAL 2.1.0) Enable bulk insert when
    adding features. This option requires to to compile GDAL against a
    bulk copy enabled ODBC driver like SQL Server Native Client 11.0. To
    specify a BCP supported driver in the connection string, use the
@@ -161,21 +160,21 @@ control the behavior of this driver.
    connection string. If GDAL is compiled against SQL Server Native
    Client 10.0 or 11.0 the default setting of this parameter is TRUE,
    otherwise the parameter is ignored by the driver.
--  **MSSQLSPATIAL_BCP_SIZE**: (From GDAL 2.1.0) Specifies the bulk
+-  :decl_configoption:`MSSQLSPATIAL_BCP_SIZE`: (From GDAL 2.1.0) Specifies the bulk
    insert batch size. The larger value makes the insert faster, but
    consumes more memory. Default = 1000.
--  **MSSQLSPATIAL_OGR_FID**: Override FID column name. Default =
+-  :decl_configoption:`MSSQLSPATIAL_OGR_FID`: Override FID column name. Default =
    ogr_fid.
--  **MSSQLSPATIAL_ALWAYS_OUTPUT_FID**: Always retrieve the FID value of
+-  :decl_configoption:`MSSQLSPATIAL_ALWAYS_OUTPUT_FID`: Always retrieve the FID value of
    the recently created feature (even if it is not a true IDENTITY
    column). Default = "NO".
--  **MSSQLSPATIAL_SHOW_FID_COLUMN**: Force to display the FID columns as
+-  :decl_configoption:`MSSQLSPATIAL_SHOW_FID_COLUMN`: Force to display the FID columns as
    a feature attribute. Default = "NO".
--  **MSSQLSPATIAL_USE_GEOMETRY_COLUMNS**: Use/create geometry_columns
+-  :decl_configoption:`MSSQLSPATIAL_USE_GEOMETRY_COLUMNS`: Use/create geometry_columns
    metadata table in the database. Default = "YES".
--  **MSSQLSPATIAL_LIST_ALL_TABLES**: Use mssql catalog to list available
+-  :decl_configoption:`MSSQLSPATIAL_LIST_ALL_TABLES`: Use mssql catalog to list available
    layers. Default = "NO".
--  **MSSQLSPATIAL_USE_GEOMETRY_VALIDATION**: (From GDAL 3.0) Let the
+-  :decl_configoption:`MSSQLSPATIAL_USE_GEOMETRY_VALIDATION`: (From GDAL 3.0) Let the
    driver detect the geometries which would trigger run time errors at
    MSSQL server. The driver tries to correct these geometries before
    submitting that to the server. Default = "YES".

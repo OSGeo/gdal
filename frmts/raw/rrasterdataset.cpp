@@ -54,7 +54,7 @@ class RRASTERDataset final: public RawDataset
     bool        m_bGeoTransformValid = false;
     double      m_adfGeoTransform[6]{0,1,0,0,0,-1};
     VSILFILE   *m_fpImage = nullptr;
-    CPLString   m_osProjection{};
+    OGRSpatialReference m_oSRS{};
     std::shared_ptr<GDALRasterAttributeTable> m_poRAT{};
     std::shared_ptr<GDALColorTable> m_poCT{};
     bool        m_bNativeOrder = true;
@@ -85,7 +85,7 @@ class RRASTERDataset final: public RawDataset
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Create( const char *pszFilename,
-                                int nXSize, int nYSize, int nBands,
+                                int nXSize, int nYSize, int nBandsIn,
                                 GDALDataType eType, char **papszOptions );
     static GDALDataset *CreateCopy( const char * pszFilename,
                                       GDALDataset * poSrcDS,
@@ -95,14 +95,8 @@ class RRASTERDataset final: public RawDataset
 
     CPLErr GetGeoTransform( double * ) override;
     CPLErr SetGeoTransform( double *padfGeoTransform ) override;
-    const char *_GetProjectionRef() override;
-    CPLErr _SetProjection( const char *pszSRS ) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
-    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
-        return OldSetProjectionFromSetSpatialRef(poSRS);
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
 
     CPLErr      SetMetadata( char ** papszMetadata,
                                      const char * pszDomain = "" ) override;
@@ -477,6 +471,7 @@ CPLErr RRASTERRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
 RRASTERDataset::RRASTERDataset()
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 }
 
 /************************************************************************/
@@ -546,30 +541,6 @@ void RRASTERDataset::RewriteHeader()
         VSIFPrintfL(fp, "creator=%s\n", m_osCreator.c_str());
     if( !m_osCreated.empty() )
         VSIFPrintfL(fp, "created=%s\n", m_osCreated.c_str());
-
-    VSIFPrintfL(fp, "[georeference]\n");
-    VSIFPrintfL(fp, "nrows=%d\n", nRasterYSize);
-    VSIFPrintfL(fp, "ncols=%d\n", nRasterXSize);
-
-    VSIFPrintfL(fp, "xmin=%.18g\n", m_adfGeoTransform[0]);
-    VSIFPrintfL(fp, "ymin=%.18g\n",
-            m_adfGeoTransform[3] + nRasterYSize * m_adfGeoTransform[5]);
-    VSIFPrintfL(fp, "xmax=%.18g\n",
-            m_adfGeoTransform[0] + nRasterXSize * m_adfGeoTransform[1]);
-    VSIFPrintfL(fp, "ymax=%.18g\n", m_adfGeoTransform[3]);
-
-    if( !m_osProjection.empty() )
-    {
-        OGRSpatialReference oSRS;
-        oSRS.SetFromUserInput(m_osProjection, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get());
-        char* pszProj4 = nullptr;
-        oSRS.exportToProj4(&pszProj4);
-        if( pszProj4 )
-        {
-            VSIFPrintfL(fp, "projection=%s\n", pszProj4);
-            VSIFree(pszProj4);
-        }
-    }
 
     VSIFPrintfL(fp, "[data]\n");
     GDALDataType eDT = GetRasterBand(1)->GetRasterDataType();
@@ -806,6 +777,39 @@ void RRASTERDataset::RewriteHeader()
         VSIFPrintfL(fp, "layername=%s\n", osLayerName.c_str());
     }
 
+    // Put the [georeference] section at end. Otherwise the wkt= entry
+    // could cause GDAL < 3.5 to be unable to open the file due to the
+    // Identify() function not using enough bytes
+    VSIFPrintfL(fp, "[georeference]\n");
+    VSIFPrintfL(fp, "nrows=%d\n", nRasterYSize);
+    VSIFPrintfL(fp, "ncols=%d\n", nRasterXSize);
+
+    VSIFPrintfL(fp, "xmin=%.18g\n", m_adfGeoTransform[0]);
+    VSIFPrintfL(fp, "ymin=%.18g\n",
+            m_adfGeoTransform[3] + nRasterYSize * m_adfGeoTransform[5]);
+    VSIFPrintfL(fp, "xmax=%.18g\n",
+            m_adfGeoTransform[0] + nRasterXSize * m_adfGeoTransform[1]);
+    VSIFPrintfL(fp, "ymax=%.18g\n", m_adfGeoTransform[3]);
+
+    if( !m_oSRS.IsEmpty() )
+    {
+        char* pszProj4 = nullptr;
+        m_oSRS.exportToProj4(&pszProj4);
+        if( pszProj4 )
+        {
+            VSIFPrintfL(fp, "projection=%s\n", pszProj4);
+            VSIFree(pszProj4);
+        }
+        char* pszWKT = nullptr;
+        const char* const apszOptions[] = { "FORMAT=WKT2_2019", nullptr };
+        m_oSRS.exportToWkt(&pszWKT, apszOptions);
+        if( pszWKT )
+        {
+            VSIFPrintfL(fp, "wkt=%s\n", pszWKT);
+            VSIFree(pszWKT);
+        }
+    }
+
     VSIFCloseL(fp);
 }
 
@@ -868,20 +872,19 @@ CPLErr RRASTERDataset::SetGeoTransform( double *padfGeoTransform )
 }
 
 /************************************************************************/
-/*                           GetProjectionRef()                         */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
-const char * RRASTERDataset::_GetProjectionRef()
+const OGRSpatialReference* RRASTERDataset::GetSpatialRef() const
 {
-    return m_osProjection.c_str();
+    return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 }
 
 /************************************************************************/
-/*                           SetProjection()                            */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
-CPLErr RRASTERDataset::_SetProjection( const char *pszSRS )
-
+CPLErr RRASTERDataset::SetSpatialRef(const OGRSpatialReference* poSRS)
 {
     if( GetAccess() != GA_Update )
     {
@@ -890,7 +893,9 @@ CPLErr RRASTERDataset::_SetProjection( const char *pszSRS )
         return CE_Failure;
     }
 
-    m_osProjection = pszSRS ? pszSRS : "";
+    m_oSRS.Clear();
+    if( poSRS )
+        m_oSRS = *poSRS;
     SetHeaderDirty();
 
     return CE_None;
@@ -945,8 +950,16 @@ int RRASTERDataset::Identify( GDALOpenInfo * poOpenInfo )
 {
     if( poOpenInfo->nHeaderBytes < 40
         || poOpenInfo->fpL == nullptr
-        || !EQUAL( CPLGetExtension(poOpenInfo->pszFilename), "grd" )
-        || strstr(reinterpret_cast<const char *>(poOpenInfo->pabyHeader), "ncols") == nullptr
+        || !EQUAL( CPLGetExtension(poOpenInfo->pszFilename), "grd" ) )
+    {
+        return FALSE;
+    }
+
+    // We need to ingest enough bytes as the wkt= entry can be quite large
+    if( poOpenInfo->nHeaderBytes <= 1024 )
+        poOpenInfo->TryToIngest(4096);
+
+    if( strstr(reinterpret_cast<const char *>(poOpenInfo->pabyHeader), "ncols") == nullptr
         || strstr(reinterpret_cast<const char *>(poOpenInfo->pabyHeader), "nrows") == nullptr
         || strstr(reinterpret_cast<const char *>(poOpenInfo->pabyHeader), "xmin") == nullptr
         || strstr(reinterpret_cast<const char *>(poOpenInfo->pabyHeader), "ymin") == nullptr
@@ -1055,6 +1068,7 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLString osDataType;
     CPLString osBandOrder;
     CPLString osProjection;
+    CPLString osWkt;
     CPLString osByteOrder;
     CPLString osNoDataValue("NA");
     CPLString osMinValue;
@@ -1102,6 +1116,8 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
                 dfYMax = CPLAtof(pszValue);
             else if( EQUAL(pszKey, "projection") )
                 osProjection = pszValue;
+            else if( EQUAL(pszKey, "wkt") )
+                osWkt = pszValue;
             else if( EQUAL(pszKey, "nbands") )
                 l_nBands = atoi(pszValue);
             else if( EQUAL(pszKey, "bandorder") )
@@ -1249,17 +1265,16 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->m_osBandOrder = osBandOrder;
     poDS->m_osLegend = osLegend;
 
-    if( !osProjection.empty() )
+    if( osWkt.empty() )
     {
-        OGRSpatialReference oSRS;
-        if( oSRS.importFromProj4( osProjection.c_str() ) == OGRERR_NONE )
+        if( !osProjection.empty() )
         {
-            char* pszWKT = nullptr;
-            oSRS.exportToWkt( &pszWKT );
-            if( pszWKT )
-                poDS->m_osProjection = pszWKT;
-            CPLFree( pszWKT );
+            poDS->m_oSRS.importFromProj4( osProjection.c_str() );
         }
+    }
+    else
+    {
+        poDS->m_oSRS.importFromWkt( osWkt.c_str() );
     }
 
     if( !osCreator.empty() )
@@ -1424,16 +1439,16 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
 /************************************************************************/
 
 GDALDataset *RRASTERDataset::Create( const char * pszFilename,
-                                  int nXSize, int nYSize, int nBands,
+                                  int nXSize, int nYSize, int nBandsIn,
                                   GDALDataType eType,
                                   char **papszOptions )
 
 {
     // Verify input options.
-    if (nBands <= 0)
+    if (nBandsIn <= 0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "RRASTER driver does not support %d bands.", nBands);
+                 "RRASTER driver does not support %d bands.", nBandsIn);
         return nullptr;
     }
 
@@ -1462,7 +1477,7 @@ GDALDataset *RRASTERDataset::Create( const char * pszFilename,
     CPLString osBandOrder(
         CSLFetchNameValueDef(papszOptions, "INTERLEAVE", "BIL"));
     if( !ComputeSpacings(osBandOrder,
-                         nXSize, nYSize, nBands, eType,
+                         nXSize, nYSize, nBandsIn, eType,
                          nPixelOffset, nLineOffset, nBandOffset) )
     {
         return nullptr;
@@ -1497,7 +1512,7 @@ GDALDataset *RRASTERDataset::Create( const char * pszFilename,
     const bool bByteSigned = (eType == GDT_Byte && pszPixelType &&
                         EQUAL(pszPixelType, "SIGNEDBYTE"));
 
-    for( int i=1; i<=nBands; i++ )
+    for( int i=1; i<=nBandsIn; i++ )
     {
         RRASTERRasterBand* poBand = new RRASTERRasterBand(
                                   poDS, i, fpImage, nBandOffset * (i-1),

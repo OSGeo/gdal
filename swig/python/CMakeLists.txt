@@ -1,4 +1,4 @@
-# CMake4GDAL project is distributed under X/MIT license. See accompanying file LICENSE.txt.
+# CMake4GDAL project is distributed under MIT license. See accompanying file LICENSE.txt.
 
 # SWIG generates wrapper sources
 option(SWIG_REGENERATE_PYTHON "Generate python source with SWIG." OFF)
@@ -48,7 +48,7 @@ if (SWIG_REGENERATE_PYTHON)
         -I${PROJECT_SOURCE_DIR}/swig/include/python/docs ${PY3ARG} -threads -relativeimport -outdir
         ${CMAKE_CURRENT_BINARY_DIR}/osgeo ${SWIG_DEFINES} -I${PROJECT_SOURCE_DIR}/gdal -c++ -python -o ${ARRAY_OUTPUT}
         ${ARRAY_INPUT}
-      DEPENDS ${GDAL_SWIG_COMMON_INCLUDE} ${ARRAY_INPUT} ${PROJECT_SOURCE_DIR}/swig/include/python/typemaps_python.i
+      DEPENDS ${ARRAY_INPUT} ${PROJECT_SOURCE_DIR}/swig/include/python/typemaps_python.i
       COMMENT "Generate _gdal_array_wrap.so and gdal_array.py by SWiG command")
     list(APPEND GDAL_PYTHON_CSOURCES "${GDAL_PYTHON_CSOURCE_DIR}/gdal_array_wrap.cpp")
     list(APPEND GDAL_PYTHON_PYSOURCES "${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdal_array.py")
@@ -123,26 +123,28 @@ function (symlink_or_copy source destination)
       RESULT res
       SYMBOLIC)
     if (NOT res EQUAL 0)
-      message("Copying content of ${source} to ${destination}")
+      message(STATUS "Copying content of ${source} to ${destination}")
       execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory ${source} ${destination})
     endif ()
   else ()
     if (NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
       execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${source} ${destination})
     else ()
-      message("Copying content of ${source} to ${destination}")
+      message(STATUS "Copying content of ${source} to ${destination}")
       execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory ${source} ${destination})
     endif ()
   endif ()
 
 endfunction ()
 
-symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/gdal-utils ${CMAKE_CURRENT_BINARY_DIR}/gdal-utils)
+if (NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
+    symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/gdal-utils ${CMAKE_CURRENT_BINARY_DIR}/gdal-utils)
+endif()
 symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/gdal-utils/osgeo_utils ${CMAKE_CURRENT_BINARY_DIR}/osgeo_utils)
 
 get_property(_isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
 if (_isMultiConfig AND WIN32)
-  set(ONLY_GENERATE_FOR_RELEASE ON)
+  set(ONLY_GENERATE_FOR_NON_DEBUG ON)
 endif ()
 
 if (Python_Interpreter_FOUND)
@@ -153,27 +155,32 @@ if (Python_Interpreter_FOUND)
   endif ()
 
   file(TO_NATIVE_PATH "${GDAL_PYTHON_CSOURCE_DIR}" GDAL_PYTHON_EXT_SOURCE_DIR)
-  if (_isMultiConfig)
+  if ("${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}" AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/setup.py)
+    # FIXME: remove this branch when we remove setup.py from source tree
+  elseif (_isMultiConfig)
     set(GDAL_LIB_DIR "os.path.dirname('$<TARGET_FILE:${GDAL_LIB_TARGET_NAME}>')")
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in ${CMAKE_CURRENT_BINARY_DIR}/setup.py.tmp @ONLY)
-    if (ONLY_GENERATE_FOR_RELEASE)
+    if (ONLY_GENERATE_FOR_NON_DEBUG)
       file(
         GENERATE
         OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/setup.py
         INPUT ${CMAKE_CURRENT_BINARY_DIR}/setup.py.tmp
         CONDITION "$<CONFIG:Release>")
+      set(SETUP_PY_FILENAME "${CMAKE_CURRENT_BINARY_DIR}/setup_$<CONFIG>.py")
     else ()
-      file(
-        GENERATE
-        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/setup.py
-        INPUT ${CMAKE_CURRENT_BINARY_DIR}/setup.py.tmp)
+      set(SETUP_PY_FILENAME "${CMAKE_CURRENT_BINARY_DIR}/setup.py")
     endif ()
+    file(
+      GENERATE
+      OUTPUT "${SETUP_PY_FILENAME}"
+      INPUT ${CMAKE_CURRENT_BINARY_DIR}/setup.py.tmp)
   else ()
     # Do not use file(GENERATE) as, for some unknown reason, it would cause cmake to be reinvoked every time make is
     # involved
     get_target_property(_gdal_lib_directory ${GDAL_LIB_TARGET_NAME} LIBRARY_OUTPUT_DIRECTORY)
     set(GDAL_LIB_DIR "'${_gdal_lib_directory}'")
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in ${CMAKE_CURRENT_BINARY_DIR}/setup.py @ONLY)
+    set(SETUP_PY_FILENAME "${CMAKE_CURRENT_BINARY_DIR}/setup.py")
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in ${SETUP_PY_FILENAME} @ONLY)
   endif ()
 
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/README.rst ${CMAKE_CURRENT_BINARY_DIR}/README.rst @ONLY)
@@ -202,43 +209,43 @@ if (Python_Interpreter_FOUND)
     endforeach ()
   endif ()
 
-  if (ONLY_GENERATE_FOR_RELEASE)
+  if (ONLY_GENERATE_FOR_NON_DEBUG)
     set(BUILD_EXT_FILENAME ${CMAKE_CURRENT_BINARY_DIR}/build_ext_$<CONFIG>.cmake)
     file(
       GENERATE
       OUTPUT ${BUILD_EXT_FILENAME}
       CONTENT
-        "execute_process(COMMAND $<IF:$<CONFIG:Release>,${Python_EXECUTABLE} setup.py build_ext --inplace,${CMAKE_COMMAND} -E echo \"setup.py build_ext only run in Release configuration\">)\n${BUILD_EXT_EXTRA_CONTENT}"
+        "execute_process(COMMAND $<IF:$<NOT:$<CONFIG:Debug>>,${Python_EXECUTABLE} ${SETUP_PY_FILENAME} build_ext --inplace,${CMAKE_COMMAND} -E echo \"setup.py build_ext only run in configuration != Debug\">)\n${BUILD_EXT_EXTRA_CONTENT}"
       )
   else ()
     set(BUILD_EXT_FILENAME ${CMAKE_CURRENT_BINARY_DIR}/build_ext.cmake)
     file(WRITE ${BUILD_EXT_FILENAME}
-         "execute_process(COMMAND ${Python_EXECUTABLE} setup.py build_ext --inplace)\n${BUILD_EXT_EXTRA_CONTENT}")
+         "execute_process(COMMAND ${Python_EXECUTABLE} ${SETUP_PY_FILENAME} build_ext --inplace)\n${BUILD_EXT_EXTRA_CONTENT}")
   endif ()
   add_custom_command(
     OUTPUT ${PY_SO_LIST}
-    COMMAND ${CMAKE_COMMAND} -P ${BUILD_EXT_FILENAME}
+    COMMAND ${CMAKE_COMMAND} ${WERROR_DEV_FLAG} -P ${BUILD_EXT_FILENAME}
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     DEPENDS ${GDAL_LIB_TARGET_NAME} ${GDAL_PYTHON_PYSOURCES} ${GDAL_PYTHON_CSOURCES})
 
   add_custom_target(python_binding ALL DEPENDS ${PY_SO_LIST} ${GDAL_PYTHON_PYSOURCES} ${GDAL_LIB_TARGET_NAME})
 
   # Generate wheel
-  if (ONLY_GENERATE_FOR_RELEASE)
+  if (ONLY_GENERATE_FOR_NON_DEBUG)
     set(BUILD_BDIST_WHEEL_FILENAME ${CMAKE_CURRENT_BINARY_DIR}/build_bdist_wheel_$<CONFIG>.cmake)
     file(
       GENERATE
       OUTPUT ${BUILD_BDIST_WHEEL_FILENAME}
       CONTENT
-        "execute_process(COMMAND $<IF:$<CONFIG:Release>,${Python_EXECUTABLE} setup.py bdist_wheel,${CMAKE_COMMAND} -E echo \"setup.py bdist_wheel only run in Release configuration\">)"
+        "execute_process(COMMAND $<IF:$<NOT:$<CONFIG:Debug>>,${Python_EXECUTABLE} ${SETUP_PY_FILENAME} bdist_wheel,${CMAKE_COMMAND} -E echo \"setup.py bdist_wheel only run in configuration != Debug\">)"
       )
   else ()
     set(BUILD_BDIST_WHEEL_FILENAME ${CMAKE_CURRENT_BINARY_DIR}/build_bdist_wheel.cmake)
-    file(WRITE ${BUILD_BDIST_WHEEL_FILENAME} "execute_process(COMMAND ${Python_EXECUTABLE} setup.py bdist_wheel)\n")
+    file(WRITE ${BUILD_BDIST_WHEEL_FILENAME} "execute_process(COMMAND ${Python_EXECUTABLE} ${SETUP_PY_FILENAME} bdist_wheel)\n")
   endif ()
   add_custom_target(
     python_wheel
-    COMMAND ${CMAKE_COMMAND} -P ${BUILD_BDIST_WHEEL_FILENAME}
+    COMMAND ${CMAKE_COMMAND} ${WERROR_DEV_FLAG} -P ${BUILD_BDIST_WHEEL_FILENAME}
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     DEPENDS ${PY_SO_LIST})
 
@@ -254,9 +261,15 @@ if (Python_Interpreter_FOUND)
   set(INSTALL_ARGS "--single-version-externally-managed --record=record.txt")
   if (DEFINED GDAL_PYTHON_INSTALL_PREFIX)
     file(TO_NATIVE_PATH "${GDAL_PYTHON_INSTALL_PREFIX}" NATIVE_GDAL_PYTHON_INSTALL_PREFIX)
+    if (WIN32)
+      string(REPLACE "\\" "\\\\" NATIVE_GDAL_PYTHON_INSTALL_PREFIX "${NATIVE_GDAL_PYTHON_INSTALL_PREFIX}")
+    endif ()
     set(INSTALL_ARGS "${INSTALL_ARGS} \"--prefix=${NATIVE_GDAL_PYTHON_INSTALL_PREFIX}\"")
   elseif (CMAKE_INSTALL_PREFIX)
     file(TO_NATIVE_PATH "${CMAKE_INSTALL_PREFIX}" NATIVE_CMAKE_INSTALL_PREFIX)
+    if (WIN32)
+      string(REPLACE "\\" "\\\\" NATIVE_CMAKE_INSTALL_PREFIX "${NATIVE_CMAKE_INSTALL_PREFIX}")
+    endif ()
     if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
       file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/is_std_unix_layout.py
            "import sys;print(\"FALSE\" if \"framework\" in sys.prefix.lower() else \"TRUE\")\n")
@@ -284,25 +297,32 @@ if (Python_Interpreter_FOUND)
     set(SETUPTOOLS_USE_DISTUTILS stdlib)
   endif ()
 
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/install_python.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/install_python.cmake
-                 @ONLY)
-
-  if (ONLY_GENERATE_FOR_RELEASE)
+  if (ONLY_GENERATE_FOR_NON_DEBUG)
     if (POLICY CMP0087)
       # install(SCRIPT) can use generator expressions, since CMake 3.14
       cmake_policy(SET CMP0087 NEW)
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/install_python.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/install_python.cmake.tmp
+                     @ONLY)
+      file(
+        GENERATE
+        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/install_python_$<CONFIG>.cmake
+        INPUT ${CMAKE_CURRENT_BINARY_DIR}/install_python.cmake.tmp
+      )
       file(
         GENERATE
         OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/install_binding_$<CONFIG>.cmake
         CONTENT
-          "execute_process(COMMAND $<IF:$<CONFIG:Release>,${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/install_python.cmake,${CMAKE_COMMAND} -E echo \"setup.py install only run in Release configuration\">
+          "execute_process(COMMAND $<IF:$<NOT:$<CONFIG:Debug>>,${CMAKE_COMMAND} ${WERROR_DEV_FLAG} -P ${CMAKE_CURRENT_BINARY_DIR}/install_python_$<CONFIG>.cmake,${CMAKE_COMMAND} -E echo \"setup.py install only run in configuration != Debug\">
                                           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})")
       install(SCRIPT ${CMAKE_CURRENT_BINARY_DIR}/install_binding_$<CONFIG>.cmake)
     else ()
       message(WARNING "Installing Python bindings with a multi generator requires CMake >= 3.14")
     endif ()
   else ()
-    install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/install_python.cmake
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/install_python.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/install_python.cmake
+                   @ONLY)
+    install(
+      CODE "execute_process(COMMAND ${CMAKE_COMMAND} ${WERROR_DEV_FLAG} -P ${CMAKE_CURRENT_BINARY_DIR}/install_python.cmake
                                   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})")
 
   endif ()

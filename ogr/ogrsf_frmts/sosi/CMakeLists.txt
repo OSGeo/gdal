@@ -9,7 +9,7 @@ add_gdal_driver(
           PLUGIN_CAPABLE)
 gdal_standard_includes(ogr_SOSI)
 target_include_directories(ogr_SOSI PRIVATE $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)
-gdal_target_link_libraries(TARGET ogr_SOSI LIBRARIES FYBA::FYBA FYBA::FYGM FYBA::FYUT)
+gdal_target_link_libraries(ogr_SOSI PRIVATE FYBA::FYBA FYBA::FYGM FYBA::FYUT)
 
 if (WIN32)
   target_sources(ogr_SOSI PRIVATE fyba_melding.cpp)

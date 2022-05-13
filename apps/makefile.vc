@@ -169,11 +169,6 @@ ogrlineref.exe:	ogrlineref.cpp $(GDALLIB) $(XTRAOBJ)
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 
-testepsg.exe:	testepsg.cpp $(GDALLIB) $(XTRAOBJ)
-	$(CC) $(CFLAGS) testepsg.cpp $(XTRAOBJ) $(LIBS) \
-		/link $(LINKER_FLAGS)
-	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
-
 test_ogrsf.exe:	test_ogrsf.cpp $(GDALLIB) $(XTRAOBJ)
 	$(CC) $(CFLAGS) test_ogrsf.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)

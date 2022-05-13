@@ -35,12 +35,13 @@ CPL_CVSID("$Id$")
 /*                          OGRODBCTableLayer()                         */
 /************************************************************************/
 
-OGRODBCTableLayer::OGRODBCTableLayer( OGRODBCDataSource *poDSIn ) :
+OGRODBCTableLayer::OGRODBCTableLayer(OGRODBCDataSource *poDSIn, int nODBCStatementFlags ) :
     pszQuery(nullptr),
     bHaveSpatialExtents(FALSE),
     pszTableName(nullptr),
     pszSchemaName(nullptr)
 {
+    m_nStatementFlags = nODBCStatementFlags;
     poDS = poDSIn;
     iNextShapeId = 0;
 
@@ -247,7 +248,7 @@ OGRErr OGRODBCTableLayer::ResetStatement()
 
     iNextShapeId = 0;
 
-    poStmt = new CPLODBCStatement( poDS->GetSession() );
+    poStmt = new CPLODBCStatement( poDS->GetSession(), m_nStatementFlags );
     poStmt->Append( "SELECT * FROM " );
     poStmt->Append( EscapeAndQuoteIdentifier(poFeatureDefn->GetName()) );
 
@@ -305,7 +306,7 @@ OGRFeature *OGRODBCTableLayer::GetFeature( GIntBig nFeatureId )
 
     iNextShapeId = nFeatureId;
 
-    poStmt = new CPLODBCStatement( poDS->GetSession() );
+    poStmt = new CPLODBCStatement( poDS->GetSession(), m_nStatementFlags );
     poStmt->Append( "SELECT * FROM " );
     poStmt->Append( EscapeAndQuoteIdentifier(poFeatureDefn->GetName()) );
     poStmt->Appendf( " WHERE %s = " CPL_FRMT_GIB,

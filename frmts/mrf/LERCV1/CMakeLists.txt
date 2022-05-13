@@ -1,5 +1,5 @@
 add_library(liblercv1 OBJECT Lerc1Image.cpp Lerc1Image.h)
 target_include_directories(liblercv1 PRIVATE $<TARGET_PROPERTY:cpl,SOURCE_DIR> $<TARGET_PROPERTY:cpl,BINARY_DIR>)
-set_property(TARGET liblercv1 PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
+set_property(TARGET liblercv1 PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:liblercv1>)
 target_compile_options(liblercv1 PRIVATE ${GDAL_CXX_WARNING_FLAGS})
