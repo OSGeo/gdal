@@ -885,8 +885,7 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
         auto geometryType = m_geometryType;
         if (geometryType == GeometryType::Unknown)
             geometryType = geometry->type();
-        GeometryReader reader { geometry, geometryType, m_hasZ, m_hasM };
-        OGRGeometry *poOGRGeometry = reader.read();
+        OGRGeometry *poOGRGeometry = GeometryReader(geometry, geometryType, m_hasZ, m_hasM).read();
         if (poOGRGeometry == nullptr) {
             CPLError(CE_Failure, CPLE_AppDefined, "Failed to read geometry");
             return OGRERR_CORRUPT_DATA;
