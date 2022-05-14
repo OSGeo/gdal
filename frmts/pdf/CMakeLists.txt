@@ -44,6 +44,8 @@ if (GDAL_USE_PDFIUM)
   target_compile_definitions(gdal_PDF PRIVATE -DHAVE_PDFIUM)
   gdal_target_link_libraries(gdal_PDF PRIVATE PDFIUM::PDFIUM)
   if (UNIX)
+    find_library(LCMS2_LIBRARY NAMES lcms2)
+
     # Rather hacky... Related how we build pdfium in https://github.com/rouault/pdfium_build_gdal_3_4
     gdal_target_link_libraries(
       gdal_PDF
@@ -51,7 +53,7 @@ if (GDAL_USE_PDFIUM)
       JPEG::JPEG
       PNG::PNG
       ${OPENJPEG_LIBRARIES}
-      -lpthread
-      -llcms2)
+      Threads::Threads
+      ${LCMS2_LIBRARY})
   endif ()
 endif ()
