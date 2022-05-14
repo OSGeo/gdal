@@ -1621,7 +1621,9 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
     const bool bHasNanNoData = bHasNoData && CPLIsNan(dfNoDataValue);
 
     bool bAllOpaque = true;
-    if( m_eDT == GDT_Byte && m_poCT == nullptr && nAlphaBand != 0 )
+    // Detect fully transparent tiles, but only if all bands are dirty (that is
+    // the user wrote content into them) !
+    if( bAllDirty && m_eDT == GDT_Byte && m_poCT == nullptr && nAlphaBand != 0 )
     {
         GByte byFirstAlphaVal =  m_pabyCachedTiles[(nAlphaBand-1) * nBlockXSize * nBlockYSize];
         GPtrDiff_t i = 1;
@@ -1644,7 +1646,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
         else
             bAllOpaque = false;
     }
-    else if( m_eDT == GDT_Float32 )
+    else if( bAllDirty && m_eDT == GDT_Float32 )
     {
         const float* pSrc = reinterpret_cast<float*>(m_pabyCachedTiles);
         GPtrDiff_t i;
@@ -1692,10 +1694,11 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
         IGetRasterBand(1)->GetColorTable();
 
     GDALDataType eTileDT = GDT_Byte;
-    if( m_eTF == GPKG_TF_PNG_JPEG )
+    // If not all bands are dirty, then (temporarily) use a lossless format
+    if( m_eTF == GPKG_TF_PNG_JPEG || (!bAllDirty && m_eTF == GPKG_TF_JPEG) )
     {
         bTileDriverSupports1Band = true;
-        if( bPartialTile || (nBands == 2 && !bAllOpaque) || (nBands == 4 && !bAllOpaque) || m_poCT != nullptr )
+        if( bPartialTile || !bAllDirty || (nBands == 2 && !bAllOpaque) || (nBands == 4 && !bAllOpaque) || m_poCT != nullptr )
         {
             pszDriverName = "PNG";
             bTileDriverSupports2Bands = m_bPNGSupports2Bands;
@@ -1751,7 +1754,8 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
             nTileBands = 2;
         else if( bPartialTile && bTileDriverSupports4Bands )
             nTileBands = 4;
-        else if( m_eTF == GPKG_TF_PNG8 && nBands >= 3 && bAllOpaque && !bPartialTile )
+        // only use (somewhat lossy) PNG8 if all bands are dirty
+        else if( bAllDirty && m_eTF == GPKG_TF_PNG8 && nBands >= 3 && bAllOpaque && !bPartialTile )
             nTileBands = 1;
         else if( nBands == 2 )
         {
@@ -2069,6 +2073,8 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
 
         if( m_eTF == GPKG_TF_PNG8 && nTileBands == 1 && nBands >= 3 )
         {
+            CPLAssert( bAllDirty );
+
             GDALDataset* poMEM_RGB_DS = MEMDataset::Create("", nBlockXSize, nBlockYSize,
                                                   0, GDT_Byte, nullptr);
             for( int i = 0; i < 3; i++ )
@@ -2187,8 +2193,16 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
         char** papszDriverOptions = CSLSetNameValue(nullptr, "_INTERNAL_DATASET", "YES");
         if( EQUAL(pszDriverName, "JPEG") || EQUAL(pszDriverName, "WEBP") )
         {
-            papszDriverOptions = CSLSetNameValue(
-                papszDriverOptions, "QUALITY", CPLSPrintf("%d", m_nQuality));
+            // If not all bands are dirty, then use lossless WEBP
+            if( !bAllDirty && EQUAL(pszDriverName, "WEBP") )
+            {
+                papszDriverOptions = CSLSetNameValue(papszDriverOptions, "LOSSLESS", "YES");
+            }
+            else
+            {
+                papszDriverOptions = CSLSetNameValue(
+                    papszDriverOptions, "QUALITY", CPLSPrintf("%d", m_nQuality));
+            }
         }
         else if( EQUAL(pszDriverName, "PNG") )
         {
@@ -3075,7 +3089,6 @@ CPLErr GDALGPKGMBTilesLikeRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff
     CPLDebug("GPKG", "IWriteBlock(nBand=%d,nBlockXOff=%d,nBlockYOff=%d,m_nZoomLevel=%d)",
              nBand,nBlockXOff,nBlockYOff,m_poTPD->m_nZoomLevel);
 #endif
-
     if( !m_poTPD->ICanIWriteBlock() )
     {
         return CE_Failure;
