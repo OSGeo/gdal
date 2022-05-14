@@ -60,6 +60,13 @@ class GeometryWriter {
         const flatbuffers::Offset<FlatGeobuf::Geometry> writePolyhedralSurface(const OGRPolyhedralSurface *p, int depth);
         void writeTIN(const OGRTriangulatedSurface *p);
 
+        const flatbuffers::Offset<FlatGeobuf::Geometry> writePart(const OGRGeometry *part, int depth) {
+            return GeometryWriter(m_fbb, part, m_hasZ, m_hasM).write(depth);
+        }
+        const flatbuffers::Offset<FlatGeobuf::Geometry> writePart(const OGRGeometry *part, const FlatGeobuf::GeometryType geometryType, int depth) {
+            return GeometryWriter(m_fbb, part, geometryType, m_hasZ, m_hasM).write(depth);
+        }
+
     public:
         GeometryWriter(
             flatbuffers::FlatBufferBuilder &fbb,
