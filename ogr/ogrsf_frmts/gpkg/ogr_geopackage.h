@@ -435,6 +435,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     sqlite3_stmt*               m_poUpdateStatement;
     bool                        m_bInsertStatementWithFID;
     sqlite3_stmt*               m_poInsertStatement;
+    sqlite3_stmt*               m_poGetFeatureStatement = nullptr;
     bool                        m_bDeferredSpatialIndexCreation;
     // m_bHasSpatialIndex cannot be bool.  -1 is unset.
     int                         m_bHasSpatialIndex;
