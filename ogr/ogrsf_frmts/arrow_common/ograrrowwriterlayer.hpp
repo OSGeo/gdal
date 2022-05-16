@@ -853,7 +853,6 @@ OGRErr OGRArrowWriterLayer::ICreateFeature( OGRFeature* poFeature )
         }
 
         const auto poFieldDefn = m_poFeatureDefn->GetFieldDefn(i);
-        std::shared_ptr<arrow::ArrayBuilder> builder;
         const auto eSubDT = poFieldDefn->GetSubType();
         switch( poFieldDefn->GetType() )
         {
