@@ -453,6 +453,15 @@ Examples
 
       ogr2ogr -f GPKG filename.gpkg abc.shp
 
+-  Update of an existing GeoPackage file – e.g. a GeoPackage template – 
+   by adding features to it from another GeoPackage file containing 
+   features according to the same or a backwards compatible database 
+   schema.
+
+   ::
+
+      ogr2ogr -append output.gpkg input.gpkg
+
 -  Translation of a directory of shapefiles into a GeoPackage. Each file
    will end up as a new table within the GPKG file. The file
    ``filename.gpkg`` must **not** already exist, as it will be created.
