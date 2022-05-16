@@ -5764,14 +5764,22 @@ CPLErr netCDFDataset::AddProjectionVars( bool bDefsOnly,
             else
             {
                 CPLAssert(bHasGeoloc);
-                vcdf.nc_put_vatt_text(nVarXID, CF_AXIS, CF_SG_X_AXIS);
-                vcdf.nc_put_vatt_text(nVarXID, CF_LNG_NAME, "x-coordinate in Cartesian system");
-                vcdf.nc_put_vatt_text(nVarXID, CF_UNITS, "m");
-                vcdf.nc_put_vatt_text(nVarYID, CF_AXIS, CF_SG_Y_AXIS);
-                vcdf.nc_put_vatt_text(nVarYID, CF_LNG_NAME, "y-coordinate in Cartesian system");
-                vcdf.nc_put_vatt_text(nVarYID, CF_UNITS, "m");
+                try
+                {
+                    vcdf.nc_put_vatt_text(nVarXID, CF_AXIS, CF_SG_X_AXIS);
+                    vcdf.nc_put_vatt_text(nVarXID, CF_LNG_NAME, "x-coordinate in Cartesian system");
+                    vcdf.nc_put_vatt_text(nVarXID, CF_UNITS, "m");
+                    vcdf.nc_put_vatt_text(nVarYID, CF_AXIS, CF_SG_Y_AXIS);
+                    vcdf.nc_put_vatt_text(nVarYID, CF_LNG_NAME, "y-coordinate in Cartesian system");
+                    vcdf.nc_put_vatt_text(nVarYID, CF_UNITS, "m");
 
-                pszCFCoordinates = NCDF_LONLAT;
+                    pszCFCoordinates = NCDF_LONLAT;
+                }
+                catch(nccfdriver::SG_Exception& e)
+                {
+                    CPLError(CE_Failure, CPLE_FileIO, "%s", e.get_err_msg());
+                    return CE_Failure;
+                }
             }
         }
 
