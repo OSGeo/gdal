@@ -139,6 +139,10 @@ public:
 
         virtual std::unique_ptr<OGRFieldDomain> BuildDomain(const std::string& osDomainName,
                                                              int iFieldIndex) const = 0;
+
+        static void TimestampToOGR(int64_t timestamp,
+                                   const arrow::TimestampType* timestampType,
+                                   OGRField* psField);
 };
 
 /************************************************************************/

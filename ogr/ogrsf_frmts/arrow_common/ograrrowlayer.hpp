@@ -1224,6 +1224,71 @@ static SetPointsOfLineType GetSetPointsOfLine(bool bHasZ, bool bHasM)
 }
 
 /************************************************************************/
+/*                            TimestampToOGR()                          */
+/************************************************************************/
+
+inline void OGRArrowLayer::TimestampToOGR(int64_t timestamp,
+                                          const arrow::TimestampType* timestampType,
+                                          OGRField* psField)
+{
+    const auto unit = timestampType->unit();
+    double floatingPart = 0;
+    if( unit == arrow::TimeUnit::MILLI )
+    {
+        floatingPart = (timestamp % 1000) / 1e3;
+        timestamp /= 1000;
+    }
+    else if( unit == arrow::TimeUnit::MICRO )
+    {
+        floatingPart = (timestamp % (1000 * 1000)) / 1e6;
+        timestamp /= 1000 * 1000;
+    }
+    else if( unit == arrow::TimeUnit::NANO )
+    {
+        floatingPart = (timestamp % (1000 * 1000 * 1000)) / 1e9;
+        timestamp /= 1000 * 1000 * 1000;
+    }
+    int nTZFlag = 0;
+    const auto osTZ = timestampType->timezone();
+    if( osTZ == "UTC" || osTZ == "Etc/UTC" )
+    {
+        nTZFlag = 100;
+    }
+    else if( osTZ.size() == 6 &&
+             (osTZ[0] == '+' || osTZ[0] == '-') &&
+             osTZ[3] == ':' )
+    {
+        int nTZHour = atoi(osTZ.c_str() + 1);
+        int nTZMin = atoi(osTZ.c_str() + 4);
+        if( nTZHour >= 0 && nTZHour <= 14 &&
+            nTZMin >= 0 && nTZMin < 60 &&
+            (nTZMin % 15) == 0 )
+        {
+            nTZFlag = (nTZHour * 4) + (nTZMin / 15);
+            if( osTZ[0] == '+' )
+            {
+                nTZFlag = 100 + nTZFlag;
+                timestamp += nTZHour * 3600 + nTZMin * 60;
+            }
+            else
+            {
+                nTZFlag = 100 - nTZFlag;
+                timestamp -= nTZHour * 3600 + nTZMin * 60;
+            }
+        }
+    }
+    struct tm dt;
+    CPLUnixTimeToYMDHMS(timestamp, &dt);
+    psField->Date.Year = static_cast<GInt16>(dt.tm_year + 1900);
+    psField->Date.Month = static_cast<GByte>(dt.tm_mon + 1);
+    psField->Date.Day = static_cast<GByte>(dt.tm_mday);
+    psField->Date.Hour = static_cast<GByte>(dt.tm_hour);
+    psField->Date.Minute = static_cast<GByte>(dt.tm_min);
+    psField->Date.TZFlag = static_cast<GByte>(nTZFlag);
+    psField->Date.Second = static_cast<float>(dt.tm_sec + floatingPart);
+}
+
+/************************************************************************/
 /*                            ReadFeature()                             */
 /************************************************************************/
 
@@ -1437,59 +1502,10 @@ OGRFeature* OGRArrowLayer::ReadFeature(
             {
                 const auto timestampType =  static_cast<arrow::TimestampType*>(array->data()->type.get());
                 const auto castArray = static_cast<const arrow::Int64Array*>(array);
-                int64_t timestamp = castArray->Value(nIdxInBatch);
-                const auto unit = timestampType->unit();
-                double floatingPart = 0;
-                if( unit == arrow::TimeUnit::MILLI )
-                {
-                    floatingPart = (timestamp % 1000) / 1e3;
-                    timestamp /= 1000;
-                }
-                else if( unit == arrow::TimeUnit::MICRO )
-                {
-                    floatingPart = (timestamp % (1000 * 1000)) / 1e6;
-                    timestamp /= 1000 * 1000;
-                }
-                else if( unit == arrow::TimeUnit::NANO )
-                {
-                    floatingPart = (timestamp % (1000 * 1000 * 1000)) / 1e9;
-                    timestamp /= 1000 * 1000 * 1000;
-                }
-                int nTZFlag = 0;
-                const auto osTZ = timestampType->timezone();
-                if( osTZ == "UTC" || osTZ == "Etc/UTC" )
-                {
-                    nTZFlag = 100;
-                }
-                else if( osTZ.size() == 6 &&
-                         (osTZ[0] == '+' || osTZ[0] == '-') &&
-                         osTZ[3] == ':' )
-                {
-                    int nTZHour = atoi(osTZ.c_str() + 1);
-                    int nTZMin = atoi(osTZ.c_str() + 4);
-                    if( nTZHour >= 0 && nTZHour <= 14 &&
-                        nTZMin >= 0 && nTZMin < 60 &&
-                        (nTZMin % 15) == 0 )
-                    {
-                        nTZFlag = (nTZHour * 4) + (nTZMin / 15);
-                        if( osTZ[0] == '+' )
-                        {
-                            nTZFlag = 100 + nTZFlag;
-                            timestamp += nTZHour * 3600 + nTZMin * 60;
-                        }
-                        else
-                        {
-                            nTZFlag = 100 - nTZFlag;
-                            timestamp -= nTZHour * 3600 + nTZMin * 60;
-                        }
-                    }
-                }
-                struct tm dt;
-                CPLUnixTimeToYMDHMS(timestamp, &dt);
-                poFeature->SetField(i, dt.tm_year + 1900, dt.tm_mon + 1, dt.tm_mday,
-                                    dt.tm_hour, dt.tm_min,
-                                    static_cast<float>(dt.tm_sec + floatingPart),
-                                    nTZFlag);
+                const int64_t timestamp = castArray->Value(nIdxInBatch);
+                OGRField sField;
+                TimestampToOGR(timestamp, timestampType, &sField);
+                poFeature->SetField(i, &sField);
                 break;
             }
             case arrow::Type::TIME32:

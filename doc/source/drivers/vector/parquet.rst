@@ -67,6 +67,13 @@ Layer creation options
   the line between two points is a straight cartesian line (PLANAR) or the
   shortest line on the sphere (geodesic line) (SPHERICAL). The default is PLANAR.
 
+SQL support
+-----------
+
+SQL statements are run through the OGR SQL engine. Statistics can be used to
+speed-up evaluations of SQL requests like:
+"SELECT MIN(colname), MAX(colname), COUNT(colname) FROM layername"
+
 Links
 -----
 

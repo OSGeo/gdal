@@ -435,6 +435,7 @@ void OGRParquetLayer::CreateFieldFromSchema(
                                     path, oMapFieldNameToGDALSchemaFieldDefn);
         if( bTypeOK )
         {
+            m_apoArrowDataTypes.push_back(type);
             m_anMapFieldIndexToParquetColumn.push_back(bParquetColValid ? iParquetCol : -1);
         }
     }

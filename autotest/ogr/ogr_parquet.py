@@ -841,3 +841,92 @@ def test_ogr_parquet_polygon_orientation(option_value,written_wkt,expected_wkt):
 
     gdal.Unlink(outfilename)
 
+
+
+###############################################################################
+# Test using statistics for SQL MIN, MAX, COUNT functions
+
+def test_ogr_parquet_statistics():
+
+    filename = 'data/parquet/test.parquet'
+    ds = ogr.Open(filename)
+    expected_fields = [
+        ('boolean', 'Integer', 'Boolean', 0, 1),
+        ('uint8', 'Integer', 'None', 1, 5),
+        ('int8', 'Integer', 'None', -2, 2),
+        ('uint16', 'Integer', 'None', 1, 40001),
+        ('int16', 'Integer', 'Int16', -20000, 20000),
+        ('uint32', 'Integer64', 'None', 1, 4000000001),
+        ('int32', 'Integer', 'None', -2000000000, 2000000000),
+        ('uint64', 'Integer64', 'None', 1, 400000000001),
+        ('int64', 'Integer64', 'None', -200000000000, 200000000000),
+        ('float32', 'Real', 'Float32', 1.5, 5.5),
+        ('float64', 'Real', 'None', 1.5, 5.5),
+        ('string', 'String', 'None', '', 'd'),
+        ('timestamp_ms_gmt', 'DateTime', 'None', '2019/01/01 14:00:00+00', '2019/01/01 14:00:00+00'),
+    ]
+
+    sql = ''
+    for field in expected_fields:
+        name = field[0]
+        if sql:
+            sql += ', '
+        else:
+            sql = 'SELECT '
+        sql += 'MIN(' + name + '), MAX(' + name + ')'
+    sql += ', COUNT(int32)'
+    sql += ' FROM test'
+    sql_lyr = ds.ExecuteSQL(sql)
+    try:
+        f = sql_lyr.GetNextFeature()
+        i = 0
+        for name, type, subtype, minval, maxval in expected_fields:
+            fld_defn = sql_lyr.GetLayerDefn().GetFieldDefn(i)
+            assert fld_defn.GetName() == 'MIN_' + name
+            assert ogr.GetFieldTypeName(fld_defn.GetType()) == type, name
+            assert ogr.GetFieldSubTypeName(fld_defn.GetSubType()) == subtype, name
+            assert f[fld_defn.GetName()] == minval, name
+            i += 1
+
+            fld_defn = sql_lyr.GetLayerDefn().GetFieldDefn(i)
+            assert fld_defn.GetName() == 'MAX_' + name
+            assert ogr.GetFieldTypeName(fld_defn.GetType()) == type, name
+            assert ogr.GetFieldSubTypeName(fld_defn.GetSubType()) == subtype, name
+            assert f[fld_defn.GetName()] == maxval, name
+            i += 1
+
+        fld_defn = sql_lyr.GetLayerDefn().GetFieldDefn(i)
+        assert fld_defn.GetName() == 'COUNT_int32'
+        assert f[fld_defn.GetName()] == 4
+    finally:
+        ds.ReleaseResultSet(sql_lyr)
+
+    # Non-optimized due to WHERE condition
+    sql_lyr = ds.ExecuteSQL('SELECT MIN(uint32) FROM test WHERE 1 = 0')
+    try:
+        f = sql_lyr.GetNextFeature()
+        assert f.GetField(0) is None
+    finally:
+        ds.ReleaseResultSet(sql_lyr)
+
+    # Non-optimized
+    sql_lyr = ds.ExecuteSQL('SELECT AVG(uint8) FROM test')
+    try:
+        f = sql_lyr.GetNextFeature()
+        assert f.GetField(0) == 3.0
+    finally:
+        ds.ReleaseResultSet(sql_lyr)
+
+    # Should be optimized, but this Parquet file has a wrong value for
+    # distinct_count
+    sql_lyr = ds.ExecuteSQL('SELECT COUNT(DISTINCT int32) FROM test')
+    try:
+        f = sql_lyr.GetNextFeature()
+        assert f.GetField(0) == 4
+    finally:
+        ds.ReleaseResultSet(sql_lyr)
+
+    # Errors
+    with gdaltest.error_handler():
+        assert ds.ExecuteSQL('SELECT MIN(int32) FROM i_dont_exist') is None
+        assert ds.ExecuteSQL('SELECT MIN(i_dont_exist) FROM test') is None

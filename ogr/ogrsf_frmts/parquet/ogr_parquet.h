@@ -53,6 +53,7 @@ class OGRParquetLayer final: public OGRArrowLayer
         std::shared_ptr<arrow::RecordBatchReader>   m_poRecordBatchReader{};
         bool                                        m_bSingleBatch = false;
         int                                         m_iFIDParquetColumn = -1;
+        std::vector<std::shared_ptr<arrow::DataType>> m_apoArrowDataTypes{}; // .size() == field ocunt
         std::vector<int>                            m_anMapFieldIndexToParquetColumn{};
         std::vector<int>                            m_anMapGeomFieldIndexToParquetColumn{};
         bool                                        m_bHasMissingMappingToParquet = false;
@@ -97,6 +98,10 @@ public:
 
         std::unique_ptr<OGRFieldDomain> BuildDomain(const std::string& osDomainName,
                                                     int iFieldIndex) const override;
+
+        parquet::arrow::FileReader* GetReader() const { return m_poArrowReader.get(); }
+        const std::vector<int>& GetMapFieldIndexToParquetColumn() const { return m_anMapFieldIndexToParquetColumn; }
+        const std::vector<std::shared_ptr<arrow::DataType>>& GetArrowFieldTypes() const { return m_apoArrowDataTypes; }
 };
 
 /************************************************************************/
@@ -107,6 +112,11 @@ class OGRParquetDataset final: public OGRArrowDataset
 {
 public:
     explicit OGRParquetDataset(std::unique_ptr<arrow::MemoryPool>&& poMemoryPool);
+
+    OGRLayer*            ExecuteSQL( const char *pszSQLCommand,
+                                     OGRGeometry *poSpatialFilter,
+                                     const char *pszDialect ) override;
+    void                 ReleaseResultSet( OGRLayer * poResultsSet ) override;
 };
 
 /************************************************************************/
