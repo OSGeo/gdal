@@ -233,6 +233,7 @@ protected:
                                                                const std::shared_ptr<arrow::Array>&)> postProcessArray);
 
         virtual void            FixupGeometryBeforeWriting(OGRGeometry* /* poGeom */ ) {}
+        virtual bool            IsSRSRequired() const = 0;
 
 public:
         OGRArrowWriterLayer( arrow::MemoryPool* poMemoryPool,

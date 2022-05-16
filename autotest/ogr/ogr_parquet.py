@@ -978,3 +978,29 @@ def test_ogr_parquet_creator():
     finally:
         gdal.Unlink(outfilename)
 
+
+
+###############################################################################
+# Test creating multiple geometry columns
+
+def test_ogr_parquet_multiple_geom_columns():
+
+    outfilename = '/vsimem/out.parquet'
+    try:
+        ds = ogr.GetDriverByName('Parquet').CreateDataSource(outfilename)
+        lyr = ds.CreateLayer('test', geom_type = ogr.wkbNone)
+        lyr.CreateGeomField(ogr.GeomFieldDefn('geom_point', ogr.wkbPoint)) == ogr.OGRERR_NONE
+        lyr.CreateGeomField(ogr.GeomFieldDefn('geom_line', ogr.wkbLineString)) == ogr.OGRERR_NONE
+        ds = None
+
+        ds = gdal.OpenEx(outfilename)
+        lyr = ds.GetLayer(0)
+        lyr_defn = lyr.GetLayerDefn()
+        assert lyr_defn.GetGeomFieldCount() == 2
+        assert lyr_defn.GetGeomFieldDefn(0).GetName() == 'geom_point'
+        assert lyr_defn.GetGeomFieldDefn(1).GetName() == 'geom_line'
+        ds = None
+
+    finally:
+        gdal.Unlink(outfilename)
+

@@ -173,19 +173,23 @@ bool OGRParquetWriterLayer::SetOptions(CSLConstList papszOptions,
         return false;
     }
 
-    auto writerPropertiesBuilder = parquet::WriterProperties::Builder();
-    writerPropertiesBuilder.compression(m_eCompression);
+    m_oWriterPropertiesBuilder.compression(m_eCompression);
     const std::string osCreator = CSLFetchNameValueDef(papszOptions, "CREATOR", "");
     if( !osCreator.empty() )
-        writerPropertiesBuilder.created_by(osCreator);
+        m_oWriterPropertiesBuilder.created_by(osCreator);
     else
-        writerPropertiesBuilder.created_by("GDAL " GDAL_RELEASE_NAME ", using " CREATED_BY_VERSION);
+        m_oWriterPropertiesBuilder.created_by("GDAL " GDAL_RELEASE_NAME ", using " CREATED_BY_VERSION);
 
     // Undocumented option. Not clear it is useful besides unit test purposes
     if( !CPLTestBool(CSLFetchNameValueDef(papszOptions, "STATISTICS", "YES")) )
-        writerPropertiesBuilder.disable_statistics();
+        m_oWriterPropertiesBuilder.disable_statistics();
 
-    m_poWriterProperties = writerPropertiesBuilder.build();
+    if( m_eGeomEncoding == OGRArrowGeomEncoding::WKB && eGType != wkbNone )
+    {
+        m_oWriterPropertiesBuilder.disable_statistics(
+            parquet::schema::ColumnPath::FromDotString(
+                m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef()));
+    }
 
     const char* pszRowGroupSize = CSLFetchNameValue(papszOptions, "ROW_GROUP_SIZE");
     if( pszRowGroupSize )
@@ -446,6 +450,24 @@ void OGRParquetWriterLayer::CreateSchema()
 }
 
 /************************************************************************/
+/*                          CreateGeomField()                           */
+/************************************************************************/
+
+OGRErr OGRParquetWriterLayer::CreateGeomField( OGRGeomFieldDefn *poField,
+                                               int bApproxOK )
+{
+    OGRErr eErr = OGRArrowWriterLayer::CreateGeomField(poField, bApproxOK);
+    if( eErr == OGRERR_NONE && m_aeGeomEncoding.back() == OGRArrowGeomEncoding::WKB )
+    {
+        m_oWriterPropertiesBuilder.disable_statistics(
+            parquet::schema::ColumnPath::FromDotString(
+                m_poFeatureDefn->GetGeomFieldDefn(
+                    m_poFeatureDefn->GetGeomFieldCount() - 1)->GetNameRef()));
+    }
+    return eErr;
+}
+
+/************************************************************************/
 /*                          CreateWriter()                              */
 /************************************************************************/
 
@@ -464,7 +486,7 @@ void OGRParquetWriterLayer::CreateWriter()
 
     auto arrowWriterProperties = parquet::ArrowWriterProperties::Builder().store_schema()->build();
     Open(*m_poSchema, m_poMemoryPool, m_poOutputStream,
-         m_poWriterProperties,
+         m_oWriterPropertiesBuilder.build(),
          arrowWriterProperties,
          &m_poFileWriter,
          &m_poKeyValueMetadata);

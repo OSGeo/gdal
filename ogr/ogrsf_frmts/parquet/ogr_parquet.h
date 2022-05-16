@@ -132,7 +132,7 @@ class OGRParquetWriterLayer final: public OGRArrowWriterLayer
         std::shared_ptr<const arrow::KeyValueMetadata> m_poKeyValueMetadata{};
         bool                                           m_bForceCounterClockwiseOrientation = false;
         bool                                           m_bEdgesSpherical = false;
-        std::shared_ptr<parquet::WriterProperties>     m_poWriterProperties{};
+        parquet::WriterProperties::Builder             m_oWriterPropertiesBuilder{};
 
         virtual bool            IsFileWriterCreated() const override { return m_poFileWriter != nullptr; }
         virtual void            CreateWriter() override;
@@ -148,6 +148,7 @@ class OGRParquetWriterLayer final: public OGRArrowWriterLayer
         virtual bool            IsSupportedGeometryType(OGRwkbGeometryType eGType) const override;
 
         virtual void            FixupGeometryBeforeWriting(OGRGeometry* poGeom) override;
+        virtual bool            IsSRSRequired() const override { return false; }
 
 public:
         OGRParquetWriterLayer( arrow::MemoryPool* poMemoryPool,
@@ -159,6 +160,8 @@ public:
         bool            SetOptions( CSLConstList papszOptions,
                                     OGRSpatialReference *poSpatialRef,
                                     OGRwkbGeometryType eGType );
+
+        OGRErr          CreateGeomField( OGRGeomFieldDefn *poField, int bApproxOK = TRUE ) override;
 };
 
 /************************************************************************/
