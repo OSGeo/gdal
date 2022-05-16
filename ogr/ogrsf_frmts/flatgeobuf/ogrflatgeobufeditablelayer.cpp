@@ -86,7 +86,7 @@ OGRErr OGRFlatGeobufEditableLayerSynchronizer::EditableSyncToDisk(
 
     OGRFlatGeobufLayer *poFlatGeobufTmpLayer = OGRFlatGeobufLayer::Create(
         osLayerName.c_str(), osTmpFilename.c_str(), spatialRef, gType, createIndex, m_papszOpenOptions);
-  
+
     OGRErr eErr = OGRERR_NONE;
     OGRFeatureDefn *poEditableFDefn = poEditableLayer->GetLayerDefn();
     for (int i = 0; eErr == OGRERR_NONE && i < poEditableFDefn->GetFieldCount();
@@ -163,7 +163,7 @@ OGRErr OGRFlatGeobufEditableLayerSynchronizer::EditableSyncToDisk(
         return OGRERR_FAILURE;
     }
 
-    m_poFlatGeobufLayer = OGRFlatGeobufLayer::Open(osFilename.c_str(), fp, false, false);
+    m_poFlatGeobufLayer = OGRFlatGeobufLayer::Open(osFilename.c_str(), fp, false);
     *ppoDecoratedLayer = m_poFlatGeobufLayer;
 
     return OGRERR_NONE;
@@ -190,4 +190,24 @@ GIntBig OGRFlatGeobufEditableLayer::GetFeatureCount( int bForce )
             SetNextFID(nTotalFeatureCount + 1);
     }
     return nRet;
+}
+
+/************************************************************************/
+/*                            TestCapability()                          */
+/************************************************************************/
+
+int OGRFlatGeobufEditableLayer::TestCapability( const char * pszCap )
+{
+    if( EQUAL(pszCap, OLCSequentialWrite) ||
+        EQUAL(pszCap, OLCRandomWrite) ||
+        EQUAL(pszCap, OLCCreateField) ||
+        EQUAL(pszCap, OLCDeleteField) ||
+        EQUAL(pszCap, OLCReorderFields) ||
+        EQUAL(pszCap, OLCAlterFieldDefn) ||
+        EQUAL(pszCap, OLCDeleteFeature) )
+    {
+        return TRUE;
+    }
+
+    return OGREditableLayer::TestCapability(pszCap);
 }
