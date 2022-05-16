@@ -180,6 +180,11 @@ bool OGRParquetWriterLayer::SetOptions(CSLConstList papszOptions,
         writerPropertiesBuilder.created_by(osCreator);
     else
         writerPropertiesBuilder.created_by("GDAL " GDAL_RELEASE_NAME ", using " CREATED_BY_VERSION);
+
+    // Undocumented option. Not clear it is useful besides unit test purposes
+    if( !CPLTestBool(CSLFetchNameValueDef(papszOptions, "STATISTICS", "YES")) )
+        writerPropertiesBuilder.disable_statistics();
+
     m_poWriterProperties = writerPropertiesBuilder.build();
 
     const char* pszRowGroupSize = CSLFetchNameValue(papszOptions, "ROW_GROUP_SIZE");

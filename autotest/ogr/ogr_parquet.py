@@ -931,6 +931,24 @@ def test_ogr_parquet_statistics():
         assert ds.ExecuteSQL('SELECT MIN(int32) FROM i_dont_exist') is None
         assert ds.ExecuteSQL('SELECT MIN(i_dont_exist) FROM test') is None
 
+    # File without statistics
+    outfilename = '/vsimem/out.parquet'
+    try:
+        with gdaltest.error_handler():
+            gdal.VectorTranslate(outfilename, 'data/parquet/test.parquet',
+                                 options='-lco STATISTICS=NO')
+        ds = ogr.Open(outfilename)
+        with gdaltest.error_handler():
+            gdal.ErrorReset()
+            # Generic OGR SQL doesn't support MIN() on string field
+            sql_lyr = ds.ExecuteSQL('SELECT MIN(string) FROM out')
+            assert sql_lyr is None
+            assert gdal.GetLastErrorMsg() == 'Use of field function MIN() on string field string illegal.'
+        ds = None
+
+    finally:
+        gdal.Unlink(outfilename)
+
 
 ###############################################################################
 # Test setting/getting creator

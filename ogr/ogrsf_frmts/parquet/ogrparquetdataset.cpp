@@ -376,6 +376,12 @@ OGRLayer* OGRParquetDataset::ExecuteSQL( const char *pszSQLCommand,
                                 }
                             }
                         }
+                        else
+                        {
+                            CPLDebug("PARQUET",
+                                     "Statistics not available for field %s",
+                                     poFieldDefn->GetNameRef());
+                        }
                     }
                     if( !bFound )
                     {
