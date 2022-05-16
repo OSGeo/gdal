@@ -65,7 +65,7 @@ IVFKReader *CreateVFKReader( const GDALOpenInfo *poOpenInfo )
   \brief VFKReader constructor
 */
 VFKReader::VFKReader( const GDALOpenInfo* poOpenInfo ) :
-    m_bLatin2(true),  // Encoding ISO-8859-2 or WINDOWS-1250.
+    m_bLatin2(true),  // Encoding ISO-8859-2 or UTF-8.
     m_poFD(nullptr),
     m_pszFilename(CPLStrdup(poOpenInfo->pszFilename)),
     m_poFStat((VSIStatBufL*) CPLCalloc(1, sizeof(VSIStatBufL))),
@@ -539,7 +539,7 @@ void VFKReader::AddInfo(const char *pszLine)
     }
 
     char *pszValueEnc = CPLRecode(pszValue,
-                            m_bLatin2 ? "ISO-8859-2" : "WINDOWS-1250",
+                            m_bLatin2 ? "ISO-8859-2" : "UTF-8",
                             CPL_ENC_UTF8);
     if (poInfo.find(pszKey) == poInfo.end() ) {
         poInfo[pszKey] = pszValueEnc;
