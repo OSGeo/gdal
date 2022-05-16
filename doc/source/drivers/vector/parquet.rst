@@ -67,6 +67,8 @@ Layer creation options
   the line between two points is a straight cartesian line (PLANAR) or the
   shortest line on the sphere (geodesic line) (SPHERICAL). The default is PLANAR.
 
+- **CREATOR=string**: Name of creating application.
+
 SQL support
 -----------
 

@@ -26,6 +26,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#undef DO_NOT_DEFINE_GDAL_DATE_NAME
+#include "gdal_version_full/gdal_version.h"
+
 #include "ogr_parquet.h"
 
 #include "../arrow_common/ograrrowwriterlayer.hpp"
@@ -169,6 +172,15 @@ bool OGRParquetWriterLayer::SetOptions(CSLConstList papszOptions,
                  "been built with support for it", pszCompression);
         return false;
     }
+
+    auto writerPropertiesBuilder = parquet::WriterProperties::Builder();
+    writerPropertiesBuilder.compression(m_eCompression);
+    const std::string osCreator = CSLFetchNameValueDef(papszOptions, "CREATOR", "");
+    if( !osCreator.empty() )
+        writerPropertiesBuilder.created_by(osCreator);
+    else
+        writerPropertiesBuilder.created_by("GDAL " GDAL_RELEASE_NAME ", using " CREATED_BY_VERSION);
+    m_poWriterProperties = writerPropertiesBuilder.build();
 
     const char* pszRowGroupSize = CSLFetchNameValue(papszOptions, "ROW_GROUP_SIZE");
     if( pszRowGroupSize )
@@ -445,10 +457,9 @@ void OGRParquetWriterLayer::CreateWriter()
         FinalizeSchema();
     }
 
-    auto writerProperties = parquet::WriterProperties::Builder().compression(m_eCompression)->build();
     auto arrowWriterProperties = parquet::ArrowWriterProperties::Builder().store_schema()->build();
     Open(*m_poSchema, m_poMemoryPool, m_poOutputStream,
-         writerProperties,
+         m_poWriterProperties,
          arrowWriterProperties,
          &m_poFileWriter,
          &m_poKeyValueMetadata);

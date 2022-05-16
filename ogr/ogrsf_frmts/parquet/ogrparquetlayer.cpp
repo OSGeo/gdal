@@ -1020,6 +1020,10 @@ const char* OGRParquetLayer::GetMetadataItem( const char* pszName,
         {
             return CPLSPrintf("%d", m_poArrowReader->num_row_groups());
         }
+        if( EQUAL(pszName, "CREATOR") )
+        {
+            return CPLSPrintf("%s", m_poArrowReader->parquet_reader()->metadata()->created_by().c_str());
+        }
         else if( sscanf(pszName, "ROW_GROUPS[%d]", &nRowGroupIdx) == 1 &&
                  strstr(pszName, ".NUM_ROWS") )
         {

@@ -930,3 +930,33 @@ def test_ogr_parquet_statistics():
     with gdaltest.error_handler():
         assert ds.ExecuteSQL('SELECT MIN(int32) FROM i_dont_exist') is None
         assert ds.ExecuteSQL('SELECT MIN(i_dont_exist) FROM test') is None
+
+
+###############################################################################
+# Test setting/getting creator
+
+def test_ogr_parquet_creator():
+
+    outfilename = '/vsimem/out.parquet'
+    try:
+        ds = ogr.GetDriverByName('Parquet').CreateDataSource(outfilename)
+        ds.CreateLayer('test')
+        ds = None
+
+        ds = gdal.OpenEx(outfilename)
+        lyr = ds.GetLayer(0)
+        assert lyr.GetMetadataItem("CREATOR", "_PARQUET_").startswith('GDAL ')
+        ds = None
+
+        ds = ogr.GetDriverByName('Parquet').CreateDataSource(outfilename)
+        ds.CreateLayer('test', options = ['CREATOR=my_creator'])
+        ds = None
+
+        ds = gdal.OpenEx(outfilename)
+        lyr = ds.GetLayer(0)
+        assert lyr.GetMetadataItem("CREATOR", "_PARQUET_") == 'my_creator'
+        ds = None
+
+    finally:
+        gdal.Unlink(outfilename)
+
