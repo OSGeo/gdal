@@ -1175,7 +1175,8 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
         if( oSelect.join_count == 0 && oSelect.poOtherSelect == nullptr &&
             oSelect.table_count == 1 && oSelect.order_specs == 0 &&
-            oSelect.query_mode != SWQM_DISTINCT_LIST )
+            oSelect.query_mode != SWQM_DISTINCT_LIST &&
+            oSelect.where_expr == nullptr )
         {
             OGROpenFileGDBLayer* poLayer =
                 reinterpret_cast<OGROpenFileGDBLayer *>(
