@@ -1004,3 +1004,93 @@ def test_ogr_parquet_multiple_geom_columns():
     finally:
         gdal.Unlink(outfilename)
 
+
+###############################################################################
+# Test SetAttributeFilter()
+
+@pytest.mark.parametrize("filter", [
+    "boolean = 0",
+    "boolean = 1",
+    "boolean = 1.5",
+    #"boolean = '0'",
+    "uint8 = 2",
+    "uint8 = -1",
+    "int8 = -1",
+    "int8 = 0",
+    "int8 != 0",
+    "int8 < 0",
+    "int8 > 0",
+    "int8 <= 0",
+    "int8 >= 0",
+    "0 = int8",
+    "0 != int8",
+    "0 < int8",
+    "0 > int8",
+    "0 <= int8",
+    "0 >= int8",
+    "int8 IS NULL",
+    "int8 IS NOT NULL",
+    "uint16 = 10001",
+    "uint32 = 1000000001",
+    "uint32 != 1000000001",
+    "uint32 < 1000000001",
+    "uint32 > 1000000001",
+    "uint32 <= 1000000001",
+    "uint32 >= 1000000001",
+    "int32 = -1000000000",
+    "uint64 = 100000000001",
+    "int64 = -100000000000",
+    "float32 = 2.5",
+    "float64 = 2.5",
+    "float64 != 2.5",
+    "float64 < 2.5",
+    "float64 > 2.5",
+    "float64 <= 2.5",
+    "float64 >= 2.5",
+    "string = ''",
+    "string != ''",
+    "string < 'l'",
+    "string > 'l'",
+    "string <= 'l'",
+    "string >= 'l'",
+    "decimal128 = -1234.567",
+    "decimal256 = -1234.567",
+
+     # not optimized
+    "boolean = 0 OR boolean = 1",
+    "1 = 1",
+    "boolean = boolean",
+])
+def test_ogr_parquet_attribute_filter(filter):
+
+    with gdaltest.config_option('OGR_PARQUET_OPTIMIZED_ATTRIBUTE_FILTER', 'NO'):
+        ds = ogr.Open('data/parquet/test.parquet')
+        lyr = ds.GetLayer(0)
+        assert lyr.SetAttributeFilter(filter) == ogr.OGRERR_NONE
+        ref_fc = lyr.GetFeatureCount()
+        ds = None
+
+    ds = ogr.Open('data/parquet/test.parquet')
+    lyr = ds.GetLayer(0)
+    assert lyr.SetAttributeFilter(filter) == ogr.OGRERR_NONE
+    assert lyr.GetFeatureCount() == ref_fc
+
+
+def test_ogr_parquet_attribute_filter_and_spatial_filter():
+
+    filter = 'int8 != 0'
+
+    with gdaltest.config_option('OGR_PARQUET_OPTIMIZED_ATTRIBUTE_FILTER', 'NO'):
+        ds = ogr.Open('data/parquet/test.parquet')
+        lyr = ds.GetLayer(0)
+        lyr.SetSpatialFilterRect(4, 2, 4, 2)
+        assert lyr.SetAttributeFilter(filter) == ogr.OGRERR_NONE
+        ref_fc = lyr.GetFeatureCount()
+        assert ref_fc > 0
+        ds = None
+
+    ds = ogr.Open('data/parquet/test.parquet')
+    lyr = ds.GetLayer(0)
+    lyr.SetSpatialFilterRect(4, 2, 4, 2)
+    assert lyr.SetAttributeFilter(filter) == ogr.OGRERR_NONE
+    assert lyr.GetFeatureCount() == ref_fc
