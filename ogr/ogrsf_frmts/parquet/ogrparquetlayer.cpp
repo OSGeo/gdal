@@ -618,21 +618,23 @@ OGRFeature* OGRParquetLayer::GetFeatureByIndex(GIntBig nFID)
         if( nFID < nNextAccRows )
         {
             std::shared_ptr<arrow::RecordBatchReader> poRecordBatchReader;
+            arrow::Status status;
             if( m_bIgnoredFields )
             {
-                m_poArrowReader->GetRecordBatchReader({iGroup},
+                status = m_poArrowReader->GetRecordBatchReader({iGroup},
                                                       m_anRequestedParquetColumns,
                                                       &poRecordBatchReader);
             }
             else
             {
-                m_poArrowReader->GetRecordBatchReader({iGroup},
+                status = m_poArrowReader->GetRecordBatchReader({iGroup},
                                                       &poRecordBatchReader);
             }
             if( poRecordBatchReader == nullptr )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "GetRecordBatchReader() failed");
+                         "GetRecordBatchReader() failed: %s",
+                         status.message().c_str());
                 return nullptr;
             }
 
@@ -641,7 +643,7 @@ OGRFeature* OGRParquetLayer::GetFeatureByIndex(GIntBig nFID)
             while( true )
             {
                 std::shared_ptr<arrow::RecordBatch> poBatch;
-                auto status = poRecordBatchReader->ReadNext(&poBatch);
+                status = poRecordBatchReader->ReadNext(&poBatch);
                 if( !status.ok() )
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
@@ -722,21 +724,23 @@ bool OGRParquetLayer::ReadNextBatch()
         anRowGroups.reserve(nNumGroups);
         for( int i = 0; i < nNumGroups; ++i )
             anRowGroups.push_back(i);
+        arrow::Status status;
         if( m_bIgnoredFields )
         {
-            m_poArrowReader->GetRecordBatchReader(anRowGroups,
+            status = m_poArrowReader->GetRecordBatchReader(anRowGroups,
                                                   m_anRequestedParquetColumns,
                                                   &m_poRecordBatchReader);
         }
         else
         {
-            m_poArrowReader->GetRecordBatchReader(anRowGroups,
+            status = m_poArrowReader->GetRecordBatchReader(anRowGroups,
                                                   &m_poRecordBatchReader);
         }
         if( m_poRecordBatchReader == nullptr )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "GetRecordBatchReader() failed");
+                     "GetRecordBatchReader() failed: %s",
+                     status.message().c_str());
             return false;
         }
     }
