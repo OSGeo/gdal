@@ -93,7 +93,16 @@ NAMESPACE_MRF_START
 // These are a pain to maintain in sync.  They should be replaced with
 // C++11 uniform initializers.  The externs reside in util.cpp
 enum ILCompression {
-    IL_PNG = 0, IL_PPNG, IL_JPEG, IL_JPNG, IL_NONE, IL_ZLIB, IL_TIF,
+#ifdef HAVE_PNG
+    IL_PNG, IL_PPNG,
+#endif
+#ifdef HAVE_JPEG
+    IL_JPEG,
+#endif
+#if defined(HAVE_PNG) && defined(HAVE_JPEG)
+    IL_JPNG,
+#endif
+    IL_NONE, IL_ZLIB, IL_TIF,
 #if defined(LERC)
     IL_LERC,
 #endif
@@ -677,7 +686,7 @@ public:
 
 private:
     // not implemented. but suppress MSVC warning about 'assignment operator could not be generated'
-    JPEG_Codec& operator= (const JPEG_Codec& src); 
+    JPEG_Codec& operator= (const JPEG_Codec& src);
 };
 
 class JPEG_Band final: public MRFRasterBand {
