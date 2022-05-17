@@ -726,6 +726,10 @@ def test_ogr_flatgeobuf_editing():
     ds = ogr.Open('/vsimem/test.fgb', update=1)
     lyr = ds.GetLayer(0)
 
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (1 1)'))
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+
     assert lyr.TestCapability(ogr.OLCDeleteFeature) == 1
     assert lyr.DeleteFeature(1) == 0
     assert lyr.DeleteFeature(1) == ogr.OGRERR_NON_EXISTING_FEATURE
@@ -743,13 +747,17 @@ def test_ogr_flatgeobuf_editing():
     lyr = ds.GetLayer(0)
 
     c = lyr.GetFeatureCount()
-    assert c == 1
+    assert c == 2
 
     f = lyr.GetNextFeature()
     assert f is not None
     assert f.GetGeometryRef().ExportToWkt() == 'POINT (2 2)'
     assert f[0] == 2
     assert f.GetFieldCount() == 1
+
+    f = lyr.GetNextFeature()
+    assert f is not None
+    assert f.GetGeometryRef().ExportToWkt() == 'POINT (1 1)'
 
     f = lyr.GetNextFeature()
     assert f is None
