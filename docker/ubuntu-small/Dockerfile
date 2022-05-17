@@ -6,8 +6,8 @@
 # or licensed under MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
 ARG PROJ_INSTALL_PREFIX=/usr/local
-ARG BASE_IMAGE=ubuntu:20.04
-ARG TARGET_BASE_IMAGE=ubuntu:20.04
+ARG BASE_IMAGE=ubuntu:22.04
+ARG TARGET_BASE_IMAGE=ubuntu:22.04
 
 FROM $BASE_IMAGE as builder
 
@@ -21,18 +21,18 @@ COPY ./bh-set-envvars.sh /buildscripts/bh-set-envvars.sh
 RUN . /buildscripts/bh-set-envvars.sh \
     && if test "${TARGET_ARCH}" != ""; then \
     rm -f /etc/apt/sources.list \
-    && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ focal main restricted universe multiverse" >> /etc/apt/sources.list \
-    && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ focal-updates main restricted universe multiverse" >> /etc/apt/sources.list \
-    && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ focal-backports main restricted universe multiverse" >> /etc/apt/sources.list \
-    && echo "deb [arch=amd64] http://security.ubuntu.com/ubuntu focal-security main restricted universe multiverse" >> /etc/apt/sources.list \
-    && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ focal main restricted universe multiverse" >> /etc/apt/sources.list \
-    && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ focal-updates main restricted universe multiverse" >> /etc/apt/sources.list \
-    && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ focal-security main restricted universe multiverse" >> /etc/apt/sources.list \
+    && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ jammy main restricted universe multiverse" >> /etc/apt/sources.list \
+    && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ jammy-updates main restricted universe multiverse" >> /etc/apt/sources.list \
+    && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ jammy-backports main restricted universe multiverse" >> /etc/apt/sources.list \
+    && echo "deb [arch=amd64] http://security.ubuntu.com/ubuntu jammy-security main restricted universe multiverse" >> /etc/apt/sources.list \
+    && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ jammy main restricted universe multiverse" >> /etc/apt/sources.list \
+    && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ jammy-updates main restricted universe multiverse" >> /etc/apt/sources.list \
+    && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ jammy-security main restricted universe multiverse" >> /etc/apt/sources.list \
     && dpkg --add-architecture ${TARGET_ARCH} \
     && apt-get update -y \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y g++-9-${GCC_ARCH}-linux-gnu \
-    && ln -s ${GCC_ARCH}-linux-gnu-gcc-9 /usr/bin/${GCC_ARCH}-linux-gnu-gcc \
-    && ln -s ${GCC_ARCH}-linux-gnu-g++-9 /usr/bin/${GCC_ARCH}-linux-gnu-g++; \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y g++-11-${GCC_ARCH}-linux-gnu \
+    && ln -s ${GCC_ARCH}-linux-gnu-gcc-11 /usr/bin/${GCC_ARCH}-linux-gnu-gcc \
+    && ln -s ${GCC_ARCH}-linux-gnu-g++-11 /usr/bin/${GCC_ARCH}-linux-gnu-g++; \
     fi
 
 # Setup build env for PROJ
@@ -218,12 +218,12 @@ RUN apt-get update; \
 # GDAL dependencies
 RUN apt-get update -y; \
     DEBIAN_FRONTEND=noninteractive apt-get install -y  --no-install-recommends \
-        python3-numpy libpython3.8 \
-        libjpeg-turbo8 libgeos-3.8.0 libgeos-c1v5 \
+        python3-numpy libpython3.10 \
+        libjpeg-turbo8 libgeos3.10.2 libgeos-c1v5 \
         libexpat1 \
         libxerces-c3.2 \
-        libwebp6 libpng16-16 \
-        libzstd1 bash libpq5 libssl1.1 libopenjp2-7 libspatialite7
+        libwebp7 libpng16-16 \
+        libzstd1 bash libpq5 libssl3 libopenjp2-7 libspatialite7
 
 RUN apt-get update; \
     DEBIAN_FRONTEND=noninteractive apt-get install -y python-is-python3

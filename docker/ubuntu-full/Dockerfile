@@ -5,8 +5,8 @@
 # Public domain
 # or licensed under MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
-ARG BASE_IMAGE=ubuntu:20.04
-ARG TARGET_BASE_IMAGE=ubuntu:20.04
+ARG BASE_IMAGE=ubuntu:22.04
+ARG TARGET_BASE_IMAGE=ubuntu:22.04
 
 FROM $BASE_IMAGE as builder
 
@@ -20,18 +20,18 @@ COPY ./bh-set-envvars.sh /buildscripts/bh-set-envvars.sh
 RUN . /buildscripts/bh-set-envvars.sh \
     && if test "${TARGET_ARCH}" != ""; then \
     rm -f /etc/apt/sources.list \
-    && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ focal main restricted universe multiverse" >> /etc/apt/sources.list \
-    && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ focal-updates main restricted universe multiverse" >> /etc/apt/sources.list \
-    && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ focal-backports main restricted universe multiverse" >> /etc/apt/sources.list \
-    && echo "deb [arch=amd64] http://security.ubuntu.com/ubuntu focal-security main restricted universe multiverse" >> /etc/apt/sources.list \
-    && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ focal main restricted universe multiverse" >> /etc/apt/sources.list \
-    && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ focal-updates main restricted universe multiverse" >> /etc/apt/sources.list \
-    && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ focal-security main restricted universe multiverse" >> /etc/apt/sources.list \
+    && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ jammy main restricted universe multiverse" >> /etc/apt/sources.list \
+    && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ jammy-updates main restricted universe multiverse" >> /etc/apt/sources.list \
+    && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ jammy-backports main restricted universe multiverse" >> /etc/apt/sources.list \
+    && echo "deb [arch=amd64] http://security.ubuntu.com/ubuntu jammy-security main restricted universe multiverse" >> /etc/apt/sources.list \
+    && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ jammy main restricted universe multiverse" >> /etc/apt/sources.list \
+    && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ jammy-updates main restricted universe multiverse" >> /etc/apt/sources.list \
+    && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ jammy-security main restricted universe multiverse" >> /etc/apt/sources.list \
     && dpkg --add-architecture ${TARGET_ARCH} \
     && apt-get update -y \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y g++-9-${GCC_ARCH}-linux-gnu \
-    && ln -s ${GCC_ARCH}-linux-gnu-gcc-9 /usr/bin/${GCC_ARCH}-linux-gnu-gcc \
-    && ln -s ${GCC_ARCH}-linux-gnu-g++-9 /usr/bin/${GCC_ARCH}-linux-gnu-g++; \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y g++-11-${GCC_ARCH}-linux-gnu \
+    && ln -s ${GCC_ARCH}-linux-gnu-gcc-11 /usr/bin/${GCC_ARCH}-linux-gnu-gcc \
+    && ln -s ${GCC_ARCH}-linux-gnu-g++-11 /usr/bin/${GCC_ARCH}-linux-gnu-g++; \
     fi
 
 # Setup build env for PROJ
@@ -56,7 +56,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
        curl libxml2-dev${APT_ARCH_SUFFIX} libexpat-dev${APT_ARCH_SUFFIX} libxerces-c-dev${APT_ARCH_SUFFIX} \
        libnetcdf-dev${APT_ARCH_SUFFIX} libpoppler-dev${APT_ARCH_SUFFIX} libpoppler-private-dev${APT_ARCH_SUFFIX} \
        libspatialite-dev${APT_ARCH_SUFFIX} swig ant libhdf4-alt-dev${APT_ARCH_SUFFIX} libhdf5-serial-dev${APT_ARCH_SUFFIX} \
-       libfreexl-dev${APT_ARCH_SUFFIX} unixodbc-dev${APT_ARCH_SUFFIX} libwebp-dev${APT_ARCH_SUFFIX} libepsilon-dev${APT_ARCH_SUFFIX} \
+       libfreexl-dev${APT_ARCH_SUFFIX} unixodbc-dev${APT_ARCH_SUFFIX}  mdbtools-dev${APT_ARCH_SUFFIX} libwebp-dev${APT_ARCH_SUFFIX} \
        liblcms2-2 libpcre3-dev${APT_ARCH_SUFFIX} libcrypto++-dev${APT_ARCH_SUFFIX} libfyba-dev${APT_ARCH_SUFFIX} \
        libkml-dev${APT_ARCH_SUFFIX} libmysqlclient-dev${APT_ARCH_SUFFIX} libogdi-dev${APT_ARCH_SUFFIX} \
        libcfitsio-dev${APT_ARCH_SUFFIX} openjdk-"$JAVA_VERSION"-jdk${APT_ARCH_SUFFIX} libzstd-dev${APT_ARCH_SUFFIX} \
@@ -86,7 +86,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && for i in /build_thirdparty/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build mongo-c-driver
-ARG MONGO_C_DRIVER_VERSION=1.17.6
+ARG MONGO_C_DRIVER_VERSION=1.21.1
 RUN . /buildscripts/bh-set-envvars.sh \
     && mkdir mongo-c-driver \
     && wget -q https://github.com/mongodb/mongo-c-driver/releases/download/${MONGO_C_DRIVER_VERSION}/mongo-c-driver-${MONGO_C_DRIVER_VERSION}.tar.gz -O - \
@@ -105,7 +105,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && for i in /build_thirdparty/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build mongocxx
-ARG MONGOCXX_VERSION=3.6.5
+ARG MONGOCXX_VERSION=3.6.7
 RUN . /buildscripts/bh-set-envvars.sh \
     && mkdir mongocxx \
     && wget -q https://github.com/mongodb/mongo-cxx-driver/archive/r${MONGOCXX_VERSION}.tar.gz -O - \
@@ -123,14 +123,12 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && for i in /build_thirdparty/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build tiledb
-COPY ./tiledb-5cad65f4c.patch /buildscripts/tiledb-5cad65f4c.patch
-ARG TILEDB_VERSION=2.3.1
+ARG TILEDB_VERSION=2.8.2
 RUN . /buildscripts/bh-set-envvars.sh \
     && mkdir tiledb \
     && wget -q https://github.com/TileDB-Inc/TileDB/archive/${TILEDB_VERSION}.tar.gz -O - \
         | tar xz -C tiledb --strip-components=1 \
     && cd tiledb \
-    && patch -p1 < /buildscripts/tiledb-5cad65f4c.patch \
     && mkdir build_cmake \
     && cd build_cmake \
     && ../bootstrap --prefix=/usr --disable-werror \
@@ -162,38 +160,6 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && cd .. \
     && rm -rf openjpeg-${OPENJPEG_VERSION} \
     ); fi
-
-# Install MDB Driver Jars
-RUN . /buildscripts/bh-set-envvars.sh \
-  && wget -q https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/mdb-sqlite/mdb-sqlite-1.0.2.tar.bz2 \
-  && tar -xjf mdb-sqlite-1.0.2.tar.bz2 \
-  && mkdir -p /build/usr/share/java \
-  && cp mdb-sqlite-1.0.2/lib/*.jar /build/usr/share/java \
-  && rm -rf mdb-sqlite-1.0.2.tar.bz2 && rm -rf mdb-sqlite-1.0.2
-
-# Build recent mdbtools
-# Patch to fix an issue with SELECT COUNT(*). See https://github.com/OSGeo/gdal/pull/4104
-COPY ./mdbtools-lexer.patch /buildscripts/mdbtools-lexer.patch
-RUN . /buildscripts/bh-set-envvars.sh \
-  && wget -q https://github.com/mdbtools/mdbtools/releases/download/v0.9.3/mdbtools-0.9.3.tar.gz \
-  && tar xzf mdbtools-0.9.3.tar.gz \
-  && apt-get update -y \
-  && apt-get install -y --fix-missing --no-install-recommends bison flex gawk \
-  && rm -rf /var/lib/apt/lists/* \
-  && cd mdbtools-0.9.3 \
-  && patch -p0 < /buildscripts/mdbtools-lexer.patch \
-  && ./configure --with-unixodbc=/usr "${WITH_HOST}" \
-  && make -j$(nproc) \
-  && mkdir -p /build_thirdparty/usr/lib/${GCC_ARCH}-linux-gnu/odbc \
-  && mkdir -p /build_thirdparty/lib/${GCC_ARCH}-linux-gnu \
-  && cp ./src/odbc/.libs/libmdbodbc.so /build_thirdparty/usr/lib/${GCC_ARCH}-linux-gnu/odbc \
-  && cp ./src/libmdb/.libs/libmdb.so.3 /build_thirdparty/lib/${GCC_ARCH}-linux-gnu \
-  && cp ./src/sql/.libs/libmdbsql.so.3 /build_thirdparty/lib/${GCC_ARCH}-linux-gnu \
-  && cd .. \
-  && rm -rf mdbtools-0.9.3*
-
-#Set CLASSPATH so jars are found
-ENV CLASSPATH="/build/usr/share/java/jackcess-1.1.14.jar:/build/usr/share/java/commons-logging-1.1.1.jar:/build/usr/share/java/commons-lang-2.4.jar"
 
 #Build File Geodatabase
 
@@ -300,15 +266,15 @@ RUN apt-get update \
 # GDAL dependencies
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
         libopenjp2-7 libcairo2 python3-numpy \
-        libpng16-16 libjpeg-turbo8 libgif7 liblzma5 libgeos-3.8.0 libgeos-c1v5 \
+        libpng16-16 libjpeg-turbo8 libgif7 liblzma5 libgeos3.10.2 libgeos-c1v5 \
         libxml2 libexpat1 \
-        libxerces-c3.2 libnetcdf-c++4 netcdf-bin libpoppler97 libspatialite7 gpsbabel \
-        libhdf4-0-alt libhdf5-103 libhdf5-cpp-103 poppler-utils libfreexl1 unixodbc libwebp6 \
-        libepsilon1 liblcms2-2 libpcre3 libcrypto++6 libfyba0 \
+        libxerces-c3.2 libnetcdf-c++4 netcdf-bin libpoppler118 libspatialite7 gpsbabel \
+        libhdf4-0-alt libhdf5-103 libhdf5-cpp-103 poppler-utils libfreexl1 unixodbc mdbtools libwebp7 \
+        liblcms2-2 libpcre3 libcrypto++8 libfyba0 \
         libkmlbase1 libkmlconvenience1 libkmldom1 libkmlengine1 libkmlregionator1 libkmlxsd1 \
-        libmysqlclient21 libogdi4.1 libcfitsio8 openjdk-"$JAVA_VERSION"-jre \
-        libzstd1 bash bash-completion libpq5 libssl1.1 \
-        libarmadillo9 libpython3.8 libopenexr24 libheif1 \
+        libmysqlclient21 libogdi4.1 libcfitsio9 openjdk-"$JAVA_VERSION"-jre \
+        libzstd1 bash bash-completion libpq5 libssl3 \
+        libarmadillo10 libpython3.10 libopenexr25 libheif1 \
         libdeflate0 libblosc1 liblz4-1 \
         libbrotli1 \
         python-is-python3 \
@@ -319,13 +285,12 @@ RUN apt-get update \
     && wget https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y -V ./apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
     && apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow700 libparquet700 \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow800 libparquet800 \
     && rm -rf /var/lib/apt/lists/*
 
 # Attempt to order layers starting with less frequently varying ones
 
 COPY --from=builder  /build_thirdparty/usr/ /usr/
-COPY --from=builder  /build_thirdparty/lib/ /lib/
 
 ARG PROJ_INSTALL_PREFIX=/usr/local
 COPY --from=builder  /tmp/proj_grids/* ${PROJ_INSTALL_PREFIX}/share/proj/
@@ -335,13 +300,10 @@ COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/include/ ${PROJ_INSTALL_PREFIX
 COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/bin/ ${PROJ_INSTALL_PREFIX}/bin/
 COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/lib/ ${PROJ_INSTALL_PREFIX}/lib/
 
-COPY --from=builder  /build/usr/share/java /usr/share/java
+#COPY --from=builder  /build/usr/share/java /usr/share/java
 COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/
 COPY --from=builder  /build/usr/include/ /usr/include/
 COPY --from=builder  /build_gdal_python/usr/ /usr/
 COPY --from=builder  /build_gdal_version_changing/usr/ /usr/
 
 RUN ldconfig
-
-#Set CLASSPATH so jars are found
-ENV CLASSPATH="/usr/share/java/jackcess-1.1.14.jar:/usr/share/java/commons-logging-1.1.1.jar:/usr/share/java/commons-lang-2.4.jar"
