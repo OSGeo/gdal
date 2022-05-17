@@ -61,8 +61,7 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(
     GByte *headerBuf,
     const char *pszFilename,
     VSILFILE *poFp,
-    uint64_t offset,
-    bool update)
+    uint64_t offset)
 {
     m_poHeader = poHeader;
     CPLAssert(poHeader);
@@ -74,7 +73,6 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(
     m_offsetFeatures = offset;
     m_offset = offset;
     m_create = false;
-    m_update = update;
 
     m_featuresCount = m_poHeader->features_count();
     m_geometryType = m_poHeader->geometry_type();
@@ -1169,8 +1167,8 @@ OGRErr OGRFlatGeobufLayer::CreateField(OGRFieldDefn *poField, int /* bApproxOK *
 
 OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
 {
-    if (!m_bCanCreate) {
-        CPLError(CE_Failure, CPLE_AppDefined, "Source not valid for direct conversion");
+    if (!m_create) {
+        CPLError(CE_Failure, CPLE_AppDefined, "CreateFeature() not supported on read-only layer");
         return OGRERR_FAILURE;
     }
 
@@ -1412,9 +1410,9 @@ OGRErr OGRFlatGeobufLayer::GetExtent(OGREnvelope* psExtent, int bForce)
 int OGRFlatGeobufLayer::TestCapability(const char *pszCap)
 {
     if (EQUAL(pszCap, OLCCreateField))
-        return m_create || m_update;
+        return m_create;
     else if (EQUAL(pszCap, OLCSequentialWrite))
-        return m_create || m_update;
+        return m_create;
     else if (EQUAL(pszCap, OLCRandomRead))
         return m_poHeader != nullptr && m_poHeader->index_node_size() > 0;
     else if (EQUAL(pszCap, OLCIgnoreFields))
@@ -1501,6 +1499,8 @@ OGRFlatGeobufLayer *OGRFlatGeobufLayer::Create(
 {
     std::string osTempFile = GetTempFilePath(pszFilename, papszOptions);
     VSILFILE *poFpWrite = CreateOutputFile(pszFilename, papszOptions, bCreateSpatialIndexAtClose);
+    if( poFpWrite == nullptr )
+        return nullptr;
     OGRFlatGeobufLayer *layer = new OGRFlatGeobufLayer(pszLayerName, pszFilename, poSpatialRef, eGType, bCreateSpatialIndexAtClose, poFpWrite, osTempFile);
     return layer;
 }
@@ -1510,14 +1510,13 @@ OGRFlatGeobufLayer *OGRFlatGeobufLayer::Open(
     GByte *headerBuf,
     const char *pszFilename,
     VSILFILE *poFp,
-    uint64_t offset,
-    bool update)
+    uint64_t offset)
 {
-    OGRFlatGeobufLayer *layer = new OGRFlatGeobufLayer(poHeader, headerBuf, pszFilename, poFp, offset, update);
+    OGRFlatGeobufLayer *layer = new OGRFlatGeobufLayer(poHeader, headerBuf, pszFilename, poFp, offset);
     return layer;
 }
 
-OGRFlatGeobufLayer *OGRFlatGeobufLayer::Open(const char* pszFilename, VSILFILE* fp, bool bVerifyBuffers, bool update)
+OGRFlatGeobufLayer *OGRFlatGeobufLayer::Open(const char* pszFilename, VSILFILE* fp, bool bVerifyBuffers)
 {
     uint64_t offset = sizeof(magicbytes);
     CPLDebugOnly("FlatGeobuf", "Start at offset: %lu", static_cast<long unsigned int>(offset));
@@ -1582,7 +1581,7 @@ OGRFlatGeobufLayer *OGRFlatGeobufLayer::Open(const char* pszFilename, VSILFILE* 
     CPLDebugOnly("FlatGeobuf", "Features start at offset (%lu)", static_cast<long unsigned int>(offset));
 
     CPLDebugOnly("FlatGeobuf", "Opening OGRFlatGeobufLayer");
-    auto poLayer = OGRFlatGeobufLayer::Open(header, buf.release(), pszFilename, fp, offset, update);
+    auto poLayer = OGRFlatGeobufLayer::Open(header, buf.release(), pszFilename, fp, offset);
     poLayer->VerifyBuffers(bVerifyBuffers);
 
     return poLayer;
