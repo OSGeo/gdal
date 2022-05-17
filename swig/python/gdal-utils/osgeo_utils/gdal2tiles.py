@@ -818,7 +818,7 @@ def scale_query_to_tile(dsquery, dstile, tiledriver, options, tilefilename=''):
             array[:, :, i] = gdalarray.BandReadAsArray(dsquery.GetRasterBand(i + 1),
                                                        0, 0, querysize, querysize)
         im = Image.fromarray(array, 'RGBA')     # Always four bands
-        im1 = im.resize((tile_size, tile_size), Image.ANTIALIAS)
+        im1 = im.resize((tile_size, tile_size), Image.LANCZOS)
         if os.path.exists(tilefilename):
             im0 = Image.open(tilefilename)
             im1 = Image.composite(im1, im0, im1)
