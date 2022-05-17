@@ -86,6 +86,8 @@ OGRErr OGRFlatGeobufEditableLayerSynchronizer::EditableSyncToDisk(
 
     OGRFlatGeobufLayer *poFlatGeobufTmpLayer = OGRFlatGeobufLayer::Create(
         osLayerName.c_str(), osTmpFilename.c_str(), spatialRef, gType, createIndex, m_papszOpenOptions);
+    if( poFlatGeobufTmpLayer == nullptr )
+        return OGRERR_FAILURE;
 
     OGRErr eErr = OGRERR_NONE;
     OGRFeatureDefn *poEditableFDefn = poEditableLayer->GetLayerDefn();

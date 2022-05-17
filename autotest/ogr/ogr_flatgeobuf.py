@@ -901,3 +901,14 @@ def test_ogr_flatgeobuf_coordinate_epoch_custom_wkt():
     ds = None
 
     ogr.GetDriverByName('FlatGeobuf').DeleteDataSource(filename)
+
+
+###############################################################################
+
+
+def test_ogr_flatgeobuf_invalid_output_filename():
+
+    ds = ogr.GetDriverByName('FlatGeobuf').CreateDataSource("/i_do/not_exist/my.fgb")
+    with gdaltest.error_handler():
+        assert ds.CreateLayer('foo') is None
+

@@ -1499,6 +1499,8 @@ OGRFlatGeobufLayer *OGRFlatGeobufLayer::Create(
 {
     std::string osTempFile = GetTempFilePath(pszFilename, papszOptions);
     VSILFILE *poFpWrite = CreateOutputFile(pszFilename, papszOptions, bCreateSpatialIndexAtClose);
+    if( poFpWrite == nullptr )
+        return nullptr;
     OGRFlatGeobufLayer *layer = new OGRFlatGeobufLayer(pszLayerName, pszFilename, poSpatialRef, eGType, bCreateSpatialIndexAtClose, poFpWrite, osTempFile);
     return layer;
 }
