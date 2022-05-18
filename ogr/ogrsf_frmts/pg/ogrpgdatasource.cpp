@@ -2405,7 +2405,7 @@ OGRSpatialReference *OGRPGDataSource::FetchSRS( int nId )
 /*      it to the table.                                                */
 /************************************************************************/
 
-int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
+int OGRPGDataSource::FetchSRSId( const OGRSpatialReference * poSRS )
 
 {
     if( poSRS == nullptr || !m_bHasSpatialRefSys )
