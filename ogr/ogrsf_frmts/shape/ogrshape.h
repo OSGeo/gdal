@@ -95,6 +95,7 @@ class OGRShapeGeomFieldDefn final: public OGRGeomFieldDefn
         }
 
         OGRSpatialReference* GetSpatialRef() const override;
+        void SetSRSSet() { bSRSSet = true; }
 
         const CPLString& GetPrjFilename() const { return osPrjFile; }
         void SetPrjFilename(const std::string& osFilename) { osPrjFile = osFilename; }
@@ -246,6 +247,9 @@ class OGRShapeLayer final: public OGRAbstractProxiedLayer
     OGRErr              AlterFieldDefn( int iField,
                                         OGRFieldDefn* poNewFieldDefn,
                                         int nFlags ) override;
+    OGRErr              AlterGeomFieldDefn( int iGeomField,
+                                            const OGRGeomFieldDefn* poNewGeomFieldDefn,
+                                            int nFlagsIn ) override;
 
     int                 TestCapability( const char * ) override;
     void                SetSpatialFilter( OGRGeometry * ) override;
