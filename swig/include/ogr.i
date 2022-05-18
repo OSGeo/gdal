@@ -448,6 +448,13 @@ typedef void retGetPoints;
 %constant ALTER_DOMAIN_FLAG = 64;
 %constant ALTER_ALL_FLAG = 1 + 2 + 4 + 8 + 16 + 32 + 64;
 
+%constant ALTER_GEOM_FIELD_DEFN_NAME_FLAG = 4096;
+%constant ALTER_GEOM_FIELD_DEFN_TYPE_FLAG = 8192;
+%constant ALTER_GEOM_FIELD_DEFN_NULLABLE_FLAG = 16384;
+%constant ALTER_GEOM_FIELD_DEFN_SRS_FLAG = 32768;
+%constant ALTER_GEOM_FIELD_DEFN_SRS_COORD_EPOCH_FLAG = 65536;
+%constant ALTER_GEOM_FIELD_DEFN_ALL_FLAG = 4096 + 8192 + 16384 + 32768 + 65536;
+
 %constant F_VAL_NULL= 0x00000001; /**< Validate that fields respect not-null constraints */
 %constant F_VAL_GEOM_TYPE = 0x00000002; /**< Validate that geometries respect geometry column type */
 %constant F_VAL_WIDTH = 0x00000004; /**< Validate that (string) fields respect field width */
@@ -464,6 +471,7 @@ typedef void retGetPoints;
 %constant char *OLCDeleteField         = "DeleteField";
 %constant char *OLCReorderFields       = "ReorderFields";
 %constant char *OLCAlterFieldDefn      = "AlterFieldDefn";
+%constant char *OLCAlterGeomFieldDefn  = "AlterGeomFieldDefn";
 %constant char *OLCTransactions        = "Transactions";
 %constant char *OLCDeleteFeature       = "DeleteFeature";
 %constant char *OLCFastSetNextByIndex  = "FastSetNextByIndex";
@@ -512,6 +520,7 @@ typedef int OGRErr;
 #define OLCDeleteField         "DeleteField"
 #define OLCReorderFields       "ReorderFields"
 #define OLCAlterFieldDefn      "AlterFieldDefn"
+#define OLCAlterGeomFieldDefn  "AlterGeomFieldDefn"
 #define OLCTransactions        "Transactions"
 #define OLCDeleteFeature       "DeleteFeature"
 #define OLCFastSetNextByIndex  "FastSetNextByIndex"
@@ -1163,6 +1172,13 @@ public:
     return OGR_L_AlterFieldDefn(self, iField, field_def, nFlags);
   }
 %clear OGRFieldDefnShadow *field_def;
+
+%apply Pointer NONNULL {OGRGeomFieldDefnShadow *field_def};
+  OGRErr AlterGeomFieldDefn(int iGeomField, const OGRGeomFieldDefnShadow* field_def, int nFlags)
+  {
+    return OGR_L_AlterGeomFieldDefn(self, iGeomField, const_cast<OGRGeomFieldDefnShadow*>(field_def), nFlags);
+  }
+%clear OGRGeomFieldDefnShadow *field_def;
 
 #ifndef SWIGJAVA
   %feature( "kwargs" ) CreateGeomField;

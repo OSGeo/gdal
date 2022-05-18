@@ -295,6 +295,18 @@ ALTER_DOMAIN_FLAG = _ogr.ALTER_DOMAIN_FLAG
 
 ALTER_ALL_FLAG = _ogr.ALTER_ALL_FLAG
 
+ALTER_GEOM_FIELD_DEFN_NAME_FLAG = _ogr.ALTER_GEOM_FIELD_DEFN_NAME_FLAG
+
+ALTER_GEOM_FIELD_DEFN_TYPE_FLAG = _ogr.ALTER_GEOM_FIELD_DEFN_TYPE_FLAG
+
+ALTER_GEOM_FIELD_DEFN_NULLABLE_FLAG = _ogr.ALTER_GEOM_FIELD_DEFN_NULLABLE_FLAG
+
+ALTER_GEOM_FIELD_DEFN_SRS_FLAG = _ogr.ALTER_GEOM_FIELD_DEFN_SRS_FLAG
+
+ALTER_GEOM_FIELD_DEFN_SRS_COORD_EPOCH_FLAG = _ogr.ALTER_GEOM_FIELD_DEFN_SRS_COORD_EPOCH_FLAG
+
+ALTER_GEOM_FIELD_DEFN_ALL_FLAG = _ogr.ALTER_GEOM_FIELD_DEFN_ALL_FLAG
+
 F_VAL_NULL = _ogr.F_VAL_NULL
 
 F_VAL_GEOM_TYPE = _ogr.F_VAL_GEOM_TYPE
@@ -324,6 +336,8 @@ OLCDeleteField = _ogr.OLCDeleteField
 OLCReorderFields = _ogr.OLCReorderFields
 
 OLCAlterFieldDefn = _ogr.OLCAlterFieldDefn
+
+OLCAlterGeomFieldDefn = _ogr.OLCAlterGeomFieldDefn
 
 OLCTransactions = _ogr.OLCTransactions
 
@@ -1972,6 +1986,10 @@ class Layer(MajorObject):
         OGR 1.9.0 
         """
         return _ogr.Layer_AlterFieldDefn(self, *args)
+
+    def AlterGeomFieldDefn(self, *args):
+        r"""AlterGeomFieldDefn(Layer self, int iGeomField, GeomFieldDefn field_def, int nFlags) -> OGRErr"""
+        return _ogr.Layer_AlterGeomFieldDefn(self, *args)
 
     def CreateGeomField(self, *args, **kwargs):
         r"""
