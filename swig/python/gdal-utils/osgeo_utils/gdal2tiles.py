@@ -1315,33 +1315,35 @@ def create_overview_tile(base_tz: int, base_tiles: List[Tuple[int, int]], output
 
         usable_base_tiles.append(base_tile)
 
-    if usable_base_tiles:
-        scale_query_to_tile(dsquery, dstile, tile_driver, options,
-                            tilefilename=tilefilename)
+    if not usable_base_tiles:
+        return
+
+    scale_query_to_tile(dsquery, dstile, tile_driver, options,
+                        tilefilename=tilefilename)
+    # Write a copy of tile to png/jpg
+    if options.resampling != 'antialias':
         # Write a copy of tile to png/jpg
-        if options.resampling != 'antialias':
-            # Write a copy of tile to png/jpg
-            out_driver.CreateCopy(tilefilename, dstile, strict=0)
-            # Remove useless side car file
-            aux_xml = tilefilename + '.aux.xml'
-            if gdal.VSIStatL(aux_xml) is not None:
-                gdal.Unlink(aux_xml)
+        out_driver.CreateCopy(tilefilename, dstile, strict=0)
+        # Remove useless side car file
+        aux_xml = tilefilename + '.aux.xml'
+        if gdal.VSIStatL(aux_xml) is not None:
+            gdal.Unlink(aux_xml)
 
-        if options.verbose:
-            print("\tbuild from zoom", base_tz, " tiles:", *base_tiles)
+    if options.verbose:
+        print("\tbuild from zoom", base_tz, " tiles:", *base_tiles)
 
-        # Create a KML file for this tile.
-        if tile_job_info.kml:
-            swne = get_tile_swne(tile_job_info, options)
-            if swne is not None:
-                with my_open(os.path.join(
-                    output_folder,
-                    '%d/%d/%d.kml' % (overview_tz, overview_tx, overview_ty_real)
-                ), 'wb') as f:
-                    f.write(generate_kml(
-                        overview_tx, overview_ty, overview_tz, tile_job_info.tile_extension, tile_job_info.tile_size,
-                        swne, options, [(t[0], t[1], base_tz) for t in base_tiles]
-                    ).encode('utf-8'))
+    # Create a KML file for this tile.
+    if tile_job_info.kml:
+        swne = get_tile_swne(tile_job_info, options)
+        if swne is not None:
+            with my_open(os.path.join(
+                output_folder,
+                '%d/%d/%d.kml' % (overview_tz, overview_tx, overview_ty_real)
+            ), 'wb') as f:
+                f.write(generate_kml(
+                    overview_tx, overview_ty, overview_tz, tile_job_info.tile_extension, tile_job_info.tile_size,
+                    swne, options, [(t[0], t[1], base_tz) for t in base_tiles]
+                ).encode('utf-8'))
 
 
 def group_overview_base_tiles(base_tz: int, output_folder: str, tile_job_info: 'TileJobInfo') -> List[List[Tuple[int, int]]]:
