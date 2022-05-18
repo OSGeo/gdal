@@ -1249,6 +1249,20 @@ def create_base_tile(tile_job_info: 'TileJobInfo', tile_detail: 'TileDetail') ->
 def create_overview_tile(base_tz: int, base_tiles: List[Tuple[int, int]], output_folder: str, tile_job_info: 'TileJobInfo', options: Options):
     """ Generating an overview tile from no more than 4 underlying tiles(base tiles) """
 
+    overview_tz = base_tz - 1
+    overview_tx = base_tiles[0][0] >> 1
+    overview_ty = base_tiles[0][1] >> 1
+    overview_ty_real = GDAL2Tiles.getYTile(overview_ty, overview_tz, options)
+
+    tilefilename = os.path.join(output_folder, str(overview_tz), str(overview_tx),
+                                "%s.%s" % (overview_ty_real, tile_job_info.tile_extension))
+    if options.verbose:
+        print(tilefilename)
+    if options.resume and isfile(tilefilename):
+        if options.verbose:
+            print("Tile generation skipped because of --resume")
+        return
+
     mem_driver = gdal.GetDriverByName('MEM')
     tile_driver = tile_job_info.tile_driver
     out_driver = gdal.GetDriverByName(tile_driver)
@@ -1300,20 +1314,6 @@ def create_overview_tile(base_tz: int, base_tiles: List[Tuple[int, int]], output
             band_list=list(range(1, tilebands + 1)))
 
         usable_base_tiles.append(base_tile)
-
-    overview_tz = base_tz - 1
-    overview_tx = base_tiles[0][0] >> 1
-    overview_ty = base_tiles[0][1] >> 1
-    overview_ty_real = GDAL2Tiles.getYTile(overview_ty, overview_tz, options)
-
-    tilefilename = os.path.join(output_folder, str(overview_tz), str(overview_tx),
-                                "%s.%s" % (overview_ty_real, tile_job_info.tile_extension))
-    if options.verbose:
-        print(tilefilename)
-    if options.resume and isfile(tilefilename):
-        if options.verbose:
-            print("Tile generation skipped because of --resume")
-        return
 
     if usable_base_tiles:
         scale_query_to_tile(dsquery, dstile, tile_driver, options,
