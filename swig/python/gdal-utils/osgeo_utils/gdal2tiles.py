@@ -789,7 +789,7 @@ def generate_kml(tx, ty, tz, tileext, tile_size, tileswne, options, children=Non
     return s
 
 
-def scale_query_to_tile(dsquery, dstile, tiledriver, options, tilefilename=''):
+def scale_query_to_tile(dsquery, dstile, options, tilefilename=''):
     """Scales down query dataset to the tile dataset"""
 
     querysize = dsquery.RasterXSize
@@ -822,7 +822,11 @@ def scale_query_to_tile(dsquery, dstile, tiledriver, options, tilefilename=''):
         if os.path.exists(tilefilename):
             im0 = Image.open(tilefilename)
             im1 = Image.composite(im1, im0, im1)
-        im1.save(tilefilename, tiledriver)
+
+        params = {}
+        if options.tiledriver == 'WEBP':
+            params['quality'] = options.webp_quality
+        im1.save(tilefilename, options.tiledriver, **params)
 
     else:
 
@@ -1222,7 +1226,7 @@ def create_base_tile(tile_job_info: 'TileJobInfo', tile_detail: 'TileDetail') ->
                                 band_list=list(range(1, dataBandsCount + 1)))
             dsquery.WriteRaster(wx, wy, wxsize, wysize, alpha, band_list=[tilebands])
 
-            scale_query_to_tile(dsquery, dstile, tile_job_info.tile_driver, options,
+            scale_query_to_tile(dsquery, dstile, options,
                                 tilefilename=tilefilename)
             del dsquery
 
@@ -1230,7 +1234,10 @@ def create_base_tile(tile_job_info: 'TileJobInfo', tile_detail: 'TileDetail') ->
 
     if options.resampling != 'antialias':
         # Write a copy of tile to png/jpg
-        out_drv.CreateCopy(tilefilename, dstile, strict=0)
+        copts = []
+        if options.tiledriver == 'WEBP':
+            copts = [ 'QUALITY=' + str(options.webp_quality) ]
+        out_drv.CreateCopy(tilefilename, dstile, strict=0, options=copts)
 
     del dstile
 
@@ -1305,12 +1312,28 @@ def create_overview_tile(base_tz: int, base_tiles: List[Tuple[int, int]], output
             else:
                 tileposy = 0
 
+        if dsquerytile.RasterCount == tilebands - 1:
+            # assume that the alpha band is missing and add it
+            tmp_ds = mem_driver.CreateCopy('', dsquerytile, 0)
+            tmp_ds.AddBand()
+            mask = bytearray([255] * (tile_job_info.tile_size * tile_job_info.tile_size))
+            tmp_ds.WriteRaster(0, 0,
+                               tile_job_info.tile_size,
+                               tile_job_info.tile_size,
+                               mask,
+                               band_list=[tilebands])
+            dsquerytile = tmp_ds
+        elif dsquerytile.RasterCount != tilebands:
+            raise Exception('Unexpected number of bands in base tile')
+
+        base_data = dsquerytile.ReadRaster(0, 0,
+                                           tile_job_info.tile_size,
+                                           tile_job_info.tile_size)
+
         dsquery.WriteRaster(
             tileposx, tileposy, tile_job_info.tile_size,
             tile_job_info.tile_size,
-            dsquerytile.ReadRaster(0, 0,
-                                   tile_job_info.tile_size,
-                                   tile_job_info.tile_size),
+            base_data,
             band_list=list(range(1, tilebands + 1)))
 
         usable_base_tiles.append(base_tile)
@@ -1318,12 +1341,15 @@ def create_overview_tile(base_tz: int, base_tiles: List[Tuple[int, int]], output
     if not usable_base_tiles:
         return
 
-    scale_query_to_tile(dsquery, dstile, tile_driver, options,
+    scale_query_to_tile(dsquery, dstile, options,
                         tilefilename=tilefilename)
     # Write a copy of tile to png/jpg
     if options.resampling != 'antialias':
         # Write a copy of tile to png/jpg
-        out_driver.CreateCopy(tilefilename, dstile, strict=0)
+        copts = []
+        if options.tiledriver == 'WEBP':
+            copts = [ 'QUALITY=' + str(options.webp_quality) ]
+        out_driver.CreateCopy(tilefilename, dstile, strict=0, options=copts)
         # Remove useless side car file
         aux_xml = tilefilename + '.aux.xml'
         if gdal.VSIStatL(aux_xml) is not None:
@@ -1428,6 +1454,9 @@ def optparse_init() -> optparse.OptionParser:
     p.add_option("--tilesize", dest="tilesize",  metavar="PIXELS", default=256,
                  type='int',
                  help="Width and height in pixel of a tile")
+    p.add_option("--tiledriver", dest="tiledriver",  choices=["PNG", "WEBP"], default='PNG',
+                 type='choice',
+                 help="which tile driver to use for the tiles")
 
     # KML options
     g = optparse.OptionGroup(p, "KML (Google Earth) options",
@@ -1466,6 +1495,14 @@ def optparse_init() -> optparse.OptionParser:
                        "template_tiles.mapml file from GDAL data resources "
                        "will be used"))
     p.add_option_group(g)
+
+    # Webp options
+    g = optparse.OptionGroup(p, "WEBP options",
+                    "Options for WEBP tiledriver")
+    g.add_option("--webp-quality", dest='webp_quality', type=int, default=70,
+                 help='quality of webp image')
+    p.add_option_group(g)
+
 
 
     p.set_defaults(verbose=False, profile="mercator", kml=None, url='',
@@ -1562,6 +1599,13 @@ def options_post_processing(options: Options, input_file: str, output_folder: st
                   "not UTF-8 compatible, and your input file contains non-ascii characters. "
                   "The generated sample googlemaps, openlayers or "
                   "leaflet files might contain some invalid characters as a result\n")
+
+    if options.tiledriver == 'WEBP':
+        if gdal.GetDriverByName(options.tiledriver) is None:
+            raise Exception('WEBP driver is not available')
+
+        if options.webp_quality < 0 or options.webp_quality > 100:
+            raise Exception('webp_quality should be in the range of [0-100]')
 
     # Output the results
     if options.verbose:
@@ -1677,8 +1721,12 @@ class GDAL2Tiles(object):
         self.tile_size = 256
         if options.tilesize:
             self.tile_size = options.tilesize
-        self.tiledriver = 'PNG'
-        self.tileext = 'png'
+
+        self.tiledriver = options.tiledriver
+        if options.tiledriver == 'PNG':
+            self.tileext = 'png'
+        else:
+            self.tileext = 'webp'
         if options.mpi:
             makedirs(output_folder)
             self.tmp_dir = tempfile.mkdtemp(dir=output_folder)
