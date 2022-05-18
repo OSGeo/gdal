@@ -2428,3 +2428,17 @@ def test_ogr_filegdb_non_spatial_table_outside_gdb_items(openfilegdb_drv, fgdb_d
     assert ds.GetLayerCount() == 3, 'did not get expected layer count'
     layer_names = set(ds.GetLayer(i).GetName() for i in range(ds.GetLayerCount()))
     assert layer_names == {'aquaduct', 'flat_table1', 'flat_table2'}
+
+
+###############################################################################
+# Test reading .gdb where the CRS in the XML definition of the feature
+# table is not consistent with the one of the feature dataset
+
+
+def test_ogr_filegdb_inconsistent_crs_feature_dataset_and_feature_table():
+    ds = ogr.Open('data/filegdb/inconsistent_crs_feature_dataset_and_feature_table.gdb')
+    assert ds is not None
+    lyr = ds.GetLayer(0)
+    srs = lyr.GetSpatialRef()
+    assert srs is not None
+    assert srs.GetAuthorityCode(None) == '4326'

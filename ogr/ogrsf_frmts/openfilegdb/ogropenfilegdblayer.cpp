@@ -159,7 +159,8 @@ OGROpenFileGDBLayer::OGROpenFileGDBLayer( const char* pszGDBFilename,
                                           const std::string& osDefinition,
                                           const std::string& osDocumentation,
                                           const char* /* pszGeomName */,
-                                          OGRwkbGeometryType eGeomType ) :
+                                          OGRwkbGeometryType eGeomType,
+                                          const std::string& osParentDefinition ) :
     m_osGDBFilename(pszGDBFilename),
     m_osName(pszName),
     m_poLyrTable(nullptr),
@@ -194,7 +195,7 @@ OGROpenFileGDBLayer::OGROpenFileGDBLayer( const char* pszGDBFilename,
 
     if( !m_osDefinition.empty() )
     {
-        BuildGeometryColumnGDBv10();
+        BuildGeometryColumnGDBv10(osParentDefinition);
     }
 }
 
@@ -262,11 +263,69 @@ static OGRSpatialReference* BuildSRS(const char* pszWKT)
     return poSRS;
 }
 
+static OGRSpatialReference* BuildSRS(const CPLXMLNode* psInfo)
+{
+    const char* pszWKT =
+        CPLGetXMLValue( psInfo, "SpatialReference.WKT", nullptr );
+    const int nWKID =
+        atoi(CPLGetXMLValue( psInfo, "SpatialReference.WKID", "0" ));
+    // The concept of LatestWKID is explained in
+    // http://resources.arcgis.com/en/help/arcgis-rest-api/index.html#//02r3000000n1000000
+    int nLatestWKID = atoi(
+        CPLGetXMLValue( psInfo, "SpatialReference.LatestWKID", "0" ));
+
+    OGRSpatialReference* poSRS = nullptr;
+    if( nWKID > 0 || nLatestWKID > 0 )
+    {
+        int bSuccess = FALSE;
+        poSRS = new OGRSpatialReference();
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        // Try first with nLatestWKID as there is a higher chance it is a
+        // EPSG code and not an ESRI one.
+        if( nLatestWKID > 0 )
+        {
+            if( poSRS->importFromEPSG(nLatestWKID) == OGRERR_NONE )
+            {
+                bSuccess = TRUE;
+            }
+            else
+            {
+                CPLDebug( "OpenFileGDB", "Cannot import SRID %d",
+                          nLatestWKID);
+            }
+        }
+        if( !bSuccess && nWKID > 0 )
+        {
+            if( poSRS->importFromEPSG(nWKID) == OGRERR_NONE )
+            {
+                bSuccess = TRUE;
+            }
+            else
+            {
+                CPLDebug("OpenFileGDB", "Cannot import SRID %d", nWKID);
+            }
+        }
+        if( !bSuccess )
+        {
+            delete poSRS;
+            poSRS = nullptr;
+        }
+        CPLPopErrorHandler();
+        CPLErrorReset();
+    }
+    if( poSRS == nullptr && pszWKT != nullptr && pszWKT[0] != '{' )
+    {
+        poSRS = BuildSRS(pszWKT);
+    }
+    return poSRS;
+}
+
 /************************************************************************/
 /*                     BuildGeometryColumnGDBv10()                      */
 /************************************************************************/
 
-int OGROpenFileGDBLayer::BuildGeometryColumnGDBv10()
+int OGROpenFileGDBLayer::BuildGeometryColumnGDBv10(const std::string& osParentDefinition)
 {
     CPLXMLNode* psTree = CPLParseXMLString(m_osDefinition.c_str());
     if( psTree == nullptr )
@@ -337,15 +396,6 @@ int OGROpenFileGDBLayer::BuildGeometryColumnGDBv10()
         if( bHasM )
             m_eGeomType = wkbSetM( m_eGeomType );
 
-        const char* pszWKT =
-            CPLGetXMLValue( psInfo, "SpatialReference.WKT", nullptr );
-        const int nWKID =
-            atoi(CPLGetXMLValue( psInfo, "SpatialReference.WKID", "0" ));
-        // The concept of LatestWKID is explained in
-        // http://resources.arcgis.com/en/help/arcgis-rest-api/index.html#//02r3000000n1000000
-        int nLatestWKID = atoi(
-            CPLGetXMLValue( psInfo, "SpatialReference.LatestWKID", "0" ));
-
        auto poGeomFieldDefn =
             cpl::make_unique<OGROpenFileGDBGeomFieldDefn>(nullptr, pszShapeFieldName, m_eGeomType);
 
@@ -370,49 +420,53 @@ int OGROpenFileGDBLayer::BuildGeometryColumnGDBv10()
             }
         }
 
-        OGRSpatialReference* poSRS = nullptr;
-        if( nWKID > 0 || nLatestWKID > 0 )
+        OGRSpatialReference* poParentSRS = nullptr;
+        if( !osParentDefinition.empty() )
         {
-            int bSuccess = FALSE;
-            poSRS = new OGRSpatialReference();
-            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-            CPLPushErrorHandler(CPLQuietErrorHandler);
-            // Try first with nLatestWKID as there is a higher chance it is a
-            // EPSG code and not an ESRI one.
-            if( nLatestWKID > 0 )
+            CPLXMLNode* psParentTree = CPLParseXMLString(osParentDefinition.c_str());
+            if( psParentTree != nullptr )
             {
-                if( poSRS->importFromEPSG(nLatestWKID) == OGRERR_NONE )
+                CPLStripXMLNamespace( psParentTree, nullptr, TRUE );
+                CPLXMLNode* psParentInfo = CPLSearchXMLNode( psParentTree, "=DEFeatureDataset" );
+                if( psParentInfo != nullptr )
                 {
-                    bSuccess = TRUE;
+                    poParentSRS = BuildSRS(psParentInfo);
                 }
-                else
-                {
-                    CPLDebug( "OpenFileGDB", "Cannot import SRID %d",
-                              nLatestWKID);
-                }
+                CPLDestroyXMLNode(psParentTree);
             }
-            if( !bSuccess && nWKID > 0 )
+            if( poParentSRS == nullptr )
             {
-                if( poSRS->importFromEPSG(nWKID) == OGRERR_NONE )
-                {
-                    bSuccess = TRUE;
-                }
-                else
-                {
-                    CPLDebug("OpenFileGDB", "Cannot import SRID %d", nWKID);
-                }
+                CPLDebug("OpenFileGDB", "Cannot get SRS from feature dataset");
             }
-            if( !bSuccess )
-            {
-                delete poSRS;
-                poSRS = nullptr;
-            }
-            CPLPopErrorHandler();
-            CPLErrorReset();
         }
-        if( poSRS == nullptr && pszWKT != nullptr && pszWKT[0] != '{' )
+
+        auto poSRS = BuildSRS(psInfo);
+        if( poParentSRS )
         {
-            poSRS = BuildSRS(pszWKT);
+            if( poSRS )
+            {
+                if( !poSRS->IsSame(poParentSRS) )
+                {
+                    // Not sure this situation is really valid (seems more a
+                    // bug of the editing software), but happens with
+                    // https://github.com/OSGeo/gdal/issues/5747
+                    // In the situation of https://github.com/OSGeo/gdal/issues/5747,
+                    // the SRS inside the .gdbtable is consistent with the
+                    // XML definition of the feature dataset, so it seems that
+                    // the the XML definition of the feature table lacked an
+                    // update.
+                    CPLDebug("OpenFileGDB",
+                             "Table %s declare a CRS '%s' in its XML definition, "
+                             "but its feature dataset declares '%s'. "
+                             "Using the later",
+                             GetDescription(),
+                             poSRS->GetName(),
+                             poParentSRS->GetName());
+                }
+                poSRS->Release();
+            }
+            // Always use the SRS of the feature dataset
+            poSRS = poParentSRS;
         }
         if( poSRS != nullptr )
         {
@@ -511,13 +565,38 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
     if( m_iGeomFieldIdx >= 0 )
     {
         FileGDBGeomField* poGDBGeomField =
-            reinterpret_cast<FileGDBGeomField *>(
+            cpl::down_cast<FileGDBGeomField *>(
                 m_poLyrTable->GetField(m_iGeomFieldIdx));
         if( m_poGeomConverter == nullptr )
         {
             m_poGeomConverter =
             FileGDBOGRGeometryConverter::BuildConverter(poGDBGeomField);
         }
+
+#ifdef DEBUG
+        const auto poSRS = GetSpatialRef();
+        if( poSRS != nullptr &&
+            !poGDBGeomField->GetWKT().empty() &&
+            poGDBGeomField->GetWKT()[0] != '{' )
+        {
+            auto poSRSFromGDBTable = BuildSRS( poGDBGeomField->GetWKT().c_str() );
+            if( poSRSFromGDBTable )
+            {
+                if( !poSRS->IsSame(poSRSFromGDBTable) )
+                {
+                    CPLDebug("OpenFileGDB",
+                             "Table %s declare a CRS '%s' in its XML "
+                             "defininition (or in its parent's one), "
+                             "but its .gdbtable declares '%s'. "
+                             "Using the former",
+                             GetDescription(),
+                             poSRS->GetName(),
+                             poSRSFromGDBTable->GetName());
+                }
+                poSRSFromGDBTable->Release();
+            }
+        }
+#endif
 
         if( !(m_poLyrTable->HasSpatialIndex() &&
               CPLTestBool(
