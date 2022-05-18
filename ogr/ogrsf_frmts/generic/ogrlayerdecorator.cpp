@@ -200,6 +200,12 @@ OGRErr      OGRLayerDecorator::AlterFieldDefn( int iField, OGRFieldDefn* poNewFi
     return m_poDecoratedLayer->AlterFieldDefn(iField, poNewFieldDefn, nFlagsIn);
 }
 
+OGRErr      OGRLayerDecorator::AlterGeomFieldDefn( int iGeomField, const OGRGeomFieldDefn* poNewGeomFieldDefn, int nFlagsIn )
+{
+    if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
+    return m_poDecoratedLayer->AlterGeomFieldDefn(iGeomField, poNewGeomFieldDefn, nFlagsIn);
+}
+
 OGRErr      OGRLayerDecorator::CreateGeomField( OGRGeomFieldDefn *poField,
                                             int bApproxOK )
 {

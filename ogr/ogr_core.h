@@ -614,6 +614,47 @@ typedef enum
  */
 #define ALTER_ALL_FLAG             (ALTER_NAME_FLAG | ALTER_TYPE_FLAG | ALTER_WIDTH_PRECISION_FLAG | ALTER_NULLABLE_FLAG | ALTER_DEFAULT_FLAG | ALTER_UNIQUE_FLAG | ALTER_DOMAIN_FLAG)
 
+
+
+/** Alter geometry field name.
+ * Used by OGR_L_AlterGeomFieldDefn().
+ * @since GDAL 3.6
+ */
+#define ALTER_GEOM_FIELD_DEFN_NAME_FLAG            0x1000
+
+/** Alter geometry field type.
+ * Used by OGR_L_AlterGeomFieldDefn().
+ * @since GDAL 3.6
+ */
+#define ALTER_GEOM_FIELD_DEFN_TYPE_FLAG            0x2000
+
+/** Alter geometry field nullable state.
+ * Used by OGR_L_AlterGeomFieldDefn().
+ * @since GDAL 3.6
+ */
+#define ALTER_GEOM_FIELD_DEFN_NULLABLE_FLAG        0x4000
+
+/** Alter geometry field spatial reference system (except its coordinate epoch)
+ * Used by OGR_L_AlterGeomFieldDefn().
+ * @since GDAL 3.6
+ */
+#define ALTER_GEOM_FIELD_DEFN_SRS_FLAG            0x8000
+
+/** Alter geometry field coordinate epoch
+ * Used by OGR_L_AlterGeomFieldDefn().
+ * @since GDAL 3.6
+ */
+#define ALTER_GEOM_FIELD_DEFN_SRS_COORD_EPOCH_FLAG  0x10000
+
+
+/** Alter all parameters of field definition.
+ * Used by OGR_L_AlterGeomFieldDefn().
+ * @since GDAL 3.6
+ */
+#define ALTER_GEOM_FIELD_DEFN_ALL_FLAG             (ALTER_GEOM_FIELD_DEFN_NAME_FLAG | ALTER_GEOM_FIELD_DEFN_TYPE_FLAG | ALTER_GEOM_FIELD_DEFN_NULLABLE_FLAG | ALTER_GEOM_FIELD_DEFN_SRS_FLAG | ALTER_GEOM_FIELD_DEFN_SRS_COORD_EPOCH_FLAG)
+
+
+
 /** Validate that fields respect not-null constraints.
  * Used by OGR_F_Validate().
  * @since GDAL 2.0
@@ -837,6 +878,7 @@ int CPL_DLL OGRParseDate( const char *pszInput, OGRField *psOutput,
 #define OLCDeleteField         "DeleteField"        /**< Layer capability for field deletion */
 #define OLCReorderFields       "ReorderFields"      /**< Layer capability for field reordering */
 #define OLCAlterFieldDefn      "AlterFieldDefn"     /**< Layer capability for field alteration */
+#define OLCAlterGeomFieldDefn  "AlterGeomFieldDefn" /**< Layer capability for geometry field alteration */
 #define OLCTransactions        "Transactions"       /**< Layer capability for transactions */
 #define OLCDeleteFeature       "DeleteFeature"      /**< Layer capability for feature deletion */
 #define OLCFastSetNextByIndex  "FastSetNextByIndex" /**< Layer capability for setting next feature index */

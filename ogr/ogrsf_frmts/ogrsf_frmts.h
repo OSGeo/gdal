@@ -174,6 +174,7 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     virtual OGRErr      DeleteField( int iField );
     virtual OGRErr      ReorderFields( int* panMap );
     virtual OGRErr      AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlagsIn );
+    virtual OGRErr      AlterGeomFieldDefn( int iGeomField, const OGRGeomFieldDefn* poNewGeomFieldDefn, int nFlagsIn );
 
     virtual OGRErr      CreateGeomField( OGRGeomFieldDefn *poField,
                                      int bApproxOK = TRUE );

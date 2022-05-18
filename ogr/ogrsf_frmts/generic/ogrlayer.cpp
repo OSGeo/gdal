@@ -870,6 +870,39 @@ OGRErr OGR_L_AlterFieldDefn( OGRLayerH hLayer, int iField, OGRFieldDefnH hNewFie
 }
 
 /************************************************************************/
+/*                        AlterGeomFieldDefn()                          */
+/************************************************************************/
+
+OGRErr OGRLayer::AlterGeomFieldDefn( int /* iGeomField*/,
+                                     const OGRGeomFieldDefn* /*poNewGeomFieldDefn*/,
+                                     int /* nFlags */ )
+
+{
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "AlterGeomFieldDefn() not supported by this layer.\n" );
+
+    return OGRERR_UNSUPPORTED_OPERATION;
+}
+
+/************************************************************************/
+/*                      OGR_L_AlterGeomFieldDefn()                      */
+/************************************************************************/
+
+OGRErr OGR_L_AlterGeomFieldDefn( OGRLayerH hLayer, int iGeomField,
+                                 OGRGeomFieldDefnH hNewGeomFieldDefn,
+                                 int nFlags )
+
+{
+    VALIDATE_POINTER1( hLayer, "OGR_L_AlterGeomFieldDefn", OGRERR_INVALID_HANDLE );
+    VALIDATE_POINTER1( hNewGeomFieldDefn, "OGR_L_AlterGeomFieldDefn", OGRERR_INVALID_HANDLE );
+
+    return OGRLayer::FromHandle(hLayer)->AlterGeomFieldDefn(
+        iGeomField,
+        const_cast<const OGRGeomFieldDefn*>(OGRGeomFieldDefn::FromHandle(hNewGeomFieldDefn)),
+        nFlags );
+}
+
+/************************************************************************/
 /*                         CreateGeomField()                            */
 /************************************************************************/
 
