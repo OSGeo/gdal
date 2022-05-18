@@ -3912,6 +3912,9 @@ SWIGINTERN OGRErr OGRLayerShadow_ReorderFields(OGRLayerShadow *self,int nList,in
 SWIGINTERN OGRErr OGRLayerShadow_AlterFieldDefn(OGRLayerShadow *self,int iField,OGRFieldDefnShadow *field_def,int nFlags){
     return OGR_L_AlterFieldDefn(self, iField, field_def, nFlags);
   }
+SWIGINTERN OGRErr OGRLayerShadow_AlterGeomFieldDefn(OGRLayerShadow *self,int iGeomField,OGRGeomFieldDefnShadow const *field_def,int nFlags){
+    return OGR_L_AlterGeomFieldDefn(self, iGeomField, const_cast<OGRGeomFieldDefnShadow*>(field_def), nFlags);
+  }
 SWIGINTERN OGRErr OGRLayerShadow_CreateGeomField(OGRLayerShadow *self,OGRGeomFieldDefnShadow *field_def,int approx_ok=1){
     return OGR_L_CreateGeomField(self, field_def, approx_ok);
   }
@@ -10581,6 +10584,91 @@ SWIGINTERN PyObject *_wrap_Layer_AlterFieldDefn(PyObject *SWIGUNUSEDPARM(self), 
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
       result = (OGRErr)OGRLayerShadow_AlterFieldDefn(arg1,arg2,arg3,arg4);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if ( ReturnSame(resultobj == Py_None || resultobj == 0) ) {
+      resultobj = PyInt_FromLong( result );
+    }
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Layer_AlterGeomFieldDefn(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
+  int arg2 ;
+  OGRGeomFieldDefnShadow *arg3 = (OGRGeomFieldDefnShadow *) 0 ;
+  int arg4 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  void *argp3 = 0 ;
+  int res3 = 0 ;
+  int val4 ;
+  int ecode4 = 0 ;
+  PyObject *swig_obj[4] ;
+  OGRErr result;
+  
+  if (!SWIG_Python_UnpackTuple(args, "Layer_AlterGeomFieldDefn", 4, 4, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_AlterGeomFieldDefn" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
+  ecode2 = SWIG_AsVal_int(swig_obj[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Layer_AlterGeomFieldDefn" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  res3 = SWIG_ConvertPtr(swig_obj[2], &argp3,SWIGTYPE_p_OGRGeomFieldDefnShadow, 0 |  0 );
+  if (!SWIG_IsOK(res3)) {
+    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "Layer_AlterGeomFieldDefn" "', argument " "3"" of type '" "OGRGeomFieldDefnShadow const *""'"); 
+  }
+  arg3 = reinterpret_cast< OGRGeomFieldDefnShadow * >(argp3);
+  ecode4 = SWIG_AsVal_int(swig_obj[3], &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "Layer_AlterGeomFieldDefn" "', argument " "4"" of type '" "int""'");
+  } 
+  arg4 = static_cast< int >(val4);
+  {
+    if (!arg3) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRLayerShadow_AlterGeomFieldDefn(arg1,arg2,(OGRGeomFieldDefnShadow const *)arg3,arg4);
       SWIG_PYTHON_THREAD_END_ALLOW;
     }
 #ifndef SED_HACKS
@@ -31522,6 +31610,7 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"OGR 1.9.0 \n"
 		""},
+	 { "Layer_AlterGeomFieldDefn", _wrap_Layer_AlterGeomFieldDefn, METH_VARARGS, "Layer_AlterGeomFieldDefn(Layer self, int iGeomField, GeomFieldDefn field_def, int nFlags) -> OGRErr"},
 	 { "Layer_CreateGeomField", (PyCFunction)(void(*)(void))_wrap_Layer_CreateGeomField, METH_VARARGS|METH_KEYWORDS, "\n"
 		"Layer_CreateGeomField(Layer self, GeomFieldDefn field_def, int approx_ok=1) -> OGRErr\n"
 		"OGRErr\n"
@@ -36968,6 +37057,12 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "ALTER_UNIQUE_FLAG",SWIG_From_int(static_cast< int >(32)));
   SWIG_Python_SetConstant(d, "ALTER_DOMAIN_FLAG",SWIG_From_int(static_cast< int >(64)));
   SWIG_Python_SetConstant(d, "ALTER_ALL_FLAG",SWIG_From_int(static_cast< int >(1+2+4+8+16+32+64)));
+  SWIG_Python_SetConstant(d, "ALTER_GEOM_FIELD_DEFN_NAME_FLAG",SWIG_From_int(static_cast< int >(4096)));
+  SWIG_Python_SetConstant(d, "ALTER_GEOM_FIELD_DEFN_TYPE_FLAG",SWIG_From_int(static_cast< int >(8192)));
+  SWIG_Python_SetConstant(d, "ALTER_GEOM_FIELD_DEFN_NULLABLE_FLAG",SWIG_From_int(static_cast< int >(16384)));
+  SWIG_Python_SetConstant(d, "ALTER_GEOM_FIELD_DEFN_SRS_FLAG",SWIG_From_int(static_cast< int >(32768)));
+  SWIG_Python_SetConstant(d, "ALTER_GEOM_FIELD_DEFN_SRS_COORD_EPOCH_FLAG",SWIG_From_int(static_cast< int >(65536)));
+  SWIG_Python_SetConstant(d, "ALTER_GEOM_FIELD_DEFN_ALL_FLAG",SWIG_From_int(static_cast< int >(4096+8192+16384+32768+65536)));
   SWIG_Python_SetConstant(d, "F_VAL_NULL",SWIG_From_int(static_cast< int >(0x00000001)));
   SWIG_Python_SetConstant(d, "F_VAL_GEOM_TYPE",SWIG_From_int(static_cast< int >(0x00000002)));
   SWIG_Python_SetConstant(d, "F_VAL_WIDTH",SWIG_From_int(static_cast< int >(0x00000004)));
@@ -36983,6 +37078,7 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "OLCDeleteField",SWIG_FromCharPtr("DeleteField"));
   SWIG_Python_SetConstant(d, "OLCReorderFields",SWIG_FromCharPtr("ReorderFields"));
   SWIG_Python_SetConstant(d, "OLCAlterFieldDefn",SWIG_FromCharPtr("AlterFieldDefn"));
+  SWIG_Python_SetConstant(d, "OLCAlterGeomFieldDefn",SWIG_FromCharPtr("AlterGeomFieldDefn"));
   SWIG_Python_SetConstant(d, "OLCTransactions",SWIG_FromCharPtr("Transactions"));
   SWIG_Python_SetConstant(d, "OLCDeleteFeature",SWIG_FromCharPtr("DeleteFeature"));
   SWIG_Python_SetConstant(d, "OLCFastSetNextByIndex",SWIG_FromCharPtr("FastSetNextByIndex"));
