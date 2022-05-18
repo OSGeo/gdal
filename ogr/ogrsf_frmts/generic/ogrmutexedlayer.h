@@ -94,6 +94,7 @@ class CPL_DLL OGRMutexedLayer : public OGRLayerDecorator
     virtual OGRErr      DeleteField( int iField ) override;
     virtual OGRErr      ReorderFields( int* panMap ) override;
     virtual OGRErr      AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags ) override;
+    virtual OGRErr      AlterGeomFieldDefn( int iGeomField, const OGRGeomFieldDefn* poNewGeomFieldDefn, int nFlags ) override;
 
     virtual OGRErr      SyncToDisk() override;
 
