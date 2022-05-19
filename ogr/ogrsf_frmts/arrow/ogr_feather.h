@@ -158,6 +158,7 @@ class OGRFeatherWriterLayer final: public OGRArrowWriterLayer
         virtual std::string GetDriverUCName() const override { return ARROW_DRIVER_NAME_UC; }
 
         virtual bool            IsSupportedGeometryType(OGRwkbGeometryType eGType) const override;
+        virtual bool            IsSRSRequired() const override { return true; }
 
 public:
         OGRFeatherWriterLayer( arrow::MemoryPool* poMemoryPool,
