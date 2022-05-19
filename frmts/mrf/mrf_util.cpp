@@ -54,7 +54,17 @@ CPL_C_END
 NAMESPACE_MRF_START
 
 // These have to be positionally in sync with the enums in marfa.h
-static const char * const ILC_N[] = { "PNG", "PPNG", "JPEG", "JPNG", "NONE", "DEFLATE", "TIF",
+static const char * const ILC_N[] = {
+#ifdef HAVE_PNG
+        "PNG", "PPNG",
+#endif
+#ifdef HAVE_JPEG
+        "JPEG",
+#endif
+#if defined(HAVE_PNG) && defined(HAVE_JPEG)
+        "JPNG",
+#endif
+        "NONE", "DEFLATE", "TIF",
 #if defined(LERC)
         "LERC",
 #endif
@@ -63,7 +73,17 @@ static const char * const ILC_N[] = { "PNG", "PPNG", "JPEG", "JPNG", "NONE", "DE
 #endif
         "Unknown" };
 
-static const char * const ILC_E[]={ ".ppg", ".ppg", ".pjg", ".pjp", ".til", ".pzp", ".ptf",
+static const char * const ILC_E[]={
+#ifdef HAVE_PNG
+    ".ppg", ".ppg",
+#endif
+#ifdef HAVE_JPEG
+    ".pjg",
+#endif
+#if defined(HAVE_PNG) && defined(HAVE_JPEG)
+    ".pjp",
+#endif
+    ".til", ".pzp", ".ptf",
 #if defined(LERC)
     ".lrc",
 #endif
@@ -192,7 +212,11 @@ ILImage::ILImage() :
     size(ILSize(1, 1, 1, 1, 0)),
     pagesize(ILSize(384, 384, 1, 1, 0)),
     pagecount(pcount(size, pagesize)),
+#ifdef HAVE_PNG
     comp(IL_PNG),
+#else
+    comp(IL_NONE),
+#endif
     order(IL_Interleaved),
     nbo(false),
     hasNoData(FALSE),
@@ -242,7 +266,7 @@ CPLString getFname(CPLXMLNode *node, const char *token, const CPLString &in, con
     if (slashPos == 0                               // Starts with slash
         || (slashPos == 2 && fn[1] == ':')          // Starts with disk letter column
         // Does not start with dots then slash
-        || (slashPos != fn.npos && slashPos != fn.find_first_not_of('.')) 
+        || (slashPos != fn.npos && slashPos != fn.find_first_not_of('.'))
         || EQUALN(in,"<MRF_META>", 10)              // XML string input
         || in.find_first_of("\\/") == in.npos)      // We can't get a basename from 'in'
         return fn;
@@ -286,10 +310,16 @@ MRFRasterBand *newMRFRasterBand(MRFDataset *pDS, const ILImage &image, int b, in
     MRFRasterBand *bnd = nullptr;
     CPLErrorReset();
     switch (pDS->current.comp) {
+#ifdef HAVE_PNG
     case IL_PPNG: // Uses the PNG code, just has a palette in each PNG
     case IL_PNG:  bnd = new PNG_Band(pDS, image, b, level);  break;
+#endif
+#ifdef HAVE_JPEG
     case IL_JPEG: bnd = new JPEG_Band(pDS, image, b, level); break;
+#endif
+#if defined(HAVE_PNG) && defined(HAVE_JPEG)
     case IL_JPNG: bnd = new JPNG_Band(pDS, image, b, level); break;
+#endif
     case IL_NONE: bnd = new Raw_Band(pDS, image, b, level);  break;
 #if defined(LERC)
     case IL_LERC: bnd = new LERC_Band(pDS, image, b, level); break;
@@ -490,9 +520,25 @@ void GDALRegister_mrf() {
     driver->SetMetadataItem(
         GDAL_DMD_CREATIONOPTIONLIST,
         "<CreationOptionList>"
-        "   <Option name='COMPRESS' type='string-select' default='PNG' description='PPNG = Palette PNG; DEFLATE = zlib '>"
-        "       <Value>JPEG</Value><Value>PNG</Value><Value>PPNG</Value><Value>JPNG</Value>"
-        "       <Value>TIF</Value><Value>DEFLATE</Value><Value>NONE</Value>"
+        "   <Option name='COMPRESS' type='string-select' "
+#ifdef HAVE_PNG
+        "default='PNG' description='PPNG = Palette PNG; DEFLATE = zlib '>"
+#else
+        "default='NONE' description='DEFLATE = zlib '>"
+#endif
+#ifdef HAVE_JPEG
+        "       <Value>JPEG</Value>"
+#endif
+#ifdef HAVE_PNG
+        "       <Value>PNG</Value>"
+        "       <Value>PPNG</Value>"
+#endif
+#if defined(HAVE_JPEG) && defined(HAVE_PNG)
+        "       <Value>JPNG</Value>"
+#endif
+        "       <Value>TIF</Value>"
+        "       <Value>DEFLATE</Value>"
+        "       <Value>NONE</Value>"
 #if defined(LERC)
         "       <Value>LERC</Value>"
 #endif
