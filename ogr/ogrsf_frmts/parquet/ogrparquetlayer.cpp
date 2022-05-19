@@ -435,6 +435,7 @@ void OGRParquetLayer::CreateFieldFromSchema(
                                     path, oMapFieldNameToGDALSchemaFieldDefn);
         if( bTypeOK )
         {
+            m_apoArrowDataTypes.push_back(type);
             m_anMapFieldIndexToParquetColumn.push_back(bParquetColValid ? iParquetCol : -1);
         }
     }
@@ -1018,6 +1019,10 @@ const char* OGRParquetLayer::GetMetadataItem( const char* pszName,
         if( EQUAL(pszName, "NUM_ROW_GROUPS") )
         {
             return CPLSPrintf("%d", m_poArrowReader->num_row_groups());
+        }
+        if( EQUAL(pszName, "CREATOR") )
+        {
+            return CPLSPrintf("%s", m_poArrowReader->parquet_reader()->metadata()->created_by().c_str());
         }
         else if( sscanf(pszName, "ROW_GROUPS[%d]", &nRowGroupIdx) == 1 &&
                  strstr(pszName, ".NUM_ROWS") )
