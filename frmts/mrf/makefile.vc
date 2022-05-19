@@ -16,6 +16,8 @@ GDAL_ROOT	=	..\..
 OBJ	=	Packer_RLE.obj Tif_band.obj PNG_band.obj JPEG_band.obj JPNG_band.obj\
     mrf_band.obj mrf_overview.obj mrf_util.obj marfa_dataset.obj
 
+EXTRAFLAGS = -DHAVE_PNG -DHAVE_JPEG
+
 
 # Internal libraries
 
