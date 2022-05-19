@@ -74,7 +74,7 @@ class OGROpenFileGDBLayer final: public OGRLayer
     bool              m_bTimeInUTC = false;
 
     int               BuildLayerDefinition();
-    int               BuildGeometryColumnGDBv10();
+    int               BuildGeometryColumnGDBv10(const std::string& osParentDefinition);
     OGRFeature       *GetCurrentFeature();
 
     FileGDBOGRGeometryConverter* m_poGeomConverter;
@@ -110,7 +110,8 @@ public:
                                             const std::string& osDefinition,
                                             const std::string& osDocumentation,
                                             const char* pszGeomName = nullptr,
-                                            OGRwkbGeometryType eGeomType = wkbUnknown);
+                                            OGRwkbGeometryType eGeomType = wkbUnknown,
+                                            const std::string& osParentDefinition = std::string());
   virtual              ~OGROpenFileGDBLayer();
 
   const std::string&    GetXMLDefinition() { return m_osDefinition; }
@@ -185,7 +186,8 @@ class OGROpenFileGDBDataSource final: public OGRDataSource
                                 const CPLString& osDefinition,
                                 const CPLString& osDocumentation,
                                 const char* pszGeomName,
-                                OGRwkbGeometryType eGeomType );
+                                OGRwkbGeometryType eGeomType,
+                                const std::string& osParentDefinition );
   static bool         IsPrivateLayerName( const CPLString& osName );
 
 public:
