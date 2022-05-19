@@ -87,6 +87,7 @@ private:
         void                     ExploreExprNode(const swq_expr_node* poNode);
 
 protected:
+        OGRArrowDataset*                            m_poArrowDS = nullptr;
         arrow::MemoryPool*                          m_poMemoryPool = nullptr;
         OGRFeatureDefn*                             m_poFeatureDefn = nullptr;
         std::shared_ptr<arrow::Schema>              m_poSchema{};
@@ -129,6 +130,10 @@ protected:
                                       OGRFieldSubType& eSubType,
                                       const std::vector<int>& path,
                                       const std::map<std::string, std::unique_ptr<OGRFieldDefn>>& oMapFieldNameToGDALSchemaFieldDefn);
+        void               CreateFieldFromSchema(
+                               const std::shared_ptr<arrow::Field>& field,
+                               const std::vector<int>& path,
+                               const std::map<std::string, std::unique_ptr<OGRFieldDefn>>& oMapFieldNameToGDALSchemaFieldDefn);
         std::unique_ptr<OGRFieldDomain> BuildDomainFromBatch(
                                     const std::string& osDomainName,
                                     const std::shared_ptr<arrow::RecordBatch>& poBatch,

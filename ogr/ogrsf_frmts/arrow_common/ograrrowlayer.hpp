@@ -43,7 +43,7 @@
 
 inline
 OGRArrowLayer::OGRArrowLayer(OGRArrowDataset* poDS, const char* pszLayerName):
-            m_poMemoryPool(poDS->GetMemoryPool())
+            m_poArrowDS(poDS), m_poMemoryPool(poDS->GetMemoryPool())
 {
     m_poFeatureDefn = new OGRFeatureDefn(pszLayerName);
     m_poFeatureDefn->SetGeomType(wkbNone);
@@ -383,6 +383,60 @@ inline bool OGRArrowLayer::MapArrowTypeToOGR(const std::shared_ptr<arrow::DataTy
     }
 
     return bTypeOK;
+}
+
+/************************************************************************/
+/*                         CreateFieldFromSchema()                      */
+/************************************************************************/
+
+inline
+void OGRArrowLayer::CreateFieldFromSchema(
+    const std::shared_ptr<arrow::Field>& field,
+    const std::vector<int>& path,
+    const std::map<std::string, std::unique_ptr<OGRFieldDefn>>& oMapFieldNameToGDALSchemaFieldDefn)
+{
+    OGRFieldDefn oField(field->name().c_str(), OFTString);
+    OGRFieldType eType = OFTString;
+    OGRFieldSubType eSubType = OFSTNone;
+    bool bTypeOK = true;
+
+    auto type = field->type();
+    if( type->id() == arrow::Type::DICTIONARY && path.size() == 1 )
+    {
+        const auto dictionaryType = std::static_pointer_cast<arrow::DictionaryType>(field->type());
+        const auto indexType = dictionaryType->index_type();
+        if( dictionaryType->value_type()->id() == arrow::Type::STRING &&
+            IsIntegerArrowType(indexType->id()) )
+        {
+            std::string osDomainName(field->name() + "Domain");
+            m_poArrowDS->RegisterDomainName(osDomainName, m_poFeatureDefn->GetFieldCount());
+            oField.SetDomainName(osDomainName);
+            type = indexType;
+        }
+        else
+        {
+            bTypeOK = false;
+        }
+    }
+
+    if( type->id() == arrow::Type::STRUCT )
+    {
+        const auto subfields = field->Flatten();
+        auto newpath = path;
+        newpath.push_back(0);
+        for( int j = 0; j < static_cast<int>(subfields.size()); j++ )
+        {
+            const auto& subfield = subfields[j];
+            newpath.back() = j;
+            CreateFieldFromSchema(subfield,
+                                  newpath, oMapFieldNameToGDALSchemaFieldDefn);
+        }
+    }
+    else if( bTypeOK )
+    {
+        MapArrowTypeToOGR(type, field, oField, eType, eSubType,
+                          path, oMapFieldNameToGDALSchemaFieldDefn);
+    }
 }
 
 /************************************************************************/

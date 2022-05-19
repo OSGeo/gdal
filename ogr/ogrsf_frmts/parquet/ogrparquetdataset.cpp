@@ -185,7 +185,7 @@ OGRLayer* OGRParquetDataset::ExecuteSQL( const char *pszSQLCommand,
             oSelect.where_expr == nullptr &&
             CPLTestBool(CPLGetConfigOption("OGR_PARQUET_USE_STATISTICS", "YES")) )
         {
-            auto poLayer = cpl::down_cast<OGRParquetLayer *>(
+            auto poLayer = dynamic_cast<OGRParquetLayer *>(
                     GetLayerByName( oSelect.table_defs[0].table_name));
             if( poLayer )
             {

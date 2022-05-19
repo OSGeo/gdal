@@ -1094,3 +1094,89 @@ def test_ogr_parquet_attribute_filter_and_spatial_filter():
     lyr.SetSpatialFilterRect(4, 2, 4, 2)
     assert lyr.SetAttributeFilter(filter) == ogr.OGRERR_NONE
     assert lyr.GetFeatureCount() == ref_fc
+
+###############################################################################
+
+
+def _has_arrow_dataset():
+    drv = gdal.GetDriverByName('Parquet')
+    return drv is not None and drv.GetMetadataItem('ARROW_DATASET') is not None
+
+###############################################################################
+# Test reading a flat partitioned dataset
+
+
+@pytest.mark.skipif(not _has_arrow_dataset(),
+                    reason="GDAL not built with ArrowDataset")
+@pytest.mark.parametrize("use_vsi", [False, True])
+@pytest.mark.parametrize("use_metadata_file", [False, True])
+@pytest.mark.parametrize("prefix", ['', 'PARQUET:'])
+def test_ogr_parquet_read_partitioned_flat(use_vsi, use_metadata_file, prefix):
+
+    opts = {
+        'OGR_PARQUET_USE_VSI': 'YES' if use_vsi else 'NO',
+        'OGR_PARQUET_USE_METADATA_FILE=NO': 'YES' if use_metadata_file else 'NO'
+    }
+    with gdaltest.config_options(opts):
+        ds = ogr.Open(prefix + 'data/parquet/partitioned_flat')
+        assert ds is not None
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 6
+        assert lyr.GetLayerDefn().GetFieldCount() == 2
+        for _ in range(2):
+            for i in range(6):
+                f = lyr.GetNextFeature()
+                assert f['one'] == i + 1
+                assert f['two'] == -(i + 1)
+            assert lyr.GetNextFeature() is None
+            lyr.ResetReading()
+
+
+###############################################################################
+# Test reading a HIVE partitioned dataset
+
+
+@pytest.mark.skipif(not _has_arrow_dataset(),
+                    reason="GDAL not built with ArrowDataset")
+@pytest.mark.parametrize("use_vsi", [False, True])
+@pytest.mark.parametrize("use_metadata_file", [False, True])
+@pytest.mark.parametrize("prefix", ['', 'PARQUET:'])
+def test_ogr_parquet_read_partitioned_hive(use_vsi, use_metadata_file, prefix):
+
+    opts = {
+        'OGR_PARQUET_USE_VSI': 'YES' if use_vsi else 'NO',
+        'OGR_PARQUET_USE_METADATA_FILE=NO': 'YES' if use_metadata_file else 'NO'
+    }
+    with gdaltest.config_options(opts):
+        ds = ogr.Open(prefix + 'data/parquet/partitioned_hive')
+        assert ds is not None
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 6
+        assert lyr.GetLayerDefn().GetFieldCount() == 3
+        for _ in range(2):
+            for i in range(6):
+                f = lyr.GetNextFeature()
+                assert f['one'] == i + 1
+                assert f['two'] == -(i + 1)
+                assert f['foo'] == ('bar' if i < 3 else 'baz')
+            assert lyr.GetNextFeature() is None
+            lyr.ResetReading()
+
+
+###############################################################################
+# Test reading a (not-so) partitioned dataset with geo
+
+
+@pytest.mark.skipif(not _has_arrow_dataset(),
+                    reason="GDAL not built with ArrowDataset")
+def test_ogr_parquet_read_partitioned_geo():
+
+    gdal.Mkdir('/vsimem/somedir', 0)
+    with gdaltest.tempfile('/vsimem/somedir/test.parquet',
+                           open('data/parquet/test.parquet', 'rb').read()):
+        ds = ogr.Open('/vsimem/somedir')
+        assert ds is not None
+        lyr = ds.GetLayer(0)
+        assert lyr.GetGeometryColumn() == 'geometry'
+
+    gdal.RmdirRecursive('/vsimem/somedir')

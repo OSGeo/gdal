@@ -88,7 +88,7 @@ jobs:
         wget https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb
         sudo apt-get install -y -V ./apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb
         sudo apt-get update
-        sudo apt-get install -y -V libarrow-dev libparquet-dev
+        sudo apt-get install -y -V libarrow-dev libparquet-dev libarrow-dataset-dev
         #
         # Workaround bug in ogdi packaging
         sudo ln -s /usr/lib/ogdi/libvrf.so /usr/lib

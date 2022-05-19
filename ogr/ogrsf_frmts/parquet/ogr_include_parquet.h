@@ -48,12 +48,21 @@
 #include "arrow/util/compression.h"
 #include "arrow/util/decimal.h"
 #include "arrow/util/key_value_metadata.h"
+#include "arrow/util/config.h" // for ARROW_VERSION_MAJOR
 #include "parquet/file_writer.h"
 #include "parquet/schema.h"
 #include "parquet/statistics.h"
 #include "parquet/arrow/reader.h"
 #include "parquet/arrow/writer.h"
 #include "parquet/arrow/schema.h"
+
+#ifdef GDAL_USE_ARROWDATASET
+#include "arrow/filesystem/filesystem.h"
+#include "arrow/dataset/dataset.h"
+#include "arrow/dataset/discovery.h"
+#include "arrow/dataset/file_parquet.h"
+#include "arrow/dataset/scanner.h"
+#endif
 
 #ifdef _MSC_VER
 #pragma warning( pop )
