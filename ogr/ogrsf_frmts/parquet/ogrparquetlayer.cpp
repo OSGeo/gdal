@@ -81,7 +81,9 @@ void OGRParquetLayer::LoadGeoMetadata()
             {
                 auto oRoot = oDoc.GetRoot();
                 const auto osVersion = oRoot.GetString("version");
-                if( osVersion != "0.1.0" )
+                if( osVersion != "0.1.0" &&
+                    osVersion != "0.2.0" &&
+                    osVersion != "0.3.0" )
                 {
                     CPLDebug("PARQUET",
                              "version = %s not explicitly handled by the driver",
