@@ -650,29 +650,6 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
     bool bHasZ = false;
     bool bHasM = false;
 
-    // Is it a table or a view ?
-    const std::map<CPLString, CPLString>& oMap =
-                                m_poDS->GetNameTypeMapFromSQliteMaster();
-    std::map<CPLString, CPLString>::const_iterator oIter =
-        oMap.find( CPLString(m_pszTableName).toupper() );
-    m_bIsTable = false;
-    bool bIsView = false;
-    if( oIter != oMap.end() )
-    {
-        if( EQUAL(oIter->second, "table") )
-            m_bIsTable = true;
-        else if( EQUAL(oIter->second, "view") )
-            bIsView = true;
-    }
-
-    if( !m_bIsTable && !bIsView )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                    "Table or view '%s' does not exist",
-                    m_pszTableName );
-        return OGRERR_FAILURE;
-    }
-
 #ifdef ENABLE_GPKG_OGR_CONTENTS
     if( m_poDS->m_bHasGPKGOGRContents )
     {
@@ -680,6 +657,8 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
             CPLSPrintf("trigger_insert_feature_count_%s", m_pszTableName));
         CPLString osTrigger2Name(
             CPLSPrintf("trigger_delete_feature_count_%s", m_pszTableName));
+        const std::map<CPLString, CPLString>& oMap =
+                                m_poDS->GetNameTypeMapFromSQliteMaster();
         if( oMap.find( osTrigger1Name.toupper() ) != oMap.end() &&
             oMap.find( osTrigger2Name.toupper() ) != oMap.end() )
         {
@@ -3930,13 +3909,15 @@ void OGRGeoPackageTableLayer::BuildWhere()
 /*                        SetOpeningParameters()                        */
 /************************************************************************/
 
-void OGRGeoPackageTableLayer::SetOpeningParameters(bool bIsInGpkgContents,
+void OGRGeoPackageTableLayer::SetOpeningParameters(const char* pszObjectType,
+                                                   bool bIsInGpkgContents,
                                                    bool bIsSpatial,
                                                    const char* pszGeomColName,
                                                    const char* pszGeomType,
                                                    bool bHasZ,
                                                    bool bHasM)
 {
+    m_bIsTable = EQUAL(pszObjectType, "table");
     m_bIsInGpkgContents = bIsInGpkgContents;
     m_bIsSpatial = bIsSpatial;
     if( pszGeomType )

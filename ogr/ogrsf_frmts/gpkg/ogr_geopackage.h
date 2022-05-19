@@ -533,7 +533,8 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
 
     void                RecomputeExtent();
 
-    void                SetOpeningParameters(bool bIsInGpkgContents,
+    void                SetOpeningParameters(const char* pszObjectType,
+                                             bool bIsInGpkgContents,
                                              bool bIsSpatial,
                                              const char* pszGeomColName,
                                              const char* pszGeomType,
