@@ -82,21 +82,39 @@ GDALDataset *OGRLVBAGDriverOpen( GDALOpenInfo* poOpenInfo )
     }
     else if( poOpenInfo->bIsDirectory && poOpenInfo->fpL == nullptr )
     {
+        int nProbedFileCount = 0;
+        bool bFound = false;
         char **papszNames = VSIReadDir(pszFilename);
         for( int i = 0; papszNames != nullptr && papszNames[i] != nullptr; ++i )
         {
+            if( !EQUAL(CPLGetExtension(papszNames[i]), "xml") )
+                continue;
+
             const CPLString oSubFilename =
                 CPLFormFilename(pszFilename, papszNames[i], nullptr);
 
             if( EQUAL(papszNames[i], ".") || EQUAL(papszNames[i], "..") )
                 continue;
 
+            // Give up on /vsi filesystems if after 10 files we haven't found
+            // a single BAG file
+            if( nProbedFileCount == 10 && !bFound && STARTS_WITH(pszFilename, "/vsi") )
+            {
+                const bool bCheckAllFiles = CPLTestBool(
+                    CPLGetConfigOption("OGR_LVBAG_CHECK_ALL_FILES", "NO"));
+                if( !bCheckAllFiles )
+                    break;
+            }
+
+            nProbedFileCount ++;
             GDALOpenInfo oOpenInfo{ oSubFilename, GA_ReadOnly };
             if( OGRLVBAGDriverIdentify(&oOpenInfo) != TRUE )
                 continue;
 
-            if( !poDS->Open( oSubFilename, poOpenInfo->papszOpenOptions ) )
-                continue;
+            if( poDS->Open( oSubFilename, poOpenInfo->papszOpenOptions ) )
+            {
+                bFound = true;
+            }
         }
 
         CSLDestroy(papszNames);
