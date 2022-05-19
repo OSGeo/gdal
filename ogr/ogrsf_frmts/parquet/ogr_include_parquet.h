@@ -50,6 +50,7 @@
 #include "arrow/util/key_value_metadata.h"
 #include "parquet/file_writer.h"
 #include "parquet/schema.h"
+#include "parquet/statistics.h"
 #include "parquet/arrow/reader.h"
 #include "parquet/arrow/writer.h"
 #include "parquet/arrow/schema.h"

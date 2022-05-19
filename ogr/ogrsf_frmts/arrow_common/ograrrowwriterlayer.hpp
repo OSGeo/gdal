@@ -576,7 +576,7 @@ OGRErr OGRArrowWriterLayer::CreateGeomField( OGRGeomFieldDefn *poField, int /* b
         return OGRERR_FAILURE;
     }
 
-    if( poField->GetSpatialRef() == nullptr )
+    if( IsSRSRequired() && poField->GetSpatialRef() == nullptr )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "Geometry column should have an associated CRS");

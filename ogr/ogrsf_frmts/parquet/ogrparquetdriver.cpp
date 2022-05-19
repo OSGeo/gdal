@@ -303,6 +303,13 @@ void OGRParquetDriver::InitMetadata()
         CPLCreateXMLElementAndValue(psOption, "Value", "SPHERICAL");
     }
 
+    {
+        auto psOption = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
+        CPLAddXMLAttributeAndValue(psOption, "name", "CREATOR");
+        CPLAddXMLAttributeAndValue(psOption, "type", "string");
+        CPLAddXMLAttributeAndValue(psOption, "description", "Name of creating application");
+    }
+
     char* pszXML = CPLSerializeXMLTree(oTree.get());
     GDALDriver::SetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST, pszXML);
     CPLFree(pszXML);
