@@ -328,6 +328,8 @@ extern TIFFDataType TIFFFieldDataType(const TIFFField*);
 extern int TIFFFieldPassCount(const TIFFField*);
 extern int TIFFFieldReadCount(const TIFFField*);
 extern int TIFFFieldWriteCount(const TIFFField*);
+extern int TIFFFieldSetGetSize(const TIFFField*);        /* returns internal storage size of TIFFSetGetFieldType in bytes. */
+extern int TIFFFieldSetGetCountSize(const TIFFField*);   /* returns size of count parameter 0=none, 2=uint16_t, 4=uint32_t */
 extern int TIFFFieldIsAnonymous(const TIFFField *);
 
 typedef int (*TIFFVSetMethod)(TIFF*, uint32_t, va_list);
@@ -485,7 +487,7 @@ extern tmsize_t TIFFWriteEncodedStrip(TIFF* tif, uint32_t strip, void* data, tms
 extern tmsize_t TIFFWriteRawStrip(TIFF* tif, uint32_t strip, void* data, tmsize_t cc);
 extern tmsize_t TIFFWriteEncodedTile(TIFF* tif, uint32_t tile, void* data, tmsize_t cc);
 extern tmsize_t TIFFWriteRawTile(TIFF* tif, uint32_t tile, void* data, tmsize_t cc);
-extern int TIFFDataWidth(TIFFDataType);    /* table of tag datatype widths */
+extern int TIFFDataWidth(TIFFDataType);    /* table of tag datatype widths within TIFF file. */
 extern void TIFFSetWriteOffset(TIFF* tif, toff_t off);
 extern void TIFFSwabShort(uint16_t*);
 extern void TIFFSwabLong(uint32_t*);

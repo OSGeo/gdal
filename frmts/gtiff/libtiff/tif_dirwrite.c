@@ -830,7 +830,7 @@ TIFFWriteDirectorySec(TIFF* tif, int isimage, int imagedone, uint64_t* pdiroff)
 					{
 						/*-- Rational2Double: For Rationals evaluate "set_field_type" to determine internal storage size. */
 						int tv_size;
-						tv_size = _TIFFSetGetFieldSize(tif->tif_dir.td_customValues[m].info->set_field_type);
+						tv_size = TIFFFieldSetGetSize(tif->tif_dir.td_customValues[m].info);
 						if (tv_size == 8) {
 							if (!TIFFWriteDirectoryTagRationalDoubleArray(tif,&ndir,dir,tag,count,tif->tif_dir.td_customValues[m].value))
 								goto bad;
@@ -849,7 +849,7 @@ TIFFWriteDirectorySec(TIFF* tif, int isimage, int imagedone, uint64_t* pdiroff)
 					{
 						/*-- Rational2Double: For Rationals evaluate "set_field_type" to determine internal storage size. */
 						int tv_size;
-						tv_size = _TIFFSetGetFieldSize(tif->tif_dir.td_customValues[m].info->set_field_type);
+						tv_size = TIFFFieldSetGetSize(tif->tif_dir.td_customValues[m].info);
 						if (tv_size == 8) {
 							if (!TIFFWriteDirectoryTagSrationalDoubleArray(tif,&ndir,dir,tag,count,tif->tif_dir.td_customValues[m].value))
 								goto bad;
