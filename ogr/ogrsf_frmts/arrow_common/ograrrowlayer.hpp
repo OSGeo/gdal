@@ -1774,8 +1774,8 @@ OGRGeometry* OGRArrowLayer::ReadGeometry(int iGeomField,
     const bool bHasM = CPL_TO_BOOL(OGR_GT_HasM(eGeomType));
     const int nDim = 2 + (bHasZ ? 1 : 0) + (bHasM ? 1 : 0);
 
-    const auto CreatePoint = [bHasZ, bHasM, nDim](const std::shared_ptr<arrow::DoubleArray>& pointValues,
-                                                  int pointOffset)
+    const auto CreatePoint = [bHasZ, bHasM](const std::shared_ptr<arrow::DoubleArray>& pointValues,
+                                            int pointOffset)
     {
         if( bHasZ )
         {
