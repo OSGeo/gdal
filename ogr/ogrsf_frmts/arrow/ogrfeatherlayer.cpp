@@ -277,14 +277,14 @@ void OGRFeatherLayer::EstablishFeatureDefn()
 bool OGRFeatherLayer::ResetRecordBatchReader()
 {
     const auto nPos = *(m_poFile->Tell());
-    m_poFile->Seek(0);
+    CPL_IGNORE_RET_VAL(m_poFile->Seek(0));
     auto result = arrow::ipc::RecordBatchStreamReader::Open(m_poFile, m_oOptions);
     if( !result.ok() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "RecordBatchStreamReader::Open() failed with %s",
                  result.status().message().c_str());
-        m_poFile->Seek(nPos);
+        CPL_IGNORE_RET_VAL(m_poFile->Seek(nPos));
         return false;
     }
     else
