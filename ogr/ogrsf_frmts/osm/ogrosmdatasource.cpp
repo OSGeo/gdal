@@ -2651,7 +2651,7 @@ void OGROSMDataSource::ProcessPolygonsStandalone()
     bool bFirst = true;
 
     while( m_bHasRowInPolygonsStandalone &&
-           m_papoLayers[IDX_LYR_MULTIPOLYGONS]->nFeatureArraySize < 10000 )
+           m_papoLayers[IDX_LYR_MULTIPOLYGONS]->m_nFeatureArraySize < 10000 )
     {
         if( bFirst )
         {

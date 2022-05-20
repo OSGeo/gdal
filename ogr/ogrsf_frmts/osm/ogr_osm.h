@@ -82,43 +82,43 @@ class OGROSMLayer final: public OGRLayer
 {
     friend class OGROSMDataSource;
 
-    OGROSMDataSource    *poDS;
-    int                  nIdxLayer;
-    OGRFeatureDefn      *poFeatureDefn;
-    OGRSpatialReference *poSRS;
-    long                 nFeatureCount;
+    OGROSMDataSource    *m_poDS = nullptr;
+    int                  m_nIdxLayer = 0;
+    OGRFeatureDefn      *m_poFeatureDefn = nullptr;
+    OGRSpatialReference *m_poSRS = nullptr;
+    long                 m_nFeatureCount = 0;
 
-    std::vector<char*>   apszNames; /* Needed to keep a "reference" to the string inserted into oMapFieldNameToIndex */
-    std::map<const char*, int, ConstCharComp> oMapFieldNameToIndex;
+    std::vector<char*>   m_apszNames{}; /* Needed to keep a "reference" to the string inserted into oMapFieldNameToIndex */
+    std::map<const char*, int, ConstCharComp> m_oMapFieldNameToIndex{};
 
-    std::vector<OGROSMComputedAttribute> oComputedAttributes;
+    std::vector<OGROSMComputedAttribute> m_oComputedAttributes{};
 
-    bool                 bResetReadingAllowed;
+    bool                 m_bResetReadingAllowed = false;
 
-    int                  nFeatureArraySize;
-    int                  nFeatureArrayMaxSize;
-    int                  nFeatureArrayIndex;
-    OGRFeature**         papoFeatures;
+    int                  m_nFeatureArraySize = 0;
+    int                  m_nFeatureArrayMaxSize = 0;
+    int                  m_nFeatureArrayIndex = 0;
+    OGRFeature**         m_papoFeatures = nullptr;
 
-    bool                  bHasOSMId;
-    int                   nIndexOSMId;
-    int                   nIndexOSMWayId;
-    bool                  bHasVersion;
-    bool                  bHasTimestamp;
-    bool                  bHasUID;
-    bool                  bHasUser;
-    bool                  bHasChangeset;
-    bool                  bHasOtherTags;
-    int                   nIndexOtherTags;
-    bool                  bHasAllTags;
-    int                   nIndexAllTags;
+    bool                  m_bHasOSMId = false;
+    int                   m_nIndexOSMId = -1;
+    int                   m_nIndexOSMWayId = -1;
+    bool                  m_bHasVersion = false;
+    bool                  m_bHasTimestamp = false;
+    bool                  m_bHasUID = false;
+    bool                  m_bHasUser = false;
+    bool                  m_bHasChangeset = false;
+    bool                  m_bHasOtherTags = true;
+    int                   m_nIndexOtherTags = -1;
+    bool                  m_bHasAllTags = false;
+    int                   m_nIndexAllTags = -1;
 
-    bool                  bHasWarnedTooManyFeatures;
+    bool                  m_bHasWarnedTooManyFeatures = false;
 
-    char                 *pszAllTags;
-    bool                  bHasWarnedAllTagsTruncated;
+    char                 *m_pszAllTags = nullptr;
+    bool                  m_bHasWarnedAllTagsTruncated = false;
 
-    bool                  bUserInterested;
+    bool                  m_bUserInterested = true;
 
     bool                  AddToArray( OGRFeature* poFeature,
                                       int bCheckFeatureThreshold );
@@ -137,12 +137,12 @@ class OGROSMLayer final: public OGRLayer
     std::set<std::string> aoSetWarnKeys;
 
   public:
-                        OGROSMLayer( OGROSMDataSource* poDS,
-                                     int nIdxLayer,
+                        OGROSMLayer( OGROSMDataSource* m_poDS,
+                                     int m_nIdxLayer,
                                      const char* pszName );
     virtual             ~OGROSMLayer();
 
-    virtual OGRFeatureDefn *GetLayerDefn() override {return poFeatureDefn;}
+    virtual OGRFeatureDefn *GetLayerDefn() override {return m_poFeatureDefn;}
 
     virtual void        ResetReading() override;
     virtual int         TestCapability( const char * ) override;
@@ -172,29 +172,29 @@ class OGROSMLayer final: public OGRLayer
     void                AddField(const char* pszName, OGRFieldType eFieldType);
     int                 GetFieldIndex(const char* pszName);
 
-    bool                HasOSMId() const { return bHasOSMId; }
-    void                SetHasOSMId(bool bIn) { bHasOSMId = bIn; }
+    bool                HasOSMId() const { return m_bHasOSMId; }
+    void                SetHasOSMId(bool bIn) { m_bHasOSMId = bIn; }
 
-    bool                HasVersion() const { return bHasVersion; }
-    void                SetHasVersion(bool bIn) { bHasVersion = bIn; }
+    bool                HasVersion() const { return m_bHasVersion; }
+    void                SetHasVersion(bool bIn) { m_bHasVersion = bIn; }
 
-    bool                HasTimestamp() const { return bHasTimestamp; }
-    void                SetHasTimestamp(bool bIn) { bHasTimestamp = bIn; }
+    bool                HasTimestamp() const { return m_bHasTimestamp; }
+    void                SetHasTimestamp(bool bIn) { m_bHasTimestamp = bIn; }
 
-    bool                HasUID() const { return bHasUID; }
-    void                SetHasUID(bool bIn) { bHasUID = bIn; }
+    bool                HasUID() const { return m_bHasUID; }
+    void                SetHasUID(bool bIn) { m_bHasUID = bIn; }
 
-    bool                HasUser() const { return bHasUser; }
-    void                SetHasUser(bool bIn) { bHasUser = bIn; }
+    bool                HasUser() const { return m_bHasUser; }
+    void                SetHasUser(bool bIn) { m_bHasUser = bIn; }
 
-    bool                HasChangeset() const { return bHasChangeset; }
-    void                SetHasChangeset(bool bIn) { bHasChangeset = bIn; }
+    bool                HasChangeset() const { return m_bHasChangeset; }
+    void                SetHasChangeset(bool bIn) { m_bHasChangeset = bIn; }
 
-    bool                HasOtherTags() const { return bHasOtherTags; }
-    void                SetHasOtherTags(bool bIn) { bHasOtherTags = bIn; }
+    bool                HasOtherTags() const { return m_bHasOtherTags; }
+    void                SetHasOtherTags(bool bIn) { m_bHasOtherTags = bIn; }
 
-    bool                HasAllTags() const { return bHasAllTags; }
-    void                SetHasAllTags(bool bIn) { bHasAllTags = bIn; }
+    bool                HasAllTags() const { return m_bHasAllTags; }
+    void                SetHasAllTags(bool bIn) { m_bHasAllTags = bIn; }
 
     void                SetFieldsFromTags(OGRFeature* poFeature,
                                           GIntBig nID,
@@ -202,8 +202,8 @@ class OGROSMLayer final: public OGRLayer
                                           unsigned int nTags, OSMTag* pasTags,
                                           OSMInfo* psInfo);
 
-    void                SetDeclareInterest(bool bIn) { bUserInterested = bIn; }
-    bool                IsUserInterested() const { return bUserInterested; }
+    void                SetDeclareInterest(bool bIn) { m_bUserInterested = bIn; }
+    bool                IsUserInterested() const { return m_bUserInterested; }
 
     int                 HasAttributeFilter() const { return m_poAttrQuery != nullptr; }
     int                 EvaluateAttributeFilter(OGRFeature* poFeature);
