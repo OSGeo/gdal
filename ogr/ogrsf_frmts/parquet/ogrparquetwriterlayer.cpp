@@ -485,11 +485,11 @@ void OGRParquetWriterLayer::CreateWriter()
     }
 
     auto arrowWriterProperties = parquet::ArrowWriterProperties::Builder().store_schema()->build();
-    Open(*m_poSchema, m_poMemoryPool, m_poOutputStream,
+    CPL_IGNORE_RET_VAL(Open(*m_poSchema, m_poMemoryPool, m_poOutputStream,
          m_oWriterPropertiesBuilder.build(),
          arrowWriterProperties,
          &m_poFileWriter,
-         &m_poKeyValueMetadata);
+         &m_poKeyValueMetadata));
 }
 
 /************************************************************************/
