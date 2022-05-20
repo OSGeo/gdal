@@ -254,13 +254,13 @@ OGRFeature *OGROSMLayer::MyGetNextFeature( OGROSMLayer** ppoNewCurLayer,
             // force a switch to that layer, so that it gets emptied.
             for( int i = 0; i < poDS->GetLayerCount(); i++ )
             {
-                if( poDS->papoLayers[i] != this &&
-                    poDS->papoLayers[i]->nFeatureArraySize > SWITCH_THRESHOLD )
+                if( poDS->m_papoLayers[i] != this &&
+                    poDS->m_papoLayers[i]->nFeatureArraySize > SWITCH_THRESHOLD )
                 {
-                    *ppoNewCurLayer = poDS->papoLayers[i];
+                    *ppoNewCurLayer = poDS->m_papoLayers[i];
                     CPLDebug("OSM", "Switching to '%s' as they are too many "
                                     "features in '%s'",
-                             poDS->papoLayers[i]->GetName(),
+                             poDS->m_papoLayers[i]->GetName(),
                              GetName());
                     return nullptr;
                 }
@@ -276,14 +276,14 @@ OGRFeature *OGROSMLayer::MyGetNextFeature( OGROSMLayer** ppoNewCurLayer,
 
                 for( int i = 0; i < poDS->GetLayerCount(); i++ )
                 {
-                    if( poDS->papoLayers[i] != this &&
-                        poDS->papoLayers[i]->nFeatureArraySize > 0 )
+                    if( poDS->m_papoLayers[i] != this &&
+                        poDS->m_papoLayers[i]->nFeatureArraySize > 0 )
                     {
-                        *ppoNewCurLayer = poDS->papoLayers[i];
+                        *ppoNewCurLayer = poDS->m_papoLayers[i];
                         CPLDebug("OSM",
                                  "Switching to '%s' as they are "
                                  "no more feature in '%s'",
-                                 poDS->papoLayers[i]->GetName(),
+                                 poDS->m_papoLayers[i]->GetName(),
                                  GetName());
                         return nullptr;
                     }
@@ -992,11 +992,11 @@ void OGROSMLayer::AddComputedAttribute( const char* pszName,
                                         OGRFieldType eType,
                                         const char* pszSQL )
 {
-    if( poDS->hDBForComputedAttributes == nullptr )
+    if( poDS->m_hDBForComputedAttributes == nullptr )
     {
         const int rc =
             sqlite3_open_v2(
-                ":memory:", &(poDS->hDBForComputedAttributes),
+                ":memory:", &(poDS->m_hDBForComputedAttributes),
                 SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE |
                 SQLITE_OPEN_NOMUTEX,
                 nullptr );
@@ -1063,13 +1063,13 @@ void OGROSMLayer::AddComputedAttribute( const char* pszName,
     CPLDebug("OSM", "SQL : \"%s\"", osSQL.c_str());
 
     sqlite3_stmt *hStmt = nullptr;
-    int rc = sqlite3_prepare_v2( poDS->hDBForComputedAttributes, osSQL, -1,
+    int rc = sqlite3_prepare_v2( poDS->m_hDBForComputedAttributes, osSQL, -1,
                               &hStmt, nullptr );
     if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "sqlite3_prepare_v2() failed :  %s",
-                  sqlite3_errmsg(poDS->hDBForComputedAttributes) );
+                  sqlite3_errmsg(poDS->m_hDBForComputedAttributes) );
         return;
     }
 
