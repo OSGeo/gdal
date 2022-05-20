@@ -430,8 +430,8 @@ void OGRFeatherWriterLayer::PerformStepsBeforeFinalFlushGroup()
 bool OGRFeatherWriterLayer::FlushGroup()
 {
     std::vector<std::shared_ptr<arrow::Array>> columns;
-    auto ret = WriteArrays([this, &columns](const std::shared_ptr<arrow::Field>&,
-                                            const std::shared_ptr<arrow::Array>& array) {
+    auto ret = WriteArrays([&columns](const std::shared_ptr<arrow::Field>&,
+                                      const std::shared_ptr<arrow::Array>& array) {
         columns.emplace_back(array);
         return true;
     });

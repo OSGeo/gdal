@@ -444,7 +444,7 @@ void OGRParquetLayer::CreateFieldFromSchema(
 
     if( bParquetColValid )
         iParquetCol += nParquetColIncrement;
-};
+}
 
 /************************************************************************/
 /*                          BuildDomain()                               */
@@ -463,8 +463,8 @@ std::unique_ptr<OGRFieldDomain> OGRParquetLayer::BuildDomain(const std::string& 
     std::shared_ptr<arrow::RecordBatchReader> poRecordBatchReader;
     const auto oldBatchSize = m_poArrowReader->properties().batch_size();
     m_poArrowReader->set_batch_size(1);
-    m_poArrowReader->GetRecordBatchReader({0}, {iParquetCol},
-                                          &poRecordBatchReader);
+    CPL_IGNORE_RET_VAL(m_poArrowReader->GetRecordBatchReader({0}, {iParquetCol},
+                                          &poRecordBatchReader));
     if( poRecordBatchReader != nullptr )
     {
         std::shared_ptr<arrow::RecordBatch> poBatch;
@@ -503,8 +503,9 @@ OGRwkbGeometryType OGRParquetLayer::ComputeGeometryColumnType(int iGeomCol,
     anRowGroups.reserve(nNumGroups);
     for( int i = 0; i < nNumGroups; ++i )
         anRowGroups.push_back(i);
-    m_poArrowReader->GetRecordBatchReader(anRowGroups, {iParquetCol},
-                                          &poRecordBatchReader);
+    CPL_IGNORE_RET_VAL(
+        m_poArrowReader->GetRecordBatchReader(anRowGroups, {iParquetCol},
+                                              &poRecordBatchReader));
     if( poRecordBatchReader != nullptr )
     {
         std::shared_ptr<arrow::RecordBatch> poBatch;
@@ -546,14 +547,16 @@ OGRFeature* OGRParquetLayer::GetFeatureExplicitFID(GIntBig nFID)
         anRowGroups.push_back(i);
     if( m_bIgnoredFields )
     {
-        m_poArrowReader->GetRecordBatchReader(anRowGroups,
+        CPL_IGNORE_RET_VAL(
+            m_poArrowReader->GetRecordBatchReader(anRowGroups,
                                               m_anRequestedParquetColumns,
-                                              &poRecordBatchReader);
+                                              &poRecordBatchReader));
     }
     else
     {
-        m_poArrowReader->GetRecordBatchReader(anRowGroups,
-                                              &poRecordBatchReader);
+        CPL_IGNORE_RET_VAL(
+            m_poArrowReader->GetRecordBatchReader(anRowGroups,
+                                              &poRecordBatchReader));
     }
     if( poRecordBatchReader != nullptr )
     {

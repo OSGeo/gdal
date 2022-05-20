@@ -37,6 +37,21 @@
 static constexpr int                        TZFLAG_UNINITIALIZED = -1;
 static constexpr int                        TZFLAG_MIXED = -2;
 
+#define OGR_ARROW_RETURN_NOT_OK(status, ret_value)                    \
+  do {                                                                \
+    if( !(status).ok() ) {                                            \
+        CPLError(CE_Failure, CPLE_AppDefined, "%s failed",            \
+                 ARROW_STRINGIFY(status));                            \
+        return (ret_value);                                           \
+    }                                                                 \
+  } while (false)
+
+#define OGR_ARROW_RETURN_FALSE_NOT_OK(status) \
+      OGR_ARROW_RETURN_NOT_OK(status, false)
+
+#define OGR_ARROW_RETURN_OGRERR_NOT_OK(status) \
+      OGR_ARROW_RETURN_NOT_OK(status, OGRERR_FAILURE)
+
 /************************************************************************/
 /*                      OGRArrowWriterLayer()                           */
 /************************************************************************/
@@ -415,12 +430,12 @@ bool OGRArrowWriterLayer::AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& domai
         }
         for( int i = nLastCode + 1; i < nCode; ++i )
         {
-            poStringBuilder->AppendNull();
+            OGR_ARROW_RETURN_FALSE_NOT_OK(poStringBuilder->AppendNull());
         }
         if( psIter->pszValue )
-            poStringBuilder->Append(psIter->pszValue);
+            OGR_ARROW_RETURN_FALSE_NOT_OK(poStringBuilder->Append(psIter->pszValue));
         else
-            poStringBuilder->AppendNull();
+            OGR_ARROW_RETURN_FALSE_NOT_OK(poStringBuilder->AppendNull());
         nLastCode = nCode;
     }
 
@@ -838,7 +853,7 @@ OGRErr OGRArrowWriterLayer::ICreateFeature( OGRFeature* poFeature )
             poFeature->SetFID(nFID);
         }
         auto poBuilder = static_cast<arrow::Int64Builder*>(m_apoBuilders[0].get());
-        poBuilder->Append(nFID);
+        OGR_ARROW_RETURN_OGRERR_NOT_OK(poBuilder->Append(nFID));
         nArrowIdx ++;
     }
 
@@ -848,7 +863,7 @@ OGRErr OGRArrowWriterLayer::ICreateFeature( OGRFeature* poFeature )
         auto poBuilder = m_apoBuilders[nArrowIdx].get();
         if( !poFeature->IsFieldSetAndNotNullUnsafe(i) )
         {
-            poBuilder->AppendNull();
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(poBuilder->AppendNull());
             continue;
         }
 
@@ -859,19 +874,23 @@ OGRErr OGRArrowWriterLayer::ICreateFeature( OGRFeature* poFeature )
         {
             case OFTInteger:
                 if( eSubDT == OFSTBoolean )
-                    static_cast<arrow::BooleanBuilder*>(poBuilder)->Append(
-                        poFeature->GetFieldAsIntegerUnsafe(i) != 0);
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                        static_cast<arrow::BooleanBuilder*>(poBuilder)->Append(
+                        poFeature->GetFieldAsIntegerUnsafe(i) != 0));
                 else if( eSubDT == OFSTInt16 )
-                    static_cast<arrow::Int16Builder*>(poBuilder)->Append(
-                        static_cast<int16_t>(poFeature->GetFieldAsIntegerUnsafe(i)));
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                        static_cast<arrow::Int16Builder*>(poBuilder)->Append(
+                        static_cast<int16_t>(poFeature->GetFieldAsIntegerUnsafe(i))));
                 else
-                    static_cast<arrow::Int32Builder*>(poBuilder)->Append(
-                        poFeature->GetFieldAsIntegerUnsafe(i));
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                        static_cast<arrow::Int32Builder*>(poBuilder)->Append(
+                        poFeature->GetFieldAsIntegerUnsafe(i)));
                 break;
 
             case OFTInteger64:
-                static_cast<arrow::Int64Builder*>(poBuilder)->Append(
-                    static_cast<int64_t>(poFeature->GetFieldAsInteger64Unsafe(i)));
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                    static_cast<arrow::Int64Builder*>(poBuilder)->Append(
+                    static_cast<int64_t>(poFeature->GetFieldAsInteger64Unsafe(i))));
                 break;
 
             case OFTReal:
@@ -884,7 +903,8 @@ OGRErr OGRArrowWriterLayer::ICreateFeature( OGRFeature* poFeature )
                         dfVal, poFieldDefn->GetWidth(), poFieldDefn->GetPrecision());
                     if( res.ok() )
                     {
-                        static_cast<arrow::Decimal128Builder*>(poBuilder)->Append(*res);
+                        OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                            static_cast<arrow::Decimal128Builder*>(poBuilder)->Append(*res));
                     }
                     else
                     {
@@ -893,7 +913,7 @@ OGRErr OGRArrowWriterLayer::ICreateFeature( OGRFeature* poFeature )
                                  dfVal,
                                  poFieldDefn->GetWidth(),
                                  poFieldDefn->GetPrecision());
-                        poBuilder->AppendNull();
+                        OGR_ARROW_RETURN_OGRERR_NOT_OK(poBuilder->AppendNull());
                     }
                 }
                 else if( arrowType->id() == arrow::Type::DECIMAL256 )
@@ -902,7 +922,8 @@ OGRErr OGRArrowWriterLayer::ICreateFeature( OGRFeature* poFeature )
                         dfVal, poFieldDefn->GetWidth(), poFieldDefn->GetPrecision());
                     if( res.ok() )
                     {
-                        static_cast<arrow::Decimal256Builder*>(poBuilder)->Append(*res);
+                        OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                            static_cast<arrow::Decimal256Builder*>(poBuilder)->Append(*res));
                     }
                     else
                     {
@@ -911,25 +932,28 @@ OGRErr OGRArrowWriterLayer::ICreateFeature( OGRFeature* poFeature )
                                  dfVal,
                                  poFieldDefn->GetWidth(),
                                  poFieldDefn->GetPrecision());
-                        poBuilder->AppendNull();
+                        OGR_ARROW_RETURN_OGRERR_NOT_OK(poBuilder->AppendNull());
                     }
                 }
                 else if( eSubDT == OFSTFloat32 )
                 {
-                    static_cast<arrow::FloatBuilder*>(poBuilder)->Append(
-                        static_cast<float>(dfVal));
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                        static_cast<arrow::FloatBuilder*>(poBuilder)->Append(
+                            static_cast<float>(dfVal)));
                 }
                 else
                 {
-                    static_cast<arrow::DoubleBuilder*>(poBuilder)->Append(dfVal);
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                        static_cast<arrow::DoubleBuilder*>(poBuilder)->Append(dfVal));
                 }
                 break;
             }
 
             case OFTString:
             case OFTWideString:
-                static_cast<arrow::StringBuilder*>(poBuilder)->Append(
-                    poFeature->GetFieldAsStringUnsafe(i));
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                    static_cast<arrow::StringBuilder*>(poBuilder)->Append(
+                        poFeature->GetFieldAsStringUnsafe(i)));
                 break;
 
             case OFTBinary:
@@ -945,15 +969,17 @@ OGRErr OGRArrowWriterLayer::ICreateFeature( OGRFeature* poFeature )
                                  poFieldDefn->GetNameRef(),
                                  nSize,
                                  poFieldDefn->GetWidth());
-                        poBuilder->AppendNull();
+                        OGR_ARROW_RETURN_OGRERR_NOT_OK(poBuilder->AppendNull());
                     }
                     else
                     {
-                        static_cast<arrow::FixedSizeBinaryBuilder*>(poBuilder)->Append(pData);
+                        OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                            static_cast<arrow::FixedSizeBinaryBuilder*>(poBuilder)->Append(pData));
                     }
                 }
                 else
-                    static_cast<arrow::BinaryBuilder*>(poBuilder)->Append(pData, nSize);
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                        static_cast<arrow::BinaryBuilder*>(poBuilder)->Append(pData, nSize));
                 break;
             }
 
@@ -962,30 +988,30 @@ OGRErr OGRArrowWriterLayer::ICreateFeature( OGRFeature* poFeature )
                 auto poListBuilder = static_cast<arrow::ListBuilder*>(poBuilder);
                 if( eSubDT == OFSTBoolean )
                 {
-                    poListBuilder->Append();
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(poListBuilder->Append());
                     auto poValueBuilder = static_cast<arrow::BooleanBuilder*>(poListBuilder->value_builder());
                     int nValues = 0;
                     const auto panValues = poFeature->GetFieldAsIntegerList(i, &nValues);
                     for(int j = 0; j < nValues; ++j )
-                        poValueBuilder->Append(panValues[j] != 0);
+                        OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(panValues[j] != 0));
                 }
                 else if( eSubDT == OFSTInt16 )
                 {
-                    poListBuilder->Append();
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(poListBuilder->Append());
                     auto poValueBuilder = static_cast<arrow::Int16Builder*>(poListBuilder->value_builder());
                     int nValues = 0;
                     const auto panValues = poFeature->GetFieldAsIntegerList(i, &nValues);
                     for(int j = 0; j < nValues; ++j )
-                        poValueBuilder->Append(static_cast<int16_t>(panValues[j]));
+                        OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(static_cast<int16_t>(panValues[j])));
                 }
                 else
                 {
-                    poListBuilder->Append();
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(poListBuilder->Append());
                     auto poValueBuilder = static_cast<arrow::Int32Builder*>(poListBuilder->value_builder());
                     int nValues = 0;
                     const auto panValues = poFeature->GetFieldAsIntegerList(i, &nValues);
                     for(int j = 0; j < nValues; ++j )
-                        poValueBuilder->Append(panValues[j]);
+                        OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(panValues[j]));
                 }
                 break;
             }
@@ -993,12 +1019,12 @@ OGRErr OGRArrowWriterLayer::ICreateFeature( OGRFeature* poFeature )
             case OFTInteger64List:
             {
                 auto poListBuilder = static_cast<arrow::ListBuilder*>(poBuilder);
-                poListBuilder->Append();
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(poListBuilder->Append());
                 auto poValueBuilder = static_cast<arrow::Int64Builder*>(poListBuilder->value_builder());
                 int nValues = 0;
                 const auto panValues = poFeature->GetFieldAsInteger64List(i, &nValues);
                 for(int j = 0; j < nValues; ++j )
-                    poValueBuilder->Append(static_cast<int64_t>(panValues[j]));
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(static_cast<int64_t>(panValues[j])));
                 break;
             }
 
@@ -1007,21 +1033,21 @@ OGRErr OGRArrowWriterLayer::ICreateFeature( OGRFeature* poFeature )
                 auto poListBuilder = static_cast<arrow::ListBuilder*>(poBuilder);
                 if( eSubDT == OFSTFloat32 )
                 {
-                    poListBuilder->Append();
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(poListBuilder->Append());
                     auto poValueBuilder = static_cast<arrow::FloatBuilder*>(poListBuilder->value_builder());
                     int nValues = 0;
                     const auto padfValues = poFeature->GetFieldAsDoubleList(i, &nValues);
                     for(int j = 0; j < nValues; ++j )
-                        poValueBuilder->Append(static_cast<float>(padfValues[j]));
+                        OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(static_cast<float>(padfValues[j])));
                 }
                 else
                 {
-                    poListBuilder->Append();
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(poListBuilder->Append());
                     auto poValueBuilder = static_cast<arrow::DoubleBuilder*>(poListBuilder->value_builder());
                     int nValues = 0;
                     const auto padfValues = poFeature->GetFieldAsDoubleList(i, &nValues);
                     for(int j = 0; j < nValues; ++j )
-                        poValueBuilder->Append(padfValues[j]);
+                        OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(padfValues[j]));
                 }
                 break;
             }
@@ -1030,11 +1056,11 @@ OGRErr OGRArrowWriterLayer::ICreateFeature( OGRFeature* poFeature )
             case OFTWideStringList:
             {
                 auto poListBuilder = static_cast<arrow::ListBuilder*>(poBuilder);
-                poListBuilder->Append();
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(poListBuilder->Append());
                 auto poValueBuilder = static_cast<arrow::StringBuilder*>(poListBuilder->value_builder());
                 const auto papszValues = poFeature->GetFieldAsStringList(i);
                 for(int j = 0; papszValues && papszValues[j]; ++j )
-                    poValueBuilder->Append(papszValues[j]);
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(papszValues[j]));
                 break;
             }
 
@@ -1051,7 +1077,8 @@ OGRErr OGRArrowWriterLayer::ICreateFeature( OGRFeature* poFeature )
                 brokenDown.tm_mon = nMonth - 1;
                 brokenDown.tm_mday = nDay;
                 GIntBig nVal = CPLYMDHMSToUnixTime(&brokenDown);
-                static_cast<arrow::Date32Builder*>(poBuilder)->Append(static_cast<int>(nVal / 86400));
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                    static_cast<arrow::Date32Builder*>(poBuilder)->Append(static_cast<int>(nVal / 86400)));
                 break;
             }
 
@@ -1063,8 +1090,9 @@ OGRErr OGRArrowWriterLayer::ICreateFeature( OGRFeature* poFeature )
                 poFeature->GetFieldAsDateTime(i,
                     &nYear, &nMonth, &nDay, &nHour, &nMinute, &fSec, &nTZFlag);
                 int nVal = nHour * 3600 + nMinute * 60;
-                static_cast<arrow::Time32Builder*>(poBuilder)->Append(
-                    static_cast<int>((static_cast<double>(nVal) + fSec) * 1000 + 0.5));
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                    static_cast<arrow::Time32Builder*>(poBuilder)->Append(
+                    static_cast<int>((static_cast<double>(nVal) + fSec) * 1000 + 0.5)));
                 break;
             }
 
@@ -1109,8 +1137,9 @@ OGRErr OGRArrowWriterLayer::ICreateFeature( OGRFeature* poFeature )
                 {
                     nVal -= (nTZFlag - 100) * 15 * 60;
                 }
-                static_cast<arrow::TimestampBuilder*>(poBuilder)->Append(
-                    static_cast<int64_t>((static_cast<double>(nVal) + fSec) * 1000 + 0.5));
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                    static_cast<arrow::TimestampBuilder*>(poBuilder)->Append(
+                    static_cast<int64_t>((static_cast<double>(nVal) + fSec) * 1000 + 0.5)));
                 break;
             }
 
@@ -1140,18 +1169,18 @@ OGRErr OGRArrowWriterLayer::ICreateFeature( OGRFeature* poFeature )
             {
                 // For some reason, Parquet doesn't support a NULL FixedSizeList on reading
                 auto poPointBuilder = static_cast<arrow::FixedSizeListBuilder*>(poBuilder);
-                poPointBuilder->Append();
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(poPointBuilder->Append());
                 auto poValueBuilder = static_cast<arrow::DoubleBuilder*>(poPointBuilder->value_builder());
-                poValueBuilder->Append(std::numeric_limits<double>::quiet_NaN());
-                poValueBuilder->Append(std::numeric_limits<double>::quiet_NaN());
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(std::numeric_limits<double>::quiet_NaN()));
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(std::numeric_limits<double>::quiet_NaN()));
                 if( OGR_GT_HasZ(eGType) )
-                    poValueBuilder->Append(std::numeric_limits<double>::quiet_NaN());
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(std::numeric_limits<double>::quiet_NaN()));
                 if( OGR_GT_HasM(eGType) )
-                    poValueBuilder->Append(std::numeric_limits<double>::quiet_NaN());
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(std::numeric_limits<double>::quiet_NaN()));
             }
             else
             {
-                poBuilder->AppendNull();
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(poBuilder->AppendNull());
             }
         }
         else if( m_aeGeomEncoding[i] == OGRArrowGeomEncoding::WKB )
@@ -1176,23 +1205,23 @@ OGRErr OGRArrowWriterLayer::ICreateFeature( OGRFeature* poFeature )
             {
                 m_abyBuffer.resize(nSize);
                 poGeom->exportToWkb(wkbNDR, &m_abyBuffer[0], wkbVariantIso);
-                static_cast<arrow::BinaryBuilder*>(poBuilder)->Append(
-                    m_abyBuffer.data(), static_cast<int>(m_abyBuffer.size()));
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(static_cast<arrow::BinaryBuilder*>(poBuilder)->Append(
+                    m_abyBuffer.data(), static_cast<int>(m_abyBuffer.size())));
             }
             else
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                      "Too big geometry. "
                      "Writing null geometry");
-                poBuilder->AppendNull();
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(poBuilder->AppendNull());
             }
         }
         else if( m_aeGeomEncoding[i] == OGRArrowGeomEncoding::WKT )
         {
             OGRWktOptions options;
             options.variant = wkbVariantIso;
-            static_cast<arrow::StringBuilder*>(poBuilder)->Append(
-                poGeom->exportToWkt(options));
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(static_cast<arrow::StringBuilder*>(poBuilder)->Append(
+                poGeom->exportToWkt(options)));
         }
         // The following checks are only valid for GeoArrow encoding
         else if( (!bIsEmpty && eGType != eColumnGType) ||
@@ -1203,7 +1232,7 @@ OGRErr OGRArrowWriterLayer::ICreateFeature( OGRFeature* poFeature )
                      "Writing null geometry",
                      OGRGeometryTypeToName(eGType),
                      OGRGeometryTypeToName(eColumnGType));
-            poBuilder->AppendNull();
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(poBuilder->AppendNull());
         }
         else if( !bIsEmpty &&
                  poGeom->Is3D() != OGR_GT_HasZ(eColumnGType) )
@@ -1213,7 +1242,7 @@ OGRErr OGRArrowWriterLayer::ICreateFeature( OGRFeature* poFeature )
                      "Writing null geometry",
                      poGeom->Is3D(),
                      OGR_GT_HasZ(eColumnGType));
-            poBuilder->AppendNull();
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(poBuilder->AppendNull());
         }
         else if( !bIsEmpty &&
                  poGeom->IsMeasured() != OGR_GT_HasM(eColumnGType) )
@@ -1223,28 +1252,28 @@ OGRErr OGRArrowWriterLayer::ICreateFeature( OGRFeature* poFeature )
                      "Writing null geometry",
                      poGeom->IsMeasured(),
                      OGR_GT_HasM(eColumnGType));
-            poBuilder->AppendNull();
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(poBuilder->AppendNull());
         }
         else if( m_aeGeomEncoding[i] == OGRArrowGeomEncoding::GEOARROW_POINT )
         {
             const auto poPoint = poGeom->toPoint();
             auto poPointBuilder = static_cast<arrow::FixedSizeListBuilder*>(poBuilder);
-            poPointBuilder->Append();
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(poPointBuilder->Append());
             auto poValueBuilder = static_cast<arrow::DoubleBuilder*>(poPointBuilder->value_builder());
             if( bIsEmpty )
             {
-                poValueBuilder->Append(std::numeric_limits<double>::quiet_NaN());
-                poValueBuilder->Append(std::numeric_limits<double>::quiet_NaN());
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(std::numeric_limits<double>::quiet_NaN()));
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(std::numeric_limits<double>::quiet_NaN()));
             }
             else
             {
-                poValueBuilder->Append(poPoint->getX());
-                poValueBuilder->Append(poPoint->getY());
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(poPoint->getX()));
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(poPoint->getY()));
             }
             if( OGR_GT_HasZ(eColumnGType) )
-                poValueBuilder->Append(poPoint->getZ());
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(poPoint->getZ()));
             if( OGR_GT_HasM(eColumnGType) )
-                poValueBuilder->Append(poPoint->getM());
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(poPoint->getM()));
         }
         else if( m_aeGeomEncoding[i] == OGRArrowGeomEncoding::GEOARROW_LINESTRING )
         {
@@ -1252,16 +1281,16 @@ OGRErr OGRArrowWriterLayer::ICreateFeature( OGRFeature* poFeature )
             auto poListBuilder = static_cast<arrow::ListBuilder*>(poBuilder);
             auto poPointBuilder = static_cast<arrow::FixedSizeListBuilder*>(poListBuilder->value_builder());
             auto poValueBuilder = static_cast<arrow::DoubleBuilder*>(poPointBuilder->value_builder());
-            poListBuilder->Append();
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(poListBuilder->Append());
             for( int j = 0; j < poLS->getNumPoints(); ++j )
             {
-                poPointBuilder->Append();
-                poValueBuilder->Append(poLS->getX(j));
-                poValueBuilder->Append(poLS->getY(j));
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(poPointBuilder->Append());
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(poLS->getX(j)));
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(poLS->getY(j)));
                 if( poGeom->Is3D() )
-                    poValueBuilder->Append(poLS->getZ(j));
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(poLS->getZ(j)));
                 if( poGeom->IsMeasured() )
-                    poValueBuilder->Append(poLS->getM(j));
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(poLS->getM(j)));
             }
         }
         else if( m_aeGeomEncoding[i] == OGRArrowGeomEncoding::GEOARROW_POLYGON )
@@ -1271,19 +1300,19 @@ OGRErr OGRArrowWriterLayer::ICreateFeature( OGRFeature* poFeature )
             auto poRingBuilder = static_cast<arrow::ListBuilder*>(poPolygonBuilder->value_builder());
             auto poPointBuilder = static_cast<arrow::FixedSizeListBuilder*>(poRingBuilder->value_builder());
             auto poValueBuilder = static_cast<arrow::DoubleBuilder*>(poPointBuilder->value_builder());
-            poPolygonBuilder->Append();
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(poPolygonBuilder->Append());
             for( const auto* poRing: *poPolygon )
             {
-                poRingBuilder->Append();
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(poRingBuilder->Append());
                 for( int j = 0; j < poRing->getNumPoints(); ++j )
                 {
-                    poPointBuilder->Append();
-                    poValueBuilder->Append(poRing->getX(j));
-                    poValueBuilder->Append(poRing->getY(j));
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(poPointBuilder->Append());
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(poRing->getX(j)));
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(poRing->getY(j)));
                     if( poGeom->Is3D() )
-                        poValueBuilder->Append(poRing->getZ(j));
+                        OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(poRing->getZ(j)));
                     if( poGeom->IsMeasured() )
-                        poValueBuilder->Append(poRing->getM(j));
+                        OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(poRing->getM(j)));
                 }
             }
         }
@@ -1293,16 +1322,16 @@ OGRErr OGRArrowWriterLayer::ICreateFeature( OGRFeature* poFeature )
             auto poListBuilder = static_cast<arrow::ListBuilder*>(poBuilder);
             auto poPointBuilder = static_cast<arrow::FixedSizeListBuilder*>(poListBuilder->value_builder());
             auto poValueBuilder = static_cast<arrow::DoubleBuilder*>(poPointBuilder->value_builder());
-            poListBuilder->Append();
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(poListBuilder->Append());
             for( const auto* poPoint: *poMultiPoint )
             {
-                poPointBuilder->Append();
-                poValueBuilder->Append(poPoint->getX());
-                poValueBuilder->Append(poPoint->getY());
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(poPointBuilder->Append());
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(poPoint->getX()));
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(poPoint->getY()));
                 if( poGeom->Is3D() )
-                    poValueBuilder->Append(poPoint->getZ());
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(poPoint->getZ()));
                 if( poGeom->IsMeasured() )
-                    poValueBuilder->Append(poPoint->getM());
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(poPoint->getM()));
             }
         }
         else if( m_aeGeomEncoding[i] == OGRArrowGeomEncoding::GEOARROW_MULTILINESTRING )
@@ -1312,19 +1341,19 @@ OGRErr OGRArrowWriterLayer::ICreateFeature( OGRFeature* poFeature )
             auto poLSBuilder = static_cast<arrow::ListBuilder*>(poMLSBuilder->value_builder());
             auto poPointBuilder = static_cast<arrow::FixedSizeListBuilder*>(poLSBuilder->value_builder());
             auto poValueBuilder = static_cast<arrow::DoubleBuilder*>(poPointBuilder->value_builder());
-            poMLSBuilder->Append();
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(poMLSBuilder->Append());
             for( const auto* poLS: *poMLS )
             {
-                poLSBuilder->Append();
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(poLSBuilder->Append());
                 for( int j = 0; j < poLS->getNumPoints(); ++j )
                 {
-                    poPointBuilder->Append();
-                    poValueBuilder->Append(poLS->getX(j));
-                    poValueBuilder->Append(poLS->getY(j));
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(poPointBuilder->Append());
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(poLS->getX(j)));
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(poLS->getY(j)));
                     if( poGeom->Is3D() )
-                        poValueBuilder->Append(poLS->getZ(j));
+                        OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(poLS->getZ(j)));
                     if( poGeom->IsMeasured() )
-                        poValueBuilder->Append(poLS->getM(j));
+                        OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(poLS->getM(j)));
                 }
             }
         }
@@ -1336,22 +1365,22 @@ OGRErr OGRArrowWriterLayer::ICreateFeature( OGRFeature* poFeature )
             auto poRingBuilder = static_cast<arrow::ListBuilder*>(poPolyBuilder->value_builder());
             auto poPointBuilder = static_cast<arrow::FixedSizeListBuilder*>(poRingBuilder->value_builder());
             auto poValueBuilder = static_cast<arrow::DoubleBuilder*>(poPointBuilder->value_builder());
-            poMPolyBuilder->Append();
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(poMPolyBuilder->Append());
             for( const auto* poPolygon: *poMPoly )
             {
-                poPolyBuilder->Append();
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(poPolyBuilder->Append());
                 for( const auto* poRing: *poPolygon )
                 {
-                    poRingBuilder->Append();
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(poRingBuilder->Append());
                     for( int j = 0; j < poRing->getNumPoints(); ++j )
                     {
-                        poPointBuilder->Append();
-                        poValueBuilder->Append(poRing->getX(j));
-                        poValueBuilder->Append(poRing->getY(j));
+                        OGR_ARROW_RETURN_OGRERR_NOT_OK(poPointBuilder->Append());
+                        OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(poRing->getX(j)));
+                        OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(poRing->getY(j)));
                         if( poGeom->Is3D() )
-                            poValueBuilder->Append(poRing->getZ(j));
+                            OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(poRing->getZ(j)));
                         if( poGeom->IsMeasured() )
-                            poValueBuilder->Append(poRing->getM(j));
+                            OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(poRing->getM(j)));
                     }
                 }
             }
