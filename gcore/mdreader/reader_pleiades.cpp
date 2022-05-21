@@ -351,16 +351,16 @@ char** GDALMDReaderPleiades::LoadRPCXmlFile()
     double firstCol = 1.0;
     if( pValidityNode != nullptr )
     {
-        char** m_papszValidity = nullptr;
-        m_papszValidity = ReadXMLToList(pValidityNode->psChild, m_papszValidity);
-        if( m_papszValidity != nullptr )
+        char** papszValidity = ReadXMLToList(pValidityNode->psChild, m_papszValidity);
+        if( papszValidity != nullptr )
         {
-            const char* pszFirstCol = CSLFetchNameValue(m_papszValidity, "FIRST_COL");
+            const char* pszFirstCol = CSLFetchNameValue(papszValidity, "FIRST_COL");
             if( pszFirstCol != nullptr )
             {
                 firstCol = CPLAtofM(pszFirstCol);
             }
         }
+        CSLDestroy(papszValidity);
     }
 
     // If we are not the top-left tile, then we must shift LINE_OFF and SAMP_OFF
