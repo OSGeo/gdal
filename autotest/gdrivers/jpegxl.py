@@ -327,6 +327,27 @@ def test_jpegxl_write_extra_channels():
     gdal.GetDriverByName('JPEGXL').Delete(outfilename)
 
 
+def test_jpegxl_read_five_bands():
+
+    ds = gdal.Open('data/jpegxl/five_bands.jxl')
+    assert [ds.GetRasterBand(i+1).Checksum() for i in range(5)] == [3741, 5281, 6003, 5095, 4318]
+
+
+def test_jpegxl_write_five_bands():
+
+    drv = gdal.GetDriverByName('JPEGXL')
+    if drv.GetMetadataItem('JXL_ENCODER_SUPPORT_EXTRA_CHANNELS') is None:
+        pytest.skip()
+
+    src_ds = gdal.Open('data/jpegxl/five_bands.jxl')
+    outfilename = '/vsimem/out.jxl'
+    assert drv.CreateCopy(outfilename, src_ds) is not None
+    ds = gdal.Open(outfilename)
+    assert [ds.GetRasterBand(i+1).Checksum() for i in range(5)] == [3741, 5281, 6003, 5095, 4318]
+    ds = None
+    gdal.GetDriverByName('JPEGXL').Delete(outfilename)
+
+
 def test_jpegxl_createcopy_errors():
 
     outfilename = '/vsimem/out.jxl'
