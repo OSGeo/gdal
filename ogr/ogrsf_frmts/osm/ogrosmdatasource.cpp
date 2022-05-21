@@ -140,6 +140,9 @@ constexpr int MAX_ACCUMULATED_TAGS  = MAX_DELAYED_FEATURES * 5;
 // Max size of the string with tag values that are accumulated in
 // pabyNonRedundantValues.
 constexpr int MAX_NON_REDUNDANT_VALUES = MAX_DELAYED_FEATURES * 10;
+// Max size of the string with tag values that are accumulated in
+// pabyNonRedundantKeys.
+constexpr int MAX_NON_REDUNDANT_KEYS = MAX_DELAYED_FEATURES * 10;
 // Max number of features that are accumulated in panUnsortedReqIds
 constexpr int MAX_ACCUMULATED_NODES = 1000000;
 
@@ -279,11 +282,8 @@ OGROSMDataSource::OGROSMDataSource() :
     pasLonLatArray(nullptr),
     pasAccumulatedTags(nullptr),
     nAccumulatedTags(0),
-    pabyNonRedundantValues(nullptr),
-    nNonRedundantValuesLen(0),
     pasWayFeaturePairs(nullptr),
     nWayFeaturePairs(0),
-    nNextKeyIndex(0),
     bInMemoryNodesFile(false),
     bMustUnlinkNodesFile(true),
     nNodesFileSize(0),
@@ -294,7 +294,14 @@ OGROSMDataSource::OGROSMDataSource() :
     pabySector(nullptr),
     bNeedsToSaveWayInfo(false),
     m_nFileSize(FILESIZE_NOT_INIT)
-{}
+{
+    asKeys.push_back(nullptr); // guard to avoid index 0 to be used
+
+    MAX_INDEXED_KEYS = static_cast<unsigned>(
+            atoi(CPLGetConfigOption("OSM_MAX_INDEXED_KEYS", "32768")));
+    MAX_INDEXED_VALUES_PER_KEY = static_cast<unsigned>(
+            atoi(CPLGetConfigOption("OSM_MAX_INDEXED_VALUES_PER_KEY", "1024")));
+}
 
 /************************************************************************/
 /*                          ~OGROSMDataSource()                         */
@@ -349,28 +356,35 @@ OGROSMDataSource::~OGROSMDataSource()
     }
     CPLFree(pasWayFeaturePairs);
     CPLFree(pasAccumulatedTags);
+    CPLFree(pabyNonRedundantKeys);
     CPLFree(pabyNonRedundantValues);
 
 #ifdef OSM_DEBUG
     FILE* f = fopen("keys.txt", "wt");
-    for( int i=0; i<startic_cast<int>(asKeys.size()); i++ )
+    for( int i=1; i<startic_cast<int>(asKeys.size()); i++ )
     {
         KeyDesc* psKD = asKeys[i];
-        fprintf(f, "%08d idx=%d %s\n",
-                psKD->nOccurrences,
-                psKD->nKeyIndex,
-                psKD->pszK);
+        if( psKD )
+        {
+            fprintf(f, "%08d idx=%d %s\n",
+                    psKD->nOccurrences,
+                    psKD->nKeyIndex,
+                    psKD->pszK);
+        }
     }
     fclose(f);
 #endif
 
-    for( int i=0; i<static_cast<int>(asKeys.size()); i++ )
+    for( int i=1; i<static_cast<int>(asKeys.size()); i++ )
     {
         KeyDesc* psKD = asKeys[i];
-        CPLFree(psKD->pszK);
-        for( int j=0; j<static_cast<int>(psKD->asValues.size());j++)
-            CPLFree(psKD->asValues[j]);
-        delete psKD;
+        if( psKD )
+        {
+            CPLFree(psKD->pszK);
+            for( int j=0; j<static_cast<int>(psKD->asValues.size());j++)
+                CPLFree(psKD->asValues[j]);
+            delete psKD;
+        }
     }
 
     if( fpNodes )
@@ -1457,35 +1471,44 @@ void OGROSMDataSource::CompressWay ( bool bIsArea, unsigned int nTags,
 {
     abyCompressedWay.clear();
     abyCompressedWay.push_back((bIsArea) ? 1 : 0);
-    abyCompressedWay.push_back(0); // reserve space for tagCount
-
-    unsigned int nTagCount = 0;
     CPLAssert(nTags <= MAX_COUNT_FOR_TAGS_IN_WAY);
+    abyCompressedWay.push_back(static_cast<GByte>(nTags));
+
     for( unsigned int iTag = 0; iTag < nTags; iTag++ )
     {
-        WriteVarInt(pasTags[iTag].nKeyIndex, abyCompressedWay);
+        if( pasTags[iTag].bKIsIndex )
+        {
+            WriteVarInt(pasTags[iTag].uKey.nKeyIndex, abyCompressedWay);
+        }
+        else
+        {
+            const char* pszK = (const char*)pabyNonRedundantKeys +
+                pasTags[iTag].uKey.nOffsetInpabyNonRedundantKeys;
 
-        // To fit in 2 bytes, the theoretical limit would be 127 * 128 + 127.
+            abyCompressedWay.push_back(0);
+
+            abyCompressedWay.insert(abyCompressedWay.end(),
+                                    reinterpret_cast<const GByte*>(pszK),
+                                    reinterpret_cast<const GByte*>(pszK) + strlen(pszK) + 1);
+        }
+
         if( pasTags[iTag].bVIsIndex )
         {
-            WriteVarInt(pasTags[iTag].u.nValueIndex, abyCompressedWay);
+            WriteVarInt(pasTags[iTag].uVal.nValueIndex, abyCompressedWay);
         }
         else
         {
             const char* pszV = (const char*)pabyNonRedundantValues +
-                pasTags[iTag].u.nOffsetInpabyNonRedundantValues;
+                pasTags[iTag].uVal.nOffsetInpabyNonRedundantValues;
 
-            abyCompressedWay.push_back(0);
+            if( pasTags[iTag].bKIsIndex )
+                abyCompressedWay.push_back(0);
 
             abyCompressedWay.insert(abyCompressedWay.end(),
                                     reinterpret_cast<const GByte*>(pszV),
                                     reinterpret_cast<const GByte*>(pszV) + strlen(pszV) + 1);
         }
-
-        nTagCount ++;
     }
-
-    abyCompressedWay[1] = (GByte) nTagCount;
 
     if( bNeedsToSaveWayInfo )
     {
@@ -1542,8 +1565,17 @@ void OGROSMDataSource::UncompressWay( int nBytes, const GByte* pabyCompressedWay
     // TODO: Some additional safety checks.
     for(unsigned int iTag = 0; iTag < nTags; iTag++)
     {
-        int nK = ReadVarInt32(&pabyPtr);
-        int nV = ReadVarInt32(&pabyPtr);
+        const int nK = ReadVarInt32(&pabyPtr);
+        const GByte* pszK = nullptr;
+        if( nK == 0 )
+        {
+            pszK = pabyPtr;
+            while(*pabyPtr != '\0')
+                pabyPtr ++;
+            pabyPtr ++;
+        }
+
+        const int nV = nK == 0 ? 0 : ReadVarInt32(&pabyPtr);
         const GByte* pszV = nullptr;
         if( nV == 0 )
         {
@@ -1556,9 +1588,10 @@ void OGROSMDataSource::UncompressWay( int nBytes, const GByte* pabyCompressedWay
         if( pasTags )
         {
             CPLAssert(nK >= 0 && nK < (int)asKeys.size());
-            pasTags[iTag].pszK = asKeys[nK]->pszK;
-            CPLAssert(nV == 0 ||
-                      (nV > 0 && nV < (int)asKeys[nK]->asValues.size()));
+            pasTags[iTag].pszK =
+                nK ? asKeys[nK]->pszK : reinterpret_cast<const char*>(pszK);
+
+            CPLAssert(nK == 0 || (nV >= 0 && nV < (int)asKeys[nK]->asValues.size()));
             pasTags[iTag].pszV =
                 nV ? asKeys[nK]->asValues[nV] : (const char*) pszV;
         }
@@ -1831,6 +1864,7 @@ void OGROSMDataSource::ProcessWaysBatch()
     nUnsortedReqIds = 0;
 
     nAccumulatedTags = 0;
+    nNonRedundantKeysLen = 0;
     nNonRedundantValuesLen = 0;
 }
 
@@ -1986,7 +2020,8 @@ void OGROSMDataSource::NotifyWay( OSMWay* psWay )
         static_cast<unsigned int>(MAX_ACCUMULATED_NODES) ||
         nWayFeaturePairs == MAX_DELAYED_FEATURES ||
         nAccumulatedTags + psWay->nTags >
-        static_cast<unsigned int>(MAX_ACCUMULATED_TAGS) ||
+            static_cast<unsigned int>(MAX_ACCUMULATED_TAGS) ||
+        nNonRedundantKeysLen + 1024 > MAX_NON_REDUNDANT_KEYS ||
         nNonRedundantValuesLen + 1024 > MAX_NON_REDUNDANT_VALUES )
     {
         ProcessWaysBatch();
@@ -2059,46 +2094,65 @@ void OGROSMDataSource::NotifyWay( OSMWay* psWay )
                 continue;
             }
 
-            std::map<const char*, KeyDesc*, ConstCharComp>::iterator oIterK =
-                aoMapIndexedKeys.find(pszK);
+            auto oIterK = aoMapIndexedKeys.find(pszK);
             KeyDesc* psKD = nullptr;
             if( oIterK == aoMapIndexedKeys.end() )
             {
-                if( nNextKeyIndex >= 32768 ) /* somewhat arbitrary */
+                if( asKeys.size() >= 1 + MAX_INDEXED_KEYS )
                 {
-                    if( nNextKeyIndex == 32768 )
+                    if( asKeys.size() == 1 + MAX_INDEXED_KEYS )
+                    {
+                        CPLDebug( "OSM", "More than %d different keys found",
+                                  MAX_INDEXED_KEYS);
+                        // To avoid next warnings.
+                        asKeys.push_back(nullptr);
+                    }
+
+                    const int nLenK = static_cast<int>(strlen(pszK)) + 1;
+                    if( nNonRedundantKeysLen + nLenK > MAX_NON_REDUNDANT_KEYS )
                     {
                         CPLError(CE_Failure, CPLE_AppDefined,
-                                 "Too many different keys in file");
-                        nNextKeyIndex ++; /* to avoid next warnings */
+                                 "Too many/too long keys found");
+                        continue;
                     }
-                    continue;
+                    memcpy( pabyNonRedundantKeys + nNonRedundantKeysLen, pszK,
+                            nLenK);
+                    pasAccumulatedTags[nAccumulatedTags].bKIsIndex = FALSE;
+                    pasAccumulatedTags[nAccumulatedTags].uKey.nOffsetInpabyNonRedundantKeys = nNonRedundantKeysLen;
+                    nNonRedundantKeysLen += nLenK;
                 }
-                psKD = new KeyDesc();
-                psKD->pszK = CPLStrdup(pszK);
-                psKD->nKeyIndex = nNextKeyIndex ++;
-                //CPLDebug("OSM", "nNextKeyIndex=%d", nNextKeyIndex);
-                psKD->nOccurrences = 0;
-                psKD->asValues.push_back(CPLStrdup(""));
-                aoMapIndexedKeys[psKD->pszK] = psKD;
-                asKeys.push_back(psKD);
+                else
+                {
+                    psKD = new KeyDesc();
+                    psKD->pszK = CPLStrdup(pszK);
+                    psKD->nKeyIndex = static_cast<int>(asKeys.size());
+                    psKD->nOccurrences = 0;
+                    psKD->asValues.push_back(CPLStrdup("")); // guard value to avoid index 0 to be used
+                    aoMapIndexedKeys[psKD->pszK] = psKD;
+                    asKeys.push_back(psKD);
+                }
             }
             else
-                psKD = oIterK->second;
-            psKD->nOccurrences ++;
-
-            pasAccumulatedTags[nAccumulatedTags].nKeyIndex = (short)psKD->nKeyIndex;
-
-            /* to fit in 2 bytes, the theoretical limit would be 127 * 128 + 127 */
-            if( psKD->asValues.size() < 1024 )
             {
-                std::map<const char*, int, ConstCharComp>::iterator oIterV;
-                oIterV = psKD->anMapV.find(pszV);
+                psKD = oIterK->second;
+            }
+
+            if( psKD )
+            {
+                psKD->nOccurrences ++;
+                pasAccumulatedTags[nAccumulatedTags].bKIsIndex = TRUE;
+                pasAccumulatedTags[nAccumulatedTags].uKey.nKeyIndex = psKD->nKeyIndex;
+            }
+
+            if( psKD != nullptr &&
+                psKD->asValues.size() < 1 + MAX_INDEXED_VALUES_PER_KEY )
+            {
                 int nValueIndex = 0;
+                auto oIterV = psKD->anMapV.find(pszV);
                 if( oIterV == psKD->anMapV.end() )
                 {
                     char* pszVDup = CPLStrdup(pszV);
-                    nValueIndex = (int)psKD->asValues.size();
+                    nValueIndex = static_cast<int>(psKD->asValues.size());
                     psKD->anMapV[pszVDup] = nValueIndex;
                     psKD->asValues.push_back(pszVDup);
                 }
@@ -2106,26 +2160,31 @@ void OGROSMDataSource::NotifyWay( OSMWay* psWay )
                     nValueIndex = oIterV->second;
 
                 pasAccumulatedTags[nAccumulatedTags].bVIsIndex = TRUE;
-                pasAccumulatedTags[nAccumulatedTags].u.nValueIndex = nValueIndex;
+                pasAccumulatedTags[nAccumulatedTags].uVal.nValueIndex = nValueIndex;
             }
             else
             {
                 const int nLenV = static_cast<int>(strlen(pszV)) + 1;
 
-                if( psKD->asValues.size() == 1024 )
+                if( psKD != nullptr &&
+                    psKD->asValues.size() == 1 + MAX_INDEXED_VALUES_PER_KEY )
                 {
                     CPLDebug( "OSM", "More than %d different values for tag %s",
-                              1024, pszK);
+                              MAX_INDEXED_VALUES_PER_KEY, pszK);
                     // To avoid next warnings.
                     psKD->asValues.push_back(CPLStrdup(""));
                 }
 
-                CPLAssert( nNonRedundantValuesLen + nLenV <=
-                           MAX_NON_REDUNDANT_VALUES );
+                if( nNonRedundantValuesLen + nLenV > MAX_NON_REDUNDANT_VALUES )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Too many/too long values found");
+                    continue;
+                }
                 memcpy( pabyNonRedundantValues + nNonRedundantValuesLen, pszV,
                         nLenV);
                 pasAccumulatedTags[nAccumulatedTags].bVIsIndex = FALSE;
-                pasAccumulatedTags[nAccumulatedTags].u.nOffsetInpabyNonRedundantValues = nNonRedundantValuesLen;
+                pasAccumulatedTags[nAccumulatedTags].uVal.nOffsetInpabyNonRedundantValues = nNonRedundantValuesLen;
                 nNonRedundantValuesLen += nLenV;
             }
             nAccumulatedTags ++;
@@ -2866,13 +2925,15 @@ int OGROSMDataSource::Open( const char * pszFilename,
         VSI_MALLOC_VERBOSE(MAX_ACCUMULATED_TAGS * sizeof(IndexedKVP)) );
     pabyNonRedundantValues = static_cast<GByte*>(
         VSI_MALLOC_VERBOSE(MAX_NON_REDUNDANT_VALUES) );
-
+    pabyNonRedundantKeys = static_cast<GByte*>(
+        VSI_MALLOC_VERBOSE(MAX_NON_REDUNDANT_KEYS) );
     if( panReqIds == nullptr ||
         pasLonLatArray == nullptr ||
         panUnsortedReqIds == nullptr ||
         pasWayFeaturePairs == nullptr ||
         pasAccumulatedTags == nullptr ||
-        pabyNonRedundantValues == nullptr )
+        pabyNonRedundantValues == nullptr ||
+        pabyNonRedundantKeys == nullptr )
     {
         return FALSE;
     }
@@ -3815,19 +3876,22 @@ int OGROSMDataSource::MyResetReading()
         nUnsortedReqIds = 0;
         nReqIds = 0;
         nAccumulatedTags = 0;
+        nNonRedundantKeysLen = 0;
         nNonRedundantValuesLen = 0;
 
-        for( int i=0;i<static_cast<int>(asKeys.size()); i++ )
+        for( int i=1;i<static_cast<int>(asKeys.size()); i++ )
         {
             KeyDesc* psKD = asKeys[i];
-            CPLFree(psKD->pszK);
-            for(int j=0;j<(int)psKD->asValues.size();j++)
-                CPLFree(psKD->asValues[j]);
-            delete psKD;
+            if( psKD )
+            {
+                CPLFree(psKD->pszK);
+                for(int j=0;j<(int)psKD->asValues.size();j++)
+                    CPLFree(psKD->asValues[j]);
+                delete psKD;
+            }
         }
-        asKeys.resize(0);
+        asKeys.resize(1); // keep guard to avoid index 0 to be used
         aoMapIndexedKeys.clear();
-        nNextKeyIndex = 0;
     }
 
     if( bCustomIndexing )

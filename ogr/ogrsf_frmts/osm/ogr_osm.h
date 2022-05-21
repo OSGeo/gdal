@@ -235,13 +235,18 @@ typedef struct
 
 typedef struct
 {
-    short               nKeyIndex; /* index of OGROSMDataSource.asKeys */
+    short               bKIsIndex; /* whether we should use nKeyIndex or nOffsetInpabyNonRedundantKeys */
     short               bVIsIndex; /* whether we should use nValueIndex or nOffsetInpabyNonRedundantValues */
+    union
+    {
+        int                 nKeyIndex; /* index of OGROSMDataSource.asKeys */
+        int                 nOffsetInpabyNonRedundantKeys; /* offset in OGROSMDataSource.pabyNonRedundantKeys */
+    } uKey;
     union
     {
         int                 nValueIndex; /* index of KeyDesc.asValues */
         int                 nOffsetInpabyNonRedundantValues; /* offset in OGROSMDataSource.pabyNonRedundantValues */
-    } u;
+    } uVal;
 } IndexedKVP;
 
 typedef struct
@@ -382,12 +387,15 @@ class OGROSMDataSource final: public OGRDataSource
 
     IndexedKVP         *pasAccumulatedTags; /* points to content of pabyNonRedundantValues or aoMapIndexedKeys */
     int                 nAccumulatedTags;
-    GByte              *pabyNonRedundantValues;
-    int                 nNonRedundantValuesLen;
+    unsigned int        MAX_INDEXED_KEYS = 0;
+    GByte              *pabyNonRedundantKeys = nullptr;
+    int                 nNonRedundantKeysLen = 0;
+    unsigned int        MAX_INDEXED_VALUES_PER_KEY = 0;
+    GByte              *pabyNonRedundantValues = nullptr;
+    int                 nNonRedundantValuesLen = 0;
     WayFeaturePair     *pasWayFeaturePairs;
     int                 nWayFeaturePairs;
 
-    int                          nNextKeyIndex;
     std::vector<KeyDesc*>         asKeys;
     std::map<const char*, KeyDesc*, ConstCharComp> aoMapIndexedKeys; /* map that is the reverse of asKeys */
 
