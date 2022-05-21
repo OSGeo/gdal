@@ -78,7 +78,7 @@ public:
     GIntBig     GetBoxLength() const { return nBoxLength; }
 
     GIntBig     GetDataOffset() const { return nDataOffset; }
-    GIntBig     GetDataLength();
+    GIntBig     GetDataLength() const;
 
     const char *GetType() { return szBoxType; }
 
@@ -99,17 +99,27 @@ public:
     void        AppendUInt32( GUInt32 nVal );
     void        AppendUInt16( GUInt16 nVal );
     void        AppendUInt8( GByte nVal );
-    const GByte*GetWritableData() { return pabyData; }
+    const GByte*GetWritableData() const { return pabyData; }
+    GByte      *GetWritableBoxData() const;
 
     // factory methods.
     static GDALJP2Box *CreateSuperBox( const char* pszType,
-                                       int nCount, GDALJP2Box **papoBoxes );
-    static GDALJP2Box *CreateAsocBox( int nCount, GDALJP2Box **papoBoxes );
+                                       int nCount,
+                                       const GDALJP2Box * const *papoBoxes );
+    static GDALJP2Box *CreateAsocBox( int nCount,
+                                      const GDALJP2Box * const *papoBoxes );
     static GDALJP2Box *CreateLblBox( const char *pszLabel );
     static GDALJP2Box *CreateLabelledXMLAssoc( const char *pszLabel,
                                                const char *pszXML );
     static GDALJP2Box *CreateUUIDBox( const GByte *pabyUUID,
                                       int nDataSize, const GByte *pabyData );
+
+    // JUMBF boxes (ISO/IEC 19566-5:2019)
+    static GDALJP2Box *CreateJUMBFDescriptionBox( const GByte *pabyUUIDType,
+                                                  const char* pszLabel );
+    static GDALJP2Box *CreateJUMBFBox( const GDALJP2Box* poJUMBFDescriptionBox,
+                                       int nCount,
+                                       const GDALJP2Box * const *papoBoxes );
 };
 
 /************************************************************************/
@@ -162,6 +172,8 @@ public:
     char   *pszXMPMetadata;
     char   *pszGDALMultiDomainMetadata; /* as serialized XML */
     char   *pszXMLIPR; /* if an IPR box with XML content has been found */
+
+    void    ReadBox( VSILFILE *fpVSIL, GDALJP2Box& oBox, int& iBox );
 
 public:
             GDALJP2Metadata();

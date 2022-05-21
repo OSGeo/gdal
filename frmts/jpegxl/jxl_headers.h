@@ -1,13 +1,11 @@
 /******************************************************************************
- * $Id$
  *
- * Project:  GDAL
- * Purpose:  GDALGeorefPamDataset with helper to read georeferencing and other
- *           metadata from JP2Boxes
- * Author:   Even Rouault <even dot rouault at spatialys.com>
+ * Project:  JPEG-XL Driver
+ * Purpose:  Implement GDAL JPEG-XL Support based on libjxl
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  ******************************************************************************
- * Copyright (c) 2013, Even Rouault <even dot rouault at spatialys.com>
+ * Copyright (c) 2022, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,39 +26,15 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef GDAL_JP2_ABSTRACT_DATASET_H_INCLUDED
-#define GDAL_JP2_ABSTRACT_DATASET_H_INCLUDED
+#if defined(__GNUC__)
+#pragma GCC system_header
+#endif
 
-//! @cond Doxygen_Suppress
-#include "gdalgeorefpamdataset.h"
-
-class CPL_DLL GDALJP2AbstractDataset: public GDALGeorefPamDataset
-{
-    char*               pszWldFilename = nullptr;
-
-    GDALDataset*        poMemDS = nullptr;
-    char**              papszMetadataFiles = nullptr;
-    int                 m_nWORLDFILEIndex = -1;
-
-    CPL_DISALLOW_COPY_ASSIGN(GDALJP2AbstractDataset)
-
-  protected:
-    int CloseDependentDatasets() override;
-
-  public:
-    GDALJP2AbstractDataset();
-    ~GDALJP2AbstractDataset() override;
-
-    void LoadJP2Metadata( GDALOpenInfo* poOpenInfo,
-                          const char* pszOverrideFilename = nullptr,
-                          VSILFILE* fpBox = nullptr);
-    void LoadVectorLayers( int bOpenRemoteResources = FALSE );
-
-    char **GetFileList( void ) override;
-
-    int GetLayerCount() override;
-    OGRLayer *GetLayer( int i ) override;
-};
-//! @endcond
-
-#endif /* GDAL_JP2_ABSTRACT_DATASET_H_INCLUDED */
+#include <jxl/decode.h>
+#include <jxl/encode.h>
+#include <jxl/decode_cxx.h>
+#include <jxl/encode_cxx.h>
+#ifdef HAVE_JXL_THREADS
+#include <jxl/resizable_parallel_runner.h>
+#include <jxl/resizable_parallel_runner_cxx.h>
+#endif

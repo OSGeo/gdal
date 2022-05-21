@@ -86,7 +86,7 @@ int GDALJP2AbstractDataset::CloseDependentDatasets()
 /************************************************************************/
 
 void GDALJP2AbstractDataset::LoadJP2Metadata(
-    GDALOpenInfo* poOpenInfo, const char* pszOverrideFilenameIn )
+    GDALOpenInfo* poOpenInfo, const char* pszOverrideFilenameIn, VSILFILE* fpBox )
 {
     const char* pszOverrideFilename = pszOverrideFilenameIn;
     if( pszOverrideFilename == nullptr )
@@ -142,10 +142,10 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(
 /* -------------------------------------------------------------------- */
     GDALJP2Metadata oJP2Geo;
     int nIndexUsed = -1;
-    if( ((poOpenInfo->fpL != nullptr && pszOverrideFilenameIn == nullptr &&
-         oJP2Geo.ReadAndParse(poOpenInfo->fpL, nGEOJP2Index, nGMLJP2Index,
+    if( (((fpBox != nullptr || poOpenInfo->fpL != nullptr) && pszOverrideFilenameIn == nullptr &&
+         oJP2Geo.ReadAndParse(fpBox ? fpBox : poOpenInfo->fpL, nGEOJP2Index, nGMLJP2Index,
                               nMSIGIndex, &nIndexUsed) ) ||
-        (!(poOpenInfo->fpL != nullptr && pszOverrideFilenameIn == nullptr) &&
+        (!((fpBox != nullptr || poOpenInfo->fpL != nullptr) && pszOverrideFilenameIn == nullptr) &&
          oJP2Geo.ReadAndParse( pszOverrideFilename, nGEOJP2Index, nGMLJP2Index,
                                nMSIGIndex, m_nWORLDFILEIndex, &nIndexUsed ))) &&
         (nGMLJP2Index >= 0 || nGEOJP2Index >= 0 || nMSIGIndex >= 0 ||

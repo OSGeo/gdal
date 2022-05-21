@@ -600,7 +600,10 @@ gdal_check_package(LZ4 "LZ4 compression" CAN_DISABLE)
 gdal_check_package(Blosc "Blosc compression" CAN_DISABLE)
 
 define_find_package2(JXL jxl/decode.h jxl PKGCONFIG_NAME libjxl)
-gdal_check_package(JXL "JPEG-XL compression (when used with internal libtiff)" CAN_DISABLE)
+gdal_check_package(JXL "JPEG-XL compression" CAN_DISABLE)
+
+define_find_package2(JXL_THREADS jxl/resizable_parallel_runner.h jxl_threads PKGCONFIG_NAME libjxl_threads)
+gdal_check_package(JXL_THREADS "JPEG-XL threading" CAN_DISABLE)
 
 # unused for now gdal_check_package(OpenMP "")
 gdal_check_package(Crnlib "enable gdal_DDS driver" CAN_DISABLE)

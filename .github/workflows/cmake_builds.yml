@@ -95,6 +95,25 @@ jobs:
         #
         python3 -m pip install -U pip wheel setuptools numpy
         python3 -m pip install -r $GITHUB_WORKSPACE/autotest/requirements.txt
+
+    - name: Buid libjxl
+      run: |
+        # Build libjxl
+        # libjxl being still unstable, if the main branch fails to compile/test
+        # you can replace JXL_TREEISH=main by JXL_TREEISH=sha1_of_known_working_commit
+        JXL_TREEISH=main
+        git clone https://github.com/libjxl/libjxl.git --recursive \
+            && cd libjxl \
+            && git checkout ${JXL_TREEISH} \
+            && mkdir build \
+            && cd build \
+            && sudo apt-get install -y --no-install-recommends libgflags-dev \
+            && /usr/bin/cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/usr .. \
+            && make -j$(nproc) \
+            && sudo make -j$(nproc) install \
+            && cd ../.. \
+            && rm -rf libjxl
+
     - name: Install pdfium
       run: |
         wget -q https://github.com/rouault/pdfium_build_gdal_3_5/releases/download/v1_pdfium_4933/install-ubuntu2004-rev4933.tar.gz \

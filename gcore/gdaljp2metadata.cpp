@@ -332,6 +332,251 @@ void GDALJP2Metadata::CollectGMLData( GDALJP2Box *poGMLData )
 }
 
 /************************************************************************/
+/*                              ReadBox()                               */
+/************************************************************************/
+
+void GDALJP2Metadata::ReadBox( VSILFILE *fpVSIL, GDALJP2Box& oBox, int& iBox )
+{
+#ifdef DEBUG
+    if (CPLTestBool(CPLGetConfigOption("DUMP_JP2_BOXES", "NO")))
+        oBox.DumpReadable(stderr);
+#endif
+
+/* -------------------------------------------------------------------- */
+/*      Collect geotiff box.                                            */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(oBox.GetType(),"uuid")
+        && memcmp( oBox.GetUUID(), msi_uuid2, 16 ) == 0 )
+    {
+        // Erdas JPEG2000 files sometimes contain 2 GeoTIFF UUID boxes. One
+        // that is correct, another one that does not contain correct
+        // georeferencing. Fetch at most 2 of them for later analysis.
+        if( nGeoTIFFBoxesCount == MAX_JP2GEOTIFF_BOXES )
+        {
+            CPLDebug( "GDALJP2",
+                      "Too many UUID GeoTIFF boxes. Ignoring this one" );
+        }
+        else
+        {
+            const int nGeoTIFFSize =
+                static_cast<int>( oBox.GetDataLength() );
+            GByte* pabyGeoTIFFData = oBox.ReadBoxData();
+            if( pabyGeoTIFFData == nullptr )
+            {
+                CPLDebug( "GDALJP2",
+                          "Cannot read data for UUID GeoTIFF box" );
+            }
+            else
+            {
+                pasGeoTIFFBoxes = static_cast<GDALJP2GeoTIFFBox *>(
+                    CPLRealloc(
+                        pasGeoTIFFBoxes,
+                        sizeof(GDALJP2GeoTIFFBox) *
+                            (nGeoTIFFBoxesCount + 1) ) );
+                pasGeoTIFFBoxes[nGeoTIFFBoxesCount].nGeoTIFFSize =
+                    nGeoTIFFSize;
+                pasGeoTIFFBoxes[nGeoTIFFBoxesCount].pabyGeoTIFFData =
+                    pabyGeoTIFFData;
+                ++nGeoTIFFBoxesCount;
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Collect MSIG box.                                               */
+/* -------------------------------------------------------------------- */
+    else if( EQUAL(oBox.GetType(),"uuid")
+        && memcmp( oBox.GetUUID(), msig_uuid, 16 ) == 0 )
+    {
+        if( nMSIGSize == 0 )
+        {
+            nMSIGSize = static_cast<int>( oBox.GetDataLength() );
+            pabyMSIGData = oBox.ReadBoxData();
+
+            if( nMSIGSize < 70
+                || pabyMSIGData == nullptr
+                || memcmp( pabyMSIGData, "MSIG/", 5 ) != 0 )
+            {
+                CPLFree( pabyMSIGData );
+                pabyMSIGData = nullptr;
+                nMSIGSize = 0;
+            }
+        }
+        else
+        {
+            CPLDebug("GDALJP2", "Too many UUID MSIG boxes. Ignoring this one");
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Collect XMP box.                                                */
+/* -------------------------------------------------------------------- */
+    else if( EQUAL(oBox.GetType(),"uuid")
+        && memcmp( oBox.GetUUID(), xmp_uuid, 16 ) == 0 )
+    {
+        if( pszXMPMetadata == nullptr )
+        {
+            pszXMPMetadata = reinterpret_cast<char *>(oBox.ReadBoxData());
+        }
+        else
+        {
+            CPLDebug("GDALJP2", "Too many UUID XMP boxes. Ignoring this one");
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Process asoc box looking for Labelled GML data.                 */
+/* -------------------------------------------------------------------- */
+    else if( EQUAL(oBox.GetType(),"asoc") )
+    {
+        GDALJP2Box oSubBox( fpVSIL );
+
+        if( oSubBox.ReadFirstChild( &oBox ) &&
+            EQUAL(oSubBox.GetType(),"lbl ") )
+        {
+            char *pszLabel = reinterpret_cast<char *>(oSubBox.ReadBoxData());
+            if( pszLabel != nullptr && EQUAL(pszLabel,"gml.data") )
+            {
+                CollectGMLData( &oBox );
+            }
+            CPLFree( pszLabel );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Process simple xml boxes.                                       */
+/* -------------------------------------------------------------------- */
+    else if( EQUAL(oBox.GetType(),"xml ") )
+    {
+        CPLString osBoxName;
+
+        char *pszXML = reinterpret_cast<char *>(oBox.ReadBoxData());
+        if( pszXML != nullptr &&
+            STARTS_WITH(pszXML, "<GDALMultiDomainMetadata>") )
+        {
+            if( pszGDALMultiDomainMetadata == nullptr )
+            {
+                pszGDALMultiDomainMetadata = pszXML;
+                pszXML = nullptr;
+            }
+            else
+            {
+                CPLDebug(
+                    "GDALJP2",
+                    "Too many GDAL metadata boxes. Ignoring this one");
+            }
+        }
+        else if( pszXML != nullptr )
+        {
+            osBoxName.Printf( "BOX_%d", iBox++ );
+
+            papszGMLMetadata = CSLSetNameValue( papszGMLMetadata,
+                                                osBoxName, pszXML );
+        }
+        CPLFree( pszXML );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Check for a resd box in jp2h.                                   */
+/* -------------------------------------------------------------------- */
+    else if( EQUAL(oBox.GetType(),"jp2h") )
+    {
+        GDALJP2Box oSubBox( fpVSIL );
+
+        for( oSubBox.ReadFirstChild( &oBox );
+             strlen(oSubBox.GetType()) > 0;
+             oSubBox.ReadNextChild( &oBox ) )
+        {
+            if( EQUAL(oSubBox.GetType(),"res ") )
+            {
+                GDALJP2Box oResBox( fpVSIL );
+
+                oResBox.ReadFirstChild( &oSubBox );
+
+                // We will use either the resd or resc box, which ever
+                // happens to be first.  Should we prefer resd?
+                unsigned char *pabyResData = nullptr;
+                if( oResBox.GetDataLength() == 10 &&
+                    (pabyResData = oResBox.ReadBoxData()) != nullptr )
+                {
+                    int nVertNum, nVertDen, nVertExp;
+                    int nHorzNum, nHorzDen, nHorzExp;
+
+                    nVertNum = pabyResData[0] * 256 + pabyResData[1];
+                    nVertDen = pabyResData[2] * 256 + pabyResData[3];
+                    nHorzNum = pabyResData[4] * 256 + pabyResData[5];
+                    nHorzDen = pabyResData[6] * 256 + pabyResData[7];
+                    nVertExp = pabyResData[8];
+                    nHorzExp = pabyResData[9];
+
+                    // compute in pixels/cm
+                    const double dfVertRes =
+                        (nVertNum / static_cast<double>(nVertDen)) *
+                        pow(10.0, nVertExp) / 100;
+                    const double dfHorzRes =
+                        (nHorzNum / static_cast<double>(nHorzDen)) *
+                        pow(10.0,nHorzExp)/100;
+                    CPLString osFormatter;
+
+                    papszMetadata = CSLSetNameValue(
+                        papszMetadata,
+                        "TIFFTAG_XRESOLUTION",
+                        osFormatter.Printf("%g",dfHorzRes) );
+
+                    papszMetadata = CSLSetNameValue(
+                        papszMetadata,
+                        "TIFFTAG_YRESOLUTION",
+                        osFormatter.Printf("%g",dfVertRes) );
+                    papszMetadata = CSLSetNameValue(
+                        papszMetadata,
+                        "TIFFTAG_RESOLUTIONUNIT",
+                        "3 (pixels/cm)" );
+
+                    CPLFree( pabyResData );
+                }
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Collect IPR box.                                                */
+/* -------------------------------------------------------------------- */
+    else if( EQUAL(oBox.GetType(),"jp2i") )
+    {
+        if( pszXMLIPR == nullptr )
+        {
+            pszXMLIPR = reinterpret_cast<char*>(oBox.ReadBoxData());
+            CPLXMLTreeCloser psNode(CPLParseXMLString(pszXMLIPR));
+            if( psNode == nullptr )
+            {
+                CPLFree(pszXMLIPR);
+                pszXMLIPR = nullptr;
+            }
+        }
+        else
+        {
+            CPLDebug("GDALJP2", "Too many IPR boxes. Ignoring this one");
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Process JUMBF super box                                         */
+/* -------------------------------------------------------------------- */
+    else if( EQUAL(oBox.GetType(),"jumb") )
+    {
+        GDALJP2Box oSubBox(fpVSIL);
+
+        for( oSubBox.ReadFirstChild( &oBox );
+             strlen(oSubBox.GetType()) > 0;
+             oSubBox.ReadNextChild( &oBox ) )
+        {
+            ReadBox( fpVSIL, oSubBox, iBox );
+        }
+    }
+
+}
+
+/************************************************************************/
 /*                             ReadBoxes()                              */
 /************************************************************************/
 
@@ -346,228 +591,7 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
     int iBox = 0;
     while( strlen(oBox.GetType()) > 0 )
     {
-#ifdef DEBUG
-        if (CPLTestBool(CPLGetConfigOption("DUMP_JP2_BOXES", "NO")))
-            oBox.DumpReadable(stderr);
-#endif
-
-/* -------------------------------------------------------------------- */
-/*      Collect geotiff box.                                            */
-/* -------------------------------------------------------------------- */
-        if( EQUAL(oBox.GetType(),"uuid")
-            && memcmp( oBox.GetUUID(), msi_uuid2, 16 ) == 0 )
-        {
-            // Erdas JPEG2000 files sometimes contain 2 GeoTIFF UUID boxes. One
-            // that is correct, another one that does not contain correct
-            // georeferencing. Fetch at most 2 of them for later analysis.
-            if( nGeoTIFFBoxesCount == MAX_JP2GEOTIFF_BOXES )
-            {
-                CPLDebug( "GDALJP2",
-                          "Too many UUID GeoTIFF boxes. Ignoring this one" );
-            }
-            else
-            {
-                const int nGeoTIFFSize =
-                    static_cast<int>( oBox.GetDataLength() );
-                GByte* pabyGeoTIFFData = oBox.ReadBoxData();
-                if( pabyGeoTIFFData == nullptr )
-                {
-                    CPLDebug( "GDALJP2",
-                              "Cannot read data for UUID GeoTIFF box" );
-                }
-                else
-                {
-                    pasGeoTIFFBoxes = static_cast<GDALJP2GeoTIFFBox *>(
-                        CPLRealloc(
-                            pasGeoTIFFBoxes,
-                            sizeof(GDALJP2GeoTIFFBox) *
-                                (nGeoTIFFBoxesCount + 1) ) );
-                    pasGeoTIFFBoxes[nGeoTIFFBoxesCount].nGeoTIFFSize =
-                        nGeoTIFFSize;
-                    pasGeoTIFFBoxes[nGeoTIFFBoxesCount].pabyGeoTIFFData =
-                        pabyGeoTIFFData;
-                    ++nGeoTIFFBoxesCount;
-                }
-            }
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Collect MSIG box.                                               */
-/* -------------------------------------------------------------------- */
-        if( EQUAL(oBox.GetType(),"uuid")
-            && memcmp( oBox.GetUUID(), msig_uuid, 16 ) == 0 )
-        {
-            if( nMSIGSize == 0 )
-            {
-                nMSIGSize = static_cast<int>( oBox.GetDataLength() );
-                pabyMSIGData = oBox.ReadBoxData();
-
-                if( nMSIGSize < 70
-                    || pabyMSIGData == nullptr
-                    || memcmp( pabyMSIGData, "MSIG/", 5 ) != 0 )
-                {
-                    CPLFree( pabyMSIGData );
-                    pabyMSIGData = nullptr;
-                    nMSIGSize = 0;
-                }
-            }
-            else
-            {
-                CPLDebug("GDALJP2", "Too many UUID MSIG boxes. Ignoring this one");
-            }
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Collect XMP box.                                                */
-/* -------------------------------------------------------------------- */
-        if( EQUAL(oBox.GetType(),"uuid")
-            && memcmp( oBox.GetUUID(), xmp_uuid, 16 ) == 0 )
-        {
-            if( pszXMPMetadata == nullptr )
-            {
-                pszXMPMetadata = reinterpret_cast<char *>(oBox.ReadBoxData());
-            }
-            else
-            {
-                CPLDebug("GDALJP2", "Too many UUID XMP boxes. Ignoring this one");
-            }
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Process asoc box looking for Labelled GML data.                 */
-/* -------------------------------------------------------------------- */
-        if( EQUAL(oBox.GetType(),"asoc") )
-        {
-            GDALJP2Box oSubBox( fpVSIL );
-
-            if( oSubBox.ReadFirstChild( &oBox ) &&
-                EQUAL(oSubBox.GetType(),"lbl ") )
-            {
-                char *pszLabel = reinterpret_cast<char *>(oSubBox.ReadBoxData());
-                if( pszLabel != nullptr && EQUAL(pszLabel,"gml.data") )
-                {
-                    CollectGMLData( &oBox );
-                }
-                CPLFree( pszLabel );
-            }
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Process simple xml boxes.                                       */
-/* -------------------------------------------------------------------- */
-        if( EQUAL(oBox.GetType(),"xml ") )
-        {
-            CPLString osBoxName;
-
-            char *pszXML = reinterpret_cast<char *>(oBox.ReadBoxData());
-            if( pszXML != nullptr &&
-                STARTS_WITH(pszXML, "<GDALMultiDomainMetadata>") )
-            {
-                if( pszGDALMultiDomainMetadata == nullptr )
-                {
-                    pszGDALMultiDomainMetadata = pszXML;
-                    pszXML = nullptr;
-                }
-                else
-                {
-                    CPLDebug(
-                        "GDALJP2",
-                        "Too many GDAL metadata boxes. Ignoring this one");
-                }
-            }
-            else if( pszXML != nullptr )
-            {
-                osBoxName.Printf( "BOX_%d", iBox++ );
-
-                papszGMLMetadata = CSLSetNameValue( papszGMLMetadata,
-                                                    osBoxName, pszXML );
-            }
-            CPLFree( pszXML );
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Check for a resd box in jp2h.                                   */
-/* -------------------------------------------------------------------- */
-        if( EQUAL(oBox.GetType(),"jp2h") )
-        {
-            GDALJP2Box oSubBox( fpVSIL );
-
-            for( oSubBox.ReadFirstChild( &oBox );
-                 strlen(oSubBox.GetType()) > 0;
-                 oSubBox.ReadNextChild( &oBox ) )
-            {
-                if( EQUAL(oSubBox.GetType(),"res ") )
-                {
-                    GDALJP2Box oResBox( fpVSIL );
-
-                    oResBox.ReadFirstChild( &oSubBox );
-
-                    // We will use either the resd or resc box, which ever
-                    // happens to be first.  Should we prefer resd?
-                    unsigned char *pabyResData = nullptr;
-                    if( oResBox.GetDataLength() == 10 &&
-                        (pabyResData = oResBox.ReadBoxData()) != nullptr )
-                    {
-                        int nVertNum, nVertDen, nVertExp;
-                        int nHorzNum, nHorzDen, nHorzExp;
-
-                        nVertNum = pabyResData[0] * 256 + pabyResData[1];
-                        nVertDen = pabyResData[2] * 256 + pabyResData[3];
-                        nHorzNum = pabyResData[4] * 256 + pabyResData[5];
-                        nHorzDen = pabyResData[6] * 256 + pabyResData[7];
-                        nVertExp = pabyResData[8];
-                        nHorzExp = pabyResData[9];
-
-                        // compute in pixels/cm
-                        const double dfVertRes =
-                            (nVertNum / static_cast<double>(nVertDen)) *
-                            pow(10.0, nVertExp) / 100;
-                        const double dfHorzRes =
-                            (nHorzNum / static_cast<double>(nHorzDen)) *
-                            pow(10.0,nHorzExp)/100;
-                        CPLString osFormatter;
-
-                        papszMetadata = CSLSetNameValue(
-                            papszMetadata,
-                            "TIFFTAG_XRESOLUTION",
-                            osFormatter.Printf("%g",dfHorzRes) );
-
-                        papszMetadata = CSLSetNameValue(
-                            papszMetadata,
-                            "TIFFTAG_YRESOLUTION",
-                            osFormatter.Printf("%g",dfVertRes) );
-                        papszMetadata = CSLSetNameValue(
-                            papszMetadata,
-                            "TIFFTAG_RESOLUTIONUNIT",
-                            "3 (pixels/cm)" );
-
-                        CPLFree( pabyResData );
-                    }
-                }
-            }
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Collect IPR box.                                                */
-/* -------------------------------------------------------------------- */
-        if( EQUAL(oBox.GetType(),"jp2i") )
-        {
-            if( pszXMLIPR == nullptr )
-            {
-                pszXMLIPR = reinterpret_cast<char*>(oBox.ReadBoxData());
-                CPLXMLTreeCloser psNode(CPLParseXMLString(pszXMLIPR));
-                if( psNode == nullptr )
-                {
-                    CPLFree(pszXMLIPR);
-                    pszXMLIPR = nullptr;
-                }
-            }
-            else
-            {
-                CPLDebug("GDALJP2", "Too many IPR boxes. Ignoring this one");
-            }
-        }
-
+        ReadBox( fpVSIL, oBox, iBox );
         if (!oBox.ReadNext())
             break;
     }

@@ -65,7 +65,7 @@ typedef struct {
         GUInt32          tdir_offset;    /* byte offset to field data */
 } GDALEXIFTIFFDirEntry;
 
-GByte* EXIFCreate(char**     papszEXIFMetadata,
+GByte CPL_DLL* EXIFCreate(char**     papszEXIFMetadata,
                   GByte*     pabyThumbnail,
                   GUInt32    nThumbnailSize,
                   GUInt32    nThumbnailWidth,
