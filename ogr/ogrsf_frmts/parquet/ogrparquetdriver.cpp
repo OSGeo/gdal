@@ -47,6 +47,13 @@ template<size_t N> constexpr int constexpr_length( const char (&) [N] )
 
 static int OGRParquetDriverIdentify( GDALOpenInfo* poOpenInfo )
 {
+#ifdef GDAL_USE_ARROWDATASET
+    if( poOpenInfo->bIsDirectory )
+        return -1;
+#endif
+    if( STARTS_WITH(poOpenInfo->pszFilename, "PARQUET:") )
+        return TRUE;
+
     // See https://github.com/apache/parquet-format#file-format
     bool bRet = false;
     constexpr const char SIGNATURE[] = "PAR1";
@@ -73,25 +80,452 @@ static int OGRParquetDriverIdentify( GDALOpenInfo* poOpenInfo )
     return bRet;
 }
 
+#ifdef GDAL_USE_ARROWDATASET
+
+/************************************************************************/
+/*                         VSIArrowFileSystem                           */
+/************************************************************************/
+
+class VSIArrowFileSystem final: public arrow::fs::FileSystem
+{
+    const std::string m_osQueryParameters;
+
+public:
+
+    explicit VSIArrowFileSystem(const std::string& osQueryParameters):
+        m_osQueryParameters(osQueryParameters)
+    {}
+
+    std::string type_name() const override { return "vsi"; }
+
+    using arrow::fs::FileSystem::Equals;
+    bool Equals(const arrow::fs::FileSystem& other) const override
+    {
+        const auto poOther = dynamic_cast<const VSIArrowFileSystem*>(&other);
+        return poOther != nullptr && poOther->m_osQueryParameters == m_osQueryParameters;
+    }
+
+    using arrow::fs::FileSystem::GetFileInfo;
+    arrow::Result<arrow::fs::FileInfo> GetFileInfo(const std::string& path) override
+    {
+        auto fileType = arrow::fs::FileType::Unknown;
+        VSIStatBufL sStat;
+        if( VSIStatL(path.c_str(), &sStat) == 0 )
+        {
+            if( VSI_ISREG(sStat.st_mode) )
+                fileType = arrow::fs::FileType::File;
+            else if( VSI_ISDIR(sStat.st_mode) )
+                fileType = arrow::fs::FileType::Directory;
+        }
+        else
+        {
+            fileType = arrow::fs::FileType::NotFound;
+        }
+        arrow::fs::FileInfo info(path, fileType);
+        if( fileType == arrow::fs::FileType::File )
+            info.set_size(sStat.st_size);
+        return info;
+    }
+
+    arrow::Result<arrow::fs::FileInfoVector> GetFileInfo(
+                        const arrow::fs::FileSelector& select) override
+    {
+        arrow::fs::FileInfoVector res;
+        VSIDIR* psDir = VSIOpenDir(select.base_dir.c_str(),
+                                   select.recursive ? -1 : 0,
+                                   nullptr);
+        if( psDir == nullptr )
+            return res;
+
+        bool bParquetFound = false;
+        const int nMaxNonParquetFiles = atoi(
+            CPLGetConfigOption("OGR_PARQUET_MAX_NON_PARQUET_FILES", "100"));
+        const int nMaxListedFiles = atoi(
+            CPLGetConfigOption("OGR_PARQUET_MAX_LISTED_FILES", "1000000"));
+        while( const auto psEntry = VSIGetNextDirEntry(psDir) )
+        {
+            if( !bParquetFound )
+                bParquetFound = EQUAL(CPLGetExtension(psEntry->pszName), "parquet");
+
+            const std::string osFilename =
+                select.base_dir + '/' + psEntry->pszName;
+            int nMode = psEntry->nMode;
+            if( !psEntry->bModeKnown )
+            {
+                VSIStatBufL sStat;
+                if( VSIStatL(osFilename.c_str(), &sStat) == 0 )
+                    nMode = sStat.st_mode;
+            }
+
+            auto fileType = arrow::fs::FileType::Unknown;
+            if( VSI_ISREG(nMode) )
+                fileType = arrow::fs::FileType::File;
+            else if( VSI_ISDIR(nMode) )
+                fileType = arrow::fs::FileType::Directory;
+
+            arrow::fs::FileInfo info(osFilename, fileType);
+            if( fileType == arrow::fs::FileType::File &&
+                psEntry->bSizeKnown )
+            {
+                info.set_size(psEntry->nSize);
+            }
+            res.push_back(info);
+
+            // Avoid iterating over too many files if there's no likely parquet
+            // files.
+            if( static_cast<int>(res.size()) == nMaxNonParquetFiles && !bParquetFound )
+                break;
+            if( static_cast<int>(res.size()) == nMaxListedFiles )
+                break;
+        }
+        VSICloseDir(psDir);
+        return res;
+    }
+
+    arrow::Status CreateDir(const std::string& /*path*/, bool /*recursive*/ = true) override
+    {
+        return arrow::Status::IOError("CreateDir() unimplemented");
+    }
+
+    arrow::Status DeleteDir(const std::string& /*path*/) override
+    {
+        return arrow::Status::IOError("DeleteDir() unimplemented");
+    }
+
+    arrow::Status DeleteDirContents(const std::string& /*path*/
+#if ARROW_VERSION_MAJOR >= 8
+                                    , bool /*missing_dir_ok*/ = false
+#endif
+                                   ) override
+    {
+        return arrow::Status::IOError("DeleteDirContents() unimplemented");
+    }
+
+    arrow::Status DeleteRootDirContents() override
+    {
+        return arrow::Status::IOError("DeleteRootDirContents() unimplemented");
+    }
+
+    arrow::Status DeleteFile(const std::string& /*path*/) override
+    {
+        return arrow::Status::IOError("DeleteFile() unimplemented");
+    }
+
+    arrow::Status Move(const std::string& /*src*/, const std::string& /*dest*/) override
+    {
+        return arrow::Status::IOError("Move() unimplemented");
+    }
+
+    arrow::Status CopyFile(const std::string& /*src*/, const std::string& /*dest*/) override
+    {
+        return arrow::Status::IOError("CopyFile() unimplemented");
+    }
+
+    using arrow::fs::FileSystem::OpenInputStream;
+    arrow::Result<std::shared_ptr<arrow::io::InputStream>> OpenInputStream(const std::string& path) override
+    {
+        return OpenInputFile(path);
+    }
+
+    using arrow::fs::FileSystem::OpenInputFile;
+    arrow::Result<std::shared_ptr<arrow::io::RandomAccessFile>> OpenInputFile(const std::string& path) override
+    {
+        std::string osPath(path);
+        osPath += m_osQueryParameters;
+        CPLDebugOnly("PARQUET", "Opening %s", osPath.c_str());
+        VSILFILE* fp = VSIFOpenL(osPath.c_str(), "rb");
+        if( fp == nullptr )
+            return arrow::Status::IOError("OpenInputFile() failed for " + osPath);
+        return std::make_shared<OGRArrowRandomAccessFile>(fp);
+    }
+
+    using arrow::fs::FileSystem::OpenOutputStream;
+    arrow::Result<std::shared_ptr<arrow::io::OutputStream>> OpenOutputStream(
+        const std::string& /*path*/,
+        const std::shared_ptr<const arrow::KeyValueMetadata>& /* metadata */ ) override
+    {
+        return arrow::Status::IOError("OpenOutputStream() unimplemented");
+    }
+
+    arrow::Result<std::shared_ptr<arrow::io::OutputStream>> OpenAppendStream(
+        const std::string& /*path*/,
+        const std::shared_ptr<const arrow::KeyValueMetadata>& /* metadata */ ) override
+    {
+        return arrow::Status::IOError("OpenAppendStream() unimplemented");
+    }
+};
+
+/************************************************************************/
+/*                      OpenFromDatasetFactory()                        */
+/************************************************************************/
+
+static GDALDataset* OpenFromDatasetFactory(const std::string& osBasePath,
+                                           const std::shared_ptr<arrow::dataset::DatasetFactory>& factory)
+{
+    std::shared_ptr<arrow::dataset::Dataset> dataset;
+    PARQUET_ASSIGN_OR_THROW(dataset, factory->Finish());
+
+    std::shared_ptr<arrow::dataset::ScannerBuilder> scannerBuilder;
+    PARQUET_ASSIGN_OR_THROW(scannerBuilder, dataset->NewScan());
+
+    auto poMemoryPool = arrow::MemoryPool::CreateDefault();
+
+    PARQUET_THROW_NOT_OK(scannerBuilder->Pool(poMemoryPool.get()));
+
+    const bool bIsVSI = STARTS_WITH(osBasePath.c_str(), "/vsi");
+    if( bIsVSI )
+    {
+        PARQUET_THROW_NOT_OK(scannerBuilder->FragmentReadahead(2));
+        // scannerBuilder->BatchSize(10);
+    }
+
+    std::shared_ptr<arrow::dataset::Scanner> scanner;
+    PARQUET_ASSIGN_OR_THROW(scanner, scannerBuilder->Finish());
+
+    auto poDS = cpl::make_unique<OGRParquetDataset>(std::move(poMemoryPool));
+    auto poLayer = cpl::make_unique<OGRParquetDatasetLayer>(
+                        poDS.get(),
+                        CPLGetBasename(osBasePath.c_str()),
+                        scanner,
+                        scannerBuilder->schema());
+    poDS->SetLayer(std::move(poLayer));
+    return poDS.release();
+}
+
+/************************************************************************/
+/*                         GetFileSystem()                              */
+/************************************************************************/
+
+static  std::shared_ptr<arrow::fs::FileSystem> GetFileSystem(std::string& osBasePathInOut,
+                                                             const std::string& osQueryParameters)
+{
+    // Instanciate file system:
+    // - VSIArrowFileSystem implementation for /vsi files
+    // - base implementation for local files
+    std::shared_ptr<arrow::fs::FileSystem> fs;
+    const bool bIsVSI = STARTS_WITH(osBasePathInOut.c_str(), "/vsi");
+    if( bIsVSI ||
+        CPLTestBool(CPLGetConfigOption("OGR_PARQUET_USE_VSI", "NO")) )
+    {
+        fs = std::make_shared<VSIArrowFileSystem>(osQueryParameters);
+    }
+    else
+    {
+        // FileSystemFromUriOrPath() doesn't like relative paths
+        // so transform them to absolute.
+        std::string osPath(osBasePathInOut);
+        if( CPLIsFilenameRelative(osPath.c_str()) )
+        {
+            char* pszCurDir = CPLGetCurrentDir();
+            if( pszCurDir == nullptr )
+                return nullptr;
+            osPath = CPLFormFilename(pszCurDir, osPath.c_str(), nullptr);
+            CPLFree(pszCurDir);
+        }
+        PARQUET_ASSIGN_OR_THROW(
+            fs,
+            arrow::fs::FileSystemFromUriOrPath(osPath));
+    }
+    return fs;
+}
+
+/************************************************************************/
+/*                  OpenParquetDatasetWithMetadata()                    */
+/************************************************************************/
+
+static GDALDataset* OpenParquetDatasetWithMetadata(const std::string& osBasePathIn,
+                                                   const char* pszMetadataFile,
+                                                   const std::string& osQueryParameters)
+{
+    std::string osBasePath(osBasePathIn);
+    auto fs = GetFileSystem(osBasePath, osQueryParameters);
+
+    arrow::dataset::ParquetFactoryOptions options;
+    auto partitioningFactory = arrow::dataset::HivePartitioning::MakeFactory();
+    options.partitioning = arrow::dataset::PartitioningOrFactory(partitioningFactory);
+
+    std::shared_ptr<arrow::dataset::DatasetFactory> factory;
+    PARQUET_ASSIGN_OR_THROW(
+        factory,
+        arrow::dataset::ParquetDatasetFactory::Make(
+            osBasePath + '/' + pszMetadataFile,
+            fs,
+            std::make_shared<arrow::dataset::ParquetFileFormat>(),
+            options));
+
+    return OpenFromDatasetFactory(osBasePath, factory);
+}
+
+/************************************************************************/
+/*                 OpenParquetDatasetWithoutMetadata()                  */
+/************************************************************************/
+
+static GDALDataset* OpenParquetDatasetWithoutMetadata(const std::string& osBasePathIn,
+                                                      const std::string& osQueryParameters)
+{
+    std::string osBasePath(osBasePathIn);
+    auto fs = GetFileSystem(osBasePath, osQueryParameters);
+
+    arrow::dataset::FileSystemFactoryOptions options;
+    auto partitioningFactory = arrow::dataset::HivePartitioning::MakeFactory();
+    options.partitioning = arrow::dataset::PartitioningOrFactory(partitioningFactory);
+
+    arrow::fs::FileSelector selector;
+    selector.base_dir = osBasePath;
+    selector.recursive = true;
+
+    std::shared_ptr<arrow::dataset::DatasetFactory> factory;
+    PARQUET_ASSIGN_OR_THROW(
+        factory,
+        arrow::dataset::FileSystemDatasetFactory::Make(
+            fs,
+            selector,
+            std::make_shared<arrow::dataset::ParquetFileFormat>(),
+            options));
+
+    return OpenFromDatasetFactory(osBasePath, factory);
+}
+
+#endif
+
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
 static GDALDataset *OGRParquetDriverOpen( GDALOpenInfo* poOpenInfo )
 {
-    if( !OGRParquetDriverIdentify(poOpenInfo) ||
-        poOpenInfo->eAccess == GA_Update )
+    if( poOpenInfo->eAccess == GA_Update )
+        return nullptr;
+
+#ifdef GDAL_USE_ARROWDATASET
+    std::string osBasePath(poOpenInfo->pszFilename);
+    std::string osQueryParameters;
+    const bool bStartedWithParquetPrefix = STARTS_WITH(osBasePath.c_str(), "PARQUET:");
+
+    if( bStartedWithParquetPrefix )
+    {
+        osBasePath = osBasePath.substr(strlen("PARQUET:"));
+    }
+
+    // Little trick to allow using syntax of
+    // https://github.com/opengeospatial/geoparquet/discussions/101
+    // ogrinfo "/vsicurl/https://ai4edataeuwest.blob.core.windows.net/us-census/2020/cb_2020_us_vtd_500k.parquet?${SAS_TOKEN}"
+    if( STARTS_WITH(osBasePath.c_str(), "/vsicurl/") )
+    {
+        const auto nPos = osBasePath.find(".parquet?st=");
+        if( nPos != std::string::npos )
+        {
+            osQueryParameters = osBasePath.substr(nPos + strlen(".parquet"));
+            osBasePath.resize(nPos + strlen(".parquet"));
+        }
+    }
+
+    if( bStartedWithParquetPrefix || poOpenInfo->bIsDirectory ||
+        !osQueryParameters.empty() )
+    {
+        VSIStatBufL sStat;
+        if( !osBasePath.empty() && osBasePath.back() == '/' )
+            osBasePath.resize(osBasePath.size() - 1);
+        std::string osMetadataPath =
+            CPLFormFilename(osBasePath.c_str(), "_metadata", nullptr);
+        if( CPLTestBool(CPLGetConfigOption("OGR_PARQUET_USE_METADATA_FILE", "YES")) &&
+            VSIStatL( (osMetadataPath + osQueryParameters).c_str(), &sStat ) == 0 )
+        {
+            // If there's a _metadata file, then use it to avoid listing files
+            try
+            {
+                return OpenParquetDatasetWithMetadata(osBasePath,
+                                                      "_metadata",
+                                                      osQueryParameters);
+            }
+            catch( const std::exception& e)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Parquet exception: %s", e.what());
+            }
+            return nullptr;
+        }
+        else
+        {
+            bool bLikelyParquetDataset = false;
+            if( poOpenInfo->bIsDirectory )
+            {
+                // Detect if the directory contains .parquet files, or
+                // subdirectories with a name of the form "key=value", typical
+                // of HIVE partitioning.
+                char** papszFiles = VSIReadDir(osBasePath.c_str());
+                for( char** papszIter = papszFiles; papszIter && *papszIter; ++papszIter )
+                {
+                    if( EQUAL(CPLGetExtension(*papszIter), "parquet") )
+                    {
+                        bLikelyParquetDataset = true;
+                        break;
+                    }
+                    else if( strchr(*papszIter, '=') )
+                    {
+                        // HIVE partitioning
+                        if( VSIStatL( CPLFormFilename(osBasePath.c_str(),
+                                        *papszIter, nullptr), &sStat ) == 0 &&
+                            VSI_ISDIR(sStat.st_mode) )
+                        {
+                            bLikelyParquetDataset = true;
+                            break;
+                        }
+                    }
+                }
+                CSLDestroy(papszFiles);
+            }
+
+            if( bStartedWithParquetPrefix || bLikelyParquetDataset )
+            {
+                try
+                {
+                    return OpenParquetDatasetWithoutMetadata(osBasePath,
+                                                             osQueryParameters);
+                }
+                catch( const std::exception& e)
+                {
+                    // If we aren't quite sure that the passed file name is
+                    // a directory, then silently continue
+                    if( poOpenInfo->bIsDirectory )
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Parquet exception: %s", e.what());
+                        return nullptr;
+                    }
+                }
+            }
+        }
+
+        if( poOpenInfo->bIsDirectory )
+            return nullptr;
+    }
+#endif
+
+    if( !OGRParquetDriverIdentify(poOpenInfo) )
     {
         return nullptr;
+    }
+
+    std::string osFilename(poOpenInfo->pszFilename);
+    if( STARTS_WITH(poOpenInfo->pszFilename, "PARQUET:") )
+    {
+        osFilename = poOpenInfo->pszFilename + strlen("PARQUET:");
     }
 
     try
     {
         std::shared_ptr<arrow::io::RandomAccessFile> infile;
-        if( STARTS_WITH(poOpenInfo->pszFilename, "/vsi") ||
+        if( STARTS_WITH(osFilename.c_str(), "/vsi") ||
             CPLTestBool(CPLGetConfigOption("OGR_PARQUET_USE_VSI", "NO")) )
         {
             VSILFILE* fp = poOpenInfo->fpL;
+            if( fp == nullptr )
+            {
+                fp = VSIFOpenL(osFilename.c_str(), "rb");
+                if( fp == nullptr )
+                    return nullptr;
+            }
             poOpenInfo->fpL = nullptr;
             infile = std::make_shared<OGRArrowRandomAccessFile>(fp);
         }
@@ -99,7 +533,7 @@ static GDALDataset *OGRParquetDriverOpen( GDALOpenInfo* poOpenInfo )
         {
             PARQUET_ASSIGN_OR_THROW(
               infile,
-              arrow::io::ReadableFile::Open(poOpenInfo->pszFilename));
+              arrow::io::ReadableFile::Open(osFilename));
         }
 
         // Open Parquet file reader
@@ -116,7 +550,7 @@ static GDALDataset *OGRParquetDriverOpen( GDALOpenInfo* poOpenInfo )
         auto poDS = cpl::make_unique<OGRParquetDataset>(std::move(poMemoryPool));
         auto poLayer = cpl::make_unique<OGRParquetLayer>(
             poDS.get(),
-            CPLGetBasename(poOpenInfo->pszFilename),
+            CPLGetBasename(osFilename.c_str()),
             std::move(arrow_reader));
         poDS->SetLayer(std::move(poLayer));
         return poDS.release();
@@ -342,6 +776,10 @@ void RegisterOGRParquet()
     poDriver->pfnOpen = OGRParquetDriverOpen;
     poDriver->pfnIdentify = OGRParquetDriverIdentify;
     poDriver->pfnCreate = OGRParquetDriverCreate;
+
+#ifdef GDAL_USE_ARROWDATASET
+    poDriver->SetMetadataItem("ARROW_DATASET", "YES");
+#endif
 
     GetGDALDriverManager()->RegisterDriver(poDriver.release());
 }

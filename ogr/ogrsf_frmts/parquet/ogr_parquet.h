@@ -31,26 +31,46 @@
 
 #include "ogrsf_frmts.h"
 
+#include <functional>
 #include <map>
 
 #include "../arrow_common/ogr_arrow.h"
 #include "ogr_include_parquet.h"
 
 /************************************************************************/
-/*                        OGRParquetLayer                               */
+/*                       OGRParquetLayerBase                            */
 /************************************************************************/
 
 class OGRParquetDataset;
 
-class OGRParquetLayer final: public OGRArrowLayer
-
+class OGRParquetLayerBase CPL_NON_FINAL: public OGRArrowLayer
 {
-        OGRParquetLayer(const OGRParquetLayer&) = delete;
-        OGRParquetLayer& operator= (const OGRParquetLayer&) = delete;
+        OGRParquetLayerBase(const OGRParquetLayerBase&) = delete;
+        OGRParquetLayerBase& operator= (const OGRParquetLayerBase&) = delete;
+
+protected:
+                            OGRParquetLayerBase(OGRParquetDataset* poDS,
+                                                const char* pszLayerName);
 
         OGRParquetDataset*                          m_poDS = nullptr;
-        std::unique_ptr<parquet::arrow::FileReader> m_poArrowReader{};
         std::shared_ptr<arrow::RecordBatchReader>   m_poRecordBatchReader{};
+
+        void                LoadGeoMetadata(const std::shared_ptr<const arrow::KeyValueMetadata>& kv_metadata);
+        bool                DealWithGeometryColumn(int iFieldIdx,
+                                                   const std::shared_ptr<arrow::Field>& field,
+                                                   std::function<OGRwkbGeometryType(void)> computeGeometryTypeFun);
+public:
+        int             TestCapability(const char* ) override;
+};
+
+/************************************************************************/
+/*                        OGRParquetLayer                               */
+/************************************************************************/
+
+class OGRParquetLayer final: public OGRParquetLayerBase
+
+{
+        std::unique_ptr<parquet::arrow::FileReader> m_poArrowReader{};
         bool                                        m_bSingleBatch = false;
         int                                         m_iFIDParquetColumn = -1;
         std::vector<std::shared_ptr<arrow::DataType>> m_apoArrowDataTypes{}; // .size() == field ocunt
@@ -65,7 +85,6 @@ class OGRParquetLayer final: public OGRArrowLayer
         CPLStringList                               m_aosFeatherMetadata{};
 
         void               EstablishFeatureDefn();
-        void               LoadGeoMetadata();
         bool               ReadNextBatch() override;
         OGRwkbGeometryType ComputeGeometryColumnType(int iGeomCol, int iParquetCol) const;
         void               CreateFieldFromSchema(
@@ -103,6 +122,39 @@ public:
         const std::vector<int>& GetMapFieldIndexToParquetColumn() const { return m_anMapFieldIndexToParquetColumn; }
         const std::vector<std::shared_ptr<arrow::DataType>>& GetArrowFieldTypes() const { return m_apoArrowDataTypes; }
 };
+
+/************************************************************************/
+/*                      OGRParquetDatasetLayer                          */
+/************************************************************************/
+
+#ifdef GDAL_USE_ARROWDATASET
+
+class OGRParquetDatasetLayer final: public OGRParquetLayerBase
+{
+        std::shared_ptr<arrow::dataset::Scanner> m_poScanner{};
+
+        void               EstablishFeatureDefn(const std::shared_ptr<arrow::Schema>& schema);
+
+protected:
+        std::string        GetDriverUCName() const override { return "PARQUET"; }
+        bool               ReadNextBatch() override;
+
+public:
+                           OGRParquetDatasetLayer(
+                               OGRParquetDataset* poDS,
+                               const char* pszLayerName,
+                               const std::shared_ptr<arrow::dataset::Scanner>& scanner,
+                               const std::shared_ptr<arrow::Schema>& schema);
+
+        void               ResetReading() override;
+        GIntBig            GetFeatureCount(int bForce) override;
+
+        // TODO
+        std::unique_ptr<OGRFieldDomain> BuildDomain(const std::string& /*osDomainName*/,
+                                                    int /*iFieldIndex*/) const override { return nullptr; }
+};
+
+#endif
 
 /************************************************************************/
 /*                         OGRParquetDataset                            */

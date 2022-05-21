@@ -659,6 +659,10 @@ gdal_check_package(LURATECH "Enable JP2Lura driver" CAN_DISABLE)
 gdal_check_package(Arrow "Apache Arrow C++ library" CONFIG CAN_DISABLE)
 if (Arrow_FOUND)
     gdal_check_package(Parquet "Apache Parquet C++ library" CONFIG PATHS ${Arrow_DIR} CAN_DISABLE)
+    gdal_check_package(ArrowDataset "Apache ArrowDataset C++ library" CONFIG PATHS ${Arrow_DIR} CAN_DISABLE)
+    if (Parquet_FOUND AND NOT ArrowDataset_FOUND)
+        message(WARNING "Parquet library found, but not ArrowDataset: partitioned datasets will not be supported")
+    endif()
 endif()
 
 # bindings
