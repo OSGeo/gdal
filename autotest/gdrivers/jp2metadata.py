@@ -56,7 +56,7 @@ def test_jp2metadata_1():
 # Test Pleiades & Pleiades Neo imagery metadata
 
 
-def _test_jp2metadata(file_path):
+def _test_jp2metadata(file_path, rpc_values_to_check=None):
     try:
         os.remove(f'{file_path}.aux.xml')
     except OSError:
@@ -102,6 +102,11 @@ def _test_jp2metadata(file_path):
     if empty_keys:
         pytest.fail(f'empty key.s : {", ".join(empty_keys)}')
 
+    if rpc_values_to_check is not None:
+        for k, v in rpc_values_to_check.items():
+            if md_rpc[k] != v:
+                pytest.fail(f'the value of the RPC key : {k} is not valid')
+
     ds = None
 
     assert not os.path.exists(f'{file_path}.aux.xml')
@@ -110,13 +115,29 @@ def _test_jp2metadata(file_path):
 def test_jp2metadata_2():
     # Pleiades product description https://content.satimagingcorp.com/media/pdf/User_Guide_Pleiades.pdf
     file_path = 'data/jpeg2000/IMG_md_ple_R1C1.jp2'
-    _test_jp2metadata(file_path)
+    rpc_values_to_check = {
+        'LAT_OFF': '-37.8185709405155',
+        'SAMP_OFF': '5187',
+        'LAT_SCALE': '0.056013496012568',
+        'LONG_SCALE': '0.1152662335048689',
+        'LINE_DEN_COEFF': ' 1 0.0001616419179600887 -0.0003138230500963576 -1.394071985006734e-06 -6.696094164696539e-06 -5.345869412075188e-09 1.763447020374064e-08 1.570099327763788e-05 -2.742185667248469e-05 2.311214210508507e-05 -1.355093965247957e-10 2.888456971707225e-08 8.124756826520027e-07 7.468753872581231e-09 5.656409063390933e-07 8.695797176083266e-06 -3.572353935073523e-09 -8.051282577435379e-11 1.691147472316222e-08 -6.436246171675777e-11',
+        'SAMP_NUM_COEFF': ' 0.0002609410706716954 1.001026213740965 -0.0003819289116566809 0.0001240788067018346 0.0005862035015589599 5.081629489519709e-05 -1.435215968291365e-05 -0.0002758832786884909 0.0001043228128012142 -1.375374301980545e-08 5.424360099410591e-08 -5.026010178171814e-05 0.0001886885841229406 -6.535315557200323e-05 3.723625930897949e-05 0.000324332729058834 9.492897372587203e-09 -6.383348194827217e-09 -3.519296777850624e-08 -8.099247649030343e-09',
+    }
+    _test_jp2metadata(file_path, rpc_values_to_check=rpc_values_to_check)
 
 
 def test_jp2metadata_2b():
     # Pleiades Neo product
     file_path = 'data/jpeg2000/IMG_md_pneo_R1C1.jp2'
-    _test_jp2metadata(file_path)
+    rpc_values_to_check = {
+        'LAT_OFF': '12.807914369557892',
+        'SAMP_OFF': '5864',
+        'LAT_SCALE': '0.06544078829767308',
+        'LONG_SCALE': '0.06456467877685057',
+        'LINE_DEN_COEFF': ' 1 0.00101120491477 0.00352363792876 1.54038387462e-06 -5.25674523513e-06 -5.82954187807e-08 -4.38661879766e-07 3.65133101845e-06 -1.87290332218e-06 5.73319333615e-06 1.04740906969e-09 -2.80668071974e-07 2.96747022687e-07 1.08930762307e-08 -7.17196535598e-08 3.34275572452e-07 -4.49546103468e-09 -2.39590665536e-08 2.69120818927e-07 1.87360972277e-10',
+        'SAMP_NUM_COEFF': ' 0.0225143172142 1.00589741678 -0.00134174726147 0.0237253142511 5.88157266883e-05 0.00269050817565 -0.00136618510734 -0.0116423108131 0.00100142882811 6.72967252237e-05 -1.21136997927e-06 -0.000921827179509 -0.00020078717226 -3.50960323581e-06 -0.000207253349484 6.15117373574e-05 -3.45619374615e-06 -0.000130177039513 -9.67483269543e-06 -3.52598626454e-08',
+    }
+    _test_jp2metadata(file_path, rpc_values_to_check=rpc_values_to_check)
 
 
 ###############################################################################
