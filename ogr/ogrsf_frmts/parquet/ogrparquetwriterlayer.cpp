@@ -26,6 +26,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#undef DO_NOT_DEFINE_GDAL_DATE_NAME
+#include "gdal_version_full/gdal_version.h"
+
 #include "ogr_parquet.h"
 
 #include "../arrow_common/ograrrowwriterlayer.hpp"
@@ -168,6 +171,24 @@ bool OGRParquetWriterLayer::SetOptions(CSLConstList papszOptions,
                  "Compression method %s is known, but libarrow has not "
                  "been built with support for it", pszCompression);
         return false;
+    }
+
+    m_oWriterPropertiesBuilder.compression(m_eCompression);
+    const std::string osCreator = CSLFetchNameValueDef(papszOptions, "CREATOR", "");
+    if( !osCreator.empty() )
+        m_oWriterPropertiesBuilder.created_by(osCreator);
+    else
+        m_oWriterPropertiesBuilder.created_by("GDAL " GDAL_RELEASE_NAME ", using " CREATED_BY_VERSION);
+
+    // Undocumented option. Not clear it is useful besides unit test purposes
+    if( !CPLTestBool(CSLFetchNameValueDef(papszOptions, "STATISTICS", "YES")) )
+        m_oWriterPropertiesBuilder.disable_statistics();
+
+    if( m_eGeomEncoding == OGRArrowGeomEncoding::WKB && eGType != wkbNone )
+    {
+        m_oWriterPropertiesBuilder.disable_statistics(
+            parquet::schema::ColumnPath::FromDotString(
+                m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef()));
     }
 
     const char* pszRowGroupSize = CSLFetchNameValue(papszOptions, "ROW_GROUP_SIZE");
@@ -429,6 +450,24 @@ void OGRParquetWriterLayer::CreateSchema()
 }
 
 /************************************************************************/
+/*                          CreateGeomField()                           */
+/************************************************************************/
+
+OGRErr OGRParquetWriterLayer::CreateGeomField( OGRGeomFieldDefn *poField,
+                                               int bApproxOK )
+{
+    OGRErr eErr = OGRArrowWriterLayer::CreateGeomField(poField, bApproxOK);
+    if( eErr == OGRERR_NONE && m_aeGeomEncoding.back() == OGRArrowGeomEncoding::WKB )
+    {
+        m_oWriterPropertiesBuilder.disable_statistics(
+            parquet::schema::ColumnPath::FromDotString(
+                m_poFeatureDefn->GetGeomFieldDefn(
+                    m_poFeatureDefn->GetGeomFieldCount() - 1)->GetNameRef()));
+    }
+    return eErr;
+}
+
+/************************************************************************/
 /*                          CreateWriter()                              */
 /************************************************************************/
 
@@ -445,13 +484,12 @@ void OGRParquetWriterLayer::CreateWriter()
         FinalizeSchema();
     }
 
-    auto writerProperties = parquet::WriterProperties::Builder().compression(m_eCompression)->build();
     auto arrowWriterProperties = parquet::ArrowWriterProperties::Builder().store_schema()->build();
-    Open(*m_poSchema, m_poMemoryPool, m_poOutputStream,
-         writerProperties,
+    CPL_IGNORE_RET_VAL(Open(*m_poSchema, m_poMemoryPool, m_poOutputStream,
+         m_oWriterPropertiesBuilder.build(),
          arrowWriterProperties,
          &m_poFileWriter,
-         &m_poKeyValueMetadata);
+         &m_poKeyValueMetadata));
 }
 
 /************************************************************************/

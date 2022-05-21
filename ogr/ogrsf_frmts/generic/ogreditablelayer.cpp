@@ -762,8 +762,13 @@ OGRErr      OGREditableLayer::AlterFieldDefn( int iField,
         OGRFieldDefn* poMemFieldDefn = m_poMemLayer->GetLayerDefn()->GetFieldDefn(iField);
         poFieldDefn->SetName(poMemFieldDefn->GetNameRef());
         poFieldDefn->SetType(poMemFieldDefn->GetType());
+        poFieldDefn->SetSubType(poMemFieldDefn->GetSubType());
         poFieldDefn->SetWidth(poMemFieldDefn->GetWidth());
         poFieldDefn->SetPrecision(poMemFieldDefn->GetPrecision());
+        poFieldDefn->SetDefault(poMemFieldDefn->GetDefault());
+        poFieldDefn->SetNullable(poMemFieldDefn->IsNullable());
+        poFieldDefn->SetUnique(poMemFieldDefn->IsUnique());
+        poFieldDefn->SetDomainName(poMemFieldDefn->GetDomainName());
         m_bStructureModified = true;
     }
     return eErr;

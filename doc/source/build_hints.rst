@@ -1984,6 +1984,16 @@ Option only to be used by maintainers:
 
     GPG pass phrase to sign build artifacts.
 
+C# bindings options
++++++++++++++++++++
+
+.. option:: BUILD_CSHARP_BINDINGS:BOOL=ON/OFF
+
+    Whether C# bindings should be built. It is ON by default, but only
+    effective if C# runtime and development packages are found. Either .NET
+    SDK can be used or Mono. The relevant options that can be set are described
+    in ``cmake/modules/thirdparty/FindDotNetFrameworkSdk.cmake`` and
+    ``cmake/modules/thirdparty/FindMono.cmake``.
 
 Driver specific options
 +++++++++++++++++++++++

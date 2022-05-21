@@ -1775,6 +1775,25 @@ def test_ogr_gpkg_21():
     gdal.Unlink('/vsimem/ogr_gpkg_21.gpkg')
 
 ###############################################################################
+
+
+def test_ogr_gpkg_table_in_gpkg_content_but_missing():
+
+    filename = '/vsimem/test_ogr_gpkg_table_in_gpkg_content_but_missing.gpkg'
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+    ds.CreateLayer('valid')
+    ds.ExecuteSQL("INSERT INTO gpkg_contents VALUES('non_existent','attributes','non_existent','','2022-05-18T17:24:49.837Z',NULL,NULL,NULL,NULL,-1);")
+    ds = None
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ds = ogr.Open(filename)
+    assert 'non_existent' in gdal.GetLastErrorMsg()
+    assert ds.GetLayerCount() == 1
+
+    gdal.Unlink(filename)
+    ds = None
+
+###############################################################################
 # Test FID64 support
 
 

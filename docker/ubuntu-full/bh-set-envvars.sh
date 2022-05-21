@@ -9,8 +9,8 @@ if test "${TARGET_ARCH:-}" != ""; then
       exit 0
   fi
   export APT_ARCH_SUFFIX=":${TARGET_ARCH}"
-  export CC=${GCC_ARCH}-linux-gnu-gcc-9
-  export CXX=${GCC_ARCH}-linux-gnu-g++-9
+  export CC=${GCC_ARCH}-linux-gnu-gcc-11
+  export CXX=${GCC_ARCH}-linux-gnu-g++-11
   export WITH_HOST="--host=${GCC_ARCH}-linux-gnu"
 else
   export APT_ARCH_SUFFIX=""

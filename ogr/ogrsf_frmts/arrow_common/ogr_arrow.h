@@ -59,8 +59,32 @@ class OGRArrowDataset;
 class OGRArrowLayer CPL_NON_FINAL: public OGRLayer,
                              public OGRGetNextFeatureThroughRaw<OGRArrowLayer>
 {
+public:
+        struct Constraint
+        {
+            enum class Type
+            {
+                Integer,
+                Integer64,
+                Real,
+                String,
+            };
+            int          iField{};
+            int          iArrayIdx{};
+            int          nOperation{};
+            Type         eType{};
+            OGRField     sValue{};
+            std::string  osValue{};
+        };
+
+private:
         OGRArrowLayer(const OGRArrowLayer&) = delete;
         OGRArrowLayer& operator= (const OGRArrowLayer&) = delete;
+
+        std::vector<Constraint>  m_asAttributeFilterConstraints{};
+        int                      m_nUseOptimizedAttributeFilter = -1;
+        bool                     SkipToNextFeatureDueToAttributeFilter() const;
+        void                     ExploreExprNode(const swq_expr_node* poNode);
 
 protected:
         arrow::MemoryPool*                          m_poMemoryPool = nullptr;
@@ -136,9 +160,14 @@ public:
         OGRErr          GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
         OGRErr          GetExtent(int iGeomField, OGREnvelope *psExtent,
                                   int bForce = TRUE) override;
+        OGRErr          SetAttributeFilter( const char* pszFilter ) override;
 
         virtual std::unique_ptr<OGRFieldDomain> BuildDomain(const std::string& osDomainName,
                                                              int iFieldIndex) const = 0;
+
+        static void TimestampToOGR(int64_t timestamp,
+                                   const arrow::TimestampType* timestampType,
+                                   OGRField* psField);
 };
 
 /************************************************************************/
@@ -229,6 +258,7 @@ protected:
                                                                const std::shared_ptr<arrow::Array>&)> postProcessArray);
 
         virtual void            FixupGeometryBeforeWriting(OGRGeometry* /* poGeom */ ) {}
+        virtual bool            IsSRSRequired() const = 0;
 
 public:
         OGRArrowWriterLayer( arrow::MemoryPool* poMemoryPool,

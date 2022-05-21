@@ -31,8 +31,11 @@
 #include "cpl_json.h"
 #include "cpl_time.h"
 #include "ogr_p.h"
+#include "ogr_swq.h"
 
 #include <cinttypes>
+
+#define SWQ_ISNOTNULL (-SWQ_ISNULL)
 
 /************************************************************************/
 /*                         OGRArrowLayer()                              */
@@ -1224,6 +1227,71 @@ static SetPointsOfLineType GetSetPointsOfLine(bool bHasZ, bool bHasM)
 }
 
 /************************************************************************/
+/*                            TimestampToOGR()                          */
+/************************************************************************/
+
+inline void OGRArrowLayer::TimestampToOGR(int64_t timestamp,
+                                          const arrow::TimestampType* timestampType,
+                                          OGRField* psField)
+{
+    const auto unit = timestampType->unit();
+    double floatingPart = 0;
+    if( unit == arrow::TimeUnit::MILLI )
+    {
+        floatingPart = (timestamp % 1000) / 1e3;
+        timestamp /= 1000;
+    }
+    else if( unit == arrow::TimeUnit::MICRO )
+    {
+        floatingPart = (timestamp % (1000 * 1000)) / 1e6;
+        timestamp /= 1000 * 1000;
+    }
+    else if( unit == arrow::TimeUnit::NANO )
+    {
+        floatingPart = (timestamp % (1000 * 1000 * 1000)) / 1e9;
+        timestamp /= 1000 * 1000 * 1000;
+    }
+    int nTZFlag = 0;
+    const auto osTZ = timestampType->timezone();
+    if( osTZ == "UTC" || osTZ == "Etc/UTC" )
+    {
+        nTZFlag = 100;
+    }
+    else if( osTZ.size() == 6 &&
+             (osTZ[0] == '+' || osTZ[0] == '-') &&
+             osTZ[3] == ':' )
+    {
+        int nTZHour = atoi(osTZ.c_str() + 1);
+        int nTZMin = atoi(osTZ.c_str() + 4);
+        if( nTZHour >= 0 && nTZHour <= 14 &&
+            nTZMin >= 0 && nTZMin < 60 &&
+            (nTZMin % 15) == 0 )
+        {
+            nTZFlag = (nTZHour * 4) + (nTZMin / 15);
+            if( osTZ[0] == '+' )
+            {
+                nTZFlag = 100 + nTZFlag;
+                timestamp += nTZHour * 3600 + nTZMin * 60;
+            }
+            else
+            {
+                nTZFlag = 100 - nTZFlag;
+                timestamp -= nTZHour * 3600 + nTZMin * 60;
+            }
+        }
+    }
+    struct tm dt;
+    CPLUnixTimeToYMDHMS(timestamp, &dt);
+    psField->Date.Year = static_cast<GInt16>(dt.tm_year + 1900);
+    psField->Date.Month = static_cast<GByte>(dt.tm_mon + 1);
+    psField->Date.Day = static_cast<GByte>(dt.tm_mday);
+    psField->Date.Hour = static_cast<GByte>(dt.tm_hour);
+    psField->Date.Minute = static_cast<GByte>(dt.tm_min);
+    psField->Date.TZFlag = static_cast<GByte>(nTZFlag);
+    psField->Date.Second = static_cast<float>(dt.tm_sec + floatingPart);
+}
+
+/************************************************************************/
 /*                            ReadFeature()                             */
 /************************************************************************/
 
@@ -1437,59 +1505,10 @@ OGRFeature* OGRArrowLayer::ReadFeature(
             {
                 const auto timestampType =  static_cast<arrow::TimestampType*>(array->data()->type.get());
                 const auto castArray = static_cast<const arrow::Int64Array*>(array);
-                int64_t timestamp = castArray->Value(nIdxInBatch);
-                const auto unit = timestampType->unit();
-                double floatingPart = 0;
-                if( unit == arrow::TimeUnit::MILLI )
-                {
-                    floatingPart = (timestamp % 1000) / 1e3;
-                    timestamp /= 1000;
-                }
-                else if( unit == arrow::TimeUnit::MICRO )
-                {
-                    floatingPart = (timestamp % (1000 * 1000)) / 1e6;
-                    timestamp /= 1000 * 1000;
-                }
-                else if( unit == arrow::TimeUnit::NANO )
-                {
-                    floatingPart = (timestamp % (1000 * 1000 * 1000)) / 1e9;
-                    timestamp /= 1000 * 1000 * 1000;
-                }
-                int nTZFlag = 0;
-                const auto osTZ = timestampType->timezone();
-                if( osTZ == "UTC" || osTZ == "Etc/UTC" )
-                {
-                    nTZFlag = 100;
-                }
-                else if( osTZ.size() == 6 &&
-                         (osTZ[0] == '+' || osTZ[0] == '-') &&
-                         osTZ[3] == ':' )
-                {
-                    int nTZHour = atoi(osTZ.c_str() + 1);
-                    int nTZMin = atoi(osTZ.c_str() + 4);
-                    if( nTZHour >= 0 && nTZHour <= 14 &&
-                        nTZMin >= 0 && nTZMin < 60 &&
-                        (nTZMin % 15) == 0 )
-                    {
-                        nTZFlag = (nTZHour * 4) + (nTZMin / 15);
-                        if( osTZ[0] == '+' )
-                        {
-                            nTZFlag = 100 + nTZFlag;
-                            timestamp += nTZHour * 3600 + nTZMin * 60;
-                        }
-                        else
-                        {
-                            nTZFlag = 100 - nTZFlag;
-                            timestamp -= nTZHour * 3600 + nTZMin * 60;
-                        }
-                    }
-                }
-                struct tm dt;
-                CPLUnixTimeToYMDHMS(timestamp, &dt);
-                poFeature->SetField(i, dt.tm_year + 1900, dt.tm_mon + 1, dt.tm_mday,
-                                    dt.tm_hour, dt.tm_min,
-                                    static_cast<float>(dt.tm_sec + floatingPart),
-                                    nTZFlag);
+                const int64_t timestamp = castArray->Value(nIdxInBatch);
+                OGRField sField;
+                TimestampToOGR(timestamp, timestampType, &sField);
+                poFeature->SetField(i, &sField);
                 break;
             }
             case arrow::Type::TIME32:
@@ -1755,8 +1774,8 @@ OGRGeometry* OGRArrowLayer::ReadGeometry(int iGeomField,
     const bool bHasM = CPL_TO_BOOL(OGR_GT_HasM(eGeomType));
     const int nDim = 2 + (bHasZ ? 1 : 0) + (bHasM ? 1 : 0);
 
-    const auto CreatePoint = [bHasZ, bHasM, nDim](const std::shared_ptr<arrow::DoubleArray>& pointValues,
-                                                  int pointOffset)
+    const auto CreatePoint = [bHasZ, bHasM](const std::shared_ptr<arrow::DoubleArray>& pointValues,
+                                            int pointOffset)
     {
         if( bHasZ )
         {
@@ -2028,6 +2047,585 @@ void OGRArrowLayer::ResetReading()
     }
 }
 
+/***********************************************************************/
+/*                        GetColumnSubNode()                           */
+/***********************************************************************/
+
+static const swq_expr_node* GetColumnSubNode(const swq_expr_node* poNode)
+{
+    if( poNode->eNodeType == SNT_OPERATION &&
+        poNode->nSubExprCount == 2 )
+    {
+        if( poNode->papoSubExpr[0]->eNodeType == SNT_COLUMN )
+            return poNode->papoSubExpr[0];
+        if( poNode->papoSubExpr[1]->eNodeType == SNT_COLUMN )
+            return poNode->papoSubExpr[1];
+    }
+    return nullptr;
+}
+
+/***********************************************************************/
+/*                        GetConstantSubNode()                         */
+/***********************************************************************/
+
+static const swq_expr_node* GetConstantSubNode(const swq_expr_node* poNode)
+{
+    if( poNode->eNodeType == SNT_OPERATION &&
+        poNode->nSubExprCount == 2 )
+    {
+        if( poNode->papoSubExpr[1]->eNodeType == SNT_CONSTANT )
+            return poNode->papoSubExpr[1];
+        if( poNode->papoSubExpr[0]->eNodeType == SNT_CONSTANT )
+            return poNode->papoSubExpr[0];
+    }
+    return nullptr;
+}
+
+/***********************************************************************/
+/*                           IsComparisonOp()                          */
+/***********************************************************************/
+
+static bool IsComparisonOp(int op)
+{
+    return (op == SWQ_EQ || op == SWQ_NE || op == SWQ_LT ||
+            op == SWQ_LE || op == SWQ_GT || op == SWQ_GE);
+}
+
+/***********************************************************************/
+/*                     FillTargetValueFromSrcExpr()                    */
+/***********************************************************************/
+
+static
+bool FillTargetValueFromSrcExpr( const OGRFieldDefn* poFieldDefn,
+                                 OGRArrowLayer::Constraint* psConstraint,
+                                 const swq_expr_node* poSrcValue )
+{
+    switch( poFieldDefn->GetType() )
+    {
+        case OFTInteger:
+            psConstraint->eType = OGRArrowLayer::Constraint::Type::Integer;
+            if (poSrcValue->field_type == SWQ_FLOAT)
+                psConstraint->sValue.Integer = static_cast<int>(poSrcValue->float_value);
+            else
+                psConstraint->sValue.Integer = static_cast<int>(poSrcValue->int_value);
+            psConstraint->osValue = std::to_string(psConstraint->sValue.Integer);
+            break;
+
+        case OFTInteger64:
+            psConstraint->eType = OGRArrowLayer::Constraint::Type::Integer64;
+            if (poSrcValue->field_type == SWQ_FLOAT)
+                psConstraint->sValue.Integer64 = static_cast<GIntBig>(poSrcValue->float_value);
+            else
+                psConstraint->sValue.Integer64 = poSrcValue->int_value;
+            psConstraint->osValue = std::to_string(psConstraint->sValue.Integer64);
+            break;
+
+        case OFTReal:
+            psConstraint->eType = OGRArrowLayer::Constraint::Type::Real;
+            psConstraint->sValue.Real = poSrcValue->float_value;
+            psConstraint->osValue = std::to_string(psConstraint->sValue.Real);
+            break;
+
+        case OFTString:
+            psConstraint->eType = OGRArrowLayer::Constraint::Type::String;
+            psConstraint->sValue.String = poSrcValue->string_value;
+            psConstraint->osValue = psConstraint->sValue.String;
+            break;
+#ifdef not_yet_handled
+        case OFTDate:
+        case OFTTime:
+        case OFTDateTime:
+            if (poSrcValue->field_type == SWQ_TIMESTAMP ||
+                poSrcValue->field_type == SWQ_DATE ||
+                poSrcValue->field_type == SWQ_TIME)
+            {
+                int nYear = 0, nMonth = 0, nDay = 0, nHour = 0, nMin = 0, nSec = 0;
+                if( sscanf(poSrcValue->string_value, "%04d/%02d/%02d %02d:%02d:%02d",
+                           &nYear, &nMonth, &nDay, &nHour, &nMin, &nSec) == 6 ||
+                    sscanf(poSrcValue->string_value, "%04d/%02d/%02d",
+                           &nYear, &nMonth, &nDay) == 3 ||
+                    sscanf(poSrcValue->string_value, "%02d:%02d:%02d",
+                           &nHour, &nMin, &nSec) == 3 )
+                {
+                    psConstraint->eType = OGRArrowLayer::Constraint::Type::DateTime;
+                    psConstraint->sValue.Date.Year = (GInt16)nYear;
+                    psConstraint->sValue.Date.Month = (GByte)nMonth;
+                    psConstraint->sValue.Date.Day = (GByte)nDay;
+                    psConstraint->sValue.Date.Hour = (GByte)nHour;
+                    psConstraint->sValue.Date.Minute = (GByte)nMin;
+                    psConstraint->sValue.Date.Second = (GByte)nSec;
+                    psConstraint->sValue.Date.TZFlag = 0;
+                    psConstraint->sValue.Date.Reserved = 0;
+                }
+                else
+                    return false;
+            }
+            else
+                return false;
+            break;
+#endif
+        default:
+            return false;
+    }
+    return true;
+}
+
+/***********************************************************************/
+/*                     ExploreExprNode()                               */
+/***********************************************************************/
+
+inline void OGRArrowLayer::ExploreExprNode(const swq_expr_node* poNode)
+{
+    const auto AddConstraint = [this](Constraint& constraint)
+    {
+        if( m_bIgnoredFields )
+        {
+            constraint.iArrayIdx = m_anMapFieldIndexToArrayIndex[constraint.iField];
+            if( constraint.iArrayIdx < 0 )
+                return;
+        }
+        else
+        {
+            constraint.iArrayIdx = m_anMapFieldIndexToArrowColumn[constraint.iField][0];
+        }
+
+        m_asAttributeFilterConstraints.emplace_back(constraint);
+    };
+
+    if( poNode->eNodeType == SNT_OPERATION &&
+        poNode->nOperation == SWQ_AND && poNode->nSubExprCount == 2 )
+    {
+        ExploreExprNode(poNode->papoSubExpr[0]);
+        ExploreExprNode(poNode->papoSubExpr[1]);
+    }
+
+    else if( poNode->eNodeType == SNT_OPERATION &&
+             IsComparisonOp(poNode->nOperation) &&
+             poNode->nSubExprCount == 2 )
+    {
+        const swq_expr_node *poColumn = GetColumnSubNode(poNode);
+        const swq_expr_node *poValue = GetConstantSubNode(poNode);
+        if( poColumn != nullptr && poValue != nullptr &&
+            poColumn->field_index < m_poFeatureDefn->GetFieldCount())
+        {
+            const OGRFieldDefn *poFieldDefn =
+                m_poFeatureDefn->GetFieldDefn(poColumn->field_index);
+
+            Constraint constraint;
+            constraint.iField = poColumn->field_index;
+            constraint.nOperation = poNode->nOperation;
+
+            if( FillTargetValueFromSrcExpr(poFieldDefn, &constraint, poValue) )
+            {
+                if( poColumn == poNode->papoSubExpr[0] )
+                {
+                    // nothing to do
+                }
+                else
+                {
+                    /* If "constant op column", then we must reverse */
+                    /* the operator for LE, LT, GE, GT */
+                    switch( poNode->nOperation )
+                    {
+                        case SWQ_LE: constraint.nOperation = SWQ_GE; break;
+                        case SWQ_LT: constraint.nOperation = SWQ_GT; break;
+                        case SWQ_NE: /* do nothing */; break;
+                        case SWQ_EQ: /* do nothing */; break;
+                        case SWQ_GE: constraint.nOperation = SWQ_LE; break;
+                        case SWQ_GT: constraint.nOperation = SWQ_LT; break;
+                        default: CPLAssert(false); break;
+                    }
+                }
+
+                AddConstraint(constraint);
+            }
+        }
+    }
+
+    else if( poNode->eNodeType == SNT_OPERATION &&
+             poNode->nOperation == SWQ_ISNULL && poNode->nSubExprCount == 1 )
+    {
+        const swq_expr_node *poColumn = poNode->papoSubExpr[0];
+        if( poColumn->eNodeType == SNT_COLUMN &&
+            poColumn->field_index < m_poFeatureDefn->GetFieldCount() )
+        {
+            Constraint constraint;
+            constraint.iField = poColumn->field_index;
+            constraint.nOperation = poNode->nOperation;
+            AddConstraint(constraint);
+        }
+    }
+
+    else if( poNode->eNodeType == SNT_OPERATION &&
+                poNode->nOperation == SWQ_NOT && poNode->nSubExprCount == 1 &&
+                poNode->papoSubExpr[0]->eNodeType == SNT_OPERATION &&
+                poNode->papoSubExpr[0]->nOperation == SWQ_ISNULL &&
+                poNode->papoSubExpr[0]->nSubExprCount == 1 )
+    {
+        const swq_expr_node *poColumn = poNode->papoSubExpr[0]->papoSubExpr[0];
+        if( poColumn->eNodeType == SNT_COLUMN &&
+            poColumn->field_index < m_poFeatureDefn->GetFieldCount() )
+        {
+            Constraint constraint;
+            constraint.iField = poColumn->field_index;
+            constraint.nOperation = SWQ_ISNOTNULL;
+            AddConstraint(constraint);
+        }
+    }
+}
+
+/***********************************************************************/
+/*                         SetAttributeFilter()                        */
+/***********************************************************************/
+
+inline
+OGRErr OGRArrowLayer::SetAttributeFilter( const char* pszFilter )
+{
+    m_asAttributeFilterConstraints.clear();
+
+    OGRErr eErr = OGRLayer::SetAttributeFilter(pszFilter);
+    if( eErr != OGRERR_NONE )
+        return eErr;
+
+    if( m_poAttrQuery != nullptr )
+    {
+        if( m_nUseOptimizedAttributeFilter < 0 )
+        {
+            m_nUseOptimizedAttributeFilter = CPLTestBool(
+                CPLGetConfigOption(("OGR_" + GetDriverUCName() + "_OPTIMIZED_ATTRIBUTE_FILTER").c_str(), "YES"));
+        }
+        if( m_nUseOptimizedAttributeFilter )
+        {
+            swq_expr_node* poNode = static_cast<swq_expr_node*>(m_poAttrQuery->GetSWQExpr());
+            poNode->ReplaceBetweenByGEAndLERecurse();
+            ExploreExprNode(poNode);
+        }
+    }
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                        ConstraintEvaluator()                         */
+/************************************************************************/
+
+namespace
+{
+template<class T, class U> struct CompareGeneric
+{
+    static inline bool get(int op, const T& val1, const U& val2)
+    {
+        switch( op )
+        {
+            case SWQ_LE: return val1 <= val2;
+            case SWQ_LT: return val1 < val2;
+            case SWQ_NE: return val1 != val2;
+            case SWQ_EQ: return val1 == val2;
+            case SWQ_GE: return val1 >= val2;
+            case SWQ_GT: return val1 > val2;
+                break;
+            default: CPLAssert(false);
+        }
+        return true;
+    }
+};
+
+template<class T, class U> struct Compare
+{
+};
+
+template<class T> struct Compare<T, T>: public CompareGeneric<T, T> {};
+template<> struct Compare<int, GIntBig>: public CompareGeneric<int, GIntBig> {};
+template<> struct Compare<double, GIntBig>
+{
+    static inline bool get(int op, double val1, GIntBig val2)
+    {
+        return CompareGeneric<double, double>::get(op, val1, static_cast<double>(val2));
+    }
+};
+template<> struct Compare<GIntBig, int>: public CompareGeneric<GIntBig, int> {};
+template<> struct Compare<double, int>: public CompareGeneric<double, int> {};
+
+template<class T> static bool ConstraintEvaluator(
+                                  const OGRArrowLayer::Constraint& constraint,
+                                  const T value)
+{
+    bool b = false;
+    switch( constraint.eType )
+    {
+        case OGRArrowLayer::Constraint::Type::Integer:
+            b = Compare<T,int>::get(
+                constraint.nOperation, value, constraint.sValue.Integer);
+            break;
+        case OGRArrowLayer::Constraint::Type::Integer64:
+            b = Compare<T,GIntBig>::get(
+                constraint.nOperation, value, constraint.sValue.Integer64);
+            break;
+        case OGRArrowLayer::Constraint::Type::Real:
+            b = Compare<double,double>::get(
+                constraint.nOperation, static_cast<double>(value), constraint.sValue.Real);
+            break;
+        case OGRArrowLayer::Constraint::Type::String:
+            b = Compare<std::string, std::string>::get(
+                constraint.nOperation, std::to_string(value), constraint.osValue);
+            break;
+    }
+    return b;
+}
+
+struct StringView
+{
+    const char* m_ptr;
+    size_t m_len;
+
+    StringView(const char* ptr, size_t len): m_ptr(ptr), m_len(len) {}
+};
+
+inline bool CompareStr(int op, const StringView& val1, const std::string& val2)
+{
+    if( op == SWQ_EQ )
+    {
+        return val1.m_len == val2.size() &&
+               memcmp(val1.m_ptr, val2.data(), val1.m_len) == 0;
+    }
+    const int cmpRes = val2.compare(0, val2.size(), val1.m_ptr, val1.m_len);
+    switch( op )
+    {
+        case SWQ_LE: return cmpRes >= 0;
+        case SWQ_LT: return cmpRes > 0;
+        case SWQ_NE: return cmpRes != 0;
+        // case SWQ_EQ: return cmpRes == 0;
+        case SWQ_GE: return cmpRes <= 0;
+        case SWQ_GT: return cmpRes < 0;
+            break;
+        default: CPLAssert(false);
+    }
+    return true;
+}
+
+inline bool ConstraintEvaluator(const OGRArrowLayer::Constraint& constraint,
+                                const StringView& value)
+{
+    return CompareStr(constraint.nOperation, value, constraint.osValue);
+}
+
+} // namespace
+
+
+/************************************************************************/
+/*                 SkipToNextFeatureDueToAttributeFilter()              */
+/************************************************************************/
+
+inline bool OGRArrowLayer::SkipToNextFeatureDueToAttributeFilter() const
+{
+    for( const auto& constraint: m_asAttributeFilterConstraints )
+    {
+        const arrow::Array* array = m_poBatchColumns[constraint.iArrayIdx].get();
+
+        const bool bIsNull = array->IsNull(m_nIdxInBatch);
+        if( constraint.nOperation == SWQ_ISNULL )
+        {
+            if( bIsNull )
+            {
+                continue;
+            }
+            return true;
+        }
+        else if( constraint.nOperation == SWQ_ISNOTNULL )
+        {
+            if( !bIsNull )
+            {
+                continue;
+            }
+            return true;
+        }
+        else if( bIsNull )
+        {
+            return true;
+        }
+
+        switch( array->type_id() )
+        {
+            case arrow::Type::NA:
+                break;
+
+            case arrow::Type::BOOL:
+            {
+                const auto castArray = static_cast<const arrow::BooleanArray*>(array);
+                if(!ConstraintEvaluator(
+                    constraint,
+                    static_cast<int>(castArray->Value(m_nIdxInBatch))))
+                {
+                    return true;
+                }
+                break;
+            }
+            case arrow::Type::UINT8:
+            {
+                const auto castArray = static_cast<const arrow::UInt8Array*>(array);
+                if(!ConstraintEvaluator(
+                    constraint,
+                    static_cast<int>(castArray->Value(m_nIdxInBatch))))
+                {
+                    return true;
+                }
+                break;
+            }
+            case arrow::Type::INT8:
+            {
+                const auto castArray = static_cast<const arrow::Int8Array*>(array);
+                if(!ConstraintEvaluator(
+                    constraint,
+                    static_cast<int>(castArray->Value(m_nIdxInBatch))))
+                {
+                    return true;
+                }
+                break;
+            }
+            case arrow::Type::UINT16:
+            {
+                const auto castArray = static_cast<const arrow::UInt16Array*>(array);
+                if(!ConstraintEvaluator(
+                    constraint,
+                    static_cast<int>(castArray->Value(m_nIdxInBatch))))
+                {
+                    return true;
+                }
+                break;
+            }
+            case arrow::Type::INT16:
+            {
+                const auto castArray = static_cast<const arrow::Int16Array*>(array);
+                if(!ConstraintEvaluator(
+                    constraint,
+                    static_cast<int>(castArray->Value(m_nIdxInBatch))))
+                {
+                    return true;
+                }
+                break;
+            }
+            case arrow::Type::UINT32:
+            {
+                const auto castArray = static_cast<const arrow::UInt32Array*>(array);
+                if(!ConstraintEvaluator(
+                    constraint,
+                    static_cast<GIntBig>(castArray->Value(m_nIdxInBatch))))
+                {
+                    return true;
+                }
+                break;
+            }
+            case arrow::Type::INT32:
+            {
+                const auto castArray = static_cast<const arrow::Int32Array*>(array);
+                if(!ConstraintEvaluator(
+                    constraint,
+                    castArray->Value(m_nIdxInBatch)))
+                {
+                    return true;
+                }
+                break;
+            }
+            case arrow::Type::UINT64:
+            {
+                const auto castArray = static_cast<const arrow::UInt64Array*>(array);
+                if(!ConstraintEvaluator(
+                    constraint,
+                    static_cast<double>(castArray->Value(m_nIdxInBatch))))
+                {
+                    return true;
+                }
+                break;
+            }
+            case arrow::Type::INT64:
+            {
+                const auto castArray = static_cast<const arrow::Int64Array*>(array);
+                if(!ConstraintEvaluator(
+                    constraint,
+                    static_cast<GIntBig>(castArray->Value(m_nIdxInBatch))))
+                {
+                    return true;
+                }
+                break;
+            }
+            case arrow::Type::HALF_FLOAT:
+            {
+                const auto castArray = static_cast<const arrow::HalfFloatArray*>(array);
+                if(!ConstraintEvaluator(
+                    constraint,
+                    static_cast<double>(castArray->Value(m_nIdxInBatch))))
+                {
+                    return true;
+                }
+                break;
+            }
+            case arrow::Type::FLOAT:
+            {
+                const auto castArray = static_cast<const arrow::FloatArray*>(array);
+                if(!ConstraintEvaluator(
+                    constraint,
+                    static_cast<double>(castArray->Value(m_nIdxInBatch))))
+                {
+                    return true;
+                }
+                break;
+            }
+            case arrow::Type::DOUBLE:
+            {
+                const auto castArray = static_cast<const arrow::DoubleArray*>(array);
+                if(!ConstraintEvaluator(
+                    constraint,
+                    castArray->Value(m_nIdxInBatch)))
+                {
+                    return true;
+                }
+                break;
+            }
+            case arrow::Type::STRING:
+            {
+                const auto castArray = static_cast<const arrow::StringArray*>(array);
+                int out_length = 0;
+                const uint8_t* data = castArray->GetValue(m_nIdxInBatch, &out_length);
+                if(!ConstraintEvaluator(
+                    constraint,
+                    StringView(reinterpret_cast<const char*>(data), out_length)))
+                {
+                    return true;
+                }
+                break;
+            }
+
+            case arrow::Type::DECIMAL128:
+            {
+                const auto castArray = static_cast<const arrow::Decimal128Array*>(array);
+                if(!ConstraintEvaluator(
+                    constraint,
+                    CPLAtof(castArray->FormatValue(m_nIdxInBatch).c_str())))
+                {
+                    return true;
+                }
+                break;
+            }
+
+            case arrow::Type::DECIMAL256:
+            {
+                const auto castArray = static_cast<const arrow::Decimal256Array*>(array);
+                if(!ConstraintEvaluator(
+                    constraint,
+                    CPLAtof(castArray->FormatValue(m_nIdxInBatch).c_str())))
+                {
+                    return true;
+                }
+                break;
+            }
+
+            default:
+                break;
+        }
+    }
+    return false;
+}
+
 /************************************************************************/
 /*                        GetNextRawFeature()                           */
 /************************************************************************/
@@ -2083,6 +2681,11 @@ OGRFeature* OGRArrowLayer::GetNextRawFeature()
                     }
                 }
                 if( !bSkipToNextFeature )
+                {
+                    break;
+                }
+                if( !m_asAttributeFilterConstraints.empty() &&
+                    !SkipToNextFeatureDueToAttributeFilter() )
                 {
                     break;
                 }
@@ -2154,6 +2757,11 @@ begin_multipolygon:
                         break;
                     }
                 }
+                if( !m_asAttributeFilterConstraints.empty() &&
+                    !SkipToNextFeatureDueToAttributeFilter() )
+                {
+                    break;
+                }
 
                 m_nFeatureIdx ++;
                 m_nIdxInBatch ++;
@@ -2192,6 +2800,11 @@ begin_multipolygon:
                 {
                     break;
                 }
+                if( !m_asAttributeFilterConstraints.empty() &&
+                    !SkipToNextFeatureDueToAttributeFilter() )
+                {
+                    break;
+                }
 
                 m_nFeatureIdx ++;
                 m_nIdxInBatch ++;
@@ -2202,6 +2815,26 @@ begin_multipolygon:
                         return nullptr;
                     array = m_poBatchColumns[iCol].get();
                 }
+            }
+        }
+    }
+
+    else if( !m_asAttributeFilterConstraints.empty() )
+    {
+        while( true )
+        {
+            if( !SkipToNextFeatureDueToAttributeFilter() )
+            {
+                break;
+            }
+
+            m_nFeatureIdx ++;
+            m_nIdxInBatch ++;
+            if( m_nIdxInBatch == m_poBatch->num_rows() )
+            {
+                m_bEOF = !ReadNextBatch();
+                if( m_bEOF )
+                    return nullptr;
             }
         }
     }

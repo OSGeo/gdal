@@ -841,3 +841,256 @@ def test_ogr_parquet_polygon_orientation(option_value,written_wkt,expected_wkt):
 
     gdal.Unlink(outfilename)
 
+
+
+###############################################################################
+# Test using statistics for SQL MIN, MAX, COUNT functions
+
+def test_ogr_parquet_statistics():
+
+    filename = 'data/parquet/test.parquet'
+    ds = ogr.Open(filename)
+    expected_fields = [
+        ('boolean', 'Integer', 'Boolean', 0, 1),
+        ('uint8', 'Integer', 'None', 1, 5),
+        ('int8', 'Integer', 'None', -2, 2),
+        ('uint16', 'Integer', 'None', 1, 40001),
+        ('int16', 'Integer', 'Int16', -20000, 20000),
+        ('uint32', 'Integer64', 'None', 1, 4000000001),
+        ('int32', 'Integer', 'None', -2000000000, 2000000000),
+        ('uint64', 'Integer64', 'None', 1, 400000000001),
+        ('int64', 'Integer64', 'None', -200000000000, 200000000000),
+        ('float32', 'Real', 'Float32', 1.5, 5.5),
+        ('float64', 'Real', 'None', 1.5, 5.5),
+        ('string', 'String', 'None', '', 'd'),
+        ('timestamp_ms_gmt', 'DateTime', 'None', '2019/01/01 14:00:00+00', '2019/01/01 14:00:00+00'),
+    ]
+
+    sql = ''
+    for field in expected_fields:
+        name = field[0]
+        if sql:
+            sql += ', '
+        else:
+            sql = 'SELECT '
+        sql += 'MIN(' + name + '), MAX(' + name + ')'
+    sql += ', COUNT(int32)'
+    sql += ' FROM test'
+    sql_lyr = ds.ExecuteSQL(sql)
+    try:
+        f = sql_lyr.GetNextFeature()
+        i = 0
+        for name, type, subtype, minval, maxval in expected_fields:
+            fld_defn = sql_lyr.GetLayerDefn().GetFieldDefn(i)
+            assert fld_defn.GetName() == 'MIN_' + name
+            assert ogr.GetFieldTypeName(fld_defn.GetType()) == type, name
+            assert ogr.GetFieldSubTypeName(fld_defn.GetSubType()) == subtype, name
+            assert f[fld_defn.GetName()] == minval, name
+            i += 1
+
+            fld_defn = sql_lyr.GetLayerDefn().GetFieldDefn(i)
+            assert fld_defn.GetName() == 'MAX_' + name
+            assert ogr.GetFieldTypeName(fld_defn.GetType()) == type, name
+            assert ogr.GetFieldSubTypeName(fld_defn.GetSubType()) == subtype, name
+            assert f[fld_defn.GetName()] == maxval, name
+            i += 1
+
+        fld_defn = sql_lyr.GetLayerDefn().GetFieldDefn(i)
+        assert fld_defn.GetName() == 'COUNT_int32'
+        assert f[fld_defn.GetName()] == 4
+    finally:
+        ds.ReleaseResultSet(sql_lyr)
+
+    # Non-optimized due to WHERE condition
+    sql_lyr = ds.ExecuteSQL('SELECT MIN(uint32) FROM test WHERE 1 = 0')
+    try:
+        f = sql_lyr.GetNextFeature()
+        assert f.GetField(0) is None
+    finally:
+        ds.ReleaseResultSet(sql_lyr)
+
+    # Non-optimized
+    sql_lyr = ds.ExecuteSQL('SELECT AVG(uint8) FROM test')
+    try:
+        f = sql_lyr.GetNextFeature()
+        assert f.GetField(0) == 3.0
+    finally:
+        ds.ReleaseResultSet(sql_lyr)
+
+    # Should be optimized, but this Parquet file has a wrong value for
+    # distinct_count
+    sql_lyr = ds.ExecuteSQL('SELECT COUNT(DISTINCT int32) FROM test')
+    try:
+        f = sql_lyr.GetNextFeature()
+        assert f.GetField(0) == 4
+    finally:
+        ds.ReleaseResultSet(sql_lyr)
+
+    # Errors
+    with gdaltest.error_handler():
+        assert ds.ExecuteSQL('SELECT MIN(int32) FROM i_dont_exist') is None
+        assert ds.ExecuteSQL('SELECT MIN(i_dont_exist) FROM test') is None
+
+    # File without statistics
+    outfilename = '/vsimem/out.parquet'
+    try:
+        with gdaltest.error_handler():
+            gdal.VectorTranslate(outfilename, 'data/parquet/test.parquet',
+                                 options='-lco STATISTICS=NO')
+        ds = ogr.Open(outfilename)
+        with gdaltest.error_handler():
+            gdal.ErrorReset()
+            # Generic OGR SQL doesn't support MIN() on string field
+            sql_lyr = ds.ExecuteSQL('SELECT MIN(string) FROM out')
+            assert sql_lyr is None
+            assert gdal.GetLastErrorMsg() == 'Use of field function MIN() on string field string illegal.'
+        ds = None
+
+    finally:
+        gdal.Unlink(outfilename)
+
+
+###############################################################################
+# Test setting/getting creator
+
+def test_ogr_parquet_creator():
+
+    outfilename = '/vsimem/out.parquet'
+    try:
+        ds = ogr.GetDriverByName('Parquet').CreateDataSource(outfilename)
+        ds.CreateLayer('test')
+        ds = None
+
+        ds = gdal.OpenEx(outfilename)
+        lyr = ds.GetLayer(0)
+        assert lyr.GetMetadataItem("CREATOR", "_PARQUET_").startswith('GDAL ')
+        ds = None
+
+        ds = ogr.GetDriverByName('Parquet').CreateDataSource(outfilename)
+        ds.CreateLayer('test', options = ['CREATOR=my_creator'])
+        ds = None
+
+        ds = gdal.OpenEx(outfilename)
+        lyr = ds.GetLayer(0)
+        assert lyr.GetMetadataItem("CREATOR", "_PARQUET_") == 'my_creator'
+        ds = None
+
+    finally:
+        gdal.Unlink(outfilename)
+
+
+
+###############################################################################
+# Test creating multiple geometry columns
+
+def test_ogr_parquet_multiple_geom_columns():
+
+    outfilename = '/vsimem/out.parquet'
+    try:
+        ds = ogr.GetDriverByName('Parquet').CreateDataSource(outfilename)
+        lyr = ds.CreateLayer('test', geom_type = ogr.wkbNone)
+        lyr.CreateGeomField(ogr.GeomFieldDefn('geom_point', ogr.wkbPoint)) == ogr.OGRERR_NONE
+        lyr.CreateGeomField(ogr.GeomFieldDefn('geom_line', ogr.wkbLineString)) == ogr.OGRERR_NONE
+        ds = None
+
+        ds = gdal.OpenEx(outfilename)
+        lyr = ds.GetLayer(0)
+        lyr_defn = lyr.GetLayerDefn()
+        assert lyr_defn.GetGeomFieldCount() == 2
+        assert lyr_defn.GetGeomFieldDefn(0).GetName() == 'geom_point'
+        assert lyr_defn.GetGeomFieldDefn(1).GetName() == 'geom_line'
+        ds = None
+
+    finally:
+        gdal.Unlink(outfilename)
+
+
+###############################################################################
+# Test SetAttributeFilter()
+
+@pytest.mark.parametrize("filter", [
+    "boolean = 0",
+    "boolean = 1",
+    "boolean = 1.5",
+    #"boolean = '0'",
+    "uint8 = 2",
+    "uint8 = -1",
+    "int8 = -1",
+    "int8 = 0",
+    "int8 != 0",
+    "int8 < 0",
+    "int8 > 0",
+    "int8 <= 0",
+    "int8 >= 0",
+    "0 = int8",
+    "0 != int8",
+    "0 < int8",
+    "0 > int8",
+    "0 <= int8",
+    "0 >= int8",
+    "int8 IS NULL",
+    "int8 IS NOT NULL",
+    "uint16 = 10001",
+    "uint32 = 1000000001",
+    "uint32 != 1000000001",
+    "uint32 < 1000000001",
+    "uint32 > 1000000001",
+    "uint32 <= 1000000001",
+    "uint32 >= 1000000001",
+    "int32 = -1000000000",
+    "uint64 = 100000000001",
+    "int64 = -100000000000",
+    "float32 = 2.5",
+    "float64 = 2.5",
+    "float64 != 2.5",
+    "float64 < 2.5",
+    "float64 > 2.5",
+    "float64 <= 2.5",
+    "float64 >= 2.5",
+    "string = ''",
+    "string != ''",
+    "string < 'l'",
+    "string > 'l'",
+    "string <= 'l'",
+    "string >= 'l'",
+    "decimal128 = -1234.567",
+    "decimal256 = -1234.567",
+
+     # not optimized
+    "boolean = 0 OR boolean = 1",
+    "1 = 1",
+    "boolean = boolean",
+])
+def test_ogr_parquet_attribute_filter(filter):
+
+    with gdaltest.config_option('OGR_PARQUET_OPTIMIZED_ATTRIBUTE_FILTER', 'NO'):
+        ds = ogr.Open('data/parquet/test.parquet')
+        lyr = ds.GetLayer(0)
+        assert lyr.SetAttributeFilter(filter) == ogr.OGRERR_NONE
+        ref_fc = lyr.GetFeatureCount()
+        ds = None
+
+    ds = ogr.Open('data/parquet/test.parquet')
+    lyr = ds.GetLayer(0)
+    assert lyr.SetAttributeFilter(filter) == ogr.OGRERR_NONE
+    assert lyr.GetFeatureCount() == ref_fc
+
+
+def test_ogr_parquet_attribute_filter_and_spatial_filter():
+
+    filter = 'int8 != 0'
+
+    with gdaltest.config_option('OGR_PARQUET_OPTIMIZED_ATTRIBUTE_FILTER', 'NO'):
+        ds = ogr.Open('data/parquet/test.parquet')
+        lyr = ds.GetLayer(0)
+        lyr.SetSpatialFilterRect(4, 2, 4, 2)
+        assert lyr.SetAttributeFilter(filter) == ogr.OGRERR_NONE
+        ref_fc = lyr.GetFeatureCount()
+        assert ref_fc > 0
+        ds = None
+
+    ds = ogr.Open('data/parquet/test.parquet')
+    lyr = ds.GetLayer(0)
+    lyr.SetSpatialFilterRect(4, 2, 4, 2)
+    assert lyr.SetAttributeFilter(filter) == ogr.OGRERR_NONE
+    assert lyr.GetFeatureCount() == ref_fc

@@ -1667,6 +1667,20 @@ def test_ogr_openfilegdb_strings_utf16():
 
 
 ###############################################################################
+# Test reading .gdb where the CRS in the XML definition of the feature
+# table is not consistent with the one of the feature dataset
+
+
+def test_ogr_openfilegdb_inconsistent_crs_feature_dataset_and_feature_table():
+    ds = ogr.Open('data/filegdb/inconsistent_crs_feature_dataset_and_feature_table.gdb')
+    assert ds is not None
+    lyr = ds.GetLayer(0)
+    srs = lyr.GetSpatialRef()
+    assert srs is not None
+    assert srs.GetAuthorityCode(None) == '4326'
+
+
+###############################################################################
 # Cleanup
 
 
