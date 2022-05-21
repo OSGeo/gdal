@@ -46,7 +46,7 @@
 CPLString CPLGetLowerCaseHexSHA256( const void *pabyData, size_t nBytes );
 CPLString CPLGetLowerCaseHexSHA256( const CPLString& osStr );
 
-CPLString CPLGetAWS_SIGN4_Timestamp();
+CPLString CPLGetAWS_SIGN4_Timestamp(GIntBig timestamp);
 
 CPLString CPLAWSURLEncode(const CPLString& osURL, bool bEncodeSlash = true);
 
@@ -157,7 +157,8 @@ class VSIS3HandleHelper final: public IVSIS3LikeHandleHelper
 
         void RebuildURL() override;
 
-        static bool GetConfigurationFromEC2(const std::string& osPathForOption,
+        static bool GetConfigurationFromEC2(bool bForceRefresh,
+                                            const std::string& osPathForOption,
                                             CPLString& osSecretAccessKey,
                                             CPLString& osAccessKeyId,
                                             CPLString& osSessionToken);
@@ -182,6 +183,10 @@ class VSIS3HandleHelper final: public IVSIS3LikeHandleHelper
                                      CPLString& osSessionToken,
                                      CPLString& osRegion,
                                      AWSCredentialsSource& eCredentialsSource);
+
+        void RefreshCredentials(const std::string& osPathForOption,
+                                bool bForceRefresh) const;
+
   protected:
 
     public:
