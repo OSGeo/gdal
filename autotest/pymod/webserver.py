@@ -30,6 +30,7 @@
 
 import contextlib
 from http.server import BaseHTTPRequestHandler, HTTPServer
+import os
 import subprocess
 import sys
 from threading import Thread
@@ -389,7 +390,7 @@ class GDAL_ThreadedHttpServer(Thread):
         self.server = 0
         if handlerClass is None:
             handlerClass = GDAL_Handler
-        for port in range(8080, 8100):
+        for port in range(int(os.environ.get('GDAL_TEST_HTTP_PORT', '8080')), 8100):
             try:
                 self.server = GDAL_HttpServer(('', port), handlerClass)
                 self.server.port = port
