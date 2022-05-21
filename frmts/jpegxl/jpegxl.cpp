@@ -167,13 +167,13 @@ CPLErr JPEGXLRasterBand::IReadBlock(int /*nBlockXOff*/, int nBlockYOff, void* pD
     }
 
     const auto nDataSize = GDALGetDataTypeSizeBytes(eDataType);
-    if( nBand <= poGDS->nBands - poGDS->m_nNonAlphaExtraChannels )
+    const int nNonExtraBands = poGDS->nBands - poGDS->m_nNonAlphaExtraChannels;
+    if( nBand <= nNonExtraBands )
     {
-        const int nBands = poGDS->GetRasterCount();
         GDALCopyWords( abyDecodedImage.data() +
-                        ((nBand - 1) + static_cast<size_t>(nBlockYOff) * nRasterXSize * nBands) * nDataSize,
+                        ((nBand - 1) + static_cast<size_t>(nBlockYOff) * nRasterXSize * nNonExtraBands) * nDataSize,
                        eDataType,
-                       nDataSize * nBands,
+                       nDataSize * nNonExtraBands,
                        pData,
                        eDataType,
                        nDataSize,
@@ -181,7 +181,7 @@ CPLErr JPEGXLRasterBand::IReadBlock(int /*nBlockXOff*/, int nBlockYOff, void* pD
     }
     else
     {
-        const uint32_t nIndex = nBand - 1 - (poGDS->nBands - poGDS->m_nNonAlphaExtraChannels);
+        const uint32_t nIndex = nBand - 1 - nNonExtraBands;
         memcpy(pData,
                poGDS->m_abyExtraChannels[nIndex].data() +
                    static_cast<size_t>(nBlockYOff) * nRasterXSize * nDataSize,
@@ -739,6 +739,7 @@ bool JPEGXLDataset::Open(GDALOpenInfo* poOpenInfo)
 #endif
 
     // Instanciate bands
+    const int nNonExtraBands = l_nBands - m_nNonAlphaExtraChannels;
     for(int i = 1; i <= l_nBands; i++ )
     {
         GDALColorInterp eInterp = GCI_Undefined;
@@ -758,11 +759,11 @@ bool JPEGXLDataset::Open(GDALOpenInfo* poOpenInfo)
         }
         std::string osBandName;
 
-        if( i - 1 >= l_nBands - m_nNonAlphaExtraChannels )
+        if( i - 1 >= nNonExtraBands )
         {
             JxlExtraChannelInfo sExtraInfo;
             memset(&sExtraInfo, 0, sizeof(sExtraInfo));
-            const size_t nIndex = static_cast<size_t>(i - 1 - (l_nBands - m_nNonAlphaExtraChannels));
+            const size_t nIndex = static_cast<size_t>(i - 1 - nNonExtraBands);
             if( JxlDecoderGetExtraChannelInfo(m_decoder.get(), nIndex, &sExtraInfo) == JXL_DEC_SUCCESS )
             {
                 if( sExtraInfo.name_length > 0 )
@@ -837,8 +838,9 @@ const std::vector<GByte>& JPEGXLDataset::GetDecodedImage()
 
     const auto eDT = GetRasterBand(1)->GetRasterDataType();
     const auto nDataSize = GDALGetDataTypeSizeBytes(eDT);
+    const int nNonExtraBands = nBands - m_nNonAlphaExtraChannels;
     if( static_cast<size_t>(nRasterXSize) >
-            std::numeric_limits<size_t>::max() / nRasterYSize / nDataSize / nBands )
+            std::numeric_limits<size_t>::max() / nRasterYSize / nDataSize / nNonExtraBands )
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
                  "Image too big for architecture");
@@ -848,7 +850,7 @@ const std::vector<GByte>& JPEGXLDataset::GetDecodedImage()
 
     try
     {
-        m_abyImage.resize(static_cast<size_t>(nRasterXSize) * nRasterYSize * nBands * nDataSize);
+        m_abyImage.resize(static_cast<size_t>(nRasterXSize) * nRasterYSize * nNonExtraBands * nDataSize);
     }
     catch( const std::exception& e )
     {
@@ -990,7 +992,7 @@ void JPEGXLDataset::GetDecodedImage(void* pabyOuputData, size_t nOutputDataSize)
         }
         else if( status == JXL_DEC_NEED_IMAGE_OUT_BUFFER )
         {
-            JxlPixelFormat format = {static_cast<uint32_t>(nBands),
+            JxlPixelFormat format = {static_cast<uint32_t>(nBands - m_nNonAlphaExtraChannels),
                                      eDT == GDT_Byte ?   JXL_TYPE_UINT8:
                                      eDT == GDT_UInt16 ? JXL_TYPE_UINT16:
                                                          JXL_TYPE_FLOAT,
@@ -1560,34 +1562,34 @@ JPEGXLDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
                      "JxlEncoderSetBasicInfo() failed");
             return nullptr;
         }
-    }
 
-    if( pszICCProfile && pszICCProfile[0] != '\0' )
-    {
-        char *pEmbedBuffer = CPLStrdup(pszICCProfile);
-        GInt32 nEmbedLen = CPLBase64DecodeInPlace(reinterpret_cast<GByte *>(pEmbedBuffer));
-        if( JXL_ENC_SUCCESS != JxlEncoderSetICCProfile(
-                                        encoder.get(),
-                                        reinterpret_cast<GByte *>(pEmbedBuffer),
-                                        nEmbedLen) )
+        if( pszICCProfile && pszICCProfile[0] != '\0' )
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "JxlEncoderSetICCProfile() failed");
+            char *pEmbedBuffer = CPLStrdup(pszICCProfile);
+            GInt32 nEmbedLen = CPLBase64DecodeInPlace(reinterpret_cast<GByte *>(pEmbedBuffer));
+            if( JXL_ENC_SUCCESS != JxlEncoderSetICCProfile(
+                                            encoder.get(),
+                                            reinterpret_cast<GByte *>(pEmbedBuffer),
+                                            nEmbedLen) )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "JxlEncoderSetICCProfile() failed");
+                CPLFree(pEmbedBuffer);
+                return nullptr;
+            }
             CPLFree(pEmbedBuffer);
-            return nullptr;
         }
-        CPLFree(pEmbedBuffer);
-    }
-    else
-    {
-        JxlColorEncoding color_encoding;
-        JxlColorEncodingSetToSRGB(&color_encoding,
-            basic_info.num_color_channels == 1 /*is_gray*/);
-        if( JXL_ENC_SUCCESS != JxlEncoderSetColorEncoding(encoder.get(), &color_encoding) )
+        else
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "JxlEncoderSetColorEncoding() failed");
-            return nullptr;
+            JxlColorEncoding color_encoding;
+            JxlColorEncodingSetToSRGB(&color_encoding,
+                basic_info.num_color_channels == 1 /*is_gray*/);
+            if( JXL_ENC_SUCCESS != JxlEncoderSetColorEncoding(encoder.get(), &color_encoding) )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "JxlEncoderSetColorEncoding() failed");
+                return nullptr;
+            }
         }
     }
 
