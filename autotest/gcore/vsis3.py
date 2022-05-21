@@ -129,34 +129,21 @@ def test_vsis3_no_sign_request(aws_test_config_as_config_options_or_credentials)
         'AWS_VIRTUAL_HOSTING': 'TRUE'
     }
 
-    with gdaltest.config_options(options) if aws_test_config_as_config_options_or_credentials else gdaltest.credentials('/vsis3/landsat-pds', options):
-        actual_url = gdal.GetActualURL(
-            '/vsis3/landsat-pds/L8/001/002/'
-            'LC80010022016230LGN00/LC80010022016230LGN00_B1.TIF'
-        )
-        assert actual_url == (
-            'https://landsat-pds.s3.amazonaws.com/L8/001/002/'
-            'LC80010022016230LGN00/LC80010022016230LGN00_B1.TIF'
-        )
+    bucket = 'noaa-goes16'
+    obj = 'ABI-L1b-RadC/2022/001/00/OR_ABI-L1b-RadC-M6C01_G16_s20220010001173_e20220010003546_c20220010003587.nc'
+    vsis3_path = '/vsis3/' + bucket + '/' + obj
+    url = 'https://' + bucket + '.s3.amazonaws.com/' + obj
 
-        actual_url = gdal.GetActualURL(
-            '/vsis3_streaming/landsat-pds/L8/001/002/'
-            'LC80010022016230LGN00/LC80010022016230LGN00_B1.TIF'
-        )
-        assert actual_url == (
-            'https://landsat-pds.s3.amazonaws.com/L8/001/002/'
-            'LC80010022016230LGN00/LC80010022016230LGN00_B1.TIF'
-        )
+    with gdaltest.config_options(options) if aws_test_config_as_config_options_or_credentials else gdaltest.credentials('/vsis3/' + bucket, options):
+        actual_url = gdal.GetActualURL(vsis3_path)
+        assert actual_url == url
 
-        f = open_for_read(
-            '/vsis3/landsat-pds/L8/001/002/'
-            'LC80010022016230LGN00/LC80010022016230LGN00_B1.TIF'
-        )
+        actual_url = gdal.GetActualURL(vsis3_path.replace('/vsis3/', '/vsis3_streaming/'))
+        assert actual_url == url
+
+        f = open_for_read(vsis3_path)
         if f is None:
-            if gdaltest.gdalurlopen(
-                'https://landsat-pds.s3.amazonaws.com/L8/001/002/'
-                'LC80010022016230LGN00/LC80010022016230LGN00_B1.TIF'
-            ) is None:
+            if gdaltest.gdalurlopen(url) is None:
                 pytest.skip('cannot open URL')
             pytest.fail()
         gdal.VSIFCloseL(f)
