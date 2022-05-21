@@ -351,7 +351,7 @@ char** GDALMDReaderPleiades::LoadRPCXmlFile()
     double firstCol = 1.0;
     if( pValidityNode != nullptr )
     {
-        char** papszValidity = ReadXMLToList(pValidityNode->psChild, m_papszValidity);
+        char** papszValidity = ReadXMLToList(pValidityNode->psChild, nullptr);
         if( papszValidity != nullptr )
         {
             const char* pszFirstCol = CSLFetchNameValue(papszValidity, "FIRST_COL");
