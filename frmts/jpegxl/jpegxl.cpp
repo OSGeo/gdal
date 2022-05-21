@@ -1560,34 +1560,34 @@ JPEGXLDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
                      "JxlEncoderSetBasicInfo() failed");
             return nullptr;
         }
-    }
 
-    if( pszICCProfile && pszICCProfile[0] != '\0' )
-    {
-        char *pEmbedBuffer = CPLStrdup(pszICCProfile);
-        GInt32 nEmbedLen = CPLBase64DecodeInPlace(reinterpret_cast<GByte *>(pEmbedBuffer));
-        if( JXL_ENC_SUCCESS != JxlEncoderSetICCProfile(
-                                        encoder.get(),
-                                        reinterpret_cast<GByte *>(pEmbedBuffer),
-                                        nEmbedLen) )
+        if( pszICCProfile && pszICCProfile[0] != '\0' )
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "JxlEncoderSetICCProfile() failed");
+            char *pEmbedBuffer = CPLStrdup(pszICCProfile);
+            GInt32 nEmbedLen = CPLBase64DecodeInPlace(reinterpret_cast<GByte *>(pEmbedBuffer));
+            if( JXL_ENC_SUCCESS != JxlEncoderSetICCProfile(
+                                            encoder.get(),
+                                            reinterpret_cast<GByte *>(pEmbedBuffer),
+                                            nEmbedLen) )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "JxlEncoderSetICCProfile() failed");
+                CPLFree(pEmbedBuffer);
+                return nullptr;
+            }
             CPLFree(pEmbedBuffer);
-            return nullptr;
         }
-        CPLFree(pEmbedBuffer);
-    }
-    else
-    {
-        JxlColorEncoding color_encoding;
-        JxlColorEncodingSetToSRGB(&color_encoding,
-            basic_info.num_color_channels == 1 /*is_gray*/);
-        if( JXL_ENC_SUCCESS != JxlEncoderSetColorEncoding(encoder.get(), &color_encoding) )
+        else
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "JxlEncoderSetColorEncoding() failed");
-            return nullptr;
+            JxlColorEncoding color_encoding;
+            JxlColorEncodingSetToSRGB(&color_encoding,
+                basic_info.num_color_channels == 1 /*is_gray*/);
+            if( JXL_ENC_SUCCESS != JxlEncoderSetColorEncoding(encoder.get(), &color_encoding) )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "JxlEncoderSetColorEncoding() failed");
+                return nullptr;
+            }
         }
     }
 
