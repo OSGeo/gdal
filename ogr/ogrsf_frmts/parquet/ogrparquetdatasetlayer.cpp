@@ -167,6 +167,22 @@ OGRErr OGRParquetDatasetLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 }
 
 /************************************************************************/
+/*                         GetFastExtent()                              */
+/************************************************************************/
+
+bool OGRParquetDatasetLayer::GetFastExtent(int iGeomField, OGREnvelope *psExtent) const
+{
+    const auto oIter = m_oMapExtents.find(iGeomField);
+    if( oIter != m_oMapExtents.end() )
+    {
+        *psExtent = oIter->second;
+        return true;
+    }
+
+    return false;
+}
+
+/************************************************************************/
 /*                            GetExtent()                               */
 /************************************************************************/
 
@@ -181,6 +197,11 @@ OGRErr OGRParquetDatasetLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
                      "Invalid geometry field index : %d", iGeomField);
         }
         return OGRERR_FAILURE;
+    }
+
+    if( GetFastExtent(iGeomField, psExtent) )
+    {
+        return OGRERR_NONE;
     }
 
     // bbox in general m_oMapGeometryColumns can not be trusted (at least at
@@ -232,7 +253,10 @@ OGRErr OGRParquetDatasetLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
                 }
             }
             if( nFragmentCount == nBBoxFragmentCount )
+            {
+                m_oMapExtents[iGeomField] = *psExtent;
                 return OGRERR_NONE;
+            }
         }
     }
 

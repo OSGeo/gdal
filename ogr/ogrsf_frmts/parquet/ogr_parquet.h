@@ -138,6 +138,7 @@ class OGRParquetDatasetLayer final: public OGRParquetLayerBase
 protected:
         std::string        GetDriverUCName() const override { return "PARQUET"; }
         bool               ReadNextBatch() override;
+        bool               GetFastExtent(int iGeomField, OGREnvelope *psExtent) const override;
 
 public:
                            OGRParquetDatasetLayer(

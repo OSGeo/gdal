@@ -290,6 +290,11 @@ def _check_test_parquet(filename,
     lyr.ResetReading()
     f = lyr.GetNextFeature()
     assert f.GetFID() == 4
+
+    lyr.SetSpatialFilterRect(-100,-100,-100,-100)
+    lyr.ResetReading()
+    assert lyr.GetNextFeature() is None
+
     lyr.SetSpatialFilter(None)
 
     if expect_ignore_fields:
@@ -1186,5 +1191,14 @@ def test_ogr_parquet_read_partitioned_geo():
     lyr = ds.GetLayer(0)
     assert lyr.GetGeometryColumn() == 'geometry'
     assert lyr.GetExtent() == (1,3,2,4)
+    assert lyr.GetExtent() == (1,3,2,4)
+
+    lyr.SetSpatialFilterRect(0,0,10,10)
+    lyr.ResetReading()
+    assert lyr.GetFeatureCount() == 2
+
+    lyr.SetSpatialFilterRect(-100,-100,-100,-100)
+    lyr.ResetReading()
+    assert lyr.GetNextFeature() is None
 
     gdal.RmdirRecursive('/vsimem/somedir')

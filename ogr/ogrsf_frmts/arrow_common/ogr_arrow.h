@@ -83,6 +83,8 @@ private:
 
         std::vector<Constraint>  m_asAttributeFilterConstraints{};
         int                      m_nUseOptimizedAttributeFilter = -1;
+        bool                     m_bSpatialFilterIntersectsLayerExtent = true;
+
         bool                     SkipToNextFeatureDueToAttributeFilter() const;
         void                     ExploreExprNode(const swq_expr_node* poNode);
 
@@ -106,6 +108,7 @@ protected:
         int64_t                                     m_nFeatureIdx = 0;
         int64_t                                     m_nIdxInBatch = 0;
         std::map<std::string, CPLJSONObject>        m_oMapGeometryColumns{};
+        std::map<int, OGREnvelope>                  m_oMapExtents{};
         int                                         m_iRecordBatch = -1;
         std::shared_ptr<arrow::RecordBatch>         m_poBatch{};
         // m_poBatch->columns() is a relatively costly operation, so cache its result
@@ -155,6 +158,7 @@ protected:
 
         void               SetBatch(const std::shared_ptr<arrow::RecordBatch>& poBatch) { m_poBatch = poBatch; m_poBatchColumns = m_poBatch->columns(); }
 
+        virtual bool       GetFastExtent(int iGeomField, OGREnvelope *psExtent) const;
         OGRErr             GetExtentFromMetadata(const CPLJSONObject& oJSONDef,
                                                  OGREnvelope *psExtent) const;
 
@@ -169,6 +173,10 @@ public:
         OGRErr          GetExtent(int iGeomField, OGREnvelope *psExtent,
                                   int bForce = TRUE) override;
         OGRErr          SetAttributeFilter( const char* pszFilter ) override;
+
+        void            SetSpatialFilter( OGRGeometry * poGeom ) override
+                            { SetSpatialFilter(0, poGeom); }
+        void            SetSpatialFilter( int iGeomField, OGRGeometry *poGeom ) override;
 
         virtual std::unique_ptr<OGRFieldDomain> BuildDomain(const std::string& osDomainName,
                                                              int iFieldIndex) const = 0;
