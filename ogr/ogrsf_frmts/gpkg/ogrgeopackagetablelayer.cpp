@@ -2001,78 +2001,32 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature( OGRFeature *poFeature )
 
     CheckGeometryType(poFeature);
 
-    /* Old version of SQLite have issues with some of the spatial index triggers */
-#if SQLITE_VERSION_NUMBER < 3007008
-    if( HasSpatialIndex() )
+    if ( ! m_poUpdateStatement )
     {
-        if ( ! m_poUpdateStatement )
+        /* Construct a SQL UPDATE statement from the OGRFeature */
+        /* Only work with fields that are set */
+        /* Do not stick values into SQL, use placeholder and bind values later */
+        CPLString osCommand = FeatureGenerateUpdateSQL(poFeature);
+        if( osCommand.empty() )
+            return OGRERR_NONE;
+
+        /* Prepare the SQL into a statement */
+        int err = sqlite3_prepare_v2(m_poDS->GetDB(), osCommand, -1, &m_poUpdateStatement, nullptr);
+        if ( err != SQLITE_OK )
         {
-            /* Construct a SQL INSERT statement from the OGRFeature */
-            /* Only work with fields that are set */
-            /* Do not stick values into SQL, use placeholder and bind values later */
-            CPLString osCommand = FeatureGenerateInsertSQL(poFeature, true, true);
-
-            /* Prepare the SQL into a statement */
-            int err = sqlite3_prepare_v2(m_poDS->GetDB(), osCommand, -1, &m_poUpdateStatement, nullptr);
-            if ( err != SQLITE_OK )
-            {
-                CPLError( CE_Failure, CPLE_AppDefined,
-                        "failed to prepare SQL: %s", osCommand.c_str());
-                return OGRERR_FAILURE;
-            }
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "failed to prepare SQL: %s", osCommand.c_str());
+            return OGRERR_FAILURE;
         }
-
-        sqlite3_stmt* hBackupStmt = m_poUpdateStatement;
-        m_poUpdateStatement = NULL;
-
-#ifdef ENABLE_GPKG_OGR_CONTENTS
-        GIntBig nTotalFeatureCountBackup = m_nTotalFeatureCount;
-#endif
-        OGRErr errOgr = DeleteFeature( poFeature->GetFID() );
-
-        m_poUpdateStatement = hBackupStmt;
-
-        if ( errOgr != OGRERR_NONE )
-            return errOgr;
-
-        /* Bind values onto the statement now */
-        errOgr = FeatureBindInsertParameters(poFeature, m_poUpdateStatement, true, true);
-        if ( errOgr != OGRERR_NONE )
-            return errOgr;
-#ifdef ENABLE_GPKG_OGR_CONTENTS
-        m_nTotalFeatureCount = nTotalFeatureCountBackup;
-#endif
     }
-    else
-#endif
+
+    /* Bind values onto the statement now */
+    OGRErr errOgr = FeatureBindUpdateParameters(poFeature, m_poUpdateStatement);
+    if ( errOgr != OGRERR_NONE )
     {
-        if ( ! m_poUpdateStatement )
-        {
-            /* Construct a SQL UPDATE statement from the OGRFeature */
-            /* Only work with fields that are set */
-            /* Do not stick values into SQL, use placeholder and bind values later */
-            CPLString osCommand = FeatureGenerateUpdateSQL(poFeature);
-            if( osCommand.empty() )
-                return OGRERR_NONE;
-
-            /* Prepare the SQL into a statement */
-            int err = sqlite3_prepare_v2(m_poDS->GetDB(), osCommand, -1, &m_poUpdateStatement, nullptr);
-            if ( err != SQLITE_OK )
-            {
-                CPLError( CE_Failure, CPLE_AppDefined,
-                        "failed to prepare SQL: %s", osCommand.c_str());
-                return OGRERR_FAILURE;
-            }
-        }
-
-        /* Bind values onto the statement now */
-        OGRErr errOgr = FeatureBindUpdateParameters(poFeature, m_poUpdateStatement);
-        if ( errOgr != OGRERR_NONE )
-        {
-            sqlite3_reset(m_poUpdateStatement);
-            sqlite3_clear_bindings(m_poUpdateStatement);
-            return errOgr;
-        }
+        sqlite3_reset(m_poUpdateStatement);
+        sqlite3_clear_bindings(m_poUpdateStatement);
+        return errOgr;
     }
 
     /* From here execute the statement and check errors */
