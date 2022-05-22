@@ -2915,6 +2915,38 @@ OGRErr OGRArrowLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 }
 
 /************************************************************************/
+/*                       GetExtentFromMetadata()                        */
+/************************************************************************/
+
+inline
+OGRErr OGRArrowLayer::GetExtentFromMetadata(const CPLJSONObject& oJSONDef,
+                                            OGREnvelope *psExtent) const
+{
+    const auto oBBox = oJSONDef.GetArray("bbox");
+    if( oBBox.IsValid() && oBBox.Size() == 4 )
+    {
+        psExtent->MinX = oBBox[0].ToDouble();
+        psExtent->MinY = oBBox[1].ToDouble();
+        psExtent->MaxX = oBBox[2].ToDouble();
+        psExtent->MaxY = oBBox[3].ToDouble();
+        if( psExtent->MinX <= psExtent->MaxX )
+            return OGRERR_NONE;
+    }
+    else if( oBBox.IsValid() && oBBox.Size() == 6 )
+    {
+        psExtent->MinX = oBBox[0].ToDouble();
+        psExtent->MinY = oBBox[1].ToDouble();
+        // MinZ skipped
+        psExtent->MaxX = oBBox[3].ToDouble();
+        psExtent->MaxY = oBBox[4].ToDouble();
+        // MaxZ skipped
+        if( psExtent->MinX <= psExtent->MaxX )
+            return OGRERR_NONE;
+    }
+    return OGRERR_FAILURE;
+}
+
+/************************************************************************/
 /*                            GetExtent()                               */
 /************************************************************************/
 
@@ -2931,32 +2963,17 @@ OGRErr OGRArrowLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
         }
         return OGRERR_FAILURE;
     }
-    auto oIter = m_oMapGeometryColumns.find(
-        m_poFeatureDefn->GetGeomFieldDefn(iGeomField)->GetNameRef() );
+
+    const char* pszGeomFieldName =
+        m_poFeatureDefn->GetGeomFieldDefn(iGeomField)->GetNameRef();
+    const auto oIter = m_oMapGeometryColumns.find(pszGeomFieldName);
     if( oIter != m_oMapGeometryColumns.end() &&
         CPLTestBool(CPLGetConfigOption(("OGR_" + GetDriverUCName() + "_USE_BBOX").c_str(), "YES")) )
     {
         const auto& oJSONDef = oIter->second;
-        const auto oBBox = oJSONDef.GetArray("bbox");
-        if( oBBox.IsValid() && oBBox.Size() == 4 )
+        if( GetExtentFromMetadata(oJSONDef, psExtent) == OGRERR_NONE )
         {
-            psExtent->MinX = oBBox[0].ToDouble();
-            psExtent->MinY = oBBox[1].ToDouble();
-            psExtent->MaxX = oBBox[2].ToDouble();
-            psExtent->MaxY = oBBox[3].ToDouble();
-            if( psExtent->MinX <= psExtent->MaxX )
-                return OGRERR_NONE;
-        }
-        else if( oBBox.IsValid() && oBBox.Size() == 6 )
-        {
-            psExtent->MinX = oBBox[0].ToDouble();
-            psExtent->MinY = oBBox[1].ToDouble();
-            // MinZ skipped
-            psExtent->MaxX = oBBox[3].ToDouble();
-            psExtent->MaxY = oBBox[4].ToDouble();
-            // MaxZ skipped
-            if( psExtent->MinX <= psExtent->MaxX )
-                return OGRERR_NONE;
+            return OGRERR_NONE;
         }
     }
 
