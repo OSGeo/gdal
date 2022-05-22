@@ -204,14 +204,10 @@ def test_jpegxl_rasterio():
     # Optimized code path: read directly in target buffer
     for i in range(2):
         got_data = ds.ReadRaster(
-            0, 0, src_ds.RasterXSize, src_ds.RasterYSize,
-            src_ds.RasterXSize, src_ds.RasterYSize,
             buf_pixel_space = 3,
             buf_line_space = 3 * src_ds.RasterXSize,
             buf_band_space = 1)
         expected_data = src_ds.ReadRaster(
-            0, 0, src_ds.RasterXSize, src_ds.RasterYSize,
-            src_ds.RasterXSize, src_ds.RasterYSize,
             buf_pixel_space = 3,
             buf_line_space = 3 * src_ds.RasterXSize,
             buf_band_space = 1)
@@ -219,23 +215,37 @@ def test_jpegxl_rasterio():
 
     # Optimized code path: do not use block cache
     got_data = ds.ReadRaster(
-        0, 0, src_ds.RasterXSize, src_ds.RasterYSize,
-        src_ds.RasterXSize, src_ds.RasterYSize,
         buf_type = gdal.GDT_UInt16,
         buf_pixel_space = 2 * 3,
         buf_line_space = 2 * 3 * src_ds.RasterXSize,
         buf_band_space = 2)
     expected_data = src_ds.ReadRaster(
-        0, 0, src_ds.RasterXSize, src_ds.RasterYSize,
-        src_ds.RasterXSize, src_ds.RasterYSize,
         buf_type = gdal.GDT_UInt16,
         buf_pixel_space = 2 * 3,
         buf_line_space = 2 * 3 * src_ds.RasterXSize,
         buf_band_space = 2)
     assert got_data == expected_data
 
+    got_data = ds.ReadRaster(
+        band_list = [1, 2],
+        buf_type = gdal.GDT_UInt16,
+        buf_pixel_space = 2 * 2,
+        buf_line_space = 2 * 2 * src_ds.RasterXSize,
+        buf_band_space = 2)
+    expected_data = src_ds.ReadRaster(
+        band_list = [1, 2],
+        buf_type = gdal.GDT_UInt16,
+        buf_pixel_space = 2 * 2,
+        buf_line_space = 2 * 2 * src_ds.RasterXSize,
+        buf_band_space = 2)
+    assert got_data == expected_data
+
+    # Optimized code path: band interleaved spacing
+    assert ds.ReadRaster(buf_type = gdal.GDT_UInt16) == src_ds.ReadRaster(buf_type = gdal.GDT_UInt16)
+    assert ds.ReadRaster(band_list = [2, 1]) == src_ds.ReadRaster(band_list = [2, 1])
+
     # Regular code path
-    assert ds.ReadRaster() == src_ds.ReadRaster()
+    assert ds.ReadRaster(0, 0, 10, 10) == src_ds.ReadRaster(0, 0, 10, 10)
 
     ds = None
     gdal.GetDriverByName('JPEGXL').Delete(outfilename)
@@ -331,6 +341,16 @@ def test_jpegxl_read_five_bands():
 
     ds = gdal.Open('data/jpegxl/five_bands.jxl')
     assert [ds.GetRasterBand(i+1).Checksum() for i in range(5)] == [3741, 5281, 6003, 5095, 4318]
+    mem_ds = gdal.GetDriverByName('MEM').CreateCopy('', ds)
+    assert [mem_ds.GetRasterBand(i+1).Checksum() for i in range(5)] == [3741, 5281, 6003, 5095, 4318]
+    assert ds.ReadRaster() == mem_ds.ReadRaster()
+    assert ds.ReadRaster(band_list = [1]) == mem_ds.ReadRaster(band_list = [1])
+    assert ds.ReadRaster(buf_pixel_space = ds.RasterCount,
+                         buf_line_space = ds.RasterCount * ds.RasterXSize,
+                         buf_band_space = 1) == \
+           mem_ds.ReadRaster(buf_pixel_space = ds.RasterCount,
+                             buf_line_space = ds.RasterCount * ds.RasterXSize,
+                             buf_band_space = 1)
 
 
 def test_jpegxl_write_five_bands():

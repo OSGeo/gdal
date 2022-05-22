@@ -31,6 +31,7 @@
 #include "gdaljp2metadata.h"
 #include "gdaljp2abstractdataset.h"
 
+#include <algorithm>
 #include <cstdlib>
 #include <limits>
 
@@ -106,6 +107,11 @@ class JPEGXLRasterBand final: public GDALPamRasterBand
 {
 protected:
     CPLErr              IReadBlock(int nBlockXOff, int nBlockYOff, void* pData) override;
+
+    CPLErr              IRasterIO( GDALRWFlag, int, int, int, int,
+                              void *, int, int, GDALDataType,
+                              GSpacing, GSpacing,
+                              GDALRasterIOExtraArg* psExtraArg ) override;
 
 public:
                         JPEGXLRasterBand(JPEGXLDataset* poDSIn,
@@ -1122,24 +1128,20 @@ CPLErr JPEGXLDataset::IRasterIO( GDALRWFlag eRWFlag,
                                     GDALRasterIOExtraArg *psExtraArg )
 
 {
-    const auto GetOneTwoThreeEtcSuite = [](int nItems)
+    const auto AreSequentialBands = [](const int* panItems, int nItems)
     {
-        std::vector<int> res(nItems);
         for( int i = 0; i < nItems; i++ )
-            res[i] = i + 1;
-        return res;
+        {
+            if( panItems[i] != i + 1 )
+                return false;
+        }
+        return true;
     };
 
-    const auto nBufTypeSize = GDALGetDataTypeSizeBytes(eBufType);
     if( eRWFlag == GF_Read &&
-        m_nNonAlphaExtraChannels == 0 &&
-        nXOff == 0 && nYOff == 0 && nXSize == nRasterXSize && nYSize == nRasterYSize &&
-        nBufXSize == nXSize && nBufYSize == nYSize &&
-        nBandCount == nBands &&
-        memcmp(panBandMap, GetOneTwoThreeEtcSuite(nBands).data(), nBands * sizeof(int)) == 0 &&
-        ((nBandSpace == 0 && nBands == 1) || nBandSpace == nBufTypeSize) &&
-        nPixelSpace == nBufTypeSize * nBands &&
-        nLineSpace == nPixelSpace * nRasterXSize )
+        nXOff == 0 && nYOff == 0 &&
+        nXSize == nRasterXSize && nYSize == nRasterYSize &&
+        nBufXSize == nXSize && nBufYSize == nYSize )
     {
         // Get the full image in a pixel-interleaved way
         if( m_bDecodingFailed )
@@ -1147,9 +1149,17 @@ CPLErr JPEGXLDataset::IRasterIO( GDALRWFlag eRWFlag,
 
         CPLDebug("JPEGXL", "Using optimized IRasterIO() code path");
 
+        const auto nBufTypeSize = GDALGetDataTypeSizeBytes(eBufType);
+        const bool bIsPixelInterleaveBuffer =
+            ((nBandSpace == 0 && nBandCount == 1) || nBandSpace == nBufTypeSize) &&
+            nPixelSpace == nBufTypeSize * nBandCount &&
+            nLineSpace == nPixelSpace * nRasterXSize;
+
         const auto eNativeDT = GetRasterBand(1)->GetRasterDataType();
         const auto nNativeDataSize = GDALGetDataTypeSizeBytes(eNativeDT);
-        if( eBufType == eNativeDT )
+        const bool bIsBandSequential = AreSequentialBands(panBandMap, nBandCount);
+        if( eBufType == eNativeDT && bIsBandSequential && nBandCount == nBands &&
+            m_nNonAlphaExtraChannels == 0 && bIsPixelInterleaveBuffer )
         {
             // We can directly use the user output buffer
             GetDecodedImage(pData,
@@ -1162,9 +1172,48 @@ CPLErr JPEGXLDataset::IRasterIO( GDALRWFlag eRWFlag,
         {
             return CE_Failure;
         }
-        GDALCopyWords64(abyDecodedImage.data(), eNativeDT, nNativeDataSize,
-                        pData, eBufType, nBufTypeSize,
-                        static_cast<GPtrDiff_t>(nRasterXSize) * nRasterYSize * nBands);
+        const int nNonExtraBands = nBands - m_nNonAlphaExtraChannels;
+        if( bIsPixelInterleaveBuffer && bIsBandSequential &&
+            nBandCount == nNonExtraBands )
+        {
+            GDALCopyWords64(abyDecodedImage.data(), eNativeDT, nNativeDataSize,
+                            pData, eBufType, nBufTypeSize,
+                            static_cast<GPtrDiff_t>(nRasterXSize) * nRasterYSize * nBandCount);
+        }
+        else
+        {
+            for( int iBand = 0; iBand < nBandCount; iBand ++ )
+            {
+                const int iSrcBand = panBandMap[iBand] - 1;
+                if( iSrcBand < nNonExtraBands )
+                {
+                    for( int iY = 0; iY < nRasterYSize; iY++ )
+                    {
+                        const GByte* pSrc = abyDecodedImage.data() +
+                            (static_cast<size_t>(iY) * nRasterXSize * nNonExtraBands +
+                             iSrcBand) * nNativeDataSize;
+                        GByte* pDst = static_cast<GByte*>(pData) +
+                            iY * nLineSpace + iBand * nBandSpace;
+                        GDALCopyWords(pSrc, eNativeDT, nNativeDataSize * nNonExtraBands,
+                                      pDst, eBufType, static_cast<int>(nPixelSpace),
+                                      nRasterXSize);
+                    }
+                }
+                else
+                {
+                    for( int iY = 0; iY < nRasterYSize; iY++ )
+                    {
+                        const GByte* pSrc = m_abyExtraChannels[iSrcBand - nNonExtraBands].data() +
+                            static_cast<size_t>(iY) * nRasterXSize * nNativeDataSize;
+                        GByte* pDst = static_cast<GByte*>(pData) +
+                            iY * nLineSpace + iBand * nBandSpace;
+                        GDALCopyWords(pSrc, eNativeDT, nNativeDataSize,
+                                      pDst, eBufType, static_cast<int>(nPixelSpace),
+                                      nRasterXSize);
+                    }
+                }
+            }
+        }
         return CE_None;
     }
 
@@ -1173,6 +1222,38 @@ CPLErr JPEGXLDataset::IRasterIO( GDALRWFlag eRWFlag,
                                      nBandCount, panBandMap,
                                      nPixelSpace, nLineSpace, nBandSpace,
                                      psExtraArg);
+}
+
+/************************************************************************/
+/*                             IRasterIO()                              */
+/************************************************************************/
+
+CPLErr JPEGXLRasterBand::IRasterIO( GDALRWFlag eRWFlag,
+                                    int nXOff, int nYOff,
+                                    int nXSize, int nYSize,
+                                    void *pData, int nBufXSize, int nBufYSize,
+                                    GDALDataType eBufType,
+                                    GSpacing nPixelSpace, GSpacing nLineSpace,
+                                    GDALRasterIOExtraArg *psExtraArg )
+
+{
+    if( eRWFlag == GF_Read &&
+        nXOff == 0 && nYOff == 0 &&
+        nXSize == nRasterXSize && nYSize == nRasterYSize &&
+        nBufXSize == nXSize && nBufYSize == nYSize )
+    {
+        return cpl::down_cast<JPEGXLDataset*>(poDS)->IRasterIO(
+            GF_Read, nXOff, nYOff, nXSize, nYSize,
+            pData, nBufXSize, nBufYSize, eBufType,
+            1, &nBand,
+            nPixelSpace, nLineSpace, 0,
+            psExtraArg);
+    }
+
+    return GDALPamRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                        pData, nBufXSize, nBufYSize, eBufType,
+                                        nPixelSpace, nLineSpace,
+                                        psExtraArg);
 }
 
 /************************************************************************/
