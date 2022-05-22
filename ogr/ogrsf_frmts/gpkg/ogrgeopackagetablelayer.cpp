@@ -1855,7 +1855,6 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
         int err = sqlite3_prepare_v2(poDb, osCommand, -1, &m_poInsertStatement, nullptr);
         if ( err != SQLITE_OK )
         {
-            m_poInsertStatement = nullptr;
             CPLError( CE_Failure, CPLE_AppDefined,
                       "failed to prepare SQL: %s - %s", osCommand.c_str(), sqlite3_errmsg( poDb ));
             return OGRERR_FAILURE;
@@ -2240,7 +2239,6 @@ OGRErr OGRGeoPackageTableLayer::ResetStatement()
         m_poDS->GetDB(), soSQL.c_str(), -1, &m_poQueryStatement, nullptr);
     if ( err != SQLITE_OK )
     {
-        m_poQueryStatement = nullptr;
         CPLError( CE_Failure, CPLE_AppDefined,
                   "failed to prepare SQL: %s", soSQL.c_str());
         return OGRERR_FAILURE;
@@ -2303,8 +2301,6 @@ OGRFeature* OGRGeoPackageTableLayer::GetFeature(GIntBig nFID)
             m_poDS->GetDB(), soSQL.c_str(), -1, &m_poGetFeatureStatement, nullptr);
         if ( err != SQLITE_OK )
         {
-            sqlite3_finalize(m_poGetFeatureStatement);
-            m_poGetFeatureStatement = nullptr;
             CPLError( CE_Failure, CPLE_AppDefined,
                       "failed to prepare SQL: %s", soSQL.c_str());
             return nullptr;
