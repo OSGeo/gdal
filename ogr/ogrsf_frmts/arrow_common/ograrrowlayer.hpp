@@ -2687,7 +2687,7 @@ inline bool OGRArrowLayer::SkipToNextFeatureDueToAttributeFilter() const
 inline
 OGRFeature* OGRArrowLayer::GetNextRawFeature()
 {
-    if( m_bEOF )
+    if( m_bEOF || !m_bSpatialFilterIntersectsLayerExtent )
         return nullptr;
 
     if( m_poBatch == nullptr || m_nIdxInBatch == m_poBatch->num_rows() )
@@ -2947,6 +2947,63 @@ OGRErr OGRArrowLayer::GetExtentFromMetadata(const CPLJSONObject& oJSONDef,
 }
 
 /************************************************************************/
+/*                        SetSpatialFilter()                            */
+/************************************************************************/
+
+inline
+void OGRArrowLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn )
+
+{
+    m_bSpatialFilterIntersectsLayerExtent = true;
+    if( iGeomField >= 0 && iGeomField < GetLayerDefn()->GetGeomFieldCount() )
+    {
+        m_iGeomFieldFilter = iGeomField;
+        if( InstallFilter( poGeomIn ) )
+            ResetReading();
+        if( m_poFilterGeom != nullptr )
+        {
+            OGREnvelope sLayerExtent;
+            if( GetFastExtent(iGeomField, &sLayerExtent) )
+            {
+                m_bSpatialFilterIntersectsLayerExtent =
+                    m_sFilterEnvelope.Intersects(sLayerExtent);
+            }
+        }
+    }
+}
+
+/************************************************************************/
+/*                         GetFastExtent()                              */
+/************************************************************************/
+
+inline
+bool OGRArrowLayer::GetFastExtent(int iGeomField, OGREnvelope *psExtent) const
+{
+    {
+        const auto oIter = m_oMapExtents.find(iGeomField);
+        if( oIter != m_oMapExtents.end() )
+        {
+            *psExtent = oIter->second;
+            return true;
+        }
+    }
+
+    const char* pszGeomFieldName =
+        m_poFeatureDefn->GetGeomFieldDefn(iGeomField)->GetNameRef();
+    const auto oIter = m_oMapGeometryColumns.find(pszGeomFieldName);
+    if( oIter != m_oMapGeometryColumns.end() &&
+        CPLTestBool(CPLGetConfigOption(("OGR_" + GetDriverUCName() + "_USE_BBOX").c_str(), "YES")) )
+    {
+        const auto& oJSONDef = oIter->second;
+        if( GetExtentFromMetadata(oJSONDef, psExtent) == OGRERR_NONE )
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+/************************************************************************/
 /*                            GetExtent()                               */
 /************************************************************************/
 
@@ -2964,17 +3021,9 @@ OGRErr OGRArrowLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
         return OGRERR_FAILURE;
     }
 
-    const char* pszGeomFieldName =
-        m_poFeatureDefn->GetGeomFieldDefn(iGeomField)->GetNameRef();
-    const auto oIter = m_oMapGeometryColumns.find(pszGeomFieldName);
-    if( oIter != m_oMapGeometryColumns.end() &&
-        CPLTestBool(CPLGetConfigOption(("OGR_" + GetDriverUCName() + "_USE_BBOX").c_str(), "YES")) )
+    if( GetFastExtent(iGeomField, psExtent) )
     {
-        const auto& oJSONDef = oIter->second;
-        if( GetExtentFromMetadata(oJSONDef, psExtent) == OGRERR_NONE )
-        {
-            return OGRERR_NONE;
-        }
+        return OGRERR_NONE;
     }
 
     if( !bForce && !CanRunNonForcedGetExtent() )
@@ -3031,7 +3080,12 @@ OGRErr OGRArrowLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
                 if( m_bEOF )
                 {
                     ResetReading();
-                    return psExtent->IsInit() ? OGRERR_NONE : OGRERR_FAILURE;
+                    if( psExtent->IsInit() )
+                    {
+                        m_oMapExtents[iGeomField] = *psExtent;
+                        return OGRERR_NONE;
+                    }
+                    return OGRERR_FAILURE;
                 }
                 array = m_poBatchColumns[iCol];
                 CPLAssert( array->type_id() == arrow::Type::BINARY );
@@ -3103,7 +3157,12 @@ begin_multipolygon:
                 if( m_bEOF )
                 {
                     ResetReading();
-                    return psExtent->IsInit() ? OGRERR_NONE : OGRERR_FAILURE;
+                    if( psExtent->IsInit() )
+                    {
+                        m_oMapExtents[iGeomField] = *psExtent;
+                        return OGRERR_NONE;
+                    }
+                    return OGRERR_FAILURE;
                 }
                 goto begin_multipolygon;
             }
