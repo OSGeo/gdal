@@ -155,6 +155,9 @@ protected:
 
         void               SetBatch(const std::shared_ptr<arrow::RecordBatch>& poBatch) { m_poBatch = poBatch; m_poBatchColumns = m_poBatch->columns(); }
 
+        OGRErr             GetExtentFromMetadata(const CPLJSONObject& oJSONDef,
+                                                 OGREnvelope *psExtent) const;
+
 public:
         virtual ~OGRArrowLayer() override;
 

@@ -1164,19 +1164,27 @@ def test_ogr_parquet_read_partitioned_hive(use_vsi, use_metadata_file, prefix):
 
 
 ###############################################################################
-# Test reading a (not-so) partitioned dataset with geo
+# Test reading a partitioned dataset with geo
 
 
 @pytest.mark.skipif(not _has_arrow_dataset(),
                     reason="GDAL not built with ArrowDataset")
 def test_ogr_parquet_read_partitioned_geo():
 
-    gdal.Mkdir('/vsimem/somedir', 0)
-    with gdaltest.tempfile('/vsimem/somedir/test.parquet',
-                           open('data/parquet/test.parquet', 'rb').read()):
-        ds = ogr.Open('/vsimem/somedir')
-        assert ds is not None
-        lyr = ds.GetLayer(0)
-        assert lyr.GetGeometryColumn() == 'geometry'
+    gdal.Mkdir('/vsimem/somedir', 0o755)
+    for name, wkt in [('part.0.parquet', 'POINT(1 2)'),
+                      ('part.1.parquet', 'POINT(3 4)')]:
+        ds = ogr.GetDriverByName('Parquet').CreateDataSource('/vsimem/somedir/' + name)
+        lyr = ds.CreateLayer('test', geom_type = ogr.wkbPoint)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt(wkt))
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+        ds = None
+
+    ds = ogr.Open('/vsimem/somedir')
+    assert ds is not None
+    lyr = ds.GetLayer(0)
+    assert lyr.GetGeometryColumn() == 'geometry'
+    assert lyr.GetExtent() == (1,3,2,4)
 
     gdal.RmdirRecursive('/vsimem/somedir')

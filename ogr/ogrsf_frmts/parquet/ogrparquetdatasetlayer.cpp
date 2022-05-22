@@ -156,3 +156,85 @@ GIntBig OGRParquetDatasetLayer::GetFeatureCount(int bForce)
     }
     return OGRLayer::GetFeatureCount(bForce);
 }
+
+/************************************************************************/
+/*                            GetExtent()                               */
+/************************************************************************/
+
+OGRErr OGRParquetDatasetLayer::GetExtent(OGREnvelope *psExtent, int bForce)
+{
+    return GetExtent(0, psExtent, bForce);
+}
+
+/************************************************************************/
+/*                            GetExtent()                               */
+/************************************************************************/
+
+OGRErr OGRParquetDatasetLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
+                                         int bForce)
+{
+    if( iGeomField < 0 || iGeomField >= m_poFeatureDefn->GetGeomFieldCount() )
+    {
+        if( iGeomField != 0 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid geometry field index : %d", iGeomField);
+        }
+        return OGRERR_FAILURE;
+    }
+
+    // bbox in general m_oMapGeometryColumns can not be trusted (at least at
+    // time of writing), so we have to iterate over each fragment.
+    const char* pszGeomFieldName =
+        m_poFeatureDefn->GetGeomFieldDefn(iGeomField)->GetNameRef();
+    auto oIter = m_oMapGeometryColumns.find(pszGeomFieldName);
+    if( oIter != m_oMapGeometryColumns.end() )
+    {
+        auto statusFragments = m_poScanner->dataset()->GetFragments();
+        if( statusFragments.ok() )
+        {
+            *psExtent = OGREnvelope();
+            int nFragmentCount = 0;
+            int nBBoxFragmentCount = 0;
+            for( auto oFragmentStatus: *statusFragments )
+            {
+                if( oFragmentStatus.ok() )
+                {
+                    auto statusSchema = (*oFragmentStatus)->ReadPhysicalSchema();
+                    if( statusSchema.ok() )
+                    {
+                        nFragmentCount ++;
+                        const auto& kv_metadata = (*statusSchema)->metadata();
+                        if( kv_metadata && kv_metadata->Contains("geo") )
+                        {
+                            auto geo = kv_metadata->Get("geo");
+                            CPLJSONDocument oDoc;
+                            if( geo.ok() && oDoc.LoadMemory(*geo) )
+                            {
+                                auto oRoot = oDoc.GetRoot();
+                                auto oColumns = oRoot.GetObj("columns");
+                                auto oCol = oColumns.GetObj(pszGeomFieldName);
+                                OGREnvelope sFragmentExtent;
+                                if( oCol.IsValid() &&
+                                    GetExtentFromMetadata(oCol, &sFragmentExtent) == OGRERR_NONE )
+                                {
+                                    nBBoxFragmentCount++;
+                                    psExtent->MinX = std::min(psExtent->MinX, sFragmentExtent.MinX);
+                                    psExtent->MinY = std::min(psExtent->MinY, sFragmentExtent.MinY);
+                                    psExtent->MaxX = std::max(psExtent->MaxX, sFragmentExtent.MaxX);
+                                    psExtent->MaxY = std::max(psExtent->MaxY, sFragmentExtent.MaxY);
+                                }
+                            }
+                        }
+                        if( nFragmentCount != nBBoxFragmentCount )
+                            break;
+                    }
+                }
+            }
+            if( nFragmentCount == nBBoxFragmentCount )
+                return OGRERR_NONE;
+        }
+    }
+
+    return OGRParquetLayerBase::GetExtent(iGeomField, psExtent, bForce);
+}
