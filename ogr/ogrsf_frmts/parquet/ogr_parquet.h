@@ -202,6 +202,8 @@ class OGRParquetWriterLayer final: public OGRArrowWriterLayer
         virtual void            FixupGeometryBeforeWriting(OGRGeometry* poGeom) override;
         virtual bool            IsSRSRequired() const override { return false; }
 
+        std::string             GetGeoMetadata() const;
+
 public:
         OGRParquetWriterLayer( arrow::MemoryPool* poMemoryPool,
                                const std::shared_ptr<arrow::io::OutputStream>& poOutputStream,
