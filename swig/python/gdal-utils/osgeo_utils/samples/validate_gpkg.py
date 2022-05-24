@@ -1965,7 +1965,7 @@ def check(filename,
 
 
 def Usage():
-    print('validate_gpkg.py [[-v]|[-q]] [-k] [--extra] [--warning-as-error] my.gpkg')
+    print('Usage: validate_gpkg.py [[-v]|[-q]] [-k] [--extra] [--warning-as-error] my.gpkg')
     print('')
     print('-v: verbose mode')
     print('-q: quiet mode')

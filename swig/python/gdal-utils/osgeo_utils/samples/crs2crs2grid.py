@@ -193,7 +193,7 @@ def write_control(control_fn, out_grid_fn, in_grid_fn,
 
 def Usage(brief=1):
     print("""
-crs2crs2grid.py
+Usage: crs2crs2grid.py
         <src_crs_id> <src_crs_date> <dst_crs_id> <dst_crs_year>
         [-griddef <ul_lon> <ul_lat> <ll_lon> <ll_lat> <lon_count> <lat_count>]
         [-htdp <path_to_exe>] [-wrkdir <dirpath>] [-kwf]

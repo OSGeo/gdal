@@ -32,25 +32,31 @@ Verify that gdal-utils scripts all exit with the same return code when
 called without arguments.
 
 Spawned from https://github.com/OSGeo/gdal/issues/5561
+
+Programs: python files installed into PYTHONHOME/Scripts and can be executed
+as just names e.g. 'gdal_edit somefile.tif ...'
+
+Scripts: python files that need to called from python in order to be run,
+e.g. 'python path/to/samples/pct2rgb.py somefile.tif ...'
 """
 import glob
 import sys
 import subprocess
 import pytest
+from pathlib import Path
 
 # pytest.skip("THIS TEST IN DRAFT MODE, SKIPPING", allow_module_level=True)
-
-from pathlib import Path
 
 # here = r"D:\code\public\gdal\autotest\pyscripts"
 # script_path = r"D:\code\public\gdal\swig\python\gdal-utils\osgeo_utils"
 here = Path(__file__).parent.absolute()
-script_path = Path(here / '../../swig/python/gdal-utils/osgeo_utils/').resolve()
+script_path = Path(here / "../../swig/python/gdal-utils/osgeo_utils/").resolve()
+
 excludes = [
-    'setup.py',
-    '__init__.py',
-    'gdal_auth.py', # gdal_auth doesn't take arguments
-    ]
+    "setup.py",
+    "__init__.py",
+    "gdal_auth.py",  # gdal_auth doesn't take arguments
+]
 
 
 def get_scripts(script_path, excludes):
@@ -59,7 +65,7 @@ def get_scripts(script_path, excludes):
 
     # scripts = list(script_path.glob("**/.py" ))
     s1 = glob.glob("*.py", root_dir=script_path)
-    s2 = glob.glob('samples/*.py', root_dir=script_path)
+    s2 = glob.glob("samples/*.py", root_dir=script_path)
     scripts = s1 + s2
     del s1, s2
 
@@ -80,15 +86,12 @@ else:
     scripts = get_scripts(script_path, excludes)
 
 
-##
-## Standard gdal-utils we expect to be installed in PYTHONHOME\Scripts
-##
+# Programs - standard gdal-utils we expect to be installed in PYTHONHOME\Scripts
 # Skip if gdal-utils is not known to pip (and therefore not registered in
 # python 'site-packages' and 'Scripts')
 installed = subprocess.run([sys.executable, "-m", "pip", "show", "gdal-utils"])
 if installed.returncode != 0:
     pytest.skip("The 'gdal-utils' package is not installed.", allow_module_level=True)
-
 utils = [
     "gdal2tiles",
     "gdal2xyz",
@@ -112,6 +115,8 @@ utils = [
 # Correct for-loop with pytest courtesy of @niccodemus
 # https://github.com/pytest-dev/pytest/discussions/9822#discussioncomment-2446025
 params = [pytest.param(util) for util in utils]
+sparams = [pytest.param(script) for script in scripts]
+
 
 @pytest.mark.parametrize("input", params)
 def test_program(input):
@@ -122,8 +127,7 @@ def test_program(input):
         and completed_process.returncode == 2
     )
 
-sparams = [pytest.param(script) for script in scripts]
-print(sparams)
+
 @pytest.mark.parametrize("input", sparams)
 def test_script(input):
     completed_process = run_script(input)
@@ -143,12 +147,12 @@ def run_program(program, args=None):
         text=True,
     )
 
+
 def run_script(program, args=None):
     return subprocess.run(
-        [sys.executable, program], # ["path/to/this/env's/python", 'path/to/script.py']
+        [sys.executable, program],  # ["path/to/this/env's/python", 'path/to/script.py']
         input=args,
         capture_output=True,
         shell=True,
         text=True,
     )
-
