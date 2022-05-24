@@ -86,6 +86,7 @@ class OGRFlatGeobufLayer final : public OGRLayer, public OGRFlatGeobufBaseLayerI
         OGRSpatialReference *m_poSRS = nullptr;
 
         // iteration
+        bool m_bEOF = false;
         size_t m_featuresPos = 0; // current iteration position
         uint64_t m_offset = 0; // current read offset
         uint64_t m_offsetFeatures = 0; // offset of feature data
@@ -139,6 +140,9 @@ class OGRFlatGeobufLayer final : public OGRLayer, public OGRFlatGeobufBaseLayerI
         virtual OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK = true) override;
         virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
         virtual int TestCapability(const char *) override;
+        virtual bool GetNextRecordBatch(struct ArrowArray* out_array,
+                                        struct ArrowSchema* out_schema,
+                                        CSLConstList papszOptions) override;
 
         virtual void ResetReading() override;
         virtual OGRFeatureDefn *GetLayerDefn() override { return m_poFeatureDefn; }
