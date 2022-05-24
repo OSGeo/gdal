@@ -4760,6 +4760,7 @@ def test_vsis3_read_credentials_ec2_imdsv2(
         """{
         "AccessKeyId": "AWS_ACCESS_KEY_ID",
         "SecretAccessKey": "AWS_SECRET_ACCESS_KEY",
+        "Token": "AWS_SESSION_TOKEN",
         "Expiration": "5000-01-01T00:00:00Z"
         }""",
         expected_headers={'X-aws-ec2-metadata-token': 'mytoken2'}
@@ -4778,8 +4779,9 @@ def test_vsis3_read_credentials_ec2_imdsv2(
         'AWS_ACCESS_KEY_ID%2F20150101%2Fus-east-1%2Fs3%2Faws4_request'
         '&X-Amz-Date=20150101T000000Z'
         '&X-Amz-Expires=63072000000'
+        '&X-Amz-Security-Token=AWS_SESSION_TOKEN'
         '&X-Amz-Signature='
-        '1bdf92685dbcb0c1a8890d7170ae3e72703e6bed0b8afa49171da8ba1d7c4829'
+        '42770a74a5ad96940a42d5660959d36bb027d3ec8433d66d1b003983ef9f47c9'
         '&X-Amz-SignedHeaders=host'
     )
     expected_url_8081 = (
@@ -4789,8 +4791,9 @@ def test_vsis3_read_credentials_ec2_imdsv2(
         'AWS_ACCESS_KEY_ID%2F20150101%2Fus-east-1%2Fs3%2Faws4_request'
         '&X-Amz-Date=20150101T000000Z'
         '&X-Amz-Expires=63072000000'
+        '&X-Amz-Security-Token=AWS_SESSION_TOKEN'
         '&X-Amz-Signature='
-        'bb2c6b57cd9ff11db34fb1c832735052ec4e073129823badf2fb9418c007c2e5'
+        '20e35d2707bd2e2896879dc009f5327d4dfd43500e16bb1c6e157dd5eda4403f'
         '&X-Amz-SignedHeaders=host'
     )
     assert signed_url in (expected_url_8080, expected_url_8081), signed_url
