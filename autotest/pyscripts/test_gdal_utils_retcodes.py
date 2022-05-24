@@ -46,7 +46,11 @@ from pathlib import Path
 # script_path = r"D:\code\public\gdal\swig\python\gdal-utils\osgeo_utils"
 here = Path(__file__).parent.absolute()
 script_path = Path(here / '../../swig/python/gdal-utils/osgeo_utils/').resolve()
-excludes = ['setup.py', '__init__.py']
+excludes = [
+    'setup.py',
+    '__init__.py',
+    'gdal_auth.py', # gdal_auth doesn't take arguments
+    ]
 
 
 def get_scripts(script_path, excludes):
@@ -55,7 +59,7 @@ def get_scripts(script_path, excludes):
 
     # scripts = list(script_path.glob("**/.py" ))
     s1 = glob.glob("*.py", root_dir=script_path)
-    s2 = glob.glob('xx-samples/*.py', root_dir=script_path)
+    s2 = glob.glob('samples/*.py', root_dir=script_path)
     scripts = s1 + s2
     del s1, s2
 
@@ -63,6 +67,9 @@ def get_scripts(script_path, excludes):
         for s in scripts:
             if e in s:
                 scripts.remove(s)
+
+    # add full path back in
+    scripts = [Path.joinpath(script_path, x).resolve() for x in scripts]
     return scripts
 
 
@@ -116,7 +123,7 @@ def test_program(input):
     )
 
 sparams = [pytest.param(script) for script in scripts]
-    # broken: runs `script.py` instead of `python script.py`
+print(sparams)
 @pytest.mark.parametrize("input", sparams)
 def test_script(input):
     completed_process = run_script(input)
@@ -138,41 +145,10 @@ def run_program(program, args=None):
 
 def run_script(program, args=None):
     return subprocess.run(
-        ['python'],
+        [sys.executable, program], # ["path/to/this/env's/python", 'path/to/script.py']
         input=args,
         capture_output=True,
         shell=True,
         text=True,
     )
 
-
-
-
-# ##
-# ## Scripts
-# ##   FIXME: this isn't a pytest. It only works when run as
-# ##   `python test_gdal_utils_retcodes.py`
-#
-# i = '.' # progress meter step
-# results = {}
-# for s in scripts:
-#     file = Path(s)
-#     print(i, end='\r')
-#     if 'gdal_auth.py' not in file.name:
-#         # skip gdal_auth because it doesn't take inputs
-#
-#         r = subprocess.run([sys.executable,
-#             file],
-#             shell=True,
-#             capture_output=True,
-#             text=True,
-#             )
-#
-#         # (absolute / relative_path) join courtesy of Thierry at https://stackoverflow.com/a/52879083/14420
-#         results[Path(here / file).resolve()] = r.returncode
-#     i = i+'.'
-#
-# # sort by return code value and display results
-# results = sorted(results.items(), key=lambda x:x[1])
-# print('\n')
-# [print(x[1], str(x[0])) for x in results]
