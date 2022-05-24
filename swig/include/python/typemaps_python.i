@@ -64,6 +64,16 @@
     $result = PyLong_FromUnsignedLongLong($1);
 }
 
+%typemap(in) VoidPtrAsLong
+{
+    $1 = PyLong_AsVoidPtr($input);
+}
+
+%typemap(out) VoidPtrAsLong
+{
+    $result = PyLong_FromVoidPtr($1);
+}
+
 /*
  * double *val, int*hasval, is a special contrived typemap used for
  * the RasterBand GetNoDataValue, GetMinimum, GetMaximum, GetOffset, GetScale methods.

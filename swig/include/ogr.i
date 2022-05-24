@@ -29,6 +29,9 @@
 
 #ifdef SWIGPYTHON
 %nothread;
+%inline %{
+typedef void* VoidPtrAsLong;
+%}
 #endif
 
 #ifndef FROM_GDAL_I
@@ -265,6 +268,7 @@ using namespace std;
 #include "cpl_port.h"
 #include "cpl_string.h"
 #include "ogr_srs_api.h"
+#include "ogr_recordbatch.h"
 
 #define FIELD_INDEX_ERROR_TMPL "Invalid field index: '%i'"
 #define FIELD_NAME_ERROR_TMPL "Invalid field name: '%s'"
@@ -1309,6 +1313,47 @@ public:
     if( table != NULL )
         OGR_L_SetStyleTable(self, (OGRStyleTableH) table);
   }
+
+#ifdef SWIGPYTHON
+  VoidPtrAsLong _GetRecordBatchSchemaPtr(char** options = NULL) {
+      struct ArrowSchema* schema = (struct ArrowSchema* )malloc(sizeof(struct ArrowSchema));
+      if( OGR_L_GetRecordBatchSchema(self, schema, options) )
+          return schema;
+      else
+      {
+          free(schema);
+          return 0;
+      }
+  }
+
+  static void _FreeRecordBatchSchemaPtr(VoidPtrAsLong ptr, bool bFreeContent)
+  {
+      struct ArrowSchema* schema = (struct ArrowSchema* )ptr;
+      if( bFreeContent && schema && schema->release )
+          schema->release(schema);
+      free(schema);
+  }
+
+  VoidPtrAsLong _GetNextRecordBatchPtr(char** options = NULL) {
+      struct ArrowArray* array = (struct ArrowArray* )malloc(sizeof(struct ArrowArray));
+      if( OGR_L_GetNextRecordBatch(self, array, NULL, options) )
+          return array;
+      else
+      {
+          free(array);
+          return 0;
+      }
+  }
+
+  static void _FreeRecordBatchArrayPtr(VoidPtrAsLong ptr, bool bFreeContent)
+  {
+      struct ArrowArray* array = (struct ArrowArray* )ptr;
+      if( bFreeContent && array && array->release )
+          array->release(array);
+      free(array);
+  }
+
+#endif
 
 } /* %extend */
 
