@@ -34,7 +34,7 @@
 /*                         OGRFeatherDataset()                          */
 /************************************************************************/
 
-OGRFeatherDataset::OGRFeatherDataset(std::unique_ptr<arrow::MemoryPool>&& poMemoryPool):
-    OGRArrowDataset(std::move(poMemoryPool))
+OGRFeatherDataset::OGRFeatherDataset(const std::shared_ptr<arrow::MemoryPool>& poMemoryPool):
+    OGRArrowDataset(poMemoryPool)
 {
 }

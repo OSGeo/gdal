@@ -192,15 +192,16 @@ public:
 
 class OGRArrowDataset CPL_NON_FINAL: public GDALPamDataset
 {
-    std::unique_ptr<arrow::MemoryPool> m_poMemoryPool{};
+    std::shared_ptr<arrow::MemoryPool> m_poMemoryPool{};
     std::unique_ptr<OGRArrowLayer>     m_poLayer{};
     std::vector<std::string>           m_aosDomainNames{};
     std::map<std::string, int>         m_oMapDomainNameToCol{};
 
 public:
-    explicit OGRArrowDataset(std::unique_ptr<arrow::MemoryPool>&& poMemoryPool);
+    explicit OGRArrowDataset(const std::shared_ptr<arrow::MemoryPool>& poMemoryPool);
 
     inline arrow::MemoryPool* GetMemoryPool() const { return m_poMemoryPool.get(); }
+    inline const std::shared_ptr<arrow::MemoryPool>& GetSharedMemoryPool() const { return m_poMemoryPool; }
     void SetLayer(std::unique_ptr<OGRArrowLayer>&& poLayer);
 
     void RegisterDomainName(const std::string& osDomainName, int iFieldIndex);
