@@ -1,8 +1,6 @@
 add_gdal_driver(
   TARGET gdal_MRF
   SOURCES BitMask2D.h
-          JPEG_band.cpp
-          PNG_band.cpp
           marfa.h
           marfa_dataset.cpp
           mrf_band.cpp
@@ -11,13 +9,26 @@ add_gdal_driver(
           Packer.h
           Packer_RLE.cpp
           Packer_RLE.h
-          JPNG_band.cpp
           Tif_band.cpp
   BUILTIN)
 gdal_standard_includes(gdal_MRF)
 
+if (GDAL_USE_JPEG OR GDAL_USE_JPEG_INTERNAL)
+  target_compile_definitions(gdal_MRF PRIVATE -DHAVE_JPEG)
+  target_sources(gdal_MRF PRIVATE JPEG_band.cpp)
+endif()
+
+if (GDAL_USE_PNG OR GDAL_USE_PNG_INTERNAL)
+  target_compile_definitions(gdal_MRF PRIVATE -DHAVE_PNG)
+  target_sources(gdal_MRF PRIVATE PNG_band.cpp)
+endif()
+
+if ((GDAL_USE_JPEG OR GDAL_USE_JPEG_INTERNAL) AND (GDAL_USE_PNG OR GDAL_USE_PNG_INTERNAL))
+  target_sources(gdal_MRF PRIVATE JPNG_band.cpp)
+  endif()
+
 # Internal libs first
-if (GDAL_USE_JPEG12_INTERNAL)
+if ((GDAL_USE_JPEG OR GDAL_USE_JPEG_INTERNAL) AND GDAL_USE_JPEG12_INTERNAL)
   target_sources(gdal_MRF PRIVATE JPEG12_band.cpp)
   target_compile_definitions(gdal_MRF PRIVATE -DJPEG12_SUPPORTED)
   target_include_directories(gdal_MRF PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
@@ -48,11 +59,11 @@ endif ()
 
 # Now external libs
 
-if (NOT GDAL_USE_JPEG_INTERNAL)
+if (GDAL_USE_JPEG AND NOT GDAL_USE_JPEG_INTERNAL)
   gdal_target_link_libraries(gdal_MRF PRIVATE JPEG::JPEG)
 endif ()
 
-if (NOT GDAL_USE_PNG_INTERNAL)
+if (GDAL_USE_PNG AND NOT GDAL_USE_PNG_INTERNAL)
   gdal_target_link_libraries(gdal_MRF PRIVATE PNG::PNG)
 endif ()
 

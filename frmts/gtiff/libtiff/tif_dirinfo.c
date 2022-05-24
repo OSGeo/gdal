@@ -569,55 +569,29 @@ TIFFDataWidth(TIFFDataType type)
 	}
 }
 
-/*
- * Return size of TIFFDataType in bytes.
- *
- * XXX: We need a separate function to determine the space needed
- * to store the value. For TIFF_RATIONAL values TIFFDataWidth() returns 8,
- * but we use 4-byte float to represent rationals.
- */
-int
-_TIFFDataSize(TIFFDataType type)
-{
-	switch (type)
-	{
-		case TIFF_BYTE:
-		case TIFF_SBYTE:
-		case TIFF_ASCII:
-		case TIFF_UNDEFINED:
-		    return 1;
-		case TIFF_SHORT:
-		case TIFF_SSHORT:
-		    return 2;
-		case TIFF_LONG:
-		case TIFF_SLONG:
-		case TIFF_FLOAT:
-		case TIFF_IFD:
-		case TIFF_RATIONAL:
-		case TIFF_SRATIONAL:
-		    return 4;
-		case TIFF_DOUBLE:
-		case TIFF_LONG8:
-		case TIFF_SLONG8:
-		case TIFF_IFD8:
-		    return 8;
-		default:
-		    return 0;
-	}
-}
 
-/*
- * Rational2Double: 
- * Return size of TIFFSetGetFieldType for internal storage in bytes.
- *
- * XXX: TIFF_RATIONAL values for FIELD_CUSTOM are stored internally as 4-byte float.
- * However, some of them should be stored internally as 8-byte double. 
- * This is now managed by the SetGetField of the tag-definition!
+/* 
+ * Return internal storage size of TIFFSetGetFieldType in bytes.
+ * TIFFSetField() and TIFFGetField() have to provide the parameter accordingly.
+ * Replaces internal functions _TIFFDataSize() and _TIFFSetGetFieldSize() 
+ * with now extern available function TIFFFieldSetGetSize().
  */
-int
-_TIFFSetGetFieldSize(TIFFSetGetFieldType setgettype)
+int 
+TIFFFieldSetGetSize(const TIFFField* fip)
 {
-	switch (setgettype)
+/*
+ * TIFFSetField() and TIFFGetField() must provide the parameter accordingly to
+ * the definition of "set_field_type" of the tag definition in dir_info.c.
+ * This function returns the data size for that purpose.
+ * 
+ * Furthermore, this data size is also used for the internal storage,
+ * even for TIFF_RATIONAL values for FIELD_CUSTOM, which are stored internally as 4-byte float,
+ * but some of them should be stored internally as 8-byte double,
+ * depending on the "set_field_type" _FLOAT_ or _DOUBLE_.
+*/
+	if (fip == NULL) return 0;
+
+	switch (fip->set_field_type)
 	{
 		case TIFF_SETGET_UNDEFINED:
 		case TIFF_SETGET_ASCII:
@@ -679,7 +653,48 @@ _TIFFSetGetFieldSize(TIFFSetGetFieldType setgettype)
 		default:
 		    return 0;
 	}
-} /*-- _TIFFSetGetFieldSize --- */
+} /*-- TIFFFieldSetGetSize() --- */
+
+/*
+ * Return size of count parameter of TIFFSetField() and TIFFGetField()
+ * and also if it is required:  0=none, 2=uint16_t, 4=uint32_t 
+ */
+int
+TIFFFieldSetGetCountSize(const TIFFField* fip)
+{
+	if (fip == NULL) return 0;
+
+	switch (fip->set_field_type) {
+		case TIFF_SETGET_C16_ASCII:
+		case TIFF_SETGET_C16_UINT8:
+		case TIFF_SETGET_C16_SINT8:
+		case TIFF_SETGET_C16_UINT16:
+		case TIFF_SETGET_C16_SINT16:
+		case TIFF_SETGET_C16_UINT32:
+		case TIFF_SETGET_C16_SINT32:
+		case TIFF_SETGET_C16_FLOAT:
+		case TIFF_SETGET_C16_UINT64:
+		case TIFF_SETGET_C16_SINT64:
+		case TIFF_SETGET_C16_DOUBLE:
+		case TIFF_SETGET_C16_IFD8:
+			return 2;
+		case TIFF_SETGET_C32_ASCII:
+		case TIFF_SETGET_C32_UINT8:
+		case TIFF_SETGET_C32_SINT8:
+		case TIFF_SETGET_C32_UINT16:
+		case TIFF_SETGET_C32_SINT16:
+		case TIFF_SETGET_C32_UINT32:
+		case TIFF_SETGET_C32_SINT32:
+		case TIFF_SETGET_C32_FLOAT:
+		case TIFF_SETGET_C32_UINT64:
+		case TIFF_SETGET_C32_SINT64:
+		case TIFF_SETGET_C32_DOUBLE:
+		case TIFF_SETGET_C32_IFD8:
+			return 4;
+		default:
+			return 0;
+	}
+} /*-- TIFFFieldSetGetCountSize() --- */
 
 
 const TIFFField*

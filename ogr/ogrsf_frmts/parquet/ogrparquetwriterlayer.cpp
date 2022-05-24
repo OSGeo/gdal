@@ -26,6 +26,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#undef DO_NOT_DEFINE_GDAL_DATE_NAME
+#include "gdal_version_full/gdal_version.h"
+
 #include "ogr_parquet.h"
 
 #include "../arrow_common/ograrrowwriterlayer.hpp"
@@ -170,6 +173,24 @@ bool OGRParquetWriterLayer::SetOptions(CSLConstList papszOptions,
         return false;
     }
 
+    m_oWriterPropertiesBuilder.compression(m_eCompression);
+    const std::string osCreator = CSLFetchNameValueDef(papszOptions, "CREATOR", "");
+    if( !osCreator.empty() )
+        m_oWriterPropertiesBuilder.created_by(osCreator);
+    else
+        m_oWriterPropertiesBuilder.created_by("GDAL " GDAL_RELEASE_NAME ", using " CREATED_BY_VERSION);
+
+    // Undocumented option. Not clear it is useful besides unit test purposes
+    if( !CPLTestBool(CSLFetchNameValueDef(papszOptions, "STATISTICS", "YES")) )
+        m_oWriterPropertiesBuilder.disable_statistics();
+
+    if( m_eGeomEncoding == OGRArrowGeomEncoding::WKB && eGType != wkbNone )
+    {
+        m_oWriterPropertiesBuilder.disable_statistics(
+            parquet::schema::ColumnPath::FromDotString(
+                m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef()));
+    }
+
     const char* pszRowGroupSize = CSLFetchNameValue(papszOptions, "ROW_GROUP_SIZE");
     if( pszRowGroupSize )
     {
@@ -205,13 +226,12 @@ void OGRParquetWriterLayer::CloseFileWriter()
 }
 
 /************************************************************************/
-/*               PerformStepsBeforeFinalFlushGroup()                    */
+/*                            GetGeoMetadata()                          */
 /************************************************************************/
 
-void OGRParquetWriterLayer::PerformStepsBeforeFinalFlushGroup()
+std::string OGRParquetWriterLayer::GetGeoMetadata() const
 {
-    if( m_poKeyValueMetadata &&
-        m_poFeatureDefn->GetGeomFieldCount() != 0 &&
+    if( m_poFeatureDefn->GetGeomFieldCount() != 0 &&
         CPLTestBool(CPLGetConfigOption("OGR_PARQUET_WRITE_GEO", "YES")) )
     {
         CPLJSONObject oRoot;
@@ -339,48 +359,49 @@ void OGRParquetWriterLayer::PerformStepsBeforeFinalFlushGroup()
             }
         }
 
-        // HACK: it would be good for Arrow to provide a clean way to alter
-        // key value metadata before finalizing.
-        // We need to write metadata at end to write the bounding box.
-        const_cast<arrow::KeyValueMetadata*>(m_poKeyValueMetadata.get())->Append(
-                "geo", oRoot.Format(CPLJSONObject::PrettyFormat::Plain));
+        return oRoot.Format(CPLJSONObject::PrettyFormat::Plain);
     }
+    return std::string();
 }
 
 /************************************************************************/
-/*                         GetSchemaMetadata()                          */
+/*               PerformStepsBeforeFinalFlushGroup()                    */
 /************************************************************************/
 
-// From ${arrow_root}/src/parquet/arrow/writer.cpp
-static
-arrow::Status GetSchemaMetadata(const ::arrow::Schema& schema, ::arrow::MemoryPool* pool,
-                         const parquet::ArrowWriterProperties& properties,
-                         std::shared_ptr<const arrow::KeyValueMetadata>* out) {
-  if (!properties.store_schema()) {
-    *out = nullptr;
-    return arrow::Status::OK();
-  }
+void OGRParquetWriterLayer::PerformStepsBeforeFinalFlushGroup()
+{
+    if( m_poKeyValueMetadata )
+    {
+        const std::string osGeoMetadata = GetGeoMetadata();
+        auto poTmpSchema = m_poSchema;
+        if( !osGeoMetadata.empty() )
+        {
+            // HACK: it would be good for Arrow to provide a clean way to alter
+            // key value metadata before finalizing.
+            // We need to write metadata at end to write the bounding box.
+            const_cast<arrow::KeyValueMetadata*>(m_poKeyValueMetadata.get())->Append(
+                    "geo", osGeoMetadata);
 
-  static const std::string kArrowSchemaKey = "ARROW:schema";
-  std::shared_ptr<arrow::KeyValueMetadata> result;
-  if (schema.metadata()) {
-    result = schema.metadata()->Copy();
-  } else {
-    result = std::make_shared<arrow::KeyValueMetadata>();
-  }
+            auto kvMetadata = poTmpSchema->metadata() ? poTmpSchema->metadata()->Copy() :
+                                  std::make_shared<arrow::KeyValueMetadata>();
+            kvMetadata->Append("geo", osGeoMetadata);
+            poTmpSchema = poTmpSchema->WithMetadata(kvMetadata);
+        }
 
-  if( CPLTestBool(CPLGetConfigOption("OGR_PARQUET_WRITE_ARROW_SCHEMA", "YES")) )
-  {
-      ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Buffer> serialized,
-                            ::arrow::ipc::SerializeSchema(schema, pool));
-
-      // The serialized schema is not UTF-8, which is required for Thrift
-      std::string schema_as_string = serialized->ToString();
-      std::string schema_base64 = ::arrow::util::base64_encode(schema_as_string);
-      result->Append(kArrowSchemaKey, schema_base64);
-  }
-  *out = result;
-  return arrow::Status::OK();
+        if( CPLTestBool(CPLGetConfigOption("OGR_PARQUET_WRITE_ARROW_SCHEMA", "YES")) )
+        {
+            auto status = ::arrow::ipc::SerializeSchema(*poTmpSchema, m_poMemoryPool);
+            if( status.ok() )
+            {
+                // The serialized schema is not UTF-8, which is required for Thrift
+                std::string schema_as_string = (*status)->ToString();
+                std::string schema_base64 = ::arrow::util::base64_encode(schema_as_string);
+                static const std::string kArrowSchemaKey = "ARROW:schema";
+                const_cast<arrow::KeyValueMetadata*>(m_poKeyValueMetadata.get())->Append(
+                  kArrowSchemaKey, schema_base64);
+            }
+        }
+    }
 }
 
 /************************************************************************/
@@ -402,9 +423,8 @@ arrow::Status Open(const ::arrow::Schema& schema, ::arrow::MemoryPool* pool,
 
     auto schema_node = std::static_pointer_cast<parquet::schema::GroupNode>(parquet_schema->schema_root());
 
-    std::shared_ptr<const arrow::KeyValueMetadata> metadata;
-    RETURN_NOT_OK(GetSchemaMetadata(schema, pool, *arrow_properties, &metadata));
-
+    auto metadata = schema.metadata() ? schema.metadata()->Copy() :
+                        std::make_shared<arrow::KeyValueMetadata>();
     *outMetadata = metadata;
 
     std::unique_ptr<parquet::ParquetFileWriter> base_writer;
@@ -429,6 +449,24 @@ void OGRParquetWriterLayer::CreateSchema()
 }
 
 /************************************************************************/
+/*                          CreateGeomField()                           */
+/************************************************************************/
+
+OGRErr OGRParquetWriterLayer::CreateGeomField( OGRGeomFieldDefn *poField,
+                                               int bApproxOK )
+{
+    OGRErr eErr = OGRArrowWriterLayer::CreateGeomField(poField, bApproxOK);
+    if( eErr == OGRERR_NONE && m_aeGeomEncoding.back() == OGRArrowGeomEncoding::WKB )
+    {
+        m_oWriterPropertiesBuilder.disable_statistics(
+            parquet::schema::ColumnPath::FromDotString(
+                m_poFeatureDefn->GetGeomFieldDefn(
+                    m_poFeatureDefn->GetGeomFieldCount() - 1)->GetNameRef()));
+    }
+    return eErr;
+}
+
+/************************************************************************/
 /*                          CreateWriter()                              */
 /************************************************************************/
 
@@ -445,13 +483,12 @@ void OGRParquetWriterLayer::CreateWriter()
         FinalizeSchema();
     }
 
-    auto writerProperties = parquet::WriterProperties::Builder().compression(m_eCompression)->build();
     auto arrowWriterProperties = parquet::ArrowWriterProperties::Builder().store_schema()->build();
-    Open(*m_poSchema, m_poMemoryPool, m_poOutputStream,
-         writerProperties,
+    CPL_IGNORE_RET_VAL(Open(*m_poSchema, m_poMemoryPool, m_poOutputStream,
+         m_oWriterPropertiesBuilder.build(),
          arrowWriterProperties,
          &m_poFileWriter,
-         &m_poKeyValueMetadata);
+         &m_poKeyValueMetadata));
 }
 
 /************************************************************************/

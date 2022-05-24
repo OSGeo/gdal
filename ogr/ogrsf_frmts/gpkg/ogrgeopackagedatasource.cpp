@@ -1436,15 +1436,18 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
         /* Load layer definitions for all tables in gpkg_contents & gpkg_geometry_columns */
         /* and non-spatial tables as well */
         std::string osSQL =
-            "SELECT c.table_name, c.identifier, 1 as is_spatial, g.column_name, g.geometry_type_name, g.z, g.m, c.min_x, c.min_y, c.max_x, c.max_y, 1 AS is_in_gpkg_contents "
-            "  FROM gpkg_geometry_columns g JOIN gpkg_contents c ON (g.table_name = c.table_name)"
+            "SELECT c.table_name, c.identifier, 1 as is_spatial, g.column_name, g.geometry_type_name, g.z, g.m, c.min_x, c.min_y, c.max_x, c.max_y, 1 AS is_in_gpkg_contents, "
+            "(SELECT type FROM sqlite_master WHERE lower(name) = lower(c.table_name) AND type IN ('table', 'view')) AS object_type "
+            "  FROM gpkg_geometry_columns g "
+            "  JOIN gpkg_contents c ON (g.table_name = c.table_name)"
             "  WHERE "
             "  c.table_name <> 'ogr_empty_table' AND"
             "  c.data_type = 'features' "
             // aspatial: Was the only method available in OGR 2.0 and 2.1
             // attributes: GPKG 1.2 or later
             "UNION ALL "
-            "SELECT table_name, identifier, 0 as is_spatial, NULL, NULL, 0, 0, 0 AS xmin, 0 AS ymin, 0 AS xmax, 0 AS ymax, 1 AS is_in_gpkg_contents "
+            "SELECT table_name, identifier, 0 as is_spatial, NULL, NULL, 0, 0, 0 AS xmin, 0 AS ymin, 0 AS xmax, 0 AS ymax, 1 AS is_in_gpkg_contents, "
+            "(SELECT type FROM sqlite_master WHERE lower(name) = lower(table_name) AND type IN ('table', 'view')) AS object_type "
             "  FROM gpkg_contents"
             "  WHERE data_type IN ('aspatial', 'attributes') ";
 
@@ -1463,7 +1466,7 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
         {
             // vgpkg_ is Spatialite virtual table
             osSQL += "UNION ALL "
-                    "SELECT name, name, 0 as is_spatial, NULL, NULL, 0, 0, 0 AS xmin, 0 AS ymin, 0 AS xmax, 0 AS ymax, 0 AS is_in_gpkg_contents "
+                    "SELECT name, name, 0 as is_spatial, NULL, NULL, 0, 0, 0 AS xmin, 0 AS ymin, 0 AS xmax, 0 AS ymax, 0 AS is_in_gpkg_contents, type AS object_type "
                     "FROM sqlite_master WHERE type IN ('table', 'view') "
                     "AND name NOT LIKE 'gpkg_%' "
                     "AND name NOT LIKE 'vgpkg_%' "
@@ -1523,6 +1526,16 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
                 const char* pszZ = oResult->GetValue(5, i);
                 const char* pszM = oResult->GetValue(6, i);
                 bool bIsInGpkgContents = CPL_TO_BOOL(oResult->GetValueAsInteger(11, i));
+                const char* pszObjectType = oResult->GetValue(12, i);
+                if( pszObjectType == nullptr ||
+                    !(EQUAL(pszObjectType, "table") || EQUAL(pszObjectType, "view")) )
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Table/view %s is referenced in gpkg_contents, "
+                             "but does not exist",
+                             pszTableName);
+                    continue;
+                }
                 OGRGeoPackageTableLayer *poLayer = new OGRGeoPackageTableLayer(this, pszTableName);
                 bool bHasZ = pszZ && atoi(pszZ) > 0;
                 bool bHasM = pszM && atoi(pszM) > 0;
@@ -1533,7 +1546,8 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
                     if( pszM && atoi(pszM) == 2 )
                         bHasM = false;
                 }
-                poLayer->SetOpeningParameters(bIsInGpkgContents,
+                poLayer->SetOpeningParameters(pszObjectType,
+                                              bIsInGpkgContents,
                                               bIsSpatial,
                                               pszGeomColName,
                                               pszGeomType,

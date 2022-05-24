@@ -67,6 +67,24 @@ Layer creation options
   the line between two points is a straight cartesian line (PLANAR) or the
   shortest line on the sphere (geodesic line) (SPHERICAL). The default is PLANAR.
 
+- **CREATOR=string**: Name of creating application.
+
+SQL support
+-----------
+
+SQL statements are run through the OGR SQL engine. Statistics can be used to
+speed-up evaluations of SQL requests like:
+"SELECT MIN(colname), MAX(colname), COUNT(colname) FROM layername"
+
+Dataset/partitioning read support
+---------------------------------
+
+Starting with GDAL 3.6.0, the driver can read directories that contain several
+Parquet files, and expose them as a single layer. This support is only enable
+if the driver is built against the ``arrowdataset`` C++ library.
+
+Note that no optimization is currently done regarding filtering.
+
 Links
 -----
 

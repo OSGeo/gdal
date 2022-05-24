@@ -1088,8 +1088,22 @@ std::vector<TagValue> EXIFFormatTagValue(char** papszEXIFMetadata,
                 if( tagdescArray[i].length == 0 ||
                     nValLength == tagdescArray[i].length )
                 {
-                    tag.pabyVal = pabyVal;
-                    tag.nLength = nValLength;
+                    if( tag.tag == 0x9286 && strncmp(pszValue, "0x", 2) != 0 ) // EXIF_UserComment
+                    {
+                        const char* pszRealVal = reinterpret_cast<char*>(pabyVal);
+                        const int nValueLen = static_cast<int>(strlen(pszRealVal));
+                        // 8 first bytes are the character code
+                        // Set them to 0 to mean undefined
+                        tag.pabyVal = static_cast<GByte*>(CPLCalloc(1, 8 + nValueLen));
+                        tag.nLength = 8 + nValueLen;
+                        memcpy(tag.pabyVal + 8, pszRealVal, nValueLen);
+                        CPLFree(pabyVal);
+                    }
+                    else
+                    {
+                        tag.pabyVal = pabyVal;
+                        tag.nLength = nValLength;
+                    }
                 }
                 else if( nValLength > tagdescArray[i].length )
                 {

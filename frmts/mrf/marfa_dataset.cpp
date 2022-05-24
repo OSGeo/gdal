@@ -739,11 +739,12 @@ static CPLErr Init_Raster(ILImage& image, MRFDataset* ds, CPLXMLNode* defimage)
     }
 
     // Page Encoding, defaults to PNG
-    image.comp = CompToken(CPLGetXMLValue(defimage, "Compression", "PNG"));
+    const char* pszCompression = CPLGetXMLValue(defimage, "Compression", "PNG");
+    image.comp = CompToken(pszCompression);
     if (image.comp == IL_ERR_COMP) {
         CPLError(CE_Failure, CPLE_IllegalArg,
             "GDAL MRF: Compression %s is unknown",
-            CPLGetXMLValue(defimage, "Compression", nullptr));
+            pszCompression);
         return CE_Failure;
     }
 
@@ -1110,8 +1111,12 @@ CPLXMLNode* MRFDataset::BuildConfig()
     XMLSetAttributeVal(raster, "Size", full.size, "%.0f");
     XMLSetAttributeVal(raster, "PageSize", full.pagesize, "%.0f");
 
+#ifdef HAVE_PNG
     if (full.comp != IL_PNG)
+#endif
+    {
         CPLCreateXMLElementAndValue(raster, "Compression", CompName(full.comp));
+    }
 
     if (full.dt != GDT_Byte)
         CPLCreateXMLElementAndValue(raster, "DataType", GDALGetDataTypeName(full.dt));
@@ -1600,13 +1605,20 @@ GDALDataset* MRFDataset::CreateCopy(const char* pszFilename,
         char** papszCWROptions = nullptr;
         papszCWROptions = CSLAddNameValue(papszCWROptions, "COMPRESSED", "TRUE");
 
+#ifdef HAVE_JPEG
         // Use the Zen version of the CopyWholeRaster if input has a dataset mask and JPEGs are generated
         if (GMF_PER_DATASET == poSrcDS->GetRasterBand(1)->GetMaskFlags() &&
-            (poDS->current.comp == IL_JPEG || poDS->current.comp == IL_JPNG)) {
+            (poDS->current.comp == IL_JPEG
+#ifdef HAVE_PNG
+             || poDS->current.comp == IL_JPNG
+#endif
+            )) {
             err = poDS->ZenCopy(poSrcDS, pfnProgress, pProgressData);
             nCloneFlags ^= GCIF_MASK; // Turn the external mask off
         }
-        else {
+        else
+#endif
+        {
             err = GDALDatasetCopyWholeRaster((GDALDatasetH)poSrcDS,
                 (GDALDatasetH)poDS, papszCWROptions, pfnProgress, pProgressData);
         }
@@ -1928,7 +1940,11 @@ MRFDataset::Create(const char* pszName,
     // Use the full, set some initial parameters
     ILImage& img = poDS->full;
     img.size = ILSize(nXSize, nYSize, 1, nBandsIn);
+#ifdef HAVE_PNG
     img.comp = IL_PNG;
+#else
+    img.comp = IL_NONE;
+#endif
     img.order = (nBandsIn < 5) ? IL_Interleaved : IL_Separate;
     img.pagesize = ILSize(512, 512, 1, 1);
     img.quality = 85;

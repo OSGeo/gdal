@@ -371,10 +371,10 @@ CPLGetAWS_SIGN4_Authorization( const CPLString& osSecretAccessKey,
 /*                        CPLGetAWS_SIGN4_Timestamp()                   */
 /************************************************************************/
 
-CPLString CPLGetAWS_SIGN4_Timestamp()
+CPLString CPLGetAWS_SIGN4_Timestamp(GIntBig timestamp)
 {
     struct tm brokenDown;
-    CPLUnixTimeToYMDHMS(time(nullptr), &brokenDown);
+    CPLUnixTimeToYMDHMS(timestamp, &brokenDown);
 
     char szTimeStamp[80] = {};
     snprintf(szTimeStamp, sizeof(szTimeStamp), "%04d%02d%02dT%02d%02d%02dZ",
@@ -734,22 +734,26 @@ static bool IsMachinePotentiallyEC2Instance()
 /*                      GetConfigurationFromEC2()                       */
 /************************************************************************/
 
-bool VSIS3HandleHelper::GetConfigurationFromEC2(const std::string& osPathForOption,
+bool VSIS3HandleHelper::GetConfigurationFromEC2(bool bForceRefresh,
+                                                const std::string& osPathForOption,
                                                 CPLString& osSecretAccessKey,
                                                 CPLString& osAccessKeyId,
                                                 CPLString& osSessionToken)
 {
     CPLMutexHolder oHolder( &ghMutex );
-    time_t nCurTime;
-    time(&nCurTime);
-    // Try to reuse credentials if they are still valid, but
-    // keep one minute of margin...
-    if( !gosGlobalAccessKeyId.empty() && nCurTime < gnGlobalExpiration - 60 )
+    if( !bForceRefresh )
     {
-        osAccessKeyId = gosGlobalAccessKeyId;
-        osSecretAccessKey = gosGlobalSecretAccessKey;
-        osSessionToken = gosGlobalSessionToken;
-        return true;
+        time_t nCurTime;
+        time(&nCurTime);
+        // Try to reuse credentials if they are still valid, but
+        // keep one minute of margin...
+        if( !gosGlobalAccessKeyId.empty() && nCurTime < gnGlobalExpiration - 60 )
+        {
+            osAccessKeyId = gosGlobalAccessKeyId;
+            osSecretAccessKey = gosGlobalSecretAccessKey;
+            osSessionToken = gosGlobalSessionToken;
+            return true;
+        }
     }
 
     CPLString osURLRefreshCredentials;
@@ -1147,7 +1151,7 @@ static bool GetTemporaryCredentialsForRole(const std::string& osRoleArn,
 {
     std::string osXAMZDate = CPLGetConfigOption("AWS_TIMESTAMP", "");
     if( osXAMZDate.empty() )
-        osXAMZDate = CPLGetAWS_SIGN4_Timestamp();
+        osXAMZDate = CPLGetAWS_SIGN4_Timestamp(time(nullptr));
     std::string osDate(osXAMZDate);
     osDate.resize(8);
 
@@ -1239,23 +1243,27 @@ static bool GetTemporaryCredentialsForRole(const std::string& osRoleArn,
 /*               GetOrRefreshTemporaryCredentialsForRole()              */
 /************************************************************************/
 
-static bool GetOrRefreshTemporaryCredentialsForRole(CPLString& osSecretAccessKey,
+static bool GetOrRefreshTemporaryCredentialsForRole(bool bForceRefresh,
+                                                    CPLString& osSecretAccessKey,
                                                     CPLString& osAccessKeyId,
                                                     CPLString& osSessionToken,
                                                     CPLString& osRegion)
 {
     CPLMutexHolder oHolder( &ghMutex );
-    time_t nCurTime;
-    time(&nCurTime);
-    // Try to reuse credentials if they are still valid, but
-    // keep one minute of margin...
-    if( !gosGlobalAccessKeyId.empty() && nCurTime < gnGlobalExpiration - 60 )
+    if( !bForceRefresh )
     {
-        osAccessKeyId = gosGlobalAccessKeyId;
-        osSecretAccessKey = gosGlobalSecretAccessKey;
-        osSessionToken = gosGlobalSessionToken;
-        osRegion = gosRegion;
-        return true;
+        time_t nCurTime;
+        time(&nCurTime);
+        // Try to reuse credentials if they are still valid, but
+        // keep one minute of margin...
+        if( !gosGlobalAccessKeyId.empty() && nCurTime < gnGlobalExpiration - 60 )
+        {
+            osAccessKeyId = gosGlobalAccessKeyId;
+            osSecretAccessKey = gosGlobalSecretAccessKey;
+            osSessionToken = gosGlobalSessionToken;
+            osRegion = gosRegion;
+            return true;
+        }
     }
 
     std::string osExpiration;
@@ -1339,7 +1347,8 @@ bool VSIS3HandleHelper::GetConfiguration(const std::string& osPathForOption,
         bAssumedRole = !gosRoleArn.empty();
     }
     if( bAssumedRole &&
-        GetOrRefreshTemporaryCredentialsForRole(osSecretAccessKey,
+        GetOrRefreshTemporaryCredentialsForRole(/* bForceRefresh = */ false,
+                                                osSecretAccessKey,
                                                 osAccessKeyId,
                                                 osSessionToken,
                                                 osRegion) )
@@ -1428,7 +1437,8 @@ bool VSIS3HandleHelper::GetConfiguration(const std::string& osPathForOption,
     }
 
     // Last method: use IAM role security credentials on EC2 instances
-    if( GetConfigurationFromEC2(osPathForOption,
+    if( GetConfigurationFromEC2(/* bForceRefresh = */ false,
+                                osPathForOption,
                                 osSecretAccessKey, osAccessKeyId,
                                 osSessionToken) )
     {
@@ -1600,6 +1610,44 @@ CPLString IVSIS3LikeHandleHelper::GetURLNoKVP() const
 }
 
 /************************************************************************/
+/*                          RefreshCredentials()                        */
+/************************************************************************/
+
+void VSIS3HandleHelper::RefreshCredentials(const std::string& osPathForOption,
+                                           bool bForceRefresh) const
+{
+    if( m_eCredentialsSource == AWSCredentialsSource::EC2 )
+    {
+        CPLString osSecretAccessKey, osAccessKeyId, osSessionToken;
+        if( GetConfigurationFromEC2(bForceRefresh,
+                                    osPathForOption.c_str(),
+                                    osSecretAccessKey,
+                                    osAccessKeyId,
+                                    osSessionToken) )
+        {
+            m_osSecretAccessKey = osSecretAccessKey;
+            m_osAccessKeyId = osAccessKeyId;
+            m_osSessionToken = osSessionToken;
+        }
+    }
+    else if( m_eCredentialsSource == AWSCredentialsSource::ASSUMED_ROLE )
+    {
+        CPLString osSecretAccessKey, osAccessKeyId, osSessionToken;
+        CPLString osRegion;
+        if( GetOrRefreshTemporaryCredentialsForRole(bForceRefresh,
+                                                    osSecretAccessKey,
+                                                    osAccessKeyId,
+                                                    osSessionToken,
+                                                    osRegion) )
+        {
+            m_osSecretAccessKey = osSecretAccessKey;
+            m_osAccessKeyId = osAccessKeyId;
+            m_osSessionToken = osSessionToken;
+        }
+    }
+}
+
+/************************************************************************/
 /*                           GetCurlHeaders()                           */
 /************************************************************************/
 
@@ -1614,37 +1662,11 @@ VSIS3HandleHelper::GetCurlHeaders( const CPLString& osVerb,
     osPathForOption += '/';
     osPathForOption += m_osObjectKey;
 
-    if( m_eCredentialsSource == AWSCredentialsSource::EC2 )
-    {
-        CPLString osSecretAccessKey, osAccessKeyId, osSessionToken;
-        if( GetConfigurationFromEC2(osPathForOption.c_str(),
-                                    osSecretAccessKey,
-                                    osAccessKeyId,
-                                    osSessionToken) )
-        {
-            m_osSecretAccessKey = osSecretAccessKey;
-            m_osAccessKeyId = osAccessKeyId;
-            m_osSessionToken = osSessionToken;
-        }
-    }
-    else if( m_eCredentialsSource == AWSCredentialsSource::ASSUMED_ROLE )
-    {
-        CPLString osSecretAccessKey, osAccessKeyId, osSessionToken;
-        CPLString osRegion;
-        if( GetOrRefreshTemporaryCredentialsForRole(osSecretAccessKey,
-                                                    osAccessKeyId,
-                                                    osSessionToken,
-                                                    osRegion) )
-        {
-            m_osSecretAccessKey = osSecretAccessKey;
-            m_osAccessKeyId = osAccessKeyId;
-            m_osSessionToken = osSessionToken;
-        }
-    }
+    RefreshCredentials(osPathForOption, /* bForceRefresh = */ false);
 
     CPLString osXAMZDate = VSIGetCredential(osPathForOption.c_str(), "AWS_TIMESTAMP", "");
     if( osXAMZDate.empty() )
-        osXAMZDate = CPLGetAWS_SIGN4_Timestamp();
+        osXAMZDate = CPLGetAWS_SIGN4_Timestamp(time(nullptr));
 
     const CPLString osXAMZContentSHA256 =
         CPLGetLowerCaseHexSHA256(pabyDataContent, nBytesContent);
@@ -1904,12 +1926,48 @@ CPLString VSIS3HandleHelper::GetSignedURL(CSLConstList papszOptions)
     CPLString osXAMZDate = CSLFetchNameValueDef(papszOptions, "START_DATE",
         VSIGetCredential(osPathForOption.c_str(), "AWS_TIMESTAMP", ""));
     if( osXAMZDate.empty() )
-        osXAMZDate = CPLGetAWS_SIGN4_Timestamp();
+        osXAMZDate = CPLGetAWS_SIGN4_Timestamp(time(nullptr));
     CPLString osDate(osXAMZDate);
     osDate.resize(8);
 
     CPLString osXAMZExpires =
         CSLFetchNameValueDef(papszOptions, "EXPIRATION_DELAY", "3600");
+
+    if( m_eCredentialsSource != AWSCredentialsSource::REGULAR )
+    {
+        // For credentials that have an expiration, we must check their
+        // expiration compared to the expiration of the signed URL, since
+        // if the effective expiration is min(desired_expiration, credential_expiration)
+        // Cf https://aws.amazon.com/premiumsupport/knowledge-center/presigned-url-s3-bucket-expiration
+        int nYear, nMonth, nDay, nHour = 0, nMin = 0, nSec = 0;
+        if( sscanf(osXAMZDate, "%04d%02d%02dT%02d%02d%02dZ",
+                    &nYear, &nMonth, &nDay, &nHour, &nMin, &nSec) < 3 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Bad format for START_DATE");
+            return CPLString();
+        }
+        struct tm brokendowntime;
+        brokendowntime.tm_year = nYear - 1900;
+        brokendowntime.tm_mon = nMonth - 1;
+        brokendowntime.tm_mday = nDay;
+        brokendowntime.tm_hour = nHour;
+        brokendowntime.tm_min = nMin;
+        brokendowntime.tm_sec = nSec;
+        const GIntBig nStartDate = CPLYMDHMSToUnixTime(&brokendowntime);
+
+        {
+            CPLMutexHolder oHolder( &ghMutex );
+
+            // Try to reuse credentials if they will still be valid after the
+            // desired end of the validity of the signed URL,
+            // with one minute of margin
+            if( nStartDate + CPLAtoGIntBig(osXAMZExpires.c_str()) >= gnGlobalExpiration - 60 )
+            {
+                RefreshCredentials(osPathForOption, /* bForceRefresh = */ true);
+            }
+        }
+    }
 
     CPLString osVerb(CSLFetchNameValueDef(papszOptions, "VERB", "GET"));
 
