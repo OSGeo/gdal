@@ -118,6 +118,10 @@ def MDArrayIONumPy(bWrite, mdarray, psArray, nDims1, nDims3, buffer_datatype):
     r"""MDArrayIONumPy(bool bWrite, GDALMDArrayHS * mdarray, PyArrayObject * psArray, int nDims1, int nDims3, GDALExtendedDataTypeHS * buffer_datatype) -> CPLErr"""
     return _gdal_array.MDArrayIONumPy(bWrite, mdarray, psArray, nDims1, nDims3, buffer_datatype)
 
+def _RecordBatchAsNumpy(recordBatchPtr, schemaPtr, pointerArrayKeeper):
+    r"""_RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr, VoidPtrAsLong schemaPtr, PyObject * pointerArrayKeeper) -> PyObject *"""
+    return _gdal_array._RecordBatchAsNumpy(recordBatchPtr, schemaPtr, pointerArrayKeeper)
+
 def VirtualMemGetArray(virtualmem):
     r"""VirtualMemGetArray(VirtualMem virtualmem)"""
     return _gdal_array.VirtualMemGetArray(virtualmem)

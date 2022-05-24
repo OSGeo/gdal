@@ -2725,6 +2725,24 @@ class Layer(MajorObject):
         """
         return _ogr.Layer_SetStyleTable(self, *args)
 
+    def _GetRecordBatchSchemaPtr(self, *args):
+        r"""_GetRecordBatchSchemaPtr(Layer self, char ** options=None) -> VoidPtrAsLong"""
+        return _ogr.Layer__GetRecordBatchSchemaPtr(self, *args)
+
+    @staticmethod
+    def _FreeRecordBatchSchemaPtr(*args):
+        r"""_FreeRecordBatchSchemaPtr(VoidPtrAsLong ptr, bool bFreeContent)"""
+        return _ogr.Layer__FreeRecordBatchSchemaPtr(*args)
+
+    def _GetNextRecordBatchPtr(self, *args):
+        r"""_GetNextRecordBatchPtr(Layer self, char ** options=None) -> VoidPtrAsLong"""
+        return _ogr.Layer__GetNextRecordBatchPtr(self, *args)
+
+    @staticmethod
+    def _FreeRecordBatchArrayPtr(*args):
+        r"""_FreeRecordBatchArrayPtr(VoidPtrAsLong ptr, bool bFreeContent)"""
+        return _ogr.Layer__FreeRecordBatchArrayPtr(*args)
+
     def Reference(self):
       "For backwards compatibility only."
       pass
@@ -2795,9 +2813,135 @@ class Layer(MajorObject):
     schema = property(schema)
 
 
+    def GetRecordBatchSchemaAsPyArrow(self, options = []):
+        """ Return the schema of a RecordBatch a a PyArrow DataType """
+
+        import pyarrow as pa
+
+        schema_ptr = self._GetRecordBatchSchemaPtr(options)
+        if schema_ptr == 0:
+            raise Exception("cannot get RecordBatch schema")
+        try:
+            ret = pa.DataType._import_from_c(schema_ptr)
+    # We don't cleanup the schema data, since PyArrow borrowed it,
+    # just the holder structure
+            self._FreeRecordBatchSchemaPtr(schema_ptr, False)
+            return ret
+        except:
+            self._FreeRecordBatchSchemaPtr(schema_ptr, True)
+            raise
+
+
+    CACHED_RECORD_BATCH_SCHEMA_PYARROW_KEY = "_record_batch_schema_pyarrow"
+    def _GetCachedRecordBatchSchemaAsPyArrow(self, options):
+        if not hasattr(self, Layer.CACHED_RECORD_BATCH_SCHEMA_PYARROW_KEY):
+            self._record_batch_schema = self.GetRecordBatchSchemaAsPyArrow(options)
+
+    # Override all methods that will modify the schema, to invalidate
+    # the cached record batch schema.
+            def overridenMethod(layer, originalMethod, *args, **kwargs):
+                if hasattr(layer, Layer.CACHED_RECORD_BATCH_SCHEMA_PYARROW_KEY):
+                    delattr(layer, Layer.CACHED_RECORD_BATCH_SCHEMA_PYARROW_KEY)
+                return originalMethod(*args, **kwargs)
+
+            import functools
+            self.CreateField = functools.partial(overridenMethod, self, self.CreateField)
+            self.CreateGeomField = functools.partial(overridenMethod, self, self.CreateGeomField)
+            self.DeleteField = functools.partial(overridenMethod, self, self.DeleteField)
+            self.ReorderField = functools.partial(overridenMethod, self, self.ReorderField)
+            self.ReorderFields = functools.partial(overridenMethod, self, self.ReorderFields)
+            self.AlterFieldDefn = functools.partial(overridenMethod, self, self.AlterFieldDefn)
+        return self._record_batch_schema
+
+
+    def GetNextRecordBatchAsPyArrow(self, options = []):
+        """ Return the next RecordBatch as a PyArrow StructArray, or None at end of iteration """
+
+        import pyarrow as pa
+
+        array_ptr = self._GetNextRecordBatchPtr(options)
+        if array_ptr == 0:
+            return None
+        try:
+            ret = pa.Array._import_from_c(array_ptr,
+                        self._GetCachedRecordBatchSchemaAsPyArrow(options))
+    # We don't cleanup the record batch data, since PyArrow borrowed it,
+    # just the holder structure
+            self._FreeRecordBatchArrayPtr(array_ptr, False)
+            return ret
+        except:
+            self._FreeRecordBatchArrayPtr(array_ptr, True)
+            raise
+
+
+    def RecordBatchesAsPyArrow(self, options = []):
+        """ Return an iterator over record batches as a PyArrow StructArray """
+
+        def iterator():
+            self.ResetReading()
+            while True:
+                batch = self.GetNextRecordBatchAsPyArrow(options)
+                if not batch:
+                    break
+                yield batch
+
+        return iterator()
+
+
+    def GetNextRecordBatchAsNumpy(self, options = []):
+        """ Return the next RecordBatch as a dictionary of Numpy arrays, or None at end of iteration """
+
+        from osgeo import gdal_array
+
+        array_ptr = self._GetNextRecordBatchPtr(options)
+        if array_ptr == 0:
+            return None
+
+        class ArrayPointerKeeper:
+            def __init__(self, array_ptr):
+                self.array_ptr = array_ptr
+
+            def __del__(self):
+                Layer._FreeRecordBatchArrayPtr(self.array_ptr, True)
+
+        try:
+            schema_ptr = self._GetRecordBatchSchemaPtr(options)
+            ret = gdal_array._RecordBatchAsNumpy(array_ptr, schema_ptr,
+                                                 ArrayPointerKeeper(array_ptr))
+            for key, val in ret.items():
+                if isinstance(val, dict):
+                    import numpy.ma as ma
+                    ret[key] = ma.masked_array(val["data"], val["mask"])
+            return ret
+        finally:
+            self._FreeRecordBatchSchemaPtr(schema_ptr, True)
+
+
+    def RecordBatchesAsNumpy(self, options = []):
+        """ Return an iterator over record batches  as a dictionary of Numpy arrays """
+
+        def iterator():
+            self.ResetReading()
+            while True:
+                batch = self.GetNextRecordBatchAsNumpy(options)
+                if not batch:
+                    break
+                yield batch
+
+        return iterator()
+
+
 
 # Register Layer in _ogr:
 _ogr.Layer_swigregister(Layer)
+
+def Layer__FreeRecordBatchSchemaPtr(*args):
+    r"""Layer__FreeRecordBatchSchemaPtr(VoidPtrAsLong ptr, bool bFreeContent)"""
+    return _ogr.Layer__FreeRecordBatchSchemaPtr(*args)
+
+def Layer__FreeRecordBatchArrayPtr(*args):
+    r"""Layer__FreeRecordBatchArrayPtr(VoidPtrAsLong ptr, bool bFreeContent)"""
+    return _ogr.Layer__FreeRecordBatchArrayPtr(*args)
 
 class Feature(object):
     r"""Proxy of C++ OGRFeatureShadow class."""
