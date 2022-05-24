@@ -167,7 +167,7 @@ public:
 class OGRParquetDataset final: public OGRArrowDataset
 {
 public:
-    explicit OGRParquetDataset(std::unique_ptr<arrow::MemoryPool>&& poMemoryPool);
+    explicit OGRParquetDataset(const std::shared_ptr<arrow::MemoryPool>& poMemoryPool);
 
     OGRLayer*            ExecuteSQL( const char *pszSQLCommand,
                                      OGRGeometry *poSpatialFilter,

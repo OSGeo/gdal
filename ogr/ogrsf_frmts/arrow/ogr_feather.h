@@ -125,7 +125,7 @@ public:
 class OGRFeatherDataset final: public OGRArrowDataset
 {
 public:
-    explicit OGRFeatherDataset(std::unique_ptr<arrow::MemoryPool>&& poMemoryPool);
+    explicit OGRFeatherDataset(const std::shared_ptr<arrow::MemoryPool>& poMemoryPool);
 };
 
 /************************************************************************/

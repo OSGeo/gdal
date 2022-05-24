@@ -268,9 +268,13 @@ static GDALDataset* OpenFromDatasetFactory(const std::string& osBasePath,
     std::shared_ptr<arrow::dataset::ScannerBuilder> scannerBuilder;
     PARQUET_ASSIGN_OR_THROW(scannerBuilder, dataset->NewScan());
 
-    auto poMemoryPool = arrow::MemoryPool::CreateDefault();
+    auto poMemoryPool = std::shared_ptr<arrow::MemoryPool>(
+        arrow::MemoryPool::CreateDefault().release());
 
-    PARQUET_THROW_NOT_OK(scannerBuilder->Pool(poMemoryPool.get()));
+    // We cannot use the above shared memory pool. Otherwise we get random
+    // crashes in multi-threaded arrow code (apparently some cleanup code),
+    // that may used the memory pool after it has been destroyed.
+    //PARQUET_THROW_NOT_OK(scannerBuilder->Pool(poMemoryPool.get()));
 
     const bool bIsVSI = STARTS_WITH(osBasePath.c_str(), "/vsi");
     if( bIsVSI )
@@ -282,7 +286,7 @@ static GDALDataset* OpenFromDatasetFactory(const std::string& osBasePath,
     std::shared_ptr<arrow::dataset::Scanner> scanner;
     PARQUET_ASSIGN_OR_THROW(scanner, scannerBuilder->Finish());
 
-    auto poDS = cpl::make_unique<OGRParquetDataset>(std::move(poMemoryPool));
+    auto poDS = cpl::make_unique<OGRParquetDataset>(poMemoryPool);
     auto poLayer = cpl::make_unique<OGRParquetDatasetLayer>(
                         poDS.get(),
                         CPLGetBasename(osBasePath.c_str()),
@@ -538,7 +542,8 @@ static GDALDataset *OGRParquetDriverOpen( GDALOpenInfo* poOpenInfo )
 
         // Open Parquet file reader
         std::unique_ptr<parquet::arrow::FileReader> arrow_reader;
-        auto poMemoryPool = arrow::MemoryPool::CreateDefault();
+        auto poMemoryPool = std::shared_ptr<arrow::MemoryPool>(
+            arrow::MemoryPool::CreateDefault().release());
         auto st = parquet::arrow::OpenFile(infile, poMemoryPool.get(), &arrow_reader);
         if( !st.ok() )
         {
@@ -547,7 +552,7 @@ static GDALDataset *OGRParquetDriverOpen( GDALOpenInfo* poOpenInfo )
             return nullptr;
         }
 
-        auto poDS = cpl::make_unique<OGRParquetDataset>(std::move(poMemoryPool));
+        auto poDS = cpl::make_unique<OGRParquetDataset>(poMemoryPool);
         auto poLayer = cpl::make_unique<OGRParquetLayer>(
             poDS.get(),
             CPLGetBasename(osFilename.c_str()),
