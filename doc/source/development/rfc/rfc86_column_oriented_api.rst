@@ -1,7 +1,7 @@
 .. _rfc-86:
 
 =============================================================
-FC 86: Column-oriented read API for vector layers
+RFC 86: Column-oriented read API for vector layers
 =============================================================
 
 ============== =============================================
@@ -490,7 +490,12 @@ expose them as GeoJSON features holded by a Python dictionary.
     import fiona
 
     with fiona.open(sys.argv[1], 'r') as features:
-        list(features)
+        for f in features:
+            pass
+
+.. note:: Changing the above loop to ``list(features)`` to accumulate features has
+          a significant negative impact on memory usage on big datasets, and on
+          memory usage.
 
 .. _rfc-86-bench-pyogrio-raw:
 
