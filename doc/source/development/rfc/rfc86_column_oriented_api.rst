@@ -1,7 +1,7 @@
 .. _rfc-86:
 
 =============================================================
-RFC 86: Column-oriented API for vector layers
+FC 86: Column-oriented read API for vector layers
 =============================================================
 
 ============== =============================================
@@ -16,7 +16,7 @@ Summary
 -------
 
 This RFC describes the addition of new methods to the :cpp:class:`OGRLayer` class to retrieve
-batches of features with a column oriented memory layout, that suits formats that
+batches of features with a column-oriented memory layout, that suits formats that
 have that organization or downstream consumers that expect data to be presented
 in such a way, in particular the `Apache Arrow <https://arrow.apache.org/docs/>`_,
 `Pandas <https://pandas.pydata.org/>`_ / `GeoPandas <https://geopandas.org/>`_
@@ -39,15 +39,15 @@ of a same field (e.g computing statistics on a field) may require data to be
 contiguously placed in RAM, for the most efficient processing (use of vectorized
 CPU instruction). The current OGR API does not allow that directly, and require
 the users to shuffle itself data into appropriate data structures.
-Similarly the above mentionned frameworks (Arrow, Pandas/GeoPandas) require
+Similarly the above mentioned frameworks (Arrow, Pandas/GeoPandas) require
 such memory layouts, and currently require reorganizing data when reading from OGR.
 The `pyogrio <https://github.com/geopandas/pyogrio>`_ project is for example
 an attempt at addressing that need.
 
 Furthermore, the :ref:`vector.arrow` and :ref:`vector.parquet` drivers,
 whose file organization is columnar, and batch oriented, have been added in GDAL 3.5.0.
-Consequentl,y a columnar-oriented API will allow to get the best performance
-from those formats.
+Consequently a columnar-oriented API will enable the best performance
+for those formats.
 
 Details
 -------
@@ -57,10 +57,10 @@ The new proposed API uses and implements the
 Reading the first paragraphs of that document (details on the various data types
 can be skipped) is strongly encouraged for a better understanding of the rest of this RFC.
 
-This interface is a set of 2 C structures:
+This interface consists of a set of 2 C structures:
 
-- ArrowSchema: describe a set of fields (name, type, metadata). The list of Arrow
-  data types and cover well OGR data types.
+- ArrowSchema: describes a set of fields (name, type, metadata). The list of Arrow
+  data types have good coverage of OGR data types.
 
 - ArrowArray: captures a set of values for a specific column/field in a subset
   of features. This is the equivalent of a
@@ -71,7 +71,7 @@ This interface is a set of 2 C structures:
   The layout of buffers and children arrays per data type is detailed in the
   `Arrow Columnar Format <https://arrow.apache.org/docs/format/Columnar.html>`_.
 
-If a layer consists of 4 features of 2 fields (one of integer type, one of
+If a layer consists of 4 features with 2 fields (one of integer type, one of
 floating-point type), the representation as a ArrowArray is *conceptually* the
 following one:
 
@@ -82,7 +82,7 @@ following one:
 
 The content of a whole layer can be seen as a sequence of record batches, each
 record batches being an ArrowArray of a subset of features. Instead of iterating
-over individual features, one iterates over a batch/subset of several features at
+over individual features, one iterates over a batch of several features at
 once.
 
 The ArrowSchema and ArrowArray structures are defined in a ogr_recordbatch.h
@@ -140,9 +140,9 @@ The following virtual methods are added to the OGRLayer class:
 
   The default implementation outputs geometries as WKB in a binary field,
   whose corresponding entry in the schema is marked with the metadata item
-  ``ARROW:extension:name`` set to ``WKB``. Specialized implementation may output
+  ``ARROW:extension:name`` set to ``WKB``. Specialized implementations may output
   by default other formats (particularly the Arrow driver that can return geometries
-  encoded according to the GeoArrow specification (using list of coordinates).
+  encoded according to the GeoArrow specification (using a list of coordinates).
   The GEOMETRY_ENCODING=WKB option can be passed to force the use of WKB (through
   the default implementation)
 
@@ -490,8 +490,7 @@ expose them as GeoJSON features holded by a Python dictionary.
     import fiona
 
     with fiona.open(sys.argv[1], 'r') as features:
-        for f in features:
-            pass
+        list(features)
 
 .. _rfc-86-bench-pyogrio-raw:
 
