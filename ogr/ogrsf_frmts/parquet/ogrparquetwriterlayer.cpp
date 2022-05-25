@@ -226,6 +226,94 @@ void OGRParquetWriterLayer::CloseFileWriter()
 }
 
 /************************************************************************/
+/*                            IdentifyCRS()                             */
+/************************************************************************/
+
+static OGRSpatialReference IdentifyCRS(const OGRSpatialReference* poSRS)
+{
+    OGRSpatialReference oSRSIdentified(*poSRS);
+
+    if( poSRS->GetAuthorityName(nullptr) == nullptr )
+    {
+        // Try to find a registered CRS that matches the input one
+        int nEntries = 0;
+        int* panConfidence = nullptr;
+        OGRSpatialReferenceH* pahSRS =
+            poSRS->FindMatches(nullptr, &nEntries, &panConfidence);
+
+        // If there are several matches >= 90%, take the only one
+        // that is EPSG
+        int iOtherAuthority = -1;
+        int iEPSG = -1;
+        const char* const apszOptions[] =
+        {
+            "IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES",
+            nullptr
+        };
+        int iConfidenceBestMatch = -1;
+        for(int iSRS = 0; iSRS < nEntries; iSRS++ )
+        {
+            auto poCandidateCRS = OGRSpatialReference::FromHandle(pahSRS[iSRS]);
+            if( panConfidence[iSRS] < iConfidenceBestMatch ||
+                panConfidence[iSRS] < 70 )
+            {
+                break;
+            }
+            if( poSRS->IsSame(poCandidateCRS, apszOptions) )
+            {
+                const char* pszAuthName =
+                   poCandidateCRS->GetAuthorityName(nullptr);
+                if( pszAuthName != nullptr && EQUAL(pszAuthName, "EPSG") )
+                {
+                    iOtherAuthority = -2;
+                    if( iEPSG < 0 )
+                    {
+                        iConfidenceBestMatch = panConfidence[iSRS];
+                        iEPSG = iSRS;
+                    }
+                    else
+                    {
+                        iEPSG = -1;
+                        break;
+                    }
+                }
+                else if( iEPSG < 0 && pszAuthName != nullptr )
+                {
+                    if( EQUAL(pszAuthName, "OGC") )
+                    {
+                        const char* pszAuthCode = poCandidateCRS->GetAuthorityCode(nullptr);
+                        if( pszAuthCode && EQUAL(pszAuthCode, "CRS84") )
+                        {
+                            iOtherAuthority = iSRS;
+                            break;
+                        }
+                    }
+                    else if( iOtherAuthority == -1 )
+                    {
+                        iConfidenceBestMatch = panConfidence[iSRS];
+                        iOtherAuthority = iSRS;
+                    }
+                    else
+                        iOtherAuthority = -2;
+                }
+            }
+        }
+        if( iEPSG >= 0 )
+        {
+            oSRSIdentified = *OGRSpatialReference::FromHandle(pahSRS[iEPSG]);
+        }
+        else if( iOtherAuthority >= 0 )
+        {
+            oSRSIdentified = *OGRSpatialReference::FromHandle(pahSRS[iOtherAuthority]);
+        }
+        OSRFreeSRSArray(pahSRS);
+        CPLFree(panConfidence);
+    }
+
+    return oSRSIdentified;
+}
+
+/************************************************************************/
 /*                            GetGeoMetadata()                          */
 /************************************************************************/
 
@@ -235,7 +323,7 @@ std::string OGRParquetWriterLayer::GetGeoMetadata() const
         CPLTestBool(CPLGetConfigOption("OGR_PARQUET_WRITE_GEO", "YES")) )
     {
         CPLJSONObject oRoot;
-        oRoot.Add("version", "0.3.0");
+        oRoot.Add("version", "0.4.0");
         oRoot.Add("primary_column",
                   m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef());
         CPLJSONObject oColumns;
@@ -254,12 +342,34 @@ std::string OGRParquetWriterLayer::GetGeoMetadata() const
                 const auto poSRS = poGeomFieldDefn->GetSpatialRef();
                 if( poSRS )
                 {
-                    if( EQUAL(CPLGetConfigOption(
-                        "OGR_PARQUET_CRS_ENCODING", "WKT"), "PROJJSON") )
+                    OGRSpatialReference oSRSIdentified(IdentifyCRS(poSRS));
+
+                    const char* pszAuthName =
+                        oSRSIdentified.GetAuthorityName(nullptr);
+                    const char* pszAuthCode =
+                        oSRSIdentified.GetAuthorityCode(nullptr);
+
+                    bool bOmitCRS = false;
+                    if( pszAuthName != nullptr && pszAuthCode != nullptr &&
+                        ((EQUAL(pszAuthName, "EPSG") && EQUAL(pszAuthCode, "4326")) ||
+                         (EQUAL(pszAuthName, "OGC") && EQUAL(pszAuthCode, "CRS84"))) )
                     {
-                        // CRS encoded as PROJJSON (extension)
+                        // To make things less confusing for non-geo-aware
+                        // consumers, omit EPSG:4326 / OGC:CRS84 CRS by default
+                        bOmitCRS = CPLTestBool(
+                            CPLGetConfigOption("OGR_PARQUET_CRS_OMIT_IF_WGS84", "YES"));
+                    }
+
+                    if( bOmitCRS )
+                    {
+                        // do nothing
+                    }
+                    else if( EQUAL(CPLGetConfigOption(
+                        "OGR_PARQUET_CRS_ENCODING", "PROJJSON"), "PROJJSON") )
+                    {
+                        // CRS encoded as PROJJSON for GeoParquet >= 0.4.0
                         char* pszPROJJSON = nullptr;
-                        poSRS->exportToPROJJSON(&pszPROJJSON, nullptr);
+                        oSRSIdentified.exportToPROJJSON(&pszPROJJSON, nullptr);
                         CPLJSONDocument oDoc;
                         oDoc.LoadMemory(pszPROJJSON);
                         CPLFree(pszPROJJSON);
@@ -267,10 +377,11 @@ std::string OGRParquetWriterLayer::GetGeoMetadata() const
                     }
                     else
                     {
+                        // WKT was used in GeoParquet <= 0.3.0
                         const char* const apszOptions[] = {
                             "FORMAT=WKT2_2019", "MULTILINE=NO", nullptr };
                         char* pszWKT = nullptr;
-                        poSRS->exportToWkt(&pszWKT, apszOptions);
+                        oSRSIdentified.exportToWkt(&pszWKT, apszOptions);
                         if( pszWKT )
                             oColumn.Add("crs", pszWKT);
                         CPLFree(pszWKT);

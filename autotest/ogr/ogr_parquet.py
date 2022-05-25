@@ -471,6 +471,8 @@ def test_ogr_parquet_write_from_another_dataset(use_vsi, row_group_size, fid):
         assert geo is not None
         j = json.loads(geo)
         assert j is not None
+        assert 'version' in j
+        assert j['version'] == '0.4.0'
         assert 'primary_column' in j
         assert j['primary_column'] == 'geometry'
         assert 'columns' in j
@@ -604,13 +606,15 @@ def test_ogr_parquet_write_compression(compression):
 ###############################################################################
 # Test coordinate epoch support
 
-
-def test_ogr_parquet_coordinate_epoch():
+@pytest.mark.parametrize("epsg_code", [4326,
+                                       9057  # "WGS 84 (G1762)"
+                                       ])
+def test_ogr_parquet_coordinate_epoch(epsg_code):
 
     outfilename = '/vsimem/out.parquet'
     ds = gdal.GetDriverByName('Parquet').Create(outfilename, 0, 0, 0, gdal.GDT_Unknown)
     srs = osr.SpatialReference()
-    srs.ImportFromEPSG(4326)
+    srs.ImportFromEPSG(epsg_code)
     srs.SetCoordinateEpoch(2022.3)
     ds.CreateLayer('out', geom_type=ogr.wkbPoint, srs=srs)
     ds = None
@@ -626,13 +630,16 @@ def test_ogr_parquet_coordinate_epoch():
     assert j is not None
     assert 'columns' in j
     assert 'geometry' in j['columns']
-    assert 'crs' in j['columns']['geometry']
-    assert j['columns']['geometry']['crs'].startswith('GEOGCRS')
+    if epsg_code == 4326:
+        assert 'crs' not in j['columns']['geometry']
+    else:
+        assert 'crs' in j['columns']['geometry']
+        assert j['columns']['geometry']['crs']['type'] == 'GeographicCRS'
     assert 'epoch' in j['columns']['geometry']
 
     srs = lyr.GetSpatialRef()
     assert srs is not None
-    assert srs.GetAuthorityCode(None) == '4326'
+    assert int(srs.GetAuthorityCode(None)) == epsg_code
     assert srs.GetCoordinateEpoch() == 2022.3
     lyr = None
     ds = None
@@ -675,18 +682,28 @@ def test_ogr_parquet_missing_crs_member():
 
 
 ###############################################################################
-# Test CRS as PROJJSON (extension)
+# Test writing a CRS and automatically identifying it
 
+crs_84_wkt1 = """GEOGCS["WGS 84 (CRS84)",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["OGC","CRS84"]]"""
 
-def test_ogr_parquet_crs_as_projjson():
+@pytest.mark.parametrize("input_definition,expected_crs",
+                         [("+proj=longlat +datum=WGS84", '4326'),
+                          (crs_84_wkt1, '4326'),
+                          ("OGC:CRS84", '4326'),
+                          ("EPSG:4326", '4326'),
+                          ("EPSG:4269", '4269'),
+                          ("+proj=longlat +datum=NAD83", '4269'),
+                          ("EPSG:32631", '32631'),
+                          ("+proj=utm +zone=31 +datum=WGS84", '32631'),
+                          ("+proj=longlat +ellps=GRS80", None)])
+def test_ogr_parquet_crs_identification_on_write(input_definition, expected_crs):
 
     outfilename = '/vsimem/out.parquet'
     ds = gdal.GetDriverByName('Parquet').Create(outfilename, 0, 0, 0, gdal.GDT_Unknown)
     srs = osr.SpatialReference()
-    srs.ImportFromEPSG(4326)
-    with gdaltest.config_option('OGR_PARQUET_CRS_ENCODING', 'PROJJSON'):
-        ds.CreateLayer('out', geom_type=ogr.wkbPoint, srs=srs)
-        ds = None
+    srs.SetFromUserInput(input_definition)
+    ds.CreateLayer('out', geom_type=ogr.wkbPoint, srs=srs)
+    ds = None
 
     ds = ogr.Open(outfilename)
     assert ds is not None
@@ -699,18 +716,18 @@ def test_ogr_parquet_crs_as_projjson():
     assert j is not None
     assert 'columns' in j
     assert 'geometry' in j['columns']
-    assert 'crs' in j['columns']['geometry']
-    assert 'type' in j['columns']['geometry']['crs']
-    assert j['columns']['geometry']['crs']['type'] == 'GeographicCRS'
+    if expected_crs == '4326':
+        assert 'crs' not in j['columns']['geometry']
+    else:
+        assert 'crs' in j['columns']['geometry']
 
     srs = lyr.GetSpatialRef()
     assert srs is not None
-    assert srs.GetAuthorityCode(None) == '4326'
+    assert srs.GetAuthorityCode(None) == expected_crs
     lyr = None
     ds = None
 
     gdal.Unlink(outfilename)
-
 
 ###############################################################################
 # Test EDGES option
