@@ -670,6 +670,44 @@ OGRErr OGR_L_CreateFeature( OGRLayerH hLayer, OGRFeatureH hFeat )
 }
 
 /************************************************************************/
+/*                           UpsertFeature()                           */
+/************************************************************************/
+
+OGRErr OGRLayer::UpsertFeature( OGRFeature *poFeature )
+
+{
+    ConvertGeomsIfNecessary(poFeature);
+    return IUpsertFeature(poFeature);
+}
+
+/************************************************************************/
+/*                           IUpsertFeature()                           */
+/************************************************************************/
+
+OGRErr OGRLayer::IUpsertFeature( OGRFeature * )
+{
+    return OGRERR_UNSUPPORTED_OPERATION;
+}
+
+/************************************************************************/
+/*                        OGR_L_UpsertFeature()                         */
+/************************************************************************/
+
+OGRErr OGR_L_UpsertFeature( OGRLayerH hLayer, OGRFeatureH hFeat )
+
+{
+    VALIDATE_POINTER1( hLayer, "OGR_L_UpsertFeature", OGRERR_INVALID_HANDLE );
+    VALIDATE_POINTER1( hFeat, "OGR_L_UpsertFeature", OGRERR_INVALID_HANDLE );
+
+#ifdef OGRAPISPY_ENABLED
+    if( bOGRAPISpyEnabled )
+        OGRAPISpy_L_UpsertFeature(hLayer, hFeat);
+#endif
+
+    return OGRLayer::FromHandle(hLayer)->UpsertFeature( OGRFeature::FromHandle(hFeat) );
+}
+
+/************************************************************************/
 /*                            CreateField()                             */
 /************************************************************************/
 
