@@ -20,7 +20,8 @@ batches of features with a column oriented memory layout, that suits formats tha
 have that organization or downstream consumers that expect data to be presented
 in such a way, in particular the `Apache Arrow <https://arrow.apache.org/docs/>`_,
 `Pandas <https://pandas.pydata.org/>`_ / `GeoPandas <https://geopandas.org/>`_
-ecosystem.
+ecosystem, R spatial packages, and many modern (data analytics focused)
+databases / engines which are column oriented (eg Snowflake, Google BigQuery, ..)
 
 Motivation
 ----------
@@ -157,6 +158,9 @@ The following virtual methods are added to the OGRLayer class:
   and GetNextRecordBatch() is not recommended, as the behaviour will be unspecified
   (but it should not crash).
 
+  Options passed to this method should be identical between calls, and the same as
+  the ones provided to GetRecordBatchSchema().
+
   When this method returns true, and the array is no longer needed, it must
   be released with the following procedure, to take into account that it might
   have been released by other code, as documented in the Arrow C data
@@ -177,15 +181,17 @@ Other remarks
 -------------
 
 Using directly (as a producer or a consumer), the ArrowArray is admitedly not
-trivial, and requires good intimacy with the Arrow C data interface specification,
-to know, in which buffer of an array, data is to be read, which data type void*
-buffers should be cast to, how to use buffers that contain null/not_null information,
-how to use offset buffers for data types of type List, etc.
+trivial, and requires good intimacy with the Arrow C data interface and columnar
+array specifications, to know, in which buffer of an array, data is to be read,
+which data type void* buffers should be cast to, how to use buffers that contain
+null/not_null information, how to use offset buffers for data types of type List, etc.
+
 For the consuming side, the new API will be best used with the (Py)Arrow, Pandas,
 GeoPandas, Numpy libraries which offer easier and safer access to record batches.
 The study of the gdal_array._RecordBatchAsNumpy() method added to the SWIG Python
 bindings can give a good hint of how to use an ArrowArray object, in conjunction
-with the associated ArrowSchema.
+with the associated ArrowSchema. DuckDB is also another example of using the ArrowArray
+inferface: https://github.com/duckdb/duckdb/blob/master/src/common/types/data_chunk.cpp
 
 It is not expected that most drivers will have a dedicated implementation of
 GetNextRecordBatch(). Implementing it requires a non-trivial effort, and
@@ -195,6 +201,11 @@ total time (I/O + shuffling).
 
 Potential future work, no in the scope of this RFC, could be the addition of a
 column-oriented method to write new features, a WriteRecordBatch() method.
+
+The use of the `Arrow C stream interface <https://arrow.apache.org/docs/format/CStreamInterface.html>`_,
+which associates the functionality of GetRecordBatchSchema() and
+GetNextRecordBatch() in a same C structure has been considered, but not kept as
+this interface is currently marked as experimental and not guaranteed to be ABI stable.
 
 Impacted drivers
 ----------------
@@ -249,8 +260,10 @@ dataset with 3.3 millions features, with 13 fields each (2 fields of type Intege
 :ref:`rfc-86-bench-ogr-py`, :ref:`rfc-86-bench-fiona` and :ref:`rfc-86-bench-ogr-cpp`
 have similar functionality: iterating over features with GetNextFeature().
 
+:ref:`rfc-86-bench-pyogrio-raw` does a little more by building Arrow arrays.
+
 :ref:`rfc-86-bench-pyogrio`, :ref:`rfc-86-bench-geopandas` and :ref:`rfc-86-bench-ogr-to-geopandas`
-have similar functionality: building a GeoPandas GeoDataFrame
+have all similar functionality: building a GeoPandas GeoDataFrame
 
 :ref:`rfc-86-bench-ogr-batch-cpp` can be used to measure the raw performance of the
 proposed GetNextRecordBatch() API.
@@ -263,6 +276,7 @@ proposed GetNextRecordBatch() API.
 bench_ogr.cpp                             6.6
 bench_ogr.py                              71
 bench_fiona.py                            68
+bench_pyogrio_raw.py                      40
 bench_pyogrio.py                          108
 bench_geopandas.py                        232
 bench_ogr_batch.cpp (driver impl.)        4.5
@@ -284,6 +298,7 @@ using GetNextFeature() underneath, is used.
 bench_ogr.cpp                             6.4
 bench_ogr.py                              72
 bench_fiona.py                            70
+bench_pyogrio_raw.py                      46
 bench_pyogrio.py                          115
 bench_geopandas.py                        228
 bench_ogr_batch.cpp (driver impl.)        1.6
@@ -302,6 +317,7 @@ Note: Fiona slightly modified to accept Parquet driver as a recognized one.
 bench_ogr.cpp                             17.7
 bench_ogr.py                              81
 bench_fiona.py                            81
+bench_pyogrio_raw.py                      58
 bench_pyogrio.py                          120
 bench_geopandas.py                        258
 bench_ogr_batch.cpp (driver impl.)        N/A
@@ -477,13 +493,29 @@ expose them as GeoJSON features holded by a Python dictionary.
         for f in features:
             pass
 
+.. _rfc-86-bench-pyogrio-raw:
+
+bench_pyogrio_raw.py
+++++++++++++++++++++
+
+Use of the pyogrio Python library which uses the OGR C GetNextFeature() underneath to
+expose a layer as a set of Arrow arrays.
+
+.. code-block:: python
+
+    import sys
+    from pyogrio.raw import read
+
+    read(sys.argv[1])
+
+
 .. _rfc-86-bench-pyogrio:
 
 bench_pyogrio.py
 ++++++++++++++++
 
 Use of the pyogrio Python library which uses the OGR C GetNextFeature() underneath to
-expose a layer as GeoPandas GeoDataFrame.
+expose a layer as GeoPandas GeoDataFrame (which involves parsing WKB as GEOS objects)
 
 .. code-block:: python
 
