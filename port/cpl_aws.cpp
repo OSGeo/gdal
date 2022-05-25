@@ -1977,6 +1977,8 @@ CPLString VSIS3HandleHelper::GetSignedURL(CSLConstList papszOptions)
         m_osAccessKeyId + "/" + osDate + "/" + m_osRegion + "/s3/aws4_request");
     AddQueryParameter("X-Amz-Date", osXAMZDate);
     AddQueryParameter("X-Amz-Expires", osXAMZExpires);
+    if( !m_osSessionToken.empty() )
+        AddQueryParameter("X-Amz-Security-Token", m_osSessionToken);
     AddQueryParameter("X-Amz-SignedHeaders", "host");
 
     CPLString osCanonicalQueryString(GetQueryString(true).substr(1));
@@ -1987,7 +1989,7 @@ CPLString VSIS3HandleHelper::GetSignedURL(CSLConstList papszOptions)
     const CPLString osSignature =
       CPLGetAWS_SIGN4_Signature(
         m_osSecretAccessKey,
-        m_osSessionToken,
+        std::string(), // sessionToken set to empty as we include it in query parameters
         m_osRegion,
         m_osRequestPayer,
         "s3",
