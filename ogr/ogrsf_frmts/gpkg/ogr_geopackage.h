@@ -312,6 +312,12 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
         static std::string GetCurrentDateEscapedSQL();
 
     protected:
+
+        virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
+                                  void *, int, int, GDALDataType,
+                                  int, int *, GSpacing, GSpacing, GSpacing,
+                                  GDALRasterIOExtraArg* psExtraArg ) override;
+
         // Coming from GDALGPKGMBTilesLikePseudoDataset
 
         virtual CPLErr                  IFlushCacheWithErrCode(bool bAtClosing) override;
