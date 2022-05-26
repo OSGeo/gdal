@@ -853,6 +853,32 @@ def test_ogr_mongodbv3_2():
     gdal.PopErrorHandler()
     assert ret != 0
 
+    # Upsert when feature does not exist
+    gdal.PushErrorHandler()
+    ret = lyr.UpsertFeature(f)
+    gdal.PopErrorHandler()
+    assert ret != 0
+
+    gdal.PushErrorHandler()
+    ret = lyr.DeleteFeature(1)
+    gdal.PopErrorHandler()
+    assert ret != 0
+
+    # Upsert when feature already exists
+    gdal.PushErrorHandler()
+    ret = lyr.CreateFeature(f)
+    gdal.PopErrorHandler()
+    assert ret != 0
+
+    gdal.PushErrorHandler()
+    ret = lyr.UpsertFeature(f)
+    gdal.PopErrorHandler()
+    assert ret != 0
+
+    gdal.PushErrorHandler()
+    ret = lyr.DeleteFeature(1)
+    gdal.PopErrorHandler()
+    assert ret != 0
 
 ###############################################################################
 # test_ogrsf
