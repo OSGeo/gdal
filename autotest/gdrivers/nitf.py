@@ -4201,6 +4201,87 @@ def test_nitf_create_three_images_final_uncompressed():
     gdal.GetDriverByName('NITF').Delete('/vsimem/out.ntf')
 
 ###############################################################################
+# Test writing/reading PAM metadata
+
+
+def test_nitf_pam_metadata_single_image():
+
+    src_ds = gdal.Open('data/rgbsmall.tif')
+    out_filename = 'tmp/test_nitf_pam_metadata_single_image.ntf'
+    gdal.ErrorReset()
+    gdal.GetDriverByName('NITF').CreateCopy(out_filename, src_ds)
+    assert gdal.GetLastErrorType() == 0
+    ds = None
+
+    assert os.path.exists(out_filename + '.aux.xml')
+    pam = open(out_filename + '.aux.xml', 'rb').read()
+    assert b'<Subdataset' not in pam
+
+    ds = gdal.Open(out_filename)
+    assert ds.GetMetadataItem('AREA_OR_POINT') == 'Area'
+    ds = None
+
+    ds = gdal.Open('NITF_IM:0:' + out_filename)
+    assert ds.GetMetadataItem('AREA_OR_POINT') == 'Area'
+    ds = None
+
+    # Try to read the variant of PAM serialization that was used from
+    # GDAL 3.4.0 to 3.5.0
+    open(out_filename + '.aux.xml', 'wb').write(
+b"""<PAMDataset>
+  <Subdataset name="0">
+    <PAMDataset>
+      <Metadata>
+        <MDI key="FOO">BAR</MDI>
+      </Metadata>
+    </PAMDataset>
+  </Subdataset>
+</PAMDataset>""")
+
+    ds = gdal.Open(out_filename)
+    assert ds.GetMetadataItem('FOO') == 'BAR'
+    ds = None
+
+    ds = gdal.Open('NITF_IM:0:' + out_filename)
+    assert ds.GetMetadataItem('FOO') == 'BAR'
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete(out_filename)
+
+###############################################################################
+# Test writing/reading PAM metadata
+
+
+def test_nitf_pam_metadata_several_images():
+
+    src_ds = gdal.Open('data/rgbsmall.tif')
+    out_filename = 'tmp/test_nitf_pam_metadata_several_images.ntf'
+    gdal.GetDriverByName('NITF').CreateCopy(out_filename, src_ds, options = ['NUMI=2'])
+    src_ds2 = gdal.GetDriverByName('MEM').Create('', 1, 1)
+    src_ds2.SetGeoTransform(src_ds.GetGeoTransform())
+    src_ds2.SetSpatialRef(src_ds.GetSpatialRef())
+    gdal.GetDriverByName('NITF').CreateCopy(out_filename, src_ds2, options = ['APPEND_SUBDATASET=YES'])
+    ds = None
+
+    assert os.path.exists(out_filename + '.aux.xml')
+    pam = open(out_filename + '.aux.xml', 'rb').read()
+    assert b'<Subdataset' in pam
+
+    ds = gdal.Open(out_filename)
+    assert ds.GetMetadataItem('AREA_OR_POINT') == 'Area'
+    ds = None
+
+    ds = gdal.Open('NITF_IM:0:' + out_filename)
+    assert ds.GetMetadataItem('AREA_OR_POINT') == 'Area'
+    ds = None
+
+    ds = gdal.Open('NITF_IM:1:' + out_filename)
+    assert ds.GetMetadataItem('AREA_OR_POINT') is None
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete(out_filename)
+
+###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
 
 
