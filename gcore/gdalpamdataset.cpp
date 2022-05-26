@@ -802,10 +802,6 @@ CPLErr GDALPamDataset::TryLoadXML(char **papszSiblingFiles)
     VSIStatBufL sStatBuf;
     CPLXMLNode *psTree = nullptr;
 
-    CPLErr eLastErr = CPLGetLastErrorType();
-    int nLastErrNo = CPLGetLastErrorNo();
-    CPLString osLastErrorMsg = CPLGetLastErrorMsg();
-
     if( papszSiblingFiles != nullptr && IsPamFilenameAPotentialSiblingFile() &&
         GDALCanReliablyUseSiblingFileList(psPam->pszPamFilename) )
     {
@@ -814,11 +810,9 @@ CPLErr GDALPamDataset::TryLoadXML(char **papszSiblingFiles)
                            CPLGetFilename(psPam->pszPamFilename) );
         if( iSibling >= 0 )
         {
-            CPLErrorReset();
-            CPLPushErrorHandler( CPLQuietErrorHandler );
+            CPLErrorStateBackuper oErrorStateBackuper;
+            CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
             psTree = CPLParseXMLFile( psPam->pszPamFilename );
-            CPLPopErrorHandler();
-            CPLErrorReset();
         }
     }
     else
@@ -826,18 +820,13 @@ CPLErr GDALPamDataset::TryLoadXML(char **papszSiblingFiles)
                     VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG ) == 0
         && VSI_ISREG( sStatBuf.st_mode ) )
     {
-        CPLErrorReset();
-        CPLPushErrorHandler( CPLQuietErrorHandler );
+        CPLErrorStateBackuper oErrorStateBackuper;
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
         psTree = CPLParseXMLFile( psPam->pszPamFilename );
-        CPLPopErrorHandler();
-        CPLErrorReset();
     }
 
-    if( eLastErr != CE_None )
-        CPLErrorSetState( eLastErr, nLastErrNo, osLastErrorMsg.c_str() );
-
 /* -------------------------------------------------------------------- */
-/*      If we are looking for a subdataset, search for its subtree not. */
+/*      If we are looking for a subdataset, search for its subtree now. */
 /* -------------------------------------------------------------------- */
     if( psTree && !psPam->osSubdatasetName.empty() )
     {
@@ -926,17 +915,23 @@ CPLErr GDALPamDataset::TrySaveXML()
 /* -------------------------------------------------------------------- */
     if( !psPam->osSubdatasetName.empty() )
     {
-        CPLXMLNode *psOldTree, *psSubTree;
+        CPLXMLNode *psOldTree = nullptr;
 
-        CPLErrorReset();
-        CPLPushErrorHandler( CPLQuietErrorHandler );
-        psOldTree = CPLParseXMLFile( psPam->pszPamFilename );
-        CPLPopErrorHandler();
+        VSIStatBufL sStatBuf;
+        if( VSIStatExL( psPam->pszPamFilename, &sStatBuf,
+                    VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG ) == 0
+            && VSI_ISREG( sStatBuf.st_mode ) )
+        {
+            CPLErrorStateBackuper oErrorStateBackuper;
+            CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+            psOldTree = CPLParseXMLFile( psPam->pszPamFilename );
+        }
 
         if( psOldTree == nullptr )
             psOldTree = CPLCreateXMLNode( nullptr, CXT_Element, "PAMDataset" );
 
-        for( psSubTree = psOldTree->psChild;
+        CPLXMLNode* psSubTree = psOldTree->psChild;
+        for( /* initialized above */;
              psSubTree != nullptr;
              psSubTree = psSubTree->psNext )
         {
