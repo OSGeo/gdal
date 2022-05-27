@@ -68,13 +68,11 @@ def doit(src_filename, dst_filename):
 
 
 def main(argv=sys.argv, src_filename=None, dst_filename=None):
-    # src_filename = 'utm.tif'
-    # dst_filename = 'classes.tif'
     if len(argv) > 1:
         src_filename = argv[1]
     if len(argv) > 2:
         dst_filename = argv[2]
-    if not dst_filename:
+    if not src_filename or not dst_filename:
         return Usage()
     return doit(src_filename, dst_filename)
 

@@ -39,6 +39,7 @@ as just names e.g. 'gdal_edit somefile.tif ...'
 Scripts: python files that need to called from python in order to be run,
 e.g. 'python path/to/samples/pct2rgb.py somefile.tif ...'
 """
+import os
 import glob
 import sys
 import subprocess
@@ -64,10 +65,13 @@ def get_scripts(script_path, excludes):
     # strings is easier than with objects
 
     # scripts = list(script_path.glob("**/.py" ))
-    s1 = glob.glob("*.py", root_dir=script_path)
-    s2 = glob.glob("samples/*.py", root_dir=script_path)
+    os.chdir(script_path)
+    s1 = glob.glob("*.py")
+    s2 = glob.glob("samples/*.py")
+    os.chdir(here)
     scripts = s1 + s2
     del s1, s2
+
 
     for e in excludes:
         for s in scripts:
