@@ -236,8 +236,9 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
     }
 
     /* Bind the attributes using appropriate SQLite data types */
+    const int nFieldCount = poFeatureDefn->GetFieldCount();
     for( int i = 0;
-         err == SQLITE_OK && i < poFeatureDefn->GetFieldCount();
+         err == SQLITE_OK && i < nFieldCount;
          i++ )
     {
         if( i == m_iFIDAsRegularColumnIndex )
@@ -252,7 +253,7 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
             continue;
         }
 
-        OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(i);
+        const OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(i);
 
         if( !poFeature->IsFieldNull(i) )
         {
@@ -261,13 +262,11 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
                 case SQLITE_INTEGER:
                 {
                     err = sqlite3_bind_int64(poStmt, nColCount++, poFeature->GetFieldAsInteger64(i));
-                    MY_CPLAssert( err == SQLITE_OK );
                     break;
                 }
                 case SQLITE_FLOAT:
                 {
                     err = sqlite3_bind_double(poStmt, nColCount++, poFeature->GetFieldAsDouble(i));
-                    MY_CPLAssert( err == SQLITE_OK );
                     break;
                 }
                 case SQLITE_BLOB:
@@ -275,13 +274,12 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
                     int szBlob = 0;
                     GByte *pabyBlob = poFeature->GetFieldAsBinary(i, &szBlob);
                     err = sqlite3_bind_blob(poStmt, nColCount++, pabyBlob, szBlob, nullptr);
-                    MY_CPLAssert( err == SQLITE_OK );
                     break;
                 }
                 default:
                 {
                     const char *pszVal = poFeature->GetFieldAsString(i);
-                    int nValLengthBytes = (int)strlen(pszVal);
+                    int nValLengthBytes = -1;
                     char szVal[32];
                     CPLString osTemp;
                     if( poFieldDefn->GetType() == OFTDate )
@@ -290,7 +288,6 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
                         poFeature->GetFieldAsDateTime(i, &nYear, &nMonth, &nDay, &nHour, &nMinute, &nSecond, &nTZFlag);
                         snprintf(szVal, sizeof(szVal), "%04d-%02d-%02d", nYear, nMonth, nDay);
                         pszVal = szVal;
-                        nValLengthBytes = (int)strlen(pszVal);
                     }
                     else if( poFieldDefn->GetType() == OFTDateTime )
                     {
@@ -326,7 +323,6 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
                         char* pszXMLDateTime = OGRGetXMLDateTime(&sField, bAlwaysMillisecond);
                         osTemp = pszXMLDateTime;
                         pszVal = osTemp.c_str();
-                        nValLengthBytes = static_cast<int>(osTemp.size());
                         CPLFree(pszXMLDateTime);
                     }
                     else if( poFieldDefn->GetType() == OFTString &&
@@ -357,16 +353,16 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
                                      m_bTruncateFields ? " Value will be truncated." : "");
                             if( m_bTruncateFields )
                             {
-                                int k = 0;
+                                int countUTF8Chars = 0;
                                 nValLengthBytes = 0;
                                 while (pszVal[nValLengthBytes])
                                 {
                                     if ((pszVal[nValLengthBytes] & 0xc0) != 0x80)
                                     {
-                                        k++;
                                         // Stop at the start of the character just beyond the maximum accepted
-                                        if( k > poFieldDefn->GetWidth() )
+                                        if( countUTF8Chars == poFieldDefn->GetWidth() )
                                             break;
+                                        countUTF8Chars++;
                                     }
                                     nValLengthBytes++;
                                 }
@@ -374,7 +370,6 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
                         }
                     }
                     err = sqlite3_bind_text(poStmt, nColCount++, pszVal, nValLengthBytes, SQLITE_TRANSIENT);
-                    MY_CPLAssert( err == SQLITE_OK );
                     break;
                 }
             }
@@ -382,7 +377,13 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
         else
         {
             err = sqlite3_bind_null(poStmt, nColCount++);
-            MY_CPLAssert( err == SQLITE_OK );
+        }
+        if( err != SQLITE_OK )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "sqlite3_bind_() for column %s failed: %s",
+                     poFieldDefn->GetNameRef(),
+                     sqlite3_errmsg(m_poDS->GetDB()));
         }
     }
 
