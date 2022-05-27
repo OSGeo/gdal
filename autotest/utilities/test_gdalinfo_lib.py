@@ -32,6 +32,7 @@
 
 
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Simple test
@@ -158,3 +159,34 @@ def test_gdalinfo_lib_coordinate_epoch():
     ret = gdal.Info(ds, format = 'json')
     assert 'coordinateEpoch' in ret
     assert ret['coordinateEpoch'] == 2021.3
+
+
+###############################################################################
+# Test fix for https://github.com/OSGeo/gdal/issues/5794
+
+
+@pytest.mark.parametrize('datatype', ['Float32', 'Float64'])
+def test_gdalinfo_lib_nodata_precision(datatype):
+
+    ds = gdal.Translate('', '../gcore/data/float32.tif', options='-of MEM -a_nodata -1e37 -ot ' + datatype)
+    ret = gdal.Info(ds)
+    assert 'e37' in ret.lower() or 'e+37' in ret.lower() or 'e+037' in ret.lower()
+
+    ret = gdal.Info(ds, format = 'json', deserialize=False)
+    assert 'e37' in ret.lower() or 'e+37' in ret.lower() or 'e+037' in ret.lower()
+
+
+def test_gdalinfo_lib_nodata_full_precision_float64():
+
+    nodata_str = "-1.1234567890123456e-10"
+    ds = gdal.Translate('', '../gcore/data/float32.tif', options='-of MEM -a_nodata ' + nodata_str + ' -ot float64')
+    ret = gdal.Info(ds)
+    pos = ret.find('NoData Value=')
+    assert pos > 0
+    eol_pos = ret.find('\n',pos)
+    assert eol_pos > 0
+    got_nodata_str = ret[pos+len('NoData Value='):eol_pos]
+    assert float(got_nodata_str) == float(nodata_str)
+
+    ret = gdal.Info(ds, format = 'json')
+    assert ret['bands'][0]['noDataValue'] == float(nodata_str)
