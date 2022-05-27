@@ -732,7 +732,7 @@ def Usage():
     print('        [-r {near/bilinear/cubic/cubicspline/lanczos}]')
     print('        [-useDirForEachRow] [-resume]')
     print('        -targetDir TileDirectory input_files')
-    return 1
+    return 2
 
 
 def main(args=None, g=None):

@@ -35,7 +35,7 @@ from osgeo import gdal
 
 def Usage():
     print('Usage: gdal_create_pdf composition.xml out.pdf')
-    return -1
+    return 2
 
 
 def gdal_create_pdf(argv):
@@ -68,7 +68,7 @@ def gdal_create_pdf(argv):
 
 
 def main(argv=sys.argv):
-    gdal_create_pdf(argv)
+    return gdal_create_pdf(argv)
 
 
 if __name__ == '__main__':

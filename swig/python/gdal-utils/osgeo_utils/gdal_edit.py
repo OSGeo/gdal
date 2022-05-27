@@ -46,7 +46,7 @@ def Usage():
     print('                 [-unsetmd] [-oo NAME=VALUE]* [-mo "META-TAG=VALUE"]*  datasetname')
     print('')
     print('Edit in place various information of an existing GDAL dataset.')
-    return -1
+    return 2
 
 
 def ArgIsNumeric(s):
@@ -64,7 +64,7 @@ def gdal_edit(argv):
 
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
-        return -1
+        return 2
 
     datasetname = None
     srs = None

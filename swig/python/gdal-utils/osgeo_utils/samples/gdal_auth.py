@@ -55,7 +55,7 @@ def Usage():
     print('')
     print('scopes: ft/storage/storage-rw/full_url')
     print('')
-    return 1
+    return 2
 
 
 def main(argv=sys.argv):

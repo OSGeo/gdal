@@ -1965,14 +1965,14 @@ def check(filename,
 
 
 def Usage():
-    print('validate_gpkg.py [[-v]|[-q]] [-k] [--extra] [--warning-as-error] my.gpkg')
+    print('Usage: validate_gpkg.py [[-v]|[-q]] [-k] [--extra] [--warning-as-error] my.gpkg')
     print('')
     print('-v: verbose mode')
     print('-q: quiet mode')
     print('-k: (try to) keep going when error is encountered')
     print('--extra: run extra checks, potentially going beyond strict requirements of specification')
     print('--warning-as-error: turn warnings as errors')
-    return 1
+    return 2
 
 
 def main(argv=sys.argv):

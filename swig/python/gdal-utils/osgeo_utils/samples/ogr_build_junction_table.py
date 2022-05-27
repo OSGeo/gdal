@@ -43,7 +43,7 @@ def Usage():
     print('This utility is aimed at creating junction tables for layers coming from GML datasources')
     print('that reference other objects in _href fields')
     print('')
-    return 1
+    return 2
 
 
 def build_junction_table(ds, lyr, ifield, bAppend, bOverwrite):

@@ -62,7 +62,7 @@ def Usage():
     print('eg.')
     print(' loslas2ntv2.py -auto *.los')
     print(' loslas2ntv2.py -system_f NAD27 -system_t NAD83 -sub_name conus conus.los conus.gsb')
-    return 1
+    return 2
 
 
 # =============================================================================

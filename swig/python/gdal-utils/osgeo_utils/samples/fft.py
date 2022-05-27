@@ -32,7 +32,11 @@
 
 import sys
 
-import FFT
+try:
+    import FFT
+except ModuleNotFoundError:
+    print('Module FFT not found, cannot continue')
+    sys.exit(1)
 from osgeo import gdal
 
 # =============================================================================
@@ -41,7 +45,7 @@ from osgeo import gdal
 def Usage():
     print('Usage: fft.py [-inv] [-of out_format] [-ot out_type] infile outfile')
     print('')
-    return 1
+    return 2
 
 
 def ParseType(typ):
