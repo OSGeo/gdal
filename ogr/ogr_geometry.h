@@ -1092,7 +1092,8 @@ class CPL_DLL OGRCurve : public OGRGeometry
                 std::unique_ptr<Private> m_poPrivate;
             public:
                 ConstIterator(const OGRCurve* poSelf, bool bStart);
-                ConstIterator(ConstIterator&& oOther) noexcept; // declared but not defined. Needed for gcc 5.4 at least
+                ConstIterator(ConstIterator&& oOther) noexcept;
+                ConstIterator& operator=(ConstIterator&& oOther);
                 ~ConstIterator();
                 const OGRPoint& operator*() const;
                 ConstIterator& operator++();
@@ -1143,6 +1144,7 @@ class CPL_DLL OGRCurve : public OGRGeometry
     virtual OGRPointIterator* getPointIterator() const = 0;
     virtual OGRBoolean IsConvex() const;
     virtual double get_Area() const = 0;
+    virtual int isClockwise() const;
 
     /** Down-cast to OGRSimpleCurve*.
      * Implies prior checking that wkbFlatten(getGeometryType()) == wkbLineString or wkbCircularString. */
@@ -1443,6 +1445,7 @@ class CPL_DLL OGRLineString : public OGRSimpleCurve
     // Non-standard from OGRGeometry.
     virtual OGRwkbGeometryType getGeometryType() const override;
     virtual const char *getGeometryName() const override;
+    virtual int isClockwise() const override;
 
     /** Return pointer of this in upper class */
     inline OGRSimpleCurve* toUpperClass() { return this; }
@@ -1528,7 +1531,6 @@ class CPL_DLL OGRLinearRing : public OGRLineString
     // Non standard.
     virtual const char *getGeometryName() const override;
     virtual OGRLinearRing *clone() const override;
-    virtual int isClockwise() const;
     virtual void reverseWindingOrder();
     virtual void closeRings() override;
     OGRBoolean isPointInRing( const OGRPoint* pt,
