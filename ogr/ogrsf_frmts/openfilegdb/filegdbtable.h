@@ -234,66 +234,63 @@ class FileGDBIndex
 
 class FileGDBTable
 {
-        VSILFILE                   *fpTable;
-        VSILFILE                   *fpTableX;
-        vsi_l_offset                nFileSize; /* only read when needed */
+        VSILFILE                   *fpTable = nullptr;
+        VSILFILE                   *fpTableX = nullptr;
+        vsi_l_offset                nFileSize = 0; /* only read when needed */
 
-        std::string                 osFilename;
-        std::vector<FileGDBField*>  apoFields;
-        std::string                 osObjectIdColName;
+        std::string                 osFilename{};
+        std::vector<FileGDBField*>  apoFields{};
+        std::string                 osObjectIdColName{};
 
-        int                         bHasReadGDBIndexes;
-        std::vector<FileGDBIndex*>  apoIndexes;
+        int                         bHasReadGDBIndexes = FALSE;
+        std::vector<FileGDBIndex*>  apoIndexes{};
 
         int                         m_nHasSpatialIndex = -1;
 
-        GUIntBig                    nOffsetFieldDesc;
-        GUInt32                     nFieldDescLength;
+        GUIntBig                    nOffsetFieldDesc = 0;
+        GUInt32                     nFieldDescLength = 0;
 
-        GUInt32                     nTablxOffsetSize;
-        std::vector<vsi_l_offset>   anFeatureOffsets; /* MSb set marks deleted feature */
+        GUInt32                     nTablxOffsetSize = 0;
+        std::vector<vsi_l_offset>   anFeatureOffsets{}; /* MSb set marks deleted feature */
 
-        GByte*                      pabyTablXBlockMap;
-        int                         nCountBlocksBeforeIBlockIdx; /* optimization */
-        int                         nCountBlocksBeforeIBlockValue; /* optimization */
+        GByte*                      pabyTablXBlockMap = nullptr;
+        int                         nCountBlocksBeforeIBlockIdx = 0; /* optimization */
+        int                         nCountBlocksBeforeIBlockValue = 0; /* optimization */
 
-        char                        achGUIDBuffer[32 + 6 + 1];
-        int                         nChSaved;
+        char                        achGUIDBuffer[32 + 6 + 1]{0};
+        int                         nChSaved = -1;
 
-        int                         bError;
-        int                         nCurRow;
-        int                         bHasDeletedFeaturesListed;
-        int                         bIsDeleted;
-        int                         nLastCol;
-        GByte*                      pabyIterVals;
-        int                         iAccNullable;
-        GUInt32                     nRowBlobLength;
+        int                         bError = FALSE;
+        int                         nCurRow = -1;
+        int                         bHasDeletedFeaturesListed = FALSE;
+        int                         bIsDeleted = FALSE;
+        int                         nLastCol = -1;
+        GByte*                      pabyIterVals = nullptr;
+        int                         iAccNullable = 0;
+        GUInt32                     nRowBlobLength = 0;
         OGRField                    sCurField;
-        /* OGRFieldType                eCurFieldType; */
 
-        FileGDBTableGeometryType    eTableGeomType;
+        FileGDBTableGeometryType    eTableGeomType = FGTGT_NONE;
         bool                        m_bGeomTypeHasZ = false;
         bool                        m_bGeomTypeHasM = false;
         bool                        m_bStringsAreUTF8 = true; // if false, UTF16
         std::string                 m_osTempString{}; // used as a temporary to store strings recoded from UTF16 to UTF8
-        int                         nValidRecordCount;
-        int                         nTotalRecordCount;
-        int                         iGeomField;
-        int                         nCountNullableFields;
-        int                         nNullableFieldsSizeInBytes;
+        int                         nValidRecordCount = 0;
+        int                         nTotalRecordCount = 0;
+        int                         iGeomField = -1;
+        int                         nCountNullableFields = 0;
+        int                         nNullableFieldsSizeInBytes = 0;
 
         std::vector<double>         m_adfSpatialIndexGridResolution{};
 
-        GUInt32                     nBufferMaxSize;
-        GByte*                      pabyBuffer;
+        GUInt32                     nBufferMaxSize = 0;
+        GByte*                      pabyBuffer = nullptr;
 
         std::string                 m_osCacheRasterFieldPath{};
 
-        void                        Init();
+        GUIntBig                    nFilterXMin = 0, nFilterXMax = 0, nFilterYMin = 0, nFilterYMax = 0;
 
-        GUIntBig                    nFilterXMin, nFilterXMax, nFilterYMin, nFilterYMax;
-
-        GUIntBig                    nOffsetHeaderEnd;
+        GUIntBig                    nOffsetHeaderEnd = 0;
 
         int                         ReadTableXHeader();
         int                         IsLikelyFeatureAtOffset(
@@ -308,6 +305,8 @@ class FileGDBTable
 
        int                      Open(const char* pszFilename,
                                      const char* pszLayerName = nullptr);
+
+       //! Object should no longer be used after Close()
        void                     Close();
 
        const std::string&       GetFilename() const { return osFilename; }
