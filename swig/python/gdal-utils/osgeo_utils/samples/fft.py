@@ -35,7 +35,8 @@ import sys
 try:
     import FFT
 except ModuleNotFoundError:
-    from numpy.fft import *
+    print('Module FFT not found, cannot continue')
+    sys.exit(1)
 from osgeo import gdal
 
 # =============================================================================
