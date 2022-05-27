@@ -89,30 +89,30 @@ class FileGDBField
 {
         friend class FileGDBTable;
 
-        FileGDBTable    *poParent;
+        FileGDBTable    *m_poParent;
 
-        std::string      osName;
-        std::string      osAlias;
-        FileGDBFieldType eType;
+        std::string      m_osName;
+        std::string      m_osAlias;
+        FileGDBFieldType m_eType;
 
-        int               bNullable;
-        int               nMaxWidth; /* for string */
+        int               m_bNullable;
+        int               m_nMaxWidth; /* for string */
 
-        OGRField          sDefault;
+        OGRField          m_sDefault;
 
-        FileGDBIndex*     poIndex;
+        FileGDBIndex*     m_poIndex;
 
     public:
 
-        explicit            FileGDBField(FileGDBTable* poParent);
+        explicit            FileGDBField(FileGDBTable* m_poParent);
         virtual            ~FileGDBField();
 
-        const std::string&  GetName() const { return osName; }
-        const std::string&  GetAlias() const { return osAlias; }
-        FileGDBFieldType    GetType() const { return eType; }
-        int                 IsNullable() const { return bNullable; }
-        int                 GetMaxWidth() const { return nMaxWidth; }
-        const OGRField     *GetDefault() const { return &sDefault; }
+        const std::string&  GetName() const { return m_osName; }
+        const std::string&  GetAlias() const { return m_osAlias; }
+        FileGDBFieldType    GetType() const { return m_eType; }
+        int                 IsNullable() const { return m_bNullable; }
+        int                 GetMaxWidth() const { return m_nMaxWidth; }
+        const OGRField     *GetDefault() const { return &m_sDefault; }
 
         int                 HasIndex();
         FileGDBIndex       *GetIndex();
@@ -126,58 +126,58 @@ class FileGDBGeomField: public FileGDBField
 {
         friend class FileGDBTable;
 
-        std::string       osWKT{};
-        int               bHasZOriginScaleTolerance = 0;
-        int               bHasMOriginScaleTolerance = 0;
-        double            dfXOrigin = 0;
-        double            dfYOrigin = 0;
-        double            dfXYScale = 0;
-        double            dfMOrigin = 0;
-        double            dfMScale = 0;
-        double            dfZOrigin = 0;
-        double            dfZScale = 0;
-        double            dfXYTolerance = 0;
-        double            dfMTolerance = 0;
-        double            dfZTolerance = 0;
-        double            dfXMin = 0;
-        double            dfYMin = 0;
-        double            dfZMin = 0;
-        double            dfMMin = 0;
-        double            dfXMax = 0;
-        double            dfYMax = 0;
-        double            dfZMax = 0;
-        double            dfMMax = 0;
+        std::string       m_osWKT{};
+        int               m_bHasZOriginScaleTolerance = 0;
+        int               m_bHasMOriginScaleTolerance = 0;
+        double            m_dfXOrigin = 0;
+        double            m_dfYOrigin = 0;
+        double            m_dfXYScale = 0;
+        double            m_dfMOrigin = 0;
+        double            m_dfMScale = 0;
+        double            m_dfZOrigin = 0;
+        double            m_dfZScale = 0;
+        double            m_dfXYTolerance = 0;
+        double            m_dfMTolerance = 0;
+        double            m_dfZTolerance = 0;
+        double            m_dfXMin = 0;
+        double            m_dfYMin = 0;
+        double            m_dfZMin = 0;
+        double            m_dfMMin = 0;
+        double            m_dfXMax = 0;
+        double            m_dfYMax = 0;
+        double            m_dfZMax = 0;
+        double            m_dfMMax = 0;
 
     public:
-        explicit          FileGDBGeomField(FileGDBTable* poParent);
+        explicit          FileGDBGeomField(FileGDBTable* m_poParent);
         virtual          ~FileGDBGeomField() {}
 
-        const std::string& GetWKT() const { return osWKT; }
+        const std::string& GetWKT() const { return m_osWKT; }
 
-        double             GetXMin() const { return dfXMin; }
-        double             GetYMin() const { return dfYMin; }
-        double             GetZMin() const { return dfZMin; } // only valid for m_bGeomTypeHasZ
-        double             GetMMin() const { return dfMMin; } // only valid for m_bGeomTypeHasM
-        double             GetXMax() const { return dfXMax; }
-        double             GetYMax() const { return dfYMax; }
-        double             GetZMax() const { return dfZMax; } // only valid for m_bGeomTypeHasZ
-        double             GetMMax() const { return dfMMax; } // only valid for m_bGeomTypeHasM
+        double             GetXMin() const { return m_dfXMin; }
+        double             GetYMin() const { return m_dfYMin; }
+        double             GetZMin() const { return m_dfZMin; } // only valid for m_bGeomTypeHasZ
+        double             GetMMin() const { return m_dfMMin; } // only valid for m_bGeomTypeHasM
+        double             GetXMax() const { return m_dfXMax; }
+        double             GetYMax() const { return m_dfYMax; }
+        double             GetZMax() const { return m_dfZMax; } // only valid for m_bGeomTypeHasZ
+        double             GetMMax() const { return m_dfMMax; } // only valid for m_bGeomTypeHasM
 
-        int                HasZOriginScaleTolerance() const { return bHasZOriginScaleTolerance; }
-        int                HasMOriginScaleTolerance() const { return bHasMOriginScaleTolerance; }
+        int                HasZOriginScaleTolerance() const { return m_bHasZOriginScaleTolerance; }
+        int                HasMOriginScaleTolerance() const { return m_bHasMOriginScaleTolerance; }
 
-        double             GetXOrigin() const { return dfXOrigin; }
-        double             GetYOrigin() const { return dfYOrigin; }
-        double             GetXYScale() const { return dfXYScale; }
-        double             GetXYTolerance() const { return dfXYTolerance; }
+        double             GetXOrigin() const { return m_dfXOrigin; }
+        double             GetYOrigin() const { return m_dfYOrigin; }
+        double             GetXYScale() const { return m_dfXYScale; }
+        double             GetXYTolerance() const { return m_dfXYTolerance; }
 
-        double             GetZOrigin() const { return dfZOrigin; }
-        double             GetZScale() const { return dfZScale; }
-        double             GetZTolerance() const { return dfZTolerance; }
+        double             GetZOrigin() const { return m_dfZOrigin; }
+        double             GetZScale() const { return m_dfZScale; }
+        double             GetZTolerance() const { return m_dfZTolerance; }
 
-        double             GetMOrigin() const { return dfMOrigin; }
-        double             GetMScale() const { return dfMScale; }
-        double             GetMTolerance() const { return dfMTolerance; }
+        double             GetMOrigin() const { return m_dfMOrigin; }
+        double             GetMScale() const { return m_dfMScale; }
+        double             GetMTolerance() const { return m_dfMTolerance; }
 };
 
 /************************************************************************/
@@ -197,16 +197,16 @@ class FileGDBRasterField: public FileGDBGeomField
     private:
         friend class FileGDBTable;
 
-        std::string       osRasterColumnName;
+        std::string       m_osRasterColumnName;
 
-        Type              m_eType = Type::EXTERNAL;
+        Type              m_eRasterType = Type::EXTERNAL;
 
     public:
         explicit          FileGDBRasterField(FileGDBTable* poParentIn) : FileGDBGeomField(poParentIn) {}
         virtual          ~FileGDBRasterField() {}
 
-        const std::string& GetRasterColumnName() const { return osRasterColumnName; }
-        Type GetType() const { return m_eType; }
+        const std::string& GetRasterColumnName() const { return m_osRasterColumnName; }
+        Type GetRasterType() const { return m_eRasterType; }
 };
 
 /************************************************************************/
@@ -216,15 +216,15 @@ class FileGDBRasterField: public FileGDBGeomField
 class FileGDBIndex
 {
         friend class FileGDBTable;
-        std::string                 osIndexName;
-        std::string                 osFieldName;
+        std::string                 m_osIndexName;
+        std::string                 m_osFieldName;
 
     public:
                             FileGDBIndex() {}
         virtual            ~FileGDBIndex() {}
 
-        const std::string&  GetIndexName() const { return osIndexName; }
-        const std::string&  GetFieldName() const { return osFieldName; }
+        const std::string&  GetIndexName() const { return m_osIndexName; }
+        const std::string&  GetFieldName() const { return m_osFieldName; }
         int                 GetMaxWidthInBytes(const FileGDBTable* poTable) const;
 };
 
@@ -234,63 +234,63 @@ class FileGDBIndex
 
 class FileGDBTable
 {
-        VSILFILE                   *fpTable = nullptr;
-        VSILFILE                   *fpTableX = nullptr;
-        vsi_l_offset                nFileSize = 0; /* only read when needed */
+        VSILFILE                   *m_fpTable = nullptr;
+        VSILFILE                   *m_fpTableX = nullptr;
+        vsi_l_offset                m_nFileSize = 0; /* only read when needed */
 
-        std::string                 osFilename{};
-        std::vector<FileGDBField*>  apoFields{};
-        std::string                 osObjectIdColName{};
+        std::string                 m_osFilename{};
+        std::vector<FileGDBField*>  m_apoFields{};
+        std::string                 m_osObjectIdColName{};
 
-        int                         bHasReadGDBIndexes = FALSE;
-        std::vector<FileGDBIndex*>  apoIndexes{};
+        int                         m_bHasReadGDBIndexes = FALSE;
+        std::vector<FileGDBIndex*>  m_apoIndexes{};
 
         int                         m_nHasSpatialIndex = -1;
 
-        GUIntBig                    nOffsetFieldDesc = 0;
-        GUInt32                     nFieldDescLength = 0;
+        GUIntBig                    m_nOffsetFieldDesc = 0;
+        GUInt32                     m_nFieldDescLength = 0;
 
-        GUInt32                     nTablxOffsetSize = 0;
-        std::vector<vsi_l_offset>   anFeatureOffsets{}; /* MSb set marks deleted feature */
+        GUInt32                     m_nTablxOffsetSize = 0;
+        std::vector<vsi_l_offset>   m_anFeatureOffsets{}; /* MSb set marks deleted feature */
 
-        GByte*                      pabyTablXBlockMap = nullptr;
-        int                         nCountBlocksBeforeIBlockIdx = 0; /* optimization */
-        int                         nCountBlocksBeforeIBlockValue = 0; /* optimization */
+        GByte*                      m_pabyTablXBlockMap = nullptr;
+        int                         m_nCountBlocksBeforeIBlockIdx = 0; /* optimization */
+        int                         m_nCountBlocksBeforeIBlockValue = 0; /* optimization */
 
-        char                        achGUIDBuffer[32 + 6 + 1]{0};
-        int                         nChSaved = -1;
+        char                        m_achGUIDBuffer[32 + 6 + 1]{0};
+        int                         m_nChSaved = -1;
 
-        int                         bError = FALSE;
-        int                         nCurRow = -1;
-        int                         bHasDeletedFeaturesListed = FALSE;
-        int                         bIsDeleted = FALSE;
-        int                         nLastCol = -1;
-        GByte*                      pabyIterVals = nullptr;
-        int                         iAccNullable = 0;
-        GUInt32                     nRowBlobLength = 0;
-        OGRField                    sCurField;
+        int                         m_bError = FALSE;
+        int                         m_nCurRow = -1;
+        int                         m_bHasDeletedFeaturesListed = FALSE;
+        int                         m_bIsDeleted = FALSE;
+        int                         m_nLastCol = -1;
+        GByte*                      m_pabyIterVals = nullptr;
+        int                         m_iAccNullable = 0;
+        GUInt32                     m_nRowBlobLength = 0;
+        OGRField                    m_sCurField;
 
-        FileGDBTableGeometryType    eTableGeomType = FGTGT_NONE;
+        FileGDBTableGeometryType    m_eTableGeomType = FGTGT_NONE;
         bool                        m_bGeomTypeHasZ = false;
         bool                        m_bGeomTypeHasM = false;
         bool                        m_bStringsAreUTF8 = true; // if false, UTF16
         std::string                 m_osTempString{}; // used as a temporary to store strings recoded from UTF16 to UTF8
-        int                         nValidRecordCount = 0;
-        int                         nTotalRecordCount = 0;
-        int                         iGeomField = -1;
-        int                         nCountNullableFields = 0;
-        int                         nNullableFieldsSizeInBytes = 0;
+        int                         m_nValidRecordCount = 0;
+        int                         m_nTotalRecordCount = 0;
+        int                         m_iGeomField = -1;
+        int                         m_nCountNullableFields = 0;
+        int                         m_nNullableFieldsSizeInBytes = 0;
 
         std::vector<double>         m_adfSpatialIndexGridResolution{};
 
-        GUInt32                     nBufferMaxSize = 0;
-        GByte*                      pabyBuffer = nullptr;
+        GUInt32                     m_nBufferMaxSize = 0;
+        GByte*                      m_pabyBuffer = nullptr;
 
         std::string                 m_osCacheRasterFieldPath{};
 
-        GUIntBig                    nFilterXMin = 0, nFilterXMax = 0, nFilterYMin = 0, nFilterYMax = 0;
+        GUIntBig                    m_nFilterXMin = 0, m_nFilterXMax = 0, m_nFilterYMin = 0, m_nFilterYMax = 0;
 
-        GUIntBig                    nOffsetHeaderEnd = 0;
+        GUIntBig                    m_nOffsetHeaderEnd = 0;
 
         int                         ReadTableXHeader();
         int                         IsLikelyFeatureAtOffset(
@@ -309,36 +309,36 @@ class FileGDBTable
        //! Object should no longer be used after Close()
        void                     Close();
 
-       const std::string&       GetFilename() const { return osFilename; }
-       FileGDBTableGeometryType GetGeometryType() const { return eTableGeomType; }
+       const std::string&       GetFilename() const { return m_osFilename; }
+       FileGDBTableGeometryType GetGeometryType() const { return m_eTableGeomType; }
        bool                     GetGeomTypeHasZ() const { return m_bGeomTypeHasZ; }
        bool                     GetGeomTypeHasM() const { return m_bGeomTypeHasM; }
-       int                      GetValidRecordCount() const { return nValidRecordCount; }
-       int                      GetTotalRecordCount() const { return nTotalRecordCount; }
-       int                      GetFieldCount() const { return (int)apoFields.size(); }
-       FileGDBField*            GetField(int i) const { return apoFields[i]; }
-       int                      GetGeomFieldIdx() const { return iGeomField; }
+       int                      GetValidRecordCount() const { return m_nValidRecordCount; }
+       int                      GetTotalRecordCount() const { return m_nTotalRecordCount; }
+       int                      GetFieldCount() const { return (int)m_apoFields.size(); }
+       FileGDBField*            GetField(int i) const { return m_apoFields[i]; }
+       int                      GetGeomFieldIdx() const { return m_iGeomField; }
        const FileGDBGeomField*  GetGeomField() const {
-           return (iGeomField >= 0) ?
-               reinterpret_cast<FileGDBGeomField*>(apoFields[iGeomField]) : nullptr; }
-       const std::string&       GetObjectIdColName() const { return osObjectIdColName; }
+           return (m_iGeomField >= 0) ?
+               reinterpret_cast<FileGDBGeomField*>(m_apoFields[m_iGeomField]) : nullptr; }
+       const std::string&       GetObjectIdColName() const { return m_osObjectIdColName; }
 
        int                      GetFieldIdx(const std::string& osName) const;
 
        int                      GetIndexCount();
-       const FileGDBIndex*      GetIndex(int i) const { return apoIndexes[i]; }
+       const FileGDBIndex*      GetIndex(int i) const { return m_apoIndexes[i]; }
        bool                     HasSpatialIndex();
 
        vsi_l_offset             GetOffsetInTableForRow(int iRow);
 
-       int                      HasDeletedFeaturesListed() const { return bHasDeletedFeaturesListed; }
+       int                      HasDeletedFeaturesListed() const { return m_bHasDeletedFeaturesListed; }
 
        /* Next call to SelectRow() or GetFieldValue() invalidates previously returned values */
        int                      SelectRow(int iRow);
        int                      GetAndSelectNextNonEmptyRow(int iRow);
-       int                      HasGotError() const { return bError; }
-       int                      GetCurRow() const { return nCurRow; }
-       int                      IsCurRowDeleted() const { return bIsDeleted; }
+       int                      HasGotError() const { return m_bError; }
+       int                      GetCurRow() const { return m_nCurRow; }
+       int                      IsCurRowDeleted() const { return m_bIsDeleted; }
        OGRField*                GetFieldValue(int iCol);
 
        int                      GetFeatureExtent(const OGRField* psGeomField,
