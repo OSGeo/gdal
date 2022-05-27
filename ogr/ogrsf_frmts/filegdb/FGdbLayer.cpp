@@ -1644,33 +1644,35 @@ char* FGdbLayer::CreateFieldDefn(OGRFieldDefn& oField,
     else
     {
         /* Clean field names */
-        fieldname_clean = FGDBLaunderName(fieldname);
+        std::wstring wfieldname_clean = FGDBLaunderName(StringToWString(fieldname));
 
         if (m_bLaunderReservedKeywords)
-            fieldname_clean = FGDBEscapeReservedKeywords(fieldname_clean);
+            wfieldname_clean = FGDBEscapeReservedKeywords(wfieldname_clean);
 
         /* Truncate to 64 characters */
-        if (fieldname_clean.size() > 64)
-            fieldname_clean.resize(64);
-
-        std::string temp_fieldname = fieldname_clean;
+        constexpr size_t FIELD_NAME_MAX_SIZE = 64;
+        if (wfieldname_clean.size() > FIELD_NAME_MAX_SIZE)
+            wfieldname_clean.resize(FIELD_NAME_MAX_SIZE);
 
         /* Ensures uniqueness of field name */
         int numRenames = 1;
-        while ((m_pFeatureDefn->GetFieldIndex(temp_fieldname.c_str()) >= 0) && (numRenames < 10))
+        while ((m_pFeatureDefn->GetFieldIndex(WStringToString(wfieldname_clean).c_str()) >= 0) && (numRenames < 10))
         {
-            temp_fieldname = CPLSPrintf("%s_%d", fieldname_clean.substr(0, 62).c_str(), numRenames);
+            wfieldname_clean = StringToWString(
+                CPLSPrintf("%s_%d", WStringToString(wfieldname_clean.substr(0, FIELD_NAME_MAX_SIZE-2)).c_str(), numRenames));
             numRenames ++;
         }
-        while ((m_pFeatureDefn->GetFieldIndex(temp_fieldname.c_str()) >= 0) && (numRenames < 100))
+        while ((m_pFeatureDefn->GetFieldIndex(WStringToString(wfieldname_clean).c_str()) >= 0) && (numRenames < 100))
         {
-            temp_fieldname = CPLSPrintf("%s_%d", fieldname_clean.substr(0, 61).c_str(), numRenames);
+            wfieldname_clean = StringToWString(
+                CPLSPrintf("%s_%d", WStringToString(wfieldname_clean.substr(0, FIELD_NAME_MAX_SIZE-3)).c_str(), numRenames));
             numRenames ++;
         }
 
-        if (temp_fieldname != fieldname)
+        fieldname_clean = WStringToString(wfieldname_clean);
+        if (fieldname_clean != fieldname)
         {
-            if( !bApproxOK || (m_pFeatureDefn->GetFieldIndex(temp_fieldname.c_str()) >= 0) )
+            if( !bApproxOK || (m_pFeatureDefn->GetFieldIndex(fieldname_clean.c_str()) >= 0) )
             {
                 CPLError( CE_Failure, CPLE_NotSupported,
                     "Failed to add field named '%s'",
@@ -1679,9 +1681,8 @@ char* FGdbLayer::CreateFieldDefn(OGRFieldDefn& oField,
             }
             CPLError(CE_Warning, CPLE_NotSupported,
                 "Normalized/laundered field name: '%s' to '%s'",
-                fieldname.c_str(), temp_fieldname.c_str());
+                fieldname.c_str(), fieldname_clean.c_str());
 
-            fieldname_clean = temp_fieldname;
             oField.SetName(fieldname_clean.c_str());
         }
     }
@@ -2302,28 +2303,35 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
 #endif
 
     /* Launder the Layer name */
-    std::string layerName;
+    std::wstring wlayerName;
 
-    layerName = FGDBLaunderName(pszLayerNameIn);
-    layerName = FGDBEscapeReservedKeywords(layerName);
-    layerName = FGDBEscapeUnsupportedPrefixes(layerName);
+    wlayerName = FGDBLaunderName(StringToWString(pszLayerNameIn));
+    wlayerName = FGDBEscapeReservedKeywords(wlayerName);
+    wlayerName = FGDBEscapeUnsupportedPrefixes(wlayerName);
 
-    if (layerName.size() > 160)
-        layerName.resize(160);
+    // https://desktop.arcgis.com/en/arcmap/latest/manage-data/administer-file-gdbs/file-geodatabase-size-and-name-limits.htm document 160 character limit
+    // but https://desktop.arcgis.com/en/arcmap/latest/manage-data/tables/fundamentals-of-adding-and-deleting-fields.htm#GUID-8E190093-8F8F-4132-AF4F-B0C9220F76B3 mentions 64.
+    // let be optimistic and aim for 160
+    constexpr size_t TABLE_NAME_MAX_SIZE = 160;
+    if (wlayerName.size() > TABLE_NAME_MAX_SIZE)
+        wlayerName.resize(TABLE_NAME_MAX_SIZE);
 
     /* Ensures uniqueness of layer name */
     int numRenames = 1;
-    while ((pParentDataSource->GetLayerByName(layerName.c_str()) != nullptr) && (numRenames < 10))
+    while ((pParentDataSource->GetLayerByName(WStringToString(wlayerName).c_str()) != nullptr) && (numRenames < 10))
     {
-        layerName = CPLSPrintf("%s_%d", layerName.substr(0, 158).c_str(), numRenames);
+        wlayerName = StringToWString(
+            CPLSPrintf("%s_%d", WStringToString(wlayerName.substr(0, TABLE_NAME_MAX_SIZE-2)).c_str(), numRenames));
         numRenames ++;
     }
-    while ((pParentDataSource->GetLayerByName(layerName.c_str()) != nullptr) && (numRenames < 100))
+    while ((pParentDataSource->GetLayerByName(WStringToString(wlayerName).c_str()) != nullptr) && (numRenames < 100))
     {
-        layerName = CPLSPrintf("%s_%d", layerName.substr(0, 157).c_str(), numRenames);
+        wlayerName = StringToWString(
+            CPLSPrintf("%s_%d", WStringToString(wlayerName.substr(0, TABLE_NAME_MAX_SIZE-3)).c_str(), numRenames));
         numRenames ++;
     }
 
+    const std::string layerName = WStringToString(wlayerName);
     if (layerName != pszLayerNameIn)
     {
         CPLError(CE_Warning, CPLE_NotSupported,
