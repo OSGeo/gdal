@@ -105,7 +105,7 @@ void FileGDBTablePrintError(const char* pszFile, int nLineNumber)
 
 FileGDBTable::FileGDBTable()
 {
-    Init();
+    memset(&sCurField, 0, sizeof(sCurField));
 }
 
 /************************************************************************/
@@ -115,52 +115,6 @@ FileGDBTable::FileGDBTable()
 FileGDBTable::~FileGDBTable()
 {
     Close();
-}
-
-/************************************************************************/
-/*                                Init()                                */
-/************************************************************************/
-
-void FileGDBTable::Init()
-{
-    osFilename = "";
-    fpTable = nullptr;
-    fpTableX = nullptr;
-    nFileSize = 0;
-    memset(&sCurField, 0, sizeof(sCurField));
-    bError = FALSE;
-    nCurRow = -1;
-    nLastCol = -1;
-    pabyIterVals = nullptr;
-    iAccNullable = 0;
-    nRowBlobLength = 0;
-    /* eCurFieldType = OFTInteger; */
-    eTableGeomType = FGTGT_NONE;
-    nValidRecordCount = 0;
-    nTotalRecordCount = 0;
-    iGeomField = -1;
-    nCountNullableFields = 0;
-    nNullableFieldsSizeInBytes = 0;
-    nBufferMaxSize = 0;
-    pabyBuffer = nullptr;
-    nFilterXMin = 0;
-    nFilterXMax = 0;
-    nFilterYMin = 0;
-    nFilterYMax = 0;
-    osObjectIdColName = "";
-    achGUIDBuffer[0] = 0;
-    nChSaved = -1;
-    pabyTablXBlockMap = nullptr;
-    nCountBlocksBeforeIBlockIdx = 0;
-    nCountBlocksBeforeIBlockValue = 0;
-    bHasReadGDBIndexes = FALSE;
-    nOffsetFieldDesc = 0;
-    nFieldDescLength = 0;
-    nTablxOffsetSize = 0;
-    anFeatureOffsets.resize(0);
-    nOffsetHeaderEnd = 0;
-    bHasDeletedFeaturesListed = FALSE;
-    bIsDeleted = FALSE;
 }
 
 /************************************************************************/
@@ -190,8 +144,6 @@ void FileGDBTable::Close()
     for(size_t i=0;i<apoIndexes.size();i++)
         delete apoIndexes[i];
     apoIndexes.resize(0);
-
-    Init();
 }
 
 /************************************************************************/

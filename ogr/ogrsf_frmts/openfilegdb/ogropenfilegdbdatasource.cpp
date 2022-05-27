@@ -634,20 +634,20 @@ int OGROpenFileGDBDataSource::OpenFileGDBv9(int iGDBFeatureClasses,
                                             int iGDBObjectClasses,
                                             int nInterestTable)
 {
-    FileGDBTable oTable;
+    auto poTable = cpl::make_unique<FileGDBTable>();
 
     CPLDebug("OpenFileGDB", "FileGDB v9");
 
     /* Fetch names of layers */
     CPLString osFilename(CPLFormFilename(m_osDirName,
             CPLSPrintf("a%08x", iGDBObjectClasses + 1), "gdbtable"));
-    if( !oTable.Open(osFilename) )
+    if( !poTable->Open(osFilename) )
         return FALSE;
 
-    int iName = oTable.GetFieldIdx("Name");
-    int iCLSID = oTable.GetFieldIdx("CLSID");
-    if( iName < 0 || oTable.GetField(iName)->GetType() != FGFT_STRING ||
-        iCLSID < 0 || oTable.GetField(iCLSID)->GetType() != FGFT_STRING )
+    int iName = poTable->GetFieldIdx("Name");
+    int iCLSID = poTable->GetFieldIdx("CLSID");
+    if( iName < 0 || poTable->GetField(iName)->GetType() != FGFT_STRING ||
+        iCLSID < 0 || poTable->GetField(iCLSID)->GetType() != FGFT_STRING )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                     "Wrong structure for GDB_ObjectClasses table");
@@ -656,21 +656,21 @@ int OGROpenFileGDBDataSource::OpenFileGDBv9(int iGDBFeatureClasses,
 
     std::vector< std::string > aosName;
     int nCandidateLayers = 0, nLayersSDCOrCDF = 0;
-    for( int i = 0; i < oTable.GetTotalRecordCount(); i++ )
+    for( int i = 0; i < poTable->GetTotalRecordCount(); i++ )
     {
-        if( !oTable.SelectRow(i) )
+        if( !poTable->SelectRow(i) )
         {
-            if( oTable.HasGotError() )
+            if( poTable->HasGotError() )
                 break;
             aosName.push_back( "" );
             continue;
         }
 
-        const OGRField* psField = oTable.GetFieldValue(iName);
+        const OGRField* psField = poTable->GetFieldValue(iName);
         if( psField != nullptr )
         {
             std::string osName(psField->String);
-            psField = oTable.GetFieldValue(iCLSID);
+            psField = poTable->GetFieldValue(iCLSID);
             if( psField != nullptr )
             {
                 /* Is it a non-spatial table ? */
@@ -688,37 +688,39 @@ int OGROpenFileGDBDataSource::OpenFileGDBv9(int iGDBFeatureClasses,
             }
         }
     }
-    oTable.Close();
+    poTable->Close();
+
+    poTable = cpl::make_unique<FileGDBTable>();
 
     /* Find tables that are spatial layers */
     osFilename = CPLFormFilename(m_osDirName,
             CPLSPrintf("a%08x", iGDBFeatureClasses + 1), "gdbtable");
-    if( !oTable.Open(osFilename) )
+    if( !poTable->Open(osFilename) )
         return FALSE;
 
-    int iObjectClassID = oTable.GetFieldIdx("ObjectClassID");
-    int iGeometryType = oTable.GetFieldIdx("GeometryType");
-    int iShapeField = oTable.GetFieldIdx("ShapeField");
+    int iObjectClassID = poTable->GetFieldIdx("ObjectClassID");
+    int iGeometryType = poTable->GetFieldIdx("GeometryType");
+    int iShapeField = poTable->GetFieldIdx("ShapeField");
     if( iObjectClassID < 0 || iGeometryType < 0 || iShapeField < 0 ||
-        oTable.GetField(iObjectClassID)->GetType() != FGFT_INT32 ||
-        oTable.GetField(iGeometryType)->GetType() != FGFT_INT32 ||
-        oTable.GetField(iShapeField)->GetType() != FGFT_STRING )
+        poTable->GetField(iObjectClassID)->GetType() != FGFT_INT32 ||
+        poTable->GetField(iGeometryType)->GetType() != FGFT_INT32 ||
+        poTable->GetField(iShapeField)->GetType() != FGFT_STRING )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                     "Wrong structure for GDB_FeatureClasses table");
         return FALSE;
     }
 
-    for( int i = 0; i < oTable.GetTotalRecordCount(); i++ )
+    for( int i = 0; i < poTable->GetTotalRecordCount(); i++ )
     {
-        if( !oTable.SelectRow(i) )
+        if( !poTable->SelectRow(i) )
         {
-            if( oTable.HasGotError() )
+            if( poTable->HasGotError() )
                 break;
             continue;
         }
 
-        const OGRField* psField = oTable.GetFieldValue(iGeometryType);
+        const OGRField* psField = poTable->GetFieldValue(iGeometryType);
         if( psField == nullptr )
             continue;
         const int nGeomType = psField->Integer;
@@ -733,12 +735,12 @@ int OGROpenFileGDBDataSource::OpenFileGDBv9(int iGDBFeatureClasses,
             case FGTGT_MULTIPATCH: eGeomType = wkbUnknown; break;
         }
 
-        psField = oTable.GetFieldValue(iShapeField);
+        psField = poTable->GetFieldValue(iShapeField);
         if( psField == nullptr )
             continue;
         CPLString osGeomFieldName(psField->String);
 
-        psField = oTable.GetFieldValue(iObjectClassID);
+        psField = poTable->GetFieldValue(iObjectClassID);
         if( psField == nullptr )
             continue;
 
