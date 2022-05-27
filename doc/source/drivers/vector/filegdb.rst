@@ -12,9 +12,8 @@ File Geodatabases (.gdb directories) created by ArcGIS 10 and above. The
 dataset name must be the directory/folder name, and it must end with the
 .gdb extension.
 
-Note : the :ref:`OpenFileGDB
-driver <vector.openfilegdb>` driver exists as an alternative
-built-in i.e. not depending on a third-party library) read-only driver.
+Note : the :ref:`OpenFileGDB driver <vector.openfilegdb>` driver exists as an
+alternative built-in (i.e. not depending on a third-party library) driver.
 
 Driver capabilities
 -------------------
