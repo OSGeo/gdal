@@ -2,7 +2,11 @@
 
 include ../../../GDALmake.opt
 
-OBJ	=	ogropenfilegdbdriver.o ogropenfilegdbdatasource.o ogropenfilegdblayer.o filegdbtable.o filegdbindex.o
+OBJ	=	ogropenfilegdbdriver.o \
+		ogropenfilegdbdatasource.o ogropenfilegdbdatasource_write.o \
+		ogropenfilegdblayer.o ogropenfilegdblayer_write.o \
+		filegdbtable.o filegdbtable_write.o filegdbindex.o filegdbindex_write.o \
+		filegdbtable_write_fields.o filegdbtable_freelist.o
 
 CPPFLAGS	:=	-iquote .. -iquote ../.. -iquote ../mem  $(CPPFLAGS)
 

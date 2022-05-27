@@ -121,6 +121,19 @@ MAIN_START(nArgc, papszArgv)
     int bRet = TRUE;
     int nThreads = 1;
 
+    if( EQUAL(CPLGetConfigOption("DRIVER_WISHED", ""), "FileGDB") )
+    {
+        auto poFileGDB = GetGDALDriverManager()->GetDriverByName("FileGDB");
+        auto poOpenFileGDB = GetGDALDriverManager()->GetDriverByName("OpenFileGDB");
+        if( poFileGDB && poOpenFileGDB )
+        {
+            GetGDALDriverManager()->DeregisterDriver(poFileGDB);
+            GetGDALDriverManager()->DeregisterDriver(poOpenFileGDB);
+            GetGDALDriverManager()->RegisterDriver(poFileGDB);
+            GetGDALDriverManager()->RegisterDriver(poOpenFileGDB);
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Processing command line arguments.                              */
 /* -------------------------------------------------------------------- */
@@ -641,14 +654,14 @@ static int TestCreateLayer( GDALDriver* poDriver, OGRwkbGeometryType eGeomType )
             bRet = FALSE;
         }
 
-        OGRFieldDefn oFieldDate("date", OFTDate);
+        OGRFieldDefn oFieldDate("mydate", OFTDate);
         CPLPushErrorHandler(CPLQuietErrorHandler);
         const bool bDateFieldOK =
             LOG_ACTION(poLayer->CreateField(&oFieldDate)) == OGRERR_NONE;
         CPLPopErrorHandler();
-        if( bDateFieldOK && (iFieldDate = poLayer->GetLayerDefn()->GetFieldIndex("date")) < 0 )
+        if( bDateFieldOK && (iFieldDate = poLayer->GetLayerDefn()->GetFieldIndex("mydate")) < 0 )
         {
-            printf("ERROR: %s: CreateField(date) returned OK but field was not created.\n",
+            printf("ERROR: %s: CreateField(mydate) returned OK but field was not created.\n",
                    poDriver->GetDescription());
             bRet = FALSE;
         }
@@ -914,7 +927,8 @@ static int TestCreateLayer( GDALDriver* poDriver, OGRwkbGeometryType eGeomType )
             poLayer = LOG_ACTION(poDS->GetLayerByName(osLayerNameToTest));
             if( poLayer != nullptr )
             {
-                if( poLayer->GetGeomType() != eExpectedGeomType )
+                if( poLayer->GetGeomType() != eExpectedGeomType &&
+                    !(eGeomType == wkbGeometryCollection25D && EQUAL(poDriver->GetDescription(), "OpenFileGDB")) )
                 {
                     printf("ERROR: %s: GetGeomType() returns %d but %d "
                            "was expected (and %d originally set).\n",
