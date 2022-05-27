@@ -193,14 +193,30 @@ static void Concat( CPLString& osRet, bool bStdoutOutput,
 
 static
 json_object *gdal_json_object_new_double_or_str_for_non_finite(
-                                        double dfVal, int nCoordPrecision)
+                                        double dfVal, int nPrecision)
 {
     if( std::isinf(dfVal) )
         return json_object_new_string(dfVal < 0 ? "-Infinity" : "Infinity");
     else if( std::isnan(dfVal) )
         return json_object_new_string("NaN");
     else
-        return json_object_new_double_with_precision(dfVal, nCoordPrecision);
+        return json_object_new_double_with_precision(dfVal, nPrecision);
+}
+
+/************************************************************************/
+/*           gdal_json_object_new_double_significant_digits()           */
+/************************************************************************/
+
+static
+json_object *gdal_json_object_new_double_significant_digits(
+                                        double dfVal, int nSignificantDigits)
+{
+    if( std::isinf(dfVal) )
+        return json_object_new_string(dfVal < 0 ? "-Infinity" : "Infinity");
+    else if( std::isnan(dfVal) )
+        return json_object_new_string("NaN");
+    else
+        return json_object_new_double_with_significant_figures(dfVal, nSignificantDigits);
 }
 
 /************************************************************************/
@@ -749,6 +765,7 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
         }
 
         GDALRasterBandH const hBand = GDALGetRasterBand( hDataset, iBand+1 );
+        const auto eDT = GDALGetRasterDataType(hBand);
 
         if( psOptions->bSample )
         {
@@ -770,7 +787,7 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
             json_object *poBlock = json_object_new_array();
             json_object *poType =
                 json_object_new_string(
-                    GDALGetDataTypeName(GDALGetRasterDataType(hBand)));
+                    GDALGetDataTypeName(eDT));
             json_object *poColorInterp =
                 json_object_new_string(
                     GDALGetColorInterpretationName(
@@ -791,7 +808,7 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
                     iBand + 1,
                     nBlockXSize, nBlockYSize,
                     GDALGetDataTypeName(
-                        GDALGetRasterDataType(hBand)),
+                        eDT),
                     GDALGetColorInterpretationName(
                         GDALGetRasterColorInterpretation(hBand)) );
         }
@@ -1003,7 +1020,7 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
         }
 
         int bGotNodata = FALSE;
-        if( GDALGetRasterDataType(hBand) == GDT_Int64 )
+        if( eDT == GDT_Int64 )
         {
             const auto nNoData = GDALGetRasterNoDataValueAsInt64( hBand, &bGotNodata );
             if( bGotNodata )
@@ -1022,7 +1039,7 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
                 }
             }
         }
-        else if( GDALGetRasterDataType(hBand) == GDT_UInt64 )
+        else if( eDT == GDT_UInt64 )
         {
             const auto nNoData = GDALGetRasterNoDataValueAsUInt64( hBand, &bGotNodata );
             if( bGotNodata )
@@ -1059,9 +1076,38 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
             const double dfNoData = GDALGetRasterNoDataValue( hBand, &bGotNodata );
             if( bGotNodata )
             {
+                const bool bIsNoDataFloat =
+                    eDT == GDT_Float32 && static_cast<float>(dfNoData) == dfNoData;
+                // Find the most compact decimal representation of the nodata value
+                // that can be used to exactly represent the binary value
+                int nSignificantDigits =
+                    bIsNoDataFloat ? 8 : 18;
+                char szNoData[64] = { 0 };
+                while( nSignificantDigits > 0 )
+                {
+                    char szCandidateNoData[64];
+                    char szFormat[16];
+                    snprintf(szFormat, sizeof(szFormat), "%%.%dg", nSignificantDigits);
+                    CPLsnprintf(szCandidateNoData, sizeof(szCandidateNoData), szFormat, dfNoData);
+                    if( szNoData[0] == '\0' ||
+                        (bIsNoDataFloat &&
+                         static_cast<float>(CPLAtof(szCandidateNoData)) == static_cast<float>(dfNoData)) ||
+                        (!bIsNoDataFloat && CPLAtof(szCandidateNoData) == dfNoData) )
+                    {
+                        strcpy(szNoData, szCandidateNoData );
+                        nSignificantDigits --;
+                    }
+                    else
+                    {
+                        nSignificantDigits ++;
+                        break;
+                    }
+                }
+
                 if( bJson )
                 {
-                    json_object *poNoDataValue = gdal_json_object_new_double_or_str_for_non_finite(dfNoData, 18);
+                    json_object *poNoDataValue = gdal_json_object_new_double_significant_digits(
+                        dfNoData, nSignificantDigits);
                     json_object_object_add(poBand, "noDataValue",
                                             poNoDataValue);
                 }
@@ -1073,7 +1119,7 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
                 else
                 {
                     Concat(osStr, psOptions->bStdoutOutput,
-                            "  NoData Value=%.18g\n", dfNoData );
+                            "  NoData Value=%s\n", szNoData );
                 }
             }
         }
