@@ -31,6 +31,7 @@
 #include "ogr_swq.h"
 
 #include "../arrow_common/ograrrowdataset.hpp"
+#include "../arrow_common/ograrrowlayer.hpp"
 
 /************************************************************************/
 /*                         OGRParquetDataset()                          */
