@@ -1052,19 +1052,22 @@ void RMFDataset::FlushCache(bool bAtClosing)
         poCompressData->oThreadPool.WaitCompletion();
     }
 
-    if( !bHeaderDirty )
-        return;
-
-    if( eRMFType == RMFT_MTW )
+    if( bAtClosing && eRMFType == RMFT_MTW )
     {
         GDALRasterBand *poBand = GetRasterBand(1);
 
         if( poBand )
         {
+            // ComputeRasterMinMax can setup error in case of dataset full
+            // from NoData values, but it  makes no sense here.
+            CPLErrorStateBackuper oErrorStateBackuper;
+            CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
             poBand->ComputeRasterMinMax( FALSE, sHeader.adfElevMinMax );
             bHeaderDirty = true;
         }
     }
+    if( !bHeaderDirty )
+        return;
     WriteHeader();
 }
 
