@@ -29,10 +29,10 @@ tar xzf freexl-2.0.0-RC0.tar.gz
 (cd freexl-2.0.0-RC0 && CC='ccache gcc' CXX='ccache g++' ./configure  --disable-static --prefix=/usr && make -j3 && sudo make -j3 install)
 
 # Build libspatialite
-fossil clone https://www.gaia-gis.it/fossil/libspatialite libspatialite.fossil && mkdir sl && (cd sl && fossil open ../libspatialite.fossil && fossil checkout 08517f176a && CC='ccache gcc' CXX='ccache g++' ./configure  --disable-static --prefix=/usr --disable-geos370 --disable-rttopo --disable-geos3100 && make -j3 && sudo make -j3 install)
+fossil clone https://www.gaia-gis.it/fossil/libspatialite libspatialite.fossil && mkdir sl && (cd sl && fossil open ../libspatialite.fossil && CC='ccache gcc' CXX='ccache g++' ./configure  --disable-static --prefix=/usr --disable-geos370 --disable-rttopo --disable-geos3100 && make -j3 && sudo make -j3 install)
 
 # Build librasterlite2
-fossil clone https://www.gaia-gis.it/fossil/librasterlite2 librasterlite2.fossil && mkdir rl2 && (cd rl2 && fossil open ../librasterlite2.fossil && CC='ccache gcc' CXX='ccache g++' ./configure --disable-static --prefix=/usr --disable-lz4 --disable-zstd && make -j3 && sudo make -j3 install)
+fossil clone https://www.gaia-gis.it/fossil/librasterlite2 librasterlite2.fossil && mkdir rl2 && (cd rl2 && fossil open ../librasterlite2.fossil && fossil checkout 9dd8217cb9 && CC='ccache gcc' CXX='ccache g++' ./configure --disable-static --prefix=/usr --disable-lz4 --disable-zstd && make -j3 && sudo make -j3 install)
 
 # Build proj
 (cd proj && ./autogen.sh && CC='ccache gcc' CXX='ccache g++' CFLAGS='-DPROJ_RENAME_SYMBOLS' CXXFLAGS='-DPROJ_RENAME_SYMBOLS' ./configure  --disable-static --prefix=/usr/local || cat config.log && make -j3)
