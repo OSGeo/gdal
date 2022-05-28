@@ -781,6 +781,40 @@ def test_rmf_33c():
 
 
 ###############################################################################
+# Flush NoData blocks in MTW 
 
 
+def test_rmf_34():
+    numpy = pytest.importorskip('numpy')
 
+    drv = gdal.GetDriverByName('RMF')
+    tst_name = 'tmp/rmf_34.mtw'
+    tst_ds = drv.Create(tst_name, 32, 32, 1, gdal.GDT_Int32, 
+                        options=['MTW=YES', 'BLOCKXSIZE=16', 'BLOCKYSIZE=16'] )
+    assert tst_ds is not None, ('Can\'t create ' + tst_name)
+    nodata = 0
+    tst_ds.GetRasterBand(1).SetNoDataValue(nodata)
+    # Write NoData block
+    buff = numpy.full((16, 16), nodata, dtype = numpy.int32)
+    assert gdal.CE_None == tst_ds.GetRasterBand(1).WriteArray(buff, 0, 0)
+    gdal.ErrorReset()
+    tst_ds.FlushCache()
+    assert gdal.GetLastErrorType() == gdal.CE_None, 'Flush cache failed: ' + gdal.GetLastErrorMsg()
+    # Write valid block
+    min_valid_data, max_valid_data = 1, 2
+    buff = numpy.full((16, 16), min_valid_data, dtype = numpy.int32)
+    assert gdal.CE_None == tst_ds.GetRasterBand(1).WriteArray(buff, 16, 0)
+    buff = numpy.full((16, 16), max_valid_data, dtype = numpy.int32)
+    assert gdal.CE_None == tst_ds.GetRasterBand(1).WriteArray(buff, 16, 16)
+    tst_ds.FlushCache()
+    assert gdal.GetLastErrorType() == gdal.CE_None, 'Flush cache failed: ' + gdal.GetLastErrorMsg()
+    tst_ds = None
+
+    tst_ds = gdal.Open(tst_name)
+    assert tst_ds is not None, ('Can\'t open ' + tst_name)
+    assert min_valid_data == int(tst_ds.GetMetadataItem('ELEVATION_MINIMUM'))
+    assert max_valid_data == int(tst_ds.GetMetadataItem('ELEVATION_MAXIMUM'))
+    tst_ds = None
+    os.remove(tst_name)
+
+###############################################################################
