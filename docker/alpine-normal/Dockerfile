@@ -5,7 +5,7 @@
 # Public domain
 # or licensed under MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
-ARG ALPINE_VERSION=3.15
+ARG ALPINE_VERSION=3.16
 FROM alpine:${ALPINE_VERSION} as builder
 
 # Derived from osgeo/proj by Howard Butler <howard@hobu.co>
@@ -32,38 +32,10 @@ RUN apk add --no-cache \
     ${POPPLER_DEV} postgresql-dev \
     openexr-dev libheif-dev xerces-c-dev geos-dev cfitsio-dev \
     netcdf-dev hdf5-dev freexl-dev \
-    lz4-dev \
+    lz4-dev blosc-dev libdeflate-dev \
     # For spatialite (and GDAL)
     libxml2-dev \
     && mkdir -p /build_thirdparty/usr/lib
-
-# Build blosc
-ARG BLOSC_VERSION=1.21.0
-RUN if test "${BLOSC_VERSION}" != ""; then ( \
-    apk add --no-cache cmake \
-    && wget -q https://github.com/Blosc/c-blosc/archive/refs/tags/v${BLOSC_VERSION}.tar.gz \
-    && tar xzf v${BLOSC_VERSION}.tar.gz \
-    && rm -f v${BLOSC_VERSION}.tar.gz \
-    && cd c-blosc-${BLOSC_VERSION} \
-    && cmake . \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_INSTALL_PREFIX=/usr \
-        -DBUILD_SHARED=ON \
-        -DBUILD_STATIC=OFF \
-        -DBUILD_BENCHMARKS=OFF \
-        -DBUILD_FUZZERS=OFF \
-        -DBUILD_TESTS=OFF \
-        -DPREFER_EXTERNAL_LZ4=ON \
-        -DPREFER_EXTERNAL_ZLIB=ON \
-        -DPREFER_EXTERNAL_ZSTD=ON \
-        -DDEACTIVATE_SNAPPY=OFF \
-    && make -j$(nproc) \
-    && make install \
-    && cp -P /usr/lib/libblosc*.so* /build_thirdparty/usr/lib \
-    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && cd .. \
-    && rm -rf c-blosc-${BLOSC_VERSION} \
-    ); fi
 
 # Build szip
 ARG SZIP_VERSION=2.1.1
@@ -102,7 +74,7 @@ RUN if test "${HDF4_VERSION}" != "" -a "$(uname -m)" = "x86_64"; then ( \
     ); fi
 
 # Build likbkea
-ARG KEA_VERSION=1.4.13
+ARG KEA_VERSION=1.4.14
 RUN if test "${KEA_VERSION}" != ""; then ( \
     apk add --no-cache cmake \
     && wget -q https://github.com/ubarsc/kealib/archive/kealib-${KEA_VERSION}.zip \
@@ -141,18 +113,31 @@ RUN if test "${OPENJPEG_VERSION}" != ""; then ( \
     && apk del cmake \
     ); fi
 
-# Build libdeflate
-ARG LIBDEFLATE_VERSION=1.7
-RUN if test "${LIBDEFLATE_VERSION}" != ""; then ( \
-    mkdir libdeflate \
-    && wget -q https://github.com/ebiggers/libdeflate/archive/v${LIBDEFLATE_VERSION}.tar.gz -O - \
-        | tar xz -C libdeflate --strip-components=1 \
-    && cd libdeflate \
-    && make -j$(nproc) PREFIX=/usr install \
-    && cp -P /usr/lib/libdeflate.so* /build_thirdparty/usr/lib \
+# Build Arrow Apache
+ARG ARROW_VERSION=8.0.0
+RUN if test "${ARROW_VERSION}" != ""; then ( \
+    apk add --no-cache cmake snappy-dev \
+    && wget -q https://dlcdn.apache.org/arrow/arrow-${ARROW_VERSION}/apache-arrow-${ARROW_VERSION}.tar.gz \
+    && tar xzf apache-arrow-${ARROW_VERSION}.tar.gz \
+    && rm -f apache-arrow-${ARROW_VERSION}.tar.gz \
+    && cd apache-arrow-${ARROW_VERSION}/cpp \
+    && mkdir build \
+    && cd build \
+    && cmake .. -DARROW_BUILD_STATIC=ON -DARROW_BUILD_STATIC=OFF -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr -DARROW_DATASET=YES -DARROW_PARQUET=YES \
+        -DARROW_WITH_BZ2:BOOL=ON \
+        -DARROW_WITH_LZ4:BOOL=ON \
+        -DARROW_WITH_SNAPPY:BOOL=ON \
+        -DARROW_WITH_ZLIB:BOOL=ON \
+        -DARROW_WITH_ZSTD:BOOL=ON \
+    && make -j$(nproc) \
+    && make install \
+    && cp -P /usr/lib/libarrow*.so* /build_thirdparty/usr/lib \
+    && cp -P /usr/lib/libparquet*.so* /build_thirdparty/usr/lib \
     && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && cd .. \
-    && rm -rf libdeflate \
+    && cd ../../.. \
+    && rm -rf apache-arrow-${ARROW_VERSION} \
+    && apk del cmake \
     ); fi
 
 RUN apk add --no-cache rsync ccache
@@ -332,7 +317,7 @@ RUN apk add --no-cache \
         python3 py3-numpy ${POPPLER} pcre libpq libxml2 portablexdr openjpeg \
         netcdf hdf5 freexl \
         openexr libheif xerces-c geos cfitsio minizip \
-        lz4-libs \
+        lz4-libs blosc libdeflate snappy \
     # Remove /usr/lib/libopenjp2.so.2.3.0 since we are building v2.3.1 manually
     # && rm -f /usr/lib/libopenjp2.so.2.3.0 \
     # libturbojpeg.so is not used by GDAL. Only libjpeg.so*

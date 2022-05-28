@@ -5,7 +5,7 @@
 # Public domain
 # or licensed under MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
-ARG ALPINE_VERSION=3.15
+ARG ALPINE_VERSION=3.16
 FROM alpine:${ALPINE_VERSION} as builder
 
 # Derived from osgeo/proj by Howard Butler <howard@hobu.co>
