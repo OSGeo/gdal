@@ -1925,7 +1925,7 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
             // angular difference between the start and end tangent. And we
             // also take into account the relative length of the tangent vs
             // the length of the straight segment
-            const int nSteps = (dfLength < 1e-9) ? 0 :
+            const int nSteps = (dfLength < 1e-9) ? 1 :
                 static_cast<int>(std::min(1000.0, ceil(
                 std::max(2.0, fabs(dfEndAngle - dfStartAngle) / dfStepSizeRad) *
                 std::max(1.0, 5.0 * (dfLengthTangentStart +
