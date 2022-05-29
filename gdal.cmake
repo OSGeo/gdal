@@ -455,6 +455,16 @@ cmake_dependent_option(OGR_ENABLE_DRIVER_SQLITE "Set ON to build OGR SQLite driv
 cmake_dependent_option(OGR_ENABLE_DRIVER_GPKG "Set ON to build OGR GPKG driver" ${OGR_BUILD_OPTIONAL_DRIVERS}
                        "GDAL_USE_SQLITE3;OGR_ENABLE_DRIVER_SQLITE" OFF)
 
+# Build frmts/iso8211 conditionally to drivers requiring it
+if ((GDAL_BUILD_OPTIONAL_DRIVERS AND NOT DEFINED GDAL_ENABLE_DRIVER_ADRG AND NOT DEFINED GDAL_ENABLE_DRIVER_SDTS) OR
+    GDAL_ENABLE_DRIVER_ADRG OR
+    GDAL_ENABLE_DRIVER_SDTS OR
+    (OGR_BUILD_OPTIONAL_DRIVERS AND NOT DEFINED OGR_ENABLE_DRIVER_S57 AND NOT DEFINED OGR_ENABLE_DRIVER_SDTS) OR
+    OGR_ENABLE_DRIVER_S57 OR
+    OGR_ENABLE_DRIVER_SDTS)
+  add_subdirectory(frmts/iso8211)
+endif()
+
 add_subdirectory(frmts)
 add_subdirectory(ogr/ogrsf_frmts)
 
