@@ -245,7 +245,7 @@ It is used by the :ref:`raster.zarr` driver.
 BRUNSLI
 *******
 
-The `Brunsli <https://github.com/google/brunsli>` JPEG repacking library, used
+The `Brunsli <https://github.com/google/brunsli>`_ JPEG repacking library, used
 by the :ref:`raster.marfa` driver.
 
 .. option:: BRUNSLI_INCLUDE_DIR
