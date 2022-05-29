@@ -980,7 +980,7 @@ do {                                                    \
 /*  Write out the extended header.                                      */
 /* -------------------------------------------------------------------- */
 
-    if( sHeader.nExtHdrOffset && sHeader.nExtHdrSize )
+    if( sHeader.nExtHdrOffset && sHeader.nExtHdrSize >= 36 + 4 )
     {
         GByte *pabyExtHeader = reinterpret_cast<GByte *>(
             CPLCalloc( sHeader.nExtHdrSize, 1 ) );
@@ -1052,7 +1052,7 @@ void RMFDataset::FlushCache(bool bAtClosing)
         poCompressData->oThreadPool.WaitCompletion();
     }
 
-    if( bAtClosing && eRMFType == RMFT_MTW )
+    if( bAtClosing && eRMFType == RMFT_MTW && eAccess == GA_Update )
     {
         GDALRasterBand *poBand = GetRasterBand(1);
 
