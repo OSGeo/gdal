@@ -245,7 +245,7 @@ It is used by the :ref:`raster.zarr` driver.
 BRUNSLI
 *******
 
-The `Brunsli <https://github.com/google/brunsli>` JPEG repacking library, used 
+The `Brunsli <https://github.com/google/brunsli>`_ JPEG repacking library, used
 by the :ref:`raster.marfa` driver.
 
 .. option:: BRUNSLI_INCLUDE_DIR
@@ -1803,11 +1803,86 @@ The following options are available to select a subset of drivers:
     Independently of options that control global behavior, drivers can be individually
     enabled or disabled with those options.
 
+    .. note::
+
+        <driver_name> above and below is *generally*, but not systematically the short driver name.
+
+        Some drivers may also be grouped together for build purposes.
+
+        - A number of "raw" raster drivers (ACE2, BT, BYN, CPG, CTable2, DIPEx, DOQ1,
+          DOQ2, EHDR, EIR, ENVI, FAST, GenBIN, GSC, GTX, MFF2, ISCE, KRO, MFF, LAN,
+          LCP, LOSLAS, NDF, NTv2, PAUX, PNM, ROIPAC, RRASTER, SNODAS) are controlled
+          by the GDAL_ENABLE_DRIVER_RAW option.
+
+        - Planetary raster formats (PDS, PDS4, ISIS2, ISIS3, VICAR) are controlled by
+          the GDAL_ENABLE_DRIVER_PDS option.
+
+        - The AAIGRID, GRASSASCIIGRID and ISG raster drivers are controlled by the GDAL_ENABLE_DRIVER_AAIGRID option.
+
+        - The ECW and JP2ECW raster drivers are controlled by the GDAL_ENABLE_DRIVER_ECW option.
+
+        - The vector EEDA and raster EEDAI drivers are controlled by the GDAL_ENABLE_DRIVER_EEDA option.
+
+        - The GSAG, GSBG and GS7BG raster drivers are controlled by the GDAL_ENABLE_DRIVER_GSG option.
+
+        - The HDF5 and BAG raster drivers are controlled by the GDAL_ENABLE_DRIVER_HDF5 option.
+
+        - The MrSID and JP2MrSID raster drivers are controlled by the GDAL_ENABLE_DRIVER_MRSID option.
+
+        - The NITF, RPFTOC and ECRGTOC raster drivers are controlled by the GDAL_ENABLE_DRIVER_NITF option.
+
+        - The NWT_GRD and NWT_GRC raster drivers are controlled by the GDAL_ENABLE_DRIVER_NORTHWOOD option.
+
+        - The SRP and ADRG raster drivers are controlled by the GDAL_ENABLE_DRIVER_ADRG option.
+
+        - The Interlis 1 and Interlis 2 vector drivers are controlled by the GDAL_ENABLE_DRIVER_ILI option.
+
+        - The WFS and OAPIF vector drivers are controlled by the GDAL_ENABLE_DRIVER_WFS option.
+
+        - The AVCBIN and AVCE00 vector drivers are controlled by the GDAL_ENABLE_DRIVER_AVC option.
+
+        - The DWG and DGNv8 vector drivers are controlled by the GDAL_ENABLE_DRIVER_DWG option.
+
+        There might be variations in naming, e.g. :
+
+        - the "AIG" raster driver is controlled by GDAL_ENABLE_DRIVER_AIGRID.
+
+        - the "ESAT" raster driver is controlled by GDAL_ENABLE_DRIVER_ENVISAT.
+
+        - the "GeoRaster" raster driver is controlled by GDAL_ENABLE_DRIVER_GEOR.
+
+        - the "RST" raster driver is controlled by GDAL_ENABLE_DRIVER_IDRISI.
+
+        - the "ElasticSearch" vector driver is controlled by OGR_ENABLE_DRIVER_ELASTIC.
+
+        - the "PostgreSQL" vector driver is controlled by OGR_ENABLE_DRIVER_PG.
+
+        - the "UK .NTF" vector driver is controlled by OGR_ENABLE_DRIVER_NTF.
+
+    .. note::
+
+        Drivers that have both a raster and vector side (and are internally implemented by a
+        single GDALDriver instance) are controlled by either a GDAL_ENABLE_DRIVER_<driver_name>
+        option or a OGR_ENABLE_DRIVER_<driver_name> one, but not both:
+
+        - The CAD drivers are controlled by the OGR_ENABLE_DRIVER_CAD option.
+        - The netCDF drivers are controlled by the GDAL_ENABLE_DRIVER_NETCDF option.
+        - The PDF drivers are controlled by the GDAL_ENABLE_DRIVER_PDF option.
+        - The GPKG drivers are controlled by the OGR_ENABLE_DRIVER_GPKG option.
+        - The NGW drivers are controlled by the OGR_ENABLE_DRIVER_NGW option.
+        - The SQLite drivers are controlled by the OGR_ENABLE_DRIVER_SQLITE option.
+
+    .. note::
+
+        The GDAL_ENABLE_DRIVER_<driver_name> and OGR_ENABLE_DRIVER_<driver_name> options are
+        only created when their required dependencies are found.
+
+
 .. option:: GDAL_BUILD_OPTIONAL_DRIVERS:BOOL=ON/OFF
 
 .. option:: OGR_BUILD_OPTIONAL_DRIVERS:BOOL=ON/OFF
 
-    Globally enable/disable all GDAL/raster or OGR/vector drivers.
+    Globally enable/disable all optional GDAL/raster, resp. all optional OGR/vector drivers.
     More exactly, setting those variables to ON affect the default value of the
     ``GDAL_ENABLE_DRIVER_<driver_name>`` or ``OGR_ENABLE_DRIVER_<driver_name>`` variables
     (when they are not yet set).
@@ -1819,6 +1894,10 @@ The following options are available to select a subset of drivers:
     activation of individual drivers. It might be needed to pass
     ``-UGDAL_ENABLE_DRIVER_* -UOGR_ENABLE_DRIVER_*`` to reset their state.
 
+    .. note::
+
+        The following GDAL drivers cannot be disabled: VRT, DERIVED, GTiff, COG, HFA, MEM.
+        The following OGR drivers cannot be disabled: "ESRI Shapefile", "MapInfo File", OGR_VRT, Memory, KML, GeoJSON, GeoJSONSeq, ESRIJSON, TopoJSON.
 
 Example of minimal build with the JP2OpenJPEG and SVG drivers enabled::
 
