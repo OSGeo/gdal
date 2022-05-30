@@ -365,6 +365,8 @@ def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDa
         myOut = myOutDrv.Create(
             os.fspath(outfile), DimensionsCheck[0], DimensionsCheck[1], allBandsCount,
             myOutType, creation_options)
+        if myOut is None:
+            raise Exception(f"Error! Could not create output file {outfile}")
 
         # set output geo info based on first input layer
         if not GeoTransformCheck:
