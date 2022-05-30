@@ -997,6 +997,69 @@ bool GDALGeoPackageDataset::ICanIWriteBlock()
 }
 
 /************************************************************************/
+/*                            IRasterIO()                               */
+/************************************************************************/
+
+CPLErr GDALGeoPackageDataset::IRasterIO( GDALRWFlag eRWFlag,
+                               int nXOff, int nYOff, int nXSize, int nYSize,
+                               void * pData, int nBufXSize, int nBufYSize,
+                               GDALDataType eBufType,
+                               int nBandCount, int *panBandMap,
+                               GSpacing nPixelSpace, GSpacing nLineSpace,
+                               GSpacing nBandSpace,
+                               GDALRasterIOExtraArg* psExtraArg)
+
+{
+    CPLErr eErr = OGRSQLiteBaseDataSource::IRasterIO(
+                        eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                        pData, nBufXSize, nBufYSize, eBufType,
+                        nBandCount, panBandMap,
+                        nPixelSpace, nLineSpace, nBandSpace, psExtraArg );
+
+    // If writing all bands, in non-shifted mode, flush all entirely written tiles
+    // This can avoid "stressing" the block cache with too many dirty blocks.
+    // Note: this logic would be useless with a per-dataset block cache.
+    if( eErr == CE_None && eRWFlag == GF_Write &&
+        nXSize == nBufXSize && nYSize == nBufYSize &&
+        nBandCount == nBands &&
+        m_nShiftXPixelsMod == 0 && m_nShiftYPixelsMod == 0 )
+    {
+        auto poBand = cpl::down_cast<GDALGPKGMBTilesLikeRasterBand*>(GetRasterBand(1));
+        int nBlockXSize, nBlockYSize;
+        poBand ->GetBlockSize(&nBlockXSize, &nBlockYSize);
+        const int nBlockXStart = DIV_ROUND_UP(nXOff, nBlockXSize);
+        const int nBlockYStart = DIV_ROUND_UP(nYOff, nBlockYSize);
+        const int nBlockXEnd = (nXOff + nXSize ) / nBlockXSize;
+        const int nBlockYEnd = (nYOff + nYSize ) / nBlockYSize;
+        for( int nBlockY = nBlockXStart; nBlockY < nBlockYEnd; nBlockY ++ )
+        {
+            for( int nBlockX = nBlockYStart; nBlockX < nBlockXEnd; nBlockX ++ )
+            {
+                GDALRasterBlock* poBlock =
+                    poBand->AccessibleTryGetLockedBlockRef(nBlockX, nBlockY);
+                if( poBlock )
+                {
+                    // GetDirty() should be true in most situation (otherwise
+                    // it means the block cache is under extreme pressure!)
+                    if( poBlock->GetDirty() )
+                    {
+                        // IWriteBlock() on one band will check the dirty state
+                        // of the corresponding blocks in other bands, to decide
+                        // if it can call WriteTile(), so we have only to do that
+                        // on one of the bands
+                        if( poBlock->Write() != CE_None )
+                            eErr = CE_Failure;
+                    }
+                    poBlock->DropLock();
+                }
+            }
+        }
+    }
+
+    return eErr;
+}
+
+/************************************************************************/
 /*                          GetOGRTableLimit()                          */
 /************************************************************************/
 
