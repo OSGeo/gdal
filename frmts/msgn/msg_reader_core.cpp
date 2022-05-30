@@ -282,13 +282,41 @@ void Msg_reader_core::read_metadata_block(VSILFILE* fin) {
 #endif
 
     // read image description block
-    IMAGE_DESCRIPTION_RECORD idr;
+    IMAGE_DESCRIPTION_RECORD& idr = _img_desc_record;
     offset = RADIOMETRICPROCESSING_RECORD_OFFSET  - IMAGEDESCRIPTION_RECORD_LENGTH + _f_header_offset + sizeof(GP_PK_HEADER) + sizeof(GP_PK_SH1) + 1;
     CPL_IGNORE_RET_VAL(VSIFSeekL(fin, offset, SEEK_SET));
     CPL_IGNORE_RET_VAL(VSIFReadL(&idr, sizeof(IMAGE_DESCRIPTION_RECORD), 1, fin));
     to_native(idr);
+    CPLDebugOnly("MSGN",
+                 "referencegrid_visir.numberOfLines = %d, "
+                 "referencegrid_visir.numberOfColumns = %d",
+                 idr.referencegrid_visir.numberOfLines,
+                 idr.referencegrid_visir.numberOfColumns);
     _line_dir_step = idr.referencegrid_visir.lineDirGridStep;
     _col_dir_step = idr.referencegrid_visir.columnDirGridStep;
+
+    CPLDebugOnly("MSGN", "referencegrid_hrv.numberOfLines = %d, "
+                 "referencegrid_hrv.numberOfColumns = %d",
+                 idr.referencegrid_hrv.numberOfLines,
+                 idr.referencegrid_hrv.numberOfColumns);
+
+    CPLDebugOnly("MSGN", "plannedCoverage_hrv.lowerSouthLinePlanned = %d, \n"
+                 "plannedCoverage_hrv.lowerNorthLinePlanned = %d, \n"
+                 "plannedCoverage_hrv.lowerEastColumnPlanned = %d, \n "
+                 "plannedCoverage_hrv.lowerWestColumnPlanned = %d",
+                 idr.plannedCoverage_hrv.lowerSouthLinePlanned,
+                 idr.plannedCoverage_hrv.lowerNorthLinePlanned,
+                 idr.plannedCoverage_hrv.lowerEastColumnPlanned,
+                 idr.plannedCoverage_hrv.lowerWestColumnPlanned);
+
+    CPLDebugOnly("MSGN", "plannedCoverage_hrv.upperSouthLinePlanned = %d, \n"
+                 "plannedCoverage_hrv.upperNorthLinePlanned = %d, \n"
+                 "plannedCoverage_hrv.upperEastColumnPlanned = %d, \n "
+                 "plannedCoverage_hrv.upperWestColumnPlanned = %d",
+                 idr.plannedCoverage_hrv.upperSouthLinePlanned,
+                 idr.plannedCoverage_hrv.upperNorthLinePlanned,
+                 idr.plannedCoverage_hrv.upperEastColumnPlanned,
+                 idr.plannedCoverage_hrv.upperWestColumnPlanned);
 
     // Rather convoluted, but this code is required to compute the real data block sizes
     // It does this by reading in the first line of every band, to get to the packet size field
@@ -320,6 +348,19 @@ void Msg_reader_core::read_metadata_block(VSILFILE* fin) {
         to_native(visir_line);
         to_native(gp_header);
 
+        CPLDebugOnly("MSGN", "channelId = %d, lineNumber = %d, packetLength = %u",
+                 visir_line.channelId,
+                 visir_line.lineNumberInVisirGrid,
+                 gp_header.packetLength);
+
+        // Sanity checks
+        if( gp_header.packetLength < sizeof(GP_PK_SH1) + sizeof(SUB_VISIRLINE) - 1 ||
+            gp_header.packetLength > 100 * 1024 * 1024 )
+        {
+            _open_success = false;
+            break;
+        }
+
         // skip over the actual line data
         CPL_IGNORE_RET_VAL(VSIFSeekL(fin,
             gp_header.packetLength - (sizeof(GP_PK_SH1) + sizeof(SUB_VISIRLINE) - 1),
@@ -342,8 +383,46 @@ void Msg_reader_core::read_metadata_block(VSILFILE* fin) {
             } else {
                 _hrv_bytes_per_line = gp_header.packetLength - (unsigned int)(sizeof(GP_PK_SH1) + sizeof(SUB_VISIRLINE) - 1);
                 _hrv_packet_size = gp_header.packetLength + (unsigned int)sizeof(GP_PK_HEADER) + 1;
-                _interline_spacing +=  3*_hrv_packet_size;
-                CPL_IGNORE_RET_VAL(VSIFSeekL(fin, 2*gp_header.packetLength, SEEK_CUR ));
+                _interline_spacing += _hrv_packet_size;
+
+                // The HRV channel has 3 consecutive lines
+                const int lineNumberInVisirGrid = visir_line.lineNumberInVisirGrid;
+                const auto packetLength = gp_header.packetLength;
+                for(int extraLines = 0; extraLines < 2; extraLines++ )
+                {
+                    if( VSIFReadL(&gp_header, sizeof(GP_PK_HEADER), 1, fin) != 1 ||
+                        VSIFReadL(&sub_header, sizeof(GP_PK_SH1), 1, fin) != 1 ||
+                        VSIFReadL(&visir_line, sizeof(SUB_VISIRLINE), 1, fin) != 1 )
+                    {
+                        _open_success = false;
+                        return;
+                    }
+                    to_native(visir_line);
+                    to_native(gp_header);
+
+                    CPLDebugOnly("MSGN", "channelId = %d, lineNumber = %d, packetLength = %u",
+                             visir_line.channelId,
+                             visir_line.lineNumberInVisirGrid,
+                             gp_header.packetLength);
+
+                    if( visir_line.channelId != 12 ||
+                        visir_line.lineNumberInVisirGrid != lineNumberInVisirGrid + extraLines + 1 ||
+                        gp_header.packetLength != packetLength )
+                    {
+                        CPLDebugOnly("MSGN", "Inconsistent records");
+                        _open_success = false;
+                        return;
+                    }
+
+                    // skip over the actual line data
+                    CPL_IGNORE_RET_VAL(VSIFSeekL(fin,
+                        gp_header.packetLength - (sizeof(GP_PK_SH1) + sizeof(SUB_VISIRLINE) - 1),
+                        SEEK_CUR
+                    ));
+
+                    _interline_spacing += _hrv_packet_size;
+                }
+
             }
         }
     } while (band_count > 0);

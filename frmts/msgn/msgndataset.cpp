@@ -43,7 +43,7 @@ typedef enum {
     MODE_VISIR,     // Visible and Infrared bands (1 through 11) in 10-bit raw mode
     MODE_HRV,       // Pan band (band 11) only, in 10-bit raw mode
     MODE_RAD     // Black-body temperature (K) for thermal bands only (4-10), 64-bit float
-    } open_mode_type;
+} open_mode_type;
 
 class MSGNRasterBand;
 
@@ -60,6 +60,11 @@ class MSGNDataset final: public GDALDataset
     VSILFILE       *fp;
 
     Msg_reader_core*    msg_reader_core;
+    open_mode_type      m_open_mode = MODE_VISIR;
+    bool                m_bHRVDealWithSplit = false;
+    int                 m_nHRVSplitLine = 0;
+    int                 m_nHRVLowerShiftX = 0;
+    int                 m_nHRVUpperShiftX = 0;
     double adfGeoTransform[6];
     char   *pszProjection;
 
@@ -172,7 +177,15 @@ CPLErr MSGNRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     MSGNDataset *poGDS = (MSGNDataset *) poDS;
 
     // invert y position
-    int i_nBlockYOff = poDS->GetRasterYSize() - 1 - nBlockYOff;
+    const int i_nBlockYOff = poDS->GetRasterYSize() - 1 - nBlockYOff;
+
+    const int nSamples = static_cast<int>((bytes_per_line * 8) / 10);
+    if (!poGDS->m_bHRVDealWithSplit && nRasterXSize != nSamples )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "nRasterXSize != nSamples");
+        return CE_Failure;
+    }
 
     unsigned int data_length =  bytes_per_line + (unsigned int)sizeof(SUB_VISIRLINE);
     vsi_l_offset data_offset = 0;
@@ -196,7 +209,7 @@ CPLErr MSGNRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     SUB_VISIRLINE* p = (SUB_VISIRLINE*) pszRecord;
     to_native(*p);
 
-    if (p->lineValidity != 1) {
+    if (p->lineValidity != 1 || poGDS->m_bHRVDealWithSplit) {
         for (int c=0; c < nBlockXSize; c++) {
             if (open_mode != MODE_RAD) {
                 ((GUInt16 *)pImage)[c] = (GUInt16)MSGN_NODATA_VALUE;
@@ -207,8 +220,8 @@ CPLErr MSGNRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     }
 
     if ( nread != data_length ||
-        ( open_mode != MODE_HRV && (p->lineNumberInVisirGrid - poGDS->msg_reader_core->get_line_start()) != (unsigned int)i_nBlockYOff )
-       ) { // no sophisticated checking for HRV at the moment
+        (p->lineNumberInVisirGrid - poGDS->msg_reader_core->get_line_start()) != (unsigned int)i_nBlockYOff )
+    {
         CPLFree( pszRecord );
 
         CPLError( CE_Failure, CPLE_AppDefined, "MSGN Scanline corrupt." );
@@ -222,7 +235,10 @@ CPLErr MSGNRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     int bitsLeft = 8;
 
     if (open_mode != MODE_RAD) {
-        for (int c=0; c < nBlockXSize; c++) {
+        int shift = 0;
+        if( poGDS->m_bHRVDealWithSplit )
+            shift = i_nBlockYOff < poGDS->m_nHRVSplitLine ? poGDS->m_nHRVLowerShiftX : poGDS->m_nHRVUpperShiftX;
+        for (int c=0; c < nSamples; c++) {
             unsigned short value = 0;
             for (int bit=0; bit < 10; bit++) {
                 value <<= 1;
@@ -236,11 +252,11 @@ CPLErr MSGNRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                 bitsLeft = 8;
                 }
             }
-            ((GUInt16 *)pImage)[nBlockXSize-1 - c] = value;
+            ((GUInt16 *)pImage)[nBlockXSize-1 - c - shift] = value;
         }
     } else {
         // radiance mode
-        for (int c=0; c < nBlockXSize; c++) {
+        for (int c=0; c < nSamples; c++) {
             unsigned short value = 0;
             for (int bit=0; bit < 10; bit++) {
                 value <<= 1;
@@ -323,6 +339,8 @@ MSGNDataset::~MSGNDataset()
 CPLErr MSGNDataset::GetGeoTransform( double * padfTransform )
 
 {
+    if( m_open_mode == MODE_HRV && !m_bHRVDealWithSplit )
+        return CE_Failure;
 
     for (int i=0; i < 6; i++) {
         padfTransform[i] = adfGeoTransform[i];
@@ -338,6 +356,9 @@ CPLErr MSGNDataset::GetGeoTransform( double * padfTransform )
 const char *MSGNDataset::_GetProjectionRef()
 
 {
+    if( m_open_mode == MODE_HRV && !m_bHRVDealWithSplit )
+        return "";
+
     return pszProjection;
 }
 
@@ -410,6 +431,7 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
 
     MSGNDataset *poDS = new MSGNDataset();
 
+    poDS->m_open_mode = open_mode;
     poDS->fp = fp;
 
 /* -------------------------------------------------------------------- */
@@ -432,8 +454,35 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterYSize = poDS->msg_reader_core->get_lines();
 
     if (open_mode == MODE_HRV) {
-        poDS->nRasterXSize *= 3;
+        const int nRawHRVColumns = (poDS->msg_reader_core->get_hrv_bytes_per_line() * 8) / 10;
         poDS->nRasterYSize *= 3;
+        const auto& idr = poDS->msg_reader_core->get_image_description_record();
+        // Check if the split layout of the HRV channel meets our expectations
+        // to re-assemble it in a consistent way
+        if( idr.plannedCoverage_hrv.lowerSouthLinePlanned == 1 &&
+            idr.plannedCoverage_hrv.lowerNorthLinePlanned > 1 &&
+            idr.plannedCoverage_hrv.lowerNorthLinePlanned < poDS->nRasterYSize &&
+            idr.plannedCoverage_hrv.upperSouthLinePlanned == idr.plannedCoverage_hrv.lowerNorthLinePlanned + 1 &&
+            idr.plannedCoverage_hrv.upperNorthLinePlanned == poDS->nRasterYSize &&
+            idr.plannedCoverage_hrv.lowerEastColumnPlanned >= 1 &&
+            idr.plannedCoverage_hrv.lowerWestColumnPlanned == idr.plannedCoverage_hrv.lowerEastColumnPlanned + nRawHRVColumns - 1 &&
+            idr.plannedCoverage_hrv.lowerWestColumnPlanned <= poDS->nRasterXSize * 3 &&
+            idr.plannedCoverage_hrv.upperEastColumnPlanned >= 1 &&
+            idr.plannedCoverage_hrv.upperWestColumnPlanned == idr.plannedCoverage_hrv.upperEastColumnPlanned + nRawHRVColumns - 1 &&
+            idr.plannedCoverage_hrv.upperWestColumnPlanned <= poDS->nRasterXSize * 3 )
+        {
+            poDS->nRasterXSize *= 3;
+            poDS->m_bHRVDealWithSplit = true;
+            poDS->m_nHRVSplitLine = idr.plannedCoverage_hrv.upperSouthLinePlanned;
+            poDS->m_nHRVLowerShiftX = idr.plannedCoverage_hrv.lowerEastColumnPlanned - 1;
+            poDS->m_nHRVUpperShiftX = idr.plannedCoverage_hrv.upperEastColumnPlanned - 1;
+        }
+        else
+        {
+            // In practice, the number of columns of HRV seems to be 1.5x the one
+            // of VISIR bands, but derive it from the paquet header
+            poDS->nRasterXSize = nRawHRVColumns;
+        }
     }
 
 /* -------------------------------------------------------------------- */
