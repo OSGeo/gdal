@@ -980,8 +980,13 @@ do {                                                    \
 /*  Write out the extended header.                                      */
 /* -------------------------------------------------------------------- */
 
-    if( sHeader.nExtHdrOffset && sHeader.nExtHdrSize )
+    if( sHeader.nExtHdrOffset && sHeader.nExtHdrSize >= RMF_MIN_EXT_HEADER_SIZE )
     {
+        if(sHeader.nExtHdrSize > RMF_MAX_EXT_HEADER_SIZE)
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "RMF File malformed" );
+            return CE_Failure;
+        }
         GByte *pabyExtHeader = reinterpret_cast<GByte *>(
             CPLCalloc( sHeader.nExtHdrSize, 1 ) );
 
@@ -1052,7 +1057,7 @@ void RMFDataset::FlushCache(bool bAtClosing)
         poCompressData->oThreadPool.WaitCompletion();
     }
 
-    if( bAtClosing && eRMFType == RMFT_MTW )
+    if( bAtClosing && eRMFType == RMFT_MTW && eAccess == GA_Update )
     {
         GDALRasterBand *poBand = GetRasterBand(1);
 
@@ -1339,10 +1344,11 @@ do {                                                                    \
 /*  Read the extended header.                                           */
 /* -------------------------------------------------------------------- */
 
-    if( poDS->sHeader.nExtHdrOffset && poDS->sHeader.nExtHdrSize )
+    if( poDS->sHeader.nExtHdrOffset && poDS->sHeader.nExtHdrSize >= RMF_MIN_EXT_HEADER_SIZE )
     {
-        if( poDS->sHeader.nExtHdrSize > 1000000 )
+        if( poDS->sHeader.nExtHdrSize > RMF_MAX_EXT_HEADER_SIZE )
         {
+            CPLError(CE_Failure, CPLE_FileIO, "RMF File malformed" );
             delete poDS;
             return nullptr;
         }
@@ -1358,13 +1364,10 @@ do {                                                                    \
                    SEEK_SET );
         VSIFReadL( pabyExtHeader, 1, poDS->sHeader.nExtHdrSize, poDS->fp );
 
-        if( poDS->sHeader.nExtHdrSize >= 36 + 4 )
-        {
-            RMF_READ_LONG( pabyExtHeader, poDS->sExtHeader.nEllipsoid, 24 );
-            RMF_READ_LONG( pabyExtHeader, poDS->sExtHeader.nVertDatum, 28 );
-            RMF_READ_LONG( pabyExtHeader, poDS->sExtHeader.nDatum, 32 );
-            RMF_READ_LONG( pabyExtHeader, poDS->sExtHeader.nZone, 36 );
-        }
+        RMF_READ_LONG( pabyExtHeader, poDS->sExtHeader.nEllipsoid, 24 );
+        RMF_READ_LONG( pabyExtHeader, poDS->sExtHeader.nVertDatum, 28 );
+        RMF_READ_LONG( pabyExtHeader, poDS->sExtHeader.nDatum, 32 );
+        RMF_READ_LONG( pabyExtHeader, poDS->sExtHeader.nZone, 36 );
 
         CPLFree( pabyExtHeader );
     }
