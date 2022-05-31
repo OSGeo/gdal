@@ -995,13 +995,15 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
     if( strcmp(schema->format, "+s") != 0 )
     {
       CPLError(CE_Failure, CPLE_AppDefined, "schema->format != '+s'");
-      return NULL;
+      Py_RETURN_NONE;
     }
     if( schema->n_children != array->n_children )
     {
       CPLError(CE_Failure, CPLE_AppDefined,
-               "schema->n_children != array->n_children");
-      return NULL;
+               "schema->n_children(=%d) != array->n_children(=%d)",
+               static_cast<int>(schema->n_children),
+               static_cast<int>(array->n_children));
+      Py_RETURN_NONE;
     }
     PyObject *dict = PyDict_New();
     for( int iField = 0; iField < array->n_children; iField++ )
@@ -1068,7 +1070,7 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
                          "Field %s: arrayField->n_buffers != 2",
                          schemaField->name);
                 Py_DECREF(dict);
-                return NULL;
+                Py_RETURN_NONE;
             }
             if( typenum == NPY_BOOL )
             {
@@ -1102,7 +1104,7 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
                          "Field %s: arrayField->n_buffers != 2",
                          schemaField->name);
                 Py_DECREF(dict);
-                return NULL;
+                Py_RETURN_NONE;
             }
             if( arrayField->n_children != 1 )
             {
@@ -1110,7 +1112,7 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
                          "Field %s: arrayField->n_children != 1",
                          schemaField->name);
                 Py_DECREF(dict);
-                return NULL;
+                Py_RETURN_NONE;
             }
             if( arrayField->children[0]->n_buffers != 2 )
             {
@@ -1118,7 +1120,7 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
                          "Field %s: arrayField->children[0]->n_buffers != 2",
                          schemaField->name);
                 Py_DECREF(dict);
-                return NULL;
+                Py_RETURN_NONE;
             }
             const int32_t* offsets = (const int32_t*)arrayField->buffers[1] + arrayField->offset;
             numpyArray = PyArray_SimpleNew(1, &dims, NPY_OBJECT);
@@ -1162,7 +1164,7 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
                          "Field %s: arrayField->n_buffers != 1",
                          schemaField->name);
                 Py_DECREF(dict);
-                return NULL;
+                Py_RETURN_NONE;
             }
             if( arrayField->n_children != 1 )
             {
@@ -1170,7 +1172,7 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
                          "Field %s: arrayField->n_children != 1",
                          schemaField->name);
                 Py_DECREF(dict);
-                return NULL;
+                Py_RETURN_NONE;
             }
             if( arrayField->children[0]->n_buffers != 2 )
             {
@@ -1178,7 +1180,7 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
                          "Field %s: arrayField->children[0]->n_buffers != 2",
                          schemaField->name);
                 Py_DECREF(dict);
-                return NULL;
+                Py_RETURN_NONE;
             }
             const int nLength = atoi(arrowType + strlen("+w:"));
             numpyArray = PyArray_SimpleNew(1, &dims, NPY_OBJECT);
@@ -1224,7 +1226,7 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
                          "Field %s: arrayField->n_buffers != 3",
                          schemaField->name);
                 Py_DECREF(dict);
-                return NULL;
+                Py_RETURN_NONE;
             }
             const int32_t* offsets = (const int32_t*)arrayField->buffers[1] + static_cast<size_t>(arrayField->offset);
             // numpy can't deal with zero length strings
@@ -1323,7 +1325,7 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
                          "field %s:arrayField->n_buffers != 2",
                          schemaField->name);
                 Py_DECREF(dict);
-                return NULL;
+                Py_RETURN_NONE;
             }
             const int nLength = atoi(arrowType + strlen("w:"));
             numpyArray = PyArray_SimpleNew(1, &dims, NPY_OBJECT);
@@ -1348,7 +1350,7 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
                          "Field %s: arrayField->n_buffers != 2",
                          schemaField->name);
                 Py_DECREF(dict);
-                return NULL;
+                Py_RETURN_NONE;
             }
             if( arrayField->n_children != 1 )
             {
@@ -1356,7 +1358,7 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
                          "Field %s: arrayField->n_children != 1",
                          schemaField->name);
                 Py_DECREF(dict);
-                return NULL;
+                Py_RETURN_NONE;
             }
             if( arrayField->children[0]->n_buffers != 3 )
             {
@@ -1364,7 +1366,7 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
                          "Field %s: arrayField->children[0]->n_buffers != 3",
                          schemaField->name);
                 Py_DECREF(dict);
-                return NULL;
+                Py_RETURN_NONE;
             }
             const int32_t* offsets = (const int32_t*)arrayField->buffers[1] + static_cast<size_t>(arrayField->offset);
             const int32_t* offsetsToBytes = (const int32_t*)arrayField->children[0]->buffers[1] + static_cast<size_t>(arrayField->children[0]->offset);
@@ -1423,7 +1425,7 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
                          "Field %s: arrayField->n_buffers != 1",
                          schemaField->name);
                 Py_DECREF(dict);
-                return NULL;
+                Py_RETURN_NONE;
             }
             if( arrayField->n_children != 1 )
             {
@@ -1431,7 +1433,7 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
                          "Field %s: arrayField->n_children != 1",
                          schemaField->name);
                 Py_DECREF(dict);
-                return NULL;
+                Py_RETURN_NONE;
             }
             if( arrayField->children[0]->n_buffers != 3 )
             {
@@ -1439,7 +1441,7 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
                          "Field %s: arrayField->children[0]->n_buffers != 3",
                          schemaField->name);
                 Py_DECREF(dict);
-                return NULL;
+                Py_RETURN_NONE;
             }
             const int32_t* offsetsToBytes = (const int32_t*)arrayField->children[0]->buffers[1] + static_cast<size_t>(arrayField->children[0]->offset);
             const char* bytes = (const char*)arrayField->children[0]->buffers[2] + static_cast<size_t>(arrayField->children[0]->offset);
@@ -1495,7 +1497,7 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
                          "Field %s: arrayField->n_buffers != 2",
                          schemaField->name);
                 Py_DECREF(dict);
-                return NULL;
+                Py_RETURN_NONE;
             }
 
             // create the dtype string
@@ -1524,7 +1526,7 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
                          "Field %s: arrayField->n_buffers != 2",
                          schemaField->name);
                 Py_DECREF(dict);
-                return NULL;
+                Py_RETURN_NONE;
             }
 #if 0
             // create the dtype string
@@ -1568,7 +1570,7 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
                          "Field %s: arrayField->n_buffers != 2",
                          schemaField->name);
                 Py_DECREF(dict);
-                return NULL;
+                Py_RETURN_NONE;
             }
 
             // create array
@@ -1596,7 +1598,7 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
                          "Field %s: arrayField->n_buffers != 2",
                          schemaField->name);
                 Py_DECREF(dict);
-                return NULL;
+                Py_RETURN_NONE;
             }
 
             // create the dtype string

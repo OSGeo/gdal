@@ -1158,12 +1158,11 @@ char** OGRParquetLayer::GetMetadata( const char* pszDomain )
 }
 
 /************************************************************************/
-/*                      GetNextRecordBatch()                            */
+/*                          GetArrowStream()                            */
 /************************************************************************/
 
-bool OGRParquetLayer::GetNextRecordBatch(struct ArrowArray* out_array,
-                                         struct ArrowSchema* out_schema,
-                                         CSLConstList papszOptions)
+bool OGRParquetLayer::GetArrowStream(struct ArrowArrayStream* out_stream,
+                                     CSLConstList papszOptions)
 {
     const char* pszMaxFeaturesInBatch = CSLFetchNameValue(
         papszOptions, "MAX_FEATURES_IN_BATCH");
@@ -1176,5 +1175,5 @@ bool OGRParquetLayer::GetNextRecordBatch(struct ArrowArray* out_array,
             nMaxBatchSize = INT_MAX - 1;
         m_poArrowReader->set_batch_size(nMaxBatchSize);
     }
-    return OGRArrowLayer::GetNextRecordBatch(out_array, out_schema, papszOptions);
+    return OGRArrowLayer::GetArrowStream(out_stream, papszOptions);
 }

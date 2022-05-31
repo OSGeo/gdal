@@ -116,9 +116,9 @@ public:
         char**          GetMetadata( const char* pszDomain = "" ) override;
 
         GDALDataset*    GetDataset() override;
-        bool            GetNextRecordBatch(struct ArrowArray* out_array,
-                                           struct ArrowSchema* out_schema = nullptr,
-                                           CSLConstList papszOptions = nullptr) override;
+        bool            GetArrowStream(struct ArrowArrayStream* out_stream,
+                                       CSLConstList papszOptions = nullptr) override;
+
 
         std::unique_ptr<OGRFieldDomain> BuildDomain(const std::string& osDomainName,
                                                     int iFieldIndex) const override;

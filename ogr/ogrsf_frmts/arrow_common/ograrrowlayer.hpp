@@ -3224,16 +3224,16 @@ static void OverrideArrowRelease(OGRArrowDataset* poDS, T* obj)
 /************************************************************************/
 
 inline
-bool OGRArrowLayer::UseRecordBatchBaseImplementation(CSLConstList papszOptions) const
+bool OGRArrowLayer::UseRecordBatchBaseImplementation() const
 {
     if( m_poAttrQuery != nullptr ||
         m_poFilterGeom != nullptr ||
-        CPLTestBool(CPLGetConfigOption("OGR_ARROW_RECORD_BATCH_BASE_IMPL", "NO")) )
+        CPLTestBool(CPLGetConfigOption("OGR_ARROW_STREAM_BASE_IMPL", "NO")) )
     {
         return true;
     }
 
-    if( EQUAL(CSLFetchNameValueDef(papszOptions, "GEOMETRY_ENCODING", ""), "WKB") )
+    if( EQUAL(m_aosArrowArrayStreamOptions.FetchNameValueDef("GEOMETRY_ENCODING", ""), "WKB") )
     {
         const int nGeomFieldCount = m_poFeatureDefn->GetGeomFieldCount();
         for( int i = 0; i < nGeomFieldCount; i++ )
@@ -3247,15 +3247,15 @@ bool OGRArrowLayer::UseRecordBatchBaseImplementation(CSLConstList papszOptions) 
 }
 
 /************************************************************************/
-/*                      GetRecordBatchSchema()                          */
+/*                         GetArrowSchema()                             */
 /************************************************************************/
 
 inline
-bool OGRArrowLayer::GetRecordBatchSchema(struct ArrowSchema* out_schema,
-                                         CSLConstList papszOptions)
+int OGRArrowLayer::GetArrowSchema(struct ArrowArrayStream* stream,
+                                   struct ArrowSchema* out_schema)
 {
-    if( UseRecordBatchBaseImplementation(papszOptions) )
-        return OGRLayer::GetRecordBatchSchema(out_schema, papszOptions);
+    if( UseRecordBatchBaseImplementation() )
+        return OGRLayer::GetArrowSchema(stream, out_schema);
 
     auto status = arrow::ExportSchema(*m_poSchema, out_schema);
     if( !status.ok() )
@@ -3263,47 +3263,98 @@ bool OGRArrowLayer::GetRecordBatchSchema(struct ArrowSchema* out_schema,
         CPLError(CE_Failure, CPLE_AppDefined,
                  "ExportSchema() failed with %s",
                  status.message().c_str());
-        return false;
+        return EIO;
     }
+
+    CPLAssert( out_schema->n_children == m_poSchema->num_fields() );
+
+    if( m_bIgnoredFields )
+    {
+        // Remove ignored fields from the ArrowSchema.
+
+        struct FieldDesc
+        {
+            bool bIsRegularField = false; // true = attribute field, false = geometyr field
+            int  nIdx = -1;
+        };
+        // cppcheck-suppress unreadVariable
+        std::vector<FieldDesc> fieldDesc(out_schema->n_children);
+        for( size_t i = 0; i < m_anMapFieldIndexToArrowColumn.size(); i++ )
+        {
+            const int nArrowCol = m_anMapFieldIndexToArrowColumn[i][0];
+            CPLAssert( fieldDesc[nArrowCol].nIdx < 0 );
+            fieldDesc[nArrowCol].bIsRegularField = true;
+            fieldDesc[nArrowCol].nIdx = static_cast<int>(i);
+        }
+        for( size_t i = 0; i < m_anMapGeomFieldIndexToArrowColumn.size(); i++ )
+        {
+            const int nArrowCol = m_anMapGeomFieldIndexToArrowColumn[i];
+            CPLAssert( fieldDesc[nArrowCol].nIdx < 0 );
+            fieldDesc[nArrowCol].bIsRegularField = false;
+            fieldDesc[nArrowCol].nIdx = static_cast<int>(i);
+        }
+
+        int j = 0;
+        for( int i = 0; i < out_schema->n_children; ++i )
+        {
+            const auto bIsIgnored = fieldDesc[i].bIsRegularField ?
+                m_poFeatureDefn->GetFieldDefn(fieldDesc[i].nIdx)->IsIgnored() :
+                m_poFeatureDefn->GetGeomFieldDefn(fieldDesc[i].nIdx)->IsIgnored();
+            if( bIsIgnored )
+            {
+                out_schema->children[i]->release(out_schema->children[i]);
+            }
+            else
+            {
+                out_schema->children[j] = out_schema->children[i];
+                ++j;
+            }
+        }
+        out_schema->n_children = j;
+    }
+
     OverrideArrowRelease(m_poArrowDS, out_schema);
-    return true;
+    return 0;
 }
 
 /************************************************************************/
-/*                      GetNextRecordBatch()                            */
+/*                       GetNextArrowArray()                            */
 /************************************************************************/
 
 inline
-bool OGRArrowLayer::GetNextRecordBatch(struct ArrowArray* out_array,
-                                       struct ArrowSchema* out_schema,
-                                       CSLConstList papszOptions)
+int OGRArrowLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
+                                      struct ArrowArray* out_array)
 {
-    if( UseRecordBatchBaseImplementation(papszOptions) )
-        return OGRLayer::GetNextRecordBatch(out_array, out_schema, papszOptions);
+    if( UseRecordBatchBaseImplementation() )
+        return OGRLayer::GetNextArrowArray(stream, out_array);
 
     if( m_bEOF )
-        return false;
+    {
+        memset(out_array, 0, sizeof(*out_array));
+        return 0;
+    }
 
     if( m_poBatch == nullptr || m_nIdxInBatch == m_poBatch->num_rows() )
     {
         m_bEOF = !ReadNextBatch();
         if( m_bEOF )
-            return false;
+        {
+            memset(out_array, 0, sizeof(*out_array));
+            return 0;
+        }
     }
 
-    auto status = arrow::ExportRecordBatch(*m_poBatch, out_array, out_schema);
+    auto status = arrow::ExportRecordBatch(*m_poBatch, out_array, nullptr);
     m_nIdxInBatch = m_poBatch->num_rows();
     if( !status.ok() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "ExportRecordBatch() failed with %s",
                  status.message().c_str());
-        return false;
+        return EIO;
     }
 
     OverrideArrowRelease(m_poArrowDS, out_array);
-    if( out_schema )
-        OverrideArrowRelease(m_poArrowDS, out_schema);
 
-    return true;
+    return 0;
 }

@@ -2694,36 +2694,37 @@ SWIGINTERN PyObject *SWIG_PyStaticMethod_New(PyObject *SWIGUNUSEDPARM(self), PyO
 
 /* -------- TYPES TABLE (BEGIN) -------- */
 
-#define SWIGTYPE_p_GDALMajorObjectShadow swig_types[0]
-#define SWIGTYPE_p_GDALProgressFunc swig_types[1]
-#define SWIGTYPE_p_GIntBig swig_types[2]
-#define SWIGTYPE_p_OGRCodedValue swig_types[3]
-#define SWIGTYPE_p_OGRDataSourceShadow swig_types[4]
-#define SWIGTYPE_p_OGRDriverShadow swig_types[5]
-#define SWIGTYPE_p_OGRFeatureDefnShadow swig_types[6]
-#define SWIGTYPE_p_OGRFeatureShadow swig_types[7]
-#define SWIGTYPE_p_OGRFieldDefnShadow swig_types[8]
-#define SWIGTYPE_p_OGRFieldDomainShadow swig_types[9]
-#define SWIGTYPE_p_OGRGeomFieldDefnShadow swig_types[10]
-#define SWIGTYPE_p_OGRGeomTransformerShadow swig_types[11]
-#define SWIGTYPE_p_OGRGeometryShadow swig_types[12]
-#define SWIGTYPE_p_OGRLayerShadow swig_types[13]
-#define SWIGTYPE_p_OGRPreparedGeometryShadow swig_types[14]
-#define SWIGTYPE_p_OGRStyleTableShadow swig_types[15]
-#define SWIGTYPE_p_OSRCoordinateTransformationShadow swig_types[16]
-#define SWIGTYPE_p_OSRSpatialReferenceShadow swig_types[17]
-#define SWIGTYPE_p_char swig_types[18]
-#define SWIGTYPE_p_double swig_types[19]
-#define SWIGTYPE_p_f_double_p_q_const__char_p_void__int swig_types[20]
-#define SWIGTYPE_p_float swig_types[21]
-#define SWIGTYPE_p_int swig_types[22]
-#define SWIGTYPE_p_p_GIntBig swig_types[23]
-#define SWIGTYPE_p_p_char swig_types[24]
-#define SWIGTYPE_p_p_double swig_types[25]
-#define SWIGTYPE_p_p_int swig_types[26]
-#define SWIGTYPE_p_size_t swig_types[27]
-static swig_type_info *swig_types[29];
-static swig_module_info swig_module = {swig_types, 28, 0, 0, 0, 0};
+#define SWIGTYPE_p_ArrowArrayStream swig_types[0]
+#define SWIGTYPE_p_GDALMajorObjectShadow swig_types[1]
+#define SWIGTYPE_p_GDALProgressFunc swig_types[2]
+#define SWIGTYPE_p_GIntBig swig_types[3]
+#define SWIGTYPE_p_OGRCodedValue swig_types[4]
+#define SWIGTYPE_p_OGRDataSourceShadow swig_types[5]
+#define SWIGTYPE_p_OGRDriverShadow swig_types[6]
+#define SWIGTYPE_p_OGRFeatureDefnShadow swig_types[7]
+#define SWIGTYPE_p_OGRFeatureShadow swig_types[8]
+#define SWIGTYPE_p_OGRFieldDefnShadow swig_types[9]
+#define SWIGTYPE_p_OGRFieldDomainShadow swig_types[10]
+#define SWIGTYPE_p_OGRGeomFieldDefnShadow swig_types[11]
+#define SWIGTYPE_p_OGRGeomTransformerShadow swig_types[12]
+#define SWIGTYPE_p_OGRGeometryShadow swig_types[13]
+#define SWIGTYPE_p_OGRLayerShadow swig_types[14]
+#define SWIGTYPE_p_OGRPreparedGeometryShadow swig_types[15]
+#define SWIGTYPE_p_OGRStyleTableShadow swig_types[16]
+#define SWIGTYPE_p_OSRCoordinateTransformationShadow swig_types[17]
+#define SWIGTYPE_p_OSRSpatialReferenceShadow swig_types[18]
+#define SWIGTYPE_p_char swig_types[19]
+#define SWIGTYPE_p_double swig_types[20]
+#define SWIGTYPE_p_f_double_p_q_const__char_p_void__int swig_types[21]
+#define SWIGTYPE_p_float swig_types[22]
+#define SWIGTYPE_p_int swig_types[23]
+#define SWIGTYPE_p_p_GIntBig swig_types[24]
+#define SWIGTYPE_p_p_char swig_types[25]
+#define SWIGTYPE_p_p_double swig_types[26]
+#define SWIGTYPE_p_p_int swig_types[27]
+#define SWIGTYPE_p_size_t swig_types[28]
+static swig_type_info *swig_types[30];
+static swig_module_info swig_module = {swig_types, 29, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -3786,6 +3787,47 @@ SWIGINTERN OGRErr OGRDataSourceShadow_CommitTransaction(OGRDataSourceShadow *sel
 SWIGINTERN OGRErr OGRDataSourceShadow_RollbackTransaction(OGRDataSourceShadow *self){
     return GDALDatasetRollbackTransaction(self);
   }
+SWIGINTERN void delete_ArrowArrayStream(ArrowArrayStream *self){
+    if( self->release )
+      self->release(self);
+    free(self);
+  }
+SWIGINTERN VoidPtrAsLong ArrowArrayStream__GetSchemaPtr(ArrowArrayStream *self){
+      struct ArrowSchema* schema = (struct ArrowSchema* )malloc(sizeof(struct ArrowSchema));
+      if( self->get_schema(self, schema) == 0 )
+      {
+          return schema;
+      }
+      else
+      {
+          free(schema);
+          return 0;
+      }
+  }
+SWIGINTERN void ArrowArrayStream__FreeSchemaPtr(VoidPtrAsLong ptr){
+      struct ArrowSchema* schema = (struct ArrowSchema* )ptr;
+      if( schema && schema->release )
+          schema->release(schema);
+      free(schema);
+  }
+SWIGINTERN VoidPtrAsLong ArrowArrayStream__GetNextRecordBatchPtr(ArrowArrayStream *self,char **options=NULL){
+      struct ArrowArray* array = (struct ArrowArray* )malloc(sizeof(struct ArrowArray));
+      if( self->get_next(self, array) == 0 && array->release != NULL )
+      {
+          return array;
+      }
+      else
+      {
+          free(array);
+          return 0;
+      }
+  }
+SWIGINTERN void ArrowArrayStream__FreeRecordBatchPtr(VoidPtrAsLong ptr){
+      struct ArrowArray* array = (struct ArrowArray* )ptr;
+      if( array && array->release )
+          array->release(array);
+      free(array);
+  }
 SWIGINTERN OGRErr OGRLayerShadow_Rename(OGRLayerShadow *self,char const *new_name){
     return OGR_L_Rename( self, new_name);
   }
@@ -3974,51 +4016,15 @@ SWIGINTERN void OGRLayerShadow_SetStyleTable(OGRLayerShadow *self,OGRStyleTableS
     if( table != NULL )
         OGR_L_SetStyleTable(self, (OGRStyleTableH) table);
   }
-SWIGINTERN VoidPtrAsLong OGRLayerShadow__GetRecordBatchSchemaPtr(OGRLayerShadow *self,char **options=NULL){
-      struct ArrowSchema* schema = (struct ArrowSchema* )malloc(sizeof(struct ArrowSchema));
-      if( OGR_L_GetRecordBatchSchema(self, schema, options) )
-          return schema;
+SWIGINTERN ArrowArrayStream *OGRLayerShadow_GetArrowStream(OGRLayerShadow *self,char **options=NULL){
+      struct ArrowArrayStream* stream = (struct ArrowArrayStream* )malloc(sizeof(struct ArrowArrayStream));
+      if( OGR_L_GetArrowStream(self, stream, options) )
+          return stream;
       else
       {
-          free(schema);
-          return 0;
+          free(stream);
+          return NULL;
       }
-  }
-
-SWIGINTERN int
-SWIG_AsVal_bool (PyObject *obj, bool *val)
-{
-  int r;
-  if (!PyBool_Check(obj))
-    return SWIG_ERROR;
-  r = PyObject_IsTrue(obj);
-  if (r == -1)
-    return SWIG_ERROR;
-  if (val) *val = r ? true : false;
-  return SWIG_OK;
-}
-
-SWIGINTERN void OGRLayerShadow__FreeRecordBatchSchemaPtr(VoidPtrAsLong ptr,bool bFreeContent){
-      struct ArrowSchema* schema = (struct ArrowSchema* )ptr;
-      if( bFreeContent && schema && schema->release )
-          schema->release(schema);
-      free(schema);
-  }
-SWIGINTERN VoidPtrAsLong OGRLayerShadow__GetNextRecordBatchPtr(OGRLayerShadow *self,char **options=NULL){
-      struct ArrowArray* array = (struct ArrowArray* )malloc(sizeof(struct ArrowArray));
-      if( OGR_L_GetNextRecordBatch(self, array, NULL, options) )
-          return array;
-      else
-      {
-          free(array);
-          return 0;
-      }
-  }
-SWIGINTERN void OGRLayerShadow__FreeRecordBatchArrayPtr(VoidPtrAsLong ptr,bool bFreeContent){
-      struct ArrowArray* array = (struct ArrowArray* )ptr;
-      if( bFreeContent && array && array->release )
-          array->release(array);
-      free(array);
   }
 SWIGINTERN void delete_OGRFeatureShadow(OGRFeatureShadow *self){
     OGR_F_Destroy(self);
@@ -5610,6 +5616,20 @@ OGRFieldDomainShadow* CreateRangeFieldDomain( const char *name,
                                                             minIsInclusive,
                                                             &sMax,
                                                             maxIsInclusive );
+}
+
+
+SWIGINTERN int
+SWIG_AsVal_bool (PyObject *obj, bool *val)
+{
+  int r;
+  if (!PyBool_Check(obj))
+    return SWIG_ERROR;
+  r = PyObject_IsTrue(obj);
+  if (r == -1)
+    return SWIG_ERROR;
+  if (val) *val = r ? true : false;
+  return SWIG_OK;
 }
 
 
@@ -8824,6 +8844,230 @@ SWIGINTERN PyObject *DataSource_swigregister(PyObject *SWIGUNUSEDPARM(self), PyO
   PyObject *obj;
   if (!SWIG_Python_UnpackTuple(args, "swigregister", 1, 1, &obj)) return NULL;
   SWIG_TypeNewClientData(SWIGTYPE_p_OGRDataSourceShadow, SWIG_NewClientData(obj));
+  return SWIG_Py_Void();
+}
+
+SWIGINTERN PyObject *_wrap_delete_ArrowArrayStream(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  ArrowArrayStream *arg1 = (ArrowArrayStream *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[1] ;
+  
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_ArrowArrayStream, SWIG_POINTER_DISOWN |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "delete_ArrowArrayStream" "', argument " "1"" of type '" "ArrowArrayStream *""'"); 
+  }
+  arg1 = reinterpret_cast< ArrowArrayStream * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      delete_ArrowArrayStream(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_ArrowArrayStream__GetSchemaPtr(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  ArrowArrayStream *arg1 = (ArrowArrayStream *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[1] ;
+  VoidPtrAsLong result;
+  
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_ArrowArrayStream, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ArrowArrayStream__GetSchemaPtr" "', argument " "1"" of type '" "ArrowArrayStream *""'"); 
+  }
+  arg1 = reinterpret_cast< ArrowArrayStream * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (VoidPtrAsLong)ArrowArrayStream__GetSchemaPtr(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  {
+    resultobj = PyLong_FromVoidPtr(result);
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_ArrowArrayStream__FreeSchemaPtr(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  VoidPtrAsLong arg1 = (VoidPtrAsLong) 0 ;
+  PyObject *swig_obj[1] ;
+  
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  {
+    arg1 = PyLong_AsVoidPtr(swig_obj[0]);
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      ArrowArrayStream__FreeSchemaPtr(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_ArrowArrayStream__GetNextRecordBatchPtr(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  ArrowArrayStream *arg1 = (ArrowArrayStream *) 0 ;
+  char **arg2 = (char **) NULL ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[2] ;
+  VoidPtrAsLong result;
+  
+  if (!SWIG_Python_UnpackTuple(args, "ArrowArrayStream__GetNextRecordBatchPtr", 1, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_ArrowArrayStream, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ArrowArrayStream__GetNextRecordBatchPtr" "', argument " "1"" of type '" "ArrowArrayStream *""'"); 
+  }
+  arg1 = reinterpret_cast< ArrowArrayStream * >(argp1);
+  if (swig_obj[1]) {
+    {
+      /* %typemap(in) char **options */
+      int bErr = FALSE;
+      arg2 = CSLFromPySequence(swig_obj[1], &bErr);
+      if( bErr )
+      {
+        SWIG_fail;
+      }
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (VoidPtrAsLong)ArrowArrayStream__GetNextRecordBatchPtr(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  {
+    resultobj = PyLong_FromVoidPtr(result);
+  }
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_ArrowArrayStream__FreeRecordBatchPtr(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  VoidPtrAsLong arg1 = (VoidPtrAsLong) 0 ;
+  PyObject *swig_obj[1] ;
+  
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  {
+    arg1 = PyLong_AsVoidPtr(swig_obj[0]);
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      ArrowArrayStream__FreeRecordBatchPtr(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *ArrowArrayStream_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *obj;
+  if (!SWIG_Python_UnpackTuple(args, "swigregister", 1, 1, &obj)) return NULL;
+  SWIG_TypeNewClientData(SWIGTYPE_p_ArrowArrayStream, SWIG_NewClientData(obj));
   return SWIG_Py_Void();
 }
 
@@ -12469,19 +12713,19 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_Layer__GetRecordBatchSchemaPtr(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_Layer_GetArrowStream(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
   char **arg2 = (char **) NULL ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   PyObject *swig_obj[2] ;
-  VoidPtrAsLong result;
+  ArrowArrayStream *result = 0 ;
   
-  if (!SWIG_Python_UnpackTuple(args, "Layer__GetRecordBatchSchemaPtr", 1, 2, swig_obj)) SWIG_fail;
+  if (!SWIG_Python_UnpackTuple(args, "Layer_GetArrowStream", 1, 2, swig_obj)) SWIG_fail;
   res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer__GetRecordBatchSchemaPtr" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_GetArrowStream" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
   if (swig_obj[1]) {
@@ -12501,7 +12745,7 @@ SWIGINTERN PyObject *_wrap_Layer__GetRecordBatchSchemaPtr(PyObject *SWIGUNUSEDPA
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-      result = (VoidPtrAsLong)OGRLayerShadow__GetRecordBatchSchemaPtr(arg1,arg2);
+      result = (ArrowArrayStream *)OGRLayerShadow_GetArrowStream(arg1,arg2);
       SWIG_PYTHON_THREAD_END_ALLOW;
     }
 #ifndef SED_HACKS
@@ -12513,9 +12757,7 @@ SWIGINTERN PyObject *_wrap_Layer__GetRecordBatchSchemaPtr(PyObject *SWIGUNUSEDPA
     }
 #endif
   }
-  {
-    resultobj = PyLong_FromVoidPtr(result);
-  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_ArrowArrayStream, SWIG_POINTER_OWN |  0 );
   {
     /* %typemap(freearg) char **options */
     CSLDestroy( arg2 );
@@ -12527,154 +12769,6 @@ fail:
     /* %typemap(freearg) char **options */
     CSLDestroy( arg2 );
   }
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_Layer__FreeRecordBatchSchemaPtr(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
-  VoidPtrAsLong arg1 = (VoidPtrAsLong) 0 ;
-  bool arg2 ;
-  bool val2 ;
-  int ecode2 = 0 ;
-  PyObject *swig_obj[2] ;
-  
-  if (!SWIG_Python_UnpackTuple(args, "Layer__FreeRecordBatchSchemaPtr", 2, 2, swig_obj)) SWIG_fail;
-  {
-    arg1 = PyLong_AsVoidPtr(swig_obj[0]);
-  }
-  ecode2 = SWIG_AsVal_bool(swig_obj[1], &val2);
-  if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Layer__FreeRecordBatchSchemaPtr" "', argument " "2"" of type '" "bool""'");
-  } 
-  arg2 = static_cast< bool >(val2);
-  {
-    if ( bUseExceptions ) {
-      ClearErrorState();
-    }
-    {
-      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-      OGRLayerShadow__FreeRecordBatchSchemaPtr(arg1,arg2);
-      SWIG_PYTHON_THREAD_END_ALLOW;
-    }
-#ifndef SED_HACKS
-    if ( bUseExceptions ) {
-      CPLErr eclass = CPLGetLastErrorType();
-      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-      }
-    }
-#endif
-  }
-  resultobj = SWIG_Py_Void();
-  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_Layer__GetNextRecordBatchPtr(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
-  OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
-  char **arg2 = (char **) NULL ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  PyObject *swig_obj[2] ;
-  VoidPtrAsLong result;
-  
-  if (!SWIG_Python_UnpackTuple(args, "Layer__GetNextRecordBatchPtr", 1, 2, swig_obj)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer__GetNextRecordBatchPtr" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
-  }
-  arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
-  if (swig_obj[1]) {
-    {
-      /* %typemap(in) char **options */
-      int bErr = FALSE;
-      arg2 = CSLFromPySequence(swig_obj[1], &bErr);
-      if( bErr )
-      {
-        SWIG_fail;
-      }
-    }
-  }
-  {
-    if ( bUseExceptions ) {
-      ClearErrorState();
-    }
-    {
-      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-      result = (VoidPtrAsLong)OGRLayerShadow__GetNextRecordBatchPtr(arg1,arg2);
-      SWIG_PYTHON_THREAD_END_ALLOW;
-    }
-#ifndef SED_HACKS
-    if ( bUseExceptions ) {
-      CPLErr eclass = CPLGetLastErrorType();
-      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-      }
-    }
-#endif
-  }
-  {
-    resultobj = PyLong_FromVoidPtr(result);
-  }
-  {
-    /* %typemap(freearg) char **options */
-    CSLDestroy( arg2 );
-  }
-  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
-  return resultobj;
-fail:
-  {
-    /* %typemap(freearg) char **options */
-    CSLDestroy( arg2 );
-  }
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_Layer__FreeRecordBatchArrayPtr(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
-  VoidPtrAsLong arg1 = (VoidPtrAsLong) 0 ;
-  bool arg2 ;
-  bool val2 ;
-  int ecode2 = 0 ;
-  PyObject *swig_obj[2] ;
-  
-  if (!SWIG_Python_UnpackTuple(args, "Layer__FreeRecordBatchArrayPtr", 2, 2, swig_obj)) SWIG_fail;
-  {
-    arg1 = PyLong_AsVoidPtr(swig_obj[0]);
-  }
-  ecode2 = SWIG_AsVal_bool(swig_obj[1], &val2);
-  if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Layer__FreeRecordBatchArrayPtr" "', argument " "2"" of type '" "bool""'");
-  } 
-  arg2 = static_cast< bool >(val2);
-  {
-    if ( bUseExceptions ) {
-      ClearErrorState();
-    }
-    {
-      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-      OGRLayerShadow__FreeRecordBatchArrayPtr(arg1,arg2);
-      SWIG_PYTHON_THREAD_END_ALLOW;
-    }
-#ifndef SED_HACKS
-    if ( bUseExceptions ) {
-      CPLErr eclass = CPLGetLastErrorType();
-      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-      }
-    }
-#endif
-  }
-  resultobj = SWIG_Py_Void();
-  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
-  return resultobj;
-fail:
   return NULL;
 }
 
@@ -31003,6 +31097,12 @@ static PyMethodDef SwigMethods[] = {
 	 { "DataSource_CommitTransaction", _wrap_DataSource_CommitTransaction, METH_O, "DataSource_CommitTransaction(DataSource self) -> OGRErr"},
 	 { "DataSource_RollbackTransaction", _wrap_DataSource_RollbackTransaction, METH_O, "DataSource_RollbackTransaction(DataSource self) -> OGRErr"},
 	 { "DataSource_swigregister", DataSource_swigregister, METH_O, NULL},
+	 { "delete_ArrowArrayStream", _wrap_delete_ArrowArrayStream, METH_O, "delete_ArrowArrayStream(ArrowArrayStream self)"},
+	 { "ArrowArrayStream__GetSchemaPtr", _wrap_ArrowArrayStream__GetSchemaPtr, METH_O, "ArrowArrayStream__GetSchemaPtr(ArrowArrayStream self) -> VoidPtrAsLong"},
+	 { "ArrowArrayStream__FreeSchemaPtr", _wrap_ArrowArrayStream__FreeSchemaPtr, METH_O, "ArrowArrayStream__FreeSchemaPtr(VoidPtrAsLong ptr)"},
+	 { "ArrowArrayStream__GetNextRecordBatchPtr", _wrap_ArrowArrayStream__GetNextRecordBatchPtr, METH_VARARGS, "ArrowArrayStream__GetNextRecordBatchPtr(ArrowArrayStream self, char ** options=None) -> VoidPtrAsLong"},
+	 { "ArrowArrayStream__FreeRecordBatchPtr", _wrap_ArrowArrayStream__FreeRecordBatchPtr, METH_O, "ArrowArrayStream__FreeRecordBatchPtr(VoidPtrAsLong ptr)"},
+	 { "ArrowArrayStream_swigregister", ArrowArrayStream_swigregister, METH_O, NULL},
 	 { "Layer_Rename", _wrap_Layer_Rename, METH_VARARGS, "Layer_Rename(Layer self, char const * new_name) -> OGRErr"},
 	 { "Layer_GetRefCount", _wrap_Layer_GetRefCount, METH_O, "\n"
 		"Layer_GetRefCount(Layer self) -> int\n"
@@ -32554,10 +32654,7 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"Set style table. \n"
 		""},
-	 { "Layer__GetRecordBatchSchemaPtr", _wrap_Layer__GetRecordBatchSchemaPtr, METH_VARARGS, "Layer__GetRecordBatchSchemaPtr(Layer self, char ** options=None) -> VoidPtrAsLong"},
-	 { "Layer__FreeRecordBatchSchemaPtr", _wrap_Layer__FreeRecordBatchSchemaPtr, METH_VARARGS, "Layer__FreeRecordBatchSchemaPtr(VoidPtrAsLong ptr, bool bFreeContent)"},
-	 { "Layer__GetNextRecordBatchPtr", _wrap_Layer__GetNextRecordBatchPtr, METH_VARARGS, "Layer__GetNextRecordBatchPtr(Layer self, char ** options=None) -> VoidPtrAsLong"},
-	 { "Layer__FreeRecordBatchArrayPtr", _wrap_Layer__FreeRecordBatchArrayPtr, METH_VARARGS, "Layer__FreeRecordBatchArrayPtr(VoidPtrAsLong ptr, bool bFreeContent)"},
+	 { "Layer_GetArrowStream", _wrap_Layer_GetArrowStream, METH_VARARGS, "Layer_GetArrowStream(Layer self, char ** options=None) -> ArrowArrayStream"},
 	 { "Layer_swigregister", Layer_swigregister, METH_O, NULL},
 	 { "delete_Feature", _wrap_delete_Feature, METH_O, "delete_Feature(Feature self)"},
 	 { "new_Feature", (PyCFunction)(void(*)(void))_wrap_new_Feature, METH_VARARGS|METH_KEYWORDS, "new_Feature(FeatureDefn feature_def) -> Feature"},
@@ -36350,6 +36447,7 @@ static void *_p_OGRLayerShadowTo_p_GDALMajorObjectShadow(void *x, int *SWIGUNUSE
 static void *_p_OGRDataSourceShadowTo_p_GDALMajorObjectShadow(void *x, int *SWIGUNUSEDPARM(newmemory)) {
     return (void *)((GDALMajorObjectShadow *)  ((OGRDataSourceShadow *) x));
 }
+static swig_type_info _swigt__p_ArrowArrayStream = {"_p_ArrowArrayStream", "ArrowArrayStream *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALMajorObjectShadow = {"_p_GDALMajorObjectShadow", "GDALMajorObjectShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALProgressFunc = {"_p_GDALProgressFunc", "GDALProgressFunc *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GIntBig = {"_p_GIntBig", "GIntBig *", 0, 0, (void*)0, 0};
@@ -36380,6 +36478,7 @@ static swig_type_info _swigt__p_p_int = {"_p_p_int", "int **", 0, 0, (void*)0, 0
 static swig_type_info _swigt__p_size_t = {"_p_size_t", "size_t *", 0, 0, (void*)0, 0};
 
 static swig_type_info *swig_type_initial[] = {
+  &_swigt__p_ArrowArrayStream,
   &_swigt__p_GDALMajorObjectShadow,
   &_swigt__p_GDALProgressFunc,
   &_swigt__p_GIntBig,
@@ -36410,6 +36509,7 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_size_t,
 };
 
+static swig_cast_info _swigc__p_ArrowArrayStream[] = {  {&_swigt__p_ArrowArrayStream, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALMajorObjectShadow[] = {  {&_swigt__p_GDALMajorObjectShadow, 0, 0, 0},  {&_swigt__p_OGRDriverShadow, _p_OGRDriverShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_OGRLayerShadow, _p_OGRLayerShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_OGRDataSourceShadow, _p_OGRDataSourceShadowTo_p_GDALMajorObjectShadow, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALProgressFunc[] = {  {&_swigt__p_GDALProgressFunc, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GIntBig[] = {  {&_swigt__p_GIntBig, 0, 0, 0},{0, 0, 0, 0}};
@@ -36440,6 +36540,7 @@ static swig_cast_info _swigc__p_p_int[] = {  {&_swigt__p_p_int, 0, 0, 0},{0, 0, 
 static swig_cast_info _swigc__p_size_t[] = {  {&_swigt__p_size_t, 0, 0, 0},{0, 0, 0, 0}};
 
 static swig_cast_info *swig_cast_initial[] = {
+  _swigc__p_ArrowArrayStream,
   _swigc__p_GDALMajorObjectShadow,
   _swigc__p_GDALProgressFunc,
   _swigc__p_GIntBig,
