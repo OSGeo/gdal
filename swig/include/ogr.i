@@ -987,6 +987,68 @@ public:
 
 #endif /* FROM_GDAL_I */
 
+#ifdef SWIGPYTHON
+class ArrowArrayStream {
+  ArrowArrayStream();
+public:
+%extend {
+
+  ~ArrowArrayStream() {
+    if( self->release )
+      self->release(self);
+    free(self);
+  }
+
+  VoidPtrAsLong _GetSchemaPtr()
+  {
+      struct ArrowSchema* schema = (struct ArrowSchema* )malloc(sizeof(struct ArrowSchema));
+      if( self->get_schema(self, schema) == 0 )
+      {
+          return schema;
+      }
+      else
+      {
+          free(schema);
+          return 0;
+      }
+  }
+
+  static void _FreeSchemaPtr(VoidPtrAsLong ptr)
+  {
+      struct ArrowSchema* schema = (struct ArrowSchema* )ptr;
+      if( schema && schema->release )
+          schema->release(schema);
+      free(schema);
+  }
+
+  VoidPtrAsLong _GetNextRecordBatchPtr(char** options = NULL)
+  {
+      struct ArrowArray* array = (struct ArrowArray* )malloc(sizeof(struct ArrowArray));
+      if( self->get_next(self, array) == 0 && array->release != NULL )
+      {
+          return array;
+      }
+      else
+      {
+          free(array);
+          return 0;
+      }
+  }
+
+  static void _FreeRecordBatchPtr(VoidPtrAsLong ptr)
+  {
+      struct ArrowArray* array = (struct ArrowArray* )ptr;
+      if( array && array->release )
+          array->release(array);
+      free(array);
+  }
+
+} /* %extend */
+
+
+}; /* class ArrowArrayStream */
+#endif
+
 /************************************************************************/
 /*                               OGRLayer                               */
 /************************************************************************/
@@ -1315,44 +1377,18 @@ public:
   }
 
 #ifdef SWIGPYTHON
-  VoidPtrAsLong _GetRecordBatchSchemaPtr(char** options = NULL) {
-      struct ArrowSchema* schema = (struct ArrowSchema* )malloc(sizeof(struct ArrowSchema));
-      if( OGR_L_GetRecordBatchSchema(self, schema, options) )
-          return schema;
+
+%newobject GetArrowStream;
+  ArrowArrayStream* GetArrowStream(char** options = NULL) {
+      struct ArrowArrayStream* stream = (struct ArrowArrayStream* )malloc(sizeof(struct ArrowArrayStream));
+      if( OGR_L_GetArrowStream(self, stream, options) )
+          return stream;
       else
       {
-          free(schema);
-          return 0;
+          free(stream);
+          return NULL;
       }
   }
-
-  static void _FreeRecordBatchSchemaPtr(VoidPtrAsLong ptr, bool bFreeContent)
-  {
-      struct ArrowSchema* schema = (struct ArrowSchema* )ptr;
-      if( bFreeContent && schema && schema->release )
-          schema->release(schema);
-      free(schema);
-  }
-
-  VoidPtrAsLong _GetNextRecordBatchPtr(char** options = NULL) {
-      struct ArrowArray* array = (struct ArrowArray* )malloc(sizeof(struct ArrowArray));
-      if( OGR_L_GetNextRecordBatch(self, array, NULL, options) )
-          return array;
-      else
-      {
-          free(array);
-          return 0;
-      }
-  }
-
-  static void _FreeRecordBatchArrayPtr(VoidPtrAsLong ptr, bool bFreeContent)
-  {
-      struct ArrowArray* array = (struct ArrowArray* )ptr;
-      if( bFreeContent && array && array->release )
-          array->release(array);
-      free(array);
-  }
-
 #endif
 
 } /* %extend */

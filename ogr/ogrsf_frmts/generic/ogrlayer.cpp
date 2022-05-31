@@ -36,6 +36,7 @@
 #include "ogr_recordbatch.h"
 
 #include "cpl_time.h"
+#include <cassert>
 #include <limits>
 
 CPL_CVSID("$Id$")
@@ -101,6 +102,11 @@ OGRLayer::~OGRLayer()
     {
         OGRDestroyPreparedGeometry(m_pPreparedFilterGeom);
         m_pPreparedFilterGeom = nullptr;
+    }
+
+    if( m_poSharedArrowArrayStreamPrivateData != nullptr )
+    {
+        m_poSharedArrowArrayStreamPrivateData->m_poLayer = nullptr;
     }
 }
 
@@ -4463,10 +4469,10 @@ OGRLayer::FeatureIterator OGRLayer::end()
 }
 
 /************************************************************************/
-/*                      OGRLayerReleaseSchema()                         */
+/*                          DefaultReleaseSchema()                      */
 /************************************************************************/
 
-static void OGRLayerReleaseSchema(struct ArrowSchema* schema)
+static void OGRLayerDefaultReleaseSchema(struct ArrowSchema* schema)
 {
     CPLAssert(schema->release != nullptr);
     if( STARTS_WITH(schema->format, "w:") )
@@ -4491,6 +4497,20 @@ static void OGRLayerReleaseSchema(struct ArrowSchema* schema)
         }
     }
     schema->release = nullptr;
+}
+
+/** Release a ArrowSchema.
+ *
+ * To be used by driver implementations that have a custom GetArrowStream()
+ * implementation.
+ *
+ * @param schema Schema to release.
+ * @since GDAL 3.6
+ */
+
+void OGRLayer::ReleaseSchema(struct ArrowSchema* schema)
+{
+    OGRLayerDefaultReleaseSchema(schema);
 }
 
 /************************************************************************/
@@ -4534,7 +4554,7 @@ static void AddDictToSchema(struct ArrowSchema* psChild,
     auto psChildDict = static_cast<struct ArrowSchema*>(
         CPLCalloc(1, sizeof(struct ArrowSchema)));
     psChild->dictionary = psChildDict;
-    psChildDict->release = OGRLayerReleaseSchema;
+    psChildDict->release = OGRLayerDefaultReleaseSchema;
     psChildDict->name = CPLStrdup(poCodedDomain->GetName().c_str());
     psChildDict->format = "u";
     if( nCountNull )
@@ -4542,27 +4562,21 @@ static void AddDictToSchema(struct ArrowSchema* psChild,
 }
 
 /************************************************************************/
-/*                      GetRecordBatchSchema()                          */
+/*                     DefaultGetArrowSchema()                          */
 /************************************************************************/
 
-/** Get record batch schema, as a Arrow Schema.
+/** Default implementation of the ArrowArrayStream::get_schema() callback.
  *
- * Include ogr_recordbatch.h.
+ * To be used by driver implementations that have a custom GetArrowStream()
+ * implementation.
  *
- * On successful return, and when the schema is no longer needed, it must must
- * be freed with out_schema->release(out_schema).
- *
- * @param out_schema Output schema Must *not* be NULL. The content of the
- *                   structure does not need to be initialized.
- * @param papszOptions NULL terminated list of key=value options.
- * @return true in case of success.
  * @since GDAL 3.6
  */
-bool OGRLayer::GetRecordBatchSchema(struct ArrowSchema* out_schema,
-                                    CSLConstList papszOptions)
+int OGRLayer::GetArrowSchema(struct ArrowArrayStream*,
+                             struct ArrowSchema* out_schema)
 {
     const bool bIncludeFID = CPLTestBool(
-        CSLFetchNameValueDef(papszOptions, "INCLUDE_FID", "YES"));
+        m_aosArrowArrayStreamOptions.FetchNameValueDef("INCLUDE_FID", "YES"));
     memset(out_schema, 0, sizeof(*out_schema));
     out_schema->format = "+s";
     out_schema->name = CPLStrdup("");
@@ -4580,7 +4594,7 @@ bool OGRLayer::GetRecordBatchSchema(struct ArrowSchema* out_schema,
             CPLCalloc(1, sizeof(struct ArrowSchema)));
         auto psChild = out_schema->children[iSchemaChild];
         ++iSchemaChild;
-        psChild->release = OGRLayerReleaseSchema;
+        psChild->release = OGRLayer::ReleaseSchema;
         const char* pszFIDName = GetFIDColumn();
         psChild->name = CPLStrdup((pszFIDName && pszFIDName[0]) ? pszFIDName : "OGC_FID");
         psChild->format = "l";
@@ -4597,7 +4611,7 @@ bool OGRLayer::GetRecordBatchSchema(struct ArrowSchema* out_schema,
             CPLCalloc(1, sizeof(struct ArrowSchema)));
         auto psChild = out_schema->children[iSchemaChild];
         ++iSchemaChild;
-        psChild->release = OGRLayerReleaseSchema;
+        psChild->release = OGRLayer::ReleaseSchema;
         psChild->name = CPLStrdup(poFieldDefn->GetNameRef());
         if( poFieldDefn->IsNullable() )
             psChild->flags = ARROW_FLAG_NULLABLE;
@@ -4710,7 +4724,7 @@ bool OGRLayer::GetRecordBatchSchema(struct ArrowSchema* out_schema,
                 CPLCalloc(1, sizeof(struct ArrowSchema*)));
             psChild->children[0] = static_cast<struct ArrowSchema*>(
                 CPLCalloc(1, sizeof(struct ArrowSchema)));
-            psChild->children[0]->release = OGRLayerReleaseSchema;
+            psChild->children[0]->release = OGRLayer::ReleaseSchema;
             psChild->children[0]->name = CPLStrdup("item");
             psChild->children[0]->format = item_format;
         }
@@ -4727,7 +4741,7 @@ bool OGRLayer::GetRecordBatchSchema(struct ArrowSchema* out_schema,
             CPLCalloc(1, sizeof(struct ArrowSchema)));
         auto psChild = out_schema->children[iSchemaChild];
         ++iSchemaChild;
-        psChild->release = OGRLayerReleaseSchema;
+        psChild->release = OGRLayer::ReleaseSchema;
         const char* pszGeomFieldName = poFieldDefn->GetNameRef();
         if( pszGeomFieldName[0] == '\0' )
             pszGeomFieldName = "wkb_geometry";
@@ -4761,15 +4775,40 @@ bool OGRLayer::GetRecordBatchSchema(struct ArrowSchema* out_schema,
     }
 
     out_schema->n_children = iSchemaChild;
-    out_schema->release = OGRLayerReleaseSchema;
-    return true;
+    out_schema->release = OGRLayer::ReleaseSchema;
+    return 0;
 }
 
 /************************************************************************/
-/*                      OGRLayerReleaseArray()                          */
+/*                         StaticGetArrowSchema()                       */
 /************************************************************************/
 
-static void OGRLayerReleaseArray(struct ArrowArray* array)
+/** Default implementation of the ArrowArrayStream::get_schema() callback.
+ *
+ * To be used by driver implementations that have a custom GetArrowStream()
+ * implementation.
+ *
+ * @since GDAL 3.6
+ */
+int OGRLayer::StaticGetArrowSchema(struct ArrowArrayStream* stream,
+                                   struct ArrowSchema* out_schema)
+{
+    auto poLayer = static_cast<ArrowArrayStreamPrivateDataSharedDataWrapper*>(
+                            stream->private_data)->poShared->m_poLayer;
+    if( poLayer == nullptr )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Calling get_schema() on a freed OGRLayer is not supported");
+        return EINVAL;
+    }
+    return poLayer->GetArrowSchema(stream, out_schema);
+}
+
+/************************************************************************/
+/*                         DefaultReleaseArray()                        */
+/************************************************************************/
+
+static void OGRLayerDefaultReleaseArray(struct ArrowArray* array)
 {
     for(int i = 0; i < static_cast<int>(array->n_buffers); ++i )
         VSIFreeAligned(const_cast<void*>(array->buffers[i]));
@@ -4794,20 +4833,17 @@ static void OGRLayerReleaseArray(struct ArrowArray* array)
     array->release = nullptr;
 }
 
-/************************************************************************/
-/*                             ReleaseArray()                           */
-/************************************************************************/
-
 /** Release a ArrowArray.
  *
- * To be used by driver implementations that override GetNextRecordBatch()
+ * To be used by driver implementations that have a custom GetArrowStream()
+ * implementation.
  *
  * @param array Arrow array to release.
  * @since GDAL 3.6
  */
 void OGRLayer::ReleaseArray(struct ArrowArray* array)
 {
-    OGRLayerReleaseArray(array);
+    OGRLayerDefaultReleaseArray(array);
 }
 
 /************************************************************************/
@@ -5012,7 +5048,7 @@ static bool FillListArray(struct ArrowArray* psChild,
     psChild->children[0] = static_cast<struct ArrowArray*>(CPLCalloc(1, sizeof(struct ArrowArray)));
     auto psValueChild = psChild->children[0];
 
-    psValueChild->release = OGRLayerReleaseArray;
+    psValueChild->release = OGRLayerDefaultReleaseArray;
     psValueChild->n_buffers = 2;
     psValueChild->buffers = static_cast<const void**>(CPLCalloc(2, sizeof(void*)));
     psValueChild->length = nOffset;
@@ -5096,7 +5132,7 @@ static bool FillListArrayBool(struct ArrowArray* psChild,
     psChild->children[0] = static_cast<struct ArrowArray*>(CPLCalloc(1, sizeof(struct ArrowArray)));
     auto psValueChild = psChild->children[0];
 
-    psValueChild->release = OGRLayerReleaseArray;
+    psValueChild->release = OGRLayerDefaultReleaseArray;
     psValueChild->n_buffers = 2;
     psValueChild->buffers = static_cast<const void**>(CPLCalloc(2, sizeof(void*)));
     psValueChild->length = nOffset;
@@ -5240,7 +5276,7 @@ static bool FillDict(struct ArrowArray* psChild,
     auto psDict = static_cast<struct ArrowArray*>(CPLCalloc(1, sizeof(struct ArrowArray)));
     psChild->dictionary = psDict;
 
-    psDict->release = OGRLayerReleaseArray;
+    psDict->release = OGRLayerDefaultReleaseArray;
     psDict->length = nLength;
     psDict->n_buffers = 3;
     psDict->buffers = static_cast<const void**>(CPLCalloc(3, sizeof(void*)));
@@ -5365,7 +5401,7 @@ static bool FillStringListArray(struct ArrowArray* psChild,
     psChild->children[0] = static_cast<struct ArrowArray*>(CPLCalloc(1, sizeof(struct ArrowArray)));
     auto psValueChild = psChild->children[0];
 
-    psValueChild->release = OGRLayerReleaseArray;
+    psValueChild->release = OGRLayerDefaultReleaseArray;
     psValueChild->length = nStrings;
     psValueChild->n_buffers = 3;
     psValueChild->buffers = static_cast<const void**>(CPLCalloc(3, sizeof(void*)));
@@ -5782,31 +5818,23 @@ static bool FillDateTimeArray(struct ArrowArray* psChild,
 }
 
 /************************************************************************/
-/*                      GetNextRecordBatch()                            */
+/*                          GetNextArrowArray()                         */
 /************************************************************************/
 
-/** Get next record batch, as a Arrow Array (of type Struct).
+/** Default implementation of the ArrowArrayStream::get_next() callback.
  *
- * On successful return, and when the array is no longer needed, it must must
- * be freed with out_array->release(out_array). If out_schema was not NULL, it
- * must must be freed with out_schema->release(out_schema).
+ * To be used by driver implementations that have a custom GetArrowStream()
+ * implementation.
  *
- * @param out_array Output array. Must *not* be NULL. The content of the
- *                  structure does not need to be initialized.
- * @param out_schema Output schema, or NULL if not needed. If passed not null,
- *                   the content of the structure does not need to be initialized.
- * @param papszOptions NULL terminated list of key=value options.
- * @return true in case of success, or false when no more record batch are available.
  * @since GDAL 3.6
  */
-bool OGRLayer::GetNextRecordBatch(struct ArrowArray* out_array,
-                                  struct ArrowSchema* out_schema,
-                                  CSLConstList papszOptions)
+int OGRLayer::GetNextArrowArray(struct ArrowArrayStream*,
+                                 struct ArrowArray* out_array)
 {
     const bool bIncludeFID = CPLTestBool(
-        CSLFetchNameValueDef(papszOptions, "INCLUDE_FID", "YES"));
+        m_aosArrowArrayStreamOptions.FetchNameValueDef("INCLUDE_FID", "YES"));
     int nMaxBatchSize = atoi(
-        CSLFetchNameValueDef(papszOptions, "MAX_FEATURES_IN_BATCH", "65536"));
+        m_aosArrowArrayStreamOptions.FetchNameValueDef("MAX_FEATURES_IN_BATCH", "65536"));
     if( nMaxBatchSize <= 0 )
         nMaxBatchSize = 1;
     if( nMaxBatchSize > INT_MAX - 1 )
@@ -5820,22 +5848,17 @@ bool OGRLayer::GetNextRecordBatch(struct ArrowArray* out_array,
     catch( const std::exception& e )
     {
         CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
-        return false;
+        return ENOMEM;
     }
 
     memset(out_array, 0, sizeof(*out_array));
-    if( out_schema )
-    {
-        if( !GetRecordBatchSchema(out_schema, papszOptions) )
-            return false;
-    }
     auto poLayerDefn = GetLayerDefn();
     const int nFieldCount = poLayerDefn->GetFieldCount();
     const int nGeomFieldCount = poLayerDefn->GetGeomFieldCount();
     const int nMaxChildren = (bIncludeFID ? 1 : 0) + nFieldCount + nGeomFieldCount;
     int iSchemaChild = 0;
 
-    out_array->release = OGRLayerReleaseArray;
+    out_array->release = OGRLayerDefaultReleaseArray;
 
     for( int i = 0; i < nMaxBatchSize; i++ )
     {
@@ -5845,7 +5868,11 @@ bool OGRLayer::GetNextRecordBatch(struct ArrowArray* out_array,
         apoFeatures.emplace_back(std::move(poFeature));
     }
     if( apoFeatures.empty() )
-        goto error;
+    {
+        out_array->release(out_array);
+        memset(out_array, 0, sizeof(*out_array));
+        return 0;
+    }
 
     out_array->length = apoFeatures.size();
     out_array->null_count = -1;
@@ -5853,7 +5880,7 @@ bool OGRLayer::GetNextRecordBatch(struct ArrowArray* out_array,
     out_array->n_children = nMaxChildren;
     out_array->children = static_cast<struct ArrowArray**>(
                         CPLCalloc(nMaxChildren, sizeof(struct ArrowArray*)));
-    out_array->release = OGRLayerReleaseArray;
+    out_array->release = OGRLayerDefaultReleaseArray;
     out_array->n_buffers = 1;
     out_array->buffers = static_cast<const void**>(CPLCalloc(1, sizeof(void*)));
 
@@ -5863,7 +5890,7 @@ bool OGRLayer::GetNextRecordBatch(struct ArrowArray* out_array,
             CPLCalloc(1, sizeof(struct ArrowArray)));
         auto psChild = out_array->children[iSchemaChild];
         ++iSchemaChild;
-        psChild->release = OGRLayerReleaseArray;
+        psChild->release = OGRLayerDefaultReleaseArray;
         psChild->length = apoFeatures.size();
         psChild->n_buffers = 2;
         psChild->buffers = static_cast<const void**>(CPLCalloc(2, sizeof(void*)));
@@ -5890,7 +5917,7 @@ bool OGRLayer::GetNextRecordBatch(struct ArrowArray* out_array,
             CPLCalloc(1, sizeof(struct ArrowArray)));
         auto psChild = out_array->children[iSchemaChild];
         ++iSchemaChild;
-        psChild->release = OGRLayerReleaseArray;
+        psChild->release = OGRLayerDefaultReleaseArray;
         psChild->length = apoFeatures.size();
         const bool bIsNullable = poFieldDefn->IsNullable();
         const auto eSubType = poFieldDefn->GetSubType();
@@ -6061,7 +6088,7 @@ bool OGRLayer::GetNextRecordBatch(struct ArrowArray* out_array,
             CPLCalloc(1, sizeof(struct ArrowArray)));
         auto psChild = out_array->children[iSchemaChild];
         ++iSchemaChild;
-        psChild->release = OGRLayerReleaseArray;
+        psChild->release = OGRLayerDefaultReleaseArray;
         psChild->length = apoFeatures.size();
         if( !FillWKBGeometryArray<int32_t>(psChild, apoFeatures, poFieldDefn, i) )
             goto error;
@@ -6069,17 +6096,37 @@ bool OGRLayer::GetNextRecordBatch(struct ArrowArray* out_array,
 
     out_array->n_children = iSchemaChild;
 
-    return true;
+    return 0;
 
 error:
-    if( out_schema )
-    {
-        out_schema->release(out_schema);
-        memset(out_schema, 0, sizeof(*out_schema));
-    }
     out_array->release(out_array);
     memset(out_array, 0, sizeof(*out_array));
-    return false;
+    return ENOMEM;
+}
+
+/************************************************************************/
+/*                       StaticGetNextArrowArray()                      */
+/************************************************************************/
+
+/** Default implementation of the ArrowArrayStream::get_next() callback.
+ *
+ * To be used by driver implementations that have a custom GetArrowStream()
+ * implementation.
+ *
+ * @since GDAL 3.6
+ */
+int OGRLayer::StaticGetNextArrowArray(struct ArrowArrayStream* stream,
+                                             struct ArrowArray* out_array)
+{
+    auto poLayer = static_cast<ArrowArrayStreamPrivateDataSharedDataWrapper*>(
+                            stream->private_data)->poShared->m_poLayer;
+    if( poLayer == nullptr )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Calling get_next() on a freed OGRLayer is not supported");
+        return EINVAL;
+    }
+    return poLayer->GetNextArrowArray(stream, out_array);
 }
 
 /************************************************************************/
@@ -6102,62 +6149,251 @@ GDALDataset* OGRLayer::GetDataset()
 }
 
 /************************************************************************/
-/*                     OGR_L_GetRecordBatchSchema()                     */
+/*                            ReleaseStream()                           */
 /************************************************************************/
 
-/** Get record batch schema, as a Arrow Schema.
+/** Release a ArrowArrayStream.
  *
- * Include ogr_recordbatch.h.
+ * To be used by driver implementations that have a custom GetArrowStream()
+ * implementation.
  *
- * On successful return, and when the schema is no longer needed, it must must
- * be freed with out_schema->release(out_schema).
+ * @param stream Arrow array stream to release.
+ * @since GDAL 3.6
+ */
+void OGRLayer::ReleaseStream(struct ArrowArrayStream* stream)
+{
+    assert( stream->release == OGRLayer::ReleaseStream );
+    ArrowArrayStreamPrivateDataSharedDataWrapper* poPrivate =
+        static_cast<ArrowArrayStreamPrivateDataSharedDataWrapper*>(stream->private_data);
+    poPrivate->poShared->m_bArrowArrayStreamInProgress = false;
+    delete poPrivate;
+    stream->private_data = nullptr;
+    stream->release = nullptr;
+}
+
+/************************************************************************/
+/*                     GetLastErrorArrowArrayStream()                   */
+/************************************************************************/
+
+/** Default implementation of the ArrowArrayStream::get_last_error() callback.
  *
- * @param hLayer Layer
- * @param out_schema Output schema Must *not* be NULL. The content of the
- *                   structure does not need to be initialized.
+ * To be used by driver implementations that have a custom GetArrowStream()
+ * implementation.
+ *
+ * @since GDAL 3.6
+ */
+const char* OGRLayer::GetLastErrorArrowArrayStream(struct ArrowArrayStream*)
+{
+    const char* pszLastErrorMsg = CPLGetLastErrorMsg();
+    return pszLastErrorMsg[0] != '\0' ? pszLastErrorMsg : nullptr;
+}
+
+/************************************************************************/
+/*                          GetArrowStream()                            */
+/************************************************************************/
+
+/** Get a Arrow C stream.
+ *
+ * On successful return, and when the stream interfaces is no longer needed, it must must
+ * be freed with out_stream->release(out_stream). Please carefully read
+ * https://arrow.apache.org/docs/format/CStreamInterface.html for more details
+ * on using Arrow C stream.
+ *
+ * The method may take into account ignored fields set with SetIgnoredFields()
+ * (the default implementation does), and should take into account filters set with
+ * SetSpatialFilter() and SetAttributeFilter(). Note however that specialized
+ * implementations may fallback to the default (slower) implementation when
+ * filters are set.
+ *
+ * There are extra precautions to take into account in a OGR context. Unless
+ * otherwise specified by a particular driver implementation, the ArrowArrayStream
+ * structure, and the ArrowSchema or ArrowArray objects its callbacks have returned,
+ * should no longer be used (except for potentially being released) after the
+ * OGRLayer from which it was initialized has been destroyed (typically at dataset
+ * closing). Furthermore, unless otherwise specified by a particular driver
+ * implementation, only one ArrowArrayStream can be active at a time on
+ * a given layer (that is the last active one must be explicitly released before
+ * a next one is asked). Changing filter state, ignored columns, modifying the schema
+ * or using ResetReading()/GetNextFeature() while using a ArrowArrayStream is
+ * strongly discouraged and may lead to unexpected results. As a rule of thumb,
+ * no OGRLayer methods that affect the state of a layer should be called on a
+ * layer, while an ArrowArrayStream on it is active.
+ *
+ * A potential usage can be:
+\code{.cpp}
+    struct ArrowArrayStream stream;
+    if( !poLayer->GetArrowStream(&stream, nullptr))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "GetArrowStream() failed\n");
+        exit(1);
+    }
+    struct ArrowSchema schema;
+    if( stream.get_schema(&stream, &schema) == 0 )
+    {
+        // Do something useful
+        schema.release(schema);
+    }
+    while( true )
+    {
+        struct ArrowArray array;
+        // Look for an error (get_next() returning a non-zero code), or
+        // end of iteration (array.release == nullptr)
+        if( stream.get_next(&stream, &array) != 0 ||
+            array.release == nullptr )
+        {
+            break;
+        }
+        // Do something useful
+        array.release(&array);
+    }
+    stream.release(&stream);
+\endcode
+ *
+ * Options may be driver specific. The default implementation recognizes the
+ * following options:
+ * <ul>
+ * <li>INCLUDE_FID=YES/NO. Whether to include the FID column. Defaults to YES.</li>
+ * <li>MAX_FEATURES_IN_BATCH=integer. Maximum number of features to retrieve in
+ *     a ArrowArray batch. Defaults to 65 536.</li>
+ * </ul>
+ *
+ * The Arrow/Parquet drivers recognize the following option:
+ * <ul>
+ * <li>GEOMETRY_ENCODING=WKB. To force a fallback to the generic implementation
+ *     when the native geometry encoding is not WKB. Otherwise the geometry
+ *     will be returned with its native Arrow encoding
+ *     (possibly using GeoArrow encoding).</li>
+ * </ul>
+ *
+ * @param out_stream Output stream. Must *not* be NULL. The content of the
+ *                  structure does not need to be initialized.
  * @param papszOptions NULL terminated list of key=value options.
  * @return true in case of success.
  * @since GDAL 3.6
  */
-bool OGR_L_GetRecordBatchSchema(OGRLayerH hLayer,
-                                struct ArrowSchema* out_schema,
-                                char** papszOptions)
+bool OGRLayer::GetArrowStream(struct ArrowArrayStream* out_stream,
+                              CSLConstList papszOptions)
 {
-    VALIDATE_POINTER1( hLayer, "OGR_L_GetRecordBatchSchema", false );
-    VALIDATE_POINTER1( out_schema, "OGR_L_GetRecordBatchSchema", false );
+    memset(out_stream, 0, sizeof(*out_stream));
+    if( m_poSharedArrowArrayStreamPrivateData &&
+        m_poSharedArrowArrayStreamPrivateData->m_bArrowArrayStreamInProgress )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "An arrow Arrow Stream is in progress on that layer. Only "
+                 "one at a time is allowed in this implementation.");
+        return false;
+    }
+    m_aosArrowArrayStreamOptions.Assign(CSLDuplicate(papszOptions), true);
 
-    return OGRLayer::FromHandle(hLayer)->GetRecordBatchSchema(out_schema,
-                                                              papszOptions);
+    ResetReading();
+
+    out_stream->get_schema = OGRLayer::StaticGetArrowSchema;
+    out_stream->get_next = OGRLayer::StaticGetNextArrowArray;
+    out_stream->get_last_error = OGRLayer::GetLastErrorArrowArrayStream;
+    out_stream->release = OGRLayer::ReleaseStream;
+
+    if( m_poSharedArrowArrayStreamPrivateData == nullptr )
+    {
+        m_poSharedArrowArrayStreamPrivateData = std::make_shared<ArrowArrayStreamPrivateData>();
+        m_poSharedArrowArrayStreamPrivateData->m_poLayer = this;
+    }
+    m_poSharedArrowArrayStreamPrivateData->m_bArrowArrayStreamInProgress = true;
+    auto poPrivateData = new ArrowArrayStreamPrivateDataSharedDataWrapper();
+    poPrivateData->poShared = m_poSharedArrowArrayStreamPrivateData;
+    out_stream->private_data = poPrivateData;
+    return true;
 }
 
 /************************************************************************/
-/*                     OGR_L_GetNextRecordBatch()                       */
+/*                       OGR_L_GetArrowStream()                         */
 /************************************************************************/
 
-/** Get next record batch, as a Arrow Array (of type Struct).
+/** Get a Arrow C stream.
  *
- * On successful return, and when the array is no longer needed, it must must
- * be freed with out_array->release(out_array). If out_schema was not NULL, it
- * must must be freed with out_schema->release(out_schema).
+ * On successful return, and when the stream interfaces is no longer needed, it must must
+ * be freed with out_stream->release(out_stream). Please carefully read
+ * https://arrow.apache.org/docs/format/CStreamInterface.html for more details
+ * on using Arrow C stream.
+ *
+ * The method may take into account ignored fields set with SetIgnoredFields()
+ * (the default implementation does), and should take into account filters set with
+ * SetSpatialFilter() and SetAttributeFilter(). Note however that specialized
+ * implementations may fallback to the default (slower) implementation when
+ * filters are set.
+ *
+ * There are extra precautions to take into account in a OGR context. Unless
+ * otherwise specified by a particular driver implementation, the ArrowArrayStream
+ * structure, and the ArrowSchema or ArrowArray objects its callbacks have returned,
+ * should no longer be used (except for potentially being released) after the
+ * OGRLayer from which it was initialized has been destroyed (typically at dataset
+ * closing). Furthermore, unless otherwise specified by a particular driver
+ * implementation, only one ArrowArrayStream can be active at a time on
+ * a given layer (that is the last active one must be explicitly released before
+ * a next one is asked). Changing filter state, ignored columns, modifying the schema
+ * or using ResetReading()/GetNextFeature() while using a ArrowArrayStream is
+ * strongly discouraged and may lead to unexpected results. As a rule of thumb,
+ * no OGRLayer methods that affect the state of a layer should be called on a
+ * layer, while an ArrowArrayStream on it is active.
+ *
+ * A potential usage can be:
+\code{.cpp}
+    struct ArrowArrayStream stream;
+    if( !OGR_L_GetArrowStream(hLayer, &stream, nullptr))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "OGR_L_GetArrowStream() failed\n");
+        exit(1);
+    }
+    struct ArrowSchema schema;
+    if( stream.get_schema(&stream, &schema) == 0 )
+    {
+        // Do something useful
+        schema.release(schema);
+    }
+    while( true )
+    {
+        struct ArrowArray array;
+        // Look for an error (get_next() returning a non-zero code), or
+        // end of iteration (array.release == nullptr)
+        if( stream.get_next(&stream, &array) != 0 ||
+            array.release == nullptr )
+        {
+            break;
+        }
+        // Do something useful
+        array.release(&array);
+    }
+    stream.release(&stream);
+\endcode
+ *
+ * Options may be driver specific. The default implementation recognizes the
+ * following options:
+ * <ul>
+ * <li>INCLUDE_FID=YES/NO. Whether to include the FID column. Defaults to YES.</li>
+ * <li>MAX_FEATURES_IN_BATCH=integer. Maximum number of features to retrieve in
+ *     a ArrowArray batch. Defaults to 65 536.</li>
+ * </ul>
+ *
+ * The Arrow/Parquet drivers recognize the following option:
+ * <ul>
+ * <li>GEOMETRY_ENCODING=WKB. To force a fallback to the generic implementation
+ *     when the native geometry encoding is not WKB. Otherwise the geometry
+ *     will be returned with its native Arrow encoding
+ *     (possibly using GeoArrow encoding).</li>
+ * </ul>
  *
  * @param hLayer Layer
- * @param out_array Output array. Must *not* be NULL. The content of the
+ * @param out_stream Output stream. Must *not* be NULL. The content of the
  *                  structure does not need to be initialized.
- * @param out_schema Output schema, or NULL if not needed. If passed not null,
- *                   the content of the structure does not need to be initialized.
  * @param papszOptions NULL terminated list of key=value options.
- * @return true in case of success, or false when no more record batch are available.
+ * @return true in case of success.
  * @since GDAL 3.6
  */
-bool OGR_L_GetNextRecordBatch(OGRLayerH hLayer,
-                              struct ArrowArray* out_array,
-                              struct ArrowSchema* out_schema,
-                              char** papszOptions)
+bool OGR_L_GetArrowStream(OGRLayerH hLayer,
+                          struct ArrowArrayStream* out_stream,
+                          char** papszOptions)
 {
-    VALIDATE_POINTER1( hLayer, "OGR_L_GetNextRecordBatch", false );
-    VALIDATE_POINTER1( out_array, "OGR_L_GetRecordBatchSchema", false );
+    VALIDATE_POINTER1( hLayer, "OGR_L_GetArrowStream", false );
+    VALIDATE_POINTER1( out_stream, "OGR_L_GetArrowStream", false );
 
-    return OGRLayer::FromHandle(hLayer)->GetNextRecordBatch(out_array,
-                                                            out_schema,
-                                                            papszOptions);
+    return OGRLayer::FromHandle(hLayer)->GetArrowStream(out_stream, papszOptions);
 }

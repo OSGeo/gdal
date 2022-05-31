@@ -1148,41 +1148,37 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
 
 
 /************************************************************************/
-/*                      GetNextRecordBatch()                            */
+/*                      GetNextArrowArray()                             */
 /************************************************************************/
 
-bool OGRFlatGeobufLayer::GetNextRecordBatch(struct ArrowArray* out_array,
-                                            struct ArrowSchema* out_schema,
-                                            CSLConstList papszOptions)
+int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
+                                           struct ArrowArray* out_array)
 {
     if( m_poAttrQuery != nullptr ||
         (m_poFilterGeom != nullptr && !(m_poHeader != nullptr && m_poHeader->index_node_size() > 0)) ||
-        CPLTestBool(CPLGetConfigOption("OGR_FLATGEOBUF_RECORD_BATCH_BASE_IMPL", "NO")) )
+        CPLTestBool(CPLGetConfigOption("OGR_FLATGEOBUF_STREAM_BASE_IMPL", "NO")) )
     {
-        return OGRLayer::GetNextRecordBatch(out_array, out_schema);
+        return OGRLayer::GetNextArrowArray(stream, out_array);
     }
 
+    int errorErrno = EIO;
     memset(out_array, 0, sizeof(*out_array));
 
     if (m_create)
-        return false;
+        return EINVAL;
 
     if (m_bEOF || (m_featuresCount > 0 && m_featuresPos >= m_featuresCount))
-        return false;
-
-    if (readIndex() != OGRERR_NONE)
-        return false;
-
-    if( out_schema )
     {
-        if( !GetRecordBatchSchema(out_schema, papszOptions) )
-            return false;
+        return 0;
     }
 
+    if (readIndex() != OGRERR_NONE)
+        return EIO;
+
     const bool bIncludeFID = CPLTestBool(
-        CSLFetchNameValueDef(papszOptions, "INCLUDE_FID", "YES"));
+        m_aosArrowArrayStreamOptions.FetchNameValueDef("INCLUDE_FID", "YES"));
     int nMaxBatchSize = atoi(
-        CSLFetchNameValueDef(papszOptions, "MAX_FEATURES_IN_BATCH", "65536"));
+        m_aosArrowArrayStreamOptions.FetchNameValueDef("MAX_FEATURES_IN_BATCH", "65536"));
     if( nMaxBatchSize <= 0 )
         nMaxBatchSize = 1;
     if( nMaxBatchSize > INT_MAX - 1 )
@@ -1490,6 +1486,7 @@ bool OGRFlatGeobufLayer::GetNextRecordBatch(struct ArrowArray* out_array,
                 if( nWKBSize > static_cast<uint32_t>(std::numeric_limits<int32_t>::max() - nCurLength) )
                 {
                     CPLError(CE_Failure, CPLE_AppDefined, "Too large geometry");
+                    errorErrno = ENOMEM;
                     goto error;
                 }
                 const int32_t nNewSize = std::max(
@@ -1767,6 +1764,7 @@ bool OGRFlatGeobufLayer::GetNextRecordBatch(struct ArrowArray* out_array,
                                 if( len > static_cast<uint32_t>(std::numeric_limits<int32_t>::max() - nCurLength) )
                                 {
                                     CPLError(CE_Failure, CPLE_AppDefined, "String/blob too large");
+                                    errorErrno = ENOMEM;
                                     goto error;
                                 }
                                 const int32_t nNewSize = std::max(
@@ -1848,7 +1846,10 @@ bool OGRFlatGeobufLayer::GetNextRecordBatch(struct ArrowArray* out_array,
                     {
                         pabyNull = static_cast<uint8_t*>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE((nMaxBatchSize + 7) / 8));
                         if( pabyNull == nullptr )
+                        {
+                            errorErrno = ENOMEM;
                             goto error;
+                        }
                         memset(pabyNull, 0xFF, (nMaxBatchSize + 7) / 8);
                         psArray->buffers[0] = pabyNull;
                     }
@@ -1883,17 +1884,12 @@ bool OGRFlatGeobufLayer::GetNextRecordBatch(struct ArrowArray* out_array,
         }
     }
 
-    return true;
+    return 0;
 
 error:
-    if( out_schema )
-    {
-        out_schema->release(out_schema);
-        memset(out_schema, 0, sizeof(*out_schema));
-    }
     out_array->release(out_array);
     memset(out_array, 0, sizeof(*out_array));
-    return false;
+    return errorErrno;
 }
 
 OGRErr OGRFlatGeobufLayer::CreateField(OGRFieldDefn *poField, int /* bApproxOK */)

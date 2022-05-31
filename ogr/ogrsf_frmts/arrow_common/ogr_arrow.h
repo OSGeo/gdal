@@ -87,7 +87,7 @@ private:
 
         bool                     SkipToNextFeatureDueToAttributeFilter() const;
         void                     ExploreExprNode(const swq_expr_node* poNode);
-        bool                     UseRecordBatchBaseImplementation(CSLConstList papszOptions) const;
+        bool                     UseRecordBatchBaseImplementation() const;
 
 protected:
         OGRArrowDataset*                            m_poArrowDS = nullptr;
@@ -163,6 +163,9 @@ protected:
         OGRErr             GetExtentFromMetadata(const CPLJSONObject& oJSONDef,
                                                  OGREnvelope *psExtent) const;
 
+        int GetArrowSchema(struct ArrowArrayStream*, struct ArrowSchema* out) override;
+        int GetNextArrowArray(struct ArrowArrayStream*, struct ArrowArray* out) override;
+
 public:
         virtual ~OGRArrowLayer() override;
 
@@ -178,12 +181,6 @@ public:
         void            SetSpatialFilter( OGRGeometry * poGeom ) override
                             { SetSpatialFilter(0, poGeom); }
         void            SetSpatialFilter( int iGeomField, OGRGeometry *poGeom ) override;
-
-        bool           GetRecordBatchSchema(struct ArrowSchema* out_schema,
-                                            CSLConstList papszOptions = nullptr) override;
-        bool           GetNextRecordBatch(struct ArrowArray* out_array,
-                                          struct ArrowSchema* out_schema = nullptr,
-                                          CSLConstList papszOptions = nullptr) override;
 
         virtual std::unique_ptr<OGRFieldDomain> BuildDomain(const std::string& osDomainName,
                                                              int iFieldIndex) const = 0;

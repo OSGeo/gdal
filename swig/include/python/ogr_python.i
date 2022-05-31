@@ -194,122 +194,133 @@
     schema = property(schema)
 
 
-    def GetRecordBatchSchemaAsPyArrow(self, options = []):
-        """ Return the schema of a RecordBatch a a PyArrow DataType """
+    def GetArrowStreamAsPyArrow(self, options = []):
+        """ Return an ArrowStream as PyArrow Schema and Array objects """
 
         import pyarrow as pa
 
-        schema_ptr = self._GetRecordBatchSchemaPtr(options)
-        if schema_ptr == 0:
-            raise Exception("cannot get RecordBatch schema")
-        try:
-            ret = pa.DataType._import_from_c(schema_ptr)
-            # We don't cleanup the schema data, since PyArrow borrowed it,
-            # just the holder structure
-            self._FreeRecordBatchSchemaPtr(schema_ptr, False)
-            return ret
-        except:
-            self._FreeRecordBatchSchemaPtr(schema_ptr, True)
-            raise
+        class Stream:
+            def __init__(self, stream):
+                self.stream = stream
+                self.end_of_stream = False
+
+            def schema(self):
+                """ Return the schema as a PyArrow DataType """
+
+                schema_ptr = self.stream._GetSchemaPtr()
+                if schema_ptr == 0:
+                    raise Exception("cannot get schema")
+                try:
+                    return pa.DataType._import_from_c(schema_ptr)
+                finally:
+                    self.stream._FreeSchemaPtr(schema_ptr)
+
+            schema = property(schema)
 
 
-    CACHED_RECORD_BATCH_SCHEMA_PYARROW_KEY = "_record_batch_schema_pyarrow"
-    def _GetCachedRecordBatchSchemaAsPyArrow(self, options):
-        if not hasattr(self, Layer.CACHED_RECORD_BATCH_SCHEMA_PYARROW_KEY):
-            self._record_batch_schema = self.GetRecordBatchSchemaAsPyArrow(options)
+            def _GetNextRecordBatchAsPyArrow(self, l_schema):
+                """ Return the next RecordBatch as a PyArrow StructArray, or None at end of iteration """
 
-            # Override all methods that will modify the schema, to invalidate
-            # the cached record batch schema.
-            def overridenMethod(layer, originalMethod, *args, **kwargs):
-                if hasattr(layer, Layer.CACHED_RECORD_BATCH_SCHEMA_PYARROW_KEY):
-                    delattr(layer, Layer.CACHED_RECORD_BATCH_SCHEMA_PYARROW_KEY)
-                return originalMethod(*args, **kwargs)
-
-            import functools
-            self.CreateField = functools.partial(overridenMethod, self, self.CreateField)
-            self.CreateGeomField = functools.partial(overridenMethod, self, self.CreateGeomField)
-            self.DeleteField = functools.partial(overridenMethod, self, self.DeleteField)
-            self.ReorderField = functools.partial(overridenMethod, self, self.ReorderField)
-            self.ReorderFields = functools.partial(overridenMethod, self, self.ReorderFields)
-            self.AlterFieldDefn = functools.partial(overridenMethod, self, self.AlterFieldDefn)
-        return self._record_batch_schema
+                array_ptr = self.stream._GetNextRecordBatchPtr()
+                if array_ptr == 0:
+                    return None
+                try:
+                    return pa.Array._import_from_c(array_ptr, l_schema)
+                finally:
+                    self.stream._FreeRecordBatchPtr(array_ptr)
 
 
-    def GetNextRecordBatchAsPyArrow(self, options = []):
-        """ Return the next RecordBatch as a PyArrow StructArray, or None at end of iteration """
+            def __iter__(self):
+                """ Return an iterator over record batches as a PyArrow StructArray """
+                if self.end_of_stream:
+                    raise Exception("Stream has already been iterated over")
 
-        import pyarrow as pa
+                l_schema = self.schema
+                while True:
+                    batch = self._GetNextRecordBatchAsPyArrow(l_schema)
+                    if not batch:
+                        break
+                    yield batch
+                self.end_of_stream = True
+                self.stream = None
 
-        array_ptr = self._GetNextRecordBatchPtr(options)
-        if array_ptr == 0:
-            return None
-        try:
-            ret = pa.Array._import_from_c(array_ptr,
-                        self._GetCachedRecordBatchSchemaAsPyArrow(options))
-            # We don't cleanup the record batch data, since PyArrow borrowed it,
-            # just the holder structure
-            self._FreeRecordBatchArrayPtr(array_ptr, False)
-            return ret
-        except:
-            self._FreeRecordBatchArrayPtr(array_ptr, True)
-            raise
-
-
-    def RecordBatchesAsPyArrow(self, options = []):
-        """ Return an iterator over record batches as a PyArrow StructArray """
-
-        def iterator():
-            self.ResetReading()
-            while True:
-                batch = self.GetNextRecordBatchAsPyArrow(options)
-                if not batch:
-                    break
-                yield batch
-
-        return iterator()
+        stream = self.GetArrowStream(options)
+        if not stream:
+            raise Exception("GetArrowStream() failed")
+        return Stream(stream)
 
 
-    def GetNextRecordBatchAsNumpy(self, options = []):
-        """ Return the next RecordBatch as a dictionary of Numpy arrays, or None at end of iteration """
+    def GetArrowStreamAsNumPy(self, options = []):
+        """ Return an ArrowStream as NumPy Array objects.
+            A specific option to this method is USE_MASKED_ARRAYS=YES/NO (default is YES).
+        """
 
         from osgeo import gdal_array
 
-        array_ptr = self._GetNextRecordBatchPtr(options)
-        if array_ptr == 0:
-            return None
+        class Stream:
+            def __init__(self, stream, use_masked_arrays):
+                self.stream = stream
+                self.end_of_stream = False
+                self.use_masked_arrays = use_masked_arrays
 
-        class ArrayPointerKeeper:
-            def __init__(self, array_ptr):
-                self.array_ptr = array_ptr
+            def _GetNextRecordBatchAsNumpy(self, schema_ptr):
+                """ Return the next RecordBatch as a dictionary of Numpy arrays, or None at end of iteration """
 
-            def __del__(self):
-                Layer._FreeRecordBatchArrayPtr(self.array_ptr, True)
+                array_ptr = self.stream._GetNextRecordBatchPtr()
+                if array_ptr == 0:
+                    return None
 
-        try:
-            schema_ptr = self._GetRecordBatchSchemaPtr(options)
-            ret = gdal_array._RecordBatchAsNumpy(array_ptr, schema_ptr,
-                                                 ArrayPointerKeeper(array_ptr))
-            for key, val in ret.items():
-                if isinstance(val, dict):
-                    import numpy.ma as ma
-                    ret[key] = ma.masked_array(val["data"], val["mask"])
-            return ret
-        finally:
-            self._FreeRecordBatchSchemaPtr(schema_ptr, True)
+                class ArrayPointerKeeper:
+                    def __init__(self, array_ptr):
+                        self.array_ptr = array_ptr
 
+                    def __del__(self):
+                        ArrowArrayStream._FreeRecordBatchPtr(self.array_ptr)
 
-    def RecordBatchesAsNumpy(self, options = []):
-        """ Return an iterator over record batches  as a dictionary of Numpy arrays """
+                ret = gdal_array._RecordBatchAsNumpy(array_ptr,
+                                                     schema_ptr,
+                                                     ArrayPointerKeeper(array_ptr))
+                if ret is None:
+                    gdal_array._RaiseException()
+                    return ret
+                for key, val in ret.items():
+                    if isinstance(val, dict):
+                        if self.use_masked_arrays:
+                            import numpy.ma as ma
+                            ret[key] = ma.masked_array(val["data"], val["mask"])
+                        else:
+                            ret[key] = val["data"]
+                return ret
 
-        def iterator():
-            self.ResetReading()
-            while True:
-                batch = self.GetNextRecordBatchAsNumpy(options)
-                if not batch:
-                    break
-                yield batch
+            def __iter__(self):
+                """ Return an iterator over record batches as a dictionary of Numpy arrays """
 
-        return iterator()
+                if self.end_of_stream:
+                    raise Exception("Stream has already been iterated over")
+
+                schema_ptr = self.stream._GetSchemaPtr()
+                try:
+                    while True:
+                        batch = self._GetNextRecordBatchAsNumpy(schema_ptr)
+                        if not batch:
+                            break
+                        yield batch
+                finally:
+                    self.stream._FreeSchemaPtr(schema_ptr)
+                    self.end_of_stream = True
+                    self.stream = None
+
+        stream = self.GetArrowStream(options)
+        if not stream:
+            raise Exception("GetArrowStream() failed")
+
+        use_masked_arrays = True
+        for opt in options:
+            opt = opt.upper()
+            if opt.startswith('USE_MASKED_ARRAYS='):
+                use_masked_arrays = opt[len('USE_MASKED_ARRAYS='):] in ('YES', 'TRUE', 'ON', '1')
+
+        return Stream(stream, use_masked_arrays)
 
   %}
 

@@ -128,6 +128,10 @@ class OGRFlatGeobufLayer final : public OGRLayer, public OGRFlatGeobufBaseLayerI
         OGRFlatGeobufLayer(const FlatGeobuf::Header *, GByte *headerBuf, const char *pszFilename, VSILFILE *poFp, uint64_t offset);
         OGRFlatGeobufLayer(const char *pszLayerName, const char *pszFilename, OGRSpatialReference *poSpatialRef, OGRwkbGeometryType eGType, bool bCreateSpatialIndexAtClose, VSILFILE *poFpWrite, std::string &osTempFile);
 
+    protected:
+        virtual int GetNextArrowArray(struct ArrowArrayStream*,
+                                       struct ArrowArray* out_array) override;
+
     public:
         virtual ~OGRFlatGeobufLayer();
 
@@ -140,9 +144,6 @@ class OGRFlatGeobufLayer final : public OGRLayer, public OGRFlatGeobufBaseLayerI
         virtual OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK = true) override;
         virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
         virtual int TestCapability(const char *) override;
-        virtual bool GetNextRecordBatch(struct ArrowArray* out_array,
-                                        struct ArrowSchema* out_schema,
-                                        CSLConstList papszOptions) override;
 
         virtual void ResetReading() override;
         virtual OGRFeatureDefn *GetLayerDefn() override { return m_poFeatureDefn; }
