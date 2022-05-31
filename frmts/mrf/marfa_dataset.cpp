@@ -89,7 +89,9 @@ MRFDataset::MRFDataset() :
     poColorTable(nullptr),
     Quality(0),
     pzscctx(nullptr),
-    pzsdctx(nullptr)
+    pzsdctx(nullptr),
+    read_timer(),
+    write_timer(0)
 {
     //                X0   Xx   Xy  Y0    Yx   Yy
     double gt[6] = { 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 };
@@ -147,7 +149,13 @@ int MRFDataset::CloseDependentDatasets() {
     return bHasDroppedRef;
 }
 
-MRFDataset::~MRFDataset() {   // Make sure everything gets written
+MRFDataset::~MRFDataset() { // Make sure everything gets written
+    if (0 != write_timer.count())
+        CPLDebug("MRF_Timing", "Compression took %fms", 1e-6 * write_timer.count());
+
+    if (0 != read_timer.count())
+        CPLDebug("MRF_Timing", "Decompression took %fms", 1e-6 * read_timer.count());
+
     if (eAccess != GA_ReadOnly && !bCrystalized)
         if (!MRFDataset::Crystalize()) {
             // Can't return error code from a destructor, just emit the error
