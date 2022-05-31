@@ -52,18 +52,27 @@ for those formats.
 Details
 -------
 
-The new proposed API uses and implements the
+The new proposed API implements the
+`Apache Arrow C Stream interface <https://arrow.apache.org/docs/format/CStreamInterface.html>`_.
+Reading that document, as well of the first paragraphs of the
 `Apache Arrow C data interface <https://arrow.apache.org/docs/format/CDataInterface.html>`_.
-Reading the first paragraphs of that document (details on the various data types
-can be skipped) is strongly encouraged for a better understanding of the rest of this RFC.
+(details on the various data types can be skipped) is strongly encouraged for a
+better understanding of the rest of this RFC.
 
-This interface consists of a set of 2 C structures:
+The Arrow C Stream interface is currently marked as experimental, but it has not
+evolved since its introduction in Nov 2020 and is already used in ABI sensitive
+places like the interface between the Arrow R bindings and DuckDB.
 
-- ArrowSchema: describes a set of fields (name, type, metadata). The list of Arrow
-  data types have good coverage of OGR data types.
+This interface consists of a set of C structures, ArrowArrayStream, that provides
+two main callbacks to get:
 
-- ArrowArray: captures a set of values for a specific column/field in a subset
-  of features. This is the equivalent of a
+- a ArrowSchema with the get_schema() callback. A ArrowSchema describes a set of
+  field descriptions (name, type, metadata). All OGR data types have a corresponding
+  Arrow data type.
+
+- a sequence of ArrowArray with the get_next() callback. A ArrowArray captures
+  a set of values for a specific column/field in a subset of features.
+  This is the equivalent of a
   `Series <https://arrow.apache.org/docs/python/pandas.html#series>`_ in a Pandas DataFrame.
   This is a potentially hiearchical structure that can aggregate
   sub arrays, and in OGR usage, the main array will be a StructArray which is
@@ -85,34 +94,83 @@ record batches being an ArrowArray of a subset of features. Instead of iterating
 over individual features, one iterates over a batch of several features at
 once.
 
-The ArrowSchema and ArrowArray structures are defined in a ogr_recordbatch.h
+The ArrowArrayStream, ArrowSchema, ArrowArray structures are defined in a ogr_recordbatch.h
 public header file, directly derived from https://github.com/apache/arrow/blob/master/cpp/src/arrow/c/abi.h
 to get API/ABI compatibility with Apache Arrow C++. This header file must be
 explicitly included when the related array batch API is used.
 
-The following virtual methods are added to the OGRLayer class:
-
-- GetRecordBatchSchema(): retrieve the layer definition as a ArrowSchema,
-  consistent with the record batches returned by GetNextRecordBatch().
+The following virtual method is added to the OGRLayer class:
 
   .. code-block:: cpp
 
-        virtual bool  GetRecordBatchSchema(struct ArrowSchema* out_schema,
-                                           CSLConstList papszOptions = nullptr);
+        virtual bool OGRLayer::GetArrowStream(struct ArrowArrayStream* out_stream,
+                                              CSLConstList papszOptions = nullptr);
 
-  out_schema is a pointer to a ArrowSchema structure, that can be in a uninitialized
-  state (the method will ignore any initial content).
+This method is also available in the C API as OGR_L_GetArrowStream().
 
-  OGRLayer has a base implementation for this method that maps all the FID
-  column, all OGR attribute fields and geometry fields to Arrow fields. Specialized
-  implementations may override this method (if doing that, GetNextRecordBatch()
-  should also generally be overridden, so that returns of both methods are
-  consistent.)
+out_stream is a pointer to a ArrowArrayStream structure, that can be in a uninitialized
+state (the method will ignore any initial content).
 
-  The top-level schema object returned is of type Struct, whose children are the
-  individual fields.
+On successful return, and when the stream interfaces is no longer needed, it must must
+be freed with out_stream->release(out_stream).
 
-  When this method returns true, and the schema is no longer needed, it must
+There are extra precautions to take into account in a OGR context. Unless
+otherwise specified by a particular driver implementation, the ArrowArrayStream
+structure, and the ArrowSchema or ArrowArray objects its callbacks have returned,
+should no longer be used (except for potentially being released) after the
+OGRLayer from which it was initialized has been destroyed (typically at dataset
+closing). Furthermore, unless otherwise specified by a particular driver
+implementation, only one ArrowArrayStream can be active at a time on
+a given layer (that is the last active one must be explicitly released before
+a next one is asked). Changing filter state, ignored columns, modifying the schema
+or using ResetReading()/GetNextFeature() while using a ArrowArrayStream is
+strongly discouraged and may lead to unexpected results. As a rule of thumb,
+no OGRLayer methods that affect the state of a layer should be called on a
+layer, while an ArrowArrayStream on it is active.
+
+A potential usage can be:
+
+.. code-block:: cpp
+
+    struct ArrowArrayStream stream;
+    if( !poLayer->GetArrowStream(&stream, nullptr))
+    {
+        fprintf(stderr, "GetArrowStream() failed\n");
+        exit(1);
+    }
+    struct ArrowSchema schema;
+    if( stream.get_schema(&stream, &schema) == 0 )
+    {
+        // Do something useful
+        schema.release(schema);
+    }
+    while( true )
+    {
+        struct ArrowArray array;
+        // Look for an error (get_next() returning a non-zero code), or
+        // end of iteration (array.release == nullptr)
+        //
+        if( stream.get_next(&stream, &array) != 0 ||
+            array.release == nullptr )
+        {
+            break;
+        }
+        // Do something useful
+        array.release(&array);
+    }
+    stream.release(&stream);
+
+The papszOptions that may be provided is a NULL terminated list of key=value
+strings, that may be driver specific.
+
+OGRLayer has a base implementation of GetArrowStream() that is such:
+
+- The get_schema() callback returns a schema whose top-level object returned is
+  of type Struct, and whose children consist in the FID column, all OGR attribute
+  fields and geometry fields to Arrow fields.
+  The FID column may be omitted by providing the INCLUDE_FID=NO option.
+
+  When get_schema() returns 0, and the schema is no longer needed, it must
   be released with the following procedure, to take into account that it might
   have been released by other code, as documented in the Arrow C data
   interface:
@@ -123,19 +181,14 @@ The following virtual methods are added to the OGRLayer class:
               out_schema->release(out_schema)
 
 
-- GetNextRecordBatch(): retrieve the next record batch over the layer.
-
-  .. code-block:: cpp
-
-        virtual bool  GetNextRecordBatch(struct ArrowArray* out_array,
-                                         struct ArrowSchema* out_schema = nullptr,
-                                         CSLConstList papszOptions = nullptr);
+- The get_next() callback retrieve the next record batch over the layer.
 
   out_array is a pointer to a ArrowArray structure, that can be in a uninitialized
   state (the method will ignore any initial content).
 
   The default implementation uses GetNextFeature() internally to retrieve batches
-  of up to 65,536 features. The starting address of buffers allocated by the
+  of up to 65,536 features (configurable with the MAX_FEATURES_IN_BATCH=num option).
+  The starting address of buffers allocated by the
   default implementation is aligned on 64-byte boundaries.
 
   The default implementation outputs geometries as WKB in a binary field,
@@ -151,17 +204,10 @@ The following virtual methods are added to the OGRLayer class:
   SetSpatialFilter() and SetAttributeFilter(). Note however that specialized implementations
   may fallback to the default (slower) implementation when filters are set.
 
-  out_schema is either NULL, or a pointer to a ArrowSchema structure, that can
-  be in a uninitialized state (the method will ignore any initial content).
+  Mixing calls to GetNextFeature() and get_next() is not recommended, as
+  the behaviour will be unspecified (but it should not crash).
 
-  The iteration might be reset with ResetReading(). Mixing calls to GetNextFeature()
-  and GetNextRecordBatch() is not recommended, as the behaviour will be unspecified
-  (but it should not crash).
-
-  Options passed to this method should be identical between calls, and the same as
-  the ones provided to GetRecordBatchSchema().
-
-  When this method returns true, and the array is no longer needed, it must
+  When get_next() returns 0, and the array is no longer needed, it must
   be released with the following procedure, to take into account that it might
   have been released by other code, as documented in the Arrow C data
   interface:
@@ -171,16 +217,11 @@ The following virtual methods are added to the OGRLayer class:
           if( out_array->release )
               out_array->release(out_array)
 
-  The out_schema, if non null, should be freed similarly, as documented in
-  GetRecordBatchSchema().
-
-The corresponding C functions, OGR_L_GetRecordBatchSchema and OGR_L_GetNextRecordBatch,
-are added.
 
 Other remarks
 -------------
 
-Using directly (as a producer or a consumer), the ArrowArray is admitedly not
+Using directly (as a producer or a consumer) a ArrowArray is admitedly not
 trivial, and requires good intimacy with the Arrow C data interface and columnar
 array specifications, to know, in which buffer of an array, data is to be read,
 which data type void* buffers should be cast to, how to use buffers that contain
@@ -194,7 +235,7 @@ with the associated ArrowSchema. DuckDB is also another example of using the Arr
 inferface: https://github.com/duckdb/duckdb/blob/master/src/common/types/data_chunk.cpp
 
 It is not expected that most drivers will have a dedicated implementation of
-GetNextRecordBatch(). Implementing it requires a non-trivial effort, and
+GetArrowStream() or its callbacks. Implementing it requires a non-trivial effort, and
 significant gains are to be expected only for those for which I/O is very fast,
 and thus in-memory shuffling of data takes a substantial time relatively to the
 total time (I/O + shuffling).
@@ -202,20 +243,15 @@ total time (I/O + shuffling).
 Potential future work, no in the scope of this RFC, could be the addition of a
 column-oriented method to write new features, a WriteRecordBatch() method.
 
-The use of the `Arrow C stream interface <https://arrow.apache.org/docs/format/CStreamInterface.html>`_,
-which associates the functionality of GetRecordBatchSchema() and
-GetNextRecordBatch() in a same C structure has been considered, but not kept as
-this interface is currently marked as experimental and not guaranteed to be ABI stable.
-
 Impacted drivers
 ----------------
 
-- Arrow and Parquet: GetRecordBatchSchema() and GetNextRecordBatch() have a
+- Arrow and Parquet: get_schema() and get_next() have a
   specialized implementation in those drivers that directly map to methods of
-  the arrow-cpp library that bridges at near   zero cost (no data copying) the
+  the arrow-cpp library that bridges at near zero cost (no data copying) the
   internal C++ implementation with the C data interface.
 
-- FlatGeoBuf: a specialized implementation of GetNextRecordBatch() has been done,
+- FlatGeoBuf: a specialized implementation of get_next() has been done,
   which saves going through the OGRFeature abstraction. See below benchmarks for
   measurement of the efficiency.
 
@@ -226,26 +262,22 @@ Per this RFC, only the Python bindings are extended to map the new functionality
 
 The ogr.Layer class receives the following new methods:
 
-- GetRecordBatchSchemaAsPyArrow(): wrapper over OGRLayer::GetRecordBatchSchema() that
-  turns the C ArrowSchema into a corresponding PyArrow Schema object
+- GetArrowStreamAsPyArrow(): wrapper over OGRLayer::GetArrowStream() that
+  has a ``schema`` property with the C ArrowSchema into a corresponding
+  PyArrow Schema object and which implements a Python iterator exposing the
+  C ArrowArray returned by the get_next() callback as a corresponding
+  PyArrow Array object. This is a almost zero-cost call.
 
-- GetNextRecordBatchAsPyArrow(): wrapper over OGRLayer::GetNextRecordBatch() that
-  turns the C ArrowArray into a corresponding PyArrow Array object. This is a almost
-  zero-cost call.
-
-- RecordBatchesAsPyArrow(): return an iterator for GetNextRecordBatchAsPyArrow()
-
-- GetNextRecordBatchAsNumpy(): wrapper over OGRLayer::GetNextRecordBatch() that
-  turns the C ArrowArray into a Python dictionary whose keys are field names and
+- GetArrowStreamAsNumPy(): wrapper over OGRLayer::GetArrowStream()
+  which implements a Python iterator exposing the C ArrowArray returned by the
+  get_next() callback as a Python dictionary whose keys are field names and
   values a Numpy array representing the values of the ArrowArray. The mapping of
   types is done for all Arrow data types returned by the base implementation of
-  OGRLayer::GetNextRecordBatch(), but may not cover "exotic" data types that can
+  OGRLayer::GetArrowStream(), but may not cover "exotic" data types that can
   be returned by specialized implementations such as the one in the Arrow/Parquet
   driver. For numeric data types, the Numpy array is a zero-copy adaptation of the
   C buffer. For other data types, a copy is involved, with potentially arrays of
   Python objects.
-
-- RecordBatchesAsNumpy(): return an iterator for GetNextRecordBatchAsNumpy()
 
 
 .. _rfc-86-benchmarks:
@@ -266,7 +298,7 @@ have similar functionality: iterating over features with GetNextFeature().
 have all similar functionality: building a GeoPandas GeoDataFrame
 
 :ref:`rfc-86-bench-ogr-batch-cpp` can be used to measure the raw performance of the
-proposed GetNextRecordBatch() API.
+proposed GetArrowStream() API.
 
 1. nz-building-outlines.fgb (FlatGeoBuf, 1.8 GB)
 
@@ -282,12 +314,12 @@ bench_geopandas.py                        232
 bench_ogr_batch.cpp (driver impl.)        4.5
 bench_ogr_batch.cpp (base impl.)          14.5
 bench_ogr_to_geopandas.py (driver impl.)  11
-bench_ogr_to_geopandas.py (base impl.)    20
+bench_ogr_to_geopandas.py (base impl.)    21
 ========================================  ============
 
-"driver impl." means that the specialized implementation of GetNextRecordBatch()
+"driver impl." means that the specialized implementation of GetArrowStream()
 is used.
-"base impl." means that the generic implementation of GetNextRecordBatch(),
+"base impl." means that the generic implementation of GetArrowStream(),
 using GetNextFeature() underneath, is used.
 
 2. nz-building-outlines.parquet (GeoParquet, 436 MB)
@@ -303,8 +335,8 @@ bench_pyogrio.py                          115
 bench_geopandas.py                        228
 bench_ogr_batch.cpp (driver impl.)        1.6
 bench_ogr_batch.cpp (base impl.)          14.1
-bench_ogr_to_geopandas.py (driver impl.)  3.7
-bench_ogr_to_geopandas.py (base impl.)    20.5
+bench_ogr_to_geopandas.py (driver impl.)  8
+bench_ogr_to_geopandas.py (base impl.)    21
 ========================================  ============
 
 Note: Fiona slightly modified to accept Parquet driver as a recognized one.
@@ -331,14 +363,14 @@ This demonstrates that:
 - the new API can yield signficant performance gains to
   ingest a OGR layer as a GeoPandas GeoDataFrame, of the order of a 4x - 10x
   speed-up compared to pyogrio, even without a specialized implementation of
-  GetNextRecordBatch(), and with formats that have a natural row organization (FlatGeoBuf).
+  GetArrowStream(), and with formats that have a natural row organization (FlatGeoBuf).
 
 - the Parquet driver is where this shines most due to the file organization being
   columnar, and its native access layer being ArrowArray compatible.
 
-- for drivers that don't have a specialized implementation of GetNextRecordBatch()
+- for drivers that don't have a specialized implementation of GetArrowStream()
   and whose layout is row oriented (GeoPackage), the GetNextFeature() approach is
-  (a bit) faster than GetNextRecordBatch().
+  (a bit) faster than GetArrowStream().
 
 Backward compatibility
 ----------------------
@@ -358,9 +390,8 @@ New dependencies
   to the topic discussed in this RFC).
 
 - For Python bindings: none at compile time. At runtime, pyarrow is imported
-  by the methods GetRecordBatchSchemaAsPyArrow(), GetNextRecordBatchAsPyArrow(),
-  record_batches_as_pyarrow().
-  The GetNextRecordBatchAsNumpy() method is implemented internaly by the
+  by GetArrowStreamAsPyArrow().
+  The GetArrowStreamAsNumPy() method is implemented internaly by the
   gdal_array module, and thus is only available if Numpy is available at compile time
   and runtime.
 
@@ -562,13 +593,24 @@ Use of the proposed GetNextRecordBatch() API from C++
         GDALAllRegister();
         GDALDataset* poDS = GDALDataset::Open(argv[1]);
         OGRLayer* poLayer = poDS->GetLayer(0);
+        OGRLayerH hLayer = OGRLayer::ToHandle(poLayer);
+        struct ArrowArrayStream stream;
+        if( !OGR_L_GetArrowStream(hLayer, &stream, nullptr))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "OGR_L_GetArrowStream() failed\n");
+            exit(1);
+        }
         while( true )
         {
             struct ArrowArray array;
-            if( !poLayer->GetNextRecordBatch(&array, nullptr, nullptr) )
+            if( stream.get_next(&stream, &array) != 0 ||
+                array.release == nullptr )
+            {
                 break;
+            }
             array.release(&array);
         }
+        stream.release(&stream);
         delete poDS;
         return 0;
     }
@@ -588,12 +630,13 @@ GeoPandas GeoDataFrame from the concatenation of the returned arrays.
     import pyarrow as pa
 
     def layer_as_geopandas(lyr):
-        schema = lyr.GetRecordBatchSchemaAsPyArrow()
+        stream = lyr.GetArrowStreamAsPyArrow()
+        schema = stream.schema
 
         geom_field_name = None
         for field in schema:
             field_md = field.metadata
-            if field_md and field_md.get(b'ARROW:extension:name', None) == b'WKB':
+            if (field_md and field_md.get(b'ARROW:extension:name', None) == b'WKB') or field.name == lyr.GetGeometryColumn():
                 geom_field_name = field.name
                 break
 
@@ -604,7 +647,7 @@ GeoPandas GeoDataFrame from the concatenation of the returned arrays.
         if geom_field_name:
             schema_geom = pa.schema(list(filter(lambda f: f.name == geom_field_name, fields)))
             batches_with_geom = []
-        for record_batch in lyr.RecordBatchesAsPyArrow():
+        for record_batch in stream:
             arrays_without_geom = [record_batch.field(field_name) for field_name in non_geom_field_names]
             batch_without_geom = pa.RecordBatch.from_arrays(arrays_without_geom, schema=schema_without_geom)
             batches_without_geom.append(batch_without_geom)
