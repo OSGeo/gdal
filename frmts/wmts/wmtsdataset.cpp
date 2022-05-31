@@ -1053,6 +1053,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
     int nBands = 4;
     GDALDataType eDataType = GDT_Byte;
     CPLString osProjection;
+    CPLString osExtraQueryParameters;
 
     if( (psXML != nullptr && CPLGetXMLNode(psXML, "=GDAL_WMTS") != nullptr ) ||
         STARTS_WITH_CI(poOpenInfo->pszFilename, "<GDAL_WMTS") ||
@@ -1082,6 +1083,11 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
             CPLDestroyXMLNode(psGDALWMTS);
             return nullptr;
         }
+        osExtraQueryParameters = CPLGetXMLValue(psRoot, "ExtraQueryParameters", "");
+        if( !osExtraQueryParameters.empty() && osExtraQueryParameters[0] != '&' )
+            osExtraQueryParameters = '&' + osExtraQueryParameters;
+
+        osGetCapabilitiesURL += osExtraQueryParameters;
 
         osLayer = CPLGetXMLValue(psRoot, "Layer", osLayer);
         osTMS = CPLGetXMLValue(psRoot, "TileMatrixSet", osTMS);
@@ -1097,17 +1103,13 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                                             (bExtendBeyondDateLine) ? "true": "false"));
 
         osOtherXML = "";
-        WMTSAddOtherXML(psRoot, "Cache", osOtherXML);
-        WMTSAddOtherXML(psRoot, "MaxConnections", osOtherXML);
-        WMTSAddOtherXML(psRoot, "Timeout", osOtherXML);
-        WMTSAddOtherXML(psRoot, "OfflineMode", osOtherXML);
-        WMTSAddOtherXML(psRoot, "MaxConnections", osOtherXML);
-        WMTSAddOtherXML(psRoot, "UserAgent", osOtherXML);
-        WMTSAddOtherXML(psRoot, "UserPwd", osOtherXML);
-        WMTSAddOtherXML(psRoot, "UnsafeSSL", osOtherXML);
-        WMTSAddOtherXML(psRoot, "Referer", osOtherXML);
-        WMTSAddOtherXML(psRoot, "ZeroBlockHttpCodes", osOtherXML);
-        WMTSAddOtherXML(psRoot, "ZeroBlockOnServerException", osOtherXML);
+        for( const char* pszXMLElement: {
+                "Cache", "MaxConnections", "Timeout", "OfflineMode",
+                "UserAgent", "Accept", "UserPwd", "UnsafeSSL", "Referer",
+                "ZeroBlockHttpCodes", "ZeroBlockOnServerException" } )
+        {
+            WMTSAddOtherXML(psRoot, pszXMLElement, osOtherXML);
+        }
 
         nBands = atoi(CPLGetXMLValue(psRoot, "BandsCount", "4"));
         const char *pszDataType = CPLGetXMLValue(psRoot, "DataType", "Byte");
@@ -1972,6 +1974,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                                             oIter->second);
             }
         }
+        osURLTileTemplate += osExtraQueryParameters;
 
         if( osURLFeatureInfoTemplate.empty() && !osSelectInfoFormat.empty() )
         {
@@ -2014,6 +2017,8 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                                             oIter->second);
             }
         }
+        if( !osURLFeatureInfoTemplate.empty() )
+            osURLFeatureInfoTemplate += osExtraQueryParameters;
         poDS->osURLFeatureInfoTemplate = osURLFeatureInfoTemplate;
 
         // Build all TMS datasets, wrapped in VRT datasets
