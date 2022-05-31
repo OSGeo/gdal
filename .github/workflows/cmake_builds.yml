@@ -372,7 +372,7 @@ jobs:
             cfitsio freexl geotiff jpeg libpq libspatialite libwebp-base pcre pcre2 postgresql \
             sqlite tiledb zstd cryptopp cgal doxygen librttopo libkml openssl xz \
             openjdk ant qhull armadillo blas blas-devel libblas libcblas liblapack liblapacke blosc \
-            "arrow-cpp>=7.0.0"
+            "arrow-cpp>=7.0.0" "pyarrow>=7.0.0"
         cd $CONDA_PREFIX/Library/share/proj
         curl http://download.osgeo.org/proj/proj-datumgrid-1.8.tar.gz > proj-datumgrid-1.8.tar.gz
         tar xvzf proj-datumgrid-1.8.tar.gz
