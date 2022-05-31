@@ -67,21 +67,46 @@ void to_native(RADIOMETRIC_PROCESSING_RECORD& r) {
     }
 }
 
-void to_native(IMAGE_DESCRIPTION_RECORD& r) {
-    r.referencegrid_visir.numberOfLines = CPL_MSBWORD32(r.referencegrid_visir.numberOfLines);
-    r.referencegrid_visir.numberOfColumns = CPL_MSBWORD32(r.referencegrid_visir.numberOfColumns);
+static void to_native(REFERENCEGRID_VISIR& r) {
+    r.numberOfLines = CPL_MSBWORD32(r.numberOfLines);
+    r.numberOfColumns = CPL_MSBWORD32(r.numberOfColumns);
     // should floats be swapped too?
     float f;
 
     // convert float using CPL_MSBPTR32
-    memcpy(&f, &r.referencegrid_visir.lineDirGridStep, sizeof(f));
+    memcpy(&f, &r.lineDirGridStep, sizeof(f));
     CPL_MSBPTR32(&f);
-    r.referencegrid_visir.lineDirGridStep = f;
+    r.lineDirGridStep = f;
 
     // convert float using CPL_MSBPTR32
-    memcpy(&f, &r.referencegrid_visir.columnDirGridStep, sizeof(f));
+    memcpy(&f, &r.columnDirGridStep, sizeof(f));
     CPL_MSBPTR32(&f);
-    r.referencegrid_visir.columnDirGridStep = f;
+    r.columnDirGridStep = f;
+}
+
+static void to_native(PLANNED_COVERAGE_VISIR& r) {
+    r.southernLinePlanned  = CPL_MSBWORD32(r.southernLinePlanned);
+    r.northernLinePlanned  = CPL_MSBWORD32(r.northernLinePlanned);
+    r.easternColumnPlanned  = CPL_MSBWORD32(r.easternColumnPlanned);
+    r.westernColumnPlanned  = CPL_MSBWORD32(r.westernColumnPlanned);
+}
+
+static void to_native(PLANNED_COVERAGE_HRV& r) {
+    r.lowerSouthLinePlanned  = CPL_MSBWORD32(r.lowerSouthLinePlanned);
+    r.lowerNorthLinePlanned  = CPL_MSBWORD32(r.lowerNorthLinePlanned);
+    r.lowerEastColumnPlanned  = CPL_MSBWORD32(r.lowerEastColumnPlanned);
+    r.lowerWestColumnPlanned  = CPL_MSBWORD32(r.lowerWestColumnPlanned);
+    r.upperSouthLinePlanned  = CPL_MSBWORD32(r.upperSouthLinePlanned);
+    r.upperNorthLinePlanned  = CPL_MSBWORD32(r.upperNorthLinePlanned);
+    r.upperEastColumnPlanned  = CPL_MSBWORD32(r.upperEastColumnPlanned);
+    r.upperWestColumnPlanned  = CPL_MSBWORD32(r.upperWestColumnPlanned);
+}
+
+void to_native(IMAGE_DESCRIPTION_RECORD& r) {
+    to_native(r.referencegrid_visir);
+    to_native(r.referencegrid_hrv);
+    to_native(r.plannedCoverage_visir);
+    to_native(r.plannedCoverage_hrv);
 }
 
 void to_string(PH_DATA& d) {
