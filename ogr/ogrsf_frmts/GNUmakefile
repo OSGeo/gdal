@@ -3,9 +3,7 @@ include ../../GDALmake.opt
 
 SUBDIRS-yes = generic geojson kml mem mitab vrt $(OGR_FORMATS)
 
-SUBDIRS-$(HAVE_DODS)	+= dods
 SUBDIRS-$(HAVE_TEIGHA)  += dwg
-SUBDIRS-$(HAVE_GRASS)	+= grass
 SUBDIRS-$(HAVE_IDB)	+= idb
 SUBDIRS-$(HAVE_MYSQL)	+= mysql
 SUBDIRS-$(HAVE_HANA)    += hana

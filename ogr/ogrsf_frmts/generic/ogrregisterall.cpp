@@ -109,9 +109,6 @@ void OGRRegisterAllInternal()
 #ifdef SQLITE_ENABLED
     RegisterOGRSQLite();
 #endif
-#ifdef DODS_ENABLED
-    RegisterOGRDODS();
-#endif
 #ifdef ODBC_ENABLED
     RegisterOGRODBC();
 #endif
@@ -154,9 +151,6 @@ void OGRRegisterAllInternal()
 #endif
 #ifdef CAD_ENABLED
     RegisterOGRCAD();
-#endif
-#ifdef GRASS_ENABLED
-    RegisterOGRGRASS();
 #endif
 #ifdef FLATGEOBUF_ENABLED
     RegisterOGRFlatGeobuf();

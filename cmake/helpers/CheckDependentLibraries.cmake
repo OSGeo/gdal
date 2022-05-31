@@ -508,7 +508,6 @@ define_find_package2(GTA gta/gta.h gta PKGCONFIG_NAME gta)
 gdal_check_package(GTA "Enable GTA driver" CAN_DISABLE)
 
 gdal_check_package(MRSID "MrSID raster SDK" CAN_DISABLE)
-gdal_check_package(DAP "Data Access Protocol library for server and client." CAN_DISABLE)
 gdal_check_package(Armadillo "C++ library for linear algebra (used for TPS transformation)" CAN_DISABLE)
 if (ARMADILLO_FOUND)
   # On Conda, the armadillo package has no dependency on lapack, but the later is required for successful linking. So
@@ -601,7 +600,10 @@ gdal_check_package(LZ4 "LZ4 compression" CAN_DISABLE)
 gdal_check_package(Blosc "Blosc compression" CAN_DISABLE)
 
 define_find_package2(JXL jxl/decode.h jxl PKGCONFIG_NAME libjxl)
-gdal_check_package(JXL "JPEG-XL compression (when used with internal libtiff)" CAN_DISABLE)
+gdal_check_package(JXL "JPEG-XL compression" CAN_DISABLE)
+
+define_find_package2(JXL_THREADS jxl/resizable_parallel_runner.h jxl_threads PKGCONFIG_NAME libjxl_threads)
+gdal_check_package(JXL_THREADS "JPEG-XL threading" CAN_DISABLE)
 
 # unused for now gdal_check_package(OpenMP "")
 gdal_check_package(Crnlib "enable gdal_DDS driver" CAN_DISABLE)
@@ -626,41 +628,6 @@ endif ()
 cmake_dependent_option(GDAL_USE_OPENJPEG "Set ON to use openjpeg" ON OPENJPEG_FOUND OFF)
 if (GDAL_USE_OPENJPEG)
   string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(OpenJPEG MODULE)\n")
-endif ()
-
-# FIXME: we should probably ultimately move the GRASS driver to an
-# external repository, due to GRASS depending on GDAL, hence the GRASS driver
-# can only be built as a plugin. Or at the very least we should only allow building
-# it as a plugin, and have a GDAL_USE_GRASS variable to control if libgrass should
-# be used (and change frmts/CMakeLists.txt and ogr/ogrsf_frmts/CMakeLists.txt
-# to use it instead of HAVE_GRASS)
-if( ALLOW_GRASS_DRIVER )
-# Only GRASS 7 is currently supported but we keep dual version support in cmake for possible future switch to GRASS 8.
-set(TMP_GRASS OFF)
-foreach (GRASS_SEARCH_VERSION 7)
-  # Cached variables: GRASS7_FOUND, GRASS_PREFIX7, GRASS_INCLUDE_DIR7 HAVE_GRASS: TRUE if at least one version of GRASS
-  # was found
-  set(GRASS_CACHE_VERSION ${GRASS_SEARCH_VERSION})
-  if (WITH_GRASS${GRASS_CACHE_VERSION})
-    find_package(GRASS ${GRASS_SEARCH_VERSION} MODULE)
-    if (${GRASS${GRASS_CACHE_VERSION}_FOUND})
-      set(GRASS_PREFIX${GRASS_CACHE_VERSION}
-          ${GRASS_PREFIX${GRASS_SEARCH_VERSION}}
-          CACHE PATH "Path to GRASS ${GRASS_SEARCH_VERSION} base directory")
-      set(TMP_GRASS ON)
-    endif ()
-  endif ()
-endforeach ()
-if (TMP_GRASS)
-  set(HAVE_GRASS
-      ON
-      CACHE INTERNAL "HAVE_GRASS")
-else ()
-  set(HAVE_GRASS
-      OFF
-      CACHE INTERNAL "HAVE_GRASS")
-endif ()
-unset(TMP_GRASS)
 endif ()
 
 gdal_check_package(HDFS "Enable Hadoop File System through native library" CAN_DISABLE)
@@ -695,6 +662,10 @@ gdal_check_package(LURATECH "Enable JP2Lura driver" CAN_DISABLE)
 gdal_check_package(Arrow "Apache Arrow C++ library" CONFIG CAN_DISABLE)
 if (Arrow_FOUND)
     gdal_check_package(Parquet "Apache Parquet C++ library" CONFIG PATHS ${Arrow_DIR} CAN_DISABLE)
+    gdal_check_package(ArrowDataset "Apache ArrowDataset C++ library" CONFIG PATHS ${Arrow_DIR} CAN_DISABLE)
+    if (Parquet_FOUND AND NOT ArrowDataset_FOUND)
+        message(WARNING "Parquet library found, but not ArrowDataset: partitioned datasets will not be supported")
+    endif()
 endif()
 
 # bindings

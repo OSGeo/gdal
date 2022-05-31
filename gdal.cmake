@@ -455,6 +455,16 @@ cmake_dependent_option(OGR_ENABLE_DRIVER_SQLITE "Set ON to build OGR SQLite driv
 cmake_dependent_option(OGR_ENABLE_DRIVER_GPKG "Set ON to build OGR GPKG driver" ${OGR_BUILD_OPTIONAL_DRIVERS}
                        "GDAL_USE_SQLITE3;OGR_ENABLE_DRIVER_SQLITE" OFF)
 
+# Build frmts/iso8211 conditionally to drivers requiring it
+if ((GDAL_BUILD_OPTIONAL_DRIVERS AND NOT DEFINED GDAL_ENABLE_DRIVER_ADRG AND NOT DEFINED GDAL_ENABLE_DRIVER_SDTS) OR
+    GDAL_ENABLE_DRIVER_ADRG OR
+    GDAL_ENABLE_DRIVER_SDTS OR
+    (OGR_BUILD_OPTIONAL_DRIVERS AND NOT DEFINED OGR_ENABLE_DRIVER_S57 AND NOT DEFINED OGR_ENABLE_DRIVER_SDTS) OR
+    OGR_ENABLE_DRIVER_S57 OR
+    OGR_ENABLE_DRIVER_SDTS)
+  add_subdirectory(frmts/iso8211)
+endif()
+
 add_subdirectory(frmts)
 add_subdirectory(ogr/ogrsf_frmts)
 
@@ -473,7 +483,9 @@ add_subdirectory(scripts)
 
 # Add all library dependencies of target gdal
 get_property(GDAL_PRIVATE_LINK_LIBRARIES GLOBAL PROPERTY gdal_private_link_libraries)
-target_link_libraries(${GDAL_LIB_TARGET_NAME} PRIVATE ${GDAL_PRIVATE_LINK_LIBRARIES})
+# GDAL_EXTRA_LINK_LIBRARIES may be set by the user if the various FindXXXX modules
+# didn't capture all required dependencies (used for example by OSGeo4W)
+target_link_libraries(${GDAL_LIB_TARGET_NAME} PRIVATE ${GDAL_PRIVATE_LINK_LIBRARIES} ${GDAL_EXTRA_LINK_LIBRARIES})
 
 # Document/Manuals
 if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/doc" AND BUILD_DOCS)
@@ -732,10 +744,10 @@ if (NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
   endif ()
 
   include(CMakePackageConfigHelpers)
-  if(CMAKE_VERSION VERSION_LESS 3.10.1)
+  if(CMAKE_VERSION VERSION_LESS 3.11)
       set(comptatibility_check ExactVersion)
   else()
-      # SameMinorVersion compatibility are supported CMake > 3.10.1
+      # SameMinorVersion compatibility are supported CMake >= 3.11
       # Our C++ ABI remains stable only among major.minor.XXX patch releases
       set(comptatibility_check SameMinorVersion)
   endif()

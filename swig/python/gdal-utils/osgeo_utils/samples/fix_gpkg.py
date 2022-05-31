@@ -68,7 +68,7 @@ def fix(filename, verbose = 1):
 def main(argv=sys.argv):
     if len(argv) != 2:
         print('Usage: fix_gpkg.py my.gpkg|*.gpkg')
-        return 1
+        return 2
 
     filename = argv[1]
     if '*' in filename:

@@ -1080,7 +1080,7 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
             {
                 CPLPushErrorHandler(CPLQuietErrorHandler);
                 // We need to reopen in a temporary dataset for the particular
-                // case of overwriten a .tif.ovr file from a .tif
+                // case of overwritten a .tif.ovr file from a .tif
                 // If we probe the file list of the .tif, it will then open the
                 // .tif.ovr !
                 const char* const apszAllowedDrivers[] = {

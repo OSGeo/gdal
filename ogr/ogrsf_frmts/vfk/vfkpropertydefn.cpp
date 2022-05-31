@@ -41,7 +41,7 @@ CPL_CVSID("$Id$")
 
   \param pszName property name
   \param pszType property type (original, string)
-  \param bLatin2 true for "ISO-8859-2" otherwise "WINDOWS-1250" is used (only for "text" type)
+  \param bLatin2 true for "ISO-8859-2" otherwise "UTF-8" is used (only for "text" type)
 */
 VFKPropertyDefn::VFKPropertyDefn( const char *pszName, const char *pszType,
                                   bool bLatin2 ) :
@@ -81,7 +81,7 @@ VFKPropertyDefn::VFKPropertyDefn( const char *pszName, const char *pszType,
     else if (*m_pszType == 'T') {
         // String.
         m_eFType = OFTString;
-        m_pszEncoding = bLatin2 ? CPLStrdup("ISO-8859-2") : CPLStrdup("WINDOWS-1250");
+        m_pszEncoding = bLatin2 ? CPLStrdup("ISO-8859-2") : CPLStrdup("UTF-8");
     }
     else if (*m_pszType == 'D') {
         // Date.
@@ -92,7 +92,7 @@ VFKPropertyDefn::VFKPropertyDefn( const char *pszName, const char *pszType,
     else {
         // Unknown - string.
         m_eFType = OFTString;
-        m_pszEncoding = bLatin2 ? CPLStrdup("ISO-8859-2") : CPLStrdup("WINDOWS-1250");
+        m_pszEncoding = bLatin2 ? CPLStrdup("ISO-8859-2") : CPLStrdup("UTF-8");
     }
 }
 

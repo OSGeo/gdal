@@ -82,43 +82,43 @@ class OGROSMLayer final: public OGRLayer
 {
     friend class OGROSMDataSource;
 
-    OGROSMDataSource    *poDS;
-    int                  nIdxLayer;
-    OGRFeatureDefn      *poFeatureDefn;
-    OGRSpatialReference *poSRS;
-    long                 nFeatureCount;
+    OGROSMDataSource    *m_poDS = nullptr;
+    int                  m_nIdxLayer = 0;
+    OGRFeatureDefn      *m_poFeatureDefn = nullptr;
+    OGRSpatialReference *m_poSRS = nullptr;
+    long                 m_nFeatureCount = 0;
 
-    std::vector<char*>   apszNames; /* Needed to keep a "reference" to the string inserted into oMapFieldNameToIndex */
-    std::map<const char*, int, ConstCharComp> oMapFieldNameToIndex;
+    std::vector<char*>   m_apszNames{}; /* Needed to keep a "reference" to the string inserted into oMapFieldNameToIndex */
+    std::map<const char*, int, ConstCharComp> m_oMapFieldNameToIndex{};
 
-    std::vector<OGROSMComputedAttribute> oComputedAttributes;
+    std::vector<OGROSMComputedAttribute> m_oComputedAttributes{};
 
-    bool                 bResetReadingAllowed;
+    bool                 m_bResetReadingAllowed = false;
 
-    int                  nFeatureArraySize;
-    int                  nFeatureArrayMaxSize;
-    int                  nFeatureArrayIndex;
-    OGRFeature**         papoFeatures;
+    int                  m_nFeatureArraySize = 0;
+    int                  m_nFeatureArrayMaxSize = 0;
+    int                  m_nFeatureArrayIndex = 0;
+    OGRFeature**         m_papoFeatures = nullptr;
 
-    bool                  bHasOSMId;
-    int                   nIndexOSMId;
-    int                   nIndexOSMWayId;
-    bool                  bHasVersion;
-    bool                  bHasTimestamp;
-    bool                  bHasUID;
-    bool                  bHasUser;
-    bool                  bHasChangeset;
-    bool                  bHasOtherTags;
-    int                   nIndexOtherTags;
-    bool                  bHasAllTags;
-    int                   nIndexAllTags;
+    bool                  m_bHasOSMId = false;
+    int                   m_nIndexOSMId = -1;
+    int                   m_nIndexOSMWayId = -1;
+    bool                  m_bHasVersion = false;
+    bool                  m_bHasTimestamp = false;
+    bool                  m_bHasUID = false;
+    bool                  m_bHasUser = false;
+    bool                  m_bHasChangeset = false;
+    bool                  m_bHasOtherTags = true;
+    int                   m_nIndexOtherTags = -1;
+    bool                  m_bHasAllTags = false;
+    int                   m_nIndexAllTags = -1;
 
-    bool                  bHasWarnedTooManyFeatures;
+    bool                  m_bHasWarnedTooManyFeatures = false;
 
-    char                 *pszAllTags;
-    bool                  bHasWarnedAllTagsTruncated;
+    char                 *m_pszAllTags = nullptr;
+    bool                  m_bHasWarnedAllTagsTruncated = false;
 
-    bool                  bUserInterested;
+    bool                  m_bUserInterested = true;
 
     bool                  AddToArray( OGRFeature* poFeature,
                                       int bCheckFeatureThreshold );
@@ -137,12 +137,12 @@ class OGROSMLayer final: public OGRLayer
     std::set<std::string> aoSetWarnKeys;
 
   public:
-                        OGROSMLayer( OGROSMDataSource* poDS,
-                                     int nIdxLayer,
+                        OGROSMLayer( OGROSMDataSource* m_poDS,
+                                     int m_nIdxLayer,
                                      const char* pszName );
     virtual             ~OGROSMLayer();
 
-    virtual OGRFeatureDefn *GetLayerDefn() override {return poFeatureDefn;}
+    virtual OGRFeatureDefn *GetLayerDefn() override {return m_poFeatureDefn;}
 
     virtual void        ResetReading() override;
     virtual int         TestCapability( const char * ) override;
@@ -172,29 +172,29 @@ class OGROSMLayer final: public OGRLayer
     void                AddField(const char* pszName, OGRFieldType eFieldType);
     int                 GetFieldIndex(const char* pszName);
 
-    bool                HasOSMId() const { return bHasOSMId; }
-    void                SetHasOSMId(bool bIn) { bHasOSMId = bIn; }
+    bool                HasOSMId() const { return m_bHasOSMId; }
+    void                SetHasOSMId(bool bIn) { m_bHasOSMId = bIn; }
 
-    bool                HasVersion() const { return bHasVersion; }
-    void                SetHasVersion(bool bIn) { bHasVersion = bIn; }
+    bool                HasVersion() const { return m_bHasVersion; }
+    void                SetHasVersion(bool bIn) { m_bHasVersion = bIn; }
 
-    bool                HasTimestamp() const { return bHasTimestamp; }
-    void                SetHasTimestamp(bool bIn) { bHasTimestamp = bIn; }
+    bool                HasTimestamp() const { return m_bHasTimestamp; }
+    void                SetHasTimestamp(bool bIn) { m_bHasTimestamp = bIn; }
 
-    bool                HasUID() const { return bHasUID; }
-    void                SetHasUID(bool bIn) { bHasUID = bIn; }
+    bool                HasUID() const { return m_bHasUID; }
+    void                SetHasUID(bool bIn) { m_bHasUID = bIn; }
 
-    bool                HasUser() const { return bHasUser; }
-    void                SetHasUser(bool bIn) { bHasUser = bIn; }
+    bool                HasUser() const { return m_bHasUser; }
+    void                SetHasUser(bool bIn) { m_bHasUser = bIn; }
 
-    bool                HasChangeset() const { return bHasChangeset; }
-    void                SetHasChangeset(bool bIn) { bHasChangeset = bIn; }
+    bool                HasChangeset() const { return m_bHasChangeset; }
+    void                SetHasChangeset(bool bIn) { m_bHasChangeset = bIn; }
 
-    bool                HasOtherTags() const { return bHasOtherTags; }
-    void                SetHasOtherTags(bool bIn) { bHasOtherTags = bIn; }
+    bool                HasOtherTags() const { return m_bHasOtherTags; }
+    void                SetHasOtherTags(bool bIn) { m_bHasOtherTags = bIn; }
 
-    bool                HasAllTags() const { return bHasAllTags; }
-    void                SetHasAllTags(bool bIn) { bHasAllTags = bIn; }
+    bool                HasAllTags() const { return m_bHasAllTags; }
+    void                SetHasAllTags(bool bIn) { m_bHasAllTags = bIn; }
 
     void                SetFieldsFromTags(OGRFeature* poFeature,
                                           GIntBig nID,
@@ -202,8 +202,8 @@ class OGROSMLayer final: public OGRLayer
                                           unsigned int nTags, OSMTag* pasTags,
                                           OSMInfo* psInfo);
 
-    void                SetDeclareInterest(bool bIn) { bUserInterested = bIn; }
-    bool                IsUserInterested() const { return bUserInterested; }
+    void                SetDeclareInterest(bool bIn) { m_bUserInterested = bIn; }
+    bool                IsUserInterested() const { return m_bUserInterested; }
 
     int                 HasAttributeFilter() const { return m_poAttrQuery != nullptr; }
     int                 EvaluateAttributeFilter(OGRFeature* poFeature);
@@ -235,13 +235,18 @@ typedef struct
 
 typedef struct
 {
-    short               nKeyIndex; /* index of OGROSMDataSource.asKeys */
+    short               bKIsIndex; /* whether we should use nKeyIndex or nOffsetInpabyNonRedundantKeys */
     short               bVIsIndex; /* whether we should use nValueIndex or nOffsetInpabyNonRedundantValues */
+    union
+    {
+        int                 nKeyIndex; /* index of OGROSMDataSource.asKeys */
+        int                 nOffsetInpabyNonRedundantKeys; /* offset in OGROSMDataSource.pabyNonRedundantKeys */
+    } uKey;
     union
     {
         int                 nValueIndex; /* index of KeyDesc.asValues */
         int                 nOffsetInpabyNonRedundantValues; /* offset in OGROSMDataSource.pabyNonRedundantValues */
-    } u;
+    } uVal;
 } IndexedKVP;
 
 typedef struct
@@ -286,129 +291,132 @@ class OGROSMDataSource final: public OGRDataSource
 {
     friend class OGROSMLayer;
 
-    int                 nLayers;
-    OGROSMLayer**       papoLayers;
-    char*               pszName;
+    int                 m_nLayers = 0;
+    OGROSMLayer**       m_papoLayers = nullptr;
+    char*               m_pszName = nullptr;
 
-    OGREnvelope         sExtent;
-    bool                bExtentValid;
+    OGREnvelope         m_sExtent{};
+    bool                m_bExtentValid = false;
 
     // Starts off at -1 to indicate that we do not know.
-    int                 bInterleavedReading;
-    OGROSMLayer        *poCurrentLayer;
+    int                 m_bInterleavedReading = -1;
+    OGROSMLayer        *m_poCurrentLayer = nullptr;
 
-    OSMContext         *psParser;
-    bool                bHasParsedFirstChunk;
-    bool                bStopParsing;
+    OSMContext         *m_psParser = nullptr;
+    bool                m_bHasParsedFirstChunk = false;
+    bool                m_bStopParsing = false;
 
-    sqlite3_vfs*        pMyVFS;
+    sqlite3_vfs*        m_pMyVFS = nullptr;
 
-    sqlite3            *hDB;
-    sqlite3_stmt       *hInsertNodeStmt;
-    sqlite3_stmt       *hInsertWayStmt;
-    sqlite3_stmt       *hSelectNodeBetweenStmt;
-    sqlite3_stmt      **pahSelectNodeStmt;
-    sqlite3_stmt      **pahSelectWayStmt;
-    sqlite3_stmt       *hInsertPolygonsStandaloneStmt;
-    sqlite3_stmt       *hDeletePolygonsStandaloneStmt;
-    sqlite3_stmt       *hSelectPolygonsStandaloneStmt;
-    bool                bHasRowInPolygonsStandalone;
+    sqlite3            *m_hDB = nullptr;
+    sqlite3_stmt       *m_hInsertNodeStmt = nullptr;
+    sqlite3_stmt       *m_hInsertWayStmt = nullptr;
+    sqlite3_stmt       *m_hSelectNodeBetweenStmt = nullptr;
+    sqlite3_stmt      **m_pahSelectNodeStmt = nullptr;
+    sqlite3_stmt      **m_pahSelectWayStmt = nullptr;
+    sqlite3_stmt       *m_hInsertPolygonsStandaloneStmt = nullptr;
+    sqlite3_stmt       *m_hDeletePolygonsStandaloneStmt = nullptr;
+    sqlite3_stmt       *m_hSelectPolygonsStandaloneStmt = nullptr;
+    bool                m_bHasRowInPolygonsStandalone = false;
 
-    sqlite3            *hDBForComputedAttributes;
+    sqlite3            *m_hDBForComputedAttributes = nullptr;
 
-    int                 nMaxSizeForInMemoryDBInMB;
-    bool                bInMemoryTmpDB;
-    bool                bMustUnlink;
-    CPLString           osTmpDBName;
+    int                 m_nMaxSizeForInMemoryDBInMB = 0;
+    bool                m_bInMemoryTmpDB = false;
+    bool                m_bMustUnlink = true;
+    CPLString           m_osTmpDBName{};
 
-    int                 nNodesInTransaction;
+    int                 m_nNodesInTransaction = 0;
 
-    std::unordered_set<std::string> aoSetClosedWaysArePolygons;
-    int                 nMinSizeKeysInSetClosedWaysArePolygons;
-    int                 nMaxSizeKeysInSetClosedWaysArePolygons;
+    std::unordered_set<std::string> aoSetClosedWaysArePolygons{};
+    int                 m_nMinSizeKeysInSetClosedWaysArePolygons = 0;
+    int                 m_nMaxSizeKeysInSetClosedWaysArePolygons = 0;
 
     std::vector<LonLat> m_asLonLatCache{};
 
-    std::array<const char*, 7>  m_ignoredKeys;
+    std::array<const char*, 7>  m_ignoredKeys = {{"area","created_by","converted_by","note","todo","fixme","FIXME"}};
 
-    bool                bReportAllNodes;
-    bool                bReportAllWays;
+    bool                m_bReportAllNodes = false;
+    bool                m_bReportAllWays = false;
 
-    bool                bFeatureAdded;
+    bool                m_bFeatureAdded = false;
 
-    bool                bInTransaction;
+    bool                m_bInTransaction = false;
 
-    bool                bIndexPoints;
-    bool                bUsePointsIndex;
-    bool                bIndexWays;
-    bool                bUseWaysIndex;
+    bool                m_bIndexPoints = true;
+    bool                m_bUsePointsIndex = true;
+    bool                m_bIndexWays = true;
+    bool                m_bUseWaysIndex = true;
 
-    std::vector<bool>   abSavedDeclaredInterest;
-    OGRLayer*           poResultSetLayer;
-    bool                bIndexPointsBackup;
-    bool                bUsePointsIndexBackup;
-    bool                bIndexWaysBackup;
-    bool                bUseWaysIndexBackup;
+    std::vector<bool>   m_abSavedDeclaredInterest{};
+    OGRLayer*           m_poResultSetLayer = nullptr;
+    bool                m_bIndexPointsBackup = false;
+    bool                m_bUsePointsIndexBackup = false;
+    bool                m_bIndexWaysBackup = false;
+    bool                m_bUseWaysIndexBackup = false;
 
-    bool                bIsFeatureCountEnabled;
+    bool                m_bIsFeatureCountEnabled = false;
 
-    bool                bAttributeNameLaundering;
+    bool                m_bAttributeNameLaundering = true;
 
     std::vector<GByte>  m_abyWayBuffer{};
 
-    int                 nWaysProcessed;
-    int                 nRelationsProcessed;
+    int                 m_nWaysProcessed = 0;
+    int                 m_nRelationsProcessed = 0;
 
-    bool                bCustomIndexing;
-    bool                bCompressNodes;
+    bool                m_bCustomIndexing = true;
+    bool                m_bCompressNodes = false;
 
-    unsigned int        nUnsortedReqIds;
-    GIntBig            *panUnsortedReqIds;
+    unsigned int        m_nUnsortedReqIds = 0;
+    GIntBig            *m_panUnsortedReqIds = nullptr;
 
-    unsigned int        nReqIds;
-    GIntBig            *panReqIds;
+    unsigned int        m_nReqIds = 0;
+    GIntBig            *m_panReqIds = nullptr;
 
 #ifdef ENABLE_NODE_LOOKUP_BY_HASHING
-    bool                bEnableHashedIndex;
+    bool                m_bEnableHashedIndex = true;
     /* values >= 0 are indexes of panReqIds. */
     /*        == -1 for unoccupied */
     /*        < -1 are expressed as -nIndexToCollisionBuckets-2 where nIndexToCollisionBuckets point to psCollisionBuckets */
-    int                *panHashedIndexes;
-    CollisionBucket    *psCollisionBuckets;
-    bool                bHashedIndexValid;
+    int                *m_panHashedIndexes = nullptr;
+    CollisionBucket    *m_psCollisionBuckets = nullptr;
+    bool                m_bHashedIndexValid = false;
 #endif
 
-    LonLat             *pasLonLatArray;
+    LonLat             *m_pasLonLatArray = nullptr;
 
-    IndexedKVP         *pasAccumulatedTags; /* points to content of pabyNonRedundantValues or aoMapIndexedKeys */
-    int                 nAccumulatedTags;
-    GByte              *pabyNonRedundantValues;
-    int                 nNonRedundantValuesLen;
-    WayFeaturePair     *pasWayFeaturePairs;
-    int                 nWayFeaturePairs;
+    IndexedKVP         *m_pasAccumulatedTags = nullptr; /* points to content of pabyNonRedundantValues or aoMapIndexedKeys */
+    int                 m_nAccumulatedTags = 0;
+    unsigned int        MAX_INDEXED_KEYS = 0;
+    GByte              *pabyNonRedundantKeys = nullptr;
+    int                 nNonRedundantKeysLen = 0;
+    unsigned int        MAX_INDEXED_VALUES_PER_KEY = 0;
+    GByte              *pabyNonRedundantValues = nullptr;
+    int                 nNonRedundantValuesLen = 0;
+    WayFeaturePair     *m_pasWayFeaturePairs = nullptr;
+    int                 m_nWayFeaturePairs = 0;
 
-    int                          nNextKeyIndex;
-    std::vector<KeyDesc*>         asKeys;
-    std::map<const char*, KeyDesc*, ConstCharComp> aoMapIndexedKeys; /* map that is the reverse of asKeys */
+    std::vector<KeyDesc*>         m_asKeys{};
+    std::map<const char*, KeyDesc*, ConstCharComp> m_aoMapIndexedKeys{}; /* map that is the reverse of asKeys */
 
-    CPLString           osNodesFilename;
-    bool                bInMemoryNodesFile;
-    bool                bMustUnlinkNodesFile;
-    GIntBig             nNodesFileSize;
-    VSILFILE           *fpNodes;
+    CPLString           m_osNodesFilename{};
+    bool                m_bInMemoryNodesFile = false;
+    bool                m_bMustUnlinkNodesFile = true;
+    GIntBig             m_nNodesFileSize = 0;
+    VSILFILE           *m_fpNodes = nullptr;
 
-    GIntBig             nPrevNodeId;
-    int                 nBucketOld;
-    int                 nOffInBucketReducedOld;
-    GByte              *pabySector;
-    std::map<int, Bucket> oMapBuckets;
+    GIntBig             m_nPrevNodeId = -INT_MAX;
+    int                 m_nBucketOld = -1;
+    int                 m_nOffInBucketReducedOld = -1;
+    GByte              *m_pabySector = nullptr;
+    std::map<int, Bucket> m_oMapBuckets{};
     Bucket*             GetBucket(int nBucketId);
 
-    bool                bNeedsToSaveWayInfo;
+    bool                m_bNeedsToSaveWayInfo = false;
 
     static const GIntBig FILESIZE_NOT_INIT = -2;
     static const GIntBig FILESIZE_INVALID = -1;
-    GIntBig             m_nFileSize;
+    GIntBig             m_nFileSize = FILESIZE_NOT_INIT;
 
     void                CompressWay (bool bIsArea, unsigned int nTags, IndexedKVP* pasTags,
                                      int nPoints, LonLat* pasLonLatPairs,
@@ -473,8 +481,8 @@ class OGROSMDataSource final: public OGRDataSource
                         OGROSMDataSource();
                         virtual ~OGROSMDataSource();
 
-    virtual const char *GetName() override { return pszName; }
-    virtual int         GetLayerCount() override { return nLayers; }
+    virtual const char *GetName() override { return m_pszName; }
+    virtual int         GetLayerCount() override { return m_nLayers; }
     virtual OGRLayer   *GetLayer( int ) override;
 
     virtual int         TestCapability( const char * ) override;
@@ -505,12 +513,12 @@ class OGROSMDataSource final: public OGRDataSource
     void                NotifyBounds (double dfXMin, double dfYMin,
                                       double dfXMax, double dfYMax);
 
-    OGROSMLayer*        GetCurrentLayer() { return poCurrentLayer; }
-    void                SetCurrentLayer(OGROSMLayer* poLyr) { poCurrentLayer = poLyr; }
+    OGROSMLayer*        GetCurrentLayer() { return m_poCurrentLayer; }
+    void                SetCurrentLayer(OGROSMLayer* poLyr) { m_poCurrentLayer = poLyr; }
 
-    bool                IsFeatureCountEnabled() const { return bIsFeatureCountEnabled; }
+    bool                IsFeatureCountEnabled() const { return m_bIsFeatureCountEnabled; }
 
-    bool                DoesAttributeNameLaundering() const { return bAttributeNameLaundering; }
+    bool                DoesAttributeNameLaundering() const { return m_bAttributeNameLaundering; }
 };
 
 #endif /* ndef OGR_OSM_H_INCLUDED */

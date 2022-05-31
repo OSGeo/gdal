@@ -44,7 +44,7 @@ from osgeo import osr
 def Usage():
     print("Usage: gdalinfo [--help-general] [-mm] [-stats] [-hist] [-nogcp] [-nomd]\n" +
           "                [-norat] [-noct] [-nofl] [-checksum] [-mdd domain]* datasetname")
-    return 1
+    return 2
 
 
 def EQUAL(a, b):

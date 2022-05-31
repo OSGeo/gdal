@@ -2013,84 +2013,6 @@ AC_SUBST(PG_INC,$PG_INC)
 AC_SUBST(PG_LIB,$PG_LIB)
 
 dnl ---------------------------------------------------------------------------
-dnl Check if we should build with GRASS support.
-dnl ---------------------------------------------------------------------------
-
-GRASS_SETTING=no
-GRASS_INCLUDE=
-HAVE_GRASS=no
-export GRASS_INCLUDE GRASS_SETTING
-
-AC_ARG_WITH(grass,[  --with-grass[=ARG]      Include GRASS support (GRASS 5.7+, ARG=GRASS install tree dir)],,)
-
-AC_ARG_WITH(libgrass,[  --with-libgrass[=ARG]   Include GRASS support based on libgrass (GRASS 5.0+)],,)
-
-# default use of grass libraries off since we can't easily auto-find them.
-if test "$with_grass" = "" ; then
-  with_grass=no
-fi
-
-# Check for GRASS 5.7.0 or later library use.
-# TODO: separate libs for rasters and vectors
-if test "$with_grass" != "yes" -a "$with_grass" != "no" ; then
-
-  AC_CHECK_LIB(grass_gis,G_is_initialized,GRASS_SETTING=grass70+,GRASS_SETTING=no,-L$with_grass/lib -lgrass_datetime)
-  if test "$GRASS_SETTING" = "no" ; then
-    AC_CHECK_LIB(grass_gis,G_asprintf,GRASS_SETTING=grass57+,GRASS_SETTING=no,-L$with_grass/lib -lgrass_datetime)
-  fi
-
-  if test "$GRASS_SETTING" != "no" ; then
-    if test "$GRASS_SETTING" = "grass70+" ; then
-      G_RASTLIBS="-lgrass_raster -lgrass_imagery"
-      G_VECTLIBS="-lgrass_vector -lgrass_dig2 -lgrass_dgl -lgrass_rtree -lgrass_linkm -lgrass_dbmiclient -lgrass_dbmibase"
-      LIBS="-L$with_grass/lib $G_VECTLIBS $G_RASTLIBS -lgrass_gproj -lgrass_gmath -lgrass_gis -lgrass_datetime $LIBS"
-    else
-      G_RASTLIBS="-lgrass_I"
-      G_VECTLIBS="-lgrass_vect -lgrass_dig2 -lgrass_dgl -lgrass_rtree -lgrass_linkm -lgrass_dbmiclient -lgrass_dbmibase"
-      LIBS="-L$with_grass/lib $G_VECTLIBS $G_RASTLIBS -lgrass_gproj -lgrass_vask -lgrass_gmath -lgrass_gis -lgrass_datetime $LIBS"
-    fi
-    GRASS_INCLUDE="-I$with_grass/include"
-    GRASS_GISBASE="$with_grass"
-    HAVE_GRASS=yes
-  else
-    AC_MSG_ERROR([--with-grass=$with_grass requested, but libraries not found!])
-  fi
-
-# Check if libgrass is disabled.
-elif test "$with_libgrass" = "no" ; then
-
-  echo "GRASS support disabled."
-
-elif test "$with_libgrass" = "yes" -o "$with_libgrass" = "" ; then
-
-  AC_CHECK_LIB(grass5,G_gisinit_2,GRASS_SETTING=libgrass,GRASS_SETTING=no,)
-
-  if test "$GRASS_SETTING" = "libgrass" ; then
-    LIBS="-lgrass5 $LIBS"
-  fi
-
-else
-
-  AC_CHECK_LIB(grass5,G_gisinit_2,GRASS_SETTING=libgrass,GRASS_SETTING=no,-L$with_libgrass/lib)
-
-  if test "$GRASS_SETTING" = "libgrass" ; then
-    LIBS="-L$with_libgrass -L$with_libgrass/lib -lgrass5 $LIBS"
-    GRASS_INCLUDE="-I$with_libgrass -I$with_libgrass/include $EXTRA_INCLUDES"
-  else
-    AC_MSG_ERROR([--with-libgrass=$with_grass requested, but libgrass5 not found!])
-  fi
-fi
-
-AC_SUBST(GRASS_SETTING,$GRASS_SETTING)
-AC_SUBST(GRASS_INCLUDE,$GRASS_INCLUDE)
-AC_SUBST(GRASS_GISBASE,$GRASS_GISBASE)
-AC_SUBST(HAVE_GRASS)
-
-if test "$GRASS_SETTING" != "no" ; then
-  OPT_GDAL_FORMATS="grass $OPT_GDAL_FORMATS"
-fi
-
-dnl ---------------------------------------------------------------------------
 dnl Check if cfitsio library is available.
 dnl ---------------------------------------------------------------------------
 
@@ -3966,124 +3888,6 @@ AC_SUBST([HAVE_OCI], [$HAVE_ORACLE_OCI])
 AC_SUBST([OCI_INCLUDE], $[OCI_INCLUDE])
 
 dnl ---------------------------------------------------------------------------
-dnl Check for DODS.
-dnl ---------------------------------------------------------------------------
-
-HAVE_DODS=no
-
-AC_MSG_CHECKING(for DODS)
-AC_ARG_WITH(dods_root,
-    [  --with-dods-root[=ARG]  Include DODS support (ARG=no or absolute path)],
-    ,,)
-
-if test -z "$with_dods_root" -o "$with_dods_root" = "no"; then
-    AC_MSG_RESULT(disabled)
-elif test "$with_dods_root" = "yes" ; then
-    AC_MSG_ERROR([--with-dods-root requires path to dods root as argument])
-else
-    DODS_LIB=$with_dods_root/lib
-    DODS_INC="-I$with_dods_root/include"
-    if test -d "$with_dods_root/include/libdap"; then
-       DODS_INC="$DODS_INC -I$with_dods_root/include/libdap";
-    elif test -d "$with_dods_root/include/dap"; then
-       DODS_INC="$DODS_INC -I$with_dods_root/include/dap";
-   fi
-    DODS_BIN=$with_dods_root/bin
-
-    dnl Check libdap version the sane way (if possible through dap-config)
-    if test -x $DODS_BIN/dap-config ; then
-        LIBDAP_VER=`${DODS_BIN}/dap-config --version |awk '{print \$2}'`
-        LIBDAP_CFLAGS=`${DODS_BIN}/dap-config --cflags`
-        dnl The dods driver needs LIBDAP_320 and LIBDAP_39 defined to include the right headers
-        DODS_INC="$DODS_INC $LIBDAP_CFLAGS -DLIBDAP_310 -DLIBDAP_39"
-        dnl libs from dap-config gets added further down
-        AC_MSG_RESULT([libdap $LIBDAP_VER])
-    else
-        PKG_PROG_PKG_CONFIG([0.21])
-        PKG_CHECK_MODULES(LIBDAP,[libdap], [HAVE_LIBDAP=yes], [HAVE_LIBDAP=no])
-
-        if test "${HAVE_LIBDAP}" = "yes"; then
-            dnl The dods driver needs LIBDAP_320 and LIBDAP_39 defined to include the right headers
-            DODS_INC="$DODS_INC $LIBDAP_CFLAGS -DLIBDAP_310 -DLIBDAP_39"
-        else
-            dnl Check the version by compiling test programs
-
-            dnl Test if we have libdap >= 3.10
-            dnl From libdap 3.10, AISConnect.h has been renamed as Connect.h
-            rm -f islibdappost310.*
-            echo '#include "Connect.h"' > islibdappost310.cpp
-            echo 'int main(int argc, char** argv) { return 0; } ' >> islibdappost310.cpp
-            if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} islibdappost310.cpp -c ${DODS_INC} ${CPPFLAGS} 2>&1`" ; then
-            dnl yes, libdap >= 3.10
-                DODS_INC="$DODS_INC -DLIBDAP_310 -DLIBDAP_39"
-                AC_MSG_RESULT([libdap >= 3.10])
-            else
-                AC_MSG_RESULT([libdap < 3.10])
-
-                dnl Test if we have libdap < 3.9
-                dnl Before libdap < 3.9, DAS derived from AttrTable class
-                dnl I wish they had defines with version numbers instead of this test !
-                rm -f islibdappre39.*
-                echo '#include "DAS.h"' > islibdappre39.cpp
-                echo '#include "AttrTable.h"' >> islibdappre39.cpp
-                echo 'using namespace libdap;' >> islibdappre39.cpp
-                echo 'int main(int argc, char** argv) { DAS oDAS; AttrTable& oAttrTable = oDAS; } ' >> islibdappre39.cpp
-                if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} islibdappre39.cpp -c ${DODS_INC} 2>&1`" ; then
-                dnl yes, libdap < 3.9
-                    AC_MSG_RESULT([libdap < 3.9])
-                else
-                    DODS_INC="$DODS_INC -DLIBDAP_39"
-                    AC_MSG_RESULT([libdap >= 3.9])
-                fi
-                rm -f islibdappre39.*
-
-            fi
-            rm -f islibdappost310.*
-        fi
-    fi
-
-
-    dnl Add the DODS libraries to LIBS
-    if test -x $DODS_BIN/opendap-config ; then
-      dnl OPeNDAP 3.4 and earlier lack opendap-config, but use it if avail.
-      LIBS="$LIBS `$DODS_BIN/opendap-config --libs`"
-    elif test -x $DODS_BIN/dap-config ; then
-      dnl OPeNDAP 3.4 and earlier lack opendap-config, but use it if avail.
-      LIBS="$LIBS `$DODS_BIN/dap-config --libs`"
-    elif test "${HAVE_LIBDAP}" = "yes"; then
-      LIBS="$LIBS $LIBDAP_LIBS"
-    else
-      dnl Otherwise try to put things together in a more primitive way.
-      LIBS="$LIBS -L$DODS_LIB -ldap++ -lpthread -lrx"
-
-      dnl Add curl to LIBS; it might be local to DODS or generally installed
-      if test -x $DODS_BIN/curl-config; then
-          LIBS="$LIBS  `$DODS_BIN/curl-config --libs`"
-      elif which curl-config > /dev/null 2>&1; then
-          LIBS="$LIBS  `curl-config --libs`"
-      else
-          AC_MSG_ERROR([You gave a dods root, but I can't find curl!])
-      fi
-
-      if test -x $DODS_BIN/xml2-config; then
-          LIBS="$LIBS `$DODS_BIN/xml2-config --libs`"
-      elif which xml2-config > /dev/null 2>&1; then
-          LIBS="$LIBS  `xml2-config --libs`"
-      else
-          AC_MSG_ERROR([You gave a dods root, but I can't find xml2!])
-      fi
-    fi
-
-    OPT_GDAL_FORMATS="dods $OPT_GDAL_FORMATS"
-    DODSDEF=-DFRMT_dods
-    AC_MSG_RESULT(setting DODS root directory to $with_dods_root)
-    HAVE_DODS=yes
-fi
-
-dnl This is used by the GNUmakefile in frmts/dods (via GDALmake.opt)
-AC_SUBST(DODS_INC)
-
-dnl ---------------------------------------------------------------------------
 dnl Check for libxml2.
 dnl ---------------------------------------------------------------------------
 
@@ -5859,7 +5663,6 @@ LOC_MSG([  crypto/openssl support:    ${HAVE_OPENSSL_CRYPTO}])
 LOC_MSG([  cryptopp support:          ${HAVE_CRYPTOPP}])
 LOC_MSG([  cURL support (wms/wcs/...):${CURL_SETTING}])
 LOC_MSG([  DDS support:               ${DDS_SETTING}])
-LOC_MSG([  DODS support:              ${HAVE_DODS}])
 LOC_MSG([  ECW support:               ${ECW_SETTING}])
 LOC_MSG([  Expat support:             ${HAVE_EXPAT}])
 LOC_MSG([  EXR support:               ${HAVE_EXR}])
@@ -5868,7 +5671,6 @@ LOC_MSG([  FreeXL support:            ${HAVE_FREEXL}])
 LOC_MSG([  GEORASTER support:         ${HAVE_GEORASTER}])
 LOC_MSG([  GEOS support:              ${HAVE_GEOS}])
 LOC_MSG([  Google libkml support:     ${HAVE_LIBKML}])
-LOC_MSG([  GRASS support:             ${GRASS_SETTING}])
 LOC_MSG([  GTA support:               ${GTA_SETTING}])
 LOC_MSG([  HDF4 support:              ${HAVE_HDF4}])
 LOC_MSG([  HDF5 support:              ${HAVE_HDF5}])

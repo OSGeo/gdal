@@ -53,12 +53,7 @@ Process :
      - ./swig/python/gdal-utils/osgeo_utils/__init__.py (gdal-utils python package)
      - ./swig/python/README.rst (libgdal)
 
-3.2) Update ./swig/include/perl/gdal_perl.i $VERSION and $GDAL_VERSION
-strings to current version. Update also $VERSION in
-./swig/include/perl/ogr_perl.i to the same as the other $VERSION. Kick
-Perl module maintainer to make a CPAN release.
-
-3.3) For major releases update the VERSION macro in nmake.opt (for 1.6, 1.7etc)
+3.2) For major releases update the VERSION macro in nmake.opt (for 1.6, 1.7etc)
 
 4) Update LIBGDAL_CURRENT/REVISION/AGE macros in GDALmake.opt.in.
    - For a release with no interface changes just bump REVISION.
@@ -68,8 +63,8 @@ Perl module maintainer to make a CPAN release.
      bump CURRENT, set others to zero.
 
 5) Prepare release overview in the NEWS file. For example, to get all changes
-   from v2.2.0 to current HEAD
-     git log --reverse -v v2.2.0..HEAD . ":(exclude)autotest"
+   from v3.4.0 to current HEAD
+     git log --reverse -v v3.4.0..HEAD . ":(exclude)autotest" ":(exclude)doc" ":(exclude).github"
 
   - commit new version to NEWS file.
 

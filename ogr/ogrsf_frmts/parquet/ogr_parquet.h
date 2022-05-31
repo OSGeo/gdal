@@ -31,28 +31,49 @@
 
 #include "ogrsf_frmts.h"
 
+#include <functional>
 #include <map>
 
 #include "../arrow_common/ogr_arrow.h"
 #include "ogr_include_parquet.h"
 
 /************************************************************************/
-/*                        OGRParquetLayer                               */
+/*                       OGRParquetLayerBase                            */
 /************************************************************************/
 
 class OGRParquetDataset;
 
-class OGRParquetLayer final: public OGRArrowLayer
-
+class OGRParquetLayerBase CPL_NON_FINAL: public OGRArrowLayer
 {
-        OGRParquetLayer(const OGRParquetLayer&) = delete;
-        OGRParquetLayer& operator= (const OGRParquetLayer&) = delete;
+        OGRParquetLayerBase(const OGRParquetLayerBase&) = delete;
+        OGRParquetLayerBase& operator= (const OGRParquetLayerBase&) = delete;
+
+protected:
+                            OGRParquetLayerBase(OGRParquetDataset* poDS,
+                                                const char* pszLayerName);
 
         OGRParquetDataset*                          m_poDS = nullptr;
-        std::unique_ptr<parquet::arrow::FileReader> m_poArrowReader{};
         std::shared_ptr<arrow::RecordBatchReader>   m_poRecordBatchReader{};
+
+        void                LoadGeoMetadata(const std::shared_ptr<const arrow::KeyValueMetadata>& kv_metadata);
+        bool                DealWithGeometryColumn(int iFieldIdx,
+                                                   const std::shared_ptr<arrow::Field>& field,
+                                                   std::function<OGRwkbGeometryType(void)> computeGeometryTypeFun);
+public:
+        int             TestCapability(const char* ) override;
+};
+
+/************************************************************************/
+/*                        OGRParquetLayer                               */
+/************************************************************************/
+
+class OGRParquetLayer final: public OGRParquetLayerBase
+
+{
+        std::unique_ptr<parquet::arrow::FileReader> m_poArrowReader{};
         bool                                        m_bSingleBatch = false;
         int                                         m_iFIDParquetColumn = -1;
+        std::vector<std::shared_ptr<arrow::DataType>> m_apoArrowDataTypes{}; // .size() == field ocunt
         std::vector<int>                            m_anMapFieldIndexToParquetColumn{};
         std::vector<int>                            m_anMapGeomFieldIndexToParquetColumn{};
         bool                                        m_bHasMissingMappingToParquet = false;
@@ -64,7 +85,6 @@ class OGRParquetLayer final: public OGRArrowLayer
         CPLStringList                               m_aosFeatherMetadata{};
 
         void               EstablishFeatureDefn();
-        void               LoadGeoMetadata();
         bool               ReadNextBatch() override;
         OGRwkbGeometryType ComputeGeometryColumnType(int iGeomCol, int iParquetCol) const;
         void               CreateFieldFromSchema(
@@ -97,7 +117,48 @@ public:
 
         std::unique_ptr<OGRFieldDomain> BuildDomain(const std::string& osDomainName,
                                                     int iFieldIndex) const override;
+
+        parquet::arrow::FileReader* GetReader() const { return m_poArrowReader.get(); }
+        const std::vector<int>& GetMapFieldIndexToParquetColumn() const { return m_anMapFieldIndexToParquetColumn; }
+        const std::vector<std::shared_ptr<arrow::DataType>>& GetArrowFieldTypes() const { return m_apoArrowDataTypes; }
 };
+
+/************************************************************************/
+/*                      OGRParquetDatasetLayer                          */
+/************************************************************************/
+
+#ifdef GDAL_USE_ARROWDATASET
+
+class OGRParquetDatasetLayer final: public OGRParquetLayerBase
+{
+        std::shared_ptr<arrow::dataset::Scanner> m_poScanner{};
+
+        void               EstablishFeatureDefn(const std::shared_ptr<arrow::Schema>& schema);
+
+protected:
+        std::string        GetDriverUCName() const override { return "PARQUET"; }
+        bool               ReadNextBatch() override;
+        bool               GetFastExtent(int iGeomField, OGREnvelope *psExtent) const override;
+
+public:
+                           OGRParquetDatasetLayer(
+                               OGRParquetDataset* poDS,
+                               const char* pszLayerName,
+                               const std::shared_ptr<arrow::dataset::Scanner>& scanner,
+                               const std::shared_ptr<arrow::Schema>& schema);
+
+        void               ResetReading() override;
+        GIntBig            GetFeatureCount(int bForce) override;
+        OGRErr             GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+        OGRErr             GetExtent(int iGeomField, OGREnvelope *psExtent,
+                                     int bForce = TRUE) override;
+
+        // TODO
+        std::unique_ptr<OGRFieldDomain> BuildDomain(const std::string& /*osDomainName*/,
+                                                    int /*iFieldIndex*/) const override { return nullptr; }
+};
+
+#endif
 
 /************************************************************************/
 /*                         OGRParquetDataset                            */
@@ -107,6 +168,11 @@ class OGRParquetDataset final: public OGRArrowDataset
 {
 public:
     explicit OGRParquetDataset(std::unique_ptr<arrow::MemoryPool>&& poMemoryPool);
+
+    OGRLayer*            ExecuteSQL( const char *pszSQLCommand,
+                                     OGRGeometry *poSpatialFilter,
+                                     const char *pszDialect ) override;
+    void                 ReleaseResultSet( OGRLayer * poResultsSet ) override;
 };
 
 /************************************************************************/
@@ -121,6 +187,8 @@ class OGRParquetWriterLayer final: public OGRArrowWriterLayer
         std::unique_ptr<parquet::arrow::FileWriter> m_poFileWriter{};
         std::shared_ptr<const arrow::KeyValueMetadata> m_poKeyValueMetadata{};
         bool                                           m_bForceCounterClockwiseOrientation = false;
+        bool                                           m_bEdgesSpherical = false;
+        parquet::WriterProperties::Builder             m_oWriterPropertiesBuilder{};
 
         virtual bool            IsFileWriterCreated() const override { return m_poFileWriter != nullptr; }
         virtual void            CreateWriter() override;
@@ -136,6 +204,9 @@ class OGRParquetWriterLayer final: public OGRArrowWriterLayer
         virtual bool            IsSupportedGeometryType(OGRwkbGeometryType eGType) const override;
 
         virtual void            FixupGeometryBeforeWriting(OGRGeometry* poGeom) override;
+        virtual bool            IsSRSRequired() const override { return false; }
+
+        std::string             GetGeoMetadata() const;
 
 public:
         OGRParquetWriterLayer( arrow::MemoryPool* poMemoryPool,
@@ -147,6 +218,8 @@ public:
         bool            SetOptions( CSLConstList papszOptions,
                                     OGRSpatialReference *poSpatialRef,
                                     OGRwkbGeometryType eGType );
+
+        OGRErr          CreateGeomField( OGRGeomFieldDefn *poField, int bApproxOK = TRUE ) override;
 };
 
 /************************************************************************/

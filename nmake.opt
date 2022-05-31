@@ -226,7 +226,7 @@ STDCALL=YES
 # Version number embedded in DLL name.
 # If GDAL version is X.Y.Z, VERSION = X * 100 + Y
 !IFNDEF VERSION
-VERSION =	303
+VERSION =	305
 !ENDIF
 
 # Set HAVE_ATLBASE_H=NO if atlbase.h header is not available
@@ -732,12 +732,6 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 #CURL_LIB = $(CURL_DIR)/libcurl.lib wsock32.lib wldap32.lib winmm.lib
 #CURL_CFLAGS = -DCURL_STATICLIB
 
-# Uncomment for DODS / OPeNDAP support
-#DODS_DIR = C:\libdap3.6.2
-#DODS_LIB = $(DODSDIR)\lib\libdapMD.lib
-# Uncomment for libdap >= 3.9
-#DODS_FLAGS = -DLIBDAP_39
-
 # Uncomment for GEOS support (GEOS >= 3.1.0 required)
 #GEOS_DIR=C:/warmerda/geos
 #GEOS_CFLAGS = -I$(GEOS_DIR)/capi -I$(GEOS_DIR)/source/headers -DHAVE_GEOS
@@ -1131,7 +1125,7 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
 	$(FITS_LIB_LINK) $(JPEG_LIB) $(NETCDF_LIB_LINK) $(PROJ4_LIB) \
 	$(GEOTIFF_LIB) $(TIFF_LIB) $(PROJ_LIBRARY) $(SQLITE_LIB) \
 	$(MYSQL_LIB) $(GEOS_LIB) $(HDF5_LIB_LINK) $(KEA_LIB_LINK) $(DWG_LIB_LINK) \
-	$(IDB_LIB) $(CURL_LIB) $(DODS_LIB) $(PCIDSK_LIB) \
+	$(IDB_LIB) $(CURL_LIB) $(PCIDSK_LIB) \
 	$(ODBCLIB) $(PNG_LIB) $(ZLIB_LIB) $(LIBDEFLATE_LIB) $(ADD_LIBS) $(OPENJPEG_LIB) \
 	$(LIBKML_LIBS) $(SOSI_LIBS) $(PDF_LIB_LINK) $(LZMA_LIBS) $(ZSTD_LIBS) $(BLOSC_LIBS) $(LZ4_LIBS) \
 	$(LIBICONV_LIBRARY) $(WEBP_LIBS) $(TILEDB_LIBS) $(FGDB_LIB_LINK) $(FREEXL_LIBS) $(GTA_LIBS) \

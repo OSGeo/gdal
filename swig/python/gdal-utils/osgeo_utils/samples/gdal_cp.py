@@ -42,7 +42,7 @@ def needsVSICurl(filename):
 
 def Usage():
     print('Usage: gdal_cp [-progress] [-r] [-skipfailures] source_file target_file')
-    return -1
+    return 2
 
 
 class TermProgress(object):

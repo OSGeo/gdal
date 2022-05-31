@@ -230,6 +230,24 @@ def test_ogr_osm_1(filename='data/osm/test.pbf'):
 def test_ogr_osm_2():
     return test_ogr_osm_1('data/osm/test.osm')
 
+
+###############################################################################
+# Test reaching the max number of indexed keys
+
+
+def test_ogr_osm_limit_keys():
+    with gdaltest.config_option('OSM_MAX_INDEXED_KEYS', '0'):
+        return test_ogr_osm_1('data/osm/test.osm')
+
+
+###############################################################################
+# Test reaching the max number of indexed values per key
+
+
+def test_ogr_osm_limit_values_per_key():
+    with gdaltest.config_option('OSM_MAX_INDEXED_VALUES_PER_KEY', '0'):
+        return test_ogr_osm_1('data/osm/test.osm')
+
 ###############################################################################
 # Test ogr2ogr
 
@@ -456,7 +474,7 @@ def test_ogr_osm_8():
         feat.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 # Same as ogr_osm_8 but with OSM_USE_CUSTOM_INDEXING=NO
 
@@ -549,7 +567,7 @@ def test_ogr_osm_10():
         gdal.PopErrorHandler()
         assert feat is None and gdal.GetLastErrorMsg() != ''
 
-    
+
 ###############################################################################
 # Test all_tags
 
@@ -576,7 +594,7 @@ def test_ogr_osm_11():
         feat.DumpReadable()
         pytest.fail()
 
-    
+
 
 ###############################################################################
 # Test that attribute filter set on a line layer is well taken into

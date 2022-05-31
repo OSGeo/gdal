@@ -36,6 +36,9 @@ from osgeo import osr
 from osgeo_utils.auxiliary.base import MaybeSequence, PathLikeOrStr
 from osgeo_utils.auxiliary.gdal_argparse import GDALArgumentParser, GDALScript
 
+def Usage():
+    print(f'Usage: {sys.argv[0]} -- This is a sample. Read source to know how to use. --')
+    return 2
 
 def esri2wkt(prj_filename: PathLikeOrStr):
     prj_fd = open(prj_filename)
@@ -82,6 +85,8 @@ class ESRI2WKT(GDALScript):
 
 
 def main(argv=sys.argv):
+    if len(sys.argv) < 2:
+        return Usage()
     return ESRI2WKT().main(argv)
 
 

@@ -49,7 +49,7 @@ def Usage():
     print('                       [-verbose_vrt] [-co NAME=VALUE]* [-q]')
     print('')
     print('Create a dataset resulting from a pansharpening operation.')
-    return -1
+    return 2
 
 
 def main(argv=sys.argv):

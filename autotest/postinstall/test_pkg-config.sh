@@ -56,12 +56,12 @@ check_ldd(){
   esac
 }
 
-PKG_CONFIG_MODVERSION=$(pkg-config gdal --modversion)
+PKG_CONFIG_MODVERSION=$(pkg-config gdal --modversion) | sed "s/-dev//"
 
 check_version(){
   printf "Testing expected version ... "
   NTESTS=$(($NTESTS + 1))
-  VERSION_OUTPUT=$(./$1)
+  VERSION_OUTPUT=$(./$1) | sed "s/-dev//"
   case "$VERSION_OUTPUT" in
     $PKG_CONFIG_MODVERSION*)
       echo "passed" ;;

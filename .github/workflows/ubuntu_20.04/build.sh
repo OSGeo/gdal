@@ -41,7 +41,6 @@ cd /build
     --with-webp \
     --with-epsilon \
     --with-hdf5 \
-    --with-dods-root=/usr \
     --with-sosi \
     --with-libtiff=internal --with-rename-internal-libtiff-symbols \
     --with-geotiff=internal --with-rename-internal-libgeotiff-symbols \

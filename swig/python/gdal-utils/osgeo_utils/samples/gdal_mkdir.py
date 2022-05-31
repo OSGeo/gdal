@@ -35,7 +35,7 @@ from osgeo import gdal
 
 def Usage():
     print('Usage: gdal_mkdir filename')
-    return -1
+    return 2
 
 
 def gdal_mkdir(argv, progress=None):

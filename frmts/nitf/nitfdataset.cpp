@@ -1590,15 +1590,13 @@ NITFDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
     }
 
 /* -------------------------------------------------------------------- */
-/*      If there are multiple image segments, and we are the zeroth,    */
-/*      then setup the subdataset metadata.                             */
+/*      If there are multiple image segments, and no specific one is    */
+/*      asker for, then setup the subdataset metadata.                  */
 /* -------------------------------------------------------------------- */
     int nSubDSCount = 0;
 
-    if( nIMIndex == -1 )
     {
         char **papszSubdatasets = nullptr;
-        int nIMCounter = 0;
 
         for( iSegment = 0; iSegment < psFile->nSegmentCount; iSegment++ )
         {
@@ -1607,24 +1605,28 @@ NITFDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
                 CPLString oName;
                 CPLString oValue;
 
-                oName.Printf( "SUBDATASET_%d_NAME", nIMCounter+1 );
-                oValue.Printf( "NITF_IM:%d:%s", nIMCounter, pszFilename );
-                papszSubdatasets = CSLSetNameValue( papszSubdatasets,
-                                                    oName, oValue );
+                if( nIMIndex == -1 )
+                {
+                    oName.Printf( "SUBDATASET_%d_NAME", nSubDSCount+1 );
+                    oValue.Printf( "NITF_IM:%d:%s", nSubDSCount, pszFilename );
+                    papszSubdatasets = CSLSetNameValue( papszSubdatasets,
+                                                        oName, oValue );
 
-                oName.Printf( "SUBDATASET_%d_DESC", nIMCounter+1 );
-                oValue.Printf( "Image %d of %s", nIMCounter+1, pszFilename );
-                papszSubdatasets = CSLSetNameValue( papszSubdatasets,
-                                                    oName, oValue );
+                    oName.Printf( "SUBDATASET_%d_DESC", nSubDSCount+1 );
+                    oValue.Printf( "Image %d of %s", nSubDSCount+1, pszFilename );
+                    papszSubdatasets = CSLSetNameValue( papszSubdatasets,
+                                                        oName, oValue );
+                }
 
-                nIMCounter++;
+                nSubDSCount++;
             }
         }
 
-        nSubDSCount = CSLCount(papszSubdatasets) / 2;
-        if( nSubDSCount > 1 )
+        if( nIMIndex == -1 && nSubDSCount > 1 )
+        {
             poDS->GDALMajorObject::SetMetadata( papszSubdatasets,
                                                 "SUBDATASETS" );
+        }
 
         CSLDestroy( papszSubdatasets );
     }
@@ -1633,14 +1635,74 @@ NITFDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->SetPhysicalFilename( pszFilename );
 
     if( nSubDSCount > 1 || nIMIndex != -1 )
     {
         if( nIMIndex == -1 )
+        {
             nIMIndex = 0;
+        }
+        else if ( nIMIndex == 0 && nSubDSCount == 1 )
+        {
+            // If subdataset 0 is explicitly specified, and there's a single
+            // subdataset, and that PAM .aux.xml doesn't have a Subdataset node,
+            // then don't set the subdataset name to get metadata from the
+            // top PAM node.
+            const char* pszPAMFilename = poDS->BuildPamFilename();
+            VSIStatBufL sStatBuf;
+            if( pszPAMFilename != nullptr &&
+                VSIStatExL( pszPAMFilename, &sStatBuf,
+                            VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG ) == 0
+                && VSI_ISREG( sStatBuf.st_mode ) )
+            {
+                CPLErrorStateBackuper oErrorStateBackuper;
+                CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+                CPLXMLNode* psTree = CPLParseXMLFile( pszPAMFilename );
+                if( psTree )
+                {
+                    if( CPLGetXMLNode(psTree, "=PAMDataset.Subdataset") == nullptr )
+                    {
+                        nIMIndex = -1;
+                    }
+                }
+                CPLDestroyXMLNode(psTree);
+            }
+        }
 
-        poDS->SetSubdatasetName( CPLString().Printf("%d",nIMIndex) );
-        poDS->SetPhysicalFilename( pszFilename );
+        if( nIMIndex >= 0 )
+        {
+            poDS->SetSubdatasetName( CPLString().Printf("%d",nIMIndex) );
+        }
+    }
+    else if( /* nIMIndex == -1 && */ nSubDSCount == 1 )
+    {
+        // GDAL 3.4.0 to 3.5.0 used to save the PAM metadata if a Subdataset
+        // node, even if there was one single subdataset.
+        // Detect that situation to automatically read it even if not explicitly
+        // specifying that single subdataset.
+        const char* pszPAMFilename = poDS->BuildPamFilename();
+        VSIStatBufL sStatBuf;
+        if( pszPAMFilename != nullptr &&
+            VSIStatExL( pszPAMFilename, &sStatBuf,
+                        VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG ) == 0
+            && VSI_ISREG( sStatBuf.st_mode ) )
+        {
+            CPLErrorStateBackuper oErrorStateBackuper;
+            CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+            CPLXMLNode* psTree = CPLParseXMLFile( pszPAMFilename );
+            if( psTree )
+            {
+                const auto psSubdatasetNode = CPLGetXMLNode(psTree, "=PAMDataset.Subdataset");
+                if( psSubdatasetNode != nullptr &&
+                    strcmp(CPLGetXMLValue(psSubdatasetNode, "name", ""), "0") == 0 )
+                {
+                    poDS->SetSubdatasetName( "0" );
+                    poDS->SetPhysicalFilename( pszFilename );
+                }
+                CPLDestroyXMLNode(psTree);
+            }
+        }
     }
 
     poDS->bInLoadXML = TRUE;
@@ -4951,7 +5013,8 @@ NITFDataset::NITFCreateCopy(
         }
 
         GDALOpenInfo oOpenInfo( pszFilename, GA_Update );
-        poDstDS = OpenInternal( &oOpenInfo, nullptr, true, nIMIndex );
+        poDstDS = OpenInternal( &oOpenInfo, nullptr, true,
+                                nImageCount == 1 ? -1 : nIMIndex );
 
         if( poDstDS == nullptr )
         {
@@ -5018,7 +5081,8 @@ NITFDataset::NITFCreateCopy(
         }
 
         GDALOpenInfo oOpenInfo( pszFilename, GA_Update );
-        poDstDS = OpenInternal( &oOpenInfo, nullptr, true, nIMIndex );
+        poDstDS = OpenInternal( &oOpenInfo, nullptr, true,
+                                nImageCount == 1 ? -1 : nIMIndex );
 
         if( poDstDS == nullptr )
         {
@@ -5057,7 +5121,8 @@ NITFDataset::NITFCreateCopy(
         CPLString osLastErrorMsg = CPLGetLastErrorMsg();
 
         GDALOpenInfo oOpenInfo( pszFilename, GA_Update );
-        poDstDS = OpenInternal( &oOpenInfo, nullptr, true, nIMIndex );
+        poDstDS = OpenInternal( &oOpenInfo, nullptr, true,
+                                nImageCount == 1 ? -1 : nIMIndex );
 
         if( CPLGetLastErrorType() == CE_None && eLastErr != CE_None )
             CPLErrorSetState( eLastErr, nLastErrNo, osLastErrorMsg.c_str() );

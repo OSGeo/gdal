@@ -13,6 +13,7 @@ add_library(
   gdalcutline.cpp
   gdaldither.cpp
   gdalgeoloc.cpp
+  gdalgeolocquadtree.cpp
   gdalgrid.cpp
   gdallinearsystem.cpp
   gdalmatching.cpp

@@ -292,7 +292,7 @@ def find_diff(golden_file: PathLikeOrStr, new_file: PathLikeOrStr, check_sds: bo
 
 def Usage():
     print('Usage: gdalcompare.py [-sds] <golden_file> <new_file>')
-    return 1
+    return 2
 
 #######################################################
 #

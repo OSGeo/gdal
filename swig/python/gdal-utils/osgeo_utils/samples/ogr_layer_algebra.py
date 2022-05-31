@@ -49,7 +49,7 @@ Usage: ogr_layer_algebra.py Union|Intersection|SymDifference|Identity|Update|Cli
                             [-f format_name] [-dsco NAME=VALUE]* [-lco NAME=VALUE]*
                             [-input_fields NONE|ALL|fld1,fl2,...fldN] [-method_fields NONE|ALL|fld1,fl2,...fldN]
                             [-nlt geom_type] [-a_srs srs_def]""")
-    return 1
+    return 2
 
 ###############################################################################
 

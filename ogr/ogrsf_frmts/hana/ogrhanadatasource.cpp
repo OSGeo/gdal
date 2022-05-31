@@ -1066,9 +1066,9 @@ bool OGRHanaDataSource::HasSrsPlanarEquivalent(int srid)
 OGRErr OGRHanaDataSource::GetQueryColumns(
     const CPLString& schemaName,
     const CPLString& query,
-    std::vector<ColumnDescription>& columDescriptions)
+    std::vector<ColumnDescription>& columnDescriptions)
 {
-    columDescriptions.clear();
+    columnDescriptions.clear();
 
     odbc::PreparedStatementRef stmtQuery;
 
@@ -1089,7 +1089,7 @@ OGRErr OGRHanaDataSource::GetQueryColumns(
     if (numColumns == 0)
         return OGRERR_NONE;
 
-    columDescriptions.reserve(numColumns);
+    columnDescriptions.reserve(numColumns);
 
     CPLString tableName = rsmd->getTableName(1);
     odbc::DatabaseMetaDataRef dmd = conn_->getDatabaseMetaData();
@@ -1186,7 +1186,7 @@ OGRErr OGRHanaDataSource::GetQueryColumns(
                     *conn_, schemaName, tableName, columnName, detectGeometryType_);
             geometryColumnDesc.isNullable = rsmd->isNullable(clmIndex);
 
-            columDescriptions.push_back(
+            columnDescriptions.push_back(
                 {true, AttributeColumnDescription(), geometryColumnDesc});
         }
         else
@@ -1205,7 +1205,7 @@ OGRErr OGRHanaDataSource::GetQueryColumns(
             attributeColumnDesc.scale = rsmd->getScale(clmIndex);
             attributeColumnDesc.defaultValue = defaultValue;
 
-            columDescriptions.push_back(
+            columnDescriptions.push_back(
                 {false, attributeColumnDesc, GeometryColumnDescription()});
         }
     }

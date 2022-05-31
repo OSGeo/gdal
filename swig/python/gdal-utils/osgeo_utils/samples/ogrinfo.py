@@ -86,7 +86,7 @@ def main(argv=None):
 #      Processing command line arguments.
 # --------------------------------------------------------------------
     if argv is None:
-        return 1
+        return 2
 
     nArgc = len(argv)
 
@@ -307,7 +307,7 @@ def Usage():
           "               [-sql statement] [-al] [-so] [-fields={YES/NO}]\n"
           "               [-geom={YES/NO/SUMMARY}][--formats]\n"
           "               datasource_name [layer [layer ...]]")
-    return 1
+    return 2
 
 # **********************************************************************
 #                           ReportOnLayer()

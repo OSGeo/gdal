@@ -23,6 +23,7 @@ OBJ =	gdaldither.obj gdalmediancut.obj gdal_crs.obj gdaltransformer.obj \
 	gdalsimplewarp.obj gdalwarper.obj gdalwarpkernel.obj \
 	thinplatespline.obj gdal_tps.obj gdalrasterize.obj llrasterize.obj \
 	gdalwarpoperation.obj gdalchecksum.obj gdal_rpc.obj gdalgeoloc.obj \
+	gdalgeolocquadtree.obj \
 	gdalgrid.obj gdalcutline.obj gdalproximity.obj rasterfill.obj \
 	gdalsievefilter.obj gdalrasterpolygonenumerator.obj polygonize.obj \
 	contour.obj viewshed.obj gdallinearsystem.obj \

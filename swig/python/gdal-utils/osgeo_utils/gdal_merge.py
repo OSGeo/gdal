@@ -295,7 +295,7 @@ def Usage():
     print('                     [-ot datatype] [-createonly] input_files')
     print('                     [--help-general]')
     print('')
-    return 1
+    return 2
 
 
 def gdal_merge(argv=None):

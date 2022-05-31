@@ -44,6 +44,7 @@
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 #include "gdal.h"
+#include "gdal_priv.h"
 
 CPL_CVSID("$Id$")
 
@@ -513,6 +514,7 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
             "Could not create Y index work file. Check driver capabilities.");
         return CE_Failure;
     }
+    GDALDataset::FromHandle(hYDS)->MarkSuppressOnClose();
 
     GDALRasterBandH hYBand = GDALGetRasterBand( hYDS, 1 );
 
@@ -533,6 +535,7 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
             "Could not create XY value work file. Check driver capabilities.");
         return CE_Failure;
     }
+    GDALDataset::FromHandle(hValDS)->MarkSuppressOnClose();
 
     GDALRasterBandH hValBand = GDALGetRasterBand( hValDS, 1 );
 
@@ -552,6 +555,7 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
             "Could not create mask work file. Check driver capabilities.");
         return CE_Failure;
     }
+    GDALDataset::FromHandle(hFiltMaskDS)->MarkSuppressOnClose();
 
     GDALRasterBandH hFiltMaskBand = GDALGetRasterBand( hFiltMaskDS, 1 );
 
@@ -899,10 +903,6 @@ end:
     GDALClose( hFiltMaskDS );
 
     CSLDestroy(papszWorkFileOptions);
-
-    GDALDeleteDataset( hDriver, osYTmpFile );
-    GDALDeleteDataset( hDriver, osValTmpFile );
-    GDALDeleteDataset( hDriver, osFiltMaskTmpFile );
 
     return eErr;
 }

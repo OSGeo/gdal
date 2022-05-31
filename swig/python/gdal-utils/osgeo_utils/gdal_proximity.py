@@ -46,7 +46,7 @@ Usage: gdal_proximity.py srcfile dstfile [-srcband n] [-dstband n]
                   [-values n,n,n] [-distunits PIXEL/GEO]
                   [-maxdist n] [-nodata n] [-use_input_nodata YES/NO]
                   [-fixed-buf-val n] [-q] """)
-    return 1
+    return 2
 
 
 def main(argv=sys.argv):

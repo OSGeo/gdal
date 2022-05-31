@@ -101,7 +101,7 @@ public:
         }
         uint8_t* buffer_data = (*buffer)->mutable_data();
         auto nread = Read(nbytes, buffer_data);
-        (*buffer)->Resize(*nread);
+        CPL_IGNORE_RET_VAL((*buffer)->Resize(*nread)); // shrink --> cannot fail
         return buffer;
     }
 

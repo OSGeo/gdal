@@ -167,3 +167,4 @@ __pycache__/
 gdal/packages*
 gdal/share
 
+.Rproj.user

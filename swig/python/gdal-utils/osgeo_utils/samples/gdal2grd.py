@@ -48,7 +48,7 @@ def Usage():
     print('  infile	    Name of the input GDAL supported file')
     print('  outfile	    Name of the output GRD file')
     print('')
-    return 1
+    return 2
 
 
 def main(argv=sys.argv):
@@ -81,9 +81,9 @@ def main(argv=sys.argv):
         i = i + 1
 
     if infile is None:
-        Usage()
+        return Usage()
     if outfile is None:
-        Usage()
+        return Usage()
 
     indataset = gdal.Open(infile, gdal.GA_ReadOnly)
     if infile is None:

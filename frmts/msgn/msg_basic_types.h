@@ -192,9 +192,30 @@ typedef struct {
 } REFERENCEGRID_VISIR;
 
 typedef struct {
+    INTEGER     southernLinePlanned;
+    INTEGER     northernLinePlanned;
+    INTEGER     easternColumnPlanned;
+    INTEGER     westernColumnPlanned;
+} PLANNED_COVERAGE_VISIR;
+
+typedef struct {
+    INTEGER     lowerSouthLinePlanned;
+    INTEGER     lowerNorthLinePlanned;
+    INTEGER     lowerEastColumnPlanned;
+    INTEGER     lowerWestColumnPlanned;
+    INTEGER     upperSouthLinePlanned;
+    INTEGER     upperNorthLinePlanned;
+    INTEGER     upperEastColumnPlanned;
+    INTEGER     upperWestColumnPlanned;
+} PLANNED_COVERAGE_HRV;
+
+typedef struct {
     EBYTE       typeOfProjection;
     REAL        longitudeOfSSP;
     REFERENCEGRID_VISIR referencegrid_visir;
+    REFERENCEGRID_VISIR referencegrid_hrv;
+    PLANNED_COVERAGE_VISIR plannedCoverage_visir;
+    PLANNED_COVERAGE_HRV plannedCoverage_hrv;
     // rest of record omitted, for now
 } IMAGE_DESCRIPTION_RECORD;
 

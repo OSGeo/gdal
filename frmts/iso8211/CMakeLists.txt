@@ -1,13 +1,16 @@
-add_gdal_driver(
-  TARGET gdal_iso8211
-  SOURCES iso8211.h
-          ddfmodule.cpp
-          ddfutils.cpp
-          ddffielddefn.cpp
-          ddfrecord.cpp
-          ddffield.cpp
-          ddfsubfielddefn.cpp
-  BUILTIN)
+# This is common library for other driver. It is conditionally built.
+# cf gdal.cmake for when it is built.
+add_library(
+  gdal_iso8211 OBJECT
+  iso8211.h
+  ddfmodule.cpp
+  ddfutils.cpp
+  ddffielddefn.cpp
+  ddfrecord.cpp
+  ddffield.cpp
+  ddfsubfielddefn.cpp)
+set_property(TARGET gdal_iso8211 PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
+target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:gdal_iso8211>)
 gdal_standard_includes(gdal_iso8211)
 
 # Because linking an OBJECT library

@@ -345,6 +345,24 @@ char** GDALMDReaderPleiades::LoadRPCXmlFile()
         return nullptr;
     }
 
+    // search Image to Ground Validity (since DIMAP v3)
+    CPLXMLNode* pValidityNode = CPLSearchXMLNode(pNode, "=ImagetoGround_Validity_Domain");
+
+    double firstCol = 1.0;
+    if( pValidityNode != nullptr )
+    {
+        char** papszValidity = ReadXMLToList(pValidityNode->psChild, nullptr);
+        if( papszValidity != nullptr )
+        {
+            const char* pszFirstCol = CSLFetchNameValue(papszValidity, "FIRST_COL");
+            if( pszFirstCol != nullptr )
+            {
+                firstCol = CPLAtofM(pszFirstCol);
+            }
+        }
+        CSLDestroy(papszValidity);
+    }
+
     // If we are not the top-left tile, then we must shift LINE_OFF and SAMP_OFF
     int nLineOffShift = 0;
     int nPixelOffShift = 0;
@@ -386,12 +404,15 @@ char** GDALMDReaderPleiades::LoadRPCXmlFile()
     {
         const char *pszValue = CSLFetchNameValue(papszRawRPCList,
                                                  apszRPBMap[i + 1]);
-        // Pleiades RPCs use "center of upper left pixel is 1,1" convention, convert to
+        // Deprecated : Pleiades RPCs use "center of upper left pixel is 1,1" convention, convert to
         // Digital globe convention of "center of upper left pixel is 0,0".
+
+        // Since DIMAP v3, the center of upper left pixel can be 0, 0. So now it is dynamically loaded
+        // from the DIMAP.
         if ((i == 0 || i == 2) && pszValue)
         {
             CPLString osField;
-            double dfVal = CPLAtofM( pszValue ) -1.0 ;
+            double dfVal = CPLAtofM( pszValue ) - firstCol ;
             if( i == 0 )
                 dfVal += nLineOffShift;
             else

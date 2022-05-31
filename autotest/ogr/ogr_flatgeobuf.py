@@ -726,6 +726,10 @@ def test_ogr_flatgeobuf_editing():
     ds = ogr.Open('/vsimem/test.fgb', update=1)
     lyr = ds.GetLayer(0)
 
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (1 1)'))
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+
     assert lyr.TestCapability(ogr.OLCDeleteFeature) == 1
     assert lyr.DeleteFeature(1) == 0
     assert lyr.DeleteFeature(1) == ogr.OGRERR_NON_EXISTING_FEATURE
@@ -743,7 +747,7 @@ def test_ogr_flatgeobuf_editing():
     lyr = ds.GetLayer(0)
 
     c = lyr.GetFeatureCount()
-    assert c == 1
+    assert c == 2
 
     f = lyr.GetNextFeature()
     assert f is not None
@@ -752,7 +756,16 @@ def test_ogr_flatgeobuf_editing():
     assert f.GetFieldCount() == 1
 
     f = lyr.GetNextFeature()
+    assert f is not None
+    assert f.GetGeometryRef().ExportToWkt() == 'POINT (1 1)'
+
+    f = lyr.GetNextFeature()
     assert f is None
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (1 1)'))
+    with gdaltest.error_handler():
+        assert lyr.CreateFeature(f) != ogr.OGRERR_NONE
 
     ogr.GetDriverByName('FlatGeobuf').DeleteDataSource('/vsimem/test.fgb')
     assert not gdal.VSIStatL('/vsimem/test.fgb')
@@ -888,3 +901,14 @@ def test_ogr_flatgeobuf_coordinate_epoch_custom_wkt():
     ds = None
 
     ogr.GetDriverByName('FlatGeobuf').DeleteDataSource(filename)
+
+
+###############################################################################
+
+
+def test_ogr_flatgeobuf_invalid_output_filename():
+
+    ds = ogr.GetDriverByName('FlatGeobuf').CreateDataSource("/i_do/not_exist/my.fgb")
+    with gdaltest.error_handler():
+        assert ds.CreateLayer('foo') is None
+

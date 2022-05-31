@@ -74,5 +74,24 @@ binaries::
     pytest ./pyscripts
 
 
+Coding best practices
+---------------------
+
+Use existing scripts for style guidelines, generally newer ones are
+will be more pythonic than old.
+
+Passes _flake8_ lint test.
+
+When called without arguments script should return a message prefixed
+'Usage: ` and use return code ``2``.::
+
+    » gdal_edit
+    Usage: gdal_edit [--help-general] [-ro] [-a_srs srs_def]
+        ...
+        [-unsetmd] [-oo NAME=VALUE]* [-mo "META-TAG=VALUE"]*  datasetname
+
+    Edit in place various information of an existing GDAL dataset.
+
+
 .. _GDAL API Tutorial: https://gdal.org/tutorials/
 .. _GDAL: http://www.gdal.org

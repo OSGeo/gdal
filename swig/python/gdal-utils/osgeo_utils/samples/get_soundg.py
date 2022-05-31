@@ -40,7 +40,7 @@ from osgeo import ogr
 def Usage():
     print('Usage: get_soundg.py <s57file> <shapefile>')
     print('')
-    return 1
+    return 2
 
 
 def main(argv=sys.argv):

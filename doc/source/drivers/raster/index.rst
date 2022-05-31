@@ -51,7 +51,6 @@ Raster drivers
    derived
    dimap
    dipex
-   dods
    doq1
    doq2
    dted
@@ -103,6 +102,7 @@ Raster drivers
    jp2mrsid
    jp2openjpeg
    jpeg
+   jpegxl
    jpipkak
    kea
    kmlsuperoverlay

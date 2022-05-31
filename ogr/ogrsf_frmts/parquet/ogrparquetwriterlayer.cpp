@@ -26,6 +26,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#undef DO_NOT_DEFINE_GDAL_DATE_NAME
+#include "gdal_version_full/gdal_version.h"
+
 #include "ogr_parquet.h"
 
 #include "../arrow_common/ograrrowwriterlayer.hpp"
@@ -170,6 +173,24 @@ bool OGRParquetWriterLayer::SetOptions(CSLConstList papszOptions,
         return false;
     }
 
+    m_oWriterPropertiesBuilder.compression(m_eCompression);
+    const std::string osCreator = CSLFetchNameValueDef(papszOptions, "CREATOR", "");
+    if( !osCreator.empty() )
+        m_oWriterPropertiesBuilder.created_by(osCreator);
+    else
+        m_oWriterPropertiesBuilder.created_by("GDAL " GDAL_RELEASE_NAME ", using " CREATED_BY_VERSION);
+
+    // Undocumented option. Not clear it is useful besides unit test purposes
+    if( !CPLTestBool(CSLFetchNameValueDef(papszOptions, "STATISTICS", "YES")) )
+        m_oWriterPropertiesBuilder.disable_statistics();
+
+    if( m_eGeomEncoding == OGRArrowGeomEncoding::WKB && eGType != wkbNone )
+    {
+        m_oWriterPropertiesBuilder.disable_statistics(
+            parquet::schema::ColumnPath::FromDotString(
+                m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef()));
+    }
+
     const char* pszRowGroupSize = CSLFetchNameValue(papszOptions, "ROW_GROUP_SIZE");
     if( pszRowGroupSize )
     {
@@ -181,6 +202,9 @@ bool OGRParquetWriterLayer::SetOptions(CSLConstList papszOptions,
             m_nRowGroupSize = nRowGroupSize;
         }
     }
+
+    m_bEdgesSpherical = EQUAL(
+        CSLFetchNameValueDef(papszOptions, "EDGES", "PLANAR"), "SPHERICAL");
 
     m_bInitializationOK = true;
     return true;
@@ -202,17 +226,104 @@ void OGRParquetWriterLayer::CloseFileWriter()
 }
 
 /************************************************************************/
-/*               PerformStepsBeforeFinalFlushGroup()                    */
+/*                            IdentifyCRS()                             */
 /************************************************************************/
 
-void OGRParquetWriterLayer::PerformStepsBeforeFinalFlushGroup()
+static OGRSpatialReference IdentifyCRS(const OGRSpatialReference* poSRS)
 {
-    if( m_poKeyValueMetadata &&
-        m_poFeatureDefn->GetGeomFieldCount() != 0 &&
+    OGRSpatialReference oSRSIdentified(*poSRS);
+
+    if( poSRS->GetAuthorityName(nullptr) == nullptr )
+    {
+        // Try to find a registered CRS that matches the input one
+        int nEntries = 0;
+        int* panConfidence = nullptr;
+        OGRSpatialReferenceH* pahSRS =
+            poSRS->FindMatches(nullptr, &nEntries, &panConfidence);
+
+        // If there are several matches >= 90%, take the only one
+        // that is EPSG
+        int iOtherAuthority = -1;
+        int iEPSG = -1;
+        const char* const apszOptions[] =
+        {
+            "IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES",
+            nullptr
+        };
+        int iConfidenceBestMatch = -1;
+        for(int iSRS = 0; iSRS < nEntries; iSRS++ )
+        {
+            auto poCandidateCRS = OGRSpatialReference::FromHandle(pahSRS[iSRS]);
+            if( panConfidence[iSRS] < iConfidenceBestMatch ||
+                panConfidence[iSRS] < 70 )
+            {
+                break;
+            }
+            if( poSRS->IsSame(poCandidateCRS, apszOptions) )
+            {
+                const char* pszAuthName =
+                   poCandidateCRS->GetAuthorityName(nullptr);
+                if( pszAuthName != nullptr && EQUAL(pszAuthName, "EPSG") )
+                {
+                    iOtherAuthority = -2;
+                    if( iEPSG < 0 )
+                    {
+                        iConfidenceBestMatch = panConfidence[iSRS];
+                        iEPSG = iSRS;
+                    }
+                    else
+                    {
+                        iEPSG = -1;
+                        break;
+                    }
+                }
+                else if( iEPSG < 0 && pszAuthName != nullptr )
+                {
+                    if( EQUAL(pszAuthName, "OGC") )
+                    {
+                        const char* pszAuthCode = poCandidateCRS->GetAuthorityCode(nullptr);
+                        if( pszAuthCode && EQUAL(pszAuthCode, "CRS84") )
+                        {
+                            iOtherAuthority = iSRS;
+                            break;
+                        }
+                    }
+                    else if( iOtherAuthority == -1 )
+                    {
+                        iConfidenceBestMatch = panConfidence[iSRS];
+                        iOtherAuthority = iSRS;
+                    }
+                    else
+                        iOtherAuthority = -2;
+                }
+            }
+        }
+        if( iEPSG >= 0 )
+        {
+            oSRSIdentified = *OGRSpatialReference::FromHandle(pahSRS[iEPSG]);
+        }
+        else if( iOtherAuthority >= 0 )
+        {
+            oSRSIdentified = *OGRSpatialReference::FromHandle(pahSRS[iOtherAuthority]);
+        }
+        OSRFreeSRSArray(pahSRS);
+        CPLFree(panConfidence);
+    }
+
+    return oSRSIdentified;
+}
+
+/************************************************************************/
+/*                            GetGeoMetadata()                          */
+/************************************************************************/
+
+std::string OGRParquetWriterLayer::GetGeoMetadata() const
+{
+    if( m_poFeatureDefn->GetGeomFieldCount() != 0 &&
         CPLTestBool(CPLGetConfigOption("OGR_PARQUET_WRITE_GEO", "YES")) )
     {
         CPLJSONObject oRoot;
-        oRoot.Add("version", "0.3.0");
+        oRoot.Add("version", "0.4.0");
         oRoot.Add("primary_column",
                   m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef());
         CPLJSONObject oColumns;
@@ -225,20 +336,70 @@ void OGRParquetWriterLayer::PerformStepsBeforeFinalFlushGroup()
             oColumn.Add("encoding",
                         GetGeomEncodingAsString(m_aeGeomEncoding[i]));
 
-            const auto poSRS = poGeomFieldDefn->GetSpatialRef();
-            if( poSRS )
+            if( CPLTestBool(CPLGetConfigOption(
+                    "OGR_PARQUET_WRITE_CRS", "YES")) )
             {
-                const char* const apszOptions[] = {
-                    "FORMAT=WKT2_2019", "MULTILINE=NO", nullptr };
-                char* pszWKT = nullptr;
-                poSRS->exportToWkt(&pszWKT, apszOptions);
-                if( pszWKT )
-                    oColumn.Add("crs", pszWKT);
-                CPLFree(pszWKT);
+                const auto poSRS = poGeomFieldDefn->GetSpatialRef();
+                if( poSRS )
+                {
+                    OGRSpatialReference oSRSIdentified(IdentifyCRS(poSRS));
 
-                const double dfCoordEpoch = poSRS->GetCoordinateEpoch();
-                if( dfCoordEpoch > 0 )
-                    oColumn.Add("epoch", dfCoordEpoch);
+                    const char* pszAuthName =
+                        oSRSIdentified.GetAuthorityName(nullptr);
+                    const char* pszAuthCode =
+                        oSRSIdentified.GetAuthorityCode(nullptr);
+
+                    bool bOmitCRS = false;
+                    if( pszAuthName != nullptr && pszAuthCode != nullptr &&
+                        ((EQUAL(pszAuthName, "EPSG") && EQUAL(pszAuthCode, "4326")) ||
+                         (EQUAL(pszAuthName, "OGC") && EQUAL(pszAuthCode, "CRS84"))) )
+                    {
+                        // To make things less confusing for non-geo-aware
+                        // consumers, omit EPSG:4326 / OGC:CRS84 CRS by default
+                        bOmitCRS = CPLTestBool(
+                            CPLGetConfigOption("OGR_PARQUET_CRS_OMIT_IF_WGS84", "YES"));
+                    }
+
+                    if( bOmitCRS )
+                    {
+                        // do nothing
+                    }
+                    else if( EQUAL(CPLGetConfigOption(
+                        "OGR_PARQUET_CRS_ENCODING", "PROJJSON"), "PROJJSON") )
+                    {
+                        // CRS encoded as PROJJSON for GeoParquet >= 0.4.0
+                        char* pszPROJJSON = nullptr;
+                        oSRSIdentified.exportToPROJJSON(&pszPROJJSON, nullptr);
+                        CPLJSONDocument oDoc;
+                        oDoc.LoadMemory(pszPROJJSON);
+                        CPLFree(pszPROJJSON);
+                        oColumn.Add("crs", oDoc.GetRoot());
+                    }
+                    else
+                    {
+                        // WKT was used in GeoParquet <= 0.3.0
+                        const char* const apszOptions[] = {
+                            "FORMAT=WKT2_2019", "MULTILINE=NO", nullptr };
+                        char* pszWKT = nullptr;
+                        oSRSIdentified.exportToWkt(&pszWKT, apszOptions);
+                        if( pszWKT )
+                            oColumn.Add("crs", pszWKT);
+                        CPLFree(pszWKT);
+                    }
+
+                    const double dfCoordEpoch = poSRS->GetCoordinateEpoch();
+                    if( dfCoordEpoch > 0 )
+                        oColumn.Add("epoch", dfCoordEpoch);
+                }
+                else
+                {
+                    oColumn.AddNull("crs");
+                }
+            }
+
+            if( m_bEdgesSpherical )
+            {
+                oColumn.Add("edges", "spherical");
             }
 
             if( m_aoEnvelopes[i].IsInit() &&
@@ -309,48 +470,49 @@ void OGRParquetWriterLayer::PerformStepsBeforeFinalFlushGroup()
             }
         }
 
-        // HACK: it would be good for Arrow to provide a clean way to alter
-        // key value metadata before finalizing.
-        // We need to write metadata at end to write the bounding box.
-        const_cast<arrow::KeyValueMetadata*>(m_poKeyValueMetadata.get())->Append(
-                "geo", oRoot.Format(CPLJSONObject::PrettyFormat::Plain));
+        return oRoot.Format(CPLJSONObject::PrettyFormat::Plain);
     }
+    return std::string();
 }
 
 /************************************************************************/
-/*                         GetSchemaMetadata()                          */
+/*               PerformStepsBeforeFinalFlushGroup()                    */
 /************************************************************************/
 
-// From ${arrow_root}/src/parquet/arrow/writer.cpp
-static
-arrow::Status GetSchemaMetadata(const ::arrow::Schema& schema, ::arrow::MemoryPool* pool,
-                         const parquet::ArrowWriterProperties& properties,
-                         std::shared_ptr<const arrow::KeyValueMetadata>* out) {
-  if (!properties.store_schema()) {
-    *out = nullptr;
-    return arrow::Status::OK();
-  }
+void OGRParquetWriterLayer::PerformStepsBeforeFinalFlushGroup()
+{
+    if( m_poKeyValueMetadata )
+    {
+        const std::string osGeoMetadata = GetGeoMetadata();
+        auto poTmpSchema = m_poSchema;
+        if( !osGeoMetadata.empty() )
+        {
+            // HACK: it would be good for Arrow to provide a clean way to alter
+            // key value metadata before finalizing.
+            // We need to write metadata at end to write the bounding box.
+            const_cast<arrow::KeyValueMetadata*>(m_poKeyValueMetadata.get())->Append(
+                    "geo", osGeoMetadata);
 
-  static const std::string kArrowSchemaKey = "ARROW:schema";
-  std::shared_ptr<arrow::KeyValueMetadata> result;
-  if (schema.metadata()) {
-    result = schema.metadata()->Copy();
-  } else {
-    result = std::make_shared<arrow::KeyValueMetadata>();
-  }
+            auto kvMetadata = poTmpSchema->metadata() ? poTmpSchema->metadata()->Copy() :
+                                  std::make_shared<arrow::KeyValueMetadata>();
+            kvMetadata->Append("geo", osGeoMetadata);
+            poTmpSchema = poTmpSchema->WithMetadata(kvMetadata);
+        }
 
-  if( CPLTestBool(CPLGetConfigOption("OGR_PARQUET_WRITE_ARROW_SCHEMA", "YES")) )
-  {
-      ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Buffer> serialized,
-                            ::arrow::ipc::SerializeSchema(schema, pool));
-
-      // The serialized schema is not UTF-8, which is required for Thrift
-      std::string schema_as_string = serialized->ToString();
-      std::string schema_base64 = ::arrow::util::base64_encode(schema_as_string);
-      result->Append(kArrowSchemaKey, schema_base64);
-  }
-  *out = result;
-  return arrow::Status::OK();
+        if( CPLTestBool(CPLGetConfigOption("OGR_PARQUET_WRITE_ARROW_SCHEMA", "YES")) )
+        {
+            auto status = ::arrow::ipc::SerializeSchema(*poTmpSchema, m_poMemoryPool);
+            if( status.ok() )
+            {
+                // The serialized schema is not UTF-8, which is required for Thrift
+                std::string schema_as_string = (*status)->ToString();
+                std::string schema_base64 = ::arrow::util::base64_encode(schema_as_string);
+                static const std::string kArrowSchemaKey = "ARROW:schema";
+                const_cast<arrow::KeyValueMetadata*>(m_poKeyValueMetadata.get())->Append(
+                  kArrowSchemaKey, schema_base64);
+            }
+        }
+    }
 }
 
 /************************************************************************/
@@ -372,9 +534,8 @@ arrow::Status Open(const ::arrow::Schema& schema, ::arrow::MemoryPool* pool,
 
     auto schema_node = std::static_pointer_cast<parquet::schema::GroupNode>(parquet_schema->schema_root());
 
-    std::shared_ptr<const arrow::KeyValueMetadata> metadata;
-    RETURN_NOT_OK(GetSchemaMetadata(schema, pool, *arrow_properties, &metadata));
-
+    auto metadata = schema.metadata() ? schema.metadata()->Copy() :
+                        std::make_shared<arrow::KeyValueMetadata>();
     *outMetadata = metadata;
 
     std::unique_ptr<parquet::ParquetFileWriter> base_writer;
@@ -399,6 +560,24 @@ void OGRParquetWriterLayer::CreateSchema()
 }
 
 /************************************************************************/
+/*                          CreateGeomField()                           */
+/************************************************************************/
+
+OGRErr OGRParquetWriterLayer::CreateGeomField( OGRGeomFieldDefn *poField,
+                                               int bApproxOK )
+{
+    OGRErr eErr = OGRArrowWriterLayer::CreateGeomField(poField, bApproxOK);
+    if( eErr == OGRERR_NONE && m_aeGeomEncoding.back() == OGRArrowGeomEncoding::WKB )
+    {
+        m_oWriterPropertiesBuilder.disable_statistics(
+            parquet::schema::ColumnPath::FromDotString(
+                m_poFeatureDefn->GetGeomFieldDefn(
+                    m_poFeatureDefn->GetGeomFieldCount() - 1)->GetNameRef()));
+    }
+    return eErr;
+}
+
+/************************************************************************/
 /*                          CreateWriter()                              */
 /************************************************************************/
 
@@ -415,13 +594,12 @@ void OGRParquetWriterLayer::CreateWriter()
         FinalizeSchema();
     }
 
-    auto writerProperties = parquet::WriterProperties::Builder().compression(m_eCompression)->build();
     auto arrowWriterProperties = parquet::ArrowWriterProperties::Builder().store_schema()->build();
-    Open(*m_poSchema, m_poMemoryPool, m_poOutputStream,
-         writerProperties,
+    CPL_IGNORE_RET_VAL(Open(*m_poSchema, m_poMemoryPool, m_poOutputStream,
+         m_oWriterPropertiesBuilder.build(),
          arrowWriterProperties,
          &m_poFileWriter,
-         &m_poKeyValueMetadata);
+         &m_poKeyValueMetadata));
 }
 
 /************************************************************************/

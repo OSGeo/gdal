@@ -185,6 +185,7 @@ def Usage():
     print('Usage: gdal_vrtmerge.py [-o out_filename] [-separate] [-pct]')
     print('           [-ul_lr ulx uly lrx lry] [-ot datatype] [-i input_file_list')
     print('           | input_files]')
+    return 2
 
 
 def main(argv=sys.argv):
@@ -226,8 +227,7 @@ def main(argv=sys.argv):
 
         elif arg[:1] == '-':
             print('Unrecognized command option: ', arg)
-            Usage()
-            return 1
+            return Usage()
 
         else:
             names.append(arg)
@@ -236,8 +236,7 @@ def main(argv=sys.argv):
 
     if not names:
         print('No input files selected.')
-        Usage()
-        return 1
+        return Usage()
 
     # Collect information on all the source files.
     file_infos = names_to_fileinfos(names)

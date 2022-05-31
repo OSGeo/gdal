@@ -35,6 +35,8 @@
 #include "ogr_featurestyle.h"
 #include "ogr_geometry.h"
 
+#include <cstddef>
+
 #include <exception>
 #include <memory>
 #include <string>
@@ -307,8 +309,8 @@ class CPL_DLL OGRFeatureDefn
     int                 GetFieldCountUnsafe() const { return static_cast<int>(apoFieldDefn.size()); }
 
     // Those methods don't check i is n range.
-    OGRFieldDefn       *GetFieldDefnUnsafe( int i ) { if( apoFieldDefn.empty() ) GetFieldDefn(i); return apoFieldDefn[i].get(); }
-    const OGRFieldDefn *GetFieldDefnUnsafe( int i ) const { if( apoFieldDefn.empty() ) GetFieldDefn(i); return apoFieldDefn[i].get(); }
+    OGRFieldDefn       *GetFieldDefnUnsafe( int i ) { if( apoFieldDefn.empty() ) GetFieldDefn(i); return apoFieldDefn[static_cast<std::size_t>(i)].get(); }
+    const OGRFieldDefn *GetFieldDefnUnsafe( int i ) const { if( apoFieldDefn.empty() ) GetFieldDefn(i); return apoFieldDefn[static_cast<std::size_t>(i)].get(); }
 //! @endcond
 
     virtual void        AddFieldDefn( const OGRFieldDefn * );
@@ -734,7 +736,7 @@ class CPL_DLL OGRFeature
                             pauFields[i].Integer = nValue; pauFields[i].Set.nMarker2 = 0; pauFields[i].Set.nMarker3 = 0; }
     void                SetFieldSameTypeUnsafe( int i, GIntBig nValue ) { pauFields[i].Integer64 = nValue; }
     void                SetFieldSameTypeUnsafe( int i, double dfValue ) { pauFields[i].Real = dfValue; }
-    void                SetFieldSameTypeUnsafe( int i, char* pszValueTransfered ) { pauFields[i].String = pszValueTransfered; }
+    void                SetFieldSameTypeUnsafe( int i, char* pszValueTransferred ) { pauFields[i].String = pszValueTransferred; }
 //! @endcond
 
     void                SetField( const char *pszFName, int nValue )
