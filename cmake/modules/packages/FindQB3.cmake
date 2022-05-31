@@ -8,8 +8,7 @@ FindQB3
 
 Find the QB3 library
 
-QB3 library
-Brunsli encode and decode libraries are built with CMake and exports cmake config files
+QB3 library exports cmake config files
 
 IMPORTED targets
 ^^^^^^^^^^^^^^^^
