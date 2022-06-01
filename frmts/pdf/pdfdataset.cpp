@@ -872,6 +872,18 @@ CPLErr PDFRasterBand::IReadBlockFromTile( int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
+/*                     GetSuggestedBlockAccessPattern()                 */
+/************************************************************************/
+
+GDALSuggestedBlockAccessPattern PDFRasterBand::GetSuggestedBlockAccessPattern() const
+{
+    PDFDataset *poGDS = cpl::down_cast<PDFDataset *>(poDS);
+    if (!poGDS->aiTiles.empty() )
+        return GSBAP_RANDOM;
+    return GSBAP_LARGEST_CHUNK_POSSIBLE;
+}
+
+/************************************************************************/
 /*                             IReadBlock()                             */
 /************************************************************************/
 

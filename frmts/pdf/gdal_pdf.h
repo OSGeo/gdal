@@ -465,6 +465,8 @@ class PDFRasterBand CPL_NON_FINAL: public GDALPamRasterBand
                 PDFRasterBand( PDFDataset *, int, int );
     virtual ~PDFRasterBand();
 
+    virtual GDALSuggestedBlockAccessPattern GetSuggestedBlockAccessPattern() const override;
+
 #ifdef HAVE_PDFIUM
     virtual int    GetOverviewCount() override;
     virtual GDALRasterBand *GetOverview( int ) override;
