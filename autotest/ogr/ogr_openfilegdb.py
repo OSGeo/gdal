@@ -62,7 +62,7 @@ ogrtest.openfilegdb_datalist = [["none", ogr.wkbNone, None],
 
 
 ogrtest.openfilegdb_datalist_m = [["pointm", ogr.wkbPointM, "POINT M (1 2 3)"],
-                                  ["pointzm", ogr.wkbPointM, "POINT ZM (1 2 3 4)"],
+                                  ["pointzm", ogr.wkbPointZM, "POINT ZM (1 2 3 4)"],
                                   ["multipointm", ogr.wkbMultiPointM, "MULTIPOINT M ((1 2 3),(4 5 6))"],
                                   ["multipointzm", ogr.wkbMultiPointZM, "MULTIPOINT ZM ((1 2 3 4),(5 6 7 8))"],
                                   ["linestringm", ogr.wkbLineStringM, "LINESTRING M (1 2 3,4 5 6)", "MULTILINESTRING M ((1 2 3,4 5 6))"],
@@ -118,7 +118,7 @@ def ogr_openfilegdb_make_test_data():
         shutil.rmtree("data/filegdb/testopenfilegdb.gdb")
     except OSError:
         pass
-    ds = ogrtest.fgdb_drv.CreateDataSource('data/filegdb/testopenfilegdb.gdb')
+    ds = ogr.GetDriverByName('FileGDB').CreateDataSource('data/filegdb/testopenfilegdb.gdb')
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput("WGS84")
@@ -151,7 +151,7 @@ def ogr_openfilegdb_make_test_data():
             if data[1] != ogr.wkbNone and data[2] is not None:
                 feat.SetGeometry(ogr.CreateGeometryFromWkt(data[2]))
             feat.SetField("id", i + 1)
-            feat.SetField("str", "foo_\xc3\xa9")
+            feat.SetField("str", "foo_é")
             feat.SetField("smallint", -13)
             feat.SetField("int", 123)
             feat.SetField("float", 1.5)
