@@ -367,3 +367,27 @@ def test_ogr_arrow_coordinate_epoch(write_gdal_footer):
     ds = None
 
     gdal.Unlink(outfilename)
+
+
+###############################################################################
+# Test that Arrow extension type is recognized as geometry column
+# if "geo" metadata is absent
+
+
+def test_ogr_arrow_extension_type():
+
+    outfilename = '/vsimem/out.feather'
+    with gdaltest.config_options({'OGR_ARROW_WRITE_GDAL_FOOTER': 'NO',
+                                  'OGR_ARROW_WRITE_GEO': 'NO'}):
+        gdal.VectorTranslate(outfilename, 'data/arrow/test.feather')
+
+    ds = ogr.Open(outfilename)
+    assert ds is not None
+    lyr = ds.GetLayer(0)
+    assert lyr is not None
+    assert lyr.GetGeometryColumn()
+    assert lyr.GetLayerDefn().GetGeomFieldCount() == 1
+    lyr = None
+    ds = None
+
+    gdal.Unlink(outfilename)
