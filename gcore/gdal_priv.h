@@ -1144,6 +1144,23 @@ typedef enum
     GMVR_0_AND_255_ONLY,    /*! Only 0 and 255 */
 } GDALMaskValueRange;
 
+/** Suggested/most efficient access pattern to blocks. */
+typedef int GDALSuggestedBlockAccessPattern;
+
+/** Unknown, or no particular read order is suggested. */
+constexpr GDALSuggestedBlockAccessPattern GSBAP_UNKNOWN = 0;
+
+/** Random access to blocks is efficient. */
+constexpr GDALSuggestedBlockAccessPattern GSBAP_RANDOM = 1;
+
+/** Reading by strips from top to bottom is the most efficient. */
+constexpr GDALSuggestedBlockAccessPattern GSBAP_TOP_TO_BOTTOM = 2;
+
+/** Reading by strips from bottom to top is the most efficient. */
+constexpr GDALSuggestedBlockAccessPattern GSBAP_BOTTOM_TO_TOP = 3;
+
+/** Reading the largest chunk from the raster is the most efficient (can be combined with above values). */
+constexpr GDALSuggestedBlockAccessPattern GSBAP_LARGEST_CHUNK_POSSIBLE = 0x100;
 
 /** A single raster band (or channel). */
 
@@ -1245,6 +1262,9 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     GDALDataType GetRasterDataType( void );
     void        GetBlockSize( int *, int * );
     CPLErr      GetActualBlockSize ( int, int, int *, int * );
+
+    virtual GDALSuggestedBlockAccessPattern GetSuggestedBlockAccessPattern() const;
+
     GDALAccess  GetAccess();
 
     CPLErr      RasterIO( GDALRWFlag, int, int, int, int,
