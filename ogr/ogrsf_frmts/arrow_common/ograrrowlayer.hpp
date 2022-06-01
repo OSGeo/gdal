@@ -625,8 +625,15 @@ inline bool OGRArrowLayer::IsValidGeometryEncoding(const std::shared_ptr<arrow::
                                                    OGRArrowGeomEncoding& eOGRArrowGeomEncodingOut)
 {
     const auto& fieldName = field->name();
-    const auto& fieldType = field->type();
-    const auto fieldTypeId = fieldType->id();
+    std::shared_ptr<arrow::DataType> fieldType = field->type();
+    auto fieldTypeId = fieldType->id();
+
+    if( fieldTypeId == arrow::Type::EXTENSION )
+    {
+        auto extensionType = cpl::down_cast<arrow::ExtensionType*>(fieldType.get());
+        fieldType = extensionType->storage_type();
+        fieldTypeId = fieldType->id();
+    }
 
     eGeomTypeOut = wkbUnknown;
 
