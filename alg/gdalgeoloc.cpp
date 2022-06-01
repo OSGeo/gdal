@@ -763,10 +763,9 @@ int GDALGeoLoc<Accessors>::Transform( void *pTransformArg,
             // The thresholds and radius are rather empirical and have been tuned
             // on the product S5P_TEST_L2__NO2____20190509T220707_20190509T234837_08137_01_010400_20200220T091343.nc
             // that includes the north pole.
+            // Amended with the test case of https://github.com/OSGeo/gdal/issues/5823
             const int nSearchRadius =
-                psTransform->bGeographicSRSWithMinus180Plus180LongRange && fabs(dfGeoY) >= 85 ? 5 :
-                psTransform->bGeographicSRSWithMinus180Plus180LongRange && fabs(dfGeoY) >= 75 ? 3 :
-                psTransform->bGeographicSRSWithMinus180Plus180LongRange && fabs(dfGeoY) >= 65 ? 2 : 1;
+                psTransform->bGeographicSRSWithMinus180Plus180LongRange && fabs(dfGeoY) >= 85 ? 5 : 3;
             const int nGeoLocPixel = static_cast<int>(std::floor(dfGeoLocPixel));
             const int nGeoLocLine = static_cast<int>(std::floor(dfGeoLocLine));
 
