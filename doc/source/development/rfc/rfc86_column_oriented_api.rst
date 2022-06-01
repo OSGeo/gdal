@@ -240,7 +240,7 @@ significant gains are to be expected only for those for which I/O is very fast,
 and thus in-memory shuffling of data takes a substantial time relatively to the
 total time (I/O + shuffling).
 
-Potential future work, no in the scope of this RFC, could be the addition of a
+Potential future work, not in the scope of this RFC, could be the addition of a
 column-oriented method to write new features, a WriteRecordBatch() method.
 
 Impacted drivers
