@@ -1561,6 +1561,9 @@ OGRFeature* OGRArrowLayer::ReadFeature(
                 const auto castArray = static_cast<const arrow::Int64Array*>(array);
                 const int64_t timestamp = castArray->Value(nIdxInBatch);
                 OGRField sField;
+                sField.Set.nMarker1 = OGRUnsetMarker;
+                sField.Set.nMarker2 = OGRUnsetMarker;
+                sField.Set.nMarker3 = OGRUnsetMarker;
                 TimestampToOGR(timestamp, timestampType, &sField);
                 poFeature->SetField(i, &sField);
                 break;
