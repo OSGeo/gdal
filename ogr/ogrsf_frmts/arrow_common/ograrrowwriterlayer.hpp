@@ -305,7 +305,7 @@ void OGRArrowWriterLayer::CreateSchemaCommon()
         {
             auto kvMetadata = field->metadata() ? field->metadata()->Copy() :
                               std::make_shared<arrow::KeyValueMetadata>();
-            kvMetadata->Append("ARROW::extension:name",
+            kvMetadata->Append("ARROW:extension:name",
                                GetGeomEncodingAsString(m_aeGeomEncoding[i]));
             field = field->WithMetadata(kvMetadata);
         }
