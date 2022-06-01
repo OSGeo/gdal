@@ -85,9 +85,9 @@ if (GDAL_USE_BRUNSLI)
   gdal_target_link_libraries(gdal_MRF PRIVATE BRUNSLI::ENCODE BRUNSLI::DECODE)
 endif ()
 
-if (GDAL_USE_QB3)
+if (GDAL_USE_LIBQB3)
   target_sources(gdal_MRF PRIVATE QB3_band.cpp)
   target_compile_definitions(gdal_MRF PRIVATE -DQB3_SUPPORT)
-  gdal_target_link_libraries(gdal_MRF PRIVATE QB3::QB3)
+  gdal_target_link_libraries(gdal_MRF PRIVATE QB3::libQB3)
 endif()
 
