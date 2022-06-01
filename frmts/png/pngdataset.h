@@ -198,6 +198,9 @@ class PNGRasterBand final: public GDALPamRasterBand
 
     virtual CPLErr IReadBlock( int, int, void * ) override;
 
+    virtual GDALSuggestedBlockAccessPattern GetSuggestedBlockAccessPattern()
+        const override { return GSBAP_TOP_TO_BOTTOM; }
+
     virtual GDALColorInterp GetColorInterpretation() override;
     virtual GDALColorTable *GetColorTable() override;
     CPLErr SetNoDataValue( double dfNewValue ) override;

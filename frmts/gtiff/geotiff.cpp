@@ -1331,6 +1331,9 @@ public:
     virtual CPLErr IReadBlock( int, int, void * ) override;
     virtual CPLErr IWriteBlock( int, int, void * ) override;
 
+    virtual GDALSuggestedBlockAccessPattern GetSuggestedBlockAccessPattern()
+        const override { return GSBAP_RANDOM; }
+
     virtual int IGetDataCoverageStatus( int nXOff, int nYOff,
                                         int nXSize, int nYSize,
                                         int nMaskFlagStop,
