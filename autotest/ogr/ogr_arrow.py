@@ -391,3 +391,36 @@ def test_ogr_arrow_extension_type():
     ds = None
 
     gdal.Unlink(outfilename)
+
+
+###############################################################################
+# Test reading a file with a geoarrow.point extension registered with
+# PyArrow (https://github.com/OSGeo/gdal/issues/5834)
+
+
+def test_ogr_arrow_read_with_geoarrow_extension_registered():
+    pa = pytest.importorskip('pyarrow')
+    _point_storage_type = pa.list_(pa.field("xy", pa.float64()), 2)
+
+    class PointGeometryType(pa.ExtensionType):
+
+        def __init__(self):
+            pa.ExtensionType.__init__(self, _point_storage_type, "geoarrow.point")
+
+        def __arrow_ext_serialize__(self):
+            return b""
+
+        @classmethod
+        def __arrow_ext_deserialize__(cls, storage_type, serialized):
+            return cls()
+
+
+    point_type = PointGeometryType()
+
+    pa.register_extension_type(point_type)
+    try:
+        ds = ogr.Open('data/arrow/from_paleolimbot_geoarrow/point-default.feather')
+        lyr = ds.GetLayer(0)
+        assert lyr.GetGeometryColumn() == 'geometry'
+    finally:
+        pa.unregister_extension_type(point_type.extension_name)
