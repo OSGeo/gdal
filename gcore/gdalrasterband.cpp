@@ -814,6 +814,43 @@ CPLErr CPL_STDCALL GDALGetActualBlockSize( GDALRasterBandH hBand,
 }
 
 /************************************************************************/
+/*                     GetSuggestedBlockAccessPattern()                 */
+/************************************************************************/
+
+/**
+ * \brief Return the suggested/most efficient access pattern to blocks
+ *        (for read operations).
+ *
+ * While all GDAL drivers have to expose a block size, not all can guarantee
+ * efficient random access (GSBAP_RANDOM) to any block.
+ * Some drivers for example decompress sequentially a compressed stream from
+ * top raster to bottom (GSBAP_TOP_TO_BOTTOM), in which
+ * case best performance will be achieved while reading blocks in that order.
+ * (accessing blocks in random access in such rasters typically causes the
+ * decoding to be re-initialized from the start if accessing blocks in
+ * a non-sequential order)
+ *
+ * The base implementation returns GSBAP_UNKNOWN, which can also be explicitly
+ * returned by drivers that expose a somewhat artificial block size, because they can
+ * extract any part of a raster, but in a rather inefficient way.
+ *
+ * The GSBAP_LARGEST_CHUNK_POSSIBLE value can be combined as a logical bitmask
+ * with other enumeration values (GSBAP_UNKNOWN, GSBAP_RANDOM, GSBAP_TOP_TO_BOTTOM,
+ * GSBAP_BOTTOM_TO_TOP). When a driver sets this flag, the most efficient strategy
+ * is to read as many pixels as possible in the less RasterIO() operations.
+ *
+ * The return of this method is for example used to determine the swath size used by
+ * GDALDatasetCopyWholeRaster() and GDALRasterBandCopyWholeRaster().
+ *
+ * @since GDAL 3.6
+ */
+
+GDALSuggestedBlockAccessPattern GDALRasterBand::GetSuggestedBlockAccessPattern() const
+{
+    return GSBAP_UNKNOWN;
+}
+
+/************************************************************************/
 /*                         GetRasterDataType()                          */
 /************************************************************************/
 
