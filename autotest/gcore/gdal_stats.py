@@ -717,3 +717,41 @@ def test_stats_clear():
     assert ds.GetRasterBand(1).GetStatistics(False, False) == [0,0,0,-1]
 
     gdal.GetDriverByName('GTiff').Delete(filename)
+
+
+@pytest.mark.parametrize('datatype,minval,maxval',
+                         [(gdal.GDT_Byte, 1, 254),
+                          (gdal.GDT_Byte, -127, 127),
+                          (gdal.GDT_UInt16, 1, 65535),
+                          (gdal.GDT_Int16, -32767, 32766),
+                          (gdal.GDT_UInt32, 1, (1 << 32) - 2),
+                          (gdal.GDT_Int32, -(1 << 31) + 1, (1 << 31) - 2),
+                          (gdal.GDT_UInt64, 1, (1 << 53) - 2),
+                          (gdal.GDT_Int64, -(1 << 53) + 2, (1 << 53) - 2),
+                          (gdal.GDT_Float32, -struct.unpack('f', struct.pack('f', 1e20))[0],
+                                             struct.unpack('f', struct.pack('f', 1e20))[0]),
+                          (gdal.GDT_Float64, -1e100, 1e100),
+                          (gdal.GDT_CInt16, -32767, 32766),
+                          (gdal.GDT_CInt32, -(1 << 31) + 1, (1 << 31) - 2),
+                          (gdal.GDT_CFloat32, -struct.unpack('f', struct.pack('f', 1e20))[0],
+                                             struct.unpack('f', struct.pack('f', 1e20))[0]),
+                          (gdal.GDT_CFloat64, -1e100, 1e100),])
+@pytest.mark.parametrize('nodata', [None, 0, 1])
+def test_stats_computeminmax(datatype, minval, maxval, nodata):
+    ds = gdal.GetDriverByName('MEM').Create('', 64, 1, 1, datatype)
+    minval_mod = minval
+    expected_minval = minval
+    if datatype == gdal.GDT_Byte and minval < 0:
+        ds.GetRasterBand(1).SetMetadataItem('PIXELTYPE', 'SIGNEDBYTE', 'IMAGE_STRUCTURE')
+        minval_mod = 256 + minval
+    if nodata:
+        ds.GetRasterBand(1).SetNoDataValue(nodata)
+        if nodata == 1 and minval == 1:
+            expected_minval = maxval
+    ds.GetRasterBand(1).WriteRaster(0, 0, 64, 1,
+                                    struct.pack('d' * 2, minval_mod, maxval),
+                                    buf_type = gdal.GDT_Float64,
+                                    buf_xsize = 2,
+                                    buf_ysize = 1)
+    assert ds.GetRasterBand(1).ComputeRasterMinMax(0) == (expected_minval, maxval)
+

@@ -4232,8 +4232,9 @@ class GDALUInt128
 // The rationale for below optimizations is detailed in statistics.txt
 
 // Use with T = GByte or GUInt16 only !
-template<class T>
-static void ComputeStatisticsInternalGeneric( int nXCheck,
+template<class T, bool COMPUTE_OTHER_STATS> struct ComputeStatisticsInternalGeneric
+{
+    static void f( int nXCheck,
                                        int nBlockXSize,
                                        int nYCheck,
                                        const T* pData,
@@ -4259,13 +4260,16 @@ static void ComputeStatisticsInternalGeneric( int nXCheck,
                 const GUInt32 nValue = pData[iOffset];
                 if( nValue == nNoDataValue )
                     continue;
-                nValidCount ++;
                 if( nValue < nMin )
                     nMin = nValue;
                 if( nValue > nMax )
                     nMax = nValue;
-                nSum += nValue;
-                nSumSquare += static_cast_for_coverity_scan<GUIntBig>(nValue) * nValue;
+                if( COMPUTE_OTHER_STATS )
+                {
+                    nValidCount ++;
+                    nSum += nValue;
+                    nSumSquare += static_cast_for_coverity_scan<GUIntBig>(nValue) * nValue;
+                }
             }
         }
         nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
@@ -4273,6 +4277,10 @@ static void ComputeStatisticsInternalGeneric( int nXCheck,
     else if( nMin == std::numeric_limits<T>::min() &&
              nMax == std::numeric_limits<T>::max() )
     {
+        if( !COMPUTE_OTHER_STATS )
+        {
+            return;
+        }
         // Optimization when there is no nodata and we know we have already
         // reached the min and max
         for( int iY = 0; iY < nYCheck; iY++ )
@@ -4329,10 +4337,13 @@ static void ComputeStatisticsInternalGeneric( int nXCheck,
                     if( nValue > nMax )
                         nMax = nValue;
                 }
-                nSum += nValue;
-                nSumSquare += static_cast_for_coverity_scan<GUIntBig>(nValue) * nValue;
-                nSum += nValue2;
-                nSumSquare += static_cast_for_coverity_scan<GUIntBig>(nValue2) * nValue2;
+                if( COMPUTE_OTHER_STATS )
+                {
+                    nSum += nValue;
+                    nSumSquare += static_cast_for_coverity_scan<GUIntBig>(nValue) * nValue;
+                    nSum += nValue2;
+                    nSumSquare += static_cast_for_coverity_scan<GUIntBig>(nValue2) * nValue2;
+                }
             }
             if( iX < nXCheck )
             {
@@ -4342,20 +4353,28 @@ static void ComputeStatisticsInternalGeneric( int nXCheck,
                     nMin = nValue;
                 if( nValue > nMax )
                     nMax = nValue;
-                nSum += nValue;
-                nSumSquare += static_cast_for_coverity_scan<GUIntBig>(nValue) * nValue;
+                if( COMPUTE_OTHER_STATS )
+                {
+                    nSum += nValue;
+                    nSumSquare += static_cast_for_coverity_scan<GUIntBig>(nValue) * nValue;
+                }
             }
         }
-        nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
-        nValidCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
+        if( COMPUTE_OTHER_STATS )
+        {
+            nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
+            nValidCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
+        }
     }
 }
+};
 
 // Specialization for Byte that is mostly 32 bit friendly as it avoids
 // using 64bit accumulators in internal loops. This also slightly helps in
 // 64bit mode.
-template<>
-void ComputeStatisticsInternalGeneric<GByte>( int nXCheck,
+template<bool COMPUTE_OTHER_STATS> struct ComputeStatisticsInternalGeneric<GByte, COMPUTE_OTHER_STATS>
+{
+static void f( int nXCheck,
                                        int nBlockXSize,
                                        int nYCheck,
                                        const GByte* pData,
@@ -4395,24 +4414,33 @@ void ComputeStatisticsInternalGeneric<GByte>( int nXCheck,
                     nSampleCount32bit ++;
                     if( nValue == nNoDataValue )
                         continue;
-                    nValidCount32bit ++;
                     if( nValue < nMin )
                         nMin = nValue;
                     if( nValue > nMax )
                         nMax = nValue;
-                    nSum32bit += nValue;
-                    nSumSquare32bit += nValue * nValue;
+                    if( COMPUTE_OTHER_STATS )
+                    {
+                        nValidCount32bit ++;
+                        nSum32bit += nValue;
+                        nSumSquare32bit += nValue * nValue;
+                    }
                 }
-                nSampleCount += nSampleCount32bit;
-                nValidCount += nValidCount32bit;
-                nSum += nSum32bit;
-                nSumSquare += nSumSquare32bit;
+                if( COMPUTE_OTHER_STATS )
+                {
+                    nSampleCount += nSampleCount32bit;
+                    nValidCount += nValidCount32bit;
+                    nSum += nSum32bit;
+                    nSumSquare += nSumSquare32bit;
+                }
             }
         }
     }
     else if( nMin == 0 &&
              nMax == 255 )
     {
+        if( !COMPUTE_OTHER_STATS )
+            return;
+
         // Optimization when there is no nodata and we know we have already
         // reached the min and max
         for( int iY = 0; iY < nYCheck; iY++ )
@@ -4486,13 +4514,19 @@ void ComputeStatisticsInternalGeneric<GByte>( int nXCheck,
                         if( nValue > nMax )
                             nMax = nValue;
                     }
-                    nSum32bit += nValue;
-                    nSumSquare32bit += nValue * nValue;
-                    nSum32bit += nValue2;
-                    nSumSquare32bit += nValue2 * nValue2;
+                    if( COMPUTE_OTHER_STATS )
+                    {
+                        nSum32bit += nValue;
+                        nSumSquare32bit += nValue * nValue;
+                        nSum32bit += nValue2;
+                        nSumSquare32bit += nValue2 * nValue2;
+                    }
                 }
-                nSum += nSum32bit;
-                nSumSquare += nSumSquare32bit;
+                if( COMPUTE_OTHER_STATS )
+                {
+                    nSum += nSum32bit;
+                    nSumSquare += nSumSquare32bit;
+                }
             }
             if( iX < nXCheck )
             {
@@ -4502,35 +4536,45 @@ void ComputeStatisticsInternalGeneric<GByte>( int nXCheck,
                     nMin = nValue;
                 if( nValue > nMax )
                     nMax = nValue;
-                nSum += nValue;
-                nSumSquare += static_cast_for_coverity_scan<GUIntBig>(nValue) * nValue;
+                if( COMPUTE_OTHER_STATS )
+                {
+                    nSum += nValue;
+                    nSumSquare += static_cast_for_coverity_scan<GUIntBig>(nValue) * nValue;
+                }
             }
         }
-        nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
-        nValidCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
+        if( COMPUTE_OTHER_STATS )
+        {
+            nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
+            nValidCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
+        }
     }
 }
+};
 
-template<class T>
-static void ComputeStatisticsInternal( int nXCheck,
-                                       int nBlockXSize,
-                                       int nYCheck,
-                                       const T* pData,
-                                       bool bHasNoData,
-                                       GUInt32 nNoDataValue,
-                                       GUInt32& nMin,
-                                       GUInt32& nMax,
-                                       GUIntBig& nSum,
-                                       GUIntBig& nSumSquare,
-                                       GUIntBig& nSampleCount,
-                                       GUIntBig& nValidCount )
+template<class T, bool COMPUTE_OTHER_STATS> struct ComputeStatisticsInternal
 {
-    ComputeStatisticsInternalGeneric( nXCheck, nBlockXSize, nYCheck,
-                                      pData,
-                                      bHasNoData, nNoDataValue,
-                                      nMin, nMax, nSum, nSumSquare,
-                                      nSampleCount, nValidCount );
-}
+    static void f( int nXCheck,
+                                           int nBlockXSize,
+                                           int nYCheck,
+                                           const T* pData,
+                                           bool bHasNoData,
+                                           GUInt32 nNoDataValue,
+                                           GUInt32& nMin,
+                                           GUInt32& nMax,
+                                           GUIntBig& nSum,
+                                           GUIntBig& nSumSquare,
+                                           GUIntBig& nSampleCount,
+                                           GUIntBig& nValidCount )
+    {
+        ComputeStatisticsInternalGeneric<T, COMPUTE_OTHER_STATS>::f(
+                                          nXCheck, nBlockXSize, nYCheck,
+                                          pData,
+                                          bHasNoData, nNoDataValue,
+                                          nMin, nMax, nSum, nSumSquare,
+                                          nSampleCount, nValidCount );
+    }
+};
 
 #if (defined(__x86_64__) || defined(_M_X64)) && (defined(__GNUC__) || defined(_MSC_VER))
 
@@ -4538,7 +4582,7 @@ static void ComputeStatisticsInternal( int nXCheck,
 
 #define ZERO256                      GDALmm256_setzero_si256()
 
-template<bool COMPUTE_MIN, bool COMPUTE_MAX>
+template<bool COMPUTE_MIN, bool COMPUTE_MAX, bool COMPUTE_OTHER_STATS>
 static void ComputeStatisticsByteNoNodata( GPtrDiff_t nBlockPixels,
                                            // assumed to be aligned on 256 bits
                                            const GByte* pData,
@@ -4550,13 +4594,13 @@ static void ComputeStatisticsByteNoNodata( GPtrDiff_t nBlockPixels,
                                            GUIntBig& nValidCount )
 {
     // 32-byte alignment may not be enforced by linker, so do it at hand
-    GByte aby32ByteUnaligned[32+32+32+32+32];
+    GByte aby32ByteUnaligned[32+32+32+(COMPUTE_OTHER_STATS ? 32+32 : 0)];
     GByte* paby32ByteAligned = aby32ByteUnaligned +
                                 (32 - (reinterpret_cast<GUIntptr_t>(aby32ByteUnaligned) % 32));
     GByte* pabyMin = paby32ByteAligned;
     GByte* pabyMax = paby32ByteAligned + 32;
-    GUInt32* panSum = reinterpret_cast<GUInt32*>(paby32ByteAligned + 32*2);
-    GUInt32* panSumSquare = reinterpret_cast<GUInt32*>(paby32ByteAligned + 32*3);
+    GUInt32* panSum = COMPUTE_OTHER_STATS ? reinterpret_cast<GUInt32*>(paby32ByteAligned + 32*2): nullptr;
+    GUInt32* panSumSquare = COMPUTE_OTHER_STATS ? reinterpret_cast<GUInt32*>(paby32ByteAligned + 32*3): nullptr;
 
     GPtrDiff_t i = 0;
     // Make sure that sumSquare can fit on uint32
@@ -4590,34 +4634,40 @@ static void ComputeStatisticsByteNoNodata( GPtrDiff_t nBlockPixels,
                 ymm_max = GDALmm256_max_epu8 (ymm_max, ymm);
             }
 
-            // Extract even-8bit values
-            const GDALm256i ymm_even = GDALmm256_and_si256(ymm, ymm_mask_8bits);
-            // Compute square of those 16 values as 32 bit result
-            // and add adjacent pairs
-            const GDALm256i ymm_even_square =
-                                        GDALmm256_madd_epi16(ymm_even, ymm_even);
-            // Add to the sumsquare accumulator
-            ymm_sumsquare = GDALmm256_add_epi32(ymm_sumsquare, ymm_even_square);
+            if( COMPUTE_OTHER_STATS )
+            {
+                // Extract even-8bit values
+                const GDALm256i ymm_even = GDALmm256_and_si256(ymm, ymm_mask_8bits);
+                // Compute square of those 16 values as 32 bit result
+                // and add adjacent pairs
+                const GDALm256i ymm_even_square =
+                                            GDALmm256_madd_epi16(ymm_even, ymm_even);
+                // Add to the sumsquare accumulator
+                ymm_sumsquare = GDALmm256_add_epi32(ymm_sumsquare, ymm_even_square);
 
-            // Extract odd-8bit values
-            const GDALm256i ymm_odd = GDALmm256_srli_epi16(ymm, 8);
-            const GDALm256i ymm_odd_square =
-                                    GDALmm256_madd_epi16(ymm_odd, ymm_odd);
-            ymm_sumsquare = GDALmm256_add_epi32(ymm_sumsquare, ymm_odd_square);
+                // Extract odd-8bit values
+                const GDALm256i ymm_odd = GDALmm256_srli_epi16(ymm, 8);
+                const GDALm256i ymm_odd_square =
+                                        GDALmm256_madd_epi16(ymm_odd, ymm_odd);
+                ymm_sumsquare = GDALmm256_add_epi32(ymm_sumsquare, ymm_odd_square);
 
-            // Now compute the sums
-            ymm_sum = GDALmm256_add_epi32(ymm_sum,
-                                       GDALmm256_sad_epu8(ymm, ZERO256));
+                // Now compute the sums
+                ymm_sum = GDALmm256_add_epi32(ymm_sum,
+                                           GDALmm256_sad_epu8(ymm, ZERO256));
+            }
         }
 
-        GDALmm256_store_si256(reinterpret_cast<GDALm256i*>(panSum), ymm_sum);
-        GDALmm256_store_si256(reinterpret_cast<GDALm256i*>(panSumSquare), ymm_sumsquare);
+        if( COMPUTE_OTHER_STATS )
+        {
+            GDALmm256_store_si256(reinterpret_cast<GDALm256i*>(panSum), ymm_sum);
+            GDALmm256_store_si256(reinterpret_cast<GDALm256i*>(panSumSquare), ymm_sumsquare);
 
-        nSum += panSum[0] + panSum[2] + panSum[4] + panSum[6];
-        nSumSquare += static_cast<GUIntBig>(panSumSquare[0]) +
-                      panSumSquare[1] + panSumSquare[2] + panSumSquare[3] +
-                      panSumSquare[4] + panSumSquare[5] + panSumSquare[6] +
-                      panSumSquare[7];
+            nSum += panSum[0] + panSum[2] + panSum[4] + panSum[6];
+            nSumSquare += static_cast<GUIntBig>(panSumSquare[0]) +
+                          panSumSquare[1] + panSumSquare[2] + panSumSquare[3] +
+                          panSumSquare[4] + panSumSquare[5] + panSumSquare[6] +
+                          panSumSquare[7];
+        }
     }
 
     if( COMPUTE_MIN )
@@ -4656,12 +4706,18 @@ static void ComputeStatisticsByteNoNodata( GPtrDiff_t nBlockPixels,
             if( nValue > nMax )
                 nMax = nValue;
         }
-        nSum += nValue;
-        nSumSquare += static_cast_for_coverity_scan<GUIntBig>(nValue) * nValue;
+        if( COMPUTE_OTHER_STATS )
+        {
+            nSum += nValue;
+            nSumSquare += static_cast_for_coverity_scan<GUIntBig>(nValue) * nValue;
+        }
     }
 
-    nSampleCount += static_cast<GUIntBig>(nBlockPixels);
-    nValidCount += static_cast<GUIntBig>(nBlockPixels);
+    if( COMPUTE_OTHER_STATS )
+    {
+        nSampleCount += static_cast<GUIntBig>(nBlockPixels);
+        nValidCount += static_cast<GUIntBig>(nBlockPixels);
+    }
 }
 
 
@@ -4669,8 +4725,9 @@ static void ComputeStatisticsByteNoNodata( GPtrDiff_t nBlockPixels,
 // In pure SSE2, this relies on gdal_avx2_emulation.hpp. There is no
 // penaly in using the emulation, because, given the mm256 intrinsics used here,
 // there are strictly equivalent to 2 parallel SSE2 streams.
-template<>
-void ComputeStatisticsInternal<GByte>( int nXCheck,
+template<bool COMPUTE_OTHER_STATS> struct ComputeStatisticsInternal<GByte, COMPUTE_OTHER_STATS>
+{
+    static void f( int nXCheck,
                                        int nBlockXSize,
                                        int nYCheck,
                                        // assumed to be aligned on 256 bits
@@ -4739,13 +4796,16 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
                 // Check which values are nodata
                 const GDALm256i ymm_eq_nodata =
                                         GDALmm256_cmpeq_epi8( ymm, ymm_nodata );
-                // Count how many values are nodata (due to cmpeq putting 255
-                // when condition is met, this will actually be 255 times
-                // the number of nodata value, spread in 4 64 bits words).
-                // We can use add_epi32 as the counter will not overflow uint32
-                ymm_count_nodata_mul_255 = GDALmm256_add_epi32 (
-                                    ymm_count_nodata_mul_255,
-                                    GDALmm256_sad_epu8(ymm_eq_nodata, ZERO256) );
+                if( COMPUTE_OTHER_STATS )
+                {
+                    // Count how many values are nodata (due to cmpeq putting 255
+                    // when condition is met, this will actually be 255 times
+                    // the number of nodata value, spread in 4 64 bits words).
+                    // We can use add_epi32 as the counter will not overflow uint32
+                    ymm_count_nodata_mul_255 = GDALmm256_add_epi32 (
+                                        ymm_count_nodata_mul_255,
+                                        GDALmm256_sad_epu8(ymm_eq_nodata, ZERO256) );
+                }
                 // Replace all nodata values by zero for the purpose of sum
                 // and sumquare.
                 const GDALm256i ymm_nodata_by_zero =
@@ -4764,45 +4824,51 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
                                                   ymm_nodata_by_neutral);
                 }
 
-                // Extract even-8bit values
-                const GDALm256i ymm_even =
-                    GDALmm256_and_si256(ymm_nodata_by_zero, ymm_mask_8bits);
-                // Compute square of those 16 values as 32 bit result
-                // and add adjacent pairs
-                const GDALm256i ymm_even_square =
-                                            GDALmm256_madd_epi16(ymm_even, ymm_even);
-                // Add to the sumsquare accumulator
-                ymm_sumsquare = GDALmm256_add_epi32(ymm_sumsquare, ymm_even_square);
+                if( COMPUTE_OTHER_STATS )
+                {
+                    // Extract even-8bit values
+                    const GDALm256i ymm_even =
+                        GDALmm256_and_si256(ymm_nodata_by_zero, ymm_mask_8bits);
+                    // Compute square of those 16 values as 32 bit result
+                    // and add adjacent pairs
+                    const GDALm256i ymm_even_square =
+                                                GDALmm256_madd_epi16(ymm_even, ymm_even);
+                    // Add to the sumsquare accumulator
+                    ymm_sumsquare = GDALmm256_add_epi32(ymm_sumsquare, ymm_even_square);
 
-                // Extract odd-8bit values
-                const GDALm256i ymm_odd =
-                    GDALmm256_srli_epi16(ymm_nodata_by_zero, 8);
-                const GDALm256i ymm_odd_square =
-                                        GDALmm256_madd_epi16(ymm_odd, ymm_odd);
-                ymm_sumsquare = GDALmm256_add_epi32(ymm_sumsquare, ymm_odd_square);
+                    // Extract odd-8bit values
+                    const GDALm256i ymm_odd =
+                        GDALmm256_srli_epi16(ymm_nodata_by_zero, 8);
+                    const GDALm256i ymm_odd_square =
+                                            GDALmm256_madd_epi16(ymm_odd, ymm_odd);
+                    ymm_sumsquare = GDALmm256_add_epi32(ymm_sumsquare, ymm_odd_square);
 
-                // Now compute the sums
-                ymm_sum = GDALmm256_add_epi32(ymm_sum,
-                                GDALmm256_sad_epu8(ymm_nodata_by_zero, ZERO256));
+                    // Now compute the sums
+                    ymm_sum = GDALmm256_add_epi32(ymm_sum,
+                                    GDALmm256_sad_epu8(ymm_nodata_by_zero, ZERO256));
+                }
             }
 
-            GUInt32* panCoutNoDataMul255 = panSum;
-            GDALmm256_store_si256(reinterpret_cast<GDALm256i*>(panCoutNoDataMul255),
-                               ymm_count_nodata_mul_255);
+            if( COMPUTE_OTHER_STATS )
+            {
+                GUInt32* panCoutNoDataMul255 = panSum;
+                GDALmm256_store_si256(reinterpret_cast<GDALm256i*>(panCoutNoDataMul255),
+                                   ymm_count_nodata_mul_255);
 
-            nSampleCount += (i - iInit);
+                nSampleCount += (i - iInit);
 
-            nValidCount += (i - iInit) -
-                        (panCoutNoDataMul255[0] + panCoutNoDataMul255[2] +
-                         panCoutNoDataMul255[4] + panCoutNoDataMul255[6]) / 255;
+                nValidCount += (i - iInit) -
+                            (panCoutNoDataMul255[0] + panCoutNoDataMul255[2] +
+                             panCoutNoDataMul255[4] + panCoutNoDataMul255[6]) / 255;
 
-            GDALmm256_store_si256(reinterpret_cast<GDALm256i*>(panSum), ymm_sum);
-            GDALmm256_store_si256(reinterpret_cast<GDALm256i*>(panSumSquare), ymm_sumsquare);
-            nSum += panSum[0] + panSum[2] + panSum[4] + panSum[6];
-            nSumSquare += static_cast<GUIntBig>(panSumSquare[0]) +
-                          panSumSquare[1] + panSumSquare[2] + panSumSquare[3] +
-                          panSumSquare[4] + panSumSquare[5] + panSumSquare[6] +
-                          panSumSquare[7];
+                GDALmm256_store_si256(reinterpret_cast<GDALm256i*>(panSum), ymm_sum);
+                GDALmm256_store_si256(reinterpret_cast<GDALm256i*>(panSumSquare), ymm_sumsquare);
+                nSum += panSum[0] + panSum[2] + panSum[4] + panSum[6];
+                nSumSquare += static_cast<GUIntBig>(panSumSquare[0]) +
+                              panSumSquare[1] + panSumSquare[2] + panSumSquare[3] +
+                              panSumSquare[4] + panSumSquare[5] + panSumSquare[6] +
+                              panSumSquare[7];
+            }
         }
 
         if( bComputeMinMax )
@@ -4827,8 +4893,11 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
                 nMin = nValue;
             if( nValue > nMax )
                 nMax = nValue;
-            nSum += nValue;
-            nSumSquare += static_cast_for_coverity_scan<GUIntBig>(nValue) * nValue;
+            if( COMPUTE_OTHER_STATS )
+            {
+                nSum += nValue;
+                nSumSquare += static_cast_for_coverity_scan<GUIntBig>(nValue) * nValue;
+            }
         }
     }
     else if( !bHasNoData && nXCheck == nBlockXSize && nBlockPixels >= 32 )
@@ -4837,14 +4906,14 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
         {
             if( nMax < 255 )
             {
-                ComputeStatisticsByteNoNodata<true, true>(
+                ComputeStatisticsByteNoNodata<true, true, COMPUTE_OTHER_STATS>(
                     nBlockPixels, pData,
                     nMin, nMax,
                     nSum, nSumSquare, nSampleCount, nValidCount );
             }
             else
             {
-                ComputeStatisticsByteNoNodata<true, false>(
+                ComputeStatisticsByteNoNodata<true, false, COMPUTE_OTHER_STATS>(
                     nBlockPixels, pData,
                     nMin, nMax,
                     nSum, nSumSquare, nSampleCount, nValidCount );
@@ -4854,29 +4923,41 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
         {
             if( nMax < 255 )
             {
-                ComputeStatisticsByteNoNodata<false, true>(
+                ComputeStatisticsByteNoNodata<false, true, COMPUTE_OTHER_STATS>(
                     nBlockPixels, pData,
                     nMin, nMax,
                     nSum, nSumSquare, nSampleCount, nValidCount );
             }
             else
             {
-                ComputeStatisticsByteNoNodata<false, false>(
+                ComputeStatisticsByteNoNodata<false, false, COMPUTE_OTHER_STATS>(
                     nBlockPixels, pData,
                     nMin, nMax,
                     nSum, nSumSquare, nSampleCount, nValidCount );
             }
         }
     }
+    else if ( !COMPUTE_OTHER_STATS && !bHasNoData && nXCheck >= 32 )
+    {
+        for( int iY = 0; iY < nYCheck; iY++ )
+        {
+            ComputeStatisticsByteNoNodata<true, true, COMPUTE_OTHER_STATS>(
+                    nXCheck, pData + static_cast<size_t>(iY) * nBlockXSize,
+                    nMin, nMax,
+                    nSum, nSumSquare, nSampleCount, nValidCount );
+        }
+    }
     else
     {
-        ComputeStatisticsInternalGeneric( nXCheck, nBlockXSize, nYCheck,
+        ComputeStatisticsInternalGeneric<GByte, COMPUTE_OTHER_STATS>::f(
+                                          nXCheck, nBlockXSize, nYCheck,
                                           pData,
                                           bHasNoData, nNoDataValue,
                                           nMin, nMax, nSum, nSumSquare,
                                           nSampleCount, nValidCount );
     }
 }
+};
 
 CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static void UnshiftSumSquare( GUIntBig& nSumSquare,
@@ -4887,8 +4968,9 @@ static void UnshiftSumSquare( GUIntBig& nSumSquare,
 }
 
 // AVX2/SSE2 optimization for GUInt16 case
-template<>
-void ComputeStatisticsInternal<GUInt16>( int nXCheck,
+template<bool COMPUTE_OTHER_STATS> struct ComputeStatisticsInternal<GUInt16, COMPUTE_OTHER_STATS>
+{
+    static void f( int nXCheck,
                                        int nBlockXSize,
                                        int nYCheck,
                                        // assumed to be aligned on 128 bits
@@ -4943,28 +5025,34 @@ void ComputeStatisticsInternal<GUInt16>( int nXCheck,
                     ymm_max = GDALmm256_max_epi16 (ymm_max, ymm_shifted);
                 }
 
-                // Note: the int32 range can overflow for (0-32768)^2 +
-                // (0-32768)^2 = 0x80000000, but as we know the result is
-                // positive, this is OK as we interpret is a uint32.
-                const GDALm256i ymm_square = GDALmm256_madd_epi16(ymm_shifted,
-                                                                  ymm_shifted);
-                ymm_sumsquare = GDALmm256_add_epi64(ymm_sumsquare,
-                                    GDALmm256_and_si256(ymm_square, ymm_mask_32bits));
-                ymm_sumsquare = GDALmm256_add_epi64(ymm_sumsquare,
-                                    GDALmm256_srli_epi64(ymm_square, 32));
+                if( COMPUTE_OTHER_STATS )
+                {
+                    // Note: the int32 range can overflow for (0-32768)^2 +
+                    // (0-32768)^2 = 0x80000000, but as we know the result is
+                    // positive, this is OK as we interpret is a uint32.
+                    const GDALm256i ymm_square = GDALmm256_madd_epi16(ymm_shifted,
+                                                                      ymm_shifted);
+                    ymm_sumsquare = GDALmm256_add_epi64(ymm_sumsquare,
+                                        GDALmm256_and_si256(ymm_square, ymm_mask_32bits));
+                    ymm_sumsquare = GDALmm256_add_epi64(ymm_sumsquare,
+                                        GDALmm256_srli_epi64(ymm_square, 32));
 
-                // Now compute the sums
-                ymm_sum = GDALmm256_add_epi32(ymm_sum,
-                                  GDALmm256_and_si256(ymm, ymm_mask_16bits));
-                ymm_sum = GDALmm256_add_epi32(ymm_sum,
-                                  GDALmm256_srli_epi32(ymm, 16));
+                    // Now compute the sums
+                    ymm_sum = GDALmm256_add_epi32(ymm_sum,
+                                      GDALmm256_and_si256(ymm, ymm_mask_16bits));
+                    ymm_sum = GDALmm256_add_epi32(ymm_sum,
+                                      GDALmm256_srli_epi32(ymm, 16));
+                }
             }
 
-            GUInt32 anSum[8];
-            GDALmm256_storeu_si256(reinterpret_cast<GDALm256i*>(anSum), ymm_sum);
-            nSumThis += static_cast<GUIntBig>(anSum[0]) + anSum[1] +
-                    anSum[2] + anSum[3] + anSum[4] + anSum[5] +
-                    anSum[6] + anSum[7];
+            if( COMPUTE_OTHER_STATS )
+            {
+                GUInt32 anSum[8];
+                GDALmm256_storeu_si256(reinterpret_cast<GDALm256i*>(anSum), ymm_sum);
+                nSumThis += static_cast<GUIntBig>(anSum[0]) + anSum[1] +
+                        anSum[2] + anSum[3] + anSum[4] + anSum[5] +
+                        anSum[6] + anSum[7];
+            }
         }
 
         if( bComputeMinMax )
@@ -4984,39 +5072,44 @@ void ComputeStatisticsInternal<GUInt16>( int nXCheck,
             }
         }
 
-        GUIntBig anSumSquare[4];
-        GDALmm256_storeu_si256(reinterpret_cast<GDALm256i*>(anSumSquare), ymm_sumsquare);
-        nSumSquare += anSumSquare[0] +
-                        anSumSquare[1] + anSumSquare[2] + anSumSquare[3];
-
-        // Unshift the sum of squares
-        UnshiftSumSquare(nSumSquare, nSumThis, static_cast<GUIntBig>(i));
-
-        nSum += nSumThis;
-
-        for( ; i<nBlockPixels; i++)
+        if ( COMPUTE_OTHER_STATS )
         {
-            const GUInt32 nValue = pData[i];
-            if( nValue < nMin )
-                nMin = nValue;
-            if( nValue > nMax )
-                nMax = nValue;
-            nSum += nValue;
-            nSumSquare += static_cast_for_coverity_scan<GUIntBig>(nValue) * nValue;
-        }
+            GUIntBig anSumSquare[4];
+            GDALmm256_storeu_si256(reinterpret_cast<GDALm256i*>(anSumSquare), ymm_sumsquare);
+            nSumSquare += anSumSquare[0] +
+                            anSumSquare[1] + anSumSquare[2] + anSumSquare[3];
 
-        nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
-        nValidCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
+            // Unshift the sum of squares
+            UnshiftSumSquare(nSumSquare, nSumThis, static_cast<GUIntBig>(i));
+
+            nSum += nSumThis;
+
+            for( ; i<nBlockPixels; i++)
+            {
+                const GUInt32 nValue = pData[i];
+                if( nValue < nMin )
+                    nMin = nValue;
+                if( nValue > nMax )
+                    nMax = nValue;
+                nSum += nValue;
+                nSumSquare += static_cast_for_coverity_scan<GUIntBig>(nValue) * nValue;
+            }
+
+            nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
+            nValidCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
+        }
     }
     else
     {
-        ComputeStatisticsInternalGeneric( nXCheck, nBlockXSize, nYCheck,
+        ComputeStatisticsInternalGeneric<GUInt16, COMPUTE_OTHER_STATS>::f(
+                                          nXCheck, nBlockXSize, nYCheck,
                                           pData,
                                           bHasNoData, nNoDataValue,
                                           nMin, nMax, nSum, nSumSquare,
                                           nSampleCount, nValidCount );
     }
 }
+};
 
 #endif // (defined(__x86_64__) || defined(_M_X64)) && (defined(__GNUC__) || defined(_MSC_VER))
 
@@ -5438,7 +5531,8 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
 
                 if( eDataType == GDT_Byte )
                 {
-                    ComputeStatisticsInternal( nXCheck,
+                    ComputeStatisticsInternal<GByte, /* COMPUTE_OTHER_STATS = */ true>::f(
+                                               nXCheck,
                                                nBlockXSize,
                                                nYCheck,
                                                static_cast<const GByte*>(pData),
@@ -5451,7 +5545,8 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                 }
                 else
                 {
-                    ComputeStatisticsInternal( nXCheck,
+                    ComputeStatisticsInternal<GUInt16, /* COMPUTE_OTHER_STATS = */ true>::f(
+                                               nXCheck,
                                                nBlockXSize,
                                                nYCheck,
                                                static_cast<const GUInt16*>(pData),
@@ -5753,6 +5848,215 @@ CPLErr CPL_STDCALL GDALSetRasterStatistics(
 /*                        ComputeRasterMinMax()                         */
 /************************************************************************/
 
+template<class T, bool HAS_NODATA> static void ComputeMinMax(const T* buffer,
+                                                             size_t nElts,
+                                                             T nodataValue,
+                                                             T* pMin,
+                                                             T* pMax)
+{
+    T min0 = *pMin;
+    T max0 = *pMax;
+    T min1 = *pMin;
+    T max1 = *pMax;
+    size_t i;
+    for(i = 0; i + 1 < nElts; i+=2 )
+    {
+        if( !HAS_NODATA || buffer[i] != nodataValue )
+        {
+            min0 = std::min(min0, buffer[i]);
+            max0 = std::max(max0, buffer[i]);
+        }
+        if( !HAS_NODATA || buffer[i+1] != nodataValue )
+        {
+            min1 = std::min(min1, buffer[i+1]);
+            max1 = std::max(max1, buffer[i+1]);
+        }
+    }
+    T min = std::min(min0, min1);
+    T max = std::max(max0, max1);
+    if( i < nElts )
+    {
+        if( !HAS_NODATA || buffer[i] != nodataValue )
+        {
+            min = std::min(min, buffer[i]);
+            max = std::max(max, buffer[i]);
+        }
+    }
+    *pMin = min;
+    *pMax = max;
+}
+
+template<GDALDataType eDataType, bool bSignedByte>
+static void ComputeMinMaxGeneric(const void* pData,
+                                 int nXCheck,
+                                 int nYCheck,
+                                 int nBlockXSize,
+                                 bool bGotNoDataValue,
+                                 double dfNoDataValue,
+                                 bool bGotFloatNoDataValue,
+                                 float fNoDataValue,
+                                 double &dfMin, double& dfMax)
+{
+    double dfLocalMin = dfMin;
+    double dfLocalMax = dfMax;
+
+    for( int iY = 0; iY < nYCheck; iY++ )
+    {
+        for( int iX = 0; iX < nXCheck; iX++ )
+        {
+            const GPtrDiff_t iOffset = iX + static_cast<GPtrDiff_t>(iY) * nBlockXSize;
+            bool bValid = true;
+            double dfValue = GetPixelValue( eDataType,
+                                            bSignedByte,
+                                            pData,
+                                            iOffset,
+                                            bGotNoDataValue,
+                                            dfNoDataValue,
+                                            bGotFloatNoDataValue,
+                                            fNoDataValue,
+                                            bValid );
+            if( !bValid )
+                continue;
+
+            dfLocalMin = std::min(dfLocalMin, dfValue);
+            dfLocalMax = std::max(dfLocalMax, dfValue);
+        }
+    }
+
+    dfMin = dfLocalMin;
+    dfMax = dfLocalMax;
+}
+
+static void ComputeMinMaxGeneric(const void* pData,
+                                 GDALDataType eDataType,
+                                 bool bSignedByte,
+                                 int nXCheck,
+                                 int nYCheck,
+                                 int nBlockXSize,
+                                 bool bGotNoDataValue,
+                                 double dfNoDataValue,
+                                 bool bGotFloatNoDataValue,
+                                 float fNoDataValue,
+                                 double &dfMin, double& dfMax)
+{
+    switch( eDataType)
+    {
+        case GDT_Unknown:
+            CPLAssert(false);
+            break;
+        case GDT_Byte:
+            CPLAssert(bSignedByte);
+            (void)bSignedByte;
+            ComputeMinMaxGeneric<GDT_Byte, true>(
+                pData, nXCheck, nYCheck, nBlockXSize,
+                bGotNoDataValue, dfNoDataValue, false, 0, dfMin, dfMax);
+            break;
+        case GDT_UInt16:
+        case GDT_Int16:
+            CPLAssert(false);
+            break;
+        case GDT_UInt32:
+            ComputeMinMaxGeneric<GDT_UInt32, false>(
+                pData, nXCheck, nYCheck, nBlockXSize,
+                bGotNoDataValue, dfNoDataValue, false, 0, dfMin, dfMax);
+            break;
+        case GDT_Int32:
+            ComputeMinMaxGeneric<GDT_Int32, false>(
+                pData, nXCheck, nYCheck, nBlockXSize,
+                bGotNoDataValue, dfNoDataValue, false, 0, dfMin, dfMax);
+            break;
+        case GDT_UInt64:
+            ComputeMinMaxGeneric<GDT_UInt64, false>(
+                pData, nXCheck, nYCheck, nBlockXSize,
+                bGotNoDataValue, dfNoDataValue, false, 0, dfMin, dfMax);
+            break;
+        case GDT_Int64:
+            ComputeMinMaxGeneric<GDT_Int64, false>(
+                pData, nXCheck, nYCheck, nBlockXSize,
+                bGotNoDataValue, dfNoDataValue, false, 0, dfMin, dfMax);
+            break;
+        case GDT_Float32:
+            ComputeMinMaxGeneric<GDT_Float32, false>(
+                pData, nXCheck, nYCheck, nBlockXSize,
+                false, 0, bGotFloatNoDataValue, fNoDataValue, dfMin, dfMax);
+            break;
+        case GDT_Float64:
+            ComputeMinMaxGeneric<GDT_Float64, false>(
+                pData, nXCheck, nYCheck, nBlockXSize,
+                bGotNoDataValue, dfNoDataValue, false, 0, dfMin, dfMax);
+            break;
+        case GDT_CInt16:
+            ComputeMinMaxGeneric<GDT_CInt16, false>(
+                pData, nXCheck, nYCheck, nBlockXSize,
+                bGotNoDataValue, dfNoDataValue, false, 0, dfMin, dfMax);
+            break;
+        case GDT_CInt32:
+            ComputeMinMaxGeneric<GDT_CInt32, false>(
+                pData, nXCheck, nYCheck, nBlockXSize,
+                bGotNoDataValue, dfNoDataValue, false, 0, dfMin, dfMax);
+            break;
+        case GDT_CFloat32:
+            ComputeMinMaxGeneric<GDT_CFloat32, false>(
+                pData, nXCheck, nYCheck, nBlockXSize,
+                bGotNoDataValue, dfNoDataValue, false, 0, dfMin, dfMax);
+            break;
+        case GDT_CFloat64:
+            ComputeMinMaxGeneric<GDT_CFloat64, false>(
+                pData, nXCheck, nYCheck, nBlockXSize,
+                bGotNoDataValue, dfNoDataValue, false, 0, dfMin, dfMax);
+            break;
+        case GDT_TypeCount:
+            CPLAssert(false);
+            break;
+    }
+}
+
+static bool
+ComputeMinMaxGenericIterBlocks(GDALRasterBand* poBand,
+                               GDALDataType eDataType,
+                               bool bSignedByte,
+                                           int nTotalBlocks,
+                                           int nSampleRate,
+                                           int nBlocksPerRow,
+                                           bool bGotNoDataValue,
+                                           double dfNoDataValue,
+                                           bool bGotFloatNoDataValue,
+                                           float fNoDataValue,
+                                           double& dfMin,
+                                           double& dfMax)
+
+{
+    int nBlockXSize, nBlockYSize;
+    poBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
+    for( int iSampleBlock = 0;
+         iSampleBlock < nTotalBlocks;
+         iSampleBlock += nSampleRate )
+    {
+        const int iYBlock = iSampleBlock / nBlocksPerRow;
+        const int iXBlock = iSampleBlock - nBlocksPerRow * iYBlock;
+
+        GDALRasterBlock *poBlock = poBand->GetLockedBlockRef( iXBlock, iYBlock );
+        if( poBlock == nullptr )
+            return false;
+
+        void * const pData = poBlock->GetDataRef();
+
+        int nXCheck = 0, nYCheck = 0;
+        poBand->GetActualBlockSize(iXBlock, iYBlock, &nXCheck, &nYCheck);
+
+        ComputeMinMaxGeneric(pData, eDataType, bSignedByte,
+                             nXCheck, nYCheck, nBlockXSize,
+                             CPL_TO_BOOL(bGotNoDataValue),
+                             dfNoDataValue,
+                             bGotFloatNoDataValue,
+                             fNoDataValue,
+                             dfMin, dfMax);
+
+        poBlock->DropLock();
+    }
+    return true;
+}
+
 /**
  * \brief Compute the min/max values for a band.
  *
@@ -5827,8 +6131,90 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
     GDALRasterIOExtraArg sExtraArg;
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
 
-    double dfMin = std::numeric_limits<double>::max();
-    double dfMax = -std::numeric_limits<double>::max();
+    GUInt32 nMin = (eDataType == GDT_Byte) ? 255 : 65535; // used for GByte & GUInt16 cases
+    GUInt32 nMax = 0;// used for GByte & GUInt16 cases
+    GInt16 nMinInt16 = std::numeric_limits<GInt16>::max(); // used for GInt16 case
+    GInt16 nMaxInt16 = std::numeric_limits<GInt16>::lowest(); // used for GInt16 case
+    double dfMin = std::numeric_limits<double>::max(); // used for generic code path
+    double dfMax = -std::numeric_limits<double>::max(); // used for generic code path
+    const bool bUseOptimizedPath = ( eDataType == GDT_Byte && !bSignedByte ) ||
+                                     eDataType == GDT_Int16 ||
+                                     eDataType == GDT_UInt16;
+
+    const auto ComputeMinMaxForBlock = [
+        this, bSignedByte,
+        bGotNoDataValue, dfNoDataValue,
+        &nMin, &nMax, &nMinInt16, &nMaxInt16]
+        (const void* pData, int nXCheck, int nBufferWidth, int nYCheck)
+    {
+        if( eDataType == GDT_Byte && !bSignedByte )
+        {
+            const bool bHasNoData =
+                bGotNoDataValue &&
+                GDALIsValueInRange<GByte>(dfNoDataValue) &&
+                static_cast<GByte>(dfNoDataValue) == dfNoDataValue;
+            const GUInt32 nNoDataValue = bHasNoData ? static_cast<GByte>(dfNoDataValue) : 0;
+            GUIntBig nSum, nSumSquare, nSampleCount, nValidCount; // unused
+            ComputeStatisticsInternal<GByte, /* COMPUTE_OTHER_STATS = */ false>::f(
+                nXCheck, nBufferWidth, nYCheck,
+                static_cast<const GByte*>(pData),
+                bHasNoData,
+                nNoDataValue,
+                nMin,
+                nMax,
+                nSum, nSumSquare, nSampleCount, nValidCount);
+        }
+        else if( eDataType == GDT_UInt16 )
+        {
+            const bool bHasNoData =
+                bGotNoDataValue &&
+                GDALIsValueInRange<GUInt16>(dfNoDataValue) &&
+                static_cast<GUInt16>(dfNoDataValue) == dfNoDataValue;
+            const GUInt32 nNoDataValue = bHasNoData ? static_cast<GUInt16>(dfNoDataValue) : 0;
+            GUIntBig nSum, nSumSquare, nSampleCount, nValidCount; // unused
+            ComputeStatisticsInternal<GUInt16, /* COMPUTE_OTHER_STATS = */ false>::f(
+                nXCheck, nBufferWidth, nYCheck,
+                static_cast<const GUInt16*>(pData),
+                bHasNoData,
+                nNoDataValue,
+                nMin,
+                nMax,
+                nSum, nSumSquare, nSampleCount, nValidCount);
+        }
+        else if( eDataType == GDT_Int16 )
+        {
+            const bool bHasNoData =
+                bGotNoDataValue &&
+                GDALIsValueInRange<int16_t>(dfNoDataValue) &&
+                static_cast<int16_t>(dfNoDataValue) == dfNoDataValue;
+            if( bHasNoData )
+            {
+                const int16_t nNoDataValue = static_cast<int16_t>(dfNoDataValue);
+                for( int iY = 0; iY < nYCheck; iY++ )
+                {
+                    ComputeMinMax<int16_t, true>(
+                        static_cast<const int16_t*>(pData) + static_cast<size_t>(iY) * nBufferWidth,
+                        nXCheck,
+                        nNoDataValue,
+                        &nMinInt16,
+                        &nMaxInt16);
+                }
+            }
+            else
+            {
+                for( int iY = 0; iY < nYCheck; iY++ )
+                {
+                    ComputeMinMax<int16_t, false>(
+                        static_cast<const int16_t*>(pData) + static_cast<size_t>(iY) * nBufferWidth,
+                        nXCheck,
+                        0,
+                        &nMinInt16,
+                        &nMaxInt16);
+                }
+            }
+        }
+    };
+
     if ( bApproxOK && HasArbitraryOverviews() )
     {
 /* -------------------------------------------------------------------- */
@@ -5866,29 +6252,21 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
             return eErr;
         }
 
-        /* this isn't the fastest way to do this, but is easier for now */
-        for( int iY = 0; iY < nYReduced; iY++ )
+        if( bUseOptimizedPath )
         {
-            for( int iX = 0; iX < nXReduced; iX++ )
-            {
-                const int iOffset = iX + iY * nXReduced;
-                bool bValid = true;
-                double dfValue = GetPixelValue( eDataType,
-                                                bSignedByte,
-                                                pData,
-                                                iOffset,
-                                                CPL_TO_BOOL(bGotNoDataValue),
-                                                dfNoDataValue,
-                                                bGotFloatNoDataValue,
-                                                fNoDataValue,
-                                                bValid );
-                if( !bValid )
-                    continue;
-
-                dfMin = std::min(dfMin, dfValue);
-                dfMax = std::max(dfMax, dfValue);
-            }
+            ComputeMinMaxForBlock(pData, nXReduced, nXReduced, nYReduced);
         }
+        else
+        {
+            ComputeMinMaxGeneric(pData, eDataType, bSignedByte,
+                                 nXReduced, nYReduced, nXReduced,
+                                 CPL_TO_BOOL(bGotNoDataValue),
+                                 dfNoDataValue,
+                                 bGotFloatNoDataValue,
+                                 fNoDataValue,
+                                 dfMin, dfMax);
+        }
+
 
         CPLFree( pData );
     }
@@ -5917,48 +6295,61 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
               nSampleRate += 1;
         }
 
-        for( int iSampleBlock = 0;
-             iSampleBlock < nBlocksPerRow * nBlocksPerColumn;
-             iSampleBlock += nSampleRate )
+        if( bUseOptimizedPath )
         {
-            const int iYBlock = iSampleBlock / nBlocksPerRow;
-            const int iXBlock = iSampleBlock - nBlocksPerRow * iYBlock;
-
-            GDALRasterBlock *poBlock = GetLockedBlockRef( iXBlock, iYBlock );
-            if( poBlock == nullptr )
-                return CE_Failure;
-
-            void * const pData = poBlock->GetDataRef();
-
-            int nXCheck = 0, nYCheck = 0;
-            GetActualBlockSize(iXBlock, iYBlock, &nXCheck, &nYCheck);
-
-            // This isn't the fastest way to do this, but is easier for now.
-            for( int iY = 0; iY < nYCheck; iY++ )
+            for( int iSampleBlock = 0;
+                 iSampleBlock < nBlocksPerRow * nBlocksPerColumn;
+                 iSampleBlock += nSampleRate )
             {
-                for( int iX = 0; iX < nXCheck; iX++ )
-                {
-                    const GPtrDiff_t iOffset = iX + static_cast<GPtrDiff_t>(iY) * nBlockXSize;
-                    bool bValid = true;
-                    double dfValue = GetPixelValue( eDataType,
-                                                    bSignedByte,
-                                                    pData,
-                                                    iOffset,
-                                                    CPL_TO_BOOL(bGotNoDataValue),
-                                                    dfNoDataValue,
-                                                    bGotFloatNoDataValue,
-                                                    fNoDataValue,
-                                                    bValid );
-                    if( !bValid )
-                        continue;
+                const int iYBlock = iSampleBlock / nBlocksPerRow;
+                const int iXBlock = iSampleBlock - nBlocksPerRow * iYBlock;
 
-                    dfMin = std::min(dfMin, dfValue);
-                    dfMax = std::max(dfMax, dfValue);
-                }
+                GDALRasterBlock *poBlock = GetLockedBlockRef( iXBlock, iYBlock );
+                if( poBlock == nullptr )
+                    return CE_Failure;
+
+                void * const pData = poBlock->GetDataRef();
+
+                int nXCheck = 0, nYCheck = 0;
+                GetActualBlockSize(iXBlock, iYBlock, &nXCheck, &nYCheck);
+
+                ComputeMinMaxForBlock(pData, nXCheck, nBlockXSize, nYCheck);
+
+                poBlock->DropLock();
+
+                if( eDataType == GDT_Byte && !bSignedByte && nMin == 0 && nMax == 255 )
+                    break;
             }
-
-            poBlock->DropLock();
         }
+        else
+        {
+            const int nTotalBlocks = nBlocksPerRow * nBlocksPerColumn;
+            if( !ComputeMinMaxGenericIterBlocks(this, eDataType,
+                                                bSignedByte,
+                                                nTotalBlocks,
+                                                nSampleRate,
+                                                nBlocksPerRow,
+                                                CPL_TO_BOOL(bGotNoDataValue),
+                                                dfNoDataValue,
+                                                bGotFloatNoDataValue,
+                                                fNoDataValue,
+                                                dfMin,
+                                                dfMax) )
+            {
+                return CE_Failure;
+            }
+        }
+    }
+
+    if( (eDataType == GDT_Byte && !bSignedByte) || eDataType == GDT_UInt16 )
+    {
+        dfMin = nMin;
+        dfMax = nMax;
+    }
+    else if( eDataType == GDT_Int16 )
+    {
+        dfMin = nMinInt16;
+        dfMax = nMaxInt16;
     }
 
     if( dfMin > dfMax )
