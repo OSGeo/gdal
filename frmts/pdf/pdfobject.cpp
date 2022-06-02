@@ -2381,7 +2381,7 @@ GDALPDFObject* GDALPDFDictionaryPdfium::Get(const char* pszKey)
 std::map<CPLString, GDALPDFObject*>& GDALPDFDictionaryPdfium::GetValues()
 {
     CPDF_DictionaryLocker dictIterator(m_poDict);
-    for( const auto iter: dictIterator )
+    for( const auto& iter: dictIterator )
     {
         // No object for this key
         if( !iter.second )
