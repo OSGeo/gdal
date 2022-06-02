@@ -149,7 +149,7 @@ class OGRMongoDBv3Layer final: public OGRLayer
         std::unique_ptr<OGRFeature>     Translate(const bsoncxx::document::view& doc);
         bsoncxx::document::value        BuildQuery();
         
-	OGRErr                   PrepareForUpdateOrUpsert(const OGRFeature *poFeature);
+        OGRErr                   PrepareForUpdateOrUpsert(const OGRFeature *poFeature);
         bsoncxx::document::value BuildIDMatchFilter(bsoncxx::document::view view,
                                                     const OGRFeature *poFeature) const;
 
