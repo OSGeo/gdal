@@ -1485,6 +1485,12 @@ class Layer(MajorObject):
         """
         return _ogr.Layer_CreateFeature(self, *args)
 
+
+    def UpsertFeature(self, *args):
+        """UpsertFeature(Layer self, Feature feature) -> OGRErr"""
+        return _ogr.Layer_UpsertFeature(self, *args)
+
+
     def DeleteFeature(self, *args):
         r"""
         DeleteFeature(Layer self, GIntBig fid) -> OGRErr

@@ -3836,6 +3836,9 @@ SWIGINTERN OGRErr OGRLayerShadow_SetFeature(OGRLayerShadow *self,OGRFeatureShado
 SWIGINTERN OGRErr OGRLayerShadow_CreateFeature(OGRLayerShadow *self,OGRFeatureShadow *feature){
     return OGR_L_CreateFeature(self, feature);
   }
+SWIGINTERN OGRErr OGRLayerShadow_UpsertFeature(OGRLayerShadow *self,OGRFeatureShadow *feature){
+    return OGR_L_UpsertFeature(self, feature);
+  }
 SWIGINTERN OGRErr OGRLayerShadow_DeleteFeature(OGRLayerShadow *self,GIntBig fid){
     return OGR_L_DeleteFeature(self, fid);
   }
@@ -9834,6 +9837,76 @@ SWIGINTERN PyObject *_wrap_Layer_CreateFeature(PyObject *SWIGUNUSEDPARM(self), P
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
       result = (OGRErr)OGRLayerShadow_CreateFeature(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if ( ReturnSame(resultobj == Py_None || resultobj == 0) ) {
+      resultobj = PyInt_FromLong( result );
+    }
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Layer_UpsertFeature(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
+  OGRFeatureShadow *arg2 = (OGRFeatureShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  OGRErr result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:Layer_UpsertFeature",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_UpsertFeature" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Layer_UpsertFeature" "', argument " "2"" of type '" "OGRFeatureShadow *""'"); 
+  }
+  arg2 = reinterpret_cast< OGRFeatureShadow * >(argp2);
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRLayerShadow_UpsertFeature(arg1,arg2);
       SWIG_PYTHON_THREAD_END_ALLOW;
     }
 #ifndef SED_HACKS
@@ -31008,7 +31081,8 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"OGRERR_NONE on success. \n"
 		""},
-	 { "Layer_DeleteFeature", _wrap_Layer_DeleteFeature, METH_VARARGS, "\n"
+	 { "Layer_UpsertFeature", _wrap_Layer_UpsertFeature, METH_VARARGS, "Layer_UpsertFeature(Layer self, Feature feature) -> OGRErr"},
+   { "Layer_DeleteFeature", _wrap_Layer_DeleteFeature, METH_VARARGS, "\n"
 		"Layer_DeleteFeature(Layer self, GIntBig fid) -> OGRErr\n"
 		"OGRErr\n"
 		"OGR_L_DeleteFeature(OGRLayerH hLayer, GIntBig nFID)\n"
