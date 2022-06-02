@@ -4602,6 +4602,8 @@ static void ComputeStatisticsByteNoNodata( GPtrDiff_t nBlockPixels,
     GUInt32* panSum = COMPUTE_OTHER_STATS ? reinterpret_cast<GUInt32*>(paby32ByteAligned + 32*2): nullptr;
     GUInt32* panSumSquare = COMPUTE_OTHER_STATS ? reinterpret_cast<GUInt32*>(paby32ByteAligned + 32*3): nullptr;
 
+    CPLAssert( (reinterpret_cast<uintptr_t>(pData) % 32) == 0 );
+
     GPtrDiff_t i = 0;
     // Make sure that sumSquare can fit on uint32
     // * 8 since we can hold 8 sums per vector register
@@ -4753,6 +4755,8 @@ template<bool COMPUTE_OTHER_STATS> struct ComputeStatisticsInternal<GByte, COMPU
         GByte* pabyMax = paby32ByteAligned + 32;
         GUInt32* panSum = reinterpret_cast<GUInt32*>(paby32ByteAligned + 32*2);
         GUInt32* panSumSquare = reinterpret_cast<GUInt32*>(paby32ByteAligned + 32*3);
+
+        CPLAssert( (reinterpret_cast<uintptr_t>(pData) % 32) == 0 );
 
         GPtrDiff_t i = 0;
         // Make sure that sumSquare can fit on uint32
@@ -4937,7 +4941,8 @@ template<bool COMPUTE_OTHER_STATS> struct ComputeStatisticsInternal<GByte, COMPU
             }
         }
     }
-    else if ( !COMPUTE_OTHER_STATS && !bHasNoData && nXCheck >= 32 )
+    else if ( !COMPUTE_OTHER_STATS && !bHasNoData && nXCheck >= 32 &&
+              (nBlockXSize % 32) == 0 )
     {
         for( int iY = 0; iY < nYCheck; iY++ )
         {
@@ -4987,6 +4992,8 @@ template<bool COMPUTE_OTHER_STATS> struct ComputeStatisticsInternal<GUInt16, COM
     const auto nBlockPixels = static_cast<GPtrDiff_t>(nXCheck) * nYCheck;
     if( !bHasNoData && nXCheck == nBlockXSize && nBlockPixels >= 16 )
     {
+        CPLAssert( (reinterpret_cast<uintptr_t>(pData) % 16) == 0 );
+
         GPtrDiff_t i = 0;
         // In SSE2, min_epu16 and max_epu16 do not exist, so shift from
         // UInt16 to SInt16 to be able to use min_epi16 and max_epi16.
