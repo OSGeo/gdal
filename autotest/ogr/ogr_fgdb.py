@@ -2208,6 +2208,42 @@ def test_ogr_fgdb_alias(fgdb_drv):
     except OSError:
         pass
 
+###############################################################################
+# Test field alias with ampersand character. Requires OpenFileGDB to be read back
+
+
+def test_ogr_fgdb_alias_with_ampersand(fgdb_drv, openfilegdb_drv):
+
+    try:
+        shutil.rmtree("tmp/alias.gdb")
+    except OSError:
+        pass
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("WGS84")
+
+    ds = fgdb_drv.CreateDataSource('tmp/alias.gdb')
+    lyr = ds.CreateLayer('test', srs=srs, geom_type=ogr.wkbPoint)
+    fld_defn = ogr.FieldDefn('short_name', ogr.OFTInteger)
+    fld_defn.SetAlternativeName('longer & name')
+    lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn('regular_name', ogr.OFTInteger)
+    lyr.CreateField(fld_defn)
+    ds = None
+
+    openfilegdb_drv.Register()
+    ds = fgdb_drv.Open('tmp/alias.gdb')
+    openfilegdb_drv.Deregister()
+    lyr = ds.GetLayer(0)
+    lyr_defn = lyr.GetLayerDefn()
+    assert lyr_defn.GetFieldDefn(0).GetAlternativeName() == 'longer & name'
+    assert lyr_defn.GetFieldDefn(1).GetAlternativeName() == ''
+
+    try:
+        shutil.rmtree("tmp/alias.gdb")
+    except OSError:
+        pass
+
 
 ###############################################################################
 # Test reading field domains
