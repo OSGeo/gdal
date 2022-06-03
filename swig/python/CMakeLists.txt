@@ -154,6 +154,13 @@ if (Python_Interpreter_FOUND)
     set(GNM_ENABLED "False")
   endif ()
 
+  # Use the 'X.Y.Z' numbering scheme from libgdal by default for the gdal python package version number
+  # And append a ".patch" if the patch is not 0.
+  set(GDAL_PYTHON_VERSION "${GDAL_VERSION_NO_DEV_SUFFIX}")
+  if( NOT "${GDAL_VERSION_BUILD}" STREQUAL "0" )
+      string(APPEND GDAL_PYTHON_VERSION ".${GDAL_VERSION_BUILD}")
+  endif()
+
   file(TO_NATIVE_PATH "${GDAL_PYTHON_CSOURCE_DIR}" GDAL_PYTHON_EXT_SOURCE_DIR)
   if ("${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}" AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/setup.py)
     # FIXME: remove this branch when we remove setup.py from source tree
