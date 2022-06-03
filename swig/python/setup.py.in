@@ -315,7 +315,7 @@ package_dir = {'osgeo': 'osgeo', '': utils_package_root}
 readme = open('README.rst', encoding="utf-8").read()
 
 name = 'GDAL'
-version = '@GDAL_VERSION_NO_DEV_SUFFIX@'
+version = '@GDAL_PYTHON_VERSION@'
 author = "Frank Warmerdam"
 author_email = "warmerdam@pobox.com"
 maintainer = "Howard Butler"
