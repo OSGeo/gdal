@@ -34,6 +34,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <cwchar>
 #include <algorithm>
 #include <string>
 
@@ -1415,11 +1416,60 @@ FileGDBIterator* OGROpenFileGDBLayer::BuildIteratorFromExprNode(swq_expr_node* p
                         }
                     }
 
+                    bool bIteratorSufficient = true;
+                    auto poField = m_poLyrTable->GetField(nTableColIdx);
+                    std::string osTruncatedStr; // keep it in this scope !
+                    if( poField->GetType() == FGFT_STRING &&
+                        poFieldDefn->GetType() == OFTString )
+                    {
+                        const int nMaxWidthIndexedStr =
+                            poField->GetIndex()->GetMaxWidthInBytes(m_poLyrTable);
+                        if( nMaxWidthIndexedStr > 0 )
+                        {
+                            wchar_t *pWide = CPLRecodeToWChar( sValue.String,
+                                                               CPL_ENC_UTF8,
+                                                               CPL_ENC_UCS2 );
+                            if( pWide )
+                            {
+                                const size_t nUCS2Len = wcslen(pWide);
+                                if( nUCS2Len * sizeof(uint16_t) > static_cast<size_t>(nMaxWidthIndexedStr) )
+                                {
+                                    pWide[nMaxWidthIndexedStr / sizeof(uint16_t)] = 0;
+                                    char* pszTruncated = CPLRecodeFromWChar( pWide, CPL_ENC_UCS2, CPL_ENC_UTF8 );
+                                    CPLFree(pWide);
+                                    pWide = nullptr;
+                                    if( pszTruncated )
+                                    {
+                                        osTruncatedStr = pszTruncated;
+                                        sValue.String = &osTruncatedStr[0];
+                                        CPLFree(pszTruncated);
+                                        if( (eOp == FGSO_EQ && poNode->nOperation != SWQ_NE) || eOp == FGSO_GE )
+                                            bIteratorSufficient = false;
+                                        else
+                                            return nullptr;
+                                    }
+                                }
+                                CPLFree(pWide);
+                            }
+                        }
+
+                        // As the index use ' ' as padding value, we cannot
+                        // trust a searched key ending with a space
+                        const size_t nLen = strlen(sValue.String);
+                        if( nLen > 0 && sValue.String[nLen-1] == ' ' )
+                        {
+                            if( (eOp == FGSO_EQ && poNode->nOperation != SWQ_NE) || eOp == FGSO_GE )
+                                bIteratorSufficient = false;
+                            else
+                                return nullptr;
+                        }
+                    }
+
                     FileGDBIterator* poIter = FileGDBIterator::Build(
                         m_poLyrTable, nTableColIdx, TRUE,
                         eOp, poFieldDefn->GetType(), &sValue);
                     if( poIter != nullptr )
-                        m_bIteratorSufficientToEvaluateFilter = TRUE;
+                        m_bIteratorSufficientToEvaluateFilter = bIteratorSufficient;
                     if( poIter && poNode->nOperation == SWQ_NE )
                         return FileGDBIterator::BuildNot(poIter);
                     else
@@ -1498,6 +1548,10 @@ FileGDBIterator* OGROpenFileGDBLayer::BuildIteratorFromExprNode(swq_expr_node* p
                 m_poLyrTable->GetField(nTableColIdx)->HasIndex() )
             {
                 FileGDBIterator* poRet = nullptr;
+
+                bool bIteratorSufficient = true;
+                auto poField = m_poLyrTable->GetField(nTableColIdx);
+
                 for( int i=1; i<poNode->nSubExprCount; i++ )
                 {
                     OGRField sValue;
@@ -1508,6 +1562,46 @@ FileGDBIterator* OGROpenFileGDBLayer::BuildIteratorFromExprNode(swq_expr_node* p
                         poRet = nullptr;
                         break;
                     }
+
+                    std::string osTruncatedStr; // keep it in this scope !
+                    if( poField->GetType() == FGFT_STRING &&
+                        poFieldDefn->GetType() == OFTString )
+                    {
+                        const int nMaxWidthIndexedStr =
+                            poField->GetIndex()->GetMaxWidthInBytes(m_poLyrTable);
+                        if( nMaxWidthIndexedStr > 0 )
+                        {
+                            wchar_t *pWide = CPLRecodeToWChar( sValue.String,
+                                                               CPL_ENC_UTF8,
+                                                               CPL_ENC_UCS2 );
+                            if( pWide )
+                            {
+                                const size_t nUCS2Len = wcslen(pWide);
+                                if( nUCS2Len * sizeof(uint16_t) > static_cast<size_t>(nMaxWidthIndexedStr) )
+                                {
+                                    pWide[nMaxWidthIndexedStr / sizeof(uint16_t)] = 0;
+                                    char* pszTruncated = CPLRecodeFromWChar( pWide, CPL_ENC_UCS2, CPL_ENC_UTF8 );
+                                    CPLFree(pWide);
+                                    pWide = nullptr;
+                                    if( pszTruncated )
+                                    {
+                                        osTruncatedStr = pszTruncated;
+                                        sValue.String = &osTruncatedStr[0];
+                                        CPLFree(pszTruncated);
+                                        bIteratorSufficient = false;
+                                    }
+                                }
+                                CPLFree(pWide);
+                            }
+                        }
+
+                        // As the index use ' ' as padding value, we cannot
+                        // trust a searched key ending with a space
+                        const size_t nLen = strlen(sValue.String);
+                        if( nLen > 0 && sValue.String[nLen-1] == ' ' )
+                            bIteratorSufficient = false;
+                    }
+
                     FileGDBIterator* poIter = FileGDBIterator::Build(
                                         m_poLyrTable, nTableColIdx, TRUE, FGSO_EQ,
                                         poFieldDefn->GetType(), &sValue);
@@ -1524,7 +1618,7 @@ FileGDBIterator* OGROpenFileGDBLayer::BuildIteratorFromExprNode(swq_expr_node* p
                 }
                 if( poRet != nullptr )
                 {
-                    m_bIteratorSufficientToEvaluateFilter = TRUE;
+                    m_bIteratorSufficientToEvaluateFilter = bIteratorSufficient;
                     return poRet;
                 }
             }

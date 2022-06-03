@@ -225,6 +225,7 @@ class FileGDBIndex
 
         const std::string&  GetIndexName() const { return osIndexName; }
         const std::string&  GetFieldName() const { return osFieldName; }
+        int                 GetMaxWidthInBytes(const FileGDBTable* poTable) const;
 };
 
 /************************************************************************/
