@@ -65,7 +65,7 @@ IVFKReader *CreateVFKReader( const GDALOpenInfo *poOpenInfo )
   \brief VFKReader constructor
 */
 VFKReader::VFKReader( const GDALOpenInfo* poOpenInfo ) :
-    m_bLatin2(true),  // Encoding ISO-8859-2 or WINDOWS-1250.
+    m_pszEncoding("ISO-8859-2"),  // Encoding, supported are ISO-8859-2, WINDOWS-1250 and UTF-8.
     m_poFD(nullptr),
     m_pszFilename(CPLStrdup(poOpenInfo->pszFilename)),
     m_poFStat((VSIStatBufL*) CPLCalloc(1, sizeof(VSIStatBufL))),
@@ -265,6 +265,12 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
     CPLString osBlockNameLast;
     char *pszLine = nullptr;
 
+    /* currency sign in current encoding */
+    const char *pszCurSign = "\244";
+    if (EQUAL(m_pszEncoding, CPL_ENC_UTF8))
+        pszCurSign = "\302\244";
+    size_t nCurSignLen = strlen(pszCurSign);
+
     while ((pszLine = ReadLine()) != nullptr) {
         iLine++;
         size_t nLength = strlen(pszLine);
@@ -292,20 +298,20 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
                    See http://en.wikipedia.org/wiki/ISO/IEC_8859
                    - \244 - general currency sign
                 */
-                if (pszLine[nLength - 1] == '\244') {
+                if (EQUAL(pszLine + nLength - nCurSignLen, pszCurSign)) {
                     /* remove \244 (currency sign) from string */
-                    pszLine[nLength - 1] = '\0';
+                    pszLine[nLength - nCurSignLen] = '\0';
 
                     CPLString osMultiLine(pszLine);
                     CPLFree(pszLine);
 
                     while ((pszLine = ReadLine()) != nullptr &&
-                           pszLine[0] != '\0' &&
-                           pszLine[strlen(pszLine) - 1] == '\244') {
+                           (nLength = strlen(pszLine)) >= nCurSignLen &&
+                           EQUAL(pszLine + nLength - nCurSignLen, pszCurSign)) {
                         /* append line */
                         osMultiLine += pszLine;
                         /* remove 0244 (currency sign) from string */
-                        osMultiLine.erase(osMultiLine.size() - 1);
+                        osMultiLine.erase(osMultiLine.size() - nCurSignLen);
 
                         CPLFree(pszLine);
                         if( osMultiLine.size() > 100U * 1024U * 1024U )
@@ -532,14 +538,16 @@ void VFKReader::AddInfo(const char *pszLine)
 
     pszValue[iValueLength] = '\0';
 
-    /* recode values, assuming Latin2 */
+    /* recode values */
     if (EQUAL(pszKey, "CODEPAGE")) {
-        if (!EQUAL(pszValue, "WE8ISO8859P2"))
-            m_bLatin2 = false;
+        if (EQUAL(pszValue, CPL_ENC_UTF8))
+            m_pszEncoding = CPL_ENC_UTF8;
+        /* fall to default "WINDOWS-1250" */
+        else if (!EQUAL(pszValue, "WE8ISO8859P2"))
+            m_pszEncoding = "WINDOWS-1250";
     }
 
-    char *pszValueEnc = CPLRecode(pszValue,
-                            m_bLatin2 ? "ISO-8859-2" : "WINDOWS-1250",
+    char *pszValueEnc = CPLRecode(pszValue, m_pszEncoding,
                             CPL_ENC_UTF8);
     if (poInfo.find(pszKey) == poInfo.end() ) {
         poInfo[pszKey] = pszValueEnc;
