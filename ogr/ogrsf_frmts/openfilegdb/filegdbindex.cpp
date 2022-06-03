@@ -826,6 +826,40 @@ static const char* FileGDBValueToStr(OGRFieldType eOGRFieldType,
 }
 
 /************************************************************************/
+/*                          GetMaxWidthInBytes()                        */
+/************************************************************************/
+
+int FileGDBIndex::GetMaxWidthInBytes(const FileGDBTable* poTable) const
+{
+    const char* pszAtxName =
+        CPLResetExtension(poTable->GetFilename().c_str(),
+                          (GetIndexName() + ".atx").c_str());
+    VSILFILE* fpCurIdx = VSIFOpenL( pszAtxName, "rb" );
+    if( fpCurIdx == nullptr )
+        return 0;
+
+    VSIFSeekL(fpCurIdx, 0, SEEK_END);
+    vsi_l_offset nFileSize = VSIFTellL(fpCurIdx);
+    if( nFileSize < FGDB_PAGE_SIZE + 22 )
+    {
+        VSIFCloseL(fpCurIdx);
+        return 0;
+    }
+
+    VSIFSeekL(fpCurIdx, nFileSize - 22, SEEK_SET);
+    GByte abyTrailer[22];
+    if(VSIFReadL( abyTrailer, 22, 1, fpCurIdx ) != 1 )
+    {
+        VSIFCloseL(fpCurIdx);
+        return 0;
+    }
+
+    const int nRet = abyTrailer[0];
+    VSIFCloseL(fpCurIdx);
+    return nRet;
+}
+
+/************************************************************************/
 /*                           SetConstraint()                            */
 /************************************************************************/
 
