@@ -185,7 +185,8 @@ jobs:
         python3 -m venv myvenv
         source myvenv/bin/activate
         # Set PATH so that gdal-config is found
-        PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH pip install gdal-python.tar.gz
+        PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH pip install gdal-python.tar.gz[numpy]
+        LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib python -c "from osgeo import gdal_array"
         which gdal_edit.py
         cp $GITHUB_WORKSPACE/autotest/gcore/data/byte.tif .
         LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib ldd myvenv/lib/python3.8/site-packages/osgeo/_gdal.cpython-38-x86_64-linux-gnu.so
