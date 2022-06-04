@@ -749,6 +749,14 @@ def test_ogr_openfilegdb_7():
         ("select id, str from point order by id desc", 5, 5, 1),
         ("select * from point where id = 1 order by id", 1, 1, 1),
         ("select * from big_layer order by real", 86 + 3 * 85, 1, 1),
+        ("select * from big_layer order by real limit 0", 0, None, 1),
+        ("select * from big_layer order by real offset 10000", 0, None, 1),
+        ("select * from big_layer order by real limit 1", 1, 1, 1),
+        ("select * from big_layer order by real limit 1 offset 0", 1, 1, 1),
+        ("select * from big_layer order by real limit 1 offset 1", 1, 5, 1),
+        ("select * from big_layer order by real limit 2", 2, 1, 1),
+        ("select * from big_layer order by real limit 100000", 86 + 3 * 85, 1, 1),
+        ("select * from big_layer order by real limit 100000 offset 1", 86 + 3 * 85 - 1, 5, 1),
         ("select * from big_layer order by real desc", 86 + 3 * 85, 4 * 85, 1),
         # Invalid :
         ("select foo from", None, None, None),
@@ -784,10 +792,14 @@ def test_ogr_openfilegdb_7():
                 ds.ReleaseResultSet(sql_lyr)
                 pytest.fail(sql, feat_count, first_fid)
             feat = sql_lyr.GetNextFeature()
-            if feat.GetFID() != first_fid:
-                ds.ReleaseResultSet(sql_lyr)
-                feat.DumpReadable()
-                pytest.fail(sql, feat_count, first_fid)
+            if feat_count > 0:
+                if feat.GetFID() != first_fid:
+                    ds.ReleaseResultSet(sql_lyr)
+                    feat.DumpReadable()
+                    pytest.fail(sql, feat_count, first_fid)
+            else:
+                assert first_fid is None
+                assert feat is None
         ds.ReleaseResultSet(sql_lyr)
 
         sql_lyr = ds.ExecuteSQL('GetLastSQLUsedOptimizedImplementation')
