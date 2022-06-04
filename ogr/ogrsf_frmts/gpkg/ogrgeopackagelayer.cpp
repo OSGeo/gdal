@@ -216,9 +216,10 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
 /* -------------------------------------------------------------------- */
 /*      set the fields.                                                 */
 /* -------------------------------------------------------------------- */
-    for( int iField = 0; iField < m_poFeatureDefn->GetFieldCount(); iField++ )
+    const int nFieldCount =  m_poFeatureDefn->GetFieldCount();
+    for( int iField = 0; iField < nFieldCount; iField++ )
     {
-        OGRFieldDefn *poFieldDefn = m_poFeatureDefn->GetFieldDefn( iField );
+        const OGRFieldDefn *poFieldDefn = m_poFeatureDefn->GetFieldDefnUnsafe( iField );
         if ( poFieldDefn->IsIgnored() )
             continue;
 
@@ -234,17 +235,17 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
         switch( poFieldDefn->GetType() )
         {
             case OFTInteger:
-                poFeature->SetField( iField,
+                poFeature->SetFieldSameTypeUnsafe( iField,
                     sqlite3_column_int( hStmt, iRawField ) );
                 break;
 
             case OFTInteger64:
-                poFeature->SetField( iField,
+                poFeature->SetFieldSameTypeUnsafe( iField,
                     sqlite3_column_int64( hStmt, iRawField ) );
                 break;
 
             case OFTReal:
-                poFeature->SetField( iField,
+                poFeature->SetFieldSameTypeUnsafe( iField,
                     sqlite3_column_double( hStmt, iRawField ) );
                 break;
 
@@ -268,12 +269,11 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
                     // nominal format: "YYYY-MM-DD" (10 characters)
                     const bool bNominalFormat = (
                         nLen == 10 && pszTxt[4] == '-' && pszTxt[7] == '-');
-                    OGRField sField;
-                    if ( OGRParseDate(pszTxt, &sField, 0) )
+                    auto psField = poFeature->GetRawFieldRef(iField);
+                    if ( OGRParseDate(pszTxt, psField, 0) )
                     {
-                        poFeature->SetField(iField, &sField);
-                        if( !bNominalFormat || sField.Date.Hour != 0 ||
-                            sField.Date.Minute != 0 || sField.Date.Second != 0 )
+                        if( !bNominalFormat || psField->Date.Hour != 0 ||
+                            psField->Date.Minute != 0 || psField->Date.Second != 0 )
                         {
                             constexpr int line = __LINE__;
                             if( !m_poDS->m_oSetGPKGLayerWarnings[line] )
@@ -290,6 +290,7 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
                     }
                     else
                     {
+                        OGR_RawField_SetUnset(psField);
                         constexpr int line = __LINE__;
                         if( !m_poDS->m_oSetGPKGLayerWarnings[line] )
                         {
@@ -324,7 +325,7 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
                 {
                     const char* pszTxt = reinterpret_cast<const char*>(sqlite3_column_text( hStmt, iRawField ));
                     const size_t nLen = strlen(pszTxt);
-                    OGRField sField;
+                    auto psField = poFeature->GetRawFieldRef(iField);
                     // nominal format: "YYYY-MM-DDTHH:MM:SS.SSSZ" (24 characters)
                     // but we also silently accept without timezone as OGR can
                     // write this
@@ -333,9 +334,8 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
                         pszTxt[4] == '-' && pszTxt[7] == '-' &&
                         pszTxt[10] == 'T' && pszTxt[13] == ':' && pszTxt[16] == ':' &&
                         pszTxt[19] == '.');
-                    if ( OGRParseDate(pszTxt, &sField, 0) )
+                    if ( OGRParseDate(pszTxt, psField, 0) )
                     {
-                        poFeature->SetField(iField, &sField);
                         if( !bNominalFormat )
                         {
                             constexpr int line = __LINE__;
@@ -353,6 +353,7 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
                     }
                     else
                     {
+                        OGR_RawField_SetUnset(psField);
                         constexpr int line = __LINE__;
                         if( !m_poDS->m_oSetGPKGLayerWarnings[line] )
                         {
@@ -382,8 +383,8 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
             }
 
             case OFTString:
-                poFeature->SetField( iField,
-                        (const char *) sqlite3_column_text( hStmt, iRawField ) );
+                poFeature->SetFieldSameTypeUnsafe( iField,
+                        CPLStrdup((const char *) sqlite3_column_text( hStmt, iRawField )) );
                 break;
 
             default:
