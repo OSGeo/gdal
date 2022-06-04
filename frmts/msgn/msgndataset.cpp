@@ -226,7 +226,7 @@ CPLErr MSGNRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     {
         fprintf(stderr, "Deal with split %s\n", poGDS->m_bHRVDealWithSplit ? "yes" : "no" );
         fprintf(stderr, "nread = %lu, data_len %d, linenum %d, start %d, offset %d\n",
-               nread,
+		(long unsigned int) nread, // Mingw_w64 otherwise wants %llu - MSG read will never exceed 32 bits
                data_length,
                (p->lineNumberInVisirGrid),
                poGDS->msg_reader_core->get_line_start(),
