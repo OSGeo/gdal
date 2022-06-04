@@ -127,7 +127,7 @@ Layer Creation Options
    required. Default to "YES"
 -  **FID**: Name of the OID column to create. Defaults to "OBJECTID".
    Note: option was called OID_NAME in releases before GDAL 2
--  **XYTOLERANCE, ZTOLERANCE**: These parameters control the snapping
+-  **XYTOLERANCE, ZTOLERANCE, MTOLERANCE**: These parameters control the snapping
    tolerance used for advanced ArcGIS features like network and topology
    rules. They won't effect any OGR operations, but they will by used by
    ArcGIS. The units of the parameters are the units of the coordinate
@@ -136,8 +136,11 @@ Layer Creation Options
    ArcMap 10.0 and OGR defaults for XYTOLERANCE are 0.001m (or
    equivalent) for projected coordinate systems, and 0.000000008983153°
    for geographic coordinate systems.
+   ArcMap 10.0 and OGR defaults for ZTOLERANCE and MTOLERANCE are 0.0001.
 
--  **XORIGIN, YORIGIN, ZORIGIN, XYSCALE, ZSCALE**: These parameters
+   ..  note:: MTOLERANCE added in GDAL 3.5.1
+
+-  **XORIGIN, YORIGIN, ZORIGIN, MORIGIN, XYSCALE, ZSCALE, MSCALE**: These parameters
    control the `coordinate precision
    grid <http://help.arcgis.com/en/sdk/10.0/java_ao_adf/conceptualhelp/engine/index.html#//00010000037m000000>`__
    inside the file geodatabase. The dimensions of the grid are
@@ -162,6 +165,10 @@ Layer Creation Options
       XYTOLERANCE of 0.001m. XORIGIN and YORIGIN change based on the
       coordinate system, but the OGR default of -2147483647 is suitable
       with the default XYSCALE for all coordinate systems.
+   -  ZORIGIN and MORIGIN: -100000
+   -  ZSCALE and MSCALE: 10000
+
+   ..  note:: MORIGIN and MSCALE added in GDAL 3.5.1
 
 -  **XML_DEFINITION** : When this option is set, its
    value will be used as the XML definition to create the new table. The

@@ -2125,11 +2125,12 @@ static CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS, char** papszO
     }
 
     /* Handle Origin/Scale/Tolerance */
-    const char* grid[7] = {
+    const char* grid[10] = {
       "XOrigin", "YOrigin", "XYScale",
       "ZOrigin", "ZScale",
-      "XYTolerance", "ZTolerance" };
-    const char* gridvalues[7];
+      "MOrigin", "MScale",
+      "XYTolerance", "ZTolerance", "MTolerance" };
+    const char* gridvalues[10];
 
     /*
     Need different default parameters for geographic and projected coordinate systems.
@@ -2140,9 +2141,15 @@ static CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS, char** papszO
     // default scale is 10x the tolerance
     long zscale = (long)(1 / ztol * 10);
 
-    char s_xyscale[50], s_xytol[50], s_zscale[50], s_ztol[50];
+    double mtol = 0.001;
+    long mscale = (long)(1 / mtol * 10);
+
+    char s_xyscale[50], s_xytol[50], s_zscale[50], s_ztol[50], s_mscale[50], s_mtol[50];
     CPLsnprintf(s_ztol, 50, "%f", ztol);
     snprintf(s_zscale, 50, "%ld", zscale);
+
+    CPLsnprintf(s_mtol, 50, "%f", mtol);
+    snprintf(s_mscale, 50, "%ld", mscale);
 
     if ( poSRS == nullptr || poSRS->IsProjected() )
     {
@@ -2160,8 +2167,11 @@ static CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS, char** papszO
         gridvalues[2] = s_xyscale;
         gridvalues[3] = "-100000";
         gridvalues[4] = s_zscale;
-        gridvalues[5] = s_xytol;
-        gridvalues[6] = s_ztol;
+        gridvalues[5] = "-100000";
+        gridvalues[6] = s_mscale;
+        gridvalues[7] = s_xytol;
+        gridvalues[8] = s_ztol;
+        gridvalues[9] = s_mtol;
     }
     else
     {
@@ -2170,12 +2180,15 @@ static CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS, char** papszO
         gridvalues[2] = "1000000000";
         gridvalues[3] = "-100000";
         gridvalues[4] = s_zscale;
-        gridvalues[5] = "0.000000008983153";
-        gridvalues[6] = s_ztol;
+        gridvalues[5] = "-100000";
+        gridvalues[6] = s_mscale;
+        gridvalues[7] = "0.000000008983153";
+        gridvalues[8] = s_ztol;
+        gridvalues[9] = s_mtol;
     }
 
     /* Convert any layer creation options available, use defaults otherwise */
-    for( int i = 0; i < 7; i++ )
+    for( int i = 0; i < 10; i++ )
     {
         if ( CSLFetchNameValue( papszOptions, grid[i] ) != nullptr )
             gridvalues[i] = CSLFetchNameValue( papszOptions, grid[i] );
