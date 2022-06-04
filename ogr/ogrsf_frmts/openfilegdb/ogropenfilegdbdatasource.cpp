@@ -1422,6 +1422,7 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 
                     /* Check that they are no NULL values */
                     if( oSelect.where_expr == nullptr &&
+                        poIter != nullptr &&
                         poIter->GetRowCount() != poLayer->GetFeatureCount(FALSE) )
                     {
                         delete poIter;
