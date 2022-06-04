@@ -220,8 +220,18 @@ CPLErr MSGNRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     }
 
     if ( nread != data_length ||
-        (p->lineNumberInVisirGrid - poGDS->msg_reader_core->get_line_start()) != (unsigned int)i_nBlockYOff )
+	 (p->lineNumberInVisirGrid - ((open_mode == MODE_HRV && !poGDS->m_bHRVDealWithSplit) ?
+				      (3 * poGDS->msg_reader_core->get_line_start()) - 2 :
+				      poGDS->msg_reader_core->get_line_start())) != (unsigned int)i_nBlockYOff )
     {
+        fprintf(stderr, "Deal with split %s\n", poGDS->m_bHRVDealWithSplit ? "yes" : "no" );
+        fprintf(stderr, "nread = %lu, data_len %d, linenum %d, start %d, offset %d\n",
+               nread,
+               data_length,
+               (p->lineNumberInVisirGrid),
+               poGDS->msg_reader_core->get_line_start(),
+               i_nBlockYOff);
+
         CPLFree( pszRecord );
 
         CPLError( CE_Failure, CPLE_AppDefined, "MSGN Scanline corrupt." );
