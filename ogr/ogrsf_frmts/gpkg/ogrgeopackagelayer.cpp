@@ -253,10 +253,16 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
             {
                 const int nBytes = sqlite3_column_bytes( hStmt, iRawField );
                 // coverity[tainted_data_return]
-                const GByte* pabyData = reinterpret_cast<const GByte*>(
-                    sqlite3_column_blob( hStmt, iRawField ) );
-                poFeature->SetField( iField, nBytes,
-                                     const_cast<GByte*>(pabyData) );
+                const void* pabyData = sqlite3_column_blob( hStmt, iRawField );
+                if( pabyData != nullptr || nBytes == 0 )
+                {
+                    poFeature->SetField( iField, nBytes, pabyData );
+                }
+                else
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                             sqlite3_errmsg(m_poDS->GetDB()));
+                }
                 break;
             }
 
@@ -265,6 +271,12 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
                 if( nSqlite3ColType == SQLITE_TEXT )
                 {
                     const char* pszTxt = reinterpret_cast<const char*>(sqlite3_column_text( hStmt, iRawField ));
+                    if( pszTxt == nullptr )
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                                 sqlite3_errmsg(m_poDS->GetDB()));
+                        break;
+                    }
                     const size_t nLen = strlen(pszTxt);
                     // nominal format: "YYYY-MM-DD" (10 characters)
                     const bool bNominalFormat = (
@@ -324,6 +336,12 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
                 if( nSqlite3ColType == SQLITE_TEXT )
                 {
                     const char* pszTxt = reinterpret_cast<const char*>(sqlite3_column_text( hStmt, iRawField ));
+                    if( pszTxt == nullptr )
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                                 sqlite3_errmsg(m_poDS->GetDB()));
+                        break;
+                    }
                     const size_t nLen = strlen(pszTxt);
                     auto psField = poFeature->GetRawFieldRef(iField);
                     // nominal format: "YYYY-MM-DDTHH:MM:SS.SSSZ" (24 characters)
@@ -383,9 +401,24 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
             }
 
             case OFTString:
-                poFeature->SetFieldSameTypeUnsafe( iField,
-                        CPLStrdup((const char *) sqlite3_column_text( hStmt, iRawField )) );
+            {
+                const char* pszTxt = reinterpret_cast<const char*>(
+                    sqlite3_column_text( hStmt, iRawField ));
+                if( pszTxt )
+                {
+                    char* pszTxtDup = VSI_STRDUP_VERBOSE(pszTxt);
+                    if( pszTxtDup )
+                    {
+                        poFeature->SetFieldSameTypeUnsafe( iField, pszTxtDup );
+                    }
+                }
+                else
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                             sqlite3_errmsg(m_poDS->GetDB()));
+                }
                 break;
+            }
 
             default:
                 break;
