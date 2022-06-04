@@ -4315,7 +4315,8 @@ void OGRFeature::SetField( int iField, int nCount, const int *panValues )
                             VSI_MALLOC_VERBOSE(nCount * sizeof(int)) );
                         if( panValuesMod == nullptr )
                             return;
-                        memcpy(panValuesMod, panValues, nCount * sizeof(int));
+                        if( nCount > 0 )
+                            memcpy(panValuesMod, panValues, nCount * sizeof(int));
                     }
                     panValuesMod[i] = nVal;
                 }
@@ -4879,7 +4880,8 @@ void OGRFeature::SetField( int iField, int nBytes, const void *pabyData )
         char* pszStr = static_cast<char *>( VSI_MALLOC_VERBOSE(nBytes + 1) );
         if( pszStr == nullptr )
             return;
-        memcpy(pszStr, pabyData, nBytes);
+        if( nBytes > 0 )
+            memcpy(pszStr, pabyData, nBytes);
         pszStr[nBytes] = 0;
         SetField( iField, pszStr );
         CPLFree( pszStr);
@@ -5211,9 +5213,12 @@ bool OGRFeature::SetFieldInternal( int iField, const OGRField * puValue )
                 OGR_RawField_SetUnset(&pauFields[iField]);
                 return false;
             }
-            memcpy( pauFields[iField].IntegerList.paList,
-                    puValue->IntegerList.paList,
-                    sizeof(int) * nCount );
+            if( nCount > 0 )
+            {
+                memcpy( pauFields[iField].IntegerList.paList,
+                        puValue->IntegerList.paList,
+                        sizeof(int) * nCount );
+            }
             pauFields[iField].IntegerList.nCount = nCount;
         }
     }
@@ -5238,9 +5243,12 @@ bool OGRFeature::SetFieldInternal( int iField, const OGRField * puValue )
                 OGR_RawField_SetUnset(&pauFields[iField]);
                 return false;
             }
-            memcpy( pauFields[iField].Integer64List.paList,
-                    puValue->Integer64List.paList,
-                    sizeof(GIntBig) * nCount );
+            if( nCount > 0 )
+            {
+                memcpy( pauFields[iField].Integer64List.paList,
+                        puValue->Integer64List.paList,
+                        sizeof(GIntBig) * nCount );
+            }
             pauFields[iField].Integer64List.nCount = nCount;
         }
     }
@@ -5265,9 +5273,12 @@ bool OGRFeature::SetFieldInternal( int iField, const OGRField * puValue )
                 OGR_RawField_SetUnset(&pauFields[iField]);
                 return false;
             }
-            memcpy( pauFields[iField].RealList.paList,
-                    puValue->RealList.paList,
-                    sizeof(double) * nCount );
+            if( nCount > 0 )
+            {
+                memcpy( pauFields[iField].RealList.paList,
+                        puValue->RealList.paList,
+                        sizeof(double) * nCount );
+            }
             pauFields[iField].RealList.nCount = nCount;
         }
     }
@@ -5323,9 +5334,12 @@ bool OGRFeature::SetFieldInternal( int iField, const OGRField * puValue )
                 OGR_RawField_SetUnset(&pauFields[iField]);
                 return false;
             }
-            memcpy( pauFields[iField].Binary.paData,
-                    puValue->Binary.paData,
-                    puValue->Binary.nCount );
+            if( puValue->Binary.nCount > 0 )
+            {
+                memcpy( pauFields[iField].Binary.paData,
+                        puValue->Binary.paData,
+                        puValue->Binary.nCount );
+            }
             pauFields[iField].Binary.nCount = puValue->Binary.nCount;
         }
     }
