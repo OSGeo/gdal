@@ -1443,8 +1443,6 @@ FileGDBIterator* OGROpenFileGDBLayer::BuildIteratorFromExprNode(swq_expr_node* p
                                 {
                                     pWide[nMaxWidthIndexedStr / sizeof(uint16_t)] = 0;
                                     char* pszTruncated = CPLRecodeFromWChar( pWide, CPL_ENC_UCS2, CPL_ENC_UTF8 );
-                                    CPLFree(pWide);
-                                    pWide = nullptr;
                                     if( pszTruncated )
                                     {
                                         osTruncatedStr = pszTruncated;
@@ -1573,14 +1571,11 @@ FileGDBIterator* OGROpenFileGDBLayer::BuildIteratorFromExprNode(swq_expr_node* p
                                 {
                                     pWide[nMaxWidthIndexedStr / sizeof(uint16_t)] = 0;
                                     char* pszTruncated = CPLRecodeFromWChar( pWide, CPL_ENC_UCS2, CPL_ENC_UTF8 );
-                                    CPLFree(pWide);
-                                    pWide = nullptr;
                                     if( pszTruncated )
                                     {
                                         osTruncatedStr = pszTruncated;
                                         sValue.String = &osTruncatedStr[0];
                                         CPLFree(pszTruncated);
-                                        bIteratorSufficient = false;
                                     }
                                 }
                                 CPLFree(pWide);
