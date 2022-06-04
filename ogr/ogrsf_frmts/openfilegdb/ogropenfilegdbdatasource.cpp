@@ -893,12 +893,18 @@ class OGROpenFileGDBSimpleSQLLayer final: public OGRLayer
         OGRLayer        *poBaseLayer;
         FileGDBIterator *poIter;
         OGRFeatureDefn  *poFeatureDefn;
+        GIntBig          m_nOffset;
+        GIntBig          m_nLimit;
+        GIntBig          m_nSkipped = 0;
+        GIntBig          m_nIterated = 0;
 
     public:
         OGROpenFileGDBSimpleSQLLayer(OGRLayer* poBaseLayer,
                                      FileGDBIterator* poIter,
                                      int nColumns,
-                                     swq_col_def* pasColDefs);
+                                     const swq_col_def* pasColDefs,
+                                     GIntBig nOffset,
+                                     GIntBig nLimit);
        virtual ~OGROpenFileGDBSimpleSQLLayer();
 
        virtual void        ResetReading() override;
@@ -922,10 +928,14 @@ OGROpenFileGDBSimpleSQLLayer::OGROpenFileGDBSimpleSQLLayer(
     OGRLayer* poBaseLayerIn,
     FileGDBIterator* poIterIn,
     int nColumns,
-    swq_col_def* pasColDefs) :
+    const swq_col_def* pasColDefs,
+    GIntBig nOffset,
+    GIntBig nLimit) :
     poBaseLayer(poBaseLayerIn),
     poIter(poIterIn),
-    poFeatureDefn(nullptr)
+    poFeatureDefn(nullptr),
+    m_nOffset(nOffset),
+    m_nLimit(nLimit)
 {
     if( nColumns == 1 && strcmp(pasColDefs[0].field_name, "*") == 0 )
     {
@@ -982,6 +992,8 @@ OGROpenFileGDBSimpleSQLLayer::~OGROpenFileGDBSimpleSQLLayer()
 void OGROpenFileGDBSimpleSQLLayer::ResetReading()
 {
     poIter->Reset();
+    m_nSkipped = 0;
+    m_nIterated = 0;
 }
 
 /***********************************************************************/
@@ -1014,12 +1026,22 @@ OGRFeature* OGROpenFileGDBSimpleSQLLayer::GetNextFeature()
 {
     while( true )
     {
+        if( m_nLimit >= 0 && m_nIterated == m_nLimit )
+            return nullptr;
+
         int nRow = poIter->GetNextRowSortedByValue();
         if( nRow < 0 )
             return nullptr;
         OGRFeature* poFeature = GetFeature(nRow + 1);
         if( poFeature == nullptr )
             return nullptr;
+        if( m_nOffset >= 0 && m_nSkipped < m_nOffset )
+        {
+            delete poFeature;
+            m_nSkipped ++;
+            continue;
+        }
+        m_nIterated ++;
 
         if( (m_poFilterGeom == nullptr
              || FilterGeometry( poFeature->GetGeometryRef() ) )
@@ -1043,7 +1065,17 @@ GIntBig OGROpenFileGDBSimpleSQLLayer::GetFeatureCount( int bForce )
     /* No filter */
     if( m_poFilterGeom == nullptr && m_poAttrQuery == nullptr )
     {
-        return poIter->GetRowCount();
+        GIntBig nRowCount = poIter->GetRowCount();
+        if( m_nOffset > 0 )
+        {
+            if( m_nOffset <= nRowCount )
+                nRowCount -= m_nOffset;
+            else
+                nRowCount = 0;
+        }
+        if( m_nLimit >= 0 && nRowCount > m_nLimit )
+            nRowCount = m_nLimit;
+        return nRowCount;
     }
 
     return OGRLayer::GetFeatureCount(bForce);
@@ -1403,7 +1435,9 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
                         return new OGROpenFileGDBSimpleSQLLayer(poLayer,
                                                                 poIter,
                                                                 oSelect.result_columns,
-                                                                oSelect.column_defs);
+                                                                oSelect.column_defs,
+                                                                oSelect.offset,
+                                                                oSelect.limit);
                     }
                 }
             }
