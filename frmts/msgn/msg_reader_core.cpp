@@ -125,6 +125,7 @@ Msg_reader_core::Msg_reader_core( const char* fname ) :
       _calibration[i].cal_slope = 0.0;
       _calibration[i].cal_offset = 0.0;
     }
+    memset(&_img_desc_record, 0, sizeof(_img_desc_record));
 
     VSILFILE* fin = VSIFOpenL(fname, "rb");
     if( !fin )
@@ -168,6 +169,7 @@ Msg_reader_core::Msg_reader_core( VSILFILE* fp ) :
       _calibration[i].cal_slope = 0.0;
       _calibration[i].cal_offset = 0.0;
     }
+    memset(&_img_desc_record, 0, sizeof(_img_desc_record));
 
     read_metadata_block(fp);
 }
