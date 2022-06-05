@@ -3732,7 +3732,17 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition,
          strstr(pszDefinition, "ProjectedCRS") ||
          strstr(pszDefinition, "VerticalCRS") ||
          strstr(pszDefinition, "BoundCRS") ||
-         strstr(pszDefinition, "CompoundCRS")) )
+         strstr(pszDefinition, "CompoundCRS") ||
+         strstr(pszDefinition, "DerivedGeodeticCRS") ||
+         strstr(pszDefinition, "DerivedGeographicCRS") ||
+         strstr(pszDefinition, "DerivedProjectedCRS") ||
+         strstr(pszDefinition, "DerivedVerticalCRS") ||
+         strstr(pszDefinition, "EngineeringCRS") ||
+         strstr(pszDefinition, "DerivedEngineeringCRS") ||
+         strstr(pszDefinition, "ParametricCRS") ||
+         strstr(pszDefinition, "DerivedParametricCRS") ||
+         strstr(pszDefinition, "TemporalCRS") ||
+         strstr(pszDefinition, "DerivedTemporalCRS")) )
     {
         auto obj = proj_create(d->getPROJContext(), pszDefinition);
         if( !obj )
