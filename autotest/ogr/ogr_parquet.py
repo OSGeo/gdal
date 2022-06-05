@@ -1111,3 +1111,38 @@ def test_ogr_parquet_attribute_filter_and_spatial_filter():
     lyr.SetSpatialFilterRect(4, 2, 4, 2)
     assert lyr.SetAttributeFilter(filter) == ogr.OGRERR_NONE
     assert lyr.GetFeatureCount() == ref_fc
+
+
+###############################################################################
+# Test that we don't write an id in members of datum ensemble
+# Cf https://github.com/opengeospatial/geoparquet/discussions/110
+
+def test_ogr_parquet_write_crs_without_id_in_datum_ensemble_members():
+
+    outfilename = '/vsimem/out.parquet'
+    ds = gdal.GetDriverByName('Parquet').Create(outfilename, 0, 0, 0, gdal.GDT_Unknown)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32631)
+    ds.CreateLayer('out', geom_type=ogr.wkbPoint, srs=srs)
+    ds = None
+
+    ds = ogr.Open(outfilename)
+    assert ds is not None
+    lyr = ds.GetLayer(0)
+    assert lyr is not None
+
+    geo = lyr.GetMetadataItem("geo", "_PARQUET_METADATA_")
+    assert geo is not None
+    j = json.loads(geo)
+    assert j is not None
+    crs = j['columns']['geometry']['crs']
+    assert 'id' not in crs['base_crs']['datum_ensemble']['members'][0]
+
+    srs = lyr.GetSpatialRef()
+    assert srs is not None
+    assert int(srs.GetAuthorityCode(None)) == 32631
+    lyr = None
+    ds = None
+
+    gdal.Unlink(outfilename)
+
