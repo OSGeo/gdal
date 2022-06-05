@@ -4016,6 +4016,108 @@ OGRGeometryH OGR_G_ConvexHull( OGRGeometryH hTarget )
 }
 
 /************************************************************************/
+/*                             ConcaveHull()                            */
+/************************************************************************/
+
+/**
+ * \brief Compute "concave hull" of a geometry.
+ *
+ * The concave hull is fully contained within the convex hull and also
+ * contains all the points of the input, but in a smaller area.
+ * The area ratio is the ratio of the area of the convex hull and the concave
+ * hull. Frequently used to convert a multi-point into a polygonal area.
+ * that contains all the points in the input Geometry.
+ *
+ * A new geometry object is created and returned containing the convex
+ * hull of the geometry on which the method is invoked.
+ *
+ * This method is the same as the C function OGR_G_ConcaveHull().
+ *
+ * This method is built on the GEOS >= 3.11 library
+ * If OGR is built without the GEOS >= 3.11 librray, this method will always fail,
+ * issuing a CPLE_NotSupported error.
+ *
+ * @param dfRatio Ratio of the area of the convex hull and the concave hull.
+ * @param bAllowHoles Whether holes are allowed.
+ *
+ * @return a newly allocated geometry now owned by the caller, or NULL
+ * on failure.
+ * @since GDAL 3.6
+ */
+
+OGRGeometry *OGRGeometry::ConcaveHull(double dfRatio, bool bAllowHoles) const
+{
+#ifndef HAVE_GEOS
+    (void)dfRatio;
+    (void)bAllowHoles;
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "GEOS support not enabled." );
+    return nullptr;
+#elif GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR < 11
+    (void)dfRatio;
+    (void)bAllowHoles;
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "GEOS 3.11 or later needed for ConcaveHull." );
+    return nullptr;
+#else
+    OGRGeometry *poOGRProduct = nullptr;
+
+    GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
+    GEOSGeom hGeosGeom = exportToGEOS(hGEOSCtxt);
+    if( hGeosGeom != nullptr )
+    {
+        GEOSGeom hGeosHull = GEOSConcaveHull_r( hGEOSCtxt, hGeosGeom, dfRatio, bAllowHoles );
+        GEOSGeom_destroy_r( hGEOSCtxt, hGeosGeom );
+
+        poOGRProduct = BuildGeometryFromGEOS(hGEOSCtxt, hGeosHull,
+                                             this, nullptr);
+    }
+    freeGEOSContext( hGEOSCtxt );
+
+    return poOGRProduct;
+#endif /* HAVE_GEOS */
+}
+
+/************************************************************************/
+/*                          OGR_G_ConcaveHull()                         */
+/************************************************************************/
+/**
+ * \brief Compute "concave hull" of a geometry.
+ *
+ * The concave hull is fully contained within the convex hull and also
+ * contains all the points of the input, but in a smaller area.
+ * The area ratio is the ratio of the area of the convex hull and the concave
+ * hull. Frequently used to convert a multi-point into a polygonal area.
+ * that contains all the points in the input Geometry.
+ *
+ * A new geometry object is created and returned containing the convex
+ * hull of the geometry on which the function is invoked.
+ *
+ * This function is the same as the C++ method OGRGeometry::ConcaveHull().
+ *
+ * This function is built on the GEOS >= 3.11 library
+ * If OGR is built without the GEOS >= 3.11 librray, this function will always fail,
+ * issuing a CPLE_NotSupported error.
+ *
+ * @param hTarget The Geometry to calculate the concave hull of.
+ * @param dfRatio Ratio of the area of the convex hull and the concave hull.
+ * @param bAllowHoles Whether holes are allowed.
+ *
+ * @return a handle to a newly allocated geometry now owned by the caller,
+ *         or NULL on failure.
+ * @since GDAL 3.6
+ */
+
+OGRGeometryH OGR_G_ConcaveHull( OGRGeometryH hTarget, double dfRatio, bool bAllowHoles )
+
+{
+    VALIDATE_POINTER1( hTarget, "OGR_G_ConcaveHull", nullptr );
+
+    return OGRGeometry::ToHandle(
+        OGRGeometry::FromHandle(hTarget)->ConcaveHull(dfRatio, bAllowHoles));
+}
+
+/************************************************************************/
 /*                            Boundary()                                */
 /************************************************************************/
 

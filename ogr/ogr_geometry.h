@@ -509,6 +509,7 @@ class CPL_DLL OGRGeometry
     virtual OGRGeometry *Boundary() const CPL_WARN_UNUSED_RESULT;
     virtual double  Distance( const OGRGeometry * ) const ;
     virtual OGRGeometry *ConvexHull() const CPL_WARN_UNUSED_RESULT;
+    virtual OGRGeometry *ConcaveHull(double dfRatio, bool bAllowHoles) const CPL_WARN_UNUSED_RESULT;
     virtual OGRGeometry *Buffer( double dfDist, int nQuadSegs = 30 )
         const CPL_WARN_UNUSED_RESULT;
     virtual OGRGeometry *Intersection( const OGRGeometry *)

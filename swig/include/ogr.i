@@ -3085,6 +3085,11 @@ public:
     return (OGRGeometryShadow*) OGR_G_ConvexHull(self);
   }
 
+  %newobject ConcaveHull;
+  OGRGeometryShadow* ConcaveHull(double ratio, bool allowHoles) {
+    return (OGRGeometryShadow*) OGR_G_ConcaveHull(self, ratio, allowHoles);
+  }
+
   %newobject MakeValid;
   OGRGeometryShadow* MakeValid( char** options = NULL ) {
     return (OGRGeometryShadow*) OGR_G_MakeValidEx(self, options);

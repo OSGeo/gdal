@@ -6245,6 +6245,10 @@ class Geometry(object):
         """
         return _ogr.Geometry_ConvexHull(self, *args)
 
+    def ConcaveHull(self, *args):
+        r"""ConcaveHull(Geometry self, double ratio, bool allowHoles) -> Geometry"""
+        return _ogr.Geometry_ConcaveHull(self, *args)
+
     def MakeValid(self, *args):
         r"""
         MakeValid(Geometry self, char ** options=None) -> Geometry
