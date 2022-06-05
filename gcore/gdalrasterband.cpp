@@ -4272,7 +4272,10 @@ template<class T, bool COMPUTE_OTHER_STATS> struct ComputeStatisticsInternalGene
                 }
             }
         }
-        nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
+        if( COMPUTE_OTHER_STATS )
+        {
+            nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
+        }
     }
     else if( nMin == std::numeric_limits<T>::min() &&
              nMax == std::numeric_limits<T>::max() )
@@ -4886,19 +4889,22 @@ template<bool COMPUTE_OTHER_STATS> struct ComputeStatisticsInternal<GByte, COMPU
             }
         }
 
+        if( COMPUTE_OTHER_STATS )
+        {
+            nSampleCount += nBlockPixels - i;
+        }
         for( ; i<nBlockPixels; i++)
         {
             const GUInt32 nValue = pData[i];
-            nSampleCount ++;
             if( nValue == nNoDataValue )
                 continue;
-            nValidCount ++;
             if( nValue < nMin )
                 nMin = nValue;
             if( nValue > nMax )
                 nMax = nValue;
             if( COMPUTE_OTHER_STATS )
             {
+                nValidCount ++;
                 nSum += nValue;
                 nSumSquare += static_cast_for_coverity_scan<GUIntBig>(nValue) * nValue;
             }
