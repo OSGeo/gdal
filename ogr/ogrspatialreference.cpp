@@ -3513,6 +3513,33 @@ CSLConstList OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()
 }
 
 /************************************************************************/
+/*                      RemoveIDFromMemberOfEnsembles()                 */
+/************************************************************************/
+
+static void RemoveIDFromMemberOfEnsembles(CPLJSONObject& obj)
+{
+    // Remove "id" from members of datum ensembles for compatibility with
+    // older PROJ versions
+    // Cf https://github.com/opengeospatial/geoparquet/discussions/110
+    // and https://github.com/OSGeo/PROJ/pull/3221
+    if( obj.GetType() == CPLJSONObject::Type::Object )
+    {
+        for( auto& subObj: obj.GetChildren() )
+        {
+            RemoveIDFromMemberOfEnsembles(subObj);
+        }
+    }
+    else if( obj.GetType() == CPLJSONObject::Type::Array &&
+             obj.GetName() == "members" )
+    {
+        for( auto& subObj: obj.ToArray() )
+        {
+            subObj.Delete("id");
+        }
+    }
+}
+
+/************************************************************************/
 /*                          SetFromUserInput()                          */
 /************************************************************************/
 
@@ -3744,13 +3771,27 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition,
          strstr(pszDefinition, "TemporalCRS") ||
          strstr(pszDefinition, "DerivedTemporalCRS")) )
     {
-        auto obj = proj_create(d->getPROJContext(), pszDefinition);
-        if( !obj )
+        PJ* pj;
+        if( strstr(pszDefinition, "datum_ensemble") != nullptr )
+        {
+            // PROJ < 9.0.1 doesn't like a datum_ensemble whose member have
+            // a unknown id.
+            CPLJSONDocument oCRSDoc;
+            oCRSDoc.LoadMemory(pszDefinition);
+            CPLJSONObject oCRSRoot = oCRSDoc.GetRoot();
+            RemoveIDFromMemberOfEnsembles(oCRSRoot);
+            pj = proj_create(d->getPROJContext(), oCRSRoot.ToString().c_str());
+        }
+        else
+        {
+            pj = proj_create(d->getPROJContext(), pszDefinition);
+        }
+        if( !pj )
         {
             return OGRERR_FAILURE;
         }
         Clear();
-        d->setPjCRS(obj);
+        d->setPjCRS(pj);
         return OGRERR_NONE;
     }
 
