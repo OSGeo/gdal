@@ -61,7 +61,7 @@ class MSGNDataset final: public GDALDataset
 
     Msg_reader_core*    msg_reader_core;
     open_mode_type      m_open_mode = MODE_VISIR;
-    bool                m_bHRVDealWithSplit = false;
+    hrv_mode_type       m_eHRVDealWithSplit = NOT_HRV;
     int                 m_nHRVSplitLine = 0;
     int                 m_nHRVLowerShiftX = 0;
     int                 m_nHRVUpperShiftX = 0;
@@ -209,7 +209,7 @@ CPLErr MSGNRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     SUB_VISIRLINE* p = (SUB_VISIRLINE*) pszRecord;
     to_native(*p);
 
-    if (p->lineValidity != 1 || poGDS->m_bHRVDealWithSplit) {
+    if (p->lineValidity != 1  || poGDS->m_eHRVDealWithSplit != NOT_HRV) {  // Split lines are not full width, so NODATA all first
         for (int c=0; c < nBlockXSize; c++) {
             if (open_mode != MODE_RAD) {
                 ((GUInt16 *)pImage)[c] = (GUInt16)MSGN_NODATA_VALUE;
@@ -220,17 +220,18 @@ CPLErr MSGNRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     }
 
     if ( nread != data_length ||
-	 (p->lineNumberInVisirGrid - ((open_mode == MODE_HRV && !poGDS->m_bHRVDealWithSplit) ?
-				      (3 * poGDS->msg_reader_core->get_line_start()) - 2 :
-				      poGDS->msg_reader_core->get_line_start())) != (unsigned int)i_nBlockYOff )
+         (p->lineNumberInVisirGrid - ((open_mode == MODE_HRV && poGDS->m_eHRVDealWithSplit == HRV_RSS) ?
+                                      (3 * poGDS->msg_reader_core->get_line_start()) - 2 :
+                                      poGDS->msg_reader_core->get_line_start())) != (unsigned int)i_nBlockYOff )
     {
-        fprintf(stderr, "Deal with split %s\n", poGDS->m_bHRVDealWithSplit ? "yes" : "no" );
-        fprintf(stderr, "nread = %lu, data_len %d, linenum %d, start %d, offset %d\n",
-		(long unsigned int) nread, // Mingw_w64 otherwise wants %llu - MSG read will never exceed 32 bits
-               data_length,
-               (p->lineNumberInVisirGrid),
-               poGDS->msg_reader_core->get_line_start(),
-               i_nBlockYOff);
+        CPLDebug("MSGN", "Deal with split %s", poGDS->m_eHRVDealWithSplit == HRV_RSS ? "RSS" :
+                 (poGDS->m_eHRVDealWithSplit ? "whole" : "no") );
+        CPLDebug("MSGN", "nread = %lu, data_len %d, linenum %d, start %d, offset %d",
+                (long unsigned int) nread, // Mingw_w64 otherwise wants %llu - MSG read will never exceed 32 bits
+                 data_length,
+                 (p->lineNumberInVisirGrid),
+                 poGDS->msg_reader_core->get_line_start(),
+                 i_nBlockYOff);
 
         CPLFree( pszRecord );
 
@@ -482,10 +483,31 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
             idr.plannedCoverage_hrv.upperWestColumnPlanned <= poDS->nRasterXSize * 3 )
         {
             poDS->nRasterXSize *= 3;
-            poDS->m_bHRVDealWithSplit = true;
+            poDS->m_eHRVDealWithSplit = HRV_WHOLE_DISK;
             poDS->m_nHRVSplitLine = idr.plannedCoverage_hrv.upperSouthLinePlanned;
             poDS->m_nHRVLowerShiftX = idr.plannedCoverage_hrv.lowerEastColumnPlanned - 1;
             poDS->m_nHRVUpperShiftX = idr.plannedCoverage_hrv.upperEastColumnPlanned - 1;
+        }
+        else if( idr.plannedCoverage_hrv.upperNorthLinePlanned == 0 &&
+                 idr.plannedCoverage_hrv.upperSouthLinePlanned == 0 &&
+                 idr.plannedCoverage_hrv.upperWestColumnPlanned == 0 &&
+                 idr.plannedCoverage_hrv.upperEastColumnPlanned == 0 &&  // RSS only uses the lower section
+                 idr.plannedCoverage_hrv.lowerNorthLinePlanned == idr.referencegrid_hrv.numberOfLines && // start at max N
+                 // full expected width
+                 idr.plannedCoverage_hrv.lowerWestColumnPlanned == idr.plannedCoverage_hrv.lowerEastColumnPlanned + nRawHRVColumns - 1 &&
+                 idr.plannedCoverage_hrv.lowerSouthLinePlanned > 1 &&
+                 idr.plannedCoverage_hrv.lowerSouthLinePlanned < idr.referencegrid_hrv.numberOfLines &&
+                 idr.plannedCoverage_hrv.lowerEastColumnPlanned >= 1 &&
+                 idr.plannedCoverage_hrv.lowerWestColumnPlanned <= poDS->nRasterXSize * 3 &&
+                 // full height
+                 idr.plannedCoverage_hrv.lowerNorthLinePlanned == idr.plannedCoverage_hrv.lowerSouthLinePlanned + poDS->nRasterYSize -1
+                 )
+        {
+            poDS->nRasterXSize *= 3;
+            poDS->m_eHRVDealWithSplit = HRV_RSS;
+            poDS->m_nHRVSplitLine = poDS->nRasterYSize + 1; // never switch over...
+            poDS->m_nHRVLowerShiftX = idr.plannedCoverage_hrv.lowerEastColumnPlanned - 1;
+            poDS->m_nHRVUpperShiftX = 0; // should never be used - could set huge to trigger SEGV
         }
         else
         {
@@ -493,6 +515,8 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
             // of VISIR bands, but derive it from the paquet header
             poDS->nRasterXSize = nRawHRVColumns;
         }
+        CPLDebug("MSGN", "Deal with split %s", poDS->m_eHRVDealWithSplit == HRV_RSS ? "RSS" :
+                 (poDS->m_eHRVDealWithSplit ? "whole" : "no"));
     }
 
 /* -------------------------------------------------------------------- */
