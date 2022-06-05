@@ -5447,3 +5447,60 @@ def test_ogr_gpkg_CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE():
     assert gdal.VSIStatL(filename) is not None
     assert gdal.ReadDir('/vsimem/temporary_location') is None
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Test (currently minimum) support for related tables extension
+
+
+def test_ogr_gpkg_relations():
+
+    filename = '/vsimem/test_ogr_gpkg_relations.gpkg'
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+    lyr = ds.CreateLayer('a')
+    lyr.CreateField(ogr.FieldDefn('some_id', ogr.OFTInteger))
+    lyr = ds.CreateLayer('b')
+    lyr.CreateField(ogr.FieldDefn('other_id', ogr.OFTInteger))
+    ds.ExecuteSQL("""CREATE TABLE 'gpkgext_relations' (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          base_table_name TEXT NOT NULL,
+          base_primary_column TEXT NOT NULL DEFAULT 'id',
+          related_table_name TEXT NOT NULL,
+          related_primary_column TEXT NOT NULL DEFAULT 'id',
+          relation_name TEXT NOT NULL,
+          mapping_table_name TEXT NOT NULL UNIQUE
+         );""")
+    ds.ExecuteSQL("""CREATE TABLE my_mapping_table(base_id INTEGER NOT NULL, related_id INTEGER NOT NULL);""")
+    ds.ExecuteSQL("INSERT INTO gpkgext_relations VALUES(1, 'a', 'some_id', 'b', 'other_id', 'attributes', 'my_mapping_table')")
+    ds.ExecuteSQL("INSERT INTO gpkg_extensions VALUES('gpkgext_relations',NULL,'gpkg_related_tables','http://www.geopackage.org/18-000.html','read-write');")
+    ds.ExecuteSQL("INSERT INTO gpkg_extensions VALUES('my_mapping_table',NULL,'gpkg_related_tables','http://www.geopackage.org/18-000.html','read-write');")
+    ds = None
+
+    assert validate(filename), 'validation failed'
+
+    ds = ogr.Open(filename, update=1)
+    lyr = ds.GetLayer('a')
+    lyr.Rename('a_renamed')
+    lyr.AlterFieldDefn(lyr.GetLayerDefn().GetFieldIndex('some_id'),
+                       ogr.FieldDefn('some_id_renamed', ogr.OFTInteger),
+                       ogr.ALTER_ALL_FLAG)
+    lyr = ds.GetLayer('b')
+    lyr.Rename('b_renamed')
+    lyr.AlterFieldDefn(lyr.GetLayerDefn().GetFieldIndex('other_id'),
+                       ogr.FieldDefn('other_id_renamed', ogr.OFTInteger),
+                       ogr.ALTER_ALL_FLAG)
+    ds = None
+
+    assert validate(filename), 'validation failed'
+
+    ds = ogr.Open(filename, update=1)
+    ds.ExecuteSQL('DELLAYER:a_renamed')
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_extensions WHERE extension_name IN ('related_tables', 'gpkg_related_tables')")
+    f = sql_lyr.GetNextFeature()
+    assert f is None
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
+
+    assert validate(filename), 'validation failed'
+
+    gdal.Unlink(filename)

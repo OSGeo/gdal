@@ -3652,6 +3652,33 @@ OGRErr OGRGeoPackageTableLayer::Rename(const char* pszDstTableName)
     }
 #endif
 
+    if( m_poDS->HasGpkgextRelationsTable() )
+    {
+        pszSQL = sqlite3_mprintf(
+            "UPDATE gpkgext_relations SET base_table_name = '%q' WHERE "
+            "lower(base_table_name )= lower('%q')",
+            pszDstTableName, m_pszTableName);
+        osSQL += ";";
+        osSQL += pszSQL;
+        sqlite3_free(pszSQL);
+
+        pszSQL = sqlite3_mprintf(
+            "UPDATE gpkgext_relations SET related_table_name = '%q' WHERE "
+            "lower(related_table_name )= lower('%q')",
+            pszDstTableName, m_pszTableName);
+        osSQL += ";";
+        osSQL += pszSQL;
+        sqlite3_free(pszSQL);
+
+        pszSQL = sqlite3_mprintf(
+            "UPDATE gpkgext_relations SET mapping_table_name = '%q' WHERE "
+            "lower(mapping_table_name )= lower('%q')",
+            pszDstTableName, m_pszTableName);
+        osSQL += ";";
+        osSQL += pszSQL;
+        sqlite3_free(pszSQL);
+    }
+
     pszSQL = sqlite3_mprintf(
             "ALTER TABLE \"%w\" RENAME TO \"%w\"",
             m_pszTableName, pszDstTableName );
@@ -4986,6 +5013,35 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
             osOldColName.c_str() );
         eErr = SQLCommand( hDB, pszSQL );
         sqlite3_free(pszSQL);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Update gpkgext_relations if needed.                             */
+/* -------------------------------------------------------------------- */
+    if( bRenameCol && eErr == OGRERR_NONE && m_poDS->HasGpkgextRelationsTable() )
+    {
+        char* pszSQL = sqlite3_mprintf(
+            "UPDATE gpkgext_relations SET base_primary_column = '%q' WHERE "
+            "lower(base_table_name) = lower('%q') AND "
+            "lower(base_primary_column) = lower('%q')",
+            poNewFieldDefn->GetNameRef(),
+            m_pszTableName,
+            osOldColName.c_str() );
+        eErr = SQLCommand( hDB, pszSQL );
+        sqlite3_free(pszSQL);
+
+        if( eErr == OGRERR_NONE )
+        {
+            pszSQL = sqlite3_mprintf(
+                "UPDATE gpkgext_relations SET related_primary_column = '%q' WHERE "
+                "lower(related_table_name) = lower('%q') AND "
+                "lower(related_primary_column) = lower('%q')",
+                poNewFieldDefn->GetNameRef(),
+                m_pszTableName,
+                osOldColName.c_str() );
+            eErr = SQLCommand( hDB, pszSQL );
+            sqlite3_free(pszSQL);
+        }
     }
 
 /* -------------------------------------------------------------------- */
