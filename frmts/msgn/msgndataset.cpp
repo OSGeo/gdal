@@ -45,6 +45,12 @@ typedef enum {
     MODE_RAD     // Black-body temperature (K) for thermal bands only (4-10), 64-bit float
 } open_mode_type;
 
+typedef enum {
+    NOT_HRV,
+    HRV_WHOLE_DISK,
+    HRV_RSS
+} hrv_mode_type;
+
 class MSGNRasterBand;
 
 /************************************************************************/
@@ -180,7 +186,7 @@ CPLErr MSGNRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     const int i_nBlockYOff = poDS->GetRasterYSize() - 1 - nBlockYOff;
 
     const int nSamples = static_cast<int>((bytes_per_line * 8) / 10);
-    if (!poGDS->m_bHRVDealWithSplit && nRasterXSize != nSamples )
+    if (poGDS->m_eHRVDealWithSplit != NOT_HRV && nRasterXSize != nSamples )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "nRasterXSize != nSamples");
@@ -247,7 +253,7 @@ CPLErr MSGNRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
     if (open_mode != MODE_RAD) {
         int shift = 0;
-        if( poGDS->m_bHRVDealWithSplit )
+        if( poGDS->m_eHRVDealWithSplit != NOT_HRV )
             shift = i_nBlockYOff < poGDS->m_nHRVSplitLine ? poGDS->m_nHRVLowerShiftX : poGDS->m_nHRVUpperShiftX;
         for (int c=0; c < nSamples; c++) {
             unsigned short value = 0;
@@ -350,7 +356,7 @@ MSGNDataset::~MSGNDataset()
 CPLErr MSGNDataset::GetGeoTransform( double * padfTransform )
 
 {
-    if( m_open_mode == MODE_HRV && !m_bHRVDealWithSplit )
+    if( m_open_mode == MODE_HRV && m_eHRVDealWithSplit != NOT_HRV )
         return CE_Failure;
 
     for (int i=0; i < 6; i++) {
@@ -367,7 +373,7 @@ CPLErr MSGNDataset::GetGeoTransform( double * padfTransform )
 const char *MSGNDataset::_GetProjectionRef()
 
 {
-    if( m_open_mode == MODE_HRV && !m_bHRVDealWithSplit )
+    if( m_open_mode == MODE_HRV && m_eHRVDealWithSplit != NOT_HRV )
         return "";
 
     return pszProjection;
