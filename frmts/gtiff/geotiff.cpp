@@ -16566,8 +16566,8 @@ static GTiffDataset::MaskOffset* GetDiscardLsbOption(TIFF* hTIFF, char** papszOp
         return nullptr;
     }
 
-    char** papszTokens = CSLTokenizeString2( pszBits, ",", 0 );
-    const int nTokens = CSLCount(papszTokens);
+    const CPLStringList aosTokens(CSLTokenizeString2( pszBits, ",", 0 ));
+    const int nTokens = aosTokens.size();
     GTiffDataset::MaskOffset* panMaskOffsetLsb = nullptr;
     if( nTokens == 1 || nTokens == nSamplesPerPixel )
     {
@@ -16575,7 +16575,7 @@ static GTiffDataset::MaskOffset* GetDiscardLsbOption(TIFF* hTIFF, char** papszOp
             CPLCalloc(nSamplesPerPixel, sizeof(GTiffDataset::MaskOffset)));
         for( int i = 0; i < nSamplesPerPixel; ++i )
         {
-            const int nBits = atoi(papszTokens[nTokens == 1 ? 0 : i]);
+            const int nBits = atoi(aosTokens[nTokens == 1 ? 0 : i]);
             const int nMaxBits =
                 (nSampleFormat == SAMPLEFORMAT_IEEEFP && nBits == 32) ? 23-1 :
                 (nSampleFormat == SAMPLEFORMAT_IEEEFP && nBits == 64) ? 53-1 :
@@ -16602,7 +16602,6 @@ static GTiffDataset::MaskOffset* GetDiscardLsbOption(TIFF* hTIFF, char** papszOp
         CPLError(CE_Warning, CPLE_AppDefined,
                  "DISCARD_LSB ignored: wrong number of components");
     }
-    CSLDestroy(papszTokens);
     return panMaskOffsetLsb;
 }
 
