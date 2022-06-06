@@ -57,7 +57,16 @@ CPLErr QB3_Band::Compress(buf_mgr& dst, buf_mgr& src)
         return CE_Failure;
     }
 
+    // Use independent band compression when by default band 1 is core band
+    if ((3 == bands || 4 == bands) &&
+        EQUAL(poMRFDS->GetPhotometricInterpretation(), "MULTISPECTRAL")) {
+        size_t corebands[] = {0, 1, 2, 3}; // Identity, no core bands
+        qb3_set_encoder_coreband(pQB3, bands, corebands);
+    }
+
+    // Quality of 90 and above trigger the better encoding
     qb3_set_encoder_mode(pQB3, (img.quality > 90) ? QB3M_BEST : QB3M_BASE);
+
     dst.size = qb3_encode(pQB3, src.buffer, dst.buffer);
     if (0 == dst.size) {
         CPLError(CE_Failure, CPLE_AssertionFailed, "MRF:QB3 encoding failed");
@@ -110,9 +119,8 @@ CPLErr QB3_Band::Decompress(buf_mgr& dst, buf_mgr& src)
     return CE_None;
 }
 
-QB3_Band::QB3_Band(MRFDataset* pDS, const ILImage& image,
-    int b, int level) :
-    MRFRasterBand(pDS, image, b, level)
+QB3_Band::QB3_Band(MRFDataset* pDS, const ILImage& image, int b, int level)
+    : MRFRasterBand(pDS, image, b, level)
 {
     static_assert(CPL_IS_LSB, "QB3 is only implemented for little endian architectures");
     if (image.pageSizeBytes > INT_MAX / 4)
