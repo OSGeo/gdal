@@ -305,16 +305,16 @@ proposed GetArrowStream() API.
 ========================================  ============
         Bench program                      Timing (s)
 ========================================  ============
-bench_ogr.cpp                             6.6
+bench_ogr.cpp                             6.3
 bench_ogr.py                              71
 bench_fiona.py                            68
 bench_pyogrio_raw.py                      40
 bench_pyogrio.py                          108
 bench_geopandas.py                        232
 bench_ogr_batch.cpp (driver impl.)        4.5
-bench_ogr_batch.cpp (base impl.)          14.5
-bench_ogr_to_geopandas.py (driver impl.)  11
-bench_ogr_to_geopandas.py (base impl.)    21
+bench_ogr_batch.cpp (base impl.)          14
+bench_ogr_to_geopandas.py (driver impl.)  10
+bench_ogr_to_geopandas.py (base impl.)    20
 ========================================  ============
 
 "driver impl." means that the specialized implementation of GetArrowStream()
@@ -334,9 +334,9 @@ bench_pyogrio_raw.py                      46
 bench_pyogrio.py                          115
 bench_geopandas.py                        228
 bench_ogr_batch.cpp (driver impl.)        1.6
-bench_ogr_batch.cpp (base impl.)          14.1
-bench_ogr_to_geopandas.py (driver impl.)  8
-bench_ogr_to_geopandas.py (base impl.)    21
+bench_ogr_batch.cpp (base impl.)          13.8
+bench_ogr_to_geopandas.py (driver impl.)  6.8
+bench_ogr_to_geopandas.py (base impl.)    20
 ========================================  ============
 
 Note: Fiona slightly modified to accept Parquet driver as a recognized one.
@@ -346,16 +346,16 @@ Note: Fiona slightly modified to accept Parquet driver as a recognized one.
 ========================================  ============
         Bench program                      Timing (s)
 ========================================  ============
-bench_ogr.cpp                             17.7
-bench_ogr.py                              81
-bench_fiona.py                            81
-bench_pyogrio_raw.py                      58
-bench_pyogrio.py                          120
-bench_geopandas.py                        258
+bench_ogr.cpp                             7.6
+bench_ogr.py                              71
+bench_fiona.py                            63
+bench_pyogrio_raw.py                      41
+bench_pyogrio.py                          103
+bench_geopandas.py                        227
 bench_ogr_batch.cpp (driver impl.)        N/A
-bench_ogr_batch.cpp (base impl.)          25
+bench_ogr_batch.cpp (base impl.)          15.5
 bench_ogr_to_geopandas.py (driver impl.)  N/A
-bench_ogr_to_geopandas.py (base impl.)    33
+bench_ogr_to_geopandas.py (base impl.)    21
 ========================================  ============
 
 This demonstrates that:
