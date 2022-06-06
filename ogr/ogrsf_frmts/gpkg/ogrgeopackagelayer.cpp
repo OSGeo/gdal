@@ -216,9 +216,10 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
 /* -------------------------------------------------------------------- */
 /*      set the fields.                                                 */
 /* -------------------------------------------------------------------- */
-    for( int iField = 0; iField < m_poFeatureDefn->GetFieldCount(); iField++ )
+    const int nFieldCount =  m_poFeatureDefn->GetFieldCount();
+    for( int iField = 0; iField < nFieldCount; iField++ )
     {
-        OGRFieldDefn *poFieldDefn = m_poFeatureDefn->GetFieldDefn( iField );
+        const OGRFieldDefn *poFieldDefn = m_poFeatureDefn->GetFieldDefnUnsafe( iField );
         if ( poFieldDefn->IsIgnored() )
             continue;
 
@@ -234,17 +235,17 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
         switch( poFieldDefn->GetType() )
         {
             case OFTInteger:
-                poFeature->SetField( iField,
+                poFeature->SetFieldSameTypeUnsafe( iField,
                     sqlite3_column_int( hStmt, iRawField ) );
                 break;
 
             case OFTInteger64:
-                poFeature->SetField( iField,
+                poFeature->SetFieldSameTypeUnsafe( iField,
                     sqlite3_column_int64( hStmt, iRawField ) );
                 break;
 
             case OFTReal:
-                poFeature->SetField( iField,
+                poFeature->SetFieldSameTypeUnsafe( iField,
                     sqlite3_column_double( hStmt, iRawField ) );
                 break;
 
@@ -252,10 +253,16 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
             {
                 const int nBytes = sqlite3_column_bytes( hStmt, iRawField );
                 // coverity[tainted_data_return]
-                const GByte* pabyData = reinterpret_cast<const GByte*>(
-                    sqlite3_column_blob( hStmt, iRawField ) );
-                poFeature->SetField( iField, nBytes,
-                                     const_cast<GByte*>(pabyData) );
+                const void* pabyData = sqlite3_column_blob( hStmt, iRawField );
+                if( pabyData != nullptr || nBytes == 0 )
+                {
+                    poFeature->SetField( iField, nBytes, pabyData );
+                }
+                else
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                             sqlite3_errmsg(m_poDS->GetDB()));
+                }
                 break;
             }
 
@@ -263,29 +270,39 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
             {
                 if( nSqlite3ColType == SQLITE_TEXT )
                 {
-                    const char* pszTxt = (const char*)sqlite3_column_text( hStmt, iRawField );
-                    int nYear, nMonth, nDay;
-                    if( sscanf(pszTxt, "%d-%d-%d", &nYear, &nMonth, &nDay) == 3 )
+                    const char* pszTxt = reinterpret_cast<const char*>(sqlite3_column_text( hStmt, iRawField ));
+                    if( pszTxt == nullptr )
                     {
-                        poFeature->SetField(iField, nYear, nMonth, nDay, 0, 0, 0, 0);
+                        CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                                 sqlite3_errmsg(m_poDS->GetDB()));
+                        break;
                     }
-                    else if ( sscanf(pszTxt, "%d/%d/%d", &nYear, &nMonth, &nDay) == 3 )
+                    const size_t nLen = strlen(pszTxt);
+                    // nominal format: "YYYY-MM-DD" (10 characters)
+                    const bool bNominalFormat = (
+                        nLen == 10 && pszTxt[4] == '-' && pszTxt[7] == '-');
+                    auto psField = poFeature->GetRawFieldRef(iField);
+                    if ( OGRParseDate(pszTxt, psField, 0) )
                     {
-                        poFeature->SetField(iField, nYear, nMonth, nDay, 0, 0, 0, 0);
-                        constexpr int line = __LINE__;
-                        if( !m_poDS->m_oSetGPKGLayerWarnings[line] )
+                        if( !bNominalFormat || psField->Date.Hour != 0 ||
+                            psField->Date.Minute != 0 || psField->Date.Second != 0 )
                         {
-                            CPLError(CE_Warning, CPLE_AppDefined,
-                                     "Non-conformant content for record "
-                                     CPL_FRMT_GIB " in column %s, %s, "
-                                     "successfully parsed",
-                                     poFeature->GetFID(),
-                                     poFieldDefn->GetNameRef(), pszTxt);
-                            m_poDS->m_oSetGPKGLayerWarnings[line] = true;
+                            constexpr int line = __LINE__;
+                            if( !m_poDS->m_oSetGPKGLayerWarnings[line] )
+                            {
+                                CPLError(CE_Warning, CPLE_AppDefined,
+                                         "Non-conformant content for record "
+                                         CPL_FRMT_GIB " in column %s, %s, "
+                                         "successfully parsed",
+                                         poFeature->GetFID(),
+                                         poFieldDefn->GetNameRef(), pszTxt);
+                                m_poDS->m_oSetGPKGLayerWarnings[line] = true;
+                            }
                         }
                     }
                     else
                     {
+                        OGR_RawField_SetUnset(psField);
                         constexpr int line = __LINE__;
                         if( !m_poDS->m_oSetGPKGLayerWarnings[line] )
                         {
@@ -318,29 +335,43 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
             {
                 if( nSqlite3ColType == SQLITE_TEXT )
                 {
-                    const char* pszTxt = (const char*)sqlite3_column_text( hStmt, iRawField );
-                    OGRField sField;
-                    if( OGRParseXMLDateTime(pszTxt, &sField) )
+                    const char* pszTxt = reinterpret_cast<const char*>(sqlite3_column_text( hStmt, iRawField ));
+                    if( pszTxt == nullptr )
                     {
-                        poFeature->SetField(iField, &sField);
+                        CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                                 sqlite3_errmsg(m_poDS->GetDB()));
+                        break;
                     }
-                    else if ( OGRParseDate(pszTxt, &sField, 0) )
+                    const size_t nLen = strlen(pszTxt);
+                    auto psField = poFeature->GetRawFieldRef(iField);
+                    // nominal format: "YYYY-MM-DDTHH:MM:SS.SSSZ" (24 characters)
+                    // but we also silently accept without timezone as OGR can
+                    // write this
+                    const bool bNominalFormat = (
+                        nLen >= 23 &&
+                        pszTxt[4] == '-' && pszTxt[7] == '-' &&
+                        pszTxt[10] == 'T' && pszTxt[13] == ':' && pszTxt[16] == ':' &&
+                        pszTxt[19] == '.');
+                    if ( OGRParseDate(pszTxt, psField, 0) )
                     {
-                        poFeature->SetField(iField, &sField);
-                        constexpr int line = __LINE__;
-                        if( !m_poDS->m_oSetGPKGLayerWarnings[line] )
+                        if( !bNominalFormat )
                         {
-                            CPLError(CE_Warning, CPLE_AppDefined,
-                                     "Non-conformant content for record "
-                                     CPL_FRMT_GIB " in column %s, %s, "
-                                     "successfully parsed",
-                                     poFeature->GetFID(),
-                                     poFieldDefn->GetNameRef(), pszTxt);
-                            m_poDS->m_oSetGPKGLayerWarnings[line] = true;
+                            constexpr int line = __LINE__;
+                            if( !m_poDS->m_oSetGPKGLayerWarnings[line] )
+                            {
+                                CPLError(CE_Warning, CPLE_AppDefined,
+                                         "Non-conformant content for record "
+                                         CPL_FRMT_GIB " in column %s, %s, "
+                                         "successfully parsed",
+                                         poFeature->GetFID(),
+                                         poFieldDefn->GetNameRef(), pszTxt);
+                                m_poDS->m_oSetGPKGLayerWarnings[line] = true;
+                            }
                         }
                     }
                     else
                     {
+                        OGR_RawField_SetUnset(psField);
                         constexpr int line = __LINE__;
                         if( !m_poDS->m_oSetGPKGLayerWarnings[line] )
                         {
@@ -370,9 +401,24 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
             }
 
             case OFTString:
-                poFeature->SetField( iField,
-                        (const char *) sqlite3_column_text( hStmt, iRawField ) );
+            {
+                const char* pszTxt = reinterpret_cast<const char*>(
+                    sqlite3_column_text( hStmt, iRawField ));
+                if( pszTxt )
+                {
+                    char* pszTxtDup = VSI_STRDUP_VERBOSE(pszTxt);
+                    if( pszTxtDup )
+                    {
+                        poFeature->SetFieldSameTypeUnsafe( iField, pszTxtDup );
+                    }
+                }
+                else
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                             sqlite3_errmsg(m_poDS->GetDB()));
+                }
                 break;
+            }
 
             default:
                 break;
