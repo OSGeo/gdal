@@ -100,8 +100,8 @@ wget -q https://github.com/Esri/file-geodatabase-api/raw/master/FileGDB_API_1.5.
   && rm -rf FileGDB_API_1_5_1-64gcc51.tar.gz \
   && echo "/usr/local/FileGDB_API/lib" > /etc/ld.so.conf.d/filegdbapi.conf
 
-# Build and install GEOS (3.10dev)
-GEOS_SHA1=cab7d3cc63dc6ffaa48630b517c9ab69be6505e0
+# Build and install GEOS (3.11dev)
+GEOS_SHA1=c8bba596e9cdcf8ad55d804bfa9ba6e4394722a1
 mkdir geos \
     && wget -q https://github.com/libgeos/geos/archive/${GEOS_SHA1}.tar.gz -O - \
         | tar xz -C geos --strip-components=1 \

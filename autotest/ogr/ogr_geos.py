@@ -356,6 +356,25 @@ def test_ogr_geos_convexhull():
 ###############################################################################
 
 
+def test_ogr_geos_concavehull():
+
+    g1 = ogr.CreateGeometryFromWkt('MULTIPOINT(0 0,0.4 0.5,0 1,1 1,0.6 0.5,1 0)')
+
+    with gdaltest.error_handler():
+        res = g1.ConcaveHull(0.5, False)
+
+    if res is None:
+        assert 'GEOS 3.11' in gdal.GetLastErrorMsg()
+        pytest.skip(gdal.GetLastErrorMsg())
+
+    with gdaltest.error_handler():
+        res = g1.ConcaveHull(-1, False)
+    assert res is None
+
+
+###############################################################################
+
+
 def test_ogr_geos_distance():
 
     g1 = ogr.CreateGeometryFromWkt('POINT(0 0)')
