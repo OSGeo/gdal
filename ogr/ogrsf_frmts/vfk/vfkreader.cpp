@@ -155,6 +155,65 @@ char *VFKReader::ReadLine()
 }
 
 /*!
+  \brief Load text encoding from header (&HENCODING)
+
+  Called from VFKReader::ReadDataBlocks()
+*/
+void VFKReader::ReadEncoding()
+{
+    VSIFSeekL(m_poFD, 0, SEEK_SET);
+    char *pszLine = nullptr;
+    while ((pszLine = ReadLine()) != nullptr) {
+        if (strlen(pszLine) < 2 || pszLine[0] != '&') {
+            CPLFree(pszLine);
+            continue;
+        }
+        if (pszLine[1] == 'B' ||
+            (pszLine[1] == 'K' && strlen(pszLine) == 2)) {
+            /* 'B' record closes the header section */
+            /* 'K' record is end of file */
+            CPLFree(pszLine);
+            break;
+        }
+        if (pszLine[1] != 'H') {
+            /* (not) 'H' header */
+            CPLFree(pszLine);
+            continue;
+        }
+
+        char *poKey = pszLine + 2; /* &H */
+        char *poValue = poKey;
+        while (*poValue != '\0' && *poValue != ';')
+            poValue++;
+        if (*poValue != ';') {
+            /* no value, ignoring */
+            CPLFree(pszLine);
+            continue;
+        }
+
+        *poValue = '\0';
+        poValue++; /* skip ; */
+        if (*poValue == '"') { /* trim "" */
+            poValue++;
+            size_t nValueLen = strlen(poValue);
+            if (nValueLen > 0)
+                poValue[nValueLen-1] = '\0';
+        }
+
+        /* read encoding to m_pszEncoding */
+        if (EQUAL(poKey, "CODEPAGE")) {
+            if (EQUAL(poValue, CPL_ENC_UTF8))
+                m_pszEncoding = CPL_ENC_UTF8;
+            else if (!EQUAL(poValue, "WE8ISO8859P2"))
+                m_pszEncoding = "WINDOWS-1250";
+        }
+
+        CPLFree(pszLine);
+    }
+}
+
+
+/*!
   \brief Load data block definitions (&B)
 
   Call VFKReader::OpenFile() before this function.
@@ -166,6 +225,9 @@ char *VFKReader::ReadLine()
 int VFKReader::ReadDataBlocks(bool bSuppressGeometry)
 {
     CPLAssert(nullptr != m_pszFilename);
+
+    /* load text encoding in extra pass through header */
+    ReadEncoding();
 
     VSIFSeekL(m_poFD, 0, SEEK_SET);
     bool bInHeader = true;
@@ -555,16 +617,9 @@ void VFKReader::AddInfo(const char *pszLine)
     pszValue[iValueLength] = '\0';
 
     /* recode values */
-    if (EQUAL(pszKey, "CODEPAGE")) {
-        if (EQUAL(pszValue, CPL_ENC_UTF8))
-            m_pszEncoding = CPL_ENC_UTF8;
-        /* fall to default "WINDOWS-1250" */
-        else if (!EQUAL(pszValue, "WE8ISO8859P2"))
-            m_pszEncoding = "WINDOWS-1250";
-    }
-
     char *pszValueEnc = CPLRecode(pszValue, m_pszEncoding,
                             CPL_ENC_UTF8);
+
     if (poInfo.find(pszKey) == poInfo.end() ) {
         poInfo[pszKey] = pszValueEnc;
     }
