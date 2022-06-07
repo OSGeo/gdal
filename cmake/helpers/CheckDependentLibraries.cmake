@@ -632,20 +632,14 @@ endif ()
 
 gdal_check_package(HDFS "Enable Hadoop File System through native library" CAN_DISABLE)
 
-# PDF library: one of them enables PDF driver
+# PDF library: one of them enables the read side of the PDF driver
 gdal_check_package(Poppler "Enable PDF driver with Poppler (read side)" CAN_DISABLE)
 
 define_find_package2(PDFIUM public/fpdfview.h pdfium FIND_PATH_SUFFIX pdfium)
 gdal_check_package(PDFIUM "Enable PDF driver with Pdfium (read side)" CAN_DISABLE)
 
 gdal_check_package(Podofo "Enable PDF driver with Podofo (read side)" CAN_DISABLE)
-if (GDAL_USE_POPPLER
-    OR GDAL_USE_PDFIUM
-    OR GDAL_USE_PODOFO)
-  set(HAVE_PDFLIB ON)
-else ()
-  set(HAVE_PDFLIB OFF)
-endif ()
+
 
 set(Oracle_CAN_USE_CLNTSH_AS_MAIN_LIBRARY ON)
 gdal_check_package(Oracle "Enable Oracle OCI driver" CAN_DISABLE)
