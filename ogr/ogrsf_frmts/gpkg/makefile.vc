@@ -7,7 +7,7 @@ GDAL_ROOT	=	..\..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
-EXTRAFLAGS = -I.. -I..\.. -I..\sqlite  -I..\..\..\frmts\mem -I..\..\..\frmts $(SQLITE_INC) $(SQLITE_HAS_COLUMN_METADATA_EXTRAFLAGS)
+EXTRAFLAGS = -I.. -I..\.. -I..\sqlite -I..\generic -I..\..\..\frmts\mem -I..\..\..\frmts $(SQLITE_INC) $(SQLITE_HAS_COLUMN_METADATA_EXTRAFLAGS)
 
 !IFDEF SQLITE_HAS_COLUMN_METADATA
 SQLITE_HAS_COLUMN_METADATA_EXTRAFLAGS = -DSQLITE_HAS_COLUMN_METADATA

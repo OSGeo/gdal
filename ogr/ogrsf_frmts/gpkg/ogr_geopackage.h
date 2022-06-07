@@ -405,6 +405,9 @@ class OGRGeoPackageLayer CPL_NON_FINAL: public OGRLayer, public IOGRSQLiteGetSpa
                                         const OGRFieldDefn* poFieldDefn,
                                         GIntBig nFID);
 
+    virtual int GetNextArrowArray(struct ArrowArrayStream*,
+                                   struct ArrowArray* out_array) override;
+
   public:
 
     explicit            OGRGeoPackageLayer(GDALGeoPackageDataset* poDS);
