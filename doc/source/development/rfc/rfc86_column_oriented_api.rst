@@ -217,6 +217,8 @@ OGRLayer has a base implementation of GetArrowStream() that is such:
           if( out_array->release )
               out_array->release(out_array)
 
+Drivers that have a specialized implementation should advertize the
+new OLCFastGetArrowStream layer capability.
 
 Other remarks
 -------------
