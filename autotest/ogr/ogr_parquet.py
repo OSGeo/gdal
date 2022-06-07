@@ -1264,6 +1264,7 @@ def test_ogr_parquet_arrow_stream_numpy():
 
     ds = ogr.Open('data/parquet/test.parquet')
     lyr = ds.GetLayer(0)
+    assert lyr.TestCapability(ogr.OLCFastGetArrowStream) == 1
 
     stream = lyr.GetArrowStreamAsNumPy(options = ['MAX_FEATURES_IN_BATCH=5', 'USE_MASKED_ARRAYS=NO'])
     with gdaltest.error_handler():

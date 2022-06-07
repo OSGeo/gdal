@@ -5619,6 +5619,7 @@ def test_ogr_gpkg_arrow_stream_numpy():
 
     ds = ogr.GetDriverByName('GPKG').CreateDataSource('/vsimem/test.gpkg')
     lyr = ds.CreateLayer('test', geom_type = ogr.wkbPoint)
+    assert lyr.TestCapability(ogr.OLCFastGetArrowStream) == 1
 
     field = ogr.FieldDefn("str", ogr.OFTString)
     lyr.CreateField(field)

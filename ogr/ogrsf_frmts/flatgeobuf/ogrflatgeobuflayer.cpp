@@ -1904,6 +1904,9 @@ int OGRFlatGeobufLayer::TestCapability(const char *pszCap)
         return m_poHeader != nullptr && m_poHeader->index_node_size() > 0;
     else if (EQUAL(pszCap, OLCStringsAsUTF8))
         return true;
+    else if ( EQUAL(pszCap, OLCFastGetArrowStream) &&
+              m_poAttrQuery == nullptr && m_poFilterGeom == nullptr )
+        return true;
     else
         return false;
 }

@@ -357,6 +357,8 @@ OLCMeasuredGeometries = _ogr.OLCMeasuredGeometries
 
 OLCRename = _ogr.OLCRename
 
+OLCFastGetArrowStream = _ogr.OLCFastGetArrowStream
+
 ODsCCreateLayer = _ogr.ODsCCreateLayer
 
 ODsCDeleteLayer = _ogr.ODsCDeleteLayer
