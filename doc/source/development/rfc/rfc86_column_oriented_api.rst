@@ -251,7 +251,7 @@ Impacted drivers
   the arrow-cpp library that bridges at near zero cost (no data copying) the
   internal C++ implementation with the C data interface.
 
-- FlatGeoBuf: a specialized implementation of get_next() has been done,
+- FlatGeoBuf and GeoPackage: a specialized implementation of get_next() has been done,
   which saves going through the OGRFeature abstraction. See below benchmarks for
   measurement of the efficiency.
 
@@ -352,24 +352,35 @@ bench_fiona.py                            63
 bench_pyogrio_raw.py                      41
 bench_pyogrio.py                          103
 bench_geopandas.py                        227
-bench_ogr_batch.cpp (driver impl.)        N/A
+bench_ogr_batch.cpp (driver impl.)        1.0
 bench_ogr_batch.cpp (base impl.)          15.5
-bench_ogr_to_geopandas.py (driver impl.)  N/A
+bench_ogr_to_geopandas.py (driver impl.)  10
 bench_ogr_to_geopandas.py (base impl.)    21
 ========================================  ============
+
+bench_ogr_batch.cpp is faster on GeoPackage than on FlatGeoBuf, because the
+GeoPackage geometry encoding is already in WKB (with an extra header), while
+FlatGeoBuf uses a different encoding.
+
+Note: it is not fully understood why bench_ogr_batch.cpp is faster with
+GeoPackage compared to GeoParquet while being slower in bench_ogr_to_geopandas.
+It might potentially be due to Parquet batches being slices of larger arrays,
+and pa.RecordBatch.from_arrays() being able to merge them faster.
+
 
 This demonstrates that:
 
 - the new API can yield signficant performance gains to
   ingest a OGR layer as a GeoPandas GeoDataFrame, of the order of a 4x - 10x
   speed-up compared to pyogrio, even without a specialized implementation of
-  GetArrowStream(), and with formats that have a natural row organization (FlatGeoBuf).
+  GetArrowStream(), and with formats that have a natural row organization
+  (FlatGeoBuf, GeoPackage).
 
 - the Parquet driver is where this shines most due to the file organization being
   columnar, and its native access layer being ArrowArray compatible.
 
 - for drivers that don't have a specialized implementation of GetArrowStream()
-  and whose layout is row oriented (GeoPackage), the GetNextFeature() approach is
+  and whose layout is row oriented, the GetNextFeature() approach is
   (a bit) faster than GetArrowStream().
 
 Backward compatibility
