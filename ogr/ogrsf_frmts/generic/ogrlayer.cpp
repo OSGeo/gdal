@@ -6203,7 +6203,8 @@ const char* OGRLayer::GetLastErrorArrowArrayStream(struct ArrowArrayStream*)
  * (the default implementation does), and should take into account filters set with
  * SetSpatialFilter() and SetAttributeFilter(). Note however that specialized
  * implementations may fallback to the default (slower) implementation when
- * filters are set.
+ * filters are set. Drivers that have a specialized implementation should
+ * advertize the OLCFastGetArrowStream capability.
  *
  * There are extra precautions to take into account in a OGR context. Unless
  * otherwise specified by a particular driver implementation, the ArrowArrayStream
@@ -6319,7 +6320,8 @@ bool OGRLayer::GetArrowStream(struct ArrowArrayStream* out_stream,
  * (the default implementation does), and should take into account filters set with
  * SetSpatialFilter() and SetAttributeFilter(). Note however that specialized
  * implementations may fallback to the default (slower) implementation when
- * filters are set.
+ * filters are set. Drivers that have a specialized implementation should
+ * advertize the OLCFastGetArrowStream capability.
  *
  * There are extra precautions to take into account in a OGR context. Unless
  * otherwise specified by a particular driver implementation, the ArrowArrayStream

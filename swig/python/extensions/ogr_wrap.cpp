@@ -5619,20 +5619,6 @@ OGRFieldDomainShadow* CreateRangeFieldDomain( const char *name,
 }
 
 
-SWIGINTERN int
-SWIG_AsVal_bool (PyObject *obj, bool *val)
-{
-  int r;
-  if (!PyBool_Check(obj))
-    return SWIG_ERROR;
-  r = PyObject_IsTrue(obj);
-  if (r == -1)
-    return SWIG_ERROR;
-  if (val) *val = r ? true : false;
-  return SWIG_OK;
-}
-
-
 static
 OGRFieldDomainShadow* CreateGlobFieldDomain( const char *name,
                                              const char* description,
@@ -37453,6 +37439,7 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "OLCCurveGeometries",SWIG_FromCharPtr("CurveGeometries"));
   SWIG_Python_SetConstant(d, "OLCMeasuredGeometries",SWIG_FromCharPtr("MeasuredGeometries"));
   SWIG_Python_SetConstant(d, "OLCRename",SWIG_FromCharPtr("Rename"));
+  SWIG_Python_SetConstant(d, "OLCFastGetArrowStream",SWIG_FromCharPtr("FastGetArrowStream"));
   SWIG_Python_SetConstant(d, "ODsCCreateLayer",SWIG_FromCharPtr("CreateLayer"));
   SWIG_Python_SetConstant(d, "ODsCDeleteLayer",SWIG_FromCharPtr("DeleteLayer"));
   SWIG_Python_SetConstant(d, "ODsCCreateGeomFieldAfterCreateLayer",SWIG_FromCharPtr("CreateGeomFieldAfterCreateLayer"));

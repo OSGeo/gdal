@@ -3358,3 +3358,23 @@ int OGRArrowLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
 
     return 0;
 }
+
+/************************************************************************/
+/*                         TestCapability()                             */
+/************************************************************************/
+
+inline
+int OGRArrowLayer::TestCapability(const char* pszCap)
+{
+
+    if( EQUAL(pszCap, OLCStringsAsUTF8) )
+        return true;
+
+    else if ( EQUAL(pszCap, OLCFastGetArrowStream) &&
+              !UseRecordBatchBaseImplementation() )
+    {
+        return true;
+    }
+
+    return false;
+}

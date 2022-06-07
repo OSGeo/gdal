@@ -922,6 +922,7 @@ def test_ogr_flatgeobuf_arrow_stream_numpy():
 
     ds = ogr.GetDriverByName('FlatGeoBuf').CreateDataSource('/vsimem/test.fgb')
     lyr = ds.CreateLayer('test', geom_type = ogr.wkbPoint)
+    assert lyr.TestCapability(ogr.OLCFastGetArrowStream) == 1
 
     field = ogr.FieldDefn("str", ogr.OFTString)
     lyr.CreateField(field)

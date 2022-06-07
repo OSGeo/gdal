@@ -182,6 +182,8 @@ public:
                             { SetSpatialFilter(0, poGeom); }
         void            SetSpatialFilter( int iGeomField, OGRGeometry *poGeom ) override;
 
+        int             TestCapability(const char* pszCap) override;
+
         virtual std::unique_ptr<OGRFieldDomain> BuildDomain(const std::string& osDomainName,
                                                              int iFieldIndex) const = 0;
 
