@@ -68,6 +68,7 @@ protected:
     IVFKDataBlock  *CreateDataBlock(const char *) override;
     void            AddDataBlock(IVFKDataBlock *, const char *) override;
     virtual OGRErr  AddFeature(IVFKDataBlock *, VFKFeature *) override;
+    void            ReadEncoding();
 
     // Metadata.
     std::map<CPLString, CPLString> poInfo;
