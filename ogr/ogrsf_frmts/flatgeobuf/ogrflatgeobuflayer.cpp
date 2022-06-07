@@ -33,6 +33,7 @@
 #include "cpl_http.h"
 #include "cpl_time.h"
 #include "ogr_p.h"
+#include "ograrrowarrayhelper.h"
 #include "ogr_recordbatch.h"
 
 #include "ogr_flatgeobuf.h"
@@ -1175,60 +1176,14 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
     if (readIndex() != OGRERR_NONE)
         return EIO;
 
-    const bool bIncludeFID = CPLTestBool(
-        m_aosArrowArrayStreamOptions.FetchNameValueDef("INCLUDE_FID", "YES"));
-    int nMaxBatchSize = atoi(
-        m_aosArrowArrayStreamOptions.FetchNameValueDef("MAX_FEATURES_IN_BATCH", "65536"));
-    if( nMaxBatchSize <= 0 )
-        nMaxBatchSize = 1;
-    if( nMaxBatchSize > INT_MAX - 1 )
-        nMaxBatchSize = INT_MAX - 1;
-
-    const int nFieldCount = m_poFeatureDefn->GetFieldCount();
-    const int nGeomFieldCount = m_poFeatureDefn->GetGeomFieldCount();
-    int nChildren = 0;
-    std::vector<int> mapOGRFieldToArrowField(nFieldCount, -1);
-    std::vector<int> mapOGRGeomFieldToArrowField(nGeomFieldCount, -1);
-    std::vector<bool> abNullableFields(nFieldCount);
-
-    if( bIncludeFID )
+    OGRArrowArrayHelper sHelper(m_poFeatureDefn, m_aosArrowArrayStreamOptions,
+                                out_array);
+    if( out_array->release == nullptr )
     {
-        nChildren ++;
-    }
-    for(int i = 0; i < nFieldCount; i++ )
-    {
-        const auto poFieldDefn = m_poFeatureDefn->GetFieldDefn(i);
-        abNullableFields[i] = poFieldDefn->IsNullable();
-        if( !poFieldDefn->IsIgnored() )
-        {
-            mapOGRFieldToArrowField[i] = nChildren;
-            nChildren ++;
-        }
-    }
-    for(int i = 0; i < nGeomFieldCount; i++ )
-    {
-        if( !m_poFeatureDefn->GetGeomFieldDefn(i)->IsIgnored() )
-        {
-            mapOGRGeomFieldToArrowField[i] = nChildren;
-            nChildren ++;
-        }
+        return ENOMEM;
     }
 
-    std::vector<bool> abSetFields(nFieldCount);
-
-    std::vector<uint32_t> anArrowFieldMaxAlloc(nChildren);
-
-    out_array->release = OGRLayer::ReleaseArray;
-
-    out_array->length = nMaxBatchSize;
-    out_array->null_count = -1;
-
-    out_array->n_children = nChildren;
-    out_array->children = static_cast<struct ArrowArray**>(
-                        CPLCalloc(nChildren, sizeof(struct ArrowArray*)));
-    out_array->release = OGRLayer::ReleaseArray;
-    out_array->n_buffers = 1;
-    out_array->buffers = static_cast<const void**>(CPLCalloc(1, sizeof(void*)));
+    std::vector<bool> abSetFields(sHelper.nFieldCount);
 
     struct tm brokenDown;
     memset(&brokenDown, 0, sizeof(brokenDown));
@@ -1236,150 +1191,12 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
     int iFeat = 0;
     bool bEOFOrError = true;
 
-    // Allocate buffers
-
-    int64_t* panFIDValues = nullptr;
-    if( bIncludeFID )
-    {
-        out_array->children[0]= static_cast<struct ArrowArray*>(
-            CPLCalloc(1, sizeof(struct ArrowArray)));
-        auto psChild = out_array->children[0];
-        psChild->release = OGRLayer::ReleaseArray;
-        psChild->length = nMaxBatchSize;
-        psChild->n_buffers = 2;
-        psChild->buffers = static_cast<const void**>(CPLCalloc(2, sizeof(void*)));
-        panFIDValues = static_cast<int64_t*>(
-            VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(int64_t) * nMaxBatchSize));
-        if( panFIDValues == nullptr )
-            goto error;
-        psChild->buffers[1] = panFIDValues;
-    }
-
-    for(int i = 0; i < nFieldCount; i++ )
-    {
-        const int iArrowField = mapOGRFieldToArrowField[i];
-        if( iArrowField >= 0 )
-        {
-            const auto poFieldDefn = m_poFeatureDefn->GetFieldDefn(i);
-            out_array->children[iArrowField]= static_cast<struct ArrowArray*>(
-                CPLCalloc(1, sizeof(struct ArrowArray)));
-            auto psChild = out_array->children[iArrowField];
-
-            psChild->release = OGRLayer::ReleaseArray;
-            psChild->length = nMaxBatchSize;
-            const auto eSubType = poFieldDefn->GetSubType();
-            size_t nEltSize = 0;
-            switch( poFieldDefn->GetType() )
-            {
-                case OFTInteger:
-                {
-                    if( eSubType == OFSTBoolean )
-                    {
-                        nEltSize = sizeof(uint8_t);
-                    }
-                    else if( eSubType == OFSTInt16 )
-                    {
-                        nEltSize = sizeof(int16_t);
-                    }
-                    else
-                    {
-                        nEltSize = sizeof(int32_t);
-                    }
-                    break;
-                }
-                case OFTInteger64:
-                {
-                    nEltSize = sizeof(int64_t);
-                    break;
-                }
-                case OFTReal:
-                {
-                    if( eSubType == OFSTFloat32 )
-                    {
-                        nEltSize = sizeof(float);
-                    }
-                    else
-                    {
-                        nEltSize = sizeof(double);
-                    }
-                    break;
-                }
-                case OFTString:
-                case OFTBinary:
-                {
-                    psChild->n_buffers = 3;
-                    psChild->buffers = static_cast<const void**>(CPLCalloc(3, sizeof(void*)));
-                    psChild->buffers[1] =
-                        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(uint32_t) * (1 + nMaxBatchSize));
-                    if( psChild->buffers[1] == nullptr )
-                        goto error;
-                    memset( (void*)psChild->buffers[1], 0, sizeof(uint32_t) * (1 + nMaxBatchSize));
-                    constexpr size_t DEFAULT_STRING_SIZE = 10;
-                    anArrowFieldMaxAlloc[iArrowField] = DEFAULT_STRING_SIZE * nMaxBatchSize;
-                    psChild->buffers[2] =
-                        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(anArrowFieldMaxAlloc[iArrowField]);
-                    if( psChild->buffers[2] == nullptr )
-                        goto error;
-                    break;
-                }
-
-                case OFTDateTime:
-                {
-                    nEltSize = sizeof(int64_t);
-                    break;
-                }
-
-                default:
-                    break;
-            }
-
-            if( nEltSize != 0 )
-            {
-                psChild->n_buffers = 2;
-                psChild->buffers = static_cast<const void**>(CPLCalloc(2, sizeof(void*)));
-                psChild->buffers[1] =
-                    VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nEltSize * nMaxBatchSize);
-                if( psChild->buffers[1] == nullptr )
-                    goto error;
-                memset( const_cast<void*>(psChild->buffers[1]), 0, nEltSize * nMaxBatchSize );
-            }
-        }
-    }
-
-    for(int i = 0; i < nGeomFieldCount; i++ )
-    {
-        const int iArrowField = mapOGRGeomFieldToArrowField[i];
-        if( iArrowField >= 0 )
-        {
-            out_array->children[iArrowField]= static_cast<struct ArrowArray*>(
-                CPLCalloc(1, sizeof(struct ArrowArray)));
-            auto psChild = out_array->children[iArrowField];
-
-            psChild->release = OGRLayer::ReleaseArray;
-            psChild->length = nMaxBatchSize;
-
-            psChild->n_buffers = 3;
-            psChild->buffers = static_cast<const void**>(CPLCalloc(3, sizeof(void*)));
-            psChild->buffers[1] =
-                VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(uint32_t) * (1 + nMaxBatchSize));
-            if( psChild->buffers[1] == nullptr )
-                goto error;
-            memset((void*)psChild->buffers[1], 0, sizeof(uint32_t) * (1 + nMaxBatchSize));
-            constexpr size_t DEFAULT_WKB_SIZE = 100;
-            anArrowFieldMaxAlloc[iArrowField] = DEFAULT_WKB_SIZE * nMaxBatchSize;
-            psChild->buffers[2] =
-                VSI_MALLOC_ALIGNED_AUTO_VERBOSE(anArrowFieldMaxAlloc[iArrowField]);
-            if( psChild->buffers[2] == nullptr )
-                goto error;
-        }
-    }
-
     if (m_queriedSpatialIndex && m_featuresCount == 0) {
         CPLDebugOnly("FlatGeobuf", "GetNextFeature: no features found");
-        nMaxBatchSize = 0;
+        sHelper.nMaxBatchSize = 0;
     }
 
-    for(; iFeat < nMaxBatchSize; iFeat++ )
+    for(; iFeat < sHelper.nMaxBatchSize; iFeat++ )
     {
         bEOFOrError = true;
         if (m_featuresCount > 0 && m_featuresPos >= m_featuresCount) {
@@ -1398,8 +1215,8 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
             fid = m_featuresPos;
         }
 
-        if( panFIDValues )
-            panFIDValues[iFeat] = fid;
+        if( sHelper.panFIDValues )
+            sHelper.panFIDValues[iFeat] = fid;
 
         if (m_featuresPos == 0)
             seek = true;
@@ -1476,40 +1293,19 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
                 goto error;
             }
 
-            const int iArrowField = mapOGRGeomFieldToArrowField[0];
-            auto psArray = out_array->children[iArrowField];
+            const int iArrowField = sHelper.mapOGRGeomFieldToArrowField[0];
             const size_t nWKBSize = poOGRGeometry->WkbSize();
-            auto panOffsets = static_cast<int32_t*>(const_cast<void*>(psArray->buffers[1]));
-            const int32_t nCurLength = panOffsets[iFeat];
-            if( nWKBSize > anArrowFieldMaxAlloc[iArrowField] - static_cast<uint32_t>(nCurLength) )
+            GByte* outPtr = sHelper.GetPtrForStringOrBinary(iArrowField, iFeat, nWKBSize);
+            if( outPtr == nullptr )
             {
-                if( nWKBSize > static_cast<uint32_t>(std::numeric_limits<int32_t>::max() - nCurLength) )
-                {
-                    CPLError(CE_Failure, CPLE_AppDefined, "Too large geometry");
-                    errorErrno = ENOMEM;
-                    goto error;
-                }
-                const int32_t nNewSize = std::max(
-                    nCurLength + static_cast<int32_t>(nWKBSize),
-                    static_cast<int32_t>(
-                        std::min(
-                            static_cast<uint64_t>(std::numeric_limits<int32_t>::max()),
-                            static_cast<uint64_t>(anArrowFieldMaxAlloc[iArrowField] * 2))));
-                void* newBuffer = VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nNewSize);
-                if( newBuffer == nullptr )
-                    goto error;
-                anArrowFieldMaxAlloc[iArrowField] = static_cast<uint32_t>(nNewSize);
-                memcpy(newBuffer, psArray->buffers[2], nCurLength);
-                VSIFreeAligned(const_cast<void*>(psArray->buffers[2]));
-                psArray->buffers[2] = newBuffer;
+                errorErrno = ENOMEM;
+                goto error;
             }
-            GByte* paby = static_cast<GByte*>(const_cast<void*>(psArray->buffers[2]));
-            poOGRGeometry->exportToWkb(wkbNDR, paby + nCurLength, wkbVariantIso);
-            panOffsets[iFeat+1] = panOffsets[iFeat] + static_cast<int32_t>(nWKBSize);
+            poOGRGeometry->exportToWkb(wkbNDR, outPtr, wkbVariantIso);
         }
 
         abSetFields.clear();
-        abSetFields.resize(nFieldCount);
+        abSetFields.resize(sHelper.nFieldCount);
 
         const auto properties = feature->properties();
         if (properties != nullptr)
@@ -1549,7 +1345,7 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
                 abSetFields[i] = true;
                 const auto column = columns->Get(i);
                 const auto type = column->type();
-                const int iArrowField = mapOGRFieldToArrowField[i];
+                const int iArrowField = sHelper.mapOGRFieldToArrowField[i];
                 const bool isIgnored = iArrowField < 0;
                 auto psArray = isIgnored ? nullptr: out_array->children[iArrowField];
 
@@ -1564,8 +1360,7 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
                         {
                             if( *(data + offset) )
                             {
-                                static_cast<uint8_t*>(const_cast<void*>(
-                                    psArray->buffers[1]))[iFeat / 8] |= static_cast<uint8_t>(1 << (iFeat / 8));
+                                sHelper.SetBoolOn(psArray, iFeat);
                             }
                         }
                         offset += sizeof(unsigned char);
@@ -1579,9 +1374,8 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
                         }
                         if (!isIgnored)
                         {
-                            static_cast<int32_t*>(const_cast<void*>(
-                                psArray->buffers[1]))[iFeat] =
-                                *reinterpret_cast<const signed char*>(data + offset);
+                            sHelper.SetInt8(psArray, iFeat,
+                                *reinterpret_cast<const int8_t*>(data + offset));
                         }
                         offset += sizeof(signed char);
                         break;
@@ -1594,9 +1388,8 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
                         }
                         if (!isIgnored)
                         {
-                            static_cast<uint8_t*>(const_cast<void*>(
-                                psArray->buffers[1]))[iFeat] =
-                                    *reinterpret_cast<const unsigned char*>(data + offset);
+                            sHelper.SetUInt8(psArray, iFeat,
+                                *reinterpret_cast<const uint8_t*>(data + offset));
                         }
                         offset += sizeof(unsigned char);
                         break;
@@ -1612,8 +1405,7 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
                             short s;
                             memcpy(&s, data + offset, sizeof(int16_t));
                             CPL_LSBPTR16(&s);
-                            static_cast<int16_t*>(const_cast<void*>(
-                                psArray->buffers[1]))[iFeat] = s;
+                            sHelper.SetInt16(psArray, iFeat, s);
                         }
                         offset += sizeof(int16_t);
                         break;
@@ -1629,8 +1421,7 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
                             uint16_t s;
                             memcpy(&s, data + offset, sizeof(uint16_t));
                             CPL_LSBPTR16(&s);
-                            static_cast<int32_t*>(const_cast<void*>(
-                                psArray->buffers[1]))[iFeat] = s;
+                            sHelper.SetInt32(psArray, iFeat, s);
                         }
                         offset += sizeof(uint16_t);
                         break;
@@ -1646,8 +1437,7 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
                             int32_t nVal;
                             memcpy(&nVal, data + offset, sizeof(int32_t));
                             CPL_LSBPTR32(&nVal);
-                            static_cast<int32_t*>(const_cast<void*>(
-                                psArray->buffers[1]))[iFeat] = nVal;
+                            sHelper.SetInt32(psArray, iFeat, nVal);
                         }
                         offset += sizeof(int32_t);
                         break;
@@ -1663,8 +1453,7 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
                             uint32_t v;
                             memcpy(&v, data + offset, sizeof(int32_t));
                             CPL_LSBPTR32(&v);
-                            static_cast<int64_t*>(const_cast<void*>(
-                                psArray->buffers[1]))[iFeat] = v;
+                            sHelper.SetInt64(psArray, iFeat, v);
                         }
                         offset += sizeof(int32_t);
                         break;
@@ -1680,8 +1469,7 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
                             int64_t v;
                             memcpy(&v, data + offset, sizeof(int64_t));
                             CPL_LSBPTR64(&v);
-                            static_cast<int64_t*>(const_cast<void*>(
-                                psArray->buffers[1]))[iFeat] = v;
+                            sHelper.SetInt64(psArray, iFeat, v);
                         }
                         offset += sizeof(int64_t);
                         break;
@@ -1697,8 +1485,7 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
                             uint64_t v;
                             memcpy(&v, data + offset, sizeof(v));
                             CPL_LSBPTR64(&v);
-                            static_cast<double*>(const_cast<void*>(
-                                psArray->buffers[1]))[iFeat] = static_cast<double>(v);
+                            sHelper.SetDouble(psArray, iFeat, static_cast<double>(v));
                         }
                         offset += sizeof(int64_t);
                         break;
@@ -1714,8 +1501,7 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
                             float f;
                             memcpy(&f, data + offset, sizeof(float));
                             CPL_LSBPTR32(&f);
-                            static_cast<float*>(const_cast<void*>(
-                                psArray->buffers[1]))[iFeat] = f;
+                            sHelper.SetFloat(psArray, iFeat, f);
                         }
                         offset += sizeof(float);
                         break;
@@ -1731,8 +1517,7 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
                             double v;
                             memcpy(&v, data + offset, sizeof(double));
                             CPL_LSBPTR64(&v);
-                            static_cast<double*>(const_cast<void*>(
-                                psArray->buffers[1]))[iFeat] = v;
+                            sHelper.SetDouble(psArray, iFeat, v);
                         }
                         offset += sizeof(double);
                         break;
@@ -1757,33 +1542,13 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
                         }
                         if (!isIgnored )
                         {
-                            auto panOffsets = static_cast<int32_t*>(const_cast<void*>(psArray->buffers[1]));
-                            const int32_t nCurLength = panOffsets[iFeat];
-                            if( len > anArrowFieldMaxAlloc[iArrowField] - static_cast<uint32_t>(nCurLength) )
+                            GByte* outPtr = sHelper.GetPtrForStringOrBinary(iArrowField, iFeat, len);
+                            if( outPtr == nullptr )
                             {
-                                if( len > static_cast<uint32_t>(std::numeric_limits<int32_t>::max() - nCurLength) )
-                                {
-                                    CPLError(CE_Failure, CPLE_AppDefined, "String/blob too large");
-                                    errorErrno = ENOMEM;
-                                    goto error;
-                                }
-                                const int32_t nNewSize = std::max(
-                                    nCurLength + static_cast<int32_t>(len),
-                                    static_cast<int32_t>(
-                                        std::min(
-                                            static_cast<uint64_t>(std::numeric_limits<int32_t>::max()),
-                                            static_cast<uint64_t>(anArrowFieldMaxAlloc[iArrowField] * 2))));
-                                void* newBuffer = VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nNewSize);
-                                if( newBuffer == nullptr )
-                                    goto error;
-                                anArrowFieldMaxAlloc[iArrowField] = nNewSize;
-                                memcpy(newBuffer, psArray->buffers[2], nCurLength);
-                                VSIFreeAligned(const_cast<void*>(psArray->buffers[2]));
-                                psArray->buffers[2] = newBuffer;
+                                errorErrno = ENOMEM;
+                                goto error;
                             }
-                            GByte* paby = static_cast<GByte*>(const_cast<void*>(psArray->buffers[2]));
-                            memcpy(paby + nCurLength, data + offset, len);
-                            panOffsets[iFeat+1] = panOffsets[iFeat] + static_cast<int32_t>(len);
+                            memcpy(outPtr, data + offset, len);
                         }
                         offset += len;
                         break;
@@ -1812,16 +1577,7 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
                             OGRField ogrField;
                             if( OGRParseDate(str, &ogrField, 0) )
                             {
-                                brokenDown.tm_year = ogrField.Date.Year - 1900;
-                                brokenDown.tm_mon = ogrField.Date.Month - 1;
-                                brokenDown.tm_mday = ogrField.Date.Day;
-                                brokenDown.tm_hour = ogrField.Date.Hour;
-                                brokenDown.tm_min = ogrField.Date.Minute;
-                                brokenDown.tm_sec = static_cast<int>(ogrField.Date.Second);
-                                static_cast<int64_t*>(const_cast<void*>(
-                                    psArray->buffers[1]))[iFeat] =
-                                    CPLYMDHMSToUnixTime(&brokenDown) * 1000 +
-                                   (static_cast<int>(ogrField.Date.Second * 1000 + 0.5) % 1000);
+                                sHelper.SetDateTime(psArray, iFeat, brokenDown, ogrField);
                             }
                         }
                         offset += len;
@@ -1832,34 +1588,14 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
         }
 
         // Mark null fields
-        for( int i = 0; i < nFieldCount; i++ )
+        for( int i = 0; i < sHelper.nFieldCount; i++ )
         {
-            if( !abSetFields[i] && abNullableFields[i] )
+            if( !abSetFields[i] && sHelper.abNullableFields[i] )
             {
-                const int iArrowField = mapOGRFieldToArrowField[i];
+                const int iArrowField = sHelper.mapOGRFieldToArrowField[i];
                 if( iArrowField >= 0 )
                 {
-                    auto psArray = out_array->children[iArrowField];
-                    ++psArray->null_count;
-                    uint8_t* pabyNull = static_cast<uint8_t*>(const_cast<void*>(psArray->buffers[0]));
-                    if( psArray->buffers[0] == nullptr )
-                    {
-                        pabyNull = static_cast<uint8_t*>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE((nMaxBatchSize + 7) / 8));
-                        if( pabyNull == nullptr )
-                        {
-                            errorErrno = ENOMEM;
-                            goto error;
-                        }
-                        memset(pabyNull, 0xFF, (nMaxBatchSize + 7) / 8);
-                        psArray->buffers[0] = pabyNull;
-                    }
-                    pabyNull[iFeat / 8] &= static_cast<uint8_t>(~(1 << (iFeat % 8)));
-
-                    if( psArray->n_buffers == 3 )
-                    {
-                        auto panOffsets = static_cast<int32_t*>(const_cast<void*>(psArray->buffers[1]));
-                        panOffsets[iFeat+1] = panOffsets[iFeat];
-                    }
+                    sHelper.SetNull(iArrowField, iFeat);
                 }
             }
         }
@@ -1876,19 +1612,11 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
     if( bEOFOrError && m_featuresCount > 0 )
         m_bEOF = true;
 
-    if( iFeat < nMaxBatchSize )
-    {
-        for( int i = 0; i < nChildren; i++ )
-        {
-            out_array->children[i]->length = iFeat;
-        }
-    }
-
+    sHelper.Shrink(iFeat);
     return 0;
 
 error:
-    out_array->release(out_array);
-    memset(out_array, 0, sizeof(*out_array));
+    sHelper.ClearArray();
     return errorErrno;
 }
 
