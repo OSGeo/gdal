@@ -54,6 +54,16 @@
 
 #define GDAL_DEFAULT_DPI 150.0
 
+#ifdef HAVE_PDFIUM
+// To be able to use https://github.com/rouault/pdfium_build_gdal_3_5/releases/download/v1_pdfium_5106/install-win10-vs2019-x64-rev5106.zip
+// with newer Visual Studio versions.
+// Trick from https://github.com/conan-io/conan-center-index/issues/4826
+#if _MSC_VER >= 1932 // Visual Studio 2022 version 17.2+
+#    pragma comment(linker, "/alternatename:__imp___std_init_once_complete=__imp_InitOnceComplete")
+#    pragma comment(linker, "/alternatename:__imp___std_init_once_begin_initialize=__imp_InitOnceBeginInitialize")
+#endif
+#endif
+
 /* g++ -fPIC -g -Wall frmts/pdf/pdfdataset.cpp -shared -o gdal_PDF.so -Iport -Igcore -Iogr -L. -lgdal -lpoppler -I/usr/include/poppler */
 
 CPL_CVSID("$Id$")
