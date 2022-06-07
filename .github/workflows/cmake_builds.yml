@@ -116,12 +116,12 @@ jobs:
 
     - name: Install pdfium
       run: |
-        wget -q https://github.com/rouault/pdfium_build_gdal_3_5/releases/download/v1_pdfium_4933/install-ubuntu2004-rev4933.tar.gz \
-          && tar -xzf install-ubuntu2004-rev4933.tar.gz \
+        wget -q https://github.com/rouault/pdfium_build_gdal_3_5/releases/download/v1_pdfium_5106/install-ubuntu2004-rev5106.tar.gz \
+          && tar -xzf install-ubuntu2004-rev5106.tar.gz \
           && sudo chown -R root:root install \
           && sudo mv install/lib/* /usr/lib/ \
           && sudo mv install/include/* /usr/include/ \
-          && sudo rm -rf install-ubuntu2004-rev4933.tar.gz install \
+          && sudo rm -rf install-ubuntu2004-rev5106.tar.gz install \
           && sudo apt-get update -y \
           && sudo apt-get install -y --fix-missing --no-install-recommends liblcms2-dev
     - name: Configure ccache
@@ -399,6 +399,14 @@ jobs:
           ${CONDA_PREFIX}/Scripts/clcache -s
           # Otherwise cmake can find link.exe from Conda instead of MSVC
           rm /usr/bin/link
+
+    - name: Install pdfium
+      shell: bash -l {0}
+      run: |
+        curl -LOs https://github.com/rouault/pdfium_build_gdal_3_5/releases/download/v1_pdfium_5106/install-win10-vs2019-x64-rev5106.zip
+        unzip install-win10-vs2019-x64-rev5106.zip
+        mv install install-pdfium
+
     - name: Configure
       shell: bash -l {0}
       # Disable MySQL because of "error LNK2038: mismatch detected for '_MSC_VER': value '1800' doesn't match value '1900' in ogrmysqldatasource.obj" and other errors
@@ -406,9 +414,10 @@ jobs:
       # Note that the leading space in CMAKE_C/CXX_FLAGS=" /WX" is due to using Bash on Windows that would
       # otherwise interpret /bla has a file relative to the Bash root directory and would replace it by a path like c:\Program Files\git\WX
       # BUILD_JAVA_BINDINGS=OFF because we get "Error occurred during initialization of VM.   Corrupted ZIP library: C:\Miniconda\envs\gdalenv\Library\bin\zip.dll" when running java. Not reproducible on a standard VM
+      # Build PDF driver as plugin due to the PDFium build including libopenjp2 symbols which would conflict with external libopenjp2
       run: |
         mkdir -p $GITHUB_WORKSPACE/build
-        cmake -G "${generator}" -Werror=dev "-DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal" "-DUSE_CCACHE=ON" "-DCMAKE_PREFIX_PATH=${CONDA_PREFIX}" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DLIBKML_BASE_LIBRARY:FILEPATH= -DGDAL_ENABLE_PLUGINS:BOOL=ON -DGDAL_ENABLE_PLUGINS_NO_DEPS:BOOL=ON -DGDAL_USE_PUBLICDECOMPWT:BOOL=ON -DPUBLICDECOMPWT_URL=https://github.com/rouault/PublicDecompWT -DBUILD_JAVA_BINDINGS=OFF -DBUILD_CSHARP_BINDINGS=ON -DGDAL_USE_MYSQL:BOOL=OFF -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX" -DWERROR_DEV_FLAG="-Werror=dev" -DCMAKE_BUILD_TYPE=Release
+        cmake -G "${generator}" -Werror=dev "-DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal" "-DUSE_CCACHE=ON" "-DCMAKE_PREFIX_PATH=${CONDA_PREFIX}" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DLIBKML_BASE_LIBRARY:FILEPATH= -DGDAL_ENABLE_PLUGINS:BOOL=ON -DGDAL_ENABLE_PLUGINS_NO_DEPS:BOOL=ON -DGDAL_USE_PUBLICDECOMPWT:BOOL=ON -DPUBLICDECOMPWT_URL=https://github.com/rouault/PublicDecompWT -DBUILD_JAVA_BINDINGS=OFF -DBUILD_CSHARP_BINDINGS=ON -DGDAL_USE_MYSQL:BOOL=OFF -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX" -DWERROR_DEV_FLAG="-Werror=dev" -DCMAKE_BUILD_TYPE=Release -DPDFIUM_ROOT=$GITHUB_WORKSPACE/install-pdfium -DGDAL_ENABLE_DRIVER_PDF_PLUGIN:BOOL=ON
     - name: Build
       shell: bash -l {0}
       run: cmake --build $GITHUB_WORKSPACE/build --config Release -j 2
