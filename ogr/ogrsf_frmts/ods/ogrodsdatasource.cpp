@@ -940,6 +940,7 @@ void OGRODSDataSource::startElementRow(const char *pszNameIn,
         }
         else
             osFormula = "";
+        m_bValueFromTableCellAttribute = !osValue.empty();
 
         nCellsRepeated = atoi(
             GetAttributeValue(ppszAttr, "table:number-columns-repeated", "1"));
@@ -1206,8 +1207,10 @@ void OGRODSDataSource::endElementRow( CPL_UNUSED /*in non-DEBUG*/ const char * p
 void OGRODSDataSource::startElementCell(const char *pszNameIn,
                                         const char ** /*ppszAttr*/)
 {
-    if (osValue.empty() && strcmp(pszNameIn, "text:p") == 0)
+    if (!m_bValueFromTableCellAttribute && strcmp(pszNameIn, "text:p") == 0)
     {
+        if( !osValue.empty() )
+            osValue += '\n';
         PushState(STATE_TEXTP);
     }
 }
