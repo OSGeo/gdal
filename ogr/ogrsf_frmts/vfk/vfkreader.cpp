@@ -299,8 +299,11 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
                    - \244 - general currency sign
                 */
                 if (EQUAL(pszLine + nLength - nCurSignLen, pszCurSign)) {
-                    /* remove \244 (currency sign) from string */
-                    pszLine[nLength - nCurSignLen] = '\0';
+                    /* trim the currency sign and trailing spaces from line */
+                    nLength -= nCurSignLen;
+                    while (nLength > 0 && pszLine[nLength - 1] == ' ')
+                        nLength--;
+                    pszLine[nLength] = '\0';
 
                     CPLString osMultiLine(pszLine);
                     CPLFree(pszLine);
@@ -308,10 +311,17 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
                     while ((pszLine = ReadLine()) != nullptr &&
                            (nLength = strlen(pszLine)) >= nCurSignLen &&
                            EQUAL(pszLine + nLength - nCurSignLen, pszCurSign)) {
-                        /* append line */
-                        osMultiLine += pszLine;
-                        /* remove 0244 (currency sign) from string */
-                        osMultiLine.erase(osMultiLine.size() - nCurSignLen);
+                        /* trim leading spaces from continued line */
+                        char *pszLineTrim = pszLine;
+                        while (*pszLineTrim == ' ') pszLineTrim++;
+                        /* trim the currency sign and trailing spaces from line */
+                        nLength = strlen(pszLineTrim) - nCurSignLen;
+                        while (nLength > 0 && pszLineTrim[nLength - 1] == ' ')
+                            nLength--;
+                        pszLineTrim[nLength] = '\0';
+                        /* append a space and the trimmed line */
+                        osMultiLine += " ";
+                        osMultiLine += pszLineTrim;
 
                         CPLFree(pszLine);
                         if( osMultiLine.size() > 100U * 1024U * 1024U )
@@ -320,8 +330,14 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
                             return -1;
                         }
                     }
-                    if( pszLine )
-                        osMultiLine += pszLine;
+                    if (pszLine) {
+                        /* trim leading spaces from continued line */
+                        char *pszLineTrim = pszLine;
+                        while (*pszLineTrim == ' ') pszLineTrim++;
+                        /* append a space and the trimmed line */
+                        osMultiLine += " ";
+                        osMultiLine += pszLineTrim;
+                    }
                     CPLFree(pszLine);
 
                     nLength = osMultiLine.size();
