@@ -2066,6 +2066,8 @@ Option only to be used by maintainers:
 C# bindings options
 +++++++++++++++++++
 
+For more details on how to build and use the C# bindings read the dedicated section :ref:`csharp_compile_cmake`.
+
 .. option:: BUILD_CSHARP_BINDINGS:BOOL=ON/OFF
 
     Whether C# bindings should be built. It is ON by default, but only
@@ -2073,6 +2075,22 @@ C# bindings options
     SDK can be used or Mono. The relevant options that can be set are described
     in ``cmake/modules/thirdparty/FindDotNetFrameworkSdk.cmake`` and
     ``cmake/modules/thirdparty/FindMono.cmake``.
+
+.. option:: CSHARP_MONO=ON/OFF
+
+    Forces the use of Mono as opposed to .NET to compile the C# bindings.
+
+.. option:: CSHARP_LIBRARY_VERSION
+
+    Sets the .NET (or Mono) target SDK to be used when compiling the C# binding libraries. `List of acceptable contents for .NET <https://docs.microsoft.com/en-us/dotnet/standard/frameworks#supported-target-frameworks>`_
+
+.. option:: CSHARP_APPLICATION_VERSION
+
+    Sets the .NET (or Mono) target SDK to be used when compiling the C# sample applications. `List of acceptable contents for .NET <https://docs.microsoft.com/en-us/dotnet/standard/frameworks#supported-target-frameworks>`_
+
+.. option:: GDAL_CSHARP_ONLY=OFF/ON
+
+    Build the C# bindings without building GDAL. This should be used when building the bindings on top of an existing GDAL installation - for instance on top of the CONDA package.
 
 Driver specific options
 +++++++++++++++++++++++
