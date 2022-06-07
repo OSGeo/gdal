@@ -28,6 +28,8 @@
 
 #pragma once
 
+//! @cond Doxygen_Suppress
+
 #include "cpl_time.h"
 
 #include "ogrsf_frmts.h"
@@ -433,3 +435,4 @@ error:
 
 };
 
+//! @endcond
