@@ -352,6 +352,102 @@ def test_nitf_14():
 
     ds = None
 
+
+###############################################################################
+# Test automatic setting of ICORDS=N/S for UTM WGS 84 projections
+
+
+@pytest.mark.parametrize("epsg_code,icords", [(32631, 'N'), (32731, 'S')])
+def test_nitf_create_copy_automatic_UTM_ICORDS(epsg_code,icords):
+    src_ds = gdal.GetDriverByName('MEM').Create('', 10, 20)
+    src_ds.SetGeoTransform([-1000, 1000, 0, 2000, 0, -500])
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(epsg_code)
+    src_ds.SetSpatialRef(srs)
+
+    outfilename = '/vsimem/test_nitf_create_copy_automatic_UTM_ICORDS.ntf'
+    gdal.ErrorReset()
+    assert gdal.GetDriverByName('NITF').CreateCopy(outfilename, src_ds)
+    assert gdal.VSIStatL(outfilename + '.aux.xml') is None
+    ds = gdal.Open(outfilename)
+    assert ds.GetMetadataItem('NITF_ICORDS') == icords
+    assert ds.GetGeoTransform() == src_ds.GetGeoTransform()
+    assert ds.GetSpatialRef().IsSame(src_ds.GetSpatialRef())
+    ds = None
+    gdal.GetDriverByName('NITF').Delete(outfilename)
+
+
+###############################################################################
+# Test creation of an NITF file with IGEOLO provided by the user, but not ICORDS
+# -> error
+
+
+def test_nitf_create_copy_user_provided_IGEOLO_without_ICORDS():
+    src_ds = gdal.GetDriverByName('MEM').Create('', 10, 20)
+    src_ds.SetGeoTransform([-1000, 1000, 0, 2000, 0, -500])
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32631)
+    src_ds.SetSpatialRef(srs)
+
+    outfilename = '/vsimem/test_nitf_create_copy_user_provided_IGEOLO_without_ICORDS.ntf'
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        assert gdal.GetDriverByName('NITF').CreateCopy(outfilename, src_ds,
+                                                options = ['IGEOLO=' + ('0' * 60)]) is None
+    assert gdal.GetLastErrorMsg() != ''
+    gdal.GetDriverByName('NITF').Delete(outfilename)
+
+
+###############################################################################
+# Test creation of an NITF file with ICORDS and IGEOLO provided by the user
+
+
+def test_nitf_create_copy_user_provided_ICORDS_IGEOLO():
+    src_ds = gdal.GetDriverByName('MEM').Create('', 10, 20)
+    src_ds.SetGeoTransform([-1000, 1000, 0, 2000, 0, -500])
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32631)
+    src_ds.SetSpatialRef(srs)
+
+    outfilename = '/vsimem/test_nitf_create_copy_user_provided_ICORDS_IGEOLO.ntf'
+    gdal.ErrorReset()
+    gdal.GetDriverByName('NITF').CreateCopy(outfilename, src_ds,
+                                            options = ['ICORDS=G', 'IGEOLO=' + ('0' * 60)])
+    assert gdal.GetLastErrorMsg() == ''
+    assert gdal.VSIStatL(outfilename + '.aux.xml') is None
+    ds = gdal.Open(outfilename)
+    assert ds.GetMetadataItem('NITF_ICORDS') == 'G'
+    assert ds.GetMetadataItem('NITF_IGEOLO') == '0' * 60
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete(outfilename)
+
+
+###############################################################################
+# Test automatic reprojection of corner coordinates to long/lat if the
+# source CRS is UTM WGS84 and the user provided ICORDS=G
+
+
+def test_nitf_create_copy_UTM_corner_reprojection_to_long_lat():
+    src_ds = gdal.GetDriverByName('MEM').Create('', 10, 20)
+    src_ds.SetGeoTransform([-1000, 1000, 0, 2000, 0, -500])
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32631)
+    src_ds.SetSpatialRef(srs)
+
+    outfilename = '/vsimem/test_nitf_create_copy_UTM_corner_reprojection_to_long_lat.ntf'
+    gdal.ErrorReset()
+    gdal.GetDriverByName('NITF').CreateCopy(outfilename, src_ds,
+                                            options = ['ICORDS=G'])
+    assert gdal.GetLastErrorMsg() == ''
+    assert gdal.VSIStatL(outfilename + '.aux.xml') is None
+    ds = gdal.Open(outfilename)
+    assert ds.GetMetadataItem('NITF_ICORDS') == 'G'
+    assert ds.GetMetadataItem('NITF_IGEOLO') == '000057N0012936W000057N0012445W000412S0012445W000412S0012936W'
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete(outfilename)
+
 ###############################################################################
 # Test creating an in memory copy.
 

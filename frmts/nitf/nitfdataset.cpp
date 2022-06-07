@@ -4520,6 +4520,16 @@ NITFDataset::NITFCreateCopy(
     int nZone = 0;
     OGRSpatialReference oSRS;
     OGRSpatialReference oSRS_WGS84;
+    int nGCIFFlags = GCIF_PAM_DEFAULT;
+    double dfIGEOLOULX = 0;
+    double dfIGEOLOULY = 0;
+    double dfIGEOLOURX = 0;
+    double dfIGEOLOURY = 0;
+    double dfIGEOLOLRX = 0;
+    double dfIGEOLOLRY = 0;
+    double dfIGEOLOLLX = 0;
+    double dfIGEOLOLLY = 0;
+    bool bManualWriteOfIGEOLO = false;
 
     if( pszWKT != nullptr && pszWKT[0] != '\0' )
     {
@@ -4650,7 +4660,33 @@ NITFDataset::NITFCreateCopy(
         bWriteGCPs = ( !bWriteGeoTransform && poSrcDS->GetGCPCount() == 4 );
 
         int bNorth;
-        if( oSRS.IsGeographic() && oSRS.GetPrimeMeridian() == 0.0 )
+        const bool bHasIGEOLO = CSLFetchNameValue(papszFullOptions, "IGEOLO") != nullptr;
+        if( bHasIGEOLO && pszICORDS == nullptr )
+        {
+            CPLError((bStrict) ? CE_Failure : CE_Warning, CPLE_AppDefined,
+                     "IGEOLO specified, but ICORDS not.%s",
+                     bStrict ? "": " Ignoring IGEOLO");
+            if( bStrict )
+            {
+                CSLDestroy(papszFullOptions);
+                CSLDestroy(papszCgmMD);
+                CSLDestroy(papszTextMD);
+                return nullptr;
+            }
+        }
+
+        if( CSLFetchNameValue(papszFullOptions, "IGEOLO") != nullptr &&
+            pszICORDS != nullptr )
+        {
+            // if both IGEOLO and ICORDS are specified, do not try to write
+            // computed values
+
+            bWriteGeoTransform = false;
+            bWriteGCPs = false;
+            nGCIFFlags &= ~GCIF_PROJECTION;
+            nGCIFFlags &= ~GCIF_GEOTRANSFORM;
+        }
+        else if( oSRS.IsGeographic() && oSRS.GetPrimeMeridian() == 0.0 )
         {
             if (pszICORDS == nullptr)
             {
@@ -4680,14 +4716,78 @@ NITFDataset::NITFCreateCopy(
 
         else if( oSRS.GetUTMZone( &bNorth ) > 0 )
         {
-            if( bNorth )
-                papszFullOptions =
-                    CSLSetNameValue( papszFullOptions, "ICORDS", "N" );
-            else
-                papszFullOptions =
-                    CSLSetNameValue( papszFullOptions, "ICORDS", "S" );
-
+            const char* pszComputedICORDS = bNorth ? "N" : "S";
             nZone = oSRS.GetUTMZone( nullptr );
+            if( pszICORDS == nullptr )
+            {
+                papszFullOptions =
+                    CSLSetNameValue( papszFullOptions, "ICORDS", pszComputedICORDS );
+            }
+            else if( EQUAL(pszICORDS, pszComputedICORDS) )
+            {
+                // ok
+            }
+            else if( (EQUAL(pszICORDS, "G") || EQUAL(pszICORDS, "D")) && bWriteGeoTransform )
+            {
+                // Reproject UTM corner coordinates to geographic.
+                // This can be used when there is no way to write an
+                // equatorial image whose one of the northing value is below -1e6
+
+                const int nXSize = poSrcDS->GetRasterXSize();
+                const int nYSize = poSrcDS->GetRasterYSize();
+
+                dfIGEOLOULX = adfGeoTransform[0] + 0.5 * adfGeoTransform[1]
+                                           + 0.5 * adfGeoTransform[2];
+                dfIGEOLOULY = adfGeoTransform[3] + 0.5 * adfGeoTransform[4]
+                                           + 0.5 * adfGeoTransform[5];
+                dfIGEOLOURX = dfIGEOLOULX + adfGeoTransform[1] * (nXSize - 1);
+                dfIGEOLOURY = dfIGEOLOULY + adfGeoTransform[4] * (nXSize - 1);
+                dfIGEOLOLRX = dfIGEOLOULX + adfGeoTransform[1] * (nXSize - 1)
+                                   + adfGeoTransform[2] * (nYSize - 1);
+                dfIGEOLOLRY = dfIGEOLOULY + adfGeoTransform[4] * (nXSize - 1)
+                                   + adfGeoTransform[5] * (nYSize - 1);
+                dfIGEOLOLLX = dfIGEOLOULX + adfGeoTransform[2] * (nYSize - 1);
+                dfIGEOLOLLY = dfIGEOLOULY + adfGeoTransform[5] * (nYSize - 1);
+
+                oSRS_WGS84.SetWellKnownGeogCS( "WGS84" );
+                oSRS_WGS84.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
+                auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
+                    OGRCreateCoordinateTransformation(&oSRS, &oSRS_WGS84));
+                if( poCT &&
+                    poCT->Transform(1, &dfIGEOLOULX, &dfIGEOLOULY) &&
+                    poCT->Transform(1, &dfIGEOLOURX, &dfIGEOLOURY) &&
+                    poCT->Transform(1, &dfIGEOLOLRX, &dfIGEOLOLRY) &&
+                    poCT->Transform(1, &dfIGEOLOLLX, &dfIGEOLOLLY) )
+                {
+                    nZone = 0;
+                    bWriteGeoTransform = false;
+                    bManualWriteOfIGEOLO = true;
+                    nGCIFFlags &= ~GCIF_PROJECTION;
+                    nGCIFFlags &= ~GCIF_GEOTRANSFORM;
+                }
+                else
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Cannot reproject UTM coordinates to geographic ones");
+                    CSLDestroy(papszFullOptions);
+                    CSLDestroy(papszCgmMD);
+                    CSLDestroy(papszTextMD);
+                    return nullptr;
+                }
+            }
+            else
+            {
+                CPLError((bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
+                         "Inconsistent ICORDS value with SRS : %s.", pszICORDS);
+                if (bStrict)
+                {
+                    CSLDestroy(papszFullOptions);
+                    CSLDestroy(papszCgmMD);
+                    CSLDestroy(papszTextMD);
+                    return nullptr;
+                }
+            }
         }
         else
         {
@@ -4706,7 +4806,6 @@ NITFDataset::NITFCreateCopy(
 /* -------------------------------------------------------------------- */
 /*      Do we have RPC information?                                     */
 /* -------------------------------------------------------------------- */
-    int nGCIFFlags = GCIF_PAM_DEFAULT;
     if( !bUseSrcNITFMetadata )
         nGCIFFlags &= ~GCIF_METADATA;
 
@@ -5198,7 +5297,22 @@ NITFDataset::NITFCreateCopy(
 /* -------------------------------------------------------------------- */
 /*      Set the georeferencing.                                         */
 /* -------------------------------------------------------------------- */
-    if( bWriteGeoTransform )
+    if( bManualWriteOfIGEOLO )
+    {
+        if( !NITFWriteIGEOLO(poDstDS->psImage,
+                             poDstDS->psImage->chICORDS,
+                             poDstDS->psImage->nZone,
+                             dfIGEOLOULX, dfIGEOLOULY, dfIGEOLOURX, dfIGEOLOURY,
+                             dfIGEOLOLRX, dfIGEOLOLRY, dfIGEOLOLLX, dfIGEOLOLLY ) )
+        {
+            delete poDstDS;
+            CSLDestroy(papszCgmMD);
+            CSLDestroy(papszTextMD);
+            CSLDestroy( papszFullOptions );
+            return nullptr;
+        }
+    }
+    else if( bWriteGeoTransform )
     {
         poDstDS->psImage->nZone = nZone;
         poDstDS->SetGeoTransform( adfGeoTransform );
@@ -6575,6 +6689,8 @@ void NITFDriver::InitCreationOptionList()
 "       <Value>N</Value>"
 "       <Value>S</Value>"
 "   </Option>"
+"   <Option name='IGEOLO' type='string' description='Image corner coordinates. "
+"Normally automatically set. If specified, ICORDS must also be specified'/>"
 "   <Option name='FHDR' type='string-select' description='File version' default='NITF02.10'>"
 "       <Value>NITF02.10</Value>"
 "       <Value>NSIF01.00</Value>"
