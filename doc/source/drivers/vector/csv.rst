@@ -279,7 +279,7 @@ The following open options can be specified
    will be emptied.
 -  **AUTODETECT_SIZE_LIMIT**\ =size to specify the number of bytes to
    inspect to determine the data type and width/precision. The default
-   will be 100000. Setting 0 means inspecting the whole file. Note :
+   will be 1000000. Setting 0 means inspecting the whole file. Note :
    specifying a value over 1 MB (or 0 if the file is larger than 1MB)
    will prevent reading from standard input.
 -  **QUOTED_FIELDS_AS_STRING**\ =YES/NO (default NO). Only used if
