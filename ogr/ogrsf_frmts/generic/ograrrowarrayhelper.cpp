@@ -318,7 +318,12 @@ bool OGRArrowArrayHelper::FillDict(struct ArrowArray* psChild,
     {
         pabyNull = static_cast<uint8_t*>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE((nLength + 7) / 8));
         if( pabyNull == nullptr )
+        {
+            psDict->release(psDict);
+            CPLFree(psDict);
+            psChild->dictionary = nullptr;
             return false;
+        }
         memset(pabyNull, 0xFF, (nLength + 7) / 8);
         psDict->buffers[0] = pabyNull;
     }
@@ -326,12 +331,22 @@ bool OGRArrowArrayHelper::FillDict(struct ArrowArray* psChild,
     uint32_t* panOffsets = static_cast<uint32_t*>(
         VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(uint32_t) * (1 + nLength)));
     if( panOffsets == nullptr )
+    {
+        psDict->release(psDict);
+        CPLFree(psDict);
+        psChild->dictionary = nullptr;
         return false;
+    }
     psDict->buffers[1] = panOffsets;
 
     char* pachValues = static_cast<char*>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nCountChars));
     if( pachValues == nullptr )
+    {
+        psDict->release(psDict);
+        CPLFree(psDict);
+        psChild->dictionary = nullptr;
         return false;
+    }
     psDict->buffers[2] = pachValues;
 
     nLastCode = -1;
@@ -341,11 +356,17 @@ bool OGRArrowArrayHelper::FillDict(struct ArrowArray* psChild,
     {
         if( CPLGetValueType(psIter->pszCode) != CPL_VALUE_INTEGER )
         {
+            psDict->release(psDict);
+            CPLFree(psDict);
+            psChild->dictionary = nullptr;
             return false;
         }
         int nCode = atoi(psIter->pszCode);
         if( nCode <= nLastCode || nCode - nLastCode > 100 )
         {
+            psDict->release(psDict);
+            CPLFree(psDict);
+            psChild->dictionary = nullptr;
             return false;
         }
         for( int i = nLastCode + 1; i < nCode; ++i )
