@@ -34,6 +34,7 @@
 #include "ogr_swq.h"
 #include "ograpispy.h"
 #include "ogr_recordbatch.h"
+#include "ograrrowarrayhelper.h"
 
 #include "cpl_time.h"
 #include <cassert>
@@ -5233,114 +5234,6 @@ static bool FillStringArray(struct ArrowArray* psChild,
 }
 
 /************************************************************************/
-/*                             FillDict()                               */
-/************************************************************************/
-
-static bool FillDict(struct ArrowArray* psChild,
-                     const OGRCodedFieldDomain* poCodedDomain)
-{
-    int nLastCode = -1;
-    uint32_t nCountChars = 0;
-    int nCountNull = 0;
-    for(const OGRCodedValue* psIter = poCodedDomain->GetEnumeration();
-            psIter->pszCode; ++psIter )
-    {
-        if( CPLGetValueType(psIter->pszCode) != CPL_VALUE_INTEGER )
-        {
-            return false;
-        }
-        int nCode = atoi(psIter->pszCode);
-        if( nCode <= nLastCode || nCode - nLastCode > 100 )
-        {
-            return false;
-        }
-        for( int i = nLastCode + 1; i < nCode; ++i )
-        {
-            nCountNull ++;
-        }
-        if( psIter->pszValue )
-        {
-            const size_t nLen = strlen(psIter->pszValue);
-            if( nLen > std::numeric_limits<uint32_t>::max() - nCountChars )
-                return false;
-            nCountChars += static_cast<uint32_t>(nLen);
-        }
-        else
-        {
-            nCountNull ++;
-        }
-        nLastCode = nCode;
-    }
-    const int nLength = 1 + nLastCode;
-
-    auto psDict = static_cast<struct ArrowArray*>(CPLCalloc(1, sizeof(struct ArrowArray)));
-    psChild->dictionary = psDict;
-
-    psDict->release = OGRLayerDefaultReleaseArray;
-    psDict->length = nLength;
-    psDict->n_buffers = 3;
-    psDict->buffers = static_cast<const void**>(CPLCalloc(3, sizeof(void*)));
-    psDict->null_count = nCountNull;
-    uint8_t* pabyNull = nullptr;
-    if( nCountNull )
-    {
-        pabyNull = static_cast<uint8_t*>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE((nLength + 7) / 8));
-        if( pabyNull == nullptr )
-            return false;
-        memset(pabyNull, 0xFF, (nLength + 7) / 8);
-        psDict->buffers[0] = pabyNull;
-    }
-
-    uint32_t* panOffsets = static_cast<uint32_t*>(
-        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(uint32_t) * (1 + nLength)));
-    if( panOffsets == nullptr )
-        return false;
-    psDict->buffers[1] = panOffsets;
-
-    char* pachValues = static_cast<char*>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nCountChars));
-    if( pachValues == nullptr )
-        return false;
-    psDict->buffers[2] = pachValues;
-
-    nLastCode = -1;
-    uint32_t nOffset = 0;
-    for(const OGRCodedValue* psIter = poCodedDomain->GetEnumeration();
-            psIter->pszCode; ++psIter )
-    {
-        if( CPLGetValueType(psIter->pszCode) != CPL_VALUE_INTEGER )
-        {
-            return false;
-        }
-        int nCode = atoi(psIter->pszCode);
-        if( nCode <= nLastCode || nCode - nLastCode > 100 )
-        {
-            return false;
-        }
-        for( int i = nLastCode + 1; i < nCode; ++i )
-        {
-            panOffsets[i] = nOffset;
-            if( pabyNull )
-                pabyNull[i / 8] &= static_cast<uint8_t>(~(1 << (i % 8)));
-        }
-        panOffsets[nCode] = nOffset;
-        if( psIter->pszValue )
-        {
-            const size_t nLen = strlen(psIter->pszValue);
-            memcpy(pachValues + nOffset, psIter->pszValue, nLen);
-            nOffset += static_cast<uint32_t>(nLen);
-        }
-        else if( pabyNull )
-        {
-            pabyNull[nCode / 8] &= static_cast<uint8_t>(~(1 << (nCode % 8)));
-        }
-        nLastCode = nCode;
-    }
-    panOffsets[nLength] = nOffset;
-
-    return true;
-}
-
-/************************************************************************/
 /*                        FillStringListArray()                         */
 /************************************************************************/
 
@@ -5952,7 +5845,7 @@ int OGRLayer::GetNextArrowArray(struct ArrowArrayStream*,
                         {
                             const OGRCodedFieldDomain* poCodedDomain = static_cast<
                                 const OGRCodedFieldDomain*>(poFieldDomain);
-                            FillDict(psChild, poCodedDomain);
+                            OGRArrowArrayHelper::FillDict(psChild, poCodedDomain);
                         }
                     }
                 }

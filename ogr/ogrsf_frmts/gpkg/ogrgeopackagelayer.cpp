@@ -495,7 +495,8 @@ int OGRGeoPackageLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
     }
     sqlite3_stmt* hStmt = m_poQueryStatement;
 
-    OGRArrowArrayHelper sHelper(m_poFeatureDefn, m_aosArrowArrayStreamOptions,
+    OGRArrowArrayHelper sHelper(m_poDS, m_poFeatureDefn,
+                                m_aosArrowArrayStreamOptions,
                                 out_array);
     if( out_array->release == nullptr )
     {
