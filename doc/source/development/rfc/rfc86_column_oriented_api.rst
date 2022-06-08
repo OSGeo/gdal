@@ -193,7 +193,7 @@ OGRLayer has a base implementation of GetArrowStream() that is such:
 
   The default implementation outputs geometries as WKB in a binary field,
   whose corresponding entry in the schema is marked with the metadata item
-  ``ARROW:extension:name`` set to ``WKB``. Specialized implementations may output
+  ``ARROW:extension:name`` set to ``ogc.wkb``. Specialized implementations may output
   by default other formats (particularly the Arrow driver that can return geometries
   encoded according to the GeoArrow specification (using a list of coordinates).
   The GEOMETRY_ENCODING=WKB option can be passed to force the use of WKB (through
