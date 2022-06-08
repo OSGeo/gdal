@@ -1138,7 +1138,8 @@ const std::map< CPLString, std::vector<GPKGExtensionDesc> > &
             "'gpkg_geom_MULTISURFACE', 'gpkg_geom_CURVE', 'gpkg_geom_SURFACE', "
             "'gpkg_geom_POLYHEDRALSURFACE', 'gpkg_geom_TIN', 'gpkg_geom_TRIANGLE', "
             "'gpkg_rtree_index', 'gpkg_geometry_type_trigger', 'gpkg_srs_id_trigger', "
-            "'gpkg_crs_wkt', 'gpkg_crs_wkt_1_1', 'gpkg_schema')");
+            "'gpkg_crs_wkt', 'gpkg_crs_wkt_1_1', 'gpkg_schema', "
+            "'gpkg_related_tables', 'related_tables')");
     const int nTableLimit = GetOGRTableLimit();
     if( nTableLimit > 0 )
     {
@@ -3371,6 +3372,18 @@ bool GDALGeoPackageDataset::CreateColumnsTableAndColumnConstraintsTablesIfNecess
     }
 
     return true;
+}
+
+/************************************************************************/
+/*                        HasGpkgextRelationsTable()                    */
+/************************************************************************/
+
+bool GDALGeoPackageDataset::HasGpkgextRelationsTable() const
+{
+    const int nCount = SQLGetInteger(hDB,
+                "SELECT 1 FROM sqlite_master WHERE name = 'gpkgext_relations'"
+                "AND type IN ('table', 'view')", nullptr);
+    return nCount == 1;
 }
 
 /************************************************************************/
@@ -5668,6 +5681,57 @@ OGRErr GDALGeoPackageDataset::DeleteLayerCommon(const char* pszLayerName)
         }
     }
 
+    if( eErr == OGRERR_NONE && HasGpkgextRelationsTable() )
+    {
+        // Remove reference to potential corresponding mapping table in
+        // gpkg_extensions
+        pszSQL = sqlite3_mprintf(
+            "DELETE FROM gpkg_extensions WHERE "
+            "extension_name IN ('related_tables', "
+            "'gpkg_related_tables') AND lower(table_name) = "
+            "(SELECT lower(mapping_table_name) FROM gpkgext_relations WHERE "
+            "lower(base_table_name) = lower('%q') OR "
+            "lower(related_table_name) = lower('%q') OR "
+            "lower(mapping_table_name) = lower('%q'))",
+             pszLayerName, pszLayerName, pszLayerName);
+        eErr = SQLCommand(hDB, pszSQL);
+        sqlite3_free(pszSQL);
+
+        if( eErr == OGRERR_NONE )
+        {
+            // Remove reference to potential corresponding mapping table in
+            // gpkgext_relations
+            pszSQL = sqlite3_mprintf(
+                    "DELETE FROM gpkgext_relations WHERE "
+                    "lower(base_table_name) = lower('%q') OR "
+                    "lower(related_table_name) = lower('%q') OR "
+                    "lower(mapping_table_name) = lower('%q')",
+                    pszLayerName, pszLayerName, pszLayerName);
+            eErr = SQLCommand(hDB, pszSQL);
+            sqlite3_free(pszSQL);
+        }
+
+        if( eErr == OGRERR_NONE && HasExtensionsTable() )
+        {
+            // If there is no longer any mapping table, then completely
+            // remove any reference to the extension in gpkg_extensions
+            // as mandated per the related table specification.
+            OGRErr err;
+            if( SQLGetInteger(hDB,
+                              "SELECT COUNT(*) FROM gpkg_extensions WHERE "
+                              "extension_name IN ('related_tables', "
+                              "'gpkg_related_tables') AND "
+                              "lower(table_name) != 'gpkgext_relations'",
+                              &err) == 0 )
+            {
+                eErr = SQLCommand(hDB,
+                                  "DELETE FROM gpkg_extensions WHERE "
+                                  "extension_name IN ('related_tables', "
+                                  "'gpkg_related_tables')");
+            }
+        }
+    }
+
     if( eErr == OGRERR_NONE )
     {
         pszSQL = sqlite3_mprintf("DROP TABLE \"%w\"", pszLayerName);
@@ -6318,7 +6382,8 @@ void GDALGeoPackageDataset::CheckUnknownExtensions(bool bCheckRasterTable)
             "'gpkg_metadata', "
             "'gpkg_schema', "
             "'gpkg_crs_wkt', "
-            "'gpkg_crs_wkt_1_1')) "
+            "'gpkg_crs_wkt_1_1', "
+            "'related_tables', 'gpkg_related_tables')) "
 #ifdef WORKAROUND_SQLITE3_BUGS
             "OR 0 "
 #endif
@@ -6338,7 +6403,8 @@ void GDALGeoPackageDataset::CheckUnknownExtensions(bool bCheckRasterTable)
             "'gpkg_metadata', "
             "'gpkg_schema', "
             "'gpkg_crs_wkt', "
-            "'gpkg_crs_wkt_1_1')) "
+            "'gpkg_crs_wkt_1_1', "
+            "'related_tables', 'gpkg_related_tables')) "
 #ifdef WORKAROUND_SQLITE3_BUGS
             "OR 0 "
 #endif
