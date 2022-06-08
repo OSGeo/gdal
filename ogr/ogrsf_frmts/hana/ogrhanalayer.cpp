@@ -71,7 +71,7 @@ CPLString BuildQuery(const char* source, const char* columns)
     return BuildQuery(source, columns, nullptr, nullptr, -1);
 }
 
-CPLString BuildSpatialFilter(uint dbVersion, const OGRGeometry& geom, const CPLString& clmName, int srid)
+CPLString BuildSpatialFilter(int dbVersion, const OGRGeometry& geom, const CPLString& clmName, int srid)
 {
     OGREnvelope env;
     geom.getEnvelope(&env);
