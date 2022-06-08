@@ -1176,7 +1176,8 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
     if (readIndex() != OGRERR_NONE)
         return EIO;
 
-    OGRArrowArrayHelper sHelper(m_poFeatureDefn, m_aosArrowArrayStreamOptions,
+    OGRArrowArrayHelper sHelper(nullptr, // dataset pointer. only used for field domains (not used by FlatGeobuf)
+                                m_poFeatureDefn, m_aosArrowArrayStreamOptions,
                                 out_array);
     if( out_array->release == nullptr )
     {

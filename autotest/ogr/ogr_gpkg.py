@@ -5617,7 +5617,7 @@ def test_ogr_gpkg_arrow_stream_numpy():
     pytest.importorskip('osgeo.gdal_array')
     numpy = pytest.importorskip('numpy')
 
-    ds = ogr.GetDriverByName('GPKG').CreateDataSource('/vsimem/test.gpkg')
+    ds = gdal.GetDriverByName('GPKG').Create('/vsimem/test.gpkg', 0, 0, 0, gdal.GDT_Unknown)
     lyr = ds.CreateLayer('test', geom_type = ogr.wkbPoint)
     assert lyr.TestCapability(ogr.OLCFastGetArrowStream) == 1
 
@@ -5632,7 +5632,9 @@ def test_ogr_gpkg_arrow_stream_numpy():
     field.SetSubType(ogr.OFSTInt16)
     lyr.CreateField(field)
 
+    assert ds.AddFieldDomain(ogr.CreateCodedFieldDomain('enum_domain', '', ogr.OFTInteger, ogr.OFSTNone, {1: "one", "2": None}))
     field = ogr.FieldDefn("int32", ogr.OFTInteger)
+    field.SetDomainName('enum_domain')
     lyr.CreateField(field)
 
     field = ogr.FieldDefn("int64", ogr.OFTInteger64)
