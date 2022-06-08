@@ -4750,29 +4750,31 @@ int OGRLayer::GetArrowSchema(struct ArrowArrayStream*,
         if( poFieldDefn->IsNullable() )
             psChild->flags = ARROW_FLAG_NULLABLE;
         psChild->format = "z";
+        constexpr const char* ARROW_EXTENSION_NAME_KEY = "ARROW:extension:name";
+        constexpr const char* EXTENSION_NAME = "ogc.wkb";
         char* pszMetadata = static_cast<char*>(CPLMalloc(
             sizeof(int32_t) +
             sizeof(int32_t) +
-            strlen("ARROW:extension:name") +
+            strlen(ARROW_EXTENSION_NAME_KEY) +
             sizeof(int32_t) +
-            strlen("WKB")));
+            strlen(EXTENSION_NAME)));
         psChild->metadata = pszMetadata;
         int offsetMD = 0;
         *reinterpret_cast<int32_t*>(pszMetadata + offsetMD) = 1;
         offsetMD += sizeof(int32_t);
         *reinterpret_cast<int32_t*>(pszMetadata + offsetMD) =
-            static_cast<int32_t>(strlen("ARROW:extension:name"));
+            static_cast<int32_t>(strlen(ARROW_EXTENSION_NAME_KEY));
         offsetMD += sizeof(int32_t);
         memcpy(pszMetadata + offsetMD,
-               "ARROW:extension:name",
-               strlen("ARROW:extension:name"));
-        offsetMD += static_cast<int>(strlen("ARROW:extension:name"));
+               ARROW_EXTENSION_NAME_KEY,
+               strlen(ARROW_EXTENSION_NAME_KEY));
+        offsetMD += static_cast<int>(strlen(ARROW_EXTENSION_NAME_KEY));
         *reinterpret_cast<int32_t*>(pszMetadata + offsetMD) =
-            static_cast<int32_t>(strlen("WKB"));
+            static_cast<int32_t>(strlen(EXTENSION_NAME));
         offsetMD += sizeof(int32_t);
         memcpy(pszMetadata+ offsetMD,
-               "WKB",
-               strlen("WKB"));
+               EXTENSION_NAME,
+               strlen(EXTENSION_NAME));
     }
 
     out_schema->n_children = iSchemaChild;

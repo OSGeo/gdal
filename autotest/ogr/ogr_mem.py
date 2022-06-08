@@ -832,6 +832,9 @@ def test_ogr_mem_arrow_stream_pyarrow():
     lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
     stream = lyr.GetArrowStreamAsPyArrow()
     assert str(stream.schema) == 'struct<OGC_FID: int64 not null, wkb_geometry: binary>'
+    md = stream.schema['wkb_geometry'].metadata
+    assert b'ARROW:extension:name' in md
+    assert md[b'ARROW:extension:name'] == b'ogc.wkb'
     batches = [ batch for batch in stream ]
     assert len(batches) == 1
     arrays = batches[0].flatten()
