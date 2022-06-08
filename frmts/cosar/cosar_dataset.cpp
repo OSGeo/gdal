@@ -90,7 +90,7 @@ CPLErr COSARRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
      *    of file
      */
 
-    VSIFSeekL(pCDS->fp,(this->nRTNB * (nBlockYOff + 4)), SEEK_SET);
+    VSIFSeekL(pCDS->fp, static_cast<vsi_l_offset>(nRTNB) * (nBlockYOff + 4), SEEK_SET);
 
     /* Read RSFV and RSLV (TX-GS-DD-3307) */
     uint32_t nRSFV = 0; // Range Sample First Valid (starting at 1)
@@ -122,11 +122,11 @@ CPLErr COSARRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
     /* properly account for validity mask */
     if (nRSFV > 1)
     {
-        VSIFSeekL(pCDS->fp,(this->nRTNB*(nBlockYOff+4)+(nRSFV+1)*4), SEEK_SET);
+        VSIFSeekL(pCDS->fp, static_cast<vsi_l_offset>(nRTNB)*(nBlockYOff+4)+(nRSFV+1)*4, SEEK_SET);
     }
 
     /* Read the valid samples: */
-    VSIFReadL(((char *)pImage)+((nRSFV - 1)*4),1,(nRSLV - nRSFV + 1)*4,pCDS->fp);
+    VSIFReadL(((char *)pImage)+(static_cast<size_t>(nRSFV - 1)*4),1,static_cast<size_t>(nRSLV - nRSFV + 1)*4,pCDS->fp);
 
 #ifdef CPL_LSB
     GDALSwapWords( pImage, 2, nBlockXSize * nBlockYSize * 2, 2 );
@@ -180,7 +180,7 @@ GDALDataset *COSARDataset::Open( GDALOpenInfo * pOpenInfo ) {
     pDS->nRasterXSize = CPL_MSBWORD32(nXSize);
 
     int32_t nYSize;
-    VSIFReadL(&nYSize, 1, sizeof(nXSize), pDS->fp);
+    VSIFReadL(&nYSize, 1, sizeof(nYSize), pDS->fp);
     pDS->nRasterYSize = CPL_MSBWORD32(nYSize);
 
     if( !GDALCheckDatasetDimensions(pDS->nRasterXSize, pDS->nRasterYSize) )
