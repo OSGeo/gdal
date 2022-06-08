@@ -1740,6 +1740,19 @@ def test_ogr_openfilegdb_inconsistent_crs_feature_dataset_and_feature_table():
 
 
 ###############################################################################
+# Test reading a .spx file with the value_count field at 0
+# (https://github.com/OSGeo/gdal/issues/5888)
+
+
+def test_ogr_openfilegdb_spx_zero_in_value_count_trailer():
+    ds = ogr.Open('data/filegdb/spx_zero_in_value_count_trailer.gdb')
+    assert ds is not None
+    lyr = ds.GetLayer(0)
+    lyr.SetSpatialFilterRect(1,1,2,2)
+    assert lyr.GetFeatureCount() == 1
+
+
+###############################################################################
 # Cleanup
 
 
