@@ -972,6 +972,7 @@ char **OGRCSVLayer::AutodetectFieldTypes(char **papszOpenOptions,
     std::vector<OGRFieldType> aeFieldType(nFieldCount);
     std::vector<int> abFieldBoolean(nFieldCount);
     std::vector<int> abFieldSet(nFieldCount);
+    std::vector<int> abFinalTypeStringSet(nFieldCount);
     std::vector<int> anFieldWidth(nFieldCount);
     std::vector<int> anFieldPrecision(nFieldCount);
     int nStringFieldCount = 0;
@@ -1012,25 +1013,25 @@ char **OGRCSVLayer::AutodetectFieldTypes(char **papszOpenOptions,
         {
             if( papszTokens[iField][0] == 0 )
                 continue;
+            if( abFinalTypeStringSet[iField] && !bAutodetectWidth )
+                continue;
             if( szDelimiter[0] == ';' )
             {
                 char *chComma = strchr(papszTokens[iField], ',');
                 if( chComma )
                     *chComma = '.';
             }
-            CPLValueType eType = CPLGetValueType(papszTokens[iField]);
-
-            int nFieldWidth = 0;
-            int nFieldPrecision = 0;
+            const CPLValueType eType = CPLGetValueType(papszTokens[iField]);
 
             if( bAutodetectWidth )
             {
-                nFieldWidth = static_cast<int>(strlen(papszTokens[iField]));
+                int nFieldWidth = static_cast<int>(strlen(papszTokens[iField]));
                 if( papszTokens[iField][0] == '"' &&
                     papszTokens[iField][nFieldWidth - 1] == '"' )
                 {
                     nFieldWidth -= 2;
                 }
+                int nFieldPrecision = 0;
                 if( eType == CPL_VALUE_REAL &&
                     bAutodetectWidthForIntOrReal )
                 {
@@ -1039,6 +1040,11 @@ char **OGRCSVLayer::AutodetectFieldTypes(char **papszOpenOptions,
                         nFieldPrecision =
                             static_cast<int>(strlen(pszDot + 1));
                 }
+
+                if( nFieldWidth > anFieldWidth[iField] )
+                    anFieldWidth[iField] = nFieldWidth;
+                if( nFieldPrecision > anFieldPrecision[iField] )
+                    anFieldPrecision[iField] = nFieldPrecision;
             }
 
             OGRFieldType eOGRFieldType;
@@ -1096,13 +1102,26 @@ char **OGRCSVLayer::AutodetectFieldTypes(char **papszOpenOptions,
                 }
             }
 
+            const auto SetFinalStringType = [
+                &abFinalTypeStringSet, &aeFieldType, &nStringFieldCount, iField]()
+            {
+                if( !abFinalTypeStringSet[iField] )
+                {
+                    aeFieldType[iField] = OFTString;
+                    abFinalTypeStringSet[iField] = true;
+                    nStringFieldCount++;
+                }
+            };
+
             if( !abFieldSet[iField] )
             {
                 aeFieldType[iField] = eOGRFieldType;
                 abFieldSet[iField] = TRUE;
                 abFieldBoolean[iField] = bIsBoolean;
                 if( eOGRFieldType == OFTString && !bIsBoolean )
-                    nStringFieldCount++;
+                {
+                    SetFinalStringType();
+                }
             }
             else if( aeFieldType[iField] != eOGRFieldType )
             {
@@ -1114,8 +1133,7 @@ char **OGRCSVLayer::AutodetectFieldTypes(char **papszOpenOptions,
                         aeFieldType[iField] = eOGRFieldType;
                     else
                     {
-                        aeFieldType[iField] = OFTString;
-                        nStringFieldCount++;
+                        SetFinalStringType();
                     }
                 }
                 else if( aeFieldType[iField] == OFTInteger64 )
@@ -1124,8 +1142,7 @@ char **OGRCSVLayer::AutodetectFieldTypes(char **papszOpenOptions,
                         aeFieldType[iField] = eOGRFieldType;
                     else if( eOGRFieldType != OFTInteger )
                     {
-                        aeFieldType[iField] = OFTString;
-                        nStringFieldCount++;
+                        SetFinalStringType();
                     }
                 }
                 else if( aeFieldType[iField] == OFTReal )
@@ -1133,8 +1150,7 @@ char **OGRCSVLayer::AutodetectFieldTypes(char **papszOpenOptions,
                     if( eOGRFieldType != OFTInteger &&
                         eOGRFieldType != OFTInteger64 )
                     {
-                        aeFieldType[iField] = OFTString;
-                        nStringFieldCount++;
+                        SetFinalStringType();
                     }
                 }
                 else if( aeFieldType[iField] == OFTDate )
@@ -1143,37 +1159,40 @@ char **OGRCSVLayer::AutodetectFieldTypes(char **papszOpenOptions,
                         aeFieldType[iField] = OFTDateTime;
                     else
                     {
-                        aeFieldType[iField] = OFTString;
-                        nStringFieldCount++;
+                        SetFinalStringType();
                     }
                 }
                 else if( aeFieldType[iField] == OFTDateTime )
                 {
                     if( eOGRFieldType != OFTDate )
                     {
-                        aeFieldType[iField] = OFTString;
-                        nStringFieldCount++;
+                        SetFinalStringType();
                     }
                 }
                 else if( aeFieldType[iField] == OFTTime )
                 {
-                    aeFieldType[iField] = OFTString;
-                    nStringFieldCount++;
+                    SetFinalStringType();
                 }
             }
-
-            if( nFieldWidth > anFieldWidth[iField] )
-                anFieldWidth[iField] = nFieldWidth;
-            if( nFieldPrecision > anFieldPrecision[iField] )
-                anFieldPrecision[iField] = nFieldPrecision;
+            else if( !abFinalTypeStringSet[iField] &&
+                     eOGRFieldType == OFTString && !bIsBoolean )
+            {
+                SetFinalStringType();
+            }
         }
 
         CSLDestroy(papszTokens);
 
         // If all fields are String and we don't need to compute width,
         // just stop auto-detection now.
-        if( nStringFieldCount == nFieldCount && bAutodetectWidth )
+        if( nStringFieldCount == nFieldCount && !bAutodetectWidth )
+        {
+            CPLDebugOnly("CSV",
+                     "AutodetectFieldTypes() stopped after "
+                     "reading " CPL_FRMT_GUIB " bytes",
+                     static_cast<GUIntBig>(VSIFTellL(fp)));
             break;
+        }
     }
 
     papszFieldTypes =

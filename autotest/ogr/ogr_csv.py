@@ -1130,13 +1130,13 @@ def test_ogr_csv_32():
                      open_options=['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=350', 'AUTODETECT_WIDTH=YES', 'QUOTED_FIELDS_AS_STRING=YES'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    col_width = [0, 3, 3, 3, 1, 1, 0, 0, 0, 0, 0, 1, 2, 1, 1, 3, 19, 10, 8, 0]
+    col_width =     [0, 3, 3, 3, 1, 1, 0, 0, 0, 0, 0, 1, 2, 1, 1, 3, 19, 10, 8, 0]
     col_precision = [0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
     for i in range(lyr.GetLayerDefn().GetFieldCount()):
         assert (lyr.GetLayerDefn().GetFieldDefn(i).GetType() == col_type[i] and \
            lyr.GetLayerDefn().GetFieldDefn(i).GetWidth() == col_width[i] and \
-           lyr.GetLayerDefn().GetFieldDefn(i).GetPrecision() == col_precision[i])
+           lyr.GetLayerDefn().GetFieldDefn(i).GetPrecision() == col_precision[i]), lyr.GetLayerDefn().GetFieldDefn(i).GetName()
         if f.GetField(i) != col_values[i]:
             f.DumpReadable()
             pytest.fail(i)
@@ -1208,6 +1208,31 @@ def test_ogr_csv_32():
         f.DumpReadable()
         pytest.fail()
 
+###############################################################################
+# Test AUTODETECT_TYPE=YES on string content only
+
+
+def test_ogr_csv_autodetect_type_only_strings():
+
+
+    # Without AUTODETECT_WIDTH
+    ds = gdal.OpenEx('data/csv/only_strings.csv', gdal.OF_VECTOR,
+                     open_options=['AUTODETECT_TYPE=YES'])
+    lyr = ds.GetLayer(0)
+    for i in range(lyr.GetLayerDefn().GetFieldCount()):
+        assert lyr.GetLayerDefn().GetFieldDefn(i).GetType() == ogr.OFTString, lyr.GetLayerDefn().GetFieldDefn(i).GetName()
+
+    # With AUTODETECT_WIDTH=YES
+    ds = gdal.OpenEx('data/csv/only_strings.csv', gdal.OF_VECTOR,
+                     open_options=['AUTODETECT_TYPE=YES', 'AUTODETECT_WIDTH=YES'])
+    lyr = ds.GetLayer(0)
+    col_width =     [4, 3, 4]
+    col_precision = [0, 0, 0]
+
+    for i in range(lyr.GetLayerDefn().GetFieldCount()):
+        assert (lyr.GetLayerDefn().GetFieldDefn(i).GetType() == ogr.OFTString and \
+           lyr.GetLayerDefn().GetFieldDefn(i).GetWidth() == col_width[i] and \
+           lyr.GetLayerDefn().GetFieldDefn(i).GetPrecision() == col_precision[i]), lyr.GetLayerDefn().GetFieldDefn(i).GetName()
 
 ###############################################################################
 # Test Boolean, Int16 and Float32 support
