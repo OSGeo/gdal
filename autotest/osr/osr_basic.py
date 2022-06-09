@@ -1969,3 +1969,32 @@ def test_osr_basic_proj_network():
     finally:
         osr.SetPROJEnableNetwork(initial_value)
 
+
+
+###############################################################################
+
+
+def test_osr_basic_get_linear_units_compound_engineering_crs():
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("""COMPOUNDCRS["None",
+    ENGCRS["None",
+        EDATUM[""],
+        CS[Cartesian,2],
+            AXIS["easting",east,
+                ORDER[1],
+                LENGTHUNIT["US survey foot",0.304800609601219,
+                    ID["EPSG",9003]]],
+            AXIS["northing",north,
+                ORDER[2],
+                LENGTHUNIT["US survey foot",0.304800609601219,
+                    ID["EPSG",9003]]]],
+    VERTCRS["Local Meter",
+        VDATUM["unknown"],
+        CS[vertical,1],
+            AXIS["up",up,
+                LENGTHUNIT["metre",1,
+                    ID["EPSG",9001]]]]]""")
+
+    assert srs.GetLinearUnits() == pytest.approx(0.304800609601219)
+    assert srs.GetLinearUnitsName() == "US survey foot"
