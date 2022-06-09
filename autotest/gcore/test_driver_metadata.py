@@ -529,3 +529,16 @@ def test_metadata_creation_sub_field_datatypes(driver_name):
     if datatypes_str is not None:
         for datatype in datatypes_str.split(' '):
             assert datatype in valid_datatypes
+
+
+@pytest.mark.parametrize('driver_name', ogr_driver_names)
+def test_metadata_alter_geom_field_defn_flags(driver_name):
+    """ Test if GDAL_DMD_ALTER_GEOM_FIELD_DEFN_FLAGS metadataitem returns valid flags """
+
+    supported_flags = {'Name', 'Type', 'Nullable', 'SRS', 'CoordinateEpoch'}
+
+    driver = gdal.GetDriverByName(driver_name)
+    flags_str = driver.GetMetadataItem(gdal.DMD_ALTER_GEOM_FIELD_DEFN_FLAGS)
+    if flags_str is not None:
+        for flag in flags_str.split(' '):
+            assert flag in supported_flags

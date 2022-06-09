@@ -2419,7 +2419,8 @@ were obtained or created with the previous layer definition.
 
 Not all drivers support this method. You can query a layer to check if it supports it
 with the OLCAlterGeomFieldDefn capability. Some drivers might not support
-all update flags.
+all update flags. The GDAL_DMD_ALTER_GEOM_FIELD_DEFN_FLAGS driver metadata item
+can be queried to examine which flags may be supported by a driver.
 
 This function is the same as the C function OGR_L_AlterGeomFieldDefn().
 
@@ -2455,7 +2456,8 @@ were obtained or created with the previous layer definition.
 
 Not all drivers support this function. You can query a layer to check if it supports it
 with the OLCAlterGeomFieldDefn capability. Some drivers might not support
-all update flags.
+all update flags. The GDAL_DMD_ALTER_GEOM_FIELD_DEFN_FLAGS driver metadata item
+can be queried to examine which flags may be supported by a driver.
 
 This function is the same as the C++ method OGRLayer::AlterFieldDefn().
 
