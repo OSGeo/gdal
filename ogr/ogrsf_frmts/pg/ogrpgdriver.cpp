@@ -175,6 +175,8 @@ void RegisterOGRPG()
     poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_RENAME_LAYERS, "YES" );
 
+    poDriver->SetMetadataItem( GDAL_DMD_ALTER_GEOM_FIELD_DEFN_FLAGS, "Name Type Nullable SRS" );
+
     poDriver->pfnOpen = OGRPGDriverOpen;
     poDriver->pfnIdentify = OGRPGDriverIdentify;
     poDriver->pfnCreate = OGRPGDriverCreate;
