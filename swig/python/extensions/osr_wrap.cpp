@@ -3631,18 +3631,10 @@ SWIGINTERN double OSRSpatialReferenceShadow_GetLinearUnits(OSRSpatialReferenceSh
     return OSRGetLinearUnits( self, 0 );
   }
 SWIGINTERN char const *OSRSpatialReferenceShadow_GetLinearUnitsName(OSRSpatialReferenceShadow *self){
-    const char *name = 0;
-    if ( OSRIsProjected( self ) ) {
-      name = OSRGetAttrValue( self, "PROJCS|UNIT", 0 );
-    }
-    else if ( OSRIsLocal( self ) ) {
-      name = OSRGetAttrValue( self, "LOCAL_CS|UNIT", 0 );
-    }
-
-    if (name != 0)
-      return name;
-
-    return "Meter";
+    char *name = NULL;
+    // Return code ignored.
+    OSRGetLinearUnits( self, &name );
+    return (const char*)name;
   }
 SWIGINTERN char const *OSRSpatialReferenceShadow_GetAuthorityCode(OSRSpatialReferenceShadow *self,char const *target_key){
     return OSRGetAuthorityCode( self, target_key );
