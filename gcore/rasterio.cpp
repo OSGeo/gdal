@@ -4464,11 +4464,20 @@ static void GDALCopyWholeRasterGetSwathSize(
         // but try to use 10 MB at least.
         GIntBig nIdealSwathBufSize =
             static_cast<GIntBig>(nSwathCols) * nSwathLines * nPixelSize;
-        if( nIdealSwathBufSize < nTargetSwathSize &&
-            nIdealSwathBufSize < 10 * 1000 * 1000 )
+        int nMinTargetSwathSize = 10 * 1000 * 1000;
+
+        if( (poSrcPrototypeBand->GetSuggestedBlockAccessPattern() &
+                GSBAP_LARGEST_CHUNK_POSSIBLE) != 0 )
         {
-            nIdealSwathBufSize = 10 * 1000 * 1000;
+            nMinTargetSwathSize = nTargetSwathSize;
         }
+
+        if( nIdealSwathBufSize < nTargetSwathSize &&
+            nIdealSwathBufSize < nMinTargetSwathSize )
+        {
+            nIdealSwathBufSize = nMinTargetSwathSize;
+        }
+
         if( pszSrcCompression != nullptr && EQUAL(pszSrcCompression, "JPEG2000") &&
             (!bDstIsCompressed || ((nSrcBlockXSize % nBlockXSize) == 0 &&
                                    (nSrcBlockYSize % nBlockYSize) == 0)) )
