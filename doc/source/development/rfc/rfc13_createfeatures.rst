@@ -15,9 +15,9 @@ RFC 13: Improved Feature Insertion/Update/Delete Performance in Batch Mode
 *Withdrawn*
 
 I have withdrawn this RFC based on some comments from
-`Frank <http://lists.maptools.org/pipermail/gdal-dev/2007-May/013132.html>`__
+`Frank <http://lists.osgeo.org/pipermail/gdal-dev/2007-May/013132.html>`__
 and
-`Tamas <http://lists.maptools.org/pipermail/gdal-dev/2007-May/013130.html>`__
+`Tamas <http://lists.osgeo.org/pipermail/gdal-dev/2007-May/013130.html>`__
 on GDAL-dev.
 
 *Summary*
