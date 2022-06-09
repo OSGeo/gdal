@@ -1063,33 +1063,44 @@ def test_ogr_csv_32():
             pytest.fail(i)
 
     # Without limit, everything will be detected as string
-    ds = gdal.OpenEx('data/csv/testtypeautodetect.csv', gdal.OF_VECTOR,
-                     open_options=['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=0'])
-    lyr = ds.GetLayer(0)
-    f = lyr.GetNextFeature()
-    for i in range(lyr.GetLayerDefn().GetFieldCount()):
-        assert (lyr.GetLayerDefn().GetFieldDefn(i).GetType() == ogr.OFTString and \
-           lyr.GetLayerDefn().GetFieldDefn(i).GetWidth() == 0)
-        if f.GetField(i) != col_values[i]:
-            f.DumpReadable()
-            pytest.fail(i)
+    def check_size_limit_0():
+        ds = gdal.OpenEx('data/csv/testtypeautodetect.csv', gdal.OF_VECTOR,
+                         open_options=['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=0'])
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        for i in range(lyr.GetLayerDefn().GetFieldCount()):
+            assert (lyr.GetLayerDefn().GetFieldDefn(i).GetType() == ogr.OFTString and \
+               lyr.GetLayerDefn().GetFieldDefn(i).GetWidth() == 0)
+            if f.GetField(i) != col_values[i]:
+                f.DumpReadable()
+                pytest.fail(i)
+
+    check_size_limit_0()
+    with gdaltest.config_option('OGR_CSV_SIMULATE_VSISTDIN', 'YES'):
+        with gdaltest.error_handler(): # a warning will be emitted
+            check_size_limit_0()
 
     # We limit to the first "1.5" line
-    ds = gdal.OpenEx('data/csv/testtypeautodetect.csv', gdal.OF_VECTOR,
-                     open_options=['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=300', 'QUOTED_FIELDS_AS_STRING=YES'])
-    lyr = ds.GetLayer(0)
-    f = lyr.GetNextFeature()
-    col_type = [ogr.OFTString, ogr.OFTReal, ogr.OFTInteger, ogr.OFTReal, ogr.OFTInteger, ogr.OFTString,
-                ogr.OFTDateTime, ogr.OFTDate, ogr.OFTDateTime, ogr.OFTDate, ogr.OFTTime,
-                ogr.OFTString, ogr.OFTString, ogr.OFTString, ogr.OFTInteger, ogr.OFTReal, ogr.OFTDateTime, ogr.OFTDate, ogr.OFTTime, ogr.OFTDateTime]
-    col_values = ['', 1.5, 1, 1.5, 2, '', '2014/09/27 19:01:00', '2014/09/27', '2014/09/27 20:00:00',
-                  '2014/09/27', '12:34:56', 'a', 'a', '1', 1, 1.5, '2014/09/27 19:01:00', '2014/09/27', '19:01:00', '2014/09/27 00:00:00+00']
-    for i in range(lyr.GetLayerDefn().GetFieldCount()):
-        assert (lyr.GetLayerDefn().GetFieldDefn(i).GetType() == col_type[i] and \
-           lyr.GetLayerDefn().GetFieldDefn(i).GetWidth() == 0)
-        if f.GetField(i) != col_values[i]:
-            f.DumpReadable()
-            pytest.fail(i)
+    def check_size_limit_300_quote_fields():
+        ds = gdal.OpenEx('data/csv/testtypeautodetect.csv', gdal.OF_VECTOR,
+                         open_options=['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=300', 'QUOTED_FIELDS_AS_STRING=YES'])
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        col_type = [ogr.OFTString, ogr.OFTReal, ogr.OFTInteger, ogr.OFTReal, ogr.OFTInteger, ogr.OFTString,
+                    ogr.OFTDateTime, ogr.OFTDate, ogr.OFTDateTime, ogr.OFTDate, ogr.OFTTime,
+                    ogr.OFTString, ogr.OFTString, ogr.OFTString, ogr.OFTInteger, ogr.OFTReal, ogr.OFTDateTime, ogr.OFTDate, ogr.OFTTime, ogr.OFTDateTime]
+        col_values = ['', 1.5, 1, 1.5, 2, '', '2014/09/27 19:01:00', '2014/09/27', '2014/09/27 20:00:00',
+                      '2014/09/27', '12:34:56', 'a', 'a', '1', 1, 1.5, '2014/09/27 19:01:00', '2014/09/27', '19:01:00', '2014/09/27 00:00:00+00']
+        for i in range(lyr.GetLayerDefn().GetFieldCount()):
+            assert (lyr.GetLayerDefn().GetFieldDefn(i).GetType() == col_type[i] and \
+               lyr.GetLayerDefn().GetFieldDefn(i).GetWidth() == 0)
+            if f.GetField(i) != col_values[i]:
+                f.DumpReadable()
+                pytest.fail(i)
+
+    check_size_limit_300_quote_fields()
+    with gdaltest.config_option('OGR_CSV_SIMULATE_VSISTDIN', 'YES'):
+        check_size_limit_300_quote_fields()
 
     # Without QUOTED_FIELDS_AS_STRING=YES, str3 will be detected as integer
     ds = gdal.OpenEx('data/csv/testtypeautodetect.csv', gdal.OF_VECTOR,
@@ -1119,13 +1130,13 @@ def test_ogr_csv_32():
                      open_options=['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=350', 'AUTODETECT_WIDTH=YES', 'QUOTED_FIELDS_AS_STRING=YES'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    col_width = [0, 3, 3, 3, 1, 1, 0, 0, 0, 0, 0, 1, 2, 1, 1, 3, 19, 10, 8, 0]
+    col_width =     [0, 3, 3, 3, 1, 1, 0, 0, 0, 0, 0, 1, 2, 1, 1, 3, 19, 10, 8, 0]
     col_precision = [0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
     for i in range(lyr.GetLayerDefn().GetFieldCount()):
         assert (lyr.GetLayerDefn().GetFieldDefn(i).GetType() == col_type[i] and \
            lyr.GetLayerDefn().GetFieldDefn(i).GetWidth() == col_width[i] and \
-           lyr.GetLayerDefn().GetFieldDefn(i).GetPrecision() == col_precision[i])
+           lyr.GetLayerDefn().GetFieldDefn(i).GetPrecision() == col_precision[i]), lyr.GetLayerDefn().GetFieldDefn(i).GetName()
         if f.GetField(i) != col_values[i]:
             f.DumpReadable()
             pytest.fail(i)
@@ -1197,6 +1208,31 @@ def test_ogr_csv_32():
         f.DumpReadable()
         pytest.fail()
 
+###############################################################################
+# Test AUTODETECT_TYPE=YES on string content only
+
+
+def test_ogr_csv_autodetect_type_only_strings():
+
+
+    # Without AUTODETECT_WIDTH
+    ds = gdal.OpenEx('data/csv/only_strings.csv', gdal.OF_VECTOR,
+                     open_options=['AUTODETECT_TYPE=YES'])
+    lyr = ds.GetLayer(0)
+    for i in range(lyr.GetLayerDefn().GetFieldCount()):
+        assert lyr.GetLayerDefn().GetFieldDefn(i).GetType() == ogr.OFTString, lyr.GetLayerDefn().GetFieldDefn(i).GetName()
+
+    # With AUTODETECT_WIDTH=YES
+    ds = gdal.OpenEx('data/csv/only_strings.csv', gdal.OF_VECTOR,
+                     open_options=['AUTODETECT_TYPE=YES', 'AUTODETECT_WIDTH=YES'])
+    lyr = ds.GetLayer(0)
+    col_width =     [4, 3, 4]
+    col_precision = [0, 0, 0]
+
+    for i in range(lyr.GetLayerDefn().GetFieldCount()):
+        assert (lyr.GetLayerDefn().GetFieldDefn(i).GetType() == ogr.OFTString and \
+           lyr.GetLayerDefn().GetFieldDefn(i).GetWidth() == col_width[i] and \
+           lyr.GetLayerDefn().GetFieldDefn(i).GetPrecision() == col_precision[i]), lyr.GetLayerDefn().GetFieldDefn(i).GetName()
 
 ###############################################################################
 # Test Boolean, Int16 and Float32 support

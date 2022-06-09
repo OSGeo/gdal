@@ -159,9 +159,9 @@ Y_POSSIBLE_NAMES=Lat\* -oo KEEP_GEOM_COLUMNS=NO* will return :
    OGRFeature(test):3
      Name (String) = Third point
      POINT (0.75 47.5)
-     
+
 If CSV file does not have a header line, the dummy "field_n" names can be
-used as possible names for coordinate fields. For example plain XYZ point 
+used as possible names for coordinate fields. For example plain XYZ point
 data can be opened as
 
 *ogrinfo -ro -al elevation.xyz -oo X_POSSIBLE_NAMES=field_1 -oo
@@ -279,9 +279,9 @@ The following open options can be specified
    will be emptied.
 -  **AUTODETECT_SIZE_LIMIT**\ =size to specify the number of bytes to
    inspect to determine the data type and width/precision. The default
-   will be 1000000. Setting 0 means inspecting the whole file. Note :
-   specifying a value over 1 MB (or 0 if the file is larger than 1MB)
-   will prevent reading from standard input.
+   will be 1 000 000. Setting 0 means inspecting the whole file. Note:
+   when reading from standard input, this will be limited to 1 MB, due to
+   how /vsistdin/ is implemented..
 -  **QUOTED_FIELDS_AS_STRING**\ =YES/NO (default NO). Only used if
    AUTODETECT_TYPE=YES. Whether to enforce quoted fields as string
    fields when set to YES. Otherwise, by default, the content of quoted
@@ -370,7 +370,7 @@ Layer Creation options
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are 
+The following :ref:`configuration options <configoptions>` are
 available:
 
 -  :decl_configoption:`OGR_WKT_PRECISION` =int: Number of decimals for coordinate
