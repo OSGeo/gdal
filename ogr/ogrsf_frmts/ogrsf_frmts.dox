@@ -2410,7 +2410,9 @@ used by a layer directly.
 
 Note that altering the SRS does *not* cause coordinate reprojection to occur:
 this is simply a modification of the layer metadata (correcting a wrong SRS
-definition)
+definition). No modification to existing geometries will ever be performed,
+so this method cannot be used to e.g. promote single part geometries to their
+multipart equivalents.
 
 This method should not be called while there are feature objects in existence that
 were obtained or created with the previous layer definition.
@@ -2444,7 +2446,9 @@ used by a layer directly.
 
 Note that altering the SRS does *not* cause coordinate reprojection to occur:
 this is simply a modification of the layer metadata (correcting a wrong SRS
-definition)
+definition). No modification to existing geometries will ever be performed,
+so this method cannot be used to e.g. promote single part geometries to their
+multipart equivalents.
 
 This function should not be called while there are feature objects in existence that
 were obtained or created with the previous layer definition.
