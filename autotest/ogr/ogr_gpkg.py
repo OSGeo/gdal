@@ -3757,7 +3757,7 @@ def test_ogr_gpkg_48():
     # No geom field, one single field with default value
     lyr = ds.CreateLayer('default_field_no_geom', geom_type=ogr.wkbNone)
     fld_defn = ogr.FieldDefn('foo')
-    fld_defn.SetDefault('x')
+    fld_defn.SetDefault("'x'")
     lyr.CreateField(fld_defn)
     f = ogr.Feature(lyr.GetLayerDefn())
     assert lyr.CreateFeature(f) == 0
