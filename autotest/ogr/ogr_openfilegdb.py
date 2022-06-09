@@ -1753,6 +1753,18 @@ def test_ogr_openfilegdb_spx_zero_in_value_count_trailer():
 
 
 ###############################################################################
+# Test reading .gdb with LengthFieldName / AreaFieldName
+
+
+def test_ogr_openfilegdb_shape_length_shape_area_as_default_in_field_defn():
+    ds = ogr.Open('data/filegdb/filegdb_polygonzm_m_not_closing_with_curves.gdb')
+    lyr = ds.GetLayer(0)
+    lyr_defn = lyr.GetLayerDefn()
+    assert lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('Shape_Area')).GetDefault() == 'FILEGEODATABASE_SHAPE_AREA'
+    assert lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('Shape_Length')).GetDefault() == 'FILEGEODATABASE_SHAPE_LENGTH'
+
+
+###############################################################################
 # Cleanup
 
 
