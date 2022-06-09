@@ -1063,33 +1063,44 @@ def test_ogr_csv_32():
             pytest.fail(i)
 
     # Without limit, everything will be detected as string
-    ds = gdal.OpenEx('data/csv/testtypeautodetect.csv', gdal.OF_VECTOR,
-                     open_options=['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=0'])
-    lyr = ds.GetLayer(0)
-    f = lyr.GetNextFeature()
-    for i in range(lyr.GetLayerDefn().GetFieldCount()):
-        assert (lyr.GetLayerDefn().GetFieldDefn(i).GetType() == ogr.OFTString and \
-           lyr.GetLayerDefn().GetFieldDefn(i).GetWidth() == 0)
-        if f.GetField(i) != col_values[i]:
-            f.DumpReadable()
-            pytest.fail(i)
+    def check_size_limit_0():
+        ds = gdal.OpenEx('data/csv/testtypeautodetect.csv', gdal.OF_VECTOR,
+                         open_options=['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=0'])
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        for i in range(lyr.GetLayerDefn().GetFieldCount()):
+            assert (lyr.GetLayerDefn().GetFieldDefn(i).GetType() == ogr.OFTString and \
+               lyr.GetLayerDefn().GetFieldDefn(i).GetWidth() == 0)
+            if f.GetField(i) != col_values[i]:
+                f.DumpReadable()
+                pytest.fail(i)
+
+    check_size_limit_0()
+    with gdaltest.config_option('OGR_CSV_SIMULATE_VSISTDIN', 'YES'):
+        with gdaltest.error_handler(): # a warning will be emitted
+            check_size_limit_0()
 
     # We limit to the first "1.5" line
-    ds = gdal.OpenEx('data/csv/testtypeautodetect.csv', gdal.OF_VECTOR,
-                     open_options=['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=300', 'QUOTED_FIELDS_AS_STRING=YES'])
-    lyr = ds.GetLayer(0)
-    f = lyr.GetNextFeature()
-    col_type = [ogr.OFTString, ogr.OFTReal, ogr.OFTInteger, ogr.OFTReal, ogr.OFTInteger, ogr.OFTString,
-                ogr.OFTDateTime, ogr.OFTDate, ogr.OFTDateTime, ogr.OFTDate, ogr.OFTTime,
-                ogr.OFTString, ogr.OFTString, ogr.OFTString, ogr.OFTInteger, ogr.OFTReal, ogr.OFTDateTime, ogr.OFTDate, ogr.OFTTime, ogr.OFTDateTime]
-    col_values = ['', 1.5, 1, 1.5, 2, '', '2014/09/27 19:01:00', '2014/09/27', '2014/09/27 20:00:00',
-                  '2014/09/27', '12:34:56', 'a', 'a', '1', 1, 1.5, '2014/09/27 19:01:00', '2014/09/27', '19:01:00', '2014/09/27 00:00:00+00']
-    for i in range(lyr.GetLayerDefn().GetFieldCount()):
-        assert (lyr.GetLayerDefn().GetFieldDefn(i).GetType() == col_type[i] and \
-           lyr.GetLayerDefn().GetFieldDefn(i).GetWidth() == 0)
-        if f.GetField(i) != col_values[i]:
-            f.DumpReadable()
-            pytest.fail(i)
+    def check_size_limit_300_quote_fields():
+        ds = gdal.OpenEx('data/csv/testtypeautodetect.csv', gdal.OF_VECTOR,
+                         open_options=['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=300', 'QUOTED_FIELDS_AS_STRING=YES'])
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        col_type = [ogr.OFTString, ogr.OFTReal, ogr.OFTInteger, ogr.OFTReal, ogr.OFTInteger, ogr.OFTString,
+                    ogr.OFTDateTime, ogr.OFTDate, ogr.OFTDateTime, ogr.OFTDate, ogr.OFTTime,
+                    ogr.OFTString, ogr.OFTString, ogr.OFTString, ogr.OFTInteger, ogr.OFTReal, ogr.OFTDateTime, ogr.OFTDate, ogr.OFTTime, ogr.OFTDateTime]
+        col_values = ['', 1.5, 1, 1.5, 2, '', '2014/09/27 19:01:00', '2014/09/27', '2014/09/27 20:00:00',
+                      '2014/09/27', '12:34:56', 'a', 'a', '1', 1, 1.5, '2014/09/27 19:01:00', '2014/09/27', '19:01:00', '2014/09/27 00:00:00+00']
+        for i in range(lyr.GetLayerDefn().GetFieldCount()):
+            assert (lyr.GetLayerDefn().GetFieldDefn(i).GetType() == col_type[i] and \
+               lyr.GetLayerDefn().GetFieldDefn(i).GetWidth() == 0)
+            if f.GetField(i) != col_values[i]:
+                f.DumpReadable()
+                pytest.fail(i)
+
+    check_size_limit_300_quote_fields()
+    with gdaltest.config_option('OGR_CSV_SIMULATE_VSISTDIN', 'YES'):
+        check_size_limit_300_quote_fields()
 
     # Without QUOTED_FIELDS_AS_STRING=YES, str3 will be detected as integer
     ds = gdal.OpenEx('data/csv/testtypeautodetect.csv', gdal.OF_VECTOR,
