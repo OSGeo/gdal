@@ -2803,24 +2803,34 @@ double OGRSpatialReference::GetTargetLinearUnits( const char *pszTargetKey,
             PJ* coordSys = nullptr;
             if( d->m_pjType == PJ_TYPE_COMPOUND_CRS )
             {
-                auto subCRS = proj_crs_get_sub_crs(
-                    d->getPROJContext(), d->m_pj_crs, 1);
-                if( subCRS && proj_get_type(subCRS) == PJ_TYPE_BOUND_CRS )
+                for(int iComponent = 0; iComponent < 2; iComponent++ )
                 {
-                    auto temp = proj_get_source_crs(
-                        d->getPROJContext(), subCRS);
-                    proj_destroy(subCRS);
-                    subCRS = temp;
+                    auto subCRS = proj_crs_get_sub_crs(
+                        d->getPROJContext(), d->m_pj_crs, iComponent);
+                    if( subCRS && proj_get_type(subCRS) == PJ_TYPE_BOUND_CRS )
+                    {
+                        auto temp = proj_get_source_crs(
+                            d->getPROJContext(), subCRS);
+                        proj_destroy(subCRS);
+                        subCRS = temp;
+                    }
+                    if( subCRS &&
+                        (proj_get_type(subCRS) == PJ_TYPE_PROJECTED_CRS ||
+                         proj_get_type(subCRS) == PJ_TYPE_ENGINEERING_CRS ||
+                         proj_get_type(subCRS) == PJ_TYPE_VERTICAL_CRS) )
+                    {
+                        coordSys = proj_crs_get_coordinate_system(
+                            d->getPROJContext(), subCRS);
+                        proj_destroy(subCRS);
+                        break;
+                    }
+                    else if( subCRS )
+                    {
+                        proj_destroy(subCRS);
+                    }
                 }
-                if( subCRS && proj_get_type(subCRS) == PJ_TYPE_VERTICAL_CRS )
+                if( coordSys == nullptr )
                 {
-                    coordSys = proj_crs_get_coordinate_system(
-                        d->getPROJContext(), subCRS);
-                    proj_destroy(subCRS);
-                }
-                else
-                {
-                    proj_destroy(subCRS);
                     d->undoDemoteFromBoundCRS();
                     break;
                 }

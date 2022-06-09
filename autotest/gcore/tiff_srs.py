@@ -996,3 +996,29 @@ def test_tiff_srs_datum_name_with_space():
     assert srs.GetAuthorityCode(None) == '4312'
     ds = None
     gdal.Unlink('/vsimem/test_tiff_srs_datum_name_with_space.tif')
+
+
+def test_tiff_srs_compound_crs_with_local_cs():
+
+    filename = '/vsimem/test_tiff_srs_compound_crs_with_local_cs.tif'
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput('COMPD_CS["COMPD_CS_name",LOCAL_CS["None",LOCAL_DATUM["None",32767],UNIT["Foot_US",0.304800609601219],AXIS["None",OTHER]],VERT_CS["VERT_CS_Name",VERT_DATUM["Local",2005],UNIT["Meter",1,AUTHORITY["EPSG","9001"]],AXIS["Gravity-related height",UP]]]')
+    ds = gdal.GetDriverByName('GTiff').Create(filename, 1, 1)
+    ds.SetSpatialRef(srs)
+    assert srs.IsCompound()
+    assert srs.GetLinearUnits() == pytest.approx(0.304800609601219)
+    gdal.ErrorReset()
+    ds = None
+    assert gdal.GetLastErrorMsg() == ''
+
+    ds = gdal.Open(filename)
+    gdal.ErrorReset()
+    srs = ds.GetSpatialRef()
+    assert gdal.GetLastErrorMsg() == '', srs.ExportToWkt(['FORMAT=WKT2_2019'])
+    assert srs.GetName() == 'COMPD_CS_name', srs.ExportToWkt(['FORMAT=WKT2_2019'])
+    assert srs.IsCompound(), srs.ExportToWkt(['FORMAT=WKT2_2019'])
+    assert srs.GetLinearUnits() == pytest.approx(0.304800609601219), srs.ExportToWkt(['FORMAT=WKT2_2019'])
+    assert srs.GetAttrValue('COMPD_CS|VERT_CS') == 'VERT_CS_Name', srs.ExportToWkt(['FORMAT=WKT2_2019'])
+    assert srs.GetAttrValue('COMPD_CS|VERT_CS|UNIT') in ('Meter', 'metre'), srs.ExportToWkt(['FORMAT=WKT2_2019'])
+    ds = None
+    gdal.Unlink(filename)
