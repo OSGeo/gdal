@@ -127,7 +127,7 @@ The following C functions are added:
 However, there are some issues with adding plain C arrays to the public
 OGR interface due to the SWIG based wrapping, see for example `GDAL-Dev
 Mail from
-Tamas <http://lists.maptools.org/pipermail/gdal-dev/2007-May/013092.html>`__...
+Tamas <http://lists.gdal.org/pipermail/gdal-dev/2007-May/013092.html>`__...
 
 *Additional Notes*
 
