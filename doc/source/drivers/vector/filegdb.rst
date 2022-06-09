@@ -180,6 +180,13 @@ Layer Creation Options
 -  **CONFIGURATION_KEYWORD**\ =DEFAULTS/TEXT_UTF16/MAX_FILE_SIZE_4GB/MAX_FILE_SIZE_256TB/GEOMETRY_OUTOFLINE/BLOB_OUTOFLINE/GEOMETRY_AND_BLOB_OUTOFLINE
    : Customize how data is stored. By default text in
    UTF-8 and data up to 1TB
+-  **CREATE_SHAPE_AREA_AND_LENGTH_FIELDS**\ =YES/NO. (GDAL >= 3.6.0)
+   Defaults to NO (through CreateLayer() API). When this option is set,
+   a Shape_Area and Shape_Length special fields will be created for polygonal
+   layers (Shape_Length only for linear layers). When using ogr2ogr with a
+   source layer that has Shape_Area/Shape_Length special fields, and this option
+   is not explicitly set, it will be automatically set, so that the resulting
+   FileGeodatabase has those fields properly tagged.
 
 Configuration options
 ---------------------
