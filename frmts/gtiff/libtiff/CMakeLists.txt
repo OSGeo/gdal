@@ -86,7 +86,7 @@ if (NOT GDAL_USE_ZLIB_INTERNAL)
   gdal_target_link_libraries(libtiff PRIVATE ZLIB::ZLIB)
 endif ()
 
-if (NOT GDAL_USE_JPEG_INTERNAL)
+if (GDAL_USE_JPEG AND NOT GDAL_USE_JPEG_INTERNAL)
   # Use a separate object library so that external libjpeg headers are only applied to tif_jpeg.c and tif_ojpeg.c, but
   # not tif_jpeg_12.c !
   add_library(libtiff_jpeg OBJECT tif_jpeg.c tif_ojpeg.c)
@@ -109,9 +109,9 @@ if (GDAL_USE_DEFLATE)
   gdal_target_link_libraries(libtiff PRIVATE Deflate::Deflate)
 endif ()
 
-if (GDAL_USE_JPEG12_INTERNAL)
+if ((GDAL_USE_JPEG OR GDAL_USE_JPEG_INTERNAL) AND GDAL_USE_JPEG12_INTERNAL)
   target_sources(libtiff PRIVATE tif_jpeg_12.c)
-  target_compile_definitions(libtiff PRIVATE -DJPEG_SUPPORT -DJPEG_DUAL_MODE_8_12)
+  target_compile_definitions(libtiff PRIVATE -DJPEG_DUAL_MODE_8_12)
   target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:libjpeg12,BINARY_DIR>)
 endif ()
 

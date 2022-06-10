@@ -3707,6 +3707,27 @@ namespace tut
 #endif
     }
 
+    // VERY MINIMAL testing of VSI plugin functionality
+    template<>
+    template<>
+    void object::test<56>()
+    {
+        auto psCallbacks = VSIAllocFilesystemPluginCallbacksStruct();
+        psCallbacks->open = []( void *pUserData, const char *pszFilename, const char *pszAccess ) -> void*
+        {
+            (void)pUserData;
+            if( strcmp(pszFilename, "test") == 0 && strcmp(pszAccess, "rb") == 0 )
+                return const_cast<char*>("ok");
+            return nullptr;
+        };
+        ensure_equals(VSIInstallPluginHandler("/vsimyplugin/", psCallbacks), 0);
+        VSIFreeFilesystemPluginCallbacksStruct(psCallbacks);
+        VSILFILE* fp = VSIFOpenL("/vsimyplugin/test", "rb");
+        ensure(fp != nullptr);
+        VSIFCloseL(fp);
+        ensure(VSIFOpenL("/vsimyplugin/i_dont_exist", "rb") == nullptr);
+    }
+
     // WARNING: keep that line at bottom and read carefully:
     // If the number of tests reaches 100, increase the MAX_NUMBER_OF_TESTS
     // define at top of this file (and update this comment!)

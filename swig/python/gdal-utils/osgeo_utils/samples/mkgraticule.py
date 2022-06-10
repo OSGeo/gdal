@@ -62,7 +62,8 @@ def Usage():
     print('Usage: mkgraticule [-connected] [-s stepsize] [-substep substepsize]')
     print('         [-t_srs srs] [-range xmin ymin xmax ymax] outfile')
     print('')
-    return 1
+    print('Defaults to: not connected, step & substep of 5.0, no SRS, range -180,-90 180,90')
+    return 2
 
 
 def main(argv=sys.argv):
@@ -107,7 +108,8 @@ def main(argv=sys.argv):
         i = i + 1
 
     if outfile is None:
-        outfile = "graticule.shp"
+        print('''\nNo outfile specified, e.g. 'graticule.shp'.\n''')
+        return Usage()
 
 
     if substepsize > stepsize:

@@ -2912,14 +2912,14 @@ struct GDALAntiRecursionStruct
     {
         std::string osFilename;
         int         nOpenFlags;
-        int         nSizeAllowedDrivers;
+        std::string osAllowedDrivers;
 
         DatasetContext(const std::string& osFilenameIn,
                         int nOpenFlagsIn,
-                        int nSizeAllowedDriversIn) :
+                        const std::string& osAllowedDriversIn) :
             osFilename(osFilenameIn),
             nOpenFlags(nOpenFlagsIn),
-            nSizeAllowedDrivers(nSizeAllowedDriversIn) {}
+            osAllowedDrivers(osAllowedDriversIn) {}
     };
 
     struct DatasetContextCompare {
@@ -2928,7 +2928,7 @@ struct GDALAntiRecursionStruct
                     (lhs.osFilename == rhs.osFilename &&
                     (lhs.nOpenFlags < rhs.nOpenFlags ||
                         (lhs.nOpenFlags == rhs.nOpenFlags &&
-                        lhs.nSizeAllowedDrivers < rhs.nSizeAllowedDrivers)));
+                        lhs.osAllowedDrivers < rhs.osAllowedDrivers)));
         }
     };
 
@@ -3031,7 +3031,7 @@ char **GDALDataset::GetFileList()
 
     GDALAntiRecursionStruct& sAntiRecursion = GetAntiRecursion();
     const GDALAntiRecursionStruct::DatasetContext datasetCtxt(
-        osMainFilename, 0, 0);
+        osMainFilename, 0, std::string());
     auto& aosDatasetList = sAntiRecursion.aosDatasetNamesWithFlags;
     if( aosDatasetList.find(datasetCtxt) != aosDatasetList.end() )
         return nullptr;
@@ -3407,8 +3407,11 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
         return nullptr;
     }
 
+    std::string osAllowedDrivers;
+    for( CSLConstList papszIter = papszAllowedDrivers; papszIter && *papszIter; ++papszIter )
+        osAllowedDrivers += *papszIter;
     auto dsCtxt = GDALAntiRecursionStruct::DatasetContext(
-        std::string(pszFilename), nOpenFlags, CSLCount(papszAllowedDrivers));
+        std::string(pszFilename), nOpenFlags, osAllowedDrivers);
     if( sAntiRecursion.aosDatasetNamesWithFlags.find(dsCtxt) !=
                 sAntiRecursion.aosDatasetNamesWithFlags.end() )
     {

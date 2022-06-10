@@ -35,7 +35,7 @@ from osgeo import gdal
 
 def Usage():
     print('Usage: gdal_zip [-r] zip_filename source_file*')
-    return -1
+    return 2
 
 
 def copy_file(srcfile, targetfile, recurse):

@@ -2803,24 +2803,34 @@ double OGRSpatialReference::GetTargetLinearUnits( const char *pszTargetKey,
             PJ* coordSys = nullptr;
             if( d->m_pjType == PJ_TYPE_COMPOUND_CRS )
             {
-                auto subCRS = proj_crs_get_sub_crs(
-                    d->getPROJContext(), d->m_pj_crs, 1);
-                if( subCRS && proj_get_type(subCRS) == PJ_TYPE_BOUND_CRS )
+                for(int iComponent = 0; iComponent < 2; iComponent++ )
                 {
-                    auto temp = proj_get_source_crs(
-                        d->getPROJContext(), subCRS);
-                    proj_destroy(subCRS);
-                    subCRS = temp;
+                    auto subCRS = proj_crs_get_sub_crs(
+                        d->getPROJContext(), d->m_pj_crs, iComponent);
+                    if( subCRS && proj_get_type(subCRS) == PJ_TYPE_BOUND_CRS )
+                    {
+                        auto temp = proj_get_source_crs(
+                            d->getPROJContext(), subCRS);
+                        proj_destroy(subCRS);
+                        subCRS = temp;
+                    }
+                    if( subCRS &&
+                        (proj_get_type(subCRS) == PJ_TYPE_PROJECTED_CRS ||
+                         proj_get_type(subCRS) == PJ_TYPE_ENGINEERING_CRS ||
+                         proj_get_type(subCRS) == PJ_TYPE_VERTICAL_CRS) )
+                    {
+                        coordSys = proj_crs_get_coordinate_system(
+                            d->getPROJContext(), subCRS);
+                        proj_destroy(subCRS);
+                        break;
+                    }
+                    else if( subCRS )
+                    {
+                        proj_destroy(subCRS);
+                    }
                 }
-                if( subCRS && proj_get_type(subCRS) == PJ_TYPE_VERTICAL_CRS )
+                if( coordSys == nullptr )
                 {
-                    coordSys = proj_crs_get_coordinate_system(
-                        d->getPROJContext(), subCRS);
-                    proj_destroy(subCRS);
-                }
-                else
-                {
-                    proj_destroy(subCRS);
                     d->undoDemoteFromBoundCRS();
                     break;
                 }
@@ -3513,6 +3523,33 @@ CSLConstList OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()
 }
 
 /************************************************************************/
+/*                      RemoveIDFromMemberOfEnsembles()                 */
+/************************************************************************/
+
+static void RemoveIDFromMemberOfEnsembles(CPLJSONObject& obj)
+{
+    // Remove "id" from members of datum ensembles for compatibility with
+    // older PROJ versions
+    // Cf https://github.com/opengeospatial/geoparquet/discussions/110
+    // and https://github.com/OSGeo/PROJ/pull/3221
+    if( obj.GetType() == CPLJSONObject::Type::Object )
+    {
+        for( auto& subObj: obj.GetChildren() )
+        {
+            RemoveIDFromMemberOfEnsembles(subObj);
+        }
+    }
+    else if( obj.GetType() == CPLJSONObject::Type::Array &&
+             obj.GetName() == "members" )
+    {
+        for( auto& subObj: obj.ToArray() )
+        {
+            subObj.Delete("id");
+        }
+    }
+}
+
+/************************************************************************/
 /*                          SetFromUserInput()                          */
 /************************************************************************/
 
@@ -3732,15 +3769,39 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition,
          strstr(pszDefinition, "ProjectedCRS") ||
          strstr(pszDefinition, "VerticalCRS") ||
          strstr(pszDefinition, "BoundCRS") ||
-         strstr(pszDefinition, "CompoundCRS")) )
+         strstr(pszDefinition, "CompoundCRS") ||
+         strstr(pszDefinition, "DerivedGeodeticCRS") ||
+         strstr(pszDefinition, "DerivedGeographicCRS") ||
+         strstr(pszDefinition, "DerivedProjectedCRS") ||
+         strstr(pszDefinition, "DerivedVerticalCRS") ||
+         strstr(pszDefinition, "EngineeringCRS") ||
+         strstr(pszDefinition, "DerivedEngineeringCRS") ||
+         strstr(pszDefinition, "ParametricCRS") ||
+         strstr(pszDefinition, "DerivedParametricCRS") ||
+         strstr(pszDefinition, "TemporalCRS") ||
+         strstr(pszDefinition, "DerivedTemporalCRS")) )
     {
-        auto obj = proj_create(d->getPROJContext(), pszDefinition);
-        if( !obj )
+        PJ* pj;
+        if( strstr(pszDefinition, "datum_ensemble") != nullptr )
+        {
+            // PROJ < 9.0.1 doesn't like a datum_ensemble whose member have
+            // a unknown id.
+            CPLJSONDocument oCRSDoc;
+            oCRSDoc.LoadMemory(pszDefinition);
+            CPLJSONObject oCRSRoot = oCRSDoc.GetRoot();
+            RemoveIDFromMemberOfEnsembles(oCRSRoot);
+            pj = proj_create(d->getPROJContext(), oCRSRoot.ToString().c_str());
+        }
+        else
+        {
+            pj = proj_create(d->getPROJContext(), pszDefinition);
+        }
+        if( !pj )
         {
             return OGRERR_FAILURE;
         }
         Clear();
-        d->setPjCRS(obj);
+        d->setPjCRS(pj);
         return OGRERR_NONE;
     }
 

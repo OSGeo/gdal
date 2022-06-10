@@ -292,8 +292,7 @@ int swqlex( YYSTYPE *ppNode, swq_parse_context *context )
             nReturn = SWQT_OFFSET;
 
         // Unhandled by OGR SQL.
-        else if( EQUAL(osToken, "LIMIT") ||
-                 EQUAL(osToken, "OUTER") ||
+        else if( EQUAL(osToken, "OUTER") ||
                  EQUAL(osToken, "INNER") )
             nReturn = SWQT_RESERVED_KEYWORD;
 

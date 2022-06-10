@@ -109,6 +109,9 @@ if (BUILD_APPS)
 
   add_custom_target(gdalapps DEPENDS ${APPS_TARGETS})
   foreach (UTILCMD IN ITEMS ${APPS_TARGETS})
+    if (WIN32)
+        target_sources(${UTILCMD} PRIVATE longpathaware.manifest)
+    endif()
     # Add that include directory before all others so the gdal_version.h from it is included and not
     # gcore/gdal_version.h
     target_include_directories(${UTILCMD} PRIVATE $<TARGET_PROPERTY:gcore,BINARY_DIR>/gdal_version_full)
@@ -153,6 +156,9 @@ if (BUILD_APPS)
           multireadtest
           test_ogrsf
           testreprojmulti)
+    if (WIN32)
+        target_sources(${UTILCMD} PRIVATE longpathaware.manifest)
+    endif()
     # Add that include directory before all others so the gdal_version.h from it is included and not
     # gcore/gdal_version.h
     target_include_directories(${UTILCMD} PRIVATE $<TARGET_PROPERTY:gcore,BINARY_DIR>/gdal_version_full)

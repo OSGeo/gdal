@@ -68,6 +68,7 @@ set(CPL_SOURCES
     cpl_vsil_tar.cpp
     cpl_vsil_stdin.cpp
     cpl_vsil_buffered_reader.cpp
+    cpl_vsil_plugin.cpp
     cpl_base64.cpp
     cpl_vsil_curl.cpp
     cpl_vsil_curl_streaming.cpp

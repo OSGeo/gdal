@@ -1644,33 +1644,35 @@ char* FGdbLayer::CreateFieldDefn(OGRFieldDefn& oField,
     else
     {
         /* Clean field names */
-        fieldname_clean = FGDBLaunderName(fieldname);
+        std::wstring wfieldname_clean = FGDBLaunderName(StringToWString(fieldname));
 
         if (m_bLaunderReservedKeywords)
-            fieldname_clean = FGDBEscapeReservedKeywords(fieldname_clean);
+            wfieldname_clean = FGDBEscapeReservedKeywords(wfieldname_clean);
 
         /* Truncate to 64 characters */
-        if (fieldname_clean.size() > 64)
-            fieldname_clean.resize(64);
-
-        std::string temp_fieldname = fieldname_clean;
+        constexpr size_t FIELD_NAME_MAX_SIZE = 64;
+        if (wfieldname_clean.size() > FIELD_NAME_MAX_SIZE)
+            wfieldname_clean.resize(FIELD_NAME_MAX_SIZE);
 
         /* Ensures uniqueness of field name */
         int numRenames = 1;
-        while ((m_pFeatureDefn->GetFieldIndex(temp_fieldname.c_str()) >= 0) && (numRenames < 10))
+        while ((m_pFeatureDefn->GetFieldIndex(WStringToString(wfieldname_clean).c_str()) >= 0) && (numRenames < 10))
         {
-            temp_fieldname = CPLSPrintf("%s_%d", fieldname_clean.substr(0, 62).c_str(), numRenames);
+            wfieldname_clean = StringToWString(
+                CPLSPrintf("%s_%d", WStringToString(wfieldname_clean.substr(0, FIELD_NAME_MAX_SIZE-2)).c_str(), numRenames));
             numRenames ++;
         }
-        while ((m_pFeatureDefn->GetFieldIndex(temp_fieldname.c_str()) >= 0) && (numRenames < 100))
+        while ((m_pFeatureDefn->GetFieldIndex(WStringToString(wfieldname_clean).c_str()) >= 0) && (numRenames < 100))
         {
-            temp_fieldname = CPLSPrintf("%s_%d", fieldname_clean.substr(0, 61).c_str(), numRenames);
+            wfieldname_clean = StringToWString(
+                CPLSPrintf("%s_%d", WStringToString(wfieldname_clean.substr(0, FIELD_NAME_MAX_SIZE-3)).c_str(), numRenames));
             numRenames ++;
         }
 
-        if (temp_fieldname != fieldname)
+        fieldname_clean = WStringToString(wfieldname_clean);
+        if (fieldname_clean != fieldname)
         {
-            if( !bApproxOK || (m_pFeatureDefn->GetFieldIndex(temp_fieldname.c_str()) >= 0) )
+            if( !bApproxOK || (m_pFeatureDefn->GetFieldIndex(fieldname_clean.c_str()) >= 0) )
             {
                 CPLError( CE_Failure, CPLE_NotSupported,
                     "Failed to add field named '%s'",
@@ -1679,9 +1681,8 @@ char* FGdbLayer::CreateFieldDefn(OGRFieldDefn& oField,
             }
             CPLError(CE_Warning, CPLE_NotSupported,
                 "Normalized/laundered field name: '%s' to '%s'",
-                fieldname.c_str(), temp_fieldname.c_str());
+                fieldname.c_str(), fieldname_clean.c_str());
 
-            fieldname_clean = temp_fieldname;
             oField.SetName(fieldname_clean.c_str());
         }
     }
@@ -2124,11 +2125,12 @@ static CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS, char** papszO
     }
 
     /* Handle Origin/Scale/Tolerance */
-    const char* grid[7] = {
+    const char* grid[10] = {
       "XOrigin", "YOrigin", "XYScale",
       "ZOrigin", "ZScale",
-      "XYTolerance", "ZTolerance" };
-    const char* gridvalues[7];
+      "MOrigin", "MScale",
+      "XYTolerance", "ZTolerance", "MTolerance" };
+    const char* gridvalues[10];
 
     /*
     Need different default parameters for geographic and projected coordinate systems.
@@ -2139,9 +2141,15 @@ static CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS, char** papszO
     // default scale is 10x the tolerance
     long zscale = (long)(1 / ztol * 10);
 
-    char s_xyscale[50], s_xytol[50], s_zscale[50], s_ztol[50];
+    double mtol = 0.001;
+    long mscale = (long)(1 / mtol * 10);
+
+    char s_xyscale[50], s_xytol[50], s_zscale[50], s_ztol[50], s_mscale[50], s_mtol[50];
     CPLsnprintf(s_ztol, 50, "%f", ztol);
     snprintf(s_zscale, 50, "%ld", zscale);
+
+    CPLsnprintf(s_mtol, 50, "%f", mtol);
+    snprintf(s_mscale, 50, "%ld", mscale);
 
     if ( poSRS == nullptr || poSRS->IsProjected() )
     {
@@ -2159,8 +2167,11 @@ static CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS, char** papszO
         gridvalues[2] = s_xyscale;
         gridvalues[3] = "-100000";
         gridvalues[4] = s_zscale;
-        gridvalues[5] = s_xytol;
-        gridvalues[6] = s_ztol;
+        gridvalues[5] = "-100000";
+        gridvalues[6] = s_mscale;
+        gridvalues[7] = s_xytol;
+        gridvalues[8] = s_ztol;
+        gridvalues[9] = s_mtol;
     }
     else
     {
@@ -2169,12 +2180,15 @@ static CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS, char** papszO
         gridvalues[2] = "1000000000";
         gridvalues[3] = "-100000";
         gridvalues[4] = s_zscale;
-        gridvalues[5] = "0.000000008983153";
-        gridvalues[6] = s_ztol;
+        gridvalues[5] = "-100000";
+        gridvalues[6] = s_mscale;
+        gridvalues[7] = "0.000000008983153";
+        gridvalues[8] = s_ztol;
+        gridvalues[9] = s_mtol;
     }
 
     /* Convert any layer creation options available, use defaults otherwise */
-    for( int i = 0; i < 7; i++ )
+    for( int i = 0; i < 10; i++ )
     {
         if ( CSLFetchNameValue( papszOptions, grid[i] ) != nullptr )
             gridvalues[i] = CSLFetchNameValue( papszOptions, grid[i] );
@@ -2302,28 +2316,35 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
 #endif
 
     /* Launder the Layer name */
-    std::string layerName;
+    std::wstring wlayerName;
 
-    layerName = FGDBLaunderName(pszLayerNameIn);
-    layerName = FGDBEscapeReservedKeywords(layerName);
-    layerName = FGDBEscapeUnsupportedPrefixes(layerName);
+    wlayerName = FGDBLaunderName(StringToWString(pszLayerNameIn));
+    wlayerName = FGDBEscapeReservedKeywords(wlayerName);
+    wlayerName = FGDBEscapeUnsupportedPrefixes(wlayerName);
 
-    if (layerName.size() > 160)
-        layerName.resize(160);
+    // https://desktop.arcgis.com/en/arcmap/latest/manage-data/administer-file-gdbs/file-geodatabase-size-and-name-limits.htm document 160 character limit
+    // but https://desktop.arcgis.com/en/arcmap/latest/manage-data/tables/fundamentals-of-adding-and-deleting-fields.htm#GUID-8E190093-8F8F-4132-AF4F-B0C9220F76B3 mentions 64.
+    // let be optimistic and aim for 160
+    constexpr size_t TABLE_NAME_MAX_SIZE = 160;
+    if (wlayerName.size() > TABLE_NAME_MAX_SIZE)
+        wlayerName.resize(TABLE_NAME_MAX_SIZE);
 
     /* Ensures uniqueness of layer name */
     int numRenames = 1;
-    while ((pParentDataSource->GetLayerByName(layerName.c_str()) != nullptr) && (numRenames < 10))
+    while ((pParentDataSource->GetLayerByName(WStringToString(wlayerName).c_str()) != nullptr) && (numRenames < 10))
     {
-        layerName = CPLSPrintf("%s_%d", layerName.substr(0, 158).c_str(), numRenames);
+        wlayerName = StringToWString(
+            CPLSPrintf("%s_%d", WStringToString(wlayerName.substr(0, TABLE_NAME_MAX_SIZE-2)).c_str(), numRenames));
         numRenames ++;
     }
-    while ((pParentDataSource->GetLayerByName(layerName.c_str()) != nullptr) && (numRenames < 100))
+    while ((pParentDataSource->GetLayerByName(WStringToString(wlayerName).c_str()) != nullptr) && (numRenames < 100))
     {
-        layerName = CPLSPrintf("%s_%d", layerName.substr(0, 157).c_str(), numRenames);
+        wlayerName = StringToWString(
+            CPLSPrintf("%s_%d", WStringToString(wlayerName.substr(0, TABLE_NAME_MAX_SIZE-3)).c_str(), numRenames));
         numRenames ++;
     }
 
+    const std::string layerName = WStringToString(wlayerName);
     if (layerName != pszLayerNameIn)
     {
         CPLError(CE_Warning, CPLE_NotSupported,
@@ -2626,7 +2647,7 @@ bool FGdbLayer::Initialize(FGdbDataSource* pParentDataSource, Table* pTable,
         return GDBErr(hr, "Failed at getting table definition for " +
                       WStringToString(wstrTablePath));
 
-    //xxx  printf("Table definition = %s", tableDef.c_str() );
+    // CPLDebug("FGDB", "tableDef = %s", tableDef.c_str());
 
     bool abort = false;
 
@@ -2659,17 +2680,11 @@ bool FGdbLayer::Initialize(FGdbDataSource* pParentDataSource, Table* pTable,
             {
                 if (EQUAL(psNode->pszValue,"OIDFieldName") )
                 {
-                    char* pszUnescaped = CPLUnescapeString(
-                    psNode->psChild->pszValue, nullptr, CPLES_XML);
-                    m_strOIDFieldName = pszUnescaped;
-                    CPLFree(pszUnescaped);
+                    m_strOIDFieldName = CPLGetXMLValue(psNode, nullptr, "");
                 }
                 else if (EQUAL(psNode->pszValue,"ShapeFieldName") )
                 {
-                    char* pszUnescaped = CPLUnescapeString(
-                    psNode->psChild->pszValue, nullptr, CPLES_XML);
-                    m_strShapeFieldName = pszUnescaped;
-                    CPLFree(pszUnescaped);
+                    m_strShapeFieldName = CPLGetXMLValue(psNode, nullptr, "");
                 }
                 else if (EQUAL(psNode->pszValue,"Fields") )
                 {
@@ -2729,12 +2744,7 @@ bool FGdbLayer::ParseGeometryDef(CPLXMLNode* psRoot)
         {
             if (EQUAL(psGeometryDefItem->pszValue,"GeometryType"))
             {
-                char* pszUnescaped = CPLUnescapeString(
-                    psGeometryDefItem->psChild->pszValue, nullptr, CPLES_XML);
-
-                geometryType = pszUnescaped;
-
-                CPLFree(pszUnescaped);
+                geometryType = CPLGetXMLValue(psGeometryDefItem, nullptr, "");
             }
             else if (EQUAL(psGeometryDefItem->pszValue,"SpatialReference"))
             {
@@ -2743,22 +2753,13 @@ bool FGdbLayer::ParseGeometryDef(CPLXMLNode* psRoot)
             }
             else if (EQUAL(psGeometryDefItem->pszValue,"HasM"))
             {
-                char* pszUnescaped = CPLUnescapeString(psGeometryDefItem->psChild->pszValue, nullptr, CPLES_XML);
-
-                if (!strcmp(pszUnescaped, "true"))
+                if (!strcmp(CPLGetXMLValue(psGeometryDefItem, nullptr, ""), "true"))
                     hasM = true;
-
-                CPLFree(pszUnescaped);
             }
             else if (EQUAL(psGeometryDefItem->pszValue,"HasZ"))
             {
-                char* pszUnescaped = CPLUnescapeString(
-                    psGeometryDefItem->psChild->pszValue, nullptr, CPLES_XML);
-
-                if (!strcmp(pszUnescaped, "true"))
-                hasZ = true;
-
-                CPLFree(pszUnescaped);
+                if (!strcmp(CPLGetXMLValue(psGeometryDefItem, nullptr, ""), "true"))
+                    hasZ = true;
             }
         }
     }
@@ -2854,9 +2855,7 @@ bool FGdbLayer::ParseSpatialReference(CPLXMLNode* psSpatialRefNode,
             psSRItemNode->psChild != nullptr &&
             EQUAL(psSRItemNode->pszValue,"WKID") )
         {
-            char* pszUnescaped = CPLUnescapeString(psSRItemNode->psChild->pszValue, nullptr, CPLES_XML);
-            *pOutWKID = pszUnescaped;
-            CPLFree(pszUnescaped);
+            *pOutWKID = CPLGetXMLValue(psSRItemNode, nullptr, "");
 
             // Needed with FileGDB v1.4 with layers with empty SRS
             if( *pOutWKID == "0" )
@@ -2867,18 +2866,14 @@ bool FGdbLayer::ParseSpatialReference(CPLXMLNode* psSpatialRefNode,
             psSRItemNode->psChild != nullptr &&
             EQUAL(psSRItemNode->pszValue,"LatestWKID") )
         {
-            char* pszUnescaped = CPLUnescapeString(psSRItemNode->psChild->pszValue, nullptr, CPLES_XML);
-            *pOutLatestWKID = pszUnescaped;
-            CPLFree(pszUnescaped);
+            *pOutLatestWKID = CPLGetXMLValue(psSRItemNode, nullptr, "");
         }
         /* The WKT well-known text can be converted by OGR */
         else if( psSRItemNode->eType == CXT_Element &&
                 psSRItemNode->psChild != nullptr &&
                 EQUAL(psSRItemNode->pszValue,"WKT") )
         {
-            char* pszUnescaped = CPLUnescapeString(psSRItemNode->psChild->pszValue, nullptr, CPLES_XML);
-            *pOutWkt = pszUnescaped;
-            CPLFree(pszUnescaped);
+            *pOutWkt = CPLGetXMLValue(psSRItemNode, nullptr, "");
         }
     }
     return *pOutWkt != "" || *pOutWKID != "";
@@ -2904,7 +2899,6 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode* psRoot)
     //CPLAssert(ogrToESRIFieldMapping.size() == pOGRFeatureDef->GetFieldCount());
 
     CPLXMLNode* psFieldNode;
-    int bShouldQueryOpenFileGDB = FALSE;
 
     for( psFieldNode = psRoot->psChild;
         psFieldNode != nullptr;
@@ -2936,26 +2930,18 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode* psRoot)
             {
                 if (psFieldItemNode->eType == CXT_Element)
                 {
+                    const char* pszValue = CPLGetXMLValue(psFieldItemNode, nullptr, "");
                     if (EQUAL(psFieldItemNode->pszValue,"Name"))
                     {
-                        char* pszUnescaped = CPLUnescapeString(
-                            psFieldItemNode->psChild->pszValue, nullptr, CPLES_XML);
-                        fieldName = pszUnescaped;
-                        CPLFree(pszUnescaped);
+                        fieldName = pszValue;
                     }
                     else if (EQUAL(psFieldItemNode->pszValue,"AliasName"))
                     {
-                        char* pszUnescaped = CPLUnescapeString(
-                            psFieldItemNode->psChild->pszValue, nullptr, CPLES_XML);
-                        fieldAlias = pszUnescaped;
-                        CPLFree(pszUnescaped);
+                        fieldAlias = pszValue;
                     }
                     else if (EQUAL(psFieldItemNode->pszValue,"Type") )
                     {
-                        char* pszUnescaped = CPLUnescapeString(
-                            psFieldItemNode->psChild->pszValue, nullptr, CPLES_XML);
-                        fieldType = pszUnescaped;
-                        CPLFree(pszUnescaped);
+                        fieldType = pszValue;
                     }
                     else if (EQUAL(psFieldItemNode->pszValue,"GeometryDef") )
                     {
@@ -2964,19 +2950,19 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode* psRoot)
                     }
                     else if (EQUAL(psFieldItemNode->pszValue,"Length") )
                     {
-                        nLength = atoi(psFieldItemNode->psChild->pszValue);
+                        nLength = atoi(pszValue);
                     }
                     else if (EQUAL(psFieldItemNode->pszValue,"Precision") )
                     {
-                        //nPrecision = atoi(psFieldItemNode->psChild->pszValue);
+                        //nPrecision = atoi(pszValue);
                     }
                     else if (EQUAL(psFieldItemNode->pszValue,"IsNullable") )
                     {
-                        bNullable = EQUAL(psFieldItemNode->psChild->pszValue, "true");
+                        bNullable = EQUAL(pszValue, "true");
                     }
                     else if (EQUAL(psFieldItemNode->pszValue,"DefaultValue"))
                     {
-                        osDefault = CPLGetXMLValue(psFieldItemNode, nullptr, "");
+                        osDefault = pszValue;
                     }
                     // NOTE: when using the GetDefinition() API, the domain name
                     // is set in <Domain><DomainName>, whereas the raw XML is
@@ -3059,7 +3045,6 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode* psRoot)
 
                     fieldTemplate.SetDefault(osDefault.c_str());
 #endif
-                    bShouldQueryOpenFileGDB = TRUE;
                 }
                 else if( ogrType == OFTDateTime )
                 {
@@ -3090,25 +3075,38 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode* psRoot)
     }
 
     /* Using OpenFileGDB to get reliable default values for integer/real fields */
-    if( bShouldQueryOpenFileGDB )
+    /* and alias */
     {
-        const char* apszDrivers[] = { "OpenFileGDB", nullptr };
-        GDALDataset* poDS = (GDALDataset*) GDALOpenEx(m_pDS->GetFSName(),
-                            GDAL_OF_VECTOR, (char**)apszDrivers, nullptr, nullptr);
+        const char* const apszDrivers[] = { "OpenFileGDB", nullptr };
+        GDALDataset* poDS = GDALDataset::Open(m_pDS->GetFSName(),
+                            GDAL_OF_VECTOR, apszDrivers, nullptr, nullptr);
         if( poDS != nullptr )
         {
             OGRLayer* poLyr = poDS->GetLayerByName(GetName());
             if( poLyr )
             {
-                for(int i=0;i<poLyr->GetLayerDefn()->GetFieldCount();i++)
+                const auto poOFGBLayerDefn = poLyr->GetLayerDefn();
+                const int nOFGDBFieldCount = poOFGBLayerDefn->GetFieldCount();
+                for(int i=0;i<nOFGDBFieldCount;i++)
                 {
-                    OGRFieldDefn* poSrcDefn = poLyr->GetLayerDefn()->GetFieldDefn(i);
+                    const OGRFieldDefn* poSrcDefn = poOFGBLayerDefn->GetFieldDefn(i);
                     if( (poSrcDefn->GetType() == OFTInteger || poSrcDefn->GetType() == OFTReal) &&
-                        poSrcDefn->GetDefault() != nullptr )
+                        poSrcDefn->GetDefault() != nullptr)
                     {
                         int nIdxDst = m_pFeatureDefn->GetFieldIndex(poSrcDefn->GetNameRef());
                         if( nIdxDst >= 0 )
                             m_pFeatureDefn->GetFieldDefn(nIdxDst)->SetDefault(poSrcDefn->GetDefault());
+                    }
+
+                    // XML parsing by the SDK fails when there are special characters,
+                    // like &, so fallback to using OpenFileGDB.
+                    const char* pszAlternativeName = poSrcDefn->GetAlternativeNameRef();
+                    if( pszAlternativeName != nullptr && pszAlternativeName[0] != '\0' &&
+                        strcmp(pszAlternativeName, poSrcDefn->GetNameRef()) != 0 )
+                    {
+                        int nIdxDst = m_pFeatureDefn->GetFieldIndex(poSrcDefn->GetNameRef());
+                        if( nIdxDst >= 0 )
+                            m_pFeatureDefn->GetFieldDefn(nIdxDst)->SetAlternativeName(pszAlternativeName);
                     }
                 }
             }

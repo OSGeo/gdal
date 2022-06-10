@@ -32,8 +32,13 @@
 import os
 import sys
 
+def Usage():
+    print(f'Usage: {sys.argv[0]} -- This is a sample. Read source to know how to use. --')
+    return 2
 
 def main(argv=sys.argv):
+    if len(sys.argv) < 2:
+        return Usage()
     fout = open(argv[1], "wb")
     fout.write('FUZZER_FRIENDLY_ARCHIVE\n'.encode('ascii'))
     for filename in argv[2:]:

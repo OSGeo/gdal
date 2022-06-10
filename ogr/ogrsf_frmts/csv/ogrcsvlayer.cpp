@@ -914,24 +914,24 @@ static bool OGRCSVIsFalse(const char *pszStr)
 char **OGRCSVLayer::AutodetectFieldTypes(char **papszOpenOptions,
                                          int nFieldCount)
 {
-    // Use 1000000 as default maximum distance to be compatible with /vsistdin/
+    const bool bStreaming = STARTS_WITH(pszFilename, "/vsistdin") ||
+        // config option for testing purposes only
+        CPLTestBool(CPLGetConfigOption("OGR_CSV_SIMULATE_VSISTDIN", "NO"));
+    constexpr int STREAMING_LIMIT = 1000 * 1000;
+    // Use 1 000 000 as default maximum distance to be compatible with /vsistdin/
     // caching.
-    int nBytes = atoi(CSLFetchNameValueDef(papszOpenOptions,
-                                           "AUTODETECT_SIZE_LIMIT", "1000000"));
-    if( nBytes == 0 )
+    vsi_l_offset nBytes = static_cast<vsi_l_offset>(
+        CPLAtoGIntBig(CSLFetchNameValueDef(papszOpenOptions,
+               "AUTODETECT_SIZE_LIMIT", CPLSPrintf("%d", STREAMING_LIMIT))));
+    if( bStreaming && (nBytes == 0 || nBytes > STREAMING_LIMIT) )
     {
-        const vsi_l_offset nCurPos = VSIFTellL(fpCSV);
-        CPL_IGNORE_RET_VAL(VSIFSeekL(fpCSV, 0, SEEK_END));
-        const vsi_l_offset nFileSize = VSIFTellL(fpCSV);
-        CPL_IGNORE_RET_VAL(VSIFSeekL(fpCSV, nCurPos, SEEK_SET));
-        nBytes = std::min(static_cast<int>(nFileSize),
-                          std::numeric_limits<int>::max());
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Limiting AUTODETECT_SIZE_LIMIT to %d for /vsistdin/",
+                 STREAMING_LIMIT);
+        nBytes = STREAMING_LIMIT;
     }
-    else if( nBytes < 0 ||
-             static_cast<vsi_l_offset>(nBytes) < VSIFTellL(fpCSV) )
-    {
-        nBytes = 1000000;
-    }
+
+    ResetReading();
 
     const char *pszAutodetectWidth =
         CSLFetchNameValueDef(papszOpenOptions, "AUTODETECT_WIDTH", "NO");
@@ -946,202 +946,99 @@ char **OGRCSVLayer::AutodetectFieldTypes(char **papszOpenOptions,
     // This will be returned as the result.
     char **papszFieldTypes = nullptr;
 
-    char *pszData = static_cast<char *>(VSI_MALLOC_VERBOSE(nBytes));
-    if( pszData != nullptr &&
-        static_cast<vsi_l_offset>(nBytes) > VSIFTellL(fpCSV) )
+    char* pszData = nullptr;
+    VSILFILE* fp = fpCSV;
+    std::string osTmpMemFile;
+    size_t nRead = 0;
+    int nRequested = 0;
+    if( bStreaming )
     {
-        const int nRequested = nBytes - 1 - static_cast<int>(VSIFTellL(fpCSV));
-        const int nRead =
-            static_cast<int>(VSIFReadL(pszData, 1, nRequested, fpCSV));
+        // The above ResetReading() will skip the header line,
+        // so VSIFTellL(fpCSV) != 0
+        nRequested = static_cast<int>(nBytes) - static_cast<int>(VSIFTellL(fpCSV));
+        if( nRequested <= 0 )
+            return nullptr;
+        pszData = static_cast<char *>(VSI_MALLOC_VERBOSE(nRequested + 1));
+        if( pszData == nullptr )
+            return nullptr;
+        nRead = VSIFReadL(pszData, 1, nRequested, fpCSV);
         pszData[nRead] = 0;
 
-        CPLString osTmpMemFile(CPLSPrintf("/vsimem/tmp%p", this));
-        VSILFILE *fpMem = VSIFileFromMemBuffer(
-            osTmpMemFile, reinterpret_cast<GByte *>(pszData), nRead, FALSE);
+        osTmpMemFile = CPLSPrintf("/vsimem/tmp%p", this);
+        fp = VSIFileFromMemBuffer(
+            osTmpMemFile.c_str(), reinterpret_cast<GByte *>(pszData), nRead, FALSE);
+    }
 
-        std::vector<OGRFieldType> aeFieldType(nFieldCount);
-        std::vector<int> abFieldBoolean(nFieldCount);
-        std::vector<int> abFieldSet(nFieldCount);
-        std::vector<int> anFieldWidth(nFieldCount);
-        std::vector<int> anFieldPrecision(nFieldCount);
-        int nStringFieldCount = 0;
+    std::vector<OGRFieldType> aeFieldType(nFieldCount);
+    std::vector<int> abFieldBoolean(nFieldCount);
+    std::vector<int> abFieldSet(nFieldCount);
+    std::vector<int> abFinalTypeStringSet(nFieldCount);
+    std::vector<int> anFieldWidth(nFieldCount);
+    std::vector<int> anFieldPrecision(nFieldCount);
+    int nStringFieldCount = 0;
 
-        while( !VSIFEofL(fpMem) )
+    while( !VSIFEofL(fp) )
+    {
+        char **papszTokens =
+            CSVReadParseLine3L(fp,
+                               OGR_CSV_MAX_LINE_SIZE,
+                               szDelimiter,
+                               true, // bHonourStrings
+                               bQuotedFieldAsString,
+                               bMergeDelimiter,
+                               true // bSkipBOM
+                              );
+        // Can happen if we just reach EOF while trying to read new bytes.
+        if( papszTokens == nullptr )
+            break;
+
+        if( bStreaming )
         {
-            char **papszTokens =
-                CSVReadParseLine3L(fpMem,
-                                   OGR_CSV_MAX_LINE_SIZE,
-                                   szDelimiter,
-                                   true, // bHonourStrings
-                                   bQuotedFieldAsString,
-                                   bMergeDelimiter,
-                                   true // bSkipBOM
-                                  );
-            // Can happen if we just reach EOF while trying to read new bytes.
-            if( papszTokens == nullptr )
-                break;
-
             // Ignore last line if it is truncated.
-            if( VSIFEofL(fpMem) && nRead == nRequested &&
+            if( VSIFEofL(fp) && nRead == static_cast<size_t>(nRequested) &&
                 pszData[nRead - 1] != 13 && pszData[nRead - 1] != 10 )
             {
                 CSLDestroy(papszTokens);
                 break;
             }
+        }
+        else if( VSIFTellL(fp) > nBytes )
+        {
+            CSLDestroy(papszTokens);
+            break;
+        }
 
-            for( int iField = 0;
-                 iField < nFieldCount && papszTokens[iField] != nullptr; iField++ )
+        for( int iField = 0;
+             iField < nFieldCount && papszTokens[iField] != nullptr; iField++ )
+        {
+            if( papszTokens[iField][0] == 0 )
+                continue;
+            if( abFinalTypeStringSet[iField] && !bAutodetectWidth )
+                continue;
+            if( szDelimiter[0] == ';' )
             {
-                if( papszTokens[iField][0] == 0 )
-                    continue;
-                if( szDelimiter[0] == ';' )
-                {
-                    char *chComma = strchr(papszTokens[iField], ',');
-                    if( chComma )
-                        *chComma = '.';
-                }
-                CPLValueType eType = CPLGetValueType(papszTokens[iField]);
+                char *chComma = strchr(papszTokens[iField], ',');
+                if( chComma )
+                    *chComma = '.';
+            }
+            const CPLValueType eType = CPLGetValueType(papszTokens[iField]);
 
-                int nFieldWidth = 0;
+            if( bAutodetectWidth )
+            {
+                int nFieldWidth = static_cast<int>(strlen(papszTokens[iField]));
+                if( papszTokens[iField][0] == '"' &&
+                    papszTokens[iField][nFieldWidth - 1] == '"' )
+                {
+                    nFieldWidth -= 2;
+                }
                 int nFieldPrecision = 0;
-
-                if( bAutodetectWidth )
+                if( eType == CPL_VALUE_REAL &&
+                    bAutodetectWidthForIntOrReal )
                 {
-                    nFieldWidth = static_cast<int>(strlen(papszTokens[iField]));
-                    if( papszTokens[iField][0] == '"' &&
-                        papszTokens[iField][nFieldWidth - 1] == '"' )
-                    {
-                        nFieldWidth -= 2;
-                    }
-                    if( eType == CPL_VALUE_REAL &&
-                        bAutodetectWidthForIntOrReal )
-                    {
-                        const char *pszDot = strchr(papszTokens[iField], '.');
-                        if( pszDot != nullptr )
-                            nFieldPrecision =
-                                static_cast<int>(strlen(pszDot + 1));
-                    }
-                }
-
-                OGRFieldType eOGRFieldType;
-                bool bIsBoolean = false;
-                if( eType == CPL_VALUE_INTEGER )
-                {
-                    GIntBig nVal = CPLAtoGIntBig(papszTokens[iField]);
-                    if( !CPL_INT64_FITS_ON_INT32(nVal) )
-                        eOGRFieldType = OFTInteger64;
-                    else
-                        eOGRFieldType = OFTInteger;
-                }
-                else if( eType == CPL_VALUE_REAL )
-                {
-                    eOGRFieldType = OFTReal;
-                }
-                else if( abFieldSet[iField] &&
-                         aeFieldType[iField] == OFTString )
-                {
-                    eOGRFieldType = OFTString;
-                    if( abFieldBoolean[iField] )
-                    {
-                        abFieldBoolean[iField] =
-                            OGRCSVIsTrue(papszTokens[iField]) ||
-                            OGRCSVIsFalse(papszTokens[iField]);
-                    }
-                }
-                else
-                {
-                    OGRField sWrkField;
-                    CPLPushErrorHandler(CPLQuietErrorHandler);
-                    const bool bSuccess = CPL_TO_BOOL(
-                        OGRParseDate(papszTokens[iField], &sWrkField, 0));
-                    CPLPopErrorHandler();
-                    CPLErrorReset();
-                    if( bSuccess )
-                    {
-                        const bool bHasDate =
-                            strchr(papszTokens[iField], '/') != nullptr ||
-                            strchr(papszTokens[iField], '-') != nullptr;
-                        const bool bHasTime =
-                            strchr(papszTokens[iField], ':') != nullptr;
-                        if( bHasDate && bHasTime )
-                            eOGRFieldType = OFTDateTime;
-                        else if( bHasDate )
-                            eOGRFieldType = OFTDate;
-                        else
-                            eOGRFieldType = OFTTime;
-                    }
-                    else
-                    {
-                        eOGRFieldType = OFTString;
-                        bIsBoolean = OGRCSVIsTrue(papszTokens[iField]) ||
-                                     OGRCSVIsFalse(papszTokens[iField]);
-                    }
-                }
-
-                if( !abFieldSet[iField] )
-                {
-                    aeFieldType[iField] = eOGRFieldType;
-                    abFieldSet[iField] = TRUE;
-                    abFieldBoolean[iField] = bIsBoolean;
-                    if( eOGRFieldType == OFTString && !bIsBoolean )
-                        nStringFieldCount++;
-                }
-                else if( aeFieldType[iField] != eOGRFieldType )
-                {
-                    // Promotion rules.
-                    if( aeFieldType[iField] == OFTInteger )
-                    {
-                        if( eOGRFieldType == OFTInteger64 ||
-                            eOGRFieldType == OFTReal )
-                            aeFieldType[iField] = eOGRFieldType;
-                        else
-                        {
-                            aeFieldType[iField] = OFTString;
-                            nStringFieldCount++;
-                        }
-                    }
-                    else if( aeFieldType[iField] == OFTInteger64 )
-                    {
-                        if( eOGRFieldType == OFTReal )
-                            aeFieldType[iField] = eOGRFieldType;
-                        else if( eOGRFieldType != OFTInteger )
-                        {
-                            aeFieldType[iField] = OFTString;
-                            nStringFieldCount++;
-                        }
-                    }
-                    else if( aeFieldType[iField] == OFTReal )
-                    {
-                        if( eOGRFieldType != OFTInteger &&
-                            eOGRFieldType != OFTInteger64 )
-                        {
-                            aeFieldType[iField] = OFTString;
-                            nStringFieldCount++;
-                        }
-                    }
-                    else if( aeFieldType[iField] == OFTDate )
-                    {
-                        if( eOGRFieldType == OFTDateTime )
-                            aeFieldType[iField] = OFTDateTime;
-                        else
-                        {
-                            aeFieldType[iField] = OFTString;
-                            nStringFieldCount++;
-                        }
-                    }
-                    else if( aeFieldType[iField] == OFTDateTime )
-                    {
-                        if( eOGRFieldType != OFTDate )
-                        {
-                            aeFieldType[iField] = OFTString;
-                            nStringFieldCount++;
-                        }
-                    }
-                    else if( aeFieldType[iField] == OFTTime )
-                    {
-                        aeFieldType[iField] = OFTString;
-                        nStringFieldCount++;
-                    }
+                    const char *pszDot = strchr(papszTokens[iField], '.');
+                    if( pszDot != nullptr )
+                        nFieldPrecision =
+                            static_cast<int>(strlen(pszDot + 1));
                 }
 
                 if( nFieldWidth > anFieldWidth[iField] )
@@ -1150,72 +1047,214 @@ char **OGRCSVLayer::AutodetectFieldTypes(char **papszOpenOptions,
                     anFieldPrecision[iField] = nFieldPrecision;
             }
 
-            CSLDestroy(papszTokens);
-
-            // If all fields are String and we don't need to compute width,
-            // just stop auto-detection now.
-            if( nStringFieldCount == nFieldCount && bAutodetectWidth )
-                break;
-        }
-
-        papszFieldTypes =
-            static_cast<char **>(CPLCalloc(nFieldCount + 1, sizeof(char *)));
-        for( int iField = 0; iField < nFieldCount; iField++ )
-        {
-            CPLString osFieldType;
-            if( !abFieldSet[iField] )
-                osFieldType = "String";
-            else if( aeFieldType[iField] == OFTInteger )
-                osFieldType = "Integer";
-            else if( aeFieldType[iField] == OFTInteger64 )
-                osFieldType = "Integer64";
-            else if( aeFieldType[iField] == OFTReal )
-                osFieldType = "Real";
-            else if( aeFieldType[iField] == OFTDateTime  )
-                osFieldType = "DateTime";
-            else if( aeFieldType[iField] == OFTDate  )
-                osFieldType = "Date";
-            else if( aeFieldType[iField] == OFTTime  )
-                osFieldType = "Time";
-            else if( aeFieldType[iField] == OFTStringList  )
-                osFieldType = "JSonStringList";
-            else if( aeFieldType[iField] == OFTIntegerList  )
-                osFieldType = "JSonIntegerList";
-            else if( aeFieldType[iField] == OFTInteger64List  )
-                osFieldType = "JSonInteger64List";
-            else if( aeFieldType[iField] == OFTRealList  )
-                osFieldType = "JSonRealList";
-            else if( abFieldBoolean[iField] )
-                osFieldType = "Integer(Boolean)";
-            else
-                osFieldType = "String";
-
-            if( !abFieldBoolean[iField] )
+            OGRFieldType eOGRFieldType;
+            bool bIsBoolean = false;
+            if( eType == CPL_VALUE_INTEGER )
             {
-                if( anFieldWidth[iField] > 0 &&
-                    (aeFieldType[iField] == OFTString ||
-                    (bAutodetectWidthForIntOrReal &&
-                     (aeFieldType[iField] == OFTInteger ||
-                      aeFieldType[iField] == OFTInteger64))) )
+                GIntBig nVal = CPLAtoGIntBig(papszTokens[iField]);
+                if( !CPL_INT64_FITS_ON_INT32(nVal) )
+                    eOGRFieldType = OFTInteger64;
+                else
+                    eOGRFieldType = OFTInteger;
+            }
+            else if( eType == CPL_VALUE_REAL )
+            {
+                eOGRFieldType = OFTReal;
+            }
+            else if( abFieldSet[iField] &&
+                     aeFieldType[iField] == OFTString )
+            {
+                eOGRFieldType = OFTString;
+                if( abFieldBoolean[iField] )
                 {
-                    osFieldType += CPLSPrintf(" (%d)", anFieldWidth[iField]);
+                    abFieldBoolean[iField] =
+                        OGRCSVIsTrue(papszTokens[iField]) ||
+                        OGRCSVIsFalse(papszTokens[iField]);
                 }
-                else if( anFieldWidth[iField] > 0 &&
-                         bAutodetectWidthForIntOrReal &&
-                         aeFieldType[iField] == OFTReal )
+            }
+            else
+            {
+                OGRField sWrkField;
+                CPLPushErrorHandler(CPLQuietErrorHandler);
+                const bool bSuccess = CPL_TO_BOOL(
+                    OGRParseDate(papszTokens[iField], &sWrkField, 0));
+                CPLPopErrorHandler();
+                CPLErrorReset();
+                if( bSuccess )
                 {
-                    osFieldType += CPLSPrintf(" (%d.%d)", anFieldWidth[iField],
-                                              anFieldPrecision[iField]);
+                    const bool bHasDate =
+                        strchr(papszTokens[iField], '/') != nullptr ||
+                        strchr(papszTokens[iField], '-') != nullptr;
+                    const bool bHasTime =
+                        strchr(papszTokens[iField], ':') != nullptr;
+                    if( bHasDate && bHasTime )
+                        eOGRFieldType = OFTDateTime;
+                    else if( bHasDate )
+                        eOGRFieldType = OFTDate;
+                    else
+                        eOGRFieldType = OFTTime;
+                }
+                else
+                {
+                    eOGRFieldType = OFTString;
+                    bIsBoolean = OGRCSVIsTrue(papszTokens[iField]) ||
+                                 OGRCSVIsFalse(papszTokens[iField]);
                 }
             }
 
-            papszFieldTypes[iField] = CPLStrdup(osFieldType);
+            const auto SetFinalStringType = [
+                &abFinalTypeStringSet, &aeFieldType, &nStringFieldCount, iField]()
+            {
+                if( !abFinalTypeStringSet[iField] )
+                {
+                    aeFieldType[iField] = OFTString;
+                    abFinalTypeStringSet[iField] = true;
+                    nStringFieldCount++;
+                }
+            };
+
+            if( !abFieldSet[iField] )
+            {
+                aeFieldType[iField] = eOGRFieldType;
+                abFieldSet[iField] = TRUE;
+                abFieldBoolean[iField] = bIsBoolean;
+                if( eOGRFieldType == OFTString && !bIsBoolean )
+                {
+                    SetFinalStringType();
+                }
+            }
+            else if( aeFieldType[iField] != eOGRFieldType )
+            {
+                // Promotion rules.
+                if( aeFieldType[iField] == OFTInteger )
+                {
+                    if( eOGRFieldType == OFTInteger64 ||
+                        eOGRFieldType == OFTReal )
+                        aeFieldType[iField] = eOGRFieldType;
+                    else
+                    {
+                        SetFinalStringType();
+                    }
+                }
+                else if( aeFieldType[iField] == OFTInteger64 )
+                {
+                    if( eOGRFieldType == OFTReal )
+                        aeFieldType[iField] = eOGRFieldType;
+                    else if( eOGRFieldType != OFTInteger )
+                    {
+                        SetFinalStringType();
+                    }
+                }
+                else if( aeFieldType[iField] == OFTReal )
+                {
+                    if( eOGRFieldType != OFTInteger &&
+                        eOGRFieldType != OFTInteger64 )
+                    {
+                        SetFinalStringType();
+                    }
+                }
+                else if( aeFieldType[iField] == OFTDate )
+                {
+                    if( eOGRFieldType == OFTDateTime )
+                        aeFieldType[iField] = OFTDateTime;
+                    else
+                    {
+                        SetFinalStringType();
+                    }
+                }
+                else if( aeFieldType[iField] == OFTDateTime )
+                {
+                    if( eOGRFieldType != OFTDate )
+                    {
+                        SetFinalStringType();
+                    }
+                }
+                else if( aeFieldType[iField] == OFTTime )
+                {
+                    SetFinalStringType();
+                }
+            }
+            else if( !abFinalTypeStringSet[iField] &&
+                     eOGRFieldType == OFTString && !bIsBoolean )
+            {
+                SetFinalStringType();
+            }
         }
 
-        VSIFCloseL(fpMem);
-        VSIUnlink(osTmpMemFile);
+        CSLDestroy(papszTokens);
+
+        // If all fields are String and we don't need to compute width,
+        // just stop auto-detection now.
+        if( nStringFieldCount == nFieldCount && !bAutodetectWidth )
+        {
+            CPLDebugOnly("CSV",
+                     "AutodetectFieldTypes() stopped after "
+                     "reading " CPL_FRMT_GUIB " bytes",
+                     static_cast<GUIntBig>(VSIFTellL(fp)));
+            break;
+        }
     }
-    VSIFree(pszData);
+
+    papszFieldTypes =
+        static_cast<char **>(CPLCalloc(nFieldCount + 1, sizeof(char *)));
+    for( int iField = 0; iField < nFieldCount; iField++ )
+    {
+        CPLString osFieldType;
+        if( !abFieldSet[iField] )
+            osFieldType = "String";
+        else if( aeFieldType[iField] == OFTInteger )
+            osFieldType = "Integer";
+        else if( aeFieldType[iField] == OFTInteger64 )
+            osFieldType = "Integer64";
+        else if( aeFieldType[iField] == OFTReal )
+            osFieldType = "Real";
+        else if( aeFieldType[iField] == OFTDateTime  )
+            osFieldType = "DateTime";
+        else if( aeFieldType[iField] == OFTDate  )
+            osFieldType = "Date";
+        else if( aeFieldType[iField] == OFTTime  )
+            osFieldType = "Time";
+        else if( aeFieldType[iField] == OFTStringList  )
+            osFieldType = "JSonStringList";
+        else if( aeFieldType[iField] == OFTIntegerList  )
+            osFieldType = "JSonIntegerList";
+        else if( aeFieldType[iField] == OFTInteger64List  )
+            osFieldType = "JSonInteger64List";
+        else if( aeFieldType[iField] == OFTRealList  )
+            osFieldType = "JSonRealList";
+        else if( abFieldBoolean[iField] )
+            osFieldType = "Integer(Boolean)";
+        else
+            osFieldType = "String";
+
+        if( !abFieldBoolean[iField] )
+        {
+            if( anFieldWidth[iField] > 0 &&
+                (aeFieldType[iField] == OFTString ||
+                (bAutodetectWidthForIntOrReal &&
+                 (aeFieldType[iField] == OFTInteger ||
+                  aeFieldType[iField] == OFTInteger64))) )
+            {
+                osFieldType += CPLSPrintf(" (%d)", anFieldWidth[iField]);
+            }
+            else if( anFieldWidth[iField] > 0 &&
+                     bAutodetectWidthForIntOrReal &&
+                     aeFieldType[iField] == OFTReal )
+            {
+                osFieldType += CPLSPrintf(" (%d.%d)", anFieldWidth[iField],
+                                          anFieldPrecision[iField]);
+            }
+        }
+
+        papszFieldTypes[iField] = CPLStrdup(osFieldType);
+    }
+
+    if( bStreaming )
+    {
+        VSIFCloseL(fp);
+        VSIUnlink(osTmpMemFile.c_str());
+        VSIFree(pszData);
+    }
 
     ResetReading();
 

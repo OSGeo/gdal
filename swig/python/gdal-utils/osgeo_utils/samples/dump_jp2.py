@@ -49,7 +49,7 @@ def Usage():
     print('                        with the supplied prefix. gmljp2://xml/ link will be replaced by')
     print('                        links to on-disk files.')
 
-    return 1
+    return 2
 
 
 def dump_gmljp2(filename, out_gmljp2):

@@ -187,9 +187,6 @@ class GDALGPKGMBTilesLikeRasterBand: public GDALPamRasterBand
         void                    SetUnitTypeInternal(const CPLString& osUom)
                                                         { m_osUom = osUom; }
 
-    protected:
-        friend class GDALGPKGMBTilesLikePseudoDataset;
-
         GDALRasterBlock*        AccessibleTryGetLockedBlockRef(int nBlockXOff, int nBlockYOff) { return TryGetLockedBlockRef(nBlockXOff, nBlockYOff); }
 };
 

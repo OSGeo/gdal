@@ -68,7 +68,7 @@ def Usage():
     print('     {LAYER_NAME} : name of the source layer')
     print('     {LAYER_INDEX}: index of the source layer')
 
-    return 1
+    return 2
 
 
 #############################################################################

@@ -84,7 +84,7 @@ def Usage():
     print('Usage: ogr2vrt.py [-relative] [-schema] [-feature_count] [-extent]')
     print('                  in_datasource out_vrtfile [layers]')
     print('')
-    return 1
+    return 2
 
 
 def main(argv=sys.argv):

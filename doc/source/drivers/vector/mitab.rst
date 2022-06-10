@@ -3,7 +3,7 @@
 MapInfo TAB and MIF/MID
 =======================
 
-.. shortname:: MITAB
+.. shortname:: MapInfo File
 
 .. built_in_by_default::
 
@@ -135,7 +135,7 @@ Layer Creation Options
 Configuration options
 ~~~~~~~~~~~~~~~~~~~~~
 
-The following :ref:`configuration options <configoptions>` are 
+The following :ref:`configuration options <configoptions>` are
 available:
 
 -  :decl_configoption:`MITAB_SET_TOWGS84_ON_KNOWN_DATUM` =YES/NO:

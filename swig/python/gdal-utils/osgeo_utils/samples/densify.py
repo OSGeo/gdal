@@ -37,6 +37,9 @@ from osgeo import osr
 from osgeo import ogr
 ogr.UseExceptions()
 
+def Usage():
+    print(f'Usage: {sys.argv[0]} -- This is a sample. Read source to know how to use. --')
+    return 2
 
 class Translator(object):
 
@@ -381,6 +384,9 @@ def GetLength(geometry):
 
 
 def main(argv=sys.argv):
+    if len(argv) < 2:
+        return Usage()
+
     import optparse
 
     options = []

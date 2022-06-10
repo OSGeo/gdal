@@ -295,6 +295,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
         bool                    HasDataColumnsTable() const;
         bool                    HasDataColumnConstraintsTable() const;
         bool                CreateColumnsTableAndColumnConstraintsTablesIfNecessary();
+        bool                HasGpkgextRelationsTable() const;
 
         const char*         GetGeometryTypeString(OGRwkbGeometryType eType);
 
@@ -312,6 +313,12 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
         static std::string GetCurrentDateEscapedSQL();
 
     protected:
+
+        virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
+                                  void *, int, int, GDALDataType,
+                                  int, int *, GSpacing, GSpacing, GSpacing,
+                                  GDALRasterIOExtraArg* psExtraArg ) override;
+
         // Coming from GDALGPKGMBTilesLikePseudoDataset
 
         virtual CPLErr                  IFlushCacheWithErrCode(bool bAtClosing) override;
@@ -435,6 +442,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     sqlite3_stmt*               m_poUpdateStatement;
     bool                        m_bInsertStatementWithFID;
     sqlite3_stmt*               m_poInsertStatement;
+    sqlite3_stmt*               m_poGetFeatureStatement = nullptr;
     bool                        m_bDeferredSpatialIndexCreation;
     // m_bHasSpatialIndex cannot be bool.  -1 is unset.
     int                         m_bHasSpatialIndex;
@@ -532,7 +540,8 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
 
     void                RecomputeExtent();
 
-    void                SetOpeningParameters(bool bIsInGpkgContents,
+    void                SetOpeningParameters(const char* pszObjectType,
+                                             bool bIsInGpkgContents,
                                              bool bIsSpatial,
                                              const char* pszGeomColName,
                                              const char* pszGeomType,

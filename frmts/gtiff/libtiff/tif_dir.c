@@ -557,11 +557,8 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 		/*
 		 * Set custom value ... save a copy of the custom tag value.
 		 */
-		tv_size = _TIFFDataSize(fip->field_type);
 		/*--: Rational2Double: For Rationals evaluate "set_field_type" to determine internal storage size. */
-		if (fip->field_type == TIFF_RATIONAL || fip->field_type == TIFF_SRATIONAL) {
-			tv_size = _TIFFSetGetFieldSize(fip->set_field_type);
-		}
+		tv_size = TIFFFieldSetGetSize(fip);
 		if (tv_size == 0) {
 			status = 0;
 			TIFFErrorExt(tif->tif_clientdata, module,
@@ -1237,7 +1234,7 @@ _TIFFVGetField(TIFF* tif, uint32_t tag, va_list ap)
 							case TIFF_SRATIONAL:
 								{
 									/*-- Rational2Double: For Rationals evaluate "set_field_type" to determine internal storage size and return value size. */
-									int tv_size = _TIFFSetGetFieldSize(fip->set_field_type);
+									int tv_size = TIFFFieldSetGetSize(fip);
 									if (tv_size == 8) {
 										*va_arg(ap, double*) = *(double *)val;
 										ret_val = 1;

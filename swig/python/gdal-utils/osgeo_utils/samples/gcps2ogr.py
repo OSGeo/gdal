@@ -38,7 +38,7 @@ from osgeo import osr
 
 def Usage():
     print('Usage: gcp2ogr.py [-f ogr_drv_name] gdal_in_dataset ogr_out_dataset')
-    return 1
+    return 2
 
 
 def main(argv=sys.argv):

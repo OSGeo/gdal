@@ -181,7 +181,13 @@ CPLErr GDALGeorefPamDataset::SetMetadataItem( const char * pszName,
 {
     if( m_bPAMLoaded && (pszDomain == nullptr || EQUAL(pszDomain, "")) )
     {
-        m_papszMainMD = CSLSetNameValue( GetMetadata(), pszName, pszValue );
+        char** papszMD = GetMetadata();
+        if( papszMD != m_papszMainMD )
+        {
+            CSLDestroy(m_papszMainMD);
+            m_papszMainMD = CSLDuplicate(papszMD);
+        }
+        m_papszMainMD = CSLSetNameValue( m_papszMainMD, pszName, pszValue );
     }
     return GDALPamDataset::SetMetadataItem(pszName, pszValue, pszDomain);
 }

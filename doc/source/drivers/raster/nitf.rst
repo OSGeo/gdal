@@ -114,6 +114,16 @@ Creation Options:
    NITF file and have specified "N" or "S" for ICORDS, you need to call
    later the SetProjection method with a consistent UTM SRS to set the
    UTM zone number (otherwise it will default to zone 0).
+   Starting with GDAL 3.5.1, when using the CreateCopy() interface with an
+   image whose source SRS is a UTM WGS84 projection and specifying ICORDS=G or D,
+   the NITF driver will reproject the image corner coordinates to longitude-latitude.
+   This can be useful when it is not possible to encode in the IGEOLO field
+   the coordinates of an image in the equatorial zone, whose one of the northing
+   expressed in a UTM northern hemisphere projection is below -1e6.
+-  **IGEOLO=string**: (GDAL >= 3.5.1) Image corner coordinates specified as a
+   string of 60 characters (cf MIL-STD-2500C for expected format). Normally
+   automatically set from source geotransform and SRS when using the CreateCopy()
+   interface. If specified, ICORDS must also be specified.
 -  **FHDR**: File version can be selected though currently the only two
    variations supported are "NITF02.10" (the default), and "NSIF01.00".
 -  **IREP**: Set to "RGB/LUT" to reserve space for a color table for

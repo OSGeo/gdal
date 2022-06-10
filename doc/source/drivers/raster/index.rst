@@ -102,6 +102,7 @@ Raster drivers
    jp2mrsid
    jp2openjpeg
    jpeg
+   jpegxl
    jpipkak
    kea
    kmlsuperoverlay

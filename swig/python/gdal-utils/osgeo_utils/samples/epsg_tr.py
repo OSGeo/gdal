@@ -40,6 +40,9 @@ from osgeo import gdal
 
 from osgeo_utils.auxiliary.gdal_argparse import GDALArgumentParser, GDALScript
 
+def Usage():
+    print(f'Usage: {sys.argv[0]} -- This is a sample. Read source to know how to use. --')
+    return 2
 
 def trHandleCode(set_srid, srs, auth_name, code, deprecated, output_format):
     if output_format == '-pretty_wkt':
@@ -217,6 +220,8 @@ class EPSG_Table(GDALScript):
 
 
 def main(argv=sys.argv):
+    if len(sys.argv) < 2:
+        return Usage()
     return EPSG_Table().main(argv)
 
 

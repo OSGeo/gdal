@@ -465,13 +465,13 @@ def test_ogr_openfilegdb_4():
              ('id IS NULL', []),
              ('nullint IS NOT NULL', []),
              ('nullint IS NULL', [1, 2, 3, 4, 5]),
-             ("str = 'foo_e'", []),
-             ("str = 'foo_é'", [1, 2, 3, 4, 5]),
-             ("str <= 'foo_é'", [1, 2, 3, 4, 5]),
-             ("str >= 'foo_é'", [1, 2, 3, 4, 5]),
-             ("str <> 'foo_é'", []),
-             ("str < 'foo_é'", []),
-             ("str > 'foo_é'", []),
+             ("str = 'foo_e'", [], 1),
+             ("str = 'foo_é'", [1, 2, 3, 4, 5], 1),
+             ("str <= 'foo_é'", [1, 2, 3, 4, 5], 0),
+             ("str >= 'foo_é'", [1, 2, 3, 4, 5], 1),
+             ("str <> 'foo_é'", [], 0),
+             ("str < 'foo_é'", [], 0),
+             ("str > 'foo_é'", [], 0),
              ('smallint = -13', [1, 2, 3, 4, 5]),
              ('smallint <= -13', [1, 2, 3, 4, 5]),
              ('smallint >= -13', [1, 2, 3, 4, 5]),
@@ -522,7 +522,7 @@ def test_ogr_openfilegdb_4():
              ('float <= 1.5 OR float >= 1.5', [1, 2, 3, 4, 5]),
              ('float < 1.5 OR float > 2', []),
              ('float < 1 OR float > 2.5', []),
-             ("str < 'foo_é' OR str > 'z'", []),
+             ("str < 'foo_é' OR str > 'z'", [], 0),
              ("adate < '2013/12/26 12:34:56' OR adate > '2014/01/01'", []),
              ("id = 1 AND id = -1", []),
              ("id = -1 AND id = 1", []),
@@ -622,6 +622,53 @@ def test_ogr_openfilegdb_4():
     ds = None
 
 ###############################################################################
+# Test use of attribute indexes on truncated strings
+
+
+def test_ogr_openfilegdb_str_indexed_truncated():
+
+    ds = ogr.Open('data/filegdb/test_str_indexed_truncated.gdb')
+
+    lyr = ds.GetLayerByName('test')
+
+    IDX_NOT_USED = 0
+    IDX_USED = 1
+
+    tests = [("str = 'a'", [1], IDX_USED),
+             ("str = 'aa'", [2], IDX_USED),
+             ("str != 'aa'", [1, 3], IDX_NOT_USED),
+             ("str = 'aaa'", [3], IDX_USED),
+             ("str >= 'aaa'", [3], IDX_USED),
+             ("str > 'aaa'", [], IDX_NOT_USED),
+             ("str > 'aa_'", [3], IDX_NOT_USED),
+             ("str <= 'aab'", [1, 2, 3], IDX_NOT_USED),
+             ("str = 'aaa '", [], IDX_USED),
+             ("str != 'aaa '", [1, 2, 3], IDX_NOT_USED),
+             ("str <= 'aaa '", [1, 2, 3], IDX_NOT_USED),
+             ("str <= 'aaaX'", [1, 2, 3], IDX_NOT_USED),
+             ("str >= 'aaa '", [], IDX_USED),
+             ("str = 'aaaX'", [], IDX_USED),
+             ("str = 'aaaXX'", [], IDX_USED),
+             ("str = 'aaa  '", [], IDX_USED),
+             ("str IN ('a', 'b')", [1], IDX_USED),
+             ("str IN ('aaa')", [3], IDX_USED),
+             ("str IN ('aaa', 'aaa ')", [3], IDX_USED),
+             ("str IN ('aaa ')", [], IDX_USED),
+             ("str IN ('aaaX')", [], IDX_USED),
+             ("str IN ('aaaXX')", [], IDX_USED),
+            ]
+    for where_clause, fids, expected_attr_index_use in tests:
+
+        lyr.SetAttributeFilter(where_clause)
+        sql_lyr = ds.ExecuteSQL('GetLayerAttrIndexUse %s' % lyr.GetName())
+        attr_index_use = int(sql_lyr.GetNextFeature().GetField(0))
+        ds.ReleaseResultSet(sql_lyr)
+        assert attr_index_use == expected_attr_index_use, \
+            (where_clause, fids, expected_attr_index_use)
+        assert [f.GetFID() for f in lyr] == fids, (where_clause, fids)
+
+
+###############################################################################
 # Test opening an unzipped dataset
 
 
@@ -701,6 +748,14 @@ def test_ogr_openfilegdb_7():
         ("select id, str from point order by id desc", 5, 5, 1),
         ("select * from point where id = 1 order by id", 1, 1, 1),
         ("select * from big_layer order by real", 86 + 3 * 85, 1, 1),
+        ("select * from big_layer order by real limit 0", 0, None, 1),
+        ("select * from big_layer order by real offset 10000", 0, None, 1),
+        ("select * from big_layer order by real limit 1", 1, 1, 1),
+        ("select * from big_layer order by real limit 1 offset 0", 1, 1, 1),
+        ("select * from big_layer order by real limit 1 offset 1", 1, 5, 1),
+        ("select * from big_layer order by real limit 2", 2, 1, 1),
+        ("select * from big_layer order by real limit 100000", 86 + 3 * 85, 1, 1),
+        ("select * from big_layer order by real limit 100000 offset 1", 86 + 3 * 85 - 1, 5, 1),
         ("select * from big_layer order by real desc", 86 + 3 * 85, 4 * 85, 1),
         # Invalid :
         ("select foo from", None, None, None),
@@ -736,10 +791,14 @@ def test_ogr_openfilegdb_7():
                 ds.ReleaseResultSet(sql_lyr)
                 pytest.fail(sql, feat_count, first_fid)
             feat = sql_lyr.GetNextFeature()
-            if feat.GetFID() != first_fid:
-                ds.ReleaseResultSet(sql_lyr)
-                feat.DumpReadable()
-                pytest.fail(sql, feat_count, first_fid)
+            if feat_count > 0:
+                if feat.GetFID() != first_fid:
+                    ds.ReleaseResultSet(sql_lyr)
+                    feat.DumpReadable()
+                    pytest.fail(sql, feat_count, first_fid)
+            else:
+                assert first_fid is None
+                assert feat is None
         ds.ReleaseResultSet(sql_lyr)
 
         sql_lyr = ds.ExecuteSQL('GetLastSQLUsedOptimizedImplementation')
@@ -1664,6 +1723,33 @@ def test_ogr_openfilegdb_strings_utf16():
     assert fld_defn.GetDefault() == "'éven'"
     f = lyr.GetNextFeature()
     assert f['str'] == 'évenéven'
+
+
+###############################################################################
+# Test reading .gdb where the CRS in the XML definition of the feature
+# table is not consistent with the one of the feature dataset
+
+
+def test_ogr_openfilegdb_inconsistent_crs_feature_dataset_and_feature_table():
+    ds = ogr.Open('data/filegdb/inconsistent_crs_feature_dataset_and_feature_table.gdb')
+    assert ds is not None
+    lyr = ds.GetLayer(0)
+    srs = lyr.GetSpatialRef()
+    assert srs is not None
+    assert srs.GetAuthorityCode(None) == '4326'
+
+
+###############################################################################
+# Test reading a .spx file with the value_count field at 0
+# (https://github.com/OSGeo/gdal/issues/5888)
+
+
+def test_ogr_openfilegdb_spx_zero_in_value_count_trailer():
+    ds = ogr.Open('data/filegdb/spx_zero_in_value_count_trailer.gdb')
+    assert ds is not None
+    lyr = ds.GetLayer(0)
+    lyr.SetSpatialFilterRect(1,1,2,2)
+    assert lyr.GetFeatureCount() == 1
 
 
 ###############################################################################

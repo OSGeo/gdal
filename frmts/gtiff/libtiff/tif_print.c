@@ -110,7 +110,7 @@ _TIFFPrintField(FILE* fd, const TIFFField *fip,
 			fprintf(fd, "0x%"PRIx32, ((uint32_t *) raw_data)[j]);
 		else if (fip->field_type == TIFF_RATIONAL
 			|| fip->field_type == TIFF_SRATIONAL) {
-			int tv_size = _TIFFSetGetFieldSize(fip->set_field_type);
+			int tv_size = TIFFFieldSetGetSize(fip);
 			if(tv_size==8)
 				fprintf(fd, "%lf", ((double*)raw_data)[j]);
 			else
@@ -619,7 +619,7 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 						continue;
 				} else {
 					/*--: Rational2Double: For Rationals evaluate "set_field_type" to determine internal storage size. */
-					int tv_size = _TIFFSetGetFieldSize(fip->set_field_type);
+					int tv_size = TIFFFieldSetGetSize(fip);
 					raw_data = _TIFFmalloc(
 					    tv_size
 					    * value_count);

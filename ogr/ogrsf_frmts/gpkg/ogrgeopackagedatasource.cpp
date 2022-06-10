@@ -997,6 +997,69 @@ bool GDALGeoPackageDataset::ICanIWriteBlock()
 }
 
 /************************************************************************/
+/*                            IRasterIO()                               */
+/************************************************************************/
+
+CPLErr GDALGeoPackageDataset::IRasterIO( GDALRWFlag eRWFlag,
+                               int nXOff, int nYOff, int nXSize, int nYSize,
+                               void * pData, int nBufXSize, int nBufYSize,
+                               GDALDataType eBufType,
+                               int nBandCount, int *panBandMap,
+                               GSpacing nPixelSpace, GSpacing nLineSpace,
+                               GSpacing nBandSpace,
+                               GDALRasterIOExtraArg* psExtraArg)
+
+{
+    CPLErr eErr = OGRSQLiteBaseDataSource::IRasterIO(
+                        eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                        pData, nBufXSize, nBufYSize, eBufType,
+                        nBandCount, panBandMap,
+                        nPixelSpace, nLineSpace, nBandSpace, psExtraArg );
+
+    // If writing all bands, in non-shifted mode, flush all entirely written tiles
+    // This can avoid "stressing" the block cache with too many dirty blocks.
+    // Note: this logic would be useless with a per-dataset block cache.
+    if( eErr == CE_None && eRWFlag == GF_Write &&
+        nXSize == nBufXSize && nYSize == nBufYSize &&
+        nBandCount == nBands &&
+        m_nShiftXPixelsMod == 0 && m_nShiftYPixelsMod == 0 )
+    {
+        auto poBand = cpl::down_cast<GDALGPKGMBTilesLikeRasterBand*>(GetRasterBand(1));
+        int nBlockXSize, nBlockYSize;
+        poBand ->GetBlockSize(&nBlockXSize, &nBlockYSize);
+        const int nBlockXStart = DIV_ROUND_UP(nXOff, nBlockXSize);
+        const int nBlockYStart = DIV_ROUND_UP(nYOff, nBlockYSize);
+        const int nBlockXEnd = (nXOff + nXSize ) / nBlockXSize;
+        const int nBlockYEnd = (nYOff + nYSize ) / nBlockYSize;
+        for( int nBlockY = nBlockXStart; nBlockY < nBlockYEnd; nBlockY ++ )
+        {
+            for( int nBlockX = nBlockYStart; nBlockX < nBlockXEnd; nBlockX ++ )
+            {
+                GDALRasterBlock* poBlock =
+                    poBand->AccessibleTryGetLockedBlockRef(nBlockX, nBlockY);
+                if( poBlock )
+                {
+                    // GetDirty() should be true in most situation (otherwise
+                    // it means the block cache is under extreme pressure!)
+                    if( poBlock->GetDirty() )
+                    {
+                        // IWriteBlock() on one band will check the dirty state
+                        // of the corresponding blocks in other bands, to decide
+                        // if it can call WriteTile(), so we have only to do that
+                        // on one of the bands
+                        if( poBlock->Write() != CE_None )
+                            eErr = CE_Failure;
+                    }
+                    poBlock->DropLock();
+                }
+            }
+        }
+    }
+
+    return eErr;
+}
+
+/************************************************************************/
 /*                          GetOGRTableLimit()                          */
 /************************************************************************/
 
@@ -1075,7 +1138,8 @@ const std::map< CPLString, std::vector<GPKGExtensionDesc> > &
             "'gpkg_geom_MULTISURFACE', 'gpkg_geom_CURVE', 'gpkg_geom_SURFACE', "
             "'gpkg_geom_POLYHEDRALSURFACE', 'gpkg_geom_TIN', 'gpkg_geom_TRIANGLE', "
             "'gpkg_rtree_index', 'gpkg_geometry_type_trigger', 'gpkg_srs_id_trigger', "
-            "'gpkg_crs_wkt', 'gpkg_crs_wkt_1_1', 'gpkg_schema')");
+            "'gpkg_crs_wkt', 'gpkg_crs_wkt_1_1', 'gpkg_schema', "
+            "'gpkg_related_tables', 'related_tables')");
     const int nTableLimit = GetOGRTableLimit();
     if( nTableLimit > 0 )
     {
@@ -1436,15 +1500,18 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
         /* Load layer definitions for all tables in gpkg_contents & gpkg_geometry_columns */
         /* and non-spatial tables as well */
         std::string osSQL =
-            "SELECT c.table_name, c.identifier, 1 as is_spatial, g.column_name, g.geometry_type_name, g.z, g.m, c.min_x, c.min_y, c.max_x, c.max_y, 1 AS is_in_gpkg_contents "
-            "  FROM gpkg_geometry_columns g JOIN gpkg_contents c ON (g.table_name = c.table_name)"
+            "SELECT c.table_name, c.identifier, 1 as is_spatial, g.column_name, g.geometry_type_name, g.z, g.m, c.min_x, c.min_y, c.max_x, c.max_y, 1 AS is_in_gpkg_contents, "
+            "(SELECT type FROM sqlite_master WHERE lower(name) = lower(c.table_name) AND type IN ('table', 'view')) AS object_type "
+            "  FROM gpkg_geometry_columns g "
+            "  JOIN gpkg_contents c ON (g.table_name = c.table_name)"
             "  WHERE "
             "  c.table_name <> 'ogr_empty_table' AND"
             "  c.data_type = 'features' "
             // aspatial: Was the only method available in OGR 2.0 and 2.1
             // attributes: GPKG 1.2 or later
             "UNION ALL "
-            "SELECT table_name, identifier, 0 as is_spatial, NULL, NULL, 0, 0, 0 AS xmin, 0 AS ymin, 0 AS xmax, 0 AS ymax, 1 AS is_in_gpkg_contents "
+            "SELECT table_name, identifier, 0 as is_spatial, NULL, NULL, 0, 0, 0 AS xmin, 0 AS ymin, 0 AS xmax, 0 AS ymax, 1 AS is_in_gpkg_contents, "
+            "(SELECT type FROM sqlite_master WHERE lower(name) = lower(table_name) AND type IN ('table', 'view')) AS object_type "
             "  FROM gpkg_contents"
             "  WHERE data_type IN ('aspatial', 'attributes') ";
 
@@ -1463,7 +1530,7 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
         {
             // vgpkg_ is Spatialite virtual table
             osSQL += "UNION ALL "
-                    "SELECT name, name, 0 as is_spatial, NULL, NULL, 0, 0, 0 AS xmin, 0 AS ymin, 0 AS xmax, 0 AS ymax, 0 AS is_in_gpkg_contents "
+                    "SELECT name, name, 0 as is_spatial, NULL, NULL, 0, 0, 0 AS xmin, 0 AS ymin, 0 AS xmax, 0 AS ymax, 0 AS is_in_gpkg_contents, type AS object_type "
                     "FROM sqlite_master WHERE type IN ('table', 'view') "
                     "AND name NOT LIKE 'gpkg_%' "
                     "AND name NOT LIKE 'vgpkg_%' "
@@ -1523,6 +1590,16 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
                 const char* pszZ = oResult->GetValue(5, i);
                 const char* pszM = oResult->GetValue(6, i);
                 bool bIsInGpkgContents = CPL_TO_BOOL(oResult->GetValueAsInteger(11, i));
+                const char* pszObjectType = oResult->GetValue(12, i);
+                if( pszObjectType == nullptr ||
+                    !(EQUAL(pszObjectType, "table") || EQUAL(pszObjectType, "view")) )
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Table/view %s is referenced in gpkg_contents, "
+                             "but does not exist",
+                             pszTableName);
+                    continue;
+                }
                 OGRGeoPackageTableLayer *poLayer = new OGRGeoPackageTableLayer(this, pszTableName);
                 bool bHasZ = pszZ && atoi(pszZ) > 0;
                 bool bHasM = pszM && atoi(pszM) > 0;
@@ -1533,7 +1610,8 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
                     if( pszM && atoi(pszM) == 2 )
                         bHasM = false;
                 }
-                poLayer->SetOpeningParameters(bIsInGpkgContents,
+                poLayer->SetOpeningParameters(pszObjectType,
+                                              bIsInGpkgContents,
                                               bIsSpatial,
                                               pszGeomColName,
                                               pszGeomType,
@@ -3294,6 +3372,18 @@ bool GDALGeoPackageDataset::CreateColumnsTableAndColumnConstraintsTablesIfNecess
     }
 
     return true;
+}
+
+/************************************************************************/
+/*                        HasGpkgextRelationsTable()                    */
+/************************************************************************/
+
+bool GDALGeoPackageDataset::HasGpkgextRelationsTable() const
+{
+    const int nCount = SQLGetInteger(hDB,
+                "SELECT 1 FROM sqlite_master WHERE name = 'gpkgext_relations'"
+                "AND type IN ('table', 'view')", nullptr);
+    return nCount == 1;
 }
 
 /************************************************************************/
@@ -5591,6 +5681,57 @@ OGRErr GDALGeoPackageDataset::DeleteLayerCommon(const char* pszLayerName)
         }
     }
 
+    if( eErr == OGRERR_NONE && HasGpkgextRelationsTable() )
+    {
+        // Remove reference to potential corresponding mapping table in
+        // gpkg_extensions
+        pszSQL = sqlite3_mprintf(
+            "DELETE FROM gpkg_extensions WHERE "
+            "extension_name IN ('related_tables', "
+            "'gpkg_related_tables') AND lower(table_name) = "
+            "(SELECT lower(mapping_table_name) FROM gpkgext_relations WHERE "
+            "lower(base_table_name) = lower('%q') OR "
+            "lower(related_table_name) = lower('%q') OR "
+            "lower(mapping_table_name) = lower('%q'))",
+             pszLayerName, pszLayerName, pszLayerName);
+        eErr = SQLCommand(hDB, pszSQL);
+        sqlite3_free(pszSQL);
+
+        if( eErr == OGRERR_NONE )
+        {
+            // Remove reference to potential corresponding mapping table in
+            // gpkgext_relations
+            pszSQL = sqlite3_mprintf(
+                    "DELETE FROM gpkgext_relations WHERE "
+                    "lower(base_table_name) = lower('%q') OR "
+                    "lower(related_table_name) = lower('%q') OR "
+                    "lower(mapping_table_name) = lower('%q')",
+                    pszLayerName, pszLayerName, pszLayerName);
+            eErr = SQLCommand(hDB, pszSQL);
+            sqlite3_free(pszSQL);
+        }
+
+        if( eErr == OGRERR_NONE && HasExtensionsTable() )
+        {
+            // If there is no longer any mapping table, then completely
+            // remove any reference to the extension in gpkg_extensions
+            // as mandated per the related table specification.
+            OGRErr err;
+            if( SQLGetInteger(hDB,
+                              "SELECT COUNT(*) FROM gpkg_extensions WHERE "
+                              "extension_name IN ('related_tables', "
+                              "'gpkg_related_tables') AND "
+                              "lower(table_name) != 'gpkgext_relations'",
+                              &err) == 0 )
+            {
+                eErr = SQLCommand(hDB,
+                                  "DELETE FROM gpkg_extensions WHERE "
+                                  "extension_name IN ('related_tables', "
+                                  "'gpkg_related_tables')");
+            }
+        }
+    }
+
     if( eErr == OGRERR_NONE )
     {
         pszSQL = sqlite3_mprintf("DROP TABLE \"%w\"", pszLayerName);
@@ -6241,7 +6382,8 @@ void GDALGeoPackageDataset::CheckUnknownExtensions(bool bCheckRasterTable)
             "'gpkg_metadata', "
             "'gpkg_schema', "
             "'gpkg_crs_wkt', "
-            "'gpkg_crs_wkt_1_1')) "
+            "'gpkg_crs_wkt_1_1', "
+            "'related_tables', 'gpkg_related_tables')) "
 #ifdef WORKAROUND_SQLITE3_BUGS
             "OR 0 "
 #endif
@@ -6261,7 +6403,8 @@ void GDALGeoPackageDataset::CheckUnknownExtensions(bool bCheckRasterTable)
             "'gpkg_metadata', "
             "'gpkg_schema', "
             "'gpkg_crs_wkt', "
-            "'gpkg_crs_wkt_1_1')) "
+            "'gpkg_crs_wkt_1_1', "
+            "'related_tables', 'gpkg_related_tables')) "
 #ifdef WORKAROUND_SQLITE3_BUGS
             "OR 0 "
 #endif

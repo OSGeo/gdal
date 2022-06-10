@@ -506,6 +506,7 @@ def test_ogr_fgdb_8(fgdb_drv):
     lyr.CreateField(ogr.FieldDefn('FROM', ogr.OFTInteger))  # reserved keyword
     lyr.CreateField(ogr.FieldDefn('1NUMBER', ogr.OFTInteger))  # starting with a number
     lyr.CreateField(ogr.FieldDefn('WITH SPACE AND !$*!- special characters', ogr.OFTInteger))  # unallowed characters
+    lyr.CreateField(ogr.FieldDefn('é' * 64, ogr.OFTInteger))  # OK
     lyr.CreateField(ogr.FieldDefn('A123456789012345678901234567890123456789012345678901234567890123', ogr.OFTInteger))  # 64 characters : ok
     lyr.CreateField(ogr.FieldDefn('A1234567890123456789012345678901234567890123456789012345678901234', ogr.OFTInteger))  # 65 characters : nok
     lyr.CreateField(ogr.FieldDefn('A12345678901234567890123456789012345678901234567890123456789012345', ogr.OFTInteger))  # 66 characters : nok
@@ -513,6 +514,7 @@ def test_ogr_fgdb_8(fgdb_drv):
 
     lyr_defn = lyr.GetLayerDefn()
     expected_names = ['FROM_', '_1NUMBER', 'WITH_SPACE_AND_______special_characters',
+                      'é' * 64,
                       'A123456789012345678901234567890123456789012345678901234567890123',
                       'A1234567890123456789012345678901234567890123456789012345678901_1',
                       'A1234567890123456789012345678901234567890123456789012345678901_2']
@@ -2206,6 +2208,42 @@ def test_ogr_fgdb_alias(fgdb_drv):
     except OSError:
         pass
 
+###############################################################################
+# Test field alias with ampersand character. Requires OpenFileGDB to be read back
+
+
+def test_ogr_fgdb_alias_with_ampersand(fgdb_drv, openfilegdb_drv):
+
+    try:
+        shutil.rmtree("tmp/alias.gdb")
+    except OSError:
+        pass
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("WGS84")
+
+    ds = fgdb_drv.CreateDataSource('tmp/alias.gdb')
+    lyr = ds.CreateLayer('test', srs=srs, geom_type=ogr.wkbPoint)
+    fld_defn = ogr.FieldDefn('short_name', ogr.OFTInteger)
+    fld_defn.SetAlternativeName('longer & name')
+    lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn('regular_name', ogr.OFTInteger)
+    lyr.CreateField(fld_defn)
+    ds = None
+
+    openfilegdb_drv.Register()
+    ds = fgdb_drv.Open('tmp/alias.gdb')
+    openfilegdb_drv.Deregister()
+    lyr = ds.GetLayer(0)
+    lyr_defn = lyr.GetLayerDefn()
+    assert lyr_defn.GetFieldDefn(0).GetAlternativeName() == 'longer & name'
+    assert lyr_defn.GetFieldDefn(1).GetAlternativeName() == ''
+
+    try:
+        shutil.rmtree("tmp/alias.gdb")
+    except OSError:
+        pass
+
 
 ###############################################################################
 # Test reading field domains
@@ -2428,3 +2466,17 @@ def test_ogr_filegdb_non_spatial_table_outside_gdb_items(openfilegdb_drv, fgdb_d
     assert ds.GetLayerCount() == 3, 'did not get expected layer count'
     layer_names = set(ds.GetLayer(i).GetName() for i in range(ds.GetLayerCount()))
     assert layer_names == {'aquaduct', 'flat_table1', 'flat_table2'}
+
+
+###############################################################################
+# Test reading .gdb where the CRS in the XML definition of the feature
+# table is not consistent with the one of the feature dataset
+
+
+def test_ogr_filegdb_inconsistent_crs_feature_dataset_and_feature_table():
+    ds = ogr.Open('data/filegdb/inconsistent_crs_feature_dataset_and_feature_table.gdb')
+    assert ds is not None
+    lyr = ds.GetLayer(0)
+    srs = lyr.GetSpatialRef()
+    assert srs is not None
+    assert srs.GetAuthorityCode(None) == '4326'
