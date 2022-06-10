@@ -67,6 +67,7 @@ for the shared lib, *e.g.* ``set (GDAL_LIB_OUTPUT_NAME gdal_x64 CACHE STRING "" 
     conflict with new settings. If strange errors appear during cmake run,
     you may try removing CMakeCache.txt to start from a clean state.
 
+Refer to :ref:`using_gdal_in_cmake` for how to use GDAL in a CMake project.
 
 CMake general configure options
 +++++++++++++++++++++++++++++++
